@@ -9,14 +9,14 @@
 
 ## Status Overview
 
-| User Story | Title                                                | Status | Effort |
-| ---------- | ---------------------------------------------------- | ------ | ------ |
-| US-FEE-001 | Configure fee rates per contract type (basis points) | ✅     | S      |
-| US-FEE-002 | Accept ETH and ERC20 fee payments                    | ✅     | S      |
-| US-FEE-003 | Query fee rate for a contract type                   | ✅     | XS     |
-| US-FEE-004 | Withdraw accumulated fees (ETH or ERC20)             | ✅     | S      |
+| User Story | Title                                                | Contract | Frontend | Effort |
+| ---------- | ---------------------------------------------------- | :------: | :------: | ------ |
+| US-FEE-001 | Configure fee rates per contract type (basis points) | ✅       | ✅       | S      |
+| US-FEE-002 | Accept ETH and ERC20 fee payments                    | ✅       | 🚫       | S      |
+| US-FEE-003 | Query fee rate for a contract type                   | ✅       | ✅       | XS     |
+| US-FEE-004 | Withdraw accumulated fees (ETH or ERC20)             | ✅       | ✅       | S      |
 
-**4 / 4 stories complete**
+**Contract: 4 / 4 — Frontend: 3 / 4**
 
 ---
 
@@ -28,6 +28,7 @@
 - **Fee unit:** Basis points (bps); 50 bps = 0.5%; 10000 bps = 100%
 - **Dependencies:** Officer stores FeeCollector address and delegates fee queries; Bank uses `getFeeFor("BANK")` and `isFeeCollectorToken(token)` before charging fees
 - **Protections:** `ReentrancyGuard` on withdrawals
+- **Frontend:** ✅ Management UI at `/micropayments` — `FeeCollectorManagement.vue`, `FeeConfigList.vue`, `FeeConfigFormModal.vue`, `WithdrawModal.vue`, `TokenHoldingsTable.vue`
 
 ---
 

@@ -9,14 +9,14 @@
 
 ## Status Overview
 
-| User Story  | Title                                                  | Status | Effort |
-| ----------- | ------------------------------------------------------ | ------ | ------ |
-| US-TIPS-001 | Push tips immediately to team members (pushTip)        | ✅     | M      |
-| US-TIPS-002 | Accumulate tip balances for later withdrawal (sendTip) | ✅     | M      |
-| US-TIPS-003 | Withdraw accumulated tip balance                       | ✅     | S      |
-| US-TIPS-004 | Configure maximum recipients for push tips             | ✅     | S      |
+| User Story  | Title                                                  | Contract | Frontend | Effort |
+| ----------- | ------------------------------------------------------ | :------: | :------: | ------ |
+| US-TIPS-001 | Push tips immediately to team members (pushTip)        | ✅       | 🚫       | M      |
+| US-TIPS-002 | Accumulate tip balances for later withdrawal (sendTip) | ✅       | 🚫       | M      |
+| US-TIPS-003 | Withdraw accumulated tip balance                       | ✅       | 🚫       | S      |
+| US-TIPS-004 | Configure maximum recipients for push tips             | ✅       | 🚫       | S      |
 
-**4 / 4 stories complete**
+**Contract: 4 / 4 — Frontend: 0 / 4**
 
 ---
 

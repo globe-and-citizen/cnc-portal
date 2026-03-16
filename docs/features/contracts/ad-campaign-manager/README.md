@@ -9,15 +9,15 @@
 
 ## Status Overview
 
-| User Story | Title                                            | Status | Effort |
-| ---------- | ------------------------------------------------ | ------ | ------ |
-| US-ADC-001 | Create an ad campaign with ETH budget            | ✅     | M      |
-| US-ADC-002 | Claim payment for clicks/impressions             | ✅     | M      |
-| US-ADC-003 | Withdraw remaining campaign budget               | ✅     | M      |
-| US-ADC-004 | Configure cost-per-click and cost-per-impression | ✅     | S      |
-| US-ADC-005 | Manage admin list                                | ✅     | S      |
+| User Story | Title                                            | Contract | Frontend | Effort |
+| ---------- | ------------------------------------------------ | :------: | :------: | ------ |
+| US-ADC-001 | Create an ad campaign with ETH budget            | ✅       | 🚫       | M      |
+| US-ADC-002 | Claim payment for clicks/impressions             | ✅       | 🚫       | M      |
+| US-ADC-003 | Withdraw remaining campaign budget               | ✅       | 🚫       | M      |
+| US-ADC-004 | Configure cost-per-click and cost-per-impression | ✅       | 🚫       | S      |
+| US-ADC-005 | Manage admin list                                | ✅       | 🚫       | S      |
 
-**5 / 5 stories complete**
+**Contract: 5 / 5 — Frontend: 0 / 5**
 
 ---
 

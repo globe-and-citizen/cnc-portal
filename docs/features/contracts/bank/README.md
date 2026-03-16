@@ -9,17 +9,17 @@
 
 ## Status Overview
 
-| User Story  | Title                                                                | Status | Effort |
-| ----------- | -------------------------------------------------------------------- | ------ | ------ |
-| US-BANK-001 | Deposit ETH into the treasury                                        | ✅     | XS     |
-| US-BANK-002 | Deposit ERC20 tokens into the treasury                               | ✅     | S      |
-| US-BANK-003 | Transfer ETH to a recipient (with protocol fee)                      | ✅     | M      |
-| US-BANK-004 | Transfer ERC20 tokens to a recipient (with fee for supported tokens) | ✅     | M      |
-| US-BANK-005 | Distribute ETH dividends to all shareholders                         | ✅     | M      |
-| US-BANK-006 | Distribute ERC20 dividends to all shareholders                       | ✅     | M      |
-| US-BANK-007 | View ETH and token balances                                          | ✅     | XS     |
+| User Story  | Title                                                                | Contract | Frontend | Effort |
+| ----------- | -------------------------------------------------------------------- | :------: | :------: | ------ |
+| US-BANK-001 | Deposit ETH into the treasury                                        | ✅       | 🚫       | XS     |
+| US-BANK-002 | Deposit ERC20 tokens into the treasury                               | ✅       | 🚫       | S      |
+| US-BANK-003 | Transfer ETH to a recipient (with protocol fee)                      | ✅       | 🚫       | M      |
+| US-BANK-004 | Transfer ERC20 tokens to a recipient (with fee for supported tokens) | ✅       | 🚫       | M      |
+| US-BANK-005 | Distribute ETH dividends to all shareholders                         | ✅       | 🚫       | M      |
+| US-BANK-006 | Distribute ERC20 dividends to all shareholders                       | ✅       | 🚫       | M      |
+| US-BANK-007 | View ETH and token balances                                          | ✅       | 🚫       | XS     |
 
-**7 / 7 stories complete**
+**Contract: 7 / 7 — Frontend: 0 / 7**
 
 ---
 

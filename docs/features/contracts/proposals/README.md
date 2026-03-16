@@ -9,14 +9,14 @@
 
 ## Status Overview
 
-| User Story  | Title                                                | Status | Effort |
-| ----------- | ---------------------------------------------------- | ------ | ------ |
-| US-PROP-001 | Create a proposal (board members only)               | ✅     | S      |
-| US-PROP-002 | Vote Yes/No/Abstain on a proposal                    | ✅     | S      |
-| US-PROP-003 | Auto-tally results when all board members have voted | ✅     | M      |
-| US-PROP-004 | Manually tally results after voting period ends      | ✅     | S      |
+| User Story  | Title                                                | Contract | Frontend | Effort |
+| ----------- | ---------------------------------------------------- | :------: | :------: | ------ |
+| US-PROP-001 | Create a proposal (board members only)               | ✅       | 🚫       | S      |
+| US-PROP-002 | Vote Yes/No/Abstain on a proposal                    | ✅       | 🚫       | S      |
+| US-PROP-003 | Auto-tally results when all board members have voted | ✅       | 🚫       | M      |
+| US-PROP-004 | Manually tally results after voting period ends      | ✅       | 🚫       | S      |
 
-**4 / 4 stories complete**
+**Contract: 4 / 4 — Frontend: 0 / 4**
 
 ---
 

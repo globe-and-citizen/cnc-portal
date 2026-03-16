@@ -9,15 +9,15 @@
 
 ## Status Overview
 
-| User Story  | Title                                                       | Status | Effort |
-| ----------- | ----------------------------------------------------------- | ------ | ------ |
-| US-ELEC-001 | Create a Board election with candidates and eligible voters | ✅     | M      |
-| US-ELEC-002 | Cast a vote for a candidate                                 | ✅     | S      |
-| US-ELEC-003 | Publish election results and update Board of Directors      | ✅     | M      |
-| US-ELEC-004 | Query election details, candidates, and voters              | ✅     | S      |
-| US-ELEC-005 | Enforce only one active election at a time                  | ✅     | S      |
+| User Story  | Title                                                       | Contract | Frontend | Effort |
+| ----------- | ----------------------------------------------------------- | :------: | :------: | ------ |
+| US-ELEC-001 | Create a Board election with candidates and eligible voters | ✅       | 🚫       | M      |
+| US-ELEC-002 | Cast a vote for a candidate                                 | ✅       | 🚫       | S      |
+| US-ELEC-003 | Publish election results and update Board of Directors      | ✅       | 🚫       | M      |
+| US-ELEC-004 | Query election details, candidates, and voters              | ✅       | 🚫       | S      |
+| US-ELEC-005 | Enforce only one active election at a time                  | ✅       | 🚫       | S      |
 
-**5 / 5 stories complete**
+**Contract: 5 / 5 — Frontend: 0 / 5**
 
 ---
 
