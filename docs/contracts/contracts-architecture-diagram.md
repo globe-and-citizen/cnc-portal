@@ -100,11 +100,8 @@ graph TB
     OfficerHub -->|deploys| CashRem
 
     Elections -->|"creates & sets"| BoD
-    Bank -.->|reads shareholders| InvestorV1
-    Proposals -.->|reads members| BoD
-    Bank -->|setInvestorAddress| InvestorV1
-    Elections -->|setBoDAddress| BoD
-    Proposals -->|setBoDAddress| BoD
+    Bank -.->|"reads (via Officer)"| InvestorV1
+    Proposals -.->|"reads (via Officer)"| BoD
     CashRem -->|mints tokens| InvestorV1
 
     style OfficerHub fill:#e3f2fd,stroke:#1976d2,stroke-width:3px
@@ -166,12 +163,13 @@ sequenceDiagram
 
     Officer->>Elections: Deploy Elections Proxy
     activate Elections
-    Elections->>BoD: Auto-create BoD Proxy
-    activate BoD
-    BoD-->>Elections: BoD address
-    deactivate BoD
     Elections-->>Officer: Elections address
     deactivate Elections
+    Note over Officer: Officer auto-deploys BoD when Elections is deployed<br/>(deployBeaconProxy detects "Elections" type)
+    Officer->>BoD: Deploy BoardOfDirectors Proxy<br/>(initialized with Elections address as owner)
+    activate BoD
+    BoD-->>Officer: BoD address
+    deactivate BoD
 
     Officer->>Proposals: Deploy Proposals Proxy
     activate Proposals
@@ -188,12 +186,13 @@ sequenceDiagram
     CashRem-->>Officer: CashRem address
     deactivate CashRem
 
-    Note over Officer: Link Contracts
-    Officer->>Bank: setInvestorAddress(InvestorV1)
-    Officer->>Elections: setBoDAddress(BoD)
-    Officer->>Proposals: setBoDAddress(BoD)
+    Note over Officer: Setup Permissions (_setupContractPermissions)
+    Note over Officer: Bank, Elections, Proposals resolve<br/>InvestorV1/BoD addresses dynamically<br/>via Officer.findDeployedContract() at runtime<br/>(no stored addresses needed)
     Officer->>CashRem: addTokenSupport(InvestorV1)
     Officer->>Investor: grantRole(MINTER_ROLE, CashRem)
+    Officer->>Investor: grantRole(MINTER_ROLE, SafeDepositRouter)
+    Officer->>Investor: grantRole(MINTER_ROLE, owner)
+    Officer->>Investor: grantRole(DEFAULT_ADMIN_ROLE, owner)
     Officer->>CashRem: transferOwnership(owner)
     Officer->>Investor: transferOwnership(owner)
 
@@ -353,7 +352,7 @@ sequenceDiagram
     Note over Owner: 1. Sign wage claim (EIP-712)<br/>Off-chain signature
     Owner->>Employee: 2. Provide signature
 
-    Employee->>CashRem: 3. withdrawWages(wageClaim, signature)
+    Employee->>CashRem: 3. withdraw(wageClaim, signature)
 
     activate CashRem
     Note over CashRem: 4. Verify EIP-712 signature<br/>Recover signer<br/>require(signer == owner)
