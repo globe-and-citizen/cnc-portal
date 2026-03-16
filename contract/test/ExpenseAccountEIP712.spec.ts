@@ -21,7 +21,7 @@ describe('ExpenseAccount (EIP712) - Administrative Tests', () => {
     const ExpenseAccountImplementation = await ethers.getContractFactory('ExpenseAccountEIP712')
     expenseAccount = (await upgrades.deployProxy(
       ExpenseAccountImplementation,
-      [owner.address, await mockUSDT.getAddress(), await mockUSDC.getAddress()],
+      [owner.address, [await mockUSDT.getAddress(), await mockUSDC.getAddress()]],
       { initializer: 'initialize' }
     )) as unknown as ExpenseAccountEIP712
   }
@@ -37,8 +37,8 @@ describe('ExpenseAccount (EIP712) - Administrative Tests', () => {
     })
 
     it('Should initialize supported tokens correctly', async () => {
-      expect(await expenseAccount.supportedTokens('USDT')).to.equal(await mockUSDT.getAddress())
-      expect(await expenseAccount.supportedTokens('USDC')).to.equal(await mockUSDC.getAddress())
+      expect(await expenseAccount.isTokenSupported(await mockUSDT.getAddress())).to.equal(true)
+      expect(await expenseAccount.isTokenSupported(await mockUSDC.getAddress())).to.equal(true)
     })
   })
 
@@ -193,22 +193,25 @@ describe('ExpenseAccount (EIP712) - Administrative Tests', () => {
       expect(await expenseAccount.getTokenBalance(await mockUSDT.getAddress())).to.equal(amount)
     })
 
-    it('Should allow owner to change token addresses', async () => {
-      const newAddress = '0x1234567890123456789012345678901234567890'
+    it('Should allow owner to add and remove token support', async () => {
+      const MockToken = await ethers.getContractFactory('MockERC20')
+      const newToken = await MockToken.deploy('NEW', 'NEW')
 
-      const tx = await expenseAccount.changeTokenAddress('USDT', newAddress)
+      await expect(expenseAccount.addTokenSupport(await newToken.getAddress()))
+        .to.emit(expenseAccount, 'TokenSupportAdded')
+        .withArgs(await newToken.getAddress())
 
-      await expect(tx)
-        .to.emit(expenseAccount, 'TokenAddressChanged')
-        .withArgs(owner.address, 'USDT', await mockUSDT.getAddress(), newAddress)
+      expect(await expenseAccount.isTokenSupported(await newToken.getAddress())).to.equal(true)
 
-      expect(await expenseAccount.supportedTokens('USDT')).to.equal(newAddress)
+      await expect(expenseAccount.removeTokenSupport(await newToken.getAddress()))
+        .to.emit(expenseAccount, 'TokenSupportRemoved')
+        .withArgs(await newToken.getAddress())
     })
 
     it('Should correctly check if token is supported', async () => {
       expect(await expenseAccount.isTokenSupported(await mockUSDT.getAddress())).to.be.true
       expect(await expenseAccount.isTokenSupported(await mockUSDC.getAddress())).to.be.true
-      expect(await expenseAccount.isTokenSupported(ethers.ZeroAddress)).to.be.true // Native token
+      expect(await expenseAccount.isTokenSupported(ethers.ZeroAddress)).to.be.false
       expect(await expenseAccount.isTokenSupported('0x1234567890123456789012345678901234567890')).to
         .be.false
     })
@@ -238,25 +241,24 @@ describe('ExpenseAccount (EIP712) - Administrative Tests', () => {
       })
 
       it('Should not allow non-owners to change token addresses', async () => {
-        const newAddress = '0x1234567890123456789012345678901234567890'
+        const MockToken = await ethers.getContractFactory('MockERC20')
+        const newToken = await MockToken.deploy('NEW', 'NEW')
 
         await expect(
-          expenseAccount.connect(imposter).changeTokenAddress('USDT', newAddress)
+          expenseAccount.connect(imposter).addTokenSupport(await newToken.getAddress())
         ).to.be.revertedWithCustomError(expenseAccount, 'OwnableUnauthorizedAccount')
       })
 
       it('Should not allow changing to invalid token symbols', async () => {
-        const newAddress = '0x1234567890123456789012345678901234567890'
-
-        await expect(expenseAccount.changeTokenAddress('INVALID', newAddress)).to.be.revertedWith(
-          'Invalid token symbol'
+        await expect(expenseAccount.addTokenSupport(ethers.ZeroAddress)).to.be.revertedWith(
+          'Token address cannot be zero'
         )
       })
 
       it('Should not allow setting zero address as token address', async () => {
-        await expect(
-          expenseAccount.changeTokenAddress('USDT', ethers.ZeroAddress)
-        ).to.be.revertedWith('Address cannot be zero')
+        await expect(expenseAccount.removeTokenSupport(ethers.ZeroAddress)).to.be.revertedWith(
+          'Token address cannot be zero'
+        )
       })
     })
   })

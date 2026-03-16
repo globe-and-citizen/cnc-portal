@@ -117,7 +117,6 @@ const createElection = async (electionData: OldProposal) => {
       address: electionsAddress.value,
       abi: ELECTIONS_ABI,
       functionName: 'createElection',
-      // @ts-expect-error type issue
       args
     })
 
@@ -125,7 +124,6 @@ const createElection = async (electionData: OldProposal) => {
       address: electionsAddress.value,
       abi: ELECTIONS_ABI,
       functionName: 'createElection',
-      // @ts-expect-error type issue
       args
     })
 

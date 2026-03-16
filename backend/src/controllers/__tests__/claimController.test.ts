@@ -49,13 +49,13 @@ vi.mock('../wageController', () => ({
 }));
 
 // Mock the storage service
-const { mockGetPresignedDownloadUrl, mockDeleteFile } = vi.hoisted(() => ({
-  mockGetPresignedDownloadUrl: vi.fn(),
+const { mockGetPublicFileUrl, mockDeleteFile } = vi.hoisted(() => ({
+  mockGetPublicFileUrl: vi.fn((key: string) => `https://storage.railway.app/test-bucket/${key}`),
   mockDeleteFile: vi.fn(),
 }));
 
 vi.mock('../../services/storageService', () => ({
-  getPresignedDownloadUrl: mockGetPresignedDownloadUrl,
+  getPublicFileUrl: mockGetPublicFileUrl,
   deleteFile: mockDeleteFile,
   isStorageConfigured: vi.fn(() => true),
   uploadFile: vi.fn(),
@@ -82,7 +82,7 @@ vi.mock('../../services/storageService', () => ({
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   ],
   MAX_FILE_SIZE: 10 * 1024 * 1024,
-  MAX_FILES_PER_CLAIM: 10,
+  MAX_FILES_UPLOAD: 10,
   PRESIGNED_URL_EXPIRATION: 3600,
 }));
 

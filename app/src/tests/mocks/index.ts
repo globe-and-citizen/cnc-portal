@@ -4,6 +4,7 @@ export * from './query.mock'
 export * from './erc20.mock'
 export * from './contract.mock'
 export * from './composables.mock'
+export * from './api.mock'
 export * from './viem.actions.mock'
 export * from './router.mock'
 

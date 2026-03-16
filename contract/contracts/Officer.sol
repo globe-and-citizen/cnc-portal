@@ -6,34 +6,11 @@ import '@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol';
 import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
-import './interfaces/ICashRemuneration.sol';
-import './interfaces/IInvestorV1.sol';
-
-interface IBodContract {
-  function initialize(address[] memory votingAddress) external;
-}
-interface IElections {
-  function setBoardOfDirectorsContractAddress(address _bodAddress) external;
-}
-interface IProposal {
-  function setBoardOfDirectorsContractAddress(address _bodAddress) external;
-}
-interface IInvestorV1Contract {
-  function initialize(string calldata _name, string calldata _symbol, address _owner) external;
-}
-interface IBank {
-  function setInvestorAddress(address _investorAddress) external;
-}
-
-interface IFeeCollector {
-  function getFeeFor(string memory contractType) external view returns (uint16);
-  function supportedTokens(address token) external view returns (bool);
-}
-
-interface ISafeDepositRouter {
-  function setInvestorAddress(address _investorAddress) external;
-  function transferOwnership(address newOwner) external;
-}
+import {IBoardOfDirectors} from './interfaces/IBoardOfDirectors.sol';
+import {ICashRemuneration} from './interfaces/ICashRemuneration.sol';
+import {IInvestorV1} from './interfaces/IInvestorV1.sol';
+import {ISafeDepositRouter} from './interfaces/ISafeDepositRouter.sol';
+import {IFeeCollector} from './interfaces/IFeeCollector.sol';
 
 /**
  * @notice Struct for contract deployment data
@@ -170,13 +147,11 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
 
     // Setup SafeDepositRouter permissions if deployed
     if (depositRouterAddress != address(0)) {
-      ISafeDepositRouter depositRouter = ISafeDepositRouter(depositRouterAddress);
-      // Grant MINTER_ROLE first (required by SafeDepositRouter.setInvestorAddress)
+      // Grant MINTER_ROLE to SafeDepositRouter (no longer needs setInvestorAddress)
       investorV1.grantRole(minterRole, depositRouterAddress);
-      // Set investor address (Officer is owner at this point)
-      depositRouter.setInvestorAddress(investorV1Address);
 
-      //ADD: Transfer ownership to final owner (like CashRemuneration)
+      // Transfer ownership to final owner
+      ISafeDepositRouter depositRouter = ISafeDepositRouter(depositRouterAddress);
       depositRouter.transferOwnership(_owner);
     }
 
@@ -234,60 +209,11 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
       bodContract = address(
         new BeaconProxy(
           bodContractBeacon,
-          abi.encodeWithSelector(IBodContract.initialize.selector, args)
+          abi.encodeWithSelector(IBoardOfDirectors.initialize.selector, args)
         )
       );
       deployedContracts.push(DeployedContract('BoardOfDirectors', bodContract));
       emit ContractDeployed('BoardOfDirectors', bodContract);
-      IElections(proxyAddress).setBoardOfDirectorsContractAddress(bodContract);
-    } else if (keccak256(bytes(contractType)) == keccak256(bytes('Proposals'))) {
-      IProposal(proxyAddress).setBoardOfDirectorsContractAddress(bodContract);
-    } else if (keccak256(bytes(contractType)) == keccak256(bytes('Bank'))) {
-      address foundInvestorsV1Contract = findDeployedContract('InvestorV1');
-      if (foundInvestorsV1Contract != address(0)) {
-        // InvestorV1 already deployed, set the investor address
-        IBank(proxyAddress).setInvestorAddress(foundInvestorsV1Contract);
-      }
-    } else if (keccak256(bytes(contractType)) == keccak256(bytes('SafeDepositRouter'))) {
-      address foundInvestorsV1Contract = findDeployedContract('InvestorV1');
-      if (foundInvestorsV1Contract != address(0)) {
-        IInvestorV1 investorV1 = IInvestorV1(foundInvestorsV1Contract);
-        bytes32 minterRole = investorV1.MINTER_ROLE();
-
-        if (!investorV1.hasRole(minterRole, proxyAddress)) {
-          investorV1.grantRole(minterRole, proxyAddress);
-        }
-
-        ISafeDepositRouter(proxyAddress).setInvestorAddress(foundInvestorsV1Contract);
-
-        // Only transfer ownership if NOT in batch deployment (will be handled by _setupContractPermissions)
-        if (!_isInitializing()) {
-          ISafeDepositRouter(proxyAddress).transferOwnership(owner());
-        }
-      }
-    } else if (keccak256(bytes(contractType)) == keccak256(bytes('InvestorV1'))) {
-      address foundBankContract = findDeployedContract('Bank');
-      if (foundBankContract != address(0)) {
-        // Bank already deployed, set the investor address
-        IBank(foundBankContract).setInvestorAddress(proxyAddress);
-      }
-
-      address foundSafeDepositRouter = findDeployedContract('SafeDepositRouter');
-      if (foundSafeDepositRouter != address(0)) {
-        IInvestorV1 investorV1 = IInvestorV1(proxyAddress);
-        bytes32 minterRole = investorV1.MINTER_ROLE();
-
-        if (!investorV1.hasRole(minterRole, foundSafeDepositRouter)) {
-          investorV1.grantRole(minterRole, foundSafeDepositRouter);
-        }
-
-        ISafeDepositRouter(foundSafeDepositRouter).setInvestorAddress(proxyAddress);
-
-        // Only transfer ownership if NOT in batch deployment (will be handled by _setupContractPermissions)
-        if (!_isInitializing()) {
-          ISafeDepositRouter(foundSafeDepositRouter).transferOwnership(owner());
-        }
-      }
     }
 
     return proxyAddress;
@@ -416,6 +342,6 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
    */
   function isFeeCollectorToken(address _tokenAddress) external view returns (bool) {
     if (_tokenAddress == address(0)) return false;
-    return IFeeCollector(feeCollector).supportedTokens(_tokenAddress);
+    return IFeeCollector(feeCollector).isTokenSupported(_tokenAddress);
   }
 }

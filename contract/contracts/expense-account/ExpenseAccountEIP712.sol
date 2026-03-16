@@ -9,6 +9,7 @@ import '@openzeppelin/contracts/utils/Address.sol';
 import '@openzeppelin/contracts/utils/cryptography/ECDSA.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@quant-finance/solidity-datetime/contracts/DateTime.sol';
+import '../base/TokenSupport.sol';
 
 /**
  * @title ExpenseAccountEIP712
@@ -20,7 +21,8 @@ contract ExpenseAccountEIP712 is
   OwnableUpgradeable,
   ReentrancyGuardUpgradeable,
   EIP712Upgradeable,
-  PausableUpgradeable
+  PausableUpgradeable,
+  TokenSupport
 {
   using Address for address payable;
   using ECDSA for bytes32;
@@ -59,9 +61,6 @@ contract ExpenseAccountEIP712 is
 
   mapping(bytes32 => ExpenseBalance) public expenseBalances;
 
-  /// @dev Mapping to track supported tokens.
-  mapping(string => address) public supportedTokens;
-
   string private constant BUDGET_LIMIT_TYPE =
     'BudgetLimit(uint256 amount,uint8 frequencyType,uint256 customFrequency,uint256 startDate,uint256 endDate,address tokenAddress,address approvedAddress)';
 
@@ -84,13 +83,6 @@ contract ExpenseAccountEIP712 is
     uint256 amount
   );
 
-  event TokenAddressChanged(
-    address indexed addressWhoChanged,
-    string tokenSymbol,
-    address indexed oldAddress,
-    address indexed newAddress
-  );
-
   error UnauthorizedAccess(address expected, address received);
 
   error AmountPerPeriodExceeded(uint256 amount);
@@ -101,18 +93,23 @@ contract ExpenseAccountEIP712 is
 
   error ApprovalExpired(uint256 currentTime, uint256 endDate);
 
-  function initialize(
-    address owner,
-    address _usdtAddress,
-    address _usdcAddress
-  ) public initializer {
+  function initialize(address owner, address[] calldata _tokenAddresses) public initializer {
+    require(owner != address(0), 'Owner cannot be zero');
     __Ownable_init(owner);
     __ReentrancyGuard_init();
-    __Pausable_init();
     __EIP712_init('CNCExpenseAccount', '1');
+    __Pausable_init();
 
-    supportedTokens['USDT'] = _usdtAddress;
-    supportedTokens['USDC'] = _usdcAddress;
+    // Set the initial supported tokens
+    uint256 length = _tokenAddresses.length;
+    for (uint256 i = 0; i < length; ++i) {
+      require(_tokenAddresses[i] != address(0), 'Token address cannot be zero');
+      _addTokenSupport(_tokenAddresses[i]);
+    }
+    // Emit events after they're already added to avoid duplicate events
+    for (uint256 i = 0; i < length; ++i) {
+      emit TokenSupportAdded(_tokenAddresses[i]);
+    }
   }
 
   /**
@@ -191,8 +188,11 @@ contract ExpenseAccountEIP712 is
       require(balance.totalWithdrawn + amount <= budgetLimit.amount, 'Exceeds period budget');
     }
 
-    // Check token is supported
-    require(isTokenSupported(budgetLimit.tokenAddress), 'Token not supported');
+    // Check token is supported (allows native token)
+    require(
+      budgetLimit.tokenAddress == address(0) || isTokenSupported(budgetLimit.tokenAddress),
+      'Token not supported'
+    );
 
     return true;
   }
@@ -421,30 +421,18 @@ contract ExpenseAccountEIP712 is
   }
 
   /**
-   * @dev Checks if a token is supported.
-   * @param _token The address of the token to check.
-   * @return True if the token is supported, false otherwise.
-   */
-  function isTokenSupported(address _token) public view returns (bool) {
-    return
-      _token == supportedTokens['USDT'] ||
-      _token == supportedTokens['USDC'] ||
-      _token == address(0);
-  }
-
-  /**
    * @dev Deposits tokens from the caller to the contract.
    * @param token The address of the token to deposit.
    * @param amount The amount of tokens to deposit.
    *
    * Requirements:
-   * - The token must be supported.
+   * - The token must be supported or is native (address(0)).
    * - The amount must be greater than zero.
    *
    * Emits a {TokenDeposited} event.
    */
   function depositToken(address token, uint256 amount) external nonReentrant whenNotPaused {
-    require(isTokenSupported(token), 'Unsupported token');
+    require(token == address(0) || isTokenSupported(token), 'Unsupported token');
     require(amount > 0, 'Amount must be greater than zero');
 
     require(IERC20(token).transferFrom(msg.sender, address(this), amount), 'Token transfer failed');
@@ -452,30 +440,21 @@ contract ExpenseAccountEIP712 is
   }
 
   /**
-   * @dev Changes the address of a supported token.
-   * @param symbol The symbol of the token to change.
-   * @param newAddress The new address of the token.
-   *
-   * Requirements:
-   * - The new address must not be zero.
-   * - The symbol must be "USDT" or "USDC".
-   *
-   * Emits a {TokenAddressChanged} event.
+   * @notice Adds a supported token to the contract.
+   * @param _tokenAddress The address of the token contract.
+   * @dev Can only be called by the contract owner.
    */
-  function changeTokenAddress(
-    string calldata symbol,
-    address newAddress
-  ) external onlyOwner whenNotPaused {
-    require(newAddress != address(0), 'Address cannot be zero');
-    require(
-      keccak256(abi.encodePacked(symbol)) == keccak256(abi.encodePacked('USDT')) ||
-        keccak256(abi.encodePacked(symbol)) == keccak256(abi.encodePacked('USDC')),
-      'Invalid token symbol'
-    );
+  function addTokenSupport(address _tokenAddress) external override onlyOwner {
+    _addTokenSupport(_tokenAddress);
+  }
 
-    address oldAddress = supportedTokens[symbol];
-    supportedTokens[symbol] = newAddress;
-    emit TokenAddressChanged(msg.sender, symbol, oldAddress, newAddress);
+  /**
+   * @notice Removes a supported token from the contract.
+   * @param _tokenAddress The address of the token contract.
+   * @dev Can only be called by the contract owner.
+   */
+  function removeTokenSupport(address _tokenAddress) external override onlyOwner {
+    _removeTokenSupport(_tokenAddress);
   }
 
   /**
@@ -484,7 +463,7 @@ contract ExpenseAccountEIP712 is
    * @return The balance of the token.
    */
   function getTokenBalance(address token) external view returns (uint256) {
-    require(isTokenSupported(token), 'Unsupported token');
+    require(token == address(0) || isTokenSupported(token), 'Unsupported token');
     return IERC20(token).balanceOf(address(this));
   }
 }

@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { generateNonce } from 'siwe';
 import { prisma } from '../utils';
 import { errorResponse } from '../utils/utils';
+import { extractProfileStorageKey, resolveStorageImageUrl } from '../utils/profileImage.util';
 import {
   uploadFile,
   getPresignedDownloadUrl,
@@ -13,39 +14,6 @@ import {
 interface MulterRequest extends Request {
   file?: Express.Multer.File;
 }
-
-const extractProfileStorageKey = (imageUrl?: string | null): string | null => {
-  if (!imageUrl || typeof imageUrl !== 'string') {
-    return null;
-  }
-
-  if (imageUrl.startsWith('profiles/')) {
-    return imageUrl;
-  }
-
-  const decodedUrl = decodeURIComponent(imageUrl);
-  const profileKeyMatch = decodedUrl.match(/profiles\/[^?]+/);
-  return profileKeyMatch ? profileKeyMatch[0] : null;
-};
-
-const resolveProfileImageUrl = async (
-  imageUrl?: string | null
-): Promise<string | null | undefined> => {
-  if (!imageUrl) {
-    return imageUrl;
-  }
-
-  const key = extractProfileStorageKey(imageUrl);
-  if (!key) {
-    return imageUrl;
-  }
-
-  try {
-    return await getPresignedDownloadUrl(key, 86400 * 7);
-  } catch {
-    return imageUrl;
-  }
-};
 
 /**
  *
@@ -95,7 +63,7 @@ export const getUser = async (req: Request, res: Response) => {
 
     if (!user) return errorResponse(404, 'User not found', res);
 
-    const resolvedImageUrl = await resolveProfileImageUrl(user.imageUrl);
+    const resolvedImageUrl = await resolveStorageImageUrl(user.imageUrl);
     return res.status(200).json({
       ...user,
       imageUrl: resolvedImageUrl,
@@ -142,9 +110,7 @@ export const updateUser = async (req: Request, res: Response) => {
           return errorResponse(400, uploadResult.error || 'Failed to upload profile image', res);
         }
 
-        // Generate presigned URL valid for 7 days
-        const signedUrl = await getPresignedDownloadUrl(uploadResult.metadata.key, 86400 * 7);
-        newImageUrl = signedUrl;
+        newImageUrl = await getPresignedDownloadUrl(uploadResult.metadata.key, 86400 * 7);
 
         // Delete old profile image if it exists and was stored on Railway
         if (user.imageUrl) {
@@ -164,6 +130,24 @@ export const updateUser = async (req: Request, res: Response) => {
       }
     }
 
+    if (
+      !multerReq.file &&
+      imageUrl !== undefined &&
+      imageUrl !== user.imageUrl &&
+      isStorageConfigured()
+    ) {
+      const oldProfileKey = extractProfileStorageKey(user.imageUrl);
+      const nextProfileKey = extractProfileStorageKey(imageUrl);
+
+      if (oldProfileKey && oldProfileKey !== nextProfileKey) {
+        try {
+          await deleteFile(oldProfileKey);
+        } catch (e) {
+          console.warn('Could not delete old profile image:', e);
+        }
+      }
+    }
+
     const updatedUser = await prisma.user.update({
       where: { address: address },
       data: {
@@ -177,7 +161,7 @@ export const updateUser = async (req: Request, res: Response) => {
       },
     });
 
-    const resolvedUpdatedImageUrl = await resolveProfileImageUrl(updatedUser.imageUrl);
+    const resolvedUpdatedImageUrl = await resolveStorageImageUrl(updatedUser.imageUrl);
     return res.status(200).json({
       ...updatedUser,
       imageUrl: resolvedUpdatedImageUrl,
@@ -211,7 +195,7 @@ export const getAllUsers = async (req: Request, res: Response) => {
     const usersWithResolvedImages = await Promise.all(
       users.map(async (user) => ({
         ...user,
-        imageUrl: await resolveProfileImageUrl(user.imageUrl),
+        imageUrl: await resolveStorageImageUrl(user.imageUrl),
       }))
     );
 

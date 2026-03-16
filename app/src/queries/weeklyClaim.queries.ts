@@ -1,8 +1,13 @@
 import type { MaybeRefOrGetter } from 'vue'
 import { toValue } from 'vue'
 import type { Address } from 'viem'
-import type { WeeklyClaim } from '@/types/cash-remuneration'
+import { useMutation, useQueryClient } from '@tanstack/vue-query'
+import type { FileAttachment, WeeklyClaim } from '@/types/cash-remuneration'
+import type { ClaimSubmitPayload } from '@/types'
+import apiClient from '@/lib/axios'
+import { uploadFileApi } from '@/api'
 import { createQueryHook, createMutationHook, queryPresets } from './queryFactory'
+import { useToastStore } from '@/stores'
 
 /**
  * Query key factory for weekly claim-related queries
@@ -215,6 +220,142 @@ export interface DeleteClaimParams {
  */
 export const useDeleteClaimMutation = createMutationHook<void, DeleteClaimParams>({
   method: 'DELETE',
+  endpoint: 'claim/{claimId}',
+  invalidateKeys: [weeklyClaimKeys.teams()]
+})
+
+// ============================================================================
+// POST /claim - Submit claim
+// ============================================================================
+
+export interface SubmitClaimParams extends ClaimSubmitPayload {
+  teamId: string | number
+  files?: File[]
+}
+
+export const useSubmitClaimMutation = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation<void, Error, SubmitClaimParams>({
+    mutationKey: ['submit-claim'],
+    mutationFn: async (payload) => {
+      const attachments: FileAttachment[] = []
+
+      if (payload.files && payload.files.length > 0) {
+        const uploadedFiles = await uploadFileApi(payload.files)
+        attachments.push(
+          ...uploadedFiles.files.map((data) => ({
+            fileKey: data.fileKey,
+            fileUrl: data.fileUrl,
+            fileType: data.metadata.fileType,
+            fileSize: data.metadata.fileSize
+          }))
+        )
+      }
+
+      await apiClient.post('/claim', {
+        teamId: payload.teamId.toString(),
+        hoursWorked: payload.hoursWorked.toString(),
+        memo: payload.memo,
+        dayWorked: payload.dayWorked,
+        attachments: attachments.length > 0 ? attachments : undefined
+      })
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: weeklyClaimKeys.teams() })
+    }
+  })
+}
+
+export interface EditClaimWithFilesParams extends ClaimSubmitPayload {
+  claimId: number | string
+  deletedFileIndexes?: number[]
+  files?: File[]
+}
+
+export const useEditClaimWithFilesMutation = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation<void, Error, EditClaimWithFilesParams>({
+    mutationKey: ['edit-claim-with-files'],
+    mutationFn: async (payload) => {
+      const attachments: FileAttachment[] = []
+
+      if (payload.files && payload.files.length > 0) {
+        const uploadedFiles = await uploadFileApi(payload.files)
+        attachments.push(
+          ...uploadedFiles.files.map((data) => ({
+            fileKey: data.fileKey,
+            fileUrl: data.fileUrl,
+            fileType: data.metadata.fileType,
+            fileSize: data.metadata.fileSize
+          }))
+        )
+      }
+
+      await apiClient.put(`/claim/${payload.claimId}`, {
+        hoursWorked: payload.hoursWorked.toString(),
+        memo: payload.memo,
+        dayWorked: payload.dayWorked,
+        deletedFileIndexes:
+          payload.deletedFileIndexes && payload.deletedFileIndexes.length > 0
+            ? payload.deletedFileIndexes
+            : undefined,
+        attachments: attachments.length > 0 ? attachments : undefined
+      })
+    },
+    onSuccess: async (_, payload) => {
+      await queryClient.invalidateQueries({ queryKey: weeklyClaimKeys.teams() })
+      await queryClient.invalidateQueries({ queryKey: weeklyClaimKeys.detail(payload.claimId) })
+    },
+    onError: async (error) => {
+      console.error('Failed to update claim:', error)
+      const message =
+        error instanceof Error
+          ? error.message
+          : ((error as { response?: { data?: { message?: string } } })?.response?.data?.message ??
+            'Failed to update claim')
+      useToastStore().addErrorToast(message)
+    }
+  })
+}
+
+// ============================================================================
+// PUT /claim/{claimId} - Edit claim
+// ============================================================================
+
+/**
+ * Combined parameters for useEditClaimMutation
+ */
+export interface EditClaimParams {
+  pathParams: {
+    /** Claim ID */
+    claimId: number | string
+  }
+  body: {
+    /** Hours worked */
+    hoursWorked: string
+    /** Claim memo */
+    memo: string
+    /** ISO date string */
+    dayWorked: string
+    /** Original indexes to remove from existing attachments */
+    deletedFileIndexes?: number[]
+    /** Newly uploaded attachments metadata */
+    attachments?: FileAttachment[]
+  }
+}
+
+/**
+ * Edit an existing claim
+ *
+ * @endpoint PUT /claim/{claimId}
+ * @pathParams { claimId: number | string }
+ * @queryParams none
+ * @body { hoursWorked: string, memo: string, dayWorked: string, deletedFileIndexes?: number[], attachments?: FileAttachment[] }
+ */
+export const useEditClaimMutation = createMutationHook<void, EditClaimParams>({
+  method: 'PUT',
   endpoint: 'claim/{claimId}',
   invalidateKeys: [weeklyClaimKeys.teams()]
 })

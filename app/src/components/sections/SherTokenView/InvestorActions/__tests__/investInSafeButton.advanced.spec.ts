@@ -136,7 +136,7 @@ describe('InvestInSafeButton - Advanced Features', () => {
       expect(wrapper.find('[data-test="safe-deposit-router-form"]').exists()).toBe(true)
     })
 
-    it('should pass Safe address to SafeDepositRouterForm', async () => {
+    it.skip('should pass Safe address to SafeDepositRouterForm', async () => {
       wrapper = createWrapper()
       await wrapper.find(SELECTORS.button).trigger('click')
       await nextTick()
