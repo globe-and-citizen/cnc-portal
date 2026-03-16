@@ -61,6 +61,7 @@ Implement on-chain logic:
 - [Project Charter](./01_PROJECT_CHARTER.md) — Vision, scope, milestones, stakeholder roles (v1.0.0)
 - [User Stories](./02_USER_STORIES.md) — Feature definitions with acceptance criteria and priorities
 - [Implementation Status](./03_IMPLEMENTATION_STATUS.md) — Feature delivery tracking and roadmap
+- [Roadmap](./ROADMAP.md) — Milestone progress, critical blockers, and security remediation track
 
 ### Architecture & Design
 
@@ -102,7 +103,7 @@ Implement on-chain logic:
 
 ### Want to know what's being built when?
 
-→ Read: [Implementation Status](./03_IMPLEMENTATION_STATUS.md) + [Project Charter Milestones](./01_PROJECT_CHARTER.md#8-milestones-and-timeline)
+→ Read: [Roadmap](./ROADMAP.md) + [Implementation Status](./03_IMPLEMENTATION_STATUS.md) + [Project Charter Milestones](./01_PROJECT_CHARTER.md#8-milestones-and-timeline)
 
 ### Want to set up the project locally?
 
