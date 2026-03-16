@@ -194,7 +194,9 @@ export const getClaims = async (req: Request, res: Response) => {
     const claimsWithFreshAttachmentUrls = await Promise.all(
       claims.map(async (claim) => ({
         ...claim,
-        fileAttachments: await refreshAttachmentUrls(claim.fileAttachments),
+        fileAttachments: await refreshAttachmentUrls(
+          claim.fileAttachments as FileAttachmentData[] | null | undefined
+        ),
       }))
     );
 
@@ -352,7 +354,7 @@ export const deleteClaim = async (req: Request, res: Response) => {
     }
 
     // Delete attached files from S3 if any exist
-    await deleteAttachments(claim.fileAttachments);
+    await deleteAttachments(claim.fileAttachments as FileAttachmentData[] | null | undefined);
 
     await prisma.claim.delete({
       where: { id: claimId },

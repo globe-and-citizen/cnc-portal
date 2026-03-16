@@ -6,7 +6,7 @@ import { Hex, isAddress, isHex, keccak256 } from 'viem';
 import CASH_REMUNERATION_ABI from '../artifacts/cash_remuneration_eip712_abi.json';
 import { isCashRemunerationOwner } from '../utils/cashRemunerationUtil';
 import publicClient from '../utils/viem.config';
-import { refreshAttachmentUrls } from '../services/attachmentService';
+import { FileAttachmentData, refreshAttachmentUrls } from '../services/attachmentService';
 import { isUserMemberOfTeam } from './wageController';
 
 export type WeeklyClaimAction = 'sign' | 'withdraw' | 'disable' | 'enable';
@@ -292,7 +292,9 @@ export const getTeamWeeklyClaims = async (req: Request, res: Response) => {
         claims: await Promise.all(
           wc.claims.map(async (claim) => ({
             ...claim,
-            fileAttachments: await refreshAttachmentUrls(claim.fileAttachments),
+            fileAttachments: await refreshAttachmentUrls(
+              claim.fileAttachments as FileAttachmentData[] | null | undefined
+            ),
           }))
         ),
       }))
