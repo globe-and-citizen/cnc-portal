@@ -1,10 +1,10 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 
-const mockRefreshPresignedUrl = vi.fn();
+const mockGetPresignedDownloadUrl = vi.fn();
 const mockDeleteFile = vi.fn();
 
 vi.mock('../storageService', () => ({
-  refreshPresignedUrl: (...args: unknown[]) => mockRefreshPresignedUrl(...args),
+  getPresignedDownloadUrl: (...args: unknown[]) => mockGetPresignedDownloadUrl(...args),
   deleteFile: (...args: unknown[]) => mockDeleteFile(...args),
 }));
 
@@ -27,7 +27,7 @@ describe('attachmentService', () => {
     });
 
     it('should refresh presigned URLs for attachments with fileKey', async () => {
-      mockRefreshPresignedUrl.mockResolvedValue('https://fresh-url.example.com/file');
+      mockGetPresignedDownloadUrl.mockResolvedValue('https://fresh-url.example.com/file');
 
       const attachments: FileAttachmentData[] = [
         {
@@ -40,7 +40,7 @@ describe('attachmentService', () => {
 
       const result = await refreshAttachmentUrls(attachments);
 
-      expect(mockRefreshPresignedUrl).toHaveBeenCalledWith('uploads/abc123.pdf');
+      expect(mockGetPresignedDownloadUrl).toHaveBeenCalledWith('uploads/abc123.pdf');
       expect(result).toEqual([
         {
           fileKey: 'uploads/abc123.pdf',
@@ -52,7 +52,7 @@ describe('attachmentService', () => {
     });
 
     it('should handle multiple attachments', async () => {
-      mockRefreshPresignedUrl
+      mockGetPresignedDownloadUrl
         .mockResolvedValueOnce('https://fresh1.com')
         .mockResolvedValueOnce('https://fresh2.com');
 
@@ -75,7 +75,7 @@ describe('attachmentService', () => {
 
       const result = await refreshAttachmentUrls(attachments);
 
-      expect(mockRefreshPresignedUrl).not.toHaveBeenCalled();
+      expect(mockGetPresignedDownloadUrl).not.toHaveBeenCalled();
       expect(result).toEqual(attachments);
     });
 
@@ -84,12 +84,12 @@ describe('attachmentService', () => {
 
       const result = await refreshAttachmentUrls(attachments);
 
-      expect(mockRefreshPresignedUrl).not.toHaveBeenCalled();
+      expect(mockGetPresignedDownloadUrl).not.toHaveBeenCalled();
       expect(result).toEqual([null, 'string', 42]);
     });
 
     it('should return original attachment on presigned URL failure', async () => {
-      mockRefreshPresignedUrl.mockRejectedValue(new Error('S3 error'));
+      mockGetPresignedDownloadUrl.mockRejectedValue(new Error('S3 error'));
 
       const attachments: FileAttachmentData[] = [
         {
@@ -187,7 +187,7 @@ describe('attachmentService', () => {
 
   describe('batchRefreshUrls', () => {
     it('should refresh URLs for all provided file keys', async () => {
-      mockRefreshPresignedUrl
+      mockGetPresignedDownloadUrl
         .mockResolvedValueOnce('https://fresh1.com')
         .mockResolvedValueOnce('https://fresh2.com');
 
@@ -204,15 +204,15 @@ describe('attachmentService', () => {
     });
 
     it('should pass expirySeconds to getPresignedDownloadUrl', async () => {
-      mockRefreshPresignedUrl.mockResolvedValue('https://url.com');
+      mockGetPresignedDownloadUrl.mockResolvedValue('https://url.com');
 
       await batchRefreshUrls(['uploads/a.pdf'], 7200);
 
-      expect(mockRefreshPresignedUrl).toHaveBeenCalledWith('uploads/a.pdf', 7200);
+      expect(mockGetPresignedDownloadUrl).toHaveBeenCalledWith('uploads/a.pdf', 7200);
     });
 
     it('should report errors for failed keys without throwing', async () => {
-      mockRefreshPresignedUrl
+      mockGetPresignedDownloadUrl
         .mockResolvedValueOnce('https://ok.com')
         .mockRejectedValueOnce(new Error('Not found'));
 
@@ -229,7 +229,7 @@ describe('attachmentService', () => {
 
       expect(result.refreshed).toHaveLength(0);
       expect(result.errors).toHaveLength(0);
-      expect(mockRefreshPresignedUrl).not.toHaveBeenCalled();
+      expect(mockGetPresignedDownloadUrl).not.toHaveBeenCalled();
     });
   });
 });

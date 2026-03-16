@@ -247,28 +247,6 @@ export async function getPresignedDownloadUrl(
   return getSignedUrl(client, getObj, { expiresIn });
 }
 
-/**
- * Refreshes a presigned download URL for a single file key.
- *
- * Presigned URLs are time-limited:
- * - Default expiry: PRESIGNED_URL_EXPIRATION (1 hour)
- * - Maximum allowed: 7 days (604 800 seconds)
- *
- * Typical usage:
- *   Client uploads via POST /upload → receives { fileKey, fileUrl }
- *   fileUrl expires → client or server calls refreshPresignedUrl(fileKey)
- *
- * @param fileKey  S3 object key returned by the upload endpoint
- * @param expirySeconds  Lifetime of the new URL in seconds (default 1 h)
- * @returns A fresh presigned download URL
- */
-export async function refreshPresignedUrl(
-  fileKey: string,
-  expirySeconds: number = PRESIGNED_URL_EXPIRATION
-): Promise<string> {
-  return getPresignedDownloadUrl(fileKey, expirySeconds);
-}
-
 export async function deleteFile(fileKey: string): Promise<boolean> {
   try {
     const cfg = getStorageConfig();
@@ -318,7 +296,6 @@ export default {
   getPublicFileUrl,
   // fileExists, // Commented out - not currently used
   getPresignedDownloadUrl,
-  refreshPresignedUrl,
   // uploadProfileImage, // Commented out - redundant, use uploadFile with folder
   validateFile,
   generateFileKey,
