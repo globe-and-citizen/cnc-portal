@@ -57,6 +57,7 @@ const { mockGetPublicFileUrl, mockDeleteFile } = vi.hoisted(() => ({
 vi.mock('../../services/storageService', () => ({
   getPublicFileUrl: mockGetPublicFileUrl,
   deleteFile: mockDeleteFile,
+  refreshPresignedUrl: vi.fn((key: string) => `https://storage.railway.app/test-bucket/${key}`),
   isStorageConfigured: vi.fn(() => true),
   uploadFile: vi.fn(),
   uploadProfileImage: vi.fn(),

@@ -21,6 +21,7 @@ const { readContractMock } = vi.hoisted(() => ({
 
 vi.mock('../../services/storageService', () => ({
   getPresignedDownloadUrl: mockGetPresignedDownloadUrl,
+  refreshPresignedUrl: mockGetPresignedDownloadUrl,
 }));
 
 vi.mock('../../middleware/authMiddleware', () => ({
