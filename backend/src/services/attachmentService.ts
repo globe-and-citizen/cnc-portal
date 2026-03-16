@@ -1,4 +1,4 @@
-import { refreshPresignedUrl, deleteFile } from './storageService';
+import { getPresignedDownloadUrl, deleteFile } from './storageService';
 
 export type FileAttachmentData = {
   fileType: string;
@@ -19,7 +19,9 @@ export type BatchRefreshResult = {
  * Refreshes presigned URLs for an array of file attachments.
  * Returns the original attachment if refresh fails (graceful degradation).
  */
-export const refreshAttachmentUrls = async (attachments: unknown): Promise<unknown> => {
+export const refreshAttachmentUrls = async (
+  attachments: FileAttachmentData[] | null | undefined
+): Promise<FileAttachmentData[] | null | undefined> => {
   if (!Array.isArray(attachments) || attachments.length === 0) {
     return attachments;
   }
@@ -36,7 +38,7 @@ export const refreshAttachmentUrls = async (attachments: unknown): Promise<unkno
       }
 
       try {
-        const freshUrl = await refreshPresignedUrl(typedAttachment.fileKey);
+        const freshUrl = await getPresignedDownloadUrl(typedAttachment.fileKey);
         return {
           ...typedAttachment,
           fileUrl: freshUrl,
@@ -52,7 +54,9 @@ export const refreshAttachmentUrls = async (attachments: unknown): Promise<unkno
  * Deletes all files associated with an array of attachments.
  * Failures are logged but do not throw — caller is never blocked.
  */
-export const deleteAttachments = async (attachments: unknown): Promise<void> => {
+export const deleteAttachments = async (
+  attachments: FileAttachmentData[] | null | undefined
+): Promise<void> => {
   if (!Array.isArray(attachments) || attachments.length === 0) {
     return;
   }
@@ -98,7 +102,7 @@ export const batchRefreshUrls = async (
   await Promise.all(
     fileKeys.map(async (fileKey) => {
       try {
-        const fileUrl = await refreshPresignedUrl(fileKey, expirySeconds);
+        const fileUrl = await getPresignedDownloadUrl(fileKey, expirySeconds);
         refreshed.push({ fileKey, fileUrl });
       } catch (e) {
         const message = e instanceof Error ? e.message : 'Unknown error';
