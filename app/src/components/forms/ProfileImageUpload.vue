@@ -46,9 +46,8 @@
 </template>
 
 <script setup lang="ts">
-import { useStorage } from '@vueuse/core'
 import { computed, ref } from 'vue'
-import { BACKEND_URL } from '@/constant/index'
+import { uploadFileApi } from '@/api'
 import { useToastStore } from '@/stores'
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10 MB
@@ -70,7 +69,6 @@ const fileInput = ref<HTMLInputElement | null>(null)
 const imageUrl = defineModel<string>({ default: '' })
 const isUploading = ref(false)
 const errorMessage = ref('')
-const authToken = useStorage('authToken', '')
 const { addErrorToast, addSuccessToast } = useToastStore()
 
 // Helper: Detect if file is image (MIME type + extension fallback)
@@ -123,25 +121,7 @@ const uploadSelectedFile = async (file: File) => {
   errorMessage.value = ''
 
   try {
-    const formData = new FormData()
-    formData.append('files', file)
-
-    const headers: Record<string, string> = {}
-    if (authToken.value) {
-      headers.Authorization = `Bearer ${authToken.value}`
-    }
-
-    const response = await fetch(`${BACKEND_URL}/api/upload`, {
-      method: 'POST',
-      headers,
-      body: formData
-    })
-
-    const responseBody = await response.json().catch(() => ({}))
-
-    if (!response.ok) {
-      throw new Error(responseBody?.error || 'Failed to upload image')
-    }
+    const responseBody = await uploadFileApi([file])
 
     const uploadedFileUrl = responseBody?.files?.[0]?.fileUrl
     if (!uploadedFileUrl) {

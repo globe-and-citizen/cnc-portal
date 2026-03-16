@@ -2,9 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount, VueWrapper, flushPromises } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
 import ProfileImageUpload from '../ProfileImageUpload.vue'
-
-const mockFetch = (globalThis as { __mockFetch?: ReturnType<typeof vi.fn> }).__mockFetch
-const originalFetch = globalThis.fetch
+import { mockUploadFileApi } from '@/tests/mocks/api.mock'
 
 type ToastStoreMock = {
   addErrorToast: ReturnType<typeof vi.fn>
@@ -51,30 +49,19 @@ describe('ProfileImageUpload.vue', () => {
   beforeEach(() => {
     vi.clearAllMocks()
 
-    if (!mockFetch) {
-      throw new Error('Global __mockFetch is not initialized in test setup')
-    }
-
-    ;(globalThis as { __mockUseStorageValue?: string }).__mockUseStorageValue = 'mock-auth-token'
-
     const toastStore = getToastStore()
     toastStore.addErrorToast.mockReset()
     toastStore.addSuccessToast.mockReset()
     toastStore.addInfoToast.mockReset()
 
-    globalThis.fetch = mockFetch as unknown as typeof fetch
-    mockFetch.mockReset()
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: () =>
-        Promise.resolve({ files: [{ fileUrl: 'https://storage.railway.app/test-image.jpg' }] })
+    mockUploadFileApi.mockReset()
+    mockUploadFileApi.mockResolvedValue({
+      files: [{ fileUrl: 'https://storage.railway.app/test-image.jpg' }],
+      count: 1
     })
   })
 
   afterEach(() => {
-    globalThis.fetch = originalFetch
-    ;(globalThis as { __mockUseStorageValue?: string }).__mockUseStorageValue = undefined
-
     if (wrapper) wrapper.unmount()
   })
 
@@ -87,7 +74,7 @@ describe('ProfileImageUpload.vue', () => {
       expect(getToastStore().addErrorToast).toHaveBeenCalledWith(
         expect.stringContaining('Only images')
       )
-      expect(mockFetch).not.toHaveBeenCalled()
+      expect(mockUploadFileApi).not.toHaveBeenCalled()
     })
 
     it('rejects files larger than 10MB', async () => {
@@ -96,36 +83,30 @@ describe('ProfileImageUpload.vue', () => {
 
       expect(wrapper.find(SELECTORS.errorMessage).exists()).toBe(true)
       expect(getToastStore().addErrorToast).toHaveBeenCalledWith(expect.stringContaining('10 MB'))
-      expect(mockFetch).not.toHaveBeenCalled()
+      expect(mockUploadFileApi).not.toHaveBeenCalled()
     })
 
     it('accepts image by extension fallback when MIME type is empty', async () => {
       wrapper = mountComponent()
       await triggerFileSelection(createMockFile('avatar.png', ''))
 
-      expect(mockFetch).toHaveBeenCalledOnce()
+      expect(mockUploadFileApi).toHaveBeenCalledOnce()
     })
   })
 
   describe('Upload', () => {
     it('uploads successfully and emits new model value', async () => {
       const expectedUrl = 'https://storage.railway.app/uploaded-image.png'
-      mockFetch?.mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve({ files: [{ fileUrl: expectedUrl }] })
+      mockUploadFileApi.mockResolvedValue({
+        files: [{ fileUrl: expectedUrl }],
+        count: 1
       })
 
       wrapper = mountComponent({ modelValue: '' })
       await triggerFileSelection(createMockFile('avatar.png', 'image/png'))
 
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/upload'),
-        expect.objectContaining({
-          method: 'POST',
-          headers: expect.objectContaining({ Authorization: 'Bearer mock-auth-token' }),
-          body: expect.any(FormData)
-        })
-      )
+      expect(mockUploadFileApi).toHaveBeenCalledOnce()
+      expect(mockUploadFileApi).toHaveBeenCalledWith([expect.any(File)])
 
       const emitted = wrapper.emitted('update:modelValue')
       expect(emitted).toBeTruthy()
@@ -133,25 +114,8 @@ describe('ProfileImageUpload.vue', () => {
       expect(getToastStore().addSuccessToast).toHaveBeenCalledWith('Image uploaded')
     })
 
-    it('sends empty headers when auth token is missing', async () => {
-      ;(globalThis as { __mockUseStorageValue?: string }).__mockUseStorageValue = ''
-
-      wrapper = mountComponent()
-      await triggerFileSelection(createMockFile('avatar.png', 'image/png'))
-
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.any(String),
-        expect.objectContaining({
-          headers: {}
-        })
-      )
-    })
-
     it('handles API error response', async () => {
-      mockFetch?.mockResolvedValue({
-        ok: false,
-        json: () => Promise.resolve({ error: 'Upload failed' })
-      })
+      mockUploadFileApi.mockRejectedValue(new Error('Upload failed'))
 
       wrapper = mountComponent()
       await triggerFileSelection(createMockFile('avatar.png', 'image/png'))
@@ -160,20 +124,8 @@ describe('ProfileImageUpload.vue', () => {
       expect(getToastStore().addErrorToast).toHaveBeenCalledWith('Upload failed')
     })
 
-    it('handles invalid JSON response body', async () => {
-      mockFetch?.mockResolvedValue({
-        ok: true,
-        json: () => Promise.reject(new Error('Invalid JSON'))
-      })
-
-      wrapper = mountComponent()
-      await triggerFileSelection(createMockFile('avatar.png', 'image/png'))
-
-      expect(getToastStore().addErrorToast).toHaveBeenCalledWith('Upload response missing fileUrl')
-    })
-
     it('handles network Error objects', async () => {
-      mockFetch?.mockRejectedValue(new Error('Network error'))
+      mockUploadFileApi.mockRejectedValue(new Error('Network error'))
 
       wrapper = mountComponent()
       await triggerFileSelection(createMockFile('avatar.png', 'image/png'))
@@ -182,7 +134,7 @@ describe('ProfileImageUpload.vue', () => {
     })
 
     it('handles non-Error thrown values', async () => {
-      mockFetch?.mockRejectedValue('network exploded')
+      mockUploadFileApi.mockRejectedValue('network exploded')
 
       wrapper = mountComponent()
       await triggerFileSelection(createMockFile('avatar.png', 'image/png'))
@@ -191,9 +143,9 @@ describe('ProfileImageUpload.vue', () => {
     })
 
     it('handles missing fileUrl in backend response', async () => {
-      mockFetch?.mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve({ files: [] })
+      mockUploadFileApi.mockResolvedValue({
+        files: [],
+        count: 0
       })
 
       wrapper = mountComponent()
@@ -209,7 +161,7 @@ describe('ProfileImageUpload.vue', () => {
       const pendingPromise = new Promise((resolve) => {
         resolveUpload = resolve
       })
-      mockFetch?.mockReturnValue(pendingPromise)
+      mockUploadFileApi.mockReturnValue(pendingPromise)
 
       wrapper = mountComponent()
       const input = wrapper.find(SELECTORS.fileInput)
@@ -223,8 +175,8 @@ describe('ProfileImageUpload.vue', () => {
       expect(wrapper.text()).toContain('Uploading...')
 
       resolveUpload({
-        ok: true,
-        json: () => Promise.resolve({ files: [{ fileUrl: 'https://test.com/image.png' }] })
+        files: [{ fileUrl: 'https://test.com/image.png' }],
+        count: 1
       })
       await flushPromises()
     })
@@ -240,7 +192,7 @@ describe('ProfileImageUpload.vue', () => {
       await input.trigger('change')
       await flushPromises()
 
-      expect(mockFetch).not.toHaveBeenCalled()
+      expect(mockUploadFileApi).not.toHaveBeenCalled()
     })
 
     it('shows existing image style when model value is provided', () => {
