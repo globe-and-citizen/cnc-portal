@@ -11,10 +11,10 @@
     "lint:ts": "npx eslint . --ext .ts",
     "format": "npm run format:sol && npm run format:ts",
     "format:sol": "npx prettier --write \"contracts/**/*.sol\"",
-    "format:ts": "prettier --write .",
+    "format:ts": "prettier --write '**/*.{ts,js,cjs,mjs,md,yml,yaml}'",
     "format-check": "npm run format-check:sol && npm run format-check:ts",
     "format-check:sol": "npx prettier --check \"contracts/**/*.sol\"",
-    "format-check:ts": "npx prettier --check .",
+    "format-check:ts": "npx prettier --check '**/*.{ts,js,cjs,mjs,md,yml,yaml}'",
     "moveConstants": "nodemon scripts/moveConstants.ts",
     "mc": "nodemon scripts/moveConstants.ts",
     "update-abi": "ts-node scripts/copy-abi.ts"
