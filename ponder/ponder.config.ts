@@ -1,20 +1,20 @@
 import { createConfig } from "ponder";
-import { erc20ABI } from "./abis/erc20ABI";
+import { FACTORY_BEACON_ABI } from "./abis/factory-beacon";
 
 export default createConfig({
   chains: {
-    mainnet: {
-      id: 1,
-      rpc: process.env.PONDER_RPC_URL_1,
+    polygon: {
+      id: 137,
+      rpc: process.env.PONDER_RPC_URL_137,
     },
   },
   contracts: {
-    ERC20: {
-      chain: "mainnet",
-      abi: erc20ABI,
-      address: "0x32353A6C91143bfd6C7d363B546e62a9A2489A20",
-      startBlock: 13142655,
-      endBlock: 13150000,
+    OfficerFactoryBeacon: {
+      chain: "polygon",
+      abi: FACTORY_BEACON_ABI,
+      address: "0x0205fd32175241aA6f7398073b64bC03f910a6A0",
+      startBlock: 79743826,
+      // endBlock: 0x4c0d7ca
     },
   },
 });
