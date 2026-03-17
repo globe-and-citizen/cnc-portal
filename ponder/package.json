@@ -9,18 +9,20 @@
     "codegen": "ponder codegen",
     "serve": "ponder serve",
     "lint": "eslint .",
-    "typecheck": "tsc"
+    "typecheck": "tsc",
+    "generate-abis": "tsx scripts/generate-abis.ts"
   },
   "dependencies": {
-    "ponder": "^0.16.5",
     "drizzle-kit": "0.22.8",
     "hono": "^4.5.0",
+    "ponder": "^0.16.5",
     "viem": "^2.21.3"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",
     "eslint": "^8.54.0",
     "eslint-config-ponder": "^0.16.5",
+    "tsx": "^4.21.0",
     "typescript": "^5.3.2"
   },
   "engines": {
