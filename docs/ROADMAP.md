@@ -10,7 +10,7 @@
 
 The CNC Portal is an open platform that enables any team — open-source community or traditional company — to operate as a Crypto Native Corporation (CNC): compensating contributors on-chain with wages, claims, and vesting, and governing transparently through proposals and Board of Directors elections.
 
-**Current status:** 63% complete (26/41 tracked features), actively in M5 — Analytics (Q1 2026).
+**Current status:** 70% complete (35/50 tracked features), actively in M5 — Analytics (Q1 2026).
 **Target production date:** Q2 2026 (M8 deployment automation and monitoring), with full-scale launch in Q3 2026 (M9).
 
 > ⚠️ **Mainnet is blocked** by 3 critical security findings from the March 4, 2026 audit. Security remediation is a hard gate before M8.
@@ -187,7 +187,7 @@ Each CNC team should be able to generate, customize, and publish founding docume
 
 | Metric                       | Current             | Target                      | By      |
 | ---------------------------- | ------------------- | --------------------------- | ------- |
-| Feature completion           | 63% (26/41 tracked) | 100%                        | Q3 2026 |
+| Feature completion           | 70% (35/50 tracked) | 100%                        | Q3 2026 |
 | Smart contract test coverage | 98%                 | ≥95%                        | ✅ Done |
 | Frontend test coverage       | 87%                 | 90%                         | M7      |
 | Backend test coverage        | 85%                 | 90%                         | M7      |
