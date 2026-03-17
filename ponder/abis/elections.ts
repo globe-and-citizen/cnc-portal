@@ -1,53 +1,45 @@
-export const OFFICER_ABI = [
+export const ELECTIONS_ABI = [
   {
     anonymous: false,
     inputs: [
+      {
+        indexed: true,
+        internalType: "uint256",
+        name: "electionId",
+        type: "uint256",
+      },
       {
         indexed: false,
         internalType: "string",
-        name: "contractType",
+        name: "title",
         type: "string",
       },
       {
-        indexed: false,
+        indexed: true,
         internalType: "address",
-        name: "beaconAddress",
+        name: "createdBy",
         type: "address",
       },
-    ],
-    name: "BeaconConfigured",
-    type: "event",
-  },
-  {
-    anonymous: false,
-    inputs: [
       {
         indexed: false,
-        internalType: "address[]",
-        name: "beaconProxies",
-        type: "address[]",
-      },
-    ],
-    name: "BeaconProxiesDeployed",
-    type: "event",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: false,
-        internalType: "string",
-        name: "contractType",
-        type: "string",
+        internalType: "uint256",
+        name: "startDate",
+        type: "uint256",
       },
       {
         indexed: false,
-        internalType: "address",
-        name: "deployedAddress",
-        type: "address",
+        internalType: "uint256",
+        name: "endDate",
+        type: "uint256",
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "seatCount",
+        type: "uint256",
       },
     ],
-    name: "ContractDeployed",
+    name: "ElectionCreated",
     type: "event",
   },
   {
@@ -99,6 +91,25 @@ export const OFFICER_ABI = [
     anonymous: false,
     inputs: [
       {
+        indexed: true,
+        internalType: "uint256",
+        name: "electionId",
+        type: "uint256",
+      },
+      {
+        indexed: false,
+        internalType: "address[]",
+        name: "winners",
+        type: "address[]",
+      },
+    ],
+    name: "ResultsPublished",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
         indexed: false,
         internalType: "address",
         name: "account",
@@ -106,6 +117,31 @@ export const OFFICER_ABI = [
       },
     ],
     name: "Unpaused",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "uint256",
+        name: "electionId",
+        type: "uint256",
+      },
+      {
+        indexed: true,
+        internalType: "address",
+        name: "voter",
+        type: "address",
+      },
+      {
+        indexed: true,
+        internalType: "address",
+        name: "candidate",
+        type: "address",
+      },
+    ],
+    name: "VoteSubmitted",
     type: "event",
   },
 ] as const
