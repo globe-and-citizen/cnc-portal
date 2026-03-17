@@ -108,6 +108,17 @@ const config: HardhatUserConfig = {
       except: [
         ':I[A-Z].*' // Exclude interfaces like IERC20, IOfficer
       ]
+    },
+    {
+      path: '../ponder/abis/json',
+      runOnCompile: true,
+      clear: true,
+      flat: true,
+      spacing: 2,
+      format: 'json',
+      except: [
+        ':I[A-Z].*' // Exclude interfaces like IERC20, IOfficer
+      ]
     }
   ]
 }
