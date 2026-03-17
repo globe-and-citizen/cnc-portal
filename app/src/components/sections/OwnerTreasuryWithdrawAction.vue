@@ -19,7 +19,6 @@
       >
         <div class="flex flex-col gap-2">
           <h1 class="font-bold text-2xl">Owner Treasury Withdraw</h1>
-          <p class="text-sm">Recipient: {{ String(ownerAddress ?? '') }}</p>
         </div>
 
         <TokenAmount
@@ -42,6 +41,7 @@
           <ButtonUI
             variant="warning"
             :loading="isLoadingAction"
+            :aria-busy="isLoadingAction"
             :disabled="isLoadingAction || !isAmountValid || !selectedToken"
             @click="submitWithdraw"
             data-test="owner-withdraw-submit"
@@ -72,6 +72,8 @@ import { SUPPORTED_TOKENS } from '@/constant'
 import type { ContractType, TokenOption } from '@/types'
 import { useBodAddAction } from '@/composables/bod/writes'
 import { useBodIsBodAction } from '@/composables/bod/reads'
+import { useQueryClient } from '@tanstack/vue-query'
+import { useChainId } from '@wagmi/vue'
 
 type WithdrawContractType = Extract<ContractType, 'CashRemunerationEIP712' | 'ExpenseAccountEIP712'>
 
@@ -87,11 +89,14 @@ const props = defineProps<{
 const teamStore = useTeamStore()
 const userStore = useUserDataStore()
 const toastStore = useToastStore()
+const queryClient = useQueryClient()
+const chainId = useChainId()
 
 const showModal = ref({ mount: false, show: false })
 const isAmountValid = ref(false)
 const withdrawAmount = ref('0')
 const selectedTokenId = ref('native')
+const isSubmitting = ref(false)
 
 const contractAddress = computed(
   () => teamStore.getContractAddressByType(props.contractType) as Address | undefined
@@ -189,8 +194,33 @@ const isLoadingWrite = computed(() => {
 })
 
 const isLoadingAction = computed(
-  () => isLoadingWrite.value || isLoadingAddAction.value || isConfirmingAddAction.value
+  () =>
+    isSubmitting.value ||
+    isLoadingWrite.value ||
+    isLoadingAddAction.value ||
+    isConfirmingAddAction.value
 )
+
+const isConfirmingWithdraw = computed(
+  () =>
+    cashWithdrawNativeWrite.receiptResult.isLoading.value ||
+    cashWithdrawTokenWrite.receiptResult.isLoading.value ||
+    expenseWithdrawNativeWrite.receiptResult.isLoading.value ||
+    expenseWithdrawTokenWrite.receiptResult.isLoading.value
+)
+
+const refreshContractBalances = async () => {
+  if (!contractAddress.value) return
+
+  await Promise.all([
+    queryClient.invalidateQueries({
+      queryKey: ['balance', { address: contractAddress.value, chainId: chainId.value }]
+    }),
+    queryClient.invalidateQueries({
+      queryKey: ['readContract', { args: [contractAddress.value], chainId: chainId.value }]
+    })
+  ])
+}
 
 const resetModal = () => {
   showModal.value = { mount: false, show: false }
@@ -204,6 +234,7 @@ const openModal = () => {
 
 const submitWithdraw = async () => {
   if (!contractAddress.value || !selectedToken.value) return
+  isSubmitting.value = true
 
   try {
     if (selectedToken.value.tokenId === 'native') {
@@ -230,19 +261,14 @@ const submitWithdraw = async () => {
         return
       }
 
-      const nativeRequest = {
-        execute:
-          props.contractType === 'CashRemunerationEIP712'
-            ? cashWithdrawNativeWrite.executeWrite
-            : expenseWithdrawNativeWrite.executeWrite
-      }
+      const nativeWrite =
+        props.contractType === 'CashRemunerationEIP712'
+          ? cashWithdrawNativeWrite
+          : expenseWithdrawNativeWrite
 
-      const hash = await nativeRequest.execute([amount])
+      const hash = await nativeWrite.executeWrite([amount], undefined, { skipGasEstimation: true })
 
-      if (hash) {
-        toastStore.addSuccessToast('Withdraw successful')
-        resetModal()
-      } else {
+      if (!hash) {
         toastStore.addErrorToast('Withdraw failed')
       }
 
@@ -272,19 +298,16 @@ const submitWithdraw = async () => {
       return
     }
 
-    const tokenRequest = {
-      execute:
-        props.contractType === 'CashRemunerationEIP712'
-          ? cashWithdrawTokenWrite.executeWrite
-          : expenseWithdrawTokenWrite.executeWrite
-    }
+    const tokenWrite =
+      props.contractType === 'CashRemunerationEIP712'
+        ? cashWithdrawTokenWrite
+        : expenseWithdrawTokenWrite
 
-    const hash = await tokenRequest.execute([selectedToken.value.address, amount])
+    const hash = await tokenWrite.executeWrite([selectedToken.value.address, amount], undefined, {
+      skipGasEstimation: true
+    })
 
-    if (hash) {
-      toastStore.addSuccessToast('Withdraw successful')
-      resetModal()
-    } else {
+    if (!hash) {
       toastStore.addErrorToast('Withdraw failed')
     }
   } catch (error: unknown) {
@@ -296,6 +319,8 @@ const submitWithdraw = async () => {
           ? String((error as { message?: string }).message || 'Failed to withdraw funds')
           : 'Failed to withdraw funds'
     toastStore.addErrorToast(message)
+  } finally {
+    isSubmitting.value = false
   }
 }
 
@@ -304,5 +329,13 @@ watch(isActionAdded, (added) => {
     toastStore.addSuccessToast('Action added successfully, waiting for board confirmation')
     resetModal()
   }
+})
+
+watch(isConfirmingWithdraw, async (newIsConfirming, oldIsConfirming) => {
+  if (newIsConfirming || !oldIsConfirming || !showModal.value.show) return
+
+  toastStore.addSuccessToast('Withdraw successful')
+  await refreshContractBalances()
+  resetModal()
 })
 </script>
