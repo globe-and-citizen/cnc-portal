@@ -15,6 +15,7 @@ const mockFiles = [
   'erc20',
   'elections',
   'bank',
+  'treasury',
   'bod',
   'investor',
   'nuxt-ui'
