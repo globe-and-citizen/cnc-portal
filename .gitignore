@@ -35,6 +35,7 @@ coverage
 
 *.tsbuildinfo
 .env
+docs/dummy
 
 # Synpress
 .cache-synpress

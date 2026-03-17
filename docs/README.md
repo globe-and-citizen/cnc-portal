@@ -4,20 +4,34 @@ Welcome to the CNC Portal documentation. This directory contains comprehensive d
 
 ## 📑 Table of Contents
 
-- [Quick Links](#-quick-links)
-- [Documentation Structure](#-documentation-structure)
-- [Quick Navigation](#-quick-navigation)
-  - [Platform Documentation](#platform-documentation)
-  - [Feature Documentation](#feature-documentation)
-  - [Authentication](#authentication)
-  - [Smart Contracts](#smart-contracts)
-- [Documentation Guidelines](#-documentation-guidelines)
-- [Architecture Overview](#%EF%B8%8F-architecture-overview)
-- [Getting Started](#-getting-started)
-- [Contributing to Documentation](#-contributing-to-documentation)
-- [Search Tips](#-search-tips)
-- [Glossary](#-glossary)
-- [Support](#-support)
+- [CNC Portal Documentation](#cnc-portal-documentation)
+  - [📑 Table of Contents](#-table-of-contents)
+  - [🚀 Quick Links](#-quick-links)
+  - [📋 Project Charter](#-project-charter)
+  - [📚 Documentation Structure](#-documentation-structure)
+  - [🎯 Quick Navigation](#-quick-navigation)
+    - [Platform Documentation](#platform-documentation)
+    - [Feature Documentation](#feature-documentation)
+    - [Authentication](#authentication)
+    - [Smart Contracts](#smart-contracts)
+  - [📖 Documentation Guidelines](#-documentation-guidelines)
+    - [Creating Feature Specifications](#creating-feature-specifications)
+    - [Document Structure](#document-structure)
+  - [🏗️ Architecture Overview](#️-architecture-overview)
+  - [🚀 Getting Started](#-getting-started)
+    - [For Developers](#for-developers)
+    - [For Product Managers](#for-product-managers)
+    - [For QA/Testing Teams](#for-qatesting-teams)
+  - [📝 Contributing to Documentation](#-contributing-to-documentation)
+    - [Adding New Feature Documentation](#adding-new-feature-documentation)
+    - [Updating Existing Documentation](#updating-existing-documentation)
+    - [Documentation Standards](#documentation-standards)
+  - [🔍 Search Tips](#-search-tips)
+  - [📖 Glossary](#-glossary)
+    - [Platform Terms](#platform-terms)
+    - [Project-Specific Terms](#project-specific-terms)
+  - [📞 Support](#-support)
+  - [📄 License](#-license)
 
 ---
 
@@ -26,6 +40,7 @@ Welcome to the CNC Portal documentation. This directory contains comprehensive d
 **New to the project?**
 
 - 📖 [Getting Started](#-getting-started) - Start here
+- 📋 [Project Charter](./01_PROJECT_CHARTER.md) - Vision, scope, objectives and milestones
 - 🏗️ [Architecture Overview](./platform/architecture.md) - Understand the system
 - 🔐 [Authentication](./auth/README.md) - How users authenticate
 - 📊 [Statistics Feature](./features/stats/functional-specification.md) - Example feature
@@ -44,11 +59,27 @@ Welcome to the CNC Portal documentation. This directory contains comprehensive d
 
 ---
 
-## 📚 Documentation Structure
+## 📋 Project Charter
+
+The [Project Charter](./01_PROJECT_CHARTER.md) is the authoritative reference for the CNC Portal's purpose, scope, governance model, and delivery milestones. Read it first when joining the project or evaluating platform direction.
+
+**Key sections:**
+
+- [Executive Summary & Background](./01_PROJECT_CHARTER.md#1-executive-summary) — Why CNC Portal exists
+- [Vision, Mission & Objectives](./01_PROJECT_CHARTER.md#2-vision-mission-and-objectives) — Strategic goals
+- [Success Criteria & KPIs](./01_PROJECT_CHARTER.md#3-success-criteria) — How progress is measured
+- [Stakeholders & Governance](./01_PROJECT_CHARTER.md#4-stakeholders-and-governance) — Roles and decision-making
+- [Scope & Deliverables](./01_PROJECT_CHARTER.md#5-scope-and-deliverables) — What is (and isn't) in scope
+- [Milestones](./01_PROJECT_CHARTER.md#8-milestones-and-timeline) — Capability phases and current status
+
+---
+
+## �📚 Documentation Structure
 
 ```
 docs/
 ├── README.md                           # This file - Documentation index
+├── 01_PROJECT_CHARTER.md                  # Project charter - vision, scope, milestones
 ├── platform/                           # Platform-wide specifications
 │   ├── architecture.md                # System architecture
 │   ├── security.md                    # Security standards & requirements
@@ -81,6 +112,10 @@ docs/
 ## 🎯 Quick Navigation
 
 ### Platform Documentation
+
+**Foundation:**
+
+- [Project Charter](./01_PROJECT_CHARTER.md) - Vision, scope, objectives, governance and milestones
 
 **Core Platform:**
 
@@ -332,4 +367,4 @@ This documentation is part of the CNC Portal project.
 
 ---
 
-**Last Updated:** December 16, 2025  
+**Last Updated:** December 16, 2025
