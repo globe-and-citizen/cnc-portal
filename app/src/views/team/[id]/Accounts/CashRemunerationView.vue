@@ -5,7 +5,7 @@
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
       <OwnerTreasuryWithdrawAction contractType="CashRemunerationEIP712" />
 
-      <div class="flex flex-wrap gap-2 sm:gap-4 items-center">
+      <div class="ml-auto flex flex-wrap items-center justify-end gap-2 sm:gap-4">
         <span class="text-sm">Contract Address</span>
 
         <AddressToolTip
