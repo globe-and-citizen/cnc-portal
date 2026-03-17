@@ -117,10 +117,9 @@ graph TB
     Officer -->|deploys & manages| Expense
     Officer -->|deploys & manages| CashRem
 
-    Bank -.->|queries shareholders| Investor
-    Elections -->|creates & updates| BoD
-    Proposals -.->|reads members| BoD
-    BoD -.->|owner| Elections
+    Bank -.->|"queries (via Officer)"| Investor
+    Elections -->|"updates members"| BoD
+    Proposals -.->|"reads (via Officer)"| BoD
     CashRem -->|mints tokens| Investor
 
     style FB fill:#e1f5ff,stroke:#0288d1,stroke-width:2px
@@ -144,9 +143,9 @@ graph TB
 
 #### 2. Elections → BoardOfDirectors
 
-- **Direction**: Elections → BoD (creates, updates)
-- **Type**: Creator/Updater
-- **Purpose**: Elections creates BoD and updates membership
+- **Direction**: Elections → BoD (updates)
+- **Type**: Updater
+- **Purpose**: Elections updates BoD membership after publishing results; BoD address resolved at runtime via Officer
 - **Data**: Winner addresses become board members
 
 #### 3. BoardOfDirectors ↔ Proposals
@@ -170,12 +169,12 @@ graph TB
 - **Purpose**: CashRemuneration mints equity tokens as wages
 - **Data**: Minting transactions via MINTER_ROLE
 
-#### 6. ExpenseAccountEIP712 (Independent)
+#### 6. ExpenseAccountEIP712
 
-- **Direction**: None
+- **Direction**: Self-contained (EIP-712 signatures, no Officer queries)
 - **Type**: Standalone
-- **Purpose**: Expense management independent of other contracts
-- **Data**: Budget signatures, expense history
+- **Purpose**: Expense management with owner-signed budget constraints; no runtime contract lookups
+- **Data**: Budget signatures, usage tracking per period
 
 ---
 
@@ -234,18 +233,23 @@ Each team deploys their own set of contract instances:
    ├─ Bank Proxy
    ├─ InvestorV1 Proxy
    ├─ Elections Proxy
-   │  └─ Auto-creates BoardOfDirectors Proxy
+   │  └─ Officer.deployBeaconProxy() detects "Elections" type and
+   │     immediately auto-deploys BoardOfDirectors Proxy
+   │     (initialized with Elections address as owner)
    ├─ Proposals Proxy
    ├─ ExpenseAccountEIP712 Proxy
    └─ CashRemunerationEIP712 Proxy
 
-5. Officer Links Contracts
-   ├─ Bank.setInvestorAddress(InvestorV1)
-   ├─ Elections.setBoardOfDirectorsContractAddress(BoD)
-   ├─ Proposals.setBoardOfDirectorsContractAddress(BoD)
+5. Officer Sets Up Permissions (_setupContractPermissions)
+   ├─ NOTE: Bank, Elections, and Proposals do NOT store addresses to each
+   │  other. Instead they resolve contract addresses dynamically at runtime
+   │  by calling Officer.findDeployedContract() — no explicit linking needed.
    ├─ CashRemuneration.addTokenSupport(InvestorV1)
    ├─ InvestorV1.grantRole(MINTER_ROLE, CashRemuneration)
-   └─ Transfer ownership to team owner
+   ├─ InvestorV1.grantRole(MINTER_ROLE, SafeDepositRouter)   // if deployed
+   ├─ InvestorV1.grantRole(MINTER_ROLE, owner)
+   ├─ InvestorV1.grantRole(DEFAULT_ADMIN_ROLE, owner)
+   └─ Transfer ownership to team owner (CashRemuneration, SafeDepositRouter, InvestorV1)
 ```
 
 ### Phase 3: Post-Deployment
@@ -393,7 +397,7 @@ Board Members → Proposals.castVote(proposalId, vote)
 ### 4. Wage Payment Flow
 
 ```
-Employee → CashRemuneration.withdrawWages(wageClaim, signature)
+Employee → CashRemuneration.withdraw(wageClaim, signature)
            │
            ├─> Verify EIP-712 signature from owner ✓
            │
@@ -558,10 +562,10 @@ I want to automatically receive dividend allocations
 So that I can benefit from company profits
 
 Acceptance Criteria:
-- ✓ Dividends allocated proportionally to holdings
+- ✓ Dividends distributed proportionally to holdings
 - ✓ Support ETH and ERC20 token dividends
-- ✓ Claim dividends at any time
-- ✓ Track unclaimed dividend balance
+- ✓ Dividends pushed directly to shareholders in one transaction (no claim step)
+- ✓ Last shareholder receives remainder to ensure lossless distribution
 ```
 
 **US-9: Participate in Elections**
@@ -748,17 +752,15 @@ contract UserBeaconProxy {
 All state-changing functions use ReentrancyGuard:
 
 ```solidity
-function claimDividend() external nonReentrant {
-    // Checks
-    uint256 amt = dividendBalances[msg.sender];
-    require(amt > 0);
+// Example: Bank.distributeNativeDividends uses nonReentrant
+function distributeNativeDividends(uint256 _amount) external onlyOwner nonReentrant whenNotPaused {
+    require(_amount > 0, 'Amount must be greater than zero');
+    require(_amount <= address(this).balance, 'Insufficient balance');
 
-    // Effects
-    dividendBalances[msg.sender] = 0;
-    totalDividends -= amt;
-
-    // Interactions
-    payable(msg.sender).call{value: amt}("");
+    address investorAddress = _getInvestorAddress();
+    // Call out to InvestorV1 only after all checks pass
+    IInvestorV1(investorAddress).distributeNativeDividends{value: _amount}(_amount);
+    emit DividendDistributionTriggered(investorAddress, address(0), _amount);
 }
 ```
 
@@ -854,12 +856,13 @@ function distributeMint(Shareholder[] memory shareholders)
 Events for historical data, storage for current state:
 
 ```solidity
-// Store only current state
-mapping(address => uint256) public dividendBalances;
+// Store only current state (e.g., shareholder set in InvestorV1)
+EnumerableSet.AddressSet private shareholders;
 
-// Historical record via events
-event DividendCredited(address indexed account, uint256 amount);
-event DividendClaimed(address indexed account, uint256 amount);
+// Historical record via events — no on-chain dividend balance storage needed
+// because distribution is push-based (Bank pushes → InvestorV1 emits per-shareholder events)
+event DividendPaid(address indexed shareholder, address indexed token, uint256 amount);
+event DividendDistributed(address indexed distributor, address indexed token, uint256 totalAmount, uint256 shareholderCount);
 ```
 
 ---
@@ -1018,7 +1021,7 @@ require(
 
 ### Issue: Wage Claim Rejected
 
-**Symptoms**: Transaction reverts on withdrawWages()
+**Symptoms**: Transaction reverts on withdraw()
 
 **Possible Causes**:
 
