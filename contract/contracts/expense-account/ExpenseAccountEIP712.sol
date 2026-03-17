@@ -427,6 +427,33 @@ contract ExpenseAccountEIP712 is
     _unpause();
   }
 
+  /**
+   * @notice Allows the owner to withdraw native (ETH) funds from the contract treasury.
+   * @param amount The amount of native funds to withdraw (in wei).
+   * @dev Can only be called by the contract owner.
+   */
+  function ownerWithdrawNative(uint256 amount) external onlyOwner nonReentrant whenNotPaused {
+    require(address(this).balance >= amount, 'Insufficient native balance');
+    payable(owner()).sendValue(amount);
+    emit OwnerTreasuryWithdrawNative(owner(), amount);
+  }
+
+  /**
+   * @notice Allows the owner to withdraw supported ERC20 token funds from the contract treasury.
+   * @param token The address of the token to withdraw.
+   * @param amount The amount of tokens to withdraw.
+   * @dev Can only be called by the contract owner. Token must be supported.
+   */
+  function ownerWithdrawToken(
+    address token,
+    uint256 amount
+  ) external onlyOwner nonReentrant whenNotPaused {
+    require(isTokenSupported(token), 'Unsupported token');
+    require(IERC20(token).balanceOf(address(this)) >= amount, 'Insufficient token balance');
+    require(IERC20(token).transfer(owner(), amount), 'Token transfer failed');
+    emit OwnerTreasuryWithdrawToken(owner(), token, amount);
+  }
+
   function getBalance() external view returns (uint256) {
     return address(this).balance;
   }
