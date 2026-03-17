@@ -86,28 +86,30 @@ const config: HardhatUserConfig = {
     coinmarketcap: process.env.COINMARKETCAP_KEY,
     token: 'POL'
   },
-  abiExporter: {
-    path: '../app/src/artifacts/abi/json',
-    runOnCompile: true,
-    clear: true,
-    flat: true,
-    spacing: 2,
-    format: 'json',
-    except: [
-      ':I[A-Z].*' // Exclude interfaces like IERC20, IOfficer
-      // ':.*Upgradeable$', // Exclude OpenZeppelin upgradeable contracts
-      // ':.*Proxy$', // Exclude proxy contracts
-      // ':.*Utils$', // Exclude utility contracts
-      // ':Address$',
-      // ':Beacon$',
-      // ':Context$',
-      // ':ECDSA$',
-      // ':ERC165$',
-      // ':Errors$',
-      // ':SafeCast$',
-      // ':Strings$'
-    ]
-  }
+  abiExporter: [
+    {
+      path: '../app/src/artifacts/abi/json',
+      runOnCompile: true,
+      clear: true,
+      flat: true,
+      spacing: 2,
+      format: 'json',
+      except: [
+        ':I[A-Z].*' // Exclude interfaces like IERC20, IOfficer
+      ]
+    },
+    {
+      path: '../dashboard/app/artifacts/abi/json',
+      runOnCompile: true,
+      clear: true,
+      flat: true,
+      spacing: 2,
+      format: 'json',
+      except: [
+        ':I[A-Z].*' // Exclude interfaces like IERC20, IOfficer
+      ]
+    }
+  ]
 }
 
 export default config
