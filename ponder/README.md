@@ -19,16 +19,48 @@ Indexes on-chain events from the CNC Portal smart contracts on Polygon (chain 13
 
 ## Setup
 
-Copy `.env.local.example` to `.env.local` and fill in the RPC URL:
+```bash
+cp .env.local.example .env.local
+pnpm install
+pnpm dev
+```
+
+### Polygon (default)
+
+Fill in your Alchemy RPC key:
 
 ```
 PONDER_RPC_URL_137=https://polygon-mainnet.g.alchemy.com/v2/<your-key>
 ```
 
-```bash
-pnpm install
-pnpm dev
-```
+### Local Hardhat node
+
+1. Start the Hardhat node and deploy the contracts (from the repo root):
+
+   ```bash
+   npx hardhat node
+   # in another terminal:
+   npx hardhat run scripts/deploy.ts --network localhost
+   ```
+
+2. Note the `OfficerFactoryBeacon` address printed by the deploy script.
+
+3. In `.env.local`, set:
+
+   ```bash
+   NETWORK=hardhat
+   FACTORY_ADDRESS=0x<address from step 2>
+   ```
+
+4. Start the indexer:
+
+   ```bash
+   pnpm dev
+   ```
+
+The indexer will connect to `http://127.0.0.1:8545` (override with `PONDER_RPC_URL_HARDHAT` if needed) and start from block 0.
+
+> **Note:** every time you restart `npx hardhat node` contracts are redeployed at new addresses. Update `FACTORY_ADDRESS` and restart `pnpm dev` each time.
 
 ## Scripts
 
