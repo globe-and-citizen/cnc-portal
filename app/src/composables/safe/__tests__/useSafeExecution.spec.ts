@@ -238,10 +238,11 @@ describe('useSafeExecution', () => {
       const result = await executeTransaction(MOCK_DATA.validSafeAddress, MOCK_DATA.safeTxHash)
 
       expect(result).toBeNull()
-      // TODO: Re-enable toast verification once implementation is fixed
-      // expect(mockAddErrorToast).toHaveBeenCalledWith(
-      //   'Transaction data is required. Please pass the transaction data from the component.'
-      // )
+      expect(globalThis.mockUseToast.add).toHaveBeenCalledWith({
+        title: 'Error',
+        description: 'Transaction data is required. Please pass the transaction data from the component.',
+        color: 'error'
+      })
     })
 
     it('should validate Safe address format correctly', async () => {
