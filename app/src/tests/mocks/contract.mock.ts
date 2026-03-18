@@ -112,6 +112,30 @@ export const mockBodAddAction = {
 }
 
 /**
+ * CashRemunerationEIP712 Contract Mocks
+ */
+export const mockCashRemunerationReads = {
+  owner: createContractReadMock('0x742d35Cc6bF8C55C6C2e013e5492D2b6637e0886')
+}
+
+export const mockCashRemunerationWrites = {
+  ownerWithdrawNative: createContractWriteMock(),
+  ownerWithdrawToken: createContractWriteMock()
+}
+
+/**
+ * ExpenseAccountEIP712 Contract Mocks
+ */
+export const mockExpenseAccountReads = {
+  owner: createContractReadMock('0x742d35Cc6bF8C55C6C2e013e5492D2b6637e0886')
+}
+
+export const mockExpenseAccountWrites = {
+  ownerWithdrawNative: createContractWriteMock(),
+  ownerWithdrawToken: createContractWriteMock()
+}
+
+/**
  * Investor Contract Mocks
  */
 export const mockInvestorReads = {
@@ -145,9 +169,23 @@ export const mockInvestorWrites = {
  * Reset function for all contract mocks
  */
 export const resetContractMocks = () => {
-  const allReadMocks = [mockElectionsReads, mockBankReads, mockBODReads, mockInvestorReads]
+  const allReadMocks = [
+    mockElectionsReads,
+    mockBankReads,
+    mockBODReads,
+    mockInvestorReads,
+    mockCashRemunerationReads,
+    mockExpenseAccountReads
+  ]
 
-  const allWriteMocks = [mockElectionsWrites, mockBankWrites, mockBODWrites, mockInvestorWrites]
+  const allWriteMocks = [
+    mockElectionsWrites,
+    mockBankWrites,
+    mockBODWrites,
+    mockInvestorWrites,
+    mockCashRemunerationWrites,
+    mockExpenseAccountWrites
+  ]
 
   // Reset all read mocks
   allReadMocks.forEach((mockGroup) => {

@@ -37,6 +37,13 @@ export const syncContracts = async (req: Request, res: Response) => {
     if (team.ownerAddress !== callerAddress)
       return errorResponse(403, 'Unauthorized: Caller is not the owner of the team', res);
 
+    console.log(
+      'Syncing contracts for team:',
+      teamId,
+      'with officer address:',
+      team.officerAddress
+    );
+    console.log('Chain ID: ', await publicClient.getChainId());
     const contracts = (await publicClient.readContract({
       address: team.officerAddress as `0x${string}`,
       abi: OFFICER_ABI,

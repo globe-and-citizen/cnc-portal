@@ -14,7 +14,9 @@ export default buildModule('BodUpgradeModule', (m) => {
   // const newImpl = m.contractAt('CashRemunerationEIP712', '<existing_implementation_address>', { id: '<unique_implementation_id>' })
 
   // Step 2: Reference the already-deployed beacon - NB: Use correct beacon address for the network and add a unique ID
-  const beacon = m.contractAt('Beacon', '0x6196a223EbFF5B65ABC640802fd614d5b3a2B2EC', { id: 'Beacon_v2' }) //e.g. 'Beacon_v1'
+  const beacon = m.contractAt('Beacon', '0x6196a223EbFF5B65ABC640802fd614d5b3a2B2EC', {
+    id: 'Beacon_v2'
+  }) //e.g. 'Beacon_v1'
 
   // Call upgradeTo on the beacon
   m.call(beacon, 'upgradeTo', [newImpl], { from: beaconOwner })

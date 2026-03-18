@@ -105,6 +105,31 @@ contract CashRemunerationEIP712 is
   event WithdrawToken(address indexed withdrawer, address indexed tokenAddress, uint256 amount);
 
   /**
+   * @dev Emitted when the contract owner withdraws native funds from treasury.
+   * @param ownerAddress The owner address initiating the withdrawal.
+   * @param amount The withdrawn native amount.
+   */
+  event OwnerTreasuryWithdrawNative(address indexed ownerAddress, uint256 amount);
+
+  /**
+   * @dev Emitted when the contract owner withdraws supported token funds from treasury.
+   * @param ownerAddress The owner address initiating the withdrawal.
+   * @param tokenAddress The token address withdrawn.
+   * @param amount The withdrawn token amount.
+   */
+  event OwnerTreasuryWithdrawToken(
+    address indexed ownerAddress,
+    address indexed tokenAddress,
+    uint256 amount
+  );
+
+  /**
+   * @dev Emitted when the officer address is updated.
+   * @param newOfficerAddress The address of the new officer.
+   */
+  event OfficerAddressUpdated(address indexed newOfficerAddress);
+
+  /**
    * @dev Emitted when a wage claim is enabled.
    * @param signatureHash The hash of the wage claim signature.
    */
@@ -378,6 +403,33 @@ contract CashRemunerationEIP712 is
    * @notice Retrieves the contract's Ether balance.
    * @return The balance of the contract in wei.
    */
+  /**
+   * @notice Allows the owner to withdraw native (ETH) funds from the contract treasury.
+   * @param amount The amount of native funds to withdraw (in wei).
+   * @dev Can only be called by the contract owner.
+   */
+  function ownerWithdrawNative(uint256 amount) external onlyOwner nonReentrant whenNotPaused {
+    require(address(this).balance >= amount, 'Insufficient native balance');
+    payable(owner()).sendValue(amount);
+    emit OwnerTreasuryWithdrawNative(owner(), amount);
+  }
+
+  /**
+   * @notice Allows the owner to withdraw supported ERC20 token funds from the contract treasury.
+   * @param token The address of the token to withdraw.
+   * @param amount The amount of tokens to withdraw.
+   * @dev Can only be called by the contract owner. Token must be supported.
+   */
+  function ownerWithdrawToken(
+    address token,
+    uint256 amount
+  ) external onlyOwner nonReentrant whenNotPaused {
+    require(_isTokenSupported(token), 'Token not supported');
+    require(IERC20(token).balanceOf(address(this)) >= amount, 'Insufficient token balance');
+    require(IERC20(token).transfer(owner(), amount), 'Token transfer failed');
+    emit OwnerTreasuryWithdrawToken(owner(), token, amount);
+  }
+
   function getBalance() external view returns (uint256) {
     return address(this).balance;
   }
