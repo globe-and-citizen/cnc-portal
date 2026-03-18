@@ -3,7 +3,6 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { ref, type Ref } from 'vue'
 import { useSafeExecution } from '../useSafeExecution'
 import type { SafeTransaction, SafeMultisigTransactionResponse } from '@/types/safe'
-import { mockToastAdd } from '@/tests/setup/nuxt-import.setup'
 
 // Define proper types for mocks following CNC Portal standards
 interface MockConnection {
