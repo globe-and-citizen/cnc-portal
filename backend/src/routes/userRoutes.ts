@@ -1,7 +1,6 @@
 import express from 'express';
 import { getNonce, getUser, updateUser, getAllUsers } from '../controllers/userController';
 import { authorizeUser } from '../middleware/authMiddleware';
-import { upload } from '../utils/upload';
 import {
   validateParams,
   validateQuery,
@@ -225,7 +224,13 @@ userRoutes.get('/', authorizeUser, validateQuery(userPaginationQuerySchema), get
  *         description: Internal server error
  *   put:
  *     summary: Update user profile
- *     description: Updates the user's profile information (name and image URL). Users can only update their own profile. Requires authentication.
+ *     description: |
+ *       Updates the user's profile information (name and/or image URL).
+ *       Users can only update their own profile. Requires authentication.
+ *
+ *       **Profile image flow:** To update the profile image, first upload the file
+ *       via `POST /upload`, then pass the returned `fileUrl` as the `imageUrl` field.
+ *       The old profile image is automatically cleaned up from storage.
  *     tags: [Users]
  *     security:
  *       - BearerAuth: []
@@ -289,7 +294,6 @@ userRoutes.get('/:address', authorizeUser, validateParams(addressParamsSchema), 
 userRoutes.put(
   '/:address',
   authorizeUser,
-  upload.single('profileImage'),
   validateBodyAndParams(updateUserBodySchema, addressParamsSchema),
   updateUser
 );

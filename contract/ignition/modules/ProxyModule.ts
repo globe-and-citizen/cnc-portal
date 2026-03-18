@@ -16,7 +16,11 @@ const proxyModule = buildModule('ProxyModule', (m) => {
   // The TransparentUpgradeableProxy contract creates the ProxyAdmin within its constructor.
   // To read more about how this proxy is implemented, you can view the source code and comments here:
   // https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v5.0.1/contracts/proxy/transparent/TransparentUpgradeableProxy.sol
-  const proxy = m.contract('TransparentUpgradeableProxy', [tipsContractImplementation, proxyAdminOwner, '0x'])
+  const proxy = m.contract('TransparentUpgradeableProxy', [
+    tipsContractImplementation,
+    proxyAdminOwner,
+    '0x'
+  ])
 
   // We need to get the address of the ProxyAdmin contract that was created by the TransparentUpgradeableProxy
   // so that we can use it to upgrade the proxy later.
@@ -42,11 +46,11 @@ const tipsModule = buildModule('TipsModule', (m) => {
   // to treat the contract at the proxy address as an instance of the Tips contract.
   // This allows us to interact with the underlying Tips contract via the proxy from within tests and scripts.
   const tips = m.contractAt('Tips', proxy)
-  m.call(tips, "initialize", []);
+  m.call(tips, 'initialize', [])
 
   // Return the contract instance, along with the original proxy and proxyAdmin contracts
   // so that they can be used by other modules, or in tests and scripts.
   return { tips, proxy, proxyAdmin }
 })
 
-export default tipsModule;
+export default tipsModule

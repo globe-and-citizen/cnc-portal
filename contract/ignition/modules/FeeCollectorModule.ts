@@ -20,10 +20,10 @@ const FeeCollectorProxyModule = buildModule('FeeCollectorProxyModule', (m) => {
 
 const FeeCollectorModule = buildModule('FeeCollectorModule', (m) => {
   const deployer = m.getAccount(0)
-  // ********* use this for hardhat 
+  // ********* use this for hardhat
   // const { usdc, usdt } = m.useModule(MockTokensModule)
   // const supportedTokens = [usdc, usdt]
-  
+
   //**use this for polygon */
   const supportedTokens = [
     '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359',

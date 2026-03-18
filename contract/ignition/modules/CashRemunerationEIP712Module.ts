@@ -6,9 +6,9 @@ export default buildModule('CashRemunerationEIP712Module', (m) => {
   const cashRemunerationEip712 = m.contract('CashRemunerationEIP712')
 
   const cashRemunerationEip712FactoryBeacon = m.contract(
-    'FactoryBeacon', 
+    'FactoryBeacon',
     [cashRemunerationEip712],
-    {from: beaconOwner}
+    { from: beaconOwner }
   )
 
   return { cashRemunerationEip712, cashRemunerationEip712FactoryBeacon }

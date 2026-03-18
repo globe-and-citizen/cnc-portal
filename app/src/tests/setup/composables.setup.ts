@@ -1,5 +1,5 @@
 import { vi } from 'vitest'
-import { defineComponent } from 'vue'
+import { defineComponent, ref } from 'vue'
 import { queryMocks } from '@/tests/mocks/query.mock'
 import {
   mockUseBackendWake,
@@ -19,6 +19,15 @@ import {
 import { mockUploadFileApi } from '@/tests/mocks/api.mock'
 import { mockGetBalance, mockGetLogs } from '@/tests/mocks/viem.actions.mock'
 import { mockRouter } from '@/tests/mocks/router.mock'
+
+declare global {
+  var __mockFetch: ReturnType<typeof vi.fn> | undefined
+  var __mockUseStorageValue: string | undefined
+}
+
+if (!globalThis.__mockFetch) {
+  globalThis.__mockFetch = vi.fn()
+}
 
 /**
  * Mock TanStack Vue Query
@@ -67,10 +76,26 @@ vi.mock('vue-router', async (importOriginal) => {
  * Mock @vueuse/core
  */
 vi.mock('@vueuse/core', async (importOriginal) => {
-  const actual: object = await importOriginal()
+  const actual = (await importOriginal()) as {
+    useStorage?: (...args: unknown[]) => unknown
+    [key: string]: unknown
+  }
+
   return {
     ...actual,
     useClipboard: vi.fn(() => mockUseClipboard),
+    useStorage: vi.fn((key: string, initialValue: unknown, ...rest: unknown[]) => {
+      if (globalThis.__mockUseStorageValue !== undefined) {
+        return ref(globalThis.__mockUseStorageValue)
+      }
+
+      if (typeof actual.useStorage === 'function') {
+        return actual.useStorage(key, initialValue, ...rest)
+      }
+
+      const fallbackValue = typeof initialValue === 'string' ? initialValue : ''
+      return ref(fallbackValue)
+    }),
     useFetch: vi.fn((url: string | { value: string }) => {
       const resolvedUrl = typeof url === 'string' ? url : url.value
       mockUseFetch.get.url.value = resolvedUrl

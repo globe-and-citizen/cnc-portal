@@ -5,13 +5,13 @@
 | Contract                   | Purpose                            | Key Functions                                                                      | Dependencies               |
 | -------------------------- | ---------------------------------- | ---------------------------------------------------------------------------------- | -------------------------- |
 | **Officer**                | Central orchestrator & factory     | `deployBeaconProxy()`, `deployAllContracts()`, `findDeployedContract()`            | All beacons                |
-| **Bank**                   | Treasury & dividend management     | `depositDividends()`, `claimDividend()`, `transfer()`, `setInvestorAddress()`      | InvestorV1                 |
+| **Bank**                   | Treasury & dividend management     | `depositToken()`, `transfer()`, `transferToken()`, `distributeNativeDividends()`, `distributeTokenDividends()` | InvestorV1 (via Officer)   |
 | **InvestorV1**             | Equity token (ERC20)               | `distributeMint()`, `individualMint()`, `getShareholders()`                        | None                       |
 | **Elections**              | BoD election system                | `createElection()`, `castVote()`, `publishResults()`                               | BoardOfDirectors           |
 | **BoardOfDirectors**       | Multi-sig governance               | `addAction()`, `approve()`, `setBoardOfDirectors()`                                | Elections                  |
 | **Proposals**              | Proposal voting                    | `createProposal()`, `castVote()`, `tallyResults()`                                 | BoardOfDirectors           |
 | **ExpenseAccountEIP712**   | Expense payments                   | `submitExpense()`, `addTokenSupport()`                                             | None                       |
-| **CashRemunerationEIP712** | Wage payments with equity          | `withdrawWages()`, `enableWageClaim()`, `disableWageClaim()`                       | InvestorV1                 |
+| **CashRemunerationEIP712** | Wage payments with equity          | `withdraw()`, `enableClaim()`, `disableClaim()`                                    | InvestorV1 (via Officer)   |
 | **Tips**                   | ETH tip distribution               | `pushTip()`, `sendTip()`, `withdraw()`, `updatePushLimit()`                        | None                       |
 | **Vesting**                | Linear ERC20 token vesting         | `addVesting()`, `release()`, `stopVesting()`, `vestedAmount()`, `releasable()`     | None                       |
 | **AdCampaignManager**      | Ad campaign & payment routing      | `createAdCampaign()`, `claimPayment()`, `requestAndApproveWithdrawal()`            | Bank (external address)    |
@@ -166,7 +166,7 @@ Proposals.castVote(proposalId, VoteOption.Yes); // or No, Abstain
 **Steps**:
 
 1. Owner signs WageClaim off-chain (EIP-712)
-2. Employee calls `CashRemuneration.withdrawWages(wageClaim, signature)`
+2. Employee calls `CashRemuneration.withdraw(wageClaim, signature)`
 3. Contract verifies signature and claim validity
 4. Transfers tokens (ERC20/ETH) + mints InvestorV1 tokens
 5. Marks claim as paid
@@ -187,7 +187,7 @@ WageClaim memory claim = WageClaim({
 bytes memory signature = signWageClaim(claim); // Owner's private key
 
 // On-chain: Employee withdraws
-CashRemuneration.withdrawWages(claim, signature);
+CashRemuneration.withdraw(claim, signature);
 // Receives: 2000 USDC + 400 InvestorV1 tokens
 ```
 
@@ -323,9 +323,10 @@ uint256[50] private __gap;                          // Storage gap for future up
 ### Elections
 
 ```solidity
-uint256 private _nextElectionId;                    // Counter for election IDs
-address public bodAddress;                          // BoardOfDirectors address
+uint256 private _nextElectionId;                    // Counter for election IDs (starts at 1)
+address public officerAddress;                      // Officer contract (resolves BoardOfDirectors at runtime)
 mapping(uint256 => Election) private _elections;    // ElectionId -> Election data
+uint256[] private _electionIds;                     // Array of all election IDs
 mapping(uint256 => mapping(address => address)) private _votes; // ElectionId -> Voter -> Candidate
 mapping(uint256 => mapping(address => uint256)) public _voteCounts; // ElectionId -> Candidate -> Count
 ```
@@ -344,7 +345,7 @@ mapping(uint256 => Action) public actions;          // ActionId -> Action data
 ```solidity
 mapping(uint256 => Proposal) private proposals;     // ProposalId -> Proposal data
 uint256 private _nextProposalId;                    // Counter for proposal IDs
-address private boardOfDirectorsContractAddress;    // BoardOfDirectors address
+address public officerAddress;                      // Officer contract (resolves BoardOfDirectors at runtime)
 ```
 
 ### ExpenseAccountEIP712
@@ -437,6 +438,7 @@ event BudgetRevoked(address indexed approvedAddress, bytes32 indexed signatureHa
 ```solidity
 event Deposited(address indexed depositor, uint256 amount);
 event Withdraw(address indexed withdrawer, uint256 amount);
+event WithdrawToken(address indexed withdrawer, address indexed tokenAddress, uint256 amount);
 event WageClaimEnabled(bytes32 indexed signatureHash);
 event WageClaimDisabled(bytes32 indexed signatureHash);
 ```
@@ -451,9 +453,9 @@ event WageClaimDisabled(bytes32 indexed signatureHash);
 | ------------------------------------------------ | ----------------------------------- | ---------------------------- |
 | `"Beacon not configured for this contract type"` | Officer doesn't have beacon address | Configure beacon first       |
 | `"Invalid beacon address"`                       | Zero address provided               | Use valid beacon address     |
-| `"Insufficient unlocked balance"`                | Trying to spend locked dividends    | Only spend unlocked funds    |
+| `"Insufficient balance"`                         | ETH balance too low for transfer    | Ensure Bank holds enough ETH |
 | `"Unsupported token"`                            | Token not in supported list         | Add token support first      |
-| `"Nothing to release"`                           | No dividends to claim               | Wait for dividend allocation |
+| `"Nothing to release"`                           | No vested tokens available to claim | Wait for vesting cliff/period |
 | `"Already approved"`                             | Trying to approve twice             | Already approved this action |
 | `"Only board of directors can call"`             | Non-member trying BoD function      | Must be board member         |
 | `"Invalid signature"`                            | EIP-712 signature invalid           | Check signer and data match  |

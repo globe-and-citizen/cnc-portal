@@ -47,6 +47,11 @@ configureBeacon(contractType, beaconAddress)
 deployBeaconProxy(contractType, initializerData) → address
 deployAllContracts(deployments[]) → address[]
 findDeployedContract(contractType) → address
+getDeployedContracts() → DeployedContract[]
+getConfiguredContractTypes() → string[]
+getFeeFor(contractType) → uint16
+getFeeCollector() → address
+isFeeCollectorToken(tokenAddress) → bool
 ```
 
 ---
@@ -119,8 +124,8 @@ Formal election system. Creates elections with candidates and eligible voters. R
 - Only one ongoing election at a time
 - Seat count must be odd (tie prevention)
 - Eligible voters cast one vote per election
-- Sort candidates by vote count; top N become board members
-- Automatically creates BoardOfDirectors proxy on first deployment
+- Sort candidates by vote count (descending); ties broken by address (ascending)
+- Resolves BoardOfDirectors address dynamically via Officer at result publication time
 - Results can only be published once all votes cast or end date passed
 
 **Key Functions**:
@@ -228,9 +233,9 @@ Wage payment with EIP-712 signatures. Supports multi-token wages including equit
 **Key Functions**:
 
 ```
-withdrawWages(wageClaim, signature)               // Employee withdraws
-enableWageClaim(wageClaim)                        // Mark claim as valid
-disableWageClaim(signatureHash)                   // Revoke before use
+withdraw(wageClaim, signature)                    // Employee withdraws wages
+enableClaim(signatureHash)                        // Re-enable a disabled claim
+disableClaim(signatureHash)                       // Revoke claim before use
 ```
 
 ---
