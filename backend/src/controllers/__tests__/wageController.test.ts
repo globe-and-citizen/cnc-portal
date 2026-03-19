@@ -61,6 +61,8 @@ const mockWage = {
     { type: 'cash', amount: 50 },
     { type: 'token', amount: 100 },
   ],
+  overtimeRatePerHour: null,
+  maximumOvertimeHoursPerWeek: null,
   maximumHoursPerWeek: 40,
   nextWageId: null,
   createdAt: new Date(),
@@ -141,6 +143,105 @@ describe('Wage Controller', () => {
 
       expect(response.status).toBe(201);
       expect(prisma.wage.create).toHaveBeenCalled();
+    });
+
+    it('should persist overtime rates when provided', async () => {
+      vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(mockTeam);
+      vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(null);
+      vi.spyOn(prisma.wage, 'findMany').mockResolvedValue([]);
+      vi.spyOn(prisma.wage, 'create').mockResolvedValue({
+        ...mockWage,
+        overtimeRatePerHour: [{ type: 'cash', amount: 75 }],
+        maximumOvertimeHoursPerWeek: 8,
+      } as Wage);
+
+      const response = await request(app)
+        .put('/setWage')
+        .send({
+          teamId: 1,
+          userAddress: '0x1234567890123456789012345678901234567890',
+          ratePerHour: [
+            { type: 'cash', amount: 50 },
+            { type: 'token', amount: 100 },
+          ],
+          overtimeRatePerHour: [{ type: 'cash', amount: 75 }],
+          maximumOvertimeHoursPerWeek: 8,
+          maximumHoursPerWeek: 40,
+        });
+
+      expect(response.status).toBe(201);
+      expect(prisma.wage.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            overtimeRatePerHour: [{ type: 'cash', amount: 75 }],
+            maximumOvertimeHoursPerWeek: 8,
+          }),
+        })
+      );
+      expect(response.body.maximumOvertimeHoursPerWeek).toBe(8);
+    });
+
+    it('should fallback maximumOvertimeHoursPerWeek to maximumHoursPerWeek when missing', async () => {
+      vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(mockTeam);
+      vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(null);
+      vi.spyOn(prisma.wage, 'findMany').mockResolvedValue([]);
+      vi.spyOn(prisma.wage, 'create').mockResolvedValue({
+        ...mockWage,
+        overtimeRatePerHour: [{ type: 'cash', amount: 75 }],
+        maximumOvertimeHoursPerWeek: 40,
+      } as Wage);
+
+      const response = await request(app)
+        .put('/setWage')
+        .send({
+          teamId: 1,
+          userAddress: '0x1234567890123456789012345678901234567890',
+          ratePerHour: [
+            { type: 'cash', amount: 50 },
+            { type: 'token', amount: 100 },
+          ],
+          overtimeRatePerHour: [{ type: 'cash', amount: 75 }],
+          maximumHoursPerWeek: 40,
+        });
+
+      expect(response.status).toBe(201);
+      expect(prisma.wage.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            maximumOvertimeHoursPerWeek: 40,
+          }),
+        })
+      );
+      expect(response.body.maximumOvertimeHoursPerWeek).toBe(40);
+    });
+
+    it('should return the newly created wage when an active wage already exists', async () => {
+      vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(mockTeam);
+      vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(mockWage);
+      vi.spyOn(prisma.wage, 'create').mockResolvedValue({
+        ...mockWage,
+        id: 2,
+        overtimeRatePerHour: [{ type: 'cash', amount: 80 }],
+        maximumOvertimeHoursPerWeek: 12,
+      } as Wage);
+
+      const response = await request(app)
+        .put('/setWage')
+        .send({
+          teamId: 1,
+          userAddress: '0x1234567890123456789012345678901234567890',
+          ratePerHour: [
+            { type: 'cash', amount: 50 },
+            { type: 'token', amount: 100 },
+          ],
+          overtimeRatePerHour: [{ type: 'cash', amount: 80 }],
+          maximumOvertimeHoursPerWeek: 12,
+          maximumHoursPerWeek: 40,
+        });
+
+      expect(response.status).toBe(201);
+      expect(response.body.id).toBe(2);
+      expect(response.body.maximumOvertimeHoursPerWeek).toBe(12);
     });
 
     it('should return 500 if all wage have a next wage', async () => {
@@ -280,6 +381,63 @@ describe('Wage Controller', () => {
 
       expect(response.status).toBe(500);
       expect(response.body.message).toContain('Internal server error');
+    });
+
+    it('should backfill maximumOvertimeHoursPerWeek when overtime rates exist but hours are null', async () => {
+      vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(mockTeam);
+      vi.spyOn(prisma.wage, 'findMany').mockResolvedValue([
+        {
+          ...mockWage,
+          overtimeRatePerHour: [{ type: 'cash', amount: 75 }],
+          maximumOvertimeHoursPerWeek: null,
+          maximumHoursPerWeek: 40,
+          //@ts-expect-error: wage relationship
+          previousWage: null,
+        },
+      ]);
+
+      const response = await request(app).get('/').query({ teamId: 1 });
+
+      expect(response.status).toBe(200);
+      expect(response.body[0].maximumOvertimeHoursPerWeek).toBe(40);
+    });
+
+    it('should backfill maximumOvertimeHoursPerWeek when overtime rates exist but hours are undefined', async () => {
+      vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(mockTeam);
+      vi.spyOn(prisma.wage, 'findMany').mockResolvedValue([
+        {
+          ...mockWage,
+          overtimeRatePerHour: [{ type: 'cash', amount: 75 }],
+          maximumOvertimeHoursPerWeek: undefined,
+          maximumHoursPerWeek: 40,
+          //@ts-expect-error: wage relationship
+          previousWage: null,
+        },
+      ]);
+
+      const response = await request(app).get('/').query({ teamId: 1 });
+
+      expect(response.status).toBe(200);
+      expect(response.body[0].maximumOvertimeHoursPerWeek).toBe(40);
+    });
+
+    it('should not overwrite maximumOvertimeHoursPerWeek when it already has a value', async () => {
+      vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(mockTeam);
+      vi.spyOn(prisma.wage, 'findMany').mockResolvedValue([
+        {
+          ...mockWage,
+          overtimeRatePerHour: [{ type: 'cash', amount: 75 }],
+          maximumOvertimeHoursPerWeek: 8,
+          maximumHoursPerWeek: 40,
+          //@ts-expect-error: wage relationship
+          previousWage: null,
+        },
+      ]);
+
+      const response = await request(app).get('/').query({ teamId: 1 });
+
+      expect(response.status).toBe(200);
+      expect(response.body[0].maximumOvertimeHoursPerWeek).toBe(8);
     });
   });
 });
