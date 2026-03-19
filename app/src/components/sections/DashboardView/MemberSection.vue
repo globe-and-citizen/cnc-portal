@@ -60,23 +60,44 @@
             />
           </template>
           <template #maxWeeklyHours-data="{ row }">
-            {{ !isTeamWageDataFetching ? getMemberWage(row.address).maximumHoursPerWeek : '' }}
+            <div v-if="!isTeamWageDataFetching" class="flex flex-col">
+              <span>{{ getMemberWage(row.address).maximumHoursPerWeek }}</span>
+              <span v-if="getMemberWage(row.address).hasOvertime" class="text-xs text-emerald-700">
+                OT: {{ getMemberWage(row.address).maximumOvertimeHoursPerWeek }}
+              </span>
+            </div>
             <div class="skeleton w-24 h-4" v-if="isTeamWageDataFetching"></div>
           </template>
           <template #wage-data="{ row }">
-            <div class="flex flex-row gap-2 justify-between">
-              <span class="w-1/3 text-right pr-4">
-                {{ !isTeamWageDataFetching ? getMemberWage(row.address).cashRatePerHour : '' }}
-              </span>
-              <span class="w-1/3 text-right pr-4">
-                {{ !isTeamWageDataFetching ? getMemberWage(row.address).usdcRatePerHour : '' }}
-              </span>
-              <span class="w-1/3 text-right pr-4">
-                {{ !isTeamWageDataFetching ? getMemberWage(row.address).tokenRatePerHour : '' }}
-              </span>
+            <div class="flex flex-col gap-1">
+              <div class="flex flex-row gap-2 justify-between">
+                <span class="w-1/3 text-right pr-4">
+                  {{ !isTeamWageDataFetching ? getMemberWage(row.address).cashRatePerHour : '' }}
+                </span>
+                <span class="w-1/3 text-right pr-4">
+                  {{ !isTeamWageDataFetching ? getMemberWage(row.address).usdcRatePerHour : '' }}
+                </span>
+                <span class="w-1/3 text-right pr-4">
+                  {{ !isTeamWageDataFetching ? getMemberWage(row.address).tokenRatePerHour : '' }}
+                </span>
+              </div>
+              <div
+                v-if="!isTeamWageDataFetching && getMemberWage(row.address).hasOvertime"
+                class="flex flex-row gap-2 justify-between text-xs text-emerald-700"
+              >
+                <span class="w-1/3 text-right pr-4">
+                  OT: {{ getMemberWage(row.address).overtimeCashRatePerHour }}
+                </span>
+                <span class="w-1/3 text-right pr-4">
+                  OT: {{ getMemberWage(row.address).overtimeUsdcRatePerHour }}
+                </span>
+                <span class="w-1/3 text-right pr-4">
+                  OT: {{ getMemberWage(row.address).overtimeTokenRatePerHour }}
+                </span>
+              </div>
             </div>
-            <div class="skeleton w-24 h-4" v-if="isTeamWageDataFetching"></div
-          ></template>
+            <div class="skeleton w-24 h-4" v-if="isTeamWageDataFetching"></div>
+          </template>
           <template
             #action-data="{ row }"
             v-if="teamId && teamStore.currentTeamMeta.data?.ownerAddress === userDataStore.address"
@@ -124,17 +145,14 @@ const showAddMemberForm = ref({
   show: false
 })
 
-// Use computed team ID from store
 const teamId = computed(() => teamStore.currentTeamId)
 
-// Fetch team wages using the new query
 const {
   data: teamWageData,
   isLoading: isTeamWageDataFetching,
   error: teamWageDataError
 } = useGetTeamWagesQuery({ queryParams: { teamId } })
 
-// Handle wage data fetch errors
 watch(
   () => teamWageDataError.value,
   (error) => {
@@ -145,25 +163,64 @@ watch(
 )
 
 const getMemberWage = (memberAddress: Address) => {
-  let memberWage
-  let cashRatePerHour
-  let usdcRatePerHour
-  let tokenRatePerHour
+  const memberWage = teamWageData.value?.find((wage) => wage.userAddress === memberAddress)
 
-  if (teamWageData.value) {
-    memberWage = teamWageData.value.find((wage) => wage.userAddress === memberAddress)
-    if (memberWage) {
-      cashRatePerHour = memberWage?.ratePerHour?.find((rate) => rate.type === 'native')?.amount
-      usdcRatePerHour = memberWage?.ratePerHour?.find((rate) => rate.type === 'usdc')?.amount
-      tokenRatePerHour = memberWage?.ratePerHour?.find((rate) => rate.type === 'sher')?.amount
+  if (!memberWage) {
+    return {
+      maximumHoursPerWeek: 'N/A',
+      maximumOvertimeHoursPerWeek: 'N/A',
+      hasOvertime: false,
+      cashRatePerHour: 'N/A',
+      usdcRatePerHour: 'N/A',
+      tokenRatePerHour: 'N/A',
+      overtimeCashRatePerHour: 'N/A',
+      overtimeUsdcRatePerHour: 'N/A',
+      overtimeTokenRatePerHour: 'N/A'
     }
   }
 
+  const cashRatePerHour = memberWage.ratePerHour?.find((rate) => rate.type === 'native')?.amount
+  const usdcRatePerHour = memberWage.ratePerHour?.find((rate) => rate.type === 'usdc')?.amount
+  const tokenRatePerHour = memberWage.ratePerHour?.find((rate) => rate.type === 'sher')?.amount
+
+  const overtimeCashRatePerHour = memberWage.overtimeRatePerHour?.find(
+    (rate) => rate.type === 'native'
+  )?.amount
+  const overtimeUsdcRatePerHour = memberWage.overtimeRatePerHour?.find(
+    (rate) => rate.type === 'usdc'
+  )?.amount
+  const overtimeTokenRatePerHour = memberWage.overtimeRatePerHour?.find(
+    (rate) => rate.type === 'sher'
+  )?.amount
+
+  const hasOvertime = Boolean(memberWage.overtimeRatePerHour?.length)
+
+  // maximumOvertimeHoursPerWeek is a distinct field — never substitute maximumHoursPerWeek.
+  // Legacy records missing this field will show 'N/A'; the backend getWages backfill
+  // handles them at the API level for new fetches.
+  const maximumOvertimeHoursPerWeek = memberWage.maximumOvertimeHoursPerWeek
+
   return {
-    maximumHoursPerWeek: memberWage ? `${memberWage.maximumHoursPerWeek} hrs/wk` : 'N/A',
-    cashRatePerHour: cashRatePerHour ? `${cashRatePerHour} ${NETWORK.currencySymbol}/hr` : 'N/A',
-    usdcRatePerHour: usdcRatePerHour ? `${usdcRatePerHour} USDC/hr` : 'N/A',
-    tokenRatePerHour: tokenRatePerHour ? `${tokenRatePerHour} SHER/hr` : 'N/A'
+    maximumHoursPerWeek: `${memberWage.maximumHoursPerWeek} hrs/wk`,
+    maximumOvertimeHoursPerWeek:
+      hasOvertime && maximumOvertimeHoursPerWeek != null
+        ? `${maximumOvertimeHoursPerWeek} hrs/wk`
+        : hasOvertime
+          ? 'N/A (legacy)'
+          : 'N/A',
+    hasOvertime,
+    cashRatePerHour:
+      cashRatePerHour != null ? `${cashRatePerHour} ${NETWORK.currencySymbol}/hr` : 'N/A',
+    usdcRatePerHour: usdcRatePerHour != null ? `${usdcRatePerHour} USDC/hr` : 'N/A',
+    tokenRatePerHour: tokenRatePerHour != null ? `${tokenRatePerHour} SHER/hr` : 'N/A',
+    overtimeCashRatePerHour:
+      overtimeCashRatePerHour != null
+        ? `${overtimeCashRatePerHour} ${NETWORK.currencySymbol}/hr`
+        : 'N/A',
+    overtimeUsdcRatePerHour:
+      overtimeUsdcRatePerHour != null ? `${overtimeUsdcRatePerHour} USDC/hr` : 'N/A',
+    overtimeTokenRatePerHour:
+      overtimeTokenRatePerHour != null ? `${overtimeTokenRatePerHour} SHER/hr` : 'N/A'
   }
 }
 
