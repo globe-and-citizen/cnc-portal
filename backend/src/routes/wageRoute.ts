@@ -86,6 +86,20 @@ const wageRoutes = express.Router();
  *                     type: number
  *                     description: Rate amount per hour
  *                     minimum: 0
+ *             overtimeRatePerHour:
+ *               type: array
+ *               nullable: true
+ *               description: Optional overtime rates applied after the weekly threshold is reached
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   type:
+ *                     type: string
+ *                     description: Rate type (e.g. native, usdc, sher)
+ *                   amount:
+ *                     type: number
+ *                     description: Overtime rate amount per hour
+ *                     minimum: 0
  *   responses:
  *     201:
  *       description: Wage set successfully
@@ -105,6 +119,9 @@ const wageRoutes = express.Router();
  *                     amount: 25.50
  *                   - type: "token"
  *                     amount: 10
+ *                 overtimeRatePerHour:
+ *                   - type: "cash"
+ *                     amount: 32
  *                 previousWage:
  *                   id: 0
  *     400:
@@ -167,6 +184,7 @@ wageRoutes.put('/setWage', validateBody(setWageBodySchema), setWage);
  *                   ratePerHour:
  *                     - type: "cash"
  *                       amount: 25.50
+ *                   overtimeRatePerHour: null
  *                   previousWage: null
  *     400:
  *       description: Bad request - invalid or missing teamId

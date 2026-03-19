@@ -19,7 +19,14 @@ export const setWageBodySchema = z.object({
     .number()
     .int()
     .positive('Maximum hours per week must be a positive integer'),
+  maximumOvertimeHoursPerWeek: z.coerce
+    .number()
+    .int()
+    .positive('Overtime hours per week must be a positive integer')
+    .nullable()
+    .optional(),
   ratePerHour: z.array(wageRateSchema).min(1, 'At least one rate must be provided'),
+  overtimeRatePerHour: z.array(wageRateSchema).min(1).nullable().optional(),
 });
 
 // Get wages query parameters
