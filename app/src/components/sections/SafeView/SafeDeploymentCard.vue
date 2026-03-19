@@ -61,6 +61,7 @@ import { useSafeDeployment } from '@/composables/safe'
 import { useCreateContractMutation } from '@/queries/contract.queries'
 import { log } from '@/utils'
 import { NETWORK } from '@/constant'
+import { useToast } from '@nuxt/ui/composables'
 
 interface Props {
   teamId: number

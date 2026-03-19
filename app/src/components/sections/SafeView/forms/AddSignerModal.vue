@@ -88,7 +88,7 @@ import { Icon as IconifyIcon } from '@iconify/vue'
 
 import { useSafeOwnerManagement } from '@/composables/safe'
 import type { User } from '@/types'
-
+import { useToast } from '@nuxt/ui/composables'
 interface Props {
   safeAddress: Address
   currentOwners: string[]
