@@ -34,6 +34,10 @@ jobs:
         run: npm run format-check
         working-directory: ./app
 
+      - name: ⚙️ Generate Nuxt types
+        run: npx nuxi prepare
+        working-directory: ./app
+
       - name: type check
         run: npm run build
         working-directory: ./app
