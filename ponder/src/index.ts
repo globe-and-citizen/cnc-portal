@@ -229,7 +229,11 @@ ponder.on("BoardOfDirectors:ActionAdded", async ({ event, context }) => {
 ponder.on("BoardOfDirectors:ActionExecuted", async ({ event, context }) => {
   await context.db
     .update(boardAction, { id: `${event.log.address}-${event.args.id}` })
-    .set({ executed: true });
+    .set({
+      executed: true,
+      blockNumber: event.block.number,
+      timestamp: Number(event.block.timestamp),
+    });
 });
 
 ponder.on("BoardOfDirectors:Approval", async ({ event, context }) => {
@@ -244,7 +248,11 @@ ponder.on("BoardOfDirectors:Approval", async ({ event, context }) => {
       blockNumber: event.block.number,
       timestamp: Number(event.block.timestamp),
     })
-    .onConflictDoUpdate({ revoked: false });
+    .onConflictDoUpdate({
+      revoked: false,
+      blockNumber: event.block.number,
+      timestamp: Number(event.block.timestamp),
+    });
 });
 
 ponder.on("BoardOfDirectors:Revocation", async ({ event, context }) => {
@@ -252,7 +260,11 @@ ponder.on("BoardOfDirectors:Revocation", async ({ event, context }) => {
     .update(boardApproval, {
       id: `${event.log.address}-${event.args.id}-${event.args.approver}`,
     })
-    .set({ revoked: true });
+    .set({
+      revoked: true,
+      blockNumber: event.block.number,
+      timestamp: Number(event.block.timestamp),
+    });
 });
 
 // ─── InvestorV1 ───────────────────────────────────────────────────────────────
