@@ -34,8 +34,6 @@
       data-test="step-1"
       @submit="nextStep"
     >
-      <span class="font-bold text-2xl mb-4">Create your team</span>
-      <hr class="mb-6" />
       <UFormField label="Team Name" name="name" required help="Give your team a unique, recognizable name">
         <UInput
           v-model="teamData.name"
@@ -63,8 +61,6 @@
 
     <!-- Step 2: Members -->
     <div v-else-if="currentStep === 2" data-test="step-2">
-      <span class="font-bold text-2xl mb-4">Add members</span>
-      <hr class="mb-6" />
       <div class="flex flex-col gap-5">
         <div class="text-sm text-gray-700 mb-2">
           Invite members to your team. You can always add more later.
@@ -109,8 +105,6 @@
       class="flex flex-col gap-5"
       data-test="step-3"
     >
-      <span class="font-bold text-2xl mb-4">Investor contract</span>
-      <hr class="mb-6" />
       <UAlert
         v-if="createdTeamData"
         color="success"
