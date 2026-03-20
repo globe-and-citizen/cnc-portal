@@ -34,10 +34,10 @@ jobs:
         run: npm run format-check
         working-directory: ./app
 
-      - name: ⚙️ Generate Nuxt types
-        run: npx nuxi prepare
+      - name: ⚙️ Build (generates auto-imports.d.ts & components.d.ts)
+        run: npm run build-only
         working-directory: ./app
 
       - name: type check
-        run: npm run build
+        run: npm run type-check
         working-directory: ./app
