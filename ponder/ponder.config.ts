@@ -26,9 +26,15 @@ const chainName = isHardhat ? "hardhat" : "polygon";
 
 // Factory contract address differs per network.
 // On Hardhat this changes every redeployment — set FACTORY_ADDRESS in .env.local.
+if (isHardhat && !process.env.FACTORY_ADDRESS) {
+  throw new Error(
+    "FACTORY_ADDRESS must be set in .env.local when NETWORK=hardhat. " +
+      "Deploy contracts and copy the OfficerFactoryBeacon address."
+  );
+}
 const factoryAddress = (
   isHardhat
-    ? (process.env.FACTORY_ADDRESS ?? "0x0000000000000000000000000000000000000000")
+    ? process.env.FACTORY_ADDRESS!
     : "0x0205fd32175241aA6f7398073b64bC03f910a6A0"
 ) as `0x${string}`;
 

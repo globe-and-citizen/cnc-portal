@@ -12,7 +12,7 @@
  *   pnpm tsx scripts/generate-abis.ts Bank      # specific contracts only
  */
 
-import { readFileSync, writeFileSync, readdirSync } from "fs";
+import { readFileSync, writeFileSync, readdirSync, existsSync } from "fs";
 import { join, basename, dirname } from "path";
 import { fileURLToPath } from "url";
 
@@ -116,6 +116,13 @@ function generateFile(contractName: string, abi: unknown[], eventsOnly: boolean)
 const args = process.argv.slice(2);
 const eventsOnly = !args.includes("--all");
 const filterContracts = args.filter((a) => !a.startsWith("--"));
+
+if (!existsSync(ABIS_JSON_DIR)) {
+  console.error(
+    `Error: ${ABIS_JSON_DIR} does not exist.\nRun 'npx hardhat compile' in the contract/ directory first.`
+  );
+  process.exit(1);
+}
 
 const jsonFiles = readdirSync(ABIS_JSON_DIR).filter((f) => f.endsWith(".json"));
 
