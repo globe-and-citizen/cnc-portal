@@ -60,9 +60,12 @@
             />
           </template>
           <template #maxWeeklyHours-data="{ row }">
-            <div v-if="!isTeamWageDataFetching" class="flex flex-col">
+            <div v-if="!isTeamWageDataFetching" class="flex flex-col font-semibold">
               <span>{{ getMemberWage(row.address).maximumHoursPerWeek }}</span>
-              <span v-if="getMemberWage(row.address).hasOvertime" class="text-xs text-emerald-700">
+              <span
+                v-if="getMemberWage(row.address).hasOvertime"
+                class="text-xs text-black font-light"
+              >
                 OT: {{ getMemberWage(row.address).maximumOvertimeHoursPerWeek }}
               </span>
             </div>
@@ -70,7 +73,7 @@
           </template>
           <template #wage-data="{ row }">
             <div class="flex flex-col gap-1">
-              <div class="flex flex-row gap-2 justify-between">
+              <div class="flex flex-row gap-2 justify-between font-semibold">
                 <span class="w-1/3 text-right pr-4">
                   {{ !isTeamWageDataFetching ? getMemberWage(row.address).cashRatePerHour : '' }}
                 </span>
@@ -83,7 +86,7 @@
               </div>
               <div
                 v-if="!isTeamWageDataFetching && getMemberWage(row.address).hasOvertime"
-                class="flex flex-row gap-2 justify-between text-xs text-emerald-700"
+                class="flex flex-row gap-2 justify-between text-xs text-black font-light"
               >
                 <span class="w-1/3 text-right pr-4">
                   OT: {{ getMemberWage(row.address).overtimeCashRatePerHour }}
@@ -107,7 +110,12 @@
                 :member="{ name: row.name, address: row.address }"
                 :teamId="teamId"
               />
-              <SetMemberWageModal
+              <!-- <SetMemberWageModal
+                :member="{ name: row.name, address: row.address }"
+                :teamId="teamId"
+                :wage="teamWageData?.find((wage) => wage.userAddress === row.address)"
+              /> -->
+              <SetMemberWageModalCopy
                 :member="{ name: row.name, address: row.address }"
                 :teamId="teamId"
                 :wage="teamWageData?.find((wage) => wage.userAddress === row.address)"
@@ -135,7 +143,8 @@ import { useGetTeamWagesQuery } from '@/queries/wage.queries'
 import type { Address } from 'viem'
 import { NETWORK } from '@/constant'
 import DeleteMemberModal from '@/components/sections/DashboardView/DeleteMemberModal.vue'
-import SetMemberWageModal from '@/components/sections/DashboardView/SetMemberWageModal.vue'
+// import SetMemberWageModal from '@/components/sections/DashboardView/SetMemberWageModal.vue'
+import SetMemberWageModalCopy from './SetMemberWageModalCopy.vue'
 
 const userDataStore = useUserDataStore()
 const toastStore = useToastStore()
