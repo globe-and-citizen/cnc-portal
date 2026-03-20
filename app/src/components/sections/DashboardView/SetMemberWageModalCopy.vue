@@ -1,4 +1,4 @@
-<!-- <template>
+<template>
   <div>
     <ButtonUI size="sm" variant="success" @click="showModal = true" data-test="set-wage-button">
       Set Wage
@@ -729,4 +729,4 @@ watch(
   },
   { deep: true }
 )
-</script> -->
+</script>
