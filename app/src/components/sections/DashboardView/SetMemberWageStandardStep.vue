@@ -1,9 +1,9 @@
 <template>
   <div class="space-y-4" data-test="standard-wage-step">
     <UForm :schema="schema" :wageData="wageData" class="space-y-4" @submit="onSubmit">
-      <UFormField name="maxWeeklyHours">
+      <UFormField name="maximumHoursPerWeek">
         <UInput
-          v-model="wageData.maxWeeklyHours"
+          v-model="wageData.maximumHoursPerWeek"
           class="w-full"
           size="xl"
           type="number"
@@ -18,27 +18,33 @@
       >
       <h3 class="text-lg font-semibold mb-4">Hourly Rates</h3>
 
-      <UFieldGroup class="flex items-center gap-4">
-        <USwitch size="xl" v-model="wageData.standardRates.nativeEnabled" />
+      <UFieldGroup
+        v-for="rate in wageData.ratePerHour"
+        :key="rate.type"
+        class="flex items-center gap-4"
+      >
+        <USwitch size="xl" v-model="rate.enabled" />
         <UInput
-          v-model="wageData.standardRates.hourlyRate"
+          v-model="rate.amount"
           placeholder="0.00"
           size="xl"
           type="number"
           class="w-full"
-          :disabled="!wageData.standardRates.nativeEnabled"
+          :disabled="!rate.enabled"
         >
           <template #trailing>
             <UBadge
               class="text-sm rounded-full px-4 test w-16 flex justify-center"
-              :variant="wageData.standardRates.nativeEnabled ? 'solid' : 'outline'"
-              :color="wageData.standardRates.nativeEnabled ? 'primary' : 'neutral'"
-              >{{ NETWORK.currencySymbol }}</UBadge
+              :variant="rate.enabled ? 'solid' : 'outline'"
+              :color="rate.enabled ? 'primary' : 'neutral'"
+              >{{
+                rate.type === 'native' ? NETWORK.currencySymbol : rate.type.toUpperCase()
+              }}</UBadge
             >
           </template>
         </UInput>
       </UFieldGroup>
-      <UFieldGroup class="flex items-center gap-4">
+      <!-- <UFieldGroup class="flex items-center gap-4">
         <USwitch size="xl" v-model="wageData.standardRates.usdcEnabled" />
         <UInput
           v-model="wageData.standardRates.hourlyRateUsdc"
@@ -78,7 +84,7 @@
             >
           </template>
         </UInput>
-      </UFieldGroup>
+      </UFieldGroup> -->
     </UForm>
 
     <div class="border-t border-base-200 pt-4">
@@ -109,23 +115,32 @@
 </template>
 
 <script setup lang="ts">
-import type { WageFormState } from '@/types'
 import * as z from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
 import { NETWORK } from '@/constant'
+import type { WageWithForm } from './SetMemberWageModalCopy.vue'
 
-const wageData = defineModel<WageFormState>('wageData', { required: true })
+const wageData = defineModel<WageWithForm>('wageData', { required: true })
 
 const schema = z.object({
-  maxWeeklyHours: z
-    .string()
-    .min(1, 'Max weekly hours is required')
-    .regex(/^\d+$/, 'Must be a number'),
-  maximumOvertimeHoursPerWeek: z
-    .string()
-    .min(1, 'Max overtime hours is required')
-    .regex(/^\d+$/, 'Must be a number'),
-  enableOvertimeRules: z.boolean()
+  maximumHoursPerWeek: z.coerce
+    .number()
+    .int('Must be a whole number')
+    .positive('Max weekly hours must be greater than 0'),
+  ratePerHour: z
+    .array(
+      z.object({
+        type: z.enum(['native', 'usdc', 'sher', 'usdc.e']),
+        amount: z.coerce.number().min(0, 'Must be non-negative')
+      })
+    )
+    .refine(
+      (rates) => {
+        const native = rates.find((r) => r.type === 'native')
+        return native ? native.amount > 0 : true
+      },
+      { message: 'Native rate must be greater than 0', path: ['0', 'amount'] }
+    )
 })
 
 type Schema = z.output<typeof schema>

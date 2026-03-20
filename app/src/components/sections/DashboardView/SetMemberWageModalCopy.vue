@@ -38,7 +38,7 @@
 
           <SetMemberWageStandardStep v-if="currentStep === 0" v-model:wageData="wageData" />
 
-          <SetMemberWageOvertimeStep
+          <!--<SetMemberWageOvertimeStep
             v-else
             v-model:wageData="wageData"
             :rateFieldConfigs="rateFieldConfigs"
@@ -47,7 +47,7 @@
             :overtimeRatePerHourErrors="v$.overtimeRatePerHour.$errors"
             :standardRateSummary="standardRateSummary"
             :overtimeRateSummary="overtimeRateSummary"
-          />
+          /> -->
 
           <div v-if="setWageError" data-test="error-state">
             <UAlert
@@ -112,11 +112,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { ref, watch } from 'vue'
 import SetMemberWageStandardStep from './SetMemberWageStandardStep.vue'
 import SetMemberWageOvertimeStep from './SetMemberWageOvertimeStep.vue'
 import { useWageForm } from '@/composables/useWageForm'
-import type { Member, RateFormKey, Wage } from '@/types'
+import type { Member, Wage } from '@/types'
 import type { AxiosError } from 'axios'
 
 import type { StepperItem } from '@nuxt/ui'
@@ -142,16 +142,56 @@ const props = defineProps<{
 const emits = defineEmits<{ wageUpdated: [] }>()
 
 const showModal = ref(false)
+const requiredRateTypes = ['native', 'usdc', 'sher'] as const
+
+type RatePerHourWithEnabled = Wage['ratePerHour'][number] & { enabled: boolean }
+
+const normalizeRatePerHour = (rates?: Wage['ratePerHour'] | null): RatePerHourWithEnabled[] => {
+  return requiredRateTypes.map((type) => {
+    const existingRate = rates?.find((rate) => rate.type === type)
+
+    return {
+      type,
+      amount: existingRate?.amount ?? 0,
+      enabled: existingRate ? existingRate.amount > 0 : false
+    }
+  })
+}
+
+export type WageWithForm = Omit<Wage, 'ratePerHour' | 'overtimeRatePerHour'> & {
+  enableOvertimeRules: boolean
+  ratePerHour: RatePerHourWithEnabled[]
+  overtimeRatePerHour: RatePerHourWithEnabled[]
+}
+
+const initialWage = (): WageWithForm => {
+  return props.wage
+    ? {
+        ...props.wage,
+        ratePerHour: normalizeRatePerHour(props.wage.ratePerHour),
+        overtimeRatePerHour: normalizeRatePerHour(props.wage.overtimeRatePerHour),
+        enableOvertimeRules: props.wage.overtimeRatePerHour
+          ? props.wage.overtimeRatePerHour.some((rate) => rate.amount > 0)
+          : false
+      }
+    : {
+        id: 0,
+        teamId: 0,
+        userAddress: '',
+        ratePerHour: normalizeRatePerHour(),
+        overtimeRatePerHour: normalizeRatePerHour(),
+        enableOvertimeRules: false,
+        maximumHoursPerWeek: 0,
+        nextWageId: null,
+        createdAt: '',
+        updatedAt: ''
+      }
+}
+const wageData = ref<WageWithForm>(initialWage())
 
 const {
-  wageData,
-  // currentStep,
-  v$,
-  standardRateSummary,
-  overtimeRateSummary,
   isMemberWageSaving,
   setWageError,
-  rateFieldConfigs,
   handleSaveWage,
   handleBack,
   handleResetWage,
@@ -164,20 +204,6 @@ const {
     emits('wageUpdated')
     handleCancel()
   }
-})
-
-const standardRateValidationErrors = computed(() => {
-  const keys: RateFormKey[] = ['hourlyRate', 'hourlyRateUsdc', 'hourlyRateToken']
-  return Object.fromEntries(
-    keys.map((key) => [key, v$.value.wageData.standardRates[key].$errors])
-  ) as Record<RateFormKey, typeof v$.value.wageData.standardRates.hourlyRate.$errors>
-})
-
-const overtimeRateValidationErrors = computed(() => {
-  const keys: RateFormKey[] = ['hourlyRate', 'hourlyRateUsdc', 'hourlyRateToken']
-  return Object.fromEntries(
-    keys.map((key) => [key, v$.value.wageData.overtimeRates[key].$errors])
-  ) as Record<RateFormKey, typeof v$.value.wageData.overtimeRates.hourlyRate.$errors>
 })
 
 const handleCancel = () => {
