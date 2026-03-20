@@ -1,23 +1,22 @@
 # 🏛️ CNC Portal & TechDAO — Full Scenario
 
-> _The story of a platform that rises, and a team that builds, governs, and grows together._
-> _Every public function of every contract appears at least once in this scenario._
+> _The story of a platform that rises, and a team that builds, governs, and grows together._ > _Every public function of every contract appears at least once in this scenario._
 
 ---
 
 ## 🎭 The Characters
 
-|     | Name            | Role                                                                              |
-| --- | --------------- | --------------------------------------------------------------------------------- |
-| 🏗️  | **CNC Team**    | Deployers and maintainers of the CNC Portal platform                              |
-| 👩‍💼  | **Alice**       | Founder of TechDAO — sole owner until the Board of Directors is elected           |
-| 👨‍💻  | **Bob**         | Senior developer, paid in mixed ETH + SHER                                        |
-| 🧑‍💻  | **Charlie**     | Junior developer, paid in mixed ETH + SHER, leaves at month 4                    |
-| 👩‍⚖️  | **Diana**       | Team member elected to the Board of Directors                                     |
-| 👩‍⚖️  | **Eve**         | Team member elected to the Board of Directors                                     |
-| 👨‍⚖️  | **Frank**       | Team member elected to the Board of Directors                                     |
-| 💰  | **Investor1**   | External investor acquiring SHER tokens                                           |
-| 📣  | **Advertiser**  | External advertiser funding an ad campaign                                        |
+|     | Name           | Role                                                                    |
+| --- | -------------- | ----------------------------------------------------------------------- |
+| 🏗️  | **CNC Team**   | Deployers and maintainers of the CNC Portal platform                    |
+| 👩‍💼  | **Alice**      | Founder of TechDAO — sole owner until the Board of Directors is elected |
+| 👨‍💻  | **Bob**        | Senior developer, paid in mixed ETH + SHER                              |
+| 🧑‍💻  | **Charlie**    | Junior developer, paid in mixed ETH + SHER, leaves at month 4           |
+| 👩‍⚖️  | **Diana**      | Team member elected to the Board of Directors                           |
+| 👩‍⚖️  | **Eve**        | Team member elected to the Board of Directors                           |
+| 👨‍⚖️  | **Frank**      | Team member elected to the Board of Directors                           |
+| 💰  | **Investor1**  | External investor acquiring SHER tokens                                 |
+| 📣  | **Advertiser** | External advertiser funding an ad campaign                              |
 
 ---
 
@@ -900,20 +899,20 @@ sequenceDiagram
 
 ### Function coverage summary
 
-| Contract | Key functions exercised |
-|---|---|
-| 💼 **FeeCollector** | initialize, addTokenSupport, removeTokenSupport, getAllFeeConfigs, getBalance, getTokenBalance, setFee, withdraw, withdrawToken, receive |
-| 🏛️ **Officer** | initialize, deployAllContracts, deployBeaconProxy, getTeam, getDeployedContracts, getConfiguredContractTypes, configureBeacon, findDeployedContract, getFeeFor, getFeeCollector, isFeeCollectorToken, pause, unpause |
-| 🏦 **Bank** | initialize, addTokenSupport, removeTokenSupport, getBalance, getTokenBalance, receive, depositToken, transfer, transferToken, distributeNativeDividends, distributeTokenDividends, pause, unpause |
-| 🎩 **BoardOfDirectors** | initialize, addAction, approve, revoke, setBoardOfDirectors, isActionExecuted, isApproved, approvalCount, getOwners, getBoardOfDirectors, isMember, addOwner, removeOwner, setOwners |
-| 💸 **CashRemuneration** | initialize, withdraw, addTokenSupport, removeTokenSupport, enableClaim, disableClaim, getBalance, receive, pause, unpause |
-| 🔀 **SafeDepositRouter** | initialize, deposit, depositWithSlippage, calculateCompensation, addTokenSupport, removeTokenSupport, enableDeposits, disableDeposits, setSafeAddress, setMultiplier, recoverERC20, pause, unpause |
-| 🧾 **ExpenseAccount** | initialize, receive, depositToken, transfer, validateTransfer, getCurrentPeriod, isNewPeriod, deactivateApproval, activateApproval, addTokenSupport, removeTokenSupport, getBalance, getTokenBalance, pause, unpause |
-| 🗳️ **Elections** | initialize, createElection, castVote, publishResults, getElection, getElectionCandidates, getElectionEligibleVoters, getElectionWinners, getElectionResults, getVoterChoice, hasVoted, isEligibleVoter, getVoteCount, getNextElectionId, pause, unpause |
-| 📋 **Proposals** | initialize, createProposal, castVote (Yes/No/Abstain), getProposal, tallyResults, getBoardOfDirectors, hasVoted |
-| 🎁 **Tips** | initialize, pushTip, sendTip, withdraw, getBalance, getContractBalance, updatePushLimit, pause, unpause |
-| ⏳ **Vesting** | initialize, createTeam, addVesting, stopVesting, vestedAmount, releasable, release, getTeamMembers, getUserTeams, getTeamVestingsWithMembers, getTeamAllArchivedVestingsFlat, getCurrentTimestamp, pause, unpause |
-| 📣 **AdCampaignManager** | constructor, createAdCampaign, claimPayment, requestAndApproveWithdrawal, addAdmin, removeAdmin, setBankContractAddress, setCostPerClick, setCostPerImpression, getAdCampaignByCode, getAdminList, pause, unpause, receive |
+| Contract                 | Key functions exercised                                                                                                                                                                                                                                 |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 💼 **FeeCollector**      | initialize, addTokenSupport, removeTokenSupport, getAllFeeConfigs, getBalance, getTokenBalance, setFee, withdraw, withdrawToken, receive                                                                                                                |
+| 🏛️ **Officer**           | initialize, deployAllContracts, deployBeaconProxy, getTeam, getDeployedContracts, getConfiguredContractTypes, configureBeacon, findDeployedContract, getFeeFor, getFeeCollector, isFeeCollectorToken, pause, unpause                                    |
+| 🏦 **Bank**              | initialize, addTokenSupport, removeTokenSupport, getBalance, getTokenBalance, receive, depositToken, transfer, transferToken, distributeNativeDividends, distributeTokenDividends, pause, unpause                                                       |
+| 🎩 **BoardOfDirectors**  | initialize, addAction, approve, revoke, setBoardOfDirectors, isActionExecuted, isApproved, approvalCount, getOwners, getBoardOfDirectors, isMember, addOwner, removeOwner, setOwners                                                                    |
+| 💸 **CashRemuneration**  | initialize, withdraw, addTokenSupport, removeTokenSupport, enableClaim, disableClaim, getBalance, receive, pause, unpause                                                                                                                               |
+| 🔀 **SafeDepositRouter** | initialize, deposit, depositWithSlippage, calculateCompensation, addTokenSupport, removeTokenSupport, enableDeposits, disableDeposits, setSafeAddress, setMultiplier, recoverERC20, pause, unpause                                                      |
+| 🧾 **ExpenseAccount**    | initialize, receive, depositToken, transfer, validateTransfer, getCurrentPeriod, isNewPeriod, deactivateApproval, activateApproval, addTokenSupport, removeTokenSupport, getBalance, getTokenBalance, pause, unpause                                    |
+| 🗳️ **Elections**         | initialize, createElection, castVote, publishResults, getElection, getElectionCandidates, getElectionEligibleVoters, getElectionWinners, getElectionResults, getVoterChoice, hasVoted, isEligibleVoter, getVoteCount, getNextElectionId, pause, unpause |
+| 📋 **Proposals**         | initialize, createProposal, castVote (Yes/No/Abstain), getProposal, tallyResults, getBoardOfDirectors, hasVoted                                                                                                                                         |
+| 🎁 **Tips**              | initialize, pushTip, sendTip, withdraw, getBalance, getContractBalance, updatePushLimit, pause, unpause                                                                                                                                                 |
+| ⏳ **Vesting**           | initialize, createTeam, addVesting, stopVesting, vestedAmount, releasable, release, getTeamMembers, getUserTeams, getTeamVestingsWithMembers, getTeamAllArchivedVestingsFlat, getCurrentTimestamp, pause, unpause                                       |
+| 📣 **AdCampaignManager** | constructor, createAdCampaign, claimPayment, requestAndApproveWithdrawal, addAdmin, removeAdmin, setBankContractAddress, setCostPerClick, setCostPerImpression, getAdCampaignByCode, getAdminList, pause, unpause, receive                              |
 
 ---
 
