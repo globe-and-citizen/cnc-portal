@@ -127,10 +127,7 @@ const { isUpdating, updateOwners } = useSafeOwnerManagement()
 const thresholdSchema = computed(() =>
   z.object({
     threshold: z
-      .number({
-        required_error: 'Threshold is required',
-        invalid_type_error: 'Threshold must be a number'
-      })
+      .number({ message: 'Threshold must be a number' })
       .int('Threshold must be a whole number')
       .min(1, 'Threshold must be at least 1')
       .max(props.currentOwners.length, `Threshold cannot exceed ${props.currentOwners.length}`)
