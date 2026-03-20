@@ -2,9 +2,27 @@
   <div class="flex flex-col gap-5">
     <!-- Step Indicator -->
     <div class="steps w-full mb-4">
-      <a class="step" :class="{ 'step-primary': currentStep >= 1 }">Team Details</a>
-      <a class="step" :class="{ 'step-primary': currentStep >= 2 }">Members</a>
-      <a class="step" :class="{ 'step-primary': currentStep >= 3 }">Investor Contract</a>
+      <a
+        class="step"
+        :class="{
+          'step-primary': currentStep > 1,
+          'step-accent': currentStep === 1
+        }"
+      >Team Details</a>
+      <a
+        class="step"
+        :class="{
+          'step-primary': currentStep > 2,
+          'step-accent': currentStep === 2
+        }"
+      >{{ step2Label }}</a>
+      <a
+        class="step"
+        :class="{
+          'step-primary': currentStep > 3,
+          'step-accent': currentStep === 3
+        }"
+      >Investor Contract</a>
     </div>
 
     <!-- Step 1: Team Details -->
@@ -16,21 +34,25 @@
       data-test="step-1"
       @submit="nextStep"
     >
-      <UFormField label="Team Name" name="name" required>
+      <span class="font-bold text-2xl mb-4">Create your team</span>
+      <hr class="mb-6" />
+      <UFormField label="Team Name" name="name" required help="Give your team a unique, recognizable name">
         <UInput
           v-model="teamData.name"
-          placeholder="Daisy"
+          placeholder="Engineering Team"
           class="w-full"
           data-test="team-name-input"
         />
       </UFormField>
-      <UFormField label="Description" name="description">
-        <UInput
+      <UFormField label="Description" name="description" help="Optional — briefly describe your team's purpose" :hint="`${teamData.description.length} / 200`">
+        <UTextarea
           v-model="teamData.description"
           placeholder="Enter a short description"
           class="w-full"
+          :rows="3"
           data-test="team-description-input"
         />
+        <div class="text-xs text-gray-400 text-right mt-1"></div>
       </UFormField>
       <div class="flex justify-end mt-6">
         <ButtonUI type="submit" variant="primary" class="w-32" data-test="next-button">
@@ -41,11 +63,11 @@
 
     <!-- Step 2: Members -->
     <div v-else-if="currentStep === 2" data-test="step-2">
-      <!-- <span class="font-bold text-2xl mb-4">Team Members (Optional)</span>
-      <hr class="mb-6" /> -->
+      <span class="font-bold text-2xl mb-4">Add members</span>
+      <hr class="mb-6" />
       <div class="flex flex-col gap-5">
         <div class="text-sm text-gray-700 mb-2">
-          You can add team members now or invite them later. (Optional)*
+          Invite members to your team. You can always add more later.
         </div>
         <MultiSelectMemberInput v-model="teamData.members" :disable-team-members="false" />
         <div
@@ -87,12 +109,19 @@
       class="flex flex-col gap-5"
       data-test="step-3"
     >
-      <!-- <span class="font-bold text-2xl mb-4">Investor Contract Details</span>
-      <hr class="mb-6" /> -->
-        <div class="text-sm text-gray-700 mb-2">
-          Set the details for your investor contract. This will be used to create the ERC-20 token representing shares in your company.
-        </div>
-      <UFormField label="Share Name" name="name" required>
+      <span class="font-bold text-2xl mb-4">Investor contract</span>
+      <hr class="mb-6" />
+      <UAlert
+        v-if="createdTeamData"
+        color="success"
+        icon="i-heroicons-check-circle"
+        :title="`Team &quot;${createdTeamData.name}&quot; created! Now optionally deploy an investor contract.`"
+        class="mb-2"
+      />
+      <div class="text-sm text-gray-700 mb-2">
+        Optionally deploy an investor contract to issue shares for your team.
+      </div>
+      <UFormField label="Share Name" name="name" required help="Full name of the share token (e.g. Company Shares)">
         <UInput
           v-model="investorContractInput.name"
           placeholder="Company Shares"
@@ -100,7 +129,7 @@
           data-test="share-name-input"
         />
       </UFormField>
-      <UFormField label="Symbol" name="symbol" required>
+      <UFormField label="Symbol" name="symbol" required help="Short ticker symbol (e.g. SHR, COMP)">
         <UInput
           v-model="investorContractInput.symbol"
           placeholder="SHR"
@@ -108,13 +137,20 @@
           data-test="share-symbol-input"
         />
       </UFormField>
-      <div class="flex justify-end mt-6">
+      <div class="flex justify-between mt-6">
+        <ButtonUI
+          variant="ghost"
+          data-test="skip-button"
+          @click="$emit('done')"
+        >
+          Skip for now
+        </ButtonUI>
         <DeployContractSection
           v-if="createdTeamData !== null && createdTeamData"
           :disable="!canProceed"
           :investorContractInput="investorContractInput"
           :createdTeamData="createdTeamData"
-          @contractDeployed="() => { $emit('done') }"
+          @contractDeployed="navigateToTeam"
         >
           Deploy Contracts
         </DeployContractSection>
@@ -134,9 +170,11 @@ import MultiSelectMemberInput from '@/components/utils/MultiSelectMemberInput.vu
 import { onClickOutside } from '@vueuse/core'
 import type { Team } from '@/types'
 import { useCreateTeamMutation } from '@/queries/team.queries'
+import { useRouter } from 'vue-router'
 
 defineEmits(['done'])
 const toast = useToast()
+const router = useRouter()
 const {
   isPending: createTeamFetching,
   error: createTeamError,
@@ -188,7 +226,20 @@ const canProceed = computed(() => {
   }
 })
 
+const step2Label = computed(() => {
+  if (currentStep.value === 3 && teamData.value.members.length > 0) {
+    return `Members (${teamData.value.members.length})`
+  }
+  return 'Members'
+})
+
 // Navigation Functions
+const navigateToTeam = () => {
+  if (createdTeamData.value?.id) {
+    router.push(`/teams/${createdTeamData.value.id}`)
+  }
+}
+
 const nextStep = () => {
   if (currentStep.value < 4 && canProceed.value) {
     currentStep.value++
