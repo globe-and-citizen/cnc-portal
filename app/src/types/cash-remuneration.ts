@@ -82,6 +82,43 @@ export interface WeeklyClaim {
   member?: User
 }
 
+// --- Wage Form Types (used by SetMemberWageModal) ---
+
+export type RateFormKey = 'hourlyRate' | 'hourlyRateUsdc' | 'hourlyRateToken'
+export type RateToggleKey = 'nativeEnabled' | 'usdcEnabled' | 'sherEnabled'
+
+export interface RateFormState {
+  hourlyRate: number
+  hourlyRateUsdc: number
+  hourlyRateToken: number
+  nativeEnabled: boolean
+  usdcEnabled: boolean
+  sherEnabled: boolean
+}
+
+export interface WageFormState {
+  maxWeeklyHours: number
+  maximumOvertimeHoursPerWeek: number
+  enableOvertimeRules: boolean
+  standardRates: RateFormState
+  overtimeRates: RateFormState
+}
+
+export interface RateFieldConfig {
+  key: string
+  amountKey: RateFormKey
+  enabledKey: RateToggleKey
+  label: string
+  activePlaceholder: string
+  unitLabel: string
+  standardInputTest: string
+  standardToggleTest: string
+  standardErrorTest: string
+  overtimeInputTest: string
+  overtimeToggleTest: string
+  overtimeErrorTest: string
+}
+
 // export interface ClaimResponse {
 //   id: number
 //   status: 'pending' | 'signed' | 'withdrawn' | 'disabled' // Assuming these are the possible statuses
