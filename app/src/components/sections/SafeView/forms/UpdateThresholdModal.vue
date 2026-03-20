@@ -1,166 +1,166 @@
 <template>
-  <ModalComponent v-model="isOpen" @reset="handleClose">
-    <div class="flex flex-col gap-5 max-w-md">
-      <div class="flex items-center justify-between">
-        <h2 class="font-bold text-2xl">Update Threshold</h2>
-      </div>
-
-      <hr />
-
-      <div class="space-y-4">
+  <UModal :open="isOpen" :close="{ onClick: () => handleClose() }" title="Update Threshold">
+    <template #body>
+      <UForm
+        :schema="thresholdSchema"
+        :state="formState"
+        class="space-y-6"
+        @submit="handleUpdateThreshold"
+      >
         <!-- Current Configuration -->
-        <div class="bg-gray-50 rounded-lg p-4">
-          <h4 class="font-semibold mb-2">Current Configuration</h4>
-          <div class="text-sm text-gray-700 space-y-1">
-            <div class="flex items-center gap-2">
+        <UAlert
+          color="neutral"
+          variant="soft"
+          title="Current Configuration"
+          :ui="{ description: 'space-y-2' }"
+        >
+          <template #description>
+            <div class="flex items-center gap-2 text-sm">
               <IconifyIcon icon="heroicons:users" class="w-4 h-4 text-blue-600" />
-              {{ totalOwners }} signers
+              <span>{{ currentOwners.length }} signers</span>
             </div>
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 text-sm">
               <IconifyIcon icon="heroicons:shield-check" class="w-4 h-4 text-green-600" />
-              {{ currentThreshold }} of {{ totalOwners }} required
+              <span>{{ currentThreshold }} of {{ currentOwners.length }} required</span>
             </div>
-          </div>
-        </div>
+          </template>
+        </UAlert>
 
-        <!-- Threshold Selection -->
-        <div class="space-y-3">
-          <label class="block text-sm font-medium text-gray-700"> Select New Threshold </label>
-
-          <div class="flex items-center gap-4">
-            <div class="flex items-center gap-2">
-              <label class="text-sm font-medium text-gray-600">Threshold:</label>
-              <input
-                type="number"
-                :min="1"
-                :max="totalOwners"
-                v-model.number="newThreshold"
-                class="input input-bordered input-sm w-20"
-                data-test="threshold-input"
-              />
-            </div>
-            <span class="text-sm text-gray-500">
-              of {{ totalOwners }} signers required to execute transactions
-            </span>
-          </div>
-
-          <div
-            v-for="error in $v.newThreshold.$errors"
-            :key="error.$uid"
-            class="text-red-500 text-sm"
-            data-test="threshold-error"
-          >
-            {{ error.$message }}
-          </div>
-        </div>
+        <!-- Threshold Input -->
+        <UFormField
+          name="threshold"
+          label="New Threshold"
+          :description="`Select number of signers (1-${currentOwners.length}) required to execute transactions`"
+          required
+        >
+          <UInput
+            v-model.number="formState.threshold"
+            type="number"
+            :min="1"
+            :max="currentOwners.length"
+            placeholder="Enter threshold"
+            data-test="threshold-input"
+          />
+        </UFormField>
 
         <!-- Summary -->
-        <div v-if="hasChanges" class="bg-gray-50 rounded-lg p-4">
-          <h4 class="font-semibold mb-2">Summary</h4>
-          <div class="text-sm text-gray-700 space-y-1">
-            <div class="flex items-center gap-2">
+        <UAlert
+          v-if="hasChanges"
+          color="primary"
+          variant="soft"
+          title="Summary"
+          :ui="{ description: 'space-y-2' }"
+        >
+          <template #description>
+            <div class="flex items-center gap-2 text-sm">
               <IconifyIcon icon="heroicons:arrow-right" class="w-4 h-4 text-green-600" />
-              Updating threshold from {{ currentThreshold }} to {{ newThreshold }}
+              <span
+                >Updating threshold from {{ currentThreshold }} to {{ formState.threshold }}</span
+              >
             </div>
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 text-sm">
               <IconifyIcon icon="heroicons:shield-check" class="w-4 h-4 text-blue-600" />
-              {{ newThreshold }} of {{ totalOwners }} signatures will be required
+              <span
+                >{{ formState.threshold }} of {{ currentOwners.length }} signatures will be
+                required</span
+              >
             </div>
-          </div>
-        </div>
-      </div>
+          </template>
+        </UAlert>
 
-      <!-- Action Buttons -->
-      <div class="flex justify-end gap-3 pt-4 border-t">
-        <ButtonUI
-          variant="ghost"
-          @click="handleClose"
-          :disabled="isLoading"
-          data-test="cancel-button"
-        >
-          Cancel
-        </ButtonUI>
-        <ButtonUI
-          variant="primary"
-          :loading="isLoading"
-          :disabled="!hasChanges || !isValidThreshold || isLoading"
-          @click="handleUpdateThreshold"
-          data-test="update-threshold-button"
-          class="flex items-center gap-2"
-        >
-          <IconifyIcon v-if="!isLoading" icon="heroicons:shield-check" class="w-4 h-4" />
-          Update Threshold
-        </ButtonUI>
-      </div>
-    </div>
-  </ModalComponent>
+        <!-- Action Buttons -->
+        <div class="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-800">
+          <UButton
+            color="neutral"
+            variant="outline"
+            :disabled="isLoading"
+            @click="handleClose"
+            data-test="cancel-button"
+          >
+            Cancel
+          </UButton>
+          <UButton
+            type="submit"
+            color="primary"
+            :loading="isLoading"
+            :disabled="!hasChanges || isLoading"
+            data-test="update-threshold-button"
+          >
+            <template #leading>
+              <IconifyIcon v-if="!isLoading" icon="heroicons:shield-check" class="w-4 h-4" />
+            </template>
+            Update Threshold
+          </UButton>
+        </div>
+      </UForm>
+    </template>
+  </UModal>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { useVuelidate } from '@vuelidate/core'
-import { required, minValue, maxValue } from '@vuelidate/validators'
+import { computed, reactive, watch } from 'vue'
+import { z } from 'zod'
 import { type Address } from 'viem'
-import ModalComponent from '@/components/ModalComponent.vue'
-import ButtonUI from '@/components/ButtonUI.vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
-import { useToastStore } from '@/stores'
-import { useSafeOwnerManagement } from '@/composables/safe'
 
-interface Props {
-  modelValue: boolean
+import { useSafeOwnerManagement } from '@/composables/safe'
+import { useToastStore } from '@/stores'
+
+const props = defineProps<{
+  open: boolean
   safeAddress: Address
   currentOwners: string[]
   currentThreshold: number
-}
-
-const props = defineProps<Props>()
+}>()
 
 const emit = defineEmits<{
-  'update:modelValue': [value: boolean]
-  'threshold-updated': []
+  'threshold-updated': [value: boolean]
 }>()
 
 const { addSuccessToast, addErrorToast } = useToastStore()
 
-// Use Safe owner management composable
 const { isUpdating, updateOwners } = useSafeOwnerManagement()
 
-// Form state
-const newThreshold = ref(props.currentThreshold)
-
 // Computed values
+
+// Zod validation schema
+const thresholdSchema = computed(() =>
+  z.object({
+    threshold: z
+      .number({
+        required_error: 'Threshold is required',
+        invalid_type_error: 'Threshold must be a number'
+      })
+      .int('Threshold must be a whole number')
+      .min(1, 'Threshold must be at least 1')
+      .max(props.currentOwners.length, `Threshold cannot exceed ${props.currentOwners.length}`)
+  })
+)
+
+// Form state
+const formState = reactive({
+  threshold: props.currentThreshold
+})
+
+// Watch for prop changes
+watch(
+  () => props.currentThreshold,
+  (newThreshold) => {
+    formState.threshold = newThreshold
+  }
+)
+
+// Computed properties
 const isOpen = computed({
-  get: () => props.modelValue,
-  set: (value: boolean) => emit('update:modelValue', value)
+  get: () => props.open,
+  set: (value) => emit('threshold-updated', value)
 })
 
 const isLoading = computed(() => isUpdating.value)
-const totalOwners = computed(() => props.currentOwners.length)
-const hasChanges = computed(() => newThreshold.value !== props.currentThreshold)
-
-// Validation rules
-const rules = {
-  newThreshold: {
-    required,
-    minValue: minValue(1),
-    maxValue: maxValue(totalOwners)
-  }
-}
-
-const $v = useVuelidate(rules, { newThreshold })
-
-const isValidThreshold = computed(() => !$v.value.$invalid)
+const hasChanges = computed(() => formState.threshold !== props.currentThreshold)
 
 // Methods
 const handleUpdateThreshold = async () => {
-  $v.value.$touch()
-
-  if ($v.value.$invalid) {
-    addErrorToast('Please fix validation errors before proceeding')
-    return
-  }
-
   if (!hasChanges.value) {
     addErrorToast('No changes to apply')
     return
@@ -168,13 +168,17 @@ const handleUpdateThreshold = async () => {
 
   try {
     const txHash = await updateOwners(props.safeAddress, {
-      newThreshold: newThreshold.value,
+      newThreshold: formState.threshold,
       shouldPropose: props.currentThreshold >= 2
     })
 
     if (txHash) {
-      addSuccessToast('Threshold update submitted successfully')
-      emit('threshold-updated')
+      addSuccessToast(
+        props.currentThreshold >= 2
+          ? 'Threshold update proposal submitted successfully'
+          : 'Threshold updated successfully'
+      )
+      emit('threshold-updated', false)
       handleClose()
     }
   } catch (error) {
@@ -184,8 +188,8 @@ const handleUpdateThreshold = async () => {
 }
 
 const handleClose = () => {
-  newThreshold.value = props.currentThreshold
-  $v.value.$reset()
-  emit('update:modelValue', false)
+  console.log('handle close is called ===')
+  formState.threshold = props.currentThreshold
+  emit('threshold-updated', false)
 }
 </script>

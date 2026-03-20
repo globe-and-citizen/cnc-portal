@@ -1,60 +1,57 @@
 <template>
   <span class="font-bold text-2xl">{{ title }}</span>
-
   <div v-if="selectedToken?.token.id !== 'native'" class="steps w-full my-4">
     <a class="step" :class="{ 'step-primary': currentStep >= 1 }">Amount</a>
     <a class="step" :class="{ 'step-primary': currentStep >= 2 }">Approval</a>
     <a class="step" :class="{ 'step-primary': currentStep >= 3 }">Deposit</a>
   </div>
 
-  <!-- New Token Amount Component -->
-  <TokenAmount
-    :tokens="tokenList"
-    v-model:modelValue="amount"
-    v-model:modelToken="selectedTokenId"
-    :isLoading="isLoading"
-    @validation="isAmountValid = $event"
-  >
-    <template #label>
-      <span class="label-text">Deposit</span>
-      <span class="label-text-alt"
-        >Balance: {{ selectedToken?.amount }} {{ selectedToken?.token.symbol }}</span
+  <UForm :schema="formSchema" :state="{ amount }" @submit="submitForm">
+    <UFormField name="amount" class="w-full">
+      <TokenAmount
+        :tokens="tokenList"
+        v-model:modelValue="amount"
+        v-model:modelToken="selectedTokenId"
+        :isLoading="isLoading"
+        @validation="isAmountValid = $event"
       >
-    </template>
-  </TokenAmount>
-  <div class="modal-action justify-between">
-    <ButtonUI
-      variant="error"
-      outline
-      @click="
-        () => {
-          reset()
-          $emit('closeModal')
-        }
-      "
-      data-test="cancel-button"
-      >Cancel</ButtonUI
-    >
-    <ButtonUI
-      variant="primary"
-      @click="submitForm"
-      :loading="submitting"
-      :disabled="isLoading || !isAmountValid"
-      data-test="deposit-button"
-    >
-      {{
-        selectedToken?.token.id !== 'native' && currentStep === 2
-          ? 'Approval'
-          : currentStep === 3
-            ? 'Deposit'
-            : 'Deposit'
-      }}
-    </ButtonUI>
-  </div>
+        <template #label>
+          <div class="flex w-full items-center justify-between text-sm font-medium">
+            <span>Deposit</span>
+            <span class="text-xs text-gray-500 dark:text-gray-400">
+              Balance: {{ selectedToken?.amount }} {{ selectedToken?.token.symbol }}
+            </span>
+          </div>
+        </template>
+      </TokenAmount>
+    </UFormField>
+
+    <div class="mt-4 flex justify-between">
+      <UButton
+        color="neutral"
+        variant="outline"
+        type="button"
+        data-test="cancel-button"
+        @click="handleCancel"
+      >
+        Cancel
+      </UButton>
+      <UButton
+        color="primary"
+        type="submit"
+        :loading="submitting"
+        :disabled="isLoading || !isAmountValid"
+        data-test="deposit-button"
+      >
+        {{ submitLabel }}
+      </UButton>
+    </div>
+  </UForm>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
+import { z } from 'zod'
 import { parseEther, zeroAddress, type Address } from 'viem'
 import { useContractBalance } from '@/composables/useContractBalance'
 import { useSafeSendTransaction } from '@/composables/transactions/useSafeSendTransaction'
@@ -62,7 +59,6 @@ import { useERC20Approve } from '@/composables/erc20/writes'
 import { useErc20Allowance } from '@/composables/erc20/reads'
 import { SUPPORTED_TOKENS, type TokenId, USDC_ADDRESS, USDC_E_ADDRESS } from '@/constant'
 import { useCurrencyStore, useToastStore, useUserDataStore } from '@/stores'
-import ButtonUI from '../ButtonUI.vue'
 import TokenAmount from './TokenAmount.vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useChainId, useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
@@ -96,6 +92,15 @@ const currentStep = ref(1)
 const submitting = ref(false)
 const isAmountValid = ref(false)
 
+const formSchema = computed(() =>
+  z.object({
+    amount: z
+      .string()
+      .min(1, 'Amount is required')
+      .refine(() => isAmountValid.value, 'Amount is invalid')
+  })
+)
+
 // Stores
 const currencyStore = useCurrencyStore()
 const userDataStore = useUserDataStore()
@@ -127,6 +132,9 @@ const tokenList = computed(() =>
 // computed property for selected token
 const selectedToken = computed(() =>
   balances.value.find((b) => b.token.id === selectedTokenId.value)
+)
+const submitLabel = computed(() =>
+  selectedToken.value?.token.id !== 'native' && currentStep.value === 2 ? 'Approval' : 'Deposit'
 )
 const selectedTokenAddress = computed<Address>(
   () => selectedToken.value?.token.address ?? zeroAddress
@@ -169,6 +177,11 @@ watch(isNativeDepositConfirmed, (confirmed) => {
     emits('closeModal')
   }
 })
+
+const handleCancel = () => {
+  reset()
+  emits('closeModal')
+}
 
 const submitForm = async () => {
   if (!isAmountValid.value) return
