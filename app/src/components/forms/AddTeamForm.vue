@@ -1,28 +1,38 @@
 <template>
   <div class="flex flex-col gap-5">
     <!-- Step Indicator -->
-    <div class="steps w-full mb-4">
-      <a
-        class="step"
-        :class="{
-          'step-primary': currentStep > 1,
-          'step-accent': currentStep === 1
-        }"
-      >Team Details</a>
-      <a
-        class="step"
-        :class="{
-          'step-primary': currentStep > 2,
-          'step-accent': currentStep === 2
-        }"
-      >{{ step2Label }}</a>
-      <a
-        class="step"
-        :class="{
-          'step-primary': currentStep > 3,
-          'step-accent': currentStep === 3
-        }"
-      >Investor Contract</a>
+    <div class="flex items-center w-full mb-4">
+      <div class="flex flex-col items-center">
+        <div
+          class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-colors"
+          :class="currentStep > 1 ? 'bg-primary text-white' : 'bg-primary text-white ring-2 ring-primary ring-offset-2'"
+        >
+          <UIcon v-if="currentStep > 1" name="i-heroicons-check" class="w-4 h-4" />
+          <span v-else>1</span>
+        </div>
+        <span class="text-xs mt-1 text-center">Team Details</span>
+      </div>
+      <div class="flex-1 h-0.5 mx-2" :class="currentStep > 1 ? 'bg-primary' : 'bg-gray-200'" />
+      <div class="flex flex-col items-center">
+        <div
+          class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-colors"
+          :class="currentStep > 2 ? 'bg-primary text-white' : currentStep === 2 ? 'bg-primary text-white ring-2 ring-primary ring-offset-2' : 'bg-gray-200 text-gray-500'"
+        >
+          <UIcon v-if="currentStep > 2" name="i-heroicons-check" class="w-4 h-4" />
+          <span v-else>2</span>
+        </div>
+        <span class="text-xs mt-1 text-center">{{ step2Label }}</span>
+      </div>
+      <div class="flex-1 h-0.5 mx-2" :class="currentStep > 2 ? 'bg-primary' : 'bg-gray-200'" />
+      <div class="flex flex-col items-center">
+        <div
+          class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-colors"
+          :class="currentStep === 3 ? 'bg-primary text-white ring-2 ring-primary ring-offset-2' : 'bg-gray-200 text-gray-500'"
+        >
+          <span>3</span>
+        </div>
+        <span class="text-xs mt-1 text-center">Investor Contract</span>
+      </div>
     </div>
 
     <!-- Step 1: Team Details -->
@@ -50,12 +60,11 @@
           :rows="3"
           data-test="team-description-input"
         />
-        <div class="text-xs text-gray-400 text-right mt-1"></div>
       </UFormField>
       <div class="flex justify-end mt-6">
-        <ButtonUI type="submit" variant="primary" class="w-32" data-test="next-button">
+        <UButton type="submit" class="w-32" data-test="next-button">
           Next
-        </ButtonUI>
+        </UButton>
       </div>
     </UForm>
 
@@ -75,17 +84,17 @@
         </div>
       </div>
       <div class="flex justify-between mt-6">
-        <ButtonUI
-          variant="secondary"
+        <UButton
+          color="neutral"
+          variant="outline"
           class="w-32"
           :disabled="createTeamFetching"
           data-test="previous-button"
           @click="currentStep--"
         >
           Previous
-        </ButtonUI>
-        <ButtonUI
-          variant="primary"
+        </UButton>
+        <UButton
           class="w-44"
           :loading="createTeamFetching"
           :disabled="createTeamFetching || !canProceed"
@@ -93,7 +102,7 @@
           @click="saveTeamToDatabase"
         >
           Create Team
-        </ButtonUI>
+        </UButton>
       </div>
     </div>
 
@@ -132,13 +141,14 @@
         />
       </UFormField>
       <div class="flex justify-between mt-6">
-        <ButtonUI
+        <UButton
+          color="neutral"
           variant="ghost"
           data-test="skip-button"
           @click="$emit('done')"
         >
           Skip for now
-        </ButtonUI>
+        </UButton>
         <DeployContractSection
           v-if="createdTeamData !== null && createdTeamData"
           :disable="!canProceed"
@@ -154,14 +164,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 import { z } from 'zod'
 import { isAddress } from 'viem'
 import { log } from '@/utils'
 import DeployContractSection from '@/components/sections/TeamView/forms/DeployContractSection.vue'
-import ButtonUI from '@/components/ButtonUI.vue'
 import MultiSelectMemberInput from '@/components/utils/MultiSelectMemberInput.vue'
-import { onClickOutside } from '@vueuse/core'
 import type { Team } from '@/types'
 import { useCreateTeamMutation } from '@/queries/team.queries'
 import { useRouter } from 'vue-router'
@@ -199,8 +207,6 @@ const investorContractInput = ref({
   symbol: ''
 })
 
-const showDropdown = ref(false)
-const formRef = ref<HTMLElement | null>(null)
 const currentStep = ref(1)
 
 // Computed Properties
@@ -254,11 +260,4 @@ const saveTeamToDatabase = async () => {
   toast.add({ title: 'Team created successfully', color: 'success' })
   nextStep()
 }
-
-// Lifecycle Hooks
-onMounted(() => {
-  onClickOutside(formRef, () => {
-    showDropdown.value = false
-  })
-})
 </script>
