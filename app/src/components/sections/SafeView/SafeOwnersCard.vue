@@ -81,7 +81,7 @@
     />
 
     <UpdateThresholdModal
-      v-model="showUpdateThresholdModal"
+      :open="showUpdateThresholdModal"
       :safe-address="address as Address"
       :current-owners="safeInfo?.owners || []"
       :current-threshold="safeInfo?.threshold || 1"
@@ -153,8 +153,8 @@ const getOwnerDisplayName = (ownerAddress: string): string => {
 const showAddSignerModal = ref(false)
 const showUpdateThresholdModal = ref(false)
 
-const handleThresholdUpdated = () => {
-  showUpdateThresholdModal.value = false
+const handleThresholdUpdated = (_value: boolean) => {
+  showUpdateThresholdModal.value = _value
 }
 
 // Error handling
