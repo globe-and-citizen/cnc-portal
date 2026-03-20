@@ -27,9 +27,6 @@ export const setWage = async (req: Request, res: Response) => {
     ? Number(body.maximumOvertimeHoursPerWeek)
     : undefined;
 
-  console.log(body.maximumOvertimeHoursPerWeek, 'request body');
-  console.log(maximumOvertimeHoursPerWeek, 'calculated value');
-
   const ratePerHour = body.ratePerHour?.map((rate) => ({
     type: rate.type,
     amount: Number(rate.amount),
@@ -48,7 +45,6 @@ export const setWage = async (req: Request, res: Response) => {
     ratePerHour,
     overtimeRatePerHour: overtimeRatePerHour ?? Prisma.JsonNull,
   };
-  console.log(wagePayload, 'wage payload');
 
   try {
     // Check if the caller is the owner of the team
