@@ -79,61 +79,16 @@
     </div>
 
     <!-- Step 3: Investor Contract -->
-    <UForm
-      v-else-if="currentStep === 2"
-      :schema="investorSchema"
-      :state="investorContractInput"
-      class="flex flex-col gap-5"
-      data-test="step-3"
-    >
-      <UAlert
+    <div v-else-if="currentStep === 2" data-test="step-3">
+      <InvestorContractStep
         v-if="createdTeamData"
-        color="success"
-        icon="i-heroicons-check-circle"
-        :title="`Team &quot;${createdTeamData.name}&quot; created! To use CNC team features, deploy all your team contracts in one action.`"
-        class="mb-2"
+        :team="createdTeamData"
+        :show-alert="true"
+        :show-skip="true"
+        @skip="$emit('done')"
+        @contractDeployed="navigateToTeam"
       />
-      <div class="text-sm text-gray-700 mb-2">
-         Start by filling in the required investor contract values below. You can skip this and come back later..
-      </div>
-      <UFormField label="Share Name" name="name" required help="Full name of the share token (e.g. Company Shares)">
-        <UInput size="xl"
-          v-model="investorContractInput.name"
-          placeholder="Company Shares"
-          class="w-full"
-          data-test="share-name-input"
-        />
-      </UFormField>
-      <UFormField label="Symbol" name="symbol" required help="Short ticker symbol (e.g. SHR, COMP)">
-        <UInput size="xl"
-          v-model="investorContractInput.symbol"
-          placeholder="SHR"
-          class="w-full"
-          data-test="share-symbol-input"
-        />
-      </UFormField>
-      <div class="flex justify-between mt-6">
-        <UButton
-          color="neutral"
-          variant="ghost"
-          size="xl"
-          class="justify-center"
-          data-test="skip-button"
-          @click="$emit('done')"
-        >
-          Skip for now
-        </UButton>
-        <DeployContractSection
-          v-if="createdTeamData !== null && createdTeamData"
-          :disable="!canProceed"
-          :investorContractInput="investorContractInput"
-          :createdTeamData="createdTeamData"
-          @contractDeployed="navigateToTeam"
-        >
-          Deploy Contracts
-        </DeployContractSection>
-      </div>
-    </UForm>
+    </div>
   </div>
 </template>
 
@@ -142,7 +97,7 @@ import { ref, computed } from 'vue'
 import { z } from 'zod'
 import { isAddress } from 'viem'
 import { log } from '@/utils'
-import DeployContractSection from '@/components/sections/TeamView/forms/DeployContractSection.vue'
+import InvestorContractStep from '@/components/sections/TeamView/forms/InvestorContractStep.vue'
 import MultiSelectMemberInput from '@/components/utils/MultiSelectMemberInput.vue'
 import type { Team } from '@/types'
 import { useCreateTeamMutation } from '@/queries/team.queries'
@@ -164,21 +119,11 @@ const teamSchema = z.object({
   description: z.string().optional()
 })
 
-const investorSchema = z.object({
-  name: z.string().min(1, 'Share name is required'),
-  symbol: z.string().min(1, 'Symbol is required')
-})
-
 // Refs
 const teamData = ref<Pick<Team, 'name' | 'description' | 'members'>>({
   name: '',
   description: '',
   members: []
-})
-
-const investorContractInput = ref({
-  name: '',
-  symbol: ''
 })
 
 const currentStep = ref(0)
@@ -193,8 +138,6 @@ const canProceed = computed(() => {
         teamData.value.members.length === 0 ||
         teamData.value.members.every((member) => isAddress(member.address))
       )
-    case 2:
-      return !!investorContractInput.value.name && !!investorContractInput.value.symbol
     default:
       return false
   }
