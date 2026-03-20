@@ -177,11 +177,10 @@ import ButtonUI from '@/components/ButtonUI.vue'
 import MultiSelectMemberInput from '@/components/utils/MultiSelectMemberInput.vue'
 import { onClickOutside } from '@vueuse/core'
 import type { Team } from '@/types'
-import { useToastStore } from '@/stores/useToastStore'
 import { useCreateTeamMutation } from '@/queries/team.queries'
 
 defineEmits(['done'])
-const { addSuccessToast, addErrorToast } = useToastStore()
+const toast = useToast()
 const {
   isPending: createTeamFetching,
   error: createTeamError,
@@ -265,11 +264,11 @@ const saveTeamToDatabase = async () => {
   if ($v.value.$invalid) return
   await executeCreateTeam({ body: teamData.value })
   if (createTeamError.value) {
-    addErrorToast('Failed to create team')
+    toast.add({ title: 'Failed to create team', color: 'error' })
     log.error('Failed to create team', createTeamError.value)
     return
   }
-  addSuccessToast('Team created successfully')
+  toast.add({ title: 'Team created successfully', color: 'success' })
   // Move to next step only after successful team creation
   nextStep()
 }
