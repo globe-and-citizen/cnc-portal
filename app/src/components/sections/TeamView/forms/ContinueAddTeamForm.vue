@@ -13,8 +13,11 @@ const open = ref(false)
 
 const stepperItems = computed(() => [
   { title: 'Team Details', value: 1 },
-  { title: props.team.members?.length ? `Members (${props.team.members.length})` : 'Members', value: 2 },
-  { title: 'Investor Contract', value: 3 },
+  {
+    title: props.team.members?.length ? `Members (${props.team.members.length})` : 'Members',
+    value: 2
+  },
+  { title: 'Investor Contract', value: 3 }
 ])
 
 const handleDone = () => {

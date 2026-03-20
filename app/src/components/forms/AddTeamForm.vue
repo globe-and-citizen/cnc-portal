@@ -12,16 +12,28 @@
       data-test="step-1"
       @submit="nextStep"
     >
-      <UFormField label="Team Name" name="name" required help="Give your team a unique, recognizable name">
-        <UInput size="xl"
+      <UFormField
+        label="Team Name"
+        name="name"
+        required
+        help="Give your team a unique, recognizable name"
+      >
+        <UInput
+          size="xl"
           v-model="teamData.name"
           placeholder="Engineering Team"
           class="w-full"
           data-test="team-name-input"
         />
       </UFormField>
-      <UFormField label="Description" name="description" help="Optional — briefly describe your team's purpose" :hint="`${teamData.description.length} / 200`">
-        <UTextarea size="xl"
+      <UFormField
+        label="Description"
+        name="description"
+        help="Optional — briefly describe your team's purpose"
+        :hint="`${teamData.description.length} / 200`"
+      >
+        <UTextarea
+          size="xl"
           v-model="teamData.description"
           placeholder="Enter a short description"
           class="w-full"
@@ -43,7 +55,7 @@
           Invite members to your team. You can always add more later.
         </div>
         <MultiSelectMemberInput v-model="teamData.members" :disable-team-members="false" />
-      {{ createTeamError }}
+        {{ createTeamError }}
         <UAlert
           v-if="createTeamError"
           color="error"
@@ -153,7 +165,7 @@ const step2Label = computed(() => {
 const stepperItems = computed(() => [
   { title: 'Team Details', value: 1 },
   { title: step2Label.value, value: 2 },
-  { title: 'Investor Contract', value: 3 },
+  { title: 'Investor Contract', value: 3 }
 ])
 
 // Navigation Functions
