@@ -301,3 +301,5 @@ export interface TokenConfig {
   address: Address
   code: string
 }
+
+export * from './wage'
