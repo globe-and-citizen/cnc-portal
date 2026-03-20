@@ -1,39 +1,7 @@
 <template>
   <div class="flex flex-col gap-5">
     <!-- Step Indicator -->
-    <div class="flex items-center w-full mb-4">
-      <div class="flex flex-col items-center">
-        <div
-          class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-colors"
-          :class="currentStep > 1 ? 'bg-primary text-white' : 'bg-primary text-white ring-2 ring-primary ring-offset-2'"
-        >
-          <UIcon v-if="currentStep > 1" name="i-heroicons-check" class="w-4 h-4" />
-          <span v-else>1</span>
-        </div>
-        <span class="text-xs mt-1 text-center">Team Details</span>
-      </div>
-      <div class="flex-1 h-0.5 mx-2" :class="currentStep > 1 ? 'bg-primary' : 'bg-gray-200'" />
-      <div class="flex flex-col items-center">
-        <div
-          class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-colors"
-          :class="currentStep > 2 ? 'bg-primary text-white' : currentStep === 2 ? 'bg-primary text-white ring-2 ring-primary ring-offset-2' : 'bg-gray-200 text-gray-500'"
-        >
-          <UIcon v-if="currentStep > 2" name="i-heroicons-check" class="w-4 h-4" />
-          <span v-else>2</span>
-        </div>
-        <span class="text-xs mt-1 text-center">{{ step2Label }}</span>
-      </div>
-      <div class="flex-1 h-0.5 mx-2" :class="currentStep > 2 ? 'bg-primary' : 'bg-gray-200'" />
-      <div class="flex flex-col items-center">
-        <div
-          class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-colors"
-          :class="currentStep === 3 ? 'bg-primary text-white ring-2 ring-primary ring-offset-2' : 'bg-gray-200 text-gray-500'"
-        >
-          <span>3</span>
-        </div>
-        <span class="text-xs mt-1 text-center">Investor Contract</span>
-      </div>
-    </div>
+    <UStepper v-model="currentStep" :items="stepperItems" disabled class="w-full mb-4" />
 
     <!-- Step 1: Team Details -->
     <UForm
@@ -45,7 +13,7 @@
       @submit="nextStep"
     >
       <UFormField label="Team Name" name="name" required help="Give your team a unique, recognizable name">
-        <UInput
+        <UInput size="xl"
           v-model="teamData.name"
           placeholder="Engineering Team"
           class="w-full"
@@ -53,7 +21,7 @@
         />
       </UFormField>
       <UFormField label="Description" name="description" help="Optional — briefly describe your team's purpose" :hint="`${teamData.description.length} / 200`">
-        <UTextarea
+        <UTextarea size="xl"
           v-model="teamData.description"
           placeholder="Enter a short description"
           class="w-full"
@@ -62,7 +30,7 @@
         />
       </UFormField>
       <div class="flex justify-end mt-6">
-        <UButton type="submit" class="w-32" data-test="next-button">
+        <UButton type="submit" size="xl" class="w-32 justify-center" data-test="next-button">
           Next
         </UButton>
       </div>
@@ -75,19 +43,22 @@
           Invite members to your team. You can always add more later.
         </div>
         <MultiSelectMemberInput v-model="teamData.members" :disable-team-members="false" />
-        <div
-          class="pl-4 pt-4 text-sm text-red-500"
-          data-test="create-team-error"
+      {{ createTeamError }}
+        <UAlert
           v-if="createTeamError"
-        >
-          Unable to create team
-        </div>
+          color="error"
+          icon="i-heroicons-exclamation-circle"
+          title="Failed to create team"
+          description="Something went wrong on our end. Please check your connection and try again."
+          data-test="create-team-error"
+        />
       </div>
       <div class="flex justify-between mt-6">
         <UButton
           color="neutral"
           variant="outline"
-          class="w-32"
+          size="xl"
+          class="w-32 justify-center"
           :disabled="createTeamFetching"
           data-test="previous-button"
           @click="currentStep--"
@@ -95,7 +66,8 @@
           Previous
         </UButton>
         <UButton
-          class="w-44"
+          size="xl"
+          class="w-44 justify-center"
           :loading="createTeamFetching"
           :disabled="createTeamFetching || !canProceed"
           data-test="create-team-button"
@@ -125,7 +97,7 @@
         Optionally deploy an investor contract to issue shares for your team.
       </div>
       <UFormField label="Share Name" name="name" required help="Full name of the share token (e.g. Company Shares)">
-        <UInput
+        <UInput size="xl"
           v-model="investorContractInput.name"
           placeholder="Company Shares"
           class="w-full"
@@ -133,7 +105,7 @@
         />
       </UFormField>
       <UFormField label="Symbol" name="symbol" required help="Short ticker symbol (e.g. SHR, COMP)">
-        <UInput
+        <UInput size="xl"
           v-model="investorContractInput.symbol"
           placeholder="SHR"
           class="w-full"
@@ -144,6 +116,8 @@
         <UButton
           color="neutral"
           variant="ghost"
+          size="xl"
+          class="justify-center"
           data-test="skip-button"
           @click="$emit('done')"
         >
@@ -233,6 +207,12 @@ const step2Label = computed(() => {
   return 'Members'
 })
 
+const stepperItems = computed(() => [
+  { title: 'Team Details', value: 1 },
+  { title: step2Label.value, value: 2 },
+  { title: 'Investor Contract', value: 3 },
+])
+
 // Navigation Functions
 const navigateToTeam = () => {
   if (createdTeamData.value?.id) {
@@ -253,7 +233,6 @@ const saveTeamToDatabase = async () => {
   if (!canProceed.value) return
   await executeCreateTeam({ body: teamData.value })
   if (createTeamError.value) {
-    toast.add({ title: 'Failed to create team', color: 'error' })
     log.error('Failed to create team', createTeamError.value)
     return
   }
