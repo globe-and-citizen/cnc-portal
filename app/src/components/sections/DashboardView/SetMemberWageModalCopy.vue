@@ -4,8 +4,7 @@
       v-model:open="showModal"
       :ui="{
         footer: 'justify-between',
-        content: 'rounded-2xl',
-        overlay: 'bg-gray-950/35'
+        content: 'rounded-2xl'
       }"
     >
       <UButton
@@ -35,55 +34,9 @@
 
       <template #body>
         <div class="space-y-4 mt-1">
-          <div class="rounded-2xl border border-base-200 bg-base-100 px-4 py-3">
-            <div class="flex items-center gap-3" data-test="wage-stepper">
-              <div class="flex items-center gap-3">
-                <UBadge
-                  variant="solid"
-                  class="flex size-7 items-center justify-center rounded-full p-0 text-sm font-semibold"
-                  :class="
-                    currentStep === 2
-                      ? 'bg-emerald-100 text-emerald-700'
-                      : 'bg-emerald-500 text-white'
-                  "
-                >
-                  {{ currentStep === 2 ? '✓' : '1' }}
-                </UBadge>
-                <span class="text-sm font-semibold text-base-content">Standard wage</span>
-              </div>
-              <div class="h-px flex-1 bg-emerald-200"></div>
-              <div class="flex items-center gap-3">
-                <UBadge
-                  variant="solid"
-                  class="flex size-7 items-center justify-center rounded-full p-0 text-sm font-semibold"
-                  :class="
-                    currentStep === 2
-                      ? 'bg-emerald-500 text-white'
-                      : wageData.enableOvertimeRules
-                        ? 'bg-base-200 text-base-content/70'
-                        : 'bg-base-200 text-base-content/40'
-                  "
-                >
-                  2
-                </UBadge>
-                <span
-                  class="text-sm font-semibold"
-                  :class="currentStep === 2 ? 'text-base-content' : 'text-base-content/50'"
-                >
-                  Overtime rules
-                </span>
-              </div>
-            </div>
-          </div>
+          <UStepper v-if="wageData.enableOvertimeRules" :items="items" v-model="currentStep" />
 
-          <SetMemberWageStandardStep
-            v-if="currentStep === 1"
-            v-model:wageData="wageData"
-            :rateFieldConfigs="rateFieldConfigs"
-            :maxWeeklyHoursErrors="v$.wageData.maxWeeklyHours.$errors"
-            :standardRateErrors="standardRateValidationErrors"
-            :ratePerHourErrors="v$.standardRatePerHour.$errors"
-          />
+          <SetMemberWageStandardStep v-if="currentStep === 0" v-model:wageData="wageData" />
 
           <SetMemberWageOvertimeStep
             v-else
@@ -122,7 +75,7 @@
             </UButton>
             <div class="ml-auto flex gap-3">
               <UButton
-                v-if="currentStep === 1"
+                v-if="currentStep === 0"
                 color="error"
                 variant="outline"
                 size="lg"
@@ -146,9 +99,9 @@
                 color="success"
                 size="lg"
                 @click="handleSaveWage"
-                :data-test="currentStep === 1 ? 'add-wage-button' : 'save-overtime-wage-button'"
+                :data-test="currentStep === 0 ? 'add-wage-button' : 'save-overtime-wage-button'"
               >
-                {{ currentStep === 1 && wageData.enableOvertimeRules ? 'Next →' : 'Save' }}
+                {{ currentStep === 0 && wageData.enableOvertimeRules ? 'Next →' : 'Save' }}
               </UButton>
             </div>
           </div>
@@ -166,6 +119,20 @@ import { useWageForm } from '@/composables/useWageForm'
 import type { Member, RateFormKey, Wage } from '@/types'
 import type { AxiosError } from 'axios'
 
+import type { StepperItem } from '@nuxt/ui'
+
+const items = ref<StepperItem[]>([
+  {
+    title: 'Standard wage '
+  },
+
+  {
+    title: 'Overtime wage'
+  }
+])
+
+const currentStep = ref(0)
+
 const props = defineProps<{
   member: Partial<Member>
   teamId: number | string
@@ -178,7 +145,7 @@ const showModal = ref(false)
 
 const {
   wageData,
-  currentStep,
+  // currentStep,
   v$,
   standardRateSummary,
   overtimeRateSummary,

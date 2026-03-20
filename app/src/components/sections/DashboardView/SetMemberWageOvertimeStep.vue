@@ -16,6 +16,23 @@
     </UAlert>
 
     <div>
+      <UForm>
+        <UFormField name="Overtime Hours">
+          <UInput
+            v-model="wageData.maximumOvertimeHoursPerWeek"
+            class="w-full"
+            size="xl"
+            placeholder="Enter max hours per week..."
+            :ui="{
+              base: 'pl-36',
+              leading: 'pointer-events-none'
+            }"
+          >
+            <template #leading> <p class="text-sm text-muted">Overtime Hours |</p> </template>
+          </UInput>
+        </UFormField>
+      </UForm>
+
       <label class="input input-bordered flex items-center gap-2 input-md w-full">
         <span class="w-40">Overtime Hours</span>
         |

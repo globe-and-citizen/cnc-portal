@@ -1,83 +1,85 @@
 <template>
   <div class="space-y-4" data-test="standard-wage-step">
-    <div>
-      <label class="input input-bordered flex items-center gap-2 input-md w-full">
-        <span class="w-40">Max Weekly Hours</span>
-        |
-        <input
-          type="text"
-          class="grow"
+    <UForm :schema="schema" :wageData="wageData" class="space-y-4" @submit="onSubmit">
+      <UFormField name="maxWeeklyHours">
+        <UInput
           v-model="wageData.maxWeeklyHours"
+          class="w-full"
+          size="xl"
+          type="number"
           placeholder="Enter max hours per week..."
-          data-test="max-hours-input"
-        />
-      </label>
-      <div
-        data-test="max-weekly-hours-error"
-        class="text-red-500 text-sm w-full text-left"
-        v-for="error of maxWeeklyHoursErrors"
-        :key="error.$uid"
+          :ui="{
+            base: 'pl-36',
+            leading: 'pointer-events-none'
+          }"
+        >
+          <template #leading> <p class="text-sm text-muted">Max Weekly Hours |</p> </template>
+        </UInput></UFormField
       >
-        {{ error.$message }}
-      </div>
-    </div>
-
-    <div class="mb-4">
       <h3 class="text-lg font-semibold mb-4">Hourly Rates</h3>
-      <div class="flex flex-col gap-6">
-        <div v-for="field in rateFieldConfigs" :key="field.key" class="space-y-2">
-          <div class="flex items-center gap-4">
-            <USwitch
-              v-model="wageData.standardRates[field.enabledKey]"
-              color="primary"
-              :data-test="field.standardToggleTest"
-            />
 
-            <div class="relative w-full">
-              <input
-                :disabled="!wageData.standardRates[field.enabledKey]"
-                type="text"
-                class="input input-bordered w-full rounded-xl pr-16"
-                v-model="wageData.standardRates[field.amountKey]"
-                :placeholder="
-                  wageData.standardRates[field.enabledKey] ? field.activePlaceholder : field.label
-                "
-                :data-test="field.standardInputTest"
-                style="min-width: 220px"
-              />
-              <span
-                class="absolute right-4 top-1/2 -translate-y-1/2"
-                :class="
-                  wageData.standardRates[field.enabledKey]
-                    ? 'badge badge-primary font-bold'
-                    : 'badge badge-ghost text-gray-400'
-                "
-                style="transition: all 0.2s; pointer-events: none"
-              >
-                {{ field.label }}
-              </span>
-            </div>
-          </div>
-          <div
-            :data-test="field.standardErrorTest"
-            class="text-red-500 text-sm w-full text-left"
-            v-for="error of standardRateErrors[field.amountKey]"
-            :key="error.$uid"
-          >
-            {{ error.$message }}
-          </div>
-        </div>
-      </div>
-    </div>
+      <UFieldGroup class="flex items-center gap-4">
+        <USwitch size="xl" v-model="wageData.standardRates.nativeEnabled" />
+        <UInput
+          v-model="wageData.standardRates.hourlyRate"
+          placeholder="0.00"
+          size="xl"
+          type="number"
+          class="w-full"
+          :disabled="!wageData.standardRates.nativeEnabled"
+        >
+          <template #trailing>
+            <UBadge
+              class="text-sm rounded-full px-4 test w-16 flex justify-center"
+              :variant="wageData.standardRates.nativeEnabled ? 'solid' : 'outline'"
+              :color="wageData.standardRates.nativeEnabled ? 'primary' : 'neutral'"
+              >{{ NETWORK.currencySymbol }}</UBadge
+            >
+          </template>
+        </UInput>
+      </UFieldGroup>
+      <UFieldGroup class="flex items-center gap-4">
+        <USwitch size="xl" v-model="wageData.standardRates.usdcEnabled" />
+        <UInput
+          v-model="wageData.standardRates.hourlyRateUsdc"
+          placeholder="0.00"
+          size="xl"
+          type="number"
+          class="w-full"
+          :disabled="!wageData.standardRates.usdcEnabled"
+        >
+          <template #trailing>
+            <UBadge
+              class="text-sm rounded-full px-4 test w-16"
+              :variant="wageData.standardRates.usdcEnabled ? 'solid' : 'outline'"
+              :color="wageData.standardRates.usdcEnabled ? 'primary' : 'neutral'"
+              >USDC</UBadge
+            >
+          </template>
+        </UInput>
+      </UFieldGroup>
 
-    <div
-      data-test="rate-per-hour-error"
-      class="text-red-500 text-sm w-full text-left"
-      v-for="error of ratePerHourErrors"
-      :key="error.$uid"
-    >
-      {{ error.$message }}
-    </div>
+      <UFieldGroup class="flex items-center gap-4">
+        <USwitch size="xl" v-model="wageData.standardRates.sherEnabled" />
+        <UInput
+          v-model="wageData.standardRates.hourlyRateToken"
+          placeholder="0.00"
+          size="xl"
+          type="number"
+          class="w-full"
+          :disabled="!wageData.standardRates.sherEnabled"
+        >
+          <template #trailing>
+            <UBadge
+              class="text-sm rounded-full px-4 test w-16"
+              :variant="wageData.standardRates.sherEnabled ? 'solid' : 'outline'"
+              :color="wageData.standardRates.sherEnabled ? 'primary' : 'neutral'"
+              >SHER</UBadge
+            >
+          </template>
+        </UInput>
+      </UFieldGroup>
+    </UForm>
 
     <div class="border-t border-base-200 pt-4">
       <label
@@ -107,20 +109,36 @@
 </template>
 
 <script setup lang="ts">
-import type { Ref } from 'vue'
-import type { RateFieldConfig, RateFormKey, WageFormState } from '@/types'
-
-interface ValidationError {
-  $uid: string
-  $message: string | Ref<string>
-}
+import type { WageFormState } from '@/types'
+import * as z from 'zod'
+import type { FormSubmitEvent } from '@nuxt/ui'
+import { NETWORK } from '@/constant'
 
 const wageData = defineModel<WageFormState>('wageData', { required: true })
 
-defineProps<{
-  rateFieldConfigs: RateFieldConfig[]
-  maxWeeklyHoursErrors: ValidationError[]
-  standardRateErrors: Record<RateFormKey, ValidationError[]>
-  ratePerHourErrors: ValidationError[]
-}>()
+const schema = z.object({
+  maxWeeklyHours: z
+    .string()
+    .min(1, 'Max weekly hours is required')
+    .regex(/^\d+$/, 'Must be a number'),
+  maximumOvertimeHoursPerWeek: z
+    .string()
+    .min(1, 'Max overtime hours is required')
+    .regex(/^\d+$/, 'Must be a number'),
+  enableOvertimeRules: z.boolean()
+})
+
+type Schema = z.output<typeof schema>
+
+// const wageData = reactive<Partial<Schema>>({
+//   maxWeeklyHours: undefined,
+//   email: undefined,
+//   password: undefined
+// })
+
+const toast = useToast()
+async function onSubmit(event: FormSubmitEvent<Schema>) {
+  toast.add({ title: 'Success', description: 'The form has been submitted.', color: 'success' })
+  console.log(event.data)
+}
 </script>
