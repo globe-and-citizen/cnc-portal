@@ -5,7 +5,7 @@
 
     <!-- Step 1: Team Details -->
     <UForm
-      v-if="currentStep === 1"
+      v-if="currentStep === 0"
       :schema="teamSchema"
       :state="teamData"
       class="flex flex-col gap-4"
@@ -37,7 +37,7 @@
     </UForm>
 
     <!-- Step 2: Members -->
-    <div v-else-if="currentStep === 2" data-test="step-2">
+    <div v-else-if="currentStep === 1" data-test="step-2">
       <div class="flex flex-col gap-5">
         <div class="text-sm text-gray-700 mb-2">
           Invite members to your team. You can always add more later.
@@ -80,7 +80,7 @@
 
     <!-- Step 3: Investor Contract -->
     <UForm
-      v-else-if="currentStep === 3"
+      v-else-if="currentStep === 2"
       :schema="investorSchema"
       :state="investorContractInput"
       class="flex flex-col gap-5"
@@ -90,11 +90,11 @@
         v-if="createdTeamData"
         color="success"
         icon="i-heroicons-check-circle"
-        :title="`Team &quot;${createdTeamData.name}&quot; created! Now optionally deploy an investor contract.`"
+        :title="`Team &quot;${createdTeamData.name}&quot; created! To use CNC team features, deploy all your team contracts in one action.`"
         class="mb-2"
       />
       <div class="text-sm text-gray-700 mb-2">
-        Optionally deploy an investor contract to issue shares for your team.
+         Start by filling in the required investor contract values below. You can skip this and come back later..
       </div>
       <UFormField label="Share Name" name="name" required help="Full name of the share token (e.g. Company Shares)">
         <UInput size="xl"
@@ -181,19 +181,19 @@ const investorContractInput = ref({
   symbol: ''
 })
 
-const currentStep = ref(1)
+const currentStep = ref(0)
 
 // Computed Properties
 const canProceed = computed(() => {
   switch (currentStep.value) {
-    case 1:
+    case 0:
       return !!teamData.value.name
-    case 2:
+    case 1:
       return (
         teamData.value.members.length === 0 ||
         teamData.value.members.every((member) => isAddress(member.address))
       )
-    case 3:
+    case 2:
       return !!investorContractInput.value.name && !!investorContractInput.value.symbol
     default:
       return false
