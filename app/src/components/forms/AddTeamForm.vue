@@ -87,8 +87,11 @@
       class="flex flex-col gap-5"
       data-test="step-3"
     >
-      <span class="font-bold text-2xl mb-4">Investor Contract Details</span>
-      <hr class="mb-6" />
+      <!-- <span class="font-bold text-2xl mb-4">Investor Contract Details</span>
+      <hr class="mb-6" /> -->
+        <div class="text-sm text-gray-700 mb-2">
+          Set the details for your investor contract. This will be used to create the ERC-20 token representing shares in your company.
+        </div>
       <UFormField label="Share Name" name="name" required>
         <UInput
           v-model="investorContractInput.name"
