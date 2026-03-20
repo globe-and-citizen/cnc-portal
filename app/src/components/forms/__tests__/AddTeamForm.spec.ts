@@ -178,7 +178,7 @@ describe('AddTeamForm.vue', () => {
       expect(wrapper.find(SELECTORS.createTeamError).text()).toContain('Unable to create team')
     })
 
-    it('should not submit when team details are invalid', async () => {
+    it('should not submit when team name is empty', async () => {
       const mutation = createMockMutationResponse(mockTeamData)
       vi.mocked(useCreateTeamMutation).mockReturnValue(
         mutation as ReturnType<typeof useCreateTeamMutation>
@@ -254,57 +254,6 @@ describe('AddTeamForm.vue', () => {
       await wrapper.vm.$nextTick()
 
       expect(vm.canProceed).toBe(false)
-    })
-
-    it('should evaluate address validation rule', async () => {
-      wrapper = mountComponent()
-
-      const vm = wrapper.vm as unknown as {
-        rules: {
-          teamData: {
-            members: {
-              $each: {
-                address: { isValidAddress: { $validator: (value: string) => boolean } }
-              }
-            }
-          }
-        }
-      }
-
-      const validator = vm.rules.teamData.members.$each.address.isValidAddress.$validator
-      expect(validator('not-an-address')).toBe(false)
-      expect(validator('0x4b6Bf5cD91446408290725879F5666dcd9785F62')).toBe(true)
-    })
-
-    it('should render team name validation error in template', async () => {
-      wrapper = mountComponent()
-
-      const exposed = (wrapper.vm as unknown as { $: { exposed?: Record<string, unknown> } }).$
-        ?.exposed as { $v: { value: { $touch: () => void } } }
-
-      exposed.$v.value.$touch()
-      await wrapper.vm.$nextTick()
-
-      expect(wrapper.find('[data-test="name-error"]').exists()).toBe(true)
-    })
-  })
-
-  describe('Template Branches', () => {
-    it('should render investor validation errors in template', async () => {
-      wrapper = mountComponent()
-
-      const vm = wrapper.vm as unknown as { currentStep: number }
-      vm.currentStep = 3
-      await wrapper.vm.$nextTick()
-
-      const exposed = (wrapper.vm as unknown as { $: { exposed?: Record<string, unknown> } }).$
-        ?.exposed as { $vInvestor: { value: { $touch: () => void } } }
-
-      exposed.$vInvestor.value.$touch()
-      await wrapper.vm.$nextTick()
-
-      expect(wrapper.find('[data-test="share-name-error"]').exists()).toBe(true)
-      expect(wrapper.find('[data-test="share-symbol-error"]').exists()).toBe(true)
     })
   })
 

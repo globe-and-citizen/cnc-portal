@@ -8,55 +8,45 @@
     </div>
 
     <!-- Step 1: Team Details -->
-    <div v-if="currentStep === 1" data-test="step-1">
-      <span class="font-bold text-2xl mb-4">Team Details</span>
-      <hr class="mb-6" />
-      <div class="flex flex-col gap-5">
-        <div>
-          <label class="w-full input input-bordered flex items-center gap-2 input-md mt-4">
-            <span class="w-24">Team Name</span>
-            <input
-              type="text"
-              class="grow"
-              placeholder="Daisy"
-              data-test="team-name-input"
-              v-model="teamData.name"
-              name="name"
-            />
-          </label>
-          <div
-            class="pl-4 text-red-500 text-sm"
-            v-for="error of $v.teamData.name.$errors"
-            data-test="name-error"
-            :key="error.$uid"
-          >
-            {{ error.$message }}
-          </div>
-        </div>
-        <label class="w-full input input-bordered flex items-center gap-2 input-md">
-          <span class="w-24">Description</span>
-          <input
-            type="text"
-            class="grow"
-            placeholder="Enter a short description"
-            data-test="team-description-input"
-            v-model="teamData.description"
-            name="description"
-          />
-        </label>
+    <UForm
+      v-if="currentStep === 1"
+      :schema="teamSchema"
+      :state="teamData"
+      class="flex flex-col gap-4"
+      data-test="step-1"
+      @submit="nextStep"
+    >
+      <UFormField label="Team Name" name="name" required>
+        <UInput
+          v-model="teamData.name"
+          placeholder="Daisy"
+          class="w-full"
+          data-test="team-name-input"
+        />
+      </UFormField>
+      <UFormField label="Description" name="description">
+        <UInput
+          v-model="teamData.description"
+          placeholder="Enter a short description"
+          class="w-full"
+          data-test="team-description-input"
+        />
+      </UFormField>
+      <div class="flex justify-end mt-6">
+        <ButtonUI type="submit" variant="primary" class="w-32" data-test="next-button">
+          Next
+        </ButtonUI>
       </div>
-    </div>
+    </UForm>
 
     <!-- Step 2: Members -->
-    <div v-if="currentStep === 2" data-test="step-2">
-      <span class="font-bold text-2xl mb-4">Team Members (Optional)</span>
-      <hr class="mb-6" />
-
+    <div v-else-if="currentStep === 2" data-test="step-2">
+      <!-- <span class="font-bold text-2xl mb-4">Team Members (Optional)</span>
+      <hr class="mb-6" /> -->
       <div class="flex flex-col gap-5">
         <div class="text-sm text-gray-700 mb-2">
-          You can add team members now or invite them later.
+          You can add team members now or invite them later. (Optional)*
         </div>
-
         <MultiSelectMemberInput v-model="teamData.members" :disable-team-members="false" />
         <div
           class="pl-4 pt-4 text-sm text-red-500"
@@ -66,110 +56,73 @@
           Unable to create team
         </div>
       </div>
-    </div>
-
-    <!-- Step 3: Investor Contract -->
-    <div v-if="currentStep === 3" data-test="step-3">
-      <span class="font-bold text-2xl mb-4">Investor Contract Details</span>
-      <hr class="mb-6" />
-      <div class="flex flex-col gap-5">
-        <label class="w-full input input-bordered flex items-center gap-2 input-md">
-          <span class="w-24">Share Name</span>
-          <input
-            type="text"
-            class="grow"
-            placeholder="Company Shares"
-            data-test="share-name-input"
-            v-model="investorContractInput.name"
-            name="shareName"
-          />
-        </label>
-        <div
-          class="pl-4 text-red-500 text-sm"
-          v-for="error of $vInvestor.investorContractInput.name.$errors"
-          data-test="share-name-error"
-          :key="error.$uid"
+      <div class="flex justify-between mt-6">
+        <ButtonUI
+          variant="secondary"
+          class="w-32"
+          :disabled="createTeamFetching"
+          data-test="previous-button"
+          @click="currentStep--"
         >
-          {{ error.$message }}
-        </div>
-
-        <label class="w-full input input-bordered flex items-center gap-2 input-md">
-          <span class="w-24">Symbol</span>
-          <input
-            type="text"
-            class="grow"
-            placeholder="SHR"
-            data-test="share-symbol-input"
-            v-model="investorContractInput.symbol"
-            name="shareSymbol"
-          />
-        </label>
-        <div
-          class="pl-4 text-red-500 text-sm"
-          v-for="error of $vInvestor.investorContractInput.symbol.$errors"
-          data-test="share-symbol-error"
-          :key="error.$uid"
+          Previous
+        </ButtonUI>
+        <ButtonUI
+          variant="primary"
+          class="w-44"
+          :loading="createTeamFetching"
+          :disabled="createTeamFetching || !canProceed"
+          data-test="create-team-button"
+          @click="saveTeamToDatabase"
         >
-          {{ error.$message }}
-        </div>
+          Create Team
+        </ButtonUI>
       </div>
     </div>
 
-    <!-- Navigation Buttons -->
-    <div class="flex justify-between mt-6">
-      <ButtonUI
-        v-if="currentStep == 2"
-        variant="secondary"
-        class="w-32"
-        @click="currentStep--"
-        :disabled="createTeamFetching || false"
-        data-test="previous-button"
-      >
-        Previous
-      </ButtonUI>
-      <div class="grow"></div>
-      <ButtonUI
-        v-if="currentStep === 1"
-        variant="primary"
-        class="w-32"
-        data-test="next-button"
-        @click="nextStep"
-        :disabled="!canProceed"
-      >
-        Next
-      </ButtonUI>
-      <ButtonUI
-        v-else-if="currentStep === 2"
-        variant="primary"
-        class="w-44"
-        :loading="createTeamFetching"
-        :disabled="createTeamFetching || !canProceed"
-        data-test="create-team-button"
-        @click="saveTeamToDatabase"
-      >
-        Create Team
-      </ButtonUI>
-      <DeployContractSection
-        v-else-if="currentStep === 3 && createdTeamData !== null && createdTeamData"
-        :disable="!canProceed"
-        :investorContractInput="investorContractInput"
-        :createdTeamData="createdTeamData"
-        @contractDeployed="
-          () => {
-            $emit('done')
-          }
-        "
-      >
-        Deploy Contracts
-      </DeployContractSection>
-    </div>
+    <!-- Step 3: Investor Contract -->
+    <UForm
+      v-else-if="currentStep === 3"
+      :schema="investorSchema"
+      :state="investorContractInput"
+      class="flex flex-col gap-5"
+      data-test="step-3"
+    >
+      <span class="font-bold text-2xl mb-4">Investor Contract Details</span>
+      <hr class="mb-6" />
+      <UFormField label="Share Name" name="name" required>
+        <UInput
+          v-model="investorContractInput.name"
+          placeholder="Company Shares"
+          class="w-full"
+          data-test="share-name-input"
+        />
+      </UFormField>
+      <UFormField label="Symbol" name="symbol" required>
+        <UInput
+          v-model="investorContractInput.symbol"
+          placeholder="SHR"
+          class="w-full"
+          data-test="share-symbol-input"
+        />
+      </UFormField>
+      <div class="flex justify-end mt-6">
+        <DeployContractSection
+          v-if="createdTeamData !== null && createdTeamData"
+          :disable="!canProceed"
+          :investorContractInput="investorContractInput"
+          :createdTeamData="createdTeamData"
+          @contractDeployed="() => { $emit('done') }"
+        >
+          Deploy Contracts
+        </DeployContractSection>
+      </div>
+    </UForm>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import useVuelidate from '@vuelidate/core'
-import { required, helpers } from '@vuelidate/validators'
+import { z } from 'zod'
 import { isAddress } from 'viem'
 import { log } from '@/utils'
 import DeployContractSection from '@/components/sections/TeamView/forms/DeployContractSection.vue'
@@ -188,6 +141,17 @@ const {
   data: createdTeamData
 } = useCreateTeamMutation()
 
+// Zod Schemas
+const teamSchema = z.object({
+  name: z.string().min(1, 'Team name is required'),
+  description: z.string().optional()
+})
+
+const investorSchema = z.object({
+  name: z.string().min(1, 'Share name is required'),
+  symbol: z.string().min(1, 'Symbol is required')
+})
+
 // Refs
 const teamData = ref<Pick<Team, 'name' | 'description' | 'members'>>({
   name: '',
@@ -204,42 +168,12 @@ const showDropdown = ref(false)
 const formRef = ref<HTMLElement | null>(null)
 const currentStep = ref(1)
 
-// Validation Rules
-const rules = {
-  teamData: {
-    name: { required },
-    members: {
-      $each: {
-        address: {
-          isValidAddress: helpers.withMessage('Invalid Ethereum address', (value: string) =>
-            isAddress(value)
-          )
-        }
-      }
-    }
-  }
-}
-
-const investorContractInputRules = {
-  investorContractInput: {
-    name: { required },
-    symbol: { required }
-  }
-}
-// TODO: validate Team Details on key up and require at least 5 letter for Team Name
-// TODO validate this before proceeding to create deploy contract
-
-// Validation Instances
-const $v = useVuelidate(rules, { teamData })
-const $vInvestor = useVuelidate(investorContractInputRules, { investorContractInput })
-
 // Computed Properties
 const canProceed = computed(() => {
   switch (currentStep.value) {
     case 1:
       return !!teamData.value.name
     case 2:
-      // Members are optional, so always allow proceeding from step 2
       return (
         teamData.value.members.length === 0 ||
         teamData.value.members.every((member) => isAddress(member.address))
@@ -260,8 +194,9 @@ const nextStep = () => {
 
 // Form Submission Functions
 const saveTeamToDatabase = async () => {
-  $v.value.$touch()
-  if ($v.value.$invalid) return
+  const result = teamSchema.safeParse(teamData.value)
+  if (!result.success) return
+  if (!canProceed.value) return
   await executeCreateTeam({ body: teamData.value })
   if (createTeamError.value) {
     toast.add({ title: 'Failed to create team', color: 'error' })
@@ -269,7 +204,6 @@ const saveTeamToDatabase = async () => {
     return
   }
   toast.add({ title: 'Team created successfully', color: 'success' })
-  // Move to next step only after successful team creation
   nextStep()
 }
 
@@ -278,10 +212,5 @@ onMounted(() => {
   onClickOutside(formRef, () => {
     showDropdown.value = false
   })
-})
-
-defineExpose({
-  $v,
-  $vInvestor
 })
 </script>
