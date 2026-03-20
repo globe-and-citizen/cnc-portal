@@ -47,7 +47,6 @@ const SELECTORS = {
   createTeamError: '[data-test="create-team-error"]'
 } as const
 
-
 type AddTeamFormVm = {
   teamData: { name: string; description: string; members: Array<{ address: string; name: string }> }
   currentStep: number
