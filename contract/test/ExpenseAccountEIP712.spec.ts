@@ -64,6 +64,37 @@ describe('ExpenseAccount (EIP712) - Administrative Tests', () => {
       const balance = await expenseAccount.getBalance()
       expect(balance).to.equal(ethers.parseEther('100'))
     })
+
+    it('Should allow owner to withdraw native treasury funds', async () => {
+      const amount = ethers.parseEther('11')
+      await owner.sendTransaction({
+        to: await expenseAccount.getAddress(),
+        value: amount
+      })
+
+      await expect(() =>
+        expenseAccount.connect(owner).ownerWithdrawNative(ethers.parseEther('10'))
+      ).to.changeEtherBalances(
+        [expenseAccount, owner],
+        [-ethers.parseEther('10'), ethers.parseEther('10')]
+      )
+
+      await expect(expenseAccount.connect(owner).ownerWithdrawNative(ethers.parseEther('1')))
+        .to.emit(expenseAccount, 'OwnerTreasuryWithdrawNative')
+        .withArgs(owner.address, ethers.parseEther('1'))
+    })
+
+    it('Should not allow non-owner to withdraw native treasury funds', async () => {
+      const amount = ethers.parseEther('1')
+      await owner.sendTransaction({
+        to: await expenseAccount.getAddress(),
+        value: amount
+      })
+
+      await expect(
+        expenseAccount.connect(imposter).ownerWithdrawNative(amount)
+      ).to.be.revertedWithCustomError(expenseAccount, 'OwnableUnauthorizedAccount')
+    })
   })
 
   describe('Approval State Management', () => {
@@ -224,6 +255,21 @@ describe('ExpenseAccount (EIP712) - Administrative Tests', () => {
       expect(balance).to.equal(amount)
     })
 
+    it('Should allow owner to withdraw supported token treasury funds', async () => {
+      const amount = ethers.parseEther('50')
+      const withdrawAmount = ethers.parseEther('10')
+
+      await expenseAccount.connect(owner).depositToken(await mockUSDT.getAddress(), amount)
+
+      await expect(
+        expenseAccount
+          .connect(owner)
+          .ownerWithdrawToken(await mockUSDT.getAddress(), withdrawAmount)
+      )
+        .to.emit(expenseAccount, 'OwnerTreasuryWithdrawToken')
+        .withArgs(owner.address, await mockUSDT.getAddress(), withdrawAmount)
+    })
+
     describe('Token Management Restrictions', () => {
       it('Should not allow deposits with unsupported tokens', async () => {
         const amount = ethers.parseEther('100')
@@ -259,6 +305,17 @@ describe('ExpenseAccount (EIP712) - Administrative Tests', () => {
         await expect(expenseAccount.removeTokenSupport(ethers.ZeroAddress)).to.be.revertedWith(
           'Token address cannot be zero'
         )
+      })
+
+      it('Should not allow owner withdraw with unsupported token', async () => {
+        await expect(
+          expenseAccount
+            .connect(owner)
+            .ownerWithdrawToken(
+              '0x1234567890123456789012345678901234567890',
+              ethers.parseEther('1')
+            )
+        ).to.be.revertedWith('Unsupported token')
       })
     })
   })

@@ -97,6 +97,24 @@ const hasContract = computed(() => {
   return (teamStore.currentTeamMeta.data?.teamContracts ?? []).length > 0
 })
 
+watch(
+  [
+    () => route.params.id,
+    () => teamStore.currentTeamMeta.data?.officerAddress,
+    () => (teamStore.currentTeamMeta.data?.teamContracts ?? []).length
+  ],
+  async ([teamId]) => {
+    if (!teamId || typeof teamId !== 'string') {
+      return
+    }
+
+    if (teamId !== teamStore.currentTeamId) {
+      return
+    }
+  },
+  { immediate: true }
+)
+
 // Declare stop first so it's available in the callback
 let stop: (() => void) | undefined
 
