@@ -62,7 +62,7 @@ import { isAddress, parseUnits, type Address } from 'viem'
 import { onMounted, ref } from 'vue'
 import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 import SelectMemberContractsInput from '@/components/utils/SelectMemberContractsInput.vue'
-import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
+import { INVESTOR_ABI } from '@/artifacts/abi/investors'
 import { computed, watch } from 'vue'
 import { useTeamStore, useToastStore } from '@/stores'
 import { log } from '@/utils'
@@ -89,7 +89,7 @@ const investorsAddress = computed(() => teamStore.getContractAddressByType('Inve
 
 const {
   data: mintHash,
-  writeContract: mint,
+  mutate: mint,
   error: mintError,
   isPending: isMintPending
 } = useWriteContract()

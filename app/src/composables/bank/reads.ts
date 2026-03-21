@@ -15,7 +15,7 @@ const BANK_FUNCTION_NAMES = {
   DIVIDEND_BALANCES: 'dividendBalances',
   TOKEN_DIVIDEND_BALANCES: 'tokenDividendBalances',
   TOTAL_DIVIDEND: 'totalDividends',
-  GET_UNLOCK_BALANCE: 'getUnlockedBalance'
+  BALANCE: 'getBalance'
 } as const
 
 /**
@@ -117,15 +117,22 @@ export function useTotalDividend() {
   })
 }
 
-export function useUnlockedBalance() {
+export function useBankBalance() {
   const bankAddress = useBankAddress()
 
   return useReadContract({
     address: bankAddress,
     abi: BANK_ABI,
-    functionName: BANK_FUNCTION_NAMES.GET_UNLOCK_BALANCE,
+    functionName: BANK_FUNCTION_NAMES.BALANCE,
     query: { enabled: !!bankAddress.value && isAddress(bankAddress.value) }
   })
+}
+
+/**
+ * @deprecated Use useBankBalance instead.
+ */
+export function useUnlockedBalance() {
+  return useBankBalance()
 }
 
 /**

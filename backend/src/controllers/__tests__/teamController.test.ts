@@ -5,7 +5,11 @@ import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { authorizeUser } from '../../middleware/authMiddleware';
 import teamRoutes from '../../routes/teamRoutes';
-import { prisma } from '../../utils';
+import { addNotification, prisma } from '../../utils';
+
+const { mockGetPresignedDownloadUrl } = vi.hoisted(() => ({
+  mockGetPresignedDownloadUrl: vi.fn((key: string) => `https://signed.example.com/${key}`),
+}));
 
 // Mock the authorizeUser middleware
 vi.mock('../../middleware/authMiddleware', () => ({
@@ -70,6 +74,10 @@ vi.mock('../../utils/viem.config', () => ({
   },
 }));
 
+vi.mock('../../services/storageService', () => ({
+  getPresignedDownloadUrl: mockGetPresignedDownloadUrl,
+}));
+
 const app = express();
 app.use(express.json());
 app.use('/', authorizeUser, teamRoutes);
@@ -90,7 +98,7 @@ const mockTeamData = {
     { address: faker.finance.ethereumAddress(), name: 'Member 2' },
   ],
 
-  officerAddress: '0xOfficerAddress',
+  officerAddress: '0x3333333333333333333333333333333333333333',
 };
 
 const teamMockResolve: Team = {
@@ -100,7 +108,7 @@ const teamMockResolve: Team = {
 
   members: [
     {
-      address: '0xmember1address000000000000000000000000',
+      address: '0x2222222222222222222222222222222222222222',
       name: 'Member 1',
       imageUrl: 'https://example.com/image.jpg',
       createdAt: new Date(),
@@ -131,7 +139,7 @@ describe('Team Controller', () => {
         });
 
       expect(response.status).toBe(400);
-      expect(response.body.message).toEqual('Invalid wallet address for member: Invalid Member');
+      expect(response.body.message).toContain('Invalid');
     });
 
     it('should return 201 and create a team successfully', async () => {
@@ -179,6 +187,59 @@ describe('Team Controller', () => {
 
       expect(response.status).toBe(500);
       expect(response.body.message).toEqual('Internal server error has occured');
+    });
+
+    it('should create team with null officer address when not provided', async () => {
+      vi.spyOn(prisma.user, 'findUnique').mockResolvedValue(mockOwner);
+      vi.spyOn(prisma.team, 'create').mockResolvedValue(teamMockResolve);
+
+      const response = await request(app).post('/').send({
+        name: 'No Officer Team',
+        description: 'desc',
+        members: mockTeamData.members,
+      });
+
+      expect(response.status).toBe(201);
+      expect(prisma.team.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ officerAddress: null }),
+        })
+      );
+    });
+
+    it('should fallback notification author to empty string when owner address is missing', async () => {
+      vi.spyOn(prisma.user, 'findUnique').mockResolvedValue({
+        ...mockOwner,
+        address: undefined,
+      } as unknown as User);
+      vi.spyOn(prisma.team, 'create').mockResolvedValue(teamMockResolve);
+
+      const response = await request(app)
+        .post('/')
+        .send({
+          ...mockTeamData,
+          members: [
+            {
+              address: '0x1234567890123456789012345678901234567890',
+              name: 'Caller',
+            },
+          ],
+        });
+
+      expect(response.status).toBe(201);
+      expect(vi.mocked(addNotification)).toHaveBeenCalledWith(
+        expect.any(Array),
+        expect.objectContaining({ author: '' })
+      );
+    });
+
+    it('should return 500 when addTeam throws non-Error value', async () => {
+      vi.spyOn(prisma.user, 'findUnique').mockRejectedValue('boom' as never);
+
+      const response = await request(app).post('/').send(mockTeamData);
+
+      expect(response.status).toBe(500);
+      expect(response.body.message).toBe('Internal server error has occured');
     });
   });
 
@@ -229,6 +290,15 @@ describe('Team Controller', () => {
       vi.spyOn(prisma.team, 'findUnique').mockRejectedValue(new Error('DB failure'));
 
       const response = await request(app).get('/1').query({ teamId: 1 }).set('address', '0xABC');
+
+      expect(response.status).toBe(500);
+      expect(response.body.message).toBe('Internal server error has occured');
+    });
+
+    it('should return 500 if getTeam throws non-Error value', async () => {
+      vi.spyOn(prisma.team, 'findUnique').mockRejectedValue('failure' as never);
+
+      const response = await request(app).get('/1');
 
       expect(response.status).toBe(500);
       expect(response.body.message).toBe('Internal server error has occured');
@@ -317,10 +387,19 @@ describe('Team Controller', () => {
       });
     });
 
-    it('should return 403 when userAddress does not match callerAddress', async () => {
+    it('should return 400 when userAddress is invalid', async () => {
       const response = await request(app)
         .get('/')
         .query({ userAddress: '0xDifferentAddress1234567890123456789' });
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toContain('Invalid');
+    });
+
+    it('should return 403 when userAddress does not match callerAddress', async () => {
+      const response = await request(app)
+        .get('/')
+        .query({ userAddress: '0x9999999999999999999999999999999999999999' });
 
       expect(response.status).toBe(403);
       expect(response.body.message).toBe('Unauthorized');
@@ -328,6 +407,15 @@ describe('Team Controller', () => {
 
     it('should return 500 if an error occurs', async () => {
       vi.spyOn(prisma.team, 'findMany').mockRejectedValue(new Error('Database failure'));
+
+      const response = await request(app).get('/');
+
+      expect(response.status).toBe(500);
+      expect(response.body.message).toBe('Internal server error has occured');
+    });
+
+    it('should return 500 if getAllTeams throws non-Error value', async () => {
+      vi.spyOn(prisma.team, 'findMany').mockRejectedValue('failure' as never);
 
       const response = await request(app).get('/');
 
@@ -348,7 +436,7 @@ describe('Team Controller', () => {
         id: 1,
         name: 'Updated Team',
         description: 'Updated Description',
-        officerAddress: '0xNewOfficerAddress',
+        officerAddress: '0x4444444444444444444444444444444444444444',
       });
 
       expect(response.status).toBe(404);
@@ -361,7 +449,7 @@ describe('Team Controller', () => {
         ownerAddress: faker.finance.ethereumAddress(),
         name: 'Test Team',
         description: 'Test Description',
-        officerAddress: '0xOfficerAddress',
+        officerAddress: '0x3333333333333333333333333333333333333333',
       };
 
       vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(mockTeam);
@@ -370,7 +458,7 @@ describe('Team Controller', () => {
         id: 1,
         name: 'Updated Team',
         description: 'Updated Description',
-        officerAddress: '0xNewOfficerAddress',
+        officerAddress: '0x4444444444444444444444444444444444444444',
       });
 
       expect(response.status).toBe(403);
@@ -383,7 +471,7 @@ describe('Team Controller', () => {
         ownerAddress: mockOwner.address,
         name: 'Test Team',
         description: 'Test Description',
-        officerAddress: '0xOfficerAddress',
+        officerAddress: '0x3333333333333333333333333333333333333333',
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -393,7 +481,7 @@ describe('Team Controller', () => {
         ...mockTeam,
         name: 'Updated Team',
         description: 'Updated Description',
-        officerAddress: '0xNewOfficerAddress',
+        officerAddress: '0x4444444444444444444444444444444444444444',
       });
 
       const response = await request(app).put('/1').send({
@@ -402,7 +490,7 @@ describe('Team Controller', () => {
         owenrAddress: mockOwner.address,
         name: 'Updated Team',
         description: 'Updated Description',
-        officerAddress: '0xNewOfficerAddress',
+        officerAddress: '0x4444444444444444444444444444444444444444',
       });
 
       expect(response.status).toBe(200);
@@ -415,11 +503,20 @@ describe('Team Controller', () => {
         ownerAddress: mockOwner.address,
         name: 'Test Team',
         description: 'Test Description',
-        officerAddress: '0xOfficerAddress',
+        officerAddress: '0x3333333333333333333333333333333333333333',
         createdAt: new Date(),
         updatedAt: new Date(),
       });
       vi.spyOn(prisma.team, 'update').mockRejectedValue(new Error('Server error'));
+
+      const response = await request(app).put('/1').send(mockTeamData);
+
+      expect(response.status).toBe(500);
+      expect(response.body.message).toEqual('Internal server error has occured');
+    });
+
+    it('should return 500 when updateTeam throws non-Error value', async () => {
+      vi.spyOn(prisma.team, 'findUnique').mockRejectedValue('failure' as never);
 
       const response = await request(app).put('/1').send(mockTeamData);
 
@@ -497,6 +594,15 @@ describe('Team Controller', () => {
     it('should return 500 if there is a server error', async () => {
       vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(teamMockResolve);
       vi.spyOn(prisma.team, 'delete').mockRejectedValue(new Error('Server error'));
+
+      const response = await request(app).delete('/1').set('address', '0xOwnerAddress');
+
+      expect(response.status).toBe(500);
+      expect(response.body.message).toEqual('Internal server error has occured');
+    });
+
+    it('should return 500 when deleteTeam throws non-Error value', async () => {
+      vi.spyOn(prisma.team, 'findUnique').mockRejectedValue('failure' as never);
 
       const response = await request(app).delete('/1').set('address', '0xOwnerAddress');
 

@@ -1,4 +1,4 @@
-import type { Address } from 'viem'
+import { type Address, parseUnits } from 'viem'
 import { encodeFunctionData, zeroAddress } from 'viem'
 import {
   BANK_BEACON_ADDRESS,
@@ -17,7 +17,7 @@ import { BANK_ABI } from '@/artifacts/abi/bank'
 import { EXPENSE_ACCOUNT_EIP712_ABI } from '@/artifacts/abi/expense-account-eip712'
 import { CASH_REMUNERATION_EIP712_ABI } from '@/artifacts/abi/cash-remuneration-eip712'
 import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
-import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
+import { INVESTOR_ABI } from '@/artifacts/abi/investors'
 import { SAFE_DEPOSIT_ROUTER_ABI } from '@/artifacts/abi/safe-deposit-router'
 import { PROPOSALS_ABI } from '@/artifacts/abi/proposals'
 import { log } from '@/utils'
@@ -160,7 +160,7 @@ export const getDeploymentConfigs = (
     initializerData: encodeFunctionData({
       abi: EXPENSE_ACCOUNT_EIP712_ABI,
       functionName: 'initialize',
-      args: [currentUserAddress, USDT_ADDRESS, USDC_ADDRESS]
+      args: [currentUserAddress, [USDC_ADDRESS, USDC_E_ADDRESS, USDT_ADDRESS]]
     })
   })
 
@@ -192,9 +192,8 @@ export const getDeploymentConfigs = (
       functionName: 'initialize',
       args: [
         currentUserAddress, // safeAddress
-        zeroAddress, // investorAddress
         [USDC_ADDRESS, USDC_E_ADDRESS, USDT_ADDRESS], // supportedTokens
-        1n // multiplier - default 1:1 ratio
+        parseUnits('1', 6) // multiplier - default 1:1 ratio
       ]
     })
   })

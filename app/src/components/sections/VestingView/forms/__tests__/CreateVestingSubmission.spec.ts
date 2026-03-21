@@ -1,6 +1,6 @@
 import { describe, it, vi, expect, beforeEach } from 'vitest'
 import { mount, type VueWrapper } from '@vue/test-utils'
-import { VueDatePicker as Datepicker } from '@vuepic/vue-datepicker'
+import Datepicker from '@vuepic/vue-datepicker'
 import CreateVesting from '@/components/sections/VestingView/forms/CreateVesting.vue'
 import SelectMemberInput from '@/components/utils/SelectMemberInput.vue'
 import { createTestingPinia } from '@pinia/testing'
@@ -8,7 +8,7 @@ import { ref } from 'vue'
 import { parseEther, parseUnits } from 'viem'
 import { useToastStore } from '@/stores/__mocks__/useToastStore'
 import { VESTING_ADDRESS } from '@/constant'
-import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
+import { INVESTOR_ABI } from '@/artifacts/abi/investors'
 import { mockUseContractBalance } from '@/tests/mocks/composables.mock'
 
 // vi.mock('@/artifacts/abi/InvestorV1', () => MOCK_INVESTOR_ABI)
@@ -29,7 +29,7 @@ const mockReloadKey = ref<number>(0)
 // })
 
 const mockWriteContract = {
-  writeContract: vi.fn(),
+  mutate: vi.fn(),
   error: ref<null | Error>(null),
   isPending: ref(false),
   data: ref(null)
@@ -205,7 +205,7 @@ describe('CreateVesting.vue', () => {
       const confirmBtn = wrapper.find('[data-test="confirm-btn"]')
       await confirmBtn.trigger('click')
 
-      expect(mockWriteContract.writeContract).toHaveBeenCalledWith({
+      expect(mockWriteContract.mutate).toHaveBeenCalledWith({
         address: '0x000000000000000000000000000000000000beef',
         abi: INVESTOR_ABI,
         functionName: 'approve',
@@ -218,7 +218,7 @@ describe('CreateVesting.vue', () => {
       mockWaitForReceipt.isLoading.value = false
       await wrapper.vm.$nextTick()
 
-      expect(mockWriteContract.writeContract).toHaveBeenCalled()
+      expect(mockWriteContract.mutate).toHaveBeenCalled()
 
       mockWaitForReceipt.isLoading.value = true
       await wrapper.vm.$nextTick()
@@ -241,7 +241,7 @@ describe('CreateVesting.vue', () => {
 
       const summary = wrapper.findComponent({ name: 'VestingSummary' })
       expect(summary.exists()).toBe(false)
-      expect(mockWriteContract.writeContract).not.toHaveBeenCalled()
+      expect(mockWriteContract.mutate).not.toHaveBeenCalled()
     })
 
     it('shows error toast when adding vesting fails', async () => {
@@ -276,7 +276,7 @@ describe('CreateVesting.vue', () => {
       expect(addErrorToast).toHaveBeenCalledWith(
         'The member address already has an active vesting.'
       )
-      expect(mockWriteContract.writeContract).not.toHaveBeenCalled()
+      expect(mockWriteContract.mutate).not.toHaveBeenCalled()
     })
 
     it('skips balance check when tokenBalance is undefined', async () => {
@@ -292,7 +292,7 @@ describe('CreateVesting.vue', () => {
       await wrapper.vm.$nextTick()
 
       expect(addErrorToast).not.toHaveBeenCalledWith('Insufficient token balance')
-      expect(mockWriteContract.writeContract).toHaveBeenCalled()
+      expect(mockWriteContract.mutate).toHaveBeenCalled()
     })
   })
 })

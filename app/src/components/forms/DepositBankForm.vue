@@ -154,7 +154,10 @@ const { data: allowance } = useErc20Allowance(
   userDataStore.address as Address,
   props.bankAddress
 )
-const allowanceAmount = computed(() => (allowance.value as bigint | undefined) ?? 0n)
+
+const allowanceValue = computed<bigint>(() =>
+  typeof allowance.value === 'bigint' ? allowance.value : 0n
+)
 
 // Computed values for approval composable
 const bigIntAmount = computed(() => BigInt(Math.floor(Number(amount.value) * 1e6)))
@@ -189,7 +192,7 @@ const submitForm = async () => {
     if (selectedTokenId.value === 'native') {
       await sendTransaction(props.bankAddress, parseEther(amount.value))
     } else {
-      if (!(allowanceAmount.value >= bigIntAmount.value)) {
+      if (!(allowanceValue.value >= bigIntAmount.value)) {
         currentStep.value = 2
 
         // Run spending cap

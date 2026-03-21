@@ -1,5 +1,5 @@
 import { vi } from 'vitest'
-import { defineComponent } from 'vue'
+import { defineComponent, ref } from 'vue'
 import { queryMocks } from '@/tests/mocks/query.mock'
 import {
   mockUseBackendWake,
@@ -13,10 +13,21 @@ import {
   useQueryClientFn,
   useQueryFn,
   mockUseFetch,
-  mockUseWalletChecks
+  mockUseWalletChecks,
+  mockUseSubmitRestriction
 } from '@/tests/mocks/composables.mock'
+import { mockUploadFileApi } from '@/tests/mocks/api.mock'
 import { mockGetBalance, mockGetLogs } from '@/tests/mocks/viem.actions.mock'
 import { mockRouter } from '@/tests/mocks/router.mock'
+
+declare global {
+  var __mockFetch: ReturnType<typeof vi.fn> | undefined
+  var __mockUseStorageValue: string | undefined
+}
+
+if (!globalThis.__mockFetch) {
+  globalThis.__mockFetch = vi.fn()
+}
 
 /**
  * Mock TanStack Vue Query
@@ -39,6 +50,14 @@ vi.mock('@vue/apollo-composable', async (importOriginal) => {
   }
 })
 
+vi.mock('@/api', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    uploadFileApi: mockUploadFileApi
+  }
+})
+
 vi.mock('vue-router', async (importOriginal) => {
   const actual: object = await importOriginal()
   return {
@@ -57,10 +76,26 @@ vi.mock('vue-router', async (importOriginal) => {
  * Mock @vueuse/core
  */
 vi.mock('@vueuse/core', async (importOriginal) => {
-  const actual: object = await importOriginal()
+  const actual = (await importOriginal()) as {
+    useStorage?: (...args: unknown[]) => unknown
+    [key: string]: unknown
+  }
+
   return {
     ...actual,
     useClipboard: vi.fn(() => mockUseClipboard),
+    useStorage: vi.fn((key: string, initialValue: unknown, ...rest: unknown[]) => {
+      if (globalThis.__mockUseStorageValue !== undefined) {
+        return ref(globalThis.__mockUseStorageValue)
+      }
+
+      if (typeof actual.useStorage === 'function') {
+        return actual.useStorage(key, initialValue, ...rest)
+      }
+
+      const fallbackValue = typeof initialValue === 'string' ? initialValue : ''
+      return ref(fallbackValue)
+    }),
     useFetch: vi.fn((url: string | { value: string }) => {
       const resolvedUrl = typeof url === 'string' ? url : url.value
       mockUseFetch.get.url.value = resolvedUrl
@@ -178,6 +213,10 @@ vi.mock('@/queries/weeklyClaim.queries', () => ({
   useGetTeamWeeklyClaimsQuery: vi.fn(queryMocks.useGetTeamWeeklyClaimsQuery),
   useGetWeeklyClaimByIdQuery: vi.fn(queryMocks.useGetWeeklyClaimByIdQuery),
   useUpdateWeeklyClaimMutation: vi.fn(queryMocks.useUpdateWeeklyClaimMutation),
+  useEditClaimMutation: vi.fn(queryMocks.useEditClaimMutation),
+  // useEditClaimMutation: vi.fn(() => queryMocks.useEditClaimMutation),
+  useEditClaimWithFilesMutation: vi.fn(queryMocks.useEditClaimWithFilesMutation),
+  useSubmitClaimMutation: vi.fn(queryMocks.useSubmitClaimMutation),
   useSyncWeeklyClaimsMutation: vi.fn(queryMocks.useSyncWeeklyClaimsMutation),
   useDeleteClaimMutation: vi.fn(queryMocks.useDeleteClaimMutation)
 }))
@@ -224,7 +263,8 @@ vi.mock('@/composables', async (importOriginal) => {
   const actual: object = await importOriginal()
   return {
     ...actual,
-    useWalletChecks: vi.fn(() => mockUseWalletChecks)
+    useWalletChecks: vi.fn(() => mockUseWalletChecks),
+    useSubmitRestriction: vi.fn(() => mockUseSubmitRestriction)
   }
 })
 

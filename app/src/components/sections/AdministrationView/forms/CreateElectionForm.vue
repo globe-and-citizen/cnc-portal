@@ -139,7 +139,7 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import { z } from 'zod'
 import ButtonUI from '@/components/ButtonUI.vue'
 import MultiSelectMemberInput from '@/components/utils/MultiSelectMemberInput.vue'
-import { VueDatePicker } from '@vuepic/vue-datepicker'
+import VueDatePicker from '@vuepic/vue-datepicker'
 
 // Dev = 2 minutes, Prod = 1 hour
 const delay = 2 * 60 * 1000

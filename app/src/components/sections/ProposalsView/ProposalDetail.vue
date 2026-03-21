@@ -171,7 +171,7 @@
 import { PROPOSALS_ABI } from '@/artifacts/abi/proposals'
 import ButtonUI from '@/components/ButtonUI.vue'
 import { useTeamStore, useToastStore, useUserDataStore } from '@/stores'
-import { ProposalState, type ProposalVoteEvent } from '@/types'
+import { ProposalState, type Proposal, type ProposalVoteEvent } from '@/types'
 import { config } from '@/wagmi.config'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
@@ -228,7 +228,7 @@ const recentVotes = ref<ProposalVoteEvent[]>([])
 const queryClient = useQueryClient()
 
 const {
-  data: proposal,
+  data: proposalData,
   error,
   isLoading,
   queryKey: proposalQueryKey
@@ -240,10 +240,18 @@ const {
   scopeKey: 'proposalDetail'
 })
 
+const proposal = computed<Proposal | undefined>(() => {
+  if (!proposalData.value || typeof proposalData.value !== 'object') {
+    return undefined
+  }
+
+  return proposalData.value as Proposal
+})
+
 const {
-  writeContract: voteOnProposal,
+  mutate: voteOnProposal,
   isPending: isVoting,
-  error: voteError,
+  // error: voteError,
   data: txHash
 } = useWriteContract()
 
@@ -308,12 +316,12 @@ onMounted(async () => {
   await fetchRecentVotes()
 })
 
-watch(voteError, (error) => {
-  if (error) {
-    console.error('Error voting on proposal:', error)
-    toastStore.addErrorToast('Failed to cast vote')
-  }
-})
+// watch(voteError, (error) => {
+//   if (error) {
+//     console.error('Error voting on proposal:', error)
+//     toastStore.addErrorToast('Failed to cast vote')
+//   }
+// })
 
 // watch(errorConfirmingVote, (error) => {
 //   if (error) {

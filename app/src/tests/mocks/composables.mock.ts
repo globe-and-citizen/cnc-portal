@@ -94,7 +94,7 @@ export const mockUseApolloQuery = {
  */
 export const mockTransactionFunctions = {
   mockSendTransaction: vi.fn(),
-  mockWriteContractAsync: vi.fn(),
+  mockMutateAsync: vi.fn(),
   mockWaitForTransactionReceipt: vi.fn()
 }
 
@@ -244,6 +244,17 @@ export const mockUseBodIsBodAction = {
 }
 
 /**
+ * Mock useSubmitRestriction composable
+ */
+export const mockUseSubmitRestriction = {
+  isRestricted: ref(false),
+  effectiveStatus: ref('enabled'),
+  canSubmitAnytime: ref(true),
+  checkRestriction: vi.fn().mockResolvedValue(false),
+  errorMessage: ref(null)
+}
+
+/**
  * Reset function for composable mocks
  */
 export const resetComposableMocks = () => {
@@ -266,7 +277,7 @@ export const resetComposableMocks = () => {
 
   // Set default mock return values for transactions
   mockTransactionFunctions.mockSendTransaction.mockResolvedValue({ hash: '0xnativetx' })
-  mockTransactionFunctions.mockWriteContractAsync.mockResolvedValue('0xtransfertx')
+  mockTransactionFunctions.mockMutateAsync.mockResolvedValue('0xtransfertx')
   mockTransactionFunctions.mockWaitForTransactionReceipt.mockResolvedValue({ status: 'success' })
 
   // Reset auth mock functions
@@ -358,6 +369,15 @@ export const resetComposableMocks = () => {
   mockUseBodIsBodAction.isBod.value = false
   mockUseBodIsBodAction.isLoading.value = false
   mockUseBodIsBodAction.error.value = null
+
+  // Reset submit restriction mock
+  mockUseSubmitRestriction.isRestricted.value = false
+  mockUseSubmitRestriction.effectiveStatus.value = 'enabled'
+  mockUseSubmitRestriction.canSubmitAnytime.value = true
+  mockUseSubmitRestriction.errorMessage.value = null
+  if (vi.isMockFunction(mockUseSubmitRestriction.checkRestriction)) {
+    mockUseSubmitRestriction.checkRestriction.mockClear()
+  }
 
   // Reset Apollo query mock
   mockUseApolloQuery.result.value = null

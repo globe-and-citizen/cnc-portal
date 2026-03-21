@@ -111,12 +111,12 @@ import SelectMemberInput from '@/components/utils/SelectMemberInput.vue'
 import VestingSummary from '@/components/sections/VestingView/VestingSummary.vue'
 import { useToastStore } from '@/stores/useToastStore'
 import { useTeamStore } from '@/stores'
-import { VueDatePicker as Datepicker } from '@vuepic/vue-datepicker'
+import Datepicker from '@vuepic/vue-datepicker'
 import '@vuepic/vue-datepicker/dist/main.css'
 import { type VestingCreation } from '@/types/vesting'
 const { addSuccessToast, addErrorToast } = useToastStore()
 import { useContractBalance } from '@/composables/useContractBalance'
-import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
+import { INVESTOR_ABI } from '@/artifacts/abi/investors'
 import { useUserDataStore } from '@/stores'
 import { isAddress } from 'viem'
 import { z } from 'zod'
@@ -145,13 +145,17 @@ const tokenBalance = computed(() => {
   )
 })
 
-const activeMembers = computed(() => {
-  if (vestingInfos.value && Array.isArray(vestingInfos.value) && vestingInfos.value.length === 2) {
-    const [members] = vestingInfos.value
-    return members
+const activeMembers = computed<string[]>(() => {
+  if (!Array.isArray(vestingInfos.value) || vestingInfos.value.length !== 2) {
+    return []
   }
-  return []
+
+  const [members] = vestingInfos.value
+  return Array.isArray(members)
+    ? members.filter((member): member is string => typeof member === 'string')
+    : []
 })
+
 const member = ref({
   name: '',
   address: ''
@@ -245,7 +249,7 @@ watch(allowanceError, () => {
 })
 
 const {
-  writeContract: addVesting,
+  mutate: addVesting,
   error: errorAddVesting,
   isPending: loadingAddVesting,
   data: hashAddVesting
@@ -279,7 +283,7 @@ watch(errorAddVesting, () => {
 })
 
 const {
-  writeContract: approveToken,
+  mutate: approveToken,
   error: errorApproveToken,
   isPending: loadingApproveToken,
   data: hashApproveToken
@@ -392,7 +396,7 @@ async function submit() {
 
   await getAllowance()
   if (
-    allowance.value !== undefined &&
+    typeof allowance.value === 'bigint' &&
     Number(formatUnits(allowance.value, 6)) < totalAmount.value
   ) {
     addErrorToast('Allowance is less than the total amount')

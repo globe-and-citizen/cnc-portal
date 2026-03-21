@@ -6,14 +6,14 @@
           index: index + 1,
           name: getShareholderName(shareholder.shareholder) || 'Unknown',
           address: shareholder.shareholder,
-          balance: `${formatUnits(shareholder.amount, 6)} ${tokenSymbolValue}`,
+          balance: `${formatUnits(shareholder.amount, 6)} ${tokenSymbolText}`,
           percentage:
             !totalSupplyLoading && totalSupplyValue != null
-              ? `${((BigInt(shareholder.amount) * BigInt(100)) / BigInt(totalSupplyValue)).toString()}%`
+              ? `${((shareholder.amount * 100n) / totalSupplyValue).toString()}%`
               : '...%',
           shareholder: shareholder.shareholder,
           amount: shareholder.amount
-        }))
+        })) ?? []
       "
       :columns="columns"
       :loading="shareholdersLoading"
@@ -92,6 +92,11 @@ import { log } from '@/utils'
 import { formatUnits, type Address } from 'viem'
 import { computed, ref, watch } from 'vue'
 
+type ShareholderInfo = {
+  shareholder: Address
+  amount: bigint
+}
+
 const mintIndividualModal = ref({
   mount: false,
   show: false
@@ -115,11 +120,17 @@ const {
   error: shareholderError
 } = useInvestorShareholders()
 
-type Shareholder = { shareholder: Address; amount: bigint }
+const shareholdersList = computed<ShareholderInfo[]>(() => {
+  return Array.isArray(shareholders.value) ? (shareholders.value as ShareholderInfo[]) : []
+})
 
-const tokenSymbolValue = computed(() => (tokenSymbol.value as string | undefined) ?? '')
-const totalSupplyValue = computed(() => totalSupply.value as bigint | undefined)
-const shareholdersList = computed(() => (shareholders.value as Shareholder[] | undefined) ?? [])
+const tokenSymbolText = computed(() =>
+  typeof tokenSymbol.value === 'string' ? tokenSymbol.value : ''
+)
+
+const totalSupplyValue = computed(() =>
+  typeof totalSupply.value === 'bigint' ? totalSupply.value : undefined
+)
 
 const getShareholderName = (address: Address) => {
   const member = teamStore.currentTeam?.members?.find((member) => member.address === address)

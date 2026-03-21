@@ -145,7 +145,7 @@ const {
 
 const {
   isPending: loadingPause,
-  writeContract: pause,
+  mutate: pause,
   error: errorPause,
   data: hashPause
 } = useWriteContract()
@@ -160,7 +160,7 @@ watch(isConfirmingPause, (isConfirming, wasConfirming) => {
 })
 
 const {
-  writeContract: unpause,
+  mutate: unpause,
   error: unpauseError,
   isPending: loadingUnpause,
   data: hashUnpause
@@ -177,7 +177,7 @@ watch(isConfirmingUnpause, (isConfirming, wasConfirming) => {
 })
 
 const {
-  writeContract: transferOwnership,
+  mutate: transferOwnership,
   error: transferOwnershipError,
   isPending: transferOwnershipLoading,
   data: transferOwnershipHash

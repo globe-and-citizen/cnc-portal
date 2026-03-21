@@ -106,6 +106,31 @@ const teamStore = useTeamStore()
 
 const open = ref(false)
 
+const accountRouteNames = [
+  'bank-account',
+  'safe-account',
+  'expense-account',
+  'payroll-account',
+  'payroll-history',
+  'cash-remunerations-member',
+  'team-payroll'
+] as const
+
+const isAccountsSectionActive = computed(() =>
+  accountRouteNames.some((routeName) => route.name === routeName)
+)
+
+const administrationRouteNames = [
+  'bod-elections',
+  'bod-proposals',
+  'proposal-detail',
+  'bod-elections-details'
+] as const
+
+const isAdministrationSectionActive = computed(() =>
+  administrationRouteNames.some((routeName) => route.name === routeName)
+)
+
 const items = computed<NavigationMenuItem[]>(() => [
   {
     label: 'Home',
@@ -120,11 +145,16 @@ const items = computed<NavigationMenuItem[]>(() => [
   {
     label: 'Team Home Page',
     icon: 'heroicons:home',
-    to: `/teams/${teamStore.currentTeamId || '1'}`
+    active: route.name === 'show-team',
+    to: {
+      name: 'show-team',
+      params: { id: teamStore.currentTeamId || '1' }
+    }
   },
   {
     label: 'Accounts',
     icon: 'heroicons:currency-dollar',
+    active: isAccountsSectionActive.value,
     to: {
       name: 'bank-account',
       params: { id: teamStore.currentTeamId || '1' }
@@ -172,6 +202,7 @@ const items = computed<NavigationMenuItem[]>(() => [
           route.name === 'payroll-history' && route.params.memberAddress !== userStore.address
             ? 'Member Payroll History'
             : 'My Payroll History',
+        active: route.name === 'payroll-history',
         to: {
           name: 'payroll-history',
           params: { id: teamStore.currentTeamId || '1', memberAddress: userStore.address }
@@ -208,6 +239,7 @@ const items = computed<NavigationMenuItem[]>(() => [
   {
     label: 'Administration',
     icon: 'heroicons:chart-bar',
+    active: isAdministrationSectionActive.value,
     to: {
       name: 'bod-elections',
       params: { id: teamStore.currentTeamId || '1' }

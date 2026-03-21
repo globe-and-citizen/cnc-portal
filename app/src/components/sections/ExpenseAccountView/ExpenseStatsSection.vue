@@ -5,10 +5,15 @@
     <ExpenseAccountTotalApproved />
   </div>
 
-  <div class="flex sm:flex-row justify-end sm:items-start">
-    <div class="flex flex-wrap gap-2 sm:gap-4" data-test="expense-account-address">
-      <span class="text-sm">Expense Account Address </span>
-      <AddressToolTip :address="expenseAccountEip712Address ?? ''" class="text-xs" />
+  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <OwnerTreasuryWithdrawAction contractType="ExpenseAccountEIP712" />
+
+    <div
+      class="ml-auto flex flex-wrap justify-end gap-2 sm:gap-4"
+      data-test="expense-account-address"
+    >
+      <span class="text-sm">Expense Account Address</span>
+      <AddressToolTip :address="expenseAccountEip712Address ?? ''" class="text-sm font-bold" />
     </div>
   </div>
 </template>
@@ -21,6 +26,7 @@ import { type Address } from 'viem'
 import ExpenseAccountBalance from '@/components/sections/ExpenseAccountView/ExpenseAccountBalance.vue'
 import ExpenseMonthSpent from '@/components/sections/ExpenseAccountView/ExpenseMonthSpent.vue'
 import ExpenseAccountTotalApproved from '@/components/sections/ExpenseAccountView/ExpenseAccountTotalApproved.vue'
+import OwnerTreasuryWithdrawAction from '@/components/sections/OwnerTreasuryWithdrawAction.vue'
 
 //#region  Composables
 const teamStore = useTeamStore()

@@ -10,8 +10,8 @@
     </OverviewCard>
     <OverviewCard
       :title="
-        tokenBalanceValue != null && tokenSymbolValue
-          ? formatUnits(tokenBalanceValue, 6) + ' ' + tokenSymbolValue
+        tokenBalanceValue != null && tokenSymbolText
+          ? formatUnits(tokenBalanceValue, 6) + ' ' + tokenSymbolText
           : '...'
       "
       subtitle="Your Balance"
@@ -22,8 +22,8 @@
     </OverviewCard>
     <OverviewCard
       :title="
-        totalSupplyValue != null && tokenSymbolValue
-          ? formatUnits(totalSupplyValue, 6) + ' ' + tokenSymbolValue
+        totalSupplyValue != null && tokenSymbolText
+          ? formatUnits(totalSupplyValue, 6) + ' ' + tokenSymbolText
           : '...'
       "
       subtitle="Total Supply"
@@ -62,9 +62,18 @@ const { data: tokenBalance, error: tokenBalanceError } = useInvestorBalanceOf(
 )
 const { data: shareholders, error: shareholderError } = useInvestorShareholders()
 
-const tokenSymbolValue = computed(() => (tokenSymbol.value as string | undefined) ?? '')
-const totalSupplyValue = computed(() => totalSupply.value as bigint | undefined)
-const tokenBalanceValue = computed(() => tokenBalance.value as bigint | undefined)
+const tokenSymbolText = computed(() =>
+  typeof tokenSymbol.value === 'string' ? tokenSymbol.value : ''
+)
+
+const tokenBalanceValue = computed(() =>
+  typeof tokenBalance.value === 'bigint' ? tokenBalance.value : undefined
+)
+
+const totalSupplyValue = computed(() =>
+  typeof totalSupply.value === 'bigint' ? totalSupply.value : undefined
+)
+
 const shareholdersCount = computed(() =>
   Array.isArray(shareholders.value) ? shareholders.value.length : 0
 )

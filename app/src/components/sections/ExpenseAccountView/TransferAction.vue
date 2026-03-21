@@ -120,7 +120,7 @@ const tokens = computed(() => getTokens([props.row], props.row.signature, balanc
 //#region Composables
 //expense account transfer
 const {
-  writeContract: executeExpenseAccountTransfer,
+  mutate: executeExpenseAccountTransfer,
   isPending: isLoadingTransfer,
   error: errorTransfer,
   data: transferHash
@@ -135,7 +135,7 @@ const {
 })
 
 // Token approval
-const { writeContract: approve, error: approveError, data: approveHash } = useWriteContract()
+const { mutate: approve, error: approveError, data: approveHash } = useWriteContract()
 
 const { isLoading: isConfirmingApprove, isSuccess: isConfirmedApprove } =
   useWaitForTransactionReceipt({
@@ -178,7 +178,6 @@ const transferNativeToken = async (to: string, amount: string, budgetLimit: Budg
     const data = encodeFunctionData({
       abi: EXPENSE_ACCOUNT_EIP712_ABI,
       functionName: 'transfer',
-      // @ts-expect-error type issue
       args
     })
     await estimateGas(config, {
@@ -187,7 +186,6 @@ const transferNativeToken = async (to: string, amount: string, budgetLimit: Budg
     })
     executeExpenseAccountTransfer({
       address: expenseAccountEip712Address.value,
-      // @ts-expect-error type issue
       args,
       abi: EXPENSE_ACCOUNT_EIP712_ABI,
       functionName: 'transfer'
@@ -253,14 +251,12 @@ const transferErc20Token = async () => {
         address: expenseAccountEip712Address.value,
         abi: EXPENSE_ACCOUNT_EIP712_ABI,
         functionName: 'transfer',
-        // @ts-expect-error type issue
         args
       })
       executeExpenseAccountTransfer({
         address: expenseAccountEip712Address.value,
         abi: EXPENSE_ACCOUNT_EIP712_ABI,
         functionName: 'transfer',
-        // @ts-expect-error type issue
         args
       })
     } catch (error) {

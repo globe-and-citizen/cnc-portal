@@ -17,8 +17,9 @@
 
     /* Modules */
     "module": "commonjs",
+    "moduleResolution": "node",
 
-    "rootDir": "./",
+    "rootDir": "./src",
     "outDir": "./dist",
 
     /* Emit */
@@ -32,6 +33,7 @@
     "strict": true /* Enable all strict type-checking options. */,
 
     "skipLibCheck": true /* Skip type checking all .d.ts files. */,
+    "skipDefaultLibCheck": true,
     "inlineSources": true,
 
     // Set `sourceRoot` to  "/" to strip the build path prefix
@@ -50,7 +52,8 @@
     "vitest.unit.config.ts",
     "node_modules",
     "**/*.spec.ts",
-    "**/*.test.ts"
+    "**/*.test.ts",
+    "dist"
   ],
-  "include": ["prisma/*", "src/*", "src/types/**/*.d.ts", "scripts/**/*.ts"]
+  "include": ["src/**/*"]
 }

@@ -2,6 +2,7 @@ import { HardhatUserConfig } from 'hardhat/config'
 import '@nomicfoundation/hardhat-toolbox'
 import '@nomicfoundation/hardhat-chai-matchers'
 import '@openzeppelin/hardhat-upgrades'
+import 'hardhat-abi-exporter'
 import dotenv from 'dotenv'
 import { NetworksUserConfig } from 'hardhat/types'
 
@@ -42,6 +43,23 @@ const config: HardhatUserConfig = {
   solidity: {
     version: '0.8.24',
     settings: {
+      // modelChecker: {
+      //   engine: 'chc',
+      //   solvers: ['z3'],
+      //   timeout: 10000,
+      //   targets: ['assert', 'overflow', 'divByZero', 'outOfBounds', 'balance'],
+      //   contracts: {
+      //     'contracts/Bank.sol': ['Bank'],
+      //     'contracts/Officer.sol': ['Officer'],
+      //     'contracts/Vesting.sol': ['Vesting'],
+      //     'contracts/Tips.sol': ['Tips'],
+      //     'contracts/FeeCollector.sol': ['FeeCollector'],
+      //     'contracts/BoardOfDirectors.sol': ['BoardOfDirectors'],
+      //     'contracts/CashRemunerationEIP712.sol': ['CashRemunerationEIP712'],
+      //     'contracts/AdCampaignManager.sol': ['AdCampaignManager'],
+      //     'contracts/SafeDepositRouter.sol': ['SafeDepositRouter']
+      //   }
+      // },
       optimizer: {
         // Toggles whether the optimizer is on or off.
         // It's good to keep it off for development
@@ -67,7 +85,42 @@ const config: HardhatUserConfig = {
     currency: 'USD',
     coinmarketcap: process.env.COINMARKETCAP_KEY,
     token: 'POL'
-  }
+  },
+  abiExporter: [
+    {
+      path: '../app/src/artifacts/abi/json',
+      runOnCompile: true,
+      clear: true,
+      flat: true,
+      spacing: 2,
+      format: 'json',
+      except: [
+        ':I[A-Z].*' // Exclude interfaces like IERC20, IOfficer
+      ]
+    },
+    {
+      path: '../dashboard/app/artifacts/abi/json',
+      runOnCompile: true,
+      clear: true,
+      flat: true,
+      spacing: 2,
+      format: 'json',
+      except: [
+        ':I[A-Z].*' // Exclude interfaces like IERC20, IOfficer
+      ]
+    },
+    {
+      path: '../ponder/abis/json',
+      runOnCompile: true,
+      clear: true,
+      flat: true,
+      spacing: 2,
+      format: 'json',
+      except: [
+        ':I[A-Z].*' // Exclude interfaces like IERC20, IOfficer
+      ]
+    }
+  ]
 }
 
 export default config

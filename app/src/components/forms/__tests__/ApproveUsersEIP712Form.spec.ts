@@ -1,7 +1,7 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { describe, expect, it, vi } from 'vitest'
 import ApproveUsersForm from '../ApproveUsersEIP712Form.vue'
-import { VueDatePicker } from '@vuepic/vue-datepicker'
+import VueDatePicker from '@vuepic/vue-datepicker'
 import ButtonUI from '@/components/ButtonUI.vue'
 import SelectMemberWithTokenInput from '@/components/utils/SelectMemberWithTokenInput.vue'
 import SelectComponent from '@/components/SelectComponent.vue'

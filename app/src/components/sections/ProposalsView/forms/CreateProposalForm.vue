@@ -74,8 +74,8 @@
 </template>
 
 <script setup lang="ts">
-import { VueDatePicker } from '@vuepic/vue-datepicker'
-import { reactive, computed, watch } from 'vue'
+import VueDatePicker from '@vuepic/vue-datepicker'
+import { ref, computed, watch } from 'vue'
 import { useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
 import { useTeamStore } from '@/stores'
 import { useToastStore } from '@/stores/useToastStore'
@@ -92,7 +92,7 @@ const teamStore = useTeamStore()
 const { addSuccessToast, addErrorToast } = useToastStore()
 
 // Form data
-const state = reactive({
+const state = ref({
   title: undefined as string | undefined,
   description: undefined as string | undefined,
   type: 'Financial' as 'Financial' | 'Technical' | 'Operational',
@@ -126,7 +126,7 @@ type ProposalSchema = z.output<typeof proposalSchema>
 
 // Contract interaction
 const {
-  writeContract: createProposal,
+  mutate: createProposal,
   isPending: isCreatingProposal,
   error: createError,
   data: txHash

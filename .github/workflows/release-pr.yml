@@ -230,7 +230,7 @@ jobs:
           # Build App (Vue.js)
           echo "Building frontend..."
           cd app
-          npm ci
+          npm ci --prefer-offline
           npm run build
           cd ..
           tar -czf cnc-portal-app-$VERSION.tar.gz -C app/dist .
@@ -238,7 +238,7 @@ jobs:
           # Build Backend (Express.js)  
           echo "Building backend..."
           cd backend
-          npm ci
+          npm ci --prefer-offline
           npm run build 2>/dev/null || echo "Backend build not available"
           cd ..
           if [ -d "backend/dist" ]; then
@@ -248,7 +248,7 @@ jobs:
           # Build Contracts (Hardhat)
           echo "Building contracts..."
           cd contract
-          npm ci
+          npm ci --prefer-offline
           npm run compile
           cd ..
           tar -czf cnc-portal-contracts-$VERSION.tar.gz -C contract artifacts cache typechain-types
@@ -256,7 +256,7 @@ jobs:
           # Build Dashboard (Nuxt.js)
           echo "Building dashboard..."
           cd dashboard  
-          npm ci
+          npm ci --prefer-offline
           npm run build 2>/dev/null || echo "Dashboard build not available"
           cd ..
           if [ -d "dashboard/.output" ]; then

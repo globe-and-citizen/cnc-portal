@@ -1,7 +1,7 @@
 import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
 import ApproveUsersForm from '../ApproveUsersEIP712Form.vue'
-import { VueDatePicker } from '@vuepic/vue-datepicker'
+import VueDatePicker from '@vuepic/vue-datepicker'
 import ButtonUI from '@/components/ButtonUI.vue'
 
 interface ComponentData {

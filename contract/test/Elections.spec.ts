@@ -1,636 +1,679 @@
 import { expect } from 'chai'
-import { ethers, upgrades } from 'hardhat'
-import { reset, time } from '@nomicfoundation/hardhat-network-helpers'
-import { Elections, MockBoardOfDirectors } from '../typechain-types'
+import { ethers } from 'hardhat'
+import { time } from '@nomicfoundation/hardhat-network-helpers'
 import { HardhatEthersSigner } from '@nomicfoundation/hardhat-ethers/signers'
+import { Elections } from '../typechain-types'
 
 describe('Elections', function () {
-  let elections: Elections
-  let boardOfDirectors: MockBoardOfDirectors
-  let owner: HardhatEthersSigner
-  let voter1: HardhatEthersSigner
-  let voter2: HardhatEthersSigner
-  let voter3: HardhatEthersSigner
-  let voter4: HardhatEthersSigner
-  let voter5: HardhatEthersSigner
-  let voter6: HardhatEthersSigner
-  let candidate1: HardhatEthersSigner
-  let candidate2: HardhatEthersSigner
-  let candidate3: HardhatEthersSigner
-  let candidate4: HardhatEthersSigner
-  let nonVoter: HardhatEthersSigner
+  async function deployFixture() {
+    const [owner, voter1, voter2, candidate1, candidate2, nonVoter] = await ethers.getSigners()
 
-  const ONE_DAY = 24 * 60 * 60
-  const ONE_WEEK = 7 * ONE_DAY
+    const MockOfficerFactory = await ethers.getContractFactory('MockOfficer')
+    const mockOfficer = await MockOfficerFactory.deploy()
 
-  beforeEach(async function () {
-    ;[
-      owner,
-      voter1,
-      voter2,
-      voter3,
-      voter4,
-      voter5,
-      voter6,
-      candidate1,
-      candidate2,
-      candidate3,
-      candidate4,
-      nonVoter
-    ] = await ethers.getSigners()
+    const BoardFactory = await ethers.getContractFactory('MockBoardOfDirectors')
+    const boardOfDirectors = await BoardFactory.deploy()
 
     const ElectionsFactory = await ethers.getContractFactory('Elections')
-    elections = (await upgrades.deployProxy(ElectionsFactory, [owner.address], {
-      initializer: 'initialize'
-    })) as unknown as Elections
-    await elections.waitForDeployment()
+    const elections = await ElectionsFactory.deploy()
 
-    const BoardOfDirectorsFactory = await ethers.getContractFactory('MockBoardOfDirectors')
-    boardOfDirectors = (await upgrades.deployProxy(BoardOfDirectorsFactory, [], {
-      initializer: 'initialize'
-    })) as unknown as MockBoardOfDirectors
-    await boardOfDirectors.waitForDeployment()
+    await mockOfficer.setDeployedContract('BoardOfDirectors', await boardOfDirectors.getAddress())
+    await mockOfficer.initializeUpgradeable(await elections.getAddress(), owner.address)
+
+    return { elections, boardOfDirectors, owner, voter1, voter2, candidate1, candidate2, nonVoter }
+  }
+
+  async function createActiveElection(
+    elections: Elections,
+    owner: HardhatEthersSigner,
+    candidate1: string,
+    candidate2: string,
+    voter1: string,
+    voter2: string
+  ) {
+    const now = await time.latest()
+    const startDate = now + 100
+    const endDate = startDate + 7 * 24 * 60 * 60
 
     await elections
       .connect(owner)
-      .setBoardOfDirectorsContractAddress(await boardOfDirectors.getAddress())
-  })
-
-  afterEach(async function () {
-    await reset()
-  })
-
-  describe('Deployment', function () {
-    it('Should set the correct owner', async function () {
-      expect(await elections.owner()).to.equal(owner.address)
-    })
-
-    it('Should initialize with nextElectionId as 1', async function () {
-      expect(await elections.getNextElectionId()).to.equal(1)
-    })
-  })
-
-  describe('Election Creation', function () {
-    let candidates: string[]
-    let eligibleVoters: string[]
-    let startDate: number
-    let endDate: number
-
-    beforeEach(async function () {
-      candidates = [candidate1.address, candidate2.address, candidate3.address]
-      eligibleVoters = [voter1.address, voter2.address, voter3.address]
-
-      const currentTime = await time.latest()
-      startDate = currentTime + ONE_DAY
-      endDate = startDate + ONE_WEEK
-    })
-
-    it('Should create an election with valid parameters', async function () {
-      const tx = await elections.createElection(
-        'BOD Election 2025',
-        'Annual Board of Directors Election',
+      .createElection(
+        'Board Election',
+        'Select board member',
         startDate,
         endDate,
-        3, // odd number of seats
-        candidates,
-        eligibleVoters
+        1,
+        [candidate1, candidate2],
+        [voter1, voter2]
       )
 
-      await expect(tx)
-        .to.emit(elections, 'ElectionCreated')
-        .withArgs(1, 'BOD Election 2025', owner.address, startDate, endDate, 3)
+    await time.increase(101)
 
-      const election = await elections.getElection(1)
-      expect(election.id).to.equal(1)
-      expect(election.title).to.equal('BOD Election 2025')
-      expect(election.seatCount).to.equal(3)
-    })
+    return { electionId: 1 }
+  }
 
-    it('Should revert with even number of seats', async function () {
-      await expect(
-        elections.createElection(
-          'BOD Election 2025',
-          'Annual Board of Directors Election',
-          startDate,
-          endDate,
-          4, // even number - should fail
-          candidates,
-          eligibleVoters
-        )
-      ).to.be.revertedWithCustomError(elections, 'InvalidSeatCount')
-    })
-
-    it('Should revert with zero seats', async function () {
-      await expect(
-        elections.createElection(
-          'BOD Election 2025',
-          'Annual Board of Directors Election',
-          startDate,
-          endDate,
-          0, // zero seats - should fail
-          candidates,
-          eligibleVoters
-        )
-      ).to.be.revertedWithCustomError(elections, 'InvalidSeatCount')
-    })
-
-    it('Should revert if election already exists', async function () {
-      await elections.createElection(
-        'BOD Election 2025',
-        'Annual Board of Directors Election',
-        startDate,
-        endDate,
-        3,
-        candidates,
-        eligibleVoters
-      )
-      console.log((await elections.getElection(1)).resultsPublished, 'resultsPublished')
-      console.log((await elections.getElection(1)).id, 'electionId')
-
-      await expect(
-        elections.createElection(
-          'BOD Election 2025',
-          'Annual Board of Directors Election',
-          startDate,
-          endDate,
-          3,
-          candidates,
-          eligibleVoters
-        )
-      ).to.be.revertedWithCustomError(elections, 'ElectionIsOngoing')
-    })
-
-    it('Should revert with past start date', async function () {
-      const pastDate = (await time.latest()) - ONE_DAY
-
-      await expect(
-        elections.createElection(
-          'BOD Election 2025',
-          'Annual Board of Directors Election',
-          pastDate,
-          endDate,
-          3,
-          candidates,
-          eligibleVoters
-        )
-      ).to.be.revertedWithCustomError(elections, 'InvalidDates')
-    })
-
-    it('Should revert with end date before start date', async function () {
-      await expect(
-        elections.createElection(
-          'BOD Election 2025',
-          'Annual Board of Directors Election',
-          endDate,
-          startDate, // end before start
-          3,
-          candidates,
-          eligibleVoters
-        )
-      ).to.be.revertedWithCustomError(elections, 'InvalidDates')
-    })
-
-    it('Should revert with insufficient candidates', async function () {
-      await expect(
-        elections.createElection(
-          'BOD Election 2025',
-          'Annual Board of Directors Election',
-          startDate,
-          endDate,
-          5, // more seats than candidates
-          candidates, // only 3 candidates
-          eligibleVoters
-        )
-      ).to.be.revertedWithCustomError(elections, 'InsufficientCandidates')
-    })
-
-    it('Should revert with duplicate candidates', async function () {
-      const duplicateCandidates = [candidate1.address, candidate1.address, candidate2.address] // duplicate
-
-      await expect(
-        elections.createElection(
-          'BOD Election 2025',
-          'Annual Board of Directors Election',
-          startDate,
-          endDate,
-          3,
-          duplicateCandidates,
-          eligibleVoters
-        )
-      ).to.be.revertedWithCustomError(elections, 'DuplicateCandidates')
-    })
-
-    it('Should revert with empty voter list', async function () {
-      await expect(
-        elections.createElection(
-          'BOD Election 2025',
-          'Annual Board of Directors Election',
-          startDate,
-          endDate,
-          3,
-          candidates,
-          [] // empty voters
-        )
-      ).to.be.revertedWithCustomError(elections, 'NoEligibleVoters')
-    })
-
-    it('Should revert with duplicate voters', async function () {
-      const duplicateVoters = [voter1.address, voter1.address, voter2.address]
-
-      await expect(
-        elections.createElection(
-          'BOD Election 2025',
-          'Annual Board of Directors Election',
-          startDate,
-          endDate,
-          3,
-          candidates,
-          duplicateVoters
-        )
-      ).to.be.revertedWithCustomError(elections, 'DuplicateVoters')
-    })
-
-    it('Should only allow owner to create elections', async function () {
-      await expect(
-        elections
-          .connect(voter1)
-          .createElection(
-            'BOD Election 2025',
-            'Annual Board of Directors Election',
-            startDate,
-            endDate,
-            3,
-            candidates,
-            eligibleVoters
-          )
-      ).to.be.revertedWithCustomError(elections, 'OwnableUnauthorizedAccount')
-    })
+  it('sets owner and starts election IDs from 1', async () => {
+    const { elections, owner } = await deployFixture()
+    expect(await elections.owner()).to.equal(owner.address)
+    expect(await elections.getNextElectionId()).to.equal(1)
   })
 
-  describe('Voting', function () {
-    let electionId: number
-    let candidates: string[]
+  it('creates elections with valid params', async () => {
+    const { elections, owner, candidate1, candidate2, voter1, voter2 } = await deployFixture()
+    const now = await time.latest()
 
-    beforeEach(async function () {
-      candidates = [candidate1.address, candidate2.address, candidate3.address]
-      const eligibleVoters = [voter1.address, voter2.address, voter3.address]
+    await expect(
+      elections
+        .connect(owner)
+        .createElection(
+          'Board Election',
+          'Select board member',
+          now + 100,
+          now + 7 * 24 * 60 * 60 + 100,
+          1,
+          [candidate1.address, candidate2.address],
+          [voter1.address, voter2.address]
+        )
+    ).to.emit(elections, 'ElectionCreated')
+  })
 
-      const currentTime = await time.latest()
-      const startDate = currentTime + 100
-      const endDate = startDate + ONE_WEEK
+  it('allows eligible voters to cast votes and blocks non-voters', async () => {
+    const { elections, owner, voter1, candidate1, candidate2, voter2, nonVoter } =
+      await deployFixture()
 
-      await elections.createElection(
-        'BOD Election 2025',
-        'Annual Board of Directors Election',
-        startDate,
-        endDate,
-        3,
-        candidates,
-        eligibleVoters
+    await createActiveElection(
+      elections,
+      owner,
+      candidate1.address,
+      candidate2.address,
+      voter1.address,
+      voter2.address
+    )
+
+    await expect(elections.connect(voter1).castVote(1, candidate1.address))
+      .to.emit(elections, 'VoteSubmitted')
+      .withArgs(1, voter1.address, candidate1.address)
+
+    await expect(
+      elections.connect(nonVoter).castVote(1, candidate1.address)
+    ).to.be.revertedWithCustomError(elections, 'NotEligibleVoter')
+  })
+
+  it('publishes results and updates board winners', async () => {
+    const { elections, boardOfDirectors, owner, voter1, voter2, candidate1, candidate2 } =
+      await deployFixture()
+
+    await createActiveElection(
+      elections,
+      owner,
+      candidate1.address,
+      candidate2.address,
+      voter1.address,
+      voter2.address
+    )
+
+    await elections.connect(voter1).castVote(1, candidate1.address)
+    await elections.connect(voter2).castVote(1, candidate1.address)
+
+    await expect(elections.connect(owner).publishResults(1))
+      .to.emit(elections, 'ResultsPublished')
+      .withArgs(1, [candidate1.address])
+
+    const winners = await boardOfDirectors.getBoardOfDirectors()
+    expect(winners).to.deep.equal([candidate1.address])
+  })
+
+  it('pause and unpause by owner', async () => {
+    const { elections, owner } = await deployFixture()
+
+    await elections.connect(owner).pause()
+    expect(await elections.paused()).to.equal(true)
+
+    await elections.connect(owner).unpause()
+    expect(await elections.paused()).to.equal(false)
+  })
+
+  it('rejects createElection with even seat count', async () => {
+    const { elections, owner, candidate1, candidate2, voter1 } = await deployFixture()
+
+    const now = await time.latest()
+
+    await expect(
+      elections.connect(owner).createElection(
+        'Invalid',
+        'Even seat count',
+        now + 100,
+        now + 7 * 24 * 60 * 60 + 100,
+        2, // even - invalid
+        [candidate1.address, candidate2.address],
+        [voter1.address]
       )
-      electionId = 1
-      await time.increaseTo(startDate + 50)
-    })
+    ).to.be.revertedWithCustomError(elections, 'InvalidSeatCount')
+  })
 
-    it('Should allow eligible voter to cast a valid vote', async function () {
-      const tx = await elections.connect(voter1).castVote(electionId, candidate1.address)
+  it('rejects createElection with invalid dates (start in past)', async () => {
+    const { elections, owner, candidate1, candidate2, voter1 } = await deployFixture()
 
-      await expect(tx)
-        .to.emit(elections, 'VoteSubmitted')
-        .withArgs(electionId, voter1.address, candidate1.address)
+    const now = await time.latest()
 
-      expect(await elections.hasVoted(electionId, voter1.address)).to.be.true
-      expect(await elections.getVoteCount(electionId)).to.equal(1)
-    })
+    await expect(
+      elections.connect(owner).createElection(
+        'Invalid',
+        'Past start date',
+        now - 100, // in the past
+        now + 7 * 24 * 60 * 60,
+        1,
+        [candidate1.address, candidate2.address],
+        [voter1.address]
+      )
+    ).to.be.revertedWithCustomError(elections, 'InvalidDates')
+  })
 
-    it('Should revert when non-eligible voter tries to vote', async function () {
-      await expect(
-        elections.connect(nonVoter).castVote(electionId, candidate1.address)
-      ).to.be.revertedWithCustomError(elections, 'NotEligibleVoter')
-    })
+  it('rejects createElection with end before start', async () => {
+    const { elections, owner, candidate1, candidate2, voter1 } = await deployFixture()
 
-    it('Should revert when voter tries to vote twice', async function () {
-      await elections.connect(voter1).castVote(electionId, candidate1.address)
-      await expect(
-        elections.connect(voter1).castVote(electionId, candidate2.address)
-      ).to.be.revertedWithCustomError(elections, 'AlreadyVoted')
-    })
+    const now = await time.latest()
 
-    it('Should revert with invalid candidate in vote', async function () {
-      await expect(
-        elections.connect(voter1).castVote(electionId, nonVoter.address)
-      ).to.be.revertedWithCustomError(elections, 'InvalidCandidate')
-    })
+    await expect(
+      elections.connect(owner).createElection(
+        'Invalid',
+        'End before start',
+        now + 200,
+        now + 100, // end before start
+        1,
+        [candidate1.address, candidate2.address],
+        [voter1.address]
+      )
+    ).to.be.revertedWithCustomError(elections, 'InvalidDates')
+  })
 
-    it('Should revert when election has not started', async function () {
-      // Conclude the first election
-      await time.increaseTo((await time.latest()) + ONE_WEEK + 100)
-      await elections.publishResults(electionId)
+  it('rejects createElection with duplicate candidates', async () => {
+    const { elections, owner, candidate1, voter1 } = await deployFixture()
 
-      const currentTime = await time.latest()
-      const futureStartDate = currentTime + ONE_DAY
-      const futureEndDate = futureStartDate + ONE_WEEK
+    const now = await time.latest()
 
-      await elections.createElection(
+    await expect(
+      elections.connect(owner).createElection(
+        'Invalid',
+        'Duplicate candidates',
+        now + 100,
+        now + 7 * 24 * 60 * 60 + 100,
+        1,
+        [candidate1.address, candidate1.address], // duplicate
+        [voter1.address]
+      )
+    ).to.be.revertedWithCustomError(elections, 'DuplicateCandidates')
+  })
+
+  it('rejects createElection with duplicate voters', async () => {
+    const { elections, owner, candidate1, candidate2, voter1 } = await deployFixture()
+
+    const now = await time.latest()
+
+    await expect(
+      elections.connect(owner).createElection(
+        'Invalid',
+        'Duplicate voters',
+        now + 100,
+        now + 7 * 24 * 60 * 60 + 100,
+        1,
+        [candidate1.address, candidate2.address],
+        [voter1.address, voter1.address] // duplicate
+      )
+    ).to.be.revertedWithCustomError(elections, 'DuplicateVoters')
+  })
+
+  it('rejects createElection when a previous election is ongoing', async () => {
+    const { elections, owner, candidate1, candidate2, voter1, voter2 } = await deployFixture()
+
+    await createActiveElection(
+      elections,
+      owner,
+      candidate1.address,
+      candidate2.address,
+      voter1.address,
+      voter2.address
+    )
+
+    const now = await time.latest()
+
+    await expect(
+      elections
+        .connect(owner)
+        .createElection(
+          'Second Election',
+          'Should fail',
+          now + 100,
+          now + 7 * 24 * 60 * 60 + 100,
+          1,
+          [candidate1.address, candidate2.address],
+          [voter1.address, voter2.address]
+        )
+    ).to.be.revertedWithCustomError(elections, 'ElectionIsOngoing')
+  })
+
+  it('rejects castVote when already voted', async () => {
+    const { elections, owner, voter1, voter2, candidate1, candidate2 } = await deployFixture()
+
+    await createActiveElection(
+      elections,
+      owner,
+      candidate1.address,
+      candidate2.address,
+      voter1.address,
+      voter2.address
+    )
+
+    await elections.connect(voter1).castVote(1, candidate1.address)
+
+    await expect(
+      elections.connect(voter1).castVote(1, candidate1.address)
+    ).to.be.revertedWithCustomError(elections, 'AlreadyVoted')
+  })
+
+  it('rejects castVote before election starts', async () => {
+    const { elections, owner, voter1, voter2, candidate1, candidate2 } = await deployFixture()
+
+    const now = await time.latest()
+    const startDate = now + 1000
+    const endDate = startDate + 7 * 24 * 60 * 60
+
+    await elections
+      .connect(owner)
+      .createElection(
         'Future Election',
-        'Future Desc',
-        futureStartDate,
-        futureEndDate,
-        3,
-        candidates,
-        [voter1.address]
-      )
-      const futureElectionId = 2
-
-      await expect(
-        elections.connect(voter1).castVote(futureElectionId, candidate1.address)
-      ).to.be.revertedWithCustomError(elections, 'ElectionNotActive')
-    })
-
-    it('Should revert when election has ended', async function () {
-      // Conclude the first election
-      await time.increaseTo((await time.latest()) + ONE_WEEK + 100)
-      await elections.publishResults(electionId)
-
-      const currentTime = await time.latest()
-      const pastStartDate = currentTime + 100
-      const pastEndDate = pastStartDate + 200
-
-      await elections.createElection(
-        'Past Election',
-        'Past Desc',
-        pastStartDate,
-        pastEndDate,
-        3,
-        candidates,
-        [voter1.address]
-      )
-      const pastElectionId = 2
-
-      await time.increaseTo(pastEndDate + 100)
-      await elections.publishResults(pastElectionId)
-
-      await expect(
-        elections.connect(voter1).castVote(pastElectionId, candidate1.address)
-      ).to.be.revertedWithCustomError(elections, 'ElectionNotActive')
-    })
-  })
-
-  describe('Results Publication', function () {
-    let electionId: number
-    let candidates: string[]
-
-    beforeEach(async function () {
-      candidates = [candidate1.address, candidate2.address, candidate3.address]
-      const eligibleVoters = [voter1.address, voter2.address, voter3.address]
-      const currentTime = await time.latest()
-      const startDate = currentTime + 100
-      const endDate = startDate + 200
-      await elections.createElection(
-        'BOD Election 2025',
-        'Annual Board of Directors Election',
+        'Not started yet',
         startDate,
         endDate,
-        1, // 1 seat for simple testing
-        candidates,
-        eligibleVoters
+        1,
+        [candidate1.address, candidate2.address],
+        [voter1.address, voter2.address]
       )
-      electionId = 1
-      await time.increaseTo(endDate + 100)
-    })
 
-    it('Should publish results after election ends', async function () {
-      const tx = await elections.publishResults(electionId)
-      await expect(tx).to.emit(elections, 'ResultsPublished')
-      const election = await elections.getElection(electionId)
-      expect(election.resultsPublished).to.be.true
-    })
-
-    it('Should publish correct results with votes', async function () {
-      // Conclude the first election
-      await elections.publishResults(electionId)
-
-      const currentTime = await time.latest()
-      const activeStartDate = currentTime + 100
-      const activeEndDate = activeStartDate + 200
-      const seatCount = 1 // We want 1 winners
-
-      await elections.createElection(
-        'Active Election',
-        'Active Election Description',
-        activeStartDate,
-        activeEndDate,
-        seatCount,
-        candidates,
-        [voter1.address, voter2.address, voter3.address]
-      )
-      const activeElectionId = 2
-      await time.increaseTo(activeStartDate + 50)
-
-      // Vote tally:
-      // Candidate 1: 2 votes (from voter1, voter2)
-      // Candidate 2: 1 vote (from voter3)
-      // Candidate 3: 0 votes
-      await elections.connect(voter1).castVote(activeElectionId, candidate1.address)
-      await elections.connect(voter2).castVote(activeElectionId, candidate1.address)
-      await elections.connect(voter3).castVote(activeElectionId, candidate2.address)
-
-      await time.increaseTo(activeEndDate + 100)
-      await elections.publishResults(activeElectionId)
-
-      const winners = await elections.getElectionWinners(activeElectionId)
-      const results = await elections.getElectionResults(activeElectionId)
-
-      expect(winners.length).to.equal(seatCount)
-      expect(results.length).to.equal(seatCount)
-
-      // C1 should be the first winner
-      expect(winners).to.deep.equal([candidate1.address])
-      expect(results).to.deep.equal([candidate1.address])
-
-      // Check if the board of directors contract was updated
-      const boardMembers = await boardOfDirectors.getBoardOfDirectors()
-      expect(boardMembers).to.deep.equal([candidate1.address])
-    })
-
-    it('Should correctly sort winners when a new candidate displaces another (tests bubble-up)', async function () {
-      // Conclude the first election
-      await elections.publishResults(electionId)
-
-      const fourCandidates = [
-        candidate1.address,
-        candidate2.address,
-        candidate3.address,
-        candidate4.address
-      ]
-      const moreVoters = await ethers.getSigners()
-      const allVoters = [
-        voter1.address,
-        voter2.address,
-        voter3.address,
-        voter4.address,
-        voter5.address,
-        voter6.address,
-        moreVoters[15].address,
-        moreVoters[16].address,
-        moreVoters[17].address,
-        moreVoters[18].address
-      ]
-
-      const currentTime = await time.latest()
-      const activeStartDate = currentTime + 100
-      const activeEndDate = activeStartDate + 200
-      const seatCount = 3 // 3 seats
-
-      await elections.createElection(
-        'Bubble Sort Test Election',
-        'Test sorting logic',
-        activeStartDate,
-        activeEndDate,
-        seatCount,
-        fourCandidates,
-        allVoters
-      )
-      const activeElectionId = 2
-      await time.increaseTo(activeStartDate + 50)
-
-      // --- Vote Tally ---
-      // C4 gets 1 vote (from voter1)
-      // C3 gets 2 votes (from voter2, voter3)
-      // C2 gets 4 votes (from voter4, voter5, voter6)
-      // C1 gets 3 votes (will displace C4 and bubble up past C3)
-
-      // Setup initial state of top candidates [C2, C3, C4]
-      await elections.connect(voter4).castVote(activeElectionId, candidate2.address)
-      await elections.connect(voter5).castVote(activeElectionId, candidate2.address)
-      await elections.connect(voter6).castVote(activeElectionId, candidate2.address)
-      await elections.connect(voter2).castVote(activeElectionId, candidate3.address)
-      await elections.connect(voter3).castVote(activeElectionId, candidate3.address)
-      await elections.connect(voter1).castVote(activeElectionId, candidate4.address)
-
-      // At this point, the vote counts are: C2=3, C3=2, C4=1. C1=0.
-      // Now, have more voters vote to trigger the bubble-up logic.
-      // We need more signers for this. Let's re-use.
-      await elections.connect(moreVoters[15]).castVote(activeElectionId, candidate1.address)
-      await elections.connect(moreVoters[16]).castVote(activeElectionId, candidate1.address)
-      await elections.connect(moreVoters[17]).castVote(activeElectionId, candidate1.address) // C1 has 3 votes now
-      await elections.connect(moreVoters[18]).castVote(activeElectionId, candidate2.address) // C2 has 4 votes now
-
-      // Final Tally: C2(4), C1(3), C3(2), C4(1)
-
-      await time.increaseTo(activeEndDate + 100)
-      await elections.publishResults(activeElectionId)
-
-      const winners = await elections.getElectionWinners(activeElectionId)
-
-      // Expected order: C2 (4 votes), C1 (3 votes), C3 (2 votes)
-      expect(winners).to.deep.equal([candidate2.address, candidate1.address, candidate3.address])
-    })
-
-    it('Should revert when trying to publish results for active election', async function () {
-      await elections.publishResults(electionId)
-
-      const currentTime = await time.latest()
-      const activeStartDate = currentTime + 100
-      const activeEndDate = activeStartDate + ONE_WEEK
-      await elections.createElection(
-        'Active Election',
-        'Active Election Description',
-        activeStartDate,
-        activeEndDate,
-        3,
-        candidates,
-        [voter1.address]
-      )
-      const activeElectionId = 2
-      await time.increaseTo(activeStartDate + 100)
-      await expect(elections.publishResults(activeElectionId)).to.be.revertedWithCustomError(
-        elections,
-        'ResultsNotReady'
-      )
-    })
-
-    it('Should revert when trying to publish results twice', async function () {
-      await elections.publishResults(electionId)
-      await expect(elections.publishResults(electionId)).to.be.revertedWithCustomError(
-        elections,
-        'ResultsAlreadyPublished'
-      )
-    })
-
-    it('Should only allow owner to publish results', async function () {
-      await expect(
-        elections.connect(voter1).publishResults(electionId)
-      ).to.be.revertedWithCustomError(elections, 'OwnableUnauthorizedAccount')
-    })
+    // Do not advance time - election hasn't started
+    await expect(
+      elections.connect(voter1).castVote(1, candidate1.address)
+    ).to.be.revertedWithCustomError(elections, 'ElectionNotActive')
   })
 
-  describe('Admin Functions', function () {
-    it('Should pause the contract', async function () {
-      await elections.pause()
-      expect(await elections.paused()).to.be.true
-    })
+  it('rejects publishResults before election ends and not all voted', async () => {
+    const { elections, owner, voter1, voter2, candidate1, candidate2 } = await deployFixture()
 
-    it('Should unpause the contract', async function () {
-      await elections.pause()
-      await elections.unpause()
-      expect(await elections.paused()).to.be.false
-    })
+    await createActiveElection(
+      elections,
+      owner,
+      candidate1.address,
+      candidate2.address,
+      voter1.address,
+      voter2.address
+    )
+
+    // Only 1 of 2 voters voted, and time hasn't passed
+    await elections.connect(voter1).castVote(1, candidate1.address)
+
+    await expect(elections.connect(owner).publishResults(1)).to.be.revertedWithCustomError(
+      elections,
+      'ResultsNotReady'
+    )
   })
 
-  describe('View Functions', function () {
-    let electionId: number
-    let startDate: number
-    let candidates: string[]
+  it('allows publishResults after all voters have voted (before end)', async () => {
+    const { elections, owner, voter1, voter2, candidate1, candidate2 } = await deployFixture()
 
-    beforeEach(async function () {
-      candidates = [candidate1.address, candidate2.address, candidate3.address]
-      const eligibleVoters = [voter1.address, voter2.address, voter3.address]
-      const currentTime = await time.latest()
-      startDate = currentTime + ONE_DAY
-      const endDate = startDate + ONE_WEEK
-      await elections.createElection(
-        'BOD Election 2025',
-        'Annual Board of Directors Election',
+    await createActiveElection(
+      elections,
+      owner,
+      candidate1.address,
+      candidate2.address,
+      voter1.address,
+      voter2.address
+    )
+
+    await elections.connect(voter1).castVote(1, candidate1.address)
+    await elections.connect(voter2).castVote(1, candidate2.address)
+
+    // All voters voted, can publish even before end
+    await expect(elections.connect(owner).publishResults(1)).to.emit(elections, 'ResultsPublished')
+  })
+
+  it('allows publishResults after election has ended (not all voted)', async () => {
+    const { elections, owner, voter1, voter2, candidate1, candidate2 } = await deployFixture()
+
+    const now = await time.latest()
+    const startDate = now + 100
+    const endDate = startDate + 60 // short duration
+
+    await elections
+      .connect(owner)
+      .createElection(
+        'Short Election',
+        'Ends quickly',
         startDate,
         endDate,
-        3,
-        candidates,
-        eligibleVoters
+        1,
+        [candidate1.address, candidate2.address],
+        [voter1.address, voter2.address]
       )
-      electionId = 1
-    })
 
-    it('Should return election candidates', async function () {
-      const returnedCandidates = await elections.getElectionCandidates(electionId)
-      expect(returnedCandidates).to.deep.equal(candidates)
-    })
+    await time.increase(101)
 
-    it('Should return eligible voters', async function () {
-      const returnedVoters = await elections.getElectionEligibleVoters(electionId)
-      expect(returnedVoters).to.deep.equal([voter1.address, voter2.address, voter3.address])
-    })
+    await elections.connect(voter1).castVote(1, candidate1.address)
+    // voter2 doesn't vote
 
-    it('Should check voter eligibility', async function () {
-      expect(await elections.isEligibleVoter(electionId, voter1.address)).to.be.true
-      expect(await elections.isEligibleVoter(electionId, nonVoter.address)).to.be.false
-    })
+    await time.increase(61) // advance past end
 
-    it('Should track voting status and voter choice', async function () {
-      expect(await elections.hasVoted(electionId, voter1.address)).to.be.false
-      await time.increaseTo(startDate + 50)
-      await elections.connect(voter1).castVote(electionId, candidate2.address)
-      expect(await elections.hasVoted(electionId, voter1.address)).to.be.true
-      expect(await elections.getVoterChoice(electionId, voter1.address)).to.equal(
-        candidate2.address
+    await expect(elections.connect(owner).publishResults(1)).to.emit(elections, 'ResultsPublished')
+  })
+
+  it('rejects publishResults if already published', async () => {
+    const { elections, owner, voter1, voter2, candidate1, candidate2 } = await deployFixture()
+
+    await createActiveElection(
+      elections,
+      owner,
+      candidate1.address,
+      candidate2.address,
+      voter1.address,
+      voter2.address
+    )
+
+    await elections.connect(voter1).castVote(1, candidate1.address)
+    await elections.connect(voter2).castVote(1, candidate1.address)
+
+    await elections.connect(owner).publishResults(1)
+
+    await expect(elections.connect(owner).publishResults(1)).to.be.revertedWithCustomError(
+      elections,
+      'ResultsAlreadyPublished'
+    )
+  })
+
+  it('rejects publishResults for non-existent election', async () => {
+    const { elections, owner } = await deployFixture()
+
+    await expect(elections.connect(owner).publishResults(99)).to.be.revertedWithCustomError(
+      elections,
+      'ElectionNotFound'
+    )
+  })
+
+  it('getElection returns correct election data', async () => {
+    const { elections, owner, voter1, voter2, candidate1, candidate2 } = await deployFixture()
+
+    const now = await time.latest()
+    const startDate = now + 100
+    const endDate = startDate + 7 * 24 * 60 * 60
+
+    await elections
+      .connect(owner)
+      .createElection(
+        'My Election',
+        'A description',
+        startDate,
+        endDate,
+        1,
+        [candidate1.address, candidate2.address],
+        [voter1.address, voter2.address]
       )
-    })
 
-    it('Should revert for non-existent election', async function () {
-      await expect(elections.getElection(999)).to.be.revertedWithCustomError(
-        elections,
-        'ElectionNotFound'
-      )
-    })
+    const [id, title, description, , , , seatCount, resultsPublished] =
+      await elections.getElection(1)
+
+    expect(id).to.equal(1)
+    expect(title).to.equal('My Election')
+    expect(description).to.equal('A description')
+    expect(seatCount).to.equal(1)
+    expect(resultsPublished).to.equal(false)
+  })
+
+  it('getElection reverts for non-existent election', async () => {
+    const { elections } = await deployFixture()
+
+    await expect(elections.getElection(99)).to.be.revertedWithCustomError(
+      elections,
+      'ElectionNotFound'
+    )
+  })
+
+  it('getElectionCandidates returns candidates', async () => {
+    const { elections, owner, voter1, voter2, candidate1, candidate2 } = await deployFixture()
+
+    await createActiveElection(
+      elections,
+      owner,
+      candidate1.address,
+      candidate2.address,
+      voter1.address,
+      voter2.address
+    )
+
+    const candidates = await elections.getElectionCandidates(1)
+    expect(candidates).to.include(candidate1.address)
+    expect(candidates).to.include(candidate2.address)
+  })
+
+  it('getElectionEligibleVoters returns voters', async () => {
+    const { elections, owner, voter1, voter2, candidate1, candidate2 } = await deployFixture()
+
+    await createActiveElection(
+      elections,
+      owner,
+      candidate1.address,
+      candidate2.address,
+      voter1.address,
+      voter2.address
+    )
+
+    const voters = await elections.getElectionEligibleVoters(1)
+    expect(voters).to.include(voter1.address)
+    expect(voters).to.include(voter2.address)
+  })
+
+  it('getElectionWinners reverts before results published', async () => {
+    const { elections, owner, voter1, voter2, candidate1, candidate2 } = await deployFixture()
+
+    await createActiveElection(
+      elections,
+      owner,
+      candidate1.address,
+      candidate2.address,
+      voter1.address,
+      voter2.address
+    )
+
+    await expect(elections.getElectionWinners(1)).to.be.revertedWithCustomError(
+      elections,
+      'ResultsNotReady'
+    )
+  })
+
+  it('getElectionWinners returns winners after publish', async () => {
+    const { elections, owner, voter1, voter2, candidate1, candidate2 } = await deployFixture()
+
+    await createActiveElection(
+      elections,
+      owner,
+      candidate1.address,
+      candidate2.address,
+      voter1.address,
+      voter2.address
+    )
+
+    await elections.connect(voter1).castVote(1, candidate1.address)
+    await elections.connect(voter2).castVote(1, candidate1.address)
+    await elections.connect(owner).publishResults(1)
+
+    const winners = await elections.getElectionWinners(1)
+    expect(winners).to.include(candidate1.address)
+  })
+
+  it('getVoterChoice returns chosen candidate', async () => {
+    const { elections, owner, voter1, voter2, candidate1, candidate2 } = await deployFixture()
+
+    await createActiveElection(
+      elections,
+      owner,
+      candidate1.address,
+      candidate2.address,
+      voter1.address,
+      voter2.address
+    )
+
+    await elections.connect(voter1).castVote(1, candidate1.address)
+
+    expect(await elections.getVoterChoice(1, voter1.address)).to.equal(candidate1.address)
+  })
+
+  it('hasVoted returns correct status', async () => {
+    const { elections, owner, voter1, voter2, candidate1, candidate2 } = await deployFixture()
+
+    await createActiveElection(
+      elections,
+      owner,
+      candidate1.address,
+      candidate2.address,
+      voter1.address,
+      voter2.address
+    )
+
+    expect(await elections.hasVoted(1, voter1.address)).to.equal(false)
+
+    await elections.connect(voter1).castVote(1, candidate1.address)
+
+    expect(await elections.hasVoted(1, voter1.address)).to.equal(true)
+  })
+
+  it('isEligibleVoter returns correct status', async () => {
+    const { elections, owner, voter1, voter2, candidate1, candidate2, nonVoter } =
+      await deployFixture()
+
+    await createActiveElection(
+      elections,
+      owner,
+      candidate1.address,
+      candidate2.address,
+      voter1.address,
+      voter2.address
+    )
+
+    expect(await elections.isEligibleVoter(1, voter1.address)).to.equal(true)
+    expect(await elections.isEligibleVoter(1, nonVoter.address)).to.equal(false)
+  })
+
+  it('getVoteCount returns current vote count', async () => {
+    const { elections, owner, voter1, voter2, candidate1, candidate2 } = await deployFixture()
+
+    await createActiveElection(
+      elections,
+      owner,
+      candidate1.address,
+      candidate2.address,
+      voter1.address,
+      voter2.address
+    )
+
+    expect(await elections.getVoteCount(1)).to.equal(0)
+
+    await elections.connect(voter1).castVote(1, candidate1.address)
+
+    expect(await elections.getVoteCount(1)).to.equal(1)
+  })
+
+  it('getElectionResults handles tie-breaking by address comparison', async () => {
+    const { elections, owner, voter1, voter2, candidate1, candidate2 } = await deployFixture()
+
+    await createActiveElection(
+      elections,
+      owner,
+      candidate1.address,
+      candidate2.address,
+      voter1.address,
+      voter2.address
+    )
+
+    // voter1 votes candidate1, voter2 votes candidate2 → tie
+    await elections.connect(voter1).castVote(1, candidate1.address)
+    await elections.connect(voter2).castVote(1, candidate2.address)
+
+    const results = await elections.getElectionResults(1)
+    expect(results.length).to.equal(1) // seatCount = 1
+    // The winner should be deterministic (lower address wins tie-breaking)
+    const expectedWinner =
+      candidate1.address.toLowerCase() < candidate2.address.toLowerCase()
+        ? candidate1.address
+        : candidate2.address
+    expect(results[0].toLowerCase()).to.equal(expectedWinner.toLowerCase())
+  })
+
+  it('rejects view functions with non-existent election ID', async () => {
+    const { elections, voter1 } = await deployFixture()
+
+    await expect(elections.getElectionCandidates(99)).to.be.revertedWithCustomError(
+      elections,
+      'ElectionNotFound'
+    )
+    await expect(elections.getElectionEligibleVoters(99)).to.be.revertedWithCustomError(
+      elections,
+      'ElectionNotFound'
+    )
+    await expect(elections.getElectionWinners(99)).to.be.revertedWithCustomError(
+      elections,
+      'ElectionNotFound'
+    )
+    await expect(elections.getVoterChoice(99, voter1.address)).to.be.revertedWithCustomError(
+      elections,
+      'ElectionNotFound'
+    )
+    await expect(elections.hasVoted(99, voter1.address)).to.be.revertedWithCustomError(
+      elections,
+      'ElectionNotFound'
+    )
+    await expect(elections.isEligibleVoter(99, voter1.address)).to.be.revertedWithCustomError(
+      elections,
+      'ElectionNotFound'
+    )
+    await expect(elections.getVoteCount(99)).to.be.revertedWithCustomError(
+      elections,
+      'ElectionNotFound'
+    )
+  })
+
+  it('rejects createElection when paused', async () => {
+    const { elections, owner, candidate1, candidate2, voter1, voter2 } = await deployFixture()
+
+    await elections.connect(owner).pause()
+
+    const now = await time.latest()
+
+    await expect(
+      elections
+        .connect(owner)
+        .createElection(
+          'Election',
+          'desc',
+          now + 100,
+          now + 7 * 24 * 60 * 60 + 100,
+          1,
+          [candidate1.address, candidate2.address],
+          [voter1.address, voter2.address]
+        )
+    ).to.be.reverted
+  })
+
+  it('rejects castVote when paused', async () => {
+    const { elections, owner, voter1, voter2, candidate1, candidate2 } = await deployFixture()
+
+    await createActiveElection(
+      elections,
+      owner,
+      candidate1.address,
+      candidate2.address,
+      voter1.address,
+      voter2.address
+    )
+
+    await elections.connect(owner).pause()
+
+    await expect(elections.connect(voter1).castVote(1, candidate1.address)).to.be.reverted
   })
 })

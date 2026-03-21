@@ -105,7 +105,7 @@ describe.skip('DeployContractSection', () => {
 
       await deployButton.trigger('click')
 
-      expect(mockUseWriteContract.writeContractAsync).toHaveBeenCalledWith(
+      expect(mockUseWriteContract.mutateAsync).toHaveBeenCalledWith(
         expect.objectContaining({
           address: expect.any(String),
           functionName: 'createBeaconProxy'

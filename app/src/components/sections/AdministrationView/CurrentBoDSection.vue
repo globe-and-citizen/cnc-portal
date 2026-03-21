@@ -2,7 +2,7 @@
   <CardComponent :title="`${electionId ? `Elected` : `Current`} Board of Directors`">
     <div
       class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mt-4"
-      v-if="boardOfDirectors && boardOfDirectors.length > 0"
+      v-if="normalizedBoardOfDirectors.length > 0"
     >
       <div
         v-for="(memberAddress, index) in _boardOfDirectors"
@@ -54,6 +54,12 @@ const { data: boardOfDirectors, isFetching } = useReadContract({
   args: [],
   scopeKey: 'boardOfDirectors'
 })
+
+const normalizedBoardOfDirectors = computed<string[]>(() =>
+  Array.isArray(boardOfDirectors.value)
+    ? boardOfDirectors.value.filter((member): member is string => typeof member === 'string')
+    : []
+)
 const { data: electionWinners, error: errorGetElectionWinners } = useReadContract({
   address: electionsAddress.value,
   abi: ELECTIONS_ABI,
@@ -64,7 +70,11 @@ const { data: electionWinners, error: errorGetElectionWinners } = useReadContrac
 })
 
 const _boardOfDirectors = computed(() => {
-  return props.electionId ? electionWinners.value : boardOfDirectors.value || []
+  if (props.electionId && Array.isArray(electionWinners.value)) {
+    return electionWinners.value.filter((member): member is string => typeof member === 'string')
+  }
+
+  return normalizedBoardOfDirectors.value
 })
 
 watch(errorGetElectionWinners, (error) => {

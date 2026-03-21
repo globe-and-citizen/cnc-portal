@@ -116,7 +116,7 @@ describe('TransferComponent', () => {
     } = options
 
     useWriteContractFn.mockReturnValue({
-      writeContract: vi.fn(),
+      mutate: vi.fn(),
       isPending: ref(writeContractPending),
       error: ref(writeContractError),
       data: ref(writeContractData)

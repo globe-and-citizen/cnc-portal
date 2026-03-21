@@ -6,68 +6,17 @@ import '@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
+import './base/TokenSupport.sol';
+import {IOfficer} from './interfaces/IOfficer.sol';
+import {IInvestorV1} from './interfaces/IInvestorV1.sol';
 
-interface IInvestorView {
-  struct Shareholder {
-    address shareholder;
-    uint256 amount;
-  }
-
-  function totalSupply() external view returns (uint256);
-
-  function getShareholders() external view returns (Shareholder[] memory);
-}
-
-interface IOfficer {
-  function getFeeCollector() external view returns (address);
-  function getFeeFor(string calldata contractType) external view returns (uint16);
-  function isFeeCollectorToken(address tokenAddress) external view returns (bool);
-}
-
-
-contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgradeable {
+contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgradeable, TokenSupport {
   using SafeERC20 for IERC20;
 
   /**
-   * @dev Address of the investor contract that provides shareholder information
-   * Used to get the list of shareholders and their token amounts for dividend distribution
+   * @dev Address of the Officer contract (set during initialization)
    */
-  address public investorAddress;
-
-  /**
-   * @dev Mapping to track which ERC20 tokens are supported by the contract
-   * token address => true if supported, false otherwise
-   */
-  mapping(address => bool) public supportedTokens;
-
-  /**
-   * @dev Mapping to track ETH/native token dividend balances for each account
-   * account address => dividend amount available for claiming
-   */
-  mapping(address => uint256) public dividendBalances;
-
-  /**
-   * @dev Nested mapping to track ERC20 token dividend balances for each account
-   * token address => account address => dividend amount available for claiming
-   */
-  mapping(address => mapping(address => uint256)) public tokenDividendBalances;
-
-  /**
-   * @dev Total amount of ETH/native tokens locked as dividends
-   * This represents the total dividends allocated to shareholders but not yet claimed
-   * Only spendable by investor shareholders through the claim mechanism
-   */
-  uint256 public totalDividends;
-
-  // Add new state variable - MUST be added after existing ones
   address public officerAddress;
-
-  /**
-   * @dev Mapping to track total locked token balances for each supported token
-   * token address => total amount locked as dividends for that token
-   * Represents the sum of all unclaimed token dividends across all shareholders
-   */
-  mapping(address => uint256) public totalTokenDividends;
 
   /**
    * @dev Emitted when ETH/native tokens are deposited into the contract.
@@ -93,6 +42,11 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
   event Transfer(address indexed sender, address indexed to, uint256 amount);
 
   event FeePaid(address indexed feeCollector, uint256 amount);
+  event DividendDistributionTriggered(
+    address indexed investor,
+    address indexed token,
+    uint256 totalAmount
+  );
   /**
    * @dev Emitted when ERC20 tokens are transferred from the contract.
    * @param sender The address that initiated the transfer (contract owner).
@@ -108,75 +62,20 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
   );
 
   /**
-   * @dev Emitted when ETH/native token dividends are deposited for distribution.
-   * @param account The address that deposited the dividends (contract owner).
-   * @param amount The total amount of dividends deposited.
-   * @param investorAddress The address of the investor contract used for shareholder allocation.
+   * @dev Resolves the deployed Investor contract from Officer.
+   * Tries "InvestorV1" first and falls back to "Investor" for compatibility.
    */
-  event DividendDeposited(address indexed account, uint256 amount, address indexed investorAddress);
+  function _getInvestorAddress() internal view returns (address) {
+    require(officerAddress != address(0), 'Officer address not configured');
 
-  /**
-   * @dev Emitted when ERC20 token dividends are deposited for distribution.
-   * @param account The address that deposited the dividends (contract owner).
-   * @param token The address of the ERC20 token contract.
-   * @param amount The total amount of token dividends deposited.
-   * @param investorAddress The address of the investor contract used for shareholder allocation.
-   */
-  event TokenDividendDeposited(
-    address indexed account,
-    address indexed token,
-    uint256 amount,
-    address indexed investorAddress
-  );
+    address investorAddress = IOfficer(officerAddress).findDeployedContract('InvestorV1');
+    if (investorAddress == address(0)) {
+      investorAddress = IOfficer(officerAddress).findDeployedContract('Investor');
+    }
 
-  /**
-   * @dev Emitted when ETH/native token dividends are credited to a shareholder's account.
-   * @param account The shareholder address that received the dividend credit.
-   * @param amount The amount of dividends credited to the account.
-   */
-  event DividendCredited(address indexed account, uint256 amount);
-
-  /**
-   * @dev Emitted when ERC20 token dividends are credited to a shareholder's account.
-   * @param account The shareholder address that received the dividend credit.
-   * @param token The address of the ERC20 token contract.
-   * @param amount The amount of token dividends credited to the account.
-   */
-  event TokenDividendCredited(address indexed account, address indexed token, uint256 amount);
-
-  /**
-   * @dev Emitted when a shareholder claims their ETH/native token dividends.
-   * @param account The shareholder address that claimed the dividends.
-   * @param amount The amount of dividends claimed.
-   */
-  event DividendClaimed(address indexed account, uint256 amount);
-
-  /**
-   * @dev Emitted when a shareholder claims their ERC20 token dividends.
-   * @param account The shareholder address that claimed the dividends.
-   * @param token The address of the ERC20 token contract.
-   * @param amount The amount of token dividends claimed.
-   */
-  event TokenDividendClaimed(address indexed account, address indexed token, uint256 amount);
-
-  /**
-   * @dev Emitted when a new token is added to the supported tokens list.
-   * @param tokenAddress The address of the token contract.
-   */
-  event TokenSupportAdded(address indexed tokenAddress);
-
-  /**
-   * @dev Emitted when a token is removed from the supported tokens list.
-   * @param tokenAddress The address of the token contract.
-   */
-  event TokenSupportRemoved(address indexed tokenAddress);
-
-  /**
-   * @dev Emitted when the investor address is updated.
-   * @param previousAddress The previous investor contract address.
-   * @param newAddress The new investor contract address.
-   */
-  event InvestorAddressUpdated(address indexed previousAddress, address indexed newAddress);
+    require(investorAddress != address(0), 'Investor contract not found');
+    return investorAddress;
+  }
 
   /**
    * @notice Initializes the Bank contract with supported tokens and owner
@@ -194,10 +93,14 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
     uint256 length = _tokenAddresses.length;
     for (uint256 i = 0; i < length; ++i) {
       require(_tokenAddresses[i] != address(0), 'Token address cannot be zero');
-      supportedTokens[_tokenAddresses[i]] = true;
+      _addTokenSupport(_tokenAddresses[i]);
     }
-    require(msg.sender!=address(0), 'msg send cannot be zero');
-    officerAddress=msg.sender;
+    // Emit events after they're already added to avoid duplicate events
+    for (uint256 i = 0; i < length; ++i) {
+      emit TokenSupportAdded(_tokenAddresses[i]);
+    }
+    require(msg.sender != address(0), 'msg send cannot be zero');
+    officerAddress = msg.sender;
   }
 
   /**
@@ -205,12 +108,8 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
    * @param _tokenAddress The address of the token contract.
    * @dev Can only be called by the contract owner.
    */
-  function addTokenSupport(address _tokenAddress) external onlyOwner {
-    require(_tokenAddress != address(0), 'Token address cannot be zero');
-    require(!supportedTokens[_tokenAddress], 'Token already supported');
-
-    supportedTokens[_tokenAddress] = true;
-    emit TokenSupportAdded(_tokenAddress);
+  function addTokenSupport(address _tokenAddress) external override onlyOwner {
+    _addTokenSupport(_tokenAddress);
   }
 
   /**
@@ -218,57 +117,26 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
    * @param _tokenAddress The address of the token contract.
    * @dev Can only be called by the contract owner.
    */
-  function removeTokenSupport(address _tokenAddress) external onlyOwner {
-    require(_tokenAddress != address(0), 'Token address cannot be zero');
-    require(supportedTokens[_tokenAddress], 'Token not supported');
-
-    supportedTokens[_tokenAddress] = false;
-    emit TokenSupportRemoved(_tokenAddress);
+  function removeTokenSupport(address _tokenAddress) external override onlyOwner {
+    _removeTokenSupport(_tokenAddress);
   }
 
   /**
-   * @notice Returns the amount of ETH/native tokens available for transfers (not locked as dividends)
-   * @dev Calculates unlocked balance by subtracting total dividends from contract balance
-   * @return The amount of ETH/native tokens that can be transferred by the owner
+   * @notice Returns the current ETH/native token balance held by the contract.
+   * @return Current balance in wei.
    */
-  function getUnlockedBalance() public view returns (uint256) {
-    uint256 bal = address(this).balance;
-    return bal > totalDividends ? bal - totalDividends : 0;
+  function getBalance() public view returns (uint256) {
+    return address(this).balance;
   }
 
   /**
-   * @notice Returns the amount of ERC20 tokens available for transfers (not locked as dividends)
-   * @dev Calculates unlocked token balance by subtracting total token dividends from contract balance
-   * @param _token The address of the ERC20 token contract
-   * @return The amount of tokens that can be transferred by the owner
+   * @notice Returns the current ERC20 token balance held by the contract.
+   * @param _token The address of the ERC20 token contract.
+   * @return Current token balance.
    */
-  function getUnlockedTokenBalance(address _token) public view returns (uint256) {
-    require(supportedTokens[_token], 'Unsupported token');
-    uint256 bal = IERC20(_token).balanceOf(address(this));
-    uint256 locked = totalTokenDividends[_token];
-    return bal > locked ? bal - locked : 0;
-  }
-
-  /**
-   * @notice Returns the dividend balance for a specific account and token
-   * @dev Public view function to check how much token dividends an account can claim
-   * @param _token The address of the ERC20 token contract
-   * @param _account The address of the account to check
-   * @return The amount of token dividends available for claiming
-   */
-  function getTokenDividendBalance(address _token, address _account) public view returns (uint256) {
-    require(supportedTokens[_token], 'Unsupported token');
-    return tokenDividendBalances[_token][_account];
-  }
-
-  /**
-   * @dev Modifier to ensure that only unlocked ETH balance is used for transfers
-   * @param _amount The amount to be checked against unlocked balance
-   * @custom:security Prevents spending of funds allocated as dividends
-   */
-  modifier requiresUnlockedBalance(uint256 _amount) {
-    require(_amount <= getUnlockedBalance(), 'Insufficient unlocked balance');
-    _;
+  function getTokenBalance(address _token) public view returns (uint256) {
+    require(_isTokenSupported(_token), 'Unsupported token');
+    return IERC20(_token).balanceOf(address(this));
   }
 
   /**
@@ -287,7 +155,7 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
    * @custom:security Protected against reentrancy and requires contract to be unpaused
    */
   function depositToken(address _token, uint256 _amount) external nonReentrant whenNotPaused {
-    require(supportedTokens[_token], 'Unsupported token');
+    require(_isTokenSupported(_token), 'Unsupported token');
     require(_amount > 0, 'Amount must be greater than zero');
 
     IERC20(_token).safeTransferFrom(msg.sender, address(this), _amount);
@@ -296,17 +164,15 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
 
   /**
    * @notice Transfers ETH/native tokens from the contract to a specified address
-   * @dev Only owner can call this function and only unlocked balance can be transferred
+   * @dev Only owner can call this function and can transfer available balance
    * @param _to The recipient address
    * @param _amount The amount of ETH/native tokens to transfer
-   * @custom:security Uses requiresUnlockedBalance modifier to prevent spending dividend funds
+   * @custom:security Protected against reentrancy and requires contract to be unpaused
    */
-  function transfer(
-    address _to,
-    uint256 _amount
-  ) external onlyOwner nonReentrant whenNotPaused requiresUnlockedBalance(_amount) {
+  function transfer(address _to, uint256 _amount) external onlyOwner nonReentrant whenNotPaused {
     require(_to != address(0), 'Address cannot be zero');
     require(_amount > 0, 'Amount must be greater than zero');
+    require(_amount <= address(this).balance, 'Insufficient balance');
 
     // --- Step 1: Get fee configuration ---
     uint16 feeBps = _getFeeBps(); // e.g., 50 = 0.5%
@@ -350,10 +216,10 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
     address _to,
     uint256 _amount
   ) external onlyOwner nonReentrant whenNotPaused {
-    require(supportedTokens[_token], 'Unsupported token');
+    require(_isTokenSupported(_token), 'Unsupported token');
     require(_to != address(0), 'Address cannot be zero');
     require(_amount > 0, 'Amount must be greater than zero');
-    require(_amount <= getUnlockedTokenBalance(_token), 'Insufficient unlocked token balance');
+    require(_amount <= getTokenBalance(_token), 'Insufficient token balance');
 
     // Check if this is a fee-supported token (USDC or USDT)
     bool shouldChargeFee = _isSupportedFeeToken(_token);
@@ -386,190 +252,39 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
   }
 
   /**
-   * @notice Sets the investor contract address used for dividend distribution
-   * @dev Only owner can call this function to update the investor contract reference
-   * @param _investorAddress The address of the investor contract implementing IInvestorView
-   * @custom:security Requires contract to be unpaused and validates non-zero address
+   * @notice Funds Investor and triggers native ETH dividend distribution
+   * @param _amount Total ETH amount to distribute
    */
-  function setInvestorAddress(address _investorAddress) external whenNotPaused {
-    require(
-      msg.sender == owner() || investorAddress == address(0),
-      'Not allowed to set investor contract'
-    );
-    require(_investorAddress != address(0), 'Address cannot be zero');
-    address previousAddress = investorAddress;
-    investorAddress = _investorAddress;
-    emit InvestorAddressUpdated(previousAddress, _investorAddress);
-  }
-
-  /**
-   * @notice Deposits ETH/native token dividends and allocates them to shareholders
-   * @dev Allocates dividends proportionally based on shareholdings from investor contract
-   * @param _amount The amount of ETH/native tokens to allocate as dividends
-   * @param _investorAddress The address of the investor contract to get shareholder data
-   * @custom:security Only owner can call, uses unlocked balance, protected against reentrancy
-   */
-  function depositDividends(
-    uint256 _amount,
-    address _investorAddress
-  ) external payable onlyOwner whenNotPaused nonReentrant requiresUnlockedBalance(_amount) {
-    require(
-      _amount <= (address(this).balance - totalDividends),
-      'Insufficient balance in the bank'
-    );
-    require(_investorAddress != address(0), 'Investor address invalid');
-
-    allocateDividends(_amount, _investorAddress);
-    emit DividendDeposited(msg.sender, _amount, _investorAddress);
-  }
-
-  /**
-   * @notice Deposits ERC20 token dividends and allocates them to shareholders
-   * @dev Allocates token dividends proportionally based on shareholdings from investor contract
-   * @param _token The address of the ERC20 token contract
-   * @param _amount The amount of tokens to allocate as dividends
-   * @param _investorAddress The address of the investor contract to get shareholder data
-   * @custom:security Only owner can call, validates token support, protected against reentrancy
-   */
-  function depositTokenDividends(
-    address _token,
-    uint256 _amount,
-    address _investorAddress
-  ) external onlyOwner whenNotPaused nonReentrant {
-    require(supportedTokens[_token], 'Unsupported token');
+  function distributeNativeDividends(
+    uint256 _amount
+  ) external onlyOwner nonReentrant whenNotPaused {
     require(_amount > 0, 'Amount must be greater than zero');
-    require(_investorAddress != address(0), 'Investor address invalid');
+    require(_amount <= address(this).balance, 'Insufficient balance');
 
-    // Check if contract has enough token balance
-    uint256 contractBalance = IERC20(_token).balanceOf(address(this));
-    uint256 lockedBalance = totalTokenDividends[_token];
-    require(_amount <= (contractBalance - lockedBalance), 'Insufficient token balance in the bank');
+    address investorAddress = _getInvestorAddress();
+    IInvestorV1(investorAddress).distributeNativeDividends{value: _amount}(_amount);
 
-    allocateTokenDividends(_token, _amount, _investorAddress);
-    emit TokenDividendDeposited(msg.sender, _token, _amount, _investorAddress);
+    emit DividendDistributionTriggered(investorAddress, address(0), _amount);
   }
 
   /**
-   * @dev Internal function to allocate ETH/native token dividends to shareholders
-   * @param _amount The total amount of dividends to allocate
-   * @param _investorAddress The investor contract address to get shareholder information
-   * @custom:logic Uses proportional allocation based on shareholder token amounts
-   * @custom:precision Handles rounding by giving remainder to last shareholder
+   * @notice Funds Investor and triggers ERC20 dividend distribution
+   * @param _token Token address to distribute
+   * @param _amount Total token amount to distribute
    */
-  function allocateDividends(uint256 _amount, address _investorAddress) internal whenNotPaused {
-    IInvestorView investor = IInvestorView(_investorAddress);
-    IInvestorView.Shareholder[] memory holders = investor.getShareholders();
-    uint256 supply = investor.totalSupply();
-
-    require(supply > 0, 'Zero supply');
-    require(holders.length > 0, 'No shareholders');
-
-    uint256 remaining = _amount;
-    uint256 shareholderCount = holders.length;
-
-    for (uint256 i = 0; i < shareholderCount; ++i) {
-      address account = holders[i].shareholder;
-      uint256 balance = holders[i].amount;
-
-      uint256 share = (_amount * balance) / supply;
-      if (i == shareholderCount - 1) {
-        share = remaining; // ensure exact sum
-      } else if (share > remaining) {
-        share = remaining; // defensive clamp
-      }
-
-      if (share > 0) {
-        dividendBalances[account] += share;
-        totalDividends += share;
-        remaining -= share;
-        emit DividendCredited(account, share);
-      }
-    }
-  }
-
-  /**
-   * @dev Internal function to allocate ERC20 token dividends to shareholders
-   * @param _token The address of the ERC20 token contract
-   * @param _amount The total amount of token dividends to allocate
-   * @param _investorAddress The investor contract address to get shareholder information
-   * @custom:logic Uses proportional allocation based on shareholder token amounts
-   * @custom:precision Handles rounding by giving remainder to last shareholder
-   */
-  function allocateTokenDividends(
+  function distributeTokenDividends(
     address _token,
-    uint256 _amount,
-    address _investorAddress
-  ) internal whenNotPaused {
-    IInvestorView investor = IInvestorView(_investorAddress);
-    IInvestorView.Shareholder[] memory holders = investor.getShareholders();
-    uint256 supply = investor.totalSupply();
+    uint256 _amount
+  ) external onlyOwner nonReentrant whenNotPaused {
+    require(_isTokenSupported(_token), 'Unsupported token');
+    require(_amount > 0, 'Amount must be greater than zero');
+    require(_amount <= getTokenBalance(_token), 'Insufficient token balance');
 
-    require(supply > 0, 'Zero supply');
-    require(holders.length > 0, 'No shareholders');
+    address investorAddress = _getInvestorAddress();
+    IERC20(_token).safeTransfer(investorAddress, _amount);
+    IInvestorV1(investorAddress).distributeTokenDividends(_token, _amount);
 
-    uint256 remaining = _amount;
-    uint256 shareholderCount = holders.length;
-
-    for (uint256 i = 0; i < shareholderCount; ++i) {
-      address account = holders[i].shareholder;
-      uint256 balance = holders[i].amount;
-
-      uint256 share = (_amount * balance) / supply;
-      if (i == shareholderCount - 1) {
-        share = remaining; // ensure exact sum
-      } else if (share > remaining) {
-        share = remaining; // defensive clamp
-      }
-
-      if (share > 0) {
-        tokenDividendBalances[_token][account] += share;
-        totalTokenDividends[_token] += share;
-        remaining -= share;
-        emit TokenDividendCredited(account, _token, share);
-      }
-    }
-  }
-
-  /**
-   * @notice Allows shareholders to claim their allocated ETH/native token dividends
-   * @dev Single entrypoint for dividend claiming - no owner-initiated release
-   * @custom:security Follows checks-effects-interactions pattern to prevent reentrancy
-   * @custom:access Any shareholder with allocated dividends can call this function
-   */
-  function claimDividend() external whenNotPaused nonReentrant {
-    uint256 amt = dividendBalances[msg.sender];
-    require(amt > 0, 'Nothing to release');
-    require(totalDividends >= amt, 'Invariant: totalDividends too low');
-    // effects
-    dividendBalances[msg.sender] = 0;
-    totalDividends -= amt;
-
-    // interaction
-    (bool sent, ) = payable(msg.sender).call{value: amt}('');
-    require(sent, 'Failed to send dividend');
-    emit DividendClaimed(msg.sender, amt);
-  }
-
-  /**
-   * @notice Allows shareholders to claim their allocated ERC20 token dividends
-   * @dev Single entrypoint for token dividend claiming - no owner-initiated release
-   * @param _token The address of the ERC20 token contract to claim dividends for
-   * @custom:security Follows checks-effects-interactions pattern to prevent reentrancy
-   * @custom:access Any shareholder with allocated token dividends can call this function
-   */
-  function claimTokenDividend(address _token) external whenNotPaused nonReentrant {
-    require(supportedTokens[_token], 'Unsupported token');
-    uint256 amt = tokenDividendBalances[_token][msg.sender];
-    require(amt > 0, 'Nothing to release');
-    require(totalTokenDividends[_token] >= amt, 'Invariant: totalTokenDividends too low');
-
-    // effects
-    tokenDividendBalances[_token][msg.sender] = 0;
-    totalTokenDividends[_token] -= amt;
-
-    // interaction
-    IERC20(_token).safeTransfer(msg.sender, amt);
-    emit TokenDividendClaimed(msg.sender, _token, amt);
+    emit DividendDistributionTriggered(investorAddress, _token, _amount);
   }
 
   /**
@@ -577,9 +292,8 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
    * @return The fee in basis points (e.g., 50 = 0.5%)
    */
   function _getFeeBps() internal view returns (uint16) {
-      return IOfficer(officerAddress).getFeeFor('BANK');
+    return IOfficer(officerAddress).getFeeFor('BANK');
   }
-  
 
   /**
    * @dev Internal function to check if a token is supported by the FeeCollector

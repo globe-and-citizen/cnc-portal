@@ -23,12 +23,7 @@ import { config } from '@/wagmi.config'
 
 const toastStore = useToastStore()
 const queryClient = useQueryClient()
-const {
-  writeContract: publishResults,
-  isPending,
-  error,
-  data: publishResultsHash
-} = useWriteContract()
+const { mutate: publishResults, isPending, error, data: publishResultsHash } = useWriteContract()
 const {
   error: waitError,
   isLoading: isWaiting,

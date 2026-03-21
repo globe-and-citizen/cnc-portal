@@ -15,7 +15,7 @@
         <div class="space-y-2 text-sm">
           <div class="flex justify-between">
             <span class="text-gray-500">Owner:</span>
-            <span class="font-mono">{{ currentUserAddress }}</span>
+            <span class="font-mono">{{ userDataStore.address }}</span>
           </div>
           <div class="flex justify-between">
             <span class="text-gray-500">Threshold:</span>
@@ -55,12 +55,13 @@ import { computed } from 'vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import { isAddress } from 'viem'
 import ButtonUI from '@/components/ButtonUI.vue'
-import { useUserDataStore } from '@/stores/user'
-import { useToastStore } from '@/stores/useToastStore'
+import { useTeamStore, useUserDataStore } from '@/stores'
+
 import { useSafeDeployment } from '@/composables/safe'
 import { useCreateContractMutation } from '@/queries/contract.queries'
 import { log } from '@/utils'
 import { NETWORK } from '@/constant'
+import { useToast } from '@nuxt/ui/composables'
 
 interface Props {
   teamId: number
@@ -68,19 +69,22 @@ interface Props {
 
 const props = defineProps<Props>()
 const emits = defineEmits(['safeDeployed'])
+const toast = useToast()
 
 // Stores
+const teamStore = useTeamStore()
 const userDataStore = useUserDataStore()
-const { addSuccessToast, addErrorToast } = useToastStore()
 
 // Composables
 const { deploySafe, isDeploying } = useSafeDeployment()
 const { mutateAsync: createContract } = useCreateContractMutation()
 
-// Computed
-const currentUserAddress = computed(() => userDataStore.address)
-
-const canDeploy = computed(() => !!currentUserAddress.value && isAddress(currentUserAddress.value))
+const canDeploy = computed(
+  () =>
+    !!userDataStore.address &&
+    isAddress(userDataStore.address) &&
+    teamStore.currentTeam?.ownerAddress == userDataStore.address
+)
 
 const networkName = computed(() => NETWORK || 'Polygon')
 
@@ -89,11 +93,11 @@ const networkName = computed(() => NETWORK || 'Polygon')
  */
 const handleDeploySafe = async () => {
   if (!canDeploy.value) {
-    addErrorToast('Please connect your wallet')
+    toast.add({ title: 'Error', description: 'connect your wallet', color: 'error' })
     return
   }
 
-  const safeAddress = await deploySafe([currentUserAddress.value!], 1)
+  const safeAddress = await deploySafe([userDataStore.address!], 1)
 
   if (!safeAddress) {
     // Error already handled by deploySafe composable
@@ -106,11 +110,16 @@ const handleDeploySafe = async () => {
       teamId: String(props.teamId),
       contractAddress: safeAddress,
       contractType: 'Safe',
-      deployer: currentUserAddress.value!
+      deployer: userDataStore.address!
     }
   })
 
-  addSuccessToast('Safe wallet deployed successfully')
+  toast.add({
+    title: 'Success',
+    description: 'Safe wallet deployed successfully',
+    color: 'success'
+  })
+
   log.info('Safe deployed:', safeAddress)
 
   // Notify parent component

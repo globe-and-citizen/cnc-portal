@@ -11,8 +11,8 @@
             v-if="
               isLoadingTokenSymbol ||
               isLoadingInvestorsOwner ||
-              !tokenSymbolValue ||
-              !investorsOwnerValue ||
+              !safeTokenSymbol ||
+              !safeInvestorsOwner ||
               !investorAddress
             "
           >
@@ -22,22 +22,23 @@
           </template>
           <template v-else>
             <DistributeMintAction
-              :token-symbol="tokenSymbolValue"
+              :token-symbol="safeTokenSymbol"
               :investors-address="investorAddress"
             />
             <MintTokenAction
-              :token-symbol="tokenSymbolValue"
-              :investors-owner="investorsOwnerValue"
+              :token-symbol="safeTokenSymbol"
+              :investors-owner="safeInvestorsOwner"
             />
 
             <PayDividendsAction
-              :token-symbol="tokenSymbolValue"
-              :shareholders-count="shareholdersList.length"
+              :token-symbol="safeTokenSymbol"
+              :shareholders-count="safeShareholders.length"
               :investors-address="investorAddress"
-              :investors-owner="investorsOwnerValue"
+              :investors-owner="safeInvestorsOwner"
               :bank-address="bankAddress"
             />
             <ToggleSherCompensationButton />
+            <SetCompensationMultiplierButton />
             <InvestInSafeButton />
           </template>
         </div>
@@ -48,8 +49,6 @@
 
 <script setup lang="ts">
 import { computed, watch } from 'vue'
-import type { Address } from 'viem'
-// import { OFFICER_ABI } from '@/artifacts/abi/officer'
 import { useTeamStore, useToastStore } from '@/stores'
 import { log } from '@/utils'
 import CardComponent from '@/components/CardComponent.vue'
@@ -58,6 +57,7 @@ import DistributeMintAction from './InvestorActions/DistributeMintAction.vue'
 import MintTokenAction from './InvestorActions/MintTokenAction.vue'
 import PayDividendsAction from './InvestorActions/PayDividendsAction.vue'
 import ToggleSherCompensationButton from './InvestorActions/ToggleSherCompensationButton.vue'
+import SetCompensationMultiplierButton from './InvestorActions/SetCompensationMultiplierButton.vue'
 import InvestInSafeButton from './InvestorActions/InvestInSafeButton.vue'
 import {
   useInvestorSymbol,
@@ -81,9 +81,15 @@ const {
   error: tokenSymbolError,
   isLoading: isLoadingTokenSymbol
 } = useInvestorSymbol()
+const safeTokenSymbol = computed(() =>
+  typeof tokenSymbol.value === 'string' ? tokenSymbol.value : ''
+)
 
 // Get shareholders list
 const { data: shareholders, error: shareholderError } = useInvestorShareholders()
+const safeShareholders = computed(() =>
+  Array.isArray(shareholders.value) ? shareholders.value : ([] as string[])
+)
 
 // Get investors contract owner
 const {
@@ -91,12 +97,9 @@ const {
   error: errorInvestorsOwner,
   isLoading: isLoadingInvestorsOwner
 } = useInvestorOwner()
-
-type Shareholder = { shareholder: Address; amount: bigint }
-
-const tokenSymbolValue = computed(() => (tokenSymbol.value as string | undefined) ?? '')
-const investorsOwnerValue = computed(() => investorsOwner.value as Address | undefined)
-const shareholdersList = computed(() => (shareholders.value as Shareholder[] | undefined) ?? [])
+const safeInvestorsOwner = computed(() =>
+  typeof investorsOwner.value === 'string' ? investorsOwner.value : ''
+)
 
 // Watch for errors and display toast notifications
 watch(tokenSymbolError, (value) => {

@@ -108,7 +108,7 @@ import VestingActions from '@/components/sections/VestingView/VestingActions.vue
 import VestingStatusFilter from './VestingStatusFilter.vue'
 import { useToastStore } from '@/stores/useToastStore'
 import { useWriteContract, useWaitForTransactionReceipt, useReadContract } from '@wagmi/vue'
-import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
+import { INVESTOR_ABI } from '@/artifacts/abi/investors'
 import { VESTING_ABI } from '@/artifacts/abi/vesting'
 const { addErrorToast, addSuccessToast } = useToastStore()
 
@@ -131,7 +131,6 @@ const investorsAddress = computed(() => {
 })
 
 // const selectedStatus = ref('all')
-
 // // Add handler
 // const handleStatusChange = (status: string) => {
 //   selectedStatus.value = status
@@ -153,7 +152,9 @@ const {
   functionName: 'symbol'
 })
 
-const tokenSymbolValue = computed(() => (tokenSymbol.value as string | undefined) ?? 'default')
+const safeTokenSymbol = computed(() =>
+  typeof tokenSymbol.value === 'string' ? tokenSymbol.value : 'default'
+)
 
 const {
   data: archivedVestingInfos,
@@ -199,14 +200,20 @@ watch(
   }
 )
 
+const isVestingTuple = (value: unknown): value is VestingTuple => {
+  if (!Array.isArray(value) || value.length !== 2) {
+    return false
+  }
+
+  const [members, vestingsRaw] = value
+  return Array.isArray(members) && Array.isArray(vestingsRaw)
+}
+
 const vestings = computed<VestingRow[]>(() => {
   const currentDateInSeconds = Math.floor(Date.now() / 1000)
 
-  const activeVestings = vestingInfos.value as VestingTuple | undefined
-  const archivedVestings = archivedVestingInfos.value as VestingTuple | undefined
-  const allVestingsRaw: VestingTuple[] = [activeVestings, archivedVestings].filter(
-    (v): v is VestingTuple =>
-      Array.isArray(v) && v.length === 2 && Array.isArray(v[0]) && Array.isArray(v[1])
+  const allVestingsRaw: VestingTuple[] = [vestingInfos.value, archivedVestingInfos.value].filter(
+    isVestingTuple
   )
 
   const allRows = allVestingsRaw.flatMap(([members, vestingsRaw]) =>
@@ -223,7 +230,7 @@ const vestings = computed<VestingRow[]>(() => {
           totalAmount: 0,
           released: 0,
           status: 'Inactive',
-          tokenSymbol: tokenSymbolValue.value
+          tokenSymbol: safeTokenSymbol.value
         }
       }
       const totalAmount = Number(formatUnits(v.totalAmount, 6))
@@ -248,7 +255,7 @@ const vestings = computed<VestingRow[]>(() => {
         totalAmount,
         released,
         status,
-        tokenSymbol: tokenSymbolValue.value
+        tokenSymbol: safeTokenSymbol.value
       }
     })
   )
@@ -270,7 +277,7 @@ const handleReload = () => {
 }
 
 const {
-  writeContract: stopVesting,
+  mutate: stopVesting,
   error: errorStopVesting,
   isPending: loadingStopVesting,
   data: hashStopVesting
@@ -295,7 +302,7 @@ watch(errorStopVesting, () => {
 })
 
 const {
-  writeContract: releaseVesting,
+  mutate: releaseVesting,
   error: errorReleaseVesting,
   isPending: loadingReleaseVesting,
   data: hashReleaseVesting

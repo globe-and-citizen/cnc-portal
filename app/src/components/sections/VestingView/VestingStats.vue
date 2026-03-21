@@ -9,19 +9,19 @@
       <template #totalReleased-data="{ row }">
         <span class="flex items-center gap-1 text-sm text-gray-700">
           {{ row.totalReleased }}
-          <span class="text-xs">{{ tokenSymbolValue }}</span>
+          <span class="text-xs">{{ tokenSymbolText }}</span>
         </span>
       </template>
       <template #totalVested-data="{ row }">
         <span class="flex items-center gap-1 text-sm text-gray-700">
           {{ row.totalVested }}
-          <span class="text-xs">{{ tokenSymbolValue }}</span>
+          <span class="text-xs">{{ tokenSymbolText }}</span>
         </span>
       </template>
       <template #totalWithdrawn-data="{ row }">
         <span class="flex items-center gap-1 text-sm text-gray-700">
           {{ row.totalWithdrawn }}
-          <span class="text-xs">{{ tokenSymbolValue }}</span>
+          <span class="text-xs">{{ tokenSymbolText }}</span>
         </span>
       </template>
     </TableComponent>
@@ -37,7 +37,7 @@ import { useTeamStore } from '@/stores'
 import { useToastStore } from '@/stores/useToastStore'
 import { type TokenSummary } from '@/types/vesting'
 import { VESTING_ADDRESS } from '@/constant'
-import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
+import { INVESTOR_ABI } from '@/artifacts/abi/investors'
 import { VESTING_ABI } from '@/artifacts/abi/vesting'
 import { type Address, formatUnits } from 'viem'
 
@@ -136,7 +136,9 @@ const {
   functionName: 'symbol'
 })
 
-const tokenSymbolValue = computed(() => (tokenSymbol.value as string | undefined) ?? 'default')
+const tokenSymbolText = computed(() =>
+  typeof tokenSymbol.value === 'string' ? tokenSymbol.value : 'default'
+)
 
 const {
   data: vestingInfos,
@@ -162,7 +164,7 @@ const tokenSummaryColumns = [
   { key: 'totalWithdrawn', label: 'Total Withdrawn', sortable: false }
 ]
 const tokenSummaryRows = computed(() => {
-  const defaultToken = tokenSymbolValue.value
+  const defaultToken = tokenSymbolText.value
   const summaryMap: Record<string, TokenSummary> = {}
   summaryMap[defaultToken] = {
     symbol: defaultToken,

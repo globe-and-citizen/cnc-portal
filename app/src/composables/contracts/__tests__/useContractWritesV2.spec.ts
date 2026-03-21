@@ -73,7 +73,7 @@ describe('useContractWrites (V2)', () => {
 
     // Set up default mock implementations using exported factory fns
     useWriteContractFn.mockReturnValue({
-      writeContractAsync: vi.fn(),
+      mutateAsync: vi.fn(),
       data: ref(undefined),
       isPending: ref(false),
       isSuccess: ref(false),
@@ -134,7 +134,7 @@ describe('useContractWrites (V2)', () => {
 
   describe('executeWrite Function', () => {
     it('should execute write operation successfully', async () => {
-      const mockWriteContractAsync = vi.fn().mockResolvedValue({
+      const mockMutateAsync = vi.fn().mockResolvedValue({
         hash: MOCK_DATA.transactionHash
       })
 
@@ -149,7 +149,7 @@ describe('useContractWrites (V2)', () => {
       })
 
       useWriteContractFn.mockReturnValueOnce({
-        writeContractAsync: mockWriteContractAsync,
+        mutateAsync: mockMutateAsync,
         data: ref(undefined),
         isPending: ref(false),
         isSuccess: ref(false),
@@ -167,11 +167,12 @@ describe('useContractWrites (V2)', () => {
       const { executeWrite } = useContractWrites(mockConfig)
       const result = await executeWrite()
 
-      expect(mockWriteContractAsync).toHaveBeenCalledWith({
+      expect(mockMutateAsync).toHaveBeenCalledWith({
         address: MOCK_DATA.contractAddress,
         abi: MOCK_ABI,
         functionName: MOCK_DATA.functionName,
-        args: []
+        args: [],
+        gas: 500000n
       })
 
       expect(result).toEqual({ hash: MOCK_DATA.transactionHash })
@@ -197,7 +198,7 @@ describe('useContractWrites (V2)', () => {
   describe('Gas Estimation', () => {
     it('should perform gas estimation by default', async () => {
       const mockRefetch = vi.fn().mockResolvedValue({ data: { gasLimit: BigInt(21000) } })
-      const mockWriteContractAsync = vi.fn().mockResolvedValue({
+      const mockMutateAsync = vi.fn().mockResolvedValue({
         hash: MOCK_DATA.transactionHash
       })
 
@@ -211,7 +212,7 @@ describe('useContractWrites (V2)', () => {
       })
 
       useWriteContractFn.mockReturnValueOnce({
-        writeContractAsync: mockWriteContractAsync,
+        mutateAsync: mockMutateAsync,
         data: ref(undefined),
         isPending: ref(false),
         isSuccess: ref(false),
@@ -234,7 +235,7 @@ describe('useContractWrites (V2)', () => {
 
     it('should skip gas estimation when skipGasEstimation is true', async () => {
       const mockRefetch = vi.fn().mockResolvedValue({ data: { gasLimit: BigInt(21000) } })
-      const mockWriteContractAsync = vi.fn().mockResolvedValue({
+      const mockMutateAsync = vi.fn().mockResolvedValue({
         hash: MOCK_DATA.transactionHash
       })
 
@@ -248,7 +249,7 @@ describe('useContractWrites (V2)', () => {
       })
 
       useWriteContractFn.mockReturnValueOnce({
-        writeContractAsync: mockWriteContractAsync,
+        mutateAsync: mockMutateAsync,
         data: ref(undefined),
         isPending: ref(false),
         isSuccess: ref(false),

@@ -89,7 +89,7 @@ const isLoading = computed(
 const newAdminAddress = ref('')
 
 const {
-  writeContract: addAdmin,
+  mutate: addAdmin,
   error: errorAddAdmin,
   isPending: loadingAddAdmin,
   data: hashAddAdmin
@@ -108,7 +108,7 @@ watch(isConfirmingAddAdmin, async (isConfirming, wasConfirming) => {
 })
 
 const {
-  writeContract: removeAdmin,
+  mutate: removeAdmin,
   error: errorRemoveAdmin,
   isPending: loadingRemoveAdmin,
   data: hashRemoveAdmin
@@ -135,7 +135,9 @@ const {
   abi: AD_CAMPAIGN_MANAGER_ABI
 })
 
-const adminsList = computed(() => (admins.value as Address[] | undefined) ?? [])
+const adminsList = computed<Address[]>(() => {
+  return Array.isArray(admins.value) ? (admins.value as Address[]) : []
+})
 
 watch(
   () => props.contract,

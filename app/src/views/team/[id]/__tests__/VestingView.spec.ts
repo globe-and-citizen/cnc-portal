@@ -46,7 +46,7 @@ const mockCurrentTeam = ref({
 
 // Wagmi mocks - local refs for per-test state
 const mockWriteContract = {
-  writeContract: vi.fn(),
+  mutate: vi.fn(),
   error: ref<Error | null>(null),
   isPending: ref(false),
   data: ref(null)
@@ -93,7 +93,7 @@ describe('VestingView.vue', () => {
       )
     } as ReturnType<typeof useTeamStore>)
     wrapper = mountComponent()
-    mockWriteContract.writeContract.mockReset()
+    mockWriteContract.mutate.mockReset()
     mockWaitReceipt.isLoading.value = false
     mockWaitReceipt.isSuccess.value = false
   })

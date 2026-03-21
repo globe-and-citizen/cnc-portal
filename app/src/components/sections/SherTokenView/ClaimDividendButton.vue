@@ -43,7 +43,7 @@ const handleClaim = async () => {
     if (props.isNative) {
       await nativeClaimWrite.executeWrite()
     } else {
-      await tokenClaimWrite.executeWrite()
+      await tokenClaimWrite.executeWrite([props.tokenAddress])
     }
 
     toast.addSuccessToast('Dividend claimed successfully')

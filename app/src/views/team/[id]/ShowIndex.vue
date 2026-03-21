@@ -31,23 +31,7 @@
     >
       <!-- Continue Team Creation section -->
       <div v-if="!hasContract">
-        <p>
-          You have created your team, but the necessary smart contracts for its management haven't
-          been deployed yet. Click
-          <ButtonUI size="sm" variant="primary" outline @click="showModal = true">here</ButtonUI>
-          to proceed with the deployment.
-        </p>
-        <ModalComponent v-model="showModal" v-if="showModal">
-          <!-- May be return an event that will trigger team reload -->
-          <ContinueAddTeamForm
-            :team="teamStore.currentTeamMeta.data"
-            @done="
-              () => {
-                showModal = false
-              }
-            "
-          ></ContinueAddTeamForm>
-        </ModalComponent>
+        <ContinueAddTeamForm :team="teamStore.currentTeamMeta.data" @done="() => {}" />
       </div>
       <TeamMeta />
 
@@ -58,20 +42,19 @@
 </template>
 <script setup lang="ts">
 import { useTeamStore } from '@/stores/teamStore'
-import { computed, onUnmounted, ref, watch } from 'vue'
+import { computed, onUnmounted, watch } from 'vue'
 import { onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useSyncWeeklyClaimsMutation } from '@/queries/weeklyClaim.queries'
 import MemberSection from '@/components/sections/DashboardView/MemberSection.vue'
 import TeamMeta from '@/components/sections/DashboardView/TeamMetaSection.vue'
 import ContinueAddTeamForm from '@/components/sections/TeamView/forms/ContinueAddTeamForm.vue'
-import ModalComponent from '@/components/ModalComponent.vue'
-import ButtonUI from '@/components/ButtonUI.vue'
+import { useSyncContractsMutation } from '@/queries'
 const teamStore = useTeamStore()
-const showModal = ref(false)
 
 const route = useRoute()
 const { mutate: syncWeeklyClaims } = useSyncWeeklyClaimsMutation()
+const { mutateAsync: syncContracts } = useSyncContractsMutation()
 
 onMounted(() => {
   if (route.params.id) {
@@ -81,9 +64,37 @@ onMounted(() => {
   }
 })
 
+watch(teamStore.currentTeamMeta, () => {
+  if (
+    teamStore.currentTeamId &&
+    teamStore.currentTeamMeta.data?.officerAddress &&
+    teamStore.currentTeamMeta.data?.teamContracts.length === 0
+  ) {
+    syncContracts({ body: { teamId: teamStore.currentTeamId } })
+  }
+})
+
 const hasContract = computed(() => {
   return (teamStore.currentTeamMeta.data?.teamContracts ?? []).length > 0
 })
+
+watch(
+  [
+    () => route.params.id,
+    () => teamStore.currentTeamMeta.data?.officerAddress,
+    () => (teamStore.currentTeamMeta.data?.teamContracts ?? []).length
+  ],
+  async ([teamId]) => {
+    if (!teamId || typeof teamId !== 'string') {
+      return
+    }
+
+    if (teamId !== teamStore.currentTeamId) {
+      return
+    }
+  },
+  { immediate: true }
+)
 
 // Declare stop first so it's available in the callback
 let stop: (() => void) | undefined

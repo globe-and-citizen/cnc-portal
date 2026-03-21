@@ -61,12 +61,12 @@ describe('PublishResult.vue', () => {
     publishResultsHashRef = ref<string | undefined>(undefined)
     useWriteContractFn.mockImplementation(
       (): {
-        writeContract: MockFn
+        mutate: MockFn
         isPending: Ref<boolean>
         error: Ref<unknown | null>
         data: Ref<string | undefined>
       } => ({
-        writeContract: publishResultsMock,
+        mutate: publishResultsMock,
         isPending: isPendingRef,
         error: ref(null),
         data: publishResultsHashRef

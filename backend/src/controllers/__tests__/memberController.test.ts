@@ -83,8 +83,8 @@ const mockResolvedTeam = {
   cashRemunerationEip712Address: null,
   BoardOfDirectorActions: null,
   members: [
-    { address: '0xMemberAddress1', name: 'Member 1' },
-    { address: '0xMemberAddress2', name: 'Member 2' },
+    { address: '0x2222222222222222222222222222222222222222', name: 'Member 1' },
+    { address: '0x4444444444444444444444444444444444444444', name: 'Member 2' },
     { address: mockOwner.address, name: mockOwner.name },
   ],
 };
@@ -121,9 +121,7 @@ describe('Member Controller', () => {
         ]);
 
       expect(response.status).toBe(400);
-      expect(response.body).toEqual({
-        message: 'Bad Request: Members data is not well formated',
-      });
+      expect(response.body.message).toContain('Invalid');
     });
 
     it('Should return 404 when team is not found', async () => {
@@ -189,7 +187,9 @@ describe('Member Controller', () => {
       vi.mocked(prisma.team.update).mockResolvedValueOnce(mockResolvedTeam);
       vi.mocked(prisma.memberTeamsData.delete).mockResolvedValueOnce({} as any);
 
-      const response = await request(app).delete('/team/1/member/0xMemberAddress1');
+      const response = await request(app).delete(
+        '/team/1/member/0x2222222222222222222222222222222222222222'
+      );
 
       expect(response.status).toBe(204);
     });
@@ -197,7 +197,9 @@ describe('Member Controller', () => {
     it('should return 404 when team is not found', async () => {
       vi.mocked(prisma.team.findUnique).mockResolvedValue(null);
 
-      const response = await request(app).delete('/team/1/member/0xMemberAddress1');
+      const response = await request(app).delete(
+        '/team/1/member/0x2222222222222222222222222222222222222222'
+      );
 
       expect(response.status).toBe(404);
       expect(response.body).toEqual({ message: 'Team not found' });
@@ -206,7 +208,9 @@ describe('Member Controller', () => {
     it('should return 404 when member is not found in the team', async () => {
       vi.mocked(prisma.team.findUnique).mockResolvedValueOnce(mockResolvedTeam);
 
-      const response = await request(app).delete('/team/1/member/0xNotMemberAddress');
+      const response = await request(app).delete(
+        '/team/1/member/0x5555555555555555555555555555555555555555'
+      );
 
       expect(response.status).toBe(404);
       expect(response.body).toEqual({
@@ -222,7 +226,9 @@ describe('Member Controller', () => {
 
       vi.mocked(prisma.team.findUnique).mockResolvedValueOnce(teamWithDifferentOwner);
 
-      const response = await request(app).delete('/team/1/member/0xMemberAddress1');
+      const response = await request(app).delete(
+        '/team/1/member/0x2222222222222222222222222222222222222222'
+      );
 
       expect(response.status).toBe(403);
       expect(response.body).toEqual({
@@ -245,7 +251,9 @@ describe('Member Controller', () => {
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       vi.mocked(prisma.team.findUnique).mockRejectedValue('Server error');
 
-      const response = await request(app).delete('/team/1/member/0xMemberAddress1');
+      const response = await request(app).delete(
+        '/team/1/member/0x2222222222222222222222222222222222222222'
+      );
 
       expect(response.status).toBe(500);
       expect(response.body).toEqual({

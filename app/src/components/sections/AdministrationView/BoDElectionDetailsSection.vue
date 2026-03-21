@@ -27,17 +27,6 @@ import { config } from '@/wagmi.config'
 import { log, parseError } from '@/utils'
 import { useQueryClient } from '@tanstack/vue-query'
 
-type ElectionContractTuple = readonly [
-  bigint,
-  string,
-  string,
-  `0x${string}`,
-  bigint,
-  bigint,
-  bigint,
-  boolean
-]
-
 const props = defineProps<{ electionId: bigint }>()
 const queryClient = useQueryClient()
 const teamStore = useTeamStore()
@@ -79,7 +68,7 @@ const {
 
 const {
   data: hashCastVote,
-  writeContract: executeCastVote,
+  mutate: executeCastVote,
   isPending: isLoadingCastVote
 } = useWriteContract()
 
@@ -88,21 +77,25 @@ const { isLoading: isConfirmingCastVote, isSuccess: isConfirmedCastVote } =
     hash: hashCastVote
   })
 
+type ElectionTuple = [bigint, string, string, Address, bigint, bigint, bigint, boolean]
+
+const electionTuple = computed<ElectionTuple | null>(() => {
+  if (!Array.isArray(election.value) || election.value.length < 8) {
+    return null
+  }
+  return election.value as unknown as ElectionTuple
+})
+
 const candidates = computed(() => {
-  if (
-    electionCandidates.value &&
-    Array.isArray(electionCandidates.value) &&
-    Array.isArray(election.value) &&
-    election.value.length >= 8
-  ) {
-    const electionData = election.value as unknown as ElectionContractTuple
+  const tuple = electionTuple.value
+  if (electionCandidates.value && Array.isArray(electionCandidates.value) && tuple) {
     return electionCandidates.value.map((candidate: Address) => {
       const user = teamStore.currentTeam?.members?.find(
         (member) => member.address === candidate
       ) as User & { role?: string }
       const currentVotes = votesPerCandidate[candidate] ?? 0
       return {
-        id: BigInt(electionData[0]),
+        id: BigInt(tuple[0]),
         user: {
           address: candidate,
           name: user?.name || 'Unknown',
@@ -111,8 +104,8 @@ const candidates = computed(() => {
         },
         totalVotes: Number(voteCount.value) || 0,
         currentVotes: currentVotes as number,
-        startDate: new Date(Number(electionData[4]) * 1000),
-        endDate: new Date(Number(electionData[5]) * 1000)
+        startDate: new Date(Number(tuple[4]) * 1000),
+        endDate: new Date(Number(tuple[5]) * 1000)
       }
     })
   } else return []
@@ -124,7 +117,7 @@ const castVote = async (candidateAddress: Address) => {
       addErrorToast('Elections contract address not found')
       return
     }
-    const args = [electionId.value, candidateAddress] as const
+    const args: readonly [bigint, Address] = [electionId.value, candidateAddress]
 
     const data = encodeFunctionData({
       abi: ELECTIONS_ABI,

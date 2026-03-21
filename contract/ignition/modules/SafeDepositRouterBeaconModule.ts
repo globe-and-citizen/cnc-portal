@@ -19,12 +19,12 @@ const safeDepositRouterBeaconModule = buildModule('SafeDepositRouterBeaconModule
   // Deploy the Beacon pointing to the implementation
   // NOTE: Using 'Beacon', not 'FactoryBeacon' - Officer will create BeaconProxy instances
   const beacon = m.contract('Beacon', [safeDepositRouterImplementation], {
-    from: beaconAdmin,
+    from: beaconAdmin
   })
 
   return {
     beacon,
-    implementation: safeDepositRouterImplementation,
+    implementation: safeDepositRouterImplementation
   }
 })
 

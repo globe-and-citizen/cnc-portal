@@ -7,7 +7,6 @@ const MockTokensModule = buildModule('MockTokens', (m) => {
   const usdcE = m.contract('MockERC20', ['USDC Coin Bridged', 'USDCe'], { id: 'USDCe' })
   const usdt = m.contract('MockERC20', ['Tether USD', 'USDT'], { id: 'USDT' })
 
-
   // Load recipients from recipients.json (shared with bulkTransferConfig)
   let testAccounts: string[] = []
   try {
