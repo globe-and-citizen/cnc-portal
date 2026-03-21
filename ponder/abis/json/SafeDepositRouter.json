@@ -1,29 +1,12 @@
 [
   {
     "inputs": [],
-    "name": "ECDSAInvalidSignature",
-    "type": "error"
+    "stateMutability": "nonpayable",
+    "type": "constructor"
   },
   {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "length",
-        "type": "uint256"
-      }
-    ],
-    "name": "ECDSAInvalidSignatureLength",
-    "type": "error"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "bytes32",
-        "name": "s",
-        "type": "bytes32"
-      }
-    ],
-    "name": "ECDSAInvalidSignatureS",
+    "inputs": [],
+    "name": "DepositsNotEnabled",
     "type": "error"
   },
   {
@@ -38,28 +21,42 @@
   },
   {
     "inputs": [],
-    "name": "FailedCall",
-    "type": "error"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "balance",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "needed",
-        "type": "uint256"
-      }
-    ],
-    "name": "InsufficientBalance",
+    "name": "InsufficientMinterRole",
     "type": "error"
   },
   {
     "inputs": [],
     "name": "InvalidInitialization",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "InvalidInvestorAddress",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "InvalidOwner",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "InvalidSafeAddress",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "InvalidTokenAddress",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "InvalidTokenDecimals",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "MultiplierTooLow",
     "type": "error"
   },
   {
@@ -98,16 +95,42 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "expected",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "received",
+        "name": "token",
         "type": "address"
       }
     ],
-    "name": "UnauthorizedAccess",
+    "name": "SafeERC20FailedOperation",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "expected",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "actual",
+        "type": "uint256"
+      }
+    ],
+    "name": "SlippageExceeded",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "TokenAlreadySupported",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "TokenNotSupported",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "ZeroAmount",
     "type": "error"
   },
   {
@@ -120,9 +143,27 @@
         "type": "address"
       },
       {
+        "indexed": true,
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      },
+      {
         "indexed": false,
         "internalType": "uint256",
-        "name": "amount",
+        "name": "tokenAmount",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "sherAmount",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "timestamp",
         "type": "uint256"
       }
     ],
@@ -131,8 +172,28 @@
   },
   {
     "anonymous": false,
-    "inputs": [],
-    "name": "EIP712DomainChanged",
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "disabledBy",
+        "type": "address"
+      }
+    ],
+    "name": "DepositsDisabled",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "enabledBy",
+        "type": "address"
+      }
+    ],
+    "name": "DepositsEnabled",
     "type": "event"
   },
   {
@@ -152,57 +213,19 @@
     "anonymous": false,
     "inputs": [
       {
-        "indexed": true,
-        "internalType": "address",
-        "name": "newOfficerAddress",
-        "type": "address"
-      }
-    ],
-    "name": "OfficerAddressUpdated",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "ownerAddress",
-        "type": "address"
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "oldMultiplier",
+        "type": "uint256"
       },
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "amount",
+        "name": "newMultiplier",
         "type": "uint256"
       }
     ],
-    "name": "OwnerTreasuryWithdrawNative",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "ownerAddress",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "tokenAddress",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      }
-    ],
-    "name": "OwnerTreasuryWithdrawToken",
+    "name": "MultiplierUpdated",
     "type": "event"
   },
   {
@@ -243,6 +266,44 @@
       {
         "indexed": true,
         "internalType": "address",
+        "name": "oldSafe",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "newSafe",
+        "type": "address"
+      }
+    ],
+    "name": "SafeAddressUpdated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "tokenAddress",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint8",
+        "name": "decimals",
+        "type": "uint8"
+      }
+    ],
+    "name": "TokenSupportAdded",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
         "name": "tokenAddress",
         "type": "address"
       }
@@ -267,6 +328,31 @@
     "anonymous": false,
     "inputs": [
       {
+        "indexed": true,
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "to",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "TokensRecovered",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
         "indexed": false,
         "internalType": "address",
         "name": "account",
@@ -277,74 +363,17 @@
     "type": "event"
   },
   {
-    "anonymous": false,
-    "inputs": [
+    "inputs": [],
+    "name": "MIN_MULTIPLIER",
+    "outputs": [
       {
-        "indexed": true,
-        "internalType": "bytes32",
-        "name": "signatureHash",
-        "type": "bytes32"
-      }
-    ],
-    "name": "WageClaimDisabled",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "bytes32",
-        "name": "signatureHash",
-        "type": "bytes32"
-      }
-    ],
-    "name": "WageClaimEnabled",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "withdrawer",
-        "type": "address"
-      },
-      {
-        "indexed": false,
         "internalType": "uint256",
-        "name": "amount",
+        "name": "",
         "type": "uint256"
       }
     ],
-    "name": "Withdraw",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "withdrawer",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "tokenAddress",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      }
-    ],
-    "name": "WithdrawToken",
-    "type": "event"
+    "stateMutability": "view",
+    "type": "function"
   },
   {
     "inputs": [
@@ -362,12 +391,41 @@
   {
     "inputs": [
       {
-        "internalType": "bytes32",
-        "name": "signatureHash",
-        "type": "bytes32"
+        "internalType": "address",
+        "name": "tokenAddress",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "tokenAmount",
+        "type": "uint256"
       }
     ],
-    "name": "disableClaim",
+    "name": "calculateCompensation",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "tokenAddress",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "deposit",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -375,12 +433,29 @@
   {
     "inputs": [
       {
-        "internalType": "bytes32",
-        "name": "",
-        "type": "bytes32"
+        "internalType": "address",
+        "name": "tokenAddress",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "minSherOut",
+        "type": "uint256"
       }
     ],
-    "name": "disabledWageClaims",
+    "name": "depositWithSlippage",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "depositsEnabled",
     "outputs": [
       {
         "internalType": "bool",
@@ -393,71 +468,16 @@
   },
   {
     "inputs": [],
-    "name": "eip712Domain",
-    "outputs": [
-      {
-        "internalType": "bytes1",
-        "name": "fields",
-        "type": "bytes1"
-      },
-      {
-        "internalType": "string",
-        "name": "name",
-        "type": "string"
-      },
-      {
-        "internalType": "string",
-        "name": "version",
-        "type": "string"
-      },
-      {
-        "internalType": "uint256",
-        "name": "chainId",
-        "type": "uint256"
-      },
-      {
-        "internalType": "address",
-        "name": "verifyingContract",
-        "type": "address"
-      },
-      {
-        "internalType": "bytes32",
-        "name": "salt",
-        "type": "bytes32"
-      },
-      {
-        "internalType": "uint256[]",
-        "name": "extensions",
-        "type": "uint256[]"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "bytes32",
-        "name": "signatureHash",
-        "type": "bytes32"
-      }
-    ],
-    "name": "enableClaim",
+    "name": "disableDeposits",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
   {
     "inputs": [],
-    "name": "getBalance",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
+    "name": "enableDeposits",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -490,13 +510,18 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_owner",
+        "name": "_safeAddress",
         "type": "address"
       },
       {
         "internalType": "address[]",
         "name": "_tokenAddresses",
         "type": "address[]"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_multiplier",
+        "type": "uint256"
       }
     ],
     "name": "initialize",
@@ -518,6 +543,19 @@
         "internalType": "bool",
         "name": "",
         "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "multiplier",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -550,56 +588,6 @@
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      }
-    ],
-    "name": "ownerWithdrawNative",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "token",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      }
-    ],
-    "name": "ownerWithdrawToken",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "bytes32",
-        "name": "",
-        "type": "bytes32"
-      }
-    ],
-    "name": "paidWageClaims",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [],
     "name": "pause",
     "outputs": [],
@@ -623,6 +611,24 @@
     "inputs": [
       {
         "internalType": "address",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "recoverERC20",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
         "name": "tokenAddress",
         "type": "address"
       }
@@ -637,6 +643,64 @@
     "name": "renounceOwnership",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "safeAddress",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_newMultiplier",
+        "type": "uint256"
+      }
+    ],
+    "name": "setMultiplier",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_newSafe",
+        "type": "address"
+      }
+    ],
+    "name": "setSafeAddress",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "tokenDecimals",
+    "outputs": [
+      {
+        "internalType": "uint8",
+        "name": "",
+        "type": "uint8"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -658,61 +722,5 @@
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "components": [
-          {
-            "internalType": "address",
-            "name": "employeeAddress",
-            "type": "address"
-          },
-          {
-            "internalType": "uint8",
-            "name": "hoursWorked",
-            "type": "uint8"
-          },
-          {
-            "components": [
-              {
-                "internalType": "uint256",
-                "name": "hourlyRate",
-                "type": "uint256"
-              },
-              {
-                "internalType": "address",
-                "name": "tokenAddress",
-                "type": "address"
-              }
-            ],
-            "internalType": "struct CashRemunerationEIP712.Wage[]",
-            "name": "wages",
-            "type": "tuple[]"
-          },
-          {
-            "internalType": "uint256",
-            "name": "date",
-            "type": "uint256"
-          }
-        ],
-        "internalType": "struct CashRemunerationEIP712.WageClaim",
-        "name": "wageClaim",
-        "type": "tuple"
-      },
-      {
-        "internalType": "bytes",
-        "name": "signature",
-        "type": "bytes"
-      }
-    ],
-    "name": "withdraw",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "stateMutability": "payable",
-    "type": "receive"
   }
 ]
