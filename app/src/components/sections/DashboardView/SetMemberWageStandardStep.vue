@@ -1,6 +1,6 @@
 <template>
   <div class="space-y-4" data-test="standard-wage-step">
-    <UForm :schema="schema" :wageData="wageData" class="space-y-4" @submit="onSubmit">
+    <UForm :schema="schema" :wageData="wageData" class="space-y-4">
       <UFormField name="maximumHoursPerWeek">
         <UInput
           v-model="wageData.maximumHoursPerWeek"
@@ -75,7 +75,6 @@
 
 <script setup lang="ts">
 import * as z from 'zod'
-import type { FormSubmitEvent } from '@nuxt/ui'
 import { NETWORK } from '@/constant'
 import type { WageWithForm } from './SetMemberWageModalCopy.vue'
 
@@ -101,12 +100,4 @@ const schema = z.object({
       { message: 'Native rate must be greater than 0', path: ['0', 'amount'] }
     )
 })
-
-type Schema = z.output<typeof schema>
-
-const toast = useToast()
-async function onSubmit(event: FormSubmitEvent<Schema>) {
-  toast.add({ title: 'Success', description: 'The form has been submitted.', color: 'success' })
-  console.log(event.data)
-}
 </script>

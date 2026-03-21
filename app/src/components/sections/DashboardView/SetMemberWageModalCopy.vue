@@ -103,7 +103,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref } from 'vue'
 import SetMemberWageStandardStep from './SetMemberWageStandardStep.vue'
 import SetMemberWageOvertimeStep from './SetMemberWageOvertimeStep.vue'
 import { useSetMemberWageMutation } from '@/queries/wage.queries'
@@ -241,41 +241,10 @@ const handlePrimaryAction = async () => {
 }
 
 const handleResetWage = () => {
-  wageData.value = {
-    ...wageData.value,
-    maximumHoursPerWeek: 0,
-    maximumOvertimeHoursPerWeek: 0,
-    enableOvertimeRules: false,
-    ratePerHour: normalizeRatePerHour(),
-    overtimeRatePerHour: normalizeRatePerHour()
-  }
-  submitWage()
+  wageData.value = initialWage()
 }
 
 const handleBackStep = () => {
   currentStep.value = 0
 }
-
-const resetFormState = () => {
-  wageData.value = initialWage()
-}
-
-watch(
-  () => showModal.value,
-  (isOpen, wasOpen) => {
-    if (!isOpen && wasOpen) {
-      resetFormState()
-    }
-  }
-)
-
-watch(
-  () => props.wage,
-  () => {
-    if (!showModal.value) {
-      resetFormState()
-    }
-  },
-  { deep: true }
-)
 </script>
