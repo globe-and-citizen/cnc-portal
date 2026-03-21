@@ -10,7 +10,7 @@
         :disabled="props.disabled"
       />
       <div
-        class="pl-4 text-red-500 text-sm w-full text-left"
+        class="w-full pl-4 text-left text-sm text-red-500"
         data-test="error-address-input"
         v-for="error of $v.input.address.$errors"
         :key="error.$uid"
@@ -26,18 +26,18 @@
       <div class="relative">
         <input
           type="number"
-          class="input input-bordered input-md grow w-full pr-16"
+          class="input input-bordered input-md w-full grow pr-16"
           data-test="amount-input"
           v-model="amount"
         />
         <span
-          class="absolute right-4 top-1/2 transform -translate-y-1/2 text-black font-bold text-sm"
+          class="absolute top-1/2 right-4 -translate-y-1/2 transform text-sm font-bold text-black"
         >
           {{ tokenSymbol }}
         </span>
       </div>
       <div
-        class="pl-4 text-red-500 text-sm w-full text-left"
+        class="w-full pl-4 text-left text-sm text-red-500"
         data-test="error-message-amount"
         v-for="error of $v.amount.$errors"
         :key="error.$uid"
@@ -46,7 +46,7 @@
       </div>
     </div>
 
-    <div class="text-center flex gap-4 justify-between" data-test="form-actions">
+    <div class="flex justify-between gap-4 text-center" data-test="form-actions">
       <ButtonUI
         outline
         variant="error"

@@ -1,24 +1,24 @@
 <template>
-  <h1 class="font-bold text-2xl">Update Team Details</h1>
+  <h1 class="text-2xl font-bold">Update Team Details</h1>
   <hr class="" />
   <div class="flex flex-col gap-5">
-    <label class="w-full input input-bordered flex items-center gap-2 input-md mt-4">
+    <label class="input input-bordered input-md mt-4 flex w-full items-center gap-2">
       <span class="w-28">Team Name</span>
       <input type="text" class="grow" :placeholder="team.name" v-model="team.name" />
     </label>
     <div
-      class="pl-4 text-red-500 text-sm w-full text-left"
+      class="w-full pl-4 text-left text-sm text-red-500"
       v-for="error of $v.name.$errors"
       :key="error.$uid"
     >
       {{ error.$message }}
     </div>
-    <label class="w-full input input-bordered flex items-center gap-2 input-md">
+    <label class="input input-bordered input-md flex w-full items-center gap-2">
       <span class="w-28">Description</span>
       <input type="text" class="grow" v-model="team.description" />
     </label>
     <div
-      class="pl-4 text-red-500 text-sm w-full text-left"
+      class="w-full pl-4 text-left text-sm text-red-500"
       v-for="error of $v.description.$errors"
       :key="error.$uid"
     >

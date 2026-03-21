@@ -1,25 +1,25 @@
 <template>
-  <div v-if="!showSummary" class="flex flex-col gap-5 max-w-5xl w-full">
-    <h4 class="font-bold text-lg">Create Vesting Schedule</h4>
-    <div class="gap-2 mt-4">
+  <div v-if="!showSummary" class="flex w-full max-w-5xl flex-col gap-5">
+    <h4 class="text-lg font-bold">Create Vesting Schedule</h4>
+    <div class="mt-4 gap-2">
       <label class="flex-col items-center gap-2">
-        <div class="flex w-32 mb-3">Choose Member</div>
-        <div class="flex grow w-full">
+        <div class="mb-3 flex w-32">Choose Member</div>
+        <div class="flex w-full grow">
           <SelectMemberInput
             v-model="member"
             data-test="member"
-            class="text-xs w-full"
+            class="w-full text-xs"
             :hidden-members="[]"
             :disable-team-members="false"
           />
         </div>
       </label>
-      <span v-for="error in $v.member.$errors" :key="error.$uid" class="text-xs text-red-500 mt-1">
+      <span v-for="error in $v.member.$errors" :key="error.$uid" class="mt-1 text-xs text-red-500">
         {{ error.$message }}
       </span>
     </div>
 
-    <div class="gap-2 mt-4">
+    <div class="mt-4 gap-2">
       <label class="flex items-center">
         <span class="w-32 shrink-0">Period</span>
         <div class="grow">
@@ -39,10 +39,10 @@
       </span>
     </div>
 
-    <div class="flex flex-wrap gap-3 mt-4 w-100">
-      <div class="flex-1 min-w-50">
-        <label class="flex input input-bordered input-md items-center gap-2 w-full">
-          <span class="text-xs shrink-0">Amount</span>
+    <div class="mt-4 flex w-100 flex-wrap gap-3">
+      <div class="min-w-50 flex-1">
+        <label class="input input-bordered input-md flex w-full items-center gap-2">
+          <span class="shrink-0 text-xs">Amount</span>
           <input
             data-test="total-amount"
             type="number"
@@ -54,20 +54,20 @@
         <span
           v-for="error in $v.totalAmount.$errors"
           :key="error.$uid"
-          class="text-xs text-red-500 mt-1 block"
+          class="mt-1 block text-xs text-red-500"
         >
           {{ error.$message }}
         </span>
       </div>
-      <div class="flex-1 min-w-50">
-        <label class="flex input input-bordered items-center gap-2 w-full">
-          <span class="text-xs shrink-0">Cliff(days)</span>
+      <div class="min-w-50 flex-1">
+        <label class="input input-bordered flex w-full items-center gap-2">
+          <span class="shrink-0 text-xs">Cliff(days)</span>
           <input data-test="cliff" type="number" class="grow text-sm" v-model="cliff" required />
         </label>
         <span
           v-for="error in $v.cliff.$errors"
           :key="error.$uid"
-          class="text-xs text-red-500 mt-1 block"
+          class="mt-1 block text-xs text-red-500"
         >
           {{ error.$message }}
         </span>

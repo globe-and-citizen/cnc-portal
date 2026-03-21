@@ -6,7 +6,7 @@
     ></span>
     <div
       v-if="!teamStore.currentTeamMeta.isPending && teamStore"
-      class="flex flex-col gap-5 w-full items-center"
+      class="flex w-full flex-col items-center gap-5"
     >
       <CardComponent class="w-full" title="Main contract">
         <template #card-action>
@@ -22,11 +22,11 @@
             <ModalComponent v-model="showModal" v-if="showModal">
               <!-- Warning for contract redeployment -->
               <!-- <div class="mt-6"> -->
-              <h4 class="font-bold text-lg">Remove Deployed Contracts</h4>
+              <h4 class="text-lg font-bold">Remove Deployed Contracts</h4>
               <div class="alert alert-error my-6">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  class="stroke-current shrink-0 h-6 w-6"
+                  class="h-6 w-6 shrink-0 stroke-current"
                   fill="none"
                   viewBox="0 0 24 24"
                 >
@@ -37,24 +37,24 @@
                     d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
                   />
                 </svg>
-                <span class="font-bold text-lg">⚠️ DANGER - IRREVERSIBLE ACTION</span>
+                <span class="text-lg font-bold">⚠️ DANGER - IRREVERSIBLE ACTION</span>
               </div>
 
               <div class="mb-6">
-                <h3 class="text-lg font-bold text-error mb-4">
+                <h3 class="text-error mb-4 text-lg font-bold">
                   Redeploying contracts will cause PERMANENT DATA LOSS:
                 </h3>
 
                 <div class="space-y-4 text-sm">
                   <!-- Cryptocurrency Loss -->
-                  <div class="border border-error rounded-lg p-4 bg-error/5">
-                    <div class="flex items-start gap-2 mb-2">
-                      <span class="text-error font-bold text-lg">💰</span>
-                      <h4 class="font-bold text-error text-base">Cryptocurrency Loss</h4>
+                  <div class="border-error bg-error/5 rounded-lg border p-4">
+                    <div class="mb-2 flex items-start gap-2">
+                      <span class="text-error text-lg font-bold">💰</span>
+                      <h4 class="text-error text-base font-bold">Cryptocurrency Loss</h4>
                     </div>
                     <div class="ml-8">
                       <p class="mb-2"><strong>Affected Contracts:</strong></p>
-                      <ul class="list-disc list-inside mb-3 text-xs space-y-1">
+                      <ul class="mb-3 list-inside list-disc space-y-1 text-xs">
                         <li>Bank Contract</li>
                         <li>Expense Account Contract (EIP712)</li>
                         <li>Cash Remuneration Contract (EIP712)</li>
@@ -68,14 +68,14 @@
                   </div>
 
                   <!-- Share Tokens Loss -->
-                  <div class="border border-error rounded-lg p-4 bg-error/5">
-                    <div class="flex items-start gap-2 mb-2">
-                      <span class="text-error font-bold text-lg">🪙</span>
-                      <h4 class="font-bold text-error text-base">Share Tokens Loss</h4>
+                  <div class="border-error bg-error/5 rounded-lg border p-4">
+                    <div class="mb-2 flex items-start gap-2">
+                      <span class="text-error text-lg font-bold">🪙</span>
+                      <h4 class="text-error text-base font-bold">Share Tokens Loss</h4>
                     </div>
                     <div class="ml-8">
                       <p class="mb-2"><strong>Affected Contracts:</strong></p>
-                      <ul class="list-disc list-inside mb-3 text-xs space-y-1">
+                      <ul class="mb-3 list-inside list-disc space-y-1 text-xs">
                         <li>Investor Contract (V1) / Share Token Contract</li>
                       </ul>
                       <p class="text-sm">
@@ -88,14 +88,14 @@
                   </div>
 
                   <!-- Governance Data Loss -->
-                  <div class="border border-error rounded-lg p-4 bg-error/5">
-                    <div class="flex items-start gap-2 mb-2">
-                      <span class="text-error font-bold text-lg">🗳️</span>
-                      <h4 class="font-bold text-error text-base">Governance Data Loss</h4>
+                  <div class="border-error bg-error/5 rounded-lg border p-4">
+                    <div class="mb-2 flex items-start gap-2">
+                      <span class="text-error text-lg font-bold">🗳️</span>
+                      <h4 class="text-error text-base font-bold">Governance Data Loss</h4>
                     </div>
                     <div class="ml-8">
                       <p class="mb-2"><strong>Affected Contracts:</strong></p>
-                      <ul class="list-disc list-inside mb-3 text-xs space-y-1">
+                      <ul class="mb-3 list-inside list-disc space-y-1 text-xs">
                         <li>Board of Directors Contract</li>
                         <li>Voting Contract</li>
                         <li>Officer Contract</li>
@@ -110,14 +110,14 @@
                   </div>
 
                   <!-- Database Reset -->
-                  <div class="border border-error rounded-lg p-4 bg-error/5">
-                    <div class="flex items-start gap-2 mb-2">
-                      <span class="text-error font-bold text-lg">🗄️</span>
-                      <h4 class="font-bold text-error text-base">Team Contract Reset</h4>
+                  <div class="border-error bg-error/5 rounded-lg border p-4">
+                    <div class="mb-2 flex items-start gap-2">
+                      <span class="text-error text-lg font-bold">🗄️</span>
+                      <h4 class="text-error text-base font-bold">Team Contract Reset</h4>
                     </div>
                     <div class="ml-8">
                       <p class="mb-2"><strong>Affected Systems:</strong></p>
-                      <ul class="list-disc list-inside mb-3 text-xs space-y-1">
+                      <ul class="mb-3 list-inside list-disc space-y-1 text-xs">
                         <li>Team Officer Contract</li>
                         <li>Team Contracts will be removed</li>
                       </ul>
@@ -129,7 +129,7 @@
                   </div>
                 </div>
 
-                <div class="mt-4 p-4 bg-base-200 rounded-lg">
+                <div class="bg-base-200 mt-4 rounded-lg p-4">
                   <p class="text-sm font-medium">
                     <strong>Note:</strong> This action cannot be undone. Ensure all stakeholders are
                     informed and that you have documented all important contract addresses and
@@ -138,7 +138,7 @@
                 </div>
               </div>
 
-              <div class="flex gap-3 justify-between">
+              <div class="flex justify-between gap-3">
                 <ButtonUI
                   variant="secondary"
                   @click="showModal = false"

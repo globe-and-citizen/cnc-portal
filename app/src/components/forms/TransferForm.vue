@@ -6,12 +6,12 @@
   </slot>
   <BodAlert v-if="isBodAction" />
 
-  <div class="flex flex-col mt-4">
+  <div class="mt-4 flex flex-col">
     <SelectMemberContractsInput v-model="model.address" @selectItem="handleSelectItem" />
 
     <div class="flex justify-end" v-if="$v.model.$error">
       <div
-        class="pl-4 text-red-500 text-sm text-left"
+        class="pl-4 text-left text-sm text-red-500"
         v-for="error of $v.model.$errors"
         :key="error.$uid"
       >
@@ -35,7 +35,7 @@
     </TokenAmount>
   </div>
 
-  <div class="modal-action justify-between mt-4">
+  <div class="modal-action mt-4 justify-between">
     <ButtonUI
       variant="error"
       outline

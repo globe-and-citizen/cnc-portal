@@ -1,7 +1,7 @@
 <template>
-  <span class="font-bold text-2xl">Invest in Safe &amp; Earn {{ tokenSymbol || 'SHER' }}</span>
+  <span class="text-2xl font-bold">Invest in Safe &amp; Earn {{ tokenSymbol || 'SHER' }}</span>
 
-  <div class="steps w-full my-4">
+  <div class="steps my-4 w-full">
     <a class="step" :class="{ 'step-primary': currentStep >= 1 }">Amount</a>
     <a class="step" :class="{ 'step-primary': currentStep >= 2 }">Approval</a>
     <a class="step" :class="{ 'step-primary': currentStep >= 3 }">Deposit</a>

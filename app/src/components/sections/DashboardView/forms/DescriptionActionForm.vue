@@ -5,13 +5,13 @@
     <h3>
       Please add description about <span class="badge badge-primary">{{ actionName }}</span>
     </h3>
-    <label class="input input-bordered flex items-center gap-2 input-md mt-2 w-full">
+    <label class="input input-bordered input-md mt-2 flex w-full items-center gap-2">
       <p>Description</p>
       |
       <input type="text" class="grow" data-test="amount-input" v-model="description" />
     </label>
     <div
-      class="pl-4 text-red-500 text-sm w-full text-left"
+      class="w-full pl-4 text-left text-sm text-red-500"
       v-for="error of $v.description.$errors"
       :key="error.$uid"
     >

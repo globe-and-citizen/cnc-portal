@@ -1,5 +1,5 @@
 <template>
-  <div id="team-contracts" class="overflow-x-auto mt-4">
+  <div id="team-contracts" class="mt-4 overflow-x-auto">
     <TableComponent
       :rows="
         teamContracts.map((contract, index) => ({

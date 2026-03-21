@@ -1,16 +1,16 @@
 <template>
   <div>
     <div
-      class="border-2 border-dashed border-gray-300 rounded-lg p-6 flex flex-col items-center gap-4 cursor-pointer"
-      :class="{ 'opacity-50 pointer-events-none': isUploading || disabled }"
+      class="flex cursor-pointer flex-col items-center gap-4 rounded-lg border-2 border-dashed border-gray-300 p-6"
+      :class="{ 'pointer-events-none opacity-50': isUploading || disabled }"
       @click="openFileDialog"
       @dragover.prevent
       @drop.prevent="onDrop"
       data-test="upload-zone"
     >
-      <div class="text-gray-500 flex flex-col items-center">
+      <div class="flex flex-col items-center text-gray-500">
         <p>Add Screenshot or File</p>
-        <p class="text-xs mt-1">{{ fileCount }}/{{ MAX_FILES }} files (10 MB max per file)</p>
+        <p class="mt-1 text-xs">{{ fileCount }}/{{ MAX_FILES }} files (10 MB max per file)</p>
       </div>
 
       <ButtonUI
@@ -34,7 +34,7 @@
     </div>
 
     <!-- Error message -->
-    <div v-if="errorMessage" class="mt-2 text-red-500 text-sm" data-test="upload-error">
+    <div v-if="errorMessage" class="mt-2 text-sm text-red-500" data-test="upload-error">
       {{ errorMessage }}
     </div>
 

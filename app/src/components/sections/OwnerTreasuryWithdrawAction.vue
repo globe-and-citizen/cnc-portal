@@ -18,7 +18,7 @@
         @reset="resetModal"
       >
         <div class="flex flex-col gap-2">
-          <h1 class="font-bold text-2xl">Owner Treasury Withdraw</h1>
+          <h1 class="text-2xl font-bold">Owner Treasury Withdraw</h1>
         </div>
 
         <TokenAmount
@@ -36,7 +36,7 @@
           </template>
         </TokenAmount>
 
-        <div class="modal-action justify-between mt-4">
+        <div class="modal-action mt-4 justify-between">
           <ButtonUI variant="error" outline @click="resetModal">Cancel</ButtonUI>
           <ButtonUI
             variant="warning"

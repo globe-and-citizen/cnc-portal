@@ -1,8 +1,8 @@
 <template>
-  <div class="bg-base-100 card border border-gray-300 flex flex-col">
+  <div class="bg-base-100 card flex flex-col border border-gray-300">
     <div class="card-body">
       <!-- Status and Date -->
-      <div class="flex justify-between items-start mb-3">
+      <div class="mb-3 flex items-start justify-between">
         <span class="badge bg-gray-100"> Completed </span>
         <span class="text-gray-600">
           {{ formatDate(election.endDate) }}
@@ -10,26 +10,26 @@
       </div>
 
       <!-- Election Title -->
-      <h3 class="text-xl font-bold mb-4 text-left">{{ election.title }}</h3>
+      <h3 class="mb-4 text-left text-xl font-bold">{{ election.title }}</h3>
 
       <!-- Candidates Count -->
-      <div class="flex justify-between items-center mb-2">
+      <div class="mb-2 flex items-center justify-between">
         <span class="text-gray-600">Candidates:</span>
-        <span class="font-semibold text-2xl text-gray-600">{{ election.seatCount }}</span>
+        <span class="text-2xl font-semibold text-gray-600">{{ election.seatCount }}</span>
       </div>
 
       <!-- Votes Count -->
-      <div class="flex justify-between items-center mb-4">
+      <div class="mb-4 flex items-center justify-between">
         <span class="text-gray-600">Total Votes:</span>
-        <span class="font-semibold text-2xl text-gray-600">{{ voteCount }}</span>
+        <span class="text-2xl font-semibold text-gray-600">{{ voteCount }}</span>
       </div>
 
       <div class="grow"></div>
       <!-- Spacer -->
-      <div class="border-t border-gray-300 my-4"></div>
+      <div class="my-4 border-t border-gray-300"></div>
       <!-- Elected Members -->
       <div class="mb-5">
-        <p class="text-gray-600 mb-2">Elected Members:</p>
+        <p class="mb-2 text-gray-600">Elected Members:</p>
         <div class="flex flex-wrap gap-2">
           <span v-for="(member, i) in electionResults" :key="i" class="badge badge-info">
             {{

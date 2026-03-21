@@ -6,12 +6,12 @@
           <div
             tabindex="0"
             role="button"
-            class="btn btn-ghost sm:btn-sm bg-opacity-10 text-black hover:bg-opacity-20 transition-all duration-300 ease-in-out transform hover:scale-105"
+            class="btn btn-ghost sm:btn-sm bg-opacity-10 hover:bg-opacity-20 transform text-black transition-all duration-300 ease-in-out hover:scale-105"
           >
             <div class="flex items-center justify-center space-x-1 sm:space-x-2">
-              <img src="../assets/Ethereum.png" class="h-4 sm:h-5 w-4 sm:w-5" alt="Ethereum Icon" />
+              <img src="../assets/Ethereum.png" class="h-4 w-4 sm:h-5 sm:w-5" alt="Ethereum Icon" />
               <div
-                class="font-mono text-xs sm:text-sm hidden sm:inline-block"
+                class="hidden font-mono text-xs sm:inline-block sm:text-sm"
                 data-test="balance-with-symbol"
               >
                 {{ NETWORK.currencySymbol }}
@@ -24,7 +24,7 @@
 
         <div class="dropdown dropdown-end" data-test="profile">
           <div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar">
-            <div class="w-8 sm:w-10 rounded-full ring-3 ring-white ring-opacity-30 ring-offset-2">
+            <div class="ring-opacity-30 w-8 rounded-full ring-3 ring-white ring-offset-2 sm:w-10">
               <img
                 alt="User avatar"
                 :src="
@@ -37,7 +37,7 @@
           </div>
           <ul
             tabindex="0"
-            class="menu menu-sm dropdown-content mt-3 z-1 p-2 shadow-lg rounded-box w-40 sm:w-52"
+            class="menu menu-sm dropdown-content rounded-box z-1 mt-3 w-40 p-2 shadow-lg sm:w-52"
           >
             <!-- <li>
               <a
@@ -50,7 +50,7 @@
               </a>
             </li> -->
             <li>
-              <a class="hover:bg-opacity-10 transition-all duration-300 text-sm sm:text-base">
+              <a class="hover:bg-opacity-10 text-sm transition-all duration-300 sm:text-base">
                 Settings
               </a>
             </li>
@@ -58,7 +58,7 @@
               <a
                 data-test="logout"
                 @click="logout()"
-                class="hover:bg-opacity-10 transition-all duration-300 text-sm sm:text-base"
+                class="hover:bg-opacity-10 text-sm transition-all duration-300 sm:text-base"
               >
                 Logout
               </a>

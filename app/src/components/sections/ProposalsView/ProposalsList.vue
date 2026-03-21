@@ -1,11 +1,11 @@
 <template>
-  <div v-if="isLoading" class="flex w-full h-96 justify-center items-center">
+  <div v-if="isLoading" class="flex h-96 w-full items-center justify-center">
     <div class="text-gray-500">Loading proposals...</div>
   </div>
-  <div v-else-if="error" class="flex w-full h-96 justify-center items-center">
+  <div v-else-if="error" class="flex h-96 w-full items-center justify-center">
     <div class="text-red-500">Error loading proposals: {{ error.message }}</div>
   </div>
-  <div v-else-if="proposals.length === 0" class="flex w-full h-96 justify-center items-center">
+  <div v-else-if="proposals.length === 0" class="flex h-96 w-full items-center justify-center">
     <div class="text-gray-500">No proposals available</div>
   </div>
   <div v-else>

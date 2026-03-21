@@ -1,31 +1,31 @@
 <template>
   <div
-    class="flex flex-col sm:flex-wrap md:flex-row md:items-center md:justify-between gap-2 mb-4 w-full max-w-full"
+    class="mb-4 flex w-full max-w-full flex-col gap-2 sm:flex-wrap md:flex-row md:items-center md:justify-between"
   >
     <ButtonUI
       @click="goToPrevMonth"
-      class="w-full sm:w-auto flex items-center justify-center whitespace-nowrap"
+      class="flex w-full items-center justify-center whitespace-nowrap sm:w-auto"
       size="sm"
     >
-      <IconifyIcon icon="heroicons:chevron-left" class="w-4 h-4" />
+      <IconifyIcon icon="heroicons:chevron-left" class="h-4 w-4" />
     </ButtonUI>
 
-    <div class="relative w-full sm:w-auto text-center">
+    <div class="relative w-full text-center sm:w-auto">
       <VueDatePicker
         v-model="monthPicked"
         :month-picker="true"
         :year-picker="true"
         auto-apply
-        class="bg-white rounded-sm w-full sm:w-auto"
+        class="w-full rounded-sm bg-white sm:w-auto"
       >
         <template #trigger>
           <ButtonUI
             @click="toggleMonthPicker"
-            class="w-full sm:w-auto flex items-center justify-center whitespace-nowrap"
+            class="flex w-full items-center justify-center whitespace-nowrap sm:w-auto"
             size="sm"
           >
             <span v-if="model">{{ formatMonthYear(model.year, model.month) }}</span>
-            <IconifyIcon icon="heroicons:chevron-down" class="w-4 h-4 ml-1" />
+            <IconifyIcon icon="heroicons:chevron-down" class="ml-1 h-4 w-4" />
           </ButtonUI>
         </template>
       </VueDatePicker>
@@ -33,10 +33,10 @@
 
     <ButtonUI
       @click="goToNextMonth"
-      class="w-full sm:w-auto flex items-center justify-center whitespace-nowrap"
+      class="flex w-full items-center justify-center whitespace-nowrap sm:w-auto"
       size="sm"
     >
-      <IconifyIcon icon="heroicons:chevron-right" class="w-4 h-4" />
+      <IconifyIcon icon="heroicons:chevron-right" class="h-4 w-4" />
     </ButtonUI>
   </div>
 </template>

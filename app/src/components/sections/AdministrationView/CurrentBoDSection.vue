@@ -1,13 +1,13 @@
 <template>
   <CardComponent :title="`${electionId ? `Elected` : `Current`} Board of Directors`">
     <div
-      class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mt-4"
+      class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
       v-if="normalizedBoardOfDirectors.length > 0"
     >
       <div
         v-for="(memberAddress, index) in _boardOfDirectors"
         :key="index"
-        class="rounded-xl overflow-hidden bg-linear-to-t from-emerald-100 to-emarald-50 shadow-xs hover:shadow-md transition-all mt-4"
+        class="to-emarald-50 mt-4 overflow-hidden rounded-xl bg-linear-to-t from-emerald-100 shadow-xs transition-all hover:shadow-md"
       >
         <UserComponentCol
           :user="

@@ -1,6 +1,6 @@
 <template>
   <div v-if="isCashRemunerationOwner">
-    <div class="px-8 pb-4 flex items-end" :class="{ 'justify-between': isCashRemunerationOwner }">
+    <div class="flex items-end px-8 pb-4" :class="{ 'justify-between': isCashRemunerationOwner }">
       <span class="card-title"></span>
       <div class="card-actions justify-end">
         <CRAddERC20Support />

@@ -12,7 +12,7 @@
         @click="openModal"
       >
         <template #prefix>
-          <IconifyIcon icon="heroicons-outline:plus" class="w-4 h-4" />
+          <IconifyIcon icon="heroicons-outline:plus" class="h-4 w-4" />
         </template>
         Invest & Get SHER
       </ButtonUI>

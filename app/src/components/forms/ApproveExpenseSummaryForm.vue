@@ -1,5 +1,5 @@
 <template>
-  <h3 class="font-bold mb-4">
+  <h3 class="mb-4 font-bold">
     You are about to approve
     {{ budgetLimit.approvedAddress }}
     with the following limits:

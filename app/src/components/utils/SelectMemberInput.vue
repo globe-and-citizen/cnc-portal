@@ -5,7 +5,7 @@
     data-test="member-input"
   >
     <label
-      class="input input-bordered flex items-center gap-2 input-md w-full"
+      class="input input-bordered input-md flex w-full items-center gap-2"
       :data-test="`member-input`"
     >
       <input
@@ -19,22 +19,22 @@
       />
     </label>
     <div v-if="!showOnFocus || (showOnFocus && showDropdown)">
-      <div class="text-xm text-gray-900 mt-5" data-test="select-member-hint">
+      <div class="text-xm mt-5 text-gray-900" data-test="select-member-hint">
         Click to Select a Member
       </div>
       <!-- Dropdown positioned relative to the input -->
       <div
         v-if="filteredUsers.length > 0"
-        class="left-0 top-full mt-4 w-full outline-hidden focus:outline-hidden focus:ring-0"
+        class="top-full left-0 mt-4 w-full outline-hidden focus:ring-0 focus:outline-hidden"
         data-test="user-dropdown"
       >
-        <div class="shadow-sm bg-base-100 rounded-box">
+        <div class="bg-base-100 rounded-box shadow-sm">
           <div class="grid grid-cols-2 gap-4" data-test="user-search-results">
             <div
               v-for="user in filteredUsers.slice(0, 8)"
               :key="user.address"
               @click="handleSelectMember(user)"
-              class="flex items-center relative group"
+              class="group relative flex items-center"
               :class="
                 isSafeOwner(user)
                   ? 'cursor-not-allowed'
@@ -45,13 +45,13 @@
               data-test="user-row"
             >
               <UserComponent
-                class="p-4 grow rounded-lg"
+                class="grow rounded-lg p-4"
                 :class="[
                   disableTeamMembers && isTeamMember(user)
                     ? 'bg-gray-200 opacity-60'
                     : isSafeOwner(user)
                       ? 'bg-gray-100 opacity-60'
-                      : 'bg-white hover:bg-base-300'
+                      : 'hover:bg-base-300 bg-white'
                 ]"
                 :user="user"
                 :data-test="`user-dropdown-${user.address}`"
@@ -59,14 +59,14 @@
               <!-- Tooltip for users already in team -->
               <div
                 v-if="disableTeamMembers && isTeamMember(user)"
-                class="absolute hidden group-hover:block bg-gray-800 text-white text-sm rounded-sm px-2 py-1 -top-8 left-1/2 transform -translate-x-1/2 whitespace-nowrap z-10"
+                class="absolute -top-8 left-1/2 z-10 hidden -translate-x-1/2 transform rounded-sm bg-gray-800 px-2 py-1 text-sm whitespace-nowrap text-white group-hover:block"
               >
                 Already in your team
               </div>
               <!-- Tooltip for safe owners -->
               <div
                 v-else-if="isSafeOwner(user)"
-                class="absolute hidden group-hover:block bg-gray-800 text-white text-sm rounded px-2 py-1 -top-8 left-1/2 transform -translate-x-1/2 whitespace-nowrap z-10"
+                class="absolute -top-8 left-1/2 z-10 hidden -translate-x-1/2 transform rounded bg-gray-800 px-2 py-1 text-sm whitespace-nowrap text-white group-hover:block"
               >
                 Already a safe owner
               </div>

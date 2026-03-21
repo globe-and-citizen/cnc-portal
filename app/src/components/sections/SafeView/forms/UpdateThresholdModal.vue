@@ -1,23 +1,23 @@
 <template>
   <ModalComponent v-model="isOpen" @reset="handleClose">
-    <div class="flex flex-col gap-5 max-w-md">
+    <div class="flex max-w-md flex-col gap-5">
       <div class="flex items-center justify-between">
-        <h2 class="font-bold text-2xl">Update Threshold</h2>
+        <h2 class="text-2xl font-bold">Update Threshold</h2>
       </div>
 
       <hr />
 
       <div class="space-y-4">
         <!-- Current Configuration -->
-        <div class="bg-gray-50 rounded-lg p-4">
-          <h4 class="font-semibold mb-2">Current Configuration</h4>
-          <div class="text-sm text-gray-700 space-y-1">
+        <div class="rounded-lg bg-gray-50 p-4">
+          <h4 class="mb-2 font-semibold">Current Configuration</h4>
+          <div class="space-y-1 text-sm text-gray-700">
             <div class="flex items-center gap-2">
-              <IconifyIcon icon="heroicons:users" class="w-4 h-4 text-blue-600" />
+              <IconifyIcon icon="heroicons:users" class="h-4 w-4 text-blue-600" />
               {{ totalOwners }} signers
             </div>
             <div class="flex items-center gap-2">
-              <IconifyIcon icon="heroicons:shield-check" class="w-4 h-4 text-green-600" />
+              <IconifyIcon icon="heroicons:shield-check" class="h-4 w-4 text-green-600" />
               {{ currentThreshold }} of {{ totalOwners }} required
             </div>
           </div>
@@ -47,7 +47,7 @@
           <div
             v-for="error in $v.newThreshold.$errors"
             :key="error.$uid"
-            class="text-red-500 text-sm"
+            class="text-sm text-red-500"
             data-test="threshold-error"
           >
             {{ error.$message }}
@@ -55,15 +55,15 @@
         </div>
 
         <!-- Summary -->
-        <div v-if="hasChanges" class="bg-gray-50 rounded-lg p-4">
-          <h4 class="font-semibold mb-2">Summary</h4>
-          <div class="text-sm text-gray-700 space-y-1">
+        <div v-if="hasChanges" class="rounded-lg bg-gray-50 p-4">
+          <h4 class="mb-2 font-semibold">Summary</h4>
+          <div class="space-y-1 text-sm text-gray-700">
             <div class="flex items-center gap-2">
-              <IconifyIcon icon="heroicons:arrow-right" class="w-4 h-4 text-green-600" />
+              <IconifyIcon icon="heroicons:arrow-right" class="h-4 w-4 text-green-600" />
               Updating threshold from {{ currentThreshold }} to {{ newThreshold }}
             </div>
             <div class="flex items-center gap-2">
-              <IconifyIcon icon="heroicons:shield-check" class="w-4 h-4 text-blue-600" />
+              <IconifyIcon icon="heroicons:shield-check" class="h-4 w-4 text-blue-600" />
               {{ newThreshold }} of {{ totalOwners }} signatures will be required
             </div>
           </div>
@@ -71,7 +71,7 @@
       </div>
 
       <!-- Action Buttons -->
-      <div class="flex justify-end gap-3 pt-4 border-t">
+      <div class="flex justify-end gap-3 border-t pt-4">
         <ButtonUI
           variant="ghost"
           @click="handleClose"
@@ -88,7 +88,7 @@
           data-test="update-threshold-button"
           class="flex items-center gap-2"
         >
-          <IconifyIcon v-if="!isLoading" icon="heroicons:shield-check" class="w-4 h-4" />
+          <IconifyIcon v-if="!isLoading" icon="heroicons:shield-check" class="h-4 w-4" />
           Update Threshold
         </ButtonUI>
       </div>

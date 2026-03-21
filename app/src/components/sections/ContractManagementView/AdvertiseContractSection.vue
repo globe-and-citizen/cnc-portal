@@ -6,7 +6,7 @@
     ></span>
     <div
       v-if="!teamStore.currentTeamMeta.isPending && teamStore"
-      class="flex flex-col gap-5 w-full items-center"
+      class="flex w-full flex-col items-center gap-5"
     >
       <CardComponent class="w-full" title="Advertise Contract">
         <template #card-action>

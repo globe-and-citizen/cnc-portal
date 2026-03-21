@@ -1,7 +1,7 @@
 <template>
   <div
     role="button"
-    class="flex items-center cursor-pointer badge badge-md badge-info text-xs mr-6"
+    class="badge badge-md badge-info mr-6 flex cursor-pointer items-center text-xs"
     @click="
       () => {
         if (!disabled) isDropdown = !isDropdown
@@ -10,10 +10,10 @@
     data-test="token-selector"
   >
     <span>{{ formattedTokenSymbol }}</span>
-    <IconifyIcon v-if="!disabled" icon="heroicons-outline:chevron-down" class="w-4 h-4" />
+    <IconifyIcon v-if="!disabled" icon="heroicons-outline:chevron-down" class="h-4 w-4" />
   </div>
   <ul
-    class="absolute right-0 mt-2 menu bg-base-200 border-2 rounded-box z-1 p-2 shadow-sm"
+    class="menu bg-base-200 rounded-box absolute right-0 z-1 mt-2 border-2 p-2 shadow-sm"
     ref="target"
     data-test="token-dropdown"
     v-if="isDropdown"

@@ -1,7 +1,7 @@
 <template>
   <div class="flex flex-col gap-5">
     <!-- Step Indicator -->
-    <UStepper v-model="currentStep" :items="stepperItems" disabled class="w-full mb-4" />
+    <UStepper v-model="currentStep" :items="stepperItems" disabled class="mb-4 w-full" />
 
     <!-- Step 1: Team Details -->
     <UForm
@@ -41,7 +41,7 @@
           data-test="team-description-input"
         />
       </UFormField>
-      <div class="flex justify-end mt-6">
+      <div class="mt-6 flex justify-end">
         <UButton type="submit" size="xl" class="w-32 justify-center" data-test="next-button">
           Next
         </UButton>
@@ -51,7 +51,7 @@
     <!-- Step 2: Members -->
     <div v-else-if="currentStep === 1" data-test="step-2">
       <div class="flex flex-col gap-5">
-        <div class="text-sm text-gray-700 mb-2">
+        <div class="mb-2 text-sm text-gray-700">
           Invite members to your team. You can always add more later.
         </div>
         <MultiSelectMemberInput v-model="teamData.members" :disable-team-members="false" />
@@ -65,7 +65,7 @@
           data-test="create-team-error"
         />
       </div>
-      <div class="flex justify-between mt-6">
+      <div class="mt-6 flex justify-between">
         <UButton
           color="neutral"
           variant="outline"

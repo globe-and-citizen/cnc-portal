@@ -6,7 +6,7 @@
     data-test="member-contracts-input"
   >
     <label
-      class="w-full input input-bordered flex items-center gap-2 input-md"
+      class="input input-bordered input-md flex w-full items-center gap-2"
       :data-test="`member-contracts-input`"
     >
       <input
@@ -33,10 +33,10 @@
       v-if="
         showDropdown && !disabled && (filteredMembers.length > 0 || filteredContracts.length > 0)
       "
-      class="left-0 top-full mt-4 w-full outline-hidden focus:outline-hidden focus:ring-0 z-10"
+      class="top-full left-0 z-10 mt-4 w-full outline-hidden focus:ring-0 focus:outline-hidden"
       data-test="search-dropdown"
     >
-      <div class="shadow bg-base-100 rounded-box">
+      <div class="bg-base-100 rounded-box shadow">
         <SelectMemberResults :members="filteredMembers" @select="handleSelectMember" />
         <SelectContractResults :contracts="filteredContracts" @select="handleSelectContract" />
       </div>

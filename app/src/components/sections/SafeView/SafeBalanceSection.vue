@@ -1,11 +1,11 @@
 <!-- filepath: app/src/components/sections/SafeView/SafeBalanceSection.vue -->
 <template>
   <CardComponent title="Balance">
-    <div class="flex justify-between items-start">
+    <div class="flex items-start justify-between">
       <div class="flex flex-col gap-2">
         <div class="flex items-baseline gap-2">
           <span class="text-4xl font-bold">
-            <span class="inline-block min-w-16 h-10">
+            <span class="inline-block h-10 min-w-16">
               <span
                 v-if="isLoading"
                 class="loading loading-spinner loading-lg"
@@ -16,10 +16,10 @@
           </span>
           <span class="text-gray-600">USD</span>
         </div>
-        <div class="text-sm text-gray-500 mt-1">
+        <div class="mt-1 text-sm text-gray-500">
           ≈ {{ total[currency.code]?.formated ?? total['USD']?.formated ?? 0 }} {{ currency.code }}
         </div>
-        <div class="text-sm text-gray-600 mt-2 flex flex-col gap-1">
+        <div class="mt-2 flex flex-col gap-1 text-sm text-gray-600">
           <div>
             <span class="font-medium">{{ safeInfo?.threshold ?? '-' }}</span> of
             <span class="font-medium">{{ safeInfo?.owners.length || 0 }}</span> signatures required
@@ -36,7 +36,7 @@
             data-test="deposit-button"
             @click="openDepositModal"
           >
-            <IconifyIcon icon="heroicons-outline:plus" class="w-5 h-5" />
+            <IconifyIcon icon="heroicons-outline:plus" class="h-5 w-5" />
             Deposit
           </ButtonUI>
 
@@ -46,7 +46,7 @@
             data-test="transfer-button"
             @click="openTransferModal"
           >
-            <IconifyIcon icon="heroicons-outline:arrows-right-left" class="w-5 h-5" />
+            <IconifyIcon icon="heroicons-outline:arrows-right-left" class="h-5 w-5" />
             Transfer
           </ButtonUI>
 
@@ -57,7 +57,7 @@
             @click="openInSafeApp"
             data-test="open-safe-app-button"
           >
-            <IconifyIcon icon="heroicons-outline:external-link" class="w-5 h-5" />
+            <IconifyIcon icon="heroicons-outline:external-link" class="h-5 w-5" />
             Open in Safe App
           </ButtonUI>
         </div>
@@ -99,7 +99,7 @@
         @closeModal="resetTransferValues"
       >
         <template #header>
-          <h1 class="font-bold text-2xl">Transfer from Safe Contract</h1>
+          <h1 class="text-2xl font-bold">Transfer from Safe Contract</h1>
           <h3 class="pt-4">
             Current contract balance: {{ transferData.token.balance }}
             {{ transferData.token.symbol }}

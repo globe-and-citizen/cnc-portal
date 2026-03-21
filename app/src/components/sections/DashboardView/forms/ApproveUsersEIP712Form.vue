@@ -1,12 +1,12 @@
 <template>
-  <h1 class="font-bold text-2xl mb-5">Approve User EIP712</h1>
+  <h1 class="mb-5 text-2xl font-bold">Approve User EIP712</h1>
   <hr />
 
   <div v-if="isBodAction">
     <p data-test="bod-notification" class="pt-2 text-red-500">
       This will create a board of directors action
     </p>
-    <label class="input input-bordered flex items-center gap-2 input-md mt-2">
+    <label class="input input-bordered input-md mt-2 flex items-center gap-2">
       <span class="w-24">description</span>
       <input
         type="text"
@@ -18,7 +18,7 @@
     </label>
     <div
       data-test="description-error"
-      class="pl-4 text-red-500 text-sm w-full text-left"
+      class="w-full pl-4 text-left text-sm text-red-500"
       v-for="error of v$.description.$errors"
       :key="error.$uid"
     >
@@ -28,7 +28,7 @@
 
   <!--Search user to approve-->
   <div v-for="(input, index) in formData" :key="index" class="input-group mt-3 mb-2">
-    <label class="input input-bordered flex items-center gap-2 input-md">
+    <label class="input input-bordered input-md flex items-center gap-2">
       <input
         type="text"
         class="w-24"
@@ -61,7 +61,7 @@
   </div>
 
   <div class="dropdown" :class="{ 'dropdown-open': !!users && users.length > 0 }" v-if="dropdown">
-    <ul class="p-2 shadow-sm menu dropdown-content z-1 bg-base-100 rounded-box w-96">
+    <ul class="menu dropdown-content bg-base-100 rounded-box z-1 w-96 p-2 shadow-sm">
       <li v-for="user in users" :key="user.address">
         <a
           @click="
@@ -82,7 +82,7 @@
   </div>
 
   <div
-    class="pl-4 text-red-500 text-sm w-full text-left"
+    class="w-full pl-4 text-left text-sm text-red-500"
     v-for="error of v$.formData.$errors"
     :key="error.$uid"
     data-test="address-error"
@@ -100,10 +100,10 @@
   </div>
 
   <div>
-    <label class="input input-bordered flex items-center gap-2 input-md">
+    <label class="input input-bordered input-md flex items-center gap-2">
       <span class="w-24">Token</span>
       |
-      <select v-model="selectedToken" class="bg-white grow">
+      <select v-model="selectedToken" class="grow bg-white">
         <option disabled :value="null">-- Select a token --</option>
         <option v-for="(address, symbol) of tokens" :value="address" :key="address">
           {{ symbol }}
@@ -114,7 +114,7 @@
 
   <div
     data-test="limit-value-error"
-    class="pl-4 text-red-500 text-sm w-full text-left"
+    class="w-full pl-4 text-left text-sm text-red-500"
     v-for="error of v$.selectedToken.$errors"
     :key="error.$uid"
   >
@@ -165,7 +165,7 @@
   </div>-->
 
   <!-- #region Multi Limit Inputs-->
-  <div class="space-y-4 mt-3 mb-3 pt-3 pb-3 border-t">
+  <div class="mt-3 mb-3 space-y-4 border-t pt-3 pb-3">
     <h3 class="text-lg font-semibold">Budget Limits:</h3>
     <div
       v-for="(label, budgetType) in budgetTypes"
@@ -175,7 +175,7 @@
     >
       <label
         :for="'checkbox-' + budgetType"
-        class="input input-bordered flex items-center gap-2 input-md mt-2"
+        class="input input-bordered input-md mt-2 flex items-center gap-2"
       >
         <!-- Checkbox -->
         <input
@@ -212,7 +212,7 @@
   <hr />
 
   <div class="mt-3">
-    <label class="input input-bordered flex items-center gap-2 input-md mt-2">
+    <label class="input input-bordered input-md mt-2 flex items-center gap-2">
       <span class="w-24">Expiry</span>
       <div class="grow" data-test="date-picker">
         <VueDatePicker v-model="date" />

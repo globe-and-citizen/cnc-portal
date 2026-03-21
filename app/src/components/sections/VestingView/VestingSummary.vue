@@ -1,8 +1,8 @@
 <template>
-  <div class="flex flex-col gap-5 max-w-5xl w-full">
-    <h4 class="font-bold text-lg">Review Vesting Details</h4>
+  <div class="flex w-full max-w-5xl flex-col gap-5">
+    <h4 class="text-lg font-bold">Review Vesting Details</h4>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-base-200 rounded-lg">
+    <div class="bg-base-200 grid grid-cols-1 gap-4 rounded-lg p-4 md:grid-cols-2">
       <div class="flex flex-col gap-2">
         <span class="text-xs text-gray-500">Member</span>
         <span class="font-medium">{{
@@ -41,7 +41,7 @@
       </div>
     </div>
 
-    <div class="flex justify-end gap-2 mt-4">
+    <div class="mt-4 flex justify-end gap-2">
       <ButtonUI variant="ghost" size="sm" @click="$emit('back')"> Back to Edit </ButtonUI>
       <ButtonUI
         variant="primary"

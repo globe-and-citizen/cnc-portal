@@ -11,7 +11,7 @@
       <template #prefix>
         <IconifyIcon
           :icon="depositsEnabled ? 'heroicons:lock-closed' : 'heroicons:lock-open'"
-          class="w-4 h-4"
+          class="h-4 w-4"
         />
       </template>
       {{ buttonText }}

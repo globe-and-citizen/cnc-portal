@@ -14,11 +14,11 @@
     </div>
 
     <!-- Empty team or Error -->
-    <div class="flex flex-col items-center animate-fade-in" v-if="teams?.length == 0 || teamsError">
+    <div class="animate-fade-in flex flex-col items-center" v-if="teams?.length == 0 || teamsError">
       <img src="../../assets/login-illustration.png" alt="Login illustration" width="300" />
 
       <span
-        class="font-bold text-sm text-gray-500 my-4"
+        class="my-4 text-sm font-bold text-gray-500"
         v-if="teams?.length == 0"
         data-test="empty-state"
       >
@@ -34,7 +34,7 @@
     <!-- Teams List -->
 
     <div
-      class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-20"
+      class="grid grid-cols-1 gap-20 md:grid-cols-2 lg:grid-cols-3"
       data-test="team-list"
       v-if="teams?.length != 0"
     >
@@ -58,7 +58,7 @@
         <AddTeamCard
           data-test="add-team-card"
           @click="openModal = true"
-          class="w-72 h-16 text-sm transform transition duration-300 hover:scale-105 animate-fade-in"
+          class="animate-fade-in h-16 w-72 transform text-sm transition duration-300 hover:scale-105"
         />
 
         <template #body>

@@ -1,5 +1,5 @@
 <template>
-  <h2 class="font-semibold text-xl mb-5">Results for Election ID: {{ id }}</h2>
+  <h2 class="mb-5 text-xl font-semibold">Results for Election ID: {{ id }}</h2>
 
   <div class="font-semibold">Winners:</div>
   <div v-if="isFetching" class="text-gray-500">Loading results...</div>

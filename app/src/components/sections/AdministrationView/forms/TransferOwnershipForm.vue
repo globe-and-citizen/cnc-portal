@@ -1,11 +1,11 @@
 <template>
   <div class="flex flex-col gap-2">
-    <h1 class="font-bold text-2xl">Transfer Ownership</h1>
+    <h1 class="text-2xl font-bold">Transfer Ownership</h1>
     <h3 class="font-bold text-red-600">This will create an board of director action</h3>
   </div>
   <hr class="" />
   <div class="flex flex-col">
-    <label class="input input-bordered flex items-center gap-2 input-md mt-4">
+    <label class="input input-bordered input-md mt-4 flex items-center gap-2">
       <span class="w-28">New Owner</span>
       <input
         type="text"
@@ -16,13 +16,13 @@
       />
     </label>
     <div
-      class="pl-4 text-red-500 text-sm w-full text-left"
+      class="w-full pl-4 text-left text-sm text-red-500"
       v-for="error of $v.newOwner.$errors"
       :key="error.$uid"
     >
       {{ error.$message }}
     </div>
-    <label class="input input-bordered flex items-center gap-2 input-md mt-4">
+    <label class="input input-bordered input-md mt-4 flex items-center gap-2">
       <span class="w-28">Description</span>
       <input
         type="text"
@@ -33,7 +33,7 @@
       />
     </label>
     <div
-      class="pl-4 text-red-500 text-sm w-full text-left"
+      class="w-full pl-4 text-left text-sm text-red-500"
       v-for="error of $v.description.$errors"
       :key="error.$uid"
     >

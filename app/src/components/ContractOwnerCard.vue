@@ -1,6 +1,6 @@
 <template>
   <CardComponent title="">
-    <div v-if="ownerUser.address" class="flex justify-between items-center">
+    <div v-if="ownerUser.address" class="flex items-center justify-between">
       <div class="text-lg text-gray-500">
         <span class="flex items-center gap-4">
           <UserAvatarComponent :user="ownerUser" class="" />
@@ -15,7 +15,7 @@
       </div>
     </div>
 
-    <div v-else class="flex justify-center items-center py-4">
+    <div v-else class="flex items-center justify-center py-4">
       <span class="text-gray-500">Loading owner information...</span>
     </div>
   </CardComponent>

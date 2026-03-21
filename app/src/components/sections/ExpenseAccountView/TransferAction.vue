@@ -34,7 +34,7 @@
           @closeModal="showModal = { mount: false, show: false }"
         >
           <template #header>
-            <h1 class="font-bold text-2xl">Transfer from Expenses Contract</h1>
+            <h1 class="text-2xl font-bold">Transfer from Expenses Contract</h1>
             <h3 v-if="expenseBalance" class="pt-4" data-test="spendable-balance">
               Spendable balance: {{ tokens[0]?.spendableBalance ?? tokens[0]?.balance ?? 0 }}
               {{ transferData.token.symbol }}

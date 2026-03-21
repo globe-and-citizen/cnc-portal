@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div class="px-8 pb-4 pt-8 flex items-end justify-between">
+    <div class="flex items-end justify-between px-8 pt-8 pb-4">
       <span class="card-title"> Pending Weekly Claim Withdrawal </span>
       <div class="card-actions justify-end">
         <div

@@ -1,7 +1,7 @@
 <template>
   <div>
     <h2>Create Election</h2>
-    <div class="flex flex-col gap-4 mt-2">
+    <div class="mt-2 flex flex-col gap-4">
       <label class="form-control w-full">
         <div class="label">
           <span class="label-text">Title</span>
@@ -15,7 +15,7 @@
           data-test="titleInput"
         />
         <div
-          class="pl-4 text-red-500 text-sm w-full text-left"
+          class="w-full pl-4 text-left text-sm text-red-500"
           v-for="error of $v.proposal.title.$errors"
           :key="error.$uid"
         >
@@ -35,7 +35,7 @@
           data-test="descriptionInput"
         ></textarea>
         <div
-          class="pl-4 text-red-500 text-sm w-full text-left"
+          class="w-full pl-4 text-left text-sm text-red-500"
           v-for="error of $v.proposal.description.$errors"
           :key="error.$uid"
         >
@@ -59,7 +59,7 @@
             />
           </div>
           <div
-            class="pl-4 text-red-500 text-sm w-full text-left"
+            class="w-full pl-4 text-left text-sm text-red-500"
             v-for="error of $v.proposal.winnerCount.$errors"
             :key="error.$uid"
           >
@@ -67,7 +67,7 @@
           </div>
 
           <div class="mb-4">
-            <label class="w-full input input-bordered flex items-center gap-2 input-md mt-2">
+            <label class="input input-bordered input-md mt-2 flex w-full items-center gap-2">
               <span class="w-24">Start Date</span>
               <div class="grow" data-test="date-picker">
                 <VueDatePicker
@@ -80,7 +80,7 @@
           </div>
 
           <div
-            class="pl-4 text-red-500 text-sm w-full text-left"
+            class="w-full pl-4 text-left text-sm text-red-500"
             v-for="error of $v.proposal.startDate.$errors"
             :key="error.$uid"
           >
@@ -88,7 +88,7 @@
           </div>
 
           <div class="mb-4">
-            <label class="w-full input input-bordered flex items-center gap-2 input-md mt-2">
+            <label class="input input-bordered input-md mt-2 flex w-full items-center gap-2">
               <span class="w-24">End Date</span>
               <div class="grow" data-test="date-picker">
                 <VueDatePicker
@@ -101,7 +101,7 @@
           </div>
 
           <div
-            class="pl-4 text-red-500 text-sm w-full text-left"
+            class="w-full pl-4 text-left text-sm text-red-500"
             v-for="error of $v.proposal.endDate.$errors"
             :key="error.$uid"
           >
@@ -115,7 +115,7 @@
           />
 
           <div
-            class="pl-4 text-red-500 text-sm w-full text-left"
+            class="w-full pl-4 text-left text-sm text-red-500"
             v-if="newProposalInput.isElection && $v.proposal.candidates.$error"
           >
             {{ $v.proposal.candidates.$errors[0]?.$message }}

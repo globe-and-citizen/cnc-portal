@@ -1,11 +1,11 @@
 <template>
   <div class="flex flex-col gap-4">
-    <div class="text-center border-b-2 text-md font-bold" data-test="title">
+    <div class="text-md border-b-2 text-center font-bold" data-test="title">
       Manage Voting Contract
     </div>
-    <div class="flex flex-col justify-center items-center">
-      <SkeletonLoading v-if="loadingPaused" class="w-40 h-12" />
-      <h3 v-if="!loadingPaused" class="font-bold text-md" data-test="status">
+    <div class="flex flex-col items-center justify-center">
+      <SkeletonLoading v-if="loadingPaused" class="h-12 w-40" />
+      <h3 v-if="!loadingPaused" class="text-md font-bold" data-test="status">
         Status: {{ isPaused ? 'Paused' : 'Active' }}
       </h3>
 
@@ -37,14 +37,14 @@
       </ButtonUI>
     </div>
 
-    <div class="text-center flex flex-col gap-y-4 items-center">
+    <div class="flex flex-col items-center gap-y-4 text-center">
       <div>
-        <div class="font-bold text-md">Owner</div>
+        <div class="text-md font-bold">Owner</div>
         <div v-if="!loadingOwner" data-test="owner" class="badge badge-secondary">{{ owner }}</div>
       </div>
-      <SkeletonLoading v-if="loadingOwner" class="w-96 h-6" />
+      <SkeletonLoading v-if="loadingOwner" class="h-6 w-96" />
 
-      <div class="flex flex-row gap-x-4 justify-around w-full">
+      <div class="flex w-full flex-row justify-around gap-x-4">
         <ButtonUI
           class="btn btn-primary w-40 text-center"
           data-test="transfer-ownership"

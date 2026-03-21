@@ -1,12 +1,12 @@
 // TableComponent.vue
 <template>
   <div :class="overflow">
-    <div v-if="loading" class="flex justify-center items-center py-4" data-test="loading">
+    <div v-if="loading" class="flex items-center justify-center py-4" data-test="loading">
       <span class="loading-icon" :class="loadingState?.icon">{{
         loadingState?.label || 'Loading...'
       }}</span>
     </div>
-    <table v-else class="table table-zebra w-full" data-test="table">
+    <table v-else class="table-zebra table w-full" data-test="table">
       <thead :class="{ 'sticky top-0': sticky }">
         <tr>
           <th v-for="(column, index) in columns" :key="index" :class="column.class">
@@ -38,11 +38,11 @@
 
                   <span v-if="isSortedAsc(column)" data-test="sort-asc">
                     {{ sortAscIcon }}
-                    <IconifyIcon icon="heroicons:chevron-up" class="w-4 h-4 text-gray-400" />
+                    <IconifyIcon icon="heroicons:chevron-up" class="h-4 w-4 text-gray-400" />
                   </span>
                   <span v-if="isSortedDesc(column)" data-test="sort-desc">
                     {{ sortDescIcon }}
-                    <IconifyIcon icon="heroicons:chevron-down" class="w-4 h-4 text-gray-400" />
+                    <IconifyIcon icon="heroicons:chevron-down" class="h-4 w-4 text-gray-400" />
                   </span>
                 </button>
               </div>
@@ -83,7 +83,7 @@
 
     <div
       v-if="showPagination && totalPages > 1"
-      class="flex justify-between items-center mt-4 px-2"
+      class="mt-4 flex items-center justify-between px-2"
     >
       <div class="flex items-center space-x-2">
         <slot
@@ -113,7 +113,7 @@
               @click="previousPage"
               data-test="previous-page"
             >
-              <IconifyIcon icon="heroicons:chevron-left" class="w-4 h-4" />
+              <IconifyIcon icon="heroicons:chevron-left" class="h-4 w-4" />
             </button>
             <button
               v-for="page in displayedPages"
@@ -131,7 +131,7 @@
               @click="nextPage"
               data-test="next-page"
             >
-              <IconifyIcon icon="heroicons:chevron-right" class="w-4 h-4" />
+              <IconifyIcon icon="heroicons:chevron-right" class="h-4 w-4" />
             </button>
           </div>
         </slot>

@@ -5,7 +5,7 @@
       <MonthSelector v-model="internalSelectedWeek" />
 
       <!-- Week List -->
-      <div class="space-y-4 z-0">
+      <div class="z-0 space-y-4">
         <div
           v-for="week in generatedMonthWeek"
           :key="week.isoWeek"
@@ -15,13 +15,13 @@
             }
           "
           :class="[
-            'border rounded-lg p-3 cursor-pointer',
+            'cursor-pointer rounded-lg border p-3',
             week.isoWeek === internalSelectedWeek.isoWeek
-              ? 'bg-emerald-50 border-emerald-500 text-gray-800'
+              ? 'border-emerald-500 bg-emerald-50 text-gray-800'
               : 'hover:bg-gray-50'
           ]"
         >
-          <div class="text-base font-medium flex items-center justify-between">
+          <div class="flex items-center justify-between text-base font-medium">
             Week
 
             <div

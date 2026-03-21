@@ -10,7 +10,7 @@
     </div>
     <ul
       tabindex="0"
-      class="p-2 shadow-sm menu dropdown-content z-1 bg-base-100 rounded-box w-[300px]"
+      class="menu dropdown-content bg-base-100 rounded-box z-1 w-[300px] p-2 shadow-sm"
       data-test="notification-dropdown"
     >
       <li v-for="notification in paginatedNotifications" :key="notification.id">
@@ -25,7 +25,7 @@
       </li>
       <!-- Pagination Controls -->
       <div
-        class="join flex justify-between items-center p-2"
+        class="join flex items-center justify-between p-2"
         v-if="paginatedNotifications.length > 0"
       >
         <ButtonUI

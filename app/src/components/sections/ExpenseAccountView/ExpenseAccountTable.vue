@@ -1,6 +1,6 @@
 <template>
   <div class="form-control flex flex-row gap-1">
-    <label class="label cursor-pointer flex gap-2" :key="status" v-for="status in statuses">
+    <label class="label flex cursor-pointer gap-2" :key="status" v-for="status in statuses">
       <span class="label-text">{{ status.charAt(0).toUpperCase() + status.slice(1) }}</span>
       <input
         type="radio"

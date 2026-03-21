@@ -30,13 +30,13 @@
         </span>
       </template>
       <template #released-data="{ row }">
-        <span class="flex items-center gap-1 badge badge-info">
+        <span class="badge badge-info flex items-center gap-1">
           {{ row.released.toFixed(2) }}
           <span class="text-xs">{{ row.tokenSymbol }}</span>
         </span>
       </template>
       <template #withdrawn-data="{ row }">
-        <span class="flex items-center gap-1 badge badge-info">
+        <span class="badge badge-info flex items-center gap-1">
           {{ row.status === 'Inactive' ? (row.totalAmount - row.released).toFixed(2) : 0 }}
           <span class="text-xs">{{ row.tokenSymbol }}</span>
         </span>

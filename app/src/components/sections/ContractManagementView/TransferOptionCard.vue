@@ -1,12 +1,12 @@
 <template>
   <div
-    class="flex-1 p-6 rounded-xl cursor-pointer transition-all duration-200"
+    class="flex-1 cursor-pointer rounded-xl p-6 transition-all duration-200"
     :class="cardClasses"
     @click="$emit('selected')"
   >
     <div class="flex flex-col items-center">
       <div :class="iconContainerClasses">
-        <IconifyIcon :icon="icon" class="w-12 h-12" />
+        <IconifyIcon :icon="icon" class="h-12 w-12" />
       </div>
       <span class="font-bold">{{ label }}</span>
     </div>

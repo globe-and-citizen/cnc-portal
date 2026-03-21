@@ -1,6 +1,6 @@
 <template>
-  <h3 class="font-bold text-xl">Create New Proposal</h3>
-  <div class="flex flex-col w-full">
+  <h3 class="text-xl font-bold">Create New Proposal</h3>
+  <div class="flex w-full flex-col">
     <label class="form-control w-full">
       <div class="label"><span class="label-text">Title</span></div>
       <input
@@ -53,13 +53,13 @@
       </div>
     </label>
 
-    <div class="flex flex-row justify-between items-center gap-4">
-      <div class="flex flex-col flex-1">
+    <div class="flex flex-row items-center justify-between gap-4">
+      <div class="flex flex-1 flex-col">
         <label class="label">
           <span class="label-text">Start Date</span>
         </label>
         <div
-          class="border rounded-lg p-2 bg-white shadow-xs"
+          class="rounded-lg border bg-white p-2 shadow-xs"
           :class="{ 'border-error': $v.startDate.$error }"
         >
           <VueDatePicker
@@ -74,12 +74,12 @@
           <span class="label-text-alt text-error">{{ $v.startDate.$errors[0]?.$message }}</span>
         </div>
       </div>
-      <div class="flex flex-col flex-1">
+      <div class="flex flex-1 flex-col">
         <label class="label">
           <span class="label-text">End Date</span>
         </label>
         <div
-          class="border rounded-lg p-2 bg-white shadow-xs"
+          class="rounded-lg border bg-white p-2 shadow-xs"
           :class="{ 'border-error': $v.endDate.$error }"
         >
           <VueDatePicker

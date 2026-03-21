@@ -1,7 +1,7 @@
 <template>
   <div class="card bg-base-100 shadow-lg">
     <div class="card-body">
-      <div class="flex justify-between items-center">
+      <div class="flex items-center justify-between">
         <div class="flex items-center gap-4">
           <span class="card-title">
             {{ props.title }}

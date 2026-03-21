@@ -3,7 +3,7 @@
     <a
       v-for="(tab, index) in tabs"
       :key="index"
-      class="whitespace-nowrap tab"
+      class="tab whitespace-nowrap"
       role="tab"
       :class="{ 'tab-active': activeTab === index }"
       @click="activeTab = index"

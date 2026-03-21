@@ -10,7 +10,7 @@
     </ButtonUI>
 
     <ModalComponent v-model="showModal" v-if="showModal">
-      <p class="font-bold text-lg">Confirmation</p>
+      <p class="text-lg font-bold">Confirmation</p>
       <hr class="" />
       <p class="py-4">
         Are you sure you want to delete

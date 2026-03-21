@@ -8,7 +8,7 @@
       @click="openModal"
       data-test="deposit-button"
     >
-      <IconifyIcon icon="heroicons-outline:plus" class="w-5 h-5" />
+      <IconifyIcon icon="heroicons-outline:plus" class="h-5 w-5" />
       Deposit
     </ButtonUI>
 

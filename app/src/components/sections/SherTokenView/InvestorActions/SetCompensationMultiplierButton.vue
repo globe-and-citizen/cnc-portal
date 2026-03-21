@@ -9,7 +9,7 @@
       @click="openModal"
     >
       <template #prefix>
-        <IconifyIcon icon="heroicons:calculator" class="w-4 h-4" />
+        <IconifyIcon icon="heroicons:calculator" class="h-4 w-4" />
       </template>
       Set Multiplier ({{ formattedCurrentMultiplier }}x)
       <template #suffix v-if="!isMultiplierLoading && formattedCurrentMultiplier !== '0'">
@@ -20,16 +20,16 @@
     <!-- Modal for setting multiplier -->
     <dialog ref="modalRef" class="modal" data-test="multiplier-modal">
       <div class="modal-box">
-        <h3 class="font-bold text-lg mb-4">Set SHER Compensation Multiplier</h3>
+        <h3 class="mb-4 text-lg font-bold">Set SHER Compensation Multiplier</h3>
 
         <div class="mb-4">
-          <p class="text-sm text-base-content/70 mb-2">
+          <p class="text-base-content/70 mb-2 text-sm">
             Current multiplier:
             <span class="font-semibold" data-test="current-multiplier">
               {{ isMultiplierLoading ? 'Loading...' : `${formattedCurrentMultiplier}x` }}
             </span>
           </p>
-          <p class="text-sm text-base-content/70">
+          <p class="text-base-content/70 text-sm">
             The multiplier determines how many SHER tokens are minted per deposited token. You can
             use decimal values (e.g., 1.5, 2.75).
           </p>

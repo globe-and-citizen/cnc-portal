@@ -1,7 +1,7 @@
 <template>
   <CardComponent title="Investor Actions">
-    <div class="flex flex-col justify-around gap-2 w-full" data-test="investors-actions">
-      <div class="flex flex-wrap items-end w-full justify-between">
+    <div class="flex w-full flex-col justify-around gap-2" data-test="investors-actions">
+      <div class="flex w-full flex-wrap items-end justify-between">
         <div class="flex gap-x-1">
           <h4>Contract Address :</h4>
           <AddressToolTip :address="investorAddress" v-if="investorAddress" />

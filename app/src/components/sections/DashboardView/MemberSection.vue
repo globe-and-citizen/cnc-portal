@@ -41,16 +41,16 @@
           data-test="members-table"
         >
           <template #wage-header="">
-            <div class="flex flex-col gap-0 w-full pt-7">
-              <div class="text-center pb-1">
+            <div class="flex w-full flex-col gap-0 pt-7">
+              <div class="pb-1 text-center">
                 <span>Hourly Rates</span>
               </div>
-              <div class="flex flex-row justify-between border-t border-base-400">
-                <span class="w-1/3 text-xs p-1 text-center bg-[#C8FACD]">{{
+              <div class="border-base-400 flex flex-row justify-between border-t">
+                <span class="w-1/3 bg-[#C8FACD] p-1 text-center text-xs">{{
                   NETWORK.currencySymbol
                 }}</span>
-                <span class="w-1/3 text-xs p-1 text-center bg-[#FEF3DE]">USDC</span>
-                <span class="w-1/3 text-xs p-1 text-center bg-[#D9F1F6]">SHER</span>
+                <span class="w-1/3 bg-[#FEF3DE] p-1 text-center text-xs">USDC</span>
+                <span class="w-1/3 bg-[#D9F1F6] p-1 text-center text-xs">SHER</span>
               </div>
             </div>
           </template>
@@ -61,21 +61,21 @@
           </template>
           <template #maxWeeklyHours-data="{ row }">
             {{ !isTeamWageDataFetching ? getMemberWage(row.address).maximumHoursPerWeek : '' }}
-            <div class="skeleton w-24 h-4" v-if="isTeamWageDataFetching"></div>
+            <div class="skeleton h-4 w-24" v-if="isTeamWageDataFetching"></div>
           </template>
           <template #wage-data="{ row }">
-            <div class="flex flex-row gap-2 justify-between">
-              <span class="w-1/3 text-right pr-4">
+            <div class="flex flex-row justify-between gap-2">
+              <span class="w-1/3 pr-4 text-right">
                 {{ !isTeamWageDataFetching ? getMemberWage(row.address).cashRatePerHour : '' }}
               </span>
-              <span class="w-1/3 text-right pr-4">
+              <span class="w-1/3 pr-4 text-right">
                 {{ !isTeamWageDataFetching ? getMemberWage(row.address).usdcRatePerHour : '' }}
               </span>
-              <span class="w-1/3 text-right pr-4">
+              <span class="w-1/3 pr-4 text-right">
                 {{ !isTeamWageDataFetching ? getMemberWage(row.address).tokenRatePerHour : '' }}
               </span>
             </div>
-            <div class="skeleton w-24 h-4" v-if="isTeamWageDataFetching"></div
+            <div class="skeleton h-4 w-24" v-if="isTeamWageDataFetching"></div
           ></template>
           <template
             #action-data="{ row }"

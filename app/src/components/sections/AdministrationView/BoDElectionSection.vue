@@ -72,7 +72,7 @@
                 <li
                   v-for="(address, index) in boardOfDirectors"
                   :key="index"
-                  class="text-sm flex justify-between"
+                  class="flex justify-between text-sm"
                 >
                   <span v-if="team.members">
                     {{
@@ -93,7 +93,7 @@
           </ModalComponent>
         </div>
       </div>
-      <div class="flex justify-center items-center" v-if="loadingGetProposals">
+      <div class="flex items-center justify-center" v-if="loadingGetProposals">
         <span class="loading loading-spinner loading-lg"></span>
       </div>
     </div>

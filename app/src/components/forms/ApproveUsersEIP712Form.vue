@@ -1,12 +1,12 @@
 <template>
-  <h1 class="font-bold text-2xl mb-5">Approve User EIP712</h1>
+  <h1 class="mb-5 text-2xl font-bold">Approve User EIP712</h1>
   <hr />
 
   <div v-if="isBodAction">
     <p data-test="bod-notification" class="pt-2 text-red-500">
       This will create a board of directors action
     </p>
-    <label class="w-full input input-bordered flex items-center gap-2 input-md mt-2">
+    <label class="input input-bordered input-md mt-2 flex w-full items-center gap-2">
       <span class="w-24">description</span>
       <input
         type="text"
@@ -18,7 +18,7 @@
     </label>
     <div
       data-test="description-error"
-      class="pl-4 text-red-500 text-sm w-full text-left"
+      class="w-full pl-4 text-left text-sm text-red-500"
       v-for="error of v$.description.$errors"
       :key="error.$uid"
     >
@@ -29,7 +29,7 @@
   <SelectMemberWithTokenInput v-model="input" />
 
   <div
-    class="pl-4 text-red-500 text-sm w-full text-right"
+    class="w-full pl-4 text-right text-sm text-red-500"
     v-for="error of v$.input.$errors"
     :key="error.$uid"
     data-test="address-error"
@@ -49,7 +49,7 @@
   <!-- Budget Amount Input -->
   <div class="mt-3">
     <span class="font-semibold">Budget Amount:</span>
-    <label class="w-full input input-bordered flex items-center gap-2 input-md mt-2">
+    <label class="input input-bordered input-md mt-2 flex w-full items-center gap-2">
       <span class="w-24">Amount</span>
       <input
         type="number"
@@ -63,7 +63,7 @@
       <SelectComponent v-model="frequencyType as unknown as string" :options="frequencyTypes" />
     </label>
     <div
-      class="pl-4 text-red-500 text-sm w-full text-right"
+      class="w-full pl-4 text-right text-sm text-red-500"
       v-for="error of v$.amount.$errors"
       :key="error.$uid"
       data-test="amount-error"
@@ -75,7 +75,7 @@
   <!-- Custom Frequency Input (only shown when Custom is selected) -->
   <div v-if="frequencyType === 4" class="mt-3">
     <span class="font-semibold">Custom Frequency:</span>
-    <label class="w-full input input-bordered flex items-center gap-2 input-md mt-2">
+    <label class="input input-bordered input-md mt-2 flex w-full items-center gap-2">
       <span class="w-24">Days</span>
       <input
         type="number"
@@ -87,11 +87,11 @@
         step="1"
       />
     </label>
-    <div class="text-xs text-gray-500 mt-1">
+    <div class="mt-1 text-xs text-gray-500">
       Frequency period in days (will be converted to seconds for the contract)
     </div>
     <div
-      class="pl-4 text-red-500 text-sm w-full text-right"
+      class="w-full pl-4 text-right text-sm text-red-500"
       v-for="error of v$.customFrequencyDays.$errors"
       :key="error.$uid"
       data-test="custom-frequency-error"
@@ -101,10 +101,10 @@
   </div>
 
   <!-- Date Range -->
-  <div class="flex flex-col gap-2 mt-5">
+  <div class="mt-5 flex flex-col gap-2">
     <div>
       <span class="font-semibold">Duration:</span>
-      <label class="w-full input input-bordered flex items-center gap-2 input-md mt-2">
+      <label class="input input-bordered input-md mt-2 flex w-full items-center gap-2">
         <span class="w-24">Start Date</span>
         <div class="grow" data-test="start-date-picker">
           <VueDatePicker
@@ -116,7 +116,7 @@
         </div>
       </label>
       <div
-        class="pl-4 text-red-500 text-sm w-full text-right"
+        class="w-full pl-4 text-right text-sm text-red-500"
         v-for="error of v$.startDate.$errors"
         :key="error.$uid"
         data-test="start-date-error"
@@ -127,7 +127,7 @@
 
     <div>
       <!-- <span class="font-semibold">End Date:</span> -->
-      <label class="w-full input input-bordered flex items-center gap-2 input-md mt-2">
+      <label class="input input-bordered input-md mt-2 flex w-full items-center gap-2">
         <span class="w-24">End Date</span>
         <div class="grow" data-test="end-date-picker">
           <VueDatePicker
@@ -139,7 +139,7 @@
         </div>
       </label>
       <div
-        class="pl-4 text-red-500 text-sm w-full text-right"
+        class="w-full pl-4 text-right text-sm text-red-500"
         v-for="error of v$.endDate.$errors"
         :key="error.$uid"
         data-test="end-date-error"

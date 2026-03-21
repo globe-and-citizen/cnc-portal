@@ -1,6 +1,6 @@
 <template>
-  <div class="p-4 flex gap-4 border-b-2 items-center text-sm">
-    <p class="text-xl font-black w-11 h-11 bg-red-200 flex items-center justify-center rounded-lg">
+  <div class="flex items-center gap-4 border-b-2 p-4 text-sm">
+    <p class="flex h-11 w-11 items-center justify-center rounded-lg bg-red-200 text-xl font-black">
       {{ team.name.charAt(0) }}
     </p>
     <div class="pr-8">

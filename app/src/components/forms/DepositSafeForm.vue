@@ -1,7 +1,7 @@
 <template>
-  <span class="font-bold text-2xl">{{ title }}</span>
+  <span class="text-2xl font-bold">{{ title }}</span>
 
-  <div v-if="selectedToken?.token.id !== 'native'" class="steps w-full my-4">
+  <div v-if="selectedToken?.token.id !== 'native'" class="steps my-4 w-full">
     <a class="step" :class="{ 'step-primary': currentStep >= 1 }">Amount</a>
     <a class="step" :class="{ 'step-primary': currentStep >= 2 }">Approval</a>
     <a class="step" :class="{ 'step-primary': currentStep >= 3 }">Deposit</a>

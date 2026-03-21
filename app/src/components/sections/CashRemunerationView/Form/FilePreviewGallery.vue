@@ -3,7 +3,7 @@
     <div
       v-for="(preview, index) in resolvedPreviews"
       :key="preview.previewUrl || preview.key || index"
-      class="relative group"
+      class="group relative"
       data-test="preview-item"
     >
       <!-- Image preview -->
@@ -11,20 +11,20 @@
         v-if="preview.isImage && preview.previewUrl"
         type="button"
         :class="[
-          'group relative overflow-hidden rounded-md w-full focus:outline-hidden border border-gray-200 hover:border-emerald-500 transition-all bg-gray-100',
+          'group relative w-full overflow-hidden rounded-md border border-gray-200 bg-gray-100 transition-all hover:border-emerald-500 focus:outline-hidden',
           itemHeightClass,
           imageClass
         ]"
         @click="openModal('image', preview)"
         data-test="image-preview"
       >
-        <img :src="preview.previewUrl" class="w-full h-full object-cover" :alt="preview.fileName" />
+        <img :src="preview.previewUrl" class="h-full w-full object-cover" :alt="preview.fileName" />
         <div
-          class="pointer-events-none absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-all flex items-center justify-center"
+          class="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/0 transition-all group-hover:bg-black/5"
         >
           <Icon
             icon="heroicons:magnifying-glass-plus"
-            class="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+            class="h-6 w-6 text-white opacity-0 transition-opacity group-hover:opacity-100"
           />
         </div>
       </button>
@@ -33,13 +33,13 @@
       <div
         v-else-if="preview.isImage && !preview.previewUrl && preview.key"
         :class="[
-          'rounded-md w-full flex flex-col items-center justify-center bg-gray-100 border border-gray-200',
+          'flex w-full flex-col items-center justify-center rounded-md border border-gray-200 bg-gray-100',
           itemHeightClass
         ]"
         data-test="image-loading"
       >
         <span class="loading loading-spinner loading-sm text-gray-400"></span>
-        <span class="text-[10px] text-gray-500 mt-1">Loading...</span>
+        <span class="mt-1 text-[10px] text-gray-500">Loading...</span>
       </div>
 
       <!-- Document preview -->
@@ -47,16 +47,16 @@
         v-else
         type="button"
         :class="[
-          'rounded-md w-full flex flex-col items-center justify-center p-2 transition-colors border border-gray-200 hover:border-emerald-500 overflow-hidden',
+          'flex w-full flex-col items-center justify-center overflow-hidden rounded-md border border-gray-200 p-2 transition-colors hover:border-emerald-500',
           itemHeightClass,
           documentClass
         ]"
         data-test="document-preview"
         @click="openModal('document', preview)"
       >
-        <Icon :icon="getFileIcon(preview.fileName)" class="w-6 h-6 text-gray-600" />
+        <Icon :icon="getFileIcon(preview.fileName)" class="h-6 w-6 text-gray-600" />
         <span
-          class="text-[11px] text-gray-700 mt-1 truncate w-full text-center"
+          class="mt-1 w-full truncate text-center text-[11px] text-gray-700"
           :title="preview.fileName"
         >
           {{ truncateFileName(preview.fileName) }}
@@ -66,12 +66,12 @@
       <!-- Remove button -->
       <button
         v-if="canRemove"
-        class="absolute -top-1 -right-1 h-6 w-6 flex items-center justify-center rounded-full bg-error text-white text-xs opacity-0 group-hover:opacity-100 transition-all shadow-xs hover:shadow-sm"
+        class="bg-error absolute -top-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full text-xs text-white opacity-0 shadow-xs transition-all group-hover:opacity-100 hover:shadow-sm"
         @click.stop="emit('remove', index)"
         data-test="remove-button"
         aria-label="Remove file"
       >
-        <Icon icon="heroicons:x-mark" class="w-3 h-3" />
+        <Icon icon="heroicons:x-mark" class="h-3 w-3" />
       </button>
     </div>
 
@@ -79,7 +79,7 @@
     <Teleport to="body">
       <div
         v-if="modalState.type === 'image'"
-        class="fixed inset-0 z-999 flex items-center justify-center bg-black bg-opacity-90 p-4"
+        class="bg-opacity-90 fixed inset-0 z-999 flex items-center justify-center bg-black p-4"
         @click="closeModal"
         @keydown.esc="closeModal"
         data-test="upload-lightbox-modal"
@@ -88,32 +88,32 @@
         aria-labelledby="lightbox-title"
       >
         <div
-          class="relative bg-black rounded-lg max-w-4xl max-h-full flex flex-col items-center justify-center"
+          class="relative flex max-h-full max-w-4xl flex-col items-center justify-center rounded-lg bg-black"
           @click.stop
         >
-          <div class="absolute top-4 right-4 flex gap-2 z-20">
+          <div class="absolute top-4 right-4 z-20 flex gap-2">
             <button
-              class="btn btn-sm btn-ghost text-white bg-black bg-opacity-60 hover:bg-opacity-80"
+              class="btn btn-sm btn-ghost bg-opacity-60 hover:bg-opacity-80 bg-black text-white"
               @click="closeModal"
               data-test="upload-lightbox-close"
               aria-label="Close lightbox"
             >
-              <Icon icon="heroicons:x-mark" class="w-6 h-6" />
+              <Icon icon="heroicons:x-mark" class="h-6 w-6" />
             </button>
             <button
-              class="btn btn-sm btn-ghost text-white bg-black bg-opacity-60 hover:bg-opacity-80"
+              class="btn btn-sm btn-ghost bg-opacity-60 hover:bg-opacity-80 bg-black text-white"
               @click="downloadFile(modalState.url)"
               data-test="upload-lightbox-download"
               aria-label="Download image"
             >
-              <Icon icon="heroicons:arrow-down-tray" class="w-5 h-5" />
+              <Icon icon="heroicons:arrow-down-tray" class="h-5 w-5" />
             </button>
           </div>
           <h2 id="lightbox-title" class="sr-only">{{ modalState.fileName }}</h2>
           <img
             :src="modalState.url"
             :alt="modalState.fileName"
-            class="max-w-full max-h-full object-contain"
+            class="max-h-full max-w-full object-contain"
           />
         </div>
       </div>
@@ -123,7 +123,7 @@
     <Teleport to="body">
       <div
         v-if="modalState.type === 'document'"
-        class="fixed inset-0 z-999 flex items-center justify-center bg-black bg-opacity-80 p-4"
+        class="bg-opacity-80 fixed inset-0 z-999 flex items-center justify-center bg-black p-4"
         @click="closeModal"
         @keydown.esc="closeModal"
         data-test="upload-doc-modal"
@@ -132,13 +132,13 @@
         aria-labelledby="doc-title"
       >
         <div
-          class="relative bg-white rounded-lg shadow-xl max-w-4xl w-full h-[80vh] p-4 flex flex-col"
+          class="relative flex h-[80vh] w-full max-w-4xl flex-col rounded-lg bg-white p-4 shadow-xl"
           @click.stop
         >
-          <div class="flex justify-between items-center mb-3">
+          <div class="mb-3 flex items-center justify-between">
             <div
               id="doc-title"
-              class="font-semibold text-gray-800 truncate"
+              class="truncate font-semibold text-gray-800"
               :title="modalState.fileName"
             >
               {{ modalState.fileName }}
@@ -162,30 +162,30 @@
             <iframe
               v-if="modalState.contentType === 'pdf'"
               :src="modalState.url"
-              class="w-full h-full"
+              class="h-full w-full"
               title="Document preview"
             ></iframe>
 
             <!-- Text File Preview -->
             <pre
               v-else-if="modalState.contentType === 'text'"
-              class="w-full h-full p-4 overflow-auto whitespace-pre-wrap text-sm text-gray-800 font-mono bg-white"
+              class="h-full w-full overflow-auto bg-white p-4 font-mono text-sm whitespace-pre-wrap text-gray-800"
               >{{ modalState.textContent }}</pre
             >
 
             <!-- Non-previewable files -->
-            <div v-else class="w-full h-full flex flex-col items-center justify-center gap-4 p-8">
-              <Icon :icon="getFileIcon(modalState.fileName)" class="w-24 h-24 text-gray-400" />
+            <div v-else class="flex h-full w-full flex-col items-center justify-center gap-4 p-8">
+              <Icon :icon="getFileIcon(modalState.fileName)" class="h-24 w-24 text-gray-400" />
               <div class="text-center">
-                <div class="text-xl font-semibold text-gray-700 mb-2">
+                <div class="mb-2 text-xl font-semibold text-gray-700">
                   {{ modalState.fileName }}
                 </div>
-                <div class="text-sm text-gray-500 mb-4">
+                <div class="mb-4 text-sm text-gray-500">
                   Type: {{ modalState.fileType || 'Unknown' }}
                 </div>
-                <p class="text-gray-600 mb-6">This file type cannot be previewed in the browser.</p>
+                <p class="mb-6 text-gray-600">This file type cannot be previewed in the browser.</p>
                 <button class="btn btn-success" @click="downloadFile(modalState.url)">
-                  <Icon icon="heroicons:arrow-down-tray" class="w-5 h-5 mr-2" />
+                  <Icon icon="heroicons:arrow-down-tray" class="mr-2 h-5 w-5" />
                   Download to view
                 </button>
               </div>

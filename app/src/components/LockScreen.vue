@@ -1,16 +1,16 @@
 <template>
-  <div class="min-h-screen flex flex-col items-center justify-center bg-gray-50 text-center">
-    <div class="max-w-md p-6 bg-white rounded-2xl shadow-lg">
-      <h1 class="text-2xl font-bold text-red-500 mb-3">🔒 Session Locked</h1>
-      <p class="text-gray-600 mb-4">
+  <div class="flex min-h-screen flex-col items-center justify-center bg-gray-50 text-center">
+    <div class="max-w-md rounded-2xl bg-white p-6 shadow-lg">
+      <h1 class="mb-3 text-2xl font-bold text-red-500">🔒 Session Locked</h1>
+      <p class="mb-4 text-gray-600">
         You are authenticated with this address
         <span class="font-mono text-sm"> {{ formatedUserAddress }} </span> but you have this address
         connected <span class="font-mono text-sm">{{ formatedConnectedAddress }}</span
         >.
       </p>
-      <p class="text-sm text-gray-500 mb-6">
+      <p class="mb-6 text-sm text-gray-500">
         Logout and login back.<br />
-        <span class="text-blue-600 font-medium">Waiting for unlock...</span>
+        <span class="font-medium text-blue-600">Waiting for unlock...</span>
       </p>
       <ButtonUI @click="disconnect.mutate()" variant="warning">Logout</ButtonUI>
     </div>

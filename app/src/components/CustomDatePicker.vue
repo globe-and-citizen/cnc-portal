@@ -4,15 +4,15 @@
     <div class="flex items-center gap-2">
       <div>
         <ButtonUI
-          class="flex items-center cursor-pointer gap-4 border border-gray-300"
+          class="flex cursor-pointer items-center gap-4 border border-gray-300"
           @click="() => (isDropdownOpen = !isDropdownOpen)"
           :data-test="`${dataTestPrefix}-date-select`"
         >
           <span>{{ displayDateRange }}</span>
-          <IconifyIcon icon="heroicons:chevron-down" class="w-4 h-4" />
+          <IconifyIcon icon="heroicons:chevron-down" class="h-4 w-4" />
         </ButtonUI>
         <ul
-          class="absolute right-0 mt-2 menu bg-base-200 border-2 rounded-box z-1 w-52 p-2 shadow-sm"
+          class="menu bg-base-200 rounded-box absolute right-0 z-1 mt-2 w-52 border-2 p-2 shadow-sm"
           ref="target"
           v-if="isDropdownOpen"
         >

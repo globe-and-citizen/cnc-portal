@@ -1,8 +1,8 @@
 <template>
   <div class="card bg-base-200 shadow-xl">
     <div class="card-body">
-      <div class="flex items-center gap-3 mb-4">
-        <IconifyIcon icon="heroicons:shield-check" class="w-8 h-8 text-primary" />
+      <div class="mb-4 flex items-center gap-3">
+        <IconifyIcon icon="heroicons:shield-check" class="text-primary h-8 w-8" />
         <div>
           <h2 class="card-title">Deploy Team Safe</h2>
           <p class="text-sm text-gray-500">
@@ -11,7 +11,7 @@
         </div>
       </div>
 
-      <div class="bg-base-300 rounded-lg p-4 mb-4">
+      <div class="bg-base-300 mb-4 rounded-lg p-4">
         <div class="space-y-2 text-sm">
           <div class="flex justify-between">
             <span class="text-gray-500">Owner:</span>
@@ -29,7 +29,7 @@
       </div>
 
       <div class="alert alert-info mb-4">
-        <IconifyIcon icon="heroicons:information-circle" class="w-5 h-5" />
+        <IconifyIcon icon="heroicons:information-circle" class="h-5 w-5" />
         <span class="text-sm"
           >This will create a Gnosis Safe wallet for your team. You can add more owners later.</span
         >

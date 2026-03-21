@@ -1,12 +1,12 @@
 <template>
   <!-- Upload -->
-  <div class="flex items-center gap-4 justify-between">
+  <div class="flex items-center justify-between gap-4">
     <div
-      class="w-40 h-40 border-2 rounded-full flex items-center justify-center relative overflow-hidden bg-white transition-all duration-300"
+      class="relative flex h-40 w-40 items-center justify-center overflow-hidden rounded-full border-2 bg-white transition-all duration-300"
       :style="uploadBoxStyle"
       :class="[
         imageUrl ? 'border-green-500' : 'border-dashed border-gray-400',
-        { 'opacity-60 cursor-not-allowed': isUploading }
+        { 'cursor-not-allowed opacity-60': isUploading }
       ]"
       data-test="profile-image-upload-box"
     >
@@ -25,7 +25,7 @@
         ref="fileInput"
         type="file"
         :accept="ACCEPTED_FILE_TYPES"
-        class="absolute inset-0 opacity-0 cursor-pointer z-10"
+        class="absolute inset-0 z-10 cursor-pointer opacity-0"
         @change="onFileChange"
         :disabled="isUploading"
         data-test="profile-image-input"
@@ -34,13 +34,13 @@
       <!-- Upload label (only show when no image) -->
       <div
         v-if="!imageUrl"
-        class="relative text-sm font-medium text-white bg-emerald-700 px-3 py-2 rounded-sm z-0"
+        class="relative z-0 rounded-sm bg-emerald-700 px-3 py-2 text-sm font-medium text-white"
       >
         {{ isUploading ? 'Uploading...' : 'Upload image' }}
       </div>
     </div>
   </div>
-  <p v-if="errorMessage" class="text-sm text-red-500 mt-2" data-test="profile-image-error">
+  <p v-if="errorMessage" class="mt-2 text-sm text-red-500" data-test="profile-image-error">
     {{ errorMessage }}
   </p>
 </template>

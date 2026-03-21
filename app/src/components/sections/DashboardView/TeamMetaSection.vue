@@ -1,11 +1,11 @@
 <template>
-  <div class="flex justify-between gap-5 w-full">
+  <div class="flex w-full justify-between gap-5">
     <TeamDetails
       @updateTeamModalOpen="updateTeamModalOpen"
       @deleteTeam="showDeleteTeamConfirmModal = true"
     />
     <ModalComponent v-model="showDeleteTeamConfirmModal">
-      <h3 class="font-bold text-lg">Confirmation</h3>
+      <h3 class="text-lg font-bold">Confirmation</h3>
       <hr class="" />
       <p class="py-4">
         Are you sure you want to delete the team

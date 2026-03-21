@@ -10,13 +10,13 @@
     </ButtonUI>
 
     <ModalComponent v-model="showModal" v-if="showModal">
-      <p class="font-bold text-lg">Set Member Wage</p>
+      <p class="text-lg font-bold">Set Member Wage</p>
       <hr class="my-2" />
 
-      <div class="space-y-4 mt-3">
+      <div class="mt-3 space-y-4">
         <!-- Max Weekly Hours -->
         <div>
-          <label class="input input-bordered flex items-center gap-2 input-md w-full">
+          <label class="input input-bordered input-md flex w-full items-center gap-2">
             <span class="w-40">Max Weekly Hours</span>
             |
             <input
@@ -29,7 +29,7 @@
           </label>
           <div
             data-test="max-weekly-hours-error"
-            class="text-red-500 text-sm w-full text-left"
+            class="w-full text-left text-sm text-red-500"
             v-for="error of v$.wageData.maxWeeklyHours?.$errors"
             :key="error.$uid"
           >
@@ -39,7 +39,7 @@
 
         <!-- #region Multi Limit Inputs - Hourly Rates Vertical -->
         <div class="mb-4">
-          <h3 class="text-lg font-semibold mb-4">Hourly Rates</h3>
+          <h3 class="mb-4 text-lg font-semibold">Hourly Rates</h3>
           <div class="flex flex-col gap-6">
             <!-- Native Token -->
             <div class="flex items-center gap-4">
@@ -63,7 +63,7 @@
                   style="min-width: 220px"
                 />
                 <span
-                  class="badge absolute right-4 top-1/2 -translate-y-1/2"
+                  class="badge absolute top-1/2 right-4 -translate-y-1/2"
                   :class="
                     wageData.nativeEnabled ? 'badge-primary font-bold' : 'badge-ghost text-gray-400'
                   "
@@ -75,7 +75,7 @@
             </div>
             <div
               data-test="hourly-rate-error"
-              class="text-red-500 text-sm w-full text-left"
+              class="w-full text-left text-sm text-red-500"
               v-for="error of v$.wageData.hourlyRate?.$errors"
               :key="error.$uid"
             >
@@ -102,7 +102,7 @@
                   style="min-width: 220px"
                 />
                 <span
-                  class="badge absolute right-4 top-1/2 -translate-y-1/2"
+                  class="badge absolute top-1/2 right-4 -translate-y-1/2"
                   :class="
                     wageData.usdcEnabled ? 'badge-primary font-bold' : 'badge-ghost text-gray-400'
                   "
@@ -114,7 +114,7 @@
             </div>
             <div
               data-test="hourly-rate-usdc-error"
-              class="text-red-500 text-sm w-full text-left"
+              class="w-full text-left text-sm text-red-500"
               v-for="error of v$.wageData.hourlyRateUsdc?.$errors"
               :key="error.$uid"
             >
@@ -141,7 +141,7 @@
                   style="min-width: 220px"
                 />
                 <span
-                  class="badge absolute right-4 top-1/2 -translate-y-1/2"
+                  class="badge absolute top-1/2 right-4 -translate-y-1/2"
                   :class="
                     wageData.sherEnabled ? 'badge-primary font-bold' : 'badge-ghost text-gray-400'
                   "
@@ -153,7 +153,7 @@
             </div>
             <div
               data-test="hourly-rate-sher-error"
-              class="text-red-500 text-sm w-full text-left"
+              class="w-full text-left text-sm text-red-500"
               v-for="error of v$.wageData.hourlyRateSher?.$errors"
               :key="error.$uid"
             >
@@ -165,7 +165,7 @@
         <!-- Error Messages -->
         <div
           data-test="rate-per-hour-error"
-          class="text-red-500 text-sm w-full text-left"
+          class="w-full text-left text-sm text-red-500"
           v-for="error of v$.ratePerHour?.$errors"
           :key="error.$uid"
         >
@@ -182,7 +182,7 @@
         </div>
 
         <!-- Action Buttons -->
-        <div class="modal-action justify-between w-full">
+        <div class="modal-action w-full justify-between">
           <ButtonUI
             v-if="props.wage"
             :loading="isMemberWageSaving"

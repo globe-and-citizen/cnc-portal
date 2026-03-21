@@ -9,7 +9,7 @@
     data-test="remove-owner-button"
     class="flex items-center gap-1"
   >
-    <IconifyIcon icon="heroicons:trash" class="w-4 h-4" />
+    <IconifyIcon icon="heroicons:trash" class="h-4 w-4" />
   </ButtonUI>
 </template>
 

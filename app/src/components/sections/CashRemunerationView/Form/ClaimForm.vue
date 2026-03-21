@@ -27,13 +27,13 @@
       </label>
       <input
         type="text"
-        class="input input-bordered input-md grow w-full"
+        class="input input-bordered input-md w-full grow"
         data-test="hours-worked-input"
         placeholder="10"
         v-model="formData.hoursWorked"
       />
       <div
-        class="pl-4 text-red-500 text-sm"
+        class="pl-4 text-sm text-red-500"
         v-for="error of v$.formData.hoursWorked.$errors"
         :key="error.$uid"
         data-test="hours-worked-error"
@@ -53,7 +53,7 @@
       ></textarea>
     </div>
     <div
-      class="pl-4 text-red-500 text-sm"
+      class="pl-4 text-sm text-red-500"
       v-for="error of v$.formData.memo.$errors"
       :key="error.$uid"
     >
@@ -72,7 +72,7 @@
       v-if="isEdit && existingFiles && existingFiles.length > 0"
       data-test="attached-files-section"
     >
-      <h4 class="text-sm font-semibold mb-3 text-gray-700">Attached Files:</h4>
+      <h4 class="mb-3 text-sm font-semibold text-gray-700">Attached Files:</h4>
       <FilePreviewGallery
         :previews="existingFilePreviews"
         can-remove

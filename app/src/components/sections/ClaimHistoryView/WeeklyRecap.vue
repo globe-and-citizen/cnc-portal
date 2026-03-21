@@ -1,9 +1,9 @@
 <template>
   <div class="flex-1 space-y-6 bg-white">
-    <div class="stats shadow-sm w-full">
+    <div class="stats w-full shadow-sm">
       <div class="stat place-items-center">
         <div class="stat-title">Total Hours</div>
-        <div class="font-bold text-xl">{{ submittedHours }}h</div>
+        <div class="text-xl font-bold">{{ submittedHours }}h</div>
         <span class="text-sm text-gray-500" v-if="props.weeklyClaim"
           >of {{ effectiveWage?.maximumHoursPerWeek ?? '-' }} hrs weekly limit</span
         >
@@ -14,20 +14,20 @@
 
       <div class="stat place-items-center">
         <div class="stat-title">Hourly Rate</div>
-        <div class="font-bold text-xl text-center">
+        <div class="text-center text-xl font-bold">
           <RatePerHourList
             :rate-per-hour="effectiveWage?.ratePerHour || []"
             :currency-symbol="currencyStore.getTokenInfo('native')?.symbol || 'NATIVE'"
           />
         </div>
-        <div class="text-sm text-gray-500 text-center mt-1">
+        <div class="mt-1 text-center text-sm text-gray-500">
           ≃ ${{ hourlyRateInUserCurrency.toFixed(2) }} {{ currencyStore.localCurrency.code }}/h
         </div>
       </div>
 
       <div class="stat place-items-center">
         <div class="stat-title">Total Amount</div>
-        <div class="font-bold text-xl">
+        <div class="text-xl font-bold">
           <RatePerHourTotalList
             v-if="weeklyClaim"
             :rate-per-hour="props.weeklyClaim?.wage?.ratePerHour || []"
@@ -35,7 +35,7 @@
             :total-hours="weeklyClaim.hoursWorked"
           />
         </div>
-        <div class="text-sm text-gray-500 flex gap-2 mt-1">
+        <div class="mt-1 flex gap-2 text-sm text-gray-500">
           ≃ ${{ totalAmount }} {{ currencyStore.localCurrency.code }}
         </div>
       </div>

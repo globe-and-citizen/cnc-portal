@@ -1,15 +1,15 @@
 <template>
-  <label class="form-control w-full mt-4">
+  <label class="form-control mt-4 w-full">
     <div class="label">
       <slot name="label">
         <span class="label-text">Action</span>
         <span class="label-text-alt">Balance: {{ selectedToken?.balance }}</span>
       </slot>
     </div>
-    <div class="w-full input input-bordered flex items-center">
+    <div class="input input-bordered flex w-full items-center">
       <input
         type="text"
-        class="grow w-24"
+        class="w-24 grow"
         placeholder="0"
         v-model="amount"
         data-test="amountInput"
@@ -53,7 +53,7 @@
       <span class="label-text" v-if="amount && parseFloat(amount) > 0">
         ≈ {{ estimatedPrice }}
       </span>
-      <div class="pl-4 text-red-500 text-sm" v-for="error in $v.amount.$errors" :key="error.$uid">
+      <div class="pl-4 text-sm text-red-500" v-for="error in $v.amount.$errors" :key="error.$uid">
         {{ error.$message }}
       </div>
     </div>

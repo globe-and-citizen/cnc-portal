@@ -19,7 +19,7 @@
         :disabled="!hasTheRight || !isBalanceGreaterThanZero"
         data-test="transfer-button"
       >
-        <IconifyIcon icon="heroicons-outline:arrows-right-left" class="w-5 h-5" />
+        <IconifyIcon icon="heroicons-outline:arrows-right-left" class="h-5 w-5" />
         Transfer
       </ButtonUI>
     </div>
@@ -40,7 +40,7 @@
         :is-bod-action="isBodAction"
       >
         <template #header>
-          <h1 class="font-bold text-2xl">Transfer from Bank Contract</h1>
+          <h1 class="text-2xl font-bold">Transfer from Bank Contract</h1>
           <h3 class="pt-4">
             Current contract balance: {{ transferData.token.balance }}
             {{ transferData.token.symbol }}

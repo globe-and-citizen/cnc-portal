@@ -3,15 +3,15 @@
   <div v-if="selectedSafe?.address" class="flex flex-col gap-6">
     <SafeBalanceSection :key="selectedSafe.address" :address="selectedSafe.address as Address" />
 
-    <div class="grid grid-cols-1 xl:grid-cols-5 gap-6">
-      <div class="xl:col-span-3 min-w-0">
+    <div class="grid grid-cols-1 gap-6 xl:grid-cols-5">
+      <div class="min-w-0 xl:col-span-3">
         <GenericTokenHoldingsSection
           :key="selectedSafe.address"
           :address="selectedSafe.address as Address"
           class="h-full"
         />
       </div>
-      <div class="xl:col-span-2 min-w-0">
+      <div class="min-w-0 xl:col-span-2">
         <SafeOwnersCard :address="selectedSafe.address as Address" />
       </div>
     </div>

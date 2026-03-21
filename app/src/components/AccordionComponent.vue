@@ -1,6 +1,6 @@
 <template>
   <template v-for="(accordion, index) in accordions" :key="index">
-    <div class="collapse collapse-arrow bg-base-200">
+    <div class="collapse-arrow bg-base-200 collapse">
       <input
         type="radio"
         :data-test="`accordion-radio-${index}`"

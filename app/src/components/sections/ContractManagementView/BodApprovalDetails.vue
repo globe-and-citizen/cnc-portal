@@ -1,5 +1,5 @@
 <template>
-  <div class="grid grid-cols-2 gap-3 auto-rows-fr">
+  <div class="grid auto-rows-fr grid-cols-2 gap-3">
     <!-- First Card -->
     <BodApprovalDetailsCard :title="type === 'Ownership Transfer Request' ? 'Contract' : 'Amount'">
       <div

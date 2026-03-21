@@ -1,7 +1,7 @@
 <template>
   <div class="flex items-center gap-1">
     <ButtonUI variant="ghost" size="xs" @click="showEditModal = true" data-test="edit-claim-button">
-      <IconifyIcon icon="heroicons:pencil-square" class="w-4 h-4" />
+      <IconifyIcon icon="heroicons:pencil-square" class="h-4 w-4" />
     </ButtonUI>
     <ButtonUI
       variant="ghost"
@@ -9,7 +9,7 @@
       @click="showDeleteModal = true"
       data-test="delete-claim-button"
     >
-      <IconifyIcon icon="heroicons:trash" class="w-4 h-4 text-error" />
+      <IconifyIcon icon="heroicons:trash" class="text-error h-4 w-4" />
     </ButtonUI>
 
     <!-- Edit Modal -->
