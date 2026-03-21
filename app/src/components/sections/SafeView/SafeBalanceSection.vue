@@ -39,36 +39,44 @@
 
       <div class="flex flex-col items-end gap-4">
         <div class="flex gap-2">
-          <ButtonUI
-            variant="secondary"
+          <UButton
+            color="neutral"
+            variant="outline"
             class="flex items-center gap-2"
             data-test="deposit-button"
             @click="openDepositModal"
           >
-            <IconifyIcon icon="heroicons-outline:plus" class="w-5 h-5" />
+            <template #leading>
+              <IconifyIcon icon="heroicons-outline:plus" class="w-5 h-5" />
+            </template>
             Deposit
-          </ButtonUI>
+          </UButton>
 
-          <ButtonUI
-            variant="secondary"
+          <UButton
+            color="neutral"
+            variant="outline"
             class="flex items-center gap-2"
             data-test="transfer-button"
             @click="openTransferModal"
           >
-            <IconifyIcon icon="heroicons-outline:arrows-right-left" class="w-5 h-5" />
+            <template #leading>
+              <IconifyIcon icon="heroicons-outline:arrows-right-left" class="w-5 h-5" />
+            </template>
             Transfer
-          </ButtonUI>
+          </UButton>
 
-          <ButtonUI
+          <UButton
             v-if="address"
-            variant="primary"
+            color="primary"
             class="flex items-center gap-2"
             @click="openInSafeApp"
             data-test="open-safe-app-button"
           >
-            <IconifyIcon icon="heroicons-outline:external-link" class="w-5 h-5" />
+            <template #leading>
+              <IconifyIcon icon="heroicons-outline:external-link" class="w-5 h-5" />
+            </template>
             Open in Safe App
-          </ButtonUI>
+          </UButton>
         </div>
         <div class="flex items-center gap-2" v-if="address">
           <div class="text-sm text-gray-600">Safe Address:</div>
@@ -131,7 +139,6 @@ import { computed, ref, type Ref } from 'vue'
 import { useChainId } from '@wagmi/vue'
 import type { Address } from 'viem'
 import { useStorage } from '@vueuse/core'
-import ButtonUI from '@/components/ButtonUI.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import { getSafeHomeUrl, openSafeAppUrl } from '@/composables/safe'
 import { Icon as IconifyIcon } from '@iconify/vue'

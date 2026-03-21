@@ -175,7 +175,6 @@ const handleUpdateThreshold = async () => {
           ? 'Threshold update proposal submitted successfully'
           : 'Threshold updated successfully'
       )
-      emit('threshold-updated', false)
       handleClose()
     }
   } catch (error) {
@@ -185,7 +184,6 @@ const handleUpdateThreshold = async () => {
 }
 
 const handleClose = () => {
-  console.log('handle close is called ===')
   formState.threshold = props.currentThreshold
   emit('threshold-updated', false)
 }
