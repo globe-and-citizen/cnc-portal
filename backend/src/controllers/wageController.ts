@@ -117,16 +117,7 @@ export const getWages = async (req: Request, res: Response) => {
       },
     });
 
-    // Backfill maximumOvertimeHoursPerWeek for legacy records created before the field existed.
-    // New records always store this field as a number.
-    const normalizedWages = wages.map((wage) => {
-      return {
-        ...wage,
-        maximumOvertimeHoursPerWeek: wage.maximumOvertimeHoursPerWeek ?? wage.maximumHoursPerWeek,
-      };
-    });
-
-    return res.status(200).json(normalizedWages);
+    return res.status(200).json(wages);
   } catch (error) {
     console.log('Error: ', error);
     return errorResponse(500, 'Internal server error', res);
