@@ -23,9 +23,8 @@ export const setWage = async (req: Request, res: Response) => {
   const teamId = Number(body.teamId);
   const userAddress = body.userAddress as Address;
   const maximumHoursPerWeek = Number(body.maximumHoursPerWeek);
-  const maximumOvertimeHoursPerWeek = body.maximumOvertimeHoursPerWeek
-    ? Number(body.maximumOvertimeHoursPerWeek)
-    : undefined;
+  const maximumOvertimeHoursPerWeek =
+    body.maximumOvertimeHoursPerWeek != null ? Number(body.maximumOvertimeHoursPerWeek) : 0;
 
   const ratePerHour = body.ratePerHour?.map((rate) => ({
     type: rate.type,
@@ -37,13 +36,27 @@ export const setWage = async (req: Request, res: Response) => {
     amount: Number(rate.amount),
   }));
 
+  const hasOvertimeRates =
+    Array.isArray(body.overtimeRatePerHour) && body.overtimeRatePerHour.length > 0;
+
+  if (hasOvertimeRates && maximumOvertimeHoursPerWeek == null) {
+    return errorResponse(
+      400,
+      'maximumOvertimeHoursPerWeek is required when overtimeRatePerHour is provided',
+      res
+    );
+  }
+
+  const overtimeRatePerHourValue =
+    body.overtimeRatePerHour === null ? Prisma.DbNull : (overtimeRatePerHour ?? Prisma.DbNull);
+
   const wagePayload = {
     teamId,
     userAddress,
     maximumHoursPerWeek,
     maximumOvertimeHoursPerWeek,
     ratePerHour,
-    overtimeRatePerHour: overtimeRatePerHour ?? Prisma.JsonNull,
+    overtimeRatePerHour: overtimeRatePerHourValue,
   };
 
   try {

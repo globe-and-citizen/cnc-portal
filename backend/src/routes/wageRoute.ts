@@ -23,6 +23,10 @@ const wageRoutes = express.Router();
  *         maximumHoursPerWeek:
  *           type: integer
  *           description: The maximum hours per week
+ *         maximumOvertimeHoursPerWeek:
+ *           type: integer
+ *           nullable: true
+ *           description: Maximum overtime hours per week. Required when overtimeRatePerHour is provided.
  *         ratePerHour:
  *           type: array
  *           items:
@@ -34,6 +38,23 @@ const wageRoutes = express.Router();
  *               amount:
  *                 type: number
  *                 description: Rate amount per hour
+ *                 minimum: 0
+ *                 exclusiveMinimum: true
+ *         overtimeRatePerHour:
+ *           type: array
+ *           nullable: true
+ *           description: Overtime rate amount per hour by token type
+ *           items:
+ *             type: object
+ *             properties:
+ *               type:
+ *                 type: string
+ *                 description: Rate type (e.g. native, usdc, sher)
+ *               amount:
+ *                 type: number
+ *                 description: Overtime rate amount per hour
+ *                 minimum: 0
+ *                 exclusiveMinimum: true
  *         previousWage:
  *           type: object
  *           description: The previous wage details
@@ -86,6 +107,12 @@ const wageRoutes = express.Router();
  *                     type: number
  *                     description: Rate amount per hour
  *                     minimum: 0
+ *                     exclusiveMinimum: true
+ *             maximumOvertimeHoursPerWeek:
+ *               type: integer
+ *               nullable: true
+ *               description: Required when overtimeRatePerHour is provided
+ *               minimum: 1
  *             overtimeRatePerHour:
  *               type: array
  *               nullable: true
@@ -100,6 +127,7 @@ const wageRoutes = express.Router();
  *                     type: number
  *                     description: Overtime rate amount per hour
  *                     minimum: 0
+ *                     exclusiveMinimum: true
  *   responses:
  *     201:
  *       description: Wage set successfully
