@@ -19,7 +19,7 @@ export interface Wage {
   userAddress: Address
   ratePerHour: RatePerHour[]
   overtimeRatePerHour?: RatePerHour[] | null
-  maximumOvertimeHoursPerWeek?: number | null
+  maximumOvertimeHoursPerWeek?: number
   cashRatePerHour?: number //@deprecated use ratePerHour instead
   tokenRatePerHour?: number //@deprecated use ratePerHour instead
   usdcRatePerHour?: number //@deprecated use ratePerHour instead

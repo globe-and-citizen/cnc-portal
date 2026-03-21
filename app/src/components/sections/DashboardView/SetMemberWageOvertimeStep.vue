@@ -112,7 +112,7 @@ const schema = z.object({
     .number()
     .int('Must be a whole number')
     .positive('Overtime hours must be greater than 0')
-    .nullable(),
+    .optional(),
   overtimeRatePerHour: z
     .array(
       z.object({
