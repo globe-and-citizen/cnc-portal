@@ -38,16 +38,7 @@
 
           <SetMemberWageStandardStep v-if="currentStep === 0" v-model:wageData="wageData" />
 
-          <!--<SetMemberWageOvertimeStep
-            v-else
-            v-model:wageData="wageData"
-            :rateFieldConfigs="rateFieldConfigs"
-            :overtimeHoursErrors="v$.wageData.maximumOvertimeHoursPerWeek.$errors"
-            :overtimeRateErrors="overtimeRateValidationErrors"
-            :overtimeRatePerHourErrors="v$.overtimeRatePerHour.$errors"
-            :standardRateSummary="standardRateSummary"
-            :overtimeRateSummary="overtimeRateSummary"
-          /> -->
+          <SetMemberWageOvertimeStep v-else v-model:wageData="wageData" />
 
           <div v-if="setWageError" data-test="error-state">
             <UAlert
@@ -88,7 +79,7 @@
                 v-else
                 variant="outline"
                 size="lg"
-                @click="handleBack"
+                @click="handleBackStep"
                 data-test="back-wage-button"
               >
                 ← Back
@@ -98,7 +89,7 @@
                 :disabled="isMemberWageSaving"
                 color="success"
                 size="lg"
-                @click="handleSaveWage"
+                @click="handlePrimaryAction"
                 :data-test="currentStep === 0 ? 'add-wage-button' : 'save-overtime-wage-button'"
               >
                 {{ currentStep === 0 && wageData.enableOvertimeRules ? 'Next →' : 'Save' }}
@@ -115,7 +106,7 @@
 import { ref, watch } from 'vue'
 import SetMemberWageStandardStep from './SetMemberWageStandardStep.vue'
 import SetMemberWageOvertimeStep from './SetMemberWageOvertimeStep.vue'
-import { useWageForm } from '@/composables/useWageForm'
+import { useSetMemberWageMutation } from '@/queries/wage.queries'
 import type { Member, Wage } from '@/types'
 import type { AxiosError } from 'axios'
 
@@ -189,25 +180,84 @@ const initialWage = (): WageWithForm => {
 }
 const wageData = ref<WageWithForm>(initialWage())
 
+const toast = useToast()
+
 const {
-  isMemberWageSaving,
-  setWageError,
-  handleSaveWage,
-  handleBack,
-  handleResetWage,
-  resetFormState
-} = useWageForm({
-  wage: () => props.wage,
-  teamId: () => props.teamId,
-  memberAddress: () => props.member.address || '',
-  onSuccess: () => {
-    emits('wageUpdated')
-    handleCancel()
-  }
-})
+  mutate: executeSetWage,
+  isPending: isMemberWageSaving,
+  error: setWageError
+} = useSetMemberWageMutation()
+
+const buildRatePayload = (rates: RatePerHourWithEnabled[]) => {
+  return rates
+    .filter((rate) => rate.enabled && Number(rate.amount) > 0)
+    .map((rate) => ({ type: rate.type, amount: Number(rate.amount) }))
+}
 
 const handleCancel = () => {
   showModal.value = false
+  currentStep.value = 0
+}
+
+const submitWage = () => {
+  const standardRates = buildRatePayload(wageData.value.ratePerHour)
+  const overtimeRates = wageData.value.enableOvertimeRules
+    ? buildRatePayload(wageData.value.overtimeRatePerHour)
+    : null
+
+  const payload = {
+    teamId: props.teamId,
+    userAddress: props.member.address || '',
+    ratePerHour: standardRates,
+    overtimeRatePerHour: overtimeRates,
+    maximumOvertimeHoursPerWeek: wageData.value.enableOvertimeRules
+      ? Number(wageData.value.maximumOvertimeHoursPerWeek ?? 0)
+      : null,
+    maximumHoursPerWeek: Number(wageData.value.maximumHoursPerWeek)
+  }
+
+  executeSetWage(
+    { body: payload },
+    {
+      onSuccess: () => {
+        toast.add({ title: 'Member wage data set successfully', color: 'success' })
+        emits('wageUpdated')
+        handleCancel()
+      },
+      onError: (error: AxiosError) => {
+        console.error('Error setting member wage:', error)
+      }
+    }
+  )
+}
+
+const handlePrimaryAction = async () => {
+  if (currentStep.value === 0 && wageData.value.enableOvertimeRules) {
+    currentStep.value = 1
+    return
+  }
+
+  submitWage()
+}
+
+const handleResetWage = () => {
+  wageData.value = {
+    ...wageData.value,
+    maximumHoursPerWeek: 0,
+    maximumOvertimeHoursPerWeek: 0,
+    enableOvertimeRules: false,
+    ratePerHour: normalizeRatePerHour(),
+    overtimeRatePerHour: normalizeRatePerHour()
+  }
+  submitWage()
+}
+
+const handleBackStep = () => {
+  currentStep.value = 0
+}
+
+const resetFormState = () => {
+  wageData.value = initialWage()
 }
 
 watch(
