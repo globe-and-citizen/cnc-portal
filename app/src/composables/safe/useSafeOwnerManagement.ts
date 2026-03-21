@@ -1,7 +1,6 @@
 import { ref } from 'vue'
 import { useConnection, useChainId } from '@wagmi/vue'
 import { isAddress, type Address } from 'viem'
-import { useToastStore } from '@/stores'
 import { useUpdateSafeOwnersMutation } from '@/queries/safe.mutations'
 import { useSafeSDK } from './useSafeSdk'
 import { useSafeProposal } from './useSafeProposal'
@@ -13,7 +12,8 @@ import { currentChainId } from '@/constant'
 export function useSafeOwnerManagement() {
   const connection = useConnection()
   const chainId = useChainId()
-  const { addSuccessToast, addErrorToast } = useToastStore()
+
+  const toast = useToast()
   const updateMutation = useUpdateSafeOwnersMutation()
   const { proposeTransaction } = useSafeProposal()
   const { loadSafe } = useSafeSDK()
@@ -35,13 +35,21 @@ export function useSafeOwnerManagement() {
   ): Promise<string | null> => {
     if (!isAddress(safeAddress)) {
       error.value = new Error('Invalid Safe address')
-      addErrorToast('Invalid Safe address')
+      toast.add({
+        title: 'Error',
+        description: 'Invalid Safe address',
+        color: 'error'
+      })
       return null
     }
 
     if (!connection.isConnected.value || !connection.address.value) {
       error.value = new Error('Wallet not connected')
-      addErrorToast('Please connect your wallet')
+      toast.add({
+        title: 'Error',
+        description: 'Please connect your wallet',
+        color: 'error'
+      })
       return null
     }
 
@@ -50,7 +58,11 @@ export function useSafeOwnerManagement() {
     // Validation
     if (ownersToAdd.length === 0 && ownersToRemove.length === 0 && newThreshold === undefined) {
       error.value = new Error('No owner management operations specified')
-      addErrorToast('No owner management operations specified')
+      toast.add({
+        title: 'Error',
+        description: 'No owner management operations specified',
+        color: 'error'
+      })
       return null
     }
 
@@ -58,7 +70,11 @@ export function useSafeOwnerManagement() {
     for (const owner of [...ownersToAdd, ...ownersToRemove]) {
       if (!isAddress(owner)) {
         error.value = new Error(`Invalid owner address: ${owner}`)
-        addErrorToast(`Invalid owner address: ${owner}`)
+        toast.add({
+          title: 'Error',
+          description: `Invalid owner address: ${owner}`,
+          color: 'error'
+        })
         return null
       }
     }
@@ -148,7 +164,12 @@ export function useSafeOwnerManagement() {
           throw new Error('Failed to propose transaction')
         }
 
-        addSuccessToast('Owner management transaction proposed successfully')
+        toast.add({
+          title: 'Success',
+          description: 'Owner management transaction proposed successfully',
+          color: 'success'
+        })
+
         // Invalidate queries via mutation (no API call, just cache invalidation)
         await updateMutation.mutateAsync({
           pathParams: {
@@ -158,11 +179,11 @@ export function useSafeOwnerManagement() {
             chainId: chainId.value
           },
           body: {
-            ownersToAdd, // Include the actual operation parameters
+            ownersToAdd,
             ownersToRemove,
             newThreshold,
             shouldPropose: false,
-            safeTxHash: safeTxHash // For executions, this is the actual transaction hash
+            safeTxHash: safeTxHash
           }
         })
         return safeTxHash
@@ -190,7 +211,12 @@ export function useSafeOwnerManagement() {
             txResponse.hash
         }
 
-        addSuccessToast('Owner management transaction executed successfully')
+        toast.add({
+          title: 'Success',
+          description: 'Owner management transaction executed successfully',
+          color: 'success'
+        })
+
         // Invalidate queries after execution
         await updateMutation.mutateAsync({
           pathParams: {
@@ -200,11 +226,11 @@ export function useSafeOwnerManagement() {
             chainId: currentChainId
           },
           body: {
-            ownersToAdd, // Include the actual operation parameters
+            ownersToAdd,
             ownersToRemove,
             newThreshold,
             shouldPropose: false,
-            safeTxHash: txHash // For executions, this is the actual transaction hash
+            safeTxHash: txHash
           }
         })
         return txHash
@@ -212,9 +238,14 @@ export function useSafeOwnerManagement() {
     } catch (err) {
       error.value = err instanceof Error ? err : new Error('Failed to update Safe owners')
       console.error('Owner management error:', err)
-      addErrorToast(
-        error.value.message.includes('User rejected') ? 'Transaction rejected' : error.value.message
-      )
+
+      toast.add({
+        title: 'Error',
+        description: error.value.message.includes('User rejected')
+          ? 'Transaction rejected'
+          : error.value.message,
+        color: 'error'
+      })
       return null
     } finally {
       isUpdating.value = false
