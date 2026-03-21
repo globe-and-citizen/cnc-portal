@@ -200,24 +200,21 @@ const handleCancel = () => {
 }
 
 const submitWage = () => {
-  const standardRates = buildRatePayload(wageData.value.ratePerHour)
-  const overtimeRates = wageData.value.enableOvertimeRules
-    ? buildRatePayload(wageData.value.overtimeRatePerHour)
-    : null
-
-  const payload = {
-    teamId: props.teamId,
-    userAddress: props.member.address || '',
-    ratePerHour: standardRates,
-    overtimeRatePerHour: overtimeRates,
-    maximumOvertimeHoursPerWeek: wageData.value.enableOvertimeRules
-      ? Number(wageData.value.maximumOvertimeHoursPerWeek ?? 0)
-      : null,
-    maximumHoursPerWeek: Number(wageData.value.maximumHoursPerWeek)
-  }
-
   executeSetWage(
-    { body: payload },
+    {
+      body: {
+        teamId: props.teamId,
+        userAddress: props.member.address || '',
+        ratePerHour: buildRatePayload(wageData.value.ratePerHour),
+        overtimeRatePerHour: wageData.value.enableOvertimeRules
+          ? buildRatePayload(wageData.value.overtimeRatePerHour)
+          : null,
+        maximumOvertimeHoursPerWeek: wageData.value.enableOvertimeRules
+          ? Number(wageData.value.maximumOvertimeHoursPerWeek ?? 0)
+          : null,
+        maximumHoursPerWeek: Number(wageData.value.maximumHoursPerWeek)
+      }
+    },
     {
       onSuccess: () => {
         toast.add({ title: 'Member wage data set successfully', color: 'success' })
