@@ -55,12 +55,13 @@ import { computed } from 'vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import { isAddress } from 'viem'
 import ButtonUI from '@/components/ButtonUI.vue'
-import { useTeamStore, useUserDataStore, useToastStore } from '@/stores'
+import { useTeamStore, useUserDataStore } from '@/stores'
 
 import { useSafeDeployment } from '@/composables/safe'
 import { useCreateContractMutation } from '@/queries/contract.queries'
 import { log } from '@/utils'
 import { NETWORK } from '@/constant'
+import { useToast } from '@nuxt/ui/composables'
 
 interface Props {
   teamId: number
@@ -68,11 +69,11 @@ interface Props {
 
 const props = defineProps<Props>()
 const emits = defineEmits(['safeDeployed'])
+const toast = useToast()
 
 // Stores
 const teamStore = useTeamStore()
 const userDataStore = useUserDataStore()
-const { addSuccessToast, addErrorToast } = useToastStore()
 
 // Composables
 const { deploySafe, isDeploying } = useSafeDeployment()
@@ -92,7 +93,7 @@ const networkName = computed(() => NETWORK || 'Polygon')
  */
 const handleDeploySafe = async () => {
   if (!canDeploy.value) {
-    addErrorToast('Please connect your wallet')
+    toast.add({ title: 'Error', description: 'connect your wallet', color: 'error' })
     return
   }
 
@@ -113,7 +114,12 @@ const handleDeploySafe = async () => {
     }
   })
 
-  addSuccessToast('Safe wallet deployed successfully')
+  toast.add({
+    title: 'Success',
+    description: 'Safe wallet deployed successfully',
+    color: 'success'
+  })
+
   log.info('Safe deployed:', safeAddress)
 
   // Notify parent component
