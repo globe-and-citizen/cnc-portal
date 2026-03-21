@@ -111,7 +111,8 @@ const schema = z.object({
   maximumOvertimeHoursPerWeek: z.coerce
     .number()
     .int('Must be a whole number')
-    .positive('Overtime hours must be greater than 0'),
+    .positive('Overtime hours must be greater than 0')
+    .nullable(),
   overtimeRatePerHour: z
     .array(
       z.object({
