@@ -44,47 +44,6 @@
           </template>
         </UInput>
       </UFieldGroup>
-      <!-- <UFieldGroup class="flex items-center gap-4">
-        <USwitch size="xl" v-model="wageData.standardRates.usdcEnabled" />
-        <UInput
-          v-model="wageData.standardRates.hourlyRateUsdc"
-          placeholder="0.00"
-          size="xl"
-          type="number"
-          class="w-full"
-          :disabled="!wageData.standardRates.usdcEnabled"
-        >
-          <template #trailing>
-            <UBadge
-              class="text-sm rounded-full px-4 test w-16"
-              :variant="wageData.standardRates.usdcEnabled ? 'solid' : 'outline'"
-              :color="wageData.standardRates.usdcEnabled ? 'primary' : 'neutral'"
-              >USDC</UBadge
-            >
-          </template>
-        </UInput>
-      </UFieldGroup>
-
-      <UFieldGroup class="flex items-center gap-4">
-        <USwitch size="xl" v-model="wageData.standardRates.sherEnabled" />
-        <UInput
-          v-model="wageData.standardRates.hourlyRateToken"
-          placeholder="0.00"
-          size="xl"
-          type="number"
-          class="w-full"
-          :disabled="!wageData.standardRates.sherEnabled"
-        >
-          <template #trailing>
-            <UBadge
-              class="text-sm rounded-full px-4 test w-16"
-              :variant="wageData.standardRates.sherEnabled ? 'solid' : 'outline'"
-              :color="wageData.standardRates.sherEnabled ? 'primary' : 'neutral'"
-              >SHER</UBadge
-            >
-          </template>
-        </UInput>
-      </UFieldGroup> -->
     </UForm>
 
     <div class="border-t border-base-200 pt-4">
@@ -144,12 +103,6 @@ const schema = z.object({
 })
 
 type Schema = z.output<typeof schema>
-
-// const wageData = reactive<Partial<Schema>>({
-//   maxWeeklyHours: undefined,
-//   email: undefined,
-//   password: undefined
-// })
 
 const toast = useToast()
 async function onSubmit(event: FormSubmitEvent<Schema>) {
