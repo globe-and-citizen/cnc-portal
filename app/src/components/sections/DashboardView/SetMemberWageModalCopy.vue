@@ -59,8 +59,6 @@
           <div class="modal-action justify-between w-full">
             <UButton
               v-if="props.wage"
-              :loading="isMemberWageSaving"
-              :disabled="isMemberWageSaving"
               color="error"
               size="lg"
               @click="handleResetWage"
@@ -89,8 +87,8 @@
                 ← Back
               </UButton>
               <UButton
-                :loading="isMemberWageSaving"
-                :disabled="isMemberWageSaving"
+                :loading="isSaving"
+                :disabled="isSaving"
                 color="success"
                 size="lg"
                 @click="handlePrimaryAction"
@@ -191,11 +189,9 @@ const overtimeStepRef = ref<WageStepRef | null>(null)
 
 const toast = useToast()
 
-const {
-  mutate: executeSetWage,
-  isPending: isMemberWageSaving,
-  error: setWageError
-} = useSetMemberWageMutation()
+const { mutate: executeSetWage, error: setWageError } = useSetMemberWageMutation()
+
+const isSaving = ref(false)
 
 const buildRatePayload = (rates: RatePerHourWithEnabled[]) => {
   return rates
@@ -204,6 +200,7 @@ const buildRatePayload = (rates: RatePerHourWithEnabled[]) => {
 }
 
 const handleCancel = () => {
+  isSaving.value = false
   showModal.value = false
   currentStep.value = 0
 }
@@ -217,6 +214,12 @@ const validateCurrentStep = () => {
 }
 
 const submitWage = () => {
+  if (isSaving.value) {
+    return
+  }
+
+  isSaving.value = true
+
   executeSetWage(
     {
       body: {
@@ -240,6 +243,9 @@ const submitWage = () => {
       },
       onError: (error: AxiosError) => {
         console.error('Error setting member wage:', error)
+      },
+      onSettled: () => {
+        isSaving.value = false
       }
     }
   )
