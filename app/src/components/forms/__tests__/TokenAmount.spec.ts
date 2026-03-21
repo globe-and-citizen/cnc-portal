@@ -35,9 +35,10 @@ const getLastValidation = (wrapper: VueWrapper<ComponentPublicInstance>): boolea
   return emissions.at(-1)?.[0] as boolean
 }
 
-const makeInputEvent = (value: string): Event => ({
-  target: { value }
-}) as unknown as Event
+const makeInputEvent = (value: string): Event =>
+  ({
+    target: { value }
+  }) as unknown as Event
 
 describe('TokenAmount.vue', () => {
   it('renders token options and balance', () => {

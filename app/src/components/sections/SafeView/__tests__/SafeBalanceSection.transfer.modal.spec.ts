@@ -49,7 +49,6 @@ vi.mock('@/composables/safe', async (importOriginal) => {
   }
 })
 
-
 vi.mock('@/queries/safe.queries', () => ({
   useGetSafeInfoQuery: mockuseGetSafeInfoQuery
 }))
