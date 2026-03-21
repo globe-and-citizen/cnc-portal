@@ -28,7 +28,9 @@
             leading: 'pointer-events-none'
           }"
         >
-          <template #leading> <p class="text-sm text-muted">Overtime Hours |</p> </template>
+          <template #leading>
+            <p class="text-sm text-muted">Overtime Hours |</p>
+          </template>
         </UInput>
       </UFormField>
 
@@ -40,6 +42,7 @@
         class="flex items-center gap-4"
       >
         <USwitch size="xl" v-model="rate.enabled" />
+
         <UInput
           v-model="rate.amount"
           placeholder="0.00"
@@ -53,10 +56,9 @@
               class="text-sm rounded-full px-4 w-16 flex justify-center"
               :variant="rate.enabled ? 'solid' : 'outline'"
               :color="rate.enabled ? 'primary' : 'neutral'"
-              >{{
-                rate.type === 'native' ? NETWORK.currencySymbol : rate.type.toUpperCase()
-              }}</UBadge
             >
+              {{ rate.type === 'native' ? NETWORK.currencySymbol : rate.type.toUpperCase() }}
+            </UBadge>
           </template>
         </UInput>
       </UFieldGroup>
@@ -70,28 +72,31 @@
         <p class="text-sm font-semibold uppercase tracking-[0.2em] text-base-content/50">
           Standard
         </p>
+
         <div class="mt-3 space-y-2">
           <p
-            v-for="item in standardRateSummary"
-            :key="item"
+            v-for="rate in wageData.ratePerHour.filter((r) => r.enabled && r.amount > 0)"
+            :key="rate.type"
             class="text-lg font-semibold text-base-content/80"
           >
-            {{ item }}
+            {{ formatRate(rate.type, rate.amount) }}
           </p>
         </div>
       </div>
+
       <div
         class="min-h-40 rounded-2xl border border-emerald-300 bg-emerald-50/60 px-5 py-5"
         data-test="overtime-rate-recap"
       >
         <p class="text-sm font-semibold uppercase tracking-[0.2em] text-emerald-700">Overtime</p>
+
         <div class="mt-3 space-y-2">
           <p
-            v-for="item in overtimeRateSummary"
-            :key="item"
+            v-for="rate in wageData.overtimeRatePerHour.filter((r) => r.enabled && r.amount > 0)"
+            :key="rate.type"
             class="text-lg font-semibold text-emerald-700"
           >
-            {{ item }}
+            {{ formatRate(rate.type, rate.amount) }}
           </p>
         </div>
       </div>
@@ -100,7 +105,6 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
 import * as z from 'zod'
 import { NETWORK } from '@/constant'
 import type { WageWithForm } from './SetMemberWageModalCopy.vue'
@@ -113,6 +117,7 @@ const schema = z.object({
     .int('Must be a whole number')
     .positive('Overtime hours must be greater than 0')
     .optional(),
+
   overtimeRatePerHour: z
     .array(
       z.object({
@@ -133,16 +138,4 @@ const formatRate = (type: string, amount: number) => {
   const label = type === 'native' ? NETWORK.currencySymbol : type.toUpperCase()
   return `${amount} ${label}/hr`
 }
-
-const standardRateSummary = computed(() =>
-  wageData.value.ratePerHour
-    .filter((r) => r.enabled && r.amount > 0)
-    .map((r) => formatRate(r.type, r.amount))
-)
-
-const overtimeRateSummary = computed(() =>
-  wageData.value.overtimeRatePerHour
-    .filter((r) => r.enabled && r.amount > 0)
-    .map((r) => formatRate(r.type, r.amount))
-)
 </script>
