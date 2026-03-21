@@ -61,12 +61,12 @@
           </template>
           <template #maxWeeklyHours-data="{ row }">
             <div v-if="!isTeamWageDataFetching" class="flex flex-col font-semibold">
-              <span>{{ getMemberWage(row.address).maximumHoursPerWeek }}</span>
+              <span>{{ getMemberWageView(row.address).maximumHoursPerWeek }}</span>
               <span
-                v-if="getMemberWage(row.address).hasOvertime"
+                v-if="getMemberWageView(row.address).hasOvertime"
                 class="text-xs text-black font-light"
               >
-                OT: {{ getMemberWage(row.address).maximumOvertimeHoursPerWeek }}
+                OT: {{ getMemberWageView(row.address).maximumOvertimeHoursPerWeek }}
               </span>
             </div>
             <div class="skeleton w-24 h-4" v-if="isTeamWageDataFetching"></div>
@@ -75,27 +75,33 @@
             <div class="flex flex-col gap-1">
               <div class="flex flex-row gap-2 justify-between font-semibold">
                 <span class="w-1/3 text-right pr-4">
-                  {{ !isTeamWageDataFetching ? getMemberWage(row.address).cashRatePerHour : '' }}
+                  {{
+                    !isTeamWageDataFetching ? getMemberWageView(row.address).cashRatePerHour : ''
+                  }}
                 </span>
                 <span class="w-1/3 text-right pr-4">
-                  {{ !isTeamWageDataFetching ? getMemberWage(row.address).usdcRatePerHour : '' }}
+                  {{
+                    !isTeamWageDataFetching ? getMemberWageView(row.address).usdcRatePerHour : ''
+                  }}
                 </span>
                 <span class="w-1/3 text-right pr-4">
-                  {{ !isTeamWageDataFetching ? getMemberWage(row.address).tokenRatePerHour : '' }}
+                  {{
+                    !isTeamWageDataFetching ? getMemberWageView(row.address).tokenRatePerHour : ''
+                  }}
                 </span>
               </div>
               <div
-                v-if="!isTeamWageDataFetching && getMemberWage(row.address).hasOvertime"
+                v-if="!isTeamWageDataFetching && getMemberWageView(row.address).hasOvertime"
                 class="flex flex-row gap-2 justify-between text-xs text-black font-light"
               >
                 <span class="w-1/3 text-right pr-4">
-                  OT: {{ getMemberWage(row.address).overtimeCashRatePerHour }}
+                  OT: {{ getMemberWageView(row.address).overtimeCashRatePerHour }}
                 </span>
                 <span class="w-1/3 text-right pr-4">
-                  OT: {{ getMemberWage(row.address).overtimeUsdcRatePerHour }}
+                  OT: {{ getMemberWageView(row.address).overtimeUsdcRatePerHour }}
                 </span>
                 <span class="w-1/3 text-right pr-4">
-                  OT: {{ getMemberWage(row.address).overtimeTokenRatePerHour }}
+                  OT: {{ getMemberWageView(row.address).overtimeTokenRatePerHour }}
                 </span>
               </div>
             </div>
@@ -110,15 +116,10 @@
                 :member="{ name: row.name, address: row.address }"
                 :teamId="teamId"
               />
-              <!-- <SetMemberWageModal
-                :member="{ name: row.name, address: row.address }"
-                :teamId="teamId"
-                :wage="teamWageData?.find((wage) => wage.userAddress === row.address)"
-              /> -->
               <SetMemberWageModalCopy
                 :member="{ name: row.name, address: row.address }"
                 :teamId="teamId"
-                :wage="teamWageData?.find((wage) => wage.userAddress === row.address)"
+                :wage="teamWageByAddress.get(row.address)"
               />
             </div>
           </template>
@@ -143,7 +144,7 @@ import { useGetTeamWagesQuery } from '@/queries/wage.queries'
 import type { Address } from 'viem'
 import { NETWORK } from '@/constant'
 import DeleteMemberModal from '@/components/sections/DashboardView/DeleteMemberModal.vue'
-// import SetMemberWageModal from '@/components/sections/DashboardView/SetMemberWageModal.vue'
+import type { Wage } from '@/types'
 import SetMemberWageModalCopy from './SetMemberWageModalCopy.vue'
 
 const userDataStore = useUserDataStore()
@@ -171,23 +172,31 @@ watch(
   }
 )
 
-const getMemberWage = (memberAddress: Address) => {
-  const memberWage = teamWageData.value?.find((wage) => wage.userAddress === memberAddress)
+type MemberWageView = {
+  maximumHoursPerWeek: string
+  maximumOvertimeHoursPerWeek: string
+  hasOvertime: boolean
+  cashRatePerHour: string
+  usdcRatePerHour: string
+  tokenRatePerHour: string
+  overtimeCashRatePerHour: string
+  overtimeUsdcRatePerHour: string
+  overtimeTokenRatePerHour: string
+}
 
-  if (!memberWage) {
-    return {
-      maximumHoursPerWeek: 'N/A',
-      maximumOvertimeHoursPerWeek: 'N/A',
-      hasOvertime: false,
-      cashRatePerHour: 'N/A',
-      usdcRatePerHour: 'N/A',
-      tokenRatePerHour: 'N/A',
-      overtimeCashRatePerHour: 'N/A',
-      overtimeUsdcRatePerHour: 'N/A',
-      overtimeTokenRatePerHour: 'N/A'
-    }
-  }
+const EMPTY_MEMBER_WAGE_VIEW: MemberWageView = {
+  maximumHoursPerWeek: 'N/A',
+  maximumOvertimeHoursPerWeek: 'N/A',
+  hasOvertime: false,
+  cashRatePerHour: 'N/A',
+  usdcRatePerHour: 'N/A',
+  tokenRatePerHour: 'N/A',
+  overtimeCashRatePerHour: 'N/A',
+  overtimeUsdcRatePerHour: 'N/A',
+  overtimeTokenRatePerHour: 'N/A'
+}
 
+const buildMemberWageView = (memberWage: Wage): MemberWageView => {
   const cashRatePerHour = memberWage.ratePerHour?.find((rate) => rate.type === 'native')?.amount
   const usdcRatePerHour = memberWage.ratePerHour?.find((rate) => rate.type === 'usdc')?.amount
   const tokenRatePerHour = memberWage.ratePerHour?.find((rate) => rate.type === 'sher')?.amount
@@ -203,10 +212,6 @@ const getMemberWage = (memberAddress: Address) => {
   )?.amount
 
   const hasOvertime = Boolean(memberWage.overtimeRatePerHour?.length)
-
-  // maximumOvertimeHoursPerWeek is a distinct field — never substitute maximumHoursPerWeek.
-  // Legacy records missing this field will show 'N/A'; the backend getWages backfill
-  // handles them at the API level for new fetches.
   const maximumOvertimeHoursPerWeek = memberWage.maximumOvertimeHoursPerWeek
 
   return {
@@ -231,6 +236,30 @@ const getMemberWage = (memberAddress: Address) => {
     overtimeTokenRatePerHour:
       overtimeTokenRatePerHour != null ? `${overtimeTokenRatePerHour} SHER/hr` : 'N/A'
   }
+}
+
+const memberWageViewByAddress = computed(() => {
+  const wageViewByAddress = new Map<string, MemberWageView>()
+
+  for (const wage of teamWageData.value ?? []) {
+    wageViewByAddress.set(wage.userAddress, buildMemberWageView(wage as Wage))
+  }
+
+  return wageViewByAddress
+})
+
+const teamWageByAddress = computed(() => {
+  const wages = new Map<string, Wage>()
+
+  for (const wage of teamWageData.value ?? []) {
+    wages.set(wage.userAddress, wage as Wage)
+  }
+
+  return wages
+})
+
+const getMemberWageView = (memberAddress: Address): MemberWageView => {
+  return memberWageViewByAddress.value.get(memberAddress) ?? EMPTY_MEMBER_WAGE_VIEW
 }
 
 const columns = computed(() => {

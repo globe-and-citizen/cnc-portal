@@ -1,6 +1,6 @@
 <template>
   <div class="space-y-4" data-test="standard-wage-step">
-    <UForm :schema="schema" :wageData="wageData" class="space-y-4">
+    <UForm :schema="schema" :state="wageData" class="space-y-4">
       <UFormField name="maximumHoursPerWeek">
         <UInput
           v-model="wageData.maximumHoursPerWeek"
@@ -19,30 +19,32 @@
       <h3 class="text-lg font-semibold mb-4">Hourly Rates</h3>
 
       <UFieldGroup
-        v-for="rate in wageData.ratePerHour"
+        v-for="(rate, index) in wageData.ratePerHour"
         :key="rate.type"
         class="flex items-center gap-4"
       >
         <USwitch size="xl" v-model="rate.enabled" />
-        <UInput
-          v-model="rate.amount"
-          placeholder="0.00"
-          size="xl"
-          type="number"
-          class="w-full"
-          :disabled="!rate.enabled"
-        >
-          <template #trailing>
-            <UBadge
-              class="text-sm rounded-full px-4 test w-16 flex justify-center"
-              :variant="rate.enabled ? 'solid' : 'outline'"
-              :color="rate.enabled ? 'primary' : 'neutral'"
-              >{{
-                rate.type === 'native' ? NETWORK.currencySymbol : rate.type.toUpperCase()
-              }}</UBadge
-            >
-          </template>
-        </UInput>
+        <UFormField :name="`ratePerHour.${index}.amount`" class="w-full">
+          <UInput
+            v-model="rate.amount"
+            placeholder="0.00"
+            size="xl"
+            type="number"
+            class="w-full"
+            :disabled="!rate.enabled"
+          >
+            <template #trailing>
+              <UBadge
+                class="text-sm rounded-full px-4 test w-16 flex justify-center"
+                :variant="rate.enabled ? 'solid' : 'outline'"
+                :color="rate.enabled ? 'primary' : 'neutral'"
+                >{{
+                  rate.type === 'native' ? NETWORK.currencySymbol : rate.type.toUpperCase()
+                }}</UBadge
+              >
+            </template>
+          </UInput>
+        </UFormField>
       </UFieldGroup>
     </UForm>
 
@@ -89,15 +91,45 @@ const schema = z.object({
     .array(
       z.object({
         type: z.enum(['native', 'usdc', 'sher', 'usdc.e']),
-        amount: z.coerce.number().min(0, 'Must be non-negative')
+        amount: z.coerce.number(),
+        enabled: z.boolean()
       })
     )
-    .refine(
-      (rates) => {
-        const native = rates.find((r) => r.type === 'native')
-        return native ? native.amount > 0 : true
-      },
-      { message: 'Native rate must be greater than 0', path: ['0', 'amount'] }
-    )
+    .superRefine((rates, ctx) => {
+      const enabledRates = rates.filter((rate) => rate.enabled)
+
+      if (enabledRates.length === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: [],
+          message: 'Enable at least one rate'
+        })
+      }
+
+      for (const [index, rate] of rates.entries()) {
+        if (rate.enabled && rate.amount <= 0) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: [index, 'amount'],
+            message: 'Enabled rates must be greater than 0'
+          })
+        }
+      }
+
+      const nativeRateIndex = rates.findIndex((rate) => rate.type === 'native')
+      const enabledNativeRate = rates[nativeRateIndex]
+
+      if (!enabledNativeRate || !enabledNativeRate.enabled || enabledNativeRate.amount <= 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: [nativeRateIndex >= 0 ? nativeRateIndex : 0, 'amount'],
+          message: 'Native rate must be enabled and greater than 0'
+        })
+      }
+    })
 })
+
+const validateForm = () => schema.safeParse(wageData.value).success
+
+defineExpose({ validateForm })
 </script>

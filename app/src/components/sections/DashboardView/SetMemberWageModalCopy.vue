@@ -36,9 +36,13 @@
         <div class="space-y-4 mt-1">
           <UStepper v-if="wageData.enableOvertimeRules" :items="items" v-model="currentStep" />
 
-          <SetMemberWageStandardStep v-if="currentStep === 0" v-model:wageData="wageData" />
+          <SetMemberWageStandardStep
+            v-if="currentStep === 0"
+            ref="standardStepRef"
+            v-model:wageData="wageData"
+          />
 
-          <SetMemberWageOvertimeStep v-else v-model:wageData="wageData" />
+          <SetMemberWageOvertimeStep v-else ref="overtimeStepRef" v-model:wageData="wageData" />
 
           <div v-if="setWageError" data-test="error-state">
             <UAlert
@@ -123,6 +127,9 @@ const items = ref<StepperItem[]>([
 ])
 
 const currentStep = ref(0)
+type WageStepRef = {
+  validateForm: () => boolean
+}
 
 const props = defineProps<{
   member: Partial<Member>
@@ -179,6 +186,8 @@ const initialWage = (): WageWithForm => {
       }
 }
 const wageData = ref<WageWithForm>(initialWage())
+const standardStepRef = ref<WageStepRef | null>(null)
+const overtimeStepRef = ref<WageStepRef | null>(null)
 
 const toast = useToast()
 
@@ -197,6 +206,14 @@ const buildRatePayload = (rates: RatePerHourWithEnabled[]) => {
 const handleCancel = () => {
   showModal.value = false
   currentStep.value = 0
+}
+
+const validateCurrentStep = () => {
+  if (currentStep.value === 0) {
+    return standardStepRef.value?.validateForm() ?? false
+  }
+
+  return overtimeStepRef.value?.validateForm() ?? false
 }
 
 const submitWage = () => {
@@ -229,6 +246,10 @@ const submitWage = () => {
 }
 
 const handlePrimaryAction = async () => {
+  if (!validateCurrentStep()) {
+    return
+  }
+
   if (currentStep.value === 0 && wageData.value.enableOvertimeRules) {
     currentStep.value = 1
     return

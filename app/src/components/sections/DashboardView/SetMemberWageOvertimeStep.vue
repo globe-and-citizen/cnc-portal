@@ -37,30 +37,32 @@
       <h3 class="text-lg font-semibold mb-4">Overtime Hourly Rates</h3>
 
       <UFieldGroup
-        v-for="rate in wageData.overtimeRatePerHour"
+        v-for="(rate, index) in wageData.overtimeRatePerHour"
         :key="rate.type"
         class="flex items-center gap-4"
       >
         <USwitch size="xl" v-model="rate.enabled" />
 
-        <UInput
-          v-model="rate.amount"
-          placeholder="0.00"
-          size="xl"
-          type="number"
-          class="w-full"
-          :disabled="!rate.enabled"
-        >
-          <template #trailing>
-            <UBadge
-              class="text-sm rounded-full px-4 w-16 flex justify-center"
-              :variant="rate.enabled ? 'solid' : 'outline'"
-              :color="rate.enabled ? 'primary' : 'neutral'"
-            >
-              {{ rate.type === 'native' ? NETWORK.currencySymbol : rate.type.toUpperCase() }}
-            </UBadge>
-          </template>
-        </UInput>
+        <UFormField :name="`overtimeRatePerHour.${index}.amount`" class="w-full">
+          <UInput
+            v-model="rate.amount"
+            placeholder="0.00"
+            size="xl"
+            type="number"
+            class="w-full"
+            :disabled="!rate.enabled"
+          >
+            <template #trailing>
+              <UBadge
+                class="text-sm rounded-full px-4 w-16 flex justify-center"
+                :variant="rate.enabled ? 'solid' : 'outline'"
+                :color="rate.enabled ? 'primary' : 'neutral'"
+              >
+                {{ rate.type === 'native' ? NETWORK.currencySymbol : rate.type.toUpperCase() }}
+              </UBadge>
+            </template>
+          </UInput>
+        </UFormField>
       </UFieldGroup>
     </UForm>
 
@@ -115,27 +117,56 @@ const schema = z.object({
   maximumOvertimeHoursPerWeek: z.coerce
     .number()
     .int('Must be a whole number')
-    .positive('Overtime hours must be greater than 0')
-    .optional(),
+    .positive('Overtime hours must be greater than 0'),
 
   overtimeRatePerHour: z
     .array(
       z.object({
         type: z.enum(['native', 'usdc', 'sher', 'usdc.e']),
-        amount: z.coerce.number().min(0, 'Must be non-negative')
+        amount: z.coerce.number(),
+        enabled: z.boolean()
       })
     )
-    .refine(
-      (rates) => {
-        const native = rates.find((r) => r.type === 'native')
-        return native ? native.amount > 0 : true
-      },
-      { message: 'Native rate must be greater than 0', path: ['0', 'amount'] }
-    )
+    .superRefine((rates, ctx) => {
+      const enabledRates = rates.filter((rate) => rate.enabled)
+
+      if (enabledRates.length === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: [],
+          message: 'Enable at least one overtime rate'
+        })
+      }
+
+      for (const [index, rate] of rates.entries()) {
+        if (rate.enabled && rate.amount <= 0) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: [index, 'amount'],
+            message: 'Enabled overtime rates must be greater than 0'
+          })
+        }
+      }
+
+      const nativeRateIndex = rates.findIndex((rate) => rate.type === 'native')
+      const enabledNativeRate = rates[nativeRateIndex]
+
+      if (!enabledNativeRate || !enabledNativeRate.enabled || enabledNativeRate.amount <= 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: [nativeRateIndex >= 0 ? nativeRateIndex : 0, 'amount'],
+          message: 'Native overtime rate must be enabled and greater than 0'
+        })
+      }
+    })
 })
 
 const formatRate = (type: string, amount: number) => {
   const label = type === 'native' ? NETWORK.currencySymbol : type.toUpperCase()
   return `${amount} ${label}/hr`
 }
+
+const validateForm = () => schema.safeParse(wageData.value).success
+
+defineExpose({ validateForm })
 </script>
