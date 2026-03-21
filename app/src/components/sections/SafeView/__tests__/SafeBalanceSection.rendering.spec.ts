@@ -60,9 +60,6 @@ vi.mock('@/composables/safe', async (importOriginal) => {
   }
 })
 
-vi.mock('@vueuse/core', () => ({
-  useStorage: vi.fn()
-}))
 
 vi.mock('@/queries/safe.queries', () => ({
   useGetSafeInfoQuery: mockuseGetSafeInfoQuery

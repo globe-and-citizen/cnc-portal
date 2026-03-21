@@ -49,9 +49,6 @@ vi.mock('@/composables/safe', async (importOriginal) => {
   }
 })
 
-vi.mock('@vueuse/core', () => ({
-  useStorage: vi.fn()
-}))
 
 vi.mock('@/queries/safe.queries', () => ({
   useGetSafeInfoQuery: mockuseGetSafeInfoQuery
@@ -144,6 +141,7 @@ interface SafeBalanceSectionInstance {
   resetTransferValues: () => Promise<void>
   tokens: Array<{ symbol: string; price: number; tokenId: string }>
   transferData: { token: { symbol: string; tokenId: string } }
+  transferModal: { mount: boolean; show: boolean }
 }
 
 describe('SafeBalanceSection transfer modals', () => {
@@ -250,12 +248,13 @@ describe('SafeBalanceSection transfer modals', () => {
       await wrapper.find('[data-test="transfer-button"]').trigger('click')
       await nextTick()
 
-      expect(wrapper.find('[data-test="transfer-modal"]').exists()).toBe(true)
+      const component = wrapper.vm as SafeBalanceSectionInstance
+      expect(component.transferModal.show).toBe(true)
 
-      await (wrapper.vm as SafeBalanceSectionInstance).resetTransferValues()
+      await component.resetTransferValues()
       await nextTick()
 
-      expect(wrapper.find('[data-test="transfer-modal"]').exists()).toBe(false)
+      expect(component.transferModal.show).toBe(false)
     })
   })
 })
