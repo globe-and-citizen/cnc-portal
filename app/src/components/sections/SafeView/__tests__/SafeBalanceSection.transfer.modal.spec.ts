@@ -49,6 +49,14 @@ vi.mock('@/composables/safe', async (importOriginal) => {
   }
 })
 
+vi.mock('@vueuse/core', async () => {
+  const actual = await vi.importActual<typeof import('@vueuse/core')>('@vueuse/core')
+  return {
+    ...actual,
+    useStorage: vi.fn()
+  }
+})
+
 vi.mock('@/queries/safe.queries', () => ({
   useGetSafeInfoQuery: mockuseGetSafeInfoQuery
 }))

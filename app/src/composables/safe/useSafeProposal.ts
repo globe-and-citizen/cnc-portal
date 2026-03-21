@@ -1,7 +1,6 @@
 import { ref } from 'vue'
 import { useConnection, useChainId } from '@wagmi/vue'
 import { isAddress } from 'viem'
-import { useToastStore } from '@/stores'
 import { useProposeTransactionMutation } from '@/queries/safe.mutations'
 import { useSafeSDK } from './useSafeSdk'
 
@@ -11,7 +10,7 @@ import { useSafeSDK } from './useSafeSdk'
 export function useSafeProposal() {
   const connection = useConnection()
   const chainId = useChainId()
-  const { addSuccessToast, addErrorToast } = useToastStore()
+  const toast = useToast()
   const mutation = useProposeTransactionMutation()
   const { loadSafe } = useSafeSDK()
 
@@ -32,13 +31,21 @@ export function useSafeProposal() {
   ): Promise<string | null> => {
     if (!isAddress(safeAddress)) {
       error.value = new Error('Invalid Safe address')
-      addErrorToast('Invalid Safe address')
+      toast.add({
+        title: 'Error',
+        description: 'Invalid Safe address',
+        color: 'error'
+      })
       return null
     }
 
     if (!connection.isConnected.value || !connection.address.value) {
       error.value = new Error('Wallet not connected')
-      addErrorToast('Please connect your wallet')
+      toast.add({
+        title: 'Error',
+        description: 'Please connect your wallet',
+        color: 'error'
+      })
       return null
     }
 
@@ -88,16 +95,23 @@ export function useSafeProposal() {
         origin: window.location.origin
       })
 
-      addSuccessToast('Transaction proposed successfully')
+      toast.add({
+        title: 'Success',
+        description: 'Transaction proposed successfully',
+        color: 'success'
+      })
       return safeTxHash
     } catch (err) {
       error.value = err instanceof Error ? err : new Error('Failed to propose transaction')
       console.error('Safe proposal error:', err)
-      addErrorToast(
-        error.value.message.includes('User rejected')
+
+      toast.add({
+        title: 'Error',
+        description: error.value.message.includes('User rejected')
           ? 'Transaction approval rejected'
-          : error.value.message
-      )
+          : error.value.message,
+        color: 'error'
+      })
       return null
     } finally {
       isProposing.value = false

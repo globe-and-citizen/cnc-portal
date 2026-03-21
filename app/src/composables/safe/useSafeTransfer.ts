@@ -2,7 +2,6 @@ import { ref } from 'vue'
 import { useConnection, useChainId } from '@wagmi/vue'
 
 import { erc20Abi, isAddress, parseEther, parseUnits, encodeFunctionData, type Address } from 'viem'
-import { useToastStore } from '@/stores'
 import { useExecuteTransactionMutation } from '@/queries/safe.mutations'
 import { useSafeSDK } from './useSafeSdk'
 import { useSafeProposal } from './useSafeProposal'
@@ -16,7 +15,7 @@ import { type SafeTransferOptions } from '@/types'
 export function useSafeTransfer() {
   const connection = useConnection()
   const chainId = useChainId()
-  const { addSuccessToast, addErrorToast } = useToastStore()
+  const toast = useToast()
   const executeMutation = useExecuteTransactionMutation()
   const { loadSafe } = useSafeSDK()
   const { proposeTransaction } = useSafeProposal()
@@ -33,25 +32,41 @@ export function useSafeTransfer() {
   ): Promise<string | null> => {
     if (!isAddress(safeAddress)) {
       error.value = new Error('Invalid Safe address')
-      addErrorToast('Invalid Safe address')
+      toast.add({
+        title: 'Error',
+        description: 'Invalid Safe address',
+        color: 'error'
+      })
       return null
     }
 
     if (!isAddress(options.to)) {
       error.value = new Error('Invalid recipient address')
-      addErrorToast('Invalid recipient address')
+      toast.add({
+        title: 'Error',
+        description: 'Invalid recipient address',
+        color: 'error'
+      })
       return null
     }
 
     if (!options.amount || parseFloat(options.amount) <= 0) {
       error.value = new Error('Invalid transfer amount')
-      addErrorToast('Invalid transfer amount')
+      toast.add({
+        title: 'Error',
+        description: 'Invalid transfer amount',
+        color: 'error'
+      })
       return null
     }
 
     if (!connection.isConnected.value || !connection.address.value) {
       error.value = new Error('Wallet not connected')
-      addErrorToast('Please connect your wallet')
+      toast.add({
+        title: 'Error',
+        description: 'Please connect your wallet',
+        color: 'error'
+      })
       return null
     }
 
@@ -120,7 +135,11 @@ export function useSafeTransfer() {
           throw new Error('Failed to propose transaction')
         }
 
-        addSuccessToast(`Transfer proposed successfully${tokenAddress ? ' (Token)' : ' (Native)'}`)
+        toast.add({
+          title: 'Success',
+          description: `Transfer proposed successfully${tokenAddress ? ' (Token)' : ' (Native)'}`,
+          color: 'success'
+        })
         return safeTxHash
       } else {
         // Execute directly (threshold = 1)
@@ -155,17 +174,24 @@ export function useSafeTransfer() {
           }
         })
 
-        addSuccessToast(`Transfer executed successfully${tokenAddress ? ' (Token)' : ' (Native)'}`)
+        toast.add({
+          title: 'Success',
+          description: `Transfer executed successfully${tokenAddress ? ' (Token)' : ' (Native)'}`,
+          color: 'success'
+        })
         return txHash
       }
     } catch (err) {
       error.value = err instanceof Error ? err : new Error('Failed to transfer from Safe')
       console.error('Safe transfer error:', err)
-      addErrorToast(
-        error.value.message.includes('User rejected')
+
+      toast.add({
+        title: 'Error',
+        description: error.value.message.includes('User rejected')
           ? 'Transaction approval rejected'
-          : error.value.message
-      )
+          : error.value.message,
+        color: 'error'
+      })
       return null
     } finally {
       isTransferring.value = false
