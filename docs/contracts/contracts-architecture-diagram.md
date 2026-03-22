@@ -310,7 +310,7 @@ sequenceDiagram
     participant Proposals as Proposals Contract
     participant BoD as BoardOfDirectors Contract
 
-    BoardMember->>Proposals: Check if member
+    BoardMember->>Proposals: Check if a member
     Proposals->>BoD: 1. isMember(sender)
     BoD-->>Proposals: 2. true
 
@@ -387,7 +387,7 @@ sequenceDiagram
 
 ### Why Storage Layout Matters
 
-When upgrading contracts via beacons, new implementations must maintain compatible storage layout:
+When upgrading contracts via beacons, new implementations must maintain a compatible storage layout:
 
 ```txt
 OLD IMPLEMENTATION                NEW IMPLEMENTATION
