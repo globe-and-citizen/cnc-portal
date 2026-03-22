@@ -30,7 +30,7 @@ The CNC Portal addresses both problems by providing:
 | Component    | Description                                                                               |
 | ------------ | ----------------------------------------------------------------------------------------- |
 | `app/`       | Vue.js user-facing application — team, contract, governance, vesting, and token workflows |
-| `dashboard/` | Nuxt admin dashboard — activity analytics, member management, backoffice operations       |
+| `dashboard/` | Nuxt admin dashboard — activity analytics, member management, back-office operations       |
 | `backend/`   | Express.js REST API — authentication (SIWE/JWT), user data, platform statistics           |
 | `contract/`  | Hardhat smart contracts — wages, claims, expenses, vesting, proposals, board actions      |
 | `the-graph/` | Subgraph indexing for on-chain event consumption                                          |
@@ -79,7 +79,7 @@ Deliver an intuitive and secure CNC Portal that makes spinning up and running a 
 
 #### S — Specific
 
-- Deploy functional CNC Portal with 6 core modules (Auth, Teams, Payroll, Governance, Tokens, Analytics)
+- Deploy a functional CNC Portal with 6 core modules (Auth, Teams, Payroll, Governance, Tokens, Analytics)
 - Support multi-currency wages (Native token, USDC, custom tokens like SHER)
 - Enable BOD elections with automatic tie-breaking
 - Provide real-time analytics API and admin dashboard
@@ -153,7 +153,7 @@ Deliver an intuitive and secure CNC Portal that makes spinning up and running a 
 - Expense limits are configurable: no limit, max per transaction, max total, or max count
 - All limits are enforced on-chain
 - Expense validation occurs before submission
-- Rejections return expense to draft state for member editing
+- Rejections return the expense to draft state for member editing
 - All reimbursements are final on-chain transactions
 
 ### 4.2 Governance Rules
@@ -189,9 +189,9 @@ Deliver an intuitive and secure CNC Portal that makes spinning up and running a 
 **Team Ownership**
 
 - Team creator is automatically the owner/admin
-- Owners cannot be removed unless promoted another admin first
+- Owners cannot be removed unless promoted to another admin first
 - Only owners can change team settings (name, description, contract)
-- Members can leave team unless they are sole owner
+- Members can leave team unless they are the sole owner
 
 **Member Roles**
 
@@ -201,7 +201,7 @@ Deliver an intuitive and secure CNC Portal that makes spinning up and running a 
 **Invitations**
 
 - Invitations are one-time use and expire after 7 days
-- Invited users must accept to join team (auto-join not allowed)
+- Invited users must accept to join the team (auto-join not allowed)
 - Cannot invite non-existent users
 - Duplicate invitations are rejected
 
@@ -226,7 +226,7 @@ Deliver an intuitive and secure CNC Portal that makes spinning up and running a 
 - Smart contracts must be upgradeable (proxy pattern)
 - Contract state must remain consistent with off-chain database
 - Failed transactions must be retried with exponential backoff
-- Gas prices monitored and transaction batching enabled
+- Gas prices are monitored and transaction batching enabled
 
 ---
 
