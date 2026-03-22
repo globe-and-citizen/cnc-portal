@@ -113,7 +113,7 @@ A key architectural goal of M7 is to move treasury and payroll operations onto [
 
 **Key activities:**
 
-- Remediate all critical and high security findings
+- Remediate all critical and high-security findings
 - Drive E2E suite to full critical-path coverage
 - Implement Safe as the underlying multi-sig for bank/payroll/expense accounts
 - Decide and implement BOD ↔ Safe architecture
