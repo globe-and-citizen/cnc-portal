@@ -30,7 +30,7 @@
 
 **Path**: `contracts/Officer.sol`
 
-Central hub and factory. Each team deploys one Officer which manages all other contracts.
+Central hub and factory. Each team deploys one Officer, which manages all other contracts.
 
 **Features**:
 
