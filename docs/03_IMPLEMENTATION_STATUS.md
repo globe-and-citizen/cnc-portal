@@ -273,7 +273,7 @@ Contract groups in parentheses indicate which contracts were delivered in that m
 
 **For Product Managers:**
 
-- Track overall delivery progress in **Summary by Module** section
+- Track overall delivery progress in the **Summary by Module** section
 - Check **Milestone Progress** to assess timeline status
 - Review **Known Blockers** for risk items
 
@@ -285,7 +285,7 @@ Contract groups in parentheses indicate which contracts were delivered in that m
 
 **For QA:**
 
-- Review status by test type in **Quality & Testing** section
+- Review status by test type in the **Quality & Testing** section
 - Plan test efforts based on feature completion status
 - Reference **User Stories** for acceptance criteria
 
