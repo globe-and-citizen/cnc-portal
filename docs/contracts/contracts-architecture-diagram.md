@@ -116,7 +116,7 @@ graph TB
 ### Legend
 
 - `deploys`: Officer creates contract instance
-- `reads`: Contract queries data from another
+- `reads`: Contract queries data from another contract
 - `sets`: Contract updates another contract's state
 - `mints`: Contract has permission to mint tokens
 - `creates`: Contract creates and initializes another
@@ -387,7 +387,7 @@ sequenceDiagram
 
 ### Why Storage Layout Matters
 
-When upgrading contracts via beacons, new implementations must maintain compatible storage layout:
+When upgrading contracts via beacons, new implementations must maintain a compatible storage layout:
 
 ```txt
 OLD IMPLEMENTATION                NEW IMPLEMENTATION
