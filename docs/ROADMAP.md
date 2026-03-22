@@ -95,7 +95,7 @@ A key architectural goal of M7 is to move treasury and payroll operations onto [
 | Bank account backed by Safe             | ⏳ Pending | Replace single-owner bank with Safe multi-sig                           |
 | Payroll (wages & claims) backed by Safe | ⏳ Pending | Safe as the fund source for wage disbursements                          |
 | Expense account backed by Safe          | ⏳ Pending | Expense approvals executed via Safe tx                                  |
-| Deploy multiple Safe instances per team | ⏳ Pending | Each team can have dedicated Safes (e.g. ops, payroll, reserve)         |
+| Deploy multiple Safe instances per team | ⏳ Pending | Each team can have dedicated Safes (e.g., ops, payroll, reserve)         |
 | BOD integration with Safe               | ⏳ Pending | BOD members as Safe signers, or Safe as BOD executor — architecture TBD |
 | Safe modules for extended functionality | ⏳ Pending | Custom modules for recurring payments, allowances, spending limits      |
 
@@ -106,8 +106,8 @@ A key architectural goal of M7 is to move treasury and payroll operations onto [
 | Task                                       | Status     | Notes                                                                                        |
 | ------------------------------------------ | ---------- | -------------------------------------------------------------------------------------------- |
 | Test Hardhat Ignition modules              | ⏳ Pending | Validate deployment scripts before mainnet                                                   |
-| Verify Frontend Proxy deployed correctly   | ⏳ Pending | Confirm proxy config in staging and production                                               |
-| Permissioning system necessity review      | ⏳ Pending | Implementation looks solid; evaluate whether RBAC layer is needed given on-chain permissions |
+| Verify Frontend Proxy is deployed correctly   | ⏳ Pending | Confirm proxy config in staging and production                                               |
+| Permissioning system necessity review      | ⏳ Pending | Implementation looks solid; evaluate whether an RBAC layer is needed given on-chain permissions |
 | Complete RBAC (member roles & permissions) | ⏳ Pending | If permissioning review confirms necessity                                                   |
 | Engage professional third-party audit firm | ⏳ Pending | OpenZeppelin, Trail of Bits, or equivalent                                                   |
 
