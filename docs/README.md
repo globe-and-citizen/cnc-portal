@@ -74,7 +74,7 @@ The [Project Charter](./01_PROJECT_CHARTER.md) is the authoritative reference fo
 
 ---
 
-## �📚 Documentation Structure
+## 📚 Documentation Structure
 
 ```
 docs/
@@ -303,7 +303,7 @@ Each feature specification should follow this structure:
 
 - Use your IDE's search function to find specific topics
 - Check the feature folder for feature-specific documentation
-- Platform-wide standards are in `platform/` directory
+- Platform-wide standards are in the `platform/` directory
 - Look for `README.md` files in each folder for navigation
 
 ---
@@ -318,7 +318,7 @@ Each feature specification should follow this structure:
 
 **Prisma ORM:** Modern database toolkit for TypeScript and Node.js that provides type-safe database access.
 
-**SSR (Server-Side Rendering):** Rendering web pages on the server before sending to client.
+**SSR (Server-Side Rendering):** Rendering web pages on the server before sending to the client.
 
 **OpenAPI/Swagger:** Specification for describing RESTful APIs in a machine-readable format.
 
@@ -336,7 +336,7 @@ Each feature specification should follow this structure:
 
 ### Project-Specific Terms
 
-**Team:** Organization unit within CNC Portal where members collaborate.
+**Team:** An organization unit within CNC Portal where members collaborate.
 
 **Claim:** Time or work entry submitted by a member for compensation.
 
