@@ -56,7 +56,7 @@
 **Acceptance Criteria:**
 
 - [ ] SIWE login button displayed on login page
-- [ ] Clicking button opens wallet connector modal (MetaMask, WalletConnect, Coinbase)
+- [ ] Clicking the button opens wallet connector modal (MetaMask, WalletConnect, Coinbase)
 - [ ] User selects wallet and confirms signature request
 - [ ] Backend validates signature and creates session
 - [ ] User redirected to dashboard after successful login
@@ -174,7 +174,7 @@
 - [ ] Invited user receives notification
 - [ ] User can accept/decline invitation
 - [ ] Accepted users appear in member list
-- [ ] Declined invitations don't add member
+- [ ] Declined invitations don't add a member
 - [ ] Admin can view pending invitations
 
 **Priority:** P1 (Critical)  
@@ -244,7 +244,7 @@
 - [ ] Can set rates in multiple currencies: Native token, USDC, SHER
 - [ ] Each rate is per-hour amount
 - [ ] Can set maximum hours per week
-- [ ] Save button disabled until all required fields filled
+- [ ] Save button disabled until all required fields are filled
 - [ ] Wage stored on-chain
 - [ ] Success toast: "Wage set for [Member Name]"
 - [ ] Admin can edit/update wages for existing members
@@ -391,7 +391,7 @@
   - Max transaction count per period
   - Max total amount per period
   - Max per-transaction amount
-- [ ] Can apply to individual members or group
+- [ ] Can apply to individual members or groups
 - [ ] Save updates on-chain
 - [ ] Error messages if invalid combinations
 - [ ] Confirmation: "Expense limits updated"
@@ -594,7 +594,7 @@
 
 **Acceptance Criteria:**
 
-- [ ] System detects if tie exists for final seat
+- [ ] System detects if a tie exists for final seat
 - [ ] Tie-breaking options:
   - Admin override (admin votes for tied candidate)
   - Secondary vote (only tied candidates voted again)
