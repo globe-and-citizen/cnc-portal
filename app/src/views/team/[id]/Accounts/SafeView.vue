@@ -9,7 +9,7 @@
     <div class="grid grid-cols-1 xl:grid-cols-5 gap-6">
       <div class="xl:col-span-3 min-w-0">
         <GenericTokenHoldingsSection
-          :key="bankSafeAddress"
+          :key="teamStore.getContractAddressByType('Safe')"
           :address="teamStore.getContractAddressByType('Safe') as Address"
           class="h-full"
         />
