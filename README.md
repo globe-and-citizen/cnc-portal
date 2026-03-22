@@ -73,7 +73,7 @@ In the `./backend` folder, create a `.env` file with the following variables:
 - **DATABASE_URL**: A valid PostgreSQL database URL. Example:
   `DATABASE_URL=postgres://username:password@localhost:5432/database_name`
 
-  **\*PS** : If you are using the docker container we set up in the top section, the URL should be: `DATABASE_URL=postgres://root:root@localhost:5432/cnc-db`\*
+  **PS**: If you are using the docker container we set up in the top section, the URL should be: `DATABASE_URL=postgres://root:root@localhost:5432/cnc-db`
 
 - **SECRET_KEY**: An HS256 compatible key for securing the application. Example:
   `SECRET_KEY=1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0a1b`
@@ -89,7 +89,7 @@ First, go to ./app folder and run `npm run git:ignore-locally`. This command wil
 
 Go to the ./contract folder and run `npm run moveConstants`
 
-This action will copy your deployed_addresses from different chains to `src/artifacts/deployed_addresses` directory and imports these constants in `src/constant/index.ts`.
+This action will copy your deployed_addresses from different chains to `src/artifacts/deployed_addresses` directory and import these constants in `src/constant/index.ts`.
 
 #### Environment variables
 
@@ -97,10 +97,10 @@ In the `./app` folder, create a `.env` file with the following variable:
 
 - **VITE_APP_BACKEND_URL**: The URL for the backend API. Example:
   `VITE_APP_BACKEND_URL=http://localhost:8000`
-- **VITE_APP_ETHERSCAN_URL**: The URL to see transaction detail. Example:
+- **VITE_APP_ETHERSCAN_URL**: The URL to see transaction details. Example:
   `VITE_APP_ETHERSCAN_URL=https://sepolia.etherscan.io`
 - **_VITE_APP_NETWORK_ALIAS_**: The string identifier of an EVM compatible network that the app uses. Example: `VITE_APP_NETWORK_ALIAS=polygon`. This variable is optional but if you don't set your own network parameters it has to be provided. Use this if you want to use one of the preset networks which the application provides. Available options are:
-  1. `etherem` - The Ethereum Main Network
+  1. `ethereum` - The Ethereum Main Network
   2. `polygon` - The Polygon Main Network
   3. `sepolia` - The Sepolia Test Network
   4. `holesky` - The Holesky Test Network
@@ -111,7 +111,7 @@ In the `./app` folder, create a `.env` file with the following variable:
 - **VITE_APP_CHAIN_ID**: The Network ID used to sign transactions on the EVM compatible network that the app uses in hexadecimal. Example: `VITE_APP_CHAIN_ID=0xa`. This variable is optional but if you don't set `VITE_APP_NETWORK_ALIAS` it has to be provided.
 - **VITE_APP_CURRENCY_SYMBOL**: The ticker symbol displayed for the network's currency. Example: `VITE_APP_CURRENCY_SYMBOL=ETH`. This variable is optional but if you don't set `VITE_APP_NETWORK_ALIAS` it has to be provided.
 - **VITE_APP_BLOCK_EXPLORER_URL**: The URL for viewing transactions on the network the app uses. Example: `VITE_APP_BLOCK_EXPLORER_URL=https://optimistic.etherscan.io/`. This variable is optional.
-- **VITE_VOTING_IMPL_ADDRESS**: The address to which the voting contract is deployed to. This is essential for drafting/interacting with proposals.
+- **VITE_VOTING_IMPL_ADDRESS**: The address to which the voting contract is deployed. This is essential for drafting/interacting with proposals.
 
 #### App end-to-end testing
 
@@ -151,13 +151,13 @@ npm install
 
 #### Start the app in development mode
 
-In `./app` folder
+In the `./app` folder
 
 ```bash
 npm run dev
 ```
 
-In `./backend` folder
+In the `./backend` folder
 
 ```bash
 npm run start
