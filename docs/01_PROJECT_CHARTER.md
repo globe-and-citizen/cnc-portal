@@ -170,7 +170,7 @@ Deliver an intuitive and secure CNC Portal that makes spinning up and running a 
 **Board of Directors Elections**
 
 - Each member gets one vote per election
-- Member can vote for up to N candidates (where N = number of seats)
+- Each member can vote for up to N candidates (where N = number of seats)
 - Top N vote-getters become board members
 - Ties for final seat trigger tie-breaking mechanism
 - BOD roles are updated on-chain immediately after election ends
@@ -180,7 +180,7 @@ Deliver an intuitive and secure CNC Portal that makes spinning up and running a 
 
 - Detected automatically if multiple candidates have equal votes for final seat(s)
 - Three mechanisms available (team configurable):
-  1. **Admin Override:** Team owner casts deciding vote
+  1. **Admin Override:** Team owner casts the deciding vote
   2. **Seniority:** Longest-tenured team member wins tie
   3. **Secondary Vote:** Only tied candidates voted again by all members
 
@@ -189,9 +189,9 @@ Deliver an intuitive and secure CNC Portal that makes spinning up and running a 
 **Team Ownership**
 
 - Team creator is automatically the owner/admin
-- Owners cannot be removed unless promoted another admin first
+- Owners cannot be removed unless promoted to another admin first
 - Only owners can change team settings (name, description, contract)
-- Members can leave team unless they are sole owner
+- Members can leave the team unless they are sole owner
 
 **Member Roles**
 
@@ -201,7 +201,7 @@ Deliver an intuitive and secure CNC Portal that makes spinning up and running a 
 **Invitations**
 
 - Invitations are one-time use and expire after 7 days
-- Invited users must accept to join team (auto-join not allowed)
+- Invited users must accept to join the team (auto-join not allowed)
 - Cannot invite non-existent users
 - Duplicate invitations are rejected
 
