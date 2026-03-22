@@ -30,7 +30,7 @@
 
 **Path**: `contracts/Officer.sol`
 
-Central hub and factory. Each team deploys one Officer which manages all other contracts.
+Central hub and factory. Each team deploys one Officer that manages all other contracts.
 
 **Features**:
 
@@ -65,8 +65,8 @@ Organizational treasury. Holds ETH and ERC20 tokens, routes transfers with proto
 **Features**:
 
 - Accept ETH via `receive()` and ERC20 via `depositToken()`
-- Transfer ETH/ERC20 to recipients; protocol fee (basis points) deducted and sent to FeeCollector
-- ERC20 fee only charged for tokens supported by FeeCollector
+- Transfer ETH/ERC20 to recipients; protocol fee (basis points) is deducted and sent to FeeCollector
+- ERC20 fee is only charged for tokens supported by FeeCollector
 - **Push-based dividend distribution** — no claim pattern; funds transfer directly to shareholders in the same transaction
 - Resolves InvestorV1 address dynamically via Officer (no stored investor address)
 - Pausable and reentrancy-protected
@@ -277,9 +277,9 @@ Linear ERC20 token vesting with cliff periods, organized by teams.
 **Features**:
 
 - Team-based: each team has an owner, token, and member list
-- Cliff period: no tokens releasable until cliff elapses
+- Cliff period: no tokens are releasable until cliff elapses
 - Linear vesting: tokens unlock proportionally after cliff
-- Team owner can stop vesting: releasable tokens go to member, unvested tokens return to owner
+- Team owner can stop vesting: releasable tokens go to the member, unvested tokens return to the owner
 - Archived history of stopped vestings per member/team
 - Upgradeable, Pausable, ReentrancyGuard
 
