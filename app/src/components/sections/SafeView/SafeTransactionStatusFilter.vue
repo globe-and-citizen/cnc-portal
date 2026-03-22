@@ -27,7 +27,7 @@ const statusOptions = [
   { value: 'all', label: 'All' },
   { value: 'pending', label: 'Pending' },
   { value: 'executed', label: 'Executed' }
-] as const
+]
 
 watch(selectedStatus, (newValue) => {
   emit('statusChange', newValue)

@@ -8,7 +8,7 @@
     <template #body>
       <UForm
         :schema="formSchema"
-        :state="{ newSigners }"
+        :state="formState"
         class="max-w-2xl space-y-6"
         @submit="handleAddSigners"
       >
@@ -94,6 +94,7 @@ import { Icon as IconifyIcon } from '@iconify/vue'
 import { useSafeOwnerManagement } from '@/composables/safe'
 import type { User } from '@/types'
 import { useToast } from '@nuxt/ui/composables'
+
 interface Props {
   safeAddress: Address
   currentOwners: string[]
@@ -106,6 +107,7 @@ const emit = defineEmits<{
   'signer-added': []
   'close-modal': []
 }>()
+
 const toast = useToast()
 
 // Stores and composables
@@ -115,6 +117,13 @@ const { isUpdating: isLoading, updateOwners } = useSafeOwnerManagement()
 const isOpen = defineModel<boolean>({ default: false })
 
 const newSigners = ref<User[]>([])
+
+// Transform newSigners to match form schema expectations
+const formState = computed(() => ({
+  newSigners: newSigners.value.map((signer) => ({
+    address: signer.address || ''
+  }))
+}))
 
 // Computed values
 const totalSignersAfterUpdate = computed(() => {
@@ -204,7 +213,7 @@ const handleAddSigners = async () => {
       const message = requiresProposal.value
         ? 'Signer addition proposal submitted successfully'
         : 'Signers added successfully'
-      toast.add({ title: 'Succes', description: message, color: 'success' })
+      toast.add({ title: 'Success', description: message, color: 'success' })
 
       emit('signer-added')
       handleClose()
