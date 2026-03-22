@@ -1,24 +1,27 @@
 <!-- filepath: app/src/views/team/[id]/Accounts/SafeView.vue -->
 <template>
-  <div v-if="selectedSafe?.address" class="flex flex-col gap-6">
-    <SafeBalanceSection :key="selectedSafe.address" :address="selectedSafe.address as Address" />
+  <div v-if="teamStore.getContractAddressByType('Safe')" class="flex flex-col gap-6">
+    <SafeBalanceSection
+      :key="teamStore.getContractAddressByType('Safe')"
+      :address="teamStore.getContractAddressByType('Safe') as Address"
+    />
 
     <div class="grid grid-cols-1 xl:grid-cols-5 gap-6">
       <div class="xl:col-span-3 min-w-0">
         <GenericTokenHoldingsSection
-          :key="selectedSafe.address"
-          :address="selectedSafe.address as Address"
+          :key="bankSafeAddress"
+          :address="teamStore.getContractAddressByType('Safe') as Address"
           class="h-full"
         />
       </div>
       <div class="xl:col-span-2 min-w-0">
-        <SafeOwnersCard :address="selectedSafe.address as Address" />
+        <SafeOwnersCard :address="teamStore.getContractAddressByType('Safe') as Address" />
       </div>
     </div>
 
-    <SafeTransactions :address="selectedSafe.address as Address" />
+    <SafeTransactions :address="teamStore.getContractAddressByType('Safe') as Address" />
 
-    <SafeIncomingTransactions :address="selectedSafe.address as Address" />
+    <SafeIncomingTransactions :address="teamStore.getContractAddressByType('Safe') as Address" />
   </div>
 
   <!-- Safe not deployed state -->
@@ -36,7 +39,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import SafeBalanceSection from '@/components/sections/SafeView/SafeBalanceSection.vue'
 import SafeOwnersCard from '@/components/sections/SafeView/SafeOwnersCard.vue'
@@ -44,22 +47,12 @@ import GenericTokenHoldingsSection from '@/components/GenericTokenHoldingsSectio
 import SafeTransactions from '@/components/sections/SafeView/SafeTransactions.vue'
 import SafeIncomingTransactions from '@/components/sections/SafeView/SafeIncomingTransactions.vue'
 import SafeDeploymentCard from '@/components/sections/SafeView/SafeDeploymentCard.vue'
-
-import { useTeamSafes } from '@/composables/safe'
+import { useTeamStore } from '@/stores'
 
 import { type Address } from 'viem'
 
 const route = useRoute()
-
-const { selectedSafe } = useTeamSafes()
-
-watch(
-  selectedSafe,
-  (newVal) => {
-    console.log('selectedSafe:', newVal)
-  },
-  { immediate: true }
-)
+const teamStore = useTeamStore()
 
 const isLoadingSafe = ref(false)
 
