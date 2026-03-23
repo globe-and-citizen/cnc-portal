@@ -40,7 +40,7 @@ Welcome to the CNC Portal documentation. This directory contains comprehensive d
 **New to the project?**
 
 - 📖 [Getting Started](#-getting-started) - Start here
-- 📋 [Project Charter](./01_PROJECT_CHARTER.md) - Vision, scope, objectives and milestones
+- 📋 [Project Charter](./01_PROJECT_CHARTER.md) - Vision, scope, objectives, and milestones
 - 🏗️ [Architecture Overview](./platform/architecture.md) - Understand the system
 - 🔐 [Authentication](./auth/README.md) - How users authenticate
 - 📊 [Statistics Feature](./features/stats/functional-specification.md) - Example feature
@@ -74,7 +74,7 @@ The [Project Charter](./01_PROJECT_CHARTER.md) is the authoritative reference fo
 
 ---
 
-## �📚 Documentation Structure
+## 📚 Documentation Structure
 
 ```
 docs/
@@ -303,7 +303,7 @@ Each feature specification should follow this structure:
 
 - Use your IDE's search function to find specific topics
 - Check the feature folder for feature-specific documentation
-- Platform-wide standards are in `platform/` directory
+- Platform-wide standards are in the `platform/` directory
 - Look for `README.md` files in each folder for navigation
 
 ---
@@ -318,7 +318,7 @@ Each feature specification should follow this structure:
 
 **Prisma ORM:** Modern database toolkit for TypeScript and Node.js that provides type-safe database access.
 
-**SSR (Server-Side Rendering):** Rendering web pages on the server before sending to client.
+**SSR (Server-Side Rendering):** Rendering web pages on the server before sending to the client.
 
 **OpenAPI/Swagger:** Specification for describing RESTful APIs in a machine-readable format.
 
