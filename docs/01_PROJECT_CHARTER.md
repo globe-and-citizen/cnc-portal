@@ -73,7 +73,7 @@ Deliver an intuitive and secure CNC Portal that makes spinning up and running a 
 | ------------------------ | --------------------------------------------------------------------------------------------- |
 | Contributor compensation | A team can create, approve, and execute a wage or claim end-to-end without off-platform tools |
 | Governance workflow      | A proposal can be created, voted on, and executed fully on-chain via the UI                   |
-| Analytics availability   | Platform statistics are available in real time for any active team                            |
+| Analytics availability   | Platform statistics are available in real-time for any active team                            |
 
 ### 3.2 SMART Objectives Breakdown
 
@@ -142,7 +142,7 @@ Deliver an intuitive and secure CNC Portal that makes spinning up and running a 
 
 - Each member can have wage rates defined in multiple currencies (Native token, USDC, SHER)
 - Maximum hours per week set by admin for each member
-- All claims must be submitted within 7 days of work period
+- All claims must be submitted within 7 days of the work period
 - No claim can contain more than 24 hours in a single submission
 - Multiple claims in a day are rate-limited to prevent abuse
 - Claims must be approved by admin before payment
@@ -153,7 +153,7 @@ Deliver an intuitive and secure CNC Portal that makes spinning up and running a 
 - Expense limits are configurable: no limit, max per transaction, max total, or max count
 - All limits are enforced on-chain
 - Expense validation occurs before submission
-- Rejections return expense to draft state for member editing
+- Rejections return the expense to draft state for member editing
 - All reimbursements are final on-chain transactions
 
 ### 4.2 Governance Rules
@@ -172,7 +172,7 @@ Deliver an intuitive and secure CNC Portal that makes spinning up and running a 
 - Each member gets one vote per election
 - Member can vote for up to N candidates (where N = number of seats)
 - Top N vote-getters become board members
-- Ties for final seat trigger tie-breaking mechanism
+- Ties for the final seat trigger the tie-breaking mechanism
 - BOD roles are updated on-chain immediately after election ends
 - Previous BOD is replaced entirely (not incremental)
 
@@ -189,9 +189,9 @@ Deliver an intuitive and secure CNC Portal that makes spinning up and running a 
 **Team Ownership**
 
 - Team creator is automatically the owner/admin
-- Owners cannot be removed unless promoted another admin first
+- Owners cannot be removed unless promoted to another admin first
 - Only owners can change team settings (name, description, contract)
-- Members can leave team unless they are sole owner
+- Members can leave the team unless they are sole owner
 
 **Member Roles**
 
@@ -201,7 +201,7 @@ Deliver an intuitive and secure CNC Portal that makes spinning up and running a 
 **Invitations**
 
 - Invitations are one-time use and expire after 7 days
-- Invited users must accept to join team (auto-join not allowed)
+- Invited users must accept to join the team (auto-join not allowed)
 - Cannot invite non-existent users
 - Duplicate invitations are rejected
 
