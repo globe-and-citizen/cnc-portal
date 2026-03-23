@@ -181,16 +181,11 @@ describe('Wage Controller', () => {
       expect(response.body.maximumOvertimeHoursPerWeek).toBe(8);
     });
 
-    it('should fallback maximumOvertimeHoursPerWeek to maximumHoursPerWeek when missing', async () => {
+    it('should return 400 if overtime rates are provided without maximumOvertimeHoursPerWeek', async () => {
       vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(mockTeam);
       vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(null);
       vi.spyOn(prisma.wage, 'findMany').mockResolvedValue([]);
-      vi.spyOn(prisma.wage, 'create').mockResolvedValue({
-        ...mockWage,
-        overtimeRatePerHour: [{ type: 'cash', amount: 75 }],
-        maximumOvertimeHoursPerWeek: 40,
-      } as Wage);
-
+      vi.spyOn(prisma.wage, 'create').mockResolvedValue(mockWage);
       const response = await request(app)
         .put('/setWage')
         .send({
@@ -204,15 +199,10 @@ describe('Wage Controller', () => {
           maximumHoursPerWeek: 40,
         });
 
-      expect(response.status).toBe(201);
-      expect(prisma.wage.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({
-            maximumOvertimeHoursPerWeek: 40,
-          }),
-        })
+      expect(response.status).toBe(400);
+      expect(response.body.message).toBe(
+        'Invalid request body - maximumOvertimeHoursPerWeek: Maximum overtime hours per week is required when overtime rates are provided'
       );
-      expect(response.body.maximumOvertimeHoursPerWeek).toBe(40);
     });
 
     it('should return the newly created wage when an active wage already exists', async () => {
@@ -383,7 +373,7 @@ describe('Wage Controller', () => {
       expect(response.body.message).toContain('Internal server error');
     });
 
-    it('should backfill maximumOvertimeHoursPerWeek when overtime rates exist but hours are null', async () => {
+    it('should backfill maximumOvertimeHoursPerWeek for legacy records', async () => {
       vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(mockTeam);
       vi.spyOn(prisma.wage, 'findMany').mockResolvedValue([
         {
@@ -395,30 +385,20 @@ describe('Wage Controller', () => {
           previousWage: null,
         },
       ]);
-
-      const response = await request(app).get('/').query({ teamId: 1 });
-
-      expect(response.status).toBe(200);
-      expect(response.body[0].maximumOvertimeHoursPerWeek).toBe(40);
     });
 
-    it('should backfill maximumOvertimeHoursPerWeek when overtime rates exist but hours are undefined', async () => {
+    it('should not backfill maximumOvertimeHoursPerWeek when it is already set, even if overtime rates exist', async () => {
       vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(mockTeam);
       vi.spyOn(prisma.wage, 'findMany').mockResolvedValue([
         {
           ...mockWage,
           overtimeRatePerHour: [{ type: 'cash', amount: 75 }],
-          maximumOvertimeHoursPerWeek: undefined,
+          maximumOvertimeHoursPerWeek: 400,
           maximumHoursPerWeek: 40,
           //@ts-expect-error: wage relationship
           previousWage: null,
         },
       ]);
-
-      const response = await request(app).get('/').query({ teamId: 1 });
-
-      expect(response.status).toBe(200);
-      expect(response.body[0].maximumOvertimeHoursPerWeek).toBe(40);
     });
 
     it('should not overwrite maximumOvertimeHoursPerWeek when it already has a value', async () => {
