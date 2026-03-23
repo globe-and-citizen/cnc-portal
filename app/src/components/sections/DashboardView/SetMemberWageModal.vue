@@ -34,7 +34,7 @@
 
       <template #body>
         <div class="space-y-4 mt-1">
-          <UStepper v-if="wageData.enableOvertimeRules" :items="items" v-model="currentStep" />
+          <UStepper :items="items" v-model="currentStep" />
 
           <SetMemberWageStandardStep
             v-if="currentStep === 0"
@@ -105,7 +105,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import SetMemberWageStandardStep from './SetMemberWageStandardStep.vue'
 import SetMemberWageOvertimeStep from './SetMemberWageOvertimeStep.vue'
 import { useSetMemberWageMutation } from '@/queries/wage.queries'
@@ -113,16 +113,6 @@ import type { Member, Wage } from '@/types'
 import type { AxiosError } from 'axios'
 
 import type { StepperItem } from '@nuxt/ui'
-
-const items = ref<StepperItem[]>([
-  {
-    title: 'Standard wage '
-  },
-
-  {
-    title: 'Overtime wage'
-  }
-])
 
 const currentStep = ref(0)
 type WageStepRef = {
@@ -184,6 +174,11 @@ const initialWage = (): WageWithForm => {
       }
 }
 const wageData = ref<WageWithForm>(initialWage())
+const items = computed<StepperItem[]>(() =>
+  wageData.value.enableOvertimeRules
+    ? [{ title: 'Standard wage' }, { title: 'Overtime wage' }]
+    : [{ title: 'Standard wage' }]
+)
 const standardStepRef = ref<WageStepRef | null>(null)
 const overtimeStepRef = ref<WageStepRef | null>(null)
 
