@@ -174,7 +174,7 @@
 - [ ] Invited user receives notification
 - [ ] User can accept/decline invitation
 - [ ] Accepted users appear in member list
-- [ ] Declined invitations don't add member
+- [ ] Declined invitations don't add members
 - [ ] Admin can view pending invitations
 
 **Priority:** P1 (Critical)  
@@ -244,7 +244,7 @@
 - [ ] Can set rates in multiple currencies: Native token, USDC, SHER
 - [ ] Each rate is per-hour amount
 - [ ] Can set maximum hours per week
-- [ ] Save button disabled until all required fields filled
+- [ ] Save button disabled until all required fields are filled
 - [ ] Wage stored on-chain
 - [ ] Success toast: "Wage set for [Member Name]"
 - [ ] Admin can edit/update wages for existing members
@@ -473,7 +473,7 @@
 
 **As a** team admin  
 **I want to** view expense reports
-**So that** I can track spending by member, category, period
+**So that** I can track spending by member, category, and period
 
 **Acceptance Criteria:**
 
@@ -594,7 +594,7 @@
 
 **Acceptance Criteria:**
 
-- [ ] System detects if tie exists for final seat
+- [ ] System detects if a tie exists for final seat
 - [ ] Tie-breaking options:
   - Admin override (admin votes for tied candidate)
   - Secondary vote (only tied candidates voted again)
