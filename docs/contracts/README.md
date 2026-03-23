@@ -147,7 +147,7 @@ Multi-signature governance contract. Board members approve actions that auto-exe
 
 **Features**:
 
-- Board membership set by Elections contract
+- Board membership set by the Elections contract
 - Any board member can propose an encoded action
 - Majority (>50%) approval required for execution
 - Auto-executes approved actions against any target contract
@@ -279,7 +279,7 @@ Linear ERC20 token vesting with cliff periods, organized by teams.
 - Team-based: each team has an owner, token, and member list
 - Cliff period: no tokens releasable until cliff elapses
 - Linear vesting: tokens unlock proportionally after cliff
-- Team owner can stop vesting: releasable tokens go to member, unvested tokens return to owner
+- Team owner can stop vesting: releasable tokens go to the member, unvested tokens return to owner
 - Archived history of stopped vestings per member/team
 - Upgradeable, Pausable, ReentrancyGuard
 
