@@ -116,7 +116,7 @@
                 :member="{ name: row.name, address: row.address }"
                 :teamId="teamId"
               />
-              <SetMemberWageModalCopy
+              <SetMemberWageModal
                 :member="{ name: row.name, address: row.address }"
                 :teamId="teamId"
                 :wage="teamWageByAddress.get(row.address)"
@@ -145,7 +145,7 @@ import type { Address } from 'viem'
 import { NETWORK } from '@/constant'
 import DeleteMemberModal from '@/components/sections/DashboardView/DeleteMemberModal.vue'
 import type { Wage } from '@/types'
-import SetMemberWageModalCopy from './SetMemberWageModalCopy.vue'
+import SetMemberWageModal from './SetMemberWageModal.vue'
 
 const userDataStore = useUserDataStore()
 const toastStore = useToastStore()
