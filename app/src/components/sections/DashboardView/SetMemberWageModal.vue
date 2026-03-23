@@ -109,8 +109,9 @@ import { ref, computed } from 'vue'
 import SetMemberWageStandardStep from './SetMemberWageStandardStep.vue'
 import SetMemberWageOvertimeStep from './SetMemberWageOvertimeStep.vue'
 import { useSetMemberWageMutation } from '@/queries/wage.queries'
-import type { Member, Wage } from '@/types'
+import type { Member, Wage, WageWithForm } from '@/types'
 import type { AxiosError } from 'axios'
+import { normalizeRatePerHour, buildRatePayload } from '@/utils'
 
 import type { StepperItem } from '@nuxt/ui'
 
@@ -128,27 +129,6 @@ const props = defineProps<{
 const emits = defineEmits<{ wageUpdated: [] }>()
 
 const showModal = ref(false)
-const requiredRateTypes = ['native', 'usdc', 'sher'] as const
-
-type RatePerHourWithEnabled = Wage['ratePerHour'][number] & { enabled: boolean }
-
-const normalizeRatePerHour = (rates?: Wage['ratePerHour'] | null): RatePerHourWithEnabled[] => {
-  return requiredRateTypes.map((type) => {
-    const existingRate = rates?.find((rate) => rate.type === type)
-
-    return {
-      type,
-      amount: existingRate?.amount ?? 0,
-      enabled: existingRate ? existingRate.amount > 0 : false
-    }
-  })
-}
-
-export type WageWithForm = Omit<Wage, 'ratePerHour' | 'overtimeRatePerHour'> & {
-  enableOvertimeRules: boolean
-  ratePerHour: RatePerHourWithEnabled[]
-  overtimeRatePerHour: RatePerHourWithEnabled[]
-}
 
 const initialWage = (): WageWithForm => {
   return props.wage
@@ -187,12 +167,6 @@ const toast = useToast()
 const { mutate: executeSetWage, error: setWageError } = useSetMemberWageMutation()
 
 const isSaving = ref(false)
-
-const buildRatePayload = (rates: RatePerHourWithEnabled[]) => {
-  return rates
-    .filter((rate) => rate.enabled && Number(rate.amount) > 0)
-    .map((rate) => ({ type: rate.type, amount: Number(rate.amount) }))
-}
 
 const handleCancel = () => {
   isSaving.value = false

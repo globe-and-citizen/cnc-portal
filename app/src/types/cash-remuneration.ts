@@ -86,3 +86,11 @@ export interface WeeklyClaim {
 
 export type RateFormKey = 'hourlyRate' | 'hourlyRateUsdc' | 'hourlyRateToken'
 export type RateToggleKey = 'nativeEnabled' | 'usdcEnabled' | 'sherEnabled'
+
+export type RatePerHourWithEnabled = RatePerHour & { enabled: boolean }
+
+export type WageWithForm = Omit<Wage, 'ratePerHour' | 'overtimeRatePerHour'> & {
+  enableOvertimeRules: boolean
+  ratePerHour: RatePerHourWithEnabled[]
+  overtimeRatePerHour: RatePerHourWithEnabled[]
+}
