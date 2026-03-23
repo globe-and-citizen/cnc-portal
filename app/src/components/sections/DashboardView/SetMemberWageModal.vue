@@ -61,7 +61,11 @@
               v-if="props.wage"
               color="error"
               size="lg"
-              @click="handleResetWage"
+              @click="
+                () => {
+                  wageData = initialWage()
+                }
+              "
               data-test="reset-wage-button"
             >
               Reset Wage
@@ -81,14 +85,18 @@
                 v-else
                 variant="outline"
                 size="lg"
-                @click="handleBackStep"
+                @click="
+                  () => {
+                    currentStep = 0
+                  }
+                "
                 data-test="back-wage-button"
               >
                 ← Back
               </UButton>
               <UButton
-                :loading="isSaving"
-                :disabled="isSaving"
+                :loading="isPending"
+                :disabled="isPending"
                 color="success"
                 size="lg"
                 @click="handlePrimaryAction"
@@ -164,31 +172,15 @@ const overtimeStepRef = ref<WageStepRef | null>(null)
 
 const toast = useToast()
 
-const { mutate: executeSetWage, error: setWageError } = useSetMemberWageMutation()
-
-const isSaving = ref(false)
+const { mutate: executeSetWage, error: setWageError, isPending } = useSetMemberWageMutation()
 
 const handleCancel = () => {
-  isSaving.value = false
   showModal.value = false
   currentStep.value = 0
 }
 
-const validateCurrentStep = () => {
-  if (currentStep.value === 0) {
-    return standardStepRef.value?.validateForm() ?? false
-  }
-
-  return overtimeStepRef.value?.validateForm() ?? false
-}
 
 const submitWage = () => {
-  if (isSaving.value) {
-    return
-  }
-
-  isSaving.value = true
-
   executeSetWage(
     {
       body: {
@@ -212,12 +204,17 @@ const submitWage = () => {
       },
       onError: (error: AxiosError) => {
         console.error('Error setting member wage:', error)
-      },
-      onSettled: () => {
-        isSaving.value = false
       }
     }
   )
+}
+
+const validateCurrentStep = () => {
+  if (currentStep.value === 0) {
+    return standardStepRef.value?.validateForm() ?? false
+  }
+
+  return overtimeStepRef.value?.validateForm() ?? false
 }
 
 const handlePrimaryAction = async () => {
@@ -233,11 +230,4 @@ const handlePrimaryAction = async () => {
   submitWage()
 }
 
-const handleResetWage = () => {
-  wageData.value = initialWage()
-}
-
-const handleBackStep = () => {
-  currentStep.value = 0
-}
 </script>
