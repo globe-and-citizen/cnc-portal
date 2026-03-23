@@ -85,11 +85,11 @@ In the `./backend` folder, create a `.env` file with the following variables:
 
 #### Constants
 
-First, go to ./app folder and run `npm run git:ignore-locally`. This command will ignore changes made to the deployed_addresses of the local hardhat network ensuring no conflict.
+First, go to the ./app folder and run `npm run git:ignore-locally`. This command will ignore changes made to the deployed_addresses of the local hardhat network ensuring no conflict.
 
 Go to the ./contract folder and run `npm run moveConstants`
 
-This action will copy your deployed_addresses from different chains to `src/artifacts/deployed_addresses` directory and imports these constants in `src/constant/index.ts`.
+This action will copy your deployed_addresses from different chains to `src/artifacts/deployed_addresses` directory and import these constants in `src/constant/index.ts`.
 
 #### Environment variables
 
@@ -97,7 +97,7 @@ In the `./app` folder, create a `.env` file with the following variable:
 
 - **VITE_APP_BACKEND_URL**: The URL for the backend API. Example:
   `VITE_APP_BACKEND_URL=http://localhost:8000`
-- **VITE_APP_ETHERSCAN_URL**: The URL to see transaction detail. Example:
+- **VITE_APP_ETHERSCAN_URL**: The URL to see transaction details. Example:
   `VITE_APP_ETHERSCAN_URL=https://sepolia.etherscan.io`
 - **_VITE_APP_NETWORK_ALIAS_**: The string identifier of an EVM compatible network that the app uses. Example: `VITE_APP_NETWORK_ALIAS=polygon`. This variable is optional but if you don't set your own network parameters it has to be provided. Use this if you want to use one of the preset networks which the application provides. Available options are:
   1. `etherem` - The Ethereum Main Network
@@ -118,8 +118,8 @@ In the `./app` folder, create a `.env` file with the following variable:
 1. Go to `/app` folder by doing `cd app`
 2. Run `VITE_APP_NETWORK_ALIAS=hardhat npm run dev` just for building cache
 3. Run `npm run test:build:cache` to build cache. This allows you to skip the wallet installation and setup steps, which can be quite time-consuming
-4. Kill terminal that run the Vue App
-5. Run `anvil --load-state ./local-node-state.json` to run local node for e2e testing.
+4. Kill the terminal that runs the Vue App
+5. Run `anvil --load-state ./local-node-state.json` to run a local node for e2e testing.
 6. Run `npm run test` to run the tests.
 7. Or run `npm run test:headless` to run tests in headless mode
 
@@ -127,7 +127,7 @@ In the `./app` folder, create a `.env` file with the following variable:
 
 ### 1- Run Docker containers
 
-In the root directory run
+In the root directory, run
 
 ```bash
 docker compose up --build
