@@ -18,6 +18,8 @@ export interface Wage {
   teamId: number
   userAddress: Address
   ratePerHour: RatePerHour[]
+  overtimeRatePerHour?: RatePerHour[] | null
+  maximumOvertimeHoursPerWeek?: number
   cashRatePerHour?: number //@deprecated use ratePerHour instead
   tokenRatePerHour?: number //@deprecated use ratePerHour instead
   usdcRatePerHour?: number //@deprecated use ratePerHour instead
@@ -80,90 +82,7 @@ export interface WeeklyClaim {
   member?: User
 }
 
-// export interface ClaimResponse {
-//   id: number
-//   status: 'pending' | 'signed' | 'withdrawn' | 'disabled' // Assuming these are the possible statuses
-//   hoursWorked: number
-//   signature: string | null
-//   tokenTx: string | null
-//   wageId: number
-//   createdAt: string // ISO date string
-//   updatedAt: string // ISO date string
+// --- Wage Form Types (used by SetMemberWageModal) ---
 
-//   wage: Wage
-
-//   // createdAt: string | Date | number
-//   // address: string
-//   // id: number
-//   // hoursWorked: number
-//   // hourlyRate: string
-//   // name: string | null
-//   // status: string
-//   // cashRemunerationSignature: string | null
-// }
-
-// export interface WageResponse {
-//   userAddress: Address
-//   maximumHoursPerWeek: number
-//   ratePerHour?: Array<{ type: string; amount: number }>
-//   cashRatePerHour: number
-//   tokenRatePerHour?: number
-//   usdcRatePerHour?: number
-//   sherRatePerHour?: number
-// }
-
-// export type CRSignClaim = Pick<
-//   ClaimResponse,
-//   'id' | 'status' | 'hoursWorked' | 'createdAt' | 'signature'
-// > & {
-//   wage: {
-//     ratePerHour: RatePerHour
-//     userAddress: Address
-//   }
-// }
-
-// export type WeeklyClaimResponse = {
-//   id: number
-//   status: 'signed' | 'withdrawn' | 'pending'
-//   weekStart: string
-//   data: {
-//     ownerAddress: Address
-//   }
-//   memberAddress: Address
-//   teamId: 2
-//   signature: null
-//   wageId: 2
-//   createdAt: string
-//   updatedAt: string
-//   wage: {
-//     id: number
-//     teamId: number
-//     userAddress: Address
-//     ratePerHour: RatePerHour
-//     cashRatePerHour: number
-//     tokenRatePerHour: number
-//     usdcRatePerHour: number
-//     maximumHoursPerWeek: number
-//     nextWageId: number | null
-//     createdAt: string
-//     updatedAt: string
-//   }
-//   claims: {
-//     id: number
-//     status: 'pending' | 'signed' | 'withdrawn' | 'disabled'
-//     hoursWorked: number
-//     dayWorked: string
-//     memo: string
-//     signature: string | null
-//     tokenTx: string | null
-//     wageId: number
-//     weeklyClaimId: number
-//     createdAt: string
-//     updatedAt: string
-//   }[]
-//   member: {
-//     address: Address
-//     name: string
-//     imageUrl: string
-//   }
-// }[]
+export type RateFormKey = 'hourlyRate' | 'hourlyRateUsdc' | 'hourlyRateToken'
+export type RateToggleKey = 'nativeEnabled' | 'usdcEnabled' | 'sherEnabled'

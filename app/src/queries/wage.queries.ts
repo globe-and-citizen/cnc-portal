@@ -60,6 +60,10 @@ export interface SetWageBody {
   userAddress: string
   /** Rate per hour for different token types */
   ratePerHour: Array<{ type: string; amount: number }>
+  /** Optional overtime rates applied after the weekly threshold */
+  overtimeRatePerHour?: Array<{ type: string; amount: number }> | null
+  /** Optional overtime allowance in hours per week */
+  maximumOvertimeHoursPerWeek?: number | null
   /** Maximum hours allowed per week */
   maximumHoursPerWeek: number
 }
