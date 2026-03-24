@@ -179,7 +179,6 @@ const handleCancel = () => {
   currentStep.value = 0
 }
 
-
 const submitWage = () => {
   executeSetWage(
     {
@@ -229,5 +228,4 @@ const handlePrimaryAction = async () => {
 
   submitWage()
 }
-
 </script>
