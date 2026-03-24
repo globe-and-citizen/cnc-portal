@@ -34,7 +34,7 @@
 
       <template #body>
         <div class="space-y-4 mt-1">
-          <UStepper v-if="wageData.enableOvertimeRules" :items="items" v-model="currentStep" />
+          <UStepper :items="items" v-model="currentStep" />
 
           <SetMemberWageStandardStep
             v-if="currentStep === 0"
@@ -61,7 +61,11 @@
               v-if="props.wage"
               color="error"
               size="lg"
-              @click="handleResetWage"
+              @click="
+                () => {
+                  wageData = initialWage()
+                }
+              "
               data-test="reset-wage-button"
             >
               Reset Wage
@@ -81,14 +85,18 @@
                 v-else
                 variant="outline"
                 size="lg"
-                @click="handleBackStep"
+                @click="
+                  () => {
+                    currentStep = 0
+                  }
+                "
                 data-test="back-wage-button"
               >
                 ← Back
               </UButton>
               <UButton
-                :loading="isSaving"
-                :disabled="isSaving"
+                :loading="isPending"
+                :disabled="isPending"
                 color="success"
                 size="lg"
                 @click="handlePrimaryAction"
@@ -105,24 +113,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import SetMemberWageStandardStep from './SetMemberWageStandardStep.vue'
 import SetMemberWageOvertimeStep from './SetMemberWageOvertimeStep.vue'
 import { useSetMemberWageMutation } from '@/queries/wage.queries'
-import type { Member, Wage } from '@/types'
+import type { Member, Wage, WageWithForm } from '@/types'
 import type { AxiosError } from 'axios'
+import { normalizeRatePerHour, buildRatePayload } from '@/utils'
 
 import type { StepperItem } from '@nuxt/ui'
-
-const items = ref<StepperItem[]>([
-  {
-    title: 'Standard wage '
-  },
-
-  {
-    title: 'Overtime wage'
-  }
-])
 
 const currentStep = ref(0)
 type WageStepRef = {
@@ -138,27 +137,6 @@ const props = defineProps<{
 const emits = defineEmits<{ wageUpdated: [] }>()
 
 const showModal = ref(false)
-const requiredRateTypes = ['native', 'usdc', 'sher'] as const
-
-type RatePerHourWithEnabled = Wage['ratePerHour'][number] & { enabled: boolean }
-
-const normalizeRatePerHour = (rates?: Wage['ratePerHour'] | null): RatePerHourWithEnabled[] => {
-  return requiredRateTypes.map((type) => {
-    const existingRate = rates?.find((rate) => rate.type === type)
-
-    return {
-      type,
-      amount: existingRate?.amount ?? 0,
-      enabled: existingRate ? existingRate.amount > 0 : false
-    }
-  })
-}
-
-export type WageWithForm = Omit<Wage, 'ratePerHour' | 'overtimeRatePerHour'> & {
-  enableOvertimeRules: boolean
-  ratePerHour: RatePerHourWithEnabled[]
-  overtimeRatePerHour: RatePerHourWithEnabled[]
-}
 
 const initialWage = (): WageWithForm => {
   return props.wage
@@ -184,42 +162,27 @@ const initialWage = (): WageWithForm => {
       }
 }
 const wageData = ref<WageWithForm>(initialWage())
+const items = computed<StepperItem[]>(() =>
+  wageData.value.enableOvertimeRules
+    ? [{ title: 'Standard wage' }, { title: 'Overtime wage' }]
+    : [{ title: 'Standard wage' }]
+)
 const standardStepRef = ref<WageStepRef | null>(null)
 const overtimeStepRef = ref<WageStepRef | null>(null)
 
 const toast = useToast()
 
-const { mutate: executeSetWage, error: setWageError } = useSetMemberWageMutation()
-
-const isSaving = ref(false)
-
-const buildRatePayload = (rates: RatePerHourWithEnabled[]) => {
-  return rates
-    .filter((rate) => rate.enabled && Number(rate.amount) > 0)
-    .map((rate) => ({ type: rate.type, amount: Number(rate.amount) }))
-}
+const { mutate: executeSetWage, error: setWageError, isPending } = useSetMemberWageMutation()
 
 const handleCancel = () => {
-  isSaving.value = false
   showModal.value = false
   currentStep.value = 0
 }
 
-const validateCurrentStep = () => {
-  if (currentStep.value === 0) {
-    return standardStepRef.value?.validateForm() ?? false
-  }
-
-  return overtimeStepRef.value?.validateForm() ?? false
-}
-
 const submitWage = () => {
-  if (isSaving.value) {
+  if (isPending.value) {
     return
   }
-
-  isSaving.value = true
-
   executeSetWage(
     {
       body: {
@@ -243,12 +206,17 @@ const submitWage = () => {
       },
       onError: (error: AxiosError) => {
         console.error('Error setting member wage:', error)
-      },
-      onSettled: () => {
-        isSaving.value = false
       }
     }
   )
+}
+
+const validateCurrentStep = () => {
+  if (currentStep.value === 0) {
+    return standardStepRef.value?.validateForm() ?? false
+  }
+
+  return overtimeStepRef.value?.validateForm() ?? false
 }
 
 const handlePrimaryAction = async () => {
@@ -262,13 +230,5 @@ const handlePrimaryAction = async () => {
   }
 
   submitWage()
-}
-
-const handleResetWage = () => {
-  wageData.value = initialWage()
-}
-
-const handleBackStep = () => {
-  currentStep.value = 0
 }
 </script>
