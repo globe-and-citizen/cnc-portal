@@ -44,7 +44,6 @@ const activeTeamId = computed(
 
 const selectedTeam = computed({
   get() {
-    // console.log(' teamItems.value.find((t) => t.id === activeTeamId.value) ',  teamItems.value.find((t) => t.id === activeTeamId.value) )
     return teamItems.value.find((t) => Number(t.id) === Number(activeTeamId.value)) ?? undefined
   },
   set(item: { label: string; id: string } | undefined) {
