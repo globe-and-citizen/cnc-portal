@@ -109,7 +109,7 @@
 <script setup lang="ts">
 import * as z from 'zod'
 import { NETWORK } from '@/constant'
-import type { WageWithForm } from './SetMemberWageModal.vue'
+import type { WageWithForm } from '@/types/cash-remuneration'
 
 const wageData = defineModel<WageWithForm>('wageData', { required: true })
 
