@@ -245,8 +245,8 @@ describe('Claim Controller', () => {
         .send({ teamId: 1, hoursWorked: 45, memo: 'memo' });
 
       expect(response.status).toBe(400);
-      expect(response.body.message).toMatch(
-        /^Maximum weekly hours reached, cannot submit more claims for this week\. You have \d+ hours remaining\.$/
+      expect(response.body.message).toBe(
+        'Maximum weekly hours (including overtime) reached. You have 10 hours remaining.'
       );
     });
 
@@ -566,7 +566,7 @@ describe('Claim Controller', () => {
       });
       expect(response.status).toBe(400);
       expect(response.body.message).toMatch(
-        /Maximum weekly hours reached, cannot update claim\. You have \d+ hours remaining for this week\./
+        'Maximum weekly hours (including overtime) reached. You have 2 hours remaining for this week.'
       );
     });
 
