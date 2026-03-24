@@ -19,6 +19,8 @@
       v-if="cashRemunerationAddress"
       :address="cashRemunerationAddress"
     />
+
+      <MemberSection />
     <CRWeeklyClaimOwnerHeader />
 
     <ContractOwnerCard v-if="cashRemunerationAddress" :contractAddress="cashRemunerationAddress" />
