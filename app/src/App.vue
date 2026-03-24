@@ -22,6 +22,9 @@
                       trailing-icon="heroicons:arrow-right-start-on-rectangle"
                     />
                   </template>
+                  <template #trailing>
+                    <TeamSelectMenu />
+                  </template>
                   <template #right>
                     <NavBar />
                   </template>
@@ -52,6 +55,7 @@ import { RouterView, useRoute } from 'vue-router'
 
 import LockScreen from '@/components/LockScreen.vue'
 import NavBar from '@/components/NavBar.vue'
+import TeamSelectMenu from '@/components/TeamSelectMenu.vue'
 import ToastContainer from '@/components/ToastContainer.vue'
 import SidebarLayout from '@/components/ui/SidebarLayout.vue'
 
