@@ -15,7 +15,7 @@
       </template>
     </UAlert>
 
-    <UForm :schema="schema" :state="wageData" class="space-y-4">
+    <UForm ref="formRef" :schema="schema" :state="wageData" class="space-y-4">
       <UFormField name="maximumOvertimeHoursPerWeek">
         <UInput
           v-model="wageData.maximumOvertimeHoursPerWeek"
@@ -108,6 +108,7 @@
 
 <script setup lang="ts">
 import * as z from 'zod'
+import { ref } from 'vue'
 import { NETWORK } from '@/constant'
 import type { WageWithForm } from '@/types/cash-remuneration'
 
@@ -166,7 +167,16 @@ const formatRate = (type: string, amount: number) => {
   return `${amount} ${label}/hr`
 }
 
-const validateForm = () => schema.safeParse(wageData.value).success
+const formRef = ref<{ validate: () => Promise<void> } | null>(null)
+
+const validateForm = async (): Promise<boolean> => {
+  try {
+    await formRef.value?.validate()
+    return true
+  } catch {
+    return false
+  }
+}
 
 defineExpose({ validateForm })
 </script>

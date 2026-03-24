@@ -125,7 +125,7 @@ import type { StepperItem } from '@nuxt/ui'
 
 const currentStep = ref(0)
 type WageStepRef = {
-  validateForm: () => boolean
+  validateForm: () => Promise<boolean>
 }
 
 const props = defineProps<{
@@ -211,16 +211,16 @@ const submitWage = () => {
   )
 }
 
-const validateCurrentStep = () => {
+const validateCurrentStep = async () => {
   if (currentStep.value === 0) {
-    return standardStepRef.value?.validateForm() ?? false
+    return (await standardStepRef.value?.validateForm()) ?? false
   }
 
-  return overtimeStepRef.value?.validateForm() ?? false
+  return (await overtimeStepRef.value?.validateForm()) ?? false
 }
 
 const handlePrimaryAction = async () => {
-  if (!validateCurrentStep()) {
+  if (!await validateCurrentStep()) {
     return
   }
 

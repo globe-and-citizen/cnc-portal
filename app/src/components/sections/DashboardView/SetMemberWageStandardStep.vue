@@ -1,6 +1,6 @@
 <template>
   <div class="space-y-4" data-test="standard-wage-step">
-    <UForm :schema="schema" :state="wageData" class="space-y-4">
+    <UForm ref="formRef" :schema="schema" :state="wageData" class="space-y-4">
       <UFormField name="maximumHoursPerWeek">
         <UInput
           v-model="wageData.maximumHoursPerWeek"
@@ -77,6 +77,7 @@
 
 <script setup lang="ts">
 import * as z from 'zod'
+import { ref } from 'vue'
 import { NETWORK } from '@/constant'
 import type { WageWithForm } from '@/types/cash-remuneration'
 
@@ -129,7 +130,16 @@ const schema = z.object({
     })
 })
 
-const validateForm = () => schema.safeParse(wageData.value).success
+const formRef = ref<{ validate: () => Promise<void> } | null>(null)
+
+const validateForm = async (): Promise<boolean> => {
+  try {
+    await formRef.value?.validate()
+    return true
+  } catch {
+    return false
+  }
+}
 
 defineExpose({ validateForm })
 </script>
