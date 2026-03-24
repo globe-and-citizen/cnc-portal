@@ -103,7 +103,4 @@ const { imageUrl } = storeToRefs(userStore)
   animation: fadeIn 0.2s ease-out;
 }
 
-/* *{
-  border: 1px solid red !important;
-} */
 </style>
