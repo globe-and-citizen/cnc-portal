@@ -62,5 +62,5 @@ watch(teamItems, (items) => {
     teamStore.setCurrentTeamId(first.id)
     router.push(`/teams/${first.id}`)
   }
-})
+}, { immediate: true })
 </script>
