@@ -1,9 +1,23 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { mount } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
 import { defineComponent, h } from 'vue'
 import SetMemberWageModal from '../SetMemberWageModal.vue'
 import { useSetMemberWageMutation } from '@/queries/wage.queries'
-import { createMockMutationResponse, mountWithProviders } from '@/tests/mocks'
+import { createMockMutationResponse } from '@/tests/mocks'
+
+// UModal teleports its header/body slots to <body> by default, making them
+// invisible to wrapper.find(). Intercepting the resolved module path from the
+// @nuxt/ui/vite auto-import allows wrapper.find() to work for all modal content.
+vi.mock('@nuxt/ui/components/Modal.vue', () => ({
+  default: {
+    name: 'UModal',
+    props: { open: { type: Boolean, default: false }, ui: Object },
+    emits: ['update:open'],
+    template:
+      '<div><slot /><div v-if="open"><slot name="header" /><slot name="body" /></div></div>'
+  }
+}))
 
 const mockMember = { address: '0x123', name: 'Alice' }
 const mockTeamId = 1
@@ -27,7 +41,7 @@ const mockWage = {
   updatedAt: ''
 }
 
-describe.skip('SetMemberWageModal', () => {
+describe('SetMemberWageModal', () => {
   let standardStepIsValid = true
   let overtimeStepIsValid = true
   let mutateSpy: ReturnType<typeof vi.fn>
@@ -55,7 +69,7 @@ describe.skip('SetMemberWageModal', () => {
   })
 
   const createWrapper = (props = {}) =>
-    mountWithProviders(SetMemberWageModal, {
+    mount(SetMemberWageModal, {
       props: {
         member: mockMember,
         teamId: mockTeamId,
@@ -230,11 +244,9 @@ describe.skip('SetMemberWageModal', () => {
 
   it('shows an error alert when the mutation returns an error', async () => {
     vi.mocked(useSetMemberWageMutation).mockReturnValueOnce(
-      createMockMutationResponse(
-        null,
-        false,
-        new Error('Network error')
-      ) as ReturnType<typeof useSetMemberWageMutation>
+      createMockMutationResponse(null, false, new Error('Network error')) as ReturnType<
+        typeof useSetMemberWageMutation
+      >
     )
 
     const wrapper = createWrapper()
