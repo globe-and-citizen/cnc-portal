@@ -61,7 +61,7 @@ watch(
     const first = items[0]
     if (!activeTeamId.value && first) {
       teamStore.setCurrentTeamId(first.id)
-      router.push(`/teams/${first.id}`)
+      // router.push(`/teams/${first.id}`)
     }
   },
   { immediate: true }
