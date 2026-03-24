@@ -102,5 +102,4 @@ const { imageUrl } = storeToRefs(userStore)
 .dropdown-content {
   animation: fadeIn 0.2s ease-out;
 }
-
 </style>
