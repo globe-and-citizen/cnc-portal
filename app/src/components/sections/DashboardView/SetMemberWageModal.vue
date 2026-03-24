@@ -180,6 +180,9 @@ const handleCancel = () => {
 }
 
 const submitWage = () => {
+  if (!isPending.value) {
+    return
+  }
   executeSetWage(
     {
       body: {
