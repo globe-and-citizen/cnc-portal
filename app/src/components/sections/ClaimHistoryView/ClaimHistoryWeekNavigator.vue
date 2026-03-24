@@ -125,35 +125,85 @@ const selectWeekWeelyClaim = computed(() => {
 
 // Bar chart configuration
 const barChartOption = computed(() => {
-  const data: number[] = []
+  const regularData: { value: number; itemStyle: object }[] = []
+  const overtimeData: number[] = []
   const labels: string[] = []
   const weekStart = dayjs(internalSelectedWeek.value.isoString).utc().startOf('isoWeek')
+  const maxRegularHours = selectWeekWeelyClaim.value?.wage?.maximumHoursPerWeek ?? Infinity
+  let cumulativeHours = 0
 
   for (let i = 0; i < 7; i++) {
     const date = weekStart.add(i, 'day')
     labels.push(dayjs(date).format('dd'))
-    const totalHours =
+    const dailyHours =
       selectWeekWeelyClaim.value?.claims
         .filter((claim) => dayjs(date).isSame(dayjs(claim.dayWorked).utc(), 'day'))
         .reduce((sum: number, claim) => sum + claim.hoursWorked, 0) ?? 0
-    data.push(totalHours)
+
+    const regularBefore = Math.min(cumulativeHours, maxRegularHours)
+    const regularAfter = Math.min(cumulativeHours + dailyHours, maxRegularHours)
+    const regularToday = regularAfter - regularBefore
+    const overtimeToday = dailyHours - regularToday
+
+    regularData.push({
+      value: regularToday,
+      itemStyle: {
+        color: '#10B981',
+        borderRadius: overtimeToday > 0 ? [0, 0, 0, 0] : [6, 6, 0, 0]
+      }
+    })
+    overtimeData.push(overtimeToday)
+    cumulativeHours += dailyHours
   }
 
-  const yMax = Math.max(...data) > 0 ? Math.max(...data) : 24
+  const totals = regularData.map((r, i) => r.value + (overtimeData?.[i] ?? 0))
+  const yMax = Math.max(...totals) > 0 ? Math.max(...totals) : 24
+
   return {
     title: { text: 'Hours/Day', left: 'center', textStyle: { fontSize: 14 } },
     grid: { left: '3%', right: '4%', bottom: '8%', containLabel: true },
-    tooltip: { trigger: 'axis', formatter: '{b} : {c} heures' },
+    tooltip: {
+      trigger: 'axis',
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      formatter: (params: any[]) => {
+        const day = params[0]?.name ?? ''
+        const regularH = params[0]?.value ?? 0
+        const overtimeH = params[1]?.value ?? 0
+        const total = regularH + overtimeH
+        if (overtimeH > 0) {
+          return `<b>${day}</b><br/>Regular: ${regularH}h<br/>Overtime: ${overtimeH}h<br/>Total: ${total}h`
+        }
+        return `<b>${day}</b><br/>${total}h`
+      }
+    },
     xAxis: { type: 'category', data: labels, axisTick: { alignWithLabel: true } },
     yAxis: { type: 'value', min: 0, max: yMax, axisLabel: { formatter: '{value} h' } },
     series: [
       {
-        name: 'Heures',
+        name: 'Regular',
         type: 'bar',
+        stack: 'hours',
         barWidth: '50%',
-        data,
-        itemStyle: { color: '#10B981', borderRadius: [6, 6, 0, 0] },
-        label: { show: true, position: 'top', formatter: '{c}h', color: '#374151' }
+        data: regularData,
+        label: { show: false }
+      },
+      {
+        name: 'Overtime',
+        type: 'bar',
+        stack: 'hours',
+        barWidth: '50%',
+        data: overtimeData,
+        itemStyle: { color: '#EF4444', borderRadius: [6, 6, 0, 0] },
+        label: {
+          show: true,
+          position: 'top',
+          color: '#374151',
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          formatter: (params: any) => {
+            const total = totals[params.dataIndex]
+            return `${total}h`
+          }
+        }
       }
     ]
   }
