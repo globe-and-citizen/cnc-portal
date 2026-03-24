@@ -137,20 +137,17 @@ const onFilesUpdate = (newFiles: File[] | File | null | undefined): void => {
   }
 
   // Add only new files to previews
-  const existingFileNames = new Set(previews.value.map((p) => p.fileName))
   for (const file of fileList) {
-    if (!existingFileNames.has(file.name)) {
-      const isImage = isImageFile(file)
-      const previewUrl = URL.createObjectURL(file)
-      previews.value.push({
-        previewUrl,
-        file,
-        isImage,
-        fileName: file.name,
-        fileSize: file.size,
-        fileType: file.type
-      })
-    }
+    const isImage = isImageFile(file)
+    const previewUrl = URL.createObjectURL(file)
+    previews.value.push({
+      previewUrl,
+      file,
+      isImage,
+      fileName: file.name,
+      fileSize: file.size,
+      fileType: file.type
+    })
   }
 
   emitFiles()
