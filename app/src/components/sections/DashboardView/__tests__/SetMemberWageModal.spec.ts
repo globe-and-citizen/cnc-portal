@@ -14,8 +14,7 @@ vi.mock('@nuxt/ui/components/Modal.vue', () => ({
     name: 'UModal',
     props: { open: { type: Boolean, default: false }, ui: Object },
     emits: ['update:open'],
-    template:
-      '<div><slot /><div v-if="open"><slot name="header" /><slot name="body" /></div></div>'
+    template: '<div><slot /><div v-if="open"><slot name="header" /><slot name="body" /></div></div>'
   }
 }))
 
@@ -97,7 +96,10 @@ describe('SetMemberWageModal', () => {
     overtimeStepIsValid = true
     mutateSpy = vi.fn()
 
-    vi.stubGlobal('useToast', vi.fn(() => ({ add: vi.fn() })))
+    vi.stubGlobal(
+      'useToast',
+      vi.fn(() => ({ add: vi.fn() }))
+    )
 
     vi.mocked(useSetMemberWageMutation).mockReturnValue({
       ...createMockMutationResponse(),
