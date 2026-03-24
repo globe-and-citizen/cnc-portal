@@ -80,6 +80,7 @@ const initialWage = (): WageWithForm => {
         id: 0,
         teamId: 0,
         userAddress: '',
+        disabled: false,
         ratePerHour: normalizeRatePerHour(),
         overtimeRatePerHour: normalizeRatePerHour(),
         enableOvertimeRules: false,

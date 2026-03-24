@@ -116,6 +116,18 @@
                 :member="{ name: row.name, address: row.address }"
                 :teamId="teamId"
               />
+              <ButtonUI
+                :variant="teamWageByAddress.get(row.address)?.disabled ? 'success' : 'warning'"
+                :loading="isToggling"
+                :disabled="!teamWageByAddress.get(row.address) || isToggling"
+                :data-test="teamWageByAddress.get(row.address)?.disabled ? 'resume-wage-button' : 'pause-wage-button'"
+                @click="toggleWageStatus(teamWageByAddress.get(row.address)!)"
+              >
+                <IconifyIcon
+                  :icon="teamWageByAddress.get(row.address)?.disabled ? 'heroicons-outline:play' : 'heroicons-outline:pause'"
+                  class="size-5"
+                />
+              </ButtonUI>
               <SetMemberWageModal
                 :member="{ name: row.name, address: row.address }"
                 :teamId="teamId"
@@ -140,7 +152,7 @@ import ButtonUI from '@/components/ButtonUI.vue'
 import CardComponent from '@/components/CardComponent.vue'
 import TableComponent from '@/components/TableComponent.vue'
 import UserComponent from '@/components/UserComponent.vue'
-import { useGetTeamWagesQuery } from '@/queries/wage.queries'
+import { useGetTeamWagesQuery, useToggleWageStatusMutation } from '@/queries/wage.queries'
 import type { Address } from 'viem'
 import { NETWORK } from '@/constant'
 import DeleteMemberModal from '@/components/sections/DashboardView/DeleteMemberModal.vue'
@@ -257,6 +269,19 @@ const teamWageByAddress = computed(() => {
 
   return wages
 })
+
+const { mutate: executeToggleStatus, isPending: isToggling } = useToggleWageStatusMutation()
+
+const toggleWageStatus = (wage: Wage) => {
+  const action = wage.disabled ? 'enable' : 'disable'
+  executeToggleStatus(
+    { pathParams: { wageId: wage.id }, queryParams: { action } },
+    {
+      onSuccess: () => toastStore.addSuccessToast(`Member wage ${action}d successfully`),
+      onError: () => toastStore.addErrorToast(`Failed to ${action} member wage`)
+    }
+  )
+}
 
 const getMemberWageView = (memberAddress: Address): MemberWageView => {
   return memberWageViewByAddress.value.get(memberAddress) ?? EMPTY_MEMBER_WAGE_VIEW

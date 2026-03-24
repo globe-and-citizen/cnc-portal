@@ -88,3 +88,34 @@ export const useSetMemberWageMutation = createMutationHook<void, SetMemberWagePa
   endpoint: 'wage/setWage',
   invalidateKeys: (params) => [wageKeys.team(params.body.teamId)]
 })
+
+// ============================================================================
+// PUT /wage/{wageId} - Toggle wage status (disable / enable)
+// ============================================================================
+
+export type WageAction = 'disable' | 'enable'
+
+export interface ToggleWageStatusParams {
+  pathParams: {
+    /** Wage ID */
+    wageId: number | string
+  }
+  queryParams: {
+    /** Action to perform */
+    action: WageAction
+  }
+}
+
+/**
+ * Disable or enable a member wage
+ *
+ * @endpoint PUT /wage/{wageId}
+ * @pathParams { wageId: number | string }
+ * @queryParams { action: 'disable' | 'enable' }
+ * @body none
+ */
+export const useToggleWageStatusMutation = createMutationHook<void, ToggleWageStatusParams>({
+  method: 'PUT',
+  endpoint: 'wage/{wageId}',
+  invalidateKeys: () => [wageKeys.teams()]
+})
