@@ -6,7 +6,8 @@
     placeholder="Select team"
     by="id"
     class="w-50"
-    icon="i-heroicons-user-group"
+    size="xl"
+    :avatar="selectedTeam?.avatar"
     :search-input="{ placeholder: 'Search team...' }"
   />
 </template>
@@ -29,12 +30,16 @@ const { data: teams, isPending: teamsLoading } = useGetTeamsQuery({
 })
 
 const teamItems = computed(() =>
-  (teams.value ?? []).map((t) => ({ label: t.name, id: t.id }))
+  (teams.value ?? []).map((t) => ({
+    label: t.name,
+    id: t.id,
+    avatar: { text: t.name.charAt(0).toUpperCase() }
+  }))
 )
 
 // The active team id: prefer the route param (most authoritative), then the store
-const activeTeamId = computed(() =>
-  (route.params.id as string | undefined) ?? currentTeamId.value ?? null
+const activeTeamId = computed(
+  () => (route.params.id as string | undefined) ?? currentTeamId.value ?? null
 )
 
 const selectedTeam = computed({

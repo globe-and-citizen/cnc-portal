@@ -22,7 +22,6 @@
 
         <NotificationDropdown />
 
-
         <div class="dropdown dropdown-end" data-test="profile">
           <div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar">
             <div class="w-8 sm:w-10 rounded-full ring-3 ring-white ring-opacity-30 ring-offset-2">
