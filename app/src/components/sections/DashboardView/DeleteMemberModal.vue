@@ -1,13 +1,12 @@
 <template>
   <div>
-    <ButtonUI
-      variant="error"
-      size="sm"
-      @click="() => (showModal = true)"
+    <UButton
+      color="error"
+      size="lg"
+      @click="showModal = true"
+      icon="heroicons-outline:trash"
       data-test="delete-member-button"
-    >
-      <IconifyIcon icon="heroicons-outline:trash" class="size-4" />
-    </ButtonUI>
+    />
 
     <ModalComponent v-model="showModal" v-if="showModal">
       <p class="font-bold text-lg">Confirmation</p>

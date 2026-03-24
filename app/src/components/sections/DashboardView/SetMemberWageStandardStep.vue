@@ -1,6 +1,6 @@
 <template>
   <div class="space-y-4" data-test="standard-wage-step">
-    <UForm ref="formRef" :schema="schema" :state="wageData" class="space-y-4">
+    <UForm ref="formRef" :schema="schema" :state="wageData" class="space-y-4" @submit="emit('validated')">
       <UFormField name="maximumHoursPerWeek">
         <UInput
           v-model="wageData.maximumHoursPerWeek"
@@ -78,9 +78,11 @@
 <script setup lang="ts">
 import * as z from 'zod'
 import { ref } from 'vue'
+import type { FormInstance } from '@nuxt/ui'
 import { NETWORK } from '@/constant'
 import type { WageWithForm } from '@/types/cash-remuneration'
 
+const emit = defineEmits<{ validated: [] }>()
 const wageData = defineModel<WageWithForm>('wageData', { required: true })
 
 const schema = z.object({
@@ -130,16 +132,7 @@ const schema = z.object({
     })
 })
 
-const formRef = ref<{ validate: () => Promise<void> } | null>(null)
+const formRef = ref<FormInstance>()
 
-const validateForm = async (): Promise<boolean> => {
-  try {
-    await formRef.value?.validate()
-    return true
-  } catch {
-    return false
-  }
-}
-
-defineExpose({ validateForm })
+defineExpose({ submit: () => formRef.value?.submit() })
 </script>

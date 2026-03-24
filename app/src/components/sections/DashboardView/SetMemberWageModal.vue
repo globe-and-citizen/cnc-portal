@@ -2,35 +2,21 @@
   <div>
     <UModal
       v-model:open="showModal"
+      title="Set Member Wage"
+      description="Fill the form to set the member current wage"
       :ui="{
         footer: 'justify-between',
         content: 'rounded-2xl'
       }"
     >
       <UButton
-        size="sm"
+        size="lg"
         color="success"
         data-test="set-wage-button"
         @click="showModal = true"
-        class="text-xs px-4 py-2 text-black rounded-lg"
-      >
-        Set Wage
-      </UButton>
+        label="Set Wage"
 
-      <template #header>
-        <div class="flex w-full items-center justify-between">
-          <p class="font-bold text-lg">Set Member Wage</p>
-          <UButton
-            icon="i-heroicons-x-mark"
-            color="error"
-            variant="outline"
-            size="sm"
-            square
-            @click="handleCancel"
-            data-test="close-wage-modal-button"
-          />
-        </div>
-      </template>
+      />
 
       <template #body>
         <div class="space-y-4 mt-1">
@@ -40,9 +26,15 @@
             v-if="currentStep === 0"
             ref="standardStepRef"
             v-model:wageData="wageData"
+            @validated="onStepValidated"
           />
 
-          <SetMemberWageOvertimeStep v-else ref="overtimeStepRef" v-model:wageData="wageData" />
+          <SetMemberWageOvertimeStep
+            v-else
+            ref="overtimeStepRef"
+            v-model:wageData="wageData"
+            @validated="onStepValidated"
+          />
 
           <div v-if="setWageError" data-test="error-state">
             <UAlert
@@ -125,7 +117,7 @@ import type { StepperItem } from '@nuxt/ui'
 
 const currentStep = ref(0)
 type WageStepRef = {
-  validateForm: () => Promise<boolean>
+  submit: () => void
 }
 
 const props = defineProps<{
@@ -134,7 +126,6 @@ const props = defineProps<{
   wage?: Wage
 }>()
 
-const emits = defineEmits<{ wageUpdated: [] }>()
 
 const showModal = ref(false)
 
@@ -201,7 +192,6 @@ const submitWage = () => {
     {
       onSuccess: () => {
         toast.add({ title: 'Member wage data set successfully', color: 'success' })
-        emits('wageUpdated')
         handleCancel()
       },
       onError: (error: AxiosError) => {
@@ -211,24 +201,19 @@ const submitWage = () => {
   )
 }
 
-const validateCurrentStep = async () => {
-  if (currentStep.value === 0) {
-    return (await standardStepRef.value?.validateForm()) ?? false
-  }
-
-  return (await overtimeStepRef.value?.validateForm()) ?? false
-}
-
-const handlePrimaryAction = async () => {
-  if (!await validateCurrentStep()) {
-    return
-  }
-
+const onStepValidated = () => {
   if (currentStep.value === 0 && wageData.value.enableOvertimeRules) {
     currentStep.value = 1
     return
   }
-
   submitWage()
+}
+
+const handlePrimaryAction = () => {
+  if (currentStep.value === 0) {
+    standardStepRef.value?.submit()
+  } else {
+    overtimeStepRef.value?.submit()
+  }
 }
 </script>
