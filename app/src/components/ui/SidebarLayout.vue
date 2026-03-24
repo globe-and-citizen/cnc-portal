@@ -188,9 +188,21 @@ const items = computed<NavigationMenuItem[]>(() => [
           params: { id: teamStore.currentTeamId || '1' }
         }
       },
+    ]
+  },
+  {
+    label: 'Payroll Account',
+    icon: 'heroicons:currency-dollar',
+    active: isAccountsSectionActive.value,
+    to: {
+      name: 'payroll-account',
+      params: { id: teamStore.currentTeamId || '1' }
+    },
+    defaultOpen: true,
+    children: [
       {
         // icon: 'heroicons:briefcase',
-        label: 'Payroll Account',
+        label: 'Payroll',
         to: {
           name: 'payroll-account',
           params: { id: teamStore.currentTeamId || '1' }
@@ -208,7 +220,6 @@ const items = computed<NavigationMenuItem[]>(() => [
           params: { id: teamStore.currentTeamId || '1', memberAddress: userStore.address }
         }
       },
-
       {
         // icon: 'heroicons:briefcase',
         label: 'Team Payroll',
