@@ -12,18 +12,18 @@
         class="w-full"
         size="xl"
         type="number"
-        placeholder="Enter max hours per week..."
+        placeholder="e.g. 40"
         :ui="{ base: 'pl-36', leading: 'pointer-events-none' }"
       >
         <template #leading>
-          <p class="text-sm text-muted">Max Weekly Hours |</p>
+          <p class="text-sm text-muted">Weekly cap (hrs)</p>
         </template>
       </UInput>
     </UFormField>
 
     <UFormField name="ratePerHour">
       <div class="space-y-4">
-        <h3 class="text-lg font-semibold mb-4">Hourly Rates</h3>
+        <h3 class="text-lg font-semibold mb-4">Standard Hourly Rates</h3>
         <UFieldGroup
           v-for="(rate, index) in wageData.ratePerHour"
           :key="rate.type"
@@ -41,7 +41,7 @@
             >
               <template #trailing>
                 <UBadge
-                  class="text-sm rounded-full px-4 test w-16 flex justify-center"
+                  class="text-sm rounded-full px-4 w-16 flex justify-center"
                   :variant="rate.enabled ? 'solid' : 'outline'"
                   :color="rate.enabled ? 'primary' : 'neutral'"
                 >
@@ -71,9 +71,9 @@
           data-test="enable-overtime-checkbox"
         />
         <div>
-          <p class="font-semibold">Enable overtime rules</p>
+          <p class="font-semibold">Add overtime rates</p>
           <p class="text-sm text-base-content/60">
-            Define a custom wage for hours worked beyond the weekly limit.
+            Set different rates for hours worked beyond the weekly cap.
           </p>
         </div>
       </label>
@@ -97,7 +97,7 @@
         data-test="reset-wage-button"
         @click="emit('reset')"
       >
-        Reset Wage
+        Reset to saved
       </UButton>
       <div class="ml-auto flex gap-3">
         <UButton
@@ -118,7 +118,7 @@
           size="lg"
           data-test="add-wage-button"
         >
-          {{ wageData.enableOvertimeRules ? 'Next →' : 'Save' }}
+          {{ wageData.enableOvertimeRules ? 'Continue' : 'Save wage' }}
         </UButton>
       </div>
     </div>
