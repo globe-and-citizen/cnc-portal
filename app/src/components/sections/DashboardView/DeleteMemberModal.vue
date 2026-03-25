@@ -44,7 +44,6 @@
 import { ref } from 'vue'
 import ButtonUI from '@/components/ButtonUI.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
-import { Icon as IconifyIcon } from '@iconify/vue'
 import { useToastStore } from '@/stores'
 import type { Member } from '@/types'
 import { useDeleteMemberMutation } from '@/queries/member.queries'
