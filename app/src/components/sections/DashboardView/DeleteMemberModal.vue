@@ -1,5 +1,5 @@
 <template>
-  <UModal v-model:open="showModal" title="Confirmation" :ui="{ content: 'rounded-2xl' }">
+  <UModal v-model:open="showModal" title="Remove Member" :ui="{ content: 'rounded-2xl' }">
     <UButton
       color="error"
       size="lg"
@@ -10,10 +10,10 @@
 
     <template #body>
       <p class="py-4">
-        Are you sure you want to delete
+        Are you sure you want to remove
         <span class="font-bold">{{ member.name }}</span>
-        with address <span class="font-bold">{{ member.address }}</span>
-        from the team?
+        (<span class="font-bold">{{ formattedAddress }}</span>)
+        from the team? This action cannot be undone.
       </p>
 
       <div class="flex justify-center gap-2">
@@ -23,7 +23,7 @@
           color="error"
           @click="handleDelete"
           data-test="delete-member-confirm-button"
-          >Delete</UButton
+          >Remove</UButton
         >
         <UButton
           color="primary"
@@ -39,10 +39,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useToastStore } from '@/stores'
 import type { Member } from '@/types'
 import { useDeleteMemberMutation } from '@/queries/member.queries'
+import { formatAddress } from '@/utils/formatAddress'
 import type { AxiosError } from 'axios'
 
 const props = defineProps<{
@@ -55,6 +56,7 @@ const emits = defineEmits<{
 }>()
 
 const showModal = ref(false)
+const formattedAddress = computed(() => formatAddress(props.member.address ?? ''))
 
 const { mutate: executeDeleteMember, isPending: memberIsDeleting } = useDeleteMemberMutation()
 
