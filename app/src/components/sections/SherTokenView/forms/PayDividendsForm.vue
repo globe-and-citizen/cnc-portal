@@ -22,11 +22,7 @@
       Please fund the bank contract before paying dividends.
     </div>
 
-    <TokenAmount
-      v-model="tokenAmountModel"
-      :tokens="tokens"
-      :loading="loading"
-    >
+    <TokenAmount v-model="tokenAmountModel" :tokens="tokens" :loading="loading">
       <template #label>
         <span class="label-text">Amount</span>
         <span class="label-text-alt">Available: {{ formattedUnlockedBalance }}</span>
