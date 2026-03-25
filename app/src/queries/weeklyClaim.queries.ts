@@ -7,7 +7,6 @@ import type { ClaimSubmitPayload } from '@/types'
 import apiClient from '@/lib/axios'
 import { uploadFileApi } from '@/api'
 import { createQueryHook, createMutationHook, queryPresets } from './queryFactory'
-import { useToastStore } from '@/stores'
 
 /**
  * Query key factory for weekly claim-related queries
@@ -293,29 +292,26 @@ export const useEditClaimWithFilesMutation = () => {
         )
       }
 
-      await apiClient.put(`/claim/${payload.claimId}`, {
-        hoursWorked: payload.hoursWorked.toString(),
-        memo: payload.memo,
-        dayWorked: payload.dayWorked,
-        deletedFileIndexes:
-          payload.deletedFileIndexes && payload.deletedFileIndexes.length > 0
-            ? payload.deletedFileIndexes
-            : undefined,
-        attachments: attachments.length > 0 ? attachments : undefined
-      })
+      try {
+        await apiClient.put(`/claim/${payload.claimId}`, {
+          hoursWorked: payload.hoursWorked.toString(),
+          memo: payload.memo,
+          dayWorked: payload.dayWorked,
+          deletedFileIndexes:
+            payload.deletedFileIndexes && payload.deletedFileIndexes.length > 0
+              ? payload.deletedFileIndexes
+              : undefined,
+          attachments: attachments.length > 0 ? attachments : undefined
+        })
+      } catch (error) {
+        const backendMessage = (error as { response?: { data?: { message?: string } } })?.response
+          ?.data?.message
+        throw new Error(backendMessage ?? 'Failed to update claim')
+      }
     },
     onSuccess: async (_, payload) => {
       await queryClient.invalidateQueries({ queryKey: weeklyClaimKeys.teams() })
       await queryClient.invalidateQueries({ queryKey: weeklyClaimKeys.detail(payload.claimId) })
-    },
-    onError: async (error) => {
-      console.error('Failed to update claim:', error)
-      const message =
-        error instanceof Error
-          ? error.message
-          : ((error as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-            'Failed to update claim')
-      useToastStore().addErrorToast(message)
     }
   })
 }

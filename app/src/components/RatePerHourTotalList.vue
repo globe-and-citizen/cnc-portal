@@ -1,5 +1,5 @@
 <template>
-  <div class="flex">
+  <div class="flex flex-col">
     <span v-for="(rate, index) in ratePerHour" :key="rate.type">
       {{ Number(rate.amount) * Number(totalHours) || 0
       }}{{ rate.type == 'native' ? currencySymbol : rate.type.toUpperCase()
