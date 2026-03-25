@@ -58,52 +58,32 @@
 
       <template #member-cell="{ row }">
         <UserComponent
-          :user="{ name: row.original.name, address: row.original.address, imageUrl: row.original.imageUrl }"
+          :user="{
+            name: row.original.name,
+            address: row.original.address,
+            imageUrl: row.original.imageUrl
+          }"
         />
       </template>
+      <template #standard-cell="{ row }">
+        <div v-if="row.original.currentWage">
 
-      <template #maxWeeklyHours-cell="{ row }">
-        <div v-if="!isTeamWageDataFetching" class="flex flex-col font-semibold">
-          <span>{{ getMemberWageView(row.original.address).maximumHoursPerWeek }}</span>
-          <span
-            v-if="getMemberWageView(row.original.address).hasOvertime"
-            class="text-xs text-black font-light"
-          >
-            OT: {{ getMemberWageView(row.original.address).maximumOvertimeHoursPerWeek }}
-          </span>
-        </div>
-        <USkeleton v-if="isTeamWageDataFetching" class="h-4 w-24" />
-      </template>
+          <div v-for="rate in row.original.currentWage.ratePerHour" :key="rate.type" class="flex items-center gap-1">
+            <span
+              class="inline-block w-2 h-2 rounded-full flex-shrink-0"
+              :class="{
+                'bg-yellow-400': rate.type === 'native',
+                'bg-blue-500': rate.type === 'usdc',
+                'bg-green-500': rate.type === 'usdt',
+                'bg-purple-500': !['native', 'usdc', 'usdt'].includes(rate.type)
+              }"
+            />
+            {{ rate.type === 'native' ? NETWORK.currencySymbol : rate.type.toUpperCase() }} {{ rate.amount }}
+          </div>
 
-      <template #wage-cell="{ row }">
-        <div v-if="!isTeamWageDataFetching" class="flex flex-col gap-1">
-          <div class="flex flex-row gap-2 justify-between font-semibold">
-            <span class="w-1/3 text-right pr-4">{{
-              getMemberWageView(row.original.address).cashRatePerHour
-            }}</span>
-            <span class="w-1/3 text-right pr-4">{{
-              getMemberWageView(row.original.address).usdcRatePerHour
-            }}</span>
-            <span class="w-1/3 text-right pr-4">{{
-              getMemberWageView(row.original.address).tokenRatePerHour
-            }}</span>
-          </div>
-          <div
-            v-if="getMemberWageView(row.original.address).hasOvertime"
-            class="flex flex-row gap-2 justify-between text-xs text-black font-light"
-          >
-            <span class="w-1/3 text-right pr-4">
-              OT: {{ getMemberWageView(row.original.address).overtimeCashRatePerHour }}
-            </span>
-            <span class="w-1/3 text-right pr-4">
-              OT: {{ getMemberWageView(row.original.address).overtimeUsdcRatePerHour }}
-            </span>
-            <span class="w-1/3 text-right pr-4">
-              OT: {{ getMemberWageView(row.original.address).overtimeTokenRatePerHour }}
-            </span>
-          </div>
+          {{ row.original.currentWage.maximumHoursPerWeek + 'h/wk' }}
         </div>
-        <USkeleton v-if="isTeamWageDataFetching" class="h-4 w-24" />
+        <div v-else>_</div>
       </template>
 
       <template #action-cell="{ row }">
@@ -113,7 +93,9 @@
             :teamId="teamId"
           />
           <UTooltip
-            :text="!teamWageByAddress.get(row.original.address) ? 'No wage set for this member' : ''"
+            :text="
+              !teamWageByAddress.get(row.original.address) ? 'No wage set for this member' : ''
+            "
             :disabled="!!teamWageByAddress.get(row.original.address)"
             :delay-duration="0"
           >
@@ -259,6 +241,13 @@ const memberWageViewByAddress = computed(() => {
   }
   return map
 })
+const memberWageViewByAddressV2 = computed(() => {
+  const map = new Map<string, MemberWageView>()
+  for (const wage of teamWageData.value ?? []) {
+    map.set(wage.userAddress, wage as unknown as MemberWageView)
+  }
+  return map
+})
 
 const teamWageByAddress = computed(() => {
   const map = new Map<string, Wage>()
@@ -281,16 +270,14 @@ const toggleWageStatus = (wage: Wage) => {
   )
 }
 
-const getMemberWageView = (memberAddress: Address): MemberWageView => {
-  return memberWageViewByAddress.value.get(memberAddress) ?? EMPTY_MEMBER_WAGE_VIEW
-}
-
 const columns = computed((): TableColumn<MemberRow>[] => {
   const cols: TableColumn<MemberRow>[] = [
     { accessorKey: 'index', header: '#' },
     { id: 'member', header: 'Member' },
-    { id: 'maxWeeklyHours', header: 'Max Weekly Hours' },
-    { id: 'wage', header: 'Hourly Rate' }
+    { id: 'standard', header: 'Standard Wage' },
+    { id: 'overtime', header: 'Overtime Wage' }
+    // { id: 'maxWeeklyHours', header: 'Max Weekly Hours' },
+    // { id: 'wage', header: 'Hourly Rate' }
   ]
   if (teamStore.currentTeamMeta.data?.ownerAddress == userDataStore.address) {
     cols.push({ id: 'action', header: 'Action' })
