@@ -32,7 +32,7 @@
 
     <UTable
       :data="
-        teamStore.currentTeamMeta.data?.members.map((member: any, index: number) => ({
+        teamStore.currentTeamMeta.data?.members.map((member: Member, index: number) => ({
           index: index + 1,
           ...member
         }))
