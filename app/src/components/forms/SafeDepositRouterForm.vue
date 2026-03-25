@@ -10,8 +10,7 @@
   <!-- USDC Amount Input -->
   <TokenAmount
     :tokens="tokenList"
-    v-model:modelValue="amount"
-    v-model:modelToken="selectedTokenId"
+    v-model="tokenAmountModel"
     :isLoading="isLoading"
     @validation="isAmountValid = $event"
     data-test="token-amount"
@@ -84,6 +83,13 @@ const emits = defineEmits<{
 const amount = ref<string>('')
 const sherAmount = ref<string>('0')
 const selectedTokenId = ref<TokenId>('usdc')
+const tokenAmountModel = computed({
+  get: () => ({ amount: amount.value, tokenId: selectedTokenId.value }),
+  set: (value: { amount: string; tokenId: TokenId | string }) => {
+    amount.value = value.amount ?? ''
+    selectedTokenId.value = (value.tokenId as TokenId) ?? 'usdc'
+  }
+})
 const currentStep = ref(1)
 const submitting = ref(false)
 const isAmountValid = ref(false)

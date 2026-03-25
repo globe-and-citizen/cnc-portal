@@ -7,7 +7,7 @@
       :items="statusOptions"
       size="sm"
       data-test="safe-transaction-status-filter"
-      class="w-35"
+      class="w-36"
     />
   </div>
 </template>

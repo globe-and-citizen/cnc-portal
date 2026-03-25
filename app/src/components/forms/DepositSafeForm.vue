@@ -10,8 +10,7 @@
     <UFormField name="amount" class="w-full">
       <TokenAmount
         :tokens="tokenList"
-        v-model:modelValue="amount"
-        v-model:modelToken="selectedTokenId"
+        v-model="tokenAmountModel"
         :isLoading="isLoading"
         @validation="isAmountValid = $event"
       >
@@ -88,6 +87,13 @@ defineExpose({ reset })
 // Component state
 const amount = ref<string>('')
 const selectedTokenId = ref<TokenId>('native')
+const tokenAmountModel = computed({
+  get: () => ({ amount: amount.value, tokenId: selectedTokenId.value }),
+  set: (value: { amount: string; tokenId: TokenId | string }) => {
+    amount.value = value.amount ?? ''
+    selectedTokenId.value = (value.tokenId as TokenId) ?? 'native'
+  }
+})
 const currentStep = ref(1)
 const submitting = ref(false)
 const isAmountValid = ref(false)

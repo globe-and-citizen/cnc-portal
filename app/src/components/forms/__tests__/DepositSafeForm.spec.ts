@@ -19,7 +19,8 @@ import {
 
 describe('DepositSafeForm.vue', () => {
   const defaultProps = {
-    safeAddress: '0xsafeaddress000000000000000000000000' as Address
+    safeAddress: '0xsafeaddress000000000000000000000000' as Address,
+    title: 'Deposit to Safe'
   }
 
   const createWrapper = (overrides = {}) =>
@@ -34,6 +35,7 @@ describe('DepositSafeForm.vue', () => {
     selectedTokenId: string
     isAmountValid: boolean
     submitForm: () => Promise<void>
+    bigIntAmount: bigint
   }
 
   const configureErc20Submit = async (wrapper: ReturnType<typeof createWrapper>): Promise<void> => {
@@ -51,8 +53,7 @@ describe('DepositSafeForm.vue', () => {
     isValid: boolean = true
   ): Promise<void> => {
     const tokenAmount = wrapper.findComponent({ name: 'TokenAmount' })
-    await tokenAmount.vm.$emit('update:modelValue', value)
-    await tokenAmount.vm.$emit('update:modelToken', tokenId)
+    await tokenAmount.vm.$emit('update:modelValue', { amount: value, tokenId })
     await tokenAmount.vm.$emit('validation', isValid)
     await nextTick()
   }
@@ -164,7 +165,7 @@ describe('DepositSafeForm.vue', () => {
       await setTokenAmount(wrapper, 'invalid', 'usdc', false)
 
       // Should convert to 0n
-      expect(wrapper.vm.bigIntAmount).toBe(0n)
+      expect((wrapper.vm as unknown as DepositSafeFormTestVm).bigIntAmount).toBe(0n)
     })
 
     it('should handle zero allowance correctly', async () => {

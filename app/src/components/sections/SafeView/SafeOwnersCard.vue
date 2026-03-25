@@ -81,7 +81,7 @@
     />
 
     <UpdateThresholdModal
-      :open="showUpdateThresholdModal"
+      v-model:open="showUpdateThresholdModal"
       :safe-address="address as Address"
       :current-owners="safeInfo?.owners || []"
       :current-threshold="safeInfo?.threshold || 1"
@@ -124,7 +124,8 @@ const teamStore = useTeamStore()
 const {
   data: safeInfo,
   error,
-  isLoading
+  isLoading,
+  refetch
 } = useGetSafeInfoQuery({
   pathParams: { safeAddress: computed(() => props.address) }
 })
@@ -153,8 +154,8 @@ const getOwnerDisplayName = (ownerAddress: string): string => {
 const showAddSignerModal = ref(false)
 const showUpdateThresholdModal = ref(false)
 
-const handleThresholdUpdated = (_value: boolean) => {
-  showUpdateThresholdModal.value = _value
+const handleThresholdUpdated = async () => {
+  await refetch()
 }
 
 // Error handling

@@ -12,6 +12,7 @@ type BalanceEntry = {
     name: string
     symbol: string
     code: string
+    coingeckoId: string
     decimals: number
     address: string
   }
@@ -28,7 +29,14 @@ type BalanceEntry = {
   }
 }
 
-const makeBalance = (overrides: Partial<BalanceEntry> = {}): BalanceEntry => {
+type BalanceEntryOverrides = Partial<Omit<BalanceEntry, 'token' | 'values'>> & {
+  token?: Partial<BalanceEntry['token']>
+  values?: {
+    USD?: Partial<BalanceEntry['values']['USD']>
+  }
+}
+
+const makeBalance = (overrides: BalanceEntryOverrides = {}): BalanceEntry => {
   const base: BalanceEntry = {
     amount: 0,
     token: {
@@ -36,6 +44,7 @@ const makeBalance = (overrides: Partial<BalanceEntry> = {}): BalanceEntry => {
       name: 'Token',
       symbol: 'TKN',
       code: 'TKN',
+      coingeckoId: 'token',
       decimals: 18,
       address: '0x0000000000000000000000000000000000000000'
     },
@@ -63,8 +72,8 @@ const makeBalance = (overrides: Partial<BalanceEntry> = {}): BalanceEntry => {
 }
 
 const TokenAmountStub = {
-  props: ['modelValue', 'modelToken', 'tokens', 'loading'],
-  emits: ['update:modelValue', 'update:modelToken'],
+  props: ['modelValue', 'tokens', 'loading'],
+  emits: ['update:modelValue'],
   template: `<div data-test="token-amount"><slot name="label" /><slot /></div>`
 }
 
@@ -195,7 +204,7 @@ describe('PayDividendsForm.vue', () => {
     const wrapper = createComponent()
     const tokenAmount = wrapper.findComponent(TokenAmountStub)
 
-    tokenAmount.vm.$emit('update:modelValue', '1.5')
+    tokenAmount.vm.$emit('update:modelValue', { amount: '1.5', tokenId: 'native' })
     await wrapper.vm.$nextTick()
 
     await wrapper.find('[data-test="submit-button"]').trigger('click')
@@ -211,10 +220,10 @@ describe('PayDividendsForm.vue', () => {
     const wrapper = createComponent()
     const tokenAmount = wrapper.findComponent(TokenAmountStub)
 
-    tokenAmount.vm.$emit('update:modelToken', 'usdc')
+    tokenAmount.vm.$emit('update:modelValue', { amount: '', tokenId: 'usdc' })
     await wrapper.vm.$nextTick()
 
-    tokenAmount.vm.$emit('update:modelValue', '2.5')
+    tokenAmount.vm.$emit('update:modelValue', { amount: '2.5', tokenId: 'usdc' })
     await wrapper.vm.$nextTick()
 
     await wrapper.find('[data-test="submit-button"]').trigger('click')

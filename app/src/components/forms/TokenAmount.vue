@@ -11,7 +11,7 @@
       </slot>
     </div>
     <div class="flex w-full flex-col gap-1">
-      <UForm :schema="schema" nested>
+      <UForm nested>
         <UFormField class="w-full" name="amount">
           <UInput
             v-model="amount"
@@ -91,14 +91,15 @@ import { type TokenId } from '@/constant'
 
 const props = defineProps<{
   tokens: TokenOption[]
-  modelValue: string
-  modelToken: string
+  modelValue: {
+    amount: string
+    tokenId: string
+  }
   isLoading?: boolean
 }>()
 
 const emits = defineEmits<{
-  (e: 'update:modelValue', value: string): void
-  (e: 'update:modelToken', value: string): void
+  (e: 'update:modelValue', value: { amount: string; tokenId: string }): void
   (e: 'validation', isValid: boolean): void
 }>()
 
@@ -109,13 +110,21 @@ const currency = useStorage('currency', {
 })
 
 const amount = computed({
-  get: () => props.modelValue,
-  set: (val: string) => emits('update:modelValue', val)
+  get: () => props.modelValue?.amount ?? '',
+  set: (val: string) =>
+    emits('update:modelValue', {
+      amount: val,
+      tokenId: props.modelValue?.tokenId ?? 'native'
+    })
 })
 
 const selectedTokenId = computed({
-  get: () => props.modelToken,
-  set: (val: string) => emits('update:modelToken', val)
+  get: () => props.modelValue?.tokenId ?? 'native',
+  set: (val: string) =>
+    emits('update:modelValue', {
+      amount: props.modelValue?.amount ?? '',
+      tokenId: val
+    })
 })
 
 const tokenList = computed(() => props.tokens)

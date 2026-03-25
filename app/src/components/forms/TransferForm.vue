@@ -19,8 +19,7 @@
     <UFormField class="w-full" name="amount">
       <TokenAmount
         :tokens="tokens"
-        v-model:modelValue="model.amount"
-        v-model:modelToken="selectedTokenId"
+        v-model="tokenAmountModel"
         :isLoading="props.loading"
         @validation="isAmountValid = $event"
       >
@@ -106,6 +105,14 @@ const selectedTokenId = computed<string>({
   set: (id) => {
     const token = props.tokens.find((t) => t.tokenId === id)
     if (token) model.value.token = token
+  }
+})
+
+const tokenAmountModel = computed({
+  get: () => ({ amount: model.value.amount ?? '', tokenId: selectedTokenId.value }),
+  set: (value: { amount: string; tokenId: string }) => {
+    model.value.amount = value.amount ?? ''
+    selectedTokenId.value = value.tokenId ?? selectedTokenId.value
   }
 })
 

@@ -1,5 +1,5 @@
 <template>
-  <UModal :open="isOpen" :close="{ onClick: () => handleClose() }" title="Update Threshold">
+  <UModal v-model:open="isOpen" :close="{ onClick: () => handleClose() }" title="Update Threshold">
     <template #body>
       <UForm
         :schema="thresholdSchema"
@@ -114,7 +114,8 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  'threshold-updated': [value: boolean]
+  'update:open': [value: boolean]
+  'threshold-updated': []
 }>()
 
 const { addSuccessToast, addErrorToast } = useToastStore()
@@ -147,10 +148,19 @@ watch(
   }
 )
 
+watch(
+  () => props.open,
+  (newOpen) => {
+    if (!newOpen) {
+      formState.threshold = props.currentThreshold
+    }
+  }
+)
+
 // Computed properties
 const isOpen = computed({
   get: () => props.open,
-  set: (value) => emit('threshold-updated', value)
+  set: (value) => emit('update:open', value)
 })
 
 const isLoading = computed(() => isUpdating.value)
@@ -175,6 +185,7 @@ const handleUpdateThreshold = async () => {
           ? 'Threshold update proposal submitted successfully'
           : 'Threshold updated successfully'
       )
+      emit('threshold-updated')
       handleClose()
     }
   } catch (error) {
@@ -185,6 +196,6 @@ const handleUpdateThreshold = async () => {
 
 const handleClose = () => {
   formState.threshold = props.currentThreshold
-  emit('threshold-updated', false)
+  emit('update:open', false)
 }
 </script>
