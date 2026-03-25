@@ -1,19 +1,21 @@
 <template>
   <UModal v-model:open="showModal" title="Remove Member" :ui="{ content: 'rounded-2xl' }">
-    <UButton
-      color="error"
-      size="lg"
-      icon="heroicons-outline:trash"
-      data-test="delete-member-button"
-      @click="showModal = true"
-    />
+    <UTooltip text="Remove member" :delay-duration="0">
+      <UButton
+        color="error"
+        size="lg"
+        icon="heroicons-outline:trash"
+        data-test="delete-member-button"
+        @click="showModal = true"
+      />
+    </UTooltip>
 
     <template #body>
       <p class="py-4">
         Are you sure you want to remove
         <span class="font-bold">{{ member.name }}</span>
-        (<span class="font-bold">{{ formattedAddress }}</span>)
-        from the team? This action cannot be undone.
+        (<span class="font-bold">{{ formattedAddress }}</span
+        >) from the team? This action cannot be undone.
       </p>
 
       <div class="flex justify-center gap-2">
