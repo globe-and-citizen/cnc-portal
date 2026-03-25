@@ -4,28 +4,35 @@
   <div class="flex flex-col gap-5 pt-5">
     <MultiSelectMemberInput v-model="formData" :disable-team-members="true" />
 
-    <div v-if="addMembersError">
-      <div class="alert alert-warning" v-if="addMembersError?.status === 401">
-        You don't have the right for this
-      </div>
-      <div class="alert alert-danger" v-else>Something went wrong, Unable to add team Members</div>
-    </div>
+    <template v-if="addMembersError">
+      <UAlert
+        v-if="addMembersError?.status === 401"
+        color="warning"
+        variant="soft"
+        description="You don't have the right for this"
+      />
+      <UAlert
+        v-else
+        color="error"
+        variant="soft"
+        description="Something went wrong, Unable to add team Members"
+      />
+    </template>
 
-    <ButtonUI
-      variant="primary"
-      class="justify-center"
+    <UButton
+      color="primary"
+      block
       :loading="addMembersLoading"
       :disabled="addMembersLoading"
       @click="handleAddMembers"
-      >Add Members</ButtonUI
+      >Add Members</UButton
     >
   </div>
 
-  <div class="divider m-0"></div>
+  <hr class="my-0" />
 </template>
 <script setup lang="ts">
 import { ref } from 'vue'
-import ButtonUI from '@/components/ButtonUI.vue'
 import MultiSelectMemberInput from '@/components/utils/MultiSelectMemberInput.vue'
 import { useToastStore } from '@/stores'
 import type { Member } from '@/types'
@@ -47,8 +54,6 @@ const {
   error: addMembersError
 } = useAddMembersMutation()
 
-// const statusCode = ref<number | null>(null)
-
 const handleAddMembers = async () => {
   executeAddMembers(
     {
@@ -62,7 +67,6 @@ const handleAddMembers = async () => {
       onSuccess: () => {
         addSuccessToast('Members added successfully')
         formData.value = []
-        // statusCode.value = 201
         emits('memberAdded')
       },
       onError: (error: unknown) => {
