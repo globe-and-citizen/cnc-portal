@@ -101,6 +101,13 @@ const getTeam = async (req: Request, res: Response) => {
             address: true,
             name: true,
             imageUrl: true,
+            Wage: {
+              where: {
+                teamId: Number(id), // wage de cette équipe uniquement
+                nextWageId: null, // nextWageId null = wage actuel (pas de successeur)
+              },
+              take: 1,
+            },
           },
         },
         teamContracts: true,
@@ -120,6 +127,8 @@ const getTeam = async (req: Request, res: Response) => {
       team.members.map(async (member) => ({
         ...member,
         imageUrl: await resolveStorageImageUrl(member.imageUrl),
+        currentWage: member.Wage[0] ?? null, // aplatir le tableau
+        Wage: undefined, // retirer le tableau brut
       }))
     );
 
