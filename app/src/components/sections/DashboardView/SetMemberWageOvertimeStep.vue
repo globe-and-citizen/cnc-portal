@@ -27,11 +27,11 @@
         class="w-full"
         size="xl"
         type="number"
-        placeholder="Enter overtime hours per week..."
+        placeholder="e.g. 10"
         :ui="{ base: 'pl-36', leading: 'pointer-events-none' }"
       >
         <template #leading>
-          <p class="text-sm text-muted">Overtime Hours |</p>
+          <p class="text-sm text-muted">Overtime cap (hrs)</p>
         </template>
       </UInput>
     </UFormField>
@@ -75,7 +75,7 @@
         data-test="standard-rate-recap"
       >
         <p class="text-sm font-semibold uppercase tracking-[0.2em] text-base-content/50">
-          Standard
+          Standard rates
         </p>
         <div class="mt-3 space-y-2">
           <p
@@ -91,7 +91,7 @@
         class="min-h-40 rounded-2xl border border-emerald-300 bg-emerald-50/60 px-5 py-5"
         data-test="overtime-rate-recap"
       >
-        <p class="text-sm font-semibold uppercase tracking-[0.2em] text-emerald-700">Overtime</p>
+        <p class="text-sm font-semibold uppercase tracking-[0.2em] text-emerald-700">Overtime rates</p>
         <div class="mt-3 space-y-2">
           <p
             v-for="rate in wageData.overtimeRatePerHour.filter((r) => r.enabled && r.amount > 0)"
@@ -119,10 +119,11 @@
           variant="outline"
           size="lg"
           type="button"
+          icon="i-heroicons-arrow-left"
           data-test="back-wage-button"
           @click="emit('back')"
         >
-          ← Back
+          Back
         </UButton>
         <UButton
           type="submit"
@@ -132,7 +133,7 @@
           size="lg"
           data-test="save-overtime-wage-button"
         >
-          Save
+          Save wage
         </UButton>
       </div>
     </div>
