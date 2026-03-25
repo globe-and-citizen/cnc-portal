@@ -112,22 +112,28 @@
             :member="{ name: row.original.name, address: row.original.address }"
             :teamId="teamId"
           />
-          <UButton
-            :color="teamWageByAddress.get(row.original.address)?.disabled ? 'success' : 'warning'"
-            :loading="isToggling"
-            :disabled="!teamWageByAddress.get(row.original.address) || isToggling"
-            :icon="
-              teamWageByAddress.get(row.original.address)?.disabled
-                ? 'i-heroicons-play'
-                : 'i-heroicons-pause'
-            "
-            :data-test="
-              teamWageByAddress.get(row.original.address)?.disabled
-                ? 'resume-wage-button'
-                : 'pause-wage-button'
-            "
-            @click="toggleWageStatus(teamWageByAddress.get(row.original.address)!)"
-          />
+          <UTooltip
+            :text="!teamWageByAddress.get(row.original.address) ? 'No wage set for this member' : ''"
+            :disabled="!!teamWageByAddress.get(row.original.address)"
+            :delay-duration="0"
+          >
+            <UButton
+              :color="teamWageByAddress.get(row.original.address)?.disabled ? 'success' : 'warning'"
+              :loading="isToggling"
+              :disabled="!teamWageByAddress.get(row.original.address) || isToggling"
+              :icon="
+                teamWageByAddress.get(row.original.address)?.disabled
+                  ? 'i-heroicons-play'
+                  : 'i-heroicons-pause'
+              "
+              :data-test="
+                teamWageByAddress.get(row.original.address)?.disabled
+                  ? 'resume-wage-button'
+                  : 'pause-wage-button'
+              "
+              @click="toggleWageStatus(teamWageByAddress.get(row.original.address)!)"
+            />
+          </UTooltip>
           <SetMemberWageModal
             :member="{ name: row.original.name, address: row.original.address }"
             :teamId="teamId"
