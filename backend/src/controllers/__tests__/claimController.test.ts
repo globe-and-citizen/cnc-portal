@@ -251,7 +251,9 @@ describe('Claim Controller', () => {
       expect(response.body.message).toContain('Weekly allowance: 40h regular + 0h overtime = 40h.');
       expect(response.body.message).toContain('Already submitted: 30h.');
       expect(response.body.message).toContain('Remaining to submit: 10h.');
-      expect(response.body.message).toContain('Requested now: 45h.');
+      expect(response.body.message).toContain(
+        'Unable to submit this claim: your weekly hours limit would be exceeded. Weekly allowance: 40h regular + 0h overtime = 40h. Already submitted: 30h. Remaining to submit: 10h.'
+      );
     });
 
     it('should return 400 if total hours exceed 24 hours for a single day', async () => {
@@ -575,7 +577,9 @@ describe('Claim Controller', () => {
       expect(response.body.message).toContain('Weekly allowance: 40h regular + 0h overtime = 40h.');
       expect(response.body.message).toContain('Already submitted: 38h.');
       expect(response.body.message).toContain('Remaining to submit: 2h.');
-      expect(response.body.message).toContain('Requested now: 5h.');
+      expect(response.body.message).toContain(
+        'Unable to update this claim: your weekly hours limit would be exceeded. Weekly allowance: 40h regular + 0h overtime = 40h. Already submitted: 38h. Remaining to submit: 2h.'
+      );
     });
 
     it('should update claim successfully with valid data', async () => {
