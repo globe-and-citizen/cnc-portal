@@ -163,6 +163,8 @@ import { useUserDataStore } from '@/stores/user'
 import { useTeamStore, useToastStore } from '@/stores'
 import UserComponent from '@/components/UserComponent.vue'
 import { useToggleWageStatusMutation } from '@/queries/wage.queries'
+import { teamKeys } from '@/queries/team.queries'
+import { useQueryClient } from '@tanstack/vue-query'
 import { NETWORK } from '@/constant'
 import DeleteMemberModal from '@/components/sections/DashboardView/DeleteMemberModal.vue'
 import type { Member, Wage } from '@/types'
@@ -180,6 +182,8 @@ const showAddMemberForm = ref({ mount: false, show: false })
 const teamId = computed(() => teamStore.currentTeamId)
 
 
+const queryClient = useQueryClient()
+
 const { mutate: executeToggleStatus, isPending: isToggling } = useToggleWageStatusMutation()
 
 const toggleWageStatus = (wage: Wage) => {
@@ -187,7 +191,10 @@ const toggleWageStatus = (wage: Wage) => {
   executeToggleStatus(
     { pathParams: { wageId: wage.id }, queryParams: { action } },
     {
-      onSuccess: () => toastStore.addSuccessToast(`Member wage ${action}d successfully`),
+      onSuccess: () => {
+        toastStore.addSuccessToast(`Member wage ${action}d successfully`)
+        queryClient.invalidateQueries({ queryKey: teamKeys.detail(String(teamId.value)) })
+      },
       onError: () => toastStore.addErrorToast(`Failed to ${action} member wage`)
     }
   )
