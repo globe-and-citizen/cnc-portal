@@ -21,7 +21,7 @@
     />
 
       <MemberSection />
-    <CRWeeklyClaimOwnerHeader />
+    <!-- <CRWeeklyClaimOwnerHeader /> -->
 
     <ContractOwnerCard v-if="cashRemunerationAddress" :contractAddress="cashRemunerationAddress" />
   </div>
