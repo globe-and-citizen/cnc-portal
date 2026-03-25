@@ -236,7 +236,7 @@ describe('Claim Controller', () => {
       expect(response.body.message).toBe('No wage found for the user');
     });
 
-    it('should return 400 if maximum weekly claim is reached', async () => {
+    it('should return 409 if maximum weekly claim is reached', async () => {
       vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(createMockWage());
       vi.spyOn(prisma.weeklyClaim, 'findFirst').mockResolvedValue(createMockWeeklyClaim());
 
@@ -244,10 +244,14 @@ describe('Claim Controller', () => {
         .post('/')
         .send({ teamId: 1, hoursWorked: 45, memo: 'memo' });
 
-      expect(response.status).toBe(400);
-      expect(response.body.message).toBe(
-        'Maximum weekly hours (including overtime) reached. You have 10 hours remaining.'
+      expect(response.status).toBe(409);
+      expect(response.body.message).toContain(
+        'Unable to submit this claim: your weekly hours limit would be exceeded.'
       );
+      expect(response.body.message).toContain('Weekly allowance: 40h regular + 0h overtime = 40h.');
+      expect(response.body.message).toContain('Already submitted: 30h.');
+      expect(response.body.message).toContain('Remaining to submit: 10h.');
+      expect(response.body.message).toContain('Requested now: 45h.');
     });
 
     it('should return 400 if total hours exceed 24 hours for a single day', async () => {
@@ -545,7 +549,7 @@ describe('Claim Controller', () => {
       });
     });
 
-    it('should return 400 if updating claim exceeds maximum weekly hours', async () => {
+    it('should return 409 if updating claim exceeds maximum weekly hours', async () => {
       const mockClaim = {
         id: 1,
         wage: { userAddress: TEST_ADDRESS, maximumHoursPerWeek: 40 },
@@ -564,10 +568,14 @@ describe('Claim Controller', () => {
         hoursWorked: 5,
         memo: 'Updated memo',
       });
-      expect(response.status).toBe(400);
-      expect(response.body.message).toMatch(
-        'Maximum weekly hours (including overtime) reached. You have 2 hours remaining for this week.'
+      expect(response.status).toBe(409);
+      expect(response.body.message).toContain(
+        'Unable to update this claim: your weekly hours limit would be exceeded.'
       );
+      expect(response.body.message).toContain('Weekly allowance: 40h regular + 0h overtime = 40h.');
+      expect(response.body.message).toContain('Already submitted: 38h.');
+      expect(response.body.message).toContain('Remaining to submit: 2h.');
+      expect(response.body.message).toContain('Requested now: 5h.');
     });
 
     it('should update claim successfully with valid data', async () => {
