@@ -21,7 +21,7 @@
             </div>
 
             <div class="flex items-center gap-2">
-              <img src="/Vector.png" alt="" class="w-4 h-4" />
+              <img :src="addressIconPath" alt="" class="w-4 h-4" />
               <AddressToolTip :address="displayedMember?.address" data-test="claim-user-address" />
             </div>
           </div>
@@ -49,6 +49,7 @@ interface Props {
 const props = defineProps<Props>()
 
 const teamStore = useTeamStore()
+const addressIconPath = '/Vector.png'
 
 const displayedMember = computed(() => {
   return (teamStore.currentTeamMeta?.data?.members || []).find(

@@ -10,7 +10,7 @@
     Submit Claim
   </ButtonUI>
 
-  <ModalComponent v-model="modal">
+  <ModalComponent v-if="modal.mount" v-model="modal.show" @reset="closeModal">
     <div class="flex flex-col gap-4 mb-20">
       <h3 class="text-xl font-bold">Submit Claim</h3>
       <hr />
@@ -62,7 +62,10 @@ const toastStore = useToastStore()
 const teamStore = useTeamStore()
 const { isRestricted, checkRestriction } = useSubmitRestriction()
 
-const modal = ref(false)
+const modal = ref({
+  mount: false,
+  show: false
+})
 const errorMessage = ref<{ message: string } | null>(null)
 const addWageClaimError = ref(false)
 const claimFormRef = ref<InstanceType<typeof ClaimForm> | null>(null)
@@ -85,17 +88,22 @@ const openModal = () => {
   formInitialData.value = createDefaultFormData()
   errorMessage.value = null
   addWageClaimError.value = false
-  modal.value = true
+  modal.value = { mount: true, show: true }
+}
+
+const closeModal = () => {
+  claimFormRef.value?.resetForm()
+  errorMessage.value = null
+  addWageClaimError.value = false
+  modal.value = { mount: false, show: false }
 }
 
 // Reset form (including file previews) whenever the modal is closed
 watch(
-  modal,
+  () => modal.value.show,
   (isOpen) => {
     if (!isOpen) {
-      claimFormRef.value?.resetForm()
-      errorMessage.value = null
-      addWageClaimError.value = false
+      closeModal()
     }
   },
   { flush: 'post' }
@@ -139,17 +147,14 @@ const handleSubmit = async (data: ClaimSubmitPayload & { files?: File[] }) => {
 
     toastStore.addSuccessToast('Wage claim added successfully')
 
-    modal.value = false
+    closeModal()
     formInitialData.value = createDefaultFormData()
-    claimFormRef.value?.resetForm()
   } catch (error) {
     console.error('Error submitting claim:', error)
+    const backendMessage = (error as { response?: { data?: { message?: string } } })?.response?.data
+      ?.message
     const message =
-      error instanceof Error
-        ? error.message
-        : ((error as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-          'Failed to add claim')
-    toastStore.addErrorToast(message)
+      backendMessage ?? (error instanceof Error ? error.message : 'Failed to add claim')
     errorMessage.value = { message }
     addWageClaimError.value = true
   }

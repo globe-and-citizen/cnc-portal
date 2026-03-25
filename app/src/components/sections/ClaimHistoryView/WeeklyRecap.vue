@@ -1,17 +1,53 @@
 <template>
-  <div class="flex-1 space-y-6 bg-white">
+  <div class="w-full bg-white">
     <div class="stats shadow-sm w-full">
+      <!-- Total Hours -->
       <div class="stat place-items-center">
         <div class="stat-title">Total Hours</div>
+
+        <div class="mb-2">
+          <span
+            v-if="props.weeklyClaim && hasOvertimeWage && overtimeHoursWorked > 0"
+            class="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full bg-amber-50 text-amber-800"
+          >
+            <span class="w-1.5 h-1.5 rounded-full bg-amber-600 inline-block" />
+            Overtime reached
+          </span>
+          <span
+            v-else-if="props.weeklyClaim"
+            class="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800"
+          >
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-600 inline-block" />
+            Submitted
+          </span>
+          <span
+            v-else
+            class="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full bg-gray-100 text-gray-600"
+          >
+            <span class="w-1.5 h-1.5 rounded-full bg-gray-400 inline-block" />
+            Waiting
+          </span>
+        </div>
+
         <div class="font-bold text-xl">{{ submittedHours }}h</div>
-        <span class="text-sm text-gray-500" v-if="props.weeklyClaim"
-          >of {{ effectiveWage?.maximumHoursPerWeek ?? '-' }} hrs weekly limit</span
-        >
-        <span class="text-sm text-gray-500" v-else
-          >{{ effectiveWage?.maximumHoursPerWeek ?? '-' }} hrs available this week</span
-        >
+
+        <span class="text-sm text-gray-500 text-center" v-if="props.weeklyClaim && hasOvertimeWage">
+          of {{ effectiveWage?.maximumHoursPerWeek ?? '-' }} hrs weekly limit &amp;
+          {{ effectiveWage?.maximumOvertimeHoursPerWeek ?? '-' }} overtime hrs
+        </span>
+        <span class="text-sm text-gray-500" v-else-if="props.weeklyClaim">
+          of {{ effectiveWage?.maximumHoursPerWeek ?? '-' }} hrs weekly limit
+        </span>
+        <span class="text-sm text-gray-500 text-center" v-else-if="hasOvertimeWage">
+          {{ effectiveWage?.maximumHoursPerWeek ?? '-' }} hrs available this week &amp;
+          {{ effectiveWage?.maximumOvertimeHoursPerWeek ?? '-' }} overtime hrs available
+        </span>
+        <span class="text-sm text-gray-500" v-else>
+          {{ effectiveWage?.maximumHoursPerWeek ?? '-' }} hrs available this week
+        </span>
       </div>
 
+      <!-- Hourly Rate -->
       <div class="stat place-items-center">
         <div class="stat-title">Hourly Rate</div>
         <div class="font-bold text-xl text-center">
@@ -25,18 +61,39 @@
         </div>
       </div>
 
-      <div class="stat place-items-center">
-        <div class="stat-title">Total Amount</div>
-        <div class="font-bold text-xl">
-          <RatePerHourTotalList
-            v-if="weeklyClaim"
-            :rate-per-hour="props.weeklyClaim?.wage?.ratePerHour || []"
+      <!-- Overtime Rate (only when overtime wage is configured) -->
+      <div v-if="hasOvertimeWage" class="stat place-items-center">
+        <div class="stat-title">Overtime Rate</div>
+        <div class="font-bold text-xl text-center text-amber-600">
+          <RatePerHourList
+            :rate-per-hour="(effectiveWage?.overtimeRatePerHour as RatePerHour[]) || []"
             :currency-symbol="currencyStore.getTokenInfo('native')?.symbol || 'NATIVE'"
-            :total-hours="weeklyClaim.hoursWorked"
           />
         </div>
-        <div class="text-sm text-gray-500 flex gap-2 mt-1">
-          ≃ ${{ totalAmount }} {{ currencyStore.localCurrency.code }}
+        <div class="text-sm text-gray-500 text-center mt-1">
+          ≃ ${{ overtimeHourlyRateInUserCurrency.toFixed(2) }}
+          {{ currencyStore.localCurrency.code }}/h
+        </div>
+      </div>
+
+      <!-- Total Amount -->
+      <div class="stat place-items-center">
+        <div class="stat-title">Total Amount</div>
+        <div class="font-bold text-xl text-center">
+          <template v-if="props.weeklyClaim">
+            <RatePerHourTotalList
+              :rate-per-hour="combinedTokenAmounts"
+              :currency-symbol="currencyStore.getTokenInfo('native')?.symbol || 'NATIVE'"
+              :total-hours="1"
+            />
+          </template>
+          <span v-else class="text-gray-300">—</span>
+        </div>
+        <div class="text-sm text-gray-500 flex gap-2 mt-1 text-center">
+          <template v-if="props.weeklyClaim">
+            ≃ ${{ totalAmount }} {{ currencyStore.localCurrency.code }}
+          </template>
+          <!-- <template v-else>Submit hours to calculate</template> -->
         </div>
       </div>
     </div>
@@ -58,10 +115,29 @@ const props = defineProps<{
 const currencyStore = useCurrencyStore()
 
 const effectiveWage = computed(() => props.weeklyClaim?.wage ?? props.wage)
-
 const submittedHours = computed(() => props.weeklyClaim?.hoursWorked ?? 0)
 
-// function to format the hourly rate in user's local currency
+const hasOvertimeWage = computed(() => {
+  const rates = effectiveWage.value?.overtimeRatePerHour
+  return Array.isArray(rates) && rates.length > 0
+})
+
+const regularHoursWorked = computed(() => {
+  if (!hasOvertimeWage.value) return submittedHours.value
+  return Math.min(
+    submittedHours.value,
+    effectiveWage.value?.maximumHoursPerWeek ?? submittedHours.value
+  )
+})
+
+const overtimeHoursWorked = computed(() => {
+  if (!hasOvertimeWage.value) return 0
+  return Math.max(
+    0,
+    submittedHours.value - (effectiveWage.value?.maximumHoursPerWeek ?? submittedHours.value)
+  )
+})
+
 function getHourlyRateInUserCurrency(
   ratePerHour: RatePerHour[],
   tokenStore = currencyStore
@@ -73,15 +149,39 @@ function getHourlyRateInUserCurrency(
   }, 0)
 }
 
-const hourlyRateInUserCurrency = computed(() => {
-  return effectiveWage.value?.ratePerHour
+const hourlyRateInUserCurrency = computed(() =>
+  effectiveWage.value?.ratePerHour
     ? getHourlyRateInUserCurrency(effectiveWage.value.ratePerHour)
     : 0
+)
+
+const overtimeHourlyRateInUserCurrency = computed(() =>
+  effectiveWage.value?.overtimeRatePerHour
+    ? getHourlyRateInUserCurrency(effectiveWage.value.overtimeRatePerHour as RatePerHour[])
+    : 0
+)
+
+const combinedTokenAmounts = computed(() => {
+  const result = new Map<string, number>()
+  const regHours = regularHoursWorked.value
+
+  for (const rate of effectiveWage.value?.ratePerHour ?? []) {
+    result.set(rate.type, (result.get(rate.type) ?? 0) + rate.amount * regHours)
+  }
+
+  if (hasOvertimeWage.value) {
+    const otHours = overtimeHoursWorked.value
+    for (const rate of (effectiveWage.value?.overtimeRatePerHour as RatePerHour[]) ?? []) {
+      result.set(rate.type, (result.get(rate.type) ?? 0) + rate.amount * otHours)
+    }
+  }
+
+  return Array.from(result.entries()).map(([type, amount]) => ({ type, amount }))
 })
 
 const totalAmount = computed(() => {
-  const hours = submittedHours.value
-  const total = hours * hourlyRateInUserCurrency.value
-  return total.toFixed(2)
+  const regularTotal = regularHoursWorked.value * hourlyRateInUserCurrency.value
+  const overtimeTotal = overtimeHoursWorked.value * overtimeHourlyRateInUserCurrency.value
+  return (regularTotal + overtimeTotal).toFixed(2)
 })
 </script>
