@@ -71,7 +71,12 @@ app.use((req, _res, next) => {
 });
 app.use('/', weeklyClaimRoutes);
 
-const ownerWage = (ownerAddress = CALLER) => ({ team: { id: 1, ownerAddress } });
+const ownerWage = (ownerAddress = CALLER, overrides: Record<string, unknown> = {}) => ({
+  team: { id: 1, ownerAddress },
+  maximumHoursPerWeek: 40,
+  maximumOvertimeHoursPerWeek: 10,
+  ...overrides,
+});
 
 const weeklyClaimFactory = (overrides: Record<string, unknown> = {}) => ({
   id: 1,
@@ -85,6 +90,7 @@ const weeklyClaimFactory = (overrides: Record<string, unknown> = {}) => ({
   createdAt: new Date('2024-07-22'),
   updatedAt: new Date('2024-07-22'),
   wage: ownerWage(),
+  claims: [{ hoursWorked: 8 }],
   ...overrides,
 });
 
@@ -201,6 +207,49 @@ describe('Weekly Claim Controller', () => {
         ownerOk: true,
         message: 'Weekly claim already withdrawn',
       },
+      {
+        title: 'sign with empty submitted hours',
+        action: 'sign',
+        claim: weeklyClaimFactory({ claims: [] }),
+        ownerOk: true,
+        message: 'Weekly claim has no submitted hours',
+      },
+      {
+        title: 'withdraw with empty submitted hours',
+        action: 'withdraw',
+        claim: weeklyClaimFactory({ status: 'signed', claims: [] }),
+        ownerOk: true,
+        message: 'Weekly claim has no submitted hours',
+      },
+      {
+        title: 'sign with overtime exceeded hours',
+        action: 'sign',
+        claim: weeklyClaimFactory({
+          claims: [{ hoursWorked: 60 }],
+          wage: ownerWage(CALLER, {
+            maximumHoursPerWeek: 40,
+            maximumOvertimeHoursPerWeek: 8,
+          }),
+        }),
+        ownerOk: true,
+        message:
+          'Weekly claim exceeds allowed hours. Allowed: 40h regular + 8h overtime = 48h. Submitted: 60h.',
+      },
+      {
+        title: 'withdraw with overtime exceeded hours',
+        action: 'withdraw',
+        claim: weeklyClaimFactory({
+          status: 'signed',
+          claims: [{ hoursWorked: 60 }],
+          wage: ownerWage(CALLER, {
+            maximumHoursPerWeek: 40,
+            maximumOvertimeHoursPerWeek: 8,
+          }),
+        }),
+        ownerOk: true,
+        message:
+          'Weekly claim exceeds allowed hours. Allowed: 40h regular + 8h overtime = 48h. Submitted: 60h.',
+      },
     ])('should return 400 for $title', async ({ action, claim, ownerOk, message }) => {
       vi.mocked(isCashRemunerationOwner).mockResolvedValue(ownerOk);
       vi.spyOn(prisma.weeklyClaim, 'findUnique').mockResolvedValue(claim as any);
@@ -252,14 +301,18 @@ describe('Weekly Claim Controller', () => {
       {
         title: 'sign success',
         action: 'sign',
-        claim: weeklyClaimFactory({ status: 'pending' }),
+        claim: weeklyClaimFactory({ status: 'pending', claims: [{ hoursWorked: 46 }] }),
         txResult: weeklyClaimFactory({ status: 'signed', signature: '0xabc' }),
         expected: 'signed',
       },
       {
         title: 'withdraw success',
         action: 'withdraw',
-        claim: weeklyClaimFactory({ status: 'signed', signature: '0xabc' }),
+        claim: weeklyClaimFactory({
+          status: 'signed',
+          signature: '0xabc',
+          claims: [{ hoursWorked: 46 }],
+        }),
         txResult: weeklyClaimFactory({ status: 'withdrawn', signature: '0xabc' }),
         expected: 'withdrawn',
       },
