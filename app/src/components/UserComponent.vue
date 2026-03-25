@@ -14,7 +14,7 @@
       >
         <img
           data-test="avatar-image"
-          alt="User Avatar"
+          :alt="`${user.name ?? 'Unknown'}'s avatar`"
           :src="
             user.imageUrl ||
             'https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp'
@@ -35,8 +35,8 @@
         data-test="user-name"
       >
         {{
-          props.user.name && props.user.name.length > 10
-            ? `${props.user.name.slice(0, 10)}...`
+          props.user.name && props.user.name.length > 20
+            ? `${props.user.name.slice(0, 20)}...`
             : props.user.name || 'User'
         }}
       </p>
