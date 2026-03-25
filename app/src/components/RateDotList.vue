@@ -7,7 +7,7 @@
       :class="textClass"
     >
       <span
-        class="inline-block w-2 h-2 rounded-full flex-shrink-0"
+        class="inline-block w-2 h-2 rounded-full shrink-0"
         :class="{
           'bg-yellow-400': rate.type === 'native',
           'bg-blue-500': rate.type === 'usdc',
