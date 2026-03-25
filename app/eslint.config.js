@@ -18,7 +18,8 @@ export default [
       'src/artifacts/**/*.{ts,mts,tsx,vue}',
       'src/components/GenericTransactionHistory.vue',
       'src/components/sections/VestingView/forms/CreateVesting.vue',
-      'src/components/TableComponent.vue'
+      'src/components/TableComponent.vue',
+      'src/components/sections/DashboardView/forms/ApproveUsersEIP712Form.vue'
     ],
     rules: {
       'max-lines': 'off'
