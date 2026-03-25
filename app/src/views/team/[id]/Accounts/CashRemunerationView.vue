@@ -35,7 +35,7 @@ import ContractOwnerCard from '@/components/ContractOwnerCard.vue'
 
 import GenericTokenHoldingsSection from '@/components/GenericTokenHoldingsSection.vue'
 import CashRemunerationOverview from '@/components/sections/CashRemunerationView/CashRemunerationOverview.vue'
-import CRWeeklyClaimOwnerHeader from '@/components/sections/CashRemunerationView/CRWeeklyClaimOwnerHeader.vue'
+// import CRWeeklyClaimOwnerHeader from '@/components/sections/CashRemunerationView/CRWeeklyClaimOwnerHeader.vue'
 import OwnerTreasuryWithdrawAction from '@/components/sections/OwnerTreasuryWithdrawAction.vue'
 
 // const userStore = useUserDataStore()
