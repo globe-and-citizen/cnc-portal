@@ -12,15 +12,35 @@ export const wageRateSchema = z.object({
 });
 
 // Set wage request body
-export const setWageBodySchema = z.object({
-  teamId: teamIdSchema,
-  userAddress: addressSchema,
-  maximumHoursPerWeek: z.coerce
-    .number()
-    .int()
-    .positive('Maximum hours per week must be a positive integer'),
-  ratePerHour: z.array(wageRateSchema).min(1, 'At least one rate must be provided'),
-});
+export const setWageBodySchema = z
+  .object({
+    teamId: teamIdSchema,
+    userAddress: addressSchema,
+    maximumHoursPerWeek: z.coerce
+      .number()
+      .int()
+      .positive('Maximum hours per week must be a positive integer'),
+    maximumOvertimeHoursPerWeek: z.coerce
+      .number()
+      .int()
+      .positive('Overtime hours per week must be a positive integer')
+      .nullable()
+      .optional(),
+    ratePerHour: z.array(wageRateSchema).min(1, 'At least one rate must be provided'),
+    overtimeRatePerHour: z.array(wageRateSchema).min(1).nullable().optional(),
+  })
+  .superRefine((data, ctx) => {
+    const hasOvertimeRates =
+      Array.isArray(data.overtimeRatePerHour) && data.overtimeRatePerHour.length > 0;
+
+    if (hasOvertimeRates && data.maximumOvertimeHoursPerWeek == null) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['maximumOvertimeHoursPerWeek'],
+        message: 'Maximum overtime hours per week is required when overtime rates are provided',
+      });
+    }
+  });
 
 // Get wages query parameters
 export const getWagesQuerySchema = z.object({
