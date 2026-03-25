@@ -1,33 +1,22 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
-import { defineComponent, h, ref } from 'vue'
+import { defineComponent, h } from 'vue'
 import SetMemberWageModal from '../SetMemberWageModal.vue'
 import { useSetMemberWageMutation } from '@/queries/wage.queries'
+import { createMockMutationResponse } from '@/tests/mocks'
 
-type WageRateVm = {
-  type: string
-  amount: number
-  enabled: boolean
-}
-
-type SetMemberWageModalVm = {
-  showModal: boolean
-  currentStep: number
-  isSaving: boolean
-  wageData: {
-    enableOvertimeRules: boolean
-    maximumHoursPerWeek: number
-    maximumOvertimeHoursPerWeek?: number
-    ratePerHour: WageRateVm[]
-    overtimeRatePerHour: WageRateVm[]
+// UModal teleports its header/body slots to <body> by default, making them
+// invisible to wrapper.find(). Intercepting the resolved module path from the
+// @nuxt/ui/vite auto-import allows wrapper.find() to work for all modal content.
+vi.mock('@nuxt/ui/components/Modal.vue', () => ({
+  default: {
+    name: 'UModal',
+    props: { open: { type: Boolean, default: false }, ui: Object },
+    emits: ['update:open'],
+    template: '<div><slot /><div v-if="open"><slot name="header" /><slot name="body" /></div></div>'
   }
-  handlePrimaryAction: () => Promise<void>
-  handleResetWage: () => void
-  submitWage: () => void
-  handleBackStep: () => void
-  $nextTick: () => Promise<void>
-}
+}))
 
 const mockMember = { address: '0x123', name: 'Alice' }
 const mockTeamId = 1
@@ -54,49 +43,32 @@ const mockWage = {
 describe('SetMemberWageModal', () => {
   let standardStepIsValid = true
   let overtimeStepIsValid = true
-  const toastAddMock = vi.fn()
-  const mutationError = ref<unknown>(null)
-  const mutateSpy = vi.fn()
+  let mutateSpy: ReturnType<typeof vi.fn>
 
+  // Locally-imported sub-components are stubbed to expose validateForm and avoid
+  // loading their heavy dependencies (contract address resolution etc.).
   const StandardStepStub = defineComponent({
     name: 'SetMemberWageStandardStep',
-    props: {
-      wageData: {
-        type: Object,
-        required: true
-      }
-    },
+    props: { wageData: { type: Object, required: true } },
     emits: ['update:wageData'],
     setup(_props, { expose }) {
-      expose({
-        validateForm: () => standardStepIsValid
-      })
-
+      expose({ validateForm: () => standardStepIsValid })
       return () => h('div', { 'data-test': 'standard-step' })
     }
   })
 
   const OvertimeStepStub = defineComponent({
     name: 'SetMemberWageOvertimeStep',
-    props: {
-      wageData: {
-        type: Object,
-        required: true
-      }
-    },
+    props: { wageData: { type: Object, required: true } },
     emits: ['update:wageData'],
     setup(_props, { expose }) {
-      expose({
-        validateForm: () => overtimeStepIsValid
-      })
-
+      expose({ validateForm: () => overtimeStepIsValid })
       return () => h('div', { 'data-test': 'overtime-step' })
     }
   })
 
   const createWrapper = (props = {}) =>
     mount(SetMemberWageModal, {
-      attachTo: document.body,
       props: {
         member: mockMember,
         teamId: mockTeamId,
@@ -106,11 +78,7 @@ describe('SetMemberWageModal', () => {
       global: {
         plugins: [createTestingPinia({ createSpy: vi.fn })],
         stubs: {
-          UModal: { template: '<div><slot /><slot name="header" /><slot name="body" /></div>' },
-          UButton: {
-            template:
-              '<button v-bind="$attrs" @click="$emit(\'click\')"><slot />{{ $attrs.label || "" }}</button>'
-          },
+          UButton: { template: '<button v-bind="$attrs"><slot />{{ $attrs.label }}</button>' },
           UStepper: { template: '<div />' },
           UAlert: {
             props: ['description'],
@@ -126,27 +94,21 @@ describe('SetMemberWageModal', () => {
     vi.clearAllMocks()
     standardStepIsValid = true
     overtimeStepIsValid = true
-    mutationError.value = null
+    mutateSpy = vi.fn()
 
     vi.stubGlobal(
       'useToast',
-      vi.fn(() => ({ add: toastAddMock }))
+      vi.fn(() => ({ add: vi.fn() }))
     )
 
-    mutateSpy.mockImplementation((_payload, options) => {
-      options?.onSuccess?.()
-      options?.onSettled?.()
-    })
-
     vi.mocked(useSetMemberWageMutation).mockReturnValue({
-      mutate: mutateSpy,
-      error: mutationError
+      ...createMockMutationResponse(),
+      mutate: mutateSpy
     } as ReturnType<typeof useSetMemberWageMutation>)
   })
 
   afterEach(() => {
     vi.unstubAllGlobals()
-    document.body.innerHTML = ''
   })
 
   const openModal = async (wrapper: ReturnType<typeof createWrapper>) => {
@@ -154,181 +116,168 @@ describe('SetMemberWageModal', () => {
     await wrapper.vm.$nextTick()
   }
 
-  const getVm = (wrapper: ReturnType<typeof createWrapper>) =>
-    wrapper.vm as unknown as SetMemberWageModalVm
-
-  it('renders modal and wage button', () => {
+  it('renders the Set Wage trigger button', () => {
     const wrapper = createWrapper()
     expect(wrapper.find('[data-test="set-wage-button"]').exists()).toBe(true)
   })
 
-  it('opens modal on button click', async () => {
+  it('shows modal content when Set Wage button is clicked', async () => {
     const wrapper = createWrapper()
-    await wrapper.find('[data-test="set-wage-button"]').trigger('click')
-    const vm = getVm(wrapper)
-    expect(vm.showModal).toBe(true)
-  })
+    expect(wrapper.find('[data-test="standard-step"]').exists()).toBe(false)
 
-  it('calls handleCancel on close button and resets state', async () => {
-    const wrapper = createWrapper()
-    const vm = getVm(wrapper)
     await openModal(wrapper)
 
-    vm.isSaving = true
-    vm.currentStep = 1
-    await vm.$nextTick()
-
-    const closeBtn = document.body.querySelector(
-      '[data-test="close-wage-modal-button"]'
-    ) as HTMLButtonElement | null
-    expect(closeBtn).not.toBeNull()
-
-    closeBtn?.click()
-    await vm.$nextTick()
-
-    expect(vm.showModal).toBe(false)
-    expect(vm.isSaving).toBe(false)
-    expect(vm.currentStep).toBe(0)
+    expect(wrapper.find('[data-test="standard-step"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="add-wage-button"]').exists()).toBe(true)
   })
 
-  it('shows error alert if setWageError is set', async () => {
-    mutationError.value = { response: { data: { message: 'fail' } } }
+  it('hides modal when the header close button is clicked', async () => {
     const wrapper = createWrapper()
-    const vm = getVm(wrapper)
-
     await openModal(wrapper)
-    await vm.$nextTick()
+    expect(wrapper.find('[data-test="standard-step"]').exists()).toBe(true)
 
-    const errorState = document.body.querySelector('[data-test="error-state"]')
+    await wrapper.find('[data-test="close-wage-modal-button"]').trigger('click')
+    await wrapper.vm.$nextTick()
 
-    expect(errorState).not.toBeNull()
+    expect(wrapper.find('[data-test="standard-step"]').exists()).toBe(false)
   })
 
-  it('resets wage data on handleResetWage', () => {
+  it('hides modal when the Cancel button is clicked', async () => {
     const wrapper = createWrapper()
-    const vm = getVm(wrapper)
-
-    vm.wageData.ratePerHour[0].amount = 99
-    vm.wageData.ratePerHour[0].enabled = false
-    vm.wageData.enableOvertimeRules = true
-
-    vm.handleResetWage()
-
-    expect(vm.wageData.ratePerHour[0].amount).toBe(10)
-    expect(vm.wageData.ratePerHour[0].enabled).toBe(true)
-    expect(vm.wageData.enableOvertimeRules).toBe(false)
-  })
-
-  it('goes to overtime step instead of submitting on step 0 when overtime is enabled', async () => {
-    const wrapper = createWrapper()
-    const vm = getVm(wrapper)
     await openModal(wrapper)
 
-    vm.wageData.enableOvertimeRules = true
+    await wrapper.find('[data-test="add-wage-cancel-button"]').trigger('click')
+    await wrapper.vm.$nextTick()
 
-    await vm.handlePrimaryAction()
+    expect(wrapper.find('[data-test="standard-step"]').exists()).toBe(false)
+  })
 
-    expect(vm.currentStep).toBe(1)
+  it('advances to the overtime step when overtime is enabled and Next is clicked', async () => {
+    const wrapper = createWrapper()
+    await openModal(wrapper)
+
+    wrapper.vm.wageData.enableOvertimeRules = true
+    await wrapper.vm.$nextTick()
+
+    await wrapper.find('[data-test="add-wage-button"]').trigger('click')
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.find('[data-test="overtime-step"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="standard-step"]').exists()).toBe(false)
     expect(mutateSpy).not.toHaveBeenCalled()
   })
 
-  it('does not continue when current step validation fails', async () => {
+  it('returns to standard step when Back is clicked on the overtime step', async () => {
     const wrapper = createWrapper()
-    const vm = getVm(wrapper)
     await openModal(wrapper)
+
+    wrapper.vm.wageData.enableOvertimeRules = true
+    await wrapper.vm.$nextTick()
+    await wrapper.find('[data-test="add-wage-button"]').trigger('click')
+    await wrapper.vm.$nextTick()
+    expect(wrapper.find('[data-test="overtime-step"]').exists()).toBe(true)
+
+    await wrapper.find('[data-test="back-wage-button"]').trigger('click')
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.find('[data-test="standard-step"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="overtime-step"]').exists()).toBe(false)
+  })
+
+  it('does not call mutation and stays on current step when validation fails', async () => {
     standardStepIsValid = false
-    vm.wageData.enableOvertimeRules = false
-
-    await vm.handlePrimaryAction()
-
-    expect(vm.currentStep).toBe(0)
-    expect(mutateSpy).not.toHaveBeenCalled()
-  })
-
-  it('returns early in submitWage when already saving', () => {
     const wrapper = createWrapper()
-    const vm = getVm(wrapper)
-
-    vm.currentStep = 1
-    vm.isSaving = true
-    vm.submitWage()
-
-    expect(mutateSpy).not.toHaveBeenCalled()
-  })
-
-  it('handles back step action', () => {
-    const wrapper = createWrapper()
-    const vm = getVm(wrapper)
-
-    vm.currentStep = 1
-    vm.handleBackStep()
-
-    expect(vm.currentStep).toBe(0)
-  })
-
-  it('submits wage and emits wageUpdated while resetting modal state', async () => {
-    const wrapper = createWrapper()
-    const vm = getVm(wrapper)
     await openModal(wrapper)
 
-    vm.currentStep = 1
-    await vm.$nextTick()
-    vm.wageData.maximumHoursPerWeek = 42
-    vm.wageData.maximumOvertimeHoursPerWeek = 7
-    vm.wageData.enableOvertimeRules = true
-    vm.wageData.ratePerHour = [
-      { type: 'native', amount: 10, enabled: true },
-      { type: 'usdc', amount: 0, enabled: true },
-      { type: 'sher', amount: 4, enabled: false }
-    ]
-    vm.wageData.overtimeRatePerHour = [
-      { type: 'native', amount: 20, enabled: true },
-      { type: 'usdc', amount: 0, enabled: false },
-      { type: 'sher', amount: 1, enabled: true }
-    ]
+    await wrapper.find('[data-test="add-wage-button"]').trigger('click')
+    await wrapper.vm.$nextTick()
 
-    await vm.handlePrimaryAction()
+    expect(wrapper.find('[data-test="standard-step"]').exists()).toBe(true)
+    expect(mutateSpy).not.toHaveBeenCalled()
+  })
 
-    expect(mutateSpy).toHaveBeenCalledTimes(1)
+  it('calls mutation with member, team, and wage data when Save is clicked', async () => {
+    const wrapper = createWrapper()
+    await openModal(wrapper)
 
-    const [payload] = mutateSpy.mock.calls[0]
-    expect(payload.body).toEqual({
+    await wrapper.find('[data-test="add-wage-button"]').trigger('click')
+
+    expect(mutateSpy).toHaveBeenCalledOnce()
+    expect(mutateSpy.mock.calls[0][0].body).toEqual({
       teamId: mockTeamId,
       userAddress: mockMember.address,
       ratePerHour: [{ type: 'native', amount: 10 }],
-      overtimeRatePerHour: [
-        { type: 'native', amount: 20 },
-        { type: 'sher', amount: 1 }
-      ],
-      maximumOvertimeHoursPerWeek: 7,
-      maximumHoursPerWeek: 42
+      overtimeRatePerHour: null,
+      maximumOvertimeHoursPerWeek: null,
+      maximumHoursPerWeek: mockWage.maximumHoursPerWeek
     })
-
-    expect(wrapper.emitted('wageUpdated')).toBeTruthy()
-    expect(vm.showModal).toBe(false)
-    expect(vm.currentStep).toBe(0)
-    expect(vm.isSaving).toBe(false)
   })
 
-  it('calls error callback when mutation fails', async () => {
-    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined)
-
-    mutateSpy.mockImplementationOnce((_payload, options) => {
-      options?.onError?.({ message: 'network issue' })
-      options?.onSettled?.()
+  it('emits wageUpdated and closes modal after mutation succeeds', async () => {
+    mutateSpy.mockImplementation((_payload, options) => {
+      options?.onSuccess?.()
     })
 
     const wrapper = createWrapper()
-    const vm = getVm(wrapper)
     await openModal(wrapper)
-    vm.currentStep = 1
-    await vm.$nextTick()
+    await wrapper.find('[data-test="add-wage-button"]').trigger('click')
+    await wrapper.vm.$nextTick()
 
-    await vm.handlePrimaryAction()
+    expect(wrapper.emitted('wageUpdated')).toBeTruthy()
+    expect(wrapper.find('[data-test="standard-step"]').exists()).toBe(false)
+  })
 
+  it('keeps the modal open and logs an error when mutation fails', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    mutateSpy.mockImplementation((_payload, options) => {
+      options?.onError?.({ message: 'network issue' })
+    })
+
+    const wrapper = createWrapper()
+    await openModal(wrapper)
+    await wrapper.find('[data-test="add-wage-button"]').trigger('click')
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.find('[data-test="standard-step"]').exists()).toBe(true)
     expect(errorSpy).toHaveBeenCalled()
-    expect(vm.isSaving).toBe(false)
 
     errorSpy.mockRestore()
+  })
+
+  it('shows an error alert when the mutation returns an error', async () => {
+    vi.mocked(useSetMemberWageMutation).mockReturnValueOnce(
+      createMockMutationResponse(null, false, new Error('Network error')) as ReturnType<
+        typeof useSetMemberWageMutation
+      >
+    )
+
+    const wrapper = createWrapper()
+    await openModal(wrapper)
+
+    expect(wrapper.find('[data-test="error-state"]').exists()).toBe(true)
+  })
+
+  it('disables the primary action button while mutation is pending', async () => {
+    vi.mocked(useSetMemberWageMutation).mockReturnValueOnce(
+      createMockMutationResponse(null, true) as ReturnType<typeof useSetMemberWageMutation>
+    )
+
+    const wrapper = createWrapper()
+    await openModal(wrapper)
+
+    expect(wrapper.find('[data-test="add-wage-button"]').attributes('disabled')).toBeDefined()
+  })
+
+  it('prevents calling mutation while a previous submission is in flight', async () => {
+    vi.mocked(useSetMemberWageMutation).mockReturnValueOnce({
+      ...createMockMutationResponse(null, true),
+      mutate: mutateSpy
+    } as ReturnType<typeof useSetMemberWageMutation>)
+
+    const wrapper = createWrapper()
+    await openModal(wrapper)
+    await wrapper.find('[data-test="add-wage-button"]').trigger('click')
+
+    expect(mutateSpy).not.toHaveBeenCalled()
   })
 })

@@ -81,10 +81,6 @@ defineEmits(['toggleSideButton', 'toggleEditUserModal'])
 const { logout } = useAuth()
 const userStore = useUserDataStore()
 const { imageUrl } = storeToRefs(userStore)
-
-// defineProps<{
-//   isCollapsed: boolean
-// }>()
 </script>
 
 <style scoped>
