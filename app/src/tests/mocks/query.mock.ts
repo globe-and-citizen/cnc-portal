@@ -61,6 +61,7 @@ export const mockWageData: Wage[] = [
     teamId: 1,
     userAddress: '0x1234567890123456789012345678901234567890',
     maximumHoursPerWeek: 40,
+    disabled: false,
     nextWageId: null,
     createdAt: '2024-01-01T00:00:00Z',
     updatedAt: '2024-01-01T00:00:00Z',
