@@ -1,27 +1,25 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
-import { createTestingPinia } from '@pinia/testing'
-import { nextTick } from 'vue'
 import WeeklyRecap from '@/components/sections/ClaimHistoryView/WeeklyRecap.vue'
-import { mockWageData, mockWeeklyClaimData } from '@/tests/mocks'
 import { useCurrencyStore } from '@/stores'
 
-describe.skip('ClaimHistory WeeklyRecap', () => {
+describe('ClaimHistory WeeklyRecap', () => {
   const createWrapper = (props: Record<string, unknown> = {}) =>
     mount(WeeklyRecap, {
       props,
       global: {
-        plugins: [createTestingPinia({ createSpy: vi.fn, stubActions: false })],
         stubs: {
           RatePerHourList: {
             name: 'RatePerHourList',
-            props: ['currencySymbol'],
-            template: '<div data-test="rate-per-hour-list">{{ currencySymbol }}</div>'
+            props: ['ratePerHour', 'currencySymbol'],
+            template:
+              '<div data-test="rate-per-hour-list">{{ currencySymbol }}|{{ JSON.stringify(ratePerHour) }}</div>'
           },
           RatePerHourTotalList: {
             name: 'RatePerHourTotalList',
-            props: ['currencySymbol'],
-            template: '<div data-test="rate-per-hour-total-list">{{ currencySymbol }}</div>'
+            props: ['ratePerHour', 'currencySymbol', 'totalHours'],
+            template:
+              '<div data-test="rate-per-hour-total-list">{{ currencySymbol }}|{{ totalHours }}|{{ JSON.stringify(ratePerHour) }}</div>'
           }
         }
       }
@@ -29,136 +27,182 @@ describe.skip('ClaimHistory WeeklyRecap', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+
+    vi.mocked(useCurrencyStore).mockReturnValue({
+      localCurrency: { code: 'USD' },
+      getTokenInfo: vi.fn((tokenType: string) => {
+        if (tokenType === 'native') {
+          return {
+            symbol: 'ETH',
+            prices: [{ id: 'local', price: 10 }]
+          }
+        }
+        if (tokenType === 'usdc') {
+          return {
+            symbol: 'USDC',
+            prices: [{ id: 'local', price: 1 }]
+          }
+        }
+        return {
+          symbol: tokenType.toUpperCase(),
+          prices: []
+        }
+      })
+    } as unknown as ReturnType<typeof useCurrencyStore>)
   })
 
-  it('renders weekly claim recap and limit text when weeklyClaim is provided', () => {
+  it('renders overtime status, overtime block, and combined totals when overtime is reached', () => {
     const wrapper = createWrapper({
-      weeklyClaim: mockWeeklyClaimData[0]
+      weeklyClaim: {
+        hoursWorked: 45,
+        wage: {
+          maximumHoursPerWeek: 40,
+          maximumOvertimeHoursPerWeek: 10,
+          ratePerHour: [
+            { type: 'native', amount: 2 },
+            { type: 'usdc', amount: 1 }
+          ],
+          overtimeRatePerHour: [{ type: 'native', amount: 3 }]
+        }
+      }
     })
-    const vm = wrapper.vm as unknown as {
-      submittedHours: number
-      totalAmount: string
-      hourlyRateInUserCurrency: number
-    }
 
-    expect(wrapper.text()).toContain('Total Hours')
-    expect(wrapper.text()).toContain('40h')
+    expect(wrapper.text()).toContain('Overtime reached')
+    expect(wrapper.text()).toContain('45h')
+    expect(wrapper.text()).toContain('40 hrs weekly limit')
+    expect(wrapper.text()).toContain('10 overtime hrs')
+    expect(wrapper.text()).toContain('Overtime Rate')
+    expect(wrapper.text()).toContain('$21.00 USD/h')
+    expect(wrapper.text()).toContain('$30.00 USD/h')
+    expect(wrapper.text()).toContain('$990.00 USD')
+
+    const totalLine = wrapper.find('[data-test="rate-per-hour-total-list"]').text()
+    expect(totalLine).toContain('ETH|1')
+    expect(totalLine).toContain('"type":"native","amount":95')
+    expect(totalLine).toContain('"type":"usdc","amount":40')
+  })
+
+  it('renders submitted state without overtime section when overtime wage is not configured', () => {
+    const wrapper = createWrapper({
+      weeklyClaim: {
+        hoursWorked: 40,
+        wage: {
+          maximumHoursPerWeek: 40,
+          ratePerHour: [{ type: 'native', amount: 5 }],
+          overtimeRatePerHour: []
+        }
+      }
+    })
+
+    expect(wrapper.text()).toContain('Submitted')
+    expect(wrapper.text()).not.toContain('Overtime reached')
+    expect(wrapper.text()).not.toContain('Overtime Rate')
     expect(wrapper.text()).toContain('of 40 hrs weekly limit')
-    expect(wrapper.find('[data-test="rate-per-hour-list"]').exists()).toBe(true)
-    expect(wrapper.find('[data-test="rate-per-hour-total-list"]').exists()).toBe(true)
-
-    expect(vm.submittedHours).toBe(40)
-    expect(vm.hourlyRateInUserCurrency).toBeGreaterThanOrEqual(0)
-    expect(vm.totalAmount).toBe('0.00')
   })
 
-  it('renders wage-only recap with available-week text and no total list', () => {
+  it('renders waiting state and wage availability with overtime when only wage is provided', () => {
     const wrapper = createWrapper({
-      wage: mockWageData[0]
+      wage: {
+        maximumHoursPerWeek: 30,
+        maximumOvertimeHoursPerWeek: 8,
+        ratePerHour: [{ type: 'native', amount: 1 }],
+        overtimeRatePerHour: [{ type: 'native', amount: 2 }]
+      }
     })
-    const vm = wrapper.vm as unknown as {
-      submittedHours: number
-      totalAmount: string
-      hourlyRateInUserCurrency: number
-    }
 
-    expect(wrapper.text()).toContain('40 hrs available this week')
-    expect(wrapper.find('[data-test="rate-per-hour-list"]').exists()).toBe(true)
+    expect(wrapper.text()).toContain('Waiting')
+    expect(wrapper.text()).toContain('30 hrs available this week')
+    expect(wrapper.text()).toContain('8 overtime hrs available')
     expect(wrapper.find('[data-test="rate-per-hour-total-list"]').exists()).toBe(false)
-
-    expect(vm.submittedHours).toBe(0)
-    expect(vm.hourlyRateInUserCurrency).toBeGreaterThanOrEqual(0)
-    expect(vm.totalAmount).toBe('0.00')
+    expect(wrapper.text()).toContain('—')
   })
 
-  it('handles missing weeklyClaim and wage with safe defaults', () => {
-    const wrapper = createWrapper()
-    const vm = wrapper.vm as unknown as {
-      submittedHours: number
-      totalAmount: string
-      hourlyRateInUserCurrency: number
-    }
+  it('falls back to default placeholders and NATIVE symbol when store token info is unavailable', () => {
+    vi.mocked(useCurrencyStore).mockReturnValue({
+      localCurrency: { code: 'USD' },
+      getTokenInfo: vi.fn(() => null)
+    } as unknown as ReturnType<typeof useCurrencyStore>)
 
-    expect(wrapper.text()).toContain('- hrs available this week')
-    expect(wrapper.find('[data-test="rate-per-hour-total-list"]').exists()).toBe(false)
-
-    expect(vm.submittedHours).toBe(0)
-    expect(vm.hourlyRateInUserCurrency).toBe(0)
-    expect(vm.totalAmount).toBe('0.00')
-  })
-
-  it('uses NATIVE fallback symbol when token info is unavailable', async () => {
     const wrapper = createWrapper({
-      weeklyClaim: mockWeeklyClaimData[0]
+      weeklyClaim: {
+        hoursWorked: 8,
+        wage: {
+          maximumHoursPerWeek: undefined,
+          ratePerHour: [{ type: 'mystery', amount: 3 }],
+          overtimeRatePerHour: undefined
+        }
+      }
     })
-    const currencyStore = useCurrencyStore()
 
-    vi.spyOn(currencyStore, 'getTokenInfo').mockReturnValue(null)
-
-    await wrapper.setProps({ weeklyClaim: { ...mockWeeklyClaimData[0] } })
-    await nextTick()
-
+    expect(wrapper.text()).toContain('Submitted')
+    expect(wrapper.text()).toContain('of - hrs weekly limit')
     expect(wrapper.find('[data-test="rate-per-hour-list"]').text()).toContain('NATIVE')
     expect(wrapper.find('[data-test="rate-per-hour-total-list"]').text()).toContain('NATIVE')
+    expect(wrapper.text()).toContain('$0.00 USD/h')
   })
 
-  it('computes non-zero amounts when local token prices are available', async () => {
+  it('handles missing claim and missing wage with safe defaults', () => {
+    const wrapper = createWrapper()
+
+    expect(wrapper.text()).toContain('Waiting')
+    expect(wrapper.text()).toContain('0h')
+    expect(wrapper.text()).toContain('- hrs available this week')
+    expect(wrapper.find('[data-test="rate-per-hour-total-list"]').exists()).toBe(false)
+    expect(wrapper.text()).not.toContain('Overtime Rate')
+  })
+
+  it('handles undefined limits and missing regular rates with overtime enabled', () => {
     const wrapper = createWrapper({
       weeklyClaim: {
-        ...mockWeeklyClaimData[0],
+        hoursWorked: 6,
         wage: {
-          ...mockWeeklyClaimData[0]?.wage,
-          ratePerHour: [{ type: 'native', amount: 3 }]
+          maximumHoursPerWeek: undefined,
+          maximumOvertimeHoursPerWeek: undefined,
+          ratePerHour: undefined,
+          overtimeRatePerHour: [{ type: 'native', amount: 2 }]
         }
       }
     })
-    const vm = wrapper.vm as unknown as {
-      hourlyRateInUserCurrency: number
-      totalAmount: string
-    }
-    const currencyStore = useCurrencyStore()
 
-    vi.spyOn(currencyStore, 'getTokenInfo').mockReturnValue({
-      id: 'native',
-      name: 'Native',
-      symbol: 'NAT',
-      code: 'NAT',
-      prices: [
-        { id: 'local', price: 2, code: 'USD', symbol: '$' },
-        { id: 'usd', price: 2, code: 'USD', symbol: '$' }
-      ]
-    })
-
-    await wrapper.setProps({
-      weeklyClaim: {
-        ...mockWeeklyClaimData[0],
-        wage: {
-          ...mockWeeklyClaimData[0]?.wage,
-          ratePerHour: [{ type: 'native', amount: 3 }]
-        }
-      }
-    })
-    await nextTick()
-
-    expect(vm.hourlyRateInUserCurrency).toBe(6)
-    expect(vm.totalAmount).toBe('240.00')
-  })
-
-  it('handles weeklyClaim without wage using fallback values', () => {
-    const wrapper = createWrapper({
-      weeklyClaim: {
-        ...mockWeeklyClaimData[0],
-        wage: undefined
-      }
-    })
-    const vm = wrapper.vm as unknown as {
-      hourlyRateInUserCurrency: number
-      totalAmount: string
-    }
-
+    expect(wrapper.text()).toContain('Submitted')
     expect(wrapper.text()).toContain('of - hrs weekly limit')
-    expect(wrapper.find('[data-test="rate-per-hour-total-list"]').exists()).toBe(true)
-    expect(vm.hourlyRateInUserCurrency).toBe(0)
-    expect(vm.totalAmount).toBe('0.00')
+    expect(wrapper.text()).toContain('- overtime hrs')
+    expect(wrapper.find('[data-test="rate-per-hour-total-list"]').text()).toContain(
+      '"type":"native","amount":0'
+    )
+  })
+
+  it('renders wage-only overtime availability with missing overtime max as placeholder', () => {
+    const wrapper = createWrapper({
+      wage: {
+        maximumHoursPerWeek: 20,
+        maximumOvertimeHoursPerWeek: undefined,
+        ratePerHour: [{ type: 'native', amount: 1 }],
+        overtimeRatePerHour: [{ type: 'native', amount: 1 }]
+      }
+    })
+
+    expect(wrapper.text()).toContain('20 hrs available this week')
+    expect(wrapper.text()).toContain('- overtime hrs available')
+  })
+
+  it('uses NATIVE fallback in overtime block when token info is missing in wage-only overtime mode', () => {
+    vi.mocked(useCurrencyStore).mockReturnValue({
+      localCurrency: { code: 'USD' },
+      getTokenInfo: vi.fn(() => null)
+    } as unknown as ReturnType<typeof useCurrencyStore>)
+
+    const wrapper = createWrapper({
+      wage: {
+        maximumHoursPerWeek: undefined,
+        maximumOvertimeHoursPerWeek: 5,
+        ratePerHour: [{ type: 'native', amount: 1 }],
+        overtimeRatePerHour: [{ type: 'native', amount: 2 }]
+      }
+    })
+
+    expect(wrapper.text()).toContain('- hrs available this week')
+    const rateLists = wrapper.findAll('[data-test="rate-per-hour-list"]')
+    expect(rateLists[1]?.text()).toContain('NATIVE')
   })
 })

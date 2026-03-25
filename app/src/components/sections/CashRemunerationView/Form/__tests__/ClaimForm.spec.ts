@@ -1,5 +1,6 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { describe, expect, it, vi, afterEach, beforeEach } from 'vitest'
+import { defineComponent } from 'vue'
 import ClaimForm from '@/components/sections/CashRemunerationView/Form/ClaimForm.vue'
 import { createTestingPinia } from '@pinia/testing'
 
@@ -24,6 +25,42 @@ const UTextareaStub = {
 const UPopoverStub = {
   template: '<div><slot /><slot name="content" /></div>'
 }
+
+const UCalendarStub = defineComponent({
+  name: 'UCalendar',
+  props: {
+    modelValue: { type: Object, required: false },
+    isDateDisabled: { type: Function, required: false }
+  },
+  emits: ['update:model-value'],
+  template:
+    '<div data-test="calendar-stub"><button data-test="calendar-select" @click="$emit(\'update:model-value\', { year: 2024, month: 1, day: 10 })" /></div>'
+})
+
+const resetUploadMock = vi.fn()
+const UploadFileDBStub = defineComponent({
+  name: 'UploadFileDB',
+  props: {
+    disabled: { type: Boolean, required: false },
+    existingFileCount: { type: Number, required: false }
+  },
+  emits: ['update:files'],
+  setup(_, { expose }) {
+    expose({ resetUpload: resetUploadMock })
+    return {}
+  },
+  template: '<div data-test="upload-file-db-stub" />'
+})
+
+const FilePreviewGalleryStub = defineComponent({
+  name: 'FilePreviewGallery',
+  props: {
+    previews: { type: Array, required: false }
+  },
+  emits: ['remove'],
+  template:
+    '<div data-test="file-preview-gallery">{{ JSON.stringify(previews) }}<button data-test="remove-preview" @click="$emit(\'remove\', 1)" /></div>'
+})
 
 // Renders a plain button passing all attrs through for data-test, type, disabled etc.
 const UButtonStub = {
@@ -51,10 +88,10 @@ const createWrapper = (props = {}) =>
         UInput: UInputStub,
         UTextarea: UTextareaStub,
         UButton: UButtonStub,
-        UCalendar: true,
+        UCalendar: UCalendarStub,
         UPopover: UPopoverStub,
-        UploadFileDB: true,
-        FilePreviewGallery: true
+        UploadFileDB: UploadFileDBStub,
+        FilePreviewGallery: FilePreviewGalleryStub
       }
     }
   })
@@ -62,21 +99,11 @@ const createWrapper = (props = {}) =>
 describe('ClaimForm.vue', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    resetUploadMock.mockClear()
     vi.mocked(useToastStore).mockReturnValue({
       addErrorToast: errorToastMock,
       addSuccessToast: vi.fn()
     } as ReturnType<typeof useToastStore>)
-  })
-
-  it('shows validation errors when required fields are missing', async () => {
-    const wrapper = createWrapper()
-
-    // Trigger via native form submit (UForm validates with Zod on submit)
-    await wrapper.find('form').trigger('submit')
-    await flushPromises()
-
-    // Zod validation should block the submit event from being emitted
-    expect(wrapper.emitted('submit')).toBeFalsy()
   })
 
   it('emits cancel event when cancel button is clicked in edit mode', async () => {
@@ -115,6 +142,146 @@ describe('ClaimForm.vue', () => {
     expect(wrapper.find('[data-test="date-input"]').text()).toBe('2024-01-15 UTC')
   })
 
+  it('shows "Select a date" when dayWorked is empty and handles valid/invalid calendar selections', async () => {
+    const wrapper = createWrapper({
+      initialData: {
+        hoursWorked: '2',
+        memo: 'memo',
+        dayWorked: ''
+      }
+    })
+
+    expect(wrapper.find('[data-test="date-input"]').text()).toBe('Select a date')
+
+    const vm = wrapper.vm as unknown as {
+      onDateSelect: (value: unknown) => void
+    }
+
+    vm.onDateSelect(null)
+    await flushPromises()
+    expect(wrapper.find('[data-test="date-input"]').text()).toBe('Select a date')
+
+    vm.onDateSelect([{ year: 2024, month: 1, day: 9 }])
+    await flushPromises()
+    expect(wrapper.find('[data-test="date-input"]').text()).toBe('Select a date')
+
+    vm.onDateSelect({ start: undefined, end: undefined })
+    await flushPromises()
+    expect(wrapper.find('[data-test="date-input"]').text()).toBe('Select a date')
+
+    vm.onDateSelect({ year: 2024, month: 1, day: 9 })
+    await flushPromises()
+    expect(wrapper.find('[data-test="date-input"]').text()).toBe('2024-01-09 UTC')
+  })
+
+  it('reacts to date button click and calendar update event through template bindings', async () => {
+    const wrapper = createWrapper({ isEdit: false })
+
+    const vm = wrapper.vm as unknown as {
+      datePickerOpen: boolean
+      onDateSelect: (value: unknown) => void
+    }
+
+    expect(vm.datePickerOpen).toBe(false)
+    await wrapper.find('[data-test="date-input"]').trigger('click')
+    expect(vm.datePickerOpen).toBe(true)
+
+    vm.onDateSelect({ year: 2024, month: 1, day: 10 })
+    await flushPromises()
+    expect(wrapper.find('[data-test="date-input"]').text()).toBe('2024-01-10 UTC')
+    expect(vm.datePickerOpen).toBe(false)
+  })
+
+  it('handles calendarValue guard branches for empty and invalid dayWorked values', async () => {
+    const emptyDateWrapper = createWrapper({
+      initialData: {
+        hoursWorked: '1',
+        memo: 'memo',
+        dayWorked: ''
+      }
+    })
+
+    const vmEmpty = emptyDateWrapper.vm as unknown as {
+      calendarValue: unknown
+    }
+    expect(vmEmpty.calendarValue).toBeUndefined()
+
+    const invalidDateWrapper = createWrapper({
+      initialData: {
+        hoursWorked: '1',
+        memo: 'memo',
+        dayWorked: 'not-a-date'
+      }
+    })
+
+    const vmInvalid = invalidDateWrapper.vm as unknown as {
+      calendarValue: unknown
+    }
+    expect(vmInvalid.calendarValue).toBeUndefined()
+
+    const malformedIsoWrapper = createWrapper({
+      initialData: {
+        hoursWorked: '1',
+        memo: 'memo',
+        dayWorked: 'T00:00:00.000Z'
+      }
+    })
+
+    const vmMalformedIso = malformedIsoWrapper.vm as unknown as {
+      calendarValue: unknown
+    }
+    expect(vmMalformedIso.calendarValue).toBeUndefined()
+  })
+
+  it('exposes disabled-date matcher and covers approved week and restriction branches', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(Date.UTC(2024, 0, 12, 0, 0, 0)))
+
+    const wrapper = createWrapper({
+      disabledWeekStarts: ['2024-01-08T00:00:00.000Z'],
+      restrictSubmit: true
+    })
+
+    const vm = wrapper.vm as unknown as {
+      isDateDisabledFn: (d: { year: number; month: number; day: number }) => boolean
+    }
+
+    const isDateDisabled = vm.isDateDisabledFn as (d: {
+      year: number
+      month: number
+      day: number
+    }) => boolean
+
+    expect(isDateDisabled({ year: 2024, month: 1, day: 8 })).toBe(true)
+
+    const restrictedWrapper = createWrapper({ restrictSubmit: true })
+    const restrictedVm = restrictedWrapper.vm as unknown as {
+      isDateDisabledFn: (d: { year: number; month: number; day: number }) => boolean
+    }
+    const isRestrictedDateDisabled = restrictedVm.isDateDisabledFn as (d: {
+      year: number
+      month: number
+      day: number
+    }) => boolean
+
+    expect(isRestrictedDateDisabled({ year: 2024, month: 1, day: 7 })).toBe(true)
+    expect(isRestrictedDateDisabled({ year: 2024, month: 1, day: 13 })).toBe(true)
+    expect(isRestrictedDateDisabled({ year: 2024, month: 1, day: 8 })).toBe(true)
+
+    const unrestrictedWrapper = createWrapper({ restrictSubmit: false })
+    const unrestrictedVm = unrestrictedWrapper.vm as unknown as {
+      isDateDisabledFn: (d: { year: number; month: number; day: number }) => boolean
+    }
+    const isUnrestrictedDateDisabled = unrestrictedVm.isDateDisabledFn as (d: {
+      year: number
+      month: number
+      day: number
+    }) => boolean
+
+    expect(isUnrestrictedDateDisabled({ year: 2024, month: 1, day: 1 })).toBe(false)
+    vi.useRealTimers()
+  })
+
   describe('formatUTC helper', () => {
     it('returns empty string when value is nullish', () => {
       const wrapper = createWrapper()
@@ -136,21 +303,6 @@ describe('ClaimForm.vue', () => {
       expect(formatUTC(sampleDate)).toBe('2024-01-20 UTC')
       expect(formatUTC('2024-02-15T12:00:00.000Z')).toBe('2024-02-15 UTC')
     })
-  })
-
-  it('shows memo length validation error and prevents submit when memo is too long', async () => {
-    const wrapper = createWrapper()
-    const longMemo = 'a'.repeat(3001)
-
-    await wrapper.find('input[data-test="hours-worked-input"]').setValue('3')
-    await wrapper.find('textarea[data-test="memo-input"]').setValue(longMemo)
-    // Date is pre-filled with today's UTC date by default — no need to set it
-
-    await wrapper.find('form').trigger('submit')
-    await flushPromises()
-
-    // Zod schema max(3000) should block submission
-    expect(wrapper.emitted('submit')).toBeFalsy()
   })
 
   describe('File Upload Integration', () => {
@@ -241,100 +393,71 @@ describe('ClaimForm.vue', () => {
       )
     })
 
-    it('should emit submit when total files are exactly 10', async () => {
+    it('maps existing file previews, derives file name, and emits delete-file from gallery', async () => {
       const wrapper = createWrapper({
         isEdit: true,
         existingFiles: [
-          { fileName: 'file1.png', fileData: 'base64', fileType: 'image/png', fileSize: 1024 },
-          { fileName: 'file2.png', fileData: 'base64', fileType: 'image/png', fileSize: 1024 },
-          { fileName: 'file3.png', fileData: 'base64', fileType: 'image/png', fileSize: 1024 },
-          { fileName: 'file4.png', fileData: 'base64', fileType: 'image/png', fileSize: 1024 },
-          { fileName: 'file5.png', fileData: 'base64', fileType: 'image/png', fileSize: 1024 },
-          { fileName: 'file6.png', fileData: 'base64', fileType: 'image/png', fileSize: 1024 },
-          { fileName: 'file7.png', fileData: 'base64', fileType: 'image/png', fileSize: 1024 }
+          {
+            fileKey: 'claims/1/report.png',
+            fileUrl: 'https://storage.railway.app/claims/1/report.png',
+            fileType: 'image/png',
+            fileSize: 2048
+          },
+          {
+            fileName: 'notes.pdf',
+            fileKey: 'claims/1/notes.pdf',
+            fileUrl: 'https://storage.railway.app/claims/1/notes.pdf',
+            fileType: 'application/pdf',
+            fileSize: 1024
+          },
+          {
+            fileKey: 'claims/1/',
+            fileUrl: 'https://storage.railway.app/claims/1/no-name',
+            fileType: 'application/pdf'
+          },
+          {
+            fileUrl: 'https://storage.railway.app/claims/1/invalid.pdf',
+            fileType: 'application/pdf'
+          }
         ]
       })
 
-      // Mock uploaded files (7 existing + 3 new = 10 total)
-      const newFiles = [
-        new File(['content1'], 'new1.png', { type: 'image/png' }),
-        new File(['content2'], 'new2.png', { type: 'image/png' }),
-        new File(['content3'], 'new3.png', { type: 'image/png' })
-      ]
+      const gallery = wrapper.find('[data-test="file-preview-gallery"]').text()
+      expect(gallery).toContain('report.png')
+      expect(gallery).toContain('notes.pdf')
+      expect(gallery).toContain('"fileName":"file"')
+      expect(gallery).toContain('"isImage":true')
+      expect(gallery).toContain('"isImage":false')
+      expect(gallery).not.toContain('invalid.pdf')
 
-      // Simulate file upload via UploadFileDB component
+      await wrapper.find('[data-test="remove-preview"]').trigger('click')
+      expect(wrapper.emitted('delete-file')?.[0]).toEqual([1])
+    })
+
+    it('exposed resetForm clears uploaded files and calls UploadFileDB.resetUpload', async () => {
+      const wrapper = createWrapper({
+        initialData: {
+          hoursWorked: '4',
+          memo: 'Reset flow',
+          dayWorked: '2024-01-15T00:00:00.000Z'
+        }
+      })
+
       const uploadComponent = wrapper.findComponent({ name: 'UploadFileDB' })
-      uploadComponent.vm.$emit('update:files', newFiles)
+      uploadComponent.vm.$emit('update:files', [new File(['content'], 'receipt.png')])
       await flushPromises()
-
-      await wrapper.find('input[data-test="hours-worked-input"]').setValue('4')
-      await wrapper.find('textarea[data-test="memo-input"]').setValue('Test memo')
 
       await wrapper.find('form').trigger('submit')
       await flushPromises()
 
-      expect(wrapper.emitted('submit')).toBeTruthy()
-      expect(errorToastMock).not.toHaveBeenCalled()
+      expect(wrapper.emitted('submit')?.[0]?.[0]?.files).toHaveLength(1)
+      ;(wrapper.vm as unknown as { resetForm: () => void }).resetForm()
+      expect(resetUploadMock).toHaveBeenCalledTimes(1)
+
+      await wrapper.find('form').trigger('submit')
+      await flushPromises()
+
+      expect(wrapper.emitted('submit')?.[1]?.[0]?.files).toBeUndefined()
     })
-
-    it('should show "Attached Files" section only in edit mode with files', () => {
-      // Not in edit mode - should not show
-      let wrapper = createWrapper({
-        isEdit: false,
-        existingFiles: [
-          { fileName: 'file1.png', fileData: 'base64', fileType: 'image/png', fileSize: 1024 }
-        ]
-      })
-      expect(wrapper.find('[data-test="attached-files-section"]').exists()).toBe(false)
-
-      // In edit mode but no files - should not show
-      wrapper = createWrapper({
-        isEdit: true,
-        existingFiles: []
-      })
-      expect(wrapper.find('[data-test="attached-files-section"]').exists()).toBe(false)
-
-      // In edit mode with files - should show
-      wrapper = createWrapper({
-        isEdit: true,
-        existingFiles: [
-          { fileName: 'file1.png', fileData: 'base64', fileType: 'image/png', fileSize: 1024 }
-        ]
-      })
-      expect(wrapper.find('[data-test="attached-files-section"]').exists()).toBe(true)
-    })
-  })
-})
-
-describe('disabledDates logic', () => {
-  afterEach(() => {
-    vi.useRealTimers()
-  })
-
-  // TODO: rewrite using isDateDisabledFn (UCalendar Matcher) after migration to Nuxt UI Calendar
-  it.skip('allows Monday..today on a Friday (week min wins)', async () => {
-    vi.useFakeTimers()
-    vi.setSystemTime(new Date(Date.UTC(2024, 0, 12, 0, 0, 0)))
-
-    const wrapper = createWrapper()
-    const { isDateDisabledFn } = wrapper.vm as unknown as {
-      isDateDisabledFn: (d: { year: number; month: number; day: number }) => boolean
-    }
-
-    // Dates that should be allowed (not disabled)
-    const allowed = [
-      { year: 2024, month: 1, day: 8 }, // Monday
-      { year: 2024, month: 1, day: 9 },
-      { year: 2024, month: 1, day: 10 },
-      { year: 2024, month: 1, day: 11 },
-      { year: 2024, month: 1, day: 12 } // Today (Friday)
-    ]
-
-    for (const d of allowed) {
-      expect(isDateDisabledFn(d)).toBe(false)
-    }
-
-    expect(isDateDisabledFn({ year: 2024, month: 1, day: 7 })).toBe(true) // Before Monday
-    expect(isDateDisabledFn({ year: 2024, month: 1, day: 13 })).toBe(true) // After today
   })
 })

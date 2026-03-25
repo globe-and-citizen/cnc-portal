@@ -151,4 +151,65 @@ describe('ClaimHistoryWeekNavigator', () => {
     expect(vm.getColor({ status: 'withdrawn' })).toBe('info')
     expect(vm.getColor({ status: 'processing' })).toBe('accent')
   })
+
+  it('covers tooltip and label formatters and overtime bar styling', () => {
+    mockWeeklyClaimData[0] = {
+      ...mockWeeklyClaimData[0],
+      weekStart: selectedWeek?.isoString,
+      wage: {
+        ...mockWeeklyClaimData[0]?.wage,
+        maximumHoursPerWeek: 8
+      },
+      claims: [
+        {
+          id: 1,
+          hoursWorked: 10,
+          dayWorked: '2024-01-01',
+          createdAt: '2024-01-01T08:00:00Z',
+          updatedAt: '2024-01-01T08:00:00Z',
+          memo: 'overtime',
+          wageId: 1,
+          wage: mockWeeklyClaimData[0]?.wage
+        }
+      ]
+    }
+
+    const wrapper = createWrapper()
+    const vm = wrapper.vm as unknown as {
+      barChartOption: {
+        tooltip: { formatter: (params: unknown[]) => string }
+        series: Array<{
+          data: Array<number | { value: number; itemStyle?: { borderRadius?: number[] } }>
+          label?: { formatter?: (params: { dataIndex: number }) => string }
+        }>
+      }
+    }
+
+    const regularDayOne = vm.barChartOption.series[0]?.data[0] as {
+      value: number
+      itemStyle: { borderRadius: number[] }
+    }
+    expect(regularDayOne.value).toBe(8)
+    expect(regularDayOne.itemStyle.borderRadius).toEqual([0, 0, 0, 0])
+
+    const tooltipWithOvertime = vm.barChartOption.tooltip.formatter([
+      { name: 'Mo', value: 8 },
+      { name: 'Mo', value: 2 }
+    ])
+    expect(tooltipWithOvertime).toContain('Regular: 8h')
+    expect(tooltipWithOvertime).toContain('Overtime: 2h')
+    expect(tooltipWithOvertime).toContain('Total: 10h')
+
+    const tooltipWithoutOvertime = vm.barChartOption.tooltip.formatter([
+      { name: 'Tu', value: 6 },
+      { name: 'Tu', value: 0 }
+    ])
+    expect(tooltipWithoutOvertime).toBe('<b>Tu</b><br/>6h')
+
+    const tooltipWithEmptyParams = vm.barChartOption.tooltip.formatter([])
+    expect(tooltipWithEmptyParams).toBe('<b></b><br/>0h')
+
+    const overtimeLabelFormatter = vm.barChartOption.series[1]?.label?.formatter
+    expect(overtimeLabelFormatter?.({ dataIndex: 0 })).toBe('10h')
+  })
 })
