@@ -78,13 +78,23 @@
           Standard rates
         </p>
         <div class="mt-3 space-y-2">
-          <p
+          <div
             v-for="rate in wageData.ratePerHour.filter((r) => r.enabled && r.amount > 0)"
             :key="rate.type"
-            class="text-lg font-semibold text-base-content/80"
+            class="flex items-center gap-1 text-base-content/80 font-semibold"
           >
-            {{ formatRate(rate.type, rate.amount) }}
-          </p>
+            <span
+              class="inline-block w-2 h-2 rounded-full flex-shrink-0"
+              :class="{
+                'bg-yellow-400': rate.type === 'native',
+                'bg-blue-500': rate.type === 'usdc',
+                'bg-green-500': rate.type === 'usdt',
+                'bg-purple-500': !['native', 'usdc', 'usdt'].includes(rate.type)
+              }"
+            />
+            {{ rate.type === 'native' ? NETWORK.currencySymbol : rate.type.toUpperCase() }}
+            {{ rate.amount }}
+          </div>
         </div>
       </div>
       <div
@@ -95,13 +105,23 @@
           Overtime rates
         </p>
         <div class="mt-3 space-y-2">
-          <p
+          <div
             v-for="rate in wageData.overtimeRatePerHour.filter((r) => r.enabled && r.amount > 0)"
             :key="rate.type"
-            class="text-lg font-semibold text-emerald-700"
+            class="flex items-center gap-1 text-emerald-700 font-semibold"
           >
-            {{ formatRate(rate.type, rate.amount) }}
-          </p>
+            <span
+              class="inline-block w-2 h-2 rounded-full flex-shrink-0"
+              :class="{
+                'bg-yellow-400': rate.type === 'native',
+                'bg-blue-500': rate.type === 'usdc',
+                'bg-green-500': rate.type === 'usdt',
+                'bg-purple-500': !['native', 'usdc', 'usdt'].includes(rate.type)
+              }"
+            />
+            {{ rate.type === 'native' ? NETWORK.currencySymbol : rate.type.toUpperCase() }}
+            {{ rate.amount }}
+          </div>
         </div>
       </div>
     </div>
@@ -187,8 +207,4 @@ const overtimeSchema = z.object({
   })
 })
 
-const formatRate = (type: string, amount: number) => {
-  const label = type === 'native' ? NETWORK.currencySymbol : type.toUpperCase()
-  return `${amount} ${label}/hr`
-}
 </script>
