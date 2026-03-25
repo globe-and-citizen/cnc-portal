@@ -9,13 +9,21 @@
         content: 'rounded-2xl'
       }"
     >
-      <UButton
-        size="lg"
-        color="success"
-        data-test="set-wage-button"
-        @click="showModal = true"
-        label="Set Wage"
-      />
+      <UTooltip
+        :text="wage?.disabled ? 'Enable the wage first to set a new wage' : undefined"
+        :content="{
+          side: 'top'
+        }"
+      >
+        <UButton
+          size="lg"
+          color="success"
+          data-test="set-wage-button"
+          :disabled="wage?.disabled"
+          @click="showModal = true"
+          label="Set Wage"
+        />
+      </UTooltip>
 
       <template #body>
         <div class="space-y-4 mt-1">
