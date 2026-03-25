@@ -78,7 +78,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed, watch, type Ref } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useFocus, watchDebounced } from '@vueuse/core'
 import UserComponent from '@/components/UserComponent.vue'
 import type { User } from '@/types'
