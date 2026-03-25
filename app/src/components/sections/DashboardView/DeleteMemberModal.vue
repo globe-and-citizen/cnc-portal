@@ -11,49 +11,57 @@
     </UTooltip>
 
     <template #body>
-      <p class="py-4">
-        Are you sure you want to remove
-        <span class="font-bold">{{ member.name }}</span>
-        (<span class="font-bold">{{ formattedAddress }}</span
-        >) from the team? This action cannot be undone.
-      </p>
+      <div class="flex flex-col gap-4">
+        <div class="flex justify-center py-2">
+          <UserComponent :user="member" isDetailedView />
+        </div>
 
-      <UAlert
-        v-if="deleteError"
-        color="error"
-        variant="soft"
-        :description="(deleteError as AxiosError<{ message?: string }>).response?.data?.message ?? 'Failed to remove member'"
-        class="mb-4"
-        data-test="delete-member-error"
-      />
+        <USeparator />
 
-      <div class="flex justify-center gap-2">
-        <UButton
-          :loading="memberIsDeleting"
-          :disabled="memberIsDeleting"
+        <UAlert
+          color="warning"
+          variant="soft"
+          icon="i-heroicons-exclamation-triangle"
+          :title="`Remove ${member.name} from the team?`"
+          description="This action cannot be undone."
+        />
+
+        <UAlert
+          v-if="deleteError"
           color="error"
-          @click="handleDelete"
-          data-test="delete-member-confirm-button"
-          >Remove</UButton
-        >
-        <UButton
-          color="primary"
-          variant="outline"
-          @click="showModal = false"
-          data-test="delete-member-cancel-button"
-        >
-          Cancel
-        </UButton>
+          variant="soft"
+          :description="(deleteError as AxiosError<{ message?: string }>).response?.data?.message ?? 'Failed to remove member'"
+          data-test="delete-member-error"
+        />
+
+        <div class="flex justify-end gap-2">
+          <UButton
+            color="neutral"
+            variant="outline"
+            @click="showModal = false"
+            data-test="delete-member-cancel-button"
+          >
+            Cancel
+          </UButton>
+          <UButton
+            :loading="memberIsDeleting"
+            :disabled="memberIsDeleting"
+            color="error"
+            @click="handleDelete"
+            data-test="delete-member-confirm-button"
+            >Remove</UButton
+          >
+        </div>
       </div>
     </template>
   </UModal>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import type { Member } from '@/types'
 import { useDeleteMemberMutation } from '@/queries/member.queries'
-import { formatAddress } from '@/utils/formatAddress'
+import UserComponent from '@/components/UserComponent.vue'
 import type { AxiosError } from 'axios'
 
 const props = defineProps<{
@@ -66,7 +74,6 @@ const emits = defineEmits<{
 }>()
 
 const showModal = ref(false)
-const formattedAddress = computed(() => formatAddress(props.member.address ?? ''))
 
 const toast = useToast()
 const { mutate: executeDeleteMember, isPending: memberIsDeleting, error: deleteError } = useDeleteMemberMutation()
