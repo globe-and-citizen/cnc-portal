@@ -151,12 +151,10 @@ const handleSubmit = async (data: ClaimSubmitPayload & { files?: File[] }) => {
     formInitialData.value = createDefaultFormData()
   } catch (error) {
     console.error('Error submitting claim:', error)
+    const backendMessage = (error as { response?: { data?: { message?: string } } })?.response?.data
+      ?.message
     const message =
-      error instanceof Error
-        ? error.message
-        : ((error as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-          'Failed to add claim')
-    toastStore.addErrorToast(message)
+      backendMessage ?? (error instanceof Error ? error.message : 'Failed to add claim')
     errorMessage.value = { message }
     addWageClaimError.value = true
   }
