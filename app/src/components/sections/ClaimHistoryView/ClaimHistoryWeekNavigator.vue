@@ -23,7 +23,6 @@
         >
           <div class="text-base font-medium flex items-center justify-between">
             Week
-
             <div
               class="badge badge-outline gap-3"
               v-if="memberWeeklyClaims?.some((wc) => wc.weekStart === week.isoString)"
@@ -52,7 +51,7 @@
       </div>
     </div>
 
-    <!-- Graphique à barres (Heures/Jour) -->
+    <!-- Bar chart (Hours/Day) -->
     <div class="mt-6">
       <v-chart :option="barChartOption" autoresize style="height: 250px" />
     </div>
@@ -72,7 +71,6 @@ import type { WeeklyClaim } from '@/types'
 import CardComponent from '@/components/CardComponent.vue'
 import MonthSelector from '@/components/MonthSelector.vue'
 
-// ECharts imports
 import { use } from 'echarts/core'
 import { BarChart } from 'echarts/charts'
 import {
@@ -93,9 +91,7 @@ interface Props {
 }
 
 const props = defineProps<Props>()
-
 const internalSelectedWeek = defineModel<Week>({ required: true })
-
 const teamStore = useTeamStore()
 
 const { data: memberWeeklyClaims } = useGetTeamWeeklyClaimsQuery({
@@ -105,9 +101,9 @@ const { data: memberWeeklyClaims } = useGetTeamWeeklyClaimsQuery({
   }
 })
 
-const generatedMonthWeek = computed(() => {
-  return getMonthWeeks(internalSelectedWeek.value.year, internalSelectedWeek.value.month)
-})
+const generatedMonthWeek = computed(() =>
+  getMonthWeeks(internalSelectedWeek.value.year, internalSelectedWeek.value.month)
+)
 
 const getColor = (weeklyClaim?: WeeklyClaim) => {
   if (!weeklyClaim) return 'accent'
@@ -117,13 +113,12 @@ const getColor = (weeklyClaim?: WeeklyClaim) => {
   return 'accent'
 }
 
-const selectWeekWeelyClaim = computed(() => {
-  return memberWeeklyClaims.value?.find(
+const selectWeekWeelyClaim = computed(() =>
+  memberWeeklyClaims.value?.find(
     (weeklyClaim) => weeklyClaim.weekStart === internalSelectedWeek.value.isoString
   )
-})
+)
 
-// Bar chart configuration
 const barChartOption = computed(() => {
   const regularData: { value: number; itemStyle: object }[] = []
   const overtimeData: number[] = []
@@ -193,7 +188,8 @@ const barChartOption = computed(() => {
         stack: 'hours',
         barWidth: '50%',
         data: overtimeData,
-        itemStyle: { color: '#EF4444', borderRadius: [6, 6, 0, 0] },
+        // Changed from #EF4444 (red) to #F59E0B (amber) for consistency with badge
+        itemStyle: { color: '#F59E0B', borderRadius: [6, 6, 0, 0] },
         label: {
           show: true,
           position: 'top',
