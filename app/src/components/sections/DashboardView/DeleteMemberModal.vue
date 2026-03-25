@@ -18,6 +18,15 @@
         >) from the team? This action cannot be undone.
       </p>
 
+      <UAlert
+        v-if="deleteError"
+        color="error"
+        variant="soft"
+        :description="(deleteError as AxiosError<{ message?: string }>).response?.data?.message ?? 'Failed to remove member'"
+        class="mb-4"
+        data-test="delete-member-error"
+      />
+
       <div class="flex justify-center gap-2">
         <UButton
           :loading="memberIsDeleting"
@@ -42,7 +51,6 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { useToastStore } from '@/stores'
 import type { Member } from '@/types'
 import { useDeleteMemberMutation } from '@/queries/member.queries'
 import { formatAddress } from '@/utils/formatAddress'
@@ -60,9 +68,8 @@ const emits = defineEmits<{
 const showModal = ref(false)
 const formattedAddress = computed(() => formatAddress(props.member.address ?? ''))
 
-const { mutate: executeDeleteMember, isPending: memberIsDeleting } = useDeleteMemberMutation()
-
-const { addSuccessToast, addErrorToast } = useToastStore()
+const toast = useToast()
+const { mutate: executeDeleteMember, isPending: memberIsDeleting, error: deleteError } = useDeleteMemberMutation()
 
 const handleDelete = (): void => {
   executeDeleteMember(
@@ -74,13 +81,9 @@ const handleDelete = (): void => {
     },
     {
       onSuccess: () => {
-        addSuccessToast('Member deleted successfully')
+        toast.add({ title: 'Member removed successfully', color: 'success' })
         showModal.value = false
         emits('memberDeleted')
-      },
-      onError: (error: AxiosError) => {
-        const err = error as AxiosError<{ message?: string }>
-        addErrorToast(err.response?.data?.message || 'Failed to delete member')
       }
     }
   )
