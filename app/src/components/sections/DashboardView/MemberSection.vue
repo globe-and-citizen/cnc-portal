@@ -67,48 +67,14 @@
       </template>
       <template #standard-cell="{ row }">
         <div v-if="row.original.currentWage">
-          <div
-            v-for="rate in row.original.currentWage.ratePerHour"
-            :key="rate.type"
-            class="flex items-center gap-1"
-          >
-            <span
-              class="inline-block w-2 h-2 rounded-full flex-shrink-0"
-              :class="{
-                'bg-yellow-400': rate.type === 'native',
-                'bg-blue-500': rate.type === 'usdc',
-                'bg-green-500': rate.type === 'usdt',
-                'bg-purple-500': !['native', 'usdc', 'usdt'].includes(rate.type)
-              }"
-            />
-            {{ rate.type === 'native' ? NETWORK.currencySymbol : rate.type.toUpperCase() }}
-            {{ rate.amount }}
-          </div>
-
+          <RateDotList :rates="row.original.currentWage.ratePerHour" />
           {{ row.original.currentWage.maximumHoursPerWeek + 'h/wk' }}
         </div>
         <div v-else>—</div>
       </template>
       <template #overtime-cell="{ row }">
         <div v-if="row.original.currentWage?.overtimeRatePerHour">
-          <div
-            v-for="rate in row.original.currentWage.overtimeRatePerHour"
-            :key="rate.type"
-            class="flex items-center gap-1"
-          >
-            <span
-              class="inline-block w-2 h-2 rounded-full flex-shrink-0"
-              :class="{
-                'bg-yellow-400': rate.type === 'native',
-                'bg-blue-500': rate.type === 'usdc',
-                'bg-green-500': rate.type === 'usdt',
-                'bg-purple-500': !['native', 'usdc', 'usdt'].includes(rate.type)
-              }"
-            />
-            {{ rate.type === 'native' ? NETWORK.currencySymbol : rate.type.toUpperCase() }}
-            {{ rate.amount }}
-          </div>
-
+          <RateDotList :rates="row.original.currentWage.overtimeRatePerHour" />
           {{ row.original.currentWage.maximumOvertimeHoursPerWeek + 'h/wk' }}
         </div>
         <div v-else>—</div>
@@ -166,6 +132,7 @@ import { NETWORK } from '@/constant'
 import DeleteMemberModal from '@/components/sections/DashboardView/DeleteMemberModal.vue'
 import type { Member, Wage } from '@/types'
 import SetMemberWageModal from './SetMemberWageModal.vue'
+import RateDotList from '@/components/RateDotList.vue'
 
 type MemberRow = Member & {
   index: number

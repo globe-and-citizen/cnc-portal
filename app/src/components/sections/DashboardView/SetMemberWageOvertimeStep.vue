@@ -77,25 +77,11 @@
         <p class="text-sm font-semibold uppercase tracking-[0.2em] text-base-content/50">
           Standard rates
         </p>
-        <div class="mt-3 space-y-2">
-          <div
-            v-for="rate in wageData.ratePerHour.filter((r) => r.enabled && r.amount > 0)"
-            :key="rate.type"
-            class="flex items-center gap-1 text-base-content/80 font-semibold"
-          >
-            <span
-              class="inline-block w-2 h-2 rounded-full flex-shrink-0"
-              :class="{
-                'bg-yellow-400': rate.type === 'native',
-                'bg-blue-500': rate.type === 'usdc',
-                'bg-green-500': rate.type === 'usdt',
-                'bg-purple-500': !['native', 'usdc', 'usdt'].includes(rate.type)
-              }"
-            />
-            {{ rate.type === 'native' ? NETWORK.currencySymbol : rate.type.toUpperCase() }}
-            {{ rate.amount }}
-          </div>
-        </div>
+        <RateDotList
+          class="mt-3"
+          :rates="wageData.ratePerHour.filter((r) => r.enabled && r.amount > 0)"
+          text-class="text-base-content/80"
+        />
       </div>
       <div
         class="min-h-40 rounded-2xl border border-emerald-300 bg-emerald-50/60 px-5 py-5"
@@ -104,25 +90,11 @@
         <p class="text-sm font-semibold uppercase tracking-[0.2em] text-emerald-700">
           Overtime rates
         </p>
-        <div class="mt-3 space-y-2">
-          <div
-            v-for="rate in wageData.overtimeRatePerHour.filter((r) => r.enabled && r.amount > 0)"
-            :key="rate.type"
-            class="flex items-center gap-1 text-emerald-700 font-semibold"
-          >
-            <span
-              class="inline-block w-2 h-2 rounded-full flex-shrink-0"
-              :class="{
-                'bg-yellow-400': rate.type === 'native',
-                'bg-blue-500': rate.type === 'usdc',
-                'bg-green-500': rate.type === 'usdt',
-                'bg-purple-500': !['native', 'usdc', 'usdt'].includes(rate.type)
-              }"
-            />
-            {{ rate.type === 'native' ? NETWORK.currencySymbol : rate.type.toUpperCase() }}
-            {{ rate.amount }}
-          </div>
-        </div>
+        <RateDotList
+          class="mt-3"
+          :rates="wageData.overtimeRatePerHour.filter((r) => r.enabled && r.amount > 0)"
+          text-class="text-emerald-700"
+        />
       </div>
     </div>
 
@@ -166,6 +138,7 @@
 import * as z from 'zod'
 import { NETWORK } from '@/constant'
 import type { WageWithForm } from '@/types'
+import RateDotList from '@/components/RateDotList.vue'
 
 const emit = defineEmits<{ validated: []; back: [] }>()
 
