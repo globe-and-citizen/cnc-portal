@@ -33,13 +33,12 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import MultiSelectMemberInput from '@/components/utils/MultiSelectMemberInput.vue'
-import { useToastStore } from '@/stores'
 import type { Member } from '@/types'
 import { useAddMembersMutation, type MemberInput } from '@/queries/member.queries'
 import { log } from '@/utils/generalUtil'
 
 const emits = defineEmits(['memberAdded'])
-const { addSuccessToast, addErrorToast } = useToastStore()
+const toast = useToast()
 
 const props = defineProps<{
   teamId: string | number
@@ -64,14 +63,12 @@ const handleAddMembers = async () => {
     },
     {
       onSuccess: () => {
-        addSuccessToast('Members added successfully')
+        toast.add({ title: 'Members added successfully', color: 'success' })
         formData.value = []
         emits('memberAdded')
       },
       onError: (error: unknown) => {
         log.error('AddMemberForm - handleAddMembers error:', error)
-        const errorMessage = 'Failed to add members'
-        addErrorToast(errorMessage)
       }
     }
   )
