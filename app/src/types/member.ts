@@ -1,4 +1,4 @@
-import type { Wage } from "@/types/cash-remuneration"
+import type { Wage } from '@/types/cash-remuneration'
 
 export interface Member {
   id: string

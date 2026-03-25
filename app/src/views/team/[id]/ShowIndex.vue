@@ -34,7 +34,6 @@
         <ContinueAddTeamForm :team="teamStore.currentTeamMeta.data" @done="() => {}" />
       </div>
       <TeamMeta />
-
     </div>
     <RouterView v-if="teamStore.currentTeam" />
   </div>

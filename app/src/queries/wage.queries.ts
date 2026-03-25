@@ -87,7 +87,10 @@ export interface SetMemberWageParams {
 export const useSetMemberWageMutation = createMutationHook<void, SetMemberWageParams>({
   method: 'PUT',
   endpoint: 'wage/setWage',
-  invalidateKeys: (params) => [wageKeys.team(params.body.teamId), teamKeys.detail(String(params.body.teamId))]
+  invalidateKeys: (params) => [
+    wageKeys.team(params.body.teamId),
+    teamKeys.detail(String(params.body.teamId))
+  ]
 })
 
 // ============================================================================

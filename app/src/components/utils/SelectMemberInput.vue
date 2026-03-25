@@ -1,9 +1,5 @@
 <template>
-  <div
-    class="relative"
-    :class="isFetching ? 'animate-pulse' : ''"
-    data-test="member-input"
-  >
+  <div class="relative" :class="isFetching ? 'animate-pulse' : ''" data-test="member-input">
     <UInput
       type="text"
       v-model="input"
@@ -66,11 +62,7 @@
           </div>
         </div>
       </div>
-      <p
-        v-else-if="input"
-        class="mt-3 text-sm text-gray-400"
-        data-test="no-members-found"
-      >
+      <p v-else-if="input" class="mt-3 text-sm text-gray-400" data-test="no-members-found">
         No members found
       </p>
     </div>

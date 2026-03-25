@@ -91,7 +91,9 @@
         class="min-h-40 rounded-2xl border border-emerald-300 bg-emerald-50/60 px-5 py-5"
         data-test="overtime-rate-recap"
       >
-        <p class="text-sm font-semibold uppercase tracking-[0.2em] text-emerald-700">Overtime rates</p>
+        <p class="text-sm font-semibold uppercase tracking-[0.2em] text-emerald-700">
+          Overtime rates
+        </p>
         <div class="mt-3 space-y-2">
           <p
             v-for="rate in wageData.overtimeRatePerHour.filter((r) => r.enabled && r.amount > 0)"

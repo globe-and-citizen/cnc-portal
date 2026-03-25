@@ -106,7 +106,6 @@ const teamStore = useTeamStore()
 
 const open = ref(false)
 
-
 const items = computed<NavigationMenuItem[]>(() => [
   {
     label: 'Home',
@@ -162,7 +161,7 @@ const items = computed<NavigationMenuItem[]>(() => [
           name: 'expense-account',
           params: { id: teamStore.currentTeamId || '1' }
         }
-      },
+      }
     ]
   },
   {
