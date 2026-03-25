@@ -37,8 +37,7 @@
           ...member
         }))
       "
-      :meta="meta"
-      :loading="isTeamWageDataFetching"
+      :loading="teamStore.currentTeamMeta.isPending ||isToggling"
       :columns="columns"
       data-test="members-table"
     >
@@ -123,32 +122,32 @@
           />
           <UTooltip
             :text="
-              !teamWageByAddress.get(row.original.address) ? 'No wage set for this member' : ''
+              !row.original.currentWage ? 'No wage set for this member' : ''
             "
-            :disabled="!!teamWageByAddress.get(row.original.address)"
+            :disabled="!!row.original.currentWage"
             :delay-duration="0"
           >
             <UButton
-              :color="teamWageByAddress.get(row.original.address)?.disabled ? 'success' : 'warning'"
+              :color="row.original.currentWage?.disabled ? 'success' : 'warning'"
               :loading="isToggling"
-              :disabled="!teamWageByAddress.get(row.original.address) || isToggling"
+              :disabled="!row.original.currentWage || isToggling"
               :icon="
-                teamWageByAddress.get(row.original.address)?.disabled
+                row.original.currentWage?.disabled
                   ? 'i-heroicons-play'
                   : 'i-heroicons-pause'
               "
               :data-test="
-                teamWageByAddress.get(row.original.address)?.disabled
+                row.original.currentWage?.disabled
                   ? 'resume-wage-button'
                   : 'pause-wage-button'
               "
-              @click="toggleWageStatus(teamWageByAddress.get(row.original.address)!)"
+              @click="toggleWageStatus(row.original.currentWage!)"
             />
           </UTooltip>
           <SetMemberWageModal
             :member="{ name: row.original.name, address: row.original.address }"
             :teamId="teamId"
-            :wage="teamWageByAddress.get(row.original.address)"
+            :wage="row.original.currentWage"
           />
         </div>
       </template>
@@ -157,18 +156,17 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
 import AddMemberForm from '@/components/sections/DashboardView/forms/AddMemberForm.vue'
 import { useUserDataStore } from '@/stores/user'
 import { useTeamStore, useToastStore } from '@/stores'
 import UserComponent from '@/components/UserComponent.vue'
-import { useGetTeamWagesQuery, useToggleWageStatusMutation } from '@/queries/wage.queries'
+import { useToggleWageStatusMutation } from '@/queries/wage.queries'
 import { NETWORK } from '@/constant'
 import DeleteMemberModal from '@/components/sections/DashboardView/DeleteMemberModal.vue'
 import type { Member, Wage } from '@/types'
 import SetMemberWageModal from './SetMemberWageModal.vue'
-import type { TableMeta, Row } from '@tanstack/vue-table'
 
 type MemberRow = Member & {
   index: number
@@ -181,26 +179,6 @@ const showAddMemberForm = ref({ mount: false, show: false })
 
 const teamId = computed(() => teamStore.currentTeamId)
 
-const {
-  data: teamWageData,
-  isLoading: isTeamWageDataFetching,
-  error: teamWageDataError
-} = useGetTeamWagesQuery({ queryParams: { teamId } })
-
-watch(
-  () => teamWageDataError.value,
-  (error) => {
-    if (error) toastStore.addErrorToast('Failed to fetch team wage data')
-  }
-)
-
-const teamWageByAddress = computed(() => {
-  const map = new Map<string, Wage>()
-  for (const wage of teamWageData.value ?? []) {
-    map.set(wage.userAddress, wage as Wage)
-  }
-  return map
-})
 
 const { mutate: executeToggleStatus, isPending: isToggling } = useToggleWageStatusMutation()
 
@@ -228,16 +206,4 @@ const columns = computed((): TableColumn<MemberRow>[] => {
   return cols
 })
 
-const meta = computed((): TableMeta<MemberRow> => {
-  return {
-    class: {
-      tr: (row: Row<MemberRow>) => {
-        if (row.original.currentWage?.disabled === true) {
-          return 'grayscale-[30%] bg-red-800'
-        }
-        return ''
-      }
-    }
-  }
-})
 </script>
