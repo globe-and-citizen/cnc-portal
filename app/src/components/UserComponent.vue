@@ -27,7 +27,6 @@
       v-if="!isCollapsed"
       data-test="user-info-container"
       class="flex flex-col text-gray-600"
-      :class="{ 'items-center text-center': isDetailedView }"
     >
       <p
         class="font-bold"
@@ -49,7 +48,7 @@
         {{ user.role || 'Member' }}
       </p>
       <p class="text-sm" data-test="formatted-address">
-        {{ formatedUserAddress }}
+        {{ isDetailedView ? user.address :formatedUserAddress }}
       </p>
     </div>
   </div>
