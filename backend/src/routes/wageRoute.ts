@@ -287,7 +287,7 @@ wageRoutes.get('/', validateQuery(getWagesQuerySchema), getWages);
 wageRoutes.put(
   '/:wageId',
   validateParamsAndQuery(toggleWageStatusParamsSchema, toggleWageStatusQuerySchema),
-  toggleWageStatus,
+  toggleWageStatus
 );
 
 export default wageRoutes;
