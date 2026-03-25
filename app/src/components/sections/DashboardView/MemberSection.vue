@@ -37,6 +37,7 @@
           ...member
         }))
       "
+      :meta="meta"
       :loading="isTeamWageDataFetching"
       :columns="columns"
       data-test="members-table"
@@ -163,17 +164,14 @@ import { useUserDataStore } from '@/stores/user'
 import { useTeamStore, useToastStore } from '@/stores'
 import UserComponent from '@/components/UserComponent.vue'
 import { useGetTeamWagesQuery, useToggleWageStatusMutation } from '@/queries/wage.queries'
-import type { Address } from 'viem'
 import { NETWORK } from '@/constant'
 import DeleteMemberModal from '@/components/sections/DashboardView/DeleteMemberModal.vue'
-import type { Wage } from '@/types'
+import type { Member, Wage } from '@/types'
 import SetMemberWageModal from './SetMemberWageModal.vue'
+import type { TableMeta, Row } from '@tanstack/vue-table'
 
-type MemberRow = {
+type MemberRow = Member & {
   index: number
-  name: string
-  address: string
-  imageUrl?: string
 }
 
 const userDataStore = useUserDataStore()
@@ -195,87 +193,6 @@ watch(
     if (error) toastStore.addErrorToast('Failed to fetch team wage data')
   }
 )
-
-type MemberWageView = {
-  maximumHoursPerWeek: string
-  maximumOvertimeHoursPerWeek: string
-  hasOvertime: boolean
-  cashRatePerHour: string
-  usdcRatePerHour: string
-  tokenRatePerHour: string
-  overtimeCashRatePerHour: string
-  overtimeUsdcRatePerHour: string
-  overtimeTokenRatePerHour: string
-}
-
-const EMPTY_MEMBER_WAGE_VIEW: MemberWageView = {
-  maximumHoursPerWeek: 'N/A',
-  maximumOvertimeHoursPerWeek: 'N/A',
-  hasOvertime: false,
-  cashRatePerHour: 'N/A',
-  usdcRatePerHour: 'N/A',
-  tokenRatePerHour: 'N/A',
-  overtimeCashRatePerHour: 'N/A',
-  overtimeUsdcRatePerHour: 'N/A',
-  overtimeTokenRatePerHour: 'N/A'
-}
-
-const buildMemberWageView = (memberWage: Wage): MemberWageView => {
-  const cashRatePerHour = memberWage.ratePerHour?.find((rate) => rate.type === 'native')?.amount
-  const usdcRatePerHour = memberWage.ratePerHour?.find((rate) => rate.type === 'usdc')?.amount
-  const tokenRatePerHour = memberWage.ratePerHour?.find((rate) => rate.type === 'sher')?.amount
-
-  const overtimeCashRatePerHour = memberWage.overtimeRatePerHour?.find(
-    (rate) => rate.type === 'native'
-  )?.amount
-  const overtimeUsdcRatePerHour = memberWage.overtimeRatePerHour?.find(
-    (rate) => rate.type === 'usdc'
-  )?.amount
-  const overtimeTokenRatePerHour = memberWage.overtimeRatePerHour?.find(
-    (rate) => rate.type === 'sher'
-  )?.amount
-
-  const hasOvertime = Boolean(memberWage.overtimeRatePerHour?.length)
-  const maximumOvertimeHoursPerWeek = memberWage.maximumOvertimeHoursPerWeek
-
-  return {
-    maximumHoursPerWeek: `${memberWage.maximumHoursPerWeek} hrs/wk`,
-    maximumOvertimeHoursPerWeek:
-      hasOvertime && maximumOvertimeHoursPerWeek != null
-        ? `${maximumOvertimeHoursPerWeek} hrs/wk`
-        : hasOvertime
-          ? 'N/A (legacy)'
-          : 'N/A',
-    hasOvertime,
-    cashRatePerHour:
-      cashRatePerHour != null ? `${cashRatePerHour} ${NETWORK.currencySymbol}/hr` : 'N/A',
-    usdcRatePerHour: usdcRatePerHour != null ? `${usdcRatePerHour} USDC/hr` : 'N/A',
-    tokenRatePerHour: tokenRatePerHour != null ? `${tokenRatePerHour} SHER/hr` : 'N/A',
-    overtimeCashRatePerHour:
-      overtimeCashRatePerHour != null
-        ? `${overtimeCashRatePerHour} ${NETWORK.currencySymbol}/hr`
-        : 'N/A',
-    overtimeUsdcRatePerHour:
-      overtimeUsdcRatePerHour != null ? `${overtimeUsdcRatePerHour} USDC/hr` : 'N/A',
-    overtimeTokenRatePerHour:
-      overtimeTokenRatePerHour != null ? `${overtimeTokenRatePerHour} SHER/hr` : 'N/A'
-  }
-}
-
-const memberWageViewByAddress = computed(() => {
-  const map = new Map<string, MemberWageView>()
-  for (const wage of teamWageData.value ?? []) {
-    map.set(wage.userAddress, buildMemberWageView(wage as Wage))
-  }
-  return map
-})
-const memberWageViewByAddressV2 = computed(() => {
-  const map = new Map<string, MemberWageView>()
-  for (const wage of teamWageData.value ?? []) {
-    map.set(wage.userAddress, wage as unknown as MemberWageView)
-  }
-  return map
-})
 
 const teamWageByAddress = computed(() => {
   const map = new Map<string, Wage>()
@@ -304,12 +221,23 @@ const columns = computed((): TableColumn<MemberRow>[] => {
     { id: 'member', header: 'Member' },
     { id: 'standard', header: 'Standard Wage' },
     { id: 'overtime', header: 'Overtime Wage' }
-    // { id: 'maxWeeklyHours', header: 'Max Weekly Hours' },
-    // { id: 'wage', header: 'Hourly Rate' }
   ]
   if (teamStore.currentTeamMeta.data?.ownerAddress == userDataStore.address) {
     cols.push({ id: 'action', header: 'Action' })
   }
   return cols
+})
+
+const meta = computed((): TableMeta<MemberRow> => {
+  return {
+    class: {
+      tr: (row: Row<MemberRow>) => {
+        if (row.original.currentWage?.disabled === true) {
+          return 'grayscale-[30%] bg-red-800'
+        }
+        return ''
+      }
+    }
+  }
 })
 </script>
