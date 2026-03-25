@@ -7,13 +7,13 @@
         v-if="addMembersError?.status === 401"
         color="warning"
         variant="soft"
-        description="You don't have the right for this"
+        description="You don't have permission to add members."
       />
       <UAlert
         v-else
         color="error"
         variant="soft"
-        description="Something went wrong, Unable to add team Members"
+        description="Something went wrong. Unable to add members."
       />
     </template>
 
