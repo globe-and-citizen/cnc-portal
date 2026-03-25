@@ -30,7 +30,10 @@
           v-if="deleteError"
           color="error"
           variant="soft"
-          :description="(deleteError as AxiosError<{ message?: string }>).response?.data?.message ?? 'Failed to remove member'"
+          :description="
+            (deleteError as AxiosError<{ message?: string }>).response?.data?.message ??
+            'Failed to remove member'
+          "
           data-test="delete-member-error"
         />
 
@@ -76,7 +79,11 @@ const emits = defineEmits<{
 const showModal = ref(false)
 
 const toast = useToast()
-const { mutate: executeDeleteMember, isPending: memberIsDeleting, error: deleteError } = useDeleteMemberMutation()
+const {
+  mutate: executeDeleteMember,
+  isPending: memberIsDeleting,
+  error: deleteError
+} = useDeleteMemberMutation()
 
 const handleDelete = (): void => {
   executeDeleteMember(
