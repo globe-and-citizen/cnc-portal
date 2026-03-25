@@ -2,6 +2,7 @@ import type { Wage } from '@/types'
 import type { MaybeRefOrGetter } from 'vue'
 import { toValue } from 'vue'
 import { createQueryHook, createMutationHook, queryPresets } from './queryFactory'
+import { teamKeys } from './team.queries'
 
 /**
  * Query key factory for wage-related queries
@@ -86,7 +87,7 @@ export interface SetMemberWageParams {
 export const useSetMemberWageMutation = createMutationHook<void, SetMemberWageParams>({
   method: 'PUT',
   endpoint: 'wage/setWage',
-  invalidateKeys: (params) => [wageKeys.team(params.body.teamId)]
+  invalidateKeys: (params) => [wageKeys.team(params.body.teamId), teamKeys.detail(String(params.body.teamId))]
 })
 
 // ============================================================================
