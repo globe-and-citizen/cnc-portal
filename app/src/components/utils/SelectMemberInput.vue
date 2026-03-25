@@ -8,21 +8,21 @@
       type="text"
       v-model="input"
       ref="inputSearch"
-      placeholder="Member Name or Member Address"
+      placeholder="Search by name or address"
       data-test="member-input"
       size="xl"
       :disabled="disabled"
       class="w-full"
     />
     <div v-if="!showOnFocus || (showOnFocus && showDropdown)">
-      <div class="text-xm text-gray-900 mt-5" data-test="select-member-hint">
-        Click to Select a Member
-      </div>
       <div
         v-if="filteredUsers.length > 0"
         class="left-0 top-full mt-4 w-full"
         data-test="user-dropdown"
       >
+        <div class="text-sm text-gray-500 mb-2" data-test="select-member-hint">
+          Click to select a member
+        </div>
         <div class="shadow-sm bg-white rounded-xl">
           <div class="grid grid-cols-2 gap-4" data-test="user-search-results">
             <div
@@ -66,12 +66,19 @@
           </div>
         </div>
       </div>
+      <p
+        v-else-if="input"
+        class="mt-3 text-sm text-gray-400"
+        data-test="no-members-found"
+      >
+        No members found
+      </p>
     </div>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, type Ref } from 'vue'
 import { useFocus, watchDebounced } from '@vueuse/core'
 import UserComponent from '@/components/UserComponent.vue'
 import type { User } from '@/types'
@@ -103,7 +110,7 @@ const emit = defineEmits<{
 
 const input = ref('')
 const inputSearch = ref<{ focus: () => void; inputRef: HTMLInputElement } | null>(null)
-const { focused: searchInputFocus } = useFocus(() => inputSearch.value?.inputRef ?? null)
+const { focused: searchInputFocus } = useFocus(computed(() => inputSearch.value?.inputRef ?? null))
 const showDropdown = ref(false)
 
 const lower = (a?: string) => (a ?? '').toLowerCase()
