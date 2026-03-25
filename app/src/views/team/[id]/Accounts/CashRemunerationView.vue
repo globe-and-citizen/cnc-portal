@@ -20,7 +20,7 @@
       :address="cashRemunerationAddress"
     />
 
-      <MemberSection />
+    <MemberSection />
     <!-- <CRWeeklyClaimOwnerHeader /> -->
 
     <ContractOwnerCard v-if="cashRemunerationAddress" :contractAddress="cashRemunerationAddress" />
