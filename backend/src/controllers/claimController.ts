@@ -21,6 +21,28 @@ type claimBodyRequest = Pick<Claim, 'hoursWorked' | 'dayWorked' | 'memo'> & {
   attachments?: FileAttachmentData[];
 };
 
+const buildWeeklyHoursExceededMessage = ({
+  action,
+  regularHours,
+  overtimeHours,
+  submittedHours,
+}: {
+  action: 'submit' | 'update';
+  regularHours: number;
+  overtimeHours: number;
+  submittedHours: number;
+}) => {
+  const totalAllowedHours = regularHours + overtimeHours;
+  const remainingHours = Math.max(0, totalAllowedHours - submittedHours);
+
+  return {
+    message:
+      `Unable to ${action} this claim: your weekly hours limit would be exceeded. ` +
+      `Weekly allowance: ${regularHours}h regular + ${overtimeHours}h overtime = ${totalAllowedHours}h. ` +
+      `Already submitted: ${submittedHours}h. Remaining to submit: ${remainingHours}h.`,
+  };
+};
+
 // TODO limit weeday only for the current week. Betwen Monday and the current day
 export const addClaim = async (req: Request, res: Response) => {
   const callerAddress = req.address;
@@ -74,17 +96,21 @@ export const addClaim = async (req: Request, res: Response) => {
       }
     }
 
-    // Check total max hours.
+    // Check total max hours (regular + overtime).
 
     const totalHours = weeklyClaim?.claims.reduce((sum, claim) => sum + claim.hoursWorked, 0) ?? 0;
+    const regularHours = wage.maximumHoursPerWeek;
+    const overtimeHours = wage.maximumOvertimeHoursPerWeek ?? 0;
+    const totalMaxHours = regularHours + overtimeHours;
 
-    if (totalHours + hoursWorked > wage.maximumHoursPerWeek) {
-      const remainingHours = Math.max(0, wage.maximumHoursPerWeek - totalHours);
-      return errorResponse(
-        400,
-        `Maximum weekly hours reached, cannot submit more claims for this week. You have ${remainingHours} hours remaining.`,
-        res
-      );
+    if (totalHours + hoursWorked > totalMaxHours) {
+      const { message } = buildWeeklyHoursExceededMessage({
+        action: 'submit',
+        regularHours,
+        overtimeHours,
+        submittedHours: totalHours,
+      });
+      return errorResponse(409, message, res);
     }
 
     if (!weeklyClaim) {
@@ -262,13 +288,18 @@ export const updateClaim = async (req: Request, res: Response) => {
 
       const newHours = Number(hoursWorked);
 
-      if (otherClaimsTotal + newHours > wage.maximumHoursPerWeek) {
-        const remainingHours = Math.max(0, wage.maximumHoursPerWeek - otherClaimsTotal);
-        return errorResponse(
-          400,
-          `Maximum weekly hours reached, cannot update claim. You have ${remainingHours} hours remaining for this week.`,
-          res
-        );
+      const regularHours = wage.maximumHoursPerWeek;
+      const overtimeHours = wage.maximumOvertimeHoursPerWeek ?? 0;
+      const totalMaxHours = regularHours + overtimeHours;
+
+      if (otherClaimsTotal + newHours > totalMaxHours) {
+        const { message } = buildWeeklyHoursExceededMessage({
+          action: 'update',
+          regularHours,
+          overtimeHours,
+          submittedHours: otherClaimsTotal,
+        });
+        return errorResponse(409, message, res);
       }
     }
 

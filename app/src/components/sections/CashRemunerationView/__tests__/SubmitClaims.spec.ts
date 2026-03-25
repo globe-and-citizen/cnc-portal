@@ -130,4 +130,36 @@ describe('SubmitClaims', () => {
 
     expect(button.props('loading')).toBe(true)
   })
+
+  it('shows backend business message inline without error toast when submit fails', async () => {
+    const backendMessage =
+      'Unable to submit this claim: your weekly hours limit would be exceeded. Remaining to submit: 2h.'
+
+    vi.mocked(useSubmitClaimMutation).mockReturnValueOnce({
+      mutateAsync: vi.fn().mockRejectedValue({
+        response: {
+          data: {
+            message: backendMessage
+          }
+        }
+      }),
+      isPending: { value: false }
+    } as unknown as ReturnType<typeof useSubmitClaimMutation>)
+
+    const wrapper = createComponent()
+    await wrapper.find('[data-test="modal-submit-hours-button"]').trigger('click')
+    await flushPromises()
+
+    const claimForm = wrapper.findComponent({ name: 'ClaimForm' })
+    claimForm.vm.$emit('submit', {
+      hoursWorked: 8,
+      memo: 'Test work',
+      dayWorked: '2024-01-10T00:00:00.000Z',
+      files: []
+    })
+    await flushPromises()
+
+    expect(mockToastStore.addErrorToast).not.toHaveBeenCalledWith(backendMessage)
+    expect(wrapper.text()).toContain(backendMessage)
+  })
 })

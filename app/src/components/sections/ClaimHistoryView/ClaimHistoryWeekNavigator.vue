@@ -23,7 +23,6 @@
         >
           <div class="text-base font-medium flex items-center justify-between">
             Week
-
             <div
               class="badge badge-outline gap-3"
               v-if="memberWeeklyClaims?.some((wc) => wc.weekStart === week.isoString)"
@@ -52,7 +51,7 @@
       </div>
     </div>
 
-    <!-- Graphique à barres (Heures/Jour) -->
+    <!-- Bar chart (Hours/Day) -->
     <div class="mt-6">
       <v-chart :option="barChartOption" autoresize style="height: 250px" />
     </div>
@@ -72,7 +71,6 @@ import type { WeeklyClaim } from '@/types'
 import CardComponent from '@/components/CardComponent.vue'
 import MonthSelector from '@/components/MonthSelector.vue'
 
-// ECharts imports
 import { use } from 'echarts/core'
 import { BarChart } from 'echarts/charts'
 import {
@@ -93,9 +91,7 @@ interface Props {
 }
 
 const props = defineProps<Props>()
-
 const internalSelectedWeek = defineModel<Week>({ required: true })
-
 const teamStore = useTeamStore()
 
 const { data: memberWeeklyClaims } = useGetTeamWeeklyClaimsQuery({
@@ -105,9 +101,9 @@ const { data: memberWeeklyClaims } = useGetTeamWeeklyClaimsQuery({
   }
 })
 
-const generatedMonthWeek = computed(() => {
-  return getMonthWeeks(internalSelectedWeek.value.year, internalSelectedWeek.value.month)
-})
+const generatedMonthWeek = computed(() =>
+  getMonthWeeks(internalSelectedWeek.value.year, internalSelectedWeek.value.month)
+)
 
 const getColor = (weeklyClaim?: WeeklyClaim) => {
   if (!weeklyClaim) return 'accent'
@@ -117,43 +113,93 @@ const getColor = (weeklyClaim?: WeeklyClaim) => {
   return 'accent'
 }
 
-const selectWeekWeelyClaim = computed(() => {
-  return memberWeeklyClaims.value?.find(
+const selectWeekWeelyClaim = computed(() =>
+  memberWeeklyClaims.value?.find(
     (weeklyClaim) => weeklyClaim.weekStart === internalSelectedWeek.value.isoString
   )
-})
+)
 
-// Bar chart configuration
 const barChartOption = computed(() => {
-  const data: number[] = []
+  const regularData: { value: number; itemStyle: object }[] = []
+  const overtimeData: number[] = []
   const labels: string[] = []
   const weekStart = dayjs(internalSelectedWeek.value.isoString).utc().startOf('isoWeek')
+  const maxRegularHours = selectWeekWeelyClaim.value?.wage?.maximumHoursPerWeek ?? Infinity
+  let cumulativeHours = 0
 
   for (let i = 0; i < 7; i++) {
     const date = weekStart.add(i, 'day')
     labels.push(dayjs(date).format('dd'))
-    const totalHours =
+    const dailyHours =
       selectWeekWeelyClaim.value?.claims
         .filter((claim) => dayjs(date).isSame(dayjs(claim.dayWorked).utc(), 'day'))
         .reduce((sum: number, claim) => sum + claim.hoursWorked, 0) ?? 0
-    data.push(totalHours)
+
+    const regularBefore = Math.min(cumulativeHours, maxRegularHours)
+    const regularAfter = Math.min(cumulativeHours + dailyHours, maxRegularHours)
+    const regularToday = regularAfter - regularBefore
+    const overtimeToday = dailyHours - regularToday
+
+    regularData.push({
+      value: regularToday,
+      itemStyle: {
+        color: '#10B981',
+        borderRadius: overtimeToday > 0 ? [0, 0, 0, 0] : [6, 6, 0, 0]
+      }
+    })
+    overtimeData.push(overtimeToday)
+    cumulativeHours += dailyHours
   }
 
-  const yMax = Math.max(...data) > 0 ? Math.max(...data) : 24
+  const totals = regularData.map((r, i) => r.value + (overtimeData?.[i] ?? 0))
+  const yMax = Math.max(...totals) > 0 ? Math.max(...totals) : 24
+
   return {
     title: { text: 'Hours/Day', left: 'center', textStyle: { fontSize: 14 } },
     grid: { left: '3%', right: '4%', bottom: '8%', containLabel: true },
-    tooltip: { trigger: 'axis', formatter: '{b} : {c} heures' },
+    tooltip: {
+      trigger: 'axis',
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      formatter: (params: any[]) => {
+        const day = params[0]?.name ?? ''
+        const regularH = params[0]?.value ?? 0
+        const overtimeH = params[1]?.value ?? 0
+        const total = regularH + overtimeH
+        if (overtimeH > 0) {
+          return `<b>${day}</b><br/>Regular: ${regularH}h<br/>Overtime: ${overtimeH}h<br/>Total: ${total}h`
+        }
+        return `<b>${day}</b><br/>${total}h`
+      }
+    },
     xAxis: { type: 'category', data: labels, axisTick: { alignWithLabel: true } },
     yAxis: { type: 'value', min: 0, max: yMax, axisLabel: { formatter: '{value} h' } },
     series: [
       {
-        name: 'Heures',
+        name: 'Regular',
         type: 'bar',
+        stack: 'hours',
         barWidth: '50%',
-        data,
-        itemStyle: { color: '#10B981', borderRadius: [6, 6, 0, 0] },
-        label: { show: true, position: 'top', formatter: '{c}h', color: '#374151' }
+        data: regularData,
+        label: { show: false }
+      },
+      {
+        name: 'Overtime',
+        type: 'bar',
+        stack: 'hours',
+        barWidth: '50%',
+        data: overtimeData,
+        // Changed from #EF4444 (red) to #F59E0B (amber) for consistency with badge
+        itemStyle: { color: '#F59E0B', borderRadius: [6, 6, 0, 0] },
+        label: {
+          show: true,
+          position: 'top',
+          color: '#374151',
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          formatter: (params: any) => {
+            const total = totals[params.dataIndex]
+            return `${total}h`
+          }
+        }
       }
     ]
   }

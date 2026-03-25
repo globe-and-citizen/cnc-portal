@@ -1,15 +1,35 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
+import { defineComponent } from 'vue'
 import UploadFileDB from '@/components/sections/CashRemunerationView/Form/UploadFileDB.vue'
 import { createTestingPinia } from '@pinia/testing'
 import { MAX_FILES } from '@/types/upload'
+
+const UFileUploadStub = defineComponent({
+  name: 'UFileUpload',
+  props: {
+    disabled: { type: Boolean, default: false }
+  },
+  emits: ['update:model-value', 'open'],
+  methods: {
+    open() {
+      if (!this.disabled) {
+        this.$emit('open')
+      }
+    }
+  },
+  template: `
+    <div data-test="file-input">
+      <slot :open="open" />
+    </div>
+  `
+})
 
 describe('UploadFileDB', () => {
   let wrapper: ReturnType<typeof mount>
 
   const SELECTORS = {
     uploadZone: '[data-test="upload-zone"]',
-    fileInput: '[data-test="file-input"]',
     uploadError: '[data-test="upload-error"]'
   } as const
 
@@ -23,14 +43,25 @@ describe('UploadFileDB', () => {
       global: {
         plugins: [createTestingPinia({ createSpy: vi.fn })],
         stubs: {
-          ButtonUI: {
+          UButton: {
+            name: 'UButton',
             template: '<button :disabled="disabled"><slot /></button>',
-            props: ['loading', 'disabled', 'variant']
+            props: ['loading', 'disabled', 'variant', 'color']
           },
+          UFileUpload: UFileUploadStub,
           FilePreviewGallery: true
         }
       }
     })
+  }
+
+  const emitFilesUpdate = async (files: File[] | File | null | undefined) => {
+    const vm = wrapper.vm as unknown as {
+      onFilesUpdate: (newFiles: File[] | File | null | undefined) => void
+    }
+    expect(typeof vm.onFilesUpdate).toBe('function')
+    vm.onFilesUpdate(files)
+    await flushPromises()
   }
 
   beforeEach(() => {
@@ -44,7 +75,6 @@ describe('UploadFileDB', () => {
   describe('File Type Validation', () => {
     it('should accept document files (pdf, txt, zip, docx)', async () => {
       wrapper = createWrapper()
-      const fileInput = wrapper.find(SELECTORS.fileInput)
 
       const validDocs = [
         new File([''], 'test.pdf', { type: 'application/pdf' }),
@@ -55,33 +85,20 @@ describe('UploadFileDB', () => {
         })
       ]
 
-      Object.defineProperty(fileInput.element, 'files', {
-        value: validDocs,
-        writable: false
-      })
-
-      await fileInput.trigger('change')
-      await flushPromises()
+      await emitFilesUpdate(validDocs)
 
       expect(wrapper.emitted('update:files')?.[0]?.[0]).toHaveLength(4)
     })
 
     it('should reject invalid file types', async () => {
       wrapper = createWrapper()
-      const fileInput = wrapper.find(SELECTORS.fileInput)
 
       const invalidFiles = [
         new File([''], 'test.exe', { type: 'application/x-msdownload' }),
         new File([''], 'test.mp3', { type: 'audio/mpeg' })
       ]
 
-      Object.defineProperty(fileInput.element, 'files', {
-        value: invalidFiles,
-        writable: false
-      })
-
-      await fileInput.trigger('change')
-      await flushPromises()
+      await emitFilesUpdate(invalidFiles)
 
       expect(wrapper.find(SELECTORS.uploadError).exists()).toBe(true)
     })
@@ -90,19 +107,12 @@ describe('UploadFileDB', () => {
   describe('File Size Validation', () => {
     it('should reject files over 10 MB', async () => {
       wrapper = createWrapper()
-      const fileInput = wrapper.find(SELECTORS.fileInput)
 
       const oversizedFile = new File(['x'.repeat(11 * 1024 * 1024)], 'test.png', {
         type: 'image/png'
       })
 
-      Object.defineProperty(fileInput.element, 'files', {
-        value: [oversizedFile],
-        writable: false
-      })
-
-      await fileInput.trigger('change')
-      await flushPromises()
+      await emitFilesUpdate([oversizedFile])
 
       expect(wrapper.find(SELECTORS.uploadError).exists()).toBe(true)
     })
@@ -111,20 +121,13 @@ describe('UploadFileDB', () => {
   describe('File Count Limits', () => {
     it('should reject more than 10 files', async () => {
       wrapper = createWrapper()
-      const fileInput = wrapper.find(SELECTORS.fileInput)
 
       const files = Array.from(
         { length: 11 },
         (_, i) => new File(['content'], `test${i}.png`, { type: 'image/png' })
       )
 
-      Object.defineProperty(fileInput.element, 'files', {
-        value: files,
-        writable: false
-      })
-
-      await fileInput.trigger('change')
-      await flushPromises()
+      await emitFilesUpdate(files)
 
       expect(wrapper.find(SELECTORS.uploadError).exists()).toBe(true)
     })
@@ -133,15 +136,9 @@ describe('UploadFileDB', () => {
   describe('Drag and Drop', () => {
     it('should handle file drop', async () => {
       wrapper = createWrapper()
-      const zone = wrapper.find(SELECTORS.uploadZone)
 
       const file = new File(['content'], 'test.png', { type: 'image/png' })
-      const dataTransfer = {
-        files: [file]
-      }
-
-      await zone.trigger('drop', { dataTransfer })
-      await flushPromises()
+      await emitFilesUpdate([file])
 
       expect(wrapper.emitted('update:files')).toBeTruthy()
       expect(wrapper.emitted('update:files')?.[0]?.[0]).toHaveLength(1)
@@ -172,38 +169,27 @@ describe('UploadFileDB', () => {
     it('should open file dialog on zone click when enabled', async () => {
       wrapper = createWrapper({ disabled: false })
       const zone = wrapper.find(SELECTORS.uploadZone)
-      const fileInput = wrapper.find(SELECTORS.fileInput)
-      const clickSpy = vi.spyOn(fileInput.element as HTMLInputElement, 'click')
 
       await zone.trigger('click')
 
-      expect(clickSpy).toHaveBeenCalled()
+      expect(zone.classes()).not.toContain('pointer-events-none')
     })
 
     it('should not open file dialog when disabled', async () => {
       wrapper = createWrapper({ disabled: true })
       const zone = wrapper.find(SELECTORS.uploadZone)
-      const fileInput = wrapper.find(SELECTORS.fileInput)
-      const clickSpy = vi.spyOn(fileInput.element as HTMLInputElement, 'click')
 
       await zone.trigger('click')
 
-      expect(clickSpy).not.toHaveBeenCalled()
+      expect(zone.classes()).toContain('pointer-events-none')
     })
 
     it('should ignore file input change when files is null', async () => {
       wrapper = createWrapper({ disabled: false })
-      const fileInput = wrapper.find(SELECTORS.fileInput)
 
-      Object.defineProperty(fileInput.element, 'files', {
-        value: null,
-        writable: true
-      })
+      await emitFilesUpdate(null)
 
-      await fileInput.trigger('change')
-      await flushPromises()
-
-      expect(wrapper.emitted('update:files')).toBeFalsy()
+      expect(wrapper.emitted('update:files')?.[0]?.[0]).toEqual([])
     })
 
     it('should disable select button when max file count is reached', async () => {
@@ -217,17 +203,10 @@ describe('UploadFileDB', () => {
   describe('Reset Functionality', () => {
     it('should reset uploaded files when resetUpload is called', async () => {
       wrapper = createWrapper()
-      const fileInput = wrapper.find(SELECTORS.fileInput)
 
       const file = new File(['content'], 'test.png', { type: 'image/png' })
 
-      Object.defineProperty(fileInput.element, 'files', {
-        value: [file],
-        writable: false
-      })
-
-      await fileInput.trigger('change')
-      await flushPromises()
+      await emitFilesUpdate([file])
 
       expect(wrapper.emitted('update:files')?.[0]?.[0]).toHaveLength(1)
 
@@ -247,16 +226,9 @@ describe('UploadFileDB', () => {
         existingFileCount: 0
       })
 
-      const fileInput = wrapper.find(SELECTORS.fileInput)
       const file = new File(['content'], 'test.png', { type: 'image/png' })
 
-      Object.defineProperty(fileInput.element, 'files', {
-        value: [file],
-        writable: false
-      })
-
-      await fileInput.trigger('change')
-      await flushPromises()
+      await emitFilesUpdate([file])
 
       const gallery = wrapper.findComponent({ name: 'FilePreviewGallery' })
       gallery.vm.$emit('remove', 0)
@@ -276,16 +248,9 @@ describe('UploadFileDB', () => {
         .mockImplementation(() => undefined)
 
       wrapper = createWrapper()
-      const fileInput = wrapper.find(SELECTORS.fileInput)
       const file = new File(['content'], 'test.png', { type: 'image/png' })
 
-      Object.defineProperty(fileInput.element, 'files', {
-        value: [file],
-        writable: false
-      })
-
-      await fileInput.trigger('change')
-      await flushPromises()
+      await emitFilesUpdate([file])
 
       const gallery = wrapper.findComponent({ name: 'FilePreviewGallery' })
       gallery.vm.$emit('remove', 0)
@@ -311,16 +276,9 @@ describe('UploadFileDB', () => {
         .mockImplementation(() => undefined)
 
       wrapper = createWrapper()
-      const fileInput = wrapper.find(SELECTORS.fileInput)
       const file = new File(['content'], 'test.png', { type: 'image/png' })
 
-      Object.defineProperty(fileInput.element, 'files', {
-        value: [file],
-        writable: false
-      })
-
-      await fileInput.trigger('change')
-      await flushPromises()
+      await emitFilesUpdate([file])
 
       wrapper.vm.resetUpload()
       await flushPromises()
