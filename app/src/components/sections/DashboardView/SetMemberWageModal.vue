@@ -2,15 +2,15 @@
   <div>
     <UModal
       v-model:open="showModal"
-      title="Set Member Wage"
-      description="Fill the form to set the member current wage"
+      :title="`Set Wage for ${props.member.name}`"
+      description="Configure standard and optional overtime rates for this member."
       :ui="{
         footer: 'justify-between',
         content: 'rounded-2xl'
       }"
     >
       <UTooltip
-        :text="wage?.disabled ? 'Enable the wage first to set a new wage' : undefined"
+        :text="wage?.disabled ? 'Resume this wage before making changes' : undefined"
         :content="{
           side: 'top'
         }"
@@ -143,7 +143,7 @@ const submitWage = () => {
     },
     {
       onSuccess: () => {
-        toast.add({ title: 'Member wage data set successfully', color: 'success' })
+        toast.add({ title: 'Wage updated successfully', color: 'success' })
         handleCancel()
       },
       onError: (error: AxiosError) => {
