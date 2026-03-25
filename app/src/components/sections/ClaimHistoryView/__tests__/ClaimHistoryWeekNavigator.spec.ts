@@ -40,7 +40,10 @@ describe('ClaimHistoryWeekNavigator', () => {
   it('renders weeks, pending badge and chart data for selected week', () => {
     const wrapper = createWrapper()
     const vm = wrapper.vm as unknown as {
-      barChartOption: { yAxis: { max: number }; series: Array<{ data: number[] }> }
+      barChartOption: {
+        yAxis: { max: number }
+        series: Array<{ data: Array<number | { value: number }> }>
+      }
     }
     const weeklyClaimsSpy = useGetTeamWeeklyClaimsQuery as unknown as {
       mock: {
@@ -59,7 +62,7 @@ describe('ClaimHistoryWeekNavigator', () => {
     )
 
     expect(vm.barChartOption.yAxis.max).toBe(8)
-    expect(vm.barChartOption.series[0]?.data[0]).toBe(8)
+    expect(vm.barChartOption.series[0]?.data[0]).toMatchObject({ value: 8 })
   })
 
   it('emits week update when a week item is clicked', async () => {
@@ -97,11 +100,19 @@ describe('ClaimHistoryWeekNavigator', () => {
 
     const wrapper = createWrapper()
     const vm = wrapper.vm as unknown as {
-      barChartOption: { yAxis: { max: number }; series: Array<{ data: number[] }> }
+      barChartOption: {
+        yAxis: { max: number }
+        series: Array<{ data: Array<number | { value: number }> }>
+      }
     }
 
+    const regularSeriesValues =
+      vm.barChartOption.series[0]?.data.map((entry) =>
+        typeof entry === 'number' ? entry : entry.value
+      ) ?? []
+
     expect(vm.barChartOption.yAxis.max).toBe(24)
-    expect(vm.barChartOption.series[0]?.data.every((value) => value === 0)).toBe(true)
+    expect(regularSeriesValues.every((value) => value === 0)).toBe(true)
   })
 
   it('handles selected week with no matching weekly claim', () => {
@@ -112,12 +123,20 @@ describe('ClaimHistoryWeekNavigator', () => {
 
     const wrapper = createWrapper()
     const vm = wrapper.vm as unknown as {
-      barChartOption: { yAxis: { max: number }; series: Array<{ data: number[] }> }
+      barChartOption: {
+        yAxis: { max: number }
+        series: Array<{ data: Array<number | { value: number }> }>
+      }
     }
+
+    const regularSeriesValues =
+      vm.barChartOption.series[0]?.data.map((entry) =>
+        typeof entry === 'number' ? entry : entry.value
+      ) ?? []
 
     expect(wrapper.find('.badge-primary').exists()).toBe(false)
     expect(vm.barChartOption.yAxis.max).toBe(24)
-    expect(vm.barChartOption.series[0]?.data.every((value) => value === 0)).toBe(true)
+    expect(regularSeriesValues.every((value) => value === 0)).toBe(true)
   })
 
   it('returns correct colors for each claim status branch', () => {
