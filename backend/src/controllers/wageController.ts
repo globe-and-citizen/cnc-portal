@@ -75,6 +75,10 @@ export const setWage = async (req: Request, res: Response) => {
     });
 
     if (currentWage) {
+      if (currentWage.disabled) {
+        return errorResponse(400, 'Cannot set wage: the current wage is disabled', res);
+      }
+
       // Create wage and chain it to the previous wage
       const createdWage = await prisma.wage.create({
         data: {
