@@ -88,7 +88,7 @@
       data-test="error-state"
     />
 
-    <div class="modal-action justify-between w-full">
+    <div class="flex justify-between w-full">
       <UButton
         v-if="wage"
         color="error"

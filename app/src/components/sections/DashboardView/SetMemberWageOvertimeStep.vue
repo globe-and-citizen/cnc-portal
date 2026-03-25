@@ -113,7 +113,7 @@
       data-test="error-state"
     />
 
-    <div class="modal-action justify-between w-full">
+    <div class="flex justify-between w-full">
       <div class="ml-auto flex gap-3">
         <UButton
           variant="outline"
