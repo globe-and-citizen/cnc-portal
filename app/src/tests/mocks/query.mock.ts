@@ -272,6 +272,7 @@ export const queryMocks: Record<string, () => Record<string, unknown>> = {
   // Wage queries - wage.queries.ts
   useGetTeamWagesQuery: () => createMockQueryResponse(mockWageData),
   useSetMemberWageMutation: () => createMockMutationResponse(),
+  useToggleWageStatusMutation: () => createMockMutationResponse(),
 
   // Notification queries - notification.queries.ts
   useGetNotificationsQuery: () => createMockQueryResponse(mockNotificationData),
