@@ -1,16 +1,14 @@
 <template>
-  <div>
+  <UModal v-model:open="showModal" title="Confirmation" :ui="{ content: 'rounded-2xl' }">
     <UButton
       color="error"
       size="lg"
-      @click="showModal = true"
       icon="heroicons-outline:trash"
       data-test="delete-member-button"
+      @click="showModal = true"
     />
 
-    <ModalComponent v-model="showModal" v-if="showModal">
-      <p class="font-bold text-lg">Confirmation</p>
-      <hr class="" />
+    <template #body>
       <p class="py-4">
         Are you sure you want to delete
         <span class="font-bold">{{ member.name }}</span>
@@ -18,32 +16,30 @@
         from the team?
       </p>
 
-      <div class="modal-action justify-center">
-        <ButtonUI
+      <div class="flex justify-center gap-2">
+        <UButton
           :loading="memberIsDeleting"
           :disabled="memberIsDeleting"
-          variant="error"
+          color="error"
           @click="handleDelete"
           data-test="delete-member-confirm-button"
-          >Delete</ButtonUI
+          >Delete</UButton
         >
-        <ButtonUI
-          variant="primary"
-          outline
+        <UButton
+          color="primary"
+          variant="outline"
           @click="showModal = false"
           data-test="delete-member-cancel-button"
         >
           Cancel
-        </ButtonUI>
+        </UButton>
       </div>
-    </ModalComponent>
-  </div>
+    </template>
+  </UModal>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import ButtonUI from '@/components/ButtonUI.vue'
-import ModalComponent from '@/components/ModalComponent.vue'
 import { useToastStore } from '@/stores'
 import type { Member } from '@/types'
 import { useDeleteMemberMutation } from '@/queries/member.queries'
@@ -86,5 +82,3 @@ const handleDelete = (): void => {
   )
 }
 </script>
-
-<style scoped></style>
