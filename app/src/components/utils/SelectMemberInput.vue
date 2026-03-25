@@ -1,40 +1,35 @@
 <template>
   <div
-    class="input-group relative"
+    class="relative"
     :class="isFetching ? 'animate-pulse' : ''"
     data-test="member-input"
   >
-    <label
-      class="input input-bordered flex items-center gap-2 input-md w-full"
-      :data-test="`member-input`"
-    >
-      <input
-        type="text"
-        class="w-full"
-        v-model="input"
-        ref="inputSearch"
-        placeholder="Member Name or Member Address"
-        :data-test="`member-input`"
-        :disabled="disabled"
-      />
-    </label>
+    <UInput
+      type="text"
+      v-model="input"
+      ref="inputSearch"
+      placeholder="Member Name or Member Address"
+      data-test="member-input"
+      size="xl"
+      :disabled="disabled"
+      class="w-full"
+    />
     <div v-if="!showOnFocus || (showOnFocus && showDropdown)">
       <div class="text-xm text-gray-900 mt-5" data-test="select-member-hint">
         Click to Select a Member
       </div>
-      <!-- Dropdown positioned relative to the input -->
       <div
         v-if="filteredUsers.length > 0"
-        class="left-0 top-full mt-4 w-full outline-hidden focus:outline-hidden focus:ring-0"
+        class="left-0 top-full mt-4 w-full"
         data-test="user-dropdown"
       >
-        <div class="shadow-sm bg-base-100 rounded-box">
+        <div class="shadow-sm bg-white rounded-xl">
           <div class="grid grid-cols-2 gap-4" data-test="user-search-results">
             <div
               v-for="user in filteredUsers.slice(0, 8)"
               :key="user.address"
               @click="handleSelectMember(user)"
-              class="flex items-center relative group"
+              class="flex items-center"
               :class="
                 isSafeOwner(user)
                   ? 'cursor-not-allowed'
@@ -44,32 +39,29 @@
               "
               data-test="user-row"
             >
-              <UserComponent
-                class="p-4 grow rounded-lg"
-                :class="[
+              <UTooltip
+                :text="
                   disableTeamMembers && isTeamMember(user)
-                    ? 'bg-gray-200 opacity-60'
+                    ? 'Already in your team'
                     : isSafeOwner(user)
-                      ? 'bg-gray-100 opacity-60'
-                      : 'bg-white hover:bg-base-300'
-                ]"
-                :user="user"
-                :data-test="`user-dropdown-${user.address}`"
-              />
-              <!-- Tooltip for users already in team -->
-              <div
-                v-if="disableTeamMembers && isTeamMember(user)"
-                class="absolute hidden group-hover:block bg-gray-800 text-white text-sm rounded-sm px-2 py-1 -top-8 left-1/2 transform -translate-x-1/2 whitespace-nowrap z-10"
+                      ? 'Already a safe owner'
+                      : undefined
+                "
+                class="grow"
               >
-                Already in your team
-              </div>
-              <!-- Tooltip for safe owners -->
-              <div
-                v-else-if="isSafeOwner(user)"
-                class="absolute hidden group-hover:block bg-gray-800 text-white text-sm rounded px-2 py-1 -top-8 left-1/2 transform -translate-x-1/2 whitespace-nowrap z-10"
-              >
-                Already a safe owner
-              </div>
+                <UserComponent
+                  class="p-4 grow rounded-lg"
+                  :class="[
+                    disableTeamMembers && isTeamMember(user)
+                      ? 'bg-gray-200 opacity-60'
+                      : isSafeOwner(user)
+                        ? 'bg-gray-100 opacity-60'
+                        : 'bg-white hover:bg-gray-100'
+                  ]"
+                  :user="user"
+                  :data-test="`user-dropdown-${user.address}`"
+                />
+              </UTooltip>
             </div>
           </div>
         </div>
@@ -105,21 +97,17 @@ const props = withDefaults(defineProps<Props>(), {
 
 const teamStore = useTeamStore()
 
-// type User = { name: string; address: string }
-
 const emit = defineEmits<{
   selectMember: [member: User]
 }>()
 
 const input = ref('')
-const inputSearch = ref<HTMLInputElement | null>(null)
-const { focused: searchInputFocus } = useFocus(inputSearch)
+const inputSearch = ref<{ focus: () => void; inputRef: HTMLInputElement } | null>(null)
+const { focused: searchInputFocus } = useFocus(() => inputSearch.value?.inputRef ?? null)
 const showDropdown = ref(false)
 
-// Small helpers and precomputed sets for clarity/perf
 const lower = (a?: string) => (a ?? '').toLowerCase()
 
-// Build query parameters reactively from the single input; backend will search name OR address
 const searchQuery = computed(() => {
   const query = input.value
   if (!query) return undefined
@@ -146,17 +134,14 @@ const isSafeOwner = (user: User): boolean => {
 const filteredUsers = computed<User[]>(() => {
   let members: User[] = []
   if (props.onlyTeamMembers) {
-    // get an empty array or the current team members
     members = teamStore.currentTeamMeta.data?.members ?? []
   } else {
     members = users.value ? (users.value.users as User[]) : []
   }
 
-  // filter this members and remove hidden Members
   return members.filter(
     (user) => !props.hiddenMembers.some((hiddenMember) => hiddenMember.address === user.address)
   )
-  // users.value
 })
 
 watchDebounced(
@@ -176,12 +161,10 @@ watch(searchInputFocus, (newVal) => {
 })
 
 const handleSelectMember = async (member: User) => {
-  // Prevent selection if already a safe owner
   if (isSafeOwner(member)) {
     return
   }
 
-  // Prevent selection if already in team
   if (props.disableTeamMembers && isTeamMember(member)) {
     return
   }
