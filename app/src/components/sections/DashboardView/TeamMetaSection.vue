@@ -19,12 +19,11 @@
           @click="deleteTeam()"
           :loading="teamIsDeleting"
           :disabled="teamIsDeleting"
-          >Delete
-        </UButton>
+          label="Delete"
+          />
         <UButton color="primary" outline @click="showDeleteTeamConfirmModal = false"
-          >Cancel</UButton
-        >
-        >
+          label="Cancel"
+        />
       </div>
     </ModalComponent>
     <ModalComponent v-model="showModal">
