@@ -55,6 +55,13 @@ export default defineConfig(({ mode }) => {
         events: 'events'
       }
     },
+    ui: {
+      button: {
+        defaultVariant: {
+          size: 'xl'
+        }
+      }
+    },
     server: {
       host: true,
       port: 5173

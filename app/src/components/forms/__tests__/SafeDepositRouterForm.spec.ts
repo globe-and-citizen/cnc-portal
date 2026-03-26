@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
-import { nextTick, ref } from 'vue'
+import { nextTick, ref, type ComponentPublicInstance } from 'vue'
 import { type Address } from 'viem'
 import SafeDepositRouterForm from '@/components/forms/SafeDepositRouterForm.vue'
 import {
@@ -72,6 +72,19 @@ describe('SafeDepositRouterForm', () => {
       }
     })
 
+  type SafeDepositRouterFormTestVm = ComponentPublicInstance & {
+    amount: string
+    sherAmount: string
+    isAmountValid: boolean
+    currentStep: number
+    reset: () => void
+    selectedTokenId: string
+    submitting: boolean
+  }
+
+  const getVm = (wrapper: ReturnType<typeof createWrapper>): SafeDepositRouterFormTestVm =>
+    wrapper.vm as unknown as SafeDepositRouterFormTestVm
+
   // Helper function to set TokenAmount values
   const setTokenAmount = async (
     wrapper: ReturnType<typeof createWrapper>,
@@ -79,7 +92,7 @@ describe('SafeDepositRouterForm', () => {
     isValid: boolean = true
   ): Promise<void> => {
     const tokenAmount = wrapper.findComponent({ name: 'TokenAmount' })
-    await tokenAmount.vm.$emit('update:modelValue', value)
+    await tokenAmount.vm.$emit('update:modelValue', { amount: value, tokenId: 'usdc' })
     await tokenAmount.vm.$emit('validation', isValid)
     await nextTick()
   }
@@ -142,17 +155,28 @@ describe('SafeDepositRouterForm', () => {
 
       const steps = wrapper.findAll(SELECTORS.step)
       expect(steps).toHaveLength(3)
-      expect(steps[0].text()).toBe('Amount')
-      expect(steps[1].text()).toBe('Approval')
-      expect(steps[2].text()).toBe('Deposit')
+
+      const [amountStep, approvalStep, depositStep] = steps
+      if (!amountStep || !approvalStep || !depositStep) {
+        throw new Error('Expected three workflow steps')
+      }
+
+      expect(amountStep.text()).toBe('Amount')
+      expect(approvalStep.text()).toBe('Approval')
+      expect(depositStep.text()).toBe('Deposit')
     })
 
     it('should highlight current step', async () => {
       const wrapper = createWrapper()
 
       const steps = wrapper.findAll(SELECTORS.step)
-      expect(steps[0].classes()).toContain('step-primary')
-      expect(steps[1].classes()).not.toContain('step-primary')
+      const [amountStep, approvalStep] = steps
+      if (!amountStep || !approvalStep) {
+        throw new Error('Expected at least two workflow steps')
+      }
+
+      expect(amountStep.classes()).toContain('step-primary')
+      expect(approvalStep.classes()).not.toContain('step-primary')
     })
   })
 
@@ -161,7 +185,7 @@ describe('SafeDepositRouterForm', () => {
       const wrapper = createWrapper()
       await setTokenAmount(wrapper, MOCK_DATA.amount, true)
 
-      expect(wrapper.vm.amount).toBe(MOCK_DATA.amount)
+      expect(getVm(wrapper).amount).toBe(MOCK_DATA.amount)
     })
 
     it('should calculate SHER compensation when amount changes', async () => {
@@ -169,21 +193,21 @@ describe('SafeDepositRouterForm', () => {
       await setTokenAmount(wrapper, MOCK_DATA.amount, true)
 
       // 100 USDC * 1.5 multiplier = 150 SHER
-      expect(wrapper.vm.sherAmount).toBe(MOCK_DATA.sherAmount)
+      expect(getVm(wrapper).sherAmount).toBe(MOCK_DATA.sherAmount)
     })
 
     it('should update validation state from TokenAmount', async () => {
       const wrapper = createWrapper()
       await setTokenAmount(wrapper, MOCK_DATA.amount, true)
 
-      expect(wrapper.vm.isAmountValid).toBe(true)
+      expect(getVm(wrapper).isAmountValid).toBe(true)
     })
 
     it('should handle zero amount correctly', async () => {
       const wrapper = createWrapper()
       await setTokenAmount(wrapper, '0', false)
 
-      expect(wrapper.vm.sherAmount).toBe('0')
+      expect(getVm(wrapper).sherAmount).toBe('0')
     })
   })
 
@@ -230,7 +254,7 @@ describe('SafeDepositRouterForm', () => {
       await nextTick()
 
       // 150 SHER / 1.5 multiplier = 100 USDC
-      expect(wrapper.vm.amount).toBe(MOCK_DATA.amount)
+      expect(getVm(wrapper).amount).toBe(MOCK_DATA.amount)
     })
 
     it('should handle SHER amount input of zero', async () => {
@@ -240,7 +264,7 @@ describe('SafeDepositRouterForm', () => {
       await compensationAmount.vm.$emit('update:modelValue', '0')
       await nextTick()
 
-      expect(wrapper.vm.amount).toBe('0')
+      expect(getVm(wrapper).amount).toBe('0')
     })
 
     it('should recalculate SHER when multiplier changes', async () => {
@@ -248,7 +272,7 @@ describe('SafeDepositRouterForm', () => {
       await setTokenAmount(wrapper, MOCK_DATA.amount, true)
 
       // Verify initial calculation
-      expect(wrapper.vm.sherAmount).toBe('150')
+      expect(getVm(wrapper).sherAmount).toBe('150')
 
       // Change multiplier to 2.0x using the reactive ref
       mockMultiplierData.value = 2000000n
@@ -256,7 +280,7 @@ describe('SafeDepositRouterForm', () => {
       await flushPromises()
 
       // Should recalculate: 100 * 2.0 = 200
-      expect(wrapper.vm.sherAmount).toBe('200')
+      expect(getVm(wrapper).sherAmount).toBe('200')
     })
   })
 
@@ -268,43 +292,43 @@ describe('SafeDepositRouterForm', () => {
       await wrapper.find(SELECTORS.cancelButton).trigger('click')
       await nextTick()
 
-      expect(wrapper.vm.amount).toBe('')
-      expect(wrapper.vm.sherAmount).toBe('0')
-      expect(wrapper.vm.currentStep).toBe(1)
+      expect(getVm(wrapper).amount).toBe('')
+      expect(getVm(wrapper).sherAmount).toBe('0')
+      expect(getVm(wrapper).currentStep).toBe(1)
       expect(wrapper.emitted('closeModal')).toBeTruthy()
     })
 
     it('should expose reset method', () => {
       const wrapper = createWrapper()
 
-      expect(typeof wrapper.vm.reset).toBe('function')
-      expect(() => wrapper.vm.reset()).not.toThrow()
+      expect(typeof getVm(wrapper).reset).toBe('function')
+      expect(() => getVm(wrapper).reset()).not.toThrow()
     })
 
     it('should reset all state when reset is called', async () => {
       const wrapper = createWrapper()
       await setTokenAmount(wrapper, MOCK_DATA.amount, true)
 
-      wrapper.vm.reset()
+      getVm(wrapper).reset()
       await nextTick()
 
-      expect(wrapper.vm.amount).toBe('')
-      expect(wrapper.vm.sherAmount).toBe('0')
-      expect(wrapper.vm.selectedTokenId).toBe('usdc')
-      expect(wrapper.vm.currentStep).toBe(1)
-      expect(wrapper.vm.submitting).toBe(false)
-      expect(wrapper.vm.isAmountValid).toBe(false)
+      expect(getVm(wrapper).amount).toBe('')
+      expect(getVm(wrapper).sherAmount).toBe('0')
+      expect(getVm(wrapper).selectedTokenId).toBe('usdc')
+      expect(getVm(wrapper).currentStep).toBe(1)
+      expect(getVm(wrapper).submitting).toBe(false)
+      expect(getVm(wrapper).isAmountValid).toBe(false)
     })
 
     it('should reset step to 1 when amount changes', async () => {
       const wrapper = createWrapper()
-      wrapper.vm.currentStep = 3
+      getVm(wrapper).currentStep = 3
       await nextTick()
 
       await setTokenAmount(wrapper, '50', true)
       await nextTick()
 
-      expect(wrapper.vm.currentStep).toBe(1)
+      expect(getVm(wrapper).currentStep).toBe(1)
     })
   })
 })

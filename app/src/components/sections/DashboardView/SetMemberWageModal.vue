@@ -2,35 +2,28 @@
   <div>
     <UModal
       v-model:open="showModal"
+      :title="`Set Wage for ${props.member.name}`"
+      description="Configure standard and optional overtime rates for this member."
       :ui="{
         footer: 'justify-between',
         content: 'rounded-2xl'
       }"
     >
-      <UButton
-        size="sm"
-        color="success"
-        data-test="set-wage-button"
-        @click="showModal = true"
-        class="text-xs px-4 py-2 text-black rounded-lg"
+      <UTooltip
+        :text="wage?.disabled ? 'Resume this wage before making changes' : undefined"
+        :content="{
+          side: 'top'
+        }"
       >
-        Set Wage
-      </UButton>
-
-      <template #header>
-        <div class="flex w-full items-center justify-between">
-          <p class="font-bold text-lg">Set Member Wage</p>
-          <UButton
-            icon="i-heroicons-x-mark"
-            color="error"
-            variant="outline"
-            size="sm"
-            square
-            @click="handleCancel"
-            data-test="close-wage-modal-button"
-          />
-        </div>
-      </template>
+        <UButton
+          size="lg"
+          color="success"
+          data-test="set-wage-button"
+          :disabled="wage?.disabled"
+          @click="showModal = true"
+          label="Set Wage"
+        />
+      </UTooltip>
 
       <template #body>
         <div class="space-y-4 mt-1">
@@ -38,74 +31,23 @@
 
           <SetMemberWageStandardStep
             v-if="currentStep === 0"
-            ref="standardStepRef"
             v-model:wageData="wageData"
+            :isPending="isPending"
+            :wage="props.wage"
+            :errorMessage="errorMessage"
+            @validated="onStandardSubmit"
+            @cancel="handleCancel"
+            @reset="wageData = initialWage()"
           />
 
-          <SetMemberWageOvertimeStep v-else ref="overtimeStepRef" v-model:wageData="wageData" />
-
-          <div v-if="setWageError" data-test="error-state">
-            <UAlert
-              color="error"
-              variant="soft"
-              icon="i-heroicons-x-circle"
-              :description="
-                (setWageError as AxiosError<{ message?: string }>).response?.data?.message ||
-                'Error setting wage'
-              "
-            />
-          </div>
-
-          <div class="modal-action justify-between w-full">
-            <UButton
-              v-if="props.wage"
-              color="error"
-              size="lg"
-              @click="
-                () => {
-                  wageData = initialWage()
-                }
-              "
-              data-test="reset-wage-button"
-            >
-              Reset Wage
-            </UButton>
-            <div class="ml-auto flex gap-3">
-              <UButton
-                v-if="currentStep === 0"
-                color="error"
-                variant="outline"
-                size="lg"
-                @click="handleCancel"
-                data-test="add-wage-cancel-button"
-              >
-                Cancel
-              </UButton>
-              <UButton
-                v-else
-                variant="outline"
-                size="lg"
-                @click="
-                  () => {
-                    currentStep = 0
-                  }
-                "
-                data-test="back-wage-button"
-              >
-                ← Back
-              </UButton>
-              <UButton
-                :loading="isPending"
-                :disabled="isPending"
-                color="success"
-                size="lg"
-                @click="handlePrimaryAction"
-                :data-test="currentStep === 0 ? 'add-wage-button' : 'save-overtime-wage-button'"
-              >
-                {{ currentStep === 0 && wageData.enableOvertimeRules ? 'Next →' : 'Save' }}
-              </UButton>
-            </div>
-          </div>
+          <SetMemberWageOvertimeStep
+            v-else
+            v-model:wageData="wageData"
+            :isPending="isPending"
+            :errorMessage="errorMessage"
+            @validated="submitWage"
+            @back="currentStep = 0"
+          />
         </div>
       </template>
     </UModal>
@@ -120,21 +62,15 @@ import { useSetMemberWageMutation } from '@/queries/wage.queries'
 import type { Member, Wage, WageWithForm } from '@/types'
 import type { AxiosError } from 'axios'
 import { normalizeRatePerHour, buildRatePayload } from '@/utils'
-
 import type { StepperItem } from '@nuxt/ui'
 
 const currentStep = ref(0)
-type WageStepRef = {
-  validateForm: () => boolean
-}
 
 const props = defineProps<{
   member: Partial<Member>
   teamId: number | string
   wage?: Wage
 }>()
-
-const emits = defineEmits<{ wageUpdated: [] }>()
 
 const showModal = ref(false)
 
@@ -152,6 +88,7 @@ const initialWage = (): WageWithForm => {
         id: 0,
         teamId: 0,
         userAddress: '',
+        disabled: false,
         ratePerHour: normalizeRatePerHour(),
         overtimeRatePerHour: normalizeRatePerHour(),
         enableOvertimeRules: false,
@@ -161,18 +98,26 @@ const initialWage = (): WageWithForm => {
         updatedAt: ''
       }
 }
+
 const wageData = ref<WageWithForm>(initialWage())
+
 const items = computed<StepperItem[]>(() =>
   wageData.value.enableOvertimeRules
     ? [{ title: 'Standard wage' }, { title: 'Overtime wage' }]
     : [{ title: 'Standard wage' }]
 )
-const standardStepRef = ref<WageStepRef | null>(null)
-const overtimeStepRef = ref<WageStepRef | null>(null)
 
 const toast = useToast()
 
 const { mutate: executeSetWage, error: setWageError, isPending } = useSetMemberWageMutation()
+
+const errorMessage = computed(() => {
+  if (!setWageError.value) return undefined
+  return (
+    (setWageError.value as AxiosError<{ message?: string }>).response?.data?.message ||
+    'Error setting wage'
+  )
+})
 
 const handleCancel = () => {
   showModal.value = false
@@ -180,9 +125,7 @@ const handleCancel = () => {
 }
 
 const submitWage = () => {
-  if (isPending.value) {
-    return
-  }
+  if (isPending.value) return
   executeSetWage(
     {
       body: {
@@ -200,8 +143,7 @@ const submitWage = () => {
     },
     {
       onSuccess: () => {
-        toast.add({ title: 'Member wage data set successfully', color: 'success' })
-        emits('wageUpdated')
+        toast.add({ title: 'Wage updated successfully', color: 'success' })
         handleCancel()
       },
       onError: (error: AxiosError) => {
@@ -211,24 +153,11 @@ const submitWage = () => {
   )
 }
 
-const validateCurrentStep = () => {
-  if (currentStep.value === 0) {
-    return standardStepRef.value?.validateForm() ?? false
-  }
-
-  return overtimeStepRef.value?.validateForm() ?? false
-}
-
-const handlePrimaryAction = async () => {
-  if (!validateCurrentStep()) {
-    return
-  }
-
-  if (currentStep.value === 0 && wageData.value.enableOvertimeRules) {
+const onStandardSubmit = () => {
+  if (wageData.value.enableOvertimeRules) {
     currentStep.value = 1
-    return
+  } else {
+    submitWage()
   }
-
-  submitWage()
 }
 </script>

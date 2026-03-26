@@ -66,15 +66,33 @@ const stubs = {
       '<div data-test="owner-withdraw-modal"><slot /><button data-test="modal-close" @click="$emit(\'update:modelValue\', false)" /><button data-test="modal-reset" @click="$emit(\'reset\')" /></div>'
   }),
   TokenAmount: defineComponent({
-    emits: ['update:modelValue', 'update:modelToken', 'validation'],
+    emits: ['update:modelValue', 'validation'],
+    data() {
+      return {
+        model: { amount: '0', tokenId: 'native' }
+      }
+    },
+    methods: {
+      emitModel() {
+        this.$emit('update:modelValue', { ...this.model })
+      },
+      setToken(tokenId: string) {
+        this.model.tokenId = tokenId
+        this.emitModel()
+      },
+      setAmount(amount: string) {
+        this.model.amount = amount
+        this.emitModel()
+      }
+    },
     template: `
       <div>
         <button data-test="token-amount-valid" @click="$emit('validation', true)" />
-        <button data-test="token-amount-native" @click="$emit('update:modelToken', 'native')" />
-        <button data-test="token-amount-usdc" @click="$emit('update:modelToken', 'usdc')" />
-        <button data-test="token-amount-sher" @click="$emit('update:modelToken', 'sher')" />
-        <button data-test="token-amount-unknown" @click="$emit('update:modelToken', 'unknown')" />
-        <button data-test="token-amount-amount-1" @click="$emit('update:modelValue', '1')" />
+        <button data-test="token-amount-native" @click="setToken('native')" />
+        <button data-test="token-amount-usdc" @click="setToken('usdc')" />
+        <button data-test="token-amount-sher" @click="setToken('sher')" />
+        <button data-test="token-amount-unknown" @click="setToken('unknown')" />
+        <button data-test="token-amount-amount-1" @click="setAmount('1')" />
         <slot name="label" />
       </div>
     `

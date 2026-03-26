@@ -5,10 +5,6 @@ import { NETWORK } from '@/constant'
 import SetMemberWageOvertimeStep from '../SetMemberWageOvertimeStep.vue'
 import type { WageWithForm } from '../SetMemberWageModal.vue'
 
-type OvertimeStepVm = {
-  validateForm: () => boolean
-}
-
 const createWageData = (overrides: Partial<WageWithForm> = {}): WageWithForm => ({
   id: 1,
   teamId: 1,
@@ -109,6 +105,7 @@ const createWrapper = (wageData = createWageData()) =>
   mount(SetMemberWageOvertimeStep, {
     props: {
       wageData,
+      isPending: false,
       'onUpdate:wageData': (newValue: WageWithForm) => newValue
     },
     global: {
@@ -152,84 +149,8 @@ describe('SetMemberWageOvertimeStep.vue', () => {
       })
     )
 
-    expect(wrapper.text()).toContain(`10 ${NETWORK.currencySymbol}/hr`)
-    expect(wrapper.text()).toContain('5 USDC/hr')
-    expect(wrapper.text()).toContain(`20 ${NETWORK.currencySymbol}/hr`)
-  })
-
-  it('returns true when overtime form data is valid', () => {
-    const wrapper = createWrapper(
-      createWageData({
-        maximumOvertimeHoursPerWeek: 6,
-        overtimeRatePerHour: [
-          { type: 'native', amount: 12, enabled: true },
-          { type: 'usdc', amount: 0, enabled: false },
-          { type: 'sher', amount: 0, enabled: false }
-        ]
-      })
-    )
-
-    const vm = wrapper.vm as unknown as OvertimeStepVm
-    expect(vm.validateForm()).toBe(true)
-  })
-
-  it('returns false when no overtime rate is enabled', () => {
-    const wrapper = createWrapper(
-      createWageData({
-        overtimeRatePerHour: [
-          { type: 'native', amount: 0, enabled: false },
-          { type: 'usdc', amount: 0, enabled: false },
-          { type: 'sher', amount: 0, enabled: false }
-        ]
-      })
-    )
-
-    const vm = wrapper.vm as unknown as OvertimeStepVm
-    expect(vm.validateForm()).toBe(false)
-  })
-
-  it('returns false when native overtime rate is disabled or invalid', () => {
-    const wrapper = createWrapper(
-      createWageData({
-        overtimeRatePerHour: [
-          { type: 'native', amount: 0, enabled: false },
-          { type: 'usdc', amount: 7, enabled: true },
-          { type: 'sher', amount: 0, enabled: false }
-        ]
-      })
-    )
-
-    const vm = wrapper.vm as unknown as OvertimeStepVm
-    expect(vm.validateForm()).toBe(false)
-  })
-
-  it('returns false when native overtime rate entry is missing', () => {
-    const wrapper = createWrapper(
-      createWageData({
-        overtimeRatePerHour: [
-          { type: 'usdc', amount: 8, enabled: true },
-          { type: 'sher', amount: 3, enabled: true }
-        ]
-      })
-    )
-
-    const vm = wrapper.vm as unknown as OvertimeStepVm
-    expect(vm.validateForm()).toBe(false)
-  })
-
-  it('returns false when overtime hours is not positive', () => {
-    const wrapper = createWrapper(
-      createWageData({
-        maximumOvertimeHoursPerWeek: 0,
-        overtimeRatePerHour: [
-          { type: 'native', amount: 12, enabled: true },
-          { type: 'usdc', amount: 0, enabled: false },
-          { type: 'sher', amount: 0, enabled: false }
-        ]
-      })
-    )
-
-    const vm = wrapper.vm as unknown as OvertimeStepVm
-    expect(vm.validateForm()).toBe(false)
+    expect(wrapper.text()).toContain(`${NETWORK.currencySymbol} 10`)
+    expect(wrapper.text()).toContain('USDC 5')
+    expect(wrapper.text()).toContain(`${NETWORK.currencySymbol} 20`)
   })
 })

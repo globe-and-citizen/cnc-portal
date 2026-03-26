@@ -319,9 +319,9 @@ describe('ExpenseAccountEIP712V2', function () {
       const currentTime = await time.latest()
       const currentDate = new Date(currentTime * 1000)
 
-      // Calculate next Wednesday from current time
+      // Calculate next Wednesday from current time (always at least 1 day ahead)
       const currentDay = currentDate.getUTCDay() // 0 = Sunday, 1 = Monday, ..., 3 = Wednesday
-      const daysUntilWednesday = currentDay <= 3 ? 3 - currentDay : 10 - currentDay
+      const daysUntilWednesday = currentDay < 3 ? 3 - currentDay : 10 - currentDay
       const nextWednesday = new Date(currentDate)
       nextWednesday.setUTCDate(currentDate.getUTCDate() + daysUntilWednesday)
       nextWednesday.setUTCHours(12, 0, 0, 0) // Wednesday at 12:00:00 UTC

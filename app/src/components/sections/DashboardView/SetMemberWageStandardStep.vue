@@ -1,52 +1,58 @@
 <template>
-  <div class="space-y-4" data-test="standard-wage-step">
-    <UForm :schema="schema" :state="wageData" class="space-y-4">
-      <UFormField name="maximumHoursPerWeek">
-        <UInput
-          v-model="wageData.maximumHoursPerWeek"
-          class="w-full"
-          size="xl"
-          type="number"
-          placeholder="Enter max hours per week..."
-          :ui="{
-            base: 'pl-36',
-            leading: 'pointer-events-none'
-          }"
-        >
-          <template #leading> <p class="text-sm text-muted">Max Weekly Hours |</p> </template>
-        </UInput></UFormField
+  <UForm
+    :schema="standardSchema"
+    :state="wageData"
+    class="space-y-4"
+    data-test="standard-wage-step"
+    @submit="emit('validated')"
+  >
+    <UFormField name="maximumHoursPerWeek">
+      <UInput
+        v-model="wageData.maximumHoursPerWeek"
+        class="w-full"
+        size="xl"
+        type="number"
+        placeholder="e.g. 40"
+        :ui="{ base: 'pl-36', leading: 'pointer-events-none' }"
       >
-      <h3 class="text-lg font-semibold mb-4">Hourly Rates</h3>
+        <template #leading>
+          <p class="text-sm text-muted">Weekly cap (hrs)</p>
+        </template>
+      </UInput>
+    </UFormField>
 
-      <UFieldGroup
-        v-for="(rate, index) in wageData.ratePerHour"
-        :key="rate.type"
-        class="flex items-center gap-4"
-      >
-        <USwitch size="xl" v-model="rate.enabled" />
-        <UFormField :name="`ratePerHour.${index}.amount`" class="w-full">
-          <UInput
-            v-model="rate.amount"
-            placeholder="0.00"
-            size="xl"
-            type="number"
-            class="w-full"
-            :disabled="!rate.enabled"
-          >
-            <template #trailing>
-              <UBadge
-                class="text-sm rounded-full px-4 test w-16 flex justify-center"
-                :variant="rate.enabled ? 'solid' : 'outline'"
-                :color="rate.enabled ? 'primary' : 'neutral'"
-                >{{
-                  rate.type === 'native' ? NETWORK.currencySymbol : rate.type.toUpperCase()
-                }}</UBadge
-              >
-            </template>
-          </UInput>
-        </UFormField>
-      </UFieldGroup>
-    </UForm>
+    <UFormField name="ratePerHour">
+      <div class="space-y-4">
+        <h3 class="text-lg font-semibold mb-4">Standard Hourly Rates</h3>
+        <UFieldGroup
+          v-for="(rate, index) in wageData.ratePerHour"
+          :key="rate.type"
+          class="flex items-center gap-4"
+        >
+          <USwitch size="xl" v-model="rate.enabled" />
+          <UFormField :name="`ratePerHour.${index}.amount`" class="w-full">
+            <UInput
+              v-model="rate.amount"
+              placeholder="0.00"
+              size="xl"
+              type="number"
+              class="w-full"
+              :disabled="!rate.enabled"
+            >
+              <template #trailing>
+                <UBadge
+                  class="text-sm rounded-full px-4 w-16 flex justify-center"
+                  :variant="rate.enabled ? 'solid' : 'outline'"
+                  :color="rate.enabled ? 'primary' : 'neutral'"
+                >
+                  {{ rate.type === 'native' ? NETWORK.currencySymbol : rate.type.toUpperCase() }}
+                </UBadge>
+              </template>
+            </UInput>
+          </UFormField>
+        </UFieldGroup>
+      </div>
+    </UFormField>
 
     <div class="border-t border-base-200 pt-4">
       <label
@@ -65,71 +71,99 @@
           data-test="enable-overtime-checkbox"
         />
         <div>
-          <p class="font-semibold">Enable overtime rules</p>
+          <p class="font-semibold">Add overtime rates</p>
           <p class="text-sm text-base-content/60">
-            Define a custom wage for hours worked beyond the weekly limit.
+            Set different rates for hours worked beyond the weekly cap.
           </p>
         </div>
       </label>
     </div>
-  </div>
+
+    <UAlert
+      v-if="errorMessage"
+      color="error"
+      variant="soft"
+      icon="i-heroicons-x-circle"
+      :description="errorMessage"
+      data-test="error-state"
+    />
+
+    <div class="flex justify-between w-full">
+      <UButton
+        v-if="wage"
+        color="error"
+        size="lg"
+        type="button"
+        data-test="reset-wage-button"
+        @click="emit('reset')"
+      >
+        Reset to saved
+      </UButton>
+      <div class="ml-auto flex gap-3">
+        <UButton
+          color="error"
+          variant="outline"
+          size="lg"
+          type="button"
+          data-test="add-wage-cancel-button"
+          @click="emit('cancel')"
+        >
+          Cancel
+        </UButton>
+        <UButton
+          type="submit"
+          :loading="isPending"
+          :disabled="isPending"
+          color="success"
+          size="lg"
+          data-test="add-wage-button"
+        >
+          {{ wageData.enableOvertimeRules ? 'Continue' : 'Save wage' }}
+        </UButton>
+      </div>
+    </div>
+  </UForm>
 </template>
 
 <script setup lang="ts">
 import * as z from 'zod'
 import { NETWORK } from '@/constant'
-import type { WageWithForm } from '@/types/cash-remuneration'
+import type { Wage, WageWithForm } from '@/types'
+
+const emit = defineEmits<{ validated: []; cancel: []; reset: [] }>()
 
 const wageData = defineModel<WageWithForm>('wageData', { required: true })
 
-const schema = z.object({
+defineProps<{
+  isPending: boolean
+  wage?: Wage
+  errorMessage?: string
+}>()
+
+const rateSchema = z.object({
+  type: z.enum(['native', 'usdc', 'sher', 'usdc.e']),
+  amount: z.coerce.number(),
+  enabled: z.boolean()
+})
+
+const standardSchema = z.object({
   maximumHoursPerWeek: z.coerce
     .number()
     .int('Must be a whole number')
     .positive('Max weekly hours must be greater than 0'),
-  ratePerHour: z
-    .array(
-      z.object({
-        type: z.enum(['native', 'usdc', 'sher', 'usdc.e']),
-        amount: z.coerce.number(),
-        enabled: z.boolean()
-      })
-    )
-    .superRefine((rates, ctx) => {
-      const enabledRates = rates.filter((rate) => rate.enabled)
-
-      if (enabledRates.length === 0) {
+  ratePerHour: z.array(rateSchema).superRefine((rates, ctx) => {
+    if (rates.filter((r) => r.enabled).length === 0) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: [], message: 'Enable at least one rate' })
+    }
+    for (const [index, rate] of rates.entries()) {
+      if (rate.enabled && rate.amount <= 0) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          path: [],
-          message: 'Enable at least one rate'
+          path: [index, 'amount'],
+          message: 'Enabled rates must be greater than 0'
         })
       }
-
-      for (const [index, rate] of rates.entries()) {
-        if (rate.enabled && rate.amount <= 0) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            path: [index, 'amount'],
-            message: 'Enabled rates must be greater than 0'
-          })
-        }
-      }
-
-      const nativeRateIndex = rates.findIndex((rate) => rate.type === 'native')
-      const enabledNativeRate = rates[nativeRateIndex]
-
-      if (!enabledNativeRate || !enabledNativeRate.enabled || enabledNativeRate.amount <= 0) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: [nativeRateIndex >= 0 ? nativeRateIndex : 0, 'amount'],
-          message: 'Native rate must be enabled and greater than 0'
-        })
-      }
-    })
+    }
+  })
 })
-
-const validateForm = () => schema.safeParse(wageData.value).success
-
-defineExpose({ validateForm })
 </script>

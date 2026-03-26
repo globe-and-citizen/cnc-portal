@@ -152,8 +152,8 @@ const AddSignerModalStub = defineComponent({
 })
 
 const UpdateThresholdModalStub = defineComponent({
-  props: ['modelValue', 'safeAddress', 'currentOwners', 'currentThreshold'],
-  emits: ['update:modelValue', 'threshold-updated'],
+  props: ['open', 'safeAddress', 'currentOwners', 'currentThreshold'],
+  emits: ['update:open', 'threshold-updated'],
   template: '<div data-test="update-threshold-modal"></div>'
 })
 

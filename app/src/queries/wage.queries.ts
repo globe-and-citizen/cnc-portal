@@ -2,6 +2,7 @@ import type { Wage } from '@/types'
 import type { MaybeRefOrGetter } from 'vue'
 import { toValue } from 'vue'
 import { createQueryHook, createMutationHook, queryPresets } from './queryFactory'
+import { teamKeys } from './team.queries'
 
 /**
  * Query key factory for wage-related queries
@@ -86,5 +87,39 @@ export interface SetMemberWageParams {
 export const useSetMemberWageMutation = createMutationHook<void, SetMemberWageParams>({
   method: 'PUT',
   endpoint: 'wage/setWage',
-  invalidateKeys: (params) => [wageKeys.team(params.body.teamId)]
+  invalidateKeys: (params) => [
+    wageKeys.team(params.body.teamId),
+    teamKeys.detail(String(params.body.teamId))
+  ]
+})
+
+// ============================================================================
+// PUT /wage/{wageId} - Toggle wage status (disable / enable)
+// ============================================================================
+
+export type WageAction = 'disable' | 'enable'
+
+export interface ToggleWageStatusParams {
+  pathParams: {
+    /** Wage ID */
+    wageId: number | string
+  }
+  queryParams: {
+    /** Action to perform */
+    action: WageAction
+  }
+}
+
+/**
+ * Disable or enable a member wage
+ *
+ * @endpoint PUT /wage/{wageId}
+ * @pathParams { wageId: number | string }
+ * @queryParams { action: 'disable' | 'enable' }
+ * @body none
+ */
+export const useToggleWageStatusMutation = createMutationHook<void, ToggleWageStatusParams>({
+  method: 'PUT',
+  endpoint: 'wage/{wageId}',
+  invalidateKeys: () => [wageKeys.teams()]
 })

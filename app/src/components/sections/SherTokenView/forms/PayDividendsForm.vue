@@ -22,12 +22,7 @@
       Please fund the bank contract before paying dividends.
     </div>
 
-    <TokenAmount
-      v-model:modelValue="amount"
-      v-model:modelToken="selectedTokenId"
-      :tokens="tokens"
-      :loading="loading"
-    >
+    <TokenAmount v-model="tokenAmountModel" :tokens="tokens" :loading="loading">
       <template #label>
         <span class="label-text">Amount</span>
         <span class="label-text-alt">Available: {{ formattedUnlockedBalance }}</span>
@@ -65,6 +60,13 @@ import TokenAmount from '@/components/forms/TokenAmount.vue'
 import type { Address } from 'viem'
 const amount = ref<string>('')
 const selectedTokenId = ref<TokenId>('native')
+const tokenAmountModel = computed({
+  get: () => ({ amount: amount.value, tokenId: selectedTokenId.value }),
+  set: (value: { amount: string; tokenId: TokenId | string }) => {
+    amount.value = value.amount ?? ''
+    selectedTokenId.value = (value.tokenId as TokenId) ?? 'native'
+  }
+})
 const teamStore = useTeamStore()
 
 defineProps<{

@@ -19,7 +19,7 @@ describe('UserComponent.vue', () => {
 
       const avatarImg = wrapper.find('[data-test="avatar-image"]')
       expect(avatarImg.attributes('src')).toBe(mockUser.imageUrl)
-      expect(avatarImg.attributes('alt')).toBe('User Avatar')
+      expect(avatarImg.attributes('alt')).toBe("John Doe's avatar")
 
       const userName = wrapper.find('[data-test="user-name"]')
       expect(userName.text()).toBe(mockUser.name || 'User')
@@ -101,7 +101,7 @@ describe('UserComponent.vue', () => {
       expect(roleButton.exists()).toBe(true)
 
       const avatarImg = wrapper.find('[data-test="avatar-image"]')
-      expect(avatarImg.attributes('alt')).toBe('User Avatar')
+      expect(avatarImg.attributes('alt')).toBe("John Doe's avatar")
     })
   })
 })
