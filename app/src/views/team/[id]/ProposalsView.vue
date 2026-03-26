@@ -18,9 +18,7 @@
           </option>
         </select>
       </div>
-      <ButtonUI variant="primary" @click="createProposalModal = { mount: true, show: true }"
-        >Create Proposal</ButtonUI
-      >
+      <UButton color="primary" @click="createProposalModal = { mount: true, show: true }" label="Create Proposal" />
     </div>
 
     <ProposalsList ref="proposalsListRef" />
@@ -38,7 +36,6 @@
   </div>
 </template>
 <script setup lang="ts">
-import ButtonUI from '@/components/ButtonUI.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import CreateProposalForm from '@/components/sections/ProposalsView/forms/CreateProposalForm.vue'
 import ProposalsList from '@/components/sections/ProposalsView/ProposalsList.vue'

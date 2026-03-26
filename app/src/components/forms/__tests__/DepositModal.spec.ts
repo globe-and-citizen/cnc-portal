@@ -2,10 +2,8 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { mount, VueWrapper } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import DepositModal from '../DepositModal.vue'
-import ButtonUI from '@/components/ButtonUI.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import DepositBankForm from '../DepositBankForm.vue'
-import { Icon as IconifyIcon } from '@iconify/vue'
 
 describe('DepositModal', () => {
   let wrapper: VueWrapper
@@ -28,10 +26,8 @@ describe('DepositModal', () => {
       },
       global: {
         components: {
-          ButtonUI,
           ModalComponent,
-          DepositBankForm,
-          IconifyIcon
+          DepositBankForm
         },
         stubs: {
           DepositBankForm: true

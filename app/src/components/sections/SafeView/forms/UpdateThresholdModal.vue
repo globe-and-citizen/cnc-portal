@@ -86,12 +86,9 @@
             :loading="isLoading"
             :disabled="!hasChanges || isLoading"
             data-test="update-threshold-button"
-          >
-            <template #leading>
-              <IconifyIcon v-if="!isLoading" icon="heroicons:shield-check" class="w-4 h-4" />
-            </template>
-            Update Threshold
-          </UButton>
+            leading-icon="heroicons:shield-check"
+            label="Update Threshold"
+          />
         </div>
       </UForm>
     </template>

@@ -10,14 +10,14 @@
           :data-test-prefix="dataTestPrefix"
         />
         <div class="relative">
-          <ButtonUI
+          <UButton
             class="flex items-center cursor-pointer gap-4 border border-gray-300 min-w-[110px]"
             @click="typeDropdownOpen = !typeDropdownOpen"
             :data-test="`${dataTestPrefix}-type-filter`"
           >
             <span>{{ selectedTypeLabel }}</span>
             <IconifyIcon icon="heroicons:chevron-down" class="w-4 h-4" />
-          </ButtonUI>
+          </UButton>
           <ul
             class="absolute right-0 mt-2 menu bg-base-200 border-2 rounded-box z-1 w-40 p-2 shadow-sm"
             ref="typeDropdownTarget"
@@ -29,13 +29,13 @@
             </li>
           </ul>
         </div>
-        <ButtonUI
+        <UButton
           v-if="showExport"
-          variant="success"
+          color="success"
           :data-test="`${dataTestPrefix}-export-button`"
           class="ml-0! px-4!"
-          >Export</ButtonUI
-        >
+          label="Export"
+        />
         <!-- <ButtonUI
           v-if="showExport"
           variant="success"
@@ -129,12 +129,12 @@
 
       <template #receipt-data="{ row }">
         <template v-if="showReceiptModal">
-          <ButtonUI
+          <UButton
             size="sm"
             @click="handleReceiptClick(row as BaseTransaction)"
             :data-test="`${dataTestPrefix}-receipt-button`"
-            >Receipt</ButtonUI
-          >
+            label="Receipt"
+          />
         </template>
         <a
           v-else
@@ -176,7 +176,6 @@
 
 <script setup lang="ts">
 import AddressToolTip from '@/components/AddressToolTip.vue'
-import ButtonUI from '@/components/ButtonUI.vue'
 import CardComponent from '@/components/CardComponent.vue'
 import CustomDatePicker from '@/components/CustomDatePicker.vue'
 import ModalComponent from '@/components/ModalComponent.vue'

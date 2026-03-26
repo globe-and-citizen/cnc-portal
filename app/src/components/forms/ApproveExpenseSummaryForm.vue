@@ -30,26 +30,25 @@
   <div class="divider" />
 
   <div class="flex justify-between">
-    <ButtonUI
-      outline
-      variant="error"
+    <UButton
+      color="error"
+      variant="outline"
       :disabled="loading"
       @click="$emit('close')"
       data-test="cancel-button"
-      >Cancel</ButtonUI
-    >
-    <ButtonUI
+      label="Cancel"
+    />
+    <UButton
       :disabled="loading"
       :loading="loading"
-      variant="primary"
+      color="primary"
       @click="$emit('submit', budgetLimit)"
       data-test="approve-button"
-      >Confirm Approval</ButtonUI
-    >
+      label="Confirm Approval"
+    />
   </div>
 </template>
 <script setup lang="ts">
-import ButtonUI from '@/components/ButtonUI.vue'
 import type { BudgetLimit } from '@/types'
 import { tokenSymbol } from '@/utils'
 import { getFrequencyType } from '@/utils'

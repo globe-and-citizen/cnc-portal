@@ -1,16 +1,14 @@
 <template>
   <div class="flex items-center gap-1">
-    <ButtonUI variant="ghost" size="xs" @click="showEditModal = true" data-test="edit-claim-button">
-      <IconifyIcon icon="heroicons:pencil-square" class="w-4 h-4" />
-    </ButtonUI>
-    <ButtonUI
+    <UButton variant="ghost" size="xs" @click="showEditModal = true" data-test="edit-claim-button" icon="heroicons:pencil-square" />
+    <UButton
       variant="ghost"
       size="xs"
       @click="showDeleteModal = true"
       data-test="delete-claim-button"
     >
       <IconifyIcon icon="heroicons:trash" class="w-4 h-4 text-error" />
-    </ButtonUI>
+    </UButton>
 
     <!-- Edit Modal -->
     <ModalComponent v-model="showEditModal">
@@ -26,7 +24,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
-import ButtonUI from '@/components/ButtonUI.vue'
 import EditClaims from '@/components/sections/CashRemunerationView/EditClaims.vue'
 import DeleteClaimModal from '@/components/sections/CashRemunerationView/DeleteClaimModal.vue'
 import ModalComponent from '@/components/ModalComponent.vue'

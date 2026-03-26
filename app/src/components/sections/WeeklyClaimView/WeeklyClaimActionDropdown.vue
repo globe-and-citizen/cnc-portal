@@ -103,15 +103,14 @@
     </ul>
 
     <!-- Dropdown trigger button -->
-    <ButtonUI class="btn-ghost" size="sm" @click.stop="toggleDropdown">
+    <UButton variant="ghost" size="sm" @click.stop="toggleDropdown">
       <IconifyIcon :icon="ellipsisIcon" class="w-5 h-5" />
-    </ButtonUI>
+    </UButton>
   </div>
 </template>
 
 <script setup lang="ts">
 import { Icon as IconifyIcon } from '@iconify/vue'
-import ButtonUI from '@/components/ButtonUI.vue'
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useUserDataStore, useTeamStore, useToastStore } from '@/stores'
 import { useReadContract } from '@wagmi/vue'

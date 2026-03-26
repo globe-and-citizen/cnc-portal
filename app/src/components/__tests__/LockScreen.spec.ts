@@ -24,8 +24,8 @@ describe('LockScreen.vue', () => {
       },
       global: {
         stubs: {
-          ButtonUI: defineComponent({
-            name: 'ButtonUI',
+          UButton: defineComponent({
+            name: 'UButton',
             emits: ['click'],
             setup(_, { slots, emit }) {
               return () =>
@@ -37,10 +37,6 @@ describe('LockScreen.vue', () => {
             }
           })
         }
-      }
-    })
-
-    const monos = wrapper.findAll('span.font-mono')
     // both formatted address spans should be empty
     expect(monos.length).toBeGreaterThanOrEqual(2)
     // expect(monos[0].text().trim()).toBe('')
@@ -54,9 +50,9 @@ describe('LockScreen.vue', () => {
       },
       global: {
         stubs: {
-          // Robust stub for ButtonUI using render function
-          ButtonUI: defineComponent({
-            name: 'ButtonUI',
+          // Robust stub for UButton using render function
+          UButton: defineComponent({
+            name: 'UButton',
             emits: ['click'],
             setup(_, { slots, emit }) {
               return () =>
@@ -68,10 +64,6 @@ describe('LockScreen.vue', () => {
             }
           })
         }
-      }
-    })
-
-    // Expect the formatted short addresses to appear
     expect(wrapper.text()).toContain('0x1111...1111')
     expect(wrapper.text()).toContain('0x1234...7890')
   })
@@ -83,8 +75,8 @@ describe('LockScreen.vue', () => {
       },
       global: {
         stubs: {
-          ButtonUI: defineComponent({
-            name: 'ButtonUI',
+          UButton: defineComponent({
+            name: 'UButton',
             emits: ['click'],
             setup(_, { slots, emit }) {
               return () =>

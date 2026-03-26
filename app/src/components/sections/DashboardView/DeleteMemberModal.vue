@@ -1,13 +1,12 @@
 <template>
   <div>
-    <ButtonUI
-      variant="error"
+    <UButton
+      color="error"
       size="sm"
       @click="() => (showModal = true)"
       data-test="delete-member-button"
-    >
-      <IconifyIcon icon="heroicons-outline:trash" class="size-4" />
-    </ButtonUI>
+      icon="heroicons-outline:trash"
+    />
 
     <ModalComponent v-model="showModal" v-if="showModal">
       <p class="font-bold text-lg">Confirmation</p>
@@ -20,22 +19,21 @@
       </p>
 
       <div class="modal-action justify-center">
-        <ButtonUI
+        <UButton
           :loading="memberIsDeleting"
           :disabled="memberIsDeleting"
-          variant="error"
+          color="error"
           @click="handleDelete"
           data-test="delete-member-confirm-button"
-          >Delete</ButtonUI
-        >
-        <ButtonUI
-          variant="primary"
-          outline
+          label="Delete"
+        />
+        <UButton
+          color="primary"
+          variant="outline"
           @click="showModal = false"
           data-test="delete-member-cancel-button"
-        >
-          Cancel
-        </ButtonUI>
+          label="Cancel"
+        />
       </div>
     </ModalComponent>
   </div>
@@ -43,7 +41,6 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import ButtonUI from '@/components/ButtonUI.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import { useToastStore } from '@/stores'

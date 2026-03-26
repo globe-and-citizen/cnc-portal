@@ -1,8 +1,8 @@
 <template>
   <div>
     <div class="flex gap-8">
-      <ButtonUI variant="primary" @click="pauseResult.executeWrite()">Pause Bank</ButtonUI>
-      <ButtonUI variant="secondary" @click="unpauseResult.executeWrite()">Unpause Bank</ButtonUI>
+      <UButton color="primary" @click="pauseResult.executeWrite()" label="Pause Bank" />
+      <UButton color="secondary" @click="unpauseResult.executeWrite()" label="Unpause Bank" />
     </div>
     <h2>
       <!-- Bank paused Status is <span class="text-red-500">{{ pauseStatus.data }}</span> -->
@@ -36,7 +36,6 @@
 <script setup lang="ts">
 // import { useBankReads } from '@/composables/bank'
 import { usePause, useUnpause } from '@/composables/bank/writes'
-import ButtonUI from '@/components/ButtonUI.vue'
 import TransactionTimeline from '@/components/ui/TransactionTimeline.vue'
 
 // const { useBankPaused } = useBankReads()

@@ -66,18 +66,14 @@
       </div>
       <div>{{ proposal.description }}</div>
       <div v-if="!hasVoted" class="flex flex-row justify-end gap-2">
-        <ButtonUI variant="primary" @click="vote('yes')" :disabled="isVoting || isConfirmingVote"
-          >Vote for yes
-        </ButtonUI>
-        <ButtonUI variant="error" @click="vote('no')" :disabled="isVoting || isConfirmingVote"
-          >Vote for no</ButtonUI
-        >
-        <ButtonUI
+        <UButton color="primary" @click="vote('yes')" :disabled="isVoting || isConfirmingVote" label="Vote for yes" />
+        <UButton color="error" @click="vote('no')" :disabled="isVoting || isConfirmingVote" label="Vote for no" />
+        <UButton
           class="bg-gray-300"
           @click="vote('abstain')"
           :disabled="isVoting || isConfirmingVote"
-          >Vote for abstain
-        </ButtonUI>
+          label="Vote for abstain"
+        />
       </div>
       <div class="flex flex-col">
         <div class="text-lg font-semibold mb-4">Current Results</div>
@@ -169,7 +165,6 @@
 </template>
 <script setup lang="ts">
 import { PROPOSALS_ABI } from '@/artifacts/abi/proposals'
-import ButtonUI from '@/components/ButtonUI.vue'
 import { useTeamStore, useToastStore, useUserDataStore } from '@/stores'
 import { ProposalState, type Proposal, type ProposalVoteEvent } from '@/types'
 import { config } from '@/wagmi.config'

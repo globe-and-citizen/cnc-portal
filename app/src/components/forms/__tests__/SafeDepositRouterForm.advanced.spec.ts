@@ -272,7 +272,7 @@ describe('SafeDepositRouterForm - Advanced Features', () => {
       const wrapper = createWrapper()
       await setTokenAmount(wrapper, MOCK_DATA.amount, true)
 
-      const buttons = wrapper.findAllComponents({ name: 'ButtonUI' })
+      const buttons = wrapper.findAllComponents({ name: 'UButton' })
       const depositButton = buttons[1]
       if (!depositButton) throw new Error('Deposit button not found')
       await depositButton.trigger('click')
@@ -308,7 +308,7 @@ describe('SafeDepositRouterForm - Advanced Features', () => {
       const wrapper = createWrapper()
       await setTokenAmount(wrapper, MOCK_DATA.amount, true)
 
-      const buttons = wrapper.findAllComponents({ name: 'ButtonUI' })
+      const buttons = wrapper.findAllComponents({ name: 'UButton' })
       const depositButton = buttons[1]
       if (!depositButton) throw new Error('Deposit button not found')
 
