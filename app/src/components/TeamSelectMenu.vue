@@ -16,7 +16,7 @@
 import { useUserDataStore, useTeamStore } from '@/stores'
 import { useGetTeamsQuery } from '@/queries/team.queries'
 import { storeToRefs } from 'pinia'
-import { computed, watch } from 'vue'
+import { computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 
 const router = useRouter()
