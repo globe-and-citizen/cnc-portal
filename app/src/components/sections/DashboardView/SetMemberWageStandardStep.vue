@@ -10,7 +10,7 @@
       <UInput
         v-model="wageData.maximumHoursPerWeek"
         class="w-full"
-        size="xl"
+        
         type="number"
         placeholder="e.g. 40"
         :ui="{ base: 'pl-36', leading: 'pointer-events-none' }"
@@ -29,12 +29,12 @@
           :key="rate.type"
           class="flex items-center gap-4"
         >
-          <USwitch size="xl" v-model="rate.enabled" />
+          <USwitch  v-model="rate.enabled" />
           <UFormField :name="`ratePerHour.${index}.amount`" class="w-full">
             <UInput
               v-model="rate.amount"
               placeholder="0.00"
-              size="xl"
+              
               type="number"
               class="w-full"
               :disabled="!rate.enabled"

@@ -18,7 +18,7 @@
       help="Full name of the share token (e.g. Company Shares)"
     >
       <UInput
-        size="xl"
+        
         v-model="investorContractInput.name"
         placeholder="Company Shares"
         class="w-full"
@@ -27,7 +27,7 @@
     </UFormField>
     <UFormField label="Symbol" name="symbol" required help="Short ticker symbol (e.g. SHR, COMP)">
       <UInput
-        size="xl"
+        
         v-model="investorContractInput.symbol"
         placeholder="SHR"
         class="w-full"
@@ -39,7 +39,7 @@
         v-if="showSkip"
         color="neutral"
         variant="ghost"
-        size="xl"
+        
         class="justify-center"
         data-test="skip-button"
         @click="$emit('skip')"
