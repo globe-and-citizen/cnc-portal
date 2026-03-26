@@ -54,9 +54,9 @@
         parseFloat(costPerClick) <= 0 ||
         parseFloat(costPerImpression) <= 0
       "
-    >
-      confirm
-    </UButton>
+      data-test="confirm-button"
+      label="confirm"
+    />
   </div>
 </template>
 

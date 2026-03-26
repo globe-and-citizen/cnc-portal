@@ -163,7 +163,7 @@ describe('CreateAddCampaign.vue', () => {
       //wrapper.vm.deployError = new Error('User rejected the request')
 
       await flushPromises()
-      await wrapper.find('.btn-primary').trigger('click')
+      await wrapper.find('[data-test="confirm-button"]').trigger('click')
 
       await flushPromises()
 
