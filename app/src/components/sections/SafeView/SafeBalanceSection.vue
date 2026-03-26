@@ -1,6 +1,15 @@
 <!-- filepath: app/src/components/sections/SafeView/SafeBalanceSection.vue -->
 <template>
-  <CardComponent title="Balance">
+  <UCard :ui="{ root: 'shadow-md' }">
+    <template #header>
+      <div class="flex justify-between items-center">
+        <div class="flex items-center gap-4">
+          <h3 class="text-lg font-semibold">Balance</h3>
+        </div>
+        <div class="flex items-center gap-2"></div>
+      </div>
+    </template>
+
     <div class="flex justify-between items-start">
       <div class="flex flex-col gap-2">
         <div class="flex items-baseline gap-2">
@@ -30,36 +39,30 @@
 
       <div class="flex flex-col items-end gap-4">
         <div class="flex gap-2">
-          <ButtonUI
-            variant="secondary"
-            class="flex items-center gap-2"
+          <UButton
+            color="secondary"
             data-test="deposit-button"
+            leading-icon="heroicons-outline:plus"
+            label="Deposit"
             @click="openDepositModal"
-          >
-            <IconifyIcon icon="heroicons-outline:plus" class="w-5 h-5" />
-            Deposit
-          </ButtonUI>
+          />
 
-          <ButtonUI
-            variant="secondary"
-            class="flex items-center gap-2"
+          <UButton
+            color="secondary"
             data-test="transfer-button"
+            leading-icon="heroicons-outline:arrows-right-left"
+            label="Transfer"
             @click="openTransferModal"
-          >
-            <IconifyIcon icon="heroicons-outline:arrows-right-left" class="w-5 h-5" />
-            Transfer
-          </ButtonUI>
+          />
 
-          <ButtonUI
+          <UButton
             v-if="address"
-            variant="primary"
-            class="flex items-center gap-2"
-            @click="openInSafeApp"
+            color="primary"
             data-test="open-safe-app-button"
-          >
-            <IconifyIcon icon="heroicons-outline:external-link" class="w-5 h-5" />
-            Open in Safe App
-          </ButtonUI>
+            leading-icon="heroicons-outline:external-link"
+            label="Open in Safe App"
+            @click="openInSafeApp"
+          />
         </div>
         <div class="flex items-center gap-2" v-if="address">
           <div class="text-sm text-gray-600">Safe Address:</div>
@@ -69,45 +72,52 @@
     </div>
 
     <!-- Deposit Modal -->
-    <ModalComponent
-      v-model="depositModal.show"
+    <UModal
       v-if="depositModal.mount"
+      v-model:open="depositModal.show"
+      @update:open="handleDepositModalOpen"
       data-test="deposit-modal"
-      @reset="() => (depositModal = { mount: false, show: false })"
+      title="Deposit to Safe Contract"
+      :close="{ onClick: () => closeDepositModal() }"
     >
-      <DepositSafeForm
-        v-if="address"
-        title="Deposit to Safe Contract"
-        :safe-address="address"
-        @close-modal="closeDepositModal"
-      />
-    </ModalComponent>
+      <template #body>
+        <DepositSafeForm
+          v-if="address"
+          title="Deposit to Safe Contract"
+          :safe-address="address"
+          @close-modal="closeDepositModal"
+        />
+      </template>
+    </UModal>
 
     <!-- Transfer Modal -->
 
-    <ModalComponent
-      v-model="transferModal.show"
+    <UModal
       v-if="transferModal.mount"
+      v-model:open="transferModal.show"
+      @update:open="handleTransferModalOpen"
       data-test="transfer-modal"
-      @reset="resetTransferValues"
+      :close="{ onClick: () => resetTransferValues() }"
     >
-      <TransferForm
-        v-model="transferData"
-        :tokens="tokens"
-        :loading="isTransferring"
-        @transfer="handleTransfer"
-        @closeModal="resetTransferValues"
-      >
-        <template #header>
-          <h1 class="font-bold text-2xl">Transfer from Safe Contract</h1>
-          <h3 class="pt-4">
-            Current contract balance: {{ transferData.token.balance }}
-            {{ transferData.token.symbol }}
-          </h3>
-        </template>
-      </TransferForm>
-    </ModalComponent>
-  </CardComponent>
+      <template #body>
+        <TransferForm
+          v-model="transferData"
+          :tokens="tokens"
+          :loading="isTransferring"
+          @transfer="handleTransfer"
+          @closeModal="resetTransferValues"
+        >
+          <template #header>
+            <h1 class="font-bold text-2xl">Transfer from Safe Contract</h1>
+            <h3 class="pt-4">
+              Current contract balance: {{ transferData.token.balance }}
+              {{ transferData.token.symbol }}
+            </h3>
+          </template>
+        </TransferForm>
+      </template>
+    </UModal>
+  </UCard>
 </template>
 
 <script setup lang="ts">
@@ -115,13 +125,9 @@ import { computed, ref, type Ref } from 'vue'
 import { useChainId } from '@wagmi/vue'
 import type { Address } from 'viem'
 import { useStorage } from '@vueuse/core'
-import ButtonUI from '@/components/ButtonUI.vue'
-import CardComponent from '@/components/CardComponent.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import { getSafeHomeUrl, openSafeAppUrl } from '@/composables/safe'
-import { Icon as IconifyIcon } from '@iconify/vue'
 
-import ModalComponent from '@/components/ModalComponent.vue'
 import { useContractBalance } from '@/composables/useContractBalance'
 import { useGetSafeInfoQuery } from '@/queries/safe.queries'
 import TransferForm, { type TransferModel } from '@/components/forms/TransferForm.vue'
@@ -253,7 +259,19 @@ const handleTransfer = async (transferData: TransferModel) => {
   }
 }
 
-const closeDepositModal = async () => {
+const closeDepositModal = () => {
   depositModal.value = { mount: false, show: false }
+}
+
+const handleDepositModalOpen = (open: boolean) => {
+  if (!open) {
+    closeDepositModal()
+  }
+}
+
+const handleTransferModalOpen = (open: boolean) => {
+  if (!open) {
+    resetTransferValues()
+  }
 }
 </script>
