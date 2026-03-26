@@ -85,9 +85,9 @@
     "@types/jsdom": "^27.0.0",
     "@types/node": "^24.10.1",
     "@vitejs/plugin-vue": "^6.0.2",
-    "@vitest/coverage-istanbul": "^4.0.15",
+    "@vitest/coverage-istanbul": "^4.1.2",
     "@vitest/eslint-plugin": "^1.5.1",
-    "@vitest/ui": "^4.0.15",
+    "@vitest/ui": "^4.1.2",
     "@vue/eslint-config-prettier": "^10.1.0",
     "@vue/eslint-config-typescript": "^14.2.0",
     "@vue/test-utils": "^2.4.4",
@@ -107,7 +107,7 @@
     "vite": "^7.2.6",
     "vite-plugin-node-polyfills": "^0.25.0",
     "vite-plugin-vue-devtools": "^8.0.5",
-    "vitest": "^4.0.15",
+    "vitest": "^4.1.2",
     "vue-tsc": "^3.1.5"
   }
 }
