@@ -23,8 +23,7 @@
 
         <TokenAmount
           :tokens="withdrawableTokens"
-          v-model:modelValue="withdrawAmount"
-          v-model:modelToken="selectedTokenId"
+          v-model="tokenAmountModel"
           :isLoading="isLoadingAction"
           @validation="(value) => (isAmountValid = value)"
         >
@@ -96,6 +95,13 @@ const showModal = ref({ mount: false, show: false })
 const isAmountValid = ref(false)
 const withdrawAmount = ref('0')
 const selectedTokenId = ref('native')
+const tokenAmountModel = computed({
+  get: () => ({ amount: withdrawAmount.value, tokenId: selectedTokenId.value }),
+  set: (value: { amount: string; tokenId: string }) => {
+    withdrawAmount.value = value.amount ?? ''
+    selectedTokenId.value = value.tokenId ?? 'native'
+  }
+})
 const isSubmitting = ref(false)
 
 const contractAddress = computed(

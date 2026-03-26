@@ -33,8 +33,7 @@ describe('DepositBankForm.vue', () => {
     isValid: boolean = true
   ): Promise<void> => {
     const tokenAmount = wrapper.findComponent({ name: 'TokenAmount' })
-    await tokenAmount.vm.$emit('update:modelValue', value)
-    await tokenAmount.vm.$emit('update:modelToken', tokenId)
+    await tokenAmount.vm.$emit('update:modelValue', { amount: value, tokenId })
     await tokenAmount.vm.$emit('validation', isValid)
     await nextTick()
   }

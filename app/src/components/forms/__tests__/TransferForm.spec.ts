@@ -58,7 +58,7 @@ describe('TransferForm.vue', () => {
 
   describe('Actions', () => {
     it('emits closeModal event when Cancel button is clicked', async () => {
-      const cancelButton = wrapper.find('.btn-error')
+      const cancelButton = wrapper.find('[data-test="cancel-button"]')
       await cancelButton.trigger('click')
       expect(wrapper.emitted('closeModal')).toBeTruthy()
     })
