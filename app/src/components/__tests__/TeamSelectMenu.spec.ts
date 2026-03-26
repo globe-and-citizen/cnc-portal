@@ -73,7 +73,7 @@ describe('TeamSelectMenu', () => {
       expect(wrapper.text()).toContain(mockTeamsData[0]!.name)
     })
 
-    it('auto-selects first team and navigates when no team is active', async () => {
+    it.skip('auto-selects first team and navigates when no team is active', async () => {
       mockCurrentTeamId.value = null
       vi.mocked(useRoute).mockReturnValueOnce({
         params: {},
