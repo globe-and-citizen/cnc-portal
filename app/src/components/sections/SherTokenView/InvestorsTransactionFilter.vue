@@ -31,7 +31,6 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { Icon as IconifyIcon } from '@iconify/vue'
 import CustomDatePicker from '@/components/CustomDatePicker.vue'
 import { onClickOutside } from '@vueuse/core'
 

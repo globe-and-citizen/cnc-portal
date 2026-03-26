@@ -33,7 +33,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 
-import { Icon as IconifyIcon } from '@iconify/vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import SafeDepositRouterForm from '@/components/forms/SafeDepositRouterForm.vue'
 import {

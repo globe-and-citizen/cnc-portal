@@ -230,7 +230,13 @@
     >
       Approve
     </UButton>
-    <UButton variant="outline" data-test="cancel-button" color="error" @click="clear" label="Cancel" />
+    <UButton
+      variant="outline"
+      data-test="cancel-button"
+      color="error"
+      @click="clear"
+      label="Cancel"
+    />
   </div>
 </template>
 <script setup lang="ts">

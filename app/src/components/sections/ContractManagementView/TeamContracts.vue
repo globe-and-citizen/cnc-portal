@@ -96,7 +96,6 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import { Icon as IconifyIcon } from '@iconify/vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import TeamContractAdmins from './TeamContractAdmins.vue'
 import TeamContractsDetail from './TeamContractsDetail.vue'
