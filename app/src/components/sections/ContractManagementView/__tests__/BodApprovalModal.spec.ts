@@ -95,7 +95,7 @@ describe('BodApprovalModal', () => {
     const wrapper = mountComponent({ alreadyApproved: true })
     await flushPromises()
 
-    // Find the ButtonUI that is the Approve Action button
+    // Find the UButton that is the Approve Action button
     const buttons = wrapper.findAllComponents({ name: 'UButton' })
     const approveBtn = buttons.find((b) => b.text().includes('Approve Action'))
     expect(approveBtn).toBeTruthy()

@@ -36,14 +36,6 @@
           class="ml-0! px-4!"
           label="Export"
         />
-        <!-- <ButtonUI
-          v-if="showExport"
-          variant="success"
-          @click="handleExport"
-          :data-test="`${dataTestPrefix}-export-button`"
-          class="ml-0! px-4!"
-          >Export</ButtonUI
-        > -->
       </div>
     </template>
 
