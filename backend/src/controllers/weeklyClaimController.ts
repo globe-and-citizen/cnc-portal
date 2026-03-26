@@ -13,38 +13,13 @@ export type WeeklyClaimAction = 'sign' | 'withdraw' | 'disable' | 'enable';
 type statusType = 'pending' | 'signed' | 'withdrawn' | 'disabled';
 
 function isValidWeeklyClaimAction(action: unknown): action is WeeklyClaimAction {
-  return ['sign', 'withdraw', 'disable', 'enable'].includes(action as string);
+  return ['sign', 'withdraw', 'pending', 'disable', 'enable'].includes(action as string);
 }
 
 const deriveWeeklyClaimStatus = (isPaid: boolean, isDisabled: boolean): statusType => {
   if (isPaid) return 'withdrawn';
   if (isDisabled) return 'disabled';
   return 'signed';
-};
-
-const getClaimSubmittedHours = (claims: Array<{ hoursWorked: number | null }>) =>
-  claims.reduce((sum, claim) => sum + Number(claim.hoursWorked ?? 0), 0);
-
-const validateOvertimeAllowance = ({
-  maximumHoursPerWeek,
-  maximumOvertimeHoursPerWeek,
-  submittedHours,
-}: {
-  maximumHoursPerWeek: number;
-  maximumOvertimeHoursPerWeek: number | null;
-  submittedHours: number;
-}) => {
-  const overtimeHours = maximumOvertimeHoursPerWeek ?? 0;
-  const allowedHours = maximumHoursPerWeek + overtimeHours;
-
-  if (submittedHours > allowedHours) {
-    return (
-      `Weekly claim exceeds allowed hours. Allowed: ${maximumHoursPerWeek}h regular + ` +
-      `${overtimeHours}h overtime = ${allowedHours}h. Submitted: ${submittedHours}h.`
-    );
-  }
-
-  return null;
 };
 
 export const updateWeeklyClaims = async (req: Request, res: Response) => {
@@ -75,11 +50,6 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
     const weeklyClaim = await prisma.weeklyClaim.findUnique({
       where: { id },
       include: {
-        claims: {
-          select: {
-            hoursWorked: true,
-          },
-        },
         wage: {
           include: { team: true },
         },
@@ -159,12 +129,6 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
       }
       case 'sign': {
         const signErrors: string[] = [];
-        const submittedHours = getClaimSubmittedHours(weeklyClaim.claims);
-        const overtimeError = validateOvertimeAllowance({
-          maximumHoursPerWeek: weeklyClaim.wage.maximumHoursPerWeek,
-          maximumOvertimeHoursPerWeek: weeklyClaim.wage.maximumOvertimeHoursPerWeek,
-          submittedHours,
-        });
 
         // Check if the caller is the Cash Remuneration owner
         const isCallerCashRemunOwner = await isCashRemunerationOwner(
@@ -180,15 +144,6 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
         if (weeklyClaim.weekStart.getTime() >= getMondayStart(new Date()).getTime()) {
           signErrors.push('Week not yet completed');
         }
-
-        if (submittedHours <= 0) {
-          signErrors.push('Weekly claim has no submitted hours');
-        }
-
-        if (overtimeError) {
-          signErrors.push(overtimeError);
-        }
-
         // check if the weekly claim is already signed or withdrawn
         if (weeklyClaim.status !== 'pending') {
           if (
@@ -211,13 +166,6 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
         break;
       }
       case 'withdraw': {
-        const submittedHours = getClaimSubmittedHours(weeklyClaim.claims);
-        const overtimeError = validateOvertimeAllowance({
-          maximumHoursPerWeek: weeklyClaim.wage.maximumHoursPerWeek,
-          maximumOvertimeHoursPerWeek: weeklyClaim.wage.maximumOvertimeHoursPerWeek,
-          submittedHours,
-        });
-
         // Check if the weekly claim is already signed
         if (weeklyClaim.status !== 'signed') {
           let withdrawErrorMsg = 'Weekly claim must be signed before it can be withdrawn';
@@ -226,15 +174,6 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
           }
           return errorResponse(400, withdrawErrorMsg, res);
         }
-
-        if (submittedHours <= 0) {
-          return errorResponse(400, 'Weekly claim has no submitted hours', res);
-        }
-
-        if (overtimeError) {
-          return errorResponse(400, overtimeError, res);
-        }
-
         data = { status: 'withdrawn' };
         // singleClaimStatus = "withdrawn";
         break;
