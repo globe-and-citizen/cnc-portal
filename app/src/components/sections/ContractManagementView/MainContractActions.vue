@@ -18,7 +18,8 @@
       size="sm"
       @click="showModal = true"
       :disabled="row.owner !== userDataStore.address && !isBodAction"
-      >Transfer Ownership</UButton>
+      >Transfer Ownership</UButton
+    >
     >
     <UButton
       :disabled="!isBodAction || formatedActions.length <= 0"

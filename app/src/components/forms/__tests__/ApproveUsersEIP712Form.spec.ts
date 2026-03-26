@@ -146,7 +146,9 @@ describe('ApproveUsersForm', () => {
     it('shows loading state on approve button when loadingApprove is true', () => {
       const wrapper = createWrapper({ loadingApprove: true })
 
-      const approveButton = wrapper.find('[data-test="approve-button"]').findComponent({ name: 'UButton' })
+      const approveButton = wrapper
+        .find('[data-test="approve-button"]')
+        .findComponent({ name: 'UButton' })
       expect(approveButton.props('loading')).toBe(true)
       expect(approveButton.props('disabled')).toBe(true)
     })

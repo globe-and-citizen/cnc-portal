@@ -43,7 +43,8 @@
 
       <template #action-data="{ row }">
         <UButton @click="handleAdminAction(row.admin, 'removeAdmin')" size="xs" color="error"
-          >Remove</UButton>
+          >Remove</UButton
+        >
         >
       </template>
     </TableComponent>

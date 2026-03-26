@@ -66,8 +66,18 @@
       </div>
       <div>{{ proposal.description }}</div>
       <div v-if="!hasVoted" class="flex flex-row justify-end gap-2">
-        <UButton color="primary" @click="vote('yes')" :disabled="isVoting || isConfirmingVote" label="Vote for yes" />
-        <UButton color="error" @click="vote('no')" :disabled="isVoting || isConfirmingVote" label="Vote for no" />
+        <UButton
+          color="primary"
+          @click="vote('yes')"
+          :disabled="isVoting || isConfirmingVote"
+          label="Vote for yes"
+        />
+        <UButton
+          color="error"
+          @click="vote('no')"
+          :disabled="isVoting || isConfirmingVote"
+          label="Vote for no"
+        />
         <UButton
           class="bg-gray-300"
           @click="vote('abstain')"

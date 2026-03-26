@@ -22,7 +22,8 @@
           >Delete
         </UButton>
         <UButton color="primary" outline @click="() => (showDeleteTeamConfirmModal = false)"
-          >Cancel</UButton>
+          >Cancel</UButton
+        >
         >
       </div>
     </ModalComponent>

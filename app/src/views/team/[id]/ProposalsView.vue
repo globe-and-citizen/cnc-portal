@@ -18,7 +18,11 @@
           </option>
         </select>
       </div>
-      <UButton color="primary" @click="createProposalModal = { mount: true, show: true }" label="Create Proposal" />
+      <UButton
+        color="primary"
+        @click="createProposalModal = { mount: true, show: true }"
+        label="Create Proposal"
+      />
     </div>
 
     <ProposalsList ref="proposalsListRef" />

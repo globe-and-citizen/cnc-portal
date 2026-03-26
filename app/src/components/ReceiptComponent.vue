@@ -34,8 +34,18 @@
       }}</span>
     </div>
     <div class="modal-action justify-center">
-      <UButton color="primary" @click="handleExportPdf" data-test="export-pdf" label="Export in PDF" />
-      <UButton color="primary" @click="handleExportExcel" data-test="export-excel" label="Export in Excel" />
+      <UButton
+        color="primary"
+        @click="handleExportPdf"
+        data-test="export-pdf"
+        label="Export in PDF"
+      />
+      <UButton
+        color="primary"
+        @click="handleExportExcel"
+        data-test="export-excel"
+        label="Export in Excel"
+      />
     </div>
   </div>
 </template>

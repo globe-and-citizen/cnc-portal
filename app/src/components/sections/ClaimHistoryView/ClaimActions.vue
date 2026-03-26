@@ -1,6 +1,12 @@
 <template>
   <div class="flex items-center gap-1">
-    <UButton variant="ghost" size="xs" @click="showEditModal = true" data-test="edit-claim-button" icon="heroicons:pencil-square" />
+    <UButton
+      variant="ghost"
+      size="xs"
+      @click="showEditModal = true"
+      data-test="edit-claim-button"
+      icon="heroicons:pencil-square"
+    />
     <UButton
       variant="ghost"
       size="xs"

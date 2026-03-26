@@ -150,7 +150,13 @@
   </div>
 
   <div class="modal-action justify-center">
-    <UButton color="error" variant="outline" data-test="cancel-button" @click="clear" label="Cancel" />
+    <UButton
+      color="error"
+      variant="outline"
+      data-test="cancel-button"
+      @click="clear"
+      label="Cancel"
+    />
 
     <UButton
       :loading="loadingApprove"

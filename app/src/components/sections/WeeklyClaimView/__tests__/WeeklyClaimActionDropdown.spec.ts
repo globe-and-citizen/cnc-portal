@@ -118,7 +118,7 @@ describe('DropdownActions', () => {
 
   it('closes dropdown after action is selected', async () => {
     const wrapper = createWrapper('pending')
-      const button = wrapper.findComponent({ name: 'UButton' })
+    const button = wrapper.findComponent({ name: 'UButton' })
 
     // Open dropdown
     await button.trigger('click')

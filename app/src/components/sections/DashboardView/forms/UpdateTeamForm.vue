@@ -32,7 +32,8 @@
       :loading="teamIsUpdating"
       :disabled="teamIsUpdating"
       @click="submitForm"
-      >Submit</UButton>
+      >Submit</UButton
+    >
     >
   </div>
 </template>

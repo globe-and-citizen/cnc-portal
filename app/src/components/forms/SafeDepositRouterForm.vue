@@ -35,7 +35,13 @@
   </div>
 
   <div class="modal-action justify-between">
-    <UButton color="error" variant="outline" data-test="cancel-button" @click="handleCancel" label="Cancel" />
+    <UButton
+      color="error"
+      variant="outline"
+      data-test="cancel-button"
+      @click="handleCancel"
+      label="Cancel"
+    />
     <UButton
       color="primary"
       :loading="submitting"
