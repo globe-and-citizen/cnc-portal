@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { mount, type VueWrapper } from '@vue/test-utils'
 import VestingActions from '@/components/sections/VestingView/VestingActions.vue'
+import CreateVesting from '@/components/sections/VestingView/forms/CreateVesting.vue'
 import { ref } from 'vue'
 import { createTestingPinia } from '@pinia/testing'
 import { mockUseContractBalance } from '@/tests/mocks/composables.mock'
