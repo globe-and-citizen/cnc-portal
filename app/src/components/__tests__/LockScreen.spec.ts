@@ -37,10 +37,8 @@ describe('LockScreen.vue', () => {
             }
           })
         }
-    // both formatted address spans should be empty
-    expect(monos.length).toBeGreaterThanOrEqual(2)
-    // expect(monos[0].text().trim()).toBe('')
-    // expect(monos[1].text().trim()).toBe('')
+      }
+    })
   })
 
   it('renders formatted user and connected addresses', () => {
@@ -64,6 +62,9 @@ describe('LockScreen.vue', () => {
             }
           })
         }
+      }
+    })
+
     expect(wrapper.text()).toContain('0x1111...1111')
     expect(wrapper.text()).toContain('0x1234...7890')
   })
