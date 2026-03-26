@@ -22,11 +22,11 @@
       <UButton
         :loading="loading"
         :disabled="loading"
-        class="btn btn-primary w-44 text-center"
+        color="primary"
+        class="w-44 text-center"
         @click="onSubmit()"
-      >
-        {{ actionName }}
-      </UButton>
+        :label="actionName"
+      />
     </div>
   </div>
 </template>
