@@ -32,9 +32,8 @@
       :loading="teamIsUpdating"
       :disabled="teamIsUpdating"
       @click="submitForm"
-      >Submit</UButton
-    >
-    >
+      label="Submit"
+    />
   </div>
 </template>
 <script setup lang="ts">

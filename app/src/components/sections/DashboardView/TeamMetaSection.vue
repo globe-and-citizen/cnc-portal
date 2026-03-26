@@ -21,9 +21,7 @@
           :disabled="teamIsDeleting"
           label="Delete"
           />
-        <UButton color="primary" outline @click="showDeleteTeamConfirmModal = false"
-          label="Cancel"
-        />
+        <UButton color="primary" variant="outline" @click="showDeleteTeamConfirmModal = false" label="Cancel" />
       </div>
     </ModalComponent>
     <ModalComponent v-model="showModal">

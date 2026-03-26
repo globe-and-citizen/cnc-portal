@@ -2,7 +2,7 @@
   <UButton
     size="sm"
     color="error"
-    outline
+    variant="outline"
     :disabled="isDisabled"
     :loading="isRemoving"
     @click="handleRemove"

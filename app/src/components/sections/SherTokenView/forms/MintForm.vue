@@ -48,13 +48,13 @@
 
     <div class="text-center flex gap-4 justify-between" data-test="form-actions">
       <UButton
-        outline
+        variant="outline"
         color="error"
         data-test="cancel-button"
         :disabled="isConfirmingMint || isMintPending"
         @click="emit('close-modal')"
-        >Cancel
-      </UButton>
+        label="Cancel"
+      />
       <UButton
         :loading="isConfirmingMint || isMintPending || $v.value?.$invalid"
         :disabled="isConfirmingMint || isMintPending || $v.value?.$invalid"

@@ -2,13 +2,12 @@
   <div :class="{ tooltip: !canMint }" :data-tip="cannotMintReason">
     <UButton
       color="primary"
-      outline
+      variant="outline"
       data-test="mint-button"
       :disabled="!canMint"
       @click="openModal"
-    >
-      Mint {{ tokenSymbol }}
-    </UButton>
+      :label="`Mint ${tokenSymbol}`"
+    />
 
     <ModalComponent v-model="modalState.show" v-if="modalState.mount" @reset="closeModal">
       <MintForm v-model="modalState.show" @close-modal="closeModal" />

@@ -14,17 +14,16 @@
     </UButton>
     <UButton
       color="success"
-      :outline="true"
+      variant="outline"
       size="sm"
       @click="showModal = true"
       :disabled="row.owner !== userDataStore.address && !isBodAction"
-      >Transfer Ownership</UButton
-    >
-    >
+      label="Transfer Ownership"
+    />
     <UButton
       :disabled="!isBodAction || formatedActions.length <= 0"
       color="success"
-      :outline="true"
+      variant="outline"
       size="sm"
       @click="
         () => {
@@ -32,9 +31,8 @@
           currentStep = 1
         }
       "
-    >
-      Pending Actions
-    </UButton>
+      label="Pending Actions"
+    />
 
     <teleport to="body">
       <ModalComponent v-model="showModal">
