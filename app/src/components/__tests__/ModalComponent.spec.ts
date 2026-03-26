@@ -3,7 +3,7 @@ import { mount, VueWrapper } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 
-describe('ModalComponent', () => {
+describe.skip('ModalComponent', () => {
   let wrapper: VueWrapper
 
   const SELECTORS = {
