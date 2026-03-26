@@ -55,7 +55,7 @@ export const UDropdownStub = defineComponent({
   name: 'UDropdown',
   props: ['items', 'popper', 'modelValue'],
   emits: ['update:modelValue', 'select'],
-  setup(props, { slots, emit }) {
+  setup(props, { slots }) {
     return () => h('div', { 'data-test': 'u-dropdown' }, slots.default ? slots.default() : null)
   }
 })

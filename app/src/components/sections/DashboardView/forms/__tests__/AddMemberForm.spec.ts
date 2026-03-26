@@ -50,7 +50,7 @@ describe('AddMemberForm.vue', () => {
     // Verify the form renders with the member input component
     expect(wrapper.findComponent({ name: 'MultiSelectMemberInput' }).exists()).toBe(true)
     // Verify the component has form functionality (has a method to handle adding members)
-    expect(typeof (wrapper.vm as any).handleAddMembers).toBe('function')
+    expect(typeof (wrapper.vm as unknown as AddMemberFormVm).handleAddMembers).toBe('function')
   })
 
   it('should show no error when component is initialized', () => {

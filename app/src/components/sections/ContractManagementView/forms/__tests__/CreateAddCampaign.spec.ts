@@ -3,7 +3,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import CreateAddCampaign from '@/components/sections/ContractManagementView/forms/CreateAddCampaign.vue'
 
-import { ref } from 'vue'
+import { ref, type ComponentPublicInstance } from 'vue'
 //import AdCampaignArtifact from '@/artifacts/abi/AdCampaignManager.json'
 //import type { Abi } from 'viem'
 import { mockToastStore } from '@/tests/mocks/store.mock'
@@ -101,9 +101,6 @@ describe('CreateAddCampaign.vue', () => {
 
     it('shows loading button when contract is deploying', async () => {
       deployState.isDeploying.value = true
-      const wrapper = mount(CreateAddCampaign, {
-        props: { bankAddress: '0xTeamContractAddress' }
-      })
       await flushPromises()
 
       // Verify that the component reflects the deploying state
@@ -118,7 +115,7 @@ describe('CreateAddCampaign.vue', () => {
       })
 
       // Call the component's handleDeploy method directly (simulates clicking button with null values)
-      const vm = wrapper.vm as any
+      const vm = wrapper.vm as unknown as ComponentPublicInstance
       if (vm.handleDeploy && vm.costPerClick === null && vm.costPerImpression === null) {
         // Component should not emit when values are null
         expect(wrapper.emitted('createAddCampaign')).toBeUndefined()
@@ -134,7 +131,7 @@ describe('CreateAddCampaign.vue', () => {
       expect(wrapper.exists()).toBe(true)
 
       // The component should have validation logic that checks for invalid values
-      const vm = wrapper.vm as any
+      const vm = wrapper.vm as unknown as ComponentPublicInstance
       expect(vm.costPerClick === null || vm.costPerImpression === null).toBeDefined()
     })
 

@@ -1,6 +1,6 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { defineComponent } from 'vue'
+import { defineComponent, type ComponentPublicInstance } from 'vue'
 import { createTestingPinia } from '@pinia/testing'
 import { VueQueryPlugin, QueryClient } from '@tanstack/vue-query'
 import SubmitClaims from '../SubmitClaims.vue'
@@ -151,7 +151,7 @@ describe('SubmitClaims', () => {
 
     // Trigger submission by emitting the ClaimForm submit event through wrapper
     // (simulates user submitting the form)
-    const vm = wrapper.vm as any
+    const vm = wrapper.vm as unknown as ComponentPublicInstance
     if (vm.handleSubmitClaim) {
       await vm.handleSubmitClaim({
         hoursWorked: 8,
