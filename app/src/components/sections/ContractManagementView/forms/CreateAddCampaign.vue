@@ -36,7 +36,7 @@
   </div>
 
   <h3 class="pt-8">
-    By clicking "Deploy Advertisement Contract" you agree to deploy an advertisment campaign
+    By clicking "Deploy Advertisement Contract" you agree to deploy an advertisement campaign
     contract and this may take some time and pay for gas fee.
     <UButton class="btn btn-secondary btn-xs" @click="viewContractCode()">view code</UButton>
   </h3>
