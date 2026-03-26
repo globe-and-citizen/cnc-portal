@@ -1,11 +1,9 @@
 import AddSignerModal from '@/components/sections/SafeView/forms/AddSignerModal.vue'
-import ModalComponent from '@/components/ModalComponent.vue'
 import MultiSelectMemberInput from '@/components/utils/MultiSelectMemberInput.vue'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount, flushPromises, VueWrapper } from '@vue/test-utils'
 import { nextTick, ref, type ComponentPublicInstance } from 'vue'
 import type { User } from '@/types'
-import { Icon } from '@iconify/vue'
 
 interface AddSignerModalInstance extends ComponentPublicInstance {
   isOpen: boolean
