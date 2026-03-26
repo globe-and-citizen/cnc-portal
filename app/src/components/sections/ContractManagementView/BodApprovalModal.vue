@@ -55,11 +55,14 @@
     </div>
   </div>
   <div class="flex mt-6 justify-end gap-2">
-    <UButton color="error" @click="$emit('close')" data-test="cancel-button" variant="ghost">
-      <template #leading>
-        <IconifyIcon icon="heroicons:arrow-left" /></template
-      > Close
-    </UButton>
+    <UButton
+      color="error"
+      @click="$emit('close')"
+      data-test="cancel-button"
+      variant="ghost"
+      leading-icon="heroicons:arrow-left"
+      label="Close"
+    />
     <ToolTip :content="hasApproved ? 'You have already approved' : 'Click to approve this action'">
       <UButton
         color="primary"
