@@ -14,8 +14,8 @@
             <!-- <p>
               You have created your team, but the necessary smart contracts for its management
               haven't been deployed yet. Click
-              <ButtonUI size="sm" variant="primary" outline @click="showModal = true"
-                >here</ButtonUI
+              <UButton size="sm" color="primary" outline @click="showModal = true"
+                >here</UButton>
               >
               to proceed with the deployment.
             </p> -->
@@ -139,31 +139,31 @@
               </div>
 
               <div class="flex gap-3 justify-between">
-                <ButtonUI
-                  variant="secondary"
+                <UButton
+                  color="secondary"
                   @click="showModal = false"
                   data-test="cancel-redeploy-contracts"
                 >
                   Cancel
-                </ButtonUI>
-                <ButtonUI
-                  variant="error"
+                </UButton>
+                <UButton
+                  color="error"
                   @click="redeployContracts()"
                   data-test="confirm-redeploy-contracts"
                 >
                   I Understand - Proceed with Redeployment
-                </ButtonUI>
+                </UButton>
               </div>
               <!-- </div> -->
             </ModalComponent>
-            <ButtonUI
-              variant="primary"
+            <UButton
+              color="primary"
               :disabled="teamStore.currentTeam?.ownerAddress !== userStore.address"
               @click="showModal = true"
               data-test="createAddCampaign"
             >
               Redeploy Contracts
-            </ButtonUI>
+            </UButton>
           </div>
         </template>
         <MainContractTable />
@@ -175,7 +175,6 @@
 import CardComponent from '@/components/CardComponent.vue'
 import { useUserDataStore } from '@/stores/user'
 import { useTeamStore } from '@/stores'
-import ButtonUI from '@/components/ButtonUI.vue'
 import MainContractTable from './MainContractTable.vue'
 import { ref } from 'vue'
 import ModalComponent from '@/components/ModalComponent.vue'

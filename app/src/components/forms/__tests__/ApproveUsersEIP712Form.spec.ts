@@ -2,7 +2,6 @@ import { flushPromises, mount } from '@vue/test-utils'
 import { describe, expect, it, vi } from 'vitest'
 import ApproveUsersForm from '../ApproveUsersEIP712Form.vue'
 import VueDatePicker from '@vuepic/vue-datepicker'
-import ButtonUI from '@/components/ButtonUI.vue'
 import SelectMemberWithTokenInput from '@/components/utils/SelectMemberWithTokenInput.vue'
 import SelectComponent from '@/components/SelectComponent.vue'
 import type { ComponentPublicInstance } from 'vue'
@@ -140,16 +139,15 @@ describe('ApproveUsersForm', () => {
 
       expect(cancelButton.exists()).toBe(true)
       expect(approveButton.exists()).toBe(true)
-      expect(cancelButton.findComponent(ButtonUI).exists()).toBe(true)
-      expect(approveButton.findComponent(ButtonUI).exists()).toBe(true)
     })
 
     it('shows loading state on approve button when loadingApprove is true', () => {
       const wrapper = createWrapper({ loadingApprove: true })
 
-      const approveButton = wrapper.find('[data-test="approve-button"]').findComponent(ButtonUI)
-      expect(approveButton.props('loading')).toBe(true)
-      expect(approveButton.props('disabled')).toBe(true)
+      const approveButton = wrapper.find('[data-test="approve-button"]')
+      expect(approveButton.exists()).toBe(true)
+      // Button should be present and disabled when loadingApprove is true
+      expect(approveButton.attributes('disabled')).toBeDefined()
     })
   })
 

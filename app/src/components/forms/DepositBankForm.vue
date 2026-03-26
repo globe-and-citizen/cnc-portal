@@ -22,9 +22,9 @@
     </template>
   </TokenAmount>
   <div class="modal-action justify-between">
-    <ButtonUI
-      variant="error"
-      outline
+    <UButton
+      color="error"
+      variant="outline"
       @click="
         () => {
           reset()
@@ -32,10 +32,10 @@
         }
       "
       data-test="cancel-button"
-      >Cancel</ButtonUI
-    >
-    <ButtonUI
-      variant="primary"
+      label="Cancel"
+    />
+    <UButton
+      color="primary"
       @click="submitForm"
       :loading="submitting"
       :disabled="isLoading || !isAmountValid"
@@ -48,7 +48,7 @@
             ? 'Deposit'
             : 'Deposit'
       }}
-    </ButtonUI>
+    </UButton>
   </div>
   <!-- You can use timeline for debuging -->
   <!-- <TransactionTimeline
@@ -75,7 +75,6 @@ import { useErc20Allowance } from '@/composables/erc20/reads'
 import { useDepositToken } from '@/composables/bank/writes'
 import { SUPPORTED_TOKENS, type TokenId } from '@/constant'
 import { useCurrencyStore, useToastStore, useUserDataStore } from '@/stores'
-import ButtonUI from '../ButtonUI.vue'
 import TokenAmount from './TokenAmount.vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useChainId } from '@wagmi/vue'

@@ -1,7 +1,6 @@
 import { describe, it, vi, expect, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
-import ButtonUI from '@/components/ButtonUI.vue'
 import DeployContractSection from '@/components/sections/TeamView/forms/DeployContractSection.vue'
 
 // Centralized Mock Objects
@@ -63,14 +62,14 @@ describe.skip('DeployContractSection', () => {
       const deployButton = wrapper.find('[data-test="deploy-contracts-button"]')
 
       expect(deployButton.exists()).toBe(true)
-      expect(deployButton.findComponent(ButtonUI).exists()).toBe(true)
+      expect(deployButton.findComponent({ name: 'UButton' }).exists()).toBe(true)
     })
 
     it('should disable the deploy button when disable prop is true', () => {
       const wrapper = createWrapper({ disable: true })
       const buttonComponent = wrapper
         .find('[data-test="deploy-contracts-button"]')
-        .findComponent(ButtonUI)
+        .findComponent({ name: 'UButton' })
 
       expect(buttonComponent.props('disabled')).toBe(true)
     })
@@ -79,7 +78,7 @@ describe.skip('DeployContractSection', () => {
       const wrapper = createWrapper()
       const buttonComponent = wrapper
         .find('[data-test="deploy-contracts-button"]')
-        .findComponent(ButtonUI)
+        .findComponent({ name: 'UButton' })
 
       // Test transaction receipt loading state (centralized mock)
       mockUseWaitForTransactionReceipt.isLoading.value = true
@@ -91,7 +90,7 @@ describe.skip('DeployContractSection', () => {
       const wrapper = createWrapper()
       const buttonComponent = wrapper
         .find('[data-test="deploy-contracts-button"]')
-        .findComponent(ButtonUI)
+        .findComponent({ name: 'UButton' })
 
       // Default state
       expect(buttonComponent.text()).toContain('Deploy Team Contracts')

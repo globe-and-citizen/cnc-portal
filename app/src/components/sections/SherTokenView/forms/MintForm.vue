@@ -47,29 +47,28 @@
     </div>
 
     <div class="text-center flex gap-4 justify-between" data-test="form-actions">
-      <ButtonUI
-        outline
-        variant="error"
+      <UButton
+        variant="outline"
+        color="error"
         data-test="cancel-button"
         :disabled="isConfirmingMint || isMintPending"
-        @click="() => emit('close-modal')"
-        >Cancel
-      </ButtonUI>
-      <ButtonUI
+        @click="emit('close-modal')"
+        label="Cancel"
+      />
+      <UButton
         :loading="isConfirmingMint || isMintPending || $v.value?.$invalid"
         :disabled="isConfirmingMint || isMintPending || $v.value?.$invalid"
-        variant="primary"
+        color="primary"
         class="w-44 text-center"
         @click="onSubmit()"
         data-test="submit-button"
         >Mint {{ tokenSymbol }}
-      </ButtonUI>
+      </UButton>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import ButtonUI from '@/components/ButtonUI.vue'
 import useVuelidate from '@vuelidate/core'
 import { helpers, numeric, required } from '@vuelidate/validators'
 import { isAddress, parseUnits, type Address } from 'viem'

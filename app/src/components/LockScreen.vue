@@ -12,7 +12,7 @@
         Logout and login back.<br />
         <span class="text-blue-600 font-medium">Waiting for unlock...</span>
       </p>
-      <ButtonUI @click="disconnect.mutate()" variant="warning">Logout</ButtonUI>
+      <UButton @click="disconnect.mutate()" color="warning" label="Logout" />
     </div>
 
     <p class="mt-6 text-xs text-gray-400">Or switch you account back to address...</p>
@@ -22,7 +22,6 @@
 <script setup lang="ts">
 import { useDisconnect, useConnection } from '@wagmi/vue'
 import type { User } from '@/types'
-import ButtonUI from './ButtonUI.vue'
 import { computed } from 'vue'
 import { formatAddress } from '@/utils/formatAddress'
 

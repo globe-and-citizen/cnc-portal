@@ -35,18 +35,22 @@
   </div>
 
   <div class="modal-action justify-between">
-    <ButtonUI variant="error" outline data-test="cancel-button" @click="handleCancel">
-      Cancel
-    </ButtonUI>
-    <ButtonUI
-      variant="primary"
+    <UButton
+      color="error"
+      variant="outline"
+      data-test="cancel-button"
+      @click="handleCancel"
+      label="Cancel"
+    />
+    <UButton
+      color="primary"
       :loading="submitting"
       :disabled="isLoading || !isAmountValid || !safeDepositRouterAddress"
       data-test="deposit-button"
       @click="submitForm"
     >
       {{ currentStep === 2 ? 'Approve' : `Deposit & Earn ${tokenSymbol || 'SHER'}` }}
-    </ButtonUI>
+    </UButton>
   </div>
 </template>
 
@@ -65,7 +69,6 @@ import {
   calculateSherCompensation,
   calculateDepositFromSher
 } from '@/utils/safeDepositRouterUtil'
-import ButtonUI from '../ButtonUI.vue'
 import TokenAmount from './TokenAmount.vue'
 import CompensationAmount from './CompensationAmount.vue'
 import {

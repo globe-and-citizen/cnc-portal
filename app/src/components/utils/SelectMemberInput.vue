@@ -6,7 +6,6 @@
       ref="inputSearch"
       placeholder="Search by name or address"
       data-test="member-input"
-      size="xl"
       :disabled="disabled"
       class="w-full"
     />

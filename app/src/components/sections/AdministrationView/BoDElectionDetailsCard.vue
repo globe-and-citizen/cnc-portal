@@ -37,10 +37,10 @@
       </div>
 
       <!-- View Results Button -->
-      <ButtonUI
+      <UButton
         v-else
-        variant="success"
-        :outline="true"
+        color="success"
+        variant="outline"
         :disabled="isVoteDisabled"
         :loading="isLoadingCastVoteLocal && isLoading"
         @click="
@@ -49,14 +49,13 @@
             emits('castVote', election.user.address)
           }
         "
-        >Cast a Vote</ButtonUI
-      >
+        label="Cast a Vote"
+      />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import ButtonUI from '@/components/ButtonUI.vue'
 import UserComponent from './UserComponent.vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import { computed, watch, type PropType, ref } from 'vue'

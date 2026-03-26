@@ -1,21 +1,19 @@
 <template>
   <div>
-    <ButtonUI
+    <UButton
       v-if="safeDepositRouterAddress"
-      variant="secondary"
+      color="secondary"
       :loading="isLoading"
       :disabled="!canManageMultiplier || isLoading"
       data-test="set-compensation-multiplier-button"
       @click="openModal"
+      leading-icon="heroicons:calculator"
+      :label="`Set Multiplier (${formattedCurrentMultiplier}x)`"
     >
-      <template #prefix>
-        <IconifyIcon icon="heroicons:calculator" class="w-4 h-4" />
-      </template>
-      Set Multiplier ({{ formattedCurrentMultiplier }}x)
-      <template #suffix v-if="!isMultiplierLoading && formattedCurrentMultiplier !== '0'">
+      <template #trailing v-if="!isMultiplierLoading && formattedCurrentMultiplier !== '0'">
         <span class="badge badge-sm">{{ formattedCurrentMultiplier }}x</span>
       </template>
-    </ButtonUI>
+    </UButton>
 
     <!-- Modal for setting multiplier -->
     <dialog ref="modalRef" class="modal" data-test="multiplier-modal">
@@ -62,23 +60,21 @@
         </div>
 
         <div class="modal-action">
-          <ButtonUI
+          <UButton
             variant="ghost"
             :disabled="isLoading"
             data-test="cancel-button"
             @click="closeModal"
-          >
-            Cancel
-          </ButtonUI>
-          <ButtonUI
-            variant="primary"
+            label="Cancel"
+          />
+          <UButton
+            color="primary"
             :loading="isLoading"
             :disabled="!isMultiplierValid || isLoading"
             data-test="confirm-button"
             @click="handleSetMultiplier"
-          >
-            Update Multiplier
-          </ButtonUI>
+            label="Update Multiplier"
+          />
         </div>
       </div>
       <form method="dialog" class="modal-backdrop">
@@ -91,9 +87,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useConnection } from '@wagmi/vue'
-import { Icon as IconifyIcon } from '@iconify/vue'
 
-import ButtonUI from '@/components/ButtonUI.vue'
 import { useSetMultiplier } from '@/composables/safeDepositRouter/writes'
 import {
   useSafeDepositRouterAddress,

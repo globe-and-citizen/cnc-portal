@@ -32,13 +32,6 @@ vi.mock('@iconify/vue', () => ({
   }
 }))
 
-vi.mock('@/components/ButtonUI.vue', () => ({
-  default: {
-    template: '<button><slot /></button>',
-    props: ['size', 'class']
-  }
-}))
-
 vi.mock('@/utils', () => ({
   log: {
     error: vi.fn()
@@ -100,7 +93,7 @@ describe('DropdownActions', () => {
       global: {
         stubs: {
           IconifyIcon: true,
-          ButtonUI: true
+          UButton: true
         }
       }
     })

@@ -56,7 +56,7 @@ describe('DropdownActions', () => {
       global: {
         stubs: {
           IconifyIcon: true,
-          ButtonUI: true
+          UButton: true
         }
       }
     })
@@ -82,7 +82,7 @@ describe('DropdownActions', () => {
   describe.skip('Action handling', () => {
     it('should close menu after click enable', async () => {
       const wrapper = createWrapper('disabled')
-      const button = wrapper.findComponent({ name: 'ButtonUI' })
+      const button = wrapper.findComponent({ name: 'UButton' })
       button.trigger('click')
 
       await flushPromises()
@@ -119,7 +119,7 @@ describe('DropdownActions', () => {
     it.skip('closes dropdown after action is selected', async () => {
       mockUserStore.address = '0xContractOwner'
       const wrapper = createWrapper('pending')
-      const button = wrapper.findComponent({ name: 'ButtonUI' })
+      const button = wrapper.findComponent({ name: 'UButton' })
 
       // Open dropdown
       await button.trigger('click')
@@ -141,7 +141,7 @@ describe('DropdownActions', () => {
     it('closes dropdown after withdraw action', async () => {
       mockUserStore.address = '0xContractOwner'
       const wrapper = createWrapper('signed')
-      const button = wrapper.findComponent({ name: 'ButtonUI' })
+      const button = wrapper.findComponent({ name: 'UButton' })
 
       await button.trigger('click')
 

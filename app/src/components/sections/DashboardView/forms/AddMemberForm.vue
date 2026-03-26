@@ -19,13 +19,12 @@
 
     <UButton
       color="primary"
-      block
-      size="xl"
+      class="justify-center"
       :loading="addMembersLoading"
       :disabled="addMembersLoading"
       @click="handleAddMembers"
-      >Add Members</UButton
-    >
+      label="Add Members"
+    />
   </div>
 
   <hr class="my-0" />

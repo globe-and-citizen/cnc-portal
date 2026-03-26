@@ -57,9 +57,9 @@
 
       <template #actions-data="{ row }">
         <div class="flex items-center gap-2">
-          <ButtonUI
+          <UButton
             size="xs"
-            variant="primary"
+            color="primary"
             @click="handleApproveClick(row as SafeTransaction)"
             :disabled="!canApprove(row as SafeTransaction) || isApproving"
             :loading="isTransactionLoading(row.safeTxHash, 'approve')"
@@ -67,11 +67,11 @@
             data-test="approve-button"
           >
             Approve
-          </ButtonUI>
+          </UButton>
 
-          <ButtonUI
+          <UButton
             size="xs"
-            variant="success"
+            color="success"
             @click="handleExecuteClick(row as SafeTransaction)"
             :disabled="!canExecute(row as SafeTransaction) || isExecuting"
             :loading="isTransactionLoading(row.safeTxHash, 'execute')"
@@ -79,7 +79,7 @@
             data-test="execute-button"
           >
             Execute
-          </ButtonUI>
+          </UButton>
         </div>
       </template>
     </TableComponent>
@@ -106,7 +106,6 @@ import type { SafeTransaction } from '@/types/safe'
 import TableComponent from '@/components/TableComponent.vue'
 import CardComponent from '@/components/CardComponent.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
-import ButtonUI from '@/components/ButtonUI.vue'
 import SafeTransactionsWarning from './SafeTransactionsWarning.vue'
 
 // Stores and composables

@@ -42,24 +42,22 @@
     </div>
 
     <div class="flex justify-end gap-2 mt-4">
-      <ButtonUI variant="ghost" size="sm" @click="$emit('back')"> Back to Edit </ButtonUI>
-      <ButtonUI
-        variant="primary"
+      <UButton variant="ghost" size="sm" @click="$emit('back')" label="Back to Edit" />
+      <UButton
+        color="primary"
         size="sm"
         :loading="loading"
         :disabled="loading"
         @click="$emit('confirm')"
         data-test="confirm-btn"
-      >
-        Confirm & Create
-      </ButtonUI>
+        label="Confirm & Create"
+      />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { format } from '@/utils/dayUtils'
-import ButtonUI from '@/components/ButtonUI.vue'
 import { type VestingCreation } from '@/types/vesting'
 const props = defineProps<{
   vesting: VestingCreation

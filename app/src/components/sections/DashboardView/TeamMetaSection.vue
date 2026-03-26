@@ -13,17 +13,20 @@
         >?
       </p>
       <div class="modal-action justify-center">
-        <ButtonUI
-          variant="error"
+        <UButton
+          color="error"
           data-test="delete-team-button"
           @click="deleteTeam()"
           :loading="teamIsDeleting"
           :disabled="teamIsDeleting"
-          >Delete
-        </ButtonUI>
-        <ButtonUI variant="primary" outline @click="() => (showDeleteTeamConfirmModal = false)"
-          >Cancel</ButtonUI
-        >
+          label="Delete"
+        />
+        <UButton
+          color="primary"
+          variant="outline"
+          @click="showDeleteTeamConfirmModal = false"
+          label="Cancel"
+        />
       </div>
     </ModalComponent>
     <ModalComponent v-model="showModal">
@@ -40,7 +43,6 @@ import { ref } from 'vue'
 import UpdateTeamForm from '@/components/sections/DashboardView/forms/UpdateTeamForm.vue'
 import TeamDetails from '@/components/sections/DashboardView/TeamDetails.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
-import ButtonUI from '@/components/ButtonUI.vue'
 import type { Member } from '@/types'
 import { useRouter } from 'vue-router'
 import { useToastStore } from '@/stores/useToastStore'

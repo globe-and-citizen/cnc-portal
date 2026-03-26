@@ -21,16 +21,16 @@
     <span v-if="isLoad" class="loading loading-spinner loading-xs mr-2"></span>
     Withdraw
   </a>
-  <ButtonUI
+  <UButton
     v-else
     :disabled="disabled"
     :loading="isLoad"
-    variant="warning"
+    color="warning"
     data-test="withdraw-button"
     size="sm"
     @click="async () => await withdrawClaim()"
-    >Withdraw</ButtonUI
-  >
+    label="Withdraw"
+  />
 </template>
 
 <script setup lang="ts">
@@ -42,7 +42,6 @@ import { computed, ref } from 'vue'
 import { CASH_REMUNERATION_EIP712_ABI } from '@/artifacts/abi/cash-remuneration-eip712'
 import { getBalance } from 'viem/actions'
 import { config } from '@/wagmi.config'
-import ButtonUI from '@/components/ButtonUI.vue'
 import { USDC_ADDRESS } from '@/constant'
 import { simulateContract } from '@wagmi/core'
 import { waitForTransactionReceipt } from '@wagmi/core'

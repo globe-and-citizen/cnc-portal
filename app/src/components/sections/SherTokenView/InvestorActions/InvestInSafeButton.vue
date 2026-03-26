@@ -4,18 +4,15 @@
       :class="{ tooltip: !canDeposit }"
       :data-tip="!canDeposit ? 'SHER compensation deposits are not available' : null"
     >
-      <ButtonUI
-        variant="primary"
-        outline
+      <UButton
+        color="primary"
+        variant="outline"
         :disabled="!canDeposit || !teamStore.getContractAddressByType('Safe')"
         data-test="invest-in-safe-button"
         @click="openModal"
-      >
-        <template #prefix>
-          <IconifyIcon icon="heroicons-outline:plus" class="w-4 h-4" />
-        </template>
-        Invest & Get SHER
-      </ButtonUI>
+        leading-icon="heroicons-outline:plus"
+        label="Invest & Get SHER"
+      />
     </div>
 
     <ModalComponent
@@ -36,8 +33,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 
-import { Icon as IconifyIcon } from '@iconify/vue'
-import ButtonUI from '@/components/ButtonUI.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import SafeDepositRouterForm from '@/components/forms/SafeDepositRouterForm.vue'
 import {
