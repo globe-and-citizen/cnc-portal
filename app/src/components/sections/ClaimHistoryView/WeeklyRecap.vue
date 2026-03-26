@@ -50,11 +50,8 @@
       <!-- Hourly Rate -->
       <div class="stat place-items-center">
         <div class="stat-title">Hourly Rate</div>
-        <div class="font-bold text-xl text-center">
-          <RatePerHourList
-            :rate-per-hour="effectiveWage?.ratePerHour || []"
-            :currency-symbol="currencyStore.getTokenInfo('native')?.symbol || 'NATIVE'"
-          />
+        <div class="text-xl text-center">
+          <RateDotList :rates="effectiveWage?.ratePerHour || []" :text-class="'text-center'" />
         </div>
         <div class="text-sm text-gray-500 text-center mt-1">
           ≃ ${{ hourlyRateInUserCurrency.toFixed(2) }} {{ currencyStore.localCurrency.code }}/h
@@ -64,12 +61,13 @@
       <!-- Overtime Rate (only when overtime wage is configured) -->
       <div v-if="hasOvertimeWage" class="stat place-items-center">
         <div class="stat-title">Overtime Rate</div>
-        <div class="font-bold text-xl text-center text-amber-600">
-          <RatePerHourList
-            :rate-per-hour="(effectiveWage?.overtimeRatePerHour as RatePerHour[]) || []"
-            :currency-symbol="currencyStore.getTokenInfo('native')?.symbol || 'NATIVE'"
+        <div class="text-xl text-center">
+          <RateDotList
+            :rates="(effectiveWage?.overtimeRatePerHour as RatePerHour[]) || []"
+            :text-class="'text-center'"
           />
         </div>
+
         <div class="text-sm text-gray-500 text-center mt-1">
           ≃ ${{ overtimeHourlyRateInUserCurrency.toFixed(2) }}
           {{ currencyStore.localCurrency.code }}/h
@@ -79,13 +77,9 @@
       <!-- Total Amount -->
       <div class="stat place-items-center">
         <div class="stat-title">Total Amount</div>
-        <div class="font-bold text-xl text-center">
+        <div class="text-xl text-center">
           <template v-if="props.weeklyClaim">
-            <RatePerHourTotalList
-              :rate-per-hour="combinedTokenAmounts"
-              :currency-symbol="currencyStore.getTokenInfo('native')?.symbol || 'NATIVE'"
-              :total-hours="1"
-            />
+            <RateDotList :rates="combinedTokenAmounts" :text-class="'text-center'" />
           </template>
           <span v-else class="text-gray-300">—</span>
         </div>
@@ -103,9 +97,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useCurrencyStore } from '@/stores'
-import RatePerHourList from '@/components/RatePerHourList.vue'
-import RatePerHourTotalList from '@/components/RatePerHourTotalList.vue'
 import type { RatePerHour, Wage, WeeklyClaim } from '@/types/cash-remuneration'
+import RateDotList from '@/components/RateDotList.vue'
 
 const props = defineProps<{
   weeklyClaim?: WeeklyClaim
