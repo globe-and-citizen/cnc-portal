@@ -29,32 +29,12 @@
             <UButton
               data-testid="sign-in"
               color="primary"
+              size="xl"
               class="w-full justify-center"
               @click="siwe()"
               :disabled="isProcessing"
               :label="isProcessing ? 'Processing...' : 'Sign In With Ethereum'"
             />
-            <!-- <div class="flex items-center">
-              <div class="grow h-px bg-gray-300"></div>
-              <div class="px-4 text-gray-500 text-sm">OR</div>
-              <div class="grow h-px bg-gray-300"></div>
-            </div>
-            <div class="flex justify-center gap-4">
-              <transition-group name="social" tag="div" class="flex gap-4">
-                <IconGoogle
-                  key="google"
-                  class="w-8 h-8 cursor-pointer transition-transform duration-300 ease-in-out hover:scale-110"
-                />
-                <IconFacebook
-                  key="facebook"
-                  class="w-8 h-8 cursor-pointer transition-transform duration-300 ease-in-out hover:scale-110"
-                />
-                <IconTwitter
-                  key="twitter"
-                  class="w-8 h-8 cursor-pointer transition-transform duration-300 ease-in-out hover:scale-110"
-                />
-              </transition-group>
-            </div> -->
           </div>
         </div>
       </transition>
@@ -63,9 +43,6 @@
 </template>
 
 <script setup lang="ts">
-// import IconGoogle from '@/components/icons/IconGoogle.vue'
-// import IconFacebook from '@/components/icons/IconFacebook.vue'
-// import IconTwitter from '@/components/icons/IconTwitter.vue'
 import { useSiwe } from '@/composables/useSiwe'
 
 const { isProcessing, siwe } = useSiwe()
