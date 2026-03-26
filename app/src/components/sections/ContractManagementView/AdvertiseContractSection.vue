@@ -13,12 +13,11 @@
           <div>
             <UButton
               color="primary"
-              :enabled="teamStore.currentTeam?.ownerAddress == userStore.address"
+              :disabled="teamStore.currentTeam?.ownerAddress != userStore.address"
               data-test="createAddCampaign"
               @click="showAdCampaignModal = { mount: true, show: true }"
-            >
-              Deploy Advertise Contract
-            </UButton>
+              label="Deploy Advertise Contract"
+            />
           </div>
         </template>
         <TeamContracts />
