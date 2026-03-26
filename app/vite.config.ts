@@ -55,8 +55,8 @@ export default defineConfig(({ mode }) => {
         events: 'events'
       }
     },
-    ui:{
-      button:{
+    ui: {
+      button: {
         defaultVariant: {
           size: 'xl'
         }
