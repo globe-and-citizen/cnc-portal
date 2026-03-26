@@ -98,15 +98,10 @@ const TokenAmountStub = {
   `
 }
 
-const UButtonStub = {
-  props: ['loading', 'disabled', 'color', 'class', 'label'],
-  emits: ['click'],
-  template: `<button :disabled="disabled" data-test="submit-button" @click="$emit('click')">{{ label }}</button>`
-}
-
 const BodAlertStub = {
   template: `<div data-test="bod-alert" />`
 }
+
 
 const defaultBalances = () => [
   makeBalance({
@@ -181,7 +176,6 @@ describe('PayDividendsForm.vue', () => {
         plugins: [createTestingPinia({ createSpy: vi.fn })],
         stubs: {
           TokenAmount: TokenAmountStub,
-          UButton: UButtonStub,
           BodAlert: BodAlertStub
         }
       }
