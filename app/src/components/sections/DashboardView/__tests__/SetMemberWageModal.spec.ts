@@ -84,6 +84,7 @@ describe('SetMemberWageModal', () => {
             props: ['description'],
             template: '<div data-test="alert-description">{{ description }}</div>'
           },
+          UTooltip: { template: '<div><slot /></div>' },
           SetMemberWageStandardStep: StandardStepStub,
           SetMemberWageOvertimeStep: OvertimeStepStub
         }
