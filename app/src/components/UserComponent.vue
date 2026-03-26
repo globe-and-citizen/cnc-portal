@@ -14,7 +14,7 @@
       >
         <img
           data-test="avatar-image"
-          alt="User Avatar"
+          :alt="`${user.name ?? 'Unknown'}'s avatar`"
           :src="
             user.imageUrl ||
             'https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp'
@@ -23,20 +23,15 @@
         />
       </div>
     </div>
-    <div
-      v-if="!isCollapsed"
-      data-test="user-info-container"
-      class="flex flex-col text-gray-600"
-      :class="{ 'items-center text-center': isDetailedView }"
-    >
+    <div v-if="!isCollapsed" data-test="user-info-container" class="flex flex-col text-gray-600">
       <p
         class="font-bold"
         :class="{ 'text-lg': isDetailedView, 'text-sm': !isDetailedView }"
         data-test="user-name"
       >
         {{
-          props.user.name && props.user.name.length > 10
-            ? `${props.user.name.slice(0, 10)}...`
+          props.user.name && props.user.name.length > 20
+            ? `${props.user.name.slice(0, 20)}...`
             : props.user.name || 'User'
         }}
       </p>
@@ -49,7 +44,7 @@
         {{ user.role || 'Member' }}
       </p>
       <p class="text-sm" data-test="formatted-address">
-        {{ formatedUserAddress }}
+        {{ isDetailedView ? user.address : formatedUserAddress }}
       </p>
     </div>
   </div>

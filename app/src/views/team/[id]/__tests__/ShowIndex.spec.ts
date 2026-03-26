@@ -29,8 +29,7 @@ describe('ShowIndex', () => {
         plugins: [router, createTestingPinia({ createSpy: vi.fn })],
         stubs: {
           ContinueAddTeamForm: true,
-          TeamMeta: true,
-          MemberSection: true
+          TeamMeta: true
         }
       }
     })

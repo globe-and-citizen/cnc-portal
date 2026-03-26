@@ -61,6 +61,7 @@ export const mockWageData: Wage[] = [
     teamId: 1,
     userAddress: '0x1234567890123456789012345678901234567890',
     maximumHoursPerWeek: 40,
+    disabled: false,
     nextWageId: null,
     createdAt: '2024-01-01T00:00:00Z',
     updatedAt: '2024-01-01T00:00:00Z',
@@ -272,6 +273,7 @@ export const queryMocks: Record<string, () => Record<string, unknown>> = {
   // Wage queries - wage.queries.ts
   useGetTeamWagesQuery: () => createMockQueryResponse(mockWageData),
   useSetMemberWageMutation: () => createMockMutationResponse(),
+  useToggleWageStatusMutation: () => createMockMutationResponse(),
 
   // Notification queries - notification.queries.ts
   useGetNotificationsQuery: () => createMockQueryResponse(mockNotificationData),

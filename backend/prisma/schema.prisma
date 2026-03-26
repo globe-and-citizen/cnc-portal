@@ -93,6 +93,7 @@ model Wage {
   overtimeRatePerHour         Json?
   maximumOvertimeHoursPerWeek Int           @default(0)
   maximumHoursPerWeek         Int
+  disabled                    Boolean       @default(false)
   nextWageId                  Int?          @unique
   nextWage                    Wage?         @relation("wageRelated", fields: [nextWageId], references: [id], onDelete: SetNull)
   previousWage                Wage?         @relation("wageRelated")

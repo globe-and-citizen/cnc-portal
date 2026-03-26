@@ -18,13 +18,8 @@ export default [
       'src/artifacts/**/*.{ts,mts,tsx,vue}',
       'src/components/GenericTransactionHistory.vue',
       'src/components/sections/VestingView/forms/CreateVesting.vue',
-      // 'src/components/sections/TeamView/forms/DeployContractSection.vue',
-      'src/components/sections/SherTokenView/InvestorsActions.vue',
-      'src/components/sections/DashboardView/forms/ApproveUsersEIP712Form.vue',
-      'src/components/sections/DashboardView/SetMemberWageModal.vue',
-      'src/components/sections/ClaimHistoryView/ClaimHistory.vue',
       'src/components/TableComponent.vue',
-      'src/components/TheDrawer.vue'
+      'src/components/sections/DashboardView/forms/ApproveUsersEIP712Form.vue'
     ],
     rules: {
       'max-lines': 'off'

@@ -24,6 +24,7 @@ export interface Wage {
   tokenRatePerHour?: number //@deprecated use ratePerHour instead
   usdcRatePerHour?: number //@deprecated use ratePerHour instead
   maximumHoursPerWeek: number
+  disabled: boolean
   nextWageId: number | null
   createdAt: string // ISO date string
   updatedAt: string // ISO date string

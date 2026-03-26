@@ -1,6 +1,14 @@
 import express from 'express';
-import { getWages, setWage } from '../controllers/wageController';
-import { validateBody, validateQuery, setWageBodySchema, getWagesQuerySchema } from '../validation';
+import { getWages, setWage, toggleWageStatus } from '../controllers/wageController';
+import {
+  validateBody,
+  validateQuery,
+  validateParamsAndQuery,
+  setWageBodySchema,
+  getWagesQuerySchema,
+  toggleWageStatusParamsSchema,
+  toggleWageStatusQuerySchema,
+} from '../validation';
 
 const wageRoutes = express.Router();
 
@@ -240,5 +248,46 @@ wageRoutes.put('/setWage', validateBody(setWageBodySchema), setWage);
  *             $ref: '#/components/schemas/ErrorResponse'
  */
 wageRoutes.get('/', validateQuery(getWagesQuerySchema), getWages);
+
+/**
+ * @openapi
+ * /wage/{wageId}:
+ *  put:
+ *   summary: Toggle wage status (disable or enable)
+ *   description: Disables or enables a member wage. A disabled wage prevents the member from submitting claims.
+ *   parameters:
+ *     - in: path
+ *       name: wageId
+ *       required: true
+ *       schema:
+ *         type: integer
+ *         minimum: 1
+ *       description: The ID of the wage to toggle
+ *     - in: query
+ *       name: action
+ *       required: true
+ *       schema:
+ *         type: string
+ *         enum: [disable, enable]
+ *       description: Action to perform on the wage
+ *   responses:
+ *     200:
+ *       description: Wage status updated successfully
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/WageRecord'
+ *     403:
+ *       description: Forbidden - caller is not the owner of the team
+ *     404:
+ *       description: Wage not found
+ *     500:
+ *       description: Internal server error
+ */
+wageRoutes.put(
+  '/:wageId',
+  validateParamsAndQuery(toggleWageStatusParamsSchema, toggleWageStatusQuerySchema),
+  toggleWageStatus
+);
 
 export default wageRoutes;

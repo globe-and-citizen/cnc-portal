@@ -16,7 +16,7 @@
 import { useUserDataStore, useTeamStore } from '@/stores'
 import { useGetTeamsQuery } from '@/queries/team.queries'
 import { storeToRefs } from 'pinia'
-import { computed, watch } from 'vue'
+import { computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 
 const router = useRouter()
@@ -53,17 +53,4 @@ const selectedTeam = computed({
     }
   }
 })
-
-// When teams load and no team is active yet, default to the first one
-watch(
-  teamItems,
-  (items) => {
-    const first = items[0]
-    if (!activeTeamId.value && first) {
-      teamStore.setCurrentTeamId(first.id)
-      router.push(`/teams/${first.id}`)
-    }
-  },
-  { immediate: true }
-)
 </script>
