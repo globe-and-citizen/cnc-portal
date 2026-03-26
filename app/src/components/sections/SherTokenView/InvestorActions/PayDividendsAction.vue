@@ -1,13 +1,13 @@
 <template>
   <div :class="{ tooltip: !canPayDividends }" :data-tip="cannotPayDividendsReason">
-    <ButtonUI
-      variant="primary"
+    <UButton
+      color="primary"
       data-test="pay-dividends-button"
       :disabled="!canPayDividends"
       @click="openModal"
     >
       Pay Dividends
-    </ButtonUI>
+    </UButton>
 
     <ModalComponent v-model="modalState.show" v-if="modalState.mount" @reset="closeModal">
       <PayDividendsForm
@@ -27,7 +27,6 @@
 import { computed, ref, watch } from 'vue'
 import type { Address } from 'viem'
 import { encodeFunctionData, formatUnits, zeroAddress } from 'viem'
-import ButtonUI from '@/components/ButtonUI.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import PayDividendsForm from '@/components/sections/SherTokenView/forms/PayDividendsForm.vue'
 import { BANK_ABI } from '@/artifacts/abi/bank'

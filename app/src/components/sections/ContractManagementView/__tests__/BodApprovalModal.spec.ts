@@ -96,7 +96,7 @@ describe('BodApprovalModal', () => {
     await flushPromises()
 
     // Find the ButtonUI that is the Approve Action button
-    const buttons = wrapper.findAllComponents({ name: 'ButtonUI' })
+    const buttons = wrapper.findAllComponents({ name: 'UButton' })
     const approveBtn = buttons.find((b) => b.text().includes('Approve Action'))
     expect(approveBtn).toBeTruthy()
     expect(approveBtn!.props('disabled')).toBe(true)

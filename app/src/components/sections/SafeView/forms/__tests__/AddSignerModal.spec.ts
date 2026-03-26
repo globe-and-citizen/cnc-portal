@@ -1,6 +1,5 @@
 import AddSignerModal from '@/components/sections/SafeView/forms/AddSignerModal.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
-import ButtonUI from '@/components/ButtonUI.vue'
 import MultiSelectMemberInput from '@/components/utils/MultiSelectMemberInput.vue'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount, flushPromises, VueWrapper } from '@vue/test-utils'
@@ -86,7 +85,7 @@ const createWrapper = (
     global: {
       components: {
         ModalComponent,
-        ButtonUI,
+        UButton,
         MultiSelectMemberInput,
         IconifyIcon: Icon
       },
@@ -106,7 +105,7 @@ const createWrapper = (
           props: ['modelValue', 'disableTeamMembers', 'currentSafeOwners'],
           emits: ['update:modelValue']
         },
-        ButtonUI: {
+        UButton: {
           template:
             '<button :data-test="$attrs[\'data-test\']" :disabled="disabled || loading" @click="$emit(\'click\')"><slot /></button>',
           props: ['disabled', 'loading', 'variant'],

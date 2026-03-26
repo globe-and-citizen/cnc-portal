@@ -2,7 +2,7 @@
   <OverviewCard
     :title="totalPendingAmount"
     subtitle="Pending Claim"
-    variant="info"
+    color="info"
     :card-icon="personIcon"
     :loading="isFetching"
   >

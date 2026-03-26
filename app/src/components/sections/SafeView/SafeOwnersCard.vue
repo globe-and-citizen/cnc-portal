@@ -3,8 +3,8 @@
     <template #card-action>
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-2">
-          <ButtonUI
-            variant="primary"
+          <UButton
+            color="primary"
             @click="showAddSignerModal = true"
             :disabled="!address || !isConnectedUserOwner"
             data-test="add-signer-button"
@@ -12,9 +12,9 @@
           >
             <IconifyIcon icon="heroicons:user-plus" class="w-4 h-4" />
             Add Signer
-          </ButtonUI>
-          <ButtonUI
-            variant="secondary"
+          </UButton>
+          <UButton
+            color="secondary"
             @click="showUpdateThresholdModal = true"
             :disabled="isLoading || !isConnectedUserOwner"
             :loading="isLoading"
@@ -23,7 +23,7 @@
           >
             <IconifyIcon icon="heroicons:shield-check" class="w-4 h-4" />
             Threshold
-          </ButtonUI>
+          </UButton>
         </div>
       </div>
     </template>
@@ -97,7 +97,6 @@ import { useAccount } from '@wagmi/vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
 
 // Components
-import ButtonUI from '@/components/ButtonUI.vue'
 import CardComponent from '@/components/CardComponent.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import AddSignerModal from '@/components/sections/SafeView/forms/AddSignerModal.vue'

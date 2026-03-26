@@ -27,19 +27,18 @@
   </div>
 
   <div class="modal-action justify-center">
-    <ButtonUI
-      variant="primary"
+    <UButton
+      color="primary"
       :loading="teamIsUpdating"
       :disabled="teamIsUpdating"
       @click="submitForm"
-      >Submit</ButtonUI
+      >Submit</UButton>
     >
   </div>
 </template>
 <script setup lang="ts">
 import { required, minLength } from '@vuelidate/validators'
 import { useVuelidate } from '@vuelidate/core'
-import ButtonUI from '@/components/ButtonUI.vue'
 const team = defineModel({
   default: {
     name: '',

@@ -38,12 +38,12 @@
   <h3 class="pt-8">
     By clicking "Deploy Advertisement Contract" you agree to deploy an advertisment campaign
     contract and this may take some time and pay for gas fee.
-    <ButtonUI class="btn btn-secondary btn-xs" @click="viewContractCode()">view code</ButtonUI>
+    <UButton class="btn btn-secondary btn-xs" @click="viewContractCode()">view code</UButton>
   </h3>
 
   <div class="modal-action justify-right">
-    <ButtonUI
-      variant="primary"
+    <UButton
+      color="primary"
       size="sm"
       @click="deployAdCampaign"
       :loading="loading"
@@ -56,13 +56,12 @@
       "
     >
       confirm
-    </ButtonUI>
+    </UButton>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import ButtonUI from '@/components/ButtonUI.vue'
 
 import { useDeployContract } from '@/composables/useContractFunctions'
 import { useUserDataStore } from '@/stores/user'

@@ -32,8 +32,8 @@ const createComponent = (props: Record<string, unknown> = {}) => {
     global: {
       plugins: [createTestingPinia({ createSpy: vi.fn }), [VueQueryPlugin, { queryClient }]],
       stubs: {
-        ButtonUI: {
-          name: 'ButtonUI',
+        UButton: {
+          name: 'UButton',
           template:
             '<button :disabled="disabled" data-test="modal-submit-hours-button" @click="$emit(\'click\')"><slot /></button>',
           props: ['disabled', 'loading'],
@@ -126,7 +126,7 @@ describe('SubmitClaims', () => {
     )
 
     const wrapper = createComponent()
-    const button = wrapper.findComponent({ name: 'ButtonUI' })
+    const button = wrapper.findComponent({ name: 'UButton' })
 
     expect(button.props('loading')).toBe(true)
   })

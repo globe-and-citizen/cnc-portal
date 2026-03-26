@@ -96,7 +96,7 @@ describe('DistributeMintForm', () => {
     const amountInput = wrapper.find('[data-test="amount-input"]')
     await amountInput.setValue('1')
 
-    await wrapper.findComponent(ButtonUI).trigger('click')
+    await wrapper.findComponent({ name: 'UButton' }).trigger('click')
     expect(wrapper.emitted('submit')).toBeTruthy()
   })
 
@@ -120,7 +120,7 @@ describe('DistributeMintForm', () => {
     const amountInput = wrapper.find('[data-test="amount-input"]')
     await amountInput.setValue('1')
 
-    await wrapper.findComponent(ButtonUI).trigger('click')
+    await wrapper.findComponent({ name: 'UButton' }).trigger('click')
     await flushPromises()
 
     const errorMessage = wrapper.find('[data-test="error-message-shareholder"]')

@@ -36,15 +36,15 @@
       </div>
 
       <div class="card-actions justify-end">
-        <ButtonUI
-          variant="primary"
+        <UButton
+          color="primary"
           :loading="isDeploying"
           :disabled="isDeploying || !canDeploy"
           data-test="deploy-safe-button"
           @click="handleDeploySafe"
         >
           {{ isDeploying ? 'Deploying Safe...' : 'Deploy Safe Wallet' }}
-        </ButtonUI>
+        </UButton>
       </div>
     </div>
   </div>
@@ -54,7 +54,6 @@
 import { computed } from 'vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import { isAddress } from 'viem'
-import ButtonUI from '@/components/ButtonUI.vue'
 import { useTeamStore, useUserDataStore } from '@/stores'
 
 import { useSafeDeployment } from '@/composables/safe'

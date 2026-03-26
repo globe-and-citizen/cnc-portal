@@ -9,7 +9,7 @@
             : null
         "
       >
-        <ButtonUI
+        <UButton
           variant="success"
           :disabled="!(userDataStore.address === contractOwnerAddress || isBodAction())"
           @click="
@@ -20,7 +20,7 @@
           data-test="approve-users-button"
         >
           Approve User Expense
-        </ButtonUI>
+        </UButton>
       </div>
     </template>
 
@@ -64,7 +64,6 @@
 </template>
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import ButtonUI from '@/components/ButtonUI.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import CardComponent from '@/components/CardComponent.vue'
 import ExpenseAccountTable from '@/components/sections/ExpenseAccountView/ExpenseAccountTable.vue'

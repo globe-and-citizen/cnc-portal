@@ -37,17 +37,17 @@
 
       <!-- Action Buttons -->
       <div class="flex gap-3 justify-end">
-        <ButtonUI variant="secondary" @click="handleCancel" data-test="cancel-execute-button">
+        <UButton color="secondary" @click="handleCancel" data-test="cancel-execute-button">
           Cancel
-        </ButtonUI>
-        <ButtonUI
-          variant="warning"
+        </UButton>
+        <UButton
+          color="warning"
           @click="handleConfirm"
           :loading="isExecuting"
           data-test="confirm-execute-button"
         >
           {{ action }} Anyway
-        </ButtonUI>
+        </UButton>
       </div>
     </div>
   </ModalComponent>
@@ -55,7 +55,6 @@
 
 <script setup lang="ts">
 import ModalComponent from '@/components/ModalComponent.vue'
-import ButtonUI from '@/components/ButtonUI.vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
 
 interface Props {

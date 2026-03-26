@@ -8,7 +8,7 @@
           :data-tip="!hasWage ? 'You need to have a wage set up to submit claims' : null"
         >
           <SubmitClaims v-if="hasWage" />
-          <ButtonUI
+          <UButton
             v-else
             variant="success"
             size="sm"
@@ -16,7 +16,7 @@
             data-test="submit-claim-disabled-button"
           >
             Submit Claim
-          </ButtonUI>
+          </UButton>
         </div>
       </div>
     </div>
@@ -28,7 +28,6 @@ import { useGetTeamWagesQuery } from '@/queries'
 import { computed, watch } from 'vue'
 import { useUserDataStore, useTeamStore, useToastStore } from '@/stores'
 import SubmitClaims from './SubmitClaims.vue'
-import ButtonUI from '@/components/ButtonUI.vue'
 
 const userStore = useUserDataStore()
 const teamStore = useTeamStore()

@@ -2,7 +2,6 @@ import { flushPromises, mount } from '@vue/test-utils'
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import CreateAddCampaign from '@/components/sections/ContractManagementView/forms/CreateAddCampaign.vue'
-import ButtonUI from '@/components/ButtonUI.vue'
 
 import { ref } from 'vue'
 //import AdCampaignArtifact from '@/artifacts/abi/AdCampaignManager.json'
@@ -113,7 +112,7 @@ describe('CreateAddCampaign.vue', () => {
       await flushPromises()
       await wrapper.find('.btn-primary').trigger('click')
 
-      const allButtonComponentsWrapper = wrapper.findAllComponents(ButtonUI)
+      const allButtonComponentsWrapper = wrapper.findAllComponents({ name: 'UButton' })
       expect(allButtonComponentsWrapper[1].props().loading).toBe(true)
     })
   })

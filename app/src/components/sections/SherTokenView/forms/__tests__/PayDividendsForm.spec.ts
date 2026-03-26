@@ -77,7 +77,7 @@ const TokenAmountStub = {
   template: `<div data-test="token-amount"><slot name="label" /><slot /></div>`
 }
 
-const ButtonUIStub = {
+const UButtonStub = {
   props: ['loading', 'disabled'],
   emits: ['click'],
   template: `<button :disabled="disabled" data-test="submit-button" @click="$emit('click')"><slot /></button>`
@@ -160,7 +160,7 @@ describe('PayDividendsForm.vue', () => {
         plugins: [createTestingPinia({ createSpy: vi.fn })],
         stubs: {
           TokenAmount: TokenAmountStub,
-          ButtonUI: ButtonUIStub,
+          UButton: UButtonStub,
           BodAlert: BodAlertStub
         }
       }

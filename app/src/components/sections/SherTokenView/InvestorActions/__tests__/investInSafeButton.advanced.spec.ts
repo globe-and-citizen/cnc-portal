@@ -48,8 +48,8 @@ describe('InvestInSafeButton - Advanced Features', () => {
       global: {
         plugins: [createTestingPinia({ createSpy: vi.fn })],
         stubs: {
-          ButtonUI: {
-            name: 'ButtonUI',
+          UButton: {
+            name: 'UButton',
             template: `
               <button 
                 data-test="invest-in-safe-button"
@@ -186,13 +186,13 @@ describe('InvestInSafeButton - Advanced Features', () => {
       })
 
       wrapper = createWrapper()
-      let button = wrapper.findComponent({ name: 'ButtonUI' })
+      let button = wrapper.findComponent({ name: 'UButton' })
       expect(button.props('disabled')).toBe(false)
 
       depositsEnabledRef.value = false
       await nextTick()
 
-      button = wrapper.findComponent({ name: 'ButtonUI' })
+      button = wrapper.findComponent({ name: 'UButton' })
       expect(button.props('disabled')).toBe(true)
     })
 
@@ -208,13 +208,13 @@ describe('InvestInSafeButton - Advanced Features', () => {
       })
 
       wrapper = createWrapper()
-      let button = wrapper.findComponent({ name: 'ButtonUI' })
+      let button = wrapper.findComponent({ name: 'UButton' })
       expect(button.props('disabled')).toBe(false)
 
       pausedRef.value = true
       await nextTick()
 
-      button = wrapper.findComponent({ name: 'ButtonUI' })
+      button = wrapper.findComponent({ name: 'UButton' })
       expect(button.props('disabled')).toBe(true)
     })
   })
@@ -226,7 +226,7 @@ describe('InvestInSafeButton - Advanced Features', () => {
       ) as unknown as typeof mockTeamStore.getContractAddressByType
 
       wrapper = createWrapper()
-      const button = wrapper.findComponent({ name: 'ButtonUI' })
+      const button = wrapper.findComponent({ name: 'UButton' })
       // Component currently doesn't validate zero address, button is enabled
       expect(button.props('disabled')).toBe(false)
     })
@@ -237,7 +237,7 @@ describe('InvestInSafeButton - Advanced Features', () => {
       ) as unknown as typeof mockTeamStore.getContractAddressByType
 
       wrapper = createWrapper()
-      const button = wrapper.findComponent({ name: 'ButtonUI' })
+      const button = wrapper.findComponent({ name: 'UButton' })
       expect(button.props('disabled')).toBe(true)
     })
 
@@ -247,7 +247,7 @@ describe('InvestInSafeButton - Advanced Features', () => {
       ) as unknown as typeof mockTeamStore.getContractAddressByType
 
       wrapper = createWrapper()
-      const button = wrapper.findComponent({ name: 'ButtonUI' })
+      const button = wrapper.findComponent({ name: 'UButton' })
       expect(button.props('disabled')).toBe(true)
     })
 
@@ -257,7 +257,7 @@ describe('InvestInSafeButton - Advanced Features', () => {
       ) as unknown as typeof mockTeamStore.getContractAddressByType
 
       wrapper = createWrapper()
-      const button = wrapper.findComponent({ name: 'ButtonUI' })
+      const button = wrapper.findComponent({ name: 'UButton' })
       expect(button.props('disabled')).toBe(true)
     })
   })
@@ -274,7 +274,7 @@ describe('InvestInSafeButton - Advanced Features', () => {
       })
 
       wrapper = createWrapper()
-      const button = wrapper.findComponent({ name: 'ButtonUI' })
+      const button = wrapper.findComponent({ name: 'UButton' })
       expect(button.props('disabled')).toBe(true)
     })
 
@@ -289,7 +289,7 @@ describe('InvestInSafeButton - Advanced Features', () => {
       })
 
       wrapper = createWrapper()
-      const button = wrapper.findComponent({ name: 'ButtonUI' })
+      const button = wrapper.findComponent({ name: 'UButton' })
       expect(button.props('disabled')).toBe(true)
     })
   })

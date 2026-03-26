@@ -221,16 +221,16 @@
   </div>
 
   <div class="modal-action justify-center">
-    <ButtonUI
+    <UButton
       :loading="loadingApprove"
       :disabled="loadingApprove"
-      variant="primary"
+      color="primary"
       @click="submitApprove"
       data-test="approve-button"
     >
       Approve
-    </ButtonUI>
-    <ButtonUI outline data-test="cancel-button" variant="error" @click="clear"> Cancel </ButtonUI>
+    </UButton>
+    <UButton outline data-test="cancel-button" color="error" @click="clear"> Cancel </UButton>
   </div>
 </template>
 <script setup lang="ts">
@@ -241,7 +241,6 @@ import { helpers, required } from '@vuelidate/validators'
 import type { User } from '@/types'
 import VueDatePicker from '@vuepic/vue-datepicker'
 import '@vuepic/vue-datepicker/dist/main.css'
-import ButtonUI from '@/components/ButtonUI.vue'
 import { NETWORK, USDC_ADDRESS, USDT_ADDRESS } from '@/constant'
 
 const props = defineProps<{

@@ -1,7 +1,7 @@
 <template>
-  <ButtonUI
+  <UButton
     size="sm"
-    variant="error"
+    color="error"
     outline
     :disabled="isDisabled"
     :loading="isRemoving"
@@ -10,7 +10,7 @@
     class="flex items-center gap-1"
   >
     <IconifyIcon icon="heroicons:trash" class="w-4 h-4" />
-  </ButtonUI>
+  </UButton>
 </template>
 
 <script setup lang="ts">
@@ -19,7 +19,6 @@ import { useAccount } from '@wagmi/vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import { type Address } from 'viem'
 
-import ButtonUI from '@/components/ButtonUI.vue'
 import { useSafeOwnerManagement } from '@/composables/safe'
 import { log } from '@/utils'
 

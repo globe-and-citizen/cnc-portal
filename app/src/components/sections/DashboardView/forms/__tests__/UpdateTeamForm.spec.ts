@@ -2,7 +2,6 @@
 import { it, expect, describe, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import UpdateTeamForm from '@/components/sections/DashboardView/forms/UpdateTeamForm.vue'
-import ButtonUI from '@/components/ButtonUI.vue'
 
 interface ComponentData {
   team: {
@@ -35,13 +34,13 @@ describe('UpdateTeamForm.vue', () => {
 
     it('displays the loading button when teamIsUpdating is true', async () => {
       await wrapper.setProps({ teamIsUpdating: true })
-      expect(wrapper.findComponent(ButtonUI).props().loading).toBe(true)
+      expect(wrapper.findComponent({ name: 'UButton' }).props().loading).toBe(true)
     })
 
     it('displays the submit button when teamIsUpdating is false', async () => {
       await wrapper.setProps({ teamIsUpdating: false })
-      expect(wrapper.findComponent(ButtonUI).props().loading).toBe(false)
-      expect(wrapper.findComponent(ButtonUI).props().variant).toBe('primary')
+      expect(wrapper.findComponent({ name: 'UButton' }).props().loading).toBe(false)
+      expect(wrapper.findComponent({ name: 'UButton' }).props().variant).toBe('primary')
     })
   })
   describe('Actions', () => {

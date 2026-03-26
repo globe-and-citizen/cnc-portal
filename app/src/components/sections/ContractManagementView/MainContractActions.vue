@@ -1,6 +1,6 @@
 <template>
   <div class="flex items-center gap-2">
-    <ButtonUI
+    <UButton
       :variant="row.paused ? 'info' : 'error'"
       size="sm"
       @click="changeContractStatus(row.paused)"
@@ -11,16 +11,16 @@
         v-if="!isLoadingPauseContract && !isLoadingUnpauseContract"
         :icon="`heroicons:${row.paused ? 'play' : 'pause-circle'}-solid`"
       />
-    </ButtonUI>
-    <ButtonUI
+    </UButton>
+    <UButton
       variant="success"
       :outline="true"
       size="sm"
       @click="showModal = true"
       :disabled="row.owner !== userDataStore.address && !isBodAction"
-      >Transfer Ownership</ButtonUI
+      >Transfer Ownership</UButton>
     >
-    <ButtonUI
+    <UButton
       :disabled="!isBodAction || formatedActions.length <= 0"
       variant="success"
       :outline="true"
@@ -33,7 +33,7 @@
       "
     >
       Pending Actions
-    </ButtonUI>
+    </UButton>
 
     <teleport to="body">
       <ModalComponent v-model="showModal">
@@ -73,7 +73,6 @@
 </template>
 <script setup lang="ts">
 import { Icon as IconifyIcon } from '@iconify/vue'
-import ButtonUI from '@/components/ButtonUI.vue'
 import { encodeFunctionData, type Address } from 'viem'
 import type { TableRow } from '@/components/TableComponent.vue'
 import { useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
