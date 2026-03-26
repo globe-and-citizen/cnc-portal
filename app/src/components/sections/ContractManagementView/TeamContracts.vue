@@ -23,7 +23,7 @@
       </template>
 
       <template #admins-data="{ row }">
-        <button
+        <UButton
           :disabled="row.type !== 'Campaign'"
           @click="
             openAdminsModal(
@@ -36,11 +36,11 @@
               row.index
             )
           "
-          class="btn btn-xs btn-secondary"
+          color="secondary"
+          size="xs"
           data-test="open-admin-modal-btn"
-        >
-          <IconifyIcon icon="material-symbols:person" class="size-4 text-white" />
-        </button>
+          icon="material-symbols:person"
+        />
       </template>
 
       <template #details-data="{ row }">
