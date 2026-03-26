@@ -25,7 +25,18 @@ const mockFiles = [
 // Global stubs for @nuxt/ui components
 const UButtonStub = defineComponent({
   name: 'UButton',
-  props: ['loading', 'disabled', 'color', 'class', 'label', 'icon', 'iconTrailing', 'size', 'variant', 'trailingIcon'],
+  props: [
+    'loading',
+    'disabled',
+    'color',
+    'class',
+    'label',
+    'icon',
+    'iconTrailing',
+    'size',
+    'variant',
+    'trailingIcon'
+  ],
   emits: ['click'],
   setup(props, { slots, emit }) {
     return () =>
@@ -54,12 +65,7 @@ const UDropdownStub = defineComponent({
   props: ['items', 'popper', 'modelValue'],
   emits: ['update:modelValue', 'select'],
   setup(props, { slots }) {
-    return () =>
-      h(
-        'div',
-        { 'data-test': 'u-dropdown' },
-        slots.default ? slots.default() : null
-      )
+    return () => h('div', { 'data-test': 'u-dropdown' }, slots.default ? slots.default() : null)
   }
 })
 

@@ -102,7 +102,6 @@ const BodAlertStub = {
   template: `<div data-test="bod-alert" />`
 }
 
-
 const defaultBalances = () => [
   makeBalance({
     amount: 10,

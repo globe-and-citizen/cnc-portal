@@ -64,7 +64,8 @@ describe('DropdownActions', () => {
           UButton: {
             name: 'UButton',
             props: ['disabled', 'icon', 'size'],
-            template: '<button data-test="dropdown-button" :disabled="disabled" @click="$emit(\'click\')"><slot /></button>'
+            template:
+              '<button data-test="dropdown-button" :disabled="disabled" @click="$emit(\'click\')"><slot /></button>'
           },
           CRWithdrawClaim: {
             name: 'CRWithdrawClaim',
