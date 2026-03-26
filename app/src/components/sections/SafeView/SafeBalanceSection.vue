@@ -40,43 +40,31 @@
       <div class="flex flex-col items-end gap-4">
         <div class="flex gap-2">
           <UButton
-            color="neutral"
-            variant="outline"
-            class="flex items-center gap-2"
+            color="secondary"
+            size="xl"
             data-test="deposit-button"
+            leading-icon="heroicons-outline:plus"
+            label="Deposit"
             @click="openDepositModal"
-          >
-            <template #leading>
-              <IconifyIcon icon="heroicons-outline:plus" class="w-5 h-5" />
-            </template>
-            Deposit
-          </UButton>
+          />
 
           <UButton
-            color="neutral"
-            variant="outline"
-            class="flex items-center gap-2"
+            color="secondary"
+            size="xl"
             data-test="transfer-button"
+            leading-icon="heroicons-outline:arrows-right-left"
+            label="Transfer"
             @click="openTransferModal"
-          >
-            <template #leading>
-              <IconifyIcon icon="heroicons-outline:arrows-right-left" class="w-5 h-5" />
-            </template>
-            Transfer
-          </UButton>
+          />
 
           <UButton
             v-if="address"
             color="primary"
-            class="flex items-center gap-2"
-            @click="openInSafeApp"
             data-test="open-safe-app-button"
-          >
-            <template #leading>
-              <IconifyIcon icon="heroicons-outline:external-link" class="w-5 h-5" />
-            </template>
-            Open in Safe App
-          </UButton>
+            leading-icon="heroicons-outline:external-link"
+            label="Open in Safe App"
+            @click="openInSafeApp"
+          />
         </div>
         <div class="flex items-center gap-2" v-if="address">
           <div class="text-sm text-gray-600">Safe Address:</div>
@@ -141,7 +129,6 @@ import type { Address } from 'viem'
 import { useStorage } from '@vueuse/core'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import { getSafeHomeUrl, openSafeAppUrl } from '@/composables/safe'
-import { Icon as IconifyIcon } from '@iconify/vue'
 
 import { useContractBalance } from '@/composables/useContractBalance'
 import { useGetSafeInfoQuery } from '@/queries/safe.queries'

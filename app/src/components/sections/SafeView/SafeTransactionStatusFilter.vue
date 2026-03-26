@@ -5,7 +5,7 @@
       id="safe-transaction-status-select"
       v-model="selectedStatus"
       :items="statusOptions"
-      size="sm"
+      size="lg"
       data-test="safe-transaction-status-filter"
       class="w-36"
     />
