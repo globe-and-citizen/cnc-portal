@@ -13,11 +13,8 @@
         :data-test="`${dataTestPrefix}-type-filter`"
         :label="selectedTypeLabel"
         variant="ghost"
-      >
-        <template #suffix>
-          <IconifyIcon icon="heroicons:chevron-down" class="w-4 h-4" />
-        </template>
-      </UButton>
+        trailing-icon="heroicons:chevron-down"
+      />
       <ul
         class="absolute right-0 mt-2 menu bg-base-200 border-2 rounded-box z-1 w-40 p-2 shadow-sm"
         ref="typeDropdownTarget"

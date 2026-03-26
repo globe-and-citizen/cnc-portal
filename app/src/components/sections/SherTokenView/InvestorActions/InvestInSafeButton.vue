@@ -6,16 +6,13 @@
     >
       <UButton
         color="primary"
-        outline
+        variant="outline"
         :disabled="!canDeposit || !teamStore.getContractAddressByType('Safe')"
         data-test="invest-in-safe-button"
         @click="openModal"
-      >
-        <template #prefix>
-          <IconifyIcon icon="heroicons-outline:plus" class="w-4 h-4" />
-        </template>
-        Invest & Get SHER
-      </UButton>
+        leading-icon="heroicons-outline:plus"
+        label="Invest & Get SHER"
+      />
     </div>
 
     <ModalComponent
