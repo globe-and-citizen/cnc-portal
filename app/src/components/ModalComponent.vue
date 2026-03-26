@@ -1,19 +1,19 @@
 <template>
   <dialog id="custom-modal" class="modal" :class="{ 'modal-open': toggleOpen }">
     <div class="modal-box h-auto overflow-y-auto" :class="width">
-      <ButtonUI
+      <UButton
         class="absolute right-4 top-4"
         size="sm"
-        variant="error"
-        outline
+        color="error"
+        variant="outline"
+        label="✕"
         @click="
           () => {
             toggleOpen = false
             emit('reset')
           }
         "
-        >✕</ButtonUI
-      >
+      />
       <slot></slot>
     </div>
 
@@ -25,7 +25,6 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted } from 'vue'
-import ButtonUI from '@/components/ButtonUI.vue'
 
 const toggleOpen = defineModel({ default: false })
 const props = defineProps<{ modalWidth?: string }>()

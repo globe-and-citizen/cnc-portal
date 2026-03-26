@@ -3,16 +3,15 @@
     <template #card-action>
       <div class="flex justify-between">
         <div class="flex justify-between gap-2">
-          <ButtonUI
-            variant="primary"
+          <UButton
+            color="primary"
             size="md"
             @click="showModal = !showModal"
             data-test="create-proposal"
-          >
-            Create Election
-          </ButtonUI>
-          <ButtonUI
-            variant="secondary"
+            label="Create Election"
+          />
+          <UButton
+            color="secondary"
             size="md"
             v-if="boardOfDirectorsAddress"
             @click="
@@ -22,17 +21,15 @@
               }
             "
             data-test="view-bod"
-          >
-            View BoD
-          </ButtonUI>
-          <ButtonUI
-            variant="secondary"
+            label="View BoD"
+          />
+          <UButton
+            color="secondary"
             size="md"
             @click="showVotingControlModal = true"
             data-test="manage-voting"
-          >
-            Manage
-          </ButtonUI>
+            label="Manage"
+          />
         </div>
         <ModalComponent v-model="showVotingControlModal">
           <VotingManagement :team="team" />
@@ -116,7 +113,6 @@ import { BOD_ABI } from '@/artifacts/abi/bod'
 import { VOTING_ABI } from '@/artifacts/abi/voting'
 import type { Address } from 'viem'
 import { config } from '@/wagmi.config'
-import ButtonUI from '@/components/ButtonUI.vue'
 import CardComponent from '@/components/CardComponent.vue'
 
 const props = defineProps<{ team: Partial<Team> }>()

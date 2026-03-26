@@ -2,7 +2,6 @@ import { flushPromises, mount } from '@vue/test-utils'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { nextTick } from 'vue'
 import CRAddERC20Support from '../CRAddERC20Support.vue'
-import ButtonUI from '@/components/ButtonUI.vue'
 import SelectComponent from '@/components/SelectComponent.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 // Mock constants
@@ -75,7 +74,7 @@ describe.skip('CRAddERC20Support.vue', () => {
     return mount(CRAddERC20Support, {
       global: {
         components: {
-          ButtonUI,
+          UButton,
           SelectComponent,
           AddressToolTip
         }
@@ -125,7 +124,7 @@ describe.skip('CRAddERC20Support.vue', () => {
   describe('Button States and Behavior', () => {
     it('should disable button when no token is selected', () => {
       wrapper = mountComponent()
-      const button = wrapper.findComponent(ButtonUI)
+      const button = wrapper.findComponent({ name: 'UButton' })
 
       expect(button.props('disabled')).toBe(true)
     })
@@ -139,7 +138,7 @@ describe.skip('CRAddERC20Support.vue', () => {
 
     it('should have primary variant initially', () => {
       wrapper = mountComponent()
-      const button = wrapper.findComponent(ButtonUI)
+      const button = wrapper.findComponent({ name: 'UButton' })
 
       expect(button.props('variant')).toBe('primary')
     })
@@ -153,7 +152,7 @@ describe.skip('CRAddERC20Support.vue', () => {
       await nextTick()
       await flushPromises()
 
-      const button = wrapper.findComponent(ButtonUI)
+      const button = wrapper.findComponent({ name: 'UButton' })
       expect(button.props('disabled')).toBe(false)
     })
 
@@ -169,7 +168,7 @@ describe.skip('CRAddERC20Support.vue', () => {
       const button = wrapper.find('[data-test="add-token-button"]')
       expect(button.text()).toBe('Remove Token Support')
 
-      const buttonComponent = wrapper.findComponent(ButtonUI)
+      const buttonComponent = wrapper.findComponent({ name: 'UButton' })
       expect(buttonComponent.props('variant')).toBe('error')
     })
   })
@@ -360,7 +359,7 @@ describe.skip('CRAddERC20Support.vue', () => {
   //     await button.trigger('click')
 
   //     // Check loading state
-  //     const buttonComponent = wrapper.findComponent(ButtonUI)
+  //     const buttonComponent = wrapper.findComponent({ name: 'UButton' })
   //     expect(buttonComponent.props('loading')).toBe(true)
   //     expect(buttonComponent.props('disabled')).toBe(true)
 

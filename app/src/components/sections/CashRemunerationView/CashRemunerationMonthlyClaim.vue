@@ -2,7 +2,7 @@
   <OverviewCard
     :title="totalMonthlyClaim"
     subtitle="Month Claimed"
-    variant="warning"
+    color="warning"
     :card-icon="cartIcon"
     :loading="isFetching"
   >

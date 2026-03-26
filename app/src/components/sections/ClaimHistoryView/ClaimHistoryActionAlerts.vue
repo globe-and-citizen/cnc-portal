@@ -16,15 +16,15 @@
             :signed-week-starts="signedWeekStarts"
             :restrict-submit="false"
           />
-          <ButtonUI
+          <UButton
             v-else
-            variant="success"
+            color="success"
             size="sm"
             :disabled="true"
             data-test="submit-claim-disabled-button"
           >
             Submit Claim
-          </ButtonUI>
+          </UButton>
         </div>
       </div>
 
@@ -91,7 +91,6 @@ import type { WeeklyClaim } from '@/types'
 import CardComponent from '@/components/CardComponent.vue'
 import SubmitClaims from '../CashRemunerationView/SubmitClaims.vue'
 import CRSigne from '../CashRemunerationView/CRSigne.vue'
-import ButtonUI from '@/components/ButtonUI.vue'
 import CRWithdrawClaim from '../CashRemunerationView/CRWithdrawClaim.vue'
 
 dayjs.extend(utc)

@@ -1,7 +1,7 @@
 <template>
   <OverviewCard
     :title="total[currency.code]?.formated ?? 0"
-    variant="success"
+    color="success"
     subtitle="Total Balance"
     :card-icon="bagIcon"
     :loading="isLoadingBalance"

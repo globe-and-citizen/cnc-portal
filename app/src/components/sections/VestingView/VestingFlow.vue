@@ -49,10 +49,11 @@
         <div class="flex flex-wrap gap-2">
           <!-- Stop Button -->
 
-          <button
+          <UButton
             v-if="row.status === 'Active' && team?.ownerAddress == userAddress"
             data-test="stop-btn"
-            class="btn btn-xs btn-error flex items-center justify-center"
+            color="error"
+            size="xs"
             @click.stop="
               stopVesting({
                 address: VESTING_ADDRESS as Address,
@@ -61,19 +62,19 @@
                 args: [row.member, BigInt(team?.id ?? 0)]
               })
             "
-          >
-            <IconifyIcon icon="mdi:stop-circle-outline" class="mr-1" />
-            <span class="text-xs">Stop</span>
-          </button>
+            icon="mdi:stop-circle-outline"
+            label="Stop"
+          />
 
           <!-- Withdraw Button -->
 
           <!-- Release Button -->
 
-          <button
+          <UButton
             data-test="release-btn"
             v-if="row.status === 'Active' && row.member === userAddress"
-            class="btn btn-xs btn-success flex items-center justify-center"
+            color="success"
+            size="xs"
             :disabled="!row.isStarted"
             :title="!row.isStarted ? 'Vesting has not started yet' : ''"
             @click.stop="
@@ -84,10 +85,9 @@
                 args: [BigInt(team?.id ?? 0)]
               })
             "
-          >
-            <IconifyIcon icon="mdi:lock-open" class="mr-1" />
-            <span class="text-xs">Release</span>
-          </button>
+            icon="mdi:lock-open"
+            label="Release"
+          />
         </div>
       </template>
     </TableComponent>
@@ -99,7 +99,6 @@ import TableComponent from '@/components/TableComponent.vue'
 import { computed, watch, ref } from 'vue'
 import CardComponent from '@/components/CardComponent.vue'
 import { type VestingRow, type VestingTuple, type VestingStatus } from '@/types/vesting'
-import { Icon as IconifyIcon } from '@iconify/vue'
 import { useTeamStore } from '@/stores'
 import { type Address, formatUnits } from 'viem'
 import { useUserDataStore } from '@/stores'

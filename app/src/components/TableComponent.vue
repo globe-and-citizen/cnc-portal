@@ -107,14 +107,14 @@
           :next-page="nextPage"
         >
           <div class="join">
-            <button
-              class="join-item btn btn-sm"
+            <UButton
+              class="join-item"
+              size="sm"
               :disabled="currentPage === 1"
               @click="previousPage"
               data-test="previous-page"
-            >
-              <IconifyIcon icon="heroicons:chevron-left" class="w-4 h-4" />
-            </button>
+              icon="heroicons:chevron-left"
+            />
             <button
               v-for="page in displayedPages"
               :key="page"
@@ -125,14 +125,14 @@
             >
               {{ page }}
             </button>
-            <button
-              class="join-item btn btn-sm"
+            <UButton
+              class="join-item"
+              size="sm"
               :disabled="currentPage === totalPages"
               @click="nextPage"
               data-test="next-page"
-            >
-              <IconifyIcon icon="heroicons:chevron-right" class="w-4 h-4" />
-            </button>
+              icon="heroicons:chevron-right"
+            />
           </div>
         </slot>
       </div>

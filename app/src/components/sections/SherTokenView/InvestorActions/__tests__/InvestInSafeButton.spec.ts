@@ -49,8 +49,8 @@ describe('InvestInSafeButton', () => {
       global: {
         plugins: [createTestingPinia({ createSpy: vi.fn })],
         stubs: {
-          ButtonUI: {
-            name: 'ButtonUI',
+          UButton: {
+            name: 'UButton',
             template: `
               <button 
                 data-test="invest-in-safe-button"

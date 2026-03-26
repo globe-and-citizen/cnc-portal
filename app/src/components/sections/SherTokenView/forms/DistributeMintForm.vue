@@ -104,22 +104,20 @@
     </div>
 
     <div class="text-center">
-      <ButtonUI
+      <UButton
         :loading="loading"
         :disabled="loading"
-        variant="primary"
+        color="primary"
         class="w-44 text-center"
         @click="onSubmit()"
         data-test="submit-button"
-      >
-        Distribute Mint
-      </ButtonUI>
+        label="Distribute Mint"
+      />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import ButtonUI from '@/components/ButtonUI.vue'
 import { useGetSearchUsersQuery } from '@/queries/user.queries'
 import { useToastStore } from '@/stores'
 import { log } from '@/utils'

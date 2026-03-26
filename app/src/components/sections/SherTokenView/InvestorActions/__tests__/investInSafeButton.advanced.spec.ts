@@ -48,8 +48,8 @@ describe('InvestInSafeButton - Advanced Features', () => {
       global: {
         plugins: [createTestingPinia({ createSpy: vi.fn })],
         stubs: {
-          ButtonUI: {
-            name: 'ButtonUI',
+          UButton: {
+            name: 'UButton',
             template: `
               <button 
                 data-test="invest-in-safe-button"
@@ -186,14 +186,14 @@ describe('InvestInSafeButton - Advanced Features', () => {
       })
 
       wrapper = createWrapper()
-      let button = wrapper.findComponent({ name: 'ButtonUI' })
-      expect(button.props('disabled')).toBe(false)
+      let button = wrapper.find('[data-test="invest-in-safe-button"]')
+      expect((button.element as HTMLButtonElement).disabled).toBe(false)
 
       depositsEnabledRef.value = false
       await nextTick()
 
-      button = wrapper.findComponent({ name: 'ButtonUI' })
-      expect(button.props('disabled')).toBe(true)
+      button = wrapper.find('[data-test="invest-in-safe-button"]')
+      expect((button.element as HTMLButtonElement).disabled).toBe(true)
     })
 
     it('should update button state when paused state changes', async () => {
@@ -208,14 +208,14 @@ describe('InvestInSafeButton - Advanced Features', () => {
       })
 
       wrapper = createWrapper()
-      let button = wrapper.findComponent({ name: 'ButtonUI' })
-      expect(button.props('disabled')).toBe(false)
+      let button = wrapper.find('[data-test="invest-in-safe-button"]')
+      expect((button.element as HTMLButtonElement).disabled).toBe(false)
 
       pausedRef.value = true
       await nextTick()
 
-      button = wrapper.findComponent({ name: 'ButtonUI' })
-      expect(button.props('disabled')).toBe(true)
+      button = wrapper.find('[data-test="invest-in-safe-button"]')
+      expect((button.element as HTMLButtonElement).disabled).toBe(true)
     })
   })
 
@@ -226,9 +226,9 @@ describe('InvestInSafeButton - Advanced Features', () => {
       ) as unknown as typeof mockTeamStore.getContractAddressByType
 
       wrapper = createWrapper()
-      const button = wrapper.findComponent({ name: 'ButtonUI' })
+      const button = wrapper.find('[data-test="invest-in-safe-button"]')
       // Component currently doesn't validate zero address, button is enabled
-      expect(button.props('disabled')).toBe(false)
+      expect((button.element as HTMLButtonElement).disabled).toBe(false)
     })
 
     it('should disable button when Safe address is empty string', () => {
@@ -237,8 +237,8 @@ describe('InvestInSafeButton - Advanced Features', () => {
       ) as unknown as typeof mockTeamStore.getContractAddressByType
 
       wrapper = createWrapper()
-      const button = wrapper.findComponent({ name: 'ButtonUI' })
-      expect(button.props('disabled')).toBe(true)
+      const button = wrapper.find('[data-test="invest-in-safe-button"]')
+      expect((button.element as HTMLButtonElement).disabled).toBe(true)
     })
 
     it('should disable button when Safe address is null', () => {
@@ -247,8 +247,8 @@ describe('InvestInSafeButton - Advanced Features', () => {
       ) as unknown as typeof mockTeamStore.getContractAddressByType
 
       wrapper = createWrapper()
-      const button = wrapper.findComponent({ name: 'ButtonUI' })
-      expect(button.props('disabled')).toBe(true)
+      const button = wrapper.find('[data-test="invest-in-safe-button"]')
+      expect((button.element as HTMLButtonElement).disabled).toBe(true)
     })
 
     it('should disable button when Safe address is undefined', () => {
@@ -257,8 +257,8 @@ describe('InvestInSafeButton - Advanced Features', () => {
       ) as unknown as typeof mockTeamStore.getContractAddressByType
 
       wrapper = createWrapper()
-      const button = wrapper.findComponent({ name: 'ButtonUI' })
-      expect(button.props('disabled')).toBe(true)
+      const button = wrapper.find('[data-test="invest-in-safe-button"]')
+      expect((button.element as HTMLButtonElement).disabled).toBe(true)
     })
   })
 
@@ -274,8 +274,8 @@ describe('InvestInSafeButton - Advanced Features', () => {
       })
 
       wrapper = createWrapper()
-      const button = wrapper.findComponent({ name: 'ButtonUI' })
-      expect(button.props('disabled')).toBe(true)
+      const button = wrapper.find('[data-test="invest-in-safe-button"]')
+      expect((button.element as HTMLButtonElement).disabled).toBe(true)
     })
 
     it('should handle undefined paused data', () => {
@@ -289,8 +289,8 @@ describe('InvestInSafeButton - Advanced Features', () => {
       })
 
       wrapper = createWrapper()
-      const button = wrapper.findComponent({ name: 'ButtonUI' })
-      expect(button.props('disabled')).toBe(true)
+      const button = wrapper.find('[data-test="invest-in-safe-button"]')
+      expect((button.element as HTMLButtonElement).disabled).toBe(true)
     })
   })
 

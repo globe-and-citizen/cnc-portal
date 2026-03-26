@@ -42,15 +42,14 @@
   </div>
 
   <div class="modal-action justify-center">
-    <ButtonUI
-      variant="primary"
+    <UButton
+      color="primary"
       :loading="transferOwnershipLoading"
       :disabled="transferOwnershipLoading"
       data-test="submit-button"
       @click="submitForm(newOwner, description)"
-    >
-      Submit
-    </ButtonUI>
+      label="Submit"
+    />
   </div>
 </template>
 <script setup lang="ts">
@@ -58,7 +57,6 @@ import { required, helpers } from '@vuelidate/validators'
 import { useVuelidate } from '@vuelidate/core'
 import { ref } from 'vue'
 import { isAddress } from 'viem'
-import ButtonUI from '@/components/ButtonUI.vue'
 
 const newOwner = ref('')
 const description = ref('')

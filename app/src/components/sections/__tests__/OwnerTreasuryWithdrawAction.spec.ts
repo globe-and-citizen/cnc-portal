@@ -54,7 +54,7 @@ const makeBalance = (
 
 const stubs = {
   teleport: true,
-  ButtonUI: defineComponent({
+  UButton: defineComponent({
     props: { disabled: { type: Boolean, default: false } },
     emits: ['click'],
     template:

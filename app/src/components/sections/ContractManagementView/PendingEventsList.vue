@@ -17,13 +17,12 @@
     </template>
 
     <template #actions-data="{ row }">
-      <ButtonUI @click="emits('view-details', row)" variant="success" size="sm">Approve</ButtonUI>
+      <UButton @click="emits('view-details', row)" color="success" size="sm" label="Approve" />
     </template>
   </TableComponent>
 </template>
 <script setup lang="ts">
 import TableComponent from '@/components/TableComponent.vue'
-import ButtonUI from '@/components/ButtonUI.vue'
 import type { FormattedAction } from '@/utils'
 import UserComponent from '@/components/UserComponent.vue'
 import { useBodIsActionExecuted } from '@/composables/bod/reads'

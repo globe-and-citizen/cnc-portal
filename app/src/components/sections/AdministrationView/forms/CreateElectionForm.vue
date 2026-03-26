@@ -124,15 +124,16 @@
       </label>
 
       <div class="flex justify-center">
-        <ButtonUI
+        <UButton
           :loading="isLoading"
           :disabled="isLoading"
-          class="btn btn-primary btn-md justify-center"
+          color="primary"
+          size="md"
+          class="justify-center"
           data-test="submitButton"
           @click="submitForm"
-        >
-          Create Election
-        </ButtonUI>
+          label="Create Election"
+        />
       </div>
     </div>
   </div>
@@ -143,7 +144,6 @@ import type { OldProposal, User } from '@/types'
 import { ref, onMounted, onUnmounted } from 'vue'
 import { required, minLength, requiredIf, helpers, minValue } from '@vuelidate/validators'
 import { useVuelidate } from '@vuelidate/core'
-import ButtonUI from '@/components/ButtonUI.vue'
 import MultiSelectMemberInput from '@/components/utils/MultiSelectMemberInput.vue'
 import VueDatePicker from '@vuepic/vue-datepicker'
 

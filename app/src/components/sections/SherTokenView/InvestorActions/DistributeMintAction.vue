@@ -1,13 +1,12 @@
 <template>
   <div class="tooltip" data-tip="Coming soon">
-    <ButtonUI
-      variant="primary"
+    <UButton
+      color="primary"
       :disabled="true"
       data-test="distribute-mint-button"
       @click="openModal"
-    >
-      Distribute Mint {{ tokenSymbol }}
-    </ButtonUI>
+      :label="`Distribute Mint ${tokenSymbol}`"
+    />
 
     <ModalComponent v-model="modalState.show" v-if="modalState.mount" @reset="closeModal">
       <DistributeMintForm
@@ -23,7 +22,6 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import type { Address } from 'viem'
-import ButtonUI from '@/components/ButtonUI.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import DistributeMintForm from '@/components/sections/SherTokenView/forms/DistributeMintForm.vue'
 import { INVESTOR_ABI } from '@/artifacts/abi/investors'

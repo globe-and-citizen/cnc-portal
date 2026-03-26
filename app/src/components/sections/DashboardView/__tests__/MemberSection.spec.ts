@@ -110,8 +110,8 @@ describe.skip('MemberSection.vue', () => {
             name: 'IconifyIcon',
             template: '<span data-test="iconify-icon" />'
           },
-          ButtonUI: {
-            name: 'ButtonUI',
+          UButton: {
+            name: 'UButton',
             emits: ['click'],
             template: '<button v-bind="$attrs" @click="$emit(\'click\')"><slot /></button>'
           },

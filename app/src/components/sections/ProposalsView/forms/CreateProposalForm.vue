@@ -98,30 +98,28 @@
   </div>
 
   <div class="modal-action">
-    <ButtonUI
-      variant="error"
-      outline
+    <UButton
+      color="error"
+      variant="outline"
       @click="
         () => {
           emit('closeModal')
         }
       "
-      >Cancel</ButtonUI
-    >
-    <ButtonUI
-      variant="primary"
+      label="Cancel"
+    />
+    <UButton
+      color="primary"
       @click="handleSubmit"
       :loading="isCreatingProposal || isConfirmingProposal"
       :disabled="isCreatingProposal || isConfirmingProposal"
       data-test="create-proposal-button"
-    >
-      Create Proposal
-    </ButtonUI>
+      label="Create Proposal"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import ButtonUI from '@/components/ButtonUI.vue'
 import VueDatePicker from '@vuepic/vue-datepicker'
 import { ref, computed, watch } from 'vue'
 import { useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
