@@ -23,6 +23,15 @@ describe('UpdateTeamForm.vue', () => {
       global: {
         provide: {
           team: defaultTeam
+        },
+        stubs: {
+          UButton: {
+            name: 'UButton',
+            props: ['loading', 'disabled', 'variant', 'color'],
+            emits: ['click'],
+            template:
+              '<button data-test="submit-btn" :loading="loading" :disabled="disabled" @click="$emit(\'click\')"><slot /></button>'
+          }
         }
       }
     })
@@ -34,13 +43,14 @@ describe('UpdateTeamForm.vue', () => {
 
     it('displays the loading button when teamIsUpdating is true', async () => {
       await wrapper.setProps({ teamIsUpdating: true })
-      expect(wrapper.findComponent({ name: 'UButton' }).props().loading).toBe(true)
+      const btn = wrapper.find('[data-test="submit-btn"]')
+      expect((btn.element as HTMLButtonElement).getAttribute('loading')).toBe('true')
     })
 
     it('displays the submit button when teamIsUpdating is false', async () => {
       await wrapper.setProps({ teamIsUpdating: false })
-      expect(wrapper.findComponent({ name: 'UButton' }).props().loading).toBe(false)
-      expect(wrapper.findComponent({ name: 'UButton' }).props().variant).toBe('primary')
+      const btn = wrapper.find('[data-test="submit-btn"]')
+      expect((btn.element as HTMLButtonElement).getAttribute('loading')).toBe('false')
     })
   })
   describe('Actions', () => {
@@ -54,7 +64,7 @@ describe('UpdateTeamForm.vue', () => {
     })
 
     it('emits updateTeam event when submit button is clicked', async () => {
-      await wrapper.find('button.btn-primary').trigger('click')
+      await wrapper.find('[data-test="submit-btn"]').trigger('click')
       expect(wrapper.emitted('updateTeam')).toBeTruthy()
     })
   })

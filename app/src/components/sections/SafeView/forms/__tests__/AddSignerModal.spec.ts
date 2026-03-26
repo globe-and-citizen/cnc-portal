@@ -83,12 +83,6 @@ const createWrapper = (
       ...props
     },
     global: {
-      components: {
-        ModalComponent,
-        UButton,
-        MultiSelectMemberInput,
-        IconifyIcon: Icon
-      },
       stubs: {
         ModalComponent: {
           template: '<div data-test="add-signer-modal"><slot /></div>',
