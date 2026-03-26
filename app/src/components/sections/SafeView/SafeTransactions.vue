@@ -71,7 +71,7 @@
 
           <UButton
             size="xs"
-            variant="success"
+            color="success"
             @click="handleExecuteClick(row as SafeTransaction)"
             :disabled="!canExecute(row as SafeTransaction) || isExecuting"
             :loading="isTransactionLoading(row.safeTxHash, 'execute')"

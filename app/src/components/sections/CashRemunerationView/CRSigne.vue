@@ -1,7 +1,7 @@
 <template>
   <UButton
     v-if="isCashRemunerationOwner && !isDropDown"
-    variant="success"
+    color="success"
     data-test="approve-button"
     :disabled="isLoad || disabled || isCurrentWeek"
     :loading="isLoad"

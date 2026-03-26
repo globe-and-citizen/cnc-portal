@@ -5,7 +5,7 @@
       <div>
         <UButton
           class="flex items-center cursor-pointer gap-4 border border-gray-300"
-          @click="() => (isDropdownOpen = !isDropdownOpen)"
+          @click="isDropdownOpen = !isDropdownOpen"
           :data-test="`${dataTestPrefix}-date-select`"
         >
           <span>{{ displayDateRange }}</span>

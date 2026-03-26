@@ -21,7 +21,7 @@
           :disabled="teamIsDeleting"
           >Delete
         </UButton>
-        <UButton color="primary" outline @click="() => (showDeleteTeamConfirmModal = false)"
+        <UButton color="primary" outline @click="showDeleteTeamConfirmModal = false"
           >Cancel</UButton
         >
         >

@@ -52,7 +52,7 @@
         color="error"
         data-test="cancel-button"
         :disabled="isConfirmingMint || isMintPending"
-        @click="() => emit('close-modal')"
+        @click="emit('close-modal')"
         >Cancel
       </UButton>
       <UButton

@@ -15,7 +15,7 @@
           : '...'
       "
       subtitle="Your Balance"
-      variant="success"
+      color="success"
       :card-icon="bagIcon"
       :loading="!teamStore.currentTeam"
     >

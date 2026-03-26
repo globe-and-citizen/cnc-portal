@@ -3,7 +3,7 @@
     <UButton
       color="error"
       size="sm"
-      @click="() => (showModal = true)"
+      @click="showModal = true"
       data-test="delete-member-button"
       icon="heroicons-outline:trash"
     />

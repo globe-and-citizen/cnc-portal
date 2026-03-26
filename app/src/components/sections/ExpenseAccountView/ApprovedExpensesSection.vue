@@ -10,7 +10,7 @@
         "
       >
         <UButton
-          variant="success"
+          color="success"
           :disabled="!(userDataStore.address === contractOwnerAddress || isBodAction())"
           @click="
             () => {

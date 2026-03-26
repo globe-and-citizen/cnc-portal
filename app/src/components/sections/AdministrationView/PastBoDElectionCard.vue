@@ -44,10 +44,11 @@
         color="success"
         variant="outline"
         @click="
-          () =>
-            router.push(
+          () => {
+            void router.push(
               `/teams/${teamStore.currentTeamId}/administration/bod-elections-details?electionId=${election.id}`
             )
+          }
         "
         label="View Results"
       />

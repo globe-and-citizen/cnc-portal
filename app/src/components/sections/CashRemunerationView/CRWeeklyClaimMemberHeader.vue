@@ -10,7 +10,7 @@
           <SubmitClaims v-if="hasWage" />
           <UButton
             v-else
-            variant="success"
+            color="success"
             size="sm"
             :disabled="true"
             data-test="submit-claim-disabled-button"

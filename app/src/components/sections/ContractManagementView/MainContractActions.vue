@@ -1,7 +1,7 @@
 <template>
   <div class="flex items-center gap-2">
     <UButton
-      :variant="row.paused ? 'info' : 'error'"
+      :color="row.paused ? 'info' : 'error'"
       size="sm"
       @click="changeContractStatus(row.paused)"
       :loading="isLoadingPauseContract || isLoadingUnpauseContract"
@@ -13,7 +13,7 @@
       />
     </UButton>
     <UButton
-      variant="success"
+      color="success"
       :outline="true"
       size="sm"
       @click="showModal = true"
@@ -23,7 +23,7 @@
     >
     <UButton
       :disabled="!isBodAction || formatedActions.length <= 0"
-      variant="success"
+      color="success"
       :outline="true"
       size="sm"
       @click="

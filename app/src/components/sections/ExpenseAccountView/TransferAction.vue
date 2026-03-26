@@ -1,7 +1,7 @@
 <template>
   <div>
     <UButton
-      variant="success"
+      color="success"
       :disabled="row.status !== 'enabled'"
       @click="showModal = { mount: true, show: true }"
       data-test="transfer-button"

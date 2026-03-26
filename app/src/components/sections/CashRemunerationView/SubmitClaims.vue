@@ -1,7 +1,7 @@
 <template>
   <UButton
     :loading="isWageClaimAdding"
-    variant="success"
+    color="success"
     size="sm"
     data-test="modal-submit-hours-button"
     :disabled="!canSubmitClaim"
