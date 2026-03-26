@@ -153,6 +153,4 @@ describe('SetMemberWageOvertimeStep.vue', () => {
     expect(wrapper.text()).toContain('USDC 5')
     expect(wrapper.text()).toContain(`${NETWORK.currencySymbol} 20`)
   })
-
-  
 })

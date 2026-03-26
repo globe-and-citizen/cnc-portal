@@ -4,7 +4,6 @@ import { defineComponent } from 'vue'
 import SetMemberWageStandardStep from '../SetMemberWageStandardStep.vue'
 import type { WageWithForm } from '../SetMemberWageModal.vue'
 
-
 const createWageData = (overrides: Partial<WageWithForm> = {}): WageWithForm => ({
   id: 1,
   teamId: 1,
@@ -172,8 +171,5 @@ describe('SetMemberWageStandardStep.vue', () => {
     expect(wageData.maximumHoursPerWeek).toBe(45)
     expect(wageData.ratePerHour[1].enabled).toBe(true)
     expect(wageData.ratePerHour[1].amount).toBe(7)
-
   })
-
-
 })

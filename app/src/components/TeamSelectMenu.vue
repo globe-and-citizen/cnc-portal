@@ -53,5 +53,4 @@ const selectedTeam = computed({
     }
   }
 })
-
 </script>
