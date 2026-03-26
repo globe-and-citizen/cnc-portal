@@ -39,7 +39,7 @@
         color="primary"
         type="submit"
         :loading="submitting"
-        :disabled="isLoading || !isAmountValid"
+        :disabled="isLoading || submitting || isNativeDepositLoading"
         data-test="deposit-button"
       >
         {{ submitLabel }}
@@ -102,8 +102,17 @@ const formSchema = computed(() =>
   z.object({
     amount: z
       .string()
-      .min(1, 'Amount is required')
-      .refine(() => isAmountValid.value, 'Amount is invalid')
+      .trim()
+      .min(1, 'Amount is required.')
+      .refine((value) => {
+        if (!/^(?:\d+\.?\d*|\.\d+)$/.test(value)) return false
+        const numericAmount = Number(value)
+        return Number.isFinite(numericAmount) && numericAmount > 0
+      }, 'Enter a valid amount greater than 0.')
+      .refine((value) => {
+        if (!selectedToken.value) return true
+        return Number(value) <= (selectedToken.value.amount ?? 0)
+      }, 'Amount exceeds available balance.')
   })
 )
 

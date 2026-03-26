@@ -1,5 +1,5 @@
 <template>
-  <UModal v-model:open="isOpen" :close="{ onClick: () => handleClose() }" title="Update Threshold">
+  <UModal v-model:open="isOpen" title="Update Threshold">
     <template #body>
       <UForm
         :schema="thresholdSchema"
@@ -71,6 +71,7 @@
         <!-- Action Buttons -->
         <div class="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-800">
           <UButton
+            type="button"
             color="neutral"
             variant="outline"
             :disabled="isLoading"

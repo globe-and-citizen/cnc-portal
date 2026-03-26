@@ -37,7 +37,13 @@
     </UFormField>
 
     <div class="mt-4 flex justify-between">
-      <UButton color="neutral" variant="outline" data-test="cancel-button" @click="handleClose">
+      <UButton
+        type="button"
+        color="neutral"
+        variant="outline"
+        data-test="cancel-button"
+        @click="handleClose"
+      >
         Cancel
       </UButton>
       <UButton
