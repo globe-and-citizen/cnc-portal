@@ -30,20 +30,19 @@
     </TokenAmount>
 
     <div class="text-center">
-      <ButtonUI
+      <UButton
         :loading="loading"
         :disabled="loading || (formattedUnlockedBalance ?? 0) === 0"
-        class="btn btn-primary w-44 text-center"
+        color="primary"
+        class="w-44 text-center"
         @click="onSubmit()"
-      >
-        submit
-      </ButtonUI>
+        label="submit"
+      />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import ButtonUI from '@/components/ButtonUI.vue'
 import { NETWORK } from '@/constant'
 // import { useToastStore } from '@/stores'
 import type { Team } from '@/types'

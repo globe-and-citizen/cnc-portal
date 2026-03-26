@@ -38,7 +38,7 @@ vi.mock('@wagmi/core', () => ({
 }))
 
 // Mock the components
-const MockButtonUI = {
+const MockUButton = {
   template: '<button @click="$emit(\'click\')"><slot></slot></button>'
 }
 
@@ -74,7 +74,7 @@ describe('TransferComponent', () => {
     return mount(TransferAction, {
       global: {
         components: {
-          ButtonUI: MockButtonUI,
+          UButton: MockUButton,
           ModalComponent: MockModalComponent,
           TransferForm: MockTransferForm
         },

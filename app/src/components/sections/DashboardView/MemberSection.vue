@@ -4,18 +4,18 @@
       #card-action
       v-if="teamStore.currentTeamMeta.data?.ownerAddress == userDataStore.address"
     >
-      <ButtonUI
+      <UButton
         @click="
           () => {
             showAddMemberForm = { mount: true, show: true }
           }
         "
         data-test="add-member-button"
-        variant="primary"
+        color="primary"
         class="w-max"
-      >
-        <IconifyIcon icon="heroicons-outline:plus-circle" class="size-6" /> Add a new Member
-      </ButtonUI>
+        leading-icon="heroicons-outline:plus-circle"
+        label="Add a new Member"
+      />
       <ModalComponent
         v-model="showAddMemberForm.show"
         @reset="() => (showAddMemberForm = { mount: false, show: false })"
@@ -131,12 +131,10 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { Icon as IconifyIcon } from '@iconify/vue'
 import AddMemberForm from '@/components/sections/DashboardView/forms/AddMemberForm.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import { useUserDataStore } from '@/stores/user'
 import { useTeamStore, useToastStore } from '@/stores'
-import ButtonUI from '@/components/ButtonUI.vue'
 import CardComponent from '@/components/CardComponent.vue'
 import TableComponent from '@/components/TableComponent.vue'
 import UserComponent from '@/components/UserComponent.vue'

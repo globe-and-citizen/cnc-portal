@@ -40,7 +40,7 @@ describe('AddMemberForm.vue', () => {
 
     expect(wrapper.find('h1').text()).toBe('Add New Member')
     expect(wrapper.findComponent({ name: 'MultiSelectMemberInput' }).exists()).toBe(true)
-    expect(wrapper.findComponent({ name: 'ButtonUI' }).exists()).toBe(true)
+    expect(wrapper.findComponent({ name: 'UButton' }).exists()).toBe(true)
   })
 
   it('should show no error when component is initialized', () => {
@@ -88,7 +88,7 @@ describe('AddMemberForm.vue', () => {
     await wrapper.vm.$nextTick()
 
     // Click button to trigger handleAddMembers
-    const button = wrapper.findComponent({ name: 'ButtonUI' })
+    const button = wrapper.findComponent({ name: 'UButton' })
     await button.trigger('click')
 
     // Verify mutate was called with correct data

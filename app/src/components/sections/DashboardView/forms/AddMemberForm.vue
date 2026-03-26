@@ -11,21 +11,20 @@
       <div class="alert alert-danger" v-else>Something went wrong, Unable to add team Members</div>
     </div>
 
-    <ButtonUI
-      variant="primary"
+    <UButton
+      color="primary"
       class="justify-center"
       :loading="addMembersLoading"
       :disabled="addMembersLoading"
       @click="handleAddMembers"
-      >Add Members</ButtonUI
-    >
+      label="Add Members"
+    />
   </div>
 
   <div class="divider m-0"></div>
 </template>
 <script setup lang="ts">
 import { ref } from 'vue'
-import ButtonUI from '@/components/ButtonUI.vue'
 import MultiSelectMemberInput from '@/components/utils/MultiSelectMemberInput.vue'
 import { useToastStore } from '@/stores'
 import type { Member } from '@/types'

@@ -61,7 +61,7 @@ describe('DropdownActions', () => {
       global: {
         stubs: {
           IconifyIcon: true,
-          ButtonUI: true,
+          UButton: true,
           CRWithdrawClaim: {
             name: 'CRWithdrawClaim',
             template:
@@ -98,7 +98,7 @@ describe('DropdownActions', () => {
 
   it('renders Enable and Resign actions for disabled status', async () => {
     const wrapper = createWrapper('disabled')
-    const button = wrapper.findComponent({ name: 'ButtonUI' })
+    const button = wrapper.findComponent({ name: 'UButton' })
     button.trigger('click')
 
     await flushPromises()
@@ -118,7 +118,7 @@ describe('DropdownActions', () => {
 
   it('closes dropdown after action is selected', async () => {
     const wrapper = createWrapper('pending')
-    const button = wrapper.findComponent({ name: 'ButtonUI' })
+      const button = wrapper.findComponent({ name: 'UButton' })
 
     // Open dropdown
     await button.trigger('click')
@@ -140,7 +140,7 @@ describe('DropdownActions', () => {
 
   it('closes dropdown after withdraw action', async () => {
     const wrapper = createWrapper('signed')
-    const button = wrapper.findComponent({ name: 'ButtonUI' })
+    const button = wrapper.findComponent({ name: 'UButton' })
 
     await button.trigger('click')
 
@@ -157,7 +157,7 @@ describe('DropdownActions', () => {
 
   it('closes dropdown when clicking outside', async () => {
     const wrapper = createWrapper('pending')
-    const button = wrapper.findComponent({ name: 'ButtonUI' })
+    const button = wrapper.findComponent({ name: 'UButton' })
 
     // Open dropdown
     await button.trigger('click')
@@ -187,7 +187,7 @@ describe('DropdownActions', () => {
   describe('Disabled status', () => {
     it('closes dropdown after enable action', async () => {
       const wrapper = createWrapper('disabled')
-      const button = wrapper.findComponent({ name: 'ButtonUI' })
+      const button = wrapper.findComponent({ name: 'UButton' })
       await button.trigger('click')
 
       const enableComponent = wrapper.findComponent({ name: 'WeeklyClaimActionEnable' })
@@ -209,7 +209,7 @@ describe('DropdownActions', () => {
       })
 
       const wrapper = createWrapper('signed')
-      const button = wrapper.findComponent({ name: 'ButtonUI' })
+      const button = wrapper.findComponent({ name: 'UButton' })
       await button.trigger('click')
 
       const signedDisable = wrapper.find('[data-test="signed-disable"]')

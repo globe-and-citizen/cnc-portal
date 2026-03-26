@@ -40,18 +40,17 @@
       </div>
 
       <!-- View Results Button -->
-      <ButtonUI
-        variant="success"
-        :outline="true"
+      <UButton
+        color="success"
+        variant="outline"
         @click="
           () =>
             router.push(
               `/teams/${teamStore.currentTeamId}/administration/bod-elections-details?electionId=${election.id}`
             )
         "
-      >
-        View Results
-      </ButtonUI>
+        label="View Results"
+      />
     </div>
   </div>
 </template>
@@ -64,7 +63,6 @@ import { log, parseError } from '@/utils'
 import { useReadContract } from '@wagmi/vue'
 import { useRouter } from 'vue-router'
 import { computed, watch } from 'vue'
-import ButtonUI from '@/components/ButtonUI.vue'
 
 const { election } = defineProps<{
   election: Election

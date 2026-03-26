@@ -55,19 +55,20 @@
     </div>
   </div>
   <div class="flex mt-6 justify-end gap-2">
-    <ButtonUI variant="error" @click="$emit('close')" data-test="cancel-button">
-      <span><IconifyIcon icon="heroicons:arrow-left" /></span> Close
-    </ButtonUI>
+    <UButton color="error" @click="$emit('close')" data-test="cancel-button" variant="ghost">
+      <template #leading>
+        <IconifyIcon icon="heroicons:arrow-left" /></template
+      > Close
+    </UButton>
     <ToolTip :content="hasApproved ? 'You have already approved' : 'Click to approve this action'">
-      <ButtonUI
-        variant="primary"
+      <UButton
+        color="primary"
         data-test="transfer-ownership-button"
         @click="$emit('approve-action', row.actionId, row.id)"
         :loading="loading"
         :disabled="hasApproved || loading"
-      >
-        Approve Action
-      </ButtonUI>
+        label="Approve Action"
+      />
     </ToolTip>
   </div>
 </template>
@@ -76,7 +77,6 @@ import { computed, ref, watch } from 'vue'
 import type { TableRow } from '@/components/TableComponent.vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import UserComponent from '@/components/UserComponent.vue'
-import ButtonUI from '@/components/ButtonUI.vue'
 import { useReadContract } from '@wagmi/vue'
 import { useTeamStore, useUserDataStore } from '@/stores'
 import { BOD_ABI } from '@/artifacts/abi/bod'

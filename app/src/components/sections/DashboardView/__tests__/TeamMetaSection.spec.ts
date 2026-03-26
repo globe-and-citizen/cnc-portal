@@ -82,7 +82,7 @@ describe('TeamMetaSection.vue', () => {
 
     // Find the delete button
     const deleteButton = wrapper
-      .findAllComponents({ name: 'ButtonUI' })
+      .findAllComponents({ name: 'UButton' })
       .find((btn) => btn.attributes('data-test') === 'delete-team-button')
 
     // Button should exist and be visible
@@ -100,7 +100,7 @@ describe('TeamMetaSection.vue', () => {
 
     // Find the delete button
     const deleteButton = wrapper
-      .findAllComponents({ name: 'ButtonUI' })
+      .findAllComponents({ name: 'UButton' })
       .find((btn) => btn.attributes('data-test') === 'delete-team-button')
 
     // Button should exist and be visible
@@ -233,8 +233,8 @@ describe('TeamMetaSection.vue', () => {
     const componentVM = wrapper.vm as unknown as ComponentData
     expect(componentVM.showDeleteTeamConfirmModal).toBe(true)
 
-    // Find and click cancel button (the second ButtonUI without data-test)
-    const buttons = wrapper.findAllComponents({ name: 'ButtonUI' })
+    // Find and click cancel button (the second UButton without data-test)
+    const buttons = wrapper.findAllComponents({ name: 'UButton' })
     const cancelButton = buttons.find((btn, idx) => {
       return idx > 0 && !btn.attributes('data-test')
     })
@@ -255,7 +255,7 @@ describe('TeamMetaSection.vue', () => {
 
     // Verify both buttons exist
     const deleteButton = wrapper
-      .findAllComponents({ name: 'ButtonUI' })
+      .findAllComponents({ name: 'UButton' })
       .find((btn) => btn.attributes('data-test') === 'delete-team-button')
 
     expect(deleteButton?.exists()).toBe(true)

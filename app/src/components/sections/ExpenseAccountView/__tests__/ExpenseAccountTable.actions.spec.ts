@@ -6,7 +6,6 @@ import { setActivePinia, createPinia } from 'pinia'
 import { createTestingPinia } from '@pinia/testing'
 import { USDC_ADDRESS } from '@/constant'
 import { zeroAddress } from 'viem'
-import ButtonUI from '@/components/ButtonUI.vue'
 import * as utils from '@/utils'
 import {
   createMockQueryResponse,
@@ -159,7 +158,7 @@ describe('ExpenseAccountTable - Actions and Loading', () => {
       await flushPromises()
       // Find button again after state update to get updated reference
       const updatedFirstRow = expenseAccountTable.find('[data-test="0-row"]')
-      const enableButton = updatedFirstRow.findComponent(ButtonUI)
+      const enableButton = updatedFirstRow.findComponent({ name: 'UButton' })
       expect(enableButton.exists()).toBeTruthy()
       expect(enableButton.props('loading')).toBe(true)
     })
@@ -197,7 +196,7 @@ describe('ExpenseAccountTable - Actions and Loading', () => {
       expect(enableButton.props('disabled')).toBe(true)
       const secondRow = expenseAccountTable.find('[data-test="1-row"]')
       expect(secondRow.exists()).toBeTruthy()
-      const disableButton = secondRow.findComponent(ButtonUI)
+      const disableButton = secondRow.findComponent({ name: 'UButton' })
       expect(disableButton.props('disabled')).toBe(true)
     })
 

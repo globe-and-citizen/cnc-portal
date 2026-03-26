@@ -4,7 +4,6 @@ import DistributeMintForm from '../../../SherTokenView/forms/DistributeMintForm.
 import { createTestingPinia } from '@pinia/testing'
 import { mockToastStore } from '@/tests/mocks/store.mock'
 import { ref } from 'vue'
-import ButtonUI from '@/components/ButtonUI.vue'
 import { useGetSearchUsersQuery } from '@/queries/user.queries'
 
 interface ComponentData {
@@ -85,7 +84,7 @@ describe('DistributeMintForm', () => {
   it('should render loading button if loading is true', async () => {
     const wrapper = createComponent(true)
 
-    expect(wrapper.findComponent(ButtonUI).props().loading).toBe(true)
+    expect(wrapper.findComponent({ name: 'UButton' }).props().loading).toBe(true)
   })
 
   it('should emit submit event when button submit clicked', async () => {

@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { mount, type VueWrapper } from '@vue/test-utils'
 import VestingActions from '@/components/sections/VestingView/VestingActions.vue'
-import ButtonUI from '@/components/ButtonUI.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import CreateVesting from '@/components/sections/VestingView/forms/CreateVesting.vue'
 import { ref } from 'vue'
@@ -98,7 +97,7 @@ describe('VestingActions.vue', () => {
 
   describe('Rendering', () => {
     it('displays add vesting button when user is team owner', () => {
-      const addButton = wrapper.findComponent(ButtonUI)
+      const addButton = wrapper.findComponent({ name: 'UButton' })
       expect(addButton.exists()).toBe(true)
       expect(addButton.text()).toContain('add vesting')
       expect(addButton.attributes('data-test')).toBe('createAddVesting')
@@ -125,7 +124,7 @@ describe('VestingActions.vue', () => {
           plugins: [createTestingPinia({ createSpy: vi.fn })]
         }
       })
-      const addButton = wrapper.findComponent(ButtonUI)
+      const addButton = wrapper.findComponent({ name: 'UButton' })
       expect(addButton.exists()).toBe(true)
       await addButton.trigger('click')
       await wrapper.vm.$nextTick()
@@ -146,7 +145,7 @@ describe('VestingActions.vue', () => {
       })
 
       // Open modal first
-      const addButton = wrapper.findComponent(ButtonUI)
+      const addButton = wrapper.findComponent({ name: 'UButton' })
       await addButton.trigger('click')
       await wrapper.vm.$nextTick()
       await wrapper.vm.$nextTick()
@@ -175,7 +174,7 @@ describe('VestingActions.vue', () => {
         }
       })
 
-      const addButton = wrapper.findComponent(ButtonUI)
+      const addButton = wrapper.findComponent({ name: 'UButton' })
       await addButton.trigger('click')
       await wrapper.vm.$nextTick()
       await wrapper.vm.$nextTick()
@@ -210,7 +209,7 @@ describe('VestingActions.vue', () => {
         }
       })
 
-      const addButton = wrapper.findComponent(ButtonUI)
+      const addButton = wrapper.findComponent({ name: 'UButton' })
       await addButton.trigger('click')
       await wrapper.vm.$nextTick()
       await wrapper.vm.$nextTick()

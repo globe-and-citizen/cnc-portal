@@ -1,21 +1,15 @@
 <template>
   <div>
-    <ButtonUI
+    <UButton
       v-if="safeDepositRouterAddress"
-      :variant="depositsEnabled ? 'warning' : 'primary'"
+      :color="depositsEnabled ? 'warning' : 'primary'"
       :loading="isLoading"
       :disabled="!canManageDeposits || isLoading"
       data-test="toggle-sher-compensation-button"
       @click="handleToggleCompensation"
-    >
-      <template #prefix>
-        <IconifyIcon
-          :icon="depositsEnabled ? 'heroicons:lock-closed' : 'heroicons:lock-open'"
-          class="w-4 h-4"
-        />
-      </template>
-      {{ buttonText }}
-    </ButtonUI>
+      :leading-icon="depositsEnabled ? 'heroicons:lock-closed' : 'heroicons:lock-open'"
+      :label="buttonText"
+    />
   </div>
 </template>
 
@@ -24,7 +18,6 @@ import { computed, ref, watch } from 'vue'
 import { useConnection } from '@wagmi/vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
 
-import ButtonUI from '@/components/ButtonUI.vue'
 import {
   useEnableDeposits,
   useDisableDeposits,
