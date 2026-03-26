@@ -41,7 +41,6 @@
         <div class="flex gap-2">
           <UButton
             color="secondary"
-            size="xl"
             data-test="deposit-button"
             leading-icon="heroicons-outline:plus"
             label="Deposit"
@@ -50,7 +49,6 @@
 
           <UButton
             color="secondary"
-            size="xl"
             data-test="transfer-button"
             leading-icon="heroicons-outline:arrows-right-left"
             label="Transfer"
