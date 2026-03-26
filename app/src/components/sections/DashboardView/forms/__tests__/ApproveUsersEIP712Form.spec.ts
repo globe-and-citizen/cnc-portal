@@ -178,11 +178,10 @@ describe('ApproveUsersForm', () => {
       })
       ;(wrapper.vm as unknown as ComponentData).addressToDisapprove = '0xAddressToApprove'
       await wrapper.vm.$nextTick()
-      const loadingApproveButton = wrapper
-        .find('[data-test="approve-button"]')
-        .findComponent({ name: 'UButton' })
-      expect(loadingApproveButton.exists()).toBeTruthy()
-      expect(loadingApproveButton.props().loading).toBe(true)
+      const approveButton = wrapper.find('[data-test="approve-button"]')
+      expect(approveButton.exists()).toBeTruthy()
+      // Button should be disabled when loadingApprove is true
+      expect(approveButton.attributes('disabled')).toBeDefined()
     })
   })
   describe('State & V-Model', () => {
