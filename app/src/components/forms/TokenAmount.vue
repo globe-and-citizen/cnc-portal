@@ -16,7 +16,6 @@
           <UInput
             v-model="amount"
             placeholder="0"
-            
             inputmode="decimal"
             data-test="amountInput"
             :disabled="isLoading"

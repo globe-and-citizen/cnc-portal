@@ -57,7 +57,6 @@
         type="text"
         placeholder="John Doe"
         data-test="name-input"
-        
         class="w-full"
       />
     </UFormField>
@@ -70,7 +69,6 @@
         :items="currencyOptions"
         @change="handleCurrencyChange"
         data-test="currency-select"
-        
         class="w-full"
       />
     </UFormField>

@@ -25,7 +25,6 @@
       <UInput
         v-model="wageData.maximumOvertimeHoursPerWeek"
         class="w-full"
-        
         type="number"
         placeholder="e.g. 10"
         :ui="{ base: 'pl-36', leading: 'pointer-events-none' }"
@@ -44,12 +43,11 @@
           :key="rate.type"
           class="flex items-center gap-4"
         >
-          <USwitch  v-model="rate.enabled" />
+          <USwitch v-model="rate.enabled" />
           <UFormField :name="`overtimeRatePerHour.${index}.amount`" class="w-full">
             <UInput
               v-model="rate.amount"
               placeholder="0.00"
-              
               type="number"
               class="w-full"
               :disabled="!rate.enabled"

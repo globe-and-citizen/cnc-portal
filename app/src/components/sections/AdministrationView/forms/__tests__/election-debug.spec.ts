@@ -46,7 +46,14 @@ describe('election debug', () => {
     await btn.trigger('click')
     await flushPromises()
     const errors = wrapper.findAll('.text-red-500')
-    console.log('Shallow errors count:', errors.length, errors.map((e) => e.text()).slice(0, 3).join('||'))
+    console.log(
+      'Shallow errors count:',
+      errors.length,
+      errors
+        .map((e) => e.text())
+        .slice(0, 3)
+        .join('||')
+    )
   })
 
   it('mount - click and errors', async () => {
@@ -59,6 +66,13 @@ describe('election debug', () => {
     await btn.trigger('click')
     await flushPromises()
     const errors = wrapper.findAll('.text-red-500')
-    console.log('Mount errors count:', errors.length, errors.map((e) => e.text()).slice(0, 3).join('||'))
+    console.log(
+      'Mount errors count:',
+      errors.length,
+      errors
+        .map((e) => e.text())
+        .slice(0, 3)
+        .join('||')
+    )
   })
 })

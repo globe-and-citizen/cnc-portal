@@ -6,7 +6,6 @@
     placeholder="Select team"
     by="id"
     class="w-50"
-    
     :avatar="selectedTeam?.avatar"
     :search-input="{ placeholder: 'Search team...' }"
   />
