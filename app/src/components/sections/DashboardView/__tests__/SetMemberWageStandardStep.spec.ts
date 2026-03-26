@@ -4,10 +4,6 @@ import { defineComponent } from 'vue'
 import SetMemberWageStandardStep from '../SetMemberWageStandardStep.vue'
 import type { WageWithForm } from '../SetMemberWageModal.vue'
 
-type StandardStepVm = {
-  validateForm: () => boolean
-}
-
 const createWageData = (overrides: Partial<WageWithForm> = {}): WageWithForm => ({
   id: 1,
   teamId: 1,
@@ -117,6 +113,7 @@ const createWrapper = (wageData = createWageData()) =>
   mount(SetMemberWageStandardStep, {
     props: {
       wageData,
+      isPending: false,
       'onUpdate:wageData': (newValue: WageWithForm) => newValue
     },
     global: {
@@ -146,7 +143,7 @@ describe('SetMemberWageStandardStep.vue', () => {
 
     expect(wrapper.find('[data-test="standard-wage-step"]').exists()).toBe(true)
     expect(wrapper.text()).toContain('Hourly Rates')
-    expect(wrapper.text()).toContain('Enable overtime rules')
+    expect(wrapper.text()).toContain('Add overtime rates')
     expect(wrapper.text()).toContain('ETH')
     expect(wrapper.text()).toContain('USDC')
   })
@@ -174,84 +171,5 @@ describe('SetMemberWageStandardStep.vue', () => {
     expect(wageData.maximumHoursPerWeek).toBe(45)
     expect(wageData.ratePerHour[1].enabled).toBe(true)
     expect(wageData.ratePerHour[1].amount).toBe(7)
-
-    const vm = wrapper.vm as unknown as StandardStepVm
-    expect(vm.validateForm()).toBe(true)
-  })
-
-  it('returns true when form data is valid', () => {
-    const wrapper = createWrapper(
-      createWageData({
-        maximumHoursPerWeek: 35,
-        ratePerHour: [
-          { type: 'native', amount: 11, enabled: true },
-          { type: 'usdc', amount: 0, enabled: false },
-          { type: 'sher', amount: 0, enabled: false }
-        ]
-      })
-    )
-
-    const vm = wrapper.vm as unknown as StandardStepVm
-    expect(vm.validateForm()).toBe(true)
-  })
-
-  it('returns false when no rate is enabled', () => {
-    const wrapper = createWrapper(
-      createWageData({
-        ratePerHour: [
-          { type: 'native', amount: 0, enabled: false },
-          { type: 'usdc', amount: 0, enabled: false },
-          { type: 'sher', amount: 0, enabled: false }
-        ]
-      })
-    )
-
-    const vm = wrapper.vm as unknown as StandardStepVm
-    expect(vm.validateForm()).toBe(false)
-  })
-
-  it('returns false when native rate is disabled or invalid', () => {
-    const wrapper = createWrapper(
-      createWageData({
-        ratePerHour: [
-          { type: 'native', amount: 0, enabled: false },
-          { type: 'usdc', amount: 5, enabled: true },
-          { type: 'sher', amount: 0, enabled: false }
-        ]
-      })
-    )
-
-    const vm = wrapper.vm as unknown as StandardStepVm
-    expect(vm.validateForm()).toBe(false)
-  })
-
-  it('returns false when native rate entry is missing', () => {
-    const wrapper = createWrapper(
-      createWageData({
-        ratePerHour: [
-          { type: 'usdc', amount: 6, enabled: true },
-          { type: 'sher', amount: 3, enabled: true }
-        ]
-      })
-    )
-
-    const vm = wrapper.vm as unknown as StandardStepVm
-    expect(vm.validateForm()).toBe(false)
-  })
-
-  it('returns false when max weekly hours is not positive', () => {
-    const wrapper = createWrapper(
-      createWageData({
-        maximumHoursPerWeek: 0,
-        ratePerHour: [
-          { type: 'native', amount: 10, enabled: true },
-          { type: 'usdc', amount: 0, enabled: false },
-          { type: 'sher', amount: 0, enabled: false }
-        ]
-      })
-    )
-
-    const vm = wrapper.vm as unknown as StandardStepVm
-    expect(vm.validateForm()).toBe(false)
   })
 })

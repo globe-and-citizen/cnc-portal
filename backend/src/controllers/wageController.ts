@@ -75,6 +75,10 @@ export const setWage = async (req: Request, res: Response) => {
     });
 
     if (currentWage) {
+      if (currentWage.disabled) {
+        return errorResponse(400, 'Cannot set wage: the current wage is disabled', res);
+      }
+
       // Create wage and chain it to the previous wage
       const createdWage = await prisma.wage.create({
         data: {
@@ -131,6 +135,36 @@ export const getWages = async (req: Request, res: Response) => {
     });
 
     return res.status(200).json(wages);
+  } catch (error) {
+    console.log('Error: ', error);
+    return errorResponse(500, 'Internal server error', res);
+  }
+};
+
+export const toggleWageStatus = async (req: Request, res: Response) => {
+  const callerAddress = req.address;
+  const wageId = Number(req.params.wageId);
+  const action = req.query.action as 'disable' | 'enable';
+
+  try {
+    const wage = await prisma.wage.findFirst({
+      where: { id: wageId, nextWageId: null },
+    });
+
+    if (!wage) {
+      return errorResponse(404, 'Wage not found', res);
+    }
+
+    if (!(await isOwnerOfTeam(callerAddress, wage.teamId))) {
+      return errorResponse(403, 'Caller is not the owner of the team', res);
+    }
+
+    const updatedWage = await prisma.wage.update({
+      where: { id: wageId },
+      data: { disabled: action === 'disable' },
+    });
+
+    return res.status(200).json(updatedWage);
   } catch (error) {
     console.log('Error: ', error);
     return errorResponse(500, 'Internal server error', res);

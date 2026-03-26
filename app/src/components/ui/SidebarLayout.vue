@@ -106,31 +106,6 @@ const teamStore = useTeamStore()
 
 const open = ref(false)
 
-const accountRouteNames = [
-  'bank-account',
-  'safe-account',
-  'expense-account',
-  'payroll-account',
-  'payroll-history',
-  'cash-remunerations-member',
-  'team-payroll'
-] as const
-
-const isAccountsSectionActive = computed(() =>
-  accountRouteNames.some((routeName) => route.name === routeName)
-)
-
-const administrationRouteNames = [
-  'bod-elections',
-  'bod-proposals',
-  'proposal-detail',
-  'bod-elections-details'
-] as const
-
-const isAdministrationSectionActive = computed(() =>
-  administrationRouteNames.some((routeName) => route.name === routeName)
-)
-
 const items = computed<NavigationMenuItem[]>(() => [
   {
     label: 'Home',
@@ -154,7 +129,6 @@ const items = computed<NavigationMenuItem[]>(() => [
   {
     label: 'Accounts',
     icon: 'heroicons:currency-dollar',
-    active: isAccountsSectionActive.value,
     to: {
       name: 'bank-account',
       params: { id: teamStore.currentTeamId || '1' }
@@ -187,10 +161,21 @@ const items = computed<NavigationMenuItem[]>(() => [
           name: 'expense-account',
           params: { id: teamStore.currentTeamId || '1' }
         }
-      },
+      }
+    ]
+  },
+  {
+    label: 'Payroll Account',
+    icon: 'heroicons:currency-dollar',
+    to: {
+      name: 'payroll-account',
+      params: { id: teamStore.currentTeamId || '1' }
+    },
+    defaultOpen: true,
+    children: [
       {
         // icon: 'heroicons:briefcase',
-        label: 'Payroll Account',
+        label: 'Payroll',
         to: {
           name: 'payroll-account',
           params: { id: teamStore.currentTeamId || '1' }
@@ -208,7 +193,6 @@ const items = computed<NavigationMenuItem[]>(() => [
           params: { id: teamStore.currentTeamId || '1', memberAddress: userStore.address }
         }
       },
-
       {
         // icon: 'heroicons:briefcase',
         label: 'Team Payroll',
@@ -239,7 +223,6 @@ const items = computed<NavigationMenuItem[]>(() => [
   {
     label: 'Administration',
     icon: 'heroicons:chart-bar',
-    active: isAdministrationSectionActive.value,
     to: {
       name: 'bod-elections',
       params: { id: teamStore.currentTeamId || '1' }

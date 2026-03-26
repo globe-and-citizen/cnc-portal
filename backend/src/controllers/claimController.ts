@@ -68,6 +68,10 @@ export const addClaim = async (req: Request, res: Response) => {
       return errorResponse(400, 'No wage found for the user', res);
     }
 
+    if (wage.disabled) {
+      return errorResponse(400, 'Cannot add claim: the wage is disabled', res);
+    }
+
     // get the member current wage
 
     let weeklyClaim = await prisma.weeklyClaim.findFirst({
@@ -274,6 +278,10 @@ export const updateClaim = async (req: Request, res: Response) => {
       return errorResponse(403, 'Caller is not the owner of the claim', res);
     }
 
+    if (wage.disabled) {
+      return errorResponse(403, 'Cannot update claim: the wage is disabled', res);
+    }
+
     // Can only edit pending claims
     if (claim.weeklyClaim?.status !== 'pending' && claim.weeklyClaim?.status !== 'disabled') {
       return errorResponse(403, "Can't edit: Claim is not pending", res);
@@ -372,6 +380,10 @@ export const deleteClaim = async (req: Request, res: Response) => {
 
     if (claim.wage.userAddress !== callerAddress) {
       return errorResponse(403, 'Caller is not the owner of the claim', res);
+    }
+
+    if (claim.wage.disabled) {
+      return errorResponse(403, 'Cannot delete claim: the wage is disabled', res);
     }
 
     const weeklyClaim = claim.weeklyClaim;

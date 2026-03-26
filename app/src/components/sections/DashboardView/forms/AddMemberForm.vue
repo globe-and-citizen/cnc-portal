@@ -1,15 +1,21 @@
 <template>
-  <h1 class="font-bold text-2xl">Add New Member</h1>
-  <hr />
-  <div class="flex flex-col gap-5 pt-5">
+  <div class="flex flex-col gap-5">
     <MultiSelectMemberInput v-model="formData" :disable-team-members="true" />
 
-    <div v-if="addMembersError">
-      <div class="alert alert-warning" v-if="addMembersError?.status === 401">
-        You don't have the right for this
-      </div>
-      <div class="alert alert-danger" v-else>Something went wrong, Unable to add team Members</div>
-    </div>
+    <template v-if="addMembersError">
+      <UAlert
+        v-if="addMembersError?.status === 401"
+        color="warning"
+        variant="soft"
+        description="You don't have permission to add members."
+      />
+      <UAlert
+        v-else
+        color="error"
+        variant="soft"
+        description="Something went wrong. Unable to add members."
+      />
+    </template>
 
     <UButton
       color="primary"
@@ -21,18 +27,17 @@
     />
   </div>
 
-  <div class="divider m-0"></div>
+  <hr class="my-0" />
 </template>
 <script setup lang="ts">
 import { ref } from 'vue'
 import MultiSelectMemberInput from '@/components/utils/MultiSelectMemberInput.vue'
-import { useToastStore } from '@/stores'
 import type { Member } from '@/types'
 import { useAddMembersMutation, type MemberInput } from '@/queries/member.queries'
 import { log } from '@/utils/generalUtil'
 
 const emits = defineEmits(['memberAdded'])
-const { addSuccessToast, addErrorToast } = useToastStore()
+const toast = useToast()
 
 const props = defineProps<{
   teamId: string | number
@@ -46,8 +51,6 @@ const {
   error: addMembersError
 } = useAddMembersMutation()
 
-// const statusCode = ref<number | null>(null)
-
 const handleAddMembers = async () => {
   executeAddMembers(
     {
@@ -59,15 +62,12 @@ const handleAddMembers = async () => {
     },
     {
       onSuccess: () => {
-        addSuccessToast('Members added successfully')
+        toast.add({ title: 'Members added successfully', color: 'success' })
         formData.value = []
-        // statusCode.value = 201
         emits('memberAdded')
       },
       onError: (error: unknown) => {
         log.error('AddMemberForm - handleAddMembers error:', error)
-        const errorMessage = 'Failed to add members'
-        addErrorToast(errorMessage)
       }
     }
   )

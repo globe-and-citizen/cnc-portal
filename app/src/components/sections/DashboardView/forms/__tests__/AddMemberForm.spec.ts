@@ -47,7 +47,6 @@ describe('AddMemberForm.vue', () => {
   it('should render component with title and form inputs', () => {
     const wrapper = mountComponent()
 
-    expect(wrapper.find('h1').text()).toBe('Add New Member')
     expect(wrapper.findComponent({ name: 'MultiSelectMemberInput' }).exists()).toBe(true)
     expect(wrapper.find('[data-test="add-members-btn"]').exists()).toBe(true)
   })

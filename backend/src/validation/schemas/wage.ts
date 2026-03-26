@@ -46,3 +46,14 @@ export const setWageBodySchema = z
 export const getWagesQuerySchema = z.object({
   teamId: teamIdSchema,
 });
+
+// Toggle wage status path params and query
+export const toggleWageStatusParamsSchema = z.object({
+  wageId: z.coerce.number().int().positive('Wage ID must be a positive integer'),
+});
+
+export const toggleWageStatusQuerySchema = z.object({
+  action: z.enum(['disable', 'enable'], {
+    message: "Invalid action. Allowed actions are: 'disable', 'enable'",
+  }),
+});
