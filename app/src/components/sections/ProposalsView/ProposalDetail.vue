@@ -253,18 +253,9 @@ const proposal = computed<Proposal | undefined>(() => {
   return proposalData.value as Proposal
 })
 
-const {
-  mutate: voteOnProposal,
-  isPending: isVoting,
-  // error: voteError,
-  data: txHash
-} = useWriteContract()
+const { mutate: voteOnProposal, isPending: isVoting, data: txHash } = useWriteContract()
 
-const {
-  isLoading: isConfirmingVote,
-  isSuccess: isVoteConfirmed
-  // error: errorConfirmingVote
-} = useWaitForTransactionReceipt({
+const { isLoading: isConfirmingVote, isSuccess: isVoteConfirmed } = useWaitForTransactionReceipt({
   hash: txHash
 })
 

@@ -29,7 +29,7 @@
             <UButton
               data-testid="sign-in"
               color="primary"
-              class="w-full"
+              class="w-full justify-center"
               @click="siwe()"
               :disabled="isProcessing"
               :label="isProcessing ? 'Processing...' : 'Sign In With Ethereum'"
