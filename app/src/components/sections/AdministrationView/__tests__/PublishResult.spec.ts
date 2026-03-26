@@ -101,7 +101,7 @@ describe('PublishResult.vue', () => {
     const wrapper = mount(PublishResult, {
       props: { electionId: 42 },
       global: {
-        stubs: ['ButtonUI']
+        stubs: ['UButton']
       }
     })
 
@@ -123,7 +123,7 @@ describe('PublishResult.vue', () => {
   it('shows success toast and invalidates queries when receipt is published', async () => {
     const wrapper = mount(PublishResult, {
       props: { electionId: 7 },
-      global: { stubs: ['ButtonUI'] }
+      global: { stubs: ['UButton'] }
     })
 
     // simulate click to trigger publish
@@ -151,7 +151,7 @@ describe('PublishResult.vue', () => {
 
     const wrapper = mount(PublishResult, {
       props: { electionId: 99 },
-      global: { stubs: ['ButtonUI'] }
+      global: { stubs: ['UButton'] }
     })
 
     await wrapper.find('[data-test="create-election-button"]').trigger('click')

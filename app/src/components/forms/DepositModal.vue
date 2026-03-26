@@ -2,15 +2,13 @@
 <template>
   <div>
     <!-- Deposit Button -->
-    <ButtonUI
-      variant="secondary"
-      class="flex items-center gap-2"
+    <UButton
+      color="secondary"
+      leading-icon="heroicons-outline:plus"
+      label="Deposit"
       @click="openModal"
       data-test="deposit-button"
-    >
-      <IconifyIcon icon="heroicons-outline:plus" class="w-5 h-5" />
-      Deposit
-    </ButtonUI>
+    />
 
     <!-- Deposit Modal -->
     <ModalComponent
@@ -30,11 +28,9 @@
 </template>
 
 <script setup lang="ts">
-import ButtonUI from '@/components/ButtonUI.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 
 import DepositSafeForm from '@/components/forms/DepositSafeForm.vue'
-import { Icon as IconifyIcon } from '@iconify/vue'
 import { ref } from 'vue'
 import { type Address } from 'viem'
 

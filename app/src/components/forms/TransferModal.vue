@@ -12,16 +12,14 @@
             : null
       "
     >
-      <ButtonUI
-        variant="secondary"
-        class="flex items-center gap-2"
+      <UButton
+        color="secondary"
+        leading-icon="heroicons-outline:arrows-right-left"
+        label="Transfer"
         @click="openModal"
         :disabled="!hasTheRight || !isBalanceGreaterThanZero"
         data-test="transfer-button"
-      >
-        <IconifyIcon icon="heroicons-outline:arrows-right-left" class="w-5 h-5" />
-        Transfer
-      </ButtonUI>
+      />
     </div>
 
     <!-- Transfer Modal -->
@@ -52,10 +50,8 @@
 </template>
 
 <script setup lang="ts">
-import ButtonUI from '@/components/ButtonUI.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import TransferForm, { type TransferModel } from '@/components/forms/TransferForm.vue'
-import { Icon as IconifyIcon } from '@iconify/vue'
 import { ref, watch, computed, type Ref } from 'vue'
 import { type Address, parseEther, encodeFunctionData, parseUnits } from 'viem'
 import {

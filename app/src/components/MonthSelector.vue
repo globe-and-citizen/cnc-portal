@@ -2,13 +2,12 @@
   <div
     class="flex flex-col sm:flex-wrap md:flex-row md:items-center md:justify-between gap-2 mb-4 w-full max-w-full"
   >
-    <ButtonUI
+    <UButton
       @click="goToPrevMonth"
       class="w-full sm:w-auto flex items-center justify-center whitespace-nowrap"
       size="sm"
-    >
-      <IconifyIcon icon="heroicons:chevron-left" class="w-4 h-4" />
-    </ButtonUI>
+      icon="heroicons:chevron-left"
+    />
 
     <div class="relative w-full sm:w-auto text-center">
       <VueDatePicker
@@ -19,31 +18,29 @@
         class="bg-white rounded-sm w-full sm:w-auto"
       >
         <template #trigger>
-          <ButtonUI
+          <UButton
             @click="toggleMonthPicker"
             class="w-full sm:w-auto flex items-center justify-center whitespace-nowrap"
             size="sm"
           >
             <span v-if="model">{{ formatMonthYear(model.year, model.month) }}</span>
             <IconifyIcon icon="heroicons:chevron-down" class="w-4 h-4 ml-1" />
-          </ButtonUI>
+          </UButton>
         </template>
       </VueDatePicker>
     </div>
 
-    <ButtonUI
+    <UButton
       @click="goToNextMonth"
       class="w-full sm:w-auto flex items-center justify-center whitespace-nowrap"
       size="sm"
-    >
-      <IconifyIcon icon="heroicons:chevron-right" class="w-4 h-4" />
-    </ButtonUI>
+      icon="heroicons:chevron-right"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import ButtonUI from '@/components/ButtonUI.vue'
 import VueDatePicker from '@vuepic/vue-datepicker'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'

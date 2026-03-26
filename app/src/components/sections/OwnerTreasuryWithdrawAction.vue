@@ -1,14 +1,13 @@
 <template>
   <div v-if="hasTheRight" class="card-actions justify-end">
-    <ButtonUI
-      variant="warning"
+    <UButton
+      color="warning"
       size="sm"
       :disabled="withdrawableTokens.length === 0"
       @click="openModal"
       data-test="owner-withdraw-button"
-    >
-      Withdraw
-    </ButtonUI>
+      label="Withdraw"
+    />
 
     <teleport to="body">
       <ModalComponent
@@ -36,17 +35,16 @@
         </TokenAmount>
 
         <div class="modal-action justify-between mt-4">
-          <ButtonUI variant="error" outline @click="resetModal">Cancel</ButtonUI>
-          <ButtonUI
-            variant="warning"
+          <UButton color="error" variant="outline" @click="resetModal" label="Cancel" />
+          <UButton
+            color="warning"
             :loading="isLoadingAction"
             :aria-busy="isLoadingAction"
             :disabled="isLoadingAction || !isAmountValid || !selectedToken"
             @click="submitWithdraw"
             data-test="owner-withdraw-submit"
-          >
-            Withdraw
-          </ButtonUI>
+            label="Withdraw"
+          />
         </div>
       </ModalComponent>
     </teleport>
@@ -56,7 +54,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { encodeFunctionData, parseEther, parseUnits, type Address } from 'viem'
-import ButtonUI from '@/components/ButtonUI.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import TokenAmount from '@/components/forms/TokenAmount.vue'
 import { useContractBalance } from '@/composables'

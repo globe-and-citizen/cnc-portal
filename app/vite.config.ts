@@ -60,6 +60,31 @@ export default defineConfig(({ mode }) => {
         defaultVariant: {
           size: 'xl'
         }
+      },
+      input: {
+        defaultVariant: {
+          size: 'xl'
+        }
+      },
+      select: {
+        defaultVariant: {
+          size: 'xl'
+        }
+      },
+      selectMenu: {
+        defaultVariant: {
+          size: 'xl'
+        }
+      },
+      textarea: {
+        defaultVariant: {
+          size: 'xl'
+        }
+      },
+      switch: {
+        defaultVariant: {
+          size: 'xl'
+        }
       }
     },
     server: {

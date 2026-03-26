@@ -1,15 +1,15 @@
 <template>
   <div>
-    <ButtonUI
+    <UButton
       v-if="teamStore.currentTeam?.ownerAddress === userStore.address"
       size="sm"
-      variant="primary"
+      color="primary"
       class="w-max"
       @click="addVestingModal = { mount: true, show: true }"
       data-test="createAddVesting"
-    >
-      <IconifyIcon icon="heroicons-outline:plus-circle" class="size-6" /> add vesting
-    </ButtonUI>
+      leading-icon="heroicons-outline:plus-circle"
+      label="add vesting"
+    />
 
     <ModalComponent
       v-model="addVestingModal.show"
@@ -29,8 +29,6 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { Icon as IconifyIcon } from '@iconify/vue'
-import ButtonUI from '@/components/ButtonUI.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import CreateVesting from '@/components/sections/VestingView/forms/CreateVesting.vue'
 import { useTeamStore, useUserDataStore } from '@/stores'

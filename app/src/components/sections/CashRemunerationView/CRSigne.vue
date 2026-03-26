@@ -1,7 +1,7 @@
 <template>
-  <ButtonUI
+  <UButton
     v-if="isCashRemunerationOwner && !isDropDown"
-    variant="success"
+    color="success"
     data-test="approve-button"
     :disabled="isLoad || disabled || isCurrentWeek"
     :loading="isLoad"
@@ -9,7 +9,7 @@
     @click="handleApprove"
   >
     Approve
-  </ButtonUI>
+  </UButton>
   <div
     v-else-if="isDropDown"
     data-test="sign-action"
@@ -26,7 +26,6 @@
 
 <script setup lang="ts">
 import { CASH_REMUNERATION_EIP712_ABI } from '@/artifacts/abi/cash-remuneration-eip712'
-import ButtonUI from '@/components/ButtonUI.vue'
 import { USDC_ADDRESS } from '@/constant'
 import { useTeamStore, useToastStore, useUserDataStore } from '@/stores'
 import type { WeeklyClaim } from '@/types'

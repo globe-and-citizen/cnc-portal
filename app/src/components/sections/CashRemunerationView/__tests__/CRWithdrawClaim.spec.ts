@@ -73,7 +73,7 @@ describe('CRWithdrawClaim', () => {
       },
       global: {
         stubs: {
-          ButtonUI: BUTTON_STUB
+          UButton: BUTTON_STUB
         }
       }
     })
@@ -205,7 +205,7 @@ describe('CRWithdrawClaim', () => {
       },
       global: {
         stubs: {
-          ButtonUI: BUTTON_STUB
+          UButton: BUTTON_STUB
         }
       }
     })

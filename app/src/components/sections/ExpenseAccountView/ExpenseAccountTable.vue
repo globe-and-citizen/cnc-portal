@@ -16,9 +16,9 @@
   <div class="card bg-base-100 w-full">
     <TableComponent :rows="filteredApprovals" :columns="columns" :loading="isFetchingExpenseData">
       <template #action-data="{ row }">
-        <ButtonUI
+        <UButton
           v-if="row.status == 'enabled'"
-          variant="error"
+          color="error"
           data-test="disable-button"
           size="sm"
           :loading="isLoadingSetStatus && signatureToUpdate === row.signature"
@@ -30,11 +30,11 @@
               deactivateApproval(row.signature)
             }
           "
-          >Disable</ButtonUI
-        >
-        <ButtonUI
+          label="Disable"
+        />
+        <UButton
           v-if="row.status == 'disabled'"
-          variant="info"
+          color="info"
           data-test="enable-button"
           size="sm"
           :loading="isLoadingSetStatus && signatureToUpdate === row.signature"
@@ -46,8 +46,8 @@
               activateApproval(row.signature)
             }
           "
-          >Enable</ButtonUI
-        >
+          label="Enable"
+        />
       </template>
       <template #member-data="{ row }">
         <UserComponent v-if="!!row.user" :user="row.user"></UserComponent>
@@ -84,7 +84,6 @@
 </template>
 
 <script setup lang="ts">
-import ButtonUI from '@/components/ButtonUI.vue'
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
 import { computed, ref, watch } from 'vue'
 import { log, parseError, tokenSymbol } from '@/utils'

@@ -1,13 +1,13 @@
 <template>
   <div>
-    <ButtonUI
-      variant="success"
+    <UButton
+      color="success"
       :disabled="row.status !== 'enabled'"
       @click="showModal = { mount: true, show: true }"
       data-test="transfer-button"
     >
       Spend
-    </ButtonUI>
+    </UButton>
 
     <teleport to="body">
       <ModalComponent
@@ -55,7 +55,6 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import ButtonUI from '@/components/ButtonUI.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import TransferForm from '@/components/forms/TransferForm.vue'
 import { USDC_ADDRESS, type TokenId } from '@/constant'

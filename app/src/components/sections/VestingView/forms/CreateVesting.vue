@@ -79,16 +79,15 @@
       Ensure your contract is approved to transfer these tokens.
     </h3>
     <div class="modal-action justify-end">
-      <ButtonUI
-        variant="primary"
+      <UButton
+        color="primary"
         size="sm"
         @click="handleDisplaySummary"
         :disabled="loading"
         :loading="loading"
         data-test="submit-btn"
-      >
-        Create Vesting
-      </ButtonUI>
+        label="Create Vesting"
+      />
     </div>
   </div>
   <div v-if="showSummary">
@@ -104,7 +103,6 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue'
 import { differenceInCalendarDays, differenceInMonths, differenceInYears } from '@/utils/dayUtils'
-import ButtonUI from '@/components/ButtonUI.vue'
 import { useWaitForTransactionReceipt, useWriteContract, useReadContract } from '@wagmi/vue'
 import { VESTING_ABI } from '@/artifacts/abi/vesting'
 import { VESTING_ADDRESS } from '@/constant'

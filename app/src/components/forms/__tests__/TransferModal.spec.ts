@@ -2,10 +2,8 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { mount, VueWrapper } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import TransferModal from '../TransferModal.vue'
-import ButtonUI from '@/components/ButtonUI.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import TransferForm from '../TransferForm.vue'
-import { Icon as IconifyIcon } from '@iconify/vue'
 import {
   mockUseWriteContract,
   mockWagmiCore,
@@ -87,10 +85,8 @@ describe('TransferModal', () => {
       },
       global: {
         components: {
-          ButtonUI,
           ModalComponent,
-          TransferForm,
-          IconifyIcon
+          TransferForm
         },
         stubs: {
           TransferForm: true

@@ -1,14 +1,14 @@
 <template>
-  <ButtonUI
+  <UButton
     :loading="isWageClaimAdding"
-    variant="success"
+    color="success"
     size="sm"
     data-test="modal-submit-hours-button"
     :disabled="!canSubmitClaim"
     @click="openModal()"
   >
     Submit Claim
-  </ButtonUI>
+  </UButton>
 
   <ModalComponent v-if="modal.mount" v-model="modal.show" @reset="closeModal">
     <div class="flex flex-col gap-4 mb-20">
@@ -48,7 +48,6 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
-import ButtonUI from '@/components/ButtonUI.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import ClaimForm from '@/components/sections/CashRemunerationView/Form/ClaimForm.vue'
 import { useSubmitRestriction } from '@/composables'

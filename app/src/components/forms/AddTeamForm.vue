@@ -19,7 +19,6 @@
         help="Give your team a unique, recognizable name"
       >
         <UInput
-          size="xl"
           v-model="teamData.name"
           placeholder="Engineering Team"
           class="w-full"
@@ -33,7 +32,6 @@
         :hint="`${teamData.description.length} / 200`"
       >
         <UTextarea
-          size="xl"
           v-model="teamData.description"
           placeholder="Enter a short description"
           class="w-full"
@@ -42,9 +40,7 @@
         />
       </UFormField>
       <div class="flex justify-end mt-6">
-        <UButton type="submit" size="xl" class="w-32 justify-center" data-test="next-button">
-          Next
-        </UButton>
+        <UButton type="submit" class="w-32 justify-center" data-test="next-button"> Next </UButton>
       </div>
     </UForm>
 
@@ -69,7 +65,6 @@
         <UButton
           color="neutral"
           variant="outline"
-          size="xl"
           class="w-32 justify-center"
           :disabled="createTeamFetching"
           data-test="previous-button"
@@ -78,7 +73,6 @@
           Previous
         </UButton>
         <UButton
-          size="xl"
           class="w-44 justify-center"
           :loading="createTeamFetching"
           :disabled="createTeamFetching || !canProceed"

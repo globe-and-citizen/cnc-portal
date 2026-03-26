@@ -34,17 +34,22 @@
       }}</span>
     </div>
     <div class="modal-action justify-center">
-      <ButtonUI variant="primary" @click="handleExportPdf" data-test="export-pdf">
-        Export in PDF
-      </ButtonUI>
-      <ButtonUI variant="primary" @click="handleExportExcel" data-test="export-excel">
-        Export in Excel
-      </ButtonUI>
+      <UButton
+        color="primary"
+        @click="handleExportPdf"
+        data-test="export-pdf"
+        label="Export in PDF"
+      />
+      <UButton
+        color="primary"
+        @click="handleExportExcel"
+        data-test="export-excel"
+        label="Export in Excel"
+      />
     </div>
   </div>
 </template>
 <script setup lang="ts">
-import ButtonUI from '@/components/ButtonUI.vue'
 import type { ReceiptData } from '@/utils/excelExport'
 import { useCurrencyStore } from '@/stores/currencyStore'
 import { storeToRefs } from 'pinia'

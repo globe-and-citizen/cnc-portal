@@ -20,28 +20,25 @@
       <p class="pl-5">{{ currentTeam?.description }}</p>
 
       <div class="pl-5 flex flex-row justify-center gap-2 mt-5 items-center">
-        <ButtonUI
+        <UButton
           size="sm"
-          variant="secondary"
+          color="secondary"
           v-if="currentTeam?.ownerAddress == address"
           @click="emits('updateTeamModalOpen')"
-        >
-          Update
-        </ButtonUI>
-        <ButtonUI
+          label="Update"
+        />
+        <UButton
           size="sm"
-          variant="error"
+          color="error"
           v-if="currentTeam?.ownerAddress == address"
           @click="emits('deleteTeam')"
-        >
-          Delete
-        </ButtonUI>
+          label="Delete"
+        />
       </div>
     </div>
   </div>
 </template>
 <script setup lang="ts">
-import ButtonUI from '@/components/ButtonUI.vue'
 import { useTeamStore } from '@/stores'
 import { useUserDataStore } from '@/stores/user'
 import { storeToRefs } from 'pinia'

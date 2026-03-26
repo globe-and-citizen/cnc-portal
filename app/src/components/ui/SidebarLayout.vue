@@ -30,7 +30,7 @@
         color="neutral"
         variant="outline"
         block
-        size="xl"
+        
         :square="collapsed"
       >
         <template v-if="!collapsed" #trailing>

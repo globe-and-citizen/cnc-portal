@@ -1,20 +1,18 @@
 <template>
   <div class="space-y-4">
     <!-- Deploy Button with dynamic message -->
-    <ButtonUI
-      variant="primary"
+    <UButton
+      color="primary"
       :loading="createOfficerLoading"
       :disabled="disable || createOfficerLoading"
       data-test="deploy-contracts-button"
       @click="deployOfficerContract"
-    >
-      {{ deployButtonText }}
-    </ButtonUI>
+      :label="deployButtonText"
+    />
   </div>
 </template>
 
 <script lang="ts" setup>
-import ButtonUI from '@/components/ButtonUI.vue'
 import { useToastStore } from '@/stores/useToastStore'
 import type { Team } from '@/types'
 import type { Address } from 'viem'

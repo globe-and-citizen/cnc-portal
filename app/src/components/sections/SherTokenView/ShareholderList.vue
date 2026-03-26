@@ -41,8 +41,8 @@
                 : null
             "
           >
-            <ButtonUI
-              variant="primary"
+            <UButton
+              color="primary"
               :disabled="userStore.address != teamStore.currentTeam?.ownerAddress"
               data-test="mint-individual"
               @click="
@@ -53,7 +53,7 @@
               "
             >
               Mint Individual
-            </ButtonUI>
+            </UButton>
           </div>
         </div>
       </template>
@@ -76,7 +76,6 @@
   </CardComponent>
 </template>
 <script setup lang="ts">
-import ButtonUI from '@/components/ButtonUI.vue'
 import CardComponent from '@/components/CardComponent.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import MintForm from '@/components/sections/SherTokenView/forms/MintForm.vue'
