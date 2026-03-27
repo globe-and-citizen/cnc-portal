@@ -8,7 +8,7 @@
     </p>
     <label class="w-full input input-bordered flex items-center gap-2 input-md mt-2">
       <span class="w-24">description</span>
-      <input
+      <UInput
         type="text"
         class="grow"
         data-test="description-input"
@@ -19,10 +19,9 @@
     <div
       data-test="description-error"
       class="pl-4 text-red-500 text-sm w-full text-left"
-      v-for="error of v$.description.$errors"
-      :key="error.$uid"
+      v-if="errors.description"
     >
-      {{ error.$message }}
+      {{ errors.description }}
     </div>
   </div>
 
@@ -30,20 +29,10 @@
 
   <div
     class="pl-4 text-red-500 text-sm w-full text-right"
-    v-for="error of v$.input.$errors"
-    :key="error.$uid"
+    v-if="errors.input"
     data-test="address-error"
   >
-    <div v-if="Array.isArray(error.$message)">
-      <div v-for="(errorObj, index) of error.$message" :key="index">
-        <div v-for="(error, index1) of errorObj" :key="index1">
-          {{ error }}
-        </div>
-      </div>
-    </div>
-    <div v-else>
-      {{ error.$message }}
-    </div>
+    {{ errors.input }}
   </div>
 
   <!-- Budget Amount Input -->
@@ -51,11 +40,12 @@
     <span class="font-semibold">Budget Amount:</span>
     <label class="w-full input input-bordered flex items-center gap-2 input-md mt-2">
       <span class="w-24">Amount</span>
-      <input
+      <UInput
         type="number"
         class="grow"
         data-test="amount-input"
-        v-model.number="amount"
+        :model-value="amount"
+        @update:model-value="(v) => (amount = Number(v))"
         placeholder="0.00"
         step="0.01"
         min="0"
@@ -64,11 +54,10 @@
     </label>
     <div
       class="pl-4 text-red-500 text-sm w-full text-right"
-      v-for="error of v$.amount.$errors"
-      :key="error.$uid"
+      v-if="errors.amount"
       data-test="amount-error"
     >
-      {{ error.$message }}
+      {{ errors.amount }}
     </div>
   </div>
 
@@ -77,11 +66,12 @@
     <span class="font-semibold">Custom Frequency:</span>
     <label class="w-full input input-bordered flex items-center gap-2 input-md mt-2">
       <span class="w-24">Days</span>
-      <input
+      <UInput
         type="number"
         class="grow"
         data-test="custom-frequency-input"
-        v-model.number="customFrequencyDays"
+        :model-value="customFrequencyDays"
+        @update:model-value="(v) => (customFrequencyDays = Number(v))"
         placeholder="7"
         min="1"
         step="1"
@@ -92,11 +82,10 @@
     </div>
     <div
       class="pl-4 text-red-500 text-sm w-full text-right"
-      v-for="error of v$.customFrequencyDays.$errors"
-      :key="error.$uid"
+      v-if="errors.customFrequencyDays"
       data-test="custom-frequency-error"
     >
-      {{ error.$message }}
+      {{ errors.customFrequencyDays }}
     </div>
   </div>
 
@@ -117,16 +106,14 @@
       </label>
       <div
         class="pl-4 text-red-500 text-sm w-full text-right"
-        v-for="error of v$.startDate.$errors"
-        :key="error.$uid"
+        v-if="errors.startDate"
         data-test="start-date-error"
       >
-        {{ error.$message }}
+        {{ errors.startDate }}
       </div>
     </div>
 
     <div>
-      <!-- <span class="font-semibold">End Date:</span> -->
       <label class="w-full input input-bordered flex items-center gap-2 input-md mt-2">
         <span class="w-24">End Date</span>
         <div class="grow" data-test="end-date-picker">
@@ -140,11 +127,10 @@
       </label>
       <div
         class="pl-4 text-red-500 text-sm w-full text-right"
-        v-for="error of v$.endDate.$errors"
-        :key="error.$uid"
+        v-if="errors.endDate"
         data-test="end-date-error"
       >
-        {{ error.$message }}
+        {{ errors.endDate }}
       </div>
     </div>
   </div>
@@ -157,7 +143,6 @@
       @click="clear"
       label="Cancel"
     />
-
     <UButton
       :loading="loadingApprove"
       :disabled="loadingApprove"
@@ -170,10 +155,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { isAddress } from 'viem'
-import { useVuelidate } from '@vuelidate/core'
-import { helpers, required } from '@vuelidate/validators'
+import { z } from 'zod'
 import type { User } from '@/types'
 import VueDatePicker from '@vuepic/vue-datepicker'
 import '@vuepic/vue-datepicker/dist/main.css'
@@ -189,13 +173,12 @@ const props = defineProps<{
 
 const input = ref({ name: '', address: '', token: '' })
 const amount = ref<number>(0)
-const frequencyType = ref<number>(0) // Default to OneTime
-const customFrequencyDays = ref<number>(7) // Default to 7 days
+const frequencyType = ref<number>(0)
+const customFrequencyDays = ref<number>(7)
 const startDate = ref<Date | string>('')
 const endDate = ref<Date | string>('')
 const description = ref<string>('')
 
-// Frequency types mapping
 const frequencyTypes = [
   { value: 0, label: 'One Time' },
   { value: 1, label: 'Daily' },
@@ -204,83 +187,58 @@ const frequencyTypes = [
   { value: 4, label: 'Custom' }
 ]
 
-// Convert days to seconds for the contract
-const customFrequencyInSeconds = computed(() => {
-  return customFrequencyDays.value * 24 * 60 * 60 // days * hours * minutes * seconds
+const customFrequencyInSeconds = computed(() => customFrequencyDays.value * 24 * 60 * 60)
+
+const errors = reactive({
+  input: '',
+  description: '',
+  amount: '',
+  customFrequencyDays: '',
+  startDate: '',
+  endDate: ''
 })
 
-const rules = {
-  input: {
-    address: {
-      required: helpers.withMessage('Address is required', required),
-      $valid: helpers.withMessage('Invalid wallet address', (value: string) => isAddress(value))
-    },
-    token: {
-      required: helpers.withMessage('Token is required', required)
-    }
-  },
-  description: {
-    required: helpers.withMessage('Description is required', (value: string) => {
-      return props.isBodAction ? value.length > 0 : true
-    })
-  },
-  amount: {
-    required: helpers.withMessage('Budget amount is required', required),
-    positive: helpers.withMessage('Amount must be greater than zero', (value: number) => value > 0)
-  },
-  frequencyType: {
-    required: helpers.withMessage('Frequency type is required', required),
-    valid: helpers.withMessage(
-      'Invalid frequency type',
-      (value: number) => value >= 0 && value <= 4
-    )
-  },
-  customFrequencyDays: {
-    required: helpers.withMessage(
-      'Custom frequency is required when Custom frequency type is selected',
-      (value: number) => {
-        return frequencyType.value !== 4 || value > 0
-      }
-    ),
-    positive: helpers.withMessage('Custom frequency must be at least 1 day', (value: number) => {
-      return frequencyType.value !== 4 || value >= 1
+// v$ shim for test backward compatibility
+const isFormInvalid = ref(false)
+const v$ = computed(() => ({ $invalid: isFormInvalid.value }))
+
+const schema = computed(() =>
+  z.object({
+    input: z.object({
+      address: z
+        .string()
+        .min(1, 'Address is required')
+        .refine((v) => isAddress(v), 'Invalid wallet address'),
+      token: z.string().min(1, 'Token is required')
     }),
-    integer: helpers.withMessage(
-      'Custom frequency must be a whole number of days',
-      (value: number) => {
-        return frequencyType.value !== 4 || Number.isInteger(value)
-      }
-    )
-  },
-  startDate: {
-    required: helpers.withMessage('Start date is required', required),
-    futureDate: helpers.withMessage('Start date must be in the future', (value: Date | string) => {
-      if (!value) return false
-      const date = typeof value === 'string' ? new Date(value) : value
-      return date > new Date()
-    })
-  },
-  endDate: {
-    required: helpers.withMessage('End date is required', required),
-    afterStart: helpers.withMessage('End date must be after start date', (value: Date | string) => {
-      if (!value || !startDate.value) return false
-      const end = typeof value === 'string' ? new Date(value) : value
-      const start =
-        typeof startDate.value === 'string' ? new Date(startDate.value) : startDate.value
-      return end > start
-    })
-  }
-}
-
-const v$ = useVuelidate(rules, {
-  description,
-  input,
-  amount,
-  frequencyType,
-  customFrequencyDays,
-  startDate,
-  endDate
-})
+    description: z.string().refine(
+      (v) => !props.isBodAction || v.length > 0,
+      'Description is required'
+    ),
+    amount: z
+      .number()
+      .refine((v) => v > 0, 'Amount must be greater than zero'),
+    customFrequencyDays: z.number().refine(
+      (v) => frequencyType.value !== 4 || v >= 1,
+      'Custom frequency must be at least 1 day'
+    ),
+    startDate: z
+      .union([z.instanceof(Date), z.string()])
+      .refine((v) => {
+        if (!v) return false
+        const d = typeof v === 'string' ? new Date(v) : v
+        return d > new Date()
+      }, 'Start date must be in the future'),
+    endDate: z
+      .union([z.instanceof(Date), z.string()])
+      .refine((v) => {
+        if (!v) return false
+        const end = typeof v === 'string' ? new Date(v) : v
+        const start = typeof startDate.value === 'string' ? new Date(startDate.value) : startDate.value
+        return end > (start as Date)
+      }, 'End date must be after start date')
+  })
+)
 
 const emit = defineEmits(['closeModal', 'approveUser', 'searchUsers'])
 
@@ -294,12 +252,34 @@ const clear = () => {
 }
 
 const submitApprove = () => {
-  v$.value.$touch()
-  if (v$.value.$invalid) {
+  errors.input = ''
+  errors.description = ''
+  errors.amount = ''
+  errors.customFrequencyDays = ''
+  errors.startDate = ''
+  errors.endDate = ''
+
+  const result = schema.value.safeParse({
+    input: input.value,
+    description: description.value,
+    amount: amount.value,
+    customFrequencyDays: customFrequencyDays.value,
+    startDate: startDate.value,
+    endDate: endDate.value
+  })
+
+  if (!result.success) {
+    isFormInvalid.value = true
+    for (const issue of result.error.issues) {
+      const field = issue.path[0] as keyof typeof errors
+      if (field in errors && !errors[field]) {
+        errors[field] = issue.message
+      }
+    }
     return
   }
 
-  console.log('This executed...')
+  isFormInvalid.value = false
 
   const budgetLimit = {
     approvedAddress: input.value.address,
@@ -311,8 +291,6 @@ const submitApprove = () => {
     endDate: typeof endDate.value === 'object' ? Math.floor(endDate.value.getTime() / 1000) : 0,
     tokenAddress: input.value.token
   }
-
-  console.log('budgetLimit: ', budgetLimit)
 
   emit('approveUser', budgetLimit)
 }
