@@ -7,7 +7,7 @@
 
       <UFormField name="address">
         <SelectMemberContractsInput
-          :modelValue="memberInput"
+          :modelValue="memberInputInternal"
           @update:modelValue="handleMemberInput"
           data-test="address-input"
           :disabled="props.disabled"
@@ -65,7 +65,7 @@ import { useTeamStore, useToastStore } from '@/stores'
 import { log } from '@/utils'
 import { useQueryClient } from '@tanstack/vue-query'
 
-const memberInput = ref<{ name: string; address: string }>({ name: '', address: '' })
+const memberInputInternal = ref<{ name: string; address: string }>({ name: '', address: '' })
 const state = reactive({ address: '', amount: '' })
 const emit = defineEmits(['close-modal'])
 
@@ -107,7 +107,7 @@ const { data: tokenSymbol, error: tokenSymbolError } = useReadContract({
 })
 
 const handleMemberInput = (v: { name: string; address: string }) => {
-  memberInput.value = v
+  memberInputInternal.value = v
   state.address = v.address
 }
 
@@ -122,7 +122,7 @@ const onSubmit = () => {
 
 onMounted(() => {
   if (props.memberInput) {
-    memberInput.value = props.memberInput
+    memberInputInternal.value = props.memberInput
     state.address = props.memberInput.address
   }
 })

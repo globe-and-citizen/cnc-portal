@@ -207,10 +207,6 @@ const tokens = ref({
 
 const errors = reactive({ description: '', formData: '', selectedToken: '' })
 
-// v$ shim for test backward compatibility
-const isFormInvalid = ref(false)
-const v$ = computed(() => ({ $invalid: isFormInvalid.value }))
-
 //#region multi limit
 const budgetTypes = {
   0: 'Transactions Per Period',
@@ -294,7 +290,6 @@ const submitApprove = () => {
   })
 
   if (!result.success) {
-    isFormInvalid.value = true
     for (const issue of result.error.issues) {
       const field = issue.path[0] as keyof typeof errors
       if (field in errors && !errors[field]) {
@@ -304,7 +299,6 @@ const submitApprove = () => {
     return
   }
 
-  isFormInvalid.value = false
   emit('approveUser', {
     approvedAddress: formData.value[0]?.address ?? '',
     budgetData: resultArray.value,

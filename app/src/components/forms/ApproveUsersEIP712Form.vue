@@ -198,10 +198,6 @@ const errors = reactive({
   endDate: ''
 })
 
-// v$ shim for test backward compatibility
-const isFormInvalid = ref(false)
-const v$ = computed(() => ({ $invalid: isFormInvalid.value }))
-
 const schema = computed(() =>
   z.object({
     input: z.object({
@@ -269,7 +265,6 @@ const submitApprove = () => {
   })
 
   if (!result.success) {
-    isFormInvalid.value = true
     for (const issue of result.error.issues) {
       const field = issue.path[0] as keyof typeof errors
       if (field in errors && !errors[field]) {
@@ -278,8 +273,6 @@ const submitApprove = () => {
     }
     return
   }
-
-  isFormInvalid.value = false
 
   const budgetLimit = {
     approvedAddress: input.value.address,
