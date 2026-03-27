@@ -22,10 +22,7 @@
         </template>
         <TeamContracts />
       </CardComponent>
-      <UModal
-        v-if="showAdCampaignModal.mount"
-        v-model:open="showAdCampaignModal.show"
-      >
+      <UModal v-if="showAdCampaignModal.mount" v-model:open="showAdCampaignModal.show">
         <template #body>
           <CreateAddCampaign
             @closeAddCampaignModal="showAdCampaignModal = { mount: false, show: false }"
