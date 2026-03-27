@@ -54,7 +54,11 @@
       data-test="add-team-button"
       v-if="!teamsError && !teamsAreFetching"
     >
-      <UModal v-model:open="openModal" title="Create Company" description="Create Your Company Step By Step">
+      <UModal
+        v-model:open="openModal"
+        title="Create Company"
+        description="Create Your Company Step By Step"
+      >
         <AddTeamCard
           data-test="add-team-card"
           @click="openModal = true"
