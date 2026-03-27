@@ -229,7 +229,7 @@ describe('OwnerTreasuryWithdrawAction', () => {
     )
   })
 
-  it.skip.skip('covers early-return and error handling paths', async () => {
+  it.skip('covers early-return and error handling paths', async () => {
     mockTeamStore.getContractAddressByType = vi.fn(
       () => undefined as unknown as string
     ) as unknown as typeof mockTeamStore.getContractAddressByType
