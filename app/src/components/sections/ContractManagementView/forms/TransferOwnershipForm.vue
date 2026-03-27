@@ -142,7 +142,7 @@ const handleContinue = () => {
 const handleTransferOwnership = () => {
   const result = addressSchema.safeParse(input.value.address)
   if (!result.success) {
-    addressError.value = result.error.errors[0].message
+    addressError.value = result.error.message
     return
   }
   addressError.value = ''

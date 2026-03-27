@@ -258,7 +258,7 @@ const schema = computed(() =>
         (v) => v.some((item) => isAddress(item.address)),
         'At least one valid address is required'
       ),
-    selectedToken: z.string({ required_error: 'Token is required' }).nullable().refine(
+    selectedToken: z.string().nullable().refine(
       (v) => v !== null,
       'Token is required'
     ),
