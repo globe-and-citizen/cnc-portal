@@ -69,53 +69,30 @@
       <template #body>
         <h1 class="font-bold text-2xl">Update Team Details</h1>
         <hr class="" />
-        <div class="flex flex-col gap-5">
-          <label class="w-full input input-bordered flex items-center gap-2 input-md mt-4">
-            <span class="w-28">Team Name</span>
-            <input
-              type="text"
-              class="grow"
-              :placeholder="updateTeamInput.name"
-              v-model="updateTeamInput.name"
+        <UForm :schema="updateTeamSchema" :state="updateTeamInput" @submit="executeUpdateTeam" class="flex flex-col gap-5 mt-4">
+          <UFormField name="name" label="Team Name" required>
+            <UInput v-model="updateTeamInput.name" class="w-full" />
+          </UFormField>
+          <UFormField name="description" label="Description" required>
+            <UInput v-model="updateTeamInput.description" class="w-full" />
+          </UFormField>
+          <div class="modal-action justify-center">
+            <UButton
+              type="submit"
+              color="primary"
+              :loading="!!teamIsUpdating"
+              :disabled="!!teamIsUpdating"
+              label="Submit"
             />
-          </label>
-          <div
-            class="pl-4 text-red-500 text-sm w-full text-left"
-            v-for="error of $v.name.$errors"
-            :key="error.$uid"
-          >
-            {{ error.$message }}
           </div>
-          <label class="w-full input input-bordered flex items-center gap-2 input-md">
-            <span class="w-28">Description</span>
-            <input type="text" class="grow" v-model="updateTeamInput.description" />
-          </label>
-          <div
-            class="pl-4 text-red-500 text-sm w-full text-left"
-            v-for="error of $v.description.$errors"
-            :key="error.$uid"
-          >
-            {{ error.$message }}
-          </div>
-        </div>
-
-        <div class="modal-action justify-center">
-          <UButton
-            color="primary"
-            :loading="!!teamIsUpdating"
-            :disabled="!!teamIsUpdating"
-            @click="submitUpdateForm"
-            label="Submit"
-          />
-        </div>
+        </UForm>
       </template>
     </UModal>
   </div>
 </template>
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { required, minLength } from '@vuelidate/validators'
-import { useVuelidate } from '@vuelidate/core'
+import { z } from 'zod'
 import type { Member } from '@/types'
 import { useRouter } from 'vue-router'
 import { useToastStore } from '@/stores/useToastStore'
@@ -133,29 +110,18 @@ const { addSuccessToast, addErrorToast } = useToastStore()
 const router = useRouter()
 const inputs = ref<Member[]>([])
 
-const updateTeamInput = ref<{ name: string; description: string }>({
-  name: '',
-  description: ''
+const updateTeamInput = ref({ name: '', description: '' })
+
+const updateTeamSchema = z.object({
+  name: z.string().min(3, 'Name must be at least 3 characters'),
+  description: z.string().min(10, 'Description must be at least 10 characters')
 })
-
-const rules = {
-  name: { required, minLength: minLength(3) },
-  description: { required, minLength: minLength(10) }
-}
-
-const $v = useVuelidate(rules, updateTeamInput)
 
 const {
   isPending: teamIsUpdating,
   error: updateTeamError,
   mutate: updateTeamMutate
 } = useUpdateTeamMutation()
-
-const submitUpdateForm = () => {
-  $v.value.$touch()
-  if ($v.value.$invalid) return
-  executeUpdateTeam()
-}
 
 const executeUpdateTeam = () => {
   updateTeamMutate(
