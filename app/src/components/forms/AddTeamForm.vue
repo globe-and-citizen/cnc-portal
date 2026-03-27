@@ -13,14 +13,14 @@
       @submit="nextStep"
     >
       <UFormField
-        label="Team Name"
+        label="Company Name"
         name="name"
         required
-        help="Give your team a unique, recognizable name"
+        help="Give your company a unique, recognizable name"
       >
         <UInput
           v-model="teamData.name"
-          placeholder="Engineering Team"
+          placeholder="Acme Corp"
           class="w-full"
           data-test="team-name-input"
         />
@@ -28,7 +28,7 @@
       <UFormField
         label="Description"
         name="description"
-        help="Optional — briefly describe your team's purpose"
+        help="Optional — briefly describe your company's purpose"
         :hint="`${teamData.description.length} / 200`"
       >
         <UTextarea
@@ -48,7 +48,7 @@
     <div v-else-if="currentStep === 1" data-test="step-2">
       <div class="flex flex-col gap-5">
         <div class="text-sm text-gray-700 mb-2">
-          Invite members to your team. You can always add more later.
+          Invite members to your company. You can always add more later.
         </div>
         <MultiSelectMemberInput v-model="teamData.members" :disable-team-members="false" />
         {{ createTeamError }}
@@ -56,7 +56,7 @@
           v-if="createTeamError"
           color="error"
           icon="i-heroicons-exclamation-circle"
-          title="Failed to create team"
+          title="Failed to create company"
           description="Something went wrong on our end. Please check your connection and try again."
           data-test="create-team-error"
         />
@@ -79,7 +79,7 @@
           data-test="create-team-button"
           @click="saveTeamToDatabase"
         >
-          Create Team
+          Create Company
         </UButton>
       </div>
     </div>
@@ -157,7 +157,7 @@ const step2Label = computed(() => {
 })
 
 const stepperItems = computed(() => [
-  { title: 'Team Details', value: 1 },
+  { title: 'Company Details', value: 1 },
   { title: step2Label.value, value: 2 },
   { title: 'Investor Contract', value: 3 }
 ])
@@ -185,7 +185,7 @@ const saveTeamToDatabase = async () => {
     log.error('Failed to create team', createTeamError.value)
     return
   }
-  toast.add({ title: 'Team created successfully', color: 'success' })
+  toast.add({ title: 'Company created successfully', color: 'success' })
   nextStep()
 }
 </script>

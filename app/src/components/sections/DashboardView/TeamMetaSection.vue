@@ -31,19 +31,35 @@
                   @submit="executeUpdateTeam"
                   class="flex flex-col gap-5"
                 >
-                  <UFormField name="name" label="Company Name" required>
-                    <UInput v-model="updateTeamInput.name" class="w-full" />
+                  <UFormField
+                    name="name"
+                    label="Company Name"
+                    help="Give your company a unique, recognizable name"
+                    required
+                  >
+                    <UInput v-model="updateTeamInput.name" placeholder="Acme Corp" class="w-full" />
                   </UFormField>
-                  <UFormField name="description" label="Description" required>
-                    <UInput v-model="updateTeamInput.description" class="w-full" />
+                  <UFormField
+                    name="description"
+                    label="Description"
+                    help="Briefly describe your company's purpose"
+                    :hint="`${updateTeamInput.description.length} / 200`"
+                  >
+                    <UTextarea
+                      v-model="updateTeamInput.description"
+                      placeholder="Enter a short description"
+                      class="w-full"
+                      :rows="3"
+                    />
                   </UFormField>
-                  <div class="flex justify-center">
+                  <div class="flex justify-end">
                     <UButton
                       type="submit"
                       color="primary"
+                      class="w-32 justify-center"
                       :loading="!!teamIsUpdating"
                       :disabled="!!teamIsUpdating"
-                      label="Submit"
+                      label="Save changes"
                     />
                   </div>
                 </UForm>
