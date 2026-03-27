@@ -2,22 +2,11 @@
   <!-- Navigation and breadcrumb -->
   <div class="flex flex-col gap-6 w-full">
     <div>
-      <div class="breadcrumbs text-sm" v-if="!teamStore.currentTeamMeta.error">
-        <ul>
-          <li>
-            <div
-              class="skeleton h-4 w-20"
-              data-test="loader"
-              v-if="teamStore.currentTeamMeta?.isPending"
-            ></div>
-            <a v-else-if="teamStore.currentTeamMeta?.data"
-              >TEAM : {{ teamStore.currentTeamMeta.data?.name }}</a
-            >
-          </li>
-
-          <li>{{ route.meta.name }}</li>
-        </ul>
-      </div>
+      <UBreadcrumb v-if="!teamStore.currentTeamMeta.error" :items="breadcrumbItems">
+        <template #loader>
+          <div class="skeleton h-4 w-20" data-test="loader" />
+        </template>
+      </UBreadcrumb>
     </div>
     <div v-if="teamStore.currentTeamMeta?.error" data-test="error-state">
       <div class="alert alert-warning" v-if="teamStore.currentTeamMeta.error?.status == 404">
@@ -73,6 +62,19 @@ watch(teamStore.currentTeamMeta, () => {
 
 const hasContract = computed(() => {
   return (teamStore.currentTeamMeta.data?.teamContracts ?? []).length > 0
+})
+
+const breadcrumbItems = computed(() => {
+  if (teamStore.currentTeamMeta?.isPending) {
+    return [{ slot: 'loader' as const }, { label: route.meta.name as string }]
+  }
+  if (teamStore.currentTeamMeta?.data) {
+    return [
+      { label: `TEAM : ${teamStore.currentTeamMeta.data?.name}` },
+      { label: route.meta.name as string }
+    ]
+  }
+  return [{ label: route.meta.name as string }]
 })
 
 watch(
