@@ -105,8 +105,8 @@ const ButtonStub = defineComponent({
 })
 const AddressToolTipStub = defineComponent({ template: '<div></div>' })
 const ModalStub = defineComponent({
-  props: ['modelValue'],
-  template: '<div v-if="modelValue"><slot /></div>'
+  props: ['open'],
+  template: '<div v-if="open"><slot name="body" /></div>'
 })
 const DepositBankFormStub = defineComponent({ template: '<div></div>' })
 const TransferFormStub = defineComponent({ template: '<div><slot name="header" /></div>' })
@@ -124,7 +124,7 @@ describe('SafeBalanceSection', () => {
           CardComponent: CardStub,
           UButton: ButtonStub,
           AddressToolTip: AddressToolTipStub,
-          ModalComponent: ModalStub,
+          UModal: ModalStub,
           DepositBankForm: DepositBankFormStub,
           TransferForm: TransferFormStub
         }

@@ -159,8 +159,8 @@ const AddressToolTipStub = defineComponent({
 })
 
 const ModalStub = defineComponent({
-  props: ['modelValue'],
-  template: '<div data-test="modal" v-if="modelValue"><slot /></div>'
+  props: ['open'],
+  template: '<div data-test="modal" v-if="open"><slot name="body" /></div>'
 })
 
 const DepositBankFormStub = defineComponent({
@@ -191,7 +191,7 @@ describe('SafeBalanceSection', () => {
           CardComponent: CardStub,
           UButton: ButtonStub,
           AddressToolTip: AddressToolTipStub,
-          ModalComponent: ModalStub,
+          UModal: ModalStub,
           DepositBankForm: DepositBankFormStub,
           TransferForm: TransferFormStub
         }

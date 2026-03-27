@@ -62,14 +62,14 @@ export const UDropdownStub = defineComponent({
 
 export const UModalStub = defineComponent({
   name: 'UModal',
-  props: ['modelValue', 'title'],
-  emits: ['update:modelValue'],
+  props: ['open', 'close', 'title'],
+  emits: ['update:open'],
   setup(props, { slots }) {
     return () =>
-      props.modelValue
+      props.open
         ? h('div', { 'data-test': 'u-modal', role: 'dialog' }, [
             props.title ? h('h2', props.title) : null,
-            slots.default ? slots.default() : null
+            slots.body ? slots.body() : slots.default ? slots.default() : null
           ])
         : null
   }

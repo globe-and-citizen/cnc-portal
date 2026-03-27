@@ -82,15 +82,10 @@ const createWrapper = (
     },
     global: {
       stubs: {
-        ModalComponent: {
-          template: '<div data-test="add-signer-modal"><slot /></div>',
-          props: ['modelValue'],
-          emits: ['reset', 'update:modelValue'],
-          watch: {
-            modelValue(newVal) {
-              this.$emit('update:modelValue', newVal)
-            }
-          }
+        UModal: {
+          template: '<div data-test="add-signer-modal"><slot name="body" /></div>',
+          props: ['open'],
+          emits: ['update:open']
         },
         MultiSelectMemberInput: {
           template: '<div data-test="new-signers-input"></div>',

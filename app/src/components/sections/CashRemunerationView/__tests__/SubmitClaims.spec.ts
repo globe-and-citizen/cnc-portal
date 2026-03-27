@@ -39,12 +39,6 @@ const createComponent = (props: Record<string, unknown> = {}) => {
           props: ['disabled', 'loading'],
           emits: ['click']
         },
-        ModalComponent: {
-          name: 'ModalComponent',
-          template: '<div v-if="modelValue"><slot /></div>',
-          props: ['modelValue'],
-          emits: ['update:modelValue']
-        },
         ClaimForm: ClaimFormStub
       }
     }

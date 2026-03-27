@@ -63,18 +63,18 @@ describe('InvestInSafeButton', () => {
             `,
             props: ['variant', 'outline', 'disabled']
           },
-          ModalComponent: {
-            name: 'ModalComponent',
+          UModal: {
+            name: 'UModal',
             template: `
-              <div 
-                v-if="modelValue" 
+              <div
+                v-if="open"
                 data-test="invest-in-safe-modal"
               >
-                <slot />
+                <slot name="body" />
               </div>
             `,
-            props: ['modelValue'],
-            emits: ['reset', 'update:modelValue']
+            props: ['open'],
+            emits: ['update:open']
           },
           SafeDepositRouterForm: {
             name: 'SafeDepositRouterForm',

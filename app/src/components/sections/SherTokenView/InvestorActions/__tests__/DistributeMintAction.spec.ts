@@ -18,7 +18,7 @@ describe('DistributeMintAction.vue', () => {
         stubs: {
           // Stub UI and child components - will be tested separately
           UButton: true,
-          ModalComponent: true,
+          UModal: true,
           DistributeMintForm: true,
           UIcon: true,
           UTooltip: true
