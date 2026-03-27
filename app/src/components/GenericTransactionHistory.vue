@@ -150,19 +150,21 @@
       }}</template>
     </TableComponent>
 
-    <ModalComponent v-if="showReceiptModal" v-model="receiptModal">
-      <ReceiptComponent
-        v-if="receiptModal && selectedTransaction"
-        :receipt-data="formatReceiptData(selectedTransaction)"
-        @export-excel="handleReceiptExport"
-      />
-      <!-- <ReceiptComponent
-        v-if="receiptModal && selectedTransaction"
-        :receipt-data="formatReceiptData(selectedTransaction)"
-        @export-excel="handleReceiptExport"
-        @export-pdf="handleReceiptPdfExport"
-      /> -->
-    </ModalComponent>
+    <UModal v-if="showReceiptModal" v-model:open="receiptModal">
+      <template #body>
+        <ReceiptComponent
+          v-if="receiptModal && selectedTransaction"
+          :receipt-data="formatReceiptData(selectedTransaction)"
+          @export-excel="handleReceiptExport"
+        />
+        <!-- <ReceiptComponent
+          v-if="receiptModal && selectedTransaction"
+          :receipt-data="formatReceiptData(selectedTransaction)"
+          @export-excel="handleReceiptExport"
+          @export-pdf="handleReceiptPdfExport"
+        /> -->
+      </template>
+    </UModal>
   </CardComponent>
 </template>
 
@@ -170,7 +172,6 @@
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import CardComponent from '@/components/CardComponent.vue'
 import CustomDatePicker from '@/components/CustomDatePicker.vue'
-import ModalComponent from '@/components/ModalComponent.vue'
 import ReceiptComponent from '@/components/ReceiptComponent.vue'
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
 import UserComponent from '@/components/UserComponent.vue'

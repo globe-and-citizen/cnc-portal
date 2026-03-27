@@ -8,17 +8,23 @@
           @show-results-modal="showResultsModal = true"
           @show-create-election-modal="showCreateElectionModal = { mount: true, show: true }"
         />
-        <ModalComponent
+        <UModal
           v-if="showCreateElectionModal.mount"
-          v-model="showCreateElectionModal.show"
-          @reset="() => (showCreateElectionModal = { mount: false, show: false })"
+          v-model:open="showCreateElectionModal.show"
+          :close="{
+            onClick: () => {
+              showCreateElectionModal = { mount: false, show: false }
+            }
+          }"
         >
-          <CreateElectionForm
-            :is-loading="isLoadingCreateElection /*|| isConfirmingCreateElection*/"
-            @create-proposal="createElection"
-            @close-modal="() => (showCreateElectionModal = { mount: false, show: false })"
-          />
-        </ModalComponent>
+          <template #body>
+            <CreateElectionForm
+              :is-loading="isLoadingCreateElection /*|| isConfirmingCreateElection*/"
+              @create-proposal="createElection"
+              @close-modal="() => (showCreateElectionModal = { mount: false, show: false })"
+            />
+          </template>
+        </UModal>
       </div>
     </template>
     <template #card-badge>
@@ -57,7 +63,6 @@
 <script setup lang="ts">
 import CardComponent from '@/components/CardComponent.vue'
 import { computed, ref, watch } from 'vue'
-import ModalComponent from '@/components/ModalComponent.vue'
 import CreateElectionForm from './forms/CreateElectionForm.vue'
 import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
 import { useTeamStore, useToastStore } from '@/stores'

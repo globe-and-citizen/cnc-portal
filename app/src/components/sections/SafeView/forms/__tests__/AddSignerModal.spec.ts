@@ -82,30 +82,10 @@ const createWrapper = (
     },
     global: {
       stubs: {
-        ModalComponent: {
-          template: '<div data-test="add-signer-modal"><slot /></div>',
-          props: ['modelValue'],
-          emits: ['reset', 'update:modelValue'],
-          watch: {
-            modelValue(newVal) {
-              this.$emit('update:modelValue', newVal)
-            }
-          }
-        },
         MultiSelectMemberInput: {
           template: '<div data-test="new-signers-input"></div>',
           props: ['modelValue', 'disableTeamMembers', 'currentSafeOwners'],
           emits: ['update:modelValue']
-        },
-        UButton: {
-          template:
-            '<button :data-test="$attrs[\'data-test\']" :disabled="disabled || loading" @click="$emit(\'click\')"><slot /></button>',
-          props: ['disabled', 'loading', 'variant'],
-          emits: ['click']
-        },
-        IconifyIcon: {
-          template: '<span></span>',
-          props: ['icon']
         }
       }
     }

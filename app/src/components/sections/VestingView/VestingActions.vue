@@ -11,25 +11,30 @@
       label="add vesting"
     />
 
-    <ModalComponent
-      v-model="addVestingModal.show"
+    <UModal
       v-if="addVestingModal.mount"
-      @reset="() => (addVestingModal = { mount: false, show: false })"
+      v-model:open="addVestingModal.show"
+      :close="{
+        onClick: () => {
+          addVestingModal = { mount: false, show: false }
+        }
+      }"
     >
-      <CreateVesting
-        v-if="teamStore.currentTeamId"
-        :tokenAddress="(teamStore.getContractAddressByType('InvestorV1') as Address) ?? ''"
-        @closeAddVestingModal="handleClose"
-        @reload="handleReload"
-        :reloadKey="reloadKey"
-      />
-    </ModalComponent>
+      <template #body>
+        <CreateVesting
+          v-if="teamStore.currentTeamId"
+          :tokenAddress="(teamStore.getContractAddressByType('InvestorV1') as Address) ?? ''"
+          @closeAddVestingModal="handleClose"
+          @reload="handleReload"
+          :reloadKey="reloadKey"
+        />
+      </template>
+    </UModal>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import ModalComponent from '@/components/ModalComponent.vue'
 import CreateVesting from '@/components/sections/VestingView/forms/CreateVesting.vue'
 import { useTeamStore, useUserDataStore } from '@/stores'
 import type { Address } from 'viem'

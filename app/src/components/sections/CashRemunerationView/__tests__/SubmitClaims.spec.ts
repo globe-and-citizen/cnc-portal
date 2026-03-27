@@ -32,19 +32,6 @@ const createComponent = (props: Record<string, unknown> = {}) => {
     global: {
       plugins: [createTestingPinia({ createSpy: vi.fn }), [VueQueryPlugin, { queryClient }]],
       stubs: {
-        UButton: {
-          name: 'UButton',
-          template:
-            '<button :disabled="disabled" data-test="modal-submit-hours-button" @click="$emit(\'click\')"><slot /></button>',
-          props: ['disabled', 'loading'],
-          emits: ['click']
-        },
-        ModalComponent: {
-          name: 'ModalComponent',
-          template: '<div v-if="modelValue"><slot /></div>',
-          props: ['modelValue'],
-          emits: ['update:modelValue']
-        },
         ClaimForm: ClaimFormStub
       }
     }

@@ -3,7 +3,6 @@ import { mount } from '@vue/test-utils'
 import VotingManagement from '@/components/sections/AdministrationView/VotingManagement.vue'
 import { createTestingPinia } from '@pinia/testing'
 
-import ModalComponent from '@/components/ModalComponent.vue'
 import { ref } from 'vue'
 
 interface ComponentData {
@@ -122,11 +121,11 @@ describe.skip('VotingManagement', () => {
       expect(wrapper.find('[data-test="transfer-to-board-of-directors"]').exists()).toBe(true)
     })
 
-    it('shows ModalComponent when transferOwnership is clicked', async () => {
+    it('shows UModal when transferOwnership is clicked', async () => {
       const wrapper = createComponent()
       const transferOwnershipButton = wrapper.find('[data-test="transfer-ownership"]')
       await transferOwnershipButton.trigger('click')
-      expect(wrapper.findComponent(ModalComponent).exists()).toBeTruthy()
+      expect(wrapper.findComponent({ name: 'UModal' }).exists()).toBeTruthy()
     })
 
     it('shows loading skeleton when owner is loading', async () => {

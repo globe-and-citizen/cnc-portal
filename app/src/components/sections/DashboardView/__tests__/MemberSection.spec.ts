@@ -106,15 +106,6 @@ describe.skip('MemberSection.vue', () => {
     wrapper = mount(MemberSection, {
       global: {
         stubs: {
-          IconifyIcon: {
-            name: 'IconifyIcon',
-            template: '<span data-test="iconify-icon" />'
-          },
-          UButton: {
-            name: 'UButton',
-            emits: ['click'],
-            template: '<button v-bind="$attrs" @click="$emit(\'click\')"><slot /></button>'
-          },
           CardComponent: {
             name: 'CardComponent',
             props: ['title'],
@@ -148,11 +139,11 @@ describe.skip('MemberSection.vue', () => {
             props: ['user'],
             template: '<div data-test="user-component">{{ user.name }}</div>'
           },
-          ModalComponent: {
-            name: 'ModalComponent',
-            props: ['modelValue'],
-            emits: ['update:modelValue', 'reset'],
-            template: '<div data-test="modal-component"><slot /></div>'
+          UModal: {
+            name: 'UModal',
+            props: ['open'],
+            emits: ['update:open'],
+            template: '<div data-test="modal-component"><slot name="body" /></div>'
           },
           AddMemberForm: {
             name: 'AddMemberForm',
@@ -301,10 +292,10 @@ describe.skip('MemberSection.vue', () => {
       await addButton.trigger('click')
       await wrapper.vm.$nextTick()
 
-      const modal = wrapper.findComponent({ name: 'ModalComponent' })
+      const modal = wrapper.findComponent({ name: 'UModal' })
       expect(wrapper.find('[data-test="add-member-form"]').exists()).toBe(true)
 
-      await modal.vm.$emit('reset')
+      await modal.vm.$emit('update:open', false)
       await wrapper.vm.$nextTick()
 
       expect(wrapper.find('[data-test="add-member-form"]').exists()).toBe(false)

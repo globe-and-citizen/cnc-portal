@@ -10,45 +10,46 @@
     Submit Claim
   </UButton>
 
-  <ModalComponent v-if="modal.mount" v-model="modal.show" @reset="closeModal">
-    <div class="flex flex-col gap-4 mb-20">
-      <h3 class="text-xl font-bold">Submit Claim</h3>
-      <hr />
-      <ClaimForm
-        ref="claimFormRef"
-        :initial-data="formInitialData"
-        :is-loading="isWageClaimAdding"
-        :disabled-week-starts="props.signedWeekStarts"
-        :restrict-submit="isRestricted"
-        @submit="handleSubmit"
-      />
-      <div v-if="addWageClaimError && errorMessage" class="mt-4">
-        <div role="alert" class="alert alert-error">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-6 w-6 shrink-0 stroke-current"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
-          </svg>
-          <span>{{ errorMessage.message }}</span>
+  <UModal v-if="modal.mount" v-model:open="modal.show">
+    <template #body>
+      <div class="flex flex-col gap-4 mb-20">
+        <h3 class="text-xl font-bold">Submit Claim</h3>
+        <hr />
+        <ClaimForm
+          ref="claimFormRef"
+          :initial-data="formInitialData"
+          :is-loading="isWageClaimAdding"
+          :disabled-week-starts="props.signedWeekStarts"
+          :restrict-submit="isRestricted"
+          @submit="handleSubmit"
+        />
+        <div v-if="addWageClaimError && errorMessage" class="mt-4">
+          <div role="alert" class="alert alert-error">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-6 w-6 shrink-0 stroke-current"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+            <span>{{ errorMessage.message }}</span>
+          </div>
         </div>
       </div>
-    </div>
-  </ModalComponent>
+    </template>
+  </UModal>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
-import ModalComponent from '@/components/ModalComponent.vue'
 import ClaimForm from '@/components/sections/CashRemunerationView/Form/ClaimForm.vue'
 import { useSubmitRestriction } from '@/composables'
 import { useToastStore, useTeamStore } from '@/stores'

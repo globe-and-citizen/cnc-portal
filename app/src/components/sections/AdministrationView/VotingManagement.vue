@@ -74,22 +74,24 @@
       </div>
     </div>
   </div>
-  <ModalComponent v-model="transferOwnershipModal">
-    <TransferOwnershipForm
-      v-if="transferOwnershipModal"
-      @transferOwnership="
-        async (newOwner: string) => {
-          transferOwnership({
-            functionName: 'transferOwnership',
-            args: [newOwner as `0x${string}`],
-            abi: VOTING_ABI,
-            address: votingAddress as Address
-          })
-        }
-      "
-      :transferOwnershipLoading="transferOwnershipLoading || isConfirmingTransferOwnership"
-    />
-  </ModalComponent>
+  <UModal v-model:open="transferOwnershipModal">
+    <template #body>
+      <TransferOwnershipForm
+        v-if="transferOwnershipModal"
+        @transferOwnership="
+          async (newOwner: string) => {
+            transferOwnership({
+              functionName: 'transferOwnership',
+              args: [newOwner as `0x${string}`],
+              abi: VOTING_ABI,
+              address: votingAddress as Address
+            })
+          }
+        "
+        :transferOwnershipLoading="transferOwnershipLoading || isConfirmingTransferOwnership"
+      />
+    </template>
+  </UModal>
 </template>
 <script setup lang="ts">
 import { useToastStore } from '@/stores/useToastStore'
@@ -97,7 +99,6 @@ import TransferOwnershipForm from '@/components/sections/AdministrationView/form
 import type { Team } from '@/types'
 import { computed, onMounted, ref, watch } from 'vue'
 import SkeletonLoading from '@/components/SkeletonLoading.vue'
-import ModalComponent from '@/components/ModalComponent.vue'
 import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 import { VOTING_ABI } from '@/artifacts/abi/voting'
 import type { Address } from 'viem'
