@@ -25,7 +25,6 @@
       <UModal
         v-if="showAdCampaignModal.mount"
         v-model:open="showAdCampaignModal.show"
-        :close="{ onClick: () => (showAdCampaignModal = { mount: false, show: false }) }"
       >
         <template #body>
           <CreateAddCampaign
