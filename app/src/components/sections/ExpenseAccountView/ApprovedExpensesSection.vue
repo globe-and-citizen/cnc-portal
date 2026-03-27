@@ -26,45 +26,44 @@
 
     <ExpenseAccountTable />
 
-    <ModalComponent
-      v-model="approveUsersModal.show"
+    <UModal
       v-if="approveUsersModal.mount"
-      @reset="
-        () => {
-          approveUsersModal = { mount: false, show: false }
-        }
-      "
+      v-model:open="approveUsersModal.show"
+      :close="{ onClick: () => (approveUsersModal = { mount: false, show: false }) }"
     >
-      <ApproveUsersForm
-        v-if="approveUsersModal.mount"
-        :form-data="teamMembers"
-        :users="foundUsers"
-        :loading-approve="loadingApprove"
-        :is-bod-action="isBodAction()"
-        @approve-user="
-          (data: BudgetLimit) => {
-            approveData = data
-            confirmationModal = true
-          }
-        "
-        @close-modal="approveUsersModal = { mount: false, show: false }"
-      />
-    </ModalComponent>
+      <template #body>
+        <ApproveUsersForm
+          v-if="approveUsersModal.mount"
+          :form-data="teamMembers"
+          :users="foundUsers"
+          :loading-approve="loadingApprove"
+          :is-bod-action="isBodAction()"
+          @approve-user="
+            (data: BudgetLimit) => {
+              approveData = data
+              confirmationModal = true
+            }
+          "
+          @close-modal="approveUsersModal = { mount: false, show: false }"
+        />
+      </template>
+    </UModal>
 
-    <ModalComponent v-model="confirmationModal">
-      <ApproveExpenseSummaryForm
-        v-if="confirmationModal"
-        :budget-limit="approveData!"
-        :loading="loadingApprove"
-        @submit="approveUser"
-        @close="confirmationModal = false"
-      />
-    </ModalComponent>
+    <UModal v-model:open="confirmationModal">
+      <template #body>
+        <ApproveExpenseSummaryForm
+          v-if="confirmationModal"
+          :budget-limit="approveData!"
+          :loading="loadingApprove"
+          @submit="approveUser"
+          @close="confirmationModal = false"
+        />
+      </template>
+    </UModal>
   </CardComponent>
 </template>
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import ModalComponent from '@/components/ModalComponent.vue'
 import CardComponent from '@/components/CardComponent.vue'
 import ExpenseAccountTable from '@/components/sections/ExpenseAccountView/ExpenseAccountTable.vue'
 import ApproveUsersForm from '@/components/forms/ApproveUsersEIP712Form.vue'
