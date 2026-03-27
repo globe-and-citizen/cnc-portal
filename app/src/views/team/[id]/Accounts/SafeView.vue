@@ -1,27 +1,20 @@
 <!-- filepath: app/src/views/team/[id]/Accounts/SafeView.vue -->
 <template>
-  <div v-if="teamStore.getContractAddressByType('Safe')" class="flex flex-col gap-6">
-    <SafeBalanceSection
-      :key="teamStore.getContractAddressByType('Safe')"
-      :address="teamStore.getContractAddressByType('Safe') as Address"
-    />
+  <div v-if="safeAddress" class="flex flex-col gap-6">
+    <SafeBalanceSection :key="safeAddress" :address="safeAddress" />
 
     <div class="grid grid-cols-1 xl:grid-cols-5 gap-6">
       <div class="xl:col-span-3 min-w-0">
-        <GenericTokenHoldingsSection
-          :key="teamStore.getContractAddressByType('Safe')"
-          :address="teamStore.getContractAddressByType('Safe') as Address"
-          class="h-full"
-        />
+        <GenericTokenHoldingsSection :key="safeAddress" :address="safeAddress" class="h-full" />
       </div>
       <div class="xl:col-span-2 min-w-0">
-        <SafeOwnersCard :address="teamStore.getContractAddressByType('Safe') as Address" />
+        <SafeOwnersCard :address="safeAddress" />
       </div>
     </div>
 
-    <SafeTransactions :address="teamStore.getContractAddressByType('Safe') as Address" />
+    <SafeTransactions :address="safeAddress" />
 
-    <SafeIncomingTransactions :address="teamStore.getContractAddressByType('Safe') as Address" />
+    <SafeIncomingTransactions :address="safeAddress" />
   </div>
 
   <!-- Safe not deployed state -->
@@ -60,6 +53,9 @@ const teamId = computed(() => {
   const id = route.params.id as string
   return id ? parseInt(id, 10) : null
 })
+
+// Computed property to get Safe address once per render cycle
+const safeAddress = computed(() => teamStore.getContractAddressByType('Safe') as Address)
 
 /**
  * Handle successful Safe deployment
