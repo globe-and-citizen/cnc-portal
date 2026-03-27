@@ -155,7 +155,7 @@ const items = computed<NavigationMenuItem[]>(() => [
         }
       },
       {
-        label: 'Expense Account ',
+        label: 'Expense Account',
         // icon: 'heroicons:briefcase',
         to: {
           name: 'expense-account',
@@ -165,7 +165,7 @@ const items = computed<NavigationMenuItem[]>(() => [
     ]
   },
   {
-    label: 'Payroll Account',
+    label: 'Payroll',
     icon: 'heroicons:currency-dollar',
     to: {
       name: 'payroll-account',
@@ -175,7 +175,7 @@ const items = computed<NavigationMenuItem[]>(() => [
     children: [
       {
         // icon: 'heroicons:briefcase',
-        label: 'Payroll',
+        label: 'Payroll Account',
         to: {
           name: 'payroll-account',
           params: { id: teamStore.currentTeamId || '1' }
@@ -229,7 +229,7 @@ const items = computed<NavigationMenuItem[]>(() => [
     },
     children: [
       {
-        label: 'BoD Election',
+        label: 'Board Election',
         to: {
           name: 'bod-elections',
           params: { id: teamStore.currentTeamId || '1' }
