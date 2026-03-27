@@ -54,17 +54,6 @@ const makeBalance = (
 
 const stubs = {
   teleport: true,
-  UButton: defineComponent({
-    props: { disabled: { type: Boolean, default: false } },
-    emits: ['click'],
-    template:
-      '<button v-bind="$attrs" :disabled="disabled" @click="$emit(\'click\')"><slot /></button>'
-  }),
-  ModalComponent: defineComponent({
-    emits: ['update:modelValue', 'reset'],
-    template:
-      '<div data-test="owner-withdraw-modal"><slot /><button data-test="modal-close" @click="$emit(\'update:modelValue\', false)" /><button data-test="modal-reset" @click="$emit(\'reset\')" /></div>'
-  }),
   TokenAmount: defineComponent({
     emits: ['update:modelValue', 'validation'],
     data() {
