@@ -21,80 +21,68 @@
         <p class="pl-5">{{ currentTeam?.description }}</p>
 
         <div class="pl-5 flex flex-row justify-center gap-2 mt-5 items-center">
-          <UButton
-            size="sm"
-            color="secondary"
-            v-if="currentTeam?.ownerAddress == address"
-            @click="updateTeamModalOpen"
-            label="Update"
-          />
-          <UButton
-            size="sm"
-            color="error"
-            v-if="currentTeam?.ownerAddress == address"
-            @click="showDeleteTeamConfirmModal = true"
-            label="Delete"
-          />
+          <template v-if="currentTeam?.ownerAddress == address">
+            <UModal v-model:open="showModal" title="Update Company Details">
+              <UButton size="sm" color="secondary" label="Update" @click="prefillUpdateForm" />
+              <template #body>
+                <UForm
+                  :schema="updateTeamSchema"
+                  :state="updateTeamInput"
+                  @submit="executeUpdateTeam"
+                  class="flex flex-col gap-5"
+                >
+                  <UFormField name="name" label="Company Name" required>
+                    <UInput v-model="updateTeamInput.name" class="w-full" />
+                  </UFormField>
+                  <UFormField name="description" label="Description" required>
+                    <UInput v-model="updateTeamInput.description" class="w-full" />
+                  </UFormField>
+                  <div class="flex justify-center">
+                    <UButton
+                      type="submit"
+                      color="primary"
+                      :loading="!!teamIsUpdating"
+                      :disabled="!!teamIsUpdating"
+                      label="Submit"
+                    />
+                  </div>
+                </UForm>
+              </template>
+            </UModal>
+
+            <UModal v-model:open="showDeleteTeamConfirmModal" title="Confirmation">
+              <UButton size="sm" color="error" label="Delete" />
+              <template #body>
+                <p>
+                  Are you sure you want to delete the company
+                  <span class="font-bold">{{ teamStore.currentTeamMeta.data?.name }}</span
+                  >?
+                </p>
+                <div class="flex justify-center gap-2 mt-4">
+                  <UButton
+                    color="error"
+                    data-test="delete-team-button"
+                    @click="deleteTeam()"
+                    :loading="teamIsDeleting"
+                    :disabled="teamIsDeleting"
+                    label="Delete"
+                  />
+                  <UButton
+                    color="primary"
+                    variant="outline"
+                    @click="showDeleteTeamConfirmModal = false"
+                    label="Cancel"
+                  />
+                </div>
+              </template>
+            </UModal>
+          </template>
         </div>
       </div>
     </div>
-    <UModal v-model:open="showDeleteTeamConfirmModal">
-      <template #body>
-        <h3 class="font-bold text-lg">Confirmation</h3>
-        <hr class="" />
-        <p class="py-4">
-          Are you sure you want to delete the team
-          <span class="font-bold">{{ teamStore.currentTeamMeta.data?.name }}</span
-          >?
-        </p>
-        <div class="modal-action justify-center">
-          <UButton
-            color="error"
-            data-test="delete-team-button"
-            @click="deleteTeam()"
-            :loading="teamIsDeleting"
-            :disabled="teamIsDeleting"
-            label="Delete"
-          />
-          <UButton
-            color="primary"
-            variant="outline"
-            @click="showDeleteTeamConfirmModal = false"
-            label="Cancel"
-          />
-        </div>
-      </template>
-    </UModal>
-    <UModal v-model:open="showModal">
-      <template #body>
-        <h1 class="font-bold text-2xl">Update Team Details</h1>
-        <hr class="" />
-        <UForm
-          :schema="updateTeamSchema"
-          :state="updateTeamInput"
-          @submit="executeUpdateTeam"
-          class="flex flex-col gap-5 mt-4"
-        >
-          <UFormField name="name" label="Team Name" required>
-            <UInput v-model="updateTeamInput.name" class="w-full" />
-          </UFormField>
-          <UFormField name="description" label="Description" required>
-            <UInput v-model="updateTeamInput.description" class="w-full" />
-          </UFormField>
-          <div class="modal-action justify-center">
-            <UButton
-              type="submit"
-              color="primary"
-              :loading="!!teamIsUpdating"
-              :disabled="!!teamIsUpdating"
-              label="Submit"
-            />
-          </div>
-        </UForm>
-      </template>
-    </UModal>
   </div>
 </template>
+
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { z } from 'zod'
@@ -139,17 +127,16 @@ const executeUpdateTeam = () => {
     },
     {
       onSuccess: () => {
-        addSuccessToast('Team updated successfully')
+        addSuccessToast('Company updated successfully')
         showModal.value = false
       },
       onError: () => {
-        addErrorToast(updateTeamError.value?.message || 'Failed to update team')
+        addErrorToast(updateTeamError.value?.message || 'Failed to update company')
       }
     }
   )
 }
 
-// Mutation for deleting team
 const {
   mutate: deleteTeamMutate,
   isPending: teamIsDeleting,
@@ -159,7 +146,7 @@ const {
 const deleteTeam = async () => {
   const teamId = teamStore.currentTeamId
   if (!teamId) {
-    addErrorToast('Team ID is required')
+    addErrorToast('Company ID is required')
     return
   }
 
@@ -167,21 +154,19 @@ const deleteTeam = async () => {
     { pathParams: { teamId: String(teamId) } },
     {
       onSuccess: async () => {
-        addSuccessToast('Team deleted successfully')
+        addSuccessToast('Company deleted successfully')
         showDeleteTeamConfirmModal.value = false
-        // wait for 3 seconds to show the toast before navigating
         await new Promise((resolve) => setTimeout(resolve, 3000))
         router.push('/teams')
       },
       onError: () => {
-        addErrorToast(deleteTeamError.value?.message || 'Failed to delete team')
+        addErrorToast(deleteTeamError.value?.message || 'Failed to delete company')
       }
     }
   )
 }
 
-const updateTeamModalOpen = async () => {
-  showModal.value = true
+const prefillUpdateForm = () => {
   updateTeamInput.value.name = teamStore.currentTeamMeta.data?.name || ''
   updateTeamInput.value.description = teamStore.currentTeamMeta.data?.description || ''
   inputs.value = teamStore.currentTeamMeta.data?.members || []
