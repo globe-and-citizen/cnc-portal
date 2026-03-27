@@ -9,13 +9,13 @@
       label="Withdraw"
     />
 
-    <teleport to="body">
-      <ModalComponent
-        v-model="showModal.show"
-        v-if="showModal.mount"
-        data-test="owner-withdraw-modal"
-        @reset="resetModal"
-      >
+    <UModal
+      v-if="showModal.mount"
+      v-model:open="showModal.show"
+      data-test="owner-withdraw-modal"
+      :close="{ onClick: resetModal }"
+    >
+      <template #body>
         <div class="flex flex-col gap-2">
           <h1 class="font-bold text-2xl">Owner Treasury Withdraw</h1>
         </div>
@@ -46,15 +46,14 @@
             label="Withdraw"
           />
         </div>
-      </ModalComponent>
-    </teleport>
+      </template>
+    </UModal>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { encodeFunctionData, parseEther, parseUnits, type Address } from 'viem'
-import ModalComponent from '@/components/ModalComponent.vue'
 import TokenAmount from '@/components/forms/TokenAmount.vue'
 import { useContractBalance } from '@/composables'
 import { useCashRemunerationOwner } from '@/composables/cashRemuneration/reads'
