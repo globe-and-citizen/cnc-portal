@@ -18,13 +18,6 @@ const MultiSelectMemberInputStub = {
   template: '<div data-test="multiselect-stub"></div>'
 }
 
-const VueDatePickerStub = {
-  name: 'VueDatePicker',
-  props: ['modelValue'],
-  emits: ['update:modelValue'],
-  template: '<input data-test="date-input" />'
-}
-
 type Candidate = { name: string; candidateAddress: string }
 
 type CreateElectionVm = {

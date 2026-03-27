@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
-import { defineComponent } from 'vue'
 import SetMemberWageStandardStep from '../SetMemberWageStandardStep.vue'
 import type { WageWithForm } from '../SetMemberWageModal.vue'
 
