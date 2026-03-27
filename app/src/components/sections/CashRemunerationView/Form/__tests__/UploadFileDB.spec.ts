@@ -43,11 +43,6 @@ describe('UploadFileDB', () => {
       global: {
         plugins: [createTestingPinia({ createSpy: vi.fn })],
         stubs: {
-          UButton: {
-            name: 'UButton',
-            template: '<button :disabled="disabled"><slot /></button>',
-            props: ['loading', 'disabled', 'variant', 'color']
-          },
           UFileUpload: UFileUploadStub,
           FilePreviewGallery: true
         }

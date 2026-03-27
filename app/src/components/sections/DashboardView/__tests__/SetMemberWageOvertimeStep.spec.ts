@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
-import { defineComponent } from 'vue'
 import { NETWORK } from '@/constant'
 import SetMemberWageOvertimeStep from '../SetMemberWageOvertimeStep.vue'
 import type { WageWithForm } from '../SetMemberWageModal.vue'
@@ -28,96 +27,12 @@ const createWageData = (overrides: Partial<WageWithForm> = {}): WageWithForm => 
   ...overrides
 })
 
-const UAlertStub = defineComponent({
-  name: 'UAlert',
-  template: '<div><slot name="description" /></div>'
-})
-
-const UFormStub = defineComponent({
-  name: 'UForm',
-  template: '<form><slot /></form>'
-})
-
-const UFormFieldStub = defineComponent({
-  name: 'UFormField',
-  props: {
-    name: {
-      type: String,
-      default: ''
-    }
-  },
-  template: '<div :data-test="`field-${name}`"><slot /></div>'
-})
-
-const UInputStub = defineComponent({
-  name: 'UInput',
-  inheritAttrs: false,
-  props: {
-    modelValue: {
-      type: [String, Number],
-      default: ''
-    },
-    disabled: {
-      type: Boolean,
-      default: false
-    }
-  },
-  emits: ['update:modelValue'],
-  template: `
-		<div>
-			<slot name="leading" />
-			<input
-				v-bind="$attrs"
-				:disabled="disabled"
-				:value="modelValue"
-				@input="$emit('update:modelValue', Number(($event.target as HTMLInputElement).value))"
-			/>
-			<slot name="trailing" />
-		</div>
-	`
-})
-
-const UFieldGroupStub = defineComponent({
-  name: 'UFieldGroup',
-  template: '<div><slot /></div>'
-})
-
-const USwitchStub = defineComponent({
-  name: 'USwitch',
-  inheritAttrs: false,
-  props: {
-    modelValue: {
-      type: Boolean,
-      default: false
-    }
-  },
-  emits: ['update:modelValue'],
-  template:
-    '<input v-bind="$attrs" type="checkbox" :checked="modelValue" @change="$emit(\'update:modelValue\', ($event.target as HTMLInputElement).checked)" />'
-})
-
-const UBadgeStub = defineComponent({
-  name: 'UBadge',
-  template: '<span data-test="rate-badge"><slot /></span>'
-})
-
 const createWrapper = (wageData = createWageData()) =>
   mount(SetMemberWageOvertimeStep, {
     props: {
       wageData,
       isPending: false,
       'onUpdate:wageData': (newValue: WageWithForm) => newValue
-    },
-    global: {
-      stubs: {
-        UAlert: UAlertStub,
-        UForm: UFormStub,
-        UFormField: UFormFieldStub,
-        UInput: UInputStub,
-        UFieldGroup: UFieldGroupStub,
-        USwitch: USwitchStub,
-        UBadge: UBadgeStub
-      }
     }
   })
 

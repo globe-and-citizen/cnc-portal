@@ -4,25 +4,18 @@ import CreateElectionForm from '@/components/sections/AdministrationView/forms/C
 import { nextTick } from 'vue'
 
 // Minimal stubs that mirror v-model behavior where needed
-const UButtonStub = {
-  name: 'UButton',
-  props: ['loading', 'disabled'],
-  emits: ['click'],
-  template: '<button :disabled="disabled" @click="$emit(\'click\')"><slot/></button>'
-}
+// const UButtonStub = {
+//   name: 'UButton',
+//   props: ['loading', 'disabled'],
+//   emits: ['click'],
+//   template: '<button :disabled="disabled" @click="$emit(\'click\')"><slot/></button>'
+// }
 
 const MultiSelectMemberInputStub = {
   name: 'MultiSelectMemberInput',
   props: { modelValue: { default: () => [] } },
   emits: ['update:modelValue'],
   template: '<div data-test="multiselect-stub"></div>'
-}
-
-const VueDatePickerStub = {
-  name: 'VueDatePicker',
-  props: ['modelValue'],
-  emits: ['update:modelValue'],
-  template: '<input data-test="date-input" />'
 }
 
 type Candidate = { name: string; candidateAddress: string }
@@ -59,9 +52,8 @@ const mountForm = (props: Record<string, unknown> = {}) =>
     props: { isLoading: false, ...props },
     global: {
       stubs: {
-        UButton: UButtonStub,
-        MultiSelectMemberInput: MultiSelectMemberInputStub,
-        VueDatePicker: VueDatePickerStub
+        MultiSelectMemberInput: MultiSelectMemberInputStub
+        // VueDatePicker: VueDatePickerStub
       }
     }
   })

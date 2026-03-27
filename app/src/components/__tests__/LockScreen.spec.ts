@@ -1,6 +1,5 @@
 import { mount } from '@vue/test-utils'
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { defineComponent, h } from 'vue'
 import LockScreen from '../LockScreen.vue'
 import { mockUseConnection } from '@/tests/mocks/wagmi.vue.mock'
 
@@ -21,22 +20,6 @@ describe('LockScreen.vue', () => {
     wrapper = mount(LockScreen, {
       props: {
         user: { address: '' }
-      },
-      global: {
-        stubs: {
-          UButton: defineComponent({
-            name: 'UButton',
-            emits: ['click'],
-            setup(_, { slots, emit }) {
-              return () =>
-                h(
-                  'button',
-                  { 'data-test': 'logout', onClick: () => emit('click') },
-                  slots.default ? slots.default() : []
-                )
-            }
-          })
-        }
       }
     })
   })
@@ -45,23 +28,6 @@ describe('LockScreen.vue', () => {
     wrapper = mount(LockScreen, {
       props: {
         user: { address: '0x1111111111111111111111111111111111111111' }
-      },
-      global: {
-        stubs: {
-          // Robust stub for UButton using render function
-          UButton: defineComponent({
-            name: 'UButton',
-            emits: ['click'],
-            setup(_, { slots, emit }) {
-              return () =>
-                h(
-                  'button',
-                  { 'data-test': 'logout', onClick: () => emit('click') },
-                  slots.default ? slots.default() : []
-                )
-            }
-          })
-        }
       }
     })
 
@@ -73,22 +39,6 @@ describe('LockScreen.vue', () => {
     wrapper = mount(LockScreen, {
       props: {
         user: { address: '0x1111111111111111111111111111111111111111' }
-      },
-      global: {
-        stubs: {
-          UButton: defineComponent({
-            name: 'UButton',
-            emits: ['click'],
-            setup(_, { slots, emit }) {
-              return () =>
-                h(
-                  'button',
-                  { 'data-test': 'logout', onClick: () => emit('click') },
-                  slots.default ? slots.default() : []
-                )
-            }
-          })
-        }
       }
     })
 
