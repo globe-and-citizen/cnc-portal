@@ -12,9 +12,15 @@
       <UAlert
         v-if="teamStore.currentTeamMeta.error?.status == 404"
         color="warning"
-        title="Error! Team not found"
+        title="Company not found"
+        description="This company doesn't exist or may have been removed."
       />
-      <UAlert v-else color="error" title="Error! Something went wrong, try again later." />
+      <UAlert
+        v-else
+        color="error"
+        title="Something went wrong"
+        description="We couldn't load this company. Please try again later."
+      />
     </div>
     <div
       v-if="route.name == 'show-team' && teamStore.currentTeamMeta?.data"
@@ -72,7 +78,7 @@ const breadcrumbItems = computed(() => {
   }
   if (teamStore.currentTeamMeta?.data) {
     return [
-      { label: `TEAM : ${teamStore.currentTeamMeta.data?.name}` },
+      { label: teamStore.currentTeamMeta.data?.name },
       { label: route.meta.name as string }
     ]
   }
