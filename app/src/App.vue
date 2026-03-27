@@ -41,7 +41,7 @@
 
       <!-- Toast Notifications -->
       <ToastContainer position="bottom-left" />
-      <VueQueryDevtools buttonPosition="bottom-left" :style="{ height: '1500px' }" />
+      <VueQueryDevtools buttonPosition="bottom-left" />
     </div>
   </UApp>
 </template>
