@@ -78,13 +78,6 @@ describe.skip('SetMemberWageModal', () => {
       global: {
         plugins: [createTestingPinia({ createSpy: vi.fn })],
         stubs: {
-          UButton: { template: '<button v-bind="$attrs"><slot />{{ $attrs.label }}</button>' },
-          UStepper: { template: '<div />' },
-          UAlert: {
-            props: ['description'],
-            template: '<div data-test="alert-description">{{ description }}</div>'
-          },
-          UTooltip: { template: '<div><slot /></div>' },
           SetMemberWageStandardStep: StandardStepStub,
           SetMemberWageOvertimeStep: OvertimeStepStub
         }

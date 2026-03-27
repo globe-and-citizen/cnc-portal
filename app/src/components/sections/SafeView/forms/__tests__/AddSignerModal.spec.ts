@@ -82,26 +82,11 @@ const createWrapper = (
     },
     global: {
       stubs: {
-        UModal: {
-          template: '<div data-test="add-signer-modal"><slot name="body" /></div>',
-          props: ['open'],
-          emits: ['update:open']
-        },
         MultiSelectMemberInput: {
           template: '<div data-test="new-signers-input"></div>',
           props: ['modelValue', 'disableTeamMembers', 'currentSafeOwners'],
           emits: ['update:modelValue']
         },
-        UButton: {
-          template:
-            '<button :data-test="$attrs[\'data-test\']" :disabled="disabled || loading" @click="$emit(\'click\')"><slot /></button>',
-          props: ['disabled', 'loading', 'variant'],
-          emits: ['click']
-        },
-        IconifyIcon: {
-          template: '<span></span>',
-          props: ['icon']
-        }
       }
     }
   })

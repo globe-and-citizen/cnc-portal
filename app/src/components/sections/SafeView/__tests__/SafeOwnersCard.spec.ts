@@ -168,7 +168,6 @@ describe('SafeOwnersCard', () => {
       global: {
         stubs: {
           CardComponent: CardStub,
-          UButton: ButtonStub,
           AddressToolTip: AddressToolTipStub,
           RemoveOwnerButton: RemoveOwnerButtonStub,
           AddSignerModal: AddSignerModalStub,

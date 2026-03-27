@@ -4,12 +4,12 @@ import CreateElectionForm from '@/components/sections/AdministrationView/forms/C
 import { nextTick } from 'vue'
 
 // Minimal stubs that mirror v-model behavior where needed
-const UButtonStub = {
-  name: 'UButton',
-  props: ['loading', 'disabled'],
-  emits: ['click'],
-  template: '<button :disabled="disabled" @click="$emit(\'click\')"><slot/></button>'
-}
+// const UButtonStub = {
+//   name: 'UButton',
+//   props: ['loading', 'disabled'],
+//   emits: ['click'],
+//   template: '<button :disabled="disabled" @click="$emit(\'click\')"><slot/></button>'
+// }
 
 const MultiSelectMemberInputStub = {
   name: 'MultiSelectMemberInput',
@@ -59,9 +59,8 @@ const mountForm = (props: Record<string, unknown> = {}) =>
     props: { isLoading: false, ...props },
     global: {
       stubs: {
-        UButton: UButtonStub,
         MultiSelectMemberInput: MultiSelectMemberInputStub,
-        VueDatePicker: VueDatePickerStub
+        // VueDatePicker: VueDatePickerStub
       }
     }
   })

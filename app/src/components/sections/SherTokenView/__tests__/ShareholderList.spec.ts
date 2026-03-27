@@ -65,7 +65,6 @@ describe('ShareholderList', () => {
           MintForm: MintFormStub,
           CardComponent: { template: '<div><slot /></div>' },
           UserComponent: true
-          // UButton: { template: '<button data-test="mint-individual"><slot /></button>' }
         }
       }
     })

@@ -64,8 +64,6 @@ describe('ElectionComponent', () => {
       },
       global: {
         stubs: {
-          // CardComponent: true,
-          UModal: true,
           CreateElectionForm: true,
           ElectionStatus: true,
           ElectionStats: true,

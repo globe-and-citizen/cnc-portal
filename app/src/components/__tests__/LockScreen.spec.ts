@@ -22,22 +22,6 @@ describe('LockScreen.vue', () => {
       props: {
         user: { address: '' }
       },
-      global: {
-        stubs: {
-          UButton: defineComponent({
-            name: 'UButton',
-            emits: ['click'],
-            setup(_, { slots, emit }) {
-              return () =>
-                h(
-                  'button',
-                  { 'data-test': 'logout', onClick: () => emit('click') },
-                  slots.default ? slots.default() : []
-                )
-            }
-          })
-        }
-      }
     })
   })
 
@@ -46,23 +30,6 @@ describe('LockScreen.vue', () => {
       props: {
         user: { address: '0x1111111111111111111111111111111111111111' }
       },
-      global: {
-        stubs: {
-          // Robust stub for UButton using render function
-          UButton: defineComponent({
-            name: 'UButton',
-            emits: ['click'],
-            setup(_, { slots, emit }) {
-              return () =>
-                h(
-                  'button',
-                  { 'data-test': 'logout', onClick: () => emit('click') },
-                  slots.default ? slots.default() : []
-                )
-            }
-          })
-        }
-      }
     })
 
     expect(wrapper.text()).toContain('0x1111...1111')
@@ -74,22 +41,6 @@ describe('LockScreen.vue', () => {
       props: {
         user: { address: '0x1111111111111111111111111111111111111111' }
       },
-      global: {
-        stubs: {
-          UButton: defineComponent({
-            name: 'UButton',
-            emits: ['click'],
-            setup(_, { slots, emit }) {
-              return () =>
-                h(
-                  'button',
-                  { 'data-test': 'logout', onClick: () => emit('click') },
-                  slots.default ? slots.default() : []
-                )
-            }
-          })
-        }
-      }
     })
 
     // Component renders with user address

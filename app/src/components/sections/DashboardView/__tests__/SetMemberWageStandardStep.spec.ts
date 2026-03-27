@@ -116,17 +116,6 @@ const createWrapper = (wageData = createWageData()) =>
       isPending: false,
       'onUpdate:wageData': (newValue: WageWithForm) => newValue
     },
-    global: {
-      stubs: {
-        UForm: UFormStub,
-        UFormField: UFormFieldStub,
-        UInput: UInputStub,
-        UFieldGroup: UFieldGroupStub,
-        USwitch: USwitchStub,
-        UCheckbox: UCheckboxStub,
-        UBadge: UBadgeStub
-      }
-    }
   })
 
 describe('SetMemberWageStandardStep.vue', () => {

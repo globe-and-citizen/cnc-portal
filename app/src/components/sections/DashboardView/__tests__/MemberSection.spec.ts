@@ -106,15 +106,6 @@ describe.skip('MemberSection.vue', () => {
     wrapper = mount(MemberSection, {
       global: {
         stubs: {
-          IconifyIcon: {
-            name: 'IconifyIcon',
-            template: '<span data-test="iconify-icon" />'
-          },
-          UButton: {
-            name: 'UButton',
-            emits: ['click'],
-            template: '<button v-bind="$attrs" @click="$emit(\'click\')"><slot /></button>'
-          },
           CardComponent: {
             name: 'CardComponent',
             props: ['title'],

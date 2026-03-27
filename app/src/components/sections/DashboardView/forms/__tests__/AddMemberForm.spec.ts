@@ -20,15 +20,6 @@ const mountComponent = () => {
     },
     global: {
       plugins: [createTestingPinia({ createSpy: vi.fn })],
-      stubs: {
-        UButton: {
-          name: 'UButton',
-          props: ['loading', 'disabled', 'color', 'class', 'label'],
-          emits: ['click'],
-          template:
-            '<button data-test="add-members-btn" :disabled="disabled" @click="$emit(\'click\')">{{ label || $slots.default?.() }}</button>'
-        }
-      }
     }
   })
 }

@@ -21,12 +21,12 @@ const UTextareaStub = {
   inheritAttrs: false
 }
 
-const UButtonStub = {
-  template:
-    '<button v-bind="$attrs" :disabled="disabled || loading" :type="type || \'button\'"><slot /></button>',
-  props: ['disabled', 'loading', 'type', 'color', 'variant', 'leadingIcon', 'size'],
-  inheritAttrs: false
-}
+// const UButtonStub = {
+//   template:
+//     '<button v-bind="$attrs" :disabled="disabled || loading" :type="type || \'button\'"><slot /></button>',
+//   props: ['disabled', 'loading', 'type', 'color', 'variant', 'leadingIcon', 'size'],
+//   inheritAttrs: false
+// }
 
 const UPopoverStub = { template: '<div><slot /><slot name="content" /></div>' }
 
@@ -67,11 +67,6 @@ const createWrapper = (props = {}) =>
     global: {
       plugins: [createTestingPinia({ createSpy: vi.fn })],
       stubs: {
-        UInput: UInputStub,
-        UTextarea: UTextareaStub,
-        UButton: UButtonStub,
-        UCalendar: UCalendarStub,
-        UPopover: UPopoverStub,
         UploadFileDB: UploadFileDBStub,
         FilePreviewGallery: FilePreviewGalleryStub
       }

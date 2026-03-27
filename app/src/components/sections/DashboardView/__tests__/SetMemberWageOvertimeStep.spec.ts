@@ -107,17 +107,6 @@ const createWrapper = (wageData = createWageData()) =>
       wageData,
       isPending: false,
       'onUpdate:wageData': (newValue: WageWithForm) => newValue
-    },
-    global: {
-      stubs: {
-        UAlert: UAlertStub,
-        UForm: UFormStub,
-        UFormField: UFormFieldStub,
-        UInput: UInputStub,
-        UFieldGroup: UFieldGroupStub,
-        USwitch: USwitchStub,
-        UBadge: UBadgeStub
-      }
     }
   })
 

@@ -90,12 +90,6 @@ describe('DropdownActions', () => {
         isCashRemunerationOwner,
         weeklyClaim
       },
-      global: {
-        stubs: {
-          IconifyIcon: true,
-          UButton: true
-        }
-      }
     })
   }
 

@@ -69,7 +69,6 @@ describe('TransferComponent', () => {
     return mount(TransferAction, {
       global: {
         stubs: {
-          // UButton: MockUButton,
           TransferForm: MockTransferForm,
           teleport: true
         }

@@ -49,33 +49,6 @@ describe('InvestInSafeButton', () => {
       global: {
         plugins: [createTestingPinia({ createSpy: vi.fn })],
         stubs: {
-          UButton: {
-            name: 'UButton',
-            template: `
-              <button 
-                data-test="invest-in-safe-button"
-                :disabled="disabled"
-                @click="$emit('click')"
-              >
-                <slot name="prefix" />
-                <slot />
-              </button>
-            `,
-            props: ['variant', 'outline', 'disabled']
-          },
-          UModal: {
-            name: 'UModal',
-            template: `
-              <div
-                v-if="open"
-                data-test="invest-in-safe-modal"
-              >
-                <slot name="body" />
-              </div>
-            `,
-            props: ['open'],
-            emits: ['update:open']
-          },
           SafeDepositRouterForm: {
             name: 'SafeDepositRouterForm',
             template: '<div data-test="safe-deposit-router-form"></div>',

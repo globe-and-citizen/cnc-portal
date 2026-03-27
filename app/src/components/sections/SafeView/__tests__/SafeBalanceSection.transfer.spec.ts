@@ -122,9 +122,7 @@ describe('SafeBalanceSection', () => {
       global: {
         stubs: {
           CardComponent: CardStub,
-          UButton: ButtonStub,
           AddressToolTip: AddressToolTipStub,
-          UModal: ModalStub,
           DepositBankForm: DepositBankFormStub,
           TransferForm: TransferFormStub
         }

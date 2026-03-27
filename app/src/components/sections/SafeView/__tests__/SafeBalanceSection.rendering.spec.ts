@@ -149,18 +149,9 @@ const CardStub = defineComponent({
   template: '<div data-test="card-component"><slot /></div>'
 })
 
-const ButtonStub = defineComponent({
-  emits: ['click'],
-  template: '<button data-test="button" @click="$emit(\'click\')"><slot /></button>'
-})
 
 const AddressToolTipStub = defineComponent({
   template: '<div data-test="address-tooltip"></div>'
-})
-
-const ModalStub = defineComponent({
-  props: ['open'],
-  template: '<div data-test="modal" v-if="open"><slot name="body" /></div>'
 })
 
 const DepositBankFormStub = defineComponent({
@@ -189,9 +180,7 @@ describe('SafeBalanceSection', () => {
       global: {
         stubs: {
           CardComponent: CardStub,
-          UButton: ButtonStub,
           AddressToolTip: AddressToolTipStub,
-          UModal: ModalStub,
           DepositBankForm: DepositBankFormStub,
           TransferForm: TransferFormStub
         }
