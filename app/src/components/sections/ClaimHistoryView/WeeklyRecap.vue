@@ -7,11 +7,18 @@
 
         <div class="mb-2">
           <span
-            v-if="props.weeklyClaim && hasOvertimeWage && overtimeHoursWorked > 0"
+            v-if="isSignedClaim"
+            class="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full bg-sky-50 text-sky-800"
+          >
+            <span class="w-1.5 h-1.5 rounded-full bg-sky-600 inline-block" />
+            Done
+          </span>
+          <span
+            v-else-if="props.weeklyClaim && hasOvertimeWage && overtimeHoursWorked > 0"
             class="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full bg-amber-50 text-amber-800"
           >
             <span class="w-1.5 h-1.5 rounded-full bg-amber-600 inline-block" />
-            Overtime reached
+            Currently in overtime
           </span>
           <span
             v-else-if="props.weeklyClaim"
@@ -114,6 +121,8 @@ const hasOvertimeWage = computed(() => {
   const rates = effectiveWage.value?.overtimeRatePerHour
   return Array.isArray(rates) && rates.length > 0
 })
+
+const isSignedClaim = computed(() => props.weeklyClaim?.status === 'signed')
 
 const regularHoursWorked = computed(() => {
   if (!hasOvertimeWage.value) return submittedHours.value
