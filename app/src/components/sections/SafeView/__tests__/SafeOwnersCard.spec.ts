@@ -116,6 +116,21 @@ const CardStub = defineComponent({
   `
 })
 
+const UButtonStub = defineComponent({
+  props: ['disabled', 'loading', 'class'],
+  emits: ['click'],
+  template: `
+    <button
+      data-test="button"
+      :disabled="disabled"
+      :class="$attrs['data-test']"
+      @click="$emit('click')"
+    >
+      <slot />
+    </button>
+  `
+})
+
 const AddressToolTipStub = defineComponent({
   props: ['address'],
   template: '<div data-test="address-tooltip">{{ address }}</div>'
@@ -153,7 +168,7 @@ describe('SafeOwnersCard', () => {
       global: {
         stubs: {
           UCard: CardStub,
-          UButton: ButtonStub,
+          UButton: UButtonStub,
           AddressToolTip: AddressToolTipStub,
           RemoveOwnerButton: RemoveOwnerButtonStub,
           AddSignerModal: AddSignerModalStub,
