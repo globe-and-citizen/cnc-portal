@@ -58,9 +58,7 @@ const emits = defineEmits(['transferOwnership'])
 const schema = computed(() =>
   z.object({
     newOwner: z.string().refine((v) => isAddress(v), { message: 'Invalid address' }),
-    description: props.asBod
-      ? z.string().min(1, 'Description is required')
-      : z.string()
+    description: props.asBod ? z.string().min(1, 'Description is required') : z.string()
   })
 )
 

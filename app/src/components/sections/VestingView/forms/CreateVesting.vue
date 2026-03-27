@@ -312,10 +312,10 @@ function buildSchema() {
     cliff: z
       .number()
       .min(0)
-      .refine((v) => v <= durationInDays.value, { message: 'Cliff cannot be greater than duration.' }),
-    totalAmount: z
-      .number()
-      .refine((v) => v >= 1, { message: 'Amount must be greater than 0.' })
+      .refine((v) => v <= durationInDays.value, {
+        message: 'Cliff cannot be greater than duration.'
+      }),
+    totalAmount: z.number().refine((v) => v >= 1, { message: 'Amount must be greater than 0.' })
   })
 }
 

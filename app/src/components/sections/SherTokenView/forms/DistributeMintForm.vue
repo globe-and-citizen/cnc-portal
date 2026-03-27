@@ -148,9 +148,7 @@ const rowSchema = z.object({
     .string()
     .min(1, 'Address is required')
     .refine((v) => isAddress(v), 'Invalid address'),
-  amount: z
-    .number()
-    .refine((v) => v > 0, 'Amount must be greater than 0')
+  amount: z.number().refine((v) => v > 0, 'Amount must be greater than 0')
 })
 
 const onSubmit = () => {

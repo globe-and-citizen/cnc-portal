@@ -41,8 +41,5 @@ const { logout } = useAuth()
 const userStore = useUserDataStore()
 const { imageUrl } = storeToRefs(userStore)
 
-const profileItems = [
-  { label: 'Settings' },
-  { label: 'Logout', click: logout }
-]
+const profileItems = [{ label: 'Settings' }, { label: 'Logout', click: logout }]
 </script>

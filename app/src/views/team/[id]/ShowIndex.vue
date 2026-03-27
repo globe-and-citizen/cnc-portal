@@ -77,10 +77,7 @@ const breadcrumbItems = computed(() => {
     return [{ slot: 'loader' as const }, { label: route.meta.name as string }]
   }
   if (teamStore.currentTeamMeta?.data) {
-    return [
-      { label: teamStore.currentTeamMeta.data?.name },
-      { label: route.meta.name as string }
-    ]
+    return [{ label: teamStore.currentTeamMeta.data?.name }, { label: route.meta.name as string }]
   }
   return [{ label: route.meta.name as string }]
 })

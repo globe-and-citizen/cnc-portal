@@ -2,11 +2,7 @@
   <h3 class="font-bold text-xl">Create New Proposal</h3>
   <UForm :schema="schema" :state="state" @submit="handleSubmit" class="flex flex-col w-full gap-2">
     <UFormField name="title" label="Title">
-      <UInput
-        v-model="state.title"
-        placeholder="Enter proposal title"
-        class="w-full"
-      />
+      <UInput v-model="state.title" placeholder="Enter proposal title" class="w-full" />
     </UFormField>
 
     <UFormField name="description" label="Description">
@@ -19,7 +15,13 @@
     </UFormField>
 
     <UFormField name="type" label="Type">
-      <USelect v-model="state.type" :items="types" value-key="value" label-key="label" class="w-full" />
+      <USelect
+        v-model="state.type"
+        :items="types"
+        value-key="value"
+        label-key="label"
+        class="w-full"
+      />
     </UFormField>
 
     <div class="flex flex-row justify-between items-start gap-4">
@@ -99,7 +101,10 @@ const schema = computed(() =>
       .min(10, 'Description must be at least 10 characters')
       .max(1000, 'Description must be less than 1000 characters'),
     type: z.enum(['Financial', 'Technical', 'Operational']),
-    startDate: z.instanceof(Date).nullable().refine((v) => v !== null, 'Start date is required'),
+    startDate: z
+      .instanceof(Date)
+      .nullable()
+      .refine((v) => v !== null, 'Start date is required'),
     endDate: z
       .instanceof(Date)
       .nullable()

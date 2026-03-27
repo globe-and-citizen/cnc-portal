@@ -207,32 +207,28 @@ const schema = computed(() =>
         .refine((v) => isAddress(v), 'Invalid wallet address'),
       token: z.string().min(1, 'Token is required')
     }),
-    description: z.string().refine(
-      (v) => !props.isBodAction || v.length > 0,
-      'Description is required'
-    ),
-    amount: z
+    description: z
+      .string()
+      .refine((v) => !props.isBodAction || v.length > 0, 'Description is required'),
+    amount: z.number().refine((v) => v > 0, 'Amount must be greater than zero'),
+    customFrequencyDays: z
       .number()
-      .refine((v) => v > 0, 'Amount must be greater than zero'),
-    customFrequencyDays: z.number().refine(
-      (v) => frequencyType.value !== 4 || v >= 1,
-      'Custom frequency must be at least 1 day'
-    ),
-    startDate: z
-      .union([z.instanceof(Date), z.string()])
-      .refine((v) => {
-        if (!v) return false
-        const d = typeof v === 'string' ? new Date(v) : v
-        return d > new Date()
-      }, 'Start date must be in the future'),
-    endDate: z
-      .union([z.instanceof(Date), z.string()])
-      .refine((v) => {
-        if (!v) return false
-        const end = typeof v === 'string' ? new Date(v) : v
-        const start = typeof startDate.value === 'string' ? new Date(startDate.value) : startDate.value
-        return end > (start as Date)
-      }, 'End date must be after start date')
+      .refine(
+        (v) => frequencyType.value !== 4 || v >= 1,
+        'Custom frequency must be at least 1 day'
+      ),
+    startDate: z.union([z.instanceof(Date), z.string()]).refine((v) => {
+      if (!v) return false
+      const d = typeof v === 'string' ? new Date(v) : v
+      return d > new Date()
+    }, 'Start date must be in the future'),
+    endDate: z.union([z.instanceof(Date), z.string()]).refine((v) => {
+      if (!v) return false
+      const end = typeof v === 'string' ? new Date(v) : v
+      const start =
+        typeof startDate.value === 'string' ? new Date(startDate.value) : startDate.value
+      return end > (start as Date)
+    }, 'End date must be after start date')
   })
 )
 

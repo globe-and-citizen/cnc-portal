@@ -60,12 +60,7 @@
           only-team-members
           @selectMember="selectMember"
         />
-        <UAlert
-          v-if="addressError"
-          color="error"
-          :description="addressError"
-          class="mt-2"
-        />
+        <UAlert v-if="addressError" color="error" :description="addressError" class="mt-2" />
       </div>
     </div>
 
@@ -120,11 +115,9 @@ const input = ref({ name: '', address: '' })
 const currentStep = ref(1)
 const addressError = ref('')
 
-const addressSchema = z
-  .string()
-  .refine((v) => selectedOption.value !== 'member' || isAddress(v), {
-    message: 'Invalid address'
-  })
+const addressSchema = z.string().refine((v) => selectedOption.value !== 'member' || isAddress(v), {
+  message: 'Invalid address'
+})
 
 // Functions
 const selectMember = (user: User) => {

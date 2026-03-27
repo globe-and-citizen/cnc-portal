@@ -130,7 +130,8 @@
           :data-test="`limit-checkbox-${budgetType}`"
           @change="toggleOption(budgetType)"
         />
-        <span class="w-48">{{ label }}</span>|
+        <span class="w-48">{{ label }}</span
+        >|
         <input
           :disabled="!selectedOptions[budgetType]"
           type="number"
@@ -258,14 +259,13 @@ const schema = computed(() =>
         (v) => v.some((item) => isAddress(item.address)),
         'At least one valid address is required'
       ),
-    selectedToken: z.string().nullable().refine(
-      (v) => v !== null,
-      'Token is required'
-    ),
-    description: z.string().refine(
-      (v) => !props.isBodAction || v.length > 0,
-      'Description is required'
-    )
+    selectedToken: z
+      .string()
+      .nullable()
+      .refine((v) => v !== null, 'Token is required'),
+    description: z
+      .string()
+      .refine((v) => !props.isBodAction || v.length > 0, 'Description is required')
   })
 )
 

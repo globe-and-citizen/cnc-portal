@@ -3,12 +3,7 @@
     <h2>Create Election</h2>
     <UForm :schema="schema" :state="state" @submit="submitForm" class="flex flex-col gap-4 mt-2">
       <UFormField name="title" label="Title">
-        <UInput
-          v-model="state.title"
-          placeholder="Title"
-          class="w-full"
-          data-test="titleInput"
-        />
+        <UInput v-model="state.title" placeholder="Title" class="w-full" data-test="titleInput" />
       </UFormField>
 
       <UFormField name="description" label="Description">
@@ -36,11 +31,7 @@
           <label class="w-full input input-bordered flex items-center gap-2 input-md mt-2">
             <span class="w-24">Start Date</span>
             <div class="grow" data-test="date-picker">
-              <VueDatePicker
-                v-model="state.startDate"
-                :min-date="minStartDate"
-                auto-apply
-              />
+              <VueDatePicker v-model="state.startDate" :min-date="minStartDate" auto-apply />
             </div>
           </label>
           <span v-if="errors.startDate" class="pl-4 text-red-500 text-sm">
@@ -52,11 +43,7 @@
           <label class="w-full input input-bordered flex items-center gap-2 input-md mt-2">
             <span class="w-24">End Date</span>
             <div class="grow" data-test="date-picker">
-              <VueDatePicker
-                v-model="state.endDate"
-                :min-date="new Date()"
-                auto-apply
-              />
+              <VueDatePicker v-model="state.endDate" :min-date="new Date()" auto-apply />
             </div>
           </label>
           <span v-if="errors.endDate" class="pl-4 text-red-500 text-sm">
