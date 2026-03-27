@@ -19,7 +19,8 @@
               >
               to proceed with the deployment.
             </p> -->
-            <ModalComponent v-model="showModal" v-if="showModal">
+            <UModal v-if="showModal" v-model:open="showModal">
+              <template #body>
               <!-- Warning for contract redeployment -->
               <!-- <div class="mt-6"> -->
               <h4 class="font-bold text-lg">Remove Deployed Contracts</h4>
@@ -155,7 +156,8 @@
                 </UButton>
               </div>
               <!-- </div> -->
-            </ModalComponent>
+              </template>
+            </UModal>
             <UButton
               color="primary"
               :disabled="teamStore.currentTeam?.ownerAddress !== userStore.address"
@@ -177,7 +179,6 @@ import { useUserDataStore } from '@/stores/user'
 import { useTeamStore } from '@/stores'
 import MainContractTable from './MainContractTable.vue'
 import { ref } from 'vue'
-import ModalComponent from '@/components/ModalComponent.vue'
 import { useResetContractsMutation } from '@/queries/contract.queries'
 import { useRouter } from 'vue-router'
 
