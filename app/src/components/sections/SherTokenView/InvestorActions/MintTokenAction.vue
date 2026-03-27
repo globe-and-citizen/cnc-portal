@@ -1,26 +1,25 @@
 <template>
   <div :class="{ tooltip: !canMint }" :data-tip="cannotMintReason">
-    <ButtonUI
-      variant="primary"
-      outline
+    <UButton
+      color="primary"
+      variant="outline"
       data-test="mint-button"
       :disabled="!canMint"
       @click="openModal"
-    >
-      Mint {{ tokenSymbol }}
-    </ButtonUI>
+      :label="`Mint ${tokenSymbol}`"
+    />
 
-    <ModalComponent v-model="modalState.show" v-if="modalState.mount" @reset="closeModal">
-      <MintForm v-model="modalState.show" @close-modal="closeModal" />
-    </ModalComponent>
+    <UModal v-if="modalState.mount" v-model:open="modalState.show" :close="{ onClick: closeModal }">
+      <template #body>
+        <MintForm v-model="modalState.show" @close-modal="closeModal" />
+      </template>
+    </UModal>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import type { Address } from 'viem'
-import ButtonUI from '@/components/ButtonUI.vue'
-import ModalComponent from '@/components/ModalComponent.vue'
 import MintForm from '@/components/sections/SherTokenView/forms/MintForm.vue'
 import { useUserDataStore } from '@/stores'
 

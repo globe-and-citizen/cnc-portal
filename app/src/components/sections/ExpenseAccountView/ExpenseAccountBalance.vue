@@ -3,7 +3,7 @@
     data-test="expense-account-balance"
     :title="total[currencyStore.localCurrency.code]?.formated ?? 0"
     subtitle="Total Balance"
-    variant="success"
+    color="success"
     :card-icon="bagIcon"
     :loading="isLoading"
   >

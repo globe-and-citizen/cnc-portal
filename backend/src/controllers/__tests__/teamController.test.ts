@@ -101,7 +101,7 @@ const mockTeamData = {
   officerAddress: '0x3333333333333333333333333333333333333333',
 };
 
-const teamMockResolve: Team = {
+const teamMockResolve = {
   ...mockTeamData,
   id: 1,
   ownerAddress: mockOwner.address,
@@ -111,18 +111,22 @@ const teamMockResolve: Team = {
       address: '0x2222222222222222222222222222222222222222',
       name: 'Member 1',
       imageUrl: 'https://example.com/image.jpg',
+      nonce: '',
       createdAt: new Date(),
       updatedAt: new Date(),
+      Wage: [],
     },
     {
       address: mockOwner.address,
       name: mockOwner.name,
       imageUrl: 'https://example.com/image.jpg',
+      nonce: '',
       createdAt: new Date(),
       updatedAt: new Date(),
+      Wage: [],
     },
   ],
-};
+} as unknown as Team;
 
 describe('Team Controller', () => {
   describe('addTeam', () => {

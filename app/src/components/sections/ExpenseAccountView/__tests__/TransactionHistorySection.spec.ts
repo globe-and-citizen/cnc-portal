@@ -2,7 +2,6 @@ import { describe, it, expect, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import TransactionHistorySection from '@/components/sections/ExpenseAccountView/TransactionHistorySection.vue'
 import type { ExpenseTransaction } from '@/types/transactions'
-import ButtonUI from '@/components/ButtonUI.vue'
 import ReceiptComponent from '@/components/ReceiptComponent.vue'
 import TableComponent from '@/components/TableComponent.vue'
 import { ref } from 'vue'
@@ -157,7 +156,7 @@ describe.skip('TransactionHistorySection', () => {
       expect(transactionTable.find('[data-test="table"]').exists()).toBeTruthy()
       const firstRow = transactionTable.find('[data-test="0-row"]')
       expect(firstRow.exists()).toBeTruthy()
-      const receiptButton = firstRow.findComponent(ButtonUI)
+      const receiptButton = firstRow.findComponent({ name: 'UButton' })
       expect(receiptButton.exists()).toBeTruthy()
       await receiptButton.trigger('click')
 

@@ -37,7 +37,8 @@ describe.skip('CRWeeklyClaimMemberHeader', () => {
         usdcRatePerHour: 0,
         nextWageId: null,
         createdAt: '',
-        updatedAt: ''
+        updatedAt: '',
+        disabled: false
       }
     ]
 
@@ -100,7 +101,8 @@ describe.skip('CRWeeklyClaimMemberHeader', () => {
         usdcRatePerHour: 0,
         nextWageId: null,
         createdAt: '',
-        updatedAt: ''
+        updatedAt: '',
+        disabled: false
       }
     ]
 

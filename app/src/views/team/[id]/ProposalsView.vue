@@ -18,28 +18,34 @@
           </option>
         </select>
       </div>
-      <ButtonUI variant="primary" @click="createProposalModal = { mount: true, show: true }"
-        >Create Proposal</ButtonUI
-      >
+      <UButton
+        color="primary"
+        @click="createProposalModal = { mount: true, show: true }"
+        label="Create Proposal"
+      />
     </div>
 
     <ProposalsList ref="proposalsListRef" />
-    <ModalComponent
-      v-model="createProposalModal.show"
+    <UModal
       v-if="createProposalModal.mount"
-      @reset="() => (createProposalModal = { mount: false, show: false })"
+      v-model:open="createProposalModal.show"
+      :close="{
+        onClick: () => {
+          createProposalModal = { mount: false, show: false }
+        }
+      }"
     >
-      <CreateProposalForm
-        :loading="false"
-        @close-modal="createProposalModal = { mount: false, show: false }"
-        @proposal-created="handleProposalCreated"
-      />
-    </ModalComponent>
+      <template #body>
+        <CreateProposalForm
+          :loading="false"
+          @close-modal="createProposalModal = { mount: false, show: false }"
+          @proposal-created="handleProposalCreated"
+        />
+      </template>
+    </UModal>
   </div>
 </template>
 <script setup lang="ts">
-import ButtonUI from '@/components/ButtonUI.vue'
-import ModalComponent from '@/components/ModalComponent.vue'
 import CreateProposalForm from '@/components/sections/ProposalsView/forms/CreateProposalForm.vue'
 import ProposalsList from '@/components/sections/ProposalsView/ProposalsList.vue'
 import { ref } from 'vue'

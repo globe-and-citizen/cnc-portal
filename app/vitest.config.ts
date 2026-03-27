@@ -2,6 +2,7 @@ import { configDefaults, defineConfig, mergeConfig } from 'vitest/config'
 
 import { fileURLToPath } from 'node:url'
 import viteConfig from './vite.config'
+import { UButtonStub, UDropdownStub, UIconStub, UModalStub } from './src/tests/stubs/nuxt-ui.stubs'
 
 import dotenv from 'dotenv'
 
@@ -20,6 +21,7 @@ const mockFiles = [
   'investor',
   'nuxt-ui'
 ].map((name) => `./src/tests/setup/${name}.setup.ts`)
+
 export default defineConfig((env) =>
   mergeConfig(viteConfig(env), {
     test: {
@@ -36,6 +38,15 @@ export default defineConfig((env) =>
       },
       env: {
         VITE_APP_NETWORK_ALIAS: 'sepolia'
+      },
+      globals: true,
+      global: {
+        stubs: {
+          UButton: UButtonStub,
+          UIcon: UIconStub,
+          UDropdown: UDropdownStub,
+          UModal: UModalStub
+        }
       }
     }
   })

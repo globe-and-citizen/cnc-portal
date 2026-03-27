@@ -9,21 +9,20 @@
         class="text-sm font-bold"
       />
     </div>
-    <ButtonUI
+    <UButton
       :disabled="isLoading || !isValidAddress || isCheckingSupport"
       :loading="isLoading"
-      :variant="tokenAddress.isSupported ? 'error' : 'primary'"
-      outline
+      :color="tokenAddress.isSupported ? 'error' : 'primary'"
+      variant="outline"
       size="sm"
       data-test="add-token-button"
       @click="updateTokenSupport"
-      >{{ tokenAddress.isSupported ? 'Remove Token Support' : 'Add Token Support' }}</ButtonUI
-    >
+      :label="tokenAddress.isSupported ? 'Remove Token Support' : 'Add Token Support'"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import ButtonUI from '@/components/ButtonUI.vue'
 import SelectComponent from '@/components/SelectComponent.vue'
 import { readContract, writeContract } from '@wagmi/core'
 import { computed, ref, watch } from 'vue'

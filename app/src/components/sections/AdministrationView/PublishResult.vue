@@ -1,17 +1,15 @@
 <template>
-  <ButtonUI
-    variant="primary"
+  <UButton
+    color="primary"
     size="md"
     @click="handlePublishResults(electionId)"
     :loading="isPending || isWaiting"
     data-test="create-election-button"
-  >
-    Publish Results
-  </ButtonUI>
+    label="Publish Results"
+  />
 </template>
 <script lang="ts" setup>
 import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
-import ButtonUI from '@/components/ButtonUI.vue'
 import { useTeamStore, useToastStore } from '@/stores'
 import { log, parseError } from '@/utils'
 import { useQueryClient } from '@tanstack/vue-query'

@@ -2,10 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { mount, VueWrapper } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import TransferModal from '../TransferModal.vue'
-import ButtonUI from '@/components/ButtonUI.vue'
-import ModalComponent from '@/components/ModalComponent.vue'
 import TransferForm from '../TransferForm.vue'
-import { Icon as IconifyIcon } from '@iconify/vue'
 import {
   mockUseWriteContract,
   mockWagmiCore,
@@ -87,10 +84,7 @@ describe('TransferModal', () => {
       },
       global: {
         components: {
-          ButtonUI,
-          ModalComponent,
-          TransferForm,
-          IconifyIcon
+          TransferForm
         },
         stubs: {
           TransferForm: true
@@ -120,8 +114,8 @@ describe('TransferModal', () => {
       await wrapper.find(SELECTORS.transferButton).trigger('click')
       await nextTick()
 
-      const modal = wrapper.findComponent(ModalComponent)
-      await modal.vm.$emit('reset')
+      // @ts-expect-error internal method
+      wrapper.vm.resetTransferValues()
       await nextTick()
 
       expect(wrapper.find(SELECTORS.transferModal).exists()).toBe(false)

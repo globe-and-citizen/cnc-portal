@@ -84,20 +84,23 @@ model Expense {
 }
 
 model Wage {
-  id                  Int           @id @default(autoincrement())
-  team                Team          @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  user                User          @relation(fields: [userAddress], references: [address], onDelete: Cascade)
-  teamId              Int
-  userAddress         String
-  ratePerHour         Json          @default("[{\"type\": \"cash\", \"amount\": 0},{\"type\": \"usdc\", \"amount\": 0},{\"type\": \"token\", \"amount\": 0}]")
-  maximumHoursPerWeek Int
-  nextWageId          Int?          @unique
-  nextWage            Wage?         @relation("wageRelated", fields: [nextWageId], references: [id], onDelete: SetNull)
-  previousWage        Wage?         @relation("wageRelated")
-  claims              Claim[]
-  weeklyClaims        WeeklyClaim[]
-  createdAt           DateTime      @default(now())
-  updatedAt           DateTime      @updatedAt
+  id                          Int           @id @default(autoincrement())
+  team                        Team          @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user                        User          @relation(fields: [userAddress], references: [address], onDelete: Cascade)
+  teamId                      Int
+  userAddress                 String
+  ratePerHour                 Json          @default("[{\"type\": \"cash\", \"amount\": 0},{\"type\": \"usdc\", \"amount\": 0},{\"type\": \"token\", \"amount\": 0}]")
+  overtimeRatePerHour         Json?
+  maximumOvertimeHoursPerWeek Int           @default(0)
+  maximumHoursPerWeek         Int
+  disabled                    Boolean       @default(false)
+  nextWageId                  Int?          @unique
+  nextWage                    Wage?         @relation("wageRelated", fields: [nextWageId], references: [id], onDelete: SetNull)
+  previousWage                Wage?         @relation("wageRelated")
+  claims                      Claim[]
+  weeklyClaims                WeeklyClaim[]
+  createdAt                   DateTime      @default(now())
+  updatedAt                   DateTime      @updatedAt
 
   @@unique([teamId, userAddress, nextWageId]) // Need to be checked
 }

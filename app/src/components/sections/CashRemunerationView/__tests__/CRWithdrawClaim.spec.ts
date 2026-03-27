@@ -22,10 +22,6 @@ type WrapperProps = {
   isClaimOwner?: boolean
 }
 
-const BUTTON_STUB = {
-  template: '<button v-bind="$attrs" @click="$emit(\'click\')"><slot /></button>'
-}
-
 describe('CRWithdrawClaim', () => {
   let wrapper: ReturnType<typeof mount>
 
@@ -70,11 +66,6 @@ describe('CRWithdrawClaim', () => {
         weeklyClaim: mockClaim,
         disabled: false,
         ...props
-      },
-      global: {
-        stubs: {
-          ButtonUI: BUTTON_STUB
-        }
       }
     })
 
@@ -202,11 +193,6 @@ describe('CRWithdrawClaim', () => {
     wrapper = mount(CRWithdrawClaim, {
       props: {
         weeklyClaim: customClaim
-      },
-      global: {
-        stubs: {
-          ButtonUI: BUTTON_STUB
-        }
       }
     })
 

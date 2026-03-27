@@ -11,27 +11,24 @@
       <CardComponent class="w-full" title="Advertise Contract">
         <template #card-action>
           <div>
-            <ButtonUI
-              variant="primary"
-              :enabled="teamStore.currentTeam?.ownerAddress == userStore.address"
+            <UButton
+              color="primary"
+              :disabled="teamStore.currentTeam?.ownerAddress != userStore.address"
               data-test="createAddCampaign"
               @click="showAdCampaignModal = { mount: true, show: true }"
-            >
-              Deploy Advertise Contract
-            </ButtonUI>
+              label="Deploy Advertise Contract"
+            />
           </div>
         </template>
         <TeamContracts />
       </CardComponent>
-      <ModalComponent
-        v-model="showAdCampaignModal.show"
-        v-if="showAdCampaignModal.mount"
-        @reset="() => (showAdCampaignModal = { mount: false, show: false })"
-      >
-        <CreateAddCampaign
-          @closeAddCampaignModal="showAdCampaignModal = { mount: false, show: false }"
-        />
-      </ModalComponent>
+      <UModal v-if="showAdCampaignModal.mount" v-model:open="showAdCampaignModal.show">
+        <template #body>
+          <CreateAddCampaign
+            @closeAddCampaignModal="showAdCampaignModal = { mount: false, show: false }"
+          />
+        </template>
+      </UModal>
     </div>
   </div>
 </template>
@@ -41,9 +38,7 @@ import TeamContracts from '@/components/sections/ContractManagementView/TeamCont
 import CardComponent from '@/components/CardComponent.vue'
 import { useUserDataStore } from '@/stores/user'
 import { useTeamStore } from '@/stores'
-import ButtonUI from '@/components/ButtonUI.vue'
 
-import ModalComponent from '@/components/ModalComponent.vue'
 import CreateAddCampaign from '@/components/sections/ContractManagementView/forms/CreateAddCampaign.vue'
 
 const teamStore = useTeamStore()

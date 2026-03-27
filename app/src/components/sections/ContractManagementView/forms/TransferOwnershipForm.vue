@@ -72,34 +72,33 @@
 
     <!-- Navigation Buttons -->
     <div v-if="currentStep == 1" class="mt-6">
-      <ButtonUI variant="primary" class="w-full" data-test="next-button" @click="handleContinue">
+      <UButton color="primary" class="w-full" data-test="next-button" @click="handleContinue">
         Continue
-      </ButtonUI>
+      </UButton>
     </div>
     <div
       v-if="currentStep == 2"
       class="flex mt-6"
       :class="{ 'justify-end': isBodAction, 'justify-between': !isBodAction }"
     >
-      <ButtonUI v-if="!isBodAction" variant="error" @click="currentStep--" data-test="back-button">
+      <UButton v-if="!isBodAction" color="error" @click="currentStep--" data-test="back-button">
         <span><IconifyIcon icon="heroicons:arrow-left" /></span> Back
-      </ButtonUI>
-      <ButtonUI
+      </UButton>
+      <UButton
         :loading="loading"
-        variant="primary"
+        color="primary"
         data-test="transfer-ownership-button"
         @click="handleTransferOwnership"
         :disabled="loading"
       >
         Transfer Ownership
-      </ButtonUI>
+      </UButton>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import ButtonUI from '@/components/ButtonUI.vue'
 import SelectMemberInput from '@/components/utils/SelectMemberInput.vue'
 import { onClickOutside } from '@vueuse/core'
 import { Icon as IconifyIcon } from '@iconify/vue'

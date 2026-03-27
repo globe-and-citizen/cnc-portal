@@ -6,64 +6,63 @@
   </slot>
   <BodAlert v-if="isBodAction" />
 
-  <div class="flex flex-col mt-4">
-    <SelectMemberContractsInput v-model="model.address" @selectItem="handleSelectItem" />
+  <UForm
+    :schema="validationSchema"
+    :state="model"
+    class="mt-4 flex flex-col gap-4"
+    @submit="submitForm"
+  >
+    <UFormField class="w-full" name="address">
+      <SelectMemberContractsInput v-model="model.address" @selectItem="handleSelectItem" />
+    </UFormField>
 
-    <div class="flex justify-end" v-if="$v.model.$error">
-      <div
-        class="pl-4 text-red-500 text-sm text-left"
-        v-for="error of $v.model.$errors"
-        :key="error.$uid"
+    <UFormField class="w-full" name="amount">
+      <TokenAmount
+        :tokens="tokens"
+        v-model="tokenAmountModel"
+        :isLoading="props.loading"
+        @validation="isAmountValid = $event"
       >
-        {{ error.$message }}
-      </div>
-    </div>
-    <TokenAmount
-      :tokens="tokens"
-      v-model:modelValue="model.amount"
-      v-model:modelToken="selectedTokenId"
-      :isLoading="props.loading"
-    >
-      <template #label>
-        <slot name="label">
-          <span class="label-text">Transfer From</span>
-          <span class="label-text-alt"
-            >Balance: {{ model.token.balance }} {{ model.token.symbol }}
-          </span>
-        </slot>
-      </template>
-    </TokenAmount>
-  </div>
+        <template #label>
+          <slot name="label">
+            <div class="flex w-full items-center justify-between text-sm font-medium">
+              <span>Transfer From</span>
+              <span class="text-xs text-gray-500 dark:text-gray-400">
+                Balance: {{ model.token.balance }} {{ model.token.symbol }}
+              </span>
+            </div>
+          </slot>
+        </template>
+      </TokenAmount>
+    </UFormField>
 
-  <div class="modal-action justify-between mt-4">
-    <ButtonUI
-      variant="error"
-      outline
-      @click="
-        () => {
-          $emit('closeModal')
-        }
-      "
-      >Cancel</ButtonUI
-    >
-    <ButtonUI
-      variant="primary"
-      @click="submitForm"
-      :loading="loading"
-      :disabled="loading"
-      data-test="transferButton"
-    >
-      Transfer
-    </ButtonUI>
-  </div>
+    <div class="mt-4 flex justify-between">
+      <UButton
+        type="button"
+        color="neutral"
+        variant="outline"
+        data-test="cancel-button"
+        @click="handleClose"
+      >
+        Cancel
+      </UButton>
+      <UButton
+        type="submit"
+        color="primary"
+        :loading="loading"
+        :disabled="loading || !isAmountValid"
+        data-test="transferButton"
+      >
+        Transfer
+      </UButton>
+    </div>
+  </UForm>
 </template>
 
 <script setup lang="ts">
-import { onMounted, watch, computed } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { isAddress } from 'viem'
-import { required, helpers } from '@vuelidate/validators'
-import { useVuelidate } from '@vuelidate/core'
-import ButtonUI from '../ButtonUI.vue'
+import { z } from 'zod'
 import SelectMemberContractsInput from '../utils/SelectMemberContractsInput.vue'
 import BodAlert from '@/components/BodAlert.vue'
 import TokenAmount from './TokenAmount.vue'
@@ -100,14 +99,26 @@ const model = defineModel<TransferModel>({
   })
 })
 
-const emit = defineEmits(['transfer', 'closeModal'])
+const emit = defineEmits<{
+  transfer: [value: TransferModel]
+  closeModal: []
+}>()
 
-// Use a computed with getter/setter so the select binds directly to tokenId
+const isAmountValid = ref(false)
+
 const selectedTokenId = computed<string>({
   get: () => model.value.token?.tokenId ?? 'usdc',
   set: (id) => {
     const token = props.tokens.find((t) => t.tokenId === id)
     if (token) model.value.token = token
+  }
+})
+
+const tokenAmountModel = computed({
+  get: () => ({ amount: model.value.amount ?? '', tokenId: selectedTokenId.value }),
+  set: (value: { amount: string; tokenId: string }) => {
+    model.value.amount = value.amount ?? ''
+    selectedTokenId.value = value.tokenId ?? selectedTokenId.value
   }
 })
 
@@ -121,25 +132,23 @@ watch(
     }
   }
 )
-const rules = {
-  model: {
-    address: {
-      required,
-      $valid: helpers.withMessage('Invalid address', (value: { address: string }) => {
-        return value.address ? isAddress(value.address) : false
-      })
-    },
-    token: {
-      required
-    }
-  }
-}
 
-const $v = useVuelidate(rules, { model })
+const validationSchema = computed(() =>
+  z.object({
+    address: z
+      .object({
+        name: z.string().optional(),
+        address: z
+          .string({ message: 'Address is required' })
+          .min(1, 'Address is required')
+          .refine((value) => isAddress(value), { message: 'Invalid address' })
+      })
+      .refine((value) => isAddress(value.address), { message: 'Invalid address' })
+  })
+)
 
 const submitForm = () => {
-  $v.value.$touch()
-  if ($v.value.$invalid) {
+  if (!isAmountValid.value) {
     return
   }
   emit('transfer', model.value)
@@ -151,6 +160,10 @@ const handleSelectItem = (item: {
   type: 'member' | 'trader-safe' | 'contract'
 }) => {
   model.value.address = item
+}
+
+const handleClose = () => {
+  emit('closeModal')
 }
 
 onMounted(() => {

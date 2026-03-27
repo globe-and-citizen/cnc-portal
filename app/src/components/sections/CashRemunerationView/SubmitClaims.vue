@@ -1,55 +1,55 @@
 <template>
-  <ButtonUI
+  <UButton
     :loading="isWageClaimAdding"
-    variant="success"
+    color="success"
     size="sm"
     data-test="modal-submit-hours-button"
     :disabled="!canSubmitClaim"
     @click="openModal()"
   >
     Submit Claim
-  </ButtonUI>
+  </UButton>
 
-  <ModalComponent v-model="modal">
-    <div class="flex flex-col gap-4 mb-20">
-      <h3 class="text-xl font-bold">Submit Claim</h3>
-      <hr />
-      <ClaimForm
-        ref="claimFormRef"
-        :initial-data="formInitialData"
-        :is-loading="isWageClaimAdding"
-        :disabled-week-starts="props.signedWeekStarts"
-        :restrict-submit="isRestricted"
-        @submit="handleSubmit"
-      />
-      <div v-if="addWageClaimError && errorMessage" class="mt-4">
-        <div role="alert" class="alert alert-error">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-6 w-6 shrink-0 stroke-current"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
-          </svg>
-          <span>{{ errorMessage.message }}</span>
+  <UModal v-if="modal.mount" v-model:open="modal.show">
+    <template #body>
+      <div class="flex flex-col gap-4 mb-20">
+        <h3 class="text-xl font-bold">Submit Claim</h3>
+        <hr />
+        <ClaimForm
+          ref="claimFormRef"
+          :initial-data="formInitialData"
+          :is-loading="isWageClaimAdding"
+          :disabled-week-starts="props.signedWeekStarts"
+          :restrict-submit="isRestricted"
+          @submit="handleSubmit"
+        />
+        <div v-if="addWageClaimError && errorMessage" class="mt-4">
+          <div role="alert" class="alert alert-error">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-6 w-6 shrink-0 stroke-current"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+            <span>{{ errorMessage.message }}</span>
+          </div>
         </div>
       </div>
-    </div>
-  </ModalComponent>
+    </template>
+  </UModal>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
-import ButtonUI from '@/components/ButtonUI.vue'
-import ModalComponent from '@/components/ModalComponent.vue'
 import ClaimForm from '@/components/sections/CashRemunerationView/Form/ClaimForm.vue'
 import { useSubmitRestriction } from '@/composables'
 import { useToastStore, useTeamStore } from '@/stores'
@@ -62,7 +62,10 @@ const toastStore = useToastStore()
 const teamStore = useTeamStore()
 const { isRestricted, checkRestriction } = useSubmitRestriction()
 
-const modal = ref(false)
+const modal = ref({
+  mount: false,
+  show: false
+})
 const errorMessage = ref<{ message: string } | null>(null)
 const addWageClaimError = ref(false)
 const claimFormRef = ref<InstanceType<typeof ClaimForm> | null>(null)
@@ -85,17 +88,22 @@ const openModal = () => {
   formInitialData.value = createDefaultFormData()
   errorMessage.value = null
   addWageClaimError.value = false
-  modal.value = true
+  modal.value = { mount: true, show: true }
+}
+
+const closeModal = () => {
+  claimFormRef.value?.resetForm()
+  errorMessage.value = null
+  addWageClaimError.value = false
+  modal.value = { mount: false, show: false }
 }
 
 // Reset form (including file previews) whenever the modal is closed
 watch(
-  modal,
+  () => modal.value.show,
   (isOpen) => {
     if (!isOpen) {
-      claimFormRef.value?.resetForm()
-      errorMessage.value = null
-      addWageClaimError.value = false
+      closeModal()
     }
   },
   { flush: 'post' }
@@ -139,17 +147,14 @@ const handleSubmit = async (data: ClaimSubmitPayload & { files?: File[] }) => {
 
     toastStore.addSuccessToast('Wage claim added successfully')
 
-    modal.value = false
+    closeModal()
     formInitialData.value = createDefaultFormData()
-    claimFormRef.value?.resetForm()
   } catch (error) {
     console.error('Error submitting claim:', error)
+    const backendMessage = (error as { response?: { data?: { message?: string } } })?.response?.data
+      ?.message
     const message =
-      error instanceof Error
-        ? error.message
-        : ((error as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-          'Failed to add claim')
-    toastStore.addErrorToast(message)
+      backendMessage ?? (error instanceof Error ? error.message : 'Failed to add claim')
     errorMessage.value = { message }
     addWageClaimError.value = true
   }

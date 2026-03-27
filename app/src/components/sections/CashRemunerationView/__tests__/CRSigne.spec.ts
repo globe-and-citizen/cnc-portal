@@ -190,7 +190,7 @@ describe('CRSigne', () => {
     it('Should emit close event after approve', async () => {
       createWrapper({ isDropDown: true })
 
-      const button = wrapper.findComponent({ name: 'ButtonUI' })
+      const button = wrapper.findComponent({ name: 'UButton' })
       expect(button.exists()).toBeFalsy()
       const signAction = wrapper.find('[data-test="sign-action"]')
       expect(signAction.exists()).toBeTruthy()

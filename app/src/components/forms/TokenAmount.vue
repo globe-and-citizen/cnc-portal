@@ -1,101 +1,141 @@
 <template>
-  <label class="form-control w-full mt-4">
-    <div class="label">
+  <div class="mt-4 space-y-3" data-test="token-amount">
+    <div class="flex items-center justify-between w-full px-1">
       <slot name="label">
-        <span class="label-text">Action</span>
-        <span class="label-text-alt">Balance: {{ selectedToken?.balance }}</span>
+        <div class="flex w-full items-center justify-between text-sm font-medium">
+          <span>Action</span>
+          <span class="text-xs text-gray-500 dark:text-gray-400">
+            Balance: {{ selectedToken?.balance ?? 0 }}
+          </span>
+        </div>
       </slot>
     </div>
-    <div class="w-full input input-bordered flex items-center">
-      <input
-        type="text"
-        class="grow w-24"
-        placeholder="0"
-        v-model="amount"
-        data-test="amountInput"
-        @input="handleAmountInput"
-        aria-label="Deposit amount"
-        :disabled="isLoading"
-      />
-      <div class="flex">
-        <button
-          v-for="percent in [25, 50, 75]"
-          :key="percent"
-          class="btn btn-xs btn-ghost cursor-pointer"
-          @click="usePercentageOfBalance(percent)"
-          :data-test="`percentButton-${percent}`"
-          :disabled="isLoading || !selectedToken || selectedToken.balance === 0"
-          :aria-label="`Set ${percent}% of balance`"
-        >
-          {{ percent }}%
-        </button>
-      </div>
-      <button
-        class="btn btn-xs btn-ghost mr-2"
-        @click="useMaxBalance"
-        :disabled="isLoading || !selectedToken || selectedToken.balance === 0"
-        data-test="maxButton"
-        aria-label="Set max balance"
-      >
-        Max
-      </button>
-      <div>
-        <SelectComponent
-          v-model="selectedTokenId"
-          :options="tokenList.map((token) => ({ label: token.symbol, value: token.tokenId }))"
-          :disabled="isLoading || tokenList.length === 1"
-          :format-value="(value: string) => (value === 'SepoliaETH' ? 'SepETH' : value)"
-          aria-label="Select token"
-        />
-      </div>
+    <div class="flex w-full flex-col gap-1">
+      <UForm nested>
+        <UFormField class="w-full" name="amount">
+          <UInput
+            v-model="amount"
+            placeholder="0"
+            inputmode="decimal"
+            data-test="amountInput"
+            :disabled="isLoading"
+            aria-label="Amount"
+            class="w-full"
+            @input="handleAmountInput"
+          >
+            <template #trailing>
+              <div
+                class="flex items-center gap-1 text-xs font-semibold text-gray-700 dark:text-gray-200"
+              >
+                <UButton
+                  v-for="percent in [25, 50, 75]"
+                  :key="percent"
+                  variant="ghost"
+                  size="xs"
+                  color="neutral"
+                  class="min-w-[2.75rem]"
+                  :disabled="isLoading || !selectedToken || selectedToken.balance === 0"
+                  :aria-label="`Set ${percent}% of balance`"
+                  :data-test="`percentButton-${percent}`"
+                  @click.stop="usePercentageOfBalance(percent)"
+                >
+                  {{ percent }}%
+                </UButton>
+
+                <UButton
+                  variant="ghost"
+                  size="xs"
+                  color="neutral"
+                  class="min-w-[2.75rem]"
+                  data-test="maxButton"
+                  :disabled="isLoading || !selectedToken || selectedToken.balance === 0"
+                  aria-label="Set max balance"
+                  @click.stop="useMaxBalance"
+                >
+                  Max
+                </UButton>
+
+                <USelect
+                  v-model="selectedTokenId as TokenId"
+                  :items="tokenOptions"
+                  :disabled="isLoading || tokenOptions.length === 1"
+                  data-test="tokenSelect"
+                  size="xs"
+                  class="w-24 bg-[#00B8D9]"
+                />
+              </div>
+            </template>
+          </UInput>
+        </UFormField>
+      </UForm>
     </div>
-    <div class="label">
-      <span class="label-text" v-if="amount && parseFloat(amount) > 0">
+    <div class="flex flex-col gap-1">
+      <span
+        v-if="amount && parseFloat(amount) > 0"
+        class="text-sm text-gray-500 dark:text-gray-400"
+      >
         ≈ {{ estimatedPrice }}
       </span>
-      <div class="pl-4 text-red-500 text-sm" v-for="error in $v.amount.$errors" :key="error.$uid">
-        {{ error.$message }}
-      </div>
     </div>
-  </label>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { computed, watch } from 'vue'
-import { required, numeric, helpers } from '@vuelidate/validators'
-import { useVuelidate } from '@vuelidate/core'
+import { z } from 'zod'
 import { formatCurrencyShort } from '@/utils/currencyUtil'
-import SelectComponent from '@/components/SelectComponent.vue'
 import { useStorage } from '@vueuse/core'
 import type { TokenOption } from '@/types'
+import { type TokenId } from '@/constant'
 
 const props = defineProps<{
   tokens: TokenOption[]
-  modelValue: string
-  modelToken: string
+  modelValue: {
+    amount: string
+    tokenId: string
+  }
   isLoading?: boolean
 }>()
+
 const emits = defineEmits<{
-  (e: 'update:modelValue', value: string): void
-  (e: 'update:modelToken', value: string): void
+  (e: 'update:modelValue', value: { amount: string; tokenId: string }): void
   (e: 'validation', isValid: boolean): void
 }>()
+
 const currency = useStorage('currency', {
   code: 'USD',
   name: 'US Dollar',
   symbol: '$'
 })
+
 const amount = computed({
-  get: () => props.modelValue,
-  set: (val: string) => emits('update:modelValue', val)
+  get: () => props.modelValue?.amount ?? '',
+  set: (val: string) =>
+    emits('update:modelValue', {
+      amount: val,
+      tokenId: props.modelValue?.tokenId ?? 'native'
+    })
 })
+
 const selectedTokenId = computed({
-  get: () => props.modelToken,
-  set: (val: string) => emits('update:modelToken', val)
+  get: () => props.modelValue?.tokenId ?? 'native',
+  set: (val: string) =>
+    emits('update:modelValue', {
+      amount: props.modelValue?.amount ?? '',
+      tokenId: val
+    })
 })
 
 const tokenList = computed(() => props.tokens)
-const selectedToken = computed(() => props.tokens.find((b) => b.tokenId === selectedTokenId.value))
+const tokenOptions = computed(() =>
+  tokenList.value.map((token) => ({
+    label: token.symbol,
+    value: token.tokenId
+  }))
+)
+const selectedToken = computed(() =>
+  tokenList.value.find((b) => b.tokenId === selectedTokenId.value)
+)
 
 const availableBalance = computed(() => {
   const token = selectedToken.value
@@ -110,42 +150,29 @@ const estimatedPrice = computed(() => {
   return formatCurrencyShort(value, code)
 })
 
-const notZero = helpers.withMessage('Amount must be greater than 0', (value: string) => {
-  return parseFloat(value) > 0
-})
-const notExceedingBalance = helpers.withMessage('Amount exceeds your balance', (value: string) => {
-  if (!value || parseFloat(value) <= 0) return true
-  return parseFloat(value) <= availableBalance.value
-})
-const numericWithMessage = helpers.withMessage('Value is not a valid number', numeric)
-const rules = {
-  amount: {
-    required,
-    numeric: numericWithMessage,
-    notZero,
-    notExceedingBalance
-  }
-}
-const $v = useVuelidate(rules, { amount })
-
-// Emit validation state to parent
-watch(
-  () => $v.value.amount.$invalid,
-  (invalid) => {
-    emits('validation', !invalid)
-  },
-  { immediate: true }
+const schema = computed(() =>
+  z.object({
+    amount: z
+      .string({ message: 'Amount is required' })
+      .refine(
+        (value) => value !== undefined && value !== null && value !== '',
+        'Amount is required'
+      )
+      .refine((value) => /^\d*\.?\d*$/.test(value), 'Value is not a valid number')
+      .refine((value) => !Number.isNaN(parseFloat(value)), 'Value is not a valid number')
+      .refine((value) => parseFloat(value) > 0, 'Amount must be greater than 0')
+      .refine((value) => parseFloat(value) <= availableBalance.value, 'Amount exceeds your balance')
+  })
 )
 
 const useMaxBalance = () => {
-  amount.value = availableBalance.value.toString() ?? '0.00'
-  $v.value.$touch()
+  amount.value = String(availableBalance.value.toFixed(6))
 }
+
 const usePercentageOfBalance = (percentage: number) => {
-  // If you want to support decimals per token, add a decimals prop and use it here
   amount.value = (((availableBalance.value ?? 0) * percentage) / 100).toFixed(4)
-  $v.value.$touch()
 }
+
 const handleAmountInput = (event: Event) => {
   const input = event.target as HTMLInputElement
   const value = input.value.replace(/[^\d.]/g, '')
@@ -155,11 +182,15 @@ const handleAmountInput = (event: Event) => {
   } else {
     amount.value = value
   }
-  $v.value.$touch()
 }
-watch(amount, () => {
-  $v.value.$touch()
-})
-</script>
 
-<style scoped></style>
+// Emit validation state when amount or token changes
+watch(
+  () => [amount.value, selectedTokenId.value],
+  () => {
+    const result = schema.value.safeParse({ amount: amount.value })
+    emits('validation', result.success)
+  },
+  { immediate: true }
+)
+</script>

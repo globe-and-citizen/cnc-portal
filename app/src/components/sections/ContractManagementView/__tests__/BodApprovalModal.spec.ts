@@ -95,11 +95,10 @@ describe('BodApprovalModal', () => {
     const wrapper = mountComponent({ alreadyApproved: true })
     await flushPromises()
 
-    // Find the ButtonUI that is the Approve Action button
-    const buttons = wrapper.findAllComponents({ name: 'ButtonUI' })
-    const approveBtn = buttons.find((b) => b.text().includes('Approve Action'))
-    expect(approveBtn).toBeTruthy()
-    expect(approveBtn!.props('disabled')).toBe(true)
+    // Find the UButton that is the Approve Action button by data-test attribute
+    const approveBtn = wrapper.findComponent('[data-test="transfer-ownership-button"]')
+    expect(approveBtn.exists()).toBe(true)
+    expect(approveBtn.props('disabled')).toBe(true)
   })
 
   it('emits close on cancel button', async () => {

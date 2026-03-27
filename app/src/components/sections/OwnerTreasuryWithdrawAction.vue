@@ -1,30 +1,28 @@
 <template>
   <div v-if="hasTheRight" class="card-actions justify-end">
-    <ButtonUI
-      variant="warning"
+    <UButton
+      color="warning"
       size="sm"
       :disabled="withdrawableTokens.length === 0"
       @click="openModal"
       data-test="owner-withdraw-button"
-    >
-      Withdraw
-    </ButtonUI>
+      label="Withdraw"
+    />
 
-    <teleport to="body">
-      <ModalComponent
-        v-model="showModal.show"
-        v-if="showModal.mount"
-        data-test="owner-withdraw-modal"
-        @reset="resetModal"
-      >
+    <UModal
+      v-if="showModal.mount"
+      v-model:open="showModal.show"
+      data-test="owner-withdraw-modal"
+      :close="{ onClick: resetModal }"
+    >
+      <template #body>
         <div class="flex flex-col gap-2">
           <h1 class="font-bold text-2xl">Owner Treasury Withdraw</h1>
         </div>
 
         <TokenAmount
           :tokens="withdrawableTokens"
-          v-model:modelValue="withdrawAmount"
-          v-model:modelToken="selectedTokenId"
+          v-model="tokenAmountModel"
           :isLoading="isLoadingAction"
           @validation="(value) => (isAmountValid = value)"
         >
@@ -37,28 +35,25 @@
         </TokenAmount>
 
         <div class="modal-action justify-between mt-4">
-          <ButtonUI variant="error" outline @click="resetModal">Cancel</ButtonUI>
-          <ButtonUI
-            variant="warning"
+          <UButton color="error" variant="outline" @click="resetModal" label="Cancel" />
+          <UButton
+            color="warning"
             :loading="isLoadingAction"
             :aria-busy="isLoadingAction"
             :disabled="isLoadingAction || !isAmountValid || !selectedToken"
             @click="submitWithdraw"
             data-test="owner-withdraw-submit"
-          >
-            Withdraw
-          </ButtonUI>
+            label="Withdraw"
+          />
         </div>
-      </ModalComponent>
-    </teleport>
+      </template>
+    </UModal>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { encodeFunctionData, parseEther, parseUnits, type Address } from 'viem'
-import ButtonUI from '@/components/ButtonUI.vue'
-import ModalComponent from '@/components/ModalComponent.vue'
 import TokenAmount from '@/components/forms/TokenAmount.vue'
 import { useContractBalance } from '@/composables'
 import { useCashRemunerationOwner } from '@/composables/cashRemuneration/reads'
@@ -96,6 +91,13 @@ const showModal = ref({ mount: false, show: false })
 const isAmountValid = ref(false)
 const withdrawAmount = ref('0')
 const selectedTokenId = ref('native')
+const tokenAmountModel = computed({
+  get: () => ({ amount: withdrawAmount.value, tokenId: selectedTokenId.value }),
+  set: (value: { amount: string; tokenId: string }) => {
+    withdrawAmount.value = value.amount ?? ''
+    selectedTokenId.value = value.tokenId ?? 'native'
+  }
+})
 const isSubmitting = ref(false)
 
 const contractAddress = computed(

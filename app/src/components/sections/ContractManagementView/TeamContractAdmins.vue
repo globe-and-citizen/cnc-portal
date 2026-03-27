@@ -17,7 +17,7 @@
       required
     />
     <div>
-      <ButtonUI type="submit" variant="primary" size="sm"> Add Admin</ButtonUI>
+      <UButton type="submit" color="primary" size="sm"> Add Admin</UButton>
     </div>
   </form>
 
@@ -42,9 +42,12 @@
       </template>
 
       <template #action-data="{ row }">
-        <ButtonUI @click="handleAdminAction(row.admin, 'removeAdmin')" size="xs" variant="error"
-          >Remove</ButtonUI
-        >
+        <UButton
+          @click="handleAdminAction(row.admin, 'removeAdmin')"
+          size="xs"
+          color="error"
+          label="Remove"
+        />
       </template>
     </TableComponent>
   </div>
@@ -63,7 +66,6 @@ import { useWaitForTransactionReceipt, useWriteContract, useReadContract } from 
 import { AddCampaignService } from '@/services/AddCampaignService'
 import type { TeamContract } from '@/types'
 import AddressToolTip from '@/components/AddressToolTip.vue'
-import ButtonUI from '@/components/ButtonUI.vue'
 import TableComponent from '@/components/TableComponent.vue'
 import { AD_CAMPAIGN_MANAGER_ABI } from '@/artifacts/abi/ad-campaign-manager'
 import type { Address } from 'viem'

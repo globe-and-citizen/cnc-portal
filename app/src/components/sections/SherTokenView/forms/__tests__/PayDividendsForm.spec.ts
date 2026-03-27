@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { shallowMount } from '@vue/test-utils'
+import { mount } from '@vue/test-utils'
 import PayDividendsForm from '../PayDividendsForm.vue'
 import { createTestingPinia } from '@pinia/testing'
 import type { Team } from '@/types'
@@ -12,6 +12,7 @@ type BalanceEntry = {
     name: string
     symbol: string
     code: string
+    coingeckoId: string
     decimals: number
     address: string
   }
@@ -28,7 +29,14 @@ type BalanceEntry = {
   }
 }
 
-const makeBalance = (overrides: Partial<BalanceEntry> = {}): BalanceEntry => {
+type BalanceEntryOverrides = Partial<Omit<BalanceEntry, 'token' | 'values'>> & {
+  token?: Partial<BalanceEntry['token']>
+  values?: {
+    USD?: Partial<BalanceEntry['values']['USD']>
+  }
+}
+
+const makeBalance = (overrides: BalanceEntryOverrides = {}): BalanceEntry => {
   const base: BalanceEntry = {
     amount: 0,
     token: {
@@ -36,6 +44,7 @@ const makeBalance = (overrides: Partial<BalanceEntry> = {}): BalanceEntry => {
       name: 'Token',
       symbol: 'TKN',
       code: 'TKN',
+      coingeckoId: 'token',
       decimals: 18,
       address: '0x0000000000000000000000000000000000000000'
     },
@@ -63,15 +72,30 @@ const makeBalance = (overrides: Partial<BalanceEntry> = {}): BalanceEntry => {
 }
 
 const TokenAmountStub = {
-  props: ['modelValue', 'modelToken', 'tokens', 'loading'],
-  emits: ['update:modelValue', 'update:modelToken'],
-  template: `<div data-test="token-amount"><slot name="label" /><slot /></div>`
-}
-
-const ButtonUIStub = {
-  props: ['loading', 'disabled'],
-  emits: ['click'],
-  template: `<button :disabled="disabled" data-test="submit-button" @click="$emit('click')"><slot /></button>`
+  props: ['modelValue', 'tokens', 'loading'],
+  emits: ['update:modelValue'],
+  template: `
+    <div data-test="token-amount">
+      <slot name="label" />
+      <input
+        data-test="amount-input"
+        type="number"
+        step="any"
+        :value="modelValue?.amount || ''"
+        @input="$emit('update:modelValue', { amount: $event.target.value, tokenId: modelValue?.tokenId || 'native' })"
+      />
+      <select
+        data-test="token-select"
+        :value="modelValue?.tokenId || 'native'"
+        @change="$emit('update:modelValue', { amount: modelValue?.amount || '', tokenId: $event.target.value })"
+      >
+        <option v-for="token in tokens" :key="token.tokenId" :value="token.tokenId">
+          {{ token.symbol }}
+        </option>
+      </select>
+      <slot />
+    </div>
+  `
 }
 
 const BodAlertStub = {
@@ -145,13 +169,12 @@ describe('PayDividendsForm.vue', () => {
   }
 
   const createComponent = (props = {}) =>
-    shallowMount(PayDividendsForm, {
+    mount(PayDividendsForm, {
       props: { ...defaultProps, ...props },
       global: {
         plugins: [createTestingPinia({ createSpy: vi.fn })],
         stubs: {
           TokenAmount: TokenAmountStub,
-          ButtonUI: ButtonUIStub,
           BodAlert: BodAlertStub
         }
       }
@@ -193,13 +216,16 @@ describe('PayDividendsForm.vue', () => {
     mockUseContractBalance.balances.value = defaultBalances()
 
     const wrapper = createComponent()
-    const tokenAmount = wrapper.findComponent(TokenAmountStub)
 
-    tokenAmount.vm.$emit('update:modelValue', '1.5')
+    // User enters amount in the input field
+    const amountInput = wrapper.find('[data-test="amount-input"]')
+    await amountInput.setValue('1.5')
     await wrapper.vm.$nextTick()
 
-    await wrapper.find('[data-test="submit-button"]').trigger('click')
+    // Trigger submit (simulates user clicking submit button)
+    await wrapper.vm.onSubmit()
 
+    // Verify component emitted the submit event with parsed amount
     const submitEvents = wrapper.emitted<'submit'>('submit')
     expect(submitEvents).toBeTruthy()
     expect(submitEvents?.[0]).toEqual([1500000000000000000n, 'native'])
@@ -209,16 +235,21 @@ describe('PayDividendsForm.vue', () => {
     mockUseContractBalance.balances.value = defaultBalances()
 
     const wrapper = createComponent()
-    const tokenAmount = wrapper.findComponent(TokenAmountStub)
 
-    tokenAmount.vm.$emit('update:modelToken', 'usdc')
+    // User selects a different token (USDC)
+    const tokenSelect = wrapper.find('[data-test="token-select"]')
+    await tokenSelect.setValue('usdc')
     await wrapper.vm.$nextTick()
 
-    tokenAmount.vm.$emit('update:modelValue', '2.5')
+    // User enters amount in the input field
+    const amountInput = wrapper.find('[data-test="amount-input"]')
+    await amountInput.setValue('2.5')
     await wrapper.vm.$nextTick()
 
-    await wrapper.find('[data-test="submit-button"]').trigger('click')
+    // Trigger submit (simulates user clicking submit button)
+    await wrapper.vm.onSubmit()
 
+    // Verify component emitted the submit event with amount parsed using USDC decimals (6)
     const submitEvents = wrapper.emitted<'submit'>('submit')
     expect(submitEvents?.[0]).toEqual([2500000n, 'usdc'])
   })

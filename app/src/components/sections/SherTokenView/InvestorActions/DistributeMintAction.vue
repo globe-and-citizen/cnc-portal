@@ -1,30 +1,29 @@
 <template>
   <div class="tooltip" data-tip="Coming soon">
-    <ButtonUI
-      variant="primary"
+    <UButton
+      color="primary"
       :disabled="true"
       data-test="distribute-mint-button"
       @click="openModal"
-    >
-      Distribute Mint {{ tokenSymbol }}
-    </ButtonUI>
+      :label="`Distribute Mint ${tokenSymbol}`"
+    />
 
-    <ModalComponent v-model="modalState.show" v-if="modalState.mount" @reset="closeModal">
-      <DistributeMintForm
-        v-if="modalState.show"
-        :loading="isLoading || isConfirming"
-        :token-symbol="tokenSymbol"
-        @submit="handleSubmit"
-      />
-    </ModalComponent>
+    <UModal v-if="modalState.mount" v-model:open="modalState.show">
+      <template #body>
+        <DistributeMintForm
+          v-if="modalState.show"
+          :loading="isLoading || isConfirming"
+          :token-symbol="tokenSymbol"
+          @submit="handleSubmit"
+        />
+      </template>
+    </UModal>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import type { Address } from 'viem'
-import ButtonUI from '@/components/ButtonUI.vue'
-import ModalComponent from '@/components/ModalComponent.vue'
 import DistributeMintForm from '@/components/sections/SherTokenView/forms/DistributeMintForm.vue'
 import { INVESTOR_ABI } from '@/artifacts/abi/investors'
 import { useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'

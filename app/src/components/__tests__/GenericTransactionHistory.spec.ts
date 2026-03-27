@@ -453,7 +453,7 @@
 //           TableComponent: mockTableComponent,
 //           AddressToolTip: true,
 //           Datepicker: true,
-//           ModalComponent: true,
+//           UModal: true,
 //           CustomDatePicker: true
 //         }
 //       }

@@ -9,14 +9,15 @@
         Status: {{ isPaused ? 'Paused' : 'Active' }}
       </h3>
 
-      <ButtonUI
+      <UButton
         :loading="
           isPaused ? loadingUnpause || isConfirmingUnpause : loadingPause || isConfirmingPause
         "
         :disabled="
           isPaused ? loadingUnpause || isConfirmingUnpause : loadingPause || isConfirmingPause
         "
-        class="btn btn-primary row-start-2"
+        color="primary"
+        class="row-start-2"
         @click="
           isPaused
             ? unpause({
@@ -34,7 +35,7 @@
         "
       >
         {{ isPaused ? 'Unpause' : 'Pause' }}
-      </ButtonUI>
+      </UButton>
     </div>
 
     <div class="text-center flex flex-col gap-y-4 items-center">
@@ -45,15 +46,15 @@
       <SkeletonLoading v-if="loadingOwner" class="w-96 h-6" />
 
       <div class="flex flex-row gap-x-4 justify-around w-full">
-        <ButtonUI
-          class="btn btn-primary w-40 text-center"
+        <UButton
+          color="primary"
+          class="w-40 text-center"
           data-test="transfer-ownership"
           @click="transferOwnershipModal = true"
-        >
-          Transfer Ownership
-        </ButtonUI>
-        <ButtonUI
-          variant="primary"
+          label="Transfer Ownership"
+        />
+        <UButton
+          color="primary"
           class="w-1/2"
           :loading="transferOwnershipLoading"
           :disabled="transferOwnershipLoading"
@@ -69,26 +70,28 @@
         >
           Transfer to Board Of <br />
           Directors Contract
-        </ButtonUI>
+        </UButton>
       </div>
     </div>
   </div>
-  <ModalComponent v-model="transferOwnershipModal">
-    <TransferOwnershipForm
-      v-if="transferOwnershipModal"
-      @transferOwnership="
-        async (newOwner: string) => {
-          transferOwnership({
-            functionName: 'transferOwnership',
-            args: [newOwner as `0x${string}`],
-            abi: VOTING_ABI,
-            address: votingAddress as Address
-          })
-        }
-      "
-      :transferOwnershipLoading="transferOwnershipLoading || isConfirmingTransferOwnership"
-    />
-  </ModalComponent>
+  <UModal v-model:open="transferOwnershipModal">
+    <template #body>
+      <TransferOwnershipForm
+        v-if="transferOwnershipModal"
+        @transferOwnership="
+          async (newOwner: string) => {
+            transferOwnership({
+              functionName: 'transferOwnership',
+              args: [newOwner as `0x${string}`],
+              abi: VOTING_ABI,
+              address: votingAddress as Address
+            })
+          }
+        "
+        :transferOwnershipLoading="transferOwnershipLoading || isConfirmingTransferOwnership"
+      />
+    </template>
+  </UModal>
 </template>
 <script setup lang="ts">
 import { useToastStore } from '@/stores/useToastStore'
@@ -96,11 +99,9 @@ import TransferOwnershipForm from '@/components/sections/AdministrationView/form
 import type { Team } from '@/types'
 import { computed, onMounted, ref, watch } from 'vue'
 import SkeletonLoading from '@/components/SkeletonLoading.vue'
-import ModalComponent from '@/components/ModalComponent.vue'
 import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 import { VOTING_ABI } from '@/artifacts/abi/voting'
 import type { Address } from 'viem'
-import ButtonUI from '@/components/ButtonUI.vue'
 
 const transferOwnershipModal = ref(false)
 

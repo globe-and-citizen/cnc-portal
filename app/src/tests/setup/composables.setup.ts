@@ -144,7 +144,8 @@ vi.mock('@/queries/member.queries', () => ({
  */
 vi.mock('@/queries/wage.queries', () => ({
   useGetTeamWagesQuery: vi.fn(queryMocks.useGetTeamWagesQuery),
-  useSetMemberWageMutation: vi.fn(queryMocks.useSetMemberWageMutation)
+  useSetMemberWageMutation: vi.fn(queryMocks.useSetMemberWageMutation),
+  useToggleWageStatusMutation: vi.fn(queryMocks.useToggleWageStatusMutation)
 }))
 
 /**

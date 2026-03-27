@@ -21,6 +21,28 @@ type claimBodyRequest = Pick<Claim, 'hoursWorked' | 'dayWorked' | 'memo'> & {
   attachments?: FileAttachmentData[];
 };
 
+const buildWeeklyHoursExceededMessage = ({
+  action,
+  regularHours,
+  overtimeHours,
+  submittedHours,
+}: {
+  action: 'submit' | 'update';
+  regularHours: number;
+  overtimeHours: number;
+  submittedHours: number;
+}) => {
+  const totalAllowedHours = regularHours + overtimeHours;
+  const remainingHours = Math.max(0, totalAllowedHours - submittedHours);
+
+  return {
+    message:
+      `Unable to ${action} this claim: your weekly hours limit would be exceeded. ` +
+      `Weekly allowance: ${regularHours}h regular + ${overtimeHours}h overtime = ${totalAllowedHours}h. ` +
+      `Already submitted: ${submittedHours}h. Remaining to submit: ${remainingHours}h.`,
+  };
+};
+
 // TODO limit weeday only for the current week. Betwen Monday and the current day
 export const addClaim = async (req: Request, res: Response) => {
   const callerAddress = req.address;
@@ -44,6 +66,10 @@ export const addClaim = async (req: Request, res: Response) => {
 
     if (!wage) {
       return errorResponse(400, 'No wage found for the user', res);
+    }
+
+    if (wage.disabled) {
+      return errorResponse(400, 'Cannot add claim: the wage is disabled', res);
     }
 
     // get the member current wage
@@ -74,17 +100,21 @@ export const addClaim = async (req: Request, res: Response) => {
       }
     }
 
-    // Check total max hours.
+    // Check total max hours (regular + overtime).
 
     const totalHours = weeklyClaim?.claims.reduce((sum, claim) => sum + claim.hoursWorked, 0) ?? 0;
+    const regularHours = wage.maximumHoursPerWeek;
+    const overtimeHours = wage.maximumOvertimeHoursPerWeek ?? 0;
+    const totalMaxHours = regularHours + overtimeHours;
 
-    if (totalHours + hoursWorked > wage.maximumHoursPerWeek) {
-      const remainingHours = Math.max(0, wage.maximumHoursPerWeek - totalHours);
-      return errorResponse(
-        400,
-        `Maximum weekly hours reached, cannot submit more claims for this week. You have ${remainingHours} hours remaining.`,
-        res
-      );
+    if (totalHours + hoursWorked > totalMaxHours) {
+      const { message } = buildWeeklyHoursExceededMessage({
+        action: 'submit',
+        regularHours,
+        overtimeHours,
+        submittedHours: totalHours,
+      });
+      return errorResponse(409, message, res);
     }
 
     if (!weeklyClaim) {
@@ -248,6 +278,10 @@ export const updateClaim = async (req: Request, res: Response) => {
       return errorResponse(403, 'Caller is not the owner of the claim', res);
     }
 
+    if (wage.disabled) {
+      return errorResponse(403, 'Cannot update claim: the wage is disabled', res);
+    }
+
     // Can only edit pending claims
     if (claim.weeklyClaim?.status !== 'pending' && claim.weeklyClaim?.status !== 'disabled') {
       return errorResponse(403, "Can't edit: Claim is not pending", res);
@@ -262,13 +296,18 @@ export const updateClaim = async (req: Request, res: Response) => {
 
       const newHours = Number(hoursWorked);
 
-      if (otherClaimsTotal + newHours > wage.maximumHoursPerWeek) {
-        const remainingHours = Math.max(0, wage.maximumHoursPerWeek - otherClaimsTotal);
-        return errorResponse(
-          400,
-          `Maximum weekly hours reached, cannot update claim. You have ${remainingHours} hours remaining for this week.`,
-          res
-        );
+      const regularHours = wage.maximumHoursPerWeek;
+      const overtimeHours = wage.maximumOvertimeHoursPerWeek ?? 0;
+      const totalMaxHours = regularHours + overtimeHours;
+
+      if (otherClaimsTotal + newHours > totalMaxHours) {
+        const { message } = buildWeeklyHoursExceededMessage({
+          action: 'update',
+          regularHours,
+          overtimeHours,
+          submittedHours: otherClaimsTotal,
+        });
+        return errorResponse(409, message, res);
       }
     }
 
@@ -341,6 +380,10 @@ export const deleteClaim = async (req: Request, res: Response) => {
 
     if (claim.wage.userAddress !== callerAddress) {
       return errorResponse(403, 'Caller is not the owner of the claim', res);
+    }
+
+    if (claim.wage.disabled) {
+      return errorResponse(403, 'Cannot delete claim: the wage is disabled', res);
     }
 
     const weeklyClaim = claim.weeklyClaim;

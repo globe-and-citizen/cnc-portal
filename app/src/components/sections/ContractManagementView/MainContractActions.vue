@@ -1,7 +1,7 @@
 <template>
   <div class="flex items-center gap-2">
-    <ButtonUI
-      :variant="row.paused ? 'info' : 'error'"
+    <UButton
+      :color="row.paused ? 'info' : 'error'"
       size="sm"
       @click="changeContractStatus(row.paused)"
       :loading="isLoadingPauseContract || isLoadingUnpauseContract"
@@ -11,19 +11,19 @@
         v-if="!isLoadingPauseContract && !isLoadingUnpauseContract"
         :icon="`heroicons:${row.paused ? 'play' : 'pause-circle'}-solid`"
       />
-    </ButtonUI>
-    <ButtonUI
-      variant="success"
-      :outline="true"
+    </UButton>
+    <UButton
+      color="success"
+      variant="outline"
       size="sm"
       @click="showModal = true"
       :disabled="row.owner !== userDataStore.address && !isBodAction"
-      >Transfer Ownership</ButtonUI
-    >
-    <ButtonUI
+      label="Transfer Ownership"
+    />
+    <UButton
       :disabled="!isBodAction || formatedActions.length <= 0"
-      variant="success"
-      :outline="true"
+      color="success"
+      variant="outline"
       size="sm"
       @click="
         () => {
@@ -31,12 +31,11 @@
           currentStep = 1
         }
       "
-    >
-      Pending Actions
-    </ButtonUI>
+      label="Pending Actions"
+    />
 
-    <teleport to="body">
-      <ModalComponent v-model="showModal">
+    <UModal v-model:open="showModal">
+      <template #body>
         <TransferOwnershipForm
           v-if="showModal"
           :is-bod-action="isBodAction"
@@ -48,8 +47,10 @@
             isConfirmingAddAction
           "
         />
-      </ModalComponent>
-      <ModalComponent v-model="showApprovalModal" :modal-width="modalWidth">
+      </template>
+    </UModal>
+    <UModal v-model:open="showApprovalModal" :ui="{ content: modalWidth }">
+      <template #body>
         <PendingEventsList
           :pending-actions="formatedActions"
           @view-details="
@@ -67,20 +68,18 @@
           :loading="isLoadingApproveAction"
           @close="showApprovalModal = false"
         />
-      </ModalComponent>
-    </teleport>
+      </template>
+    </UModal>
   </div>
 </template>
 <script setup lang="ts">
 import { Icon as IconifyIcon } from '@iconify/vue'
-import ButtonUI from '@/components/ButtonUI.vue'
 import { encodeFunctionData, type Address } from 'viem'
 import type { TableRow } from '@/components/TableComponent.vue'
 import { useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
 import { watch, ref, computed } from 'vue'
 import { useToastStore, useTeamStore, useUserDataStore } from '@/stores'
 import TransferOwnershipForm from './forms/TransferOwnershipForm.vue'
-import ModalComponent from '@/components/ModalComponent.vue'
 import { filterAndFormatActions, log, parseError } from '@/utils'
 import PendingEventsList from './PendingEventsList.vue'
 import BodApprovalModal from './BodApprovalModal.vue'

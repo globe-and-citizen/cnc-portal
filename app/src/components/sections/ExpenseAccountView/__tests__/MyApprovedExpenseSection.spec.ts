@@ -5,7 +5,6 @@ import { ref } from 'vue'
 import { NETWORK, USDC_ADDRESS } from '@/constant'
 import { createTestingPinia } from '@pinia/testing'
 import { useWriteContract } from '@wagmi/vue'
-import ButtonUI from '@/components/ButtonUI.vue'
 import * as util from '@/utils'
 import * as mocks from './mock/MyApprovedExpenseSection.mock'
 import { EXPENSE_ACCOUNT_EIP712_ABI } from '@/artifacts/abi/expense-account-eip712'
@@ -79,7 +78,7 @@ describe('ExpenseAccountSection', () => {
         `${mocks.budgetData.amountPerTransaction} ${NETWORK.currencySymbol}`
       )
       expect(firstRow.html()).toContain('Spend')
-      const spendButton = firstRow.findComponent(ButtonUI)
+      const spendButton = firstRow.findComponent({ name: 'UButton' })
       expect(spendButton.exists()).toBeTruthy()
       expect(spendButton.props('disabled')).toBe(false)
       spendButton.trigger('click')
@@ -147,7 +146,7 @@ describe('ExpenseAccountSection', () => {
 
       expect(firstRow.html()).toContain('20')
 
-      const spendButton = firstRow.findComponent(ButtonUI)
+      const spendButton = firstRow.findComponent({ name: 'UButton' })
       expect(spendButton.exists()).toBeTruthy()
       expect(spendButton.props('disabled')).toBe(true)
     })

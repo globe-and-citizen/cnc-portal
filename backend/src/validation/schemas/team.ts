@@ -16,7 +16,7 @@ export const addTeamBodySchema = z.object({
   name: nonEmptyStringSchema,
   description: z.string().optional(),
   officerAddress: addressSchema.optional(),
-  members: z.array(memberSchema).min(1, 'At least one member is required'),
+  members: z.array(memberSchema).default([]),
 });
 
 // Update team request body

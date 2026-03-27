@@ -1,6 +1,6 @@
 <template>
   <div class="flex justify-between gap-2">
-    <ButtonUI
+    <UButton
       v-if="
         formattedElection &&
         !formattedElection?.resultsPublished &&
@@ -11,7 +11,7 @@
           router.push(`/teams/${teamStore.currentTeamId}/administration/bod-elections-details`)
         }
       "
-      :variant="electionStatus?.text === 'Active' ? 'primary' : undefined"
+      :color="electionStatus?.text === 'Active' ? 'primary' : undefined"
     >
       {{
         electionStatus?.text === 'Active'
@@ -20,7 +20,7 @@
             ? 'View Results'
             : 'View Details'
       }}
-    </ButtonUI>
+    </UButton>
     <PublishResult
       v-if="
         showPublishResult &&
@@ -35,21 +35,19 @@
       :class="{ tooltip: userStore.address != owner }"
       :data-tip="userStore.address != owner ? 'Only the owner can create elections' : null"
     >
-      <ButtonUI
+      <UButton
         v-if="!electionStatus || formattedElection?.resultsPublished"
-        variant="success"
+        color="success"
         @click="emits('showCreateElectionModal')"
         :disabled="userStore.address != owner"
-      >
-        Create Election
-      </ButtonUI>
+        label="Create Election"
+      />
     </div>
   </div>
 </template>
 <script setup lang="ts">
 import { computed, inject } from 'vue'
 import PublishResult from '@/components/sections/AdministrationView/PublishResult.vue'
-import ButtonUI from '@/components/ButtonUI.vue'
 import { useRouter } from 'vue-router'
 import { useTeamStore, useUserDataStore } from '@/stores'
 import { useBoDElections } from '@/composables/elections'

@@ -100,14 +100,7 @@ const MOCK_DATA = {
 
 // Component stubs
 const CardStub = defineComponent({ template: '<div><slot /></div>' })
-const ButtonStub = defineComponent({
-  template: '<button @click="$emit(\'click\')"><slot /></button>'
-})
 const AddressToolTipStub = defineComponent({ template: '<div></div>' })
-const ModalStub = defineComponent({
-  props: ['modelValue'],
-  template: '<div v-if="modelValue"><slot /></div>'
-})
 const DepositBankFormStub = defineComponent({ template: '<div></div>' })
 const TransferFormStub = defineComponent({ template: '<div><slot name="header" /></div>' })
 
@@ -122,9 +115,7 @@ describe('SafeBalanceSection', () => {
       global: {
         stubs: {
           CardComponent: CardStub,
-          ButtonUI: ButtonStub,
           AddressToolTip: AddressToolTipStub,
-          ModalComponent: ModalStub,
           DepositBankForm: DepositBankFormStub,
           TransferForm: TransferFormStub
         }

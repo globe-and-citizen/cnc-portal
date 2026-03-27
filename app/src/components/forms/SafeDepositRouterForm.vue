@@ -10,8 +10,7 @@
   <!-- USDC Amount Input -->
   <TokenAmount
     :tokens="tokenList"
-    v-model:modelValue="amount"
-    v-model:modelToken="selectedTokenId"
+    v-model="tokenAmountModel"
     :isLoading="isLoading"
     @validation="isAmountValid = $event"
     data-test="token-amount"
@@ -36,18 +35,22 @@
   </div>
 
   <div class="modal-action justify-between">
-    <ButtonUI variant="error" outline data-test="cancel-button" @click="handleCancel">
-      Cancel
-    </ButtonUI>
-    <ButtonUI
-      variant="primary"
+    <UButton
+      color="error"
+      variant="outline"
+      data-test="cancel-button"
+      @click="handleCancel"
+      label="Cancel"
+    />
+    <UButton
+      color="primary"
       :loading="submitting"
       :disabled="isLoading || !isAmountValid || !safeDepositRouterAddress"
       data-test="deposit-button"
       @click="submitForm"
     >
       {{ currentStep === 2 ? 'Approve' : `Deposit & Earn ${tokenSymbol || 'SHER'}` }}
-    </ButtonUI>
+    </UButton>
   </div>
 </template>
 
@@ -66,7 +69,6 @@ import {
   calculateSherCompensation,
   calculateDepositFromSher
 } from '@/utils/safeDepositRouterUtil'
-import ButtonUI from '../ButtonUI.vue'
 import TokenAmount from './TokenAmount.vue'
 import CompensationAmount from './CompensationAmount.vue'
 import {
@@ -84,6 +86,13 @@ const emits = defineEmits<{
 const amount = ref<string>('')
 const sherAmount = ref<string>('0')
 const selectedTokenId = ref<TokenId>('usdc')
+const tokenAmountModel = computed({
+  get: () => ({ amount: amount.value, tokenId: selectedTokenId.value }),
+  set: (value: { amount: string; tokenId: TokenId | string }) => {
+    amount.value = value.amount ?? ''
+    selectedTokenId.value = (value.tokenId as TokenId) ?? 'usdc'
+  }
+})
 const currentStep = ref(1)
 const submitting = ref(false)
 const isAmountValid = ref(false)

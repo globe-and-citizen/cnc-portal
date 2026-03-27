@@ -3,16 +3,15 @@
     <template #card-action>
       <div class="flex justify-between">
         <div class="flex justify-between gap-2">
-          <ButtonUI
-            variant="primary"
+          <UButton
+            color="primary"
             size="md"
             @click="showModal = !showModal"
             data-test="create-proposal"
-          >
-            Create Election
-          </ButtonUI>
-          <ButtonUI
-            variant="secondary"
+            label="Create Election"
+          />
+          <UButton
+            color="secondary"
             size="md"
             v-if="boardOfDirectorsAddress"
             @click="
@@ -22,21 +21,21 @@
               }
             "
             data-test="view-bod"
-          >
-            View BoD
-          </ButtonUI>
-          <ButtonUI
-            variant="secondary"
+            label="View BoD"
+          />
+          <UButton
+            color="secondary"
             size="md"
             @click="showVotingControlModal = true"
             data-test="manage-voting"
-          >
-            Manage
-          </ButtonUI>
+            label="Manage"
+          />
         </div>
-        <ModalComponent v-model="showVotingControlModal">
-          <VotingManagement :team="team" />
-        </ModalComponent>
+        <UModal v-model:open="showVotingControlModal">
+          <template #body>
+            <VotingManagement :team="team" />
+          </template>
+        </UModal>
       </div>
     </template>
     <div v-if="votingAddress">
@@ -64,33 +63,37 @@
               />
             </template>
           </TabNavigation>
-          <ModalComponent v-model="showBoDModal">
-            <h3>Board Of Directors</h3>
-            <hr />
-            <div class="mt-4">
-              <ul v-if="(boardOfDirectors as Array<string>)?.length">
-                <li
-                  v-for="(address, index) in boardOfDirectors"
-                  :key="index"
-                  class="text-sm flex justify-between"
-                >
-                  <span v-if="team.members">
-                    {{
-                      team.members.find((member) => member.address === address)?.name || 'Unknown'
-                    }}
-                  </span>
-                  {{ address }}
-                </li>
-              </ul>
-              <p v-else>No Board of Directors found.</p>
-            </div>
-          </ModalComponent>
-          <ModalComponent v-model="showModal">
-            <CreateElectionForm
-              @createProposal="createProposal"
-              :isLoading="loadingAddProposal || isConfirmingAddProposal"
-            />
-          </ModalComponent>
+          <UModal v-model:open="showBoDModal">
+            <template #body>
+              <h3>Board Of Directors</h3>
+              <hr />
+              <div class="mt-4">
+                <ul v-if="(boardOfDirectors as Array<string>)?.length">
+                  <li
+                    v-for="(address, index) in boardOfDirectors"
+                    :key="index"
+                    class="text-sm flex justify-between"
+                  >
+                    <span v-if="team.members">
+                      {{
+                        team.members.find((member) => member.address === address)?.name || 'Unknown'
+                      }}
+                    </span>
+                    {{ address }}
+                  </li>
+                </ul>
+                <p v-else>No Board of Directors found.</p>
+              </div>
+            </template>
+          </UModal>
+          <UModal v-model:open="showModal">
+            <template #body>
+              <CreateElectionForm
+                @createProposal="createProposal"
+                :isLoading="loadingAddProposal || isConfirmingAddProposal"
+              />
+            </template>
+          </UModal>
         </div>
       </div>
       <div class="flex justify-center items-center" v-if="loadingGetProposals">
@@ -102,7 +105,6 @@
 <script setup lang="ts">
 import type { OldProposal } from '@/types/index'
 import { computed, onMounted, ref, watch, type Ref } from 'vue'
-import ModalComponent from '@/components/ModalComponent.vue'
 import CreateElectionForm from './forms/CreateElectionForm.vue'
 import TabNavigation from '@/components/TabNavigation.vue'
 import { ProposalTabs } from '@/types/index'
@@ -116,7 +118,6 @@ import { BOD_ABI } from '@/artifacts/abi/bod'
 import { VOTING_ABI } from '@/artifacts/abi/voting'
 import type { Address } from 'viem'
 import { config } from '@/wagmi.config'
-import ButtonUI from '@/components/ButtonUI.vue'
 import CardComponent from '@/components/CardComponent.vue'
 
 const props = defineProps<{ team: Partial<Team> }>()

@@ -6,6 +6,7 @@ import { TooltipProvider } from 'reka-ui'
 /**
  * Global test utilities for Nuxt UI components
  * Provides TooltipProvider context automatically for all tests
+ * Includes global stubs for auto-imported @nuxt/ui components
  */
 
 declare global {

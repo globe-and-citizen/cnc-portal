@@ -3,14 +3,14 @@
   <div class="relative flex flex-col gap-2">
     <div class="flex items-center gap-2">
       <div>
-        <ButtonUI
+        <UButton
           class="flex items-center cursor-pointer gap-4 border border-gray-300"
-          @click="() => (isDropdownOpen = !isDropdownOpen)"
+          @click="isDropdownOpen = !isDropdownOpen"
           :data-test="`${dataTestPrefix}-date-select`"
         >
           <span>{{ displayDateRange }}</span>
           <IconifyIcon icon="heroicons:chevron-down" class="w-4 h-4" />
-        </ButtonUI>
+        </UButton>
         <ul
           class="absolute right-0 mt-2 menu bg-base-200 border-2 rounded-box z-1 w-52 p-2 shadow-sm"
           ref="target"
@@ -48,7 +48,6 @@ import { ref, computed, onMounted, watch } from 'vue'
 import Datepicker from '@vuepic/vue-datepicker'
 import '@vuepic/vue-datepicker/dist/main.css'
 import { onClickOutside } from '@vueuse/core'
-import ButtonUI from './ButtonUI.vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
 
 interface Props {

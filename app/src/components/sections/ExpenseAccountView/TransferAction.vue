@@ -1,21 +1,25 @@
 <template>
   <div>
-    <ButtonUI
-      variant="success"
+    <UButton
+      color="success"
       :disabled="row.status !== 'enabled'"
       @click="showModal = { mount: true, show: true }"
       data-test="transfer-button"
     >
       Spend
-    </ButtonUI>
+    </UButton>
 
-    <teleport to="body">
-      <ModalComponent
-        v-model="showModal.show"
-        v-if="showModal.mount"
-        data-test="transfer-modal"
-        @reset="() => (showModal = { mount: false, show: false })"
-      >
+    <UModal
+      v-if="showModal.mount"
+      v-model:open="showModal.show"
+      data-test="transfer-modal"
+      :close="{
+        onClick: () => {
+          showModal = { mount: false, show: false }
+        }
+      }"
+    >
+      <template #body>
         <TransferForm
           v-if="showModal.mount && tokens.length > 0"
           v-model="transferData"
@@ -48,15 +52,13 @@
             </span>
           </template>
         </TransferForm>
-      </ModalComponent>
-    </teleport>
+      </template>
+    </UModal>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import ButtonUI from '@/components/ButtonUI.vue'
-import ModalComponent from '@/components/ModalComponent.vue'
 import TransferForm from '@/components/forms/TransferForm.vue'
 import { USDC_ADDRESS, type TokenId } from '@/constant'
 import type { BudgetLimit } from '@/types'
