@@ -122,7 +122,9 @@ const hasOvertimeWage = computed(() => {
   return Array.isArray(rates) && rates.length > 0
 })
 
-const isSignedClaim = computed(() => props.weeklyClaim?.status === 'signed')
+const isSignedClaim = computed(
+  () => props.weeklyClaim?.status === 'signed' || props.weeklyClaim?.status === 'withdrawn'
+)
 
 const regularHoursWorked = computed(() => {
   if (!hasOvertimeWage.value) return submittedHours.value
