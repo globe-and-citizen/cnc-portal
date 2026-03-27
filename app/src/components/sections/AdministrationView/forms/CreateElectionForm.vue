@@ -1,238 +1,171 @@
 <template>
   <div>
     <h2>Create Election</h2>
-    <div class="flex flex-col gap-4 mt-2">
-      <label class="form-control w-full">
-        <div class="label">
-          <span class="label-text">Title</span>
-        </div>
-
-        <input
-          type="text"
+    <UForm :schema="schema" :state="state" @submit="submitForm" class="flex flex-col gap-4 mt-2">
+      <UFormField name="title" label="Title">
+        <UInput
+          v-model="state.title"
           placeholder="Title"
-          class="input input-primary w-full"
-          v-model="newProposalInput.title"
+          class="w-full"
           data-test="titleInput"
         />
-        <div
-          class="pl-4 text-red-500 text-sm w-full text-left"
-          v-for="error of $v.proposal.title.$errors"
-          :key="error.$uid"
-        >
-          {{ error.$message }}
-        </div>
-      </label>
+      </UFormField>
 
-      <label class="form-control w-full">
-        <div class="label">
-          <span class="label-text">Description</span>
-        </div>
-
-        <textarea
-          class="textarea textarea-primary h-24 w-full"
+      <UFormField name="description" label="Description">
+        <UTextarea
+          v-model="state.description"
           placeholder="Description"
-          v-model="newProposalInput.description"
+          class="w-full"
+          :rows="4"
           data-test="descriptionInput"
-        ></textarea>
-        <div
-          class="pl-4 text-red-500 text-sm w-full text-left"
-          v-for="error of $v.proposal.description.$errors"
-          :key="error.$uid"
-        >
-          {{ error.$message }}
-        </div>
-      </label>
+        />
+      </UFormField>
 
-      <label class="form-control w-full">
-        <div class="label">
-          <span class="label-text">Number of Board Of Directors</span>
-        </div>
-
-        <div v-if="newProposalInput.isElection">
-          <div class="mb-4">
-            <input
-              type="number"
-              class="input input-primary w-full"
-              placeholder="Number of Directors"
-              v-model="newProposalInput.winnerCount"
-              data-test="winnerCountInput"
-            />
-          </div>
-          <div
-            class="pl-4 text-red-500 text-sm w-full text-left"
-            v-for="error of $v.proposal.winnerCount.$errors"
-            :key="error.$uid"
-          >
-            {{ error.$message }}
-          </div>
-
-          <div class="mb-4">
-            <label class="w-full input input-bordered flex items-center gap-2 input-md mt-2">
-              <span class="w-24">Start Date</span>
-              <div class="grow" data-test="date-picker">
-                <VueDatePicker
-                  v-model="newProposalInput.startDate"
-                  :min-date="startDate"
-                  auto-apply
-                />
-              </div>
-            </label>
-          </div>
-
-          <div
-            class="pl-4 text-red-500 text-sm w-full text-left"
-            v-for="error of $v.proposal.startDate.$errors"
-            :key="error.$uid"
-          >
-            {{ error.$message }}
-          </div>
-
-          <div class="mb-4">
-            <label class="w-full input input-bordered flex items-center gap-2 input-md mt-2">
-              <span class="w-24">End Date</span>
-              <div class="grow" data-test="date-picker">
-                <VueDatePicker
-                  v-model="newProposalInput.endDate"
-                  :min-date="new Date()"
-                  auto-apply
-                />
-              </div>
-            </label>
-          </div>
-
-          <div
-            class="pl-4 text-red-500 text-sm w-full text-left"
-            v-for="error of $v.proposal.endDate.$errors"
-            :key="error.$uid"
-          >
-            {{ error.$message }}
-          </div>
-
-          <MultiSelectMemberInput
-            v-model="formData"
-            :show-on-focus="true"
-            :only-team-members="true"
+      <div v-if="newProposalInput.isElection">
+        <UFormField name="winnerCount" label="Number of Board Of Directors">
+          <UInput
+            type="number"
+            v-model="state.winnerCount"
+            placeholder="Number of Directors"
+            class="w-full"
+            data-test="winnerCountInput"
           />
+        </UFormField>
 
-          <div
-            class="pl-4 text-red-500 text-sm w-full text-left"
-            v-if="newProposalInput.isElection && $v.proposal.candidates.$error"
-          >
-            {{ $v.proposal.candidates.$errors[0]?.$message }}
-          </div>
+        <div class="mb-4 mt-4">
+          <label class="w-full input input-bordered flex items-center gap-2 input-md mt-2">
+            <span class="w-24">Start Date</span>
+            <div class="grow" data-test="date-picker">
+              <VueDatePicker
+                v-model="state.startDate"
+                :min-date="minStartDate"
+                auto-apply
+              />
+            </div>
+          </label>
+          <span v-if="errors.startDate" class="pl-4 text-red-500 text-sm">
+            {{ errors.startDate }}
+          </span>
         </div>
-      </label>
+
+        <div class="mb-4">
+          <label class="w-full input input-bordered flex items-center gap-2 input-md mt-2">
+            <span class="w-24">End Date</span>
+            <div class="grow" data-test="date-picker">
+              <VueDatePicker
+                v-model="state.endDate"
+                :min-date="new Date()"
+                auto-apply
+              />
+            </div>
+          </label>
+          <span v-if="errors.endDate" class="pl-4 text-red-500 text-sm">
+            {{ errors.endDate }}
+          </span>
+        </div>
+
+        <MultiSelectMemberInput
+          v-model="formData"
+          :show-on-focus="true"
+          :only-team-members="true"
+        />
+        <span v-if="errors.candidates" class="pl-4 text-red-500 text-sm">
+          {{ errors.candidates }}
+        </span>
+      </div>
 
       <div class="flex justify-center">
         <UButton
+          type="submit"
           :loading="isLoading"
           :disabled="isLoading"
           color="primary"
           size="md"
           class="justify-center"
           data-test="submitButton"
-          @click="submitForm"
           label="Create Election"
         />
       </div>
-    </div>
+    </UForm>
   </div>
 </template>
 
 <script setup lang="ts">
 import type { OldProposal, User } from '@/types'
-import { ref, onMounted, onUnmounted } from 'vue'
-import { required, minLength, requiredIf, helpers, minValue } from '@vuelidate/validators'
-import { useVuelidate } from '@vuelidate/core'
+import { reactive, ref, onMounted, onUnmounted } from 'vue'
+import { z } from 'zod'
 import MultiSelectMemberInput from '@/components/utils/MultiSelectMemberInput.vue'
 import VueDatePicker from '@vuepic/vue-datepicker'
 
 // Dev = 2 minutes, Prod = 1 hour
 const delay = 2 * 60 * 1000
-const startDate = new Date(new Date().getTime() + delay)
+const minStartDate = new Date(new Date().getTime() + delay)
 
 const emits = defineEmits(['createProposal'])
 defineProps<{ isLoading: boolean }>()
 
 const formData = ref<Array<Pick<User, 'address' | 'name'>>>([])
-interface Candidate {
-  name: string
-  candidateAddress: string
-}
-const uniqueCandidates = () => {
-  return {
-    $validator: (candidates: Candidate[]) => {
-      if (!Array.isArray(candidates) || candidates.length === 0) return true
-      const addresses = candidates.map((c) => c.candidateAddress)
-      const uniqueAddresses = new Set(addresses)
-      return addresses.length === uniqueAddresses.size
-    },
-    $message: 'Duplicate candidates are not allowed.'
-  }
-}
+const errors = reactive({ startDate: '', endDate: '', candidates: '' })
 
 const newProposalInput = ref<Partial<OldProposal>>({
-  title: '',
-  description: '',
-  startDate,
-  endDate: '',
-  candidates: [
-    {
-      name: '',
-      candidateAddress: ''
-    }
-  ],
-  isElection: true,
-  winnerCount: 0
+  isElection: true
 })
 
-const rules = {
-  proposal: {
-    title: {
-      required,
-      minLength: minLength(3)
-    },
-    description: {
-      required,
-      minLength: minLength(10)
-    },
-    candidates: {
-      requiredIf: requiredIf(() => newProposalInput.value?.isElection ?? false),
-      uniqueCandidates: uniqueCandidates()
-    },
-    startDate: {
-      required,
-      beforeEnd: helpers.withMessage('Start date must be before end date: ', (value) => {
-        return (value as Date) < (newProposalInput.value?.endDate as Date)
-      })
-    },
-    endDate: {
-      required,
-      afterStart: helpers.withMessage('End date must be later than start date: ', (value) => {
-        return (value as Date) > (newProposalInput.value?.startDate as Date)
-      })
-    },
-    winnerCount: {
-      minValue: minValue(3),
-      onlyOdd: helpers.withMessage('Number of directors must be an odd number: ', (value) => {
-        return Number(value) % 2 === 1
-      })
-    }
-  }
-}
-const $v = useVuelidate(rules, { proposal: newProposalInput })
+const state = reactive({
+  title: '',
+  description: '',
+  winnerCount: '',
+  startDate: minStartDate as Date | null,
+  endDate: null as Date | null
+})
+
+const schema = z.object({
+  title: z.string().min(3, 'Title must be at least 3 characters'),
+  description: z.string().min(10, 'Description must be at least 10 characters'),
+  winnerCount: z
+    .union([z.string(), z.number()])
+    .refine((v) => Number(v) >= 3, 'Number of directors must be at least 3')
+    .refine((v) => Number(v) % 2 === 1, 'Number of directors must be an odd number')
+})
 
 const submitForm = () => {
-  newProposalInput.value.candidates = []
-  for (const user of formData.value) {
-    newProposalInput.value.candidates?.push({
-      name: user.name || '',
-      candidateAddress: user.address || ''
-    })
+  errors.startDate = ''
+  errors.endDate = ''
+  errors.candidates = ''
+
+  if (!state.startDate) {
+    errors.startDate = 'Start date is required'
+    return
   }
-  $v.value.$touch()
-  if ($v.value.$invalid) return
-  emits('createProposal', newProposalInput.value)
+  if (!state.endDate) {
+    errors.endDate = 'End date is required'
+    return
+  }
+  if (state.startDate >= state.endDate) {
+    errors.startDate = 'Start date must be before end date'
+    return
+  }
+
+  const candidates = formData.value.map((user) => ({
+    name: user.name || '',
+    candidateAddress: user.address || ''
+  }))
+
+  const addresses = candidates.map((c) => c.candidateAddress)
+  if (new Set(addresses).size !== addresses.length) {
+    errors.candidates = 'Duplicate candidates are not allowed.'
+    return
+  }
+
+  emits('createProposal', {
+    ...newProposalInput.value,
+    title: state.title,
+    description: state.description,
+    startDate: state.startDate,
+    endDate: state.endDate,
+    winnerCount: Number(state.winnerCount),
+    candidates
+  })
 }
 
 const formRef = ref<HTMLElement | null>(null)
@@ -244,11 +177,6 @@ const handleClickOutside = (event: MouseEvent) => {
   }
 }
 
-onMounted(() => {
-  document.addEventListener('click', handleClickOutside)
-})
-
-onUnmounted(() => {
-  document.removeEventListener('click', handleClickOutside)
-})
+onMounted(() => document.addEventListener('click', handleClickOutside))
+onUnmounted(() => document.removeEventListener('click', handleClickOutside))
 </script>
