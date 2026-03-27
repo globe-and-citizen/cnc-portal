@@ -1,100 +1,107 @@
 <template>
-  <CardComponent title="Transactions">
-    <template #card-action>
-      <div class="flex items-center gap-4">
-        <SafeTransactionStatusFilter @statusChange="handleStatusChange" />
+  <UCard :ui="{ root: 'shadow-md' }" data-test="card-component">
+    <template #header>
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-4">
+          <h3 class="text-lg font-semibold">Transactions</h3>
+        </div>
+        <div class="flex items-center gap-4">
+          <SafeTransactionStatusFilter @statusChange="handleStatusChange" />
+        </div>
       </div>
     </template>
 
-    <TableComponent
-      :rows="filteredTransactions"
-      :columns="[
-        { key: 'method', label: 'Method' },
-        { key: 'to', label: 'To' },
-        { key: 'value', label: 'Value' },
-        { key: 'status', label: 'Status' },
-        { key: 'txHash', label: 'Tx Hash' },
-        { key: 'actions', label: 'Actions' }
-      ]"
-      :loading="isLoading"
-      :current-page-prop="currentPage"
-      :items-per-page-prop="itemsPerPage"
-      @update:currentPage="handlePageChange"
-      @update:itemsPerPage="handleItemsPerPageChange"
-      :maxItemsPerPage="5"
-      data-test="safe-transactions-table"
-    >
-      <template #to-data="{ row }">
-        <AddressToolTip :address="row.to" slice />
-      </template>
+    <div data-test="card-body">
+      <TableComponent
+        :rows="filteredTransactions"
+        :columns="[
+          { key: 'method', label: 'Method' },
+          { key: 'to', label: 'To' },
+          { key: 'value', label: 'Value' },
+          { key: 'status', label: 'Status' },
+          { key: 'txHash', label: 'Tx Hash' },
+          { key: 'actions', label: 'Actions' }
+        ]"
+        :loading="isLoading"
+        :current-page-prop="currentPage"
+        :items-per-page-prop="itemsPerPage"
+        @update:currentPage="handlePageChange"
+        @update:itemsPerPage="handleItemsPerPageChange"
+        :maxItemsPerPage="5"
+        data-test="safe-transactions-table"
+      >
+        <template #to-data="{ row }">
+          <AddressToolTip :address="row.to" slice />
+        </template>
 
-      <template #value-data="{ row }">
-        <span
-          >{{ formatSafeTransactionValue(row.value.toString(), row?.dataDecoded, row.to) }}
-        </span>
-      </template>
+        <template #value-data="{ row }">
+          <span
+            >{{ formatSafeTransactionValue(row.value.toString(), row?.dataDecoded, row.to) }}
+          </span>
+        </template>
 
-      <template #status-data="{ row }">
-        <span>{{ getTransactionStatus(row as SafeTransaction) }}</span>
-        <span class="badge badge-sm flex items-center gap-1 badge-neutral badge-outline">
-          {{ row.confirmations?.length || 0 }} / {{ row.confirmationsRequired }}
-        </span>
-      </template>
+        <template #status-data="{ row }">
+          <span>{{ getTransactionStatus(row as SafeTransaction) }}</span>
+          <span class="badge badge-sm flex items-center gap-1 badge-neutral badge-outline">
+            {{ row.confirmations?.length || 0 }} / {{ row.confirmationsRequired }}
+          </span>
+        </template>
 
-      <template #txHash-data="{ row }">
-        <AddressToolTip
-          v-if="row.transactionHash"
-          :address="row.transactionHash"
-          type="transaction"
-          slice
-        />
-        <span v-else>...</span>
-      </template>
+        <template #txHash-data="{ row }">
+          <AddressToolTip
+            v-if="row.transactionHash"
+            :address="row.transactionHash"
+            type="transaction"
+            slice
+          />
+          <span v-else>...</span>
+        </template>
 
-      <template #method-data="{ row }">
-        {{ row?.dataDecoded?.method || 'unknown' }}
-      </template>
+        <template #method-data="{ row }">
+          {{ row?.dataDecoded?.method || 'unknown' }}
+        </template>
 
-      <template #actions-data="{ row }">
-        <div class="flex items-center gap-2">
-          <UButton
-            size="xs"
-            color="primary"
-            @click="handleApproveClick(row as SafeTransaction)"
-            :disabled="!canApprove(row as SafeTransaction) || isApproving"
-            :loading="isTransactionLoading(row.safeTxHash, 'approve')"
-            class="flex items-center gap-1 text-xs"
-            data-test="approve-button"
-          >
-            Approve
-          </UButton>
+        <template #actions-data="{ row }">
+          <div class="flex items-center gap-2">
+            <UButton
+              size="xs"
+              color="primary"
+              @click="handleApproveClick(row as SafeTransaction)"
+              :disabled="!canApprove(row as SafeTransaction) || isApproving"
+              :loading="isTransactionLoading(row.safeTxHash, 'approve')"
+              class="flex items-center gap-1 text-xs"
+              data-test="approve-button"
+            >
+              Approve
+            </UButton>
 
-          <UButton
-            size="xs"
-            color="success"
-            @click="handleExecuteClick(row as SafeTransaction)"
-            :disabled="!canExecute(row as SafeTransaction) || isExecuting"
-            :loading="isTransactionLoading(row.safeTxHash, 'execute')"
-            class="flex items-center gap-1 text-xs"
-            data-test="execute-button"
-          >
-            Execute
-          </UButton>
-        </div>
-      </template>
-    </TableComponent>
+            <UButton
+              size="xs"
+              color="success"
+              @click="handleExecuteClick(row as SafeTransaction)"
+              :disabled="!canExecute(row as SafeTransaction) || isExecuting"
+              :loading="isTransactionLoading(row.safeTxHash, 'execute')"
+              class="flex items-center gap-1 text-xs"
+              data-test="execute-button"
+            >
+              Execute
+            </UButton>
+          </div>
+        </template>
+      </TableComponent>
 
-    <!-- Conflicting Transaction Warning Modal -->
-    <SafeTransactionsWarning
-      v-if="showConflictWarning"
-      v-model="showConflictWarning"
-      :is-executing="isExecuting || isApproving"
-      :action="isExecuting ? 'Execute' : 'Approve'"
-      @confirm="handleConfirmAction"
-      @cancel="handleCancelAction"
-      data-test="conflict-warning-modal"
-    />
-  </CardComponent>
+      <!-- Conflicting Transaction Warning Modal -->
+      <SafeTransactionsWarning
+        v-if="showConflictWarning"
+        v-model="showConflictWarning"
+        :is-executing="isExecuting || isApproving"
+        :action="isExecuting ? 'Execute' : 'Approve'"
+        @confirm="handleConfirmAction"
+        @cancel="handleCancelAction"
+        data-test="conflict-warning-modal"
+      />
+    </div>
+  </UCard>
 </template>
 
 <script setup lang="ts">
@@ -104,7 +111,6 @@ import type { SafeTransaction } from '@/types/safe'
 
 // Components
 import TableComponent from '@/components/TableComponent.vue'
-import CardComponent from '@/components/CardComponent.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import SafeTransactionsWarning from './SafeTransactionsWarning.vue'
 

@@ -1,5 +1,5 @@
 <template>
-  <span class="font-bold text-2xl">{{ title }}</span>
+  <span v-if="title" class="font-bold text-2xl">{{ title }}</span>
   <div v-if="selectedToken?.token.id !== 'native'" class="steps w-full my-4">
     <a class="step" :class="{ 'step-primary': currentStep >= 1 }">Amount</a>
     <a class="step" :class="{ 'step-primary': currentStep >= 2 }">Approval</a>
@@ -71,7 +71,7 @@ const chainId = useChainId()
 const emits = defineEmits(['closeModal'])
 const props = defineProps<{
   safeAddress: Address
-  title: string
+  title?: string
 }>()
 
 function reset() {

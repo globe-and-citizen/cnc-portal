@@ -106,7 +106,7 @@ const CardStub = defineComponent({
   template: `
     <div data-test="card-component">
       <div data-test="card-header">
-        <slot name="card-action" />
+        <slot name="header" />
       </div>
       <div data-test="card-body"><slot /></div>
       <div v-if="$slots.footer" data-test="card-footer">
@@ -167,7 +167,7 @@ describe('SafeOwnersCard', () => {
       props: { ...defaultProps, ...props },
       global: {
         stubs: {
-          CardComponent: CardStub,
+          UCard: CardStub,
           UButton: ButtonStub,
           AddressToolTip: AddressToolTipStub,
           RemoveOwnerButton: RemoveOwnerButtonStub,

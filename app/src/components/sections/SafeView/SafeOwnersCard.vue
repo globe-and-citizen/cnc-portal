@@ -1,7 +1,10 @@
 <template>
-  <CardComponent title="Safe Owners" class="h-full">
-    <template #card-action>
+  <UCard class="h-full" :ui="{ root: 'shadow-md' }" data-test="card-component">
+    <template #header>
       <div class="flex items-center justify-between">
+        <div class="flex items-center gap-4">
+          <h3 class="text-lg font-semibold">Safe Owners</h3>
+        </div>
         <div class="flex items-center gap-2">
           <UButton
             color="primary"
@@ -28,66 +31,69 @@
       </div>
     </template>
 
-    <div v-if="isLoading" class="flex items-center justify-center py-8">
-      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-    </div>
+    <div data-test="card-body">
+      <div v-if="isLoading" class="flex items-center justify-center py-8">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
 
-    <div v-else-if="safeInfo?.owners.length === 0" class="text-center py-8">
-      <div class="text-gray-500">No owners found</div>
-    </div>
+      <div v-else-if="safeInfo?.owners.length === 0" class="text-center py-8">
+        <div class="text-gray-500">No owners found</div>
+      </div>
 
-    <div v-else class="space-y-3 mt-3">
-      <div
-        v-for="(owner, index) in safeInfo?.owners"
-        :key="owner"
-        class="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-        :class="{ 'ring-2 ring-primary/20': isCurrentUserAddress(owner) }"
-        data-test="owner-item"
-      >
-        <div class="flex items-center gap-3">
-          <div class="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
-            <span class="text-sm font-medium text-primary">{{ index + 1 }}</span>
-          </div>
-          <div>
-            <div class="flex items-center gap-2">
-              <AddressToolTip :address="owner" slice />
-              <span
-                v-if="isCurrentUserAddress(owner)"
-                class="text-xs bg-primary/10 text-primary px-2 py-1 rounded-sm"
-              >
-                You
-              </span>
+      <div v-else class="space-y-3 mt-3">
+        <div
+          v-for="(owner, index) in safeInfo?.owners"
+          :key="owner"
+          class="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+          :class="{ 'ring-2 ring-primary/20': isCurrentUserAddress(owner) }"
+          data-test="owner-item"
+        >
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
+              <span class="text-sm font-medium text-primary">{{ index + 1 }}</span>
             </div>
-            <div class="text-xs text-gray-500 mt-1">{{ getOwnerDisplayName(owner) }}</div>
+            <div>
+              <div class="flex items-center gap-2">
+                <AddressToolTip :address="owner" slice />
+                <span
+                  v-if="isCurrentUserAddress(owner)"
+                  class="text-xs bg-primary/10 text-primary px-2 py-1 rounded-sm"
+                >
+                  You
+                </span>
+              </div>
+              <div class="text-xs text-gray-500 mt-1">{{ getOwnerDisplayName(owner) }}</div>
+            </div>
           </div>
-        </div>
-        <div class="flex items-center text-xs gap-2">
-          <RemoveOwnerButton
-            :owner-address="owner"
-            :safe-address="address as Address"
-            :total-owners="safeInfo?.owners.length ?? 0"
-            :threshold="safeInfo?.threshold ?? 1"
-            :is-connected-user-owner="isConnectedUserOwner"
-          />
+          <div class="flex items-center text-xs gap-2">
+            <RemoveOwnerButton
+              :owner-address="owner"
+              :safe-address="address as Address"
+              :total-owners="safeInfo?.owners.length ?? 0"
+              :threshold="safeInfo?.threshold ?? 1"
+              :is-connected-user-owner="isConnectedUserOwner"
+            />
+          </div>
         </div>
       </div>
-    </div>
-    <!-- Modals -->
-    <AddSignerModal
-      v-model="showAddSignerModal"
-      :safe-address="address as Address"
-      :current-owners="safeInfo?.owners || []"
-      :current-threshold="safeInfo?.threshold || 1"
-    />
 
-    <UpdateThresholdModal
-      v-model:open="showUpdateThresholdModal"
-      :safe-address="address as Address"
-      :current-owners="safeInfo?.owners || []"
-      :current-threshold="safeInfo?.threshold || 1"
-      @threshold-updated="handleThresholdUpdated"
-    />
-  </CardComponent>
+      <!-- Modals -->
+      <AddSignerModal
+        v-model="showAddSignerModal"
+        :safe-address="address as Address"
+        :current-owners="safeInfo?.owners || []"
+        :current-threshold="safeInfo?.threshold || 1"
+      />
+
+      <UpdateThresholdModal
+        v-model:open="showUpdateThresholdModal"
+        :safe-address="address as Address"
+        :current-owners="safeInfo?.owners || []"
+        :current-threshold="safeInfo?.threshold || 1"
+        @threshold-updated="handleThresholdUpdated"
+      />
+    </div>
+  </UCard>
 </template>
 
 <script setup lang="ts">
@@ -97,7 +103,6 @@ import { useAccount } from '@wagmi/vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
 
 // Components
-import CardComponent from '@/components/CardComponent.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import AddSignerModal from '@/components/sections/SafeView/forms/AddSignerModal.vue'
 import UpdateThresholdModal from '@/components/sections/SafeView/forms/UpdateThresholdModal.vue'
