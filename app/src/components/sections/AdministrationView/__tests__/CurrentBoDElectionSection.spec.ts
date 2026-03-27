@@ -4,7 +4,6 @@ import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import ElectionComponent from '@/components/sections/AdministrationView/CurrentBoDElectionSection.vue'
 import CardComponent from '@/components/CardComponent.vue'
-import ModalComponent from '@/components/ModalComponent.vue'
 import ElectionStatus from '@/components/sections/AdministrationView/ElectionStatus.vue'
 import ElectionStats from '@/components/sections/AdministrationView/ElectionStats.vue'
 import ElectionActions from '@/components/sections/AdministrationView/ElectionActions.vue'
@@ -66,7 +65,7 @@ describe('ElectionComponent', () => {
       global: {
         stubs: {
           // CardComponent: true,
-          ModalComponent: true,
+          UModal: true,
           CreateElectionForm: true,
           ElectionStatus: true,
           ElectionStats: true,
@@ -156,9 +155,9 @@ describe('ElectionComponent', () => {
   })
 
   describe('Modal functionality', () => {
-    it('does not mount ModalComponent initially', () => {
+    it('does not mount UModal initially', () => {
       wrapper = createWrapper()
-      expect(wrapper.findComponent(ModalComponent).exists()).toBe(false)
+      expect(wrapper.findComponent({ name: 'UModal' }).exists()).toBe(false)
     })
   })
 
