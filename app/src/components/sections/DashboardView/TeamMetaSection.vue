@@ -4,45 +4,48 @@
       @updateTeamModalOpen="updateTeamModalOpen"
       @deleteTeam="showDeleteTeamConfirmModal = true"
     />
-    <ModalComponent v-model="showDeleteTeamConfirmModal">
-      <h3 class="font-bold text-lg">Confirmation</h3>
-      <hr class="" />
-      <p class="py-4">
-        Are you sure you want to delete the team
-        <span class="font-bold">{{ teamStore.currentTeamMeta.data?.name }}</span
-        >?
-      </p>
-      <div class="modal-action justify-center">
-        <UButton
-          color="error"
-          data-test="delete-team-button"
-          @click="deleteTeam()"
-          :loading="teamIsDeleting"
-          :disabled="teamIsDeleting"
-          label="Delete"
+    <UModal v-model:open="showDeleteTeamConfirmModal">
+      <template #body>
+        <h3 class="font-bold text-lg">Confirmation</h3>
+        <hr class="" />
+        <p class="py-4">
+          Are you sure you want to delete the team
+          <span class="font-bold">{{ teamStore.currentTeamMeta.data?.name }}</span
+          >?
+        </p>
+        <div class="modal-action justify-center">
+          <UButton
+            color="error"
+            data-test="delete-team-button"
+            @click="deleteTeam()"
+            :loading="teamIsDeleting"
+            :disabled="teamIsDeleting"
+            label="Delete"
+          />
+          <UButton
+            color="primary"
+            variant="outline"
+            @click="showDeleteTeamConfirmModal = false"
+            label="Cancel"
+          />
+        </div>
+      </template>
+    </UModal>
+    <UModal v-model:open="showModal">
+      <template #body>
+        <UpdateTeamForm
+          :teamIsUpdating="!!teamIsUpdating"
+          v-model="updateTeamInput"
+          @updateTeam="executeUpdateTeam"
         />
-        <UButton
-          color="primary"
-          variant="outline"
-          @click="showDeleteTeamConfirmModal = false"
-          label="Cancel"
-        />
-      </div>
-    </ModalComponent>
-    <ModalComponent v-model="showModal">
-      <UpdateTeamForm
-        :teamIsUpdating="!!teamIsUpdating"
-        v-model="updateTeamInput"
-        @updateTeam="executeUpdateTeam"
-      />
-    </ModalComponent>
+      </template>
+    </UModal>
   </div>
 </template>
 <script setup lang="ts">
 import { ref } from 'vue'
 import UpdateTeamForm from '@/components/sections/DashboardView/forms/UpdateTeamForm.vue'
 import TeamDetails from '@/components/sections/DashboardView/TeamDetails.vue'
-import ModalComponent from '@/components/ModalComponent.vue'
 import type { Member } from '@/types'
 import { useRouter } from 'vue-router'
 import { useToastStore } from '@/stores/useToastStore'

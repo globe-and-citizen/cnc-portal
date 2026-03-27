@@ -17,13 +17,17 @@
     </UButton>
 
     <!-- Edit Modal -->
-    <ModalComponent v-model="showEditModal">
-      <EditClaims :claim="claim" @close="showEditModal = false" />
-    </ModalComponent>
+    <UModal v-model:open="showEditModal">
+      <template #body>
+        <EditClaims :claim="claim" @close="showEditModal = false" />
+      </template>
+    </UModal>
     <!-- Delete Modal -->
-    <ModalComponent v-model="showDeleteModal">
-      <DeleteClaimModal :claim="claim" @close="showDeleteModal = false" />
-    </ModalComponent>
+    <UModal v-model:open="showDeleteModal">
+      <template #body>
+        <DeleteClaimModal :claim="claim" @close="showDeleteModal = false" />
+      </template>
+    </UModal>
   </div>
 </template>
 
@@ -32,7 +36,6 @@ import { ref } from 'vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import EditClaims from '@/components/sections/CashRemunerationView/EditClaims.vue'
 import DeleteClaimModal from '@/components/sections/CashRemunerationView/DeleteClaimModal.vue'
-import ModalComponent from '@/components/ModalComponent.vue'
 import type { Claim } from '@/types'
 
 defineProps<{

@@ -9,17 +9,19 @@
       Pay Dividends
     </UButton>
 
-    <ModalComponent v-model="modalState.show" v-if="modalState.mount" @reset="closeModal">
-      <PayDividendsForm
-        v-if="modalState.show && currentTeam"
-        :loading="isBankWriteLoading || isLoadingAddAction || isConfirmingAddAction"
-        :token-symbol="tokenSymbol!"
-        :team="currentTeam"
-        :is-bod-action="isBodAction"
-        @submit="handleSubmit"
-        @close-modal="closeModal"
-      />
-    </ModalComponent>
+    <UModal v-if="modalState.mount" v-model:open="modalState.show">
+      <template #body>
+        <PayDividendsForm
+          v-if="modalState.show && currentTeam"
+          :loading="isBankWriteLoading || isLoadingAddAction || isConfirmingAddAction"
+          :token-symbol="tokenSymbol!"
+          :team="currentTeam"
+          :is-bod-action="isBodAction"
+          @submit="handleSubmit"
+          @close-modal="closeModal"
+        />
+      </template>
+    </UModal>
   </div>
 </template>
 
@@ -27,7 +29,6 @@
 import { computed, ref, watch } from 'vue'
 import type { Address } from 'viem'
 import { encodeFunctionData, formatUnits, zeroAddress } from 'viem'
-import ModalComponent from '@/components/ModalComponent.vue'
 import PayDividendsForm from '@/components/sections/SherTokenView/forms/PayDividendsForm.vue'
 import { BANK_ABI } from '@/artifacts/abi/bank'
 import { useTeamStore, useUserDataStore } from '@/stores'

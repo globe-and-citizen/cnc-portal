@@ -68,12 +68,7 @@ const createWrapper = (props: Partial<{ claim: Claim }> = {}) => {
     global: {
       plugins: [createTestingPinia({ createSpy: vi.fn }), [VueQueryPlugin, { queryClient }]],
       stubs: {
-        ClaimForm: ClaimFormStub,
-        UAlert: {
-          name: 'UAlert',
-          template: '<div data-test="edit-claim-error">{{ description }}</div>',
-          props: ['description']
-        }
+        ClaimForm: ClaimFormStub
       }
     }
   })

@@ -22,15 +22,13 @@
         </template>
         <TeamContracts />
       </CardComponent>
-      <ModalComponent
-        v-model="showAdCampaignModal.show"
-        v-if="showAdCampaignModal.mount"
-        @reset="() => (showAdCampaignModal = { mount: false, show: false })"
-      >
-        <CreateAddCampaign
-          @closeAddCampaignModal="showAdCampaignModal = { mount: false, show: false }"
-        />
-      </ModalComponent>
+      <UModal v-if="showAdCampaignModal.mount" v-model:open="showAdCampaignModal.show">
+        <template #body>
+          <CreateAddCampaign
+            @closeAddCampaignModal="showAdCampaignModal = { mount: false, show: false }"
+          />
+        </template>
+      </UModal>
     </div>
   </div>
 </template>
@@ -41,7 +39,6 @@ import CardComponent from '@/components/CardComponent.vue'
 import { useUserDataStore } from '@/stores/user'
 import { useTeamStore } from '@/stores'
 
-import ModalComponent from '@/components/ModalComponent.vue'
 import CreateAddCampaign from '@/components/sections/ContractManagementView/forms/CreateAddCampaign.vue'
 
 const teamStore = useTeamStore()

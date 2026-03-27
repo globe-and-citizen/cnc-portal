@@ -31,9 +31,11 @@
             label="Manage"
           />
         </div>
-        <ModalComponent v-model="showVotingControlModal">
-          <VotingManagement :team="team" />
-        </ModalComponent>
+        <UModal v-model:open="showVotingControlModal">
+          <template #body>
+            <VotingManagement :team="team" />
+          </template>
+        </UModal>
       </div>
     </template>
     <div v-if="votingAddress">
@@ -61,33 +63,37 @@
               />
             </template>
           </TabNavigation>
-          <ModalComponent v-model="showBoDModal">
-            <h3>Board Of Directors</h3>
-            <hr />
-            <div class="mt-4">
-              <ul v-if="(boardOfDirectors as Array<string>)?.length">
-                <li
-                  v-for="(address, index) in boardOfDirectors"
-                  :key="index"
-                  class="text-sm flex justify-between"
-                >
-                  <span v-if="team.members">
-                    {{
-                      team.members.find((member) => member.address === address)?.name || 'Unknown'
-                    }}
-                  </span>
-                  {{ address }}
-                </li>
-              </ul>
-              <p v-else>No Board of Directors found.</p>
-            </div>
-          </ModalComponent>
-          <ModalComponent v-model="showModal">
-            <CreateElectionForm
-              @createProposal="createProposal"
-              :isLoading="loadingAddProposal || isConfirmingAddProposal"
-            />
-          </ModalComponent>
+          <UModal v-model:open="showBoDModal">
+            <template #body>
+              <h3>Board Of Directors</h3>
+              <hr />
+              <div class="mt-4">
+                <ul v-if="(boardOfDirectors as Array<string>)?.length">
+                  <li
+                    v-for="(address, index) in boardOfDirectors"
+                    :key="index"
+                    class="text-sm flex justify-between"
+                  >
+                    <span v-if="team.members">
+                      {{
+                        team.members.find((member) => member.address === address)?.name || 'Unknown'
+                      }}
+                    </span>
+                    {{ address }}
+                  </li>
+                </ul>
+                <p v-else>No Board of Directors found.</p>
+              </div>
+            </template>
+          </UModal>
+          <UModal v-model:open="showModal">
+            <template #body>
+              <CreateElectionForm
+                @createProposal="createProposal"
+                :isLoading="loadingAddProposal || isConfirmingAddProposal"
+              />
+            </template>
+          </UModal>
         </div>
       </div>
       <div class="flex justify-center items-center" v-if="loadingGetProposals">
@@ -99,7 +105,6 @@
 <script setup lang="ts">
 import type { OldProposal } from '@/types/index'
 import { computed, onMounted, ref, watch, type Ref } from 'vue'
-import ModalComponent from '@/components/ModalComponent.vue'
 import CreateElectionForm from './forms/CreateElectionForm.vue'
 import TabNavigation from '@/components/TabNavigation.vue'
 import { ProposalTabs } from '@/types/index'

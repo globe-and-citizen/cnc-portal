@@ -15,25 +15,26 @@
       />
     </div>
 
-    <ModalComponent
-      v-model="modal.show"
+    <UModal
       v-if="modal.mount"
+      v-model:open="modal.show"
       data-test="invest-in-safe-modal"
-      @reset="closeModal"
+      :close="{ onClick: closeModal }"
     >
-      <SafeDepositRouterForm
-        v-if="teamStore.getContractAddressByType('Safe')"
-        @close-modal="closeModal"
-        ref="depositFormRef"
-      />
-    </ModalComponent>
+      <template #body>
+        <SafeDepositRouterForm
+          v-if="teamStore.getContractAddressByType('Safe')"
+          @close-modal="closeModal"
+          ref="depositFormRef"
+        />
+      </template>
+    </UModal>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 
-import ModalComponent from '@/components/ModalComponent.vue'
 import SafeDepositRouterForm from '@/components/forms/SafeDepositRouterForm.vue'
 import {
   useSafeDepositRouterDepositsEnabled,

@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { mount, VueWrapper } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import DepositModal from '../DepositModal.vue'
-import ModalComponent from '@/components/ModalComponent.vue'
 import DepositBankForm from '../DepositBankForm.vue'
 
 describe('DepositModal', () => {
@@ -26,7 +25,6 @@ describe('DepositModal', () => {
       },
       global: {
         components: {
-          ModalComponent,
           DepositBankForm
         },
         stubs: {

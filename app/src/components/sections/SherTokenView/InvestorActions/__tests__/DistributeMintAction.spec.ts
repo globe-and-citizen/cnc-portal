@@ -16,12 +16,7 @@ describe('DistributeMintAction.vue', () => {
       global: {
         plugins: [createTestingPinia({ createSpy: vi.fn })],
         stubs: {
-          // Stub UI and child components - will be tested separately
-          UButton: true,
-          ModalComponent: true,
-          DistributeMintForm: true,
-          UIcon: true,
-          UTooltip: true
+          DistributeMintForm: true
         }
       },
       props: {

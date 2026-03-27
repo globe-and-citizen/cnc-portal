@@ -45,3 +45,4 @@ test-results
 gasReporterOutput.json
 backend/.env.production
 app/.env.production
+.mcp.json

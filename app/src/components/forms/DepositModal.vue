@@ -11,25 +11,25 @@
     />
 
     <!-- Deposit Modal -->
-    <ModalComponent
-      v-model="DepositModal.show"
+    <UModal
       v-if="DepositModal.mount"
+      v-model:open="DepositModal.show"
       data-test="deposit-modal"
-      @reset="closeModal"
+      :close="{ onClick: closeModal }"
     >
-      <DepositSafeForm
-        v-if="bankAddress"
-        :safe-address="bankAddress"
-        title="Deposit to Bank Contract"
-        @close-modal="closeModal"
-      />
-    </ModalComponent>
+      <template #body>
+        <DepositSafeForm
+          v-if="bankAddress"
+          :safe-address="bankAddress"
+          title="Deposit to Bank Contract"
+          @close-modal="closeModal"
+        />
+      </template>
+    </UModal>
   </div>
 </template>
 
 <script setup lang="ts">
-import ModalComponent from '@/components/ModalComponent.vue'
-
 import DepositSafeForm from '@/components/forms/DepositSafeForm.vue'
 import { ref } from 'vue'
 import { type Address } from 'viem'

@@ -34,8 +34,8 @@
       label="Pending Actions"
     />
 
-    <teleport to="body">
-      <ModalComponent v-model="showModal">
+    <UModal v-model:open="showModal">
+      <template #body>
         <TransferOwnershipForm
           v-if="showModal"
           :is-bod-action="isBodAction"
@@ -47,8 +47,10 @@
             isConfirmingAddAction
           "
         />
-      </ModalComponent>
-      <ModalComponent v-model="showApprovalModal" :modal-width="modalWidth">
+      </template>
+    </UModal>
+    <UModal v-model:open="showApprovalModal" :ui="{ content: modalWidth }">
+      <template #body>
         <PendingEventsList
           :pending-actions="formatedActions"
           @view-details="
@@ -66,8 +68,8 @@
           :loading="isLoadingApproveAction"
           @close="showApprovalModal = false"
         />
-      </ModalComponent>
-    </teleport>
+      </template>
+    </UModal>
   </div>
 </template>
 <script setup lang="ts">
@@ -78,7 +80,6 @@ import { useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
 import { watch, ref, computed } from 'vue'
 import { useToastStore, useTeamStore, useUserDataStore } from '@/stores'
 import TransferOwnershipForm from './forms/TransferOwnershipForm.vue'
-import ModalComponent from '@/components/ModalComponent.vue'
 import { filterAndFormatActions, log, parseError } from '@/utils'
 import PendingEventsList from './PendingEventsList.vue'
 import BodApprovalModal from './BodApprovalModal.vue'

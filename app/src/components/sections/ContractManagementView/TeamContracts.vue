@@ -61,42 +61,47 @@
     </TableComponent>
 
     <!-- Admin Modal -->
-    <ModalComponent v-model="contractAdminDialog.show">
-      <div class="max-w-lg">
-        <TeamContractAdmins
-          :contract="contractAdminDialog.contract"
-          :range="contractAdminDialog.range"
-        />
-      </div>
-    </ModalComponent>
+    <UModal v-model:open="contractAdminDialog.show">
+      <template #body>
+        <div class="max-w-lg">
+          <TeamContractAdmins
+            :contract="contractAdminDialog.contract"
+            :range="contractAdminDialog.range"
+          />
+        </div>
+      </template>
+    </UModal>
 
     <!-- Contract Data Modal -->
-    <ModalComponent v-model="contractDataDialog.show">
-      <div class="max-w-lg">
-        <h3 class="text-lg font-bold">Contract Details</h3>
-        <TeamContractsDetail
-          :contract-address="contractDataDialog.address"
-          :datas="contractDataDialog.datas"
-          :reset="contractDetailReset"
-          @closeContractDataDialog="contractDataDialog.show = false"
-        />
-      </div>
-    </ModalComponent>
+    <UModal v-model:open="contractDataDialog.show">
+      <template #body>
+        <div class="max-w-lg">
+          <h3 class="text-lg font-bold">Contract Details</h3>
+          <TeamContractsDetail
+            :contract-address="contractDataDialog.address"
+            :datas="contractDataDialog.datas"
+            :reset="contractDetailReset"
+            @closeContractDataDialog="contractDataDialog.show = false"
+          />
+        </div>
+      </template>
+    </UModal>
 
-    <ModalComponent v-model="contractEventsDialog.show">
-      <div class="max-w-lg">
-        <h3 class="text-lg font-bold">Contract Events</h3>
-        <TeamContractEventList
-          :eventsByCampaignCode="groupEventsByCampaignCode(contractEventsDialog.events)"
-        />
-      </div>
-    </ModalComponent>
+    <UModal v-model:open="contractEventsDialog.show">
+      <template #body>
+        <div class="max-w-lg">
+          <h3 class="text-lg font-bold">Contract Events</h3>
+          <TeamContractEventList
+            :eventsByCampaignCode="groupEventsByCampaignCode(contractEventsDialog.events)"
+          />
+        </div>
+      </template>
+    </UModal>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import ModalComponent from '@/components/ModalComponent.vue'
 import TeamContractAdmins from './TeamContractAdmins.vue'
 import TeamContractsDetail from './TeamContractsDetail.vue'
 import { AddCampaignService } from '@/services/AddCampaignService'

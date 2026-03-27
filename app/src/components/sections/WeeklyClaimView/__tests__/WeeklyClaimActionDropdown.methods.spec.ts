@@ -52,12 +52,6 @@ describe('DropdownActions', () => {
       props: {
         status,
         weeklyClaim
-      },
-      global: {
-        stubs: {
-          IconifyIcon: true,
-          UButton: true
-        }
       }
     })
   }
