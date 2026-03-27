@@ -18,7 +18,7 @@ const router = createRouter({
     {
       path: '/teams',
       name: 'teams',
-      meta: { name: 'Teams List' },
+      meta: { name: 'Companies' },
       components: {
         default: () => import('@/views/team/ListIndex.vue')
       }
@@ -27,12 +27,12 @@ const router = createRouter({
       path: '/teams/:id',
       component: () => import('@/views/team/[id]/ShowIndex.vue'),
       name: 'show-team',
-      meta: { name: 'Team View' },
+      meta: { name: 'Company View' },
       children: [
         {
           path: '/teams/:id/demo',
           name: 'team-demo',
-          meta: { name: 'Team Demo' },
+          meta: { name: 'Company Demo' },
           component: () => import('@/views/team/[id]/DemoExample.vue')
         },
         {
@@ -62,7 +62,7 @@ const router = createRouter({
         {
           path: '/teams/:id/accounts/team-payroll',
           name: 'team-payroll',
-          meta: { name: 'Team Payroll' },
+          meta: { name: 'Company Payroll' },
           component: () => import('@/views/team/[id]/Accounts/WeeklyClaimView.vue')
         },
         {

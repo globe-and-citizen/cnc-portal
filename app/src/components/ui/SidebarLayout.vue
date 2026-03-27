@@ -113,12 +113,12 @@ const items = computed<NavigationMenuItem[]>(() => [
     to: '/'
   },
   {
-    label: 'Team List',
+    label: 'Companies',
     icon: 'heroicons:squares-2x2',
     to: '/teams'
   },
   {
-    label: 'Team Home Page',
+    label: 'Company',
     icon: 'heroicons:home',
     active: route.name === 'show-team',
     to: {
@@ -195,7 +195,7 @@ const items = computed<NavigationMenuItem[]>(() => [
       },
       {
         // icon: 'heroicons:briefcase',
-        label: 'Team Payroll',
+        label: 'Company Payroll',
         to: {
           name: 'team-payroll',
           params: { id: teamStore.currentTeamId || '1' }
@@ -245,7 +245,7 @@ const items = computed<NavigationMenuItem[]>(() => [
     ]
   },
   {
-    label: 'vesting',
+    label: 'Vesting',
     icon: 'heroicons:lock-closed',
     to: {
       name: 'vesting',
