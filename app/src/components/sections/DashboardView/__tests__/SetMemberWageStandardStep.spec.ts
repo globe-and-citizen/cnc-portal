@@ -32,7 +32,7 @@ const createWrapper = (wageData = createWageData()) =>
       wageData,
       isPending: false,
       'onUpdate:wageData': (newValue: WageWithForm) => newValue
-    },
+    }
   })
 
 describe('SetMemberWageStandardStep.vue', () => {

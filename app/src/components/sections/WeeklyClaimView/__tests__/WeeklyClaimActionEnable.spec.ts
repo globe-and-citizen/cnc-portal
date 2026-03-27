@@ -89,7 +89,7 @@ describe('DropdownActions', () => {
       props: {
         isCashRemunerationOwner,
         weeklyClaim
-      },
+      }
     })
   }
 

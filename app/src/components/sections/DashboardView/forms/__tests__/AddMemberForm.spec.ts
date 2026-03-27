@@ -19,7 +19,7 @@ const mountComponent = () => {
       teamId: 'team-123'
     },
     global: {
-      plugins: [createTestingPinia({ createSpy: vi.fn })],
+      plugins: [createTestingPinia({ createSpy: vi.fn })]
     }
   })
 }

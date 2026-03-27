@@ -86,7 +86,7 @@ const createWrapper = (
           template: '<div data-test="new-signers-input"></div>',
           props: ['modelValue', 'disableTeamMembers', 'currentSafeOwners'],
           emits: ['update:modelValue']
-        },
+        }
       }
     }
   })

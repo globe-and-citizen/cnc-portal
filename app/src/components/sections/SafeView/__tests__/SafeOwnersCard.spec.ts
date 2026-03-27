@@ -116,7 +116,6 @@ const CardStub = defineComponent({
   `
 })
 
-
 const AddressToolTipStub = defineComponent({
   props: ['address'],
   template: '<div data-test="address-tooltip">{{ address }}</div>'

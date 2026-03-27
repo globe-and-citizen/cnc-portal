@@ -16,7 +16,7 @@ describe('DistributeMintAction.vue', () => {
       global: {
         plugins: [createTestingPinia({ createSpy: vi.fn })],
         stubs: {
-          DistributeMintForm: true,
+          DistributeMintForm: true
         }
       },
       props: {

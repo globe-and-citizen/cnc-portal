@@ -52,7 +52,7 @@ describe('DropdownActions', () => {
       props: {
         status,
         weeklyClaim
-      },
+      }
     })
   }
 

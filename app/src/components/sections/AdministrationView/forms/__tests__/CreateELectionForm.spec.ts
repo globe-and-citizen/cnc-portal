@@ -52,7 +52,7 @@ const mountForm = (props: Record<string, unknown> = {}) =>
     props: { isLoading: false, ...props },
     global: {
       stubs: {
-        MultiSelectMemberInput: MultiSelectMemberInputStub,
+        MultiSelectMemberInput: MultiSelectMemberInputStub
         // VueDatePicker: VueDatePickerStub
       }
     }

@@ -22,7 +22,6 @@ type WrapperProps = {
   isClaimOwner?: boolean
 }
 
-
 describe('CRWithdrawClaim', () => {
   let wrapper: ReturnType<typeof mount>
 
@@ -67,7 +66,7 @@ describe('CRWithdrawClaim', () => {
         weeklyClaim: mockClaim,
         disabled: false,
         ...props
-      },
+      }
     })
 
     return wrapper
@@ -194,7 +193,7 @@ describe('CRWithdrawClaim', () => {
     wrapper = mount(CRWithdrawClaim, {
       props: {
         weeklyClaim: customClaim
-      },
+      }
     })
 
     await clickWithdrawButton()

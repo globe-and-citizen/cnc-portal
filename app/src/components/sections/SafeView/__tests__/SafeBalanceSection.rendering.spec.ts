@@ -149,7 +149,6 @@ const CardStub = defineComponent({
   template: '<div data-test="card-component"><slot /></div>'
 })
 
-
 const AddressToolTipStub = defineComponent({
   template: '<div data-test="address-tooltip"></div>'
 })

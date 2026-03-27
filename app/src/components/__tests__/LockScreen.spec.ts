@@ -20,7 +20,7 @@ describe('LockScreen.vue', () => {
     wrapper = mount(LockScreen, {
       props: {
         user: { address: '' }
-      },
+      }
     })
   })
 
@@ -28,7 +28,7 @@ describe('LockScreen.vue', () => {
     wrapper = mount(LockScreen, {
       props: {
         user: { address: '0x1111111111111111111111111111111111111111' }
-      },
+      }
     })
 
     expect(wrapper.text()).toContain('0x1111...1111')
@@ -39,7 +39,7 @@ describe('LockScreen.vue', () => {
     wrapper = mount(LockScreen, {
       props: {
         user: { address: '0x1111111111111111111111111111111111111111' }
-      },
+      }
     })
 
     // Component renders with user address
