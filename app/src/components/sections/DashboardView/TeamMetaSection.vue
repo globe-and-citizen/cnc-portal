@@ -69,7 +69,12 @@
       <template #body>
         <h1 class="font-bold text-2xl">Update Team Details</h1>
         <hr class="" />
-        <UForm :schema="updateTeamSchema" :state="updateTeamInput" @submit="executeUpdateTeam" class="flex flex-col gap-5 mt-4">
+        <UForm
+          :schema="updateTeamSchema"
+          :state="updateTeamInput"
+          @submit="executeUpdateTeam"
+          class="flex flex-col gap-5 mt-4"
+        >
           <UFormField name="name" label="Team Name" required>
             <UInput v-model="updateTeamInput.name" class="w-full" />
           </UFormField>
