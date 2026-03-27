@@ -30,7 +30,6 @@
 </template>
 
 <script setup lang="ts">
-
 import DepositSafeForm from '@/components/forms/DepositSafeForm.vue'
 import { ref } from 'vue'
 import { type Address } from 'viem'

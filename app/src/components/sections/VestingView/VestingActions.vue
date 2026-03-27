@@ -14,7 +14,11 @@
     <UModal
       v-if="addVestingModal.mount"
       v-model:open="addVestingModal.show"
-      :close="{ onClick: () => { addVestingModal = { mount: false, show: false } } }"
+      :close="{
+        onClick: () => {
+          addVestingModal = { mount: false, show: false }
+        }
+      }"
     >
       <template #body>
         <CreateVesting

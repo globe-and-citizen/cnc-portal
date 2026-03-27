@@ -60,7 +60,11 @@
     </TableComponent>
     <UModal
       v-model:open="mintIndividualModal.show"
-      :close="{ onClick: () => { mintIndividualModal = { mount: false, show: false } } }"
+      :close="{
+        onClick: () => {
+          mintIndividualModal = { mount: false, show: false }
+        }
+      }"
     >
       <template #body>
         <MintForm

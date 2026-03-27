@@ -11,7 +11,11 @@
         <UModal
           v-if="showCreateElectionModal.mount"
           v-model:open="showCreateElectionModal.show"
-          :close="{ onClick: () => { showCreateElectionModal = { mount: false, show: false } } }"
+          :close="{
+            onClick: () => {
+              showCreateElectionModal = { mount: false, show: false }
+            }
+          }"
         >
           <template #body>
             <CreateElectionForm

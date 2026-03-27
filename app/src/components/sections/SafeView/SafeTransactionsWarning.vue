@@ -29,7 +29,8 @@
           <div class="text-sm text-gray-600 space-y-2">
             <p>
               <span class="font-semibold">Why this happens:</span>
-              Safe transactions must follow nonce order. This action will invalidates earlier nonces.
+              Safe transactions must follow nonce order. This action will invalidates earlier
+              nonces.
             </p>
           </div>
         </div>

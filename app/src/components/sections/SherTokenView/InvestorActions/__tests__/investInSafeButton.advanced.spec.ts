@@ -48,7 +48,6 @@ describe('InvestInSafeButton - Advanced Features', () => {
       global: {
         plugins: [createTestingPinia({ createSpy: vi.fn })],
         stubs: {
-          
           SafeDepositRouterForm: {
             name: 'SafeDepositRouterForm',
             template: '<div data-test="safe-deposit-router-form"></div>',

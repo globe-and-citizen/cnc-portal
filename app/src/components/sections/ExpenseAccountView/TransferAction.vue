@@ -13,7 +13,11 @@
       v-if="showModal.mount"
       v-model:open="showModal.show"
       data-test="transfer-modal"
-      :close="{ onClick: () => { showModal = { mount: false, show: false } } }"
+      :close="{
+        onClick: () => {
+          showModal = { mount: false, show: false }
+        }
+      }"
     >
       <template #body>
         <TransferForm

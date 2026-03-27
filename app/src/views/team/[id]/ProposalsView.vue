@@ -29,7 +29,11 @@
     <UModal
       v-if="createProposalModal.mount"
       v-model:open="createProposalModal.show"
-      :close="{ onClick: () => { createProposalModal = { mount: false, show: false } } }"
+      :close="{
+        onClick: () => {
+          createProposalModal = { mount: false, show: false }
+        }
+      }"
     >
       <template #body>
         <CreateProposalForm

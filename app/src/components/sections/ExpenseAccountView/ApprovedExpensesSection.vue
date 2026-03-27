@@ -29,7 +29,11 @@
     <UModal
       v-if="approveUsersModal.mount"
       v-model:open="approveUsersModal.show"
-      :close="{ onClick: () => { approveUsersModal = { mount: false, show: false } } }"
+      :close="{
+        onClick: () => {
+          approveUsersModal = { mount: false, show: false }
+        }
+      }"
     >
       <template #body>
         <ApproveUsersForm

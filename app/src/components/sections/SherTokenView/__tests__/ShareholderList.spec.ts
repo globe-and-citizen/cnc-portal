@@ -64,7 +64,7 @@ describe('ShareholderList', () => {
           TableComponent: TableComponentStub,
           MintForm: MintFormStub,
           CardComponent: { template: '<div><slot /></div>' },
-          UserComponent: true,
+          UserComponent: true
           // UButton: { template: '<button data-test="mint-individual"><slot /></button>' }
         }
       }

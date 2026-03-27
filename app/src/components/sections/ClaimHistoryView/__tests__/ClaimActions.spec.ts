@@ -51,7 +51,7 @@ describe('ClaimActions', () => {
             template: '<div data-test="delete-claim-stub" />',
             props: ['claim'],
             emits: ['close']
-          },
+          }
         }
       }
     })
