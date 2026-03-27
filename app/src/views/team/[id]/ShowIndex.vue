@@ -72,9 +72,11 @@ watch(teamStore.currentTeamMeta, () => {
 })
 
 const hasContract = computed(() => {
-  return (teamStore.currentTeamMeta.data?.teamContracts ?? []).filter(
-    (contract) => contract.type !== 'Safe'
-  ).length > 0
+  return (
+    (teamStore.currentTeamMeta.data?.teamContracts ?? []).filter(
+      (contract) => contract.type !== 'Safe'
+    ).length > 0
+  )
 })
 
 watch(
