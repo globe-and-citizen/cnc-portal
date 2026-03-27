@@ -4,15 +4,17 @@
     <div>
       <UBreadcrumb v-if="!teamStore.currentTeamMeta.error" :items="breadcrumbItems">
         <template #loader>
-          <div class="skeleton h-4 w-20" data-test="loader" />
+          <USkeleton class="h-4 w-20" data-test="loader" />
         </template>
       </UBreadcrumb>
     </div>
     <div v-if="teamStore.currentTeamMeta?.error" data-test="error-state">
-      <div class="alert alert-warning" v-if="teamStore.currentTeamMeta.error?.status == 404">
-        Error! Team not found
-      </div>
-      <div class="alert alert-error" v-else>Error! Something went wrong, try again later.</div>
+      <UAlert
+        v-if="teamStore.currentTeamMeta.error?.status == 404"
+        color="warning"
+        title="Error! Team not found"
+      />
+      <UAlert v-else color="error" title="Error! Something went wrong, try again later." />
     </div>
     <div
       v-if="route.name == 'show-team' && teamStore.currentTeamMeta?.data"
