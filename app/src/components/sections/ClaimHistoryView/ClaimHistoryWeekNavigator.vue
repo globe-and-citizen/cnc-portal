@@ -1,5 +1,5 @@
 <template>
-  <CardComponent class="min-w-[280px] flex flex-col justify-between" data-test="week-navigator">
+  <UCard class="min-w-[280px] flex flex-col justify-between" data-test="week-navigator">
     <div class="space-y-8">
       <!-- Month Selector -->
       <MonthSelector v-model="internalSelectedWeek" />
@@ -9,11 +9,7 @@
         <div
           v-for="week in generatedMonthWeek"
           :key="week.isoWeek"
-          @click="
-            () => {
-              internalSelectedWeek = week
-            }
-          "
+          @click="internalSelectedWeek = week"
           :class="[
             'border rounded-lg p-3 cursor-pointer',
             week.isoWeek === internalSelectedWeek.isoWeek
@@ -39,6 +35,7 @@
               />
             </div>
           </div>
+
           <div
             class="text-sm"
             :class="
@@ -51,11 +48,12 @@
       </div>
     </div>
 
-    <!-- Bar chart (Hours/Day) -->
-    <div class="mt-6">
+    <!-- Footer (optionnel pour ton chart) -->
+
+    <div class="mt-10">
       <v-chart :option="barChartOption" autoresize style="height: 250px" />
     </div>
-  </CardComponent>
+  </UCard>
 </template>
 
 <script setup lang="ts">
@@ -68,7 +66,6 @@ import { getMonthWeeks, type Week } from '@/utils/dayUtils'
 import { useTeamStore } from '@/stores'
 import { useGetTeamWeeklyClaimsQuery } from '@/queries'
 import type { WeeklyClaim } from '@/types'
-import CardComponent from '@/components/CardComponent.vue'
 import MonthSelector from '@/components/MonthSelector.vue'
 
 import { use } from 'echarts/core'
