@@ -62,18 +62,18 @@ describe('TeamSelectMenu', () => {
       } as ReturnType<typeof useRoute>)
 
       const wrapper = createWrapper()
-      expect(wrapper.text()).toContain('Select team')
+      expect(wrapper.text()).toContain('Select Company')
     })
   })
 
   describe('default selection', () => {
-    it('pre-selects the team matching the current route param id', () => {
+    it('pre-selects the company matching the current route param id', () => {
       // useRoute is globally mocked with params.id = '1' and mockTeamsData[0].id = '1'
       const wrapper = createWrapper()
       expect(wrapper.text()).toContain(mockTeamsData[0]!.name)
     })
 
-    it.skip('auto-selects first team and navigates when no team is active', async () => {
+    it.skip('auto-selects first company and navigates when no company is active', async () => {
       mockCurrentTeamId.value = null
       vi.mocked(useRoute).mockReturnValueOnce({
         params: {},
@@ -156,10 +156,10 @@ describe('TeamSelectMenu', () => {
       // USelectMenu renders its dropdown in a portal attached to document.body
       const input = document.querySelector('input')
       expect(input).not.toBeNull()
-      expect(input?.getAttribute('placeholder')).toBe('Search team...')
+      expect(input?.getAttribute('placeholder')).toBe('Search company...')
     })
 
-    it('filters teams by name based on search input', async () => {
+    it('filters companies by name based on search input', async () => {
       vi.mocked(useGetTeamsQuery).mockReturnValueOnce(
         createMockQueryResponse([
           { ...mockTeamsData[0]!, id: '1', name: 'Alpha Team' },

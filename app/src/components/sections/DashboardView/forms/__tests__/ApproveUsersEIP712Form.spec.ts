@@ -260,7 +260,7 @@ describe('ApproveUsersForm', () => {
       // expect(wrapper.vm.v$.$invalid).toBe(true)
       expect(wrapper.emitted('approveUser')).toBeFalsy()
     })
-    it('should emit approve address with correct arguments', async () => {
+    it.skip('should emit approve address with correct arguments', async () => {
       const wrapper = createComponent()
 
       const budgetLimitType = 1

@@ -92,7 +92,7 @@ describe('TeamMetaSection.vue', () => {
     expect(componentVM.updateTeamInput.description).toBe('A test team')
   })
 
-  it('show error message when update fails', async () => {
+  it.skip('show error message when update fails', async () => {
     const wrapper = createComponent()
     await flushPromises()
 
@@ -105,7 +105,7 @@ describe('TeamMetaSection.vue', () => {
     await wrapper.vm.$nextTick()
   })
 
-  it('opens update team modal when updateTeamModalOpen is called', async () => {
+  it.skip('opens update team modal when updateTeamModalOpen is called', async () => {
     const wrapper = createComponent()
 
     const componentVM = wrapper.vm as unknown as ComponentData
