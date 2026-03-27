@@ -58,26 +58,27 @@
         </div>
       </template>
     </TableComponent>
-    <ModalComponent
-      v-model="mintIndividualModal.show"
-      @reset="() => (mintIndividualModal = { mount: false, show: false })"
+    <UModal
+      v-model:open="mintIndividualModal.show"
+      :close="{ onClick: () => { mintIndividualModal = { mount: false, show: false } } }"
     >
-      <MintForm
-        v-if="mintIndividualModal.mount"
-        v-model="mintIndividualModal.show"
-        :memberInput="{
-          name: getShareholderName(selectedShareholder!),
-          address: selectedShareholder!
-        }"
-        :disabled="true"
-        @close-modal="() => (mintIndividualModal = { mount: false, show: false })"
-      />
-    </ModalComponent>
+      <template #body>
+        <MintForm
+          v-if="mintIndividualModal.mount"
+          v-model="mintIndividualModal.show"
+          :memberInput="{
+            name: getShareholderName(selectedShareholder!),
+            address: selectedShareholder!
+          }"
+          :disabled="true"
+          @close-modal="() => (mintIndividualModal = { mount: false, show: false })"
+        />
+      </template>
+    </UModal>
   </CardComponent>
 </template>
 <script setup lang="ts">
 import CardComponent from '@/components/CardComponent.vue'
-import ModalComponent from '@/components/ModalComponent.vue'
 import MintForm from '@/components/sections/SherTokenView/forms/MintForm.vue'
 import TableComponent from '@/components/TableComponent.vue'
 import UserComponent from '@/components/UserComponent.vue'
