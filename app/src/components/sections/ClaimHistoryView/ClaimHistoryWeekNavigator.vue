@@ -1,5 +1,5 @@
 <template>
-  <CardComponent class="min-w[270px] flex flex-col justify-between" data-test="week-navigator">
+  <CardComponent class="min-w-[280px] flex flex-col justify-between" data-test="week-navigator">
     <div class="space-y-8">
       <!-- Month Selector -->
       <MonthSelector v-model="internalSelectedWeek" />
