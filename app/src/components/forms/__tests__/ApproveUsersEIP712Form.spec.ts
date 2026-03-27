@@ -5,7 +5,6 @@ import VueDatePicker from '@vuepic/vue-datepicker'
 import SelectMemberWithTokenInput from '@/components/utils/SelectMemberWithTokenInput.vue'
 import SelectComponent from '@/components/SelectComponent.vue'
 import type { ComponentPublicInstance } from 'vue'
-import type { Validation } from '@vuelidate/core'
 
 // Define the component instance type based on the component's reactive properties and methods
 type ApproveUsersFormInstance = ComponentPublicInstance<{
@@ -26,8 +25,8 @@ type ApproveUsersFormInstance = ComponentPublicInstance<{
   clear: () => void
   submitApprove: () => void
 
-  // Vuelidate instance
-  v$: Validation
+  // Validation shim
+  v$: { $invalid: boolean }
 }>
 
 // Mock the SelectComponent
