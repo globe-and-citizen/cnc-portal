@@ -186,6 +186,37 @@ describe('CRWithdrawClaim', () => {
     expect(mockGetBalance).toHaveBeenCalled()
   })
 
+  it('uses overtime-aware total for balance check', async () => {
+    mockGetBalance.mockResolvedValueOnce(parseEther('100'))
+
+    const overtimeClaim: WeeklyClaim = {
+      ...mockClaim,
+      hoursWorked: 4,
+      wage: {
+        ...mockClaim.wage,
+        maximumHoursPerWeek: 2,
+        ratePerHour: [{ type: 'native', amount: 10 }],
+        overtimeRatePerHour: [{ type: 'native', amount: 100 }]
+      }
+    }
+
+    wrapper = mount(CRWithdrawClaim, {
+      props: {
+        weeklyClaim: overtimeClaim
+      },
+      global: {
+        stubs: {
+          UButton: BUTTON_STUB
+        }
+      }
+    })
+
+    await clickWithdrawButton()
+
+    expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('Insufficient balance')
+    expect(mockWagmiCore.simulateContract).not.toHaveBeenCalled()
+  })
+
   it('builds claim data with correct token addresses', async () => {
     const customClaim: WeeklyClaim = {
       ...mockClaim,
