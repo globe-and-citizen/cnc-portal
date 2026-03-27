@@ -5,39 +5,6 @@ import { createTestingPinia } from '@pinia/testing'
 import ClaimForm from '@/components/sections/CashRemunerationView/Form/ClaimForm.vue'
 import { useToastStore } from '@/stores'
 
-const UInputStub = {
-  template:
-    '<input v-bind="$attrs" :value="modelValue" @input="$emit(\'update:modelValue\', $event.target.value)" />',
-  props: ['modelValue'],
-  emits: ['update:modelValue'],
-  inheritAttrs: false
-}
-
-const UTextareaStub = {
-  template:
-    '<textarea v-bind="$attrs" :value="modelValue" @input="$emit(\'update:modelValue\', $event.target.value)"></textarea>',
-  props: ['modelValue'],
-  emits: ['update:modelValue'],
-  inheritAttrs: false
-}
-
-// const UButtonStub = {
-//   template:
-//     '<button v-bind="$attrs" :disabled="disabled || loading" :type="type || \'button\'"><slot /></button>',
-//   props: ['disabled', 'loading', 'type', 'color', 'variant', 'leadingIcon', 'size'],
-//   inheritAttrs: false
-// }
-
-const UPopoverStub = { template: '<div><slot /><slot name="content" /></div>' }
-
-const UCalendarStub = defineComponent({
-  name: 'UCalendar',
-  props: { modelValue: Object, isDateDisabled: Function },
-  emits: ['update:model-value'],
-  template:
-    '<div data-test="calendar-stub"><button data-test="calendar-select" @click="$emit(\'update:model-value\', { year: 2024, month: 1, day: 10 })" /></div>'
-})
-
 const resetUploadMock = vi.fn()
 const UploadFileDBStub = defineComponent({
   name: 'UploadFileDB',

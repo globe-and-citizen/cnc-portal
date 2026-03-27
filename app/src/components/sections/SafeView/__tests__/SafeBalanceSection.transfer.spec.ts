@@ -100,14 +100,7 @@ const MOCK_DATA = {
 
 // Component stubs
 const CardStub = defineComponent({ template: '<div><slot /></div>' })
-const ButtonStub = defineComponent({
-  template: '<button @click="$emit(\'click\')"><slot /></button>'
-})
 const AddressToolTipStub = defineComponent({ template: '<div></div>' })
-const ModalStub = defineComponent({
-  props: ['open'],
-  template: '<div v-if="open"><slot name="body" /></div>'
-})
 const DepositBankFormStub = defineComponent({ template: '<div></div>' })
 const TransferFormStub = defineComponent({ template: '<div><slot name="header" /></div>' })
 
