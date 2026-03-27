@@ -23,34 +23,35 @@
     </div>
 
     <!-- Transfer Modal -->
-    <ModalComponent
-      v-model="modal.show"
+    <UModal
       v-if="modal.mount"
+      v-model:open="modal.show"
       data-test="transfer-modal"
-      @reset="resetTransferValues"
+      :close="{ onClick: resetTransferValues }"
     >
-      <TransferForm
-        v-model="transferData"
-        :tokens="tokens"
-        :loading="isLoading"
-        @transfer="handleTransfer"
-        @closeModal="resetTransferValues"
-        :is-bod-action="isBodAction"
-      >
-        <template #header>
-          <h1 class="font-bold text-2xl">Transfer from Bank Contract</h1>
-          <h3 class="pt-4">
-            Current contract balance: {{ transferData.token.balance }}
-            {{ transferData.token.symbol }}
-          </h3>
-        </template>
-      </TransferForm>
-    </ModalComponent>
+      <template #body>
+        <TransferForm
+          v-model="transferData"
+          :tokens="tokens"
+          :loading="isLoading"
+          @transfer="handleTransfer"
+          @closeModal="resetTransferValues"
+          :is-bod-action="isBodAction"
+        >
+          <template #header>
+            <h1 class="font-bold text-2xl">Transfer from Bank Contract</h1>
+            <h3 class="pt-4">
+              Current contract balance: {{ transferData.token.balance }}
+              {{ transferData.token.symbol }}
+            </h3>
+          </template>
+        </TransferForm>
+      </template>
+    </UModal>
   </div>
 </template>
 
 <script setup lang="ts">
-import ModalComponent from '@/components/ModalComponent.vue'
 import TransferForm, { type TransferModel } from '@/components/forms/TransferForm.vue'
 import { ref, watch, computed, type Ref } from 'vue'
 import { type Address, parseEther, encodeFunctionData, parseUnits } from 'viem'
