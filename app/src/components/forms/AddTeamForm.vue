@@ -121,7 +121,7 @@ const {
 
 // Zod Schemas
 const teamSchema = z.object({
-  name: z.string().min(1, 'Team name is required'),
+  name: z.string().min(1, 'Company name is required'),
   description: z.string().optional()
 })
 

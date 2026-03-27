@@ -53,7 +53,7 @@ const deployButtonText = computed(() => {
   if (createOfficerLoading.value) {
     return 'Deploying Officer Contracts...'
   }
-  return 'Deploy Team Contracts'
+  return 'Deploy Company Contracts'
 })
 
 /**
@@ -61,15 +61,15 @@ const deployButtonText = computed(() => {
  */
 const handleOfficerDeploymentSuccess = async (officerAddress: Address) => {
   if (!props.createdTeamData.id) {
-    log.error('No team data found')
-    addErrorToast('No team data found')
+    log.error('No Company data found')
+    addErrorToast('No company data found')
     return
   }
 
   const teamId = props.createdTeamData.id
 
   try {
-    // Update team with officer address
+    // Update company with officer address
     await updateTeam({
       pathParams: { id: teamId },
       body: { officerAddress }
