@@ -27,6 +27,8 @@
       v-if="modal.mount"
       v-model:open="modal.show"
       data-test="transfer-modal"
+      title="Transfer from Bank Contract"
+      :description="`Current contract balance: ${transferData.token.balance} ${transferData.token.symbol}`"
       :close="{ onClick: resetTransferValues }"
     >
       <template #body>
@@ -37,15 +39,7 @@
           @transfer="handleTransfer"
           @closeModal="resetTransferValues"
           :is-bod-action="isBodAction"
-        >
-          <template #header>
-            <h1 class="font-bold text-2xl">Transfer from Bank Contract</h1>
-            <h3 class="pt-4">
-              Current contract balance: {{ transferData.token.balance }}
-              {{ transferData.token.symbol }}
-            </h3>
-          </template>
-        </TransferForm>
+        />
       </template>
     </UModal>
   </div>

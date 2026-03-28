@@ -93,6 +93,8 @@
       v-model:open="transferModal.show"
       @update:open="handleTransferModalOpen"
       data-test="transfer-modal"
+      title="Transfer from Safe Contract"
+      :description="`Current contract balance: ${transferData.token.balance} ${transferData.token.symbol}`"
       :close="{ onClick: () => resetTransferValues() }"
     >
       <template #body>
@@ -102,15 +104,7 @@
           :loading="isTransferring"
           @transfer="handleTransfer"
           @closeModal="resetTransferValues"
-        >
-          <template #header>
-            <h1 class="font-bold text-2xl">Transfer from Safe Contract</h1>
-            <h3 class="pt-4">
-              Current contract balance: {{ transferData.token.balance }}
-              {{ transferData.token.symbol }}
-            </h3>
-          </template>
-        </TransferForm>
+        />
       </template>
     </UModal>
   </UCard>

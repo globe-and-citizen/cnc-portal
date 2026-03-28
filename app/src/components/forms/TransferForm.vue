@@ -1,9 +1,4 @@
 <template>
-  <slot name="header">
-    <h3 class="pt-4">
-      Current contract balance: {{ model.token.balance }} {{ model.token.symbol }}
-    </h3>
-  </slot>
   <BodAlert v-if="isBodAction" />
 
   <UForm
