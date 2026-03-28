@@ -6,7 +6,7 @@ import {
   useWriteContractFn,
   useWaitForTransactionReceiptFn,
   useQueryClientFn,
-  mockWagmiCore,
+  mockWagmiCore
 } from '@/tests/mocks'
 import { useTeamStore } from '@/stores'
 
@@ -130,8 +130,7 @@ describe('PublishResult.vue', () => {
 
     // need nextTick / flush for watchers
     await nextTick()
-    await Promise.resolve() 
+    await Promise.resolve()
     expect(queryClientMock.invalidateQueries).toHaveBeenCalled()
   })
-
 })

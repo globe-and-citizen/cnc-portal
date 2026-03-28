@@ -3,12 +3,7 @@ import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 import { createTestingPinia } from '@pinia/testing'
 import InvestorsHeader from '../InvestorsHeader.vue'
 import { parseUnits } from 'viem'
-import {
-  mockInvestorReads,
-  mockTeamStore,
-  mockUserStore,
-  resetContractMocks
-} from '@/tests/mocks'
+import { mockInvestorReads, mockTeamStore, mockUserStore, resetContractMocks } from '@/tests/mocks'
 
 describe('InvestorsHeader', () => {
   let wrapper: ReturnType<typeof mount>
@@ -135,7 +130,6 @@ describe('InvestorsHeader', () => {
       expect(cards[1].find(SELECTORS.amount).text()).toBe('...')
     })
   })
-
 
   describe('Edge Cases and Data Validation', () => {
     it('should handle empty shareholders array', () => {

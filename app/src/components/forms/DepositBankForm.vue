@@ -181,7 +181,10 @@ const bankDepositTokenResult = useDepositToken(selectedTokenAddress, bigIntAmoun
 watch(isNativeDepositConfirmed, (confirmed) => {
   if (confirmed && nativeReceipt.value) {
     amount.value = ''
-    toast.add({ title: `${selectedToken.value?.token.code} deposited successfully`, color: 'success' })
+    toast.add({
+      title: `${selectedToken.value?.token.code} deposited successfully`,
+      color: 'success'
+    })
     emits('closeModal')
   }
 })
@@ -237,7 +240,10 @@ const submitForm = async () => {
 
       submitting.value = false
       amount.value = ''
-      toast.add({ title: `${selectedToken.value?.token.code} deposited successfully`, color: 'success' })
+      toast.add({
+        title: `${selectedToken.value?.token.code} deposited successfully`,
+        color: 'success'
+      })
       emits('closeModal')
     }
   } catch {

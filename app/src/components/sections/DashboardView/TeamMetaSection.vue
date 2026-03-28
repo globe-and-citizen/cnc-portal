@@ -151,7 +151,10 @@ const executeUpdateTeam = () => {
         showModal.value = false
       },
       onError: () => {
-        toast.add({ title: updateTeamError.value?.message || 'Failed to update company', color: 'error' })
+        toast.add({
+          title: updateTeamError.value?.message || 'Failed to update company',
+          color: 'error'
+        })
       }
     }
   )
@@ -174,7 +177,10 @@ const deleteTeam = async () => {
         router.push('/teams')
       },
       onError: () => {
-        toast.add({ title: deleteTeamError.value?.message || 'Failed to delete company', color: 'error' })
+        toast.add({
+          title: deleteTeamError.value?.message || 'Failed to delete company',
+          color: 'error'
+        })
       }
     }
   )

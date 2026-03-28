@@ -60,7 +60,6 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
 
-
 import { useWaitForTransactionReceipt, useWriteContract, useReadContract } from '@wagmi/vue'
 import { AddCampaignService } from '@/services/AddCampaignService'
 import type { TeamContract } from '@/types'

@@ -4,7 +4,6 @@ import { createTestingPinia } from '@pinia/testing'
 import ProfileImageUpload from '../ProfileImageUpload.vue'
 import { mockUploadFileApi } from '@/tests/mocks/api.mock'
 
-
 describe('ProfileImageUpload.vue', () => {
   let wrapper: VueWrapper
 
@@ -38,7 +37,6 @@ describe('ProfileImageUpload.vue', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-
 
     mockUploadFileApi.mockReset()
     mockUploadFileApi.mockResolvedValue({
@@ -109,7 +107,6 @@ describe('ProfileImageUpload.vue', () => {
 
       wrapper = mountComponent()
       await triggerFileSelection(createMockFile('avatar.png', 'image/png'))
-
     })
 
     it('handles non-Error thrown values', async () => {
@@ -117,7 +114,6 @@ describe('ProfileImageUpload.vue', () => {
 
       wrapper = mountComponent()
       await triggerFileSelection(createMockFile('avatar.png', 'image/png'))
-
     })
 
     it('handles missing fileUrl in backend response', async () => {
@@ -128,7 +124,6 @@ describe('ProfileImageUpload.vue', () => {
 
       wrapper = mountComponent()
       await triggerFileSelection(createMockFile('avatar.png', 'image/png'))
-
     })
   })
 

@@ -22,31 +22,26 @@ interface MockMutation {
 }
 
 // Hoisted mock variables
-const {
-  mockUseConnection,
-  mockUseChainId,
-  mockUseSafeSDK,
-  mockLoadSafe,
-  mockMutation
-} = vi.hoisted(() => ({
-  mockUseConnection: vi.fn<[], MockConnection>(),
-  mockUseChainId: vi.fn(() => ref(137)),
-  mockUseSafeSDK: vi.fn(),
-  mockLoadSafe: vi.fn<[string], Promise<MockSafeSDK>>(),
-  mockMutation: {
-    mutateAsync: vi.fn<
-      [
-        {
-          chainId: number
-          safeAddress: string
-          safeTxHash: string
-          signature: { data: string; signer: string }
-        }
-      ],
-      Promise<void>
-    >()
-  } as MockMutation
-}))
+const { mockUseConnection, mockUseChainId, mockUseSafeSDK, mockLoadSafe, mockMutation } =
+  vi.hoisted(() => ({
+    mockUseConnection: vi.fn<[], MockConnection>(),
+    mockUseChainId: vi.fn(() => ref(137)),
+    mockUseSafeSDK: vi.fn(),
+    mockLoadSafe: vi.fn<[string], Promise<MockSafeSDK>>(),
+    mockMutation: {
+      mutateAsync: vi.fn<
+        [
+          {
+            chainId: number
+            safeAddress: string
+            safeTxHash: string
+            signature: { data: string; signer: string }
+          }
+        ],
+        Promise<void>
+      >()
+    } as MockMutation
+  }))
 
 // Mock external dependencies
 vi.mock('@wagmi/vue', () => ({

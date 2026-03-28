@@ -38,9 +38,13 @@ export function useWalletChecks() {
   // Watch
   watch(switchChain.error, (newError) => {
     if (newError) {
-      toast.add({ title: newError.name === 'UserRejectedRequestError'
-          ? 'Network switch rejected: You need to switch to the correct network to use the CNC Portal'
-          : 'Something went wrong: Failed switch network', color: 'error' })
+      toast.add({
+        title:
+          newError.name === 'UserRejectedRequestError'
+            ? 'Network switch rejected: You need to switch to the correct network to use the CNC Portal'
+            : 'Something went wrong: Failed switch network',
+        color: 'error'
+      })
       log.error('switchChainError.value', newError)
       isProcessing.value = false
     }

@@ -213,7 +213,6 @@ describe('SafeBalanceSection', () => {
       address: ref('0x1234567890123456789012345678901234567890')
     })
 
-
     vi.mocked(useStorage).mockReturnValue(mockCurrency as never)
 
     mockGetSafeHomeUrl.mockReturnValue(

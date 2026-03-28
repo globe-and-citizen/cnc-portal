@@ -8,7 +8,7 @@ import {
   mockUseWalletChecks,
   mockUseSignMessage,
   mockUseConnect,
-  mockUseChainId,
+  mockUseChainId
 } from '@/tests/mocks'
 
 const mocks = vi.hoisted(() => ({

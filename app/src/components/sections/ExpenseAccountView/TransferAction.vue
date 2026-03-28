@@ -14,7 +14,11 @@
       v-model:open="showModal.show"
       data-test="transfer-modal"
       title="Transfer from Expenses Contract"
-      :description="expenseBalance ? `Spendable balance: ${tokens[0]?.spendableBalance ?? tokens[0]?.balance ?? 0} ${transferData.token.symbol}` : undefined"
+      :description="
+        expenseBalance
+          ? `Spendable balance: ${tokens[0]?.spendableBalance ?? tokens[0]?.balance ?? 0} ${transferData.token.symbol}`
+          : undefined
+      "
       :close="{
         onClick: () => {
           showModal = { mount: false, show: false }

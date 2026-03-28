@@ -199,7 +199,8 @@ watch(errorAddExpenseData, (newVal) => {
   }
 })
 watch(errorGetOwner, (newVal) => {
-  if (newVal) toast.add({ title: errorMessage(newVal, 'Error Getting Contract Owner'), color: 'error' })
+  if (newVal)
+    toast.add({ title: errorMessage(newVal, 'Error Getting Contract Owner'), color: 'error' })
 })
 watch(signTypedDataError, async (newVal) => {
   if (newVal) {

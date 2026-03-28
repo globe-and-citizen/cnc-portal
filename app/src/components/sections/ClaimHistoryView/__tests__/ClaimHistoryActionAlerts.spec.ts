@@ -6,12 +6,7 @@ import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import isoWeek from 'dayjs/plugin/isoWeek'
 import ClaimHistoryActionAlerts from '@/components/sections/ClaimHistoryView/ClaimHistoryActionAlerts.vue'
-import {
-  mockUserStore,
-  mockWageData,
-  mockWeeklyClaimData,
-  queryMocks
-} from '@/tests/mocks'
+import { mockUserStore, mockWageData, mockWeeklyClaimData, queryMocks } from '@/tests/mocks'
 import { useGetTeamWagesQuery, useGetTeamWeeklyClaimsQuery } from '@/queries'
 
 dayjs.extend(utc)
@@ -247,7 +242,6 @@ describe('ClaimHistoryActionAlerts', () => {
     await nextTick()
     wageError.value = null
     await nextTick()
-
   })
 
   it('evaluates queryParams computed values for wages and weekly claims hooks', () => {

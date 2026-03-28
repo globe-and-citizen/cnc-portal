@@ -297,7 +297,10 @@ watch(
   () => depositWrite.receiptResult.isSuccess.value,
   (success) => {
     if (success) {
-      toast.add({ title: `Successfully deposited ${amount.value} ${selectedToken.value?.token.symbol} and minted ${sherAmount.value} ${tokenSymbol.value || 'SHER'} tokens`, color: 'success' })
+      toast.add({
+        title: `Successfully deposited ${amount.value} ${selectedToken.value?.token.symbol} and minted ${sherAmount.value} ${tokenSymbol.value || 'SHER'} tokens`,
+        color: 'success'
+      })
       reset()
       emits('closeModal')
     }

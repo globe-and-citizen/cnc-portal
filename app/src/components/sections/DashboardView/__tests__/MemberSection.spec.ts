@@ -307,7 +307,10 @@ describe.skip('MemberSection.vue', () => {
       mockWageError.value = new Error('New error')
       await wrapper.vm.$nextTick()
 
-      expect(mockToast.add).toHaveBeenCalledWith({ title: 'Failed to fetch team wage data', color: 'error' })
+      expect(mockToast.add).toHaveBeenCalledWith({
+        title: 'Failed to fetch team wage data',
+        color: 'error'
+      })
     })
   })
 

@@ -295,7 +295,10 @@ const handleSubmit = async () => {
   // Validate total file count before emitting
   const totalFiles = (props.existingFiles?.length ?? 0) + uploadedFiles.value.length
   if (totalFiles > MAX_FILES) {
-    toast.add({ title: `Maximum ${MAX_FILES} files allowed. Currently you have ${totalFiles} files. Please remove ${totalFiles - MAX_FILES} file(s).`, color: 'error' })
+    toast.add({
+      title: `Maximum ${MAX_FILES} files allowed. Currently you have ${totalFiles} files. Please remove ${totalFiles - MAX_FILES} file(s).`,
+      color: 'error'
+    })
     return
   }
 

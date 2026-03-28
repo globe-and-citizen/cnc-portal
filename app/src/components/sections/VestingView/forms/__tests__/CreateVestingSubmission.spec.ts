@@ -172,7 +172,10 @@ describe('CreateVesting.vue', () => {
       await wrapper.vm.$nextTick()
 
       // The error watcher should trigger and show the toast
-      expect(mockToast.add).toHaveBeenCalledWith({ title: 'error on get Allowance', color: 'error' })
+      expect(mockToast.add).toHaveBeenCalledWith({
+        title: 'error on get Allowance',
+        color: 'error'
+      })
     })
 
     it('shows error toast when token approval fails', async () => {
@@ -265,7 +268,10 @@ describe('CreateVesting.vue', () => {
       const confirmBtn = wrapper.find('[data-test="confirm-btn"]')
       await confirmBtn.trigger('click')
 
-      expect(mockToast.add).toHaveBeenCalledWith({ title: 'The member address already has an active vesting.', color: 'error' })
+      expect(mockToast.add).toHaveBeenCalledWith({
+        title: 'The member address already has an active vesting.',
+        color: 'error'
+      })
       expect(mockWriteContract.mutate).not.toHaveBeenCalled()
     })
 

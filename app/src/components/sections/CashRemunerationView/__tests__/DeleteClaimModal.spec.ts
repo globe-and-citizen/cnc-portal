@@ -7,7 +7,6 @@ import type { Claim } from '@/types'
 import dayjs from 'dayjs'
 import { useDeleteClaimMutation } from '@/queries/weeklyClaim.queries'
 
-
 // Test data
 const defaultClaim: Claim = {
   id: 1,
@@ -38,7 +37,6 @@ describe.skip('DeleteClaimModal', () => {
   })
 
   const createWrapper = (props = {}, mutationOverrides = {}) => {
-
     // Mock the delete mutation
     const mockMutateAsync = vi.fn().mockResolvedValue(undefined)
     const mockIsPending = ref(false)

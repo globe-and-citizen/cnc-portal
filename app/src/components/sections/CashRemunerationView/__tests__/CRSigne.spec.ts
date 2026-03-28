@@ -244,7 +244,10 @@ describe('CRSigne', () => {
       createWrapper()
       await clickApprove()
 
-      expect(mockToast.add).toHaveBeenCalledWith({ title: 'User rejected the request', color: 'error' })
+      expect(mockToast.add).toHaveBeenCalledWith({
+        title: 'User rejected the request',
+        color: 'error'
+      })
     })
 
     it('should show error toast when signature is missing', async () => {
@@ -267,7 +270,10 @@ describe('CRSigne', () => {
       createWrapper()
       await clickApprove()
 
-      expect(mockToast.add).toHaveBeenCalledWith({ title: 'Failed to approve weeklyClaim', color: 'error' })
+      expect(mockToast.add).toHaveBeenCalledWith({
+        title: 'Failed to approve weeklyClaim',
+        color: 'error'
+      })
     })
 
     it('should show error toast when cash remuneration address is missing', async () => {
@@ -281,7 +287,10 @@ describe('CRSigne', () => {
       createWrapper({ isResign: true })
       await clickApprove()
 
-      expect(mockToast.add).toHaveBeenCalledWith({ title: 'Failed to sign weeklyClaim', color: 'error' })
+      expect(mockToast.add).toHaveBeenCalledWith({
+        title: 'Failed to sign weeklyClaim',
+        color: 'error'
+      })
     })
 
     it('should handle resign flow when claim is disabled', async () => {
@@ -318,7 +327,10 @@ describe('CRSigne', () => {
       mockUseReadContract.error.value = new Error('Fetch failed') as unknown as null
       await nextTick()
 
-      expect(mockToast.add).toHaveBeenCalledWith({ title: 'Failed to fetch cash remuneration owner', color: 'error' })
+      expect(mockToast.add).toHaveBeenCalledWith({
+        title: 'Failed to fetch cash remuneration owner',
+        color: 'error'
+      })
     })
   })
 })

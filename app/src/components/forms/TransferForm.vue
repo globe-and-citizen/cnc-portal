@@ -10,11 +10,7 @@
     <SelectMemberContractsInput v-model="model.address" @selectItem="handleSelectItem" />
 
     <UFormField class="w-full" name="amount">
-      <TokenAmount
-        :tokens="tokens"
-        v-model="tokenAmountModel"
-        :isLoading="props.loading"
-      >
+      <TokenAmount :tokens="tokens" v-model="tokenAmountModel" :isLoading="props.loading">
         <template #label>
           <slot name="label">
             <div class="flex w-full items-center justify-between text-sm font-medium">
@@ -94,7 +90,6 @@ const emit = defineEmits<{
   transfer: [value: TransferModel]
   closeModal: []
 }>()
-
 
 const selectedTokenId = computed<TokenId>({
   get: () => (model.value.token?.tokenId ?? 'usdc') as TokenId,

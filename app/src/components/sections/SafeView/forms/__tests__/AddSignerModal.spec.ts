@@ -150,7 +150,6 @@ describe('AddSignerModal', () => {
       wrapper = createWrapper()
       await wrapper.vm.handleAddSigners()
       await flushPromises()
-
     })
 
     it('should show success toast and emit event after successful execution', async () => {
@@ -174,7 +173,6 @@ describe('AddSignerModal', () => {
 
       await wrapper.vm.handleAddSigners()
       await flushPromises()
-
     })
 
     it('should handle updateOwners error with generic message', async () => {
@@ -185,7 +183,6 @@ describe('AddSignerModal', () => {
 
       await wrapper.vm.handleAddSigners()
       await flushPromises()
-
     })
 
     it('should handle updateOwners error with specific message', async () => {
@@ -196,7 +193,6 @@ describe('AddSignerModal', () => {
 
       await wrapper.vm.handleAddSigners()
       await flushPromises()
-
     })
 
     it('should not close modal or emit when updateOwners returns null', async () => {

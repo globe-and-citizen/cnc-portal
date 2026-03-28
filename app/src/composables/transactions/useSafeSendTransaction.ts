@@ -137,7 +137,10 @@ export function useSafeSendTransaction() {
       try {
         const canExecute = await canExecuteTransaction(to, value, data)
         if (!canExecute) {
-          toast.add({ title: 'Transaction will likely fail due to insufficient gas or other constraints', color: 'error' })
+          toast.add({
+            title: 'Transaction will likely fail due to insufficient gas or other constraints',
+            color: 'error'
+          })
           return
         }
       } catch (gasError) {

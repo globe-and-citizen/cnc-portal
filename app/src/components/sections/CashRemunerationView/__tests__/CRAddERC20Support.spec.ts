@@ -218,7 +218,10 @@ describe.skip('CRAddERC20Support.vue', () => {
         'Error checking token support:',
         expect.any(Error)
       )
-      expect(mockLocalToast.add).toHaveBeenCalledWith({ title: 'Failed to check token support status', color: 'error' })
+      expect(mockLocalToast.add).toHaveBeenCalledWith({
+        title: 'Failed to check token support status',
+        color: 'error'
+      })
 
       consoleErrorSpy.mockRestore()
     })
@@ -249,7 +252,10 @@ describe.skip('CRAddERC20Support.vue', () => {
         }
       )
 
-      expect(mockLocalToast.add).toHaveBeenCalledWith({ title: 'Token support added successfully', color: 'success' })
+      expect(mockLocalToast.add).toHaveBeenCalledWith({
+        title: 'Token support added successfully',
+        color: 'success'
+      })
     })
 
     it('should remove token support for supported token', async () => {
@@ -276,7 +282,10 @@ describe.skip('CRAddERC20Support.vue', () => {
         }
       )
 
-      expect(mockLocalToast.add).toHaveBeenCalledWith({ title: 'Token support removed successfully', color: 'success' })
+      expect(mockLocalToast.add).toHaveBeenCalledWith({
+        title: 'Token support removed successfully',
+        color: 'success'
+      })
     })
 
     it('should handle errors when adding token support', async () => {
@@ -298,7 +307,10 @@ describe.skip('CRAddERC20Support.vue', () => {
         'Error Updating token support:',
         expect.any(Error)
       )
-      expect(mockLocalToast.add).toHaveBeenCalledWith({ title: 'Failed to add token support: Transaction failed', color: 'error' })
+      expect(mockLocalToast.add).toHaveBeenCalledWith({
+        title: 'Failed to add token support: Transaction failed',
+        color: 'error'
+      })
 
       consoleErrorSpy.mockRestore()
     })
@@ -322,7 +334,10 @@ describe.skip('CRAddERC20Support.vue', () => {
         'Error Updating token support:',
         expect.any(Error)
       )
-      expect(mockLocalToast.add).toHaveBeenCalledWith({ title: 'Failed to remove token support: Transaction failed', color: 'error' })
+      expect(mockLocalToast.add).toHaveBeenCalledWith({
+        title: 'Failed to remove token support: Transaction failed',
+        color: 'error'
+      })
 
       consoleErrorSpy.mockRestore()
     })

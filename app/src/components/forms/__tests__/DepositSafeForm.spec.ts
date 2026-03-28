@@ -130,7 +130,6 @@ describe('DepositSafeForm.vue', () => {
       await configureErc20Submit(wrapper)
       await flushPromises()
 
-    
       expect(wrapper.emitted('closeModal')).toBeTruthy()
     })
   })
@@ -146,7 +145,6 @@ describe('DepositSafeForm.vue', () => {
       await setTokenAmount(wrapper, '1', 'usdc', true)
       await configureErc20Submit(wrapper)
       await flushPromises()
-
     })
   })
 

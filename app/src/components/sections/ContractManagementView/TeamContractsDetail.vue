@@ -209,7 +209,10 @@ async function submit() {
       }
     }
   } catch (error) {
-    toast.add({ title: 'An error occurred while updating the costs. Please try again.', color: 'error' })
+    toast.add({
+      title: 'An error occurred while updating the costs. Please try again.',
+      color: 'error'
+    })
     console.error('Error:', error)
   }
 }

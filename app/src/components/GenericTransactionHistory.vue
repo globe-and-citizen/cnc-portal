@@ -396,7 +396,10 @@ const formatReceiptData = (transaction: BaseTransaction): ReceiptData => {
 const handleReceiptExport = (receiptData: ReceiptData) => {
   try {
     const success = exportReceiptToExcel(receiptData)
-    toast.add({ title: success ? 'Receipt exported successfully' : 'Failed to export receipt', color: success ? 'success' : 'error' })
+    toast.add({
+      title: success ? 'Receipt exported successfully' : 'Failed to export receipt',
+      color: success ? 'success' : 'error'
+    })
   } catch (error) {
     console.error('Error exporting receipt:', error)
     toast.add({ title: 'Failed to export receipt', color: 'error' })

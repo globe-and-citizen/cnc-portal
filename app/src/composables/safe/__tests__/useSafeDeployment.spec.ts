@@ -3,19 +3,14 @@ import { ref } from 'vue'
 import { useSafeDeployment } from '../useSafeDeployment'
 
 // Hoisted mocks
-const {
-  mockUseConnection,
-  mockSafeInit,
-  mockSendTransaction,
-  mockWaitForReceipt,
-  mockGetAddress
-} = vi.hoisted(() => ({
-  mockUseConnection: vi.fn(),
-  mockSafeInit: vi.fn(),
-  mockSendTransaction: vi.fn(),
-  mockWaitForReceipt: vi.fn(),
-  mockGetAddress: vi.fn()
-}))
+const { mockUseConnection, mockSafeInit, mockSendTransaction, mockWaitForReceipt, mockGetAddress } =
+  vi.hoisted(() => ({
+    mockUseConnection: vi.fn(),
+    mockSafeInit: vi.fn(),
+    mockSendTransaction: vi.fn(),
+    mockWaitForReceipt: vi.fn(),
+    mockGetAddress: vi.fn()
+  }))
 
 // Mock external dependencies
 vi.mock('@wagmi/vue', () => ({

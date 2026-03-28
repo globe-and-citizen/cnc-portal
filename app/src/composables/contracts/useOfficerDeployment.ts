@@ -129,7 +129,10 @@ export function useOfficerDeployment() {
           // Log error but don't throw - deployment was successful
           log.error('Error in deployment success callback:', error)
           // Only show user-facing error, don't fail the entire deployment
-          toast.add({ title: 'Deployment successful, but setup encountered an issue', color: 'error' })
+          toast.add({
+            title: 'Deployment successful, but setup encountered an issue',
+            color: 'error'
+          })
         }
       }
 

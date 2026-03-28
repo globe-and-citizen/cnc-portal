@@ -204,7 +204,10 @@ watch(
   () => setMultiplierWrite.receiptResult.isSuccess.value,
   (success) => {
     if (success) {
-      toast.add({ title: `Multiplier updated successfully to ${formatSherAmount(newMultiplier.value, MULTIPLIER_DECIMALS)}x`, color: 'success' })
+      toast.add({
+        title: `Multiplier updated successfully to ${formatSherAmount(newMultiplier.value, MULTIPLIER_DECIMALS)}x`,
+        color: 'success'
+      })
       closeModal()
     }
   }

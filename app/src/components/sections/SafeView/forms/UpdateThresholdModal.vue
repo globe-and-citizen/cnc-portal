@@ -177,7 +177,13 @@ const handleUpdateThreshold = async () => {
     })
 
     if (txHash) {
-      toast.add({ title: props.currentThreshold >= 2 ? 'Threshold update proposal submitted successfully' : 'Threshold updated successfully', color: 'success' })
+      toast.add({
+        title:
+          props.currentThreshold >= 2
+            ? 'Threshold update proposal submitted successfully'
+            : 'Threshold updated successfully',
+        color: 'success'
+      })
       emit('threshold-updated')
       handleClose()
     }

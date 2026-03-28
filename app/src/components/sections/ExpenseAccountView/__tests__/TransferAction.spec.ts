@@ -205,7 +205,10 @@ describe('TransferComponent', () => {
     await wrapper.vm.$nextTick()
 
     expect(logErrorMock).toHaveBeenCalledWith(parseError(mockError, EXPENSE_ACCOUNT_EIP712_ABI))
-    expect(mockToast.add).toHaveBeenCalledWith({ title: 'Failed to transfer after approval', color: 'error' })
+    expect(mockToast.add).toHaveBeenCalledWith({
+      title: 'Failed to transfer after approval',
+      color: 'error'
+    })
   })
 
   it('should reset loading states when confirming transfer error occurs', async () => {

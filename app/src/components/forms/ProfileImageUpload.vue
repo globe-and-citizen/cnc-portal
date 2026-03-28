@@ -99,7 +99,10 @@ const onFileChange = async (event: Event) => {
 
   if (!isImageFile(file)) {
     errorMessage.value = 'Only images (png, jpg, jpeg, webp, gif, bmp, svg) are allowed'
-    toast.add({ title: 'Only images (png, jpg, jpeg, webp, gif, bmp, svg) are allowed', color: 'error' })
+    toast.add({
+      title: 'Only images (png, jpg, jpeg, webp, gif, bmp, svg) are allowed',
+      color: 'error'
+    })
     input.value = ''
     return
   }

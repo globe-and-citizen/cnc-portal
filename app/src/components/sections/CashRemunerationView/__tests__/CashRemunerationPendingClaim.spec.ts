@@ -41,5 +41,4 @@ describe.skip('CashRemunerationPendingClaim', () => {
     const wrapper = createComponent()
     expect(wrapper.exists()).toBeTruthy()
   })
-
 })

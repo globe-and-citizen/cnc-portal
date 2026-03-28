@@ -75,7 +75,6 @@ describe.skip('DepositBankForm.vue', () => {
       await setTokenAmount(wrapper, '1', 'native', true)
       await wrapper.find('[data-test="deposit-button"]').trigger('click')
       await nextTick()
-
     })
 
     it('should not submit when form is invalid', async () => {
@@ -124,7 +123,6 @@ describe.skip('DepositBankForm.vue', () => {
       await setTokenAmount(wrapper, '100', 'invalid-token' as unknown as string, true)
       await wrapper.find('[data-test="deposit-button"]').trigger('click')
       await flushPromises()
-
     })
 
     it('should handle form validation correctly', async () => {
@@ -196,7 +194,6 @@ describe.skip('DepositBankForm.vue', () => {
       await setTokenAmount(wrapper, '1', 'native', true)
       await wrapper.find('[data-test="deposit-button"]').trigger('click')
       await nextTick()
-
     })
 
     it('should prevent multiple submissions', async () => {

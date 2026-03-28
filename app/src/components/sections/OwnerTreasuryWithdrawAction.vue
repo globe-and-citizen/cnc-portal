@@ -18,7 +18,6 @@
       :close="{ onClick: resetModal }"
     >
       <template #body>
-
         <TokenAmount
           :tokens="withdrawableTokens"
           v-model="tokenAmountModel"
@@ -327,7 +326,10 @@ const submitWithdraw = async () => {
 
 watch(isActionAdded, (added) => {
   if (added) {
-    toast.add({ title: 'Action added successfully, waiting for board confirmation', color: 'success' })
+    toast.add({
+      title: 'Action added successfully, waiting for board confirmation',
+      color: 'success'
+    })
     resetModal()
   }
 })

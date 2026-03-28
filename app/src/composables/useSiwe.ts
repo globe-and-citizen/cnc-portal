@@ -94,9 +94,13 @@ export function useSiwe() {
       await signMessageAsync({ message: authData.value.message })
     } catch (error) {
       if (signMessageError.value) {
-        toast.add({ title: signMessageError.value.name === 'UserRejectedRequestError'
-            ? 'Message sign rejected: You need to sign the message to Sign in the CNC Portal'
-            : 'Something went wrong: Unable to sign SIWE message', color: 'error' })
+        toast.add({
+          title:
+            signMessageError.value.name === 'UserRejectedRequestError'
+              ? 'Message sign rejected: You need to sign the message to Sign in the CNC Portal'
+              : 'Something went wrong: Unable to sign SIWE message',
+          color: 'error'
+        })
         log.error('signMessageError.value', error)
         isProcessing.value = false
       }

@@ -162,7 +162,10 @@ describe('CRWithdrawClaim', () => {
     createWrapper()
     await clickWithdrawButton()
 
-    expect(mockToast.add).toHaveBeenCalledWith({ title: 'Cash Remuneration EIP712 contract address not found', color: 'error' })
+    expect(mockToast.add).toHaveBeenCalledWith({
+      title: 'Cash Remuneration EIP712 contract address not found',
+      color: 'error'
+    })
   })
 
   it('shows insufficient balance error before withdraw', async () => {
@@ -219,7 +222,10 @@ describe('CRWithdrawClaim', () => {
     createWrapper()
     await clickWithdrawButton()
 
-    expect(mockToast.add).toHaveBeenCalledWith({ title: 'Transaction failed: Failed to withdraw claim', color: 'error' })
+    expect(mockToast.add).toHaveBeenCalledWith({
+      title: 'Transaction failed: Failed to withdraw claim',
+      color: 'error'
+    })
   })
 
   it('shows error when sync weekly claim fails', async () => {
@@ -236,7 +242,10 @@ describe('CRWithdrawClaim', () => {
     await clickWithdrawButton()
 
     expect(syncMutation.mutateAsync).toHaveBeenCalledWith({ queryParams: { teamId: '1' } })
-    expect(mockToast.add).toHaveBeenCalledWith({ title: 'Failed to update Claim status', color: 'error' })
+    expect(mockToast.add).toHaveBeenCalledWith({
+      title: 'Failed to update Claim status',
+      color: 'error'
+    })
   })
 
   it('shows token balance error when parsing revert', async () => {
@@ -245,7 +254,10 @@ describe('CRWithdrawClaim', () => {
     createWrapper()
     await clickWithdrawButton()
 
-    expect(mockToast.add).toHaveBeenCalledWith({ title: 'Insufficient token balance', color: 'error' })
+    expect(mockToast.add).toHaveBeenCalledWith({
+      title: 'Insufficient token balance',
+      color: 'error'
+    })
   })
 
   it('shows token support error when parsing revert', async () => {
@@ -254,7 +266,10 @@ describe('CRWithdrawClaim', () => {
     createWrapper()
     await clickWithdrawButton()
 
-    expect(mockToast.add).toHaveBeenCalledWith({ title: 'Add Token support: Token not supported', color: 'error' })
+    expect(mockToast.add).toHaveBeenCalledWith({
+      title: 'Add Token support: Token not supported',
+      color: 'error'
+    })
   })
 
   it('shows parsed error for unknown failures', async () => {

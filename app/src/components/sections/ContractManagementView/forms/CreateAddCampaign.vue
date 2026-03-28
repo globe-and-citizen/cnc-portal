@@ -123,7 +123,10 @@ watch(contractAddress, async (newAddress) => {
       emit('closeAddCampaignModal')
     } catch (error) {
       console.error('Failed to add contract to team:', error)
-      toast.add({ title: 'Contract deployed but failed to add to team. Please try again.', color: 'error' })
+      toast.add({
+        title: 'Contract deployed but failed to add to team. Please try again.',
+        color: 'error'
+      })
     }
   }
 })

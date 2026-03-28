@@ -224,7 +224,10 @@ describe('OwnerTreasuryWithdrawAction', () => {
 
     mockBodAddAction.isActionAdded.value = true
     await nextTick()
-    expect(mockToast.add).toHaveBeenCalledWith({ title: 'Action added successfully, waiting for board confirmation', color: 'success' })
+    expect(mockToast.add).toHaveBeenCalledWith({
+      title: 'Action added successfully, waiting for board confirmation',
+      color: 'success'
+    })
   })
 
   it.skip('covers early-return and error handling paths', async () => {

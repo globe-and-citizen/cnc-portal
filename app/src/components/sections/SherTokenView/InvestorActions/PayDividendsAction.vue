@@ -9,7 +9,12 @@
       Pay Dividends
     </UButton>
 
-    <UModal v-if="modalState.mount" v-model:open="modalState.show" title="Pay Dividends to the shareholders" :description="`Please input amount to divide to the shareholders. This will move funds from bank contract to shareholders based on their share percentage. Only the bank owner can pay dividends.`">
+    <UModal
+      v-if="modalState.mount"
+      v-model:open="modalState.show"
+      title="Pay Dividends to the shareholders"
+      :description="`Please input amount to divide to the shareholders. This will move funds from bank contract to shareholders based on their share percentage. Only the bank owner can pay dividends.`"
+    >
       <template #body>
         <PayDividendsForm
           v-if="modalState.show && currentTeam"

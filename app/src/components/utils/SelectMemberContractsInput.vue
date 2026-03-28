@@ -26,7 +26,9 @@
 
     <!-- Dropdown positioned relative to the input -->
     <div
-      v-if="showDropdown && !disabled && (filteredMembers.length > 0 || filteredContracts.length > 0)"
+      v-if="
+        showDropdown && !disabled && (filteredMembers.length > 0 || filteredContracts.length > 0)
+      "
       class="absolute left-0 top-full mt-1 w-full z-10"
       data-test="search-dropdown"
     >

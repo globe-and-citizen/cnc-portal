@@ -8,7 +8,7 @@ import {
   mockERC20Reads,
   resetERC20Mocks,
   mockInvestorReads,
-  mockUseContractBalance,
+  mockUseContractBalance
 } from '@/tests/mocks'
 
 // Hoisted mocks
@@ -215,7 +215,7 @@ describe('SafeDepositRouterForm - Advanced Features', () => {
       mockApproveWrite.writeResult.error.value = new Error('User rejected transaction')
       await nextTick()
       await flushPromises()
- 
+
       expect(getVm(wrapper).submitting).toBe(false)
       expect(getVm(wrapper).currentStep).toBe(1)
     })
@@ -227,7 +227,7 @@ describe('SafeDepositRouterForm - Advanced Features', () => {
       mockDepositWrite.writeResult.error.value = new Error('Insufficient balance')
       await nextTick()
       await flushPromises()
- 
+
       expect(getVm(wrapper).submitting).toBe(false)
     })
 
@@ -238,7 +238,6 @@ describe('SafeDepositRouterForm - Advanced Features', () => {
       mockApproveWrite.writeResult.error.value = new Error('User denied transaction signature')
       await nextTick()
       await flushPromises()
- 
     })
   })
 
@@ -251,7 +250,7 @@ describe('SafeDepositRouterForm - Advanced Features', () => {
       mockApproveWrite.receiptResult.isSuccess.value = true
       await nextTick()
       await flushPromises()
- 
+
       expect(getVm(wrapper).currentStep).toBe(3)
       expect(mockDepositWrite.executeWrite).toHaveBeenCalled()
     })
@@ -277,7 +276,7 @@ describe('SafeDepositRouterForm - Advanced Features', () => {
       mockDepositWrite.receiptResult.isSuccess.value = true
       await nextTick()
       await flushPromises()
- 
+
       expect(getVm(wrapper).amount).toBe('')
       expect(getVm(wrapper).sherAmount).toBe('0')
       expect(wrapper.emitted('closeModal')).toBeTruthy()

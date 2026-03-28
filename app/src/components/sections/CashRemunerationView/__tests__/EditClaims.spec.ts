@@ -94,7 +94,10 @@ describe('EditClaims', () => {
     form.vm.$emit('submit', SUBMIT_PAYLOAD)
     await flushPromises()
 
-    expect(mockToast.add).toHaveBeenCalledWith({ title: 'Claim updated successfully', color: 'success' })
+    expect(mockToast.add).toHaveBeenCalledWith({
+      title: 'Claim updated successfully',
+      color: 'success'
+    })
     expect(wrapper.emitted()).toHaveProperty('close')
   })
 

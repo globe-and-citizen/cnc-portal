@@ -117,7 +117,6 @@ describe('InvestorsActions.vue', () => {
 
     mockInvestorReads.symbol.error.value = new Error('Symbol error')
     await wrapper.vm.$nextTick()
-
   })
 
   it('shows error toast when shareholders fetch fails', async () => {
@@ -125,7 +124,6 @@ describe('InvestorsActions.vue', () => {
 
     mockInvestorReads.shareholders.error.value = new Error('Shareholders error')
     await wrapper.vm.$nextTick()
-
   })
 
   it('shows error toast when owner fetch fails', async () => {
@@ -133,6 +131,5 @@ describe('InvestorsActions.vue', () => {
 
     mockInvestorReads.owner.error.value = new Error('Owner error')
     await wrapper.vm.$nextTick()
-
   })
 })

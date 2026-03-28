@@ -96,7 +96,6 @@ describe('TeamContractsDetail.vue', () => {
 
     await wrapper.find('button').trigger('click')
     await flushPromises()
-
   })
 
   it('shows error toast when setCostPerClick and setCostPerImpression fails ', async () => {
