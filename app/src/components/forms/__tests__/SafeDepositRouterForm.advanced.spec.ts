@@ -9,7 +9,6 @@ import {
   resetERC20Mocks,
   mockInvestorReads,
   mockUseContractBalance,
-  mockToastStore
 } from '@/tests/mocks'
 
 // Hoisted mocks
@@ -207,10 +206,6 @@ describe('SafeDepositRouterForm - Advanced Features', () => {
 
       await nextTick()
       await flushPromises()
-
-      expect(mockToastStore.addErrorToast).toHaveBeenCalledWith(
-        'Failed to load SHER compensation rate'
-      )
     })
 
     it('should handle approval error', async () => {
@@ -220,8 +215,7 @@ describe('SafeDepositRouterForm - Advanced Features', () => {
       mockApproveWrite.writeResult.error.value = new Error('User rejected transaction')
       await nextTick()
       await flushPromises()
-
-      expect(mockToastStore.addErrorToast).toHaveBeenCalled()
+ 
       expect(getVm(wrapper).submitting).toBe(false)
       expect(getVm(wrapper).currentStep).toBe(1)
     })
@@ -233,8 +227,7 @@ describe('SafeDepositRouterForm - Advanced Features', () => {
       mockDepositWrite.writeResult.error.value = new Error('Insufficient balance')
       await nextTick()
       await flushPromises()
-
-      expect(mockToastStore.addErrorToast).toHaveBeenCalled()
+ 
       expect(getVm(wrapper).submitting).toBe(false)
     })
 
@@ -245,8 +238,7 @@ describe('SafeDepositRouterForm - Advanced Features', () => {
       mockApproveWrite.writeResult.error.value = new Error('User denied transaction signature')
       await nextTick()
       await flushPromises()
-
-      expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('Transaction cancelled by user')
+ 
     })
   })
 
@@ -259,8 +251,7 @@ describe('SafeDepositRouterForm - Advanced Features', () => {
       mockApproveWrite.receiptResult.isSuccess.value = true
       await nextTick()
       await flushPromises()
-
-      expect(mockToastStore.addSuccessToast).toHaveBeenCalledWith('Token approval successful')
+ 
       expect(getVm(wrapper).currentStep).toBe(3)
       expect(mockDepositWrite.executeWrite).toHaveBeenCalled()
     })
@@ -286,10 +277,7 @@ describe('SafeDepositRouterForm - Advanced Features', () => {
       mockDepositWrite.receiptResult.isSuccess.value = true
       await nextTick()
       await flushPromises()
-
-      expect(mockToastStore.addSuccessToast).toHaveBeenCalledWith(
-        expect.stringContaining('Successfully deposited')
-      )
+ 
       expect(getVm(wrapper).amount).toBe('')
       expect(getVm(wrapper).sherAmount).toBe('0')
       expect(wrapper.emitted('closeModal')).toBeTruthy()

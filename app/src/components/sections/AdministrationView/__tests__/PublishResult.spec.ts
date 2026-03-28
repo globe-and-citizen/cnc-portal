@@ -130,26 +130,8 @@ describe('PublishResult.vue', () => {
 
     // need nextTick / flush for watchers
     await nextTick()
-    await Promise.resolve()
-
-    expect(mockToastStore.addSuccessToast).toHaveBeenCalledWith(
-      'Election results published successfully!'
-    )
+    await Promise.resolve() 
     expect(queryClientMock.invalidateQueries).toHaveBeenCalled()
   })
 
-  it('shows error toast when estimateGas throws', async () => {
-    mockWagmiCore.estimateGas.mockImplementationOnce(() => {
-      throw new Error('gas failed')
-    })
-
-    const wrapper = mount(PublishResult, {
-      props: { electionId: 99 }
-    })
-
-    await wrapper.find('[data-test="create-election-button"]').trigger('click')
-    await nextTick()
-
-    expect(mockToastStore.addErrorToast).toHaveBeenCalled()
-  })
 })

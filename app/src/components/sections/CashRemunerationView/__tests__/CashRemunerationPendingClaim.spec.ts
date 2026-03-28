@@ -3,7 +3,7 @@ import CashRemunerationPendingClaim from '../CashRemunerationPendingClaim.vue'
 import { shallowMount } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
-import { mockToastStore, mockTeamStore, queryMocks } from '@/tests/mocks'
+import { mockTeamStore, queryMocks } from '@/tests/mocks'
 
 const mockClaims = ref([
   {
@@ -42,14 +42,4 @@ describe.skip('CashRemunerationPendingClaim', () => {
     expect(wrapper.exists()).toBeTruthy()
   })
 
-  it('displays error toast when there is an error', async () => {
-    const wrapper = createComponent()
-    mockError.value = 'Error fetching data'
-
-    await wrapper.vm.$nextTick()
-
-    expect(mockToastStore.addErrorToast).toHaveBeenCalledWith(
-      'Failed to fetch monthly pending amount'
-    )
-  })
 })

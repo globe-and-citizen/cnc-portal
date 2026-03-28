@@ -11,18 +11,7 @@ import { INVESTOR_ABI } from '@/artifacts/abi/investors'
 import { mockUseContractBalance } from '@/tests/mocks/composables.mock'
 
 const memberAddress = '0x000000000000000000000000000000000000dead'
-const mockSymbol = ref<string>('shr')
 const mockReloadKey = ref<number>(0)
-const mockCurrentTeam = ref({
-  id: 1,
-  ownerAddress: memberAddress,
-  teamContracts: [
-    {
-      type: 'InvestorV1',
-      address: '0x000000000000000000000000000000000000beef'
-    }
-  ]
-})
 
 const mockWriteContract = {
   mutate: vi.fn(),
@@ -47,83 +36,6 @@ const mockVestingInfos = ref<VestingInfosType>([
   ]
 ])
 
-const refetchVestingInfos = vi.fn()
-
-const mockWaitForReceipt = {
-  isLoading: ref(false),
-  isSuccess: ref(false)
-}
-const mockBalance = ref<bigint | undefined>(parseUnits('10', 6)) // default 10 tokens
-const mockAllowance = ref(parseUnits('10', 6)) // default 10 tokens
-const mockApproval = ref(parseUnits('10', 6)) // default 10 tokens
-const mockBalanceError = ref<null | Error>(null)
-const mockAllowanceError = ref<null | Error>(null)
-const mockApprovalError = ref<null | Error>(null)
-
-vi.mock('@wagmi/vue', async (importOriginal) => {
-  const actual = (await importOriginal()) as typeof import('@wagmi/vue')
-  return {
-    ...actual,
-    useWriteContract: vi.fn(() => mockWriteContract),
-    useWaitForTransactionReceipt: vi.fn(() => mockWaitForReceipt),
-    useReadContract: vi.fn(({ functionName }) => {
-      if (functionName === 'balanceOf') {
-        return {
-          data: mockBalance,
-          refetch: vi.fn(),
-          error: mockBalanceError
-        }
-      }
-      if (functionName === 'approve') {
-        return {
-          data: mockApproval,
-          refetch: vi.fn(),
-          error: mockApprovalError
-        }
-      }
-      if (functionName === 'allowance') {
-        return {
-          data: mockAllowance,
-          refetch: vi.fn(),
-          error: mockAllowanceError
-        }
-      }
-
-      if (functionName === 'getTeamVestingsWithMembers') {
-        return {
-          data: mockVestingInfos,
-          error: ref(null),
-          refetch: refetchVestingInfos
-        }
-      }
-      if (functionName === 'symbol') {
-        return {
-          data: mockSymbol,
-          error: ref(null),
-          refetch: vi.fn()
-        }
-      }
-      return {
-        data: ref(BigInt(0)),
-        refetch: vi.fn(),
-        error: ref(null)
-      }
-    })
-  }
-})
-vi.mock('@/stores/useToastStore')
-vi.mock('@/stores', () => ({
-  useUserDataStore: () => ({
-    address: '0x000000000000000000000000000000000000dead'
-  }),
-  useTeamStore: () => ({
-    currentTeam: mockCurrentTeam.value
-  })
-}))
-
-vi.mock('@/composables/useContractBalance', () => ({
-  useContractBalance: vi.fn(() => mockUseContractBalance)
-}))
 describe('CreateVesting.vue', () => {
   let wrapper: VueWrapper
   const mountComponent = () =>

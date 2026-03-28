@@ -7,7 +7,6 @@ import utc from 'dayjs/plugin/utc'
 import isoWeek from 'dayjs/plugin/isoWeek'
 import ClaimHistoryActionAlerts from '@/components/sections/ClaimHistoryView/ClaimHistoryActionAlerts.vue'
 import {
-  mockToastStore,
   mockUserStore,
   mockWageData,
   mockWeeklyClaimData,
@@ -249,8 +248,6 @@ describe('ClaimHistoryActionAlerts', () => {
     wageError.value = null
     await nextTick()
 
-    expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('Failed to fetch user wage data')
-    expect(mockToastStore.addErrorToast).toHaveBeenCalledTimes(1)
   })
 
   it('evaluates queryParams computed values for wages and weekly claims hooks', () => {

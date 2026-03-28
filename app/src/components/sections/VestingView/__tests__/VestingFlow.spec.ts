@@ -56,50 +56,6 @@ const mockWaitForReceipt = {
   isSuccess: ref(false)
 }
 
-// Setup Mocks
-vi.mock('@wagmi/vue', async (importOriginal) => {
-  const actual = (await importOriginal()) as typeof import('@wagmi/vue')
-  return {
-    ...actual,
-    useWriteContract: vi.fn(() => mockWriteContract),
-    useWaitForTransactionReceipt: vi.fn(() => mockWaitForReceipt),
-    useReadContract: vi.fn(({ functionName }) => {
-      if (functionName === 'getTeamVestingsWithMembers') {
-        return {
-          data: mockVestingInfos,
-          error: ref(null),
-          refetch: vi.fn()
-        }
-      }
-      if (functionName === 'getTeamAllArchivedVestingsFlat') {
-        return {
-          data: mockArchivedVestingInfos,
-          error: ref(null),
-          refetch: vi.fn()
-        }
-      }
-      if (functionName === 'symbol') {
-        return {
-          data: mockSymbol,
-          error: ref(null),
-          refetch: vi.fn()
-        }
-      }
-      return {
-        data: ref(null),
-        error: ref(null),
-        refetch: vi.fn()
-      }
-    })
-  }
-})
-
-vi.mock('@/stores/useToastStore')
-
-vi.mock('@/composables/useContractBalance', () => ({
-  useContractBalance: vi.fn(() => mockUseContractBalance)
-}))
-
 describe('VestingFlow.vue', () => {
   let wrapper: VueWrapper
 

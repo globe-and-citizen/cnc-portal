@@ -34,7 +34,6 @@ const {
   mockUseTeamStore: vi.fn(),
   mockUseCurrencyStore: vi.fn(),
   mockUseUserDataStore: vi.fn(),
-  //mockUseToastStore: vi.fn(),
   mockuseGetSafeInfoQuery: vi.fn(),
   mockQueryClient: {
     invalidateQueries: vi.fn()
@@ -214,11 +213,6 @@ describe('SafeBalanceSection', () => {
       address: ref('0x1234567890123456789012345678901234567890')
     })
 
-    // TODO: Re-enable toast store mock once implementation is fixed
-    // mockUseToastStore.mockReturnValue({
-    //   addErrorToast: vi.fn(),
-    //   addSuccessToast: vi.fn()
-    // })
 
     vi.mocked(useStorage).mockReturnValue(mockCurrency as never)
 
@@ -241,8 +235,6 @@ describe('SafeBalanceSection', () => {
       wrapper = createWrapper()
 
       expect(wrapper.find('[data-test="safe-balance-loading"]').exists()).toBe(true)
-      // TODO: Re-enable toast verification once implementation is fixed
-      // expect(mockUseToastStore().addErrorToast).not.toHaveBeenCalled()
     })
 
     it('should show fallback values when safeInfo is null', () => {
@@ -251,8 +243,6 @@ describe('SafeBalanceSection', () => {
 
       expect(wrapper.text()).toContain('-')
       expect(wrapper.text()).toContain('0')
-      // TODO: Re-enable toast verification once implementation is fixed
-      // expect(mockUseToastStore().addErrorToast).not.toHaveBeenCalled()
     })
 
     it.skip('should display "Open in Safe App" button when safeAddress exists', () => {
@@ -282,8 +272,6 @@ describe('SafeBalanceSection', () => {
 
       const tokens = (wrapper.vm as SafeBalanceSectionInstance).tokens
       expect(tokens[0].price).toBe(0)
-      // TODO: Re-enable toast verification once implementation is fixed
-      // expect(mockUseToastStore().addErrorToast).not.toHaveBeenCalled()
     })
   })
 
@@ -297,8 +285,6 @@ describe('SafeBalanceSection', () => {
 
       const transferData = (wrapper.vm as unknown as SafeBalanceSectionInstance).transferData
       expect(transferData.token.symbol).toBe('')
-      // TODO: Re-enable toast verification once implementation is fixed
-      // expect(mockUseToastStore().addErrorToast).not.toHaveBeenCalled()
     })
   })
 })

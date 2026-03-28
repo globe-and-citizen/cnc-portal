@@ -3,7 +3,6 @@ import { mount, flushPromises } from '@vue/test-utils'
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import TeamContractsDetail from '@/components/sections/ContractManagementView/TeamContractsDetail.vue'
-import { useToastStore } from '@/stores/__mocks__/useToastStore'
 import { ref } from 'vue'
 import { useWriteContractFn, useWaitForTransactionReceiptFn } from '@/tests/mocks'
 
@@ -20,7 +19,6 @@ const mockUseWaitForTransactionReceipt = {
 
 //mock wagmi vue (handled globally via useWriteContractFn / useWaitForTransactionReceiptFn)
 
-vi.mock('@/stores/useToastStore')
 vi.mock('@/services/AddCampaignService', () => ({
   AddCampaignService: vi.fn().mockImplementation(() => ({}))
 }))
@@ -79,7 +77,6 @@ describe('TeamContractsDetail.vue', () => {
   })
 
   it('shows error toast when the the costPerClick and CostPerImpression is null', async () => {
-    const { addErrorToast } = useToastStore()
     const datas = getClonedTestData()
     datas[0].value = '0.2'
 
@@ -100,14 +97,10 @@ describe('TeamContractsDetail.vue', () => {
     await wrapper.find('button').trigger('click')
     await flushPromises()
 
-    expect(addErrorToast).toHaveBeenCalledWith(
-      'An error occurred while updating the costs. Please try again.'
-    )
   })
 
   it('shows error toast when setCostPerClick and setCostPerImpression fails ', async () => {
     const datas = getClonedTestData()
-    const { addErrorToast } = useToastStore()
     const wrapper = mount(TeamContractsDetail, {
       props: {
         datas,

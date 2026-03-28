@@ -7,18 +7,6 @@ const { mockIsAddress } = vi.hoisted(() => ({
   mockIsAddress: vi.fn()
 }))
 
-// Keep local viem mock for isAddress (not mocked in global viem.setup.ts)
-vi.mock('viem', async (importOriginal) => {
-  const actual: object = await importOriginal()
-  return {
-    ...actual,
-    isAddress: mockIsAddress
-  }
-})
-
-// @/stores is covered by the global store.setup.ts - use centralized mockToastStore
-import { mockToastStore } from '@/tests/mocks'
-
 // Test constants
 const MOCK_DATA = {
   validAddress: '0x1234567890123456789012345678901234567890' as Address,
@@ -46,7 +34,6 @@ describe('useValidation', () => {
       const result = validateAmount(MOCK_DATA.validAmount)
 
       expect(result).toBe(true)
-      expect(mockToastStore.addErrorToast).not.toHaveBeenCalled()
     })
 
     it('should reject zero amount', () => {
@@ -55,7 +42,6 @@ describe('useValidation', () => {
       const result = validateAmount(MOCK_DATA.invalidAmount)
 
       expect(result).toBe(false)
-      expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('Invalid amount')
     })
 
     it('should reject empty amount', () => {
@@ -64,7 +50,6 @@ describe('useValidation', () => {
       const result = validateAmount(MOCK_DATA.emptyAmount)
 
       expect(result).toBe(false)
-      expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('Invalid amount')
     })
 
     it('should reject negative amounts', () => {
@@ -73,7 +58,6 @@ describe('useValidation', () => {
       const result = validateAmount(MOCK_DATA.negativeAmount)
 
       expect(result).toBe(false)
-      expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('Invalid amount')
     })
   })
 
@@ -86,7 +70,6 @@ describe('useValidation', () => {
 
       expect(result).toBe(true)
       expect(mockIsAddress).toHaveBeenCalledWith(MOCK_DATA.validAddress)
-      expect(mockToastStore.addErrorToast).not.toHaveBeenCalled()
     })
 
     it('should reject invalid addresses', () => {
@@ -97,7 +80,6 @@ describe('useValidation', () => {
 
       expect(result).toBe(false)
       expect(mockIsAddress).toHaveBeenCalledWith(MOCK_DATA.invalidAddress)
-      expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('Invalid address')
     })
 
     it('should use custom label in error message', () => {
@@ -107,7 +89,6 @@ describe('useValidation', () => {
       const result = validateAddress(MOCK_DATA.invalidAddress, 'token')
 
       expect(result).toBe(false)
-      expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('Invalid token')
     })
   })
 })

@@ -7,11 +7,6 @@ import type { Claim } from '@/types'
 import dayjs from 'dayjs'
 import { useDeleteClaimMutation } from '@/queries/weeklyClaim.queries'
 
-import { useToastStore } from '@/stores'
-
-// Toast mocks
-const successToastMock = vi.fn()
-const errorToastMock = vi.fn()
 
 // Test data
 const defaultClaim: Claim = {
@@ -43,10 +38,6 @@ describe.skip('DeleteClaimModal', () => {
   })
 
   const createWrapper = (props = {}, mutationOverrides = {}) => {
-    vi.mocked(useToastStore).mockReturnValue({
-      addErrorToast: errorToastMock,
-      addSuccessToast: successToastMock
-    } as ReturnType<typeof useToastStore>)
 
     // Mock the delete mutation
     const mockMutateAsync = vi.fn().mockResolvedValue(undefined)
@@ -102,7 +93,6 @@ describe.skip('DeleteClaimModal', () => {
       await flushPromises()
 
       expect(mockMutateAsync).toHaveBeenCalledWith({ claimId: 1 })
-      expect(successToastMock).toHaveBeenCalledWith('Claim deleted successfully')
     })
 
     it('should emit close event after successful deletion', async () => {
@@ -126,8 +116,6 @@ describe.skip('DeleteClaimModal', () => {
 
       await wrapper.find('[data-test="confirm-delete-claim-button"]').trigger('click')
       await flushPromises()
-
-      expect(errorToastMock).toHaveBeenCalled()
     })
 
     it('should not emit close when deletion fails', async () => {

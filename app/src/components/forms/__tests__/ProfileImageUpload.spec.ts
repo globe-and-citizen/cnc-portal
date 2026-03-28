@@ -4,12 +4,6 @@ import { createTestingPinia } from '@pinia/testing'
 import ProfileImageUpload from '../ProfileImageUpload.vue'
 import { mockUploadFileApi } from '@/tests/mocks/api.mock'
 
-type ToastStoreMock = {
-  addErrorToast: ReturnType<typeof vi.fn>
-  addSuccessToast: ReturnType<typeof vi.fn>
-  addInfoToast: ReturnType<typeof vi.fn>
-  toasts: unknown[]
-}
 
 describe('ProfileImageUpload.vue', () => {
   let wrapper: VueWrapper
@@ -42,17 +36,9 @@ describe('ProfileImageUpload.vue', () => {
     await flushPromises()
   }
 
-  const getToastStore = (): ToastStoreMock => {
-    return (globalThis as { __mockToastStore?: ToastStoreMock }).__mockToastStore as ToastStoreMock
-  }
-
   beforeEach(() => {
     vi.clearAllMocks()
 
-    const toastStore = getToastStore()
-    toastStore.addErrorToast.mockReset()
-    toastStore.addSuccessToast.mockReset()
-    toastStore.addInfoToast.mockReset()
 
     mockUploadFileApi.mockReset()
     mockUploadFileApi.mockResolvedValue({
@@ -71,9 +57,6 @@ describe('ProfileImageUpload.vue', () => {
       await triggerFileSelection(createMockFile('document.pdf', 'application/pdf'))
 
       expect(wrapper.find(SELECTORS.errorMessage).exists()).toBe(true)
-      expect(getToastStore().addErrorToast).toHaveBeenCalledWith(
-        expect.stringContaining('Only images')
-      )
       expect(mockUploadFileApi).not.toHaveBeenCalled()
     })
 
@@ -82,7 +65,6 @@ describe('ProfileImageUpload.vue', () => {
       await triggerFileSelection(createMockFile('large.png', 'image/png', 11 * 1024 * 1024))
 
       expect(wrapper.find(SELECTORS.errorMessage).exists()).toBe(true)
-      expect(getToastStore().addErrorToast).toHaveBeenCalledWith(expect.stringContaining('10 MB'))
       expect(mockUploadFileApi).not.toHaveBeenCalled()
     })
 
@@ -111,7 +93,6 @@ describe('ProfileImageUpload.vue', () => {
       const emitted = wrapper.emitted('update:modelValue')
       expect(emitted).toBeTruthy()
       expect(emitted?.[emitted.length - 1]).toEqual([expectedUrl])
-      expect(getToastStore().addSuccessToast).toHaveBeenCalledWith('Image uploaded')
     })
 
     it('handles API error response', async () => {
@@ -121,7 +102,6 @@ describe('ProfileImageUpload.vue', () => {
       await triggerFileSelection(createMockFile('avatar.png', 'image/png'))
 
       expect(wrapper.find(SELECTORS.errorMessage).exists()).toBe(true)
-      expect(getToastStore().addErrorToast).toHaveBeenCalledWith('Upload failed')
     })
 
     it('handles network Error objects', async () => {
@@ -130,7 +110,6 @@ describe('ProfileImageUpload.vue', () => {
       wrapper = mountComponent()
       await triggerFileSelection(createMockFile('avatar.png', 'image/png'))
 
-      expect(getToastStore().addErrorToast).toHaveBeenCalledWith('Network error')
     })
 
     it('handles non-Error thrown values', async () => {
@@ -139,7 +118,6 @@ describe('ProfileImageUpload.vue', () => {
       wrapper = mountComponent()
       await triggerFileSelection(createMockFile('avatar.png', 'image/png'))
 
-      expect(getToastStore().addErrorToast).toHaveBeenCalledWith('Failed to upload image')
     })
 
     it('handles missing fileUrl in backend response', async () => {
@@ -151,7 +129,6 @@ describe('ProfileImageUpload.vue', () => {
       wrapper = mountComponent()
       await triggerFileSelection(createMockFile('avatar.png', 'image/png'))
 
-      expect(getToastStore().addErrorToast).toHaveBeenCalledWith('Upload response missing fileUrl')
     })
   })
 

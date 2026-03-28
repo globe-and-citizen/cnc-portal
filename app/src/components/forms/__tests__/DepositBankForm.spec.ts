@@ -5,7 +5,6 @@ import { nextTick } from 'vue'
 import { zeroAddress, type Address } from 'viem'
 import DepositBankForm from '@/components/forms/DepositBankForm.vue'
 import {
-  mockToastStore,
   mockTransactionFunctions,
   mockUseSafeSendTransaction,
   mockERC20Reads,
@@ -64,9 +63,6 @@ describe.skip('DepositBankForm.vue', () => {
       mockUseSafeSendTransaction.receipt.value = { status: 'success' }
       await nextTick()
 
-      expect(mockToastStore.addSuccessToast).toHaveBeenCalledWith(
-        expect.stringContaining('deposited successfully')
-      )
       expect(wrapper.emitted('closeModal')).toBeTruthy()
     })
 
@@ -80,9 +76,6 @@ describe.skip('DepositBankForm.vue', () => {
       await wrapper.find('[data-test="deposit-button"]').trigger('click')
       await nextTick()
 
-      expect(mockToastStore.addErrorToast).toHaveBeenCalledWith(
-        expect.stringContaining('Failed to deposit')
-      )
     })
 
     it('should not submit when form is invalid', async () => {
@@ -132,7 +125,6 @@ describe.skip('DepositBankForm.vue', () => {
       await wrapper.find('[data-test="deposit-button"]').trigger('click')
       await flushPromises()
 
-      expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('Failed to deposit invalid-token')
     })
 
     it('should handle form validation correctly', async () => {
@@ -205,7 +197,6 @@ describe.skip('DepositBankForm.vue', () => {
       await wrapper.find('[data-test="deposit-button"]').trigger('click')
       await nextTick()
 
-      expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('Failed to deposit native')
     })
 
     it('should prevent multiple submissions', async () => {

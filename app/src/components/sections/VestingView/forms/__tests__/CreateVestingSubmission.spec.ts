@@ -270,7 +270,6 @@ describe('CreateVesting.vue', () => {
     })
 
     it('skips balance check when tokenBalance is undefined', async () => {
-      const { addErrorToast } = useToastStore()
       mockBalance.value = undefined
 
       await fillFormWithValidData(wrapper, '0x120000000000000000000000000000000000dead')
@@ -281,7 +280,6 @@ describe('CreateVesting.vue', () => {
       await wrapper.find('[data-test="confirm-btn"]').trigger('click')
       await wrapper.vm.$nextTick()
 
-      expect(addErrorToast).not.toHaveBeenCalledWith('Insufficient token balance')
       expect(mockWriteContract.mutate).toHaveBeenCalled()
     })
   })

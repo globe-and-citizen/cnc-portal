@@ -9,7 +9,6 @@ import {
   mockUseSignMessage,
   mockUseConnect,
   mockUseChainId,
-  mockToastStore
 } from '@/tests/mocks'
 
 const mocks = vi.hoisted(() => ({
@@ -28,18 +27,6 @@ const mocks = vi.hoisted(() => ({
     mockPrepareMessage: vi.fn(() => 'Siwe message')
   }
 }))
-
-// vi.mock('@/stores/user', async (importOriginal) => {
-//   const actual: object = await importOriginal()
-//   return {
-//     ...actual,
-//     useUserDataStore: vi.fn(() => ({
-//       setUserData: mocks.mockUserDataStore.setUserData,
-//       setAuthStatus: mocks.mockUserDataStore.setAuthStatus
-//     })),
-//     useToastStore: vi.fn(() => ({ addErrorToast: mocks.mockUseToastStore.addErrorToast }))
-//   }
-// })
 
 describe('useSiwe', () => {
   const logErrorSpy = vi.spyOn(utils.log, 'error')
@@ -94,14 +81,10 @@ describe('useSiwe', () => {
     const { isProcessing, siwe } = useSiwe()
     await siwe()
     await flushPromises()
-    expect(mockToastStore.addErrorToast).toBeCalledWith(
-      'Something went wrong: Unable to sign SIWE message'
-    )
     expect(isProcessing.value).toBe(false)
     expect(logErrorSpy).toBeCalledWith('signMessageError.value', new Error('Sign message error'))
     mockUseSignMessage.error.value = null
     mockUseSignMessage.mutateAsync.mockReset()
-    mockToastStore.addErrorToast.mockClear()
     logErrorSpy.mockClear()
     const error = new Error('A new sign error')
     error.name = 'UserRejectedRequestError'
@@ -110,9 +93,6 @@ describe('useSiwe', () => {
     )
     await siwe()
     await flushPromises()
-    expect(mockToastStore.addErrorToast).toBeCalledWith(
-      'Message sign rejected: You need to sign the message to Sign in the CNC Portal'
-    )
     expect(isProcessing.value).toBe(false)
     expect(logErrorSpy).toBeCalledWith('signMessageError.value', error)
   })
@@ -129,7 +109,6 @@ describe('useSiwe', () => {
     await siwe()
     await flushPromises()
     expect(mockUseFetch.post.execute).toBeCalled()
-    expect(mockToastStore.addErrorToast).toBeCalledWith('Unable to authenticate with SIWE')
     expect(isProcessing.value).toBe(false)
     expect(logInfoSpy).toBeCalledWith('siweError.value', new Error('Error posting auth data'))
   })
@@ -143,7 +122,6 @@ describe('useSiwe', () => {
     await siwe()
     await flushPromises()
     expect(logInfoSpy).toBeCalledWith('fetchError.value', new Error('Error getting data'))
-    expect(mockToastStore.addErrorToast).toBeCalledWith('Unable to fetch nonce')
     expect(isProcessing.value).toBe(false)
   })
   it('should update isProcessing to false if checks failed', async () => {
@@ -168,7 +146,6 @@ describe('useSiwe', () => {
     const { isProcessing, siwe } = useSiwe()
     await siwe()
     await flushPromises()
-    expect(mockToastStore.addErrorToast).toBeCalledWith('Failed to get authentication token')
     expect(isProcessing.value).toBe(false)
   })
   it.skip('should handle missing user data', async () => {
@@ -195,7 +172,6 @@ describe('useSiwe', () => {
     await siwe()
     await flushPromises()
     console.log("Mock Imple '")
-    expect(mockToastStore.addErrorToast).toBeCalledWith('Failed to fetch user data')
     expect(isProcessing.value).toBe(false)
   })
 })

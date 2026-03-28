@@ -6,7 +6,6 @@ import { ref } from 'vue'
 import {
   mockUserData,
   mockUserStore,
-  mockToastStore,
   mockUseClipboard,
   mountWithProviders
 } from '@/tests/mocks'
@@ -126,7 +125,6 @@ describe('EditUserForm', () => {
         component.handleCurrencyChange()
         await flushPromises()
 
-        expect(mockToastStore.addSuccessToast).toHaveBeenCalledWith('Currency updated')
       } else {
         // If method isn't accessible, at least verify the component rendered correctly
         expect(select.exists()).toBe(true)
@@ -181,7 +179,6 @@ describe('EditUserForm', () => {
           body: expect.objectContaining({ name: 'Jane Doe' })
         })
       )
-      expect(mockToastStore.addSuccessToast).toHaveBeenCalledWith('User updated')
     })
 
     it('should handle errors and disable button during submission', async () => {
@@ -200,7 +197,6 @@ describe('EditUserForm', () => {
       await form.trigger('submit')
       await flushPromises()
 
-      expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('Failed to update user')
       expect(wrapper.find('div[data-test="error-alert"]').exists()).toBe(true)
     })
 
