@@ -10,11 +10,9 @@
     Submit Claim
   </UButton>
 
-  <UModal v-if="modal.mount" v-model:open="modal.show">
+  <UModal v-if="modal.mount" v-model:open="modal.show" title="Submit Claim" :description="`Submit your hours worked for the week to receive payment. You can only submit one claim per week.`">
     <template #body>
       <div class="flex flex-col gap-4 mb-20">
-        <h3 class="text-xl font-bold">Submit Claim</h3>
-        <hr />
         <ClaimForm
           ref="claimFormRef"
           :initial-data="formInitialData"

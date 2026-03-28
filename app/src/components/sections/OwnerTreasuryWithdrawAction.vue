@@ -13,12 +13,11 @@
       v-if="showModal.mount"
       v-model:open="showModal.show"
       data-test="owner-withdraw-modal"
+      title="Owner Treasury Withdraw"
+      description="Withdraw funds from the owner treasury to the owner's address."
       :close="{ onClick: resetModal }"
     >
       <template #body>
-        <div class="flex flex-col gap-2">
-          <h1 class="font-bold text-2xl">Owner Treasury Withdraw</h1>
-        </div>
 
         <TokenAmount
           :tokens="withdrawableTokens"

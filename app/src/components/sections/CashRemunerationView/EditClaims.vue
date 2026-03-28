@@ -1,8 +1,5 @@
 <template>
   <div class="flex flex-col gap-4 mb-20">
-    <h3 class="text-xl font-bold">Edit Claim</h3>
-    <hr />
-
     <ClaimForm
       ref="claimFormRef"
       :initial-data="claimFormInitialData"

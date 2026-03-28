@@ -17,13 +17,13 @@
     </UButton>
 
     <!-- Edit Modal -->
-    <UModal v-model:open="showEditModal">
+    <UModal v-model:open="showEditModal" title="Edit Claim" :description="`Edit your claim for the week. You can update the hours worked, memo, and attached files. Remember to save your changes.`">
       <template #body>
         <EditClaims :claim="claim" @close="showEditModal = false" />
       </template>
     </UModal>
     <!-- Delete Modal -->
-    <UModal v-model:open="showDeleteModal">
+    <UModal v-model:open="showDeleteModal" title="Delete Claim" :description="`Are you sure you want to delete this claim? This action cannot be undone.`">
       <template #body>
         <DeleteClaimModal :claim="claim" @close="showDeleteModal = false" />
       </template>

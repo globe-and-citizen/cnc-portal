@@ -24,6 +24,8 @@
                 showCreateElectionModal = { mount: false, show: false }
               }
             }"
+            title="Create election"
+            description="Create a new Board of Directors election to manage your team's leadership."
           >
             <template #body>
               <CreateElectionForm

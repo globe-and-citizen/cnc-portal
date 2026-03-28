@@ -1,6 +1,5 @@
 <template>
   <div>
-    <h2>Create Election</h2>
     <UForm :schema="schema" :state="state" @submit="submitForm" class="flex flex-col gap-4 mt-2">
       <UFormField name="title" label="Title">
         <UInput v-model="state.title" placeholder="Title" class="w-full" data-test="titleInput" />
