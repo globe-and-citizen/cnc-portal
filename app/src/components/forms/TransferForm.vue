@@ -14,7 +14,6 @@
         :tokens="tokens"
         v-model="tokenAmountModel"
         :isLoading="props.loading"
-        @validation="isAmountValid = $event"
       >
         <template #label>
           <slot name="label">
@@ -43,7 +42,7 @@
         type="submit"
         color="primary"
         :loading="loading"
-        :disabled="loading || !isAmountValid"
+        :disabled="loading"
         data-test="transferButton"
       >
         Transfer
@@ -53,7 +52,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, watch } from 'vue'
 import { z } from 'zod'
 import SelectMemberContractsInput from '../utils/SelectMemberContractsInput.vue'
 import BodAlert from '@/components/BodAlert.vue'
@@ -96,7 +95,6 @@ const emit = defineEmits<{
   closeModal: []
 }>()
 
-const isAmountValid = ref(false)
 
 const selectedTokenId = computed<TokenId>({
   get: () => (model.value.token?.tokenId ?? 'usdc') as TokenId,
@@ -140,9 +138,6 @@ const validationSchema = computed(() =>
 )
 
 const submitForm = () => {
-  if (!isAmountValid.value) {
-    return
-  }
   emit('transfer', model.value)
 }
 
