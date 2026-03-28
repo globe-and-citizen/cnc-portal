@@ -26,6 +26,15 @@
       </TokenAmount>
     </UFormField>
 
+    <UAlert
+      v-if="errorMessage"
+      color="error"
+      variant="soft"
+      :description="errorMessage"
+      icon="i-lucide-circle-alert"
+      class="mt-3"
+    />
+
     <div class="mt-4 flex justify-between">
       <UButton
         color="neutral"
@@ -124,7 +133,17 @@ const formSchema = computed(() =>
 // Stores
 const currencyStore = useCurrencyStore()
 const userDataStore = useUserDataStore()
-const { addErrorToast, addSuccessToast } = useToastStore()
+const { addSuccessToast } = useToastStore()
+
+const errorMessage = computed(() => {
+  const err =
+    nativeError.value ||
+    ERC20ApproveResult.writeResult.error.value ||
+    ERC20ApproveResult.receiptResult.error.value ||
+    transferError.value ||
+    transferReceiptError.value
+  return err ? ((err as { shortMessage?: string }).shortMessage ?? err.message) : null
+})
 
 // Reactive state for balances
 const { balances, isLoading } = useContractBalance(userDataStore.address as Address)
@@ -134,7 +153,8 @@ const {
   sendTransaction,
   isLoading: isNativeDepositLoading,
   isConfirmed: isNativeDepositConfirmed,
-  receipt: nativeReceipt
+  receipt: nativeReceipt,
+  error: nativeError
 } = useSafeSendTransaction()
 
 // Computed properties
@@ -183,9 +203,9 @@ const ERC20ApproveResult = useERC20Approve(
 )
 
 // ERC20 transfer for Safe
-const { data: transferHash, mutateAsync: writeTransfer } = useWriteContract()
+const { data: transferHash, mutateAsync: writeTransfer, error: transferError } = useWriteContract()
 
-useWaitForTransactionReceipt({
+const { error: transferReceiptError } = useWaitForTransactionReceipt({
   hash: transferHash
 })
 
@@ -283,7 +303,6 @@ const submitForm = async () => {
     }
   } catch (error) {
     console.error('Deposit failed:', error)
-    addErrorToast(`Failed to deposit ${selectedTokenId.value}`)
     submitting.value = false
   }
 }
