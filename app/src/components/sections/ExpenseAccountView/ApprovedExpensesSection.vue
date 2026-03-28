@@ -1,26 +1,29 @@
 <template>
-  <CardComponent title="Approved Addresses" data-test="claims-table">
-    <template #card-action>
-      <div
-        :class="{ tooltip: !(userDataStore.address === contractOwnerAddress || isBodAction()) }"
-        :data-tip="
-          !(userDataStore.address === contractOwnerAddress || isBodAction())
-            ? 'Only the contract owner can approve expenses'
-            : null
-        "
-      >
-        <UButton
-          color="success"
-          :disabled="!(userDataStore.address === contractOwnerAddress || isBodAction())"
-          @click="
-            () => {
-              approveUsersModal = { mount: true, show: true }
-            }
+  <UCard data-test="claims-table">
+    <template #header>
+      <div class="flex justify-between items-center">
+        <span>Approved Addresses</span>
+        <div
+          :class="{ tooltip: !(userDataStore.address === contractOwnerAddress || isBodAction()) }"
+          :data-tip="
+            !(userDataStore.address === contractOwnerAddress || isBodAction())
+              ? 'Only the contract owner can approve expenses'
+              : null
           "
-          data-test="approve-users-button"
         >
-          Approve User Expense
-        </UButton>
+          <UButton
+            color="success"
+            :disabled="!(userDataStore.address === contractOwnerAddress || isBodAction())"
+            @click="
+              () => {
+                approveUsersModal = { mount: true, show: true }
+              }
+            "
+            data-test="approve-users-button"
+          >
+            Approve User Expense
+          </UButton>
+        </div>
       </div>
     </template>
 
@@ -64,11 +67,10 @@
         />
       </template>
     </UModal>
-  </CardComponent>
+  </UCard>
 </template>
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import CardComponent from '@/components/CardComponent.vue'
 import ExpenseAccountTable from '@/components/sections/ExpenseAccountView/ExpenseAccountTable.vue'
 import ApproveUsersForm from '@/components/forms/ApproveUsersEIP712Form.vue'
 import { useUserDataStore, useToastStore, useTeamStore } from '@/stores'

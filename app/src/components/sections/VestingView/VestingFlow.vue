@@ -1,10 +1,13 @@
 <template>
-  <CardComponent title="Vesting OverView">
-    <template #card-action>
-      <div class="flex items-center gap-4">
-        <VestingStatusFilter @statusChange="handleStatusChange" />
+  <UCard>
+    <template #header>
+      <div class="flex justify-between items-center">
+        <span>Vesting OverView</span>
+        <div class="flex items-center gap-4">
+          <VestingStatusFilter @statusChange="handleStatusChange" />
 
-        <VestingActions :reloadKey="reloadKey" @reload="handleReload" />
+          <VestingActions :reloadKey="reloadKey" @reload="handleReload" />
+        </div>
       </div>
     </template>
 
@@ -91,13 +94,12 @@
         </div>
       </template>
     </TableComponent>
-  </CardComponent>
+  </UCard>
 </template>
 
 <script setup lang="ts">
 import TableComponent from '@/components/TableComponent.vue'
 import { computed, watch, ref } from 'vue'
-import CardComponent from '@/components/CardComponent.vue'
 import { type VestingRow, type VestingTuple, type VestingStatus } from '@/types/vesting'
 import { useTeamStore } from '@/stores'
 import { type Address, formatUnits } from 'viem'

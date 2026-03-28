@@ -1,37 +1,40 @@
 <template>
-  <CardComponent :title="`${isDetails ? `Past` : `Current`} Election`">
-    <template #card-action>
-      <div class="flex justify-between">
-        <ElectionActions
-          v-if="!isDetails"
-          :election-id="currentElectionId"
-          @show-results-modal="showResultsModal = true"
-          @show-create-election-modal="showCreateElectionModal = { mount: true, show: true }"
-        />
-        <UModal
-          v-if="showCreateElectionModal.mount"
-          v-model:open="showCreateElectionModal.show"
-          :close="{
-            onClick: () => {
-              showCreateElectionModal = { mount: false, show: false }
-            }
-          }"
-        >
-          <template #body>
-            <CreateElectionForm
-              :is-loading="isLoadingCreateElection /*|| isConfirmingCreateElection*/"
-              @create-proposal="createElection"
-              @close-modal="() => (showCreateElectionModal = { mount: false, show: false })"
-            />
-          </template>
-        </UModal>
+  <UCard>
+    <template #header>
+      <div class="flex justify-between items-center">
+        <div class="flex items-center gap-4">
+          <span>{{ isDetails ? `Past` : `Current` }} Election</span>
+          <ElectionStatus
+            v-if="formattedElection && (!formattedElection?.resultsPublished || isDetails)"
+            :election-id="currentElectionId"
+          />
+        </div>
+        <div class="flex justify-between">
+          <ElectionActions
+            v-if="!isDetails"
+            :election-id="currentElectionId"
+            @show-results-modal="showResultsModal = true"
+            @show-create-election-modal="showCreateElectionModal = { mount: true, show: true }"
+          />
+          <UModal
+            v-if="showCreateElectionModal.mount"
+            v-model:open="showCreateElectionModal.show"
+            :close="{
+              onClick: () => {
+                showCreateElectionModal = { mount: false, show: false }
+              }
+            }"
+          >
+            <template #body>
+              <CreateElectionForm
+                :is-loading="isLoadingCreateElection /*|| isConfirmingCreateElection*/"
+                @create-proposal="createElection"
+                @close-modal="() => (showCreateElectionModal = { mount: false, show: false })"
+              />
+            </template>
+          </UModal>
+        </div>
       </div>
-    </template>
-    <template #card-badge>
-      <ElectionStatus
-        v-if="formattedElection && (!formattedElection?.resultsPublished || isDetails)"
-        :election-id="currentElectionId"
-      />
     </template>
     <div
       v-if="formattedElection && (!formattedElection?.resultsPublished || isDetails)"
@@ -57,11 +60,10 @@
       v-else
       @show-create-election-modal="showCreateElectionModal = { mount: true, show: true }"
     />
-  </CardComponent>
+  </UCard>
 </template>
 
 <script setup lang="ts">
-import CardComponent from '@/components/CardComponent.vue'
 import { computed, ref, watch } from 'vue'
 import CreateElectionForm from './forms/CreateElectionForm.vue'
 import { ELECTIONS_ABI } from '@/artifacts/abi/elections'

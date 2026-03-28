@@ -8,17 +8,19 @@
       v-if="!teamStore.currentTeamMeta.isPending && teamStore"
       class="flex flex-col gap-5 w-full items-center"
     >
-      <CardComponent class="w-full" title="Main contract">
-        <template #card-action>
-          <div>
-            <!-- <p>
-              You have created your team, but the necessary smart contracts for its management
-              haven't been deployed yet. Click
-              <UButton size="sm" color="primary" outline @click="showModal = true"
-                >here</UButton>
-              >
-              to proceed with the deployment.
-            </p> -->
+      <UCard class="w-full">
+        <template #header>
+          <div class="flex justify-between items-center">
+            <span>Main contract</span>
+            <div>
+              <!-- <p>
+                You have created your team, but the necessary smart contracts for its management
+                haven't been deployed yet. Click
+                <UButton size="sm" color="primary" outline @click="showModal = true"
+                  >here</UButton>
+                >
+                to proceed with the deployment.
+              </p> -->
             <UModal v-if="showModal" v-model:open="showModal">
               <template #body>
                 <!-- Warning for contract redeployment -->
@@ -158,23 +160,23 @@
                 <!-- </div> -->
               </template>
             </UModal>
-            <UButton
-              color="primary"
-              :disabled="teamStore.currentTeam?.ownerAddress !== userStore.address"
-              @click="showModal = true"
-              data-test="createAddCampaign"
-            >
-              Redeploy Contracts
-            </UButton>
+              <UButton
+                color="primary"
+                :disabled="teamStore.currentTeam?.ownerAddress !== userStore.address"
+                @click="showModal = true"
+                data-test="createAddCampaign"
+              >
+                Redeploy Contracts
+              </UButton>
+            </div>
           </div>
         </template>
         <MainContractTable />
-      </CardComponent>
+      </UCard>
     </div>
   </div>
 </template>
 <script setup lang="ts">
-import CardComponent from '@/components/CardComponent.vue'
 import { useUserDataStore } from '@/stores/user'
 import { useTeamStore } from '@/stores'
 import MainContractTable from './MainContractTable.vue'

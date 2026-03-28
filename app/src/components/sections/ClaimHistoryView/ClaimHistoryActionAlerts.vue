@@ -1,5 +1,5 @@
 <template>
-  <CardComponent data-test="action-alerts">
+  <UCard data-test="action-alerts">
     <div class="flex flex-col gap-4">
       <!-- Submit Claims Alert (for member's own view) -->
       <div
@@ -75,7 +75,7 @@
         </div>
       </div>
     </div>
-  </CardComponent>
+  </UCard>
 </template>
 
 <script setup lang="ts">
@@ -88,7 +88,6 @@ import type { Address } from 'viem'
 import { useTeamStore, useToastStore, useUserDataStore } from '@/stores'
 import { useGetTeamWagesQuery, useGetTeamWeeklyClaimsQuery } from '@/queries'
 import type { WeeklyClaim } from '@/types'
-import CardComponent from '@/components/CardComponent.vue'
 import SubmitClaims from '../CashRemunerationView/SubmitClaims.vue'
 import CRSigne from '../CashRemunerationView/CRSigne.vue'
 import CRWithdrawClaim from '../CashRemunerationView/CRWithdrawClaim.vue'

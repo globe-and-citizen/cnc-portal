@@ -1,5 +1,6 @@
 <template>
-  <CardComponent title="Vesting Stats">
+  <UCard>
+    <template #header>Vesting Stats</template>
     <TableComponent
       :rows="tokenSummaryRows"
       :columns="tokenSummaryColumns"
@@ -25,12 +26,11 @@
         </span>
       </template>
     </TableComponent>
-  </CardComponent>
+  </UCard>
 </template>
 
 <script setup lang="ts">
 import TableComponent from '@/components/TableComponent.vue'
-import CardComponent from '@/components/CardComponent.vue'
 import { computed, ref, watch } from 'vue'
 import { useReadContract } from '@wagmi/vue'
 import { useTeamStore } from '@/stores'

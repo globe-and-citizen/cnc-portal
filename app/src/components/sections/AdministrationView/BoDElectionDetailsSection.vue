@@ -1,5 +1,6 @@
 <template>
-  <CardComponent title="Candidates">
+  <UCard>
+    <template #header>Candidates</template>
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-4">
       <ElectionDetailsCard
         v-for="(election, index) in candidates"
@@ -9,11 +10,10 @@
         :is-loading="isLoadingCastVote"
       />
     </div>
-  </CardComponent>
+  </UCard>
 </template>
 
 <script lang="ts" setup>
-import CardComponent from '@/components/CardComponent.vue'
 import ElectionDetailsCard from './BoDElectionDetailsCard.vue'
 import { computed, reactive, watch } from 'vue'
 import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
