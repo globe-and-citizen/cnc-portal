@@ -5,7 +5,7 @@
     ref="formRef"
     data-test="member-contracts-input"
   >
-    <UFieldGroup :data-test="`member-contracts-input`">
+    <UFieldGroup :data-test="`member-contracts-input`" class="w-full">
       <UInput
         v-model="input.name"
         ref="nameInput"
