@@ -9,7 +9,7 @@
           v-model:open="showAddMemberForm.show"
           title="Add Member"
           :ui="{ content: 'rounded-2xl' }"
-          @update:open="(v) => !v && (showAddMemberForm = { mount: false, show: false })"
+          @update:open="(v: boolean) => !v && (showAddMemberForm = { mount: false, show: false })"
         >
           <UButton
             icon="i-heroicons-plus-circle"

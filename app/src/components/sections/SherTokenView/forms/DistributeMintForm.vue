@@ -66,7 +66,7 @@
             class="grow"
             data-test="amount-input"
             :model-value="shareholder.amount"
-            @update:model-value="(v) => (shareholder.amount = Number(v))"
+            @update:model-value="(v: string | number) => (shareholder.amount = Number(v))"
           />
           {{ tokenSymbol }}
         </label>

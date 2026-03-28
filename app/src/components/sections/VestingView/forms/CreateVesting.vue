@@ -44,7 +44,7 @@
             type="number"
             class="grow border-none shadow-none"
             :model-value="totalAmount"
-            @update:model-value="(v) => (totalAmount = Number(v))"
+            @update:model-value="(v: string | number) => (totalAmount = Number(v))"
             required
           />
         </label>
@@ -60,7 +60,7 @@
             type="number"
             class="grow text-sm border-none shadow-none"
             :model-value="cliff"
-            @update:model-value="(v) => (cliff = Number(v))"
+            @update:model-value="(v: string | number) => (cliff = Number(v))"
             required
           />
         </label>
