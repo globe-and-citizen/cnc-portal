@@ -105,7 +105,6 @@ import { VESTING_ADDRESS } from '@/constant'
 import { parseEther, type Address, formatUnits, parseUnits } from 'viem'
 import SelectMemberInput from '@/components/utils/SelectMemberInput.vue'
 import VestingSummary from '@/components/sections/VestingView/VestingSummary.vue'
-import { useToastStore } from '@/stores/useToastStore'
 import { useTeamStore } from '@/stores'
 import Datepicker from '@vuepic/vue-datepicker'
 import '@vuepic/vue-datepicker/dist/main.css'
@@ -116,7 +115,7 @@ import { useUserDataStore } from '@/stores'
 import { isAddress } from 'viem'
 import { z } from 'zod'
 
-const { addSuccessToast, addErrorToast } = useToastStore()
+const toast = useToast()
 
 const props = defineProps<{
   tokenAddress: string
@@ -200,7 +199,7 @@ const {
 })
 watch(errorGetVestingInfo, () => {
   if (errorGetVestingInfo.value) {
-    addErrorToast('Add admin failed')
+    toast.add({ title: 'Add admin failed', color: 'error' })
   }
 })
 
@@ -233,7 +232,7 @@ const {
 
 watch(allowanceError, () => {
   if (allowanceError.value) {
-    addErrorToast('error on get Allowance')
+    toast.add({ title: 'error on get Allowance', color: 'error' })
     console.error('allowance error ', allowanceError.value)
   }
 })
@@ -252,7 +251,7 @@ const { isLoading: isConfirmingAddVesting, isSuccess: isConfirmedAddVesting } =
 
 watch(isConfirmingAddVesting, async (isConfirming, wasConfirming) => {
   if (wasConfirming && !isConfirming && isConfirmedAddVesting.value) {
-    addSuccessToast('vesting added successfully')
+    toast.add({ title: 'vesting added successfully', color: 'success' })
     startDate.value = ''
     cliff.value = 0
     totalAmount.value = 0
@@ -267,7 +266,7 @@ watch(isConfirmingAddVesting, async (isConfirming, wasConfirming) => {
 
 watch(errorAddVesting, () => {
   if (errorAddVesting.value) {
-    addErrorToast('Add vesting failed')
+    toast.add({ title: 'Add vesting failed', color: 'error' })
     console.error('add vesting error', errorAddVesting.value)
   }
 })
@@ -286,14 +285,14 @@ const { isLoading: isConfirmingApproveToken, isSuccess: isConfirmedApproveToken 
 
 watch(isConfirmingApproveToken, async (isConfirming, wasConfirming) => {
   if (wasConfirming && !isConfirming && isConfirmedApproveToken.value) {
-    addSuccessToast('Approval added successfully')
+    toast.add({ title: 'Approval added successfully', color: 'success' })
     submit()
   }
 })
 
 watch(errorApproveToken, () => {
   if (errorApproveToken.value) {
-    addErrorToast('Approval failed')
+    toast.add({ title: 'Approval failed', color: 'error' })
     console.error('Approval error ', errorApproveToken.value)
   }
 })
@@ -349,7 +348,7 @@ function checkDuplicateVesting() {
     member.value.address &&
     activeMembers.value.some((m) => m.toLowerCase() === member.value.address.toLowerCase())
   ) {
-    addErrorToast('The member address already has an active vesting.')
+    toast.add({ title: 'The member address already has an active vesting.', color: 'error' })
     return true
   }
   return false
@@ -365,7 +364,7 @@ async function approveAllowance() {
         args: [VESTING_ADDRESS as Address, parseEther(totalAmount.value.toString())]
       })
     } else {
-      addErrorToast('total amount value should be greater than zero')
+      toast.add({ title: 'total amount value should be greater than zero', color: 'error' })
     }
   }
 }
@@ -385,7 +384,7 @@ async function submit() {
     const totalAmountInUnits = parseUnits(totalAmount.value.toString(), 6)
     const balanceInUnits = parseUnits(tokenBalance.value.amount.toString(), 6)
     if (balanceInUnits < totalAmountInUnits) {
-      addErrorToast('Insufficient token balance')
+      toast.add({ title: 'Insufficient token balance', color: 'error' })
       return
     }
   }
@@ -395,7 +394,7 @@ async function submit() {
     typeof allowance.value === 'bigint' &&
     Number(formatUnits(allowance.value, 6)) < totalAmount.value
   ) {
-    addErrorToast('Allowance is less than the total amount')
+    toast.add({ title: 'Allowance is less than the total amount', color: 'error' })
     return
   }
   addVesting({

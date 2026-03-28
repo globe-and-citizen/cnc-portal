@@ -61,7 +61,7 @@ import { useExpenseAccountOwner } from '@/composables/expenseAccount/reads'
 import { useExpenseAccountContractWrite } from '@/composables/expenseAccount/writes'
 import { CASH_REMUNERATION_EIP712_ABI } from '@/artifacts/abi/cash-remuneration-eip712'
 import { EXPENSE_ACCOUNT_EIP712_ABI } from '@/artifacts/abi/expense-account-eip712'
-import { useTeamStore, useToastStore, useUserDataStore } from '@/stores'
+import { useTeamStore, useUserDataStore } from '@/stores'
 import { SUPPORTED_TOKENS, type TokenId } from '@/constant'
 import type { ContractType, TokenOption } from '@/types'
 import { useBodAddAction } from '@/composables/bod/writes'
@@ -82,7 +82,7 @@ const props = defineProps<{
 
 const teamStore = useTeamStore()
 const userStore = useUserDataStore()
-const toastStore = useToastStore()
+const toast = useToast()
 const queryClient = useQueryClient()
 const chainId = useChainId()
 
@@ -270,7 +270,7 @@ const submitWithdraw = async () => {
       const hash = await nativeWrite.executeWrite([amount], undefined, { skipGasEstimation: true })
 
       if (!hash) {
-        toastStore.addErrorToast('Withdraw failed')
+        toast.add({ title: 'Withdraw failed', color: 'error' })
       }
 
       return
@@ -309,7 +309,7 @@ const submitWithdraw = async () => {
     })
 
     if (!hash) {
-      toastStore.addErrorToast('Withdraw failed')
+      toast.add({ title: 'Withdraw failed', color: 'error' })
     }
   } catch (error: unknown) {
     console.error(error)
@@ -319,7 +319,7 @@ const submitWithdraw = async () => {
         : typeof error === 'object' && error !== null && 'message' in error
           ? String((error as { message?: string }).message || 'Failed to withdraw funds')
           : 'Failed to withdraw funds'
-    toastStore.addErrorToast(message)
+    toast.add({ title: message, color: 'error' })
   } finally {
     isSubmitting.value = false
   }
@@ -327,7 +327,7 @@ const submitWithdraw = async () => {
 
 watch(isActionAdded, (added) => {
   if (added) {
-    toastStore.addSuccessToast('Action added successfully, waiting for board confirmation')
+    toast.add({ title: 'Action added successfully, waiting for board confirmation', color: 'success' })
     resetModal()
   }
 })
@@ -335,7 +335,7 @@ watch(isActionAdded, (added) => {
 watch(isConfirmingWithdraw, async (newIsConfirming, oldIsConfirming) => {
   if (newIsConfirming || !oldIsConfirming || !showModal.value.show) return
 
-  toastStore.addSuccessToast('Withdraw successful')
+  toast.add({ title: 'Withdraw successful', color: 'success' })
   await refreshContractBalances()
   resetModal()
 })

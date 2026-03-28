@@ -13,10 +13,6 @@ const Toast = defineComponent({
 // Import your component
 import ToastContainer from '@/components/ToastContainer.vue'
 
-// Mock the useToastStore function
-vi.mock('@/stores/useToastStore', () => ({
-  useToastStore: () => mockToastStore
-}))
 
 describe('ToastContainer.vue', () => {
   beforeEach(() => {

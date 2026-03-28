@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import WeeklyClaimActionEnable from '../WeeklyClaimActionEnable.vue'
 import { createPinia, setActivePinia } from 'pinia'
-import { useTeamStore, useToastStore } from '@/stores'
+import { useTeamStore } from '@/stores'
 import type { WeeklyClaim } from '@/types'
 import { ref } from 'vue'
 import * as mocks from '@/tests/mocks'
@@ -130,7 +130,7 @@ describe('DropdownActions', () => {
       // Should show success toast after mutation
       expect(mocks.mockWagmiCore.writeContract).toBeCalled()
       expect(mockSyncMutateAsync).toHaveBeenCalled()
-      expect(mocks.mockToastStore.addSuccessToast).toHaveBeenCalledWith('Claim enabled')
+      expect(mocks.mockToast.add).toHaveBeenCalledWith({ title: 'Claim enabled', color: 'success' })
     })
 
     it('should handle enable claim errors properly', async () => {
@@ -154,9 +154,7 @@ describe('DropdownActions', () => {
 
       //@ts-expect-error not visible on wrapper
       expect(wrapper.vm.isLoading).toBeFalsy()
-      expect(mocks.mockToastStore.addErrorToast).toBeCalledWith(
-        'Cash Remuneration EIP712 contract address not found'
-      )
+      expect(mocks.mockToast.add).toBeCalledWith({ title: 'Cash Remuneration EIP712 contract address not found', color: 'error' })
 
       vi.mocked(useTeamStore).mockRestore()
 
@@ -175,9 +173,9 @@ describe('DropdownActions', () => {
 
       //@ts-expect-error not visible on wrapper
       await wrapper.vm.enableClaim()
-      expect(mocks.mockToastStore.addErrorToast).toBeCalledWith('Failed to update Claim status')
+      expect(mocks.mockToast.add).toBeCalledWith({ title: 'Failed to update Claim status', color: 'error' })
 
-      vi.mocked(useToastStore).mockClear()
+      mocks.mockToast.add.mockClear()
 
       // Test transaction reverted
       //@ts-expect-error only mocking necessary values
@@ -190,11 +188,9 @@ describe('DropdownActions', () => {
       //@ts-expect-error not visible on wrapper
       await wrapper.vm.enableClaim()
 
-      expect(mocks.mockToastStore.addErrorToast).toBeCalledWith(
-        'Transaction failed: Failed to enable claim'
-      )
+      expect(mocks.mockToast.add).toBeCalledWith({ title: 'Transaction failed: Failed to enable claim', color: 'error' })
 
-      vi.mocked(useToastStore).mockClear()
+      mocks.mockToast.add.mockClear()
 
       // Test simulate error
       //@ts-expect-error only mocking necessary values
@@ -210,7 +206,7 @@ describe('DropdownActions', () => {
       await wrapper.vm.enableClaim()
 
       expect(logError).toBeCalledWith('Enable error', simulateError)
-      expect(mocks.mockToastStore.addErrorToast).toBeCalledWith('Parsed error message')
+      expect(mocks.mockToast.add).toBeCalledWith({ title: 'Parsed error message', color: 'error' })
     })
   })
 })

@@ -6,10 +6,10 @@ import SelectMemberInput from '@/components/utils/SelectMemberInput.vue'
 import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
 import { parseEther, parseUnits } from 'viem'
-import { useToastStore } from '@/stores/__mocks__/useToastStore'
 import { VESTING_ADDRESS } from '@/constant'
 import { INVESTOR_ABI } from '@/artifacts/abi/investors'
 import { mockUseContractBalance } from '@/tests/mocks/composables.mock'
+import { mockToast } from '@/tests/mocks'
 
 // vi.mock('@/artifacts/abi/InvestorV1', () => MOCK_INVESTOR_ABI)
 // Constants
@@ -115,7 +115,6 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
   }
 })
 
-vi.mock('@/stores/useToastStore')
 vi.mock('@/composables/useContractBalance', () => ({
   useContractBalance: vi.fn(() => mockUseContractBalance)
 }))
@@ -169,17 +168,14 @@ describe('CreateVesting.vue', () => {
 
   describe('Create Vesting Submission', () => {
     it('shows error toast when allowance check fails', async () => {
-      const { addErrorToast } = useToastStore()
       mockAllowanceError.value = new Error('Allowance check failed')
       await wrapper.vm.$nextTick()
 
       // The error watcher should trigger and show the toast
-      expect(addErrorToast).toHaveBeenCalledWith('error on get Allowance')
+      expect(mockToast.add).toHaveBeenCalledWith({ title: 'error on get Allowance', color: 'error' })
     })
 
     it('shows error toast when token approval fails', async () => {
-      const { addErrorToast } = useToastStore()
-
       await fillFormWithValidData(wrapper)
       await wrapper.find('[data-test="submit-btn"]').trigger('click')
       await wrapper.vm.$nextTick()
@@ -191,7 +187,7 @@ describe('CreateVesting.vue', () => {
       mockWriteContract.error.value = new Error('Approval failed')
       await wrapper.vm.$nextTick()
 
-      expect(addErrorToast).toHaveBeenCalledWith('Approval failed')
+      expect(mockToast.add).toHaveBeenCalledWith({ title: 'Approval failed', color: 'error' })
     })
 
     it('calls writeContract on valid form and tokenApproved=true', async () => {
@@ -245,8 +241,6 @@ describe('CreateVesting.vue', () => {
     })
 
     it('shows error toast when adding vesting fails', async () => {
-      const { addErrorToast } = useToastStore()
-
       await fillFormWithValidData(wrapper)
       mockWriteContract.error.value = new Error('Add vesting failed')
 
@@ -257,12 +251,10 @@ describe('CreateVesting.vue', () => {
       const confirmBtn = wrapper.find('[data-test="confirm-btn"]')
       await confirmBtn.trigger('click')
 
-      expect(addErrorToast).toHaveBeenCalledWith('Add vesting failed')
+      expect(mockToast.add).toHaveBeenCalledWith({ title: 'Add vesting failed', color: 'error' })
     })
 
     it('shows error toast when member already has active vesting', async () => {
-      const { addErrorToast } = useToastStore()
-
       await fillFormWithValidData(wrapper, memberAddress)
       mockWriteContract.error.value = new Error('Add vesting failed')
 
@@ -273,9 +265,7 @@ describe('CreateVesting.vue', () => {
       const confirmBtn = wrapper.find('[data-test="confirm-btn"]')
       await confirmBtn.trigger('click')
 
-      expect(addErrorToast).toHaveBeenCalledWith(
-        'The member address already has an active vesting.'
-      )
+      expect(mockToast.add).toHaveBeenCalledWith({ title: 'The member address already has an active vesting.', color: 'error' })
       expect(mockWriteContract.mutate).not.toHaveBeenCalled()
     })
 

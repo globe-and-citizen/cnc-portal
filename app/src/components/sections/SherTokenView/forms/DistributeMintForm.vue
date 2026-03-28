@@ -123,14 +123,13 @@
 
 <script setup lang="ts">
 import { useGetSearchUsersQuery } from '@/queries/user.queries'
-import { useToastStore } from '@/stores'
 import { log } from '@/utils'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import { z } from 'zod'
 import { parseUnits, isAddress } from 'viem'
 import { ref, watch, reactive } from 'vue'
 
-const { addErrorToast } = useToastStore()
+const toast = useToast()
 const emits = defineEmits(['submit'])
 defineProps<{
   tokenSymbol: string
@@ -185,7 +184,7 @@ const { data: usersData, error: errorSearchUser } = useGetSearchUsersQuery({
 watch(errorSearchUser, (value) => {
   if (value) {
     log.error('Failed to search users', value)
-    addErrorToast('Failed to search users')
+    toast.add({ title: 'Failed to search users', color: 'error' })
   }
 })
 

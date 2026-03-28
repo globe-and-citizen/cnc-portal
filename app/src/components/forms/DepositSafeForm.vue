@@ -67,7 +67,7 @@ import { useSafeSendTransaction } from '@/composables/transactions/useSafeSendTr
 import { useERC20Approve } from '@/composables/erc20/writes'
 import { useErc20Allowance } from '@/composables/erc20/reads'
 import { SUPPORTED_TOKENS, type TokenId, USDC_ADDRESS, USDC_E_ADDRESS } from '@/constant'
-import { useCurrencyStore, useToastStore, useUserDataStore } from '@/stores'
+import { useCurrencyStore, useUserDataStore } from '@/stores'
 import TokenAmount from './TokenAmount.vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useChainId, useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
@@ -133,7 +133,7 @@ const formSchema = computed(() =>
 // Stores
 const currencyStore = useCurrencyStore()
 const userDataStore = useUserDataStore()
-const { addSuccessToast } = useToastStore()
+const toast = useToast()
 
 const errorMessage = computed(() => {
   const err =
@@ -213,7 +213,7 @@ const { error: transferReceiptError } = useWaitForTransactionReceipt({
 watch(isNativeDepositConfirmed, (confirmed) => {
   if (confirmed && nativeReceipt.value) {
     amount.value = ''
-    addSuccessToast(`${selectedToken.value?.token.code} deposited successfully`)
+    toast.add({ title: `${selectedToken.value?.token.code} deposited successfully`, color: 'success' })
     emits('closeModal')
   }
 })
@@ -298,7 +298,7 @@ const submitForm = async () => {
 
       submitting.value = false
       amount.value = ''
-      addSuccessToast(`${selectedToken.value?.token.code} deposited successfully`)
+      toast.add({ title: `${selectedToken.value?.token.code} deposited successfully`, color: 'success' })
       emits('closeModal')
     }
   } catch (error) {

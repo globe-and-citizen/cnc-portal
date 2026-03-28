@@ -74,7 +74,7 @@ import { useERC20Approve } from '@/composables/erc20/writes'
 import { useErc20Allowance } from '@/composables/erc20/reads'
 import { useDepositToken } from '@/composables/bank/writes'
 import { SUPPORTED_TOKENS, type TokenId } from '@/constant'
-import { useCurrencyStore, useToastStore, useUserDataStore } from '@/stores'
+import { useCurrencyStore, useUserDataStore } from '@/stores'
 import TokenAmount from './TokenAmount.vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useChainId } from '@wagmi/vue'
@@ -119,7 +119,7 @@ const isAmountValid = ref(false) // Validation state used by TokenAmount compone
 // Stores
 const currencyStore = useCurrencyStore()
 const userDataStore = useUserDataStore()
-const { addErrorToast, addSuccessToast } = useToastStore()
+const toast = useToast()
 
 // Reactive state for balances: composable that fetches address balances
 const { balances, isLoading } = useContractBalance(userDataStore.address as Address)
@@ -181,7 +181,7 @@ const bankDepositTokenResult = useDepositToken(selectedTokenAddress, bigIntAmoun
 watch(isNativeDepositConfirmed, (confirmed) => {
   if (confirmed && nativeReceipt.value) {
     amount.value = ''
-    addSuccessToast(`${selectedToken.value?.token.code} deposited successfully`)
+    toast.add({ title: `${selectedToken.value?.token.code} deposited successfully`, color: 'success' })
     emits('closeModal')
   }
 })
@@ -237,12 +237,12 @@ const submitForm = async () => {
 
       submitting.value = false
       amount.value = ''
-      addSuccessToast(`${selectedToken.value?.token.code} deposited successfully`)
+      toast.add({ title: `${selectedToken.value?.token.code} deposited successfully`, color: 'success' })
       emits('closeModal')
     }
   } catch {
     // console.error(error)
-    addErrorToast(`Failed to deposit ${selectedTokenId.value}`)
+    toast.add({ title: `Failed to deposit ${selectedTokenId.value}`, color: 'error' })
     submitting.value = false
     // currentStep.value = 1
   }

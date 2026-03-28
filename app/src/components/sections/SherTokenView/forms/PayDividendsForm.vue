@@ -43,7 +43,6 @@
 
 <script setup lang="ts">
 import { NETWORK } from '@/constant'
-// import { useToastStore } from '@/stores'
 import type { Team } from '@/types'
 
 import { parseUnits } from 'viem'

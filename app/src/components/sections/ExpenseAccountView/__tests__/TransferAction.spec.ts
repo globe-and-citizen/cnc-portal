@@ -9,9 +9,7 @@ import { parseError } from '@/utils'
 import * as utils from '@/utils'
 import { EXPENSE_ACCOUNT_EIP712_ABI } from '@/artifacts/abi/expense-account-eip712'
 import TransferAction from '../TransferAction.vue'
-import { mockToastStore, useWriteContractFn, useWaitForTransactionReceiptFn } from '@/tests/mocks'
-
-const { addErrorToast: addErrorToastMock } = mockToastStore
+import { mockToast, useWriteContractFn, useWaitForTransactionReceiptFn } from '@/tests/mocks'
 
 const { simulateContractMock } = vi.hoisted(() => ({
   simulateContractMock: vi.fn()
@@ -193,7 +191,7 @@ describe('TransferComponent', () => {
     // Check that log.error was called with parsed error
     expect(logErrorMock).toHaveBeenCalledWith(parseError(mockError, EXPENSE_ACCOUNT_EIP712_ABI))
     // Check that error toast was shown
-    expect(addErrorToastMock).toHaveBeenCalledWith('Failed to transfer')
+    expect(mockToast.add).toHaveBeenCalledWith({ title: 'Failed to transfer', color: 'error' })
   })
 
   it('should handle confirming transfer error and show appropriate error message', async () => {
@@ -207,7 +205,7 @@ describe('TransferComponent', () => {
     await wrapper.vm.$nextTick()
 
     expect(logErrorMock).toHaveBeenCalledWith(parseError(mockError, EXPENSE_ACCOUNT_EIP712_ABI))
-    expect(addErrorToastMock).toHaveBeenCalledWith('Failed to transfer after approval')
+    expect(mockToast.add).toHaveBeenCalledWith({ title: 'Failed to transfer after approval', color: 'error' })
   })
 
   it('should reset loading states when confirming transfer error occurs', async () => {

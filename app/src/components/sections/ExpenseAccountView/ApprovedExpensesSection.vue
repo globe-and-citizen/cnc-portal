@@ -73,7 +73,7 @@
 import { computed, ref, watch } from 'vue'
 import ExpenseAccountTable from '@/components/sections/ExpenseAccountView/ExpenseAccountTable.vue'
 import ApproveUsersForm from '@/components/forms/ApproveUsersEIP712Form.vue'
-import { useUserDataStore, useToastStore, useTeamStore } from '@/stores'
+import { useUserDataStore, useTeamStore } from '@/stores'
 import { useRoute } from 'vue-router'
 import { useReadContract, useChainId, useSignTypedData } from '@wagmi/vue'
 import { parseEther, zeroAddress, type Address } from 'viem'
@@ -92,7 +92,7 @@ const approveData = ref<BudgetLimit>()
 
 const teamStore = useTeamStore()
 const userDataStore = useUserDataStore()
-const { addErrorToast } = useToastStore()
+const toast = useToast()
 const route = useRoute()
 const chainId = useChainId()
 const { signTypedDataAsync, data: signature, error: signTypedDataError } = useSignTypedData()
@@ -193,17 +193,17 @@ const isBodAction = () => false
 //#region Watchers
 watch(errorAddExpenseData, (newVal) => {
   if (newVal) {
-    addErrorToast(errorMessage(newVal, 'Error Adding Expense Data'))
+    toast.add({ title: errorMessage(newVal, 'Error Adding Expense Data'), color: 'error' })
     log.error('errorAddExpenseData.value', parseError(newVal))
     loadingApprove.value = false
   }
 })
 watch(errorGetOwner, (newVal) => {
-  if (newVal) addErrorToast(errorMessage(newVal, 'Error Getting Contract Owner'))
+  if (newVal) toast.add({ title: errorMessage(newVal, 'Error Getting Contract Owner'), color: 'error' })
 })
 watch(signTypedDataError, async (newVal) => {
   if (newVal) {
-    addErrorToast('Error signing expense data')
+    toast.add({ title: 'Error signing expense data', color: 'error' })
     log.error('signTypedDataError.value', parseError(newVal))
     loadingApprove.value = false
   }

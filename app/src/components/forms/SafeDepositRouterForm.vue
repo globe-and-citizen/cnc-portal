@@ -62,7 +62,7 @@ import { useContractBalance } from '@/composables/useContractBalance'
 import { useERC20Approve } from '@/composables/erc20/writes'
 import { useErc20Allowance } from '@/composables/erc20/reads'
 import { SUPPORTED_TOKENS, type TokenId } from '@/constant'
-import { useCurrencyStore, useToastStore, useUserDataStore } from '@/stores'
+import { useCurrencyStore, useUserDataStore } from '@/stores'
 import { parseError } from '@/utils'
 import {
   formatSafeDepositRouterMultiplier,
@@ -101,7 +101,7 @@ const isUpdatingFromSher = ref(false)
 // Stores
 const currencyStore = useCurrencyStore()
 const userDataStore = useUserDataStore()
-const { addErrorToast, addSuccessToast } = useToastStore()
+const toast = useToast()
 
 // SafeDepositRouter address and multiplier
 const safeDepositRouterAddress = useSafeDepositRouterAddress()
@@ -240,7 +240,7 @@ const isLoading = computed(
 watch(multiplierError, (error) => {
   if (error) {
     console.error('Error fetching multiplier:', error)
-    addErrorToast('Failed to load SHER compensation rate')
+    toast.add({ title: 'Failed to load SHER compensation rate', color: 'error' })
   }
 })
 
@@ -252,9 +252,9 @@ watch(
       const errorMessage = parseError(error)
 
       if (errorMessage.includes('User rejected') || errorMessage.includes('User denied')) {
-        addErrorToast('Transaction cancelled by user')
+        toast.add({ title: 'Transaction cancelled by user', color: 'error' })
       } else {
-        addErrorToast('Failed to approve tokens')
+        toast.add({ title: 'Failed to approve tokens', color: 'error' })
       }
 
       submitting.value = false
@@ -267,7 +267,7 @@ watch(
   () => approveWrite.receiptResult.isSuccess.value,
   (success) => {
     if (success) {
-      addSuccessToast('Token approval successful')
+      toast.add({ title: 'Token approval successful', color: 'success' })
       currentStep.value = 3
       performDeposit()
     }
@@ -282,9 +282,9 @@ watch(
       const errorMessage = parseError(error)
 
       if (errorMessage.includes('User rejected') || errorMessage.includes('User denied')) {
-        addErrorToast('Transaction cancelled by user')
+        toast.add({ title: 'Transaction cancelled by user', color: 'error' })
       } else {
-        addErrorToast('Failed to deposit')
+        toast.add({ title: 'Failed to deposit', color: 'error' })
       }
 
       submitting.value = false
@@ -297,9 +297,7 @@ watch(
   () => depositWrite.receiptResult.isSuccess.value,
   (success) => {
     if (success) {
-      addSuccessToast(
-        `Successfully deposited ${amount.value} ${selectedToken.value?.token.symbol} and minted ${sherAmount.value} ${tokenSymbol.value || 'SHER'} tokens`
-      )
+      toast.add({ title: `Successfully deposited ${amount.value} ${selectedToken.value?.token.symbol} and minted ${sherAmount.value} ${tokenSymbol.value || 'SHER'} tokens`, color: 'success' })
       reset()
       emits('closeModal')
     }
@@ -342,15 +340,15 @@ async function performDeposit() {
 const submitForm = async () => {
   if (!isAmountValid.value) return
   if (!safeDepositRouterAddress.value) {
-    addErrorToast('SafeDepositRouter address not found')
+    toast.add({ title: 'SafeDepositRouter address not found', color: 'error' })
     return
   }
   if (!selectedToken.value) {
-    addErrorToast('No token selected')
+    toast.add({ title: 'No token selected', color: 'error' })
     return
   }
   if (!multiplier.value) {
-    addErrorToast('Unable to calculate SHER compensation')
+    toast.add({ title: 'Unable to calculate SHER compensation', color: 'error' })
     return
   }
 

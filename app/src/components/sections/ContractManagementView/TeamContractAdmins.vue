@@ -60,7 +60,6 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
 
-import { useToastStore } from '@/stores/useToastStore'
 
 import { useWaitForTransactionReceipt, useWriteContract, useReadContract } from '@wagmi/vue'
 import { AddCampaignService } from '@/services/AddCampaignService'
@@ -69,7 +68,7 @@ import AddressToolTip from '@/components/AddressToolTip.vue'
 import TableComponent from '@/components/TableComponent.vue'
 import { AD_CAMPAIGN_MANAGER_ABI } from '@/artifacts/abi/ad-campaign-manager'
 import type { Address } from 'viem'
-const { addErrorToast, addSuccessToast } = useToastStore()
+const toast = useToast()
 const addCampaignService = new AddCampaignService()
 
 const props = defineProps<{
@@ -103,7 +102,7 @@ const { isLoading: isConfirmingAddAdmin, isSuccess: isConfirmedAddAdmin } =
   })
 watch(isConfirmingAddAdmin, async (isConfirming, wasConfirming) => {
   if (wasConfirming && !isConfirming && isConfirmedAddAdmin.value) {
-    addSuccessToast('Admin added successfully')
+    toast.add({ title: 'Admin added successfully', color: 'success' })
     newAdminAddress.value = ''
     executeGetAdminList()
   }
@@ -122,7 +121,7 @@ const { isLoading: isConfirmingRemoveAdmin, isSuccess: isConfirmedRemoveAdmin } 
   })
 watch(isConfirmingRemoveAdmin, async (isConfirming, wasConfirming) => {
   if (wasConfirming && !isConfirming && isConfirmedRemoveAdmin.value) {
-    addSuccessToast('Admin removed successfully')
+    toast.add({ title: 'Admin removed successfully', color: 'success' })
     executeGetAdminList()
   }
 })
@@ -153,19 +152,19 @@ watch(
 
 watch(errorAddAdmin, () => {
   if (errorAddAdmin.value) {
-    addErrorToast('Add admin failed')
+    toast.add({ title: 'Add admin failed', color: 'error' })
   }
 })
 
 watch(errorGetAdminList, () => {
   if (errorGetAdminList.value) {
-    addErrorToast('get Admin list failed')
+    toast.add({ title: 'get Admin list failed', color: 'error' })
   }
 })
 
 watch(errorRemoveAdmin, () => {
   if (errorRemoveAdmin.value) {
-    addErrorToast('Remove admin failed')
+    toast.add({ title: 'Remove admin failed', color: 'error' })
   }
 })
 

@@ -69,7 +69,7 @@
 import { computed, ref, watch } from 'vue'
 import CreateElectionForm from './forms/CreateElectionForm.vue'
 import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
-import { useTeamStore, useToastStore } from '@/stores'
+import { useTeamStore } from '@/stores'
 import { simulateContract, writeContract, waitForTransactionReceipt } from '@wagmi/core'
 import type { OldProposal } from '@/types'
 import { log, parseError } from '@/utils'
@@ -84,7 +84,7 @@ import { useCreateElectionNotificationsMutation } from '@/queries/action.queries
 const props = defineProps<{ electionId: bigint; isDetails?: boolean }>()
 
 const teamStore = useTeamStore()
-const { addSuccessToast, addErrorToast } = useToastStore()
+const toast = useToast()
 const showResultsModal = ref(false)
 const currentElectionId = computed(() => props.electionId)
 const { electionsAddress, formattedElection } = useBoDElections(currentElectionId)
@@ -101,7 +101,7 @@ const createElection = async (electionData: OldProposal) => {
   try {
     isLoadingCreateElection.value = true
     if (!electionsAddress.value) {
-      addErrorToast('Elections contract address not found')
+      toast.add({ title: 'Elections contract address not found', color: 'error' })
       return
     }
 
@@ -141,11 +141,11 @@ const createElection = async (electionData: OldProposal) => {
     })
 
     await addElectionNotifications({ pathParams: { teamId: teamStore.currentTeamId! } })
-    addSuccessToast('Election created successfully!')
+    toast.add({ title: 'Election created successfully!', color: 'success' })
     showCreateElectionModal.value.show = false
     showCreateElectionModal.value.mount = false
   } catch (error) {
-    addErrorToast(parseError(error, ELECTIONS_ABI))
+    toast.add({ title: parseError(error, ELECTIONS_ABI), color: 'error' })
     log.error('creatingElection error:', error)
   } finally {
     isLoadingCreateElection.value = false
@@ -154,7 +154,7 @@ const createElection = async (electionData: OldProposal) => {
 
 watch(electionNotificationError, (error) => {
   if (error) {
-    addErrorToast('Failed to send election notifications')
+    toast.add({ title: 'Failed to send election notifications', color: 'error' })
     log.error('electionNotificationError.value: ', error)
   }
 })

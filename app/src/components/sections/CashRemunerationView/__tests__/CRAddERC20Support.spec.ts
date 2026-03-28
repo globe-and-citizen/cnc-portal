@@ -12,7 +12,7 @@ vi.mock('@/constant', () => ({
 const USDC_ADDRESS = '0xA0b86a33E6441bB7bE6d0B9EB5Bbf26b2d60C1cd'
 
 // Hoisted variables for mocks
-const { mockReadContract, mockWriteContract, mockUseDebounceFn, mockToastStore } = vi.hoisted(
+const { mockReadContract, mockWriteContract, mockUseDebounceFn, mockLocalToast } = vi.hoisted(
   () => ({
     mockReadContract: vi.fn(),
     mockWriteContract: vi.fn(),
@@ -24,9 +24,8 @@ const { mockReadContract, mockWriteContract, mockUseDebounceFn, mockToastStore }
         return undefined
       })
     },
-    mockToastStore: {
-      addErrorToast: vi.fn(),
-      addSuccessToast: vi.fn()
+    mockLocalToast: {
+      add: vi.fn()
     }
   })
 )
@@ -219,9 +218,7 @@ describe.skip('CRAddERC20Support.vue', () => {
         'Error checking token support:',
         expect.any(Error)
       )
-      expect(mockToastStore.addErrorToast).toHaveBeenCalledWith(
-        'Failed to check token support status'
-      )
+      expect(mockLocalToast.add).toHaveBeenCalledWith({ title: 'Failed to check token support status', color: 'error' })
 
       consoleErrorSpy.mockRestore()
     })
@@ -252,9 +249,7 @@ describe.skip('CRAddERC20Support.vue', () => {
         }
       )
 
-      expect(mockToastStore.addSuccessToast).toHaveBeenCalledWith(
-        'Token support added successfully'
-      )
+      expect(mockLocalToast.add).toHaveBeenCalledWith({ title: 'Token support added successfully', color: 'success' })
     })
 
     it('should remove token support for supported token', async () => {
@@ -281,9 +276,7 @@ describe.skip('CRAddERC20Support.vue', () => {
         }
       )
 
-      expect(mockToastStore.addSuccessToast).toHaveBeenCalledWith(
-        'Token support removed successfully'
-      )
+      expect(mockLocalToast.add).toHaveBeenCalledWith({ title: 'Token support removed successfully', color: 'success' })
     })
 
     it('should handle errors when adding token support', async () => {
@@ -305,9 +298,7 @@ describe.skip('CRAddERC20Support.vue', () => {
         'Error Updating token support:',
         expect.any(Error)
       )
-      expect(mockToastStore.addErrorToast).toHaveBeenCalledWith(
-        'Failed to add token support: Transaction failed'
-      )
+      expect(mockLocalToast.add).toHaveBeenCalledWith({ title: 'Failed to add token support: Transaction failed', color: 'error' })
 
       consoleErrorSpy.mockRestore()
     })
@@ -331,9 +322,7 @@ describe.skip('CRAddERC20Support.vue', () => {
         'Error Updating token support:',
         expect.any(Error)
       )
-      expect(mockToastStore.addErrorToast).toHaveBeenCalledWith(
-        'Failed to remove token support: Transaction failed'
-      )
+      expect(mockLocalToast.add).toHaveBeenCalledWith({ title: 'Failed to remove token support: Transaction failed', color: 'error' })
 
       consoleErrorSpy.mockRestore()
     })

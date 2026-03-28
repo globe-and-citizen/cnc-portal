@@ -5,7 +5,7 @@ import { createTestingPinia } from '@pinia/testing'
 import { VueQueryPlugin, QueryClient } from '@tanstack/vue-query'
 import SubmitClaims from '../SubmitClaims.vue'
 import { useSubmitClaimMutation } from '@/queries/weeklyClaim.queries'
-import { mockTeamStore, mockToastStore } from '@/tests/mocks'
+import { mockTeamStore, mockToast } from '@/tests/mocks'
 import { createMockMutationResponse } from '@/tests/mocks/query.mock'
 
 const claimFormResetMock = vi.fn()
@@ -43,8 +43,7 @@ describe('SubmitClaims', () => {
     vi.clearAllMocks()
 
     mockTeamStore.currentTeamId = '1'
-    mockToastStore.addErrorToast.mockClear()
-    mockToastStore.addSuccessToast.mockClear()
+    mockToast.add.mockClear()
   })
 
   afterEach(() => {
@@ -83,7 +82,7 @@ describe('SubmitClaims', () => {
     claimForm.vm.$emit('submit', submitData)
     await flushPromises()
 
-    expect(mockToastStore.addSuccessToast).toHaveBeenCalledWith('Wage claim added successfully')
+    expect(mockToast.add).toHaveBeenCalledWith({ title: 'Wage claim added successfully', color: 'success' })
     expect(claimFormResetMock).toHaveBeenCalledTimes(1)
     expect(wrapper.findComponent({ name: 'ClaimForm' }).exists()).toBe(false)
   })
@@ -104,7 +103,7 @@ describe('SubmitClaims', () => {
     })
     await flushPromises()
 
-    expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('Team not selected')
+    expect(mockToast.add).toHaveBeenCalledWith({ title: 'Team not selected', color: 'error' })
   })
 
   it('passes loading state to button when mutation is pending', async () => {
@@ -151,6 +150,6 @@ describe('SubmitClaims', () => {
 
     // Verify that the specific backend message error does not show as a toast
     // (the component should handle it differently, likely displaying it inline in the form)
-    expect(mockToastStore.addErrorToast).not.toHaveBeenCalledWith(backendMessage)
+    expect(mockToast.add).not.toHaveBeenCalledWith({ title: backendMessage, color: 'error' })
   })
 })

@@ -6,14 +6,19 @@ vi.mock('@/stores', async (importOriginal) => {
   const actual: object = await importOriginal()
   return {
     ...actual,
-    useToastStore: vi.fn(() => mocks.mockToastStore),
     useTeamStore: vi.fn(() => ({ ...mocks.mockTeamStore })),
     useCurrencyStore: vi.fn(() => mocks.mockUseCurrencyStore()),
     useUserDataStore: vi.fn(() => ({ ...mocks.mockUserStore }))
   }
 })
-;(globalThis as { __mockToastStore?: typeof mocks.mockToastStore }).__mockToastStore =
-  mocks.mockToastStore
+
+vi.mock('@nuxt/ui', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    useToast: vi.fn(() => mocks.mockToast)
+  }
+})
 
 vi.mock('@/stores/user', async (importOriginal) => {
   const actual: object = await importOriginal()
@@ -28,13 +33,5 @@ vi.mock('@/stores/teamStore', async (importOriginal) => {
   return {
     ...actual,
     useTeamStore: vi.fn(() => ({ ...mocks.mockTeamStore }))
-  }
-})
-
-vi.mock('@/stores/useToastStore', async (importOriginal) => {
-  const actual: object = await importOriginal()
-  return {
-    ...actual,
-    useToastStore: vi.fn(() => mocks.mockToastStore)
   }
 })

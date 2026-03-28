@@ -7,9 +7,8 @@ import {
   useWaitForTransactionReceiptFn,
   useQueryClientFn,
   mockWagmiCore,
-  mockToastStore
 } from '@/tests/mocks'
-import { useTeamStore, useToastStore } from '@/stores'
+import { useTeamStore } from '@/stores'
 
 // Prevent module-level constant validation and provide minimal addresses used by utils
 vi.mock('@/constant', () => ({
@@ -51,7 +50,6 @@ describe('PublishResult.vue', () => {
         return undefined
       }
     }
-    vi.mocked(useToastStore).mockImplementation(() => mockToastStore)
     vi.mocked(useTeamStore).mockImplementation(
       () => localMockTeamStore as ReturnType<typeof useTeamStore>
     )

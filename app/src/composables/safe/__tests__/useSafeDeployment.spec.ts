@@ -6,16 +6,12 @@ import { useSafeDeployment } from '../useSafeDeployment'
 const {
   mockUseConnection,
   mockSafeInit,
-  mockAddSuccessToast,
-  mockAddErrorToast,
   mockSendTransaction,
   mockWaitForReceipt,
   mockGetAddress
 } = vi.hoisted(() => ({
   mockUseConnection: vi.fn(),
   mockSafeInit: vi.fn(),
-  mockAddSuccessToast: vi.fn(),
-  mockAddErrorToast: vi.fn(),
   mockSendTransaction: vi.fn(),
   mockWaitForReceipt: vi.fn(),
   mockGetAddress: vi.fn()
@@ -31,13 +27,6 @@ vi.mock('@safe-global/protocol-kit', () => ({
   default: {
     init: mockSafeInit
   }
-}))
-
-vi.mock('@/stores', () => ({
-  useToastStore: () => ({
-    addSuccessToast: mockAddSuccessToast,
-    addErrorToast: mockAddErrorToast
-  })
 }))
 
 vi.mock('@/utils/safe', () => ({

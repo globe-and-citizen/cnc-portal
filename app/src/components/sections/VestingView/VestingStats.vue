@@ -34,7 +34,6 @@ import TableComponent from '@/components/TableComponent.vue'
 import { computed, ref, watch } from 'vue'
 import { useReadContract } from '@wagmi/vue'
 import { useTeamStore } from '@/stores'
-import { useToastStore } from '@/stores/useToastStore'
 import { type TokenSummary } from '@/types/vesting'
 import { VESTING_ADDRESS } from '@/constant'
 import { INVESTOR_ABI } from '@/artifacts/abi/investors'
@@ -100,7 +99,7 @@ const totals = computed<{ totalAmount: number; totalReleased: number; totalWithd
 )
 
 // Define columns including the new "Actions" column
-const { addErrorToast } = useToastStore()
+const toast = useToast()
 
 const {
   data: archivedVestingInfos,
@@ -116,7 +115,7 @@ const {
 
 watch(errorGetArchivedVestingInfo, () => {
   if (errorGetArchivedVestingInfo.value) {
-    addErrorToast('get archived  failed')
+    toast.add({ title: 'get archived  failed', color: 'error' })
     console.error('get archived  failed ====', errorGetArchivedVestingInfo)
   }
 })
@@ -153,7 +152,7 @@ const {
 })
 watch(errorGetVestingInfo, () => {
   if (errorGetVestingInfo.value) {
-    addErrorToast('Add admin failed')
+    toast.add({ title: 'Add admin failed', color: 'error' })
   }
 })
 

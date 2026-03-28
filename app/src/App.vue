@@ -39,8 +39,6 @@
         </div>
       </template>
 
-      <!-- Toast Notifications -->
-      <ToastContainer position="bottom-left" />
       <VueQueryDevtools buttonPosition="bottom-left" />
     </div>
   </UApp>
@@ -56,14 +54,13 @@ import { RouterView, useRoute } from 'vue-router'
 import LockScreen from '@/components/LockScreen.vue'
 import NavBar from '@/components/NavBar.vue'
 import TeamSelectMenu from '@/components/TeamSelectMenu.vue'
-import ToastContainer from '@/components/ToastContainer.vue'
 import SidebarLayout from '@/components/ui/SidebarLayout.vue'
 
 import { useAuth } from '@/composables/useAuth'
 import { useBackendWake } from '@/composables/useBackendWake'
 
 import { NETWORK } from '@/constant/index'
-import { useToastStore, useUserDataStore } from '@/stores/index'
+import { useUserDataStore } from '@/stores/index'
 
 const route = useRoute()
 
@@ -81,7 +78,7 @@ watch(chainId, (val) => {
 })
 useBackendWake()
 
-const { addErrorToast } = useToastStore()
+const toast = useToast()
 const { logout } = useAuth()
 
 const userStore = useUserDataStore()
@@ -99,7 +96,7 @@ const lock = computed(() => {
 useConnectionEffect({
   onDisconnect() {
     if (userStore.isAuth) {
-      addErrorToast('Disconnected from wallet')
+      toast.add({ title: 'Disconnected from wallet', color: 'error' })
       logout()
     }
   }

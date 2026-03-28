@@ -104,7 +104,6 @@ import { ref, computed } from 'vue'
 import { z } from 'zod'
 import type { Member } from '@/types'
 import { useRouter } from 'vue-router'
-import { useToastStore } from '@/stores/useToastStore'
 import { useTeamStore } from '@/stores'
 import { useUserDataStore } from '@/stores/user'
 import { useUpdateTeamMutation, useDeleteTeamMutation } from '@/queries/team.queries'
@@ -114,7 +113,7 @@ const showModal = ref(false)
 const teamStore = useTeamStore()
 const currentTeam = computed(() => teamStore.currentTeamMeta.data)
 const { address } = useUserDataStore()
-const { addSuccessToast, addErrorToast } = useToastStore()
+const toast = useToast()
 
 const router = useRouter()
 const inputs = ref<Member[]>([])
@@ -148,11 +147,11 @@ const executeUpdateTeam = () => {
     },
     {
       onSuccess: () => {
-        addSuccessToast('Company updated successfully')
+        toast.add({ title: 'Company updated successfully', color: 'success' })
         showModal.value = false
       },
       onError: () => {
-        addErrorToast(updateTeamError.value?.message || 'Failed to update company')
+        toast.add({ title: updateTeamError.value?.message || 'Failed to update company', color: 'error' })
       }
     }
   )
@@ -161,7 +160,7 @@ const executeUpdateTeam = () => {
 const deleteTeam = async () => {
   const teamId = teamStore.currentTeamId
   if (!teamId) {
-    addErrorToast('Company ID is required')
+    toast.add({ title: 'Company ID is required', color: 'error' })
     return
   }
 
@@ -169,13 +168,13 @@ const deleteTeam = async () => {
     { pathParams: { teamId: String(teamId) } },
     {
       onSuccess: async () => {
-        addSuccessToast('Company deleted successfully')
+        toast.add({ title: 'Company deleted successfully', color: 'success' })
         showDeleteTeamConfirmModal.value = false
         // await new Promise((resolve) => setTimeout(resolve, 3000))
         router.push('/teams')
       },
       onError: () => {
-        addErrorToast(deleteTeamError.value?.message || 'Failed to delete company')
+        toast.add({ title: deleteTeamError.value?.message || 'Failed to delete company', color: 'error' })
       }
     }
   )

@@ -123,7 +123,7 @@ import { computed, ref } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
 import AddMemberForm from '@/components/sections/DashboardView/forms/AddMemberForm.vue'
 import { useUserDataStore } from '@/stores/user'
-import { useTeamStore, useToastStore } from '@/stores'
+import { useTeamStore } from '@/stores'
 import UserComponent from '@/components/UserComponent.vue'
 import { useToggleWageStatusMutation } from '@/queries/wage.queries'
 import { teamKeys } from '@/queries/team.queries'
@@ -139,7 +139,7 @@ type MemberRow = Member & {
 }
 
 const userDataStore = useUserDataStore()
-const toastStore = useToastStore()
+const toast = useToast()
 const teamStore = useTeamStore()
 const showAddMemberForm = ref({ mount: false, show: false })
 
@@ -156,10 +156,10 @@ const toggleWageStatus = (wage: Wage) => {
     { pathParams: { wageId: wage.id }, queryParams: { action } },
     {
       onSuccess: () => {
-        toastStore.addSuccessToast(`Wage ${actionLabel} successfully`)
+        toast.add({ title: `Wage ${actionLabel} successfully`, color: 'success' })
         queryClient.invalidateQueries({ queryKey: teamKeys.detail(String(teamId.value)) })
       },
-      onError: () => toastStore.addErrorToast(`Failed to ${action} wage`)
+      onError: () => toast.add({ title: `Failed to ${action} wage`, color: 'error' })
     }
   )
 }

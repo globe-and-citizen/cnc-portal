@@ -102,7 +102,6 @@ import { type Address } from 'viem'
 import { Icon as IconifyIcon } from '@iconify/vue'
 
 import { useSafeOwnerManagement } from '@/composables/safe'
-import { useToastStore } from '@/stores'
 
 const props = defineProps<{
   open: boolean
@@ -116,7 +115,7 @@ const emit = defineEmits<{
   'threshold-updated': []
 }>()
 
-const { addSuccessToast, addErrorToast } = useToastStore()
+const toast = useToast()
 
 const { isUpdating, updateOwners } = useSafeOwnerManagement()
 
@@ -167,7 +166,7 @@ const hasChanges = computed(() => formState.threshold !== props.currentThreshold
 // Methods
 const handleUpdateThreshold = async () => {
   if (!hasChanges.value) {
-    addErrorToast('No changes to apply')
+    toast.add({ title: 'No changes to apply', color: 'error' })
     return
   }
 
@@ -178,17 +177,13 @@ const handleUpdateThreshold = async () => {
     })
 
     if (txHash) {
-      addSuccessToast(
-        props.currentThreshold >= 2
-          ? 'Threshold update proposal submitted successfully'
-          : 'Threshold updated successfully'
-      )
+      toast.add({ title: props.currentThreshold >= 2 ? 'Threshold update proposal submitted successfully' : 'Threshold updated successfully', color: 'success' })
       emit('threshold-updated')
       handleClose()
     }
   } catch (error) {
     console.error('Failed to update threshold:', error)
-    addErrorToast('Failed to update threshold')
+    toast.add({ title: 'Failed to update threshold', color: 'error' })
   }
 }
 

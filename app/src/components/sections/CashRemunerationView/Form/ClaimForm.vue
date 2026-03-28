@@ -114,7 +114,6 @@ import type { ClaimFormData } from '@/types'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import FilePreviewGallery from '@/components/sections/CashRemunerationView/Form/FilePreviewGallery.vue'
-import { useToastStore } from '@/stores'
 import UploadFileDB from '@/components/sections/CashRemunerationView/Form/UploadFileDB.vue'
 
 interface FileData {
@@ -139,7 +138,7 @@ interface Props {
 dayjs.extend(utc)
 
 const MAX_FILES = 10
-const toastStore = useToastStore()
+const toast = useToast()
 
 const props = withDefaults(defineProps<Props>(), {
   isEdit: false,
@@ -296,9 +295,7 @@ const handleSubmit = async () => {
   // Validate total file count before emitting
   const totalFiles = (props.existingFiles?.length ?? 0) + uploadedFiles.value.length
   if (totalFiles > MAX_FILES) {
-    toastStore.addErrorToast(
-      `Maximum ${MAX_FILES} files allowed. Currently you have ${totalFiles} files. Please remove ${totalFiles - MAX_FILES} file(s).`
-    )
+    toast.add({ title: `Maximum ${MAX_FILES} files allowed. Currently you have ${totalFiles} files. Please remove ${totalFiles - MAX_FILES} file(s).`, color: 'error' })
     return
   }
 

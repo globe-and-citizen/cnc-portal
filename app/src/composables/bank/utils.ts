@@ -1,16 +1,15 @@
 import { isAddress, type Address } from 'viem'
-import { useToastStore } from '@/stores'
 
 /**
  * Validation utilities for Bank contract operations
  */
 
 export function useValidation() {
-  const { addErrorToast } = useToastStore()
+  const toast = useToast()
 
   const validateAmount = (amount: string) => {
     if (!amount || parseFloat(amount) <= 0) {
-      addErrorToast('Invalid amount')
+      toast.add({ title: 'Invalid amount', color: 'error' })
       return false
     }
     return true
@@ -18,7 +17,7 @@ export function useValidation() {
 
   const validateAddress = (address: Address, label = 'address') => {
     if (!isAddress(address)) {
-      addErrorToast(`Invalid ${label}`)
+      toast.add({ title: `Invalid ${label}`, color: 'error' })
       return false
     }
     return true

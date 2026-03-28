@@ -29,7 +29,7 @@
 import { computed, ref, watch, onMounted, watchEffect } from 'vue'
 import ClaimForm from '@/components/sections/CashRemunerationView/Form/ClaimForm.vue'
 import { useSubmitRestriction } from '@/composables'
-import { useToastStore, useTeamStore } from '@/stores'
+import { useTeamStore } from '@/stores'
 import type { Claim, ClaimFormData, ClaimSubmitPayload } from '@/types'
 import { useEditClaimWithFilesMutation } from '@/queries/weeklyClaim.queries'
 
@@ -42,7 +42,7 @@ const emit = defineEmits<{
 }>()
 
 const claimFormRef = ref<InstanceType<typeof ClaimForm> | null>(null)
-const toastStore = useToastStore()
+const toast = useToast()
 const teamStore = useTeamStore()
 const { isRestricted, checkRestriction } = useSubmitRestriction()
 
@@ -115,7 +115,7 @@ const {
 
 const updateClaim = async (data: ClaimSubmitPayload & { files?: File[] }) => {
   if (!teamId.value) {
-    toastStore.addErrorToast('Team not selected')
+    toast.add({ title: 'Team not selected', color: 'error' })
     return
   }
 
@@ -125,7 +125,7 @@ const updateClaim = async (data: ClaimSubmitPayload & { files?: File[] }) => {
     deletedFileIndexes: deletedFileIndexes.value
   })
 
-  toastStore.addSuccessToast('Claim updated successfully')
+  toast.add({ title: 'Claim updated successfully', color: 'success' })
   deletedFileIndexes.value = []
 
   claimFormRef.value?.resetForm()

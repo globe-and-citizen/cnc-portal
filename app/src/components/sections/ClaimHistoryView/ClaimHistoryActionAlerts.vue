@@ -85,7 +85,7 @@ import utc from 'dayjs/plugin/utc'
 import isoWeek from 'dayjs/plugin/isoWeek'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import type { Address } from 'viem'
-import { useTeamStore, useToastStore, useUserDataStore } from '@/stores'
+import { useTeamStore, useUserDataStore } from '@/stores'
 import { useGetTeamWagesQuery, useGetTeamWeeklyClaimsQuery } from '@/queries'
 import type { WeeklyClaim } from '@/types'
 import SubmitClaims from '../CashRemunerationView/SubmitClaims.vue'
@@ -104,7 +104,7 @@ const props = defineProps<Props>()
 
 const teamStore = useTeamStore()
 const userStore = useUserDataStore()
-const toastStore = useToastStore()
+const toast = useToast()
 
 const { data: teamWageData, error: teamWageDataError } = useGetTeamWagesQuery({
   queryParams: { teamId: computed(() => teamStore.currentTeamId) }
@@ -126,7 +126,7 @@ const hasWage = computed(() => {
 
 watch(teamWageDataError, (newVal) => {
   if (newVal) {
-    toastStore.addErrorToast('Failed to fetch user wage data')
+    toast.add({ title: 'Failed to fetch user wage data', color: 'error' })
   }
 })
 

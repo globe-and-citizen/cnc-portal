@@ -27,9 +27,7 @@ const {
   mockUseChainId,
   mockUseSafeSDK,
   mockLoadSafe,
-  mockMutation,
-  mockAddSuccessToast,
-  mockAddErrorToast
+  mockMutation
 } = vi.hoisted(() => ({
   mockUseConnection: vi.fn<[], MockConnection>(),
   mockUseChainId: vi.fn(() => ref(137)),
@@ -47,9 +45,7 @@ const {
       ],
       Promise<void>
     >()
-  } as MockMutation,
-  mockAddSuccessToast: vi.fn(),
-  mockAddErrorToast: vi.fn()
+  } as MockMutation
 }))
 
 // Mock external dependencies
@@ -64,13 +60,6 @@ vi.mock('@/queries/safe.mutations', () => ({
 
 vi.mock('../useSafeSdk', () => ({
   useSafeSDK: mockUseSafeSDK
-}))
-
-vi.mock('@/stores', () => ({
-  useToastStore: () => ({
-    addSuccessToast: mockAddSuccessToast,
-    addErrorToast: mockAddErrorToast
-  })
 }))
 
 vi.mock('viem', async (importOriginal) => {

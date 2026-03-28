@@ -27,7 +27,6 @@ import type { Address } from 'viem'
 import DistributeMintForm from '@/components/sections/SherTokenView/forms/DistributeMintForm.vue'
 import { INVESTOR_ABI } from '@/artifacts/abi/investors'
 import { useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
-import { useToastStore } from '@/stores'
 import { log } from '@/utils'
 
 interface Props {
@@ -40,7 +39,7 @@ const emit = defineEmits<{
   refetchShareholders: []
 }>()
 
-const { addErrorToast, addSuccessToast } = useToastStore()
+const toast = useToast()
 
 const modalState = ref({
   mount: false,
@@ -85,14 +84,14 @@ const handleSubmit = (
 watch(distributeMintError, () => {
   if (distributeMintError.value) {
     log.error('Failed to distribute mint', distributeMintError.value)
-    addErrorToast('Failed to distribute mint')
+    toast.add({ title: 'Failed to distribute mint', color: 'error' })
   }
 })
 
 watch([isConfirming, isSuccessDistributing], ([newIsConfirming, newIsSuccess]) => {
   if (!newIsConfirming && newIsSuccess) {
     emit('refetchShareholders')
-    addSuccessToast('Distributed mint successfully')
+    toast.add({ title: 'Distributed mint successfully', color: 'success' })
     closeModal()
   }
 })

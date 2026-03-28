@@ -5,7 +5,7 @@ import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
 import type { Address } from 'viem'
 import { useGetTeamWagesQuery } from '@/queries/wage.queries'
-import { mockTeamStore, mockToastStore, mockUserDataStore } from '@/tests/mocks/store.mock'
+import { mockTeamStore, mockToast, mockUserDataStore } from '@/tests/mocks/store.mock'
 import { NETWORK } from '@/constant'
 import type { Wage } from '@/types'
 
@@ -175,7 +175,7 @@ describe.skip('MemberSection.vue', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    mockToastStore.addErrorToast.mockClear()
+    mockToast.add.mockClear()
     createWrapper()
   })
 
@@ -307,7 +307,7 @@ describe.skip('MemberSection.vue', () => {
       mockWageError.value = new Error('New error')
       await wrapper.vm.$nextTick()
 
-      expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('Failed to fetch team wage data')
+      expect(mockToast.add).toHaveBeenCalledWith({ title: 'Failed to fetch team wage data', color: 'error' })
     })
   })
 

@@ -188,7 +188,6 @@ import { exportReceiptToExcel } from '@/utils/excelExport'
 // import { exportTransactionsToPdf, exportReceiptToPdf } from '@/utils/pdfExport'
 import { useTeamStore } from '@/stores'
 import { useCurrencyStore } from '@/stores/currencyStore'
-import { useToastStore } from '@/stores/useToastStore'
 import type { ReceiptData } from '@/utils/excelExport'
 import { onClickOutside } from '@vueuse/core'
 import { storeToRefs } from 'pinia'
@@ -216,7 +215,7 @@ const emit = defineEmits<{
   (e: 'receipt-click', data: ReceiptData): void
 }>()
 
-const toastStore = useToastStore()
+const toast = useToast()
 const currencyStore = useCurrencyStore()
 const teamStore = useTeamStore()
 const route = useRoute()
@@ -397,12 +396,10 @@ const formatReceiptData = (transaction: BaseTransaction): ReceiptData => {
 const handleReceiptExport = (receiptData: ReceiptData) => {
   try {
     const success = exportReceiptToExcel(receiptData)
-    toastStore.addSuccessToast(
-      success ? 'Receipt exported successfully' : 'Failed to export receipt'
-    )
+    toast.add({ title: success ? 'Receipt exported successfully' : 'Failed to export receipt', color: success ? 'success' : 'error' })
   } catch (error) {
     console.error('Error exporting receipt:', error)
-    toastStore.addErrorToast('Failed to export receipt')
+    toast.add({ title: 'Failed to export receipt', color: 'error' })
   }
 }
 

@@ -9,7 +9,7 @@ import { USDC_ADDRESS } from '@/constant'
 import { useSyncWeeklyClaimsMutation } from '@/queries'
 import {
   mockTeamStore,
-  mockToastStore,
+  mockToast,
   mockGetBalance,
   mockUseWriteContract,
   mockWagmiCore
@@ -108,7 +108,7 @@ describe('CRWithdrawClaim', () => {
     createWrapper()
     await clickWithdrawButton()
 
-    expect(mockToastStore.addSuccessToast).toHaveBeenCalledWith('Claim withdrawn')
+    expect(mockToast.add).toHaveBeenCalledWith({ title: 'Claim withdrawn', color: 'success' })
     expect(mockWagmiCore.waitForTransactionReceipt).toHaveBeenCalled()
   })
 
@@ -162,9 +162,7 @@ describe('CRWithdrawClaim', () => {
     createWrapper()
     await clickWithdrawButton()
 
-    expect(mockToastStore.addErrorToast).toHaveBeenCalledWith(
-      'Cash Remuneration EIP712 contract address not found'
-    )
+    expect(mockToast.add).toHaveBeenCalledWith({ title: 'Cash Remuneration EIP712 contract address not found', color: 'error' })
   })
 
   it('shows insufficient balance error before withdraw', async () => {
@@ -173,7 +171,7 @@ describe('CRWithdrawClaim', () => {
     createWrapper()
     await clickWithdrawButton()
 
-    expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('Insufficient balance')
+    expect(mockToast.add).toHaveBeenCalledWith({ title: 'Insufficient balance', color: 'error' })
     expect(mockGetBalance).toHaveBeenCalled()
   })
 
@@ -221,9 +219,7 @@ describe('CRWithdrawClaim', () => {
     createWrapper()
     await clickWithdrawButton()
 
-    expect(mockToastStore.addErrorToast).toHaveBeenCalledWith(
-      'Transaction failed: Failed to withdraw claim'
-    )
+    expect(mockToast.add).toHaveBeenCalledWith({ title: 'Transaction failed: Failed to withdraw claim', color: 'error' })
   })
 
   it('shows error when sync weekly claim fails', async () => {
@@ -240,7 +236,7 @@ describe('CRWithdrawClaim', () => {
     await clickWithdrawButton()
 
     expect(syncMutation.mutateAsync).toHaveBeenCalledWith({ queryParams: { teamId: '1' } })
-    expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('Failed to update Claim status')
+    expect(mockToast.add).toHaveBeenCalledWith({ title: 'Failed to update Claim status', color: 'error' })
   })
 
   it('shows token balance error when parsing revert', async () => {
@@ -249,7 +245,7 @@ describe('CRWithdrawClaim', () => {
     createWrapper()
     await clickWithdrawButton()
 
-    expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('Insufficient token balance')
+    expect(mockToast.add).toHaveBeenCalledWith({ title: 'Insufficient token balance', color: 'error' })
   })
 
   it('shows token support error when parsing revert', async () => {
@@ -258,9 +254,7 @@ describe('CRWithdrawClaim', () => {
     createWrapper()
     await clickWithdrawButton()
 
-    expect(mockToastStore.addErrorToast).toHaveBeenCalledWith(
-      'Add Token support: Token not supported'
-    )
+    expect(mockToast.add).toHaveBeenCalledWith({ title: 'Add Token support: Token not supported', color: 'error' })
   })
 
   it('shows parsed error for unknown failures', async () => {
@@ -269,6 +263,6 @@ describe('CRWithdrawClaim', () => {
     createWrapper()
     await clickWithdrawButton()
 
-    expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('Unknown failure')
+    expect(mockToast.add).toHaveBeenCalledWith({ title: 'Unknown failure', color: 'error' })
   })
 })

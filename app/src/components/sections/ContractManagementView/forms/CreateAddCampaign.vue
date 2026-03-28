@@ -65,7 +65,6 @@ import { ref, watch } from 'vue'
 
 import { useDeployContract } from '@/composables/useContractFunctions'
 import { useUserDataStore } from '@/stores/user'
-import { useToastStore } from '@/stores'
 import { useTeamStore } from '@/stores'
 import { AD_CAMPAIGN_MANAGER_ABI } from '@/artifacts/abi/ad-campaign-manager'
 import { CAMPAIGN_BYTECODE } from '@/artifacts/bytecode/adCampaignManager.ts'
@@ -74,7 +73,7 @@ import { useCreateContractMutation } from '@/queries/contract.queries'
 import { useQueryClient } from '@tanstack/vue-query'
 
 const emit = defineEmits(['closeAddCampaignModal'])
-const { addErrorToast, addSuccessToast } = useToastStore()
+const toast = useToast()
 
 const campaignBytecode = CAMPAIGN_BYTECODE as Hex
 const teamStore = useTeamStore()
@@ -120,11 +119,11 @@ watch(contractAddress, async (newAddress) => {
       })
 
       // Only show success and close modal if everything succeeds
-      addSuccessToast(`Contract deployed and added to team successfully`)
+      toast.add({ title: `Contract deployed and added to team successfully`, color: 'success' })
       emit('closeAddCampaignModal')
     } catch (error) {
       console.error('Failed to add contract to team:', error)
-      addErrorToast('Contract deployed but failed to add to team. Please try again.')
+      toast.add({ title: 'Contract deployed but failed to add to team. Please try again.', color: 'error' })
     }
   }
 })
@@ -132,11 +131,11 @@ watch(contractAddress, async (newAddress) => {
 // Trigger deployment
 const deployAdCampaign = async () => {
   if (!costPerClick.value || !costPerImpression.value) {
-    addErrorToast('Please enter valid numeric values for both rates.')
+    toast.add({ title: 'Please enter valid numeric values for both rates.', color: 'error' })
     return
   }
   if (!bankAddress) {
-    addErrorToast('Bank address is missing.')
+    toast.add({ title: 'Bank address is missing.', color: 'error' })
     return
   }
   await deploy(bankAddress, costPerClick.value, costPerImpression.value)
@@ -146,7 +145,7 @@ const deployAdCampaign = async () => {
     if (errorMessage.includes('User rejected the request')) {
       errorMessage = 'User rejected the request'
     }
-    addErrorToast(`${errorMessage}`)
+    toast.add({ title: `${errorMessage}`, color: 'error' })
   }
 }
 

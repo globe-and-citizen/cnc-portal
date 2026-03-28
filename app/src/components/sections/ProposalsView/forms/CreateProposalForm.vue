@@ -65,14 +65,13 @@ import { reactive, computed, watch } from 'vue'
 import { z } from 'zod'
 import { useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
 import { useTeamStore } from '@/stores'
-import { useToastStore } from '@/stores/useToastStore'
 import { PROPOSALS_ABI } from '@/artifacts/abi/proposals'
 import { type Address } from 'viem'
 
 const emit = defineEmits(['closeModal', 'proposal-created'])
 
 const teamStore = useTeamStore()
-const { addSuccessToast, addErrorToast } = useToastStore()
+const toast = useToast()
 
 const state = reactive({
   title: '',
@@ -147,13 +146,13 @@ const handleSubmit = async () => {
     })
   } catch (error) {
     console.error('Error creating proposal:', error)
-    addErrorToast('Failed to create proposal')
+    toast.add({ title: 'Failed to create proposal', color: 'error' })
   }
 }
 
 watch(isProposalCreated, (success) => {
   if (success) {
-    addSuccessToast('Proposal created successfully!')
+    toast.add({ title: 'Proposal created successfully!', color: 'success' })
     emit('proposal-created')
   }
 })
@@ -165,6 +164,6 @@ watch(createError, (error) => {
 
 watch(errorConfirmingProposal, (error) => {
   if (!error) return
-  addErrorToast('Failed to confirm proposal creation')
+  toast.add({ title: 'Failed to confirm proposal creation', color: 'error' })
 })
 </script>

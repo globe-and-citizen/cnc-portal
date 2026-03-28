@@ -61,7 +61,7 @@ import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from 
 import SelectMemberContractsInput from '@/components/utils/SelectMemberContractsInput.vue'
 import { INVESTOR_ABI } from '@/artifacts/abi/investors'
 import { computed, watch } from 'vue'
-import { useTeamStore, useToastStore } from '@/stores'
+import { useTeamStore } from '@/stores'
 import { log } from '@/utils'
 import { useQueryClient } from '@tanstack/vue-query'
 
@@ -77,7 +77,7 @@ const props = defineProps<{
 
 const queryClient = useQueryClient()
 const teamStore = useTeamStore()
-const { addSuccessToast, addErrorToast } = useToastStore()
+const toast = useToast()
 
 const investorsAddress = computed(() => teamStore.getContractAddressByType('InvestorV1'))
 
@@ -129,7 +129,7 @@ onMounted(() => {
 
 watch(isConfirmingMint, async (isConfirming, wasConfirming) => {
   if (wasConfirming && !isConfirming && isSuccessMinting.value) {
-    addSuccessToast('Minted successfully')
+    toast.add({ title: 'Minted successfully', color: 'success' })
     await queryClient.invalidateQueries({
       queryKey: ['readContract']
     })
@@ -142,14 +142,14 @@ watch(isConfirmingMint, async (isConfirming, wasConfirming) => {
 watch(mintError, (value) => {
   if (value) {
     log.error('Failed to mint', value)
-    addErrorToast('Failed to mint')
+    toast.add({ title: 'Failed to mint', color: 'error' })
   }
 })
 
 watch(tokenSymbolError, (value) => {
   if (value) {
     log.error('Error fetching token symbol', value)
-    addErrorToast('Error fetching token symbol')
+    toast.add({ title: 'Error fetching token symbol', color: 'error' })
   }
 })
 </script>

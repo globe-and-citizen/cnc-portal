@@ -11,7 +11,7 @@ import {
   mockExpenseAccountReads,
   mockExpenseAccountWrites,
   mockTeamStore,
-  mockToastStore,
+  mockToast,
   mockUseChainId,
   mockUseContractBalance,
   mockUserStore,
@@ -186,7 +186,7 @@ describe('OwnerTreasuryWithdrawAction', () => {
     await nextTick()
     mockCashRemunerationWrites.ownerWithdrawNative.receiptResult.isLoading.value = false
     await nextTick()
-    expect(mockToastStore.addSuccessToast).toHaveBeenCalledWith('Withdraw successful')
+    expect(mockToast.add).toHaveBeenCalledWith({ title: 'Withdraw successful', color: 'success' })
     expect(invalidateQueries).toHaveBeenCalled()
   })
 
@@ -224,9 +224,7 @@ describe('OwnerTreasuryWithdrawAction', () => {
 
     mockBodAddAction.isActionAdded.value = true
     await nextTick()
-    expect(mockToastStore.addSuccessToast).toHaveBeenCalledWith(
-      'Action added successfully, waiting for board confirmation'
-    )
+    expect(mockToast.add).toHaveBeenCalledWith({ title: 'Action added successfully, waiting for board confirmation', color: 'success' })
   })
 
   it.skip('covers early-return and error handling paths', async () => {
@@ -254,6 +252,6 @@ describe('OwnerTreasuryWithdrawAction', () => {
     await flushPromises()
 
     expect(mockCashRemunerationWrites.ownerWithdrawToken.executeWrite).not.toHaveBeenCalled()
-    expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('Short withdraw error')
+    expect(mockToast.add).toHaveBeenCalledWith({ title: 'Short withdraw error', color: 'error' })
   })
 })

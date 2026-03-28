@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { defineComponent } from 'vue'
 import { createTestingPinia } from '@pinia/testing'
 import ClaimForm from '@/components/sections/CashRemunerationView/Form/ClaimForm.vue'
-import { useToastStore } from '@/stores'
+import { mockToast } from '@/tests/mocks'
 
 const resetUploadMock = vi.fn()
 const UploadFileDBStub = defineComponent({
@@ -25,7 +25,6 @@ const FilePreviewGalleryStub = defineComponent({
     '<div data-test="file-preview-gallery">{{ JSON.stringify(previews) }}<button data-test="remove-preview" @click="$emit(\'remove\', 1)" /></div>'
 })
 
-const errorToastMock = vi.fn()
 const defaultProps = { isEdit: false, isLoading: false }
 
 const createWrapper = (props = {}) =>
@@ -60,10 +59,6 @@ describe('ClaimForm.vue', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     resetUploadMock.mockClear()
-    vi.mocked(useToastStore).mockReturnValue({
-      addErrorToast: errorToastMock,
-      addSuccessToast: vi.fn()
-    } as ReturnType<typeof useToastStore>)
   })
 
   it('handles edit actions and prop updates', async () => {
@@ -189,9 +184,10 @@ describe('ClaimForm.vue', () => {
     await flushPromises()
 
     expect(wrapper.emitted('submit')).toBeFalsy()
-    expect(errorToastMock).toHaveBeenCalledWith(
-      'Maximum 10 files allowed. Currently you have 11 files. Please remove 1 file(s).'
-    )
+    expect(mockToast.add).toHaveBeenCalledWith({
+      title: 'Maximum 10 files allowed. Currently you have 11 files. Please remove 1 file(s).',
+      color: 'error'
+    })
   })
 
   it('maps previews, emits delete-file, and supports nullish props', async () => {
