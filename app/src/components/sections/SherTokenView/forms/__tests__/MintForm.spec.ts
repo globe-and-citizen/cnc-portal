@@ -124,5 +124,4 @@ describe.skip('MintForm', () => {
     expect(errorMessage.exists()).toBeTruthy()
     expect(errorMessage.text()).toBe('Value is required')
   })
-
 })

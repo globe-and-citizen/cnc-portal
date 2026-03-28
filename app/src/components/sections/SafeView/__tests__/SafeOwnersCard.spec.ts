@@ -102,7 +102,6 @@ const SELECTORS = {
   openSafeAppFooter: '[data-test="open-safe-app-footer"]'
 } as const
 
-
 const AddressToolTipStub = defineComponent({
   props: ['address'],
   template: '<div data-test="address-tooltip">{{ address }}</div>'

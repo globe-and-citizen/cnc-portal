@@ -47,7 +47,6 @@ describe('VestingFlow.vue', () => {
       const table = wrapper.find('[data-test="vesting-overview"]')
       expect(table.exists()).toBe(true)
     })
-
   })
 
   describe('Vesting Actions', () => {

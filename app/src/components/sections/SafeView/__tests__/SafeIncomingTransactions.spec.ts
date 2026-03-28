@@ -82,7 +82,6 @@ const MOCK_DATA = {
   ] as SafeIncomingTransfer[]
 } as const
 
-
 const TableStub = defineComponent({
   props: ['rows', 'columns', 'loading', 'showPagination', 'itemsPerPageProp', 'emptyState'],
   template: `

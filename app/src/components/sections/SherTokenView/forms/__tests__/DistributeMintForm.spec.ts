@@ -172,6 +172,5 @@ describe.skip('DistributeMintForm', () => {
     // Now trigger the error by updating the ref
     mockError.value = new Error('Search failed')
     await wrapper.vm.$nextTick()
-
   })
 })
