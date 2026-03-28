@@ -131,6 +131,11 @@ const {
   error: updateTeamError,
   mutate: updateTeamMutate
 } = useUpdateTeamMutation()
+const {
+  mutate: deleteTeamMutate,
+  isPending: teamIsDeleting,
+  error: deleteTeamError
+} = useDeleteTeamMutation()
 
 const executeUpdateTeam = () => {
   updateTeamMutate(
@@ -153,12 +158,6 @@ const executeUpdateTeam = () => {
   )
 }
 
-const {
-  mutate: deleteTeamMutate,
-  isPending: teamIsDeleting,
-  error: deleteTeamError
-} = useDeleteTeamMutation()
-
 const deleteTeam = async () => {
   const teamId = teamStore.currentTeamId
   if (!teamId) {
@@ -172,7 +171,7 @@ const deleteTeam = async () => {
       onSuccess: async () => {
         addSuccessToast('Company deleted successfully')
         showDeleteTeamConfirmModal.value = false
-        await new Promise((resolve) => setTimeout(resolve, 3000))
+        // await new Promise((resolve) => setTimeout(resolve, 3000))
         router.push('/teams')
       },
       onError: () => {
