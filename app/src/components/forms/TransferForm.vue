@@ -106,8 +106,8 @@ const emit = defineEmits<{
 
 const isAmountValid = ref(false)
 
-const selectedTokenId = computed<string>({
-  get: () => model.value.token?.tokenId ?? 'usdc',
+const selectedTokenId = computed<TokenId>({
+  get: () => (model.value.token?.tokenId ?? 'usdc') as TokenId,
   set: (id) => {
     const token = props.tokens.find((t) => t.tokenId === id)
     if (token) model.value.token = token
@@ -116,7 +116,7 @@ const selectedTokenId = computed<string>({
 
 const tokenAmountModel = computed({
   get: () => ({ amount: model.value.amount ?? '', tokenId: selectedTokenId.value }),
-  set: (value: { amount: string; tokenId: string }) => {
+  set: (value: { amount: string; tokenId: TokenId }) => {
     model.value.amount = value.amount ?? ''
     selectedTokenId.value = value.tokenId ?? selectedTokenId.value
   }

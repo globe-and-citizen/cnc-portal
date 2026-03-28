@@ -71,7 +71,7 @@
             </template>
           </UFormField>
           <USelect
-            v-model="selectedTokenId"
+            v-model="selectedTokenId as TokenId"
             :items="tokenOptions"
             :disabled="isLoading || tokenOptions.length === 1"
             data-test="tokenSelect"
@@ -90,18 +90,19 @@ import { z } from 'zod'
 import { formatCurrencyShort } from '@/utils/currencyUtil'
 import { useStorage } from '@vueuse/core'
 import type { TokenOption } from '@/types'
+import { type TokenId } from '@/constant'
 
 const props = defineProps<{
   tokens: TokenOption[]
   modelValue: {
     amount: string
-    tokenId: string
+    tokenId: TokenId
   }
   isLoading?: boolean
 }>()
 
 const emits = defineEmits<{
-  (e: 'update:modelValue', value: { amount: string; tokenId: string }): void
+  (e: 'update:modelValue', value: { amount: string; tokenId: TokenId }): void
   (e: 'validation', isValid: boolean): void
 }>()
 
@@ -125,7 +126,7 @@ const selectedTokenId = computed({
   set: (val: string) =>
     emits('update:modelValue', {
       amount: props.modelValue?.amount ?? '',
-      tokenId: val
+      tokenId: val as TokenId
     })
 })
 

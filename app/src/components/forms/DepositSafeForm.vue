@@ -98,9 +98,9 @@ const amount = ref<string>('')
 const selectedTokenId = ref<TokenId>('native')
 const tokenAmountModel = computed({
   get: () => ({ amount: amount.value, tokenId: selectedTokenId.value }),
-  set: (value: { amount: string; tokenId: TokenId | string }) => {
+  set: (value: { amount: string; tokenId: TokenId }) => {
     amount.value = value.amount ?? ''
-    selectedTokenId.value = (value.tokenId as TokenId) ?? 'native'
+    selectedTokenId.value = value.tokenId ?? 'native'
   }
 })
 const currentStep = ref(0)

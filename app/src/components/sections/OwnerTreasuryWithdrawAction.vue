@@ -63,7 +63,7 @@ import { useExpenseAccountContractWrite } from '@/composables/expenseAccount/wri
 import { CASH_REMUNERATION_EIP712_ABI } from '@/artifacts/abi/cash-remuneration-eip712'
 import { EXPENSE_ACCOUNT_EIP712_ABI } from '@/artifacts/abi/expense-account-eip712'
 import { useTeamStore, useToastStore, useUserDataStore } from '@/stores'
-import { SUPPORTED_TOKENS } from '@/constant'
+import { SUPPORTED_TOKENS, type TokenId } from '@/constant'
 import type { ContractType, TokenOption } from '@/types'
 import { useBodAddAction } from '@/composables/bod/writes'
 import { useBodIsBodAction } from '@/composables/bod/reads'
@@ -90,10 +90,10 @@ const chainId = useChainId()
 const showModal = ref({ mount: false, show: false })
 const isAmountValid = ref(false)
 const withdrawAmount = ref('0')
-const selectedTokenId = ref('native')
+const selectedTokenId = ref<TokenId>('native')
 const tokenAmountModel = computed({
   get: () => ({ amount: withdrawAmount.value, tokenId: selectedTokenId.value }),
-  set: (value: { amount: string; tokenId: string }) => {
+  set: (value: { amount: string; tokenId: TokenId }) => {
     withdrawAmount.value = value.amount ?? ''
     selectedTokenId.value = value.tokenId ?? 'native'
   }
