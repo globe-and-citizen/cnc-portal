@@ -82,11 +82,7 @@
       :close="{ onClick: () => closeDepositModal() }"
     >
       <template #body>
-        <DepositSafeForm
-          v-if="address"
-          :safe-address="address"
-          @close-modal="closeDepositModal"
-        />
+        <DepositSafeForm v-if="address" :safe-address="address" @close-modal="closeDepositModal" />
       </template>
     </UModal>
 

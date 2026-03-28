@@ -1,6 +1,11 @@
 <!-- DepositModal.vue -->
 <template>
-  <UModal v-model:open="isOpen" data-test="deposit-modal" title="Deposit to Bank Contract" description="Deposit assets to the Bank contract to fund your team’s operations.">
+  <UModal
+    v-model:open="isOpen"
+    data-test="deposit-modal"
+    title="Deposit to Bank Contract"
+    description="Deposit assets to the Bank contract to fund your team’s operations."
+  >
     <UButton
       color="secondary"
       leading-icon="heroicons-outline:plus"
@@ -9,10 +14,7 @@
     />
 
     <template #body>
-      <DepositSafeForm
-        :safe-address="bankAddress"
-        @close-modal="isOpen = false"
-      />
+      <DepositSafeForm :safe-address="bankAddress" @close-modal="isOpen = false" />
     </template>
   </UModal>
 </template>
