@@ -9,7 +9,6 @@ describe('GenericTokenHoldingsSection', () => {
       global: {
         components: {
           TableComponent: { template: '<div class="table"><slot /></div>' },
-          CardComponent: { template: '<div class="card"><slot /></div>' }
         }
       }
     })

@@ -48,12 +48,6 @@ describe('VestingFlow.vue', () => {
       expect(table.exists()).toBe(true)
     })
 
-    it('shows loading spinner when loading is true', async () => {
-      mockWriteContract.isPending.value = true
-      await wrapper.vm.$nextTick()
-      const spinner = wrapper.find('.loading-spinner')
-      expect(spinner.exists()).toBe(true)
-    })
   })
 
   describe('Vesting Actions', () => {

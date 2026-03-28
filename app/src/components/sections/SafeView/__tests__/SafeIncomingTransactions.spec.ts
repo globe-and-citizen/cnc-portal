@@ -82,10 +82,6 @@ const MOCK_DATA = {
   ] as SafeIncomingTransfer[]
 } as const
 
-// Component stubs
-const CardStub = defineComponent({
-  template: '<div data-test="card-component"><slot /></div>'
-})
 
 const TableStub = defineComponent({
   props: ['rows', 'columns', 'loading', 'showPagination', 'itemsPerPageProp', 'emptyState'],
@@ -112,7 +108,6 @@ const createWrapper = (props = {}): VueWrapper =>
     props: { address: MOCK_DATA.safeAddress, ...props },
     global: {
       stubs: {
-        CardComponent: CardStub,
         TableComponent: TableStub,
         AddressToolTip: AddressToolTipStub
       }

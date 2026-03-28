@@ -106,12 +106,6 @@ describe.skip('MemberSection.vue', () => {
     wrapper = mount(MemberSection, {
       global: {
         stubs: {
-          CardComponent: {
-            name: 'CardComponent',
-            props: ['title'],
-            template:
-              '<div data-test="card-component"><div data-test="card-title">{{ title }}</div><slot name="card-action" /><slot /></div>'
-          },
           TableComponent: {
             name: 'TableComponent',
             props: ['rows', 'loading', 'columns'],
@@ -210,12 +204,6 @@ describe.skip('MemberSection.vue', () => {
   })
 
   describe('Component Rendering', () => {
-    it('renders the card title correctly', () => {
-      const card = wrapper.findComponent({ name: 'CardComponent' })
-      expect(card.exists()).toBe(true)
-      expect(card.props('title')).toBe('Team Members List')
-    })
-
     it('renders table with correct columns when user is owner', () => {
       createWrapper('0x1234' as Address, '0x1234' as Address)
       const table = wrapper.findComponent({ name: 'TableComponent' })

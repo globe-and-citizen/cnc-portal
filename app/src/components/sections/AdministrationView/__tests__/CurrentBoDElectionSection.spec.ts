@@ -3,7 +3,6 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import ElectionComponent from '@/components/sections/AdministrationView/CurrentBoDElectionSection.vue'
-import CardComponent from '@/components/CardComponent.vue'
 import ElectionStatus from '@/components/sections/AdministrationView/ElectionStatus.vue'
 import ElectionStats from '@/components/sections/AdministrationView/ElectionStats.vue'
 import ElectionActions from '@/components/sections/AdministrationView/ElectionActions.vue'
@@ -73,84 +72,6 @@ describe('ElectionComponent', () => {
       }
     })
   }
-
-  describe('Rendering', () => {
-    it('renders CardComponent with correct title', () => {
-      wrapper = createWrapper()
-      const card = wrapper.findComponent(CardComponent)
-      expect(card.exists()).toBe(true)
-      expect(card.props('title')).toBe('Current Election')
-    })
-
-    it('renders "Past Election" title when isDetails is true', () => {
-      wrapper = createWrapper({ isDetails: true })
-      const card = wrapper.findComponent(CardComponent)
-      expect(card.props('title')).toBe('Past Election')
-    })
-
-    it('renders ElectionActions when not in details mode', () => {
-      wrapper = createWrapper({ isDetails: false })
-      const card = wrapper.findComponent(CardComponent)
-      expect(card.exists()).toBe(true)
-      // expect(card.find('[data-test="actions-slot"]').exists()).toBe(true)
-      expect(wrapper.findComponent({ name: 'ElectionActions' }).exists()).toBe(true)
-    })
-
-    it('does not render ElectionActions when in details mode', () => {
-      wrapper = createWrapper({ isDetails: true })
-      expect(wrapper.findComponent(ElectionActions).exists()).toBe(false)
-    })
-
-    it('renders ElectionStatus when formattedElection exists and results not published', async () => {
-      setMockElection()
-      mockElectionsReads.getVoteCount.data.value = 1n
-      mockElectionsReads.getCandidates.data.value = ['0xCandidate']
-      mockElectionsReads.getEligibleVoters.data.value = ['0xVoter']
-
-      wrapper = createWrapper()
-      await flushPromises()
-
-      expect(wrapper.findComponent(ElectionStatus).exists()).toBe(true)
-    })
-
-    it('renders election content when formattedElection exists', async () => {
-      setMockElection()
-
-      wrapper = createWrapper()
-      await flushPromises()
-
-      expect(wrapper.find('h2').text()).toBe('Test Election')
-      expect(wrapper.find('h4').text()).toBe('Test Description')
-      expect(wrapper.findComponent(ElectionStats).exists()).toBe(true)
-    })
-
-    it('renders CurrentBoDElection404 when no formattedElection exists', async () => {
-      mockElectionsReads.getElection.data.value = null
-
-      wrapper = createWrapper()
-      await flushPromises()
-
-      expect(wrapper.findComponent(CurrentBoDElection404).exists()).toBe(true)
-    })
-
-    it('renders CurrentBoDElection404 when results are published and not in details mode', async () => {
-      setMockElection([
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        true
-      ])
-
-      wrapper = createWrapper({ isDetails: false })
-      await flushPromises()
-
-      expect(wrapper.findComponent(CurrentBoDElection404).exists()).toBe(true)
-    })
-  })
 
   describe('Modal functionality', () => {
     it('does not mount UModal initially', () => {

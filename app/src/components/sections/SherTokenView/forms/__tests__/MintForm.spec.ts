@@ -3,7 +3,6 @@ import { describe, expect, it, vi } from 'vitest'
 import MintForm from '../../../SherTokenView/forms/MintForm.vue'
 import type { Address } from 'viem'
 import { createTestingPinia } from '@pinia/testing'
-import { mockToastStore } from '@/tests/mocks/store.mock'
 
 interface Props {
   address: Address | undefined
@@ -18,8 +17,6 @@ interface ComponentData {
   foundUsers: { address: string; name: string }[]
   searchError: unknown
 }
-
-// vi.mock('@/stores/useToastStore')
 
 describe.skip('MintForm', () => {
   const createComponent = (props?: Partial<Props>) => {
@@ -128,13 +125,4 @@ describe.skip('MintForm', () => {
     expect(errorMessage.text()).toBe('Value is required')
   })
 
-  it('should add error toast if there is an error when searching users', async () => {
-    // const { addErrorToast } = useToastStore()
-    const wrapper = createComponent()
-
-    ;(wrapper.vm as unknown as ComponentData).searchError = 'error'
-    await wrapper.vm.$nextTick()
-
-    expect(mockToastStore.addErrorToast).toHaveBeenCalled()
-  })
 })

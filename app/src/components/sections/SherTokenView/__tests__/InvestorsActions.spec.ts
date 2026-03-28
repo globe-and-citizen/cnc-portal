@@ -55,7 +55,6 @@ describe('InvestorsActions.vue', () => {
       global: {
         plugins: [createTestingPinia({ createSpy: vi.fn })],
         stubs: {
-          CardComponent: { template: '<div><slot /></div>' },
           AddressToolTip: true,
           DistributeMintAction: DistributeMintActionStub,
           MintTokenAction: MintTokenActionStub,
