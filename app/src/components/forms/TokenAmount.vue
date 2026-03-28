@@ -90,7 +90,6 @@ import { z } from 'zod'
 import { formatCurrencyShort } from '@/utils/currencyUtil'
 import { useStorage } from '@vueuse/core'
 import type { TokenOption } from '@/types'
-import { type TokenId } from '@/constant'
 
 const props = defineProps<{
   tokens: TokenOption[]
