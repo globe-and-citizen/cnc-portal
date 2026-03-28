@@ -3,14 +3,11 @@ import { mount, type VueWrapper } from '@vue/test-utils'
 import VestingFlow from '@/components/sections/VestingView/VestingFlow.vue'
 import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
-import { parseUnits } from 'viem'
 import { VESTING_ADDRESS } from '@/constant'
 //import VestingStatusFilter from '@/components/sections/VestingView/VestingStatusFilter.vue'
 import VestingActions from '@/components/sections/VestingView/VestingActions.vue'
-import { mockUseContractBalance } from '@/tests/mocks/composables.mock'
 // Mock Constants
 const memberAddress = '0x000000000000000000000000000000000000dead'
-const mockSymbol = ref('SHR')
 const mockReloadKey = ref(0)
 
 // Mock Contract Write
@@ -20,35 +17,6 @@ const mockWriteContract = {
   isPending: ref(false),
   data: ref(null)
 }
-
-// Mock Vesting Data
-const mockVestingInfos = ref([
-  [memberAddress],
-  [
-    {
-      start: Math.floor(Date.now() / 1000).toString(),
-      duration: (30 * 86400).toString(),
-      cliff: '0',
-      totalAmount: parseUnits('10', 6),
-      released: parseUnits('2', 6),
-      active: true
-    }
-  ]
-])
-
-const mockArchivedVestingInfos = ref([
-  [memberAddress],
-  [
-    {
-      start: Math.floor(Date.now() / 1000 - 86400).toString(),
-      duration: (30 * 86400).toString(),
-      cliff: '0',
-      totalAmount: parseUnits('5', 6),
-      released: parseUnits('5', 6),
-      active: false
-    }
-  ]
-])
 
 // Mock Transaction Receipt
 const mockWaitForReceipt = {
