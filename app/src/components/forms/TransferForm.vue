@@ -4,7 +4,7 @@
   <UForm
     :schema="validationSchema"
     :state="{ amount: model.amount }"
-    class="mt-4 flex flex-col gap-4"
+    class="flex flex-col gap-4"
     @submit="submitForm"
   >
     <SelectMemberContractsInput v-model="model.address" @selectItem="handleSelectItem" />
