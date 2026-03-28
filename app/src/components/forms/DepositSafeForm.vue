@@ -77,7 +77,7 @@ const props = defineProps<{
 function reset() {
   amount.value = ''
   selectedTokenId.value = 'native'
-  currentStep.value = 1
+  currentStep.value = 0
   submitting.value = false
   isAmountValid.value = false
 }
@@ -94,11 +94,11 @@ const tokenAmountModel = computed({
     selectedTokenId.value = (value.tokenId as TokenId) ?? 'native'
   }
 })
-const currentStep = ref(1)
+const currentStep = ref(0)
 const stepperItems = [
-  { title: 'Amount', value: 1 },
-  { title: 'Approval', value: 2 },
-  { title: 'Deposit', value: 3 }
+  { title: 'Amount', value: 0 },
+  { title: 'Approval', value: 1 },
+  { title: 'Deposit', value: 2 }
 ]
 const submitting = ref(false)
 const isAmountValid = ref(false)
@@ -154,7 +154,7 @@ const selectedToken = computed(() =>
   balances.value.find((b) => b.token.id === selectedTokenId.value)
 )
 const submitLabel = computed(() =>
-  selectedToken.value?.token.id !== 'native' && currentStep.value === 2 ? 'Approval' : 'Deposit'
+  selectedToken.value?.token.id !== 'native' && currentStep.value === 1 ? 'Approval' : 'Deposit'
 )
 const selectedTokenAddress = computed<Address>(
   () => selectedToken.value?.token.address ?? zeroAddress
@@ -214,7 +214,7 @@ const submitForm = async () => {
     } else {
       // USDC deposit workflow - step 1 to 2 to 3 in one execution
       if (!(allowanceValue.value >= bigIntAmount.value)) {
-        currentStep.value = 2
+        currentStep.value = 1
 
         // Run spending cap approval and wait for confirmation
         await ERC20ApproveResult.executeWrite([props.safeAddress, bigIntAmount.value])
@@ -227,7 +227,7 @@ const submitForm = async () => {
       }
 
       // Step 3: Proceed to transfer (continue from step 2 if approval was done)
-      currentStep.value = 3
+      currentStep.value = 2
 
       // Transfer USDC to Safe (not deposit to a bank contract)
       if (selectedTokenId.value === 'usdc.e') {
