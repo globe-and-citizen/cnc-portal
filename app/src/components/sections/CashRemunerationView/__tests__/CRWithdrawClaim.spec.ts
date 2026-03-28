@@ -7,13 +7,7 @@ import CRWithdrawClaim from '../CRWithdrawClaim.vue'
 import type { WeeklyClaim } from '@/types'
 import { USDC_ADDRESS } from '@/constant'
 import { useSyncWeeklyClaimsMutation } from '@/queries'
-import {
-  mockTeamStore,
-  mockToast,
-  mockGetBalance,
-  mockUseWriteContract,
-  mockWagmiCore
-} from '@/tests/mocks'
+import { mockTeamStore, mockGetBalance, mockUseWriteContract, mockWagmiCore } from '@/tests/mocks'
 
 type WrapperProps = {
   weeklyClaim: WeeklyClaim

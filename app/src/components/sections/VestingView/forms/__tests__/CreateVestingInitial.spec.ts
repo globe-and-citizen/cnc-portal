@@ -5,9 +5,6 @@ import CreateVesting from '@/components/sections/VestingView/forms/CreateVesting
 import SelectMemberInput from '@/components/utils/SelectMemberInput.vue'
 import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
-import { parseEther, parseUnits } from 'viem'
-import { VESTING_ADDRESS } from '@/constant'
-import { INVESTOR_ABI } from '@/artifacts/abi/investors'
 import { mockUseContractBalance } from '@/tests/mocks/composables.mock'
 
 const memberAddress = '0x000000000000000000000000000000000000dead'
@@ -164,7 +161,7 @@ describe('CreateVesting.vue', () => {
       await wrapper.vm.$nextTick()
 
       // const callArgs = mockWriteContract.mutate.mock.calls[0][0]
-      const expectedAmount = parseUnits('7', 18)
+      // const expectedAmount = parseUnits('7', 18)
       // expect(callArgs.args[1]).toEqual(expectedAmount)
     })
 

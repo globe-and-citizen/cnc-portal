@@ -7,7 +7,7 @@ import EditClaims from '@/components/sections/CashRemunerationView/EditClaims.vu
 import { useEditClaimWithFilesMutation } from '@/queries/weeklyClaim.queries'
 import type { Claim } from '@/types'
 import type { Address } from 'viem'
-import { mockTeamStore, mockToast } from '@/tests/mocks'
+import { mockTeamStore } from '@/tests/mocks'
 import { createMockMutationResponse } from '@/tests/mocks/query.mock'
 
 const SUBMIT_PAYLOAD = {

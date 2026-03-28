@@ -9,7 +9,7 @@ import { parseError } from '@/utils'
 import * as utils from '@/utils'
 import { EXPENSE_ACCOUNT_EIP712_ABI } from '@/artifacts/abi/expense-account-eip712'
 import TransferAction from '../TransferAction.vue'
-import { mockToast, useWriteContractFn, useWaitForTransactionReceiptFn } from '@/tests/mocks'
+import { useWriteContractFn, useWaitForTransactionReceiptFn } from '@/tests/mocks'
 
 const { simulateContractMock } = vi.hoisted(() => ({
   simulateContractMock: vi.fn()

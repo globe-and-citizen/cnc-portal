@@ -3,7 +3,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { defineComponent } from 'vue'
 import { createTestingPinia } from '@pinia/testing'
 import ClaimForm from '@/components/sections/CashRemunerationView/Form/ClaimForm.vue'
-import { mockToast } from '@/tests/mocks'
 
 const resetUploadMock = vi.fn()
 const UploadFileDBStub = defineComponent({

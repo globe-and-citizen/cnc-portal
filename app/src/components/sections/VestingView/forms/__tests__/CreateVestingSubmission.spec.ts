@@ -9,7 +9,6 @@ import { parseEther, parseUnits } from 'viem'
 import { VESTING_ADDRESS } from '@/constant'
 import { INVESTOR_ABI } from '@/artifacts/abi/investors'
 import { mockUseContractBalance } from '@/tests/mocks/composables.mock'
-import { mockToast } from '@/tests/mocks'
 
 // vi.mock('@/artifacts/abi/InvestorV1', () => MOCK_INVESTOR_ABI)
 // Constants
