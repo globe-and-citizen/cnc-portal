@@ -78,12 +78,12 @@
       @update:open="handleDepositModalOpen"
       data-test="deposit-modal"
       title="Deposit to Safe Contract"
+      description="Deposit assets to the Safe contract to fund your team’s operations."
       :close="{ onClick: () => closeDepositModal() }"
     >
       <template #body>
         <DepositSafeForm
           v-if="address"
-          title="Deposit to Safe Contract"
           :safe-address="address"
           @close-modal="closeDepositModal"
         />
