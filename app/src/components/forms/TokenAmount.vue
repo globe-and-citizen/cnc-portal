@@ -12,70 +12,74 @@
     </div>
     <div class="flex w-full flex-col gap-1">
       <UForm nested>
-        <UFormField class="w-full" name="amount">
-          <UInput
-            v-model="amount"
-            placeholder="0"
-            inputmode="decimal"
-            data-test="amountInput"
-            :disabled="isLoading"
-            aria-label="Amount"
-            class="w-full"
-            @input="handleAmountInput"
-          >
-            <template #trailing>
-              <div
-                class="flex items-center gap-1 text-xs font-semibold text-gray-700 dark:text-gray-200"
-              >
-                <UButton
-                  v-for="percent in [25, 50, 75]"
-                  :key="percent"
-                  variant="ghost"
-                  size="xs"
-                  color="neutral"
-                  class="min-w-[2.75rem]"
-                  :disabled="isLoading || !selectedToken || selectedToken.balance === 0"
-                  :aria-label="`Set ${percent}% of balance`"
-                  :data-test="`percentButton-${percent}`"
-                  @click.stop="usePercentageOfBalance(percent)"
-                >
-                  {{ percent }}%
-                </UButton>
+        <UFieldGroup class="w-full">
+          <UFormField class="w-full" name="amount">
+            <UInput
+              v-model="amount"
+              placeholder="0"
+              inputmode="decimal"
+              data-test="amountInput"
+              :disabled="isLoading"
+              aria-label="Amount"
+              class="w-full"
+              @input="handleAmountInput"
+            >
+            </UInput>
 
-                <UButton
-                  variant="ghost"
-                  size="xs"
-                  color="neutral"
-                  class="min-w-[2.75rem]"
-                  data-test="maxButton"
-                  :disabled="isLoading || !selectedToken || selectedToken.balance === 0"
-                  aria-label="Set max balance"
-                  @click.stop="useMaxBalance"
+            <template #help>
+              <div class="flex justify-between">
+                <div class="flex flex-col gap-1">
+                  <span
+                    v-if="amount && parseFloat(amount) > 0"
+                    class="text-sm text-gray-500 dark:text-gray-400"
+                  >
+                    ≈ {{ estimatedPrice }}
+                  </span>
+                </div>
+                <div
+                  class="flex items-center gap-1 text-xs font-semibold text-gray-700 dark:text-gray-200"
                 >
-                  Max
-                </UButton>
+                  <UButton
+                    v-for="percent in [25, 50, 75]"
+                    :key="percent"
+                    variant="outline"
+                    size="xs"
+                    color="neutral"
+                    class="min-w-11"
+                    :disabled="isLoading || !selectedToken || selectedToken.balance === 0"
+                    :aria-label="`Set ${percent}% of balance`"
+                    :data-test="`percentButton-${percent}`"
+                    @click.stop="usePercentageOfBalance(percent)"
+                  >
+                    {{ percent }}%
+                  </UButton>
 
-                <USelect
-                  v-model="selectedTokenId as TokenId"
-                  :items="tokenOptions"
-                  :disabled="isLoading || tokenOptions.length === 1"
-                  data-test="tokenSelect"
-                  size="xs"
-                  class="w-24 bg-[#00B8D9]"
-                />
+                  <UButton
+                    variant="outline"
+                    size="xs"
+                    color="neutral"
+                    class="min-w-11"
+                    data-test="maxButton"
+                    :disabled="isLoading || !selectedToken || selectedToken.balance === 0"
+                    aria-label="Set max balance"
+                    @click.stop="useMaxBalance"
+                  >
+                    Max
+                  </UButton>
+                </div>
               </div>
             </template>
-          </UInput>
-        </UFormField>
+          </UFormField>
+          <USelect
+            v-model="selectedTokenId"
+            :items="tokenOptions"
+            :disabled="isLoading || tokenOptions.length === 1"
+            data-test="tokenSelect"
+            size="xs"
+            class="h-8 w-24"
+          />
+        </UFieldGroup>
       </UForm>
-    </div>
-    <div class="flex flex-col gap-1">
-      <span
-        v-if="amount && parseFloat(amount) > 0"
-        class="text-sm text-gray-500 dark:text-gray-400"
-      >
-        ≈ {{ estimatedPrice }}
-      </span>
     </div>
   </div>
 </template>
