@@ -26,7 +26,7 @@
 import SelectComponent from '@/components/SelectComponent.vue'
 import { readContract, writeContract } from '@wagmi/core'
 import { computed, ref, watch } from 'vue'
-import { useTeamStore, useToastStore, useUserDataStore } from '@/stores'
+import { useTeamStore, useUserDataStore } from '@/stores'
 import { USDC_ADDRESS } from '@/constant'
 import type { Address } from 'viem'
 import { isAddress } from 'viem'
@@ -46,7 +46,7 @@ const isCheckingSupport = ref(false)
 
 const teamStore = useTeamStore()
 const userStore = useUserDataStore()
-const { addErrorToast, addSuccessToast } = useToastStore()
+const toast = useToast()
 
 const isValidAddress = computed(() => {
   return tokenAddress.value.token && isAddress(tokenAddress.value.token)
@@ -73,7 +73,7 @@ const isCashRemunerationOwner = computed(() => cashRemunerationOwner.value == us
 watch(cashRemunerationOwnerError, (value) => {
   if (value) {
     console.error('Failed to fetch cash remuneration owner:', value)
-    addErrorToast('Failed to fetch cash remuneration owner')
+    toast.add({ title: 'Failed to fetch cash remuneration owner', color: 'error' })
   }
 })
 
@@ -90,7 +90,7 @@ const checkTokenSupport = useDebounceFn(async (newAddress: string) => {
       tokenAddress.value.isSupported = isSupported as boolean
     } catch (error) {
       console.error('Error checking token support:', error)
-      addErrorToast('Failed to check token support status')
+      toast.add({ title: 'Failed to check token support status', color: 'error' })
       tokenAddress.value.isSupported = false
     } finally {
       isCheckingSupport.value = false
@@ -105,7 +105,7 @@ watch(() => tokenAddress.value.token, checkTokenSupport, { immediate: true })
 const updateTokenSupport = async () => {
   if (!tokenAddress.value.token || isLoading.value || !cashRemunerationEip712Address.value) {
     if (!cashRemunerationEip712Address.value) {
-      addErrorToast('Contract address not configured')
+      toast.add({ title: 'Contract address not configured', color: 'error' })
     }
     return
   }
@@ -120,7 +120,7 @@ const updateTokenSupport = async () => {
         args: [tokenAddress.value.token as Address]
       })
       tokenAddress.value.isSupported = false
-      addSuccessToast('Token support removed successfully')
+      toast.add({ title: 'Token support removed successfully', color: 'success' })
     } else {
       await writeContract(config, {
         address: cashRemunerationEip712Address.value as Address,
@@ -129,7 +129,7 @@ const updateTokenSupport = async () => {
         args: [tokenAddress.value.token as Address]
       })
       tokenAddress.value.isSupported = true
-      addSuccessToast('Token support added successfully')
+      toast.add({ title: 'Token support added successfully', color: 'success' })
     }
   } catch (error: unknown) {
     console.error('Error Updating token support:', error)
@@ -138,7 +138,7 @@ const updateTokenSupport = async () => {
       error instanceof Error && error.message
         ? `Failed to ${action} token support: ${error.message}`
         : `Failed to ${action} token support`
-    addErrorToast(message)
+    toast.add({ title: message, color: 'error' })
   } finally {
     isLoading.value = false
   }

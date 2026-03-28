@@ -8,7 +8,7 @@
     </p>
     <label class="input input-bordered flex items-center gap-2 input-md mt-2">
       <span class="w-24">description</span>
-      <input
+      <UInput
         type="text"
         class="grow"
         data-test="description-input"
@@ -19,10 +19,9 @@
     <div
       data-test="description-error"
       class="pl-4 text-red-500 text-sm w-full text-left"
-      v-for="error of v$.description.$errors"
-      :key="error.$uid"
+      v-if="errors.description"
     >
-      {{ error.$message }}
+      {{ errors.description }}
     </div>
   </div>
 
@@ -83,20 +82,10 @@
 
   <div
     class="pl-4 text-red-500 text-sm w-full text-left"
-    v-for="error of v$.formData.$errors"
-    :key="error.$uid"
+    v-if="errors.formData"
     data-test="address-error"
   >
-    <div v-if="Array.isArray(error.$message)">
-      <div v-for="(errorObj, index) of error.$message" :key="index">
-        <div v-for="(error, index1) of errorObj" :key="index1">
-          {{ error }}
-        </div>
-      </div>
-    </div>
-    <div v-else>
-      {{ error.$message }}
-    </div>
+    {{ errors.formData }}
   </div>
 
   <div>
@@ -115,54 +104,10 @@
   <div
     data-test="limit-value-error"
     class="pl-4 text-red-500 text-sm w-full text-left"
-    v-for="error of v$.selectedToken.$errors"
-    :key="error.$uid"
+    v-if="errors.selectedToken"
   >
-    {{ error.$message }}
+    {{ errors.selectedToken }}
   </div>
-  <!--Select budget limit type
-  <div>
-    <label class="input input-bordered flex items-center gap-2 input-md">
-      <select v-model="budgetLimitType" class="bg-white grow">
-        <option disabled :value="null">-- Select a budget limit type --</option>
-        <option v-for="type of budgetLimitTypes" :key="type.id" :value="type.id">
-          {{ type.name }}
-        </option>
-      </select>
-    </label>
-  </div>
-
-  <div
-    data-test="limit-type-error"
-    class="pl-4 text-red-500 text-sm w-full text-left"
-    v-for="error of v$.budgetLimitType.$errors"
-    :key="error.$uid"
-  >
-    {{ error.$message }}
-  </div>-->
-
-  <!-- Budget limit value 
-  <div>
-    <label class="input input-bordered flex items-center gap-2 input-md mt-2">
-      <span class="w-24">Limit</span>
-      <input
-        type="text"
-        class="grow pl-4"
-        data-test="limit-value-input"
-        v-model="limitValue"
-        placeholder="Enter a limit value"
-      />
-    </label>
-  </div>
-
-  <div
-    data-test="limit-value-error"
-    class="pl-4 text-red-500 text-sm w-full text-left"
-    v-for="error of v$.limitValue.$errors"
-    :key="error.$uid"
-  >
-    {{ error.$message }}
-  </div>-->
 
   <!-- #region Multi Limit Inputs-->
   <div class="space-y-4 mt-3 mb-3 pt-3 pb-3 border-t">
@@ -177,7 +122,6 @@
         :for="'checkbox-' + budgetType"
         class="input input-bordered flex items-center gap-2 input-md mt-2"
       >
-        <!-- Checkbox -->
         <input
           type="checkbox"
           class="checkbox checkbox-primary"
@@ -186,7 +130,6 @@
           :data-test="`limit-checkbox-${budgetType}`"
           @change="toggleOption(budgetType)"
         />
-        <!-- Numeric Input -->
         <span class="w-48">{{ label }}</span
         >|
         <input
@@ -200,12 +143,6 @@
         />
       </label>
     </div>
-
-    <!-- Display Selected Options -->
-    <!--<div class="p-4 mt-6 border-t">
-      <h3 class="text-lg font-semibold">Selected Options:</h3>
-      <pre class="bg-gray-100 p-4 rounded-lg">{{ resultArray }}</pre>
-    </div>-->
   </div>
   <!-- #endregion Multi Limit Inputs -->
 
@@ -239,11 +176,11 @@
     />
   </div>
 </template>
+
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue'
 import { isAddress, zeroAddress } from 'viem'
-import { useVuelidate } from '@vuelidate/core'
-import { helpers, required } from '@vuelidate/validators'
+import { z } from 'zod'
 import type { User } from '@/types'
 import VueDatePicker from '@vuepic/vue-datepicker'
 import '@vuepic/vue-datepicker/dist/main.css'
@@ -269,8 +206,9 @@ const tokens = ref({
   USDT: USDT_ADDRESS
 })
 
+const errors = reactive({ description: '', formData: '', selectedToken: '' })
+
 //#region multi limit
-// Labels for budget types
 const budgetTypes = {
   0: 'Transactions Per Period',
   1: 'Amount Per Period',
@@ -280,7 +218,6 @@ const budgetTypes = {
 type BudgetTypeKey = keyof typeof budgetTypes
 type BudgetTypeStringKey = `${BudgetTypeKey}`
 
-// Reactive states
 const selectedOptions = reactive<Record<BudgetTypeStringKey, boolean>>({
   '0': false,
   '1': false,
@@ -292,69 +229,45 @@ const values = reactive<Record<BudgetTypeStringKey, null | string | number>>({
   '2': null
 })
 
-// Result array
 const resultArray = computed(() =>
   Object.entries(selectedOptions)
     .filter(([, isSelected]) => isSelected)
     .map(([budgetType]) => ({
       budgetType: Number(budgetType),
-      value: values[budgetType as BudgetTypeStringKey] || 0 //,
-      //token: selectedToken.value
+      value: values[budgetType as BudgetTypeStringKey] || 0
     }))
 )
 
-// Handlers
 const toggleOption = (budgetType: BudgetTypeStringKey) => {
   if (!selectedOptions[budgetType]) {
-    values[budgetType] = null // Reset value if deselected
+    values[budgetType] = null
   }
 }
 
 const updateValue = (budgetType: BudgetTypeStringKey) => {
   if (values[budgetType] === null || isNaN(Number(values[budgetType]))) {
-    values[budgetType] = 0 // Default value if input is empty
+    values[budgetType] = 0
   }
 }
 //#endregion multi limit
 
-const rules = {
-  formData: {
-    $each: helpers.forEach({
-      address: {
-        required: helpers.withMessage('Address is required', required),
-        $valid: helpers.withMessage('Invalid wallet address', (value: string) => isAddress(value))
-      }
-    }),
-
-    $valid: helpers.withMessage(
-      'At least one member is required',
-      (value: Array<{ name: string; address: string }>) => {
-        return value.some((v) => v.address)
-      }
-    )
-  },
-  selectedToken: { required },
-  // limitValue: {
-  //   required,
-  //   numeric
-  // },
-  // budgetLimitType: {
-  //   required: helpers.withMessage('Budget limit type is required', (value: number | null) => {
-  //     return typeof value === 'number' && value >= 0 ? true : false
-  //   })
-  // },
-  description: {
-    required: helpers.withMessage('Description is required', (value: string) => {
-      return props.isBodAction ? value.length > 0 : true
-    })
-  }
-}
-
-const v$ = useVuelidate(rules, {
-  /*budgetLimitType, */ description,
-  /*limitValue, */ formData,
-  selectedToken
-})
+const schema = computed(() =>
+  z.object({
+    formData: z
+      .array(z.object({ name: z.string(), address: z.string() }))
+      .refine(
+        (v) => v.some((item) => isAddress(item.address)),
+        'At least one valid address is required'
+      ),
+    selectedToken: z
+      .string()
+      .nullable()
+      .refine((v) => v !== null, 'Token is required'),
+    description: z
+      .string()
+      .refine((v) => !props.isBodAction || v.length > 0, 'Description is required')
+  })
+)
 
 const emit = defineEmits(['closeModal', 'approveUser', 'searchUsers'])
 
@@ -366,8 +279,23 @@ const clear = () => {
 }
 
 const submitApprove = () => {
-  v$.value.$touch()
-  if (v$.value.$invalid) {
+  errors.description = ''
+  errors.formData = ''
+  errors.selectedToken = ''
+
+  const result = schema.value.safeParse({
+    formData: formData.value,
+    selectedToken: selectedToken.value,
+    description: description.value
+  })
+
+  if (!result.success) {
+    for (const issue of result.error.issues) {
+      const field = issue.path[0] as keyof typeof errors
+      if (field in errors && !errors[field]) {
+        errors[field] = issue.message
+      }
+    }
     return
   }
 
@@ -379,6 +307,7 @@ const submitApprove = () => {
   })
 }
 </script>
+
 <style>
 .dp__input {
   border: none;

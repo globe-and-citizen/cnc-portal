@@ -36,11 +36,8 @@ export const mockTeamStore = {
   fetchTeam: vi.fn()
 }
 
-export const mockToastStore = {
-  addErrorToast: vi.fn(),
-  addSuccessToast: vi.fn(),
-  addInfoToast: vi.fn(),
-  toasts: []
+export const mockToast = {
+  add: vi.fn()
 }
 
 export const mockUserStore = {

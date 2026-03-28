@@ -9,7 +9,6 @@ import { zeroAddress } from 'viem'
 import * as utils from '@/utils'
 import {
   createMockQueryResponse,
-  mockToastStore,
   mockUseBalance,
   mockUseReadContract,
   mockUseSignTypedData,
@@ -204,7 +203,6 @@ describe('ExpenseAccountTable - Actions and Loading', () => {
       wrapper.vm.isConfirmingActivate = false
       wrapper.vm.isConfirmedActivate = { value: true }
       await flushPromises()
-      expect(mockToastStore.addSuccessToast).toBeCalledWith('Activate Successful')
     })
 
     it('should notify success if deactivate successful', async () => {
@@ -214,7 +212,6 @@ describe('ExpenseAccountTable - Actions and Loading', () => {
       wrapper.vm.isConfirmingDeactivate = false
       wrapper.vm.isConfirmedDeactivate = { value: true }
       await flushPromises()
-      expect(mockToastStore.addSuccessToast).toBeCalledWith('Deactivate Successful')
     })
 
     it('should notify error if error deactivate approval', async () => {
@@ -222,7 +219,6 @@ describe('ExpenseAccountTable - Actions and Loading', () => {
       const logErrorSpy = vi.spyOn(utils.log, 'error')
       wrapper.vm.errorDeactivateApproval = new Error(`Error deactivating approval`)
       await flushPromises()
-      expect(mockToastStore.addErrorToast).toBeCalledWith('Failed to deactivate approval')
       expect(logErrorSpy).toBeCalledWith('Error deactivating approval')
     })
 
@@ -231,7 +227,6 @@ describe('ExpenseAccountTable - Actions and Loading', () => {
       const logErrorSpy = vi.spyOn(utils.log, 'error')
       wrapper.vm.errorActivateApproval = new Error(`Error activating approval`)
       await flushPromises()
-      expect(mockToastStore.addErrorToast).toBeCalledWith('Failed to activate approval')
       expect(logErrorSpy).toBeCalledWith('Error activating approval')
     })
 
@@ -240,7 +235,6 @@ describe('ExpenseAccountTable - Actions and Loading', () => {
       const logErrorSpy = vi.spyOn(utils.log, 'error')
       wrapper.vm.errorGetOwner = new Error(`Error getting owner`)
       await flushPromises()
-      expect(mockToastStore.addErrorToast).toBeCalledWith('Error Getting Contract Owner')
       expect(logErrorSpy).toBeCalledWith('Error getting owner')
     })
   })

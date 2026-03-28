@@ -4,7 +4,7 @@ import { createTestingPinia } from '@pinia/testing'
 import InvestorsTransactionHistory from '@/components/sections/SherTokenView/InvestorsTransactionHistory.vue'
 import InvestorsTransactionFilter from '@/components/sections/SherTokenView/InvestorsTransactionFilter.vue'
 import InvestorsTransactionTable from '@/components/sections/SherTokenView/InvestorsTransactionTable.vue'
-import CardComponent from '@/components/CardComponent.vue'
+
 import type { InvestorsTransaction } from '@/types/transactions'
 
 // Mock any external dependencies that child components might need
@@ -63,7 +63,6 @@ describe('InvestorsTransactionHistory.vue', () => {
       global: {
         plugins: [createTestingPinia({ createSpy: vi.fn })],
         components: {
-          CardComponent,
           InvestorsTransactionFilter,
           InvestorsTransactionTable
         }

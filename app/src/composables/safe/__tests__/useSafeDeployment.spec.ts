@@ -3,23 +3,14 @@ import { ref } from 'vue'
 import { useSafeDeployment } from '../useSafeDeployment'
 
 // Hoisted mocks
-const {
-  mockUseConnection,
-  mockSafeInit,
-  mockAddSuccessToast,
-  mockAddErrorToast,
-  mockSendTransaction,
-  mockWaitForReceipt,
-  mockGetAddress
-} = vi.hoisted(() => ({
-  mockUseConnection: vi.fn(),
-  mockSafeInit: vi.fn(),
-  mockAddSuccessToast: vi.fn(),
-  mockAddErrorToast: vi.fn(),
-  mockSendTransaction: vi.fn(),
-  mockWaitForReceipt: vi.fn(),
-  mockGetAddress: vi.fn()
-}))
+const { mockUseConnection, mockSafeInit, mockSendTransaction, mockWaitForReceipt, mockGetAddress } =
+  vi.hoisted(() => ({
+    mockUseConnection: vi.fn(),
+    mockSafeInit: vi.fn(),
+    mockSendTransaction: vi.fn(),
+    mockWaitForReceipt: vi.fn(),
+    mockGetAddress: vi.fn()
+  }))
 
 // Mock external dependencies
 vi.mock('@wagmi/vue', () => ({
@@ -31,13 +22,6 @@ vi.mock('@safe-global/protocol-kit', () => ({
   default: {
     init: mockSafeInit
   }
-}))
-
-vi.mock('@/stores', () => ({
-  useToastStore: () => ({
-    addSuccessToast: mockAddSuccessToast,
-    addErrorToast: mockAddErrorToast
-  })
 }))
 
 vi.mock('@/utils/safe', () => ({

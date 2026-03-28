@@ -1,7 +1,6 @@
 import { computed, ref, watch } from 'vue'
 import { useSendTransaction, useWaitForTransactionReceipt, useEstimateGas } from '@wagmi/vue'
 import { getAddress, type Address } from 'viem'
-import { useToastStore } from '@/stores'
 import { useQueryClient } from '@tanstack/vue-query'
 
 export interface SafeTransactionConfig {
@@ -13,7 +12,7 @@ export interface SafeTransactionConfig {
  * and error handling for sending ETH transactions
  */
 export function useSafeSendTransaction() {
-  const { addErrorToast } = useToastStore()
+  const toast = useToast()
   const queryClient = useQueryClient()
 
   // Transaction params for gas estimation
@@ -138,7 +137,10 @@ export function useSafeSendTransaction() {
       try {
         const canExecute = await canExecuteTransaction(to, value, data)
         if (!canExecute) {
-          addErrorToast('Transaction will likely fail due to insufficient gas or other constraints')
+          toast.add({
+            title: 'Transaction will likely fail due to insufficient gas or other constraints',
+            color: 'error'
+          })
           return
         }
       } catch (gasError) {

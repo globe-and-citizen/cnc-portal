@@ -34,8 +34,6 @@ const {
   mockLoadSafe,
   mockSafeSdk,
   mockMutation,
-  mockAddSuccessToast,
-  mockAddErrorToast,
   mockTransformToSafeMultisigResponse
 } = vi.hoisted(() => ({
   mockUseConnection: vi.fn<[], MockConnection>(),
@@ -48,8 +46,6 @@ const {
   mockMutation: {
     mutateAsync: vi.fn()
   } as MockMutation,
-  mockAddSuccessToast: vi.fn(),
-  mockAddErrorToast: vi.fn(),
   mockTransformToSafeMultisigResponse: vi.fn()
 }))
 
@@ -65,13 +61,6 @@ vi.mock('@/queries/safe.mutations', () => ({
 
 vi.mock('../useSafeSdk', () => ({
   useSafeSDK: mockUseSafeSDK
-}))
-
-vi.mock('@/stores', () => ({
-  useToastStore: () => ({
-    addSuccessToast: mockAddSuccessToast,
-    addErrorToast: mockAddErrorToast
-  })
 }))
 
 vi.mock('@/utils/safe', () => ({

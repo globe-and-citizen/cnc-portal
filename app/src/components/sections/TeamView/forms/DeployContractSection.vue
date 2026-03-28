@@ -13,7 +13,6 @@
 </template>
 
 <script lang="ts" setup>
-import { useToastStore } from '@/stores/useToastStore'
 import type { Team } from '@/types'
 import type { Address } from 'viem'
 import { computed } from 'vue'
@@ -35,7 +34,7 @@ const props = withDefaults(
 const emits = defineEmits(['contractDeployed'])
 
 // Stores
-const { addSuccessToast, addErrorToast } = useToastStore()
+const toast = useToast()
 
 // Composables
 const {
@@ -53,7 +52,7 @@ const deployButtonText = computed(() => {
   if (createOfficerLoading.value) {
     return 'Deploying Officer Contracts...'
   }
-  return 'Deploy Team Contracts'
+  return 'Deploy Company Contracts'
 })
 
 /**
@@ -61,15 +60,15 @@ const deployButtonText = computed(() => {
  */
 const handleOfficerDeploymentSuccess = async (officerAddress: Address) => {
   if (!props.createdTeamData.id) {
-    log.error('No team data found')
-    addErrorToast('No team data found')
+    log.error('No Company data found')
+    toast.add({ title: 'No company data found', color: 'error' })
     return
   }
 
   const teamId = props.createdTeamData.id
 
   try {
-    // Update team with officer address
+    // Update company with officer address
     await updateTeam({
       pathParams: { id: teamId },
       body: { officerAddress }
@@ -77,7 +76,7 @@ const handleOfficerDeploymentSuccess = async (officerAddress: Address) => {
 
     if (updateTeamError.value) {
       log.error('Error updating officer address')
-      addErrorToast('Error updating officer address')
+      toast.add({ title: 'Error updating officer address', color: 'error' })
       return
     }
 
@@ -86,21 +85,21 @@ const handleOfficerDeploymentSuccess = async (officerAddress: Address) => {
 
     if (syncContractsError.value) {
       log.error('Error updating contracts')
-      addErrorToast('Error updating contracts')
+      toast.add({ title: 'Error updating contracts', color: 'error' })
       return
     }
 
     // Invalidate queries
     await invalidateQueries(teamId)
 
-    addSuccessToast('Officer contracts deployed and synced successfully')
+    toast.add({ title: 'Officer contracts deployed and synced successfully', color: 'success' })
     log.info('Officer contracts deployment complete')
 
     // Notify parent that deployment is complete
     emits('contractDeployed')
   } catch (error) {
     log.error('Error in post-deployment processing:', error)
-    addErrorToast('Failed to complete deployment setup')
+    toast.add({ title: 'Failed to complete deployment setup', color: 'error' })
   }
 }
 
@@ -109,7 +108,7 @@ const handleOfficerDeploymentSuccess = async (officerAddress: Address) => {
  */
 const deployOfficerContract = async () => {
   if (!props.createdTeamData?.id) {
-    addErrorToast('Team data not found')
+    toast.add({ title: 'Team data not found', color: 'error' })
     return
   }
 

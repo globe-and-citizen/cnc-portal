@@ -114,8 +114,7 @@ import type {
   GetEventsGroupedByCampaignCodeResult,
   ExtendedEvent
 } from '@/services/AddCampaignService'
-import { useToastStore } from '@/stores/useToastStore'
-const { addErrorToast } = useToastStore()
+const toast = useToast()
 import { useTeamStore } from '@/stores/'
 import type { Address } from 'viem'
 import TeamContractEventList from './TeamContractEventList.vue'
@@ -192,7 +191,7 @@ const openEventsModal = async (contractAddress: Address) => {
       contractEventsDialog.value.show = true
     }
   } else {
-    addErrorToast('Failed to fetch events')
+    toast.add({ title: 'Failed to fetch events', color: 'error' })
   }
 }
 

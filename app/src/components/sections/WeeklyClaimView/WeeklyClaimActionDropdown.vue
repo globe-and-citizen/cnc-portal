@@ -112,7 +112,7 @@
 <script setup lang="ts">
 import { Icon as IconifyIcon } from '@iconify/vue'
 import { ref, onMounted, onUnmounted, computed } from 'vue'
-import { useUserDataStore, useTeamStore, useToastStore } from '@/stores'
+import { useUserDataStore, useTeamStore } from '@/stores'
 import { useReadContract } from '@wagmi/vue'
 import { CASH_REMUNERATION_EIP712_ABI } from '@/artifacts/abi/cash-remuneration-eip712'
 import type { WeeklyClaim } from '@/types'
@@ -146,7 +146,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const userStore = useUserDataStore()
 const teamStore = useTeamStore()
-const toastStore = useToastStore()
+const toast = useToast()
 const queryClient = useQueryClient()
 
 // Reactive data
@@ -190,7 +190,7 @@ const disableClaim = async () => {
 
   disableLoading.value = true
   if (!cashRemunerationAddress.value) {
-    toastStore.addErrorToast('Cash Remuneration EIP712 contract address not found')
+    toast.add({ title: 'Cash Remuneration EIP712 contract address not found', color: 'error' })
     disableLoading.value = false
     return
   }
@@ -216,14 +216,14 @@ const disableClaim = async () => {
     })
 
     if (receipt.status === 'success') {
-      toastStore.addSuccessToast('Claim disabled')
+      toast.add({ title: 'Claim disabled', color: 'success' })
 
       claimAction.value = 'disable'
 
       try {
         await syncWeeklyClaim({ queryParams: { teamId: teamStore.currentTeamId! } })
       } catch {
-        toastStore.addErrorToast('Failed to update Claim status')
+        toast.add({ title: 'Failed to update Claim status', color: 'error' })
       }
 
       queryClient.invalidateQueries({
@@ -234,7 +234,7 @@ const disableClaim = async () => {
       disableLoading.value = false
       isOpen.value = false
     } else {
-      toastStore.addErrorToast('Transaction failed: Failed to disable claim')
+      toast.add({ title: 'Transaction failed: Failed to disable claim', color: 'error' })
       // keep loading until explicit success
     }
   } catch (error) {
@@ -242,7 +242,7 @@ const disableClaim = async () => {
     log.error('Disable error', error)
     const parsed = parseError(error, CASH_REMUNERATION_EIP712_ABI)
 
-    toastStore.addErrorToast(parsed)
+    toast.add({ title: parsed, color: 'error' })
     // Stop loading on user cancel or any explicit error
     disableLoading.value = false
   }

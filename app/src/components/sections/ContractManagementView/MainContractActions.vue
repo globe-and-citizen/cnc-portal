@@ -78,7 +78,7 @@ import { encodeFunctionData, type Address } from 'viem'
 import type { TableRow } from '@/components/TableComponent.vue'
 import { useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
 import { watch, ref, computed } from 'vue'
-import { useToastStore, useTeamStore, useUserDataStore } from '@/stores'
+import { useTeamStore, useUserDataStore } from '@/stores'
 import TransferOwnershipForm from './forms/TransferOwnershipForm.vue'
 import { filterAndFormatActions, log, parseError } from '@/utils'
 import PendingEventsList from './PendingEventsList.vue'
@@ -95,7 +95,7 @@ const props = defineProps<{
 const emits = defineEmits(['contract-status-changed'])
 
 const teamStore = useTeamStore()
-const { addSuccessToast, addErrorToast } = useToastStore()
+const toast = useToast()
 const userDataStore = useUserDataStore()
 const queryClient = useQueryClient()
 
@@ -248,42 +248,42 @@ watch(isConfirmingTransferOwnership, async (isConfirming, wasConfirming) => {
       exact: false
     })
     showModal.value = false
-    addSuccessToast('Ownership transferred successfully!')
+    toast.add({ title: 'Ownership transferred successfully!', color: 'success' })
     emits('contract-status-changed')
   }
 })
 
 watch(isConfirmingPauseContract, async (isConfirming, wasConfirming) => {
   if (wasConfirming && !isConfirming && isConfirmedPauseContract.value) {
-    addSuccessToast('Contract paused successfully!')
+    toast.add({ title: 'Contract paused successfully!', color: 'success' })
     emits('contract-status-changed')
   }
 })
 
 watch(isConfirmingUnpauseContract, async (isConfirming, wasConfirming) => {
   if (wasConfirming && !isConfirming && isConfirmedUnpauseContract.value) {
-    addSuccessToast('Contract paused successfully!')
+    toast.add({ title: 'Contract paused successfully!', color: 'success' })
     emits('contract-status-changed')
   }
 })
 
 watch(errorTransferOwnership, (error) => {
   if (error) {
-    addErrorToast(parseError(error, props.row.abi))
+    toast.add({ title: parseError(error, props.row.abi), color: 'error' })
     log.error('errorTransferOwnership.value: ', error)
   }
 })
 
 watch(errorPauseContract, (error) => {
   if (error) {
-    addErrorToast(parseError(error, props.row.abi))
+    toast.add({ title: parseError(error, props.row.abi), color: 'error' })
     log.error('errorPauseContract.value: ', error)
   }
 })
 
 watch(errorUnpauseContract, (error) => {
   if (error) {
-    addErrorToast(parseError(error, props.row.abi))
+    toast.add({ title: parseError(error, props.row.abi), color: 'error' })
     log.error('errorUnpauseContract.value: ', error)
   }
 })

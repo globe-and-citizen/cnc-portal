@@ -1,8 +1,11 @@
 <template>
-  <CardComponent title="Transactions">
-    <template #card-action>
-      <div class="flex items-center gap-4">
-        <SafeTransactionStatusFilter @statusChange="handleStatusChange" />
+  <UCard>
+    <template #header>
+      <div class="flex justify-between items-center">
+        <span>Transactions</span>
+        <div class="flex items-center gap-4">
+          <SafeTransactionStatusFilter @statusChange="handleStatusChange" />
+        </div>
       </div>
     </template>
 
@@ -94,7 +97,7 @@
       @cancel="handleCancelAction"
       data-test="conflict-warning-modal"
     />
-  </CardComponent>
+  </UCard>
 </template>
 
 <script setup lang="ts">
@@ -104,7 +107,6 @@ import type { SafeTransaction } from '@/types/safe'
 
 // Components
 import TableComponent from '@/components/TableComponent.vue'
-import CardComponent from '@/components/CardComponent.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import SafeTransactionsWarning from './SafeTransactionsWarning.vue'
 

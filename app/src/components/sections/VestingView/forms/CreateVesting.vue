@@ -14,9 +14,7 @@
           />
         </div>
       </label>
-      <span v-for="error in $v.member.$errors" :key="error.$uid" class="text-xs text-red-500 mt-1">
-        {{ error.$message }}
-      </span>
+      <span v-if="errors.member" class="text-xs text-red-500 mt-1">{{ errors.member }}</span>
     </div>
 
     <div class="gap-2 mt-4">
@@ -34,42 +32,40 @@
           />
         </div>
       </label>
-      <span v-for="error in $v.dateRange.$errors" :key="error.$uid" class="text-xs text-red-500">
-        {{ error.$message }}
-      </span>
+      <span v-if="errors.dateRange" class="text-xs text-red-500">{{ errors.dateRange }}</span>
     </div>
 
     <div class="flex flex-wrap gap-3 mt-4 w-100">
       <div class="flex-1 min-w-50">
         <label class="flex input input-bordered input-md items-center gap-2 w-full">
           <span class="text-xs shrink-0">Amount</span>
-          <input
+          <UInput
             data-test="total-amount"
             type="number"
-            class="grow"
-            v-model="totalAmount"
+            class="grow border-none shadow-none"
+            :model-value="totalAmount"
+            @update:model-value="(v: string | number) => (totalAmount = Number(v))"
             required
           />
         </label>
-        <span
-          v-for="error in $v.totalAmount.$errors"
-          :key="error.$uid"
-          class="text-xs text-red-500 mt-1 block"
-        >
-          {{ error.$message }}
+        <span v-if="errors.totalAmount" class="text-xs text-red-500 mt-1 block">
+          {{ errors.totalAmount }}
         </span>
       </div>
       <div class="flex-1 min-w-50">
         <label class="flex input input-bordered items-center gap-2 w-full">
           <span class="text-xs shrink-0">Cliff(days)</span>
-          <input data-test="cliff" type="number" class="grow text-sm" v-model="cliff" required />
+          <UInput
+            data-test="cliff"
+            type="number"
+            class="grow text-sm border-none shadow-none"
+            :model-value="cliff"
+            @update:model-value="(v: string | number) => (cliff = Number(v))"
+            required
+          />
         </label>
-        <span
-          v-for="error in $v.cliff.$errors"
-          :key="error.$uid"
-          class="text-xs text-red-500 mt-1 block"
-        >
-          {{ error.$message }}
+        <span v-if="errors.cliff" class="text-xs text-red-500 mt-1 block">
+          {{ errors.cliff }}
         </span>
       </div>
     </div>
@@ -101,7 +97,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, ref, watch } from 'vue'
+import { computed, nextTick, reactive, ref, watch } from 'vue'
 import { differenceInCalendarDays, differenceInMonths, differenceInYears } from '@/utils/dayUtils'
 import { useWaitForTransactionReceipt, useWriteContract, useReadContract } from '@wagmi/vue'
 import { VESTING_ABI } from '@/artifacts/abi/vesting'
@@ -109,18 +105,17 @@ import { VESTING_ADDRESS } from '@/constant'
 import { parseEther, type Address, formatUnits, parseUnits } from 'viem'
 import SelectMemberInput from '@/components/utils/SelectMemberInput.vue'
 import VestingSummary from '@/components/sections/VestingView/VestingSummary.vue'
-import { useToastStore } from '@/stores/useToastStore'
 import { useTeamStore } from '@/stores'
 import Datepicker from '@vuepic/vue-datepicker'
 import '@vuepic/vue-datepicker/dist/main.css'
 import { type VestingCreation } from '@/types/vesting'
-const { addSuccessToast, addErrorToast } = useToastStore()
 import { useContractBalance } from '@/composables/useContractBalance'
 import { INVESTOR_ABI } from '@/artifacts/abi/investors'
 import { useUserDataStore } from '@/stores'
 import { isAddress } from 'viem'
-import { required, helpers, minValue } from '@vuelidate/validators'
-import { useVuelidate } from '@vuelidate/core'
+import { z } from 'zod'
+
+const toast = useToast()
 
 const props = defineProps<{
   tokenAddress: string
@@ -140,7 +135,6 @@ const vestingData = computed<VestingCreation>(() => ({
 }))
 
 const tokenBalance = computed(() => {
-  // Find the balance entry for the current token address
   return balances.value.find(
     (b) => b.token.address?.toLowerCase() === props.tokenAddress.toLowerCase()
   )
@@ -157,21 +151,17 @@ const activeMembers = computed<string[]>(() => {
     : []
 })
 
-const member = ref({
-  name: '',
-  address: ''
-})
-
+const member = ref({ name: '', address: '' })
 const startDate = ref('')
-//const duration = ref(30)
 const cliff = ref(0)
 const totalAmount = ref(0)
 const dateRange = ref<[Date, Date] | null>(null)
-
 const duration = ref({ years: 0, months: 0, days: 0 })
 const durationInDays = ref(0)
 const updateCount = ref(0)
 const showSummary = ref(false)
+
+const errors = reactive({ member: '', dateRange: '', totalAmount: '', cliff: '' })
 
 async function resetUpdateCount() {
   await nextTick()
@@ -199,7 +189,6 @@ const emit = defineEmits(['reload', 'closeAddVestingModal'])
 
 const {
   data: vestingInfos,
-  //isLoading: isLoadingVestingInfos,
   error: errorGetVestingInfo,
   refetch: getVestingInfos
 } = useReadContract({
@@ -210,7 +199,7 @@ const {
 })
 watch(errorGetVestingInfo, () => {
   if (errorGetVestingInfo.value) {
-    addErrorToast('Add admin failed')
+    toast.add({ title: 'Add admin failed', color: 'error' })
   }
 })
 
@@ -233,7 +222,6 @@ const loading = computed(() => {
 const {
   data: allowance,
   refetch: getAllowance,
-  //isLoading: isLoadingTokenSymbol
   error: allowanceError
 } = useReadContract({
   abi: INVESTOR_ABI,
@@ -244,7 +232,7 @@ const {
 
 watch(allowanceError, () => {
   if (allowanceError.value) {
-    addErrorToast('error on get Allowance')
+    toast.add({ title: 'error on get Allowance', color: 'error' })
     console.error('allowance error ', allowanceError.value)
   }
 })
@@ -263,7 +251,7 @@ const { isLoading: isConfirmingAddVesting, isSuccess: isConfirmedAddVesting } =
 
 watch(isConfirmingAddVesting, async (isConfirming, wasConfirming) => {
   if (wasConfirming && !isConfirming && isConfirmedAddVesting.value) {
-    addSuccessToast('vesting added successfully')
+    toast.add({ title: 'vesting added successfully', color: 'success' })
     startDate.value = ''
     cliff.value = 0
     totalAmount.value = 0
@@ -278,7 +266,7 @@ watch(isConfirmingAddVesting, async (isConfirming, wasConfirming) => {
 
 watch(errorAddVesting, () => {
   if (errorAddVesting.value) {
-    addErrorToast('Add vesting failed')
+    toast.add({ title: 'Add vesting failed', color: 'error' })
     console.error('add vesting error', errorAddVesting.value)
   }
 })
@@ -297,59 +285,70 @@ const { isLoading: isConfirmingApproveToken, isSuccess: isConfirmedApproveToken 
 
 watch(isConfirmingApproveToken, async (isConfirming, wasConfirming) => {
   if (wasConfirming && !isConfirming && isConfirmedApproveToken.value) {
-    addSuccessToast('Approval added successfully')
+    toast.add({ title: 'Approval added successfully', color: 'success' })
     submit()
   }
 })
 
 watch(errorApproveToken, () => {
   if (errorApproveToken.value) {
-    addErrorToast('Approval failed')
+    toast.add({ title: 'Approval failed', color: 'error' })
     console.error('Approval error ', errorApproveToken.value)
   }
 })
 
-const validAddress = helpers.withMessage('Please enter a valid Ethereum address.', () => {
-  return isAddress(member.value.address)
-})
-
-const rules = {
-  member: {
-    address: {
-      required: helpers.withMessage('Member is required. ', required),
-      validAddress
-    }
-  },
-  dateRange: {
-    required: helpers.withMessage('Date range is required.', required)
-  },
-  cliff: {
-    required: helpers.withMessage('Cliff is required.', required),
-    minValue: minValue(0),
-    notGreaterThanDuration: helpers.withMessage(
-      'Cliff cannot be greater than duration.',
-      (value: number) => value <= durationInDays.value
-    )
-  },
-  totalAmount: {
-    required: helpers.withMessage('Amount is required.', required),
-    minValue: helpers.withMessage('Amount must be greater than 0.', minValue(1))
-  }
+function buildSchema() {
+  return z.object({
+    member: z.object({
+      address: z
+        .string()
+        .refine((v) => isAddress(v), { message: 'Please enter a valid Ethereum address.' })
+    }),
+    dateRange: z
+      .array(z.instanceof(Date))
+      .nullable()
+      .refine((v) => v !== null && v.length === 2, { message: 'Date range is required.' }),
+    cliff: z
+      .number()
+      .min(0)
+      .refine((v) => v <= durationInDays.value, {
+        message: 'Cliff cannot be greater than duration.'
+      }),
+    totalAmount: z.number().refine((v) => v >= 1, { message: 'Amount must be greater than 0.' })
+  })
 }
 
-const $v = useVuelidate(rules, {
-  member,
-  dateRange,
-  cliff,
-  totalAmount
-})
+function validate(): boolean {
+  errors.member = ''
+  errors.dateRange = ''
+  errors.cliff = ''
+  errors.totalAmount = ''
+
+  const result = buildSchema().safeParse({
+    member: member.value,
+    dateRange: dateRange.value,
+    cliff: cliff.value,
+    totalAmount: totalAmount.value
+  })
+
+  if (!result.success) {
+    for (const issue of result.error.issues) {
+      const field = issue.path[0] as keyof typeof errors
+      if (field in errors && !errors[field]) {
+        errors[field] = issue.message
+      }
+    }
+    return false
+  }
+  return true
+}
 
 function checkDuplicateVesting() {
   if (
     member.value.address &&
     activeMembers.value.some((m) => m.toLowerCase() === member.value.address.toLowerCase())
   ) {
-    addErrorToast('The member address already has an active vesting.')
+    toast.add({ title: 'The member address already has an active vesting.', color: 'error' })
     return true
   }
   return false
@@ -365,18 +364,16 @@ async function approveAllowance() {
         args: [VESTING_ADDRESS as Address, parseEther(totalAmount.value.toString())]
       })
     } else {
-      addErrorToast('total amount value should be greater than zero')
+      toast.add({ title: 'total amount value should be greater than zero', color: 'error' })
     }
   }
 }
 
 function handleDisplaySummary() {
-  $v.value.$touch()
-  if (!$v.value.$invalid) showSummary.value = true
+  if (validate()) showSummary.value = true
 }
+
 async function submit() {
-  $v.value.$touch()
-  if ($v.value.$invalid) return
   if (checkDuplicateVesting()) return
   const startDate = dateRange.value?.[0] || new Date()
   const start = Math.floor(startDate.getTime() / 1000)
@@ -387,7 +384,7 @@ async function submit() {
     const totalAmountInUnits = parseUnits(totalAmount.value.toString(), 6)
     const balanceInUnits = parseUnits(tokenBalance.value.amount.toString(), 6)
     if (balanceInUnits < totalAmountInUnits) {
-      addErrorToast('Insufficient token balance')
+      toast.add({ title: 'Insufficient token balance', color: 'error' })
       return
     }
   }
@@ -397,7 +394,7 @@ async function submit() {
     typeof allowance.value === 'bigint' &&
     Number(formatUnits(allowance.value, 6)) < totalAmount.value
   ) {
-    addErrorToast('Allowance is less than the total amount')
+    toast.add({ title: 'Allowance is less than the total amount', color: 'error' })
     return
   }
   addVesting({

@@ -99,7 +99,6 @@ const MOCK_DATA = {
 } as const
 
 // Component stubs
-const CardStub = defineComponent({ template: '<div><slot /></div>' })
 const AddressToolTipStub = defineComponent({ template: '<div></div>' })
 const DepositBankFormStub = defineComponent({ template: '<div></div>' })
 const TransferFormStub = defineComponent({ template: '<div><slot name="header" /></div>' })
@@ -114,7 +113,6 @@ describe('SafeBalanceSection', () => {
       props,
       global: {
         stubs: {
-          CardComponent: CardStub,
           AddressToolTip: AddressToolTipStub,
           DepositBankForm: DepositBankFormStub,
           TransferForm: TransferFormStub

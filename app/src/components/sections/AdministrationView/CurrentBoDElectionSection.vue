@@ -1,37 +1,42 @@
 <template>
-  <CardComponent :title="`${isDetails ? `Past` : `Current`} Election`">
-    <template #card-action>
-      <div class="flex justify-between">
-        <ElectionActions
-          v-if="!isDetails"
-          :election-id="currentElectionId"
-          @show-results-modal="showResultsModal = true"
-          @show-create-election-modal="showCreateElectionModal = { mount: true, show: true }"
-        />
-        <UModal
-          v-if="showCreateElectionModal.mount"
-          v-model:open="showCreateElectionModal.show"
-          :close="{
-            onClick: () => {
-              showCreateElectionModal = { mount: false, show: false }
-            }
-          }"
-        >
-          <template #body>
-            <CreateElectionForm
-              :is-loading="isLoadingCreateElection /*|| isConfirmingCreateElection*/"
-              @create-proposal="createElection"
-              @close-modal="() => (showCreateElectionModal = { mount: false, show: false })"
-            />
-          </template>
-        </UModal>
+  <UCard>
+    <template #header>
+      <div class="flex justify-between items-center">
+        <div class="flex items-center gap-4">
+          <span>{{ isDetails ? `Past` : `Current` }} Election</span>
+          <ElectionStatus
+            v-if="formattedElection && (!formattedElection?.resultsPublished || isDetails)"
+            :election-id="currentElectionId"
+          />
+        </div>
+        <div class="flex justify-between">
+          <ElectionActions
+            v-if="!isDetails"
+            :election-id="currentElectionId"
+            @show-results-modal="showResultsModal = true"
+            @show-create-election-modal="showCreateElectionModal = { mount: true, show: true }"
+          />
+          <UModal
+            v-if="showCreateElectionModal.mount"
+            v-model:open="showCreateElectionModal.show"
+            :close="{
+              onClick: () => {
+                showCreateElectionModal = { mount: false, show: false }
+              }
+            }"
+            title="Create election"
+            description="Create a new Board of Directors election to manage your team's leadership."
+          >
+            <template #body>
+              <CreateElectionForm
+                :is-loading="isLoadingCreateElection /*|| isConfirmingCreateElection*/"
+                @create-proposal="createElection"
+                @close-modal="() => (showCreateElectionModal = { mount: false, show: false })"
+              />
+            </template>
+          </UModal>
+        </div>
       </div>
-    </template>
-    <template #card-badge>
-      <ElectionStatus
-        v-if="formattedElection && (!formattedElection?.resultsPublished || isDetails)"
-        :election-id="currentElectionId"
-      />
     </template>
     <div
       v-if="formattedElection && (!formattedElection?.resultsPublished || isDetails)"
@@ -57,15 +62,14 @@
       v-else
       @show-create-election-modal="showCreateElectionModal = { mount: true, show: true }"
     />
-  </CardComponent>
+  </UCard>
 </template>
 
 <script setup lang="ts">
-import CardComponent from '@/components/CardComponent.vue'
 import { computed, ref, watch } from 'vue'
 import CreateElectionForm from './forms/CreateElectionForm.vue'
 import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
-import { useTeamStore, useToastStore } from '@/stores'
+import { useTeamStore } from '@/stores'
 import { simulateContract, writeContract, waitForTransactionReceipt } from '@wagmi/core'
 import type { OldProposal } from '@/types'
 import { log, parseError } from '@/utils'
@@ -80,7 +84,7 @@ import { useCreateElectionNotificationsMutation } from '@/queries/action.queries
 const props = defineProps<{ electionId: bigint; isDetails?: boolean }>()
 
 const teamStore = useTeamStore()
-const { addSuccessToast, addErrorToast } = useToastStore()
+const toast = useToast()
 const showResultsModal = ref(false)
 const currentElectionId = computed(() => props.electionId)
 const { electionsAddress, formattedElection } = useBoDElections(currentElectionId)
@@ -97,7 +101,7 @@ const createElection = async (electionData: OldProposal) => {
   try {
     isLoadingCreateElection.value = true
     if (!electionsAddress.value) {
-      addErrorToast('Elections contract address not found')
+      toast.add({ title: 'Elections contract address not found', color: 'error' })
       return
     }
 
@@ -137,11 +141,11 @@ const createElection = async (electionData: OldProposal) => {
     })
 
     await addElectionNotifications({ pathParams: { teamId: teamStore.currentTeamId! } })
-    addSuccessToast('Election created successfully!')
+    toast.add({ title: 'Election created successfully!', color: 'success' })
     showCreateElectionModal.value.show = false
     showCreateElectionModal.value.mount = false
   } catch (error) {
-    addErrorToast(parseError(error, ELECTIONS_ABI))
+    toast.add({ title: parseError(error, ELECTIONS_ABI), color: 'error' })
     log.error('creatingElection error:', error)
   } finally {
     isLoadingCreateElection.value = false
@@ -150,7 +154,7 @@ const createElection = async (electionData: OldProposal) => {
 
 watch(electionNotificationError, (error) => {
   if (error) {
-    addErrorToast('Failed to send election notifications')
+    toast.add({ title: 'Failed to send election notifications', color: 'error' })
     log.error('electionNotificationError.value: ', error)
   }
 })
