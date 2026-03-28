@@ -1,10 +1,11 @@
 <template>
-  <span class="font-bold text-2xl">{{ title }}</span>
-  <div v-if="selectedToken?.token.id !== 'native'" class="steps w-full my-4">
-    <a class="step" :class="{ 'step-primary': currentStep >= 1 }">Amount</a>
-    <a class="step" :class="{ 'step-primary': currentStep >= 2 }">Approval</a>
-    <a class="step" :class="{ 'step-primary': currentStep >= 3 }">Deposit</a>
-  </div>
+  <UStepper
+    v-if="selectedToken?.token.id !== 'native'"
+    v-model="currentStep"
+    :items="stepperItems"
+    disabled
+    class="w-full my-4"
+  />
 
   <UForm :schema="formSchema" :state="{ amount }" @submit="submitForm">
     <UFormField name="amount" class="w-full">
@@ -71,7 +72,6 @@ const chainId = useChainId()
 const emits = defineEmits(['closeModal'])
 const props = defineProps<{
   safeAddress: Address
-  title: string
 }>()
 
 function reset() {
@@ -95,6 +95,11 @@ const tokenAmountModel = computed({
   }
 })
 const currentStep = ref(1)
+const stepperItems = [
+  { title: 'Amount', value: 1 },
+  { title: 'Approval', value: 2 },
+  { title: 'Deposit', value: 3 }
+]
 const submitting = ref(false)
 const isAmountValid = ref(false)
 
