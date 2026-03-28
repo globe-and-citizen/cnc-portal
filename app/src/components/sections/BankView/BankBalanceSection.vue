@@ -1,6 +1,6 @@
 <!-- BankBalanceSection.vue -->
 <template>
-  <UCard :ui="{ root: 'shadow-md' }">
+  <UCard>
     <template #header>
       <h3 class="text-lg font-semibold">Balance</h3>
     </template>
