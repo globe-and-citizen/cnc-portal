@@ -3,13 +3,11 @@
 
   <UForm
     :schema="validationSchema"
-    :state="model"
+    :state="{ amount: model.amount }"
     class="mt-4 flex flex-col gap-4"
     @submit="submitForm"
   >
-    <UFormField class="w-full" name="address">
-      <SelectMemberContractsInput v-model="model.address" @selectItem="handleSelectItem" />
-    </UFormField>
+    <SelectMemberContractsInput v-model="model.address" @selectItem="handleSelectItem" />
 
     <UFormField class="w-full" name="amount">
       <TokenAmount
@@ -56,7 +54,6 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
-import { isAddress } from 'viem'
 import { z } from 'zod'
 import SelectMemberContractsInput from '../utils/SelectMemberContractsInput.vue'
 import BodAlert from '@/components/BodAlert.vue'
@@ -130,15 +127,15 @@ watch(
 
 const validationSchema = computed(() =>
   z.object({
-    address: z
-      .object({
-        name: z.string().optional(),
-        address: z
-          .string({ message: 'Address is required' })
-          .min(1, 'Address is required')
-          .refine((value) => isAddress(value), { message: 'Invalid address' })
-      })
-      .refine((value) => isAddress(value.address), { message: 'Invalid address' })
+    amount: z
+      .string()
+      .min(1, 'Amount is required')
+      .refine((value) => /^\d*\.?\d+$/.test(value), 'Enter a valid amount')
+      .refine((value) => parseFloat(value) > 0, 'Amount must be greater than 0')
+      .refine(
+        (value) => parseFloat(value) <= (model.value.token.balance ?? 0),
+        'Amount exceeds available balance'
+      )
   })
 )
 
