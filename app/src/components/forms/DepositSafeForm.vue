@@ -1,10 +1,11 @@
 <template>
-  <span class="font-bold text-2xl">{{ title }}</span>
-  <div v-if="selectedToken?.token.id !== 'native'" class="steps w-full my-4">
-    <a class="step" :class="{ 'step-primary': currentStep >= 1 }">Amount</a>
-    <a class="step" :class="{ 'step-primary': currentStep >= 2 }">Approval</a>
-    <a class="step" :class="{ 'step-primary': currentStep >= 3 }">Deposit</a>
-  </div>
+  <UStepper
+    v-if="selectedToken?.token.id !== 'native'"
+    v-model="currentStep"
+    :items="stepperItems"
+    disabled
+    class="w-full my-4"
+  />
 
   <UForm :schema="formSchema" :state="{ amount }" @submit="submitForm">
     <UFormField name="amount" class="w-full">
@@ -24,6 +25,15 @@
         </template>
       </TokenAmount>
     </UFormField>
+
+    <UAlert
+      v-if="errorMessage"
+      color="error"
+      variant="soft"
+      :description="errorMessage"
+      icon="i-lucide-circle-alert"
+      class="mt-3"
+    />
 
     <div class="mt-4 flex justify-between">
       <UButton
@@ -57,7 +67,7 @@ import { useSafeSendTransaction } from '@/composables/transactions/useSafeSendTr
 import { useERC20Approve } from '@/composables/erc20/writes'
 import { useErc20Allowance } from '@/composables/erc20/reads'
 import { SUPPORTED_TOKENS, type TokenId, USDC_ADDRESS, USDC_E_ADDRESS } from '@/constant'
-import { useCurrencyStore, useToastStore, useUserDataStore } from '@/stores'
+import { useCurrencyStore, useUserDataStore } from '@/stores'
 import TokenAmount from './TokenAmount.vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useChainId, useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
@@ -71,13 +81,12 @@ const chainId = useChainId()
 const emits = defineEmits(['closeModal'])
 const props = defineProps<{
   safeAddress: Address
-  title: string
 }>()
 
 function reset() {
   amount.value = ''
   selectedTokenId.value = 'native'
-  currentStep.value = 1
+  currentStep.value = 0
   submitting.value = false
   isAmountValid.value = false
 }
@@ -89,12 +98,17 @@ const amount = ref<string>('')
 const selectedTokenId = ref<TokenId>('native')
 const tokenAmountModel = computed({
   get: () => ({ amount: amount.value, tokenId: selectedTokenId.value }),
-  set: (value: { amount: string; tokenId: TokenId | string }) => {
+  set: (value: { amount: string; tokenId: TokenId }) => {
     amount.value = value.amount ?? ''
-    selectedTokenId.value = (value.tokenId as TokenId) ?? 'native'
+    selectedTokenId.value = value.tokenId ?? 'native'
   }
 })
-const currentStep = ref(1)
+const currentStep = ref(0)
+const stepperItems = [
+  { title: 'Amount', value: 0 },
+  { title: 'Approval', value: 1 },
+  { title: 'Deposit', value: 2 }
+]
 const submitting = ref(false)
 const isAmountValid = ref(false)
 
@@ -119,7 +133,17 @@ const formSchema = computed(() =>
 // Stores
 const currencyStore = useCurrencyStore()
 const userDataStore = useUserDataStore()
-const { addErrorToast, addSuccessToast } = useToastStore()
+const toast = useToast()
+
+const errorMessage = computed(() => {
+  const err =
+    nativeError.value ||
+    ERC20ApproveResult.writeResult.error.value ||
+    ERC20ApproveResult.receiptResult.error.value ||
+    transferError.value ||
+    transferReceiptError.value
+  return err ? ((err as { shortMessage?: string }).shortMessage ?? err.message) : null
+})
 
 // Reactive state for balances
 const { balances, isLoading } = useContractBalance(userDataStore.address as Address)
@@ -129,7 +153,8 @@ const {
   sendTransaction,
   isLoading: isNativeDepositLoading,
   isConfirmed: isNativeDepositConfirmed,
-  receipt: nativeReceipt
+  receipt: nativeReceipt,
+  error: nativeError
 } = useSafeSendTransaction()
 
 // Computed properties
@@ -149,7 +174,7 @@ const selectedToken = computed(() =>
   balances.value.find((b) => b.token.id === selectedTokenId.value)
 )
 const submitLabel = computed(() =>
-  selectedToken.value?.token.id !== 'native' && currentStep.value === 2 ? 'Approval' : 'Deposit'
+  selectedToken.value?.token.id !== 'native' && currentStep.value === 1 ? 'Approval' : 'Deposit'
 )
 const selectedTokenAddress = computed<Address>(
   () => selectedToken.value?.token.address ?? zeroAddress
@@ -178,9 +203,9 @@ const ERC20ApproveResult = useERC20Approve(
 )
 
 // ERC20 transfer for Safe
-const { data: transferHash, mutateAsync: writeTransfer } = useWriteContract()
+const { data: transferHash, mutateAsync: writeTransfer, error: transferError } = useWriteContract()
 
-useWaitForTransactionReceipt({
+const { error: transferReceiptError } = useWaitForTransactionReceipt({
   hash: transferHash
 })
 
@@ -188,7 +213,10 @@ useWaitForTransactionReceipt({
 watch(isNativeDepositConfirmed, (confirmed) => {
   if (confirmed && nativeReceipt.value) {
     amount.value = ''
-    addSuccessToast(`${selectedToken.value?.token.code} deposited successfully`)
+    toast.add({
+      title: `${selectedToken.value?.token.code} deposited successfully`,
+      color: 'success'
+    })
     emits('closeModal')
   }
 })
@@ -209,7 +237,7 @@ const submitForm = async () => {
     } else {
       // USDC deposit workflow - step 1 to 2 to 3 in one execution
       if (!(allowanceValue.value >= bigIntAmount.value)) {
-        currentStep.value = 2
+        currentStep.value = 1
 
         // Run spending cap approval and wait for confirmation
         await ERC20ApproveResult.executeWrite([props.safeAddress, bigIntAmount.value])
@@ -222,7 +250,7 @@ const submitForm = async () => {
       }
 
       // Step 3: Proceed to transfer (continue from step 2 if approval was done)
-      currentStep.value = 3
+      currentStep.value = 2
 
       // Transfer USDC to Safe (not deposit to a bank contract)
       if (selectedTokenId.value === 'usdc.e') {
@@ -273,12 +301,14 @@ const submitForm = async () => {
 
       submitting.value = false
       amount.value = ''
-      addSuccessToast(`${selectedToken.value?.token.code} deposited successfully`)
+      toast.add({
+        title: `${selectedToken.value?.token.code} deposited successfully`,
+        color: 'success'
+      })
       emits('closeModal')
     }
   } catch (error) {
     console.error('Deposit failed:', error)
-    addErrorToast(`Failed to deposit ${selectedTokenId.value}`)
     submitting.value = false
   }
 }

@@ -63,7 +63,6 @@ describe('ShareholderList', () => {
         stubs: {
           TableComponent: TableComponentStub,
           MintForm: MintFormStub,
-          CardComponent: { template: '<div><slot /></div>' },
           UserComponent: true
         }
       }

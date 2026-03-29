@@ -1,6 +1,5 @@
 <template>
   <div class="flex flex-col gap-4">
-    <h2>Pay Dividends to the shareholders</h2>
     <BodAlert v-if="isBodAction" />
     <h3>
       Please input amount to divide to the shareholders. This will move funds from bank contract to
@@ -44,7 +43,6 @@
 
 <script setup lang="ts">
 import { NETWORK } from '@/constant'
-// import { useToastStore } from '@/stores'
 import type { Team } from '@/types'
 
 import { parseUnits } from 'viem'

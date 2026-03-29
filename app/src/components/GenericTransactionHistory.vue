@@ -1,41 +1,44 @@
 <!-- GenericTransactionHistory.vue -->
 <template>
-  <CardComponent :title="title" class="w-full">
-    <template #card-action>
-      <div class="flex items-center gap-2">
-        <CustomDatePicker
-          v-if="showDateFilter"
-          v-model="dateRange"
-          class="min-w-[140px]"
-          :data-test-prefix="dataTestPrefix"
-        />
-        <div class="relative">
+  <UCard class="w-full">
+    <template #header>
+      <div class="flex justify-between items-center">
+        <span>{{ title }}</span>
+        <div class="flex items-center gap-2">
+          <CustomDatePicker
+            v-if="showDateFilter"
+            v-model="dateRange"
+            class="min-w-[140px]"
+            :data-test-prefix="dataTestPrefix"
+          />
+          <div class="relative">
+            <UButton
+              class="flex items-center cursor-pointer gap-4 border border-gray-300 min-w-[110px]"
+              @click="typeDropdownOpen = !typeDropdownOpen"
+              :data-test="`${dataTestPrefix}-type-filter`"
+            >
+              <span>{{ selectedTypeLabel }}</span>
+              <IconifyIcon icon="heroicons:chevron-down" class="w-4 h-4" />
+            </UButton>
+            <ul
+              class="absolute right-0 mt-2 menu bg-base-200 border-2 rounded-box z-1 w-40 p-2 shadow-sm"
+              ref="typeDropdownTarget"
+              v-if="typeDropdownOpen"
+            >
+              <li @click="selectType('')"><a>All Types</a></li>
+              <li v-for="type in uniqueTypes" :key="type" @click="selectType(type)">
+                <a>{{ type }}</a>
+              </li>
+            </ul>
+          </div>
           <UButton
-            class="flex items-center cursor-pointer gap-4 border border-gray-300 min-w-[110px]"
-            @click="typeDropdownOpen = !typeDropdownOpen"
-            :data-test="`${dataTestPrefix}-type-filter`"
-          >
-            <span>{{ selectedTypeLabel }}</span>
-            <IconifyIcon icon="heroicons:chevron-down" class="w-4 h-4" />
-          </UButton>
-          <ul
-            class="absolute right-0 mt-2 menu bg-base-200 border-2 rounded-box z-1 w-40 p-2 shadow-sm"
-            ref="typeDropdownTarget"
-            v-if="typeDropdownOpen"
-          >
-            <li @click="selectType('')"><a>All Types</a></li>
-            <li v-for="type in uniqueTypes" :key="type" @click="selectType(type)">
-              <a>{{ type }}</a>
-            </li>
-          </ul>
+            v-if="showExport"
+            color="success"
+            :data-test="`${dataTestPrefix}-export-button`"
+            class="ml-0! px-4!"
+            label="Export"
+          />
         </div>
-        <UButton
-          v-if="showExport"
-          color="success"
-          :data-test="`${dataTestPrefix}-export-button`"
-          class="ml-0! px-4!"
-          label="Export"
-        />
       </div>
     </template>
 
@@ -165,12 +168,11 @@
         /> -->
       </template>
     </UModal>
-  </CardComponent>
+  </UCard>
 </template>
 
 <script setup lang="ts">
 import AddressToolTip from '@/components/AddressToolTip.vue'
-import CardComponent from '@/components/CardComponent.vue'
 import CustomDatePicker from '@/components/CustomDatePicker.vue'
 import ReceiptComponent from '@/components/ReceiptComponent.vue'
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
@@ -186,7 +188,6 @@ import { exportReceiptToExcel } from '@/utils/excelExport'
 // import { exportTransactionsToPdf, exportReceiptToPdf } from '@/utils/pdfExport'
 import { useTeamStore } from '@/stores'
 import { useCurrencyStore } from '@/stores/currencyStore'
-import { useToastStore } from '@/stores/useToastStore'
 import type { ReceiptData } from '@/utils/excelExport'
 import { onClickOutside } from '@vueuse/core'
 import { storeToRefs } from 'pinia'
@@ -214,7 +215,7 @@ const emit = defineEmits<{
   (e: 'receipt-click', data: ReceiptData): void
 }>()
 
-const toastStore = useToastStore()
+const toast = useToast()
 const currencyStore = useCurrencyStore()
 const teamStore = useTeamStore()
 const route = useRoute()
@@ -395,12 +396,13 @@ const formatReceiptData = (transaction: BaseTransaction): ReceiptData => {
 const handleReceiptExport = (receiptData: ReceiptData) => {
   try {
     const success = exportReceiptToExcel(receiptData)
-    toastStore.addSuccessToast(
-      success ? 'Receipt exported successfully' : 'Failed to export receipt'
-    )
+    toast.add({
+      title: success ? 'Receipt exported successfully' : 'Failed to export receipt',
+      color: success ? 'success' : 'error'
+    })
   } catch (error) {
     console.error('Error exporting receipt:', error)
-    toastStore.addErrorToast('Failed to export receipt')
+    toast.add({ title: 'Failed to export receipt', color: 'error' })
   }
 }
 

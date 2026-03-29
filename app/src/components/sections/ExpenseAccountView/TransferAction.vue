@@ -13,6 +13,12 @@
       v-if="showModal.mount"
       v-model:open="showModal.show"
       data-test="transfer-modal"
+      title="Transfer from Expenses Contract"
+      :description="
+        expenseBalance
+          ? `Spendable balance: ${tokens[0]?.spendableBalance ?? tokens[0]?.balance ?? 0} ${transferData.token.symbol}`
+          : undefined
+      "
       :close="{
         onClick: () => {
           showModal = { mount: false, show: false }
@@ -37,14 +43,6 @@
           "
           @closeModal="showModal = { mount: false, show: false }"
         >
-          <template #header>
-            <h1 class="font-bold text-2xl">Transfer from Expenses Contract</h1>
-            <h3 v-if="expenseBalance" class="pt-4" data-test="spendable-balance">
-              Spendable balance: {{ tokens[0]?.spendableBalance ?? tokens[0]?.balance ?? 0 }}
-              {{ transferData.token.symbol }}
-            </h3>
-          </template>
-
           <template #label>
             <span class="label-text">Transfer From</span>
             <span class="label-text-alt"
@@ -63,7 +61,7 @@ import TransferForm from '@/components/forms/TransferForm.vue'
 import { USDC_ADDRESS, type TokenId } from '@/constant'
 import type { BudgetLimit } from '@/types'
 import { useContractBalance } from '@/composables'
-import { useTeamStore, useToastStore, useUserDataStore } from '@/stores'
+import { useTeamStore, useUserDataStore } from '@/stores'
 import { getTokens, log, parseError } from '@/utils'
 import { useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 import { encodeFunctionData, parseEther, zeroAddress, type Address } from 'viem'
@@ -78,7 +76,7 @@ const props = defineProps<{ row: TableRow }>()
 
 const teamStore = useTeamStore()
 const userDataStore = useUserDataStore()
-const { addErrorToast, addSuccessToast } = useToastStore()
+const toast = useToast()
 const { balances } = useContractBalance(
   ref(teamStore.getContractAddressByType('ExpenseAccountEIP712'))
 )
@@ -195,7 +193,7 @@ const transferNativeToken = async (to: string, amount: string, budgetLimit: Budg
   } catch (error) {
     console.error('Error in transferNativeToken:', parseError(error, EXPENSE_ACCOUNT_EIP712_ABI))
     log.error('Error in transferNativeToken:', parseError(error, EXPENSE_ACCOUNT_EIP712_ABI))
-    addErrorToast(parseError(error, EXPENSE_ACCOUNT_EIP712_ABI))
+    toast.add({ title: parseError(error, EXPENSE_ACCOUNT_EIP712_ABI), color: 'error' })
     transferERC20loading.value = false
     isLoadingTransfer.value = false
   }
@@ -263,7 +261,7 @@ const transferErc20Token = async () => {
       })
     } catch (error) {
       log.error('Error in transferErc20Token:', error)
-      addErrorToast(parseError(error, EXPENSE_ACCOUNT_EIP712_ABI))
+      toast.add({ title: parseError(error, EXPENSE_ACCOUNT_EIP712_ABI), color: 'error' })
       transferERC20loading.value = false
       isLoadingTransfer.value = false
     }
@@ -274,7 +272,7 @@ const transferErc20Token = async () => {
 //#region Watchers
 watch(isConfirmingTransfer, async (isConfirming, wasConfirming) => {
   if (!isConfirming && wasConfirming && isConfirmedTransfer.value) {
-    addSuccessToast('Transfer Successful')
+    toast.add({ title: 'Transfer Successful', color: 'success' })
     showModal.value = { mount: false, show: false }
     transferERC20loading.value = false
     queryClient.invalidateQueries({ queryKey: ['getExpenseData'] })
@@ -285,12 +283,12 @@ watch(errorTransfer, (newVal) => {
     transferERC20loading.value = false
     isLoadingTransfer.value = false
     log.error(parseError(newVal, EXPENSE_ACCOUNT_EIP712_ABI))
-    addErrorToast('Failed to transfer')
+    toast.add({ title: 'Failed to transfer', color: 'error' })
   }
 })
 watch(isConfirmingApprove, (newIsConfirming, oldIsConfirming) => {
   if (!newIsConfirming && oldIsConfirming && isConfirmedApprove.value) {
-    addSuccessToast('Approval granted successfully')
+    toast.add({ title: 'Approval granted successfully', color: 'success' })
     transferERC20loading.value = false
     transferErc20Token()
   }
@@ -299,7 +297,7 @@ watch(approveError, () => {
   if (approveError.value) {
     transferERC20loading.value = false
     log.error(parseError(approveError.value))
-    addErrorToast('Failed to approve token spending')
+    toast.add({ title: 'Failed to approve token spending', color: 'error' })
   }
 })
 watch(confirmingTransferError, (newError) => {
@@ -307,7 +305,7 @@ watch(confirmingTransferError, (newError) => {
     transferERC20loading.value = false
     isLoadingTransfer.value = false
     log.error(parseError(newError, EXPENSE_ACCOUNT_EIP712_ABI))
-    addErrorToast('Failed to transfer after approval')
+    toast.add({ title: 'Failed to transfer after approval', color: 'error' })
   }
 })
 //#endregion

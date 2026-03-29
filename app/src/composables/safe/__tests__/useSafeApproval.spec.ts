@@ -22,35 +22,26 @@ interface MockMutation {
 }
 
 // Hoisted mock variables
-const {
-  mockUseConnection,
-  mockUseChainId,
-  mockUseSafeSDK,
-  mockLoadSafe,
-  mockMutation,
-  mockAddSuccessToast,
-  mockAddErrorToast
-} = vi.hoisted(() => ({
-  mockUseConnection: vi.fn<[], MockConnection>(),
-  mockUseChainId: vi.fn(() => ref(137)),
-  mockUseSafeSDK: vi.fn(),
-  mockLoadSafe: vi.fn<[string], Promise<MockSafeSDK>>(),
-  mockMutation: {
-    mutateAsync: vi.fn<
-      [
-        {
-          chainId: number
-          safeAddress: string
-          safeTxHash: string
-          signature: { data: string; signer: string }
-        }
-      ],
-      Promise<void>
-    >()
-  } as MockMutation,
-  mockAddSuccessToast: vi.fn(),
-  mockAddErrorToast: vi.fn()
-}))
+const { mockUseConnection, mockUseChainId, mockUseSafeSDK, mockLoadSafe, mockMutation } =
+  vi.hoisted(() => ({
+    mockUseConnection: vi.fn<[], MockConnection>(),
+    mockUseChainId: vi.fn(() => ref(137)),
+    mockUseSafeSDK: vi.fn(),
+    mockLoadSafe: vi.fn<[string], Promise<MockSafeSDK>>(),
+    mockMutation: {
+      mutateAsync: vi.fn<
+        [
+          {
+            chainId: number
+            safeAddress: string
+            safeTxHash: string
+            signature: { data: string; signer: string }
+          }
+        ],
+        Promise<void>
+      >()
+    } as MockMutation
+  }))
 
 // Mock external dependencies
 vi.mock('@wagmi/vue', () => ({
@@ -64,13 +55,6 @@ vi.mock('@/queries/safe.mutations', () => ({
 
 vi.mock('../useSafeSdk', () => ({
   useSafeSDK: mockUseSafeSDK
-}))
-
-vi.mock('@/stores', () => ({
-  useToastStore: () => ({
-    addSuccessToast: mockAddSuccessToast,
-    addErrorToast: mockAddErrorToast
-  })
 }))
 
 vi.mock('viem', async (importOriginal) => {

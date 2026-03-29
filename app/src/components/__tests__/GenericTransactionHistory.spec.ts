@@ -48,13 +48,6 @@
 //   exportTransactionsToPdf: vi.fn().mockResolvedValue(true)
 // }))
 
-// vi.mock('@/stores/useToastStore', () => ({
-//   useToastStore: () => ({
-//     addSuccessToast: vi.fn(),
-//     addErrorToast: vi.fn()
-//   })
-// }))
-
 // const mockTeamData = {
 //   currentTeam: {
 //     members: [

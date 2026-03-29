@@ -25,7 +25,7 @@ import { useSyncWeeklyClaimsMutation } from '@/queries/weeklyClaim.queries'
 import { keccak256 } from 'viem'
 import { log, parseError } from '@/utils'
 import { useQueryClient } from '@tanstack/vue-query'
-import { useTeamStore, useToastStore } from '@/stores'
+import { useTeamStore } from '@/stores'
 import { computed, ref } from 'vue'
 import type { WeeklyClaim } from '@/types'
 
@@ -36,7 +36,7 @@ const props = defineProps<{
 const emit = defineEmits(['close', 'loading'])
 
 const teamStore = useTeamStore()
-const toastStore = useToastStore()
+const toast = useToast()
 const queryClient = useQueryClient()
 
 const cashRemunerationAddress = computed(() =>
@@ -59,7 +59,7 @@ const enableClaim = async () => {
   if (!cashRemunerationAddress.value) {
     isLoading.value = false
     emit('loading', false)
-    toastStore.addErrorToast('Cash Remuneration EIP712 contract address not found')
+    toast.add({ title: 'Cash Remuneration EIP712 contract address not found', color: 'error' })
     return
   }
   // disable
@@ -85,14 +85,14 @@ const enableClaim = async () => {
     })
 
     if (receipt.status === 'success') {
-      toastStore.addSuccessToast('Claim enabled')
+      toast.add({ title: 'Claim enabled', color: 'success' })
 
       claimAction.value = 'enable'
 
       try {
         await syncWeeklyClaim({ queryParams: { teamId: teamStore.currentTeamId! } })
       } catch {
-        toastStore.addErrorToast('Failed to update Claim status')
+        toast.add({ title: 'Failed to update Claim status', color: 'error' })
       }
 
       queryClient.invalidateQueries({
@@ -102,7 +102,7 @@ const enableClaim = async () => {
       isLoading.value = false
       emit('loading', false)
     } else {
-      toastStore.addErrorToast('Transaction failed: Failed to enable claim')
+      toast.add({ title: 'Transaction failed: Failed to enable claim', color: 'error' })
       // keep loading until explicit success
     }
   } catch (error) {
@@ -113,7 +113,7 @@ const enableClaim = async () => {
     log.error('Enable error', error)
     const parsed = parseError(error, CASH_REMUNERATION_EIP712_ABI)
 
-    toastStore.addErrorToast(parsed)
+    toast.add({ title: parsed, color: 'error' })
   }
 }
 </script>

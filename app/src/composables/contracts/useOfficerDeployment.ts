@@ -3,7 +3,6 @@ import { useMutation, useQueryClient } from '@tanstack/vue-query'
 import { writeContract, waitForTransactionReceipt, getConnections } from '@wagmi/core'
 import { encodeFunctionData, type Address, type Hex } from 'viem'
 import { getLogs } from 'viem/actions'
-import { useToastStore } from '@/stores'
 import { config } from '@/wagmi.config'
 import { log, parseError } from '@/utils'
 import {
@@ -37,7 +36,7 @@ export interface OfficerDeploymentResult {
  * Uses wagmi core + Tanstack Query for optimal performance
  */
 export function useOfficerDeployment() {
-  const { addSuccessToast, addErrorToast } = useToastStore()
+  const toast = useToast()
   const queryClient = useQueryClient()
 
   const deployedOfficerAddress = ref<Address | null>(null)
@@ -118,7 +117,7 @@ export function useOfficerDeployment() {
       return { hash, receipt, officerAddress: proxyAddress }
     },
     onSuccess: async (data, variables) => {
-      addSuccessToast('Officer contract deployed successfully')
+      toast.add({ title: 'Officer contract deployed successfully', color: 'success' })
       log.info('Officer contract deployment successful')
 
       //  Execute callback once, with proper error handling
@@ -130,7 +129,10 @@ export function useOfficerDeployment() {
           // Log error but don't throw - deployment was successful
           log.error('Error in deployment success callback:', error)
           // Only show user-facing error, don't fail the entire deployment
-          addErrorToast('Deployment successful, but setup encountered an issue')
+          toast.add({
+            title: 'Deployment successful, but setup encountered an issue',
+            color: 'error'
+          })
         }
       }
 
@@ -149,7 +151,7 @@ export function useOfficerDeployment() {
     onError: (error) => {
       log.error('Officer deployment error:', error)
       const errorMessage = parseError(error, FACTORY_BEACON_ABI)
-      addErrorToast(`Failed to deploy officer contract: ${errorMessage}`)
+      toast.add({ title: `Failed to deploy officer contract: ${errorMessage}`, color: 'error' })
     }
   })
 

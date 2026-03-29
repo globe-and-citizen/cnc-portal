@@ -1,29 +1,32 @@
 <template>
-  <CardComponent title="Safe Owners" class="h-full">
-    <template #card-action>
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-2">
-          <UButton
-            color="primary"
-            @click="showAddSignerModal = true"
-            :disabled="!address || !isConnectedUserOwner"
-            data-test="add-signer-button"
-            class="flex items-center gap-1"
-          >
-            <IconifyIcon icon="heroicons:user-plus" class="w-4 h-4" />
-            Add Signer
-          </UButton>
-          <UButton
-            color="secondary"
-            @click="showUpdateThresholdModal = true"
-            :disabled="isLoading || !isConnectedUserOwner"
-            :loading="isLoading"
-            data-test="update-threshold-button"
-            class="flex items-center gap-1"
-          >
-            <IconifyIcon icon="heroicons:shield-check" class="w-4 h-4" />
-            Threshold
-          </UButton>
+  <UCard class="h-full">
+    <template #header>
+      <div class="flex justify-between items-center">
+        <span>Safe Owners</span>
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <UButton
+              color="primary"
+              @click="showAddSignerModal = true"
+              :disabled="!address || !isConnectedUserOwner"
+              data-test="add-signer-button"
+              class="flex items-center gap-1"
+            >
+              <IconifyIcon icon="heroicons:user-plus" class="w-4 h-4" />
+              Add Signer
+            </UButton>
+            <UButton
+              color="secondary"
+              @click="showUpdateThresholdModal = true"
+              :disabled="isLoading || !isConnectedUserOwner"
+              :loading="isLoading"
+              data-test="update-threshold-button"
+              class="flex items-center gap-1"
+            >
+              <IconifyIcon icon="heroicons:shield-check" class="w-4 h-4" />
+              Threshold
+            </UButton>
+          </div>
         </div>
       </div>
     </template>
@@ -87,7 +90,7 @@
       :current-threshold="safeInfo?.threshold || 1"
       @threshold-updated="handleThresholdUpdated"
     />
-  </CardComponent>
+  </UCard>
 </template>
 
 <script setup lang="ts">
@@ -97,7 +100,6 @@ import { useAccount } from '@wagmi/vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
 
 // Components
-import CardComponent from '@/components/CardComponent.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import AddSignerModal from '@/components/sections/SafeView/forms/AddSignerModal.vue'
 import UpdateThresholdModal from '@/components/sections/SafeView/forms/UpdateThresholdModal.vue'

@@ -1,6 +1,6 @@
 import router from '@/router'
 import { computed, ref } from 'vue'
-import { useUserDataStore, useToastStore } from '@/stores'
+import { useUserDataStore } from '@/stores'
 import type { User } from '@/types'
 import { log } from '@/utils'
 import { useFetch, useStorage } from '@vueuse/core'
@@ -17,7 +17,7 @@ export function useSiwe() {
   //#endregion
 
   //#region Composables
-  const { addErrorToast } = useToastStore()
+  const toast = useToast()
   const userDataStore = useUserDataStore()
 
   const connection = useConnection()
@@ -74,7 +74,7 @@ export function useSiwe() {
     // Check if nonce is fetched successfully
     if (!nonce.value || fetchUserNonceError.value) {
       log.info('fetchError.value', fetchUserNonceError.value)
-      addErrorToast('Failed to fetch nonce')
+      toast.add({ title: 'Failed to fetch nonce', color: 'error' })
       isProcessing.value = false
       return
     }
@@ -94,11 +94,13 @@ export function useSiwe() {
       await signMessageAsync({ message: authData.value.message })
     } catch (error) {
       if (signMessageError.value) {
-        addErrorToast(
-          signMessageError.value.name === 'UserRejectedRequestError'
-            ? 'Message sign rejected: You need to sign the message to Sign in the CNC Portal'
-            : 'Something went wrong: Unable to sign SIWE message'
-        )
+        toast.add({
+          title:
+            signMessageError.value.name === 'UserRejectedRequestError'
+              ? 'Message sign rejected: You need to sign the message to Sign in the CNC Portal'
+              : 'Something went wrong: Unable to sign SIWE message',
+          color: 'error'
+        })
         log.error('signMessageError.value', error)
         isProcessing.value = false
       }
@@ -115,7 +117,7 @@ export function useSiwe() {
     const token = siweData.value?.accessToken
     if (!token || siweError.value) {
       log.info('siweError.value', siweError.value)
-      addErrorToast('Failed to get authentication token')
+      toast.add({ title: 'Failed to get authentication token', color: 'error' })
 
       isProcessing.value = false
       return
@@ -133,7 +135,7 @@ export function useSiwe() {
     const user = userData.value
     if (!user || fetchUserError.value) {
       log.info('fetchUserError.value', fetchUserError.value)
-      addErrorToast('Failed to fetch user data')
+      toast.add({ title: 'Failed to fetch user data', color: 'error' })
 
       isProcessing.value = false
       return

@@ -4,7 +4,6 @@ import VestingActions from '@/components/sections/VestingView/VestingActions.vue
 import CreateVesting from '@/components/sections/VestingView/forms/CreateVesting.vue'
 import { ref } from 'vue'
 import { createTestingPinia } from '@pinia/testing'
-import { mockUseContractBalance } from '@/tests/mocks/composables.mock'
 
 const memberAddress = '0x000000000000000000000000000000000000dead'
 const mockReloadKey = ref<number>(0)
@@ -19,51 +18,6 @@ const mockCurrentTeam = ref({
     }
   ]
 })
-const mockWriteContract = {
-  mutate: vi.fn(),
-  error: ref<null | Error>(null),
-  isPending: ref(false),
-  data: ref(null)
-}
-
-const mockWaitForReceipt = {
-  isLoading: ref(false),
-  isSuccess: ref(false)
-}
-
-vi.mock('@wagmi/vue', async (importOriginal) => {
-  const actual = (await importOriginal()) as typeof import('@wagmi/vue')
-  return {
-    ...actual,
-    useWriteContract: vi.fn(() => mockWriteContract),
-    useWaitForTransactionReceipt: vi.fn(() => mockWaitForReceipt),
-    useReadContract: vi.fn(({}) => {
-      return {
-        data: ref(BigInt(0)),
-        refetch: vi.fn(),
-        error: ref(null)
-      }
-    })
-  }
-})
-
-vi.mock('@/stores/useToastStore')
-vi.mock('@/stores', () => ({
-  useUserDataStore: () => ({
-    address: '0x000000000000000000000000000000000000dead'
-  }),
-  useTeamStore: () => ({
-    currentTeam: mockCurrentTeam.value,
-    currentTeamId: mockCurrentTeam.value.id,
-    getContractAddressByType: vi.fn((type) => {
-      return type ? '0x000000000000000000000000000000000000beef' : undefined
-    })
-  })
-}))
-
-vi.mock('@/composables/useContractBalance', () => ({
-  useContractBalance: vi.fn(() => mockUseContractBalance)
-}))
 
 describe('VestingActions.vue', () => {
   let wrapper: VueWrapper

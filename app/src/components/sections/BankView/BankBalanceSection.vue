@@ -1,16 +1,16 @@
 <!-- BankBalanceSection.vue -->
 <template>
-  <CardComponent title="Balance">
+  <UCard>
+    <template #header>
+      <h3 class="text-lg font-semibold">Balance</h3>
+    </template>
+
     <div class="flex justify-between items-start">
       <div>
         <div class="flex items-baseline gap-2">
           <span class="text-4xl font-bold">
             <span class="inline-block min-w-16 h-10">
-              <span
-                data-test="loading-spinner"
-                class="loading loading-spinner loading-lg"
-                v-if="isLoading"
-              ></span>
+              <USkeleton v-if="isLoading" class="h-10 w-16" data-test="loading-spinner" />
               <span v-else>{{ total['USD']?.formated ?? 0 }}</span>
             </span>
           </span>
@@ -23,7 +23,6 @@
       <div class="flex flex-col items-end gap-4">
         <div class="flex gap-2">
           <DepositModal v-if="bankAddress" :bank-address="bankAddress" />
-
           <TransferModal v-if="bankAddress" :bank-address="bankAddress" />
         </div>
         <div class="flex items-center gap-2" v-if="bankAddress">
@@ -32,12 +31,11 @@
         </div>
       </div>
     </div>
-  </CardComponent>
+  </UCard>
 </template>
 
 <script setup lang="ts">
 import AddressToolTip from '@/components/AddressToolTip.vue'
-import CardComponent from '@/components/CardComponent.vue'
 import { useStorage } from '@vueuse/core'
 import { type Address } from 'viem'
 import { useContractBalance } from '@/composables/useContractBalance'

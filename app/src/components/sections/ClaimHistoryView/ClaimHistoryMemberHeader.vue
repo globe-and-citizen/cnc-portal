@@ -1,6 +1,6 @@
 <template>
   <div class="w-full pb-6" v-if="displayedMember" data-test="member-header">
-    <CardComponent>
+    <UCard>
       <div class="flex justify-between">
         <div class="flex gap-4 items-start">
           <div
@@ -30,7 +30,7 @@
           <SelectMemberItem v-if="memberAddress" :address="memberAddress" />
         </div>
       </div>
-    </CardComponent>
+    </UCard>
   </div>
 </template>
 
@@ -38,7 +38,6 @@
 import { computed } from 'vue'
 import type { Address } from 'viem'
 import { useTeamStore } from '@/stores'
-import CardComponent from '@/components/CardComponent.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import SelectMemberItem from '@/components/SelectMemberItem.vue'
 

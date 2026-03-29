@@ -4,7 +4,7 @@
       v-if="showAlert && team?.name"
       color="success"
       icon="i-heroicons-check-circle"
-      :title="`Team &quot;${team.name}&quot; created! To use CNC team features, deploy all your team contracts in one action.`"
+      :title="`Company &quot;${team.name}&quot; created! To use CNC features, deploy all your company contracts in one action.`"
       class="mb-2"
     />
     <div class="text-sm text-gray-700 mb-2">

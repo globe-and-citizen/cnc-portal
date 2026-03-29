@@ -55,8 +55,6 @@ const {
   mockSafeSdk,
   mockUpdateMutation,
   mockProposeMutation,
-  mockAddSuccessToast,
-  mockAddErrorToast,
   mockGetInjectedProvider
 } = vi.hoisted(() => ({
   mockUseConnection: vi.fn<[], MockConnection>(),
@@ -80,8 +78,6 @@ const {
   mockProposeMutation: {
     mutateAsync: vi.fn<[Record<string, unknown>], Promise<void>>()
   } as MockMutation,
-  mockAddSuccessToast: vi.fn(),
-  mockAddErrorToast: vi.fn(),
   mockGetInjectedProvider: vi.fn(() => ({}))
 }))
 
@@ -98,13 +94,6 @@ vi.mock('@/queries/safe.mutations', () => ({
 
 vi.mock('../useSafeSdk', () => ({
   useSafeSDK: mockUseSafeSDK
-}))
-
-vi.mock('@/stores', () => ({
-  useToastStore: () => ({
-    addSuccessToast: mockAddSuccessToast,
-    addErrorToast: mockAddErrorToast
-  })
 }))
 
 vi.mock('@/types/safe', () => ({

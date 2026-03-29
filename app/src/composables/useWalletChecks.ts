@@ -1,5 +1,4 @@
 import { ref, watch } from 'vue'
-import { useToastStore } from '@/stores'
 import { useConnect, useSwitchChain, injected, useConnection } from '@wagmi/vue'
 import { NETWORK } from '@/constant'
 import { log } from '@/utils'
@@ -10,7 +9,7 @@ export function useWalletChecks() {
   const isSuccess = ref(false)
 
   // Composables
-  const { addErrorToast } = useToastStore()
+  const toast = useToast()
   const connect = useConnect()
   const connection = useConnection()
   const switchChain = useSwitchChain()
@@ -39,11 +38,13 @@ export function useWalletChecks() {
   // Watch
   watch(switchChain.error, (newError) => {
     if (newError) {
-      addErrorToast(
-        newError.name === 'UserRejectedRequestError'
-          ? 'Network switch rejected: You need to switch to the correct network to use the CNC Portal'
-          : 'Something went wrong: Failed switch network'
-      )
+      toast.add({
+        title:
+          newError.name === 'UserRejectedRequestError'
+            ? 'Network switch rejected: You need to switch to the correct network to use the CNC Portal'
+            : 'Something went wrong: Failed switch network',
+        color: 'error'
+      })
       log.error('switchChainError.value', newError)
       isProcessing.value = false
     }
@@ -62,7 +63,7 @@ export function useWalletChecks() {
           message =
             'No wallet detected: You need to install a wallet like metamask to use the CNC Portal'
       }
-      addErrorToast(message)
+      toast.add({ title: message, color: 'error' })
       log.error('connectError.value', newError)
       isProcessing.value = false
     }
