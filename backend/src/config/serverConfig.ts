@@ -44,6 +44,12 @@ const options = {
       title: 'API Documentation',
       version: '1.0.0',
     },
+    servers: [
+      {
+        url: '/api',
+        description: 'API base path',
+      },
+    ],
   },
   apis: ['./src/routes/*.ts'], // Point to route files containing JSDoc comments
 };
