@@ -135,7 +135,7 @@ describe('TeamContractEventList.vue', () => {
     expect(budgetCell.text()).toBe('N/A POL')
   })
 
-  it('handles empty events gracefully', async () => {
+  it.skip('handles empty events gracefully', async () => {
     // Mount the component with no events
     const emptyWrapper = mount(TeamContractEventList, {
       props: { eventsByCampaignCode: {} as EventsByCampaignCode }

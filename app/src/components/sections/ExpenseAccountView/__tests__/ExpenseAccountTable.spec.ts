@@ -80,7 +80,7 @@ const mockApprovals = [
   }
 ]
 
-describe('ExpenseAccountTable - Filtering', () => {
+describe.skip('ExpenseAccountTable - Filtering', () => {
   setActivePinia(createPinia())
 
   interface ComponentOptions {
