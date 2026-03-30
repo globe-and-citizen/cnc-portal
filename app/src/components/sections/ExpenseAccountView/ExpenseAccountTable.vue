@@ -202,7 +202,7 @@ const filteredApprovals = computed(() => {
 //#region Functions
 const deactivateApproval = async (signature: `0x{string}`) => {
   if (!expenseAccountEip712Address.value) {
-    toast.add({ title: 'Failed to deactivate', color: 'error' })
+    toast.add({ title: 'Failed to deactivate approval', color: 'error' })
     log.error('ExpenseAccountEip712Address is undefined')
     return
   }
@@ -219,7 +219,7 @@ const deactivateApproval = async (signature: `0x{string}`) => {
 
 const activateApproval = async (signature: `0x{string}`) => {
   if (!expenseAccountEip712Address.value) {
-    toast.add({ title: 'Failed to activate', color: 'error' })
+    toast.add({ title: 'Failed to activate approval', color: 'error' })
     log.error('ExpenseAccountEip712Address is undefined')
     return
   }
@@ -242,7 +242,7 @@ watch(isConfirmingActivate, async (isConfirming, wasConfirming) => {
     signatureToUpdate.value = ''
     isLoadingSetStatus.value = false
     queryClient.invalidateQueries({ queryKey: ['getExpenseData'] })
-    toast.add({ title: 'Activate Successful', color: 'success' })
+    toast.add({ title: 'Approval activated', color: 'success' })
   }
 })
 watch(isConfirmingDeactivate, async (isConfirming, wasConfirming) => {
@@ -250,7 +250,7 @@ watch(isConfirmingDeactivate, async (isConfirming, wasConfirming) => {
     signatureToUpdate.value = ''
     isLoadingSetStatus.value = false
     queryClient.invalidateQueries({ queryKey: ['getExpenseData'] })
-    toast.add({ title: 'Deactivate Successful', color: 'success' })
+    toast.add({ title: 'Approval deactivated', color: 'success' })
   }
 })
 watch(errorDeactivateApproval, (newVal) => {
@@ -270,7 +270,7 @@ watch(errorActivateApproval, (newVal) => {
 watch(errorGetOwner, (newVal) => {
   if (newVal) {
     log.error(parseError(newVal))
-    toast.add({ title: 'Error Getting Contract Owner', color: 'error' })
+    toast.add({ title: 'Could not fetch contract owner', color: 'error' })
   }
 })
 //#endregion

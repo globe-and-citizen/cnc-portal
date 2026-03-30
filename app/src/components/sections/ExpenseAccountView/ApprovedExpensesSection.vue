@@ -2,12 +2,12 @@
   <UCard data-test="claims-table">
     <template #header>
       <div class="flex justify-between items-center">
-        <span>Approved Addresses</span>
+        <span>Spending Approvals</span>
         <div
           :class="{ tooltip: !(userDataStore.address === contractOwnerAddress || isBodAction()) }"
           :data-tip="
             !(userDataStore.address === contractOwnerAddress || isBodAction())
-              ? 'Only the contract owner can approve expenses'
+              ? 'Only the contract owner can grant approvals'
               : null
           "
         >
@@ -21,7 +21,7 @@
             "
             data-test="approve-users-button"
           >
-            Approve User Expense
+            Approve Member
           </UButton>
         </div>
       </div>
@@ -37,8 +37,8 @@
           approveUsersModal = { mount: false, show: false }
         }
       }"
-      title="Approve User EIP712"
-      description="Appouve User"
+      title="Grant Spending Approval"
+      description="Set spending limits and authorize a member to submit expenses."
     >
       <template #body>
         <ApproveUsersEIP712Form
@@ -56,7 +56,7 @@
           @close-modal="approveUsersModal = { mount: false, show: false }"
         />
 
-        <UModal v-model:open="confirmationModal" title="Confirm Approval">
+        <UModal v-model:open="confirmationModal" title="Review & Sign">
           <template #body>
             <UAlert
               v-if="approveErrorMessage"

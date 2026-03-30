@@ -3,7 +3,7 @@
     <!-- BOD Description -->
     <div v-if="isBodAction">
       <p data-test="bod-notification" class="text-sm text-red-500">
-        This will create a board of directors action
+        This approval will be submitted as a board of directors action.
       </p>
       <UFormField label="Description" name="description" required class="mt-2">
         <UInput
