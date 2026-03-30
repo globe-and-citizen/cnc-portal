@@ -18,7 +18,13 @@
       :close="{ onClick: resetModal }"
     >
       <template #body>
-        <UAlert v-if="withdrawErrorMessage" color="error" variant="soft" :description="withdrawErrorMessage" class="mb-4" />
+        <UAlert
+          v-if="withdrawErrorMessage"
+          color="error"
+          variant="soft"
+          :description="withdrawErrorMessage"
+          class="mb-4"
+        />
         <TokenAmount
           :tokens="withdrawableTokens"
           v-model="tokenAmountModel"

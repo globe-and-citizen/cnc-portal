@@ -36,7 +36,13 @@
 
     <UModal v-model:open="showModal">
       <template #body>
-        <UAlert v-if="transferOwnershipErrorMessage" color="error" variant="soft" :description="transferOwnershipErrorMessage" class="mb-4" />
+        <UAlert
+          v-if="transferOwnershipErrorMessage"
+          color="error"
+          variant="soft"
+          :description="transferOwnershipErrorMessage"
+          class="mb-4"
+        />
         <TransferOwnershipForm
           v-if="showModal"
           :is-bod-action="isBodAction"

@@ -6,7 +6,13 @@
     data-test="add-signer-modal"
   >
     <template #body>
-      <UAlert v-if="errorMessage" color="error" variant="soft" :description="errorMessage" class="mb-4" />
+      <UAlert
+        v-if="errorMessage"
+        color="error"
+        variant="soft"
+        :description="errorMessage"
+        class="mb-4"
+      />
       <UForm
         :schema="formSchema"
         :state="formState"

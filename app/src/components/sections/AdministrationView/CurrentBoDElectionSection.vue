@@ -29,7 +29,13 @@
             description="Create a new Board of Directors election to manage your team's leadership."
           >
             <template #body>
-              <UAlert v-if="createElectionError" color="error" variant="soft" :description="createElectionError" class="mb-4" />
+              <UAlert
+                v-if="createElectionError"
+                color="error"
+                variant="soft"
+                :description="createElectionError"
+                class="mb-4"
+              />
               <CreateElectionForm
                 :is-loading="isLoadingCreateElection /*|| isConfirmingCreateElection*/"
                 @create-proposal="createElection"

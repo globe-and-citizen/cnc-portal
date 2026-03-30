@@ -1,7 +1,13 @@
 <template>
   <UModal v-model:open="isOpen" title="Update Threshold">
     <template #body>
-      <UAlert v-if="errorMessage" color="error" variant="soft" :description="errorMessage" class="mb-4" />
+      <UAlert
+        v-if="errorMessage"
+        color="error"
+        variant="soft"
+        :description="errorMessage"
+        class="mb-4"
+      />
       <UForm
         :schema="thresholdSchema"
         :state="formState"

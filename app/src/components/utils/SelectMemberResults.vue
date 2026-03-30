@@ -1,6 +1,6 @@
 <template>
   <div v-if="members.length > 0">
-    <div class=" pb-1 text-xs uppercase text-gray-500">Team Members</div>
+    <div class="pb-1 text-xs uppercase text-gray-500">Team Members</div>
     <div class="grid grid-cols-2 gap-4 pb-3" data-test="user-search-results">
       <div
         v-for="member in members"

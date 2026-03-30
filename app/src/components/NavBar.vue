@@ -42,5 +42,8 @@ const { logout } = useAuth()
 const userStore = useUserDataStore()
 const { imageUrl } = storeToRefs(userStore)
 
-const profileItems = <DropdownMenuItem[]>[{ label: 'Settings' }, { label: 'Logout', onSelect: logout }]
+const profileItems = <DropdownMenuItem[]>[
+  { label: 'Settings' },
+  { label: 'Logout', onSelect: logout }
+]
 </script>

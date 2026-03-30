@@ -27,7 +27,13 @@
       }"
     >
       <template #body>
-        <UAlert v-if="errorMessage" color="error" variant="soft" :description="errorMessage" class="mb-4" />
+        <UAlert
+          v-if="errorMessage"
+          color="error"
+          variant="soft"
+          :description="errorMessage"
+          class="mb-4"
+        />
         <TransferForm
           v-if="showModal.mount && tokens.length > 0"
           v-model="transferData"

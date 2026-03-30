@@ -10,7 +10,13 @@
 
     <UModal v-if="modalState.mount" v-model:open="modalState.show">
       <template #body>
-        <UAlert v-if="distributeMintError" color="error" variant="soft" :description="distributeMintError.message" class="mb-4" />
+        <UAlert
+          v-if="distributeMintError"
+          color="error"
+          variant="soft"
+          :description="distributeMintError.message"
+          class="mb-4"
+        />
         <DistributeMintForm
           v-if="modalState.show"
           :loading="isLoading || isConfirming"

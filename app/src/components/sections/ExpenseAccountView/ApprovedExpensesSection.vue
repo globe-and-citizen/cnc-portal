@@ -59,7 +59,13 @@
 
     <UModal v-model:open="confirmationModal">
       <template #body>
-        <UAlert v-if="approveErrorMessage" color="error" variant="soft" :description="approveErrorMessage" class="mb-4" />
+        <UAlert
+          v-if="approveErrorMessage"
+          color="error"
+          variant="soft"
+          :description="approveErrorMessage"
+          class="mb-4"
+        />
         <ApproveExpenseSummaryForm
           v-if="confirmationModal"
           :budget-limit="approveData!"
