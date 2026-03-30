@@ -22,10 +22,12 @@
       :close="{
         onClick: () => {
           showModal = { mount: false, show: false }
+          errorMessage = ''
         }
       }"
     >
       <template #body>
+        <UAlert v-if="errorMessage" color="error" variant="soft" :description="errorMessage" class="mb-4" />
         <TransferForm
           v-if="showModal.mount && tokens.length > 0"
           v-model="transferData"
@@ -83,6 +85,7 @@ const { balances } = useContractBalance(
 const queryClient = useQueryClient()
 
 const showModal = ref({ mount: false, show: false })
+const errorMessage = ref('')
 const tokenAmount = ref('')
 const tokenRecipient = ref('')
 
@@ -193,7 +196,7 @@ const transferNativeToken = async (to: string, amount: string, budgetLimit: Budg
   } catch (error) {
     console.error('Error in transferNativeToken:', parseError(error, EXPENSE_ACCOUNT_EIP712_ABI))
     log.error('Error in transferNativeToken:', parseError(error, EXPENSE_ACCOUNT_EIP712_ABI))
-    toast.add({ title: parseError(error, EXPENSE_ACCOUNT_EIP712_ABI), color: 'error' })
+    errorMessage.value = parseError(error, EXPENSE_ACCOUNT_EIP712_ABI)
     transferERC20loading.value = false
     isLoadingTransfer.value = false
   }
@@ -261,7 +264,7 @@ const transferErc20Token = async () => {
       })
     } catch (error) {
       log.error('Error in transferErc20Token:', error)
-      toast.add({ title: parseError(error, EXPENSE_ACCOUNT_EIP712_ABI), color: 'error' })
+      errorMessage.value = parseError(error, EXPENSE_ACCOUNT_EIP712_ABI)
       transferERC20loading.value = false
       isLoadingTransfer.value = false
     }
@@ -283,7 +286,7 @@ watch(errorTransfer, (newVal) => {
     transferERC20loading.value = false
     isLoadingTransfer.value = false
     log.error(parseError(newVal, EXPENSE_ACCOUNT_EIP712_ABI))
-    toast.add({ title: 'Failed to transfer', color: 'error' })
+    errorMessage.value = 'Failed to transfer'
   }
 })
 watch(isConfirmingApprove, (newIsConfirming, oldIsConfirming) => {
@@ -297,7 +300,7 @@ watch(approveError, () => {
   if (approveError.value) {
     transferERC20loading.value = false
     log.error(parseError(approveError.value))
-    toast.add({ title: 'Failed to approve token spending', color: 'error' })
+    errorMessage.value = 'Failed to approve token spending'
   }
 })
 watch(confirmingTransferError, (newError) => {
@@ -305,7 +308,7 @@ watch(confirmingTransferError, (newError) => {
     transferERC20loading.value = false
     isLoadingTransfer.value = false
     log.error(parseError(newError, EXPENSE_ACCOUNT_EIP712_ABI))
-    toast.add({ title: 'Failed to transfer after approval', color: 'error' })
+    errorMessage.value = 'Failed to transfer after approval'
   }
 })
 //#endregion

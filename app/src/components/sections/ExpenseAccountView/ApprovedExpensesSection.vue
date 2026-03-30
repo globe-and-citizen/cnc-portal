@@ -58,6 +58,7 @@
 
     <UModal v-model:open="confirmationModal">
       <template #body>
+        <UAlert v-if="approveErrorMessage" color="error" variant="soft" :description="approveErrorMessage" class="mb-4" />
         <ApproveExpenseSummaryForm
           v-if="confirmationModal"
           :budget-limit="approveData!"
@@ -84,6 +85,7 @@ import ApproveExpenseSummaryForm from '@/components/forms/ApproveExpenseSummaryF
 import { useCreateExpenseMutation } from '@/queries/expense.queries'
 
 const confirmationModal = ref(false)
+const approveErrorMessage = ref('')
 const approveUsersModal = ref({ mount: false, show: false })
 const foundUsers = ref<User[]>([])
 const teamMembers = ref([{ name: '', address: '', isValid: false }])
@@ -181,6 +183,7 @@ const approveUser = async (data: BudgetLimit) => {
   await refetchExpenseAccountGetOwner()
   loadingApprove.value = false
   approveUsersModal.value = { mount: false, show: false }
+  approveErrorMessage.value = ''
   confirmationModal.value = false
 }
 
@@ -193,7 +196,7 @@ const isBodAction = () => false
 //#region Watchers
 watch(errorAddExpenseData, (newVal) => {
   if (newVal) {
-    toast.add({ title: errorMessage(newVal, 'Error Adding Expense Data'), color: 'error' })
+    approveErrorMessage.value = errorMessage(newVal, 'Error Adding Expense Data')
     log.error('errorAddExpenseData.value', parseError(newVal))
     loadingApprove.value = false
   }
@@ -204,7 +207,7 @@ watch(errorGetOwner, (newVal) => {
 })
 watch(signTypedDataError, async (newVal) => {
   if (newVal) {
-    toast.add({ title: 'Error signing expense data', color: 'error' })
+    approveErrorMessage.value = 'Error signing expense data'
     log.error('signTypedDataError.value', parseError(newVal))
     loadingApprove.value = false
   }

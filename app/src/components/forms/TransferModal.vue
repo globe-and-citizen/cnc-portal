@@ -32,6 +32,7 @@
       :close="{ onClick: resetTransferValues }"
     >
       <template #body>
+        <UAlert v-if="errorMessage" color="error" variant="soft" :description="errorMessage" class="mb-4" />
         <TransferForm
           v-model="transferData"
           :tokens="tokens"
@@ -103,6 +104,7 @@ const modal = ref({
   mount: false,
   show: false
 })
+const errorMessage = ref('')
 
 // Contract interactions for transfer
 const { data: transferHash, isPending: transferLoading, mutateAsync: transfer } = useWriteContract()
@@ -164,6 +166,7 @@ const transferData: Ref<TransferModel> = ref(initialTransferDataValue())
 const resetTransferValues = () => {
   modal.value = { mount: false, show: false }
   transferData.value = initialTransferDataValue()
+  errorMessage.value = ''
 }
 
 // Open modal
@@ -254,7 +257,7 @@ const handleTransfer = async (data: {
     queryClient.invalidateQueries({ queryKey })
   } catch (error) {
     console.error('Transfer failed:', error)
-    toast.add({ title: `Failed to transfer ${data.token.symbol}`, color: 'error' })
+    errorMessage.value = `Failed to transfer ${data.token.symbol}`
   }
 }
 

@@ -18,6 +18,7 @@
       :close="{ onClick: resetModal }"
     >
       <template #body>
+        <UAlert v-if="withdrawErrorMessage" color="error" variant="soft" :description="withdrawErrorMessage" class="mb-4" />
         <TokenAmount
           :tokens="withdrawableTokens"
           v-model="tokenAmountModel"
@@ -86,6 +87,7 @@ const queryClient = useQueryClient()
 const chainId = useChainId()
 
 const showModal = ref({ mount: false, show: false })
+const withdrawErrorMessage = ref('')
 const isAmountValid = ref(false)
 const withdrawAmount = ref('0')
 const selectedTokenId = ref<TokenId>('native')
@@ -226,6 +228,7 @@ const resetModal = () => {
   showModal.value = { mount: false, show: false }
   withdrawAmount.value = '0'
   isAmountValid.value = false
+  withdrawErrorMessage.value = ''
 }
 
 const openModal = () => {
@@ -269,7 +272,7 @@ const submitWithdraw = async () => {
       const hash = await nativeWrite.executeWrite([amount], undefined, { skipGasEstimation: true })
 
       if (!hash) {
-        toast.add({ title: 'Withdraw failed', color: 'error' })
+        withdrawErrorMessage.value = 'Withdraw failed'
       }
 
       return
@@ -308,17 +311,16 @@ const submitWithdraw = async () => {
     })
 
     if (!hash) {
-      toast.add({ title: 'Withdraw failed', color: 'error' })
+      withdrawErrorMessage.value = 'Withdraw failed'
     }
   } catch (error: unknown) {
     console.error(error)
-    const message =
+    withdrawErrorMessage.value =
       typeof error === 'object' && error !== null && 'shortMessage' in error
         ? String((error as { shortMessage?: string }).shortMessage || 'Failed to withdraw funds')
         : typeof error === 'object' && error !== null && 'message' in error
           ? String((error as { message?: string }).message || 'Failed to withdraw funds')
           : 'Failed to withdraw funds'
-    toast.add({ title: message, color: 'error' })
   } finally {
     isSubmitting.value = false
   }

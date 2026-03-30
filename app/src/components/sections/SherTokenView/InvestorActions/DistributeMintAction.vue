@@ -10,6 +10,7 @@
 
     <UModal v-if="modalState.mount" v-model:open="modalState.show">
       <template #body>
+        <UAlert v-if="distributeMintError" color="error" variant="soft" :description="distributeMintError.message" class="mb-4" />
         <DistributeMintForm
           v-if="modalState.show"
           :loading="isLoading || isConfirming"
@@ -84,7 +85,6 @@ const handleSubmit = (
 watch(distributeMintError, () => {
   if (distributeMintError.value) {
     log.error('Failed to distribute mint', distributeMintError.value)
-    toast.add({ title: 'Failed to distribute mint', color: 'error' })
   }
 })
 
