@@ -1,6 +1,6 @@
 <template>
   <div v-if="contracts.length > 0">
-    <div class="px-2 pt-2 pb-1 text-xs uppercase text-gray-500">Contracts</div>
+    <div class=" pb-1 text-xs uppercase text-gray-500">Contracts</div>
     <div class="grid grid-cols-2 gap-4 px-2 pb-3" data-test="contract-search-results">
       <div
         v-for="contract in contracts"
