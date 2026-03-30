@@ -1,5 +1,9 @@
 <template>
-  <UModal v-model:open="isOpen" title="Update Threshold">
+  <UModal
+    v-model:open="isOpen"
+    title="Update Threshold"
+    description="Set the number of signers required to approve safe transactions."
+  >
     <template #body>
       <UAlert
         v-if="errorMessage"
