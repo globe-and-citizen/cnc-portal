@@ -3,8 +3,6 @@ import { mount, type VueWrapper } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
 import VestingStats from '@/components/sections/VestingView/VestingStats.vue'
 
-//import { useToastStore } from '@/stores/__mocks__/useToastStore'
-
 import { ref } from 'vue'
 
 // Constants

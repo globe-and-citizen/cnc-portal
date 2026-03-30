@@ -1,28 +1,16 @@
 <template>
-  <slot name="header">
-    <h3 class="pt-4">
-      Current contract balance: {{ model.token.balance }} {{ model.token.symbol }}
-    </h3>
-  </slot>
   <BodAlert v-if="isBodAction" />
 
   <UForm
     :schema="validationSchema"
-    :state="model"
-    class="mt-4 flex flex-col gap-4"
+    :state="{ amount: model.amount }"
+    class="flex flex-col gap-4"
     @submit="submitForm"
   >
-    <UFormField class="w-full" name="address">
-      <SelectMemberContractsInput v-model="model.address" @selectItem="handleSelectItem" />
-    </UFormField>
+    <SelectMemberContractsInput v-model="model.address" @selectItem="handleSelectItem" />
 
     <UFormField class="w-full" name="amount">
-      <TokenAmount
-        :tokens="tokens"
-        v-model="tokenAmountModel"
-        :isLoading="props.loading"
-        @validation="isAmountValid = $event"
-      >
+      <TokenAmount :tokens="tokens" v-model="tokenAmountModel" :isLoading="props.loading">
         <template #label>
           <slot name="label">
             <div class="flex w-full items-center justify-between text-sm font-medium">
@@ -50,7 +38,7 @@
         type="submit"
         color="primary"
         :loading="loading"
-        :disabled="loading || !isAmountValid"
+        :disabled="loading"
         data-test="transferButton"
       >
         Transfer
@@ -60,8 +48,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
-import { isAddress } from 'viem'
+import { computed, onMounted, watch } from 'vue'
 import { z } from 'zod'
 import SelectMemberContractsInput from '../utils/SelectMemberContractsInput.vue'
 import BodAlert from '@/components/BodAlert.vue'
@@ -104,10 +91,8 @@ const emit = defineEmits<{
   closeModal: []
 }>()
 
-const isAmountValid = ref(false)
-
-const selectedTokenId = computed<string>({
-  get: () => model.value.token?.tokenId ?? 'usdc',
+const selectedTokenId = computed<TokenId>({
+  get: () => (model.value.token?.tokenId ?? 'usdc') as TokenId,
   set: (id) => {
     const token = props.tokens.find((t) => t.tokenId === id)
     if (token) model.value.token = token
@@ -116,7 +101,7 @@ const selectedTokenId = computed<string>({
 
 const tokenAmountModel = computed({
   get: () => ({ amount: model.value.amount ?? '', tokenId: selectedTokenId.value }),
-  set: (value: { amount: string; tokenId: string }) => {
+  set: (value: { amount: string; tokenId: TokenId }) => {
     model.value.amount = value.amount ?? ''
     selectedTokenId.value = value.tokenId ?? selectedTokenId.value
   }
@@ -135,22 +120,19 @@ watch(
 
 const validationSchema = computed(() =>
   z.object({
-    address: z
-      .object({
-        name: z.string().optional(),
-        address: z
-          .string({ message: 'Address is required' })
-          .min(1, 'Address is required')
-          .refine((value) => isAddress(value), { message: 'Invalid address' })
-      })
-      .refine((value) => isAddress(value.address), { message: 'Invalid address' })
+    amount: z
+      .string()
+      .min(1, 'Amount is required')
+      .refine((value) => /^\d*\.?\d+$/.test(value), 'Enter a valid amount')
+      .refine((value) => parseFloat(value) > 0, 'Amount must be greater than 0')
+      .refine(
+        (value) => parseFloat(value) <= (model.value.token.balance ?? 0),
+        'Amount exceeds available balance'
+      )
   })
 )
 
 const submitForm = () => {
-  if (!isAmountValid.value) {
-    return
-  }
   emit('transfer', model.value)
 }
 

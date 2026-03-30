@@ -56,11 +56,10 @@ import TableComponent from '@/components/TableComponent.vue'
 
 import { parseUnits } from 'viem/utils'
 
-import { useToastStore } from '@/stores/useToastStore'
 import { AD_CAMPAIGN_MANAGER_ABI } from '@/artifacts/abi/ad-campaign-manager'
 
 import { useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
-const { addErrorToast, addSuccessToast } = useToastStore()
+const toast = useToast()
 const props = defineProps<{
   datas: Array<{ key: string; value: string }>
   contractAddress: string
@@ -101,7 +100,7 @@ const { isLoading: isConfirmingSetCostPerClick, isSuccess: isConfirmedSetCostPer
 watch(isConfirmingSetCostPerClick, async (isConfirming, wasConfirming) => {
   if (wasConfirming && !isConfirming && isConfirmedSetCostPerClick.value) {
     pendingTransactions.value--
-    addSuccessToast('Cost per click updated successfully')
+    toast.add({ title: 'Cost per click updated successfully', color: 'success' })
     originalCostPerClick.value = getOriginalValue('costPerClick')
     if (pendingTransactions.value === 0) emit('closeContractDataDialog')
   }
@@ -122,7 +121,7 @@ const { isLoading: isConfirmingSetCostPerImpression, isSuccess: isConfirmedSetCo
 watch(isConfirmingSetCostPerImpression, async (isConfirming, wasConfirming) => {
   if (wasConfirming && !isConfirming && isConfirmedSetCostPerImpression.value) {
     pendingTransactions.value--
-    addSuccessToast('Cost per impression updated successfully')
+    toast.add({ title: 'Cost per impression updated successfully', color: 'success' })
     originalCostPerImpression.value = getOriginalValue('costPerImpression')
     if (pendingTransactions.value === 0) emit('closeContractDataDialog')
   }
@@ -130,13 +129,13 @@ watch(isConfirmingSetCostPerImpression, async (isConfirming, wasConfirming) => {
 
 watch(errorSetCostPerClick, () => {
   if (errorSetCostPerClick.value) {
-    addErrorToast('Set cost per click failed')
+    toast.add({ title: 'Set cost per click failed', color: 'error' })
   }
 })
 
 watch(errorSetCostPerImpression, () => {
   if (errorSetCostPerImpression.value) {
-    addErrorToast('Set cost per impression failed')
+    toast.add({ title: 'Set cost per impression failed', color: 'error' })
   }
 })
 
@@ -184,7 +183,7 @@ async function submit() {
     if (costPerClick && costPerImpression && originalCostPerClick && originalCostPerImpression) {
       if (originalCostPerClick.value != parseFloat(costPerClick)) {
         if (parseFloat(costPerClick) <= 0) {
-          addErrorToast('Cost per click should be greater than 0')
+          toast.add({ title: 'Cost per click should be greater than 0', color: 'error' })
           return
         }
         pendingTransactions.value++
@@ -197,7 +196,7 @@ async function submit() {
       }
       if (originalCostPerImpression.value != parseFloat(costPerImpression)) {
         if (parseFloat(costPerImpression) <= 0) {
-          addErrorToast('Cost per impression should be greater than 0')
+          toast.add({ title: 'Cost per impression should be greater than 0', color: 'error' })
           return
         }
         pendingTransactions.value++
@@ -210,7 +209,10 @@ async function submit() {
       }
     }
   } catch (error) {
-    addErrorToast('An error occurred while updating the costs. Please try again.')
+    toast.add({
+      title: 'An error occurred while updating the costs. Please try again.',
+      color: 'error'
+    })
     console.error('Error:', error)
   }
 }

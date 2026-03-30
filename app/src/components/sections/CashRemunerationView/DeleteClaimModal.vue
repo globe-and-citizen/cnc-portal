@@ -39,7 +39,6 @@ import dayjs from 'dayjs'
 import type { Claim } from '@/types'
 
 import { useDeleteClaimMutation } from '@/queries/weeklyClaim.queries'
-import { useToastStore } from '@/stores'
 
 const props = defineProps<{
   claim: Claim
@@ -49,7 +48,7 @@ const emit = defineEmits<{
   close: []
 }>()
 
-const toastStore = useToastStore()
+const toast = useToast()
 
 const formattedDate = computed(() => {
   return props.claim ? dayjs(props.claim.dayWorked).format('MMM DD, YYYY') : ''
@@ -63,7 +62,7 @@ const {
 
 const handleDelete = async () => {
   await deleteClaim({ pathParams: { claimId: props.claim.id } })
-  toastStore.addSuccessToast('Claim deleted successfully')
+  toast.add({ title: 'Claim deleted successfully', color: 'success' })
   emit('close')
 }
 </script>

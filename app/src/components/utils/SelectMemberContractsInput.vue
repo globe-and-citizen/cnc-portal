@@ -1,45 +1,41 @@
 <template>
   <div
-    class="input-group relative"
+    class="relative"
     :class="isFetching ? 'animate-pulse' : ''"
     ref="formRef"
     data-test="member-contracts-input"
   >
-    <label
-      class="w-full input input-bordered flex items-center gap-2 input-md"
-      :data-test="`member-contracts-input`"
-    >
-      <input
-        type="text"
-        class="w-24"
+    <UFieldGroup :data-test="`member-contracts-input`" class="w-full">
+      <UInput
         v-model="input.name"
         ref="nameInput"
-        :placeholder="'Name'"
+        placeholder="Name"
         :data-test="`member-contracts-name-input`"
         :disabled="disabled"
+        class="w-28"
       />
-      |
-      <input
-        type="text"
-        ref="addressInput"
+      <UInput
         v-model="input.address"
+        ref="addressInput"
+        placeholder="Address"
         :data-test="`member-contracts-address-input`"
-        :placeholder="`Address`"
         :disabled="disabled"
+        class="flex-1"
       />
-    </label>
+    </UFieldGroup>
+
     <!-- Dropdown positioned relative to the input -->
     <div
       v-if="
         showDropdown && !disabled && (filteredMembers.length > 0 || filteredContracts.length > 0)
       "
-      class="left-0 top-full mt-4 w-full outline-hidden focus:outline-hidden focus:ring-0 z-10"
+      class="absolute left-0 top-full mt-1 w-full z-10"
       data-test="search-dropdown"
     >
-      <div class="shadow bg-base-100 rounded-box">
+      <UCard>
         <SelectMemberResults :members="filteredMembers" @select="handleSelectMember" />
         <SelectContractResults :contracts="filteredContracts" @select="handleSelectContract" />
-      </div>
+      </UCard>
     </div>
   </div>
 </template>

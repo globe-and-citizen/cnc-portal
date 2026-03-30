@@ -5,7 +5,7 @@ import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
 import type { Address } from 'viem'
 import { useGetTeamWagesQuery } from '@/queries/wage.queries'
-import { mockTeamStore, mockToastStore, mockUserDataStore } from '@/tests/mocks/store.mock'
+import { mockTeamStore, mockToast, mockUserDataStore } from '@/tests/mocks/store.mock'
 import { NETWORK } from '@/constant'
 import type { Wage } from '@/types'
 
@@ -106,12 +106,6 @@ describe.skip('MemberSection.vue', () => {
     wrapper = mount(MemberSection, {
       global: {
         stubs: {
-          CardComponent: {
-            name: 'CardComponent',
-            props: ['title'],
-            template:
-              '<div data-test="card-component"><div data-test="card-title">{{ title }}</div><slot name="card-action" /><slot /></div>'
-          },
           TableComponent: {
             name: 'TableComponent',
             props: ['rows', 'loading', 'columns'],
@@ -175,7 +169,7 @@ describe.skip('MemberSection.vue', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    mockToastStore.addErrorToast.mockClear()
+    mockToast.add.mockClear()
     createWrapper()
   })
 
@@ -210,12 +204,6 @@ describe.skip('MemberSection.vue', () => {
   })
 
   describe('Component Rendering', () => {
-    it('renders the card title correctly', () => {
-      const card = wrapper.findComponent({ name: 'CardComponent' })
-      expect(card.exists()).toBe(true)
-      expect(card.props('title')).toBe('Team Members List')
-    })
-
     it('renders table with correct columns when user is owner', () => {
       createWrapper('0x1234' as Address, '0x1234' as Address)
       const table = wrapper.findComponent({ name: 'TableComponent' })
@@ -307,7 +295,10 @@ describe.skip('MemberSection.vue', () => {
       mockWageError.value = new Error('New error')
       await wrapper.vm.$nextTick()
 
-      expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('Failed to fetch team wage data')
+      expect(mockToast.add).toHaveBeenCalledWith({
+        title: 'Failed to fetch team wage data',
+        color: 'error'
+      })
     })
   })
 

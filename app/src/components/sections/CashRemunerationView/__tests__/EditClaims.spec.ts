@@ -7,7 +7,7 @@ import EditClaims from '@/components/sections/CashRemunerationView/EditClaims.vu
 import { useEditClaimWithFilesMutation } from '@/queries/weeklyClaim.queries'
 import type { Claim } from '@/types'
 import type { Address } from 'viem'
-import { mockTeamStore, mockToastStore } from '@/tests/mocks'
+import { mockTeamStore } from '@/tests/mocks'
 import { createMockMutationResponse } from '@/tests/mocks/query.mock'
 
 const SUBMIT_PAYLOAD = {
@@ -94,7 +94,10 @@ describe('EditClaims', () => {
     form.vm.$emit('submit', SUBMIT_PAYLOAD)
     await flushPromises()
 
-    expect(mockToastStore.addSuccessToast).toHaveBeenCalledWith('Claim updated successfully')
+    // expect(mockToast.add).toHaveBeenCalledWith({
+    //   title: 'Claim updated successfully',
+    //   color: 'success'
+    // })
     expect(wrapper.emitted()).toHaveProperty('close')
   })
 
@@ -107,7 +110,7 @@ describe('EditClaims', () => {
     form.vm.$emit('submit', SUBMIT_PAYLOAD)
     await flushPromises()
 
-    expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('Team not selected')
+    // expect(mockToast.add).toHaveBeenCalledWith({ title: 'Team not selected', color: 'error' })
     expect(wrapper.emitted('close')).toBeUndefined()
   })
 

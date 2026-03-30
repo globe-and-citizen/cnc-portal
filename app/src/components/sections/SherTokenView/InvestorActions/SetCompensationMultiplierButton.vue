@@ -94,7 +94,6 @@ import {
   useSafeDepositRouterMultiplier,
   useSafeDepositRouterOwner
 } from '@/composables/safeDepositRouter/reads'
-import { useToastStore } from '@/stores'
 import { parseError } from '@/utils'
 import {
   formatSafeDepositRouterMultiplier,
@@ -102,7 +101,7 @@ import {
   formatSherAmount
 } from '@/utils/safeDepositRouterUtil'
 
-const { addErrorToast, addSuccessToast } = useToastStore()
+const toast = useToast()
 const connection = useConnection()
 
 // Modal reference
@@ -192,9 +191,9 @@ watch(
       const errorMessage = parseError(error)
 
       if (errorMessage.includes('User rejected') || errorMessage.includes('User denied')) {
-        addErrorToast('Transaction cancelled by user')
+        toast.add({ title: 'Transaction cancelled by user', color: 'error' })
       } else {
-        addErrorToast('Failed to update multiplier')
+        toast.add({ title: 'Failed to update multiplier', color: 'error' })
       }
     }
   }
@@ -205,9 +204,10 @@ watch(
   () => setMultiplierWrite.receiptResult.isSuccess.value,
   (success) => {
     if (success) {
-      addSuccessToast(
-        `Multiplier updated successfully to ${formatSherAmount(newMultiplier.value, MULTIPLIER_DECIMALS)}x`
-      )
+      toast.add({
+        title: `Multiplier updated successfully to ${formatSherAmount(newMultiplier.value, MULTIPLIER_DECIMALS)}x`,
+        color: 'success'
+      })
       closeModal()
     }
   }
@@ -233,7 +233,7 @@ watch(
  */
 function openModal() {
   if (!canManageMultiplier.value) {
-    addErrorToast('Only the owner can set the multiplier')
+    toast.add({ title: 'Only the owner can set the multiplier', color: 'error' })
     return
   }
 
@@ -258,17 +258,17 @@ function closeModal() {
  */
 async function handleSetMultiplier() {
   if (!safeDepositRouterAddress.value) {
-    addErrorToast('SafeDepositRouter address not found')
+    toast.add({ title: 'SafeDepositRouter address not found', color: 'error' })
     return
   }
 
   if (!canManageMultiplier.value) {
-    addErrorToast('Only the owner can set the multiplier')
+    toast.add({ title: 'Only the owner can set the multiplier', color: 'error' })
     return
   }
 
   if (!isMultiplierValid.value) {
-    addErrorToast('Please enter a valid multiplier')
+    toast.add({ title: 'Please enter a valid multiplier', color: 'error' })
     return
   }
 
@@ -280,14 +280,14 @@ async function handleSetMultiplier() {
     )
 
     if (multiplierInWei === 0n) {
-      addErrorToast('Invalid multiplier format')
+      toast.add({ title: 'Invalid multiplier format', color: 'error' })
       return
     }
 
     await setMultiplierWrite.executeWrite(multiplierInWei)
   } catch (error) {
     console.error('Error formatting multiplier:', error)
-    addErrorToast('Invalid multiplier format')
+    toast.add({ title: 'Invalid multiplier format', color: 'error' })
   }
 }
 </script>

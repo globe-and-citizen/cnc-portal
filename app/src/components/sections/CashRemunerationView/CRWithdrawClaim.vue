@@ -34,8 +34,8 @@
 </template>
 
 <script setup lang="ts">
-import { useTeamStore, useToastStore } from '@/stores'
-import { buildClaimRatesWithOvertime, log, parseError } from '@/utils'
+import { useTeamStore } from '@/stores'
+import { log, parseError } from '@/utils'
 import { useWriteContract } from '@wagmi/vue'
 import { zeroAddress, type Address } from 'viem'
 import { computed, ref } from 'vue'
@@ -58,7 +58,7 @@ const props = defineProps<{
 const emit = defineEmits(['claim-withdrawn'])
 
 const teamStore = useTeamStore()
-const toastStore = useToastStore()
+const toast = useToast()
 
 const cashRemunerationEip712Address = computed(() =>
   teamStore.getContractAddressByType('CashRemunerationEIP712')
@@ -83,7 +83,7 @@ const withdrawClaim = async () => {
 
   if (!cashRemunerationEip712Address.value) {
     isLoading.value = false
-    toastStore.addErrorToast('Cash Remuneration EIP712 contract address not found')
+    toast.add({ title: 'Cash Remuneration EIP712 contract address not found', color: 'error' })
     return
   }
 
@@ -102,7 +102,7 @@ const withdrawClaim = async () => {
 
   if (balance < nativeAmountToPay) {
     isLoading.value = false
-    toastStore.addErrorToast('Insufficient balance')
+    toast.add({ title: 'Insufficient balance', color: 'error' })
     return
   }
 
@@ -140,20 +140,20 @@ const withdrawClaim = async () => {
     })
 
     if (receipt.status === 'success') {
-      toastStore.addSuccessToast('Claim withdrawn')
+      toast.add({ title: 'Claim withdrawn', color: 'success' })
 
       if (teamStore.currentTeamId) {
         await syncWeeklyClaim({ queryParams: { teamId: teamStore.currentTeamId } })
 
         if (syncWeeklyClaimError.value) {
-          toastStore.addErrorToast('Failed to update Claim status')
+          toast.add({ title: 'Failed to update Claim status', color: 'error' })
         }
       }
 
       emit('claim-withdrawn')
       isLoading.value = false
     } else {
-      toastStore.addErrorToast('Transaction failed: Failed to withdraw claim')
+      toast.add({ title: 'Transaction failed: Failed to withdraw claim', color: 'error' })
       // keep loading until explicit success
     }
   } catch (error) {
@@ -163,15 +163,15 @@ const withdrawClaim = async () => {
     const parsed = parseError(error, CASH_REMUNERATION_EIP712_ABI)
 
     if (parsed.includes('Insufficient token balance')) {
-      toastStore.addErrorToast('Insufficient token balance')
+      toast.add({ title: 'Insufficient token balance', color: 'error' })
     } else if (
       parsed.includes('Token not supported') ||
       parsed.includes('Token not support') ||
       parsed.includes('unsupported token')
     ) {
-      toastStore.addErrorToast('Add Token support: Token not supported')
+      toast.add({ title: 'Add Token support: Token not supported', color: 'error' })
     } else {
-      toastStore.addErrorToast(/*'Failed to withdraw'*/ parsed)
+      toast.add({ title: parsed, color: 'error' })
     }
   }
 }

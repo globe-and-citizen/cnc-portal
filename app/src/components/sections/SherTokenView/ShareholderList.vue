@@ -1,5 +1,6 @@
 <template>
-  <CardComponent title="Shareholders List" class="w-full justify-between">
+  <UCard class="w-full justify-between">
+    <template #header>Shareholders List</template>
     <TableComponent
       :rows="
         shareholdersList.map((shareholder, index) => ({
@@ -79,10 +80,9 @@
         />
       </template>
     </UModal>
-  </CardComponent>
+  </UCard>
 </template>
 <script setup lang="ts">
-import CardComponent from '@/components/CardComponent.vue'
 import MintForm from '@/components/sections/SherTokenView/forms/MintForm.vue'
 import TableComponent from '@/components/TableComponent.vue'
 import UserComponent from '@/components/UserComponent.vue'

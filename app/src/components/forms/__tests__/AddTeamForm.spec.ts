@@ -157,10 +157,10 @@ describe('AddTeamForm.vue', () => {
       await flushPromises()
 
       expect(wrapper.find(SELECTORS.createTeamError).exists()).toBe(true)
-      expect(wrapper.find(SELECTORS.createTeamError).text()).toContain('Failed to create team')
+      expect(wrapper.find(SELECTORS.createTeamError).text()).toContain('Failed to create company')
     })
 
-    it('should not submit when team name is empty', async () => {
+    it('should not submit when company name is empty', async () => {
       const mutation = createMockMutationResponse(mockTeamData)
       vi.mocked(useCreateTeamMutation).mockReturnValue(
         mutation as ReturnType<typeof useCreateTeamMutation>

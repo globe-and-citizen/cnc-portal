@@ -1,6 +1,7 @@
 <template>
   <!-- <h2 class="text-xl">Past Elections</h2> -->
-  <CardComponent title="Past Election">
+  <UCard>
+    <template #header>Past Election</template>
     <div v-if="isLoading" class="flex w-full h-96 justify-center items-center">
       <div class="text-gray-500">Loading past elections...</div>
     </div>
@@ -15,13 +16,12 @@
         :election="election"
       />
     </div>
-  </CardComponent>
+  </UCard>
 </template>
 <script setup lang="ts">
 import { computed } from 'vue'
 import PastBoDElectionCard from './PastBoDElectionCard.vue'
 import PastBoDElection404 from './PastBoDElection404.vue'
-import CardComponent from '@/components/CardComponent.vue'
 import { useTeamStore } from '@/stores'
 import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
 import { config } from '@/wagmi.config'

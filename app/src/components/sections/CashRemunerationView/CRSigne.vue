@@ -27,7 +27,7 @@
 <script setup lang="ts">
 import { CASH_REMUNERATION_EIP712_ABI } from '@/artifacts/abi/cash-remuneration-eip712'
 import { USDC_ADDRESS } from '@/constant'
-import { useTeamStore, useToastStore, useUserDataStore } from '@/stores'
+import { useTeamStore, useUserDataStore } from '@/stores'
 import type { WeeklyClaim } from '@/types'
 import { buildClaimRatesWithOvertime, log } from '@/utils'
 import { useChainId, useReadContract, useSignTypedData } from '@wagmi/vue'
@@ -54,7 +54,7 @@ const emit = defineEmits(['close'])
 
 // Stores
 const teamStore = useTeamStore()
-const toastStore = useToastStore()
+const toast = useToast()
 const userStore = useUserDataStore()
 
 // Computed values
@@ -179,7 +179,7 @@ const approveClaim = async (weeklyClaim: WeeklyClaim) => {
     })
 
     if (!signature.value) {
-      toastStore.addErrorToast('Signature not found')
+      toast.add({ title: 'Signature not found', color: 'error' })
       return
     }
 
@@ -191,9 +191,9 @@ const approveClaim = async (weeklyClaim: WeeklyClaim) => {
     })
 
     if (claimError.value) {
-      toastStore.addErrorToast('Failed to approve weeklyClaim')
+      toast.add({ title: 'Failed to approve weeklyClaim', color: 'error' })
     } else {
-      toastStore.addSuccessToast('Claim approved')
+      toast.add({ title: 'Claim approved', color: 'success' })
     }
   } catch (error) {
     const typedError = error as { message?: string }
@@ -203,7 +203,7 @@ const approveClaim = async (weeklyClaim: WeeklyClaim) => {
       ? 'User rejected the request'
       : 'Failed to sign weeklyClaim'
 
-    toastStore.addErrorToast(errorMessage)
+    toast.add({ title: errorMessage, color: 'error' })
   } finally {
     setLoadingState(false)
   }
@@ -230,7 +230,7 @@ const handleDropdownClick = async () => {
 watch(cashRemunerationOwnerError, (value) => {
   if (value) {
     log.error('Failed to fetch cash remuneration owner', value)
-    toastStore.addErrorToast('Failed to fetch cash remuneration owner')
+    toast.add({ title: 'Failed to fetch cash remuneration owner', color: 'error' })
   }
 })
 </script>

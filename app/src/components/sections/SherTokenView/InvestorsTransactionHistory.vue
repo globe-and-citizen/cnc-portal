@@ -1,22 +1,23 @@
 <template>
-  <CardComponent :title="title" class="w-full">
-    <template #card-action>
-      <InvestorsTransactionFilters
-        :unique-types="uniqueTypes"
-        :show-date-filter="showDateFilter"
-        :data-test-prefix="dataTestPrefix"
-        v-model:date-range="dateRange"
-        v-model:selected-type="selectedType"
-      />
+  <UCard class="w-full">
+    <template #header>
+      <div class="flex justify-between items-center">
+        <span>{{ title }}</span>
+        <InvestorsTransactionFilters
+          :unique-types="uniqueTypes"
+          :show-date-filter="showDateFilter"
+          :data-test-prefix="dataTestPrefix"
+          v-model:date-range="dateRange"
+          v-model:selected-type="selectedType"
+        />
+      </div>
     </template>
     <InvestorsTransactionTable :transactions="displayedTransactions" />
-  </CardComponent>
+  </UCard>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-
-import CardComponent from '@/components/CardComponent.vue'
 
 import type { InvestorsTransaction } from '@/types/transactions'
 import { onClickOutside } from '@vueuse/core'

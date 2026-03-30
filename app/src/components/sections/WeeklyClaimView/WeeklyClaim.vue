@@ -1,5 +1,6 @@
 <template>
-  <CardComponent :title="singleUser ? 'Weekly Claim (User)' : 'Weekly Claim'" class="w-full pb-7">
+  <UCard class="w-full pb-7">
+    <template #header>{{ singleUser ? 'Weekly Claim (User)' : 'Weekly Claim' }}</template>
     <TableComponent
       v-if="data"
       :rows="data"
@@ -99,11 +100,10 @@
         </template>
       </template>
     </TableComponent>
-  </CardComponent>
+  </UCard>
 </template>
 
 <script setup lang="ts">
-import CardComponent from '@/components/CardComponent.vue'
 import RatePerHourList from '@/components/RatePerHourList.vue'
 import RatePerHourTotalList from '@/components/RatePerHourTotalList.vue'
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
