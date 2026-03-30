@@ -1,25 +1,25 @@
 <template>
   <div id="team-contracts" class="overflow-x-auto mt-4">
-    <TableComponent
-      :rows="
+    <UTable
+      :data="
         teamContracts.map((contract, index) => ({
           ...contract,
           index: index + 1
         }))
       "
       :columns="[
-        { key: 'index', label: '#' },
-        { key: 'type', label: 'Type' },
-        { key: 'address', label: 'Contract Address' },
-        { key: 'owner', label: 'Owner' },
-        { key: 'actions', label: 'Actions' }
+        { accessorKey: 'index', header: '#' },
+        { accessorKey: 'type', header: 'Type' },
+        { accessorKey: 'address', header: 'Contract Address' },
+        { accessorKey: 'owner', header: 'Owner' },
+        { accessorKey: 'actions', header: 'Actions' }
       ]"
     >
-      <template #address-data="{ row }">
+      <template #address-cell="{ row: { original: row } }">
         <AddressToolTip :address="row.address" class="text-xs" />
       </template>
 
-      <template #owner-data="{ row }">
+      <template #owner-cell="{ row: { original: row } }">
         <UserComponent
           :user="
             getUser(row.owner) //teamStore.currentTeam?.members.find((member) => member.address == row.owner) as User
@@ -27,7 +27,7 @@
         />
       </template>
 
-      <template #actions-data="{ row }">
+      <template #actions-cell="{ row: { original: row } }">
         <MainContractActions
           @contract-status-changed="
             async () =>
@@ -38,13 +38,12 @@
           :row="row"
         />
       </template>
-    </TableComponent>
+    </UTable>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import TableComponent from '@/components/TableComponent.vue'
 import UserComponent from '@/components/UserComponent.vue'
 import { useTeamStore } from '@/stores/'
 import { type User } from '@/types'
@@ -53,7 +52,7 @@ import MainContractActions from './MainContractActions.vue'
 import { getTeamContracts } from '@/utils'
 
 const teamStore = useTeamStore()
-const teamContracts = ref<object[]>([])
+const teamContracts = ref<any[]>([])
 
 const getUser = (address: string): User => {
   if (address === teamStore.getContractAddressByType('BoardOfDirectors'))

@@ -1,8 +1,8 @@
 <template>
   <UCard class="w-full justify-between">
     <template #header>Shareholders List</template>
-    <TableComponent
-      :rows="
+    <UTable
+      :data="
         shareholdersList.map((shareholder, index) => ({
           index: index + 1,
           name: getShareholderName(shareholder.shareholder) || 'Unknown',
@@ -19,7 +19,7 @@
       :columns="columns"
       :loading="shareholdersLoading"
     >
-      <template #address-data="{ row }">
+      <template #address-cell="{ row: { original: row } }">
         <div class="flex w-full">
           <UserComponent
             :user="
@@ -32,7 +32,7 @@
         </div>
       </template>
 
-      <template #actions-data="{ row }">
+      <template #actions-cell="{ row: { original: row } }">
         <div class="flex w-full">
           <div
             :class="{ tooltip: userStore.address != teamStore.currentTeam?.ownerAddress }"
@@ -58,7 +58,7 @@
           </div>
         </div>
       </template>
-    </TableComponent>
+    </UTable>
     <UModal
       v-model:open="mintIndividualModal.show"
       title="Mint Tokens for Shareholder"
@@ -86,7 +86,6 @@
 </template>
 <script setup lang="ts">
 import MintForm from '@/components/sections/SherTokenView/forms/MintForm.vue'
-import TableComponent from '@/components/TableComponent.vue'
 import UserComponent from '@/components/UserComponent.vue'
 import {
   useInvestorShareholders,
@@ -165,10 +164,10 @@ watch(shareholderError, (value) => {
 })
 
 const columns = [
-  { key: 'index', label: 'No', class: 'w-1/6 text-center' },
-  { key: 'address', label: 'Member' },
-  { key: 'percentage', label: 'Percentage' },
-  { key: 'balance', label: 'Balance' },
-  { key: 'actions', label: 'Actions', class: 'w-1/6 text-center' }
+  { accessorKey: 'index', header: 'No' },
+  { accessorKey: 'address', header: 'Member' },
+  { accessorKey: 'percentage', header: 'Percentage' },
+  { accessorKey: 'balance', header: 'Balance' },
+  { accessorKey: 'actions', header: 'Actions' }
 ]
 </script>

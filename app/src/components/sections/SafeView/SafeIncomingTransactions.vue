@@ -1,19 +1,15 @@
 <template>
   <UCard data-test="incoming-transfers-card">
     <template #header>Deposits</template>
-    <TableComponent
-      :rows="incomingTransfers || []"
+    <UTable
+      :data="incomingTransfers || []"
       :columns="columns"
       :loading="isLoading"
-      :showPagination="true"
-      :itemsPerPageProp="5"
-      :emptyState="{
-        label: 'No incoming transfers found'
-      }"
+      empty="No incoming transfers found"
       data-test="incoming-transfers-table"
     >
       <!-- Type Column -->
-      <template #type-data="{ row }">
+      <template #type-cell="{ row: { original: row } }">
         <div class="flex items-center gap-2">
           <span
             class="badge badge-sm"
@@ -32,29 +28,29 @@
       </template>
 
       <!-- From Column -->
-      <template #from-data="{ row }">
+      <template #from-cell="{ row: { original: row } }">
         <TransferSenderCell :address="row.from" />
       </template>
 
       <!-- Amount Column -->
-      <template #amount-data="{ row }">
+      <template #amount-cell="{ row: { original: row } }">
         <span class="font-medium">
           {{ formatSafeTransferAmount(row as SafeIncomingTransfer) }}
         </span>
       </template>
 
       <!-- Date Column -->
-      <template #executionDate-data="{ row }">
+      <template #executionDate-cell="{ row: { original: row } }">
         <span class="text-sm text-gray-600">
           {{ formatDateShort(row.executionDate) }}
         </span>
       </template>
 
       <!-- Transaction Hash Column -->
-      <template #transactionHash-data="{ row }">
+      <template #transactionHash-cell="{ row: { original: row } }">
         <AddressToolTip :address="row.transactionHash" type="transaction" slice />
       </template>
-    </TableComponent>
+    </UTable>
   </UCard>
 </template>
 
@@ -63,7 +59,7 @@ import { computed } from 'vue'
 import type { Address } from 'viem'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import TransferSenderCell from './TransferSenderCell.vue'
-import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
+import type { TableColumn } from '@nuxt/ui'
 import { useGetSafeIncomingTransfersQuery } from '@/queries/safe.queries'
 import { formatSafeTransferType, formatSafeTransferAmount } from '@/utils/safe'
 import { formatDateShort } from '@/utils/dayUtils'
@@ -76,12 +72,12 @@ interface Props {
 const props = defineProps<Props>()
 
 // Define table columns
-const columns: TableColumn[] = [
-  { key: 'type', label: 'Type' },
-  { key: 'from', label: 'From' },
-  { key: 'amount', label: 'Amount' },
-  { key: 'executionDate', label: 'Date', sortable: true },
-  { key: 'transactionHash', label: 'Tx Hash' }
+const columns: TableColumn<any>[] = [
+  { accessorKey: 'type', header: 'Type' },
+  { accessorKey: 'from', header: 'From' },
+  { accessorKey: 'amount', header: 'Amount' },
+  { accessorKey: 'executionDate', header: 'Date', enableSorting: true },
+  { accessorKey: 'transactionHash', header: 'Tx Hash' }
 ]
 
 // Fetch incoming transfers

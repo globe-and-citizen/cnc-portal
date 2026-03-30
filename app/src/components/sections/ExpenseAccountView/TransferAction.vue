@@ -78,7 +78,7 @@ import { estimateGas, readContract, simulateContract } from '@wagmi/core'
 import { config } from '@/wagmi.config'
 import { ERC20_ABI } from '@/artifacts/abi/erc20'
 import { useQueryClient } from '@tanstack/vue-query'
-import type { TableRow } from '@/components/TableComponent.vue'
+import type { TableRow } from '@/types/table'
 import type { TransferData } from '@/types'
 const props = defineProps<{ row: TableRow }>()
 

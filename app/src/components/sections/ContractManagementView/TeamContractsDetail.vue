@@ -1,19 +1,19 @@
 <template>
   <div id="admins-table" class="overflow-x-auto">
-    <TableComponent
-      :rows="
+    <UTable
+      :data="
         datas.map((data, index) => ({
           ...data,
           index: index + 1
         }))
       "
       :columns="[
-        { key: 'index', label: '#' },
-        { key: 'key', label: 'Name' },
-        { key: 'value', label: 'Value' }
+        { accessorKey: 'index', header: '#' },
+        { accessorKey: 'key', header: 'Name' },
+        { accessorKey: 'value', header: 'Value' }
       ]"
     >
-      <template #value-data="{ row }">
+      <template #value-cell="{ row: { original: row } }">
         <template v-if="row.key.startsWith('cost')">
           <input
             type="number"
@@ -39,7 +39,7 @@
           {{ row.value }}
         </template>
       </template>
-    </TableComponent>
+    </UTable>
     <div class="mt-4">
       <button @click="submit" class="btn btn-primary" :loading="isLoading" :disabled="isLoading">
         <span v-if="isLoading" class="loading loading-spinner loading-xs text-green-800"></span>
@@ -52,7 +52,6 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
-import TableComponent from '@/components/TableComponent.vue'
 
 import { parseUnits } from 'viem/utils'
 

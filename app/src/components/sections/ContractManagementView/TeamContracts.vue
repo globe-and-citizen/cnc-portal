@@ -1,7 +1,7 @@
 <template>
   <div id="team-contracts" class="overflow-x-auto">
-    <TableComponent
-      :rows="
+    <UTable
+      :data="
         teamStore.currentTeam?.teamContracts
           .filter((contract) => contract.type === 'Campaign')
           .map((contract, index) => ({
@@ -10,19 +10,19 @@
           }))
       "
       :columns="[
-        { key: 'index', label: '#' },
-        { key: 'type', label: 'Type' },
-        { key: 'address', label: 'Contract Address' },
-        { key: 'admins', label: 'Admins' },
-        { key: 'details', label: 'Details' },
-        { key: 'events', label: 'Events' }
+        { accessorKey: 'index', header: '#' },
+        { accessorKey: 'type', header: 'Type' },
+        { accessorKey: 'address', header: 'Contract Address' },
+        { accessorKey: 'admins', header: 'Admins' },
+        { accessorKey: 'details', header: 'Details' },
+        { accessorKey: 'events', header: 'Events' }
       ]"
     >
-      <template #address-data="{ row }">
+      <template #address-cell="{ row: { original: row } }">
         <AddressToolTip :address="row.address" class="text-xs" />
       </template>
 
-      <template #admins-data="{ row }">
+      <template #admins-cell="{ row: { original: row } }">
         <UButton
           :disabled="row.type !== 'Campaign'"
           @click="
@@ -43,7 +43,7 @@
         />
       </template>
 
-      <template #details-data="{ row }">
+      <template #details-cell="{ row: { original: row } }">
         <button
           :disabled="row.type !== 'Campaign'"
           @click="openContractDataModal(row.address)"
@@ -53,12 +53,12 @@
         </button>
       </template>
 
-      <template #events-data="{ row }">
+      <template #events-cell="{ row: { original: row } }">
         <button @click="openEventsModal(row.address)" class="btn btn-ghost btn-xs">
           View Events
         </button>
       </template>
-    </TableComponent>
+    </UTable>
 
     <!-- Admin Modal -->
     <UModal
@@ -118,7 +118,6 @@ import { AddCampaignService } from '@/services/AddCampaignService'
 import { getContractData } from '@/composables/useContractFunctions'
 
 import { AD_CAMPAIGN_MANAGER_ABI } from '@/artifacts/abi/ad-campaign-manager'
-import TableComponent from '@/components/TableComponent.vue'
 
 import type {
   GetEventsGroupedByCampaignCodeResult,

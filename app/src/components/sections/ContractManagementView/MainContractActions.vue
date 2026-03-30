@@ -91,7 +91,7 @@
 <script setup lang="ts">
 import { Icon as IconifyIcon } from '@iconify/vue'
 import { encodeFunctionData, type Address } from 'viem'
-import type { TableRow } from '@/components/TableComponent.vue'
+import type { TableRow } from '@/types/table'
 import { useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
 import { watch, ref, computed } from 'vue'
 import { useTeamStore, useUserDataStore } from '@/stores'

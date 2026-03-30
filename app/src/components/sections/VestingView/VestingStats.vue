@@ -1,36 +1,35 @@
 <template>
   <UCard>
     <template #header>Vesting Stats</template>
-    <TableComponent
-      :rows="tokenSummaryRows"
+    <UTable
+      :data="tokenSummaryRows"
       :columns="tokenSummaryColumns"
       :sticky="true"
       :showPagination="true"
     >
-      <template #totalReleased-data="{ row }">
+      <template #totalReleased-cell="{ row: { original: row } }">
         <span class="flex items-center gap-1 text-sm text-gray-700">
           {{ row.totalReleased }}
           <span class="text-xs">{{ tokenSymbolText }}</span>
         </span>
       </template>
-      <template #totalVested-data="{ row }">
+      <template #totalVested-cell="{ row: { original: row } }">
         <span class="flex items-center gap-1 text-sm text-gray-700">
           {{ row.totalVested }}
           <span class="text-xs">{{ tokenSymbolText }}</span>
         </span>
       </template>
-      <template #totalWithdrawn-data="{ row }">
+      <template #totalWithdrawn-cell="{ row: { original: row } }">
         <span class="flex items-center gap-1 text-sm text-gray-700">
           {{ row.totalWithdrawn }}
           <span class="text-xs">{{ tokenSymbolText }}</span>
         </span>
       </template>
-    </TableComponent>
+    </UTable>
   </UCard>
 </template>
 
 <script setup lang="ts">
-import TableComponent from '@/components/TableComponent.vue'
 import { computed, ref, watch } from 'vue'
 import { useReadContract } from '@wagmi/vue'
 import { useTeamStore } from '@/stores'
@@ -157,10 +156,10 @@ watch(errorGetVestingInfo, () => {
 })
 
 const tokenSummaryColumns = [
-  { key: 'symbol', label: 'Token Symbol', sortable: false },
-  { key: 'totalVested', label: 'Total Vested', sortable: false },
-  { key: 'totalReleased', label: 'Total Released', sortable: false },
-  { key: 'totalWithdrawn', label: 'Total Withdrawn', sortable: false }
+  { accessorKey: 'symbol', header: 'Token Symbol', enableSorting: false },
+  { accessorKey: 'totalVested', header: 'Total Vested', enableSorting: false },
+  { accessorKey: 'totalReleased', header: 'Total Released', enableSorting: false },
+  { accessorKey: 'totalWithdrawn', header: 'Total Withdrawn', enableSorting: false }
 ]
 const tokenSummaryRows = computed(() => {
   const defaultToken = tokenSymbolText.value

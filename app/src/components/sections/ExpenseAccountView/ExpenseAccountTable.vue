@@ -14,8 +14,8 @@
     </label>
   </div>
   <div class="card bg-base-100 w-full">
-    <TableComponent :rows="filteredApprovals" :columns="columns" :loading="isFetchingExpenseData">
-      <template #action-data="{ row }">
+    <UTable :data="filteredApprovals" :columns="columns" :loading="isFetchingExpenseData">
+      <template #action-cell="{ row: { original: row } }">
         <UButton
           v-if="row.status == 'enabled'"
           color="error"
@@ -27,7 +27,7 @@
             () => {
               isLoadingSetStatus = true
               signatureToUpdate = row.signature
-              deactivateApproval(row.signature)
+              deactivateApproval(row.signature as `0x{string}`)
             }
           "
           label="Disable"
@@ -43,22 +43,24 @@
             () => {
               isLoadingSetStatus = true
               signatureToUpdate = row.signature
-              activateApproval(row.signature)
+              activateApproval(row.signature as `0x{string}`)
             }
           "
           label="Enable"
         />
       </template>
-      <template #member-data="{ row }">
-        <UserComponent v-if="!!row.user" :user="row.user"></UserComponent>
+      <template #member-cell="{ row: { original: row } }">
+        <UserComponent
+          :user="(row.user as any) || { name: row.userAddress, address: row.userAddress, imageUrl: '' }"
+        ></UserComponent>
       </template>
-      <template #startDate-data="{ row }">
+      <template #startDate-cell="{ row: { original: row } }">
         <span>{{ new Date(Number(row.startDate) * 1000).toLocaleString('en-US') }}</span>
       </template>
-      <template #endDate-data="{ row }">
+      <template #endDate-cell="{ row: { original: row } }">
         <span>{{ new Date(Number(row.endDate) * 1000).toLocaleString('en-US') }}</span>
       </template>
-      <template #status-data="{ row }">
+      <template #status-cell="{ row: { original: row } }">
         <span
           class="badge"
           :class="{
@@ -69,22 +71,22 @@
           >{{ row.status }}</span
         >
       </template>
-      <template #frequencyType-data="{ row }">
+      <template #frequencyType-cell="{ row: { original: row } }">
         <span>{{
           row.frequencyType == 4
-            ? getCustomFrequency(row.customFrequency)
+            ? getCustomFrequency(Number(row.customFrequency))
             : getFrequencyType(row.frequencyType)
         }}</span>
       </template>
-      <template #amountTransferred-data="{ row }">
+      <template #amountTransferred-cell="{ row: { original: row } }">
         <span>{{ row.balances[1] }}/{{ row.amount }} {{ tokenSymbol(row.tokenAddress) }}</span>
       </template>
-    </TableComponent>
+    </UTable>
   </div>
 </template>
 
 <script setup lang="ts">
-import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
+import type { TableColumn } from '@nuxt/ui'
 import { computed, ref, watch } from 'vue'
 import { log, parseError, tokenSymbol } from '@/utils'
 import { useUserDataStore, useTeamStore } from '@/stores'
@@ -123,40 +125,40 @@ const expenseAccountEip712Address = computed(() =>
 )
 const columns = [
   {
-    key: 'member',
-    label: 'Member',
-    sortable: false
+    accessorKey: 'member',
+    header: 'Member',
+    enableSorting: false
   },
   {
-    key: 'startDate',
-    label: 'Start Date',
-    sortable: true
+    accessorKey: 'startDate',
+    header: 'Start Date',
+    enableSorting: true
   },
   {
-    key: 'endDate',
-    label: 'End Date',
-    sortable: true
+    accessorKey: 'endDate',
+    header: 'End Date',
+    enableSorting: true
   },
   {
-    key: 'frequencyType',
-    label: 'Frequency',
-    sortable: false
+    accessorKey: 'frequencyType',
+    header: 'Frequency',
+    enableSorting: false
   },
   {
-    key: 'amountTransferred',
-    label: 'Max Amount',
-    sortable: false
+    accessorKey: 'amountTransferred',
+    header: 'Max Amount',
+    enableSorting: false
   },
   {
-    key: 'status',
-    label: 'Status'
+    accessorKey: 'status',
+    header: 'Status'
   },
   {
-    key: 'action',
-    label: 'Action',
-    sortable: false
+    accessorKey: 'action',
+    header: 'Action',
+    enableSorting: false
   }
-] as TableColumn[]
+] as TableColumn<any>[]
 
 //#endregion Composables
 const { data: contractOwnerAddress, error: errorGetOwner } = useReadContract({
