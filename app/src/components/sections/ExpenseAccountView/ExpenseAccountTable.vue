@@ -1,19 +1,6 @@
 <template>
-  <div class="form-control flex flex-row gap-1">
-    <label class="label cursor-pointer flex gap-2" :key="status" v-for="status in statuses">
-      <span class="label-text">{{ status.charAt(0).toUpperCase() + status.slice(1) }}</span>
-      <input
-        type="radio"
-        name="pending"
-        class="radio checked:bg-primary"
-        :data-test="`status-input-${status}`"
-        :id="status"
-        :value="status"
-        v-model="selectedRadio"
-      />
-    </label>
-  </div>
-  <div class="card bg-base-100 w-full">
+  <URadioGroup v-model="selectedRadio" :items="statuses" orientation="horizontal" />
+  <div class="bg-base-100 w-full">
     <UTable :data="filteredApprovals" :columns="columns" :loading="isFetchingExpenseData">
       <template #action-cell="{ row: { original: row } }">
         <UButton
@@ -51,7 +38,9 @@
       </template>
       <template #member-cell="{ row: { original: row } }">
         <UserComponent
-          :user="(row.user as any) || { name: row.userAddress, address: row.userAddress, imageUrl: '' }"
+          :user="
+            (row.user as any) || { name: row.userAddress, address: row.userAddress, imageUrl: '' }
+          "
         ></UserComponent>
       </template>
       <template #startDate-cell="{ row: { original: row } }">
@@ -61,15 +50,14 @@
         <span>{{ new Date(Number(row.endDate) * 1000).toLocaleString('en-US') }}</span>
       </template>
       <template #status-cell="{ row: { original: row } }">
-        <span
-          class="badge"
-          :class="{
-            'badge-success badge-outline': row.status === 'enabled',
-            'badge-info badge-outline': row.status === 'disabled',
-            'badge-error badge-outline': row.status === 'expired'
-          }"
-          >{{ row.status }}</span
-        >
+        <UBadge
+          :label="row.status"
+          variant="outline"
+          class="rounded-full"
+          :color="
+            row.status === 'enabled' ? 'success' : row.status === 'disabled' ? 'info' : 'error'
+          "
+        />
       </template>
       <template #frequencyType-cell="{ row: { original: row } }">
         <span>{{
