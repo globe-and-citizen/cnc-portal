@@ -56,7 +56,11 @@
           @close-modal="approveUsersModal = { mount: false, show: false }"
         />
 
-        <UModal v-model:open="confirmationModal" title="Review & Sign">
+          <UModal
+            v-model:open="confirmationModal"
+            title="Review & Sign"
+            description="Confirm spending approval details and sign the transaction."
+          >
           <template #body>
             <UAlert
               v-if="approveErrorMessage"
