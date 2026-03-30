@@ -1,16 +1,16 @@
 <template>
   <div v-if="members.length > 0">
-    <div class="pb-1 text-xs uppercase text-gray-500">Team Members</div>
+    <div class="pb-1 text-xs text-gray-500 uppercase">Team Members</div>
     <div class="grid grid-cols-2 gap-4 pb-3" data-test="user-search-results">
       <div
         v-for="member in members"
         :key="member.address"
-        class="flex items-center relative group cursor-pointer"
+        class="group relative flex cursor-pointer items-center"
         data-test="user-row"
         @click="handleSelect(member)"
       >
         <UserComponent
-          class="p-4 flex-grow rounded-lg bg-white hover:bg-base-300"
+          class="hover:bg-base-300 flex-grow rounded-lg bg-white p-4"
           :user="member"
           :data-test="`user-dropdown-${member.address}`"
         />

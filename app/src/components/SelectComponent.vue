@@ -2,7 +2,7 @@
   <div class="relative">
     <div
       role="button"
-      class="flex items-center cursor-pointer badge badge-md badge-info text-xs"
+      class="badge badge-md badge-info flex cursor-pointer items-center text-xs"
       @click="toggleDropdown"
       @keydown.enter="toggleDropdown"
       @keydown.space.prevent="toggleDropdown"
@@ -15,10 +15,10 @@
       :aria-haspopup="true"
     >
       <span>{{ formattedSelectedValue }}</span>
-      <IconifyIcon v-if="!disabled" icon="heroicons-outline:chevron-down" class="w-4 h-4" />
+      <IconifyIcon v-if="!disabled" icon="heroicons-outline:chevron-down" class="h-4 w-4" />
     </div>
     <ul
-      class="absolute right-0 mt-2 menu bg-base-200 border-2 rounded-box z-10 p-2 shadow-sm"
+      class="menu bg-base-200 rounded-box absolute right-0 z-10 mt-2 border-2 p-2 shadow-sm"
       ref="target"
       data-test="options-dropdown"
       v-if="isDropdown"

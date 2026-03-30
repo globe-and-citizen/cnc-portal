@@ -1,10 +1,10 @@
 <template>
   <div
-    class="flex items-start gap-3 p-4 border border-blue-300 rounded-md bg-blue-50 text-blue-800"
+    class="flex items-start gap-3 rounded-md border border-blue-300 bg-blue-50 p-4 text-blue-800"
   >
     <!-- Icon (optional) -->
     <svg
-      class="w-5 h-5 mt-1 text-blue-500 shrink-0"
+      class="mt-1 h-5 w-5 shrink-0 text-blue-500"
       fill="none"
       stroke="currentColor"
       stroke-width="2"

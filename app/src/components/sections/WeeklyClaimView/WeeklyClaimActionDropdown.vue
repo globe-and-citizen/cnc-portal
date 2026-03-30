@@ -3,7 +3,7 @@
     <!-- Dropdown menu positioned to the left -->
     <ul
       v-if="isOpen"
-      class="absolute right-full top-1/2 transform -translate-y-1/2 mr-2 menu p-2 shadow-lg bg-base-100 rounded-box w-52 z-99999 border border-base-300"
+      class="menu bg-base-100 rounded-box border-base-300 absolute top-1/2 right-full z-99999 mr-2 w-52 -translate-y-1/2 transform border p-2 shadow-lg"
     >
       <!-- Pending status: Sign -->
       <template v-if="status === 'pending'">
@@ -104,7 +104,7 @@
 
     <!-- Dropdown trigger button -->
     <UButton variant="ghost" size="sm" @click.stop="toggleDropdown">
-      <IconifyIcon :icon="ellipsisIcon" class="w-5 h-5" />
+      <IconifyIcon :icon="ellipsisIcon" class="h-5 w-5" />
     </UButton>
   </div>
 </template>

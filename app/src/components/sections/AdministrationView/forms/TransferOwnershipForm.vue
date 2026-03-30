@@ -1,11 +1,11 @@
 <template>
   <UForm :schema="schema" :state="state" @submit="submitForm">
     <div class="flex flex-col gap-2">
-      <h1 class="font-bold text-2xl">Transfer Ownership</h1>
+      <h1 class="text-2xl font-bold">Transfer Ownership</h1>
       <h3 class="font-bold text-red-600">This will create an board of director action</h3>
     </div>
     <hr class="" />
-    <div class="flex flex-col gap-4 mt-4">
+    <div class="mt-4 flex flex-col gap-4">
       <UFormField name="newOwner" label="New Owner">
         <UInput
           v-model="state.newOwner"

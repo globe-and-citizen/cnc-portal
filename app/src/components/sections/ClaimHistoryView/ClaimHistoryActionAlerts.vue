@@ -7,7 +7,7 @@
         class="alert alert-vertical sm:alert-horizontal"
         v-if="memberAddress === userStore.address"
       >
-        <IconifyIcon icon="heroicons:information-circle" class="w-8 h-8 text-info" />
+        <IconifyIcon icon="heroicons:information-circle" class="text-info h-8 w-8" />
         <span>{{ claimSubmitMessage }}</span>
         <div>
           <SubmitClaims
@@ -34,7 +34,7 @@
         class="alert alert-vertical sm:alert-horizontal"
         v-if="weeklyClaim && !weeklyClaim.signature"
       >
-        <IconifyIcon icon="heroicons:information-circle" class="w-8 h-8 text-info" />
+        <IconifyIcon icon="heroicons:information-circle" class="text-info h-8 w-8" />
         <span>{{
           weeklyClaim?.weekStart === currentWeekStart
             ? 'You cannot approve the current week claim, wait until the week is over'
@@ -63,7 +63,7 @@
           userStore.address === weeklyClaim.wage.userAddress
         "
       >
-        <IconifyIcon icon="heroicons:information-circle" class="w-8 h-8 text-info" />
+        <IconifyIcon icon="heroicons:information-circle" class="text-info h-8 w-8" />
         <span v-if="weeklyClaim.status == 'withdrawn'">You have withdrawn your weekly claim.</span>
         <span v-else>Your weekly claim has been approved. You can now withdraw it.</span>
         <div>

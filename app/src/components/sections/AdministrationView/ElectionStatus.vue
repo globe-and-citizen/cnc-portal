@@ -1,8 +1,8 @@
 <template>
   <!-- Status and Countdown -->
   <div v-if="electionStatus" class="flex items-center justify-start gap-2">
-    <span class="badge badge-lg flex items-center gap-1 px-2 py-1 text-sm h-10" :class="badgeClass">
-      <span class="w-3 h-3 rounded-full inline-block" :class="dotClass"></span>
+    <span class="badge badge-lg flex h-10 items-center gap-1 px-2 py-1 text-sm" :class="badgeClass">
+      <span class="inline-block h-3 w-3 rounded-full" :class="dotClass"></span>
       <span class="font-medium">{{ electionStatus.text }}</span>
       <span v-if="electionStatus.text !== 'Completed'" class="flex items-center gap-1">
         <span class="mx-1">•</span>

@@ -1,7 +1,7 @@
 <template>
-  <div class="flex-1 flex gap-4 p-4 bg-white rounded-lg shadow-xs border border-gray-300">
+  <div class="flex flex-1 gap-4 rounded-lg border border-gray-300 bg-white p-4 shadow-xs">
     <div
-      class="p-1 rounded-full aspect-square flex items-center justify-center w-12 h-12"
+      class="flex aspect-square h-12 w-12 items-center justify-center rounded-full p-1"
       :class="`${bgColor}`"
     >
       <IconifyIcon :icon="`heroicons:${icon}-solid`" :class="`h-7 w-7 ${textColor}`" />

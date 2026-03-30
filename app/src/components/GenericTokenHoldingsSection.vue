@@ -39,8 +39,8 @@
 
       <template #token-cell="{ row: { original: row } }">
         <div class="flex items-center gap-2 lg:w-48">
-          <img v-if="row.icon" :src="row.icon" :alt="row.token.name" class="w-8 h-8 rounded-full" />
-          <div v-else class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
+          <img v-if="row.icon" :src="row.icon" :alt="row.token.name" class="h-8 w-8 rounded-full" />
+          <div v-else class="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200">
             <span class="text-gray-500">{{ row.token.name.charAt(0) }}</span>
           </div>
           <div class="flex flex-col">

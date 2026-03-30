@@ -5,7 +5,7 @@
     <ExpenseAccountTotalApproved />
   </div>
 
-  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+  <div class="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
     <OwnerTreasuryWithdrawAction contractType="ExpenseAccountEIP712" />
 
     <div

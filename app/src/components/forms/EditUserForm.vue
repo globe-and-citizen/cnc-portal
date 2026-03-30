@@ -18,7 +18,7 @@
         <div class="flex items-center gap-2">
           <UTooltip text="Click to see address in block explorer">
             <span
-              class="cursor-pointer hover:text-primary transition-colors"
+              class="hover:text-primary cursor-pointer transition-colors"
               @click="openExplorer(userStore.address)"
               data-test="user-address"
             >

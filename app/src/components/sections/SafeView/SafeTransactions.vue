@@ -1,7 +1,7 @@
 <template>
   <UCard>
     <template #header>
-      <div class="flex justify-between items-center">
+      <div class="flex items-center justify-between">
         <span>Transactions</span>
         <div class="flex items-center gap-4">
           <SafeTransactionStatusFilter @statusChange="handleStatusChange" />
@@ -36,7 +36,7 @@
 
       <template #status-cell="{ row: { original: row } }">
         <span>{{ getTransactionStatus(row as SafeTransaction) }}</span>
-        <span class="badge badge-sm flex items-center gap-1 badge-neutral badge-outline">
+        <span class="badge badge-sm badge-neutral badge-outline flex items-center gap-1">
           {{ row.confirmations?.length || 0 }} / {{ row.confirmationsRequired }}
         </span>
       </template>

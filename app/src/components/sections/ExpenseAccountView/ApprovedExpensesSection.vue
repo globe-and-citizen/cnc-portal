@@ -1,7 +1,7 @@
 <template>
   <UCard data-test="claims-table">
     <template #header>
-      <div class="flex justify-between items-center">
+      <div class="flex items-center justify-between">
         <span>Spending Approvals</span>
         <div
           :class="{ tooltip: !(userDataStore.address === contractOwnerAddress || isBodAction()) }"

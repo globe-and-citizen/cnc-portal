@@ -1,6 +1,6 @@
 <template>
   <div class="space-y-3" data-test="token-amount">
-    <div class="flex items-center justify-between w-full px-1">
+    <div class="flex w-full items-center justify-between px-1">
       <slot name="label">
         <div class="flex w-full items-center justify-between text-sm font-medium">
           <span>Action</span>

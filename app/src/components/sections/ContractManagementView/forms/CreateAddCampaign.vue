@@ -1,8 +1,8 @@
 <template>
-  <h4 class="font-bold text-lg">Deploy Advertisement Campaign contract</h4>
+  <h4 class="text-lg font-bold">Deploy Advertisement Campaign contract</h4>
   <div class="flex flex-col gap-5">
     <h3 class="pt-8">By clicking "Deploy Advertisement"</h3>
-    <label class="input input-bordered flex items-center gap-2 input-md mt-4">
+    <label class="input input-bordered input-md mt-4 flex items-center gap-2">
       <span class="w-28">Bank Contract</span>
       <input
         type="string"
@@ -13,7 +13,7 @@
         data-testid="bank-address-input"
       />
     </label>
-    <label class="input input-bordered flex items-center gap-2 input-md mt-4">
+    <label class="input input-bordered input-md mt-4 flex items-center gap-2">
       <span class="w-28">click rate</span>
       <input
         type="number"
@@ -23,7 +23,7 @@
         required
       />
     </label>
-    <label class="input input-bordered flex items-center gap-2 input-md mt-4">
+    <label class="input input-bordered input-md mt-4 flex items-center gap-2">
       <span class="w-28">impression rate</span>
       <input
         type="number"

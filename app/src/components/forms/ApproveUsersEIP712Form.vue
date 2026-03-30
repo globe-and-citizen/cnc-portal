@@ -100,7 +100,7 @@
     </div>
 
     <!-- Actions -->
-    <div class="flex justify-center gap-3 mt-2">
+    <div class="mt-2 flex justify-center gap-3">
       <UButton
         color="error"
         variant="outline"

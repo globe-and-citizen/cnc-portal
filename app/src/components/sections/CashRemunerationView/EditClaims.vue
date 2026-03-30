@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col gap-4 mb-20">
+  <div class="mb-20 flex flex-col gap-4">
     <ClaimForm
       ref="claimFormRef"
       :initial-data="claimFormInitialData"

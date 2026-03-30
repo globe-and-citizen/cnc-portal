@@ -1,7 +1,7 @@
 <template>
   <UCard>
     <template #header>
-      <div class="flex justify-between items-center">
+      <div class="flex items-center justify-between">
         <div class="flex items-center gap-4">
           <span>{{ isDetails ? `Past` : `Current` }} Election</span>
           <ElectionStatus

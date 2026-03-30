@@ -2,7 +2,7 @@
   <UCard :ui="{ body: 'p-0' }">
     <template #header>
       <div class="flex items-center justify-between">
-        <p class="font-semibold text-lg">Team Members</p>
+        <p class="text-lg font-semibold">Team Members</p>
 
         <UModal
           v-if="teamStore.currentTeamMeta.data?.ownerAddress == userDataStore.address"
@@ -43,16 +43,16 @@
       data-test="members-table"
     >
       <template #wage-header>
-        <div class="flex flex-col gap-0 w-full pt-7">
-          <div class="text-center pb-1">
+        <div class="flex w-full flex-col gap-0 pt-7">
+          <div class="pb-1 text-center">
             <span>Hourly Rates</span>
           </div>
-          <div class="flex flex-row justify-between border-t border-base-400">
-            <span class="w-1/3 text-xs p-1 text-center bg-[#C8FACD]">{{
+          <div class="border-base-400 flex flex-row justify-between border-t">
+            <span class="w-1/3 bg-[#C8FACD] p-1 text-center text-xs">{{
               NETWORK.currencySymbol
             }}</span>
-            <span class="w-1/3 text-xs p-1 text-center bg-[#FEF3DE]">USDC</span>
-            <span class="w-1/3 text-xs p-1 text-center bg-[#D9F1F6]">SHER</span>
+            <span class="w-1/3 bg-[#FEF3DE] p-1 text-center text-xs">USDC</span>
+            <span class="w-1/3 bg-[#D9F1F6] p-1 text-center text-xs">SHER</span>
           </div>
         </div>
       </template>

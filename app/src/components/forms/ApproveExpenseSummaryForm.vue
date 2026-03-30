@@ -1,5 +1,5 @@
 <template>
-  <p class="text-sm text-gray-500 mb-4">
+  <p class="mb-4 text-sm text-gray-500">
     Review the spending limits for
     <span class="font-semibold text-gray-800 dark:text-gray-200">{{
       budgetLimit.approvedAddress

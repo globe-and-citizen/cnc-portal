@@ -41,7 +41,7 @@ const handleDone = () => {
     >
       <template #body>
         <div class="flex flex-col gap-5">
-          <UStepper :model-value="2" :items="stepperItems" disabled class="w-full mb-4" />
+          <UStepper :model-value="2" :items="stepperItems" disabled class="mb-4 w-full" />
           <InvestorContractStep
             :team="props.team"
             :show-skip="true"

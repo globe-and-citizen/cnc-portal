@@ -26,7 +26,7 @@
       </UTooltip>
 
       <template #body>
-        <div class="space-y-4 mt-1">
+        <div class="mt-1 space-y-4">
           <UStepper :items="items" v-model="currentStep" />
 
           <SetMemberWageStandardStep

@@ -15,7 +15,7 @@
             name: 'payroll-history',
             params: { id: teamStore.currentTeamId, memberAddress: row.member.address }
           }"
-          class="flex items-center gap-2 hover:underline text-emerald-700"
+          class="flex items-center gap-2 text-emerald-700 hover:underline"
         >
           <UserComponent :user="row.member" />
         </RouterLink>
@@ -81,21 +81,21 @@
       <template #status-cell="{ row: { original: row } }">
         <template v-if="row.status === 'signed'">
           <span
-            class="text-base px-3 py-1 rounded-2xl border-2 border-secondary text-secondary bg-transparent"
+            class="border-secondary text-secondary rounded-2xl border-2 bg-transparent px-3 py-1 text-base"
           >
             {{ row.status.charAt(0).toUpperCase() + row.status.slice(1) }}
           </span>
         </template>
         <template v-else-if="!row.status || row.status === 'pending'">
           <span
-            class="text-base px-3 py-1 rounded-2xl border-2 border-gray-400 text-gray-700 bg-transparent"
+            class="rounded-2xl border-2 border-gray-400 bg-transparent px-3 py-1 text-base text-gray-700"
           >
             {{ row.status ? row.status.charAt(0).toUpperCase() + row.status.slice(1) : 'Pending' }}
           </span>
         </template>
         <template v-else>
           <span
-            class="text-base px-3 py-1 rounded-2xl border-2 border-yellow-500 text-black bg-transparent"
+            class="rounded-2xl border-2 border-yellow-500 bg-transparent px-3 py-1 text-base text-black"
           >
             {{ row.status ? row.status.charAt(0).toUpperCase() + row.status.slice(1) : 'Pending' }}
           </span>

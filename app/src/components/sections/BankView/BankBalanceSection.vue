@@ -5,18 +5,18 @@
       <h3 class="text-lg font-semibold">Balance</h3>
     </template>
 
-    <div class="flex justify-between items-start">
+    <div class="flex items-start justify-between">
       <div>
         <div class="flex items-baseline gap-2">
           <span class="text-4xl font-bold">
-            <span class="inline-block min-w-16 h-10">
+            <span class="inline-block h-10 min-w-16">
               <USkeleton v-if="isLoading" class="h-10 w-16" data-test="loading-spinner" />
               <span v-else>{{ total['USD']?.formated ?? 0 }}</span>
             </span>
           </span>
           <span class="text-gray-600">USD</span>
         </div>
-        <div class="text-sm text-gray-500 mt-1">
+        <div class="mt-1 text-sm text-gray-500">
           ≈ {{ total[currency.code]?.formated ?? 0 }} {{ currency.code }}
         </div>
       </div>

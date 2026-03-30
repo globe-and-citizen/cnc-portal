@@ -29,7 +29,7 @@
       v-if="
         showDropdown && !disabled && (filteredMembers.length > 0 || filteredContracts.length > 0)
       "
-      class="absolute left-0 top-full mt-1 w-full z-10"
+      class="absolute top-full left-0 z-10 mt-1 w-full"
       data-test="search-dropdown"
     >
       <UCard>

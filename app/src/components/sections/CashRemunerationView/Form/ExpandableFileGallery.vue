@@ -6,17 +6,17 @@
     @mouseleave="isExpanded = false"
   >
     <!-- Vue réduite -->
-    <div v-show="!isExpanded" class="avatar-group rtl:space-x-reverse -space-x-6">
+    <div v-show="!isExpanded" class="avatar-group -space-x-6 rtl:space-x-reverse">
       <div v-for="(preview, i) in displayedPreviews" :key="preview.key || i" class="avatar">
-        <div class="w-12 rounded-full overflow-hidden">
+        <div class="w-12 overflow-hidden rounded-full">
           <img
             v-if="preview.isImage && preview.previewUrl"
             :src="preview.previewUrl"
             :alt="preview.fileName"
             class="object-cover"
           />
-          <div v-else class="w-full h-full flex items-center justify-center bg-emerald-100">
-            <Icon :icon="getFileIcon(preview.fileName)" class="w-4 h-4 text-gray-500" />
+          <div v-else class="flex h-full w-full items-center justify-center bg-emerald-100">
+            <Icon :icon="getFileIcon(preview.fileName)" class="h-4 w-4 text-gray-500" />
           </div>
         </div>
       </div>
@@ -31,33 +31,33 @@
     <!-- Vue étendue -->
     <div
       v-show="isExpanded"
-      class="grid grid-cols-5 gap-2 p-2 bg-transparent rounded-lg shadow-lg border border-gray-200"
+      class="grid grid-cols-5 gap-2 rounded-lg border border-gray-200 bg-transparent p-2 shadow-lg"
     >
       <button
         v-for="(preview, i) in resolvedPreviews"
         :key="preview.key || i"
         type="button"
-        class="group relative rounded-md overflow-hidden hover:scale-105 focus:outline-hidden focus:ring-2 focus:ring-emerald-500 border border-gray-200 hover:border-emerald-500 w-16 h-16"
+        class="group relative h-16 w-16 overflow-hidden rounded-md border border-gray-200 hover:scale-105 hover:border-emerald-500 focus:ring-2 focus:ring-emerald-500 focus:outline-hidden"
         @click="openPreview(i)"
       >
         <img
           v-if="preview.isImage && preview.previewUrl"
           :src="preview.previewUrl"
           :alt="preview.fileName"
-          class="w-full h-full object-cover"
+          class="h-full w-full object-cover"
         />
-        <div v-else class="w-full h-full flex flex-col items-center justify-center bg-gray-100 p-1">
-          <Icon :icon="getFileIcon(preview.fileName)" class="w-5 h-5 text-gray-600" />
-          <span class="text-[8px] text-gray-500 truncate w-full text-center mt-0.5">
+        <div v-else class="flex h-full w-full flex-col items-center justify-center bg-gray-100 p-1">
+          <Icon :icon="getFileIcon(preview.fileName)" class="h-5 w-5 text-gray-600" />
+          <span class="mt-0.5 w-full truncate text-center text-[8px] text-gray-500">
             {{ truncateFileName(preview.fileName, 8) }}
           </span>
         </div>
         <div
-          class="absolute inset-0 bg-black/0 group-hover:bg-black/10 flex items-center justify-center"
+          class="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/10"
         >
           <Icon
             icon="heroicons:magnifying-glass-plus"
-            class="w-4 h-4 text-white opacity-0 group-hover:opacity-100"
+            class="h-4 w-4 text-white opacity-0 group-hover:opacity-100"
           />
         </div>
       </button>
@@ -67,27 +67,27 @@
     <Teleport to="body">
       <div
         v-if="modal.isOpen"
-        class="fixed inset-0 z-999 flex items-center justify-center bg-black bg-opacity-90 p-4"
+        class="bg-opacity-90 fixed inset-0 z-999 flex items-center justify-center bg-black p-4"
         @click="closeModal"
         @keydown.esc="closeModal"
       >
         <div
-          class="relative bg-black rounded-lg max-w-4xl max-h-full flex flex-col items-center justify-center"
+          class="relative flex max-h-full max-w-4xl flex-col items-center justify-center rounded-lg bg-black"
           @click.stop
         >
           <!-- Contrôles -->
-          <div class="absolute top-4 right-4 flex gap-2 z-20">
+          <div class="absolute top-4 right-4 z-20 flex gap-2">
             <button
-              class="btn btn-sm btn-ghost text-white bg-black bg-opacity-60 hover:bg-opacity-80"
+              class="btn btn-sm btn-ghost bg-opacity-60 hover:bg-opacity-80 bg-black text-white"
               @click="closeModal"
             >
-              <Icon icon="heroicons:x-mark" class="w-6 h-6" />
+              <Icon icon="heroicons:x-mark" class="h-6 w-6" />
             </button>
             <button
-              class="btn btn-sm btn-ghost text-white bg-black bg-opacity-60 hover:bg-opacity-80"
+              class="btn btn-sm btn-ghost bg-opacity-60 hover:bg-opacity-80 bg-black text-white"
               @click="downloadFile"
             >
-              <Icon icon="heroicons:arrow-down-tray" class="w-5 h-5" />
+              <Icon icon="heroicons:arrow-down-tray" class="h-5 w-5" />
             </button>
           </div>
 
@@ -97,29 +97,29 @@
               v-if="current.isImage"
               :src="current.previewUrl"
               :alt="current.fileName"
-              class="max-w-full max-h-[80vh] object-contain"
+              class="max-h-[80vh] max-w-full object-contain"
             />
 
             <div
               v-else-if="isViewable(current.fileName)"
-              class="bg-white rounded-2xl shadow-xl border border-gray-200 w-3xl h-256 max-w-[90vw] max-h-[90vh] overflow-hidden"
+              class="h-256 max-h-[90vh] w-3xl max-w-[90vw] overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl"
             >
-              <iframe :src="current.previewUrl" class="w-full h-full" />
+              <iframe :src="current.previewUrl" class="h-full w-full" />
             </div>
 
             <div
               v-else-if="isCompressed(current.fileName)"
-              class="bg-white rounded-2xl p-12 flex flex-col items-center justify-center gap-6 min-w-125 min-h-100"
+              class="flex min-h-100 min-w-125 flex-col items-center justify-center gap-6 rounded-2xl bg-white p-12"
             >
-              <Icon icon="mdi:folder-zip" class="w-40 h-40 text-amber-500" />
+              <Icon icon="mdi:folder-zip" class="h-40 w-40 text-amber-500" />
               <p class="text-base text-gray-500">Compressed file - Download required</p>
             </div>
 
             <div
               v-else
-              class="bg-white rounded-2xl p-12 flex flex-col items-center justify-center gap-6 min-w-125 min-h-100"
+              class="flex min-h-100 min-w-125 flex-col items-center justify-center gap-6 rounded-2xl bg-white p-12"
             >
-              <Icon :icon="getFileIcon(current.fileName)" class="w-40 h-40 text-gray-400" />
+              <Icon :icon="getFileIcon(current.fileName)" class="h-40 w-40 text-gray-400" />
               <p class="text-base text-gray-500">Download required for this file type</p>
             </div>
           </template>
