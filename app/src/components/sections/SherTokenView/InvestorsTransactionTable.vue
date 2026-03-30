@@ -53,5 +53,4 @@ const getTypeClass = (type: string) => {
     'bg-info': type === 'transfer'
   }
 }
-
 </script>

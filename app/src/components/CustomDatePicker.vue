@@ -32,10 +32,7 @@
     <template #footer>
       <div class="flex w-full justify-end gap-2">
         <UButton color="neutral" variant="ghost" @click="isModalOpen = false">Cancel</UButton>
-        <UButton
-          :disabled="!calendarRange?.start || !calendarRange?.end"
-          @click="applyCustomRange"
-        >
+        <UButton :disabled="!calendarRange?.start || !calendarRange?.end" @click="applyCustomRange">
           Apply
         </UButton>
       </div>
@@ -71,7 +68,9 @@ const getCurrentMonthName = () => new Date().toLocaleString('default', { month: 
 
 const getPreviousMonthName = () => {
   const now = new Date()
-  return new Date(now.getFullYear(), now.getMonth() - 1).toLocaleString('default', { month: 'long' })
+  return new Date(now.getFullYear(), now.getMonth() - 1).toLocaleString('default', {
+    month: 'long'
+  })
 }
 
 const options = computed(() => [
@@ -81,19 +80,24 @@ const options = computed(() => [
 
 const getCurrentMonthRange = (): [Date, Date] => {
   const now = new Date()
-  return [new Date(now.getFullYear(), now.getMonth(), 1), new Date(now.getFullYear(), now.getMonth() + 1, 0)]
+  return [
+    new Date(now.getFullYear(), now.getMonth(), 1),
+    new Date(now.getFullYear(), now.getMonth() + 1, 0)
+  ]
 }
 
 const getPreviousMonthRange = (): [Date, Date] => {
   const now = new Date()
-  return [new Date(now.getFullYear(), now.getMonth() - 1, 1), new Date(now.getFullYear(), now.getMonth(), 0)]
+  return [
+    new Date(now.getFullYear(), now.getMonth() - 1, 1),
+    new Date(now.getFullYear(), now.getMonth(), 0)
+  ]
 }
 
 const dateToCalendarDate = (date: Date): CalendarDate =>
   new CalendarDate(date.getFullYear(), date.getMonth() + 1, date.getDate())
 
-const calendarDateToDate = (cd: CalendarDate): Date =>
-  new Date(cd.year, cd.month - 1, cd.day)
+const calendarDateToDate = (cd: CalendarDate): Date => new Date(cd.year, cd.month - 1, cd.day)
 
 const openCustomRangeModal = () => {
   isDropdownOpen.value = false
