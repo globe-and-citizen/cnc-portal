@@ -153,7 +153,12 @@
       }}</template>
     </TableComponent>
 
-    <UModal v-if="showReceiptModal" v-model:open="receiptModal">
+    <UModal
+      v-if="showReceiptModal"
+      v-model:open="receiptModal"
+      title="Transaction Receipt"
+      description="Review and export the details of this transaction."
+    >
       <template #body>
         <ReceiptComponent
           v-if="receiptModal && selectedTransaction"
