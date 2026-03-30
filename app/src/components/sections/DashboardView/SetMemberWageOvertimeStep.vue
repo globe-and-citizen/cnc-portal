@@ -30,14 +30,14 @@
         :ui="{ base: 'pl-36', leading: 'pointer-events-none' }"
       >
         <template #leading>
-          <p class="text-sm text-muted">Overtime cap (hrs)</p>
+          <p class="text-muted text-sm">Overtime cap (hrs)</p>
         </template>
       </UInput>
     </UFormField>
 
     <UFormField name="overtimeRatePerHour">
       <div class="space-y-4">
-        <h3 class="text-lg font-semibold mb-4">Overtime Hourly Rates</h3>
+        <h3 class="mb-4 text-lg font-semibold">Overtime Hourly Rates</h3>
         <UFieldGroup
           v-for="(rate, index) in wageData.overtimeRatePerHour"
           :key="rate.type"
@@ -54,7 +54,7 @@
             >
               <template #trailing>
                 <UBadge
-                  class="text-sm rounded-full px-4 w-16 flex justify-center"
+                  class="flex w-16 justify-center rounded-full px-4 text-sm"
                   :variant="rate.enabled ? 'solid' : 'outline'"
                   :color="rate.enabled ? 'primary' : 'neutral'"
                 >
@@ -69,10 +69,10 @@
 
     <div class="grid gap-4 md:grid-cols-2">
       <div
-        class="min-h-40 rounded-2xl border border-base-300 bg-base-100 px-5 py-5"
+        class="border-base-300 bg-base-100 min-h-40 rounded-2xl border px-5 py-5"
         data-test="standard-rate-recap"
       >
-        <p class="text-sm font-semibold uppercase tracking-[0.2em] text-base-content/50">
+        <p class="text-base-content/50 text-sm font-semibold tracking-[0.2em] uppercase">
           Standard rates
         </p>
         <RateDotList
@@ -85,7 +85,7 @@
         class="min-h-40 rounded-2xl border border-emerald-300 bg-emerald-50/60 px-5 py-5"
         data-test="overtime-rate-recap"
       >
-        <p class="text-sm font-semibold uppercase tracking-[0.2em] text-emerald-700">
+        <p class="text-sm font-semibold tracking-[0.2em] text-emerald-700 uppercase">
           Overtime rates
         </p>
         <RateDotList
@@ -105,7 +105,7 @@
       data-test="error-state"
     />
 
-    <div class="flex justify-between w-full">
+    <div class="flex w-full justify-between">
       <div class="ml-auto flex gap-3">
         <UButton
           variant="outline"

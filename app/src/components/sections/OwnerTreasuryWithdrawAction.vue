@@ -37,7 +37,7 @@
           </template>
         </TokenAmount>
 
-        <div class="modal-action justify-between mt-4">
+        <div class="modal-action mt-4 justify-between">
           <UButton color="error" variant="outline" @click="resetModal" label="Cancel" />
           <UButton
             color="warning"

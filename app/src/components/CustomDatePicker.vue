@@ -14,7 +14,7 @@
     <template #content-bottom>
       <div class="border-t border-gray-200 p-1">
         <div
-          class="flex w-full cursor-pointer select-none items-center rounded-md px-2 py-1.5 text-sm hover:bg-gray-100 dark:hover:bg-gray-800"
+          class="flex w-full cursor-pointer items-center rounded-md px-2 py-1.5 text-sm select-none hover:bg-gray-100 dark:hover:bg-gray-800"
           @click="openCustomRangeModal"
         >
           Custom Range

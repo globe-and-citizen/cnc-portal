@@ -7,7 +7,7 @@
     <div
       v-for="key in orderedKeys"
       :key="key"
-      class="flex justify-between py-2 border-b"
+      class="flex justify-between border-b py-2"
       :data-test="`receipt-data-${key}`"
     >
       <span class="font-medium text-gray-700">{{ labels[key as keyof typeof labels] }}:</span>

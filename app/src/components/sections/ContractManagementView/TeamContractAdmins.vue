@@ -1,5 +1,5 @@
 <template>
-  <h3 class="text-lg font-bold mb-4">
+  <h3 class="mb-4 text-lg font-bold">
     Contract Admin List {{ range }}
     <span class="loading loading-spinner" v-if="isLoading || isUpdating"></span>
   </h3>
@@ -7,7 +7,7 @@
   <!-- Inline form to add new admin -->
   <form
     @submit.prevent="handleAdminAction(newAdminAddress as `0x${string}`, 'addAdmin')"
-    class="flex items-center space-x-2 mb-4"
+    class="mb-4 flex items-center space-x-2"
   >
     <input
       v-model="newAdminAddress"
@@ -53,7 +53,7 @@
   </div>
   <div
     v-if="isLoading || isUpdating"
-    class="absolute inset-0 flex items-center justify-center bg-white bg-opacity-75"
+    class="bg-opacity-75 absolute inset-0 flex items-center justify-center bg-white"
   ></div>
 </template>
 

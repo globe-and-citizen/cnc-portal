@@ -1,7 +1,7 @@
 <template>
   <UCard>
     <template #header>
-      <div class="flex justify-between items-center">
+      <div class="flex items-center justify-between">
         <span>Vesting OverView</span>
         <div class="flex items-center gap-4">
           <VestingStatusFilter @statusChange="handleStatusChange" />
@@ -33,13 +33,13 @@
         </span>
       </template>
       <template #released-cell="{ row: { original: row } }">
-        <span class="flex items-center gap-1 badge badge-info">
+        <span class="badge badge-info flex items-center gap-1">
           {{ row.released.toFixed(2) }}
           <span class="text-xs">{{ row.tokenSymbol }}</span>
         </span>
       </template>
       <template #withdrawn-cell="{ row: { original: row } }">
-        <span class="flex items-center gap-1 badge badge-info">
+        <span class="badge badge-info flex items-center gap-1">
           {{ row.status === 'Inactive' ? (row.totalAmount - row.released).toFixed(2) : 0 }}
           <span class="text-xs">{{ row.tokenSymbol }}</span>
         </span>

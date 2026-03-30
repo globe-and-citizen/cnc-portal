@@ -2,16 +2,16 @@
   <div class="w-full pb-6" v-if="displayedMember" data-test="member-header">
     <UCard>
       <div class="flex justify-between">
-        <div class="flex gap-4 items-start">
+        <div class="flex items-start gap-4">
           <div
             v-if="displayedMember?.imageUrl"
-            class="w-28 h-28 border border-gray-60 rounded-lg overflow-hidden"
+            class="border-gray-60 h-28 w-28 overflow-hidden rounded-lg border"
             data-test="claim-user-image-wrapper"
           >
             <img
               :src="displayedMember?.imageUrl"
               alt="User image"
-              class="w-full h-full object-cover"
+              class="h-full w-full object-cover"
               data-test="claim-user-image"
             />
           </div>
@@ -21,7 +21,7 @@
             </div>
 
             <div class="flex items-center gap-2">
-              <img :src="addressIconPath" alt="" class="w-4 h-4" />
+              <img :src="addressIconPath" alt="" class="h-4 w-4" />
               <AddressToolTip :address="displayedMember?.address" data-test="claim-user-address" />
             </div>
           </div>

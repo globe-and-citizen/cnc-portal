@@ -22,7 +22,7 @@
     >
       <IconifyIcon
         icon="heroicons:clipboard-document"
-        class="w-5 h-5 text-gray-400 hover:text-gray-600 transition-colors duration-200"
+        class="h-5 w-5 text-gray-400 transition-colors duration-200 hover:text-gray-600"
       />
     </ToolTip>
   </div>

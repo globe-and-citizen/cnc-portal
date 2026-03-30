@@ -1,6 +1,6 @@
 <template>
   <div>
-    <UForm :schema="schema" :state="state" @submit="submitForm" class="flex flex-col gap-4 mt-2">
+    <UForm :schema="schema" :state="state" @submit="submitForm" class="mt-2 flex flex-col gap-4">
       <UFormField name="title" label="Title">
         <UInput v-model="state.title" placeholder="Title" class="w-full" data-test="titleInput" />
       </UFormField>
@@ -26,26 +26,26 @@
           />
         </UFormField>
 
-        <div class="mb-4 mt-4">
-          <label class="w-full input input-bordered flex items-center gap-2 input-md mt-2">
+        <div class="mt-4 mb-4">
+          <label class="input input-bordered input-md mt-2 flex w-full items-center gap-2">
             <span class="w-24">Start Date</span>
             <div class="grow" data-test="date-picker">
               <VueDatePicker v-model="state.startDate" :min-date="minStartDate" auto-apply />
             </div>
           </label>
-          <span v-if="errors.startDate" class="pl-4 text-red-500 text-sm">
+          <span v-if="errors.startDate" class="pl-4 text-sm text-red-500">
             {{ errors.startDate }}
           </span>
         </div>
 
         <div class="mb-4">
-          <label class="w-full input input-bordered flex items-center gap-2 input-md mt-2">
+          <label class="input input-bordered input-md mt-2 flex w-full items-center gap-2">
             <span class="w-24">End Date</span>
             <div class="grow" data-test="date-picker">
               <VueDatePicker v-model="state.endDate" :min-date="new Date()" auto-apply />
             </div>
           </label>
-          <span v-if="errors.endDate" class="pl-4 text-red-500 text-sm">
+          <span v-if="errors.endDate" class="pl-4 text-sm text-red-500">
             {{ errors.endDate }}
           </span>
         </div>
@@ -55,7 +55,7 @@
           :show-on-focus="true"
           :only-team-members="true"
         />
-        <span v-if="errors.candidates" class="pl-4 text-red-500 text-sm">
+        <span v-if="errors.candidates" class="pl-4 text-sm text-red-500">
           {{ errors.candidates }}
         </span>
       </div>

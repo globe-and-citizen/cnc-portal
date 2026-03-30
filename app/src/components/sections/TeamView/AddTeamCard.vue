@@ -1,9 +1,9 @@
 <template>
-  <div class="card bg-green-100 flex justify-center items-center border">
-    <div class="card-body flex justify-center items-center">
+  <div class="card flex items-center justify-center border bg-green-100">
+    <div class="card-body flex items-center justify-center">
       <span class="font-bold">Create Company</span>
 
-      <div class="w-5 h-5 cursor-pointer" data-test="add-team">
+      <div class="h-5 w-5 cursor-pointer" data-test="add-team">
         <IconifyIcon icon="heroicons:plus-circle" class="size-6" data-test="add-team-icon" />
       </div>
     </div>

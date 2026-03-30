@@ -1,5 +1,5 @@
 <template>
-  <label class="form-control w-full mt-6" data-test="compensation-amount">
+  <label class="form-control mt-6 w-full" data-test="compensation-amount">
     <div class="label">
       <slot name="label">
         <span class="label-text">{{ safeTokenSymbol }} to Receive</span>
@@ -8,10 +8,10 @@
         </span>
       </slot>
     </div>
-    <div class="w-full input input-bordered flex items-center">
+    <div class="input input-bordered flex w-full items-center">
       <input
         type="text"
-        class="grow w-24"
+        class="w-24 grow"
         :value="displayValue"
         @input="handleInput"
         placeholder="0"
@@ -21,7 +21,7 @@
       />
       <div>
         <button
-          class="flex items-center cursor-pointer badge badge-md badge-info text-xs cursor-default"
+          class="badge badge-md badge-info flex cursor-default cursor-pointer items-center text-xs"
           disabled
           data-test="token-symbol-badge"
           :aria-label="`Token symbol: ${safeTokenSymbol}`"

@@ -27,11 +27,11 @@
         >
           <template #description>
             <div class="flex items-center gap-2 text-sm">
-              <IconifyIcon icon="heroicons:users" class="w-4 h-4 text-blue-600" />
+              <IconifyIcon icon="heroicons:users" class="h-4 w-4 text-blue-600" />
               <span>{{ currentOwners.length }} signers</span>
             </div>
             <div class="flex items-center gap-2 text-sm">
-              <IconifyIcon icon="heroicons:shield-check" class="w-4 h-4 text-green-600" />
+              <IconifyIcon icon="heroicons:shield-check" class="h-4 w-4 text-green-600" />
               <span>{{ currentThreshold }} of {{ currentOwners.length }} required</span>
             </div>
           </template>
@@ -64,13 +64,13 @@
         >
           <template #description>
             <div class="flex items-center gap-2 text-sm">
-              <IconifyIcon icon="heroicons:arrow-right" class="w-4 h-4 text-green-600" />
+              <IconifyIcon icon="heroicons:arrow-right" class="h-4 w-4 text-green-600" />
               <span
                 >Updating threshold from {{ currentThreshold }} to {{ formState.threshold }}</span
               >
             </div>
             <div class="flex items-center gap-2 text-sm">
-              <IconifyIcon icon="heroicons:shield-check" class="w-4 h-4 text-blue-600" />
+              <IconifyIcon icon="heroicons:shield-check" class="h-4 w-4 text-blue-600" />
               <span
                 >{{ formState.threshold }} of {{ currentOwners.length }} signatures will be
                 required</span
@@ -80,7 +80,7 @@
         </UAlert>
 
         <!-- Action Buttons -->
-        <div class="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-800">
+        <div class="flex justify-end gap-3 border-t border-gray-200 pt-4 dark:border-gray-800">
           <UButton
             type="button"
             color="neutral"

@@ -17,7 +17,7 @@
     :description="`Submit your hours worked for the week to receive payment. You can only submit one claim per week.`"
   >
     <template #body>
-      <div class="flex flex-col gap-4 mb-20">
+      <div class="mb-20 flex flex-col gap-4">
         <ClaimForm
           ref="claimFormRef"
           :initial-data="formInitialData"

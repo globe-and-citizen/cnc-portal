@@ -2,7 +2,7 @@
 <template>
   <UCard class="w-full">
     <template #header>
-      <div class="flex justify-between items-center">
+      <div class="flex items-center justify-between">
         <span>{{ title }}</span>
         <div class="flex items-center gap-2">
           <CustomDatePicker
@@ -13,15 +13,15 @@
           />
           <div class="relative">
             <UButton
-              class="flex items-center cursor-pointer gap-4 border border-gray-300 min-w-[110px]"
+              class="flex min-w-[110px] cursor-pointer items-center gap-4 border border-gray-300"
               @click="typeDropdownOpen = !typeDropdownOpen"
               :data-test="`${dataTestPrefix}-type-filter`"
             >
               <span>{{ selectedTypeLabel }}</span>
-              <IconifyIcon icon="heroicons:chevron-down" class="w-4 h-4" />
+              <IconifyIcon icon="heroicons:chevron-down" class="h-4 w-4" />
             </UButton>
             <ul
-              class="absolute right-0 mt-2 menu bg-base-200 border-2 rounded-box z-1 w-40 p-2 shadow-sm"
+              class="menu bg-base-200 rounded-box absolute right-0 z-1 mt-2 w-40 border-2 p-2 shadow-sm"
               ref="typeDropdownTarget"
               v-if="typeDropdownOpen"
             >
@@ -66,11 +66,11 @@
           <a
             :href="getExplorerUrl((row as BaseTransaction).from)"
             target="_blank"
-            class="flex items-center gap-2 text-emerald-600 hover:text-emerald-800 hover:underline transition-colors duration-200"
+            class="flex items-center gap-2 text-emerald-600 transition-colors duration-200 hover:text-emerald-800 hover:underline"
           >
             <IconifyIcon
               :icon="getContractType((row as BaseTransaction).from).icon"
-              class="w-5 h-5"
+              class="h-5 w-5"
             />
             <span class="font-medium">{{
               getContractType((row as BaseTransaction).from).type
@@ -92,11 +92,11 @@
           <a
             :href="getExplorerUrl((row as BaseTransaction).to)"
             target="_blank"
-            class="flex items-center gap-2 text-emerald-600 hover:text-emerald-800 hover:underline transition-colors duration-200"
+            class="flex items-center gap-2 text-emerald-600 transition-colors duration-200 hover:text-emerald-800 hover:underline"
           >
             <IconifyIcon
               :icon="getContractType((row as BaseTransaction).to).icon"
-              class="w-5 h-5"
+              class="h-5 w-5"
             />
             <span class="font-medium">{{ getContractType((row as BaseTransaction).to).type }}</span>
           </a>
@@ -124,7 +124,7 @@
           v-else
           :href="getReceiptUrl((row as BaseTransaction).txHash)"
           target="_blank"
-          class="text-primary hover:text-primary-focus transition-colors duration-200 flex items-center gap-2"
+          class="text-primary hover:text-primary-focus flex items-center gap-2 transition-colors duration-200"
         >
           <IconifyIcon icon="heroicons-outline:document-text" class="h-4 w-4" />Receipt
         </a>

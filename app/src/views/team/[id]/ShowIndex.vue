@@ -1,6 +1,6 @@
 <template>
   <!-- Navigation and breadcrumb -->
-  <div class="flex flex-col gap-6 w-full">
+  <div class="flex w-full flex-col gap-6">
     <div>
       <UBreadcrumb v-if="!teamStore.currentTeamMeta.error" :items="breadcrumbItems">
         <template #loader>

@@ -1,7 +1,7 @@
 <template>
   <UCard class="w-full">
     <template #header>
-      <div class="flex justify-between items-center">
+      <div class="flex items-center justify-between">
         <span>{{ title }}</span>
         <InvestorsTransactionFilters
           :unique-types="uniqueTypes"

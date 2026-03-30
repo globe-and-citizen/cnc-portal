@@ -3,9 +3,9 @@
     <div class="flex justify-between">
       <div class="flex items-center space-x-2 sm:space-x-4">
         <UButton color="neutral" variant="ghost">
-          <img src="../assets/Ethereum.png" class="h-4 sm:h-5 w-4 sm:w-5" alt="Ethereum Icon" />
+          <img src="../assets/Ethereum.png" class="h-4 w-4 sm:h-5 sm:w-5" alt="Ethereum Icon" />
           <span
-            class="font-mono text-xs sm:text-sm hidden sm:inline-block"
+            class="hidden font-mono text-xs sm:inline-block sm:text-sm"
             data-test="balance-with-symbol"
           >
             {{ NETWORK.currencySymbol }}

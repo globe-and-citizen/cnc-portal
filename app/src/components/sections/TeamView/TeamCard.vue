@@ -4,7 +4,7 @@
     :class="`${team.ownerAddress == userStore.address ? 'bg-green-100' : 'bg-blue-100'}`"
   >
     <div class="card-body">
-      <div class="flex flex-row justify-between items-start">
+      <div class="flex flex-row items-start justify-between">
         <h1 class="card-title text-md overflow-hidden">
           {{ props.team.name }}
         </h1>
@@ -14,7 +14,7 @@
         <div class="badge badge-sm badge-secondary" v-else>Employee</div>
       </div>
       <div>
-        <p class="text-xs line-clamp-3">{{ props.team.description }}</p>
+        <p class="line-clamp-3 text-xs">{{ props.team.description }}</p>
       </div>
       <div class="card-actions justify-between"></div>
     </div>

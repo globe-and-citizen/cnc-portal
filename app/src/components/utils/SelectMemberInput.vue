@@ -12,13 +12,13 @@
     <div v-if="!showOnFocus || (showOnFocus && showDropdown)">
       <div
         v-if="filteredUsers.length > 0"
-        class="left-0 top-full mt-4 w-full"
+        class="top-full left-0 mt-4 w-full"
         data-test="user-dropdown"
       >
-        <div class="text-sm text-gray-500 mb-2" data-test="select-member-hint">
+        <div class="mb-2 text-sm text-gray-500" data-test="select-member-hint">
           Click to select a member
         </div>
-        <div class="shadow-sm bg-white rounded-xl">
+        <div class="rounded-xl bg-white shadow-sm">
           <div class="grid grid-cols-2 gap-4" data-test="user-search-results">
             <div
               v-for="user in filteredUsers.slice(0, 8)"
@@ -45,7 +45,7 @@
                 class="grow"
               >
                 <UserComponent
-                  class="p-4 grow rounded-lg"
+                  class="grow rounded-lg p-4"
                   :class="[
                     disableTeamMembers && isTeamMember(user)
                       ? 'bg-gray-200 opacity-60'

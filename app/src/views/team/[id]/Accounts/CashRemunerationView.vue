@@ -2,7 +2,7 @@
   <div class="flex flex-col gap-6">
     <CashRemunerationOverview />
 
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div class="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
       <OwnerTreasuryWithdrawAction contractType="CashRemunerationEIP712" />
 
       <div class="ml-auto flex flex-wrap items-center justify-end gap-2 sm:gap-4">
