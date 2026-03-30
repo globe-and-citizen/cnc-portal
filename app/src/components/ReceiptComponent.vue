@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h1 class="font-bold text-2xl mb-5">Receipt</h1>
+    <!-- Modal title provides the heading -->
     <hr />
 
     <!-- Render key-value pairs in a specific order -->
