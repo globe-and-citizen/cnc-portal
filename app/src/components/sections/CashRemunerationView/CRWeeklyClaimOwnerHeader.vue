@@ -11,7 +11,7 @@
 
 <script setup lang="ts">
 import { computed, watch } from 'vue'
-import { useUserDataStore, useTeamStore, useToastStore } from '@/stores'
+import { useUserDataStore, useTeamStore } from '@/stores'
 import { useReadContract } from '@wagmi/vue'
 import { CASH_REMUNERATION_EIP712_ABI } from '@/artifacts/abi/cash-remuneration-eip712'
 
@@ -19,7 +19,7 @@ import CRAddERC20Support from './CRAddERC20Support.vue'
 
 const userStore = useUserDataStore()
 const teamStore = useTeamStore()
-const toastStore = useToastStore()
+const toast = useToast()
 
 const cashRemunerationAddress = computed(() =>
   teamStore.getContractAddressByType('CashRemunerationEIP712')
@@ -37,7 +37,7 @@ const isCashRemunerationOwner = computed(() => cashRemunerationOwner.value == us
 watch(cashRemunerationOwnerError, (value) => {
   if (value) {
     console.log('Failed to fetch cash remuneration owner:', value)
-    toastStore.addErrorToast('Failed to fetch cash remuneration owner')
+    toast.add({ title: 'Failed to fetch cash remuneration owner', color: 'error' })
   }
 })
 </script>

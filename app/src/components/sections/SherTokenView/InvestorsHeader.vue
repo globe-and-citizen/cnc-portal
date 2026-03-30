@@ -41,7 +41,7 @@ import OverviewCard from '@/components/OverviewCard.vue'
 import cartIcon from '@/assets/cart.svg'
 import bagIcon from '@/assets/bag.svg'
 import personIcon from '@/assets/person.svg'
-import { useTeamStore, useToastStore, useUserDataStore } from '@/stores'
+import { useTeamStore, useUserDataStore } from '@/stores'
 import {
   useInvestorSymbol,
   useInvestorTotalSupply,
@@ -52,7 +52,7 @@ import { computed, watch } from 'vue'
 import { log } from '@/utils'
 
 const teamStore = useTeamStore()
-const { addErrorToast } = useToastStore()
+const toast = useToast()
 const userStore = useUserDataStore()
 
 const { data: tokenSymbol, error: tokenSymbolError } = useInvestorSymbol()
@@ -81,28 +81,28 @@ const shareholdersCount = computed(() =>
 watch(tokenSymbolError, (value) => {
   if (value) {
     log.error('Error fetching token symbol', value)
-    addErrorToast('Error fetching token symbol')
+    toast.add({ title: 'Error fetching token symbol', color: 'error' })
   }
 })
 
 watch(totalSupplyError, (value) => {
   if (value) {
     log.error('Error fetching total supply', value)
-    addErrorToast('Error fetching total supply')
+    toast.add({ title: 'Error fetching total supply', color: 'error' })
   }
 })
 
 watch(tokenBalanceError, () => {
   if (tokenBalanceError.value) {
     log.error('Failed to fetch token balance')
-    addErrorToast('Failed to fetch token balance')
+    toast.add({ title: 'Failed to fetch token balance', color: 'error' })
   }
 })
 
 watch(shareholderError, (value) => {
   if (value) {
     log.error('Error fetching shareholders', value)
-    addErrorToast('Error fetching shareholders')
+    toast.add({ title: 'Error fetching shareholders', color: 'error' })
   }
 })
 </script>

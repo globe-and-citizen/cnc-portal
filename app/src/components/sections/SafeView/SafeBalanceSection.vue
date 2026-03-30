@@ -78,15 +78,11 @@
       @update:open="handleDepositModalOpen"
       data-test="deposit-modal"
       title="Deposit to Safe Contract"
+      description="Deposit assets to the Safe contract to fund your team’s operations."
       :close="{ onClick: () => closeDepositModal() }"
     >
       <template #body>
-        <DepositSafeForm
-          v-if="address"
-          title="Deposit to Safe Contract"
-          :safe-address="address"
-          @close-modal="closeDepositModal"
-        />
+        <DepositSafeForm v-if="address" :safe-address="address" @close-modal="closeDepositModal" />
       </template>
     </UModal>
 
@@ -97,6 +93,8 @@
       v-model:open="transferModal.show"
       @update:open="handleTransferModalOpen"
       data-test="transfer-modal"
+      title="Transfer from Safe Contract"
+      :description="`Current contract balance: ${transferData.token.balance} ${transferData.token.symbol}`"
       :close="{ onClick: () => resetTransferValues() }"
     >
       <template #body>
@@ -106,15 +104,7 @@
           :loading="isTransferring"
           @transfer="handleTransfer"
           @closeModal="resetTransferValues"
-        >
-          <template #header>
-            <h1 class="font-bold text-2xl">Transfer from Safe Contract</h1>
-            <h3 class="pt-4">
-              Current contract balance: {{ transferData.token.balance }}
-              {{ transferData.token.symbol }}
-            </h3>
-          </template>
-        </TransferForm>
+        />
       </template>
     </UModal>
   </UCard>

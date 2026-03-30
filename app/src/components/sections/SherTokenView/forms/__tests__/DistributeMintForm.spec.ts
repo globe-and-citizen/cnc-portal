@@ -2,7 +2,6 @@ import { flushPromises, shallowMount } from '@vue/test-utils'
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import DistributeMintForm from '../../../SherTokenView/forms/DistributeMintForm.vue'
 import { createTestingPinia } from '@pinia/testing'
-import { mockToastStore } from '@/tests/mocks/store.mock'
 import { ref } from 'vue'
 import { useGetSearchUsersQuery } from '@/queries/user.queries'
 
@@ -173,7 +172,5 @@ describe.skip('DistributeMintForm', () => {
     // Now trigger the error by updating the ref
     mockError.value = new Error('Search failed')
     await wrapper.vm.$nextTick()
-
-    expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('Failed to search users')
   })
 })

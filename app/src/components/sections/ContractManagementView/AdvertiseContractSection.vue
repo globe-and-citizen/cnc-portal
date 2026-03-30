@@ -8,20 +8,23 @@
       v-if="!teamStore.currentTeamMeta.isPending && teamStore"
       class="flex flex-col gap-5 w-full items-center"
     >
-      <CardComponent class="w-full" title="Advertise Contract">
-        <template #card-action>
-          <div>
-            <UButton
-              color="primary"
-              :disabled="teamStore.currentTeam?.ownerAddress != userStore.address"
-              data-test="createAddCampaign"
-              @click="showAdCampaignModal = { mount: true, show: true }"
-              label="Deploy Advertise Contract"
-            />
+      <UCard class="w-full">
+        <template #header>
+          <div class="flex justify-between items-center">
+            <span>Advertise Contract</span>
+            <div>
+              <UButton
+                color="primary"
+                :disabled="teamStore.currentTeam?.ownerAddress != userStore.address"
+                data-test="createAddCampaign"
+                @click="showAdCampaignModal = { mount: true, show: true }"
+                label="Deploy Advertise Contract"
+              />
+            </div>
           </div>
         </template>
         <TeamContracts />
-      </CardComponent>
+      </UCard>
       <UModal v-if="showAdCampaignModal.mount" v-model:open="showAdCampaignModal.show">
         <template #body>
           <CreateAddCampaign
@@ -35,7 +38,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import TeamContracts from '@/components/sections/ContractManagementView/TeamContracts.vue'
-import CardComponent from '@/components/CardComponent.vue'
 import { useUserDataStore } from '@/stores/user'
 import { useTeamStore } from '@/stores'
 

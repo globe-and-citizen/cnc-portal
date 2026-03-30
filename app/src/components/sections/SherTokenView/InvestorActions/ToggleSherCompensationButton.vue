@@ -28,12 +28,11 @@ import {
   useSafeDepositRouterDepositsEnabled,
   useSafeDepositRouterOwner
 } from '@/composables/safeDepositRouter/reads'
-import { useToastStore } from '@/stores'
 import { useTeamStore } from '@/stores'
 import { parseError } from '@/utils'
 
 const teamStore = useTeamStore()
-const { addErrorToast, addSuccessToast, addInfoToast } = useToastStore()
+const toast = useToast()
 const connection = useConnection()
 
 // Track if we're in the process of setting safe address before enabling
@@ -110,9 +109,9 @@ watch(
       const errorMessage = parseError(error)
 
       if (errorMessage.includes('User rejected') || errorMessage.includes('User denied')) {
-        addErrorToast('Transaction cancelled by user')
+        toast.add({ title: 'Transaction cancelled by user', color: 'error' })
       } else {
-        addErrorToast('Failed to enable SHER compensation')
+        toast.add({ title: 'Failed to enable SHER compensation', color: 'error' })
       }
       isSettingSafeAddress.value = false
     }
@@ -124,7 +123,7 @@ watch(
   () => enableDepositsWrite.receiptResult.isSuccess.value,
   (success) => {
     if (success) {
-      addSuccessToast('SHER compensation enabled successfully')
+      toast.add({ title: 'SHER compensation enabled successfully', color: 'success' })
       isSettingSafeAddress.value = false
     }
   }
@@ -139,9 +138,9 @@ watch(
       const errorMessage = parseError(error)
 
       if (errorMessage.includes('User rejected') || errorMessage.includes('User denied')) {
-        addErrorToast('Transaction cancelled by user')
+        toast.add({ title: 'Transaction cancelled by user', color: 'error' })
       } else {
-        addErrorToast('Failed to disable SHER compensation')
+        toast.add({ title: 'Failed to disable SHER compensation', color: 'error' })
       }
     }
   }
@@ -152,7 +151,7 @@ watch(
   () => disableDepositsWrite.receiptResult.isSuccess.value,
   (success) => {
     if (success) {
-      addSuccessToast('SHER compensation disabled successfully')
+      toast.add({ title: 'SHER compensation disabled successfully', color: 'success' })
     }
   }
 )
@@ -166,9 +165,9 @@ watch(
       const errorMessage = parseError(error)
 
       if (errorMessage.includes('User rejected') || errorMessage.includes('User denied')) {
-        addErrorToast('Transaction cancelled by user')
+        toast.add({ title: 'Transaction cancelled by user', color: 'error' })
       } else {
-        addErrorToast('Failed to update Safe address')
+        toast.add({ title: 'Failed to update Safe address', color: 'error' })
       }
       isSettingSafeAddress.value = false
     }
@@ -180,7 +179,7 @@ watch(
   () => setSafeAddressWrite.receiptResult.isSuccess.value,
   (success) => {
     if (success && isSettingSafeAddress.value) {
-      addSuccessToast('Safe address updated successfully')
+      toast.add({ title: 'Safe address updated successfully', color: 'success' })
 
       // Auto-enable deposits after successful Safe address update
       setTimeout(() => {
@@ -197,12 +196,12 @@ async function updateSafeAddress() {
   const safeAddress = teamStore.getContractAddressByType('Safe')
 
   if (!safeAddress) {
-    addErrorToast('Safe address not found')
+    toast.add({ title: 'Safe address not found', color: 'error' })
     isSettingSafeAddress.value = false
     return
   }
 
-  addInfoToast('Updating Safe address...')
+  toast.add({ title: 'Updating Safe address...', color: 'info' })
   await setSafeAddressWrite.executeWrite(safeAddress)
 }
 
@@ -226,12 +225,12 @@ async function handleDisableDeposits() {
  */
 async function handleToggleCompensation() {
   if (!safeDepositRouterAddress.value) {
-    addErrorToast('SafeDepositRouter address not found')
+    toast.add({ title: 'SafeDepositRouter address not found', color: 'error' })
     return
   }
 
   if (!canManageDeposits.value) {
-    addErrorToast('Only the owner can manage SHER compensation')
+    toast.add({ title: 'Only the owner can manage SHER compensation', color: 'error' })
     return
   }
 

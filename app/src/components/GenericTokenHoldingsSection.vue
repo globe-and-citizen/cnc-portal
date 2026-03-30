@@ -1,6 +1,7 @@
 <!-- TokenHoldingsSection.vue -->
 <template>
-  <CardComponent title="Token Holding">
+  <UCard>
+    <template #header>Token Holding</template>
     <TableComponent
       :rows="
         balances.map((balance, index) => ({
@@ -47,12 +48,11 @@
         </div>
       </template>
     </TableComponent>
-  </CardComponent>
+  </UCard>
 </template>
 
 <script setup lang="ts">
 import TableComponent from '@/components/TableComponent.vue'
-import CardComponent from '@/components/CardComponent.vue'
 import EthereumIcon from '@/assets/Ethereum.png'
 import USDCIcon from '@/assets/usdc.png'
 import MaticIcon from '@/assets/matic-logo.png'

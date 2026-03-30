@@ -1,5 +1,6 @@
 <template>
-  <CardComponent :title="`${electionId ? `Elected` : `Current`} Board of Directors`">
+  <UCard>
+    <template #header>{{ electionId ? `Elected` : `Current` }} Board of Directors</template>
     <div
       class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mt-4"
       v-if="normalizedBoardOfDirectors.length > 0"
@@ -25,11 +26,10 @@
       No Board of Directors members found.
     </div> -->
     <CurrentBoDSection404 v-else />
-  </CardComponent>
+  </UCard>
 </template>
 <script setup lang="ts">
 import { BOD_ABI } from '@/artifacts/abi/bod'
-import CardComponent from '@/components/CardComponent.vue'
 import UserComponentCol from '@/components/UserComponent.vue'
 import CurrentBoDSection404 from './CurrentBoDSection404.vue'
 import { useTeamStore } from '@/stores'

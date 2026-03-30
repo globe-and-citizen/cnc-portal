@@ -3,11 +3,11 @@
     v-model="selectedTeam"
     :items="teamItems"
     :loading="teamsLoading"
-    placeholder="Select team"
+    placeholder="Select Company"
     by="id"
     class="w-50"
     :avatar="selectedTeam?.avatar"
-    :search-input="{ placeholder: 'Search team...' }"
+    :search-input="{ placeholder: 'Search company...' }"
   />
 </template>
 

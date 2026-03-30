@@ -1,5 +1,6 @@
 <template>
-  <CardComponent title="Investor Actions">
+  <UCard>
+    <template #header>Investor Actions</template>
     <div class="flex flex-col justify-around gap-2 w-full" data-test="investors-actions">
       <div class="flex flex-wrap items-end w-full justify-between">
         <div class="flex gap-x-1">
@@ -44,14 +45,13 @@
         </div>
       </div>
     </div>
-  </CardComponent>
+  </UCard>
 </template>
 
 <script setup lang="ts">
 import { computed, watch } from 'vue'
-import { useTeamStore, useToastStore } from '@/stores'
+import { useTeamStore } from '@/stores'
 import { log } from '@/utils'
-import CardComponent from '@/components/CardComponent.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import DistributeMintAction from './InvestorActions/DistributeMintAction.vue'
 import MintTokenAction from './InvestorActions/MintTokenAction.vue'
@@ -69,7 +69,7 @@ defineEmits<{
   refetchShareholders: []
 }>()
 
-const { addErrorToast } = useToastStore()
+const toast = useToast()
 const teamStore = useTeamStore()
 
 const investorAddress = teamStore.getContractAddressByType('InvestorV1')
@@ -105,21 +105,21 @@ const safeInvestorsOwner = computed(() =>
 watch(tokenSymbolError, (value) => {
   if (value) {
     log.error('Error fetching token symbol', value)
-    addErrorToast('Error fetching token symbol')
+    toast.add({ title: 'Error fetching token symbol', color: 'error' })
   }
 })
 
 watch(shareholderError, (value) => {
   if (value) {
     log.error('Error fetching shareholders', value)
-    addErrorToast('Error fetching shareholders')
+    toast.add({ title: 'Error fetching shareholders', color: 'error' })
   }
 })
 
 watch(errorInvestorsOwner, (value) => {
   if (value) {
     log.error('Error fetching investors owner', value)
-    addErrorToast('Error fetching investors owner')
+    toast.add({ title: 'Error fetching investors owner', color: 'error' })
   }
 })
 </script>

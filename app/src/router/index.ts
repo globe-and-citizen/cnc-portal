@@ -18,7 +18,7 @@ const router = createRouter({
     {
       path: '/teams',
       name: 'teams',
-      meta: { name: 'Teams List' },
+      meta: { name: 'Companies' },
       components: {
         default: () => import('@/views/team/ListIndex.vue')
       }
@@ -27,12 +27,12 @@ const router = createRouter({
       path: '/teams/:id',
       component: () => import('@/views/team/[id]/ShowIndex.vue'),
       name: 'show-team',
-      meta: { name: 'Team View' },
+      meta: { name: 'Overview' },
       children: [
         {
           path: '/teams/:id/demo',
           name: 'team-demo',
-          meta: { name: 'Team Demo' },
+          meta: { name: 'Company Demo' },
           component: () => import('@/views/team/[id]/DemoExample.vue')
         },
         {
@@ -62,7 +62,7 @@ const router = createRouter({
         {
           path: '/teams/:id/accounts/team-payroll',
           name: 'team-payroll',
-          meta: { name: 'Team Payroll' },
+          meta: { name: 'Company Payroll' },
           component: () => import('@/views/team/[id]/Accounts/WeeklyClaimView.vue')
         },
         {
@@ -74,7 +74,7 @@ const router = createRouter({
         {
           path: '/teams/:id/cash-remunerations/member/:memberAddress',
           name: 'cash-remunerations-member',
-          meta: { name: 'Cash Remuneration Member' },
+          meta: { name: 'Member Compensation' },
           component: () => import('@/views/team/[id]/Accounts/CashRemunerationView.vue')
         },
         {
@@ -93,7 +93,7 @@ const router = createRouter({
         {
           path: '/teams/:id/administration/bod-elections',
           name: 'bod-elections',
-          meta: { name: 'BoD Election' },
+          meta: { name: 'Board Election' },
           component: () => import('@/views/team/[id]/BodElectionView.vue')
         },
         {
@@ -111,7 +111,7 @@ const router = createRouter({
         {
           path: '/teams/:id/administration/bod-elections-details',
           name: 'bod-elections-details',
-          meta: { name: 'BoD Election Details' },
+          meta: { name: 'Board Election Details' },
           component: () => import('@/views/team/[id]/BodElectionDetailsView.vue')
         },
         {

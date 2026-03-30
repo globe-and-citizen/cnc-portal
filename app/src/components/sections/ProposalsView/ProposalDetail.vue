@@ -175,7 +175,7 @@
 </template>
 <script setup lang="ts">
 import { PROPOSALS_ABI } from '@/artifacts/abi/proposals'
-import { useTeamStore, useToastStore, useUserDataStore } from '@/stores'
+import { useTeamStore, useUserDataStore } from '@/stores'
 import { ProposalState, type Proposal, type ProposalVoteEvent } from '@/types'
 import { config } from '@/wagmi.config'
 import { useQueryClient } from '@tanstack/vue-query'
@@ -190,7 +190,7 @@ const route = useRoute()
 const teamStore = useTeamStore()
 const emits = defineEmits(['proposal-voted'])
 const proposalsAddress = computed(() => teamStore.getContractAddressByType('Proposals') as Address)
-const toastStore = useToastStore()
+const toast = useToast()
 const userDataStore = useUserDataStore()
 
 // Helper function to format dates
@@ -330,7 +330,7 @@ watch(isVoteConfirmed, async (success) => {
   if (success) {
     emits('proposal-voted')
     await queryClient.invalidateQueries({ queryKey: [proposalQueryKey, hasVotedQueryKey] })
-    toastStore.addSuccessToast('Vote cast successfully!')
+    toast.add({ title: 'Vote cast successfully!', color: 'success' })
     await fetchRecentVotes()
   }
 })

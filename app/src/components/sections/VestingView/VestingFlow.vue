@@ -1,10 +1,13 @@
 <template>
-  <CardComponent title="Vesting OverView">
-    <template #card-action>
-      <div class="flex items-center gap-4">
-        <VestingStatusFilter @statusChange="handleStatusChange" />
+  <UCard>
+    <template #header>
+      <div class="flex justify-between items-center">
+        <span>Vesting OverView</span>
+        <div class="flex items-center gap-4">
+          <VestingStatusFilter @statusChange="handleStatusChange" />
 
-        <VestingActions :reloadKey="reloadKey" @reload="handleReload" />
+          <VestingActions :reloadKey="reloadKey" @reload="handleReload" />
+        </div>
       </div>
     </template>
 
@@ -91,13 +94,12 @@
         </div>
       </template>
     </TableComponent>
-  </CardComponent>
+  </UCard>
 </template>
 
 <script setup lang="ts">
 import TableComponent from '@/components/TableComponent.vue'
 import { computed, watch, ref } from 'vue'
-import CardComponent from '@/components/CardComponent.vue'
 import { type VestingRow, type VestingTuple, type VestingStatus } from '@/types/vesting'
 import { useTeamStore } from '@/stores'
 import { type Address, formatUnits } from 'viem'
@@ -105,11 +107,10 @@ import { useUserDataStore } from '@/stores'
 
 import VestingActions from '@/components/sections/VestingView/VestingActions.vue'
 import VestingStatusFilter from './VestingStatusFilter.vue'
-import { useToastStore } from '@/stores/useToastStore'
 import { useWriteContract, useWaitForTransactionReceipt, useReadContract } from '@wagmi/vue'
 import { INVESTOR_ABI } from '@/artifacts/abi/investors'
 import { VESTING_ABI } from '@/artifacts/abi/vesting'
-const { addErrorToast, addSuccessToast } = useToastStore()
+const toast = useToast()
 
 import { VESTING_ADDRESS } from '@/constant'
 const teamStore = useTeamStore()
@@ -169,7 +170,7 @@ const {
 
 watch(errorGetArchivedVestingInfo, () => {
   if (errorGetArchivedVestingInfo.value) {
-    addErrorToast('get archived  failed')
+    toast.add({ title: 'get archived  failed', color: 'error' })
     console.error('get archived  failed ====', errorGetArchivedVestingInfo)
   }
 })
@@ -187,7 +188,7 @@ const {
 })
 watch(errorGetVestingInfo, () => {
   if (errorGetVestingInfo.value) {
-    addErrorToast('Add admin failed')
+    toast.add({ title: 'Add admin failed', color: 'error' })
   }
 })
 
@@ -289,13 +290,13 @@ const { isLoading: isConfirmingStopVesting, isSuccess: isConfirmedStopVesting } 
 
 watch(isConfirmingStopVesting, async (isConfirming, wasConfirming) => {
   if (wasConfirming && !isConfirming && isConfirmedStopVesting.value) {
-    addSuccessToast('vesting stoped successfully')
+    toast.add({ title: 'vesting stoped successfully', color: 'success' })
     emit('reload')
   }
 })
 watch(errorStopVesting, () => {
   if (errorStopVesting.value) {
-    addErrorToast('stop vesting failed')
+    toast.add({ title: 'stop vesting failed', color: 'error' })
     console.error('add vesting error', errorStopVesting.value)
   }
 })
@@ -314,14 +315,14 @@ const { isLoading: isConfirmingReleaseVesting, isSuccess: isConfirmedReleaseVest
 
 watch(isConfirmingReleaseVesting, async (isConfirming, wasConfirming) => {
   if (wasConfirming && !isConfirming && isConfirmedReleaseVesting.value) {
-    addSuccessToast('vesting Releaseed successfully')
+    toast.add({ title: 'vesting Releaseed successfully', color: 'success' })
     emit('reload')
   }
 })
 
 watch(errorReleaseVesting, () => {
   if (errorReleaseVesting.value) {
-    addErrorToast('Release vesting failed')
+    toast.add({ title: 'Release vesting failed', color: 'error' })
     console.error('add vesting error', errorReleaseVesting.value)
   }
 })

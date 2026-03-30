@@ -13,7 +13,7 @@ describe('AddTeamCard.vue', () => {
   })
   describe('Render', () => {
     it('renders correctly', () => {
-      expect(wrapper.find('span').text()).toBe('Add Team')
+      expect(wrapper.find('span').text()).toBe('Create Company')
     })
     it('renders icon plus', () => {
       expect(wrapper.findComponent(IconifyIcon).exists()).toBe(true)
