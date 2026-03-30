@@ -67,23 +67,39 @@
     <div class="flex flex-col gap-3">
       <span class="font-semibold">Duration</span>
       <UFormField label="Start Date" name="startDate">
-        <VueDatePicker
-          v-model="state.startDate"
-          :min-date="new Date()"
-          auto-apply
-          placeholder="Pick start date"
-          data-test="start-date-picker"
-        />
+        <UPopover>
+          <UButton
+            color="neutral"
+            variant="outline"
+            icon="i-lucide-calendar"
+            :label="state.startDate?.toString() || 'Pick start date'"
+            class="w-full justify-start"
+            data-test="start-date-picker"
+          />
+          <template #content>
+            <UCalendar v-model="state.startDate" :min-value="todayDate" class="p-2" />
+          </template>
+        </UPopover>
       </UFormField>
 
       <UFormField label="End Date" name="endDate">
-        <VueDatePicker
-          v-model="state.endDate"
-          :min-date="state.startDate || new Date()"
-          auto-apply
-          placeholder="Pick end date"
-          data-test="end-date-picker"
-        />
+        <UPopover>
+          <UButton
+            color="neutral"
+            variant="outline"
+            icon="i-lucide-calendar"
+            :label="state.endDate?.toString() || 'Pick end date'"
+            class="w-full justify-start"
+            data-test="end-date-picker"
+          />
+          <template #content>
+            <UCalendar
+              v-model="state.endDate"
+              :min-value="state.startDate ?? todayDate"
+              class="p-2"
+            />
+          </template>
+        </UPopover>
       </UFormField>
     </div>
 
@@ -114,8 +130,7 @@ import { computed, reactive } from 'vue'
 import { isAddress } from 'viem'
 import { z } from 'zod'
 import type { User } from '@/types'
-import VueDatePicker from '@vuepic/vue-datepicker'
-import '@vuepic/vue-datepicker/dist/main.css'
+import { today, getLocalTimeZone, type CalendarDate } from '@internationalized/date'
 import SelectMemberWithTokenInput from '@/components/utils/SelectMemberWithTokenInput.vue'
 
 const props = defineProps<{
@@ -131,9 +146,11 @@ const state = reactive({
   amount: 0,
   frequencyType: 0,
   customFrequencyDays: 7,
-  startDate: null as Date | null,
-  endDate: null as Date | null
+  startDate: null as CalendarDate | null,
+  endDate: null as CalendarDate | null
 })
+
+const todayDate = today(getLocalTimeZone())
 
 const frequencyTypes = [
   { value: 0, label: 'One Time' },
@@ -164,15 +181,27 @@ const schema = computed(() =>
         (v) => state.frequencyType !== 4 || v >= 1,
         'Custom frequency must be at least 1 day'
       ),
-    startDate: z
-      .union([z.instanceof(Date), z.null()])
-      .refine((v) => v instanceof Date && v > new Date(), 'Start date must be in the future'),
-    endDate: z
-      .union([z.instanceof(Date), z.null()])
-      .refine((v) => {
-        if (!(v instanceof Date)) return false
-        return !state.startDate || v > state.startDate
-      }, 'End date must be after start date')
+    startDate: z.custom<CalendarDate | null>().superRefine((v, ctx) => {
+      if (!v) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Start date is required' })
+        return z.NEVER
+      }
+      if (v.compare(today(getLocalTimeZone())) < 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Start date must be today or in the future'
+        })
+      }
+    }),
+    endDate: z.custom<CalendarDate | null>().superRefine((v, ctx) => {
+      if (!v) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'End date is required' })
+        return z.NEVER
+      }
+      if (state.startDate && v.compare(state.startDate) <= 0) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'End date must be after start date' })
+      }
+    })
   })
 )
 
@@ -195,17 +224,15 @@ const handleSubmit = () => {
     amount: state.amount,
     frequencyType: state.frequencyType,
     customFrequency: state.frequencyType === 4 ? customFrequencyInSeconds.value : 0,
-    startDate: state.startDate instanceof Date ? Math.floor(state.startDate.getTime() / 1000) : 0,
-    endDate: state.endDate instanceof Date ? Math.floor(state.endDate.getTime() / 1000) : 0,
+    startDate: state.startDate
+      ? Math.floor(state.startDate.toDate(getLocalTimeZone()).getTime() / 1000)
+      : 0,
+    endDate: state.endDate
+      ? Math.floor(state.endDate.toDate(getLocalTimeZone()).getTime() / 1000)
+      : 0,
     tokenAddress: state.input.token
   }
 
   emit('approveUser', budgetLimit)
 }
 </script>
-
-<style>
-.dp__input {
-  border: none;
-}
-</style>
