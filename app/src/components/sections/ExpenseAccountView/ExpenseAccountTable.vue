@@ -39,7 +39,7 @@
       <template #member-cell="{ row: { original: row } }">
         <UserComponent
           :user="
-            (row.user as any) || { name: row.userAddress, address: row.userAddress, imageUrl: '' }
+            { name: row.userAddress, address: row.userAddress, imageUrl: '' }
           "
         ></UserComponent>
       </template>
