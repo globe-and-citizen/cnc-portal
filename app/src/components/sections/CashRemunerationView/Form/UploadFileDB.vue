@@ -44,7 +44,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import * as z from 'zod'
-import { useToastStore } from '@/stores/useToastStore'
 import FilePreviewGallery from './FilePreviewGallery.vue'
 import {
   ACCEPTED_FILE_TYPES,
@@ -74,7 +73,7 @@ const emit = defineEmits<{
 }>()
 
 /** Stores **/
-const { addErrorToast } = useToastStore()
+const toast = useToast()
 
 /** Refs **/
 const internalFiles = ref<File[]>([])
@@ -131,7 +130,7 @@ const onFilesUpdate = (newFiles: File[] | File | null | undefined): void => {
   if (!result.success) {
     const firstError = result.error.issues[0]?.message ?? 'Invalid file'
     errorMessage.value = firstError
-    addErrorToast(firstError)
+    toast.add({ title: firstError, color: 'error' })
     internalFiles.value = []
     return
   }

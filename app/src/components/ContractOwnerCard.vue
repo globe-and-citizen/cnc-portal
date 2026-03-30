@@ -1,5 +1,5 @@
 <template>
-  <CardComponent title="">
+  <UCard>
     <div v-if="ownerUser.address" class="flex justify-between items-center">
       <div class="text-lg text-gray-500">
         <span class="flex items-center gap-4">
@@ -18,7 +18,7 @@
     <div v-else class="flex justify-center items-center py-4">
       <span class="text-gray-500">Loading owner information...</span>
     </div>
-  </CardComponent>
+  </UCard>
 </template>
 
 <script setup lang="ts">
@@ -31,7 +31,6 @@ import { ref, watch, computed } from 'vue'
 import { readContract } from '@wagmi/core'
 import { config } from '@/wagmi.config'
 import type { Abi, Address } from 'viem'
-import CardComponent from '@/components/CardComponent.vue'
 
 const props = defineProps<{
   contractAddress?: Address

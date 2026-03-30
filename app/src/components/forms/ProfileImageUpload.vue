@@ -48,7 +48,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { uploadFileApi } from '@/api'
-import { useToastStore } from '@/stores'
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10 MB
 const ALLOWED_IMAGE_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.webp', '.gif', '.bmp', '.svg']
@@ -69,7 +68,7 @@ const fileInput = ref<HTMLInputElement | null>(null)
 const imageUrl = defineModel<string>({ default: '' })
 const isUploading = ref(false)
 const errorMessage = ref('')
-const { addErrorToast, addSuccessToast } = useToastStore()
+const toast = useToast()
 
 // Helper: Detect if file is image (MIME type + extension fallback)
 const isImageFile = (file: File): boolean => {
@@ -100,14 +99,17 @@ const onFileChange = async (event: Event) => {
 
   if (!isImageFile(file)) {
     errorMessage.value = 'Only images (png, jpg, jpeg, webp, gif, bmp, svg) are allowed'
-    addErrorToast('Only images (png, jpg, jpeg, webp, gif, bmp, svg) are allowed')
+    toast.add({
+      title: 'Only images (png, jpg, jpeg, webp, gif, bmp, svg) are allowed',
+      color: 'error'
+    })
     input.value = ''
     return
   }
 
   if (file.size > MAX_FILE_SIZE) {
     errorMessage.value = 'Image must be 10 MB or smaller'
-    addErrorToast('Image must be 10 MB or smaller')
+    toast.add({ title: 'Image must be 10 MB or smaller', color: 'error' })
     input.value = ''
     return
   }
@@ -129,11 +131,11 @@ const uploadSelectedFile = async (file: File) => {
     }
 
     imageUrl.value = uploadedFileUrl
-    addSuccessToast('Image uploaded')
+    toast.add({ title: 'Image uploaded', color: 'success' })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to upload image'
     errorMessage.value = message
-    addErrorToast(message)
+    toast.add({ title: message, color: 'error' })
   } finally {
     isUploading.value = false
   }

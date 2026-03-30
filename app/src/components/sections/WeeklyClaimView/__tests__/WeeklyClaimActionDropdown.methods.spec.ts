@@ -5,7 +5,7 @@ import type { Status } from '../WeeklyClaimActionDropdown.vue'
 import { createPinia, setActivePinia } from 'pinia'
 import { useTeamStore, useUserDataStore } from '@/stores'
 import type { WeeklyClaim } from '@/types'
-import { mockUseReadContract, mockWagmiCore, mockToastStore, mockUserStore } from '@/tests/mocks'
+import { mockUseReadContract, mockWagmiCore, mockToast, mockUserStore } from '@/tests/mocks'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import isoWeek from 'dayjs/plugin/isoWeek'
@@ -107,7 +107,7 @@ describe('DropdownActions', () => {
       expect(mockWagmiCore.writeContract).toBeCalled()
       //@ts-expect-error not visible on wrapper
       expect(wrapper.vm.weeklyClaimSyncUrl).toBe('/weeklyclaim/sync/?teamId=1')
-      expect(mockToastStore.addSuccessToast).toHaveBeenCalledWith('Claim disabled')
+      expect(mockToast.add).toHaveBeenCalledWith({ title: 'Claim disabled', color: 'success' })
     })
 
     it.skip('closes dropdown after action is selected', async () => {

@@ -1,5 +1,5 @@
 <template>
-  <CardComponent title="" class="w-full" data-test="daily-breakdown">
+  <UCard class="w-full" data-test="daily-breakdown">
     <div>
       <h2 class="pb-4">Weekly Claims: {{ selectedWeek.formatted }}</h2>
       <div
@@ -57,7 +57,7 @@
         </div>
       </div>
     </div>
-  </CardComponent>
+  </UCard>
 </template>
 
 <script setup lang="ts">
@@ -71,7 +71,6 @@ import type { Address } from 'viem'
 import type { Week } from '@/utils/dayUtils'
 import { useUserDataStore } from '@/stores'
 import type { WeeklyClaim, Claim } from '@/types'
-import CardComponent from '@/components/CardComponent.vue'
 import ClaimActions from '@/components/sections/ClaimHistoryView/ClaimActions.vue'
 import ExpandableFileGallery from '@/components/sections/CashRemunerationView/Form/ExpandableFileGallery.vue'
 

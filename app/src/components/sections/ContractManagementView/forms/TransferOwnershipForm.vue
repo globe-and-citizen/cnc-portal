@@ -60,13 +60,7 @@
           only-team-members
           @selectMember="selectMember"
         />
-        <div
-          class="text-red-500 text-sm w-full text-left"
-          v-for="error of $v.input.address.$errors"
-          :key="error.$uid"
-        >
-          {{ error.$message }}
-        </div>
+        <UAlert v-if="addressError" color="error" :description="addressError" class="mt-2" />
       </div>
     </div>
 
@@ -106,8 +100,7 @@ import TransferOptionCard from '../TransferOptionCard.vue'
 import { useTeamStore } from '@/stores'
 import { isAddress, type Address } from 'viem'
 import BodAlert from '@/components/BodAlert.vue'
-import { helpers } from '@vuelidate/validators'
-import { useVuelidate } from '@vuelidate/core'
+import { z } from 'zod'
 import type { User } from '@/types'
 import UserComponent from '@/components/UserComponent.vue'
 
@@ -117,16 +110,20 @@ const teamStore = useTeamStore()
 
 // Refs
 const selectedOption = ref<'bod' | 'member' | null>(null)
-const showDropdown = ref(false)
 const formRef = ref<HTMLElement | null>(null)
 const input = ref({ name: '', address: '' })
 const currentStep = ref(1)
-// Validation Rules
+const addressError = ref('')
+
+const addressSchema = z.string().refine((v) => selectedOption.value !== 'member' || isAddress(v), {
+  message: 'Invalid address'
+})
 
 // Functions
 const selectMember = (user: User) => {
   //@ts-expect-error: Type mismatch
   input.value = { name: user.name, address: user.address, imageUrl: user.imageUrl }
+  addressError.value = ''
 }
 
 const handleContinue = () => {
@@ -135,23 +132,13 @@ const handleContinue = () => {
   }
 }
 
-const addressValidIfMember = helpers.withMessage(
-  'Invalid address',
-  (value: string) => selectedOption.value !== 'member' || isAddress(value)
-)
-const rules = {
-  input: {
-    address: {
-      addressValidIfMember
-    }
-  }
-}
-
-const $v = useVuelidate(rules, { input })
-
 const handleTransferOwnership = () => {
-  $v.value.$touch()
-  if ($v.value.$invalid) return
+  const result = addressSchema.safeParse(input.value.address)
+  if (!result.success) {
+    addressError.value = result.error.message
+    return
+  }
+  addressError.value = ''
   if (selectedOption.value === 'member') {
     emits('transfer-ownership', input.value.address as Address)
   } else if (selectedOption.value === 'bod') {
@@ -165,8 +152,6 @@ onMounted(() => {
     currentStep.value = 2
     selectedOption.value = 'member'
   }
-  onClickOutside(formRef, () => {
-    showDropdown.value = false
-  })
+  onClickOutside(formRef, () => {})
 })
 </script>

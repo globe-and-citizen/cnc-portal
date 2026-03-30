@@ -27,6 +27,8 @@
       v-if="modal.mount"
       v-model:open="modal.show"
       data-test="transfer-modal"
+      title="Transfer from Bank Contract"
+      :description="`Current contract balance: ${transferData.token.balance} ${transferData.token.symbol}`"
       :close="{ onClick: resetTransferValues }"
     >
       <template #body>
@@ -37,15 +39,7 @@
           @transfer="handleTransfer"
           @closeModal="resetTransferValues"
           :is-bod-action="isBodAction"
-        >
-          <template #header>
-            <h1 class="font-bold text-2xl">Transfer from Bank Contract</h1>
-            <h3 class="pt-4">
-              Current contract balance: {{ transferData.token.balance }}
-              {{ transferData.token.symbol }}
-            </h3>
-          </template>
-        </TransferForm>
+        />
       </template>
     </UModal>
   </div>
@@ -66,7 +60,7 @@ import { waitForTransactionReceipt } from '@wagmi/core'
 import { config } from '@/wagmi.config'
 import { BANK_ABI } from '@/artifacts/abi/bank'
 import { NETWORK, USDC_ADDRESS, USDC_E_ADDRESS } from '@/constant'
-import { useToastStore, useUserDataStore } from '@/stores'
+import { useUserDataStore } from '@/stores'
 import { useBodAddAction } from '@/composables/bod/writes'
 import { useBodIsBodAction } from '@/composables/bod/reads'
 import type { TokenOption } from '@/types'
@@ -80,7 +74,7 @@ const props = withDefaults(defineProps<Props>(), {})
 
 const chainId = useChainId()
 const queryClient = useQueryClient()
-const { addErrorToast, addSuccessToast } = useToastStore()
+const toast = useToast()
 
 const { balances } = useContractBalance(props.bankAddress)
 
@@ -260,14 +254,14 @@ const handleTransfer = async (data: {
     queryClient.invalidateQueries({ queryKey })
   } catch (error) {
     console.error('Transfer failed:', error)
-    addErrorToast(`Failed to transfer ${data.token.symbol}`)
+    toast.add({ title: `Failed to transfer ${data.token.symbol}`, color: 'error' })
   }
 }
 
 // Watch for BOD action completion
 watch(isActionAdded, (added) => {
   if (added) {
-    addSuccessToast('Action added successfully, waiting for confirmation')
+    toast.add({ title: 'Action added successfully, waiting for confirmation', color: 'success' })
     resetTransferValues()
   }
 })
@@ -275,7 +269,7 @@ watch(isActionAdded, (added) => {
 // Watch for transfer confirmation
 watch(isConfirmingTransfer, (newIsConfirming, oldIsConfirming) => {
   if (!newIsConfirming && oldIsConfirming) {
-    addSuccessToast('Transferred successfully')
+    toast.add({ title: 'Transferred successfully', color: 'success' })
     resetTransferValues()
 
     // Refresh bank owner data after a successful transfer

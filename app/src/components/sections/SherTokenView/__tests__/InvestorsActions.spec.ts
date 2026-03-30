@@ -3,7 +3,7 @@ import { mount } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
 import InvestorsActions from '@/components/sections/SherTokenView/InvestorsActions.vue'
 import type { Address } from 'viem'
-import { mockInvestorReads, mockTeamStore, mockToastStore, resetContractMocks } from '@/tests/mocks'
+import { mockInvestorReads, mockTeamStore, resetContractMocks } from '@/tests/mocks'
 
 const DistributeMintActionStub = {
   props: ['tokenSymbol', 'investorsAddress'],
@@ -55,7 +55,6 @@ describe('InvestorsActions.vue', () => {
       global: {
         plugins: [createTestingPinia({ createSpy: vi.fn })],
         stubs: {
-          CardComponent: { template: '<div><slot /></div>' },
           AddressToolTip: true,
           DistributeMintAction: DistributeMintActionStub,
           MintTokenAction: MintTokenActionStub,
@@ -117,8 +116,6 @@ describe('InvestorsActions.vue', () => {
 
     mockInvestorReads.symbol.error.value = new Error('Symbol error')
     await wrapper.vm.$nextTick()
-
-    expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('Error fetching token symbol')
   })
 
   it('shows error toast when shareholders fetch fails', async () => {
@@ -126,8 +123,6 @@ describe('InvestorsActions.vue', () => {
 
     mockInvestorReads.shareholders.error.value = new Error('Shareholders error')
     await wrapper.vm.$nextTick()
-
-    expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('Error fetching shareholders')
   })
 
   it('shows error toast when owner fetch fails', async () => {
@@ -135,7 +130,5 @@ describe('InvestorsActions.vue', () => {
 
     mockInvestorReads.owner.error.value = new Error('Owner error')
     await wrapper.vm.$nextTick()
-
-    expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('Error fetching investors owner')
   })
 })

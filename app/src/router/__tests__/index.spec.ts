@@ -134,7 +134,7 @@ describe('Router Configuration', () => {
 
       expect(teamRoute).toBeDefined()
       expect(teamRoute?.path).toBe('/teams/:id')
-      expect(teamRoute?.meta?.name).toBe('Team View')
+      expect(teamRoute?.meta?.name).toBe('Overview')
 
       // Check nested routes exist
       const nestedRoutes = routes.filter((route) => route.path.includes('/teams/:id/'))
@@ -179,22 +179,22 @@ describe('Router Configuration', () => {
       const routes = router.getRoutes()
 
       const routesWithMeta = [
-        { name: 'teams', expectedMeta: { name: 'Teams List' } },
-        { name: 'show-team', expectedMeta: { name: 'Team View' } },
-        { name: 'team-demo', expectedMeta: { name: 'Team Demo' } },
-        { name: 'team-payroll', expectedMeta: { name: 'Team Payroll' } },
+        { name: 'teams', expectedMeta: { name: 'Companies' } },
+        { name: 'show-team', expectedMeta: { name: 'Overview' } },
+        { name: 'team-demo', expectedMeta: { name: 'Company Demo' } },
+        { name: 'team-payroll', expectedMeta: { name: 'Company Payroll' } },
         { name: 'payroll-history', expectedMeta: { name: 'Payroll History' } },
         { name: 'safe-account', expectedMeta: { name: 'Safe Account' } },
         { name: 'payroll-account', expectedMeta: { name: 'Payroll Account' } },
-        { name: 'cash-remunerations-member', expectedMeta: { name: 'Cash Remuneration Member' } },
+        { name: 'cash-remunerations-member', expectedMeta: { name: 'Member Compensation' } },
         { name: 'expense-account', expectedMeta: { name: 'Expense Account' } },
         { name: 'vesting', expectedMeta: { name: 'Vesting' } },
         { name: 'bank-account', expectedMeta: { name: 'Bank Account' } },
         { name: 'contract-management', expectedMeta: { name: 'Contract Management' } },
-        { name: 'bod-elections', expectedMeta: { name: 'BoD Election' } },
+        { name: 'bod-elections', expectedMeta: { name: 'Board Election' } },
         { name: 'bod-proposals', expectedMeta: { name: 'Proposals' } },
         { name: 'proposal-detail', expectedMeta: { name: 'Proposals' } },
-        { name: 'bod-elections-details', expectedMeta: { name: 'BoD Election Details' } },
+        { name: 'bod-elections-details', expectedMeta: { name: 'Board Election Details' } },
         { name: 'sher-token', expectedMeta: { name: 'SHER Token' } }
       ]
 

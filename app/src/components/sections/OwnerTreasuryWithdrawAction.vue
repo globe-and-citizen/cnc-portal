@@ -13,13 +13,11 @@
       v-if="showModal.mount"
       v-model:open="showModal.show"
       data-test="owner-withdraw-modal"
+      title="Owner Treasury Withdraw"
+      description="Withdraw funds from the owner treasury to the owner's address."
       :close="{ onClick: resetModal }"
     >
       <template #body>
-        <div class="flex flex-col gap-2">
-          <h1 class="font-bold text-2xl">Owner Treasury Withdraw</h1>
-        </div>
-
         <TokenAmount
           :tokens="withdrawableTokens"
           v-model="tokenAmountModel"
@@ -62,8 +60,8 @@ import { useExpenseAccountOwner } from '@/composables/expenseAccount/reads'
 import { useExpenseAccountContractWrite } from '@/composables/expenseAccount/writes'
 import { CASH_REMUNERATION_EIP712_ABI } from '@/artifacts/abi/cash-remuneration-eip712'
 import { EXPENSE_ACCOUNT_EIP712_ABI } from '@/artifacts/abi/expense-account-eip712'
-import { useTeamStore, useToastStore, useUserDataStore } from '@/stores'
-import { SUPPORTED_TOKENS } from '@/constant'
+import { useTeamStore, useUserDataStore } from '@/stores'
+import { SUPPORTED_TOKENS, type TokenId } from '@/constant'
 import type { ContractType, TokenOption } from '@/types'
 import { useBodAddAction } from '@/composables/bod/writes'
 import { useBodIsBodAction } from '@/composables/bod/reads'
@@ -83,17 +81,17 @@ const props = defineProps<{
 
 const teamStore = useTeamStore()
 const userStore = useUserDataStore()
-const toastStore = useToastStore()
+const toast = useToast()
 const queryClient = useQueryClient()
 const chainId = useChainId()
 
 const showModal = ref({ mount: false, show: false })
 const isAmountValid = ref(false)
 const withdrawAmount = ref('0')
-const selectedTokenId = ref('native')
+const selectedTokenId = ref<TokenId>('native')
 const tokenAmountModel = computed({
   get: () => ({ amount: withdrawAmount.value, tokenId: selectedTokenId.value }),
-  set: (value: { amount: string; tokenId: string }) => {
+  set: (value: { amount: string; tokenId: TokenId }) => {
     withdrawAmount.value = value.amount ?? ''
     selectedTokenId.value = value.tokenId ?? 'native'
   }
@@ -271,7 +269,7 @@ const submitWithdraw = async () => {
       const hash = await nativeWrite.executeWrite([amount], undefined, { skipGasEstimation: true })
 
       if (!hash) {
-        toastStore.addErrorToast('Withdraw failed')
+        toast.add({ title: 'Withdraw failed', color: 'error' })
       }
 
       return
@@ -310,7 +308,7 @@ const submitWithdraw = async () => {
     })
 
     if (!hash) {
-      toastStore.addErrorToast('Withdraw failed')
+      toast.add({ title: 'Withdraw failed', color: 'error' })
     }
   } catch (error: unknown) {
     console.error(error)
@@ -320,7 +318,7 @@ const submitWithdraw = async () => {
         : typeof error === 'object' && error !== null && 'message' in error
           ? String((error as { message?: string }).message || 'Failed to withdraw funds')
           : 'Failed to withdraw funds'
-    toastStore.addErrorToast(message)
+    toast.add({ title: message, color: 'error' })
   } finally {
     isSubmitting.value = false
   }
@@ -328,7 +326,10 @@ const submitWithdraw = async () => {
 
 watch(isActionAdded, (added) => {
   if (added) {
-    toastStore.addSuccessToast('Action added successfully, waiting for board confirmation')
+    toast.add({
+      title: 'Action added successfully, waiting for board confirmation',
+      color: 'success'
+    })
     resetModal()
   }
 })
@@ -336,7 +337,7 @@ watch(isActionAdded, (added) => {
 watch(isConfirmingWithdraw, async (newIsConfirming, oldIsConfirming) => {
   if (newIsConfirming || !oldIsConfirming || !showModal.value.show) return
 
-  toastStore.addSuccessToast('Withdraw successful')
+  toast.add({ title: 'Withdraw successful', color: 'success' })
   await refreshContractBalances()
   resetModal()
 })

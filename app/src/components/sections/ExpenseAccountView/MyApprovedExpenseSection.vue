@@ -1,5 +1,6 @@
 <template>
-  <CardComponent title="My Approved Expense">
+  <UCard>
+    <template #header>My Approved Expense</template>
     <div v-if="newExpenseData">
       <!-- TODO display this only if the use have an approved expense -->
       <!-- Expense A/c Info Section -->
@@ -34,13 +35,12 @@
         </template>
       </TableComponent>
     </div>
-  </CardComponent>
+  </UCard>
 </template>
 
 <script setup lang="ts">
 //#region Imports
 import { computed } from 'vue'
-import CardComponent from '@/components/CardComponent.vue'
 import { useUserDataStore, useTeamStore } from '@/stores'
 import { tokenSymbol, getCurrentUserExpenses } from '@/utils'
 import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
