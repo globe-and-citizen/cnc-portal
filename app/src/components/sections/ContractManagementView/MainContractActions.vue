@@ -34,7 +34,11 @@
       label="Pending Actions"
     />
 
-    <UModal v-model:open="showModal">
+    <UModal
+      v-model:open="showModal"
+      title="Transfer Ownership"
+      description="Transfer contract ownership to a Board of Directors member or an individual team member."
+    >
       <template #body>
         <UAlert
           v-if="transferOwnershipErrorMessage"
@@ -56,7 +60,12 @@
         />
       </template>
     </UModal>
-    <UModal v-model:open="showApprovalModal" :ui="{ content: modalWidth }">
+    <UModal
+      v-model:open="showApprovalModal"
+      :ui="{ content: modalWidth }"
+      title="Review Pending Actions"
+      description="Approve or reject pending board actions before execution."
+    >
       <template #body>
         <PendingEventsList
           :pending-actions="formatedActions"
