@@ -8,7 +8,12 @@
       :label="`Distribute Mint ${tokenSymbol}`"
     />
 
-    <UModal v-if="modalState.mount" v-model:open="modalState.show">
+    <UModal
+      v-if="modalState.mount"
+      v-model:open="modalState.show"
+      title="Distribute Mint"
+      :description="`Distribute minted tokens to shareholders for ${tokenSymbol}.`"
+    >
       <template #body>
         <UAlert
           v-if="distributeMintError"
