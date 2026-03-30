@@ -1,22 +1,20 @@
 <template>
   <div v-if="hasTheRight" class="card-actions justify-end">
-    <UButton
-      color="warning"
-      size="sm"
-      :disabled="withdrawableTokens.length === 0"
-      @click="openModal"
-      data-test="owner-withdraw-button"
-      label="Withdraw"
-    />
-
     <UModal
-      v-if="showModal.mount"
-      v-model:open="showModal.show"
+      v-model:open="isOpen"
       data-test="owner-withdraw-modal"
       title="Owner Treasury Withdraw"
       description="Withdraw funds from the owner treasury to the owner's address."
       :close="{ onClick: resetModal }"
     >
+      <UButton
+        color="warning"
+        size="sm"
+        :disabled="withdrawableTokens.length === 0"
+        data-test="owner-withdraw-button"
+        label="Withdraw"
+      />
+
       <template #body>
         <UAlert
           v-if="withdrawErrorMessage"
@@ -92,7 +90,7 @@ const toast = useToast()
 const queryClient = useQueryClient()
 const chainId = useChainId()
 
-const showModal = ref({ mount: false, show: false })
+const isOpen = ref(false)
 const withdrawErrorMessage = ref('')
 const isAmountValid = ref(false)
 const withdrawAmount = ref('0')
@@ -231,14 +229,10 @@ const refreshContractBalances = async () => {
 }
 
 const resetModal = () => {
-  showModal.value = { mount: false, show: false }
+  isOpen.value = false
   withdrawAmount.value = '0'
   isAmountValid.value = false
   withdrawErrorMessage.value = ''
-}
-
-const openModal = () => {
-  showModal.value = { mount: true, show: true }
 }
 
 const submitWithdraw = async () => {
@@ -343,7 +337,7 @@ watch(isActionAdded, (added) => {
 })
 
 watch(isConfirmingWithdraw, async (newIsConfirming, oldIsConfirming) => {
-  if (newIsConfirming || !oldIsConfirming || !showModal.value.show) return
+  if (newIsConfirming || !oldIsConfirming || !isOpen.value) return
 
   toast.add({ title: 'Withdraw successful', color: 'success' })
   await refreshContractBalances()
