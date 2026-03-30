@@ -37,9 +37,10 @@
           approveUsersModal = { mount: false, show: false }
         }
       }"
+      title="Approve User EIP712"
     >
       <template #body>
-        <ApproveUsersForm
+        <ApproveUsersEIP712Form
           v-if="approveUsersModal.mount"
           :form-data="teamMembers"
           :users="foundUsers"
@@ -73,7 +74,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import ExpenseAccountTable from '@/components/sections/ExpenseAccountView/ExpenseAccountTable.vue'
-import ApproveUsersForm from '@/components/forms/ApproveUsersEIP712Form.vue'
+import ApproveUsersEIP712Form from '@/components/forms/ApproveUsersEIP712Form.vue'
 import { useUserDataStore, useTeamStore } from '@/stores'
 import { useRoute } from 'vue-router'
 import { useReadContract, useChainId, useSignTypedData } from '@wagmi/vue'

@@ -1,7 +1,4 @@
 <template>
-  <h1 class="font-bold text-2xl mb-5">Approve User EIP712</h1>
-  <hr />
-
   <div v-if="isBodAction">
     <p data-test="bod-notification" class="pt-2 text-red-500">
       This will create a board of directors action
