@@ -26,7 +26,6 @@
           :restrict-submit="isRestricted"
           @submit="handleSubmit"
         />
-
         <UAlert
           v-if="addWageClaimError && errorMessage"
           color="error"
@@ -59,13 +58,12 @@ const teamStore = useTeamStore()
 const { isRestricted, checkRestriction } = useSubmitRestriction()
 
 const modal = ref({
+  mount: false,
   show: false
 })
-
 const errorMessage = ref<{ message: string } | null>(null)
 const addWageClaimError = ref(false)
 const claimFormRef = ref<InstanceType<typeof ClaimForm> | null>(null)
-
 const createDefaultFormData = (): ClaimFormData => ({
   hoursWorked: '',
   memo: '',
@@ -85,24 +83,30 @@ const openModal = () => {
   formInitialData.value = createDefaultFormData()
   errorMessage.value = null
   addWageClaimError.value = false
-  modal.value.show = true
+  modal.value = { mount: true, show: true }
 }
 
 const closeModal = () => {
   claimFormRef.value?.resetForm()
   errorMessage.value = null
   addWageClaimError.value = false
-  modal.value.show = false
+  modal.value = { mount: false, show: false }
 }
 
-const onModalChange = (isOpen: boolean) => {
-  if (!isOpen) {
-    closeModal()
-  }
-}
+// Reset form (including file previews) whenever the modal is closed
+watch(
+  () => modal.value.show,
+  (isOpen) => {
+    if (!isOpen) {
+      closeModal()
+    }
+  },
+  { flush: 'post' }
+)
 
 const teamId = computed(() => teamStore.currentTeamId)
 
+// Check restriction when team changes
 watch(
   teamId,
   async (newTeamId) => {
@@ -115,6 +119,7 @@ watch(
 
 const canSubmitClaim = computed(() => {
   if (!props.weeklyClaim) return true
+
   return props.weeklyClaim.status === 'pending'
 })
 
@@ -141,18 +146,16 @@ const handleSubmit = async (data: ClaimSubmitPayload & { files?: File[] }) => {
     formInitialData.value = createDefaultFormData()
   } catch (error) {
     console.error('Error submitting claim:', error)
-
     const backendMessage = (error as { response?: { data?: { message?: string } } })?.response?.data
       ?.message
-
     const message =
       backendMessage ?? (error instanceof Error ? error.message : 'Failed to add claim')
-
     errorMessage.value = { message }
     addWageClaimError.value = true
   }
 }
 
+// Check restriction on mount
 onMounted(async () => {
   if (teamId.value) {
     await checkRestriction(teamId.value)
