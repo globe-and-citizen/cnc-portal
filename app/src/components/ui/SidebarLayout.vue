@@ -108,11 +108,6 @@ const open = ref(false)
 
 const items = computed<NavigationMenuItem[]>(() => [
   {
-    label: 'Home',
-    icon: 'i-lucide-house',
-    to: '/'
-  },
-  {
     label: 'Companies',
     icon: 'heroicons:squares-2x2',
     to: '/teams'

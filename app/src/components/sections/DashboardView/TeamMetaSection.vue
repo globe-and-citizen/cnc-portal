@@ -22,7 +22,7 @@
 
         <div class="pl-5 flex flex-row justify-center gap-2 mt-5 items-center">
           <template v-if="currentTeam?.ownerAddress == address">
-            <UModal v-model:open="showModal" title="Update Company Details">
+            <UModal v-model:open="showModal" title="Update Company Details" description="Update your company name and description to keep your profile current and accurate">
               <UButton size="sm" color="secondary" label="Update" @click="prefillUpdateForm" />
               <template #body>
                 <UForm
@@ -66,7 +66,7 @@
               </template>
             </UModal>
 
-            <UModal v-model:open="showDeleteTeamConfirmModal" title="Confirmation">
+            <UModal v-model:open="showDeleteTeamConfirmModal" title="Confirmation" description="This action cannot be undone. Please confirm that you want to permanently delete this company.">
               <UButton size="sm" color="error" label="Delete" />
               <template #body>
                 <p>
