@@ -333,15 +333,6 @@ const handleStatusChange = (status: SafeTransactionStatus) => {
   selectedStatus.value = status
 }
 
-// Handle pagination updates
-const handlePageChange = (page: number) => {
-  currentPage.value = page
-}
-
-const handleItemsPerPageChange = (items: number) => {
-  itemsPerPage.value = items
-  currentPage.value = 1 // Reset to first page when changing items per page
-}
 
 // Error watching
 watch(error, (newError) => {
