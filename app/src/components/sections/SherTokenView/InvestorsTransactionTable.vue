@@ -20,7 +20,7 @@
 
     <template #amount-cell="{ row: { original: row } }">{{ row.amount }} {{ row.token }}</template>
     <template #amountUSD-cell="{ row: { original: row } }">
-      {{ formatUSDAmount(row.amountUSD) }}
+      {{ formatCurrencyShort(row.amountUSD, 'USD') }}
     </template>
   </UTable>
 </template>
@@ -44,24 +44,7 @@ const columns = [
   { accessorKey: 'amountUSD', header: 'USD Value' }
 ]
 
-const formatUSDAmount = (amount: number): string => {
-  try {
-    return formatCurrencyShort(amount, 'USD')
-  } catch (error) {
-    console.error('Error formatting USD amount:', error)
-    return '$0.00'
-  }
-}
-
-const formatDate = (date: string) => {
-  try {
-    const dateObj = new Date(date)
-    return dateObj.toLocaleString()
-  } catch (error) {
-    console.error('Error formatting date:', error)
-    return 'Invalid Date'
-  }
-}
+const formatDate = (date: string) => new Date(date).toLocaleString()
 
 const getTypeClass = (type: string) => {
   return {
@@ -73,7 +56,6 @@ const getTypeClass = (type: string) => {
 
 defineExpose({
   columns,
-  formatUSDAmount,
   formatDate,
   getTypeClass
 })
