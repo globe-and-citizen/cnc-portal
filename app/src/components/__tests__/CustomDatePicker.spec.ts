@@ -54,10 +54,10 @@ describe.skip('CustomDatePicker', () => {
 
     it('lists current and previous month as selectable options', async () => {
       const wrapper = mountComponent()
-      console.log("Before opening dropdown: \n")
+      console.log('Before opening dropdown: \n')
       console.log(wrapper.html())
       await openDropdown(wrapper)
-      console.log("After opening dropdown: \n")
+      console.log('After opening dropdown: \n')
       console.log(wrapper.html())
 
       const items = wrapper.findAll('li')
@@ -182,7 +182,10 @@ describe.skip('CustomDatePicker', () => {
       })
       await nextTick()
 
-      await wrapper.findAll('button').find((b) => b.text() === 'Apply')!.trigger('click')
+      await wrapper
+        .findAll('button')
+        .find((b) => b.text() === 'Apply')!
+        .trigger('click')
       await nextTick()
 
       const emitted = wrapper.emitted('update:modelValue')!
@@ -199,7 +202,10 @@ describe.skip('CustomDatePicker', () => {
       })
       await nextTick()
 
-      await wrapper.findAll('button').find((b) => b.text() === 'Apply')!.trigger('click')
+      await wrapper
+        .findAll('button')
+        .find((b) => b.text() === 'Apply')!
+        .trigger('click')
       await nextTick()
 
       expect(wrapper.find('[data-test="u-modal"]').exists()).toBe(false)
@@ -210,7 +216,10 @@ describe.skip('CustomDatePicker', () => {
       await openCustomRangeModal(wrapper)
       const emitCountBeforeCancel = wrapper.emitted('update:modelValue')?.length ?? 0
 
-      await wrapper.findAll('button').find((b) => b.text() === 'Cancel')!.trigger('click')
+      await wrapper
+        .findAll('button')
+        .find((b) => b.text() === 'Cancel')!
+        .trigger('click')
       await nextTick()
 
       expect(wrapper.find('[data-test="u-modal"]').exists()).toBe(false)

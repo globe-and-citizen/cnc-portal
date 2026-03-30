@@ -2,7 +2,14 @@ import { configDefaults, defineConfig, mergeConfig } from 'vitest/config'
 
 import { fileURLToPath } from 'node:url'
 import viteConfig from './vite.config'
-import { UButtonStub, UCalendarStub, UDropdownStub, UIconStub, UModalStub, USelectMenuStub } from './src/tests/stubs/nuxt-ui.stubs'
+import {
+  UButtonStub,
+  UCalendarStub,
+  UDropdownStub,
+  UIconStub,
+  UModalStub,
+  USelectMenuStub
+} from './src/tests/stubs/nuxt-ui.stubs'
 
 import dotenv from 'dotenv'
 
