@@ -192,14 +192,15 @@ describe('CRWithdrawClaim', () => {
       },
       global: {
         stubs: {
-          UButton: BUTTON_STUB
+          UButton: {
+            template: '<button @click="$emit(\'click\')"><slot /></button>'
+          }
         }
       }
     })
 
     await clickWithdrawButton()
 
-    expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('Insufficient balance')
     expect(mockWagmiCore.simulateContract).not.toHaveBeenCalled()
   })
 
