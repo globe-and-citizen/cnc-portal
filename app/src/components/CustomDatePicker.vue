@@ -45,7 +45,8 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import { CalendarDate, type DateRange } from '@internationalized/date'
+import { CalendarDate } from '@internationalized/date'
+import type { DateRange } from 'reka-ui'
 
 interface Props {
   modelValue: [Date, Date] | null
