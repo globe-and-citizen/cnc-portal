@@ -1,5 +1,5 @@
 <template>
-  <UForm :schema="schema" :state="state" class="flex flex-col gap-4" @submit="handleSubmit">
+  <UForm :schema="schema" :state="formState" class="flex flex-col gap-4" @submit="handleSubmit">
     <!-- BOD Description -->
     <div v-if="isBodAction">
       <p data-test="bod-notification" class="text-sm text-red-500">
@@ -72,12 +72,12 @@
             color="neutral"
             variant="outline"
             icon="i-lucide-calendar"
-            :label="state.startDate?.toString() || 'Pick start date'"
+            :label="startDate?.toString() || 'Pick start date'"
             class="w-full justify-start"
             data-test="start-date-picker"
           />
           <template #content>
-            <UCalendar v-model="state.startDate" :min-value="todayDate" class="p-2" />
+            <UCalendar v-model="startDate" :min-value="todayDate" class="p-2" />
           </template>
         </UPopover>
       </UFormField>
@@ -88,14 +88,14 @@
             color="neutral"
             variant="outline"
             icon="i-lucide-calendar"
-            :label="state.endDate?.toString() || 'Pick end date'"
+            :label="endDate?.toString() || 'Pick end date'"
             class="w-full justify-start"
             data-test="end-date-picker"
           />
           <template #content>
             <UCalendar
-              v-model="state.endDate"
-              :min-value="state.startDate ?? todayDate"
+              v-model="endDate"
+              :min-value="startDate ?? todayDate"
               class="p-2"
             />
           </template>
@@ -126,7 +126,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive } from 'vue'
+import { computed, reactive, shallowRef } from 'vue'
 import { isAddress } from 'viem'
 import { z } from 'zod'
 import type { User } from '@/types'
@@ -140,15 +140,21 @@ const props = defineProps<{
   users: User[]
 }>()
 
+// Dates are kept in shallowRef to avoid Vue's reactive proxy breaking
+// the nominal CalendarDate type (which uses #private class fields).
+const startDate = shallowRef<CalendarDate | null>(null)
+const endDate = shallowRef<CalendarDate | null>(null)
+
 const state = reactive({
   input: { name: '', address: '', token: '' },
   description: '',
   amount: 0,
   frequencyType: 0,
   customFrequencyDays: 7,
-  startDate: null as CalendarDate | null,
-  endDate: null as CalendarDate | null
 })
+
+// UForm :state needs all schema keys present for error binding.
+const formState = computed(() => ({ ...state, startDate: startDate.value, endDate: endDate.value }))
 
 const todayDate = today(getLocalTimeZone())
 
@@ -187,10 +193,7 @@ const schema = computed(() =>
         return z.NEVER
       }
       if (v.compare(today(getLocalTimeZone())) < 0) {
-        ctx.addIssue({
-          code: 'custom',
-          message: 'Start date must be today or in the future'
-        })
+        ctx.addIssue({ code: 'custom', message: 'Start date must be today or in the future' })
       }
     }),
     endDate: z.custom<CalendarDate | null>().superRefine((v, ctx) => {
@@ -198,7 +201,7 @@ const schema = computed(() =>
         ctx.addIssue({ code: 'custom', message: 'End date is required' })
         return z.NEVER
       }
-      if (state.startDate && v.compare(state.startDate) <= 0) {
+      if (startDate.value && v.compare(startDate.value) <= 0) {
         ctx.addIssue({ code: 'custom', message: 'End date must be after start date' })
       }
     })
@@ -213,8 +216,8 @@ const clear = () => {
   state.amount = 0
   state.frequencyType = 0
   state.customFrequencyDays = 7
-  state.startDate = null
-  state.endDate = null
+  startDate.value = null
+  endDate.value = null
   emit('closeModal')
 }
 
@@ -224,11 +227,11 @@ const handleSubmit = () => {
     amount: state.amount,
     frequencyType: state.frequencyType,
     customFrequency: state.frequencyType === 4 ? customFrequencyInSeconds.value : 0,
-    startDate: state.startDate
-      ? Math.floor(state.startDate.toDate(getLocalTimeZone()).getTime() / 1000)
+    startDate: startDate.value
+      ? Math.floor(startDate.value.toDate(getLocalTimeZone()).getTime() / 1000)
       : 0,
-    endDate: state.endDate
-      ? Math.floor(state.endDate.toDate(getLocalTimeZone()).getTime() / 1000)
+    endDate: endDate.value
+      ? Math.floor(endDate.value.toDate(getLocalTimeZone()).getTime() / 1000)
       : 0,
     tokenAddress: state.input.token
   }

@@ -38,6 +38,7 @@
         }
       }"
       title="Approve User EIP712"
+      description="Appouve User"
     >
       <template #body>
         <ApproveUsersEIP712Form
