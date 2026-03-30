@@ -95,4 +95,47 @@ describe('OverviewCard', () => {
 
     expect(wrapper.classes()).toContain('text-[#6A3B13]')
   })
+
+  it('falls back to default colors for unknown variant', () => {
+    const wrapper = mount(OverviewCard, {
+      props: {
+        title: 'Test Title',
+        subtitle: 'Test Subtitle',
+        variant: 'unknown',
+        cardIcon: 'test-icon.png'
+      }
+    })
+
+    expect(wrapper.classes()).toContain('bg-white')
+    expect(wrapper.classes()).toContain('text-black')
+  })
+
+  it('shows skeleton while loading and hides amount', () => {
+    const wrapper = mount(OverviewCard, {
+      props: {
+        title: '73.9K USD',
+        subtitle: 'Total Balance',
+        cardIcon: bagIcon,
+        loading: true
+      }
+    })
+
+    expect(wrapper.find('[data-test="amount"]').exists()).toBe(false)
+    expect(wrapper.findComponent({ name: 'SkeletonLoading' }).exists()).toBe(true)
+  })
+
+  it('renders slot content', () => {
+    const wrapper = mount(OverviewCard, {
+      props: {
+        title: '73.9K USD',
+        subtitle: 'Total Balance',
+        cardIcon: bagIcon
+      },
+      slots: {
+        default: '<div data-test="overview-extra">Extra</div>'
+      }
+    })
+
+    expect(wrapper.find('[data-test="overview-extra"]').exists()).toBe(true)
+  })
 })

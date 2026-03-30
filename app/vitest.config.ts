@@ -26,7 +26,8 @@ const mockFiles = [
   'treasury',
   'bod',
   'investor',
-  'nuxt-ui'
+  'nuxt-ui',
+  'utils'
 ].map((name) => `./src/tests/setup/${name}.setup.ts`)
 
 export default defineConfig((env) =>

@@ -35,9 +35,9 @@
 
 <script setup lang="ts">
 import { useTeamStore } from '@/stores'
-import { log, parseError } from '@/utils'
+import { buildClaimRatesWithOvertime, log, parseError } from '@/utils'
 import { useWriteContract } from '@wagmi/vue'
-import { formatEther, parseEther, parseUnits, zeroAddress, type Address } from 'viem'
+import { zeroAddress, type Address } from 'viem'
 import { computed, ref } from 'vue'
 import { CASH_REMUNERATION_EIP712_ABI } from '@/artifacts/abi/cash-remuneration-eip712'
 import { getBalance } from 'viem/actions'
@@ -72,6 +72,12 @@ const { mutateAsync: syncWeeklyClaim, error: syncWeeklyClaimError } = useSyncWee
 const isLoading = ref(false)
 const isLoad = computed(() => isLoading.value as boolean)
 
+const getTokenAddress = (type: string): Address => {
+  if (type === 'native') return zeroAddress as Address
+  if (type === 'usdc') return USDC_ADDRESS as Address
+  return teamStore.getContractAddressByType('InvestorV1') as Address
+}
+
 const withdrawClaim = async () => {
   isLoading.value = true
 
@@ -80,17 +86,21 @@ const withdrawClaim = async () => {
     toast.add({ title: 'Cash Remuneration EIP712 contract address not found', color: 'error' })
     return
   }
+
+  const claimRates = buildClaimRatesWithOvertime({
+    hoursWorked: props.weeklyClaim.hoursWorked,
+    maximumHoursPerWeek: props.weeklyClaim.wage.maximumHoursPerWeek,
+    ratePerHour: props.weeklyClaim.wage.ratePerHour,
+    overtimeRatePerHour: props.weeklyClaim.wage.overtimeRatePerHour
+  })
+
   // balance check
-  const balance = formatEther(
-    await getBalance(config.getClient(), {
-      address: cashRemunerationEip712Address.value
-    })
-  )
-  if (
-    Number(balance) <
-    Number(props.weeklyClaim.wage.ratePerHour.find((rate) => rate.type === 'native')?.amount || 0) *
-      Number(props.weeklyClaim.hoursWorked)
-  ) {
+  const balance = await getBalance(config.getClient(), {
+    address: cashRemunerationEip712Address.value
+  })
+  const nativeAmountToPay = claimRates.find((rate) => rate.type === 'native')?.totalAmount ?? 0n
+
+  if (balance < nativeAmountToPay) {
     isLoading.value = false
     toast.add({ title: 'Insufficient balance', color: 'error' })
     return
@@ -100,15 +110,9 @@ const withdrawClaim = async () => {
     hoursWorked: props.weeklyClaim.hoursWorked,
     employeeAddress: props.weeklyClaim.wage.userAddress as Address,
     date: BigInt(Math.floor(new Date(props.weeklyClaim.createdAt).getTime() / 1000)),
-    wages: props.weeklyClaim.wage.ratePerHour.map((rate) => ({
-      hourlyRate:
-        rate.type === 'native' ? parseEther(`${rate.amount}`) : parseUnits(`${rate.amount}`, 6), // Convert to wei (assuming 6 decimals for USDC)
-      tokenAddress:
-        rate.type === 'native'
-          ? (zeroAddress as Address)
-          : rate.type === 'usdc'
-            ? (USDC_ADDRESS as Address)
-            : (teamStore.getContractAddressByType('InvestorV1') as Address)
+    wages: claimRates.map((rate) => ({
+      hourlyRate: rate.hourlyRate,
+      tokenAddress: getTokenAddress(rate.type)
     }))
   }
 
