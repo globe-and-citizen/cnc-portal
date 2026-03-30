@@ -35,7 +35,7 @@
 
 <script setup lang="ts">
 import { useTeamStore } from '@/stores'
-import { log, parseError } from '@/utils'
+import { buildClaimRatesWithOvertime, log, parseError } from '@/utils'
 import { useWriteContract } from '@wagmi/vue'
 import { zeroAddress, type Address } from 'viem'
 import { computed, ref } from 'vue'
