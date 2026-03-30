@@ -54,9 +54,4 @@ const getTypeClass = (type: string) => {
   }
 }
 
-defineExpose({
-  columns,
-  formatDate,
-  getTypeClass
-})
 </script>
