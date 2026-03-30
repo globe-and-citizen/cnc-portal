@@ -2,6 +2,7 @@
   <UModal
     v-model:open="isOpen"
     title="Add Safe Signers"
+    description="Add one or more new signers to the Safe and manage multisig approval rules."
     :close="{ onClick: () => handleClose() }"
     data-test="add-signer-modal"
   >
