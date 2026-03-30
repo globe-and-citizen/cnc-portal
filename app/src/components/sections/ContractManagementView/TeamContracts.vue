@@ -61,7 +61,11 @@
     </TableComponent>
 
     <!-- Admin Modal -->
-    <UModal v-model:open="contractAdminDialog.show">
+    <UModal
+      v-model:open="contractAdminDialog.show"
+      title="Contract Admins"
+      description="View and manage contract administrators for this campaign."
+    >
       <template #body>
         <div class="max-w-lg">
           <TeamContractAdmins
@@ -73,10 +77,13 @@
     </UModal>
 
     <!-- Contract Data Modal -->
-    <UModal v-model:open="contractDataDialog.show">
+    <UModal
+      v-model:open="contractDataDialog.show"
+      title="Contract Details"
+      description="View the details of the selected campaign contract."
+    >
       <template #body>
         <div class="max-w-lg">
-          <h3 class="text-lg font-bold">Contract Details</h3>
           <TeamContractsDetail
             :contract-address="contractDataDialog.address"
             :datas="contractDataDialog.datas"
@@ -87,10 +94,13 @@
       </template>
     </UModal>
 
-    <UModal v-model:open="contractEventsDialog.show">
+    <UModal
+      v-model:open="contractEventsDialog.show"
+      title="Contract Events"
+      description="Review events emitted by the contract to track actions and state changes."
+    >
       <template #body>
         <div class="max-w-lg">
-          <h3 class="text-lg font-bold">Contract Events</h3>
           <TeamContractEventList
             :eventsByCampaignCode="groupEventsByCampaignCode(contractEventsDialog.events)"
           />
