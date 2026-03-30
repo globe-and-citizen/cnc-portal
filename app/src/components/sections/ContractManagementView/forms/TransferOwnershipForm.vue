@@ -2,7 +2,6 @@
   <div class="flex flex-col gap-5">
     <!-- Step 1: Select Owner -->
     <div v-if="currentStep === 1 && !isBodAction" data-test="step-1">
-      <span class="font-bold text-xl mb-4">Transfer ownership</span>
       <p class="mt-4">Do you want to transfer ownership to the BOD or to a member?</p>
       <hr class="mt-6" />
 
