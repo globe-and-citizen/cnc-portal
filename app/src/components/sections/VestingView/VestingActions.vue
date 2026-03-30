@@ -19,6 +19,8 @@
           addVestingModal = { mount: false, show: false }
         }
       }"
+      title="Add Vesting Schedule"
+      description="Create a new vesting schedule for your team members."
     >
       <template #body>
         <CreateVesting
