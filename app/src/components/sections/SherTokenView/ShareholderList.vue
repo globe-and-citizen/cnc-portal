@@ -61,6 +61,8 @@
     </TableComponent>
     <UModal
       v-model:open="mintIndividualModal.show"
+      title="Mint Tokens for Shareholder"
+      description="Mint tokens directly for the selected shareholder."
       :close="{
         onClick: () => {
           mintIndividualModal = { mount: false, show: false }
