@@ -55,25 +55,25 @@
           "
           @close-modal="approveUsersModal = { mount: false, show: false }"
         />
-      </template>
-    </UModal>
 
-    <UModal v-model:open="confirmationModal">
-      <template #body>
-        <UAlert
-          v-if="approveErrorMessage"
-          color="error"
-          variant="soft"
-          :description="approveErrorMessage"
-          class="mb-4"
-        />
-        <ApproveExpenseSummaryForm
-          v-if="confirmationModal"
-          :budget-limit="approveData!"
-          :loading="loadingApprove"
-          @submit="approveUser"
-          @close="confirmationModal = false"
-        />
+        <UModal v-model:open="confirmationModal" title="Confirm Approval">
+          <template #body>
+            <UAlert
+              v-if="approveErrorMessage"
+              color="error"
+              variant="soft"
+              :description="approveErrorMessage"
+              class="mb-4"
+            />
+            <ApproveExpenseSummaryForm
+              v-if="confirmationModal"
+              :budget-limit="approveData!"
+              :loading="loadingApprove"
+              @submit="approveUser"
+              @close="confirmationModal = false"
+            />
+          </template>
+        </UModal>
       </template>
     </UModal>
   </UCard>
