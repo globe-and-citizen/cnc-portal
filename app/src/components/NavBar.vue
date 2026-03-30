@@ -35,11 +35,12 @@ import { useAuth } from '@/composables/useAuth'
 import NotificationDropdown from '@/components/NotificationDropdown.vue'
 import { useUserDataStore } from '@/stores'
 import { storeToRefs } from 'pinia'
+import type { DropdownMenuItem } from '@nuxt/ui'
 
 defineEmits(['toggleSideButton', 'toggleEditUserModal'])
 const { logout } = useAuth()
 const userStore = useUserDataStore()
 const { imageUrl } = storeToRefs(userStore)
 
-const profileItems = [{ label: 'Settings' }, { label: 'Logout', click: logout }]
+const profileItems = <DropdownMenuItem[]>[{ label: 'Settings' }, { label: 'Logout', onSelect: logout }]
 </script>
