@@ -19,6 +19,8 @@
       v-if="modal.mount"
       v-model:open="modal.show"
       data-test="invest-in-safe-modal"
+      title="Invest in Safe"
+      description="Deposit funds into the Safe for SHER distribution and team treasury operations."
       :close="{ onClick: closeModal }"
     >
       <template #body>

@@ -1,8 +1,5 @@
 <template>
   <div class="flex flex-col gap-4">
-    <h2>Distribute Mint</h2>
-
-    <h3>Please input the amounts to mint to the shareholders</h3>
     <div class="flex flex-col gap-6">
       <div v-for="(shareholder, index) in shareholderWithAmounts" :key="index">
         <h4 class="badge badge-primary">Shareholder {{ index + 1 }}</h4>

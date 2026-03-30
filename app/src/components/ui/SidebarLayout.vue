@@ -55,7 +55,11 @@
 
     <template #footer="{ collapsed }">
       <!-- User Meta -->
-      <UModal v-model:open="open" title="Update User Data">
+      <UModal
+        v-model:open="open"
+        title="Update User Data"
+        description="Edit your profile information used across the application."
+      >
         <div
           class="w-full bg-base-200 flex flex-row justify-start gap-4 cursor-pointer transition-all duration-300 shadow-xs rounded-xl p-4"
           data-test="edit-user-card"
@@ -107,11 +111,6 @@ const teamStore = useTeamStore()
 const open = ref(false)
 
 const items = computed<NavigationMenuItem[]>(() => [
-  {
-    label: 'Home',
-    icon: 'i-lucide-house',
-    to: '/'
-  },
   {
     label: 'Companies',
     icon: 'heroicons:squares-2x2',

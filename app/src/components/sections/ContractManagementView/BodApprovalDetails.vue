@@ -48,7 +48,7 @@
 <script setup lang="ts">
 import UserComponent from '@/components/UserComponent.vue'
 import { useTeamStore } from '@/stores'
-import type { TableRow } from '@/components/TableComponent.vue'
+import type { TableRow } from '@/types/table'
 import { getUser, formatCryptoAmount } from '@/utils'
 import { NETWORK } from '@/constant'
 import BodApprovalDetailsCard from './BodApprovalDetailsCard.vue'

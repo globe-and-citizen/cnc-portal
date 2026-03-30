@@ -21,11 +21,15 @@
                 >
                 to proceed with the deployment.
               </p> -->
-              <UModal v-if="showModal" v-model:open="showModal">
+              <UModal
+                v-if="showModal"
+                v-model:open="showModal"
+                title="Remove Deployed Contracts"
+                description="Warning: this action will delete contract state and all funds. Use this only for redeployment testing."
+              >
                 <template #body>
                   <!-- Warning for contract redeployment -->
                   <!-- <div class="mt-6"> -->
-                  <h4 class="font-bold text-lg">Remove Deployed Contracts</h4>
                   <div class="alert alert-error my-6">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"

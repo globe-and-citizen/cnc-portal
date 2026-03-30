@@ -77,7 +77,7 @@
 </template>
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import type { TableRow } from '@/components/TableComponent.vue'
+import type { TableRow } from '@/types/table'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import UserComponent from '@/components/UserComponent.vue'
 import { useReadContract } from '@wagmi/vue'

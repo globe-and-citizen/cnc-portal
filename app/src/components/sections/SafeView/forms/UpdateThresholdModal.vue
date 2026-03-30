@@ -1,6 +1,17 @@
 <template>
-  <UModal v-model:open="isOpen" title="Update Threshold">
+  <UModal
+    v-model:open="isOpen"
+    title="Update Threshold"
+    description="Set the number of signers required to approve safe transactions."
+  >
     <template #body>
+      <UAlert
+        v-if="errorMessage"
+        color="error"
+        variant="soft"
+        :description="errorMessage"
+        class="mb-4"
+      />
       <UForm
         :schema="thresholdSchema"
         :state="formState"
@@ -96,7 +107,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, watch } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { z } from 'zod'
 import { type Address } from 'viem'
 import { Icon as IconifyIcon } from '@iconify/vue'
@@ -118,6 +129,7 @@ const emit = defineEmits<{
 const toast = useToast()
 
 const { isUpdating, updateOwners } = useSafeOwnerManagement()
+const errorMessage = ref('')
 
 // Computed values
 
@@ -166,10 +178,11 @@ const hasChanges = computed(() => formState.threshold !== props.currentThreshold
 // Methods
 const handleUpdateThreshold = async () => {
   if (!hasChanges.value) {
-    toast.add({ title: 'No changes to apply', color: 'error' })
+    errorMessage.value = 'No changes to apply'
     return
   }
 
+  errorMessage.value = ''
   try {
     const txHash = await updateOwners(props.safeAddress, {
       newThreshold: formState.threshold,
@@ -189,12 +202,13 @@ const handleUpdateThreshold = async () => {
     }
   } catch (error) {
     console.error('Failed to update threshold:', error)
-    toast.add({ title: 'Failed to update threshold', color: 'error' })
+    errorMessage.value = 'Failed to update threshold'
   }
 }
 
 const handleClose = () => {
   formState.threshold = props.currentThreshold
+  errorMessage.value = ''
   emit('update:open', false)
 }
 </script>

@@ -22,9 +22,20 @@
 
         <div class="pl-5 flex flex-row justify-center gap-2 mt-5 items-center">
           <template v-if="currentTeam?.ownerAddress == address">
-            <UModal v-model:open="showModal" title="Update Company Details">
+            <UModal
+              v-model:open="showModal"
+              title="Update Company Details"
+              description="Update your company name and description to keep your profile current and accurate"
+            >
               <UButton size="sm" color="secondary" label="Update" @click="prefillUpdateForm" />
               <template #body>
+                <UAlert
+                  v-if="updateTeamError"
+                  color="error"
+                  variant="soft"
+                  :description="updateTeamError.message"
+                  class="mb-4"
+                />
                 <UForm
                   :schema="updateTeamSchema"
                   :state="updateTeamInput"
@@ -66,9 +77,20 @@
               </template>
             </UModal>
 
-            <UModal v-model:open="showDeleteTeamConfirmModal" title="Confirmation">
+            <UModal
+              v-model:open="showDeleteTeamConfirmModal"
+              title="Confirmation"
+              description="This action cannot be undone. Please confirm that you want to permanently delete this company."
+            >
               <UButton size="sm" color="error" label="Delete" />
               <template #body>
+                <UAlert
+                  v-if="deleteTeamError"
+                  color="error"
+                  variant="soft"
+                  :description="deleteTeamError.message"
+                  class="mb-4"
+                />
                 <p>
                   Are you sure you want to delete the company
                   <span class="font-bold">{{ teamStore.currentTeamMeta.data?.name }}</span
@@ -149,12 +171,6 @@ const executeUpdateTeam = () => {
       onSuccess: () => {
         toast.add({ title: 'Company updated successfully', color: 'success' })
         showModal.value = false
-      },
-      onError: () => {
-        toast.add({
-          title: updateTeamError.value?.message || 'Failed to update company',
-          color: 'error'
-        })
       }
     }
   )
@@ -173,14 +189,7 @@ const deleteTeam = async () => {
       onSuccess: async () => {
         toast.add({ title: 'Company deleted successfully', color: 'success' })
         showDeleteTeamConfirmModal.value = false
-        // await new Promise((resolve) => setTimeout(resolve, 3000))
         router.push('/teams')
-      },
-      onError: () => {
-        toast.add({
-          title: deleteTeamError.value?.message || 'Failed to delete company',
-          color: 'error'
-        })
       }
     }
   )

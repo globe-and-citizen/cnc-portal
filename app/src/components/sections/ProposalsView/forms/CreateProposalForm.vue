@@ -1,5 +1,5 @@
 <template>
-  <h3 class="font-bold text-xl">Create New Proposal</h3>
+  <!-- Modal title already communicates form purpose -->
   <UForm :schema="schema" :state="state" @submit="handleSubmit" class="flex flex-col w-full gap-2">
     <UFormField name="title" label="Title">
       <UInput v-model="state.title" placeholder="Enter proposal title" class="w-full" />

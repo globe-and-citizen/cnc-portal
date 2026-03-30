@@ -3,7 +3,6 @@ import { flushPromises, mount } from '@vue/test-utils'
 import TransactionHistorySection from '@/components/sections/ExpenseAccountView/TransactionHistorySection.vue'
 import type { ExpenseTransaction } from '@/types/transactions'
 import ReceiptComponent from '@/components/ReceiptComponent.vue'
-import TableComponent from '@/components/TableComponent.vue'
 import { ref } from 'vue'
 import { createTestingPinia } from '@pinia/testing'
 import * as utils from '@/utils'
@@ -151,7 +150,7 @@ describe.skip('TransactionHistorySection', () => {
       const wrapper = createComponent()
       await flushPromises()
 
-      const transactionTable = wrapper.findComponent(TableComponent)
+      const transactionTable = wrapper.findComponent({ name: 'UTable' })
       expect(transactionTable.exists()).toBeTruthy()
       expect(transactionTable.find('[data-test="table"]').exists()).toBeTruthy()
       const firstRow = transactionTable.find('[data-test="0-row"]')

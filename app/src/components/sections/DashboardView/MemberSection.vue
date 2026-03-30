@@ -8,6 +8,7 @@
           v-if="teamStore.currentTeamMeta.data?.ownerAddress == userDataStore.address"
           v-model:open="showAddMemberForm.show"
           title="Add Member"
+          description="Invite a new member to your team and set their team role."
           :ui="{ content: 'rounded-2xl' }"
           @update:open="(v: boolean) => !v && (showAddMemberForm = { mount: false, show: false })"
         >

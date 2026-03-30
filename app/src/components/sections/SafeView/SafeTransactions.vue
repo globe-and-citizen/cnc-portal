@@ -9,42 +9,39 @@
       </div>
     </template>
 
-    <TableComponent
-      :rows="filteredTransactions"
+    <UTable
+      :data="filteredTransactions"
       :columns="[
-        { key: 'method', label: 'Method' },
-        { key: 'to', label: 'To' },
-        { key: 'value', label: 'Value' },
-        { key: 'status', label: 'Status' },
-        { key: 'txHash', label: 'Tx Hash' },
-        { key: 'actions', label: 'Actions' }
+        { accessorKey: 'method', header: 'Method' },
+        { accessorKey: 'to', header: 'To' },
+        { accessorKey: 'value', header: 'Value' },
+        { accessorKey: 'status', header: 'Status' },
+        { accessorKey: 'txHash', header: 'Tx Hash' },
+        { accessorKey: 'actions', header: 'Actions' }
       ]"
       :loading="isLoading"
-      :current-page-prop="currentPage"
-      :items-per-page-prop="itemsPerPage"
-      @update:currentPage="handlePageChange"
-      @update:itemsPerPage="handleItemsPerPageChange"
-      :maxItemsPerPage="5"
       data-test="safe-transactions-table"
     >
-      <template #to-data="{ row }">
+      <template #to-cell="{ row: { original: row } }">
         <AddressToolTip :address="row.to" slice />
       </template>
 
-      <template #value-data="{ row }">
+      <template #value-cell="{ row: { original: row } }">
         <span
-          >{{ formatSafeTransactionValue(row.value.toString(), row?.dataDecoded, row.to) }}
+          >{{
+            formatSafeTransactionValue(row.value.toString(), row.dataDecoded ?? undefined, row.to)
+          }}
         </span>
       </template>
 
-      <template #status-data="{ row }">
+      <template #status-cell="{ row: { original: row } }">
         <span>{{ getTransactionStatus(row as SafeTransaction) }}</span>
         <span class="badge badge-sm flex items-center gap-1 badge-neutral badge-outline">
           {{ row.confirmations?.length || 0 }} / {{ row.confirmationsRequired }}
         </span>
       </template>
 
-      <template #txHash-data="{ row }">
+      <template #txHash-cell="{ row: { original: row } }">
         <AddressToolTip
           v-if="row.transactionHash"
           :address="row.transactionHash"
@@ -54,11 +51,11 @@
         <span v-else>...</span>
       </template>
 
-      <template #method-data="{ row }">
-        {{ row?.dataDecoded?.method || 'unknown' }}
+      <template #method-cell="{ row: { original: row } }">
+        {{ row.dataDecoded?.method || 'unknown' }}
       </template>
 
-      <template #actions-data="{ row }">
+      <template #actions-cell="{ row: { original: row } }">
         <div class="flex items-center gap-2">
           <UButton
             size="xs"
@@ -85,7 +82,7 @@
           </UButton>
         </div>
       </template>
-    </TableComponent>
+    </UTable>
 
     <!-- Conflicting Transaction Warning Modal -->
     <SafeTransactionsWarning
@@ -106,7 +103,6 @@ import { useAccount } from '@wagmi/vue'
 import type { SafeTransaction } from '@/types/safe'
 
 // Components
-import TableComponent from '@/components/TableComponent.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import SafeTransactionsWarning from './SafeTransactionsWarning.vue'
 
@@ -335,16 +331,6 @@ const handleExecuteTransaction = async (transaction: SafeTransaction) => {
 
 const handleStatusChange = (status: SafeTransactionStatus) => {
   selectedStatus.value = status
-}
-
-// Handle pagination updates
-const handlePageChange = (page: number) => {
-  currentPage.value = page
-}
-
-const handleItemsPerPageChange = (items: number) => {
-  itemsPerPage.value = items
-  currentPage.value = 1 // Reset to first page when changing items per page
 }
 
 // Error watching

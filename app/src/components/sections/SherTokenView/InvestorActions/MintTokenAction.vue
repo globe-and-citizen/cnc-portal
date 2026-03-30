@@ -9,7 +9,13 @@
       :label="`Mint ${tokenSymbol}`"
     />
 
-    <UModal v-if="modalState.mount" v-model:open="modalState.show" :close="{ onClick: closeModal }">
+    <UModal
+      v-if="modalState.mount"
+      v-model:open="modalState.show"
+      title="Mint Tokens"
+      description="Mint new tokens to be distributed to shareholders from the token contract."
+      :close="{ onClick: closeModal }"
+    >
       <template #body>
         <MintForm v-model="modalState.show" @close-modal="closeModal" />
       </template>

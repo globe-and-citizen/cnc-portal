@@ -1,54 +1,49 @@
 <!-- CustomDatePicker.vue -->
 <template>
-  <div class="relative flex flex-col gap-2">
-    <div class="flex items-center gap-2">
-      <div>
-        <UButton
-          class="flex items-center cursor-pointer gap-4 border border-gray-300"
-          @click="isDropdownOpen = !isDropdownOpen"
-          :data-test="`${dataTestPrefix}-date-select`"
+  <USelectMenu
+    v-model="selectedOption"
+    :items="options"
+    value-key="value"
+    :search-input="false"
+    v-model:open="isDropdownOpen"
+    :data-test="`${dataTestPrefix}-date-select`"
+  >
+    <template #default>
+      <span>{{ displayDateRange }}</span>
+    </template>
+    <template #content-bottom>
+      <div class="border-t border-gray-200 p-1">
+        <div
+          class="flex w-full cursor-pointer select-none items-center rounded-md px-2 py-1.5 text-sm hover:bg-gray-100 dark:hover:bg-gray-800"
+          @click="openCustomRangeModal"
         >
-          <span>{{ displayDateRange }}</span>
-          <IconifyIcon icon="heroicons:chevron-down" class="w-4 h-4" />
-        </UButton>
-        <ul
-          class="absolute right-0 mt-2 menu bg-base-200 border-2 rounded-box z-1 w-52 p-2 shadow-sm"
-          ref="target"
-          v-if="isDropdownOpen"
-        >
-          <li
-            v-for="option in options"
-            :key="option.value"
-            @click="handleOptionSelect(option.value)"
-          >
-            <a>{{ option.label }}</a>
-          </li>
-          <li>
-            <Datepicker
-              v-model="dateRange"
-              range
-              :format="'dd/MM/yyyy'"
-              placeholder="Select Date Range"
-              auto-apply
-              :data-test="`${dataTestPrefix}-date-range-picker`"
-            >
-              <template #trigger>
-                <p>Custom Range</p>
-              </template>
-            </Datepicker>
-          </li>
-        </ul>
+          Custom Range
+        </div>
       </div>
-    </div>
-  </div>
+    </template>
+  </USelectMenu>
+
+  <UModal v-model:open="isModalOpen" title="Custom Date Range">
+    <template #body>
+      <div class="flex justify-center py-2">
+        <UCalendar range v-model="calendarRange" :number-of-months="2" />
+      </div>
+    </template>
+    <template #footer>
+      <div class="flex w-full justify-end gap-2">
+        <UButton color="neutral" variant="ghost" @click="isModalOpen = false">Cancel</UButton>
+        <UButton :disabled="!calendarRange?.start || !calendarRange?.end" @click="applyCustomRange">
+          Apply
+        </UButton>
+      </div>
+    </template>
+  </UModal>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import Datepicker from '@vuepic/vue-datepicker'
-import '@vuepic/vue-datepicker/dist/main.css'
-import { onClickOutside } from '@vueuse/core'
-import { Icon as IconifyIcon } from '@iconify/vue'
+import { CalendarDate } from '@internationalized/date'
+import type { DateRange } from 'reka-ui'
 
 interface Props {
   modelValue: [Date, Date] | null
@@ -66,18 +61,16 @@ const emit = defineEmits<{
 const selectedOption = ref('current')
 const dateRange = ref<[Date, Date] | null>(null)
 const isDropdownOpen = ref(false)
-const target = ref<HTMLElement | null>(null)
+const isModalOpen = ref(false)
+const calendarRange = ref<DateRange | undefined>()
 
-// Get current month name
-const getCurrentMonthName = () => {
-  return new Date().toLocaleString('default', { month: 'long' })
-}
+const getCurrentMonthName = () => new Date().toLocaleString('default', { month: 'long' })
 
-// Get previous month name
 const getPreviousMonthName = () => {
   const now = new Date()
-  const previousMonth = new Date(now.getFullYear(), now.getMonth() - 1)
-  return previousMonth.toLocaleString('default', { month: 'long' })
+  return new Date(now.getFullYear(), now.getMonth() - 1).toLocaleString('default', {
+    month: 'long'
+  })
 }
 
 const options = computed(() => [
@@ -85,93 +78,74 @@ const options = computed(() => [
   { value: 'previous', label: getPreviousMonthName() }
 ])
 
-// Get first and last day of current month
-const getCurrentMonthRange = () => {
+const getCurrentMonthRange = (): [Date, Date] => {
   const now = new Date()
-  const firstDay = new Date(now.getFullYear(), now.getMonth(), 1)
-  const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0)
-  return [firstDay, lastDay] as [Date, Date]
+  return [
+    new Date(now.getFullYear(), now.getMonth(), 1),
+    new Date(now.getFullYear(), now.getMonth() + 1, 0)
+  ]
 }
 
-// Get first and last day of previous month
-const getPreviousMonthRange = () => {
+const getPreviousMonthRange = (): [Date, Date] => {
   const now = new Date()
-  const firstDay = new Date(now.getFullYear(), now.getMonth() - 1, 1)
-  const lastDay = new Date(now.getFullYear(), now.getMonth(), 0)
-  return [firstDay, lastDay] as [Date, Date]
+  return [
+    new Date(now.getFullYear(), now.getMonth() - 1, 1),
+    new Date(now.getFullYear(), now.getMonth(), 0)
+  ]
 }
 
-// Watch for changes in selectedOption
+const dateToCalendarDate = (date: Date): CalendarDate =>
+  new CalendarDate(date.getFullYear(), date.getMonth() + 1, date.getDate())
+
+const calendarDateToDate = (cd: CalendarDate): Date => new Date(cd.year, cd.month - 1, cd.day)
+
+const openCustomRangeModal = () => {
+  isDropdownOpen.value = false
+  if (dateRange.value) {
+    calendarRange.value = {
+      start: dateToCalendarDate(dateRange.value[0]),
+      end: dateToCalendarDate(dateRange.value[1])
+    }
+  }
+  isModalOpen.value = true
+}
+
+const applyCustomRange = () => {
+  if (calendarRange.value?.start && calendarRange.value?.end) {
+    dateRange.value = [
+      calendarDateToDate(calendarRange.value.start as CalendarDate),
+      calendarDateToDate(calendarRange.value.end as CalendarDate)
+    ]
+  }
+  isModalOpen.value = false
+}
+
 watch(selectedOption, (newValue) => {
-  switch (newValue) {
-    case 'current':
-      dateRange.value = getCurrentMonthRange()
-      break
-    case 'previous':
-      dateRange.value = getPreviousMonthRange()
-      break
-    case 'custom':
-      // Keep existing date range if any, otherwise reset
-      if (!dateRange.value) {
-        dateRange.value = getCurrentMonthRange()
-      }
-      break
-  }
+  if (newValue === 'current') dateRange.value = getCurrentMonthRange()
+  else if (newValue === 'previous') dateRange.value = getPreviousMonthRange()
 })
 
-// Watch for changes in dateRange
 watch(dateRange, (newValue) => {
-  if (newValue) {
-    emit('update:modelValue', newValue)
-  }
+  if (newValue) emit('update:modelValue', newValue)
 })
 
-// Watch for changes in modelValue
 watch(
   () => props.modelValue,
   (newValue) => {
-    if (newValue) {
-      dateRange.value = newValue
-    }
+    if (newValue) dateRange.value = newValue
   }
 )
 
-// Set default range to current month on mount
 onMounted(() => {
-  if (!props.modelValue) {
-    dateRange.value = getCurrentMonthRange()
-  } else {
-    dateRange.value = props.modelValue
-  }
+  dateRange.value = props.modelValue ?? getCurrentMonthRange()
 })
 
-// Handle clicking outside of dropdown
-onClickOutside(target, () => {
-  isDropdownOpen.value = false
-})
+const formatDisplayDate = (date: Date) =>
+  `${date.toLocaleString('default', { month: 'long' })} ${date.getDate()}`
 
-const handleOptionSelect = (value: string) => {
-  selectedOption.value = value
-  if (value !== 'custom') {
-    isDropdownOpen.value = false
-  }
-}
-
-// Format date for display
-const formatDisplayDate = (date: Date) => {
-  const month = date.toLocaleString('default', { month: 'long' })
-  const day = date.getDate()
-  return `${month} ${day}`
-}
-
-// Computed property for displaying the date range
 const displayDateRange = computed(() => {
   if (!dateRange.value) return ''
-
   const [start, end] = dateRange.value
-  const startStr = formatDisplayDate(start)
-  const endStr = formatDisplayDate(end)
-
-  return `${startStr} - ${endStr}`
+  return `${formatDisplayDate(start)} - ${formatDisplayDate(end)}`
 })
 </script>

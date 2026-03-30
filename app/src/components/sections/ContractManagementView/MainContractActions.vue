@@ -34,8 +34,19 @@
       label="Pending Actions"
     />
 
-    <UModal v-model:open="showModal">
+    <UModal
+      v-model:open="showModal"
+      title="Transfer Ownership"
+      description="Transfer contract ownership to a Board of Directors member or an individual team member."
+    >
       <template #body>
+        <UAlert
+          v-if="transferOwnershipErrorMessage"
+          color="error"
+          variant="soft"
+          :description="transferOwnershipErrorMessage"
+          class="mb-4"
+        />
         <TransferOwnershipForm
           v-if="showModal"
           :is-bod-action="isBodAction"
@@ -49,7 +60,12 @@
         />
       </template>
     </UModal>
-    <UModal v-model:open="showApprovalModal" :ui="{ content: modalWidth }">
+    <UModal
+      v-model:open="showApprovalModal"
+      :ui="{ content: modalWidth }"
+      title="Review Pending Actions"
+      description="Approve or reject pending board actions before execution."
+    >
       <template #body>
         <PendingEventsList
           :pending-actions="formatedActions"
@@ -75,7 +91,7 @@
 <script setup lang="ts">
 import { Icon as IconifyIcon } from '@iconify/vue'
 import { encodeFunctionData, type Address } from 'viem'
-import type { TableRow } from '@/components/TableComponent.vue'
+import type { TableRow } from '@/types/table'
 import { useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
 import { watch, ref, computed } from 'vue'
 import { useTeamStore, useUserDataStore } from '@/stores'
@@ -122,6 +138,7 @@ const approveAction = executeApproveAction
 
 const showModal = ref(false)
 const showApprovalModal = ref(false)
+const transferOwnershipErrorMessage = ref('')
 const selectedRow = ref<TableRow>({})
 const currentStep = ref<0 | 1 | 2>(0)
 
@@ -248,6 +265,7 @@ watch(isConfirmingTransferOwnership, async (isConfirming, wasConfirming) => {
       exact: false
     })
     showModal.value = false
+    transferOwnershipErrorMessage.value = ''
     toast.add({ title: 'Ownership transferred successfully!', color: 'success' })
     emits('contract-status-changed')
   }
@@ -269,7 +287,7 @@ watch(isConfirmingUnpauseContract, async (isConfirming, wasConfirming) => {
 
 watch(errorTransferOwnership, (error) => {
   if (error) {
-    toast.add({ title: parseError(error, props.row.abi), color: 'error' })
+    transferOwnershipErrorMessage.value = parseError(error, props.row.abi)
     log.error('errorTransferOwnership.value: ', error)
   }
 })

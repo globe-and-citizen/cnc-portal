@@ -34,6 +34,8 @@
           createProposalModal = { mount: false, show: false }
         }
       }"
+      title="Create Proposal"
+      description="Submit a new proposal for team review and voting."
     >
       <template #body>
         <CreateProposalForm

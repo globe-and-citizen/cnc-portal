@@ -13,42 +13,42 @@
 
     <span class="loading loading-spinner" v-if="loading"></span>
 
-    <TableComponent
-      :rows="vestings"
+    <UTable
+      :data="vestings"
       :columns="columns"
       :sticky="true"
       :showPagination="true"
       data-test="vesting-overview"
     >
-      <template #vestablePerDay-data="{ row }">
+      <template #vestablePerDay-cell="{ row: { original: row } }">
         <span class="flex items-center gap-1 text-sm text-gray-700">
           {{ Number((row.totalAmount / row.durationDays).toFixed(2)) }}
           <span class="text-xs">{{ row.tokenSymbol }}</span>
         </span>
       </template>
-      <template #totalAmount-data="{ row }">
+      <template #totalAmount-cell="{ row: { original: row } }">
         <span class="flex items-center gap-1 text-sm text-gray-700">
           {{ (row as VestingRow).totalAmount }}
           <span class="text-xs">{{ row.tokenSymbol }}</span>
         </span>
       </template>
-      <template #released-data="{ row }">
+      <template #released-cell="{ row: { original: row } }">
         <span class="flex items-center gap-1 badge badge-info">
           {{ row.released.toFixed(2) }}
           <span class="text-xs">{{ row.tokenSymbol }}</span>
         </span>
       </template>
-      <template #withdrawn-data="{ row }">
+      <template #withdrawn-cell="{ row: { original: row } }">
         <span class="flex items-center gap-1 badge badge-info">
           {{ row.status === 'Inactive' ? (row.totalAmount - row.released).toFixed(2) : 0 }}
           <span class="text-xs">{{ row.tokenSymbol }}</span>
         </span>
       </template>
 
-      <template #member-data="{ row }">
+      <template #member-cell="{ row: { original: row } }">
         <span>{{ row.member }}</span>
       </template>
-      <template #actions-data="{ row }">
+      <template #actions-cell="{ row: { original: row } }">
         <div class="flex flex-wrap gap-2">
           <!-- Stop Button -->
 
@@ -93,12 +93,11 @@
           />
         </div>
       </template>
-    </TableComponent>
+    </UTable>
   </UCard>
 </template>
 
 <script setup lang="ts">
-import TableComponent from '@/components/TableComponent.vue'
 import { computed, watch, ref } from 'vue'
 import { type VestingRow, type VestingTuple, type VestingStatus } from '@/types/vesting'
 import { useTeamStore } from '@/stores'
@@ -337,15 +336,15 @@ const loading = computed(
 
 // Define columns including the new "Actions" column
 const columns = [
-  { key: 'member', label: 'Member Address', sortable: true },
-  { key: 'tokenSymbol', label: 'Token', sortable: false },
-  { key: 'startDate', label: 'Start Date', sortable: true },
-  { key: 'durationDays', label: 'Duration (days)', sortable: true },
-  { key: 'vestablePerDay', label: 'Per Day', sortable: false },
-  { key: 'totalAmount', label: 'Total Amount', sortable: true },
-  { key: 'released', label: 'Released', sortable: true },
-  { key: 'status', label: 'Status', sortable: true },
-  { key: 'withdrawn', label: 'Withdrawn', sortable: false },
-  { key: 'actions', label: 'Actions' }
+  { accessorKey: 'member', header: 'Member Address', enableSorting: true },
+  { accessorKey: 'tokenSymbol', header: 'Token', enableSorting: false },
+  { accessorKey: 'startDate', header: 'Start Date', enableSorting: true },
+  { accessorKey: 'durationDays', header: 'Duration (days)', enableSorting: true },
+  { accessorKey: 'vestablePerDay', header: 'Per Day', enableSorting: false },
+  { accessorKey: 'totalAmount', header: 'Total Amount', enableSorting: true },
+  { accessorKey: 'released', header: 'Released', enableSorting: true },
+  { accessorKey: 'status', header: 'Status', enableSorting: true },
+  { accessorKey: 'withdrawn', header: 'Withdrawn', enableSorting: false },
+  { accessorKey: 'actions', header: 'Actions' }
 ]
 </script>

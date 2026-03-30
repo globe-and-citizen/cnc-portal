@@ -2,7 +2,7 @@ import type { ExpenseResponse, TokenBalance, TokenOption } from '@/types'
 import { tokenSymbol } from './constantUtil'
 import { zeroAddress } from 'viem'
 import type { TokenId } from '@/constant'
-import type { TableRow } from '@/components/TableComponent.vue'
+import type { TableRow } from '@/types/table'
 
 // Frequency types mapping
 export const frequencyTypes = [

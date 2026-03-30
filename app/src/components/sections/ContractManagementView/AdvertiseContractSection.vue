@@ -25,7 +25,12 @@
         </template>
         <TeamContracts />
       </UCard>
-      <UModal v-if="showAdCampaignModal.mount" v-model:open="showAdCampaignModal.show">
+      <UModal
+        v-if="showAdCampaignModal.mount"
+        v-model:open="showAdCampaignModal.show"
+        title="Deploy Advertising Campaign"
+        description="Deploy a new campaign contract to advertise your team’s work and attract contributors."
+      >
         <template #body>
           <CreateAddCampaign
             @closeAddCampaignModal="showAdCampaignModal = { mount: false, show: false }"

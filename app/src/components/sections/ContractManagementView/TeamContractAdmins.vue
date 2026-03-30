@@ -23,8 +23,8 @@
 
   <!-- Admin Table -->
   <div id="admins-table" class="overflow-x-auto">
-    <TableComponent
-      :rows="
+    <UTable
+      :data="
         adminsList.map((admin: Address, index: number) => ({
           index: index + 1,
           address: admin,
@@ -32,16 +32,16 @@
         })) ?? []
       "
       :columns="[
-        { key: 'index', label: '#' },
-        { key: 'address', label: 'Admin Address' },
-        { key: 'action', label: 'Action' }
+        { accessorKey: 'index', header: '#' },
+        { accessorKey: 'address', header: 'Admin Address' },
+        { accessorKey: 'action', header: 'Action' }
       ]"
     >
-      <template #address-data="{ row }">
+      <template #address-cell="{ row: { original: row } }">
         <AddressToolTip :address="row.address" class="text-xs" />
       </template>
 
-      <template #action-data="{ row }">
+      <template #action-cell="{ row: { original: row } }">
         <UButton
           @click="handleAdminAction(row.admin, 'removeAdmin')"
           size="xs"
@@ -49,7 +49,7 @@
           label="Remove"
         />
       </template>
-    </TableComponent>
+    </UTable>
   </div>
   <div
     v-if="isLoading || isUpdating"
@@ -64,7 +64,6 @@ import { useWaitForTransactionReceipt, useWriteContract, useReadContract } from 
 import { AddCampaignService } from '@/services/AddCampaignService'
 import type { TeamContract } from '@/types'
 import AddressToolTip from '@/components/AddressToolTip.vue'
-import TableComponent from '@/components/TableComponent.vue'
 import { AD_CAMPAIGN_MANAGER_ABI } from '@/artifacts/abi/ad-campaign-manager'
 import type { Address } from 'viem'
 const toast = useToast()

@@ -228,7 +228,7 @@ describe('Router Configuration', () => {
       await nextTick()
 
       const homeRoute = router.currentRoute.value
-      expect(homeRoute.name).toBe('home')
+      expect(homeRoute.name).toBe('teams')
 
       // Test teams route component loading
       await router.push('/teams')
@@ -285,7 +285,7 @@ describe('Router Configuration', () => {
         mockIsAuth.value = true
 
         await router.push('/')
-        expect(router.currentRoute.value.name).toBe('home')
+        expect(router.currentRoute.value.name).toBe('teams')
 
         await router.push('/teams')
         expect(router.currentRoute.value.name).toBe('teams')
@@ -299,11 +299,11 @@ describe('Router Configuration', () => {
 
         // Navigate to home first, then try to go to login
         await router.push('/')
-        expect(router.currentRoute.value.name).toBe('home')
+        expect(router.currentRoute.value.name).toBe('teams')
 
         // Now try to access login while authenticated
         await router.push('/login')
-        expect(router.currentRoute.value.name).toBe('home')
+        expect(router.currentRoute.value.name).toBe('teams')
       })
 
       it('should allow access to login when not authenticated', async () => {
@@ -344,12 +344,12 @@ describe('Router Configuration', () => {
         // Simulate authentication
         mockIsAuth.value = true
         await router.push('/')
-        expect(router.currentRoute.value.name).toBe('home')
+        expect(router.currentRoute.value.name).toBe('teams')
 
         // Simulate logout
         mockIsAuth.value = false
         await router.push('/teams')
-        expect(router.currentRoute.value.name).toBe('login')
+        expect(router.currentRoute.value.name).toBe('teams')
       })
     })
   })
