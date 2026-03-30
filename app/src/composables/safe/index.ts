@@ -26,4 +26,3 @@ export { useSafeExecution } from './useSafeExecution'
 export { useSafeOwnerManagement } from './useSafeOwnerManagement'
 export { useSafeTransactionConflicts } from './useSafeTransactionConflicts'
 export { useSafeTransfer } from './useSafeTransfer' // New transfer composable
-export * from './useTeamSafes'
