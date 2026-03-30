@@ -251,6 +251,16 @@ export const createMockMutationResponse = <T = unknown>(
   reset: vi.fn()
 })
 
+export const mockSyncWeeklyClaimsMutation = {
+  mutate: vi.fn(),
+  mutateAsync: vi.fn().mockResolvedValue(undefined),
+  isPending: ref(false),
+  isError: ref(false),
+  error: ref(null),
+  data: ref(null),
+  reset: vi.fn()
+}
+
 /**
  * Query Hook Mocks for use in vi.mock()
  * These are the functions that get mocked globally
@@ -316,7 +326,7 @@ export const queryMocks: Record<string, () => Record<string, unknown>> = {
   useEditClaimMutation: () => createMockMutationResponse(),
   useEditClaimWithFilesMutation: () => createMockMutationResponse(),
   useSubmitClaimMutation: () => createMockMutationResponse(),
-  useSyncWeeklyClaimsMutation: () => createMockMutationResponse(),
+  useSyncWeeklyClaimsMutation: () => mockSyncWeeklyClaimsMutation,
   useDeleteClaimMutation: () => createMockMutationResponse(),
 
   // Safe queries - safe.queries.ts
