@@ -38,9 +38,7 @@
       </template>
       <template #member-cell="{ row: { original: row } }">
         <UserComponent
-          :user="
-            { name: row.userAddress, address: row.userAddress, imageUrl: '' }
-          "
+          :user="{ name: row.userAddress, address: row.userAddress, imageUrl: '' }"
         ></UserComponent>
       </template>
       <template #startDate-cell="{ row: { original: row } }">

@@ -333,7 +333,6 @@ const handleStatusChange = (status: SafeTransactionStatus) => {
   selectedStatus.value = status
 }
 
-
 // Error watching
 watch(error, (newError) => {
   if (newError) {
