@@ -183,23 +183,23 @@ const schema = computed(() =>
       ),
     startDate: z.custom<CalendarDate | null>().superRefine((v, ctx) => {
       if (!v) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Start date is required' })
+        ctx.addIssue({ code: 'custom', message: 'Start date is required' })
         return z.NEVER
       }
       if (v.compare(today(getLocalTimeZone())) < 0) {
         ctx.addIssue({
-          code: z.ZodIssueCode.custom,
+          code: 'custom',
           message: 'Start date must be today or in the future'
         })
       }
     }),
     endDate: z.custom<CalendarDate | null>().superRefine((v, ctx) => {
       if (!v) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'End date is required' })
+        ctx.addIssue({ code: 'custom', message: 'End date is required' })
         return z.NEVER
       }
       if (state.startDate && v.compare(state.startDate) <= 0) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'End date must be after start date' })
+        ctx.addIssue({ code: 'custom', message: 'End date must be after start date' })
       }
     })
   })
