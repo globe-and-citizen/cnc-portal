@@ -219,7 +219,7 @@ describe('ExpenseAccountTable - Actions and Loading', () => {
       const logErrorSpy = vi.spyOn(utils.log, 'error')
       wrapper.vm.errorDeactivateApproval = new Error(`Error deactivating approval`)
       await flushPromises()
-      expect(logErrorSpy).toBeCalledWith('Error deactivating approval')
+      expect(logErrorSpy).toBeCalledWith('Parsed error message')
     })
 
     it('should notify error if error activate approval', async () => {
@@ -227,7 +227,7 @@ describe('ExpenseAccountTable - Actions and Loading', () => {
       const logErrorSpy = vi.spyOn(utils.log, 'error')
       wrapper.vm.errorActivateApproval = new Error(`Error activating approval`)
       await flushPromises()
-      expect(logErrorSpy).toBeCalledWith('Error activating approval')
+      expect(logErrorSpy).toBeCalledWith('Parsed error message')
     })
 
     it('should notify error if error getting owner', async () => {
@@ -235,7 +235,7 @@ describe('ExpenseAccountTable - Actions and Loading', () => {
       const logErrorSpy = vi.spyOn(utils.log, 'error')
       wrapper.vm.errorGetOwner = new Error(`Error getting owner`)
       await flushPromises()
-      expect(logErrorSpy).toBeCalledWith('Error getting owner')
+      expect(logErrorSpy).toBeCalledWith('Parsed error message')
     })
   })
 })
