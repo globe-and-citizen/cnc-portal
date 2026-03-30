@@ -60,3 +60,25 @@ export const UModalStub = defineComponent({
         : undefined
   }
 })
+
+export const USelectMenuStub = defineComponent({
+  name: 'USelectMenu',
+  props: ['modelValue', 'open', 'items', 'valueKey', 'searchInput'],
+  emits: ['update:modelValue', 'update:open'],
+  setup(props, { slots, attrs }) {
+    return () =>
+      h('div', { ...attrs }, [
+        slots.default?.(),
+        props.open ? slots['content-bottom']?.() : undefined
+      ])
+  }
+})
+
+export const UCalendarStub = defineComponent({
+  name: 'UCalendar',
+  props: ['modelValue', 'range', 'numberOfMonths'],
+  emits: ['update:modelValue'],
+  setup() {
+    return () => h('div', { 'data-test': 'u-calendar' })
+  }
+})
