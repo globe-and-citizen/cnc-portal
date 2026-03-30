@@ -5,10 +5,7 @@
       <!-- TODO display this only if the use have an approved expense -->
       <!-- Expense A/c Info Section -->
       <!-- New Header -->
-      <UTable
-        :data="getCurrentUserExpenses(newExpenseData, currentUserAddress)"
-        :columns="columns"
-      >
+      <UTable :data="getCurrentUserExpenses(newExpenseData, currentUserAddress)" :columns="columns">
         <template #action-cell="{ row: { original: row } }">
           <TransferAction :row="row" />
         </template>

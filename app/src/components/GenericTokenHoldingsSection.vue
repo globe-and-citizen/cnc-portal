@@ -26,7 +26,9 @@
         { accessorKey: 'balance', header: 'Balance', enableSorting: true }
       ]"
     >
-      <template #amount-cell="{ row: { original: row } }"> {{ row.amount }} {{ row.token.symbol }} </template>
+      <template #amount-cell="{ row: { original: row } }">
+        {{ row.amount }} {{ row.token.symbol }}
+      </template>
       <template #price-cell="{ row: { original: row } }">
         {{ row.values[currency.code ?? 'USD']?.formatedPrice }} / {{ row.token.symbol }}
       </template>

@@ -93,11 +93,7 @@
             data-test="end-date-picker"
           />
           <template #content>
-            <UCalendar
-              v-model="endDate"
-              :min-value="startDate ?? todayDate"
-              class="p-2"
-            />
+            <UCalendar v-model="endDate" :min-value="startDate ?? todayDate" class="p-2" />
           </template>
         </UPopover>
       </UFormField>
@@ -150,7 +146,7 @@ const state = reactive({
   description: '',
   amount: 0,
   frequencyType: 0,
-  customFrequencyDays: 7,
+  customFrequencyDays: 7
 })
 
 // UForm :state needs all schema keys present for error binding.

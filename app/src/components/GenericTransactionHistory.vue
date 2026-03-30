@@ -42,10 +42,7 @@
       </div>
     </template>
 
-    <UTable
-      :data="displayedTransactions"
-      :columns="columns"
-    >
+    <UTable :data="displayedTransactions" :columns="columns">
       <template #txHash-cell="{ row: { original: row } }">
         <AddressToolTip
           :address="(row as BaseTransaction).txHash"
@@ -54,7 +51,9 @@
         />
       </template>
 
-      <template #date-cell="{ row: { original: row } }">{{ formatDate((row as BaseTransaction).date) }}</template>
+      <template #date-cell="{ row: { original: row } }">{{
+        formatDate((row as BaseTransaction).date)
+      }}</template>
 
       <template #type-cell="{ row: { original: row } }">
         <span class="badge" :class="getTypeClass((row as BaseTransaction).type)">{{

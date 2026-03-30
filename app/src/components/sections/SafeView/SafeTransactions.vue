@@ -28,7 +28,9 @@
 
       <template #value-cell="{ row: { original: row } }">
         <span
-          >{{ formatSafeTransactionValue(row.value.toString(), row.dataDecoded ?? undefined, row.to) }}
+          >{{
+            formatSafeTransactionValue(row.value.toString(), row.dataDecoded ?? undefined, row.to)
+          }}
         </span>
       </template>
 

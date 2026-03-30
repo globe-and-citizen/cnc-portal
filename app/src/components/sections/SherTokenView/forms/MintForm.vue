@@ -16,11 +16,7 @@
 
       <UFormField name="amount" label="Amount">
         <div class="relative">
-          <UInput
-            class="w-full pr-16"
-            data-test="amount-input"
-            v-model="state.amount"
-          />
+          <UInput class="w-full pr-16" data-test="amount-input" v-model="state.amount" />
           <span
             class="absolute right-4 top-1/2 transform -translate-y-1/2 text-black font-bold text-sm"
           >
