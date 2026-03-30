@@ -74,7 +74,6 @@
 </template>
 
 <script setup lang="ts">
-import type { TableColumn } from '@nuxt/ui'
 import { computed, ref, watch } from 'vue'
 import { log, parseError, tokenSymbol } from '@/utils'
 import { useUserDataStore, useTeamStore } from '@/stores'
@@ -146,7 +145,7 @@ const columns = [
     header: 'Action',
     enableSorting: false
   }
-] as TableColumn<any>[]
+]
 
 //#endregion Composables
 const { data: contractOwnerAddress, error: errorGetOwner } = useReadContract({

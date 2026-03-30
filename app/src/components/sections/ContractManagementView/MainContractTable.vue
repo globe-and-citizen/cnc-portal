@@ -52,6 +52,7 @@ import MainContractActions from './MainContractActions.vue'
 import { getTeamContracts } from '@/utils'
 
 const teamStore = useTeamStore()
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const teamContracts = ref<any[]>([])
 
 const getUser = (address: string): User => {

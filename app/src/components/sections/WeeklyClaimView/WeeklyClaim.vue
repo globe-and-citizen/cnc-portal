@@ -218,5 +218,5 @@ const columns = [
     header: 'Action',
     enableSorting: false
   }
-] as TableColumn<any>[]
+] as TableColumn<WeeklyClaim>[]
 </script>

@@ -169,7 +169,6 @@
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import CustomDatePicker from '@/components/CustomDatePicker.vue'
 import ReceiptComponent from '@/components/ReceiptComponent.vue'
-import type { TableColumn } from '@nuxt/ui'
 import UserComponent from '@/components/UserComponent.vue'
 import { NETWORK } from '@/constant'
 import type { BaseTransaction } from '@/types/transactions'
@@ -240,7 +239,7 @@ const columns = computed(() => {
     { accessorKey: 'to', header: 'To', enableSorting: false },
     { accessorKey: 'amount', header: 'Amount', enableSorting: false },
     { accessorKey: 'valueUSD', header: 'Value (USD)', enableSorting: false }
-  ] as TableColumn<any>[]
+  ]
 
   if (currencyStore.localCurrency?.code !== 'USD') {
     baseColumns.push({

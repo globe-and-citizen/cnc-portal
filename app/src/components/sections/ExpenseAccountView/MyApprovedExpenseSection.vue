@@ -40,7 +40,6 @@
 import { computed } from 'vue'
 import { useUserDataStore, useTeamStore } from '@/stores'
 import { tokenSymbol, getCurrentUserExpenses } from '@/utils'
-import type { TableColumn } from '@nuxt/ui'
 import { useGetExpensesQuery } from '@/queries'
 import TransferAction from './TransferAction.vue'
 import { getFrequencyType, getCustomFrequency } from '@/utils'
@@ -79,5 +78,5 @@ const columns = [
     header: 'Action',
     enableSorting: false
   }
-] as TableColumn<any>[]
+]
 </script>

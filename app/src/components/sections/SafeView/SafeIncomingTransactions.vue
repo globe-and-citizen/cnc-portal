@@ -72,7 +72,7 @@ interface Props {
 const props = defineProps<Props>()
 
 // Define table columns
-const columns: TableColumn<any>[] = [
+const columns: TableColumn<SafeIncomingTransfer>[] = [
   { accessorKey: 'type', header: 'Type' },
   { accessorKey: 'from', header: 'From' },
   { accessorKey: 'amount', header: 'Amount' },
