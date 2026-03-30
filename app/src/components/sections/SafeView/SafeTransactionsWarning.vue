@@ -1,9 +1,14 @@
 <template>
-  <UModal v-model:open="isOpen" :close="{ onClick: handleClose }">
+  <UModal
+    v-model:open="isOpen"
+    title="Conflicting Transactions"
+    description="You have pending transactions that conflict by nonce; confirming this action will invalidate others."
+    :close="{ onClick: handleClose }"
+  >
     <template #body>
       <div class="flex flex-col gap-5 max-w-md">
         <div class="flex items-center justify-between">
-          <h2 class="font-bold text-2xl">Conflicting Transactions</h2>
+          <!-- Title is provided by modal header -->
         </div>
 
         <hr />
