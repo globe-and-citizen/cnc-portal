@@ -25,9 +25,11 @@ export const updateNotificationBodySchema = z
   })
   .default({});
 
-export const createBulkNotificationsBodySchema = z.object({
-  userIds: z.any().optional(),
-  message: z.any().optional(),
-  subject: z.any().optional(),
-  resource: z.any().optional(),
-}).default({});
+export const createBulkNotificationsBodySchema = z
+  .object({
+    userIds: z.any().optional(),
+    message: z.any().optional(),
+    subject: z.any().optional(),
+    resource: z.any().optional(),
+  })
+  .default({});
