@@ -12,8 +12,9 @@ const getActions = async (req: Request, res: Response) => {
     if (teamId) {
       where.teamId = parseInt(teamId as string);
     }
-    if (isExecuted) {
-      where.isExecuted = isExecuted === 'true';
+    if (typeof isExecuted !== 'undefined') {
+      where.isExecuted =
+        typeof isExecuted === 'boolean' ? isExecuted : (isExecuted as string) === 'true';
     }
     const actions = await prisma.boardOfDirectorActions.findMany({
       where,
