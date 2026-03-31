@@ -1,12 +1,15 @@
 <template>
   <div class="tooltip" data-tip="Coming soon">
-    <UButton
-      color="primary"
+    <ActionButton
+      icon="heroicons:banknotes"
+      icon-bg="bg-green-50 dark:bg-green-950"
+      icon-color="text-green-700 dark:text-green-400"
       :disabled="true"
       data-test="distribute-mint-button"
       @click="openModal"
-      :label="`Distribute Mint ${tokenSymbol}`"
-    />
+    >
+      {{ `Distribute\nMint ${tokenSymbol}` }}
+    </ActionButton>
 
     <UModal
       v-if="modalState.mount"
@@ -37,6 +40,7 @@
 import { ref, watch } from 'vue'
 import type { Address } from 'viem'
 import DistributeMintForm from '@/components/sections/SherTokenView/forms/DistributeMintForm.vue'
+import ActionButton from '@/components/sections/SherTokenView/ActionButton.vue'
 import { INVESTOR_ABI } from '@/artifacts/abi/investors'
 import { useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
 import { log } from '@/utils'

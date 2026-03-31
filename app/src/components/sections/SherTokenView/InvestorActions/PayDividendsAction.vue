@@ -1,13 +1,15 @@
 <template>
   <div :class="{ tooltip: !canPayDividends }" :data-tip="cannotPayDividendsReason">
-    <UButton
-      color="primary"
-      data-test="pay-dividends-button"
+    <ActionButton
+      icon="heroicons:arrow-trending-up"
+      icon-bg="bg-blue-50 dark:bg-blue-950"
+      icon-color="text-blue-700 dark:text-blue-400"
       :disabled="!canPayDividends"
+      data-test="pay-dividends-button"
       @click="openModal"
     >
-      Pay Dividends
-    </UButton>
+      {{ `Pay\nDividends` }}
+    </ActionButton>
 
     <UModal
       v-if="modalState.mount"
@@ -35,6 +37,7 @@ import { computed, ref, watch } from 'vue'
 import type { Address } from 'viem'
 import { encodeFunctionData, formatUnits, zeroAddress } from 'viem'
 import PayDividendsForm from '@/components/sections/SherTokenView/forms/PayDividendsForm.vue'
+import ActionButton from '@/components/sections/SherTokenView/ActionButton.vue'
 import { BANK_ABI } from '@/artifacts/abi/bank'
 import { useTeamStore, useUserDataStore } from '@/stores'
 import { useBodAddAction } from '@/composables/bod/writes'
@@ -95,7 +98,6 @@ const canPayDividends = computed(() => {
   const hasTokenSymbol = !!props.tokenSymbol
   const hasShareholders = (props.shareholdersCount ?? 0) > 0
   const isAuthorized = isBodAction.value || currentAddress === props.investorsOwner
-
   return hasTokenSymbol && hasShareholders && isAuthorized
 })
 
@@ -153,7 +155,6 @@ const handleSubmit = async (value: bigint, selectedTokenId: TokenId) => {
         depositTokenAddress.value,
         value
       ])
-
       if (!result) return
     }
 

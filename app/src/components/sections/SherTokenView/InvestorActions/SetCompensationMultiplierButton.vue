@@ -1,21 +1,22 @@
 <template>
-  <div>
-    <UButton
-      v-if="safeDepositRouterAddress"
-      color="secondary"
+  <div v-if="safeDepositRouterAddress">
+    <ActionButton
+      icon="heroicons:calculator"
+      icon-bg="bg-amber-50 dark:bg-amber-950"
+      icon-color="text-amber-700 dark:text-amber-400"
       :loading="isLoading"
       :disabled="!canManageMultiplier || isLoading"
+      :badge="
+        !isMultiplierLoading && formattedCurrentMultiplier !== '0'
+          ? `${formattedCurrentMultiplier}x`
+          : undefined
+      "
       data-test="set-compensation-multiplier-button"
       @click="openModal"
-      leading-icon="heroicons:calculator"
-      :label="`Set Multiplier (${formattedCurrentMultiplier}x)`"
     >
-      <template #trailing v-if="!isMultiplierLoading && formattedCurrentMultiplier !== '0'">
-        <span class="badge badge-sm">{{ formattedCurrentMultiplier }}x</span>
-      </template>
-    </UButton>
+      {{ `Set\nMultiplier` }}
+    </ActionButton>
 
-    <!-- Modal for setting multiplier -->
     <dialog ref="modalRef" class="modal" data-test="multiplier-modal">
       <div class="modal-box">
         <h3 class="mb-4 text-lg font-bold">Set SHER Compensation Multiplier</h3>
@@ -87,7 +88,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useConnection } from '@wagmi/vue'
-
+import ActionButton from '@/components/sections/SherTokenView/ActionButton.vue'
 import { useSetMultiplier } from '@/composables/safeDepositRouter/writes'
 import {
   useSafeDepositRouterAddress,

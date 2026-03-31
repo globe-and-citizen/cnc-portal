@@ -1,22 +1,23 @@
 <template>
-  <div>
-    <UButton
-      v-if="safeDepositRouterAddress"
-      :color="depositsEnabled ? 'warning' : 'primary'"
+  <div v-if="safeDepositRouterAddress">
+    <ActionButton
+      :icon="depositsEnabled ? 'heroicons:lock-closed' : 'heroicons:lock-open'"
+      :icon-bg="depositsEnabled ? 'bg-amber-50 dark:bg-amber-950' : 'bg-purple-50 dark:bg-purple-950'"
+      :icon-color="depositsEnabled ? 'text-amber-700 dark:text-amber-400' : 'text-purple-700 dark:text-purple-400'"
       :loading="isLoading"
       :disabled="!canManageDeposits || isLoading"
       data-test="toggle-sher-compensation-button"
       @click="handleToggleCompensation"
-      :leading-icon="depositsEnabled ? 'heroicons:lock-closed' : 'heroicons:lock-open'"
-      :label="buttonText"
-    />
+    >
+      {{ buttonText }}
+    </ActionButton>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useConnection } from '@wagmi/vue'
-
+import ActionButton from '@/components/sections/SherTokenView/ActionButton.vue'
 import {
   useEnableDeposits,
   useDisableDeposits,

@@ -1,13 +1,15 @@
 <template>
   <div :class="{ tooltip: !canMint }" :data-tip="cannotMintReason">
-    <UButton
-      color="primary"
-      variant="outline"
-      data-test="mint-button"
+    <ActionButton
+      icon="heroicons:plus-circle"
+      icon-bg="bg-teal-50 dark:bg-teal-950"
+      icon-color="text-teal-700 dark:text-teal-400"
       :disabled="!canMint"
+      data-test="mint-button"
       @click="openModal"
-      :label="`Mint ${tokenSymbol}`"
-    />
+    >
+      {{ `Mint\n${tokenSymbol}` }}
+    </ActionButton>
 
     <UModal
       v-if="modalState.mount"
@@ -27,6 +29,7 @@
 import { computed, ref } from 'vue'
 import type { Address } from 'viem'
 import MintForm from '@/components/sections/SherTokenView/forms/MintForm.vue'
+import ActionButton from '@/components/sections/SherTokenView/ActionButton.vue'
 import { useUserDataStore } from '@/stores'
 
 interface Props {
