@@ -13,7 +13,9 @@ describe('dayUtils', () => {
       expect(mondayStart.getMinutes()).toBe(0);
       expect(mondayStart.getSeconds()).toBe(0);
       expect(mondayStart.getMilliseconds()).toBe(0);
-      expect(mondayStart.toISOString().split('T')[0]).toBe('2024-01-08');
+      expect(mondayStart.getFullYear()).toBe(2024);
+      expect(mondayStart.getMonth()).toBe(0);
+      expect(mondayStart.getDate()).toBe(8);
     });
 
     it('should return the same day at midnight if date is already Monday', () => {
@@ -23,7 +25,9 @@ describe('dayUtils', () => {
 
       expect(mondayStart.getDay()).toBe(1); // Monday
       expect(mondayStart.getHours()).toBe(0);
-      expect(mondayStart.toISOString().split('T')[0]).toBe('2024-01-08');
+      expect(mondayStart.getFullYear()).toBe(2024);
+      expect(mondayStart.getMonth()).toBe(0);
+      expect(mondayStart.getDate()).toBe(8);
     });
 
     it('should go back to the previous Monday for a Sunday', () => {
@@ -33,7 +37,9 @@ describe('dayUtils', () => {
 
       expect(mondayStart.getDay()).toBe(1); // Monday
       expect(mondayStart.getHours()).toBe(0);
-      expect(mondayStart.toISOString().split('T')[0]).toBe('2024-01-08');
+      expect(mondayStart.getFullYear()).toBe(2024);
+      expect(mondayStart.getMonth()).toBe(0);
+      expect(mondayStart.getDate()).toBe(8);
     });
 
     it('should handle dates at the start of the year', () => {
@@ -42,7 +48,9 @@ describe('dayUtils', () => {
       const mondayStart = getMondayStart(friday);
 
       expect(mondayStart.getDay()).toBe(1); // Monday
-      expect(mondayStart.toISOString().split('T')[0]).toBe('2024-01-01');
+      expect(mondayStart.getFullYear()).toBe(2024);
+      expect(mondayStart.getMonth()).toBe(0);
+      expect(mondayStart.getDate()).toBe(1);
     });
 
     it('should handle dates at the end of the year', () => {
@@ -51,7 +59,9 @@ describe('dayUtils', () => {
       const mondayStart = getMondayStart(saturday);
 
       expect(mondayStart.getDay()).toBe(1); // Monday
-      expect(mondayStart.toISOString().split('T')[0]).toBe('2023-12-25');
+      expect(mondayStart.getFullYear()).toBe(2023);
+      expect(mondayStart.getMonth()).toBe(11);
+      expect(mondayStart.getDate()).toBe(25);
     });
   });
 
