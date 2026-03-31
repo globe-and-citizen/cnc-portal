@@ -7,13 +7,12 @@
       icon="heroicons-outline:plus"
       icon-bg="bg-teal-50 dark:bg-teal-950"
       icon-color="text-teal-700 dark:text-teal-400"
+      title="Invest & Get SHER"
+      tone-class="border-cyan-200 bg-cyan-50/60 hover:border-cyan-300 hover:bg-cyan-100/70 disabled:border-cyan-200 disabled:bg-cyan-50/50 dark:border-cyan-900 dark:bg-cyan-950/30 dark:hover:border-cyan-800 dark:hover:bg-cyan-900/40 dark:disabled:border-cyan-900 dark:disabled:bg-cyan-950/30"
       :disabled="!canDeposit || !teamStore.getContractAddressByType('Safe')"
       data-test="invest-in-safe-button"
-      class="border-teal-200 bg-teal-50/50 hover:bg-teal-100 dark:border-teal-800 dark:bg-teal-950/30 dark:hover:bg-teal-900"
       @click="openModal"
-    >
-      {{ `Invest &\nGet SHER` }}
-    </ActionButton>
+    />
 
     <UModal
       v-if="modal.mount"

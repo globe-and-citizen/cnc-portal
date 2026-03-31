@@ -4,12 +4,12 @@
       icon="heroicons:arrow-trending-up"
       icon-bg="bg-blue-50 dark:bg-blue-950"
       icon-color="text-blue-700 dark:text-blue-400"
+      title="Pay Dividends"
+      tone-class="border-blue-200 bg-blue-50/60 hover:border-blue-300 hover:bg-blue-100/70 disabled:border-blue-200 disabled:bg-blue-50/50 dark:border-blue-900 dark:bg-blue-950/30 dark:hover:border-blue-800 dark:hover:bg-blue-900/40 dark:disabled:border-blue-900 dark:disabled:bg-blue-950/30"
       :disabled="!canPayDividends"
       data-test="pay-dividends-button"
       @click="openModal"
-    >
-      {{ `Pay\nDividends` }}
-    </ActionButton>
+    />
 
     <UModal
       v-if="modalState.mount"

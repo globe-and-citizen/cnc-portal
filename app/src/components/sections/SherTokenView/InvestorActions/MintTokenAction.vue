@@ -4,12 +4,12 @@
       icon="heroicons:plus-circle"
       icon-bg="bg-teal-50 dark:bg-teal-950"
       icon-color="text-teal-700 dark:text-teal-400"
+      title="Mint"
+      tone-class="border-teal-200 bg-teal-50/60 hover:border-teal-300 hover:bg-teal-100/70 disabled:border-teal-200 disabled:bg-teal-50/50 dark:border-teal-900 dark:bg-teal-950/30 dark:hover:border-teal-800 dark:hover:bg-teal-900/40 dark:disabled:border-teal-900 dark:disabled:bg-teal-950/30"
       :disabled="!canMint"
       data-test="mint-button"
       @click="openModal"
-    >
-      {{ `Mint\n${tokenSymbol}` }}
-    </ActionButton>
+    />
 
     <UModal
       v-if="modalState.mount"
