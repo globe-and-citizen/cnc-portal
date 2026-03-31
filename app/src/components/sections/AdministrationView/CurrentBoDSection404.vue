@@ -3,16 +3,16 @@
     <div
       v-for="(_, index) in 5"
       :key="index"
-      class="flex flex-col items-center gap-4 p-4 bg-white rounded-lg shadow-xs min-w-[180px] max-w-[200px] flex-1"
+      class="flex max-w-[200px] min-w-[180px] flex-1 flex-col items-center gap-4 rounded-lg bg-white p-4 shadow-xs"
     >
       <!-- Circle placeholder for avatar -->
-      <div class="w-20 h-20 rounded-full bg-gray-200 animate-pulse"></div>
+      <div class="h-20 w-20 animate-pulse rounded-full bg-gray-200"></div>
 
       <!-- Three rectangular strips -->
-      <div class="w-full flex flex-col items-center gap-3">
-        <div class="h-3 w-4/5 rounded-sm bg-gray-200 animate-pulse"></div>
-        <div class="h-3 w-4/5 rounded-sm bg-gray-200 animate-pulse"></div>
-        <div class="h-3 w-4/5 rounded-sm bg-gray-200 animate-pulse"></div>
+      <div class="flex w-full flex-col items-center gap-3">
+        <div class="h-3 w-4/5 animate-pulse rounded-sm bg-gray-200"></div>
+        <div class="h-3 w-4/5 animate-pulse rounded-sm bg-gray-200"></div>
+        <div class="h-3 w-4/5 animate-pulse rounded-sm bg-gray-200"></div>
       </div>
     </div>
   </div>

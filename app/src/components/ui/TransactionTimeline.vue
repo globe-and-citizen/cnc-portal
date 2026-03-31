@@ -1,6 +1,6 @@
 <template>
   <div v-if="show" class="mb-6" data-test="transaction-timeline">
-    <h5 class="text-sm font-medium mb-3">{{ title || 'Transaction Progress' }}</h5>
+    <h5 class="mb-3 text-sm font-medium">{{ title || 'Transaction Progress' }}</h5>
     <ul class="timeline timeline-vertical timeline-compact">
       <!-- Step 1: Initiate Transaction -->
       <li>
@@ -10,7 +10,7 @@
               steps.initiate.title || 'Initiate'
             }}</span>
           </div>
-          <p class="text-sm text-gray-600 mt-1">{{ steps.initiate.description }}</p>
+          <p class="mt-1 text-sm text-gray-600">{{ steps.initiate.description }}</p>
         </div>
         <div class="timeline-middle">
           <TimelineIcon :status="steps.initiate.status" />
@@ -30,8 +30,8 @@
               steps.pending.title || 'Transaction Sent'
             }}</span>
           </div>
-          <p class="text-sm text-gray-600 mt-1">{{ steps.pending.description }}</p>
-          <div v-if="transactionHash" class="text-xs font-mono text-gray-500 mt-1">
+          <p class="mt-1 text-sm text-gray-600">{{ steps.pending.description }}</p>
+          <div v-if="transactionHash" class="mt-1 font-mono text-xs text-gray-500">
             Hash: {{ transactionHash.slice(0, 10) }}...{{ transactionHash.slice(-8) }}
           </div>
         </div>
@@ -50,7 +50,7 @@
               steps.confirming.title || 'Confirming'
             }}</span>
           </div>
-          <p class="text-sm text-gray-600 mt-1">{{ steps.confirming.description }}</p>
+          <p class="mt-1 text-sm text-gray-600">{{ steps.confirming.description }}</p>
         </div>
         <hr :class="completeHrColor" />
       </li>
@@ -67,8 +67,8 @@
               steps.complete.title || 'Complete'
             }}</span>
           </div>
-          <p class="text-sm text-gray-600 mt-1">{{ steps.complete.description }}</p>
-          <div v-if="blockNumber" class="text-xs font-mono text-gray-500 mt-1">
+          <p class="mt-1 text-sm text-gray-600">{{ steps.complete.description }}</p>
+          <div v-if="blockNumber" class="mt-1 font-mono text-xs text-gray-500">
             Block: {{ blockNumber }}
           </div>
         </div>

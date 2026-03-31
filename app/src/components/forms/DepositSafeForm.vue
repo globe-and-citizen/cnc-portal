@@ -4,7 +4,7 @@
     v-model="currentStep"
     :items="stepperItems"
     disabled
-    class="w-full my-4"
+    class="my-4 w-full"
   />
 
   <UForm :schema="formSchema" :state="{ amount }" @submit="submitForm">

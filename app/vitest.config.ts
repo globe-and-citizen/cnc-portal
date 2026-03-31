@@ -2,7 +2,14 @@ import { configDefaults, defineConfig, mergeConfig } from 'vitest/config'
 
 import { fileURLToPath } from 'node:url'
 import viteConfig from './vite.config'
-import { UButtonStub, UDropdownStub, UIconStub, UModalStub } from './src/tests/stubs/nuxt-ui.stubs'
+import {
+  UButtonStub,
+  UCalendarStub,
+  UDropdownStub,
+  UIconStub,
+  UModalStub,
+  USelectMenuStub
+} from './src/tests/stubs/nuxt-ui.stubs'
 
 import dotenv from 'dotenv'
 
@@ -19,7 +26,8 @@ const mockFiles = [
   'treasury',
   'bod',
   'investor',
-  'nuxt-ui'
+  'nuxt-ui',
+  'utils'
 ].map((name) => `./src/tests/setup/${name}.setup.ts`)
 
 export default defineConfig((env) =>
@@ -45,7 +53,9 @@ export default defineConfig((env) =>
           UButton: UButtonStub,
           UIcon: UIconStub,
           UDropdown: UDropdownStub,
-          UModal: UModalStub
+          UModal: UModalStub,
+          USelectMenu: USelectMenuStub,
+          UCalendar: UCalendarStub
         }
       }
     }

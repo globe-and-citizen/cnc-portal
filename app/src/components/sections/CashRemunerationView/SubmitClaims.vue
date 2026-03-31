@@ -17,7 +17,7 @@
     :description="`Submit your hours worked for the week to receive payment. You can only submit one claim per week.`"
   >
     <template #body>
-      <div class="flex flex-col gap-4 mb-20">
+      <div class="mb-20 flex flex-col gap-4">
         <ClaimForm
           ref="claimFormRef"
           :initial-data="formInitialData"
@@ -26,24 +26,16 @@
           :restrict-submit="isRestricted"
           @submit="handleSubmit"
         />
-        <div v-if="addWageClaimError && errorMessage" class="mt-4">
-          <div role="alert" class="alert alert-error">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-6 w-6 shrink-0 stroke-current"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-            <span>{{ errorMessage.message }}</span>
-          </div>
-        </div>
+        <UAlert
+          v-if="addWageClaimError && errorMessage"
+          color="error"
+          variant="soft"
+          icon="i-heroicons-x-circle"
+          title="Failed to submit claim"
+          :description="errorMessage.message"
+          class="mt-4"
+          data-test="submit-claim-error"
+        />
       </div>
     </template>
   </UModal>

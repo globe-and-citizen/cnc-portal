@@ -3,31 +3,31 @@
     class="flex transition-all duration-300"
     :class="{
       'flex-row justify-start gap-4': layout === 'default',
-      'justify-center flex-col items-center': isCollapsed || isDetailedView,
+      'flex-col items-center justify-center': isCollapsed || isDetailedView,
       'flex-col': layout === 'alternate'
     }"
   >
     <!-- Image and Name Row -->
     <div class="flex flex-row items-center gap-3">
-      <div role="button" class="relative group">
+      <div role="button" class="group relative">
         <div
-          class="relative rounded-full overflow-hidden"
+          class="relative overflow-hidden rounded-full"
           :class="{
-            'ring-gray-200 w-24 h-24 ring-4': isDetailedView,
-            'w-11 h-11 ring-2 ring-white/50': !isDetailedView && layout === 'default',
-            'w-16 h-16': layout === 'alternate' && !isDetailedView
+            'h-24 w-24 ring-4 ring-gray-200': isDetailedView,
+            'h-11 w-11 ring-2 ring-white/50': !isDetailedView && layout === 'default',
+            'h-16 w-16': layout === 'alternate' && !isDetailedView
           }"
         >
           <img
             alt="User Avatar"
             :src="user.imageUrl || defaultAvatar"
-            class="w-full h-full object-cover"
+            class="h-full w-full object-cover"
           />
         </div>
       </div>
       <p
         v-if="!isCollapsed && layout === 'alternate'"
-        class="font-bold text-xl"
+        class="text-xl font-bold"
         data-test="user-name"
       >
         {{ user.name || 'User' }}
@@ -36,10 +36,10 @@
 
     <!-- Role and Address Section (only for alternate layout) -->
     <div v-if="!isCollapsed && layout === 'alternate'" class="mt-6 ml-19">
-      <p v-if="user.role" class="text-gray-600 text-lg" data-test="user-role">
+      <p v-if="user.role" class="text-lg text-gray-600" data-test="user-role">
         {{ user.role }}
       </p>
-      <p class="text-gray-400 text-sm mt-1" data-test="formatted-address">
+      <p class="mt-1 text-sm text-gray-400" data-test="formatted-address">
         {{ formatedUserAddress }}
       </p>
     </div>
@@ -54,7 +54,7 @@
       }"
     >
       <p
-        class="font-bold line-clamp-1"
+        class="line-clamp-1 font-bold"
         :class="{
           'text-lg': isDetailedView,
           'text-sm': !isDetailedView
@@ -65,7 +65,7 @@
       </p>
       <p
         v-if="isDetailedView"
-        class="text-gray-400 font-bold mt-2"
+        class="mt-2 font-bold text-gray-400"
         :class="{ 'text-sm': isDetailedView, 'text-xs': !isDetailedView }"
         data-test="user-role"
       >

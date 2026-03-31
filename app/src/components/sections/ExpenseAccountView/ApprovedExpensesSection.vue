@@ -1,13 +1,13 @@
 <template>
   <UCard data-test="claims-table">
     <template #header>
-      <div class="flex justify-between items-center">
-        <span>Approved Addresses</span>
+      <div class="flex items-center justify-between">
+        <span>Spending Approvals</span>
         <div
           :class="{ tooltip: !(userDataStore.address === contractOwnerAddress || isBodAction()) }"
           :data-tip="
             !(userDataStore.address === contractOwnerAddress || isBodAction())
-              ? 'Only the contract owner can approve expenses'
+              ? 'Only the contract owner can grant approvals'
               : null
           "
         >
@@ -21,7 +21,7 @@
             "
             data-test="approve-users-button"
           >
-            Approve User Expense
+            Approve Member
           </UButton>
         </div>
       </div>
@@ -37,9 +37,11 @@
           approveUsersModal = { mount: false, show: false }
         }
       }"
+      title="Grant Spending Approval"
+      description="Set spending limits and authorize a member to submit expenses."
     >
       <template #body>
-        <ApproveUsersForm
+        <ApproveUsersEIP712Form
           v-if="approveUsersModal.mount"
           :form-data="teamMembers"
           :users="foundUsers"
@@ -53,18 +55,29 @@
           "
           @close-modal="approveUsersModal = { mount: false, show: false }"
         />
-      </template>
-    </UModal>
 
-    <UModal v-model:open="confirmationModal">
-      <template #body>
-        <ApproveExpenseSummaryForm
-          v-if="confirmationModal"
-          :budget-limit="approveData!"
-          :loading="loadingApprove"
-          @submit="approveUser"
-          @close="confirmationModal = false"
-        />
+        <UModal
+          v-model:open="confirmationModal"
+          title="Review & Sign"
+          description="Confirm spending approval details and sign the transaction."
+        >
+          <template #body>
+            <UAlert
+              v-if="approveErrorMessage"
+              color="error"
+              variant="soft"
+              :description="approveErrorMessage"
+              class="mb-4"
+            />
+            <ApproveExpenseSummaryForm
+              v-if="confirmationModal"
+              :budget-limit="approveData!"
+              :loading="loadingApprove"
+              @submit="approveUser"
+              @close="confirmationModal = false"
+            />
+          </template>
+        </UModal>
       </template>
     </UModal>
   </UCard>
@@ -72,7 +85,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import ExpenseAccountTable from '@/components/sections/ExpenseAccountView/ExpenseAccountTable.vue'
-import ApproveUsersForm from '@/components/forms/ApproveUsersEIP712Form.vue'
+import ApproveUsersEIP712Form from '@/components/forms/ApproveUsersEIP712Form.vue'
 import { useUserDataStore, useTeamStore } from '@/stores'
 import { useRoute } from 'vue-router'
 import { useReadContract, useChainId, useSignTypedData } from '@wagmi/vue'
@@ -84,6 +97,7 @@ import ApproveExpenseSummaryForm from '@/components/forms/ApproveExpenseSummaryF
 import { useCreateExpenseMutation } from '@/queries/expense.queries'
 
 const confirmationModal = ref(false)
+const approveErrorMessage = ref('')
 const approveUsersModal = ref({ mount: false, show: false })
 const foundUsers = ref<User[]>([])
 const teamMembers = ref([{ name: '', address: '', isValid: false }])
@@ -181,6 +195,7 @@ const approveUser = async (data: BudgetLimit) => {
   await refetchExpenseAccountGetOwner()
   loadingApprove.value = false
   approveUsersModal.value = { mount: false, show: false }
+  approveErrorMessage.value = ''
   confirmationModal.value = false
 }
 
@@ -193,7 +208,7 @@ const isBodAction = () => false
 //#region Watchers
 watch(errorAddExpenseData, (newVal) => {
   if (newVal) {
-    toast.add({ title: errorMessage(newVal, 'Error Adding Expense Data'), color: 'error' })
+    approveErrorMessage.value = errorMessage(newVal, 'Error Adding Expense Data')
     log.error('errorAddExpenseData.value', parseError(newVal))
     loadingApprove.value = false
   }
@@ -204,7 +219,7 @@ watch(errorGetOwner, (newVal) => {
 })
 watch(signTypedDataError, async (newVal) => {
   if (newVal) {
-    toast.add({ title: 'Error signing expense data', color: 'error' })
+    approveErrorMessage.value = 'Error signing expense data'
     log.error('signTypedDataError.value', parseError(newVal))
     loadingApprove.value = false
   }

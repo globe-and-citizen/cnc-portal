@@ -69,7 +69,7 @@
       v-if="isEdit && existingFiles && existingFiles.length > 0"
       data-test="attached-files-section"
     >
-      <h4 class="text-sm font-semibold mb-3 text-gray-700">Attached Files:</h4>
+      <h4 class="mb-3 text-sm font-semibold text-gray-700">Attached Files:</h4>
       <FilePreviewGallery
         :previews="existingFilePreviews"
         can-remove

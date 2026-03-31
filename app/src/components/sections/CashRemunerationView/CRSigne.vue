@@ -29,7 +29,7 @@ import { CASH_REMUNERATION_EIP712_ABI } from '@/artifacts/abi/cash-remuneration-
 import { USDC_ADDRESS } from '@/constant'
 import { useTeamStore, useUserDataStore } from '@/stores'
 import type { WeeklyClaim } from '@/types'
-import { log } from '@/utils'
+import { buildClaimRatesWithOvertime, log } from '@/utils'
 import { useChainId, useReadContract, useSignTypedData } from '@wagmi/vue'
 import {
   readContract,
@@ -38,7 +38,7 @@ import {
   waitForTransactionReceipt
 } from '@wagmi/core'
 import dayjs from 'dayjs'
-import { keccak256, parseEther, parseUnits, zeroAddress, type Address } from 'viem'
+import { keccak256, zeroAddress, type Address } from 'viem'
 import { computed, ref, watch } from 'vue'
 import { config } from '@/wagmi.config'
 import { useUpdateWeeklyClaimMutation } from '@/queries'
@@ -111,19 +111,24 @@ const getTokenAddress = (type: string): Address => {
   return teamStore.getContractAddressByType('InvestorV1') as Address
 }
 
-const parseAmount = (amount: number, type: string) => {
-  return type === 'native' ? parseEther(`${amount}`) : parseUnits(`${amount}`, 6)
-}
+const buildTypedDataMessage = (weeklyClaim: WeeklyClaim) => {
+  const claimRates = buildClaimRatesWithOvertime({
+    hoursWorked: weeklyClaim.hoursWorked,
+    maximumHoursPerWeek: weeklyClaim.wage.maximumHoursPerWeek,
+    ratePerHour: weeklyClaim.wage.ratePerHour,
+    overtimeRatePerHour: weeklyClaim.wage.overtimeRatePerHour
+  })
 
-const buildTypedDataMessage = (weeklyClaim: WeeklyClaim) => ({
-  hoursWorked: weeklyClaim.hoursWorked,
-  employeeAddress: weeklyClaim.wage.userAddress as Address,
-  date: BigInt(Math.floor(new Date(weeklyClaim.createdAt).getTime() / 1000)),
-  wages: weeklyClaim.wage.ratePerHour.map((rate) => ({
-    hourlyRate: parseAmount(rate.amount, rate.type),
-    tokenAddress: getTokenAddress(rate.type)
-  }))
-})
+  return {
+    hoursWorked: weeklyClaim.hoursWorked,
+    employeeAddress: weeklyClaim.wage.userAddress as Address,
+    date: BigInt(Math.floor(new Date(weeklyClaim.createdAt).getTime() / 1000)),
+    wages: claimRates.map((rate) => ({
+      hourlyRate: rate.hourlyRate,
+      tokenAddress: getTokenAddress(rate.type)
+    }))
+  }
+}
 
 const setLoadingState = (state: boolean) => {
   isLoading.value = state

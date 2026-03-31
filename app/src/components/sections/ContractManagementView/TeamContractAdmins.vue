@@ -1,5 +1,5 @@
 <template>
-  <h3 class="text-lg font-bold mb-4">
+  <h3 class="mb-4 text-lg font-bold">
     Contract Admin List {{ range }}
     <span class="loading loading-spinner" v-if="isLoading || isUpdating"></span>
   </h3>
@@ -7,7 +7,7 @@
   <!-- Inline form to add new admin -->
   <form
     @submit.prevent="handleAdminAction(newAdminAddress as `0x${string}`, 'addAdmin')"
-    class="flex items-center space-x-2 mb-4"
+    class="mb-4 flex items-center space-x-2"
   >
     <input
       v-model="newAdminAddress"
@@ -23,8 +23,8 @@
 
   <!-- Admin Table -->
   <div id="admins-table" class="overflow-x-auto">
-    <TableComponent
-      :rows="
+    <UTable
+      :data="
         adminsList.map((admin: Address, index: number) => ({
           index: index + 1,
           address: admin,
@@ -32,16 +32,16 @@
         })) ?? []
       "
       :columns="[
-        { key: 'index', label: '#' },
-        { key: 'address', label: 'Admin Address' },
-        { key: 'action', label: 'Action' }
+        { accessorKey: 'index', header: '#' },
+        { accessorKey: 'address', header: 'Admin Address' },
+        { accessorKey: 'action', header: 'Action' }
       ]"
     >
-      <template #address-data="{ row }">
+      <template #address-cell="{ row: { original: row } }">
         <AddressToolTip :address="row.address" class="text-xs" />
       </template>
 
-      <template #action-data="{ row }">
+      <template #action-cell="{ row: { original: row } }">
         <UButton
           @click="handleAdminAction(row.admin, 'removeAdmin')"
           size="xs"
@@ -49,11 +49,11 @@
           label="Remove"
         />
       </template>
-    </TableComponent>
+    </UTable>
   </div>
   <div
     v-if="isLoading || isUpdating"
-    class="absolute inset-0 flex items-center justify-center bg-white bg-opacity-75"
+    class="bg-opacity-75 absolute inset-0 flex items-center justify-center bg-white"
   ></div>
 </template>
 
@@ -64,7 +64,6 @@ import { useWaitForTransactionReceipt, useWriteContract, useReadContract } from 
 import { AddCampaignService } from '@/services/AddCampaignService'
 import type { TeamContract } from '@/types'
 import AddressToolTip from '@/components/AddressToolTip.vue'
-import TableComponent from '@/components/TableComponent.vue'
 import { AD_CAMPAIGN_MANAGER_ABI } from '@/artifacts/abi/ad-campaign-manager'
 import type { Address } from 'viem'
 const toast = useToast()

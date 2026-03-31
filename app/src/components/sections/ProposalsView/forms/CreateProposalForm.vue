@@ -1,6 +1,6 @@
 <template>
-  <h3 class="font-bold text-xl">Create New Proposal</h3>
-  <UForm :schema="schema" :state="state" @submit="handleSubmit" class="flex flex-col w-full gap-2">
+  <!-- Modal title already communicates form purpose -->
+  <UForm :schema="schema" :state="state" @submit="handleSubmit" class="flex w-full flex-col gap-2">
     <UFormField name="title" label="Title">
       <UInput v-model="state.title" placeholder="Enter proposal title" class="w-full" />
     </UFormField>
@@ -24,7 +24,7 @@
       />
     </UFormField>
 
-    <div class="flex flex-row justify-between items-start gap-4">
+    <div class="flex flex-row items-start justify-between gap-4">
       <UFormField name="startDate" label="Start Date" class="flex-1">
         <VueDatePicker
           v-model="state.startDate"

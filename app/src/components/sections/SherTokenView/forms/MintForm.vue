@@ -16,21 +16,16 @@
 
       <UFormField name="amount" label="Amount">
         <div class="relative">
-          <UInput
-            type="number"
-            class="w-full pr-16"
-            data-test="amount-input"
-            v-model="state.amount"
-          />
+          <UInput class="w-full pr-16" data-test="amount-input" v-model="state.amount" />
           <span
-            class="absolute right-4 top-1/2 transform -translate-y-1/2 text-black font-bold text-sm"
+            class="absolute top-1/2 right-4 -translate-y-1/2 transform text-sm font-bold text-black"
           >
             {{ tokenSymbol }}
           </span>
         </div>
       </UFormField>
 
-      <div class="text-center flex gap-4 justify-between" data-test="form-actions">
+      <div class="flex justify-between gap-4 text-center" data-test="form-actions">
         <UButton
           variant="outline"
           color="error"
@@ -44,7 +39,7 @@
           :loading="isConfirmingMint || isMintPending"
           :disabled="isConfirmingMint || isMintPending"
           color="primary"
-          class="w-44 text-center"
+          class="text-center"
           data-test="submit-button"
           >Mint {{ tokenSymbol }}
         </UButton>
@@ -70,6 +65,7 @@ const state = reactive({ address: '', amount: '' })
 const emit = defineEmits(['close-modal'])
 
 const mintModal = defineModel({ default: false })
+
 const props = defineProps<{
   memberInput?: { name: string; address: string }
   disabled?: boolean

@@ -1,7 +1,7 @@
 <template>
   <div class="flex flex-col">
-    <p class="text-sm font-medium text-blue-gray-700 mb-1">{{ title }}</p>
-    <div class="rounded-lg border border-blue-gray-200 bg-gray-50 p-3 flex-1">
+    <p class="text-blue-gray-700 mb-1 text-sm font-medium">{{ title }}</p>
+    <div class="border-blue-gray-200 flex-1 rounded-lg border bg-gray-50 p-3">
       <slot></slot>
     </div>
   </div>

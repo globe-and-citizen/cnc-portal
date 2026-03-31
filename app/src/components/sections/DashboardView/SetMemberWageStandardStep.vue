@@ -15,14 +15,14 @@
         :ui="{ base: 'pl-36', leading: 'pointer-events-none' }"
       >
         <template #leading>
-          <p class="text-sm text-muted">Weekly cap (hrs)</p>
+          <p class="text-muted text-sm">Weekly cap (hrs)</p>
         </template>
       </UInput>
     </UFormField>
 
     <UFormField name="ratePerHour">
       <div class="space-y-4">
-        <h3 class="text-lg font-semibold mb-4">Standard Hourly Rates</h3>
+        <h3 class="mb-4 text-lg font-semibold">Standard Hourly Rates</h3>
         <UFieldGroup
           v-for="(rate, index) in wageData.ratePerHour"
           :key="rate.type"
@@ -39,7 +39,7 @@
             >
               <template #trailing>
                 <UBadge
-                  class="text-sm rounded-full px-4 w-16 flex justify-center"
+                  class="flex w-16 justify-center rounded-full px-4 text-sm"
                   :variant="rate.enabled ? 'solid' : 'outline'"
                   :color="rate.enabled ? 'primary' : 'neutral'"
                 >
@@ -52,7 +52,7 @@
       </div>
     </UFormField>
 
-    <div class="border-t border-base-200 pt-4">
+    <div class="border-base-200 border-t pt-4">
       <label
         class="flex cursor-pointer items-start gap-3 rounded-2xl border px-4 py-4 transition"
         :class="
@@ -70,7 +70,7 @@
         />
         <div>
           <p class="font-semibold">Add overtime rates</p>
-          <p class="text-sm text-base-content/60">
+          <p class="text-base-content/60 text-sm">
             Set different rates for hours worked beyond the weekly cap.
           </p>
         </div>
@@ -86,7 +86,7 @@
       data-test="error-state"
     />
 
-    <div class="flex justify-between w-full">
+    <div class="flex w-full justify-between">
       <UButton
         v-if="wage"
         color="error"

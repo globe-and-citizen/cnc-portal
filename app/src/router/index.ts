@@ -6,7 +6,7 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      component: () => import('@/views/HomeView.vue')
+      redirect: { name: 'teams' }
     },
     {
       path: '/login',
@@ -146,9 +146,9 @@ router.beforeEach(async (to) => {
   if (!isAuth.value && to.name !== 'login') {
     return { name: 'login' }
   }
-  // Redirect to home page if logged in
+  // Redirect to teams page if logged in
   if (to.name === 'login' && isAuth.value) {
-    return { name: 'home' }
+    return { name: 'teams' }
   }
 })
 // router.

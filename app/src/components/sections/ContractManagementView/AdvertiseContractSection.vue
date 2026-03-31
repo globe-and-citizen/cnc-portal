@@ -6,11 +6,11 @@
     ></span>
     <div
       v-if="!teamStore.currentTeamMeta.isPending && teamStore"
-      class="flex flex-col gap-5 w-full items-center"
+      class="flex w-full flex-col items-center gap-5"
     >
       <UCard class="w-full">
         <template #header>
-          <div class="flex justify-between items-center">
+          <div class="flex items-center justify-between">
             <span>Advertise Contract</span>
             <div>
               <UButton
@@ -25,7 +25,12 @@
         </template>
         <TeamContracts />
       </UCard>
-      <UModal v-if="showAdCampaignModal.mount" v-model:open="showAdCampaignModal.show">
+      <UModal
+        v-if="showAdCampaignModal.mount"
+        v-model:open="showAdCampaignModal.show"
+        title="Deploy Advertising Campaign"
+        description="Deploy a new campaign contract to advertise your team’s work and attract contributors."
+      >
         <template #body>
           <CreateAddCampaign
             @closeAddCampaignModal="showAdCampaignModal = { mount: false, show: false }"

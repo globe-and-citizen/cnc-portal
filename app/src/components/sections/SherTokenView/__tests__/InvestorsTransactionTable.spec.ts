@@ -3,7 +3,6 @@ import { mount } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
 import InvestorsTransactionTable from '../InvestorsTransactionTable.vue'
 import type { InvestorsTransaction } from '@/types/transactions'
-import { formatCurrencyShort } from '@/utils'
 
 const mockTransactions: InvestorsTransaction[] = [
   {
@@ -55,21 +54,14 @@ describe('InvestorsTransactionTable.vue', () => {
 
     expect(columns).toHaveLength(7)
     expect(columns).toEqual([
-      { key: 'txHash', label: 'Transaction' },
-      { key: 'date', label: 'Date' },
-      { key: 'type', label: 'Type' },
-      { key: 'from', label: 'From' },
-      { key: 'to', label: 'To' },
-      { key: 'amount', label: 'Amount' },
-      { key: 'amountUSD', label: 'USD Value' }
+      { accessorKey: 'txHash', header: 'Transaction' },
+      { accessorKey: 'date', header: 'Date' },
+      { accessorKey: 'type', header: 'Type' },
+      { accessorKey: 'from', header: 'From' },
+      { accessorKey: 'to', header: 'To' },
+      { accessorKey: 'amount', header: 'Amount' },
+      { accessorKey: 'amountUSD', header: 'USD Value' }
     ])
-  })
-
-  it('should format USD amount correctly', () => {
-    const wrapper = createComponent()
-    const result = wrapper.vm.formatUSDAmount(1000.5)
-
-    expect(result).toBe(formatCurrencyShort(1000.5))
   })
 
   it('should format date correctly', () => {
@@ -77,17 +69,6 @@ describe('InvestorsTransactionTable.vue', () => {
     const result = wrapper.vm.formatDate('2023-03-01 10:00:00')
 
     expect(result).toBe(new Date('2023-03-01 10:00:00').toLocaleString())
-  })
-
-  it.skip('should handle date formatting error', () => {
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-    const wrapper = createComponent()
-    const result = wrapper.vm.formatDate('invalid-date')
-
-    expect(result).toBe('Invalid Date')
-    expect(consoleSpy).toHaveBeenCalledWith('Error formatting date:', expect.any(Error))
-
-    consoleSpy.mockRestore()
   })
 
   it('should return correct type classes', () => {

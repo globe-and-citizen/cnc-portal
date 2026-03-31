@@ -1,5 +1,10 @@
 <template>
-  <UModal v-model:open="showModal" title="Remove Member" :ui="{ content: 'rounded-2xl' }">
+  <UModal
+    v-model:open="showModal"
+    title="Remove Member"
+    description="Confirm removing a member from the team permanently."
+    :ui="{ content: 'rounded-2xl' }"
+  >
     <UTooltip text="Remove member" :delay-duration="0">
       <UButton
         color="error"

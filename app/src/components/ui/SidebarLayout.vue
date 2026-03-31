@@ -6,7 +6,7 @@
     :ui="{ root: 'min-w-24', footer: 'border-t border-default' }"
   >
     <template #header="{ collapsed }">
-      <div class="relative group cursor-pointer p-3">
+      <div class="group relative cursor-pointer p-3">
         <img
           v-show="!collapsed"
           src="../../assets/Logo.png"
@@ -17,7 +17,7 @@
           v-show="collapsed"
           src="../../assets/LogoWithoutText.png"
           alt="CNC Portal"
-          class="w-full relative transition-transform duration-300 hover:scale-110"
+          class="relative w-full transition-transform duration-300 hover:scale-110"
         />
       </div>
     </template>
@@ -55,27 +55,31 @@
 
     <template #footer="{ collapsed }">
       <!-- User Meta -->
-      <UModal v-model:open="open" title="Update User Data">
+      <UModal
+        v-model:open="open"
+        title="Update User Data"
+        description="Edit your profile information used across the application."
+      >
         <div
-          class="w-full bg-base-200 flex flex-row justify-start gap-4 cursor-pointer transition-all duration-300 shadow-xs rounded-xl p-4"
+          class="bg-base-200 flex w-full cursor-pointer flex-row justify-start gap-4 rounded-xl p-4 shadow-xs transition-all duration-300"
           data-test="edit-user-card"
           :class="{ 'justify-center': collapsed }"
           @click="open = true"
         >
-          <div role="button" class="relative group">
-            <div class="relative rounded-full overflow-hidden w-11 h-11 ring-2 ring-white/50">
+          <div role="button" class="group relative">
+            <div class="relative h-11 w-11 overflow-hidden rounded-full ring-2 ring-white/50">
               <img
                 alt="User Avatar"
                 :src="
                   userStore.imageUrl ||
                   'https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp'
                 "
-                class="w-full h-full object-cover"
+                class="h-full w-full object-cover"
               />
             </div>
           </div>
           <div class="flex flex-col text-gray-600" v-if="!collapsed">
-            <p class="font-bold text-sm line-clamp-1" data-test="user-name">
+            <p class="line-clamp-1 text-sm font-bold" data-test="user-name">
               {{ userStore.name || 'User' }}
             </p>
             <p class="text-sm" data-test="formatted-address">
@@ -107,11 +111,6 @@ const teamStore = useTeamStore()
 const open = ref(false)
 
 const items = computed<NavigationMenuItem[]>(() => [
-  {
-    label: 'Home',
-    icon: 'i-lucide-house',
-    to: '/'
-  },
   {
     label: 'Companies',
     icon: 'heroicons:squares-2x2',

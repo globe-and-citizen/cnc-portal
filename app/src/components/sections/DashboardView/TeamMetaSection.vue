@@ -1,7 +1,7 @@
 <template>
-  <div class="flex justify-between gap-5 w-full">
+  <div class="flex w-full justify-between gap-5">
     <div
-      class="collapse collapse-arrow border static"
+      class="collapse-arrow collapse static border"
       :class="`${currentTeam?.ownerAddress == address ? 'bg-green-100' : 'bg-blue-100'}`"
     >
       <input type="checkbox" />
@@ -9,7 +9,7 @@
         <div class="flex items-center justify-center">
           <h2 class="pl-5">{{ currentTeam?.name }}</h2>
           <div
-            class="badge badge-lg badge-primary flex items-center justify-center ml-2"
+            class="badge badge-lg badge-primary ml-2 flex items-center justify-center"
             v-if="currentTeam?.ownerAddress == address"
           >
             Owner
@@ -20,11 +20,22 @@
       <div class="collapse-content">
         <p class="pl-5">{{ currentTeam?.description }}</p>
 
-        <div class="pl-5 flex flex-row justify-center gap-2 mt-5 items-center">
+        <div class="mt-5 flex flex-row items-center justify-center gap-2 pl-5">
           <template v-if="currentTeam?.ownerAddress == address">
-            <UModal v-model:open="showModal" title="Update Company Details">
+            <UModal
+              v-model:open="showModal"
+              title="Update Company Details"
+              description="Update your company name and description to keep your profile current and accurate"
+            >
               <UButton size="sm" color="secondary" label="Update" @click="prefillUpdateForm" />
               <template #body>
+                <UAlert
+                  v-if="updateTeamError"
+                  color="error"
+                  variant="soft"
+                  :description="updateTeamError.message"
+                  class="mb-4"
+                />
                 <UForm
                   :schema="updateTeamSchema"
                   :state="updateTeamInput"
@@ -66,15 +77,26 @@
               </template>
             </UModal>
 
-            <UModal v-model:open="showDeleteTeamConfirmModal" title="Confirmation">
+            <UModal
+              v-model:open="showDeleteTeamConfirmModal"
+              title="Confirmation"
+              description="This action cannot be undone. Please confirm that you want to permanently delete this company."
+            >
               <UButton size="sm" color="error" label="Delete" />
               <template #body>
+                <UAlert
+                  v-if="deleteTeamError"
+                  color="error"
+                  variant="soft"
+                  :description="deleteTeamError.message"
+                  class="mb-4"
+                />
                 <p>
                   Are you sure you want to delete the company
                   <span class="font-bold">{{ teamStore.currentTeamMeta.data?.name }}</span
                   >?
                 </p>
-                <div class="flex justify-center gap-2 mt-4">
+                <div class="mt-4 flex justify-center gap-2">
                   <UButton
                     color="error"
                     data-test="delete-team-button"
@@ -149,12 +171,6 @@ const executeUpdateTeam = () => {
       onSuccess: () => {
         toast.add({ title: 'Company updated successfully', color: 'success' })
         showModal.value = false
-      },
-      onError: () => {
-        toast.add({
-          title: updateTeamError.value?.message || 'Failed to update company',
-          color: 'error'
-        })
       }
     }
   )
@@ -173,14 +189,7 @@ const deleteTeam = async () => {
       onSuccess: async () => {
         toast.add({ title: 'Company deleted successfully', color: 'success' })
         showDeleteTeamConfirmModal.value = false
-        // await new Promise((resolve) => setTimeout(resolve, 3000))
         router.push('/teams')
-      },
-      onError: () => {
-        toast.add({
-          title: deleteTeamError.value?.message || 'Failed to delete company',
-          color: 'error'
-        })
       }
     }
   )

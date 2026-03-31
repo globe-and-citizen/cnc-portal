@@ -13,7 +13,7 @@
       @click="showDeleteModal = true"
       data-test="delete-claim-button"
     >
-      <IconifyIcon icon="heroicons:trash" class="w-4 h-4 text-error" />
+      <IconifyIcon icon="heroicons:trash" class="text-error h-4 w-4" />
     </UButton>
 
     <!-- Edit Modal -->

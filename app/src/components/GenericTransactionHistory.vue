@@ -2,7 +2,7 @@
 <template>
   <UCard class="w-full">
     <template #header>
-      <div class="flex justify-between items-center">
+      <div class="flex items-center justify-between">
         <span>{{ title }}</span>
         <div class="flex items-center gap-2">
           <CustomDatePicker
@@ -13,15 +13,15 @@
           />
           <div class="relative">
             <UButton
-              class="flex items-center cursor-pointer gap-4 border border-gray-300 min-w-[110px]"
+              class="flex min-w-[110px] cursor-pointer items-center gap-4 border border-gray-300"
               @click="typeDropdownOpen = !typeDropdownOpen"
               :data-test="`${dataTestPrefix}-type-filter`"
             >
               <span>{{ selectedTypeLabel }}</span>
-              <IconifyIcon icon="heroicons:chevron-down" class="w-4 h-4" />
+              <IconifyIcon icon="heroicons:chevron-down" class="h-4 w-4" />
             </UButton>
             <ul
-              class="absolute right-0 mt-2 menu bg-base-200 border-2 rounded-box z-1 w-40 p-2 shadow-sm"
+              class="menu bg-base-200 rounded-box absolute right-0 z-1 mt-2 w-40 border-2 p-2 shadow-sm"
               ref="typeDropdownTarget"
               v-if="typeDropdownOpen"
             >
@@ -42,21 +42,8 @@
       </div>
     </template>
 
-    <TableComponent
-      :rows="displayedTransactions"
-      :columns="columns"
-      v-model:current-page="currentPage"
-      v-model:items-per-page="itemsPerPage"
-      :page-size-options="[5, 10, 15, 20]"
-      :max-displayed-pages="5"
-    >
-      <template #pagination-info="{ startIndex, endIndex, totalItems }">
-        <div class="text-sm text-gray-600">
-          Showing transactions {{ startIndex + 1 }} to {{ endIndex }} of {{ totalItems }}
-        </div>
-      </template>
-
-      <template #txHash-data="{ row }">
+    <UTable :data="displayedTransactions" :columns="columns">
+      <template #txHash-cell="{ row: { original: row } }">
         <AddressToolTip
           :address="(row as BaseTransaction).txHash"
           :slice="true"
@@ -64,24 +51,26 @@
         />
       </template>
 
-      <template #date-data="{ row }">{{ formatDate((row as BaseTransaction).date) }}</template>
+      <template #date-cell="{ row: { original: row } }">{{
+        formatDate((row as BaseTransaction).date)
+      }}</template>
 
-      <template #type-data="{ row }">
+      <template #type-cell="{ row: { original: row } }">
         <span class="badge" :class="getTypeClass((row as BaseTransaction).type)">{{
           (row as BaseTransaction).type
         }}</span>
       </template>
 
-      <template #from-data="{ row }">
+      <template #from-cell="{ row: { original: row } }">
         <template v-if="isContract((row as BaseTransaction).from)">
           <a
             :href="getExplorerUrl((row as BaseTransaction).from)"
             target="_blank"
-            class="flex items-center gap-2 text-emerald-600 hover:text-emerald-800 hover:underline transition-colors duration-200"
+            class="flex items-center gap-2 text-emerald-600 transition-colors duration-200 hover:text-emerald-800 hover:underline"
           >
             <IconifyIcon
               :icon="getContractType((row as BaseTransaction).from).icon"
-              class="w-5 h-5"
+              class="h-5 w-5"
             />
             <span class="font-medium">{{
               getContractType((row as BaseTransaction).from).type
@@ -98,16 +87,16 @@
         </template>
       </template>
 
-      <template #to-data="{ row }">
+      <template #to-cell="{ row: { original: row } }">
         <template v-if="isContract((row as BaseTransaction).to)">
           <a
             :href="getExplorerUrl((row as BaseTransaction).to)"
             target="_blank"
-            class="flex items-center gap-2 text-emerald-600 hover:text-emerald-800 hover:underline transition-colors duration-200"
+            class="flex items-center gap-2 text-emerald-600 transition-colors duration-200 hover:text-emerald-800 hover:underline"
           >
             <IconifyIcon
               :icon="getContractType((row as BaseTransaction).to).icon"
-              class="w-5 h-5"
+              class="h-5 w-5"
             />
             <span class="font-medium">{{ getContractType((row as BaseTransaction).to).type }}</span>
           </a>
@@ -122,7 +111,7 @@
         </template>
       </template>
 
-      <template #receipt-data="{ row }">
+      <template #receipt-cell="{ row: { original: row } }">
         <template v-if="showReceiptModal">
           <UButton
             size="sm"
@@ -135,25 +124,30 @@
           v-else
           :href="getReceiptUrl((row as BaseTransaction).txHash)"
           target="_blank"
-          class="text-primary hover:text-primary-focus transition-colors duration-200 flex items-center gap-2"
+          class="text-primary hover:text-primary-focus flex items-center gap-2 transition-colors duration-200"
         >
           <IconifyIcon icon="heroicons-outline:document-text" class="h-4 w-4" />Receipt
         </a>
       </template>
 
-      <template #amount-data="{ row }"
+      <template #amount-cell="{ row: { original: row } }"
         >{{ Number((row as BaseTransaction).amount) }}
         {{ (row as BaseTransaction).token }}</template
       >
-      <template #valueUSD-data="{ row }">{{
+      <template #valueUSD-cell="{ row: { original: row } }">{{
         formatAmount(row as BaseTransaction, 'USD')
       }}</template>
-      <template #valueLocal-data="{ row }">{{
+      <template #valueLocal-cell="{ row: { original: row } }">{{
         formatAmount(row as BaseTransaction, currencyStore.localCurrency?.code)
       }}</template>
-    </TableComponent>
+    </UTable>
 
-    <UModal v-if="showReceiptModal" v-model:open="receiptModal">
+    <UModal
+      v-if="showReceiptModal"
+      v-model:open="receiptModal"
+      title="Transaction Receipt"
+      description="Review and export the details of this transaction."
+    >
       <template #body>
         <ReceiptComponent
           v-if="receiptModal && selectedTransaction"
@@ -175,7 +169,6 @@
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import CustomDatePicker from '@/components/CustomDatePicker.vue'
 import ReceiptComponent from '@/components/ReceiptComponent.vue'
-import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
 import UserComponent from '@/components/UserComponent.vue'
 import { NETWORK } from '@/constant'
 import type { BaseTransaction } from '@/types/transactions'
@@ -227,8 +220,6 @@ const dateRange = ref<[Date, Date] | null>(null)
 const selectedType = ref('')
 const receiptModal = ref(false)
 const selectedTransaction = ref<BaseTransaction | null>(null)
-const currentPage = ref(1)
-const itemsPerPage = ref(10)
 const typeDropdownOpen = ref(false)
 const typeDropdownTarget = ref<HTMLElement | null>(null)
 const selectedTypeLabel = computed(() => (selectedType.value ? selectedType.value : 'All Types'))
@@ -241,23 +232,23 @@ onMounted(async () => {
 
 const columns = computed(() => {
   const baseColumns = [
-    { key: 'txHash', label: 'Tx Hash', sortable: false },
-    { key: 'date', label: 'Date', sortable: true },
-    { key: 'type', label: 'Type', sortable: false },
-    { key: 'from', label: 'From', sortable: false },
-    { key: 'to', label: 'To', sortable: false },
-    { key: 'amount', label: 'Amount', sortable: false },
-    { key: 'valueUSD', label: 'Value (USD)', sortable: false }
-  ] as TableColumn[]
+    { accessorKey: 'txHash', header: 'Tx Hash', enableSorting: false },
+    { accessorKey: 'date', header: 'Date', enableSorting: true },
+    { accessorKey: 'type', header: 'Type', enableSorting: false },
+    { accessorKey: 'from', header: 'From', enableSorting: false },
+    { accessorKey: 'to', header: 'To', enableSorting: false },
+    { accessorKey: 'amount', header: 'Amount', enableSorting: false },
+    { accessorKey: 'valueUSD', header: 'Value (USD)', enableSorting: false }
+  ]
 
   if (currencyStore.localCurrency?.code !== 'USD') {
     baseColumns.push({
-      key: 'valueLocal',
-      label: `Value (${currencyStore.localCurrency?.code})`,
-      sortable: false
+      accessorKey: 'valueLocal',
+      header: `Value (${currencyStore.localCurrency?.code})`,
+      enableSorting: false
     })
   }
-  baseColumns.push({ key: 'receipt', label: 'Receipt', sortable: false })
+  baseColumns.push({ accessorKey: 'receipt', header: 'Receipt', enableSorting: false })
   return baseColumns
 })
 

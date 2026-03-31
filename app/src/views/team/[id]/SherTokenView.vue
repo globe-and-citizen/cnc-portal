@@ -1,12 +1,8 @@
 <template>
   <div class="flex flex-col gap-y-8">
     <InvestorsHeader />
-
-    <div class="divider m-0"></div>
     <InvestorsActions />
-    <div class="divider m-0"></div>
     <ShareholderList />
-    <div class="divider m-o"></div>
     <InvestorsTransactions />
   </div>
   <ContractOwnerCard v-if="investorsAddress" :contractAddress="investorsAddress" />

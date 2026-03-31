@@ -1,7 +1,7 @@
 <template>
   <UCard>
     <template #header>
-      <div class="flex justify-between items-center">
+      <div class="flex items-center justify-between">
         <div class="flex items-center gap-4">
           <span>{{ isDetails ? `Past` : `Current` }} Election</span>
           <ElectionStatus
@@ -22,12 +22,20 @@
             :close="{
               onClick: () => {
                 showCreateElectionModal = { mount: false, show: false }
+                createElectionError = ''
               }
             }"
             title="Create election"
             description="Create a new Board of Directors election to manage your team's leadership."
           >
             <template #body>
+              <UAlert
+                v-if="createElectionError"
+                color="error"
+                variant="soft"
+                :description="createElectionError"
+                class="mb-4"
+              />
               <CreateElectionForm
                 :is-loading="isLoadingCreateElection /*|| isConfirmingCreateElection*/"
                 @create-proposal="createElection"
@@ -93,15 +101,17 @@ const showCreateElectionModal = ref({
   show: false
 })
 const isLoadingCreateElection = ref(false)
+const createElectionError = ref('')
 
 const { mutateAsync: addElectionNotifications, error: electionNotificationError } =
   useCreateElectionNotificationsMutation()
 
 const createElection = async (electionData: OldProposal) => {
   try {
+    createElectionError.value = ''
     isLoadingCreateElection.value = true
     if (!electionsAddress.value) {
-      toast.add({ title: 'Elections contract address not found', color: 'error' })
+      createElectionError.value = 'Elections contract address not found'
       return
     }
 
@@ -145,7 +155,7 @@ const createElection = async (electionData: OldProposal) => {
     showCreateElectionModal.value.show = false
     showCreateElectionModal.value.mount = false
   } catch (error) {
-    toast.add({ title: parseError(error, ELECTIONS_ABI), color: 'error' })
+    createElectionError.value = parseError(error, ELECTIONS_ABI)
     log.error('creatingElection error:', error)
   } finally {
     isLoadingCreateElection.value = false

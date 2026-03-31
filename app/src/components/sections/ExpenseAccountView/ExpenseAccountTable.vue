@@ -1,21 +1,8 @@
 <template>
-  <div class="form-control flex flex-row gap-1">
-    <label class="label cursor-pointer flex gap-2" :key="status" v-for="status in statuses">
-      <span class="label-text">{{ status.charAt(0).toUpperCase() + status.slice(1) }}</span>
-      <input
-        type="radio"
-        name="pending"
-        class="radio checked:bg-primary"
-        :data-test="`status-input-${status}`"
-        :id="status"
-        :value="status"
-        v-model="selectedRadio"
-      />
-    </label>
-  </div>
-  <div class="card bg-base-100 w-full">
-    <TableComponent :rows="filteredApprovals" :columns="columns" :loading="isFetchingExpenseData">
-      <template #action-data="{ row }">
+  <URadioGroup v-model="selectedRadio" :items="statuses" orientation="horizontal" />
+  <div class="bg-base-100 w-full">
+    <UTable :data="filteredApprovals" :columns="columns" :loading="isFetchingExpenseData">
+      <template #action-cell="{ row: { original: row } }">
         <UButton
           v-if="row.status == 'enabled'"
           color="error"
@@ -27,7 +14,7 @@
             () => {
               isLoadingSetStatus = true
               signatureToUpdate = row.signature
-              deactivateApproval(row.signature)
+              deactivateApproval(row.signature as `0x{string}`)
             }
           "
           label="Disable"
@@ -43,48 +30,48 @@
             () => {
               isLoadingSetStatus = true
               signatureToUpdate = row.signature
-              activateApproval(row.signature)
+              activateApproval(row.signature as `0x{string}`)
             }
           "
           label="Enable"
         />
       </template>
-      <template #member-data="{ row }">
-        <UserComponent v-if="!!row.user" :user="row.user"></UserComponent>
+      <template #member-cell="{ row: { original: row } }">
+        <UserComponent
+          :user="{ name: row.userAddress, address: row.userAddress, imageUrl: '' }"
+        ></UserComponent>
       </template>
-      <template #startDate-data="{ row }">
+      <template #startDate-cell="{ row: { original: row } }">
         <span>{{ new Date(Number(row.startDate) * 1000).toLocaleString('en-US') }}</span>
       </template>
-      <template #endDate-data="{ row }">
+      <template #endDate-cell="{ row: { original: row } }">
         <span>{{ new Date(Number(row.endDate) * 1000).toLocaleString('en-US') }}</span>
       </template>
-      <template #status-data="{ row }">
-        <span
-          class="badge"
-          :class="{
-            'badge-success badge-outline': row.status === 'enabled',
-            'badge-info badge-outline': row.status === 'disabled',
-            'badge-error badge-outline': row.status === 'expired'
-          }"
-          >{{ row.status }}</span
-        >
+      <template #status-cell="{ row: { original: row } }">
+        <UBadge
+          :label="row.status"
+          variant="outline"
+          class="rounded-full"
+          :color="
+            row.status === 'enabled' ? 'success' : row.status === 'disabled' ? 'info' : 'error'
+          "
+        />
       </template>
-      <template #frequencyType-data="{ row }">
+      <template #frequencyType-cell="{ row: { original: row } }">
         <span>{{
           row.frequencyType == 4
-            ? getCustomFrequency(row.customFrequency)
+            ? getCustomFrequency(Number(row.customFrequency))
             : getFrequencyType(row.frequencyType)
         }}</span>
       </template>
-      <template #amountTransferred-data="{ row }">
+      <template #amountTransferred-cell="{ row: { original: row } }">
         <span>{{ row.balances[1] }}/{{ row.amount }} {{ tokenSymbol(row.tokenAddress) }}</span>
       </template>
-    </TableComponent>
+    </UTable>
   </div>
 </template>
 
 <script setup lang="ts">
-import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
 import { computed, ref, watch } from 'vue'
 import { log, parseError, tokenSymbol } from '@/utils'
 import { useUserDataStore, useTeamStore } from '@/stores'
@@ -123,40 +110,40 @@ const expenseAccountEip712Address = computed(() =>
 )
 const columns = [
   {
-    key: 'member',
-    label: 'Member',
-    sortable: false
+    accessorKey: 'member',
+    header: 'Member',
+    enableSorting: false
   },
   {
-    key: 'startDate',
-    label: 'Start Date',
-    sortable: true
+    accessorKey: 'startDate',
+    header: 'Start Date',
+    enableSorting: true
   },
   {
-    key: 'endDate',
-    label: 'End Date',
-    sortable: true
+    accessorKey: 'endDate',
+    header: 'End Date',
+    enableSorting: true
   },
   {
-    key: 'frequencyType',
-    label: 'Frequency',
-    sortable: false
+    accessorKey: 'frequencyType',
+    header: 'Frequency',
+    enableSorting: false
   },
   {
-    key: 'amountTransferred',
-    label: 'Max Amount',
-    sortable: false
+    accessorKey: 'amountTransferred',
+    header: 'Max Amount',
+    enableSorting: false
   },
   {
-    key: 'status',
-    label: 'Status'
+    accessorKey: 'status',
+    header: 'Status'
   },
   {
-    key: 'action',
-    label: 'Action',
-    sortable: false
+    accessorKey: 'action',
+    header: 'Action',
+    enableSorting: false
   }
-] as TableColumn[]
+]
 
 //#endregion Composables
 const { data: contractOwnerAddress, error: errorGetOwner } = useReadContract({
@@ -202,7 +189,7 @@ const filteredApprovals = computed(() => {
 //#region Functions
 const deactivateApproval = async (signature: `0x{string}`) => {
   if (!expenseAccountEip712Address.value) {
-    toast.add({ title: 'Failed to deactivate', color: 'error' })
+    toast.add({ title: 'Failed to deactivate approval', color: 'error' })
     log.error('ExpenseAccountEip712Address is undefined')
     return
   }
@@ -219,7 +206,7 @@ const deactivateApproval = async (signature: `0x{string}`) => {
 
 const activateApproval = async (signature: `0x{string}`) => {
   if (!expenseAccountEip712Address.value) {
-    toast.add({ title: 'Failed to activate', color: 'error' })
+    toast.add({ title: 'Failed to activate approval', color: 'error' })
     log.error('ExpenseAccountEip712Address is undefined')
     return
   }
@@ -242,7 +229,7 @@ watch(isConfirmingActivate, async (isConfirming, wasConfirming) => {
     signatureToUpdate.value = ''
     isLoadingSetStatus.value = false
     queryClient.invalidateQueries({ queryKey: ['getExpenseData'] })
-    toast.add({ title: 'Activate Successful', color: 'success' })
+    toast.add({ title: 'Approval activated', color: 'success' })
   }
 })
 watch(isConfirmingDeactivate, async (isConfirming, wasConfirming) => {
@@ -250,7 +237,7 @@ watch(isConfirmingDeactivate, async (isConfirming, wasConfirming) => {
     signatureToUpdate.value = ''
     isLoadingSetStatus.value = false
     queryClient.invalidateQueries({ queryKey: ['getExpenseData'] })
-    toast.add({ title: 'Deactivate Successful', color: 'success' })
+    toast.add({ title: 'Approval deactivated', color: 'success' })
   }
 })
 watch(errorDeactivateApproval, (newVal) => {
@@ -270,7 +257,7 @@ watch(errorActivateApproval, (newVal) => {
 watch(errorGetOwner, (newVal) => {
   if (newVal) {
     log.error(parseError(newVal))
-    toast.add({ title: 'Error Getting Contract Owner', color: 'error' })
+    toast.add({ title: 'Could not fetch contract owner', color: 'error' })
   }
 })
 //#endregion

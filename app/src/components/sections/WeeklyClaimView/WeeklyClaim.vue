@@ -1,26 +1,28 @@
 <template>
   <UCard class="w-full pb-7">
     <template #header>{{ singleUser ? 'Weekly Claim (User)' : 'Weekly Claim' }}</template>
-    <TableComponent
+    <UTable
       v-if="data"
-      :rows="data"
+      :data="data"
       :columns="columns"
       :loading="isTeamClaimDataFetching"
       overflow="overflow-visible"
     >
-      <template #member-data="{ row }">
+      <template #member-cell="{ row: { original: row } }">
         <RouterLink
+          v-if="row.member"
           :to="{
             name: 'payroll-history',
             params: { id: teamStore.currentTeamId, memberAddress: row.member.address }
           }"
-          class="flex items-center gap-2 hover:underline text-emerald-700"
+          class="flex items-center gap-2 text-emerald-700 hover:underline"
         >
           <UserComponent :user="row.member" />
         </RouterLink>
+        <span v-else>-</span>
       </template>
 
-      <template #weekStart-data="{ row }">
+      <template #weekStart-cell="{ row: { original: row } }">
         <span class="font-bold">{{
           dayjs(row.weekStart).utc().startOf('isoWeek').format('MMMM YYYY')
         }}</span>
@@ -28,13 +30,13 @@
         <span>{{ formatIsoWeekRange(dayjs(row.weekStart).utc().startOf('isoWeek')) }}</span>
       </template>
 
-      <template #hoursWorked-data="{ row }">
+      <template #hoursWorked-cell="{ row: { original: row } }">
         <span class="font-bold"> {{ getTotalHoursWorked(row.claims) }}:00 hrs </span>
         <br />
         <span>of {{ row.wage.maximumHoursPerWeek ?? '-' }} hrs weekly limit</span>
       </template>
 
-      <template #hourlyRate-data="{ row }">
+      <template #hourlyRate-cell="{ row: { original: row } }">
         <div>
           <RatePerHourList
             :rate-per-hour="row.wage.ratePerHour"
@@ -48,7 +50,7 @@
         </div>
       </template>
 
-      <template #totalAmount-data="{ row }">
+      <template #totalAmount-cell="{ row: { original: row } }">
         <div>
           <RatePerHourTotalList
             :rate-per-hour="row.wage.ratePerHour"
@@ -66,7 +68,7 @@
           </span>
         </div>
       </template>
-      <template #action-data="{ row }">
+      <template #action-cell="{ row: { original: row } }">
         <!--<CRSigne v-if="row.status == 'pending'" :weekly-claim="assertWeeklyClaimRow(row)" />
         <CRWithdrawClaim
           v-if="row.status == 'signed' || row.status == 'withdrawn'"
@@ -76,37 +78,37 @@
         <WeeklyClaimActionDropdown :status="row.status" :weekly-claim="assertWeeklyClaimRow(row)" />
       </template>
 
-      <template #status-data="{ row }">
+      <template #status-cell="{ row: { original: row } }">
         <template v-if="row.status === 'signed'">
           <span
-            class="text-base px-3 py-1 rounded-2xl border-2 border-secondary text-secondary bg-transparent"
+            class="border-secondary text-secondary rounded-2xl border-2 bg-transparent px-3 py-1 text-base"
           >
             {{ row.status.charAt(0).toUpperCase() + row.status.slice(1) }}
           </span>
         </template>
         <template v-else-if="!row.status || row.status === 'pending'">
           <span
-            class="text-base px-3 py-1 rounded-2xl border-2 border-gray-400 text-gray-700 bg-transparent"
+            class="rounded-2xl border-2 border-gray-400 bg-transparent px-3 py-1 text-base text-gray-700"
           >
             {{ row.status ? row.status.charAt(0).toUpperCase() + row.status.slice(1) : 'Pending' }}
           </span>
         </template>
         <template v-else>
           <span
-            class="text-base px-3 py-1 rounded-2xl border-2 border-yellow-500 text-black bg-transparent"
+            class="rounded-2xl border-2 border-yellow-500 bg-transparent px-3 py-1 text-base text-black"
           >
             {{ row.status ? row.status.charAt(0).toUpperCase() + row.status.slice(1) : 'Pending' }}
           </span>
         </template>
       </template>
-    </TableComponent>
+    </UTable>
   </UCard>
 </template>
 
 <script setup lang="ts">
 import RatePerHourList from '@/components/RatePerHourList.vue'
 import RatePerHourTotalList from '@/components/RatePerHourTotalList.vue'
-import TableComponent, { type TableColumn } from '@/components/TableComponent.vue'
+import type { TableColumn } from '@nuxt/ui'
 import UserComponent from '@/components/UserComponent.vue'
 import type { TokenId } from '@/constant'
 import { NETWORK } from '@/constant'
@@ -182,46 +184,39 @@ function getHoulyRateInUserCurrency(
 
 const columns = [
   {
-    key: 'weekStart',
-    label: 'Productivity Diary',
-    sortable: true,
-    class: 'text-base '
+    accessorKey: 'weekStart',
+    header: 'Productivity Diary',
+    enableSorting: true
   },
   {
-    key: 'member',
-    label: 'Member',
-    sortable: false,
-    class: 'text-base '
+    accessorKey: 'member',
+    header: 'Member',
+    enableSorting: false
   },
   {
-    key: 'hoursWorked',
-    label: 'Hour Worked',
-    sortable: false,
-    class: 'text-base'
+    accessorKey: 'hoursWorked',
+    header: 'Hour Worked',
+    enableSorting: false
   },
   {
-    key: 'hourlyRate',
-    label: 'Hourly Rate',
-    sortable: false,
-    class: 'text-base'
+    accessorKey: 'hourlyRate',
+    header: 'Hourly Rate',
+    enableSorting: false
   },
   {
-    key: 'totalAmount',
-    label: 'Total Amount',
-    sortable: false,
-    class: 'text-base'
+    accessorKey: 'totalAmount',
+    header: 'Total Amount',
+    enableSorting: false
   },
   {
-    key: 'status',
-    label: 'Status',
-    sortable: true,
-    class: 'text-base'
+    accessorKey: 'status',
+    header: 'Status',
+    enableSorting: true
   },
   {
-    key: 'action',
-    label: 'Action',
-    sortable: false,
-    class: 'text-base'
+    accessorKey: 'action',
+    header: 'Action',
+    enableSorting: false
   }
-] as TableColumn[]
+] as TableColumn<WeeklyClaim>[]
 </script>

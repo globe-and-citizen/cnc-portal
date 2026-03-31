@@ -8,7 +8,7 @@
     />
     <div class="relative">
       <UButton
-        class="flex items-center cursor-pointer gap-4 border border-gray-300 min-w-[110px]"
+        class="flex min-w-[110px] cursor-pointer items-center gap-4 border border-gray-300"
         @click="typeDropdownOpen = !typeDropdownOpen"
         :data-test="`${dataTestPrefix}-type-filter`"
         :label="selectedTypeLabel"
@@ -16,7 +16,7 @@
         trailing-icon="heroicons:chevron-down"
       />
       <ul
-        class="absolute right-0 mt-2 menu bg-base-200 border-2 rounded-box z-1 w-40 p-2 shadow-sm"
+        class="menu bg-base-200 rounded-box absolute right-0 z-1 mt-2 w-40 border-2 p-2 shadow-sm"
         ref="typeDropdownTarget"
         v-if="typeDropdownOpen"
       >

@@ -1,6 +1,17 @@
 <template>
-  <UModal v-model:open="isOpen" title="Update Threshold">
+  <UModal
+    v-model:open="isOpen"
+    title="Update Threshold"
+    description="Set the number of signers required to approve safe transactions."
+  >
     <template #body>
+      <UAlert
+        v-if="errorMessage"
+        color="error"
+        variant="soft"
+        :description="errorMessage"
+        class="mb-4"
+      />
       <UForm
         :schema="thresholdSchema"
         :state="formState"
@@ -16,11 +27,11 @@
         >
           <template #description>
             <div class="flex items-center gap-2 text-sm">
-              <IconifyIcon icon="heroicons:users" class="w-4 h-4 text-blue-600" />
+              <IconifyIcon icon="heroicons:users" class="h-4 w-4 text-blue-600" />
               <span>{{ currentOwners.length }} signers</span>
             </div>
             <div class="flex items-center gap-2 text-sm">
-              <IconifyIcon icon="heroicons:shield-check" class="w-4 h-4 text-green-600" />
+              <IconifyIcon icon="heroicons:shield-check" class="h-4 w-4 text-green-600" />
               <span>{{ currentThreshold }} of {{ currentOwners.length }} required</span>
             </div>
           </template>
@@ -53,13 +64,13 @@
         >
           <template #description>
             <div class="flex items-center gap-2 text-sm">
-              <IconifyIcon icon="heroicons:arrow-right" class="w-4 h-4 text-green-600" />
+              <IconifyIcon icon="heroicons:arrow-right" class="h-4 w-4 text-green-600" />
               <span
                 >Updating threshold from {{ currentThreshold }} to {{ formState.threshold }}</span
               >
             </div>
             <div class="flex items-center gap-2 text-sm">
-              <IconifyIcon icon="heroicons:shield-check" class="w-4 h-4 text-blue-600" />
+              <IconifyIcon icon="heroicons:shield-check" class="h-4 w-4 text-blue-600" />
               <span
                 >{{ formState.threshold }} of {{ currentOwners.length }} signatures will be
                 required</span
@@ -69,7 +80,7 @@
         </UAlert>
 
         <!-- Action Buttons -->
-        <div class="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-800">
+        <div class="flex justify-end gap-3 border-t border-gray-200 pt-4 dark:border-gray-800">
           <UButton
             type="button"
             color="neutral"
@@ -96,7 +107,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, watch } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { z } from 'zod'
 import { type Address } from 'viem'
 import { Icon as IconifyIcon } from '@iconify/vue'
@@ -118,6 +129,7 @@ const emit = defineEmits<{
 const toast = useToast()
 
 const { isUpdating, updateOwners } = useSafeOwnerManagement()
+const errorMessage = ref('')
 
 // Computed values
 
@@ -166,10 +178,11 @@ const hasChanges = computed(() => formState.threshold !== props.currentThreshold
 // Methods
 const handleUpdateThreshold = async () => {
   if (!hasChanges.value) {
-    toast.add({ title: 'No changes to apply', color: 'error' })
+    errorMessage.value = 'No changes to apply'
     return
   }
 
+  errorMessage.value = ''
   try {
     const txHash = await updateOwners(props.safeAddress, {
       newThreshold: formState.threshold,
@@ -189,12 +202,13 @@ const handleUpdateThreshold = async () => {
     }
   } catch (error) {
     console.error('Failed to update threshold:', error)
-    toast.add({ title: 'Failed to update threshold', color: 'error' })
+    errorMessage.value = 'Failed to update threshold'
   }
 }
 
 const handleClose = () => {
   formState.threshold = props.currentThreshold
+  errorMessage.value = ''
   emit('update:open', false)
 }
 </script>

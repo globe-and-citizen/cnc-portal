@@ -1,7 +1,7 @@
 <template>
   <div class="flex flex-col gap-4">
-    <div class="flex flex-row justify-between items-center">
-      <div class="flex flex-row gap-2 items-center">
+    <div class="flex flex-row items-center justify-between">
+      <div class="flex flex-row items-center gap-2">
         <select class="select select-bordered w-40">
           <option v-for="type in types" :key="type.value" :value="type.value">
             {{ type.label }}
@@ -34,6 +34,8 @@
           createProposalModal = { mount: false, show: false }
         }
       }"
+      title="Create Proposal"
+      description="Submit a new proposal for team review and voting."
     >
       <template #body>
         <CreateProposalForm

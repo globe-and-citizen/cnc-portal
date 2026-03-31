@@ -2,10 +2,18 @@
   <UModal
     v-model:open="isOpen"
     title="Add Safe Signers"
+    description="Add one or more new signers to the Safe and manage multisig approval rules."
     :close="{ onClick: () => handleClose() }"
     data-test="add-signer-modal"
   >
     <template #body>
+      <UAlert
+        v-if="errorMessage"
+        color="error"
+        variant="soft"
+        :description="errorMessage"
+        class="mb-4"
+      />
       <UForm
         :schema="formSchema"
         :state="formState"
@@ -109,6 +117,7 @@ const emit = defineEmits<{
 }>()
 
 const toast = useToast()
+const errorMessage = ref('')
 
 // Stores and composables
 const { isUpdating: isLoading, updateOwners } = useSafeOwnerManagement()
@@ -178,7 +187,7 @@ watch(
 
     // Remove invalid signers automatically
     if (existingOwners.length > 0) {
-      toast.add({ title: 'Error', description: 'Cannot add existing signers', color: 'error' })
+      errorMessage.value = 'Cannot add existing signers'
       newSigners.value = newSigners.value.filter((signer) => {
         const isExistingOwner = props.currentOwners.some(
           (owner) => owner.toLowerCase() === signer.address?.toLowerCase()
@@ -193,14 +202,11 @@ watch(
 
 const handleAddSigners = async () => {
   if (!canSubmit.value) {
-    toast.add({
-      title: 'Error',
-      description: 'Please add at least one valid signer',
-      color: 'error'
-    })
+    errorMessage.value = 'Please add at least one valid signer'
     return
   }
 
+  errorMessage.value = ''
   try {
     const ownersToAdd = validNewSigners.value.map((signer) => signer.address as string)
 
@@ -220,16 +226,16 @@ const handleAddSigners = async () => {
     }
   } catch (error) {
     console.error('Failed to add signers:', error)
-    const message =
+    errorMessage.value =
       error instanceof Error && error.message
         ? `Failed to add signers: ${error.message}`
         : 'Failed to add signers'
-    toast.add({ title: 'Error', description: message, color: 'error' })
   }
 }
 
 const handleClose = () => {
   newSigners.value = []
+  errorMessage.value = ''
   isOpen.value = false
   emit('close-modal')
 }

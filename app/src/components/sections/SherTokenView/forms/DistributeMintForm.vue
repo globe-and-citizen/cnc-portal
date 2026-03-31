@@ -1,12 +1,9 @@
 <template>
   <div class="flex flex-col gap-4">
-    <h2>Distribute Mint</h2>
-
-    <h3>Please input the amounts to mint to the shareholders</h3>
     <div class="flex flex-col gap-6">
       <div v-for="(shareholder, index) in shareholderWithAmounts" :key="index">
         <h4 class="badge badge-primary">Shareholder {{ index + 1 }}</h4>
-        <label class="input input-bordered flex items-center gap-2 input-md mt-2 w-full">
+        <label class="input input-bordered input-md mt-2 flex w-full items-center gap-2">
           <p>Address</p>
           |
           <UInput
@@ -32,7 +29,7 @@
           :key="index"
           v-if="showDropdown[index]"
         >
-          <ul class="p-2 shadow-sm menu dropdown-content z-1 bg-base-100 rounded-box w-96">
+          <ul class="menu dropdown-content bg-base-100 rounded-box z-1 w-96 p-2 shadow-sm">
             <li v-for="user in usersData?.users" :key="user.address">
               <a
                 data-test="found-user"
@@ -52,13 +49,13 @@
         </div>
         <span
           v-if="rowErrors[index]?.shareholder"
-          class="pl-4 text-red-500 text-sm w-full text-left block"
+          class="block w-full pl-4 text-left text-sm text-red-500"
           data-test="error-message-shareholder"
         >
           {{ rowErrors[index].shareholder }}
         </span>
 
-        <label class="input input-bordered flex items-center gap-2 input-md mt-2 w-full">
+        <label class="input input-bordered input-md mt-2 flex w-full items-center gap-2">
           <p>Amount</p>
           |
           <UInput
@@ -72,7 +69,7 @@
         </label>
         <span
           v-if="rowErrors[index]?.amount"
-          class="pl-4 text-red-500 text-sm w-full text-left block"
+          class="block w-full pl-4 text-left text-sm text-red-500"
           data-test="error-message-amount"
         >
           {{ rowErrors[index].amount }}
@@ -82,7 +79,7 @@
 
     <div class="flex justify-end pt-3">
       <div
-        class="w-6 h-6 cursor-pointer"
+        class="h-6 w-6 cursor-pointer"
         @click="
           () => {
             shareholderWithAmounts.push({ shareholder: '', amount: 0 })
@@ -94,7 +91,7 @@
         <IconifyIcon icon="heroicons-outline:plus-circle" class="size-6 text-green-700" />
       </div>
       <div
-        class="w-6 h-6 cursor-pointer"
+        class="h-6 w-6 cursor-pointer"
         @click="
           () => {
             shareholderWithAmounts.length > 1 && shareholderWithAmounts.pop()

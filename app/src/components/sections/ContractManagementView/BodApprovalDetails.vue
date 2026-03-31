@@ -1,5 +1,5 @@
 <template>
-  <div class="grid grid-cols-2 gap-3 auto-rows-fr">
+  <div class="grid auto-rows-fr grid-cols-2 gap-3">
     <!-- First Card -->
     <BodApprovalDetailsCard :title="type === 'Ownership Transfer Request' ? 'Contract' : 'Amount'">
       <div
@@ -48,7 +48,7 @@
 <script setup lang="ts">
 import UserComponent from '@/components/UserComponent.vue'
 import { useTeamStore } from '@/stores'
-import type { TableRow } from '@/components/TableComponent.vue'
+import type { TableRow } from '@/types/table'
 import { getUser, formatCryptoAmount } from '@/utils'
 import { NETWORK } from '@/constant'
 import BodApprovalDetailsCard from './BodApprovalDetailsCard.vue'

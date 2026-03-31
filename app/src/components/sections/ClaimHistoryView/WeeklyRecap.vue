@@ -1,44 +1,51 @@
 <template>
   <div class="w-full bg-white">
-    <div class="stats shadow-sm w-full">
+    <div class="stats w-full shadow-sm">
       <!-- Total Hours -->
       <div class="stat place-items-center">
         <div class="stat-title">Total Hours</div>
 
         <div class="mb-2">
           <span
-            v-if="props.weeklyClaim && hasOvertimeWage && overtimeHoursWorked > 0"
-            class="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full bg-amber-50 text-amber-800"
+            v-if="isSignedClaim"
+            class="inline-flex items-center gap-1.5 rounded-full bg-sky-50 px-2.5 py-1 text-xs font-medium text-sky-800"
           >
-            <span class="w-1.5 h-1.5 rounded-full bg-amber-600 inline-block" />
-            Overtime reached
+            <span class="inline-block h-1.5 w-1.5 rounded-full bg-sky-600" />
+            Done
+          </span>
+          <span
+            v-else-if="props.weeklyClaim && hasOvertimeWage && overtimeHoursWorked > 0"
+            class="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-800"
+          >
+            <span class="inline-block h-1.5 w-1.5 rounded-full bg-amber-600" />
+            Currently in overtime
           </span>
           <span
             v-else-if="props.weeklyClaim"
-            class="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800"
+            class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-800"
           >
-            <span class="w-1.5 h-1.5 rounded-full bg-emerald-600 inline-block" />
+            <span class="inline-block h-1.5 w-1.5 rounded-full bg-emerald-600" />
             Submitted
           </span>
           <span
             v-else
-            class="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full bg-gray-100 text-gray-600"
+            class="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600"
           >
-            <span class="w-1.5 h-1.5 rounded-full bg-gray-400 inline-block" />
+            <span class="inline-block h-1.5 w-1.5 rounded-full bg-gray-400" />
             Waiting
           </span>
         </div>
 
-        <div class="font-bold text-xl">{{ submittedHours }}h</div>
+        <div class="text-xl font-bold">{{ submittedHours }}h</div>
 
-        <span class="text-sm text-gray-500 text-center" v-if="props.weeklyClaim && hasOvertimeWage">
+        <span class="text-center text-sm text-gray-500" v-if="props.weeklyClaim && hasOvertimeWage">
           of {{ effectiveWage?.maximumHoursPerWeek ?? '-' }} hrs weekly limit &amp;
           {{ effectiveWage?.maximumOvertimeHoursPerWeek ?? '-' }} overtime hrs
         </span>
         <span class="text-sm text-gray-500" v-else-if="props.weeklyClaim">
           of {{ effectiveWage?.maximumHoursPerWeek ?? '-' }} hrs weekly limit
         </span>
-        <span class="text-sm text-gray-500 text-center" v-else-if="hasOvertimeWage">
+        <span class="text-center text-sm text-gray-500" v-else-if="hasOvertimeWage">
           {{ effectiveWage?.maximumHoursPerWeek ?? '-' }} hrs available this week &amp;
           {{ effectiveWage?.maximumOvertimeHoursPerWeek ?? '-' }} overtime hrs available
         </span>
@@ -50,13 +57,10 @@
       <!-- Hourly Rate -->
       <div class="stat place-items-center">
         <div class="stat-title">Hourly Rate</div>
-        <div class="font-bold text-xl text-center">
-          <RatePerHourList
-            :rate-per-hour="effectiveWage?.ratePerHour || []"
-            :currency-symbol="currencyStore.getTokenInfo('native')?.symbol || 'NATIVE'"
-          />
+        <div class="text-center text-xl">
+          <RateDotList :rates="effectiveWage?.ratePerHour || []" :text-class="'text-center'" />
         </div>
-        <div class="text-sm text-gray-500 text-center mt-1">
+        <div class="mt-1 text-center text-sm text-gray-500">
           ≃ ${{ hourlyRateInUserCurrency.toFixed(2) }} {{ currencyStore.localCurrency.code }}/h
         </div>
       </div>
@@ -64,13 +68,14 @@
       <!-- Overtime Rate (only when overtime wage is configured) -->
       <div v-if="hasOvertimeWage" class="stat place-items-center">
         <div class="stat-title">Overtime Rate</div>
-        <div class="font-bold text-xl text-center text-amber-600">
-          <RatePerHourList
-            :rate-per-hour="(effectiveWage?.overtimeRatePerHour as RatePerHour[]) || []"
-            :currency-symbol="currencyStore.getTokenInfo('native')?.symbol || 'NATIVE'"
+        <div class="text-center text-xl">
+          <RateDotList
+            :rates="(effectiveWage?.overtimeRatePerHour as RatePerHour[]) || []"
+            :text-class="'text-center'"
           />
         </div>
-        <div class="text-sm text-gray-500 text-center mt-1">
+
+        <div class="mt-1 text-center text-sm text-gray-500">
           ≃ ${{ overtimeHourlyRateInUserCurrency.toFixed(2) }}
           {{ currencyStore.localCurrency.code }}/h
         </div>
@@ -79,17 +84,13 @@
       <!-- Total Amount -->
       <div class="stat place-items-center">
         <div class="stat-title">Total Amount</div>
-        <div class="font-bold text-xl text-center">
+        <div class="text-center text-xl">
           <template v-if="props.weeklyClaim">
-            <RatePerHourTotalList
-              :rate-per-hour="combinedTokenAmounts"
-              :currency-symbol="currencyStore.getTokenInfo('native')?.symbol || 'NATIVE'"
-              :total-hours="1"
-            />
+            <RateDotList :rates="combinedTokenAmounts" :text-class="'text-center'" />
           </template>
           <span v-else class="text-gray-300">—</span>
         </div>
-        <div class="text-sm text-gray-500 flex gap-2 mt-1 text-center">
+        <div class="mt-1 flex gap-2 text-center text-sm text-gray-500">
           <template v-if="props.weeklyClaim">
             ≃ ${{ totalAmount }} {{ currencyStore.localCurrency.code }}
           </template>
@@ -103,9 +104,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useCurrencyStore } from '@/stores'
-import RatePerHourList from '@/components/RatePerHourList.vue'
-import RatePerHourTotalList from '@/components/RatePerHourTotalList.vue'
 import type { RatePerHour, Wage, WeeklyClaim } from '@/types/cash-remuneration'
+import RateDotList from '@/components/RateDotList.vue'
 
 const props = defineProps<{
   weeklyClaim?: WeeklyClaim
@@ -121,6 +121,10 @@ const hasOvertimeWage = computed(() => {
   const rates = effectiveWage.value?.overtimeRatePerHour
   return Array.isArray(rates) && rates.length > 0
 })
+
+const isSignedClaim = computed(
+  () => props.weeklyClaim?.status === 'signed' || props.weeklyClaim?.status === 'withdrawn'
+)
 
 const regularHoursWorked = computed(() => {
   if (!hasOvertimeWage.value) return submittedHours.value
