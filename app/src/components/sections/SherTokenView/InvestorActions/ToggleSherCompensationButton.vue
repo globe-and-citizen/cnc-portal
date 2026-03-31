@@ -1,7 +1,7 @@
 <template>
   <div v-if="safeDepositRouterAddress">
     <ActionButton
-      :icon="depositsEnabled ? 'heroicons:lock-closed' : 'heroicons:lock-open'"
+      :icon="depositsEnabled ? 'heroicons:lock-open' : 'heroicons:lock-closed'"
       :icon-bg="depositsEnabled ? 'bg-amber-50 dark:bg-amber-950' : 'bg-purple-50 dark:bg-purple-950'"
       :icon-color="depositsEnabled ? 'text-amber-700 dark:text-amber-400' : 'text-purple-700 dark:text-purple-400'"
       :loading="isLoading"
@@ -38,6 +38,7 @@ const connection = useConnection()
 
 // Track if we're in the process of setting safe address before enabling
 const isSettingSafeAddress = ref(false)
+const safeAddressErrorShown = ref(false)
 
 // Get SafeDepositRouter address
 const safeDepositRouterAddress = useSafeDepositRouterAddress()
@@ -94,7 +95,7 @@ const buttonText = computed(() => {
       ? 'Disabling SHER Compensation...'
       : 'Enabling SHER Compensation...'
   }
-  return depositsEnabled.value ? 'Disable SHER Compensation' : 'Enable SHER Compensation'
+  return depositsEnabled.value ? 'Disable SHER \nCompensation' : 'Enable SHER \nCompensation'
 })
 
 // ============================================================================
@@ -197,11 +198,15 @@ async function updateSafeAddress() {
   const safeAddress = teamStore.getContractAddressByType('Safe')
 
   if (!safeAddress) {
-    toast.add({ title: 'Safe address not found', color: 'error' })
+    if (!safeAddressErrorShown.value) {
+      toast.add({ title: 'Safe address not found', color: 'error' })
+      safeAddressErrorShown.value = true
+    }
     isSettingSafeAddress.value = false
     return
   }
 
+  safeAddressErrorShown.value = false
   toast.add({ title: 'Updating Safe address...', color: 'info' })
   await setSafeAddressWrite.executeWrite(safeAddress)
 }
