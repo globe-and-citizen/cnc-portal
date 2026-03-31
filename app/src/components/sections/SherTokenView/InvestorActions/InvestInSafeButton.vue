@@ -9,7 +9,7 @@
       icon-color="text-teal-700 dark:text-teal-400"
       :disabled="!canDeposit || !teamStore.getContractAddressByType('Safe')"
       data-test="invest-in-safe-button"
-      class="border-teal-200 dark:border-teal-800 bg-teal-50/50 dark:bg-teal-950/30 hover:bg-teal-100 dark:hover:bg-teal-900"
+      class="border-teal-200 bg-teal-50/50 hover:bg-teal-100 dark:border-teal-800 dark:bg-teal-950/30 dark:hover:bg-teal-900"
       @click="openModal"
     >
       {{ `Invest &\nGet SHER` }}

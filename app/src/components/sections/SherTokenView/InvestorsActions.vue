@@ -1,13 +1,13 @@
 <template>
   <UCard>
     <template #header>
-   <div class="flex items-center justify-between mt-6">
-      <h3 class="text-lg font-medium text-neutral-900 dark:text-white">Investor actions</h3>
-      <div class="flex items-center gap-2">
-        <span class="">Contract Address :</span>
-        <AddressToolTip :address="investorAddress" v-if="investorAddress" />
+      <div class="mt-6 flex items-center justify-between">
+        <h3 class="text-lg font-medium text-neutral-900 dark:text-white">Investor actions</h3>
+        <div class="flex items-center gap-2">
+          <span class="">Contract Address :</span>
+          <AddressToolTip :address="investorAddress" v-if="investorAddress" />
+        </div>
       </div>
-    </div>
     </template>
 
     <template

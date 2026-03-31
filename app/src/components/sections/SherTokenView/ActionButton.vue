@@ -4,18 +4,18 @@
       v-bind="$attrs"
       variant="outline"
       color="neutral"
-      class="w-full flex-col gap-1.5 h-auto py-3 px-2 border-neutral-200 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-600 active:scale-[0.97] transition-all duration-100 rounded-lg"
+      class="h-auto w-full flex-col gap-1.5 rounded-lg border-neutral-200 px-2 py-3 transition-all duration-100 hover:border-neutral-300 hover:bg-neutral-50 active:scale-[0.97] dark:border-neutral-700 dark:hover:border-neutral-600 dark:hover:bg-neutral-800"
     >
       <template #leading>
         <div
-          class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
+          class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full"
           :class="iconBg"
         >
-          <UIcon :name="icon" class="w-4 h-4" :class="iconColor" />
+          <UIcon :name="icon" class="h-4 w-4" :class="iconColor" />
         </div>
       </template>
       <span
-        class="text-[11px] font-medium text-center leading-tight text-neutral-700 dark:text-neutral-300 whitespace-pre-line"
+        class="text-center text-[11px] leading-tight font-medium whitespace-pre-line text-neutral-700 dark:text-neutral-300"
       >
         <slot />
       </span>
@@ -26,7 +26,7 @@
       color="primary"
       variant="solid"
       size="xs"
-      class="absolute top-1.5 right-1.5 pointer-events-none"
+      class="pointer-events-none absolute top-1.5 right-1.5"
     />
   </div>
 </template>

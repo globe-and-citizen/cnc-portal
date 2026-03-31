@@ -2,8 +2,14 @@
   <div v-if="safeDepositRouterAddress">
     <ActionButton
       :icon="depositsEnabled ? 'heroicons:lock-open' : 'heroicons:lock-closed'"
-      :icon-bg="depositsEnabled ? 'bg-amber-50 dark:bg-amber-950' : 'bg-purple-50 dark:bg-purple-950'"
-      :icon-color="depositsEnabled ? 'text-amber-700 dark:text-amber-400' : 'text-purple-700 dark:text-purple-400'"
+      :icon-bg="
+        depositsEnabled ? 'bg-amber-50 dark:bg-amber-950' : 'bg-purple-50 dark:bg-purple-950'
+      "
+      :icon-color="
+        depositsEnabled
+          ? 'text-amber-700 dark:text-amber-400'
+          : 'text-purple-700 dark:text-purple-400'
+      "
       :loading="isLoading"
       :disabled="!canManageDeposits || isLoading"
       data-test="toggle-sher-compensation-button"
