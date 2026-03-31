@@ -4,21 +4,25 @@
       v-bind="$attrs"
       variant="outline"
       color="neutral"
-      class="h-auto w-full flex-col gap-1.5 rounded-lg border-neutral-200 px-2 py-3 transition-all duration-100 hover:border-neutral-300 hover:bg-neutral-50 active:scale-[0.97] dark:border-neutral-700 dark:hover:border-neutral-600 dark:hover:bg-neutral-800"
+      class="group h-auto min-h-10 w-full items-center justify-center rounded-lg border px-2.5 py-2 text-left shadow-xs transition-all duration-150 hover:-translate-y-0.5 hover:shadow-sm active:translate-y-0 active:scale-[0.99] disabled:translate-y-0 disabled:shadow-none"
+      :class="toneClass"
     >
-      <template #leading>
+      <div class="flex w-full items-center gap-2.5">
         <div
-          class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full"
+          class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-transparent transition-transform duration-150 group-hover:scale-105"
           :class="iconBg"
         >
-          <UIcon :name="icon" class="h-4 w-4" :class="iconColor" />
+          <UIcon :name="icon" class="h-3.5 w-3.5" :class="iconColor" />
         </div>
-      </template>
-      <span
-        class="text-center text-[11px] leading-tight font-medium whitespace-pre-line text-neutral-700 dark:text-neutral-300"
-      >
-        <slot />
-      </span>
+
+        <div class="min-w-0 flex-1">
+          <p
+            class="line-clamp-2 text-sm leading-4 font-semibold text-neutral-900 dark:text-neutral-100"
+          >
+            {{ title }}
+          </p>
+        </div>
+      </div>
     </UButton>
     <UBadge
       v-if="badge"
@@ -36,6 +40,8 @@ defineProps<{
   icon: string
   iconBg: string
   iconColor: string
+  title: string
+  toneClass: string
   badge?: string
 }>()
 </script>
