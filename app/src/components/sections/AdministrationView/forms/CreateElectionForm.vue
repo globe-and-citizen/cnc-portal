@@ -39,7 +39,12 @@
               <UCalendar
                 :model-value="state.startDate ? dateToCalendarDate(state.startDate) : undefined"
                 :min-value="dateToCalendarDate(minStartDate)"
-                @update:model-value="(val) => { state.startDate = (val as CalendarDate).toDate(getLocalTimeZone()); startDateOpen = false }"
+                @update:model-value="
+                  (val) => {
+                    state.startDate = (val as CalendarDate).toDate(getLocalTimeZone())
+                    startDateOpen = false
+                  }
+                "
               />
             </template>
           </UPopover>
@@ -61,7 +66,12 @@
               <UCalendar
                 :model-value="state.endDate ? dateToCalendarDate(state.endDate) : undefined"
                 :min-value="today(getLocalTimeZone())"
-                @update:model-value="(val) => { state.endDate = (val as CalendarDate).toDate(getLocalTimeZone()); endDateOpen = false }"
+                @update:model-value="
+                  (val) => {
+                    state.endDate = (val as CalendarDate).toDate(getLocalTimeZone())
+                    endDateOpen = false
+                  }
+                "
               />
             </template>
           </UPopover>
