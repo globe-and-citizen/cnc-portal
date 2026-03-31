@@ -27,24 +27,44 @@
         </UFormField>
 
         <div class="mt-4 mb-4">
-          <label class="input input-bordered input-md mt-2 flex w-full items-center gap-2">
-            <span class="w-24">Start Date</span>
-            <div class="grow" data-test="date-picker">
-              <VueDatePicker v-model="state.startDate" :min-date="minStartDate" auto-apply />
-            </div>
-          </label>
+          <label class="text-sm font-medium">Start Date</label>
+          <UPopover v-model:open="startDateOpen" class="mt-2 block" data-test="date-picker">
+            <UButton
+              variant="outline"
+              color="neutral"
+              class="w-full justify-start font-normal"
+              :label="state.startDate ? formatDate(state.startDate) : 'mm/dd/yyyy'"
+            />
+            <template #content>
+              <UCalendar
+                :model-value="state.startDate ? dateToCalendarDate(state.startDate) : undefined"
+                :min-value="dateToCalendarDate(minStartDate)"
+                @update:model-value="(val) => { state.startDate = (val as CalendarDate).toDate(getLocalTimeZone()); startDateOpen = false }"
+              />
+            </template>
+          </UPopover>
           <span v-if="errors.startDate" class="pl-4 text-sm text-red-500">
             {{ errors.startDate }}
           </span>
         </div>
 
         <div class="mb-4">
-          <label class="input input-bordered input-md mt-2 flex w-full items-center gap-2">
-            <span class="w-24">End Date</span>
-            <div class="grow" data-test="date-picker">
-              <VueDatePicker v-model="state.endDate" :min-date="new Date()" auto-apply />
-            </div>
-          </label>
+          <label class="text-sm font-medium">End Date</label>
+          <UPopover v-model:open="endDateOpen" class="mt-2 block" data-test="date-picker">
+            <UButton
+              variant="outline"
+              color="neutral"
+              class="w-full justify-start font-normal"
+              :label="state.endDate ? formatDate(state.endDate) : 'mm/dd/yyyy'"
+            />
+            <template #content>
+              <UCalendar
+                :model-value="state.endDate ? dateToCalendarDate(state.endDate) : undefined"
+                :min-value="today(getLocalTimeZone())"
+                @update:model-value="(val) => { state.endDate = (val as CalendarDate).toDate(getLocalTimeZone()); endDateOpen = false }"
+              />
+            </template>
+          </UPopover>
           <span v-if="errors.endDate" class="pl-4 text-sm text-red-500">
             {{ errors.endDate }}
           </span>
@@ -81,11 +101,24 @@ import type { OldProposal, User } from '@/types'
 import { reactive, ref, onMounted, onUnmounted } from 'vue'
 import { z } from 'zod'
 import MultiSelectMemberInput from '@/components/utils/MultiSelectMemberInput.vue'
-import VueDatePicker from '@vuepic/vue-datepicker'
+import { CalendarDate, getLocalTimeZone, today } from '@internationalized/date'
 
 // Dev = 2 minutes, Prod = 1 hour
 const delay = 2 * 60 * 1000
 const minStartDate = new Date(new Date().getTime() + delay)
+
+const startDateOpen = ref(false)
+const endDateOpen = ref(false)
+
+const formatDate = (date: Date): string => {
+  const mm = (date.getMonth() + 1).toString().padStart(2, '0')
+  const dd = date.getDate().toString().padStart(2, '0')
+  return `${mm}/${dd}/${date.getFullYear()}`
+}
+
+const dateToCalendarDate = (date: Date): CalendarDate => {
+  return new CalendarDate(date.getFullYear(), date.getMonth() + 1, date.getDate())
+}
 
 const emits = defineEmits(['createProposal'])
 defineProps<{ isLoading: boolean }>()

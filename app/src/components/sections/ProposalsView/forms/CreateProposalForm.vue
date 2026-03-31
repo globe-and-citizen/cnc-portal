@@ -26,22 +26,38 @@
 
     <div class="flex flex-row items-start justify-between gap-4">
       <UFormField name="startDate" label="Start Date" class="flex-1">
-        <VueDatePicker
-          v-model="state.startDate"
-          placeholder="mm/dd/yyyy"
-          :min-date="new Date()"
-          auto-apply
-          :enable-time-picker="false"
-        />
+        <UPopover v-model:open="startDateOpen">
+          <UButton
+            variant="outline"
+            color="neutral"
+            class="w-full justify-start font-normal"
+            :label="state.startDate ? formatDate(state.startDate) : 'mm/dd/yyyy'"
+          />
+          <template #content>
+            <UCalendar
+              :model-value="state.startDate ? dateToCalendarDate(state.startDate) : undefined"
+              :min-value="today(getLocalTimeZone())"
+              @update:model-value="(val) => { state.startDate = (val as CalendarDate).toDate(getLocalTimeZone()); startDateOpen = false }"
+            />
+          </template>
+        </UPopover>
       </UFormField>
       <UFormField name="endDate" label="End Date" class="flex-1">
-        <VueDatePicker
-          v-model="state.endDate"
-          placeholder="mm/dd/yyyy"
-          :min-date="state.startDate || new Date()"
-          auto-apply
-          :enable-time-picker="false"
-        />
+        <UPopover v-model:open="endDateOpen">
+          <UButton
+            variant="outline"
+            color="neutral"
+            class="w-full justify-start font-normal"
+            :label="state.endDate ? formatDate(state.endDate) : 'mm/dd/yyyy'"
+          />
+          <template #content>
+            <UCalendar
+              :model-value="state.endDate ? dateToCalendarDate(state.endDate) : undefined"
+              :min-value="state.startDate ? dateToCalendarDate(state.startDate) : today(getLocalTimeZone())"
+              @update:model-value="(val) => { state.endDate = (val as CalendarDate).toDate(getLocalTimeZone()); endDateOpen = false }"
+            />
+          </template>
+        </UPopover>
       </UFormField>
     </div>
 
@@ -60,8 +76,8 @@
 </template>
 
 <script setup lang="ts">
-import VueDatePicker from '@vuepic/vue-datepicker'
-import { reactive, computed, watch } from 'vue'
+import { CalendarDate, getLocalTimeZone, today } from '@internationalized/date'
+import { reactive, ref, computed, watch } from 'vue'
 import { z } from 'zod'
 import { useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
 import { useTeamStore } from '@/stores'
@@ -72,6 +88,9 @@ const emit = defineEmits(['closeModal', 'proposal-created'])
 
 const teamStore = useTeamStore()
 const toast = useToast()
+
+const startDateOpen = ref(false)
+const endDateOpen = ref(false)
 
 const state = reactive({
   title: '',
@@ -129,6 +148,16 @@ const {
 } = useWaitForTransactionReceipt({ hash: txHash })
 
 const dateToTimestamp = (date: Date): number => Math.floor(date.getTime() / 1000)
+
+const formatDate = (date: Date): string => {
+  const mm = (date.getMonth() + 1).toString().padStart(2, '0')
+  const dd = date.getDate().toString().padStart(2, '0')
+  return `${mm}/${dd}/${date.getFullYear()}`
+}
+
+const dateToCalendarDate = (date: Date): CalendarDate => {
+  return new CalendarDate(date.getFullYear(), date.getMonth() + 1, date.getDate())
+}
 
 const handleSubmit = async () => {
   try {
