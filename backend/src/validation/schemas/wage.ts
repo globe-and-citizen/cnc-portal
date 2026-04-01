@@ -49,10 +49,7 @@ export const setWageBodySchema = z
       });
     }
 
-    if (
-      data.maximumOvertimeHoursPerWeek != null &&
-      data.maximumOvertimeHoursPerWeek > 20
-    ) {
+    if (data.maximumOvertimeHoursPerWeek != null && data.maximumOvertimeHoursPerWeek > 20) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['maximumOvertimeHoursPerWeek'],
