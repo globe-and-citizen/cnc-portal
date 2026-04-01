@@ -162,8 +162,6 @@ const {
   error
 } = useGetSafeTransactionsQuery({ pathParams: { safeAddress: computed(() => props.address) } })
 
-
-
 const { data: safeInfo } = useGetSafeInfoQuery({
   pathParams: { safeAddress: computed(() => props.address) }
 })
@@ -185,7 +183,6 @@ const isConnectedUserOwner = computed(() => {
   )
 })
 
-
 // Simplified filtering - directly filter the original transactions
 const filteredTransactions = computed(() => {
   if (!transactions.value) return []
@@ -204,7 +201,6 @@ const filteredTransactions = computed(() => {
 watch(selectedStatus, () => {
   currentPage.value = 1
 })
-
 
 // Reset pagination when filtered data changes significantly
 watch(

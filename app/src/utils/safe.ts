@@ -119,7 +119,6 @@ export const formatSafeTransactionValue = (
   data?: DecodedCall,
   transactionTo?: string
 ): string => {
-
   const noValuePlaceholder = '...'
   const normalizedMethod = data?.method?.toLowerCase()
   const isTokenTransferMethod = normalizedMethod === 'transfer'

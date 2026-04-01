@@ -13,7 +13,6 @@
         </div>
 
         <div class="space-y-2 rounded-lg border p-3">
-          
           <div
             v-for="(detail, detailIndex) in displayDetails"
             :key="`${detail.label}-${detailIndex}`"
@@ -23,7 +22,7 @@
             <span v-if="detail.type === 'address'" class="font-mono text-sm break-all">
               <AddressToolTip :address="detail.value" slice />
             </span>
-            <span v-else class="font-medium text-sm break-all">{{ detail.value }}</span>
+            <span v-else class="text-sm font-medium break-all">{{ detail.value }}</span>
           </div>
         </div>
 
@@ -168,17 +167,16 @@ const methodDetails = computed<DetailItem[]>(() => {
         }
       ]
     }
-    case 'changethreshold':
-      {
-        const newThreshold = findParameterValue(['threshold', '_threshold'], 0)
-        return [
-          {
-            label: 'Required Approvals Change',
-            value: formatThresholdChange(newThreshold),
-            type: 'text'
-          }
-        ]
-      }
+    case 'changethreshold': {
+      const newThreshold = findParameterValue(['threshold', '_threshold'], 0)
+      return [
+        {
+          label: 'Required Approvals Change',
+          value: formatThresholdChange(newThreshold),
+          type: 'text'
+        }
+      ]
+    }
     case 'enablemodule':
     case 'disablemodule': {
       const moduleAddress =
@@ -242,7 +240,9 @@ const displayDetails = computed<DetailItem[]>(() => {
     },
     {
       label: 'Executed',
-      value: transaction.executionDate ? formatDateShort(transaction.executionDate) : 'Not executed',
+      value: transaction.executionDate
+        ? formatDateShort(transaction.executionDate)
+        : 'Not executed',
       type: 'text'
     }
   ]
