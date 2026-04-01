@@ -127,7 +127,7 @@ describe('Notification Controller', () => {
       const response = await request(app).put('/invalid');
 
       expect(response.status).toBe(400);
-      expect(response.body.message).toBe('Notification ID invalid format');
+      expect(response.body.message).toBe('Invalid path parameters - id: Must be a number');
     });
 
     it('should return 403 if user is not authorized', async () => {
