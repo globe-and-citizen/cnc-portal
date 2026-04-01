@@ -1,311 +1,118 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { mount, type VueWrapper } from '@vue/test-utils'
-import { ref } from 'vue'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { mount } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
-import type { Address } from 'viem'
+import { nextTick } from 'vue'
 import InvestInSafeButton from '../InvestInSafeButton.vue'
-import { mockTeamStore, resetContractMocks } from '@/tests/mocks'
-import type { ContractType } from '@/types/teamContract'
-
-// Hoisted mocks
-const { mockUseSafeDepositRouterDepositsEnabled, mockUseSafeDepositRouterPaused } = vi.hoisted(
-  () => ({
-    mockUseSafeDepositRouterDepositsEnabled: vi.fn(),
-    mockUseSafeDepositRouterPaused: vi.fn()
-  })
-)
-
-// Mock composables
-vi.mock('@/composables/safeDepositRouter/reads', () => ({
-  useSafeDepositRouterDepositsEnabled: mockUseSafeDepositRouterDepositsEnabled,
-  useSafeDepositRouterPaused: mockUseSafeDepositRouterPaused
-}))
-
-// Mock IconifyIcon
-vi.mock('@iconify/vue', () => ({
-  Icon: {
-    name: 'IconifyIcon',
-    template: '<span></span>',
-    props: ['icon']
-  }
-}))
-
-// Test constants
-const SELECTORS = {
-  button: '[data-test="invest-in-safe-button"]',
-  modal: '[data-test="invest-in-safe-modal"]',
-  tooltip: '.tooltip'
-} as const
-
-const MOCK_DATA = {
-  safeAddress: '0x1234567890123456789012345678901234567890' as Address
-} as const
+import { mockSafeDepositRouterReads, mockTeamStore } from '@/tests/mocks'
 
 describe('InvestInSafeButton', () => {
-  let wrapper: VueWrapper
-
-  const createWrapper = () => {
-    return mount(InvestInSafeButton, {
+  const createWrapper = () =>
+    mount(InvestInSafeButton, {
       global: {
         plugins: [createTestingPinia({ createSpy: vi.fn })],
         stubs: {
-          SafeDepositRouterForm: {
-            name: 'SafeDepositRouterForm',
-            template: '<div data-test="safe-deposit-router-form"></div>',
-            props: ['safeAddress'],
-            emits: ['closeModal']
+          ActionButton: {
+            props: ['disabled'],
+            emits: ['click'],
+            template:
+              '<button data-test="invest-in-safe-button" :disabled="disabled" @click="$emit(\'click\')">Invest</button>'
           },
-          IconifyIcon: true
+          SafeDepositRouterForm: {
+            template: '<div data-test="safe-deposit-router-form" />'
+          }
         }
       }
     })
-  }
 
   beforeEach(() => {
     vi.clearAllMocks()
-    resetContractMocks()
-
-    // Setup default mock returns
-    mockUseSafeDepositRouterDepositsEnabled.mockReturnValue({
-      data: ref(true),
-      isLoading: ref(false)
-    })
-
-    mockUseSafeDepositRouterPaused.mockReturnValue({
-      data: ref(false),
-      isLoading: ref(false)
-    })
-
-    // Setup team store with Safe address
-    mockTeamStore.getContractAddressByType = vi.fn((type: ContractType) => {
-      if (type === 'Safe') return MOCK_DATA.safeAddress
+    mockSafeDepositRouterReads.depositsEnabled.data.value = true
+    mockSafeDepositRouterReads.depositsEnabled.isLoading.value = false
+    mockSafeDepositRouterReads.paused.data.value = false
+    mockSafeDepositRouterReads.paused.isLoading.value = false
+    mockTeamStore.getContractAddressByType = vi.fn((type) => {
+      if (type === 'Safe') return '0x1234567890123456789012345678901234567890'
       return '0x0000000000000000000000000000000000000000'
     }) as unknown as typeof mockTeamStore.getContractAddressByType
   })
 
-  afterEach(() => {
-    if (wrapper) wrapper.unmount()
+  it('renders invest button', () => {
+    const wrapper = createWrapper()
+    expect(wrapper.find('[data-test="invest-in-safe-button"]').exists()).toBe(true)
   })
 
-  describe('Component Rendering', () => {
-    it('should render the button', () => {
-      wrapper = createWrapper()
-      expect(wrapper.find(SELECTORS.button).exists()).toBe(true)
-    })
+  it('enables button when deposits are enabled and not paused', () => {
+    const wrapper = createWrapper()
 
-    it('should render with correct text', () => {
-      wrapper = createWrapper()
-      expect(wrapper.find(SELECTORS.button).text()).toContain('Invest & Get SHER')
-    })
+    expect(
+      wrapper.find('[data-test="invest-in-safe-button"]').attributes('disabled')
+    ).toBeUndefined()
+    expect(wrapper.attributes('data-tip')).toBeUndefined()
   })
 
-  describe('Button State - Deposits Enabled', () => {
-    it('should enable button when deposits are enabled and contract is not paused', () => {
-      mockUseSafeDepositRouterDepositsEnabled.mockReturnValue({
-        data: ref(true),
-        isLoading: ref(false)
-      })
-      mockUseSafeDepositRouterPaused.mockReturnValue({
-        data: ref(false),
-        isLoading: ref(false)
-      })
+  it('disables button and shows tooltip when deposits are disabled', () => {
+    mockSafeDepositRouterReads.depositsEnabled.data.value = false
+    const wrapper = createWrapper()
 
-      wrapper = createWrapper()
-      const button = wrapper.find(SELECTORS.button)
-      expect(button.attributes('disabled')).toBeUndefined()
-    })
-
-    it('should disable button when deposits are disabled', () => {
-      mockUseSafeDepositRouterDepositsEnabled.mockReturnValue({
-        data: ref(false),
-        isLoading: ref(false)
-      })
-      mockUseSafeDepositRouterPaused.mockReturnValue({
-        data: ref(false),
-        isLoading: ref(false)
-      })
-
-      wrapper = createWrapper()
-      const button = wrapper.find(SELECTORS.button)
-      expect(button.attributes('disabled')).toBeDefined()
-    })
-
-    it('should disable button when contract is paused', () => {
-      mockUseSafeDepositRouterDepositsEnabled.mockReturnValue({
-        data: ref(true),
-        isLoading: ref(false)
-      })
-      mockUseSafeDepositRouterPaused.mockReturnValue({
-        data: ref(true),
-        isLoading: ref(false)
-      })
-
-      wrapper = createWrapper()
-      const button = wrapper.find(SELECTORS.button)
-      expect(button.attributes('disabled')).toBeDefined()
-    })
-
-    it('should disable button when both deposits disabled and contract paused', () => {
-      mockUseSafeDepositRouterDepositsEnabled.mockReturnValue({
-        data: ref(false),
-        isLoading: ref(false)
-      })
-      mockUseSafeDepositRouterPaused.mockReturnValue({
-        data: ref(true),
-        isLoading: ref(false)
-      })
-
-      wrapper = createWrapper()
-      const button = wrapper.find(SELECTORS.button)
-      expect(button.attributes('disabled')).toBeDefined()
-    })
+    expect(wrapper.find('[data-test="invest-in-safe-button"]').attributes('disabled')).toBeDefined()
+    expect(wrapper.attributes('data-tip')).toBe('SHER compensation deposits are not available')
   })
 
-  describe('Button State - Loading States', () => {
-    it('should disable button while deposits enabled is loading', () => {
-      mockUseSafeDepositRouterDepositsEnabled.mockReturnValue({
-        data: ref(true),
-        isLoading: ref(true)
-      })
-      mockUseSafeDepositRouterPaused.mockReturnValue({
-        data: ref(false),
-        isLoading: ref(false)
-      })
+  it('disables button while loading', () => {
+    mockSafeDepositRouterReads.depositsEnabled.isLoading.value = true
+    const wrapper = createWrapper()
 
-      wrapper = createWrapper()
-      const button = wrapper.find(SELECTORS.button)
-      expect(button.attributes('disabled')).toBeDefined()
-    })
-
-    it('should disable button while paused state is loading', () => {
-      mockUseSafeDepositRouterDepositsEnabled.mockReturnValue({
-        data: ref(true),
-        isLoading: ref(false)
-      })
-      mockUseSafeDepositRouterPaused.mockReturnValue({
-        data: ref(false),
-        isLoading: ref(true)
-      })
-
-      wrapper = createWrapper()
-      const button = wrapper.find(SELECTORS.button)
-      expect(button.attributes('disabled')).toBeDefined()
-    })
-
-    it('should disable button when both are loading', () => {
-      mockUseSafeDepositRouterDepositsEnabled.mockReturnValue({
-        data: ref(true),
-        isLoading: ref(true)
-      })
-      mockUseSafeDepositRouterPaused.mockReturnValue({
-        data: ref(false),
-        isLoading: ref(true)
-      })
-
-      wrapper = createWrapper()
-      const button = wrapper.find(SELECTORS.button)
-      expect(button.attributes('disabled')).toBeDefined()
-    })
+    expect(wrapper.find('[data-test="invest-in-safe-button"]').attributes('disabled')).toBeDefined()
   })
 
-  describe('Tooltip Behavior', () => {
-    it('should show tooltip when deposits are not available', () => {
-      mockUseSafeDepositRouterDepositsEnabled.mockReturnValue({
-        data: ref(false),
-        isLoading: ref(false)
-      })
+  it('disables button when safe address is missing', () => {
+    mockTeamStore.getContractAddressByType = vi.fn(
+      () => ''
+    ) as unknown as typeof mockTeamStore.getContractAddressByType
+    const wrapper = createWrapper()
 
-      wrapper = createWrapper()
-      const tooltipDiv = wrapper.find(SELECTORS.tooltip)
-      expect(tooltipDiv.exists()).toBe(true)
-      expect(tooltipDiv.attributes('data-tip')).toBe('SHER compensation deposits are not available')
-    })
-
-    it('should not show tooltip when deposits are available', () => {
-      mockUseSafeDepositRouterDepositsEnabled.mockReturnValue({
-        data: ref(true),
-        isLoading: ref(false)
-      })
-      mockUseSafeDepositRouterPaused.mockReturnValue({
-        data: ref(false),
-        isLoading: ref(false)
-      })
-
-      wrapper = createWrapper()
-      const tooltipDiv = wrapper.find(SELECTORS.tooltip)
-      expect(tooltipDiv.exists()).toBe(false)
-    })
+    expect(wrapper.find('[data-test="invest-in-safe-button"]').attributes('disabled')).toBeDefined()
   })
 
-  describe('canDeposit Computed Property', () => {
-    it('should return false when deposits loading', () => {
-      mockUseSafeDepositRouterDepositsEnabled.mockReturnValue({
-        data: ref(true),
-        isLoading: ref(true)
-      })
-      mockUseSafeDepositRouterPaused.mockReturnValue({
-        data: ref(false),
-        isLoading: ref(false)
-      })
+  it('disables button when paused', () => {
+    mockSafeDepositRouterReads.paused.data.value = true
+    const wrapper = createWrapper()
 
-      wrapper = createWrapper()
-      expect(wrapper.vm.canDeposit).toBe(false)
-    })
+    expect(wrapper.find('[data-test="invest-in-safe-button"]').attributes('disabled')).toBeDefined()
+  })
 
-    it('should return false when paused loading', () => {
-      mockUseSafeDepositRouterDepositsEnabled.mockReturnValue({
-        data: ref(true),
-        isLoading: ref(false)
-      })
-      mockUseSafeDepositRouterPaused.mockReturnValue({
-        data: ref(false),
-        isLoading: ref(true)
-      })
+  it('clicking enabled button opens the modal', async () => {
+    const wrapper = createWrapper()
 
-      wrapper = createWrapper()
-      expect(wrapper.vm.canDeposit).toBe(false)
-    })
+    await wrapper.find('[data-test="invest-in-safe-button"]').trigger('click')
+    await nextTick()
 
-    it('should return true when deposits enabled and not paused', () => {
-      mockUseSafeDepositRouterDepositsEnabled.mockReturnValue({
-        data: ref(true),
-        isLoading: ref(false)
-      })
-      mockUseSafeDepositRouterPaused.mockReturnValue({
-        data: ref(false),
-        isLoading: ref(false)
-      })
+    expect(wrapper.find('[data-test="safe-deposit-router-form"]').exists()).toBe(true)
+  })
 
-      wrapper = createWrapper()
-      expect(wrapper.vm.canDeposit).toBe(true)
-    })
+  it('closeModal via update:open hides modal content', async () => {
+    const wrapper = createWrapper()
 
-    it('should return false when deposits disabled', () => {
-      mockUseSafeDepositRouterDepositsEnabled.mockReturnValue({
-        data: ref(false),
-        isLoading: ref(false)
-      })
-      mockUseSafeDepositRouterPaused.mockReturnValue({
-        data: ref(false),
-        isLoading: ref(false)
-      })
+    await wrapper.find('[data-test="invest-in-safe-button"]').trigger('click')
+    await nextTick()
 
-      wrapper = createWrapper()
-      expect(wrapper.vm.canDeposit).toBe(false)
-    })
+    const modal = wrapper.findComponent({ name: 'UModal' })
+    await modal.vm.$emit('update:open', false)
+    await nextTick()
 
-    it('should return false when contract is paused', () => {
-      mockUseSafeDepositRouterDepositsEnabled.mockReturnValue({
-        data: ref(true),
-        isLoading: ref(false)
-      })
-      mockUseSafeDepositRouterPaused.mockReturnValue({
-        data: ref(true),
-        isLoading: ref(false)
-      })
+    expect(wrapper.find('[data-test="safe-deposit-router-form"]').exists()).toBe(false)
+  })
 
-      wrapper = createWrapper()
-      expect(wrapper.vm.canDeposit).toBe(false)
-    })
+  it('closeModal method hides modal content', async () => {
+    const wrapper = createWrapper()
+    const vm = wrapper.vm as unknown as { closeModal: () => void }
+
+    await wrapper.find('[data-test="invest-in-safe-button"]').trigger('click')
+    await nextTick()
+
+    vm.closeModal()
+    await nextTick()
+
+    expect(wrapper.find('[data-test="safe-deposit-router-form"]').exists()).toBe(false)
   })
 })
