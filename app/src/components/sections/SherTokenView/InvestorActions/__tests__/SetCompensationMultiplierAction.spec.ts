@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, beforeAll, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
 import { nextTick } from 'vue'
-import SetCompensationMultiplierButton from '../SetCompensationMultiplierButton.vue'
+import SetCompensationMultiplierAction from '../SetCompensationMultiplierAction.vue'
 import {
   mockParseError,
   mockSafeDepositRouterAddress,
@@ -12,12 +12,12 @@ import {
   resetSafeDepositRouterMocks
 } from '@/tests/mocks'
 
-describe('SetCompensationMultiplierButton.vue', () => {
+describe('SetCompensationMultiplierAction.vue', () => {
   const showModalMock = vi.fn()
   const closeModalMock = vi.fn()
 
   const createWrapper = () =>
-    mount(SetCompensationMultiplierButton, {
+    mount(SetCompensationMultiplierAction, {
       global: {
         plugins: [createTestingPinia({ createSpy: vi.fn })]
       }

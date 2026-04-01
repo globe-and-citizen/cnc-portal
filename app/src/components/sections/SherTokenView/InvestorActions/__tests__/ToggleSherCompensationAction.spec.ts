@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import { createTestingPinia } from '@pinia/testing'
-import ToggleSherCompensationButton from '../ToggleSherCompensationButton.vue'
+import ToggleSherCompensationAction from '../ToggleSherCompensationAction.vue'
 import {
   mockParseError,
   mockSafeDepositRouterAddress,
@@ -13,9 +13,9 @@ import {
   resetSafeDepositRouterMocks
 } from '@/tests/mocks'
 
-describe('ToggleSherCompensationButton.vue', () => {
+describe('ToggleSherCompensationAction.vue', () => {
   const createWrapper = () =>
-    mount(ToggleSherCompensationButton, {
+    mount(ToggleSherCompensationAction, {
       global: {
         plugins: [createTestingPinia({ createSpy: vi.fn })]
       }

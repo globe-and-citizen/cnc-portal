@@ -2,12 +2,12 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
 import { nextTick } from 'vue'
-import InvestInSafeButton from '../InvestInSafeButton.vue'
+import InvestInSafeAction from '../InvestInSafeAction.vue'
 import { mockSafeDepositRouterReads, mockTeamStore } from '@/tests/mocks'
 
-describe('InvestInSafeButton', () => {
+describe('InvestInSafeAction', () => {
   const createWrapper = () =>
-    mount(InvestInSafeButton, {
+    mount(InvestInSafeAction, {
       global: {
         plugins: [createTestingPinia({ createSpy: vi.fn })],
         stubs: {
