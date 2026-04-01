@@ -5,7 +5,7 @@ import CreateVesting from '@/components/sections/VestingView/forms/CreateVesting
 import SelectMemberInput from '@/components/utils/SelectMemberInput.vue'
 import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
-import { parseEther, parseUnits } from 'viem'
+import { parseUnits } from 'viem'
 import { VESTING_ADDRESS } from '@/constant'
 import { INVESTOR_ABI } from '@/artifacts/abi/investors'
 import { mockUseContractBalance } from '@/tests/mocks/composables.mock'
@@ -137,7 +137,7 @@ describe('CreateVesting.vue', () => {
     memberAddr = '0x120000000000000000000000000000000000dead'
   ) => {
     const selectMemberInput = wrapper.findComponent(SelectMemberInput)
-    await selectMemberInput.setValue({
+    selectMemberInput.vm.$emit('selectMember', {
       name: 'Test User',
       address: memberAddr
     })
@@ -207,7 +207,7 @@ describe('CreateVesting.vue', () => {
         address: '0x000000000000000000000000000000000000beef',
         abi: INVESTOR_ABI,
         functionName: 'approve',
-        args: [VESTING_ADDRESS, parseEther('5')]
+        args: [VESTING_ADDRESS, parseUnits('5', 6)]
       })
 
       mockWaitForReceipt.isLoading.value = true

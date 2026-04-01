@@ -4,13 +4,22 @@
     <div class="mt-4 gap-2">
       <label class="flex-col items-center gap-2">
         <div class="mb-3 flex w-32">Choose Member</div>
+        <div v-if="member.address" class="h-20">
+          <UserComponent
+            class="bg-base-200 grow rounded-lg p-4"
+            :user="member"
+            data-test="selected-member"
+          />
+        </div>
         <div class="flex w-full grow">
           <SelectMemberInput
-            v-model="member"
             data-test="member"
             class="w-full text-xs"
             :hidden-members="[]"
             :disable-team-members="false"
+            showOnFocus
+            only-team-members
+            @selectMember="handleSelectMember"
           />
         </div>
       </label>
@@ -102,13 +111,15 @@ import { differenceInCalendarDays, differenceInMonths, differenceInYears } from 
 import { useWaitForTransactionReceipt, useWriteContract, useReadContract } from '@wagmi/vue'
 import { VESTING_ABI } from '@/artifacts/abi/vesting'
 import { VESTING_ADDRESS } from '@/constant'
-import { parseEther, type Address, formatUnits, parseUnits } from 'viem'
+import { type Address, formatUnits, parseUnits } from 'viem'
 import SelectMemberInput from '@/components/utils/SelectMemberInput.vue'
+import UserComponent from '@/components/UserComponent.vue'
 import VestingSummary from '@/components/sections/VestingView/VestingSummary.vue'
 import { useTeamStore } from '@/stores'
 import Datepicker from '@vuepic/vue-datepicker'
 import '@vuepic/vue-datepicker/dist/main.css'
 import { type VestingCreation } from '@/types/vesting'
+import type { User } from '@/types'
 import { useContractBalance } from '@/composables/useContractBalance'
 import { INVESTOR_ABI } from '@/artifacts/abi/investors'
 import { useUserDataStore } from '@/stores'
@@ -121,6 +132,8 @@ const props = defineProps<{
   tokenAddress: string
   reloadKey: number
 }>()
+
+const VESTING_TOKEN_DECIMALS = 6
 
 const userDataStore = useUserDataStore()
 const { balances } = useContractBalance(userDataStore.address as Address)
@@ -138,6 +151,46 @@ const tokenBalance = computed(() => {
   return balances.value.find(
     (b) => b.token.address?.toLowerCase() === props.tokenAddress.toLowerCase()
   )
+})
+
+const vestingTokenAddress = computed(() => props.tokenAddress as Address)
+const connectedUserAddress = computed(() => userDataStore.address as Address)
+
+const { data: connectedUserVestingBalanceRaw, error: connectedUserVestingBalanceError } =
+  useReadContract({
+    abi: INVESTOR_ABI,
+    address: vestingTokenAddress,
+    functionName: 'balanceOf',
+    args: [connectedUserAddress],
+    query: {
+      enabled: computed(
+        () => isAddress(vestingTokenAddress.value) && isAddress(connectedUserAddress.value)
+      )
+    }
+  })
+
+watch(connectedUserVestingBalanceError, () => {
+  if (connectedUserVestingBalanceError.value) {
+    toast.add({ title: 'Error fetching connected user token balance', color: 'error' })
+    console.error('connected user balance error', connectedUserVestingBalanceError.value)
+  }
+})
+
+const connectedUserTokenBalance = computed<number | undefined>(() => {
+  if (typeof connectedUserVestingBalanceRaw.value === 'bigint') {
+    return Number(formatUnits(connectedUserVestingBalanceRaw.value, VESTING_TOKEN_DECIMALS))
+  }
+  return tokenBalance.value?.amount
+})
+
+const connectedUserTokenBalanceUnits = computed<bigint | undefined>(() => {
+  if (typeof connectedUserVestingBalanceRaw.value === 'bigint') {
+    return connectedUserVestingBalanceRaw.value
+  }
+  if (typeof tokenBalance.value?.amount === 'number') {
+    return parseUnits(tokenBalance.value.amount.toString(), VESTING_TOKEN_DECIMALS)
+  }
+  return undefined
 })
 
 const activeMembers = computed<string[]>(() => {
@@ -162,6 +215,15 @@ const updateCount = ref(0)
 const showSummary = ref(false)
 
 const errors = reactive({ member: '', dateRange: '', totalAmount: '', cliff: '' })
+const emptyErrors = { member: '', dateRange: '', totalAmount: '', cliff: '' }
+
+const handleSelectMember = (selectedMember: User) => {
+  member.value = {
+    name: selectedMember.name ?? '',
+    address: selectedMember.address ?? ''
+  }
+  errors.member = ''
+}
 
 async function resetUpdateCount() {
   await nextTick()
@@ -298,6 +360,8 @@ watch(errorApproveToken, () => {
 })
 
 function buildSchema() {
+  const connectedUserBalance = connectedUserTokenBalance.value
+
   return z.object({
     member: z.object({
       address: z
@@ -314,16 +378,22 @@ function buildSchema() {
       .refine((v) => v <= durationInDays.value, {
         message: 'Cliff cannot be greater than duration.'
       }),
-    totalAmount: z.number().refine((v) => v >= 1, { message: 'Amount must be greater than 0.' })
+    totalAmount: z
+      .number()
+      .refine((v) => v >= 1, { message: 'Amount must be greater than 0.' })
+      .refine(
+        (v) =>
+          typeof connectedUserBalance !== 'number' ||
+          Number.isNaN(connectedUserBalance) ||
+          v <= connectedUserBalance,
+        {
+          message: `Insufficient Investor token balance`
+        }
+      )
   })
 }
 
 function validate(): boolean {
-  errors.member = ''
-  errors.dateRange = ''
-  errors.cliff = ''
-  errors.totalAmount = ''
-
   const result = buildSchema().safeParse({
     member: member.value,
     dateRange: dateRange.value,
@@ -331,16 +401,18 @@ function validate(): boolean {
     totalAmount: totalAmount.value
   })
 
+  const nextErrors = { ...emptyErrors }
+
   if (!result.success) {
-    for (const issue of result.error.issues) {
-      const field = issue.path[0] as keyof typeof errors
-      if (field in errors && !errors[field]) {
-        errors[field] = issue.message
-      }
-    }
-    return false
+    const fieldErrors = result.error.flatten().fieldErrors
+    nextErrors.member = fieldErrors.member?.[0] ?? ''
+    nextErrors.dateRange = fieldErrors.dateRange?.[0] ?? ''
+    nextErrors.totalAmount = fieldErrors.totalAmount?.[0] ?? ''
+    nextErrors.cliff = fieldErrors.cliff?.[0] ?? ''
   }
-  return true
+
+  Object.assign(errors, nextErrors)
+  return result.success
 }
 
 function checkDuplicateVesting() {
@@ -357,11 +429,12 @@ function checkDuplicateVesting() {
 async function approveAllowance() {
   if (!checkDuplicateVesting()) {
     if (totalAmount.value > 0) {
+      const totalAmountInUnits = parseUnits(totalAmount.value.toString(), VESTING_TOKEN_DECIMALS)
       approveToken({
         address: props.tokenAddress as Address,
         abi: INVESTOR_ABI,
         functionName: 'approve',
-        args: [VESTING_ADDRESS as Address, parseEther(totalAmount.value.toString())]
+        args: [VESTING_ADDRESS as Address, totalAmountInUnits]
       })
     } else {
       toast.add({ title: 'total amount value should be greater than zero', color: 'error' })
@@ -379,21 +452,16 @@ async function submit() {
   const start = Math.floor(startDate.getTime() / 1000)
   const durationInSeconds = durationInDays.value * 24 * 60 * 60
   const cliffInSeconds = cliff.value * 24 * 60 * 60
+  const totalAmountInUnits = parseUnits(totalAmount.value.toString(), VESTING_TOKEN_DECIMALS)
 
-  if (tokenBalance.value !== undefined) {
-    const totalAmountInUnits = parseUnits(totalAmount.value.toString(), 6)
-    const balanceInUnits = parseUnits(tokenBalance.value.amount.toString(), 6)
-    if (balanceInUnits < totalAmountInUnits) {
-      toast.add({ title: 'Insufficient token balance', color: 'error' })
-      return
-    }
+  const balanceInUnits = connectedUserTokenBalanceUnits.value
+  if (balanceInUnits !== undefined && balanceInUnits < totalAmountInUnits) {
+    toast.add({ title: 'Insufficient token balance', color: 'error' })
+    return
   }
 
   await getAllowance()
-  if (
-    typeof allowance.value === 'bigint' &&
-    Number(formatUnits(allowance.value, 6)) < totalAmount.value
-  ) {
+  if (typeof allowance.value === 'bigint' && allowance.value < totalAmountInUnits) {
     toast.add({ title: 'Allowance is less than the total amount', color: 'error' })
     return
   }
@@ -407,7 +475,7 @@ async function submit() {
       BigInt(start),
       BigInt(durationInSeconds),
       BigInt(cliffInSeconds),
-      parseUnits(totalAmount.value.toString(), 6),
+      totalAmountInUnits,
       props.tokenAddress as Address
     ]
   })

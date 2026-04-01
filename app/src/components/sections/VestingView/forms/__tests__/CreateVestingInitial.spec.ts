@@ -73,7 +73,7 @@ describe('CreateVesting.vue', () => {
     })
     it('shows error on invalid member address', async () => {
       const selectMemberInput = wrapper.findComponent(SelectMemberInput)
-      selectMemberInput.setValue({
+      selectMemberInput.vm.$emit('selectMember', {
         name: 'Invalid',
         address: 'notanaddress'
       })
@@ -89,7 +89,7 @@ describe('CreateVesting.vue', () => {
   describe('Allowance Approval', () => {
     const fillValidForm = async (amount = 10) => {
       const selectMemberInput = wrapper.findComponent(SelectMemberInput)
-      selectMemberInput.setValue({
+      selectMemberInput.vm.$emit('selectMember', {
         name: 'Test User',
         address: '0x120000000000000000000000000000000000dead'
       })
