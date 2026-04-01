@@ -41,16 +41,22 @@ export const setWageBodySchema = z
       });
     }
 
-    const hasOvertimeHours =
-      data.maximumOvertimeHoursPerWeek != null && data.maximumOvertimeHoursPerWeek > 0;
-    const totalHours = data.maximumHoursPerWeek + (data.maximumOvertimeHoursPerWeek ?? 0);
-    if (totalHours > 168) {
+    if (data.maximumHoursPerWeek > 40) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['maximumHoursPerWeek'],
-        message: hasOvertimeHours
-          ? 'Total weekly hours (regular + overtime) cannot exceed 168 hours (24h × 7 days)'
-          : 'Maximum regular hours per week cannot exceed 168 hours (24h × 7 days)',
+        message: 'Maximum regular hours per week cannot exceed 40 hours',
+      });
+    }
+
+    if (
+      data.maximumOvertimeHoursPerWeek != null &&
+      data.maximumOvertimeHoursPerWeek > 20
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['maximumOvertimeHoursPerWeek'],
+        message: 'Maximum overtime hours per week cannot exceed 20 hours',
       });
     }
   });

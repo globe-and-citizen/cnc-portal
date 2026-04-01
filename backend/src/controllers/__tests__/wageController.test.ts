@@ -331,23 +331,23 @@ describe('Wage Controller', () => {
       expect(response.body.message).toContain('Invalid request body');
     });
 
-    it('should return 400 if maximumHoursPerWeek alone exceeds 168', async () => {
+    it('should return 400 if maximumHoursPerWeek alone exceeds 40', async () => {
       const response = await request(app)
         .put('/setWage')
         .send({
           teamId: 1,
           userAddress: '0x1234567890123456789012345678901234567890',
           ratePerHour: [{ type: 'cash', amount: 50 }],
-          maximumHoursPerWeek: 169,
+          maximumHoursPerWeek: 41,
         });
 
       expect(response.status).toBe(400);
       expect(response.body.message).toContain(
-        'Maximum regular hours per week cannot exceed 168 hours (24h × 7 days)'
+        'Maximum regular hours per week cannot exceed 40 hours'
       );
     });
 
-    it('should return 400 if regular + overtime hours exceed 168', async () => {
+    it('should return 400 if maximumOvertimeHoursPerWeek exceeds 20', async () => {
       const response = await request(app)
         .put('/setWage')
         .send({
@@ -355,13 +355,13 @@ describe('Wage Controller', () => {
           userAddress: '0x1234567890123456789012345678901234567890',
           ratePerHour: [{ type: 'cash', amount: 50 }],
           overtimeRatePerHour: [{ type: 'cash', amount: 75 }],
-          maximumHoursPerWeek: 140,
-          maximumOvertimeHoursPerWeek: 30,
+          maximumHoursPerWeek: 40,
+          maximumOvertimeHoursPerWeek: 21,
         });
 
       expect(response.status).toBe(400);
       expect(response.body.message).toContain(
-        'Total weekly hours (regular + overtime) cannot exceed 168 hours (24h × 7 days)'
+        'Maximum overtime hours per week cannot exceed 20 hours'
       );
     });
 
@@ -382,14 +382,14 @@ describe('Wage Controller', () => {
       expect(response.body.message).toBe('Cannot set wage: the current wage is disabled');
     });
 
-    it('should allow total hours equal to exactly 168', async () => {
+    it('should allow max limits of exactly 40 regular + 20 overtime', async () => {
       vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(mockTeam);
       vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(null);
       vi.spyOn(prisma.wage, 'findMany').mockResolvedValue([]);
       vi.spyOn(prisma.wage, 'create').mockResolvedValue({
         ...mockWage,
-        maximumHoursPerWeek: 140,
-        maximumOvertimeHoursPerWeek: 28,
+        maximumHoursPerWeek: 40,
+        maximumOvertimeHoursPerWeek: 20,
       } as Wage);
 
       const response = await request(app)
@@ -399,8 +399,8 @@ describe('Wage Controller', () => {
           userAddress: '0x1234567890123456789012345678901234567890',
           ratePerHour: [{ type: 'cash', amount: 50 }],
           overtimeRatePerHour: [{ type: 'cash', amount: 75 }],
-          maximumHoursPerWeek: 140,
-          maximumOvertimeHoursPerWeek: 28,
+          maximumHoursPerWeek: 40,
+          maximumOvertimeHoursPerWeek: 20,
         });
 
       expect(response.status).toBe(201);
