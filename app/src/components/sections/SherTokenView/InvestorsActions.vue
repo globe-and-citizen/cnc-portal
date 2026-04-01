@@ -45,9 +45,9 @@
           :investors-owner="safeInvestorsOwner"
           :bank-address="bankAddress"
         />
-        <ToggleSherCompensationButton />
-        <SetCompensationMultiplierButton />
-        <InvestInSafeButton />
+        <ToggleSherCompensationAction />
+        <SetCompensationMultiplierAction />
+        <InvestInSafeAction />
       </div>
     </template>
   </UCard>
@@ -61,9 +61,9 @@ import AddressToolTip from '@/components/AddressToolTip.vue'
 import DistributeMintAction from './InvestorActions/DistributeMintAction.vue'
 import MintTokenAction from './InvestorActions/MintTokenAction.vue'
 import PayDividendsAction from './InvestorActions/PayDividendsAction.vue'
-import ToggleSherCompensationButton from './InvestorActions/ToggleSherCompensationButton.vue'
-import SetCompensationMultiplierButton from './InvestorActions/SetCompensationMultiplierButton.vue'
-import InvestInSafeButton from './InvestorActions/InvestInSafeButton.vue'
+import ToggleSherCompensationAction from './InvestorActions/ToggleSherCompensationAction.vue'
+import SetCompensationMultiplierAction from './InvestorActions/SetCompensationMultiplierAction.vue'
+import InvestInSafeAction from './InvestorActions/InvestInSafeAction.vue'
 import {
   useInvestorSymbol,
   useInvestorShareholders,
