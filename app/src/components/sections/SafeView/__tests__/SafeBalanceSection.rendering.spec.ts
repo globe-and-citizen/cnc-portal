@@ -4,7 +4,7 @@ import { nextTick, ref, defineComponent } from 'vue'
 import { useStorage } from '@vueuse/core'
 import type { Address } from 'viem'
 import SafeBalanceSection from '../SafeBalanceSection.vue'
-import { mockUseContractBalance } from '@/tests/mocks'
+import { mockUseContractBalance, mockUseAccount } from '@/tests/mocks'
 
 // Mock @iconify/vue
 vi.mock('@iconify/vue', () => ({
@@ -193,6 +193,8 @@ describe('SafeBalanceSection', () => {
       data: mockSafeInfo
     })
 
+    mockUseAccount.address.value = MOCK_DATA.safeInfo.owners[0]
+
     mockUseChainId.mockReturnValue(ref(137))
     mockUseTeamStore.mockReturnValue({
       currentTeam: MOCK_DATA.team,
@@ -269,6 +271,19 @@ describe('SafeBalanceSection', () => {
   })
 
   describe('Transfer Modal', () => {
+    it('should disable transfer button for non-owner', async () => {
+      mockUseAccount.address.value = '0x9999999999999999999999999999999999999999'
+      wrapper = createWrapper()
+
+      const transferButton = wrapper.find('[data-test="transfer-button"]')
+      expect(transferButton.attributes('disabled')).toBeDefined()
+
+      await transferButton.trigger('click')
+      await nextTick()
+
+      expect(wrapper.find('[data-test="transfer-modal"]').exists()).toBe(false)
+    })
+
     it('should handle empty tokens list gracefully', async () => {
       mockUseContractBalance.balances.value = [] as typeof mockUseContractBalance.balances.value
       wrapper = createWrapper()
