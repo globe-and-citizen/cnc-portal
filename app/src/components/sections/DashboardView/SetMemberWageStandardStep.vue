@@ -150,7 +150,8 @@ const standardSchema = z.object({
   maximumHoursPerWeek: z.coerce
     .number()
     .int('Must be a whole number')
-    .positive('Max weekly hours must be greater than 0'),
+    .positive('Max weekly hours must be greater than 0')
+    .max(40, 'Maximum regular hours per week cannot exceed 40 hours'),
   ratePerHour: z.array(rateSchema).superRefine((rates, ctx) => {
     if (rates.filter((r) => r.enabled).length === 0) {
       ctx.addIssue({ code: z.ZodIssueCode.custom, path: [], message: 'Enable at least one rate' })
