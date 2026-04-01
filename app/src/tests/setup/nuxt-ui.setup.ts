@@ -3,6 +3,17 @@ import { defineComponent, h } from 'vue'
 import type { Component } from 'vue'
 import { TooltipProvider } from 'reka-ui'
 
+// UModal teleports content outside wrapper — stub to keep it in the tree
+vi.mock('@nuxt/ui/components/Modal.vue', () => ({
+  default: {
+    name: 'UModal',
+    props: { open: { type: Boolean, default: false }, ui: Object },
+    emits: ['update:open'],
+    template:
+      '<div><slot /><div v-if="open" data-test="u-modal"><slot name="header" /><slot name="body" /></div></div>'
+  }
+}))
+
 /**
  * Global test utilities for Nuxt UI components
  * Provides TooltipProvider context automatically for all tests
