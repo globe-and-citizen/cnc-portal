@@ -119,9 +119,14 @@ export const formatSafeTransactionValue = (
   data?: DecodedCall,
   transactionTo?: string
 ): string => {
+
+  const noValuePlaceholder = '...'
+  const normalizedMethod = data?.method?.toLowerCase()
+  const isTokenTransferMethod = normalizedMethod === 'transfer'
+
   try {
     // Handle ERC20 token transfers
-    if (data && data.method === 'transfer' && data.parameters?.length >= 2) {
+    if (data && isTokenTransferMethod && data.parameters?.length >= 2) {
       const tokenAddress = transactionTo || '' // The contract address being called
       const transferAmount = data.parameters[1]?.value
 
@@ -136,7 +141,12 @@ export const formatSafeTransactionValue = (
       }
     }
     // Handle native token transfers or fallback
-    const formattedAmount = formatEtherUtil(BigInt(value), zeroAddress)
+    const parsedValue = BigInt(value)
+    if (parsedValue === 0n && normalizedMethod && !isTokenTransferMethod) {
+      return noValuePlaceholder
+    }
+
+    const formattedAmount = formatEtherUtil(parsedValue, zeroAddress)
     const numericValue = parseFloat(formattedAmount)
     return `${numericValue.toFixed(4)} ${NETWORK.currencySymbol}`
   } catch (error) {
@@ -144,6 +154,26 @@ export const formatSafeTransactionValue = (
     // Fallback to basic formatting
     return `0 ${NETWORK.currencySymbol}`
   }
+}
+
+export const getSafeTransactionMethod = (
+  transaction: Pick<SafeTransaction, 'value' | 'dataDecoded'>
+): string => {
+  const decodedMethod = transaction.dataDecoded?.method?.trim().toLowerCase()
+
+  if (decodedMethod && decodedMethod !== 'unknown') {
+    return decodedMethod
+  }
+
+  try {
+    if (BigInt(transaction.value) > 0n) {
+      return 'transfer'
+    }
+  } catch {
+    // ignore invalid value parsing
+  }
+
+  return 'unknown'
 }
 
 export const formatSafeTransferAmount = (transfer: SafeIncomingTransfer): string => {
