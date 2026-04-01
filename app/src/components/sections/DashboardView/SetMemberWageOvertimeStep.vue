@@ -26,6 +26,7 @@
         v-model="wageData.maximumOvertimeHoursPerWeek"
         class="w-full"
         type="number"
+        size="xl"
         placeholder="e.g. 10"
         :ui="{ base: 'pl-36', leading: 'pointer-events-none' }"
       >
@@ -50,6 +51,7 @@
               placeholder="0.00"
               type="number"
               class="w-full"
+              size="xl"
               :disabled="!rate.enabled"
             >
               <template #trailing>
