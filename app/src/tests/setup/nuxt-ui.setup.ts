@@ -2,6 +2,7 @@ import { mount as originalMount, VueWrapper } from '@vue/test-utils'
 import { defineComponent, h } from 'vue'
 import type { Component } from 'vue'
 import { TooltipProvider } from 'reka-ui'
+import { vi } from 'vitest'
 
 // UModal teleports content outside wrapper — stub to keep it in the tree
 vi.mock('@nuxt/ui/components/Modal.vue', () => ({
