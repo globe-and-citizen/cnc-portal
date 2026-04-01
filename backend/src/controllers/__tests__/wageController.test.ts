@@ -145,6 +145,26 @@ describe('Wage Controller', () => {
       expect(prisma.wage.create).toHaveBeenCalled();
     });
 
+    it('should store DbNull when overtimeRatePerHour is explicitly null', async () => {
+      vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(mockTeam);
+      vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(null);
+      vi.spyOn(prisma.wage, 'findMany').mockResolvedValue([]);
+      vi.spyOn(prisma.wage, 'create').mockResolvedValue(mockWage);
+
+      const response = await request(app)
+        .put('/setWage')
+        .send({
+          teamId: 1,
+          userAddress: '0x1234567890123456789012345678901234567890',
+          ratePerHour: [{ type: 'cash', amount: 50 }],
+          overtimeRatePerHour: null,
+          maximumHoursPerWeek: 40,
+        });
+
+      expect(response.status).toBe(201);
+      expect(prisma.wage.create).toHaveBeenCalled();
+    });
+
     it('should persist overtime rates when provided', async () => {
       vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(mockTeam);
       vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(null);
@@ -310,6 +330,81 @@ describe('Wage Controller', () => {
       expect(response.status).toBe(400);
       expect(response.body.message).toContain('Invalid request body');
     });
+
+    it('should return 400 if maximumHoursPerWeek alone exceeds 168', async () => {
+      const response = await request(app)
+        .put('/setWage')
+        .send({
+          teamId: 1,
+          userAddress: '0x1234567890123456789012345678901234567890',
+          ratePerHour: [{ type: 'cash', amount: 50 }],
+          maximumHoursPerWeek: 169,
+        });
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toContain(
+        'Maximum regular hours per week cannot exceed 168 hours (24h × 7 days)'
+      );
+    });
+
+    it('should return 400 if regular + overtime hours exceed 168', async () => {
+      const response = await request(app)
+        .put('/setWage')
+        .send({
+          teamId: 1,
+          userAddress: '0x1234567890123456789012345678901234567890',
+          ratePerHour: [{ type: 'cash', amount: 50 }],
+          overtimeRatePerHour: [{ type: 'cash', amount: 75 }],
+          maximumHoursPerWeek: 140,
+          maximumOvertimeHoursPerWeek: 30,
+        });
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toContain(
+        'Total weekly hours (regular + overtime) cannot exceed 168 hours (24h × 7 days)'
+      );
+    });
+
+    it('should return 400 if the current wage is disabled', async () => {
+      vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(mockTeam);
+      vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue({ ...mockWage, disabled: true } as Wage);
+
+      const response = await request(app)
+        .put('/setWage')
+        .send({
+          teamId: 1,
+          userAddress: '0x1234567890123456789012345678901234567890',
+          ratePerHour: [{ type: 'cash', amount: 50 }],
+          maximumHoursPerWeek: 40,
+        });
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toBe('Cannot set wage: the current wage is disabled');
+    });
+
+    it('should allow total hours equal to exactly 168', async () => {
+      vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(mockTeam);
+      vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(null);
+      vi.spyOn(prisma.wage, 'findMany').mockResolvedValue([]);
+      vi.spyOn(prisma.wage, 'create').mockResolvedValue({
+        ...mockWage,
+        maximumHoursPerWeek: 140,
+        maximumOvertimeHoursPerWeek: 28,
+      } as Wage);
+
+      const response = await request(app)
+        .put('/setWage')
+        .send({
+          teamId: 1,
+          userAddress: '0x1234567890123456789012345678901234567890',
+          ratePerHour: [{ type: 'cash', amount: 50 }],
+          overtimeRatePerHour: [{ type: 'cash', amount: 75 }],
+          maximumHoursPerWeek: 140,
+          maximumOvertimeHoursPerWeek: 28,
+        });
+
+      expect(response.status).toBe(201);
+    });
   });
 
   describe('GET: /', () => {
@@ -373,7 +468,7 @@ describe('Wage Controller', () => {
       expect(response.body.message).toContain('Internal server error');
     });
 
-    it('should backfill maximumOvertimeHoursPerWeek for legacy records', async () => {
+    it('should return wages with null maximumOvertimeHoursPerWeek for legacy records', async () => {
       vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(mockTeam);
       vi.spyOn(prisma.wage, 'findMany').mockResolvedValue([
         {
@@ -385,9 +480,14 @@ describe('Wage Controller', () => {
           previousWage: null,
         },
       ]);
+
+      const response = await request(app).get('/').query({ teamId: 1 });
+
+      expect(response.status).toBe(200);
+      expect(response.body[0].maximumOvertimeHoursPerWeek).toBeNull();
     });
 
-    it('should not backfill maximumOvertimeHoursPerWeek when it is already set, even if overtime rates exist', async () => {
+    it('should return wages with existing maximumOvertimeHoursPerWeek unchanged', async () => {
       vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(mockTeam);
       vi.spyOn(prisma.wage, 'findMany').mockResolvedValue([
         {
@@ -399,6 +499,11 @@ describe('Wage Controller', () => {
           previousWage: null,
         },
       ]);
+
+      const response = await request(app).get('/').query({ teamId: 1 });
+
+      expect(response.status).toBe(200);
+      expect(response.body[0].maximumOvertimeHoursPerWeek).toBe(400);
     });
 
     it('should not overwrite maximumOvertimeHoursPerWeek when it already has a value', async () => {
@@ -418,6 +523,82 @@ describe('Wage Controller', () => {
 
       expect(response.status).toBe(200);
       expect(response.body[0].maximumOvertimeHoursPerWeek).toBe(8);
+    });
+  });
+
+  describe('PUT: /:wageId', () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+      mockAuthorizeUser.mockImplementation((req: Request, res: Response, next: NextFunction) => {
+        req.address = '0x1234567890123456789012345678901234567890';
+        next();
+      });
+    });
+
+    it('should return 400 if wageId is not a valid integer', async () => {
+      const response = await request(app).put('/abc').query({ action: 'disable' });
+      expect(response.status).toBe(400);
+    });
+
+    it('should return 400 if action is invalid', async () => {
+      const response = await request(app).put('/1').query({ action: 'invalid' });
+      expect(response.status).toBe(400);
+    });
+
+    it('should return 404 if wage not found', async () => {
+      vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(null);
+
+      const response = await request(app).put('/1').query({ action: 'disable' });
+
+      expect(response.status).toBe(404);
+      expect(response.body.message).toBe('Wage not found');
+    });
+
+    it('should return 403 if caller is not the owner of the team', async () => {
+      vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(mockWage);
+      vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(null);
+
+      const response = await request(app).put('/1').query({ action: 'disable' });
+
+      expect(response.status).toBe(403);
+      expect(response.body.message).toBe('Caller is not the owner of the team');
+    });
+
+    it('should disable a wage', async () => {
+      vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(mockWage);
+      vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(mockTeam);
+      vi.spyOn(prisma.wage, 'update').mockResolvedValue({ ...mockWage, disabled: true } as Wage);
+
+      const response = await request(app).put('/1').query({ action: 'disable' });
+
+      expect(response.status).toBe(200);
+      expect(response.body.disabled).toBe(true);
+      expect(prisma.wage.update).toHaveBeenCalledWith(
+        expect.objectContaining({ data: { disabled: true } })
+      );
+    });
+
+    it('should enable a wage', async () => {
+      vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue({ ...mockWage, disabled: true } as Wage);
+      vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(mockTeam);
+      vi.spyOn(prisma.wage, 'update').mockResolvedValue({ ...mockWage, disabled: false } as Wage);
+
+      const response = await request(app).put('/1').query({ action: 'enable' });
+
+      expect(response.status).toBe(200);
+      expect(response.body.disabled).toBe(false);
+      expect(prisma.wage.update).toHaveBeenCalledWith(
+        expect.objectContaining({ data: { disabled: false } })
+      );
+    });
+
+    it('should return 500 on internal server error', async () => {
+      vi.spyOn(prisma.wage, 'findFirst').mockRejectedValue(new Error('Database error'));
+
+      const response = await request(app).put('/1').query({ action: 'disable' });
+
+      expect(response.status).toBe(500);
+      expect(response.body.message).toContain('Internal server error');
     });
   });
 });
