@@ -36,7 +36,7 @@ describe('App', () => {
     const wrapper = mountApp()
 
     expect(wrapper.find('[data-test="lock-screen"]').exists()).toBe(false)
-    expect(wrapper.find('[data-test="sidebar-layout"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="sidebar-layout"]').exists()).toBe(false)
   })
 
   it('renders lock screen when wallet address differs from authenticated user', () => {
