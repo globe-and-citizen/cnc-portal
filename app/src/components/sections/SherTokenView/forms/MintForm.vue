@@ -1,11 +1,7 @@
 <template>
   <UForm :schema="schema" :state="state" @submit="onSubmit">
     <div class="flex flex-col gap-4">
-      <h2>Mint {{ tokenSymbol }}</h2>
-
-      <h3>Please input the {{ state.address ? '' : 'address and ' }}amount to mint</h3>
-
-      <UFormField name="address">
+      <UFormField name="address" label="Recipient">
         <SelectMemberContractsInput
           :modelValue="memberInputInternal"
           @update:modelValue="handleMemberInput"
@@ -14,7 +10,7 @@
         />
       </UFormField>
 
-      <UFormField name="amount" label="Mint amount">
+      <UFormField name="amount" label="Ownership stake" hint="Enter a percentage or an exact token amount — both fields stay in sync.">
         <div class="flex flex-col gap-2">
           <div class="flex items-center gap-2">
             <UInput
@@ -45,8 +41,8 @@
           </div>
 
           <p v-if="totalSupplyDisplay !== null" class="text-xs text-gray-500">
-            Total supply: <span class="font-semibold">{{ totalSupplyDisplay }} {{ tokenSymbol }}</span>
-            <span v-if="totalSupplyDisplay === '0'" class="text-amber-600 ml-2">— percentage mode requires existing supply</span>
+            Current supply: <span class="font-semibold">{{ totalSupplyDisplay }} {{ tokenSymbol }}</span>
+            <span v-if="totalSupplyDisplay === '0'" class="text-amber-500 ml-1">— issue a fixed amount first before using percentage mode</span>
           </p>
         </div>
       </UFormField>
@@ -67,8 +63,8 @@
           color="primary"
           class="text-center"
           data-test="submit-button"
-          >Mint {{ tokenSymbol }}
-        </UButton>
+          label="Issue tokens"
+        />
       </div>
     </div>
   </UForm>
