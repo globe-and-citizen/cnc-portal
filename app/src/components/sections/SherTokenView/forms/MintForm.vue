@@ -14,10 +14,10 @@
         />
       </UFormField>
 
-      <div class="flex flex-col gap-2">
-        <div class="flex items-center gap-3">
-          <UFormField name="percentage" label="Ownership after mint" class="flex-1">
-            <div class="relative">
+      <UFormField name="amount" label="Mint amount">
+        <div class="flex flex-col gap-2">
+          <div class="flex items-center gap-3">
+            <div class="relative flex-1">
               <UInput
                 class="w-full pr-8"
                 data-test="percentage-input"
@@ -25,16 +25,12 @@
                 placeholder="0"
                 @input="onPercentageInput"
               />
-              <span class="absolute top-1/2 right-3 -translate-y-1/2 transform text-sm font-bold text-black">
-                %
-              </span>
+              <span class="absolute top-1/2 right-3 -translate-y-1/2 transform text-sm font-bold text-black">%</span>
             </div>
-          </UFormField>
 
-          <span class="mt-5 text-gray-400 font-medium">=</span>
+            <span class="text-gray-400 font-medium">=</span>
 
-          <UFormField name="amount" label="Amount" class="flex-1">
-            <div class="relative">
+            <div class="relative flex-1">
               <UInput
                 class="w-full pr-16"
                 data-test="amount-input"
@@ -46,14 +42,14 @@
                 {{ tokenSymbol }}
               </span>
             </div>
-          </UFormField>
-        </div>
+          </div>
 
-        <p v-if="totalSupplyDisplay !== null" class="text-xs text-gray-500">
-          Current total supply: <span class="font-semibold">{{ totalSupplyDisplay }} {{ tokenSymbol }}</span>
-          <span v-if="totalSupplyDisplay === '0'" class="text-amber-600 ml-2">— percentage mode requires existing supply</span>
-        </p>
-      </div>
+          <p v-if="totalSupplyDisplay !== null" class="text-xs text-gray-500">
+            Current total supply: <span class="font-semibold">{{ totalSupplyDisplay }} {{ tokenSymbol }}</span>
+            <span v-if="totalSupplyDisplay === '0'" class="text-amber-600 ml-2">— percentage mode requires existing supply</span>
+          </p>
+        </div>
+      </UFormField>
 
       <div class="flex justify-between gap-4 text-center" data-test="form-actions">
         <UButton
@@ -113,14 +109,8 @@ const schema = z.object({
   address: z.string().refine((v) => isAddress(v), { message: 'Invalid address' }),
   amount: z
     .string()
-    .min(1, 'Value is required')
-    .refine((v) => !isNaN(Number(v)) && Number(v) > 0, { message: 'Amount must be greater than 0' }),
-  percentage: z
-    .string()
-    .refine(
-      (v) => v === '' || (!isNaN(Number(v)) && Number(v) >= 0 && Number(v) < 100),
-      { message: 'Percentage must be between 0 and 100' }
-    )
+    .min(1, 'Enter an amount or a percentage')
+    .refine((v) => !isNaN(Number(v)) && Number(v) > 0, { message: 'Amount must be greater than 0' })
 })
 
 const {
