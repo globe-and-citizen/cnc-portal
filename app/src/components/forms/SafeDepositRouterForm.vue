@@ -1,11 +1,12 @@
 <template>
   <span class="text-2xl font-bold">Invest in Safe &amp; Earn {{ tokenSymbol || 'SHER' }}</span>
 
-  <div class="steps my-4 w-full">
-    <a class="step" :class="{ 'step-primary': currentStep >= 1 }">Amount</a>
-    <a class="step" :class="{ 'step-primary': currentStep >= 2 }">Approval</a>
-    <a class="step" :class="{ 'step-primary': currentStep >= 3 }">Deposit</a>
-  </div>
+  <UStepper
+    :items="stepperItems"
+    v-model="currentStep"
+    disabled
+    class="my-4 w-full"
+  />
 
   <!-- USDC Amount Input -->
   <TokenAmount
@@ -93,6 +94,12 @@ const tokenAmountModel = computed({
     selectedTokenId.value = (value.tokenId as TokenId) ?? 'usdc'
   }
 })
+const stepperItems = [
+  { title: 'Amount', value: 1 },
+  { title: 'Approval', value: 2 },
+  { title: 'Deposit', value: 3 }
+]
+
 const currentStep = ref(1)
 const submitting = ref(false)
 const isAmountValid = ref(false)

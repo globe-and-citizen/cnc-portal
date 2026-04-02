@@ -15,11 +15,11 @@
       label="Share Name"
       name="name"
       required
-      help="Full name of the share token (e.g. Company Shares)"
+      help="Full name of the share token (e.g. Company SHER)"
     >
       <UInput
         v-model="investorContractInput.name"
-        placeholder="Company Shares"
+        placeholder="Company SHER"
         class="w-full"
         data-test="share-name-input"
       />
