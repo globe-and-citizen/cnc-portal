@@ -199,7 +199,9 @@ const onSubmit = async () => {
       onError: (error) => {
         log.error('Failed to mint', error)
         mintErrorMessage.value =
-          (error as { shortMessage?: string }).shortMessage ?? error.message ?? 'Transaction failed. Please try again.'
+          (error as { shortMessage?: string }).shortMessage ??
+          error.message ??
+          'Transaction failed. Please try again.'
       }
     }
   )
