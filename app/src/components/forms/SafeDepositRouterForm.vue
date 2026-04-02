@@ -50,7 +50,7 @@
       data-test="deposit-button"
       @click="submitForm"
     >
-      {{ currentStep === 2 ? 'Approve' : `Deposit & Earn ${tokenSymbol || 'SHER'}` }}
+      {{ currentStep === 1 ? 'Approve' : `Deposit & Earn ${tokenSymbol || 'SHER'}` }}
     </UButton>
   </div>
 </template>
@@ -95,12 +95,12 @@ const tokenAmountModel = computed({
   }
 })
 const stepperItems = [
-  { title: 'Amount', value: 1 },
-  { title: 'Approval', value: 2 },
-  { title: 'Deposit', value: 3 }
+  { title: 'Amount', value: 0 },
+  { title: 'Approval', value: 1 },
+  { title: 'Deposit', value: 2 }
 ]
 
-const currentStep = ref(1)
+const currentStep = ref(0)
 const submitting = ref(false)
 const isAmountValid = ref(false)
 const isUpdatingFromSher = ref(false)
@@ -265,7 +265,7 @@ watch(
       }
 
       submitting.value = false
-      currentStep.value = 1
+      currentStep.value = 0
     }
   }
 )
@@ -275,7 +275,7 @@ watch(
   (success) => {
     if (success) {
       toast.add({ title: 'Token approval successful', color: 'success' })
-      currentStep.value = 3
+      currentStep.value = 2
       performDeposit()
     }
   }
@@ -295,7 +295,7 @@ watch(
       }
 
       submitting.value = false
-      currentStep.value = 1
+      currentStep.value = 0
     }
   }
 )
@@ -315,7 +315,7 @@ watch(
 )
 
 watch(amount, () => {
-  currentStep.value = 1
+  currentStep.value = 0
 })
 
 // ============================================================================
@@ -326,7 +326,7 @@ function reset() {
   amount.value = ''
   sherAmount.value = '0'
   selectedTokenId.value = 'usdc'
-  currentStep.value = 1
+  currentStep.value = 0
   submitting.value = false
   isAmountValid.value = false
   isUpdatingFromSher.value = false
@@ -365,7 +365,7 @@ const submitForm = async () => {
   submitting.value = true
   const currentAllowance = (allowance.value as bigint | undefined) ?? 0n
   if (currentAllowance < bigIntAmount.value) {
-    currentStep.value = 2
+    currentStep.value = 1
 
     try {
       await approveWrite.executeWrite([safeDepositRouterAddress.value, bigIntAmount.value])
@@ -373,7 +373,7 @@ const submitForm = async () => {
       console.error('Approve execution error:', error)
     }
   } else {
-    currentStep.value = 3
+    currentStep.value = 2
     await performDeposit()
   }
 }
