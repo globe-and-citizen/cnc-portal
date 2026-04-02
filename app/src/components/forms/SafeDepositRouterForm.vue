@@ -1,12 +1,7 @@
 <template>
   <span class="text-2xl font-bold">Invest in Safe &amp; Earn {{ tokenSymbol || 'SHER' }}</span>
 
-  <UStepper
-    :items="stepperItems"
-    v-model="currentStep"
-    disabled
-    class="my-4 w-full"
-  />
+  <UStepper :items="stepperItems" v-model="currentStep" disabled class="my-4 w-full" />
 
   <!-- USDC Amount Input -->
   <TokenAmount

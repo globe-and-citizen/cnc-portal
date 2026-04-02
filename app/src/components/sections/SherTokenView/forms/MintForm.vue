@@ -25,7 +25,7 @@
               </template>
             </UInput>
 
-            <UIcon name="i-lucide-equal" class="text-gray-400 shrink-0 size-4" />
+            <UIcon name="i-lucide-equal" class="size-4 shrink-0 text-gray-400" />
 
             <UInput
               class="flex-1"
@@ -35,14 +35,19 @@
               @update:modelValue="onAmountChange"
             >
               <template #trailing>
-                <span class="text-sm font-semibold text-gray-500 select-none">{{ tokenSymbol }}</span>
+                <span class="text-sm font-semibold text-gray-500 select-none">{{
+                  tokenSymbol
+                }}</span>
               </template>
             </UInput>
           </div>
 
           <p v-if="totalSupplyDisplay !== null" class="text-xs text-gray-500">
-            Current supply: <span class="font-semibold">{{ totalSupplyDisplay }} {{ tokenSymbol }}</span>
-            <span v-if="totalSupplyDisplay === '0'" class="text-amber-500 ml-1">— issue a fixed amount first before using percentage mode</span>
+            Current supply:
+            <span class="font-semibold">{{ totalSupplyDisplay }} {{ tokenSymbol }}</span>
+            <span v-if="totalSupplyDisplay === '0'" class="ml-1 text-amber-500"
+              >— issue a fixed amount first before using percentage mode</span
+            >
           </p>
         </div>
       </UFormField>
