@@ -12,6 +12,43 @@ vi.mock('@nuxt/ui/components/Modal.vue', () => ({
     emits: ['update:open'],
     template:
       '<div><slot /><div v-if="open" data-test="u-modal"><slot name="header" /><slot name="body" /></div></div>'
+// ---------------------------------------------------------------------------
+// Module-level mocks for @nuxt/ui components
+// ---------------------------------------------------------------------------
+
+// UModal teleports slots to <body> in the real implementation, which hides
+// slot content from wrapper.find(). This mock renders all slots inline and
+// provides a close button replicating UModal's built-in dismiss control.
+vi.mock('@nuxt/ui/components/Modal.vue', () => ({
+  default: {
+    name: 'UModal',
+    props: {
+      open: { type: Boolean, default: false },
+      ui: Object,
+      title: String,
+      description: String
+    },
+    emits: ['update:open'],
+    template: `
+      <div>
+        <slot />
+        <div v-if="open">
+          <button data-test="close-wage-modal-button" @click="$emit('update:open', false)" />
+          <slot name="header" />
+          <slot name="body" />
+        </div>
+      </div>
+    `
+  }
+}))
+
+// UTooltip requires a TooltipProvider ancestor injected via context. Stubbing
+// the module avoids the "Injection not found" error in unit tests.
+vi.mock('@nuxt/ui/components/Tooltip.vue', () => ({
+  default: {
+    name: 'UTooltip',
+    props: ['text', 'content'],
+    template: '<div><slot /></div>'
   }
 }))
 
