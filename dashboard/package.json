@@ -25,7 +25,7 @@
     "@vueuse/nuxt": "^13.9.0",
     "@wagmi/core": "^3.0.0",
     "@wagmi/vue": "^0.4.17",
-    "axios": "^1.13.5",
+    "axios": "^1.14.0",
     "date-fns": "^4.1.0",
     "ethers": "^6.15.0",
     "nuxt": "^4.2.1",
