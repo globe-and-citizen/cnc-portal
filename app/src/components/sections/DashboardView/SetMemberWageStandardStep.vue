@@ -11,6 +11,7 @@
         v-model="wageData.maximumHoursPerWeek"
         class="w-full"
         type="number"
+        size="xl"
         placeholder="e.g. 40"
         :ui="{ base: 'pl-36', leading: 'pointer-events-none' }"
       >
@@ -35,6 +36,7 @@
               placeholder="0.00"
               type="number"
               class="w-full"
+              size="xl"
               :disabled="!rate.enabled"
             >
               <template #trailing>
@@ -148,7 +150,8 @@ const standardSchema = z.object({
   maximumHoursPerWeek: z.coerce
     .number()
     .int('Must be a whole number')
-    .positive('Max weekly hours must be greater than 0'),
+    .positive('Max weekly hours must be greater than 0')
+    .max(40, 'Maximum regular hours per week cannot exceed 40 hours'),
   ratePerHour: z.array(rateSchema).superRefine((rates, ctx) => {
     if (rates.filter((r) => r.enabled).length === 0) {
       ctx.addIssue({ code: z.ZodIssueCode.custom, path: [], message: 'Enable at least one rate' })
