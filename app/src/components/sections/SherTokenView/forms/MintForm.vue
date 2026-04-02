@@ -16,36 +16,36 @@
 
       <UFormField name="amount" label="Mint amount">
         <div class="flex flex-col gap-2">
-          <div class="flex items-center gap-3">
-            <div class="relative flex-1">
-              <UInput
-                class="w-full pr-8"
-                data-test="percentage-input"
-                v-model="state.percentage"
-                placeholder="0"
-                @input="onPercentageInput"
-              />
-              <span class="absolute top-1/2 right-3 -translate-y-1/2 transform text-sm font-bold text-black">%</span>
-            </div>
+          <div class="flex items-center gap-2">
+            <UInput
+              class="flex-1"
+              data-test="percentage-input"
+              v-model="state.percentage"
+              placeholder="0"
+              @update:modelValue="onPercentageChange"
+            >
+              <template #trailing>
+                <span class="text-sm font-semibold text-gray-500 select-none">%</span>
+              </template>
+            </UInput>
 
-            <span class="text-gray-400 font-medium">=</span>
+            <UIcon name="i-lucide-equal" class="text-gray-400 shrink-0 size-4" />
 
-            <div class="relative flex-1">
-              <UInput
-                class="w-full pr-16"
-                data-test="amount-input"
-                v-model="state.amount"
-                placeholder="0"
-                @input="onAmountInput"
-              />
-              <span class="absolute top-1/2 right-4 -translate-y-1/2 transform text-sm font-bold text-black">
-                {{ tokenSymbol }}
-              </span>
-            </div>
+            <UInput
+              class="flex-1"
+              data-test="amount-input"
+              v-model="state.amount"
+              placeholder="0"
+              @update:modelValue="onAmountChange"
+            >
+              <template #trailing>
+                <span class="text-sm font-semibold text-gray-500 select-none">{{ tokenSymbol }}</span>
+              </template>
+            </UInput>
           </div>
 
           <p v-if="totalSupplyDisplay !== null" class="text-xs text-gray-500">
-            Current total supply: <span class="font-semibold">{{ totalSupplyDisplay }} {{ tokenSymbol }}</span>
+            Total supply: <span class="font-semibold">{{ totalSupplyDisplay }} {{ tokenSymbol }}</span>
             <span v-if="totalSupplyDisplay === '0'" class="text-amber-600 ml-2">— percentage mode requires existing supply</span>
           </p>
         </div>
@@ -166,14 +166,12 @@ const computePercentageFromAmount = (amountStr: string): string => {
   return String(Math.round(pct * 100) / 100) // 2 decimal places
 }
 
-const onPercentageInput = (event: Event) => {
-  const value = (event.target as HTMLInputElement).value
-  state.amount = computeAmountFromPercentage(value)
+const onPercentageChange = (v: string | number) => {
+  state.amount = computeAmountFromPercentage(String(v))
 }
 
-const onAmountInput = (event: Event) => {
-  const value = (event.target as HTMLInputElement).value
-  state.percentage = computePercentageFromAmount(value)
+const onAmountChange = (v: string | number) => {
+  state.percentage = computePercentageFromAmount(String(v))
 }
 
 const handleMemberInput = (v: { name: string; address: string }) => {
