@@ -55,7 +55,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import SetMemberWageStandardStep from './SetMemberWageStandardStep.vue'
 import SetMemberWageOvertimeStep from './SetMemberWageOvertimeStep.vue'
 import { useSetMemberWageMutation } from '@/queries/wage.queries'
@@ -109,7 +109,12 @@ const items = computed<StepperItem[]>(() =>
 
 const toast = useToast()
 
-const { mutate: executeSetWage, error: setWageError, isPending } = useSetMemberWageMutation()
+const {
+  mutate: executeSetWage,
+  error: setWageError,
+  isPending,
+  reset: resetSetWageMutation
+} = useSetMemberWageMutation()
 
 const errorMessage = computed(() => {
   if (!setWageError.value) return undefined
@@ -123,6 +128,19 @@ const handleCancel = () => {
   showModal.value = false
   currentStep.value = 0
 }
+
+// Reset form state whenever the modal is closed
+watch(
+  () => showModal.value,
+  (isOpen) => {
+    if (!isOpen) {
+      resetSetWageMutation()
+      wageData.value = initialWage()
+      currentStep.value = 0
+    }
+  },
+  { flush: 'post' }
+)
 
 const submitWage = () => {
   if (isPending.value) return
