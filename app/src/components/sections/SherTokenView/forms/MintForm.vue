@@ -10,7 +10,7 @@
         />
       </UFormField>
 
-      <UFormField name="amount" label="Ownership stake" hint="Enter a percentage or an exact token amount — both fields stay in sync.">
+      <UFormField name="amount" label="Ownership stake" hint="Both fields stay in sync.">
         <div class="flex flex-col gap-2">
           <div class="flex items-center gap-2">
             <UInput
