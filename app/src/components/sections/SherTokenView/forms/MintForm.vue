@@ -14,16 +14,46 @@
         />
       </UFormField>
 
-      <UFormField name="amount" label="Amount">
-        <div class="relative">
-          <UInput class="w-full pr-16" data-test="amount-input" v-model="state.amount" />
-          <span
-            class="absolute top-1/2 right-4 -translate-y-1/2 transform text-sm font-bold text-black"
-          >
-            {{ tokenSymbol }}
-          </span>
+      <div class="flex flex-col gap-2">
+        <div class="flex items-center gap-3">
+          <UFormField name="percentage" label="Ownership after mint" class="flex-1">
+            <div class="relative">
+              <UInput
+                class="w-full pr-8"
+                data-test="percentage-input"
+                v-model="state.percentage"
+                placeholder="0"
+                @input="onPercentageInput"
+              />
+              <span class="absolute top-1/2 right-3 -translate-y-1/2 transform text-sm font-bold text-black">
+                %
+              </span>
+            </div>
+          </UFormField>
+
+          <span class="mt-5 text-gray-400 font-medium">=</span>
+
+          <UFormField name="amount" label="Amount" class="flex-1">
+            <div class="relative">
+              <UInput
+                class="w-full pr-16"
+                data-test="amount-input"
+                v-model="state.amount"
+                placeholder="0"
+                @input="onAmountInput"
+              />
+              <span class="absolute top-1/2 right-4 -translate-y-1/2 transform text-sm font-bold text-black">
+                {{ tokenSymbol }}
+              </span>
+            </div>
+          </UFormField>
         </div>
-      </UFormField>
+
+        <p v-if="totalSupplyDisplay !== null" class="text-xs text-gray-500">
+          Current total supply: <span class="font-semibold">{{ totalSupplyDisplay }} {{ tokenSymbol }}</span>
+          <span v-if="totalSupplyDisplay === '0'" class="text-amber-600 ml-2">— percentage mode requires existing supply</span>
+        </p>
+      </div>
 
       <div class="flex justify-between gap-4 text-center" data-test="form-actions">
         <UButton
@@ -50,18 +80,20 @@
 
 <script setup lang="ts">
 import { z } from 'zod'
-import { isAddress, parseUnits, type Address } from 'viem'
-import { onMounted, reactive, ref } from 'vue'
+import { isAddress, parseUnits, formatUnits, type Address } from 'viem'
+import { onMounted, reactive, ref, computed } from 'vue'
 import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 import SelectMemberContractsInput from '@/components/utils/SelectMemberContractsInput.vue'
 import { INVESTOR_ABI } from '@/artifacts/abi/investors'
-import { computed, watch } from 'vue'
+import { watch } from 'vue'
 import { useTeamStore } from '@/stores'
 import { log } from '@/utils'
 import { useQueryClient } from '@tanstack/vue-query'
 
+const TOKEN_DECIMALS = 6
+
 const memberInputInternal = ref<{ name: string; address: string }>({ name: '', address: '' })
-const state = reactive({ address: '', amount: '' })
+const state = reactive({ address: '', amount: '', percentage: '' })
 const emit = defineEmits(['close-modal'])
 
 const mintModal = defineModel({ default: false })
@@ -82,7 +114,13 @@ const schema = z.object({
   amount: z
     .string()
     .min(1, 'Value is required')
-    .refine((v) => !isNaN(Number(v)) && Number(v) > 0, { message: 'Amount must be greater than 0' })
+    .refine((v) => !isNaN(Number(v)) && Number(v) > 0, { message: 'Amount must be greater than 0' }),
+  percentage: z
+    .string()
+    .refine(
+      (v) => v === '' || (!isNaN(Number(v)) && Number(v) >= 0 && Number(v) < 100),
+      { message: 'Percentage must be between 0 and 100' }
+    )
 })
 
 const {
@@ -102,6 +140,50 @@ const { data: tokenSymbol, error: tokenSymbolError } = useReadContract({
   functionName: 'symbol'
 })
 
+const { data: totalSupplyRaw } = useReadContract({
+  abi: INVESTOR_ABI,
+  address: investorsAddress,
+  functionName: 'totalSupply'
+})
+
+const totalSupplyDisplay = computed(() => {
+  if (totalSupplyRaw.value === undefined || totalSupplyRaw.value === null) return null
+  return formatUnits(totalSupplyRaw.value as bigint, TOKEN_DECIMALS)
+})
+
+/**
+ * Ownership percentage after mint:  p = X / (S + X)  → X = (p * S) / (1 - p)
+ * where S = totalSupply (in display units) and X = amount to mint (in display units)
+ */
+const computeAmountFromPercentage = (percentageStr: string): string => {
+  const pct = Number(percentageStr)
+  if (isNaN(pct) || pct <= 0 || pct >= 100) return ''
+  const supply = Number(totalSupplyDisplay.value ?? '0')
+  if (supply <= 0) return ''
+  const p = pct / 100
+  const amount = (p * supply) / (1 - p)
+  // Round to token decimals precision
+  return String(Math.round(amount * 10 ** TOKEN_DECIMALS) / 10 ** TOKEN_DECIMALS)
+}
+
+const computePercentageFromAmount = (amountStr: string): string => {
+  const amount = Number(amountStr)
+  console.log('Computing percentage from amount', { amount, totalSupply: totalSupplyDisplay.value })
+  if (isNaN(amount) || amount <= 0) return ''
+  const supply = Number(totalSupplyDisplay.value ?? '0')
+  if (supply <= 0) return ''
+  const pct = (amount / (supply + amount)) * 100
+  return String(Math.round(pct * 100) / 100) // 2 decimal places
+}
+
+const onPercentageInput = () => {
+  state.amount = computeAmountFromPercentage(state.percentage)
+}
+
+const onAmountInput = () => {
+  state.percentage = computePercentageFromAmount(state.amount)
+}
+
 const handleMemberInput = (v: { name: string; address: string }) => {
   memberInputInternal.value = v
   state.address = v.address
@@ -112,7 +194,7 @@ const onSubmit = () => {
     abi: INVESTOR_ABI,
     address: investorsAddress.value as Address,
     functionName: 'individualMint',
-    args: [state.address as Address, parseUnits(state.amount, 6)]
+    args: [state.address as Address, parseUnits(state.amount, TOKEN_DECIMALS)]
   })
 }
 
