@@ -47,6 +47,14 @@
         </div>
       </UFormField>
 
+      <UAlert
+        v-if="mintErrorMessage"
+        color="error"
+        variant="soft"
+        icon="i-lucide-circle-alert"
+        :title="mintErrorMessage"
+      />
+
       <div class="flex justify-between gap-4 text-center" data-test="form-actions">
         <UButton
           variant="outline"
@@ -86,6 +94,8 @@ const TOKEN_DECIMALS = 6
 
 const memberInputInternal = ref<{ name: string; address: string }>({ name: '', address: '' })
 const state = reactive({ address: '', amount: '', percentage: '' })
+const mintErrorMessage = ref<string | null>(null)
+const mintHash = ref<`0x${string}` | undefined>()
 const emit = defineEmits(['close-modal'])
 
 const mintModal = defineModel({ default: false })
@@ -109,18 +119,13 @@ const schema = z.object({
     .refine((v) => !isNaN(Number(v)) && Number(v) > 0, { message: 'Amount must be greater than 0' })
 })
 
-const {
-  data: mintHash,
-  mutate: mint,
-  error: mintError,
-  isPending: isMintPending
-} = useWriteContract()
+const { mutateAsync: mint, isPending: isMintPending } = useWriteContract()
 
 const { isLoading: isConfirmingMint, isSuccess: isSuccessMinting } = useWaitForTransactionReceipt({
   hash: mintHash
 })
 
-const { data: tokenSymbol, error: tokenSymbolError } = useReadContract({
+const { data: tokenSymbol } = useReadContract({
   abi: INVESTOR_ABI,
   address: investorsAddress,
   functionName: 'symbol'
@@ -148,18 +153,16 @@ const computeAmountFromPercentage = (percentageStr: string): string => {
   if (supply <= 0) return ''
   const p = pct / 100
   const amount = (p * supply) / (1 - p)
-  // Round to token decimals precision
   return String(Math.round(amount * 10 ** TOKEN_DECIMALS) / 10 ** TOKEN_DECIMALS)
 }
 
 const computePercentageFromAmount = (amountStr: string): string => {
   const amount = Number(amountStr)
-  console.log('Computing percentage from amount', { amount, totalSupply: totalSupplyDisplay.value })
   if (isNaN(amount) || amount <= 0) return ''
   const supply = Number(totalSupplyDisplay.value ?? '0')
   if (supply <= 0) return ''
   const pct = (amount / (supply + amount)) * 100
-  return String(Math.round(pct * 100) / 100) // 2 decimal places
+  return String(Math.round(pct * 100) / 100)
 }
 
 const onPercentageChange = (v: string | number) => {
@@ -175,13 +178,26 @@ const handleMemberInput = (v: { name: string; address: string }) => {
   state.address = v.address
 }
 
-const onSubmit = () => {
-  mint({
-    abi: INVESTOR_ABI,
-    address: investorsAddress.value as Address,
-    functionName: 'individualMint',
-    args: [state.address as Address, parseUnits(state.amount, TOKEN_DECIMALS)]
-  })
+const onSubmit = async () => {
+  mintErrorMessage.value = null
+  await mint(
+    {
+      abi: INVESTOR_ABI,
+      address: investorsAddress.value as Address,
+      functionName: 'individualMint',
+      args: [state.address as Address, parseUnits(state.amount, TOKEN_DECIMALS)]
+    },
+    {
+      onSuccess: (hash) => {
+        mintHash.value = hash
+      },
+      onError: (error) => {
+        log.error('Failed to mint', error)
+        mintErrorMessage.value =
+          (error as any).shortMessage ?? error.message ?? 'Transaction failed. Please try again.'
+      }
+    }
+  )
 }
 
 onMounted(() => {
@@ -193,27 +209,10 @@ onMounted(() => {
 
 watch(isConfirmingMint, async (isConfirming, wasConfirming) => {
   if (wasConfirming && !isConfirming && isSuccessMinting.value) {
-    toast.add({ title: 'Minted successfully', color: 'success' })
-    await queryClient.invalidateQueries({
-      queryKey: ['readContract']
-    })
-
+    toast.add({ title: 'Tokens issued successfully', color: 'success' })
+    await queryClient.invalidateQueries({ queryKey: ['readContract'] })
     mintModal.value = false
     emit('close-modal')
-  }
-})
-
-watch(mintError, (value) => {
-  if (value) {
-    log.error('Failed to mint', value)
-    toast.add({ title: 'Failed to mint', color: 'error' })
-  }
-})
-
-watch(tokenSymbolError, (value) => {
-  if (value) {
-    log.error('Error fetching token symbol', value)
-    toast.add({ title: 'Error fetching token symbol', color: 'error' })
   }
 })
 </script>
