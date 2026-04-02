@@ -166,12 +166,14 @@ const computePercentageFromAmount = (amountStr: string): string => {
   return String(Math.round(pct * 100) / 100) // 2 decimal places
 }
 
-const onPercentageInput = () => {
-  state.amount = computeAmountFromPercentage(state.percentage)
+const onPercentageInput = (event: Event) => {
+  const value = (event.target as HTMLInputElement).value
+  state.amount = computeAmountFromPercentage(value)
 }
 
-const onAmountInput = () => {
-  state.percentage = computePercentageFromAmount(state.amount)
+const onAmountInput = (event: Event) => {
+  const value = (event.target as HTMLInputElement).value
+  state.percentage = computePercentageFromAmount(value)
 }
 
 const handleMemberInput = (v: { name: string; address: string }) => {
