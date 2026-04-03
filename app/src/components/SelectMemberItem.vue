@@ -28,7 +28,7 @@
     <div
       v-if="isOpen.mount"
       v-show="isOpen.show"
-      class="rounded-box bg-base-100 absolute left-0 z-50 mt-2 max-h-72 w-full overflow-y-auto shadow-sm"
+      class="rounded-box bg-base-100 absolute left-0 z-[9999] mt-2 max-h-72 w-full overflow-y-auto shadow-lg"
       data-test="select-member-item-dropdown"
     >
       <!-- Search input -->
@@ -126,7 +126,6 @@ const toggleOpen = () => {
 
 const select = (member: User) => {
   //   const memberAddress = member.address ?? ''
-
   search.value = ''
   close()
 
@@ -143,17 +142,9 @@ const select = (member: User) => {
   }
 }
 
-// watch(
-//   () => props.modelValue,
-//   () => {
-//     search.value = ''
-//   }
-// )
-
 const handleClickOutside = (event: MouseEvent) => {
   const target = event.target as HTMLElement
   if (!clickOutside.value) return
-
   if (!clickOutside.value.contains(target)) {
     close()
   }

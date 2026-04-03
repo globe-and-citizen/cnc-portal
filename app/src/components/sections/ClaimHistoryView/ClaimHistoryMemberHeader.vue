@@ -1,6 +1,6 @@
 <template>
   <div class="w-full pb-6" v-if="displayedMember" data-test="member-header">
-    <UCard>
+    <UCard :ui="{ root: 'overflow-visible' }">
       <div class="flex justify-between">
         <div class="flex items-start gap-4">
           <div
