@@ -1,50 +1,55 @@
 <template>
   <UCard>
-    <template #header>Investor Actions</template>
-    <div class="flex w-full flex-col justify-around gap-2" data-test="investors-actions">
-      <div class="flex w-full flex-wrap items-end justify-between">
-        <div class="flex gap-x-1">
-          <h4>Contract Address :</h4>
+    <template #header>
+      <div class="mt-6 flex items-center justify-between">
+        <h3 class="text-lg font-medium text-neutral-900 dark:text-white">Investor actions</h3>
+        <div class="flex items-center gap-2">
+          <span class="">Contract Address :</span>
           <AddressToolTip :address="investorAddress" v-if="investorAddress" />
         </div>
-        <div class="flex gap-2">
-          <template
-            v-if="
-              isLoadingTokenSymbol ||
-              isLoadingInvestorsOwner ||
-              !safeTokenSymbol ||
-              !safeInvestorsOwner ||
-              !investorAddress
-            "
-          >
-            <div class="skeleton h-10 w-40" data-test="skeleton-1"></div>
-            <div class="skeleton h-10 w-40" data-test="skeleton-2"></div>
-            <div class="skeleton h-10 w-40" data-test="skeleton-3"></div>
-          </template>
-          <template v-else>
-            <DistributeMintAction
-              :token-symbol="safeTokenSymbol"
-              :investors-address="investorAddress"
-            />
-            <MintTokenAction
-              :token-symbol="safeTokenSymbol"
-              :investors-owner="safeInvestorsOwner"
-            />
-
-            <PayDividendsAction
-              :token-symbol="safeTokenSymbol"
-              :shareholders-count="safeShareholders.length"
-              :investors-address="investorAddress"
-              :investors-owner="safeInvestorsOwner"
-              :bank-address="bankAddress"
-            />
-            <ToggleSherCompensationButton />
-            <SetCompensationMultiplierButton />
-            <InvestInSafeButton />
-          </template>
-        </div>
       </div>
-    </div>
+    </template>
+
+    <template
+      v-if="
+        isLoadingTokenSymbol ||
+        isLoadingInvestorsOwner ||
+        !safeTokenSymbol ||
+        !safeInvestorsOwner ||
+        !investorAddress
+      "
+    >
+      <div class="grid grid-cols-2 gap-2.5 md:grid-cols-3 xl:grid-cols-6">
+        <div
+          v-for="i in 6"
+          :key="i"
+          class="skeleton h-20 rounded-lg"
+          :data-test="`skeleton-${i}`"
+        />
+      </div>
+    </template>
+    <template v-else>
+      <div
+        class="grid grid-cols-2 gap-2.5 md:grid-cols-3 xl:grid-cols-6"
+        data-test="investors-actions"
+      >
+        <DistributeMintAction
+          :token-symbol="safeTokenSymbol"
+          :investors-address="investorAddress"
+        />
+        <MintTokenAction :token-symbol="safeTokenSymbol" :investors-owner="safeInvestorsOwner" />
+        <PayDividendsAction
+          :token-symbol="safeTokenSymbol"
+          :shareholders-count="safeShareholders.length"
+          :investors-address="investorAddress"
+          :investors-owner="safeInvestorsOwner"
+          :bank-address="bankAddress"
+        />
+        <ToggleSherCompensationAction />
+        <SetCompensationMultiplierAction />
+        <InvestInSafeAction />
+      </div>
+    </template>
   </UCard>
 </template>
 
@@ -56,9 +61,9 @@ import AddressToolTip from '@/components/AddressToolTip.vue'
 import DistributeMintAction from './InvestorActions/DistributeMintAction.vue'
 import MintTokenAction from './InvestorActions/MintTokenAction.vue'
 import PayDividendsAction from './InvestorActions/PayDividendsAction.vue'
-import ToggleSherCompensationButton from './InvestorActions/ToggleSherCompensationButton.vue'
-import SetCompensationMultiplierButton from './InvestorActions/SetCompensationMultiplierButton.vue'
-import InvestInSafeButton from './InvestorActions/InvestInSafeButton.vue'
+import ToggleSherCompensationAction from './InvestorActions/ToggleSherCompensationAction.vue'
+import SetCompensationMultiplierAction from './InvestorActions/SetCompensationMultiplierAction.vue'
+import InvestInSafeAction from './InvestorActions/InvestInSafeAction.vue'
 import {
   useInvestorSymbol,
   useInvestorShareholders,
@@ -75,33 +80,31 @@ const teamStore = useTeamStore()
 const investorAddress = teamStore.getContractAddressByType('InvestorV1')
 const bankAddress = teamStore.getContractAddressByType('Bank')
 
-// Get token symbol
 const {
   data: tokenSymbol,
   error: tokenSymbolError,
   isLoading: isLoadingTokenSymbol
 } = useInvestorSymbol()
+
 const safeTokenSymbol = computed(() =>
   typeof tokenSymbol.value === 'string' ? tokenSymbol.value : ''
 )
 
-// Get shareholders list
 const { data: shareholders, error: shareholderError } = useInvestorShareholders()
 const safeShareholders = computed(() =>
   Array.isArray(shareholders.value) ? shareholders.value : ([] as string[])
 )
 
-// Get investors contract owner
 const {
   data: investorsOwner,
   error: errorInvestorsOwner,
   isLoading: isLoadingInvestorsOwner
 } = useInvestorOwner()
+
 const safeInvestorsOwner = computed(() =>
   typeof investorsOwner.value === 'string' ? investorsOwner.value : ''
 )
 
-// Watch for errors and display toast notifications
 watch(tokenSymbolError, (value) => {
   if (value) {
     log.error('Error fetching token symbol', value)
