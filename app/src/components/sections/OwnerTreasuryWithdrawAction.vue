@@ -7,8 +7,46 @@
       :loading="isLoadingAction"
       data-test="owner-withdraw-button"
       label="Withdraw"
-      @click="submitWithdrawAll"
+      @click="openWithdrawModal"
     />
+
+    <UModal
+      v-model:open="isWithdrawModalOpen"
+      title="Confirm Treasury Withdraw"
+      description="Review this action before signing the transaction in MetaMask."
+    >
+      <template #body>
+        <div class="space-y-4">
+          <UAlert
+            color="warning"
+            variant="soft"
+            icon="i-heroicons-exclamation-triangle"
+            title="You are about to withdraw all available funds to the Bank."
+            description="By continuing, MetaMask will open and you will be asked to confirm the transaction."
+          />
+
+          <div class="flex justify-end gap-2">
+            <UButton
+              color="neutral"
+              variant="outline"
+              :disabled="isLoadingAction"
+              @click="isWithdrawModalOpen = false"
+            >
+              Cancel
+            </UButton>
+
+            <UButton
+              color="warning"
+              :loading="isLoadingAction"
+              :disabled="!hasWithdrawableBalance || isLoadingAction"
+              data-test="owner-withdraw-modal-confirm-button"
+              label="Withdraw"
+              @click="confirmWithdrawFromModal"
+            />
+          </div>
+        </div>
+      </template>
+    </UModal>
   </div>
 </template>
 
@@ -42,6 +80,7 @@ const queryClient = useQueryClient()
 const chainId = useChainId()
 
 const isSubmitting = ref(false)
+const isWithdrawModalOpen = ref(false)
 
 const contractAddress = computed(
   () => teamStore.getContractAddressByType(props.contractType) as Address | undefined
@@ -122,6 +161,15 @@ const refreshContractBalances = async () => {
       queryKey: ['readContract', { args: [contractAddress.value], chainId: chainId.value }]
     })
   ])
+}
+
+const openWithdrawModal = () => {
+  isWithdrawModalOpen.value = true
+}
+
+const confirmWithdrawFromModal = async () => {
+  isWithdrawModalOpen.value = false
+  await submitWithdrawAll()
 }
 
 const submitWithdrawAll = async () => {
