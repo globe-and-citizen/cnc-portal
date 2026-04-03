@@ -16,20 +16,18 @@ vi.mock('@/composables/expenseAccount/reads', () => ({
 
 vi.mock('@/composables/cashRemuneration/writes', () => ({
   useCashRemunerationContractWrite: vi.fn((options?: { functionName?: string }) => {
-    if (options?.functionName === 'ownerWithdrawToken') {
-      return mockCashRemunerationWrites.ownerWithdrawToken
+    if (options?.functionName === 'ownerWithdrawAllToBank') {
+      return mockCashRemunerationWrites.ownerWithdrawAllToBank
     }
-
-    return mockCashRemunerationWrites.ownerWithdrawNative
+    return mockCashRemunerationWrites.ownerWithdrawAllToBank
   })
 }))
 
 vi.mock('@/composables/expenseAccount/writes', () => ({
   useExpenseAccountContractWrite: vi.fn((options?: { functionName?: string }) => {
-    if (options?.functionName === 'ownerWithdrawToken') {
-      return mockExpenseAccountWrites.ownerWithdrawToken
+    if (options?.functionName === 'ownerWithdrawAllToBank') {
+      return mockExpenseAccountWrites.ownerWithdrawAllToBank
     }
-
-    return mockExpenseAccountWrites.ownerWithdrawNative
+    return mockExpenseAccountWrites.ownerWithdrawAllToBank
   })
 }))

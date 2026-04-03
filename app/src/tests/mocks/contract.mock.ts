@@ -121,8 +121,7 @@ export const mockCashRemunerationReads = {
 }
 
 export const mockCashRemunerationWrites = {
-  ownerWithdrawNative: createContractWriteMock(),
-  ownerWithdrawToken: createContractWriteMock()
+  ownerWithdrawAllToBank: createContractWriteMock()
 }
 
 /**
@@ -133,8 +132,7 @@ export const mockExpenseAccountReads = {
 }
 
 export const mockExpenseAccountWrites = {
-  ownerWithdrawNative: createContractWriteMock(),
-  ownerWithdrawToken: createContractWriteMock()
+  ownerWithdrawAllToBank: createContractWriteMock()
 }
 
 /**
