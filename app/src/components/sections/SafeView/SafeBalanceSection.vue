@@ -52,6 +52,7 @@
             data-test="transfer-button"
             leading-icon="heroicons-outline:arrows-right-left"
             label="Transfer"
+            :disabled="!isConnectedUserOwner"
             @click="openTransferModal"
           />
 
@@ -117,7 +118,7 @@ import type { Address } from 'viem'
 import { useStorage } from '@vueuse/core'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import { getSafeHomeUrl, openSafeAppUrl } from '@/composables/safe'
-
+import { useUserDataStore } from '@/stores'
 import { useContractBalance } from '@/composables/useContractBalance'
 import { useGetSafeInfoQuery } from '@/queries/safe.queries'
 import TransferForm, { type TransferModel } from '@/components/forms/TransferForm.vue'
@@ -128,6 +129,7 @@ import DepositSafeForm from '@/components/forms/DepositSafeForm.vue'
 import { getTokenAddress } from '@/utils'
 
 const chainId = useChainId()
+const userDataStore = useUserDataStore()
 const queryClient = useQueryClient()
 const currency = useStorage('currency', {
   code: 'USD',
@@ -172,6 +174,15 @@ const { transferFromSafe, isTransferring } = useSafeTransfer()
 
 const { data: safeInfo } = useGetSafeInfoQuery({ pathParams: { safeAddress: props.address } })
 
+// Refactored to use computed with direct logic
+const isConnectedUserOwner = computed(() => {
+  if (!userDataStore.address || !safeInfo.value?.owners?.length) return false
+
+  return safeInfo.value.owners.some(
+    (owner) => owner.toLowerCase() === userDataStore.address.toLowerCase()
+  )
+})
+
 const initialTransferDataValue = (): TransferModel => {
   const firstToken = tokens.value[0]
   return {
@@ -198,6 +209,7 @@ const openDepositModal = () => {
 }
 
 const openTransferModal = () => {
+  if (!isConnectedUserOwner.value) return
   transferModal.value = { mount: true, show: true }
 }
 

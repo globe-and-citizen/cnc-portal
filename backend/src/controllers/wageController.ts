@@ -36,17 +36,6 @@ export const setWage = async (req: Request, res: Response) => {
     amount: Number(rate.amount),
   }));
 
-  const hasOvertimeRates =
-    Array.isArray(body.overtimeRatePerHour) && body.overtimeRatePerHour.length > 0;
-
-  if (hasOvertimeRates && maximumOvertimeHoursPerWeek == null) {
-    return errorResponse(
-      400,
-      'maximumOvertimeHoursPerWeek is required when overtimeRatePerHour is provided',
-      res
-    );
-  }
-
   const overtimeRatePerHourValue =
     body.overtimeRatePerHour === null ? Prisma.DbNull : (overtimeRatePerHour ?? Prisma.DbNull);
 

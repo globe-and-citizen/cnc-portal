@@ -40,6 +40,8 @@ export const mockBankWrites = {
   deposit: createContractWriteMock(),
   addTokenSupport: createContractWriteMock(),
   removeTokenSupport: createContractWriteMock(),
+  distributeNativeDividends: createContractWriteMock(),
+  distributeTokenDividends: createContractWriteMock(),
   claimDividend: createContractWriteMock(),
   claimTokenDividend: createContractWriteMock(),
   depositDividends: createContractWriteMock(),
