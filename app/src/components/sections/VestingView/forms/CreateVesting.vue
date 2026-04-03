@@ -437,13 +437,17 @@ function checkDuplicateVesting() {
 
 async function approveAllowance() {
   if (!checkDuplicateVesting()) {
+    const vestingSpender = vestingAddressResult.value
+    if (!vestingSpender || !isAddress(vestingSpender)) {
+      toast.add({ title: 'Invalid vesting contract address', color: 'error' })
+      return
+    }
+
     if (totalAmount.value > 0) {
       approvalAmountUnits.value = parseUnits(totalAmount.value.toString(), VESTING_TOKEN_DECIMALS)
-      void approveTokenWrite.executeWrite(
-        [vestingAddress.value, approvalAmountUnits.value],
-        undefined,
-        { skipGasEstimation: true }
-      )
+      void approveTokenWrite.executeWrite([vestingSpender, approvalAmountUnits.value], undefined, {
+        skipGasEstimation: true
+      })
     } else {
       toast.add({ title: 'total amount value should be greater than zero', color: 'error' })
     }
