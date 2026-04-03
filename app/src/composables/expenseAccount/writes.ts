@@ -92,25 +92,6 @@ export function useExpenseAccountInitialize(
   })
 }
 
-export function useExpenseAccountOwnerWithdrawNative(amount: MaybeRef<bigint>) {
-  const args = computed(() => [unref(amount)] as readonly unknown[])
-  return useExpenseAccountContractWrite({
-    functionName: 'ownerWithdrawNative',
-    args
-  })
-}
-
-export function useExpenseAccountOwnerWithdrawToken(
-  tokenAddress: MaybeRef<Address>,
-  amount: MaybeRef<bigint>
-) {
-  const args = computed(() => [unref(tokenAddress), unref(amount)] as readonly unknown[])
-  return useExpenseAccountContractWrite({
-    functionName: 'ownerWithdrawToken',
-    args
-  })
-}
-
 export function useExpenseAccountTransferOwnership(newOwner: MaybeRef<Address>) {
   const args = computed(() => [unref(newOwner)] as readonly unknown[])
   return useExpenseAccountContractWrite({
