@@ -52,11 +52,20 @@
       </template>
 
       <template #method-cell="{ row: { original: row } }">
-        {{ row.dataDecoded?.method || 'unknown' }}
+        {{ getSafeTransactionMethod(row as SafeTransaction) }}
       </template>
 
       <template #actions-cell="{ row: { original: row } }">
         <div class="flex items-center gap-2">
+          <UButton
+            size="xs"
+            color="neutral"
+            variant="ghost"
+            icon="heroicons:eye"
+            @click="handleViewDetailsClick(row as SafeTransaction)"
+            data-test="view-details-button"
+          />
+
           <UButton
             size="xs"
             color="primary"
@@ -94,6 +103,11 @@
       @cancel="handleCancelAction"
       data-test="conflict-warning-modal"
     />
+
+    <SafeTransactionDetailsModal
+      v-model="showDetailsModal"
+      :transaction="selectedTransactionForDetails"
+    />
   </UCard>
 </template>
 
@@ -105,6 +119,7 @@ import type { SafeTransaction } from '@/types/safe'
 // Components
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import SafeTransactionsWarning from './SafeTransactionsWarning.vue'
+import SafeTransactionDetailsModal from './SafeTransactionDetailsModal.vue'
 
 // Stores and composables
 import { useGetSafeTransactionsQuery, useGetSafeInfoQuery } from '@/queries/safe.queries'
@@ -115,7 +130,7 @@ import SafeTransactionStatusFilter, {
 } from '@/components/sections/SafeView/SafeTransactionStatusFilter.vue'
 import { type Address } from 'viem'
 
-import { formatSafeTransactionValue } from '@/utils'
+import { formatSafeTransactionValue, getSafeTransactionMethod } from '@/utils'
 
 const { address: connectedAddress } = useAccount()
 
@@ -137,6 +152,8 @@ const showConflictWarning = ref(false)
 const pendingExecutionTransaction = ref<SafeTransaction | null>(null)
 const pendingApprovalTransaction = ref<SafeTransaction | null>(null)
 const conflictActionType = ref<'approve' | 'execute'>('execute')
+const showDetailsModal = ref(false)
+const selectedTransactionForDetails = ref<SafeTransaction | null>(null)
 
 // Data fetching
 const {
@@ -332,6 +349,15 @@ const handleExecuteTransaction = async (transaction: SafeTransaction) => {
 const handleStatusChange = (status: SafeTransactionStatus) => {
   selectedStatus.value = status
 }
+
+const handleViewDetailsClick = (transaction: SafeTransaction) => {
+  selectedTransactionForDetails.value = transaction
+  showDetailsModal.value = true
+}
+
+watch(showDetailsModal, (isOpen) => {
+  if (!isOpen) selectedTransactionForDetails.value = null
+})
 
 // Error watching
 watch(error, (newError) => {

@@ -31,13 +31,14 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { useReadContract } from '@wagmi/vue'
 import { useTeamStore } from '@/stores'
 import { type TokenSummary } from '@/types/vesting'
-import { VESTING_ADDRESS } from '@/constant'
-import { INVESTOR_ABI } from '@/artifacts/abi/investors'
-import { VESTING_ABI } from '@/artifacts/abi/vesting'
-import { type Address, formatUnits } from 'viem'
+import { formatUnits } from 'viem'
+import { useInvestorSymbol } from '@/composables/investor/reads'
+import {
+  useVestingGetTeamAllArchivedVestingsFlat,
+  useVestingGetTeamVestingsWithMembers
+} from '@/composables/vesting/reads'
 
 const teamStore = useTeamStore()
 const team = computed(() => teamStore.currentTeam)
@@ -105,12 +106,7 @@ const {
   //isLoading: isLoadingArchivedVestingInfos,
   error: errorGetArchivedVestingInfo,
   refetch: getArchivedVestingInfos
-} = useReadContract({
-  functionName: 'getTeamAllArchivedVestingsFlat',
-  address: VESTING_ADDRESS as Address,
-  abi: VESTING_ABI,
-  args: [BigInt(team?.value?.id ?? 0)]
-})
+} = useVestingGetTeamAllArchivedVestingsFlat(computed(() => BigInt(team?.value?.id ?? 0)))
 
 watch(errorGetArchivedVestingInfo, () => {
   if (errorGetArchivedVestingInfo.value) {
@@ -119,20 +115,11 @@ watch(errorGetArchivedVestingInfo, () => {
   }
 })
 
-const investorsAddress = computed(() => {
-  return teamStore?.currentTeam?.teamContracts?.find((contract) => contract.type === 'InvestorV1')
-    ?.address as Address
-})
-
 const {
   data: tokenSymbol
   //isLoading: isLoadingTokenSymbol
   //error: tokenSymbolError
-} = useReadContract({
-  abi: INVESTOR_ABI,
-  address: investorsAddress,
-  functionName: 'symbol'
-})
+} = useInvestorSymbol()
 
 const tokenSymbolText = computed(() =>
   typeof tokenSymbol.value === 'string' ? tokenSymbol.value : 'default'
@@ -143,12 +130,7 @@ const {
   //isLoading: isLoadingVestingInfos,
   error: errorGetVestingInfo,
   refetch: getVestingInfos
-} = useReadContract({
-  functionName: 'getTeamVestingsWithMembers',
-  address: VESTING_ADDRESS as Address,
-  abi: VESTING_ABI,
-  args: [BigInt(team?.value?.id ?? 0)]
-})
+} = useVestingGetTeamVestingsWithMembers(computed(() => BigInt(team?.value?.id ?? 0)))
 watch(errorGetVestingInfo, () => {
   if (errorGetVestingInfo.value) {
     toast.add({ title: 'Add admin failed', color: 'error' })
