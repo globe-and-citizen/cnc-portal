@@ -57,14 +57,7 @@
             data-test="stop-btn"
             color="error"
             size="xs"
-            @click.stop="
-              stopVesting({
-                address: VESTING_ADDRESS as Address,
-                abi: VESTING_ABI,
-                functionName: 'stopVesting',
-                args: [row.member, BigInt(team?.id ?? 0)]
-              })
-            "
+            @click.stop="stopVesting(row.member)"
             icon="mdi:stop-circle-outline"
             label="Stop"
           />
@@ -80,14 +73,7 @@
             size="xs"
             :disabled="!row.isStarted"
             :title="!row.isStarted ? 'Vesting has not started yet' : ''"
-            @click.stop="
-              releaseVesting({
-                address: VESTING_ADDRESS as Address,
-                abi: VESTING_ABI,
-                functionName: 'release',
-                args: [BigInt(team?.id ?? 0)]
-              })
-            "
+            @click.stop="releaseVesting()"
             icon="mdi:lock-open"
             label="Release"
           />
@@ -101,17 +87,19 @@
 import { computed, watch, ref } from 'vue'
 import { type VestingRow, type VestingTuple, type VestingStatus } from '@/types/vesting'
 import { useTeamStore } from '@/stores'
-import { type Address, formatUnits } from 'viem'
+import { formatUnits } from 'viem'
 import { useUserDataStore } from '@/stores'
 
 import VestingActions from '@/components/sections/VestingView/VestingActions.vue'
 import VestingStatusFilter from './VestingStatusFilter.vue'
-import { useWriteContract, useWaitForTransactionReceipt, useReadContract } from '@wagmi/vue'
-import { INVESTOR_ABI } from '@/artifacts/abi/investors'
-import { VESTING_ABI } from '@/artifacts/abi/vesting'
+import { useInvestorSymbol } from '@/composables/investor/reads'
+import {
+  useVestingGetTeamAllArchivedVestingsFlat,
+  useVestingGetTeamVestingsWithMembers
+} from '@/composables/vesting/reads'
+import { useVestingReleaseWrite, useVestingStopVestingWrite } from '@/composables/vesting/writes'
 const toast = useToast()
 
-import { VESTING_ADDRESS } from '@/constant'
 const teamStore = useTeamStore()
 const team = computed(() => teamStore.currentTeam)
 
@@ -123,11 +111,6 @@ const props = defineProps<{
 
 const userStore = useUserDataStore()
 const userAddress = computed(() => userStore.address)
-
-const investorsAddress = computed(() => {
-  return teamStore?.currentTeam?.teamContracts?.find((contract) => contract.type === 'InvestorV1')
-    ?.address as Address
-})
 
 // const selectedStatus = ref('all')
 // // Add handler
@@ -145,11 +128,7 @@ const {
   data: tokenSymbol
   //isLoading: isLoadingTokenSymbol
   //error: tokenSymbolError
-} = useReadContract({
-  abi: INVESTOR_ABI,
-  address: investorsAddress,
-  functionName: 'symbol'
-})
+} = useInvestorSymbol()
 
 const safeTokenSymbol = computed(() =>
   typeof tokenSymbol.value === 'string' ? tokenSymbol.value : 'default'
@@ -160,12 +139,7 @@ const {
   //isLoading: isLoadingArchivedVestingInfos,
   error: errorGetArchivedVestingInfo,
   refetch: getArchivedVestingInfos
-} = useReadContract({
-  functionName: 'getTeamAllArchivedVestingsFlat',
-  address: VESTING_ADDRESS as Address,
-  abi: VESTING_ABI,
-  args: [BigInt(team?.value?.id ?? 0)]
-})
+} = useVestingGetTeamAllArchivedVestingsFlat(computed(() => BigInt(team?.value?.id ?? 0)))
 
 watch(errorGetArchivedVestingInfo, () => {
   if (errorGetArchivedVestingInfo.value) {
@@ -179,12 +153,7 @@ const {
   //isLoading: isLoadingVestingInfos,
   error: errorGetVestingInfo,
   refetch: getVestingInfos
-} = useReadContract({
-  functionName: 'getTeamVestingsWithMembers',
-  address: VESTING_ADDRESS as Address,
-  abi: VESTING_ABI,
-  args: [BigInt(team?.value?.id ?? 0)]
-})
+} = useVestingGetTeamVestingsWithMembers(computed(() => BigInt(team?.value?.id ?? 0)))
 watch(errorGetVestingInfo, () => {
   if (errorGetVestingInfo.value) {
     toast.add({ title: 'Add admin failed', color: 'error' })
@@ -275,17 +244,21 @@ const handleReload = () => {
   emit('reload')
 }
 
-const {
-  mutate: stopVesting,
-  error: errorStopVesting,
-  isPending: loadingStopVesting,
-  data: hashStopVesting
-} = useWriteContract()
+const teamId = computed(() => BigInt(team?.value?.id ?? 0))
 
-const { isLoading: isConfirmingStopVesting, isSuccess: isConfirmedStopVesting } =
-  useWaitForTransactionReceipt({
-    hash: hashStopVesting
+const stopVestingWrite = useVestingStopVestingWrite()
+const loadingStopVesting = computed(() => stopVestingWrite.writeResult.isPending.value)
+const isConfirmingStopVesting = computed(() => stopVestingWrite.receiptResult.isLoading.value)
+const isConfirmedStopVesting = computed(() => stopVestingWrite.receiptResult.isSuccess.value)
+const errorStopVesting = computed(
+  () => stopVestingWrite.writeResult.error.value || stopVestingWrite.receiptResult.error.value
+)
+
+const stopVesting = async (member: string) => {
+  await stopVestingWrite.executeWrite([member, teamId.value], undefined, {
+    skipGasEstimation: true
   })
+}
 
 watch(isConfirmingStopVesting, async (isConfirming, wasConfirming) => {
   if (wasConfirming && !isConfirming && isConfirmedStopVesting.value) {
@@ -300,17 +273,17 @@ watch(errorStopVesting, () => {
   }
 })
 
-const {
-  mutate: releaseVesting,
-  error: errorReleaseVesting,
-  isPending: loadingReleaseVesting,
-  data: hashReleaseVesting
-} = useWriteContract()
+const releaseVestingWrite = useVestingReleaseWrite()
+const loadingReleaseVesting = computed(() => releaseVestingWrite.writeResult.isPending.value)
+const isConfirmingReleaseVesting = computed(() => releaseVestingWrite.receiptResult.isLoading.value)
+const isConfirmedReleaseVesting = computed(() => releaseVestingWrite.receiptResult.isSuccess.value)
+const errorReleaseVesting = computed(
+  () => releaseVestingWrite.writeResult.error.value || releaseVestingWrite.receiptResult.error.value
+)
 
-const { isLoading: isConfirmingReleaseVesting, isSuccess: isConfirmedReleaseVesting } =
-  useWaitForTransactionReceipt({
-    hash: hashReleaseVesting
-  })
+const releaseVesting = async () => {
+  await releaseVestingWrite.executeWrite([teamId.value], undefined, { skipGasEstimation: true })
+}
 
 watch(isConfirmingReleaseVesting, async (isConfirming, wasConfirming) => {
   if (wasConfirming && !isConfirming && isConfirmedReleaseVesting.value) {
