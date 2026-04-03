@@ -10,6 +10,7 @@ import '@openzeppelin/contracts/utils/cryptography/ECDSA.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@quant-finance/solidity-datetime/contracts/DateTime.sol';
 import '../base/TokenSupport.sol';
+import {IOfficer} from '../interfaces/IOfficer.sol';
 
 /**
  * @title ExpenseAccountEIP712
@@ -60,6 +61,12 @@ contract ExpenseAccountEIP712 is
   }
 
   mapping(bytes32 => ExpenseBalance) public expenseBalances;
+
+  // Add new state variable - MUST be added after existing ones
+  address public officerAddress;
+
+  // Storage gap for future upgrades
+  uint256[49] private __gap;
 
   string private constant BUDGET_LIMIT_TYPE =
     'BudgetLimit(uint256 amount,uint8 frequencyType,uint256 customFrequency,uint256 startDate,uint256 endDate,address tokenAddress,address approvedAddress)';
@@ -114,6 +121,9 @@ contract ExpenseAccountEIP712 is
     __ReentrancyGuard_init();
     __EIP712_init('CNCExpenseAccount', '1');
     __Pausable_init();
+
+    require(msg.sender != address(0), 'msg.sender cannot be zero');
+    officerAddress = msg.sender;
 
     // Set the initial supported tokens
     uint256 length = _tokenAddresses.length;
@@ -428,30 +438,38 @@ contract ExpenseAccountEIP712 is
   }
 
   /**
-   * @notice Allows the owner to withdraw native (ETH) funds from the contract treasury.
-   * @param amount The amount of native funds to withdraw (in wei).
-   * @dev Can only be called by the contract owner.
+   * @notice Sets the officer address for cross-contract discovery.
+   * @param _officerAddress The address of the officer contract.
+   * @dev Can only be called by the contract owner. Used for already-deployed proxies.
    */
-  function ownerWithdrawNative(uint256 amount) external onlyOwner nonReentrant whenNotPaused {
-    require(address(this).balance >= amount, 'Insufficient native balance');
-    payable(owner()).sendValue(amount);
-    emit OwnerTreasuryWithdrawNative(owner(), amount);
+  function setOfficerAddress(address _officerAddress) external onlyOwner {
+    require(_officerAddress != address(0), 'Officer address cannot be zero');
+    officerAddress = _officerAddress;
   }
 
   /**
-   * @notice Allows the owner to withdraw supported ERC20 token funds from the contract treasury.
-   * @param token The address of the token to withdraw.
-   * @param amount The amount of tokens to withdraw.
-   * @dev Can only be called by the contract owner. Token must be supported.
+   * @notice Withdraws all funds (native + all supported tokens) to the Bank contract.
+   * @dev Discovers the Bank address via the Officer contract. Single transaction drain.
    */
-  function ownerWithdrawToken(
-    address token,
-    uint256 amount
-  ) external onlyOwner nonReentrant whenNotPaused {
-    require(isTokenSupported(token), 'Unsupported token');
-    require(IERC20(token).balanceOf(address(this)) >= amount, 'Insufficient token balance');
-    require(IERC20(token).transfer(owner(), amount), 'Token transfer failed');
-    emit OwnerTreasuryWithdrawToken(owner(), token, amount);
+  function ownerWithdrawAllToBank() external onlyOwner nonReentrant whenNotPaused {
+    require(officerAddress != address(0), 'Officer address not set');
+    address bankAddress = IOfficer(officerAddress).findDeployedContract('Bank');
+    require(bankAddress != address(0), 'Bank contract not found');
+
+    uint256 nativeBalance = address(this).balance;
+    if (nativeBalance > 0) {
+      payable(bankAddress).sendValue(nativeBalance);
+      emit OwnerTreasuryWithdrawNative(owner(), nativeBalance);
+    }
+
+    address[] memory tokens = this.getSupportedTokens();
+    for (uint256 i = 0; i < tokens.length; i++) {
+      uint256 tokenBalance = IERC20(tokens[i]).balanceOf(address(this));
+      if (tokenBalance > 0) {
+        require(IERC20(tokens[i]).transfer(bankAddress, tokenBalance), 'Token transfer failed');
+        emit OwnerTreasuryWithdrawToken(owner(), tokens[i], tokenBalance);
+      }
+    }
   }
 
   function getBalance() external view returns (uint256) {
