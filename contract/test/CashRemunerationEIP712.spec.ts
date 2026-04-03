@@ -129,46 +129,6 @@ describe('CashRemuneration*** (EIP712)', () => {
         expect(balance).to.be.equal(ethers.parseEther('5000'))
       })
 
-      describe('Owner treasury withdrawals', () => {
-        it('Then owner can withdraw native treasury balance', async () => {
-          const amount = ethers.parseEther('1')
-
-          await expect(() =>
-            cashRemunerationProxy.connect(employer).ownerWithdrawNative(amount)
-          ).to.changeEtherBalances([cashRemunerationProxy, employer], [-amount, amount])
-
-          await expect(cashRemunerationProxy.connect(employer).ownerWithdrawNative(amount))
-            .to.emit(cashRemunerationProxy, 'OwnerTreasuryWithdrawNative')
-            .withArgs(employer.address, amount)
-        })
-
-        it('Then owner can withdraw supported token treasury balance', async () => {
-          const amount = BigInt(5 * 1e6)
-
-          await expect(
-            cashRemunerationProxy
-              .connect(employer)
-              .ownerWithdrawToken(await mockUSDC.getAddress(), amount)
-          )
-            .to.emit(cashRemunerationProxy, 'OwnerTreasuryWithdrawToken')
-            .withArgs(employer.address, await mockUSDC.getAddress(), amount)
-        })
-
-        it('Then non-owner cannot withdraw treasury funds', async () => {
-          await expect(
-            cashRemunerationProxy.connect(employee).ownerWithdrawNative(ethers.parseEther('1'))
-          ).to.be.revertedWithCustomError(cashRemunerationProxy, 'OwnableUnauthorizedAccount')
-        })
-
-        it('Then owner cannot withdraw unsupported token', async () => {
-          await expect(
-            cashRemunerationProxy
-              .connect(employer)
-              .ownerWithdrawToken(await mockUSDT.getAddress(), BigInt(1 * 1e6))
-          ).to.be.revertedWith('Token not supported')
-        })
-      })
-
       it('Then I can add and remove supported tokens', async () => {
         await expect(cashRemunerationProxy.addTokenSupport(await mockUSDT.getAddress()))
           .to.emit(cashRemunerationProxy, 'TokenSupportAdded')

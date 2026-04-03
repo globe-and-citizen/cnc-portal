@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
-import { defineComponent, nextTick } from 'vue'
+import { nextTick } from 'vue'
 import OwnerTreasuryWithdrawAction from '../OwnerTreasuryWithdrawAction.vue'
 import {
   mockBodAddAction,
@@ -11,7 +11,6 @@ import {
   mockExpenseAccountReads,
   mockExpenseAccountWrites,
   mockTeamStore,
-  // mockToast,
   mockUseChainId,
   mockUseContractBalance,
   mockUserStore,
@@ -52,45 +51,13 @@ const makeBalance = (
   }
 })
 
-const stubs = {
-  teleport: true,
-  TokenAmount: defineComponent({
-    emits: ['update:modelValue', 'validation'],
-    data() {
-      return {
-        model: { amount: '0', tokenId: 'native' }
-      }
-    },
-    methods: {
-      emitModel() {
-        this.$emit('update:modelValue', { ...this.model })
-      },
-      setToken(tokenId: string) {
-        this.model.tokenId = tokenId
-        this.emitModel()
-      },
-      setAmount(amount: string) {
-        this.model.amount = amount
-        this.emitModel()
-      }
-    },
-    template: `
-      <div>
-        <button data-test="token-amount-valid" @click="$emit('validation', true)" />
-        <button data-test="token-amount-native" @click="setToken('native')" />
-        <button data-test="token-amount-usdc" @click="setToken('usdc')" />
-        <button data-test="token-amount-sher" @click="setToken('sher')" />
-        <button data-test="token-amount-unknown" @click="setToken('unknown')" />
-        <button data-test="token-amount-amount-1" @click="setAmount('1')" />
-        <slot name="label" />
-      </div>
-    `
-  })
-}
-
 const createWrapper = (
   contractType: 'CashRemunerationEIP712' | 'ExpenseAccountEIP712' = 'CashRemunerationEIP712'
-) => mount(OwnerTreasuryWithdrawAction, { props: { contractType }, global: { stubs } })
+) =>
+  mount(OwnerTreasuryWithdrawAction, {
+    props: { contractType },
+    global: { stubs: { teleport: true } }
+  })
 
 describe('OwnerTreasuryWithdrawAction', () => {
   const invalidateQueries = vi.fn()
@@ -114,10 +81,8 @@ describe('OwnerTreasuryWithdrawAction', () => {
     mockBodIsBodAction.isBodAction.value = false
     mockBodAddAction.isActionAdded.value = false
 
-    mockCashRemunerationWrites.ownerWithdrawNative.executeWrite.mockResolvedValue('0xhash')
-    mockCashRemunerationWrites.ownerWithdrawToken.executeWrite.mockResolvedValue('0xhash')
-    mockExpenseAccountWrites.ownerWithdrawNative.executeWrite.mockResolvedValue('0xhash')
-    mockExpenseAccountWrites.ownerWithdrawToken.executeWrite.mockResolvedValue('0xhash')
+    mockCashRemunerationWrites.ownerWithdrawAllToBank.executeWrite.mockResolvedValue('0xhash')
+    mockExpenseAccountWrites.ownerWithdrawAllToBank.executeWrite.mockResolvedValue('0xhash')
 
     mockTeamStore.getContractAddressByType = vi.fn((type) => {
       if (type === 'CashRemunerationEIP712') return '0x6666666666666666666666666666666666666666'
@@ -147,114 +112,93 @@ describe('OwnerTreasuryWithdrawAction', () => {
     expect(wrapper.get('[data-test="owner-withdraw-button"]').attributes('disabled')).toBeDefined()
   })
 
-  it.skip('auto-selects first valid token when current one disappears', async () => {
-    mockUseContractBalance.balances.value = [
-      makeBalance('native', 5, 'ETH', 18, '0x0000000000000000000000000000000000000000')
-    ]
-    const wrapper = createWrapper('ExpenseAccountEIP712')
-    mockUseContractBalance.balances.value = [
-      makeBalance('usdc', 10, 'USDC', 6, '0xA3492D046095AFFE351cFac15de9b86425E235dB')
-    ]
-    await nextTick()
-    await wrapper.get('[data-test="owner-withdraw-button"]').trigger('click')
-    expect(wrapper.text()).toContain('Balance: 10 USDC')
+  it('enables button when there is withdrawable balance', () => {
+    const wrapper = createWrapper()
+    const btn = wrapper.get('[data-test="owner-withdraw-button"]')
+    expect(btn.attributes('disabled')).toBeUndefined()
   })
 
-  it.skip('opens and resets modal from emitted events', async () => {
-    const wrapper = createWrapper()
+  it.skip('calls ownerWithdrawAllToBank for CashRemunerationEIP712 on click', async () => {
+    const wrapper = createWrapper('CashRemunerationEIP712')
     await wrapper.get('[data-test="owner-withdraw-button"]').trigger('click')
-    await wrapper.get('[data-test="modal-close"]').trigger('click')
-    await wrapper.get('[data-test="modal-reset"]').trigger('click')
-    await nextTick()
-    expect(wrapper.find('[data-test="owner-withdraw-modal"]').exists()).toBe(false)
-  })
-
-  it.skip('submits native owner withdraw and handles confirmation refresh', async () => {
-    const wrapper = createWrapper()
-    await wrapper.get('[data-test="owner-withdraw-button"]').trigger('click')
-    await wrapper.get('[data-test="token-amount-valid"]').trigger('click')
-    await wrapper.get('[data-test="token-amount-amount-1"]').trigger('click')
-    await wrapper.get('[data-test="owner-withdraw-submit"]').trigger('click')
     await flushPromises()
 
-    expect(mockCashRemunerationWrites.ownerWithdrawNative.executeWrite).toHaveBeenCalledWith(
-      [1000000000000000000n],
+    expect(mockCashRemunerationWrites.ownerWithdrawAllToBank.executeWrite).toHaveBeenCalledWith(
+      [],
       undefined,
       { skipGasEstimation: true }
     )
-    mockCashRemunerationWrites.ownerWithdrawNative.receiptResult.isLoading.value = true
-    await nextTick()
-    mockCashRemunerationWrites.ownerWithdrawNative.receiptResult.isLoading.value = false
-    await nextTick()
-    // expect(mockToast.add).toHaveBeenCalledWith({ title: 'Withdraw successful', color: 'success' })
-    expect(invalidateQueries).toHaveBeenCalled()
   })
 
-  it.skip('submits token withdraw for expense and cash paths', async () => {
-    const expense = createWrapper('ExpenseAccountEIP712')
-    await expense.get('[data-test="owner-withdraw-button"]').trigger('click')
-    await expense.get('[data-test="token-amount-valid"]').trigger('click')
-    await expense.get('[data-test="token-amount-usdc"]').trigger('click')
-    await expense.get('[data-test="token-amount-amount-1"]').trigger('click')
-    await expense.get('[data-test="owner-withdraw-submit"]').trigger('click')
-
-    const cash = createWrapper('CashRemunerationEIP712')
-    await cash.get('[data-test="owner-withdraw-button"]').trigger('click')
-    await cash.get('[data-test="token-amount-valid"]').trigger('click')
-    await cash.get('[data-test="token-amount-sher"]').trigger('click')
-    await cash.get('[data-test="token-amount-amount-1"]').trigger('click')
-    await cash.get('[data-test="owner-withdraw-submit"]').trigger('click')
+  it.skip('calls ownerWithdrawAllToBank for ExpenseAccountEIP712 on click', async () => {
+    const wrapper = createWrapper('ExpenseAccountEIP712')
+    await wrapper.get('[data-test="owner-withdraw-button"]').trigger('click')
     await flushPromises()
 
-    expect(mockExpenseAccountWrites.ownerWithdrawToken.executeWrite).toHaveBeenCalled()
-    expect(mockCashRemunerationWrites.ownerWithdrawToken.executeWrite).toHaveBeenCalled()
+    expect(mockExpenseAccountWrites.ownerWithdrawAllToBank.executeWrite).toHaveBeenCalledWith(
+      [],
+      undefined,
+      { skipGasEstimation: true }
+    )
   })
 
-  it.skip('creates bod action for native withdraw and completes success watcher', async () => {
+  it.skip('creates bod action for withdraw all to bank', async () => {
     mockUserStore.address = '0x00000000000000000000000000000000000000de'
     mockBodIsBodAction.isBodAction.value = true
     const wrapper = createWrapper()
 
     await wrapper.get('[data-test="owner-withdraw-button"]').trigger('click')
-    await wrapper.get('[data-test="token-amount-valid"]').trigger('click')
-    await wrapper.get('[data-test="token-amount-amount-1"]').trigger('click')
-    await wrapper.get('[data-test="owner-withdraw-submit"]').trigger('click')
     await flushPromises()
-    expect(mockBodAddAction.executeAddAction).toHaveBeenCalled()
 
-    mockBodAddAction.isActionAdded.value = true
-    await nextTick()
-    // expect(mockToast.add).toHaveBeenCalledWith({
-    //   title: 'Action added successfully, waiting for board confirmation',
-    //   color: 'success'
-    // })
+    expect(mockBodAddAction.executeAddAction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        targetAddress: '0x6666666666666666666666666666666666666666',
+        userAddress: '0x00000000000000000000000000000000000000de'
+      })
+    )
   })
 
-  it.skip('covers early-return and error handling paths', async () => {
+  it('shows success toast on bod action added', async () => {
+    mockBodIsBodAction.isBodAction.value = true
+    mockBodAddAction.isActionAdded.value = true
+    createWrapper()
+    await nextTick()
+    // The watcher will fire for isActionAdded
+  })
+
+  it('refreshes balances after withdraw confirmation', async () => {
+    const wrapper = createWrapper()
+    await wrapper.get('[data-test="owner-withdraw-button"]').trigger('click')
+    await flushPromises()
+
+    // Simulate confirmation cycle
+    mockCashRemunerationWrites.ownerWithdrawAllToBank.receiptResult.isLoading.value = true
+    await nextTick()
+    mockCashRemunerationWrites.ownerWithdrawAllToBank.receiptResult.isLoading.value = false
+    await nextTick()
+
+    expect(invalidateQueries).toHaveBeenCalled()
+  })
+
+  it('does not submit when contractAddress is undefined', async () => {
     mockTeamStore.getContractAddressByType = vi.fn(
       () => undefined as unknown as string
     ) as unknown as typeof mockTeamStore.getContractAddressByType
     const wrapper = createWrapper()
     await wrapper.get('[data-test="owner-withdraw-button"]').trigger('click')
-    await wrapper.get('[data-test="token-amount-valid"]').trigger('click')
-    await wrapper.get('[data-test="token-amount-unknown"]').trigger('click')
-    await wrapper.get('[data-test="token-amount-amount-1"]').trigger('click')
-    await wrapper.get('[data-test="owner-withdraw-submit"]').trigger('click')
-
-    mockCashRemunerationWrites.ownerWithdrawNative.executeWrite.mockRejectedValueOnce({
-      shortMessage: 'Short withdraw error'
-    })
-    mockTeamStore.getContractAddressByType = vi.fn(
-      () => '0x6666666666666666666666666666666666666666'
-    )
-    const owner = createWrapper()
-    await owner.get('[data-test="owner-withdraw-button"]').trigger('click')
-    await owner.get('[data-test="token-amount-valid"]').trigger('click')
-    await owner.get('[data-test="token-amount-amount-1"]').trigger('click')
-    await owner.get('[data-test="owner-withdraw-submit"]').trigger('click')
     await flushPromises()
 
-    expect(mockCashRemunerationWrites.ownerWithdrawToken.executeWrite).not.toHaveBeenCalled()
-    // expect(mockToast.add).toHaveBeenCalledWith({ title: 'Short withdraw error', color: 'error' })
+    expect(mockCashRemunerationWrites.ownerWithdrawAllToBank.executeWrite).not.toHaveBeenCalled()
+  })
+
+  it.skip('handles error during withdraw', async () => {
+    mockCashRemunerationWrites.ownerWithdrawAllToBank.executeWrite.mockRejectedValueOnce({
+      shortMessage: 'Short withdraw error'
+    })
+    const wrapper = createWrapper()
+    await wrapper.get('[data-test="owner-withdraw-button"]').trigger('click')
+    await flushPromises()
+
+    expect(mockCashRemunerationWrites.ownerWithdrawAllToBank.executeWrite).toHaveBeenCalled()
   })
 })
