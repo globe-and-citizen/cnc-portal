@@ -1,51 +1,60 @@
 <template>
-  <div v-if="!showSummary" class="flex w-full max-w-5xl flex-col gap-5">
+  <UForm
+    v-if="!showSummary"
+    :schema="schema"
+    :state="formState"
+    class="flex w-full max-w-5xl flex-col gap-5"
+    @submit="handleDisplaySummary"
+  >
     <h4 class="text-lg font-bold">Create Vesting Schedule</h4>
-    <div class="mt-4 gap-2">
-      <label class="flex-col items-center gap-2">
-        <div class="mb-3 flex w-32">Choose Member</div>
-        <div v-if="member.address" class="h-20">
-          <UserComponent
-            class="bg-base-200 grow rounded-lg p-4"
-            :user="member"
-            data-test="selected-member"
-          />
-        </div>
-        <div class="flex w-full grow">
-          <SelectMemberInput
-            data-test="member"
-            class="w-full text-xs"
-            :hidden-members="[]"
-            :disable-team-members="false"
-            showOnFocus
-            only-team-members
-            @selectMember="handleSelectMember"
-          />
-        </div>
-      </label>
-      <span v-if="errors.member" class="mt-1 text-xs text-red-500">{{ errors.member }}</span>
-    </div>
 
-    <div class="mt-4 gap-2">
-      <label class="flex items-center">
-        <span class="w-32 shrink-0">Period</span>
-        <div class="grow">
-          <Datepicker
-            v-model="dateRange"
-            data-test="date-range"
+    <UFormField name="member" label="Choose Member" class="mt-4 gap-2">
+      <div v-if="member.address" class="h-20">
+        <UserComponent
+          class="bg-base-200 grow rounded-lg p-4"
+          :user="member"
+          data-test="selected-member"
+        />
+      </div>
+      <div class="flex w-full grow">
+        <SelectMemberInput
+          data-test="member"
+          class="w-full text-xs"
+          :hidden-members="[]"
+          :disable-team-members="false"
+          showOnFocus
+          only-team-members
+          @selectMember="handleSelectMember"
+        />
+      </div>
+    </UFormField>
+
+    <UFormField name="dateRange" label="Period" class="mt-4">
+      <UPopover v-model:open="isDatePickerOpen">
+        <UButton
+          type="button"
+          color="neutral"
+          variant="outline"
+          class="w-full justify-start"
+          icon="i-lucide-calendar"
+          data-test="date-range"
+        >
+          {{ dateRangeLabel }}
+        </UButton>
+        <template #content>
+          <UCalendar
             range
-            auto-apply
-            format="dd/MM/yyyy"
-            placeholder="Select range"
-            class="w-full"
+            :number-of-months="1"
+            :model-value="calendarRange"
+            class="p-2"
+            @update:model-value="onDateRangeChange"
           />
-        </div>
-      </label>
-      <span v-if="errors.dateRange" class="text-xs text-red-500">{{ errors.dateRange }}</span>
-    </div>
+        </template>
+      </UPopover>
+    </UFormField>
 
-    <div class="mt-4 flex w-100 flex-wrap gap-3">
-      <div class="min-w-50 flex-1">
+    <div class="mt-4 flex w-full items-start gap-3">
+      <UFormField name="totalAmount" class="min-w-0 flex-1">
         <label class="input input-bordered input-md flex w-full items-center gap-2">
           <span class="shrink-0 text-xs">Amount</span>
           <UInput
@@ -57,11 +66,8 @@
             required
           />
         </label>
-        <span v-if="errors.totalAmount" class="mt-1 block text-xs text-red-500">
-          {{ errors.totalAmount }}
-        </span>
-      </div>
-      <div class="min-w-50 flex-1">
+      </UFormField>
+      <UFormField name="cliff" class="min-w-0 flex-1">
         <label class="input input-bordered flex w-full items-center gap-2">
           <span class="shrink-0 text-xs">Cliff(days)</span>
           <UInput
@@ -73,10 +79,7 @@
             required
           />
         </label>
-        <span v-if="errors.cliff" class="mt-1 block text-xs text-red-500">
-          {{ errors.cliff }}
-        </span>
-      </div>
+      </UFormField>
     </div>
 
     <h3 class="pt-6 text-sm text-gray-600">
@@ -85,6 +88,7 @@
     </h3>
     <div class="modal-action justify-end">
       <UButton
+        type="button"
         color="primary"
         size="sm"
         @click="handleDisplaySummary"
@@ -94,7 +98,7 @@
         label="Create Vesting"
       />
     </div>
-  </div>
+  </UForm>
   <div v-if="showSummary">
     <VestingSummary
       :vesting="vestingData"
@@ -106,25 +110,27 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, reactive, ref, watch } from 'vue'
+import { computed, ref, shallowRef, watch } from 'vue'
 import { differenceInCalendarDays, differenceInMonths, differenceInYears } from '@/utils/dayUtils'
-import { useWaitForTransactionReceipt, useWriteContract, useReadContract } from '@wagmi/vue'
-import { VESTING_ABI } from '@/artifacts/abi/vesting'
-import { VESTING_ADDRESS } from '@/constant'
 import { type Address, formatUnits, parseUnits } from 'viem'
 import SelectMemberInput from '@/components/utils/SelectMemberInput.vue'
 import UserComponent from '@/components/UserComponent.vue'
 import VestingSummary from '@/components/sections/VestingView/VestingSummary.vue'
 import { useTeamStore } from '@/stores'
-import Datepicker from '@vuepic/vue-datepicker'
-import '@vuepic/vue-datepicker/dist/main.css'
+import {
+  useVestingAddress,
+  useVestingGetTeamVestingsWithMembers
+} from '@/composables/vesting/reads'
+import { useVestingAddVestingWrite } from '@/composables/vesting/writes'
 import { type VestingCreation } from '@/types/vesting'
 import type { User } from '@/types'
 import { useContractBalance } from '@/composables/useContractBalance'
-import { INVESTOR_ABI } from '@/artifacts/abi/investors'
+import { useErc20Allowance, useErc20BalanceOf } from '@/composables/erc20/reads'
+import { useERC20Approve } from '@/composables/erc20/writes'
 import { useUserDataStore } from '@/stores'
 import { isAddress } from 'viem'
 import { z } from 'zod'
+import type { DateRange } from 'reka-ui'
 
 const toast = useToast()
 
@@ -155,19 +161,11 @@ const tokenBalance = computed(() => {
 
 const vestingTokenAddress = computed(() => props.tokenAddress as Address)
 const connectedUserAddress = computed(() => userDataStore.address as Address)
+const vestingAddressResult = useVestingAddress()
+const vestingAddress = computed(() => vestingAddressResult.value as Address)
 
 const { data: connectedUserVestingBalanceRaw, error: connectedUserVestingBalanceError } =
-  useReadContract({
-    abi: INVESTOR_ABI,
-    address: vestingTokenAddress,
-    functionName: 'balanceOf',
-    args: [connectedUserAddress],
-    query: {
-      enabled: computed(
-        () => isAddress(vestingTokenAddress.value) && isAddress(connectedUserAddress.value)
-      )
-    }
-  })
+  useErc20BalanceOf(vestingTokenAddress, connectedUserAddress)
 
 watch(connectedUserVestingBalanceError, () => {
   if (connectedUserVestingBalanceError.value) {
@@ -205,161 +203,24 @@ const activeMembers = computed<string[]>(() => {
 })
 
 const member = ref({ name: '', address: '' })
-const startDate = ref('')
 const cliff = ref(0)
 const totalAmount = ref(0)
 const dateRange = ref<[Date, Date] | null>(null)
+// Keep calendar values in a shallow ref to preserve DateValue nominal types.
+const calendarRange = shallowRef<DateRange | null>(null)
+const isDatePickerOpen = ref(false)
 const duration = ref({ years: 0, months: 0, days: 0 })
 const durationInDays = ref(0)
-const updateCount = ref(0)
 const showSummary = ref(false)
 
-const errors = reactive({ member: '', dateRange: '', totalAmount: '', cliff: '' })
-const emptyErrors = { member: '', dateRange: '', totalAmount: '', cliff: '' }
+const formState = computed(() => ({
+  member: member.value,
+  dateRange: dateRange.value,
+  cliff: cliff.value,
+  totalAmount: totalAmount.value
+}))
 
-const handleSelectMember = (selectedMember: User) => {
-  member.value = {
-    name: selectedMember.name ?? '',
-    address: selectedMember.address ?? ''
-  }
-  errors.member = ''
-}
-
-async function resetUpdateCount() {
-  await nextTick()
-  updateCount.value = 0
-}
-
-watch(dateRange, async (val) => {
-  if (!val || val.length !== 2) return
-
-  if (updateCount.value > 2) return
-
-  const [start, end] = val
-  const days = differenceInCalendarDays(end, start)
-  const years = differenceInYears(end, start)
-  const months = differenceInMonths(end, start) % 12
-  const leftoverDays = days - years * 365 - months * 30
-  durationInDays.value = days
-  duration.value = { years, months, days: leftoverDays }
-
-  updateCount.value++
-  if (updateCount.value === 2) await resetUpdateCount()
-})
-
-const emit = defineEmits(['reload', 'closeAddVestingModal'])
-
-const {
-  data: vestingInfos,
-  error: errorGetVestingInfo,
-  refetch: getVestingInfos
-} = useReadContract({
-  functionName: 'getTeamVestingsWithMembers',
-  address: VESTING_ADDRESS as Address,
-  abi: VESTING_ABI,
-  args: [BigInt(teamStore.currentTeamId ?? 0)]
-})
-watch(errorGetVestingInfo, () => {
-  if (errorGetVestingInfo.value) {
-    toast.add({ title: 'Add admin failed', color: 'error' })
-  }
-})
-
-watch(
-  () => props.reloadKey,
-  async () => {
-    await getVestingInfos()
-  }
-)
-
-const loading = computed(() => {
-  const tokenApprovalPending =
-    loadingApproveToken.value || (isConfirmingApproveToken.value && !isConfirmedApproveToken.value)
-  const vestingCreationPending =
-    loadingAddVesting.value || (isConfirmingAddVesting.value && !isConfirmedAddVesting.value)
-
-  return tokenApprovalPending || vestingCreationPending
-})
-
-const {
-  data: allowance,
-  refetch: getAllowance,
-  error: allowanceError
-} = useReadContract({
-  abi: INVESTOR_ABI,
-  address: props.tokenAddress as Address,
-  functionName: 'allowance',
-  args: [userDataStore.address as Address, VESTING_ADDRESS as Address]
-})
-
-watch(allowanceError, () => {
-  if (allowanceError.value) {
-    toast.add({ title: 'error on get Allowance', color: 'error' })
-    console.error('allowance error ', allowanceError.value)
-  }
-})
-
-const {
-  mutate: addVesting,
-  error: errorAddVesting,
-  isPending: loadingAddVesting,
-  data: hashAddVesting
-} = useWriteContract()
-
-const { isLoading: isConfirmingAddVesting, isSuccess: isConfirmedAddVesting } =
-  useWaitForTransactionReceipt({
-    hash: hashAddVesting
-  })
-
-watch(isConfirmingAddVesting, async (isConfirming, wasConfirming) => {
-  if (wasConfirming && !isConfirming && isConfirmedAddVesting.value) {
-    toast.add({ title: 'vesting added successfully', color: 'success' })
-    startDate.value = ''
-    cliff.value = 0
-    totalAmount.value = 0
-    dateRange.value = null
-    member.value = { name: '', address: '' }
-    duration.value = { years: 0, months: 0, days: 0 }
-    showSummary.value = false
-    emit('closeAddVestingModal')
-    emit('reload')
-  }
-})
-
-watch(errorAddVesting, () => {
-  if (errorAddVesting.value) {
-    toast.add({ title: 'Add vesting failed', color: 'error' })
-    console.error('add vesting error', errorAddVesting.value)
-  }
-})
-
-const {
-  mutate: approveToken,
-  error: errorApproveToken,
-  isPending: loadingApproveToken,
-  data: hashApproveToken
-} = useWriteContract()
-
-const { isLoading: isConfirmingApproveToken, isSuccess: isConfirmedApproveToken } =
-  useWaitForTransactionReceipt({
-    hash: hashApproveToken
-  })
-
-watch(isConfirmingApproveToken, async (isConfirming, wasConfirming) => {
-  if (wasConfirming && !isConfirming && isConfirmedApproveToken.value) {
-    toast.add({ title: 'Approval added successfully', color: 'success' })
-    submit()
-  }
-})
-
-watch(errorApproveToken, () => {
-  if (errorApproveToken.value) {
-    toast.add({ title: 'Approval failed', color: 'error' })
-    console.error('Approval error ', errorApproveToken.value)
-  }
-})
-
-function buildSchema() {
+const schema = computed(() => {
   const connectedUserBalance = connectedUserTokenBalance.value
 
   return z.object({
@@ -391,29 +252,177 @@ function buildSchema() {
         }
       )
   })
+})
+
+const handleSelectMember = (selectedMember: User) => {
+  member.value = {
+    name: selectedMember.name ?? '',
+    address: selectedMember.address ?? ''
+  }
 }
 
-function validate(): boolean {
-  const result = buildSchema().safeParse({
-    member: member.value,
-    dateRange: dateRange.value,
-    cliff: cliff.value,
-    totalAmount: totalAmount.value
-  })
+interface CalendarDateLike {
+  year: number
+  month: number
+  day: number
+}
 
-  const nextErrors = { ...emptyErrors }
+const isCalendarDateLike = (value: unknown): value is CalendarDateLike => {
+  if (!value || typeof value !== 'object') return false
 
-  if (!result.success) {
-    const fieldErrors = result.error.flatten().fieldErrors
-    nextErrors.member = fieldErrors.member?.[0] ?? ''
-    nextErrors.dateRange = fieldErrors.dateRange?.[0] ?? ''
-    nextErrors.totalAmount = fieldErrors.totalAmount?.[0] ?? ''
-    nextErrors.cliff = fieldErrors.cliff?.[0] ?? ''
+  const parsed = value as Record<string, unknown>
+  return (
+    typeof parsed.year === 'number' &&
+    typeof parsed.month === 'number' &&
+    typeof parsed.day === 'number'
+  )
+}
+
+const calendarDateToDate = (value: CalendarDateLike): Date =>
+  new Date(value.year, value.month - 1, value.day)
+
+const formatDate = (value: Date): string => value.toLocaleDateString('en-GB')
+
+const dateRangeLabel = computed(() => {
+  if (!dateRange.value) return 'Select range'
+  return `${formatDate(dateRange.value[0])} - ${formatDate(dateRange.value[1])}`
+})
+
+const onDateRangeChange = (value: DateRange | null) => {
+  calendarRange.value = value
+
+  if (
+    !value?.start ||
+    !value?.end ||
+    !isCalendarDateLike(value.start) ||
+    !isCalendarDateLike(value.end)
+  ) {
+    dateRange.value = null
+    return
   }
 
-  Object.assign(errors, nextErrors)
-  return result.success
+  dateRange.value = [calendarDateToDate(value.start), calendarDateToDate(value.end)]
+  isDatePickerOpen.value = false
 }
+
+watch(dateRange, (val) => {
+  if (!val || val.length !== 2) {
+    calendarRange.value = null
+    durationInDays.value = 0
+    duration.value = { years: 0, months: 0, days: 0 }
+    return
+  }
+
+  const [start, end] = val
+
+  const days = differenceInCalendarDays(end, start)
+  if (days < 0) {
+    durationInDays.value = 0
+    duration.value = { years: 0, months: 0, days: 0 }
+    return
+  }
+
+  const years = differenceInYears(end, start)
+  const months = differenceInMonths(end, start) % 12
+  const leftoverDays = days - years * 365 - months * 30
+  durationInDays.value = days
+  duration.value = { years, months, days: leftoverDays }
+})
+
+const emit = defineEmits(['reload', 'closeAddVestingModal'])
+
+const {
+  data: vestingInfos,
+  error: errorGetVestingInfo,
+  refetch: getVestingInfos
+} = useVestingGetTeamVestingsWithMembers(computed(() => BigInt(teamStore.currentTeamId ?? 0)))
+watch(errorGetVestingInfo, () => {
+  if (errorGetVestingInfo.value) {
+    toast.add({ title: 'Add admin failed', color: 'error' })
+  }
+})
+
+watch(
+  () => props.reloadKey,
+  async () => {
+    await getVestingInfos()
+  }
+)
+
+const loading = computed(() => {
+  const tokenApprovalPending =
+    loadingApproveToken.value || (isConfirmingApproveToken.value && !isConfirmedApproveToken.value)
+  const vestingCreationPending =
+    loadingAddVesting.value || (isConfirmingAddVesting.value && !isConfirmedAddVesting.value)
+
+  return tokenApprovalPending || vestingCreationPending
+})
+
+const {
+  data: allowance,
+  refetch: getAllowance,
+  error: allowanceError
+} = useErc20Allowance(vestingTokenAddress, connectedUserAddress, vestingAddress)
+
+watch(allowanceError, () => {
+  if (allowanceError.value) {
+    toast.add({ title: 'error on get Allowance', color: 'error' })
+    console.error('allowance error ', allowanceError.value)
+  }
+})
+
+const addVestingWrite = useVestingAddVestingWrite()
+const loadingAddVesting = computed(() => addVestingWrite.writeResult.isPending.value)
+const isConfirmingAddVesting = computed(() => addVestingWrite.receiptResult.isLoading.value)
+const isConfirmedAddVesting = computed(() => addVestingWrite.receiptResult.isSuccess.value)
+const errorAddVesting = computed(
+  () => addVestingWrite.writeResult.error.value || addVestingWrite.receiptResult.error.value
+)
+
+watch(isConfirmingAddVesting, async (isConfirming, wasConfirming) => {
+  if (wasConfirming && !isConfirming && isConfirmedAddVesting.value) {
+    toast.add({ title: 'vesting added successfully', color: 'success' })
+    cliff.value = 0
+    totalAmount.value = 0
+    dateRange.value = null
+    calendarRange.value = null
+    member.value = { name: '', address: '' }
+    duration.value = { years: 0, months: 0, days: 0 }
+    showSummary.value = false
+    emit('closeAddVestingModal')
+    emit('reload')
+  }
+})
+
+watch(errorAddVesting, () => {
+  if (errorAddVesting.value) {
+    toast.add({ title: 'Add vesting failed', color: 'error' })
+    console.error('add vesting error', errorAddVesting.value)
+  }
+})
+
+const approvalAmountUnits = ref<bigint>(0n)
+const approveTokenWrite = useERC20Approve(vestingTokenAddress, vestingAddress, approvalAmountUnits)
+const loadingApproveToken = computed(() => approveTokenWrite.writeResult.isPending.value)
+const isConfirmingApproveToken = computed(() => approveTokenWrite.receiptResult.isLoading.value)
+const isConfirmedApproveToken = computed(() => approveTokenWrite.receiptResult.isSuccess.value)
+const errorApproveToken = computed(
+  () => approveTokenWrite.writeResult.error.value || approveTokenWrite.receiptResult.error.value
+)
+
+watch(isConfirmingApproveToken, async (isConfirming, wasConfirming) => {
+  if (wasConfirming && !isConfirming && isConfirmedApproveToken.value) {
+    toast.add({ title: 'Approval added successfully', color: 'success' })
+    submit()
+  }
+})
+
+watch(errorApproveToken, () => {
+  if (errorApproveToken.value) {
+    toast.add({ title: 'Approval failed', color: 'error' })
+    console.error('Approval error ', errorApproveToken.value)
+  }
+})
 
 function checkDuplicateVesting() {
   if (
@@ -429,13 +438,12 @@ function checkDuplicateVesting() {
 async function approveAllowance() {
   if (!checkDuplicateVesting()) {
     if (totalAmount.value > 0) {
-      const totalAmountInUnits = parseUnits(totalAmount.value.toString(), VESTING_TOKEN_DECIMALS)
-      approveToken({
-        address: props.tokenAddress as Address,
-        abi: INVESTOR_ABI,
-        functionName: 'approve',
-        args: [VESTING_ADDRESS as Address, totalAmountInUnits]
-      })
+      approvalAmountUnits.value = parseUnits(totalAmount.value.toString(), VESTING_TOKEN_DECIMALS)
+      void approveTokenWrite.executeWrite(
+        [vestingAddress.value, approvalAmountUnits.value],
+        undefined,
+        { skipGasEstimation: true }
+      )
     } else {
       toast.add({ title: 'total amount value should be greater than zero', color: 'error' })
     }
@@ -443,7 +451,8 @@ async function approveAllowance() {
 }
 
 function handleDisplaySummary() {
-  if (validate()) showSummary.value = true
+  const result = schema.value.safeParse(formState.value)
+  if (result.success) showSummary.value = true
 }
 
 async function submit() {
@@ -465,11 +474,8 @@ async function submit() {
     toast.add({ title: 'Allowance is less than the total amount', color: 'error' })
     return
   }
-  addVesting({
-    address: VESTING_ADDRESS as Address,
-    abi: VESTING_ABI,
-    functionName: 'addVesting',
-    args: [
+  await addVestingWrite.executeWrite(
+    [
       BigInt(teamStore.currentTeamId ?? 0),
       member.value.address as Address,
       BigInt(start),
@@ -477,7 +483,9 @@ async function submit() {
       BigInt(cliffInSeconds),
       totalAmountInUnits,
       props.tokenAddress as Address
-    ]
-  })
+    ],
+    undefined,
+    { skipGasEstimation: true }
+  )
 }
 </script>

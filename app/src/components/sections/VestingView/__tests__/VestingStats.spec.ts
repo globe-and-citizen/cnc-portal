@@ -35,6 +35,15 @@ const mockWaitReceipt = {
   isLoading: ref(false),
   isSuccess: ref(false)
 }
+
+vi.mock('@/composables/investor/reads', () => ({
+  useInvestorSymbol: vi.fn(() => ({
+    data: mockSymbol,
+    error: ref(null),
+    refetch: vi.fn()
+  }))
+}))
+
 vi.mock('@wagmi/vue', async (importOriginal) => {
   const actual: object = await importOriginal()
   return {

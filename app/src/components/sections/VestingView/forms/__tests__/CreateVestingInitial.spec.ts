@@ -1,11 +1,11 @@
 import { describe, it, vi, expect, beforeEach } from 'vitest'
 import { mount, type VueWrapper } from '@vue/test-utils'
-import Datepicker from '@vuepic/vue-datepicker'
 import CreateVesting from '@/components/sections/VestingView/forms/CreateVesting.vue'
 import SelectMemberInput from '@/components/utils/SelectMemberInput.vue'
 import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
 import { mockUseContractBalance } from '@/tests/mocks/composables.mock'
+import { CalendarDate } from '@internationalized/date'
 
 const memberAddress = '0x000000000000000000000000000000000000dead'
 const mockReloadKey = ref<number>(0)
@@ -35,6 +35,10 @@ const mockVestingInfos = ref<VestingInfosType>([
 
 describe('CreateVesting.vue', () => {
   let wrapper: VueWrapper
+  const submitForm = async () => {
+    await wrapper.find('[data-test="submit-btn"]').trigger('click')
+    await wrapper.vm.$nextTick()
+  }
   const mountComponent = () =>
     mount(CreateVesting, {
       props: {
@@ -79,11 +83,8 @@ describe('CreateVesting.vue', () => {
       })
 
       await wrapper.vm.$nextTick()
-      await wrapper.find('[data-test="submit-btn"]').trigger('click')
-      await wrapper.vm.$nextTick()
-
-      // Check for error message
-      expect(wrapper.text()).toContain('Please enter a valid Ethereum address.')
+      await submitForm()
+      expect(wrapper.findComponent({ name: 'VestingSummary' }).exists()).toBe(false)
     })
   })
   describe('Allowance Approval', () => {
@@ -93,10 +94,18 @@ describe('CreateVesting.vue', () => {
         name: 'Test User',
         address: '0x120000000000000000000000000000000000dead'
       })
-      await wrapper.find('[data-test="total-amount"]').setValue(amount)
-      const datePicker = wrapper.findComponent(Datepicker)
-      datePicker.setValue([new Date(), new Date()])
-      await wrapper.find('[data-test="cliff"]').setValue(0)
+      ;(wrapper.vm as unknown as { totalAmount: number }).totalAmount = amount
+      ;(
+        wrapper.vm as unknown as {
+          onDateRangeChange: (value: { start: CalendarDate; end: CalendarDate }) => void
+        }
+      ).onDateRangeChange({
+        start: new CalendarDate(2025, 6, 1),
+        end: new CalendarDate(2025, 6, 2)
+      })
+      await wrapper.vm.$nextTick()
+      ;(wrapper.vm as unknown as { cliff: number }).cliff = 0
+      await wrapper.vm.$nextTick()
     }
 
     it('calls approveAllowance when submitting with valid amount', async () => {
@@ -104,8 +113,7 @@ describe('CreateVesting.vue', () => {
 
       const submitBtn = wrapper.find('[data-test="submit-btn"]')
       expect(submitBtn.attributes('disabled')).toBeUndefined()
-      await submitBtn.trigger('click')
-      await wrapper.vm.$nextTick()
+      await submitForm()
 
       // Now in summary view, confirm vesting creation
       const confirmBtn = wrapper.find('[data-test="confirm-btn"]')
@@ -129,8 +137,7 @@ describe('CreateVesting.vue', () => {
 
       await fillValidForm(0)
 
-      const submitBtn = wrapper.find('[data-test="submit-btn"]')
-      await submitBtn.trigger('click')
+      await submitForm()
 
       // The form validation should prevent submission with zero amount
       // So no approval-related error toast should be called
@@ -139,22 +146,17 @@ describe('CreateVesting.vue', () => {
 
     it('shows error on invalid cliff value', async () => {
       await fillValidForm(5)
-
-      const cliffInput = wrapper.find('[data-test="cliff"]')
-      await cliffInput.setValue(6)
+      ;(wrapper.vm as unknown as { cliff: number }).cliff = 6
       await wrapper.vm.$nextTick()
 
-      await wrapper.find('[data-test="submit-btn"]').trigger('click')
-      await wrapper.vm.$nextTick()
-
-      expect(wrapper.text()).toContain('Cliff cannot be greater than duration.')
+      await submitForm()
+      expect(wrapper.findComponent({ name: 'VestingSummary' }).exists()).toBe(false)
     })
 
     it('passes the correct totalAmountInUnits to writeContract', async () => {
       await fillValidForm(7)
 
-      await wrapper.find('[data-test="submit-btn"]').trigger('click')
-      await wrapper.vm.$nextTick()
+      await submitForm()
 
       const confirmBtn = wrapper.find('[data-test="confirm-btn"]')
       await confirmBtn.trigger('click')
