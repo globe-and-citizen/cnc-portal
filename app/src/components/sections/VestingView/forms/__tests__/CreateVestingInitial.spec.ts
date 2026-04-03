@@ -9,6 +9,7 @@ import { CalendarDate } from '@internationalized/date'
 
 const memberAddress = '0x000000000000000000000000000000000000dead'
 const mockReloadKey = ref<number>(0)
+const mockResolvedVestingAddress = ref('0x1000000000000000000000000000000000000001' as const)
 
 const mockWriteContract = {
   mutate: vi.fn(),
@@ -32,6 +33,16 @@ const mockVestingInfos = ref<VestingInfosType>([
     }
   ]
 ])
+const refetchVestingInfos = vi.fn()
+
+vi.mock('@/composables/vesting/reads', () => ({
+  useVestingAddress: vi.fn(() => mockResolvedVestingAddress),
+  useVestingGetTeamVestingsWithMembers: vi.fn(() => ({
+    data: mockVestingInfos,
+    error: ref(null),
+    refetch: refetchVestingInfos
+  }))
+}))
 
 describe('CreateVesting.vue', () => {
   let wrapper: VueWrapper

@@ -14,6 +14,7 @@ import { CalendarDate } from '@internationalized/date'
 const memberAddress = '0x000000000000000000000000000000000000dead'
 const mockSymbol = ref<string>('shr')
 const mockReloadKey = ref<number>(0)
+const mockResolvedVestingAddress = ref('0x1000000000000000000000000000000000000001' as const)
 // const mockCurrentTeam = ref({
 //   id: 1,
 //   ownerAddress: memberAddress,
@@ -69,6 +70,15 @@ const mockApproval = ref(parseUnits('10', 6)) // default 10 tokens
 const mockBalanceError = ref<null | Error>(null)
 const mockAllowanceError = ref<null | Error>(null)
 const mockApprovalError = ref<null | Error>(null)
+
+vi.mock('@/composables/vesting/reads', () => ({
+  useVestingAddress: vi.fn(() => mockResolvedVestingAddress),
+  useVestingGetTeamVestingsWithMembers: vi.fn(() => ({
+    data: mockVestingInfos,
+    error: ref(null),
+    refetch: refetchVestingInfos
+  }))
+}))
 
 vi.mock('@/composables/erc20/reads', () => ({
   useErc20BalanceOf: vi.fn(() => ({
