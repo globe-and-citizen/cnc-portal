@@ -1,6 +1,6 @@
 import { computed, unref, type MaybeRef } from 'vue'
 import { useReadContract } from '@wagmi/vue'
-import { isAddress } from 'viem'
+import { isAddress, type Address } from 'viem'
 import { VESTING_ABI } from '@/artifacts/abi/vesting'
 import { VESTING_ADDRESS } from '@/constant'
 import { useTeamStore } from '@/stores'
@@ -16,7 +16,10 @@ export const VESTING_FUNCTION_NAMES = {
 
 export function useVestingAddress() {
   const teamStore = useTeamStore()
-  return computed(() => teamStore.getContractAddressByType('VestingV1') ?? VESTING_ADDRESS)
+  return computed<Address | undefined>(() => {
+    const address = teamStore.getContractAddressByType('VestingV1') ?? VESTING_ADDRESS
+    return address && isAddress(address) ? address : undefined
+  })
 }
 
 export function useVestingGetTeamVestingsWithMembers(teamId: MaybeRef<bigint>) {
@@ -29,7 +32,7 @@ export function useVestingGetTeamVestingsWithMembers(teamId: MaybeRef<bigint>) {
     functionName: VESTING_FUNCTION_NAMES.GET_TEAM_VESTINGS_WITH_MEMBERS,
     args: [teamIdValue],
     query: {
-      enabled: computed(() => !!vestingAddress.value && isAddress(vestingAddress.value))
+      enabled: computed(() => !!vestingAddress.value)
     }
   })
 }
@@ -44,7 +47,7 @@ export function useVestingGetTeamAllArchivedVestingsFlat(teamId: MaybeRef<bigint
     functionName: VESTING_FUNCTION_NAMES.GET_TEAM_ALL_ARCHIVED_VESTINGS_FLAT,
     args: [teamIdValue],
     query: {
-      enabled: computed(() => !!vestingAddress.value && isAddress(vestingAddress.value))
+      enabled: computed(() => !!vestingAddress.value)
     }
   })
 }
