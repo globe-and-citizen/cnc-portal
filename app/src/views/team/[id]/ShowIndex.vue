@@ -31,6 +31,7 @@
         <ContinueAddTeamForm :team="teamStore.currentTeamMeta.data" @done="() => {}" />
       </div>
       <TeamMeta />
+      <CompanyOverview />
     </div>
     <RouterView v-if="teamStore.currentTeam" />
   </div>
@@ -42,8 +43,10 @@ import { onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useSyncWeeklyClaimsMutation } from '@/queries/weeklyClaim.queries'
 import TeamMeta from '@/components/sections/DashboardView/TeamMetaSection.vue'
+import CompanyOverview from '@/components/sections/DashboardView/CompanyOverview.vue'
 import ContinueAddTeamForm from '@/components/sections/TeamView/forms/ContinueAddTeamForm.vue'
 import { useSyncContractsMutation } from '@/queries'
+
 const teamStore = useTeamStore()
 
 const route = useRoute()
