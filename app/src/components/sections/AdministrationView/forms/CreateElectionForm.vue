@@ -33,7 +33,7 @@
               variant="outline"
               color="neutral"
               class="w-full justify-start font-normal"
-              :label="state.startDate ? formatDate(state.startDate) : 'mm/dd/yyyy'"
+              :label="state.startDate ? formatDateMMDDYYYY(state.startDate) : 'mm/dd/yyyy'"
             />
             <template #content>
               <UCalendar
@@ -41,7 +41,8 @@
                 :min-value="dateToCalendarDate(minStartDate)"
                 @update:model-value="
                   (val) => {
-                    state.startDate = (val as CalendarDate).toDate(getLocalTimeZone())
+                    const selectedDate = (val as CalendarDate).toDate(getLocalTimeZone())
+                    state.startDate = ensureFutureDate(selectedDate, minStartDate)
                     startDateOpen = false
                   }
                 "
@@ -60,7 +61,7 @@
               variant="outline"
               color="neutral"
               class="w-full justify-start font-normal"
-              :label="state.endDate ? formatDate(state.endDate) : 'mm/dd/yyyy'"
+              :label="state.endDate ? formatDateMMDDYYYY(state.endDate) : 'mm/dd/yyyy'"
             />
             <template #content>
               <UCalendar
@@ -112,6 +113,7 @@ import { reactive, ref, onMounted, onUnmounted } from 'vue'
 import { z } from 'zod'
 import MultiSelectMemberInput from '@/components/utils/MultiSelectMemberInput.vue'
 import { CalendarDate, getLocalTimeZone, today } from '@internationalized/date'
+import { formatDateMMDDYYYY, dateToCalendarDate, ensureFutureDate } from '@/utils/dayUtils'
 
 // Dev = 2 minutes, Prod = 1 hour
 const delay = 2 * 60 * 1000
@@ -119,16 +121,6 @@ const minStartDate = new Date(new Date().getTime() + delay)
 
 const startDateOpen = ref(false)
 const endDateOpen = ref(false)
-
-const formatDate = (date: Date): string => {
-  const mm = (date.getMonth() + 1).toString().padStart(2, '0')
-  const dd = date.getDate().toString().padStart(2, '0')
-  return `${mm}/${dd}/${date.getFullYear()}`
-}
-
-const dateToCalendarDate = (date: Date): CalendarDate => {
-  return new CalendarDate(date.getFullYear(), date.getMonth() + 1, date.getDate())
-}
 
 const emits = defineEmits(['createProposal'])
 defineProps<{ isLoading: boolean }>()

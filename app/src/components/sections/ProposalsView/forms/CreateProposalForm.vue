@@ -31,7 +31,7 @@
             variant="outline"
             color="neutral"
             class="w-full justify-start font-normal"
-            :label="state.startDate ? formatDate(state.startDate) : 'mm/dd/yyyy'"
+            :label="state.startDate ? formatDateMMDDYYYY(state.startDate) : 'mm/dd/yyyy'"
           />
           <template #content>
             <UCalendar
@@ -39,7 +39,11 @@
               :min-value="today(getLocalTimeZone())"
               @update:model-value="
                 (val) => {
-                  state.startDate = (val as CalendarDate).toDate(getLocalTimeZone())
+                  const minStart = new Date(Date.now() + MIN_START_DELAY_MS)
+                  state.startDate = ensureFutureDate(
+                    (val as CalendarDate).toDate(getLocalTimeZone()),
+                    minStart
+                  )
                   startDateOpen = false
                 }
               "
@@ -53,7 +57,7 @@
             variant="outline"
             color="neutral"
             class="w-full justify-start font-normal"
-            :label="state.endDate ? formatDate(state.endDate) : 'mm/dd/yyyy'"
+            :label="state.endDate ? formatDateMMDDYYYY(state.endDate) : 'mm/dd/yyyy'"
           />
           <template #content>
             <UCalendar
@@ -95,6 +99,10 @@ import { useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
 import { useTeamStore } from '@/stores'
 import { PROPOSALS_ABI } from '@/artifacts/abi/proposals'
 import { type Address } from 'viem'
+import { formatDateMMDDYYYY, dateToCalendarDate, ensureFutureDate } from '@/utils/dayUtils'
+
+// 2 minutes buffer to ensure startDate is in the future when tx hits the chain
+const MIN_START_DELAY_MS = 2 * 60 * 1000
 
 const emit = defineEmits(['closeModal', 'proposal-created'])
 
@@ -160,16 +168,6 @@ const {
 } = useWaitForTransactionReceipt({ hash: txHash })
 
 const dateToTimestamp = (date: Date): number => Math.floor(date.getTime() / 1000)
-
-const formatDate = (date: Date): string => {
-  const mm = (date.getMonth() + 1).toString().padStart(2, '0')
-  const dd = date.getDate().toString().padStart(2, '0')
-  return `${mm}/${dd}/${date.getFullYear()}`
-}
-
-const dateToCalendarDate = (date: Date): CalendarDate => {
-  return new CalendarDate(date.getFullYear(), date.getMonth() + 1, date.getDate())
-}
 
 const handleSubmit = async () => {
   try {
