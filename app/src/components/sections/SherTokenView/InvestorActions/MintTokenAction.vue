@@ -14,8 +14,8 @@
     <UModal
       v-if="modalState.mount"
       v-model:open="modalState.show"
-      title="Mint Tokens"
-      description="Mint new tokens to be distributed to shareholders from the token contract."
+      :title="`Issue ${tokenSymbol} tokens`"
+      description="Allocate new tokens to a shareholder. Their ownership stake is calculated based on the total supply at the time of issuance."
       :close="{ onClick: closeModal }"
     >
       <template #body>

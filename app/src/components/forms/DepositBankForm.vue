@@ -1,11 +1,13 @@
 <template>
   <span class="text-2xl font-bold">{{ title || 'Deposit to Team Bank Contract' }}</span>
 
-  <div v-if="selectedToken?.token.id !== 'native'" class="steps my-4 w-full">
-    <a class="step" :class="{ 'step-primary': currentStep >= 1 }">Amount</a>
-    <a class="step" :class="{ 'step-primary': currentStep >= 2 }">Approval</a>
-    <a class="step" :class="{ 'step-primary': currentStep >= 3 }">Deposit</a>
-  </div>
+  <UStepper
+    v-if="selectedToken?.token.id !== 'native'"
+    :items="stepperItems"
+    v-model="currentStep"
+    disabled
+    class="my-4 w-full"
+  />
 
   <!-- New Token Amount Component -->
   <TokenAmount
@@ -42,9 +44,9 @@
       data-test="deposit-button"
     >
       {{
-        selectedToken?.token.id !== 'native' && currentStep === 2
+        selectedToken?.token.id !== 'native' && currentStep === 1
           ? 'Approval'
-          : currentStep === 3
+          : currentStep === 2
             ? 'Deposit'
             : 'Deposit'
       }}
@@ -95,7 +97,7 @@ const props = defineProps<{
 function reset() {
   amount.value = ''
   selectedTokenId.value = 'native'
-  currentStep.value = 1
+  currentStep.value = 0
   submitting.value = false
   isAmountValid.value = false
 }
@@ -112,7 +114,13 @@ const tokenAmountModel = computed({
     selectedTokenId.value = (value.tokenId as TokenId) ?? 'native'
   }
 })
-const currentStep = ref(1)
+const stepperItems = [
+  { title: 'Amount', value: 0 },
+  { title: 'Approval', value: 1 },
+  { title: 'Deposit', value: 2 }
+]
+
+const currentStep = ref(0)
 const submitting = ref(false)
 const isAmountValid = ref(false) // Validation state used by TokenAmount component
 
@@ -201,7 +209,7 @@ const submitForm = async () => {
       await sendTransaction(props.bankAddress, parseEther(amount.value))
     } else {
       if (!(allowanceValue.value >= bigIntAmount.value)) {
-        currentStep.value = 2
+        currentStep.value = 1
 
         // Run spending cap
         await ERC20ApproveResult.executeWrite([props.bankAddress, bigIntAmount.value])
@@ -212,7 +220,7 @@ const submitForm = async () => {
           throw new Error('Approval failed')
         }
       }
-      currentStep.value = 3
+      currentStep.value = 2
       await bankDepositTokenResult.executeWrite([selectedTokenAddress.value, bigIntAmount.value])
 
       const invalidateErc20Balance = (tokenAddress: Address, target: Address) =>
