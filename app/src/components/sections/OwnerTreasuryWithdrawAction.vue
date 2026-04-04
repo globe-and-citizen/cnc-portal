@@ -1,53 +1,49 @@
 <template>
   <div v-if="hasTheRight" class="card-actions justify-end">
+    <UButton
+      color="warning"
+      size="sm"
+      :disabled="!hasWithdrawableBalance || isLoadingAction"
+      :loading="isLoadingAction"
+      data-test="owner-withdraw-button"
+      label="Withdraw"
+      @click="openWithdrawModal"
+    />
+
     <UModal
-      v-model:open="isOpen"
-      data-test="owner-withdraw-modal"
-      title="Owner Treasury Withdraw"
-      description="Withdraw funds from the owner treasury to the owner's address."
-      :close="{ onClick: resetModal }"
+      v-model:open="isWithdrawModalOpen"
+      title="Confirm Treasury Withdraw"
+      description="Review this action before signing the transaction in MetaMask."
     >
-      <UButton
-        color="warning"
-        size="sm"
-        :disabled="withdrawableTokens.length === 0"
-        data-test="owner-withdraw-button"
-        label="Withdraw"
-      />
-
       <template #body>
-        <UAlert
-          v-if="withdrawErrorMessage"
-          color="error"
-          variant="soft"
-          :description="withdrawErrorMessage"
-          class="mb-4"
-        />
-        <TokenAmount
-          :tokens="withdrawableTokens"
-          v-model="tokenAmountModel"
-          :isLoading="isLoadingAction"
-          @validation="(value) => (isAmountValid = value)"
-        >
-          <template #label>
-            <span class="label-text">Withdraw token</span>
-            <span class="label-text-alt"
-              >Balance: {{ selectedToken?.balance ?? 0 }} {{ selectedToken?.symbol ?? '' }}</span
-            >
-          </template>
-        </TokenAmount>
-
-        <div class="modal-action mt-4 justify-between">
-          <UButton color="error" variant="outline" @click="resetModal" label="Cancel" />
-          <UButton
+        <div class="space-y-4">
+          <UAlert
             color="warning"
-            :loading="isLoadingAction"
-            :aria-busy="isLoadingAction"
-            :disabled="isLoadingAction || !isAmountValid || !selectedToken"
-            @click="submitWithdraw"
-            data-test="owner-withdraw-submit"
-            label="Withdraw"
+            variant="soft"
+            icon="i-heroicons-exclamation-triangle"
+            title="You are about to withdraw all available funds to the Bank."
+            description="By continuing, MetaMask will open and you will be asked to confirm the transaction."
           />
+
+          <div class="flex justify-end gap-2">
+            <UButton
+              color="neutral"
+              variant="outline"
+              :disabled="isLoadingAction"
+              @click="isWithdrawModalOpen = false"
+            >
+              Cancel
+            </UButton>
+
+            <UButton
+              color="warning"
+              :loading="isLoadingAction"
+              :disabled="!hasWithdrawableBalance || isLoadingAction"
+              data-test="owner-withdraw-modal-confirm-button"
+              label="Withdraw"
+              @click="confirmWithdrawFromModal"
+            />
+          </div>
         </div>
       </template>
     </UModal>
@@ -56,8 +52,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { encodeFunctionData, parseEther, parseUnits, type Address } from 'viem'
-import TokenAmount from '@/components/forms/TokenAmount.vue'
+import { encodeFunctionData, type Address } from 'viem'
 import { useContractBalance } from '@/composables'
 import { useCashRemunerationOwner } from '@/composables/cashRemuneration/reads'
 import { useCashRemunerationContractWrite } from '@/composables/cashRemuneration/writes'
@@ -66,19 +61,13 @@ import { useExpenseAccountContractWrite } from '@/composables/expenseAccount/wri
 import { CASH_REMUNERATION_EIP712_ABI } from '@/artifacts/abi/cash-remuneration-eip712'
 import { EXPENSE_ACCOUNT_EIP712_ABI } from '@/artifacts/abi/expense-account-eip712'
 import { useTeamStore, useUserDataStore } from '@/stores'
-import { SUPPORTED_TOKENS, type TokenId } from '@/constant'
-import type { ContractType, TokenOption } from '@/types'
+import type { ContractType } from '@/types'
 import { useBodAddAction } from '@/composables/bod/writes'
 import { useBodIsBodAction } from '@/composables/bod/reads'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useChainId } from '@wagmi/vue'
 
 type WithdrawContractType = Extract<ContractType, 'CashRemunerationEIP712' | 'ExpenseAccountEIP712'>
-
-interface WithdrawTokenOption extends TokenOption {
-  address: Address
-  decimals: number
-}
 
 const props = defineProps<{
   contractType: WithdrawContractType
@@ -90,19 +79,8 @@ const toast = useToast()
 const queryClient = useQueryClient()
 const chainId = useChainId()
 
-const isOpen = ref(false)
-const withdrawErrorMessage = ref('')
-const isAmountValid = ref(false)
-const withdrawAmount = ref('0')
-const selectedTokenId = ref<TokenId>('native')
-const tokenAmountModel = computed({
-  get: () => ({ amount: withdrawAmount.value, tokenId: selectedTokenId.value }),
-  set: (value: { amount: string; tokenId: TokenId }) => {
-    withdrawAmount.value = value.amount ?? ''
-    selectedTokenId.value = value.tokenId ?? 'native'
-  }
-})
 const isSubmitting = ref(false)
+const isWithdrawModalOpen = ref(false)
 
 const contractAddress = computed(
   () => teamStore.getContractAddressByType(props.contractType) as Address | undefined
@@ -141,63 +119,22 @@ const hasTheRight = computed(() => isOwner.value || isBodAction.value)
 
 const { balances } = useContractBalance(contractAddress)
 
-const withdrawableTokens = computed<WithdrawTokenOption[]>(() => {
-  const supportedTokenIds = SUPPORTED_TOKENS.map((token) => token.id)
-  const allowedByContract =
-    props.contractType === 'ExpenseAccountEIP712'
-      ? ['native', 'usdc', 'usdt']
-      : [...supportedTokenIds, 'sher']
+const hasWithdrawableBalance = computed(() => balances.value.some((b) => b.amount > 0))
 
-  return balances.value
-    .filter((balance) => allowedByContract.includes(balance.token.id) && balance.amount > 0)
-    .map((balance) => ({
-      tokenId: balance.token.id,
-      symbol: balance.token.symbol,
-      name: balance.token.name,
-      code: balance.token.code,
-      balance: balance.amount,
-      price: balance.values['USD']?.price ?? 0,
-      address: balance.token.address,
-      decimals: balance.token.decimals
-    }))
+const cashWithdrawAllWrite = useCashRemunerationContractWrite({
+  functionName: 'ownerWithdrawAllToBank'
+})
+const expenseWithdrawAllWrite = useExpenseAccountContractWrite({
+  functionName: 'ownerWithdrawAllToBank'
 })
 
-const selectedToken = computed(() =>
-  withdrawableTokens.value.find((token) => token.tokenId === selectedTokenId.value)
+const isLoadingWrite = computed(
+  () =>
+    cashWithdrawAllWrite.writeResult.isPending.value ||
+    cashWithdrawAllWrite.receiptResult.isLoading.value ||
+    expenseWithdrawAllWrite.writeResult.isPending.value ||
+    expenseWithdrawAllWrite.receiptResult.isLoading.value
 )
-
-watch(withdrawableTokens, (tokens) => {
-  if (!tokens.length) return
-  if (!tokens.some((token) => token.tokenId === selectedTokenId.value)) {
-    selectedTokenId.value = tokens[0]?.tokenId ?? 'native'
-  }
-})
-
-const cashWithdrawNativeWrite = useCashRemunerationContractWrite({
-  functionName: 'ownerWithdrawNative'
-})
-const cashWithdrawTokenWrite = useCashRemunerationContractWrite({
-  functionName: 'ownerWithdrawToken'
-})
-const expenseWithdrawNativeWrite = useExpenseAccountContractWrite({
-  functionName: 'ownerWithdrawNative'
-})
-const expenseWithdrawTokenWrite = useExpenseAccountContractWrite({
-  functionName: 'ownerWithdrawToken'
-})
-
-const isLoadingWrite = computed(() => {
-  const writes = [
-    cashWithdrawNativeWrite,
-    cashWithdrawTokenWrite,
-    expenseWithdrawNativeWrite,
-    expenseWithdrawTokenWrite
-  ]
-
-  return writes.some(
-    (write) => write.writeResult.isPending.value || write.receiptResult.isLoading.value
-  )
-})
 
 const isLoadingAction = computed(
   () =>
@@ -209,10 +146,8 @@ const isLoadingAction = computed(
 
 const isConfirmingWithdraw = computed(
   () =>
-    cashWithdrawNativeWrite.receiptResult.isLoading.value ||
-    cashWithdrawTokenWrite.receiptResult.isLoading.value ||
-    expenseWithdrawNativeWrite.receiptResult.isLoading.value ||
-    expenseWithdrawTokenWrite.receiptResult.isLoading.value
+    cashWithdrawAllWrite.receiptResult.isLoading.value ||
+    expenseWithdrawAllWrite.receiptResult.isLoading.value
 )
 
 const refreshContractBalances = async () => {
@@ -228,68 +163,30 @@ const refreshContractBalances = async () => {
   ])
 }
 
-const resetModal = () => {
-  isOpen.value = false
-  withdrawAmount.value = '0'
-  isAmountValid.value = false
-  withdrawErrorMessage.value = ''
+const openWithdrawModal = () => {
+  isWithdrawModalOpen.value = true
 }
 
-const submitWithdraw = async () => {
-  if (!contractAddress.value || !selectedToken.value) return
+const confirmWithdrawFromModal = async () => {
+  isWithdrawModalOpen.value = false
+  await submitWithdrawAll()
+}
+
+const submitWithdrawAll = async () => {
+  if (!contractAddress.value) return
   isSubmitting.value = true
 
   try {
-    if (selectedToken.value.tokenId === 'native') {
-      const amount = parseEther(withdrawAmount.value)
-
-      if (isBodAction.value) {
-        const encodedData = encodeFunctionData({
-          abi: abi.value,
-          functionName: 'ownerWithdrawNative',
-          args: [amount]
-        })
-
-        const description = JSON.stringify({
-          text: `Withdraw ${withdrawAmount.value} ${selectedToken.value.symbol} to ${String(ownerAddress.value ?? '')}`,
-          title: 'Owner Treasury Withdraw Request'
-        })
-
-        await addAction({
-          targetAddress: contractAddress.value,
-          description,
-          data: encodedData,
-          userAddress: userStore.address
-        })
-        return
-      }
-
-      const nativeWrite =
-        props.contractType === 'CashRemunerationEIP712'
-          ? cashWithdrawNativeWrite
-          : expenseWithdrawNativeWrite
-
-      const hash = await nativeWrite.executeWrite([amount], undefined, { skipGasEstimation: true })
-
-      if (!hash) {
-        withdrawErrorMessage.value = 'Withdraw failed'
-      }
-
-      return
-    }
-
-    const amount = parseUnits(withdrawAmount.value, selectedToken.value.decimals)
-
     if (isBodAction.value) {
       const encodedData = encodeFunctionData({
         abi: abi.value,
-        functionName: 'ownerWithdrawToken',
-        args: [selectedToken.value.address, amount]
+        functionName: 'ownerWithdrawAllToBank',
+        args: []
       })
 
       const description = JSON.stringify({
-        text: `Withdraw ${withdrawAmount.value} ${selectedToken.value.symbol} to ${String(ownerAddress.value ?? '')}`,
-        title: 'Owner Treasury Withdraw Request'
+        text: 'Withdraw all funds to Bank',
+        title: 'Owner Treasury Withdraw All to Bank'
       })
 
       await addAction({
@@ -301,26 +198,25 @@ const submitWithdraw = async () => {
       return
     }
 
-    const tokenWrite =
+    const write =
       props.contractType === 'CashRemunerationEIP712'
-        ? cashWithdrawTokenWrite
-        : expenseWithdrawTokenWrite
+        ? cashWithdrawAllWrite
+        : expenseWithdrawAllWrite
 
-    const hash = await tokenWrite.executeWrite([selectedToken.value.address, amount], undefined, {
-      skipGasEstimation: true
-    })
+    const hash = await write.executeWrite([], undefined, { skipGasEstimation: true })
 
     if (!hash) {
-      withdrawErrorMessage.value = 'Withdraw failed'
+      toast.add({ title: 'Withdraw failed', color: 'error' })
     }
   } catch (error: unknown) {
     console.error(error)
-    withdrawErrorMessage.value =
+    const message =
       typeof error === 'object' && error !== null && 'shortMessage' in error
         ? String((error as { shortMessage?: string }).shortMessage || 'Failed to withdraw funds')
         : typeof error === 'object' && error !== null && 'message' in error
           ? String((error as { message?: string }).message || 'Failed to withdraw funds')
           : 'Failed to withdraw funds'
+    toast.add({ title: message, color: 'error' })
   } finally {
     isSubmitting.value = false
   }
@@ -332,15 +228,13 @@ watch(isActionAdded, (added) => {
       title: 'Action added successfully, waiting for board confirmation',
       color: 'success'
     })
-    resetModal()
   }
 })
 
 watch(isConfirmingWithdraw, async (newIsConfirming, oldIsConfirming) => {
-  if (newIsConfirming || !oldIsConfirming || !isOpen.value) return
+  if (newIsConfirming || !oldIsConfirming) return
 
   toast.add({ title: 'Withdraw successful', color: 'success' })
   await refreshContractBalances()
-  resetModal()
 })
 </script>

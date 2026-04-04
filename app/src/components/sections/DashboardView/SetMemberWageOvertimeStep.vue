@@ -26,6 +26,7 @@
         v-model="wageData.maximumOvertimeHoursPerWeek"
         class="w-full"
         type="number"
+        size="xl"
         placeholder="e.g. 10"
         :ui="{ base: 'pl-36', leading: 'pointer-events-none' }"
       >
@@ -50,6 +51,7 @@
               placeholder="0.00"
               type="number"
               class="w-full"
+              size="xl"
               :disabled="!rate.enabled"
             >
               <template #trailing>
@@ -157,7 +159,8 @@ const overtimeSchema = z.object({
   maximumOvertimeHoursPerWeek: z.coerce
     .number()
     .int('Must be a whole number')
-    .positive('Overtime hours must be greater than 0'),
+    .positive('Overtime hours must be greater than 0')
+    .max(20, 'Maximum overtime hours per week cannot exceed 20 hours'),
   overtimeRatePerHour: z.array(rateSchema).superRefine((rates, ctx) => {
     if (rates.filter((r) => r.enabled).length === 0) {
       ctx.addIssue({

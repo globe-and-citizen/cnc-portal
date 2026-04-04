@@ -114,34 +114,6 @@ export function useCashRemunerationSetOfficerAddress(officerAddress: MaybeRef<Ad
   }
 }
 
-export function useCashRemunerationOwnerWithdrawNative(amount: MaybeRef<bigint>) {
-  const write = useCashRemunerationContractWrite({
-    functionName: 'ownerWithdrawNative',
-    args: []
-  })
-
-  return {
-    ...write,
-    executeWrite: () => write.executeWrite([unref(amount)] as readonly unknown[])
-  }
-}
-
-export function useCashRemunerationOwnerWithdrawToken(
-  tokenAddress: MaybeRef<Address>,
-  amount: MaybeRef<bigint>
-) {
-  const write = useCashRemunerationContractWrite({
-    functionName: 'ownerWithdrawToken',
-    args: []
-  })
-
-  return {
-    ...write,
-    executeWrite: () =>
-      write.executeWrite([unref(tokenAddress), unref(amount)] as readonly unknown[])
-  }
-}
-
 export function useCashRemunerationWithdraw(
   wageClaim: MaybeRef<CashRemunerationWageClaim>,
   signature: MaybeRef<Hex>

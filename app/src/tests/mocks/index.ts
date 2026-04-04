@@ -7,6 +7,8 @@ export * from './composables.mock'
 export * from './api.mock'
 export * from './viem.actions.mock'
 export * from './router.mock'
+export * from './safeDepositRouter.mock'
+export * from './utils.mock'
 
 // Export test utilities
 export { mountWithProviders } from '../setup/nuxt-ui.setup'

@@ -40,6 +40,8 @@ export const mockBankWrites = {
   deposit: createContractWriteMock(),
   addTokenSupport: createContractWriteMock(),
   removeTokenSupport: createContractWriteMock(),
+  distributeNativeDividends: createContractWriteMock(),
+  distributeTokenDividends: createContractWriteMock(),
   claimDividend: createContractWriteMock(),
   claimTokenDividend: createContractWriteMock(),
   depositDividends: createContractWriteMock(),
@@ -119,8 +121,7 @@ export const mockCashRemunerationReads = {
 }
 
 export const mockCashRemunerationWrites = {
-  ownerWithdrawNative: createContractWriteMock(),
-  ownerWithdrawToken: createContractWriteMock()
+  ownerWithdrawAllToBank: createContractWriteMock()
 }
 
 /**
@@ -131,8 +132,7 @@ export const mockExpenseAccountReads = {
 }
 
 export const mockExpenseAccountWrites = {
-  ownerWithdrawNative: createContractWriteMock(),
-  ownerWithdrawToken: createContractWriteMock()
+  ownerWithdrawAllToBank: createContractWriteMock()
 }
 
 /**

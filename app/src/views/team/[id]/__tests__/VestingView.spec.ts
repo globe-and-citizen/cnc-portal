@@ -47,13 +47,23 @@ const mockCurrentTeam = ref({
 // Wagmi mocks - local refs for per-test state
 const mockWriteContract = {
   mutate: vi.fn(),
+  mutateAsync: vi.fn(),
   error: ref<Error | null>(null),
   isPending: ref(false),
-  data: ref(null)
+  data: ref(null),
+  isError: ref(false),
+  status: ref('idle' as const),
+  variables: ref(undefined),
+  reset: vi.fn()
 }
 const mockWaitReceipt = {
   isLoading: ref(false),
-  isSuccess: ref(false)
+  isSuccess: ref(false),
+  error: ref<Error | null>(null),
+  isPending: ref(false),
+  isError: ref(false),
+  data: ref(null),
+  status: ref('idle' as const)
 }
 
 // Test suite

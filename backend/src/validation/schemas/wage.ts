@@ -40,6 +40,22 @@ export const setWageBodySchema = z
         message: 'Maximum overtime hours per week is required when overtime rates are provided',
       });
     }
+
+    if (data.maximumHoursPerWeek > 40) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['maximumHoursPerWeek'],
+        message: 'Maximum regular hours per week cannot exceed 40 hours',
+      });
+    }
+
+    if (data.maximumOvertimeHoursPerWeek != null && data.maximumOvertimeHoursPerWeek > 20) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['maximumOvertimeHoursPerWeek'],
+        message: 'Maximum overtime hours per week cannot exceed 20 hours',
+      });
+    }
   });
 
 // Get wages query parameters

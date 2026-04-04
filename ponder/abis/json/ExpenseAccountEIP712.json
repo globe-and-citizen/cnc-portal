@@ -920,6 +920,19 @@
   },
   {
     "inputs": [],
+    "name": "officerAddress",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "owner",
     "outputs": [
       {
@@ -932,32 +945,8 @@
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      }
-    ],
-    "name": "ownerWithdrawNative",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "token",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      }
-    ],
-    "name": "ownerWithdrawToken",
+    "inputs": [],
+    "name": "ownerWithdrawAllToBank",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -998,6 +987,19 @@
   {
     "inputs": [],
     "name": "renounceOwnership",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_officerAddress",
+        "type": "address"
+      }
+    ],
+    "name": "setOfficerAddress",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
