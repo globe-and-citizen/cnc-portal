@@ -16,7 +16,7 @@
               {{ totalBalance }}
             </p>
           </div>
-          <div class="rounded-full bg-primary/10 p-3">
+          <div class="bg-primary/10 rounded-full p-3">
             <UIcon name="heroicons:building-library" class="text-primary size-8" />
           </div>
         </div>
@@ -31,7 +31,7 @@
           @click="$router.push(account.to)"
         >
           <div class="flex items-center gap-3">
-            <div class="rounded-lg bg-primary/10 p-2">
+            <div class="bg-primary/10 rounded-lg p-2">
               <UIcon :name="account.icon" class="text-primary size-5" />
             </div>
             <div class="min-w-0 flex-1">
@@ -105,7 +105,7 @@
           @click="$router.push(section.to)"
         >
           <div class="flex items-center gap-3">
-            <div class="rounded-lg bg-primary/10 p-2">
+            <div class="bg-primary/10 rounded-lg p-2">
               <UIcon :name="section.icon" class="text-primary size-5" />
             </div>
             <div>
@@ -208,9 +208,7 @@ const members = computed(() => teamStore.currentTeamMeta.data?.members ?? [])
 const activeMembers = computed(
   () => members.value.filter((m) => m.currentWage && !m.currentWage.disabled).length
 )
-const pausedMembers = computed(
-  () => members.value.filter((m) => m.currentWage?.disabled).length
-)
+const pausedMembers = computed(() => members.value.filter((m) => m.currentWage?.disabled).length)
 const noWageMembers = computed(() => members.value.filter((m) => !m.currentWage).length)
 
 // Quick Access
