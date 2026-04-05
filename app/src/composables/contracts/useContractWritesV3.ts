@@ -61,12 +61,82 @@ export class ContractWriteRevertedError extends BaseError {
   }
 }
 
+export interface ExecuteContractWriteParams {
+  address: Address
+  abi: Abi
+  functionName: string
+  chainId?: number
+  args?: readonly unknown[]
+  value?: bigint
+}
+
+export type ExecuteContractWriteResult = {
+  hash: Awaited<ReturnType<typeof writeContract>>
+  receipt: Awaited<ReturnType<typeof waitForTransactionReceipt>>
+  simulation: Awaited<ReturnType<typeof simulateContract>>
+}
+
+/**
+ * Standalone contract write: simulate -> write -> wait for receipt.
+ *
+ * Framework-agnostic (no Vue/TanStack dependencies). Throws
+ * `ContractWriteRevertedError` when the transaction is mined but reverts,
+ * with the ABI-decoded revert reason attached as `cause` when recoverable.
+ */
+export async function executeContractWrite(
+  params: ExecuteContractWriteParams
+): Promise<ExecuteContractWriteResult> {
+  const { address, abi, functionName, args = [], value } = params
+  const chainId = params.chainId as SimulateParams['chainId']
+
+  // 1) Simulate
+  const simulation = await simulateContract(wagmiConfig, {
+    address,
+    abi,
+    functionName,
+    args,
+    chainId,
+    ...(value !== undefined ? { value } : {})
+  } as SimulateParams)
+
+  // 2) Write — reuse the validated request from the simulation
+  const hash = await writeContract(wagmiConfig, simulation.request)
+
+  // 3) Wait for receipt — throw on reverted so callers only see genuine success
+  const receipt = await waitForTransactionReceipt(wagmiConfig, {
+    hash,
+    chainId
+  } as WaitParams)
+
+  if (receipt.status !== 'success') {
+    // Replay at the block just before mining to recover the ABI-decoded
+    // revert reason (receipts don't carry it). viem will throw a
+    // BaseError containing a ContractFunctionRevertedError in its chain.
+    let revertCause: BaseError | undefined
+    try {
+      await simulateContract(wagmiConfig, {
+        address,
+        abi,
+        functionName,
+        args,
+        chainId,
+        blockNumber: receipt.blockNumber - 1n,
+        ...(value !== undefined ? { value } : {})
+      } as SimulateParams)
+    } catch (replayErr) {
+      if (replayErr instanceof BaseError) revertCause = replayErr
+    }
+    throw new ContractWriteRevertedError({ hash, receipt, simulation, cause: revertCause })
+  }
+
+  return { hash, receipt, simulation }
+}
+
 /**
  * V3: Lean contract write composable.
  *
  * Accepts contract coordinates (address, abi, functionName, chainId) at call time.
- * Internally runs: simulateContract -> writeContract -> waitForTransactionReceipt
- * inside a single TanStack mutation. Uses @wagmi/core directly (no wagmi/vue hooks).
+ * Wraps `executeContractWrite` in a TanStack mutation.
  *
  * `args` and `value` are provided per-call to `executeWrite` / `mutate`.
  */
@@ -78,57 +148,19 @@ export function useContractWritesV3(cfg: ContractWriteV3Config) {
   return useMutation({
     mutationFn: async (variables: ExecuteWriteVariables = {}) => {
       const address = unref(cfg.contractAddress)
-      const abi = unref(cfg.abi)
       const functionName = unref(cfg.functionName)
-      const chainId = unref(cfg.chainId) as SimulateParams['chainId']
 
       if (!address) throw new Error('Contract address is undefined')
       if (!functionName) throw new Error('Function name is undefined')
 
-      const args = (variables.args ?? []) as readonly unknown[]
-      const value = variables.value
-
-      // 1) Simulate
-      const simulation = await simulateContract(wagmiConfig, {
+      return executeContractWrite({
         address,
-        abi,
+        abi: unref(cfg.abi),
         functionName,
-        args,
-        chainId,
-        ...(value !== undefined ? { value } : {})
-      } as SimulateParams)
-
-      // 2) Write — reuse the validated request from the simulation
-      const hash = await writeContract(wagmiConfig, simulation.request)
-
-      // 3) Wait for receipt — throw on reverted so callers only see genuine success
-      const receipt = await waitForTransactionReceipt(wagmiConfig, {
-        hash,
-        chainId
-      } as WaitParams)
-
-      if (receipt.status !== 'success') {
-        // Replay at the block just before mining to recover the ABI-decoded
-        // revert reason (receipts don't carry it). viem will throw a
-        // BaseError containing a ContractFunctionRevertedError in its chain.
-        let revertCause: BaseError | undefined
-        try {
-          await simulateContract(wagmiConfig, {
-            address,
-            abi,
-            functionName,
-            args,
-            chainId,
-            blockNumber: receipt.blockNumber - 1n,
-            ...(value !== undefined ? { value } : {})
-          } as SimulateParams)
-        } catch (replayErr) {
-          if (replayErr instanceof BaseError) revertCause = replayErr
-        }
-        throw new ContractWriteRevertedError({ hash, receipt, simulation, cause: revertCause })
-      }
-
-      return { hash, receipt, simulation }
+        chainId: unref(cfg.chainId),
+        args: variables.args,
+        value: variables.value
+      })
     },
     onError: (error) => {
       if (shouldLog.value) {
