@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import {
+import {useDepositToken,
   useAddTokenSupport,
   useRemoveTokenSupport,
   usePause,
@@ -29,6 +29,11 @@ describe('Bank Contract Writes', () => {
   })
 
   describe('Token Operations', () => {
+    it('should return deposit token mock', () => {
+      const result = useDepositToken(MOCK_DATA.tokenAddress, MOCK_DATA.amount)
+      expect(result).toBe(mockBankWrites.deposit)
+      expect(result.executeWrite).toBeInstanceOf(Function)
+    })
     it('should return add token support mock', () => {
       const result = useAddTokenSupport(MOCK_DATA.tokenAddress)
       expect(result).toBe(mockBankWrites.addTokenSupport)
@@ -37,6 +42,24 @@ describe('Bank Contract Writes', () => {
     it('should return remove token support mock', () => {
       const result = useRemoveTokenSupport(MOCK_DATA.tokenAddress)
       expect(result).toBe(mockBankWrites.removeTokenSupport)
+    })
+
+    it('should support successful token operations', async () => {
+      mockBankWrites.deposit.executeWrite.mockResolvedValue(undefined)
+      const result = useDepositToken(MOCK_DATA.tokenAddress, MOCK_DATA.amount)
+
+      await result.executeWrite()
+      expect(result.executeWrite).toHaveBeenCalled()
+    })
+
+    it('should handle zero amounts', () => {
+      const result = useDepositToken(MOCK_DATA.tokenAddress, MOCK_DATA.zeroAmount)
+      expect(result.executeWrite).toBeInstanceOf(Function)
+    })
+
+    it('should handle large amounts', () => {
+      const result = useDepositToken(MOCK_DATA.tokenAddress, MOCK_DATA.largeAmount)
+      expect(result).toBe(mockBankWrites.deposit)
     })
   })
 

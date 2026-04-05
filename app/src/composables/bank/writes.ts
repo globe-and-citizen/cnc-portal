@@ -25,6 +25,15 @@ export function useBankContractWrite(options: {
   })
 }
 
+export function useDepositToken(token: MaybeRef<Address>, amount: MaybeRef<bigint>) {
+  const args = computed(() => [unref(token), unref(amount)] as readonly unknown[])
+
+  return useBankContractWrite({
+    functionName: 'depositToken',
+    args
+  })
+}
+
 export function useDistributeNativeDividends(amount: MaybeRef<bigint>) {
   const args = computed(() => [unref(amount)] as readonly unknown[])
   return useBankContractWrite({
