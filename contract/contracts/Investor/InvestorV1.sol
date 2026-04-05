@@ -52,6 +52,34 @@ contract InvestorV1 is
     string reason
   );
 
+  /// @dev A required address argument was the zero address.
+  error ZeroAddress();
+  /// @dev The officer contract address has not been configured.
+  error OfficerAddressNotSet();
+  /// @dev The Bank contract could not be located via the Officer.
+  error BankContractNotFound();
+  /// @dev The caller is not the Bank contract.
+  /// @param caller The caller address.
+  error NotBank(address caller);
+  /// @dev The amount must be greater than zero.
+  error ZeroAmount();
+  /// @dev The provided msg.value does not match the expected funding amount.
+  /// @param expected The expected amount.
+  /// @param actual The actual msg.value.
+  error InvalidNativeFunding(uint256 expected, uint256 actual);
+  /// @dev There are no minted tokens in circulation.
+  error NoTokensMinted();
+  /// @dev There are no shareholders to distribute to.
+  error NoShareholders();
+  /// @dev A low-level native token transfer failed.
+  /// @param to The recipient.
+  error NativeTransferFailed(address to);
+  /// @dev The contract holds an insufficient token balance for distribution.
+  /// @param token The ERC20 token.
+  /// @param required The amount required.
+  /// @param available The current contract balance.
+  error InsufficientFundedTokenBalance(address token, uint256 required, uint256 available);
+
   function initialize(
     string calldata _name,
     string calldata _symbol,
@@ -67,7 +95,7 @@ contract InvestorV1 is
     _grantRole(DEFAULT_ADMIN_ROLE, owner);
     _grantRole(MINTER_ROLE, owner);
 
-    require(msg.sender != address(0), 'msg.sender cannot be zero');
+    if (msg.sender == address(0)) revert ZeroAddress();
     officerAddress = msg.sender;
   }
 
@@ -124,14 +152,14 @@ contract InvestorV1 is
    * @return Address of the Bank contract
    */
   function _getBankAddress() internal view returns (address) {
-    require(officerAddress != address(0), 'Officer address not configured');
+    if (officerAddress == address(0)) revert OfficerAddressNotSet();
     address bankAddress = IOfficer(officerAddress).findDeployedContract('Bank');
-    require(bankAddress != address(0), 'Bank contract not found');
+    if (bankAddress == address(0)) revert BankContractNotFound();
     return bankAddress;
   }
 
   modifier onlyBank() {
-    require(msg.sender == _getBankAddress(), 'Caller is not Bank');
+    if (msg.sender != _getBankAddress()) revert NotBank(msg.sender);
     _;
   }
 
@@ -144,14 +172,14 @@ contract InvestorV1 is
   function distributeNativeDividends(
     uint256 _amount
   ) external payable onlyBank nonReentrant whenNotPaused {
-    require(_amount > 0, 'Amount must be greater than zero');
-    require(msg.value == _amount, 'Invalid native dividend funding');
+    if (_amount == 0) revert ZeroAmount();
+    if (msg.value != _amount) revert InvalidNativeFunding(_amount, msg.value);
 
     uint256 supply = totalSupply();
-    require(supply > 0, 'No tokens minted');
+    if (supply == 0) revert NoTokensMinted();
 
     Shareholder[] memory currentShareholders = _getShareholders();
-    require(currentShareholders.length > 0, 'No shareholders');
+    if (currentShareholders.length == 0) revert NoShareholders();
 
     uint256 remaining = _amount;
 
@@ -170,7 +198,7 @@ contract InvestorV1 is
 
       if (share > 0) {
         (bool sent, ) = payable(shareholder).call{value: share}('');
-        require(sent, 'Transfer failed');
+        if (!sent) revert NativeTransferFailed(shareholder);
         emit DividendPaid(shareholder, address(0), share);
         remaining -= share;
       }
@@ -189,18 +217,16 @@ contract InvestorV1 is
     address _token,
     uint256 _amount
   ) external onlyBank nonReentrant whenNotPaused {
-    require(_token != address(0), 'Invalid token address');
-    require(_amount > 0, 'Amount must be greater than zero');
+    if (_token == address(0)) revert ZeroAddress();
+    if (_amount == 0) revert ZeroAmount();
 
     uint256 supply = totalSupply();
-    require(supply > 0, 'No tokens minted');
+    if (supply == 0) revert NoTokensMinted();
 
     Shareholder[] memory currentShareholders = _getShareholders();
-    require(currentShareholders.length > 0, 'No shareholders');
-    require(
-      IERC20(_token).balanceOf(address(this)) >= _amount,
-      'Insufficient funded token balance'
-    );
+    if (currentShareholders.length == 0) revert NoShareholders();
+    uint256 tokenBal = IERC20(_token).balanceOf(address(this));
+    if (tokenBal < _amount) revert InsufficientFundedTokenBalance(_token, _amount, tokenBal);
 
     uint256 remaining = _amount;
 

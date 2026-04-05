@@ -100,6 +100,12 @@ contract SafeDepositRouter is
   error TokenAlreadySupported();
   error SlippageExceeded(uint256 expected, uint256 actual);
   error DepositsNotEnabled();
+  /// @dev The caller (msg.sender) was the zero address when assigning officerAddress.
+  error ZeroSender();
+  /// @dev The officer contract address has not been configured on this router.
+  error OfficerAddressNotSet();
+  /// @dev The InvestorV1 contract could not be located via the Officer.
+  error InvestorContractNotFound();
 
   /*//////////////////////////////////////////////////////////////
                               MODIFIERS
@@ -151,7 +157,7 @@ contract SafeDepositRouter is
     __Pausable_init();
 
     safeAddress = _safeAddress;
-    require(msg.sender != address(0), 'msg.sender cannot be zero');
+    if (msg.sender == address(0)) revert ZeroSender();
     officerAddress = msg.sender;
     multiplier = _multiplier;
     depositsEnabled = false; // Disabled by default
@@ -208,9 +214,9 @@ contract SafeDepositRouter is
    * @return Address of the InvestorV1 contract
    */
   function _getInvestorAddress() internal view returns (address) {
-    require(officerAddress != address(0), 'Officer address not configured');
+    if (officerAddress == address(0)) revert OfficerAddressNotSet();
     address investorAddress = IOfficer(officerAddress).findDeployedContract('InvestorV1');
-    require(investorAddress != address(0), 'InvestorV1 contract not found');
+    if (investorAddress == address(0)) revert InvestorContractNotFound();
     return investorAddress;
   }
 

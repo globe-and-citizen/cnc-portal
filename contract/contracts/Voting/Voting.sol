@@ -32,6 +32,42 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
   event TieBreakOptionSelected(uint256 indexed proposalId, Types.TieBreakOption option);
   event RunoffElectionStarted(uint256 indexed proposalId, address[] candidates);
 
+  /// @dev The caller (msg.sender) was the zero address when initializing.
+  error ZeroSender();
+  /// @dev A required string argument was empty.
+  error EmptyTitle();
+  /// @dev Election proposals require at least one candidate.
+  error NoCandidates();
+  /// @dev The proposal id does not exist.
+  /// @param proposalId The non-existent id.
+  error ProposalNotFound(uint256 proposalId);
+  /// @dev The proposal is no longer active.
+  error ProposalNotActive();
+  /// @dev The caller is not registered to vote on this proposal.
+  /// @param voter The caller address.
+  error VoterNotRegistered(address voter);
+  /// @dev The caller is not eligible to vote on this proposal.
+  error VoterNotEligible();
+  /// @dev The caller has already voted on this proposal.
+  error VoterAlreadyVoted();
+  /// @dev The specified candidate was not declared on this proposal.
+  error CandidateNotFound();
+  /// @dev Only the proposal creator (founder) can perform this action.
+  error OnlyFounder();
+  /// @dev No tie exists on this proposal.
+  error NoTieToResolve();
+  /// @dev The chosen tie-break option requires a different flow.
+  error WrongTieBreakOption();
+  /// @dev The selected winner was not in the tied candidates list.
+  error InvalidTieWinner();
+  /// @dev The directive vote value was not 0/1/2.
+  /// @param vote The invalid vote value.
+  error InvalidVote(uint256 vote);
+  /// @dev The officer contract address has not been configured.
+  error OfficerAddressNotSet();
+  /// @dev The BoardOfDirectors contract could not be located via the Officer.
+  error BoardOfDirectorsNotFound();
+
   /// @notice Initializes the contract
   /// @param _sender Address that will be set as the owner
   /// @dev This is the initialization function for the upgradeable contract pattern
@@ -40,7 +76,7 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
     __ReentrancyGuard_init();
     __Pausable_init();
 
-    require(msg.sender != address(0), 'msg.sender cannot be zero');
+    if (msg.sender == address(0)) revert ZeroSender();
     officerAddress = msg.sender;
   }
 
@@ -60,7 +96,7 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
     address[] memory _voters,
     address[] memory _candidates
   ) public {
-    require(bytes(_title).length > 0, 'Title cannot be empty');
+    if (bytes(_title).length == 0) revert EmptyTitle();
 
     Types.Proposal storage newProposal = proposalsById[proposalCount];
     newProposal.id = proposalCount;
@@ -80,7 +116,7 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
       newProposal.voters.push(voter);
     }
     if (_isElection) {
-      require(_candidates.length > 0, 'Candidates cannot be empty');
+      if (_candidates.length == 0) revert NoCandidates();
       for (uint256 i = 0; i < _candidates.length; i++) {
         Types.Candidate memory candidate = Types.Candidate({
           candidateAddress: _candidates[i],
@@ -100,15 +136,15 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
   /// @param vote 0 for No, 1 for Yes, 2 for Abstain
   /// @dev Requires voter to be eligible and not to have voted already
   function voteDirective(uint256 proposalId, uint256 vote) public {
-    require(proposalId < proposalCount, 'Proposal does not exist');
+    if (proposalId >= proposalCount) revert ProposalNotFound(proposalId);
 
     Types.Proposal storage proposal = proposalsById[proposalId];
-    require(proposal.isActive, 'Proposal is not active');
+    if (!proposal.isActive) revert ProposalNotActive();
 
     Types.Member storage voter = findVoter(proposal, msg.sender);
 
-    require(voter.isEligible, 'You are not eligible to vote');
-    require(!voter.isVoted, 'You have already voted');
+    if (!voter.isEligible) revert VoterNotEligible();
+    if (voter.isVoted) revert VoterAlreadyVoted();
 
     recordDirectiveVote(proposal, vote);
 
@@ -121,15 +157,15 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
   /// @param candidateAddress Address of the candidate being voted for
   /// @dev Requires voter to be eligible and not to have voted already
   function voteElection(uint256 proposalId, address candidateAddress) public {
-    require(proposalId < proposalCount, 'Proposal does not exist');
+    if (proposalId >= proposalCount) revert ProposalNotFound(proposalId);
 
     Types.Proposal storage proposal = proposalsById[proposalId];
-    require(proposal.isActive, 'Proposal is not active');
+    if (!proposal.isActive) revert ProposalNotActive();
 
     Types.Member storage voter = findVoter(proposal, msg.sender);
 
-    require(voter.isEligible, 'You are not eligible to vote');
-    require(!voter.isVoted, 'You have already voted');
+    if (!voter.isEligible) revert VoterNotEligible();
+    if (voter.isVoted) revert VoterAlreadyVoted();
 
     bool candidateExists = false;
     for (uint256 i = 0; i < proposal.candidates.length; i++) {
@@ -140,7 +176,7 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
       }
     }
 
-    require(candidateExists, 'Candidate does not exist');
+    if (!candidateExists) revert CandidateNotFound();
     voter.isVoted = true;
     emit ElectionVoted(msg.sender, proposalId, candidateAddress);
   }
@@ -149,11 +185,8 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
   /// @param proposalId ID of the proposal to conclude
   /// @dev Only the proposal creator can conclude it. Handles tie detection for elections
   function concludeProposal(uint256 proposalId) public {
-    require(proposalId < proposalCount, 'Proposal does not exist');
-    require(
-      msg.sender == proposalsById[proposalId].draftedBy,
-      'Only the founder can conclude the proposal'
-    );
+    if (proposalId >= proposalCount) revert ProposalNotFound(proposalId);
+    if (msg.sender != proposalsById[proposalId].draftedBy) revert OnlyFounder();
 
     Types.Proposal storage proposal = proposalsById[proposalId];
 
@@ -221,10 +254,10 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
   /// @param option The chosen method to break the tie
   /// @dev Only the proposal creator can resolve ties
   function resolveTie(uint256 proposalId, Types.TieBreakOption option) public {
-    require(proposalId < proposalCount, 'Proposal does not exist');
+    if (proposalId >= proposalCount) revert ProposalNotFound(proposalId);
     Types.Proposal storage proposal = proposalsById[proposalId];
-    require(msg.sender == proposal.draftedBy, 'Only the founder can resolve ties');
-    require(proposal.hasTie, 'No tie to resolve');
+    if (msg.sender != proposal.draftedBy) revert OnlyFounder();
+    if (!proposal.hasTie) revert NoTieToResolve();
 
     proposal.selectedTieBreakOption = option;
     emit TieBreakOptionSelected(proposalId, option);
@@ -283,14 +316,13 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
   /// @param winner Address of the chosen winner
   /// @dev Only usable when FOUNDER_CHOICE was selected as tie break option
   function selectWinner(uint256 proposalId, address winner) public {
-    require(proposalId < proposalCount, 'Proposal does not exist');
+    if (proposalId >= proposalCount) revert ProposalNotFound(proposalId);
     Types.Proposal storage proposal = proposalsById[proposalId];
-    require(msg.sender == proposal.draftedBy, 'Only the founder can select winner');
-    require(proposal.hasTie, 'No tie to resolve');
-    require(
-      proposal.selectedTieBreakOption == Types.TieBreakOption.FOUNDER_CHOICE,
-      'Tie break option must be FOUNDER_CHOICE'
-    );
+    if (msg.sender != proposal.draftedBy) revert OnlyFounder();
+    if (!proposal.hasTie) revert NoTieToResolve();
+    if (proposal.selectedTieBreakOption != Types.TieBreakOption.FOUNDER_CHOICE) {
+      revert WrongTieBreakOption();
+    }
 
     bool isValidChoice = false;
     for (uint256 i = 0; i < proposal.tiedCandidates.length; i++) {
@@ -299,7 +331,7 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
         break;
       }
     }
-    require(isValidChoice, 'Selected winner must be one of the tied candidates');
+    if (!isValidChoice) revert InvalidTieWinner();
 
     address[] memory winnerList = new address[](proposal.winnerCount);
     for (uint256 i = 0; i < proposal.winnerCount - 1; i++) {
@@ -341,14 +373,14 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
         return proposal.voters[i];
       }
     }
-    revert('You are not registered to vote in this proposal');
+    revert VoterNotRegistered(voterAddress);
   }
 
   /// @notice Retrieves a proposal by its ID
   /// @param proposalId The ID of the proposal to retrieve
   /// @return The complete proposal data
   function getProposalById(uint256 proposalId) public view returns (Types.Proposal memory) {
-    require(proposalId < proposalCount, 'Proposal does not exist');
+    if (proposalId >= proposalCount) revert ProposalNotFound(proposalId);
     return proposalsById[proposalId];
   }
 
@@ -364,7 +396,7 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
     } else if (vote == 2) {
       proposal.votes.abstain++;
     } else {
-      revert('Invalid vote');
+      revert InvalidVote(vote);
     }
   }
 
@@ -381,9 +413,9 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
    * @return Address of the BoardOfDirectors contract
    */
   function _getBoardOfDirectorsAddress() internal view returns (address) {
-    require(officerAddress != address(0), 'Officer address not configured');
+    if (officerAddress == address(0)) revert OfficerAddressNotSet();
     address bodAddress = IOfficer(officerAddress).findDeployedContract('BoardOfDirectors');
-    require(bodAddress != address(0), 'BoardOfDirectors contract not found');
+    if (bodAddress == address(0)) revert BoardOfDirectorsNotFound();
     return bodAddress;
   }
 

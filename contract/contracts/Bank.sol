@@ -61,19 +61,44 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
     uint256 amount
   );
 
+  /// @dev A required address argument was the zero address.
+  error ZeroAddress();
+  /// @dev The officer contract address has not been configured on this bank.
+  error OfficerAddressNotSet();
+  /// @dev The Investor contract could not be located via the Officer.
+  error InvestorContractNotFound();
+  /// @dev The token is not supported by this bank.
+  /// @param token The unsupported token address.
+  error UnsupportedToken(address token);
+  /// @dev The amount must be greater than zero.
+  error ZeroAmount();
+  /// @dev The contract's balance is less than the requested amount.
+  /// @param required The amount requested.
+  /// @param available The current contract balance.
+  error InsufficientBalance(uint256 required, uint256 available);
+  /// @dev The fee basis points value exceeds 100% (10000 bps).
+  /// @param feeBps The invalid fee value.
+  error InvalidFeeBps(uint16 feeBps);
+  /// @dev The fee collector address has not been configured on the officer.
+  error FeeCollectorNotConfigured();
+  /// @dev A low-level native token send to the fee collector failed.
+  error FeeTransferFailed();
+  /// @dev A low-level native token transfer failed.
+  error TransferFailed();
+
   /**
    * @dev Resolves the deployed Investor contract from Officer.
    * Tries "InvestorV1" first and falls back to "Investor" for compatibility.
    */
   function _getInvestorAddress() internal view returns (address) {
-    require(officerAddress != address(0), 'Officer address not configured');
+    if (officerAddress == address(0)) revert OfficerAddressNotSet();
 
     address investorAddress = IOfficer(officerAddress).findDeployedContract('InvestorV1');
     if (investorAddress == address(0)) {
       investorAddress = IOfficer(officerAddress).findDeployedContract('Investor');
     }
 
-    require(investorAddress != address(0), 'Investor contract not found');
+    if (investorAddress == address(0)) revert InvestorContractNotFound();
     return investorAddress;
   }
 
@@ -85,21 +110,21 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
    * @custom:security Only callable once due to initializer modifier
    */
   function initialize(address[] calldata _tokenAddresses, address _sender) public initializer {
-    require(_sender != address(0), 'Sender cannot be zero');
+    if (_sender == address(0)) revert ZeroAddress();
     __Ownable_init(_sender);
     __ReentrancyGuard_init();
     __Pausable_init();
     // Set the initial supported tokens
     uint256 length = _tokenAddresses.length;
     for (uint256 i = 0; i < length; ++i) {
-      require(_tokenAddresses[i] != address(0), 'Token address cannot be zero');
+      if (_tokenAddresses[i] == address(0)) revert ZeroAddress();
       _addTokenSupport(_tokenAddresses[i]);
     }
     // Emit events after they're already added to avoid duplicate events
     for (uint256 i = 0; i < length; ++i) {
       emit TokenSupportAdded(_tokenAddresses[i]);
     }
-    require(msg.sender != address(0), 'msg send cannot be zero');
+    if (msg.sender == address(0)) revert ZeroAddress();
     officerAddress = msg.sender;
   }
 
@@ -135,7 +160,7 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
    * @return Current token balance.
    */
   function getTokenBalance(address _token) public view returns (uint256) {
-    require(_isTokenSupported(_token), 'Unsupported token');
+    if (!_isTokenSupported(_token)) revert UnsupportedToken(_token);
     return IERC20(_token).balanceOf(address(this));
   }
 
@@ -155,8 +180,8 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
    * @custom:security Protected against reentrancy and requires contract to be unpaused
    */
   function depositToken(address _token, uint256 _amount) external nonReentrant whenNotPaused {
-    require(_isTokenSupported(_token), 'Unsupported token');
-    require(_amount > 0, 'Amount must be greater than zero');
+    if (!_isTokenSupported(_token)) revert UnsupportedToken(_token);
+    if (_amount == 0) revert ZeroAmount();
 
     IERC20(_token).safeTransferFrom(msg.sender, address(this), _amount);
     emit TokenDeposited(msg.sender, _token, _amount);
@@ -170,13 +195,13 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
    * @custom:security Protected against reentrancy and requires contract to be unpaused
    */
   function transfer(address _to, uint256 _amount) external onlyOwner nonReentrant whenNotPaused {
-    require(_to != address(0), 'Address cannot be zero');
-    require(_amount > 0, 'Amount must be greater than zero');
-    require(_amount <= address(this).balance, 'Insufficient balance');
+    if (_to == address(0)) revert ZeroAddress();
+    if (_amount == 0) revert ZeroAmount();
+    if (_amount > address(this).balance) revert InsufficientBalance(_amount, address(this).balance);
 
     // --- Step 1: Get fee configuration ---
     uint16 feeBps = _getFeeBps(); // e.g., 50 = 0.5%
-    require(feeBps <= 10_000, 'Fee cannot exceed 100%');
+    if (feeBps > 10_000) revert InvalidFeeBps(feeBps);
 
     uint256 fee = 0;
     uint256 net = _amount;
@@ -188,17 +213,17 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
 
       // Get fee collector address
       address feeCollector = IOfficer(officerAddress).getFeeCollector();
-      require(feeCollector != address(0), 'Fee collector not configured');
+      if (feeCollector == address(0)) revert FeeCollectorNotConfigured();
 
       // Send fee to fee collector
       (bool sentFee, ) = feeCollector.call{value: fee}('');
-      require(sentFee, 'Fee transfer failed');
+      if (!sentFee) revert FeeTransferFailed();
       emit FeePaid(feeCollector, fee);
     }
 
     // --- Step 3: Send net amount to recipient ---
     (bool sentNet, ) = _to.call{value: net}('');
-    require(sentNet, 'Transfer failed');
+    if (!sentNet) revert TransferFailed();
 
     emit Transfer(msg.sender, _to, net);
   }
@@ -216,10 +241,13 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
     address _to,
     uint256 _amount
   ) external onlyOwner nonReentrant whenNotPaused {
-    require(_isTokenSupported(_token), 'Unsupported token');
-    require(_to != address(0), 'Address cannot be zero');
-    require(_amount > 0, 'Amount must be greater than zero');
-    require(_amount <= getTokenBalance(_token), 'Insufficient token balance');
+    if (!_isTokenSupported(_token)) revert UnsupportedToken(_token);
+    if (_to == address(0)) revert ZeroAddress();
+    if (_amount == 0) revert ZeroAmount();
+    {
+      uint256 tokenBal = getTokenBalance(_token);
+      if (_amount > tokenBal) revert InsufficientBalance(_amount, tokenBal);
+    }
 
     // Check if this is a fee-supported token (USDC or USDT)
     bool shouldChargeFee = _isSupportedFeeToken(_token);
@@ -230,7 +258,7 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
     // Only charge fee for FeeCollector-supported tokens
     if (shouldChargeFee) {
       uint16 feeBps = _getFeeBps(); // e.g., 50 = 0.5%
-      require(feeBps <= 10_000, 'Fee cannot exceed 100%');
+      if (feeBps > 10_000) revert InvalidFeeBps(feeBps);
 
       if (feeBps > 0) {
         fee = (_amount * feeBps) / 10_000;
@@ -238,7 +266,7 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
 
         // Get fee collector address
         address feeCollector = IOfficer(officerAddress).getFeeCollector();
-        require(feeCollector != address(0), 'Fee collector not configured');
+        if (feeCollector == address(0)) revert FeeCollectorNotConfigured();
 
         // Transfer fee to fee collector
         IERC20(_token).safeTransfer(feeCollector, fee);
@@ -258,8 +286,8 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
   function distributeNativeDividends(
     uint256 _amount
   ) external onlyOwner nonReentrant whenNotPaused {
-    require(_amount > 0, 'Amount must be greater than zero');
-    require(_amount <= address(this).balance, 'Insufficient balance');
+    if (_amount == 0) revert ZeroAmount();
+    if (_amount > address(this).balance) revert InsufficientBalance(_amount, address(this).balance);
 
     address investorAddress = _getInvestorAddress();
     IInvestorV1(investorAddress).distributeNativeDividends{value: _amount}(_amount);
@@ -276,9 +304,12 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
     address _token,
     uint256 _amount
   ) external onlyOwner nonReentrant whenNotPaused {
-    require(_isTokenSupported(_token), 'Unsupported token');
-    require(_amount > 0, 'Amount must be greater than zero');
-    require(_amount <= getTokenBalance(_token), 'Insufficient token balance');
+    if (!_isTokenSupported(_token)) revert UnsupportedToken(_token);
+    if (_amount == 0) revert ZeroAmount();
+    {
+      uint256 tokenBal = getTokenBalance(_token);
+      if (_amount > tokenBal) revert InsufficientBalance(_amount, tokenBal);
+    }
 
     address investorAddress = _getInvestorAddress();
     IERC20(_token).safeTransfer(investorAddress, _amount);

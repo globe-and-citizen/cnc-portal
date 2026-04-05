@@ -36,6 +36,35 @@ contract BoardOfDirectors is ReentrancyGuardUpgradeable, IBoardOfDirectors {
   event Approval(uint256 indexed id, address indexed approver);
   event Revocation(uint256 indexed id, address indexed approver);
 
+  /// @dev A required address argument was the zero address.
+  error ZeroAddress();
+  /// @dev The action has already been executed and cannot be modified.
+  /// @param actionId The action id.
+  error ActionAlreadyExecuted(uint256 actionId);
+  /// @dev The caller has already approved this action.
+  error AlreadyApproved();
+  /// @dev The caller has not approved this action.
+  error NotApproved();
+  /// @dev The list must not be empty.
+  error EmptyList();
+  /// @dev The owner is already registered.
+  /// @param owner The owner address.
+  error OwnerAlreadyExists(address owner);
+  /// @dev The owner was not found in the owners set.
+  /// @param owner The owner address.
+  error OwnerNotFound(address owner);
+  /// @dev The low-level call to the target contract failed.
+  /// @param target The call target.
+  error CallFailed(address target);
+  /// @dev The caller is not in the owners set.
+  /// @param caller The caller address.
+  error NotOwner(address caller);
+  /// @dev The caller is not a board of directors member.
+  /// @param caller The caller address.
+  error NotBoardMember(address caller);
+  /// @dev The function can only be called by the contract itself.
+  error NotSelf();
+
   /**
    * @dev Initializes the contract with the initial set of owners.
    * @param _owners The initial set of owners.
@@ -43,7 +72,7 @@ contract BoardOfDirectors is ReentrancyGuardUpgradeable, IBoardOfDirectors {
   function initialize(address[] memory _owners) public initializer {
     uint256 length = _owners.length;
     for (uint256 i = 0; i < length; i++) {
-      require(_owners[i] != address(0), 'Invalid owner address');
+      if (_owners[i] == address(0)) revert ZeroAddress();
       owners.add(_owners[i]);
     }
     __ReentrancyGuard_init();
@@ -60,7 +89,7 @@ contract BoardOfDirectors is ReentrancyGuardUpgradeable, IBoardOfDirectors {
     string memory _description,
     bytes memory _data
   ) external onlyBoardOfDirectors {
-    require(_target != address(0), 'Invalid target address');
+    if (_target == address(0)) revert ZeroAddress();
 
     Action storage _action = actions[actionCount];
     _action.id = actionCount;
@@ -82,8 +111,8 @@ contract BoardOfDirectors is ReentrancyGuardUpgradeable, IBoardOfDirectors {
    * @param _actionId The id of the action to approve.
    */
   function approve(uint256 _actionId) external onlyBoardOfDirectors {
-    require(!actions[_actionId].isExecuted, 'Action already executed');
-    require(!actions[_actionId].approvals[msg.sender], 'Already approved');
+    if (actions[_actionId].isExecuted) revert ActionAlreadyExecuted(_actionId);
+    if (actions[_actionId].approvals[msg.sender]) revert AlreadyApproved();
 
     actions[_actionId].approvals[msg.sender] = true;
     actions[_actionId].approvalCount++;
@@ -99,8 +128,8 @@ contract BoardOfDirectors is ReentrancyGuardUpgradeable, IBoardOfDirectors {
    * @param _actionId The id of the action to revoke approval for.
    */
   function revoke(uint256 _actionId) external onlyBoardOfDirectors {
-    require(!actions[_actionId].isExecuted, 'Action already executed');
-    require(actions[_actionId].approvals[msg.sender], 'Not approved');
+    if (actions[_actionId].isExecuted) revert ActionAlreadyExecuted(_actionId);
+    if (!actions[_actionId].approvals[msg.sender]) revert NotApproved();
 
     actions[_actionId].approvals[msg.sender] = false;
     actions[_actionId].approvalCount--;
@@ -113,7 +142,7 @@ contract BoardOfDirectors is ReentrancyGuardUpgradeable, IBoardOfDirectors {
    * @param _boardOfDirectors The new board of directors.
    */
   function setBoardOfDirectors(address[] memory _boardOfDirectors) external onlyOwner {
-    require(_boardOfDirectors.length > 0, 'Board of directors required');
+    if (_boardOfDirectors.length == 0) revert EmptyList();
 
     // Remove all existing board of directors
     while (boardOfDirectors.length() > 0) {
@@ -124,7 +153,7 @@ contract BoardOfDirectors is ReentrancyGuardUpgradeable, IBoardOfDirectors {
     // Set the new board of directors
     uint256 length = _boardOfDirectors.length;
     for (uint256 i = 0; i < length; i++) {
-      require(_boardOfDirectors[i] != address(0), 'Invalid board of directors address');
+      if (_boardOfDirectors[i] == address(0)) revert ZeroAddress();
       boardOfDirectors.add(_boardOfDirectors[i]);
     }
 
@@ -194,7 +223,7 @@ contract BoardOfDirectors is ReentrancyGuardUpgradeable, IBoardOfDirectors {
     Action storage _action = actions[_actionId];
 
     (bool success, ) = _action.target.call(_action.data);
-    require(success, 'Call failed');
+    if (!success) revert CallFailed(_action.target);
 
     _action.isExecuted = true;
 
@@ -206,7 +235,7 @@ contract BoardOfDirectors is ReentrancyGuardUpgradeable, IBoardOfDirectors {
    * @param _owners The new owners.
    */
   function setOwners(address[] memory _owners) external onlySelf {
-    require(_owners.length > 0, 'Owners required');
+    if (_owners.length == 0) revert EmptyList();
 
     // Remove all existing owners
     while (owners.length() > 0) {
@@ -217,7 +246,7 @@ contract BoardOfDirectors is ReentrancyGuardUpgradeable, IBoardOfDirectors {
     // Set the new owners
     uint256 length = _owners.length;
     for (uint256 i = 0; i < length; i++) {
-      require(_owners[i] != address(0), 'Invalid owner address');
+      if (_owners[i] == address(0)) revert ZeroAddress();
       owners.add(_owners[i]);
     }
 
@@ -229,10 +258,10 @@ contract BoardOfDirectors is ReentrancyGuardUpgradeable, IBoardOfDirectors {
    * @param _owner The new owner.
    */
   function addOwner(address _owner) external onlySelf {
-    require(_owner != address(0), 'Invalid owner address');
+    if (_owner == address(0)) revert ZeroAddress();
 
     if (owners.contains(_owner)) {
-      revert('Owner already exists');
+      revert OwnerAlreadyExists(_owner);
     }
     owners.add(_owner);
 
@@ -244,27 +273,24 @@ contract BoardOfDirectors is ReentrancyGuardUpgradeable, IBoardOfDirectors {
    * @param _owner The owner to remove.
    */
   function removeOwner(address _owner) external onlySelf {
-    require(owners.contains(_owner), 'Owner not found');
+    if (!owners.contains(_owner)) revert OwnerNotFound(_owner);
 
     owners.remove(_owner);
     emit OwnersChanged(owners.values());
   }
 
   modifier onlyOwner() {
-    require(owners.contains(msg.sender), 'Only owner can call this function');
+    if (!owners.contains(msg.sender)) revert NotOwner(msg.sender);
     _;
   }
 
   modifier onlyBoardOfDirectors() {
-    require(
-      boardOfDirectors.contains(msg.sender),
-      'Only board of directors can call this function'
-    );
+    if (!boardOfDirectors.contains(msg.sender)) revert NotBoardMember(msg.sender);
     _;
   }
 
   modifier onlySelf() {
-    require(msg.sender == address(this), 'Only self can call this function');
+    if (msg.sender != address(this)) revert NotSelf();
     _;
   }
 }

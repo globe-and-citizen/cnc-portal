@@ -57,6 +57,28 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
   /// @notice Array to store deployed contract information
   DeployedContract[] private deployedContracts;
 
+  /// @dev A required address argument was the zero address.
+  error ZeroAddress();
+  /// @dev The beaconType string was empty.
+  error EmptyBeaconType();
+  /// @dev Duplicate beacon types are not allowed.
+  /// @param beaconType The duplicated type.
+  error DuplicateBeaconType(string beaconType);
+  /// @dev No beacon is configured for this contract type.
+  /// @param contractType The requested contract type.
+  error BeaconNotConfigured(string contractType);
+  /// @dev BoardOfDirectors must be deployed through Elections.
+  error BodMustBeDeployedViaElections();
+  /// @dev The caller is not authorized for this action.
+  error Unauthorized();
+  /// @dev The contractType string was empty.
+  error EmptyContractType();
+  /// @dev Missing initializer data for deployment.
+  /// @param contractType The deployment contract type.
+  error MissingInitializerData(string contractType);
+  /// @dev The caller is neither the contract owner nor is initialization in progress.
+  error NotOwnerOrInitializing();
+
   /// @notice Address of the Board of Directors contract
   address private bodContract;
 
@@ -67,7 +89,7 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
    * @notice Address of the fee collector contract
    */
   constructor(address _feeCollector) {
-    require(_feeCollector != address(0), 'Invalid feeCollector');
+    if (_feeCollector == address(0)) revert ZeroAddress();
     feeCollector = _feeCollector;
   }
 
@@ -95,16 +117,17 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
 
   function _configureBeacons(BeaconConfig[] memory beaconConfigs) internal {
     for (uint256 i = 0; i < beaconConfigs.length; i++) {
-      require(beaconConfigs[i].beaconAddress != address(0), 'Invalid beacon address');
-      require(bytes(beaconConfigs[i].beaconType).length > 0, 'Empty beacon type');
+      if (beaconConfigs[i].beaconAddress == address(0)) revert ZeroAddress();
+      if (bytes(beaconConfigs[i].beaconType).length == 0) revert EmptyBeaconType();
 
       // Check for duplicate beacon types
       for (uint256 j = 0; j < i; j++) {
-        require(
-          keccak256(bytes(beaconConfigs[i].beaconType)) !=
-            keccak256(bytes(beaconConfigs[j].beaconType)),
-          'Duplicate beacon type'
-        );
+        if (
+          keccak256(bytes(beaconConfigs[i].beaconType)) ==
+          keccak256(bytes(beaconConfigs[j].beaconType))
+        ) {
+          revert DuplicateBeaconType(beaconConfigs[i].beaconType);
+        }
       }
 
       contractBeacons[beaconConfigs[i].beaconType] = beaconConfigs[i].beaconAddress;
@@ -188,14 +211,10 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     bytes calldata initializerData
   ) public whenNotPaused onlyInitializingOrOwners returns (address) {
     // Validate inputs
-    require(
-      contractBeacons[contractType] != address(0),
-      'Beacon not configured for this contract type'
-    );
-    require(
-      keccak256(bytes(contractType)) != keccak256(bytes('BoardOfDirectors')),
-      'BoardOfDirectors must be deployed through Elections'
-    );
+    if (contractBeacons[contractType] == address(0)) revert BeaconNotConfigured(contractType);
+    if (keccak256(bytes(contractType)) == keccak256(bytes('BoardOfDirectors'))) {
+      revert BodMustBeDeployedViaElections();
+    }
     BeaconProxy proxy = new BeaconProxy(contractBeacons[contractType], initializerData);
 
     address proxyAddress = address(proxy);
@@ -249,7 +268,7 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
       _;
       return;
     }
-    revert('You are not authorized to perform this action');
+    revert Unauthorized();
   }
 
   /**
@@ -285,19 +304,16 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     address[] memory deployedAddresses = new address[](deployments.length);
 
     for (uint256 i = 0; i < deployments.length; i++) {
-      require(bytes(deployments[i].contractType).length > 0, 'Contract type cannot be empty');
-      require(
-        deployments[i].initializerData.length > 0,
-        string.concat('Missing initializer data for ', deployments[i].contractType)
-      );
-      require(
-        contractBeacons[deployments[i].contractType] != address(0),
-        string.concat('Beacon not configured for ', deployments[i].contractType)
-      );
-      require(
-        keccak256(bytes(deployments[i].contractType)) != keccak256(bytes('BoardOfDirectors')),
-        'BoardOfDirectors must be deployed through Elections'
-      );
+      if (bytes(deployments[i].contractType).length == 0) revert EmptyContractType();
+      if (deployments[i].initializerData.length == 0) {
+        revert MissingInitializerData(deployments[i].contractType);
+      }
+      if (contractBeacons[deployments[i].contractType] == address(0)) {
+        revert BeaconNotConfigured(deployments[i].contractType);
+      }
+      if (keccak256(bytes(deployments[i].contractType)) == keccak256(bytes('BoardOfDirectors'))) {
+        revert BodMustBeDeployedViaElections();
+      }
       deployedAddresses[i] = deployBeaconProxy(
         deployments[i].contractType,
         deployments[i].initializerData
@@ -316,10 +332,7 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
   }
 
   modifier onlyInitializingOrOwners() {
-    require(
-      _isInitializing() || owner() == msg.sender,
-      'Caller is not an owner and contract is not initializing'
-    );
+    if (!(_isInitializing() || owner() == msg.sender)) revert NotOwnerOrInitializing();
     _;
   }
 

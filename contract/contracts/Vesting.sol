@@ -33,6 +33,38 @@ contract Vesting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
   event TokensReleased(address indexed member, uint256 indexed teamId, uint256 amount);
   event VestingStopped(address indexed member, uint256 indexed teamId);
   event UnvestedWithdrawn(address indexed member, uint256 indexed teamId, uint256 amount);
+
+  /// @dev The caller is not the team owner.
+  /// @param expected The team owner address.
+  /// @param actual The caller address.
+  error NotTeamOwner(address expected, address actual);
+  /// @dev A required address argument was the zero address.
+  error ZeroAddress();
+  /// @dev The team id is already in use.
+  /// @param teamId The duplicate team id.
+  error TeamAlreadyExists(uint256 teamId);
+  /// @dev The cliff duration exceeds the vesting duration.
+  error CliffExceedsDuration();
+  /// @dev A vesting already exists for this member in this team.
+  /// @param member The member address.
+  /// @param teamId The team id.
+  error VestingAlreadyExists(address member, uint256 teamId);
+  /// @dev The caller has not granted enough ERC20 allowance.
+  /// @param required The amount required.
+  /// @param actual The current allowance.
+  error InsufficientAllowance(uint256 required, uint256 actual);
+  /// @dev The caller's ERC20 balance is less than the amount required.
+  /// @param required The amount required.
+  /// @param actual The caller's balance.
+  error InsufficientBalance(uint256 required, uint256 actual);
+  /// @dev A raw ERC20 transfer returned false.
+  /// @param token The token whose transfer returned false.
+  error TokenTransferFailed(address token);
+  /// @dev There is no active vesting for this member/team.
+  error VestingNotActive();
+  /// @dev The releasable amount is zero.
+  error NothingToRelease();
+
   /// @notice Initializer instead of constructor for proxy compatibility
   function initialize() public initializer {
     __Ownable_init(msg.sender);
@@ -41,15 +73,15 @@ contract Vesting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
   }
 
   modifier onlyTeamOwner(uint256 teamId) {
-    require(msg.sender == teams[teamId].owner, 'Not team owner');
+    if (msg.sender != teams[teamId].owner) revert NotTeamOwner(teams[teamId].owner, msg.sender);
     _;
   }
 
   /// @notice Create a new team with a specific owner
   function createTeam(uint256 teamId, address teamOwner, address tokenAddress) external onlyOwner {
-    require(teamOwner != address(0), 'Invalid owner');
-    require(tokenAddress != address(0), 'Invalid token');
-    require(teams[teamId].owner == address(0), 'Team already exists');
+    if (teamOwner == address(0)) revert ZeroAddress();
+    if (tokenAddress == address(0)) revert ZeroAddress();
+    if (teams[teamId].owner != address(0)) revert TeamAlreadyExists(teamId);
     teams[teamId] = TeamInfo({owner: teamOwner, token: tokenAddress, members: new address[](0)});
   }
 
@@ -63,29 +95,30 @@ contract Vesting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     uint256 totalAmount,
     address tokenAddress
   ) external nonReentrant whenNotPaused {
-    require(member != address(0), 'Invalid member');
+    if (member == address(0)) revert ZeroAddress();
     //require(start >= block.timestamp, "Start time must be in the future");
-    require(duration >= cliff, 'Cliff exceeds duration');
-    require(tokenAddress != address(0), 'Invalid token');
+    if (duration < cliff) revert CliffExceedsDuration();
+    if (tokenAddress == address(0)) revert ZeroAddress();
 
     // If team doesn't exist, create it with msg.sender as owner
     if (teams[teamId].owner == address(0)) {
       // Create team on the fly
       teams[teamId] = TeamInfo({owner: msg.sender, token: tokenAddress, members: new address[](0)});
     } else {
-      require(msg.sender == teams[teamId].owner, 'Not team owner');
+      if (msg.sender != teams[teamId].owner) revert NotTeamOwner(teams[teamId].owner, msg.sender);
     }
 
-    require(teams[teamId].token != address(0), 'Invalid token');
-    require(!vestings[member][teamId].active, 'Vesting already exists');
+    if (teams[teamId].token == address(0)) revert ZeroAddress();
+    if (vestings[member][teamId].active) revert VestingAlreadyExists(member, teamId);
 
     address tokenAddr = teams[teamId].token;
     uint256 allowance = IERC20(tokenAddr).allowance(msg.sender, address(this));
-    require(allowance >= totalAmount, 'Not enough allowance');
-    require(IERC20(tokenAddr).balanceOf(msg.sender) >= totalAmount, 'Insufficient balance');
+    if (allowance < totalAmount) revert InsufficientAllowance(totalAmount, allowance);
+    uint256 senderBal = IERC20(tokenAddr).balanceOf(msg.sender);
+    if (senderBal < totalAmount) revert InsufficientBalance(totalAmount, senderBal);
 
     bool success = IERC20(tokenAddr).transferFrom(msg.sender, address(this), totalAmount);
-    require(success, 'Transfer failed');
+    if (!success) revert TokenTransferFailed(tokenAddr);
 
     vestings[member][teamId] = VestingInfo({
       start: start,
@@ -112,7 +145,7 @@ contract Vesting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     uint256 teamId
   ) external onlyTeamOwner(teamId) nonReentrant whenNotPaused {
     VestingInfo storage v = vestings[member][teamId];
-    require(v.active, 'Already stopped');
+    if (!v.active) revert VestingNotActive();
 
     uint256 releasableAmount = releasable(member, teamId);
     uint256 unvestedAmount = v.totalAmount - v.released - releasableAmount;
@@ -185,9 +218,9 @@ contract Vesting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
   /// @notice Release available tokens for the sender
   function release(uint256 teamId) external nonReentrant whenNotPaused {
     VestingInfo storage v = vestings[msg.sender][teamId];
-    require(v.active, 'Vesting not active');
+    if (!v.active) revert VestingNotActive();
     uint256 amount = releasable(msg.sender, teamId);
-    require(amount > 0, 'Nothing to release');
+    if (amount == 0) revert NothingToRelease();
     v.released += amount;
     IERC20(teams[teamId].token).safeTransfer(msg.sender, amount);
     emit TokensReleased(msg.sender, teamId, amount);

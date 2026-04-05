@@ -45,13 +45,19 @@ contract Elections is Initializable, OwnableUpgradeable, PausableUpgradeable {
   error ResultsAlreadyPublished();
   error ResultsNotReady();
   error Unauthorized();
+  /// @dev The caller (msg.sender) was the zero address when initializing.
+  error ZeroSender();
+  /// @dev The officer contract address has not been configured.
+  error OfficerAddressNotSet();
+  /// @dev The BoardOfDirectors contract could not be located via the Officer.
+  error BoardOfDirectorsNotFound();
 
   function initialize(address _owner) public initializer {
     __Ownable_init(_owner);
     __Pausable_init();
     _nextElectionId = 1;
 
-    require(msg.sender != address(0), 'msg.sender cannot be zero');
+    if (msg.sender == address(0)) revert ZeroSender();
     officerAddress = msg.sender;
   }
 
@@ -322,9 +328,9 @@ contract Elections is Initializable, OwnableUpgradeable, PausableUpgradeable {
    * @return Address of the BoardOfDirectors contract
    */
   function _getBoardOfDirectorsAddress() internal view returns (address) {
-    require(officerAddress != address(0), 'Officer address not configured');
+    if (officerAddress == address(0)) revert OfficerAddressNotSet();
     address bodAddress = IOfficer(officerAddress).findDeployedContract('BoardOfDirectors');
-    require(bodAddress != address(0), 'BoardOfDirectors contract not found');
+    if (bodAddress == address(0)) revert BoardOfDirectorsNotFound();
     return bodAddress;
   }
 }

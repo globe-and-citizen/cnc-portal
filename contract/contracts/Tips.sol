@@ -15,6 +15,33 @@ contract Tips is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
   event SendTip(address from, address[] teamMembers, uint256 totalAmount, uint256 amountPerAddress);
   event TipWithdrawal(address to, uint256 amount);
 
+  /// @dev No team member addresses were provided.
+  error NoTeamMembers();
+  /// @dev Too many team members were provided.
+  /// @param provided The provided count.
+  /// @param limit The current push limit.
+  error TooManyTeamMembers(uint256 provided, uint256 limit);
+  /// @dev A required address argument was the zero address.
+  error ZeroAddress();
+  /// @dev The contract's balance is less than the required amount.
+  /// @param required The amount required.
+  /// @param available The current contract balance.
+  error InsufficientBalance(uint256 required, uint256 available);
+  /// @dev A low-level native token send failed.
+  error SendFailed();
+  /// @dev The caller has no tips available to withdraw.
+  error NothingToWithdraw();
+  /// @dev Withdraw failed to zero the caller's balance.
+  error BalanceNotCleared();
+  /// @dev msg.value must be greater than zero.
+  error ZeroValue();
+  /// @dev The new push limit is the same as the current one.
+  error SameLimit();
+  /// @dev The push limit exceeds the allowed maximum.
+  /// @param requested The requested limit.
+  /// @param maximum The max push limit allowed.
+  error LimitTooHigh(uint8 requested, uint8 maximum);
+
   function initialize() public initializer {
     __Ownable_init(msg.sender);
     __ReentrancyGuard_init();
@@ -25,8 +52,10 @@ contract Tips is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
   function pushTip(
     address[] calldata _teamMembersAddresses
   ) external payable positiveAmountRequired whenNotPaused {
-    require(_teamMembersAddresses.length > 0, 'Must have at least one team member');
-    require(pushLimit >= _teamMembersAddresses.length, 'You have too much team members');
+    if (_teamMembersAddresses.length == 0) revert NoTeamMembers();
+    if (pushLimit < _teamMembersAddresses.length) {
+      revert TooManyTeamMembers(_teamMembersAddresses.length, pushLimit);
+    }
     uint totalAmount = msg.value + remainder;
     uint256 amountPerAddress = totalAmount / _teamMembersAddresses.length;
 
@@ -36,11 +65,13 @@ contract Tips is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
     // Should fail if the contract balance is insufficient
     for (uint256 i = 0; i < _teamMembersAddresses.length; i++) {
       // Check for zero addresses
-      require(_teamMembersAddresses[i] != address(0), 'Invalid address');
-      require(address(this).balance >= amountPerAddress, 'Insufficient contract balance');
+      if (_teamMembersAddresses[i] == address(0)) revert ZeroAddress();
+      if (address(this).balance < amountPerAddress) {
+        revert InsufficientBalance(amountPerAddress, address(this).balance);
+      }
 
       (bool sent, ) = _teamMembersAddresses[i].call{value: amountPerAddress}('');
-      require(sent, 'Failed to send ETH');
+      if (!sent) revert SendFailed();
     }
 
     emit PushTip(msg.sender, _teamMembersAddresses, msg.value, amountPerAddress);
@@ -49,7 +80,7 @@ contract Tips is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
   function sendTip(
     address[] calldata _teamMembersAddresses
   ) external payable positiveAmountRequired whenNotPaused {
-    require(_teamMembersAddresses.length > 0, 'Must have at least one team member');
+    if (_teamMembersAddresses.length == 0) revert NoTeamMembers();
     uint totalAmount = msg.value + remainder;
     uint256 amountPerAddress = totalAmount / _teamMembersAddresses.length;
 
@@ -58,7 +89,7 @@ contract Tips is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
 
     for (uint256 i = 0; i < _teamMembersAddresses.length; i++) {
       // Check for zero addresses
-      require(_teamMembersAddresses[i] != address(0), 'Invalid address');
+      if (_teamMembersAddresses[i] == address(0)) revert ZeroAddress();
       balance[_teamMembersAddresses[i]] += amountPerAddress;
     }
 
@@ -68,13 +99,13 @@ contract Tips is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
   // TODO: Protection for reentrancy attack
   function withdraw() external nonReentrant whenNotPaused {
     uint256 senderBalance = balance[msg.sender];
-    require(senderBalance > 0, 'No tips to withdraw.');
+    if (senderBalance == 0) revert NothingToWithdraw();
 
     (bool sent, ) = msg.sender.call{value: senderBalance}('');
-    require(sent, 'Failed to withdraw tips.');
+    if (!sent) revert SendFailed();
 
     balance[msg.sender] = 0;
-    require(balance[msg.sender] == 0, 'Failed to zero out balance');
+    if (balance[msg.sender] != 0) revert BalanceNotCleared();
 
     emit TipWithdrawal(msg.sender, senderBalance);
   }
@@ -84,13 +115,13 @@ contract Tips is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
   }
 
   function updatePushLimit(uint8 value) external onlyOwner {
-    require(value != pushLimit, 'New limit is the same as the old one');
-    require(value <= MAX_PUSH_LIMIT, 'Push limit is too high, must be less or equal to 100');
+    if (value == pushLimit) revert SameLimit();
+    if (value > MAX_PUSH_LIMIT) revert LimitTooHigh(value, MAX_PUSH_LIMIT);
     pushLimit = value;
   }
 
   modifier positiveAmountRequired() {
-    require(msg.value > 0, 'Must send a positive amount.');
+    if (msg.value == 0) revert ZeroValue();
     _;
   }
 
