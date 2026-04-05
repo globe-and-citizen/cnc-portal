@@ -148,6 +148,42 @@ contract CashRemunerationEIP712 is
    */
   error UnauthorizedAccess(address expected, address received);
 
+  /// @dev A required address argument was the zero address.
+  error ZeroAddress();
+
+  /// @dev The caller is not the employee declared in the wage claim.
+  /// @param expected The employee address recorded in the claim.
+  /// @param actual The caller attempting the withdrawal.
+  error NotClaimOwner(address expected, address actual);
+
+  /// @dev The wage claim signature has already been paid out.
+  /// @param signatureHash keccak256 hash of the signature that was reused.
+  error WageAlreadyPaid(bytes32 signatureHash);
+
+  /// @dev The wage claim was disabled by the owner.
+  /// @param signatureHash keccak256 hash of the disabled signature.
+  error ClaimIsDisabled(bytes32 signatureHash);
+
+  /// @dev The token in the wage claim is not in the contract's supported list.
+  /// @param token The unsupported token address.
+  error TokenNotSupported(address token);
+
+  /// @dev The contract's balance of `token` is less than the amount owed.
+  /// @param token The ERC20 token being paid out.
+  /// @param required The amount needed for this payout.
+  /// @param available The current contract balance of the token.
+  error InsufficientTokenBalance(address token, uint256 required, uint256 available);
+
+  /// @dev The officer address has not been set, so dependent features are unavailable.
+  error OfficerAddressNotSet();
+
+  /// @dev The Bank contract could not be located via the Officer.
+  error BankContractNotFound();
+
+  /// @dev A raw ERC20 transfer returned false.
+  /// @param token The token whose `transfer` returned false.
+  error TokenTransferFailed(address token);
+
   /**
    * @dev Initializes the contract with the specified owner.
    * @param _owner The address of the contract owner.
@@ -159,12 +195,12 @@ contract CashRemunerationEIP712 is
     __EIP712_init('CashRemuneration', '1');
     __Pausable_init();
 
-    require(msg.sender != address(0), 'msg.sender cannot be zero');
+    if (msg.sender == address(0)) revert ZeroAddress();
     officerAddress = msg.sender;
 
     // Set the initial supported tokens
     for (uint256 i = 0; i < _tokenAddresses.length; i++) {
-      require(_tokenAddresses[i] != address(0), 'Token address cannot be zero');
+      if (_tokenAddresses[i] == address(0)) revert ZeroAddress();
       _addTokenSupport(_tokenAddresses[i]);
     }
     // Emit events after they're already added to avoid duplicate events
@@ -246,7 +282,9 @@ contract CashRemunerationEIP712 is
   ) external whenNotPaused nonReentrant {
     // Step 1: Verify the caller is the authorized employee
     // Prevents someone else from withdrawing another employee's wages
-    require(msg.sender == wageClaim.employeeAddress, 'Withdrawer not approved');
+    if (msg.sender != wageClaim.employeeAddress) {
+      revert NotClaimOwner(wageClaim.employeeAddress, msg.sender);
+    }
 
     // Step 2: EIP-712 Signature Verification
     // Create the EIP-712 compliant digest for signature recovery
@@ -271,8 +309,8 @@ contract CashRemunerationEIP712 is
     // Step 5: Prevent double-spending of the same signature & usage of disabled claims
     // Each signature can only be used once to prevent replay attacks
     bytes32 sigHash = keccak256(signature);
-    require(!paidWageClaims[sigHash], 'Wage already paid');
-    require(!disabledWageClaims[sigHash], 'Wage claim disabled');
+    if (paidWageClaims[sigHash]) revert WageAlreadyPaid(sigHash);
+    if (disabledWageClaims[sigHash]) revert ClaimIsDisabled(sigHash);
 
     // Step 6: Mark this signature as used to prevent reuse
     paidWageClaims[sigHash] = true;
@@ -304,7 +342,9 @@ contract CashRemunerationEIP712 is
       // Step 7b: Handle ERC20 Token Payments
       else {
         // Ensure the requested token is supported by the contract
-        require(_isTokenSupported(wageClaim.wages[i].tokenAddress), 'Token not supported');
+        if (!_isTokenSupported(wageClaim.wages[i].tokenAddress)) {
+          revert TokenNotSupported(wageClaim.wages[i].tokenAddress);
+        }
 
         // Step 7b(i): Special Case - Mintable InvestorV1 Token
         // If we have an officer address configured and this is the InvestorV1 token,
@@ -328,10 +368,14 @@ contract CashRemunerationEIP712 is
         // For regular ERC20 tokens, transfer from contract's balance
         else {
           // Verify the contract has sufficient token balance
-          require(
-            IERC20(wageClaim.wages[i].tokenAddress).balanceOf(address(this)) >= amountToPay,
-            'Insufficient token balance'
-          );
+          uint256 tokenBalance = IERC20(wageClaim.wages[i].tokenAddress).balanceOf(address(this));
+          if (tokenBalance < amountToPay) {
+            revert InsufficientTokenBalance(
+              wageClaim.wages[i].tokenAddress,
+              amountToPay,
+              tokenBalance
+            );
+          }
 
           // Transfer tokens from contract to employee
           IERC20(wageClaim.wages[i].tokenAddress).transfer(wageClaim.employeeAddress, amountToPay);
@@ -404,9 +448,9 @@ contract CashRemunerationEIP712 is
    * @dev Discovers the Bank address via the Officer contract. Single transaction drain.
    */
   function ownerWithdrawAllToBank() external onlyOwner nonReentrant whenNotPaused {
-    require(officerAddress != address(0), 'Officer address not set');
+    if (officerAddress == address(0)) revert OfficerAddressNotSet();
     address bankAddress = IOfficer(officerAddress).findDeployedContract('Bank');
-    require(bankAddress != address(0), 'Bank contract not found');
+    if (bankAddress == address(0)) revert BankContractNotFound();
 
     uint256 nativeBalance = address(this).balance;
     if (nativeBalance > 0) {
@@ -418,7 +462,9 @@ contract CashRemunerationEIP712 is
     for (uint256 i = 0; i < tokens.length; i++) {
       uint256 tokenBalance = IERC20(tokens[i]).balanceOf(address(this));
       if (tokenBalance > 0) {
-        require(IERC20(tokens[i]).transfer(bankAddress, tokenBalance), 'Token transfer failed');
+        if (!IERC20(tokens[i]).transfer(bankAddress, tokenBalance)) {
+          revert TokenTransferFailed(tokens[i]);
+        }
         emit OwnerTreasuryWithdrawToken(owner(), tokens[i], tokenBalance);
       }
     }
