@@ -540,4 +540,64 @@ describe('ExpenseAccountEIP712V2', function () {
       expect(period).to.equal(2)
     })
   })
+
+  describe('EIP-712 Replay Protection', function () {
+    it('Should reject replay of a one-time signed budget after it has been fully consumed', async function () {
+      const { expenseAccount, owner, approvedAddress, recipient } = await loadFixture(
+        deployExpenseAccountFixture
+      )
+
+      const budgetLimit = createBudgetLimit({
+        amount: ethers.parseEther('1'),
+        frequencyType: 0, // OneTime
+        approvedAddress: approvedAddress.address
+      })
+
+      const signature = await createSignature(owner, budgetLimit, expenseAccount)
+      const signatureHash = ethers.keccak256(signature)
+
+      // First withdrawal — succeeds
+      await expenseAccount
+        .connect(approvedAddress)
+        .transfer(recipient.address, ethers.parseEther('1'), budgetLimit, signature)
+
+      // State reflects the one-time budget was consumed
+      const balance = await expenseAccount.expenseBalances(signatureHash)
+      expect(balance.totalWithdrawn).to.equal(ethers.parseEther('1'))
+
+      // Second attempt reusing the exact same (budgetLimit, signature) pair must revert
+      // with the OneTimeBudgetAlreadyUsed custom error (replay protection for one-time budgets).
+      await expect(
+        expenseAccount
+          .connect(approvedAddress)
+          .transfer(recipient.address, ethers.parseEther('1'), budgetLimit, signature)
+      ).to.be.revertedWithCustomError(expenseAccount, 'OneTimeBudgetAlreadyUsed')
+    })
+
+    it('Should reject replay of a consumed one-time budget even for a tiny amount', async function () {
+      const { expenseAccount, owner, approvedAddress, recipient } = await loadFixture(
+        deployExpenseAccountFixture
+      )
+
+      const budgetLimit = createBudgetLimit({
+        amount: ethers.parseEther('5'),
+        frequencyType: 0, // OneTime
+        approvedAddress: approvedAddress.address
+      })
+
+      const signature = await createSignature(owner, budgetLimit, expenseAccount)
+
+      // Use only a portion — the one-time budget is still considered consumed.
+      await expenseAccount
+        .connect(approvedAddress)
+        .transfer(recipient.address, ethers.parseEther('0.01'), budgetLimit, signature)
+
+      // Any replay of the same signature/budget pair fails.
+      await expect(
+        expenseAccount
+          .connect(approvedAddress)
+          .transfer(recipient.address, 1n, budgetLimit, signature)
+      ).to.be.revertedWithCustomError(expenseAccount, 'OneTimeBudgetAlreadyUsed')
+    })
+  })
 })

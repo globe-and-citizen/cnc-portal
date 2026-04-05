@@ -49,8 +49,9 @@ describe('Tips', function () {
     })
 
     it('should revert if the tip amount is zero', async function () {
-      await expect(tips.connect(sender).pushTip(recipientAddress)).to.be.revertedWith(
-        'Must send a positive amount.'
+      await expect(tips.connect(sender).pushTip(recipientAddress)).to.be.revertedWithCustomError(
+        tips,
+        'ZeroValue'
       )
     })
 
@@ -78,8 +79,9 @@ describe('Tips', function () {
     })
 
     it('should revert if the tip amount is zero', async function () {
-      await expect(tips.connect(sender).sendTip(recipientAddress)).to.be.revertedWith(
-        'Must send a positive amount.'
+      await expect(tips.connect(sender).sendTip(recipientAddress)).to.be.revertedWithCustomError(
+        tips,
+        'ZeroValue'
       )
     })
 
@@ -96,7 +98,10 @@ describe('Tips', function () {
 
   describe('withdraw', function () {
     it('should revert if no tips have been earned', async function () {
-      await expect(tips.connect(member1).withdraw()).to.be.revertedWith('No tips to withdraw.')
+      await expect(tips.connect(member1).withdraw()).to.be.revertedWithCustomError(
+        tips,
+        'NothingToWithdraw'
+      )
     })
 
     it('should withdraw earned tips and reset the balance', async function () {
