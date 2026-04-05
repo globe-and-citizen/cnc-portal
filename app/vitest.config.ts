@@ -2,15 +2,6 @@ import { configDefaults, defineConfig, mergeConfig } from 'vitest/config'
 
 import { fileURLToPath } from 'node:url'
 import viteConfig from './vite.config'
-import {
-  UButtonStub,
-  UCalendarStub,
-  UDropdownStub,
-  UIconStub,
-  UModalStub,
-  USelectMenuStub
-} from './src/tests/stubs/nuxt-ui.stubs'
-
 import dotenv from 'dotenv'
 
 dotenv.config()
@@ -48,17 +39,7 @@ export default defineConfig((env) =>
       env: {
         VITE_APP_NETWORK_ALIAS: 'sepolia'
       },
-      globals: true,
-      global: {
-        stubs: {
-          UButton: UButtonStub,
-          UIcon: UIconStub,
-          UDropdown: UDropdownStub,
-          UModal: UModalStub,
-          USelectMenu: USelectMenuStub,
-          UCalendar: UCalendarStub
-        }
-      }
+      globals: true
     }
   })
 )
