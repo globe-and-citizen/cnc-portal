@@ -7,7 +7,7 @@ import {
   type SimulateContractParameters,
   type WaitForTransactionReceiptParameters
 } from '@wagmi/core'
-import { type Abi, type Address } from 'viem'
+import { BaseError, type Abi, type Address } from 'viem'
 import { config as wagmiConfig, type config as wagmiConfigType } from '@/wagmi.config'
 import { log, parseErrorV2 } from '@/utils'
 
@@ -34,8 +34,12 @@ export interface ExecuteWriteVariables {
  * Thrown when a transaction was mined but reverted on-chain.
  * Carries the full context (hash, receipt, simulation) so callers
  * can inspect gas used, logs, block number, etc. for debugging.
+ *
+ * Extends viem's `BaseError` and exposes the decoded revert reason via
+ * `cause` so that `parseError(error, abi)` can `walk()` and extract the
+ * ABI-level error name (e.g. "InsufficientTokenBalance").
  */
-export class ContractWriteRevertedError extends Error {
+export class ContractWriteRevertedError extends BaseError {
   readonly hash: Awaited<ReturnType<typeof writeContract>>
   readonly receipt: Awaited<ReturnType<typeof waitForTransactionReceipt>>
   readonly simulation: Awaited<ReturnType<typeof simulateContract>>
@@ -44,8 +48,12 @@ export class ContractWriteRevertedError extends Error {
     hash: ContractWriteRevertedError['hash']
     receipt: ContractWriteRevertedError['receipt']
     simulation: ContractWriteRevertedError['simulation']
+    cause?: BaseError
   }) {
-    super(`Transaction reverted on-chain (hash: ${params.hash})`)
+    super('Transaction reverted on-chain', {
+      cause: params.cause,
+      metaMessages: [`hash: ${params.hash}`, `block: ${params.receipt.blockNumber}`]
+    })
     this.name = 'ContractWriteRevertedError'
     this.hash = params.hash
     this.receipt = params.receipt
@@ -100,7 +108,24 @@ export function useContractWritesV3(cfg: ContractWriteV3Config) {
       } as WaitParams)
 
       if (receipt.status !== 'success') {
-        throw new ContractWriteRevertedError({ hash, receipt, simulation })
+        // Replay at the block just before mining to recover the ABI-decoded
+        // revert reason (receipts don't carry it). viem will throw a
+        // BaseError containing a ContractFunctionRevertedError in its chain.
+        let revertCause: BaseError | undefined
+        try {
+          await simulateContract(wagmiConfig, {
+            address,
+            abi,
+            functionName,
+            args,
+            chainId,
+            blockNumber: receipt.blockNumber - 1n,
+            ...(value !== undefined ? { value } : {})
+          } as SimulateParams)
+        } catch (replayErr) {
+          if (replayErr instanceof BaseError) revertCause = replayErr
+        }
+        throw new ContractWriteRevertedError({ hash, receipt, simulation, cause: revertCause })
       }
 
       return { hash, receipt, simulation }
