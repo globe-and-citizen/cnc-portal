@@ -29,7 +29,6 @@ vi.mock('@/composables/safeDepositRouter/writes', () => ({
   useRenounceOwnership: vi.fn(() => mockSafeDepositRouterWrites.renounceOwnership),
   useTransferOwnership: vi.fn(() => mockSafeDepositRouterWrites.transferOwnership),
   useSetSafeAddress: vi.fn(() => mockSafeDepositRouterWrites.setSafeAddress),
-  useSetInvestorAddress: vi.fn(() => mockSafeDepositRouterWrites.setInvestorAddress),
   useSetMultiplier: vi.fn(() => mockSafeDepositRouterWrites.setMultiplier),
   useAddTokenSupport: vi.fn(() => mockSafeDepositRouterWrites.addTokenSupport),
   useRemoveTokenSupport: vi.fn(() => mockSafeDepositRouterWrites.removeTokenSupport),
