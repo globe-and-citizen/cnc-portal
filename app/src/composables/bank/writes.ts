@@ -26,15 +26,6 @@ export function useBankContractWrite(options: {
   })
 }
 
-export function useDepositToken(token: MaybeRef<Address>, amount: MaybeRef<bigint>) {
-  const args = computed(() => [unref(token), unref(amount)] as readonly unknown[])
-
-  return useBankContractWrite({
-    functionName: 'depositToken',
-    args
-  })
-}
-
 export function useDistributeNativeDividends(amount: MaybeRef<bigint>) {
   const args = computed(() => [unref(amount)] as readonly unknown[])
   return useBankContractWrite({
@@ -61,84 +52,6 @@ export function useRemoveTokenSupport(tokenAddress: MaybeRef<Address>) {
   return useBankContractWrite({
     functionName: 'removeTokenSupport',
     args: [tokenAddress]
-  })
-}
-
-export function useClaimDividend() {
-  const queryClient = useQueryClient()
-  const teamStore = useTeamStore()
-  const bankAddress = computed(() => teamStore.getContractAddressByType('Bank'))
-
-  const writeResult = useBankContractWrite({
-    functionName: 'claimDividend',
-    args: []
-  })
-
-  // Override invalidateQueries to invalidate dividend balances
-  const originalInvalidateQueries = writeResult.invalidateQueries
-  writeResult.invalidateQueries = async () => {
-    await originalInvalidateQueries()
-    // Invalidate all dividend balances queries for this bank
-    await queryClient.invalidateQueries({
-      queryKey: ['bank', 'dividendBalances', bankAddress.value]
-    })
-  }
-
-  return writeResult
-}
-
-export function useClaimTokenDividend(token: MaybeRef<Address>) {
-  const queryClient = useQueryClient()
-  const teamStore = useTeamStore()
-  const bankAddress = computed(() => teamStore.getContractAddressByType('Bank'))
-
-  const args = computed(() => [unref(token)] as readonly unknown[])
-
-  const writeResult = useBankContractWrite({
-    functionName: 'claimTokenDividend',
-    args
-  })
-
-  // Override invalidateQueries to invalidate dividend balances
-  const originalInvalidateQueries = writeResult.invalidateQueries
-  writeResult.invalidateQueries = async () => {
-    await originalInvalidateQueries()
-    // Invalidate all dividend balances queries for this bank
-    await queryClient.invalidateQueries({
-      queryKey: ['bank', 'dividendBalances', bankAddress.value]
-    })
-  }
-
-  return writeResult
-}
-
-// export function useDepositDividends(amount: MaybeRef<bigint>, investorAddress: MaybeRef<Address>) {
-//   const args = computed(() => [unref(amount), unref(investorAddress)] as readonly unknown[])
-//   return useBankContractWrite({
-//     functionName: 'depositDividends',
-//     args,
-//     value: amount // This is a payable function
-//   })
-// }
-
-// export function useDepositTokenDividends(
-//   token: MaybeRef<Address>,
-//   amount: MaybeRef<bigint>,
-//   investorAddress: MaybeRef<Address>
-// ) {
-//   const args = computed(
-//     () => [unref(token), unref(amount), unref(investorAddress)] as readonly unknown[]
-//   )
-//   return useBankContractWrite({
-//     functionName: 'depositTokenDividends',
-//     args
-//   })
-// }
-
-export function useSetInvestorAddress(investorAddress: MaybeRef<Address>) {
-  return useBankContractWrite({
-    functionName: 'setInvestorAddress',
-    args: [investorAddress]
   })
 }
 

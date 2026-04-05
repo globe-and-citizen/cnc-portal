@@ -116,16 +116,6 @@ export function useSetSafeAddress() {
   }
 }
 
-export function useSetInvestorAddress() {
-  const write = useSafeDepositRouterContractWrite({
-    functionName: 'setInvestorAddress'
-  })
-
-  return {
-    ...write,
-    executeWrite: (newInvestorAddress: Address) => write.executeWrite([newInvestorAddress])
-  }
-}
 
 export function useSetMultiplier() {
   const write = useSafeDepositRouterContractWrite({

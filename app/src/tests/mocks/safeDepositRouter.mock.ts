@@ -25,7 +25,6 @@ export const mockSafeDepositRouterWrites = {
   renounceOwnership: createContractWriteMock(),
   transferOwnership: createContractWriteMock(),
   setSafeAddress: createContractWriteMock(),
-  setInvestorAddress: createContractWriteMock(),
   setMultiplier: createContractWriteMock(),
   addTokenSupport: createContractWriteMock(),
   removeTokenSupport: createContractWriteMock(),

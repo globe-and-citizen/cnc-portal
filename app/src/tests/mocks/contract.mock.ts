@@ -29,24 +29,12 @@ export const mockBankReads = {
   paused: createContractReadMock(false),
   owner: createContractReadMock('0x742d35Cc6bF8C55C6C2e013e5492D2b6637e0886'),
   supportedTokens: createContractReadMock([]),
-  dividendBalance: createContractReadMock(0n),
-  tokenDividendBalance: createContractReadMock(0n),
-  totalDividend: createContractReadMock(0n),
-  unlockedBalance: createContractReadMock(0n),
-  getDividendBalances: createContractReadMock([])
 }
 
 export const mockBankWrites = {
   deposit: createContractWriteMock(),
   addTokenSupport: createContractWriteMock(),
   removeTokenSupport: createContractWriteMock(),
-  distributeNativeDividends: createContractWriteMock(),
-  distributeTokenDividends: createContractWriteMock(),
-  claimDividend: createContractWriteMock(),
-  claimTokenDividend: createContractWriteMock(),
-  depositDividends: createContractWriteMock(),
-  depositTokenDividends: createContractWriteMock(),
-  setInvestorAddress: createContractWriteMock(),
   transfer: createContractWriteMock(),
   transferToken: createContractWriteMock(),
   transferOwnership: createContractWriteMock(),
