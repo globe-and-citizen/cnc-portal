@@ -6,6 +6,11 @@
   },
   {
     "inputs": [],
+    "name": "BoardOfDirectorsNotFound",
+    "type": "error"
+  },
+  {
+    "inputs": [],
     "name": "EnforcedPause",
     "type": "error"
   },
@@ -47,6 +52,11 @@
   {
     "inputs": [],
     "name": "NotInitializing",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "OfficerAddressNotSet",
     "type": "error"
   },
   {
@@ -99,6 +109,11 @@
   {
     "inputs": [],
     "name": "ReentrancyGuardReentrantCall",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "ZeroSender",
     "type": "error"
   },
   {
