@@ -116,7 +116,6 @@ export function useSetSafeAddress() {
   }
 }
 
-
 export function useSetMultiplier() {
   const write = useSafeDepositRouterContractWrite({
     functionName: 'setMultiplier'

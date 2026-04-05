@@ -12,7 +12,7 @@ vi.mock('@/composables/bank/reads', () => ({
   useBankAddress: vi.fn(() => computed(() => MOCK_BANK_ADDRESS)),
   useBankPaused: vi.fn(() => mockBankReads.paused),
   useBankOwner: vi.fn(() => mockBankReads.owner),
-  useBankSupportedTokens: vi.fn(() => mockBankReads.supportedTokens),
+  useBankSupportedTokens: vi.fn(() => mockBankReads.supportedTokens)
 }))
 
 /**
@@ -28,5 +28,5 @@ vi.mock('@/composables/bank/writes', () => ({
   useTransferOwnership: vi.fn(() => mockBankWrites.transferOwnership),
   useRenounceOwnership: vi.fn(() => mockBankWrites.renounceOwnership),
   useTransfer: vi.fn(() => mockBankWrites.transfer),
-  useTransferToken: vi.fn(() => mockBankWrites.transferToken),
+  useTransferToken: vi.fn(() => mockBankWrites.transferToken)
 }))

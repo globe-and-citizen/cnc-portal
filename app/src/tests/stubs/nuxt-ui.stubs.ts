@@ -82,33 +82,41 @@ export const USelectMenuStub = defineComponent({
   emits: ['update:modelValue', 'update:open'],
   setup(props, { slots, attrs, emit }) {
     return () =>
-      h('div', { ...attrs, 'data-test': 'u-select-menu', 'data-loading': props.loading ? 'true' : undefined }, [
-        h(
-          'button',
-          { 'data-test': 'select-trigger', onClick: () => emit('update:open', !props.open) },
-          slots.default?.() ?? props.placeholder
-        ),
-        props.open
-          ? h(
-              'ul',
-              {},
-              props.items?.map((item) =>
-                h(
-                  'li',
-                  {
-                    key: item.value,
-                    onClick: () => {
-                      emit('update:modelValue', item.value)
-                      emit('update:open', false)
-                    }
-                  },
-                  item.label
+      h(
+        'div',
+        {
+          ...attrs,
+          'data-test': 'u-select-menu',
+          'data-loading': props.loading ? 'true' : undefined
+        },
+        [
+          h(
+            'button',
+            { 'data-test': 'select-trigger', onClick: () => emit('update:open', !props.open) },
+            slots.default?.() ?? props.placeholder
+          ),
+          props.open
+            ? h(
+                'ul',
+                {},
+                props.items?.map((item) =>
+                  h(
+                    'li',
+                    {
+                      key: item.value,
+                      onClick: () => {
+                        emit('update:modelValue', item.value)
+                        emit('update:open', false)
+                      }
+                    },
+                    item.label
+                  )
                 )
               )
-            )
-          : undefined,
-        props.open ? slots['content-bottom']?.() : undefined
-      ])
+            : undefined,
+          props.open ? slots['content-bottom']?.() : undefined
+        ]
+      )
   }
 })
 

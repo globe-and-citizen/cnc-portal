@@ -7,7 +7,7 @@ import {
   useTransferOwnership,
   useRenounceOwnership,
   useTransfer,
-  useTransferToken,
+  useTransferToken
 } from '../writes'
 import { mockBankWrites, resetContractMocks } from '@/tests/mocks'
 import type { Address } from 'viem'
@@ -29,7 +29,6 @@ describe('Bank Contract Writes', () => {
   })
 
   describe('Token Operations', () => {
-
     it('should return add token support mock', () => {
       const result = useAddTokenSupport(MOCK_DATA.tokenAddress)
       expect(result).toBe(mockBankWrites.addTokenSupport)
@@ -39,7 +38,6 @@ describe('Bank Contract Writes', () => {
       const result = useRemoveTokenSupport(MOCK_DATA.tokenAddress)
       expect(result).toBe(mockBankWrites.removeTokenSupport)
     })
-
   })
 
   describe('Administrative Operations', () => {
@@ -62,7 +60,6 @@ describe('Bank Contract Writes', () => {
       const result = useRenounceOwnership()
       expect(result).toBe(mockBankWrites.renounceOwnership)
     })
-
 
     it('should handle pause/unpause operations', async () => {
       mockBankWrites.pause.executeWrite.mockResolvedValue(undefined)

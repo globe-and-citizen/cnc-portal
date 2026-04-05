@@ -1,6 +1,5 @@
 import { computed, unref, type MaybeRef } from 'vue'
 import type { Address } from 'viem'
-import { useQueryClient } from '@tanstack/vue-query'
 import { BANK_ABI } from '@/artifacts/abi/bank'
 import { useContractWrites } from '@/composables/contracts/useContractWritesV2'
 import { useTeamStore } from '@/stores/teamStore'

@@ -28,7 +28,7 @@ export const mockElectionsWrites = {
 export const mockBankReads = {
   paused: createContractReadMock(false),
   owner: createContractReadMock('0x742d35Cc6bF8C55C6C2e013e5492D2b6637e0886'),
-  supportedTokens: createContractReadMock([]),
+  supportedTokens: createContractReadMock([])
 }
 
 export const mockBankWrites = {

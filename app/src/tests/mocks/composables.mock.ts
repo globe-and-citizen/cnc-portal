@@ -286,7 +286,6 @@ export const resetComposableMocks = () => {
     mockUseSafeDeployment.deploySafe.mockClear()
   }
 
-
   mockUseBodAddAction.isLoading.value = false
   mockUseBodAddAction.error.value = null
   if (vi.isMockFunction(mockUseBodAddAction.addActionWrite)) {
