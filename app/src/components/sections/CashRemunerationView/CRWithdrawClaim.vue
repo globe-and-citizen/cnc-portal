@@ -45,6 +45,10 @@ import { USDC_ADDRESS } from '@/constant'
 import type { WeeklyClaim } from '@/types'
 import { useSyncWeeklyClaimsMutation } from '@/queries'
 import { useContractWritesV3 } from '@/composables/contracts/useContractWritesV3'
+import {
+  CASH_REMUNERATION_ERRORS,
+  resolveMessage
+} from '@/composables/contracts/errorCatalogs'
 
 const props = defineProps<{
   weeklyClaim: WeeklyClaim
@@ -145,22 +149,10 @@ const withdrawClaim = async () => {
         // Silent when user cancels from wallet — nothing to show.
         if (classified.category === 'user_rejected') return
 
-        // The contract uses require(..., "message") — viem decodes these as
-        // Error(string) reverts, and our classifier lifts the string into
-        // `revertName`. Match case-insensitively for resilience.
-        let title = classified.userMessage
-        if (classified.category === 'contract_revert' && classified.revertName) {
-          const reason = classified.revertName.toLowerCase()
-          if (reason.includes('insufficient token balance')) {
-            title = 'Insufficient token balance'
-          } else if (reason.includes('token not support') || reason.includes('unsupported token')) {
-            title = 'Add Token support: Token not supported'
-          } else {
-            title = classified.revertName
-          }
-        }
-
-        toast.add({ title, color: 'error' })
+        toast.add({
+          title: resolveMessage(classified, CASH_REMUNERATION_ERRORS),
+          color: 'error'
+        })
       }
     }
   )
