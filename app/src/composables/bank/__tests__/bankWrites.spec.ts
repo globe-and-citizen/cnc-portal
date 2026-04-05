@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import {useDepositToken,
+import {
+  useDepositToken,
   useAddTokenSupport,
   useRemoveTokenSupport,
   usePause,
