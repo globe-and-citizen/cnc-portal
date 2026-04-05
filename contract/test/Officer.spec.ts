@@ -126,7 +126,7 @@ describe('Officer Contract', function () {
   })
 
   describe('Contract Deployment', () => {
-    it.skip('Should deploy contracts via BeaconProxy', async function () {
+    it('Should deploy contracts via BeaconProxy', async function () {
       const electionsInitData = electionsContract.interface.encodeFunctionData('initialize', [
         owner.address
       ])
@@ -143,7 +143,8 @@ describe('Officer Contract', function () {
       ])
 
       const expenseInitData = expenseAccount.interface.encodeFunctionData('initialize', [
-        owner.address
+        owner.address,
+        supportedTokenAddresses
       ])
 
       //  ADD: SafeDepositRouter initialization data

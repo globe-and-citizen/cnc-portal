@@ -579,32 +579,35 @@ describe('FeeCollector', () => {
     })
   })
 
-  // describe.skip('Reentrancy Protection', () => {
-  //   beforeEach(async () => {
-  //     ;[owner, user1, user2] = await ethers.getSigners()
-  //     feeCollector = await deployFeeCollector()
-  //   })
+  describe('Reentrancy Protection', () => {
+    beforeEach(async () => {
+      ;[owner, user1, user2] = await ethers.getSigners()
+      feeCollector = await deployFeeCollector()
+    })
 
-  //   it('should prevent reentrancy attacks on withdraw', async () => {
-  //     // Deploy a malicious contract that attempts reentrancy
-  //     const MaliciousContract = await ethers.getContractFactory('MaliciousReentrancy')
-  //     const malicious = await MaliciousContract.deploy()
+    it('should prevent reentrancy attacks on withdraw', async () => {
+      // Deploy a malicious contract that attempts reentrancy
+      const MaliciousContract = await ethers.getContractFactory('MaliciousReentrancy')
+      const malicious = await MaliciousContract.deploy()
 
-  //     // Fund the fee collector
-  //     await owner.sendTransaction({
-  //       to: await feeCollector.getAddress(),
-  //       value: ethers.parseEther('10')
-  //     })
+      // Fund the fee collector
+      await owner.sendTransaction({
+        to: await feeCollector.getAddress(),
+        value: ethers.parseEther('10')
+      })
 
-  //     // Transfer ownership to malicious contract
-  //     await feeCollector.transferOwnership(await malicious.getAddress())
+      // Transfer ownership to malicious contract so withdraw passes onlyOwner
+      await feeCollector.transferOwnership(await malicious.getAddress())
 
-  //     // Attempt reentrancy attack
-  //     await expect(
-  //       malicious.attack(await feeCollector.getAddress(), ethers.parseEther('1'))
-  //     ).to.be.revertedWithCustomError(feeCollector, 'ReentrancyGuardReentrantCall')
-  //   })
-  // })
+      // Attempt reentrancy attack. The outer withdraw call triggers a native
+      // transfer to the malicious owner, whose receive() re-enters withdraw.
+      // The re-entrant call reverts via nonReentrant, causing the native
+      // transfer (.call) to return false, which surfaces as WithdrawalFailed.
+      await expect(
+        malicious.attack(await feeCollector.getAddress(), ethers.parseEther('1'))
+      ).to.be.revertedWithCustomError(feeCollector, 'WithdrawalFailed')
+    })
+  })
 
   describe('Edge Cases', () => {
     beforeEach(async () => {
