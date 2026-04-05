@@ -31,6 +31,29 @@ export interface ExecuteWriteVariables {
 }
 
 /**
+ * Thrown when a transaction was mined but reverted on-chain.
+ * Carries the full context (hash, receipt, simulation) so callers
+ * can inspect gas used, logs, block number, etc. for debugging.
+ */
+export class ContractWriteRevertedError extends Error {
+  readonly hash: Awaited<ReturnType<typeof writeContract>>
+  readonly receipt: Awaited<ReturnType<typeof waitForTransactionReceipt>>
+  readonly simulation: Awaited<ReturnType<typeof simulateContract>>
+
+  constructor(params: {
+    hash: ContractWriteRevertedError['hash']
+    receipt: ContractWriteRevertedError['receipt']
+    simulation: ContractWriteRevertedError['simulation']
+  }) {
+    super(`Transaction reverted on-chain (hash: ${params.hash})`)
+    this.name = 'ContractWriteRevertedError'
+    this.hash = params.hash
+    this.receipt = params.receipt
+    this.simulation = params.simulation
+  }
+}
+
+/**
  * V3: Lean contract write composable.
  *
  * Accepts contract coordinates (address, abi, functionName, chainId) at call time.
@@ -77,7 +100,7 @@ export function useContractWritesV3(cfg: ContractWriteV3Config) {
       } as WaitParams)
 
       if (receipt.status !== 'success') {
-        throw new Error(`Transaction reverted on-chain (hash: ${hash})`)
+        throw new ContractWriteRevertedError({ hash, receipt, simulation })
       }
 
       return { hash, receipt, simulation }
