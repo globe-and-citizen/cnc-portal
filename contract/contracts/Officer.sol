@@ -23,9 +23,10 @@ struct DeploymentData {
 }
 
 /**
- * @title Officer Contract
- * @dev Manages team creation, beacon proxy deployment, and contract upgrades
- * Inherits from OwnableUpgradeable, ReentrancyGuardUpgradeable, and PausableUpgradeable
+ * @title Officer
+ * @notice Manages a team's beacon registry, proxy deployments, and fee routing.
+ * @dev Upgradeable; owned by the team. Configures beacons, deploys proxies for contract types,
+ *      and exposes discovery helpers used by peer contracts (Bank, Investor, etc.).
  */
 contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgradeable {
   /// @notice Mapping of contract type to beacon address
@@ -39,7 +40,11 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
   /// @notice Emitted when beacon proxies are deployed
   event BeaconProxiesDeployed(address[] beaconProxies);
 
-  /// @notice Configuration struct for beacon initialization
+  /**
+   * @notice Configuration struct for beacon initialization.
+   * @param beaconType Identifier of the contract type this beacon powers.
+   * @param beaconAddress Address of the beacon contract.
+   */
   struct BeaconConfig {
     string beaconType;
     address beaconAddress;
@@ -48,7 +53,11 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
   /// @notice Array to store configured contract types
   string[] public contractTypes;
 
-  /// @notice Struct for deployed contract information
+  /**
+   * @notice Struct for deployed contract information.
+   * @param contractType Identifier of the contract type.
+   * @param contractAddress Address of the deployed proxy.
+   */
   struct DeployedContract {
     string contractType;
     address contractAddress;
@@ -86,7 +95,8 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
   address private immutable feeCollector;
 
   /**
-   * @notice Address of the fee collector contract
+   * @notice Sets the immutable fee collector used by this officer.
+   * @param _feeCollector Address of the fee collector contract.
    */
   constructor(address _feeCollector) {
     if (_feeCollector == address(0)) revert ZeroAddress();
@@ -94,9 +104,11 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
   }
 
   /**
-   * @notice Initializes the contract with owner and optional beacon configurations
-   * @param _owner Address of the contract owner
-   * @param beaconConfigs Array of beacon configurations to initialize
+   * @notice Initializes the contract with owner and optional beacon configurations.
+   * @param _owner Address of the contract owner.
+   * @param beaconConfigs Array of beacon configurations to initialize.
+   * @param _deployments Deployment descriptors run when `_isDeployAllContracts` is true.
+   * @param _isDeployAllContracts When true, immediately deploys all described proxies.
    */
   function initialize(
     address _owner,
@@ -336,6 +348,11 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     _;
   }
 
+  /**
+   * @notice Returns the fee in basis points for a contract type.
+   * @param contractType The contract type identifier.
+   * @return Fee in basis points.
+   */
   function getFeeFor(string memory contractType) external view returns (uint16) {
     return IFeeCollector(feeCollector).getFeeFor(contractType);
   }

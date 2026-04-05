@@ -5,9 +5,24 @@ import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
+
+/**
+ * @title Vesting
+ * @notice Per-team ERC20 vesting with cliff, linear release, and owner-initiated stop.
+ * @dev Upgradeable; each team has an owner, a token, and a set of members with vesting schedules.
+ */
 contract Vesting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgradeable {
   using SafeERC20 for IERC20;
 
+  /**
+   * @dev Vesting schedule parameters for a single member in a team.
+   * @param start Vesting start timestamp.
+   * @param duration Total vesting duration in seconds.
+   * @param cliff Cliff period in seconds (counted from start).
+   * @param totalAmount Total tokens to vest.
+   * @param released Amount of tokens already released to the member.
+   * @param active Whether the vesting is active.
+   */
   struct VestingInfo {
     uint64 start; // Vesting start time
     uint64 duration; // Vesting duration
@@ -17,6 +32,12 @@ contract Vesting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     bool active; // Whether the vesting is active
   }
 
+  /**
+   * @dev Team metadata associated with a team id.
+   * @param owner Team owner (can manage vestings).
+   * @param token ERC20 token used for vesting in this team.
+   * @param members List of team members who have had a vesting schedule.
+   */
   struct TeamInfo {
     address owner;
     address token;
@@ -29,9 +50,32 @@ contract Vesting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
   mapping(address => mapping(uint256 => VestingInfo[])) public archivedVestings;
   mapping(address => mapping(uint256 => bool)) public isUserInTeam;
 
+  /**
+   * @notice Emitted when a new vesting schedule is created for a member.
+   * @param member The member receiving the vesting.
+   * @param teamId The team id the vesting belongs to.
+   * @param amount Total amount allocated for vesting.
+   */
   event VestingCreated(address indexed member, uint256 indexed teamId, uint256 amount);
+  /**
+   * @notice Emitted when vested tokens are released to a member.
+   * @param member The member receiving the tokens.
+   * @param teamId The team id.
+   * @param amount Amount released.
+   */
   event TokensReleased(address indexed member, uint256 indexed teamId, uint256 amount);
+  /**
+   * @notice Emitted when a vesting schedule is stopped.
+   * @param member The member whose vesting was stopped.
+   * @param teamId The team id.
+   */
   event VestingStopped(address indexed member, uint256 indexed teamId);
+  /**
+   * @notice Emitted when unvested tokens are returned to the team owner.
+   * @param member The member whose unvested tokens were withdrawn.
+   * @param teamId The team id.
+   * @param amount Amount returned to the team owner.
+   */
   event UnvestedWithdrawn(address indexed member, uint256 indexed teamId, uint256 amount);
 
   /// @dev The caller is not the team owner.
@@ -311,10 +355,12 @@ contract Vesting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     return block.timestamp;
   }
 
+  /// @notice Pauses the contract, blocking vesting operations.
   function pause() external onlyOwner {
     _pause();
   }
 
+  /// @notice Unpauses the contract, restoring normal operation.
   function unpause() external onlyOwner {
     _unpause();
   }

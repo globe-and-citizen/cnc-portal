@@ -21,16 +21,27 @@ contract FeeCollector is
 {
   using SafeERC20 for IERC20;
 
+  /**
+   * @dev Fee configuration entry for one contract type.
+   * @param contractType Identifier of the contract type (e.g. "BANK").
+   * @param feeBps Fee in basis points (e.g. 50 = 0.5%).
+   */
   struct FeeConfig {
     string contractType; // e.g. "BANK"
     uint16 feeBps; // e.g. 50 = 0.5%
   }
 
+  /// @dev Stored fee configurations, one entry per contract type.
   FeeConfig[] private feeConfigs;
 
   /// @notice Emitted when ERC20 tokens are withdrawn
   event TokenWithdrawn(address indexed owner, address indexed token, uint256 amount);
 
+  /**
+   * @notice Emitted when a fee configuration entry is added or updated.
+   * @param contractType The contract type the fee applies to.
+   * @param feeBps The new fee in basis points.
+   */
   event FeeConfigUpdated(string indexed contractType, uint16 feeBps);
 
   /// @dev A required address argument was the zero address.
@@ -196,6 +207,8 @@ contract FeeCollector is
 
   /**
    * @notice Add or update a single fee configuration
+   * @param contractType The contract type this fee applies to.
+   * @param feeBps Fee in basis points (must be <= 10000).
    */
   function setFee(string memory contractType, uint16 feeBps) external onlyOwner {
     if (bytes(contractType).length == 0) revert EmptyContractType();

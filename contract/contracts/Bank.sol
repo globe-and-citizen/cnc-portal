@@ -10,6 +10,12 @@ import './base/TokenSupport.sol';
 import {IOfficer} from './interfaces/IOfficer.sol';
 import {IInvestorV1} from './interfaces/IInvestorV1.sol';
 
+/**
+ * @title Bank
+ * @notice Treasury contract holding native and ERC20 funds for a team, with fee-aware transfers
+ *         and dividend distribution via the Investor contract.
+ * @dev Upgradeable, pausable and reentrancy-guarded. Resolves Investor/FeeCollector via Officer.
+ */
 contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgradeable, TokenSupport {
   using SafeERC20 for IERC20;
 
@@ -41,7 +47,18 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
    */
   event Transfer(address indexed sender, address indexed to, uint256 amount);
 
+  /**
+   * @notice Emitted when a fee is paid to the fee collector.
+   * @param feeCollector Recipient of the fee.
+   * @param amount The fee amount paid.
+   */
   event FeePaid(address indexed feeCollector, uint256 amount);
+  /**
+   * @notice Emitted when a dividend distribution is triggered via the Investor contract.
+   * @param investor The Investor contract address that received/forwarded funds.
+   * @param token Token distributed, or address(0) for native.
+   * @param totalAmount Total amount sent to the investor for distribution.
+   */
   event DividendDistributionTriggered(
     address indexed investor,
     address indexed token,

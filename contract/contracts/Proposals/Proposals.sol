@@ -8,25 +8,30 @@ import {IBoardOfDirectors} from '../interfaces/IBoardOfDirectors.sol';
 import {ProposalUtils} from './ProposalUtils.sol';
 import {IOfficer} from '../interfaces/IOfficer.sol';
 
-/*
+/**
  * @title Proposals
- * @dev A contract that manages proposals for the Board of Directors (BOD).
- * @notice This contract allows board of directors to create proposals, vote on them,
- * and automatically calculates results.
+ * @notice Allows the Board of Directors to create proposals, vote on them,
+ *         and automatically calculate results.
+ * @dev Upgradeable, pausable, reentrancy-guarded. BoardOfDirectors is resolved via Officer.
  */
 contract Proposals is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUpgradeable {
   // --- State Variables ---
+  /// @dev Proposal records by id.
   mapping(uint256 => Proposal) private proposals;
+  /// @dev Id assigned to the next proposal.
   uint256 private _nextProposalId;
+  /// @notice Address of the Officer contract used to locate BoardOfDirectors.
   address public officerAddress;
 
   // --- Enums and Structs ---
+  /// @dev Directive vote options.
   enum VoteOption {
     Yes,
     No,
     Abstain
   }
 
+  /// @dev Lifecycle state of a proposal.
   enum ProposalState {
     Active, // Proposal is currently open for voting
     Succeeded, // Proposal was approved
@@ -34,6 +39,23 @@ contract Proposals is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUp
     Expired // Proposal voting period ended without a conclusive result (e.g., a tie)
   }
 
+  /**
+   * @dev Storage record of a proposal. Mappings are stored alongside vote tallies.
+   * @param id Proposal id.
+   * @param title Proposal title.
+   * @param description Proposal description.
+   * @param proposalType Category of proposal (e.g. "Budget", "Policy Change").
+   * @param startDate Start timestamp.
+   * @param endDate End timestamp.
+   * @param creator Address that created the proposal.
+   * @param voteCount Number of votes cast so far.
+   * @param totalVoters Number of eligible voters at proposal creation.
+   * @param yesCount Number of yes votes.
+   * @param noCount Number of no votes.
+   * @param abstainCount Number of abstain votes.
+   * @param state Lifecycle state.
+   * @param hasVoted Tracks which voters have already cast a vote.
+   */
   struct Proposal {
     uint256 id;
     string title;
@@ -51,6 +73,22 @@ contract Proposals is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUp
     mapping(address => bool) hasVoted;
   }
 
+  /**
+   * @dev Flat view of a proposal without mappings, suitable for returning externally.
+   * @param id Proposal id.
+   * @param title Proposal title.
+   * @param description Proposal description.
+   * @param proposalType Category of proposal.
+   * @param startDate Start timestamp.
+   * @param endDate End timestamp.
+   * @param creator Address that created the proposal.
+   * @param voteCount Number of votes cast so far.
+   * @param totalVoters Number of eligible voters at proposal creation.
+   * @param yesCount Number of yes votes.
+   * @param noCount Number of no votes.
+   * @param abstainCount Number of abstain votes.
+   * @param state Lifecycle state.
+   */
   struct ProposalView {
     uint256 id;
     string title;
@@ -68,14 +106,23 @@ contract Proposals is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUp
   }
 
   // Custom errors
+  /// @dev The proposal id does not exist.
   error ProposalNotFound();
+  /// @dev Voting has not yet started for this proposal.
   error ProposalVotingNotStarted();
+  /// @dev Voting has ended for this proposal.
   error ProposalVotingEnded();
+  /// @dev The caller has already voted on this proposal.
   error ProposalAlreadyVoted();
+  /// @dev The vote value is invalid.
   error InvalidVote();
+  /// @dev The caller is not a member of the board of directors.
   error OnlyBoardMember();
+  /// @dev The board of directors is empty.
   error NoBoardMembers();
+  /// @dev The BoardOfDirectors address has not been configured.
   error BoardOfDirectorAddressNotSet();
+  /// @dev The caller is not allowed to perform this action.
   error NotAllowed();
   /// @dev The caller (msg.sender) was the zero address when initializing.
   error ZeroSender();
@@ -85,6 +132,14 @@ contract Proposals is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUp
   error BoardOfDirectorsNotFound();
 
   // --- Events ---
+  /**
+   * @notice Emitted when a proposal is created.
+   * @param proposalId The id of the new proposal.
+   * @param title The proposal title.
+   * @param creator The address that created the proposal.
+   * @param startDate Voting start timestamp.
+   * @param endDate Voting end timestamp.
+   */
   event ProposalCreated(
     uint256 indexed proposalId,
     string title,
@@ -92,12 +147,27 @@ contract Proposals is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUp
     uint256 startDate,
     uint256 endDate
   );
+  /**
+   * @notice Emitted when a vote is cast on a proposal.
+   * @param proposalId The proposal id.
+   * @param voter The voter's address.
+   * @param vote The chosen vote option.
+   * @param timestamp Block timestamp of the vote.
+   */
   event ProposalVoted(
     uint256 indexed proposalId,
     address indexed voter,
     VoteOption vote,
     uint256 timestamp
   );
+  /**
+   * @notice Emitted when proposal results are tallied.
+   * @param proposalId The proposal id.
+   * @param state Final state of the proposal.
+   * @param yesCount Final yes count.
+   * @param noCount Final no count.
+   * @param abstainCount Final abstain count.
+   */
   event ProposalTallyResults(
     uint256 indexed proposalId,
     ProposalState state,
@@ -106,6 +176,10 @@ contract Proposals is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUp
     uint256 abstainCount
   );
 
+  /**
+   * @notice Initializes the Proposals contract.
+   * @param _owner Address that will own the contract.
+   */
   function initialize(address _owner) public initializer {
     __Ownable_init(_owner);
     __Pausable_init();
@@ -117,12 +191,12 @@ contract Proposals is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUp
   }
 
   /**
-   * @dev Creates a new proposal.
+   * @notice Creates a new proposal. Only members of the board of directors can create proposals.
    * @param title The title of the proposal.
    * @param description The description of the proposal.
+   * @param proposalType The category of the proposal (e.g. "Budget", "Policy Change").
    * @param startDate The start date of the proposal (in Unix timestamp).
    * @param endDate The end date of the proposal (in Unix timestamp).
-   * @notice Only members of the board of directors can create proposals.
    */
   function createProposal(
     string memory title,
@@ -258,6 +332,10 @@ contract Proposals is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUp
     return bodAddress;
   }
 
+  /**
+   * @notice Returns the current Board of Directors members.
+   * @return Array of BOD member addresses.
+   */
   function getBoardOfDirectors()
     external
     view
@@ -269,6 +347,12 @@ contract Proposals is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUp
     return boardOfDirectors.getBoardOfDirectors();
   }
 
+  /**
+   * @notice Returns whether a voter has already voted on a proposal.
+   * @param proposalId Id of the proposal.
+   * @param voter Voter address to check.
+   * @return True if the voter has voted.
+   */
   function hasVoted(uint256 proposalId, address voter) external view returns (bool) {
     Proposal storage proposal = proposals[proposalId];
     if (proposal.id == 0) revert ProposalNotFound();

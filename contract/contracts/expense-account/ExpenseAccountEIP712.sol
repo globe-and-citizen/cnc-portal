@@ -14,8 +14,8 @@ import {IOfficer} from '../interfaces/IOfficer.sol';
 
 /**
  * @title ExpenseAccountEIP712
- * @dev A contract for expense payments using EIP-712 for signature verification.
- *      Allows approved users to transfer expense payments approved by the contract owner.
+ * @notice Allows approved users to spend from an expense account using EIP-712 signed budgets.
+ * @dev Signed budget limits can be reused within their valid period, subject to per-period caps.
  */
 
 contract ExpenseAccountEIP712 is
@@ -29,6 +29,7 @@ contract ExpenseAccountEIP712 is
   using ECDSA for bytes32;
   using DateTime for uint256;
 
+  /// @dev Frequency type controlling how the budget limit is applied.
   enum FrequencyType {
     OneTime,
     Daily,
@@ -37,6 +38,16 @@ contract ExpenseAccountEIP712 is
     Custom
   }
 
+  /**
+   * @dev A signed budget authorization.
+   * @param amount Per-period (or per-transaction for one-time) spending cap.
+   * @param frequencyType How the budget resets over time.
+   * @param customFrequency Period length in seconds when frequencyType is Custom.
+   * @param startDate Timestamp when the budget becomes usable.
+   * @param endDate Timestamp after which the budget expires.
+   * @param tokenAddress Token the budget applies to; address(0) means native token.
+   * @param approvedAddress Address allowed to spend against this budget.
+   */
   struct BudgetLimit {
     uint256 amount;
     FrequencyType frequencyType;
@@ -47,12 +58,20 @@ contract ExpenseAccountEIP712 is
     address approvedAddress;
   }
 
+  /// @dev State of an approval (budget signature) tracked per signature hash.
   enum ApprovalState {
     Uninitialized,
     Active,
     Inactive
   }
 
+  /**
+   * @dev Running balance/state recorded per budget signature.
+   * @param lastWithdrawnDate Timestamp of the most recent withdrawal.
+   * @param totalWithdrawn Total withdrawn in the current period (or ever, for one-time).
+   * @param lastWithdrawnPeriod Period index of the most recent withdrawal.
+   * @param state Current approval state.
+   */
   struct ExpenseBalance {
     uint256 lastWithdrawnDate;
     uint256 totalWithdrawn;
@@ -60,6 +79,7 @@ contract ExpenseAccountEIP712 is
     ApprovalState state;
   }
 
+  /// @notice Tracks expense balances per signature hash.
   mapping(bytes32 => ExpenseBalance) public expenseBalances;
 
   // Add new state variable - MUST be added after existing ones
@@ -73,16 +93,42 @@ contract ExpenseAccountEIP712 is
 
   bytes32 constant BUDGET_LIMIT_TYPEHASH = keccak256(abi.encodePacked(BUDGET_LIMIT_TYPE));
 
+  /**
+   * @notice Emitted when native token is deposited into the contract.
+   * @param depositor The sender.
+   * @param amount The native amount deposited.
+   */
   event Deposited(address indexed depositor, uint256 amount);
 
+  /**
+   * @notice Emitted on a successful native transfer out of the expense account.
+   * @param withdrawer The approved spender authorizing the transfer.
+   * @param to The recipient.
+   * @param amount The amount transferred.
+   */
   event Transfer(address indexed withdrawer, address indexed to, uint256 amount);
 
+  /// @notice Emitted when an approval is deactivated.
   event ApprovalDeactivated(bytes32 indexed signatureHash);
 
+  /// @notice Emitted when an approval is activated.
   event ApprovalActivated(bytes32 indexed signatureHash);
 
+  /**
+   * @notice Emitted when ERC20 tokens are deposited into the contract.
+   * @param depositor The depositor.
+   * @param token The ERC20 token address.
+   * @param amount The amount deposited.
+   */
   event TokenDeposited(address indexed depositor, address indexed token, uint256 amount);
 
+  /**
+   * @notice Emitted on a successful ERC20 transfer out of the expense account.
+   * @param withdrawer The approved spender authorizing the transfer.
+   * @param to The recipient.
+   * @param token The ERC20 token.
+   * @param amount The amount transferred.
+   */
   event TokenTransfer(
     address indexed withdrawer,
     address indexed to,
@@ -90,14 +136,32 @@ contract ExpenseAccountEIP712 is
     uint256 amount
   );
 
+  /**
+   * @notice Emitted when the owner drains native funds to the Bank.
+   * @param ownerAddress Owner initiating the withdrawal.
+   * @param amount Amount withdrawn.
+   */
   event OwnerTreasuryWithdrawNative(address indexed ownerAddress, uint256 amount);
 
+  /**
+   * @notice Emitted when the owner drains an ERC20 token balance to the Bank.
+   * @param ownerAddress Owner initiating the withdrawal.
+   * @param token The ERC20 token.
+   * @param amount Amount withdrawn.
+   */
   event OwnerTreasuryWithdrawToken(
     address indexed ownerAddress,
     address indexed token,
     uint256 amount
   );
 
+  /**
+   * @notice Emitted when a token address alias is updated.
+   * @param addressWhoChanged The caller performing the change.
+   * @param tokenSymbol Symbol identifier for the token being updated.
+   * @param oldAddress Previous token address.
+   * @param newAddress New token address.
+   */
   event TokenAddressChanged(
     address indexed addressWhoChanged,
     string tokenSymbol,
@@ -105,14 +169,27 @@ contract ExpenseAccountEIP712 is
     address indexed newAddress
   );
 
+  /// @dev The caller is not authorized for this operation.
+  /// @param expected The expected authorized address.
+  /// @param received The actual caller.
   error UnauthorizedAccess(address expected, address received);
 
+  /// @dev The requested amount exceeds the per-period budget.
+  /// @param amount The requested amount.
   error AmountPerPeriodExceeded(uint256 amount);
 
+  /// @dev The requested amount exceeds the per-transaction limit.
+  /// @param amount The requested amount.
   error AmountPerTransactionExceeded(uint256 amount);
 
+  /// @dev The approval has not yet become active at the current time.
+  /// @param currentTime Current block timestamp.
+  /// @param startDate The approval's start timestamp.
   error ApprovalNotActive(uint256 currentTime, uint256 startDate);
 
+  /// @dev The approval has expired.
+  /// @param currentTime Current block timestamp.
+  /// @param endDate The approval's end timestamp.
   error ApprovalExpired(uint256 currentTime, uint256 endDate);
 
   /// @dev A required address argument was the zero address.
@@ -159,6 +236,11 @@ contract ExpenseAccountEIP712 is
   /// @dev The Bank contract could not be located via the Officer.
   error BankContractNotFound();
 
+  /**
+   * @notice Initializes the expense account contract.
+   * @param owner The contract owner that will sign budget approvals.
+   * @param _tokenAddresses Initial set of supported ERC20 tokens.
+   */
   function initialize(address owner, address[] calldata _tokenAddresses) public initializer {
     if (owner == address(0)) revert ZeroAddress();
     __Ownable_init(owner);
@@ -182,8 +264,12 @@ contract ExpenseAccountEIP712 is
   }
 
   /**
-   * @dev Withdraw funds using EIP-712 signed budget limit
-   * Signature can be reused within the valid period
+   * @notice Withdraws funds to `to` using an EIP-712 signed budget limit.
+   * @dev The signature can be reused within its valid period, subject to per-period caps.
+   * @param to Recipient of the funds.
+   * @param amount Amount to transfer (in token units, or wei for native).
+   * @param budgetLimit The signed budget authorization details.
+   * @param signature The owner's EIP-712 signature over the budget limit.
    */
   function transfer(
     address to,
@@ -232,7 +318,11 @@ contract ExpenseAccountEIP712 is
   }
 
   /**
-   * @dev Validate transfer against budget limits
+   * @notice Validates that a proposed transfer respects the budget limits.
+   * @param budgetLimit The signed budget authorization.
+   * @param amount The requested transfer amount.
+   * @param signatureHash The keccak256 hash of the approval signature.
+   * @return True if the transfer is allowed.
    */
   function validateTransfer(
     BudgetLimit calldata budgetLimit,
@@ -281,7 +371,10 @@ contract ExpenseAccountEIP712 is
   }
 
   /**
-   * @dev Update expense balance after successful withdrawal
+   * @dev Updates the expense balance record after a successful withdrawal.
+   * @param budgetLimit The signed budget authorization.
+   * @param amount Amount that was withdrawn.
+   * @param signatureHash The keccak256 hash of the approval signature.
    */
   function updateExpenseBalance(
     BudgetLimit calldata budgetLimit,
@@ -306,14 +399,19 @@ contract ExpenseAccountEIP712 is
   }
 
   /**
-   * @dev Get current period based on frequency type using calendar periods
+   * @notice Returns the current calendar period index for a budget.
+   * @param budgetLimit The signed budget authorization.
+   * @return The current period index.
    */
   function getCurrentPeriod(BudgetLimit calldata budgetLimit) public view returns (uint256) {
     return getPeriod(budgetLimit, block.timestamp);
   }
 
   /**
-   * @dev Calculate period for a given timestamp using calendar periods
+   * @notice Returns the period index for a specific timestamp under a budget's frequency.
+   * @param budgetLimit The signed budget authorization.
+   * @param timestamp Timestamp to evaluate.
+   * @return The period index at `timestamp`.
    */
   function getPeriod(
     BudgetLimit calldata budgetLimit,
@@ -341,7 +439,10 @@ contract ExpenseAccountEIP712 is
   }
 
   /**
-   * @dev Calculate weeks since start date (Monday to Sunday weeks)
+   * @dev Calculate weeks since start date (Monday to Sunday weeks).
+   * @param startDate The reference start timestamp.
+   * @param timestamp The timestamp to compare.
+   * @return Number of full weeks between the Mondays of `startDate` and `timestamp`.
    */
   function getWeeksSinceStart(
     uint256 startDate,
@@ -362,7 +463,9 @@ contract ExpenseAccountEIP712 is
   }
 
   /**
-   * @dev Get start of week (previous Monday) for a given timestamp
+   * @dev Returns the timestamp of the previous Monday at 00:00:00 UTC for a given timestamp.
+   * @param timestamp The reference timestamp.
+   * @return The start-of-week timestamp.
    */
   function getStartOfWeek(uint256 timestamp) internal pure returns (uint256) {
     // DateTime.getDayOfWeek returns 1 for Monday, 2 for Tuesday, ..., 7 for Sunday
@@ -392,7 +495,10 @@ contract ExpenseAccountEIP712 is
   }
 
   /**
-   * @dev Calculate months since start date (calendar months)
+   * @dev Calculates months elapsed between two timestamps based on calendar months.
+   * @param startDate The reference start timestamp.
+   * @param timestamp The timestamp to compare.
+   * @return Number of calendar months between `startDate` and `timestamp`.
    */
   function getMonthsSinceStart(
     uint256 startDate,
@@ -429,7 +535,10 @@ contract ExpenseAccountEIP712 is
   }
 
   /**
-   * @dev Helper to check if we're in a new period (for frontend)
+   * @notice Returns whether the current time starts a new period relative to the last withdrawal.
+   * @param budgetLimit The signed budget authorization.
+   * @param signatureHash The keccak256 hash of the approval signature.
+   * @return True if this timestamp begins a new period (or there has never been a withdrawal).
    */
   function isNewPeriod(
     BudgetLimit calldata budgetLimit,
@@ -449,7 +558,9 @@ contract ExpenseAccountEIP712 is
   }
 
   /**
-   * @dev Get hash of budget limit for tracking in expenseBalances mapping
+   * @notice Computes the EIP-712 hash of a BudgetLimit struct.
+   * @param budgetLimit The budget limit to hash.
+   * @return The struct hash usable for EIP-712 signing.
    */
   function budgetLimitHash(BudgetLimit calldata budgetLimit) public pure returns (bytes32) {
     return
@@ -487,10 +598,12 @@ contract ExpenseAccountEIP712 is
     emit ApprovalActivated(signatureHash);
   }
 
+  /// @notice Pauses the contract.
   function pause() external onlyOwner {
     _pause();
   }
 
+  /// @notice Unpauses the contract.
   function unpause() external onlyOwner {
     _unpause();
   }
@@ -532,16 +645,18 @@ contract ExpenseAccountEIP712 is
     }
   }
 
+  /// @notice Returns the contract's native token balance.
   function getBalance() external view returns (uint256) {
     return address(this).balance;
   }
 
+  /// @notice Accepts native token deposits and emits {Deposited}.
   receive() external payable {
     emit Deposited(msg.sender, msg.value);
   }
 
   /**
-   * @dev Deposits tokens from the caller to the contract.
+   * @notice Deposits ERC20 tokens from the caller to the contract.
    * @param token The address of the token to deposit.
    * @param amount The amount of tokens to deposit.
    *
@@ -580,9 +695,9 @@ contract ExpenseAccountEIP712 is
   }
 
   /**
-   * @dev Gets the balance of a supported token.
-   * @param token The address of the token to get the balance of.
-   * @return The balance of the token.
+   * @notice Returns the contract's balance of a supported token.
+   * @param token The token address (use address(0) for native token).
+   * @return The token balance held by the contract.
    */
   function getTokenBalance(address token) external view returns (uint256) {
     if (token != address(0) && !isTokenSupported(token)) revert TokenNotSupported(token);

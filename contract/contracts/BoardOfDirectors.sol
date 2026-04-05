@@ -12,12 +12,27 @@ import {IBoardOfDirectors} from './interfaces/IBoardOfDirectors.sol';
 contract BoardOfDirectors is ReentrancyGuardUpgradeable, IBoardOfDirectors {
   using EnumerableSet for EnumerableSet.AddressSet;
 
+  /// @dev Set of owner addresses allowed to manage board membership.
   EnumerableSet.AddressSet private owners;
+  /// @dev Set of current board-of-directors members.
   EnumerableSet.AddressSet private boardOfDirectors;
+  /// @notice Total number of actions that have been added.
   uint256 public actionCount;
 
+  /// @notice Maps an action id to its action record.
   mapping(uint256 => Action) public actions;
 
+  /**
+   * @dev An action submitted for board approval and execution.
+   * @param id Action identifier.
+   * @param target Contract address the action calls into.
+   * @param description Human-readable description.
+   * @param approvalCount Number of current approvals.
+   * @param isExecuted Whether the action has been executed.
+   * @param data Calldata to be forwarded to the target.
+   * @param createdBy Address that submitted the action.
+   * @param approvals Approval state per approver.
+   */
   struct Action {
     uint256 id;
     address target;
@@ -29,11 +44,37 @@ contract BoardOfDirectors is ReentrancyGuardUpgradeable, IBoardOfDirectors {
     mapping(address => bool) approvals;
   }
 
+  /// @notice Emitted when the board-of-directors set is replaced.
   event BoardOfDirectorsChanged(address[] boardOfDirectors);
+  /// @notice Emitted when the owner set changes.
   event OwnersChanged(address[] owners);
+  /**
+   * @notice Emitted when a new action is added to the board.
+   * @param id Action id.
+   * @param target Target contract.
+   * @param _description Description of the action.
+   * @param data Calldata payload for the action.
+   */
   event ActionAdded(uint256 indexed id, address indexed target, string _description, bytes data);
+  /**
+   * @notice Emitted when an action is executed.
+   * @param id Action id.
+   * @param target Target contract that was called.
+   * @param _description Description of the action.
+   * @param data Calldata that was executed.
+   */
   event ActionExecuted(uint256 indexed id, address indexed target, string _description, bytes data);
+  /**
+   * @notice Emitted when a board member approves an action.
+   * @param id Action id.
+   * @param approver The approving board member.
+   */
   event Approval(uint256 indexed id, address indexed approver);
+  /**
+   * @notice Emitted when a board member revokes their approval.
+   * @param id Action id.
+   * @param approver The approver revoking their vote.
+   */
   event Revocation(uint256 indexed id, address indexed approver);
 
   /// @dev A required address argument was the zero address.
