@@ -14,7 +14,6 @@
             v-if="hasWage"
             :weekly-claim="weeklyClaim"
             :signed-week-starts="signedWeekStarts"
-            :restrict-submit="false"
           />
           <UButton
             v-else
