@@ -70,11 +70,15 @@ export function useContractWritesV3(cfg: ContractWriteV3Config) {
       // 2) Write — reuse the validated request from the simulation
       const hash = await writeContract(wagmiConfig, simulation.request)
 
-      // 3) Wait for receipt
+      // 3) Wait for receipt — throw on reverted so callers only see genuine success
       const receipt = await waitForTransactionReceipt(wagmiConfig, {
         hash,
         chainId
       } as WaitParams)
+
+      if (receipt.status !== 'success') {
+        throw new Error(`Transaction reverted on-chain (hash: ${hash})`)
+      }
 
       return { hash, receipt, simulation }
     },
