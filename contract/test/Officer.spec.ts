@@ -190,9 +190,9 @@ describe('Officer Contract', function () {
       const initData = bankAccount.interface.encodeFunctionData('initialize', [[], owner.address])
 
       // Test unauthorized access
-      await expect(officer.connect(addr3).deployBeaconProxy('Bank', initData)).to.be.revertedWith(
-        'Caller is not an owner and contract is not initializing'
-      )
+      await expect(
+        officer.connect(addr3).deployBeaconProxy('Bank', initData)
+      ).to.be.revertedWithCustomError(officer, 'NotOwnerOrInitializing')
 
       // Test authorized access (founder)
       await expect(officer.connect(owner).deployBeaconProxy('Bank', initData)).to.emit(
@@ -211,9 +211,9 @@ describe('Officer Contract', function () {
       expect(await officer.contractBeacons(newContractType)).to.equal(ethers.ZeroAddress)
 
       // Attempt to deploy proxy with new contract type should fail
-      await expect(
-        officer.connect(owner).deployBeaconProxy(newContractType, initData)
-      ).to.be.revertedWith('Beacon not configured for this contract type')
+      await expect(officer.connect(owner).deployBeaconProxy(newContractType, initData))
+        .to.be.revertedWithCustomError(officer, 'BeaconNotConfigured')
+        .withArgs(newContractType)
     })
   })
 
@@ -235,12 +235,14 @@ describe('Officer Contract', function () {
     })
 
     it('Should restrict pause/unpause to owners', async function () {
-      await expect(officer.connect(addr3).pause()).to.be.revertedWith(
-        'You are not authorized to perform this action'
+      await expect(officer.connect(addr3).pause()).to.be.revertedWithCustomError(
+        officer,
+        'Unauthorized'
       )
 
-      await expect(officer.connect(addr3).unpause()).to.be.revertedWith(
-        'You are not authorized to perform this action'
+      await expect(officer.connect(addr3).unpause()).to.be.revertedWithCustomError(
+        officer,
+        'Unauthorized'
       )
     })
   })
@@ -266,8 +268,9 @@ describe('Officer Contract', function () {
         }
       ]
 
-      await expect(deployOfficerInstance(invalidConfig, [], false)).to.be.revertedWith(
-        'Invalid beacon address'
+      await expect(deployOfficerInstance(invalidConfig, [], false)).to.be.revertedWithCustomError(
+        officer,
+        'ZeroAddress'
       )
     })
 
@@ -279,8 +282,9 @@ describe('Officer Contract', function () {
         }
       ]
 
-      await expect(deployOfficerInstance(invalidConfig, [], false)).to.be.revertedWith(
-        'Empty beacon type'
+      await expect(deployOfficerInstance(invalidConfig, [], false)).to.be.revertedWithCustomError(
+        officer,
+        'EmptyBeaconType'
       )
     })
 
@@ -296,9 +300,9 @@ describe('Officer Contract', function () {
         }
       ]
 
-      await expect(deployOfficerInstance(duplicateConfigs, [], false)).to.be.revertedWith(
-        'Duplicate beacon type'
-      )
+      await expect(deployOfficerInstance(duplicateConfigs, [], false))
+        .to.be.revertedWithCustomError(officer, 'DuplicateBeaconType')
+        .withArgs('TestBeacon')
     })
 
     it('Should successfully initialize with valid beacon configs', async function () {
@@ -567,9 +571,9 @@ describe('Officer Contract', function () {
         }
       ]
 
-      await expect(officer.connect(owner).deployAllContracts(deployments)).to.be.revertedWith(
-        'Contract type cannot be empty'
-      )
+      await expect(
+        officer.connect(owner).deployAllContracts(deployments)
+      ).to.be.revertedWithCustomError(officer, 'EmptyContractType')
     })
 
     it('Should fail when deploying with empty initializer data', async function () {
@@ -580,9 +584,9 @@ describe('Officer Contract', function () {
         }
       ]
 
-      await expect(officer.connect(owner).deployAllContracts(deployments)).to.be.revertedWith(
-        'Missing initializer data for Bank'
-      )
+      await expect(officer.connect(owner).deployAllContracts(deployments))
+        .to.be.revertedWithCustomError(officer, 'MissingInitializerData')
+        .withArgs('Bank')
     })
 
     it('Should fail when deploying unconfigured contract type', async function () {
@@ -593,9 +597,9 @@ describe('Officer Contract', function () {
         }
       ]
 
-      await expect(officer.connect(owner).deployAllContracts(deployments)).to.be.revertedWith(
-        'Beacon not configured for NonExistentContract'
-      )
+      await expect(officer.connect(owner).deployAllContracts(deployments))
+        .to.be.revertedWithCustomError(officer, 'BeaconNotConfigured')
+        .withArgs('NonExistentContract')
     })
 
     it('Should restrict batch deployment to owners and founders', async function () {
@@ -609,9 +613,9 @@ describe('Officer Contract', function () {
         }
       ]
 
-      await expect(officer.connect(addr3).deployAllContracts(deployments)).to.be.revertedWith(
-        'Caller is not an owner and contract is not initializing'
-      )
+      await expect(
+        officer.connect(addr3).deployAllContracts(deployments)
+      ).to.be.revertedWithCustomError(officer, 'NotOwnerOrInitializing')
     })
   })
 
