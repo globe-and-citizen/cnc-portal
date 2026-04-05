@@ -35,7 +35,7 @@
 
 <script setup lang="ts">
 import { useTeamStore } from '@/stores'
-import { buildClaimRatesWithOvertime, log, parseError } from '@/utils'
+import { buildClaimRatesWithOvertime, classifyError, log } from '@/utils'
 import { zeroAddress, type Address } from 'viem'
 import { computed, ref } from 'vue'
 import { CASH_REMUNERATION_EIP712_ABI } from '@/artifacts/abi/cash-remuneration-eip712'
@@ -139,19 +139,28 @@ const withdrawClaim = async () => {
       onError: (error) => {
         isLoading.value = false
         log.error('Withdraw error', error)
-        const parsed = parseError(error, CASH_REMUNERATION_EIP712_ABI)
 
-        if (parsed.includes('Insufficient token balance')) {
-          toast.add({ title: 'Insufficient token balance', color: 'error' })
-        } else if (
-          parsed.includes('Token not supported') ||
-          parsed.includes('Token not support') ||
-          parsed.includes('unsupported token')
-        ) {
-          toast.add({ title: 'Add Token support: Token not supported', color: 'error' })
-        } else {
-          toast.add({ title: parsed, color: 'error' })
+        const classified = classifyError(error)
+
+        // Silent when user cancels from wallet — nothing to show.
+        if (classified.category === 'user_rejected') return
+
+        // The contract uses require(..., "message") — viem decodes these as
+        // Error(string) reverts, and our classifier lifts the string into
+        // `revertName`. Match case-insensitively for resilience.
+        let title = classified.userMessage
+        if (classified.category === 'contract_revert' && classified.revertName) {
+          const reason = classified.revertName.toLowerCase()
+          if (reason.includes('insufficient token balance')) {
+            title = 'Insufficient token balance'
+          } else if (reason.includes('token not support') || reason.includes('unsupported token')) {
+            title = 'Add Token support: Token not supported'
+          } else {
+            title = classified.revertName
+          }
         }
+
+        toast.add({ title, color: 'error' })
       }
     }
   )
