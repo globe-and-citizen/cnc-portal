@@ -11,6 +11,7 @@ import {
   mockExpenseAccountReads,
   mockExpenseAccountWrites,
   mockTeamStore,
+  mockToast,
   mockUseChainId,
   mockUseContractBalance,
   mockUserStore,
@@ -167,13 +168,18 @@ describe('OwnerTreasuryWithdrawAction', () => {
   })
 
   it('refreshes balances after withdraw confirmation', async () => {
+    mockCashRemunerationWrites.ownerWithdrawAllToBank.executeWrite.mockImplementationOnce(
+      async () => {
+        mockCashRemunerationWrites.ownerWithdrawAllToBank.receiptResult.isLoading.value = true
+        return '0xhash'
+      }
+    )
+
     const wrapper = createWrapper()
     await wrapper.get('[data-test="owner-withdraw-button"]').trigger('click')
+    await wrapper.get('[data-test="owner-withdraw-modal-confirm-button"]').trigger('click')
     await flushPromises()
 
-    // Simulate confirmation cycle
-    mockCashRemunerationWrites.ownerWithdrawAllToBank.receiptResult.isLoading.value = true
-    await nextTick()
     mockCashRemunerationWrites.ownerWithdrawAllToBank.receiptResult.isLoading.value = false
     await nextTick()
 
@@ -186,19 +192,57 @@ describe('OwnerTreasuryWithdrawAction', () => {
     ) as unknown as typeof mockTeamStore.getContractAddressByType
     const wrapper = createWrapper()
     await wrapper.get('[data-test="owner-withdraw-button"]').trigger('click')
+    await wrapper.get('[data-test="owner-withdraw-modal-confirm-button"]').trigger('click')
     await flushPromises()
 
     expect(mockCashRemunerationWrites.ownerWithdrawAllToBank.executeWrite).not.toHaveBeenCalled()
   })
 
-  it.skip('handles error during withdraw', async () => {
-    mockCashRemunerationWrites.ownerWithdrawAllToBank.executeWrite.mockRejectedValueOnce({
-      shortMessage: 'Short withdraw error'
-    })
+  it('closes the modal after withdraw confirmation', async () => {
+    mockCashRemunerationWrites.ownerWithdrawAllToBank.executeWrite.mockImplementationOnce(
+      async () => {
+        mockCashRemunerationWrites.ownerWithdrawAllToBank.receiptResult.isLoading.value = true
+        return '0xhash'
+      }
+    )
+
     const wrapper = createWrapper()
     await wrapper.get('[data-test="owner-withdraw-button"]').trigger('click')
+    expect(wrapper.find('[data-test="owner-withdraw-modal-confirm-button"]').exists()).toBe(true)
+
+    await wrapper.get('[data-test="owner-withdraw-modal-confirm-button"]').trigger('click')
+    await flushPromises()
+    expect(wrapper.find('[data-test="owner-withdraw-modal-confirm-button"]').exists()).toBe(true)
+
+    mockCashRemunerationWrites.ownerWithdrawAllToBank.receiptResult.isLoading.value = false
+    await nextTick()
+
+    expect(mockCashRemunerationWrites.ownerWithdrawAllToBank.executeWrite).toHaveBeenCalled()
+    expect(wrapper.find('[data-test="owner-withdraw-modal-confirm-button"]').exists()).toBe(false)
+  })
+
+  it('shows an inline warning instead of a toast when MetaMask signature is cancelled', async () => {
+    mockCashRemunerationWrites.ownerWithdrawAllToBank.executeWrite.mockImplementationOnce(
+      async () => {
+        mockCashRemunerationWrites.ownerWithdrawAllToBank.writeResult.error.value = {
+          message: 'User rejected the request'
+        } as Error
+        return undefined
+      }
+    )
+
+    const wrapper = createWrapper()
+    await wrapper.get('[data-test="owner-withdraw-button"]').trigger('click')
+    await wrapper.get('[data-test="owner-withdraw-modal-confirm-button"]').trigger('click')
     await flushPromises()
 
     expect(mockCashRemunerationWrites.ownerWithdrawAllToBank.executeWrite).toHaveBeenCalled()
+    expect(wrapper.find('[data-test="owner-withdraw-modal-warning"]').exists()).toBe(true)
+    expect(mockToast.add).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        color: 'error',
+        title: expect.stringContaining('User rejected')
+      })
+    )
   })
 })
