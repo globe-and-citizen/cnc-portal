@@ -5,9 +5,24 @@ import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
+
+/**
+ * @title Vesting
+ * @notice Per-team ERC20 vesting with cliff, linear release, and owner-initiated stop.
+ * @dev Upgradeable; each team has an owner, a token, and a set of members with vesting schedules.
+ */
 contract Vesting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgradeable {
   using SafeERC20 for IERC20;
 
+  /**
+   * @dev Vesting schedule parameters for a single member in a team.
+   * @param start Vesting start timestamp.
+   * @param duration Total vesting duration in seconds.
+   * @param cliff Cliff period in seconds (counted from start).
+   * @param totalAmount Total tokens to vest.
+   * @param released Amount of tokens already released to the member.
+   * @param active Whether the vesting is active.
+   */
   struct VestingInfo {
     uint64 start; // Vesting start time
     uint64 duration; // Vesting duration
@@ -17,6 +32,12 @@ contract Vesting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     bool active; // Whether the vesting is active
   }
 
+  /**
+   * @dev Team metadata associated with a team id.
+   * @param owner Team owner (can manage vestings).
+   * @param token ERC20 token used for vesting in this team.
+   * @param members List of team members who have had a vesting schedule.
+   */
   struct TeamInfo {
     address owner;
     address token;
@@ -29,10 +50,65 @@ contract Vesting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
   mapping(address => mapping(uint256 => VestingInfo[])) public archivedVestings;
   mapping(address => mapping(uint256 => bool)) public isUserInTeam;
 
+  /**
+   * @notice Emitted when a new vesting schedule is created for a member.
+   * @param member The member receiving the vesting.
+   * @param teamId The team id the vesting belongs to.
+   * @param amount Total amount allocated for vesting.
+   */
   event VestingCreated(address indexed member, uint256 indexed teamId, uint256 amount);
+  /**
+   * @notice Emitted when vested tokens are released to a member.
+   * @param member The member receiving the tokens.
+   * @param teamId The team id.
+   * @param amount Amount released.
+   */
   event TokensReleased(address indexed member, uint256 indexed teamId, uint256 amount);
+  /**
+   * @notice Emitted when a vesting schedule is stopped.
+   * @param member The member whose vesting was stopped.
+   * @param teamId The team id.
+   */
   event VestingStopped(address indexed member, uint256 indexed teamId);
+  /**
+   * @notice Emitted when unvested tokens are returned to the team owner.
+   * @param member The member whose unvested tokens were withdrawn.
+   * @param teamId The team id.
+   * @param amount Amount returned to the team owner.
+   */
   event UnvestedWithdrawn(address indexed member, uint256 indexed teamId, uint256 amount);
+
+  /// @dev The caller is not the team owner.
+  /// @param expected The team owner address.
+  /// @param actual The caller address.
+  error NotTeamOwner(address expected, address actual);
+  /// @dev A required address argument was the zero address.
+  error ZeroAddress();
+  /// @dev The team id is already in use.
+  /// @param teamId The duplicate team id.
+  error TeamAlreadyExists(uint256 teamId);
+  /// @dev The cliff duration exceeds the vesting duration.
+  error CliffExceedsDuration();
+  /// @dev A vesting already exists for this member in this team.
+  /// @param member The member address.
+  /// @param teamId The team id.
+  error VestingAlreadyExists(address member, uint256 teamId);
+  /// @dev The caller has not granted enough ERC20 allowance.
+  /// @param required The amount required.
+  /// @param actual The current allowance.
+  error InsufficientAllowance(uint256 required, uint256 actual);
+  /// @dev The caller's ERC20 balance is less than the amount required.
+  /// @param required The amount required.
+  /// @param actual The caller's balance.
+  error InsufficientBalance(uint256 required, uint256 actual);
+  /// @dev A raw ERC20 transfer returned false.
+  /// @param token The token whose transfer returned false.
+  error TokenTransferFailed(address token);
+  /// @dev There is no active vesting for this member/team.
+  error VestingNotActive();
+  /// @dev The releasable amount is zero.
+  error NothingToRelease();
+
   /// @notice Initializer instead of constructor for proxy compatibility
   function initialize() public initializer {
     __Ownable_init(msg.sender);
@@ -41,15 +117,15 @@ contract Vesting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
   }
 
   modifier onlyTeamOwner(uint256 teamId) {
-    require(msg.sender == teams[teamId].owner, 'Not team owner');
+    if (msg.sender != teams[teamId].owner) revert NotTeamOwner(teams[teamId].owner, msg.sender);
     _;
   }
 
   /// @notice Create a new team with a specific owner
   function createTeam(uint256 teamId, address teamOwner, address tokenAddress) external onlyOwner {
-    require(teamOwner != address(0), 'Invalid owner');
-    require(tokenAddress != address(0), 'Invalid token');
-    require(teams[teamId].owner == address(0), 'Team already exists');
+    if (teamOwner == address(0)) revert ZeroAddress();
+    if (tokenAddress == address(0)) revert ZeroAddress();
+    if (teams[teamId].owner != address(0)) revert TeamAlreadyExists(teamId);
     teams[teamId] = TeamInfo({owner: teamOwner, token: tokenAddress, members: new address[](0)});
   }
 
@@ -63,29 +139,30 @@ contract Vesting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     uint256 totalAmount,
     address tokenAddress
   ) external nonReentrant whenNotPaused {
-    require(member != address(0), 'Invalid member');
+    if (member == address(0)) revert ZeroAddress();
     //require(start >= block.timestamp, "Start time must be in the future");
-    require(duration >= cliff, 'Cliff exceeds duration');
-    require(tokenAddress != address(0), 'Invalid token');
+    if (duration < cliff) revert CliffExceedsDuration();
+    if (tokenAddress == address(0)) revert ZeroAddress();
 
     // If team doesn't exist, create it with msg.sender as owner
     if (teams[teamId].owner == address(0)) {
       // Create team on the fly
       teams[teamId] = TeamInfo({owner: msg.sender, token: tokenAddress, members: new address[](0)});
     } else {
-      require(msg.sender == teams[teamId].owner, 'Not team owner');
+      if (msg.sender != teams[teamId].owner) revert NotTeamOwner(teams[teamId].owner, msg.sender);
     }
 
-    require(teams[teamId].token != address(0), 'Invalid token');
-    require(!vestings[member][teamId].active, 'Vesting already exists');
+    if (teams[teamId].token == address(0)) revert ZeroAddress();
+    if (vestings[member][teamId].active) revert VestingAlreadyExists(member, teamId);
 
     address tokenAddr = teams[teamId].token;
     uint256 allowance = IERC20(tokenAddr).allowance(msg.sender, address(this));
-    require(allowance >= totalAmount, 'Not enough allowance');
-    require(IERC20(tokenAddr).balanceOf(msg.sender) >= totalAmount, 'Insufficient balance');
+    if (allowance < totalAmount) revert InsufficientAllowance(totalAmount, allowance);
+    uint256 senderBal = IERC20(tokenAddr).balanceOf(msg.sender);
+    if (senderBal < totalAmount) revert InsufficientBalance(totalAmount, senderBal);
 
     bool success = IERC20(tokenAddr).transferFrom(msg.sender, address(this), totalAmount);
-    require(success, 'Transfer failed');
+    if (!success) revert TokenTransferFailed(tokenAddr);
 
     vestings[member][teamId] = VestingInfo({
       start: start,
@@ -112,7 +189,7 @@ contract Vesting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     uint256 teamId
   ) external onlyTeamOwner(teamId) nonReentrant whenNotPaused {
     VestingInfo storage v = vestings[member][teamId];
-    require(v.active, 'Already stopped');
+    if (!v.active) revert VestingNotActive();
 
     uint256 releasableAmount = releasable(member, teamId);
     uint256 unvestedAmount = v.totalAmount - v.released - releasableAmount;
@@ -185,9 +262,9 @@ contract Vesting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
   /// @notice Release available tokens for the sender
   function release(uint256 teamId) external nonReentrant whenNotPaused {
     VestingInfo storage v = vestings[msg.sender][teamId];
-    require(v.active, 'Vesting not active');
+    if (!v.active) revert VestingNotActive();
     uint256 amount = releasable(msg.sender, teamId);
-    require(amount > 0, 'Nothing to release');
+    if (amount == 0) revert NothingToRelease();
     v.released += amount;
     IERC20(teams[teamId].token).safeTransfer(msg.sender, amount);
     emit TokensReleased(msg.sender, teamId, amount);
@@ -278,10 +355,12 @@ contract Vesting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     return block.timestamp;
   }
 
+  /// @notice Pauses the contract, blocking vesting operations.
   function pause() external onlyOwner {
     _pause();
   }
 
+  /// @notice Unpauses the contract, restoring normal operation.
   function unpause() external onlyOwner {
     _unpause();
   }

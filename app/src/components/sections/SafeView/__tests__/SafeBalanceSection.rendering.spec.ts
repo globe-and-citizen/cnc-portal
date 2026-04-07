@@ -147,10 +147,6 @@ const AddressToolTipStub = defineComponent({
   template: '<div data-test="address-tooltip"></div>'
 })
 
-const DepositBankFormStub = defineComponent({
-  template: '<div data-test="deposit-bank-form">Deposit Form</div>'
-})
-
 const TransferFormStub = defineComponent({
   template: '<div data-test="transfer-form"><slot name="header" /></div>'
 })
@@ -173,7 +169,6 @@ describe('SafeBalanceSection', () => {
       global: {
         stubs: {
           AddressToolTip: AddressToolTipStub,
-          DepositBankForm: DepositBankFormStub,
           TransferForm: TransferFormStub
         }
       }

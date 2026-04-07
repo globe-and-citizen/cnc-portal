@@ -212,7 +212,7 @@ describe('ExpenseAccountEIP712V2', function () {
         expenseAccount
           .connect(approvedAddress)
           .transfer(recipient.address, ethers.parseEther('0.3'), budgetLimit, signature)
-      ).to.be.revertedWith('Exceeds period budget')
+      ).to.be.revertedWithCustomError(expenseAccount, 'AmountExceedsPeriodBudget')
 
       // Move to 1st of next month (period 1)
       await time.setNextBlockTimestamp(nextMonthTimestamp)

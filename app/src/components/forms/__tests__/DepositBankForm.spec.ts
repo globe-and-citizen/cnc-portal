@@ -51,23 +51,22 @@ describe.skip('DepositBankForm.vue', () => {
 
   describe('Native Token Deposit', () => {
     it('should show success toast and close modal after successful native deposit', async () => {
-      mockTransactionFunctions.mockSendTransaction.mockResolvedValueOnce({})
+      mockTransactionFunctions.mockMutateAsync.mockResolvedValueOnce({
+        hash: '0xnativetx',
+        receipt: { status: 'success' }
+      })
       const wrapper = createWrapper({ title: 'Deposit Bank Form' }, mount)
 
       await setTokenAmount(wrapper, '1', 'native', true)
       await wrapper.find('[data-test="deposit-button"]').trigger('click')
       await nextTick()
 
-      // Simulate transaction confirmation
-      mockUseSafeSendTransaction.isConfirmed.value = true
-      mockUseSafeSendTransaction.receipt.value = { status: 'success' }
-      await nextTick()
-
+      expect(mockTransactionFunctions.mockMutateAsync).toHaveBeenCalled()
       expect(wrapper.emitted('closeModal')).toBeTruthy()
     })
 
     it('should show error toast when native token deposit fails', async () => {
-      mockTransactionFunctions.mockSendTransaction.mockRejectedValueOnce(
+      mockTransactionFunctions.mockMutateAsync.mockRejectedValueOnce(
         new Error('Transaction failed')
       )
       const wrapper = createWrapper({}, mount)
@@ -84,7 +83,7 @@ describe.skip('DepositBankForm.vue', () => {
       await wrapper.find('[data-test="deposit-button"]').trigger('click')
       await nextTick()
 
-      expect(mockTransactionFunctions.mockSendTransaction).not.toHaveBeenCalled()
+      expect(mockTransactionFunctions.mockMutateAsync).not.toHaveBeenCalled()
     })
   })
 
@@ -188,7 +187,7 @@ describe.skip('DepositBankForm.vue', () => {
 
   describe('Error Handling', () => {
     it('should handle transaction errors gracefully', async () => {
-      mockTransactionFunctions.mockSendTransaction.mockRejectedValueOnce(new Error('Network error'))
+      mockTransactionFunctions.mockMutateAsync.mockRejectedValueOnce(new Error('Network error'))
       const wrapper = createWrapper({}, mount)
 
       await setTokenAmount(wrapper, '1', 'native', true)
@@ -199,15 +198,15 @@ describe.skip('DepositBankForm.vue', () => {
     it('should prevent multiple submissions', async () => {
       const wrapper = createWrapper({}, mount)
 
-      // Set loading state
-      mockUseSafeSendTransaction.isLoading.value = true
+      // Set pending state
+      mockUseSafeSendTransaction.isPending.value = true
 
       await setTokenAmount(wrapper, '1', 'native', true)
       await wrapper.find('[data-test="deposit-button"]').trigger('click')
       await nextTick()
 
-      // Should not call sendTransaction when already loading
-      expect(mockTransactionFunctions.mockSendTransaction).not.toHaveBeenCalled()
+      // Should not call mutateAsync when already pending
+      expect(mockTransactionFunctions.mockMutateAsync).not.toHaveBeenCalled()
     })
   })
 })

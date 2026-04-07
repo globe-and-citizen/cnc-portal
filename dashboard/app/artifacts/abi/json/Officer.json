@@ -11,6 +11,43 @@
     "type": "constructor"
   },
   {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "contractType",
+        "type": "string"
+      }
+    ],
+    "name": "BeaconNotConfigured",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "BodMustBeDeployedViaElections",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "beaconType",
+        "type": "string"
+      }
+    ],
+    "name": "DuplicateBeaconType",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "EmptyBeaconType",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "EmptyContractType",
+    "type": "error"
+  },
+  {
     "inputs": [],
     "name": "EnforcedPause",
     "type": "error"
@@ -26,8 +63,24 @@
     "type": "error"
   },
   {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "contractType",
+        "type": "string"
+      }
+    ],
+    "name": "MissingInitializerData",
+    "type": "error"
+  },
+  {
     "inputs": [],
     "name": "NotInitializing",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "NotOwnerOrInitializing",
     "type": "error"
   },
   {
@@ -55,6 +108,16 @@
   {
     "inputs": [],
     "name": "ReentrancyGuardReentrantCall",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Unauthorized",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "ZeroAddress",
     "type": "error"
   },
   {

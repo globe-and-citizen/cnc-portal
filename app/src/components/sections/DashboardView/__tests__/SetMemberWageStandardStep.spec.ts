@@ -50,7 +50,7 @@ describe('SetMemberWageStandardStep.vue', () => {
     expect(wrapper.find('[data-test="standard-wage-step"]').exists()).toBe(true)
     expect(wrapper.text()).toContain('Hourly Rates')
     expect(wrapper.text()).toContain('Add overtime rates')
-    expect(wrapper.text()).toContain('ETH')
+    expect(wrapper.text()).toContain('GO')
     expect(wrapper.text()).toContain('USDC')
   })
 

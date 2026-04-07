@@ -9,6 +9,10 @@ import { USDC_ADDRESS } from '@/constant'
 import { useSyncWeeklyClaimsMutation } from '@/queries'
 import { mockTeamStore, mockGetBalance, mockUseWriteContract, mockWagmiCore } from '@/tests/mocks'
 
+vi.mock('@/composables/contracts/useContractWritesV3', () => ({
+  useContractWritesV3: vi.fn(() => mockUseWriteContract)
+}))
+
 type WrapperProps = {
   weeklyClaim: WeeklyClaim
   disabled?: boolean
@@ -87,9 +91,14 @@ describe('CRWithdrawClaim', () => {
     })
     mockTeamStore.currentTeamId = '1'
 
+    // The component calls withdrawTx.mutate(variables, { onSuccess, onError })
+    // By default, invoke onSuccess callback to simulate a successful mutation
+    mockUseWriteContract.mutate = vi.fn(
+      async (_variables: unknown, options?: { onSuccess?: () => Promise<void> | void }) => {
+        await options?.onSuccess?.()
+      }
+    )
     mockUseWriteContract.mutateAsync = vi.fn().mockResolvedValue('0xhash')
-    mockWagmiCore.simulateContract.mockResolvedValue(undefined)
-    mockWagmiCore.waitForTransactionReceipt.mockResolvedValue({ status: 'success' })
 
     mockGetBalance.mockResolvedValue(parseEther('100'))
   })
@@ -103,7 +112,7 @@ describe('CRWithdrawClaim', () => {
     await clickWithdrawButton()
 
     // expect(mockToast.add).toHaveBeenCalledWith({ title: 'Claim withdrawn', color: 'success' })
-    expect(mockWagmiCore.waitForTransactionReceipt).toHaveBeenCalled()
+    expect(mockUseWriteContract.mutate).toHaveBeenCalled()
   })
 
   it('withdraws and emits from dropdown when owner', async () => {
@@ -124,26 +133,19 @@ describe('CRWithdrawClaim', () => {
   })
 
   it('skips dropdown click while loading', async () => {
-    let resolvePending: (() => void) | undefined
-    const pending = new Promise<void>((resolve) => {
-      resolvePending = resolve
-    })
-
-    mockUseWriteContract.mutateAsync = vi.fn().mockReturnValueOnce(pending)
+    // Don't invoke onSuccess so isLoading stays true
+    mockUseWriteContract.mutate = vi.fn()
 
     createWrapper({ isDropDown: true, isClaimOwner: true })
 
     const action = wrapper.find('[data-test="withdraw-action"]')
     await action.trigger('click')
-    await nextTick()
+    await flushPromises()
 
     await action.trigger('click')
     await nextTick()
 
-    expect(mockUseWriteContract.mutateAsync).toHaveBeenCalledTimes(1)
-
-    resolvePending?.()
-    await flushPromises()
+    expect(mockUseWriteContract.mutate).toHaveBeenCalledTimes(1)
   })
 
   it('shows error when contract address is missing', async () => {
@@ -225,8 +227,7 @@ describe('CRWithdrawClaim', () => {
 
     await clickWithdrawButton()
 
-    expect(mockWagmiCore.simulateContract).toHaveBeenCalledWith(
-      expect.anything(),
+    expect(mockUseWriteContract.mutate).toHaveBeenCalledWith(
       expect.objectContaining({
         args: [
           expect.objectContaining({
@@ -238,7 +239,8 @@ describe('CRWithdrawClaim', () => {
           }),
           '0xSignature'
         ]
-      })
+      }),
+      expect.anything()
     )
   })
 

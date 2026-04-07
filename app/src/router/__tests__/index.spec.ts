@@ -56,10 +56,6 @@ vi.mock('@/views/team/[id]/ShowIndex.vue', () => ({
   default: { name: 'ShowIndex', template: '<div>Team Show</div>' }
 }))
 
-vi.mock('@/views/team/[id]/DemoExample.vue', () => ({
-  default: { name: 'DemoExample', template: '<div>Demo Example</div>' }
-}))
-
 vi.mock('@/views/team/[id]/Accounts/WeeklyClaimView.vue', () => ({
   default: { name: 'WeeklyClaimView', template: '<div>Weekly Claim</div>' }
 }))
@@ -145,7 +141,6 @@ describe('Router Configuration', () => {
       const routes = router.getRoutes()
 
       const expectedNestedRoutes = [
-        { name: 'team-demo', path: '/teams/:id/demo' },
         { name: 'team-payroll', path: '/teams/:id/accounts/team-payroll' },
         {
           name: 'payroll-history',
@@ -181,7 +176,6 @@ describe('Router Configuration', () => {
       const routesWithMeta = [
         { name: 'teams', expectedMeta: { name: 'Companies' } },
         { name: 'show-team', expectedMeta: { name: 'Overview' } },
-        { name: 'team-demo', expectedMeta: { name: 'Company Demo' } },
         { name: 'team-payroll', expectedMeta: { name: 'Company Payroll' } },
         { name: 'payroll-history', expectedMeta: { name: 'Payroll History' } },
         { name: 'safe-account', expectedMeta: { name: 'Safe Account' } },

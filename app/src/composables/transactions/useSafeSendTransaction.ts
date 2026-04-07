@@ -1,189 +1,133 @@
-import { computed, ref, watch } from 'vue'
-import { useSendTransaction, useWaitForTransactionReceipt, useEstimateGas } from '@wagmi/vue'
+import { computed, unref, type MaybeRef } from 'vue'
+import { useMutation, useQueryClient } from '@tanstack/vue-query'
+import {
+  sendTransaction,
+  estimateGas,
+  waitForTransactionReceipt,
+  type WaitForTransactionReceiptParameters
+} from '@wagmi/core'
 import { getAddress, type Address } from 'viem'
-import { useQueryClient } from '@tanstack/vue-query'
+import { config as wagmiConfig, type config as wagmiConfigType } from '@/wagmi.config'
+import { log, parseErrorV2 } from '@/utils'
 
-export interface SafeTransactionConfig {
+type WagmiConfig = typeof wagmiConfigType
+type WaitParams = WaitForTransactionReceiptParameters<WagmiConfig>
+
+export interface SendTransactionConfig {
+  to: MaybeRef<Address | undefined>
+  chainId?: MaybeRef<number | undefined>
+  config?: {
+    log?: boolean
+    skipGasEstimation?: boolean
+  }
+}
+
+export interface SendTransactionVariables {
+  value: bigint
+  data?: `0x${string}`
+}
+
+export interface ExecuteSendTransactionParams {
+  to: Address
+  value: bigint
+  data?: `0x${string}`
+  chainId?: number
   skipGasEstimation?: boolean
 }
 
+export type ExecuteSendTransactionResult = {
+  hash: `0x${string}`
+  receipt: Awaited<ReturnType<typeof waitForTransactionReceipt>>
+}
+
 /**
- * A wrapper around useSendTransaction that provides transaction tracking, receipt waiting,
- * and error handling for sending ETH transactions
+ * Standalone send transaction: estimate gas -> send -> wait for receipt.
+ *
+ * Framework-agnostic (no Vue/TanStack dependencies).
+ * Throws on receipt with status !== 'success'.
  */
-export function useSafeSendTransaction() {
-  const toast = useToast()
+export async function executeSendTransaction(
+  params: ExecuteSendTransactionParams
+): Promise<ExecuteSendTransactionResult> {
+  const { to, value, data, chainId, skipGasEstimation } = params
+
+  // 1) Gas estimation (optional pre-check)
+  if (!skipGasEstimation) {
+    await estimateGas(wagmiConfig, {
+      to,
+      value,
+      ...(data !== undefined ? { data } : {})
+    })
+  }
+
+  // 2) Send transaction
+  const hash = await sendTransaction(wagmiConfig, {
+    to,
+    value,
+    ...(data !== undefined ? { data } : {})
+  })
+
+  // 3) Wait for receipt
+  const receipt = await waitForTransactionReceipt(wagmiConfig, {
+    hash,
+    chainId
+  } as WaitParams)
+
+  if (receipt.status !== 'success') {
+    throw new Error(`Transaction reverted on-chain (hash: ${hash})`)
+  }
+
+  return { hash, receipt }
+}
+
+/**
+ * Lean send-transaction composable.
+ *
+ * Accepts `to` and optional `chainId` at setup time.
+ * `value` and `data` are provided per-call via `mutate` / `mutateAsync`.
+ *
+ * Wraps `executeSendTransaction` in a TanStack mutation and invalidates
+ * balance queries for both sender and receiver on success.
+ */
+export function useSafeSendTransaction(cfg: SendTransactionConfig) {
   const queryClient = useQueryClient()
 
-  // Transaction params for gas estimation
-  const gasEstimateParams = ref<{
-    to: Address
-    value: bigint
-    data?: `0x${string}`
-  } | null>(null)
+  const shouldLog = computed(() => cfg.config?.log ?? true)
 
-  const { data: txData, mutateAsync, isPending: isSending, error: sendError } = useSendTransaction()
+  const mutation = useMutation({
+    mutationFn: async (variables: SendTransactionVariables) => {
+      const to = unref(cfg.to)
+      if (!to) throw new Error('Recipient address (to) is undefined')
 
-  const {
-    data: receipt,
-    isLoading: isConfirming,
-    isSuccess: isConfirmed,
-    error: receiptError
-  } = useWaitForTransactionReceipt({ hash: txData })
-
-  // Combined loading state
-  const isLoading = computed(() => isSending.value || isConfirming.value)
-  const error = computed(() => sendError.value || receiptError.value)
-
-  // Gas estimation
-  const {
-    data: gasEstimate,
-    isLoading: isEstimatingGas,
-    error: gasEstimateError,
-    refetch: refetchGasEstimate
-  } = useEstimateGas({
-    to: computed(() => gasEstimateParams.value?.to),
-    value: computed(() => gasEstimateParams.value?.value),
-    data: computed(() => gasEstimateParams.value?.data),
-    query: {
-      enabled: computed(() => !!gasEstimateParams.value?.to && !!gasEstimateParams.value?.value)
-    }
-  })
-
-  /**
-   * Estimate gas for a transaction
-   */
-  const estimateGas = async (to: Address, value: bigint, data?: `0x${string}`) => {
-    try {
-      gasEstimateParams.value = { to, value, data }
-      const result = await refetchGasEstimate()
-      return result.data
-    } catch (error) {
-      console.error('Gas estimation failed:', error)
-      throw error
-    }
-  }
-
-  /**
-   * Check if a transaction will likely succeed by estimating gas
-   */
-  const canExecuteTransaction = async (
-    to: Address,
-    value: bigint,
-    data?: `0x${string}`
-  ): Promise<boolean> => {
-    try {
-      await estimateGas(to, value, data)
-      return true
-    } catch (error) {
-      console.warn('Transaction will likely fail:', error)
-      return false
-    }
-  }
-
-  // Error handling
-  watch(sendError, (error) => {
-    if (error) {
-      console.error('Transaction send error:', error)
-      // addErrorToast(`Failed to send transaction: ${parseError(error)}`)
-    }
-  })
-
-  watch(receiptError, (error) => {
-    if (error) {
-      console.error('Transaction receipt error:', error)
-      // addErrorToast(`Transaction confirmation failed: ${parseError(error)}`)
-    }
-  })
-
-  // Success handling
-  watch(isConfirmed, async (confirmed) => {
-    if (confirmed && receipt.value) {
-      console.log('Info: Transaction confirmed')
-      console.log('Info: Start Invalidating queries')
-      await queryClient.invalidateQueries({
-        queryKey: [
-          'balance',
-          {
-            address: receipt.value.to ? getAddress(receipt.value.to) : undefined,
-            chainId: receipt.value.chainId
-          }
-        ]
-      })
-      await queryClient.invalidateQueries({
-        queryKey: [
-          'balance',
-          {
-            address: receipt.value.from ? getAddress(receipt.value.from) : undefined,
-            chainId: receipt.value.chainId
-          }
-        ]
-      })
-      console.log('Info: Queries invalidation done, wait for updates')
-    }
-  })
-
-  /**
-   * Send a transaction and wait for confirmation
-   */
-  const sendTransaction = async (
-    to: Address,
-    value: bigint,
-    data?: `0x${string}`,
-    config?: SafeTransactionConfig
-  ) => {
-    // Optional gas estimation before sending
-    if (!config?.skipGasEstimation) {
-      try {
-        const canExecute = await canExecuteTransaction(to, value, data)
-        if (!canExecute) {
-          toast.add({
-            title: 'Transaction will likely fail due to insufficient gas or other constraints',
-            color: 'error'
-          })
-          return
-        }
-      } catch (gasError) {
-        console.warn('Gas estimation failed, proceeding anyway:', gasError)
-      }
-    }
-
-    try {
-      return await mutateAsync({
+      return executeSendTransaction({
         to,
-        value,
-        ...(data !== undefined ? { data } : {})
+        value: variables.value,
+        data: variables.data,
+        chainId: unref(cfg.chainId),
+        skipGasEstimation: cfg.config?.skipGasEstimation
       })
-    } catch (error) {
-      console.error('Failed to send transaction:', error)
-      // addErrorToast(`Failed to send transaction: ${parseError(error)}`)
-      throw error
+    },
+    onError: (error) => {
+      if (shouldLog.value) {
+        log.error('useSafeSendTransaction failed:\n', parseErrorV2(error))
+      }
+    },
+    onSuccess: async (_data) => {
+      const receipt = _data.receipt
+      const chainId = unref(cfg.chainId)
+
+      // Invalidate balance queries for both sender and receiver
+      const addresses = [receipt.to, receipt.from].filter(Boolean).map((a) => getAddress(a!))
+
+      await Promise.all(
+        addresses.map((address) =>
+          queryClient.invalidateQueries({
+            queryKey: ['balance', { address, chainId: chainId ?? receipt.chainId }]
+          })
+        )
+      )
     }
-  }
+  })
 
-  /**
-   * @returns {isSending} sending state
-   */
-  return {
-    // Loading states
-    isLoading,
-    isSending,
-    isConfirming,
-    isConfirmed,
-
-    // Data
-    txData,
-    receipt,
-    error,
-
-    // Gas estimation
-    gasEstimate,
-    isEstimatingGas,
-    gasEstimateError,
-    estimateGas,
-    canExecuteTransaction,
-
-    // Core function
-    sendTransaction
-  }
+  return mutation
 }
