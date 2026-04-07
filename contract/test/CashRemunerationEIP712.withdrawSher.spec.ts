@@ -216,7 +216,7 @@ describe('Cash Remuneration - Withdraw SHER', function () {
 
     await expect(
       cashRemunerationEip712Proxy.connect(addr1).withdraw(wageClaim, signature)
-    ).to.be.revertedWith('Wage claim disabled')
+    ).to.be.revertedWithCustomError(cashRemunerationEip712Proxy, 'ClaimIsDisabled')
   })
 
   it('Should enable claims so the user can withdraw SHER again', async () => {
@@ -257,5 +257,65 @@ describe('Cash Remuneration - Withdraw SHER', function () {
     expect((await cashRemunerationEip712Proxy.officerAddress()).toLocaleLowerCase()).to.be.equal(
       (await officer.getAddress()).toLocaleLowerCase()
     )
+  })
+
+  it('Should prevent replay of the same SHER mint signature (EIP-712 replay protection)', async () => {
+    const wageClaim = {
+      employeeAddress: addr1.address,
+      hoursWorked: 5,
+      wages: [
+        {
+          hourlyRate: BigInt(20 * 1e6),
+          tokenAddress: await investorV1Proxy.getAddress()
+        }
+      ],
+      date: Math.floor(Date.now() / 1000)
+    }
+
+    const signature = await owner.signTypedData(domain, types, wageClaim)
+    const signatureHash = ethers.keccak256(signature)
+
+    // First invocation mints SHER successfully
+    await cashRemunerationEip712Proxy.connect(addr1).withdraw(wageClaim, signature)
+    expect(await cashRemunerationEip712Proxy.paidWageClaims(signatureHash)).to.equal(true)
+
+    const amountSher = BigInt(wageClaim.hoursWorked) * wageClaim.wages[0].hourlyRate
+    expect(await investorV1Proxy.balanceOf(addr1.address)).to.equal(amountSher)
+
+    // Replay attempt with identical signature/claim must revert with WageAlreadyPaid
+    await expect(cashRemunerationEip712Proxy.connect(addr1).withdraw(wageClaim, signature))
+      .to.be.revertedWithCustomError(cashRemunerationEip712Proxy, 'WageAlreadyPaid')
+      .withArgs(signatureHash)
+
+    // Balance unchanged after failed replay
+    expect(await investorV1Proxy.balanceOf(addr1.address)).to.equal(amountSher)
+  })
+
+  it('Should prevent replay once a claim has been disabled after use', async () => {
+    const wageClaim = {
+      employeeAddress: addr1.address,
+      hoursWorked: 2,
+      wages: [
+        {
+          hourlyRate: BigInt(10 * 1e6),
+          tokenAddress: await investorV1Proxy.getAddress()
+        }
+      ],
+      date: Math.floor(Date.now() / 1000) + 1
+    }
+
+    const signature = await owner.signTypedData(domain, types, wageClaim)
+    const signatureHash = ethers.keccak256(signature)
+
+    // Use the claim once
+    await cashRemunerationEip712Proxy.connect(addr1).withdraw(wageClaim, signature)
+
+    // Owner disables it afterwards
+    await cashRemunerationEip712Proxy.connect(owner).disableClaim(signatureHash)
+
+    // Replay: WageAlreadyPaid is checked first in the contract, so it should hit that error
+    await expect(
+      cashRemunerationEip712Proxy.connect(addr1).withdraw(wageClaim, signature)
+    ).to.be.revertedWithCustomError(cashRemunerationEip712Proxy, 'WageAlreadyPaid')
   })
 })

@@ -98,11 +98,14 @@ describe('Voting Contract', () => {
 
     await voting.addProposal('Directive', 'Description', false, 0, [voter1.address], [])
 
-    await expect(voting.connect(voter1).voteDirective(0, 4)).to.be.revertedWith('Invalid vote')
+    await expect(voting.connect(voter1).voteDirective(0, 4))
+      .to.be.revertedWithCustomError(voting, 'InvalidVote')
+      .withArgs(4)
 
     await voting.connect(voter1).voteDirective(0, 1)
-    await expect(voting.connect(voter1).voteDirective(0, 1)).to.be.revertedWith(
-      'You have already voted'
+    await expect(voting.connect(voter1).voteDirective(0, 1)).to.be.revertedWithCustomError(
+      voting,
+      'VoterAlreadyVoted'
     )
   })
 
@@ -153,9 +156,9 @@ describe('Voting Contract', () => {
 
     await voting.addProposal('Directive', 'Description', false, 0, [voter1.address], [])
 
-    await expect(voting.connect(outsider).voteDirective(0, 1)).to.be.revertedWith(
-      'You are not registered to vote in this proposal'
-    )
+    await expect(voting.connect(outsider).voteDirective(0, 1))
+      .to.be.revertedWithCustomError(voting, 'VoterNotRegistered')
+      .withArgs(outsider.address)
   })
 
   it('rejects election vote for non-existent candidate', async () => {
@@ -165,25 +168,25 @@ describe('Voting Contract', () => {
       .connect(founder)
       .addProposal('Election', 'desc', true, 1, [voter1.address], [founder.address])
 
-    await expect(voting.connect(voter1).voteElection(0, outsider.address)).to.be.revertedWith(
-      'Candidate does not exist'
-    )
+    await expect(
+      voting.connect(voter1).voteElection(0, outsider.address)
+    ).to.be.revertedWithCustomError(voting, 'CandidateNotFound')
   })
 
   it('rejects voteDirective on non-existent proposal', async () => {
     const { voting, voter1 } = await deployFixture()
 
-    await expect(voting.connect(voter1).voteDirective(99, 1)).to.be.revertedWith(
-      'Proposal does not exist'
-    )
+    await expect(voting.connect(voter1).voteDirective(99, 1))
+      .to.be.revertedWithCustomError(voting, 'ProposalNotFound')
+      .withArgs(99)
   })
 
   it('rejects voteElection on non-existent proposal', async () => {
     const { voting, voter1, founder } = await deployFixture()
 
-    await expect(voting.connect(voter1).voteElection(99, founder.address)).to.be.revertedWith(
-      'Proposal does not exist'
-    )
+    await expect(voting.connect(voter1).voteElection(99, founder.address))
+      .to.be.revertedWithCustomError(voting, 'ProposalNotFound')
+      .withArgs(99)
   })
 
   it('rejects concludeProposal by non-founder', async () => {
@@ -191,8 +194,9 @@ describe('Voting Contract', () => {
 
     await voting.addProposal('Directive', 'Description', false, 0, [voter1.address], [])
 
-    await expect(voting.connect(voter1).concludeProposal(0)).to.be.revertedWith(
-      'Only the founder can conclude the proposal'
+    await expect(voting.connect(voter1).concludeProposal(0)).to.be.revertedWithCustomError(
+      voting,
+      'OnlyFounder'
     )
   })
 
@@ -201,7 +205,7 @@ describe('Voting Contract', () => {
 
     await expect(
       voting.addProposal('', 'Description', false, 0, [voter1.address], [])
-    ).to.be.revertedWith('Title cannot be empty')
+    ).to.be.revertedWithCustomError(voting, 'EmptyTitle')
   })
 
   it('rejects election proposal with empty candidates', async () => {
@@ -209,7 +213,7 @@ describe('Voting Contract', () => {
 
     await expect(
       voting.addProposal('Election', 'desc', true, 1, [voter1.address], [])
-    ).to.be.revertedWith('Candidates cannot be empty')
+    ).to.be.revertedWithCustomError(voting, 'NoCandidates')
   })
 
   it('getProposalById returns correct proposal data', async () => {
@@ -226,7 +230,9 @@ describe('Voting Contract', () => {
   it('getProposalById reverts for non-existent proposal', async () => {
     const { voting } = await deployFixture()
 
-    await expect(voting.getProposalById(99)).to.be.revertedWith('Proposal does not exist')
+    await expect(voting.getProposalById(99))
+      .to.be.revertedWithCustomError(voting, 'ProposalNotFound')
+      .withArgs(99)
   })
 
   it('setBoardOfDirectors sets board via owner', async () => {
@@ -318,8 +324,9 @@ describe('Voting Contract', () => {
 
       await createTiedElection(voting, founder, voter1, voter2, voter3, voter4)
 
-      await expect(voting.connect(voter1).resolveTie(0, 0)).to.be.revertedWith(
-        'Only the founder can resolve ties'
+      await expect(voting.connect(voter1).resolveTie(0, 0)).to.be.revertedWithCustomError(
+        voting,
+        'OnlyFounder'
       )
     })
 
@@ -332,7 +339,10 @@ describe('Voting Contract', () => {
       await voting.connect(voter1).voteElection(0, founder.address)
       await voting.connect(founder).concludeProposal(0)
 
-      await expect(voting.connect(founder).resolveTie(0, 0)).to.be.revertedWith('No tie to resolve')
+      await expect(voting.connect(founder).resolveTie(0, 0)).to.be.revertedWithCustomError(
+        voting,
+        'NoTieToResolve'
+      )
     })
 
     it('rejects selectWinner with invalid candidate', async () => {
@@ -342,9 +352,9 @@ describe('Voting Contract', () => {
 
       await voting.connect(founder).resolveTie(0, 2) // FOUNDER_CHOICE
 
-      await expect(voting.connect(founder).selectWinner(0, outsider.address)).to.be.revertedWith(
-        'Selected winner must be one of the tied candidates'
-      )
+      await expect(
+        voting.connect(founder).selectWinner(0, outsider.address)
+      ).to.be.revertedWithCustomError(voting, 'InvalidTieWinner')
     })
 
     it('rejects selectWinner when tie break option is not FOUNDER_CHOICE', async () => {
@@ -357,9 +367,9 @@ describe('Voting Contract', () => {
 
       // resolveTie already resolved the tie, so hasTie=false
       // Try selectWinner anyway
-      await expect(voting.connect(founder).selectWinner(0, voter1.address)).to.be.revertedWith(
-        'No tie to resolve'
-      )
+      await expect(
+        voting.connect(founder).selectWinner(0, voter1.address)
+      ).to.be.revertedWithCustomError(voting, 'NoTieToResolve')
     })
   })
 })

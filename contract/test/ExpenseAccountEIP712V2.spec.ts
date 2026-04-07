@@ -208,7 +208,7 @@ describe('ExpenseAccountEIP712V2', function () {
         expenseAccount
           .connect(approvedAddress)
           .transfer(recipient.address, ethers.parseEther('0.1'), budgetLimit, signature)
-      ).to.be.revertedWith('Exceeds period budget')
+      ).to.be.revertedWithCustomError(expenseAccount, 'AmountExceedsPeriodBudget')
 
       // Check that we're tracking the correct period
       const expenseBalance = await expenseAccount.expenseBalances(signatureHash)
@@ -253,7 +253,7 @@ describe('ExpenseAccountEIP712V2', function () {
         expenseAccount
           .connect(approvedAddress)
           .transfer(recipient.address, ethers.parseEther('0.1'), budgetLimit, signature)
-      ).to.be.revertedWith('Exceeds period budget')
+      ).to.be.revertedWithCustomError(expenseAccount, 'AmountExceedsPeriodBudget')
 
       // Move to next Monday (new week)
       const nextMonday = Date.UTC(2030, 0, 14, 0, 0, 0) / 1000 // Jan 14, 2030
@@ -339,7 +339,7 @@ describe('ExpenseAccountEIP712V2', function () {
         expenseAccount
           .connect(approvedAddress)
           .transfer(recipient.address, ethers.parseEther('50'), budgetLimit, signature)
-      ).to.be.revertedWith('Token not supported')
+      ).to.be.revertedWithCustomError(expenseAccount, 'TokenNotSupported')
     })
 
     it('Should reject transfer from unauthorized spender', async function () {
@@ -357,7 +357,7 @@ describe('ExpenseAccountEIP712V2', function () {
         expenseAccount
           .connect(other)
           .transfer(recipient.address, ethers.parseEther('0.5'), budgetLimit, signature)
-      ).to.be.revertedWith('Spender not approved')
+      ).to.be.revertedWithCustomError(expenseAccount, 'SpenderNotApproved')
     })
 
     it('Should reject transfer with invalid signature', async function () {
@@ -375,7 +375,7 @@ describe('ExpenseAccountEIP712V2', function () {
         expenseAccount
           .connect(approvedAddress)
           .transfer(recipient.address, ethers.parseEther('0.5'), budgetLimit, invalidSignature)
-      ).to.be.revertedWith('Signer not authorized')
+      ).to.be.revertedWithCustomError(expenseAccount, 'SignerNotAuthorized')
     })
 
     it('Should reject transfer outside date range', async function () {
@@ -400,7 +400,7 @@ describe('ExpenseAccountEIP712V2', function () {
         expenseAccount
           .connect(approvedAddress)
           .transfer(recipient.address, ethers.parseEther('0.5'), futureBudgetLimit, futureSignature)
-      ).to.be.revertedWith('Approval not yet active')
+      ).to.be.revertedWithCustomError(expenseAccount, 'ApprovalNotActive')
 
       // Test case 2: Approval expired (after end date)
       // Use a timestamp far in the past
@@ -417,7 +417,7 @@ describe('ExpenseAccountEIP712V2', function () {
         expenseAccount
           .connect(approvedAddress)
           .transfer(recipient.address, ethers.parseEther('0.5'), pastBudgetLimit, pastSignature)
-      ).to.be.revertedWith('Approval expired')
+      ).to.be.revertedWithCustomError(expenseAccount, 'ApprovalExpired')
     })
 
     it('Should reject transfer exceeding single withdrawal limit', async function () {
@@ -436,7 +436,7 @@ describe('ExpenseAccountEIP712V2', function () {
         expenseAccount
           .connect(approvedAddress)
           .transfer(recipient.address, ethers.parseEther('1.5'), budgetLimit, signature)
-      ).to.be.revertedWith('Amount exceeds budget limit')
+      ).to.be.revertedWithCustomError(expenseAccount, 'AmountExceedsBudgetLimit')
     })
 
     it('Should reject one-time transfer exceeding total budget', async function () {
@@ -457,7 +457,7 @@ describe('ExpenseAccountEIP712V2', function () {
         expenseAccount
           .connect(approvedAddress)
           .transfer(recipient.address, ethers.parseEther('1.1'), budgetLimit, signature)
-      ).to.be.revertedWith('Amount exceeds budget limit')
+      ).to.be.revertedWithCustomError(expenseAccount, 'AmountExceedsBudgetLimit')
     })
 
     it('Should reject one-time transfer if already withdrawn', async function () {
@@ -483,7 +483,7 @@ describe('ExpenseAccountEIP712V2', function () {
         expenseAccount
           .connect(approvedAddress)
           .transfer(recipient.address, ethers.parseEther('0.5'), budgetLimit, signature)
-      ).to.be.revertedWith('One-time budget already used')
+      ).to.be.revertedWithCustomError(expenseAccount, 'OneTimeBudgetAlreadyUsed')
     })
   })
 
@@ -538,6 +538,66 @@ describe('ExpenseAccountEIP712V2', function () {
       const march1Timestamp = Date.UTC(2030, 2, 1, 0, 0, 0) / 1000 // Mar 1, 2030
       const period = await expenseAccount.getPeriod(budgetLimit, march1Timestamp)
       expect(period).to.equal(2)
+    })
+  })
+
+  describe('EIP-712 Replay Protection', function () {
+    it('Should reject replay of a one-time signed budget after it has been fully consumed', async function () {
+      const { expenseAccount, owner, approvedAddress, recipient } = await loadFixture(
+        deployExpenseAccountFixture
+      )
+
+      const budgetLimit = createBudgetLimit({
+        amount: ethers.parseEther('1'),
+        frequencyType: 0, // OneTime
+        approvedAddress: approvedAddress.address
+      })
+
+      const signature = await createSignature(owner, budgetLimit, expenseAccount)
+      const signatureHash = ethers.keccak256(signature)
+
+      // First withdrawal — succeeds
+      await expenseAccount
+        .connect(approvedAddress)
+        .transfer(recipient.address, ethers.parseEther('1'), budgetLimit, signature)
+
+      // State reflects the one-time budget was consumed
+      const balance = await expenseAccount.expenseBalances(signatureHash)
+      expect(balance.totalWithdrawn).to.equal(ethers.parseEther('1'))
+
+      // Second attempt reusing the exact same (budgetLimit, signature) pair must revert
+      // with the OneTimeBudgetAlreadyUsed custom error (replay protection for one-time budgets).
+      await expect(
+        expenseAccount
+          .connect(approvedAddress)
+          .transfer(recipient.address, ethers.parseEther('1'), budgetLimit, signature)
+      ).to.be.revertedWithCustomError(expenseAccount, 'OneTimeBudgetAlreadyUsed')
+    })
+
+    it('Should reject replay of a consumed one-time budget even for a tiny amount', async function () {
+      const { expenseAccount, owner, approvedAddress, recipient } = await loadFixture(
+        deployExpenseAccountFixture
+      )
+
+      const budgetLimit = createBudgetLimit({
+        amount: ethers.parseEther('5'),
+        frequencyType: 0, // OneTime
+        approvedAddress: approvedAddress.address
+      })
+
+      const signature = await createSignature(owner, budgetLimit, expenseAccount)
+
+      // Use only a portion — the one-time budget is still considered consumed.
+      await expenseAccount
+        .connect(approvedAddress)
+        .transfer(recipient.address, ethers.parseEther('0.01'), budgetLimit, signature)
+
+      // Any replay of the same signature/budget pair fails.
+      await expect(
+        expenseAccount
+          .connect(approvedAddress)
+          .transfer(recipient.address, 1n, budgetLimit, signature)
+      ).to.be.revertedWithCustomError(expenseAccount, 'OneTimeBudgetAlreadyUsed')
     })
   })
 })

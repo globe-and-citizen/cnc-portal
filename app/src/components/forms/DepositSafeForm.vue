@@ -49,7 +49,7 @@
         color="primary"
         type="submit"
         :loading="submitting"
-        :disabled="isLoading || submitting || isNativeDepositLoading"
+        :disabled="isLoading || submitting || nativeDeposit.isPending.value"
         data-test="deposit-button"
       >
         {{ submitLabel }}
@@ -59,7 +59,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed } from 'vue'
 import { z } from 'zod'
 import { parseEther, zeroAddress, type Address } from 'viem'
 import { useContractBalance } from '@/composables/useContractBalance'
@@ -137,7 +137,7 @@ const toast = useToast()
 
 const errorMessage = computed(() => {
   const err =
-    nativeError.value ||
+    nativeDeposit.error.value ||
     ERC20ApproveResult.writeResult.error.value ||
     ERC20ApproveResult.receiptResult.error.value ||
     transferError.value ||
@@ -149,13 +149,9 @@ const errorMessage = computed(() => {
 const { balances, isLoading } = useContractBalance(userDataStore.address as Address)
 
 // Native token deposit using safe transaction handler
-const {
-  sendTransaction,
-  isLoading: isNativeDepositLoading,
-  isConfirmed: isNativeDepositConfirmed,
-  receipt: nativeReceipt,
-  error: nativeError
-} = useSafeSendTransaction()
+const nativeDeposit = useSafeSendTransaction({
+  to: computed(() => props.safeAddress)
+})
 
 // Computed properties
 const tokenList = computed(() =>
@@ -209,18 +205,6 @@ const { error: transferReceiptError } = useWaitForTransactionReceipt({
   hash: transferHash
 })
 
-// Success handling
-watch(isNativeDepositConfirmed, (confirmed) => {
-  if (confirmed && nativeReceipt.value) {
-    amount.value = ''
-    toast.add({
-      title: `${selectedToken.value?.token.code} deposited successfully`,
-      color: 'success'
-    })
-    emits('closeModal')
-  }
-})
-
 const handleCancel = () => {
   reset()
   emits('closeModal')
@@ -228,12 +212,20 @@ const handleCancel = () => {
 
 const submitForm = async () => {
   if (!isAmountValid.value) return
-  if (isNativeDepositLoading.value) return
+  if (nativeDeposit.isPending.value) return
   submitting.value = true
   try {
     // Deposit of native token (ETH/POL...)
     if (selectedTokenId.value === 'native') {
-      await sendTransaction(props.safeAddress, parseEther(amount.value))
+      await nativeDeposit.mutateAsync({ value: parseEther(amount.value) })
+      submitting.value = false
+      amount.value = ''
+      toast.add({
+        title: `${selectedToken.value?.token.code} deposited successfully`,
+        color: 'success'
+      })
+      emits('closeModal')
+      return
     } else {
       // USDC deposit workflow - step 1 to 2 to 3 in one execution
       if (!(allowanceValue.value >= bigIntAmount.value)) {

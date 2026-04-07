@@ -35,18 +35,17 @@
 
 <script setup lang="ts">
 import { useTeamStore } from '@/stores'
-import { buildClaimRatesWithOvertime, log, parseError } from '@/utils'
-import { useWriteContract } from '@wagmi/vue'
+import { buildClaimRatesWithOvertime, classifyError, log } from '@/utils'
 import { zeroAddress, type Address } from 'viem'
 import { computed, ref } from 'vue'
 import { CASH_REMUNERATION_EIP712_ABI } from '@/artifacts/abi/cash-remuneration-eip712'
 import { getBalance } from 'viem/actions'
 import { config } from '@/wagmi.config'
 import { USDC_ADDRESS } from '@/constant'
-import { simulateContract } from '@wagmi/core'
-import { waitForTransactionReceipt } from '@wagmi/core'
 import type { WeeklyClaim } from '@/types'
 import { useSyncWeeklyClaimsMutation } from '@/queries'
+import { useContractWritesV3 } from '@/composables/contracts/useContractWritesV3'
+import { CASH_REMUNERATION_ERRORS, resolveMessage } from '@/composables/contracts/errorCatalogs'
 
 const props = defineProps<{
   weeklyClaim: WeeklyClaim
@@ -63,7 +62,11 @@ const toast = useToast()
 const cashRemunerationEip712Address = computed(() =>
   teamStore.getContractAddressByType('CashRemunerationEIP712')
 )
-const { mutateAsync: withdraw } = useWriteContract()
+const withdrawTx = useContractWritesV3({
+  contractAddress: cashRemunerationEip712Address,
+  abi: CASH_REMUNERATION_EIP712_ABI,
+  functionName: 'withdraw'
+})
 
 // const weeklyClaimUrl = computed(() => `/weeklyclaim/${props.weeklyClaim.id}/?action=withdraw`)
 
@@ -117,62 +120,38 @@ const withdrawClaim = async () => {
   }
 
   // withdraw
-  try {
-    const args = {
-      abi: CASH_REMUNERATION_EIP712_ABI,
-      functionName: 'withdraw' as const,
-      args: [claimData, props.weeklyClaim.signature as `0x${string}`] as const
-    }
+  withdrawTx.mutate(
+    { args: [claimData, props.weeklyClaim.signature as `0x${string}`] },
+    {
+      onSuccess: async () => {
+        toast.add({ title: 'Claim withdrawn', color: 'success' })
 
-    await simulateContract(config, {
-      ...args,
-      address: cashRemunerationEip712Address.value
-    })
+        if (teamStore.currentTeamId) {
+          await syncWeeklyClaim({ queryParams: { teamId: teamStore.currentTeamId } })
 
-    const hash = await withdraw({
-      ...args,
-      address: cashRemunerationEip712Address.value
-    })
-
-    // Wait for transaction receipt
-    const receipt = await waitForTransactionReceipt(config, {
-      hash
-    })
-
-    if (receipt.status === 'success') {
-      toast.add({ title: 'Claim withdrawn', color: 'success' })
-
-      if (teamStore.currentTeamId) {
-        await syncWeeklyClaim({ queryParams: { teamId: teamStore.currentTeamId } })
-
-        if (syncWeeklyClaimError.value) {
-          toast.add({ title: 'Failed to update Claim status', color: 'error' })
+          if (syncWeeklyClaimError.value) {
+            toast.add({ title: 'Failed to update Claim status', color: 'error' })
+          }
         }
+
+        emit('claim-withdrawn')
+        isLoading.value = false
+      },
+      onError: (error) => {
+        isLoading.value = false
+        log.error('Withdraw error', error)
+
+        const classified = classifyError(error)
+
+        // Silent when user cancels from wallet — nothing to show.
+        if (classified.category === 'user_rejected') return
+
+        toast.add({
+          title: resolveMessage(classified, CASH_REMUNERATION_ERRORS),
+          color: 'error'
+        })
       }
-
-      emit('claim-withdrawn')
-      isLoading.value = false
-    } else {
-      toast.add({ title: 'Transaction failed: Failed to withdraw claim', color: 'error' })
-      // keep loading until explicit success
     }
-  } catch (error) {
-    // Stop loading on cancel or explicit error
-    isLoading.value = false
-    log.error('Withdraw error', error)
-    const parsed = parseError(error, CASH_REMUNERATION_EIP712_ABI)
-
-    if (parsed.includes('Insufficient token balance')) {
-      toast.add({ title: 'Insufficient token balance', color: 'error' })
-    } else if (
-      parsed.includes('Token not supported') ||
-      parsed.includes('Token not support') ||
-      parsed.includes('unsupported token')
-    ) {
-      toast.add({ title: 'Add Token support: Token not supported', color: 'error' })
-    } else {
-      toast.add({ title: parsed, color: 'error' })
-    }
-  }
+  )
 }
 </script>

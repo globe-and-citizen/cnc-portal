@@ -67,19 +67,12 @@ const modalState = ref({
   show: false
 })
 
-const depositAmount = ref<bigint>(0n)
-const depositTokenAddress = ref<Address>(zeroAddress)
-
-const distributeNativeDividendsWrite = useDistributeNativeDividends(depositAmount)
-const distributeTokenDividendsWrite = useDistributeTokenDividends(
-  depositTokenAddress,
-  depositAmount
-)
+const distributeNativeDividendsWrite = useDistributeNativeDividends()
+const distributeTokenDividendsWrite = useDistributeTokenDividends()
 
 const isBankWriteLoading = computed(
   () =>
-    distributeNativeDividendsWrite.writeResult.isPending.value ||
-    distributeTokenDividendsWrite.writeResult.isPending.value
+    distributeNativeDividendsWrite.isPending.value || distributeTokenDividendsWrite.isPending.value
 )
 
 const addActionComposable = useBodAddAction()
@@ -144,18 +137,11 @@ const handleSubmit = async (value: bigint, selectedTokenId: TokenId) => {
       data
     })
   } else {
-    depositAmount.value = value
-
     if (selectedTokenId === 'native') {
-      const result = await distributeNativeDividendsWrite.executeWrite([value])
-      if (!result) return
+      await distributeNativeDividendsWrite.mutateAsync({ args: [value] })
     } else {
-      depositTokenAddress.value = tokenSymbolAddresses[selectedTokenId] as Address
-      const result = await distributeTokenDividendsWrite.executeWrite([
-        depositTokenAddress.value,
-        value
-      ])
-      if (!result) return
+      const tokenAddress = tokenSymbolAddresses[selectedTokenId] as Address
+      await distributeTokenDividendsWrite.mutateAsync({ args: [tokenAddress, value] })
     }
 
     closeModal()

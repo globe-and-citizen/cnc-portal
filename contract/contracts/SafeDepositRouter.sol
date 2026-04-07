@@ -69,6 +69,14 @@ contract SafeDepositRouter is
                                 EVENTS
     //////////////////////////////////////////////////////////////*/
 
+  /**
+   * @notice Emitted when a user deposits tokens and receives SHER.
+   * @param depositor The depositor.
+   * @param token The deposited ERC20 token.
+   * @param tokenAmount Amount deposited (in token decimals).
+   * @param sherAmount SHER minted in return.
+   * @param timestamp Block number recorded for the deposit.
+   */
   event Deposited(
     address indexed depositor,
     address indexed token,
@@ -77,29 +85,55 @@ contract SafeDepositRouter is
     uint256 timestamp
   );
 
+  /// @notice Emitted when deposits are enabled.
   event DepositsEnabled(address indexed enabledBy);
+  /// @notice Emitted when deposits are disabled.
   event DepositsDisabled(address indexed disabledBy);
+  /// @notice Emitted when the Safe address is updated.
   event SafeAddressUpdated(address indexed oldSafe, address indexed newSafe);
+  /// @notice Emitted when the multiplier is updated.
   event MultiplierUpdated(uint256 oldMultiplier, uint256 newMultiplier);
+  /// @notice Emitted when a new token is whitelisted, along with its stored decimals.
   event TokenSupportAdded(address indexed tokenAddress, uint8 decimals);
+  /// @notice Emitted when stray tokens are recovered to the Safe.
   event TokensRecovered(address indexed token, address indexed to, uint256 amount);
 
   /*//////////////////////////////////////////////////////////////
                                 ERRORS
     //////////////////////////////////////////////////////////////*/
 
+  /// @dev The owner address is invalid.
   error InvalidOwner();
+  /// @dev The Safe address is invalid (e.g. zero address).
   error InvalidSafeAddress();
+  /// @dev The Investor address is invalid.
   error InvalidInvestorAddress();
+  /// @dev The token address is invalid.
   error InvalidTokenAddress();
+  /// @dev The token decimals value is outside the supported range.
   error InvalidTokenDecimals();
+  /// @dev The multiplier is below the allowed minimum.
   error MultiplierTooLow();
+  /// @dev The amount must be greater than zero.
   error ZeroAmount();
+  /// @dev The router does not hold MINTER_ROLE on InvestorV1.
   error InsufficientMinterRole();
+  /// @dev The token is not supported by this router.
   error TokenNotSupported();
+  /// @dev The token is already supported.
   error TokenAlreadySupported();
+  /// @dev The output SHER amount is less than the caller's minimum.
+  /// @param expected The caller's minimum acceptable SHER amount.
+  /// @param actual The SHER amount that would be minted.
   error SlippageExceeded(uint256 expected, uint256 actual);
+  /// @dev Deposits are currently disabled.
   error DepositsNotEnabled();
+  /// @dev The caller (msg.sender) was the zero address when assigning officerAddress.
+  error ZeroSender();
+  /// @dev The officer contract address has not been configured on this router.
+  error OfficerAddressNotSet();
+  /// @dev The InvestorV1 contract could not be located via the Officer.
+  error InvestorContractNotFound();
 
   /*//////////////////////////////////////////////////////////////
                               MODIFIERS
@@ -151,7 +185,7 @@ contract SafeDepositRouter is
     __Pausable_init();
 
     safeAddress = _safeAddress;
-    require(msg.sender != address(0), 'msg.sender cannot be zero');
+    if (msg.sender == address(0)) revert ZeroSender();
     officerAddress = msg.sender;
     multiplier = _multiplier;
     depositsEnabled = false; // Disabled by default
@@ -208,9 +242,9 @@ contract SafeDepositRouter is
    * @return Address of the InvestorV1 contract
    */
   function _getInvestorAddress() internal view returns (address) {
-    require(officerAddress != address(0), 'Officer address not configured');
+    if (officerAddress == address(0)) revert OfficerAddressNotSet();
     address investorAddress = IOfficer(officerAddress).findDeployedContract('InvestorV1');
-    require(investorAddress != address(0), 'InvestorV1 contract not found');
+    if (investorAddress == address(0)) revert InvestorContractNotFound();
     return investorAddress;
   }
 

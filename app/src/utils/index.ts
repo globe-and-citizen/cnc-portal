@@ -1,4 +1,5 @@
 export * from './errorUtil'
+export * from './classifyError'
 export * from './generalUtil'
 export * from './constantUtil'
 export * from './currencyUtil'

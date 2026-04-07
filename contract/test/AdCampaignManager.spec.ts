@@ -80,7 +80,7 @@ describe('AdCampaignManager', () => {
         adCampaignManager.connect(advertiser).createAdCampaign({
           value: ethers.parseEther('0')
         })
-      ).to.be.revertedWith('the budget should be greater than zero')
+      ).to.be.revertedWithCustomError(adCampaignManager, 'ZeroAmount')
     })
 
     it('Should not allow unauthorized users to request withdrawal', async () => {
@@ -95,7 +95,9 @@ describe('AdCampaignManager', () => {
         adCampaignManager
           .connect(unauthorizedUser)
           .requestAndApproveWithdrawal(campaignCode, ethers.parseEther('3'))
-      ).to.be.revertedWith('Only the advertiser,admin, or owner can request withdrawal')
+      )
+        .to.be.revertedWithCustomError(adCampaignManager, 'NotAuthorizedWithdrawer')
+        .withArgs(unauthorizedUser.address)
     })
 
     it('Should not allow creating an ad campaign with invalid budget', async () => {
@@ -103,7 +105,7 @@ describe('AdCampaignManager', () => {
         adCampaignManager.connect(advertiser).createAdCampaign({
           value: ethers.parseEther('0') // Negative budget
         })
-      ).to.be.revertedWith('the budget should be greater than zero')
+      ).to.be.revertedWithCustomError(adCampaignManager, 'ZeroAmount')
     })
 
     it('Should fail to withdraw by a non-advertiser', async () => {
@@ -118,7 +120,9 @@ describe('AdCampaignManager', () => {
         adCampaignManager
           .connect(admin)
           .requestAndApproveWithdrawal(campaignCode, ethers.parseEther('3'))
-      ).to.be.revertedWith('Only the advertiser,admin, or owner can request withdrawal')
+      )
+        .to.be.revertedWithCustomError(adCampaignManager, 'NotAuthorizedWithdrawer')
+        .withArgs(admin.address)
     })
 
     it('Should allow the owner or admin to claim payment', async () => {
@@ -139,7 +143,7 @@ describe('AdCampaignManager', () => {
 
       await expect(
         adCampaignManager.connect(owner).claimPayment(campaignCode, invalidAmountSpent)
-      ).to.be.revertedWith('the current amount spent should be greater than zero')
+      ).to.be.revertedWithCustomError(adCampaignManager, 'ZeroAmount')
     })
 
     it('Should allow the owner to update cost per click and cost per impression', async () => {
@@ -152,7 +156,9 @@ describe('AdCampaignManager', () => {
     it('Should not allow unauthorized users to set the cost per click', async () => {
       await expect(
         adCampaignManager.connect(unauthorizedUser).setCostPerClick(ethers.parseEther('0.02'))
-      ).to.be.revertedWith('Caller is not an admin or the owner')
+      )
+        .to.be.revertedWithCustomError(adCampaignManager, 'NotAdminOrOwner')
+        .withArgs(unauthorizedUser.address)
     })
 
     it('Should allow the owner to update cost per click and cost per impression', async () => {
@@ -167,26 +173,28 @@ describe('AdCampaignManager', () => {
         adCampaignManager
           .connect(owner)
           .setBankContractAddress('0x0000000000000000000000000000000000000000')
-      ).to.be.revertedWith('Invalid bank contract address')
+      ).to.be.revertedWithCustomError(adCampaignManager, 'ZeroAddress')
     })
 
     it('Should not allow non-owners to update cost per click', async () => {
-      await expect(
-        adCampaignManager.connect(advertiser).setCostPerClick(ethers.parseEther('0.02'))
-      ).to.be.revertedWith('Caller is not an admin or the owner')
+      await expect(adCampaignManager.connect(advertiser).setCostPerClick(ethers.parseEther('0.02')))
+        .to.be.revertedWithCustomError(adCampaignManager, 'NotAdminOrOwner')
+        .withArgs(advertiser.address)
     })
 
     it('Should not allow non-owners to update cost per impression', async () => {
       await expect(
         adCampaignManager.connect(advertiser).setCostPerImpression(ethers.parseEther('0.02'))
-      ).to.be.revertedWith('Caller is not an admin or the owner')
+      )
+        .to.be.revertedWithCustomError(adCampaignManager, 'NotAdminOrOwner')
+        .withArgs(advertiser.address)
     })
 
     it('Should fail to claim payment with an invalid campaign code', async () => {
       const invalidCode = 'INVALID_CODE'
       await expect(
         adCampaignManager.connect(owner).claimPayment(invalidCode, ethers.parseEther('3'))
-      ).to.be.revertedWith('Invalid campaign code')
+      ).to.be.revertedWithCustomError(adCampaignManager, 'InvalidCampaignCode')
     })
 
     it('Should allow the advertiser to request and approve withdrawal', async () => {
@@ -308,21 +316,25 @@ describe('AdCampaignManager', () => {
       expect(await adCampaignManager.bankContractAddress()).to.equal(admin.address)
 
       // Test unauthorized user trying to set the bank address
-      await expect(
-        adCampaignManager.connect(advertiser).setBankContractAddress(advertiser.address)
-      ).to.be.revertedWith('Caller is not an admin or the owner')
+      await expect(adCampaignManager.connect(advertiser).setBankContractAddress(advertiser.address))
+        .to.be.revertedWithCustomError(adCampaignManager, 'NotAdminOrOwner')
+        .withArgs(advertiser.address)
     })
 
     it('Should not allow unauthorized users to set the cost per click', async () => {
       await expect(
         adCampaignManager.connect(unauthorizedUser).setCostPerClick(ethers.parseEther('0.02'))
-      ).to.be.revertedWith('Caller is not an admin or the owner')
+      )
+        .to.be.revertedWithCustomError(adCampaignManager, 'NotAdminOrOwner')
+        .withArgs(unauthorizedUser.address)
     })
 
     it('Should not allow unauthorized users to set the cost per impression', async () => {
       await expect(
         adCampaignManager.connect(unauthorizedUser).setCostPerImpression(ethers.parseEther('0.02'))
-      ).to.be.revertedWith('Caller is not an admin or the owner')
+      )
+        .to.be.revertedWithCustomError(adCampaignManager, 'NotAdminOrOwner')
+        .withArgs(unauthorizedUser.address)
     })
 
     it('Should allow only admins or the owner to set the cost per click', async () => {
@@ -330,9 +342,9 @@ describe('AdCampaignManager', () => {
       expect(await adCampaignManager.costPerClick()).to.equal(ethers.parseEther('0.02'))
 
       // Test unauthorized user trying to set the cost
-      await expect(
-        adCampaignManager.connect(advertiser).setCostPerClick(ethers.parseEther('0.02'))
-      ).to.be.revertedWith('Caller is not an admin or the owner')
+      await expect(adCampaignManager.connect(advertiser).setCostPerClick(ethers.parseEther('0.02')))
+        .to.be.revertedWithCustomError(adCampaignManager, 'NotAdminOrOwner')
+        .withArgs(advertiser.address)
     })
 
     it('Should allow only admins or the owner to set the cost per impression', async () => {
@@ -342,7 +354,9 @@ describe('AdCampaignManager', () => {
       // Test unauthorized user trying to set the cost
       await expect(
         adCampaignManager.connect(advertiser).setCostPerImpression(ethers.parseEther('0.002'))
-      ).to.be.revertedWith('Caller is not an admin or the owner')
+      )
+        .to.be.revertedWithCustomError(adCampaignManager, 'NotAdminOrOwner')
+        .withArgs(advertiser.address)
     })
   })
 
@@ -413,7 +427,7 @@ describe('AdCampaignManager', () => {
       const invalidCampaignCode = 'invalid_campaign'
       await expect(
         adCampaignManager.connect(owner).claimPayment(invalidCampaignCode, ethers.parseEther('1'))
-      ).to.be.revertedWith('Invalid campaign code')
+      ).to.be.revertedWithCustomError(adCampaignManager, 'InvalidCampaignCode')
     })
 
     it('Should return the correct ad campaign for a valid campaign code', async () => {

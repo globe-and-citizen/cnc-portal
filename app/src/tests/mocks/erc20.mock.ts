@@ -22,6 +22,24 @@ export function createContractReadMock<T>(defaultValue?: T) {
 }
 
 /**
+ * Mock factory for V3 contract write operations (TanStack mutation shape)
+ * Used by composables built on useContractWritesV3
+ */
+export function createContractWriteV3Mock() {
+  return {
+    mutate: vi.fn(),
+    mutateAsync: vi.fn(),
+    isPending: ref(false),
+    isSuccess: ref(false),
+    isError: ref(false),
+    error: ref<Error | null>(null),
+    data: ref(null),
+    reset: vi.fn(),
+    status: ref<'idle' | 'pending' | 'error' | 'success'>('idle')
+  }
+}
+
+/**
  * Generic mock factory for contract write operations
  * Can be used for ERC20, ERC721, or any contract write function
  * that uses useContractWrite and returns the same structure

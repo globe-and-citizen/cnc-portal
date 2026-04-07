@@ -231,7 +231,7 @@ describe('Vesting', () => {
   it('should revert in createTeam if token address is zero', async () => {
     await expect(
       vesting.createTeam(teamId, teamOwner.address, ethers.ZeroAddress)
-    ).to.be.revertedWith('Invalid token')
+    ).to.be.revertedWithCustomError(vesting, 'ZeroAddress')
   })
 
   it('should return active vestings with members for a team', async () => {
