@@ -91,7 +91,10 @@ describe.skip('DepositSafeForm.vue', () => {
 
   describe('Native Token Deposit', () => {
     it('should show success toast and close modal after native deposit confirmation', async () => {
-      mockTransactionFunctions.mockMutateAsync.mockResolvedValueOnce({ hash: '0xnativetx', receipt: { status: 'success' } })
+      mockTransactionFunctions.mockMutateAsync.mockResolvedValueOnce({
+        hash: '0xnativetx',
+        receipt: { status: 'success' }
+      })
       const wrapper = createWrapper()
 
       await setTokenAmount(wrapper, '1', 'native', true)

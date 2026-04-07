@@ -21,7 +21,7 @@ describe('DepositModal', () => {
       props: {
         bankAddress: mockBankAddress,
         ...props
-      },
+      }
     })
   }
 

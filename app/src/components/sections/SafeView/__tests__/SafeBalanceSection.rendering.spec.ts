@@ -147,7 +147,6 @@ const AddressToolTipStub = defineComponent({
   template: '<div data-test="address-tooltip"></div>'
 })
 
-
 const TransferFormStub = defineComponent({
   template: '<div data-test="transfer-form"><slot name="header" /></div>'
 })

@@ -72,8 +72,7 @@ const distributeTokenDividendsWrite = useDistributeTokenDividends()
 
 const isBankWriteLoading = computed(
   () =>
-    distributeNativeDividendsWrite.isPending.value ||
-    distributeTokenDividendsWrite.isPending.value
+    distributeNativeDividendsWrite.isPending.value || distributeTokenDividendsWrite.isPending.value
 )
 
 const addActionComposable = useBodAddAction()

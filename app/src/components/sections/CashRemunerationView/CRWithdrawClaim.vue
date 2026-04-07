@@ -45,10 +45,7 @@ import { USDC_ADDRESS } from '@/constant'
 import type { WeeklyClaim } from '@/types'
 import { useSyncWeeklyClaimsMutation } from '@/queries'
 import { useContractWritesV3 } from '@/composables/contracts/useContractWritesV3'
-import {
-  CASH_REMUNERATION_ERRORS,
-  resolveMessage
-} from '@/composables/contracts/errorCatalogs'
+import { CASH_REMUNERATION_ERRORS, resolveMessage } from '@/composables/contracts/errorCatalogs'
 
 const props = defineProps<{
   weeklyClaim: WeeklyClaim

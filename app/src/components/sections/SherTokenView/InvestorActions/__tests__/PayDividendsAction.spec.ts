@@ -192,7 +192,9 @@ describe('PayDividendsAction.vue', () => {
 
     await vm.handleSubmit(5n, 'native')
 
-    expect(mockBankWrites.distributeNativeDividends.mutateAsync).toHaveBeenCalledWith({ args: [5n] })
+    expect(mockBankWrites.distributeNativeDividends.mutateAsync).toHaveBeenCalledWith({
+      args: [5n]
+    })
   })
 
   it('handleSubmit executes token write in non-BOD mode', async () => {
@@ -215,7 +217,9 @@ describe('PayDividendsAction.vue', () => {
 
     await vm.handleSubmit(7n, 'native')
 
-    expect(mockBankWrites.distributeNativeDividends.mutateAsync).toHaveBeenCalledWith({ args: [7n] })
+    expect(mockBankWrites.distributeNativeDividends.mutateAsync).toHaveBeenCalledWith({
+      args: [7n]
+    })
   })
 
   it('handleSubmit returns early when token write fails', async () => {
