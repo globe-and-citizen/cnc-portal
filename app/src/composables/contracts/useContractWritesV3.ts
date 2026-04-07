@@ -164,10 +164,7 @@ export function useContractWritesV3(cfg: ContractWriteV3Config) {
     },
     onError: (error) => {
       if (shouldLog.value) {
-        log.error(
-          `useContractWritesV3(${unref(cfg.functionName)}) failed:\n`,
-          parseErrorV2(error)
-        )
+        log.error(`useContractWritesV3(${unref(cfg.functionName)}) failed:\n`, parseErrorV2(error))
       }
     },
     onSuccess: async () => {

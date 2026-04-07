@@ -56,7 +56,6 @@ vi.mock('@/views/team/[id]/ShowIndex.vue', () => ({
   default: { name: 'ShowIndex', template: '<div>Team Show</div>' }
 }))
 
-
 vi.mock('@/views/team/[id]/Accounts/WeeklyClaimView.vue', () => ({
   default: { name: 'WeeklyClaimView', template: '<div>Weekly Claim</div>' }
 }))

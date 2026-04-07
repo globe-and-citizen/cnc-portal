@@ -86,11 +86,7 @@ export function classifyError(error: unknown): ClassifiedError {
     }
   }
 
-  if (
-    error.walk(
-      (e) => e instanceof ChainMismatchError || e instanceof ChainDisconnectedError
-    )
-  ) {
+  if (error.walk((e) => e instanceof ChainMismatchError || e instanceof ChainDisconnectedError)) {
     return {
       category: 'chain_mismatch',
       userMessage: 'Your wallet is connected to the wrong network.',
@@ -135,8 +131,7 @@ export function classifyError(error: unknown): ClassifiedError {
   if (
     error.walk(
       (e) =>
-        e instanceof TransactionNotFoundError ||
-        e instanceof WaitForTransactionReceiptTimeoutError
+        e instanceof TransactionNotFoundError || e instanceof WaitForTransactionReceiptTimeoutError
     )
   ) {
     return {

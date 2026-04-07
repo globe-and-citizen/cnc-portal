@@ -22,10 +22,7 @@ export interface ContractErrorCatalog {
  * catalog. For non-revert errors (user_rejected, network, etc.) we fall back
  * to the classifier's default `userMessage`.
  */
-export function resolveMessage(
-  classified: ClassifiedError,
-  catalog: ContractErrorCatalog
-): string {
+export function resolveMessage(classified: ClassifiedError, catalog: ContractErrorCatalog): string {
   if (classified.category !== 'contract_revert' || !classified.revertName) {
     return classified.userMessage
   }
