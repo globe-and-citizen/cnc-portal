@@ -143,7 +143,7 @@ describe('Bank Contract Writes', () => {
     it('should return distinct mocks for different functions', () => {
       const pause = usePause()
       const transfer = useTransfer()
-      const claimDividend = useClaimDividend()
+      // const claimDividend = useClaimDividend()
 
       expect(pause).not.toBe(transfer)
     })
