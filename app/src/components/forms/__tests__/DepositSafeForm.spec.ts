@@ -85,36 +85,32 @@ describe.skip('DepositSafeForm.vue', () => {
       await wrapper.find('[data-test="deposit-button"]').trigger('click')
       await nextTick()
 
-      expect(mockTransactionFunctions.mockSendTransaction).not.toHaveBeenCalled()
+      expect(mockTransactionFunctions.mockMutateAsync).not.toHaveBeenCalled()
     })
   })
 
   describe('Native Token Deposit', () => {
     it('should show success toast and close modal after native deposit confirmation', async () => {
-      mockTransactionFunctions.mockSendTransaction.mockResolvedValueOnce({ hash: '0xnativetx' })
+      mockTransactionFunctions.mockMutateAsync.mockResolvedValueOnce({ hash: '0xnativetx', receipt: { status: 'success' } })
       const wrapper = createWrapper()
 
       await setTokenAmount(wrapper, '1', 'native', true)
       await wrapper.find('[data-test="deposit-button"]').trigger('click')
       await nextTick()
 
-      // Simulate transaction confirmation
-      mockUseSafeSendTransaction.isConfirmed.value = true
-      mockUseSafeSendTransaction.receipt.value = { status: 'success' }
-      await nextTick()
-
+      expect(mockTransactionFunctions.mockMutateAsync).toHaveBeenCalled()
       expect(wrapper.emitted('closeModal')).toBeTruthy()
     })
 
     it('should prevent multiple submissions while loading', async () => {
-      mockUseSafeSendTransaction.isLoading.value = true
+      mockUseSafeSendTransaction.isPending.value = true
       const wrapper = createWrapper()
 
       await setTokenAmount(wrapper, '1', 'native', true)
       await wrapper.find('[data-test="deposit-button"]').trigger('click')
       await nextTick()
 
-      expect(mockTransactionFunctions.mockSendTransaction).not.toHaveBeenCalled()
+      expect(mockTransactionFunctions.mockMutateAsync).not.toHaveBeenCalled()
     })
   })
 
