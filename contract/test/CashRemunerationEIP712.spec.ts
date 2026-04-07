@@ -49,7 +49,7 @@ describe('CashRemuneration*** (EIP712)', () => {
           [employer.address, [ethers.ZeroAddress]],
           { initializer: 'initialize' }
         )
-      ).to.be.revertedWith('Token address cannot be zero')
+      ).to.be.revertedWithCustomError(cashRemunerationProxy, 'ZeroAddress')
     })
 
     it('should prevent reinitialization', async () => {
@@ -227,7 +227,7 @@ describe('CashRemuneration*** (EIP712)', () => {
 
           await expect(
             cashRemunerationProxy.connect(imposter).withdraw(wageClaim, signature)
-          ).to.be.revertedWith('Withdrawer not approved')
+          ).to.be.revertedWithCustomError(cashRemunerationProxy, 'NotClaimOwner')
         })
         it('the wage has already been paid', async () => {
           const wageClaim = {
@@ -258,9 +258,9 @@ describe('CashRemuneration*** (EIP712)', () => {
           const paidWageClaim = await cashRemunerationProxy.paidWageClaims(sigHash)
           expect(paidWageClaim).to.be.equal(true)
 
-          expect(
+          await expect(
             cashRemunerationProxy.connect(employee).withdraw(wageClaim, signature)
-          ).to.be.revertedWith('Wage already paid')
+          ).to.be.revertedWithCustomError(cashRemunerationProxy, 'WageAlreadyPaid')
         })
         it('the wage amount exceeds the contract balance', async () => {
           const wageClaim = {
@@ -317,6 +317,114 @@ describe('CashRemuneration*** (EIP712)', () => {
             .withArgs(employer.address)
         })
       })
+    })
+  })
+
+  describe('EIP-712 Replay Protection', () => {
+    let employer: SignerWithAddress
+    let employee: SignerWithAddress
+    let chainId: bigint
+    let verifyingContract: string
+    let domain: {
+      name: string
+      version: string
+      chainId: bigint
+      verifyingContract: string
+    }
+    let types: {
+      [key: string]: Array<{ name: string; type: string }>
+    }
+
+    beforeEach(async () => {
+      ;[employer, employee] = await ethers.getSigners()
+      await deployContract(employer)
+      chainId = (await ethers.provider.getNetwork()).chainId
+      verifyingContract = await cashRemunerationProxy.getAddress()
+
+      domain = {
+        name: 'CashRemuneration',
+        version: '1',
+        chainId,
+        verifyingContract
+      }
+
+      types = {
+        Wage: [
+          { name: 'hourlyRate', type: 'uint256' },
+          { name: 'tokenAddress', type: 'address' }
+        ],
+        WageClaim: [
+          { name: 'employeeAddress', type: 'address' },
+          { name: 'hoursWorked', type: 'uint8' },
+          { name: 'wages', type: 'Wage[]' },
+          { name: 'date', type: 'uint256' }
+        ]
+      }
+
+      // Fund the contract
+      await employer.sendTransaction({
+        to: await cashRemunerationProxy.getAddress(),
+        value: ethers.parseEther('100')
+      })
+    })
+
+    it('should prevent replay of a valid signature (same wage claim used twice)', async () => {
+      const wageClaim = {
+        employeeAddress: employee.address,
+        hoursWorked: 5,
+        wages: [
+          {
+            hourlyRate: ethers.parseEther('1'),
+            tokenAddress: ethers.ZeroAddress
+          }
+        ],
+        date: Math.floor(Date.now() / 1000)
+      }
+
+      const signature = await employer.signTypedData(domain, types, wageClaim)
+      const sigHash = ethers.keccak256(signature)
+
+      // First invocation succeeds
+      await cashRemunerationProxy.connect(employee).withdraw(wageClaim, signature)
+      expect(await cashRemunerationProxy.paidWageClaims(sigHash)).to.equal(true)
+
+      // Second invocation with same signature must revert with WageAlreadyPaid
+      await expect(cashRemunerationProxy.connect(employee).withdraw(wageClaim, signature))
+        .to.be.revertedWithCustomError(cashRemunerationProxy, 'WageAlreadyPaid')
+        .withArgs(sigHash)
+    })
+
+    it('should prevent replay even across intermediate valid calls', async () => {
+      // First claim
+      const wageClaimA = {
+        employeeAddress: employee.address,
+        hoursWorked: 3,
+        wages: [{ hourlyRate: ethers.parseEther('1'), tokenAddress: ethers.ZeroAddress }],
+        date: Math.floor(Date.now() / 1000)
+      }
+      const sigA = await employer.signTypedData(domain, types, wageClaimA)
+
+      // Second distinct claim (different date)
+      const wageClaimB = {
+        employeeAddress: employee.address,
+        hoursWorked: 4,
+        wages: [{ hourlyRate: ethers.parseEther('1'), tokenAddress: ethers.ZeroAddress }],
+        date: Math.floor(Date.now() / 1000) + 10
+      }
+      const sigB = await employer.signTypedData(domain, types, wageClaimB)
+
+      await cashRemunerationProxy.connect(employee).withdraw(wageClaimA, sigA)
+      await cashRemunerationProxy.connect(employee).withdraw(wageClaimB, sigB)
+
+      // Reusing the first signature must still fail
+      await expect(
+        cashRemunerationProxy.connect(employee).withdraw(wageClaimA, sigA)
+      ).to.be.revertedWithCustomError(cashRemunerationProxy, 'WageAlreadyPaid')
+
+      // Reusing the second signature must also fail
+      await expect(
+        cashRemunerationProxy.connect(employee).withdraw(wageClaimB, sigB)
+      ).to.be.revertedWithCustomError(cashRemunerationProxy, 'WageAlreadyPaid')
     })
   })
 })

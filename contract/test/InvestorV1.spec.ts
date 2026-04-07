@@ -362,7 +362,7 @@ describe('InvestorV1 - dividend distribution (with MockOfficer)', () => {
 
       await expect(
         investor.connect(bankSigner).distributeNativeDividends(0, { value: 0 })
-      ).to.be.revertedWith('Amount must be greater than zero')
+      ).to.be.revertedWithCustomError(investor, 'ZeroAmount')
     })
 
     it('reverts if msg.value does not match amount', async () => {
@@ -376,7 +376,7 @@ describe('InvestorV1 - dividend distribution (with MockOfficer)', () => {
         investor
           .connect(bankSigner)
           .distributeNativeDividends(ethers.parseEther('1'), { value: ethers.parseEther('2') })
-      ).to.be.revertedWith('Invalid native dividend funding')
+      ).to.be.revertedWithCustomError(investor, 'InvalidNativeFunding')
     })
 
     it('reverts if no tokens minted', async () => {
@@ -386,7 +386,7 @@ describe('InvestorV1 - dividend distribution (with MockOfficer)', () => {
         investor
           .connect(bankSigner)
           .distributeNativeDividends(ethers.parseEther('1'), { value: ethers.parseEther('1') })
-      ).to.be.revertedWith('No tokens minted')
+      ).to.be.revertedWithCustomError(investor, 'NoTokensMinted')
     })
 
     it('reverts if called by non-bank', async () => {
@@ -400,7 +400,7 @@ describe('InvestorV1 - dividend distribution (with MockOfficer)', () => {
         investor
           .connect(addr1)
           .distributeNativeDividends(ethers.parseEther('1'), { value: ethers.parseEther('1') })
-      ).to.be.revertedWith('Caller is not Bank')
+      ).to.be.revertedWithCustomError(investor, 'NotBank')
     })
 
     it('reverts if paused', async () => {
@@ -470,7 +470,7 @@ describe('InvestorV1 - dividend distribution (with MockOfficer)', () => {
         investor
           .connect(bankSigner)
           .distributeTokenDividends(ethers.ZeroAddress, ethers.parseUnits('100', 6))
-      ).to.be.revertedWith('Invalid token address')
+      ).to.be.revertedWithCustomError(investor, 'ZeroAddress')
     })
 
     it('reverts if amount is zero', async () => {
@@ -482,7 +482,7 @@ describe('InvestorV1 - dividend distribution (with MockOfficer)', () => {
 
       await expect(
         investor.connect(bankSigner).distributeTokenDividends(await token.getAddress(), 0)
-      ).to.be.revertedWith('Amount must be greater than zero')
+      ).to.be.revertedWithCustomError(investor, 'ZeroAmount')
     })
 
     it('reverts if no supply', async () => {
@@ -492,7 +492,7 @@ describe('InvestorV1 - dividend distribution (with MockOfficer)', () => {
         investor
           .connect(bankSigner)
           .distributeTokenDividends(await token.getAddress(), ethers.parseUnits('100', 6))
-      ).to.be.revertedWith('No tokens minted')
+      ).to.be.revertedWithCustomError(investor, 'NoTokensMinted')
     })
 
     it('reverts if insufficient funded token balance', async () => {
@@ -507,7 +507,7 @@ describe('InvestorV1 - dividend distribution (with MockOfficer)', () => {
         investor
           .connect(bankSigner)
           .distributeTokenDividends(await token.getAddress(), ethers.parseUnits('100', 6))
-      ).to.be.revertedWith('Insufficient funded token balance')
+      ).to.be.revertedWithCustomError(investor, 'InsufficientFundedTokenBalance')
     })
 
     it('reverts if called by non-bank', async () => {
@@ -521,7 +521,7 @@ describe('InvestorV1 - dividend distribution (with MockOfficer)', () => {
         investor
           .connect(addr1)
           .distributeTokenDividends(await token.getAddress(), ethers.parseUnits('100', 6))
-      ).to.be.revertedWith('Caller is not Bank')
+      ).to.be.revertedWithCustomError(investor, 'NotBank')
     })
 
     it('reverts if paused', async () => {

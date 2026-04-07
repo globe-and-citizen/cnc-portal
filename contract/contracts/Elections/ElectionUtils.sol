@@ -110,6 +110,11 @@ library ElectionUtils {
     }
   }
 
+  /**
+   * @dev Validates that `candidate` is a valid choice for the given election.
+   * @param election The election storage reference.
+   * @param candidate The candidate address being voted for.
+   */
   function validateVote(ElectionTypes.Election storage election, address candidate) internal view {
     // Check if candidate is valid
     if (candidate == address(0)) {
@@ -146,6 +151,11 @@ library ElectionUtils {
     return block.timestamp > endDate;
   }
 
+  /**
+   * @dev Detects duplicate entries in an address list.
+   * @param candidateOrVoters The list of addresses to check.
+   * @return True if any duplicate is found.
+   */
   function isDuplicate(address[] memory candidateOrVoters) internal pure returns (bool) {
     for (uint256 i = 0; i < candidateOrVoters.length; i++) {
       for (uint256 j = i + 1; j < candidateOrVoters.length; j++) {

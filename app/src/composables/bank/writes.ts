@@ -1,110 +1,73 @@
-import { computed, unref, type MaybeRef } from 'vue'
-import type { Address } from 'viem'
+import { computed } from 'vue'
 import { BANK_ABI } from '@/artifacts/abi/bank'
-import { useContractWrites } from '@/composables/contracts/useContractWritesV2'
+import { useContractWritesV3 } from '@/composables/contracts/useContractWritesV3'
 import { useTeamStore } from '@/stores/teamStore'
 import type { ExtractAbiFunctionNames } from 'abitype'
-// import BANK_ABI from '@/artifacts/abi/Bank.json'
 
 type BankFunctionNames = ExtractAbiFunctionNames<typeof BANK_ABI>
 
-// Helper function to wrap useContractWrites for Bank contract
-export function useBankContractWrite(options: {
-  functionName: BankFunctionNames
-  args?: MaybeRef<readonly unknown[]>
-  value?: MaybeRef<bigint>
-}) {
+function useBankContractWrite(functionName: BankFunctionNames) {
   const teamStore = useTeamStore()
   const bankAddress = computed(() => teamStore.getContractAddressByType('Bank'))
-  return useContractWrites({
+  return useContractWritesV3({
     contractAddress: bankAddress,
     abi: BANK_ABI,
-    functionName: options.functionName,
-    args: options.args ?? [],
-    ...(options.value !== undefined ? { value: options.value } : {})
+    functionName
   })
 }
 
-export function useDepositToken(token: MaybeRef<Address>, amount: MaybeRef<bigint>) {
-  const args = computed(() => [unref(token), unref(amount)] as readonly unknown[])
-
-  return useBankContractWrite({
-    functionName: 'depositToken',
-    args
-  })
+export function useDepositToken() {
+  return useBankContractWrite('depositToken')
 }
 
-export function useDistributeNativeDividends(amount: MaybeRef<bigint>) {
-  const args = computed(() => [unref(amount)] as readonly unknown[])
-  return useBankContractWrite({
-    functionName: 'distributeNativeDividends',
-    args
-  })
-}
-export function useDistributeTokenDividends(token: MaybeRef<Address>, amount: MaybeRef<bigint>) {
-  const args = computed(() => [unref(token), unref(amount)] as readonly unknown[])
-  return useBankContractWrite({
-    functionName: 'distributeTokenDividends',
-    args
-  })
+export function useDistributeNativeDividends() {
+  return useBankContractWrite('distributeNativeDividends')
 }
 
-export function useAddTokenSupport(tokenAddress: MaybeRef<Address>) {
-  return useBankContractWrite({
-    functionName: 'addTokenSupport',
-    args: [tokenAddress]
-  })
+export function useDistributeTokenDividends() {
+  return useBankContractWrite('distributeTokenDividends')
 }
 
-export function useRemoveTokenSupport(tokenAddress: MaybeRef<Address>) {
-  return useBankContractWrite({
-    functionName: 'removeTokenSupport',
-    args: [tokenAddress]
-  })
+export function useAddTokenSupport() {
+  return useBankContractWrite('addTokenSupport')
 }
 
-export function useTransfer(to: MaybeRef<Address>, amount: MaybeRef<bigint>) {
-  return useBankContractWrite({
-    functionName: 'transfer',
-    args: [to, amount]
-  })
+export function useRemoveTokenSupport() {
+  return useBankContractWrite('removeTokenSupport')
 }
 
-export function useTransferToken(
-  token: MaybeRef<Address>,
-  to: MaybeRef<Address>,
-  amount: MaybeRef<bigint>
-) {
-  return useBankContractWrite({
-    functionName: 'transferToken',
-    args: [token, to, amount]
-  })
+export function useClaimDividend() {
+  return useBankContractWrite('claimDividend')
 }
 
-export function useTransferOwnership(newOwner: MaybeRef<Address>) {
-  return useBankContractWrite({
-    functionName: 'transferOwnership',
-    args: [newOwner]
-  })
+export function useClaimTokenDividend() {
+  return useBankContractWrite('claimTokenDividend')
+}
+
+export function useSetInvestorAddress() {
+  return useBankContractWrite('setInvestorAddress')
+}
+
+export function useTransfer() {
+  return useBankContractWrite('transfer')
+}
+
+export function useTransferToken() {
+  return useBankContractWrite('transferToken')
+}
+
+export function useTransferOwnership() {
+  return useBankContractWrite('transferOwnership')
 }
 
 export function useRenounceOwnership() {
-  return useBankContractWrite({
-    functionName: 'renounceOwnership',
-    args: []
-  })
+  return useBankContractWrite('renounceOwnership')
 }
 
 export function usePause() {
-  return useBankContractWrite({
-    functionName: 'pause',
-    args: []
-  })
+  return useBankContractWrite('pause')
 }
 
 export function useUnpause() {
-  return useBankContractWrite({
-    functionName: 'unpause',
-    args: []
-  })
+  return useBankContractWrite('unpause')
 }

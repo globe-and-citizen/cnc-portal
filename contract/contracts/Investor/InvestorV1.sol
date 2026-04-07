@@ -11,6 +11,12 @@ import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import {IOfficer} from '../interfaces/IOfficer.sol';
 
+/**
+ * @title InvestorV1
+ * @notice ERC20 share token that tracks shareholders and distributes ETH or ERC20 dividends.
+ * @dev Upgradeable with role-based minting. Dividends are distributed pro-rata from Bank-funded
+ *      calls, with any rounding dust accruing to the final shareholder.
+ */
 contract InvestorV1 is
   ERC20Upgradeable,
   OwnableUpgradeable,
@@ -22,9 +28,16 @@ contract InvestorV1 is
   using SafeERC20 for IERC20;
 
   // Add MINTER_ROLE constant - this doesn't affect storage
+  /// @notice Access control role allowed to mint new tokens.
   bytes32 public constant MINTER_ROLE = keccak256('MINTER_ROLE');
 
+  /// @dev Set of addresses currently holding a non-zero balance.
   EnumerableSet.AddressSet private shareholders;
+  /**
+   * @dev Snapshot of a shareholder and their balance.
+   * @param shareholder Address of the shareholder.
+   * @param amount Token balance held by the shareholder.
+   */
   struct Shareholder {
     address shareholder;
     uint256 amount;
@@ -37,14 +50,39 @@ contract InvestorV1 is
   // Add a gap for future upgrades (important for upgradeable contracts)
   uint256[50] private __gap;
 
+  /**
+   * @notice Emitted when tokens are minted to a shareholder.
+   * @param shareholder Recipient of the minted tokens.
+   * @param amount Amount minted.
+   */
   event Minted(address indexed shareholder, uint256 amount);
+  /**
+   * @notice Emitted when a dividend distribution round completes.
+   * @param distributor Address that triggered the distribution.
+   * @param token Token distributed, or address(0) for native ETH.
+   * @param totalAmount Total amount distributed.
+   * @param shareholderCount Number of shareholders paid in this round.
+   */
   event DividendDistributed(
     address indexed distributor,
     address indexed token,
     uint256 totalAmount,
     uint256 shareholderCount
   );
+  /**
+   * @notice Emitted for each individual dividend payment to a shareholder.
+   * @param shareholder Recipient of the dividend.
+   * @param token Token paid, or address(0) for native ETH.
+   * @param amount Amount paid to this shareholder.
+   */
   event DividendPaid(address indexed shareholder, address indexed token, uint256 amount);
+  /**
+   * @notice Emitted when a dividend payment to a shareholder fails.
+   * @param shareholder Intended recipient.
+   * @param token Token involved, or address(0) for native ETH.
+   * @param amount Amount that failed to be paid.
+   * @param reason Description of the failure.
+   */
   event DividendPaymentFailed(
     address indexed shareholder,
     address indexed token,
@@ -52,6 +90,40 @@ contract InvestorV1 is
     string reason
   );
 
+  /// @dev A required address argument was the zero address.
+  error ZeroAddress();
+  /// @dev The officer contract address has not been configured.
+  error OfficerAddressNotSet();
+  /// @dev The Bank contract could not be located via the Officer.
+  error BankContractNotFound();
+  /// @dev The caller is not the Bank contract.
+  /// @param caller The caller address.
+  error NotBank(address caller);
+  /// @dev The amount must be greater than zero.
+  error ZeroAmount();
+  /// @dev The provided msg.value does not match the expected funding amount.
+  /// @param expected The expected amount.
+  /// @param actual The actual msg.value.
+  error InvalidNativeFunding(uint256 expected, uint256 actual);
+  /// @dev There are no minted tokens in circulation.
+  error NoTokensMinted();
+  /// @dev There are no shareholders to distribute to.
+  error NoShareholders();
+  /// @dev A low-level native token transfer failed.
+  /// @param to The recipient.
+  error NativeTransferFailed(address to);
+  /// @dev The contract holds an insufficient token balance for distribution.
+  /// @param token The ERC20 token.
+  /// @param required The amount required.
+  /// @param available The current contract balance.
+  error InsufficientFundedTokenBalance(address token, uint256 required, uint256 available);
+
+  /**
+   * @notice Initializes the InvestorV1 token.
+   * @param _name ERC20 token name.
+   * @param _symbol ERC20 token symbol.
+   * @param _owner Contract owner; if address(0) the caller becomes owner.
+   */
   function initialize(
     string calldata _name,
     string calldata _symbol,
@@ -67,18 +139,24 @@ contract InvestorV1 is
     _grantRole(DEFAULT_ADMIN_ROLE, owner);
     _grantRole(MINTER_ROLE, owner);
 
-    require(msg.sender != address(0), 'msg.sender cannot be zero');
+    if (msg.sender == address(0)) revert ZeroAddress();
     officerAddress = msg.sender;
   }
 
+  /// @notice Allows the contract to receive native ETH (e.g. from Bank dividend funding).
   receive() external payable {
     // Contract can receive ETH
   }
 
+  /// @notice Returns the token's decimal count.
   function decimals() public view virtual override returns (uint8) {
     return 6; // Standard for many tokens, can be adjusted as needed
   }
 
+  /**
+   * @notice Mints tokens to a batch of shareholders.
+   * @param _shareholders Array of shareholders and amounts to mint.
+   */
   function distributeMint(
     Shareholder[] memory _shareholders
   ) external onlyOwner whenNotPaused nonReentrant {
@@ -90,6 +168,11 @@ contract InvestorV1 is
     }
   }
 
+  /**
+   * @notice Mints tokens to a single shareholder (requires MINTER_ROLE).
+   * @param shareholder Recipient of the minted tokens.
+   * @param amount Amount to mint.
+   */
   function individualMint(
     address shareholder,
     uint256 amount
@@ -110,6 +193,10 @@ contract InvestorV1 is
     }
   }
 
+  /**
+   * @notice Returns a snapshot of all current shareholders with their balances.
+   * @return Array of Shareholder structs.
+   */
   function getShareholders() external view returns (Shareholder[] memory) {
     Shareholder[] memory _shareholders = new Shareholder[](shareholders.length());
     for (uint256 i = 0; i < shareholders.length(); i++) {
@@ -124,14 +211,14 @@ contract InvestorV1 is
    * @return Address of the Bank contract
    */
   function _getBankAddress() internal view returns (address) {
-    require(officerAddress != address(0), 'Officer address not configured');
+    if (officerAddress == address(0)) revert OfficerAddressNotSet();
     address bankAddress = IOfficer(officerAddress).findDeployedContract('Bank');
-    require(bankAddress != address(0), 'Bank contract not found');
+    if (bankAddress == address(0)) revert BankContractNotFound();
     return bankAddress;
   }
 
   modifier onlyBank() {
-    require(msg.sender == _getBankAddress(), 'Caller is not Bank');
+    if (msg.sender != _getBankAddress()) revert NotBank(msg.sender);
     _;
   }
 
@@ -144,14 +231,14 @@ contract InvestorV1 is
   function distributeNativeDividends(
     uint256 _amount
   ) external payable onlyBank nonReentrant whenNotPaused {
-    require(_amount > 0, 'Amount must be greater than zero');
-    require(msg.value == _amount, 'Invalid native dividend funding');
+    if (_amount == 0) revert ZeroAmount();
+    if (msg.value != _amount) revert InvalidNativeFunding(_amount, msg.value);
 
     uint256 supply = totalSupply();
-    require(supply > 0, 'No tokens minted');
+    if (supply == 0) revert NoTokensMinted();
 
     Shareholder[] memory currentShareholders = _getShareholders();
-    require(currentShareholders.length > 0, 'No shareholders');
+    if (currentShareholders.length == 0) revert NoShareholders();
 
     uint256 remaining = _amount;
 
@@ -170,7 +257,7 @@ contract InvestorV1 is
 
       if (share > 0) {
         (bool sent, ) = payable(shareholder).call{value: share}('');
-        require(sent, 'Transfer failed');
+        if (!sent) revert NativeTransferFailed(shareholder);
         emit DividendPaid(shareholder, address(0), share);
         remaining -= share;
       }
@@ -189,18 +276,16 @@ contract InvestorV1 is
     address _token,
     uint256 _amount
   ) external onlyBank nonReentrant whenNotPaused {
-    require(_token != address(0), 'Invalid token address');
-    require(_amount > 0, 'Amount must be greater than zero');
+    if (_token == address(0)) revert ZeroAddress();
+    if (_amount == 0) revert ZeroAmount();
 
     uint256 supply = totalSupply();
-    require(supply > 0, 'No tokens minted');
+    if (supply == 0) revert NoTokensMinted();
 
     Shareholder[] memory currentShareholders = _getShareholders();
-    require(currentShareholders.length > 0, 'No shareholders');
-    require(
-      IERC20(_token).balanceOf(address(this)) >= _amount,
-      'Insufficient funded token balance'
-    );
+    if (currentShareholders.length == 0) revert NoShareholders();
+    uint256 tokenBal = IERC20(_token).balanceOf(address(this));
+    if (tokenBal < _amount) revert InsufficientFundedTokenBalance(_token, _amount, tokenBal);
 
     uint256 remaining = _amount;
 
@@ -239,10 +324,12 @@ contract InvestorV1 is
     return _shareholders;
   }
 
+  /// @notice Pauses token operations.
   function pause() external onlyOwner {
     _pause();
   }
 
+  /// @notice Unpauses token operations.
   function unpause() external onlyOwner {
     _unpause();
   }

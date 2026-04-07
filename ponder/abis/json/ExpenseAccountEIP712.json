@@ -1,5 +1,15 @@
 [
   {
+    "inputs": [],
+    "name": "AmountExceedsBudgetLimit",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "AmountExceedsPeriodBudget",
+    "type": "error"
+  },
+  {
     "inputs": [
       {
         "internalType": "uint256",
@@ -51,6 +61,11 @@
       }
     ],
     "name": "ApprovalNotActive",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "BankContractNotFound",
     "type": "error"
   },
   {
@@ -112,6 +127,53 @@
     "type": "error"
   },
   {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "required",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "available",
+        "type": "uint256"
+      }
+    ],
+    "name": "InsufficientNativeBalance",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "required",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "available",
+        "type": "uint256"
+      }
+    ],
+    "name": "InsufficientTokenBalance",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "InvalidCustomFrequency",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "InvalidFrequencyType",
+    "type": "error"
+  },
+  {
     "inputs": [],
     "name": "InvalidInitialization",
     "type": "error"
@@ -119,6 +181,16 @@
   {
     "inputs": [],
     "name": "NotInitializing",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "OfficerAddressNotSet",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "OneTimeBudgetAlreadyUsed",
     "type": "error"
   },
   {
@@ -157,11 +229,107 @@
       },
       {
         "internalType": "address",
+        "name": "actual",
+        "type": "address"
+      }
+    ],
+    "name": "SignerNotAuthorized",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "expected",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "actual",
+        "type": "address"
+      }
+    ],
+    "name": "SpenderNotApproved",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      }
+    ],
+    "name": "TokenNotSupported",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      }
+    ],
+    "name": "TokenSupportAlreadyAdded",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      }
+    ],
+    "name": "TokenSupportNotFound",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "TokenSupportZeroAddress",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      }
+    ],
+    "name": "TokenTransferFailed",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "TransferNotAllowed",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "expected",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
         "name": "received",
         "type": "address"
       }
     ],
     "name": "UnauthorizedAccess",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "ZeroAddress",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "ZeroAmount",
     "type": "error"
   },
   {

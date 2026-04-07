@@ -85,7 +85,7 @@ describe('BoardOfDirectors', () => {
           'bank transfer',
           bank.interface.encodeFunctionData('transfer', [recipient.address, ethers.parseEther('1')])
         )
-    ).to.be.revertedWith('Only board of directors can call this function')
+    ).to.be.revertedWithCustomError(board, 'NotBoardMember')
   })
 
   it('supports revoking approvals', async () => {
@@ -137,7 +137,10 @@ describe('BoardOfDirectors', () => {
 
     await board.connect(member2).approve(0) // executes the action (majority reached)
 
-    await expect(board.connect(member2).approve(0)).to.be.revertedWith('Action already executed')
+    await expect(board.connect(member2).approve(0)).to.be.revertedWithCustomError(
+      board,
+      'ActionAlreadyExecuted'
+    )
   })
 
   it('rejects revoke when not approved', async () => {
@@ -152,7 +155,10 @@ describe('BoardOfDirectors', () => {
       )
 
     // member2 has not approved, so revoke should fail
-    await expect(board.connect(member2).revoke(0)).to.be.revertedWith('Not approved')
+    await expect(board.connect(member2).revoke(0)).to.be.revertedWithCustomError(
+      board,
+      'NotApproved'
+    )
   })
 
   it('rejects revoke on already executed action', async () => {
@@ -168,14 +174,18 @@ describe('BoardOfDirectors', () => {
 
     await board.connect(member2).approve(0) // executes the action
 
-    await expect(board.connect(member1).revoke(0)).to.be.revertedWith('Action already executed')
+    await expect(board.connect(member1).revoke(0)).to.be.revertedWithCustomError(
+      board,
+      'ActionAlreadyExecuted'
+    )
   })
 
   it('rejects setBoardOfDirectors with empty array', async () => {
     const { board, founder } = await deployFixture()
 
-    await expect(board.connect(founder).setBoardOfDirectors([])).to.be.revertedWith(
-      'Board of directors required'
+    await expect(board.connect(founder).setBoardOfDirectors([])).to.be.revertedWithCustomError(
+      board,
+      'EmptyList'
     )
   })
 
@@ -184,7 +194,7 @@ describe('BoardOfDirectors', () => {
 
     await expect(
       board.connect(member1).addAction(ethers.ZeroAddress, 'invalid', '0x')
-    ).to.be.revertedWith('Invalid target address')
+    ).to.be.revertedWithCustomError(board, 'ZeroAddress')
   })
 
   it('calls setOwners via self-referential board action', async () => {
@@ -239,6 +249,9 @@ describe('BoardOfDirectors', () => {
 
     await board.connect(member1).addAction(await board.getAddress(), 'add owner', addOwnerCalldata)
 
-    await expect(board.connect(member2).approve(0)).to.be.revertedWith('Call failed')
+    await expect(board.connect(member2).approve(0)).to.be.revertedWithCustomError(
+      board,
+      'CallFailed'
+    )
   })
 })

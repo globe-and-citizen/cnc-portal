@@ -99,13 +99,17 @@ export const mockTransactionFunctions = {
 }
 
 /**
- * Mock native transaction composable
+ * Mock native transaction composable (TanStack mutation shape)
  */
 export const mockUseSafeSendTransaction = {
-  sendTransaction: mockTransactionFunctions.mockSendTransaction,
-  isLoading: ref(false),
-  isConfirmed: ref(false),
-  receipt: ref<{ status: string } | null>(null)
+  mutateAsync: mockTransactionFunctions.mockMutateAsync,
+  mutate: mockTransactionFunctions.mockSendTransaction,
+  isPending: ref(false),
+  isSuccess: ref(false),
+  isError: ref(false),
+  error: ref<Error | null>(null),
+  data: ref<{ hash: string; receipt: { status: string } } | null>(null),
+  reset: vi.fn()
 }
 
 /**
@@ -219,9 +223,11 @@ export const resetComposableMocks = () => {
   mockUseContractBalance.dividends.value = []
 
   // Reset native transaction states
-  mockUseSafeSendTransaction.isLoading.value = false
-  mockUseSafeSendTransaction.isConfirmed.value = false
-  mockUseSafeSendTransaction.receipt.value = null
+  mockUseSafeSendTransaction.isPending.value = false
+  mockUseSafeSendTransaction.isSuccess.value = false
+  mockUseSafeSendTransaction.isError.value = false
+  mockUseSafeSendTransaction.error.value = null
+  mockUseSafeSendTransaction.data.value = null
 
   // Clear all native transaction function mocks
   Object.values(mockTransactionFunctions).forEach((mock) => {

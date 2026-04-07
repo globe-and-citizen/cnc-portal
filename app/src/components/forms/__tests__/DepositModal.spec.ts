@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { mount, VueWrapper } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import DepositModal from '../DepositModal.vue'
-import DepositBankForm from '../DepositBankForm.vue'
 
 describe('DepositModal', () => {
   let wrapper: VueWrapper
@@ -22,14 +21,6 @@ describe('DepositModal', () => {
       props: {
         bankAddress: mockBankAddress,
         ...props
-      },
-      global: {
-        components: {
-          DepositBankForm
-        },
-        stubs: {
-          DepositBankForm: true
-        }
       }
     })
   }

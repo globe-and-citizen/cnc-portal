@@ -21,17 +21,55 @@ contract FeeCollector is
 {
   using SafeERC20 for IERC20;
 
+  /**
+   * @dev Fee configuration entry for one contract type.
+   * @param contractType Identifier of the contract type (e.g. "BANK").
+   * @param feeBps Fee in basis points (e.g. 50 = 0.5%).
+   */
   struct FeeConfig {
     string contractType; // e.g. "BANK"
     uint16 feeBps; // e.g. 50 = 0.5%
   }
 
+  /// @dev Stored fee configurations, one entry per contract type.
   FeeConfig[] private feeConfigs;
 
   /// @notice Emitted when ERC20 tokens are withdrawn
   event TokenWithdrawn(address indexed owner, address indexed token, uint256 amount);
 
+  /**
+   * @notice Emitted when a fee configuration entry is added or updated.
+   * @param contractType The contract type the fee applies to.
+   * @param feeBps The new fee in basis points.
+   */
   event FeeConfigUpdated(string indexed contractType, uint16 feeBps);
+
+  /// @dev A required address argument was the zero address.
+  error ZeroAddress();
+  /// @dev The contractType string was empty.
+  error EmptyContractType();
+  /// @dev The fee basis points value is invalid (> 10000).
+  /// @param feeBps The invalid fee value.
+  error InvalidBps(uint16 feeBps);
+  /// @dev Duplicate contractType entries are not allowed.
+  /// @param contractType The duplicated contract type.
+  error DuplicateContractType(string contractType);
+  /// @dev The contract's balance is less than the requested amount.
+  /// @param required The amount requested.
+  /// @param available The current contract balance.
+  error InsufficientBalance(uint256 required, uint256 available);
+  /// @dev A low-level native token transfer failed.
+  error WithdrawalFailed();
+  /// @dev The token is not supported by this fee collector.
+  /// @param token The unsupported token.
+  error TokenNotSupported(address token);
+  /// @dev The amount must be greater than zero.
+  error ZeroAmount();
+  /// @dev The contract's token balance is less than the requested amount.
+  /// @param token The ERC20 token.
+  /// @param required The amount requested.
+  /// @param available The current token balance.
+  error InsufficientTokenBalance(address token, uint256 required, uint256 available);
 
   /**
    * @notice Initializes the FeeCollector with owner, fee configs, and supported tokens
@@ -45,23 +83,23 @@ contract FeeCollector is
     FeeConfig[] memory _configs,
     address[] calldata _tokenAddresses
   ) public initializer {
-    require(_owner != address(0), 'Owner is zero');
+    if (_owner == address(0)) revert ZeroAddress();
 
     __Ownable_init(_owner);
     __ReentrancyGuard_init();
 
     // Store fee configs
     for (uint256 i = 0; i < _configs.length; i++) {
-      require(bytes(_configs[i].contractType).length > 0, 'Empty type');
-      require(_configs[i].feeBps <= 10000, 'Invalid BPS');
+      if (bytes(_configs[i].contractType).length == 0) revert EmptyContractType();
+      if (_configs[i].feeBps > 10000) revert InvalidBps(_configs[i].feeBps);
 
       // No duplicates allowed
       for (uint256 j = 0; j < i; j++) {
-        require(
-          keccak256(bytes(feeConfigs[j].contractType)) !=
-            keccak256(bytes(_configs[i].contractType)),
-          'Duplicate contractType'
-        );
+        if (
+          keccak256(bytes(feeConfigs[j].contractType)) == keccak256(bytes(_configs[i].contractType))
+        ) {
+          revert DuplicateContractType(_configs[i].contractType);
+        }
       }
 
       feeConfigs.push(
@@ -71,7 +109,7 @@ contract FeeCollector is
 
     // Set the initial supported tokens (same pattern as Bank contract)
     for (uint256 i = 0; i < _tokenAddresses.length; i++) {
-      require(_tokenAddresses[i] != address(0), 'Token address cannot be zero');
+      if (_tokenAddresses[i] == address(0)) revert ZeroAddress();
       _addTokenSupport(_tokenAddresses[i]);
     }
     // Emit events after they're already added to avoid duplicate events
@@ -109,10 +147,10 @@ contract FeeCollector is
    * @dev Protected by nonReentrant due to external call
    */
   function withdraw(uint256 amount) external onlyOwner nonReentrant {
-    require(address(this).balance >= amount, 'Insufficient balance');
+    if (address(this).balance < amount) revert InsufficientBalance(amount, address(this).balance);
 
     (bool sent, ) = owner().call{value: amount}('');
-    require(sent, 'Withdrawal failed');
+    if (!sent) revert WithdrawalFailed();
   }
 
   /**
@@ -122,11 +160,13 @@ contract FeeCollector is
    * @dev Protected by nonReentrant and only owner can call
    */
   function withdrawToken(address _token, uint256 _amount) external onlyOwner nonReentrant {
-    require(_isTokenSupported(_token), 'Token not supported');
-    require(_amount > 0, 'Amount must be greater than zero');
+    if (!_isTokenSupported(_token)) revert TokenNotSupported(_token);
+    if (_amount == 0) revert ZeroAmount();
 
     uint256 contractBalance = IERC20(_token).balanceOf(address(this));
-    require(contractBalance >= _amount, 'Insufficient token balance');
+    if (contractBalance < _amount) {
+      revert InsufficientTokenBalance(_token, _amount, contractBalance);
+    }
 
     IERC20(_token).safeTransfer(owner(), _amount);
     emit TokenWithdrawn(owner(), _token, _amount);
@@ -160,16 +200,18 @@ contract FeeCollector is
    * @return The token balance
    */
   function getTokenBalance(address _token) external view returns (uint256) {
-    require(_isTokenSupported(_token), 'Token not supported');
+    if (!_isTokenSupported(_token)) revert TokenNotSupported(_token);
     return IERC20(_token).balanceOf(address(this));
   }
 
   /**
    * @notice Add or update a single fee configuration
+   * @param contractType The contract type this fee applies to.
+   * @param feeBps Fee in basis points (must be <= 10000).
    */
   function setFee(string memory contractType, uint16 feeBps) external onlyOwner {
-    require(bytes(contractType).length > 0, 'Empty type');
-    require(feeBps <= 10000, 'Invalid BPS');
+    if (bytes(contractType).length == 0) revert EmptyContractType();
+    if (feeBps > 10000) revert InvalidBps(feeBps);
 
     bytes32 key = keccak256(bytes(contractType));
 

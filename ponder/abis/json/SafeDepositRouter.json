@@ -56,12 +56,22 @@
   },
   {
     "inputs": [],
+    "name": "InvestorContractNotFound",
+    "type": "error"
+  },
+  {
+    "inputs": [],
     "name": "MultiplierTooLow",
     "type": "error"
   },
   {
     "inputs": [],
     "name": "NotInitializing",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "OfficerAddressNotSet",
     "type": "error"
   },
   {
@@ -129,8 +139,40 @@
     "type": "error"
   },
   {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      }
+    ],
+    "name": "TokenSupportAlreadyAdded",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      }
+    ],
+    "name": "TokenSupportNotFound",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "TokenSupportZeroAddress",
+    "type": "error"
+  },
+  {
     "inputs": [],
     "name": "ZeroAmount",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "ZeroSender",
     "type": "error"
   },
   {

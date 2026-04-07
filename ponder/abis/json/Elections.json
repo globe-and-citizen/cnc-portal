@@ -6,6 +6,11 @@
   },
   {
     "inputs": [],
+    "name": "BoardOfDirectorsNotFound",
+    "type": "error"
+  },
+  {
+    "inputs": [],
     "name": "DuplicateCandidates",
     "type": "error"
   },
@@ -85,6 +90,11 @@
     "type": "error"
   },
   {
+    "inputs": [],
+    "name": "OfficerAddressNotSet",
+    "type": "error"
+  },
+  {
     "inputs": [
       {
         "internalType": "address",
@@ -119,6 +129,11 @@
   {
     "inputs": [],
     "name": "Unauthorized",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "ZeroSender",
     "type": "error"
   },
   {

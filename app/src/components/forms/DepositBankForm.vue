@@ -68,7 +68,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed } from 'vue'
 import { parseEther, zeroAddress, type Address } from 'viem'
 import { useContractBalance } from '@/composables/useContractBalance'
 import { useSafeSendTransaction } from '@/composables/transactions/useSafeSendTransaction'
@@ -133,13 +133,9 @@ const toast = useToast()
 const { balances, isLoading } = useContractBalance(userDataStore.address as Address)
 
 // Native token deposit using safe transaction handler
-const {
-  sendTransaction,
-  isLoading: isNativeDepositLoading,
-  isConfirmed: isNativeDepositConfirmed,
-  receipt: nativeReceipt
-  // error: nativeDepositError
-} = useSafeSendTransaction()
+const nativeDeposit = useSafeSendTransaction({
+  to: computed(() => props.bankAddress)
+})
 
 // Computed properties
 // Token list derived from SUPPORTED_TOKENS
@@ -181,32 +177,24 @@ const ERC20ApproveResult = useERC20Approve(
   bigIntAmount
 )
 
-const bankDepositTokenResult = useDepositToken(selectedTokenAddress, bigIntAmount)
+const bankDepositTokenResult = useDepositToken()
 
 // Methods
 
-// Success handling
-watch(isNativeDepositConfirmed, (confirmed) => {
-  if (confirmed && nativeReceipt.value) {
-    amount.value = ''
-    toast.add({
-      title: `${selectedToken.value?.token.code} deposited successfully`,
-      color: 'success'
-    })
-    emits('closeModal')
-  }
-})
-// Remove unused notZero and notExceedingBalance
-
 const submitForm = async () => {
   if (!isAmountValid.value) return // Validation check
-  // TODO: handle multiple submission for native and erc20
-  if (isNativeDepositLoading.value) return // Prevent multiple submissions
+  if (nativeDeposit.isPending.value) return // Prevent multiple submissions
   submitting.value = true
   try {
     // Deposit of native token (ETH/POL...)
     if (selectedTokenId.value === 'native') {
-      await sendTransaction(props.bankAddress, parseEther(amount.value))
+      await nativeDeposit.mutateAsync({ value: parseEther(amount.value) })
+      amount.value = ''
+      toast.add({
+        title: `${selectedToken.value?.token.code} deposited successfully`,
+        color: 'success'
+      })
+      emits('closeModal')
     } else {
       if (!(allowanceValue.value >= bigIntAmount.value)) {
         currentStep.value = 1
@@ -221,7 +209,9 @@ const submitForm = async () => {
         }
       }
       currentStep.value = 2
-      await bankDepositTokenResult.executeWrite([selectedTokenAddress.value, bigIntAmount.value])
+      await bankDepositTokenResult.mutateAsync({
+        args: [selectedTokenAddress.value, bigIntAmount.value]
+      })
 
       const invalidateErc20Balance = (tokenAddress: Address, target: Address) =>
         queryClient.invalidateQueries({
@@ -237,14 +227,6 @@ const submitForm = async () => {
         })
 
       invalidateErc20Balance(selectedTokenAddress.value, props.bankAddress)
-
-      // Check if bankDepositTokenResult has an error
-      if (
-        bankDepositTokenResult.receiptResult.error.value ||
-        bankDepositTokenResult.writeResult.error.value
-      ) {
-        throw new Error('Deposit failed')
-      }
 
       submitting.value = false
       amount.value = ''

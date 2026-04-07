@@ -20,14 +20,25 @@ abstract contract TokenSupport {
   /// @notice Emitted when a token is removed from the supported tokens list
   event TokenSupportRemoved(address indexed tokenAddress);
 
+  /// @dev A required token address argument was the zero address.
+  error TokenSupportZeroAddress();
+
+  /// @dev The token is already in the supported tokens list.
+  /// @param token The token that was already supported.
+  error TokenSupportAlreadyAdded(address token);
+
+  /// @dev The token is not currently in the supported tokens list.
+  /// @param token The token that was not found.
+  error TokenSupportNotFound(address token);
+
   /**
    * @notice Adds a supported token to the contract.
    * @param _tokenAddress The address of the token contract.
    * @dev Can only be called by contracts that implement onlyOwner or similar access control.
    */
   function _addTokenSupport(address _tokenAddress) internal {
-    require(_tokenAddress != address(0), 'Token address cannot be zero');
-    require(_supportedTokens.add(_tokenAddress), 'Token already supported');
+    if (_tokenAddress == address(0)) revert TokenSupportZeroAddress();
+    if (!_supportedTokens.add(_tokenAddress)) revert TokenSupportAlreadyAdded(_tokenAddress);
     emit TokenSupportAdded(_tokenAddress);
   }
 
@@ -37,8 +48,8 @@ abstract contract TokenSupport {
    * @dev Can only be called by contracts that implement onlyOwner or similar access control.
    */
   function _removeTokenSupport(address _tokenAddress) internal {
-    require(_tokenAddress != address(0), 'Token address cannot be zero');
-    require(_supportedTokens.remove(_tokenAddress), 'Token not supported');
+    if (_tokenAddress == address(0)) revert TokenSupportZeroAddress();
+    if (!_supportedTokens.remove(_tokenAddress)) revert TokenSupportNotFound(_tokenAddress);
     emit TokenSupportRemoved(_tokenAddress);
   }
 
