@@ -137,7 +137,10 @@ describe('BoardOfDirectors', () => {
 
     await board.connect(member2).approve(0) // executes the action (majority reached)
 
-    await expect(board.connect(member2).approve(0)).to.be.revertedWithCustomError(board, 'ActionAlreadyExecuted')
+    await expect(board.connect(member2).approve(0)).to.be.revertedWithCustomError(
+      board,
+      'ActionAlreadyExecuted'
+    )
   })
 
   it('rejects revoke when not approved', async () => {
@@ -152,7 +155,10 @@ describe('BoardOfDirectors', () => {
       )
 
     // member2 has not approved, so revoke should fail
-    await expect(board.connect(member2).revoke(0)).to.be.revertedWithCustomError(board, 'NotApproved')
+    await expect(board.connect(member2).revoke(0)).to.be.revertedWithCustomError(
+      board,
+      'NotApproved'
+    )
   })
 
   it('rejects revoke on already executed action', async () => {
@@ -168,14 +174,18 @@ describe('BoardOfDirectors', () => {
 
     await board.connect(member2).approve(0) // executes the action
 
-    await expect(board.connect(member1).revoke(0)).to.be.revertedWithCustomError(board, 'ActionAlreadyExecuted')
+    await expect(board.connect(member1).revoke(0)).to.be.revertedWithCustomError(
+      board,
+      'ActionAlreadyExecuted'
+    )
   })
 
   it('rejects setBoardOfDirectors with empty array', async () => {
     const { board, founder } = await deployFixture()
 
     await expect(board.connect(founder).setBoardOfDirectors([])).to.be.revertedWithCustomError(
-      board, 'EmptyList'
+      board,
+      'EmptyList'
     )
   })
 
@@ -239,6 +249,9 @@ describe('BoardOfDirectors', () => {
 
     await board.connect(member1).addAction(await board.getAddress(), 'add owner', addOwnerCalldata)
 
-    await expect(board.connect(member2).approve(0)).to.be.revertedWithCustomError(board, 'CallFailed')
+    await expect(board.connect(member2).approve(0)).to.be.revertedWithCustomError(
+      board,
+      'CallFailed'
+    )
   })
 })

@@ -163,7 +163,8 @@ describe('ExpenseAccountEIP712V2 - Custom Frequency', function () {
 
       // Test period calculation with zero custom frequency
       await expect(expenseAccount.getPeriod(budgetLimit, 1000)).to.be.revertedWithCustomError(
-        expenseAccount, 'InvalidCustomFrequency'
+        expenseAccount,
+        'InvalidCustomFrequency'
       )
     })
 

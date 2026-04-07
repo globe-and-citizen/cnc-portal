@@ -250,15 +250,15 @@ describe('ExpenseAccount (EIP712) - Administrative Tests', () => {
       })
 
       it('Should not allow changing to invalid token symbols', async () => {
-        await expect(expenseAccount.addTokenSupport(ethers.ZeroAddress)).to.be.revertedWithCustomError(
-          expenseAccount, 'TokenSupportZeroAddress'
-        )
+        await expect(
+          expenseAccount.addTokenSupport(ethers.ZeroAddress)
+        ).to.be.revertedWithCustomError(expenseAccount, 'TokenSupportZeroAddress')
       })
 
       it('Should not allow setting zero address as token address', async () => {
-        await expect(expenseAccount.removeTokenSupport(ethers.ZeroAddress)).to.be.revertedWithCustomError(
-          expenseAccount, 'TokenSupportZeroAddress'
-        )
+        await expect(
+          expenseAccount.removeTokenSupport(ethers.ZeroAddress)
+        ).to.be.revertedWithCustomError(expenseAccount, 'TokenSupportZeroAddress')
       })
     })
   })
