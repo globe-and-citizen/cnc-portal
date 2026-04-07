@@ -112,7 +112,7 @@ export function useSafeSendTransaction(cfg: SendTransactionConfig) {
         log.error('useSafeSendTransaction failed:\n', parseErrorV2(error))
       }
     },
-    onSuccess: async (_data, _variables) => {
+    onSuccess: async (_data) => {
       const receipt = _data.receipt
       const chainId = unref(cfg.chainId)
 
