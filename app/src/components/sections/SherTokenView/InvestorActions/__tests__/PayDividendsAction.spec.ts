@@ -49,8 +49,8 @@ describe('PayDividendsAction.vue', () => {
     mockBodIsBodAction.isBodAction.value = false
     mockBodAddAction.isActionAdded.value = false
     mockBodAddAction.executeAddAction.mockResolvedValue(undefined)
-    mockBankWrites.distributeNativeDividends.executeWrite.mockResolvedValue(true)
-    mockBankWrites.distributeTokenDividends.executeWrite.mockResolvedValue(true)
+    mockBankWrites.distributeNativeDividends.mutateAsync.mockResolvedValue(true)
+    mockBankWrites.distributeTokenDividends.mutateAsync.mockResolvedValue(true)
     mockTeamStore.currentTeam = {
       id: 'team-1',
       name: 'Test Team'
@@ -141,7 +141,7 @@ describe('PayDividendsAction.vue', () => {
 
     await vm.handleSubmit(0n, 'native')
 
-    expect(mockBankWrites.distributeNativeDividends.executeWrite).not.toHaveBeenCalled()
+    expect(mockBankWrites.distributeNativeDividends.mutateAsync).not.toHaveBeenCalled()
     expect(mockBodAddAction.executeAddAction).not.toHaveBeenCalled()
   })
 
@@ -192,7 +192,7 @@ describe('PayDividendsAction.vue', () => {
 
     await vm.handleSubmit(5n, 'native')
 
-    expect(mockBankWrites.distributeNativeDividends.executeWrite).toHaveBeenCalledWith([5n])
+    expect(mockBankWrites.distributeNativeDividends.mutateAsync).toHaveBeenCalledWith({ args: [5n] })
   })
 
   it('handleSubmit executes token write in non-BOD mode', async () => {
@@ -203,11 +203,11 @@ describe('PayDividendsAction.vue', () => {
 
     await vm.handleSubmit(6n, 'usdc')
 
-    expect(mockBankWrites.distributeTokenDividends.executeWrite).toHaveBeenCalled()
+    expect(mockBankWrites.distributeTokenDividends.mutateAsync).toHaveBeenCalled()
   })
 
   it('handleSubmit returns early when native write fails', async () => {
-    mockBankWrites.distributeNativeDividends.executeWrite.mockResolvedValue(undefined)
+    mockBankWrites.distributeNativeDividends.mutateAsync.mockResolvedValue(undefined)
     const wrapper = createWrapper()
     const vm = wrapper.vm as unknown as {
       handleSubmit: (value: bigint, tokenId: string) => Promise<void>
@@ -215,11 +215,11 @@ describe('PayDividendsAction.vue', () => {
 
     await vm.handleSubmit(7n, 'native')
 
-    expect(mockBankWrites.distributeNativeDividends.executeWrite).toHaveBeenCalledWith([7n])
+    expect(mockBankWrites.distributeNativeDividends.mutateAsync).toHaveBeenCalledWith({ args: [7n] })
   })
 
   it('handleSubmit returns early when token write fails', async () => {
-    mockBankWrites.distributeTokenDividends.executeWrite.mockResolvedValue(undefined)
+    mockBankWrites.distributeTokenDividends.mutateAsync.mockResolvedValue(undefined)
     const wrapper = createWrapper()
     const vm = wrapper.vm as unknown as {
       handleSubmit: (value: bigint, tokenId: string) => Promise<void>
@@ -227,7 +227,7 @@ describe('PayDividendsAction.vue', () => {
 
     await vm.handleSubmit(8n, 'usdc')
 
-    expect(mockBankWrites.distributeTokenDividends.executeWrite).toHaveBeenCalled()
+    expect(mockBankWrites.distributeTokenDividends.mutateAsync).toHaveBeenCalled()
   })
 
   it('watch isActionAdded closes modal', async () => {

@@ -1,6 +1,6 @@
 import { vi } from 'vitest'
 import { ref } from 'vue'
-import { createContractReadMock, createContractWriteMock } from './erc20.mock'
+import { createContractReadMock, createContractWriteMock, createContractWriteV3Mock } from './erc20.mock'
 
 /**
  * Elections Contract Mocks
@@ -37,22 +37,22 @@ export const mockBankReads = {
 }
 
 export const mockBankWrites = {
-  deposit: createContractWriteMock(),
-  addTokenSupport: createContractWriteMock(),
-  removeTokenSupport: createContractWriteMock(),
-  distributeNativeDividends: createContractWriteMock(),
-  distributeTokenDividends: createContractWriteMock(),
-  claimDividend: createContractWriteMock(),
-  claimTokenDividend: createContractWriteMock(),
-  depositDividends: createContractWriteMock(),
-  depositTokenDividends: createContractWriteMock(),
-  setInvestorAddress: createContractWriteMock(),
-  transfer: createContractWriteMock(),
-  transferToken: createContractWriteMock(),
-  transferOwnership: createContractWriteMock(),
-  renounceOwnership: createContractWriteMock(),
-  pause: createContractWriteMock(),
-  unpause: createContractWriteMock()
+  deposit: createContractWriteV3Mock(),
+  addTokenSupport: createContractWriteV3Mock(),
+  removeTokenSupport: createContractWriteV3Mock(),
+  distributeNativeDividends: createContractWriteV3Mock(),
+  distributeTokenDividends: createContractWriteV3Mock(),
+  claimDividend: createContractWriteV3Mock(),
+  claimTokenDividend: createContractWriteV3Mock(),
+  depositDividends: createContractWriteV3Mock(),
+  depositTokenDividends: createContractWriteV3Mock(),
+  setInvestorAddress: createContractWriteV3Mock(),
+  transfer: createContractWriteV3Mock(),
+  transferToken: createContractWriteV3Mock(),
+  transferOwnership: createContractWriteV3Mock(),
+  renounceOwnership: createContractWriteV3Mock(),
+  pause: createContractWriteV3Mock(),
+  unpause: createContractWriteV3Mock()
 }
 
 /**
@@ -178,14 +178,15 @@ export const resetContractMocks = () => {
     mockExpenseAccountReads
   ]
 
-  const allWriteMocks = [
+  const allWriteV2Mocks = [
     mockElectionsWrites,
-    mockBankWrites,
     mockBODWrites,
     mockInvestorWrites,
     mockCashRemunerationWrites,
     mockExpenseAccountWrites
   ]
+
+  const allWriteV3Mocks = [mockBankWrites]
 
   // Reset all read mocks
   allReadMocks.forEach((mockGroup) => {
@@ -204,10 +205,9 @@ export const resetContractMocks = () => {
     })
   })
 
-  // Reset all write mocks
-  allWriteMocks.forEach((mockGroup) => {
+  // Reset V2 write mocks
+  allWriteV2Mocks.forEach((mockGroup) => {
     Object.values(mockGroup).forEach((mock) => {
-      // Reset write results
       mock.writeResult.data.value = null
       mock.writeResult.error.value = null
       mock.writeResult.isLoading.value = false
@@ -216,7 +216,6 @@ export const resetContractMocks = () => {
       mock.writeResult.isPending.value = false
       mock.writeResult.status.value = 'idle'
 
-      // Reset receipt results
       mock.receiptResult.data.value = null
       mock.receiptResult.error.value = null
       mock.receiptResult.isLoading.value = false
@@ -225,11 +224,29 @@ export const resetContractMocks = () => {
       mock.receiptResult.isPending.value = false
       mock.receiptResult.status.value = 'idle'
 
-      // Reset execute function
       if (vi.isMockFunction(mock.executeWrite)) {
         mock.executeWrite.mockClear()
         mock.executeWrite.mockResolvedValue(undefined)
       }
+    })
+  })
+
+  // Reset V3 write mocks (TanStack mutation shape)
+  allWriteV3Mocks.forEach((mockGroup) => {
+    Object.values(mockGroup).forEach((mock) => {
+      mock.isPending.value = false
+      mock.isSuccess.value = false
+      mock.isError.value = false
+      mock.error.value = null
+      mock.data.value = null
+      mock.status.value = 'idle'
+
+      if (vi.isMockFunction(mock.mutate)) mock.mutate.mockClear()
+      if (vi.isMockFunction(mock.mutateAsync)) {
+        mock.mutateAsync.mockClear()
+        mock.mutateAsync.mockResolvedValue(undefined)
+      }
+      if (vi.isMockFunction(mock.reset)) mock.reset.mockClear()
     })
   })
 }

@@ -177,7 +177,7 @@ const ERC20ApproveResult = useERC20Approve(
   bigIntAmount
 )
 
-const bankDepositTokenResult = useDepositToken(selectedTokenAddress, bigIntAmount)
+const bankDepositTokenResult = useDepositToken()
 
 // Methods
 
@@ -209,7 +209,9 @@ const submitForm = async () => {
         }
       }
       currentStep.value = 2
-      await bankDepositTokenResult.executeWrite([selectedTokenAddress.value, bigIntAmount.value])
+      await bankDepositTokenResult.mutateAsync({
+        args: [selectedTokenAddress.value, bigIntAmount.value]
+      })
 
       const invalidateErc20Balance = (tokenAddress: Address, target: Address) =>
         queryClient.invalidateQueries({
@@ -225,14 +227,6 @@ const submitForm = async () => {
         })
 
       invalidateErc20Balance(selectedTokenAddress.value, props.bankAddress)
-
-      // Check if bankDepositTokenResult has an error
-      if (
-        bankDepositTokenResult.receiptResult.error.value ||
-        bankDepositTokenResult.writeResult.error.value
-      ) {
-        throw new Error('Deposit failed')
-      }
 
       submitting.value = false
       amount.value = ''
