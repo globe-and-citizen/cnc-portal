@@ -231,13 +231,13 @@ describe('ExpenseAccount (EIP712) - Administrative Tests', () => {
 
         await expect(
           expenseAccount.connect(owner).depositToken(unsupportedToken, amount)
-        ).to.be.revertedWith('Unsupported token')
+        ).to.be.revertedWithCustomError(expenseAccount, 'TokenNotSupported')
       })
 
       it('Should not allow zero amount deposits', async () => {
         await expect(
           expenseAccount.connect(owner).depositToken(await mockUSDT.getAddress(), 0)
-        ).to.be.revertedWith('Amount must be greater than zero')
+        ).to.be.revertedWithCustomError(expenseAccount, 'ZeroAmount')
       })
 
       it('Should not allow non-owners to change token addresses', async () => {
@@ -250,14 +250,14 @@ describe('ExpenseAccount (EIP712) - Administrative Tests', () => {
       })
 
       it('Should not allow changing to invalid token symbols', async () => {
-        await expect(expenseAccount.addTokenSupport(ethers.ZeroAddress)).to.be.revertedWith(
-          'Token address cannot be zero'
+        await expect(expenseAccount.addTokenSupport(ethers.ZeroAddress)).to.be.revertedWithCustomError(
+          expenseAccount, 'TokenSupportZeroAddress'
         )
       })
 
       it('Should not allow setting zero address as token address', async () => {
-        await expect(expenseAccount.removeTokenSupport(ethers.ZeroAddress)).to.be.revertedWith(
-          'Token address cannot be zero'
+        await expect(expenseAccount.removeTokenSupport(ethers.ZeroAddress)).to.be.revertedWithCustomError(
+          expenseAccount, 'TokenSupportZeroAddress'
         )
       })
     })

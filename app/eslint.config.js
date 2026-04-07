@@ -32,7 +32,8 @@ export default [
       '**/dist-ssr/**',
       '**/coverage/**',
       '**/playwright-report/**',
-      '**/.cache-synpress/**'
+      '**/.cache-synpress/**',
+      '**/test-results/**'
     ]
   },
   ...pluginVue.configs['flat/essential'],
