@@ -195,19 +195,16 @@ describe('Bank', () => {
           value: ethers.parseEther('2')
         })
 
-        await expect(bank.transfer(ethers.ZeroAddress, transferAmount)).to.be.revertedWithCustomError(
-          bankProxy,
-          ERRORS.ZERO_ADDRESS
-        )
+        await expect(
+          bank.transfer(ethers.ZeroAddress, transferAmount)
+        ).to.be.revertedWithCustomError(bankProxy, ERRORS.ZERO_ADDRESS)
 
         await expect(bank.transfer(contractor.address, 0)).to.be.revertedWithCustomError(
           bankProxy,
           ERRORS.ZERO_AMOUNT
         )
 
-        await expect(
-          bank.transfer(contractor.address, ethers.parseEther('100'))
-        )
+        await expect(bank.transfer(contractor.address, ethers.parseEther('100')))
           .to.be.revertedWithCustomError(bankProxy, ERRORS.INSUFFICIENT_BALANCE)
           .withArgs(ethers.parseEther('100'), ethers.parseEther('2'))
       })
@@ -282,9 +279,7 @@ describe('Bank', () => {
         'UNS'
       )) as unknown as MockERC20
 
-      await expect(
-        bankProxy.connect(owner).depositToken(await unsupportedToken.getAddress(), 100)
-      )
+      await expect(bankProxy.connect(owner).depositToken(await unsupportedToken.getAddress(), 100))
         .to.be.revertedWithCustomError(bankProxy, ERRORS.UNSUPPORTED_TOKEN)
         .withArgs(await unsupportedToken.getAddress())
     })
@@ -325,9 +320,7 @@ describe('Bank', () => {
         'UNS'
       )) as unknown as MockERC20
 
-      await expect(
-        bank.transferToken(await unsupportedToken.getAddress(), contractor.address, 100)
-      )
+      await expect(bank.transferToken(await unsupportedToken.getAddress(), contractor.address, 100))
         .to.be.revertedWithCustomError(bankProxy, ERRORS.UNSUPPORTED_TOKEN)
         .withArgs(await unsupportedToken.getAddress())
 
@@ -368,9 +361,7 @@ describe('Bank', () => {
         'UNS'
       )) as unknown as MockERC20
 
-      await expect(
-        bankProxy.getTokenBalance(await unsupportedToken.getAddress())
-      )
+      await expect(bankProxy.getTokenBalance(await unsupportedToken.getAddress()))
         .to.be.revertedWithCustomError(bankProxy, ERRORS.UNSUPPORTED_TOKEN)
         .withArgs(await unsupportedToken.getAddress())
     })

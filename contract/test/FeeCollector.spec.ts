@@ -78,11 +78,9 @@ describe('FeeCollector', () => {
 
     it('should reject zero address as owner', async () => {
       const FeeCollectorFactory = await ethers.getContractFactory('FeeCollector')
-      const tempProxy = (await upgrades.deployProxy(
-        FeeCollectorFactory,
-        [owner.address, [], []],
-        { initializer: 'initialize' }
-      )) as unknown as FeeCollector
+      const tempProxy = (await upgrades.deployProxy(FeeCollectorFactory, [owner.address, [], []], {
+        initializer: 'initialize'
+      })) as unknown as FeeCollector
 
       await expect(
         upgrades.deployProxy(FeeCollectorFactory, [ethers.ZeroAddress, INITIAL_CONFIGS, []], {
@@ -98,11 +96,9 @@ describe('FeeCollector', () => {
       ]
 
       const FeeCollectorFactory = await ethers.getContractFactory('FeeCollector')
-      const tempProxy = (await upgrades.deployProxy(
-        FeeCollectorFactory,
-        [owner.address, [], []],
-        { initializer: 'initialize' }
-      )) as unknown as FeeCollector
+      const tempProxy = (await upgrades.deployProxy(FeeCollectorFactory, [owner.address, [], []], {
+        initializer: 'initialize'
+      })) as unknown as FeeCollector
 
       await expect(
         upgrades.deployProxy(FeeCollectorFactory, [owner.address, invalidConfigs, []], {
@@ -118,11 +114,9 @@ describe('FeeCollector', () => {
       ]
 
       const FeeCollectorFactory = await ethers.getContractFactory('FeeCollector')
-      const tempProxy = (await upgrades.deployProxy(
-        FeeCollectorFactory,
-        [owner.address, [], []],
-        { initializer: 'initialize' }
-      )) as unknown as FeeCollector
+      const tempProxy = (await upgrades.deployProxy(FeeCollectorFactory, [owner.address, [], []], {
+        initializer: 'initialize'
+      })) as unknown as FeeCollector
 
       await expect(
         upgrades.deployProxy(FeeCollectorFactory, [owner.address, invalidConfigs, []], {
@@ -138,11 +132,9 @@ describe('FeeCollector', () => {
       ]
 
       const FeeCollectorFactory = await ethers.getContractFactory('FeeCollector')
-      const tempProxy = (await upgrades.deployProxy(
-        FeeCollectorFactory,
-        [owner.address, [], []],
-        { initializer: 'initialize' }
-      )) as unknown as FeeCollector
+      const tempProxy = (await upgrades.deployProxy(FeeCollectorFactory, [owner.address, [], []], {
+        initializer: 'initialize'
+      })) as unknown as FeeCollector
 
       await expect(
         upgrades.deployProxy(FeeCollectorFactory, [owner.address, duplicateConfigs, []], {
@@ -153,11 +145,9 @@ describe('FeeCollector', () => {
 
     it('should reject zero token address in initialization', async () => {
       const FeeCollectorFactory = await ethers.getContractFactory('FeeCollector')
-      const tempProxy = (await upgrades.deployProxy(
-        FeeCollectorFactory,
-        [owner.address, [], []],
-        { initializer: 'initialize' }
-      )) as unknown as FeeCollector
+      const tempProxy = (await upgrades.deployProxy(FeeCollectorFactory, [owner.address, [], []], {
+        initializer: 'initialize'
+      })) as unknown as FeeCollector
 
       await expect(
         upgrades.deployProxy(
@@ -343,9 +333,10 @@ describe('FeeCollector', () => {
     })
 
     it('should not allow adding zero address token', async () => {
-      await expect(
-        feeCollector.addTokenSupport(ethers.ZeroAddress)
-      ).to.be.revertedWithCustomError(feeCollector, ERRORS.TOKEN_SUPPORT_ZERO_ADDRESS)
+      await expect(feeCollector.addTokenSupport(ethers.ZeroAddress)).to.be.revertedWithCustomError(
+        feeCollector,
+        ERRORS.TOKEN_SUPPORT_ZERO_ADDRESS
+      )
     })
 
     it('should allow owner to remove token support', async () => {

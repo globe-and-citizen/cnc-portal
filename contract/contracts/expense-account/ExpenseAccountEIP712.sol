@@ -361,9 +361,7 @@ contract ExpenseAccountEIP712 is
     }
 
     // Check token is supported (allows native token)
-    if (
-      budgetLimit.tokenAddress != address(0) && !isTokenSupported(budgetLimit.tokenAddress)
-    ) {
+    if (budgetLimit.tokenAddress != address(0) && !isTokenSupported(budgetLimit.tokenAddress)) {
       revert TokenNotSupported(budgetLimit.tokenAddress);
     }
 

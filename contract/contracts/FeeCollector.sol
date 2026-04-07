@@ -96,8 +96,7 @@ contract FeeCollector is
       // No duplicates allowed
       for (uint256 j = 0; j < i; j++) {
         if (
-          keccak256(bytes(feeConfigs[j].contractType)) ==
-          keccak256(bytes(_configs[i].contractType))
+          keccak256(bytes(feeConfigs[j].contractType)) == keccak256(bytes(_configs[i].contractType))
         ) {
           revert DuplicateContractType(_configs[i].contractType);
         }

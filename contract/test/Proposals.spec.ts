@@ -340,9 +340,7 @@ describe('Proposals Contract', function () {
     const { proposalsContract, boardMember1 } = await loadFixture(deployContracts)
 
     await expect(
-      proposalsContract
-        .connect(boardMember1)
-        .createProposal('Title', 'Description', 'Budget', 0, 0)
+      proposalsContract.connect(boardMember1).createProposal('Title', 'Description', 'Budget', 0, 0)
     ).to.be.revertedWithCustomError(proposalsContract, 'InvalidProposalDates')
   })
 

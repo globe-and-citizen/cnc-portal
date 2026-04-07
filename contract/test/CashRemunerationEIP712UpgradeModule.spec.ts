@@ -49,10 +49,7 @@ describe('CashRemunerationEIP712UpgradeModule', function () {
       })
       .find((p) => p?.name === 'BeaconProxyCreated')
     const proxyAddress = parsed!.args[0] as string
-    const cashRemunerationProxy = await ethers.getContractAt(
-      'CashRemunerationEIP712',
-      proxyAddress
-    )
+    const cashRemunerationProxy = await ethers.getContractAt('CashRemunerationEIP712', proxyAddress)
 
     return {
       beaconOwner,

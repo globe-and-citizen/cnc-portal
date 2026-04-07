@@ -217,9 +217,7 @@ contract AdCampaignManager is Ownable(msg.sender), Pausable, ReentrancyGuard {
     if (campaignId == 0) revert InvalidCampaignCode();
     AdCampaign storage campaign = adCampaigns[campaignId];
     if (campaign.status != CampaignStatus.Active) revert CampaignNotActive();
-    if (
-      !(msg.sender == campaign.advertiser || admins[msg.sender] || msg.sender == owner())
-    ) {
+    if (!(msg.sender == campaign.advertiser || admins[msg.sender] || msg.sender == owner())) {
       revert NotAuthorizedWithdrawer(msg.sender);
     }
     if (campaign.amountSpent > currentAmountSpent) revert SpentLessThanClaimed();

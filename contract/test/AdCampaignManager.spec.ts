@@ -177,9 +177,7 @@ describe('AdCampaignManager', () => {
     })
 
     it('Should not allow non-owners to update cost per click', async () => {
-      await expect(
-        adCampaignManager.connect(advertiser).setCostPerClick(ethers.parseEther('0.02'))
-      )
+      await expect(adCampaignManager.connect(advertiser).setCostPerClick(ethers.parseEther('0.02')))
         .to.be.revertedWithCustomError(adCampaignManager, 'NotAdminOrOwner')
         .withArgs(advertiser.address)
     })
@@ -318,9 +316,7 @@ describe('AdCampaignManager', () => {
       expect(await adCampaignManager.bankContractAddress()).to.equal(admin.address)
 
       // Test unauthorized user trying to set the bank address
-      await expect(
-        adCampaignManager.connect(advertiser).setBankContractAddress(advertiser.address)
-      )
+      await expect(adCampaignManager.connect(advertiser).setBankContractAddress(advertiser.address))
         .to.be.revertedWithCustomError(adCampaignManager, 'NotAdminOrOwner')
         .withArgs(advertiser.address)
     })
@@ -346,9 +342,7 @@ describe('AdCampaignManager', () => {
       expect(await adCampaignManager.costPerClick()).to.equal(ethers.parseEther('0.02'))
 
       // Test unauthorized user trying to set the cost
-      await expect(
-        adCampaignManager.connect(advertiser).setCostPerClick(ethers.parseEther('0.02'))
-      )
+      await expect(adCampaignManager.connect(advertiser).setCostPerClick(ethers.parseEther('0.02')))
         .to.be.revertedWithCustomError(adCampaignManager, 'NotAdminOrOwner')
         .withArgs(advertiser.address)
     })

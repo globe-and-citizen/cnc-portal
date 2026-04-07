@@ -103,9 +103,8 @@ describe('BankUpgradeModule', function () {
   it('rejects upgrading to a non-contract implementation address', async () => {
     const { beaconOwner, user1, beacon } = await loadFixture(deployFixture)
 
-    await expect(beacon.connect(beaconOwner).upgradeTo(user1.address)).to.be.revertedWithCustomError(
-      beacon,
-      'BeaconInvalidImplementation'
-    )
+    await expect(
+      beacon.connect(beaconOwner).upgradeTo(user1.address)
+    ).to.be.revertedWithCustomError(beacon, 'BeaconInvalidImplementation')
   })
 })
