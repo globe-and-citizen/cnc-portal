@@ -30,12 +30,6 @@ const router = createRouter({
       meta: { name: 'Overview' },
       children: [
         {
-          path: '/teams/:id/demo',
-          name: 'team-demo',
-          meta: { name: 'Company Demo' },
-          component: () => import('@/views/team/[id]/DemoExample.vue')
-        },
-        {
           path: '/teams/:id/accounts/bank-account',
           name: 'bank-account',
           meta: { name: 'Bank Account' },
