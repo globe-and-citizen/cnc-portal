@@ -5,7 +5,6 @@ import { readContracts } from '@wagmi/core'
 import { useQuery } from '@tanstack/vue-query'
 import { useTeamStore } from '@/stores'
 import { BANK_ABI } from '@/artifacts/abi/bank'
-import { OFFICER_ABI } from '@/artifacts/abi/officer'
 import { SUPPORTED_TOKENS } from '@/constant/index'
 import { config } from '@/wagmi.config'
 
@@ -18,10 +17,6 @@ const BANK_FUNCTION_NAMES = {
   TOKEN_DIVIDEND_BALANCES: 'tokenDividendBalances',
   TOTAL_DIVIDEND: 'totalDividends',
   BALANCE: 'getBalance'
-} as const
-
-const OFFICER_FUNCTION_NAMES = {
-  GET_FEE_FOR: 'getFeeFor'
 } as const
 
 /**
@@ -222,36 +217,5 @@ export function useGetDividendBalances(userAddress: MaybeRef<Address>) {
     },
     staleTime: 30_000, // 30 seconds
     refetchInterval: 60_000 // 1 minute
-  })
-}
-
-export function useBankOfficerAddress(bankAddress: MaybeRef<Address | undefined>) {
-  const bankAddressValue = computed(() => unref(bankAddress))
-
-  return useReadContract({
-    address: bankAddressValue,
-    abi: BANK_ABI,
-    functionName: BANK_FUNCTION_NAMES.OFFICER_ADDRESS,
-    query: {
-      enabled: computed(() => !!bankAddressValue.value && isAddress(bankAddressValue.value))
-    }
-  })
-}
-
-export function useBankFeeBps(bankAddress: MaybeRef<Address | undefined>) {
-  const { data: officerAddress } = useBankOfficerAddress(bankAddress)
-  const resolvedOfficerAddress = computed<Address | undefined>(() => {
-    const value = officerAddress.value as Address | undefined
-    return value && isAddress(value) ? value : undefined
-  })
-
-  return useReadContract({
-    address: resolvedOfficerAddress,
-    abi: OFFICER_ABI,
-    functionName: OFFICER_FUNCTION_NAMES.GET_FEE_FOR,
-    args: ['BANK'],
-    query: {
-      enabled: computed(() => !!resolvedOfficerAddress.value)
-    }
   })
 }

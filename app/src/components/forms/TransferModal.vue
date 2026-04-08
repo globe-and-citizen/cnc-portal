@@ -71,7 +71,7 @@ import { NETWORK, USDC_ADDRESS, USDC_E_ADDRESS } from '@/constant'
 import { useUserDataStore } from '@/stores'
 import { useBodAddAction } from '@/composables/bod/writes'
 import { useBodIsBodAction } from '@/composables/bod/reads'
-import { useBankFeeBps } from '@/composables/bank/reads'
+import { useOfficerFeeBps } from '@/composables/officer/reads'
 import type { TokenOption } from '@/types'
 import { useContractBalance } from '@/composables'
 
@@ -98,7 +98,7 @@ const { data: bankOwner } = useReadContract({
 
 const { isBodAction } = useBodIsBodAction(props.bankAddress as Address)
 
-const { data: feeBpsData } = useBankFeeBps(computed(() => props.bankAddress))
+const { data: feeBpsData } = useOfficerFeeBps('BANK')
 const feeBpsNumber = computed(() => Number(feeBpsData.value ?? 0))
 
 const isBankOwner = computed(() => bankOwner.value === userStore.address)
