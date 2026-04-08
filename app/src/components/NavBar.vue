@@ -26,6 +26,17 @@
         </UDropdownMenu>
       </div>
     </div>
+    <div>
+      <UModal
+        v-model:open="open"
+        title="Update User Data"
+        description="Edit your profile information used across the application."
+      >
+        <template #body>
+          <EditUserForm />
+        </template>
+      </UModal>
+    </div>
   </div>
 </template>
 
@@ -36,14 +47,18 @@ import NotificationDropdown from '@/components/NotificationDropdown.vue'
 import { useUserDataStore } from '@/stores'
 import { storeToRefs } from 'pinia'
 import type { DropdownMenuItem } from '@nuxt/ui'
+import EditUserForm from '@/components/forms/EditUserForm.vue'
+import { ref } from 'vue'
 
 defineEmits(['toggleSideButton', 'toggleEditUserModal'])
 const { logout } = useAuth()
 const userStore = useUserDataStore()
 const { imageUrl } = storeToRefs(userStore)
 
+const open = ref(false)
+
 const profileItems = <DropdownMenuItem[]>[
-  { label: 'Settings' },
+  { label: 'Settings', onSelect: () => (open.value = true) },
   { label: 'Logout', onSelect: logout }
 ]
 </script>

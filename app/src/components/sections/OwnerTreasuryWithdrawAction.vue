@@ -4,19 +4,28 @@
       color="warning"
       size="sm"
       :disabled="!hasWithdrawableBalance || isLoadingAction"
-      :loading="isLoadingAction"
       data-test="owner-withdraw-button"
       label="Withdraw"
       @click="openWithdrawModal"
     />
 
     <UModal
-      v-model:open="isWithdrawModalOpen"
+      v-if="withdrawModal.mount"
+      v-model:open="withdrawModal.show"
       title="Confirm Treasury Withdraw"
       description="Review this action before signing the transaction in MetaMask."
+      :close="{ onClick: resetWithdrawState }"
     >
       <template #body>
         <div class="space-y-4">
+          <UAlert
+            v-if="modalWarningMessage"
+            color="error"
+            variant="soft"
+            :description="modalWarningMessage"
+            data-test="owner-withdraw-modal-warning"
+          />
+
           <UAlert
             color="warning"
             variant="soft"
@@ -30,7 +39,7 @@
               color="neutral"
               variant="outline"
               :disabled="isLoadingAction"
-              @click="isWithdrawModalOpen = false"
+              @click="resetWithdrawState"
             >
               Cancel
             </UButton>
@@ -80,7 +89,11 @@ const queryClient = useQueryClient()
 const chainId = useChainId()
 
 const isSubmitting = ref(false)
-const isWithdrawModalOpen = ref(false)
+const withdrawModal = ref({
+  mount: false,
+  show: false
+})
+const modalWarningMessage = ref('')
 
 const contractAddress = computed(
   () => teamStore.getContractAddressByType(props.contractType) as Address | undefined
@@ -103,12 +116,7 @@ const ownerAddress = computed(() =>
 
 const { isBodAction } = useBodIsBodAction(contractAddress as unknown as Address)
 
-const {
-  executeAddAction: addAction,
-  isPending: isLoadingAddAction,
-  isConfirming: isConfirmingAddAction,
-  isActionAdded
-} = useBodAddAction()
+const bodAddAction = useBodAddAction()
 
 const isOwner = computed(() => {
   if (!ownerAddress.value || !userStore.address) return false
@@ -140,8 +148,8 @@ const isLoadingAction = computed(
   () =>
     isSubmitting.value ||
     isLoadingWrite.value ||
-    isLoadingAddAction.value ||
-    isConfirmingAddAction.value
+    bodAddAction.isPending.value ||
+    bodAddAction.isConfirming.value
 )
 
 const isConfirmingWithdraw = computed(
@@ -149,6 +157,39 @@ const isConfirmingWithdraw = computed(
     cashWithdrawAllWrite.receiptResult.isLoading.value ||
     expenseWithdrawAllWrite.receiptResult.isLoading.value
 )
+
+const resetWithdrawState = () => {
+  withdrawModal.value = { mount: false, show: false }
+  modalWarningMessage.value = ''
+}
+
+const getRawErrorMessage = (error: unknown) => {
+  if (typeof error === 'object' && error !== null) {
+    if ('shortMessage' in error && typeof error.shortMessage === 'string') {
+      return error.shortMessage
+    }
+
+    if ('message' in error && typeof error.message === 'string') {
+      return error.message
+    }
+  }
+
+  return ''
+}
+
+const isUserRejectedError = (error: unknown) => {
+  const message = getRawErrorMessage(error).toLowerCase()
+
+  if (!message) return false
+
+  return (
+    message.includes('user rejected') ||
+    message.includes('user denied') ||
+    message.includes('cancelled') ||
+    message.includes('user cancelled') ||
+    message.includes('denied transaction signature')
+  )
+}
 
 const refreshContractBalances = async () => {
   if (!contractAddress.value) return
@@ -164,17 +205,18 @@ const refreshContractBalances = async () => {
 }
 
 const openWithdrawModal = () => {
-  isWithdrawModalOpen.value = true
+  modalWarningMessage.value = ''
+  withdrawModal.value = { mount: true, show: true }
 }
 
 const confirmWithdrawFromModal = async () => {
-  isWithdrawModalOpen.value = false
   await submitWithdrawAll()
 }
 
 const submitWithdrawAll = async () => {
   if (!contractAddress.value) return
   isSubmitting.value = true
+  modalWarningMessage.value = ''
 
   try {
     if (isBodAction.value) {
@@ -189,7 +231,7 @@ const submitWithdrawAll = async () => {
         title: 'Owner Treasury Withdraw All to Bank'
       })
 
-      await addAction({
+      await bodAddAction.executeAddAction({
         targetAddress: contractAddress.value,
         description,
         data: encodedData,
@@ -206,35 +248,45 @@ const submitWithdrawAll = async () => {
     const hash = await write.executeWrite([], undefined, { skipGasEstimation: true })
 
     if (!hash) {
+      if (isUserRejectedError(write.writeResult.error.value)) {
+        modalWarningMessage.value = 'Owner rejected the request.'
+        return
+      }
+
       toast.add({ title: 'Withdraw failed', color: 'error' })
     }
   } catch (error: unknown) {
     console.error(error)
-    const message =
-      typeof error === 'object' && error !== null && 'shortMessage' in error
-        ? String((error as { shortMessage?: string }).shortMessage || 'Failed to withdraw funds')
-        : typeof error === 'object' && error !== null && 'message' in error
-          ? String((error as { message?: string }).message || 'Failed to withdraw funds')
-          : 'Failed to withdraw funds'
-    toast.add({ title: message, color: 'error' })
+
+    if (isUserRejectedError(error)) {
+      modalWarningMessage.value = 'Owner rejected the request.'
+      return
+    }
+
+    toast.add({ title: 'Failed to withdraw funds', color: 'error' })
   } finally {
     isSubmitting.value = false
   }
 }
 
-watch(isActionAdded, (added) => {
-  if (added) {
-    toast.add({
-      title: 'Action added successfully, waiting for board confirmation',
-      color: 'success'
-    })
+watch(
+  () => bodAddAction.isActionAdded.value,
+  (added) => {
+    if (added) {
+      toast.add({
+        title: 'Action added successfully, waiting for board confirmation',
+        color: 'success'
+      })
+      resetWithdrawState()
+    }
   }
-})
+)
 
 watch(isConfirmingWithdraw, async (newIsConfirming, oldIsConfirming) => {
   if (newIsConfirming || !oldIsConfirming) return
 
   toast.add({ title: 'Withdraw successful', color: 'success' })
+  resetWithdrawState()
   await refreshContractBalances()
 })
 </script>

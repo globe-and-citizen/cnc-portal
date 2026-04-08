@@ -1,5 +1,5 @@
 import { getPresignedDownloadUrl } from '../services/storageService';
-import { faker } from '@faker-js/faker';
+// import { faker } from '@faker-js/faker';
 
 type AvatarMode = 'faker' | 'none';
 
@@ -11,10 +11,15 @@ const resolveAvatarMode = (): AvatarMode => {
   return 'faker';
 };
 
-const generateFakerAvatar = (address: string): string => {
-  const seed = Array.from(address).reduce((sum, char) => sum + char.charCodeAt(0), 0);
-  faker.seed(seed);
-  return faker.image.avatar();
+// const generateFakerAvatar = (address: string): string => {
+//   const seed = Array.from(address).reduce((sum, char) => sum + char.charCodeAt(0), 0);
+//   faker.seed(seed);
+//   return faker.image.avatar();
+// };
+
+const generateSeedAvatar = (address: string): string => {
+  const seed = encodeURIComponent(address);
+  return `https://api.dicebear.com/7.x/identicon/svg?seed=${seed}`;
 };
 
 export const resolveDefaultProfileImageUrl = (address: string): string | null => {
@@ -22,7 +27,7 @@ export const resolveDefaultProfileImageUrl = (address: string): string | null =>
     return null;
   }
 
-  return generateFakerAvatar(address);
+  return generateSeedAvatar(address);
 };
 
 export const extractProfileStorageKey = (imageUrl?: string | null): string | null => {
