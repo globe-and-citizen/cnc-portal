@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
-import { nextTick } from 'vue'
 import OwnerTreasuryWithdrawAction from '../OwnerTreasuryWithdrawAction.vue'
 import {
   mockBodAddAction,
@@ -20,23 +19,23 @@ import {
 } from '@/tests/mocks'
 
 const OWNER_ADDRESS = '0x00000000000000000000000000000000000000aa'
+const NON_OWNER_ADDRESS = '0x00000000000000000000000000000000000000bb'
+const CASH_ADDRESS = '0x6666666666666666666666666666666666666666'
+const EXPENSE_ADDRESS = '0x5555555555555555555555555555555555555555'
+const BUTTON = '[data-test="owner-withdraw-button"]'
+const CONFIRM = '[data-test="owner-withdraw-modal-confirm-button"]'
+const WARNING = '[data-test="owner-withdraw-modal-warning"]'
 
-const makeBalance = (
-  id: string,
-  amount: number,
-  symbol: string,
-  decimals: number,
-  address: string
-) => ({
+const makeBalance = (amount: number) => ({
   amount,
   token: {
-    id,
-    name: symbol,
-    symbol,
-    code: symbol,
-    coingeckoId: symbol.toLowerCase(),
-    decimals,
-    address
+    id: 'native',
+    name: 'ETH',
+    symbol: 'ETH',
+    code: 'ETH',
+    coingeckoId: 'ethereum',
+    decimals: 18,
+    address: '0x0000000000000000000000000000000000000000'
   },
   values: {
     USD: {
@@ -59,6 +58,38 @@ const createWrapper = (
     global: { stubs: { teleport: true } }
   })
 
+const openModal = async (wrapper: ReturnType<typeof createWrapper>) => {
+  await wrapper.get(BUTTON).trigger('click')
+}
+
+const submit = async (
+  contractType: 'CashRemunerationEIP712' | 'ExpenseAccountEIP712' = 'CashRemunerationEIP712'
+) => {
+  const wrapper = createWrapper(contractType)
+  await openModal(wrapper)
+  await wrapper.get(CONFIRM).trigger('click')
+  await flushPromises()
+  return wrapper
+}
+
+const simulatePendingReceipt = (
+  write: typeof mockCashRemunerationWrites.ownerWithdrawAllToBank
+) => {
+  write.executeWrite.mockImplementationOnce(async () => {
+    write.receiptResult.isLoading.value = true
+    return '0xhash'
+  })
+}
+
+const simulateReturnedError = (error: unknown) => {
+  mockCashRemunerationWrites.ownerWithdrawAllToBank.executeWrite.mockImplementationOnce(
+    async () => {
+      mockCashRemunerationWrites.ownerWithdrawAllToBank.writeResult.error.value = error as Error
+      return undefined
+    }
+  )
+}
+
 describe('OwnerTreasuryWithdrawAction', () => {
   const invalidateQueries = vi.fn()
 
@@ -67,7 +98,6 @@ describe('OwnerTreasuryWithdrawAction', () => {
     vi.clearAllMocks()
     resetContractMocks()
     resetComposableMocks()
-
     vi.mocked(useQueryClientFn).mockReturnValue({
       invalidateQueries,
       getQueryData: vi.fn(),
@@ -80,125 +110,148 @@ describe('OwnerTreasuryWithdrawAction', () => {
     mockExpenseAccountReads.owner.data.value = OWNER_ADDRESS
     mockBodIsBodAction.isBodAction.value = false
     mockBodAddAction.isActionAdded.value = false
-
     mockCashRemunerationWrites.ownerWithdrawAllToBank.executeWrite.mockResolvedValue('0xhash')
     mockExpenseAccountWrites.ownerWithdrawAllToBank.executeWrite.mockResolvedValue('0xhash')
-
     mockTeamStore.getContractAddressByType = vi.fn((type) => {
-      if (type === 'CashRemunerationEIP712') return '0x6666666666666666666666666666666666666666'
-      if (type === 'ExpenseAccountEIP712') return '0x5555555555555555555555555555555555555555'
+      if (type === 'CashRemunerationEIP712') return CASH_ADDRESS
+      if (type === 'ExpenseAccountEIP712') return EXPENSE_ADDRESS
       return '0x1111111111111111111111111111111111111111'
     })
-
-    mockUseContractBalance.balances.value = [
-      makeBalance('native', 3, 'ETH', 18, '0x0000000000000000000000000000000000000000'),
-      makeBalance('usdc', 20, 'USDC', 6, '0xA3492D046095AFFE351cFac15de9b86425E235dB'),
-      makeBalance('sher', 2, 'SHER', 18, '0x1111111111111111111111111111111111111112')
-    ]
+    mockUseContractBalance.balances.value = [makeBalance(3)]
   })
 
-  it('hides action without owner or bod right', () => {
-    mockUserStore.address = '0x00000000000000000000000000000000000000bb'
+  it('applies visibility and balance rules before any withdrawal', () => {
+    mockUserStore.address = NON_OWNER_ADDRESS
     mockCashRemunerationReads.owner.data.value = '0x00000000000000000000000000000000000000cc'
-    const wrapper = createWrapper()
-    expect(wrapper.find('[data-test="owner-withdraw-button"]').exists()).toBe(false)
+    expect(createWrapper().find(BUTTON).exists()).toBe(false)
+
+    mockUserStore.address = ''
+    mockCashRemunerationReads.owner.data.value = OWNER_ADDRESS
+    expect(createWrapper().find(BUTTON).exists()).toBe(false)
+
+    mockUserStore.address = OWNER_ADDRESS.toLowerCase()
+    mockUseContractBalance.balances.value = [makeBalance(0)]
+    expect(createWrapper().get(BUTTON).attributes('disabled')).toBeDefined()
+
+    mockUseContractBalance.balances.value = [makeBalance(3)]
+    expect(createWrapper().get(BUTTON).attributes('disabled')).toBeUndefined()
   })
 
-  it('disables button with empty withdrawable balance', () => {
-    mockUseContractBalance.balances.value = [
-      makeBalance('native', 0, 'ETH', 18, '0x0000000000000000000000000000000000000000')
-    ]
+  it('opens and closes the modal through the UModal v-model', async () => {
     const wrapper = createWrapper()
-    expect(wrapper.get('[data-test="owner-withdraw-button"]').attributes('disabled')).toBeDefined()
+    await openModal(wrapper)
+    expect(wrapper.find(CONFIRM).exists()).toBe(true)
+    await wrapper.findComponent({ name: 'UModal' }).vm.$emit('update:open', false)
+    await flushPromises()
+    expect(wrapper.find(CONFIRM).exists()).toBe(false)
   })
 
-  it('enables button when there is withdrawable balance', () => {
+  it('closes the modal when a BOD action is added', async () => {
+    mockBodIsBodAction.isBodAction.value = true
     const wrapper = createWrapper()
-    const btn = wrapper.get('[data-test="owner-withdraw-button"]')
-    expect(btn.attributes('disabled')).toBeUndefined()
+    await openModal(wrapper)
+    mockBodAddAction.isActionAdded.value = true
+    await flushPromises()
+    expect(wrapper.find(CONFIRM).exists()).toBe(false)
   })
 
-  it.skip('calls ownerWithdrawAllToBank for CashRemunerationEIP712 on click', async () => {
-    const wrapper = createWrapper('CashRemunerationEIP712')
-    await wrapper.get('[data-test="owner-withdraw-button"]').trigger('click')
+  it('does not submit without a resolved contract address', async () => {
+    mockTeamStore.getContractAddressByType = vi.fn(
+      () => undefined as unknown as string
+    ) as unknown as typeof mockTeamStore.getContractAddressByType
+    await submit()
+    expect(mockCashRemunerationWrites.ownerWithdrawAllToBank.executeWrite).not.toHaveBeenCalled()
+  })
+
+  it('refreshes balances and closes the modal after a successful cash withdrawal', async () => {
+    simulatePendingReceipt(mockCashRemunerationWrites.ownerWithdrawAllToBank)
+    const wrapper = createWrapper()
+    await openModal(wrapper)
+    await wrapper.get(CONFIRM).trigger('click')
+    await flushPromises()
+    expect(wrapper.find(CONFIRM).exists()).toBe(true)
+
+    mockCashRemunerationWrites.ownerWithdrawAllToBank.receiptResult.isLoading.value = false
     await flushPromises()
 
-    expect(mockCashRemunerationWrites.ownerWithdrawAllToBank.executeWrite).toHaveBeenCalledWith(
-      [],
-      undefined,
-      { skipGasEstimation: true }
-    )
+    expect(invalidateQueries).toHaveBeenCalled()
+    expect(mockCashRemunerationWrites.ownerWithdrawAllToBank.executeWrite).toHaveBeenCalled()
+    expect(wrapper.find(CONFIRM).exists()).toBe(false)
   })
 
-  it.skip('calls ownerWithdrawAllToBank for ExpenseAccountEIP712 on click', async () => {
-    const wrapper = createWrapper('ExpenseAccountEIP712')
-    await wrapper.get('[data-test="owner-withdraw-button"]').trigger('click')
-    await flushPromises()
-
+  it('uses the expense account writer for direct expense withdrawals', async () => {
+    await submit('ExpenseAccountEIP712')
     expect(mockExpenseAccountWrites.ownerWithdrawAllToBank.executeWrite).toHaveBeenCalledWith(
       [],
       undefined,
       { skipGasEstimation: true }
     )
-  })
-
-  it.skip('creates bod action for withdraw all to bank', async () => {
-    mockUserStore.address = '0x00000000000000000000000000000000000000de'
-    mockBodIsBodAction.isBodAction.value = true
-    const wrapper = createWrapper()
-
-    await wrapper.get('[data-test="owner-withdraw-button"]').trigger('click')
-    await flushPromises()
-
-    expect(mockBodAddAction.executeAddAction).toHaveBeenCalledWith(
-      expect.objectContaining({
-        targetAddress: '0x6666666666666666666666666666666666666666',
-        userAddress: '0x00000000000000000000000000000000000000de'
-      })
-    )
-  })
-
-  it('shows success toast on bod action added', async () => {
-    mockBodIsBodAction.isBodAction.value = true
-    mockBodAddAction.isActionAdded.value = true
-    createWrapper()
-    await nextTick()
-    // The watcher will fire for isActionAdded
-  })
-
-  it('refreshes balances after withdraw confirmation', async () => {
-    const wrapper = createWrapper()
-    await wrapper.get('[data-test="owner-withdraw-button"]').trigger('click')
-    await flushPromises()
-
-    // Simulate confirmation cycle
-    mockCashRemunerationWrites.ownerWithdrawAllToBank.receiptResult.isLoading.value = true
-    await nextTick()
-    mockCashRemunerationWrites.ownerWithdrawAllToBank.receiptResult.isLoading.value = false
-    await nextTick()
-
-    expect(invalidateQueries).toHaveBeenCalled()
-  })
-
-  it('does not submit when contractAddress is undefined', async () => {
-    mockTeamStore.getContractAddressByType = vi.fn(
-      () => undefined as unknown as string
-    ) as unknown as typeof mockTeamStore.getContractAddressByType
-    const wrapper = createWrapper()
-    await wrapper.get('[data-test="owner-withdraw-button"]').trigger('click')
-    await flushPromises()
-
     expect(mockCashRemunerationWrites.ownerWithdrawAllToBank.executeWrite).not.toHaveBeenCalled()
   })
 
-  it.skip('handles error during withdraw', async () => {
-    mockCashRemunerationWrites.ownerWithdrawAllToBank.executeWrite.mockRejectedValueOnce({
-      shortMessage: 'Short withdraw error'
-    })
-    const wrapper = createWrapper()
-    await wrapper.get('[data-test="owner-withdraw-button"]').trigger('click')
-    await flushPromises()
+  it.each([
+    ['ExpenseAccountEIP712', EXPENSE_ADDRESS, mockExpenseAccountWrites.ownerWithdrawAllToBank],
+    ['CashRemunerationEIP712', CASH_ADDRESS, mockCashRemunerationWrites.ownerWithdrawAllToBank]
+  ] as const)(
+    'routes %s withdrawals through BOD action creation',
+    async (contractType, targetAddress, write) => {
+      mockBodIsBodAction.isBodAction.value = true
+      mockUserStore.address = NON_OWNER_ADDRESS
+      mockBodAddAction.executeAddAction.mockResolvedValue(undefined)
 
+      await submit(contractType)
+
+      expect(mockBodAddAction.executeAddAction).toHaveBeenCalledWith(
+        expect.objectContaining({
+          targetAddress,
+          userAddress: NON_OWNER_ADDRESS,
+          description: expect.stringContaining('Owner Treasury Withdraw All to Bank'),
+          data: expect.any(String)
+        })
+      )
+      expect(write.executeWrite).not.toHaveBeenCalled()
+    }
+  )
+
+  it.each([
+    ['returned message', () => simulateReturnedError({ message: 'User rejected the request' })],
+    [
+      'returned shortMessage',
+      () => simulateReturnedError({ shortMessage: 'User denied transaction signature' })
+    ],
+    [
+      'thrown shortMessage',
+      () =>
+        mockCashRemunerationWrites.ownerWithdrawAllToBank.executeWrite.mockRejectedValueOnce({
+          shortMessage: 'cancelled in MetaMask'
+        })
+    ]
+  ])('shows an inline warning for %s user cancellations', async (_, setup) => {
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    setup()
+    const wrapper = await submit()
+    expect(wrapper.find(WARNING).text()).toContain('Owner rejected the request.')
+    consoleErrorSpy.mockRestore()
+  })
+
+  it.each([
+    ['string response error', () => simulateReturnedError('rpc aborted')],
+    ['object response error', () => simulateReturnedError({ code: 4001 })]
+  ])('keeps the inline warning hidden for %s', async (_, setup) => {
+    setup()
+    const wrapper = await submit()
+    expect(wrapper.find(WARNING).exists()).toBe(false)
     expect(mockCashRemunerationWrites.ownerWithdrawAllToBank.executeWrite).toHaveBeenCalled()
+  })
+
+  it('keeps the inline warning hidden for unexpected thrown errors', async () => {
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    mockCashRemunerationWrites.ownerWithdrawAllToBank.executeWrite.mockRejectedValueOnce(
+      new Error('RPC node unavailable')
+    )
+    const wrapper = await submit()
+    expect(consoleErrorSpy).toHaveBeenCalled()
+    expect(wrapper.find(WARNING).exists()).toBe(false)
+    consoleErrorSpy.mockRestore()
   })
 })
