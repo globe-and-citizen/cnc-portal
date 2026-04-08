@@ -174,14 +174,11 @@ const validationSchema = computed(() =>
       .min(1, 'Amount is required')
       .refine((value) => /^\d*\.?\d+$/.test(value), 'Enter a valid amount')
       .refine((value) => parseFloat(value) > 0, 'Amount must be greater than 0')
-      .refine(
-        (value) => {
-          const amount = parseFloat(value)
-          const fee = (amount * (props.feeBps ?? 0)) / 10000
-          return amount + fee <= (model.value.token.balance ?? 0)
-        },
-        'Amount + fees exceed available balance'
-      )
+      .refine((value) => {
+        const amount = parseFloat(value)
+        const fee = (amount * (props.feeBps ?? 0)) / 10000
+        return amount + fee <= (model.value.token.balance ?? 0)
+      }, 'Amount + fees exceed available balance')
   })
 )
 
