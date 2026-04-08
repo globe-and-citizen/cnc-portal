@@ -77,7 +77,7 @@
         :disabled="loading"
         data-test="transferButton"
       >
-        {{ showFees ? `Send ${totalToSend.toFixed(2)} ${model.token.symbol}` : 'Transfer' }}
+        {{ showFees ? ` Transfer ${totalToSend.toFixed(2)} ${model.token.symbol}` : 'Transfer' }}
       </UButton>
     </div>
   </UForm>
@@ -176,7 +176,8 @@ const validationSchema = computed(() =>
       .refine((value) => parseFloat(value) > 0, 'Amount must be greater than 0')
       .refine((value) => {
         const amount = parseFloat(value)
-        const fee = (amount * (props.feeBps ?? 0)) / 10000
+        const bps = props.feeBps ?? 0
+        const fee = bps > 0 ? (amount * bps) / (10000 - bps) : 0
         return amount + fee <= (model.value.token.balance ?? 0)
       }, 'Amount + fees exceed available balance')
   })
