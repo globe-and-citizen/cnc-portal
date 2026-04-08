@@ -9,10 +9,10 @@ export const mockSafeDepositRouterReads = {
   owner: createContractReadMock('0x742d35Cc6bF8C55C6C2e013e5492D2b6637e0886'),
   depositsEnabled: createContractReadMock(true),
   safeAddress: createContractReadMock('0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'),
-  investorAddress: createContractReadMock('0x2222222222222222222222222222222222222222'),
+  officerAddress: createContractReadMock('0x2222222222222222222222222222222222222222'),
   multiplier: createContractReadMock(1000000n),
   minMultiplier: createContractReadMock(1000000n),
-  supportedTokens: createContractReadMock(true),
+  isTokenSupported: createContractReadMock(true),
   tokenDecimals: createContractReadMock(6),
   calculateCompensation: createContractReadMock(0n)
 }

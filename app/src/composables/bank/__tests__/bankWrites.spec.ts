@@ -8,10 +8,7 @@ import {
   useTransferOwnership,
   useRenounceOwnership,
   useTransfer,
-  useTransferToken,
-  useClaimDividend,
-  useClaimTokenDividend,
-  useSetInvestorAddress
+  useTransferToken
 } from '../writes'
 import { mockBankWrites, resetContractMocks } from '@/tests/mocks'
 
@@ -46,34 +43,6 @@ describe('Bank Contract Writes', () => {
     })
   })
 
-  describe('Dividend Operations', () => {
-    it('should return claim dividend mock', () => {
-      const result = useClaimDividend()
-      expect(result).toBe(mockBankWrites.claimDividend)
-    })
-
-    it('should return claim token dividend mock', () => {
-      const result = useClaimTokenDividend()
-      expect(result).toBe(mockBankWrites.claimTokenDividend)
-    })
-
-    it('should support successful dividend claims', async () => {
-      mockBankWrites.claimDividend.mutateAsync.mockResolvedValue(undefined)
-      const result = useClaimDividend()
-
-      await result.mutateAsync()
-      expect(result.mutateAsync).toHaveBeenCalled()
-    })
-
-    it('should handle dividend claim errors', async () => {
-      const error = new Error('Claim failed')
-      mockBankWrites.claimDividend.mutateAsync.mockRejectedValue(error)
-
-      const result = useClaimDividend()
-      await expect(result.mutateAsync()).rejects.toThrow('Claim failed')
-    })
-  })
-
   describe('Administrative Operations', () => {
     it('should return pause mock', () => {
       const result = usePause()
@@ -93,11 +62,6 @@ describe('Bank Contract Writes', () => {
     it('should return renounce ownership mock', () => {
       const result = useRenounceOwnership()
       expect(result).toBe(mockBankWrites.renounceOwnership)
-    })
-
-    it('should return set investor address mock', () => {
-      const result = useSetInvestorAddress()
-      expect(result).toBe(mockBankWrites.setInvestorAddress)
     })
 
     it('should handle pause/unpause operations', async () => {
@@ -143,8 +107,6 @@ describe('Bank Contract Writes', () => {
     it('should return distinct mocks for different functions', () => {
       const pause = usePause()
       const transfer = useTransfer()
-      // const claimDividend = useClaimDividend()
-
       expect(pause).not.toBe(transfer)
     })
 

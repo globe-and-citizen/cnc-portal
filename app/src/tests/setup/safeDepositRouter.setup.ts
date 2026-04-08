@@ -11,10 +11,10 @@ vi.mock('@/composables/safeDepositRouter/reads', () => ({
   useSafeDepositRouterOwner: vi.fn(() => mockSafeDepositRouterReads.owner),
   useSafeDepositRouterDepositsEnabled: vi.fn(() => mockSafeDepositRouterReads.depositsEnabled),
   useSafeDepositRouterSafeAddress: vi.fn(() => mockSafeDepositRouterReads.safeAddress),
-  useSafeDepositRouterInvestorAddress: vi.fn(() => mockSafeDepositRouterReads.investorAddress),
+  useSafeDepositRouterOfficerAddress: vi.fn(() => mockSafeDepositRouterReads.officerAddress),
   useSafeDepositRouterMultiplier: vi.fn(() => mockSafeDepositRouterReads.multiplier),
   useSafeDepositRouterMinMultiplier: vi.fn(() => mockSafeDepositRouterReads.minMultiplier),
-  useSafeDepositRouterSupportedTokens: vi.fn(() => mockSafeDepositRouterReads.supportedTokens),
+  useSafeDepositRouterIsTokenSupported: vi.fn(() => mockSafeDepositRouterReads.isTokenSupported),
   useSafeDepositRouterTokenDecimals: vi.fn(() => mockSafeDepositRouterReads.tokenDecimals),
   useSafeDepositRouterCalculateCompensation: vi.fn(
     () => mockSafeDepositRouterReads.calculateCompensation

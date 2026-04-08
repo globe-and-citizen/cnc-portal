@@ -1,7 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import {
-  useBodPause,
-  useBodUnpause,
   useBodSetBoardOfDirectors,
   useBodAddAction,
   useBodApproveAction
@@ -22,48 +20,6 @@ describe('BOD Contract Writes', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     resetContractMocks()
-  })
-
-  describe('useBodPause', () => {
-    it('should return pause mock', () => {
-      const result = useBodPause()
-
-      expect(result).toBe(mockBODWrites.pause)
-      expect(result.executeWrite).toBeInstanceOf(Function)
-    })
-
-    it('should support successful pause execution', async () => {
-      mockBODWrites.pause.executeWrite.mockResolvedValue(undefined)
-      const result = useBodPause()
-
-      await result.executeWrite()
-      expect(result.executeWrite).toHaveBeenCalled()
-    })
-
-    it('should handle pause errors', async () => {
-      const error = new Error('Pause failed')
-      mockBODWrites.pause.executeWrite.mockRejectedValue(error)
-
-      const result = useBodPause()
-      await expect(result.executeWrite()).rejects.toThrow('Pause failed')
-    })
-  })
-
-  describe('useBodUnpause', () => {
-    it('should return unpause mock', () => {
-      const result = useBodUnpause()
-
-      expect(result).toBe(mockBODWrites.unpause)
-      expect(result.executeWrite).toBeInstanceOf(Function)
-    })
-
-    it('should support successful unpause execution', async () => {
-      mockBODWrites.unpause.executeWrite.mockResolvedValue(undefined)
-      const result = useBodUnpause()
-
-      await result.executeWrite()
-      expect(result.executeWrite).toHaveBeenCalled()
-    })
   })
 
   describe('useBodSetBoardOfDirectors', () => {
@@ -146,16 +102,14 @@ describe('BOD Contract Writes', () => {
 
   describe('Mock Behavior', () => {
     it('should return distinct mocks for different functions', () => {
-      const pause = useBodPause()
-      const unpause = useBodUnpause()
       const setBoard = useBodSetBoardOfDirectors(MOCK_DATA.memberAddresses)
+      const approve = useBodApproveAction()
 
-      expect(pause).not.toBe(unpause)
-      expect(unpause).not.toBe(setBoard)
+      expect(setBoard).not.toBe(approve)
     })
 
     it('should maintain consistent interface structure', () => {
-      const result = useBodPause()
+      const result = useBodSetBoardOfDirectors(MOCK_DATA.memberAddresses)
 
       expect(result).toHaveProperty('executeWrite')
       expect(result).toHaveProperty('writeResult')
@@ -164,11 +118,11 @@ describe('BOD Contract Writes', () => {
     })
 
     it('should support mock reset', () => {
-      mockBODWrites.pause.executeWrite.mockResolvedValue(undefined)
+      mockBODWrites.setBoard.executeWrite.mockResolvedValue(undefined)
       resetContractMocks()
 
-      const result = useBodPause()
-      expect(result).toBe(mockBODWrites.pause)
+      const result = useBodSetBoardOfDirectors(MOCK_DATA.memberAddresses)
+      expect(result).toBe(mockBODWrites.setBoard)
     })
 
     it('should allow mock customization for different scenarios', async () => {

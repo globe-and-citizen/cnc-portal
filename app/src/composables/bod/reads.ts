@@ -9,8 +9,6 @@ import { BOD_ABI } from '@/artifacts/abi/bod'
  */
 export const BOD_FUNCTION_NAMES = {
   // Read functions
-  PAUSED: 'paused',
-  OWNER: 'owner',
   IS_ACTION_EXECUTED: 'isActionExecuted',
   IS_APPROVED: 'isApproved',
   GET_OWNERS: 'getOwners',
@@ -19,9 +17,6 @@ export const BOD_FUNCTION_NAMES = {
   APPROVAL_COUNT: 'approvalCount',
 
   // Write functions
-  PAUSE: 'pause',
-  UNPAUSE: 'unpause',
-  TRANSFER_OWNERSHIP: 'transferOwnership',
   ADD_ACTION: 'addAction',
   APPROVE: 'approve',
   REVOKE: 'revoke',
