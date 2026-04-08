@@ -43,6 +43,7 @@
           v-model="transferData"
           :tokens="tokens"
           :loading="isLoading"
+          :fee-bps="feeBpsNumber"
           @transfer="handleTransfer"
           @closeModal="resetTransferValues"
           :is-bod-action="isBodAction"
@@ -70,6 +71,7 @@ import { NETWORK, USDC_ADDRESS, USDC_E_ADDRESS } from '@/constant'
 import { useUserDataStore } from '@/stores'
 import { useBodAddAction } from '@/composables/bod/writes'
 import { useBodIsBodAction } from '@/composables/bod/reads'
+import { useBankFeeBps } from '@/composables/bank/reads'
 import type { TokenOption } from '@/types'
 import { useContractBalance } from '@/composables'
 
@@ -95,6 +97,9 @@ const { data: bankOwner } = useReadContract({
 })
 
 const { isBodAction } = useBodIsBodAction(props.bankAddress as Address)
+
+const { data: feeBpsData } = useBankFeeBps(computed(() => props.bankAddress))
+const feeBpsNumber = computed(() => Number(feeBpsData.value ?? 0))
 
 const isBankOwner = computed(() => bankOwner.value === userStore.address)
 
@@ -191,7 +196,13 @@ const handleTransfer = async (data: {
   const tokenAddress = data.token.symbol === 'USDCe' ? USDC_E_ADDRESS : USDC_ADDRESS
   try {
     const isNativeToken = data.token.symbol === NETWORK.currencySymbol
-    const transferAmount = isNativeToken ? parseEther(data.amount) : parseUnits(data.amount, 6)
+
+    // Exact formula: the contract deducts fee from _amount and sends net to recipient.
+    // To give recipient exactly `userAmountBigInt`, we must send: amount * 10000 / (10000 - feeBps)
+    const userAmountBigInt = isNativeToken ? parseEther(data.amount) : parseUnits(data.amount, 6)
+    const feeBps = BigInt(feeBpsNumber.value)
+    const transferAmount =
+      feeBps > 0n ? (userAmountBigInt * 10000n) / (10000n - feeBps) : userAmountBigInt
 
     if (isBodAction.value) {
       // BOD Action path
