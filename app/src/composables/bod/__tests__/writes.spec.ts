@@ -1,9 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import {
-  useBodSetBoardOfDirectors,
-  useBodAddAction,
-  useBodApproveAction
-} from '../writes'
+import { useBodSetBoardOfDirectors, useBodAddAction, useBodApproveAction } from '../writes'
 import { mockBODWrites, mockBodAddAction, resetContractMocks } from '@/tests/mocks'
 import type { Address } from 'viem'
 
