@@ -9,13 +9,26 @@ import { mockTeamStore, mockTeamsData } from '@/tests/mocks/index'
 import { mockRouterPush } from '@/tests/mocks/router.mock'
 import { createMockQueryResponse } from '@/tests/mocks/query.mock'
 
+// Restore real SelectMenu for this test — it tests actual USelectMenu behavior
+vi.unmock('@nuxt/ui/components/SelectMenu.vue')
+
 // jsdom does not implement scrollIntoView — reka-ui calls it when highlighting items
 Element.prototype.scrollIntoView = vi.fn()
 
 // currentTeamId must be a Vue ref so that storeToRefs() can extract it properly
 const mockCurrentTeamId = ref<string | null>(mockTeamStore.currentTeamId)
 
-const createWrapper = () => mount(TeamSelectMenu, { attachTo: document.body })
+const createWrapper = () =>
+  mount(TeamSelectMenu, {
+    attachTo: document.body,
+    global: {
+      stubs: {
+        // Override global stubs — this test exercises the real USelectMenu
+        USelectMenu: false,
+        SelectMenu: false
+      }
+    }
+  })
 
 describe('TeamSelectMenu', () => {
   afterEach(() => {
@@ -48,7 +61,7 @@ describe('TeamSelectMenu', () => {
         createMockQueryResponse([], true) as ReturnType<typeof useGetTeamsQuery>
       )
       const wrapper = createWrapper()
-      expect(wrapper.find('svg').exists()).toBe(true)
+      expect(wrapper.find('[data-test="u-icon"][data-icon*="loader"]').exists()).toBe(true)
     })
 
     it('shows placeholder text when no team matches', () => {

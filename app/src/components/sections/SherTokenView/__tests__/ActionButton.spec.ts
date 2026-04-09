@@ -28,7 +28,7 @@ describe('ActionButton.vue', () => {
     const wrapper = createWrapper()
 
     expect(wrapper.text()).toContain('Mint')
-    expect(wrapper.find('svg').exists()).toBe(true)
+    expect(wrapper.find('[data-test="u-icon"]').exists()).toBe(true)
   })
 
   it('applies tone and icon classes', () => {

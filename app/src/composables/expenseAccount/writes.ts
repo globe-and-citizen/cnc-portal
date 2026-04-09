@@ -52,17 +52,6 @@ export function useExpenseAccountDepositToken(
   })
 }
 
-export function useExpenseAccountChangeTokenAddress(
-  symbol: MaybeRef<string>,
-  tokenAddress: MaybeRef<Address>
-) {
-  const args = computed(() => [unref(symbol), unref(tokenAddress)] as readonly unknown[])
-  return useExpenseAccountContractWrite({
-    functionName: 'changeTokenAddress',
-    args
-  })
-}
-
 export function useExpenseAccountTransfer(
   to: MaybeRef<Address>,
   amount: MaybeRef<bigint>,

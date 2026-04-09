@@ -36,18 +36,6 @@ export function useRemoveTokenSupport() {
   return useBankContractWrite('removeTokenSupport')
 }
 
-export function useClaimDividend() {
-  return useBankContractWrite('claimDividend')
-}
-
-export function useClaimTokenDividend() {
-  return useBankContractWrite('claimTokenDividend')
-}
-
-export function useSetInvestorAddress() {
-  return useBankContractWrite('setInvestorAddress')
-}
-
 export function useTransfer() {
   return useBankContractWrite('transfer')
 }

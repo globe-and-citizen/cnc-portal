@@ -6,7 +6,6 @@ export const UButtonStub = defineComponent({
     'loading',
     'disabled',
     'color',
-    'class',
     'label',
     'icon',
     'iconTrailing',
@@ -21,10 +20,16 @@ export const UButtonStub = defineComponent({
         'button',
         {
           ...attrs,
-          disabled: props.disabled,
+          disabled: props.disabled || props.loading,
           onClick: (event) => emit('click', event)
         },
-        slots.default ? slots.default() : props.label
+        [
+          props.icon ? h('span', { 'data-test': 'u-icon', 'data-icon': props.icon }) : undefined,
+          slots.default ? slots.default() : props.label,
+          props.trailingIcon
+            ? h('span', { 'data-test': 'u-icon', 'data-icon': props.trailingIcon })
+            : undefined
+        ]
       )
   }
 })
@@ -33,7 +38,7 @@ export const UIconStub = defineComponent({
   name: 'UIcon',
   props: ['name', 'size', 'class'],
   setup(props) {
-    return () => h('span', { 'data-test': 'u-icon', class: props.class }, props.name)
+    return () => h('span', { 'data-test': 'u-icon', 'data-icon': props.name, class: props.class })
   }
 })
 
@@ -68,38 +73,50 @@ export const USelectMenuStub = defineComponent({
     open: { type: Boolean },
     items: { type: Array as () => Array<{ value: string; label: string }> },
     valueKey: { type: String },
-    searchInput: { type: Boolean }
+    searchInput: { type: Boolean },
+    loading: { type: Boolean },
+    placeholder: { type: String },
+    by: { type: String },
+    avatar: { type: Object }
   },
   emits: ['update:modelValue', 'update:open'],
   setup(props, { slots, attrs, emit }) {
     return () =>
-      h('div', { ...attrs }, [
-        h(
-          'button',
-          { 'data-test': 'select-trigger', onClick: () => emit('update:open', !props.open) },
-          slots.default?.()
-        ),
-        props.open
-          ? h(
-              'ul',
-              {},
-              props.items?.map((item) =>
-                h(
-                  'li',
-                  {
-                    key: item.value,
-                    onClick: () => {
-                      emit('update:modelValue', item.value)
-                      emit('update:open', false)
-                    }
-                  },
-                  item.label
+      h(
+        'div',
+        {
+          ...attrs,
+          'data-test': 'u-select-menu',
+          'data-loading': props.loading ? 'true' : undefined
+        },
+        [
+          h(
+            'button',
+            { 'data-test': 'select-trigger', onClick: () => emit('update:open', !props.open) },
+            slots.default?.() ?? props.placeholder
+          ),
+          props.open
+            ? h(
+                'ul',
+                {},
+                props.items?.map((item) =>
+                  h(
+                    'li',
+                    {
+                      key: item.value,
+                      onClick: () => {
+                        emit('update:modelValue', item.value)
+                        emit('update:open', false)
+                      }
+                    },
+                    item.label
+                  )
                 )
               )
-            )
-          : undefined,
-        props.open ? slots['content-bottom']?.() : undefined
-      ])
+            : undefined,
+          props.open ? slots['content-bottom']?.() : undefined
+        ]
+      )
   }
 })
 

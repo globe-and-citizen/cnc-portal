@@ -1,98 +1,191 @@
 # Test Utilities Guide
 
-## Mounting Components with Nuxt UI Support
+## Testing Components that Use Nuxt UI
 
-### Problem
+### TL;DR
 
-Nuxt UI components like `UTooltip`, `UPopover`, etc., use `reka-ui` internally which requires provider contexts. Without these providers, tests fail with errors like:
-
-```
-Error: Injection `Symbol(TooltipProviderContext)` not found.
-Component must be used within `TooltipProvider`
-```
-
-### Solution
-
-Use `mountWithProviders` instead of `mount` from `@vue/test-utils`.
-
-## Usage
-
-### Basic Example
+**Most Nuxt UI components are already stubbed globally.** Just `mount()` your component — no extra setup needed for `UButton`, `UIcon`, `UModal`, `UTooltip`, `USelectMenu`, `UDropdownMenu`, or `UCalendar`.
 
 ```typescript
-import { mountWithProviders } from '@/tests/mocks'
+import { mount } from '@vue/test-utils'
 import MyComponent from '@/components/MyComponent.vue'
 
 describe('MyComponent', () => {
-  it('should render correctly', () => {
-    const wrapper = mountWithProviders(MyComponent, {
-      props: {
-        title: 'Test Title'
-      }
-    })
-
-    expect(wrapper.text()).toContain('Test Title')
+  it('renders', () => {
+    const wrapper = mount(MyComponent)
+    expect(wrapper.text()).toContain('hello')
   })
 })
 ```
 
-### With Testing Pinia
+### Globally Stubbed Components
+
+These are replaced automatically in every test via `src/tests/setup/nuxt-ui.setup.ts`:
+
+| Component       | Stub behavior                                                                                                                                                                                          |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `UButton`       | `<button>` with `disabled` set when `loading` or `disabled` prop is true. The `icon`/`trailingIcon` props render as `<span data-test="u-icon" data-icon="...">`. The `class` attribute passes through. |
+| `UIcon`         | `<span data-test="u-icon" data-icon="{name}">` (no visible text)                                                                                                                                       |
+| `UModal`        | Renders `<slot />` always. When `open=true`, also renders header/body slots plus a `data-test="close-wage-modal-button"` button that emits `update:open=false`.                                        |
+| `UTooltip`      | Transparent wrapper — just renders the default slot                                                                                                                                                    |
+| `USelectMenu`   | `<div data-test="u-select-menu">` with trigger button and item list when `open=true`                                                                                                                   |
+| `UDropdownMenu` | `<div data-test="u-dropdown">` wrapping the default slot                                                                                                                                               |
+| `UCalendar`     | `<div data-test="u-calendar" />`                                                                                                                                                                       |
+
+### Components NOT Globally Stubbed
+
+`UInput`, `UForm`, `UFormField`, `UTextarea`, `USelect`, `UCheckbox`, `USwitch`, `URadioGroup`, `UTable`, `UBadge`, `UAlert`, `UCard`, `UAvatar`, `USkeleton`, `USeparator`, etc. render their real implementation in tests. This keeps form/table/display behavior realistic.
+
+If one of these causes issues in your test, stub it locally in your `mount()` call.
+
+## Common Testing Patterns
+
+### Finding stubbed buttons and icons
 
 ```typescript
-import { mountWithProviders } from '@/tests/mocks'
-import { createTestingPinia } from '@pinia/testing'
-import EditUserForm from '@/components/forms/EditUserForm.vue'
+// UButton with icon prop
+expect(wrapper.find('[data-test="edit-button"]').exists()).toBe(true)
+expect(wrapper.find('[data-test="u-icon"][data-icon="heroicons:pencil-square"]').exists()).toBe(
+  true
+)
 
-const createWrapper = () =>
-  mountWithProviders(EditUserForm, {
-    global: {
-      plugins: [createTestingPinia({ createSpy: vi.fn })],
-      stubs: {
-        SomeChildComponent: true
-      }
+// UIcon (standalone)
+expect(wrapper.find('[data-test="u-icon"]').exists()).toBe(true)
+```
+
+**Do not** search for `svg` elements — the stubs render `<span>`, not SVG.
+
+### Testing UModal
+
+```typescript
+// Modal body is rendered even when closed (stub renders the default slot unconditionally)
+await wrapper.find('[data-test="open-modal"]').trigger('click')
+await nextTick()
+expect(wrapper.find('[role="dialog"]').exists()).toBe(false) // stub has no role="dialog"
+expect(wrapper.findComponent({ name: 'MyModalContent' }).exists()).toBe(true)
+
+// Close via built-in stub close button
+await wrapper.find('[data-test="close-wage-modal-button"]').trigger('click')
+```
+
+### Testing USelectMenu
+
+```typescript
+// Open the menu
+await wrapper.find('[data-test="select-trigger"]').trigger('click')
+await nextTick()
+
+// Click an item
+const items = wrapper.findAll('li')
+await items[0].trigger('click')
+// emits update:modelValue and update:open
+```
+
+### When you need the REAL component
+
+If your test specifically exercises the real Nuxt UI component's behavior (e.g. testing `USelectMenu`'s search/filter logic), override the stub locally:
+
+```typescript
+import { mount } from '@vue/test-utils'
+import { vi } from 'vitest'
+
+// Unmock the vi.mock() at the module level
+vi.unmock('@nuxt/ui/components/SelectMenu.vue')
+
+const wrapper = mount(MyComponent, {
+  global: {
+    stubs: {
+      // Override the config.global.stubs entries
+      USelectMenu: false,
+      SelectMenu: false
     }
-  })
-
-describe('EditUserForm', () => {
-  it('should work with stores', () => {
-    const wrapper = createWrapper()
-    // Test your component
-  })
+  }
 })
 ```
 
-### What It Does
+Both steps are required: `vi.unmock()` restores the real module, and `stubs: { X: false }` disables the name-based global stubs.
 
-`mountWithProviders` automatically wraps your component with:
+## Provider Contexts (TooltipProvider)
 
-- ✅ `TooltipProvider` from reka-ui (enables UTooltip, UPopover, etc.)
-- ✅ Future providers can be added as needed
+Some reka-ui primitives require a `TooltipProvider` ancestor. `UTooltip` is already globally mocked, so you normally don't need this. But if you test a component that uses reka-ui primitives directly, use `mountWithProviders`:
 
-This means **all Nuxt UI components work out of the box** in your tests without manual provider setup!
+```typescript
+import { mountWithProviders } from '@/tests/setup/nuxt-ui.setup'
 
-## When to Use
+const wrapper = mountWithProviders(MyComponent, {
+  global: {
+    plugins: [createTestingPinia({ createSpy: vi.fn })]
+  }
+})
+```
 
-- ✅ **Always** - Use `mountWithProviders` for all component tests
-- ✅ When testing components that use Nuxt UI components
-- ✅ When you see provider context errors in tests
+## Adding a New Global Stub
 
-## When NOT to Use
+If you find yourself stubbing the same Nuxt UI component in many tests, add it to the global setup.
 
-- ❌ Don't use if you specifically need to test provider absence
-- ❌ Don't use for unit testing pure functions (no mounting needed)
+1. **Add the stub** in `src/tests/stubs/nuxt-ui.stubs.ts`:
 
-## Implementation Details
+   ```typescript
+   export const UMyComponentStub = defineComponent({
+     name: 'UMyComponent',
+     props: ['modelValue', 'label'],
+     emits: ['update:modelValue'],
+     setup(props, { slots }) {
+       return () => h('div', { 'data-test': 'u-my-component' }, slots.default?.())
+     }
+   })
+   ```
 
-The helper is defined in [src/tests/setup/nuxt-ui.setup.ts](./setup/nuxt-ui.setup.ts) and automatically loaded via vitest.config.ts setup files.
+2. **Register it** in `src/tests/setup/nuxt-ui.setup.ts`:
+
+   ```typescript
+   // For reliability, use vi.mock for the module path
+   vi.mock('@nuxt/ui/components/MyComponent.vue', async () => {
+     const { UMyComponentStub } = await import('../stubs/nuxt-ui.stubs')
+     return { default: UMyComponentStub }
+   })
+
+   // Also add to config.global.stubs under BOTH keys (with and without U prefix)
+   config.global.stubs = {
+     ...config.global.stubs,
+     UMyComponent: UMyComponentStub,
+     MyComponent: UMyComponentStub
+   }
+   ```
+
+**Why both?** Auto-imported components may be registered internally by filename (e.g. `MyComponent`) rather than by the auto-import alias (`UMyComponent`). Registering both keys ensures the stub is always matched.
+
+**Why `vi.mock` AND `config.global.stubs`?**
+
+- `vi.mock` intercepts module imports — catches components imported by other `@nuxt/ui` components internally.
+- `config.global.stubs` matches by component name at render time — catches auto-imported components.
+- Together they cover every import path.
+
+## Stub Design Guidelines
+
+When writing a stub:
+
+- **Keep it simple** — stubs exist to remove complexity, not replicate behavior.
+- **Forward relevant props/events** — if the parent test checks `modelValue` or emits, the stub must support them.
+- **Use `data-test` attributes** for querying (e.g. `data-test="u-select-menu"`).
+- **Don't render text content from icon names** — use `data-icon` attribute instead, to avoid polluting `.text()` assertions.
+- **Don't declare `class` as a prop** — let it pass through as an attribute so parent `:class` bindings apply to the root element.
+- **Reflect `loading` in `disabled`** for interactive stubs — matches real Nuxt UI behavior where loading implies disabled.
 
 ## Troubleshooting
 
-### Still getting provider errors?
+### `wrapper.find('svg').exists()` returns false
 
-1. Make sure you're importing from `@/tests/mocks`
-2. Check that vitest.config.ts includes `nuxt-ui.setup.ts` in setup files
-3. Verify reka-ui is installed: `npm list reka-ui`
+Stubs render `<span data-test="u-icon">`, not SVG. Query `[data-test="u-icon"]` instead.
 
-### TypeScript errors?
+### `findComponent({ name: 'UXxx' })` returns an empty wrapper
 
-The function has the same signature as `mount` from `@vue/test-utils`, so it should work as a drop-in replacement.
+Auto-imported components may be registered under the filename (without the `U` prefix). Try `findComponent({ name: 'Xxx' })` or import the stub directly and use `findComponent(UXxxStub)`.
+
+### The real component renders despite a global stub
+
+The component is likely auto-imported via a path not covered by `vi.mock()`. Add a `vi.mock()` entry for its module path, or add its filename-based name to `config.global.stubs` (e.g. `SelectMenu` alongside `USelectMenu`).
+
+### My test checks Nuxt UI's CSS classes and they're missing
+
+Stubs don't replicate Nuxt UI's theming classes. Either override the stub locally (`stubs: { UButton: false }`) or assert on the props/bound classes rather than the theme classes.
