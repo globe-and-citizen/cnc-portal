@@ -24,6 +24,42 @@
       </TokenAmount>
     </UFormField>
 
+    <!-- Fee breakdown -->
+    <div
+      v-if="showFees"
+      class="flex flex-col gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm dark:border-green-800 dark:bg-green-950"
+    >
+      <div class="flex justify-between">
+        <span class="text-gray-500 dark:text-gray-400">Recipient receives</span>
+        <span class="font-medium text-gray-800 dark:text-gray-200">
+          {{ numericAmount.toFixed(2) }} {{ model.token.symbol }}
+        </span>
+      </div>
+
+      <div class="flex justify-between">
+        <span class="text-gray-500 dark:text-gray-400">
+          Deposit fee
+          <span
+            class="ml-1 rounded bg-yellow-100 px-1.5 py-0.5 text-xs text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300"
+          >
+            {{ props.feeBps / 100 }}%
+          </span>
+        </span>
+        <span class="text-orange-500">
+          + {{ depositFee.toFixed(2) }} {{ model.token.symbol }}
+        </span>
+      </div>
+
+      <div
+        class="flex items-center justify-between border-t border-green-200 pt-2 dark:border-green-800"
+      >
+        <span class="font-semibold text-gray-800 dark:text-gray-200">Total you send</span>
+        <span class="font-bold text-green-600 dark:text-green-400">
+          {{ totalToSend.toFixed(2) }} {{ model.token.symbol }}
+        </span>
+      </div>
+    </div>
+
     <div class="mt-4 flex justify-between">
       <UButton
         type="button"
@@ -41,7 +77,7 @@
         :disabled="loading"
         data-test="transferButton"
       >
-        Transfer
+        {{ showFees ? ` Transfer ${totalToSend.toFixed(2)} ${model.token.symbol}` : 'Transfer' }}
       </UButton>
     </div>
   </UForm>
@@ -71,9 +107,11 @@ const props = withDefaults(
     loading: boolean
     tokens: TokenOption[]
     isBodAction?: boolean
+    feeBps?: number
   }>(),
   {
-    isBodAction: false
+    isBodAction: false,
+    feeBps: 0
   }
 )
 
@@ -107,6 +145,17 @@ const tokenAmountModel = computed({
   }
 })
 
+const numericAmount = computed(() => parseFloat(model.value.amount) || 0)
+// Exact formula: total * (1 - feeBps/10000) = amount  →  total = amount * 10000 / (10000 - feeBps)
+// So fee = amount * feeBps / (10000 - feeBps), ensuring recipient gets exactly `amount` after the contract deducts its cut
+const depositFee = computed(() => {
+  const bps = props.feeBps ?? 0
+  if (bps === 0) return 0
+  return (numericAmount.value * bps) / (10000 - bps)
+})
+const totalToSend = computed(() => numericAmount.value + depositFee.value)
+const showFees = computed(() => numericAmount.value > 0 && (props.feeBps ?? 0) > 0)
+
 watch(
   () => props.tokens,
   (tokens) => {
@@ -125,10 +174,12 @@ const validationSchema = computed(() =>
       .min(1, 'Amount is required')
       .refine((value) => /^\d*\.?\d+$/.test(value), 'Enter a valid amount')
       .refine((value) => parseFloat(value) > 0, 'Amount must be greater than 0')
-      .refine(
-        (value) => parseFloat(value) <= (model.value.token.balance ?? 0),
-        'Amount exceeds available balance'
-      )
+      .refine((value) => {
+        const amount = parseFloat(value)
+        const bps = props.feeBps ?? 0
+        const fee = bps > 0 ? (amount * bps) / (10000 - bps) : 0
+        return amount + fee <= (model.value.token.balance ?? 0)
+      }, 'Amount + fees exceed available balance')
   })
 )
 
