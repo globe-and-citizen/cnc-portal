@@ -4,7 +4,11 @@ import type { Address } from 'viem'
 import { formatUnits } from 'viem'
 import { getSupportedTokens, getUSDCAddress, getUSDTAddress } from '@/constant'
 import type { TokenDisplay } from '@/types/token'
-import { useFeeBalance, useFeeTokenBalance } from '~/composables/FeeCollector/read'
+import {
+  useFeeBalance,
+  useFeeSupportedTokens,
+  useFeeTokenBalance
+} from '~/composables/FeeCollector/read'
 
 export const useFeeCollector = () => {
   const connection = useConnection()
@@ -15,6 +19,13 @@ export const useFeeCollector = () => {
     isLoading: isLoadingNativeBalance,
     error: errorNative
   } = useFeeBalance()
+
+  // On-chain list of ERC20s the FeeCollector currently supports — source of truth
+  const {
+    data: onChainSupportedTokens,
+    isLoading: isLoadingSupportedTokens,
+    error: errorSupportedTokens
+  } = useFeeSupportedTokens()
 
   // USDC balance
   const {
@@ -55,36 +66,64 @@ export const useFeeCollector = () => {
     return formatUSD(tokenPrice * tokenAmount)
   }
 
-  // Build tokens list using getSupportedTokens helper
+  // Lowercased set of on-chain supported ERC20 addresses for cheap membership checks.
+  // Empty until the contract read resolves, which hides every ERC20 during load.
+  const onChainSupportedSet = computed<Set<string>>(() => {
+    const list = onChainSupportedTokens.value as readonly Address[] | undefined
+    return new Set((list ?? []).map((addr) => addr.toLowerCase()))
+  })
+
+  // Build tokens list: native is always shown; each known ERC20 is only shown
+  // if its address appears in the on-chain supported list.
   const tokens = computed<TokenDisplay[]>(() => {
     const nativeSymbol = connection.chain.value?.nativeCurrency.symbol || 'ETH'
     const chainId = connection.chain.value?.id
 
-    const supportedTokens = getSupportedTokens(nativeSymbol, chainId)
+    const localRegistry = getSupportedTokens(nativeSymbol, chainId)
+    const supportedSet = onChainSupportedSet.value
 
-    // Map balance data to each token config
+    // Balance lookup keyed by token id — matches entries in the local registry.
     const balanceMap: Record<string, unknown> = {
       native: nativeBalance.value,
       usdc: usdcBalance.value,
       usdt: usdtBalance.value
     }
 
-    return supportedTokens.map((token) => {
-      const balance = balanceMap[token.id]
-      return {
-        address: token.address,
-        symbol: token.symbol,
-        decimals: token.decimals,
-        balance: validateBalance(balance) ? balance : 0n,
-        formattedBalance: formatTokenBalance(balance, token.decimals),
-        shortAddress: token.shortAddress,
-        formattedValue: formatTokenBalanceValue(balance, token.address, token.decimals, token.symbol)
-      }
-    })
+    return localRegistry
+      .filter((token) => token.id === 'native' || supportedSet.has(token.address.toLowerCase()))
+      .map((token) => {
+        const balance = balanceMap[token.id]
+        return {
+          address: token.address,
+          symbol: token.symbol,
+          decimals: token.decimals,
+          balance: validateBalance(balance) ? balance : 0n,
+          formattedBalance: formatTokenBalance(balance, token.decimals),
+          shortAddress: token.shortAddress,
+          formattedValue: formatTokenBalanceValue(balance, token.address, token.decimals, token.symbol)
+        }
+      })
+  })
+
+  // Addresses the collector reports supporting that the dashboard has no metadata for.
+  // Surfacing them lets callers flag unknown tokens instead of silently hiding them.
+  const unknownSupportedTokens = computed<Address[]>(() => {
+    const nativeSymbol = connection.chain.value?.nativeCurrency.symbol || 'ETH'
+    const chainId = connection.chain.value?.id
+    const known = new Set(
+      getSupportedTokens(nativeSymbol, chainId)
+        .filter((token) => token.id !== 'native')
+        .map((token) => token.address.toLowerCase())
+    )
+    const list = (onChainSupportedTokens.value as readonly Address[] | undefined) ?? []
+    return list.filter((addr) => !known.has(addr.toLowerCase()))
   })
 
   const isLoading = computed(() =>
-    isLoadingNativeBalance.value || isLoadingUsdc.value || isLoadingUsdt.value
+    isLoadingNativeBalance.value
+    || isLoadingSupportedTokens.value
+    || isLoadingUsdc.value
+    || isLoadingUsdt.value
   )
 
   // Calculate total USD balance (raw and formatted)
@@ -106,6 +145,9 @@ export const useFeeCollector = () => {
     if (errorNative.value) {
       errors.push({ id: 'native', error: errorNative.value })
     }
+    if (errorSupportedTokens.value) {
+      errors.push({ id: 'supportedTokens', error: errorSupportedTokens.value })
+    }
     if (errorUsdc.value) {
       errors.push({ id: 'usdc', error: errorUsdc.value })
     }
@@ -117,6 +159,7 @@ export const useFeeCollector = () => {
 
   return {
     tokens,
+    unknownSupportedTokens,
     isLoading,
     totalUsdAmount,
     formattedTotalUsd,
