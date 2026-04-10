@@ -41,6 +41,25 @@ export function useFeeCollectorOwner() {
   })
 }
 
+export function useFeeCollectorBeneficiary() {
+  // Address that receives funds on withdraw(). address(0) means the contract
+  // falls back to owner() when sweeping. Changes rarely (owner-gated setter),
+  // so we cache for the whole session and rely on an explicit refetch() after
+  // setFeeBeneficiary succeeds.
+  return useReadContract({
+    address: FEE_COLLECTOR_ADDRESS as Address,
+    abi: FEE_COLLECTOR_ABI,
+    functionName: 'feeBeneficiary',
+    query: {
+      staleTime: Infinity,
+      gcTime: Infinity,
+      refetchOnMount: false,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false
+    }
+  })
+}
+
 export function isFeeCollectorOwner() {
   const connection = useConnection()
   const { data: owner } = useFeeCollectorOwner()

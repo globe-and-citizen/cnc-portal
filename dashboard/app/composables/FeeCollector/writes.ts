@@ -52,3 +52,13 @@ export function useWithdrawNative(
     args
   })
 }
+
+export function useSetFeeBeneficiary(
+  beneficiary: MaybeRef<Address>
+) {
+  const args = computed(() => [unref(beneficiary)] as readonly unknown[])
+  return useFeeCollectorContractWrite({
+    functionName: 'setFeeBeneficiary',
+    args
+  })
+}

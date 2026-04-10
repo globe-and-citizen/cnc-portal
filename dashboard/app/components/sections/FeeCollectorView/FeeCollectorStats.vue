@@ -1,5 +1,6 @@
 <template>
-  <div class="grid grid-cols-1 gap-4">
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <!-- Total Balance -->
     <UCard>
       <div class="flex items-center justify-between">
         <div class="flex-1">
@@ -26,15 +27,122 @@
         </div>
       </div>
     </UCard>
+
+    <!-- Owner -->
+    <UCard>
+      <div class="flex items-center justify-between">
+        <div class="flex-1 min-w-0">
+          <p class="text-sm text-gray-600 dark:text-gray-400">
+            Owner
+          </p>
+          <div class="mt-1">
+            <span v-if="isLoadingOwner">
+              <UIcon name="i-heroicons-arrow-path" class="w-5 h-5 animate-spin" />
+            </span>
+            <span v-else-if="errorOwner" class="text-red-600 dark:text-red-400 text-sm">
+              Failed to load owner
+            </span>
+            <UBadge v-else-if="owner" variant="subtle" color="neutral">
+              <span class="font-mono text-xs">{{ shortenAddress(owner) }}</span>
+            </UBadge>
+          </div>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+            Controls fee config and withdrawals
+          </p>
+        </div>
+
+        <div class="w-12 h-12 rounded-full flex items-center justify-center shrink-0 bg-amber-100 dark:bg-amber-900">
+          <UIcon name="i-heroicons-key" class="w-6 h-6 text-amber-600 dark:text-amber-400" />
+        </div>
+      </div>
+    </UCard>
+
+    <!-- Fee Beneficiary -->
+    <UCard>
+      <div class="flex items-center justify-between">
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center justify-between gap-2">
+            <p class="text-sm text-gray-600 dark:text-gray-400">
+              Fee Beneficiary
+            </p>
+            <UButton
+              v-if="isOwnerOfCollector"
+              size="xs"
+              color="primary"
+              variant="soft"
+              :disabled="isLoadingBeneficiary"
+              @click="isBeneficiaryModalOpen = true"
+            >
+              Change
+            </UButton>
+          </div>
+          <div class="mt-1">
+            <span v-if="isLoadingBeneficiary || (isBeneficiaryUnset && isLoadingOwner)">
+              <UIcon name="i-heroicons-arrow-path" class="w-5 h-5 animate-spin" />
+            </span>
+            <span v-else-if="errorBeneficiary" class="text-red-600 dark:text-red-400 text-sm">
+              Failed to load beneficiary
+            </span>
+            <UBadge v-else-if="displayBeneficiary" variant="subtle" color="neutral">
+              <span class="font-mono text-xs">{{ shortenAddress(displayBeneficiary) }}</span>
+            </UBadge>
+          </div>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+            <span v-if="isBeneficiaryUnset">Fallback → owner</span>
+            <span v-else>Receives swept fees</span>
+          </p>
+        </div>
+
+        <div class="w-12 h-12 rounded-full flex items-center justify-center shrink-0 bg-green-100 dark:bg-green-900">
+          <UIcon name="i-heroicons-arrow-down-on-square" class="w-6 h-6 text-green-600 dark:text-green-400" />
+        </div>
+      </div>
+    </UCard>
+
+    <BeneficiaryFormModal v-model:model-value="isBeneficiaryModalOpen" />
   </div>
 </template>
 
 <script setup lang="ts">
+import { computed, ref } from 'vue'
+import { zeroAddress, type Address } from 'viem'
 import { useFeeCollector } from '@/composables/useFeeCollector'
+import {
+  isFeeCollectorOwner,
+  useFeeCollectorBeneficiary,
+  useFeeCollectorOwner
+} from '~/composables/FeeCollector/read'
+import { shortenAddress } from '~/utils/generalUtil'
+import BeneficiaryFormModal from './BeneficiaryFormModal.vue'
 
-// Get total USD directly from composable
+// Total balance (existing)
+const { isLoading, error, formattedTotalUsd } = useFeeCollector()
+
+// Owner
 const {
-  isLoading,
-  error,
-  formattedTotalUsd } = useFeeCollector()
+  data: ownerData,
+  isLoading: isLoadingOwner,
+  error: errorOwner
+} = useFeeCollectorOwner()
+const owner = computed(() => ownerData.value as Address | undefined)
+
+// Beneficiary — when unset (zeroAddress) the contract falls back to owner(),
+// so we surface the owner's address instead and label it as a fallback.
+const {
+  data: beneficiaryData,
+  isLoading: isLoadingBeneficiary,
+  error: errorBeneficiary
+} = useFeeCollectorBeneficiary()
+const beneficiary = computed(() => beneficiaryData.value as Address | undefined)
+const isBeneficiaryUnset = computed(() =>
+  beneficiary.value !== undefined && beneficiary.value === zeroAddress
+)
+const displayBeneficiary = computed<Address | undefined>(() => {
+  if (beneficiary.value === undefined) return undefined
+  return isBeneficiaryUnset.value ? owner.value : beneficiary.value
+})
+
+// Owner-gated Change action
+const isOwnerOfCollector = isFeeCollectorOwner()
+const isBeneficiaryModalOpen = ref(false)
 </script>
