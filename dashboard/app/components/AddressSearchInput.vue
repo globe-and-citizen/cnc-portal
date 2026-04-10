@@ -1,19 +1,16 @@
 <template>
   <UInputMenu
-    :model-value="modelValue"
+    v-model:search-term="searchTerm"
+    :model-value="(modelValue as unknown as UserItem)"
     :items="items"
-    value-key="address"
+    autocomplete
+    label-key="address"
     :ignore-filter="true"
-    :create-item="true"
     :loading="isFetching"
     :placeholder="placeholder"
     :disabled="disabled"
-    :reset-search-term-on-select="false"
-    :reset-search-term-on-blur="false"
-    :search-term="searchTerm"
     class="w-full"
     @update:model-value="handleModelUpdate"
-    @update:search-term="handleSearchUpdate"
   >
     <template #item="{ item }">
       <div class="flex items-center gap-2 min-w-0">
@@ -45,7 +42,7 @@
     <template #empty>
       <div class="px-2 py-2 text-xs text-gray-500 dark:text-gray-400">
         <span v-if="isFetching">Searching…</span>
-        <span v-else-if="searchTerm">No user matches — type a full 0x address to use it directly.</span>
+        <span v-else-if="searchTerm">No user matches — the typed value is used as-is.</span>
         <span v-else>Start typing a name or paste an address.</span>
       </div>
     </template>
@@ -57,7 +54,6 @@ import { ref, computed, watch } from 'vue'
 import { useUsers } from '~/queries/user.queries'
 
 interface UserItem {
-  label: string
   address: string
   name?: string
   imageUrl?: string
@@ -79,6 +75,17 @@ const emit = defineEmits<{
   'update:modelValue': [value: string]
 }>()
 
+// The input is driven in `autocomplete` mode (Nuxt UI >= 4.6), which means
+// `modelValue` is literally the input text — typing a raw 0x address works
+// natively (no `create-item` / `@create` dance), and picking a suggestion
+// writes `item[labelKey]` into the field. We use `labelKey: 'address'` so
+// selections write the full address, which is what the form schemas validate.
+//
+// `ignoreFilter: true` disables the built-in client-side filter so the
+// dropdown reflects whatever the server returned for the current search
+// term — `useUsers` already filters on both `name` and `address` via a
+// case-insensitive `contains` on the backend.
+
 // Debounced search term the menu feeds into the users query. We debounce by
 // 200ms so every keystroke doesn't hammer the API while typing.
 const searchTerm = ref('')
@@ -96,13 +103,8 @@ const { data: usersResponse, isFetching } = useUsers({
   search: debouncedSearch
 })
 
-// Map the server response into the item shape UInputMenu understands. We use
-// `address` as the `value-key` so picking an item writes the address back as
-// modelValue. The label falls back to the shortened address when the user
-// record has no display name.
 const items = computed<UserItem[]>(() =>
   (usersResponse.value?.users ?? []).map(user => ({
-    label: user.name || shortAddress(user.address),
     address: user.address,
     name: user.name,
     imageUrl: user.imageUrl
@@ -120,20 +122,22 @@ function avatarSrcFor(item: UserItem): string {
   return item.imageUrl || `https://api.dicebear.com/9.x/bottts/svg?seed=${item.address}`
 }
 
-// UInputMenu with `createItem` emits either an existing item's value (string,
-// via value-key) or the raw typed text when no item is picked. Either way the
-// final value is a string, so we can forward it straight to the parent.
+// In autocomplete mode UInputMenu's runtime modelValue is a plain string
+// (the current input text), but the generic TS types still infer it as
+// `UserItem`. We cast on the way out and coerce null/undefined to ''.
 function handleModelUpdate(value: unknown) {
+  if (value == null) {
+    emit('update:modelValue', '')
+    return
+  }
   if (typeof value === 'string') {
     emit('update:modelValue', value)
     return
   }
-  if (value && typeof value === 'object' && 'address' in value) {
+  // Defensive fallback — shouldn't happen in autocomplete mode, but guards
+  // against future prop changes.
+  if (typeof value === 'object' && 'address' in value) {
     emit('update:modelValue', (value as UserItem).address)
   }
-}
-
-function handleSearchUpdate(value: string) {
-  searchTerm.value = value
 }
 </script>
