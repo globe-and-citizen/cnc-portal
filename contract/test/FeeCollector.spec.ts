@@ -581,9 +581,10 @@ describe('FeeCollector', () => {
       // transfer to the malicious owner, whose receive() re-enters withdraw.
       // The re-entrant call reverts via nonReentrant, causing the native
       // transfer (.call) to return false, which surfaces as WithdrawalFailed.
-      await expect(
-        malicious.attack(await feeCollector.getAddress())
-      ).to.be.revertedWithCustomError(feeCollector, 'WithdrawalFailed')
+      await expect(malicious.attack(await feeCollector.getAddress())).to.be.revertedWithCustomError(
+        feeCollector,
+        'WithdrawalFailed'
+      )
     })
   })
 

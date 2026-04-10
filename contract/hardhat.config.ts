@@ -9,10 +9,12 @@ import { NetworksUserConfig } from 'hardhat/types'
 dotenv.config()
 let networks: NetworksUserConfig = {
   // hardhat: { chainId: 31337 },
-  hardhat: { chainId: 31337,
+  hardhat: {
+    chainId: 31337,
     blockGasLimit: 30_000_000,
     gas: 30_000_000,
-    allowUnlimitedContractSize: true },
+    allowUnlimitedContractSize: true
+  },
   localhost: {
     chainId: 31337,
     url: 'http://localhost:8545',
