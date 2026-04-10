@@ -117,6 +117,12 @@ const emit = defineEmits<{
   'close': []
 }>()
 
+// The contract stores fees as uint16 basis points (integer), so the UI must
+// only accept values that map exactly to a BPS integer — i.e. at most 2
+// decimal places (0.01% granularity). We can't use `.multipleOf(0.01)` here:
+// JS floating-point makes `0.1 % 0.01 !== 0`, so valid inputs like 0.1%
+// would be rejected. Instead, scale by 100 and check the result is (within
+// epsilon of) a whole number before the transform rounds it.
 const feeConfigSchema = z
   .object({
     contractType: z.string().min(1, 'Contract type is required'),
@@ -124,6 +130,10 @@ const feeConfigSchema = z
       .number()
       .min(0, 'Fee must be at least 0')
       .max(100, 'Fee cannot exceed 100%')
+      .refine(
+        value => Math.abs(value * 100 - Math.round(value * 100)) < 1e-9,
+        'Fee is limited to 0.01% precision (2 decimal places)'
+      )
   })
   .transform(data => ({
     contractType: data.contractType,
