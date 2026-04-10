@@ -71,6 +71,11 @@ contract Tips is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
   /// @param maximum The max push limit allowed.
   error LimitTooHigh(uint8 requested, uint8 maximum);
 
+  /// @custom:oz-upgrades-unsafe-allow constructor
+  constructor() {
+    _disableInitializers();
+  }
+
   /**
    * @notice Initializes the contract owner, reentrancy guard, pause state and default push limit.
    * @dev Proxy initializer; sets the caller as owner and pushLimit to 10.

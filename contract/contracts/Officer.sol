@@ -98,9 +98,11 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
    * @notice Sets the immutable fee collector used by this officer.
    * @param _feeCollector Address of the fee collector contract.
    */
+  /// @custom:oz-upgrades-unsafe-allow constructor
   constructor(address _feeCollector) {
     if (_feeCollector == address(0)) revert ZeroAddress();
     feeCollector = _feeCollector;
+    _disableInitializers();
   }
 
   /**
