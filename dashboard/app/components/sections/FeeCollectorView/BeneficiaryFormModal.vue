@@ -10,7 +10,7 @@
       <UForm
         :schema="beneficiarySchema"
         :state="localState"
-        class="space-y-6 px-6 pt-6 pb-2"
+        class="space-y-6  pb-2"
         @submit="handleSubmit"
       >
         <UFormField
@@ -51,11 +51,11 @@
       </UForm>
 
       <UAlert
-        v-if="setBeneficiaryResult.transactionTimelineResult.transactionSummaryStatus.value === 'error'"
+        v-if="setBeneficiary.isError.value"
         color="error"
         variant="subtle"
         title="Failed to update beneficiary"
-        :description="setBeneficiaryResult.transactionTimelineResult.timelineSteps.value['complete'].description"
+        :description="errorDescription"
         icon="i-lucide-terminal"
       />
     </template>
@@ -66,10 +66,8 @@
 import { ref, computed, watch } from 'vue'
 import { z } from 'zod'
 import { isAddress, zeroAddress, type Address } from 'viem'
-import {
-  useFeeCollectorBeneficiary
-} from '~/composables/FeeCollector/read'
 import { useSetFeeBeneficiary } from '~/composables/FeeCollector/writes'
+import { parseErrorV2 } from '@/utils'
 
 const props = defineProps<{
   modelValue: boolean
@@ -101,14 +99,15 @@ const normalizedBeneficiary = computed<Address>(() => {
   return raw === '' ? zeroAddress : (raw as Address)
 })
 
-const setBeneficiaryResult = useSetFeeBeneficiary(normalizedBeneficiary)
-const { refetch: refetchBeneficiary } = useFeeCollectorBeneficiary()
+const setBeneficiary = useSetFeeBeneficiary()
 
-const isLoading = computed(() =>
-  setBeneficiaryResult.receiptResult.isLoading.value
-  || setBeneficiaryResult.writeResult.isPending.value
-  || setBeneficiaryResult.simulateGasResult.isLoading.value
-)
+const isLoading = computed(() => setBeneficiary.isPending.value)
+
+const errorDescription = computed(() => {
+  const err = setBeneficiary.error.value
+  if (!err) return ''
+  return parseErrorV2(err)
+})
 
 const handleClose = () => {
   if (isLoading.value) return
@@ -118,19 +117,16 @@ const handleClose = () => {
 
 const handleSubmit = async () => {
   if (isLoading.value) return
-  await setBeneficiaryResult.executeWrite([normalizedBeneficiary.value])
-}
-
-// Refetch the on-chain beneficiary once the tx is confirmed and close the modal.
-watch(
-  () => setBeneficiaryResult.receiptResult.isSuccess.value,
-  async (ok) => {
-    if (!ok) return
-    await refetchBeneficiary()
+  try {
+    await setBeneficiary.mutateAsync({ args: [normalizedBeneficiary.value] })
+    // V3 auto-invalidates ['readContract', { address, chainId }] on success,
+    // so useFeeCollectorBeneficiary refetches without an explicit refetch() call.
     emit('update:modelValue', false)
     emit('close')
+  } catch {
+    // Error surfaced via setBeneficiary.error + the UAlert below.
   }
-)
+}
 
 // Reset the input whenever the modal is reopened.
 watch(
@@ -138,6 +134,7 @@ watch(
   (open) => {
     if (open) {
       localState.value.beneficiary = ''
+      setBeneficiary.reset()
     }
   }
 )

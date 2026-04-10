@@ -82,11 +82,11 @@
         </div>
       </UForm>
       <UAlert
-        v-if="setFeeResult.transactionTimelineResult.transactionSummaryStatus.value==='error'"
+        v-if="setFee.isError.value"
         color="error"
         variant="subtle"
         :title="`Failed to ${mode === 'edit' ? 'update' : 'add'} fee`"
-        :description="setFeeResult.transactionTimelineResult.timelineSteps.value['complete'].description"
+        :description="errorDescription"
         icon="i-lucide-terminal"
       />
     </template>
@@ -100,6 +100,7 @@ import { z } from 'zod'
 import { useFeeConfigs } from '~/composables/FeeCollector/read'
 import { useSetFee } from '~/composables/FeeCollector/writes'
 import { teamContractTypes } from '~/types/teamContracts'
+import { parseErrorV2 } from '@/utils'
 
 interface FeeConfig {
   contractType: string
@@ -124,14 +125,15 @@ const localConfig = ref<FeeConfigInput>({
     : 0
 })
 
-const setFeeResult = useSetFee(
-  computed(() => localConfig.value.contractType),
-  computed(() => Math.round(localConfig.value.feePercent * 100))
-)
+const setFee = useSetFee()
 
-const isLoading = computed(() =>
-  setFeeResult.receiptResult.isLoading.value || setFeeResult.writeResult.isPending.value || setFeeResult.simulateGasResult.isLoading.value
-)
+const isLoading = computed(() => setFee.isPending.value)
+
+const errorDescription = computed(() => {
+  const err = setFee.error.value
+  if (!err) return ''
+  return parseErrorV2(err)
+})
 
 // Available contract types not yet set in the contract
 const availableContractTypes = computed(() => {
@@ -166,9 +168,13 @@ const handleSubmit = async (event: { data: FeeConfigOutput }) => {
 
   const { contractType, feeBps } = event.data
 
-  await setFeeResult.executeWrite([contractType, feeBps])
-  if (setFeeResult.receiptResult.isSuccess.value) {
+  try {
+    await setFee.mutateAsync({ args: [contractType, feeBps] })
+    // V3 auto-invalidates the contract's readContract queries (fee configs
+    // included) on success, so no manual refetch needed here.
     handleClose()
+  } catch {
+    // Error surfaced via setFee.error + the UAlert below.
   }
 }
 </script>

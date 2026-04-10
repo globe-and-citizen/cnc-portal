@@ -1,30 +1,21 @@
-import { ref, watch } from 'vue'
-import { useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
-import type { Address } from 'viem'
-import { FEE_COLLECTOR_ADDRESS } from '@/constant'
-import { FEE_COLLECTOR_ABI } from '@/artifacts/abi/feeCollector'
+import { computed, ref, watch } from 'vue'
+import { useWithdrawAll } from '@/composables/FeeCollector/writes'
+import { parseErrorV2 } from '@/utils'
 
 export const useTokenWithdraw = () => {
   const toast = useToast()
 
-  const {
-    data: hashWithdraw,
-    writeContract: executeWithdraw,
-    isPending: isLoadingWithdraw,
-    error: errorWithdraw
-  } = useWriteContract()
+  const withdrawMutation = useWithdrawAll()
 
-  const {
-    isLoading: isConfirmingWithdraw,
-    isSuccess: isConfirmedWithdraw
-  } = useWaitForTransactionReceipt({
-    hash: hashWithdraw
-  })
+  // Compatibility aliases so existing consumers keep their imported refs.
+  const isLoadingWithdraw = computed(() => withdrawMutation.isPending.value)
+  const isConfirmingWithdraw = computed(() => withdrawMutation.isPending.value)
+  const isConfirmedWithdraw = computed(() => withdrawMutation.isSuccess.value)
+  const errorWithdraw = computed(() => withdrawMutation.error.value)
 
-  // Callbacks
   const onSuccess = ref<(() => void) | null>(null)
 
-  watch(isConfirmedWithdraw, async (ok) => {
+  watch(isConfirmedWithdraw, (ok) => {
     if (!ok) return
     if (onSuccess.value) {
       onSuccess.value()
@@ -33,7 +24,7 @@ export const useTokenWithdraw = () => {
 
   watch(errorWithdraw, (err) => {
     if (!err) return
-    console.error('Withdraw error:', err.message)
+    console.error('Withdraw error:', parseErrorV2(err))
     toast.add({
       title: 'Error',
       description: 'Failed to withdraw fees',
@@ -47,13 +38,7 @@ export const useTokenWithdraw = () => {
     if (successCallback) {
       onSuccess.value = successCallback
     }
-
-    executeWithdraw({
-      address: FEE_COLLECTOR_ADDRESS as Address,
-      abi: FEE_COLLECTOR_ABI,
-      functionName: 'withdraw',
-      args: []
-    })
+    withdrawMutation.mutate({ args: [] })
   }
 
   return {
