@@ -30,21 +30,19 @@
 
     <!-- Owner -->
     <UCard>
-      <div class="flex items-center justify-between">
+      <div class="flex items-center justify-between gap-3">
         <div class="flex-1 min-w-0">
           <p class="text-sm text-gray-600 dark:text-gray-400">
             Owner
           </p>
-          <div class="mt-1">
+          <div class="mt-2">
             <span v-if="isLoadingOwner">
               <UIcon name="i-heroicons-arrow-path" class="w-5 h-5 animate-spin" />
             </span>
             <span v-else-if="errorOwner" class="text-red-600 dark:text-red-400 text-sm">
               Failed to load owner
             </span>
-            <UBadge v-else-if="owner" variant="subtle" color="neutral">
-              <span class="font-mono text-xs">{{ shortenAddress(owner) }}</span>
-            </UBadge>
+            <UserIdentity v-else :address="owner" />
           </div>
           <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
             Controls fee config and withdrawals
@@ -76,16 +74,14 @@
               Change
             </UButton>
           </div>
-          <div class="mt-1">
+          <div class="mt-2">
             <span v-if="isLoadingBeneficiary || (isBeneficiaryUnset && isLoadingOwner)">
               <UIcon name="i-heroicons-arrow-path" class="w-5 h-5 animate-spin" />
             </span>
             <span v-else-if="errorBeneficiary" class="text-red-600 dark:text-red-400 text-sm">
               Failed to load beneficiary
             </span>
-            <UBadge v-else-if="displayBeneficiary" variant="subtle" color="neutral">
-              <span class="font-mono text-xs">{{ shortenAddress(displayBeneficiary) }}</span>
-            </UBadge>
+            <UserIdentity v-else :address="displayBeneficiary" />
           </div>
           <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
             <span v-if="isBeneficiaryUnset">Fallback → owner</span>
@@ -112,8 +108,8 @@ import {
   useFeeCollectorBeneficiary,
   useFeeCollectorOwner
 } from '~/composables/FeeCollector/read'
-import { shortenAddress } from '~/utils/generalUtil'
 import BeneficiaryFormModal from './BeneficiaryFormModal.vue'
+import UserIdentity from '@/components/UserIdentity.vue'
 
 // Total balance (existing)
 const { isLoading, error, formattedTotalUsd } = useFeeCollector()
