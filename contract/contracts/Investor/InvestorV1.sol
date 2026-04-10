@@ -118,6 +118,11 @@ contract InvestorV1 is
   /// @param available The current contract balance.
   error InsufficientFundedTokenBalance(address token, uint256 required, uint256 available);
 
+  /// @custom:oz-upgrades-unsafe-allow constructor
+  constructor() {
+    _disableInitializers();
+  }
+
   /**
    * @notice Initializes the InvestorV1 token.
    * @param _name ERC20 token name.

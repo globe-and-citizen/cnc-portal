@@ -46,9 +46,18 @@ describe('Bank', () => {
       { initializer: 'initialize' }
     )) as unknown as FeeCollector
 
-    officer = (await OfficerFactory.deploy(await feeCollector.getAddress())) as unknown as Officer
+    // Deploy Officer through a proxy; the implementation's constructor now calls
+    // `_disableInitializers()`, so `initialize` can only be invoked on a proxy.
+    officer = (await upgrades.deployProxy(
+      OfficerFactory,
+      [await owner.getAddress(), [], [], false],
+      {
+        initializer: 'initialize',
+        constructorArgs: [await feeCollector.getAddress()],
+        unsafeAllow: ['constructor', 'state-variable-immutable']
+      }
+    )) as unknown as Officer
     await officer.waitForDeployment()
-    await officer.initialize(await owner.getAddress(), [], [], false)
 
     const officerAddress = await officer.getAddress()
     await impersonateAccount(officerAddress)

@@ -31,24 +31,6 @@ function useBodContractWrite(options: {
 }
 
 /**
- * Pause the BOD contract
- */
-export function useBodPause() {
-  return useBodContractWrite({
-    functionName: BOD_FUNCTION_NAMES.PAUSE
-  })
-}
-
-/**
- * Unpause the BOD contract
- */
-export function useBodUnpause() {
-  return useBodContractWrite({
-    functionName: BOD_FUNCTION_NAMES.UNPAUSE
-  })
-}
-
-/**
  * Set board of directors
  */
 export function useBodSetBoardOfDirectors(addresses: MaybeRef<Address[]>) {

@@ -87,6 +87,11 @@ contract Elections is Initializable, OwnableUpgradeable, PausableUpgradeable {
   /// @dev The BoardOfDirectors contract could not be located via the Officer.
   error BoardOfDirectorsNotFound();
 
+  /// @custom:oz-upgrades-unsafe-allow constructor
+  constructor() {
+    _disableInitializers();
+  }
+
   /**
    * @notice Initializes the Elections contract.
    * @param _owner Address that will own the contract.

@@ -184,6 +184,11 @@ contract CashRemunerationEIP712 is
   /// @param token The token whose `transfer` returned false.
   error TokenTransferFailed(address token);
 
+  /// @custom:oz-upgrades-unsafe-allow constructor
+  constructor() {
+    _disableInitializers();
+  }
+
   /**
    * @dev Initializes the contract with the specified owner.
    * @param _owner The address of the contract owner.

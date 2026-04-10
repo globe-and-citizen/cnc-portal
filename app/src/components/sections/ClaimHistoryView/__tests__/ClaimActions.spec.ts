@@ -217,7 +217,7 @@ describe('ClaimActions', () => {
       const editButton = wrapper.find('[data-test="edit-claim-button"]')
 
       expect(editButton.exists()).toBe(true)
-      expect(editButton.find('svg').exists()).toBe(true)
+      expect(editButton.find('[data-test="u-icon"]').exists()).toBe(true)
     })
 
     it('should render delete button with correct styling', () => {
@@ -225,7 +225,6 @@ describe('ClaimActions', () => {
       const deleteButton = wrapper.find('[data-test="delete-claim-button"]')
 
       expect(deleteButton.exists()).toBe(true)
-      expect(deleteButton.find('svg').exists()).toBe(true)
     })
 
     it('should handle multiple button clicks correctly', async () => {

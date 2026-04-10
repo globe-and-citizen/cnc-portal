@@ -1,5 +1,6 @@
-import { ethers } from 'hardhat'
+import { ethers, upgrades } from 'hardhat'
 import { expect } from 'chai'
+import type { Bank } from '../typechain-types'
 
 describe('BoardOfDirectors', () => {
   async function deployFixture() {
@@ -20,9 +21,12 @@ describe('BoardOfDirectors', () => {
       .connect(founder)
       .setBoardOfDirectors([member1.address, member2.address, member3.address])
 
+    // Deploy Bank through a proxy; the implementation's constructor now calls
+    // `_disableInitializers()`, so `initialize` can only be invoked on a proxy.
     const BankFactory = await ethers.getContractFactory('Bank')
-    const bank = await BankFactory.deploy()
-    await bank.initialize([], founder.address)
+    const bank = (await upgrades.deployProxy(BankFactory, [[], founder.address], {
+      initializer: 'initialize'
+    })) as unknown as Bank
     await bank.transferOwnership(await board.getAddress())
 
     await founder.sendTransaction({ to: await bank.getAddress(), value: ethers.parseEther('5') })

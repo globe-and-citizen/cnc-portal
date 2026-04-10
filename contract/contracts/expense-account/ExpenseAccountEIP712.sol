@@ -236,6 +236,11 @@ contract ExpenseAccountEIP712 is
   /// @dev The Bank contract could not be located via the Officer.
   error BankContractNotFound();
 
+  /// @custom:oz-upgrades-unsafe-allow constructor
+  constructor() {
+    _disableInitializers();
+  }
+
   /**
    * @notice Initializes the expense account contract.
    * @param owner The contract owner that will sign budget approvals.

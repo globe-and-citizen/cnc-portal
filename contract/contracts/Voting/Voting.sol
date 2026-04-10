@@ -68,6 +68,11 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
   /// @dev The BoardOfDirectors contract could not be located via the Officer.
   error BoardOfDirectorsNotFound();
 
+  /// @custom:oz-upgrades-unsafe-allow constructor
+  constructor() {
+    _disableInitializers();
+  }
+
   /// @notice Initializes the contract
   /// @param _sender Address that will be set as the owner
   /// @dev This is the initialization function for the upgradeable contract pattern

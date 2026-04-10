@@ -14,11 +14,28 @@ describe('Elections', function () {
     const BoardFactory = await ethers.getContractFactory('MockBoardOfDirectors')
     const boardOfDirectors = await BoardFactory.deploy()
 
+    // Deploy Elections behind a beacon proxy. The implementation's constructor calls
+    // `_disableInitializers()`, so `initialize` can only run in the context of a proxy.
+    // Spawning the proxy through MockOfficer ensures the Elections proxy records
+    // `officerAddress = mockOfficer`.
     const ElectionsFactory = await ethers.getContractFactory('Elections')
-    const elections = await ElectionsFactory.deploy()
+    const electionsImpl = await ElectionsFactory.deploy()
+    const BeaconFactory = await ethers.getContractFactory('Beacon')
+    const electionsBeacon = await BeaconFactory.deploy(await electionsImpl.getAddress())
+    const initData = electionsImpl.interface.encodeFunctionData('initialize', [owner.address])
+    const tx = await mockOfficer.deployBeaconProxy(
+      await electionsBeacon.getAddress(),
+      initData,
+      'Elections'
+    )
+    await tx.wait()
+    const electionsProxyAddress = await mockOfficer.findDeployedContract('Elections')
+    const elections = (await ethers.getContractAt(
+      'Elections',
+      electionsProxyAddress
+    )) as unknown as Elections
 
     await mockOfficer.setDeployedContract('BoardOfDirectors', await boardOfDirectors.getAddress())
-    await mockOfficer.initializeUpgradeable(await elections.getAddress(), owner.address)
 
     return { elections, boardOfDirectors, owner, voter1, voter2, candidate1, candidate2, nonVoter }
   }
