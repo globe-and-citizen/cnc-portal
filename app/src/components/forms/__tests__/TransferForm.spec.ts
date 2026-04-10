@@ -37,8 +37,12 @@ const defaultProps = {
 }
 
 type TransferFormProps = Partial<typeof defaultProps> & Record<string, unknown>
+type ValidationResult =
+  | { success: true }
+  | { success: false; error: { issues: Array<{ message: string }> } }
+
 type TransferFormVm = {
-  validationSchema: { safeParse: (value: { amount: string }) => any }
+  validationSchema: { safeParse: (value: { amount: string }) => ValidationResult }
   depositFee: number
   showFees: boolean
   selectedTokenId: string
