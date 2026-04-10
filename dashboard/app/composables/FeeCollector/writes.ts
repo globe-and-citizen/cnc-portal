@@ -2,53 +2,33 @@ import type { ExtractAbiFunctionNames } from 'abitype'
 import type { Address } from 'viem'
 import { FEE_COLLECTOR_ABI } from '~/artifacts/abi/feeCollector'
 import { FEE_COLLECTOR_ADDRESS } from '~/constant/index'
+import { useContractWritesV3 } from '~/composables/useContractWritesV3'
 
 export type FeeCollectorFunctionNames = ExtractAbiFunctionNames<typeof FEE_COLLECTOR_ABI>
 
-export function useFeeCollectorContractWrite(options: {
-  functionName: FeeCollectorFunctionNames
-  args?: MaybeRef<readonly unknown[]>
-  value?: MaybeRef<bigint>
-}) {
-  return useContractWrites({
-    contractAddress: FEE_COLLECTOR_ADDRESS as MaybeRef<Address>,
+/**
+ * Generic V3 write for any function on the FeeCollector. Contract coordinates
+ * are bound once at construction; callers pass `args` per-call via `mutateAsync`.
+ *
+ * The returned object is a TanStack mutation, so consumers get `isPending`,
+ * `isSuccess`, `error`, `data`, `mutate`, `mutateAsync` etc. On success the V3
+ * helper invalidates all `['readContract', { address, chainId }]` queries for
+ * the FeeCollector — so any wagmi/vue `useReadContract` subscribed to this
+ * contract (balances, owner, beneficiary, fee configs…) refetches automatically.
+ */
+export function useFeeCollectorWrite<T extends FeeCollectorFunctionNames>(
+  functionName: T
+) {
+  return useContractWritesV3({
+    contractAddress: FEE_COLLECTOR_ADDRESS as Address,
     abi: FEE_COLLECTOR_ABI,
-    functionName: options.functionName,
-    args: options.args ?? [],
-    ...(options.value !== undefined ? { value: options.value } : {})
+    functionName
   })
 }
 
-export function useSetFee(
-  contractType: MaybeRef<string>,
-  feeBps: MaybeRef<number>
-) {
-  const args = computed(() => [unref(contractType), unref(feeBps)] as readonly unknown[])
-  return useFeeCollectorContractWrite({
-    functionName: 'setFee',
-    args
-  })
-}
-
-// 'withdraw' : 'withdrawToken',
-
-export function useWithdrawToken(
-  tokenAddress: MaybeRef<Address>,
-  amount: MaybeRef<bigint>
-) {
-  const args = computed(() => [unref(tokenAddress), unref(amount)] as readonly unknown[])
-  return useFeeCollectorContractWrite({
-    functionName: 'withdrawToken',
-    args
-  })
-}
-
-export function useWithdrawNative(
-  amount: MaybeRef<bigint>
-) {
-  const args = computed(() => [unref(amount)] as readonly unknown[])
-  return useFeeCollectorContractWrite({
-    functionName: 'withdraw',
-    args
-  })
-}
+export const useSetFee = () => useFeeCollectorWrite('setFee')
+export const useWithdrawAll = () => useFeeCollectorWrite('withdraw')
+export const useSetFeeBeneficiary = () => useFeeCollectorWrite('setFeeBeneficiary')
+export const useTransferOwnership = () => useFeeCollectorWrite('transferOwnership')
+export const useAddTokenSupport = () => useFeeCollectorWrite('addTokenSupport')
+export const useRemoveTokenSupport = () => useFeeCollectorWrite('removeTokenSupport')

@@ -194,7 +194,9 @@ describe('Bank', () => {
         await expect(tx)
           .to.emit(bankProxy, 'Transfer')
           .withArgs(owner.address, contractor.address, netAmount)
-        await expect(tx).to.emit(bankProxy, 'FeePaid').withArgs(feeCollectorAddress, fee)
+        await expect(tx)
+          .to.emit(feeCollector, 'FeePaid')
+          .withArgs('BANK', await bankProxy.getAddress(), ethers.ZeroAddress, fee)
       })
 
       it('should fail for invalid transfer params and insufficient balance', async () => {
@@ -319,7 +321,9 @@ describe('Bank', () => {
       await expect(tx)
         .to.emit(bankProxy, 'TokenTransfer')
         .withArgs(owner.address, contractor.address, await mockUSDT.getAddress(), netAmount)
-      await expect(tx).to.emit(bankProxy, 'FeePaid').withArgs(feeCollectorAddress, fee)
+      await expect(tx)
+        .to.emit(feeCollector, 'FeePaid')
+        .withArgs('BANK', await bankProxy.getAddress(), await mockUSDT.getAddress(), fee)
     })
 
     it('should reject invalid token transfer requests', async () => {

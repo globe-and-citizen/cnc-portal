@@ -9,7 +9,22 @@ import { NetworksUserConfig } from 'hardhat/types'
 dotenv.config()
 let networks: NetworksUserConfig = {
   // hardhat: { chainId: 31337 },
-  localhost: { chainId: 31337, url: 'http://localhost:8545' }
+  // NOTE: `gas` (per-transaction default limit) is intentionally omitted here.
+  // Hardhat's EDR provider caps per-tx gas at 16_777_216 (2^24), so setting
+  // `gas: 30_000_000` caused every `npx hardhat test` run to fail at deploy
+  // time with "Transaction gas limit exceeds transaction gas cap". The
+  // `blockGasLimit` is a separate, block-level cap and can stay at 30M.
+  hardhat: {
+    chainId: 31337,
+    blockGasLimit: 30_000_000,
+    allowUnlimitedContractSize: true
+  },
+  localhost: {
+    chainId: 31337,
+    url: 'http://localhost:8545',
+    blockGasLimit: 30_000_000,
+    allowUnlimitedContractSize: true
+  }
 }
 if (process.env.SEPOLIA_URL === undefined || process.env.PRIVATE_KEY === undefined) {
   console.error('\x1b[33m Please set your SEPOLIA_URL and PRIVATE_KEY in a .env file\x1b[0m')

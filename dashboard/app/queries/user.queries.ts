@@ -1,29 +1,40 @@
 import type { UpdateUserPayload } from '@/types/user'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import type { MaybeRefOrGetter } from 'vue'
-import { toValue } from 'vue'
+import { computed, toValue } from 'vue'
 import { getUserByAddress, getUserNonce, getUsers, updateUser } from '~/api/user'
 
 /**
  * Fetch user data by address
  *
- * @param address - The Ethereum address of the user
+ * @param address - The Ethereum address of the user. Accepts a plain string,
+ *                  a ref, or a getter — the query re-runs automatically when
+ *                  the underlying value changes (e.g. a `<UserIdentity :address>`
+ *                  prop flipping from one owner to another).
  * @returns Query result with user data
  *
  * @example
  * const { data: user, isLoading } = useUserQuery('0x123...')
  */
 export const useUserQuery = (address: MaybeRefOrGetter<string>) => {
-  return useQuery({
-    queryKey: ['user', { address: toValue(address) }],
-    queryFn: async () => {
+  // Wrap the options in a computed so tanstack-vue-query tracks changes to
+  // `address` and re-keys the query when it moves. Without this wrapper the
+  // queryKey is built once at setup time and freezes on the initial value,
+  // which causes stale user data to leak across prop changes — e.g. the
+  // Owner card keeping the previous owner's name + avatar after a successful
+  // `transferOwnership`.
+  return useQuery(
+    computed(() => {
       const userAddress = toValue(address)
-      return await getUserByAddress(userAddress)
-    },
-    enabled: () => !!toValue(address),
-    refetchOnWindowFocus: false,
-    staleTime: 1000 * 60 * 5 // 5 minutes
-  })
+      return {
+        queryKey: ['user', { address: userAddress }],
+        queryFn: async () => await getUserByAddress(userAddress),
+        enabled: !!userAddress,
+        refetchOnWindowFocus: false,
+        staleTime: 1000 * 60 * 5 // 5 minutes
+      }
+    })
+  )
 }
 
 /**
@@ -69,29 +80,24 @@ export const useUsers = (options: {
   limit?: MaybeRefOrGetter<number>
   search?: MaybeRefOrGetter<string | undefined>
 }) => {
-  return useQuery({
-    queryKey: [
-      'users',
-      {
-        page: toValue(options.page) || 1,
-        limit: toValue(options.limit) || 10,
-        search: toValue(options.search) || ''
-      }
-    ],
-    queryFn: async () => {
+  // Same reactivity fix as useUserQuery: wrap options in a computed so the
+  // query re-keys whenever page, limit, or search changes. Without this the
+  // query was frozen on whatever values happened to be unref'd at setup time,
+  // which broke async search (the search term would update visually but the
+  // fetch would never re-run for the new term).
+  return useQuery(
+    computed(() => {
       const page = toValue(options.page) || 1
       const limit = toValue(options.limit) || 10
-      const search = toValue(options.search)
-
-      return await getUsers({
-        page,
-        limit,
-        search
-      })
-    },
-    refetchOnWindowFocus: false,
-    staleTime: 1000 * 60 * 5 // 5 minutes
-  })
+      const search = toValue(options.search) || ''
+      return {
+        queryKey: ['users', { page, limit, search }],
+        queryFn: async () => await getUsers({ page, limit, search: search || undefined }),
+        refetchOnWindowFocus: false,
+        staleTime: 1000 * 60 * 5 // 5 minutes
+      }
+    })
+  )
 }
 
 /**
