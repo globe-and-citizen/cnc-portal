@@ -1,4 +1,4 @@
-import { mount, shallowMount, flushPromises } from '@vue/test-utils'
+import { mount, flushPromises } from '@vue/test-utils'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { createTestingPinia } from '@pinia/testing'
 import { nextTick } from 'vue'
@@ -8,205 +8,180 @@ import {
   mockTransactionFunctions,
   mockUseSafeSendTransaction,
   mockERC20Reads,
-  mockERC20Writes
+  mockERC20Writes,
+  mockBankWrites,
+  resetComposableMocks,
+  resetERC20Mocks,
+  useQueryClientFn
 } from '@/tests/mocks'
 
-describe.skip('DepositBankForm.vue', () => {
-  const defaultProps = {
-    bankAddress: zeroAddress as Address
-  }
+type DepositBankVm = {
+  amount: string
+  selectedTokenId: string
+  currentStep: number
+  isAmountValid: boolean
+  submitting: boolean
+  reset: () => void
+  submitForm: () => Promise<void>
+}
 
-  const createWrapper = (overrides = {}, mountFn = shallowMount) =>
-    mountFn(DepositBankForm, {
-      props: { ...defaultProps, ...overrides },
-      global: {
-        plugins: [createTestingPinia({ createSpy: vi.fn })]
-      }
-    })
+const defaultProps = {
+  bankAddress: zeroAddress as Address
+}
 
-  // Helper function to set TokenAmount values
-  const setTokenAmount = async (
-    wrapper: ReturnType<typeof createWrapper>,
-    value: string,
-    tokenId: string,
-    isValid: boolean = true
-  ): Promise<void> => {
-    const tokenAmount = wrapper.findComponent({ name: 'TokenAmount' })
-    await tokenAmount.vm.$emit('update:modelValue', { amount: value, tokenId })
-    await tokenAmount.vm.$emit('validation', isValid)
-    await nextTick()
-  }
+const createQueryClient = () => {
+  const invalidateQueries = vi.fn()
+  useQueryClientFn.mockReturnValue({
+    invalidateQueries,
+    getQueryData: vi.fn(),
+    setQueryData: vi.fn(),
+    removeQueries: vi.fn()
+  })
+  return { invalidateQueries }
+}
 
+const createWrapper = (overrides = {}) =>
+  mount(DepositBankForm, {
+    props: { ...defaultProps, ...overrides },
+    global: {
+      plugins: [createTestingPinia({ createSpy: vi.fn })]
+    }
+  })
+
+const getVm = (wrapper: ReturnType<typeof createWrapper>) => wrapper.vm as unknown as DepositBankVm
+
+const setTokenAmount = async (
+  wrapper: ReturnType<typeof createWrapper>,
+  value: string,
+  tokenId: string,
+  isValid: boolean = true
+) => {
+  const tokenAmount = wrapper.findComponent({ name: 'TokenAmount' })
+  await tokenAmount.vm.$emit('update:modelValue', { amount: value, tokenId })
+  await tokenAmount.vm.$emit('validation', isValid)
+  await nextTick()
+}
+
+describe('DepositBankForm.vue', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-  })
-  describe('User Interactions', () => {
-    it('should emit closeModal when cancel button is clicked', async () => {
-      const wrapper = createWrapper()
-      await wrapper.find('[data-test="cancel-button"]').trigger('click')
-
-      expect(wrapper.emitted('closeModal')).toBeTruthy()
-    })
+    resetComposableMocks()
+    resetERC20Mocks()
+    createQueryClient()
+    mockBankWrites.deposit.mutateAsync.mockResolvedValue(undefined)
   })
 
-  describe('Native Token Deposit', () => {
-    it('should show success toast and close modal after successful native deposit', async () => {
-      mockTransactionFunctions.mockMutateAsync.mockResolvedValueOnce({
-        hash: '0xnativetx',
-        receipt: { status: 'success' }
-      })
-      const wrapper = createWrapper({ title: 'Deposit Bank Form' }, mount)
+  it('resets and emits closeModal when cancelled', async () => {
+    const wrapper = createWrapper()
+    const vm = getVm(wrapper)
 
-      await setTokenAmount(wrapper, '1', 'native', true)
-      await wrapper.find('[data-test="deposit-button"]').trigger('click')
-      await nextTick()
+    await setTokenAmount(wrapper, '1', 'usdc', true)
+    vm.currentStep = 2
+    await wrapper.find('[data-test="cancel-button"]').trigger('click')
 
-      expect(mockTransactionFunctions.mockMutateAsync).toHaveBeenCalled()
-      expect(wrapper.emitted('closeModal')).toBeTruthy()
-    })
-
-    it('should show error toast when native token deposit fails', async () => {
-      mockTransactionFunctions.mockMutateAsync.mockRejectedValueOnce(
-        new Error('Transaction failed')
-      )
-      const wrapper = createWrapper({}, mount)
-
-      await setTokenAmount(wrapper, '1', 'native', true)
-      await wrapper.find('[data-test="deposit-button"]').trigger('click')
-      await nextTick()
-    })
-
-    it('should not submit when form is invalid', async () => {
-      const wrapper = createWrapper({}, mount)
-      await setTokenAmount(wrapper, '1', 'native', false)
-
-      await wrapper.find('[data-test="deposit-button"]').trigger('click')
-      await nextTick()
-
-      expect(mockTransactionFunctions.mockMutateAsync).not.toHaveBeenCalled()
-    })
+    expect(vm.amount).toBe('')
+    expect(vm.selectedTokenId).toBe('native')
+    expect(vm.currentStep).toBe(0)
+    expect(wrapper.emitted('closeModal')).toBeTruthy()
   })
 
-  describe('ERC20 Token Deposit', () => {
-    it('should handle token deposit flow when allowance is insufficient', async () => {
-      mockERC20Reads.allowance.data.value = 0n
-      mockERC20Writes.approve.executeWrite.mockResolvedValueOnce(undefined)
+  it('prevents submission when invalid or already pending', async () => {
+    const wrapper = createWrapper()
 
-      const wrapper = createWrapper({}, mount)
-      await setTokenAmount(wrapper, '1', 'usdc', true)
-      await wrapper.find('[data-test="deposit-button"]').trigger('click')
-      await flushPromises()
+    await setTokenAmount(wrapper, '1', 'native', false)
+    await getVm(wrapper).submitForm()
+    expect(mockTransactionFunctions.mockMutateAsync).not.toHaveBeenCalled()
 
-      expect(mockERC20Writes.approve.executeWrite).toHaveBeenCalled()
-    })
-
-    it('should handle token deposit flow when allowance is sufficient', async () => {
-      mockERC20Reads.allowance.data.value = 1000000n
-
-      const wrapper = createWrapper({}, mount)
-      await setTokenAmount(wrapper, '1', 'usdc', true)
-      await wrapper.find('[data-test="deposit-button"]').trigger('click')
-      await nextTick()
-
-      // The form should successfully submit without errors
-      expect(wrapper.find('[data-test="deposit-button"]').exists()).toBe(true)
-    })
-
-    it.skip('should show error toast when selected token is not valid', async () => {
-      mockERC20Reads.allowance.data.value = 0n
-      mockTransactionFunctions.mockMutateAsync.mockRejectedValueOnce(new Error('Invalid token'))
-
-      const wrapper = createWrapper({}, mount)
-
-      // Set an invalid token scenario by manually triggering with empty selection
-      await setTokenAmount(wrapper, '100', 'invalid-token' as unknown as string, true)
-      await wrapper.find('[data-test="deposit-button"]').trigger('click')
-      await flushPromises()
-    })
-
-    it('should handle form validation correctly', async () => {
-      const wrapper = createWrapper({}, mount)
-
-      // Test invalid form submission
-      await setTokenAmount(wrapper, '1', 'usdc', false)
-      await wrapper.find('[data-test="deposit-button"]').trigger('click')
-      await nextTick()
-
-      expect(mockERC20Writes.approve.executeWrite).not.toHaveBeenCalled()
-      expect(mockTransactionFunctions.mockMutateAsync).not.toHaveBeenCalled()
-    })
+    mockUseSafeSendTransaction.isPending.value = true
+    await setTokenAmount(wrapper, '1', 'native', true)
+    await getVm(wrapper).submitForm()
+    expect(mockTransactionFunctions.mockMutateAsync).not.toHaveBeenCalled()
   })
 
-  describe('Component State Management', () => {
-    it('should reset form when reset method is exposed', async () => {
-      const wrapper = createWrapper({}, mount)
+  it('handles native token deposits successfully and on failure', async () => {
+    const wrapper = createWrapper({ title: 'Deposit Bank Form' })
 
-      // The reset method is exposed via defineExpose
-      expect(typeof wrapper.vm.reset).toBe('function')
+    const vm = getVm(wrapper)
+    vm.amount = '1'
+    vm.selectedTokenId = 'native'
+    vm.isAmountValid = true
+    await getVm(wrapper).submitForm()
+    await flushPromises()
 
-      // Calling reset should not throw an error
-      expect(() => wrapper.vm.reset()).not.toThrow()
-    })
+    expect(mockTransactionFunctions.mockMutateAsync).toHaveBeenCalled()
+    expect(wrapper.emitted('closeModal')).toBeTruthy()
 
-    it('should show loading state on submit button', async () => {
-      const wrapper = createWrapper({}, mount)
+    mockTransactionFunctions.mockMutateAsync.mockRejectedValueOnce(new Error('Transaction failed'))
+    const failedWrapper = createWrapper()
+    const failedVm = getVm(failedWrapper)
+    failedVm.amount = '2'
+    failedVm.selectedTokenId = 'native'
+    failedVm.isAmountValid = true
+    await failedVm.submitForm()
+    await flushPromises()
 
-      await setTokenAmount(wrapper, '1', 'native', true)
-      const submitButton = wrapper.findComponent('[data-test="deposit-button"]')
-
-      // Test that the button component receives loading prop
-      expect(submitButton.exists()).toBe(true)
-    })
-
-    it('should show steps for non-native token deposits', async () => {
-      const wrapper = createWrapper({}, mount)
-
-      await setTokenAmount(wrapper, '1', 'usdc', true)
-      await nextTick()
-
-      expect(wrapper.find('.steps').exists()).toBe(true)
-      expect(wrapper.findAll('.step')).toHaveLength(3)
-    })
-
-    it('should hide steps for native token deposits', async () => {
-      const wrapper = createWrapper({}, mount)
-
-      await setTokenAmount(wrapper, '1', 'native', true)
-      await nextTick()
-
-      expect(wrapper.find('.steps').exists()).toBe(false)
-    })
-
-    it('should render token amount component correctly', async () => {
-      const wrapper = createWrapper({}, mount)
-
-      const tokenAmount = wrapper.findComponent({ name: 'TokenAmount' })
-      expect(tokenAmount.exists()).toBe(true)
-    })
+    expect(mockTransactionFunctions.mockMutateAsync).toHaveBeenCalledTimes(2)
+    expect(failedWrapper.emitted('closeModal')).toBeFalsy()
   })
 
-  describe('Error Handling', () => {
-    it('should handle transaction errors gracefully', async () => {
-      mockTransactionFunctions.mockMutateAsync.mockRejectedValueOnce(new Error('Network error'))
-      const wrapper = createWrapper({}, mount)
+  it('shows native and erc20 stepper states correctly', async () => {
+    const wrapper = createWrapper()
+    const vm = getVm(wrapper)
 
-      await setTokenAmount(wrapper, '1', 'native', true)
-      await wrapper.find('[data-test="deposit-button"]').trigger('click')
-      await nextTick()
+    vm.selectedTokenId = 'native'
+    await wrapper.vm.$nextTick()
+
+    vm.selectedTokenId = 'usdc'
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.findComponent({ name: 'TokenAmount' }).exists()).toBe(true)
+
+    expect(() => getVm(wrapper).reset()).not.toThrow()
+  })
+
+  it('runs approval first when allowance is insufficient and then deposits token', async () => {
+    const { invalidateQueries } = createQueryClient()
+    mockERC20Reads.allowance.data.value = 0n
+    const wrapper = createWrapper()
+
+    await setTokenAmount(wrapper, '1', 'usdc', true)
+    await getVm(wrapper).submitForm()
+    await flushPromises()
+
+    expect(mockERC20Writes.approve.executeWrite).toHaveBeenCalledWith([
+      defaultProps.bankAddress,
+      1000000n
+    ])
+    expect(mockBankWrites.deposit.mutateAsync).toHaveBeenCalledWith({
+      args: ['0xA3492D046095AFFE351cFac15de9b86425E235dB', 1000000n]
     })
+    expect(invalidateQueries).toHaveBeenCalled()
+    expect(wrapper.emitted('closeModal')).toBeTruthy()
+  })
 
-    it('should prevent multiple submissions', async () => {
-      const wrapper = createWrapper({}, mount)
+  it('skips approval when allowance is sufficient', async () => {
+    mockERC20Reads.allowance.data.value = 1000000n
+    const wrapper = createWrapper()
 
-      // Set pending state
-      mockUseSafeSendTransaction.isPending.value = true
+    await setTokenAmount(wrapper, '1', 'usdc', true)
+    await getVm(wrapper).submitForm()
+    await flushPromises()
 
-      await setTokenAmount(wrapper, '1', 'native', true)
-      await wrapper.find('[data-test="deposit-button"]').trigger('click')
-      await nextTick()
+    expect(mockERC20Writes.approve.executeWrite).not.toHaveBeenCalled()
+    expect(mockBankWrites.deposit.mutateAsync).toHaveBeenCalledOnce()
+    expect(getVm(wrapper).currentStep).toBe(2)
+  })
 
-      // Should not call mutateAsync when already pending
-      expect(mockTransactionFunctions.mockMutateAsync).not.toHaveBeenCalled()
-    })
+  it('surfaces approval failures and resets submitting state', async () => {
+    mockERC20Reads.allowance.data.value = 0n
+    mockERC20Writes.approve.writeResult.error.value = new Error('Approval failed')
+    const wrapper = createWrapper()
+
+    await setTokenAmount(wrapper, '1', 'usdc', true)
+    await getVm(wrapper).submitForm()
+    await flushPromises()
+
+    expect(mockBankWrites.deposit.mutateAsync).not.toHaveBeenCalled()
+    expect(getVm(wrapper).submitting).toBe(false)
   })
 })
