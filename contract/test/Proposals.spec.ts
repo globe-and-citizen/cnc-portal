@@ -30,14 +30,28 @@ describe('Proposals Contract', function () {
     await boardOfDirectorsMock.addMember(boardMember2.address)
     await boardOfDirectorsMock.addMember(boardMember3.address)
 
+    // Deploy Proposals behind a beacon proxy. The implementation's constructor calls
+    // `_disableInitializers()`, so `initialize` can only run in the context of a proxy.
+    // Spawning the proxy through MockOfficer ensures the Proposals proxy records
+    // `officerAddress = mockOfficer`.
     const ProposalsFactory = await ethers.getContractFactory('Proposals')
-    const proposalsContract = await ProposalsFactory.deploy()
+    const proposalsImpl = await ProposalsFactory.deploy()
+    const BeaconFactory = await ethers.getContractFactory('Beacon')
+    const proposalsBeacon = await BeaconFactory.deploy(await proposalsImpl.getAddress())
+    const initData = proposalsImpl.interface.encodeFunctionData('initialize', [owner.address])
+    const tx = await mockOfficer.deployBeaconProxy(
+      await proposalsBeacon.getAddress(),
+      initData,
+      'Proposals'
+    )
+    await tx.wait()
+    const proposalsProxyAddress = await mockOfficer.findDeployedContract('Proposals')
+    const proposalsContract = await ethers.getContractAt('Proposals', proposalsProxyAddress)
 
     await mockOfficer.setDeployedContract(
       'BoardOfDirectors',
       await boardOfDirectorsMock.getAddress()
     )
-    await mockOfficer.initializeUpgradeable(await proposalsContract.getAddress(), owner.address)
 
     return {
       proposalsContract,
@@ -118,9 +132,16 @@ describe('Proposals Contract', function () {
     const MockOfficerFactory = await ethers.getContractFactory('MockOfficer')
     const mockOfficer = await MockOfficerFactory.deploy()
 
+    // Deploy Proposals behind a beacon proxy so `_disableInitializers()` on the impl
+    // doesn't block initialization, and `officerAddress` is set to mockOfficer.
     const ProposalsFactory = await ethers.getContractFactory('Proposals')
-    const proposalsContract = await ProposalsFactory.deploy()
-    await mockOfficer.initializeUpgradeable(await proposalsContract.getAddress(), owner.address)
+    const proposalsImpl = await ProposalsFactory.deploy()
+    const BeaconFactory = await ethers.getContractFactory('Beacon')
+    const proposalsBeacon = await BeaconFactory.deploy(await proposalsImpl.getAddress())
+    const initData = proposalsImpl.interface.encodeFunctionData('initialize', [owner.address])
+    await mockOfficer.deployBeaconProxy(await proposalsBeacon.getAddress(), initData, 'Proposals')
+    const proposalsProxyAddress = await mockOfficer.findDeployedContract('Proposals')
+    const proposalsContract = await ethers.getContractAt('Proposals', proposalsProxyAddress)
 
     const now = await time.latest()
 

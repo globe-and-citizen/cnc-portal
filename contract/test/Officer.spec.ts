@@ -46,17 +46,19 @@ describe('Officer Contract', function () {
     deployments: { contractType: string; initializerData: string }[] = [],
     isDeployAllContracts = false
   ) {
+    // Deploy Officer through a proxy; the implementation's constructor now calls
+    // `_disableInitializers()`, so `initialize` can only be invoked on a proxy.
     const OfficerFactory = await ethers.getContractFactory('Officer')
-    const instance = (await OfficerFactory.deploy(
-      await feeCollector.getAddress()
+    const instance = (await upgrades.deployProxy(
+      OfficerFactory,
+      [await owner.getAddress(), beaconConfigs, deployments, isDeployAllContracts],
+      {
+        initializer: 'initialize',
+        constructorArgs: [await feeCollector.getAddress()],
+        unsafeAllow: ['constructor', 'state-variable-immutable']
+      }
     )) as unknown as Officer
     await instance.waitForDeployment()
-    await instance.initialize(
-      await owner.getAddress(),
-      beaconConfigs,
-      deployments,
-      isDeployAllContracts
-    )
     return instance
   }
 

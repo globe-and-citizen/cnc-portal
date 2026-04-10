@@ -1,7 +1,8 @@
-import { ethers } from 'hardhat'
+import { ethers, upgrades } from 'hardhat'
 import { expect } from 'chai'
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers'
 import { ZeroAddress } from 'ethers'
+import type { FeeCollector } from '../typechain-types'
 
 /**
  * Exercises the semantics of ignition/modules/OfficerUpgradeModule.ts:
@@ -15,13 +16,15 @@ describe('OfficerUpgradeModule', function () {
   async function deployFixture() {
     const [beaconOwner, officerOwner, attacker] = await ethers.getSigners()
 
-    // Officer requires a FeeCollector in its constructor.
+    // Officer requires a FeeCollector in its constructor. Deploy through a proxy
+    // since the FeeCollector impl now disables initializers in its constructor.
     const FeeCollectorFactory = await ethers.getContractFactory('FeeCollector')
-    const feeCollectorImpl = await FeeCollectorFactory.connect(beaconOwner).deploy()
+    const feeCollectorImpl = (await upgrades.deployProxy(
+      FeeCollectorFactory.connect(beaconOwner),
+      [beaconOwner.address, [], []],
+      { initializer: 'initialize' }
+    )) as unknown as FeeCollector
     await feeCollectorImpl.waitForDeployment()
-    // Use the implementation directly as feeCollector; Officer only reads its interface
-    // via isFeeCollectorToken, which is not under test here.
-    await feeCollectorImpl.initialize(beaconOwner.address, [], [])
 
     // Deploy the initial Officer implementation (module uses m.contract('Officer', [])
     // in practice this is pointed at a deployed implementation — we mimic with a real one).

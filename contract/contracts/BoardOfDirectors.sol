@@ -106,6 +106,11 @@ contract BoardOfDirectors is ReentrancyGuardUpgradeable, IBoardOfDirectors {
   /// @dev The function can only be called by the contract itself.
   error NotSelf();
 
+  /// @custom:oz-upgrades-unsafe-allow constructor
+  constructor() {
+    _disableInitializers();
+  }
+
   /**
    * @dev Initializes the contract with the initial set of owners.
    * @param _owners The initial set of owners.

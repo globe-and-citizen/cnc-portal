@@ -71,6 +71,11 @@ contract FeeCollector is
   /// @param available The current token balance.
   error InsufficientTokenBalance(address token, uint256 required, uint256 available);
 
+  /// @custom:oz-upgrades-unsafe-allow constructor
+  constructor() {
+    _disableInitializers();
+  }
+
   /**
    * @notice Initializes the FeeCollector with owner, fee configs, and supported tokens
    * @param _owner The address that will own this contract

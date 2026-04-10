@@ -176,6 +176,11 @@ contract Proposals is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUp
     uint256 abstainCount
   );
 
+  /// @custom:oz-upgrades-unsafe-allow constructor
+  constructor() {
+    _disableInitializers();
+  }
+
   /**
    * @notice Initializes the Proposals contract.
    * @param _owner Address that will own the contract.

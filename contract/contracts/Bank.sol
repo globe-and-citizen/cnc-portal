@@ -119,6 +119,11 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
     return investorAddress;
   }
 
+  /// @custom:oz-upgrades-unsafe-allow constructor
+  constructor() {
+    _disableInitializers();
+  }
+
   /**
    * @notice Initializes the Bank contract with supported tokens and owner
    * @dev This function replaces the constructor for upgradeable contracts

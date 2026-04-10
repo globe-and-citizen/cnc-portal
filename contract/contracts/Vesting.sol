@@ -109,6 +109,11 @@ contract Vesting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
   /// @dev The releasable amount is zero.
   error NothingToRelease();
 
+  /// @custom:oz-upgrades-unsafe-allow constructor
+  constructor() {
+    _disableInitializers();
+  }
+
   /// @notice Initializer instead of constructor for proxy compatibility
   function initialize() public initializer {
     __Ownable_init(msg.sender);
