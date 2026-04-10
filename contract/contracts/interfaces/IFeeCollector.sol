@@ -31,12 +31,32 @@ interface IFeeCollector is ITokenSupport {
   /// @return Array of FeeConfig structs
   function getAllFeeConfigs() external view returns (FeeConfig[] memory);
 
+  // ============ Fee Payment ============
+  /// @notice Pay a native fee into the collector and emit a FeePaid event
+  /// @param contractType Name of the contract type charging the fee (e.g. "BANK")
+  function payFee(string calldata contractType) external payable;
+
+  /// @notice Pay an ERC20 fee into the collector (pulled from caller) and emit a FeePaid event
+  /// @param contractType Name of the contract type charging the fee (e.g. "BANK")
+  /// @param token Token address
+  /// @param amount Amount to pull from the caller via transferFrom
+  function payFeeToken(string calldata contractType, address token, uint256 amount) external;
+
+  // ============ Fee Beneficiary ============
+  /// @notice Address that receives funds on withdraw / withdrawToken
+  /// @return Current beneficiary; address(0) means withdrawals fall back to owner()
+  function feeBeneficiary() external view returns (address);
+
+  /// @notice Set the address that will receive swept fees
+  /// @param _beneficiary New beneficiary address, or address(0) to clear (fall back to owner)
+  function setFeeBeneficiary(address _beneficiary) external;
+
   // ============ Withdrawals ============
-  /// @notice Withdraw native ETH
+  /// @notice Withdraw native ETH to the fee beneficiary (or owner if unset)
   /// @param amount Amount to withdraw
   function withdraw(uint256 amount) external;
 
-  /// @notice Withdraw ERC20 tokens
+  /// @notice Withdraw ERC20 tokens to the fee beneficiary (or owner if unset)
   /// @param _token Token address
   /// @param _amount Amount to withdraw
   function withdrawToken(address _token, uint256 _amount) external;

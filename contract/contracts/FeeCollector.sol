@@ -34,8 +34,38 @@ contract FeeCollector is
   /// @dev Stored fee configurations, one entry per contract type.
   FeeConfig[] private feeConfigs;
 
+  /**
+   * @notice Address that receives funds when `withdraw` / `withdrawToken` is called.
+   * @dev If unset (address(0)), withdrawals fall back to `owner()`.
+   */
+  address public feeBeneficiary;
+
   /// @notice Emitted when ERC20 tokens are withdrawn
-  event TokenWithdrawn(address indexed owner, address indexed token, uint256 amount);
+  event TokenWithdrawn(address indexed recipient, address indexed token, uint256 amount);
+
+  /// @notice Emitted when native tokens are withdrawn
+  event Withdrawn(address indexed recipient, uint256 amount);
+
+  /**
+   * @notice Emitted when a fee is paid into the collector.
+   * @param contractType The contract type the fee applies to (e.g. "BANK").
+   * @param payer The address that paid the fee (typically the charging contract).
+   * @param token The token paid; address(0) for native.
+   * @param amount The fee amount.
+   */
+  event FeePaid(
+    string indexed contractType,
+    address indexed payer,
+    address indexed token,
+    uint256 amount
+  );
+
+  /**
+   * @notice Emitted when the fee beneficiary is changed.
+   * @param previous The previous beneficiary (address(0) if unset).
+   * @param current The new beneficiary (address(0) clears it; withdrawals fall back to owner).
+   */
+  event FeeBeneficiaryUpdated(address indexed previous, address indexed current);
 
   /**
    * @notice Emitted when a fee configuration entry is added or updated.
@@ -147,19 +177,71 @@ contract FeeCollector is
   receive() external payable {}
 
   /**
-   * @notice Withdraw native token to owner
+   * @notice Accept a native fee payment and emit a FeePaid event.
+   * @dev Funds are held in this contract until swept via `withdraw`.
+   * @param contractType Identifier of the contract type charging the fee (e.g. "BANK").
+   */
+  function payFee(string calldata contractType) external payable {
+    if (bytes(contractType).length == 0) revert EmptyContractType();
+    if (msg.value == 0) revert ZeroAmount();
+    emit FeePaid(contractType, msg.sender, address(0), msg.value);
+  }
+
+  /**
+   * @notice Accept an ERC20 fee payment and emit a FeePaid event.
+   * @dev Pulls `amount` from `msg.sender` via transferFrom; the caller must approve first.
+   *      Funds are held in this contract until swept via `withdrawToken`.
+   * @param contractType Identifier of the contract type charging the fee (e.g. "BANK").
+   * @param token ERC20 token address (must be supported).
+   * @param amount Fee amount to pull from the caller.
+   */
+  function payFeeToken(
+    string calldata contractType,
+    address token,
+    uint256 amount
+  ) external nonReentrant {
+    if (bytes(contractType).length == 0) revert EmptyContractType();
+    if (!_isTokenSupported(token)) revert TokenNotSupported(token);
+    if (amount == 0) revert ZeroAmount();
+
+    IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
+    emit FeePaid(contractType, msg.sender, token, amount);
+  }
+
+  /**
+   * @notice Set the address that receives swept fees on withdrawals.
+   * @param _beneficiary New beneficiary; address(0) clears it and falls back to owner().
+   */
+  function setFeeBeneficiary(address _beneficiary) external onlyOwner {
+    address previous = feeBeneficiary;
+    feeBeneficiary = _beneficiary;
+    emit FeeBeneficiaryUpdated(previous, _beneficiary);
+  }
+
+  /**
+   * @dev Resolves the effective recipient for withdrawals: beneficiary if set, otherwise owner.
+   */
+  function _withdrawRecipient() internal view returns (address) {
+    address beneficiary = feeBeneficiary;
+    return beneficiary == address(0) ? owner() : beneficiary;
+  }
+
+  /**
+   * @notice Withdraw native token to the fee beneficiary (or owner if unset)
    * @param amount The amount to withdraw
    * @dev Protected by nonReentrant due to external call
    */
   function withdraw(uint256 amount) external onlyOwner nonReentrant {
     if (address(this).balance < amount) revert InsufficientBalance(amount, address(this).balance);
 
-    (bool sent, ) = owner().call{value: amount}('');
+    address recipient = _withdrawRecipient();
+    (bool sent, ) = recipient.call{value: amount}('');
     if (!sent) revert WithdrawalFailed();
+    emit Withdrawn(recipient, amount);
   }
 
   /**
-   * @notice Withdraw ERC20 tokens to owner
+   * @notice Withdraw ERC20 tokens to the fee beneficiary (or owner if unset)
    * @param _token The address of the token to withdraw
    * @param _amount The amount of tokens to withdraw
    * @dev Protected by nonReentrant and only owner can call
@@ -173,8 +255,9 @@ contract FeeCollector is
       revert InsufficientTokenBalance(_token, _amount, contractBalance);
     }
 
-    IERC20(_token).safeTransfer(owner(), _amount);
-    emit TokenWithdrawn(owner(), _token, _amount);
+    address recipient = _withdrawRecipient();
+    IERC20(_token).safeTransfer(recipient, _amount);
+    emit TokenWithdrawn(recipient, _token, _amount);
   }
 
   /**

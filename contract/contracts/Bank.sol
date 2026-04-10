@@ -9,6 +9,7 @@ import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import './base/TokenSupport.sol';
 import {IOfficer} from './interfaces/IOfficer.sol';
 import {IInvestorV1} from './interfaces/IInvestorV1.sol';
+import {IFeeCollector} from './interfaces/IFeeCollector.sol';
 
 /**
  * @title Bank
@@ -47,12 +48,6 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
    */
   event Transfer(address indexed sender, address indexed to, uint256 amount);
 
-  /**
-   * @notice Emitted when a fee is paid to the fee collector.
-   * @param feeCollector Recipient of the fee.
-   * @param amount The fee amount paid.
-   */
-  event FeePaid(address indexed feeCollector, uint256 amount);
   /**
    * @notice Emitted when a dividend distribution is triggered via the Investor contract.
    * @param investor The Investor contract address that received/forwarded funds.
@@ -98,8 +93,6 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
   error InvalidFeeBps(uint16 feeBps);
   /// @dev The fee collector address has not been configured on the officer.
   error FeeCollectorNotConfigured();
-  /// @dev A low-level native token send to the fee collector failed.
-  error FeeTransferFailed();
   /// @dev A low-level native token transfer failed.
   error TransferFailed();
 
@@ -237,10 +230,8 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
       address feeCollector = IOfficer(officerAddress).getFeeCollector();
       if (feeCollector == address(0)) revert FeeCollectorNotConfigured();
 
-      // Send fee to fee collector
-      (bool sentFee, ) = feeCollector.call{value: fee}('');
-      if (!sentFee) revert FeeTransferFailed();
-      emit FeePaid(feeCollector, fee);
+      // Pay fee via FeeCollector (emits FeePaid on the collector)
+      IFeeCollector(feeCollector).payFee{value: fee}('BANK');
     }
 
     // --- Step 3: Send net amount to recipient ---
@@ -290,9 +281,9 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
         address feeCollector = IOfficer(officerAddress).getFeeCollector();
         if (feeCollector == address(0)) revert FeeCollectorNotConfigured();
 
-        // Transfer fee to fee collector
-        IERC20(_token).safeTransfer(feeCollector, fee);
-        emit FeePaid(feeCollector, fee);
+        // Pay fee via FeeCollector (pulled via transferFrom; emits FeePaid on the collector)
+        IERC20(_token).forceApprove(feeCollector, fee);
+        IFeeCollector(feeCollector).payFeeToken('BANK', _token, fee);
       }
     }
 
