@@ -170,8 +170,22 @@ export function useContractWritesV3(cfg: ContractWriteV3Config) {
     onSuccess: async () => {
       const address = unref(cfg.contractAddress)
       const chainId = unref(cfg.chainId)
+      // TanStack's partialMatchKey walks every key present in the invalidation
+      // target and compares values by identity. `useReadContract` always stores
+      // a concrete `chainId` in its query key (it injects `chainId ?? currentChainId`),
+      // so passing `{ address, chainId: undefined }` here compares `undefined`
+      // against e.g. `31337` and the match fails — no reads get invalidated.
+      // Only include `chainId` when it was explicitly set on the V3 call; an
+      // address-only target lets partialMatchKey ignore the chainId field on
+      // the stored key and invalidate all reads against this contract.
       await queryClient.invalidateQueries({
-        queryKey: ['readContract', { address, chainId }]
+        queryKey: [
+          'readContract',
+          {
+            address,
+            ...(chainId !== undefined ? { chainId } : {})
+          }
+        ]
       })
     }
   })
