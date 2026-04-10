@@ -6,6 +6,7 @@ import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
+import '@openzeppelin/contracts/utils/structs/EnumerableSet.sol';
 import './base/TokenSupport.sol';
 
 /**
@@ -20,6 +21,7 @@ contract FeeCollector is
   TokenSupport
 {
   using SafeERC20 for IERC20;
+  using EnumerableSet for EnumerableSet.AddressSet;
 
   /**
    * @dev Fee configuration entry for one contract type.
@@ -84,10 +86,6 @@ contract FeeCollector is
   /// @dev Duplicate contractType entries are not allowed.
   /// @param contractType The duplicated contract type.
   error DuplicateContractType(string contractType);
-  /// @dev The contract's balance is less than the requested amount.
-  /// @param required The amount requested.
-  /// @param available The current contract balance.
-  error InsufficientBalance(uint256 required, uint256 available);
   /// @dev A low-level native token transfer failed.
   error WithdrawalFailed();
   /// @dev The token is not supported by this fee collector.
@@ -95,11 +93,6 @@ contract FeeCollector is
   error TokenNotSupported(address token);
   /// @dev The amount must be greater than zero.
   error ZeroAmount();
-  /// @dev The contract's token balance is less than the requested amount.
-  /// @param token The ERC20 token.
-  /// @param required The amount requested.
-  /// @param available The current token balance.
-  error InsufficientTokenBalance(address token, uint256 required, uint256 available);
 
   /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() {
@@ -227,37 +220,31 @@ contract FeeCollector is
   }
 
   /**
-   * @notice Withdraw native token to the fee beneficiary (or owner if unset)
-   * @param amount The amount to withdraw
-   * @dev Protected by nonReentrant due to external call
+   * @notice Sweep the entire native balance and every supported ERC20 balance
+   *         held by this contract to the fee beneficiary (or owner if unset).
+   * @dev Owner-only and reentrancy-guarded. Any token whose balance is zero is
+   *      skipped. If both native and all token balances are zero this is a no-op.
    */
-  function withdraw(uint256 amount) external onlyOwner nonReentrant {
-    if (address(this).balance < amount) revert InsufficientBalance(amount, address(this).balance);
-
+  function withdraw() external onlyOwner nonReentrant {
     address recipient = _withdrawRecipient();
-    (bool sent, ) = recipient.call{value: amount}('');
-    if (!sent) revert WithdrawalFailed();
-    emit Withdrawn(recipient, amount);
-  }
 
-  /**
-   * @notice Withdraw ERC20 tokens to the fee beneficiary (or owner if unset)
-   * @param _token The address of the token to withdraw
-   * @param _amount The amount of tokens to withdraw
-   * @dev Protected by nonReentrant and only owner can call
-   */
-  function withdrawToken(address _token, uint256 _amount) external onlyOwner nonReentrant {
-    if (!_isTokenSupported(_token)) revert TokenNotSupported(_token);
-    if (_amount == 0) revert ZeroAmount();
-
-    uint256 contractBalance = IERC20(_token).balanceOf(address(this));
-    if (contractBalance < _amount) {
-      revert InsufficientTokenBalance(_token, _amount, contractBalance);
+    uint256 nativeBalance = address(this).balance;
+    if (nativeBalance > 0) {
+      (bool sent, ) = recipient.call{value: nativeBalance}('');
+      if (!sent) revert WithdrawalFailed();
+      emit Withdrawn(recipient, nativeBalance);
     }
 
-    address recipient = _withdrawRecipient();
-    IERC20(_token).safeTransfer(recipient, _amount);
-    emit TokenWithdrawn(recipient, _token, _amount);
+    address[] memory tokens = _supportedTokens.values();
+    uint256 len = tokens.length;
+    for (uint256 i = 0; i < len; ++i) {
+      address token = tokens[i];
+      uint256 balance = IERC20(token).balanceOf(address(this));
+      if (balance > 0) {
+        IERC20(token).safeTransfer(recipient, balance);
+        emit TokenWithdrawn(recipient, token, balance);
+      }
+    }
   }
 
   /**

@@ -52,14 +52,8 @@ interface IFeeCollector is ITokenSupport {
   function setFeeBeneficiary(address _beneficiary) external;
 
   // ============ Withdrawals ============
-  /// @notice Withdraw native ETH to the fee beneficiary (or owner if unset)
-  /// @param amount Amount to withdraw
-  function withdraw(uint256 amount) external;
-
-  /// @notice Withdraw ERC20 tokens to the fee beneficiary (or owner if unset)
-  /// @param _token Token address
-  /// @param _amount Amount to withdraw
-  function withdrawToken(address _token, uint256 _amount) external;
+  /// @notice Sweep the full native balance and every supported ERC20 balance to the fee beneficiary (or owner if unset)
+  function withdraw() external;
 
   // ============ Balance Queries ============
   /// @notice Get native ETH balance
