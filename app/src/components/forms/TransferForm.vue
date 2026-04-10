@@ -77,7 +77,7 @@
         :disabled="loading"
         data-test="transferButton"
       >
-        {{ showFees ? ` Transfer ${totalToSend.toFixed(2)} ${model.token.symbol}` : 'Transfer' }}
+        {{ `Transfer${showFees ? ` ${totalToSend.toFixed(2)} ${model.token.symbol}` : ''}` }}
       </UButton>
     </div>
   </UForm>
