@@ -85,8 +85,6 @@ export const useFeeCollector = () => {
 
     const localRegistry = getSupportedTokens(nativeSymbol, chainId)
     const supportedSet = onChainSupportedSet.value
-    console.log('Local registry:', localRegistry)
-    console.log('On-chain supported set:', supportedSet)
 
     // Balance lookup keyed by token id — matches entries in the local registry.
     const balanceMap: Record<string, unknown> = {
