@@ -103,6 +103,12 @@ describe('TransferForm.vue', () => {
   })
 
   describe('Actions', () => {
+    it('renders BodAlert when the form is used in bod mode', () => {
+      const w = factory({ isBodAction: true })
+
+      expect(w.text()).toContain('This will create a BOD action')
+    })
+
     it('emits closeModal event when Cancel button is clicked', async () => {
       await wrapper.find('[data-test="cancel-button"]').trigger('click')
 
@@ -202,6 +208,15 @@ describe('TransferForm.vue', () => {
       const invalid = validateAmount(w, '91')
       expect(invalid.success).toBe(false)
       expect(invalid.error.issues[0].message).toBe('Amount + fees exceed available balance')
+    })
+
+    it('keeps validation valid when the fee-adjusted total exactly matches the balance', () => {
+      const w = factory({
+        feeBps: 1000,
+        modelValue: createModelValue({ amount: '10' })
+      })
+
+      expect(validateAmount(w, '90').success).toBe(true)
     })
   })
 

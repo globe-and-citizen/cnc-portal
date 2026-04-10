@@ -97,6 +97,17 @@ describe('TokenAmount.vue', () => {
         wrapper.find('[data-test="percentButton-25"]').attributes('disabled')
       ).not.toBeUndefined()
     })
+
+    it('disables token select when there is only one option', () => {
+      const wrapper = createWrapper({
+        tokens: [
+          { symbol: 'USDC', tokenId: 'usdc' as TokenId, balance: 10, price: 1, code: 'USD' }
+        ],
+        modelValue: { amount: '', tokenId: 'usdc' as TokenId }
+      })
+
+      expect(wrapper.find('[data-test="tokenSelect"]').attributes('disabled')).not.toBeUndefined()
+    })
   })
 
   describe('amount helpers', () => {
@@ -120,6 +131,25 @@ describe('TokenAmount.vue', () => {
 
       await wrapper.find('[data-test="percentButton-75"]').trigger('click')
       expect(getLastModelValue(wrapper)?.amount).toBe('75.0000')
+    })
+
+    it('uses spendableBalance for max balance when present', async () => {
+      const wrapper = createWrapper({
+        tokens: [
+          {
+            symbol: 'ETH',
+            tokenId: 'native' as TokenId,
+            balance: 100,
+            spendableBalance: 40,
+            price: 2000,
+            code: 'USD'
+          }
+        ]
+      })
+
+      await wrapper.find('[data-test="maxButton"]').trigger('click')
+
+      expect(getLastModelValue(wrapper)?.amount).toBe('40.000000')
     })
   })
 
@@ -167,6 +197,14 @@ describe('TokenAmount.vue', () => {
     it('keeps validation valid for more than 4 decimal places', () => {
       const wrapper = createWrapper({ modelValue: { amount: '1.12345', tokenId: 'native' } })
       expect(getLastValidation(wrapper)).toBe(true)
+    })
+
+    it('shows invalid validation state when amount exceeds balance', async () => {
+      const wrapper = createWrapper({ modelValue: { amount: '999', tokenId: 'native' } })
+
+      await nextTick()
+
+      expect(getLastValidation(wrapper)).toBe(false)
     })
   })
 })
