@@ -1,4 +1,6 @@
 import { useConnection, useReadContract } from '@wagmi/vue'
+import type { MaybeRefOrGetter } from 'vue'
+import { toValue } from 'vue'
 import type { Address } from 'viem'
 import { FEE_COLLECTOR_ABI } from '~/artifacts/abi/feeCollector'
 import { FEE_COLLECTOR_ADDRESS } from '~/constant/index'
@@ -12,13 +14,21 @@ export function useFeeBalance() {
   })
 }
 
-export function useFeeTokenBalance(tokenAddress: Address) {
-  // ERC20 token balance
+export function useFeeTokenBalance(
+  tokenAddress: Address,
+  enabled?: MaybeRefOrGetter<boolean>
+) {
+  // ERC20 token balance. `enabled` lets callers gate the read on e.g. the
+  // on-chain supported-tokens list, so we don't hit `getTokenBalance` for a
+  // token the collector would revert on with TokenNotSupported.
   return useReadContract({
     address: FEE_COLLECTOR_ADDRESS as Address,
     abi: FEE_COLLECTOR_ABI,
     functionName: 'getTokenBalance',
-    args: [tokenAddress]
+    args: [tokenAddress],
+    query: {
+      enabled: computed(() => (enabled === undefined ? true : toValue(enabled)))
+    }
   })
 }
 

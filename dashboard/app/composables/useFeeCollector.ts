@@ -27,19 +27,30 @@ export const useFeeCollector = () => {
     error: errorSupportedTokens
   } = useFeeSupportedTokens()
 
-  // USDC balance
+  // Lowercased set of on-chain supported ERC20 addresses for cheap membership checks.
+  // Empty until the contract read resolves, which keeps the gated token reads disabled
+  // during load and prevents TokenNotSupported reverts for stale local addresses.
+  const onChainSupportedSet = computed<Set<string>>(() => {
+    const list = onChainSupportedTokens.value as readonly Address[] | undefined
+    return new Set((list ?? []).map(addr => addr.toLowerCase()))
+  })
+
+  const isTokenOnChainSupported = (address: Address) =>
+    computed(() => onChainSupportedSet.value.has(address.toLowerCase()))
+
+  // USDC balance — only read if the collector actually supports the current USDC address
   const {
     data: usdcBalance,
     isLoading: isLoadingUsdc,
     error: errorUsdc
-  } = useFeeTokenBalance(getUSDCAddress())
+  } = useFeeTokenBalance(getUSDCAddress(), isTokenOnChainSupported(getUSDCAddress()))
 
-  // USDT balance
+  // USDT balance — same gating
   const {
     data: usdtBalance,
     isLoading: isLoadingUsdt,
     error: errorUsdt
-  } = useFeeTokenBalance(getUSDTAddress())
+  } = useFeeTokenBalance(getUSDTAddress(), isTokenOnChainSupported(getUSDTAddress()))
 
   const tokenPriceStore = useTokenPriceStore()
 
@@ -66,13 +77,6 @@ export const useFeeCollector = () => {
     return formatUSD(tokenPrice * tokenAmount)
   }
 
-  // Lowercased set of on-chain supported ERC20 addresses for cheap membership checks.
-  // Empty until the contract read resolves, which hides every ERC20 during load.
-  const onChainSupportedSet = computed<Set<string>>(() => {
-    const list = onChainSupportedTokens.value as readonly Address[] | undefined
-    return new Set((list ?? []).map((addr) => addr.toLowerCase()))
-  })
-
   // Build tokens list: native is always shown; each known ERC20 is only shown
   // if its address appears in the on-chain supported list.
   const tokens = computed<TokenDisplay[]>(() => {
@@ -81,6 +85,8 @@ export const useFeeCollector = () => {
 
     const localRegistry = getSupportedTokens(nativeSymbol, chainId)
     const supportedSet = onChainSupportedSet.value
+    console.log('Local registry:', localRegistry)
+    console.log('On-chain supported set:', supportedSet)
 
     // Balance lookup keyed by token id — matches entries in the local registry.
     const balanceMap: Record<string, unknown> = {
@@ -90,7 +96,7 @@ export const useFeeCollector = () => {
     }
 
     return localRegistry
-      .filter((token) => token.id === 'native' || supportedSet.has(token.address.toLowerCase()))
+      .filter(token => token.id === 'native' || supportedSet.has(token.address.toLowerCase()))
       .map((token) => {
         const balance = balanceMap[token.id]
         return {
@@ -112,11 +118,11 @@ export const useFeeCollector = () => {
     const chainId = connection.chain.value?.id
     const known = new Set(
       getSupportedTokens(nativeSymbol, chainId)
-        .filter((token) => token.id !== 'native')
-        .map((token) => token.address.toLowerCase())
+        .filter(token => token.id !== 'native')
+        .map(token => token.address.toLowerCase())
     )
     const list = (onChainSupportedTokens.value as readonly Address[] | undefined) ?? []
-    return list.filter((addr) => !known.has(addr.toLowerCase()))
+    return list.filter(addr => !known.has(addr.toLowerCase()))
   })
 
   const isLoading = computed(() =>
