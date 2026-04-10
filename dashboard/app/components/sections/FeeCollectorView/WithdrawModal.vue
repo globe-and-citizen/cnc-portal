@@ -4,7 +4,7 @@
       color="primary"
       size="sm"
       icon="i-heroicons-arrow-down-tray"
-      :disabled="isLoadingWithdraw || isConfirmingWithdraw"
+      :disabled="withdrawAll.isPending.value"
       @click="isOpen = true"
     >
       Withdraw
@@ -12,7 +12,7 @@
 
     <UModal
       :open="isOpen"
-      :prevent-close="isLoadingWithdraw || isConfirmingWithdraw"
+      :prevent-close="withdrawAll.isPending.value"
       title="Withdraw all fees"
       :close="{ onClick: () => handleClose() }"
       @update:model-value="isOpen = $event"
@@ -68,6 +68,15 @@
           <p v-if="sweepableTokens.length > 0" class="text-right text-sm text-gray-500">
             Total ≈ {{ formattedTotalUsd }}
           </p>
+
+          <UAlert
+            v-if="withdrawAll.isError.value"
+            color="error"
+            variant="subtle"
+            title="Failed to withdraw fees"
+            :description="errorDescription"
+            icon="i-lucide-terminal"
+          />
         </div>
       </template>
 
@@ -77,7 +86,7 @@
           <UButton
             color="neutral"
             variant="outline"
-            :disabled="isLoadingWithdraw || isConfirmingWithdraw"
+            :disabled="withdrawAll.isPending.value"
             @click="handleClose"
           >
             Cancel
@@ -86,10 +95,10 @@
           <UButton
             color="primary"
             :disabled="sweepableTokens.length === 0"
-            :loading="isLoadingWithdraw || isConfirmingWithdraw"
+            :loading="withdrawAll.isPending.value"
             @click="handleConfirm"
           >
-            {{ isConfirmingWithdraw ? 'Confirming...' : 'Withdraw all' }}
+            Withdraw all
           </UButton>
         </div>
       </template>
@@ -100,8 +109,9 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useFeeCollector } from '@/composables/useFeeCollector'
-import { useTokenWithdraw } from '@/composables/useTokenWithdraw'
 import { isFeeCollectorOwner } from '~/composables/FeeCollector/read'
+import { useWithdrawAll } from '~/composables/FeeCollector/writes'
+import { parseErrorV2 } from '@/utils'
 
 const toast = useToast()
 
@@ -109,12 +119,7 @@ const isOwner = isFeeCollectorOwner()
 const isOpen = ref(false)
 
 const { tokens, formattedTotalUsd } = useFeeCollector()
-const {
-  withdraw,
-  isLoadingWithdraw,
-  isConfirmingWithdraw,
-  isConfirmedWithdraw
-} = useTokenWithdraw()
+const withdrawAll = useWithdrawAll()
 
 // Only show tokens that actually have a non-zero balance — those are what
 // the on-chain sweep will move. Zero-balance entries are skipped by the
@@ -123,22 +128,34 @@ const sweepableTokens = computed(() =>
   tokens.value.filter(token => token.balance > 0n)
 )
 
+const errorDescription = computed(() => {
+  const err = withdrawAll.error.value
+  return err ? parseErrorV2(err) : ''
+})
+
 const handleClose = () => {
-  if (isLoadingWithdraw.value || isConfirmingWithdraw.value) return
+  if (withdrawAll.isPending.value) return
   isOpen.value = false
 }
 
-const handleConfirm = () => {
-  withdraw()
+const handleConfirm = async () => {
+  try {
+    await withdrawAll.mutateAsync({ args: [] })
+    // V3 auto-invalidates the fee collector's readContract queries on success,
+    // so the TokenHoldingsTable balances refresh without manual wiring.
+    toast.add({
+      title: 'Success',
+      description: 'All fees withdrawn successfully',
+      color: 'success'
+    })
+    isOpen.value = false
+  } catch {
+    // Error surfaced via withdrawAll.error + the UAlert in the modal body.
+  }
 }
 
-watch(isConfirmedWithdraw, (confirmed) => {
-  if (!confirmed) return
-  toast.add({
-    title: 'Success',
-    description: 'All fees withdrawn successfully',
-    color: 'success'
-  })
-  isOpen.value = false
+// Reset any previous error state whenever the modal is reopened.
+watch(isOpen, (open) => {
+  if (open) withdrawAll.reset()
 })
 </script>
