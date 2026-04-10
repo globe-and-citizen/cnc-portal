@@ -6,44 +6,46 @@
     ></span>
     <div
       v-if="!teamStore.currentTeamMeta.isPending && teamStore"
-      class="flex flex-col gap-5 w-full items-center"
+      class="flex w-full flex-col items-center gap-5"
     >
-      <CardComponent class="w-full" title="Advertise Contract">
-        <template #card-action>
-          <div>
-            <ButtonUI
-              variant="primary"
-              :enabled="teamStore.currentTeam?.ownerAddress == userStore.address"
-              data-test="createAddCampaign"
-              @click="showAdCampaignModal = { mount: true, show: true }"
-            >
-              Deploy Advertise Contract
-            </ButtonUI>
+      <UCard class="w-full">
+        <template #header>
+          <div class="flex items-center justify-between">
+            <span>Advertise Contract</span>
+            <div>
+              <UButton
+                color="primary"
+                :disabled="teamStore.currentTeam?.ownerAddress != userStore.address"
+                data-test="createAddCampaign"
+                @click="showAdCampaignModal = { mount: true, show: true }"
+                label="Deploy Advertise Contract"
+              />
+            </div>
           </div>
         </template>
         <TeamContracts />
-      </CardComponent>
-      <ModalComponent
-        v-model="showAdCampaignModal.show"
+      </UCard>
+      <UModal
         v-if="showAdCampaignModal.mount"
-        @reset="() => (showAdCampaignModal = { mount: false, show: false })"
+        v-model:open="showAdCampaignModal.show"
+        title="Deploy Advertising Campaign"
+        description="Deploy a new campaign contract to advertise your team’s work and attract contributors."
       >
-        <CreateAddCampaign
-          @closeAddCampaignModal="showAdCampaignModal = { mount: false, show: false }"
-        />
-      </ModalComponent>
+        <template #body>
+          <CreateAddCampaign
+            @closeAddCampaignModal="showAdCampaignModal = { mount: false, show: false }"
+          />
+        </template>
+      </UModal>
     </div>
   </div>
 </template>
 <script setup lang="ts">
 import { ref } from 'vue'
 import TeamContracts from '@/components/sections/ContractManagementView/TeamContracts.vue'
-import CardComponent from '@/components/CardComponent.vue'
 import { useUserDataStore } from '@/stores/user'
 import { useTeamStore } from '@/stores'
-import ButtonUI from '@/components/ButtonUI.vue'
 
-import ModalComponent from '@/components/ModalComponent.vue'
 import CreateAddCampaign from '@/components/sections/ContractManagementView/forms/CreateAddCampaign.vue'
 
 const teamStore = useTeamStore()

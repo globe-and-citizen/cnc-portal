@@ -1,8 +1,8 @@
 <template>
-  <h4 class="font-bold text-lg">Deploy Advertisement Campaign contract</h4>
+  <h4 class="text-lg font-bold">Deploy Advertisement Campaign contract</h4>
   <div class="flex flex-col gap-5">
     <h3 class="pt-8">By clicking "Deploy Advertisement"</h3>
-    <label class="input input-bordered flex items-center gap-2 input-md mt-4">
+    <label class="input input-bordered input-md mt-4 flex items-center gap-2">
       <span class="w-28">Bank Contract</span>
       <input
         type="string"
@@ -13,7 +13,7 @@
         data-testid="bank-address-input"
       />
     </label>
-    <label class="input input-bordered flex items-center gap-2 input-md mt-4">
+    <label class="input input-bordered input-md mt-4 flex items-center gap-2">
       <span class="w-28">click rate</span>
       <input
         type="number"
@@ -23,7 +23,7 @@
         required
       />
     </label>
-    <label class="input input-bordered flex items-center gap-2 input-md mt-4">
+    <label class="input input-bordered input-md mt-4 flex items-center gap-2">
       <span class="w-28">impression rate</span>
       <input
         type="number"
@@ -36,14 +36,14 @@
   </div>
 
   <h3 class="pt-8">
-    By clicking "Deploy Advertisement Contract" you agree to deploy an advertisment campaign
+    By clicking "Deploy Advertisement Contract" you agree to deploy an advertisement campaign
     contract and this may take some time and pay for gas fee.
-    <ButtonUI class="btn btn-secondary btn-xs" @click="viewContractCode()">view code</ButtonUI>
+    <UButton color="secondary" size="xs" @click="viewContractCode()" label="view code" />
   </h3>
 
   <div class="modal-action justify-right">
-    <ButtonUI
-      variant="primary"
+    <UButton
+      color="primary"
       size="sm"
       @click="deployAdCampaign"
       :loading="loading"
@@ -54,19 +54,17 @@
         parseFloat(costPerClick) <= 0 ||
         parseFloat(costPerImpression) <= 0
       "
-    >
-      confirm
-    </ButtonUI>
+      data-test="confirm-button"
+      label="confirm"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import ButtonUI from '@/components/ButtonUI.vue'
 
 import { useDeployContract } from '@/composables/useContractFunctions'
 import { useUserDataStore } from '@/stores/user'
-import { useToastStore } from '@/stores'
 import { useTeamStore } from '@/stores'
 import { AD_CAMPAIGN_MANAGER_ABI } from '@/artifacts/abi/ad-campaign-manager'
 import { CAMPAIGN_BYTECODE } from '@/artifacts/bytecode/adCampaignManager.ts'
@@ -75,7 +73,7 @@ import { useCreateContractMutation } from '@/queries/contract.queries'
 import { useQueryClient } from '@tanstack/vue-query'
 
 const emit = defineEmits(['closeAddCampaignModal'])
-const { addErrorToast, addSuccessToast } = useToastStore()
+const toast = useToast()
 
 const campaignBytecode = CAMPAIGN_BYTECODE as Hex
 const teamStore = useTeamStore()
@@ -121,11 +119,14 @@ watch(contractAddress, async (newAddress) => {
       })
 
       // Only show success and close modal if everything succeeds
-      addSuccessToast(`Contract deployed and added to team successfully`)
+      toast.add({ title: `Contract deployed and added to team successfully`, color: 'success' })
       emit('closeAddCampaignModal')
     } catch (error) {
       console.error('Failed to add contract to team:', error)
-      addErrorToast('Contract deployed but failed to add to team. Please try again.')
+      toast.add({
+        title: 'Contract deployed but failed to add to team. Please try again.',
+        color: 'error'
+      })
     }
   }
 })
@@ -133,11 +134,11 @@ watch(contractAddress, async (newAddress) => {
 // Trigger deployment
 const deployAdCampaign = async () => {
   if (!costPerClick.value || !costPerImpression.value) {
-    addErrorToast('Please enter valid numeric values for both rates.')
+    toast.add({ title: 'Please enter valid numeric values for both rates.', color: 'error' })
     return
   }
   if (!bankAddress) {
-    addErrorToast('Bank address is missing.')
+    toast.add({ title: 'Bank address is missing.', color: 'error' })
     return
   }
   await deploy(bankAddress, costPerClick.value, costPerImpression.value)
@@ -147,7 +148,7 @@ const deployAdCampaign = async () => {
     if (errorMessage.includes('User rejected the request')) {
       errorMessage = 'User rejected the request'
     }
-    addErrorToast(`${errorMessage}`)
+    toast.add({ title: `${errorMessage}`, color: 'error' })
   }
 }
 

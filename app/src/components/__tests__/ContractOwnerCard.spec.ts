@@ -23,11 +23,6 @@ describe('ContractOwnerCard', () => {
   })
 
   const globalStubs = {
-    CardComponent: { template: '<div><slot /></div>' },
-    UserAvatarComponent: {
-      props: ['user'],
-      template: '<div class="avatar">{{ user?.name || user?.address || "no" }}</div>'
-    },
     AddressToolTip: {
       props: ['address'],
       template: '<span class="addr">{{ address }}</span>'

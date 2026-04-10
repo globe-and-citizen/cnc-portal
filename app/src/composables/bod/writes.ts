@@ -2,7 +2,7 @@ import { computed, ref, unref, type MaybeRef } from 'vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import { type Address } from 'viem'
 import { readContract } from '@wagmi/core'
-import { useTeamStore, useToastStore } from '@/stores'
+import { useTeamStore } from '@/stores'
 import { useContractWrites } from '../contracts/useContractWritesV2'
 import { config } from '@/wagmi.config'
 import { BOD_ABI } from '@/artifacts/abi/bod'
@@ -31,24 +31,6 @@ function useBodContractWrite(options: {
 }
 
 /**
- * Pause the BOD contract
- */
-export function useBodPause() {
-  return useBodContractWrite({
-    functionName: BOD_FUNCTION_NAMES.PAUSE
-  })
-}
-
-/**
- * Unpause the BOD contract
- */
-export function useBodUnpause() {
-  return useBodContractWrite({
-    functionName: BOD_FUNCTION_NAMES.UNPAUSE
-  })
-}
-
-/**
  * Set board of directors
  */
 export function useBodSetBoardOfDirectors(addresses: MaybeRef<Address[]>) {
@@ -65,7 +47,7 @@ export function useBodSetBoardOfDirectors(addresses: MaybeRef<Address[]>) {
  */
 export function useBodAddAction() {
   const teamStore = useTeamStore()
-  const { addErrorToast } = useToastStore()
+  const toast = useToast()
   const queryClient = useQueryClient()
   const bodAddress = computed(() => teamStore.getContractAddressByType('BoardOfDirectors'))
 
@@ -128,11 +110,11 @@ export function useBodAddAction() {
   const executeAddAction = async (data: Partial<Action>) => {
     try {
       if (!bodAddress.value) {
-        addErrorToast('BOD address not found')
+        toast.add({ title: 'BOD address not found', color: 'error' })
         return
       }
       if (!teamStore.currentTeamId) {
-        addErrorToast('No current team ID found')
+        toast.add({ title: 'No current team ID found', color: 'error' })
         return
       }
 

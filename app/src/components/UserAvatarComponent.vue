@@ -1,34 +1,34 @@
 <template>
   <div
-    class="flex flex-row justify-start items-center gap-4 transition-all duration-300"
+    class="flex flex-row items-center justify-start gap-4 transition-all duration-300"
     :class="{ 'justify-center': isCollapsed || isDetailedView }"
   >
-    <div role="button" class="relative group">
+    <div role="button" class="group relative">
       <div
         data-test="avatar-container"
-        class="relative rounded-full overflow-hidden border border-gray-400"
+        class="relative overflow-hidden rounded-full border border-gray-400"
         :class="{
-          'ring-gray-200 w-24 h-24 ring-4': isDetailedView,
-          'w-11 h-11 ring-2 ring-white/50': !isDetailedView
+          'h-24 w-24 ring-4 ring-gray-200': isDetailedView,
+          'h-11 w-11 ring-2 ring-white/50': !isDetailedView
         }"
       >
         <img
           data-test="avatar-image"
           alt="User Avatar"
           :src="user.imageUrl || defaultUser"
-          class="w-full h-full object-cover"
+          class="h-full w-full object-cover"
         />
       </div>
     </div>
     <div
       v-if="!isCollapsed"
       data-test="user-info-container"
-      class="flex-1 text-gray-800 flex items-center"
-      :class="{ 'justify-center text-center flex-col': isDetailedView }"
+      class="flex flex-1 items-center text-gray-800"
+      :class="{ 'flex-col justify-center text-center': isDetailedView }"
     >
-      <span class="text-gray-500 mr-2">Owner name:</span>
+      <span class="mr-2 text-gray-500">Owner name:</span>
       <p
-        class="font-bold line-clamp-1"
+        class="line-clamp-1 font-bold"
         :class="{ 'text-sm': isDetailedView, 'text-lg': !isDetailedView }"
         data-test="user-name"
       >
@@ -36,7 +36,7 @@
       </p>
       <p
         v-if="isDetailedView"
-        class="text-gray-400 font-bold mt-2"
+        class="mt-2 font-bold text-gray-400"
         :class="{ 'text-sm': isDetailedView, 'text-xs': !isDetailedView }"
         data-test="user-role"
       >

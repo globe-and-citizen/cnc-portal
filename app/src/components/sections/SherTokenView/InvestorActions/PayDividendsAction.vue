@@ -1,25 +1,34 @@
 <template>
   <div :class="{ tooltip: !canPayDividends }" :data-tip="cannotPayDividendsReason">
-    <ButtonUI
-      variant="primary"
-      data-test="pay-dividends-button"
+    <ActionButton
+      icon="heroicons:arrow-trending-up"
+      icon-bg="bg-blue-50 dark:bg-blue-950"
+      icon-color="text-blue-700 dark:text-blue-400"
+      title="Pay Dividends"
+      tone-class="border-blue-200 bg-blue-50/60 hover:border-blue-300 hover:bg-blue-100/70 disabled:border-blue-200 disabled:bg-blue-50/50 dark:border-blue-900 dark:bg-blue-950/30 dark:hover:border-blue-800 dark:hover:bg-blue-900/40 dark:disabled:border-blue-900 dark:disabled:bg-blue-950/30"
       :disabled="!canPayDividends"
+      data-test="pay-dividends-button"
       @click="openModal"
-    >
-      Pay Dividends
-    </ButtonUI>
+    />
 
-    <ModalComponent v-model="modalState.show" v-if="modalState.mount" @reset="closeModal">
-      <PayDividendsForm
-        v-if="modalState.show && currentTeam"
-        :loading="isBankWriteLoading || isLoadingAddAction || isConfirmingAddAction"
-        :token-symbol="tokenSymbol!"
-        :team="currentTeam"
-        :is-bod-action="isBodAction"
-        @submit="handleSubmit"
-        @close-modal="closeModal"
-      />
-    </ModalComponent>
+    <UModal
+      v-if="modalState.mount"
+      v-model:open="modalState.show"
+      title="Pay Dividends to the shareholders"
+      :description="`Please input amount to divide to the shareholders. This will move funds from bank contract to shareholders based on their share percentage. Only the bank owner can pay dividends.`"
+    >
+      <template #body>
+        <PayDividendsForm
+          v-if="modalState.show && currentTeam"
+          :loading="isBankWriteLoading || isLoadingAddAction || isConfirmingAddAction"
+          :token-symbol="tokenSymbol!"
+          :team="currentTeam"
+          :is-bod-action="isBodAction"
+          @submit="handleSubmit"
+          @close-modal="closeModal"
+        />
+      </template>
+    </UModal>
   </div>
 </template>
 
@@ -27,14 +36,16 @@
 import { computed, ref, watch } from 'vue'
 import type { Address } from 'viem'
 import { encodeFunctionData, formatUnits, zeroAddress } from 'viem'
-import ButtonUI from '@/components/ButtonUI.vue'
-import ModalComponent from '@/components/ModalComponent.vue'
 import PayDividendsForm from '@/components/sections/SherTokenView/forms/PayDividendsForm.vue'
+import ActionButton from '@/components/sections/SherTokenView/ActionButton.vue'
 import { BANK_ABI } from '@/artifacts/abi/bank'
 import { useTeamStore, useUserDataStore } from '@/stores'
 import { useBodAddAction } from '@/composables/bod/writes'
 import { useBodIsBodAction } from '@/composables/bod/reads'
-import { useDepositDividends, useDepositTokenDividends } from '@/composables/bank/writes'
+import {
+  useDistributeNativeDividends,
+  useDistributeTokenDividends
+} from '@/composables/bank/writes'
 import { tokenSymbol as tokenSymbolUtils, tokenSymbolAddresses } from '@/utils'
 import type { TokenId } from '@/constant'
 
@@ -56,21 +67,12 @@ const modalState = ref({
   show: false
 })
 
-const depositAmount = ref<bigint>(0n)
-const depositTokenAddress = ref<Address>(zeroAddress)
-const investorAddress = computed(() => teamStore.getContractAddressByType('InvestorV1') as Address)
-
-const depositDividendsWrite = useDepositDividends(depositAmount, investorAddress)
-const depositTokenDividendsWrite = useDepositTokenDividends(
-  depositTokenAddress,
-  depositAmount,
-  investorAddress
-)
+const distributeNativeDividendsWrite = useDistributeNativeDividends()
+const distributeTokenDividendsWrite = useDistributeTokenDividends()
 
 const isBankWriteLoading = computed(
   () =>
-    depositDividendsWrite.writeResult.isPending.value ||
-    depositTokenDividendsWrite.writeResult.isPending.value
+    distributeNativeDividendsWrite.isPending.value || distributeTokenDividendsWrite.isPending.value
 )
 
 const addActionComposable = useBodAddAction()
@@ -89,7 +91,6 @@ const canPayDividends = computed(() => {
   const hasTokenSymbol = !!props.tokenSymbol
   const hasShareholders = (props.shareholdersCount ?? 0) > 0
   const isAuthorized = isBodAction.value || currentAddress === props.investorsOwner
-
   return hasTokenSymbol && hasShareholders && isAuthorized
 })
 
@@ -111,17 +112,18 @@ const closeModal = () => {
 }
 
 const handleSubmit = async (value: bigint, selectedTokenId: TokenId) => {
+  if (value <= 0n) return
+
   if (isBodAction.value) {
-    if (!props.investorsAddress) return
-    const investorAddr = investorAddress.value
-    if (!investorAddr) return
+    if (!props.bankAddress) return
     const data = encodeFunctionData({
       abi: BANK_ABI,
-      functionName: selectedTokenId === 'native' ? 'depositDividends' : 'depositTokenDividends',
+      functionName:
+        selectedTokenId === 'native' ? 'distributeNativeDividends' : 'distributeTokenDividends',
       args:
         selectedTokenId === 'native'
-          ? [value, investorAddr]
-          : [tokenSymbolAddresses[selectedTokenId] as Address, value, investorAddr]
+          ? [value]
+          : [tokenSymbolAddresses[selectedTokenId] as Address, value]
     })
 
     const description = JSON.stringify({
@@ -135,21 +137,11 @@ const handleSubmit = async (value: bigint, selectedTokenId: TokenId) => {
       data
     })
   } else {
-    const investorAddr = investorAddress.value
-    if (!investorAddr) return
-    depositAmount.value = value
-
     if (selectedTokenId === 'native') {
-      const result = await depositDividendsWrite.executeWrite([value, investorAddr], value)
-      if (!result) throw new Error('Deposit failed')
+      await distributeNativeDividendsWrite.mutateAsync({ args: [value] })
     } else {
-      depositTokenAddress.value = tokenSymbolAddresses[selectedTokenId] as Address
-      const result = await depositTokenDividendsWrite.executeWrite([
-        depositTokenAddress.value,
-        value,
-        investorAddr
-      ])
-      if (!result) throw new Error('Deposit failed')
+      const tokenAddress = tokenSymbolAddresses[selectedTokenId] as Address
+      await distributeTokenDividendsWrite.mutateAsync({ args: [tokenAddress, value] })
     }
 
     closeModal()

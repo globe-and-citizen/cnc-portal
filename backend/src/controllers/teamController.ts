@@ -3,7 +3,9 @@ import { Request, Response } from 'express';
 import { isAddress } from 'viem';
 import { addNotification, prisma } from '../utils';
 import { errorResponse } from '../utils/utils';
+import { resolveStorageImageUrl } from '../utils/profileImage.util';
 //const prisma = new PrismaClient();
+
 // Create a new team
 const addTeam = async (req: Request, res: Response) => {
   /*
@@ -99,6 +101,13 @@ const getTeam = async (req: Request, res: Response) => {
             address: true,
             name: true,
             imageUrl: true,
+            Wage: {
+              where: {
+                teamId: Number(id), // wage de cette équipe uniquement
+                nextWageId: null, // nextWageId null = wage actuel (pas de successeur)
+              },
+              take: 1,
+            },
           },
         },
         teamContracts: true,
@@ -114,7 +123,19 @@ const getTeam = async (req: Request, res: Response) => {
       return errorResponse(403, 'Unauthorized', res);
     }
 
-    res.status(200).json(team);
+    const membersWithResolvedImages = await Promise.all(
+      team.members.map(async (member) => ({
+        ...member,
+        imageUrl: await resolveStorageImageUrl(member.imageUrl),
+        currentWage: member.Wage[0] ?? null, // aplatir le tableau
+        Wage: undefined, // retirer le tableau brut
+      }))
+    );
+
+    res.status(200).json({
+      ...team,
+      members: membersWithResolvedImages,
+    });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal Server Error';
     return errorResponse(500, message, res);

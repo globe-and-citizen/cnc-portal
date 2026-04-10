@@ -1,9 +1,12 @@
 <template>
-  <div class="text-xm text-gray-900" v-if="teamMembers.length > 0">Click to Remove a Member</div>
+  <div class="mb-1 flex items-center gap-2" v-if="teamMembers.length > 0">
+    <span class="text-sm text-gray-500">Click a member below to remove them</span>
+    <UBadge color="primary" variant="soft">{{ teamMembers.length }} selected</UBadge>
+  </div>
   <div class="grid grid-cols-2 gap-4" data-test="members-list">
     <div class="flex items-center" v-for="member of teamMembers" :key="member.address">
       <UserComponent
-        class="bg-base-200 rounded-lg p-4 grow hover:cursor-pointer"
+        class="bg-base-200 grow rounded-lg p-4 hover:cursor-pointer"
         :user="member"
         @click="addMember(member)"
       />

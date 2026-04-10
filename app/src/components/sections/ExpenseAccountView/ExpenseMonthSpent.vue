@@ -2,15 +2,15 @@
   <OverviewCard
     :title="totalMonthlySpentAmount"
     subtitle="Month Spent"
-    variant="warning"
+    color="warning"
     :card-icon="cartIcon"
     :loading="loading"
   >
     <div class="flex flex-row gap-1 text-black">
       <img :src="uptrendIcon" alt="status-icon" />
       <div>
-        <span class="font-semibold text-sm" data-test="percentage-increase">+ 26.3% </span>
-        <span class="font-medium text-[#637381] text-xs">than last week</span>
+        <span class="text-sm font-semibold" data-test="percentage-increase">+ 26.3% </span>
+        <span class="text-xs font-medium text-[#637381]">than last week</span>
       </div>
     </div>
   </OverviewCard>
@@ -19,7 +19,7 @@
 import cartIcon from '@/assets/cart.svg'
 import uptrendIcon from '@/assets/uptrend.svg'
 import OverviewCard from '@/components/OverviewCard.vue'
-import { useCurrencyStore, useTeamStore, useToastStore } from '@/stores'
+import { useCurrencyStore, useTeamStore } from '@/stores'
 import { formatCurrencyShort, log } from '@/utils'
 import { useQuery } from '@vue/apollo-composable'
 import gql from 'graphql-tag'
@@ -29,7 +29,7 @@ import { computed } from 'vue'
 import { SUPPORTED_TOKENS } from '@/constant'
 
 const teamStore = useTeamStore()
-const toastStore = useToastStore()
+const toast = useToast()
 const currencyStore = useCurrencyStore()
 const contractAddress = computed(() => teamStore.getContractAddressByType('ExpenseAccountEIP712'))
 
@@ -88,7 +88,7 @@ const totalMonthlySpentAmount = computed(() => {
 
 watch(error, (err) => {
   if (err) {
-    toastStore.addErrorToast('Failed to fetch monthly spent amount')
+    toast.add({ title: 'Failed to fetch monthly spent amount', color: 'error' })
     log.error('Failed to fetch monthly spent amount', err)
   }
 })

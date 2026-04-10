@@ -3,8 +3,6 @@ import { mount, type VueWrapper } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
 import VestingStats from '@/components/sections/VestingView/VestingStats.vue'
 
-//import { useToastStore } from '@/stores/__mocks__/useToastStore'
-
 import { ref } from 'vue'
 
 // Constants
@@ -28,7 +26,7 @@ const mockArchivedInfos = ref([[], []])
 
 // Wagmi mocks
 const mockWriteContract = {
-  writeContract: vi.fn(),
+  mutate: vi.fn(),
   error: ref<Error | null>(null),
   isPending: ref(false),
   data: ref(null)
@@ -37,6 +35,15 @@ const mockWaitReceipt = {
   isLoading: ref(false),
   isSuccess: ref(false)
 }
+
+vi.mock('@/composables/investor/reads', () => ({
+  useInvestorSymbol: vi.fn(() => ({
+    data: mockSymbol,
+    error: ref(null),
+    refetch: vi.fn()
+  }))
+}))
+
 vi.mock('@wagmi/vue', async (importOriginal) => {
   const actual: object = await importOriginal()
   return {
@@ -92,7 +99,7 @@ describe('VestingStats.vue', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     wrapper = mountComponent()
-    mockWriteContract.writeContract.mockReset()
+    mockWriteContract.mutate.mockReset()
     mockWaitReceipt.isLoading.value = false
     mockWaitReceipt.isSuccess.value = false
   })

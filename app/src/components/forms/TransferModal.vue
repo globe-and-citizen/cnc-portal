@@ -12,50 +12,49 @@
             : null
       "
     >
-      <ButtonUI
-        variant="secondary"
-        class="flex items-center gap-2"
+      <UButton
+        color="secondary"
+        leading-icon="heroicons-outline:arrows-right-left"
+        label="Transfer"
         @click="openModal"
         :disabled="!hasTheRight || !isBalanceGreaterThanZero"
         data-test="transfer-button"
-      >
-        <IconifyIcon icon="heroicons-outline:arrows-right-left" class="w-5 h-5" />
-        Transfer
-      </ButtonUI>
+      />
     </div>
 
     <!-- Transfer Modal -->
-    <ModalComponent
-      v-model="modal.show"
+    <UModal
       v-if="modal.mount"
+      v-model:open="modal.show"
       data-test="transfer-modal"
-      @reset="resetTransferValues"
+      title="Transfer from Bank Contract"
+      :description="`Current contract balance: ${transferData.token.balance} ${transferData.token.symbol}`"
+      :close="{ onClick: resetTransferValues }"
     >
-      <TransferForm
-        v-model="transferData"
-        :tokens="tokens"
-        :loading="isLoading"
-        @transfer="handleTransfer"
-        @closeModal="resetTransferValues"
-        :is-bod-action="isBodAction"
-      >
-        <template #header>
-          <h1 class="font-bold text-2xl">Transfer from Bank Contract</h1>
-          <h3 class="pt-4">
-            Current contract balance: {{ transferData.token.balance }}
-            {{ transferData.token.symbol }}
-          </h3>
-        </template>
-      </TransferForm>
-    </ModalComponent>
+      <template #body>
+        <UAlert
+          v-if="errorMessage"
+          color="error"
+          variant="soft"
+          :description="errorMessage"
+          class="mb-4"
+        />
+        <TransferForm
+          v-model="transferData"
+          :tokens="tokens"
+          :loading="isLoading"
+          :fee-bps="feeBpsNumber"
+          @transfer="handleTransfer"
+          @closeModal="resetTransferValues"
+          :is-bod-action="isBodAction"
+        />
+      </template>
+    </UModal>
   </div>
 </template>
 
 <script setup lang="ts">
-import ButtonUI from '@/components/ButtonUI.vue'
-import ModalComponent from '@/components/ModalComponent.vue'
 import TransferForm, { type TransferModel } from '@/components/forms/TransferForm.vue'
-import { Icon as IconifyIcon } from '@iconify/vue'
 import { ref, watch, computed, type Ref } from 'vue'
 import { type Address, parseEther, encodeFunctionData, parseUnits } from 'viem'
 import {
@@ -69,9 +68,10 @@ import { waitForTransactionReceipt } from '@wagmi/core'
 import { config } from '@/wagmi.config'
 import { BANK_ABI } from '@/artifacts/abi/bank'
 import { NETWORK, USDC_ADDRESS, USDC_E_ADDRESS } from '@/constant'
-import { useToastStore, useUserDataStore } from '@/stores'
+import { useUserDataStore } from '@/stores'
 import { useBodAddAction } from '@/composables/bod/writes'
 import { useBodIsBodAction } from '@/composables/bod/reads'
+import { useOfficerFeeBps } from '@/composables/officer/reads'
 import type { TokenOption } from '@/types'
 import { useContractBalance } from '@/composables'
 
@@ -83,7 +83,7 @@ const props = withDefaults(defineProps<Props>(), {})
 
 const chainId = useChainId()
 const queryClient = useQueryClient()
-const { addErrorToast, addSuccessToast } = useToastStore()
+const toast = useToast()
 
 const { balances } = useContractBalance(props.bankAddress)
 
@@ -97,6 +97,9 @@ const { data: bankOwner } = useReadContract({
 })
 
 const { isBodAction } = useBodIsBodAction(props.bankAddress as Address)
+
+const { data: feeBpsData } = useOfficerFeeBps('BANK')
+const feeBpsNumber = computed(() => Number(feeBpsData.value ?? 0))
 
 const isBankOwner = computed(() => bankOwner.value === userStore.address)
 
@@ -112,13 +115,10 @@ const modal = ref({
   mount: false,
   show: false
 })
+const errorMessage = ref('')
 
 // Contract interactions for transfer
-const {
-  data: transferHash,
-  isPending: transferLoading,
-  writeContractAsync: transfer
-} = useWriteContract()
+const { data: transferHash, isPending: transferLoading, mutateAsync: transfer } = useWriteContract()
 
 const { isLoading: isConfirmingTransfer } = useWaitForTransactionReceipt({
   hash: transferHash
@@ -177,6 +177,7 @@ const transferData: Ref<TransferModel> = ref(initialTransferDataValue())
 const resetTransferValues = () => {
   modal.value = { mount: false, show: false }
   transferData.value = initialTransferDataValue()
+  errorMessage.value = ''
 }
 
 // Open modal
@@ -195,7 +196,13 @@ const handleTransfer = async (data: {
   const tokenAddress = data.token.symbol === 'USDCe' ? USDC_E_ADDRESS : USDC_ADDRESS
   try {
     const isNativeToken = data.token.symbol === NETWORK.currencySymbol
-    const transferAmount = isNativeToken ? parseEther(data.amount) : parseUnits(data.amount, 6)
+
+    // Exact formula: the contract deducts fee from _amount and sends net to recipient.
+    // To give recipient exactly `userAmountBigInt`, we must send: amount * 10000 / (10000 - feeBps)
+    const userAmountBigInt = isNativeToken ? parseEther(data.amount) : parseUnits(data.amount, 6)
+    const feeBps = BigInt(feeBpsNumber.value)
+    const transferAmount =
+      feeBps > 0n ? (userAmountBigInt * 10000n) / (10000n - feeBps) : userAmountBigInt
 
     if (isBodAction.value) {
       // BOD Action path
@@ -225,19 +232,24 @@ const handleTransfer = async (data: {
     }
 
     // Direct transfer (non-BOD action)
+    // Set a reasonable gas limit to avoid exceeding network gas cap
+    const gasLimit = 500000n
+
     if (isNativeToken) {
       await transfer({
         address: props.bankAddress,
         abi: BANK_ABI,
         functionName: 'transfer',
-        args: [data.address.address, transferAmount]
+        args: [data.address.address, transferAmount],
+        gas: gasLimit
       })
     } else {
       await transfer({
         address: props.bankAddress,
         abi: BANK_ABI,
         functionName: 'transferToken',
-        args: [tokenAddress, data.address.address, transferAmount]
+        args: [tokenAddress, data.address.address, transferAmount],
+        gas: gasLimit
       })
     }
 
@@ -262,14 +274,14 @@ const handleTransfer = async (data: {
     queryClient.invalidateQueries({ queryKey })
   } catch (error) {
     console.error('Transfer failed:', error)
-    addErrorToast(`Failed to transfer ${data.token.symbol}`)
+    errorMessage.value = `Failed to transfer ${data.token.symbol}`
   }
 }
 
 // Watch for BOD action completion
 watch(isActionAdded, (added) => {
   if (added) {
-    addSuccessToast('Action added successfully, waiting for confirmation')
+    toast.add({ title: 'Action added successfully, waiting for confirmation', color: 'success' })
     resetTransferValues()
   }
 })
@@ -277,7 +289,7 @@ watch(isActionAdded, (added) => {
 // Watch for transfer confirmation
 watch(isConfirmingTransfer, (newIsConfirming, oldIsConfirming) => {
   if (!newIsConfirming && oldIsConfirming) {
-    addSuccessToast('Transferred successfully')
+    toast.add({ title: 'Transferred successfully', color: 'success' })
     resetTransferValues()
 
     // Refresh bank owner data after a successful transfer

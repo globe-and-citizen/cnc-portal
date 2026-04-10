@@ -61,6 +61,7 @@ export const mockWageData: Wage[] = [
     teamId: 1,
     userAddress: '0x1234567890123456789012345678901234567890',
     maximumHoursPerWeek: 40,
+    disabled: false,
     nextWageId: null,
     createdAt: '2024-01-01T00:00:00Z',
     updatedAt: '2024-01-01T00:00:00Z',
@@ -250,6 +251,16 @@ export const createMockMutationResponse = <T = unknown>(
   reset: vi.fn()
 })
 
+export const mockSyncWeeklyClaimsMutation = {
+  mutate: vi.fn(),
+  mutateAsync: vi.fn().mockResolvedValue(undefined),
+  isPending: ref(false),
+  isError: ref(false),
+  error: ref(null),
+  data: ref(null),
+  reset: vi.fn()
+}
+
 /**
  * Query Hook Mocks for use in vi.mock()
  * These are the functions that get mocked globally
@@ -272,6 +283,7 @@ export const queryMocks: Record<string, () => Record<string, unknown>> = {
   // Wage queries - wage.queries.ts
   useGetTeamWagesQuery: () => createMockQueryResponse(mockWageData),
   useSetMemberWageMutation: () => createMockMutationResponse(),
+  useToggleWageStatusMutation: () => createMockMutationResponse(),
 
   // Notification queries - notification.queries.ts
   useGetNotificationsQuery: () => createMockQueryResponse(mockNotificationData),
@@ -311,7 +323,10 @@ export const queryMocks: Record<string, () => Record<string, unknown>> = {
   useGetTeamWeeklyClaimsQuery: () => createMockQueryResponse(mockWeeklyClaimData),
   useGetWeeklyClaimByIdQuery: () => createMockQueryResponse(mockWeeklyClaimData[0]),
   useUpdateWeeklyClaimMutation: () => createMockMutationResponse(),
-  useSyncWeeklyClaimsMutation: () => createMockMutationResponse(),
+  useEditClaimMutation: () => createMockMutationResponse(),
+  useEditClaimWithFilesMutation: () => createMockMutationResponse(),
+  useSubmitClaimMutation: () => createMockMutationResponse(),
+  useSyncWeeklyClaimsMutation: () => mockSyncWeeklyClaimsMutation,
   useDeleteClaimMutation: () => createMockMutationResponse(),
 
   // Safe queries - safe.queries.ts

@@ -1,0 +1,5462 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Contract Coverage Audit</title>
+<style>
+  :root { --ok:#22c55e; --partial:#f59e0b; --missing:#ef4444; --fg:#0f172a; --mut:#64748b; --bg:#f8fafc; --card:#fff; --bd:#e2e8f0; }
+  * { box-sizing: border-box; }
+  body { font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; margin:0; background:var(--bg); color:var(--fg); }
+  header { padding: 20px 24px; background: #fff; border-bottom:1px solid var(--bd); position:sticky; top:0; z-index:10; }
+  h1 { margin:0 0 8px; font-size:20px; }
+  .meta { color:var(--mut); font-size:12px; }
+  main { padding: 24px; max-width: 1400px; margin:0 auto; }
+  .controls { display:flex; gap:12px; align-items:center; margin-bottom:16px; flex-wrap:wrap; }
+  select, input[type="search"] { padding:8px 10px; border:1px solid var(--bd); border-radius:6px; font-size:14px; background:#fff; }
+  .card { background:var(--card); border:1px solid var(--bd); border-radius:10px; padding:16px; margin-bottom:16px; }
+  .stats { display:grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap:12px; margin-bottom:16px; }
+  .stat { background:var(--card); border:1px solid var(--bd); border-radius:10px; padding:12px 14px; }
+  .stat .v { font-size:22px; font-weight:700; }
+  .stat .l { font-size:11px; color:var(--mut); text-transform:uppercase; letter-spacing:0.04em; }
+  table { width:100%; border-collapse: collapse; font-size:13px; }
+  th, td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--bd); vertical-align:top; }
+  th { background:#f1f5f9; font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:0.04em; color:var(--mut); position:sticky; top:0; }
+  tr:hover td { background:#f8fafc; }
+  .mark { display:inline-block; width:18px; text-align:center; font-weight:700; border-radius:4px; padding:2px 4px; }
+  .mark.ok { color:var(--ok); }
+  .mark.bad { color:var(--missing); }
+  .mark.warn { color:var(--partial); }
+  .pill { display:inline-block; padding:2px 8px; border-radius:999px; font-size:11px; font-weight:600; }
+  .pill.ok { background:#dcfce7; color:#166534; }
+  .pill.partial { background:#fef3c7; color:#92400e; }
+  .pill.missing { background:#fee2e2; color:#991b1b; }
+  .pill.read { background:#dbeafe; color:#1e40af; }
+  .pill.write { background:#f3e8ff; color:#6b21a8; }
+  .muted { color:var(--mut); font-size:11px; }
+  details { margin-top:8px; }
+  summary { cursor:pointer; font-size:12px; color:var(--mut); }
+  code { font-family: ui-monospace, "SF Mono", Monaco, Consolas, monospace; font-size:11px; background:#f1f5f9; padding:1px 4px; border-radius:3px; }
+  .usage-list { margin:4px 0 0; padding-left:18px; font-size:12px; }
+  .tag { font-size:10px; padding:1px 5px; border-radius:3px; background:#e2e8f0; color:#475569; margin-left:4px; }
+  .tag.skip { background:#fef3c7; color:#92400e; }
+  .tag.no-test { background:#fee2e2; color:#991b1b; }
+  .tag.tested { background:#dcfce7; color:#166534; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Contract Coverage Audit</h1>
+  <div class="meta" id="meta"></div>
+</header>
+<main>
+  <div class="controls">
+    <label>Contract: <select id="contract-select"></select></label>
+    <label>Status: <select id="status-filter">
+      <option value="all">All</option>
+      <option value="ok">OK only</option>
+      <option value="partial">Partial</option>
+      <option value="missing">Missing</option>
+      <option value="not-ok">Not OK (partial+missing)</option>
+    </select></label>
+    <input type="search" id="search" placeholder="filter by function name..." />
+  </div>
+  <div id="content"></div>
+</main>
+<script id="report" type="application/json">{
+  "generatedAt": "2026-04-05T08:30:29.795Z",
+  "root": ".",
+  "contracts": [
+    {
+      "slug": "bank",
+      "abiFile": "app/src/artifacts/abi/json/Bank.json",
+      "abiError": null,
+      "readsFile": "app/src/composables/bank/reads.ts",
+      "writesFile": "app/src/composables/bank/writes.ts",
+      "setupFile": "app/src/tests/setup/bank.setup.ts",
+      "counts": {
+        "totalFunctions": 20,
+        "ok": 6,
+        "partial": 8,
+        "missing": 6,
+        "usedContractFns": 18
+      },
+      "functions": [
+        {
+          "name": "getBalance",
+          "kind": "read",
+          "signature": "function getBalance() view returns (uint256)",
+          "stateMutability": "view",
+          "composable": {
+            "name": "useBankBalance",
+            "file": "app/src/composables/bank/reads.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": "app/src/tests/setup/bank.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "partial"
+        },
+        {
+          "name": "getSupportedTokenCount",
+          "kind": "read",
+          "signature": "function getSupportedTokenCount() view returns (uint256)",
+          "stateMutability": "view",
+          "composable": null,
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": "app/src/tests/setup/bank.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "getSupportedTokens",
+          "kind": "read",
+          "signature": "function getSupportedTokens() view returns (address[])",
+          "stateMutability": "view",
+          "composable": null,
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": "app/src/tests/setup/bank.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "getTokenBalance",
+          "kind": "read",
+          "signature": "function getTokenBalance(address _token) view returns (uint256)",
+          "stateMutability": "view",
+          "composable": null,
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": "app/src/tests/setup/bank.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "isTokenSupported",
+          "kind": "read",
+          "signature": "function isTokenSupported(address _token) view returns (bool)",
+          "stateMutability": "view",
+          "composable": null,
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": "app/src/tests/setup/bank.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "officerAddress",
+          "kind": "read",
+          "signature": "function officerAddress() view returns (address)",
+          "stateMutability": "view",
+          "composable": null,
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": "app/src/tests/setup/bank.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "owner",
+          "kind": "read",
+          "signature": "function owner() view returns (address)",
+          "stateMutability": "view",
+          "composable": {
+            "name": "useBankOwner",
+            "file": "app/src/composables/bank/reads.ts"
+          },
+          "mock": {
+            "present": true,
+            "key": "mockBankReads.owner"
+          },
+          "setup": {
+            "present": true,
+            "file": "app/src/tests/setup/bank.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "partial"
+        },
+        {
+          "name": "paused",
+          "kind": "read",
+          "signature": "function paused() view returns (bool)",
+          "stateMutability": "view",
+          "composable": {
+            "name": "useBankPaused",
+            "file": "app/src/composables/bank/reads.ts"
+          },
+          "mock": {
+            "present": true,
+            "key": "mockBankReads.paused"
+          },
+          "setup": {
+            "present": true,
+            "file": "app/src/tests/setup/bank.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [
+            {
+              "file": "app/src/views/team/[id]/DemoExample.vue",
+              "hasTest": false,
+              "testFile": null,
+              "skipped": false
+            }
+          ],
+          "status": "partial"
+        },
+        {
+          "name": "addTokenSupport",
+          "kind": "write",
+          "signature": "function addTokenSupport(address _tokenAddress)",
+          "stateMutability": "nonpayable",
+          "composable": {
+            "name": "useAddTokenSupport",
+            "file": "app/src/composables/bank/writes.ts"
+          },
+          "mock": {
+            "present": true,
+            "key": "mockBankWrites.addTokenSupport"
+          },
+          "setup": {
+            "present": true,
+            "file": "app/src/tests/setup/bank.setup.ts"
+          },
+          "composableTest": {
+            "tested": true,
+            "files": [
+              "app/src/composables/bank/__tests__/bankWrites.spec.ts"
+            ]
+          },
+          "usages": [],
+          "status": "ok"
+        },
+        {
+          "name": "depositToken",
+          "kind": "write",
+          "signature": "function depositToken(address _token, uint256 _amount)",
+          "stateMutability": "nonpayable",
+          "composable": {
+            "name": "useDepositToken",
+            "file": "app/src/composables/bank/writes.ts"
+          },
+          "mock": {
+            "present": true,
+            "key": "mockBankWrites.deposit"
+          },
+          "setup": {
+            "present": true,
+            "file": "app/src/tests/setup/bank.setup.ts"
+          },
+          "composableTest": {
+            "tested": true,
+            "files": [
+              "app/src/composables/bank/__tests__/bankWrites.spec.ts"
+            ]
+          },
+          "usages": [
+            {
+              "file": "app/src/components/forms/DepositBankForm.vue",
+              "hasTest": true,
+              "testFile": "app/src/components/forms/__tests__/DepositBankForm.spec.ts",
+              "skipped": true
+            }
+          ],
+          "status": "partial"
+        },
+        {
+          "name": "distributeNativeDividends",
+          "kind": "write",
+          "signature": "function distributeNativeDividends(uint256 _amount)",
+          "stateMutability": "nonpayable",
+          "composable": {
+            "name": "useDistributeNativeDividends",
+            "file": "app/src/composables/bank/writes.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": "app/src/tests/setup/bank.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [
+            {
+              "file": "app/src/components/sections/SherTokenView/InvestorActions/PayDividendsAction.vue",
+              "hasTest": true,
+              "testFile": "app/src/components/sections/SherTokenView/InvestorActions/__tests__/PayDividendsAction.spec.ts",
+              "skipped": true
+            }
+          ],
+          "status": "partial"
+        },
+        {
+          "name": "distributeTokenDividends",
+          "kind": "write",
+          "signature": "function distributeTokenDividends(address _token, uint256 _amount)",
+          "stateMutability": "nonpayable",
+          "composable": {
+            "name": "useDistributeTokenDividends",
+            "file": "app/src/composables/bank/writes.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": "app/src/tests/setup/bank.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [
+            {
+              "file": "app/src/components/sections/SherTokenView/InvestorActions/PayDividendsAction.vue",
+              "hasTest": true,
+              "testFile": "app/src/components/sections/SherTokenView/InvestorActions/__tests__/PayDividendsAction.spec.ts",
+              "skipped": true
+            }
+          ],
+          "status": "partial"
+        },
+        {
+          "name": "initialize",
+          "kind": "write",
+          "signature": "function initialize(address[] _tokenAddresses, address _sender)",
+          "stateMutability": "nonpayable",
+          "composable": null,
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": "app/src/tests/setup/bank.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "pause",
+          "kind": "write",
+          "signature": "function pause()",
+          "stateMutability": "nonpayable",
+          "composable": {
+            "name": "usePause",
+            "file": "app/src/composables/bank/writes.ts"
+          },
+          "mock": {
+            "present": true,
+            "key": "mockBankWrites.pause"
+          },
+          "setup": {
+            "present": true,
+            "file": "app/src/tests/setup/bank.setup.ts"
+          },
+          "composableTest": {
+            "tested": true,
+            "files": [
+              "app/src/composables/bank/__tests__/bankWrites.spec.ts"
+            ]
+          },
+          "usages": [
+            {
+              "file": "app/src/views/team/[id]/DemoExample.vue",
+              "hasTest": false,
+              "testFile": null,
+              "skipped": false
+            }
+          ],
+          "status": "partial"
+        },
+        {
+          "name": "removeTokenSupport",
+          "kind": "write",
+          "signature": "function removeTokenSupport(address _tokenAddress)",
+          "stateMutability": "nonpayable",
+          "composable": {
+            "name": "useRemoveTokenSupport",
+            "file": "app/src/composables/bank/writes.ts"
+          },
+          "mock": {
+            "present": true,
+            "key": "mockBankWrites.removeTokenSupport"
+          },
+          "setup": {
+            "present": true,
+            "file": "app/src/tests/setup/bank.setup.ts"
+          },
+          "composableTest": {
+            "tested": true,
+            "files": [
+              "app/src/composables/bank/__tests__/bankWrites.spec.ts"
+            ]
+          },
+          "usages": [],
+          "status": "ok"
+        },
+        {
+          "name": "renounceOwnership",
+          "kind": "write",
+          "signature": "function renounceOwnership()",
+          "stateMutability": "nonpayable",
+          "composable": {
+            "name": "useRenounceOwnership",
+            "file": "app/src/composables/bank/writes.ts"
+          },
+          "mock": {
+            "present": true,
+            "key": "mockBankWrites.renounceOwnership"
+          },
+          "setup": {
+            "present": true,
+            "file": "app/src/tests/setup/bank.setup.ts"
+          },
+          "composableTest": {
+            "tested": true,
+            "files": [
+              "app/src/composables/bank/__tests__/bankWrites.spec.ts"
+            ]
+          },
+          "usages": [],
+          "status": "ok"
+        },
+        {
+          "name": "transfer",
+          "kind": "write",
+          "signature": "function transfer(address _to, uint256 _amount)",
+          "stateMutability": "nonpayable",
+          "composable": {
+            "name": "useTransfer",
+            "file": "app/src/composables/bank/writes.ts"
+          },
+          "mock": {
+            "present": true,
+            "key": "mockBankWrites.transfer"
+          },
+          "setup": {
+            "present": true,
+            "file": "app/src/tests/setup/bank.setup.ts"
+          },
+          "composableTest": {
+            "tested": true,
+            "files": [
+              "app/src/composables/bank/__tests__/bankWrites.spec.ts"
+            ]
+          },
+          "usages": [],
+          "status": "ok"
+        },
+        {
+          "name": "transferOwnership",
+          "kind": "write",
+          "signature": "function transferOwnership(address newOwner)",
+          "stateMutability": "nonpayable",
+          "composable": {
+            "name": "useTransferOwnership",
+            "file": "app/src/composables/bank/writes.ts"
+          },
+          "mock": {
+            "present": true,
+            "key": "mockBankWrites.transferOwnership"
+          },
+          "setup": {
+            "present": true,
+            "file": "app/src/tests/setup/bank.setup.ts"
+          },
+          "composableTest": {
+            "tested": true,
+            "files": [
+              "app/src/composables/bank/__tests__/bankWrites.spec.ts"
+            ]
+          },
+          "usages": [],
+          "status": "ok"
+        },
+        {
+          "name": "transferToken",
+          "kind": "write",
+          "signature": "function transferToken(address _token, address _to, uint256 _amount)",
+          "stateMutability": "nonpayable",
+          "composable": {
+            "name": "useTransferToken",
+            "file": "app/src/composables/bank/writes.ts"
+          },
+          "mock": {
+            "present": true,
+            "key": "mockBankWrites.transferToken"
+          },
+          "setup": {
+            "present": true,
+            "file": "app/src/tests/setup/bank.setup.ts"
+          },
+          "composableTest": {
+            "tested": true,
+            "files": [
+              "app/src/composables/bank/__tests__/bankWrites.spec.ts"
+            ]
+          },
+          "usages": [],
+          "status": "ok"
+        },
+        {
+          "name": "unpause",
+          "kind": "write",
+          "signature": "function unpause()",
+          "stateMutability": "nonpayable",
+          "composable": {
+            "name": "useUnpause",
+            "file": "app/src/composables/bank/writes.ts"
+          },
+          "mock": {
+            "present": true,
+            "key": "mockBankWrites.unpause"
+          },
+          "setup": {
+            "present": true,
+            "file": "app/src/tests/setup/bank.setup.ts"
+          },
+          "composableTest": {
+            "tested": true,
+            "files": [
+              "app/src/composables/bank/__tests__/bankWrites.spec.ts"
+            ]
+          },
+          "usages": [
+            {
+              "file": "app/src/views/team/[id]/DemoExample.vue",
+              "hasTest": false,
+              "testFile": null,
+              "skipped": false
+            }
+          ],
+          "status": "partial"
+        }
+      ],
+      "orphans": {
+        "composablesWithoutFunction": [
+          {
+            "name": "useBankAddress",
+            "kind": "read",
+            "file": "app/src/composables/bank/reads.ts"
+          },
+          {
+            "name": "useUnlockedBalance",
+            "kind": "read",
+            "file": "app/src/composables/bank/reads.ts"
+          },
+          {
+            "name": "useBankContractWrite",
+            "kind": "write",
+            "file": "app/src/composables/bank/writes.ts"
+          },
+          {
+            "name": "useBankSupportedTokens",
+            "kind": "read",
+            "contractFn": "supportedTokens",
+            "file": "app/src/composables/bank/reads.ts"
+          },
+          {
+            "name": "useDividendBalance",
+            "kind": "read",
+            "contractFn": "dividendBalances",
+            "file": "app/src/composables/bank/reads.ts"
+          },
+          {
+            "name": "useTokenDividendBalance",
+            "kind": "read",
+            "contractFn": "tokenDividendBalances",
+            "file": "app/src/composables/bank/reads.ts"
+          },
+          {
+            "name": "useTotalDividend",
+            "kind": "read",
+            "contractFn": "totalDividends",
+            "file": "app/src/composables/bank/reads.ts"
+          }
+        ],
+        "mocksWithoutComposable": [
+          "mockBankReads.supportedTokens"
+        ],
+        "setupEntriesWithoutComposable": []
+      }
+    },
+    {
+      "slug": "bod",
+      "abiFile": "app/src/artifacts/abi/json/BoardOfDirectors.json",
+      "abiError": null,
+      "readsFile": "app/src/composables/bod/reads.ts",
+      "writesFile": "app/src/composables/bod/writes.ts",
+      "setupFile": "app/src/tests/setup/bod.setup.ts",
+      "counts": {
+        "totalFunctions": 16,
+        "ok": 3,
+        "partial": 3,
+        "missing": 10,
+        "usedContractFns": 6
+      },
+      "functions": [
+        {
+          "name": "actionCount",
+          "kind": "read",
+          "signature": "function actionCount() view returns (uint256)",
+          "stateMutability": "view",
+          "composable": null,
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": "app/src/tests/setup/bod.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "actions",
+          "kind": "read",
+          "signature": "function actions(uint256) view returns (uint256 id, address target, string description, uint8 approvalCount, bool isExecuted, bytes data, address createdBy)",
+          "stateMutability": "view",
+          "composable": null,
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": "app/src/tests/setup/bod.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "approvalCount",
+          "kind": "read",
+          "signature": "function approvalCount(uint256 _actionId) view returns (uint256)",
+          "stateMutability": "view",
+          "composable": {
+            "name": "useBodApprovalCount",
+            "file": "app/src/composables/bod/reads.ts"
+          },
+          "mock": {
+            "present": true,
+            "key": "mockBODReads.approvalCount"
+          },
+          "setup": {
+            "present": true,
+            "file": "app/src/tests/setup/bod.setup.ts"
+          },
+          "composableTest": {
+            "tested": true,
+            "files": [
+              "app/src/composables/bod/__tests__/reads.spec.ts"
+            ]
+          },
+          "usages": [],
+          "status": "ok"
+        },
+        {
+          "name": "getBoardOfDirectors",
+          "kind": "read",
+          "signature": "function getBoardOfDirectors() view returns (address[])",
+          "stateMutability": "view",
+          "composable": {
+            "name": "useBodGetBoardOfDirectors",
+            "file": "app/src/composables/bod/reads.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": true,
+            "file": "app/src/tests/setup/bod.setup.ts"
+          },
+          "composableTest": {
+            "tested": true,
+            "files": [
+              "app/src/composables/bod/__tests__/reads.spec.ts"
+            ]
+          },
+          "usages": [],
+          "status": "partial"
+        },
+        {
+          "name": "getOwners",
+          "kind": "read",
+          "signature": "function getOwners() view returns (address[])",
+          "stateMutability": "view",
+          "composable": {
+            "name": "useBodOwner",
+            "file": "app/src/composables/bod/reads.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": true,
+            "file": "app/src/tests/setup/bod.setup.ts"
+          },
+          "composableTest": {
+            "tested": true,
+            "files": [
+              "app/src/composables/bod/__tests__/reads.spec.ts"
+            ]
+          },
+          "usages": [],
+          "status": "partial"
+        },
+        {
+          "name": "isActionExecuted",
+          "kind": "read",
+          "signature": "function isActionExecuted(uint256 _actionId) view returns (bool)",
+          "stateMutability": "view",
+          "composable": {
+            "name": "useBodIsActionExecuted",
+            "file": "app/src/composables/bod/reads.ts"
+          },
+          "mock": {
+            "present": true,
+            "key": "mockBODReads.isActionExecuted"
+          },
+          "setup": {
+            "present": true,
+            "file": "app/src/tests/setup/bod.setup.ts"
+          },
+          "composableTest": {
+            "tested": true,
+            "files": [
+              "app/src/composables/bod/__tests__/reads.spec.ts"
+            ]
+          },
+          "usages": [
+            {
+              "file": "app/src/components/sections/ContractManagementView/PendingEventsList.vue",
+              "hasTest": false,
+              "testFile": null,
+              "skipped": false
+            }
+          ],
+          "status": "partial"
+        },
+        {
+          "name": "isApproved",
+          "kind": "read",
+          "signature": "function isApproved(uint256 _actionId, address _address) view returns (bool)",
+          "stateMutability": "view",
+          "composable": {
+            "name": "useBodIsApproved",
+            "file": "app/src/composables/bod/reads.ts"
+          },
+          "mock": {
+            "present": true,
+            "key": "mockBODReads.isApproved"
+          },
+          "setup": {
+            "present": true,
+            "file": "app/src/tests/setup/bod.setup.ts"
+          },
+          "composableTest": {
+            "tested": true,
+            "files": [
+              "app/src/composables/bod/__tests__/reads.spec.ts"
+            ]
+          },
+          "usages": [],
+          "status": "ok"
+        },
+        {
+          "name": "isMember",
+          "kind": "read",
+          "signature": "function isMember(address _address) view returns (bool)",
+          "stateMutability": "view",
+          "composable": {
+            "name": "useBodIsMember",
+            "file": "app/src/composables/bod/reads.ts"
+          },
+          "mock": {
+            "present": true,
+            "key": "mockBODReads.isMember"
+          },
+          "setup": {
+            "present": true,
+            "file": "app/src/tests/setup/bod.setup.ts"
+          },
+          "composableTest": {
+            "tested": true,
+            "files": [
+              "app/src/composables/bod/__tests__/reads.spec.ts"
+            ]
+          },
+          "usages": [],
+          "status": "ok"
+        },
+        {
+          "name": "addAction",
+          "kind": "write",
+          "signature": "function addAction(address _target, string _description, bytes _data)",
+          "stateMutability": "nonpayable",
+          "composable": null,
+          "mock": {
+            "present": true,
+            "key": "mockBODWrites.addAction"
+          },
+          "setup": {
+            "present": false,
+            "file": "app/src/tests/setup/bod.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "addOwner",
+          "kind": "write",
+          "signature": "function addOwner(address _owner)",
+          "stateMutability": "nonpayable",
+          "composable": null,
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": "app/src/tests/setup/bod.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "approve",
+          "kind": "write",
+          "signature": "function approve(uint256 _actionId)",
+          "stateMutability": "nonpayable",
+          "composable": null,
+          "mock": {
+            "present": true,
+            "key": "mockBODWrites.approve"
+          },
+          "setup": {
+            "present": false,
+            "file": "app/src/tests/setup/bod.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "initialize",
+          "kind": "write",
+          "signature": "function initialize(address[] _owners)",
+          "stateMutability": "nonpayable",
+          "composable": null,
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": "app/src/tests/setup/bod.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "removeOwner",
+          "kind": "write",
+          "signature": "function removeOwner(address _owner)",
+          "stateMutability": "nonpayable",
+          "composable": null,
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": "app/src/tests/setup/bod.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "revoke",
+          "kind": "write",
+          "signature": "function revoke(uint256 _actionId)",
+          "stateMutability": "nonpayable",
+          "composable": null,
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": "app/src/tests/setup/bod.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "setBoardOfDirectors",
+          "kind": "write",
+          "signature": "function setBoardOfDirectors(address[] _boardOfDirectors)",
+          "stateMutability": "nonpayable",
+          "composable": null,
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": "app/src/tests/setup/bod.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "setOwners",
+          "kind": "write",
+          "signature": "function setOwners(address[] _owners)",
+          "stateMutability": "nonpayable",
+          "composable": null,
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": "app/src/tests/setup/bod.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        }
+      ],
+      "orphans": {
+        "composablesWithoutFunction": [
+          {
+            "name": "useBodIsBodAction",
+            "kind": "read",
+            "file": "app/src/composables/bod/reads.ts"
+          },
+          {
+            "name": "useBodPause",
+            "kind": "write",
+            "file": "app/src/composables/bod/writes.ts"
+          },
+          {
+            "name": "useBodUnpause",
+            "kind": "write",
+            "file": "app/src/composables/bod/writes.ts"
+          },
+          {
+            "name": "useBodSetBoardOfDirectors",
+            "kind": "write",
+            "file": "app/src/composables/bod/writes.ts"
+          }
+        ],
+        "mocksWithoutComposable": [
+          "mockBODReads.owner",
+          "mockBODReads.boardMembers",
+          "mockBODReads.memberCount",
+          "mockBODWrites.addMember",
+          "mockBODWrites.removeMember",
+          "mockBODWrites.updateMember",
+          "mockBODWrites.pause",
+          "mockBODWrites.unpause",
+          "mockBODWrites.setBoard"
+        ],
+        "setupEntriesWithoutComposable": []
+      }
+    },
+    {
+      "slug": "cashRemuneration",
+      "abiFile": "app/src/artifacts/abi/json/CashRemunerationEIP712.json",
+      "abiError": null,
+      "readsFile": "app/src/composables/cashRemuneration/reads.ts",
+      "writesFile": "app/src/composables/cashRemuneration/writes.ts",
+      "setupFile": null,
+      "counts": {
+        "totalFunctions": 21,
+        "ok": 0,
+        "partial": 17,
+        "missing": 4,
+        "usedContractFns": 19
+      },
+      "functions": [
+        {
+          "name": "disabledWageClaims",
+          "kind": "read",
+          "signature": "function disabledWageClaims(bytes32) view returns (bool)",
+          "stateMutability": "view",
+          "composable": {
+            "name": "useCashRemunerationDisabledWageClaim",
+            "file": "app/src/composables/cashRemuneration/reads.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": null
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "partial"
+        },
+        {
+          "name": "eip712Domain",
+          "kind": "read",
+          "signature": "function eip712Domain() view returns (bytes1 fields, string name, string version, uint256 chainId, address verifyingContract, bytes32 salt, uint256[] extensions)",
+          "stateMutability": "view",
+          "composable": {
+            "name": "useCashRemunerationEip712Domain",
+            "file": "app/src/composables/cashRemuneration/reads.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": null
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "partial"
+        },
+        {
+          "name": "getBalance",
+          "kind": "read",
+          "signature": "function getBalance() view returns (uint256)",
+          "stateMutability": "view",
+          "composable": {
+            "name": "useCashRemunerationBalance",
+            "file": "app/src/composables/cashRemuneration/reads.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": null
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "partial"
+        },
+        {
+          "name": "getSupportedTokenCount",
+          "kind": "read",
+          "signature": "function getSupportedTokenCount() view returns (uint256)",
+          "stateMutability": "view",
+          "composable": null,
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": null
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "getSupportedTokens",
+          "kind": "read",
+          "signature": "function getSupportedTokens() view returns (address[])",
+          "stateMutability": "view",
+          "composable": null,
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": null
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "isTokenSupported",
+          "kind": "read",
+          "signature": "function isTokenSupported(address _token) view returns (bool)",
+          "stateMutability": "view",
+          "composable": null,
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": null
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "officerAddress",
+          "kind": "read",
+          "signature": "function officerAddress() view returns (address)",
+          "stateMutability": "view",
+          "composable": {
+            "name": "useCashRemunerationOfficerAddress",
+            "file": "app/src/composables/cashRemuneration/reads.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": null
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "partial"
+        },
+        {
+          "name": "owner",
+          "kind": "read",
+          "signature": "function owner() view returns (address)",
+          "stateMutability": "view",
+          "composable": {
+            "name": "useCashRemunerationOwner",
+            "file": "app/src/composables/cashRemuneration/reads.ts"
+          },
+          "mock": {
+            "present": true,
+            "key": "mockCashRemunerationReads.owner"
+          },
+          "setup": {
+            "present": false,
+            "file": null
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [
+            {
+              "file": "app/src/components/sections/OwnerTreasuryWithdrawAction.vue",
+              "hasTest": true,
+              "testFile": "app/src/components/sections/__tests__/OwnerTreasuryWithdrawAction.spec.ts",
+              "skipped": true
+            }
+          ],
+          "status": "partial"
+        },
+        {
+          "name": "paidWageClaims",
+          "kind": "read",
+          "signature": "function paidWageClaims(bytes32) view returns (bool)",
+          "stateMutability": "view",
+          "composable": {
+            "name": "useCashRemunerationPaidWageClaim",
+            "file": "app/src/composables/cashRemuneration/reads.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": null
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "partial"
+        },
+        {
+          "name": "paused",
+          "kind": "read",
+          "signature": "function paused() view returns (bool)",
+          "stateMutability": "view",
+          "composable": {
+            "name": "useCashRemunerationPaused",
+            "file": "app/src/composables/cashRemuneration/reads.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": null
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "partial"
+        },
+        {
+          "name": "addTokenSupport",
+          "kind": "write",
+          "signature": "function addTokenSupport(address tokenAddress)",
+          "stateMutability": "nonpayable",
+          "composable": {
+            "name": "useCashRemunerationAddTokenSupport",
+            "file": "app/src/composables/cashRemuneration/writes.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": null
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "partial"
+        },
+        {
+          "name": "disableClaim",
+          "kind": "write",
+          "signature": "function disableClaim(bytes32 signatureHash)",
+          "stateMutability": "nonpayable",
+          "composable": {
+            "name": "useCashRemunerationDisableClaim",
+            "file": "app/src/composables/cashRemuneration/writes.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": null
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "partial"
+        },
+        {
+          "name": "enableClaim",
+          "kind": "write",
+          "signature": "function enableClaim(bytes32 signatureHash)",
+          "stateMutability": "nonpayable",
+          "composable": {
+            "name": "useCashRemunerationEnableClaim",
+            "file": "app/src/composables/cashRemuneration/writes.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": null
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "partial"
+        },
+        {
+          "name": "initialize",
+          "kind": "write",
+          "signature": "function initialize(address _owner, address[] _tokenAddresses)",
+          "stateMutability": "nonpayable",
+          "composable": {
+            "name": "useCashRemunerationInitialize",
+            "file": "app/src/composables/cashRemuneration/writes.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": null
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "partial"
+        },
+        {
+          "name": "ownerWithdrawAllToBank",
+          "kind": "write",
+          "signature": "function ownerWithdrawAllToBank()",
+          "stateMutability": "nonpayable",
+          "composable": null,
+          "mock": {
+            "present": true,
+            "key": "mockCashRemunerationWrites.ownerWithdrawAllToBank"
+          },
+          "setup": {
+            "present": false,
+            "file": null
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "pause",
+          "kind": "write",
+          "signature": "function pause()",
+          "stateMutability": "nonpayable",
+          "composable": {
+            "name": "useCashRemunerationPause",
+            "file": "app/src/composables/cashRemuneration/writes.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": null
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "partial"
+        },
+        {
+          "name": "removeTokenSupport",
+          "kind": "write",
+          "signature": "function removeTokenSupport(address tokenAddress)",
+          "stateMutability": "nonpayable",
+          "composable": {
+            "name": "useCashRemunerationRemoveTokenSupport",
+            "file": "app/src/composables/cashRemuneration/writes.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": null
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "partial"
+        },
+        {
+          "name": "renounceOwnership",
+          "kind": "write",
+          "signature": "function renounceOwnership()",
+          "stateMutability": "nonpayable",
+          "composable": {
+            "name": "useCashRemunerationRenounceOwnership",
+            "file": "app/src/composables/cashRemuneration/writes.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": null
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "partial"
+        },
+        {
+          "name": "transferOwnership",
+          "kind": "write",
+          "signature": "function transferOwnership(address newOwner)",
+          "stateMutability": "nonpayable",
+          "composable": {
+            "name": "useCashRemunerationTransferOwnership",
+            "file": "app/src/composables/cashRemuneration/writes.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": null
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "partial"
+        },
+        {
+          "name": "unpause",
+          "kind": "write",
+          "signature": "function unpause()",
+          "stateMutability": "nonpayable",
+          "composable": {
+            "name": "useCashRemunerationUnpause",
+            "file": "app/src/composables/cashRemuneration/writes.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": null
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "partial"
+        },
+        {
+          "name": "withdraw",
+          "kind": "write",
+          "signature": "function withdraw((address employeeAddress, uint8 hoursWorked, (uint256 hourlyRate, address tokenAddress)[] wages, uint256 date) wageClaim, bytes signature)",
+          "stateMutability": "nonpayable",
+          "composable": {
+            "name": "useCashRemunerationWithdraw",
+            "file": "app/src/composables/cashRemuneration/writes.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": null
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "partial"
+        }
+      ],
+      "orphans": {
+        "composablesWithoutFunction": [
+          {
+            "name": "useCashRemunerationAddress",
+            "kind": "read",
+            "file": "app/src/composables/cashRemuneration/reads.ts"
+          },
+          {
+            "name": "useCashRemunerationSupportedTokens",
+            "kind": "read",
+            "file": "app/src/composables/cashRemuneration/reads.ts"
+          },
+          {
+            "name": "useCashRemunerationContractWrite",
+            "kind": "write",
+            "file": "app/src/composables/cashRemuneration/writes.ts"
+          },
+          {
+            "name": "useCashRemunerationTokenSupport",
+            "kind": "read",
+            "contractFn": "supportedTokens",
+            "file": "app/src/composables/cashRemuneration/reads.ts"
+          },
+          {
+            "name": "useCashRemunerationSetOfficerAddress",
+            "kind": "write",
+            "contractFn": "setOfficerAddress",
+            "file": "app/src/composables/cashRemuneration/writes.ts"
+          }
+        ],
+        "mocksWithoutComposable": [],
+        "setupEntriesWithoutComposable": []
+      }
+    },
+    {
+      "slug": "elections",
+      "abiFile": "app/src/artifacts/abi/json/Elections.json",
+      "abiError": null,
+      "readsFile": "app/src/composables/elections/reads.ts",
+      "writesFile": "app/src/composables/elections/writes.ts",
+      "setupFile": "app/src/tests/setup/elections.setup.ts",
+      "counts": {
+        "totalFunctions": 22,
+        "ok": 4,
+        "partial": 3,
+        "missing": 15,
+        "usedContractFns": 7
+      },
+      "functions": [
+        {
+          "name": "_voteCounts",
+          "kind": "read",
+          "signature": "function _voteCounts(uint256, address) view returns (uint256)",
+          "stateMutability": "view",
+          "composable": null,
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": "app/src/tests/setup/elections.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "getElection",
+          "kind": "read",
+          "signature": "function getElection(uint256 electionId) view returns (uint256 id, string title, string description, address createdBy, uint256 startDate, uint256 endDate, uint256 seatCount, bool resultsPublished)",
+          "stateMutability": "view",
+          "composable": {
+            "name": "useElectionsGetElection",
+            "file": "app/src/composables/elections/reads.ts"
+          },
+          "mock": {
+            "present": true,
+            "key": "mockElectionsReads.getElection"
+          },
+          "setup": {
+            "present": true,
+            "file": "app/src/tests/setup/elections.setup.ts"
+          },
+          "composableTest": {
+            "tested": true,
+            "files": [
+              "app/src/composables/elections/__tests__/reads.spec.ts"
+            ]
+          },
+          "usages": [],
+          "status": "ok"
+        },
+        {
+          "name": "getElectionCandidates",
+          "kind": "read",
+          "signature": "function getElectionCandidates(uint256 electionId) view returns (address[] candidates)",
+          "stateMutability": "view",
+          "composable": {
+            "name": "useElectionsGetCandidates",
+            "file": "app/src/composables/elections/reads.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": true,
+            "file": "app/src/tests/setup/elections.setup.ts"
+          },
+          "composableTest": {
+            "tested": true,
+            "files": [
+              "app/src/composables/elections/__tests__/reads.spec.ts"
+            ]
+          },
+          "usages": [],
+          "status": "partial"
+        },
+        {
+          "name": "getElectionEligibleVoters",
+          "kind": "read",
+          "signature": "function getElectionEligibleVoters(uint256 electionId) view returns (address[] voters)",
+          "stateMutability": "view",
+          "composable": {
+            "name": "useElectionsGetEligibleVoters",
+            "file": "app/src/composables/elections/reads.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": true,
+            "file": "app/src/tests/setup/elections.setup.ts"
+          },
+          "composableTest": {
+            "tested": true,
+            "files": [
+              "app/src/composables/elections/__tests__/reads.spec.ts"
+            ]
+          },
+          "usages": [],
+          "status": "partial"
+        },
+        {
+          "name": "getElectionResults",
+          "kind": "read",
+          "signature": "function getElectionResults(uint256 electionId) view returns (address[])",
+          "stateMutability": "view",
+          "composable": null,
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": "app/src/tests/setup/elections.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "getElectionWinners",
+          "kind": "read",
+          "signature": "function getElectionWinners(uint256 electionId) view returns (address[])",
+          "stateMutability": "view",
+          "composable": {
+            "name": "useElectionsGetWinners",
+            "file": "app/src/composables/elections/reads.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": true,
+            "file": "app/src/tests/setup/elections.setup.ts"
+          },
+          "composableTest": {
+            "tested": true,
+            "files": [
+              "app/src/composables/elections/__tests__/reads.spec.ts"
+            ]
+          },
+          "usages": [],
+          "status": "partial"
+        },
+        {
+          "name": "getNextElectionId",
+          "kind": "read",
+          "signature": "function getNextElectionId() view returns (uint256)",
+          "stateMutability": "view",
+          "composable": null,
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": "app/src/tests/setup/elections.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "getVoteCount",
+          "kind": "read",
+          "signature": "function getVoteCount(uint256 electionId) view returns (uint256)",
+          "stateMutability": "view",
+          "composable": {
+            "name": "useElectionsGetVoteCount",
+            "file": "app/src/composables/elections/reads.ts"
+          },
+          "mock": {
+            "present": true,
+            "key": "mockElectionsReads.getVoteCount"
+          },
+          "setup": {
+            "present": true,
+            "file": "app/src/tests/setup/elections.setup.ts"
+          },
+          "composableTest": {
+            "tested": true,
+            "files": [
+              "app/src/composables/elections/__tests__/reads.spec.ts"
+            ]
+          },
+          "usages": [],
+          "status": "ok"
+        },
+        {
+          "name": "getVoterChoice",
+          "kind": "read",
+          "signature": "function getVoterChoice(uint256 electionId, address voter) view returns (address)",
+          "stateMutability": "view",
+          "composable": null,
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": "app/src/tests/setup/elections.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "hasVoted",
+          "kind": "read",
+          "signature": "function hasVoted(uint256 electionId, address voter) view returns (bool)",
+          "stateMutability": "view",
+          "composable": {
+            "name": "useElectionsHasVoted",
+            "file": "app/src/composables/elections/reads.ts"
+          },
+          "mock": {
+            "present": true,
+            "key": "mockElectionsReads.hasVoted"
+          },
+          "setup": {
+            "present": true,
+            "file": "app/src/tests/setup/elections.setup.ts"
+          },
+          "composableTest": {
+            "tested": true,
+            "files": [
+              "app/src/composables/elections/__tests__/reads.spec.ts"
+            ]
+          },
+          "usages": [],
+          "status": "ok"
+        },
+        {
+          "name": "isEligibleVoter",
+          "kind": "read",
+          "signature": "function isEligibleVoter(uint256 electionId, address voter) view returns (bool)",
+          "stateMutability": "view",
+          "composable": null,
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": "app/src/tests/setup/elections.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "officerAddress",
+          "kind": "read",
+          "signature": "function officerAddress() view returns (address)",
+          "stateMutability": "view",
+          "composable": null,
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": "app/src/tests/setup/elections.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "owner",
+          "kind": "read",
+          "signature": "function owner() view returns (address)",
+          "stateMutability": "view",
+          "composable": {
+            "name": "useElectionsOwner",
+            "file": "app/src/composables/elections/reads.ts"
+          },
+          "mock": {
+            "present": true,
+            "key": "mockElectionsReads.owner"
+          },
+          "setup": {
+            "present": true,
+            "file": "app/src/tests/setup/elections.setup.ts"
+          },
+          "composableTest": {
+            "tested": true,
+            "files": [
+              "app/src/composables/elections/__tests__/reads.spec.ts"
+            ]
+          },
+          "usages": [],
+          "status": "ok"
+        },
+        {
+          "name": "paused",
+          "kind": "read",
+          "signature": "function paused() view returns (bool)",
+          "stateMutability": "view",
+          "composable": null,
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": "app/src/tests/setup/elections.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "castVote",
+          "kind": "write",
+          "signature": "function castVote(uint256 electionId, address candidate)",
+          "stateMutability": "nonpayable",
+          "composable": null,
+          "mock": {
+            "present": true,
+            "key": "mockElectionsWrites.castVote"
+          },
+          "setup": {
+            "present": false,
+            "file": "app/src/tests/setup/elections.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "createElection",
+          "kind": "write",
+          "signature": "function createElection(string title, string description, uint256 startDate, uint256 endDate, uint256 seatCount, address[] candidates, address[] eligibleVoters) returns (uint256 electionId)",
+          "stateMutability": "nonpayable",
+          "composable": null,
+          "mock": {
+            "present": true,
+            "key": "mockElectionsWrites.createElection"
+          },
+          "setup": {
+            "present": false,
+            "file": "app/src/tests/setup/elections.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "initialize",
+          "kind": "write",
+          "signature": "function initialize(address _owner)",
+          "stateMutability": "nonpayable",
+          "composable": null,
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": "app/src/tests/setup/elections.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "pause",
+          "kind": "write",
+          "signature": "function pause()",
+          "stateMutability": "nonpayable",
+          "composable": null,
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": "app/src/tests/setup/elections.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "publishResults",
+          "kind": "write",
+          "signature": "function publishResults(uint256 electionId)",
+          "stateMutability": "nonpayable",
+          "composable": null,
+          "mock": {
+            "present": true,
+            "key": "mockElectionsWrites.publishResults"
+          },
+          "setup": {
+            "present": false,
+            "file": "app/src/tests/setup/elections.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "renounceOwnership",
+          "kind": "write",
+          "signature": "function renounceOwnership()",
+          "stateMutability": "nonpayable",
+          "composable": null,
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": "app/src/tests/setup/elections.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "transferOwnership",
+          "kind": "write",
+          "signature": "function transferOwnership(address newOwner)",
+          "stateMutability": "nonpayable",
+          "composable": null,
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": "app/src/tests/setup/elections.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "unpause",
+          "kind": "write",
+          "signature": "function unpause()",
+          "stateMutability": "nonpayable",
+          "composable": null,
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": "app/src/tests/setup/elections.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        }
+      ],
+      "orphans": {
+        "composablesWithoutFunction": [
+          {
+            "name": "useElectionsAddress",
+            "kind": "read",
+            "file": "app/src/composables/elections/reads.ts"
+          },
+          {
+            "name": "useElectionsCreateElection",
+            "kind": "write",
+            "file": "app/src/composables/elections/writes.ts"
+          },
+          {
+            "name": "useElectionsCastVote",
+            "kind": "write",
+            "file": "app/src/composables/elections/writes.ts"
+          },
+          {
+            "name": "useElectionsPublishResults",
+            "kind": "write",
+            "file": "app/src/composables/elections/writes.ts"
+          }
+        ],
+        "mocksWithoutComposable": [
+          "mockElectionsReads.address",
+          "mockElectionsReads.getCandidates",
+          "mockElectionsReads.getEligibleVoters",
+          "mockElectionsReads.getWinners"
+        ],
+        "setupEntriesWithoutComposable": []
+      }
+    },
+    {
+      "slug": "erc20",
+      "abiFile": "app/src/artifacts/abi/json/ERC20.json",
+      "abiError": null,
+      "readsFile": "app/src/composables/erc20/reads.ts",
+      "writesFile": "app/src/composables/erc20/writes.ts",
+      "setupFile": "app/src/tests/setup/erc20.setup.ts",
+      "counts": {
+        "totalFunctions": 9,
+        "ok": 0,
+        "partial": 9,
+        "missing": 0,
+        "usedContractFns": 9
+      },
+      "functions": [
+        {
+          "name": "allowance",
+          "kind": "read",
+          "signature": "function allowance(address owner, address spender) view returns (uint256)",
+          "stateMutability": "view",
+          "composable": {
+            "name": "useErc20Allowance",
+            "file": "app/src/composables/erc20/reads.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": true,
+            "file": "app/src/tests/setup/erc20.setup.ts"
+          },
+          "composableTest": {
+            "tested": true,
+            "files": [
+              "app/src/composables/erc20/__tests__/reads.spec.ts"
+            ]
+          },
+          "usages": [
+            {
+              "file": "app/src/components/forms/DepositBankForm.vue",
+              "hasTest": true,
+              "testFile": "app/src/components/forms/__tests__/DepositBankForm.spec.ts",
+              "skipped": true
+            },
+            {
+              "file": "app/src/components/forms/DepositSafeForm.vue",
+              "hasTest": true,
+              "testFile": "app/src/components/forms/__tests__/DepositSafeForm.spec.ts",
+              "skipped": true
+            },
+            {
+              "file": "app/src/components/forms/SafeDepositRouterForm.vue",
+              "hasTest": false,
+              "testFile": null,
+              "skipped": false
+            },
+            {
+              "file": "app/src/components/sections/VestingView/forms/CreateVesting.vue",
+              "hasTest": false,
+              "testFile": null,
+              "skipped": false
+            }
+          ],
+          "status": "partial"
+        },
+        {
+          "name": "balanceOf",
+          "kind": "read",
+          "signature": "function balanceOf(address account) view returns (uint256)",
+          "stateMutability": "view",
+          "composable": {
+            "name": "useErc20BalanceOf",
+            "file": "app/src/composables/erc20/reads.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": true,
+            "file": "app/src/tests/setup/erc20.setup.ts"
+          },
+          "composableTest": {
+            "tested": true,
+            "files": [
+              "app/src/composables/erc20/__tests__/reads.spec.ts"
+            ]
+          },
+          "usages": [
+            {
+              "file": "app/src/components/sections/VestingView/forms/CreateVesting.vue",
+              "hasTest": false,
+              "testFile": null,
+              "skipped": false
+            }
+          ],
+          "status": "partial"
+        },
+        {
+          "name": "decimals",
+          "kind": "read",
+          "signature": "function decimals() view returns (uint8)",
+          "stateMutability": "view",
+          "composable": {
+            "name": "useErc20Decimals",
+            "file": "app/src/composables/erc20/reads.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": true,
+            "file": "app/src/tests/setup/erc20.setup.ts"
+          },
+          "composableTest": {
+            "tested": true,
+            "files": [
+              "app/src/composables/erc20/__tests__/reads.spec.ts"
+            ]
+          },
+          "usages": [],
+          "status": "partial"
+        },
+        {
+          "name": "name",
+          "kind": "read",
+          "signature": "function name() view returns (string)",
+          "stateMutability": "view",
+          "composable": {
+            "name": "useErc20Name",
+            "file": "app/src/composables/erc20/reads.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": true,
+            "file": "app/src/tests/setup/erc20.setup.ts"
+          },
+          "composableTest": {
+            "tested": true,
+            "files": [
+              "app/src/composables/erc20/__tests__/reads.spec.ts"
+            ]
+          },
+          "usages": [],
+          "status": "partial"
+        },
+        {
+          "name": "symbol",
+          "kind": "read",
+          "signature": "function symbol() view returns (string)",
+          "stateMutability": "view",
+          "composable": {
+            "name": "useErc20Symbol",
+            "file": "app/src/composables/erc20/reads.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": true,
+            "file": "app/src/tests/setup/erc20.setup.ts"
+          },
+          "composableTest": {
+            "tested": true,
+            "files": [
+              "app/src/composables/erc20/__tests__/reads.spec.ts"
+            ]
+          },
+          "usages": [],
+          "status": "partial"
+        },
+        {
+          "name": "totalSupply",
+          "kind": "read",
+          "signature": "function totalSupply() view returns (uint256)",
+          "stateMutability": "view",
+          "composable": {
+            "name": "useErc20TotalSupply",
+            "file": "app/src/composables/erc20/reads.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": true,
+            "file": "app/src/tests/setup/erc20.setup.ts"
+          },
+          "composableTest": {
+            "tested": true,
+            "files": [
+              "app/src/composables/erc20/__tests__/reads.spec.ts"
+            ]
+          },
+          "usages": [],
+          "status": "partial"
+        },
+        {
+          "name": "approve",
+          "kind": "write",
+          "signature": "function approve(address spender, uint256 value) returns (bool)",
+          "stateMutability": "nonpayable",
+          "composable": {
+            "name": "useERC20Approve",
+            "file": "app/src/composables/erc20/writes.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": true,
+            "file": "app/src/tests/setup/erc20.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [
+            {
+              "file": "app/src/components/forms/DepositBankForm.vue",
+              "hasTest": true,
+              "testFile": "app/src/components/forms/__tests__/DepositBankForm.spec.ts",
+              "skipped": true
+            },
+            {
+              "file": "app/src/components/forms/DepositSafeForm.vue",
+              "hasTest": true,
+              "testFile": "app/src/components/forms/__tests__/DepositSafeForm.spec.ts",
+              "skipped": true
+            },
+            {
+              "file": "app/src/components/forms/SafeDepositRouterForm.vue",
+              "hasTest": false,
+              "testFile": null,
+              "skipped": false
+            },
+            {
+              "file": "app/src/components/sections/VestingView/forms/CreateVesting.vue",
+              "hasTest": false,
+              "testFile": null,
+              "skipped": false
+            }
+          ],
+          "status": "partial"
+        },
+        {
+          "name": "transfer",
+          "kind": "write",
+          "signature": "function transfer(address to, uint256 value) returns (bool)",
+          "stateMutability": "nonpayable",
+          "composable": {
+            "name": "useERC20Transfer",
+            "file": "app/src/composables/erc20/writes.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": true,
+            "file": "app/src/tests/setup/erc20.setup.ts"
+          },
+          "composableTest": {
+            "tested": true,
+            "files": [
+              "app/src/composables/erc20/__tests__/writes.spec.ts"
+            ]
+          },
+          "usages": [],
+          "status": "partial"
+        },
+        {
+          "name": "transferFrom",
+          "kind": "write",
+          "signature": "function transferFrom(address from, address to, uint256 value) returns (bool)",
+          "stateMutability": "nonpayable",
+          "composable": {
+            "name": "useERC20TransferFrom",
+            "file": "app/src/composables/erc20/writes.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": true,
+            "file": "app/src/tests/setup/erc20.setup.ts"
+          },
+          "composableTest": {
+            "tested": true,
+            "files": [
+              "app/src/composables/erc20/__tests__/writes.spec.ts"
+            ]
+          },
+          "usages": [],
+          "status": "partial"
+        }
+      ],
+      "orphans": {
+        "composablesWithoutFunction": [
+          {
+            "name": "useERC20ContractWrite",
+            "kind": "write",
+            "file": "app/src/composables/erc20/writes.ts"
+          }
+        ],
+        "mocksWithoutComposable": [],
+        "setupEntriesWithoutComposable": []
+      }
+    },
+    {
+      "slug": "expenseAccount",
+      "abiFile": "app/src/artifacts/abi/json/ExpenseAccountEIP712.json",
+      "abiError": null,
+      "readsFile": "app/src/composables/expenseAccount/reads.ts",
+      "writesFile": "app/src/composables/expenseAccount/writes.ts",
+      "setupFile": null,
+      "counts": {
+        "totalFunctions": 28,
+        "ok": 0,
+        "partial": 21,
+        "missing": 7,
+        "usedContractFns": 23
+      },
+      "functions": [
+        {
+          "name": "budgetLimitHash",
+          "kind": "read",
+          "signature": "function budgetLimitHash((uint256 amount, uint8 frequencyType, uint256 customFrequency, uint256 startDate, uint256 endDate, address tokenAddress, address approvedAddress) budgetLimit) pure returns (bytes32)",
+          "stateMutability": "pure",
+          "composable": {
+            "name": "useExpenseAccountBudgetLimitHash",
+            "file": "app/src/composables/expenseAccount/reads.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": null
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "partial"
+        },
+        {
+          "name": "eip712Domain",
+          "kind": "read",
+          "signature": "function eip712Domain() view returns (bytes1 fields, string name, string version, uint256 chainId, address verifyingContract, bytes32 salt, uint256[] extensions)",
+          "stateMutability": "view",
+          "composable": {
+            "name": "useExpenseAccountEip712Domain",
+            "file": "app/src/composables/expenseAccount/reads.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": null
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "partial"
+        },
+        {
+          "name": "expenseBalances",
+          "kind": "read",
+          "signature": "function expenseBalances(bytes32) view returns (uint256 lastWithdrawnDate, uint256 totalWithdrawn, uint256 lastWithdrawnPeriod, uint8 state)",
+          "stateMutability": "view",
+          "composable": {
+            "name": "useExpenseAccountExpenseBalances",
+            "file": "app/src/composables/expenseAccount/reads.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": null
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "partial"
+        },
+        {
+          "name": "getBalance",
+          "kind": "read",
+          "signature": "function getBalance() view returns (uint256)",
+          "stateMutability": "view",
+          "composable": {
+            "name": "useExpenseAccountBalance",
+            "file": "app/src/composables/expenseAccount/reads.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": null
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "partial"
+        },
+        {
+          "name": "getCurrentPeriod",
+          "kind": "read",
+          "signature": "function getCurrentPeriod((uint256 amount, uint8 frequencyType, uint256 customFrequency, uint256 startDate, uint256 endDate, address tokenAddress, address approvedAddress) budgetLimit) view returns (uint256)",
+          "stateMutability": "view",
+          "composable": {
+            "name": "useExpenseAccountCurrentPeriod",
+            "file": "app/src/composables/expenseAccount/reads.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": null
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "partial"
+        },
+        {
+          "name": "getPeriod",
+          "kind": "read",
+          "signature": "function getPeriod((uint256 amount, uint8 frequencyType, uint256 customFrequency, uint256 startDate, uint256 endDate, address tokenAddress, address approvedAddress) budgetLimit, uint256 timestamp) pure returns (uint256)",
+          "stateMutability": "pure",
+          "composable": {
+            "name": "useExpenseAccountPeriod",
+            "file": "app/src/composables/expenseAccount/reads.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": null
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "partial"
+        },
+        {
+          "name": "getSupportedTokenCount",
+          "kind": "read",
+          "signature": "function getSupportedTokenCount() view returns (uint256)",
+          "stateMutability": "view",
+          "composable": null,
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": null
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "getSupportedTokens",
+          "kind": "read",
+          "signature": "function getSupportedTokens() view returns (address[])",
+          "stateMutability": "view",
+          "composable": null,
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": null
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "getTokenBalance",
+          "kind": "read",
+          "signature": "function getTokenBalance(address token) view returns (uint256)",
+          "stateMutability": "view",
+          "composable": {
+            "name": "useExpenseAccountGetTokenBalance",
+            "file": "app/src/composables/expenseAccount/reads.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": null
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "partial"
+        },
+        {
+          "name": "isNewPeriod",
+          "kind": "read",
+          "signature": "function isNewPeriod((uint256 amount, uint8 frequencyType, uint256 customFrequency, uint256 startDate, uint256 endDate, address tokenAddress, address approvedAddress) budgetLimit, bytes32 signatureHash) view returns (bool)",
+          "stateMutability": "view",
+          "composable": {
+            "name": "useExpenseAccountIsNewPeriod",
+            "file": "app/src/composables/expenseAccount/reads.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": null
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "partial"
+        },
+        {
+          "name": "isTokenSupported",
+          "kind": "read",
+          "signature": "function isTokenSupported(address _token) view returns (bool)",
+          "stateMutability": "view",
+          "composable": {
+            "name": "useExpenseAccountIsTokenSupported",
+            "file": "app/src/composables/expenseAccount/reads.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": null
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "partial"
+        },
+        {
+          "name": "officerAddress",
+          "kind": "read",
+          "signature": "function officerAddress() view returns (address)",
+          "stateMutability": "view",
+          "composable": null,
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": null
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "owner",
+          "kind": "read",
+          "signature": "function owner() view returns (address)",
+          "stateMutability": "view",
+          "composable": {
+            "name": "useExpenseAccountOwner",
+            "file": "app/src/composables/expenseAccount/reads.ts"
+          },
+          "mock": {
+            "present": true,
+            "key": "mockExpenseAccountReads.owner"
+          },
+          "setup": {
+            "present": false,
+            "file": null
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [
+            {
+              "file": "app/src/components/sections/OwnerTreasuryWithdrawAction.vue",
+              "hasTest": true,
+              "testFile": "app/src/components/sections/__tests__/OwnerTreasuryWithdrawAction.spec.ts",
+              "skipped": true
+            }
+          ],
+          "status": "partial"
+        },
+        {
+          "name": "paused",
+          "kind": "read",
+          "signature": "function paused() view returns (bool)",
+          "stateMutability": "view",
+          "composable": {
+            "name": "useExpenseAccountPaused",
+            "file": "app/src/composables/expenseAccount/reads.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": null
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "partial"
+        },
+        {
+          "name": "validateTransfer",
+          "kind": "read",
+          "signature": "function validateTransfer((uint256 amount, uint8 frequencyType, uint256 customFrequency, uint256 startDate, uint256 endDate, address tokenAddress, address approvedAddress) budgetLimit, uint256 amount, bytes32 signatureHash) view returns (bool)",
+          "stateMutability": "view",
+          "composable": {
+            "name": "useExpenseAccountValidateTransfer",
+            "file": "app/src/composables/expenseAccount/reads.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": null
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "partial"
+        },
+        {
+          "name": "activateApproval",
+          "kind": "write",
+          "signature": "function activateApproval(bytes32 signatureHash)",
+          "stateMutability": "nonpayable",
+          "composable": {
+            "name": "useExpenseAccountActivateApproval",
+            "file": "app/src/composables/expenseAccount/writes.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": null
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "partial"
+        },
+        {
+          "name": "addTokenSupport",
+          "kind": "write",
+          "signature": "function addTokenSupport(address _tokenAddress)",
+          "stateMutability": "nonpayable",
+          "composable": null,
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": null
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "deactivateApproval",
+          "kind": "write",
+          "signature": "function deactivateApproval(bytes32 signatureHash)",
+          "stateMutability": "nonpayable",
+          "composable": {
+            "name": "useExpenseAccountDeactivateApproval",
+            "file": "app/src/composables/expenseAccount/writes.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": null
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "partial"
+        },
+        {
+          "name": "depositToken",
+          "kind": "write",
+          "signature": "function depositToken(address token, uint256 amount)",
+          "stateMutability": "nonpayable",
+          "composable": {
+            "name": "useExpenseAccountDepositToken",
+            "file": "app/src/composables/expenseAccount/writes.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": null
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "partial"
+        },
+        {
+          "name": "initialize",
+          "kind": "write",
+          "signature": "function initialize(address owner, address[] _tokenAddresses)",
+          "stateMutability": "nonpayable",
+          "composable": {
+            "name": "useExpenseAccountInitialize",
+            "file": "app/src/composables/expenseAccount/writes.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": null
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "partial"
+        },
+        {
+          "name": "ownerWithdrawAllToBank",
+          "kind": "write",
+          "signature": "function ownerWithdrawAllToBank()",
+          "stateMutability": "nonpayable",
+          "composable": null,
+          "mock": {
+            "present": true,
+            "key": "mockExpenseAccountWrites.ownerWithdrawAllToBank"
+          },
+          "setup": {
+            "present": false,
+            "file": null
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "pause",
+          "kind": "write",
+          "signature": "function pause()",
+          "stateMutability": "nonpayable",
+          "composable": {
+            "name": "useExpenseAccountPause",
+            "file": "app/src/composables/expenseAccount/writes.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": null
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "partial"
+        },
+        {
+          "name": "removeTokenSupport",
+          "kind": "write",
+          "signature": "function removeTokenSupport(address _tokenAddress)",
+          "stateMutability": "nonpayable",
+          "composable": null,
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": null
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "renounceOwnership",
+          "kind": "write",
+          "signature": "function renounceOwnership()",
+          "stateMutability": "nonpayable",
+          "composable": {
+            "name": "useExpenseAccountRenounceOwnership",
+            "file": "app/src/composables/expenseAccount/writes.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": null
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "partial"
+        },
+        {
+          "name": "setOfficerAddress",
+          "kind": "write",
+          "signature": "function setOfficerAddress(address _officerAddress)",
+          "stateMutability": "nonpayable",
+          "composable": null,
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": null
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "transfer",
+          "kind": "write",
+          "signature": "function transfer(address to, uint256 amount, (uint256 amount, uint8 frequencyType, uint256 customFrequency, uint256 startDate, uint256 endDate, address tokenAddress, address approvedAddress) budgetLimit, bytes signature)",
+          "stateMutability": "nonpayable",
+          "composable": {
+            "name": "useExpenseAccountTransfer",
+            "file": "app/src/composables/expenseAccount/writes.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": null
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "partial"
+        },
+        {
+          "name": "transferOwnership",
+          "kind": "write",
+          "signature": "function transferOwnership(address newOwner)",
+          "stateMutability": "nonpayable",
+          "composable": {
+            "name": "useExpenseAccountTransferOwnership",
+            "file": "app/src/composables/expenseAccount/writes.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": null
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "partial"
+        },
+        {
+          "name": "unpause",
+          "kind": "write",
+          "signature": "function unpause()",
+          "stateMutability": "nonpayable",
+          "composable": {
+            "name": "useExpenseAccountUnpause",
+            "file": "app/src/composables/expenseAccount/writes.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": null
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "partial"
+        }
+      ],
+      "orphans": {
+        "composablesWithoutFunction": [
+          {
+            "name": "useExpenseAccountAddress",
+            "kind": "read",
+            "file": "app/src/composables/expenseAccount/reads.ts"
+          },
+          {
+            "name": "useExpenseAccountContractWrite",
+            "kind": "write",
+            "file": "app/src/composables/expenseAccount/writes.ts"
+          },
+          {
+            "name": "useExpenseAccountSupportedTokens",
+            "kind": "read",
+            "contractFn": "supportedTokens",
+            "file": "app/src/composables/expenseAccount/reads.ts"
+          },
+          {
+            "name": "useExpenseAccountChangeTokenAddress",
+            "kind": "write",
+            "contractFn": "changeTokenAddress",
+            "file": "app/src/composables/expenseAccount/writes.ts"
+          }
+        ],
+        "mocksWithoutComposable": [],
+        "setupEntriesWithoutComposable": []
+      }
+    },
+    {
+      "slug": "investor",
+      "abiFile": "app/src/artifacts/abi/json/InvestorV1.json",
+      "abiError": null,
+      "readsFile": "app/src/composables/investor/reads.ts",
+      "writesFile": "app/src/composables/investor/writes.ts",
+      "setupFile": "app/src/tests/setup/investor.setup.ts",
+      "counts": {
+        "totalFunctions": 30,
+        "ok": 10,
+        "partial": 7,
+        "missing": 13,
+        "usedContractFns": 17
+      },
+      "functions": [
+        {
+          "name": "DEFAULT_ADMIN_ROLE",
+          "kind": "read",
+          "signature": "function DEFAULT_ADMIN_ROLE() view returns (bytes32)",
+          "stateMutability": "view",
+          "composable": null,
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": "app/src/tests/setup/investor.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "MINTER_ROLE",
+          "kind": "read",
+          "signature": "function MINTER_ROLE() view returns (bytes32)",
+          "stateMutability": "view",
+          "composable": null,
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": "app/src/tests/setup/investor.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "allowance",
+          "kind": "read",
+          "signature": "function allowance(address owner, address spender) view returns (uint256)",
+          "stateMutability": "view",
+          "composable": null,
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": "app/src/tests/setup/investor.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "balanceOf",
+          "kind": "read",
+          "signature": "function balanceOf(address account) view returns (uint256)",
+          "stateMutability": "view",
+          "composable": {
+            "name": "useInvestorBalanceOf",
+            "file": "app/src/composables/investor/reads.ts"
+          },
+          "mock": {
+            "present": true,
+            "key": "mockInvestorReads.balanceOf"
+          },
+          "setup": {
+            "present": true,
+            "file": "app/src/tests/setup/investor.setup.ts"
+          },
+          "composableTest": {
+            "tested": true,
+            "files": [
+              "app/src/composables/investor/__tests__/reads.spec.ts"
+            ]
+          },
+          "usages": [
+            {
+              "file": "app/src/components/sections/SherTokenView/InvestorsHeader.vue",
+              "hasTest": true,
+              "testFile": "app/src/components/sections/SherTokenView/__tests__/InvestorsHeader.spec.ts",
+              "skipped": false
+            }
+          ],
+          "status": "ok"
+        },
+        {
+          "name": "decimals",
+          "kind": "read",
+          "signature": "function decimals() view returns (uint8)",
+          "stateMutability": "view",
+          "composable": null,
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": "app/src/tests/setup/investor.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "getRoleAdmin",
+          "kind": "read",
+          "signature": "function getRoleAdmin(bytes32 role) view returns (bytes32)",
+          "stateMutability": "view",
+          "composable": null,
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": "app/src/tests/setup/investor.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "getShareholders",
+          "kind": "read",
+          "signature": "function getShareholders() view returns ((address shareholder, uint256 amount)[])",
+          "stateMutability": "view",
+          "composable": {
+            "name": "useInvestorShareholders",
+            "file": "app/src/composables/investor/reads.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": true,
+            "file": "app/src/tests/setup/investor.setup.ts"
+          },
+          "composableTest": {
+            "tested": true,
+            "files": [
+              "app/src/composables/investor/__tests__/reads.spec.ts"
+            ]
+          },
+          "usages": [
+            {
+              "file": "app/src/components/sections/SherTokenView/InvestorsActions.vue",
+              "hasTest": true,
+              "testFile": "app/src/components/sections/SherTokenView/__tests__/InvestorsActions.spec.ts",
+              "skipped": false
+            },
+            {
+              "file": "app/src/components/sections/SherTokenView/InvestorsHeader.vue",
+              "hasTest": true,
+              "testFile": "app/src/components/sections/SherTokenView/__tests__/InvestorsHeader.spec.ts",
+              "skipped": false
+            },
+            {
+              "file": "app/src/components/sections/SherTokenView/ShareholderList.vue",
+              "hasTest": true,
+              "testFile": "app/src/components/sections/SherTokenView/__tests__/ShareholderList.spec.ts",
+              "skipped": true
+            }
+          ],
+          "status": "partial"
+        },
+        {
+          "name": "hasRole",
+          "kind": "read",
+          "signature": "function hasRole(bytes32 role, address account) view returns (bool)",
+          "stateMutability": "view",
+          "composable": null,
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": "app/src/tests/setup/investor.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "name",
+          "kind": "read",
+          "signature": "function name() view returns (string)",
+          "stateMutability": "view",
+          "composable": {
+            "name": "useInvestorName",
+            "file": "app/src/composables/investor/reads.ts"
+          },
+          "mock": {
+            "present": true,
+            "key": "mockInvestorReads.name"
+          },
+          "setup": {
+            "present": true,
+            "file": "app/src/tests/setup/investor.setup.ts"
+          },
+          "composableTest": {
+            "tested": true,
+            "files": [
+              "app/src/composables/investor/__tests__/reads.spec.ts"
+            ]
+          },
+          "usages": [],
+          "status": "ok"
+        },
+        {
+          "name": "officerAddress",
+          "kind": "read",
+          "signature": "function officerAddress() view returns (address)",
+          "stateMutability": "view",
+          "composable": null,
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": "app/src/tests/setup/investor.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "owner",
+          "kind": "read",
+          "signature": "function owner() view returns (address)",
+          "stateMutability": "view",
+          "composable": {
+            "name": "useInvestorOwner",
+            "file": "app/src/composables/investor/reads.ts"
+          },
+          "mock": {
+            "present": true,
+            "key": "mockInvestorReads.owner"
+          },
+          "setup": {
+            "present": true,
+            "file": "app/src/tests/setup/investor.setup.ts"
+          },
+          "composableTest": {
+            "tested": true,
+            "files": [
+              "app/src/composables/investor/__tests__/reads.spec.ts"
+            ]
+          },
+          "usages": [
+            {
+              "file": "app/src/components/sections/SherTokenView/InvestorsActions.vue",
+              "hasTest": true,
+              "testFile": "app/src/components/sections/SherTokenView/__tests__/InvestorsActions.spec.ts",
+              "skipped": false
+            }
+          ],
+          "status": "ok"
+        },
+        {
+          "name": "paused",
+          "kind": "read",
+          "signature": "function paused() view returns (bool)",
+          "stateMutability": "view",
+          "composable": {
+            "name": "useInvestorPaused",
+            "file": "app/src/composables/investor/reads.ts"
+          },
+          "mock": {
+            "present": true,
+            "key": "mockInvestorReads.paused"
+          },
+          "setup": {
+            "present": true,
+            "file": "app/src/tests/setup/investor.setup.ts"
+          },
+          "composableTest": {
+            "tested": true,
+            "files": [
+              "app/src/composables/investor/__tests__/reads.spec.ts"
+            ]
+          },
+          "usages": [],
+          "status": "ok"
+        },
+        {
+          "name": "supportsInterface",
+          "kind": "read",
+          "signature": "function supportsInterface(bytes4 interfaceId) view returns (bool)",
+          "stateMutability": "view",
+          "composable": null,
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": "app/src/tests/setup/investor.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "symbol",
+          "kind": "read",
+          "signature": "function symbol() view returns (string)",
+          "stateMutability": "view",
+          "composable": {
+            "name": "useInvestorSymbol",
+            "file": "app/src/composables/investor/reads.ts"
+          },
+          "mock": {
+            "present": true,
+            "key": "mockInvestorReads.symbol"
+          },
+          "setup": {
+            "present": true,
+            "file": "app/src/tests/setup/investor.setup.ts"
+          },
+          "composableTest": {
+            "tested": true,
+            "files": [
+              "app/src/composables/investor/__tests__/reads.spec.ts"
+            ]
+          },
+          "usages": [
+            {
+              "file": "app/src/components/forms/CompensationAmount.vue",
+              "hasTest": false,
+              "testFile": null,
+              "skipped": false
+            },
+            {
+              "file": "app/src/components/forms/SafeDepositRouterForm.vue",
+              "hasTest": false,
+              "testFile": null,
+              "skipped": false
+            },
+            {
+              "file": "app/src/components/sections/SherTokenView/InvestorsActions.vue",
+              "hasTest": true,
+              "testFile": "app/src/components/sections/SherTokenView/__tests__/InvestorsActions.spec.ts",
+              "skipped": false
+            },
+            {
+              "file": "app/src/components/sections/SherTokenView/InvestorsHeader.vue",
+              "hasTest": true,
+              "testFile": "app/src/components/sections/SherTokenView/__tests__/InvestorsHeader.spec.ts",
+              "skipped": false
+            },
+            {
+              "file": "app/src/components/sections/SherTokenView/ShareholderList.vue",
+              "hasTest": true,
+              "testFile": "app/src/components/sections/SherTokenView/__tests__/ShareholderList.spec.ts",
+              "skipped": true
+            },
+            {
+              "file": "app/src/components/sections/VestingView/VestingFlow.vue",
+              "hasTest": true,
+              "testFile": "app/src/components/sections/VestingView/__tests__/VestingFlow.spec.ts",
+              "skipped": true
+            },
+            {
+              "file": "app/src/components/sections/VestingView/VestingStats.vue",
+              "hasTest": true,
+              "testFile": "app/src/components/sections/VestingView/__tests__/VestingStats.spec.ts",
+              "skipped": true
+            }
+          ],
+          "status": "ok"
+        },
+        {
+          "name": "totalSupply",
+          "kind": "read",
+          "signature": "function totalSupply() view returns (uint256)",
+          "stateMutability": "view",
+          "composable": {
+            "name": "useInvestorTotalSupply",
+            "file": "app/src/composables/investor/reads.ts"
+          },
+          "mock": {
+            "present": true,
+            "key": "mockInvestorReads.totalSupply"
+          },
+          "setup": {
+            "present": true,
+            "file": "app/src/tests/setup/investor.setup.ts"
+          },
+          "composableTest": {
+            "tested": true,
+            "files": [
+              "app/src/composables/investor/__tests__/reads.spec.ts"
+            ]
+          },
+          "usages": [
+            {
+              "file": "app/src/components/sections/SherTokenView/InvestorsHeader.vue",
+              "hasTest": true,
+              "testFile": "app/src/components/sections/SherTokenView/__tests__/InvestorsHeader.spec.ts",
+              "skipped": false
+            },
+            {
+              "file": "app/src/components/sections/SherTokenView/ShareholderList.vue",
+              "hasTest": true,
+              "testFile": "app/src/components/sections/SherTokenView/__tests__/ShareholderList.spec.ts",
+              "skipped": true
+            }
+          ],
+          "status": "ok"
+        },
+        {
+          "name": "approve",
+          "kind": "write",
+          "signature": "function approve(address spender, uint256 value) returns (bool)",
+          "stateMutability": "nonpayable",
+          "composable": null,
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": "app/src/tests/setup/investor.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "distributeMint",
+          "kind": "write",
+          "signature": "function distributeMint((address shareholder, uint256 amount)[] _shareholders)",
+          "stateMutability": "nonpayable",
+          "composable": {
+            "name": "useDistributeMint",
+            "file": "app/src/composables/investor/writes.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": true,
+            "file": "app/src/tests/setup/investor.setup.ts"
+          },
+          "composableTest": {
+            "tested": true,
+            "files": [
+              "app/src/composables/investor/__tests__/writes.spec.ts"
+            ]
+          },
+          "usages": [],
+          "status": "partial"
+        },
+        {
+          "name": "distributeNativeDividends",
+          "kind": "write",
+          "signature": "function distributeNativeDividends(uint256 _amount) payable",
+          "stateMutability": "payable",
+          "composable": {
+            "name": "useDepositDividends",
+            "file": "app/src/composables/investor/writes.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": "app/src/tests/setup/investor.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "partial"
+        },
+        {
+          "name": "distributeTokenDividends",
+          "kind": "write",
+          "signature": "function distributeTokenDividends(address _token, uint256 _amount)",
+          "stateMutability": "nonpayable",
+          "composable": {
+            "name": "useDepositTokenDividends",
+            "file": "app/src/composables/investor/writes.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": "app/src/tests/setup/investor.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "partial"
+        },
+        {
+          "name": "grantRole",
+          "kind": "write",
+          "signature": "function grantRole(bytes32 role, address account)",
+          "stateMutability": "nonpayable",
+          "composable": null,
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": "app/src/tests/setup/investor.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "individualMint",
+          "kind": "write",
+          "signature": "function individualMint(address shareholder, uint256 amount)",
+          "stateMutability": "nonpayable",
+          "composable": {
+            "name": "useIndividualMint",
+            "file": "app/src/composables/investor/writes.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": true,
+            "file": "app/src/tests/setup/investor.setup.ts"
+          },
+          "composableTest": {
+            "tested": true,
+            "files": [
+              "app/src/composables/investor/__tests__/writes.spec.ts"
+            ]
+          },
+          "usages": [],
+          "status": "partial"
+        },
+        {
+          "name": "initialize",
+          "kind": "write",
+          "signature": "function initialize(string _name, string _symbol, address _owner)",
+          "stateMutability": "nonpayable",
+          "composable": {
+            "name": "useInitialize",
+            "file": "app/src/composables/investor/writes.ts"
+          },
+          "mock": {
+            "present": true,
+            "key": "mockInvestorWrites.initialize"
+          },
+          "setup": {
+            "present": true,
+            "file": "app/src/tests/setup/investor.setup.ts"
+          },
+          "composableTest": {
+            "tested": true,
+            "files": [
+              "app/src/composables/investor/__tests__/writes.spec.ts"
+            ]
+          },
+          "usages": [],
+          "status": "ok"
+        },
+        {
+          "name": "pause",
+          "kind": "write",
+          "signature": "function pause()",
+          "stateMutability": "nonpayable",
+          "composable": {
+            "name": "usePause",
+            "file": "app/src/composables/investor/writes.ts"
+          },
+          "mock": {
+            "present": true,
+            "key": "mockInvestorWrites.pause"
+          },
+          "setup": {
+            "present": true,
+            "file": "app/src/tests/setup/investor.setup.ts"
+          },
+          "composableTest": {
+            "tested": true,
+            "files": [
+              "app/src/composables/investor/__tests__/writes.spec.ts"
+            ]
+          },
+          "usages": [
+            {
+              "file": "app/src/views/team/[id]/DemoExample.vue",
+              "hasTest": false,
+              "testFile": null,
+              "skipped": false
+            }
+          ],
+          "status": "partial"
+        },
+        {
+          "name": "renounceOwnership",
+          "kind": "write",
+          "signature": "function renounceOwnership()",
+          "stateMutability": "nonpayable",
+          "composable": {
+            "name": "useRenounceOwnership",
+            "file": "app/src/composables/investor/writes.ts"
+          },
+          "mock": {
+            "present": true,
+            "key": "mockInvestorWrites.renounceOwnership"
+          },
+          "setup": {
+            "present": true,
+            "file": "app/src/tests/setup/investor.setup.ts"
+          },
+          "composableTest": {
+            "tested": true,
+            "files": [
+              "app/src/composables/investor/__tests__/writes.spec.ts"
+            ]
+          },
+          "usages": [],
+          "status": "ok"
+        },
+        {
+          "name": "renounceRole",
+          "kind": "write",
+          "signature": "function renounceRole(bytes32 role, address callerConfirmation)",
+          "stateMutability": "nonpayable",
+          "composable": null,
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": "app/src/tests/setup/investor.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "revokeRole",
+          "kind": "write",
+          "signature": "function revokeRole(bytes32 role, address account)",
+          "stateMutability": "nonpayable",
+          "composable": null,
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": "app/src/tests/setup/investor.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "transfer",
+          "kind": "write",
+          "signature": "function transfer(address to, uint256 value) returns (bool)",
+          "stateMutability": "nonpayable",
+          "composable": {
+            "name": "useTransfer",
+            "file": "app/src/composables/investor/writes.ts"
+          },
+          "mock": {
+            "present": true,
+            "key": "mockInvestorWrites.transfer"
+          },
+          "setup": {
+            "present": true,
+            "file": "app/src/tests/setup/investor.setup.ts"
+          },
+          "composableTest": {
+            "tested": true,
+            "files": [
+              "app/src/composables/investor/__tests__/writes.spec.ts"
+            ]
+          },
+          "usages": [],
+          "status": "ok"
+        },
+        {
+          "name": "transferFrom",
+          "kind": "write",
+          "signature": "function transferFrom(address from, address to, uint256 value) returns (bool)",
+          "stateMutability": "nonpayable",
+          "composable": null,
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": "app/src/tests/setup/investor.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "transferOwnership",
+          "kind": "write",
+          "signature": "function transferOwnership(address newOwner)",
+          "stateMutability": "nonpayable",
+          "composable": {
+            "name": "useTransferOwnership",
+            "file": "app/src/composables/investor/writes.ts"
+          },
+          "mock": {
+            "present": true,
+            "key": "mockInvestorWrites.transferOwnership"
+          },
+          "setup": {
+            "present": true,
+            "file": "app/src/tests/setup/investor.setup.ts"
+          },
+          "composableTest": {
+            "tested": true,
+            "files": [
+              "app/src/composables/investor/__tests__/writes.spec.ts"
+            ]
+          },
+          "usages": [],
+          "status": "ok"
+        },
+        {
+          "name": "unpause",
+          "kind": "write",
+          "signature": "function unpause()",
+          "stateMutability": "nonpayable",
+          "composable": {
+            "name": "useUnpause",
+            "file": "app/src/composables/investor/writes.ts"
+          },
+          "mock": {
+            "present": true,
+            "key": "mockInvestorWrites.unpause"
+          },
+          "setup": {
+            "present": true,
+            "file": "app/src/tests/setup/investor.setup.ts"
+          },
+          "composableTest": {
+            "tested": true,
+            "files": [
+              "app/src/composables/investor/__tests__/writes.spec.ts"
+            ]
+          },
+          "usages": [
+            {
+              "file": "app/src/views/team/[id]/DemoExample.vue",
+              "hasTest": false,
+              "testFile": null,
+              "skipped": false
+            }
+          ],
+          "status": "partial"
+        }
+      ],
+      "orphans": {
+        "composablesWithoutFunction": [
+          {
+            "name": "useInvestorAddress",
+            "kind": "read",
+            "file": "app/src/composables/investor/reads.ts"
+          },
+          {
+            "name": "useInvestorContractWrite",
+            "kind": "write",
+            "file": "app/src/composables/investor/writes.ts"
+          }
+        ],
+        "mocksWithoutComposable": [
+          "mockInvestorReads.shareholders",
+          "mockInvestorReads.totalInvested",
+          "mockInvestorReads.userInvestment",
+          "mockInvestorReads.dividendBalance",
+          "mockInvestorReads.investorCount",
+          "mockInvestorWrites.invest",
+          "mockInvestorWrites.claimDividend",
+          "mockInvestorWrites.withdraw",
+          "mockInvestorWrites.mint"
+        ],
+        "setupEntriesWithoutComposable": []
+      }
+    },
+    {
+      "slug": "safeDepositRouter",
+      "abiFile": "app/src/artifacts/abi/json/SafeDepositRouter.json",
+      "abiError": null,
+      "readsFile": "app/src/composables/safeDepositRouter/reads.ts",
+      "writesFile": "app/src/composables/safeDepositRouter/writes.ts",
+      "setupFile": "app/src/tests/setup/safeDepositRouter.setup.ts",
+      "counts": {
+        "totalFunctions": 26,
+        "ok": 0,
+        "partial": 21,
+        "missing": 5,
+        "usedContractFns": 23
+      },
+      "functions": [
+        {
+          "name": "MIN_MULTIPLIER",
+          "kind": "read",
+          "signature": "function MIN_MULTIPLIER() view returns (uint256)",
+          "stateMutability": "view",
+          "composable": {
+            "name": "useSafeDepositRouterMinMultiplier",
+            "file": "app/src/composables/safeDepositRouter/reads.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": true,
+            "file": "app/src/tests/setup/safeDepositRouter.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "partial"
+        },
+        {
+          "name": "calculateCompensation",
+          "kind": "read",
+          "signature": "function calculateCompensation(address tokenAddress, uint256 tokenAmount) view returns (uint256)",
+          "stateMutability": "view",
+          "composable": {
+            "name": "useSafeDepositRouterCalculateCompensation",
+            "file": "app/src/composables/safeDepositRouter/reads.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": true,
+            "file": "app/src/tests/setup/safeDepositRouter.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "partial"
+        },
+        {
+          "name": "depositsEnabled",
+          "kind": "read",
+          "signature": "function depositsEnabled() view returns (bool)",
+          "stateMutability": "view",
+          "composable": {
+            "name": "useSafeDepositRouterDepositsEnabled",
+            "file": "app/src/composables/safeDepositRouter/reads.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": true,
+            "file": "app/src/tests/setup/safeDepositRouter.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [
+            {
+              "file": "app/src/components/sections/SherTokenView/InvestorActions/InvestInSafeAction.vue",
+              "hasTest": true,
+              "testFile": "app/src/components/sections/SherTokenView/InvestorActions/__tests__/InvestInSafeAction.spec.ts",
+              "skipped": false
+            },
+            {
+              "file": "app/src/components/sections/SherTokenView/InvestorActions/ToggleSherCompensationAction.vue",
+              "hasTest": true,
+              "testFile": "app/src/components/sections/SherTokenView/InvestorActions/__tests__/ToggleSherCompensationAction.spec.ts",
+              "skipped": false
+            }
+          ],
+          "status": "partial"
+        },
+        {
+          "name": "getSupportedTokenCount",
+          "kind": "read",
+          "signature": "function getSupportedTokenCount() view returns (uint256)",
+          "stateMutability": "view",
+          "composable": null,
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": "app/src/tests/setup/safeDepositRouter.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "getSupportedTokens",
+          "kind": "read",
+          "signature": "function getSupportedTokens() view returns (address[])",
+          "stateMutability": "view",
+          "composable": null,
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": "app/src/tests/setup/safeDepositRouter.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "isTokenSupported",
+          "kind": "read",
+          "signature": "function isTokenSupported(address _token) view returns (bool)",
+          "stateMutability": "view",
+          "composable": null,
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": "app/src/tests/setup/safeDepositRouter.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "multiplier",
+          "kind": "read",
+          "signature": "function multiplier() view returns (uint256)",
+          "stateMutability": "view",
+          "composable": {
+            "name": "useSafeDepositRouterMultiplier",
+            "file": "app/src/composables/safeDepositRouter/reads.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": true,
+            "file": "app/src/tests/setup/safeDepositRouter.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [
+            {
+              "file": "app/src/components/forms/SafeDepositRouterForm.vue",
+              "hasTest": false,
+              "testFile": null,
+              "skipped": false
+            },
+            {
+              "file": "app/src/components/sections/SherTokenView/InvestorActions/SetCompensationMultiplierAction.vue",
+              "hasTest": true,
+              "testFile": "app/src/components/sections/SherTokenView/InvestorActions/__tests__/SetCompensationMultiplierAction.spec.ts",
+              "skipped": false
+            }
+          ],
+          "status": "partial"
+        },
+        {
+          "name": "officerAddress",
+          "kind": "read",
+          "signature": "function officerAddress() view returns (address)",
+          "stateMutability": "view",
+          "composable": null,
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": "app/src/tests/setup/safeDepositRouter.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "owner",
+          "kind": "read",
+          "signature": "function owner() view returns (address)",
+          "stateMutability": "view",
+          "composable": {
+            "name": "useSafeDepositRouterOwner",
+            "file": "app/src/composables/safeDepositRouter/reads.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": true,
+            "file": "app/src/tests/setup/safeDepositRouter.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [
+            {
+              "file": "app/src/components/sections/SherTokenView/InvestorActions/SetCompensationMultiplierAction.vue",
+              "hasTest": true,
+              "testFile": "app/src/components/sections/SherTokenView/InvestorActions/__tests__/SetCompensationMultiplierAction.spec.ts",
+              "skipped": false
+            },
+            {
+              "file": "app/src/components/sections/SherTokenView/InvestorActions/ToggleSherCompensationAction.vue",
+              "hasTest": true,
+              "testFile": "app/src/components/sections/SherTokenView/InvestorActions/__tests__/ToggleSherCompensationAction.spec.ts",
+              "skipped": false
+            }
+          ],
+          "status": "partial"
+        },
+        {
+          "name": "paused",
+          "kind": "read",
+          "signature": "function paused() view returns (bool)",
+          "stateMutability": "view",
+          "composable": {
+            "name": "useSafeDepositRouterPaused",
+            "file": "app/src/composables/safeDepositRouter/reads.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": true,
+            "file": "app/src/tests/setup/safeDepositRouter.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [
+            {
+              "file": "app/src/components/sections/SherTokenView/InvestorActions/InvestInSafeAction.vue",
+              "hasTest": true,
+              "testFile": "app/src/components/sections/SherTokenView/InvestorActions/__tests__/InvestInSafeAction.spec.ts",
+              "skipped": false
+            }
+          ],
+          "status": "partial"
+        },
+        {
+          "name": "safeAddress",
+          "kind": "read",
+          "signature": "function safeAddress() view returns (address)",
+          "stateMutability": "view",
+          "composable": {
+            "name": "useSafeDepositRouterSafeAddress",
+            "file": "app/src/composables/safeDepositRouter/reads.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": true,
+            "file": "app/src/tests/setup/safeDepositRouter.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [
+            {
+              "file": "app/src/components/sections/SherTokenView/InvestorActions/ToggleSherCompensationAction.vue",
+              "hasTest": true,
+              "testFile": "app/src/components/sections/SherTokenView/InvestorActions/__tests__/ToggleSherCompensationAction.spec.ts",
+              "skipped": false
+            }
+          ],
+          "status": "partial"
+        },
+        {
+          "name": "tokenDecimals",
+          "kind": "read",
+          "signature": "function tokenDecimals(address) view returns (uint8)",
+          "stateMutability": "view",
+          "composable": {
+            "name": "useSafeDepositRouterTokenDecimals",
+            "file": "app/src/composables/safeDepositRouter/reads.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": true,
+            "file": "app/src/tests/setup/safeDepositRouter.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "partial"
+        },
+        {
+          "name": "addTokenSupport",
+          "kind": "write",
+          "signature": "function addTokenSupport(address tokenAddress)",
+          "stateMutability": "nonpayable",
+          "composable": {
+            "name": "useAddTokenSupport",
+            "file": "app/src/composables/safeDepositRouter/writes.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": true,
+            "file": "app/src/tests/setup/safeDepositRouter.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "partial"
+        },
+        {
+          "name": "deposit",
+          "kind": "write",
+          "signature": "function deposit(address tokenAddress, uint256 amount)",
+          "stateMutability": "nonpayable",
+          "composable": {
+            "name": "useDeposit",
+            "file": "app/src/composables/safeDepositRouter/writes.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": true,
+            "file": "app/src/tests/setup/safeDepositRouter.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [
+            {
+              "file": "app/src/components/forms/SafeDepositRouterForm.vue",
+              "hasTest": false,
+              "testFile": null,
+              "skipped": false
+            }
+          ],
+          "status": "partial"
+        },
+        {
+          "name": "depositWithSlippage",
+          "kind": "write",
+          "signature": "function depositWithSlippage(address tokenAddress, uint256 amount, uint256 minSherOut)",
+          "stateMutability": "nonpayable",
+          "composable": {
+            "name": "useDepositWithSlippage",
+            "file": "app/src/composables/safeDepositRouter/writes.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": true,
+            "file": "app/src/tests/setup/safeDepositRouter.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "partial"
+        },
+        {
+          "name": "disableDeposits",
+          "kind": "write",
+          "signature": "function disableDeposits()",
+          "stateMutability": "nonpayable",
+          "composable": {
+            "name": "useDisableDeposits",
+            "file": "app/src/composables/safeDepositRouter/writes.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": true,
+            "file": "app/src/tests/setup/safeDepositRouter.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [
+            {
+              "file": "app/src/components/sections/SherTokenView/InvestorActions/ToggleSherCompensationAction.vue",
+              "hasTest": true,
+              "testFile": "app/src/components/sections/SherTokenView/InvestorActions/__tests__/ToggleSherCompensationAction.spec.ts",
+              "skipped": false
+            }
+          ],
+          "status": "partial"
+        },
+        {
+          "name": "enableDeposits",
+          "kind": "write",
+          "signature": "function enableDeposits()",
+          "stateMutability": "nonpayable",
+          "composable": {
+            "name": "useEnableDeposits",
+            "file": "app/src/composables/safeDepositRouter/writes.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": true,
+            "file": "app/src/tests/setup/safeDepositRouter.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [
+            {
+              "file": "app/src/components/sections/SherTokenView/InvestorActions/ToggleSherCompensationAction.vue",
+              "hasTest": true,
+              "testFile": "app/src/components/sections/SherTokenView/InvestorActions/__tests__/ToggleSherCompensationAction.spec.ts",
+              "skipped": false
+            }
+          ],
+          "status": "partial"
+        },
+        {
+          "name": "initialize",
+          "kind": "write",
+          "signature": "function initialize(address _safeAddress, address[] _tokenAddresses, uint256 _multiplier)",
+          "stateMutability": "nonpayable",
+          "composable": null,
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": "app/src/tests/setup/safeDepositRouter.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "pause",
+          "kind": "write",
+          "signature": "function pause()",
+          "stateMutability": "nonpayable",
+          "composable": {
+            "name": "usePauseContract",
+            "file": "app/src/composables/safeDepositRouter/writes.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": true,
+            "file": "app/src/tests/setup/safeDepositRouter.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "partial"
+        },
+        {
+          "name": "recoverERC20",
+          "kind": "write",
+          "signature": "function recoverERC20(address token, uint256 amount)",
+          "stateMutability": "nonpayable",
+          "composable": {
+            "name": "useRecoverERC20",
+            "file": "app/src/composables/safeDepositRouter/writes.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": true,
+            "file": "app/src/tests/setup/safeDepositRouter.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "partial"
+        },
+        {
+          "name": "removeTokenSupport",
+          "kind": "write",
+          "signature": "function removeTokenSupport(address tokenAddress)",
+          "stateMutability": "nonpayable",
+          "composable": {
+            "name": "useRemoveTokenSupport",
+            "file": "app/src/composables/safeDepositRouter/writes.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": true,
+            "file": "app/src/tests/setup/safeDepositRouter.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "partial"
+        },
+        {
+          "name": "renounceOwnership",
+          "kind": "write",
+          "signature": "function renounceOwnership()",
+          "stateMutability": "nonpayable",
+          "composable": {
+            "name": "useRenounceOwnership",
+            "file": "app/src/composables/safeDepositRouter/writes.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": true,
+            "file": "app/src/tests/setup/safeDepositRouter.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "partial"
+        },
+        {
+          "name": "setMultiplier",
+          "kind": "write",
+          "signature": "function setMultiplier(uint256 _newMultiplier)",
+          "stateMutability": "nonpayable",
+          "composable": {
+            "name": "useSetMultiplier",
+            "file": "app/src/composables/safeDepositRouter/writes.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": true,
+            "file": "app/src/tests/setup/safeDepositRouter.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [
+            {
+              "file": "app/src/components/sections/SherTokenView/InvestorActions/SetCompensationMultiplierAction.vue",
+              "hasTest": true,
+              "testFile": "app/src/components/sections/SherTokenView/InvestorActions/__tests__/SetCompensationMultiplierAction.spec.ts",
+              "skipped": false
+            }
+          ],
+          "status": "partial"
+        },
+        {
+          "name": "setSafeAddress",
+          "kind": "write",
+          "signature": "function setSafeAddress(address _newSafe)",
+          "stateMutability": "nonpayable",
+          "composable": {
+            "name": "useSetSafeAddress",
+            "file": "app/src/composables/safeDepositRouter/writes.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": true,
+            "file": "app/src/tests/setup/safeDepositRouter.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [
+            {
+              "file": "app/src/components/sections/SherTokenView/InvestorActions/ToggleSherCompensationAction.vue",
+              "hasTest": true,
+              "testFile": "app/src/components/sections/SherTokenView/InvestorActions/__tests__/ToggleSherCompensationAction.spec.ts",
+              "skipped": false
+            }
+          ],
+          "status": "partial"
+        },
+        {
+          "name": "transferOwnership",
+          "kind": "write",
+          "signature": "function transferOwnership(address newOwner)",
+          "stateMutability": "nonpayable",
+          "composable": {
+            "name": "useTransferOwnership",
+            "file": "app/src/composables/safeDepositRouter/writes.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": true,
+            "file": "app/src/tests/setup/safeDepositRouter.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "partial"
+        },
+        {
+          "name": "unpause",
+          "kind": "write",
+          "signature": "function unpause()",
+          "stateMutability": "nonpayable",
+          "composable": {
+            "name": "useUnpauseContract",
+            "file": "app/src/composables/safeDepositRouter/writes.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": true,
+            "file": "app/src/tests/setup/safeDepositRouter.setup.ts"
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "partial"
+        }
+      ],
+      "orphans": {
+        "composablesWithoutFunction": [
+          {
+            "name": "useSafeDepositRouterAddress",
+            "kind": "read",
+            "file": "app/src/composables/safeDepositRouter/reads.ts"
+          },
+          {
+            "name": "useSafeDepositRouterInvestorAddress",
+            "kind": "read",
+            "contractFn": "investorAddress",
+            "file": "app/src/composables/safeDepositRouter/reads.ts"
+          },
+          {
+            "name": "useSafeDepositRouterSupportedTokens",
+            "kind": "read",
+            "contractFn": "supportedTokens",
+            "file": "app/src/composables/safeDepositRouter/reads.ts"
+          }
+        ],
+        "mocksWithoutComposable": [],
+        "setupEntriesWithoutComposable": []
+      }
+    },
+    {
+      "slug": "vesting",
+      "abiFile": "app/src/artifacts/abi/json/Vesting.json",
+      "abiError": null,
+      "readsFile": "app/src/composables/vesting/reads.ts",
+      "writesFile": "app/src/composables/vesting/writes.ts",
+      "setupFile": null,
+      "counts": {
+        "totalFunctions": 23,
+        "ok": 0,
+        "partial": 5,
+        "missing": 18,
+        "usedContractFns": 5
+      },
+      "functions": [
+        {
+          "name": "archivedVestings",
+          "kind": "read",
+          "signature": "function archivedVestings(address, uint256, uint256) view returns (uint64 start, uint64 duration, uint64 cliff, uint256 totalAmount, uint256 released, bool active)",
+          "stateMutability": "view",
+          "composable": null,
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": null
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "getCurrentTimestamp",
+          "kind": "read",
+          "signature": "function getCurrentTimestamp() view returns (uint256)",
+          "stateMutability": "view",
+          "composable": null,
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": null
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "getTeamAllArchivedVestingsFlat",
+          "kind": "read",
+          "signature": "function getTeamAllArchivedVestingsFlat(uint256 teamId) view returns (address[] members, (uint64 start, uint64 duration, uint64 cliff, uint256 totalAmount, uint256 released, bool active)[] archivedInfos)",
+          "stateMutability": "view",
+          "composable": {
+            "name": "useVestingGetTeamAllArchivedVestingsFlat",
+            "file": "app/src/composables/vesting/reads.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": null
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [
+            {
+              "file": "app/src/components/sections/VestingView/VestingFlow.vue",
+              "hasTest": true,
+              "testFile": "app/src/components/sections/VestingView/__tests__/VestingFlow.spec.ts",
+              "skipped": true
+            },
+            {
+              "file": "app/src/components/sections/VestingView/VestingStats.vue",
+              "hasTest": true,
+              "testFile": "app/src/components/sections/VestingView/__tests__/VestingStats.spec.ts",
+              "skipped": true
+            }
+          ],
+          "status": "partial"
+        },
+        {
+          "name": "getTeamMembers",
+          "kind": "read",
+          "signature": "function getTeamMembers(uint256 teamId) view returns (address[])",
+          "stateMutability": "view",
+          "composable": null,
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": null
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "getTeamVestingsWithMembers",
+          "kind": "read",
+          "signature": "function getTeamVestingsWithMembers(uint256 teamId) view returns (address[], (uint64 start, uint64 duration, uint64 cliff, uint256 totalAmount, uint256 released, bool active)[])",
+          "stateMutability": "view",
+          "composable": {
+            "name": "useVestingGetTeamVestingsWithMembers",
+            "file": "app/src/composables/vesting/reads.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": null
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [
+            {
+              "file": "app/src/components/sections/VestingView/VestingFlow.vue",
+              "hasTest": true,
+              "testFile": "app/src/components/sections/VestingView/__tests__/VestingFlow.spec.ts",
+              "skipped": true
+            },
+            {
+              "file": "app/src/components/sections/VestingView/VestingStats.vue",
+              "hasTest": true,
+              "testFile": "app/src/components/sections/VestingView/__tests__/VestingStats.spec.ts",
+              "skipped": true
+            },
+            {
+              "file": "app/src/components/sections/VestingView/forms/CreateVesting.vue",
+              "hasTest": false,
+              "testFile": null,
+              "skipped": false
+            }
+          ],
+          "status": "partial"
+        },
+        {
+          "name": "getUserTeams",
+          "kind": "read",
+          "signature": "function getUserTeams(address user) view returns (uint256[])",
+          "stateMutability": "view",
+          "composable": null,
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": null
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "isUserInTeam",
+          "kind": "read",
+          "signature": "function isUserInTeam(address, uint256) view returns (bool)",
+          "stateMutability": "view",
+          "composable": null,
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": null
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "owner",
+          "kind": "read",
+          "signature": "function owner() view returns (address)",
+          "stateMutability": "view",
+          "composable": null,
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": null
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "paused",
+          "kind": "read",
+          "signature": "function paused() view returns (bool)",
+          "stateMutability": "view",
+          "composable": null,
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": null
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "releasable",
+          "kind": "read",
+          "signature": "function releasable(address member, uint256 teamId) view returns (uint256)",
+          "stateMutability": "view",
+          "composable": null,
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": null
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "teams",
+          "kind": "read",
+          "signature": "function teams(uint256) view returns (address owner, address token)",
+          "stateMutability": "view",
+          "composable": null,
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": null
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "userTeams",
+          "kind": "read",
+          "signature": "function userTeams(address, uint256) view returns (uint256)",
+          "stateMutability": "view",
+          "composable": null,
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": null
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "vestedAmount",
+          "kind": "read",
+          "signature": "function vestedAmount(address member, uint256 teamId) view returns (uint256)",
+          "stateMutability": "view",
+          "composable": null,
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": null
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "vestings",
+          "kind": "read",
+          "signature": "function vestings(address, uint256) view returns (uint64 start, uint64 duration, uint64 cliff, uint256 totalAmount, uint256 released, bool active)",
+          "stateMutability": "view",
+          "composable": null,
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": null
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "addVesting",
+          "kind": "write",
+          "signature": "function addVesting(uint256 teamId, address member, uint64 start, uint64 duration, uint64 cliff, uint256 totalAmount, address tokenAddress)",
+          "stateMutability": "nonpayable",
+          "composable": {
+            "name": "useVestingAddVestingWrite",
+            "file": "app/src/composables/vesting/writes.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": null
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [
+            {
+              "file": "app/src/components/sections/VestingView/forms/CreateVesting.vue",
+              "hasTest": false,
+              "testFile": null,
+              "skipped": false
+            }
+          ],
+          "status": "partial"
+        },
+        {
+          "name": "createTeam",
+          "kind": "write",
+          "signature": "function createTeam(uint256 teamId, address teamOwner, address tokenAddress)",
+          "stateMutability": "nonpayable",
+          "composable": null,
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": null
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "initialize",
+          "kind": "write",
+          "signature": "function initialize()",
+          "stateMutability": "nonpayable",
+          "composable": null,
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": null
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "pause",
+          "kind": "write",
+          "signature": "function pause()",
+          "stateMutability": "nonpayable",
+          "composable": null,
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": null
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "release",
+          "kind": "write",
+          "signature": "function release(uint256 teamId)",
+          "stateMutability": "nonpayable",
+          "composable": {
+            "name": "useVestingReleaseWrite",
+            "file": "app/src/composables/vesting/writes.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": null
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [
+            {
+              "file": "app/src/components/sections/VestingView/VestingFlow.vue",
+              "hasTest": true,
+              "testFile": "app/src/components/sections/VestingView/__tests__/VestingFlow.spec.ts",
+              "skipped": true
+            }
+          ],
+          "status": "partial"
+        },
+        {
+          "name": "renounceOwnership",
+          "kind": "write",
+          "signature": "function renounceOwnership()",
+          "stateMutability": "nonpayable",
+          "composable": null,
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": null
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "stopVesting",
+          "kind": "write",
+          "signature": "function stopVesting(address member, uint256 teamId)",
+          "stateMutability": "nonpayable",
+          "composable": {
+            "name": "useVestingStopVestingWrite",
+            "file": "app/src/composables/vesting/writes.ts"
+          },
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": null
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [
+            {
+              "file": "app/src/components/sections/VestingView/VestingFlow.vue",
+              "hasTest": true,
+              "testFile": "app/src/components/sections/VestingView/__tests__/VestingFlow.spec.ts",
+              "skipped": true
+            }
+          ],
+          "status": "partial"
+        },
+        {
+          "name": "transferOwnership",
+          "kind": "write",
+          "signature": "function transferOwnership(address newOwner)",
+          "stateMutability": "nonpayable",
+          "composable": null,
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": null
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        },
+        {
+          "name": "unpause",
+          "kind": "write",
+          "signature": "function unpause()",
+          "stateMutability": "nonpayable",
+          "composable": null,
+          "mock": {
+            "present": false,
+            "key": null
+          },
+          "setup": {
+            "present": false,
+            "file": null
+          },
+          "composableTest": {
+            "tested": false,
+            "files": []
+          },
+          "usages": [],
+          "status": "missing"
+        }
+      ],
+      "orphans": {
+        "composablesWithoutFunction": [
+          {
+            "name": "useVestingAddress",
+            "kind": "read",
+            "file": "app/src/composables/vesting/reads.ts"
+          },
+          {
+            "name": "useVestingContractWrite",
+            "kind": "write",
+            "file": "app/src/composables/vesting/writes.ts"
+          }
+        ],
+        "mocksWithoutComposable": [],
+        "setupEntriesWithoutComposable": []
+      }
+    }
+  ]
+}</script>
+<script>
+  const report = JSON.parse(document.getElementById('report').textContent);
+  document.getElementById('meta').textContent =
+    'Generated ' + report.generatedAt + ' · ' + report.contracts.length + ' contract(s)';
+
+  const sel = document.getElementById('contract-select');
+  sel.innerHTML = '<option value="__all__">(all contracts)</option>' +
+    report.contracts.map(c => '<option value="' + c.slug + '">' + c.slug + ' (' + c.counts.ok + '/' + c.counts.totalFunctions + ')</option>').join('');
+  const status = document.getElementById('status-filter');
+  const search = document.getElementById('search');
+  const content = document.getElementById('content');
+
+  function mark(ok) { return ok ? '<span class="mark ok">✓</span>' : '<span class="mark bad">✗</span>'; }
+  function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c])); }
+
+  function renderContract(c, filters) {
+    const fns = c.functions.filter(f => {
+      if (filters.status === 'ok' && f.status !== 'ok') return false;
+      if (filters.status === 'partial' && f.status !== 'partial') return false;
+      if (filters.status === 'missing' && f.status !== 'missing') return false;
+      if (filters.status === 'not-ok' && f.status === 'ok') return false;
+      if (filters.search && !f.name.toLowerCase().includes(filters.search)) return false;
+      return true;
+    });
+
+    const rows = fns.map(f => {
+      const usages = (f.usages || []).map(u => {
+        const tag = !u.hasTest ? '<span class="tag no-test">no test</span>'
+                  : u.skipped ? '<span class="tag skip">skipped</span>'
+                  : '<span class="tag tested">tested</span>';
+        return '<li><code>' + esc(u.file) + '</code>' + tag + '</li>';
+      }).join('');
+      return `
+      <tr>
+        <td><strong>${esc(f.name)}</strong><div class="muted"><code>${esc(f.signature)}</code></div></td>
+        <td><span class="pill ${f.kind}">${f.kind}</span></td>
+        <td>${mark(!!f.composable)}${f.composable ? '<div class="muted">' + esc(f.composable.name) + '</div>' : ''}</td>
+        <td>${mark(f.mock.present)}${f.mock.key ? '<div class="muted">' + esc(f.mock.key) + '</div>' : ''}</td>
+        <td>${mark(f.setup.present)}</td>
+        <td>${mark(f.composableTest.tested)}${f.composableTest.files.length ? '<div class="muted">' + esc(f.composableTest.files[0]) + '</div>' : ''}</td>
+        <td>${(f.usages||[]).length === 0 ? '<span class="muted">—</span>' : '<details><summary>' + f.usages.length + ' usage(s)</summary><ul class="usage-list">' + usages + '</ul></details>'}</td>
+        <td><span class="pill ${f.status}">${f.status}</span></td>
+      </tr>`;
+    }).join('');
+
+    const orphans = c.orphans;
+    const hasOrphans = orphans.composablesWithoutFunction.length || orphans.mocksWithoutComposable.length || orphans.setupEntriesWithoutComposable.length;
+
+    return `
+    <div class="card">
+      <h2 style="margin:0 0 10px;font-size:16px;">${esc(c.slug)} <span class="muted">· ${esc(c.abiFile || '?')}</span></h2>
+      <div class="stats">
+        <div class="stat"><div class="v">${c.counts.totalFunctions}</div><div class="l">Functions</div></div>
+        <div class="stat"><div class="v" style="color:var(--ok)">${c.counts.ok}</div><div class="l">OK</div></div>
+        <div class="stat"><div class="v" style="color:var(--partial)">${c.counts.partial}</div><div class="l">Partial</div></div>
+        <div class="stat"><div class="v" style="color:var(--missing)">${c.counts.missing}</div><div class="l">Missing</div></div>
+      </div>
+      <table>
+        <thead><tr>
+          <th>Function</th><th>Kind</th><th>Composable</th><th>Mock</th><th>Setup</th><th>Comp. test</th><th>Used in</th><th>Status</th>
+        </tr></thead>
+        <tbody>${rows || '<tr><td colspan="8" class="muted">No functions match filter.</td></tr>'}</tbody>
+      </table>
+      ${hasOrphans ? `
+      <details style="margin-top:12px">
+        <summary><strong>Orphans</strong> (composables/mocks/setup entries not tied to an ABI function)</summary>
+        <div style="margin-top:8px; font-size:12px;">
+          ${orphans.composablesWithoutFunction.length ? '<p><strong>Composables without contract fn:</strong> ' + orphans.composablesWithoutFunction.map(o=>esc(o.name)+(o.contractFn?' → <code>'+esc(o.contractFn)+'</code>':'')).join(', ') + '</p>' : ''}
+          ${orphans.mocksWithoutComposable.length ? '<p><strong>Mocks without matching fn:</strong> ' + orphans.mocksWithoutComposable.map(esc).join(', ') + '</p>' : ''}
+          ${orphans.setupEntriesWithoutComposable.length ? '<p><strong>Setup entries without composable:</strong> ' + orphans.setupEntriesWithoutComposable.map(esc).join(', ') + '</p>' : ''}
+        </div>
+      </details>` : ''}
+    </div>`;
+  }
+
+  function render() {
+    const slug = sel.value;
+    const filters = { status: status.value, search: search.value.toLowerCase().trim() };
+    const list = slug === '__all__' ? report.contracts : report.contracts.filter(c => c.slug === slug);
+    content.innerHTML = list.map(c => renderContract(c, filters)).join('');
+  }
+  sel.addEventListener('change', render);
+  status.addEventListener('change', render);
+  search.addEventListener('input', render);
+  render();
+</script>
+</body>
+</html>

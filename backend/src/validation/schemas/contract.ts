@@ -15,6 +15,8 @@ const contractTypes = [
   'ExpenseAccountEIP712',
   'CashRemunerationEIP712',
   'Campaign',
+  'SafeDepositRouter',
+  'Safe',
 ] as const;
 
 // Add contract request body

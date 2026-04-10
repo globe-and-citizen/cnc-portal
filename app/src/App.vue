@@ -1,13 +1,13 @@
 <template>
   <UApp>
-    <div class="min-h-screen bg-base-200">
+    <div class="bg-base-200 min-h-screen">
       <LockScreen v-if="lock" :user="{ address: userStore.address }" />
       <template v-else>
         <RouterView name="login" />
         <div v-if="userStore.isAuth">
           <!-- Responsive Drawer and Content -->
-          <UDashboardGroup>
-            <SidebarLayout></SidebarLayout>
+          <UDashboardGroup v-if="route.name">
+            <SidebarLayout v-if="route.name && route.name !== 'teams'"></SidebarLayout>
             <UDashboardPanel
               :ui="{
                 body: 'overflow-x-hidden'
@@ -20,7 +20,11 @@
                       icon="heroicons:arrow-left-start-on-rectangle"
                       trailing
                       trailing-icon="heroicons:arrow-right-start-on-rectangle"
+                      v-if="route.name && route.name !== 'teams'"
                     />
+                  </template>
+                  <template #trailing>
+                    <TeamSelectMenu />
                   </template>
                   <template #right>
                     <NavBar />
@@ -36,9 +40,7 @@
         </div>
       </template>
 
-      <!-- Toast Notifications -->
-      <ToastContainer position="bottom-left" />
-      <VueQueryDevtools buttonPosition="bottom-left" :style="{ height: '1500px' }" />
+      <VueQueryDevtools buttonPosition="bottom-left" />
     </div>
   </UApp>
 </template>
@@ -52,14 +54,14 @@ import { RouterView, useRoute } from 'vue-router'
 
 import LockScreen from '@/components/LockScreen.vue'
 import NavBar from '@/components/NavBar.vue'
-import ToastContainer from '@/components/ToastContainer.vue'
+import TeamSelectMenu from '@/components/TeamSelectMenu.vue'
 import SidebarLayout from '@/components/ui/SidebarLayout.vue'
 
 import { useAuth } from '@/composables/useAuth'
 import { useBackendWake } from '@/composables/useBackendWake'
 
 import { NETWORK } from '@/constant/index'
-import { useToastStore, useUserDataStore } from '@/stores/index'
+import { useUserDataStore } from '@/stores/index'
 
 const route = useRoute()
 
@@ -77,7 +79,7 @@ watch(chainId, (val) => {
 })
 useBackendWake()
 
-const { addErrorToast } = useToastStore()
+const toast = useToast()
 const { logout } = useAuth()
 
 const userStore = useUserDataStore()
@@ -95,7 +97,7 @@ const lock = computed(() => {
 useConnectionEffect({
   onDisconnect() {
     if (userStore.isAuth) {
-      addErrorToast('Disconnected from wallet')
+      toast.add({ title: 'Disconnected from wallet', color: 'error' })
       logout()
     }
   }

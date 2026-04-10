@@ -1,3 +1,4 @@
+import { CalendarDate } from '@internationalized/date'
 import dayjs from 'dayjs'
 
 import utc from 'dayjs/plugin/utc'
@@ -163,6 +164,30 @@ export function differenceInMonths(endDate: Date, startDate: Date): number {
     months--
   }
   return months
+}
+
+/**
+ * Convert a Date to a CalendarDate from @internationalized/date
+ */
+export function dateToCalendarDate(date: Date): CalendarDate {
+  return new CalendarDate(date.getFullYear(), date.getMonth() + 1, date.getDate())
+}
+
+/**
+ * Format a Date as MM/DD/YYYY
+ */
+export function formatDateMMDDYYYY(date: Date): string {
+  const mm = (date.getMonth() + 1).toString().padStart(2, '0')
+  const dd = date.getDate().toString().padStart(2, '0')
+  return `${mm}/${dd}/${date.getFullYear()}`
+}
+
+/**
+ * Ensure a calendar-selected date (midnight local) is in the future.
+ * If the selected date is today or earlier than minDate, returns minDate instead.
+ */
+export function ensureFutureDate(selectedDate: Date, minDate: Date): Date {
+  return selectedDate < minDate ? new Date(minDate) : selectedDate
 }
 
 export function addDays(date: Date, days: number): Date {

@@ -4,6 +4,7 @@ import rateLimit from 'express-rate-limit';
 import jwt from 'jsonwebtoken';
 import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { authenticateToken } from '../authController';
 import authRoutes from '../../routes/authRoutes';
 
 // Hoisted mock variables for consistent mocking
@@ -112,6 +113,7 @@ const invalidTokenScenarios = [
 describe('authController', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    delete process.env.PROFILE_AVATAR_MODE;
   });
 
   describe('POST: /siwe', () => {
@@ -153,7 +155,7 @@ describe('authController', () => {
 
     it('should return 200 if authentication successful with new user', async () => {
       mockPrisma.user.findUnique.mockResolvedValue(null);
-      mockPrisma.user.update.mockResolvedValue({
+      mockPrisma.user.create.mockResolvedValue({
         ...createMockUser(),
         nonce: '123abc',
       });
@@ -166,6 +168,39 @@ describe('authController', () => {
       expect(response.status).toBe(200);
       expect(response.body).toHaveProperty('accessToken');
       expect(typeof response.body.accessToken).toBe('string');
+    });
+
+    it('should create new user without avatar when PROFILE_AVATAR_MODE is none', async () => {
+      process.env.PROFILE_AVATAR_MODE = 'none';
+      mockPrisma.user.findUnique.mockResolvedValue(null);
+      mockPrisma.user.create.mockResolvedValue({
+        ...createMockUser(),
+        nonce: '123abc',
+      });
+
+      const response = await request(app).post('/siwe').send({
+        message: createSiweMessage(),
+        signature: VALID_SIGNATURE,
+      });
+
+      expect(response.status).toBe(200);
+      expect(mockPrisma.user.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ imageUrl: null }),
+        })
+      );
+    });
+
+    it('should return 500 when unexpected error happens in authenticateSiwe', async () => {
+      mockPrisma.user.findUnique.mockRejectedValue(new Error('db crash'));
+
+      const response = await request(app).post('/siwe').send({
+        message: createSiweMessage(),
+        signature: VALID_SIGNATURE,
+      });
+
+      expect(response.status).toBe(500);
+      expect(response.body.message).toBe('Internal server error has occured');
     });
 
     it('should return 400 if internal server error occurs', async () => {
@@ -202,6 +237,30 @@ describe('authController', () => {
       const response = await request(app).get('/token').set('Authorization', `Bearer ${testToken}`);
 
       expect(response.status).toBe(200);
+    });
+  });
+
+  describe('authenticateToken (unit)', () => {
+    it('returns 401 when request has no address payload', () => {
+      const json = vi.fn();
+      const res = { status: vi.fn().mockReturnValue({ json }) } as unknown as express.Response;
+      const req = {} as express.Request;
+
+      authenticateToken(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(401);
+      expect(json).toHaveBeenCalledWith({ message: 'Unauthorized: Missing jwt payload' });
+    });
+
+    it('returns 200 when request contains address payload', () => {
+      const json = vi.fn();
+      const res = { status: vi.fn().mockReturnValue({ json }) } as unknown as express.Response;
+      const req = { address: TEST_ADDRESS } as unknown as express.Request;
+
+      authenticateToken(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(json).toHaveBeenCalledWith({});
     });
   });
 });

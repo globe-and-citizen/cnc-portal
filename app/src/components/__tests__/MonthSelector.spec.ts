@@ -28,7 +28,7 @@ describe('MonthSelector', () => {
       },
       global: {
         components: {
-          ButtonUI: {
+          UButton: {
             template: '<button><slot /></button>'
           },
           VueDatePicker: {

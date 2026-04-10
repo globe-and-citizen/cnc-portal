@@ -119,7 +119,6 @@ describe('SelectMemberItem', () => {
       await searchInput.setValue('Bob')
 
       const options = wrapper.findAll('[data-test="select-member-item-option"]')
-      // On ne doit voir que Bob
       expect(options).toHaveLength(1)
       expect(options[0]?.text()).toContain('Bob')
     })
@@ -162,6 +161,22 @@ describe('SelectMemberItem', () => {
       const options = wrapper.findAll('[data-test="select-member-item-option"]')
       expect(options.length).toBeGreaterThan(0)
     })
+
+    it('should reset search when selected address prop changes', async () => {
+      const wrapper = createWrapper()
+
+      await wrapper.find('[data-test="select-member-item-trigger"]').trigger('click')
+      const searchInput = wrapper.find('[data-test="select-member-item-search"]')
+      await searchInput.setValue('Bob')
+
+      await wrapper.setProps({
+        address: '0x0987654321098765432109876543210987654321' as Address
+      })
+
+      expect((searchInput.element as HTMLInputElement).value).toBe('')
+      const options = wrapper.findAll('[data-test="select-member-item-option"]')
+      expect(options.length).toBeGreaterThan(1)
+    })
   })
 
   describe('Click outside behavior', () => {
@@ -182,7 +197,6 @@ describe('SelectMemberItem', () => {
       await wrapper.find('[data-test="select-member-item-trigger"]').trigger('click')
       expect(wrapper.find('[data-test="select-member-item-dropdown"]').exists()).toBe(true)
 
-      // Simule un click en dehors du composant
       document.body.click()
       await wrapper.vm.$nextTick()
 

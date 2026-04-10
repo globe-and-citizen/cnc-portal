@@ -1,6 +1,6 @@
 <template>
   <!-- Stats Row -->
-  <div class="flex justify-between items-stretch gap-4">
+  <div class="flex items-stretch justify-between gap-4">
     <!-- Candidates Stat -->
     <ElectionStatsCard
       :data="`${formattedElection?.seatCount ?? 0} / ${formattedElection?.candidates ?? 0}`"

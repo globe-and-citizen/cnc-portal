@@ -2,23 +2,30 @@
 
 ## Contract Summary Table
 
-| Contract | Purpose | Key Functions | Dependencies |
-|----------|---------|---------------|--------------|
-| **Officer** | Central orchestrator & factory | `deployBeaconProxy()`, `deployAllContracts()`, `findDeployedContract()` | All beacons |
-| **Bank** | Treasury & dividend management | `depositDividends()`, `claimDividend()`, `transfer()`, `setInvestorAddress()` | InvestorV1 |
-| **InvestorV1** | Equity token (ERC20) | `distributeMint()`, `individualMint()`, `getShareholders()` | None |
-| **Elections** | BoD election system | `createElection()`, `castVote()`, `publishResults()` | BoardOfDirectors |
-| **BoardOfDirectors** | Multi-sig governance | `addAction()`, `approve()`, `setBoardOfDirectors()` | Elections |
-| **Proposals** | Proposal voting | `createProposal()`, `castVote()`, `tallyResults()` | BoardOfDirectors |
-| **ExpenseAccountEIP712** | Expense payments | `submitExpense()`, `addTokenSupport()` | None |
-| **CashRemunerationEIP712** | Wage payments | `withdrawWages()`, `enableWageClaim()` | InvestorV1 |
+| Contract                   | Purpose                            | Key Functions                                                                      | Dependencies               |
+| -------------------------- | ---------------------------------- | ---------------------------------------------------------------------------------- | -------------------------- |
+| **Officer**                | Central orchestrator & factory     | `deployBeaconProxy()`, `deployAllContracts()`, `findDeployedContract()`            | All beacons                |
+| **Bank**                   | Treasury & dividend management     | `depositToken()`, `transfer()`, `transferToken()`, `distributeNativeDividends()`, `distributeTokenDividends()` | InvestorV1 (via Officer)   |
+| **InvestorV1**             | Equity token (ERC20)               | `distributeMint()`, `individualMint()`, `getShareholders()`                        | None                       |
+| **Elections**              | BoD election system                | `createElection()`, `castVote()`, `publishResults()`                               | BoardOfDirectors           |
+| **BoardOfDirectors**       | Multi-sig governance               | `addAction()`, `approve()`, `setBoardOfDirectors()`                                | Elections                  |
+| **Proposals**              | Proposal voting                    | `createProposal()`, `castVote()`, `tallyResults()`                                 | BoardOfDirectors           |
+| **ExpenseAccountEIP712**   | Expense payments                   | `submitExpense()`, `addTokenSupport()`                                             | None                       |
+| **CashRemunerationEIP712** | Wage payments with equity          | `withdraw()`, `enableClaim()`, `disableClaim()`                                    | InvestorV1 (via Officer)   |
+| **Tips**                   | ETH tip distribution               | `pushTip()`, `sendTip()`, `withdraw()`, `updatePushLimit()`                        | None                       |
+| **Vesting**                | Linear ERC20 token vesting         | `addVesting()`, `release()`, `stopVesting()`, `vestedAmount()`, `releasable()`     | None                       |
+| **AdCampaignManager**      | Ad campaign & payment routing      | `createAdCampaign()`, `claimPayment()`, `requestAndApproveWithdrawal()`            | Bank (external address)    |
+| **SafeDepositRouter**      | Token deposit → SHER minting       | `deposit()`, `depositWithSlippage()`, `calculateCompensation()`, `setMultiplier()` | InvestorV1 (via Officer)   |
+| **FeeCollector**           | Global protocol fee vault          | `getFeeFor()`, `setFee()`, `withdraw()`, `withdrawToken()`                         | None                       |
+| **Voting**                 | Combined directive/election voting | `addProposal()`, `voteDirective()`, `voteElection()`, `concludeProposal()`         | BoardOfDirectors (Officer) |
 
 ---
 
 ## Key Contract Addresses (Per Network)
 
 ### Mainnet (Production)
-```
+
+```txt
 FactoryBeacon:           TBD
 BankBeacon:              TBD
 ElectionsBeacon:         TBD
@@ -30,7 +37,8 @@ CashRemunerationBeacon:  TBD
 ```
 
 ### Testnet (Sepolia)
-```
+
+```txt
 FactoryBeacon:           Check /app/src/constant.ts
 BankBeacon:              Check /app/src/constant.ts
 ...
@@ -45,14 +53,15 @@ BankBeacon:              Check /app/src/constant.ts
 ### 1. Deploy Team Contracts
 
 **Frontend**:
+
 ```typescript
 // /app/src/components/sections/TeamView/forms/DeployContractSection.vue
 createOfficer({
   address: OFFICER_BEACON,
   abi: FACTORY_BEACON_ABI,
-  functionName: 'createBeaconProxy',
-  args: [encodedInitializerData]
-})
+  functionName: "createBeaconProxy",
+  args: [encodedInitializerData],
+});
 ```
 
 **Result**: Officer + all 7 contracts deployed and linked
@@ -61,20 +70,32 @@ createOfficer({
 
 ### 2. Distribute Dividends
 
-**Steps**:
-1. Ensure Bank has funds (deposit ETH or ERC20)
-2. Owner calls `Bank.depositDividends(amount, investorAddress)`
-3. Bank queries InvestorV1 for shareholders
-4. Proportional allocation to `dividendBalances`
-5. Shareholders call `Bank.claimDividend()` anytime
+Distribution is **push-based**: one owner transaction immediately transfers funds to all shareholders. There is no separate claim step.
+
+**ETH Dividends**:
+
+1. Ensure Bank holds enough ETH (ETH received via `receive()` or direct send)
+2. Owner calls `Bank.distributeNativeDividends(amount)`
+3. Bank forwards ETH to InvestorV1 via `{value: amount}`
+4. InvestorV1 calculates each shareholder's share and transfers immediately
+
+**ERC20 Dividends**:
+
+1. Ensure Bank holds enough of the token (deposit via `Bank.depositToken()`)
+2. Owner calls `Bank.distributeTokenDividends(token, amount)`
+3. Bank transfers tokens to InvestorV1, then calls `distributeTokenDividends()`
+4. InvestorV1 distributes proportionally to all shareholders
 
 **Code**:
-```solidity
-// Owner deposits dividends
-Bank.depositDividends{value: 1 ether}(1 ether, investorV1Address);
 
-// Shareholder claims
-Bank.claimDividend(); // Receives proportional share
+```solidity
+// ETH dividends — one call, immediate push to all shareholders
+Bank.distributeNativeDividends{value: 0}(1 ether);
+// (Bank must already hold ≥ 1 ether)
+
+// ERC20 dividends
+Bank.distributeTokenDividends(usdcAddress, 1000e6);
+// (Bank must already hold ≥ 1000 USDC)
 ```
 
 ---
@@ -82,12 +103,14 @@ Bank.claimDividend(); // Receives proportional share
 ### 3. Conduct Election
 
 **Steps**:
+
 1. Owner calls `Elections.createElection()` with candidates & voters
 2. Eligible voters call `Elections.castVote(electionId, candidate)`
 3. After voting period, owner calls `Elections.publishResults(electionId)`
 4. Winners automatically become board members in BoD
 
 **Code**:
+
 ```solidity
 // Create election
 uint256 electionId = Elections.createElection(
@@ -112,12 +135,14 @@ Elections.publishResults(electionId);
 ### 4. Create & Vote on Proposal
 
 **Steps**:
+
 1. Board member calls `Proposals.createProposal()`
 2. Board members call `Proposals.castVote(proposalId, vote)`
 3. After all votes or manual tally, results calculated
 4. Proposal state updated (Succeeded/Defeated/Expired)
 
 **Code**:
+
 ```solidity
 // Create proposal (board member only)
 uint256 proposalId = Proposals.createProposal(
@@ -139,13 +164,15 @@ Proposals.castVote(proposalId, VoteOption.Yes); // or No, Abstain
 ### 5. Pay Wages with Equity
 
 **Steps**:
+
 1. Owner signs WageClaim off-chain (EIP-712)
-2. Employee calls `CashRemuneration.withdrawWages(wageClaim, signature)`
+2. Employee calls `CashRemuneration.withdraw(wageClaim, signature)`
 3. Contract verifies signature and claim validity
 4. Transfers tokens (ERC20/ETH) + mints InvestorV1 tokens
 5. Marks claim as paid
 
 **Code**:
+
 ```solidity
 // Off-chain: Owner signs
 WageClaim memory claim = WageClaim({
@@ -160,7 +187,7 @@ WageClaim memory claim = WageClaim({
 bytes memory signature = signWageClaim(claim); // Owner's private key
 
 // On-chain: Employee withdraws
-CashRemuneration.withdrawWages(claim, signature);
+CashRemuneration.withdraw(claim, signature);
 // Receives: 2000 USDC + 400 InvestorV1 tokens
 ```
 
@@ -169,12 +196,14 @@ CashRemuneration.withdrawWages(claim, signature);
 ### 6. Submit Expense
 
 **Steps**:
+
 1. Owner signs BudgetLimit off-chain (EIP-712)
 2. Employee calls `ExpenseAccount.submitExpense()`
 3. Contract validates budget constraints
 4. Transfers funds to recipient
 
 **Code**:
+
 ```solidity
 // Off-chain: Owner signs budget
 BudgetLimit memory budget = BudgetLimit({
@@ -208,11 +237,13 @@ ExpenseAccount.submitExpense(
 ### 7. Multi-sig Action
 
 **Steps**:
+
 1. Board member calls `BoD.addAction(target, description, encodedData)`
 2. Other board members call `BoD.approve(actionId)`
 3. When majority reached, action auto-executes
 
 **Code**:
+
 ```solidity
 // Create action to transfer funds
 bytes memory data = abi.encodeWithSelector(
@@ -237,32 +268,33 @@ BoD.approve(actionId); // Multiple times
 
 ## Access Control Quick Reference
 
-| Operation | Who Can Call | Modifier |
-|-----------|--------------|----------|
-| Deploy contracts | Anyone via FactoryBeacon | Public |
-| Configure beacons | Officer owner | `onlyOwner` |
-| Deploy child contracts | Officer owner | `onlyOwners` |
-| Deposit dividends | Bank owner | `onlyOwner` |
-| Claim dividends | Any shareholder | Public |
-| Transfer funds | Bank owner | `onlyOwner` |
-| Set investor address | Bank owner (or first time) | Special |
-| Create election | Elections owner | `onlyOwner` |
-| Vote in election | Eligible voters | Public (with validation) |
-| Publish results | Elections owner | `onlyOwner` |
-| Set BoD members | BoD owner (Elections) | `onlyOwner` |
-| Add BoD action | Board members | `onlyBoardOfDirectors` |
-| Approve action | Board members | `onlyBoardOfDirectors` |
-| Create proposal | Board members | `onlyMember` |
-| Vote on proposal | Board members | `onlyMember` |
-| Submit expense | Approved address | Public (with signature) |
-| Withdraw wages | Employee | Public (with signature) |
-| Mint InvestorV1 | Owner or MINTER_ROLE | `onlyRole(MINTER_ROLE)` |
+| Operation                          | Who Can Call             | Modifier                 |
+| ---------------------------------- | ------------------------ | ------------------------ |
+| Deploy contracts                   | Anyone via FactoryBeacon | Public                   |
+| Configure beacons                  | Officer owner            | `onlyOwner`              |
+| Deploy child contracts             | Officer owner            | `onlyOwners`             |
+| Distribute ETH dividends           | Bank owner               | `onlyOwner`              |
+| Distribute token dividends         | Bank owner               | `onlyOwner`              |
+| Trigger distribution on InvestorV1 | Bank contract only       | `onlyBank`               |
+| Transfer funds                     | Bank owner               | `onlyOwner`              |
+| Create election                    | Elections owner          | `onlyOwner`              |
+| Vote in election                   | Eligible voters          | Public (with validation) |
+| Publish results                    | Elections owner          | `onlyOwner`              |
+| Set BoD members                    | BoD owner (Elections)    | `onlyOwner`              |
+| Add BoD action                     | Board members            | `onlyBoardOfDirectors`   |
+| Approve action                     | Board members            | `onlyBoardOfDirectors`   |
+| Create proposal                    | Board members            | `onlyMember`             |
+| Vote on proposal                   | Board members            | `onlyMember`             |
+| Submit expense                     | Approved address         | Public (with signature)  |
+| Withdraw wages                     | Employee                 | Public (with signature)  |
+| Mint InvestorV1                    | Owner or MINTER_ROLE     | `onlyRole(MINTER_ROLE)`  |
 
 ---
 
 ## State Variables Quick Reference
 
 ### Officer
+
 ```solidity
 mapping(string => address) public contractBeacons;  // ContractType -> BeaconAddress
 DeployedContract[] private deployedContracts;       // [{type, address}, ...]
@@ -270,31 +302,37 @@ address private bodContract;                        // BoardOfDirectors address
 ```
 
 ### Bank
+
 ```solidity
-address public investorAddress;                     // InvestorV1 contract
-mapping(address => bool) public supportedTokens;    // Token -> Supported?
-mapping(address => uint256) public dividendBalances;// Shareholder -> Amount
-mapping(address => mapping(address => uint256)) public tokenDividendBalances; // Token -> Shareholder -> Amount
-uint256 public totalDividends;                      // Total locked dividends
-mapping(address => uint256) public totalTokenDividends; // Token -> Locked amount
+address public officerAddress;                      // Officer contract (resolves InvestorV1 + fees at runtime)
+// Token support managed via TokenSupport base contract
+// No stored investorAddress — resolved dynamically via Officer
+// No dividend balances — distribution is push-based (no claim pattern)
 ```
 
 ### InvestorV1
+
 ```solidity
-EnumerableSet.AddressSet private shareholders;      // Set of shareholder addresses
-bytes32 public constant MINTER_ROLE;                // Role for minting tokens
+EnumerableSet.AddressSet private shareholders;      // Auto-managed set of shareholder addresses
+bytes32 public constant MINTER_ROLE;                // keccak256("MINTER_ROLE") — granted to CashRemuneration
+address public officerAddress;                      // Officer contract (resolves Bank address for onlyBank)
+uint256[50] private __gap;                          // Storage gap for future upgrades
+// Decimals: 6 (not 18)
 ```
 
 ### Elections
+
 ```solidity
-uint256 private _nextElectionId;                    // Counter for election IDs
-address public bodAddress;                          // BoardOfDirectors address
+uint256 private _nextElectionId;                    // Counter for election IDs (starts at 1)
+address public officerAddress;                      // Officer contract (resolves BoardOfDirectors at runtime)
 mapping(uint256 => Election) private _elections;    // ElectionId -> Election data
+uint256[] private _electionIds;                     // Array of all election IDs
 mapping(uint256 => mapping(address => address)) private _votes; // ElectionId -> Voter -> Candidate
 mapping(uint256 => mapping(address => uint256)) public _voteCounts; // ElectionId -> Candidate -> Count
 ```
 
 ### BoardOfDirectors
+
 ```solidity
 EnumerableSet.AddressSet private owners;            // Contract owners
 EnumerableSet.AddressSet private boardOfDirectors;  // Board member addresses
@@ -303,13 +341,15 @@ mapping(uint256 => Action) public actions;          // ActionId -> Action data
 ```
 
 ### Proposals
+
 ```solidity
 mapping(uint256 => Proposal) private proposals;     // ProposalId -> Proposal data
 uint256 private _nextProposalId;                    // Counter for proposal IDs
-address private boardOfDirectorsContractAddress;    // BoardOfDirectors address
+address public officerAddress;                      // Officer contract (resolves BoardOfDirectors at runtime)
 ```
 
 ### ExpenseAccountEIP712
+
 ```solidity
 mapping(address => bool) public supportedTokens;    // Token -> Supported?
 mapping(bytes32 => ApprovalState) private _approvals; // SignatureHash -> State
@@ -318,6 +358,7 @@ mapping(bytes32 => uint256) private _lastUsageTimestamp; // SignatureHash -> Tim
 ```
 
 ### CashRemunerationEIP712
+
 ```solidity
 mapping(address => bool) public supportedTokens;    // Token -> Supported?
 mapping(bytes32 => bool) public paidWageClaims;     // ClaimHash -> Paid?
@@ -329,43 +370,44 @@ address public officerAddress;                      // Officer contract address
 
 ## Events Quick Reference
 
-### Officer
+### Officer Reference
+
 ```solidity
 event ContractDeployed(string contractType, address deployedAddress);
 event BeaconConfigured(string contractType, address beaconAddress);
 event BeaconProxiesDeployed(address[] beaconProxies);
 ```
 
-### Bank
+### Bank Reference
+
 ```solidity
 event Deposited(address indexed depositor, uint256 amount);
 event TokenDeposited(address indexed depositor, address indexed token, uint256 amount);
 event Transfer(address indexed sender, address indexed to, uint256 amount);
 event TokenTransfer(address indexed sender, address indexed to, address indexed token, uint256 amount);
-event DividendDeposited(address indexed account, uint256 amount, address indexed investorAddress);
-event TokenDividendDeposited(address indexed account, address indexed token, uint256 amount, address indexed investorAddress);
-event DividendCredited(address indexed account, uint256 amount);
-event TokenDividendCredited(address indexed account, address indexed token, uint256 amount);
-event DividendClaimed(address indexed account, uint256 amount);
-event TokenDividendClaimed(address indexed account, address indexed token, uint256 amount);
-event InvestorAddressUpdated(address indexed previousAddress, address indexed newAddress);
+event FeePaid(address indexed feeCollector, uint256 amount);
+event DividendDistributionTriggered(address indexed investor, address indexed token, uint256 totalAmount);
 ```
 
-### InvestorV1
+### InvestorV1 Reference
+
 ```solidity
 event Minted(address indexed shareholder, uint256 amount);
-event DividendDistributed(address indexed shareholder, uint256 amount);
-event DividendFailed(address indexed shareholder, uint256 amount);
+event DividendDistributed(address indexed distributor, address indexed token, uint256 totalAmount, uint256 shareholderCount);
+event DividendPaid(address indexed shareholder, address indexed token, uint256 amount);
+event DividendPaymentFailed(address indexed shareholder, address indexed token, uint256 amount, string reason);
 ```
 
-### Elections
+### Elections Reference
+
 ```solidity
 event ElectionCreated(uint256 indexed electionId, string title, address indexed createdBy, uint256 startDate, uint256 endDate, uint256 seatCount);
 event VoteSubmitted(uint256 indexed electionId, address indexed voter, address indexed candidate);
 event ResultsPublished(uint256 indexed electionId, address[] winners);
 ```
 
-### BoardOfDirectors
+### BoardOfDirectors Reference
+
 ```solidity
 event BoardOfDirectorsChanged(address[] boardOfDirectors);
 event OwnersChanged(address[] owners);
@@ -375,24 +417,28 @@ event Approval(uint256 indexed id, address indexed approver);
 event Revocation(uint256 indexed id, address indexed approver);
 ```
 
-### Proposals
+### Proposals Reference
+
 ```solidity
 event ProposalCreated(uint256 indexed proposalId, string title, address indexed creator, uint256 startDate, uint256 endDate);
 event ProposalVoted(uint256 indexed proposalId, address indexed voter, VoteOption vote, uint256 timestamp);
 event ProposalTallyResults(uint256 indexed proposalId, ProposalState state, uint256 yesCount, uint256 noCount, uint256 abstainCount);
 ```
 
-### ExpenseAccountEIP712
+### ExpenseAccountEIP712 Reference
+
 ```solidity
 event ExpenseSubmitted(address indexed recipient, uint256 amount, address indexed tokenAddress);
 event BudgetApproved(address indexed approvedAddress, bytes32 indexed signatureHash);
 event BudgetRevoked(address indexed approvedAddress, bytes32 indexed signatureHash);
 ```
 
-### CashRemunerationEIP712
+### CashRemunerationEIP712 Reference
+
 ```solidity
 event Deposited(address indexed depositor, uint256 amount);
 event Withdraw(address indexed withdrawer, uint256 amount);
+event WithdrawToken(address indexed withdrawer, address indexed tokenAddress, uint256 amount);
 event WageClaimEnabled(bytes32 indexed signatureHash);
 event WageClaimDisabled(bytes32 indexed signatureHash);
 ```
@@ -402,19 +448,21 @@ event WageClaimDisabled(bytes32 indexed signatureHash);
 ## Error Messages Quick Reference
 
 ### Common Errors
-| Error | Meaning | Solution |
-|-------|---------|----------|
-| `"Beacon not configured for this contract type"` | Officer doesn't have beacon address | Configure beacon first |
-| `"Invalid beacon address"` | Zero address provided | Use valid beacon address |
-| `"Insufficient unlocked balance"` | Trying to spend locked dividends | Only spend unlocked funds |
-| `"Unsupported token"` | Token not in supported list | Add token support first |
-| `"Nothing to release"` | No dividends to claim | Wait for dividend allocation |
-| `"Already approved"` | Trying to approve twice | Already approved this action |
-| `"Only board of directors can call"` | Non-member trying BoD function | Must be board member |
-| `"Invalid signature"` | EIP-712 signature invalid | Check signer and data match |
-| `"Already paid"` | Wage claim resubmitted | Cannot pay same claim twice |
+
+| Error                                            | Meaning                             | Solution                     |
+| ------------------------------------------------ | ----------------------------------- | ---------------------------- |
+| `"Beacon not configured for this contract type"` | Officer doesn't have beacon address | Configure beacon first       |
+| `"Invalid beacon address"`                       | Zero address provided               | Use valid beacon address     |
+| `"Insufficient balance"`                         | ETH balance too low for transfer    | Ensure Bank holds enough ETH |
+| `"Unsupported token"`                            | Token not in supported list         | Add token support first      |
+| `"Nothing to release"`                           | No vested tokens available to claim | Wait for vesting cliff/period |
+| `"Already approved"`                             | Trying to approve twice             | Already approved this action |
+| `"Only board of directors can call"`             | Non-member trying BoD function      | Must be board member         |
+| `"Invalid signature"`                            | EIP-712 signature invalid           | Check signer and data match  |
+| `"Already paid"`                                 | Wage claim resubmitted              | Cannot pay same claim twice  |
 
 ### Elections Errors
+
 ```solidity
 error ElectionNotFound();              // Election ID doesn't exist
 error ElectionNotActive();             // Voting period not active
@@ -427,6 +475,7 @@ error ResultsNotReady();               // Not all votes in or period not ended
 ```
 
 ### Proposals Errors
+
 ```solidity
 error ProposalNotFound();              // Proposal ID doesn't exist
 error ProposalVotingNotStarted();      // Voting period hasn't started
@@ -442,52 +491,57 @@ error BoardOfDirectorAddressNotSet();  // BoD address not configured
 ## File Locations Quick Reference
 
 ### Smart Contracts
-| File | Path |
-|------|------|
-| Officer | `/contract/contracts/Officer.sol` |
-| Bank | `/contract/contracts/Bank.sol` |
-| InvestorV1 | `/contract/contracts/Investor/InvestorV1.sol` |
-| Elections | `/contract/contracts/Elections/Elections.sol` |
-| BoardOfDirectors | `/contract/contracts/BoardOfDirectors.sol` |
-| Proposals | `/contract/contracts/Proposals/Proposals.sol` |
-| ExpenseAccountEIP712 | `/contract/contracts/expense-account/ExpenseAccountEIP712.sol` |
-| CashRemunerationEIP712 | `/contract/contracts/CashRemunerationEIP712.sol` |
-| FactoryBeacon | `/contract/contracts/beacons/FactoryBeacon.sol` |
-| Beacon | `/contract/contracts/beacons/Beacon.sol` |
+
+| File                   | Path                                                           |
+| ---------------------- | -------------------------------------------------------------- |
+| Officer                | `/contract/contracts/Officer.sol`                              |
+| Bank                   | `/contract/contracts/Bank.sol`                                 |
+| InvestorV1             | `/contract/contracts/Investor/InvestorV1.sol`                  |
+| Elections              | `/contract/contracts/Elections/Elections.sol`                  |
+| BoardOfDirectors       | `/contract/contracts/BoardOfDirectors.sol`                     |
+| Proposals              | `/contract/contracts/Proposals/Proposals.sol`                  |
+| ExpenseAccountEIP712   | `/contract/contracts/expense-account/ExpenseAccountEIP712.sol` |
+| CashRemunerationEIP712 | `/contract/contracts/CashRemunerationEIP712.sol`               |
+| FactoryBeacon          | `/contract/contracts/beacons/FactoryBeacon.sol`                |
+| Beacon                 | `/contract/contracts/beacons/Beacon.sol`                       |
 
 ### Deployment Scripts
-| Module | Path |
-|--------|------|
-| OfficerModule | `/contract/ignition/modules/OfficerModule.ts` |
-| BankBeaconModule | `/contract/ignition/modules/BankBeaconModule.ts` |
-| ElectionsModule | `/contract/ignition/modules/ElectionsModule.ts` |
-| ProposalModule | `/contract/ignition/modules/ProposalModule.ts` |
+
+| Module                       | Path                                                         |
+| ---------------------------- | ------------------------------------------------------------ |
+| OfficerModule                | `/contract/ignition/modules/OfficerModule.ts`                |
+| BankBeaconModule             | `/contract/ignition/modules/BankBeaconModule.ts`             |
+| ElectionsModule              | `/contract/ignition/modules/ElectionsModule.ts`              |
+| ProposalModule               | `/contract/ignition/modules/ProposalModule.ts`               |
 | BoardOfDirectorsBeaconModule | `/contract/ignition/modules/BoardOfDirectorsBeaconModule.ts` |
-| InvestorsV1BeaconModule | `/contract/ignition/modules/InvestorsV1BeaconModule.ts` |
-| ExpenseAccountEIP712Module | `/contract/ignition/modules/ExpenseAccountEIP712Module.ts` |
+| InvestorsV1BeaconModule      | `/contract/ignition/modules/InvestorsV1BeaconModule.ts`      |
+| ExpenseAccountEIP712Module   | `/contract/ignition/modules/ExpenseAccountEIP712Module.ts`   |
 | CashRemunerationEIP712Module | `/contract/ignition/modules/CashRemunerationEIP712Module.ts` |
 
-### Frontend
-| Component | Path |
-|-----------|------|
+### App Frontend
+
+| Component        | Path                                                                    |
+| ---------------- | ----------------------------------------------------------------------- |
 | Deploy Contracts | `/app/src/components/sections/TeamView/forms/DeployContractSection.vue` |
-| Constants | `/app/src/constant.ts` |
-| ABIs | `/app/src/artifacts/abi/` |
+| Constants        | `/app/src/constant.ts`                                                  |
+| ABIs             | `/app/src/artifacts/abi/`                                               |
 
 ### Tests
-| Test Suite | Path |
-|------------|------|
-| Officer Tests | `/contract/test/Officer.test.ts` |
-| Bank Tests | `/contract/test/Bank.test.ts` |
-| Elections Tests | `/contract/test/Elections.test.ts` |
-| Proposals Tests | `/contract/test/Proposals.test.ts` |
-| Integration Tests | `/contract/test/integration/` |
+
+| Test Suite        | Path                               |
+| ----------------- | ---------------------------------- |
+| Officer Tests     | `/contract/test/Officer.test.ts`   |
+| Bank Tests        | `/contract/test/Bank.test.ts`      |
+| Elections Tests   | `/contract/test/Elections.test.ts` |
+| Proposals Tests   | `/contract/test/Proposals.test.ts` |
+| Integration Tests | `/contract/test/integration/`      |
 
 ---
 
 ## Environment Variables
 
 ### Backend
+
 ```bash
 SECRET_KEY=<jwt_secret>
 DATABASE_URL=<postgresql_url>
@@ -496,6 +550,7 @@ CHAIN_ID=<network_chain_id>
 ```
 
 ### Frontend
+
 ```bash
 VITE_APP_BACKEND_URL=<backend_api_url>
 VITE_APP_NETWORK_ALIAS=<network_name>
@@ -503,6 +558,7 @@ VITE_APP_ETHERSCAN_URL=<block_explorer_url>
 ```
 
 ### Contract Deployment
+
 ```bash
 ALCHEMY_API_KEY=<alchemy_key>
 ALCHEMY_HTTP=<alchemy_http_url>
@@ -514,6 +570,7 @@ PRIVATE_KEY=<deployer_private_key>
 ## Useful Commands
 
 ### Contract Development
+
 ```bash
 # Compile contracts
 cd contract && npm run compile
@@ -535,6 +592,7 @@ npx hardhat size-contracts
 ```
 
 ### Frontend Development
+
 ```bash
 # Run frontend
 cd app && npm run dev
@@ -550,6 +608,7 @@ npm run lint
 ```
 
 ### Database Operations
+
 ```bash
 # Run migrations
 cd backend && npx prisma migrate dev
@@ -566,12 +625,14 @@ npx prisma studio
 ## Testing Checklist
 
 ### After Deploying Beacons
+
 - [ ] Verify all beacon addresses on explorer
 - [ ] Update addresses in `/app/src/constant.ts`
 - [ ] Test creating Officer instance
 - [ ] Verify all contracts deployed correctly
 
 ### After Team Deployment
+
 - [ ] Verify Officer proxy address stored
 - [ ] Check all child contracts deployed
 - [ ] Test Bank deposit and transfer
@@ -582,6 +643,7 @@ npx prisma studio
 - [ ] Submit test wage claim
 
 ### Before Production
+
 - [ ] Full security audit
 - [ ] Gas optimization review
 - [ ] Upgrade path tested
@@ -591,6 +653,6 @@ npx prisma studio
 
 ---
 
-*Document Version: 1.0*  
-*Last Updated: November 23, 2024*  
-*Maintained by: CNC Portal Team*
+_Document Version: 1.1_
+_Last Updated: March 2026_
+_Maintained by: CNC Portal Team_

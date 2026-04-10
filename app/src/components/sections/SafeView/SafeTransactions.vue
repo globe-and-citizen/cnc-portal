@@ -1,47 +1,47 @@
 <template>
-  <CardComponent title="Transactions">
-    <template #card-action>
-      <div class="flex items-center gap-4">
-        <SafeTransactionStatusFilter @statusChange="handleStatusChange" />
+  <UCard>
+    <template #header>
+      <div class="flex items-center justify-between">
+        <span>Transactions</span>
+        <div class="flex items-center gap-4">
+          <SafeTransactionStatusFilter @statusChange="handleStatusChange" />
+        </div>
       </div>
     </template>
 
-    <TableComponent
-      :rows="filteredTransactions"
+    <UTable
+      :data="filteredTransactions"
       :columns="[
-        { key: 'method', label: 'Method' },
-        { key: 'to', label: 'To' },
-        { key: 'value', label: 'Value' },
-        { key: 'status', label: 'Status' },
-        { key: 'txHash', label: 'Tx Hash' },
-        { key: 'actions', label: 'Actions' }
+        { accessorKey: 'method', header: 'Method' },
+        { accessorKey: 'to', header: 'To' },
+        { accessorKey: 'value', header: 'Value' },
+        { accessorKey: 'status', header: 'Status' },
+        { accessorKey: 'txHash', header: 'Tx Hash' },
+        { accessorKey: 'actions', header: 'Actions' }
       ]"
       :loading="isLoading"
-      :current-page-prop="currentPage"
-      :items-per-page-prop="itemsPerPage"
-      @update:currentPage="handlePageChange"
-      @update:itemsPerPage="handleItemsPerPageChange"
-      :maxItemsPerPage="5"
       data-test="safe-transactions-table"
     >
-      <template #to-data="{ row }">
+      <template #to-cell="{ row: { original: row } }">
         <AddressToolTip :address="row.to" slice />
       </template>
 
-      <template #value-data="{ row }">
+      <template #value-cell="{ row: { original: row } }">
         <span
-          >{{ formatSafeTransactionValue(row.value.toString(), row?.dataDecoded, row.to) }}
+          >{{
+            formatSafeTransactionValue(row.value.toString(), row.dataDecoded ?? undefined, row.to)
+          }}
         </span>
       </template>
 
-      <template #status-data="{ row }">
+      <template #status-cell="{ row: { original: row } }">
         <span>{{ getTransactionStatus(row as SafeTransaction) }}</span>
-        <span class="badge badge-sm flex items-center gap-1 badge-neutral badge-outline">
+        <span class="badge badge-sm badge-neutral badge-outline flex items-center gap-1">
           {{ row.confirmations?.length || 0 }} / {{ row.confirmationsRequired }}
         </span>
       </template>
 
-      <template #txHash-data="{ row }">
+      <template #txHash-cell="{ row: { original: row } }">
         <AddressToolTip
           v-if="row.transactionHash"
           :address="row.transactionHash"
@@ -51,15 +51,24 @@
         <span v-else>...</span>
       </template>
 
-      <template #method-data="{ row }">
-        {{ row?.dataDecoded?.method || 'unknown' }}
+      <template #method-cell="{ row: { original: row } }">
+        {{ getSafeTransactionMethod(row as SafeTransaction) }}
       </template>
 
-      <template #actions-data="{ row }">
+      <template #actions-cell="{ row: { original: row } }">
         <div class="flex items-center gap-2">
-          <ButtonUI
+          <UButton
             size="xs"
-            variant="primary"
+            color="neutral"
+            variant="ghost"
+            icon="heroicons:eye"
+            @click="handleViewDetailsClick(row as SafeTransaction)"
+            data-test="view-details-button"
+          />
+
+          <UButton
+            size="xs"
+            color="primary"
             @click="handleApproveClick(row as SafeTransaction)"
             :disabled="!canApprove(row as SafeTransaction) || isApproving"
             :loading="isTransactionLoading(row.safeTxHash, 'approve')"
@@ -67,11 +76,11 @@
             data-test="approve-button"
           >
             Approve
-          </ButtonUI>
+          </UButton>
 
-          <ButtonUI
+          <UButton
             size="xs"
-            variant="success"
+            color="success"
             @click="handleExecuteClick(row as SafeTransaction)"
             :disabled="!canExecute(row as SafeTransaction) || isExecuting"
             :loading="isTransactionLoading(row.safeTxHash, 'execute')"
@@ -79,10 +88,10 @@
             data-test="execute-button"
           >
             Execute
-          </ButtonUI>
+          </UButton>
         </div>
       </template>
-    </TableComponent>
+    </UTable>
 
     <!-- Conflicting Transaction Warning Modal -->
     <SafeTransactionsWarning
@@ -94,7 +103,12 @@
       @cancel="handleCancelAction"
       data-test="conflict-warning-modal"
     />
-  </CardComponent>
+
+    <SafeTransactionDetailsModal
+      v-model="showDetailsModal"
+      :transaction="selectedTransactionForDetails"
+    />
+  </UCard>
 </template>
 
 <script setup lang="ts">
@@ -103,11 +117,9 @@ import { useAccount } from '@wagmi/vue'
 import type { SafeTransaction } from '@/types/safe'
 
 // Components
-import TableComponent from '@/components/TableComponent.vue'
-import CardComponent from '@/components/CardComponent.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
-import ButtonUI from '@/components/ButtonUI.vue'
 import SafeTransactionsWarning from './SafeTransactionsWarning.vue'
+import SafeTransactionDetailsModal from './SafeTransactionDetailsModal.vue'
 
 // Stores and composables
 import { useGetSafeTransactionsQuery, useGetSafeInfoQuery } from '@/queries/safe.queries'
@@ -118,7 +130,7 @@ import SafeTransactionStatusFilter, {
 } from '@/components/sections/SafeView/SafeTransactionStatusFilter.vue'
 import { type Address } from 'viem'
 
-import { formatSafeTransactionValue } from '@/utils'
+import { formatSafeTransactionValue, getSafeTransactionMethod } from '@/utils'
 
 const { address: connectedAddress } = useAccount()
 
@@ -140,6 +152,8 @@ const showConflictWarning = ref(false)
 const pendingExecutionTransaction = ref<SafeTransaction | null>(null)
 const pendingApprovalTransaction = ref<SafeTransaction | null>(null)
 const conflictActionType = ref<'approve' | 'execute'>('execute')
+const showDetailsModal = ref(false)
+const selectedTransactionForDetails = ref<SafeTransaction | null>(null)
 
 // Data fetching
 const {
@@ -336,15 +350,14 @@ const handleStatusChange = (status: SafeTransactionStatus) => {
   selectedStatus.value = status
 }
 
-// Handle pagination updates
-const handlePageChange = (page: number) => {
-  currentPage.value = page
+const handleViewDetailsClick = (transaction: SafeTransaction) => {
+  selectedTransactionForDetails.value = transaction
+  showDetailsModal.value = true
 }
 
-const handleItemsPerPageChange = (items: number) => {
-  itemsPerPage.value = items
-  currentPage.value = 1 // Reset to first page when changing items per page
-}
+watch(showDetailsModal, (isOpen) => {
+  if (!isOpen) selectedTransactionForDetails.value = null
+})
 
 // Error watching
 watch(error, (newError) => {

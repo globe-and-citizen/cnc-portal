@@ -1,0 +1,45 @@
+{
+  "extends": "solhint:recommended",
+  "rules": {
+    "code-complexity": ["warning", 7],
+    "compiler-version": ["error", "^0.8.24"],
+    "const-name-snakecase": "warning",
+    "contract-name-camelcase": "error",
+    "event-name-camelcase": "error",
+    "func-name-mixedcase": "error",
+    "func-order": "warning",
+    "function-max-lines": ["warning", 75],
+    "imports-on-top": "error",
+    "indent": ["error", 2],
+    "line-length": ["warning", 120],
+    "max-states-count": ["warning", 30],
+    "multiple-inheritance": "warning",
+    "named-parameters-mapping": "warning",
+    "no-complex-fields-packing": "warning",
+    "no-console": "warning",
+    "no-empty-blocks": "error",
+    "no-global-import": "error",
+    "no-inline-assembly": "warning",
+    "no-longer-assignable-variables": "error",
+    "no-multiple-inheritance": "warning",
+    "no-state-functions": "error",
+    "no-unused-state-variables": "warning",
+    "not-rely-on-block-hash": "warning",
+    "not-rely-on-time": "warning",
+    "ordering": "warning",
+    "payable-fallback": "warning",
+    "private-vars-leading-underscore": "warning",
+    "reason-string": [
+      "warning",
+      {
+        "minLength": 10
+      }
+    ],
+    "reentrancy": "warning",
+    "separate-by-one-line-in-contract": "warning",
+    "state-visibility": "error",
+    "two-lines-top-level-separator": "error",
+    "var-name-mixedcase": "error",
+    "visibility-modifier-order": "error"
+  }
+}

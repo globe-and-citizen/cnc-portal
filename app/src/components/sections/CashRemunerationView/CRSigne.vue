@@ -1,7 +1,7 @@
 <template>
-  <ButtonUI
+  <UButton
     v-if="isCashRemunerationOwner && !isDropDown"
-    variant="success"
+    color="success"
     data-test="approve-button"
     :disabled="isLoad || disabled || isCurrentWeek"
     :loading="isLoad"
@@ -9,7 +9,7 @@
     @click="handleApprove"
   >
     Approve
-  </ButtonUI>
+  </UButton>
   <div
     v-else-if="isDropDown"
     data-test="sign-action"
@@ -26,11 +26,10 @@
 
 <script setup lang="ts">
 import { CASH_REMUNERATION_EIP712_ABI } from '@/artifacts/abi/cash-remuneration-eip712'
-import ButtonUI from '@/components/ButtonUI.vue'
 import { USDC_ADDRESS } from '@/constant'
-import { useTeamStore, useToastStore, useUserDataStore } from '@/stores'
+import { useTeamStore, useUserDataStore } from '@/stores'
 import type { WeeklyClaim } from '@/types'
-import { log } from '@/utils'
+import { buildClaimRatesWithOvertime, log } from '@/utils'
 import { useChainId, useReadContract, useSignTypedData } from '@wagmi/vue'
 import {
   readContract,
@@ -39,7 +38,7 @@ import {
   waitForTransactionReceipt
 } from '@wagmi/core'
 import dayjs from 'dayjs'
-import { keccak256, parseEther, parseUnits, zeroAddress, type Address } from 'viem'
+import { keccak256, zeroAddress, type Address } from 'viem'
 import { computed, ref, watch } from 'vue'
 import { config } from '@/wagmi.config'
 import { useUpdateWeeklyClaimMutation } from '@/queries'
@@ -55,7 +54,7 @@ const emit = defineEmits(['close'])
 
 // Stores
 const teamStore = useTeamStore()
-const toastStore = useToastStore()
+const toast = useToast()
 const userStore = useUserDataStore()
 
 // Computed values
@@ -112,25 +111,30 @@ const getTokenAddress = (type: string): Address => {
   return teamStore.getContractAddressByType('InvestorV1') as Address
 }
 
-const parseAmount = (amount: number, type: string) => {
-  return type === 'native' ? parseEther(`${amount}`) : parseUnits(`${amount}`, 6)
-}
+const buildTypedDataMessage = (weeklyClaim: WeeklyClaim) => {
+  const claimRates = buildClaimRatesWithOvertime({
+    hoursWorked: weeklyClaim.hoursWorked,
+    maximumHoursPerWeek: weeklyClaim.wage.maximumHoursPerWeek,
+    ratePerHour: weeklyClaim.wage.ratePerHour,
+    overtimeRatePerHour: weeklyClaim.wage.overtimeRatePerHour
+  })
 
-const buildTypedDataMessage = (weeklyClaim: WeeklyClaim) => ({
-  hoursWorked: weeklyClaim.hoursWorked,
-  employeeAddress: weeklyClaim.wage.userAddress as Address,
-  date: BigInt(Math.floor(new Date(weeklyClaim.createdAt).getTime() / 1000)),
-  wages: weeklyClaim.wage.ratePerHour.map((rate) => ({
-    hourlyRate: parseAmount(rate.amount, rate.type),
-    tokenAddress: getTokenAddress(rate.type)
-  }))
-})
+  return {
+    hoursWorked: weeklyClaim.hoursWorked,
+    employeeAddress: weeklyClaim.wage.userAddress as Address,
+    date: BigInt(Math.floor(new Date(weeklyClaim.createdAt).getTime() / 1000)),
+    wages: claimRates.map((rate) => ({
+      hourlyRate: rate.hourlyRate,
+      tokenAddress: getTokenAddress(rate.type)
+    }))
+  }
+}
 
 const setLoadingState = (state: boolean) => {
   isLoading.value = state
 }
 
-const enableClaim = async (signature: Address) => {
+const enableClaim = async (signature: `0x${string}`) => {
   if (!cashRemunerationAddress.value) {
     throw new Error('Cash remuneration address not found')
   }
@@ -175,11 +179,11 @@ const approveClaim = async (weeklyClaim: WeeklyClaim) => {
     })
 
     if (!signature.value) {
-      toastStore.addErrorToast('Signature not found')
+      toast.add({ title: 'Signature not found', color: 'error' })
       return
     }
 
-    await enableClaim(signature.value)
+    await enableClaim(signature.value as `0x${string}`)
     await executeUpdateClaim({
       pathParams: { claimId: weeklyClaim.id },
       queryParams: { action: 'sign' },
@@ -187,9 +191,9 @@ const approveClaim = async (weeklyClaim: WeeklyClaim) => {
     })
 
     if (claimError.value) {
-      toastStore.addErrorToast('Failed to approve weeklyClaim')
+      toast.add({ title: 'Failed to approve weeklyClaim', color: 'error' })
     } else {
-      toastStore.addSuccessToast('Claim approved')
+      toast.add({ title: 'Claim approved', color: 'success' })
     }
   } catch (error) {
     const typedError = error as { message?: string }
@@ -199,7 +203,7 @@ const approveClaim = async (weeklyClaim: WeeklyClaim) => {
       ? 'User rejected the request'
       : 'Failed to sign weeklyClaim'
 
-    toastStore.addErrorToast(errorMessage)
+    toast.add({ title: errorMessage, color: 'error' })
   } finally {
     setLoadingState(false)
   }
@@ -226,7 +230,7 @@ const handleDropdownClick = async () => {
 watch(cashRemunerationOwnerError, (value) => {
   if (value) {
     log.error('Failed to fetch cash remuneration owner', value)
-    toastStore.addErrorToast('Failed to fetch cash remuneration owner')
+    toast.add({ title: 'Failed to fetch cash remuneration owner', color: 'error' })
   }
 })
 </script>

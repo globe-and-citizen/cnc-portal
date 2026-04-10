@@ -1,29 +1,27 @@
 <template>
   <span class="text-lg font-semibold">Pending Actions</span>
-  <TableComponent :rows="notExecutedActions" :columns="columns">
-    <template #index-data="{ row }">
+  <UTable :data="notExecutedActions" :columns="columns">
+    <template #actionId-cell="{ row: { original: row } }">
       {{ row.actionId }}
     </template>
-    <template #description-data="{ row }">
+    <template #description-cell="{ row: { original: row } }">
       {{ row.description }}
     </template>
 
-    <template #requestedBy-data="{ row }">
+    <template #requestedBy-cell="{ row: { original: row } }">
       <UserComponent :user="row.requestedBy" />
     </template>
 
-    <template #dateCreated-data="{ row }">
+    <template #dateCreated-cell="{ row: { original: row } }">
       {{ row.dateCreated }}
     </template>
 
-    <template #actions-data="{ row }">
-      <ButtonUI @click="emits('view-details', row)" variant="success" size="sm">Approve</ButtonUI>
+    <template #actions-cell="{ row: { original: row } }">
+      <UButton @click="emits('view-details', row)" color="success" size="sm" label="Approve" />
     </template>
-  </TableComponent>
+  </UTable>
 </template>
 <script setup lang="ts">
-import TableComponent from '@/components/TableComponent.vue'
-import ButtonUI from '@/components/ButtonUI.vue'
 import type { FormattedAction } from '@/utils'
 import UserComponent from '@/components/UserComponent.vue'
 import { useBodIsActionExecuted } from '@/composables/bod/reads'
@@ -51,10 +49,10 @@ const notExecutedActions = computed(() =>
 )
 
 const columns = [
-  { key: 'index', label: '#' },
-  { key: 'description', label: 'Description' },
-  { key: 'requestedBy', label: 'Requested By' },
-  { key: 'dateCreated', label: 'Date Created' },
-  { key: 'actions', label: 'Actions' }
+  { accessorKey: 'actionId', header: '#' },
+  { accessorKey: 'description', header: 'Description' },
+  { accessorKey: 'requestedBy', header: 'Requested By' },
+  { accessorKey: 'dateCreated', header: 'Date Created' },
+  { accessorKey: 'actions', header: 'Actions' }
 ]
 </script>

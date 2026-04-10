@@ -1,49 +1,46 @@
 <template>
   <div
-    class="flex flex-col sm:flex-wrap md:flex-row md:items-center md:justify-between gap-2 mb-4 w-full max-w-full"
+    class="mb-4 flex w-full max-w-full flex-col gap-2 sm:flex-wrap md:flex-row md:items-center md:justify-between"
   >
-    <ButtonUI
+    <UButton
       @click="goToPrevMonth"
-      class="w-full sm:w-auto flex items-center justify-center whitespace-nowrap"
+      class="flex w-full items-center justify-center whitespace-nowrap sm:w-auto"
       size="sm"
-    >
-      <IconifyIcon icon="heroicons:chevron-left" class="w-4 h-4" />
-    </ButtonUI>
+      icon="heroicons:chevron-left"
+    />
 
-    <div class="relative w-full sm:w-auto text-center">
+    <div class="relative w-full text-center sm:w-auto">
       <VueDatePicker
         v-model="monthPicked"
         :month-picker="true"
         :year-picker="true"
         auto-apply
-        class="bg-white rounded-sm w-full sm:w-auto"
+        class="w-full rounded-sm bg-white sm:w-auto"
       >
         <template #trigger>
-          <ButtonUI
+          <UButton
             @click="toggleMonthPicker"
-            class="w-full sm:w-auto flex items-center justify-center whitespace-nowrap"
+            class="flex w-full items-center justify-center whitespace-nowrap sm:w-auto"
             size="sm"
           >
             <span v-if="model">{{ formatMonthYear(model.year, model.month) }}</span>
-            <IconifyIcon icon="heroicons:chevron-down" class="w-4 h-4 ml-1" />
-          </ButtonUI>
+            <IconifyIcon icon="heroicons:chevron-down" class="ml-1 h-4 w-4" />
+          </UButton>
         </template>
       </VueDatePicker>
     </div>
 
-    <ButtonUI
+    <UButton
       @click="goToNextMonth"
-      class="w-full sm:w-auto flex items-center justify-center whitespace-nowrap"
+      class="flex w-full items-center justify-center whitespace-nowrap sm:w-auto"
       size="sm"
-    >
-      <IconifyIcon icon="heroicons:chevron-right" class="w-4 h-4" />
-    </ButtonUI>
+      icon="heroicons:chevron-right"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import ButtonUI from '@/components/ButtonUI.vue'
 import VueDatePicker from '@vuepic/vue-datepicker'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'

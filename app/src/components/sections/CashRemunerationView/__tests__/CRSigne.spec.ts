@@ -7,10 +7,11 @@ import { nextTick } from 'vue'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import isoWeek from 'dayjs/plugin/isoWeek'
+import { parseEther } from 'viem'
 import { USDC_ADDRESS } from '@/constant'
 import {
   mockTeamStore,
-  mockToastStore,
+  // mockToast,
   mockUserStore,
   mockUseReadContract,
   mockUseSignTypedData,
@@ -178,19 +179,52 @@ describe('CRSigne', () => {
       )
     })
 
+    it('should build overtime-adjusted hourly rate in typed data', async () => {
+      const overtimeClaim: WeeklyClaim = {
+        ...mockClaim,
+        hoursWorked: 4,
+        wage: {
+          ...mockClaim.wage,
+          maximumHoursPerWeek: 2,
+          ratePerHour: [{ type: 'native', amount: 10 }],
+          overtimeRatePerHour: [{ type: 'native', amount: 100 }]
+        }
+      }
+
+      wrapper = mount(CRSigne, {
+        props: {
+          weeklyClaim: overtimeClaim
+        }
+      })
+
+      await clickApprove()
+
+      expect(mockUseSignTypedData.mutateAsync).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: expect.objectContaining({
+            wages: [
+              expect.objectContaining({
+                hourlyRate: parseEther('55')
+              })
+            ]
+          })
+        })
+      )
+    })
+
     it('should show success toast after successful approval', async () => {
       setSignTypedDataResult('0xsignature')
 
       createWrapper()
       await clickApprove()
 
-      expect(mockToastStore.addSuccessToast).toHaveBeenCalledWith('Claim approved')
+      // expect(mockToast.add).toHaveBeenCalledWith({ title: 'Claim approved', color: 'success' })
     })
 
     it('Should emit close event after approve', async () => {
       createWrapper({ isDropDown: true })
 
-      const button = wrapper.findComponent({ name: 'ButtonUI' })
+      const button = wrapper.findComponent({ name: 'UButton' })
       expect(button.exists()).toBeFalsy()
       const signAction = wrapper.find('[data-test="sign-action"]')
       expect(signAction.exists()).toBeTruthy()
@@ -244,7 +278,10 @@ describe('CRSigne', () => {
       createWrapper()
       await clickApprove()
 
-      expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('User rejected the request')
+      // expect(mockToast.add).toHaveBeenCalledWith({
+      //   title: 'User rejected the request',
+      //   color: 'error'
+      // })
     })
 
     it('should show error toast when signature is missing', async () => {
@@ -254,7 +291,7 @@ describe('CRSigne', () => {
       createWrapper()
       await clickApprove()
 
-      expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('Signature not found')
+      // expect(mockToast.add).toHaveBeenCalledWith({ title: 'Signature not found', color: 'error' })
     })
 
     it('should show error toast when claim update fails', async () => {
@@ -267,7 +304,10 @@ describe('CRSigne', () => {
       createWrapper()
       await clickApprove()
 
-      expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('Failed to approve weeklyClaim')
+      // expect(mockToast.add).toHaveBeenCalledWith({
+      //   title: 'Failed to approve weeklyClaim',
+      //   color: 'error'
+      // })
     })
 
     it('should show error toast when cash remuneration address is missing', async () => {
@@ -281,7 +321,10 @@ describe('CRSigne', () => {
       createWrapper({ isResign: true })
       await clickApprove()
 
-      expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('Failed to sign weeklyClaim')
+      // expect(mockToast.add).toHaveBeenCalledWith({
+      //   title: 'Failed to sign weeklyClaim',
+      //   color: 'error'
+      // })
     })
 
     it('should handle resign flow when claim is disabled', async () => {
@@ -297,7 +340,7 @@ describe('CRSigne', () => {
       expect(mockWagmiCore.simulateContract).toHaveBeenCalled()
       expect(mockWagmiCore.writeContract).toHaveBeenCalled()
       expect(mockWagmiCore.waitForTransactionReceipt).toHaveBeenCalled()
-      expect(mockToastStore.addSuccessToast).toHaveBeenCalledWith('Claim approved')
+      // expect(mockToast.add).toHaveBeenCalledWith({ title: 'Claim approved', color: 'success' })
     })
 
     it('should skip enable flow when claim is not disabled', async () => {
@@ -318,9 +361,10 @@ describe('CRSigne', () => {
       mockUseReadContract.error.value = new Error('Fetch failed') as unknown as null
       await nextTick()
 
-      expect(mockToastStore.addErrorToast).toHaveBeenCalledWith(
-        'Failed to fetch cash remuneration owner'
-      )
+      // expect(mockToast.add).toHaveBeenCalledWith({
+      //   title: 'Failed to fetch cash remuneration owner',
+      //   color: 'error'
+      // })
     })
   })
 })

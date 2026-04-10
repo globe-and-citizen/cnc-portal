@@ -1,7 +1,6 @@
 import { ref } from 'vue'
 import { useConnection, useChainId } from '@wagmi/vue'
 import { isAddress } from 'viem'
-import { useToastStore } from '@/stores'
 import { useExecuteTransactionMutation } from '@/queries/safe.mutations'
 import { useSafeSDK } from './useSafeSdk'
 import type { SafeTransaction, SafeMultisigTransactionResponse } from '@/types/safe'
@@ -13,7 +12,7 @@ import { transformToSafeMultisigResponse } from '@/utils/safe'
 export function useSafeExecution() {
   const connection = useConnection()
   const chainId = useChainId()
-  const { addSuccessToast, addErrorToast } = useToastStore()
+  const toast = useToast()
   const mutation = useExecuteTransactionMutation()
   const { loadSafe } = useSafeSDK()
 
@@ -33,19 +32,31 @@ export function useSafeExecution() {
   ): Promise<string | null> => {
     if (!isAddress(safeAddress)) {
       error.value = new Error('Invalid Safe address')
-      addErrorToast('Invalid Safe address')
+      toast.add({
+        title: 'Error',
+        description: 'Invalid Safe address',
+        color: 'error'
+      })
       return null
     }
 
     if (!safeTxHash) {
       error.value = new Error('Missing Safe transaction hash')
-      addErrorToast('Missing Safe transaction hash')
+      toast.add({
+        title: 'Error',
+        description: 'Missing Safe transaction hash',
+        color: 'error'
+      })
       return null
     }
 
     if (!connection.isConnected.value || !connection.address.value) {
       error.value = new Error('Wallet not connected')
-      addErrorToast('Please connect your wallet')
+      toast.add({
+        title: 'Error',
+        description: 'Please connect your wallet',
+        color: 'error'
+      })
       return null
     }
 
@@ -95,16 +106,23 @@ export function useSafeExecution() {
         }
       })
 
-      addSuccessToast('Transaction executed successfully')
+      toast.add({
+        title: 'Success',
+        description: 'Transaction executed successfully',
+        color: 'success'
+      })
       return txHash
     } catch (err) {
       error.value = err instanceof Error ? err : new Error('Failed to execute transaction')
       console.error('Safe execution error:', err)
-      addErrorToast(
-        error.value.message.includes('User rejected')
-          ? 'Transaction  rejected'
-          : error.value.message
-      )
+
+      toast.add({
+        title: 'Error',
+        description: error.value.message.includes('User rejected')
+          ? 'Transaction rejected'
+          : error.value.message,
+        color: 'error'
+      })
       return null
     } finally {
       isExecuting.value = false

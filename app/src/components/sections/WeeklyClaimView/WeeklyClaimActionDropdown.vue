@@ -3,7 +3,7 @@
     <!-- Dropdown menu positioned to the left -->
     <ul
       v-if="isOpen"
-      class="absolute right-full top-1/2 transform -translate-y-1/2 mr-2 menu p-2 shadow-lg bg-base-100 rounded-box w-52 z-99999 border border-base-300"
+      class="menu bg-base-100 rounded-box border-base-300 absolute top-1/2 right-full z-99999 mr-2 w-52 -translate-y-1/2 transform border p-2 shadow-lg"
     >
       <!-- Pending status: Sign -->
       <template v-if="status === 'pending'">
@@ -103,17 +103,16 @@
     </ul>
 
     <!-- Dropdown trigger button -->
-    <ButtonUI class="btn-ghost" size="sm" @click.stop="toggleDropdown">
-      <IconifyIcon :icon="ellipsisIcon" class="w-5 h-5" />
-    </ButtonUI>
+    <UButton variant="ghost" size="sm" @click.stop="toggleDropdown">
+      <IconifyIcon :icon="ellipsisIcon" class="h-5 w-5" />
+    </UButton>
   </div>
 </template>
 
 <script setup lang="ts">
 import { Icon as IconifyIcon } from '@iconify/vue'
-import ButtonUI from '@/components/ButtonUI.vue'
 import { ref, onMounted, onUnmounted, computed } from 'vue'
-import { useUserDataStore, useTeamStore, useToastStore } from '@/stores'
+import { useUserDataStore, useTeamStore } from '@/stores'
 import { useReadContract } from '@wagmi/vue'
 import { CASH_REMUNERATION_EIP712_ABI } from '@/artifacts/abi/cash-remuneration-eip712'
 import type { WeeklyClaim } from '@/types'
@@ -122,7 +121,7 @@ import CRWithdrawClaim from '../CashRemunerationView/CRWithdrawClaim.vue'
 import { simulateContract, waitForTransactionReceipt, writeContract } from '@wagmi/core'
 import { config } from '@/wagmi.config'
 import { useSyncWeeklyClaimsMutation } from '@/queries/weeklyClaim.queries'
-import { keccak256, type Address } from 'viem'
+import { keccak256 } from 'viem'
 import { log, parseError } from '@/utils'
 import { useQueryClient } from '@tanstack/vue-query'
 import WeeklyClaimActionEnable from './WeeklyClaimActionEnable.vue'
@@ -147,7 +146,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const userStore = useUserDataStore()
 const teamStore = useTeamStore()
-const toastStore = useToastStore()
+const toast = useToast()
 const queryClient = useQueryClient()
 
 // Reactive data
@@ -191,7 +190,7 @@ const disableClaim = async () => {
 
   disableLoading.value = true
   if (!cashRemunerationAddress.value) {
-    toastStore.addErrorToast('Cash Remuneration EIP712 contract address not found')
+    toast.add({ title: 'Cash Remuneration EIP712 contract address not found', color: 'error' })
     disableLoading.value = false
     return
   }
@@ -199,7 +198,7 @@ const disableClaim = async () => {
     const args = {
       abi: CASH_REMUNERATION_EIP712_ABI,
       functionName: 'disableClaim' as const,
-      args: [keccak256(props.weeklyClaim.signature as Address)] as const
+      args: [keccak256(props.weeklyClaim.signature as `0x${string}`)] as const
     }
     await simulateContract(config, {
       ...args,
@@ -217,14 +216,14 @@ const disableClaim = async () => {
     })
 
     if (receipt.status === 'success') {
-      toastStore.addSuccessToast('Claim disabled')
+      toast.add({ title: 'Claim disabled', color: 'success' })
 
       claimAction.value = 'disable'
 
       try {
         await syncWeeklyClaim({ queryParams: { teamId: teamStore.currentTeamId! } })
       } catch {
-        toastStore.addErrorToast('Failed to update Claim status')
+        toast.add({ title: 'Failed to update Claim status', color: 'error' })
       }
 
       queryClient.invalidateQueries({
@@ -235,7 +234,7 @@ const disableClaim = async () => {
       disableLoading.value = false
       isOpen.value = false
     } else {
-      toastStore.addErrorToast('Transaction failed: Failed to disable claim')
+      toast.add({ title: 'Transaction failed: Failed to disable claim', color: 'error' })
       // keep loading until explicit success
     }
   } catch (error) {
@@ -243,7 +242,7 @@ const disableClaim = async () => {
     log.error('Disable error', error)
     const parsed = parseError(error, CASH_REMUNERATION_EIP712_ABI)
 
-    toastStore.addErrorToast(parsed)
+    toast.add({ title: parsed, color: 'error' })
     // Stop loading on user cancel or any explicit error
     disableLoading.value = false
   }

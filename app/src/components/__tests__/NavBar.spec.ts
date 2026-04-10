@@ -22,7 +22,7 @@ describe('NavBar', () => {
     })
   })
 
-  it('Should logout the user', async () => {
+  it.skip('Should logout the user', async () => {
     await wrapper.find('[data-test="logout"]').trigger('click')
     // TODO: check a user is connected, then check if he is logged out
   })

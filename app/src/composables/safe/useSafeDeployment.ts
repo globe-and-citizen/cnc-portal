@@ -3,7 +3,7 @@ import { useConnection } from '@wagmi/vue'
 import Safe, { type SafeAccountConfig } from '@safe-global/protocol-kit'
 import type { SafeVersion } from '@safe-global/types-kit'
 import { isAddress } from 'viem'
-import { useToastStore } from '@/stores'
+
 import { getInjectedProvider, randomSaltNonce } from '@/utils/safe' // Use centralized utils
 
 const SAFE_VERSION: SafeVersion = '1.4.1'
@@ -14,7 +14,7 @@ const SAFE_VERSION: SafeVersion = '1.4.1'
 export function useSafeDeployment() {
   const connection = useConnection()
 
-  const { addSuccessToast, addErrorToast } = useToastStore()
+  const toast = useToast()
 
   const isDeploying = ref(false)
   const error = ref<Error | null>(null)
@@ -22,27 +22,35 @@ export function useSafeDeployment() {
   const deploySafe = async (owners: string[], threshold: number): Promise<string | null> => {
     if (!connection.isConnected.value || !connection.address.value) {
       error.value = new Error('Wallet not connected')
-      addErrorToast('Please connect your wallet')
+      toast.add({ title: 'Error', description: 'Please connect your wallet', color: 'error' })
       return null
     }
 
     // Validation
     if (!owners || owners.length === 0) {
       error.value = new Error('At least one owner required')
-      addErrorToast('At least one owner required')
+      toast.add({ title: 'Error', description: 'At least one owner required', color: 'error' })
       return null
     }
 
     if (threshold < 1 || threshold > owners.length) {
       error.value = new Error(`Threshold must be between 1 and ${owners.length}`)
-      addErrorToast(`Threshold must be between 1 and ${owners.length}`)
+      toast.add({
+        title: 'Error',
+        description: `Threshold must be between 1 and ${owners.length}`,
+        color: 'error'
+      })
       return null
     }
 
     owners.forEach((owner, i) => {
       if (!isAddress(owner)) {
         error.value = new Error(`Invalid owner address [${i}]: ${owner}`)
-        addErrorToast(`Invalid owner address: ${owner}`)
+        toast.add({
+          title: 'Error',
+          description: `Invalid owner address: ${owner}`,
+          color: 'error'
+        })
         throw error.value
       }
     })
@@ -96,14 +104,25 @@ export function useSafeDeployment() {
       await publicClient.waitForTransactionReceipt({ hash: txHash })
 
       const safeAddress = await safeSdk.getAddress()
-
-      addSuccessToast(`Safe deployed successfully at ${safeAddress}`)
+      toast.add({
+        title: 'Succes',
+        description: `Safe deployed successfully at ${safeAddress}`,
+        color: 'success'
+      })
 
       return safeAddress
     } catch (err) {
       error.value = err instanceof Error ? err : new Error('Failed to deploy Safe')
       console.error('Safe deployment error:', err)
-      addErrorToast(error.value.message)
+
+      toast.add({
+        title: 'Error',
+        description: error.value.message.includes('User rejected')
+          ? 'Transaction approval rejected'
+          : error.value.message,
+        color: 'error'
+      })
+
       return null
     } finally {
       isDeploying.value = false

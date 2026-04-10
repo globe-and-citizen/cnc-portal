@@ -4,8 +4,8 @@ import { join } from 'path'
 
 const MockTokensModule = buildModule('MockTokens', (m) => {
   const usdc = m.contract('MockERC20', ['USD Coin', 'USDC'], { id: 'USDC' })
+  const usdcE = m.contract('MockERC20', ['USDC Coin Bridged', 'USDCe'], { id: 'USDCe' })
   const usdt = m.contract('MockERC20', ['Tether USD', 'USDT'], { id: 'USDT' })
-
 
   // Load recipients from recipients.json (shared with bulkTransferConfig)
   let testAccounts: string[] = []
@@ -24,10 +24,11 @@ const MockTokensModule = buildModule('MockTokens', (m) => {
 
   testAccounts.forEach((account, index) => {
     m.call(usdc, 'mint', [account, 1_000_000_000_000n], { id: `mint_usdc_${index}` })
+    m.call(usdcE, 'mint', [account, 1_000_000_000_000n], { id: `mint_usdcE_${index}` })
     m.call(usdt, 'mint', [account, 1_000_000_000_000n], { id: `mint_usdt_${index}` })
   })
 
-  return { usdc, usdt }
+  return { usdc, usdcE, usdt }
 })
 
 export default MockTokensModule

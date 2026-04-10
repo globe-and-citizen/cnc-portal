@@ -2,33 +2,24 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import DropdownActions from '../WeeklyClaimActionDropdown.vue'
 import type { Status } from '../WeeklyClaimActionDropdown.vue'
-import { createPinia, setActivePinia } from 'pinia'
 import type { WeeklyClaim } from '@/types'
-import dayjs from 'dayjs'
-import utc from 'dayjs/plugin/utc'
-import isoWeek from 'dayjs/plugin/isoWeek'
-import { mockUserStore, mockWagmiCore } from '@/tests/mocks'
+import {
+  mockSyncWeeklyClaimsMutation,
+  mockTeamStore,
+  mockUserStore,
+  mockWagmiCore,
+  mockUseReadContract,
+  useQueryClientFn
+} from '@/tests/mocks'
 
-// Configure dayjs plugins
-dayjs.extend(utc)
-dayjs.extend(isoWeek)
-
-vi.mock('@iconify/vue', () => ({
-  Icon: {
-    template: '<span>Icon</span>'
-  }
-}))
-
-describe('DropdownActions', () => {
-  const MOCK_OWNER_ADDRESS = '0xOwnerAddress'
-
+describe('WeeklyClaimActionDropdown', () => {
   const weeklyClaim: WeeklyClaim = {
     id: 1,
     status: 'pending',
     hoursWorked: 8,
     createdAt: '2024-01-01T00:00:00Z',
     wage: {
-      userAddress: MOCK_OWNER_ADDRESS,
+      userAddress: '0xOwner',
       ratePerHour: [{ type: 'native', amount: 10 }],
       id: 0,
       teamId: 0,
@@ -38,18 +29,28 @@ describe('DropdownActions', () => {
       maximumHoursPerWeek: 0,
       nextWageId: null,
       createdAt: '',
-      updatedAt: ''
+      updatedAt: '',
+      disabled: false
     },
     weekStart: '2024-01-01T00:00:00Z',
-    data: {
-      ownerAddress: MOCK_OWNER_ADDRESS
-    },
-    memberAddress: MOCK_OWNER_ADDRESS,
-    teamId: 0,
-    signature: null,
+    data: { ownerAddress: '0xOwner' },
+    memberAddress: '0xMember',
+    teamId: 1,
+    signature: '0x1234',
     wageId: 0,
     updatedAt: '',
     claims: []
+  }
+
+  const setupSyncMutation = (mutateAsync = vi.fn().mockResolvedValue(undefined)) => {
+    mockSyncWeeklyClaimsMutation.mutate.mockClear()
+    mockSyncWeeklyClaimsMutation.reset.mockClear()
+    mockSyncWeeklyClaimsMutation.isPending.value = false
+    mockSyncWeeklyClaimsMutation.isError.value = false
+    mockSyncWeeklyClaimsMutation.error.value = null
+    mockSyncWeeklyClaimsMutation.data.value = null
+    mockSyncWeeklyClaimsMutation.mutateAsync = mutateAsync
+    return mutateAsync
   }
 
   const createWrapper = (status: Status = 'pending') => {
@@ -60,8 +61,6 @@ describe('DropdownActions', () => {
       },
       global: {
         stubs: {
-          IconifyIcon: true,
-          ButtonUI: true,
           CRWithdrawClaim: {
             name: 'CRWithdrawClaim',
             template:
@@ -83,144 +82,114 @@ describe('DropdownActions', () => {
   }
 
   beforeEach(() => {
-    setActivePinia(createPinia())
+    vi.clearAllMocks()
     vi.useFakeTimers()
-    mockUserStore.address = '0xContractOwner'
+
+    mockTeamStore.currentTeamId = '1'
+    mockTeamStore.getContractAddressByType.mockReturnValue(
+      '0x6666666666666666666666666666666666666666'
+    )
+
+    mockUserStore.address = '0xOwner'
+    mockUseReadContract.data.value = '0xOwner'
+
     mockWagmiCore.simulateContract.mockResolvedValue({})
     mockWagmiCore.writeContract.mockResolvedValue('0xhash')
     mockWagmiCore.waitForTransactionReceipt.mockResolvedValue({ status: 'success' })
+
+    setupSyncMutation()
   })
 
   afterEach(() => {
-    vi.restoreAllMocks()
     vi.useRealTimers()
   })
 
-  it('renders Enable and Resign actions for disabled status', async () => {
-    const wrapper = createWrapper('disabled')
-    const button = wrapper.findComponent({ name: 'ButtonUI' })
-    button.trigger('click')
-
-    await flushPromises()
-
-    expect(wrapper.text()).toContain('Withdraw')
-    const disabledWithdraw = wrapper.find('[data-test="disabled-withdraw"]')
-    expect(disabledWithdraw.exists()).toBeTruthy()
-    expect(disabledWithdraw.classes()).toContain('disabled')
-    const disabledResign = wrapper.find('[data-test="disabled-resign"]')
-    expect(disabledResign.exists()).toBeTruthy()
-    expect(disabledResign.classes()).toContain('disabled')
-    const disabledEnable = wrapper.find('[data-test="disabled-enable"]')
-    expect(disabledEnable.exists()).toBeTruthy()
-    expect(disabledEnable.classes()).toContain('disabled')
-    expect(wrapper.text()).not.toContain('Sign')
-  })
-
-  it('closes dropdown after action is selected', async () => {
-    const wrapper = createWrapper('pending')
-    const button = wrapper.findComponent({ name: 'ButtonUI' })
-
-    // Open dropdown
-    await button.trigger('click')
-    //@ts-expect-error not visible wrapper
-    expect(wrapper.vm.isOpen).toBe(true)
-    // Click action
-    // const signAction = wrapper.find('[data-test="sign-action"]')
-    const crSign = wrapper.findComponent({ name: 'CRSigne' })
-    expect(crSign.exists()).toBeTruthy()
-    const signAction = crSign.find('[data-test="sign-action"]')
-    expect(signAction.exists()).toBeTruthy()
-    await signAction.trigger('click')
-
-    // Check dropdown is closed
-    //@ts-expect-error not visible wrapper
-    expect(wrapper.vm.isOpen).toBe(false)
+  it('does not render dropdown actions for withdrawn status', () => {
+    const wrapper = createWrapper('withdrawn')
+    expect(wrapper.find('button').exists()).toBe(false)
     expect(wrapper.find('ul').exists()).toBe(false)
   })
 
-  it('closes dropdown after withdraw action', async () => {
-    const wrapper = createWrapper('signed')
-    const button = wrapper.findComponent({ name: 'ButtonUI' })
-
-    await button.trigger('click')
-
-    const crWithdrawClaim = wrapper.findComponent({ name: 'CRWithdrawClaim' })
-    const withdrawAction = crWithdrawClaim.find('[data-test="withdraw-action"]')
-    expect(withdrawAction.exists()).toBeTruthy()
-
-    // Test Withdraw action
-    await withdrawAction.trigger('click')
-    expect(crWithdrawClaim.emitted()).toHaveProperty('claim-withdrawn')
-    //@ts-expect-error not visible on wrapper
-    expect(wrapper.vm.isOpen).toBeFalsy()
-  })
-
-  it('closes dropdown when clicking outside', async () => {
+  it('opens and closes menu when clicking trigger button', async () => {
     const wrapper = createWrapper('pending')
-    const button = wrapper.findComponent({ name: 'ButtonUI' })
+    const trigger = wrapper.find('button')
 
-    // Open dropdown
-    await button.trigger('click')
-    //@ts-expect-error not visible wrapper
-    expect(wrapper.vm.isOpen).toBe(true)
+    expect(wrapper.find('ul').exists()).toBe(false)
 
-    // Advance timers to ensure event listener is set up
-    vi.runAllTimers()
+    await trigger.trigger('click')
+    expect(wrapper.find('ul').exists()).toBe(true)
 
-    // Simulate click outside
-    document.dispatchEvent(new MouseEvent('click'))
-
-    // Check dropdown is closed
-    //@ts-expect-error not visible wrapper
-    expect(wrapper.vm.isOpen).toBe(false)
+    await trigger.trigger('click')
+    expect(wrapper.find('ul').exists()).toBe(false)
   })
 
-  it('removes event listener on unmount', () => {
+  it('renders pending actions and closes when sign child emits close', async () => {
+    const wrapper = createWrapper('pending')
+
+    await wrapper.find('button').trigger('click')
+    expect(wrapper.find('[data-test="pending-withdraw"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="pending-sign"]').exists()).toBe(true)
+
+    await wrapper.find('[data-test="sign-action"]').trigger('click')
+    expect(wrapper.find('ul').exists()).toBe(false)
+  })
+
+  it('renders disabled actions and closes when enable child emits close', async () => {
+    const wrapper = createWrapper('disabled')
+
+    await wrapper.find('button').trigger('click')
+    expect(wrapper.find('[data-test="disabled-withdraw"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="disabled-enable"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="disabled-resign"]').exists()).toBe(true)
+
+    await wrapper.find('[data-test="enable-action"]').trigger('click')
+    expect(wrapper.find('ul').exists()).toBe(false)
+  })
+
+  it('does not call disable flow when current user is not remuneration owner', async () => {
+    mockUserStore.address = '0xNotOwner'
+    mockUseReadContract.data.value = '0xOwner'
+
+    const wrapper = createWrapper('signed')
+    await wrapper.find('button').trigger('click')
+
+    const disableLink = wrapper.find('[data-test="signed-disable"] a')
+    await disableLink.trigger('click')
+
+    expect(mockWagmiCore.simulateContract).not.toHaveBeenCalled()
+    expect(mockWagmiCore.writeContract).not.toHaveBeenCalled()
+  })
+
+  it('disables claim successfully and syncs weekly claims', async () => {
+    const mutateAsync = setupSyncMutation(vi.fn().mockResolvedValue(undefined))
+
+    const wrapper = createWrapper('signed')
+    await wrapper.find('button').trigger('click')
+
+    const disableLink = wrapper.find('[data-test="signed-disable"] a')
+    await disableLink.trigger('click')
+    await flushPromises()
+
+    expect(mockWagmiCore.simulateContract).toHaveBeenCalled()
+    expect(mockWagmiCore.writeContract).toHaveBeenCalled()
+    expect(mockWagmiCore.waitForTransactionReceipt).toHaveBeenCalled()
+    expect(mutateAsync).toHaveBeenCalledWith({ queryParams: { teamId: '1' } })
+
+    const queryClient = useQueryClientFn.mock.results.at(-1)?.value
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith({
+      queryKey: ['weekly-claims', '1']
+    })
+
+    expect(wrapper.find('ul').exists()).toBe(false)
+  })
+
+  it('removes document click listener on unmount', () => {
     const removeEventListenerSpy = vi.spyOn(document, 'removeEventListener')
 
     const wrapper = createWrapper('pending')
+    vi.runAllTimers()
     wrapper.unmount()
 
     expect(removeEventListenerSpy).toHaveBeenCalledWith('click', expect.any(Function))
-  })
-
-  describe('Disabled status', () => {
-    it('closes dropdown after enable action', async () => {
-      const wrapper = createWrapper('disabled')
-      const button = wrapper.findComponent({ name: 'ButtonUI' })
-      await button.trigger('click')
-
-      const enableComponent = wrapper.findComponent({ name: 'WeeklyClaimActionEnable' })
-      const enableAction = enableComponent.find('[data-test="enable-action"]')
-      expect(enableAction.exists()).toBeTruthy()
-
-      await enableAction.trigger('click')
-      expect(enableComponent.emitted()).toHaveProperty('close')
-      //@ts-expect-error not visible on wrapper
-      expect(wrapper.vm.isOpen).toBeFalsy()
-    })
-  })
-
-  describe.skip('Signed status', () => {
-    it('calls disableClaim and closes dropdown on Disable action', async () => {
-      //@ts-expect-error only mocking necessary fields
-      vi.mocked(useUserDataStore).mockReturnValue({
-        address: '0xContractOwner'
-      })
-
-      const wrapper = createWrapper('signed')
-      const button = wrapper.findComponent({ name: 'ButtonUI' })
-      await button.trigger('click')
-
-      const signedDisable = wrapper.find('[data-test="signed-disable"]')
-      const disableLink = signedDisable.find('a')
-
-      await disableLink.trigger('click')
-      await flushPromises()
-      await wrapper.vm.$nextTick()
-
-      //@ts-expect-error not visible on wrapper
-      expect(wrapper.vm.isOpen).toBeFalsy()
-    })
   })
 })

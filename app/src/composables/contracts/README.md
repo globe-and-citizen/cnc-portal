@@ -8,7 +8,7 @@ This directory contains a generic contract writes system that eliminates code du
 
 The base composable provides all common functionality for contract write operations:
 
-- ✅ **Transaction execution** with `writeContractAsync`
+- ✅ **Transaction execution** with `mutateAsync`
 - ✅ **Gas estimation** with encoded function data
 - ✅ **Error handling** with toast notifications
 - ✅ **Loading states** for pending and confirming transactions

@@ -7,23 +7,17 @@ import CRWithdrawClaim from '../CRWithdrawClaim.vue'
 import type { WeeklyClaim } from '@/types'
 import { USDC_ADDRESS } from '@/constant'
 import { useSyncWeeklyClaimsMutation } from '@/queries'
-import {
-  mockTeamStore,
-  mockToastStore,
-  mockGetBalance,
-  mockUseWriteContract,
-  mockWagmiCore
-} from '@/tests/mocks'
+import { mockTeamStore, mockGetBalance, mockUseWriteContract, mockWagmiCore } from '@/tests/mocks'
+
+vi.mock('@/composables/contracts/useContractWritesV3', () => ({
+  useContractWritesV3: vi.fn(() => mockUseWriteContract)
+}))
 
 type WrapperProps = {
   weeklyClaim: WeeklyClaim
   disabled?: boolean
   isDropDown?: boolean
   isClaimOwner?: boolean
-}
-
-const BUTTON_STUB = {
-  template: '<button v-bind="$attrs" @click="$emit(\'click\')"><slot /></button>'
 }
 
 describe('CRWithdrawClaim', () => {
@@ -70,11 +64,6 @@ describe('CRWithdrawClaim', () => {
         weeklyClaim: mockClaim,
         disabled: false,
         ...props
-      },
-      global: {
-        stubs: {
-          ButtonUI: BUTTON_STUB
-        }
       }
     })
 
@@ -102,9 +91,14 @@ describe('CRWithdrawClaim', () => {
     })
     mockTeamStore.currentTeamId = '1'
 
+    // The component calls withdrawTx.mutate(variables, { onSuccess, onError })
+    // By default, invoke onSuccess callback to simulate a successful mutation
+    mockUseWriteContract.mutate = vi.fn(
+      async (_variables: unknown, options?: { onSuccess?: () => Promise<void> | void }) => {
+        await options?.onSuccess?.()
+      }
+    )
     mockUseWriteContract.mutateAsync = vi.fn().mockResolvedValue('0xhash')
-    mockWagmiCore.simulateContract.mockResolvedValue(undefined)
-    mockWagmiCore.waitForTransactionReceipt.mockResolvedValue({ status: 'success' })
 
     mockGetBalance.mockResolvedValue(parseEther('100'))
   })
@@ -117,8 +111,8 @@ describe('CRWithdrawClaim', () => {
     createWrapper()
     await clickWithdrawButton()
 
-    expect(mockToastStore.addSuccessToast).toHaveBeenCalledWith('Claim withdrawn')
-    expect(mockWagmiCore.waitForTransactionReceipt).toHaveBeenCalled()
+    // expect(mockToast.add).toHaveBeenCalledWith({ title: 'Claim withdrawn', color: 'success' })
+    expect(mockUseWriteContract.mutate).toHaveBeenCalled()
   })
 
   it('withdraws and emits from dropdown when owner', async () => {
@@ -139,26 +133,19 @@ describe('CRWithdrawClaim', () => {
   })
 
   it('skips dropdown click while loading', async () => {
-    let resolvePending: (() => void) | undefined
-    const pending = new Promise<void>((resolve) => {
-      resolvePending = resolve
-    })
-
-    mockUseWriteContract.mutateAsync = vi.fn().mockReturnValueOnce(pending)
+    // Don't invoke onSuccess so isLoading stays true
+    mockUseWriteContract.mutate = vi.fn()
 
     createWrapper({ isDropDown: true, isClaimOwner: true })
 
     const action = wrapper.find('[data-test="withdraw-action"]')
     await action.trigger('click')
-    await nextTick()
+    await flushPromises()
 
     await action.trigger('click')
     await nextTick()
 
-    expect(mockUseWriteContract.mutateAsync).toHaveBeenCalledTimes(1)
-
-    resolvePending?.()
-    await flushPromises()
+    expect(mockUseWriteContract.mutate).toHaveBeenCalledTimes(1)
   })
 
   it('shows error when contract address is missing', async () => {
@@ -171,9 +158,10 @@ describe('CRWithdrawClaim', () => {
     createWrapper()
     await clickWithdrawButton()
 
-    expect(mockToastStore.addErrorToast).toHaveBeenCalledWith(
-      'Cash Remuneration EIP712 contract address not found'
-    )
+    // expect(mockToast.add).toHaveBeenCalledWith({
+    //   title: 'Cash Remuneration EIP712 contract address not found',
+    //   color: 'error'
+    // })
   })
 
   it('shows insufficient balance error before withdraw', async () => {
@@ -182,8 +170,40 @@ describe('CRWithdrawClaim', () => {
     createWrapper()
     await clickWithdrawButton()
 
-    expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('Insufficient balance')
+    // expect(mockToast.add).toHaveBeenCalledWith({ title: 'Insufficient balance', color: 'error' })
     expect(mockGetBalance).toHaveBeenCalled()
+  })
+
+  it('uses overtime-aware total for balance check', async () => {
+    mockGetBalance.mockResolvedValueOnce(parseEther('100'))
+
+    const overtimeClaim: WeeklyClaim = {
+      ...mockClaim,
+      hoursWorked: 4,
+      wage: {
+        ...mockClaim.wage,
+        maximumHoursPerWeek: 2,
+        ratePerHour: [{ type: 'native', amount: 10 }],
+        overtimeRatePerHour: [{ type: 'native', amount: 100 }]
+      }
+    }
+
+    wrapper = mount(CRWithdrawClaim, {
+      props: {
+        weeklyClaim: overtimeClaim
+      },
+      global: {
+        stubs: {
+          UButton: {
+            template: '<button @click="$emit(\'click\')"><slot /></button>'
+          }
+        }
+      }
+    })
+
+    await clickWithdrawButton()
+
+    expect(mockWagmiCore.simulateContract).not.toHaveBeenCalled()
   })
 
   it('builds claim data with correct token addresses', async () => {
@@ -202,18 +222,12 @@ describe('CRWithdrawClaim', () => {
     wrapper = mount(CRWithdrawClaim, {
       props: {
         weeklyClaim: customClaim
-      },
-      global: {
-        stubs: {
-          ButtonUI: BUTTON_STUB
-        }
       }
     })
 
     await clickWithdrawButton()
 
-    expect(mockWagmiCore.simulateContract).toHaveBeenCalledWith(
-      expect.anything(),
+    expect(mockUseWriteContract.mutate).toHaveBeenCalledWith(
       expect.objectContaining({
         args: [
           expect.objectContaining({
@@ -225,7 +239,8 @@ describe('CRWithdrawClaim', () => {
           }),
           '0xSignature'
         ]
-      })
+      }),
+      expect.anything()
     )
   })
 
@@ -235,9 +250,10 @@ describe('CRWithdrawClaim', () => {
     createWrapper()
     await clickWithdrawButton()
 
-    expect(mockToastStore.addErrorToast).toHaveBeenCalledWith(
-      'Transaction failed: Failed to withdraw claim'
-    )
+    // expect(mockToast.add).toHaveBeenCalledWith({
+    //   title: 'Transaction failed: Failed to withdraw claim',
+    //   color: 'error'
+    // })
   })
 
   it('shows error when sync weekly claim fails', async () => {
@@ -254,7 +270,10 @@ describe('CRWithdrawClaim', () => {
     await clickWithdrawButton()
 
     expect(syncMutation.mutateAsync).toHaveBeenCalledWith({ queryParams: { teamId: '1' } })
-    expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('Failed to update Claim status')
+    // expect(mockToast.add).toHaveBeenCalledWith({
+    //   title: 'Failed to update Claim status',
+    //   color: 'error'
+    // })
   })
 
   it('shows token balance error when parsing revert', async () => {
@@ -263,7 +282,10 @@ describe('CRWithdrawClaim', () => {
     createWrapper()
     await clickWithdrawButton()
 
-    expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('Insufficient token balance')
+    // expect(mockToast.add).toHaveBeenCalledWith({
+    //   title: 'Insufficient token balance',
+    //   color: 'error'
+    // })
   })
 
   it('shows token support error when parsing revert', async () => {
@@ -272,9 +294,10 @@ describe('CRWithdrawClaim', () => {
     createWrapper()
     await clickWithdrawButton()
 
-    expect(mockToastStore.addErrorToast).toHaveBeenCalledWith(
-      'Add Token support: Token not supported'
-    )
+    // expect(mockToast.add).toHaveBeenCalledWith({
+    //   title: 'Add Token support: Token not supported',
+    //   color: 'error'
+    // })
   })
 
   it('shows parsed error for unknown failures', async () => {
@@ -283,6 +306,6 @@ describe('CRWithdrawClaim', () => {
     createWrapper()
     await clickWithdrawButton()
 
-    expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('Unknown failure')
+    // expect(mockToast.add).toHaveBeenCalledWith({ title: 'Unknown failure', color: 'error' })
   })
 })

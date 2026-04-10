@@ -12,12 +12,7 @@ vi.mock('@/composables/bank/reads', () => ({
   useBankAddress: vi.fn(() => computed(() => MOCK_BANK_ADDRESS)),
   useBankPaused: vi.fn(() => mockBankReads.paused),
   useBankOwner: vi.fn(() => mockBankReads.owner),
-  useBankSupportedTokens: vi.fn(() => mockBankReads.supportedTokens),
-  useDividendBalance: vi.fn(() => mockBankReads.dividendBalance),
-  useTokenDividendBalance: vi.fn(() => mockBankReads.tokenDividendBalance),
-  useTotalDividend: vi.fn(() => mockBankReads.totalDividend),
-  useUnlockedBalance: vi.fn(() => mockBankReads.unlockedBalance),
-  useGetDividendBalances: vi.fn(() => mockBankReads.getDividendBalances)
+  useBankSupportedTokens: vi.fn(() => mockBankReads.supportedTokens)
 }))
 
 /**
@@ -33,10 +28,5 @@ vi.mock('@/composables/bank/writes', () => ({
   useTransferOwnership: vi.fn(() => mockBankWrites.transferOwnership),
   useRenounceOwnership: vi.fn(() => mockBankWrites.renounceOwnership),
   useTransfer: vi.fn(() => mockBankWrites.transfer),
-  useTransferToken: vi.fn(() => mockBankWrites.transferToken),
-  useClaimDividend: vi.fn(() => mockBankWrites.claimDividend),
-  useClaimTokenDividend: vi.fn(() => mockBankWrites.claimTokenDividend),
-  useDepositDividends: vi.fn(() => mockBankWrites.depositDividends),
-  useDepositTokenDividends: vi.fn(() => mockBankWrites.depositTokenDividends),
-  useSetInvestorAddress: vi.fn(() => mockBankWrites.setInvestorAddress)
+  useTransferToken: vi.fn(() => mockBankWrites.transferToken)
 }))

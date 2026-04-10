@@ -7,16 +7,16 @@
       :data-test-prefix="dataTestPrefix"
     />
     <div class="relative">
-      <ButtonUI
-        class="flex items-center cursor-pointer gap-4 border border-gray-300 min-w-[110px]"
+      <UButton
+        class="flex min-w-[110px] cursor-pointer items-center gap-4 border border-gray-300"
         @click="typeDropdownOpen = !typeDropdownOpen"
         :data-test="`${dataTestPrefix}-type-filter`"
-      >
-        <span>{{ selectedTypeLabel }}</span>
-        <IconifyIcon icon="heroicons:chevron-down" class="w-4 h-4" />
-      </ButtonUI>
+        :label="selectedTypeLabel"
+        variant="ghost"
+        trailing-icon="heroicons:chevron-down"
+      />
       <ul
-        class="absolute right-0 mt-2 menu bg-base-200 border-2 rounded-box z-1 w-40 p-2 shadow-sm"
+        class="menu bg-base-200 rounded-box absolute right-0 z-1 mt-2 w-40 border-2 p-2 shadow-sm"
         ref="typeDropdownTarget"
         v-if="typeDropdownOpen"
       >
@@ -31,8 +31,6 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { Icon as IconifyIcon } from '@iconify/vue'
-import ButtonUI from '@/components/ButtonUI.vue'
 import CustomDatePicker from '@/components/CustomDatePicker.vue'
 import { onClickOutside } from '@vueuse/core'
 

@@ -1,10 +1,10 @@
 <template>
   <span class="mb-4 text-xl font-semibold">Board Approval Required</span>
   <!-- BOD Action Details -->
-  <div class="flex-col flex gap-4 p-4 mt-4 bg-white rounded-lg shadow-xs border border-gray-300">
+  <div class="mt-4 flex flex-col gap-4 rounded-lg border border-gray-300 bg-white p-4 shadow-xs">
     <div class="flex items-center gap-3">
       <div
-        class="p-1 rounded-full aspect-square flex items-center justify-center w-10 h-10 bg-gray-200"
+        class="flex aspect-square h-10 w-10 items-center justify-center rounded-full bg-gray-200 p-1"
       >
         <IconifyIcon icon="heroicons:arrow-right" class="h-5 w-5 text-gray-600" />
       </div>
@@ -18,7 +18,7 @@
   </div>
 
   <!-- Approval Progress -->
-  <div class="flex justify-between mt-5 py-2">
+  <div class="mt-5 flex justify-between py-2">
     <span>Approval progress</span>
     <span class="badge badge-warning badge-outline font-semibold">
       {{ approvalCount.approved }}/{{ approvalCount.total }} Approvals
@@ -39,7 +39,7 @@
     <div
       v-for="approval in approvals"
       :key="approval.id"
-      class="flex justify-between items-center gap-2 p-2 rounded-lg border border-gray-200"
+      class="flex items-center justify-between gap-2 rounded-lg border border-gray-200 p-2"
     >
       <UserComponent :user="{ name: approval.name, address: approval.address }" />
       <p
@@ -54,29 +54,32 @@
       </p>
     </div>
   </div>
-  <div class="flex mt-6 justify-end gap-2">
-    <ButtonUI variant="error" @click="$emit('close')" data-test="cancel-button">
-      <span><IconifyIcon icon="heroicons:arrow-left" /></span> Close
-    </ButtonUI>
+  <div class="mt-6 flex justify-end gap-2">
+    <UButton
+      color="error"
+      @click="$emit('close')"
+      data-test="cancel-button"
+      variant="ghost"
+      leading-icon="heroicons:arrow-left"
+      label="Close"
+    />
     <ToolTip :content="hasApproved ? 'You have already approved' : 'Click to approve this action'">
-      <ButtonUI
-        variant="primary"
+      <UButton
+        color="primary"
         data-test="transfer-ownership-button"
         @click="$emit('approve-action', row.actionId, row.id)"
         :loading="loading"
         :disabled="hasApproved || loading"
-      >
-        Approve Action
-      </ButtonUI>
+        label="Approve Action"
+      />
     </ToolTip>
   </div>
 </template>
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import type { TableRow } from '@/components/TableComponent.vue'
+import type { TableRow } from '@/types/table'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import UserComponent from '@/components/UserComponent.vue'
-import ButtonUI from '@/components/ButtonUI.vue'
 import { useReadContract } from '@wagmi/vue'
 import { useTeamStore, useUserDataStore } from '@/stores'
 import { BOD_ABI } from '@/artifacts/abi/bod'

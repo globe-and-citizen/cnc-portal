@@ -13,24 +13,22 @@
       Failed to delete claim
     </div>
     <div class="flex justify-end gap-2">
-      <ButtonUI
-        variant="error"
+      <UButton
+        color="error"
         :loading="isDeleting"
         :disabled="isDeleting"
         @click="handleDelete"
         data-test="confirm-delete-claim-button"
-      >
-        Delete
-      </ButtonUI>
-      <ButtonUI
-        variant="primary"
-        outline
+        label="Delete"
+      />
+      <UButton
+        color="primary"
+        variant="outline"
         :disabled="isDeleting"
         @click="$emit('close')"
         data-test="cancel-delete-claim-button"
-      >
-        Cancel
-      </ButtonUI>
+        label="Cancel"
+      />
     </div>
   </div>
 </template>
@@ -40,9 +38,7 @@ import { computed } from 'vue'
 import dayjs from 'dayjs'
 import type { Claim } from '@/types'
 
-import ButtonUI from '@/components/ButtonUI.vue'
 import { useDeleteClaimMutation } from '@/queries/weeklyClaim.queries'
-import { useToastStore } from '@/stores'
 
 const props = defineProps<{
   claim: Claim
@@ -52,7 +48,7 @@ const emit = defineEmits<{
   close: []
 }>()
 
-const toastStore = useToastStore()
+const toast = useToast()
 
 const formattedDate = computed(() => {
   return props.claim ? dayjs(props.claim.dayWorked).format('MMM DD, YYYY') : ''
@@ -66,7 +62,7 @@ const {
 
 const handleDelete = async () => {
   await deleteClaim({ pathParams: { claimId: props.claim.id } })
-  toastStore.addSuccessToast('Claim deleted successfully')
+  toast.add({ title: 'Claim deleted successfully', color: 'success' })
   emit('close')
 }
 </script>

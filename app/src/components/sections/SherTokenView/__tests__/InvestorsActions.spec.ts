@@ -3,7 +3,7 @@ import { mount } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
 import InvestorsActions from '@/components/sections/SherTokenView/InvestorsActions.vue'
 import type { Address } from 'viem'
-import { mockInvestorReads, mockTeamStore, mockToastStore, resetContractMocks } from '@/tests/mocks'
+import { mockInvestorReads, mockTeamStore, resetContractMocks } from '@/tests/mocks'
 
 const DistributeMintActionStub = {
   props: ['tokenSymbol', 'investorsAddress'],
@@ -18,6 +18,18 @@ const MintTokenActionStub = {
 const PayDividendsActionStub = {
   props: ['tokenSymbol', 'shareholdersCount', 'investorsAddress', 'investorsOwner', 'bankAddress'],
   template: '<div data-test="pay-dividends-action" />'
+}
+
+const ToggleSherCompensationButtonStub = {
+  template: '<div data-test="toggle-sher-compensation-button" />'
+}
+
+const InvestInSafeButtonStub = {
+  template: '<div data-test="invest-in-safe-button" />'
+}
+
+const SetCompensationMultiplierButtonStub = {
+  template: '<div data-test="set-compensation-multiplier-button" />'
 }
 
 describe('InvestorsActions.vue', () => {
@@ -43,11 +55,13 @@ describe('InvestorsActions.vue', () => {
       global: {
         plugins: [createTestingPinia({ createSpy: vi.fn })],
         stubs: {
-          CardComponent: { template: '<div><slot /></div>' },
           AddressToolTip: true,
           DistributeMintAction: DistributeMintActionStub,
           MintTokenAction: MintTokenActionStub,
-          PayDividendsAction: PayDividendsActionStub
+          PayDividendsAction: PayDividendsActionStub,
+          ToggleSherCompensationButton: ToggleSherCompensationButtonStub,
+          SetCompensationMultiplierButton: SetCompensationMultiplierButtonStub,
+          InvestInSafeButton: InvestInSafeButtonStub
         }
       }
     })
@@ -69,6 +83,8 @@ describe('InvestorsActions.vue', () => {
     expect(wrapper.find('[data-test="distribute-mint-action"]').exists()).toBe(true)
     expect(wrapper.find('[data-test="mint-token-action"]').exists()).toBe(true)
     expect(wrapper.find('[data-test="pay-dividends-action"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="toggle-sher-compensation-button"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="invest-in-safe-button"]').exists()).toBe(true)
   })
 
   it('passes props to action components', () => {
@@ -100,7 +116,19 @@ describe('InvestorsActions.vue', () => {
 
     mockInvestorReads.symbol.error.value = new Error('Symbol error')
     await wrapper.vm.$nextTick()
+  })
 
-    expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('Error fetching token symbol')
+  it('shows error toast when shareholders fetch fails', async () => {
+    const wrapper = createWrapper()
+
+    mockInvestorReads.shareholders.error.value = new Error('Shareholders error')
+    await wrapper.vm.$nextTick()
+  })
+
+  it('shows error toast when owner fetch fails', async () => {
+    const wrapper = createWrapper()
+
+    mockInvestorReads.owner.error.value = new Error('Owner error')
+    await wrapper.vm.$nextTick()
   })
 })

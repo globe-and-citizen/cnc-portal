@@ -1,5 +1,5 @@
 <template>
-  <h3 class="text-lg font-bold mb-4">
+  <h3 class="mb-4 text-lg font-bold">
     Contract Admin List {{ range }}
     <span class="loading loading-spinner" v-if="isLoading || isUpdating"></span>
   </h3>
@@ -7,7 +7,7 @@
   <!-- Inline form to add new admin -->
   <form
     @submit.prevent="handleAdminAction(newAdminAddress as `0x${string}`, 'addAdmin')"
-    class="flex items-center space-x-2 mb-4"
+    class="mb-4 flex items-center space-x-2"
   >
     <input
       v-model="newAdminAddress"
@@ -17,57 +17,56 @@
       required
     />
     <div>
-      <ButtonUI type="submit" variant="primary" size="sm"> Add Admin</ButtonUI>
+      <UButton type="submit" color="primary" size="sm"> Add Admin</UButton>
     </div>
   </form>
 
   <!-- Admin Table -->
   <div id="admins-table" class="overflow-x-auto">
-    <TableComponent
-      :rows="
-        admins?.map((admin: Address, index: number) => ({
+    <UTable
+      :data="
+        adminsList.map((admin: Address, index: number) => ({
           index: index + 1,
           address: admin,
           admin: admin
         })) ?? []
       "
       :columns="[
-        { key: 'index', label: '#' },
-        { key: 'address', label: 'Admin Address' },
-        { key: 'action', label: 'Action' }
+        { accessorKey: 'index', header: '#' },
+        { accessorKey: 'address', header: 'Admin Address' },
+        { accessorKey: 'action', header: 'Action' }
       ]"
     >
-      <template #address-data="{ row }">
+      <template #address-cell="{ row: { original: row } }">
         <AddressToolTip :address="row.address" class="text-xs" />
       </template>
 
-      <template #action-data="{ row }">
-        <ButtonUI @click="handleAdminAction(row.admin, 'removeAdmin')" size="xs" variant="error"
-          >Remove</ButtonUI
-        >
+      <template #action-cell="{ row: { original: row } }">
+        <UButton
+          @click="handleAdminAction(row.admin, 'removeAdmin')"
+          size="xs"
+          color="error"
+          label="Remove"
+        />
       </template>
-    </TableComponent>
+    </UTable>
   </div>
   <div
     v-if="isLoading || isUpdating"
-    class="absolute inset-0 flex items-center justify-center bg-white bg-opacity-75"
+    class="bg-opacity-75 absolute inset-0 flex items-center justify-center bg-white"
   ></div>
 </template>
 
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
 
-import { useToastStore } from '@/stores/useToastStore'
-
 import { useWaitForTransactionReceipt, useWriteContract, useReadContract } from '@wagmi/vue'
 import { AddCampaignService } from '@/services/AddCampaignService'
 import type { TeamContract } from '@/types'
 import AddressToolTip from '@/components/AddressToolTip.vue'
-import ButtonUI from '@/components/ButtonUI.vue'
-import TableComponent from '@/components/TableComponent.vue'
 import { AD_CAMPAIGN_MANAGER_ABI } from '@/artifacts/abi/ad-campaign-manager'
 import type { Address } from 'viem'
-const { addErrorToast, addSuccessToast } = useToastStore()
+const toast = useToast()
 const addCampaignService = new AddCampaignService()
 
 const props = defineProps<{
@@ -89,7 +88,7 @@ const isLoading = computed(
 const newAdminAddress = ref('')
 
 const {
-  writeContract: addAdmin,
+  mutate: addAdmin,
   error: errorAddAdmin,
   isPending: loadingAddAdmin,
   data: hashAddAdmin
@@ -101,14 +100,14 @@ const { isLoading: isConfirmingAddAdmin, isSuccess: isConfirmedAddAdmin } =
   })
 watch(isConfirmingAddAdmin, async (isConfirming, wasConfirming) => {
   if (wasConfirming && !isConfirming && isConfirmedAddAdmin.value) {
-    addSuccessToast('Admin added successfully')
+    toast.add({ title: 'Admin added successfully', color: 'success' })
     newAdminAddress.value = ''
     executeGetAdminList()
   }
 })
 
 const {
-  writeContract: removeAdmin,
+  mutate: removeAdmin,
   error: errorRemoveAdmin,
   isPending: loadingRemoveAdmin,
   data: hashRemoveAdmin
@@ -120,7 +119,7 @@ const { isLoading: isConfirmingRemoveAdmin, isSuccess: isConfirmedRemoveAdmin } 
   })
 watch(isConfirmingRemoveAdmin, async (isConfirming, wasConfirming) => {
   if (wasConfirming && !isConfirming && isConfirmedRemoveAdmin.value) {
-    addSuccessToast('Admin removed successfully')
+    toast.add({ title: 'Admin removed successfully', color: 'success' })
     executeGetAdminList()
   }
 })
@@ -135,6 +134,10 @@ const {
   abi: AD_CAMPAIGN_MANAGER_ABI
 })
 
+const adminsList = computed<Address[]>(() => {
+  return Array.isArray(admins.value) ? (admins.value as Address[]) : []
+})
+
 watch(
   () => props.contract,
   async (newContract) => {
@@ -147,19 +150,19 @@ watch(
 
 watch(errorAddAdmin, () => {
   if (errorAddAdmin.value) {
-    addErrorToast('Add admin failed')
+    toast.add({ title: 'Add admin failed', color: 'error' })
   }
 })
 
 watch(errorGetAdminList, () => {
   if (errorGetAdminList.value) {
-    addErrorToast('get Admin list failed')
+    toast.add({ title: 'get Admin list failed', color: 'error' })
   }
 })
 
 watch(errorRemoveAdmin, () => {
   if (errorRemoveAdmin.value) {
-    addErrorToast('Remove admin failed')
+    toast.add({ title: 'Remove admin failed', color: 'error' })
   }
 })
 

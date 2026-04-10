@@ -13,6 +13,12 @@ module.exports = {
       parserOptions: {
         sourceType: 'script'
       }
+    },
+    {
+      files: ['test/**/*.ts'],
+      rules: {
+        '@typescript-eslint/no-unused-expressions': 'off'
+      }
     }
   ],
   parser: '@typescript-eslint/parser',

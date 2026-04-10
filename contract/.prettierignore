@@ -1,3 +1,7 @@
 node_modules
 typechain-types
 ignition
+artifacts
+cache
+coverage
+ignition/deployments/**/*.json

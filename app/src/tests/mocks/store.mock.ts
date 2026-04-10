@@ -28,6 +28,7 @@ export const mockTeamStore = {
       Elections: '0x8888888888888888888888888888888888888888',
       Proposals: '0x9999999999999999999999999999999999999999',
       VestingV1: '0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+      SafeDepositRouter: '0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB',
       Safe: '0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'
     }
     return contractAddresses[type] || '0x1234567890123456789012345678901234567890'
@@ -35,11 +36,8 @@ export const mockTeamStore = {
   fetchTeam: vi.fn()
 }
 
-export const mockToastStore = {
-  addErrorToast: vi.fn(),
-  addSuccessToast: vi.fn(),
-  addInfoToast: vi.fn(),
-  toasts: []
+export const mockToast = {
+  add: vi.fn()
 }
 
 export const mockUserStore = {

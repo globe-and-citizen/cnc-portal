@@ -18,7 +18,7 @@
         <div class="flex items-center gap-2">
           <UTooltip text="Click to see address in block explorer">
             <span
-              class="cursor-pointer hover:text-primary transition-colors"
+              class="hover:text-primary cursor-pointer transition-colors"
               @click="openExplorer(userStore.address)"
               data-test="user-address"
             >
@@ -57,7 +57,6 @@
         type="text"
         placeholder="John Doe"
         data-test="name-input"
-        size="xl"
         class="w-full"
       />
     </UFormField>
@@ -70,7 +69,6 @@
         :items="currencyOptions"
         @change="handleCurrencyChange"
         data-test="currency-select"
-        size="xl"
         class="w-full"
       />
     </UFormField>
@@ -111,7 +109,7 @@
 <script setup lang="ts">
 import { z } from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
-import { useCurrencyStore, useToastStore, useUserDataStore } from '@/stores'
+import { useCurrencyStore, useUserDataStore } from '@/stores'
 import { LIST_CURRENCIES } from '@/constant'
 import { useClipboard } from '@vueuse/core'
 import { NETWORK } from '@/constant'
@@ -121,7 +119,7 @@ import { useUpdateUserMutation } from '@/queries/user.queries'
 
 // Stores
 const currencyStore = useCurrencyStore()
-const toastStore = useToastStore()
+const toast = useToast()
 const userStore = useUserDataStore()
 const selectedCurrency = ref<string>(currencyStore.localCurrency?.code)
 
@@ -172,7 +170,7 @@ const submitForm = async (event: FormSubmitEvent<UserSchema>) => {
     })
 
     if (updatedUser) {
-      toastStore.addSuccessToast('User updated')
+      toast.add({ title: 'User updated', color: 'success' })
       userStore.setUserData(
         updatedUser.name ?? '',
         (updatedUser.address ?? '') as `0x${string}`,
@@ -180,12 +178,12 @@ const submitForm = async (event: FormSubmitEvent<UserSchema>) => {
         updatedUser.imageUrl ?? ''
       )
       setTimeout(() => {
-        toastStore.addSuccessToast('Reloading page to reflect changes')
+        toast.add({ title: 'Reloading page to reflect changes', color: 'success' })
         window.location.reload()
       }, 2000)
     }
   } catch {
-    toastStore.addErrorToast('Failed to update user')
+    toast.add({ title: 'Failed to update user', color: 'error' })
   }
 }
 
@@ -199,6 +197,6 @@ const openExplorer = (address: string) => {
 
 const handleCurrencyChange = () => {
   currencyStore.setCurrency(selectedCurrency.value)
-  toastStore.addSuccessToast('Currency updated')
+  toast.add({ title: 'Currency updated', color: 'success' })
 }
 </script>

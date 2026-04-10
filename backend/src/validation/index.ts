@@ -15,6 +15,14 @@ export * from './schemas/expense';
 export * from './schemas/wage';
 export * from './schemas/auth';
 export * from './schemas/stats';
+export * from './schemas/team';
+export * from './schemas/storage';
+export * from './schemas/weeklyClaim';
+export * from './schemas/dev';
+export * from './schemas/actions';
+export * from './schemas/notification';
+export * from './schemas/elections';
+export * from './schemas/health';
 
 // Advanced validation utilities (Zod v4 best practices)
 export * from './utils';

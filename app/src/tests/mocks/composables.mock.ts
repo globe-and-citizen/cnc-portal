@@ -94,18 +94,22 @@ export const mockUseApolloQuery = {
  */
 export const mockTransactionFunctions = {
   mockSendTransaction: vi.fn(),
-  mockWriteContractAsync: vi.fn(),
+  mockMutateAsync: vi.fn(),
   mockWaitForTransactionReceipt: vi.fn()
 }
 
 /**
- * Mock native transaction composable
+ * Mock native transaction composable (TanStack mutation shape)
  */
 export const mockUseSafeSendTransaction = {
-  sendTransaction: mockTransactionFunctions.mockSendTransaction,
-  isLoading: ref(false),
-  isConfirmed: ref(false),
-  receipt: ref<{ status: string } | null>(null)
+  mutateAsync: mockTransactionFunctions.mockMutateAsync,
+  mutate: mockTransactionFunctions.mockSendTransaction,
+  isPending: ref(false),
+  isSuccess: ref(false),
+  isError: ref(false),
+  error: ref<Error | null>(null),
+  data: ref<{ hash: string; receipt: { status: string } } | null>(null),
+  reset: vi.fn()
 }
 
 /**
@@ -181,51 +185,6 @@ export const mockUseSafeDeployment = {
 }
 
 /**
- * Mock useGetDividendBalances composable
- */
-export const mockUseGetDividendBalances = {
-  data: ref([]),
-  isLoading: ref(false),
-  error: ref(null)
-}
-
-/**
- * Mock useClaimDividend composable (for native token claims)
- */
-export const mockUseClaimDividend = {
-  claimWrite: vi.fn(),
-  isLoading: ref(false),
-  error: ref(null)
-}
-
-/**
- * Mock useClaimTokenDividend composable (for token claims)
- */
-export const mockUseClaimTokenDividend = {
-  tokenClaimWrite: vi.fn(),
-  isLoading: ref(false),
-  error: ref(null)
-}
-
-/**
- * Mock useDepositDividends composable
- */
-export const mockUseDepositDividends = {
-  depositWrite: vi.fn(),
-  isLoading: ref(false),
-  error: ref(null)
-}
-
-/**
- * Mock useDepositTokenDividends composable
- */
-export const mockUseDepositTokenDividends = {
-  tokenDepositWrite: vi.fn(),
-  isLoading: ref(false),
-  error: ref(null)
-}
-
-/**
  * Mock useBodAddAction composable
  */
 export const mockUseBodAddAction = {
@@ -244,6 +203,17 @@ export const mockUseBodIsBodAction = {
 }
 
 /**
+ * Mock useSubmitRestriction composable
+ */
+export const mockUseSubmitRestriction = {
+  isRestricted: ref(false),
+  effectiveStatus: ref('enabled'),
+  canSubmitAnytime: ref(true),
+  checkRestriction: vi.fn().mockResolvedValue(false),
+  errorMessage: ref(null)
+}
+
+/**
  * Reset function for composable mocks
  */
 export const resetComposableMocks = () => {
@@ -253,9 +223,11 @@ export const resetComposableMocks = () => {
   mockUseContractBalance.dividends.value = []
 
   // Reset native transaction states
-  mockUseSafeSendTransaction.isLoading.value = false
-  mockUseSafeSendTransaction.isConfirmed.value = false
-  mockUseSafeSendTransaction.receipt.value = null
+  mockUseSafeSendTransaction.isPending.value = false
+  mockUseSafeSendTransaction.isSuccess.value = false
+  mockUseSafeSendTransaction.isError.value = false
+  mockUseSafeSendTransaction.error.value = null
+  mockUseSafeSendTransaction.data.value = null
 
   // Clear all native transaction function mocks
   Object.values(mockTransactionFunctions).forEach((mock) => {
@@ -266,7 +238,7 @@ export const resetComposableMocks = () => {
 
   // Set default mock return values for transactions
   mockTransactionFunctions.mockSendTransaction.mockResolvedValue({ hash: '0xnativetx' })
-  mockTransactionFunctions.mockWriteContractAsync.mockResolvedValue('0xtransfertx')
+  mockTransactionFunctions.mockMutateAsync.mockResolvedValue('0xtransfertx')
   mockTransactionFunctions.mockWaitForTransactionReceipt.mockResolvedValue({ status: 'success' })
 
   // Reset auth mock functions
@@ -320,35 +292,6 @@ export const resetComposableMocks = () => {
     mockUseSafeDeployment.deploySafe.mockClear()
   }
 
-  // Reset dividend-related composables
-  mockUseGetDividendBalances.data.value = []
-  mockUseGetDividendBalances.isLoading.value = false
-  mockUseGetDividendBalances.error.value = null
-
-  mockUseClaimDividend.isLoading.value = false
-  mockUseClaimDividend.error.value = null
-  if (vi.isMockFunction(mockUseClaimDividend.claimWrite)) {
-    mockUseClaimDividend.claimWrite.mockClear()
-  }
-
-  mockUseClaimTokenDividend.isLoading.value = false
-  mockUseClaimTokenDividend.error.value = null
-  if (vi.isMockFunction(mockUseClaimTokenDividend.tokenClaimWrite)) {
-    mockUseClaimTokenDividend.tokenClaimWrite.mockClear()
-  }
-
-  mockUseDepositDividends.isLoading.value = false
-  mockUseDepositDividends.error.value = null
-  if (vi.isMockFunction(mockUseDepositDividends.depositWrite)) {
-    mockUseDepositDividends.depositWrite.mockClear()
-  }
-
-  mockUseDepositTokenDividends.isLoading.value = false
-  mockUseDepositTokenDividends.error.value = null
-  if (vi.isMockFunction(mockUseDepositTokenDividends.tokenDepositWrite)) {
-    mockUseDepositTokenDividends.tokenDepositWrite.mockClear()
-  }
-
   mockUseBodAddAction.isLoading.value = false
   mockUseBodAddAction.error.value = null
   if (vi.isMockFunction(mockUseBodAddAction.addActionWrite)) {
@@ -358,6 +301,15 @@ export const resetComposableMocks = () => {
   mockUseBodIsBodAction.isBod.value = false
   mockUseBodIsBodAction.isLoading.value = false
   mockUseBodIsBodAction.error.value = null
+
+  // Reset submit restriction mock
+  mockUseSubmitRestriction.isRestricted.value = false
+  mockUseSubmitRestriction.effectiveStatus.value = 'enabled'
+  mockUseSubmitRestriction.canSubmitAnytime.value = true
+  mockUseSubmitRestriction.errorMessage.value = null
+  if (vi.isMockFunction(mockUseSubmitRestriction.checkRestriction)) {
+    mockUseSubmitRestriction.checkRestriction.mockClear()
+  }
 
   // Reset Apollo query mock
   mockUseApolloQuery.result.value = null

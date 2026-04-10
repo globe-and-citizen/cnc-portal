@@ -1,27 +1,22 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { mount, flushPromises } from '@vue/test-utils'
+import { mount } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
-import DistributeMintAction from '@/components/sections/SherTokenView/InvestorActions/DistributeMintAction.vue'
+import { nextTick } from 'vue'
 import type { Address } from 'viem'
-import { resetComposableMocks } from '@/tests/mocks'
+import DistributeMintAction from '@/components/sections/SherTokenView/InvestorActions/DistributeMintAction.vue'
+import { mockUseWriteContract, mockUseWaitForTransactionReceipt, mockLog } from '@/tests/mocks'
 
 describe('DistributeMintAction.vue', () => {
-  beforeEach(() => {
-    resetComposableMocks()
-    vi.clearAllMocks()
-  })
-
-  const createWrapper = (props = {}) => {
-    return mount(DistributeMintAction, {
+  const createWrapper = (props = {}) =>
+    mount(DistributeMintAction, {
       global: {
         plugins: [createTestingPinia({ createSpy: vi.fn })],
         stubs: {
-          // Stub UI and child components - will be tested separately
-          ButtonUI: true,
-          ModalComponent: true,
-          DistributeMintForm: true,
-          UIcon: true,
-          UTooltip: true
+          DistributeMintForm: {
+            props: ['loading', 'tokenSymbol'],
+            emits: ['submit'],
+            template: "<div data-test='distribute-mint-form' @click=\"\$emit('submit', [])\" />"
+          }
         }
       },
       props: {
@@ -30,112 +25,117 @@ describe('DistributeMintAction.vue', () => {
         ...props
       }
     })
-  }
 
-  it('renders without errors', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockUseWriteContract.error.value = null
+    mockUseWaitForTransactionReceipt.isLoading.value = false
+    mockUseWaitForTransactionReceipt.isSuccess.value = false
+  })
+
+  it('renders with coming soon tooltip', () => {
     const wrapper = createWrapper()
-    expect(wrapper.exists()).toBe(true)
+    expect(wrapper.classes()).toContain('tooltip')
+    expect(wrapper.attributes('data-tip')).toBe('Coming soon')
   })
 
-  it('accepts and uses correct props', () => {
-    const tokenSymbol = 'TEST'
-    const investorsAddress = '0xABCDEFABCDEFABCDEFABCDEFABCDEFABCDEFABCD' as Address
-
-    const wrapper = createWrapper({
-      tokenSymbol,
-      investorsAddress
-    })
-
-    expect(wrapper.exists()).toBe(true)
-  })
-
-  it('button is rendered in disabled state (coming soon)', () => {
+  it('renders action button as disabled', () => {
     const wrapper = createWrapper()
-
-    // Component should have a disabled button since feature is coming soon
-    expect(wrapper.exists()).toBe(true)
+    const button = wrapper.find('[data-test="distribute-mint-button"]')
+    expect(button.exists()).toBe(true)
+    expect(button.attributes('disabled')).toBeDefined()
   })
 
-  it('handles button click event', async () => {
-    const wrapper = createWrapper()
-
-    await wrapper.trigger('click')
-    await flushPromises()
-
-    expect(wrapper.exists()).toBe(true)
-  })
-
-  it('manages modal state on mount', () => {
-    const wrapper = createWrapper()
-
-    expect(wrapper.exists()).toBe(true)
-  })
-
-  it('processes different token symbols', () => {
+  it('accepts required props', () => {
     const wrapper = createWrapper({ tokenSymbol: 'USDC' })
-
     expect(wrapper.exists()).toBe(true)
   })
 
-  it('validation with various investor addresses', () => {
-    const address = '0x0000000000000000000000000000000000000001' as Address
-
-    const wrapper = createWrapper({
-      investorsAddress: address
-    })
-
-    expect(wrapper.exists()).toBe(true)
-  })
-
-  it('handles form submission state', async () => {
+  it('openModal mounts and shows the modal', async () => {
     const wrapper = createWrapper()
-
-    await wrapper.vm.$nextTick()
-    await flushPromises()
-
-    expect(wrapper.exists()).toBe(true)
+    await (wrapper.vm as unknown as { openModal: () => void }).openModal()
+    await nextTick()
+    expect(wrapper.find('[data-test="distribute-mint-form"]').exists()).toBe(true)
   })
 
-  it('emits refetchShareholders event on success', async () => {
+  it('closeModal unmounts the modal', async () => {
     const wrapper = createWrapper()
-
-    await wrapper.vm.$nextTick()
-
-    // Component should exist and be able to emit events
-    expect(wrapper.exists()).toBe(true)
+    const vm = wrapper.vm as unknown as { openModal: () => void; closeModal: () => void }
+    await vm.openModal()
+    await nextTick()
+    await vm.closeModal()
+    await nextTick()
+    expect(wrapper.find('[data-test="distribute-mint-form"]').exists()).toBe(false)
   })
 
-  it('displays success toast notification', async () => {
+  it('handleSubmit calls distributeMint when form submits', async () => {
     const wrapper = createWrapper()
-
-    await wrapper.vm.$nextTick()
-    await flushPromises()
-
-    expect(wrapper.exists()).toBe(true)
+    const vm = wrapper.vm as unknown as { openModal: () => void }
+    await vm.openModal()
+    await nextTick()
+    await wrapper.find('[data-test="distribute-mint-form"]').trigger('click')
+    expect(mockUseWriteContract.mutate).toHaveBeenCalled()
   })
 
-  it('handles loading state transitions', async () => {
+  it('handleSubmit returns early when investorsAddress is empty', async () => {
+    const wrapper = createWrapper({ investorsAddress: '' as Address })
+    const vm = wrapper.vm as unknown as {
+      handleSubmit: (shareholders: ReadonlyArray<{ shareholder: Address; amount: bigint }>) => void
+    }
+    vm.handleSubmit([{ shareholder: '0xabc' as Address, amount: 100n }])
+    expect(mockUseWriteContract.mutate).not.toHaveBeenCalled()
+  })
+
+  it('watch distributeMintError logs the error', async () => {
     const wrapper = createWrapper()
-
-    await wrapper.vm.$nextTick()
-
-    expect(wrapper.exists()).toBe(true)
+    mockUseWriteContract.error.value = new Error('distribute failed') as never
+    await nextTick()
+    expect(mockLog.error).toHaveBeenCalled()
+    wrapper.unmount()
   })
 
-  it('accepts tokenSymbol as required prop', () => {
-    const wrapper = createWrapper({ tokenSymbol: 'CUSTOM' })
-
-    expect(wrapper.exists()).toBe(true)
-  })
-
-  it('manages component lifecycle correctly', async () => {
+  it('watch isConfirming+isSuccess emits refetchShareholders and closes modal', async () => {
     const wrapper = createWrapper()
+    const vm = wrapper.vm as unknown as { openModal: () => void }
+    await vm.openModal()
+    await nextTick()
+    mockUseWaitForTransactionReceipt.isLoading.value = false
+    mockUseWaitForTransactionReceipt.isSuccess.value = true
+    await nextTick()
+    expect(wrapper.emitted('refetchShareholders')).toBeTruthy()
+  })
 
-    expect(wrapper.exists()).toBe(true)
+  it('watch modalState.show=false triggers closeModal', async () => {
+    const wrapper = createWrapper()
+    const vm = wrapper.vm as unknown as {
+      openModal: () => void
+      modalState: { mount: boolean; show: boolean }
+    }
+    await vm.openModal()
+    await nextTick()
+    vm.modalState.show = false
+    await nextTick()
+    expect(vm.modalState.mount).toBe(false)
+  })
 
-    await wrapper.unmount()
+  it('v-model update:open handler resets modal state', async () => {
+    const wrapper = createWrapper()
+    const vm = wrapper.vm as unknown as { openModal: () => void }
+    await vm.openModal()
+    await nextTick()
+    const modal = wrapper.findComponent({ name: 'UModal' })
+    await modal.vm.$emit('update:open', false)
+    await nextTick()
+    expect(wrapper.find('[data-test="distribute-mint-form"]').exists()).toBe(false)
+  })
 
-    // Component should unmount successfully
-    expect(wrapper.exists()).toBe(false)
+  it('form loading prop reflects isConfirming state', async () => {
+    const wrapper = createWrapper()
+    const vm = wrapper.vm as unknown as { openModal: () => void }
+    await vm.openModal()
+    await nextTick()
+    mockUseWaitForTransactionReceipt.isLoading.value = true
+    await nextTick()
+    expect(wrapper.find('[data-test="distribute-mint-form"]').exists()).toBe(true)
   })
 })

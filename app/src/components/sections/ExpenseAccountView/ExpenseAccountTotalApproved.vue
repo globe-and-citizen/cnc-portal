@@ -1,10 +1,10 @@
 <template>
-  <OverviewCard :title="10" subtitle="Total Approved" variant="info" :card-icon="personIcon">
+  <OverviewCard :title="10" subtitle="Total Approved" color="info" :card-icon="personIcon">
     <div class="flex flex-row gap-1 text-black">
       <img :src="uptrendIcon" alt="status-icon" />
       <div>
-        <span class="font-semibold text-sm" data-test="percentage-increase">+ 12.3% </span>
-        <span class="font-medium text-[#637381] text-xs">TODO: Update this</span>
+        <span class="text-sm font-semibold" data-test="percentage-increase">+ 12.3% </span>
+        <span class="text-xs font-medium text-[#637381]">TODO: Update this</span>
         <!-- <span class="font-medium text-[#637381] text-xs">than last week</span> -->
       </div>
     </div>

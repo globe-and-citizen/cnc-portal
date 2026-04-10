@@ -1,4 +1,3 @@
-import { useToastStore } from '@/stores/useToastStore'
 import type { ContractType } from '@/types'
 // import type { Team } from '@/types/team'
 import { log } from '@/utils/generalUtil'
@@ -9,7 +8,7 @@ import { useGetTeamQuery } from '@/queries/team.queries'
 
 export const useTeamStore = defineStore('team', () => {
   const currentTeamId = ref<string | null>(null)
-  const { addErrorToast } = useToastStore()
+  const toast = useToast()
 
   /**
    * @description Fetch team by id using TanStack Query
@@ -39,7 +38,7 @@ export const useTeamStore = defineStore('team', () => {
   watch(currentTeamMeta.error, () => {
     if (currentTeamMeta.error.value) {
       log.error('Failed to load user team \n', currentTeamMeta.error.value)
-      addErrorToast('Failed to load user team')
+      toast.add({ title: 'Failed to load user team', color: 'error' })
     }
   })
 

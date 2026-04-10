@@ -5,7 +5,8 @@
     "vitest.config.*",
     "cypress.config.*",
     "nightwatch.conf.*",
-    "playwright.config.*"
+    "playwright.config.*",
+    "./src/tests/stubs/nuxt-ui.stubs.ts"
   ],
   "compilerOptions": {
     "composite": true,

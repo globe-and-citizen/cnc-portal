@@ -1,12 +1,12 @@
 <template>
   <div
-    class="bg-base-100 card border border-gray-300 flex flex-col relative"
+    class="bg-base-100 card relative flex flex-col border border-gray-300"
     :class="{ 'border-warning': isElectionWinner }"
   >
     <!-- Winner Badge (aligned to straddle border) -->
     <div
       v-if="isElectionWinner"
-      class="absolute top-0 -translate-y-1/2 right-0 -translate-x-1/4 z-10 badge badge-warning badge-lg gap-2 shadow-lg border-2 border-base-100"
+      class="badge badge-warning badge-lg border-base-100 absolute top-0 right-0 z-10 -translate-x-1/4 -translate-y-1/2 gap-2 border-2 shadow-lg"
     >
       <span class=""> Winner </span>
     </div>
@@ -15,7 +15,7 @@
       <UserComponent layout="alternate" :user="election.user" />
 
       <!-- Votes Stat - Right-aligned below UserComponent -->
-      <div class="flex justify-end mt-2">
+      <div class="mt-2 flex justify-end">
         <span class="text-lg font-bold text-gray-700">
           {{ election.currentVotes }}/{{ election.totalVotes }}
         </span>
@@ -30,20 +30,18 @@
       <!-- Conditional Button/Indicator -->
       <div
         v-if="hasVoted && voterChoice === election.user.address"
-        class="inline-flex items-center justify-center gap-2 py-3 px-6 rounded-full border-2 border-warning text-warning font-bold text-base h-12"
+        class="border-warning text-warning inline-flex h-12 items-center justify-center gap-2 rounded-full border-2 px-6 py-3 text-base font-bold"
       >
         <IconifyIcon icon="heroicons-solid:check" class="h-5 w-5" />
         <span>Your Vote</span>
       </div>
 
       <!-- View Results Button -->
-      <ButtonUI
+      <UButton
         v-else
-        variant="success"
-        :outline="true"
-        :disabled="
-          hasVoted || electionStatus?.text === 'Upcoming' || electionStatus?.text === 'Completed'
-        "
+        color="success"
+        variant="outline"
+        :disabled="isVoteDisabled"
         :loading="isLoadingCastVoteLocal && isLoading"
         @click="
           () => {
@@ -51,14 +49,13 @@
             emits('castVote', election.user.address)
           }
         "
-        >Cast a Vote</ButtonUI
-      >
+        label="Cast a Vote"
+      />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import ButtonUI from '@/components/ButtonUI.vue'
 import UserComponent from './UserComponent.vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import { computed, watch, type PropType, ref } from 'vue'
@@ -117,6 +114,13 @@ const { data: electionResults } = useReadContract({
   abi: ELECTIONS_ABI,
   args: [props.election.id]
 })
+
+const isVoteDisabled = computed(
+  () =>
+    hasVoted.value === true ||
+    electionStatus.value?.text === 'Upcoming' ||
+    electionStatus.value?.text === 'Completed'
+)
 
 const isElectionWinner = computed(
   () =>

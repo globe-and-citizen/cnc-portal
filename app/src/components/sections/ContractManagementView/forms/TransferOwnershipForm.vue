@@ -2,12 +2,11 @@
   <div class="flex flex-col gap-5">
     <!-- Step 1: Select Owner -->
     <div v-if="currentStep === 1 && !isBodAction" data-test="step-1">
-      <span class="font-bold text-xl mb-4">Transfer ownership</span>
       <p class="mt-4">Do you want to transfer ownership to the BOD or to a member?</p>
       <hr class="mt-6" />
 
       <!-- Selectable Cards Container -->
-      <div class="flex gap-4 mt-6">
+      <div class="mt-6 flex gap-4">
         <!-- BOD Card -->
         <TransferOptionCard
           label="Transfer to BOD"
@@ -29,7 +28,7 @@
     <div v-if="currentStep === 2">
       <!-- Transfer to BOD -->
       <div v-if="selectedOption === 'bod'" data-test="step-2">
-        <span class="font-bold text-xl mb-6">Recap of the transfer ownership</span>
+        <span class="mb-6 text-xl font-bold">Recap of the transfer ownership</span>
         <p class="mt-4">
           You will transfer ownership to the BOD. Only the members of the BOD will be able to manage
           this contract.
@@ -45,7 +44,7 @@
 
         <div class="h-20">
           <UserComponent
-            class="bg-base-200 rounded-lg p-4 grow hover:cursor-pointer"
+            class="bg-base-200 grow rounded-lg p-4 hover:cursor-pointer"
             v-if="input.address"
             :user="input"
           />
@@ -60,46 +59,39 @@
           only-team-members
           @selectMember="selectMember"
         />
-        <div
-          class="text-red-500 text-sm w-full text-left"
-          v-for="error of $v.input.address.$errors"
-          :key="error.$uid"
-        >
-          {{ error.$message }}
-        </div>
+        <UAlert v-if="addressError" color="error" :description="addressError" class="mt-2" />
       </div>
     </div>
 
     <!-- Navigation Buttons -->
     <div v-if="currentStep == 1" class="mt-6">
-      <ButtonUI variant="primary" class="w-full" data-test="next-button" @click="handleContinue">
+      <UButton color="primary" class="w-full" data-test="next-button" @click="handleContinue">
         Continue
-      </ButtonUI>
+      </UButton>
     </div>
     <div
       v-if="currentStep == 2"
-      class="flex mt-6"
+      class="mt-6 flex"
       :class="{ 'justify-end': isBodAction, 'justify-between': !isBodAction }"
     >
-      <ButtonUI v-if="!isBodAction" variant="error" @click="currentStep--" data-test="back-button">
+      <UButton v-if="!isBodAction" color="error" @click="currentStep--" data-test="back-button">
         <span><IconifyIcon icon="heroicons:arrow-left" /></span> Back
-      </ButtonUI>
-      <ButtonUI
+      </UButton>
+      <UButton
         :loading="loading"
-        variant="primary"
+        color="primary"
         data-test="transfer-ownership-button"
         @click="handleTransferOwnership"
         :disabled="loading"
       >
         Transfer Ownership
-      </ButtonUI>
+      </UButton>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import ButtonUI from '@/components/ButtonUI.vue'
 import SelectMemberInput from '@/components/utils/SelectMemberInput.vue'
 import { onClickOutside } from '@vueuse/core'
 import { Icon as IconifyIcon } from '@iconify/vue'
@@ -107,8 +99,7 @@ import TransferOptionCard from '../TransferOptionCard.vue'
 import { useTeamStore } from '@/stores'
 import { isAddress, type Address } from 'viem'
 import BodAlert from '@/components/BodAlert.vue'
-import { helpers } from '@vuelidate/validators'
-import { useVuelidate } from '@vuelidate/core'
+import { z } from 'zod'
 import type { User } from '@/types'
 import UserComponent from '@/components/UserComponent.vue'
 
@@ -118,16 +109,20 @@ const teamStore = useTeamStore()
 
 // Refs
 const selectedOption = ref<'bod' | 'member' | null>(null)
-const showDropdown = ref(false)
 const formRef = ref<HTMLElement | null>(null)
 const input = ref({ name: '', address: '' })
 const currentStep = ref(1)
-// Validation Rules
+const addressError = ref('')
+
+const addressSchema = z.string().refine((v) => selectedOption.value !== 'member' || isAddress(v), {
+  message: 'Invalid address'
+})
 
 // Functions
 const selectMember = (user: User) => {
   //@ts-expect-error: Type mismatch
   input.value = { name: user.name, address: user.address, imageUrl: user.imageUrl }
+  addressError.value = ''
 }
 
 const handleContinue = () => {
@@ -136,23 +131,13 @@ const handleContinue = () => {
   }
 }
 
-const addressValidIfMember = helpers.withMessage(
-  'Invalid address',
-  (value: string) => selectedOption.value !== 'member' || isAddress(value)
-)
-const rules = {
-  input: {
-    address: {
-      addressValidIfMember
-    }
-  }
-}
-
-const $v = useVuelidate(rules, { input })
-
 const handleTransferOwnership = () => {
-  $v.value.$touch()
-  if ($v.value.$invalid) return
+  const result = addressSchema.safeParse(input.value.address)
+  if (!result.success) {
+    addressError.value = result.error.message
+    return
+  }
+  addressError.value = ''
   if (selectedOption.value === 'member') {
     emits('transfer-ownership', input.value.address as Address)
   } else if (selectedOption.value === 'bod') {
@@ -166,8 +151,6 @@ onMounted(() => {
     currentStep.value = 2
     selectedOption.value = 'member'
   }
-  onClickOutside(formRef, () => {
-    showDropdown.value = false
-  })
+  onClickOutside(formRef, () => {})
 })
 </script>

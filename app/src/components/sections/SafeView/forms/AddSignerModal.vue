@@ -1,33 +1,45 @@
 <template>
-  <ModalComponent v-model="isOpen" @reset="handleClose" data-test="add-signer-modal">
-    <div class="flex flex-col gap-5 max-w-2xl">
-      <div class="flex items-center justify-between">
-        <h2 class="font-bold text-2xl">Add Safe Signers</h2>
-      </div>
-
-      <hr />
-
-      <div class="space-y-6">
+  <UModal
+    v-model:open="isOpen"
+    title="Add Safe Signers"
+    description="Add one or more new signers to the Safe and manage multisig approval rules."
+    :close="{ onClick: () => handleClose() }"
+    data-test="add-signer-modal"
+  >
+    <template #body>
+      <UAlert
+        v-if="errorMessage"
+        color="error"
+        variant="soft"
+        :description="errorMessage"
+        class="mb-4"
+      />
+      <UForm
+        :schema="formSchema"
+        :state="formState"
+        class="max-w-2xl space-y-6"
+        @submit="handleAddSigners"
+      >
         <!-- Add Signers Section -->
-        <div>
+        <UFormField name="newSigners" class="w-full">
           <MultiSelectMemberInput
             v-model="newSigners"
             :disable-team-members="false"
             :current-safe-owners="props.currentOwners"
             data-test="new-signers-input"
           />
-        </div>
+        </UFormField>
 
         <!-- Summary -->
-        <div v-if="newSigners.length > 0" class="bg-gray-50 rounded-lg p-4">
-          <h4 class="font-semibold mb-2">Summary</h4>
-          <div class="text-sm text-gray-700 space-y-1">
+        <div v-if="newSigners.length > 0" class="rounded-lg bg-gray-50 p-4">
+          <h4 class="mb-2 font-semibold">Summary</h4>
+          <div class="space-y-1 text-sm text-gray-700">
             <div class="flex items-center gap-2">
-              <IconifyIcon icon="heroicons:plus-circle" class="w-4 h-4 text-green-600" />
+              <IconifyIcon icon="heroicons:plus-circle" class="h-4 w-4 text-green-600" />
               Adding {{ newSigners.length }} new signer{{ newSigners.length > 1 ? 's' : '' }}
             </div>
             <div class="flex items-center gap-2">
-              <IconifyIcon icon="heroicons:users" class="w-4 h-4 text-blue-600" />
+              <IconifyIcon icon="heroicons:users" class="h-4 w-4 text-blue-600" />
               Total signers after update: {{ totalSignersAfterUpdate }}
             </div>
           </div>
@@ -36,15 +48,15 @@
         <!-- Transaction Note -->
         <div
           v-if="requiresProposal && newSigners.length > 0"
-          class="bg-yellow-50 border border-yellow-200 rounded-lg p-4"
+          class="rounded-lg border border-yellow-200 bg-yellow-50 p-4"
         >
           <div class="flex items-start gap-2">
             <IconifyIcon
               icon="heroicons:exclamation-triangle"
-              class="w-5 h-5 text-yellow-600 mt-0.5"
+              class="mt-0.5 h-5 w-5 text-yellow-600"
             />
             <div class="text-sm text-yellow-800">
-              <p class="font-semibold mb-1">Multi-signature Required</p>
+              <p class="mb-1 font-semibold">Multi-signature Required</p>
               <p>
                 This transaction requires approval from {{ currentThreshold }} signers before
                 execution.
@@ -53,41 +65,43 @@
           </div>
         </div>
         <!-- Action Buttons -->
-        <div class="flex justify-end gap-3 pt-4 border-t">
-          <ButtonUI
+        <div class="flex justify-end gap-3 border-t pt-4">
+          <UButton
+            color="neutral"
             variant="ghost"
+            type="button"
             @click="handleClose"
             :disabled="isLoading"
             data-test="cancel-button"
           >
             Cancel
-          </ButtonUI>
+          </UButton>
 
-          <ButtonUI
-            variant="primary"
-            @click="handleAddSigners"
+          <UButton
+            color="primary"
+            type="submit"
             :disabled="!canSubmit || isLoading"
             :loading="isLoading"
             data-test="add-signers-button"
           >
             {{ requiresProposal ? 'Propose' : 'Execute' }} Add Signers
-          </ButtonUI>
+          </UButton>
         </div>
-      </div>
-    </div>
-  </ModalComponent>
+      </UForm>
+    </template>
+  </UModal>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { z } from 'zod'
 import { type Address, isAddress } from 'viem'
-import ModalComponent from '@/components/ModalComponent.vue'
-import ButtonUI from '@/components/ButtonUI.vue'
 import MultiSelectMemberInput from '@/components/utils/MultiSelectMemberInput.vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
-import { useToastStore } from '@/stores'
+
 import { useSafeOwnerManagement } from '@/composables/safe'
 import type { User } from '@/types'
+import { useToast } from '@nuxt/ui/composables'
 
 interface Props {
   safeAddress: Address
@@ -102,14 +116,23 @@ const emit = defineEmits<{
   'close-modal': []
 }>()
 
+const toast = useToast()
+const errorMessage = ref('')
+
 // Stores and composables
-const { addSuccessToast, addErrorToast } = useToastStore()
 const { isUpdating: isLoading, updateOwners } = useSafeOwnerManagement()
 
 // Modal state
 const isOpen = defineModel<boolean>({ default: false })
 
 const newSigners = ref<User[]>([])
+
+// Transform newSigners to match form schema expectations
+const formState = computed(() => ({
+  newSigners: newSigners.value.map((signer) => ({
+    address: signer.address || ''
+  }))
+}))
 
 // Computed values
 const totalSignersAfterUpdate = computed(() => {
@@ -139,6 +162,19 @@ const canSubmit = computed(() => {
   return validNewSigners.value.length > 0
 })
 
+const formSchema = computed(() =>
+  z.object({
+    newSigners: z
+      .array(
+        z.object({
+          address: z.string().refine((address) => isAddress(address), 'Invalid signer address')
+        })
+      )
+      .min(1, 'Please add at least one signer')
+      .refine(() => validNewSigners.value.length > 0, 'Please add at least one valid signer')
+  })
+)
+
 // Watch for validation issues (simplified since prevention is handled by hiddenMembers)
 watch(
   newSigners,
@@ -151,7 +187,7 @@ watch(
 
     // Remove invalid signers automatically
     if (existingOwners.length > 0) {
-      addErrorToast(`Cannot add existing signers`)
+      errorMessage.value = 'Cannot add existing signers'
       newSigners.value = newSigners.value.filter((signer) => {
         const isExistingOwner = props.currentOwners.some(
           (owner) => owner.toLowerCase() === signer.address?.toLowerCase()
@@ -166,10 +202,11 @@ watch(
 
 const handleAddSigners = async () => {
   if (!canSubmit.value) {
-    addErrorToast('Please add at least one valid signer')
+    errorMessage.value = 'Please add at least one valid signer'
     return
   }
 
+  errorMessage.value = ''
   try {
     const ownersToAdd = validNewSigners.value.map((signer) => signer.address as string)
 
@@ -182,23 +219,23 @@ const handleAddSigners = async () => {
       const message = requiresProposal.value
         ? 'Signer addition proposal submitted successfully'
         : 'Signers added successfully'
-      addSuccessToast(message)
+      toast.add({ title: 'Success', description: message, color: 'success' })
 
       emit('signer-added')
       handleClose()
     }
   } catch (error) {
     console.error('Failed to add signers:', error)
-    const message =
+    errorMessage.value =
       error instanceof Error && error.message
         ? `Failed to add signers: ${error.message}`
         : 'Failed to add signers'
-    addErrorToast(message)
   }
 }
 
 const handleClose = () => {
   newSigners.value = []
+  errorMessage.value = ''
   isOpen.value = false
   emit('close-modal')
 }

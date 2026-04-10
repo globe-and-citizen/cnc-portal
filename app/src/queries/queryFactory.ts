@@ -22,7 +22,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import type { QueryKey, UseQueryOptions, UseMutationOptions } from '@tanstack/vue-query'
 import apiClient from '@/lib/axios'
 import type { MaybeRefOrGetter } from 'vue'
-import { toValue } from 'vue'
+import { computed, toValue } from 'vue'
 import type { AxiosError, AxiosRequestConfig } from 'axios'
 
 // ============================================================================
@@ -196,8 +196,10 @@ export function createQueryHook<TResponse, TParams extends BaseQueryParams>(
   config: QueryConfig<TResponse, TParams>
 ) {
   return (params: TParams) => {
+    const reactiveQueryKey = computed(() => config.queryKey(params))
+
     return useQuery<TResponse, AxiosError>({
-      queryKey: config.queryKey(params),
+      queryKey: reactiveQueryKey,
       queryFn: async () => {
         const url = buildEndpoint(config.endpoint, params)
         const requestConfig = buildRequestConfig(params)

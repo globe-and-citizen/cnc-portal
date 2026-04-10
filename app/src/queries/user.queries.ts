@@ -3,6 +3,7 @@ import type { MaybeRefOrGetter } from 'vue'
 import { toValue } from 'vue'
 import type { Address } from 'viem'
 import { createQueryHook, createMutationHook, queryPresets } from './queryFactory'
+import { teamKeys } from './team.queries'
 
 /**
  * Query key factory for user-related queries
@@ -49,7 +50,7 @@ export interface UpdateUserParams {
 export const useUpdateUserMutation = createMutationHook<User, UpdateUserParams>({
   method: 'PUT',
   endpoint: 'user/{address}',
-  invalidateKeys: (params) => [userKeys.detail(params.pathParams.address as Address)]
+  invalidateKeys: (params) => [userKeys.detail(params.pathParams.address as Address), teamKeys.all]
 })
 
 // ============================================================================

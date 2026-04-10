@@ -1,15 +1,12 @@
 <template>
   <div class="flex flex-col gap-4">
-    <h2>Distribute Mint</h2>
-
-    <h3>Please input the amounts to mint to the shareholders</h3>
     <div class="flex flex-col gap-6">
       <div v-for="(shareholder, index) in shareholderWithAmounts" :key="index">
         <h4 class="badge badge-primary">Shareholder {{ index + 1 }}</h4>
-        <label class="input input-bordered flex items-center gap-2 input-md mt-2 w-full">
+        <label class="input input-bordered input-md mt-2 flex w-full items-center gap-2">
           <p>Address</p>
           |
-          <input
+          <UInput
             type="text"
             class="grow"
             data-test="address-input"
@@ -32,7 +29,7 @@
           :key="index"
           v-if="showDropdown[index]"
         >
-          <ul class="p-2 shadow-sm menu dropdown-content z-1 bg-base-100 rounded-box w-96">
+          <ul class="menu dropdown-content bg-base-100 rounded-box z-1 w-96 p-2 shadow-sm">
             <li v-for="user in usersData?.users" :key="user.address">
               <a
                 data-test="found-user"
@@ -50,35 +47,39 @@
             </li>
           </ul>
         </div>
-        <div
-          class="pl-4 text-red-500 text-sm w-full text-left"
-          v-for="error of $v.shareholderWithAmounts.$errors[0]?.$response.$errors[index]
-            .shareholder"
+        <span
+          v-if="rowErrors[index]?.shareholder"
+          class="block w-full pl-4 text-left text-sm text-red-500"
           data-test="error-message-shareholder"
-          :key="error.$uid"
         >
-          {{ error.$message }}
-        </div>
-        <label class="input input-bordered flex items-center gap-2 input-md mt-2 w-full">
+          {{ rowErrors[index].shareholder }}
+        </span>
+
+        <label class="input input-bordered input-md mt-2 flex w-full items-center gap-2">
           <p>Amount</p>
           |
-          <input type="number" class="grow" data-test="amount-input" v-model="shareholder.amount" />
+          <UInput
+            type="number"
+            class="grow"
+            data-test="amount-input"
+            :model-value="shareholder.amount"
+            @update:model-value="(v: string | number) => (shareholder.amount = Number(v))"
+          />
           {{ tokenSymbol }}
         </label>
-        <div
-          class="pl-4 text-red-500 text-sm w-full text-left"
+        <span
+          v-if="rowErrors[index]?.amount"
+          class="block w-full pl-4 text-left text-sm text-red-500"
           data-test="error-message-amount"
-          v-for="error of $v.shareholderWithAmounts.$errors[0]?.$response.$errors[index].amount"
-          :key="error.$uid"
         >
-          {{ error.$message }}
-        </div>
+          {{ rowErrors[index].amount }}
+        </span>
       </div>
     </div>
 
     <div class="flex justify-end pt-3">
       <div
-        class="w-6 h-6 cursor-pointer"
+        class="h-6 w-6 cursor-pointer"
         @click="
           () => {
             shareholderWithAmounts.push({ shareholder: '', amount: 0 })
@@ -90,7 +91,7 @@
         <IconifyIcon icon="heroicons-outline:plus-circle" class="size-6 text-green-700" />
       </div>
       <div
-        class="w-6 h-6 cursor-pointer"
+        class="h-6 w-6 cursor-pointer"
         @click="
           () => {
             shareholderWithAmounts.length > 1 && shareholderWithAmounts.pop()
@@ -104,76 +105,75 @@
     </div>
 
     <div class="text-center">
-      <ButtonUI
+      <UButton
         :loading="loading"
         :disabled="loading"
-        variant="primary"
+        color="primary"
         class="w-44 text-center"
         @click="onSubmit()"
         data-test="submit-button"
-      >
-        Distribute Mint
-      </ButtonUI>
+        label="Distribute Mint"
+      />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import ButtonUI from '@/components/ButtonUI.vue'
 import { useGetSearchUsersQuery } from '@/queries/user.queries'
-import { useToastStore } from '@/stores'
 import { log } from '@/utils'
 import { Icon as IconifyIcon } from '@iconify/vue'
-import useVuelidate from '@vuelidate/core'
-import { helpers, numeric, required } from '@vuelidate/validators'
+import { z } from 'zod'
 import { parseUnits, isAddress } from 'viem'
-import { ref, watch } from 'vue'
-import { reactive } from 'vue'
+import { ref, watch, reactive } from 'vue'
 
-const { addErrorToast } = useToastStore()
+const toast = useToast()
 const emits = defineEmits(['submit'])
 defineProps<{
   tokenSymbol: string
   loading: boolean
 }>()
+
 const shareholderWithAmounts = reactive<{ shareholder: string; amount: number }[]>([
   { shareholder: '', amount: 0 }
 ])
-const rules = {
-  shareholderWithAmounts: {
-    $each: helpers.forEach({
-      shareholder: {
-        required: helpers.withMessage('Address is required', required),
-        isAddress: helpers.withMessage('Invalid address', (value: string) => isAddress(value))
-      },
-      amount: {
-        required: helpers.withMessage('Amount is required', required),
-        numeric: helpers.withMessage('Amount must be a number', numeric),
-        minValue: helpers.withMessage('Amount must be greater than 0', (value: number) => value > 0)
-      }
-    })
-  }
-}
-const $v = useVuelidate(rules, { shareholderWithAmounts })
-const onSubmit = () => {
-  $v.value.$touch()
 
-  if ($v.value.$invalid) return
+const rowErrors = ref<{ shareholder?: string; amount?: string }[]>([{}])
+
+const rowSchema = z.object({
+  shareholder: z
+    .string()
+    .min(1, 'Address is required')
+    .refine((v) => isAddress(v), 'Invalid address'),
+  amount: z.number().refine((v) => v > 0, 'Amount must be greater than 0')
+})
+
+const onSubmit = () => {
+  rowErrors.value = shareholderWithAmounts.map((item) => {
+    const result = rowSchema.safeParse(item)
+    if (result.success) return {}
+    const errs: { shareholder?: string; amount?: string } = {}
+    for (const issue of result.error.issues) {
+      const field = issue.path[0] as 'shareholder' | 'amount'
+      if (!errs[field]) errs[field] = issue.message
+    }
+    return errs
+  })
+
+  const hasErrors = rowErrors.value.some((e) => e.shareholder || e.amount)
+  if (hasErrors) return
+
   emits(
     'submit',
-    shareholderWithAmounts.map((shareholder) => {
-      return {
-        shareholder: shareholder.shareholder,
-        amount: parseUnits(shareholder.amount?.toString() ?? '0', 6)
-      }
-    })
+    shareholderWithAmounts.map((shareholder) => ({
+      shareholder: shareholder.shareholder,
+      amount: parseUnits(shareholder.amount?.toString() ?? '0', 6)
+    }))
   )
 }
 
 const search = ref('')
 const showDropdown = ref<boolean[]>([false])
 
-// Use TanStack Query for user search
 const { data: usersData, error: errorSearchUser } = useGetSearchUsersQuery({
   queryParams: { search, limit: 100 }
 })
@@ -181,7 +181,7 @@ const { data: usersData, error: errorSearchUser } = useGetSearchUsersQuery({
 watch(errorSearchUser, (value) => {
   if (value) {
     log.error('Failed to search users', value)
-    addErrorToast('Failed to search users')
+    toast.add({ title: 'Failed to search users', color: 'error' })
   }
 })
 
@@ -189,6 +189,5 @@ const searchUsers = async (input: string) => {
   if (input !== search.value && input.length > 0) {
     search.value = input
   }
-  // TanStack Query automatically refetches when the `search` ref changes
 }
 </script>

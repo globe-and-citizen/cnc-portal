@@ -1,12 +1,17 @@
 export * from './errorUtil'
+export * from './classifyError'
 export * from './generalUtil'
 export * from './constantUtil'
 export * from './currencyUtil'
 export * from './expenseUtil'
+export * from './wageUtil'
 export * from './contractManagementUtil'
+export * from './contractDeploymentUtil'
 export * from './web3Util'
 export * from './safe'
 export * from './fileUtil'
+// SafeDepositRouter utilities
+export * from './safeDepositRouterUtil'
 /**
  * Utility function to wait for a condition to be met
  * @description This function repeatedly checks a condition until it returns true or a timeout occurs.

@@ -23,8 +23,6 @@ vi.mock('@/composables/bod/reads', () => ({
  * Mock all BOD write composables
  */
 vi.mock('@/composables/bod/writes', () => ({
-  useBodPause: vi.fn(() => mockBODWrites.pause),
-  useBodUnpause: vi.fn(() => mockBODWrites.unpause),
   useBodSetBoardOfDirectors: vi.fn(() => mockBODWrites.setBoard),
   useBodAddAction: vi.fn(() => mockBodAddAction),
   useBodApproveAction: vi.fn(() => mockBODWrites.approve)

@@ -8,8 +8,7 @@ describe('GenericTokenHoldingsSection', () => {
       props: { address: '0x123' },
       global: {
         components: {
-          TableComponent: { template: '<div class="table"><slot /></div>' },
-          CardComponent: { template: '<div class="card"><slot /></div>' }
+          TableComponent: { template: '<div class="table"><slot /></div>' }
         }
       }
     })

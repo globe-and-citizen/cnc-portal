@@ -4,7 +4,7 @@ import { nextTick, ref, defineComponent } from 'vue'
 import { useStorage } from '@vueuse/core'
 import type { Address } from 'viem'
 import SafeBalanceSection from '../SafeBalanceSection.vue'
-import { mockUseContractBalance } from '@/tests/mocks'
+import { mockUseContractBalance, mockUseAccount } from '@/tests/mocks'
 
 // Mock @iconify/vue
 vi.mock('@iconify/vue', () => ({
@@ -23,7 +23,7 @@ const {
   mockUseTeamStore,
   mockUseCurrencyStore,
   mockUseUserDataStore,
-  mockUseToastStore,
+
   mockuseGetSafeInfoQuery,
   mockQueryClient,
   mockUseSafeTransfer
@@ -34,7 +34,6 @@ const {
   mockUseTeamStore: vi.fn(),
   mockUseCurrencyStore: vi.fn(),
   mockUseUserDataStore: vi.fn(),
-  mockUseToastStore: vi.fn(),
   mockuseGetSafeInfoQuery: vi.fn(),
   mockQueryClient: {
     invalidateQueries: vi.fn()
@@ -60,9 +59,13 @@ vi.mock('@/composables/safe', async (importOriginal) => {
   }
 })
 
-vi.mock('@vueuse/core', () => ({
-  useStorage: vi.fn()
-}))
+vi.mock('@vueuse/core', async () => {
+  const actual = await vi.importActual<typeof import('@vueuse/core')>('@vueuse/core')
+  return {
+    ...actual,
+    useStorage: vi.fn()
+  }
+})
 
 vi.mock('@/queries/safe.queries', () => ({
   useGetSafeInfoQuery: mockuseGetSafeInfoQuery
@@ -140,27 +143,8 @@ const MOCK_DATA = {
   }
 } as const
 
-// Component stubs
-const CardStub = defineComponent({
-  template: '<div data-test="card-component"><slot /></div>'
-})
-
-const ButtonStub = defineComponent({
-  emits: ['click'],
-  template: '<button data-test="button" @click="$emit(\'click\')"><slot /></button>'
-})
-
 const AddressToolTipStub = defineComponent({
   template: '<div data-test="address-tooltip"></div>'
-})
-
-const ModalStub = defineComponent({
-  props: ['modelValue'],
-  template: '<div data-test="modal" v-if="modelValue"><slot /></div>'
-})
-
-const DepositBankFormStub = defineComponent({
-  template: '<div data-test="deposit-bank-form">Deposit Form</div>'
 })
 
 const TransferFormStub = defineComponent({
@@ -184,11 +168,7 @@ describe('SafeBalanceSection', () => {
       props,
       global: {
         stubs: {
-          CardComponent: CardStub,
-          ButtonUI: ButtonStub,
           AddressToolTip: AddressToolTipStub,
-          ModalComponent: ModalStub,
-          DepositBankForm: DepositBankFormStub,
           TransferForm: TransferFormStub
         }
       }
@@ -208,6 +188,8 @@ describe('SafeBalanceSection', () => {
       data: mockSafeInfo
     })
 
+    mockUseAccount.address.value = MOCK_DATA.safeInfo.owners[0]
+
     mockUseChainId.mockReturnValue(ref(137))
     mockUseTeamStore.mockReturnValue({
       currentTeam: MOCK_DATA.team,
@@ -220,11 +202,6 @@ describe('SafeBalanceSection', () => {
 
     mockUseUserDataStore.mockReturnValue({
       address: ref('0x1234567890123456789012345678901234567890')
-    })
-
-    mockUseToastStore.mockReturnValue({
-      addErrorToast: vi.fn(),
-      addSuccessToast: vi.fn()
     })
 
     vi.mocked(useStorage).mockReturnValue(mockCurrency as never)
@@ -289,6 +266,19 @@ describe('SafeBalanceSection', () => {
   })
 
   describe('Transfer Modal', () => {
+    it('should disable transfer button for non-owner', async () => {
+      mockUseAccount.address.value = '0x9999999999999999999999999999999999999999'
+      wrapper = createWrapper()
+
+      const transferButton = wrapper.find('[data-test="transfer-button"]')
+      expect(transferButton.attributes('disabled')).toBeDefined()
+
+      await transferButton.trigger('click')
+      await nextTick()
+
+      expect(wrapper.find('[data-test="transfer-modal"]').exists()).toBe(false)
+    })
+
     it('should handle empty tokens list gracefully', async () => {
       mockUseContractBalance.balances.value = [] as typeof mockUseContractBalance.balances.value
       wrapper = createWrapper()

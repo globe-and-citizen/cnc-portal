@@ -48,13 +48,6 @@
 //   exportTransactionsToPdf: vi.fn().mockResolvedValue(true)
 // }))
 
-// vi.mock('@/stores/useToastStore', () => ({
-//   useToastStore: () => ({
-//     addSuccessToast: vi.fn(),
-//     addErrorToast: vi.fn()
-//   })
-// }))
-
 // const mockTeamData = {
 //   currentTeam: {
 //     members: [
@@ -453,7 +446,7 @@
 //           TableComponent: mockTableComponent,
 //           AddressToolTip: true,
 //           Datepicker: true,
-//           ModalComponent: true,
+//           UModal: true,
 //           CustomDatePicker: true
 //         }
 //       }

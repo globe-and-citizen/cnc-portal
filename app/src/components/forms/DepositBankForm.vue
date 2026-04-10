@@ -1,17 +1,18 @@
 <template>
-  <span class="font-bold text-2xl">{{ title || 'Deposit to Team Bank Contract' }}</span>
+  <span class="text-2xl font-bold">{{ title || 'Deposit to Team Bank Contract' }}</span>
 
-  <div v-if="selectedToken?.token.id !== 'native'" class="steps w-full my-4">
-    <a class="step" :class="{ 'step-primary': currentStep >= 1 }">Amount</a>
-    <a class="step" :class="{ 'step-primary': currentStep >= 2 }">Approval</a>
-    <a class="step" :class="{ 'step-primary': currentStep >= 3 }">Deposit</a>
-  </div>
+  <UStepper
+    v-if="selectedToken?.token.id !== 'native'"
+    :items="stepperItems"
+    v-model="currentStep"
+    disabled
+    class="my-4 w-full"
+  />
 
   <!-- New Token Amount Component -->
   <TokenAmount
     :tokens="tokenList"
-    v-model:modelValue="amount"
-    v-model:modelToken="selectedTokenId"
+    v-model="tokenAmountModel"
     :isLoading="isLoading"
     @validation="isAmountValid = $event"
   >
@@ -23,9 +24,9 @@
     </template>
   </TokenAmount>
   <div class="modal-action justify-between">
-    <ButtonUI
-      variant="error"
-      outline
+    <UButton
+      color="error"
+      variant="outline"
       @click="
         () => {
           reset()
@@ -33,23 +34,23 @@
         }
       "
       data-test="cancel-button"
-      >Cancel</ButtonUI
-    >
-    <ButtonUI
-      variant="primary"
+      label="Cancel"
+    />
+    <UButton
+      color="primary"
       @click="submitForm"
       :loading="submitting"
       :disabled="isLoading || !isAmountValid"
       data-test="deposit-button"
     >
       {{
-        selectedToken?.token.id !== 'native' && currentStep === 2
+        selectedToken?.token.id !== 'native' && currentStep === 1
           ? 'Approval'
-          : currentStep === 3
+          : currentStep === 2
             ? 'Deposit'
             : 'Deposit'
       }}
-    </ButtonUI>
+    </UButton>
   </div>
   <!-- You can use timeline for debuging -->
   <!-- <TransactionTimeline
@@ -67,7 +68,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed } from 'vue'
 import { parseEther, zeroAddress, type Address } from 'viem'
 import { useContractBalance } from '@/composables/useContractBalance'
 import { useSafeSendTransaction } from '@/composables/transactions/useSafeSendTransaction'
@@ -75,8 +76,7 @@ import { useERC20Approve } from '@/composables/erc20/writes'
 import { useErc20Allowance } from '@/composables/erc20/reads'
 import { useDepositToken } from '@/composables/bank/writes'
 import { SUPPORTED_TOKENS, type TokenId } from '@/constant'
-import { useCurrencyStore, useToastStore, useUserDataStore } from '@/stores'
-import ButtonUI from '../ButtonUI.vue'
+import { useCurrencyStore, useUserDataStore } from '@/stores'
 import TokenAmount from './TokenAmount.vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useChainId } from '@wagmi/vue'
@@ -97,7 +97,7 @@ const props = defineProps<{
 function reset() {
   amount.value = ''
   selectedTokenId.value = 'native'
-  currentStep.value = 1
+  currentStep.value = 0
   submitting.value = false
   isAmountValid.value = false
 }
@@ -107,26 +107,35 @@ defineExpose({ reset })
 // Component state
 const amount = ref<string>('')
 const selectedTokenId = ref<TokenId>('native') // Default to native token (ETH)
-const currentStep = ref(1)
+const tokenAmountModel = computed({
+  get: () => ({ amount: amount.value, tokenId: selectedTokenId.value }),
+  set: (value: { amount: string; tokenId: TokenId | string }) => {
+    amount.value = value.amount ?? ''
+    selectedTokenId.value = (value.tokenId as TokenId) ?? 'native'
+  }
+})
+const stepperItems = [
+  { title: 'Amount', value: 0 },
+  { title: 'Approval', value: 1 },
+  { title: 'Deposit', value: 2 }
+]
+
+const currentStep = ref(0)
 const submitting = ref(false)
 const isAmountValid = ref(false) // Validation state used by TokenAmount component
 
 // Stores
 const currencyStore = useCurrencyStore()
 const userDataStore = useUserDataStore()
-const { addErrorToast, addSuccessToast } = useToastStore()
+const toast = useToast()
 
 // Reactive state for balances: composable that fetches address balances
 const { balances, isLoading } = useContractBalance(userDataStore.address as Address)
 
 // Native token deposit using safe transaction handler
-const {
-  sendTransaction,
-  isLoading: isNativeDepositLoading,
-  isConfirmed: isNativeDepositConfirmed,
-  receipt: nativeReceipt
-  // error: nativeDepositError
-} = useSafeSendTransaction()
+const nativeDeposit = useSafeSendTransaction({
+  to: computed(() => props.bankAddress)
+})
 
 // Computed properties
 // Token list derived from SUPPORTED_TOKENS
@@ -155,6 +164,10 @@ const { data: allowance } = useErc20Allowance(
   props.bankAddress
 )
 
+const allowanceValue = computed<bigint>(() =>
+  typeof allowance.value === 'bigint' ? allowance.value : 0n
+)
+
 // Computed values for approval composable
 const bigIntAmount = computed(() => BigInt(Math.floor(Number(amount.value) * 1e6)))
 
@@ -164,32 +177,27 @@ const ERC20ApproveResult = useERC20Approve(
   bigIntAmount
 )
 
-const bankDepositTokenResult = useDepositToken(selectedTokenAddress, bigIntAmount)
+const bankDepositTokenResult = useDepositToken()
 
 // Methods
 
-// Success handling
-watch(isNativeDepositConfirmed, (confirmed) => {
-  if (confirmed && nativeReceipt.value) {
-    amount.value = ''
-    addSuccessToast(`${selectedToken.value?.token.code} deposited successfully`)
-    emits('closeModal')
-  }
-})
-// Remove unused notZero and notExceedingBalance
-
 const submitForm = async () => {
   if (!isAmountValid.value) return // Validation check
-  // TODO: handle multiple submission for native and erc20
-  if (isNativeDepositLoading.value) return // Prevent multiple submissions
+  if (nativeDeposit.isPending.value) return // Prevent multiple submissions
   submitting.value = true
   try {
     // Deposit of native token (ETH/POL...)
     if (selectedTokenId.value === 'native') {
-      await sendTransaction(props.bankAddress, parseEther(amount.value))
+      await nativeDeposit.mutateAsync({ value: parseEther(amount.value) })
+      amount.value = ''
+      toast.add({
+        title: `${selectedToken.value?.token.code} deposited successfully`,
+        color: 'success'
+      })
+      emits('closeModal')
     } else {
-      if (!((allowance.value ?? 0n) >= bigIntAmount.value)) {
-        currentStep.value = 2
+      if (!(allowanceValue.value >= bigIntAmount.value)) {
+        currentStep.value = 1
 
         // Run spending cap
         await ERC20ApproveResult.executeWrite([props.bankAddress, bigIntAmount.value])
@@ -200,8 +208,10 @@ const submitForm = async () => {
           throw new Error('Approval failed')
         }
       }
-      currentStep.value = 3
-      await bankDepositTokenResult.executeWrite([selectedTokenAddress.value, bigIntAmount.value])
+      currentStep.value = 2
+      await bankDepositTokenResult.mutateAsync({
+        args: [selectedTokenAddress.value, bigIntAmount.value]
+      })
 
       const invalidateErc20Balance = (tokenAddress: Address, target: Address) =>
         queryClient.invalidateQueries({
@@ -218,22 +228,17 @@ const submitForm = async () => {
 
       invalidateErc20Balance(selectedTokenAddress.value, props.bankAddress)
 
-      // Check if bankDepositTokenResult has an error
-      if (
-        bankDepositTokenResult.receiptResult.error.value ||
-        bankDepositTokenResult.writeResult.error.value
-      ) {
-        throw new Error('Deposit failed')
-      }
-
       submitting.value = false
       amount.value = ''
-      addSuccessToast(`${selectedToken.value?.token.code} deposited successfully`)
+      toast.add({
+        title: `${selectedToken.value?.token.code} deposited successfully`,
+        color: 'success'
+      })
       emits('closeModal')
     }
   } catch {
     // console.error(error)
-    addErrorToast(`Failed to deposit ${selectedTokenId.value}`)
+    toast.add({ title: `Failed to deposit ${selectedTokenId.value}`, color: 'error' })
     submitting.value = false
     // currentStep.value = 1
   }

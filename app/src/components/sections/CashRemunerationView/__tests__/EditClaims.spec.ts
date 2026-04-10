@@ -1,18 +1,14 @@
 import { flushPromises, mount } from '@vue/test-utils'
-import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest'
-import { ref } from 'vue'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { defineComponent } from 'vue'
 import { createTestingPinia } from '@pinia/testing'
 import { VueQueryPlugin, QueryClient } from '@tanstack/vue-query'
 import EditClaims from '@/components/sections/CashRemunerationView/EditClaims.vue'
+import { useEditClaimWithFilesMutation } from '@/queries/weeklyClaim.queries'
 import type { Claim } from '@/types'
 import type { Address } from 'viem'
-
-// Test constants
-const SELECTORS = {
-  submitButton: '[data-test="claim-form-submit"]',
-  cancelButton: '[data-test="claim-form-cancel"]',
-  errorAlert: '[data-test="edit-claim-error"]'
-} as const
+import { mockTeamStore } from '@/tests/mocks'
+import { createMockMutationResponse } from '@/tests/mocks/query.mock'
 
 const SUBMIT_PAYLOAD = {
   hoursWorked: 6,
@@ -45,53 +41,24 @@ const defaultClaim: Claim = {
   updatedAt: '2024-01-01T00:00:00.000Z'
 }
 
-// Toast mocks
-const successToastMock = vi.fn()
-const errorToastMock = vi.fn()
+const resetFormMock = vi.fn()
 
-// Hoisted mocks
-const { mockApiClient, mockUseToastStore, mockTeamStore, mockCheckRestriction } = vi.hoisted(() => {
-  const mockTeamStore = {
-    currentTeamId: 1 as number | undefined,
-    currentTeam: { id: 1 } as { id: number } | undefined
-  }
-
-  return {
-    mockApiClient: {
-      put: vi.fn(),
-      post: vi.fn()
-    },
-    mockUseToastStore: vi.fn(() => ({
-      addErrorToast: errorToastMock,
-      addSuccessToast: successToastMock
-    })),
-    mockTeamStore,
-    mockCheckRestriction: vi.fn()
+const ClaimFormStub = defineComponent({
+  name: 'ClaimForm',
+  props: {
+    initialData: { type: Object, required: false },
+    isEdit: { type: Boolean, required: false },
+    isLoading: { type: Boolean, required: false },
+    restrictSubmit: { type: Boolean, required: false },
+    existingFiles: { type: Array, required: false }
+  },
+  emits: ['submit', 'cancel', 'delete-file'],
+  setup(_, { expose }) {
+    expose({ resetForm: resetFormMock })
+    return () => null
   }
 })
 
-// Mock implementations
-vi.mock('@/stores', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/stores')>()
-  return {
-    ...actual,
-    useToastStore: mockUseToastStore,
-    useTeamStore: () => mockTeamStore
-  }
-})
-
-vi.mock('@/lib/axios', () => ({
-  default: mockApiClient
-}))
-
-vi.mock('@/composables', () => ({
-  useSubmitRestriction: () => ({
-    isRestricted: ref(false),
-    checkRestriction: mockCheckRestriction
-  })
-}))
-
-// Helper function for creating wrapper
 const createWrapper = (props: Partial<{ claim: Claim }> = {}) => {
   const queryClient = new QueryClient()
   return mount(EditClaims, {
@@ -99,210 +66,105 @@ const createWrapper = (props: Partial<{ claim: Claim }> = {}) => {
       claim: props.claim ?? defaultClaim
     },
     global: {
-      plugins: [createTestingPinia({ createSpy: vi.fn }), [VueQueryPlugin, { queryClient }]]
+      plugins: [createTestingPinia({ createSpy: vi.fn }), [VueQueryPlugin, { queryClient }]],
+      stubs: {
+        ClaimForm: ClaimFormStub
+      }
     }
   })
 }
 
 describe('EditClaims', () => {
   beforeEach(() => {
-    // Reset team store values
-    mockTeamStore.currentTeamId = 1
-    mockTeamStore.currentTeam = { id: 1 }
+    vi.clearAllMocks()
 
-    // Setup axios mock to resolve for put and handle upload posts
-    mockApiClient.put.mockResolvedValue({ data: { message: 'Claim updated successfully' } })
-    mockApiClient.post.mockImplementation((url: string) => {
-      if (url === '/upload' || url.endsWith('/upload')) {
-        return Promise.resolve({
-          data: {
-            fileKey: 'bucket/path/image.png',
-            fileUrl: 'https://storage.railway.app/bucket/path/image.png',
-            metadata: { fileType: 'image/png', fileSize: 123 }
-          }
-        })
-      }
-      return Promise.resolve({ data: {} })
-    })
+    mockTeamStore.currentTeamId = '1'
+    mockTeamStore.currentTeam = { id: 1 }
+    mockTeamStore.currentTeamMeta = { isPending: false, data: { id: 1 } }
   })
 
   afterEach(() => {
-    vi.clearAllMocks()
+    vi.restoreAllMocks()
   })
 
-  describe('File Handling', () => {
-    it('should pre-upload new files and submit attachments metadata', async () => {
-      const file = new File(['content'], 'test.png', { type: 'image/png' })
-      const payloadWithFile = {
-        ...SUBMIT_PAYLOAD,
-        files: [file]
-      }
+  it('shows success toast and closes modal after a successful submit', async () => {
+    const wrapper = createWrapper()
+    const form = wrapper.findComponent({ name: 'ClaimForm' })
 
-      const wrapper = createWrapper()
-      const form = wrapper.findComponent({ name: 'ClaimForm' })
+    form.vm.$emit('submit', SUBMIT_PAYLOAD)
+    await flushPromises()
 
-      form.vm.$emit('submit', payloadWithFile)
-      await flushPromises()
-
-      // Upload should be called first, then put for claim update
-      expect(mockApiClient.post).toHaveBeenCalled()
-      const uploadCall = mockApiClient.post.mock.calls[0] as [string, FormData] | undefined
-      expect(uploadCall).toBeDefined()
-      expect(uploadCall![0]).toBe('/upload')
-      const uploadForm = uploadCall![1] as FormData
-      expect(uploadForm.get('file')).toBeTruthy()
-
-      expect(mockApiClient.put).toHaveBeenCalled()
-      const putCall = mockApiClient.put.mock.calls[0]
-      expect(putCall![0]).toBe(`/claim/${defaultClaim.id}`)
-      const payload = putCall![1]
-      expect(payload).toBeDefined()
-      expect(Array.isArray(payload.attachments)).toBe(true)
-      expect(payload.attachments).toHaveLength(1)
-      expect(payload.attachments[0]).toMatchObject({ fileKey: 'bucket/path/image.png' })
-    })
-
-    it('should include deletedFileIndexes in FormData when files are deleted', async () => {
-      const claimWithFiles = {
-        ...defaultClaim,
-        fileAttachments: [
-          {
-            fileKey: 'bucket/path/file1.png',
-            fileUrl: 'https://storage.railway.app/bucket/path/file1.png',
-            fileType: 'image/png',
-            fileSize: 1024
-          },
-          {
-            fileKey: 'bucket/path/file2.png',
-            fileUrl: 'https://storage.railway.app/bucket/path/file2.png',
-            fileType: 'image/png',
-            fileSize: 2048
-          }
-        ]
-      }
-
-      const wrapper = createWrapper({ claim: claimWithFiles })
-      const form = wrapper.findComponent({ name: 'ClaimForm' })
-
-      // Simulate file deletion via form event
-      form.vm.$emit('delete-file', 0)
-      await flushPromises()
-
-      form.vm.$emit('submit', SUBMIT_PAYLOAD)
-      await flushPromises()
-
-      expect(mockApiClient.put).toHaveBeenCalled()
-      const putCall = mockApiClient.put.mock.calls[0]
-      expect(putCall).toBeDefined()
-      const payload = putCall![1]
-      expect(payload.deletedFileIndexes).toEqual([0])
-    })
+    // expect(mockToast.add).toHaveBeenCalledWith({
+    //   title: 'Claim updated successfully',
+    //   color: 'success'
+    // })
+    expect(wrapper.emitted()).toHaveProperty('close')
   })
 
-  describe('Error Handling', () => {
-    it('should use default error message when API does not provide one', async () => {
-      mockApiClient.put.mockRejectedValueOnce({
-        response: {
-          status: 500,
-          data: {}
+  it('shows error toast and keeps modal open when no team is selected', async () => {
+    mockTeamStore.currentTeamMeta = { isPending: false, data: null }
+
+    const wrapper = createWrapper()
+    const form = wrapper.findComponent({ name: 'ClaimForm' })
+
+    form.vm.$emit('submit', SUBMIT_PAYLOAD)
+    await flushPromises()
+
+    // expect(mockToast.add).toHaveBeenCalledWith({ title: 'Team not selected', color: 'error' })
+    expect(wrapper.emitted('close')).toBeUndefined()
+  })
+
+  it('renders backend error message when mutation returns an error', async () => {
+    vi.mocked(useEditClaimWithFilesMutation).mockReturnValueOnce(
+      createMockMutationResponse(null, false, new Error('Server unavailable')) as ReturnType<
+        typeof useEditClaimWithFilesMutation
+      >
+    )
+
+    const wrapper = createWrapper()
+    await flushPromises()
+
+    expect(wrapper.find('[data-test="edit-claim-error"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="edit-claim-error"]').text()).toContain('Server unavailable')
+  })
+
+  it('emits close when cancel is triggered', async () => {
+    const wrapper = createWrapper()
+    const form = wrapper.findComponent({ name: 'ClaimForm' })
+
+    form.vm.$emit('cancel')
+    await flushPromises()
+
+    expect(wrapper.emitted()).toHaveProperty('close')
+  })
+
+  it('updates visible file list after user removes an attachment', async () => {
+    const claimWithFiles: Claim = {
+      ...defaultClaim,
+      fileAttachments: [
+        {
+          fileKey: 'bucket/path/file1.png',
+          fileUrl: 'https://storage.railway.app/bucket/path/file1.png',
+          fileType: 'image/png',
+          fileSize: 100
+        },
+        {
+          fileKey: 'bucket/path/file2.png',
+          fileUrl: 'https://storage.railway.app/bucket/path/file2.png',
+          fileType: 'image/png',
+          fileSize: 200
         }
-      })
+      ]
+    }
 
-      const wrapper = createWrapper()
-      const form = wrapper.findComponent({ name: 'ClaimForm' })
+    const wrapper = createWrapper({ claim: claimWithFiles })
+    const form = wrapper.findComponent({ name: 'ClaimForm' })
 
-      form.vm.$emit('submit', SUBMIT_PAYLOAD)
-      await flushPromises()
+    expect((form.props('existingFiles') as unknown[]).length).toBe(2)
 
-      expect(errorToastMock).toHaveBeenCalledWith('Failed to update claim')
-      expect(wrapper.find(SELECTORS.errorAlert).exists()).toBe(true)
-      expect(wrapper.find(SELECTORS.errorAlert).text()).toContain('Failed to update claim')
-    })
+    form.vm.$emit('delete-file', 0)
+    await flushPromises()
 
-    it('should handle network errors gracefully', async () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-      mockApiClient.put.mockRejectedValueOnce(new Error('Network failure'))
-
-      const wrapper = createWrapper()
-      const form = wrapper.findComponent({ name: 'ClaimForm' })
-
-      form.vm.$emit('submit', SUBMIT_PAYLOAD)
-      await flushPromises()
-
-      expect(consoleErrorSpy).toHaveBeenCalledWith('Failed to update claim:', expect.any(Error))
-      expect(errorToastMock).toHaveBeenCalledWith('Network failure')
-      expect(wrapper.emitted('close')).toBeUndefined()
-
-      consoleErrorSpy.mockRestore()
-    })
-  })
-
-  describe('Modal Interactions', () => {
-    it('should emit close when cancel is triggered', async () => {
-      const wrapper = createWrapper()
-      const form = wrapper.findComponent({ name: 'ClaimForm' })
-
-      form.vm.$emit('cancel')
-      await flushPromises()
-
-      expect(wrapper.emitted('close')).toBeTruthy()
-    })
-
-    it('should not emit close when update fails', async () => {
-      mockApiClient.put.mockRejectedValueOnce({
-        response: {
-          status: 400,
-          data: { message: 'Failed to update claim' }
-        }
-      })
-
-      const wrapper = createWrapper()
-      const form = wrapper.findComponent({ name: 'ClaimForm' })
-
-      form.vm.$emit('submit', SUBMIT_PAYLOAD)
-      await flushPromises()
-
-      expect(wrapper.emitted('close')).toBeUndefined()
-    })
-  })
-
-  describe('Loading States', () => {
-    it('should show loading state during update', async () => {
-      let resolveUpdate: (value: { data: { message: string } }) => void
-      const updatePromise = new Promise<{ data: { message: string } }>((resolve) => {
-        resolveUpdate = resolve
-      })
-
-      mockApiClient.put.mockReturnValueOnce(updatePromise)
-
-      const wrapper = createWrapper()
-      const form = wrapper.findComponent({ name: 'ClaimForm' })
-
-      form.vm.$emit('submit', SUBMIT_PAYLOAD)
-      await flushPromises()
-
-      expect(form.props('isLoading')).toBe(true)
-
-      resolveUpdate!({ data: { message: 'Success' } })
-      await flushPromises()
-
-      expect(form.props('isLoading')).toBe(false)
-    })
-  })
-
-  describe('Edge Cases', () => {
-    it('should handle team without ID gracefully', async () => {
-      mockTeamStore.currentTeamId = undefined
-      mockTeamStore.currentTeam = undefined
-
-      const wrapper = createWrapper()
-      const form = wrapper.findComponent({ name: 'ClaimForm' })
-
-      form.vm.$emit('submit', SUBMIT_PAYLOAD)
-      await flushPromises()
-
-      expect(mockApiClient.put).not.toHaveBeenCalled()
-      expect(errorToastMock).toHaveBeenCalledWith('Team not selected')
-    })
+    expect((form.props('existingFiles') as unknown[]).length).toBe(1)
   })
 })

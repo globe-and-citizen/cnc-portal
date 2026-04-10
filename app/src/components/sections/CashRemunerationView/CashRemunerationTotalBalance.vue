@@ -1,7 +1,7 @@
 <template>
   <OverviewCard
     :title="total[currency.code]?.formated ?? 0"
-    variant="success"
+    color="success"
     subtitle="Total Balance"
     :card-icon="bagIcon"
     :loading="isLoadingBalance"
@@ -9,8 +9,8 @@
     <div class="flex flex-row gap-1 text-black">
       <img :src="uptrendIcon" alt="status-icon" />
       <div>
-        <span class="font-semibold text-sm" data-test="percentage-increase">+ 41.3% </span>
-        <span class="font-medium text-[#637381] text-xs">than last week</span>
+        <span class="text-sm font-semibold" data-test="percentage-increase">+ 41.3% </span>
+        <span class="text-xs font-medium text-[#637381]">than last week</span>
       </div>
     </div>
   </OverviewCard>

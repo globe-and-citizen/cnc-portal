@@ -6,7 +6,9 @@ import '../interfaces/IBoardOfDirectors.sol';
 contract MockBoardOfDirectors is IBoardOfDirectors {
   address[] public boardMembers;
 
-  function initialize() external {}
+  function initialize(address[] memory _owners) external {
+    boardMembers = _owners;
+  }
 
   function setBoardOfDirectors(address[] memory _members) external {
     boardMembers = _members;
@@ -35,13 +37,13 @@ contract MockBoardOfDirectors is IBoardOfDirectors {
   }
 
   function removeMember(address _member) external {
-      for (uint256 i = 0; i < boardMembers.length; i++) {
+    for (uint256 i = 0; i < boardMembers.length; i++) {
       if (boardMembers[i] == _member) {
-          boardMembers[i] = boardMembers[boardMembers.length - 1];
-          boardMembers.pop();
-          return;
+        boardMembers[i] = boardMembers[boardMembers.length - 1];
+        boardMembers.pop();
+        return;
       }
-      }
-      revert('Member not found');
+    }
+    revert('Member not found');
   }
 }

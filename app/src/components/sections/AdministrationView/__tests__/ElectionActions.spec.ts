@@ -35,7 +35,6 @@ describe('ElectionActions', () => {
     const wrapper = mount(ElectionActions, {
       global: {
         stubs: {
-          ButtonUI: { template: '<button @click="$emit(\'click\')"><slot/></button>' },
           PublishResult: true
         }
       }
@@ -62,7 +61,6 @@ describe('ElectionActions', () => {
       global: {
         provide: { showPublishResultBtn: true },
         stubs: {
-          ButtonUI: { template: '<button @click="$emit(\'click\')"><slot/></button>' },
           PublishResult: PublishStub
         }
       }
@@ -84,7 +82,6 @@ describe('ElectionActions', () => {
     const wrapper = mount(ElectionActions, {
       global: {
         stubs: {
-          ButtonUI: { template: '<button @click="$emit(\'click\')"><slot/></button>' },
           PublishResult: true
         }
       }

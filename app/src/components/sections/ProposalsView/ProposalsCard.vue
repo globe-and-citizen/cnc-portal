@@ -1,10 +1,10 @@
 <template>
   <div
-    class="flex flex-col w-full border rounded-lg p-6 bg-white shadow-xs hover:shadow-md transition-shadow gap-2 cursor-pointer"
+    class="flex w-full cursor-pointer flex-col gap-2 rounded-lg border bg-white p-6 shadow-xs transition-shadow hover:shadow-md"
   >
     <div class="flex flex-col">
       <div class="flex flex-row justify-between">
-        <div class="font-bold text-lg">{{ title }}</div>
+        <div class="text-lg font-bold">{{ title }}</div>
         <div
           :class="{
             'bg-purple-600': state == ProposalState.Active,
@@ -12,7 +12,7 @@
             'bg-red-500': state == ProposalState.Rejected,
             'bg-gray-300': state == ProposalState.Tied
           }"
-          class="py-1 px-2 rounded-full"
+          class="rounded-full px-2 py-1"
         >
           {{
             state == ProposalState.Active
@@ -49,8 +49,8 @@
       </div>
     </div>
     <div class="text-gray-500">{{ description }}</div>
-    <div class="flex flex-row justify-between items-center">
-      <div class="flex flex-row gap-4 text-gray-500 text-sm">
+    <div class="flex flex-row items-center justify-between">
+      <div class="flex flex-row gap-4 text-sm text-gray-500">
         <div>{{ voteCount }}/{{ totalVoters }} votes cast</div>
         <div class="flex flex-row gap-2">
           <span class="text-green-500">{{ yesCount }} For</span>
@@ -59,7 +59,7 @@
         </div>
       </div>
       <div
-        class="cursor-pointer hover:bg-gray-300 p-2 rounded-lg"
+        class="cursor-pointer rounded-lg p-2 hover:bg-gray-300"
         @click="
           router.replace({
             name: 'proposal-detail',

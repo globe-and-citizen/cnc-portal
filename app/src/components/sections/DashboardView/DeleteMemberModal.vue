@@ -1,54 +1,75 @@
 <template>
-  <div>
-    <ButtonUI
-      variant="error"
-      size="sm"
-      @click="() => (showModal = true)"
-      data-test="delete-member-button"
-    >
-      <IconifyIcon icon="heroicons-outline:trash" class="size-4" />
-    </ButtonUI>
+  <UModal
+    v-model:open="showModal"
+    title="Remove Member"
+    description="Confirm removing a member from the team permanently."
+    :ui="{ content: 'rounded-2xl' }"
+  >
+    <UTooltip text="Remove member" :delay-duration="0">
+      <UButton
+        color="error"
+        size="lg"
+        icon="heroicons-outline:trash"
+        data-test="delete-member-button"
+        @click="showModal = true"
+      />
+    </UTooltip>
 
-    <ModalComponent v-model="showModal" v-if="showModal">
-      <p class="font-bold text-lg">Confirmation</p>
-      <hr class="" />
-      <p class="py-4">
-        Are you sure you want to delete
-        <span class="font-bold">{{ member.name }}</span>
-        with address <span class="font-bold">{{ member.address }}</span>
-        from the team?
-      </p>
+    <template #body>
+      <div class="flex flex-col gap-4">
+        <div class="flex justify-center py-2">
+          <UserComponent :user="member" isDetailedView />
+        </div>
 
-      <div class="modal-action justify-center">
-        <ButtonUI
-          :loading="memberIsDeleting"
-          :disabled="memberIsDeleting"
-          variant="error"
-          @click="handleDelete"
-          data-test="delete-member-confirm-button"
-          >Delete</ButtonUI
-        >
-        <ButtonUI
-          variant="primary"
-          outline
-          @click="showModal = false"
-          data-test="delete-member-cancel-button"
-        >
-          Cancel
-        </ButtonUI>
+        <USeparator />
+
+        <UAlert
+          color="warning"
+          variant="soft"
+          icon="i-heroicons-exclamation-triangle"
+          :title="`Remove ${member.name} from the team?`"
+          description="This action cannot be undone."
+        />
+
+        <UAlert
+          v-if="deleteError"
+          color="error"
+          variant="soft"
+          :description="
+            (deleteError as AxiosError<{ message?: string }>).response?.data?.message ??
+            'Failed to remove member'
+          "
+          data-test="delete-member-error"
+        />
+
+        <div class="flex justify-end gap-2">
+          <UButton
+            color="neutral"
+            variant="outline"
+            @click="showModal = false"
+            data-test="delete-member-cancel-button"
+          >
+            Cancel
+          </UButton>
+          <UButton
+            :loading="memberIsDeleting"
+            :disabled="memberIsDeleting"
+            color="error"
+            @click="handleDelete"
+            data-test="delete-member-confirm-button"
+            >Remove</UButton
+          >
+        </div>
       </div>
-    </ModalComponent>
-  </div>
+    </template>
+  </UModal>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import ButtonUI from '@/components/ButtonUI.vue'
-import ModalComponent from '@/components/ModalComponent.vue'
-import { Icon as IconifyIcon } from '@iconify/vue'
-import { useToastStore } from '@/stores'
 import type { Member } from '@/types'
 import { useDeleteMemberMutation } from '@/queries/member.queries'
+import UserComponent from '@/components/UserComponent.vue'
 import type { AxiosError } from 'axios'
 
 const props = defineProps<{
@@ -62,9 +83,12 @@ const emits = defineEmits<{
 
 const showModal = ref(false)
 
-const { mutate: executeDeleteMember, isPending: memberIsDeleting } = useDeleteMemberMutation()
-
-const { addSuccessToast, addErrorToast } = useToastStore()
+const toast = useToast()
+const {
+  mutate: executeDeleteMember,
+  isPending: memberIsDeleting,
+  error: deleteError
+} = useDeleteMemberMutation()
 
 const handleDelete = (): void => {
   executeDeleteMember(
@@ -76,17 +100,11 @@ const handleDelete = (): void => {
     },
     {
       onSuccess: () => {
-        addSuccessToast('Member deleted successfully')
+        toast.add({ title: 'Member removed successfully', color: 'success' })
         showModal.value = false
         emits('memberDeleted')
-      },
-      onError: (error: AxiosError) => {
-        const err = error as AxiosError<{ message?: string }>
-        addErrorToast(err.response?.data?.message || 'Failed to delete member')
       }
     }
   )
 }
 </script>
-
-<style scoped></style>

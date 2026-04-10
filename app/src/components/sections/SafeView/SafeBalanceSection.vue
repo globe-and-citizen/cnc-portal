@@ -1,11 +1,20 @@
 <!-- filepath: app/src/components/sections/SafeView/SafeBalanceSection.vue -->
 <template>
-  <CardComponent title="Balance">
-    <div class="flex justify-between items-start">
+  <UCard :ui="{ root: 'shadow-md' }">
+    <template #header>
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-4">
+          <h3 class="text-lg font-semibold">Balance</h3>
+        </div>
+        <div class="flex items-center gap-2"></div>
+      </div>
+    </template>
+
+    <div class="flex items-start justify-between">
       <div class="flex flex-col gap-2">
         <div class="flex items-baseline gap-2">
           <span class="text-4xl font-bold">
-            <span class="inline-block min-w-16 h-10">
+            <span class="inline-block h-10 min-w-16">
               <span
                 v-if="isLoading"
                 class="loading loading-spinner loading-lg"
@@ -16,10 +25,10 @@
           </span>
           <span class="text-gray-600">USD</span>
         </div>
-        <div class="text-sm text-gray-500 mt-1">
+        <div class="mt-1 text-sm text-gray-500">
           ≈ {{ total[currency.code]?.formated ?? total['USD']?.formated ?? 0 }} {{ currency.code }}
         </div>
-        <div class="text-sm text-gray-600 mt-2 flex flex-col gap-1">
+        <div class="mt-2 flex flex-col gap-1 text-sm text-gray-600">
           <div>
             <span class="font-medium">{{ safeInfo?.threshold ?? '-' }}</span> of
             <span class="font-medium">{{ safeInfo?.owners.length || 0 }}</span> signatures required
@@ -30,36 +39,31 @@
 
       <div class="flex flex-col items-end gap-4">
         <div class="flex gap-2">
-          <ButtonUI
-            variant="secondary"
-            class="flex items-center gap-2"
+          <UButton
+            color="secondary"
             data-test="deposit-button"
+            leading-icon="heroicons-outline:plus"
+            label="Deposit"
             @click="openDepositModal"
-          >
-            <IconifyIcon icon="heroicons-outline:plus" class="w-5 h-5" />
-            Deposit
-          </ButtonUI>
+          />
 
-          <ButtonUI
-            variant="secondary"
-            class="flex items-center gap-2"
+          <UButton
+            color="secondary"
             data-test="transfer-button"
+            leading-icon="heroicons-outline:arrows-right-left"
+            label="Transfer"
+            :disabled="!isConnectedUserOwner"
             @click="openTransferModal"
-          >
-            <IconifyIcon icon="heroicons-outline:arrows-right-left" class="w-5 h-5" />
-            Transfer
-          </ButtonUI>
+          />
 
-          <ButtonUI
+          <UButton
             v-if="address"
-            variant="primary"
-            class="flex items-center gap-2"
-            @click="openInSafeApp"
+            color="primary"
             data-test="open-safe-app-button"
-          >
-            <IconifyIcon icon="heroicons-outline:external-link" class="w-5 h-5" />
-            Open in Safe App
-          </ButtonUI>
+            leading-icon="heroicons-outline:external-link"
+            label="Open in Safe App"
+            @click="openInSafeApp"
+          />
         </div>
         <div class="flex items-center gap-2" v-if="address">
           <div class="text-sm text-gray-600">Safe Address:</div>
@@ -69,45 +73,42 @@
     </div>
 
     <!-- Deposit Modal -->
-    <ModalComponent
-      v-model="depositModal.show"
+    <UModal
       v-if="depositModal.mount"
+      v-model:open="depositModal.show"
+      @update:open="handleDepositModalOpen"
       data-test="deposit-modal"
-      @reset="() => (depositModal = { mount: false, show: false })"
+      title="Deposit to Safe Contract"
+      description="Deposit assets to the Safe contract to fund your team’s operations."
+      :close="{ onClick: () => closeDepositModal() }"
     >
-      <DepositSafeForm
-        v-if="address"
-        title="Deposit to Safe Contract"
-        :safe-address="address"
-        @close-modal="closeDepositModal"
-      />
-    </ModalComponent>
+      <template #body>
+        <DepositSafeForm v-if="address" :safe-address="address" @close-modal="closeDepositModal" />
+      </template>
+    </UModal>
 
     <!-- Transfer Modal -->
 
-    <ModalComponent
-      v-model="transferModal.show"
+    <UModal
       v-if="transferModal.mount"
+      v-model:open="transferModal.show"
+      @update:open="handleTransferModalOpen"
       data-test="transfer-modal"
-      @reset="resetTransferValues"
+      title="Transfer from Safe Contract"
+      :description="`Current contract balance: ${transferData.token.balance} ${transferData.token.symbol}`"
+      :close="{ onClick: () => resetTransferValues() }"
     >
-      <TransferForm
-        v-model="transferData"
-        :tokens="tokens"
-        :loading="isTransferring"
-        @transfer="handleTransfer"
-        @closeModal="resetTransferValues"
-      >
-        <template #header>
-          <h1 class="font-bold text-2xl">Transfer from Safe Contract</h1>
-          <h3 class="pt-4">
-            Current contract balance: {{ transferData.token.balance }}
-            {{ transferData.token.symbol }}
-          </h3>
-        </template>
-      </TransferForm>
-    </ModalComponent>
-  </CardComponent>
+      <template #body>
+        <TransferForm
+          v-model="transferData"
+          :tokens="tokens"
+          :loading="isTransferring"
+          @transfer="handleTransfer"
+          @closeModal="resetTransferValues"
+        />
+      </template>
+    </UModal>
+  </UCard>
 </template>
 
 <script setup lang="ts">
@@ -115,13 +116,9 @@ import { computed, ref, type Ref } from 'vue'
 import { useChainId } from '@wagmi/vue'
 import type { Address } from 'viem'
 import { useStorage } from '@vueuse/core'
-import ButtonUI from '@/components/ButtonUI.vue'
-import CardComponent from '@/components/CardComponent.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import { getSafeHomeUrl, openSafeAppUrl } from '@/composables/safe'
-import { Icon as IconifyIcon } from '@iconify/vue'
-
-import ModalComponent from '@/components/ModalComponent.vue'
+import { useUserDataStore } from '@/stores'
 import { useContractBalance } from '@/composables/useContractBalance'
 import { useGetSafeInfoQuery } from '@/queries/safe.queries'
 import TransferForm, { type TransferModel } from '@/components/forms/TransferForm.vue'
@@ -132,6 +129,7 @@ import DepositSafeForm from '@/components/forms/DepositSafeForm.vue'
 import { getTokenAddress } from '@/utils'
 
 const chainId = useChainId()
+const userDataStore = useUserDataStore()
 const queryClient = useQueryClient()
 const currency = useStorage('currency', {
   code: 'USD',
@@ -176,6 +174,15 @@ const { transferFromSafe, isTransferring } = useSafeTransfer()
 
 const { data: safeInfo } = useGetSafeInfoQuery({ pathParams: { safeAddress: props.address } })
 
+// Refactored to use computed with direct logic
+const isConnectedUserOwner = computed(() => {
+  if (!userDataStore.address || !safeInfo.value?.owners?.length) return false
+
+  return safeInfo.value.owners.some(
+    (owner) => owner.toLowerCase() === userDataStore.address.toLowerCase()
+  )
+})
+
 const initialTransferDataValue = (): TransferModel => {
   const firstToken = tokens.value[0]
   return {
@@ -202,6 +209,7 @@ const openDepositModal = () => {
 }
 
 const openTransferModal = () => {
+  if (!isConnectedUserOwner.value) return
   transferModal.value = { mount: true, show: true }
 }
 
@@ -253,7 +261,19 @@ const handleTransfer = async (transferData: TransferModel) => {
   }
 }
 
-const closeDepositModal = async () => {
+const closeDepositModal = () => {
   depositModal.value = { mount: false, show: false }
+}
+
+const handleDepositModalOpen = (open: boolean) => {
+  if (!open) {
+    closeDepositModal()
+  }
+}
+
+const handleTransferModalOpen = (open: boolean) => {
+  if (!open) {
+    resetTransferValues()
+  }
 }
 </script>

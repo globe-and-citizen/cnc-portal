@@ -35,6 +35,7 @@ coverage
 
 *.tsbuildinfo
 .env
+docs/dummy
 
 # Synpress
 .cache-synpress
@@ -44,3 +45,4 @@ test-results
 gasReporterOutput.json
 backend/.env.production
 app/.env.production
+.mcp.json

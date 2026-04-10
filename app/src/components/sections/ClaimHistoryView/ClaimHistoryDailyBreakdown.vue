@@ -1,18 +1,18 @@
 <template>
-  <CardComponent title="" class="w-full" data-test="daily-breakdown">
+  <UCard class="w-full" data-test="daily-breakdown">
     <div>
       <h2 class="pb-4">Weekly Claims: {{ selectedWeek.formatted }}</h2>
       <div
         v-for="(entry, index) in weekDayClaims"
         :key="index"
         :class="[
-          'flex items-center justify-between border px-4 py-3 mb-2 rounded-lg ',
+          'mb-2 flex items-center justify-between rounded-lg border px-4 py-3',
           entry.hours > 0
-            ? 'bg-green-50 text-emerald-700 border border-emerald-500'
+            ? 'border border-emerald-500 bg-green-50 text-emerald-700'
             : 'bg-gray-100 text-gray-400'
         ]"
       >
-        <div class="flex items-center gap-2 min-w-30">
+        <div class="flex min-w-30 items-center gap-2">
           <span
             class="h-3 w-3 rounded-full"
             :class="entry.hours > 0 ? 'bg-emerald-700' : 'bg-gray-300'"
@@ -26,11 +26,11 @@
             data-test="attachment-icon"
             title="Has attachments"
           >
-            <Icon icon="heroicons:paper-clip" class="w-4 h-4 text-blue-600" />
+            <Icon icon="heroicons:paper-clip" class="h-4 w-4 text-blue-600" />
           </span>
         </div>
 
-        <div v-if="entry.hours > 0" class="text-sm text-gray-500 w-3/5 pl-10 space-y-3">
+        <div v-if="entry.hours > 0" class="w-3/5 space-y-3 pl-10 text-sm text-gray-500">
           <div v-for="claim in entry.claims" :key="claim.id" class="space-y-2">
             <!-- Memo above -->
             <div class="flex items-center justify-between gap-3">
@@ -51,13 +51,13 @@
           </div>
         </div>
 
-        <div class="text-base flex items-center gap-2 min-w-22.5 justify-end">
-          <IconifyIcon icon="heroicons:clock" class="w-4 h-4 text-gray-500" />
+        <div class="flex min-w-22.5 items-center justify-end gap-2 text-base">
+          <IconifyIcon icon="heroicons:clock" class="h-4 w-4 text-gray-500" />
           {{ entry.hours }} hours
         </div>
       </div>
     </div>
-  </CardComponent>
+  </UCard>
 </template>
 
 <script setup lang="ts">
@@ -71,7 +71,6 @@ import type { Address } from 'viem'
 import type { Week } from '@/utils/dayUtils'
 import { useUserDataStore } from '@/stores'
 import type { WeeklyClaim, Claim } from '@/types'
-import CardComponent from '@/components/CardComponent.vue'
 import ClaimActions from '@/components/sections/ClaimHistoryView/ClaimActions.vue'
 import ExpandableFileGallery from '@/components/sections/CashRemunerationView/Form/ExpandableFileGallery.vue'
 

@@ -1,35 +1,49 @@
 <template>
   <div class="flex items-center gap-1">
-    <ButtonUI variant="ghost" size="xs" @click="showEditModal = true" data-test="edit-claim-button">
-      <IconifyIcon icon="heroicons:pencil-square" class="w-4 h-4" />
-    </ButtonUI>
-    <ButtonUI
+    <UButton
+      variant="ghost"
+      size="xs"
+      @click="showEditModal = true"
+      data-test="edit-claim-button"
+      icon="heroicons:pencil-square"
+    />
+    <UButton
       variant="ghost"
       size="xs"
       @click="showDeleteModal = true"
       data-test="delete-claim-button"
     >
-      <IconifyIcon icon="heroicons:trash" class="w-4 h-4 text-error" />
-    </ButtonUI>
+      <IconifyIcon icon="heroicons:trash" class="text-error h-4 w-4" />
+    </UButton>
 
     <!-- Edit Modal -->
-    <ModalComponent v-model="showEditModal">
-      <EditClaims :claim="claim" @close="showEditModal = false" />
-    </ModalComponent>
+    <UModal
+      v-model:open="showEditModal"
+      title="Edit Claim"
+      :description="`Edit your claim for the week. You can update the hours worked, memo, and attached files. Remember to save your changes.`"
+    >
+      <template #body>
+        <EditClaims :claim="claim" @close="showEditModal = false" />
+      </template>
+    </UModal>
     <!-- Delete Modal -->
-    <ModalComponent v-model="showDeleteModal">
-      <DeleteClaimModal :claim="claim" @close="showDeleteModal = false" />
-    </ModalComponent>
+    <UModal
+      v-model:open="showDeleteModal"
+      title="Delete Claim"
+      :description="`Are you sure you want to delete this claim? This action cannot be undone.`"
+    >
+      <template #body>
+        <DeleteClaimModal :claim="claim" @close="showDeleteModal = false" />
+      </template>
+    </UModal>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
-import ButtonUI from '@/components/ButtonUI.vue'
 import EditClaims from '@/components/sections/CashRemunerationView/EditClaims.vue'
 import DeleteClaimModal from '@/components/sections/CashRemunerationView/DeleteClaimModal.vue'
-import ModalComponent from '@/components/ModalComponent.vue'
 import type { Claim } from '@/types'
 
 defineProps<{

@@ -1,6 +1,6 @@
 import { computed, unref, type MaybeRef } from 'vue'
 import type { Address } from 'viem'
-import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
+import { INVESTOR_ABI } from '@/artifacts/abi/investors'
 import { useContractWrites } from '@/composables/contracts/useContractWritesV2'
 import { useTeamStore } from '@/stores'
 import type { ExtractAbiFunctionNames } from 'abitype'
@@ -65,4 +65,21 @@ export function useTransferOwnership(newOwner: MaybeRef<Address>) {
 
 export function useRenounceOwnership() {
   return useInvestorContractWrite({ functionName: 'renounceOwnership', args: [] })
+}
+
+export function useDepositDividends(amount: MaybeRef<bigint>) {
+  const args = computed(() => [unref(amount)] as readonly unknown[])
+  return useInvestorContractWrite({
+    functionName: 'distributeNativeDividends',
+    args,
+    value: amount // This is a payable function
+  })
+}
+
+export function useDepositTokenDividends(token: MaybeRef<Address>, amount: MaybeRef<bigint>) {
+  const args = computed(() => [unref(token), unref(amount)] as readonly unknown[])
+  return useInvestorContractWrite({
+    functionName: 'distributeTokenDividends',
+    args
+  })
 }

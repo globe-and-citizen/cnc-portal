@@ -1,27 +1,27 @@
 <template>
   <!-- <h2 class="text-xl">Past Elections</h2> -->
-  <CardComponent title="Past Election">
-    <div v-if="isLoading" class="flex w-full h-96 justify-center items-center">
+  <UCard>
+    <template #header>Past Election</template>
+    <div v-if="isLoading" class="flex h-96 w-full items-center justify-center">
       <div class="text-gray-500">Loading past elections...</div>
     </div>
     <!-- <div v-else-if="elections.length === 0" class="flex w-full h-96 justify-center items-center">
       <div class="text-gray-500">No past elections available</div>
     </div> -->
     <PastBoDElection404 v-else-if="pastElections?.length === 0" :is-loading="isLoading" />
-    <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
+    <div v-else class="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
       <PastBoDElectionCard
         v-for="(election, index) in pastElections"
         :key="index"
         :election="election"
       />
     </div>
-  </CardComponent>
+  </UCard>
 </template>
 <script setup lang="ts">
 import { computed } from 'vue'
 import PastBoDElectionCard from './PastBoDElectionCard.vue'
 import PastBoDElection404 from './PastBoDElection404.vue'
-import CardComponent from '@/components/CardComponent.vue'
 import { useTeamStore } from '@/stores'
 import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
 import { config } from '@/wagmi.config'

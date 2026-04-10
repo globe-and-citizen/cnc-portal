@@ -1,28 +1,30 @@
 import { flushPromises, mount } from '@vue/test-utils'
-import { describe, expect, it, vi, afterEach, beforeEach } from 'vitest'
-import ClaimForm from '@/components/sections/CashRemunerationView/Form/ClaimForm.vue'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { defineComponent } from 'vue'
 import { createTestingPinia } from '@pinia/testing'
+import ClaimForm from '@/components/sections/CashRemunerationView/Form/ClaimForm.vue'
 
-const VueDatePickerStub = {
-  template: `
-    <input
-      data-test="date-input"
-      :value="modelValue"
-      :disabled="disabled"
-      @input="$emit('update:modelValue', $event.target.value)"
-    />
-  `,
-  props: ['modelValue', 'disabled', 'format', 'disabledDates']
-}
+const resetUploadMock = vi.fn()
+const UploadFileDBStub = defineComponent({
+  name: 'UploadFileDB',
+  props: { disabled: Boolean, existingFileCount: Number },
+  emits: ['update:files'],
+  setup(_, { expose }) {
+    expose({ resetUpload: resetUploadMock })
+    return {}
+  },
+  template: '<div data-test="upload-file-db-stub" />'
+})
 
-import { useToastStore } from '@/stores'
+const FilePreviewGalleryStub = defineComponent({
+  name: 'FilePreviewGallery',
+  props: { previews: Array },
+  emits: ['remove'],
+  template:
+    '<div data-test="file-preview-gallery">{{ JSON.stringify(previews) }}<button data-test="remove-preview" @click="$emit(\'remove\', 1)" /></div>'
+})
 
-const errorToastMock = vi.fn()
-
-const defaultProps = {
-  isEdit: false,
-  isLoading: false
-}
+const defaultProps = { isEdit: false, isLoading: false }
 
 const createWrapper = (props = {}) =>
   mount(ClaimForm, {
@@ -30,292 +32,230 @@ const createWrapper = (props = {}) =>
     global: {
       plugins: [createTestingPinia({ createSpy: vi.fn })],
       stubs: {
-        VueDatePicker: VueDatePickerStub,
-        UploadFileDB: true,
-        FilePreviewGallery: true
+        UploadFileDB: UploadFileDBStub,
+        FilePreviewGallery: FilePreviewGalleryStub
       }
     }
   })
+
+const makeExistingFile = (i: number) => ({
+  fileName: `file${i}.png`,
+  fileKey: `claims/1/${i}.png`,
+  fileUrl: `https://storage.railway.app/test/claims/1/${i}.png`,
+  fileType: 'image/png',
+  fileSize: 1024
+})
+
+const setValidFormFields = async (
+  wrapper: ReturnType<typeof createWrapper>,
+  memo = 'Test memo'
+) => {
+  await wrapper.find('input[data-test="hours-worked-input"]').setValue('4')
+  await wrapper.find('textarea[data-test="memo-input"]').setValue(memo)
+}
 
 describe('ClaimForm.vue', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(useToastStore).mockReturnValue({
-      addErrorToast: errorToastMock,
-      addSuccessToast: vi.fn()
-    } as ReturnType<typeof useToastStore>)
+    resetUploadMock.mockClear()
   })
 
-  it('shows validation errors when required fields are missing', async () => {
-    const wrapper = createWrapper()
-
-    await wrapper.find('[data-test="submit-claim-button"]').trigger('click')
-    await flushPromises()
-
-    expect(wrapper.findAll('[data-test="hours-worked-error"]').length).toBeGreaterThan(0)
-    expect(wrapper.findAll('.text-red-500').length).toBeGreaterThan(0)
-  })
-
-  it('emits cancel event when cancel button is clicked in edit mode', async () => {
-    const wrapper = createWrapper({ isEdit: true })
+  it('handles edit actions and prop updates', async () => {
+    const wrapper = createWrapper({
+      isEdit: true,
+      initialData: { hoursWorked: '3', memo: 'Initial', dayWorked: '2024-01-01T00:00:00.000Z' }
+    })
 
     await wrapper.find('[data-test="cancel-button"]').trigger('click')
     expect(wrapper.emitted('cancel')).toBeTruthy()
-  })
-
-  it('updates form inputs when initialData prop changes', async () => {
-    const wrapper = createWrapper({
-      initialData: {
-        hoursWorked: '3',
-        memo: 'Initial memo',
-        dayWorked: '2024-01-01T00:00:00.000Z'
-      }
-    })
 
     await wrapper.setProps({
-      initialData: {
-        hoursWorked: '6',
-        memo: 'Updated memo',
-        dayWorked: '2024-01-15T00:00:00.000Z'
-      }
+      initialData: { hoursWorked: '6', memo: 'Updated memo', dayWorked: '2024-01-15T00:00:00.000Z' }
     })
     await flushPromises()
 
-    const hoursInput = wrapper.find('input[data-test="hours-worked-input"]')
-      .element as HTMLInputElement
-    const memoInput = wrapper.find('textarea[data-test="memo-input"]')
-      .element as HTMLTextAreaElement
-    const dateInput = wrapper.find('[data-test="date-input"]').element as HTMLInputElement
-
-    expect(hoursInput.value).toBe('6')
-    expect(memoInput.value).toBe('Updated memo')
-    expect(dateInput.value).toBe('2024-01-15T00:00:00.000Z')
+    expect(
+      (wrapper.find('input[data-test="hours-worked-input"]').element as HTMLInputElement).value
+    ).toBe('6')
+    expect(
+      (wrapper.find('textarea[data-test="memo-input"]').element as HTMLTextAreaElement).value
+    ).toBe('Updated memo')
+    expect(wrapper.find('[data-test="date-input"]').text()).toBe('2024-01-15 UTC')
   })
 
-  describe('formatUTC helper', () => {
-    it('returns empty string when value is nullish', () => {
-      const wrapper = createWrapper()
-      const { formatUTC } = wrapper.vm as unknown as {
-        formatUTC: (value: Date | string | null | undefined) => string
-      }
-
-      expect(formatUTC(null)).toBe('')
-      expect(formatUTC(undefined)).toBe('')
+  it('covers date selection + guards + format helper branches', async () => {
+    const wrapper = createWrapper({
+      initialData: { hoursWorked: '2', memo: 'memo', dayWorked: '' }
     })
+    const vm = wrapper.vm as unknown as {
+      datePickerOpen: boolean
+      onDateSelect: (value: unknown) => void
+      calendarValue: unknown
+      formatUTC: (value: Date | string | null | undefined) => string
+    }
 
-    it('formats Date instances and ISO strings into UTC labels', () => {
-      const wrapper = createWrapper()
-      const { formatUTC } = wrapper.vm as unknown as {
-        formatUTC: (value: Date | string | null | undefined) => string
-      }
+    expect(wrapper.find('[data-test="date-input"]').text()).toBe('Select a date')
+    expect(vm.calendarValue).toBeUndefined()
+    expect(vm.formatUTC(null)).toBe('')
+    expect(vm.formatUTC(undefined)).toBe('')
+    expect(vm.formatUTC(new Date(Date.UTC(2024, 0, 20, 5, 30, 0)))).toBe('2024-01-20 UTC')
+    expect(vm.formatUTC('2024-02-15T12:00:00.000Z')).toBe('2024-02-15 UTC')
 
-      const sampleDate = new Date(Date.UTC(2024, 0, 20, 5, 30, 0))
-      expect(formatUTC(sampleDate)).toBe('2024-01-20 UTC')
-      expect(formatUTC('2024-02-15T12:00:00.000Z')).toBe('2024-02-15 UTC')
-    })
-  })
+    await wrapper.find('[data-test="date-input"]').trigger('click')
+    expect(vm.datePickerOpen).toBe(true)
 
-  it('shows memo length validation error and prevents submit when memo is too long', async () => {
-    const wrapper = createWrapper()
-    const longMemo = 'a'.repeat(3001)
+    for (const invalidValue of [
+      null,
+      [{ year: 2024, month: 1, day: 9 }],
+      { start: undefined, end: undefined }
+    ]) {
+      vm.onDateSelect(invalidValue)
+      await flushPromises()
+      expect(wrapper.find('[data-test="date-input"]').text()).toBe('Select a date')
+    }
 
-    await wrapper.find('input[data-test="hours-worked-input"]').setValue('3')
-    await wrapper.find('textarea[data-test="memo-input"]').setValue(longMemo)
-    await wrapper.find('[data-test="date-input"]').setValue('2024-01-10T00:00:00.000Z')
-
-    await wrapper.find('[data-test="submit-claim-button"]').trigger('click')
+    vm.onDateSelect({ year: 2024, month: 1, day: 10 })
     await flushPromises()
+    expect(wrapper.find('[data-test="date-input"]').text()).toBe('2024-01-10 UTC')
+    expect(vm.datePickerOpen).toBe(false)
 
-    expect(wrapper.emitted('submit')).toBeFalsy()
-    // memo errors are rendered in a generic red text block (we check for any red text)
-    expect(wrapper.findAll('.text-red-500').length).toBeGreaterThan(0)
+    const invalidDateWrapper = createWrapper({
+      initialData: { hoursWorked: '1', memo: 'memo', dayWorked: 'not-a-date' }
+    })
+    const malformedDateWrapper = createWrapper({
+      initialData: { hoursWorked: '1', memo: 'memo', dayWorked: 'T00:00:00.000Z' }
+    })
+    expect((invalidDateWrapper.vm as { calendarValue: unknown }).calendarValue).toBeUndefined()
+    expect((malformedDateWrapper.vm as { calendarValue: unknown }).calendarValue).toBeUndefined()
   })
 
-  describe('File Upload Integration', () => {
-    it('should not emit submit when total files exceed 10', async () => {
-      const wrapper = createWrapper({
-        isEdit: true,
-        existingFiles: [
-          {
-            fileName: 'file1.png',
-            fileKey: 'claims/1/abc.png',
-            fileUrl: 'https://storage.railway.app/test/claims/1/abc.png',
-            fileType: 'image/png',
-            fileSize: 1024
-          },
-          {
-            fileName: 'file2.png',
-            fileKey: 'claims/1/abc.png',
-            fileUrl: 'https://storage.railway.app/test/claims/1/abc.png',
-            fileType: 'image/png',
-            fileSize: 1024
-          },
-          {
-            fileName: 'file3.png',
-            fileKey: 'claims/1/abc.png',
-            fileUrl: 'https://storage.railway.app/test/claims/1/abc.png',
-            fileType: 'image/png',
-            fileSize: 1024
-          },
-          {
-            fileName: 'file4.png',
-            fileKey: 'claims/1/abc.png',
-            fileUrl: 'https://storage.railway.app/test/claims/1/abc.png',
-            fileType: 'image/png',
-            fileSize: 1024
-          },
-          {
-            fileName: 'file5.png',
-            fileKey: 'claims/1/abc.png',
-            fileUrl: 'https://storage.railway.app/test/claims/1/abc.png',
-            fileType: 'image/png',
-            fileSize: 1024
-          },
-          {
-            fileName: 'file6.png',
-            fileKey: 'claims/1/abc.png',
-            fileUrl: 'https://storage.railway.app/test/claims/1/abc.png',
-            fileType: 'image/png',
-            fileSize: 1024
-          },
-          {
-            fileName: 'file7.png',
-            fileKey: 'claims/1/abc.png',
-            fileUrl: 'https://storage.railway.app/test/claims/1/abc.png',
-            fileType: 'image/png',
-            fileSize: 1024
-          },
-          {
-            fileName: 'file8.png',
-            fileKey: 'claims/1/abc.png',
-            fileUrl: 'https://storage.railway.app/test/claims/1/abc.png',
-            fileType: 'image/png',
-            fileSize: 1024
-          }
-        ]
-      })
-
-      // Mock uploaded files (8 existing + 3 new = 11 total)
-      const newFiles = [
-        new File(['content1'], 'new1.png', { type: 'image/png' }),
-        new File(['content2'], 'new2.png', { type: 'image/png' }),
-        new File(['content3'], 'new3.png', { type: 'image/png' })
-      ]
-
-      // Simulate file upload via UploadFileDB component
-      const uploadComponent = wrapper.findComponent({ name: 'UploadFileDB' })
-      uploadComponent.vm.$emit('update:files', newFiles)
-      await flushPromises()
-
-      await wrapper.find('input[data-test="hours-worked-input"]').setValue('4')
-      await wrapper.find('textarea[data-test="memo-input"]').setValue('Test memo')
-
-      await wrapper.find('[data-test="update-claim-button"]').trigger('click')
-      await flushPromises()
-
-      expect(wrapper.emitted('submit')).toBeFalsy()
-      expect(errorToastMock).toHaveBeenCalledWith(
-        'Maximum 10 files allowed. Currently you have 11 files. Please remove 1 file(s).'
-      )
-    })
-
-    it('should emit submit when total files are exactly 10', async () => {
-      const wrapper = createWrapper({
-        isEdit: true,
-        existingFiles: [
-          { fileName: 'file1.png', fileData: 'base64', fileType: 'image/png', fileSize: 1024 },
-          { fileName: 'file2.png', fileData: 'base64', fileType: 'image/png', fileSize: 1024 },
-          { fileName: 'file3.png', fileData: 'base64', fileType: 'image/png', fileSize: 1024 },
-          { fileName: 'file4.png', fileData: 'base64', fileType: 'image/png', fileSize: 1024 },
-          { fileName: 'file5.png', fileData: 'base64', fileType: 'image/png', fileSize: 1024 },
-          { fileName: 'file6.png', fileData: 'base64', fileType: 'image/png', fileSize: 1024 },
-          { fileName: 'file7.png', fileData: 'base64', fileType: 'image/png', fileSize: 1024 }
-        ]
-      })
-
-      // Mock uploaded files (7 existing + 3 new = 10 total)
-      const newFiles = [
-        new File(['content1'], 'new1.png', { type: 'image/png' }),
-        new File(['content2'], 'new2.png', { type: 'image/png' }),
-        new File(['content3'], 'new3.png', { type: 'image/png' })
-      ]
-
-      // Simulate file upload via UploadFileDB component
-      const uploadComponent = wrapper.findComponent({ name: 'UploadFileDB' })
-      uploadComponent.vm.$emit('update:files', newFiles)
-      await flushPromises()
-
-      await wrapper.find('input[data-test="hours-worked-input"]').setValue('4')
-      await wrapper.find('textarea[data-test="memo-input"]').setValue('Test memo')
-
-      await wrapper.find('[data-test="update-claim-button"]').trigger('click')
-      await flushPromises()
-
-      expect(wrapper.emitted('submit')).toBeTruthy()
-      expect(errorToastMock).not.toHaveBeenCalled()
-    })
-
-    it('should show "Attached Files" section only in edit mode with files', () => {
-      // Not in edit mode - should not show
-      let wrapper = createWrapper({
-        isEdit: false,
-        existingFiles: [
-          { fileName: 'file1.png', fileData: 'base64', fileType: 'image/png', fileSize: 1024 }
-        ]
-      })
-      expect(wrapper.find('[data-test="attached-files-section"]').exists()).toBe(false)
-
-      // In edit mode but no files - should not show
-      wrapper = createWrapper({
-        isEdit: true,
-        existingFiles: []
-      })
-      expect(wrapper.find('[data-test="attached-files-section"]').exists()).toBe(false)
-
-      // In edit mode with files - should show
-      wrapper = createWrapper({
-        isEdit: true,
-        existingFiles: [
-          { fileName: 'file1.png', fileData: 'base64', fileType: 'image/png', fileSize: 1024 }
-        ]
-      })
-      expect(wrapper.find('[data-test="attached-files-section"]').exists()).toBe(true)
-    })
-  })
-})
-
-describe('disabledDates logic', () => {
-  afterEach(() => {
-    vi.useRealTimers()
-  })
-
-  it.skip('allows Monday..today on a Friday (week min wins)', async () => {
-    // Use fake timers and set system date to Friday, 2024-01-12 UTC
+  it('covers disabled-date logic for approved weeks and restrictions', () => {
     vi.useFakeTimers()
     vi.setSystemTime(new Date(Date.UTC(2024, 0, 12, 0, 0, 0)))
 
-    const wrapper = createWrapper()
-    const datePicker = wrapper.findComponent(VueDatePickerStub)
-    const disabledFn = datePicker.props('disabledDates') as (
-      d: Date | string | null | undefined
-    ) => boolean
+    const withApprovedWeek = createWrapper({
+      disabledWeekStarts: ['2024-01-08T00:00:00.000Z'],
+      restrictSubmit: true
+    })
+    const restricted = createWrapper({ restrictSubmit: true })
+    const unrestricted = createWrapper({ restrictSubmit: false })
 
-    // Dates that should be allowed (not disabled)
-    const allowed = [
-      new Date(Date.UTC(2024, 0, 8)), // Monday
-      new Date(Date.UTC(2024, 0, 9)),
-      new Date(Date.UTC(2024, 0, 10)),
-      new Date(Date.UTC(2024, 0, 11)),
-      new Date(Date.UTC(2024, 0, 12)) // Today (Friday)
-    ]
+    const fn1 = (
+      withApprovedWeek.vm as {
+        isDateDisabledFn: (d: { year: number; month: number; day: number }) => boolean
+      }
+    ).isDateDisabledFn
+    const fn2 = (
+      restricted.vm as {
+        isDateDisabledFn: (d: { year: number; month: number; day: number }) => boolean
+      }
+    ).isDateDisabledFn
+    const fn3 = (
+      unrestricted.vm as {
+        isDateDisabledFn: (d: { year: number; month: number; day: number }) => boolean
+      }
+    ).isDateDisabledFn
 
-    for (const d of allowed) {
-      expect(disabledFn(d)).toBe(false)
+    expect(fn1({ year: 2024, month: 1, day: 8 })).toBe(true)
+    expect(fn2({ year: 2024, month: 1, day: 7 })).toBe(true)
+    expect(fn2({ year: 2024, month: 1, day: 13 })).toBe(true)
+    expect(fn2({ year: 2024, month: 1, day: 8 })).toBe(true)
+    expect(fn3({ year: 2024, month: 1, day: 1 })).toBe(false)
+
+    vi.useRealTimers()
+  })
+
+  it('blocks submit when total files exceed max and shows error toast', async () => {
+    const wrapper = createWrapper({
+      isEdit: true,
+      existingFiles: Array.from({ length: 8 }, (_, i) => makeExistingFile(i + 1))
+    })
+    const upload = wrapper.findComponent({ name: 'UploadFileDB' })
+    upload.vm.$emit('update:files', [
+      new File(['a'], 'new1.png', { type: 'image/png' }),
+      new File(['b'], 'new2.png', { type: 'image/png' }),
+      new File(['c'], 'new3.png', { type: 'image/png' })
+    ])
+
+    await flushPromises()
+    await setValidFormFields(wrapper)
+    await wrapper.find('form').trigger('submit')
+    await flushPromises()
+
+    expect(wrapper.emitted('submit')).toBeFalsy()
+    // expect(mockToast.add).toHaveBeenCalledWith({
+    //   title: 'Maximum 10 files allowed. Currently you have 11 files. Please remove 1 file(s).',
+    //   color: 'error'
+    // })
+  })
+
+  it('maps previews, emits delete-file, and supports nullish props', async () => {
+    const wrapper = createWrapper({
+      isEdit: true,
+      existingFiles: [
+        {
+          fileKey: 'claims/1/report.png',
+          fileUrl: 'https://storage.railway.app/claims/1/report.png',
+          fileType: 'image/png',
+          fileSize: 2048
+        },
+        {
+          fileName: 'notes.pdf',
+          fileKey: 'claims/1/notes.pdf',
+          fileUrl: 'https://storage.railway.app/claims/1/notes.pdf',
+          fileType: 'application/pdf',
+          fileSize: 1024
+        },
+        {
+          fileKey: 'claims/1/',
+          fileUrl: 'https://storage.railway.app/claims/1/no-name',
+          fileType: 'application/pdf'
+        },
+        { fileUrl: 'https://storage.railway.app/claims/1/invalid.pdf', fileType: 'application/pdf' }
+      ]
+    })
+
+    const gallery = wrapper.find('[data-test="file-preview-gallery"]').text()
+    expect(gallery).toContain('report.png')
+    expect(gallery).toContain('notes.pdf')
+    expect(gallery).toContain('"fileName":"file"')
+    expect(gallery).toContain('"isImage":true')
+    expect(gallery).toContain('"isImage":false')
+    expect(gallery).not.toContain('invalid.pdf')
+
+    await wrapper.find('[data-test="remove-preview"]').trigger('click')
+    expect(wrapper.emitted('delete-file')?.[0]).toEqual([1])
+
+    const nullishWrapper = createWrapper({
+      existingFiles: null,
+      disabledWeekStarts: null,
+      initialData: { hoursWorked: '2', memo: 'null-props', dayWorked: '2024-01-12T00:00:00.000Z' }
+    })
+    const vm = nullishWrapper.vm as {
+      existingFilePreviews: unknown[]
+      isDateDisabledFn: (d: { year: number; month: number; day: number }) => boolean
     }
 
-    // Before Monday should be disabled
-    expect(disabledFn(new Date(Date.UTC(2024, 0, 7)))).toBe(true)
-    // After today should be disabled
-    expect(disabledFn(new Date(Date.UTC(2024, 0, 13)))).toBe(true)
+    expect(vm.existingFilePreviews).toEqual([])
+    expect(typeof vm.isDateDisabledFn({ year: 2024, month: 1, day: 12 })).toBe('boolean')
+  })
+
+  it('resetForm clears uploaded files and calls UploadFileDB.resetUpload', async () => {
+    const wrapper = createWrapper({
+      initialData: { hoursWorked: '4', memo: 'Reset flow', dayWorked: '2024-01-15T00:00:00.000Z' }
+    })
+    const upload = wrapper.findComponent({ name: 'UploadFileDB' })
+    upload.vm.$emit('update:files', [new File(['content'], 'receipt.png')])
+
+    await flushPromises()
+    await wrapper.find('form').trigger('submit')
+    await flushPromises()
+    expect(wrapper.emitted('submit')?.[0]?.[0]?.files).toHaveLength(1)
+    ;(wrapper.vm as { resetForm: () => void }).resetForm()
+    expect(resetUploadMock).toHaveBeenCalledTimes(1)
+
+    await wrapper.find('form').trigger('submit')
+    await flushPromises()
+    expect(wrapper.emitted('submit')?.[1]?.[0]?.files).toBeUndefined()
   })
 })

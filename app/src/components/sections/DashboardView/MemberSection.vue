@@ -1,182 +1,180 @@
 <template>
-  <CardComponent title="Team Members List">
-    <template
-      #card-action
-      v-if="teamStore.currentTeamMeta.data?.ownerAddress == userDataStore.address"
-    >
-      <ButtonUI
-        @click="
-          () => {
-            showAddMemberForm = { mount: true, show: true }
-          }
-        "
-        data-test="add-member-button"
-        variant="primary"
-        class="w-max"
-      >
-        <IconifyIcon icon="heroicons-outline:plus-circle" class="size-6" /> Add a new Member
-      </ButtonUI>
-      <ModalComponent
-        v-model="showAddMemberForm.show"
-        @reset="() => (showAddMemberForm = { mount: false, show: false })"
-      >
-        <AddMemberForm
-          v-if="teamStore.currentTeamId && showAddMemberForm.mount"
-          :teamId="teamStore.currentTeamId"
-          @memberAdded="showAddMemberForm = { mount: false, show: false }"
-        />
-      </ModalComponent>
-    </template>
-    <template #default>
-      <div class="divider m-0"></div>
-      <div class="overflow-x-auto">
-        <TableComponent
-          :rows="
-            teamStore.currentTeamMeta.data?.members.map((member: any, index: number) => {
-              return { index: index + 1, ...member }
-            })
-          "
-          :loading="isTeamWageDataFetching"
-          :columns="columns"
-          data-test="members-table"
+  <UCard :ui="{ body: 'p-0' }">
+    <template #header>
+      <div class="flex items-center justify-between">
+        <p class="text-lg font-semibold">Team Members</p>
+
+        <UModal
+          v-if="teamStore.currentTeamMeta.data?.ownerAddress == userDataStore.address"
+          v-model:open="showAddMemberForm.show"
+          title="Add Member"
+          description="Invite a new member to your team and set their team role."
+          :ui="{ content: 'rounded-2xl' }"
+          @update:open="(v: boolean) => !v && (showAddMemberForm = { mount: false, show: false })"
         >
-          <template #wage-header="">
-            <div class="flex flex-col gap-0 w-full pt-7">
-              <div class="text-center pb-1">
-                <span>Hourly Rates</span>
-              </div>
-              <div class="flex flex-row justify-between border-t border-base-400">
-                <span class="w-1/3 text-xs p-1 text-center bg-[#C8FACD]">{{
-                  NETWORK.currencySymbol
-                }}</span>
-                <span class="w-1/3 text-xs p-1 text-center bg-[#FEF3DE]">USDC</span>
-                <span class="w-1/3 text-xs p-1 text-center bg-[#D9F1F6]">SHER</span>
-              </div>
-            </div>
-          </template>
-          <template #member-data="{ row }">
-            <UserComponent
-              :user="{ name: row.name, address: row.address, imageUrl: row.imageUrl }"
+          <UButton
+            icon="i-heroicons-plus-circle"
+            color="success"
+            data-test="add-member-button"
+            label="Add Member"
+            @click="showAddMemberForm = { mount: true, show: true }"
+          />
+
+          <template #body>
+            <AddMemberForm
+              v-if="teamStore.currentTeamId && showAddMemberForm.mount"
+              :teamId="teamStore.currentTeamId"
+              @memberAdded="showAddMemberForm = { mount: false, show: false }"
             />
           </template>
-          <template #maxWeeklyHours-data="{ row }">
-            {{ !isTeamWageDataFetching ? getMemberWage(row.address).maximumHoursPerWeek : '' }}
-            <div class="skeleton w-24 h-4" v-if="isTeamWageDataFetching"></div>
-          </template>
-          <template #wage-data="{ row }">
-            <div class="flex flex-row gap-2 justify-between">
-              <span class="w-1/3 text-right pr-4">
-                {{ !isTeamWageDataFetching ? getMemberWage(row.address).cashRatePerHour : '' }}
-              </span>
-              <span class="w-1/3 text-right pr-4">
-                {{ !isTeamWageDataFetching ? getMemberWage(row.address).usdcRatePerHour : '' }}
-              </span>
-              <span class="w-1/3 text-right pr-4">
-                {{ !isTeamWageDataFetching ? getMemberWage(row.address).tokenRatePerHour : '' }}
-              </span>
-            </div>
-            <div class="skeleton w-24 h-4" v-if="isTeamWageDataFetching"></div
-          ></template>
-          <template
-            #action-data="{ row }"
-            v-if="teamId && teamStore.currentTeamMeta.data?.ownerAddress === userDataStore.address"
-          >
-            <div class="flex flex-wrap gap-2">
-              <DeleteMemberModal
-                :member="{ name: row.name, address: row.address }"
-                :teamId="teamId"
-              />
-              <SetMemberWageModal
-                :member="{ name: row.name, address: row.address }"
-                :teamId="teamId"
-                :wage="teamWageData?.find((wage) => wage.userAddress === row.address)"
-              />
-            </div>
-          </template>
-        </TableComponent>
+        </UModal>
       </div>
     </template>
-  </CardComponent>
+
+    <UTable
+      :data="
+        teamStore.currentTeamMeta.data?.members.map((member: Member, index: number) => ({
+          index: index + 1,
+          ...member
+        }))
+      "
+      :loading="teamStore.currentTeamMeta.isPending || isToggling"
+      :columns="columns"
+      data-test="members-table"
+    >
+      <template #wage-header>
+        <div class="flex w-full flex-col gap-0 pt-7">
+          <div class="pb-1 text-center">
+            <span>Hourly Rates</span>
+          </div>
+          <div class="border-base-400 flex flex-row justify-between border-t">
+            <span class="w-1/3 bg-[#C8FACD] p-1 text-center text-xs">{{
+              NETWORK.currencySymbol
+            }}</span>
+            <span class="w-1/3 bg-[#FEF3DE] p-1 text-center text-xs">USDC</span>
+            <span class="w-1/3 bg-[#D9F1F6] p-1 text-center text-xs">SHER</span>
+          </div>
+        </div>
+      </template>
+
+      <template #member-cell="{ row }">
+        <UserComponent
+          :user="{
+            name: row.original.name,
+            address: row.original.address,
+            imageUrl: row.original.imageUrl
+          }"
+        />
+      </template>
+      <template #standard-cell="{ row }">
+        <div v-if="row.original.currentWage">
+          <RateDotList :rates="row.original.currentWage.ratePerHour" />
+          {{ row.original.currentWage.maximumHoursPerWeek + 'h/wk' }}
+        </div>
+        <div v-else>—</div>
+      </template>
+      <template #overtime-cell="{ row }">
+        <div v-if="row.original.currentWage?.overtimeRatePerHour">
+          <RateDotList :rates="row.original.currentWage.overtimeRatePerHour" />
+          {{ row.original.currentWage.maximumOvertimeHoursPerWeek + 'h/wk' }}
+        </div>
+        <div v-else>—</div>
+      </template>
+
+      <template #action-cell="{ row }">
+        <div v-if="teamId" class="flex flex-wrap gap-2">
+          <DeleteMemberModal
+            :member="{ name: row.original.name, address: row.original.address }"
+            :teamId="teamId"
+          />
+          <UTooltip
+            :text="
+              !row.original.currentWage
+                ? 'No wage set yet'
+                : row.original.currentWage?.disabled
+                  ? 'Resume wage'
+                  : 'Pause wage'
+            "
+            :delay-duration="0"
+          >
+            <UButton
+              :color="row.original.currentWage?.disabled ? 'success' : 'warning'"
+              :loading="isToggling"
+              :disabled="!row.original.currentWage || isToggling"
+              :icon="row.original.currentWage?.disabled ? 'i-heroicons-play' : 'i-heroicons-pause'"
+              :data-test="
+                row.original.currentWage?.disabled ? 'resume-wage-button' : 'pause-wage-button'
+              "
+              @click="toggleWageStatus(row.original.currentWage!)"
+            />
+          </UTooltip>
+          <SetMemberWageModal
+            :member="{ name: row.original.name, address: row.original.address }"
+            :teamId="teamId"
+            :wage="row.original.currentWage"
+          />
+        </div>
+      </template>
+    </UTable>
+  </UCard>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-import { Icon as IconifyIcon } from '@iconify/vue'
+import { computed, ref } from 'vue'
+import type { TableColumn } from '@nuxt/ui'
 import AddMemberForm from '@/components/sections/DashboardView/forms/AddMemberForm.vue'
-import ModalComponent from '@/components/ModalComponent.vue'
 import { useUserDataStore } from '@/stores/user'
-import { useTeamStore, useToastStore } from '@/stores'
-import ButtonUI from '@/components/ButtonUI.vue'
-import CardComponent from '@/components/CardComponent.vue'
-import TableComponent from '@/components/TableComponent.vue'
+import { useTeamStore } from '@/stores'
 import UserComponent from '@/components/UserComponent.vue'
-import { useGetTeamWagesQuery } from '@/queries/wage.queries'
-import type { Address } from 'viem'
+import { useToggleWageStatusMutation } from '@/queries/wage.queries'
+import { teamKeys } from '@/queries/team.queries'
+import { useQueryClient } from '@tanstack/vue-query'
 import { NETWORK } from '@/constant'
 import DeleteMemberModal from '@/components/sections/DashboardView/DeleteMemberModal.vue'
-import SetMemberWageModal from '@/components/sections/DashboardView/SetMemberWageModal.vue'
+import type { Member, Wage } from '@/types'
+import SetMemberWageModal from './SetMemberWageModal.vue'
+import RateDotList from '@/components/RateDotList.vue'
 
-const userDataStore = useUserDataStore()
-const toastStore = useToastStore()
-const teamStore = useTeamStore()
-const showAddMemberForm = ref({
-  mount: false,
-  show: false
-})
-
-// Use computed team ID from store
-const teamId = computed(() => teamStore.currentTeamId)
-
-// Fetch team wages using the new query
-const {
-  data: teamWageData,
-  isLoading: isTeamWageDataFetching,
-  error: teamWageDataError
-} = useGetTeamWagesQuery({ queryParams: { teamId } })
-
-// Handle wage data fetch errors
-watch(
-  () => teamWageDataError.value,
-  (error) => {
-    if (error) {
-      toastStore.addErrorToast('Failed to fetch team wage data')
-    }
-  }
-)
-
-const getMemberWage = (memberAddress: Address) => {
-  let memberWage
-  let cashRatePerHour
-  let usdcRatePerHour
-  let tokenRatePerHour
-
-  if (teamWageData.value) {
-    memberWage = teamWageData.value.find((wage) => wage.userAddress === memberAddress)
-    if (memberWage) {
-      cashRatePerHour = memberWage?.ratePerHour?.find((rate) => rate.type === 'native')?.amount
-      usdcRatePerHour = memberWage?.ratePerHour?.find((rate) => rate.type === 'usdc')?.amount
-      tokenRatePerHour = memberWage?.ratePerHour?.find((rate) => rate.type === 'sher')?.amount
-    }
-  }
-
-  return {
-    maximumHoursPerWeek: memberWage ? `${memberWage.maximumHoursPerWeek} hrs/wk` : 'N/A',
-    cashRatePerHour: cashRatePerHour ? `${cashRatePerHour} ${NETWORK.currencySymbol}/hr` : 'N/A',
-    usdcRatePerHour: usdcRatePerHour ? `${usdcRatePerHour} USDC/hr` : 'N/A',
-    tokenRatePerHour: tokenRatePerHour ? `${tokenRatePerHour} SHER/hr` : 'N/A'
-  }
+type MemberRow = Member & {
+  index: number
 }
 
-const columns = computed(() => {
-  const columns = [
-    { key: 'index', label: '#' },
-    { key: 'member', label: 'Member' },
-    { key: 'maxWeeklyHours', label: 'Max Weekly Hours' },
-    { key: 'wage', label: `Hourly Rate` }
+const userDataStore = useUserDataStore()
+const toast = useToast()
+const teamStore = useTeamStore()
+const showAddMemberForm = ref({ mount: false, show: false })
+
+const teamId = computed(() => teamStore.currentTeamId)
+
+const queryClient = useQueryClient()
+
+const { mutate: executeToggleStatus, isPending: isToggling } = useToggleWageStatusMutation()
+
+const toggleWageStatus = (wage: Wage) => {
+  const action = wage.disabled ? 'enable' : 'disable'
+  const actionLabel = wage.disabled ? 'enabled' : 'disabled'
+  executeToggleStatus(
+    { pathParams: { wageId: wage.id }, queryParams: { action } },
+    {
+      onSuccess: () => {
+        toast.add({ title: `Wage ${actionLabel} successfully`, color: 'success' })
+        queryClient.invalidateQueries({ queryKey: teamKeys.detail(String(teamId.value)) })
+      },
+      onError: () => toast.add({ title: `Failed to ${action} wage`, color: 'error' })
+    }
+  )
+}
+
+const columns = computed((): TableColumn<MemberRow>[] => {
+  const cols: TableColumn<MemberRow>[] = [
+    { accessorKey: 'index', header: '#' },
+    { id: 'member', header: 'Member' },
+    { id: 'standard', header: 'Standard Wage' },
+    { id: 'overtime', header: 'Overtime Wage' }
   ]
   if (teamStore.currentTeamMeta.data?.ownerAddress == userDataStore.address) {
-    columns.push({ key: 'action', label: 'Action' })
+    cols.push({ id: 'action', header: 'Action' })
   }
-  return columns
+  return cols
 })
 </script>

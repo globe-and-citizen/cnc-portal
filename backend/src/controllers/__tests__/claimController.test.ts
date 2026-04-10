@@ -49,14 +49,15 @@ vi.mock('../wageController', () => ({
 }));
 
 // Mock the storage service
-const { mockGetPresignedDownloadUrl, mockDeleteFile } = vi.hoisted(() => ({
-  mockGetPresignedDownloadUrl: vi.fn(),
+const { mockGetPublicFileUrl, mockDeleteFile } = vi.hoisted(() => ({
+  mockGetPublicFileUrl: vi.fn((key: string) => `https://storage.railway.app/test-bucket/${key}`),
   mockDeleteFile: vi.fn(),
 }));
 
 vi.mock('../../services/storageService', () => ({
-  getPresignedDownloadUrl: mockGetPresignedDownloadUrl,
+  getPublicFileUrl: mockGetPublicFileUrl,
   deleteFile: mockDeleteFile,
+  refreshPresignedUrl: vi.fn((key: string) => `https://storage.railway.app/test-bucket/${key}`),
   isStorageConfigured: vi.fn(() => true),
   uploadFile: vi.fn(),
   uploadProfileImage: vi.fn(),
@@ -82,7 +83,7 @@ vi.mock('../../services/storageService', () => ({
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   ],
   MAX_FILE_SIZE: 10 * 1024 * 1024,
-  MAX_FILES_PER_CLAIM: 10,
+  MAX_FILES_UPLOAD: 10,
   PRESIGNED_URL_EXPIRATION: 3600,
 }));
 
@@ -235,7 +236,7 @@ describe('Claim Controller', () => {
       expect(response.body.message).toBe('No wage found for the user');
     });
 
-    it('should return 400 if maximum weekly claim is reached', async () => {
+    it('should return 409 if maximum weekly claim is reached', async () => {
       vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(createMockWage());
       vi.spyOn(prisma.weeklyClaim, 'findFirst').mockResolvedValue(createMockWeeklyClaim());
 
@@ -243,9 +244,15 @@ describe('Claim Controller', () => {
         .post('/')
         .send({ teamId: 1, hoursWorked: 45, memo: 'memo' });
 
-      expect(response.status).toBe(400);
-      expect(response.body.message).toMatch(
-        /^Maximum weekly hours reached, cannot submit more claims for this week\. You have \d+ hours remaining\.$/
+      expect(response.status).toBe(409);
+      expect(response.body.message).toContain(
+        'Unable to submit this claim: your weekly hours limit would be exceeded.'
+      );
+      expect(response.body.message).toContain('Weekly allowance: 40h regular + 0h overtime = 40h.');
+      expect(response.body.message).toContain('Already submitted: 30h.');
+      expect(response.body.message).toContain('Remaining to submit: 10h.');
+      expect(response.body.message).toContain(
+        'Unable to submit this claim: your weekly hours limit would be exceeded. Weekly allowance: 40h regular + 0h overtime = 40h. Already submitted: 30h. Remaining to submit: 10h.'
       );
     });
 
@@ -544,7 +551,7 @@ describe('Claim Controller', () => {
       });
     });
 
-    it('should return 400 if updating claim exceeds maximum weekly hours', async () => {
+    it('should return 409 if updating claim exceeds maximum weekly hours', async () => {
       const mockClaim = {
         id: 1,
         wage: { userAddress: TEST_ADDRESS, maximumHoursPerWeek: 40 },
@@ -563,9 +570,15 @@ describe('Claim Controller', () => {
         hoursWorked: 5,
         memo: 'Updated memo',
       });
-      expect(response.status).toBe(400);
-      expect(response.body.message).toMatch(
-        /Maximum weekly hours reached, cannot update claim\. You have \d+ hours remaining for this week\./
+      expect(response.status).toBe(409);
+      expect(response.body.message).toContain(
+        'Unable to update this claim: your weekly hours limit would be exceeded.'
+      );
+      expect(response.body.message).toContain('Weekly allowance: 40h regular + 0h overtime = 40h.');
+      expect(response.body.message).toContain('Already submitted: 38h.');
+      expect(response.body.message).toContain('Remaining to submit: 2h.');
+      expect(response.body.message).toContain(
+        'Unable to update this claim: your weekly hours limit would be exceeded. Weekly allowance: 40h regular + 0h overtime = 40h. Already submitted: 38h. Remaining to submit: 2h.'
       );
     });
 
