@@ -11,7 +11,6 @@ import { config } from '@/wagmi.config'
 const BANK_FUNCTION_NAMES = {
   PAUSED: 'paused',
   OWNER: 'owner',
-  OFFICER_ADDRESS: 'officerAddress',
   SUPPORTED_TOKENS: 'supportedTokens',
   DIVIDEND_BALANCES: 'dividendBalances',
   TOKEN_DIVIDEND_BALANCES: 'tokenDividendBalances',
