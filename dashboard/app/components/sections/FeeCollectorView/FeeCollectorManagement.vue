@@ -15,17 +15,8 @@
     <!-- Stats Cards -->
     <FeeCollectorStats />
 
-    <!-- Token Holdings Table -->
-    <TokenHoldingsTable @open-batch-modal="isWithdrawModalOpen = true" />
-
-    <!-- Withdraw Modal -->
-    <WithdrawModal
-      v-model:is-open="isWithdrawModalOpen"
-      :is-loading-withdraw="isLoadingWithdraw"
-      :is-confirming-withdraw="isConfirmingWithdraw"
-      @close="isWithdrawModalOpen = false"
-      @withdraw="handleWithdraw"
-    />
+    <!-- Token Holdings Table (renders the Withdraw button + modal internally) -->
+    <TokenHoldingsTable />
 
     <!-- Fee Config List -->
     <FeeConfigList />
@@ -33,39 +24,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
-import { useTokenWithdraw } from '@/composables/useTokenWithdraw'
 import FeeCollectorStats from './FeeCollectorStats.vue'
 import TokenHoldingsTable from './TokenHoldingsTable.vue'
-import WithdrawModal from './WithdrawModal.vue'
 import FeeConfigList from './FeeConfigList.vue'
-
-const toast = useToast()
-
-const {
-  withdraw,
-  isLoadingWithdraw,
-  isConfirmingWithdraw,
-  isConfirmedWithdraw
-} = useTokenWithdraw()
-
-// State
-const isWithdrawModalOpen = ref(false)
-
-// Handlers
-const handleWithdraw = () => {
-  withdraw()
-}
-
-// Watch for successful withdrawal
-watch(isConfirmedWithdraw, (confirmed) => {
-  if (confirmed) {
-    toast.add({
-      title: 'Success',
-      description: 'All fees withdrawn successfully',
-      color: 'success'
-    })
-    isWithdrawModalOpen.value = false
-  }
-})
 </script>

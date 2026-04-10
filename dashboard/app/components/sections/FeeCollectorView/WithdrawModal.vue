@@ -1,112 +1,120 @@
 <template>
-  <UModal
-    :open="isOpen"
-    :prevent-close="isLoadingWithdraw || isConfirmingWithdraw"
-    title="Withdraw all fees"
-    :close="{ onClick: () => handleClose() }"
-    @update:model-value="$emit('update:isOpen', $event)"
-  >
-    <!-- BODY -->
-    <template #body>
-      <div class="space-y-4">
-        <p class="text-sm text-gray-600 dark:text-gray-400">
-          This will sweep every supported token held by the FeeCollector
-          to the configured beneficiary in a single transaction. There is
-          no amount to enter — the full balance of each token is withdrawn.
-        </p>
+  <template v-if="isOwner">
+    <UButton
+      color="primary"
+      size="sm"
+      icon="i-heroicons-arrow-down-tray"
+      :disabled="isLoadingWithdraw || isConfirmingWithdraw"
+      @click="isOpen = true"
+    >
+      Withdraw
+    </UButton>
 
-        <div class="border rounded-lg divide-y dark:divide-gray-700">
-          <div
-            v-if="sweepableTokens.length === 0"
-            class="px-4 py-6 text-center text-sm text-gray-500"
-          >
-            Nothing to withdraw — every balance is zero.
+    <UModal
+      :open="isOpen"
+      :prevent-close="isLoadingWithdraw || isConfirmingWithdraw"
+      title="Withdraw all fees"
+      :close="{ onClick: () => handleClose() }"
+      @update:model-value="isOpen = $event"
+    >
+      <!-- BODY -->
+      <template #body>
+        <div class="space-y-4">
+          <p class="text-sm text-gray-600 dark:text-gray-400">
+            This will sweep every supported token held by the FeeCollector
+            to the configured beneficiary in a single transaction. There is
+            no amount to enter — the full balance of each token is withdrawn.
+          </p>
+
+          <div class="border rounded-lg divide-y dark:divide-gray-700">
+            <div
+              v-if="sweepableTokens.length === 0"
+              class="px-4 py-6 text-center text-sm text-gray-500"
+            >
+              Nothing to withdraw — every balance is zero.
+            </div>
+
+            <div
+              v-for="token in sweepableTokens"
+              :key="token.address"
+              class="flex items-center justify-between px-4 py-3"
+            >
+              <div class="flex items-center gap-3">
+                <UAvatar :alt="token.symbol" size="sm">
+                  <template #fallback>
+                    <span class="text-sm font-semibold">
+                      {{ token.symbol.charAt(0) }}
+                    </span>
+                  </template>
+                </UAvatar>
+                <span class="font-medium">
+                  {{ token.symbol }}
+                </span>
+              </div>
+              <div class="text-right">
+                <div class="font-medium">
+                  {{ token.formattedBalance }} {{ token.symbol }}
+                </div>
+                <div
+                  v-if="token.formattedValue"
+                  class="text-xs text-gray-500 dark:text-gray-400"
+                >
+                  {{ token.formattedValue }}
+                </div>
+              </div>
+            </div>
           </div>
 
-          <div
-            v-for="token in sweepableTokens"
-            :key="token.address"
-            class="flex items-center justify-between px-4 py-3"
-          >
-            <div class="flex items-center gap-3">
-              <UAvatar :alt="token.symbol" size="sm">
-                <template #fallback>
-                  <span class="text-sm font-semibold">
-                    {{ token.symbol.charAt(0) }}
-                  </span>
-                </template>
-              </UAvatar>
-              <span class="font-medium">
-                {{ token.symbol }}
-              </span>
-            </div>
-            <div class="text-right">
-              <div class="font-medium">
-                {{ token.formattedBalance }} {{ token.symbol }}
-              </div>
-              <div
-                v-if="token.formattedValue"
-                class="text-xs text-gray-500 dark:text-gray-400"
-              >
-                {{ token.formattedValue }}
-              </div>
-            </div>
-          </div>
+          <p v-if="sweepableTokens.length > 0" class="text-right text-sm text-gray-500">
+            Total ≈ {{ formattedTotalUsd }}
+          </p>
         </div>
+      </template>
 
-        <p v-if="sweepableTokens.length > 0" class="text-right text-sm text-gray-500">
-          Total ≈ {{ formattedTotalUsd }}
-        </p>
-      </div>
-    </template>
+      <!-- FOOTER -->
+      <template #footer>
+        <div class="flex justify-end gap-3 pt-2">
+          <UButton
+            color="neutral"
+            variant="outline"
+            :disabled="isLoadingWithdraw || isConfirmingWithdraw"
+            @click="handleClose"
+          >
+            Cancel
+          </UButton>
 
-    <!-- FOOTER -->
-    <template #footer>
-      <div class="flex justify-end gap-3 pt-2">
-        <UButton
-          color="neutral"
-          variant="outline"
-          :disabled="isLoadingWithdraw || isConfirmingWithdraw"
-          @click="handleClose"
-        >
-          Cancel
-        </UButton>
-
-        <UButton
-          color="primary"
-          :disabled="sweepableTokens.length === 0"
-          :loading="isLoadingWithdraw || isConfirmingWithdraw"
-          @click="handleConfirm"
-        >
-          {{ isConfirmingWithdraw ? 'Confirming...' : 'Withdraw all' }}
-        </UButton>
-      </div>
-    </template>
-  </UModal>
+          <UButton
+            color="primary"
+            :disabled="sweepableTokens.length === 0"
+            :loading="isLoadingWithdraw || isConfirmingWithdraw"
+            @click="handleConfirm"
+          >
+            {{ isConfirmingWithdraw ? 'Confirming...' : 'Withdraw all' }}
+          </UButton>
+        </div>
+      </template>
+    </UModal>
+  </template>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useFeeCollector } from '@/composables/useFeeCollector'
+import { useTokenWithdraw } from '@/composables/useTokenWithdraw'
+import { isFeeCollectorOwner } from '~/composables/FeeCollector/read'
 
-interface Props {
-  isOpen: boolean
-  isLoadingWithdraw?: boolean
-  isConfirmingWithdraw?: boolean
-}
+const toast = useToast()
 
-withDefaults(defineProps<Props>(), {
-  isLoadingWithdraw: false,
-  isConfirmingWithdraw: false
-})
-
-const emit = defineEmits<{
-  'update:isOpen': [value: boolean]
-  'close': []
-  'withdraw': []
-}>()
+const isOwner = isFeeCollectorOwner()
+const isOpen = ref(false)
 
 const { tokens, formattedTotalUsd } = useFeeCollector()
+const {
+  withdraw,
+  isLoadingWithdraw,
+  isConfirmingWithdraw,
+  isConfirmedWithdraw
+} = useTokenWithdraw()
 
 // Only show tokens that actually have a non-zero balance — those are what
 // the on-chain sweep will move. Zero-balance entries are skipped by the
@@ -116,10 +124,21 @@ const sweepableTokens = computed(() =>
 )
 
 const handleClose = () => {
-  emit('close')
+  if (isLoadingWithdraw.value || isConfirmingWithdraw.value) return
+  isOpen.value = false
 }
 
 const handleConfirm = () => {
-  emit('withdraw')
+  withdraw()
 }
+
+watch(isConfirmedWithdraw, (confirmed) => {
+  if (!confirmed) return
+  toast.add({
+    title: 'Success',
+    description: 'All fees withdrawn successfully',
+    color: 'success'
+  })
+  isOpen.value = false
+})
 </script>

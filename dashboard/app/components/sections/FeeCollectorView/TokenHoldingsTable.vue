@@ -11,15 +11,7 @@
           </UBadge>
         </div>
 
-        <UButton
-          v-if="isOwner"
-          color="primary"
-          size="sm"
-          icon="i-heroicons-arrow-down-tray"
-          @click="$emit('openBatchModal')"
-        >
-          Withdraw
-        </UButton>
+        <WithdrawModal />
       </div>
     </template>
     <!-- <pre>{{ tableRows }}</pre> -->
@@ -88,10 +80,7 @@ import { computed } from 'vue'
 import { useFeeCollector } from '@/composables/useFeeCollector'
 import type { TokenDisplay } from '@/types/token'
 import { isFeeCollectorOwner } from '~/composables/FeeCollector/read'
-
-defineEmits<{
-  openBatchModal: []
-}>()
+import WithdrawModal from './WithdrawModal.vue'
 
 interface TableRow extends TokenDisplay {
   rank: number
