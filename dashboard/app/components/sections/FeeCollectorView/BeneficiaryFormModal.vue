@@ -18,11 +18,10 @@
           name="beneficiary"
           class="flex-1"
         >
-          <UInput
+          <AddressSearchInput
             v-model="localState.beneficiary"
-            placeholder="0x…"
+            placeholder="Search a user or paste an address…"
             :disabled="isLoading"
-            class="w-full"
           />
           <div class="text-xs text-gray-500 mt-1">
             Leave empty (or enter 0x0000…0000) to clear and fall back to the contract owner.

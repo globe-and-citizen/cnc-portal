@@ -27,11 +27,10 @@
             name="newOwner"
             class="flex-1"
           >
-            <UInput
+            <AddressSearchInput
               v-model="localState.newOwner"
-              placeholder="0x…"
+              placeholder="Search a user or paste an address…"
               :disabled="transferOwnership.isPending.value"
-              class="w-full"
             />
           </UFormField>
 
@@ -91,6 +90,7 @@ import { useFeeCollectorOwner } from '~/composables/FeeCollector/read'
 import { useTransferOwnership } from '~/composables/FeeCollector/writes'
 import { parseErrorV2 } from '@/utils'
 import UserIdentity from '@/components/UserIdentity.vue'
+import AddressSearchInput from '@/components/AddressSearchInput.vue'
 
 const props = defineProps<{
   modelValue: boolean

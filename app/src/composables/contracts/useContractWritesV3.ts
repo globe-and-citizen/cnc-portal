@@ -169,23 +169,35 @@ export function useContractWritesV3(cfg: ContractWriteV3Config) {
     },
     onSuccess: async () => {
       const address = unref(cfg.contractAddress)
+      if (!address) return
       const chainId = unref(cfg.chainId)
-      // TanStack's partialMatchKey walks every key present in the invalidation
-      // target and compares values by identity. `useReadContract` always stores
-      // a concrete `chainId` in its query key (it injects `chainId ?? currentChainId`),
-      // so passing `{ address, chainId: undefined }` here compares `undefined`
-      // against e.g. `31337` and the match fails — no reads get invalidated.
-      // Only include `chainId` when it was explicitly set on the V3 call; an
-      // address-only target lets partialMatchKey ignore the chainId field on
-      // the stored key and invalidate all reads against this contract.
+      const addressLower = address.toLowerCase()
+
+      // Invalidate every `useReadContract` subscribed to this contract address.
+      // We use a predicate rather than a partial-key target for two reasons:
+      //
+      //   1. `useReadContract` injects `chainId` into its stored queryKey, so
+      //      a partial-key target that omits `chainId` matches by a subtle
+      //      `partialMatchKey` contract and a target that includes
+      //      `chainId: undefined` fails outright (`typeof undefined !== typeof 31337`).
+      //      The predicate sidesteps both traps by reading the queryKey
+      //      structurally.
+      //   2. Address case drift: the stored key uses whatever address the
+      //      caller passed; comparing lower-cased on both sides makes the
+      //      match robust if viem ever checksum-normalises the string
+      //      somewhere in the pipeline.
       await queryClient.invalidateQueries({
-        queryKey: [
-          'readContract',
-          {
-            address,
-            ...(chainId !== undefined ? { chainId } : {})
-          }
-        ]
+        predicate: (query) => {
+          const key = query.queryKey
+          if (!Array.isArray(key) || key[0] !== 'readContract') return false
+          const params = key[1] as { address?: string, chainId?: number } | undefined
+          if (!params || typeof params !== 'object') return false
+          if (typeof params.address !== 'string') return false
+          if (params.address.toLowerCase() !== addressLower) return false
+          // If the caller pinned a specific chainId, only invalidate reads on that chain.
+          if (chainId !== undefined && params.chainId !== chainId) return false
+          return true
+        }
       })
     }
   })
