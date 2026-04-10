@@ -139,19 +139,15 @@ const handleClose = () => {
 }
 
 const handleConfirm = async () => {
-  try {
-    await withdrawAll.mutateAsync({ args: [] })
-    // V3 auto-invalidates the fee collector's readContract queries on success,
-    // so the TokenHoldingsTable balances refresh without manual wiring.
-    toast.add({
-      title: 'Success',
-      description: 'All fees withdrawn successfully',
-      color: 'success'
-    })
-    isOpen.value = false
-  } catch {
-    // Error surfaced via withdrawAll.error + the UAlert in the modal body.
-  }
+  await withdrawAll.mutateAsync({ args: [] })
+  // V3 auto-invalidates the fee collector's readContract queries on success,
+  // so the TokenHoldingsTable balances refresh without manual wiring.
+  toast.add({
+    title: 'Success',
+    description: 'All fees withdrawn successfully',
+    color: 'success'
+  })
+  isOpen.value = false
 }
 
 // Reset any previous error state whenever the modal is reopened.
