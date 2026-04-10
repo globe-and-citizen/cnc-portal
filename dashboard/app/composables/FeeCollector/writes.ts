@@ -29,3 +29,4 @@ export function useFeeCollectorWrite<T extends FeeCollectorFunctionNames>(
 export const useSetFee = () => useFeeCollectorWrite('setFee')
 export const useWithdrawAll = () => useFeeCollectorWrite('withdraw')
 export const useSetFeeBeneficiary = () => useFeeCollectorWrite('setFeeBeneficiary')
+export const useTransferOwnership = () => useFeeCollectorWrite('transferOwnership')

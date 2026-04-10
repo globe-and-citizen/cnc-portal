@@ -32,9 +32,21 @@
     <UCard>
       <div class="flex items-center justify-between gap-3">
         <div class="flex-1 min-w-0">
-          <p class="text-sm text-gray-600 dark:text-gray-400">
-            Owner
-          </p>
+          <div class="flex items-center justify-between gap-2">
+            <p class="text-sm text-gray-600 dark:text-gray-400">
+              Owner
+            </p>
+            <UButton
+              v-if="isOwnerOfCollector"
+              size="xs"
+              color="primary"
+              variant="soft"
+              :disabled="isLoadingOwner"
+              @click="isTransferModalOpen = true"
+            >
+              Transfer
+            </UButton>
+          </div>
           <div class="mt-2">
             <span v-if="isLoadingOwner">
               <UIcon name="i-heroicons-arrow-path" class="w-5 h-5 animate-spin" />
@@ -96,6 +108,7 @@
     </UCard>
 
     <BeneficiaryFormModal v-model:model-value="isBeneficiaryModalOpen" />
+    <TransferOwnershipModal v-model:model-value="isTransferModalOpen" />
   </div>
 </template>
 
@@ -109,6 +122,7 @@ import {
   useFeeCollectorOwner
 } from '~/composables/FeeCollector/read'
 import BeneficiaryFormModal from './BeneficiaryFormModal.vue'
+import TransferOwnershipModal from './TransferOwnershipModal.vue'
 import UserIdentity from '@/components/UserIdentity.vue'
 
 // Total balance (existing)
@@ -138,7 +152,8 @@ const displayBeneficiary = computed<Address | undefined>(() => {
   return isBeneficiaryUnset.value ? owner.value : beneficiary.value
 })
 
-// Owner-gated Change action
+// Owner-gated actions
 const isOwnerOfCollector = isFeeCollectorOwner()
 const isBeneficiaryModalOpen = ref(false)
+const isTransferModalOpen = ref(false)
 </script>
