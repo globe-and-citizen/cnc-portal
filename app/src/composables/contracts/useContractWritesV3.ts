@@ -190,7 +190,7 @@ export function useContractWritesV3(cfg: ContractWriteV3Config) {
         predicate: (query) => {
           const key = query.queryKey
           if (!Array.isArray(key) || key[0] !== 'readContract') return false
-          const params = key[1] as { address?: string, chainId?: number } | undefined
+          const params = key[1] as { address?: string; chainId?: number } | undefined
           if (!params || typeof params !== 'object') return false
           if (typeof params.address !== 'string') return false
           if (params.address.toLowerCase() !== addressLower) return false
