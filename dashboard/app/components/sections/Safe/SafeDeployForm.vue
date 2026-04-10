@@ -8,7 +8,7 @@
     @update:model-value="emit('update:modelValue', $event)"
   >
     <template #body>
-      <UForm class="space-y-6 px-6 pt-6 pb-4" @submit.prevent="onSubmit">
+      <UForm class="space-y-6" @submit.prevent="onSubmit">
         <div>
           <label class="block font-medium mb-2">Owners</label>
           <div class="space-y-2">

@@ -10,7 +10,7 @@
       <UForm
         :schema="feeConfigSchema"
         :state="localConfig"
-        class="space-y-6 px-6 pt-6 pb-2"
+        class="space-y-6"
         @submit="handleSubmit"
       >
         <!-- <div class="flex flex-row md:flex-row gap-4 items-start"> -->
