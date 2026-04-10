@@ -1,9 +1,10 @@
 <template>
   <UInputMenu
     v-model:search-term="searchTerm"
-    :model-value="(modelValue as unknown as UserItem)"
+    :model-value="modelValue"
     :items="items"
     autocomplete
+    value-key="address"
     label-key="address"
     :ignore-filter="true"
     :loading="isFetching"
@@ -51,9 +52,14 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
+import type { InputMenuItem } from '@nuxt/ui'
 import { useUsers } from '~/queries/user.queries'
 
-interface UserItem {
+// InputMenuItem is `InputMenuValue | { label?, description?, ...; [key: string]: any }`.
+// Intersecting with our custom fields collapses the union to the object
+// variant (the primitive branch becomes `never`) and adds our concrete
+// `address` / `name` / `imageUrl` on top of Nuxt UI's allowed shape.
+type UserItem = InputMenuItem & {
   address: string
   name?: string
   imageUrl?: string
@@ -123,8 +129,14 @@ function avatarSrcFor(item: UserItem): string {
 }
 
 // In autocomplete mode UInputMenu's runtime modelValue is a plain string
-// (the current input text), but the generic TS types still infer it as
-// `UserItem`. We cast on the way out and coerce null/undefined to ''.
+// (the current input text). With `valueKey="address"` set, picking a
+// suggestion also yields a string — reka-ui's ComboboxItem is rendered with
+// `:value="item[valueKey]"`, so the selected value is `item.address` (not
+// the whole object). Without `valueKey`, reka-ui's AutocompleteRoot would
+// call `String(item)` on the object and the input would show `[object Object]`.
+//
+// The generic TS types still infer modelValue as `UserItem`, so we handle
+// the incoming value as `unknown` and normalise to a string.
 function handleModelUpdate(value: unknown) {
   if (value == null) {
     emit('update:modelValue', '')
@@ -134,7 +146,7 @@ function handleModelUpdate(value: unknown) {
     emit('update:modelValue', value)
     return
   }
-  // Defensive fallback — shouldn't happen in autocomplete mode, but guards
+  // Defensive fallback — shouldn't happen with valueKey set, but guards
   // against future prop changes.
   if (typeof value === 'object' && 'address' in value) {
     emit('update:modelValue', (value as UserItem).address)
