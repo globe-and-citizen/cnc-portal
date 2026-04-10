@@ -1,197 +1,157 @@
 <template>
-  <UModal
-    :open="isOpen"
-    :prevent-close="isLoadingWithdraw || isConfirmingWithdraw"
-    title="Withdraw from Fee Collector Contract"
-    :close="{ onClick: () => handleClose() }"
-    @update:model-value="$emit('update:isOpen', $event)"
-  >
-    <!-- HEADER -->
+  <template v-if="isOwner">
+    <UButton
+      color="primary"
+      size="sm"
+      icon="i-heroicons-arrow-down-tray"
+      :disabled="withdrawAll.isPending.value"
+      @click="isOpen = true"
+    >
+      Withdraw
+    </UButton>
 
-    <!-- BODY -->
-    <template #body>
-      <div class="space-y-6">
-        <!-- Amount + Token box -->
-        <div class="border rounded-lg px-4 py-3 space-y-1">
-          <div class="flex items-center justify-between text-sm text-gray-500">
-            <span>Amount</span>
-            <span v-if="selectedToken">
-              Balance: {{ selectedToken.formattedBalance }} {{ selectedToken.symbol }}
-            </span>
+    <UModal
+      :open="isOpen"
+      :prevent-close="withdrawAll.isPending.value"
+      title="Withdraw all fees"
+      :close="{ onClick: () => handleClose() }"
+      @update:model-value="isOpen = $event"
+    >
+      <!-- BODY -->
+      <template #body>
+        <div class="space-y-4">
+          <p class="text-sm text-gray-600 dark:text-gray-400">
+            This will sweep every supported token held by the FeeCollector
+            to the configured beneficiary in a single transaction. There is
+            no amount to enter — the full balance of each token is withdrawn.
+          </p>
+
+          <div class="border rounded-lg divide-y dark:divide-gray-700">
+            <div
+              v-if="sweepableTokens.length === 0"
+              class="px-4 py-6 text-center text-sm text-gray-500"
+            >
+              Nothing to withdraw — every balance is zero.
+            </div>
+
+            <div
+              v-for="token in sweepableTokens"
+              :key="token.address"
+              class="flex items-center justify-between px-4 py-3"
+            >
+              <div class="flex items-center gap-3">
+                <UAvatar :alt="token.symbol" size="sm">
+                  <template #fallback>
+                    <span class="text-sm font-semibold">
+                      {{ token.symbol.charAt(0) }}
+                    </span>
+                  </template>
+                </UAvatar>
+                <span class="font-medium">
+                  {{ token.symbol }}
+                </span>
+              </div>
+              <div class="text-right">
+                <div class="font-medium">
+                  {{ token.formattedBalance }} {{ token.symbol }}
+                </div>
+                <div
+                  v-if="token.formattedValue"
+                  class="text-xs text-gray-500 dark:text-gray-400"
+                >
+                  {{ token.formattedValue }}
+                </div>
+              </div>
+            </div>
           </div>
 
-          <div class="flex items-center gap-3">
-            <UInput
-              v-model="withdrawAmount"
-              placeholder="0"
-              inputmode="decimal"
-              size="xl"
-              class="flex-1"
-              :disabled="!selectedToken || isLoadingWithdraw || isConfirmingWithdraw"
-            />
+          <p v-if="sweepableTokens.length > 0" class="text-right text-sm text-gray-500">
+            Total ≈ {{ formattedTotalUsd }}
+          </p>
 
-            <!-- TOKEN DROPDOWN -->
-            <UDropdownMenu :items="dropdownItems">
-              <UButton
-                color="neutral"
-                variant="solid"
-                class="min-w-[70px] flex justify-between"
-                :disabled="isLoadingWithdraw || isConfirmingWithdraw"
-              >
-                {{ selectedToken ? selectedToken.symbol : 'Select' }}
-                <UIcon name="i-heroicons-chevron-down" />
-              </UButton>
-            </UDropdownMenu>
-          </div>
-
-          <!-- % BUTTONS -->
-          <div class="flex justify-end gap-4 text-xs text-gray-600 pt-1">
-            <button type="button" :disabled="!selectedToken" @click="setPercentAmount(25)">
-              25%
-            </button>
-            <button type="button" :disabled="!selectedToken" @click="setPercentAmount(50)">
-              50%
-            </button>
-            <button type="button" :disabled="!selectedToken" @click="setPercentAmount(75)">
-              75%
-            </button>
-            <button type="button" :disabled="!selectedToken" @click="setMaxAmount">
-              Max
-            </button>
-          </div>
+          <UAlert
+            v-if="withdrawAll.isError.value"
+            color="error"
+            variant="subtle"
+            title="Failed to withdraw fees"
+            :description="errorDescription"
+            icon="i-lucide-terminal"
+          />
         </div>
+      </template>
 
-        <!-- Fiat estimate -->
-        <p class="text-gray-500 text-sm">
-          ≈ {{ estimatedUSD }}
-        </p>
-      </div>
-    </template>
+      <!-- FOOTER -->
+      <template #footer>
+        <div class="flex justify-end gap-3 pt-2">
+          <UButton
+            color="neutral"
+            variant="outline"
+            :disabled="withdrawAll.isPending.value"
+            @click="handleClose"
+          >
+            Cancel
+          </UButton>
 
-    <!-- FOOTER -->
-    <template #footer>
-      <div class="flex justify-end gap-3 pt-2">
-        <UButton
-          color="neutral"
-          variant="outline"
-          :disabled="isLoadingWithdraw || isConfirmingWithdraw"
-          @click="handleClose"
-        >
-          Cancel
-        </UButton>
-
-        <UButton
-          color="primary"
-          :disabled="!isValid"
-          :loading="isLoadingWithdraw || isConfirmingWithdraw"
-          @click="handleSubmit"
-        >
-          {{ isConfirmingWithdraw ? 'Confirming...' : 'Withdraw' }}
-        </UButton>
-      </div>
-    </template>
-  </UModal>
+          <UButton
+            color="primary"
+            :disabled="sweepableTokens.length === 0"
+            :loading="withdrawAll.isPending.value"
+            @click="handleConfirm"
+          >
+            Withdraw all
+          </UButton>
+        </div>
+      </template>
+    </UModal>
+  </template>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
-import type { TokenDisplay } from '@/types/token'
-import type { DropdownMenuItem } from '@nuxt/ui'
+import { computed, ref, watch } from 'vue'
 import { useFeeCollector } from '@/composables/useFeeCollector'
-import { useTokenPriceStore } from '@/stores/useTokenPriceStore'
+import { isFeeCollectorOwner } from '~/composables/FeeCollector/read'
+import { useWithdrawAll } from '~/composables/FeeCollector/writes'
+import { parseErrorV2 } from '@/utils'
 
-interface Props {
-  isOpen: boolean
-  isLoadingWithdraw?: boolean
-  isConfirmingWithdraw?: boolean
-}
+const toast = useToast()
 
-const props = withDefaults(defineProps<Props>(), {
-  isLoadingWithdraw: false,
-  isConfirmingWithdraw: false
-})
+const isOwner = isFeeCollectorOwner()
+const isOpen = ref(false)
 
-const emit = defineEmits<{
-  'update:isOpen': [value: boolean]
-  'close': []
-  'withdraw': [token: TokenDisplay, amount: string]
-}>()
+const { tokens, formattedTotalUsd } = useFeeCollector()
+const withdrawAll = useWithdrawAll()
 
-// Get data from composables
-const { tokens } = useFeeCollector()
-const tokenPriceStore = useTokenPriceStore()
-
-// Local state
-const selectedToken = ref<TokenDisplay | null>(null)
-const withdrawAmount = ref('')
-
-// Dropdown items
-const dropdownItems = computed<DropdownMenuItem[]>(() =>
-  tokens.value.map(token => ({
-    label: `${token.symbol} — ${token.formattedBalance}`,
-    onSelect: () => {
-      selectedToken.value = token
-      withdrawAmount.value = ''
-    }
-  }))
+// Only show tokens that actually have a non-zero balance — those are what
+// the on-chain sweep will move. Zero-balance entries are skipped by the
+// contract anyway, so there's no value in listing them here.
+const sweepableTokens = computed(() =>
+  tokens.value.filter(token => token.balance > 0n)
 )
 
-// Calculate estimated USD using store
-const estimatedUSD = computed(() => {
-  if (!selectedToken.value || !withdrawAmount.value) return '$0.00'
-
-  const amount = parseFloat(withdrawAmount.value)
-  if (isNaN(amount) || amount === 0) return '$0.00'
-
-  const price = tokenPriceStore.getTokenPrice(selectedToken.value)
-  const usdValue = price * amount
-
-  if (usdValue < 0.0001) return '< $0.0001'
-  if (usdValue < 0.01) return `$${usdValue.toFixed(4)}`
-  return `$${usdValue.toFixed(2)}`
+const errorDescription = computed(() => {
+  const err = withdrawAll.error.value
+  return err ? parseErrorV2(err) : ''
 })
 
-// Set max amount
-const setMaxAmount = () => {
-  if (selectedToken.value && selectedToken.value.formattedBalance) {
-    withdrawAmount.value = selectedToken.value.formattedBalance
-  }
-}
-
-// Set percentage amount
-const setPercentAmount = (percent: number) => {
-  if (selectedToken.value && selectedToken.value.formattedBalance) {
-    const maxAmount = parseFloat(selectedToken.value.formattedBalance)
-    const percentAmount = (maxAmount * percent) / 100
-    withdrawAmount.value = percentAmount.toFixed(selectedToken.value.decimals)
-  }
-}
-
-// Validation
-const isValid = computed(() => {
-  if (!selectedToken.value || !withdrawAmount.value || !selectedToken.value.formattedBalance) return false
-  const amount = parseFloat(withdrawAmount.value)
-  const maxAmount = parseFloat(selectedToken.value.formattedBalance)
-  return !isNaN(amount) && amount > 0 && amount <= maxAmount
-})
-
-// Handlers
 const handleClose = () => {
-  selectedToken.value = null
-  withdrawAmount.value = ''
-  emit('close')
+  if (withdrawAll.isPending.value) return
+  isOpen.value = false
 }
 
-const handleSubmit = () => {
-  if (!selectedToken.value || !withdrawAmount.value || !isValid.value) return
-  emit('withdraw', selectedToken.value, withdrawAmount.value)
+const handleConfirm = async () => {
+  await withdrawAll.mutateAsync({ args: [] })
+  // V3 auto-invalidates the fee collector's readContract queries on success,
+  // so the TokenHoldingsTable balances refresh without manual wiring.
+  toast.add({
+    title: 'Success',
+    description: 'All fees withdrawn successfully',
+    color: 'success'
+  })
+  isOpen.value = false
 }
 
-// Reset when modal closes
-watch(() => props.isOpen, (isOpen) => {
-  if (!isOpen) {
-    selectedToken.value = null
-    withdrawAmount.value = ''
-  }
+// Reset any previous error state whenever the modal is reopened.
+watch(isOpen, (open) => {
+  if (open) withdrawAll.reset()
 })
 </script>

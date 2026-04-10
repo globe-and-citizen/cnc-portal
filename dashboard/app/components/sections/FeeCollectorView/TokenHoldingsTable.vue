@@ -11,18 +11,13 @@
           </UBadge>
         </div>
 
-        <UButton
-          v-if="isOwner"
-          color="primary"
-          size="sm"
-          icon="i-heroicons-arrow-down-tray"
-          @click="$emit('openBatchModal')"
-        >
-          Withdraw
-        </UButton>
+        <div class="flex items-center gap-2">
+          <AddTokenSupportModal />
+          <WithdrawModal />
+        </div>
       </div>
     </template>
-    <!-- <pre>{{ tableRows }}</pre> -->
+
     <UTable
       :data="tableRows"
       :columns="columns"
@@ -79,19 +74,37 @@
           </div>
         </div>
       </template>
+
+      <template #actions-cell="{ row }">
+        <UButton
+          v-if="isOwner && !isNative(row.original)"
+          icon="i-heroicons-trash"
+          size="xs"
+          color="error"
+          variant="ghost"
+          aria-label="Remove token support"
+          @click="openRemove(row.original)"
+        />
+      </template>
     </UTable>
+
+    <RemoveTokenSupportModal
+      v-model:model-value="isRemoveModalOpen"
+      :token="tokenToRemove"
+      @close="tokenToRemove = null"
+    />
   </UCard>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
+import { zeroAddress } from 'viem'
 import { useFeeCollector } from '@/composables/useFeeCollector'
 import type { TokenDisplay } from '@/types/token'
 import { isFeeCollectorOwner } from '~/composables/FeeCollector/read'
-
-defineEmits<{
-  openBatchModal: []
-}>()
+import WithdrawModal from './WithdrawModal.vue'
+import AddTokenSupportModal from './AddTokenSupportModal.vue'
+import RemoveTokenSupportModal from './RemoveTokenSupportModal.vue'
 
 interface TableRow extends TokenDisplay {
   rank: number
@@ -99,34 +112,32 @@ interface TableRow extends TokenDisplay {
 
 const isOwner = isFeeCollectorOwner()
 
-// Get data directly from composables and store
 const { tokens, isLoading } = useFeeCollector()
 
-// Define table columns
 const columns = [
-  {
-    accessorKey: 'rank',
-    header: 'RANK'
-  },
-  {
-    accessorKey: 'symbol',
-    header: 'Token'
-  },
-  {
-    accessorKey: 'shortAddress',
-    header: 'Address'
-  },
-  {
-    accessorKey: 'formattedBalance',
-    header: 'Amount'
-  }
+  { accessorKey: 'rank', header: 'RANK' },
+  { accessorKey: 'symbol', header: 'Token' },
+  { accessorKey: 'shortAddress', header: 'Address' },
+  { accessorKey: 'formattedBalance', header: 'Amount' },
+  { id: 'actions', header: '' }
 ]
 
-// Transform tokens into table rows with rank
-const tableRows = computed<TableRow[]>(() => {
-  return tokens.value.map((token, index) => ({
-    ...token,
-    rank: index + 1
-  }))
-})
+const tableRows = computed<TableRow[]>(() =>
+  tokens.value.map((token, index) => ({ ...token, rank: index + 1 }))
+)
+
+// Native rows can't be "unsupported" — the FeeCollector always receives native
+// via its receive() hook, and removeTokenSupport would revert on zeroAddress.
+function isNative(token: TokenDisplay): boolean {
+  return token.address === zeroAddress
+}
+
+// Remove-support flow: a single modal instance is reused with whichever row
+// the user clicks, avoiding N modals in the DOM.
+const isRemoveModalOpen = ref(false)
+const tokenToRemove = ref<TokenDisplay | null>(null)
+function openRemove(token: TokenDisplay) {
+  tokenToRemove.value = token
+  isRemoveModalOpen.value = true
+}
 </script>

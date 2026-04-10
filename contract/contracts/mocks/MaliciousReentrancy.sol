@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 
 interface IFeeCollectorForAttack {
-  function withdraw(uint256 amount) external;
+  function withdraw() external;
 }
 
 /**
@@ -14,7 +14,6 @@ interface IFeeCollectorForAttack {
  */
 contract MaliciousReentrancy {
   address public target;
-  uint256 public attackAmount;
   bool private attacking;
 
   /**
@@ -23,18 +22,17 @@ contract MaliciousReentrancy {
    *         we attempt to call withdraw again, which should revert with
    *         ReentrancyGuardReentrantCall.
    */
-  function attack(address _target, uint256 _amount) external {
+  function attack(address _target) external {
     target = _target;
-    attackAmount = _amount;
     attacking = true;
-    IFeeCollectorForAttack(_target).withdraw(_amount);
+    IFeeCollectorForAttack(_target).withdraw();
     attacking = false;
   }
 
   receive() external payable {
-    if (attacking && address(target).balance >= attackAmount) {
+    if (attacking) {
       // Attempt a re-entrant call. Will bubble up the revert.
-      IFeeCollectorForAttack(target).withdraw(attackAmount);
+      IFeeCollectorForAttack(target).withdraw();
     }
   }
 }

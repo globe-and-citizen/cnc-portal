@@ -1,19 +1,19 @@
 import { computed, unref, type MaybeRef } from 'vue'
 import { useMutation, useQueryClient } from '@tanstack/vue-query'
+import { useConfig } from '@wagmi/vue'
 import {
   simulateContract,
   writeContract,
   waitForTransactionReceipt,
   type SimulateContractParameters,
-  type WaitForTransactionReceiptParameters
+  type WaitForTransactionReceiptParameters,
+  type Config
 } from '@wagmi/core'
 import { BaseError, type Abi, type Address } from 'viem'
-import { config as wagmiConfig, type config as wagmiConfigType } from '@/wagmi.config'
 import { log, parseErrorV2 } from '@/utils'
 
-type WagmiConfig = typeof wagmiConfigType
-type SimulateParams = SimulateContractParameters<Abi, string, readonly unknown[], WagmiConfig>
-type WaitParams = WaitForTransactionReceiptParameters<WagmiConfig>
+type SimulateParams = SimulateContractParameters<Abi, string, readonly unknown[], Config>
+type WaitParams = WaitForTransactionReceiptParameters<Config>
 
 export interface ContractWriteV3Config {
   contractAddress: MaybeRef<Address | undefined>
@@ -79,11 +79,11 @@ export type ExecuteContractWriteResult = {
 /**
  * Standalone contract write: simulate -> write -> wait for receipt.
  *
- * Framework-agnostic (no Vue/TanStack dependencies). Throws
- * `ContractWriteRevertedError` when the transaction is mined but reverts,
+ * Throws `ContractWriteRevertedError` when the transaction is mined but reverts,
  * with the ABI-decoded revert reason attached as `cause` when recoverable.
  */
 export async function executeContractWrite(
+  wagmiConfig: Config,
   params: ExecuteContractWriteParams
 ): Promise<ExecuteContractWriteResult> {
   const { address, abi, functionName, args = [], value } = params
@@ -138,10 +138,11 @@ export async function executeContractWrite(
  * Accepts contract coordinates (address, abi, functionName, chainId) at call time.
  * Wraps `executeContractWrite` in a TanStack mutation.
  *
- * `args` and `value` are provided per-call to `executeWrite` / `mutate`.
+ * `args` and `value` are provided per-call to `mutateAsync` / `mutate`.
  */
 export function useContractWritesV3(cfg: ContractWriteV3Config) {
   const queryClient = useQueryClient()
+  const wagmiConfig = useConfig()
 
   const shouldLog = computed(() => cfg.config?.log ?? true)
 
@@ -153,7 +154,7 @@ export function useContractWritesV3(cfg: ContractWriteV3Config) {
       if (!address) throw new Error('Contract address is undefined')
       if (!functionName) throw new Error('Function name is undefined')
 
-      return executeContractWrite({
+      return executeContractWrite(wagmiConfig, {
         address,
         abi: unref(cfg.abi),
         functionName,
@@ -190,7 +191,7 @@ export function useContractWritesV3(cfg: ContractWriteV3Config) {
         predicate: (query) => {
           const key = query.queryKey
           if (!Array.isArray(key) || key[0] !== 'readContract') return false
-          const params = key[1] as { address?: string; chainId?: number } | undefined
+          const params = key[1] as { address?: string, chainId?: number } | undefined
           if (!params || typeof params !== 'object') return false
           if (typeof params.address !== 'string') return false
           if (params.address.toLowerCase() !== addressLower) return false
