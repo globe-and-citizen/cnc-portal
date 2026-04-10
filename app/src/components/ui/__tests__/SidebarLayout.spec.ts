@@ -1,6 +1,7 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createRouter, createMemoryHistory } from 'vue-router'
+import { nextTick } from 'vue'
 import SidebarLayout from '@/components/ui/SidebarLayout.vue'
 
 describe('SidebarLayout.vue', () => {
@@ -20,7 +21,7 @@ describe('SidebarLayout.vue', () => {
         },
         {
           path: '/teams/:id',
-          name: 'team-detail',
+          name: 'show-team',
           component: { template: '<div>Team Detail</div>' }
         },
         {
@@ -84,28 +85,60 @@ describe('SidebarLayout.vue', () => {
   })
 
   it('should toggle modal when clicking user card', async () => {
+    await router.push('/teams/1')
+    await router.isReady()
+
     const wrapper = mount(SidebarLayout, {
       global: {
         stubs: {
           UDashboardSidebar: {
             template: `
               <div>
+                <slot name="header" :collapsed="false" />
+                <slot name="default" :collapsed="false" />
+                <slot name="footer" :collapsed="false" />
+              </div>
+            `,
+            props: ['collapsible', 'resizable', 'class', 'ui']
+          },
+          DashboardSidebar: {
+            template: `
+              <div>
+                <slot name="header" :collapsed="false" />
+                <slot name="default" :collapsed="false" />
                 <slot name="footer" :collapsed="false" />
               </div>
             `,
             props: ['collapsible', 'resizable', 'class', 'ui']
           },
           UNavigationMenu: true,
+          NavigationMenu: true,
           UModal: {
             template: `
               <div>
                 <slot />
                 <template v-if="open">
-                  <slot name="body" />
+                  <div data-test="modal-body">
+                    <slot name="body" />
+                  </div>
                 </template>
               </div>
             `,
-            props: ['open', 'title'],
+            props: ['open', 'title', 'description'],
+            emits: ['update:open']
+          },
+          Modal: {
+            template: `
+              <div>
+                <slot />
+                <template v-if="open">
+                  <div data-test="modal-body">
+                    <slot name="body" />
+                  </div>
+                </template>
+              </div>
+            `,
+            props: ['open', 'title', 'description'],
             emits: ['update:open']
           },
           EditUserForm: true
@@ -116,10 +149,11 @@ describe('SidebarLayout.vue', () => {
 
     const userCard = wrapper.find('[data-test="edit-user-card"]')
     expect(userCard.exists()).toBe(true)
+    expect((wrapper.vm as { open: boolean }).open).toBe(false)
 
-    // Verify clicking the user card triggers modal interaction
     await userCard.trigger('click')
-    // The modal is a v-model component, so the parent state would be updated
-    expect(userCard.exists()).toBe(true)
+    await nextTick()
+
+    expect((wrapper.vm as { open: boolean }).open).toBe(true)
   })
 })
