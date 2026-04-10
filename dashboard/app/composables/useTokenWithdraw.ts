@@ -1,9 +1,8 @@
 import { ref, watch } from 'vue'
 import { useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
-import { parseUnits, parseEther, type Address, zeroAddress } from 'viem'
+import type { Address } from 'viem'
 import { FEE_COLLECTOR_ADDRESS } from '@/constant'
 import { FEE_COLLECTOR_ABI } from '@/artifacts/abi/feeCollector'
-import type { TokenDisplay } from '@/types/token'
 
 export const useTokenWithdraw = () => {
   const toast = useToast()
@@ -37,37 +36,24 @@ export const useTokenWithdraw = () => {
     console.error('Withdraw error:', err.message)
     toast.add({
       title: 'Error',
-      description: 'Failed to withdraw tokens',
+      description: 'Failed to withdraw fees',
       color: 'error'
     })
   })
 
-  const withdraw = (token: TokenDisplay, amount: string, successCallback?: () => void) => {
+  // Sweep everything held by the collector (native + every supported ERC20)
+  // to the configured fee beneficiary (or owner if unset).
+  const withdraw = (successCallback?: () => void) => {
     if (successCallback) {
       onSuccess.value = successCallback
     }
 
-    try {
-      const parsedAmount = token.address === zeroAddress
-        ? parseEther(amount)
-        : parseUnits(amount, token.decimals)
-
-      executeWithdraw({
-        address: FEE_COLLECTOR_ADDRESS as Address,
-        abi: FEE_COLLECTOR_ABI,
-        functionName: token.address === zeroAddress ? 'withdraw' : 'withdrawToken',
-        args: token.address === zeroAddress
-          ? [parsedAmount]
-          : [token.address as Address, parsedAmount]
-      })
-    } catch (err) {
-      console.error('error', err)
-      toast.add({
-        title: 'Error',
-        description: 'Invalid amount entered',
-        color: 'error'
-      })
-    }
+    executeWithdraw({
+      address: FEE_COLLECTOR_ADDRESS as Address,
+      abi: FEE_COLLECTOR_ABI,
+      functionName: 'withdraw',
+      args: []
+    })
   }
 
   return {

@@ -34,9 +34,7 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-// import { useFeeCollector } from '@/composables/useFeeCollector'
 import { useTokenWithdraw } from '@/composables/useTokenWithdraw'
-import type { TokenDisplay } from '@/types/token'
 import FeeCollectorStats from './FeeCollectorStats.vue'
 import TokenHoldingsTable from './TokenHoldingsTable.vue'
 import WithdrawModal from './WithdrawModal.vue'
@@ -55,8 +53,8 @@ const {
 const isWithdrawModalOpen = ref(false)
 
 // Handlers
-const handleWithdraw = (token: TokenDisplay, amount: string) => {
-  withdraw(token, amount)
+const handleWithdraw = () => {
+  withdraw()
 }
 
 // Watch for successful withdrawal
@@ -64,7 +62,7 @@ watch(isConfirmedWithdraw, (confirmed) => {
   if (confirmed) {
     toast.add({
       title: 'Success',
-      description: 'Withdrawal completed successfully',
+      description: 'All fees withdrawn successfully',
       color: 'success'
     })
     isWithdrawModalOpen.value = false
