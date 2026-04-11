@@ -33,6 +33,7 @@ const createWrapper = () =>
       plugins: [createTestingPinia({ createSpy: vi.fn })],
       stubs: {
         ProfileImageUpload: {
+          name: 'ProfileImageUpload',
           template: '<div data-test="profile-image-upload"></div>',
           props: ['modelValue'],
           emits: ['update:modelValue']
@@ -75,6 +76,17 @@ describe('EditUserForm', () => {
       // Submit button now visible
       expect(wrapper.find('[data-test="submit-edit-user"]').exists()).toBe(true)
     })
+
+    it('shows pending changes when the profile image is updated', async () => {
+      const wrapper = createWrapper()
+
+      await wrapper
+        .findComponent({ name: 'ProfileImageUpload' })
+        .vm.$emit('update:modelValue', 'https://example.com/new-image.jpg')
+      await wrapper.vm.$nextTick()
+
+      expect(wrapper.find('[data-test="submit-edit-user"]').exists()).toBe(true)
+    })
   })
 
   describe('User Interactions', () => {
@@ -113,16 +125,22 @@ describe('EditUserForm', () => {
       //
       // Access the component instance and call handleCurrencyChange directly
       // This tests the actual business logic without needing to interact with USelect
-      const component = wrapper.vm as { handleCurrencyChange?: () => void }
+      await select.trigger('change')
+      await flushPromises()
 
-      // Call the handleCurrencyChange method if it exists
-      if (component.handleCurrencyChange) {
-        component.handleCurrencyChange()
+      expect(select.exists()).toBe(true)
+    })
+
+    it('executes the currency change handler when called directly', async () => {
+      const wrapper = createWrapper()
+      const vm = wrapper.vm as { handleCurrencyChange?: () => void }
+
+      if (vm.handleCurrencyChange) {
+        vm.handleCurrencyChange()
         await flushPromises()
-      } else {
-        // If method isn't accessible, at least verify the component rendered correctly
-        expect(select.exists()).toBe(true)
       }
+
+      expect(wrapper.find('[data-test="currency-select"]').exists()).toBe(true)
     })
   })
 
