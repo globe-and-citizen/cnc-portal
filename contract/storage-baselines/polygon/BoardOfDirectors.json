@@ -1,0 +1,209 @@
+{
+  "storage": [
+    {
+      "astId": 12931,
+      "contract": "contracts/BoardOfDirectors.sol:BoardOfDirectors",
+      "label": "owners",
+      "offset": 0,
+      "slot": "0",
+      "type": "t_struct(AddressSet)8936_storage"
+    },
+    {
+      "astId": 12934,
+      "contract": "contracts/BoardOfDirectors.sol:BoardOfDirectors",
+      "label": "boardOfDirectors",
+      "offset": 0,
+      "slot": "2",
+      "type": "t_struct(AddressSet)8936_storage"
+    },
+    {
+      "astId": 12936,
+      "contract": "contracts/BoardOfDirectors.sol:BoardOfDirectors",
+      "label": "actionCount",
+      "offset": 0,
+      "slot": "4",
+      "type": "t_uint256"
+    },
+    {
+      "astId": 12941,
+      "contract": "contracts/BoardOfDirectors.sol:BoardOfDirectors",
+      "label": "actions",
+      "offset": 0,
+      "slot": "5",
+      "type": "t_mapping(t_uint256,t_struct(Action)12960_storage)"
+    }
+  ],
+  "types": {
+    "t_address": {
+      "encoding": "inplace",
+      "label": "address",
+      "numberOfBytes": "20"
+    },
+    "t_array(t_bytes32)dyn_storage": {
+      "base": "t_bytes32",
+      "encoding": "dynamic_array",
+      "label": "bytes32[]",
+      "numberOfBytes": "32"
+    },
+    "t_bool": {
+      "encoding": "inplace",
+      "label": "bool",
+      "numberOfBytes": "1"
+    },
+    "t_bytes32": {
+      "encoding": "inplace",
+      "label": "bytes32",
+      "numberOfBytes": "32"
+    },
+    "t_bytes_storage": {
+      "encoding": "bytes",
+      "label": "bytes",
+      "numberOfBytes": "32"
+    },
+    "t_mapping(t_address,t_bool)": {
+      "encoding": "mapping",
+      "key": "t_address",
+      "label": "mapping(address => bool)",
+      "numberOfBytes": "32",
+      "value": "t_bool"
+    },
+    "t_mapping(t_bytes32,t_uint256)": {
+      "encoding": "mapping",
+      "key": "t_bytes32",
+      "label": "mapping(bytes32 => uint256)",
+      "numberOfBytes": "32",
+      "value": "t_uint256"
+    },
+    "t_mapping(t_uint256,t_struct(Action)12960_storage)": {
+      "encoding": "mapping",
+      "key": "t_uint256",
+      "label": "mapping(uint256 => struct BoardOfDirectors.Action)",
+      "numberOfBytes": "32",
+      "value": "t_struct(Action)12960_storage"
+    },
+    "t_string_storage": {
+      "encoding": "bytes",
+      "label": "string",
+      "numberOfBytes": "32"
+    },
+    "t_struct(Action)12960_storage": {
+      "encoding": "inplace",
+      "label": "struct BoardOfDirectors.Action",
+      "members": [
+        {
+          "astId": 12943,
+          "contract": "contracts/BoardOfDirectors.sol:BoardOfDirectors",
+          "label": "id",
+          "offset": 0,
+          "slot": "0",
+          "type": "t_uint256"
+        },
+        {
+          "astId": 12945,
+          "contract": "contracts/BoardOfDirectors.sol:BoardOfDirectors",
+          "label": "target",
+          "offset": 0,
+          "slot": "1",
+          "type": "t_address"
+        },
+        {
+          "astId": 12947,
+          "contract": "contracts/BoardOfDirectors.sol:BoardOfDirectors",
+          "label": "description",
+          "offset": 0,
+          "slot": "2",
+          "type": "t_string_storage"
+        },
+        {
+          "astId": 12949,
+          "contract": "contracts/BoardOfDirectors.sol:BoardOfDirectors",
+          "label": "approvalCount",
+          "offset": 0,
+          "slot": "3",
+          "type": "t_uint8"
+        },
+        {
+          "astId": 12951,
+          "contract": "contracts/BoardOfDirectors.sol:BoardOfDirectors",
+          "label": "isExecuted",
+          "offset": 1,
+          "slot": "3",
+          "type": "t_bool"
+        },
+        {
+          "astId": 12953,
+          "contract": "contracts/BoardOfDirectors.sol:BoardOfDirectors",
+          "label": "data",
+          "offset": 0,
+          "slot": "4",
+          "type": "t_bytes_storage"
+        },
+        {
+          "astId": 12955,
+          "contract": "contracts/BoardOfDirectors.sol:BoardOfDirectors",
+          "label": "createdBy",
+          "offset": 0,
+          "slot": "5",
+          "type": "t_address"
+        },
+        {
+          "astId": 12959,
+          "contract": "contracts/BoardOfDirectors.sol:BoardOfDirectors",
+          "label": "approvals",
+          "offset": 0,
+          "slot": "6",
+          "type": "t_mapping(t_address,t_bool)"
+        }
+      ],
+      "numberOfBytes": "224"
+    },
+    "t_struct(AddressSet)8936_storage": {
+      "encoding": "inplace",
+      "label": "struct EnumerableSet.AddressSet",
+      "members": [
+        {
+          "astId": 8935,
+          "contract": "contracts/BoardOfDirectors.sol:BoardOfDirectors",
+          "label": "_inner",
+          "offset": 0,
+          "slot": "0",
+          "type": "t_struct(Set)8621_storage"
+        }
+      ],
+      "numberOfBytes": "64"
+    },
+    "t_struct(Set)8621_storage": {
+      "encoding": "inplace",
+      "label": "struct EnumerableSet.Set",
+      "members": [
+        {
+          "astId": 8616,
+          "contract": "contracts/BoardOfDirectors.sol:BoardOfDirectors",
+          "label": "_values",
+          "offset": 0,
+          "slot": "0",
+          "type": "t_array(t_bytes32)dyn_storage"
+        },
+        {
+          "astId": 8620,
+          "contract": "contracts/BoardOfDirectors.sol:BoardOfDirectors",
+          "label": "_positions",
+          "offset": 0,
+          "slot": "1",
+          "type": "t_mapping(t_bytes32,t_uint256)"
+        }
+      ],
+      "numberOfBytes": "64"
+    },
+    "t_uint256": {
+      "encoding": "inplace",
+      "label": "uint256",
+      "numberOfBytes": "32"
+    },
+    "t_uint8": {
+      "encoding": "inplace",
+      "label": "uint8",
+      "numberOfBytes": "1"
+    }
+  }
+}
