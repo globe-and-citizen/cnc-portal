@@ -116,7 +116,7 @@ See [`UPGRADE_STRATEGY.md`](./UPGRADE_STRATEGY.md) for:
 
 Track every deployed change in [`CHANGELOG.md`](./CHANGELOG.md).
 
-## Ressources
+## Resources
 
 - [Hardht Verifying contract](https://hardhat.org/hardhat-runner/docs/guides/verifying)
 - [Hardhat Verify plugin](https://hardhat.org/hardhat-runner/plugins/nomicfoundation-hardhat-verify)
