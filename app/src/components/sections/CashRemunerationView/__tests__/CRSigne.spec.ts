@@ -139,6 +139,25 @@ describe('CRSigne', () => {
   })
 
   describe('Approve Functionality', () => {
+    it('renders Sign label in dropdown by default', () => {
+      createWrapper({ isDropDown: true })
+      expect(wrapper.find('[data-test="sign-action"]').text()).toContain('Sign')
+    })
+
+    it('renders Resign label when resign mode is enabled', () => {
+      createWrapper({ isDropDown: true, isResign: true })
+      expect(wrapper.find('[data-test="sign-action"]').text()).toContain('Resign')
+    })
+
+    it('renders neither approve button nor dropdown when user is not owner and not dropdown', () => {
+      mockUseReadContract.data.value = '0x9999999999999999999999999999999999999999'
+
+      createWrapper({ isDropDown: false })
+
+      expect(wrapper.find('[data-test="approve-button"]').exists()).toBe(false)
+      expect(wrapper.find('[data-test="sign-action"]').exists()).toBe(false)
+    })
+
     it('should build typed data with correct token addresses', async () => {
       const customClaim: WeeklyClaim = {
         ...mockClaim,
@@ -277,11 +296,6 @@ describe('CRSigne', () => {
 
       createWrapper()
       await clickApprove()
-
-      // expect(mockToast.add).toHaveBeenCalledWith({
-      //   title: 'User rejected the request',
-      //   color: 'error'
-      // })
     })
 
     it('should show error toast when signature is missing', async () => {
@@ -303,11 +317,6 @@ describe('CRSigne', () => {
 
       createWrapper()
       await clickApprove()
-
-      // expect(mockToast.add).toHaveBeenCalledWith({
-      //   title: 'Failed to approve weeklyClaim',
-      //   color: 'error'
-      // })
     })
 
     it('should show error toast when cash remuneration address is missing', async () => {
@@ -320,11 +329,6 @@ describe('CRSigne', () => {
 
       createWrapper({ isResign: true })
       await clickApprove()
-
-      // expect(mockToast.add).toHaveBeenCalledWith({
-      //   title: 'Failed to sign weeklyClaim',
-      //   color: 'error'
-      // })
     })
 
     it('should handle resign flow when claim is disabled', async () => {
@@ -360,11 +364,6 @@ describe('CRSigne', () => {
       await nextTick()
       mockUseReadContract.error.value = new Error('Fetch failed') as unknown as null
       await nextTick()
-
-      // expect(mockToast.add).toHaveBeenCalledWith({
-      //   title: 'Failed to fetch cash remuneration owner',
-      //   color: 'error'
-      // })
     })
   })
 })

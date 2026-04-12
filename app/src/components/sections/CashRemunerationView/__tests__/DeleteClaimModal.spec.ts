@@ -31,7 +31,7 @@ const defaultClaim: Claim = {
   updatedAt: '2024-01-01T00:00:00.000Z'
 }
 
-describe.skip('DeleteClaimModal', () => {
+describe('DeleteClaimModal', () => {
   afterEach(() => {
     vi.clearAllMocks()
   })
@@ -83,48 +83,24 @@ describe.skip('DeleteClaimModal', () => {
   })
 
   describe('Delete Functionality', () => {
-    it('should show success toast on successful claim deletion', async () => {
+    it('should call delete mutation and emit close on success', async () => {
       const mockMutateAsync = vi.fn().mockResolvedValue(undefined)
       const wrapper = createWrapper({}, { mutateAsync: mockMutateAsync })
 
       await wrapper.find('[data-test="confirm-delete-claim-button"]').trigger('click')
       await flushPromises()
 
-      expect(mockMutateAsync).toHaveBeenCalledWith({ claimId: 1 })
-    })
-
-    it('should emit close event after successful deletion', async () => {
-      const mockMutateAsync = vi.fn().mockResolvedValue(undefined)
-      const wrapper = createWrapper({}, { mutateAsync: mockMutateAsync })
-
-      await wrapper.find('[data-test="confirm-delete-claim-button"]').trigger('click')
-      await flushPromises()
-
+      expect(mockMutateAsync).toHaveBeenCalledWith({ pathParams: { claimId: 1 } })
       expect(wrapper.emitted('close')).toBeTruthy()
     })
   })
 
-  describe('Error Handling', () => {
-    it('should show error toast when deletion fails', async () => {
-      const mockMutateAsync = vi.fn().mockRejectedValue(new Error('Network error'))
-      const mockError = ref({
-        response: { data: { message: 'Failed to delete claim' } }
-      })
-      const wrapper = createWrapper({}, { mutateAsync: mockMutateAsync, error: mockError })
+  describe('Error State', () => {
+    it('shows error alert when mutation has an error', () => {
+      const wrapper = createWrapper({}, { error: ref(new Error('delete failed')) })
 
-      await wrapper.find('[data-test="confirm-delete-claim-button"]').trigger('click')
-      await flushPromises()
-    })
-
-    it('should not emit close when deletion fails', async () => {
-      const mockMutateAsync = vi.fn().mockRejectedValue(new Error('Error'))
-      const wrapper = createWrapper({}, { mutateAsync: mockMutateAsync })
-
-      await wrapper.find('[data-test="confirm-delete-claim-button"]').trigger('click')
-      await flushPromises()
-
-      // Should not emit close on error
-      expect(wrapper.emitted('close')).toBeUndefined()
+      expect(wrapper.find('[data-test="delete-claim-error"]').exists()).toBe(true)
+      expect(wrapper.text()).toContain('Failed to delete claim')
     })
   })
 
@@ -155,6 +131,11 @@ describe.skip('DeleteClaimModal', () => {
       })
 
       expect(wrapper.text()).toContain('Jun 15, 2024')
+    })
+
+    it('returns empty formatted date when claim is not provided', () => {
+      const wrapper = createWrapper({ claim: undefined as unknown as Claim })
+      expect(wrapper.text()).toContain('claims submitted on')
     })
   })
 })
