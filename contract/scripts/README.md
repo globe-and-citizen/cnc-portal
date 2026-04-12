@@ -100,13 +100,13 @@ consume one `__gap` slot and append `name` at the end.
 
 ## Commands
 
-| Command | Description |
-|---------|-------------|
-| `npm run validate-upgrade:polygon` | Validate all contracts against polygon baselines |
-| `npm run validate-upgrade:local` | Validate against localhost baselines |
-| `CONTRACT=X npm run validate-upgrade:polygon` | Validate a single contract |
-| `BAKE=1 npm run validate-upgrade:polygon` | Bake all baselines for polygon |
-| `BAKE=1 CONTRACT=X npm run validate-upgrade:polygon` | Bake one baseline |
+| Command                                              | Description                                      |
+| ---------------------------------------------------- | ------------------------------------------------ |
+| `npm run validate-upgrade:polygon`                   | Validate all contracts against polygon baselines |
+| `npm run validate-upgrade:local`                     | Validate against localhost baselines             |
+| `CONTRACT=X npm run validate-upgrade:polygon`        | Validate a single contract                       |
+| `BAKE=1 npm run validate-upgrade:polygon`            | Bake all baselines for polygon                   |
+| `BAKE=1 CONTRACT=X npm run validate-upgrade:polygon` | Bake one baseline                                |
 
 ## File structure
 

@@ -79,7 +79,11 @@ async function getStorageLayout(contractName: string): Promise<StorageLayout> {
   if (!buildInfo) throw new Error(`No build info for ${contractName} — run \`npx hardhat compile\``)
 
   const [sourceName, name] = fqn.split(':')
-  const contractOutput = (buildInfo.output as { contracts: Record<string, Record<string, { storageLayout?: StorageLayout }>> }).contracts[sourceName]?.[name]
+  const contractOutput = (
+    buildInfo.output as {
+      contracts: Record<string, Record<string, { storageLayout?: StorageLayout }>>
+    }
+  ).contracts[sourceName]?.[name]
   if (!contractOutput?.storageLayout) {
     throw new Error(
       `No storageLayout for ${contractName}. The OpenZeppelin hardhat-upgrades plugin should enable this automatically — check that it is imported in hardhat.config.ts.`
@@ -237,7 +241,9 @@ function printResult(r: ValidationResult) {
       console.log(`  SKIP  ${r.name}  (${r.skipped})`)
       return
     case 'warn':
-      console.log(`  OK    ${r.name}  (${r.warnings.length} warning${r.warnings.length === 1 ? '' : 's'})`)
+      console.log(
+        `  OK    ${r.name}  (${r.warnings.length} warning${r.warnings.length === 1 ? '' : 's'})`
+      )
       for (const w of r.warnings) console.log(`          ! ${w}`)
       return
     case 'fail':
@@ -259,7 +265,9 @@ async function main() {
     : UPGRADEABLE_CONTRACTS
 
   if (bakeMode) {
-    console.log(`\nBaking storage baselines for ${targets.length} contract(s) on network "${network}"...\n`)
+    console.log(
+      `\nBaking storage baselines for ${targets.length} contract(s) on network "${network}"...\n`
+    )
     for (const { name } of targets) {
       try {
         await bakeBaseline(name, network)
@@ -292,9 +300,7 @@ async function main() {
   for (const r of results) counts[statusOf(r)]++
 
   console.log('')
-  console.log(
-    `  ${counts.ok + counts.warn} ok, ${counts.skip} skipped, ${counts.fail} failed`
-  )
+  console.log(`  ${counts.ok + counts.warn} ok, ${counts.skip} skipped, ${counts.fail} failed`)
 
   if (counts.fail > 0) {
     console.log(
