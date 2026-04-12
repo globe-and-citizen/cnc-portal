@@ -35,6 +35,9 @@ const BASELINE_ROOT = path.join(__dirname, '..', 'storage-baselines')
  *  baseline against an ephemeral network by mistake. */
 const KNOWN_NETWORKS = new Set(['polygon', 'mainnet', 'sepolia', 'amoy', 'localhost'])
 
+/** Networks where a missing baseline should be treated as an error (production). */
+const PRODUCTION_NETWORKS = new Set(['polygon', 'mainnet'])
+
 function resolveNetwork(): string {
   const network = hre.network.name
   if (network === 'hardhat') {
@@ -103,6 +106,10 @@ type LayoutDiff = {
   message: string
 }
 
+function isGap(entry: StorageEntry): boolean {
+  return entry.label === '__gap'
+}
+
 function compareLayouts(oldLayout: StorageLayout, newLayout: StorageLayout): LayoutDiff[] {
   const diffs: LayoutDiff[] = []
   const oldStorage = oldLayout.storage ?? []
@@ -113,9 +120,40 @@ function compareLayouts(oldLayout: StorageLayout, newLayout: StorageLayout): Lay
     const newEntry = newStorage[i]
 
     if (!newEntry) {
+      // A __gap shrinking (fewer entries) is fine — the slots were consumed by
+      // new variables that now appear earlier in the layout.
+      if (isGap(oldEntry)) {
+        diffs.push({
+          level: 'warning',
+          message: `slot ${oldEntry.slot} (${oldEntry.label}) was consumed by new variable(s) — OK if gap was shrunk intentionally`
+        })
+        continue
+      }
       diffs.push({
         level: 'error',
         message: `slot ${oldEntry.slot} (${oldEntry.label}) was removed`
+      })
+      continue
+    }
+
+    // When a __gap slot is replaced by a new variable, that's the standard
+    // "consume gap" upgrade pattern and is safe as long as a (smaller) __gap
+    // still exists later in the layout.
+    if (isGap(oldEntry) && !isGap(newEntry)) {
+      const newHasGap = newStorage.some((e, j) => j >= i && isGap(e))
+      if (newHasGap) {
+        diffs.push({
+          level: 'warning',
+          message: `slot ${oldEntry.slot}: __gap consumed by \`${newEntry.label}\` — compatible (gap still present)`
+        })
+        // Skip the remaining checks for this slot — the type/label change is expected.
+        continue
+      }
+      // No gap left at all — warn but don't error, because it's still valid if
+      // intentional (all reserved slots used up).
+      diffs.push({
+        level: 'warning',
+        message: `slot ${oldEntry.slot}: __gap consumed by \`${newEntry.label}\` — no remaining gap slots`
       })
       continue
     }
@@ -185,12 +223,22 @@ async function validateContract(
   const baseline = baselinePath(network, contractName)
   if (!fs.existsSync(baseline)) {
     const relPath = path.relative(process.cwd(), baseline)
+    const missingMsg = `no baseline at ${relPath} — run \`BAKE=1 CONTRACT=${contractName} npm run validate-upgrade -- --network ${network}\` to create it`
+    if (PRODUCTION_NETWORKS.has(network)) {
+      errors.push(`missing baseline on production network: ${missingMsg}`)
+      return {
+        name: contractName,
+        ok: false,
+        errors,
+        warnings
+      }
+    }
     return {
       name: contractName,
       ok: errors.length === 0,
       errors,
       warnings,
-      skipped: `no baseline at ${relPath} — run \`BAKE=1 CONTRACT=${contractName} npm run validate-upgrade -- --network ${network}\` to create it`
+      skipped: missingMsg
     }
   }
 
