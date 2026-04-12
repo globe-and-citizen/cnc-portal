@@ -19,7 +19,7 @@
     "mc": "nodemon scripts/moveConstants.ts",
     "update-abi": "ts-node scripts/copy-abi.ts",
     "validate-upgrade": "npx hardhat run scripts/validate-upgrade.ts",
-    "validate-upgrade:polygon": "BAKE=1 npx hardhat run scripts/validate-upgrade.ts --network polygon",
+    "validate-upgrade:polygon": "npx hardhat run scripts/validate-upgrade.ts --network polygon",
     "validate-upgrade:local": "npx hardhat run scripts/validate-upgrade.ts --network localhost"
   },
   "devDependencies": {
