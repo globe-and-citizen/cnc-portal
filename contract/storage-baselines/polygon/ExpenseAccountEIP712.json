@@ -1,0 +1,100 @@
+{
+  "storage": [
+    {
+      "astId": 22839,
+      "contract": "contracts/expense-account/ExpenseAccountEIP712.sol:ExpenseAccountEIP712",
+      "label": "expenseBalances",
+      "offset": 0,
+      "slot": "0",
+      "type": "t_mapping(t_bytes32,t_struct(ExpenseBalance)22834_storage)"
+    },
+    {
+      "astId": 22844,
+      "contract": "contracts/expense-account/ExpenseAccountEIP712.sol:ExpenseAccountEIP712",
+      "label": "supportedTokens",
+      "offset": 0,
+      "slot": "1",
+      "type": "t_mapping(t_string_memory_ptr,t_address)"
+    }
+  ],
+  "types": {
+    "t_address": {
+      "encoding": "inplace",
+      "label": "address",
+      "numberOfBytes": "20"
+    },
+    "t_bytes32": {
+      "encoding": "inplace",
+      "label": "bytes32",
+      "numberOfBytes": "32"
+    },
+    "t_enum(ApprovalState)22824": {
+      "encoding": "inplace",
+      "label": "enum ExpenseAccountEIP712.ApprovalState",
+      "numberOfBytes": "1"
+    },
+    "t_mapping(t_bytes32,t_struct(ExpenseBalance)22834_storage)": {
+      "encoding": "mapping",
+      "key": "t_bytes32",
+      "label": "mapping(bytes32 => struct ExpenseAccountEIP712.ExpenseBalance)",
+      "numberOfBytes": "32",
+      "value": "t_struct(ExpenseBalance)22834_storage"
+    },
+    "t_mapping(t_string_memory_ptr,t_address)": {
+      "encoding": "mapping",
+      "key": "t_string_memory_ptr",
+      "label": "mapping(string => address)",
+      "numberOfBytes": "32",
+      "value": "t_address"
+    },
+    "t_string_memory_ptr": {
+      "encoding": "bytes",
+      "label": "string",
+      "numberOfBytes": "32"
+    },
+    "t_struct(ExpenseBalance)22834_storage": {
+      "encoding": "inplace",
+      "label": "struct ExpenseAccountEIP712.ExpenseBalance",
+      "members": [
+        {
+          "astId": 22826,
+          "contract": "contracts/expense-account/ExpenseAccountEIP712.sol:ExpenseAccountEIP712",
+          "label": "lastWithdrawnDate",
+          "offset": 0,
+          "slot": "0",
+          "type": "t_uint256"
+        },
+        {
+          "astId": 22828,
+          "contract": "contracts/expense-account/ExpenseAccountEIP712.sol:ExpenseAccountEIP712",
+          "label": "totalWithdrawn",
+          "offset": 0,
+          "slot": "1",
+          "type": "t_uint256"
+        },
+        {
+          "astId": 22830,
+          "contract": "contracts/expense-account/ExpenseAccountEIP712.sol:ExpenseAccountEIP712",
+          "label": "lastWithdrawnPeriod",
+          "offset": 0,
+          "slot": "2",
+          "type": "t_uint256"
+        },
+        {
+          "astId": 22833,
+          "contract": "contracts/expense-account/ExpenseAccountEIP712.sol:ExpenseAccountEIP712",
+          "label": "state",
+          "offset": 0,
+          "slot": "3",
+          "type": "t_enum(ApprovalState)22824"
+        }
+      ],
+      "numberOfBytes": "128"
+    },
+    "t_uint256": {
+      "encoding": "inplace",
+      "label": "uint256",
+      "numberOfBytes": "32"
+    }
+  }
+}
