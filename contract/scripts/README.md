@@ -96,7 +96,8 @@ flowchart LR
 
 In this example, inserting `name` at slot 2 pushed `__gap` down — the script
 catches the type change at slot 2 and reports `FAIL`. The safe version would
-consume one `__gap` slot and append `name` at the end.
+consume one `__gap` slot by placing `name` before the remaining `__gap` and
+shrinking the gap from 50 slots to 49 so `__gap` stays at the end.
 
 ## Commands
 

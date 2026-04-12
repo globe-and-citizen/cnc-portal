@@ -8,7 +8,8 @@ read [`UPGRADE_STRATEGY.md`](./UPGRADE_STRATEGY.md) — it defines when to upgra
 place vs. redeploy, and the checklist every PR has to pass.
 
 **TL;DR**: never redeploy by default. Modify the contract in place, run
-`npm run validate-upgrade`, and only redeploy if the script forces you to.
+`npm run validate-upgrade:polygon` (or `:local`), and only redeploy if the
+script forces you to.
 
 ## How to run
 
@@ -66,7 +67,7 @@ npx hardhat verify --network polygon [contractAddress]
 
 Every change to an upgradeable contract goes through `validate-upgrade`, which
 compiles, runs OpenZeppelin's safety checks, and compares the current storage
-layout against a baked-in baseline (`storage-baselines/<Contract>.json`).
+layout against a baked-in baseline (`storage-baselines/<network>/<Contract>.json`).
 
 ### Daily commands
 
@@ -88,7 +89,7 @@ BAKE=1 npm run validate-upgrade:polygon
 BAKE=1 CONTRACT=InvestorV1 npm run validate-upgrade:polygon
 
 # The raw command (requires explicit --network)
-npx hardhat run scripts/validate-upgrade.ts --network sepolia
+npx hardhat run scripts/validate-upgrade.ts --network polygon
 ```
 
 > The script refuses to run against the default in-memory `hardhat` network — you
@@ -118,6 +119,6 @@ Track every deployed change in [`CHANGELOG.md`](./CHANGELOG.md).
 
 ## Resources
 
-- [Hardht Verifying contract](https://hardhat.org/hardhat-runner/docs/guides/verifying)
+- [Hardhat verifying contracts](https://hardhat.org/hardhat-runner/docs/guides/verifying)
 - [Hardhat Verify plugin](https://hardhat.org/hardhat-runner/plugins/nomicfoundation-hardhat-verify)
 - [OpenZeppelin Upgrades plugin docs](https://docs.openzeppelin.com/upgrades-plugins/api-hardhat-upgrades)

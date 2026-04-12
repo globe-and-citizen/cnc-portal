@@ -15,7 +15,7 @@ upgrades plugin tells us we have to.
 │  1. Modify the contract in place (do NOT create InvestorV2.sol  │
 │     for a compatible change)                                    │
 │  2. Bump version() per semver                                   │
-│  3. Run: npm run validate-upgrade                               │
+│  3. Run: npm run validate-upgrade:polygon                        │
 │  4a. PASS → deploy via the existing XxxUpgradeModule            │
 │  4b. FAIL → read errors, try to keep storage compatible:        │
 │       - append new vars at the end, not in the middle           │
