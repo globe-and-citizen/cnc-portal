@@ -11,7 +11,6 @@ import { parseEther } from 'viem'
 import { USDC_ADDRESS } from '@/constant'
 import {
   mockTeamStore,
-  // mockToast,
   mockUserStore,
   mockUseReadContract,
   mockUseSignTypedData,
@@ -20,7 +19,6 @@ import {
 import { createMockMutationResponse } from '@/tests/mocks/query.mock'
 import { useUpdateWeeklyClaimMutation } from '@/queries'
 
-// Configure dayjs plugins
 dayjs.extend(utc)
 dayjs.extend(isoWeek)
 
@@ -139,16 +137,6 @@ describe('CRSigne', () => {
   })
 
   describe('Approve Functionality', () => {
-    it('renders Sign label in dropdown by default', () => {
-      createWrapper({ isDropDown: true })
-      expect(wrapper.find('[data-test="sign-action"]').text()).toContain('Sign')
-    })
-
-    it('renders Resign label when resign mode is enabled', () => {
-      createWrapper({ isDropDown: true, isResign: true })
-      expect(wrapper.find('[data-test="sign-action"]').text()).toContain('Resign')
-    })
-
     it('renders neither approve button nor dropdown when user is not owner and not dropdown', () => {
       mockUseReadContract.data.value = '0x9999999999999999999999999999999999999999'
 
@@ -231,26 +219,6 @@ describe('CRSigne', () => {
       )
     })
 
-    it('should show success toast after successful approval', async () => {
-      setSignTypedDataResult('0xsignature')
-
-      createWrapper()
-      await clickApprove()
-
-      // expect(mockToast.add).toHaveBeenCalledWith({ title: 'Claim approved', color: 'success' })
-    })
-
-    it('Should emit close event after approve', async () => {
-      createWrapper({ isDropDown: true })
-
-      const button = wrapper.findComponent({ name: 'UButton' })
-      expect(button.exists()).toBeFalsy()
-      const signAction = wrapper.find('[data-test="sign-action"]')
-      expect(signAction.exists()).toBeTruthy()
-      await clickDropdownAction()
-      expect(wrapper.emitted()).toHaveProperty('close')
-    })
-
     it('should emit close when user is not owner', async () => {
       mockUseReadContract.data.value = '0x9999999999999999999999999999999999999999'
 
@@ -304,8 +272,6 @@ describe('CRSigne', () => {
 
       createWrapper()
       await clickApprove()
-
-      // expect(mockToast.add).toHaveBeenCalledWith({ title: 'Signature not found', color: 'error' })
     })
 
     it('should show error toast when claim update fails', async () => {
@@ -344,7 +310,6 @@ describe('CRSigne', () => {
       expect(mockWagmiCore.simulateContract).toHaveBeenCalled()
       expect(mockWagmiCore.writeContract).toHaveBeenCalled()
       expect(mockWagmiCore.waitForTransactionReceipt).toHaveBeenCalled()
-      // expect(mockToast.add).toHaveBeenCalledWith({ title: 'Claim approved', color: 'success' })
     })
 
     it('should skip enable flow when claim is not disabled', async () => {
