@@ -1,0 +1,89 @@
+{
+  "storage": [
+    {
+      "astId": 16479,
+      "contract": "contracts/Investor/InvestorV1.sol:InvestorV1",
+      "label": "shareholders",
+      "offset": 0,
+      "slot": "0",
+      "type": "t_struct(AddressSet)8936_storage"
+    },
+    {
+      "astId": 16488,
+      "contract": "contracts/Investor/InvestorV1.sol:InvestorV1",
+      "label": "__gap",
+      "offset": 0,
+      "slot": "2",
+      "type": "t_array(t_uint256)50_storage"
+    }
+  ],
+  "types": {
+    "t_array(t_bytes32)dyn_storage": {
+      "base": "t_bytes32",
+      "encoding": "dynamic_array",
+      "label": "bytes32[]",
+      "numberOfBytes": "32"
+    },
+    "t_array(t_uint256)50_storage": {
+      "base": "t_uint256",
+      "encoding": "inplace",
+      "label": "uint256[50]",
+      "numberOfBytes": "1600"
+    },
+    "t_bytes32": {
+      "encoding": "inplace",
+      "label": "bytes32",
+      "numberOfBytes": "32"
+    },
+    "t_mapping(t_bytes32,t_uint256)": {
+      "encoding": "mapping",
+      "key": "t_bytes32",
+      "label": "mapping(bytes32 => uint256)",
+      "numberOfBytes": "32",
+      "value": "t_uint256"
+    },
+    "t_struct(AddressSet)8936_storage": {
+      "encoding": "inplace",
+      "label": "struct EnumerableSet.AddressSet",
+      "members": [
+        {
+          "astId": 8935,
+          "contract": "contracts/Investor/InvestorV1.sol:InvestorV1",
+          "label": "_inner",
+          "offset": 0,
+          "slot": "0",
+          "type": "t_struct(Set)8621_storage"
+        }
+      ],
+      "numberOfBytes": "64"
+    },
+    "t_struct(Set)8621_storage": {
+      "encoding": "inplace",
+      "label": "struct EnumerableSet.Set",
+      "members": [
+        {
+          "astId": 8616,
+          "contract": "contracts/Investor/InvestorV1.sol:InvestorV1",
+          "label": "_values",
+          "offset": 0,
+          "slot": "0",
+          "type": "t_array(t_bytes32)dyn_storage"
+        },
+        {
+          "astId": 8620,
+          "contract": "contracts/Investor/InvestorV1.sol:InvestorV1",
+          "label": "_positions",
+          "offset": 0,
+          "slot": "1",
+          "type": "t_mapping(t_bytes32,t_uint256)"
+        }
+      ],
+      "numberOfBytes": "64"
+    },
+    "t_uint256": {
+      "encoding": "inplace",
+      "label": "uint256",
+      "numberOfBytes": "32"
+    }
+  }
+}

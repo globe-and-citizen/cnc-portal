@@ -1,0 +1,276 @@
+{
+  "storage": [
+    {
+      "astId": 21292,
+      "contract": "contracts/Voting/Voting.sol:Voting",
+      "label": "proposalsById",
+      "offset": 0,
+      "slot": "0",
+      "type": "t_mapping(t_uint256,t_struct(Proposal)21270_storage)"
+    },
+    {
+      "astId": 21294,
+      "contract": "contracts/Voting/Voting.sol:Voting",
+      "label": "proposalCount",
+      "offset": 0,
+      "slot": "1",
+      "type": "t_uint256"
+    },
+    {
+      "astId": 21296,
+      "contract": "contracts/Voting/Voting.sol:Voting",
+      "label": "boardOfDirectorsContractAddress",
+      "offset": 0,
+      "slot": "2",
+      "type": "t_address"
+    }
+  ],
+  "types": {
+    "t_address": {
+      "encoding": "inplace",
+      "label": "address",
+      "numberOfBytes": "20"
+    },
+    "t_array(t_address)dyn_storage": {
+      "base": "t_address",
+      "encoding": "dynamic_array",
+      "label": "address[]",
+      "numberOfBytes": "32"
+    },
+    "t_array(t_struct(Candidate)21229_storage)dyn_storage": {
+      "base": "t_struct(Candidate)21229_storage",
+      "encoding": "dynamic_array",
+      "label": "struct Types.Candidate[]",
+      "numberOfBytes": "32"
+    },
+    "t_array(t_struct(Member)21236_storage)dyn_storage": {
+      "base": "t_struct(Member)21236_storage",
+      "encoding": "dynamic_array",
+      "label": "struct Types.Member[]",
+      "numberOfBytes": "32"
+    },
+    "t_bool": {
+      "encoding": "inplace",
+      "label": "bool",
+      "numberOfBytes": "1"
+    },
+    "t_enum(TieBreakOption)21217": {
+      "encoding": "inplace",
+      "label": "enum Types.TieBreakOption",
+      "numberOfBytes": "1"
+    },
+    "t_mapping(t_uint256,t_struct(Proposal)21270_storage)": {
+      "encoding": "mapping",
+      "key": "t_uint256",
+      "label": "mapping(uint256 => struct Types.Proposal)",
+      "numberOfBytes": "32",
+      "value": "t_struct(Proposal)21270_storage"
+    },
+    "t_string_storage": {
+      "encoding": "bytes",
+      "label": "string",
+      "numberOfBytes": "32"
+    },
+    "t_struct(Candidate)21229_storage": {
+      "encoding": "inplace",
+      "label": "struct Types.Candidate",
+      "members": [
+        {
+          "astId": 21226,
+          "contract": "contracts/Voting/Voting.sol:Voting",
+          "label": "candidateAddress",
+          "offset": 0,
+          "slot": "0",
+          "type": "t_address"
+        },
+        {
+          "astId": 21228,
+          "contract": "contracts/Voting/Voting.sol:Voting",
+          "label": "votes",
+          "offset": 0,
+          "slot": "1",
+          "type": "t_uint256"
+        }
+      ],
+      "numberOfBytes": "64"
+    },
+    "t_struct(DirectiveVotes)21224_storage": {
+      "encoding": "inplace",
+      "label": "struct Types.DirectiveVotes",
+      "members": [
+        {
+          "astId": 21219,
+          "contract": "contracts/Voting/Voting.sol:Voting",
+          "label": "yes",
+          "offset": 0,
+          "slot": "0",
+          "type": "t_uint256"
+        },
+        {
+          "astId": 21221,
+          "contract": "contracts/Voting/Voting.sol:Voting",
+          "label": "no",
+          "offset": 0,
+          "slot": "1",
+          "type": "t_uint256"
+        },
+        {
+          "astId": 21223,
+          "contract": "contracts/Voting/Voting.sol:Voting",
+          "label": "abstain",
+          "offset": 0,
+          "slot": "2",
+          "type": "t_uint256"
+        }
+      ],
+      "numberOfBytes": "96"
+    },
+    "t_struct(Member)21236_storage": {
+      "encoding": "inplace",
+      "label": "struct Types.Member",
+      "members": [
+        {
+          "astId": 21231,
+          "contract": "contracts/Voting/Voting.sol:Voting",
+          "label": "isEligible",
+          "offset": 0,
+          "slot": "0",
+          "type": "t_bool"
+        },
+        {
+          "astId": 21233,
+          "contract": "contracts/Voting/Voting.sol:Voting",
+          "label": "isVoted",
+          "offset": 1,
+          "slot": "0",
+          "type": "t_bool"
+        },
+        {
+          "astId": 21235,
+          "contract": "contracts/Voting/Voting.sol:Voting",
+          "label": "memberAddress",
+          "offset": 2,
+          "slot": "0",
+          "type": "t_address"
+        }
+      ],
+      "numberOfBytes": "32"
+    },
+    "t_struct(Proposal)21270_storage": {
+      "encoding": "inplace",
+      "label": "struct Types.Proposal",
+      "members": [
+        {
+          "astId": 21238,
+          "contract": "contracts/Voting/Voting.sol:Voting",
+          "label": "id",
+          "offset": 0,
+          "slot": "0",
+          "type": "t_uint256"
+        },
+        {
+          "astId": 21240,
+          "contract": "contracts/Voting/Voting.sol:Voting",
+          "label": "title",
+          "offset": 0,
+          "slot": "1",
+          "type": "t_string_storage"
+        },
+        {
+          "astId": 21242,
+          "contract": "contracts/Voting/Voting.sol:Voting",
+          "label": "description",
+          "offset": 0,
+          "slot": "2",
+          "type": "t_string_storage"
+        },
+        {
+          "astId": 21244,
+          "contract": "contracts/Voting/Voting.sol:Voting",
+          "label": "draftedBy",
+          "offset": 0,
+          "slot": "3",
+          "type": "t_address"
+        },
+        {
+          "astId": 21246,
+          "contract": "contracts/Voting/Voting.sol:Voting",
+          "label": "isElection",
+          "offset": 20,
+          "slot": "3",
+          "type": "t_bool"
+        },
+        {
+          "astId": 21248,
+          "contract": "contracts/Voting/Voting.sol:Voting",
+          "label": "isActive",
+          "offset": 21,
+          "slot": "3",
+          "type": "t_bool"
+        },
+        {
+          "astId": 21250,
+          "contract": "contracts/Voting/Voting.sol:Voting",
+          "label": "winnerCount",
+          "offset": 0,
+          "slot": "4",
+          "type": "t_uint256"
+        },
+        {
+          "astId": 21253,
+          "contract": "contracts/Voting/Voting.sol:Voting",
+          "label": "votes",
+          "offset": 0,
+          "slot": "5",
+          "type": "t_struct(DirectiveVotes)21224_storage"
+        },
+        {
+          "astId": 21257,
+          "contract": "contracts/Voting/Voting.sol:Voting",
+          "label": "candidates",
+          "offset": 0,
+          "slot": "8",
+          "type": "t_array(t_struct(Candidate)21229_storage)dyn_storage"
+        },
+        {
+          "astId": 21261,
+          "contract": "contracts/Voting/Voting.sol:Voting",
+          "label": "voters",
+          "offset": 0,
+          "slot": "9",
+          "type": "t_array(t_struct(Member)21236_storage)dyn_storage"
+        },
+        {
+          "astId": 21263,
+          "contract": "contracts/Voting/Voting.sol:Voting",
+          "label": "hasTie",
+          "offset": 0,
+          "slot": "10",
+          "type": "t_bool"
+        },
+        {
+          "astId": 21266,
+          "contract": "contracts/Voting/Voting.sol:Voting",
+          "label": "tiedCandidates",
+          "offset": 0,
+          "slot": "11",
+          "type": "t_array(t_address)dyn_storage"
+        },
+        {
+          "astId": 21269,
+          "contract": "contracts/Voting/Voting.sol:Voting",
+          "label": "selectedTieBreakOption",
+          "offset": 0,
+          "slot": "12",
+          "type": "t_enum(TieBreakOption)21217"
+        }
+      ],
+      "numberOfBytes": "416"
+    },
+    "t_uint256": {
+      "encoding": "inplace",
+      "label": "uint256",
+      "numberOfBytes": "32"
+    }
+  }
+}

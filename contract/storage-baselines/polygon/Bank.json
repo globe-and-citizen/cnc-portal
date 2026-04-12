@@ -1,0 +1,98 @@
+{
+  "storage": [
+    {
+      "astId": 11517,
+      "contract": "contracts/Bank.sol:Bank",
+      "label": "investorAddress",
+      "offset": 0,
+      "slot": "0",
+      "type": "t_address"
+    },
+    {
+      "astId": 11522,
+      "contract": "contracts/Bank.sol:Bank",
+      "label": "supportedTokens",
+      "offset": 0,
+      "slot": "1",
+      "type": "t_mapping(t_address,t_bool)"
+    },
+    {
+      "astId": 11527,
+      "contract": "contracts/Bank.sol:Bank",
+      "label": "dividendBalances",
+      "offset": 0,
+      "slot": "2",
+      "type": "t_mapping(t_address,t_uint256)"
+    },
+    {
+      "astId": 11534,
+      "contract": "contracts/Bank.sol:Bank",
+      "label": "tokenDividendBalances",
+      "offset": 0,
+      "slot": "3",
+      "type": "t_mapping(t_address,t_mapping(t_address,t_uint256))"
+    },
+    {
+      "astId": 11537,
+      "contract": "contracts/Bank.sol:Bank",
+      "label": "totalDividends",
+      "offset": 0,
+      "slot": "4",
+      "type": "t_uint256"
+    },
+    {
+      "astId": 11539,
+      "contract": "contracts/Bank.sol:Bank",
+      "label": "officerAddress",
+      "offset": 0,
+      "slot": "5",
+      "type": "t_address"
+    },
+    {
+      "astId": 11544,
+      "contract": "contracts/Bank.sol:Bank",
+      "label": "totalTokenDividends",
+      "offset": 0,
+      "slot": "6",
+      "type": "t_mapping(t_address,t_uint256)"
+    }
+  ],
+  "types": {
+    "t_address": {
+      "encoding": "inplace",
+      "label": "address",
+      "numberOfBytes": "20"
+    },
+    "t_bool": {
+      "encoding": "inplace",
+      "label": "bool",
+      "numberOfBytes": "1"
+    },
+    "t_mapping(t_address,t_bool)": {
+      "encoding": "mapping",
+      "key": "t_address",
+      "label": "mapping(address => bool)",
+      "numberOfBytes": "32",
+      "value": "t_bool"
+    },
+    "t_mapping(t_address,t_mapping(t_address,t_uint256))": {
+      "encoding": "mapping",
+      "key": "t_address",
+      "label": "mapping(address => mapping(address => uint256))",
+      "numberOfBytes": "32",
+      "value": "t_mapping(t_address,t_uint256)"
+    },
+    "t_mapping(t_address,t_uint256)": {
+      "encoding": "mapping",
+      "key": "t_address",
+      "label": "mapping(address => uint256)",
+      "numberOfBytes": "32",
+      "value": "t_uint256"
+    },
+    "t_uint256": {
+      "encoding": "inplace",
+      "label": "uint256",
+      "numberOfBytes": "32"
+    }
+  }
+}
