@@ -34,14 +34,17 @@ import {
 
 // ─── Officer Factory ─────────────────────────────────────────────────────────
 
-ponder.on("OfficerFactoryBeacon:BeaconProxyCreated", async ({ event, context }) => {
-  await context.db.insert(team).values({
-    address: event.args.proxy,
-    deployer: event.args.deployer,
-    blockNumber: event.block.number,
-    timestamp: Number(event.block.timestamp),
-  });
-});
+ponder.on(
+  "OfficerFactoryBeacon:BeaconProxyCreated",
+  async ({ event, context }) => {
+    await context.db.insert(team).values({
+      address: event.args.proxy,
+      deployer: event.args.deployer,
+      blockNumber: event.block.number,
+      timestamp: Number(event.block.timestamp),
+    });
+  },
+);
 
 ponder.on("Officer:ContractDeployed", async ({ event, context }) => {
   await context.db.insert(teamContract).values({
@@ -342,39 +345,48 @@ ponder.on("CashRemunerationEIP712:Withdraw", async ({ event, context }) => {
   });
 });
 
-ponder.on("CashRemunerationEIP712:WithdrawToken", async ({ event, context }) => {
-  await context.db.insert(cashRemunerationWithdrawToken).values({
-    id: `${event.transaction.hash}-${event.log.logIndex}`,
-    contractAddress: event.log.address,
-    withdrawer: event.args.withdrawer,
-    tokenAddress: event.args.tokenAddress,
-    amount: event.args.amount,
-    blockNumber: event.block.number,
-    timestamp: Number(event.block.timestamp),
-  });
-});
+ponder.on(
+  "CashRemunerationEIP712:WithdrawToken",
+  async ({ event, context }) => {
+    await context.db.insert(cashRemunerationWithdrawToken).values({
+      id: `${event.transaction.hash}-${event.log.logIndex}`,
+      contractAddress: event.log.address,
+      withdrawer: event.args.withdrawer,
+      tokenAddress: event.args.tokenAddress,
+      amount: event.args.amount,
+      blockNumber: event.block.number,
+      timestamp: Number(event.block.timestamp),
+    });
+  },
+);
 
-ponder.on("CashRemunerationEIP712:WageClaimEnabled", async ({ event, context }) => {
-  await context.db.insert(cashRemunerationWageClaim).values({
-    id: `${event.transaction.hash}-${event.log.logIndex}`,
-    contractAddress: event.log.address,
-    signatureHash: event.args.signatureHash,
-    enabled: true,
-    blockNumber: event.block.number,
-    timestamp: Number(event.block.timestamp),
-  });
-});
+ponder.on(
+  "CashRemunerationEIP712:WageClaimEnabled",
+  async ({ event, context }) => {
+    await context.db.insert(cashRemunerationWageClaim).values({
+      id: `${event.transaction.hash}-${event.log.logIndex}`,
+      contractAddress: event.log.address,
+      signatureHash: event.args.signatureHash,
+      enabled: true,
+      blockNumber: event.block.number,
+      timestamp: Number(event.block.timestamp),
+    });
+  },
+);
 
-ponder.on("CashRemunerationEIP712:WageClaimDisabled", async ({ event, context }) => {
-  await context.db.insert(cashRemunerationWageClaim).values({
-    id: `${event.transaction.hash}-${event.log.logIndex}`,
-    contractAddress: event.log.address,
-    signatureHash: event.args.signatureHash,
-    enabled: false,
-    blockNumber: event.block.number,
-    timestamp: Number(event.block.timestamp),
-  });
-});
+ponder.on(
+  "CashRemunerationEIP712:WageClaimDisabled",
+  async ({ event, context }) => {
+    await context.db.insert(cashRemunerationWageClaim).values({
+      id: `${event.transaction.hash}-${event.log.logIndex}`,
+      contractAddress: event.log.address,
+      signatureHash: event.args.signatureHash,
+      enabled: false,
+      blockNumber: event.block.number,
+      timestamp: Number(event.block.timestamp),
+    });
+  },
+);
 
 // ─── SafeDepositRouter ────────────────────────────────────────────────────────
 
@@ -442,24 +454,30 @@ ponder.on("ExpenseAccountEIP712:TokenTransfer", async ({ event, context }) => {
   });
 });
 
-ponder.on("ExpenseAccountEIP712:ApprovalActivated", async ({ event, context }) => {
-  await context.db.insert(expenseApproval).values({
-    id: `${event.transaction.hash}-${event.log.logIndex}`,
-    contractAddress: event.log.address,
-    signatureHash: event.args.signatureHash,
-    activated: true,
-    blockNumber: event.block.number,
-    timestamp: Number(event.block.timestamp),
-  });
-});
+ponder.on(
+  "ExpenseAccountEIP712:ApprovalActivated",
+  async ({ event, context }) => {
+    await context.db.insert(expenseApproval).values({
+      id: `${event.transaction.hash}-${event.log.logIndex}`,
+      contractAddress: event.log.address,
+      signatureHash: event.args.signatureHash,
+      activated: true,
+      blockNumber: event.block.number,
+      timestamp: Number(event.block.timestamp),
+    });
+  },
+);
 
-ponder.on("ExpenseAccountEIP712:ApprovalDeactivated", async ({ event, context }) => {
-  await context.db.insert(expenseApproval).values({
-    id: `${event.transaction.hash}-${event.log.logIndex}`,
-    contractAddress: event.log.address,
-    signatureHash: event.args.signatureHash,
-    activated: false,
-    blockNumber: event.block.number,
-    timestamp: Number(event.block.timestamp),
-  });
-});
+ponder.on(
+  "ExpenseAccountEIP712:ApprovalDeactivated",
+  async ({ event, context }) => {
+    await context.db.insert(expenseApproval).values({
+      id: `${event.transaction.hash}-${event.log.logIndex}`,
+      contractAddress: event.log.address,
+      signatureHash: event.args.signatureHash,
+      activated: false,
+      blockNumber: event.block.number,
+      timestamp: Number(event.block.timestamp),
+    });
+  },
+);
