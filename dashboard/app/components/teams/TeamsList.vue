@@ -84,10 +84,10 @@ const columns: TableColumn<Team>[] = [
     }
   },
   {
-    accessorKey: 'officerAddress',
+    accessorKey: 'currentOfficer',
     header: 'Officer',
     cell: ({ row }) => {
-      const address = row.original.officerAddress
+      const address = row.original.currentOfficer?.address
       if (!address) {
         return h(UBadge, { color: 'warning', variant: 'subtle' }, () => 'Not Set')
       }
