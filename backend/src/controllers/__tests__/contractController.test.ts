@@ -29,7 +29,6 @@ vi.mock('../../utils', async () => {
         createMany: vi.fn(),
         findMany: vi.fn(),
         create: vi.fn(),
-        deleteMany: vi.fn(),
       },
       teamOfficer: {
         upsert: vi.fn(),
@@ -480,58 +479,4 @@ describe('contractController', () => {
     });
   });
 
-  describe('DELETE: /reset', () => {
-    it('should return 400 if required fields are missing', async () => {
-      const response = await request(app).delete('/reset').send({});
-      expect(response.status).toBe(400);
-      expect(response.body.message).toContain('Invalid request body');
-    });
-
-    it('should return 404 if team is not found', async () => {
-      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(null);
-      const response = await request(app).delete('/reset').send({ teamId: 1 });
-      expect(response.status).toBe(404);
-      expect(response.body.message).toContain('Team not found');
-    });
-
-    it('should return 403 if caller is not team owner', async () => {
-      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue({
-        ...mockTeam,
-        ownerAddress: '0x456',
-      });
-
-      const response = await request(app).delete('/reset').send({ teamId: 1 });
-      expect(response.status).toBe(403);
-      expect(response.body.message).toContain('Unauthorized: Caller is not the owner of the team');
-    });
-
-    it('should return 200 when team contracts are reset', async () => {
-      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(mockTeam);
-      vi.spyOn(prisma.teamContract, 'deleteMany').mockResolvedValue({ count: 2 });
-      vi.spyOn(prisma.team, 'update').mockResolvedValue({
-        ...mockTeam,
-        officerAddress: null,
-      });
-
-      const response = await request(app).delete('/reset').send({ teamId: 1 });
-
-      expect(prisma.teamContract.deleteMany).toHaveBeenCalledWith({
-        where: { teamId: 1 },
-      });
-      expect(prisma.team.update).toHaveBeenCalledWith({
-        where: { id: 1 },
-        data: { officerAddress: null },
-      });
-      expect(response.status).toBe(200);
-      expect(response.body.message).toBe('Team contracts reset successfully');
-    });
-
-    it('should return 500 if reset fails', async () => {
-      vi.spyOn(prisma.team, 'findUnique').mockRejectedValue('Error');
-
-      const response = await request(app).delete('/reset').send({ teamId: 1 });
-      expect(response.status).toBe(500);
-      expect(response.body.message).toBe('Internal server error has occured');
-    });
-  });
 });

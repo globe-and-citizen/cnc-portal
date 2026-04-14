@@ -4,7 +4,6 @@ import {
   getContracts,
   syncContracts,
   addContract,
-  resetTeamContracts,
   getTeamOfficers,
   createOfficer,
 } from '../controllers/contractController';
@@ -264,7 +263,5 @@ contractRoutes.post('/officer', validateBody(createOfficerBodySchema), createOff
  *       description: Internal server error
  */
 contractRoutes.get('/officers', validateQuery(getContractsQuerySchema), getTeamOfficers);
-
-contractRoutes.delete('/reset', validateBody(syncContractsBodySchema), resetTeamContracts);
 
 export default contractRoutes;
