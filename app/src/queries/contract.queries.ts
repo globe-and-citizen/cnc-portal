@@ -76,6 +76,55 @@ export const useSyncContractsMutation = createMutationHook<void, SyncContractsPa
 })
 
 // ============================================================================
+// POST /contract/officer - Register a freshly deployed Officer contract
+// ============================================================================
+
+export interface CreateOfficerBody {
+  /** Team ID */
+  teamId: string | number
+  /** Newly deployed Officer contract address */
+  address: string
+  /** Block number of the deploy transaction receipt */
+  deployBlockNumber?: number
+  /** Timestamp of the deploy transaction, ISO string */
+  deployedAt?: string
+}
+
+export interface CreateOfficerParams {
+  body: CreateOfficerBody
+}
+
+export interface CreateOfficerResponse {
+  officer: {
+    id: number
+    address: string
+    teamId: number
+    deployer: string
+    deployBlockNumber: string | null
+    deployedAt: string | null
+    createdAt: string
+    updatedAt: string
+  }
+  contractsCreated: number
+}
+
+/**
+ * Register a freshly deployed Officer contract on a team.
+ * Updates team.officerAddress, records a TeamOfficer row and syncs the
+ * contracts it governs in a single call.
+ *
+ * @endpoint POST /contract/officer
+ */
+export const useCreateOfficerMutation = createMutationHook<
+  CreateOfficerResponse,
+  CreateOfficerParams
+>({
+  method: 'POST',
+  endpoint: 'contract/officer',
+  invalidateKeys: [contractKeys.all, teamKeys.all]
+})
+
+// ============================================================================
 // DELETE /contract/reset - Reset contracts
 // ============================================================================
 

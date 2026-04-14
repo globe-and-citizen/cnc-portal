@@ -16,19 +16,27 @@ import { OFFICER_ABI } from '@/artifacts/abi/officer'
 import { FACTORY_BEACON_ABI } from '@/artifacts/abi/factory-beacon'
 console.log('OFFICER_BEACON:', OFFICER_BEACON)
 
+export interface OfficerDeploymentMetadata {
+  officerAddress: Address
+  deployBlockNumber: number
+  deployedAt: Date
+}
+
 export interface OfficerDeploymentOptions {
   investorInput: {
     name: string
     symbol: string
   }
   teamId?: string | number
-  onDeploymentComplete?: (officerAddress: Address) => void | Promise<void>
+  onDeploymentComplete?: (metadata: OfficerDeploymentMetadata) => void | Promise<void>
 }
 
 export interface OfficerDeploymentResult {
   hash: Hex
   receipt: unknown
   officerAddress: Address
+  deployBlockNumber: number
+  deployedAt: Date
 }
 
 /**
@@ -114,7 +122,13 @@ export function useOfficerDeployment() {
       log.info('Officer proxy address extracted:', proxyAddress)
       deployedOfficerAddress.value = proxyAddress
 
-      return { hash, receipt, officerAddress: proxyAddress }
+      return {
+        hash,
+        receipt,
+        officerAddress: proxyAddress,
+        deployBlockNumber: Number(blockNumber),
+        deployedAt: new Date()
+      }
     },
     onSuccess: async (data, variables) => {
       toast.add({ title: 'Officer contract deployed successfully', color: 'success' })
@@ -123,7 +137,11 @@ export function useOfficerDeployment() {
       //  Execute callback once, with proper error handling
       if (variables.onDeploymentComplete) {
         try {
-          await variables.onDeploymentComplete(data.officerAddress)
+          await variables.onDeploymentComplete({
+            officerAddress: data.officerAddress,
+            deployBlockNumber: data.deployBlockNumber,
+            deployedAt: data.deployedAt
+          })
           log.info('Post-deployment callback completed successfully')
         } catch (error) {
           // Log error but don't throw - deployment was successful

@@ -14,11 +14,10 @@
 
 <script lang="ts" setup>
 import type { Team } from '@/types'
-import type { Address } from 'viem'
 import { computed } from 'vue'
 import { useOfficerDeployment } from '@/composables/contracts'
-import { useUpdateTeamMutation } from '@/queries/team.queries'
-import { useSyncContractsMutation } from '@/queries/contract.queries'
+import type { OfficerDeploymentMetadata } from '@/composables/contracts/useOfficerDeployment'
+import { useCreateOfficerMutation } from '@/queries/contract.queries'
 import { log } from '@/utils'
 
 const props = withDefaults(
@@ -44,8 +43,7 @@ const {
 } = useOfficerDeployment()
 
 // Mutations
-const { mutateAsync: updateTeam, error: updateTeamError } = useUpdateTeamMutation()
-const { mutateAsync: syncContracts, error: syncContractsError } = useSyncContractsMutation()
+const { mutateAsync: registerOfficer } = useCreateOfficerMutation()
 
 // Computed states
 const deployButtonText = computed(() => {
@@ -55,10 +53,7 @@ const deployButtonText = computed(() => {
   return 'Deploy Company Contracts'
 })
 
-/**
- * Handle successful officer contract deployment
- */
-const handleOfficerDeploymentSuccess = async (officerAddress: Address) => {
+const handleOfficerDeploymentSuccess = async (metadata: OfficerDeploymentMetadata) => {
   if (!props.createdTeamData.id) {
     log.error('No Company data found')
     toast.add({ title: 'No company data found', color: 'error' })
@@ -68,34 +63,20 @@ const handleOfficerDeploymentSuccess = async (officerAddress: Address) => {
   const teamId = props.createdTeamData.id
 
   try {
-    // Update company with officer address
-    await updateTeam({
-      pathParams: { id: teamId },
-      body: { officerAddress }
+    await registerOfficer({
+      body: {
+        teamId,
+        address: metadata.officerAddress,
+        deployBlockNumber: metadata.deployBlockNumber,
+        deployedAt: metadata.deployedAt.toISOString()
+      }
     })
 
-    if (updateTeamError.value) {
-      log.error('Error updating officer address')
-      toast.add({ title: 'Error updating officer address', color: 'error' })
-      return
-    }
-
-    // Sync contracts
-    await syncContracts({ body: { teamId } })
-
-    if (syncContractsError.value) {
-      log.error('Error updating contracts')
-      toast.add({ title: 'Error updating contracts', color: 'error' })
-      return
-    }
-
-    // Invalidate queries
     await invalidateQueries(teamId)
 
     toast.add({ title: 'Officer contracts deployed and synced successfully', color: 'success' })
     log.info('Officer contracts deployment complete')
 
-    // Notify parent that deployment is complete
     emits('contractDeployed')
   } catch (error) {
     log.error('Error in post-deployment processing:', error)
@@ -103,9 +84,6 @@ const handleOfficerDeploymentSuccess = async (officerAddress: Address) => {
   }
 }
 
-/**
- * Deploy officer contract and all sub-contracts
- */
 const deployOfficerContract = async () => {
   if (!props.createdTeamData?.id) {
     toast.add({ title: 'Team data not found', color: 'error' })
