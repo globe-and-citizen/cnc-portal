@@ -37,13 +37,13 @@
       <div class="flex justify-between">
         <span class="text-gray-500 dark:text-gray-400">Recipient receives</span>
         <span class="font-medium text-gray-800 dark:text-gray-200">
-          {{ numericAmount.toFixed(2) }} {{ model.token.symbol }}
+          {{ formatTransferAmount(numericAmount) }} {{ model.token.symbol }}
         </span>
       </div>
 
       <div class="flex justify-between">
         <span class="text-gray-500 dark:text-gray-400">
-          Deposit fee
+          Transfer fee
           <span
             class="ml-1 rounded bg-yellow-100 px-1.5 py-0.5 text-xs text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300"
           >
@@ -51,7 +51,7 @@
           </span>
         </span>
         <span class="text-orange-500">
-          + {{ depositFee.toFixed(2) }} {{ model.token.symbol }}
+          + {{ formatTransferAmount(depositFee) }} {{ model.token.symbol }}
         </span>
       </div>
 
@@ -60,7 +60,7 @@
       >
         <span class="font-semibold text-gray-800 dark:text-gray-200">Total you transfer</span>
         <span class="font-bold text-green-600 dark:text-green-400">
-          {{ totalToSend.toFixed(2) }} {{ model.token.symbol }}
+          {{ formatTransferAmount(totalToSend) }} {{ model.token.symbol }}
         </span>
       </div>
     </div>
@@ -82,7 +82,11 @@
         :disabled="loading"
         data-test="transferButton"
       >
-        {{ `Transfer${showFees ? ` ${totalToSend.toFixed(2)} ${model.token.symbol}` : ''}` }}
+        <!-- {{ `Transfer${showFees ? ` ${totalToSend.toFixed(2)} ${model.token.symbol}` : ''}` }} -->
+
+        {{
+          `Transfer${showFees ? ` ${formatTransferAmount(totalToSend)} ${model.token.symbol}` : ''}`
+        }}
       </UButton>
     </div>
   </UForm>
@@ -94,6 +98,7 @@ import { z } from 'zod'
 import SelectMemberContractsInput from '../utils/SelectMemberContractsInput.vue'
 import BodAlert from '@/components/BodAlert.vue'
 import TokenAmount from './TokenAmount.vue'
+import { formatAmountWithPrecision } from '@/utils/currencyUtil'
 import type { TokenOption } from '@/types'
 import type { TokenId } from '@/constant'
 
@@ -160,6 +165,8 @@ const depositFee = computed(() => {
 })
 const totalToSend = computed(() => numericAmount.value + depositFee.value)
 const showFees = computed(() => numericAmount.value > 0 && (props.feeBps ?? 0) > 0)
+
+const formatTransferAmount = (value: number) => formatAmountWithPrecision(value, 0, 4)
 
 watch(
   () => props.tokens,
