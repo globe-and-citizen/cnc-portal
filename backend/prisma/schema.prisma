@@ -45,7 +45,6 @@ model Team {
   ownerAddress           String
   description            String?
   name                   String                   @unique
-  officerAddress         String?
   BoardOfDirectorActions BoardOfDirectorActions[]
   teamContracts          TeamContract[]
   teamOfficers           TeamOfficer[]
@@ -176,6 +175,11 @@ model TeamOfficer {
   deployer          String
   deployBlockNumber BigInt?
   deployedAt        DateTime?
+  // Linked list: each row points back to its predecessor. The current Officer
+  // for a team is the row with no nextOfficer (no successor exists).
+  previousOfficerId Int?           @unique
+  previousOfficer   TeamOfficer?   @relation("OfficerHistory", fields: [previousOfficerId], references: [id])
+  nextOfficer       TeamOfficer?   @relation("OfficerHistory")
   contracts         TeamContract[]
   createdAt         DateTime       @default(now())
   updatedAt         DateTime       @updatedAt
