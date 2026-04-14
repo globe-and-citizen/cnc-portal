@@ -48,6 +48,7 @@ model Team {
   officerAddress         String?
   BoardOfDirectorActions BoardOfDirectorActions[]
   teamContracts          TeamContract[]
+  teamOfficers           TeamOfficer[]
   memberTeamsData        MemberTeamsData[]
   Wage                   Wage[]
   weeklyClaims           WeeklyClaim[]
@@ -152,16 +153,34 @@ model Notification {
 }
 
 model TeamContract {
-  id        Int      @id @default(autoincrement())
-  address   String   @unique
+  id        Int          @id @default(autoincrement())
+  address   String       @unique
   type      String
   deployer  String
   teamId    Int
-  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  team      Team         @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  officerId Int?
+  officer   TeamOfficer? @relation(fields: [officerId], references: [id], onDelete: SetNull)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
 
   @@index([address])
+  @@index([officerId])
+}
+
+model TeamOfficer {
+  id                Int            @id @default(autoincrement())
+  address           String         @unique
+  teamId            Int
+  team              Team           @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  deployer          String
+  deployBlockNumber BigInt?
+  deployedAt        DateTime?
+  contracts         TeamContract[]
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  @@index([teamId])
 }
 
 model BoardOfDirectorActions {
