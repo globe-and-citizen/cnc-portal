@@ -5,6 +5,7 @@ import {
   syncContracts,
   addContract,
   resetTeamContracts,
+  getTeamOfficers,
 } from '../controllers/contractController';
 import {
   validateBody,
@@ -194,6 +195,31 @@ contractRoutes.get('/', validateQuery(getContractsQuerySchema), getContracts);
  *             $ref: '#/components/schemas/ErrorResponse'
  */
 contractRoutes.put('/sync', validateBody(syncContractsBodySchema), syncContracts);
+
+/**
+ * @openapi
+ * /contract/officers:
+ *  get:
+ *   summary: List Officer contract history for a team
+ *   parameters:
+ *     - in: query
+ *       name: teamId
+ *       required: true
+ *       schema:
+ *         type: integer
+ *         description: The ID of the team
+ *         minimum: 1
+ *   responses:
+ *     200:
+ *       description: Ordered list of TeamOfficer rows, newest first. Each row
+ *         includes its related contracts and an `isCurrent` flag indicating
+ *         whether it matches the team's current `officerAddress`.
+ *     404:
+ *       description: Team not found
+ *     500:
+ *       description: Internal server error
+ */
+contractRoutes.get('/officers', validateQuery(getContractsQuerySchema), getTeamOfficers);
 
 contractRoutes.delete('/reset', validateBody(syncContractsBodySchema), resetTeamContracts);
 

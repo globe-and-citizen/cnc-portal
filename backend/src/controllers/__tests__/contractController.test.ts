@@ -31,6 +31,10 @@ vi.mock('../../utils', async () => {
         create: vi.fn(),
         deleteMany: vi.fn(),
       },
+      teamOfficer: {
+        upsert: vi.fn(),
+        findMany: vi.fn(),
+      },
     },
   };
 });
@@ -68,6 +72,16 @@ describe('contractController', () => {
     vi.clearAllMocks();
     vi.mocked(publicClient.getChainId).mockResolvedValue(11155111);
     vi.mocked(prisma.teamContract.findMany).mockResolvedValue([]);
+    vi.mocked(prisma.teamOfficer.upsert).mockResolvedValue({
+      id: 1,
+      address: mockTeam.officerAddress!,
+      teamId: mockTeam.id,
+      deployer: mockTeam.ownerAddress,
+      deployBlockNumber: null,
+      deployedAt: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
   });
 
   describe('PUT: /sync', () => {

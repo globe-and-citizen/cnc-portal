@@ -23,11 +23,18 @@ interface ContractBodyRequest {
   contractType: ContractType;
 }
 
+interface SyncContractsBody {
+  teamId: number;
+  deployBlockNumber?: number;
+  deployedAt?: Date;
+}
+
 export const syncContracts = async (req: Request, res: Response) => {
   const callerAddress = req.address as Address;
-  const body = req.body as unknown as Pick<ContractBodyRequest, 'teamId'>;
+  const body = req.body as unknown as SyncContractsBody;
 
   const teamId = Number(body.teamId);
+  const { deployBlockNumber, deployedAt } = body;
 
   try {
     const team = await prisma.team.findUnique({
@@ -36,6 +43,8 @@ export const syncContracts = async (req: Request, res: Response) => {
     if (!team) return errorResponse(404, 'Team not found', res);
     if (team.ownerAddress !== callerAddress)
       return errorResponse(403, 'Unauthorized: Caller is not the owner of the team', res);
+    if (!team.officerAddress)
+      return errorResponse(400, 'Team has no officer address set', res);
 
     console.log(
       'Syncing contracts for team:',
@@ -50,12 +59,27 @@ export const syncContracts = async (req: Request, res: Response) => {
       functionName: 'getTeam',
     })) as { contractType: string; contractAddress: string }[];
 
-    // Format the contracts to be created
+    // Upsert the TeamOfficer entry. Deploy metadata is immutable — an existing
+    // row is left untouched so a second sync call does not overwrite the real
+    // deploy block/date with fresher values from a non-deploy caller.
+    const officer = await prisma.teamOfficer.upsert({
+      where: { address: team.officerAddress },
+      create: {
+        address: team.officerAddress,
+        teamId: teamId,
+        deployer: callerAddress,
+        deployBlockNumber: deployBlockNumber ?? null,
+        deployedAt: deployedAt ?? null,
+      },
+      update: {},
+    });
+
     const contractsToCreate: Prisma.TeamContractCreateManyInput[] = contracts.map((contract) => ({
       teamId: teamId,
       address: contract.contractAddress,
       type: contract.contractType,
       deployer: callerAddress,
+      officerId: officer.id,
     }));
     const createdContract = await prisma.teamContract.createMany({
       data: contractsToCreate,
@@ -117,6 +141,32 @@ export const addContract = async (req: Request, res: Response) => {
       },
     });
     return res.status(200).json(contract);
+  } catch (error) {
+    console.log('Error: ', error);
+    return errorResponse(500, 'Internal server error', res);
+  }
+};
+
+export const getTeamOfficers = async (req: Request, res: Response) => {
+  const teamId = Number(req.query.teamId);
+
+  try {
+    const team = await prisma.team.findUnique({ where: { id: teamId } });
+    if (!team) return errorResponse(404, 'Team not found', res);
+
+    const officers = await prisma.teamOfficer.findMany({
+      where: { teamId },
+      include: { contracts: true },
+      orderBy: [{ deployBlockNumber: { sort: 'desc', nulls: 'last' } }, { createdAt: 'desc' }],
+    });
+
+    return res.status(200).json(
+      officers.map((o) => ({
+        ...o,
+        deployBlockNumber: o.deployBlockNumber?.toString() ?? null,
+        isCurrent: o.address === team.officerAddress,
+      }))
+    );
   } catch (error) {
     console.log('Error: ', error);
     return errorResponse(500, 'Internal server error', res);

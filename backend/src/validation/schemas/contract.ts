@@ -31,6 +31,8 @@ export const addContractBodySchema = z.object({
 // Sync contracts request body
 export const syncContractsBodySchema = z.object({
   teamId: teamIdSchema,
+  deployBlockNumber: z.coerce.number().int().nonnegative().optional(),
+  deployedAt: z.coerce.date().optional(),
 });
 
 // Get contracts query parameters
