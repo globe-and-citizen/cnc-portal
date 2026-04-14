@@ -124,30 +124,3 @@ export const useCreateOfficerMutation = createMutationHook<
   invalidateKeys: [contractKeys.all, teamKeys.all]
 })
 
-// ============================================================================
-// DELETE /contract/reset - Reset contracts
-// ============================================================================
-
-/**
- * Combined parameters for useResetContractsMutation
- */
-export interface ResetContractsParams {
-  body: {
-    /** Team ID */
-    teamId: string
-  }
-}
-
-/**
- * Reset/delete contracts for a team
- *
- * @endpoint DELETE /contract/reset
- * @pathParams none
- * @queryParams none
- * @body { teamId: string }
- */
-export const useResetContractsMutation = createMutationHook<void, ResetContractsParams>({
-  method: 'DELETE',
-  endpoint: 'contract/reset',
-  invalidateKeys: [contractKeys.all, teamKeys.all]
-})

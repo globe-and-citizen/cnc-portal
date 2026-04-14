@@ -197,7 +197,7 @@ vi.mock('@/queries/auth.queries', () => ({
 vi.mock('@/queries/contract.queries', () => ({
   useCreateContractMutation: vi.fn(queryMocks.useCreateContractMutation),
   useSyncContractsMutation: vi.fn(queryMocks.useSyncContractsMutation),
-  useResetContractsMutation: vi.fn(queryMocks.useResetContractsMutation)
+  useCreateOfficerMutation: vi.fn(queryMocks.useCreateOfficerMutation)
 }))
 
 /**

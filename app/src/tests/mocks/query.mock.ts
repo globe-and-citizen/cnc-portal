@@ -311,7 +311,7 @@ export const queryMocks: Record<string, () => Record<string, unknown>> = {
   // Contract queries - contract.queries.ts
   useCreateContractMutation: () => createMockMutationResponse(),
   useSyncContractsMutation: () => createMockMutationResponse(),
-  useResetContractsMutation: () => createMockMutationResponse(),
+  useCreateOfficerMutation: () => createMockMutationResponse(),
 
   // Health queries - health.queries.ts
   useGetBackendHealthQuery: () => ({
