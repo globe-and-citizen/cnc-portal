@@ -6,6 +6,7 @@ import {
   addContract,
   resetTeamContracts,
   getTeamOfficers,
+  createOfficer,
 } from '../controllers/contractController';
 import {
   validateBody,
@@ -13,6 +14,7 @@ import {
   addContractBodySchema,
   syncContractsBodySchema,
   getContractsQuerySchema,
+  createOfficerBodySchema,
 } from '../validation';
 
 const contractRoutes = express.Router();
@@ -195,6 +197,48 @@ contractRoutes.get('/', validateQuery(getContractsQuerySchema), getContracts);
  *             $ref: '#/components/schemas/ErrorResponse'
  */
 contractRoutes.put('/sync', validateBody(syncContractsBodySchema), syncContracts);
+
+/**
+ * @openapi
+ * /contract/officer:
+ *  post:
+ *   summary: Register a freshly deployed Officer contract on a team
+ *   description: Updates the team's current officerAddress, records a new
+ *     TeamOfficer entry with deploy metadata, and syncs the contracts the
+ *     Officer governs in a single call. Intended to be called by the frontend
+ *     right after a successful Officer deployment transaction.
+ *   requestBody:
+ *     required: true
+ *     content:
+ *       application/json:
+ *         schema:
+ *           type: object
+ *           required: [teamId, address]
+ *           properties:
+ *             teamId:
+ *               type: integer
+ *               minimum: 1
+ *             address:
+ *               type: string
+ *               description: The newly deployed Officer contract address
+ *             deployBlockNumber:
+ *               type: integer
+ *               description: Block number of the deploy transaction receipt
+ *             deployedAt:
+ *               type: string
+ *               format: date-time
+ *               description: Timestamp of the deploy transaction
+ *   responses:
+ *     200:
+ *       description: Officer registered and contracts synced
+ *     403:
+ *       description: Caller is not the team owner
+ *     404:
+ *       description: Team not found
+ *     500:
+ *       description: Internal server error
+ */
+contractRoutes.post('/officer', validateBody(createOfficerBodySchema), createOfficer);
 
 /**
  * @openapi

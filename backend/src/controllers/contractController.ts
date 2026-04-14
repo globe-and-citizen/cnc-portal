@@ -29,6 +29,57 @@ interface SyncContractsBody {
   deployedAt?: Date;
 }
 
+interface CreateOfficerBody {
+  teamId: number;
+  address: string;
+  deployBlockNumber?: number;
+  deployedAt?: Date;
+}
+
+// Shared logic: upsert the TeamOfficer for the given address, read the
+// contracts it governs from-chain, and persist them linked to that officer.
+// Deploy metadata on an existing TeamOfficer row is immutable (the first
+// caller wins) so later syncs can't overwrite the real deploy block/date.
+const upsertOfficerAndSyncContracts = async (
+  teamId: number,
+  officerAddress: Address,
+  callerAddress: Address,
+  deployBlockNumber: number | undefined,
+  deployedAt: Date | undefined
+) => {
+  const contracts = (await publicClient.readContract({
+    address: officerAddress,
+    abi: OFFICER_ABI,
+    functionName: 'getTeam',
+  })) as { contractType: string; contractAddress: string }[];
+
+  const officer = await prisma.teamOfficer.upsert({
+    where: { address: officerAddress },
+    create: {
+      address: officerAddress,
+      teamId,
+      deployer: callerAddress,
+      deployBlockNumber: deployBlockNumber ?? null,
+      deployedAt: deployedAt ?? null,
+    },
+    update: {},
+  });
+
+  const contractsToCreate: Prisma.TeamContractCreateManyInput[] = contracts.map((contract) => ({
+    teamId,
+    address: contract.contractAddress,
+    type: contract.contractType,
+    deployer: callerAddress,
+    officerId: officer.id,
+  }));
+  const created = await prisma.teamContract.createMany({
+    data: contractsToCreate,
+    skipDuplicates: true,
+  });
+
+  return { officer, created };
+};
+
 export const syncContracts = async (req: Request, res: Response) => {
   const callerAddress = req.address as Address;
   const body = req.body as unknown as SyncContractsBody;
@@ -53,44 +104,63 @@ export const syncContracts = async (req: Request, res: Response) => {
       team.officerAddress
     );
     console.log('Chain ID: ', await publicClient.getChainId());
-    const contracts = (await publicClient.readContract({
-      address: team.officerAddress as `0x${string}`,
-      abi: OFFICER_ABI,
-      functionName: 'getTeam',
-    })) as { contractType: string; contractAddress: string }[];
 
-    // Upsert the TeamOfficer entry. Deploy metadata is immutable — an existing
-    // row is left untouched so a second sync call does not overwrite the real
-    // deploy block/date with fresher values from a non-deploy caller.
-    const officer = await prisma.teamOfficer.upsert({
-      where: { address: team.officerAddress },
-      create: {
-        address: team.officerAddress,
-        teamId: teamId,
-        deployer: callerAddress,
-        deployBlockNumber: deployBlockNumber ?? null,
-        deployedAt: deployedAt ?? null,
-      },
-      update: {},
-    });
+    const { created } = await upsertOfficerAndSyncContracts(
+      teamId,
+      team.officerAddress as Address,
+      callerAddress,
+      deployBlockNumber,
+      deployedAt
+    );
 
-    const contractsToCreate: Prisma.TeamContractCreateManyInput[] = contracts.map((contract) => ({
-      teamId: teamId,
-      address: contract.contractAddress,
-      type: contract.contractType,
-      deployer: callerAddress,
-      officerId: officer.id,
-    }));
-    const createdContract = await prisma.teamContract.createMany({
-      data: contractsToCreate,
-      skipDuplicates: true,
-    });
-
-    if (createdContract.count === 0) {
+    if (created.count === 0) {
       return errorResponse(400, 'No new contracts Created', res);
     }
     // TODO: manage geting the owner of the contract directly from the contract with other metadata
-    return res.status(200).json(createdContract);
+    return res.status(200).json(created);
+  } catch (error) {
+    console.log('Error: ', error);
+    return errorResponse(500, 'Internal server error', res);
+  }
+};
+
+// POST /contract/officer — registers a freshly deployed Officer contract on a
+// team. Updates team.officerAddress, records the new TeamOfficer with deploy
+// metadata, and syncs the contracts it governs in one call.
+export const createOfficer = async (req: Request, res: Response) => {
+  const callerAddress = req.address as Address;
+  const body = req.body as unknown as CreateOfficerBody;
+
+  const teamId = Number(body.teamId);
+  const officerAddress = body.address as Address;
+  const { deployBlockNumber, deployedAt } = body;
+
+  try {
+    const team = await prisma.team.findUnique({ where: { id: teamId } });
+    if (!team) return errorResponse(404, 'Team not found', res);
+    if (team.ownerAddress !== callerAddress)
+      return errorResponse(403, 'Unauthorized: Caller is not the owner of the team', res);
+
+    await prisma.team.update({
+      where: { id: teamId },
+      data: { officerAddress },
+    });
+
+    const { officer, created } = await upsertOfficerAndSyncContracts(
+      teamId,
+      officerAddress,
+      callerAddress,
+      deployBlockNumber,
+      deployedAt
+    );
+
+    return res.status(200).json({
+      officer: {
+        ...officer,
+        deployBlockNumber: officer.deployBlockNumber?.toString() ?? null,
+      },
+      contractsCreated: created.count,
+    });
   } catch (error) {
     console.log('Error: ', error);
     return errorResponse(500, 'Internal server error', res);

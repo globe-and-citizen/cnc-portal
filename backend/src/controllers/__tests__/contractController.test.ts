@@ -378,6 +378,108 @@ describe('contractController', () => {
     });
   });
 
+  describe('POST: /officer', () => {
+    const newOfficerAddress = '0x2222222222222222222222222222222222222222';
+
+    it('should return 400 if required fields are missing', async () => {
+      const response = await request(app).post('/officer').send({ teamId: 1 });
+      expect(response.status).toBe(400);
+      expect(response.body.message).toContain('Invalid request body');
+    });
+
+    it('should return 404 if team is not found', async () => {
+      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(null);
+      const response = await request(app)
+        .post('/officer')
+        .send({ teamId: 1, address: newOfficerAddress });
+      expect(response.status).toBe(404);
+      expect(response.body.message).toContain('Team not found');
+    });
+
+    it('should return 403 if caller is not the team owner', async () => {
+      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue({
+        ...mockTeam,
+        ownerAddress: '0x9999999999999999999999999999999999999999',
+      });
+      const response = await request(app)
+        .post('/officer')
+        .send({ teamId: 1, address: newOfficerAddress });
+      expect(response.status).toBe(403);
+      expect(response.body.message).toContain('Unauthorized: Caller is not the owner of the team');
+    });
+
+    it('should update team, upsert officer and sync contracts', async () => {
+      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(mockTeam);
+      vi.spyOn(prisma.team, 'update').mockResolvedValue({
+        ...mockTeam,
+        officerAddress: newOfficerAddress,
+      });
+      vi.spyOn(publicClient, 'readContract').mockResolvedValue([
+        {
+          contractType: 'Voting',
+          contractAddress: '0xABCDEF1234567890123456789012345678901234',
+        },
+      ]);
+      vi.mocked(prisma.teamOfficer.upsert).mockResolvedValue({
+        id: 42,
+        address: newOfficerAddress,
+        teamId: 1,
+        deployer: mockTeam.ownerAddress,
+        deployBlockNumber: BigInt(12345),
+        deployedAt: new Date('2026-04-14T10:00:00Z'),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      vi.spyOn(prisma.teamContract, 'createMany').mockResolvedValue({ count: 1 });
+
+      const response = await request(app).post('/officer').send({
+        teamId: 1,
+        address: newOfficerAddress,
+        deployBlockNumber: 12345,
+        deployedAt: '2026-04-14T10:00:00Z',
+      });
+
+      expect(prisma.team.update).toHaveBeenCalledWith({
+        where: { id: 1 },
+        data: { officerAddress: newOfficerAddress },
+      });
+      expect(prisma.teamOfficer.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { address: newOfficerAddress },
+          create: expect.objectContaining({
+            address: newOfficerAddress,
+            teamId: 1,
+            deployBlockNumber: 12345,
+          }),
+        })
+      );
+      expect(prisma.teamContract.createMany).toHaveBeenCalledWith({
+        data: expect.arrayContaining([
+          expect.objectContaining({
+            teamId: 1,
+            address: '0xABCDEF1234567890123456789012345678901234',
+            type: 'Voting',
+            officerId: 42,
+          }),
+        ]),
+        skipDuplicates: true,
+      });
+      expect(response.status).toBe(200);
+      expect(response.body.contractsCreated).toBe(1);
+      expect(response.body.officer.id).toBe(42);
+      expect(response.body.officer.deployBlockNumber).toBe('12345');
+    });
+
+    it('should return 500 on internal error', async () => {
+      vi.spyOn(prisma.team, 'findUnique').mockRejectedValue('Error');
+      const response = await request(app)
+        .post('/officer')
+        .send({ teamId: 1, address: newOfficerAddress });
+      expect(response.status).toBe(500);
+      expect(response.body.message).toBe('Internal server error has occured');
+    });
+  });
+
   describe('DELETE: /reset', () => {
     it('should return 400 if required fields are missing', async () => {
       const response = await request(app).delete('/reset').send({});
