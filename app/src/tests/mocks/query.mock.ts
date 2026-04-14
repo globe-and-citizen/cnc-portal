@@ -47,7 +47,17 @@ export const mockTeamData: Team = {
     }
   ],
   ownerAddress: '0x1234567890123456789012345678901234567890',
-  officerAddress: '0x0987654321098765432109876543210987654321'
+  currentOfficer: {
+    id: 1,
+    address: '0x0987654321098765432109876543210987654321',
+    teamId: 1,
+    deployer: '0x1234567890123456789012345678901234567890',
+    deployBlockNumber: null,
+    deployedAt: null,
+    previousOfficerId: null,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  }
 }
 
 export const mockTeamsData: Team[] = [mockTeamData]

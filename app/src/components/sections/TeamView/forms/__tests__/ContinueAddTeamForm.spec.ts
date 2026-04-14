@@ -88,8 +88,7 @@ const team = ref<Partial<Team>>({
   id: '1',
   name: 'Team 1',
   description: 'Team 1 description',
-  ownerAddress: '0x4b6Bf5cD91446408290725879F5666dcd9785F62',
-  officerAddress: '0x4b6Bf5cD91446408290725879F5666dcd9785F62'
+  ownerAddress: '0x4b6Bf5cD91446408290725879F5666dcd9785F62'
 })
 
 describe.skip('ContinueAddTeamForm', () => {
