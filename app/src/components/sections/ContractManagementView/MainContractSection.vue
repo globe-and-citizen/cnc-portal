@@ -80,6 +80,22 @@
                     </div>
                   </div>
 
+                  <div
+                    v-if="shareholderCount > 0"
+                    class="border-info bg-info/5 mb-6 rounded-lg border p-4 text-sm"
+                  >
+                    <p class="font-semibold">
+                      {{ shareholderCount }} shareholder{{ shareholderCount === 1 ? '' : 's' }}
+                      will be migrated automatically
+                    </p>
+                    <p class="mt-1">
+                      After the new Officer is deployed, the current share token holders will be
+                      reissued the same balances on the new Investor contract via
+                      <code>distributeMint</code>. This is a separate transaction you'll need to
+                      sign right after the deploy.
+                    </p>
+                  </div>
+
                   <UForm :state="investorContractInput" class="mb-6 flex flex-col gap-4">
                     <UFormField
                       label="New share token name"
@@ -149,14 +165,28 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
+import { writeContract, waitForTransactionReceipt, readContract } from '@wagmi/core'
+import type { Address } from 'viem'
+import { config } from '@/wagmi.config'
 import { useUserDataStore } from '@/stores/user'
 import { useTeamStore } from '@/stores'
 import MainContractTable from './MainContractTable.vue'
 import { useOfficerDeployment } from '@/composables/contracts'
 import type { OfficerDeploymentMetadata } from '@/composables/contracts/useOfficerDeployment'
-import { useInvestorName, useInvestorSymbol } from '@/composables/investor/reads'
+import {
+  useInvestorName,
+  useInvestorSymbol,
+  useInvestorShareholders
+} from '@/composables/investor/reads'
 import { useCreateOfficerMutation } from '@/queries/contract.queries'
+import { INVESTOR_ABI } from '@/artifacts/abi/investors'
+import { OFFICER_ABI } from '@/artifacts/abi/officer'
 import { log } from '@/utils'
+
+interface ShareholderSnapshot {
+  shareholder: Address
+  amount: bigint
+}
 
 const showModal = ref(false)
 const investorContractInput = ref({ name: '', symbol: '' })
@@ -167,6 +197,9 @@ const toast = useToast()
 
 const { data: currentInvestorName } = useInvestorName()
 const { data: currentInvestorSymbol } = useInvestorSymbol()
+const { data: currentShareholders } = useInvestorShareholders()
+
+const isMigratingShareholders = ref(false)
 
 const {
   isLoading: isDeploying,
@@ -175,7 +208,14 @@ const {
 } = useOfficerDeployment()
 const { mutateAsync: registerOfficer, isPending: isRegistering } = useCreateOfficerMutation()
 
-const isRedeploying = computed(() => isDeploying.value || isRegistering.value)
+const isRedeploying = computed(
+  () => isDeploying.value || isRegistering.value || isMigratingShareholders.value
+)
+
+const shareholderCount = computed(() => {
+  const list = currentShareholders.value as readonly ShareholderSnapshot[] | undefined
+  return list?.length ?? 0
+})
 
 const canRedeploy = computed(
   () =>
@@ -200,36 +240,99 @@ const openRedeployModal = () => {
   showModal.value = true
 }
 
-const handleRedeploySuccess = async (metadata: OfficerDeploymentMetadata) => {
-  const teamId = teamStore.currentTeamId
-  if (!teamId) return
+// Reads the new InvestorV1 address by calling getTeam() on the freshly deployed
+// Officer. We can't rely on the teamStore yet because the cache invalidation
+// and refetch happen asynchronously after registerOfficer.
+const findNewInvestorAddress = async (officerAddress: Address): Promise<Address | null> => {
+  const contracts = (await readContract(config, {
+    address: officerAddress,
+    abi: OFFICER_ABI,
+    functionName: 'getTeam'
+  })) as readonly { contractType: string; contractAddress: Address }[]
 
+  return contracts.find((c) => c.contractType === 'InvestorV1')?.contractAddress ?? null
+}
+
+const migrateShareholders = async (
+  newInvestorAddress: Address,
+  snapshot: readonly ShareholderSnapshot[]
+) => {
+  isMigratingShareholders.value = true
   try {
-    await registerOfficer({
-      body: {
-        teamId,
-        address: metadata.officerAddress,
-        deployBlockNumber: metadata.deployBlockNumber,
-        deployedAt: metadata.deployedAt.toISOString()
-      }
+    const hash = await writeContract(config, {
+      address: newInvestorAddress,
+      abi: INVESTOR_ABI,
+      functionName: 'distributeMint',
+      args: [snapshot.map((s) => ({ shareholder: s.shareholder, amount: s.amount }))]
     })
-
-    await invalidateQueries(teamId)
-    toast.add({ title: 'Officer redeployed and contracts synced', color: 'success' })
-    showModal.value = false
-  } catch (error) {
-    log.error('Error registering redeployed officer:', error)
-    toast.add({ title: 'Failed to register the new Officer contract', color: 'error' })
+    await waitForTransactionReceipt(config, { hash })
+    toast.add({
+      title: `Migrated ${snapshot.length} shareholder${snapshot.length === 1 ? '' : 's'}`,
+      color: 'success'
+    })
+  } finally {
+    isMigratingShareholders.value = false
   }
 }
+
+const buildHandleRedeploySuccess =
+  (snapshot: readonly ShareholderSnapshot[]) =>
+  async (metadata: OfficerDeploymentMetadata) => {
+    const teamId = teamStore.currentTeamId
+    if (!teamId) return
+
+    try {
+      await registerOfficer({
+        body: {
+          teamId,
+          address: metadata.officerAddress,
+          deployBlockNumber: metadata.deployBlockNumber,
+          deployedAt: metadata.deployedAt.toISOString()
+        }
+      })
+
+      // Migrate shareholders BEFORE invalidating queries so the team store
+      // doesn't briefly show a zero-balance state for existing holders.
+      if (snapshot.length > 0) {
+        try {
+          const newInvestorAddress = await findNewInvestorAddress(metadata.officerAddress)
+          if (!newInvestorAddress) {
+            throw new Error('New InvestorV1 address not found in Officer.getTeam()')
+          }
+          await migrateShareholders(newInvestorAddress, snapshot)
+        } catch (migrationError) {
+          // Officer is already registered; surface the failure but don't
+          // unwind. The user can retry the migration manually.
+          log.error('Shareholder migration failed:', migrationError)
+          toast.add({
+            title:
+              'Officer redeployed, but shareholder migration failed. You can retry from the new InvestorV1 contract.',
+            color: 'error'
+          })
+        }
+      }
+
+      await invalidateQueries(teamId)
+      toast.add({ title: 'Officer redeployed and contracts synced', color: 'success' })
+      showModal.value = false
+    } catch (error) {
+      log.error('Error registering redeployed officer:', error)
+      toast.add({ title: 'Failed to register the new Officer contract', color: 'error' })
+    }
+  }
 
 const redeployContracts = async () => {
   if (!canRedeploy.value || !teamStore.currentTeamId) return
 
+  // Snapshot the shareholders BEFORE deploy. After deploy the teamStore points
+  // at the new (empty) InvestorV1, so we'd lose the old state.
+  const snapshot = ((currentShareholders.value as readonly ShareholderSnapshot[] | undefined) ??
+    []) as readonly ShareholderSnapshot[]
+
   await deployOfficer({
     investorInput: { ...investorContractInput.value },
     teamId: teamStore.currentTeamId,
-    onDeploymentComplete: handleRedeploySuccess
+    onDeploymentComplete: buildHandleRedeploySuccess(snapshot)
   })
 }
 </script>
