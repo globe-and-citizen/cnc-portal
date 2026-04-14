@@ -36,16 +36,22 @@ export async function seedTeams(prisma: PrismaClient, config: SeedConfig, users:
     // All team members including owner
     const allMembers = [owner, ...selectedUsers];
 
-    // Create team with owner, members, contracts, and memberships (all in one atomic transaction)
+    // Create team with owner, members, current Officer, contracts, and memberships
     const team = await prisma.team.create({
       data: {
         name: faker.company.name(),
         description: faker.company.catchPhrase(),
         ownerAddress: owner.address,
-        officerAddress: officerAddress,
         createdAt: teamCreatedAt,
         members: {
           connect: allMembers.map((user) => ({ address: user.address })),
+        },
+        teamOfficers: {
+          create: {
+            address: officerAddress,
+            deployer: owner.address,
+            createdAt: teamCreatedAt,
+          },
         },
         teamContracts: {
           create: CONTRACT_TYPES.map((contractType) => ({

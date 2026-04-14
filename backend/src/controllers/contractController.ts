@@ -36,6 +36,14 @@ interface CreateOfficerBody {
   deployedAt?: Date;
 }
 
+// Look up the head of a team's Officer linked list — the row with no
+// successor pointing back to it. Returns null if the team has never had an
+// Officer deployed.
+const findCurrentOfficer = (teamId: number) =>
+  prisma.teamOfficer.findFirst({
+    where: { teamId, nextOfficer: { is: null } },
+  });
+
 // Shared logic: upsert the TeamOfficer for the given address, read the
 // contracts it governs from-chain, and persist them linked to that officer.
 // Deploy metadata on an existing TeamOfficer row is immutable (the first
@@ -45,7 +53,8 @@ const upsertOfficerAndSyncContracts = async (
   officerAddress: Address,
   callerAddress: Address,
   deployBlockNumber: number | undefined,
-  deployedAt: Date | undefined
+  deployedAt: Date | undefined,
+  previousOfficerId: number | null
 ) => {
   const contracts = (await publicClient.readContract({
     address: officerAddress,
@@ -61,6 +70,7 @@ const upsertOfficerAndSyncContracts = async (
       deployer: callerAddress,
       deployBlockNumber: deployBlockNumber ?? null,
       deployedAt: deployedAt ?? null,
+      previousOfficerId,
     },
     update: {},
   });
@@ -94,23 +104,26 @@ export const syncContracts = async (req: Request, res: Response) => {
     if (!team) return errorResponse(404, 'Team not found', res);
     if (team.ownerAddress !== callerAddress)
       return errorResponse(403, 'Unauthorized: Caller is not the owner of the team', res);
-    if (!team.officerAddress)
-      return errorResponse(400, 'Team has no officer address set', res);
+
+    const currentOfficer = await findCurrentOfficer(teamId);
+    if (!currentOfficer)
+      return errorResponse(400, 'Team has no Officer deployed', res);
 
     console.log(
       'Syncing contracts for team:',
       teamId,
       'with officer address:',
-      team.officerAddress
+      currentOfficer.address
     );
     console.log('Chain ID: ', await publicClient.getChainId());
 
     const { created } = await upsertOfficerAndSyncContracts(
       teamId,
-      team.officerAddress as Address,
+      currentOfficer.address as Address,
       callerAddress,
       deployBlockNumber,
-      deployedAt
+      deployedAt,
+      currentOfficer.previousOfficerId
     );
 
     if (created.count === 0) {
@@ -125,8 +138,9 @@ export const syncContracts = async (req: Request, res: Response) => {
 };
 
 // POST /contract/officer — registers a freshly deployed Officer contract on a
-// team. Updates team.officerAddress, records the new TeamOfficer with deploy
-// metadata, and syncs the contracts it governs in one call.
+// team. Inserts a new TeamOfficer row, linking it to the previous head of the
+// chain (so the linked list represents the deployment history), and syncs the
+// contracts it governs in one call.
 export const createOfficer = async (req: Request, res: Response) => {
   const callerAddress = req.address as Address;
   const body = req.body as unknown as CreateOfficerBody;
@@ -141,17 +155,15 @@ export const createOfficer = async (req: Request, res: Response) => {
     if (team.ownerAddress !== callerAddress)
       return errorResponse(403, 'Unauthorized: Caller is not the owner of the team', res);
 
-    await prisma.team.update({
-      where: { id: teamId },
-      data: { officerAddress },
-    });
+    const previousHead = await findCurrentOfficer(teamId);
 
     const { officer, created } = await upsertOfficerAndSyncContracts(
       teamId,
       officerAddress,
       callerAddress,
       deployBlockNumber,
-      deployedAt
+      deployedAt,
+      previousHead?.id ?? null
     );
 
     return res.status(200).json({
@@ -224,17 +236,19 @@ export const getTeamOfficers = async (req: Request, res: Response) => {
     const team = await prisma.team.findUnique({ where: { id: teamId } });
     if (!team) return errorResponse(404, 'Team not found', res);
 
+    // Include `nextOfficer` so we can flag the head of the chain (the row
+    // with no successor) without an extra round-trip.
     const officers = await prisma.teamOfficer.findMany({
       where: { teamId },
-      include: { contracts: true },
+      include: { contracts: true, nextOfficer: { select: { id: true } } },
       orderBy: [{ deployBlockNumber: { sort: 'desc', nulls: 'last' } }, { createdAt: 'desc' }],
     });
 
     return res.status(200).json(
-      officers.map((o) => ({
+      officers.map(({ nextOfficer, ...o }) => ({
         ...o,
         deployBlockNumber: o.deployBlockNumber?.toString() ?? null,
-        isCurrent: o.address === team.officerAddress,
+        isCurrent: nextOfficer === null,
       }))
     );
   } catch (error) {

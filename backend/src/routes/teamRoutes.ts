@@ -44,10 +44,27 @@ const teamRoutes = express.Router();
  *         ownerAddress:
  *           type: string
  *           description: The Ethereum address of the team owner
- *         officerAddress:
- *           type: string
- *           description: The Ethereum address of the team officer
+ *         currentOfficer:
+ *           type: object
  *           nullable: true
+ *           description: The team's currently active Officer contract (head of the linked list). Null if no Officer has ever been deployed.
+ *           properties:
+ *             id:
+ *               type: integer
+ *             address:
+ *               type: string
+ *             deployer:
+ *               type: string
+ *             deployBlockNumber:
+ *               type: string
+ *               nullable: true
+ *             deployedAt:
+ *               type: string
+ *               format: date-time
+ *               nullable: true
+ *             previousOfficerId:
+ *               type: integer
+ *               nullable: true
  *         members:
  *           type: array
  *           items:
@@ -92,10 +109,6 @@ const teamRoutes = express.Router();
  *             description:
  *               type: string
  *               description: The description of the team
- *             officerAddress:
- *               type: string
- *               description: The Ethereum address of the team officer
- *               pattern: "^0x[a-fA-F0-9]{40}$"
  *             members:
  *               type: array
  *               items:
@@ -413,7 +426,7 @@ teamRoutes.get('/:id', validateParams(teamIdParamsSchema), getTeam);
  * /teams/{id}:
  *  put:
  *   summary: Update a team
- *   description: Updates team properties such as name, description, or officer. Only the team owner can update.
+ *   description: Updates team metadata (name, description). Only the team owner can update. The current Officer is managed via POST /contract/officer.
  *   parameters:
  *     - in: path
  *       name: id
@@ -434,10 +447,6 @@ teamRoutes.get('/:id', validateParams(teamIdParamsSchema), getTeam);
  *             description:
  *               type: string
  *               description: The new description of the team
- *             officerAddress:
- *               type: string
- *               description: The new officer Ethereum address
- *               pattern: "^0x[a-fA-F0-9]{40}$"
  *   responses:
  *     200:
  *       description: Team updated successfully

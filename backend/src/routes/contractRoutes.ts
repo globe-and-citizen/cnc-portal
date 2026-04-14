@@ -202,10 +202,10 @@ contractRoutes.put('/sync', validateBody(syncContractsBodySchema), syncContracts
  * /contract/officer:
  *  post:
  *   summary: Register a freshly deployed Officer contract on a team
- *   description: Updates the team's current officerAddress, records a new
- *     TeamOfficer entry with deploy metadata, and syncs the contracts the
- *     Officer governs in a single call. Intended to be called by the frontend
- *     right after a successful Officer deployment transaction.
+ *   description: Inserts a new TeamOfficer row at the head of the team's
+ *     Officer linked list (linking it to the previous head if any) and syncs
+ *     the contracts the new Officer governs in a single call. Intended to be
+ *     called by the frontend right after a successful Officer deployment.
  *   requestBody:
  *     required: true
  *     content:
@@ -255,8 +255,8 @@ contractRoutes.post('/officer', validateBody(createOfficerBodySchema), createOff
  *   responses:
  *     200:
  *       description: Ordered list of TeamOfficer rows, newest first. Each row
- *         includes its related contracts and an `isCurrent` flag indicating
- *         whether it matches the team's current `officerAddress`.
+ *         includes its related contracts and an `isCurrent` flag — true for
+ *         the head of the linked list (no successor exists).
  *     404:
  *       description: Team not found
  *     500:

@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { Team } from '@prisma/client';
+import { Team, TeamOfficer } from '@prisma/client';
 import express, { NextFunction, Request, Response } from 'express';
 import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -33,6 +33,7 @@ vi.mock('../../utils', async () => {
       teamOfficer: {
         upsert: vi.fn(),
         findMany: vi.fn(),
+        findFirst: vi.fn(),
       },
     },
   };
@@ -56,31 +57,37 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 
 app.use('/', contractRoutes);
 
+const mockOfficerAddress = '0x1111111111111111111111111111111111111111';
+
 const mockTeam = {
   id: 1,
   name: 'TeamName',
   ownerAddress: '0x1234567890123456789012345678901234567890',
-  officerAddress: '0x1111111111111111111111111111111111111111',
   description: null,
   createdAt: new Date(),
   updatedAt: new Date(),
 } as Team;
+
+const buildMockTeamOfficer = (overrides: Partial<TeamOfficer> = {}): TeamOfficer => ({
+  id: 1,
+  address: mockOfficerAddress,
+  teamId: mockTeam.id,
+  deployer: mockTeam.ownerAddress,
+  deployBlockNumber: null,
+  deployedAt: null,
+  previousOfficerId: null,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  ...overrides,
+});
 
 describe('contractController', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(publicClient.getChainId).mockResolvedValue(11155111);
     vi.mocked(prisma.teamContract.findMany).mockResolvedValue([]);
-    vi.mocked(prisma.teamOfficer.upsert).mockResolvedValue({
-      id: 1,
-      address: mockTeam.officerAddress!,
-      teamId: mockTeam.id,
-      deployer: mockTeam.ownerAddress,
-      deployBlockNumber: null,
-      deployedAt: null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
+    vi.mocked(prisma.teamOfficer.findFirst).mockResolvedValue(buildMockTeamOfficer());
+    vi.mocked(prisma.teamOfficer.upsert).mockResolvedValue(buildMockTeamOfficer());
   });
 
   describe('PUT: /sync', () => {
@@ -407,28 +414,27 @@ describe('contractController', () => {
       expect(response.body.message).toContain('Unauthorized: Caller is not the owner of the team');
     });
 
-    it('should update team, upsert officer and sync contracts', async () => {
+    it('should link to previous officer, upsert and sync contracts', async () => {
       vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(mockTeam);
-      vi.spyOn(prisma.team, 'update').mockResolvedValue({
-        ...mockTeam,
-        officerAddress: newOfficerAddress,
-      });
+      // The previous head of the linked list — the new Officer points back at it.
+      vi.mocked(prisma.teamOfficer.findFirst).mockResolvedValue(
+        buildMockTeamOfficer({ id: 7, address: mockOfficerAddress })
+      );
       vi.spyOn(publicClient, 'readContract').mockResolvedValue([
         {
           contractType: 'Voting',
           contractAddress: '0xABCDEF1234567890123456789012345678901234',
         },
       ]);
-      vi.mocked(prisma.teamOfficer.upsert).mockResolvedValue({
-        id: 42,
-        address: newOfficerAddress,
-        teamId: 1,
-        deployer: mockTeam.ownerAddress,
-        deployBlockNumber: BigInt(12345),
-        deployedAt: new Date('2026-04-14T10:00:00Z'),
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
+      vi.mocked(prisma.teamOfficer.upsert).mockResolvedValue(
+        buildMockTeamOfficer({
+          id: 42,
+          address: newOfficerAddress,
+          deployBlockNumber: BigInt(12345),
+          deployedAt: new Date('2026-04-14T10:00:00Z'),
+          previousOfficerId: 7,
+        })
+      );
       vi.spyOn(prisma.teamContract, 'createMany').mockResolvedValue({ count: 1 });
 
       const response = await request(app).post('/officer').send({
@@ -438,9 +444,9 @@ describe('contractController', () => {
         deployedAt: '2026-04-14T10:00:00Z',
       });
 
-      expect(prisma.team.update).toHaveBeenCalledWith({
-        where: { id: 1 },
-        data: { officerAddress: newOfficerAddress },
+      expect(prisma.team.update).not.toHaveBeenCalled();
+      expect(prisma.teamOfficer.findFirst).toHaveBeenCalledWith({
+        where: { teamId: 1, nextOfficer: { is: null } },
       });
       expect(prisma.teamOfficer.upsert).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -449,6 +455,7 @@ describe('contractController', () => {
             address: newOfficerAddress,
             teamId: 1,
             deployBlockNumber: 12345,
+            previousOfficerId: 7,
           }),
         })
       );
@@ -467,6 +474,30 @@ describe('contractController', () => {
       expect(response.body.contractsCreated).toBe(1);
       expect(response.body.officer.id).toBe(42);
       expect(response.body.officer.deployBlockNumber).toBe('12345');
+    });
+
+    it('should set previousOfficerId to null when the team has no prior Officer', async () => {
+      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(mockTeam);
+      vi.mocked(prisma.teamOfficer.findFirst).mockResolvedValue(null);
+      vi.spyOn(publicClient, 'readContract').mockResolvedValue([
+        { contractType: 'Voting', contractAddress: '0xABCDEF1234567890123456789012345678901234' },
+      ]);
+      vi.mocked(prisma.teamOfficer.upsert).mockResolvedValue(
+        buildMockTeamOfficer({ id: 1, address: newOfficerAddress })
+      );
+      vi.spyOn(prisma.teamContract, 'createMany').mockResolvedValue({ count: 1 });
+
+      const response = await request(app).post('/officer').send({
+        teamId: 1,
+        address: newOfficerAddress,
+      });
+
+      expect(prisma.teamOfficer.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          create: expect.objectContaining({ previousOfficerId: null }),
+        })
+      );
+      expect(response.status).toBe(200);
     });
 
     it('should return 500 on internal error', async () => {

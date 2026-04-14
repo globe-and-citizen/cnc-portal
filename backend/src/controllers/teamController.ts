@@ -1,4 +1,4 @@
-import { /*PrismaClient,*/ User } from '@prisma/client';
+import { /*PrismaClient,*/ TeamOfficer, User } from '@prisma/client';
 import { Request, Response } from 'express';
 import { isAddress } from 'viem';
 import { addNotification, prisma } from '../utils';
@@ -6,12 +6,44 @@ import { errorResponse } from '../utils/utils';
 import { resolveStorageImageUrl } from '../utils/profileImage.util';
 //const prisma = new PrismaClient();
 
+// Prisma include shape that fetches the linked list head — the TeamOfficer
+// row that has no successor pointing back to it. This is the team's current
+// Officer. Returned as a single-element array because Prisma includes are
+// always relations; we flatten it to `currentOfficer` in the response.
+export const currentOfficerInclude = {
+  teamOfficers: {
+    where: { nextOfficer: { is: null } },
+    take: 1,
+  },
+} as const;
+
+// Serialize a TeamOfficer for API responses: BigInt isn't valid JSON, so
+// deployBlockNumber must be stringified.
+export const serializeOfficer = (o: TeamOfficer | undefined | null) =>
+  o
+    ? {
+        ...o,
+        deployBlockNumber: o.deployBlockNumber?.toString() ?? null,
+      }
+    : null;
+
+// Pulls the head of the linked list out of an `include: currentOfficerInclude`
+// result and exposes it as `currentOfficer`. Removes the raw `teamOfficers`
+// array so consumers don't accidentally rely on the implementation detail.
+const withCurrentOfficer = <T extends { teamOfficers?: TeamOfficer[] }>(team: T) => {
+  const { teamOfficers, ...rest } = team;
+  return {
+    ...rest,
+    currentOfficer: serializeOfficer(teamOfficers?.[0]),
+  };
+};
+
 // Create a new team
 const addTeam = async (req: Request, res: Response) => {
   /*
   #swagger.tags = ['Teams']
   */
-  const { name, members, description, officerAddress } = req.body;
+  const { name, members, description } = req.body;
   const callerAddress = req.address;
   try {
     // Validate all members' wallet addresses
@@ -56,7 +88,6 @@ const addTeam = async (req: Request, res: Response) => {
             memberAddress: member.address,
           })),
         },
-        officerAddress: officerAddress || null,
       },
       include: {
         members: {
@@ -111,6 +142,7 @@ const getTeam = async (req: Request, res: Response) => {
           },
         },
         teamContracts: true,
+        ...currentOfficerInclude,
       },
     });
 
@@ -133,7 +165,7 @@ const getTeam = async (req: Request, res: Response) => {
     );
 
     res.status(200).json({
-      ...team,
+      ...withCurrentOfficer(team),
       members: membersWithResolvedImages,
     });
   } catch (error: unknown) {
@@ -171,10 +203,11 @@ const getAllTeams = async (req: Request, res: Response) => {
               members: true,
             },
           },
+          ...currentOfficerInclude,
         },
       });
 
-      return res.status(200).json(memberTeams);
+      return res.status(200).json(memberTeams.map(withCurrentOfficer));
     }
 
     // No userAddress provided - return all teams
@@ -185,10 +218,11 @@ const getAllTeams = async (req: Request, res: Response) => {
             members: true,
           },
         },
+        ...currentOfficerInclude,
       },
     });
 
-    res.status(200).json(allTeams);
+    res.status(200).json(allTeams.map(withCurrentOfficer));
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal Server Error';
     return errorResponse(500, message, res);
@@ -199,7 +233,7 @@ const getAllTeams = async (req: Request, res: Response) => {
 
 const updateTeam = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { name, description, officerAddress } = req.body;
+  const { name, description } = req.body;
   const callerAddress = req.address;
 
   try {
@@ -222,7 +256,6 @@ const updateTeam = async (req: Request, res: Response) => {
       data: {
         name,
         description,
-        officerAddress,
       },
       include: {
         members: {
@@ -232,9 +265,10 @@ const updateTeam = async (req: Request, res: Response) => {
           },
         },
         teamContracts: true,
+        ...currentOfficerInclude,
       },
     });
-    res.status(200).json(teamU);
+    res.status(200).json(withCurrentOfficer(teamU));
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal Server Error';
     return errorResponse(500, message, res);
