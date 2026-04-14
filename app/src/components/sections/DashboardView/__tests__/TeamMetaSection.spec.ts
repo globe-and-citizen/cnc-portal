@@ -1,200 +1,207 @@
-import { mount, flushPromises } from '@vue/test-utils'
-import { afterEach, describe, expect, it, vi } from 'vitest'
-import TeamMetaSection from '../TeamMetaSection.vue'
+import { mount } from '@vue/test-utils'
+import { ref } from 'vue'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createTestingPinia } from '@pinia/testing'
+import { useTeamStore } from '@/stores'
+import { useUserDataStore } from '@/stores/user'
+import { useDeleteTeamMutation, useUpdateTeamMutation } from '@/queries/team.queries'
+import { mockRouterPush } from '@/tests/mocks/router.mock'
+import TeamMetaSection from '../TeamMetaSection.vue'
 
-vi.mock('vue-router', async (importOriginal) => {
-  const actual: object = await importOriginal()
-  return {
-    ...actual,
-    useRouter: vi.fn(() => ({
-      push: vi.fn()
-    }))
-  }
-})
+const updateMutateSpy = vi.fn()
+const deleteMutateSpy = vi.fn()
 
-interface ComponentData {
-  showDeleteTeamConfirmModal: boolean
-  updateTeamModalOpen: () => Promise<void>
-  showModal: boolean
-  updateTeamInput: {
-    name: string
-    description: string
+const teamStoreState = {
+  currentTeamId: '22',
+  currentTeamMeta: {
+    data: {
+      id: '22',
+      name: 'Sher Team',
+      description: 'Team description for testing coverage.',
+      ownerAddress: '0xOWNER',
+      members: [{ name: 'Alice', description: 'dev' }]
+    }
   }
-  inputs: {
-    name: string
-    description: string
-  }[]
 }
 
-afterEach(() => {
-  vi.clearAllMocks()
-})
+const mountSection = () =>
+  mount(TeamMetaSection, {
+    global: {
+      plugins: [createTestingPinia({ createSpy: vi.fn })]
+    }
+  })
 
 describe('TeamMetaSection.vue', () => {
-  const createComponent = () => {
-    return mount(TeamMetaSection, {
-      global: {
-        plugins: [createTestingPinia({ createSpy: vi.fn })]
-      }
-    })
-  }
+  beforeEach(() => {
+    vi.clearAllMocks()
 
-  it('renders the component', () => {
-    const wrapper = createComponent()
-    expect(wrapper.exists()).toBe(true)
+    vi.mocked(useTeamStore).mockReturnValue(teamStoreState as never)
+    vi.mocked(useUserDataStore).mockReturnValue({ address: '0xOWNER' } as never)
+    vi.mocked(useUpdateTeamMutation).mockReturnValue({
+      isPending: ref(false),
+      error: ref(null),
+      mutate: updateMutateSpy
+    } as never)
+    vi.mocked(useDeleteTeamMutation).mockReturnValue({
+      isPending: ref(false),
+      error: ref(null),
+      mutate: deleteMutateSpy
+    } as never)
   })
 
-  it('shows delete confirmation modal when delete button is clicked', async () => {
-    const wrapper = createComponent()
-
-    const componentVM = wrapper.vm as unknown as ComponentData
-    componentVM.showDeleteTeamConfirmModal = true
-    await wrapper.vm.$nextTick()
-
-    expect(componentVM.showDeleteTeamConfirmModal).toBe(true)
+  it('renders owner badge and owner action buttons', () => {
+    const wrapper = mountSection()
+    expect(wrapper.text()).toContain('Owner')
+    expect(wrapper.text()).toContain('Update')
+    expect(wrapper.text()).toContain('Delete')
   })
 
-  it('closes delete modal and navigates on successful delete', async () => {
-    const wrapper = createComponent()
-
-    const componentVM = wrapper.vm as unknown as ComponentData
-    componentVM.showDeleteTeamConfirmModal = true
-    await wrapper.vm.$nextTick()
-
-    expect(componentVM.showDeleteTeamConfirmModal).toBe(true)
+  it('renders employee badge when viewer is not owner', () => {
+    vi.mocked(useUserDataStore).mockReturnValue({ address: '0xEMP' } as never)
+    const wrapper = mountSection()
+    expect(wrapper.text()).toContain('Employee')
+    expect(wrapper.text()).not.toContain('Update')
   })
 
-  it('shows error message when delete fails', async () => {
-    const wrapper = createComponent()
+  it('prefills update form and submits mutation successfully', async () => {
+    updateMutateSpy.mockImplementation((_payload, options) => options?.onSuccess?.())
 
-    const componentVM = wrapper.vm as unknown as ComponentData
-    componentVM.showDeleteTeamConfirmModal = true
+    const wrapper = mountSection()
+    await wrapper.find('button').trigger('click')
     await wrapper.vm.$nextTick()
 
-    expect(componentVM.showDeleteTeamConfirmModal).toBe(true)
+    const vm = wrapper.vm as unknown as {
+      prefillUpdateForm: () => void
+      executeUpdateTeam: () => void
+      updateTeamInput: { name: string; description: string }
+      showModal: boolean
+      inputs: unknown[]
+    }
+
+    vm.prefillUpdateForm()
+    expect(vm.updateTeamInput.name).toBe('Sher Team')
+    expect(vm.inputs).toHaveLength(1)
+
+    vm.updateTeamInput.name = 'Sher Team v2'
+    vm.updateTeamInput.description = 'Updated description for assertions.'
+    vm.executeUpdateTeam()
+
+    expect(updateMutateSpy).toHaveBeenCalledWith(
+      {
+        pathParams: { id: '22' },
+        body: {
+          name: 'Sher Team v2',
+          description: 'Updated description for assertions.'
+        }
+      },
+      expect.objectContaining({ onSuccess: expect.any(Function) })
+    )
+    expect(vm.showModal).toBe(false)
   })
 
-  it('updates team name and description', async () => {
-    const wrapper = createComponent()
-    await flushPromises()
+  it('shows update and delete mutation errors in modal body', async () => {
+    vi.mocked(useUpdateTeamMutation).mockReturnValueOnce({
+      isPending: ref(false),
+      error: ref(new Error('Update failed')),
+      mutate: updateMutateSpy
+    } as never)
+    vi.mocked(useDeleteTeamMutation).mockReturnValueOnce({
+      isPending: ref(false),
+      error: ref(new Error('Delete failed')),
+      mutate: deleteMutateSpy
+    } as never)
 
-    const componentVM = wrapper.vm as unknown as ComponentData
-
-    componentVM.updateTeamInput.name = 'Test Team'
-    componentVM.updateTeamInput.description = 'A test team'
-
-    componentVM.showModal = true
+    const wrapper = mountSection()
+    const vm = wrapper.vm as unknown as { showModal: boolean; showDeleteTeamConfirmModal: boolean }
+    vm.showModal = true
+    vm.showDeleteTeamConfirmModal = true
     await wrapper.vm.$nextTick()
 
-    expect(componentVM.showModal).toBe(true)
-    expect(componentVM.updateTeamInput.name).toBe('Test Team')
-    expect(componentVM.updateTeamInput.description).toBe('A test team')
+    expect(wrapper.text()).toContain('Update failed')
+    expect(wrapper.text()).toContain('Delete failed')
   })
 
-  it.skip('show error message when update fails', async () => {
-    const wrapper = createComponent()
-    await flushPromises()
+  it('handles deleteTeam guard when current team id is missing', async () => {
+    vi.mocked(useTeamStore).mockReturnValue({
+      ...teamStoreState,
+      currentTeamId: ''
+    } as never)
 
-    const componentVM = wrapper.vm as unknown as ComponentData
+    const wrapper = mountSection()
+    const vm = wrapper.vm as unknown as { deleteTeam: () => Promise<void> }
+    await vm.deleteTeam()
 
-    await componentVM.updateTeamModalOpen()
-    await wrapper.vm.$nextTick()
-
-    componentVM.showModal = true
-    await wrapper.vm.$nextTick()
+    expect(deleteMutateSpy).not.toHaveBeenCalled()
   })
 
-  it.skip('opens update team modal when updateTeamModalOpen is called', async () => {
-    const wrapper = createComponent()
+  it('handles successful delete by closing modal and redirecting', async () => {
+    deleteMutateSpy.mockImplementation((_payload, options) => options?.onSuccess?.())
 
-    const componentVM = wrapper.vm as unknown as ComponentData
-    await componentVM.updateTeamModalOpen()
-    await wrapper.vm.$nextTick()
+    const wrapper = mountSection()
+    const vm = wrapper.vm as unknown as {
+      deleteTeam: () => Promise<void>
+      showDeleteTeamConfirmModal: boolean
+    }
 
-    expect(componentVM.showModal).toBe(true)
+    vm.showDeleteTeamConfirmModal = true
+    await vm.deleteTeam()
+
+    expect(deleteMutateSpy).toHaveBeenCalledWith(
+      { pathParams: { teamId: '22' } },
+      expect.objectContaining({ onSuccess: expect.any(Function) })
+    )
+    expect(vm.showDeleteTeamConfirmModal).toBe(false)
+    expect(mockRouterPush).toHaveBeenCalledWith('/teams')
   })
 
-  it.skip('closes update modal when UModal emits update:open false', async () => {
-    const wrapper = createComponent()
+  it('closes update modal with modal close event and updates textarea model', async () => {
+    const wrapper = mountSection()
+    const vm = wrapper.vm as unknown as {
+      showModal: boolean
+      updateTeamInput: { description: string }
+    }
 
-    const componentVM = wrapper.vm as unknown as ComponentData
-    componentVM.showModal = true
+    vm.showModal = true
     await wrapper.vm.$nextTick()
 
-    const modals = wrapper.findAllComponents({ name: 'UModal' })
-    // @ts-expect-error: vm exists
-    await modals[1].vm.$emit('update:open', false)
+    const textarea = wrapper.find('textarea')
+    if (textarea.exists()) {
+      await textarea.setValue('new description through textarea')
+    }
+
+    await wrapper.find('[data-test="close-wage-modal-button"]').trigger('click')
     await wrapper.vm.$nextTick()
 
-    expect(componentVM.showModal).toBe(false)
+    expect(vm.showModal).toBe(false)
   })
 
-  it.skip('displays team name in delete confirmation modal', async () => {
-    const wrapper = createComponent()
+  it('opens delete modal actions and closes with cancel button', async () => {
+    const wrapper = mountSection()
+    const vm = wrapper.vm as unknown as { showDeleteTeamConfirmModal: boolean }
 
-    const componentVM = wrapper.vm as unknown as ComponentData
-    componentVM.showDeleteTeamConfirmModal = true
+    vm.showDeleteTeamConfirmModal = true
     await wrapper.vm.$nextTick()
 
-    const modalText = wrapper.text()
-    expect(modalText).toContain('Are you sure you want to delete the team')
+    expect(wrapper.find('[data-test="delete-team-button"]').exists()).toBe(true)
+    const buttons = wrapper.findAll('button')
+    const cancelButton = buttons.find((btn) => btn.text().includes('Cancel'))
+    expect(cancelButton).toBeDefined()
 
-    expect(componentVM.showDeleteTeamConfirmModal).toBe(true)
-  })
-
-  it('calls executeUpdateTeam when submit button is clicked with form data', async () => {
-    const wrapper = createComponent()
-    await flushPromises()
-
-    const componentVM = wrapper.vm as unknown as ComponentData
-
-    componentVM.updateTeamInput.name = 'Updated Team'
-    componentVM.updateTeamInput.description = 'Updated description'
-    componentVM.showModal = true
+    await cancelButton?.trigger('click')
     await wrapper.vm.$nextTick()
 
-    await flushPromises()
+    expect(vm.showDeleteTeamConfirmModal).toBe(false)
   })
 
-  it('renders update form inputs when modal is open', async () => {
-    const wrapper = createComponent()
-    await flushPromises()
+  it('triggers deleteTeam from delete button click in modal body', async () => {
+    deleteMutateSpy.mockImplementation((_payload, options) => options?.onSuccess?.())
 
-    const componentVM = wrapper.vm as unknown as ComponentData
-    componentVM.showModal = true
-    componentVM.updateTeamInput.name = 'Test Team'
-    componentVM.updateTeamInput.description = 'A test team'
+    const wrapper = mountSection()
+    const vm = wrapper.vm as unknown as { showDeleteTeamConfirmModal: boolean }
+    vm.showDeleteTeamConfirmModal = true
     await wrapper.vm.$nextTick()
 
-    expect(componentVM.showModal).toBe(true)
-    expect(componentVM.updateTeamInput.name).toBe('Test Team')
-    expect(componentVM.updateTeamInput.description).toBe('A test team')
-  })
-
-  it('closes delete modal when cancel button is clicked', async () => {
-    const wrapper = createComponent()
-
-    const componentVM = wrapper.vm as unknown as ComponentData
-    componentVM.showDeleteTeamConfirmModal = true
-    await wrapper.vm.$nextTick()
-
-    expect(componentVM.showDeleteTeamConfirmModal).toBe(true)
-  })
-
-  it('renders delete and cancel buttons in delete confirmation modal', async () => {
-    const wrapper = createComponent()
-
-    const componentVM = wrapper.vm as unknown as ComponentData
-    componentVM.showDeleteTeamConfirmModal = true
-    await wrapper.vm.$nextTick()
-
-    expect(componentVM.showDeleteTeamConfirmModal).toBe(true)
-  })
-
-  it.skip('passes correct props to child components', () => {
-    const wrapper = createComponent()
-
-    expect(wrapper.findAllComponents({ name: 'UModal' })).toHaveLength(2)
+    await wrapper.find('[data-test="delete-team-button"]').trigger('click')
+    expect(deleteMutateSpy).toHaveBeenCalled()
   })
 })

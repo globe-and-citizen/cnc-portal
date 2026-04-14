@@ -6,6 +6,7 @@ import { ref } from 'vue'
 import { mockTeamStore } from '@/tests/mocks'
 import OverviewCard from '@/components/OverviewCard.vue'
 import * as queries from '@/queries'
+import { mockLog } from '@/tests/mocks/utils.mock'
 
 const mockClaims = ref([
   {
@@ -75,9 +76,32 @@ describe('CashRemunerationPendingClaim', () => {
     expect(card.props('title')).toBe('')
   })
 
-  it('passes subtitle to OverviewCard', () => {
+  it('should pass subtitle to OverviewCard', () => {
     const wrapper = createComponent()
     const card = wrapper.findComponent(OverviewCard)
     expect(card.props('subtitle')).toBe('Pending Claim')
+  })
+
+  it('should pass signed status to weekly-claims query', () => {
+    createComponent()
+
+    expect(queries.useGetTeamWeeklyClaimsQuery).toHaveBeenCalledWith(
+      expect.objectContaining({
+        queryParams: expect.objectContaining({ status: 'signed' })
+      })
+    )
+  })
+
+  it('should handle query error state changes without crashing', async () => {
+    const wrapper = createComponent()
+
+    mockError.value = new Error('pending failed')
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.exists()).toBe(true)
+    expect(mockLog.error).toHaveBeenCalledWith(
+      'Failed to fetch monthly pending amount',
+      expect.any(Error)
+    )
   })
 })

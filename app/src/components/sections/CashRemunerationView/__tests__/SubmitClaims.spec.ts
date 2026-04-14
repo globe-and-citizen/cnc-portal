@@ -1,6 +1,6 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { defineComponent, type ComponentPublicInstance } from 'vue'
+import { defineComponent } from 'vue'
 import { createTestingPinia } from '@pinia/testing'
 import { VueQueryPlugin, QueryClient } from '@tanstack/vue-query'
 import SubmitClaims from '../SubmitClaims.vue'
@@ -138,21 +138,47 @@ describe('SubmitClaims', () => {
 
     const wrapper = createComponent()
 
-    // Trigger submission by emitting the ClaimForm submit event through wrapper
-    // (simulates user submitting the form)
-    const vm = wrapper.vm as unknown as ComponentPublicInstance
-    if (vm.handleSubmitClaim) {
-      await vm.handleSubmitClaim({
-        hoursWorked: 8,
-        memo: 'Test work',
-        dayWorked: '2024-01-10T00:00:00.000Z',
-        files: []
-      })
-    }
+    await wrapper.find('[data-test="modal-submit-hours-button"]').trigger('click')
     await flushPromises()
 
-    // Verify that the specific backend message error does not show as a toast
-    // (the component should handle it differently, likely displaying it inline in the form)
+    const vm = wrapper.vm as unknown as {
+      handleSubmit: (payload: Record<string, unknown>) => Promise<void>
+      errorMessage: { message: string } | null
+    }
+    await vm.handleSubmit({
+      hoursWorked: 8,
+      memo: 'Test work',
+      dayWorked: '2024-01-10T00:00:00.000Z',
+      files: []
+    })
+    await flushPromises()
+
+    expect(vm.errorMessage?.message).toBe(backendMessage)
     expect(mockToast.add).not.toHaveBeenCalledWith({ title: backendMessage, color: 'error' })
+  })
+
+  it('uses Error.message fallback when backend message is absent', async () => {
+    vi.mocked(useSubmitClaimMutation).mockReturnValueOnce({
+      mutateAsync: vi.fn().mockRejectedValue(new Error('Plain failure message')),
+      isPending: { value: false }
+    } as unknown as ReturnType<typeof useSubmitClaimMutation>)
+
+    const wrapper = createComponent()
+    await wrapper.find('[data-test="modal-submit-hours-button"]').trigger('click')
+    await flushPromises()
+
+    const vm = wrapper.vm as unknown as {
+      handleSubmit: (payload: Record<string, unknown>) => Promise<void>
+      errorMessage: { message: string } | null
+    }
+    await vm.handleSubmit({
+      hoursWorked: 8,
+      memo: 'Test work',
+      dayWorked: '2024-01-10T00:00:00.000Z',
+      files: []
+    })
+    await flushPromises()
+
+    expect(vm.errorMessage?.message).toBe('Plain failure message')
   })
 })

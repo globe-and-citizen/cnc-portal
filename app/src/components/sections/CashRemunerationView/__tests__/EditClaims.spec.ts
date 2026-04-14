@@ -167,4 +167,52 @@ describe('EditClaims', () => {
 
     expect((form.props('existingFiles') as unknown[]).length).toBe(1)
   })
+
+  it('tracks original file indexes when deleting multiple files before submit', async () => {
+    const mutateAsync = vi.fn().mockResolvedValue(undefined)
+    vi.mocked(useEditClaimWithFilesMutation).mockReturnValueOnce({
+      mutateAsync,
+      isPending: { value: false },
+      error: { value: null }
+    } as unknown as ReturnType<typeof useEditClaimWithFilesMutation>)
+
+    const claimWithFiles: Claim = {
+      ...defaultClaim,
+      fileAttachments: [
+        {
+          fileKey: 'bucket/path/file1.png',
+          fileUrl: 'https://storage.railway.app/bucket/path/file1.png',
+          fileType: 'image/png',
+          fileSize: 100
+        },
+        {
+          fileKey: 'bucket/path/file2.png',
+          fileUrl: 'https://storage.railway.app/bucket/path/file2.png',
+          fileType: 'image/png',
+          fileSize: 200
+        },
+        {
+          fileKey: 'bucket/path/file3.png',
+          fileUrl: 'https://storage.railway.app/bucket/path/file3.png',
+          fileType: 'image/png',
+          fileSize: 300
+        }
+      ]
+    }
+
+    const wrapper = createWrapper({ claim: claimWithFiles })
+    const form = wrapper.findComponent({ name: 'ClaimForm' })
+
+    form.vm.$emit('delete-file', 1)
+    await flushPromises()
+    form.vm.$emit('delete-file', 1)
+    await flushPromises()
+
+    form.vm.$emit('submit', SUBMIT_PAYLOAD)
+    await flushPromises()
+
+    expect(mutateAsync).toHaveBeenCalledWith(
+      expect.objectContaining({ deletedFileIndexes: [1, 2] })
+    )
+  })
 })

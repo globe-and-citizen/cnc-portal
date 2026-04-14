@@ -1,324 +1,239 @@
 import { mount } from '@vue/test-utils'
-import { describe, it, expect, beforeEach, vi } from 'vitest'
-import MemberSection from '@/components/sections/DashboardView/MemberSection.vue'
+import { computed, ref } from 'vue'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createTestingPinia } from '@pinia/testing'
-import { ref } from 'vue'
-import type { Address } from 'viem'
-import { useGetTeamWagesQuery } from '@/queries/wage.queries'
-import { mockTeamStore, mockToast, mockUserDataStore } from '@/tests/mocks/store.mock'
-import { NETWORK } from '@/constant'
-import type { Wage } from '@/types'
+import { useQueryClient } from '@tanstack/vue-query'
+import { useTeamStore } from '@/stores'
+import { useUserDataStore } from '@/stores/user'
+import { useToggleWageStatusMutation } from '@/queries/wage.queries'
+import MemberSection from '../MemberSection.vue'
 
-// Create mutable refs for reactive state outside the mock
-const mockWageData = ref<Wage[]>([])
-const mockWageError = ref<string | null | Error>(null)
-const mockWageIsFetching = ref(false)
-
-describe.skip('MemberSection.vue', () => {
-  let wrapper: ReturnType<typeof mount>
-
-  const baseMembers = [
-    {
-      address: '0x1234' as Address,
-      name: 'Member 1',
-      id: '1',
-      teamId: 1
-    },
-    {
-      address: '0x5678' as Address,
-      name: 'Member 2',
-      id: '2',
-      teamId: 1
+vi.mock('@/queries/team.queries', async (importOriginal) => {
+  const actual = (await importOriginal()) as object
+  return {
+    ...actual,
+    teamKeys: {
+      detail: (id: string) => ['team', id]
     }
-  ]
+  }
+})
 
-  const wageDataMock: Wage[] = [
-    {
-      id: 1,
-      teamId: 1,
-      userAddress: '0x1234' as Address,
-      maximumHoursPerWeek: 40,
-      maximumOvertimeHoursPerWeek: 10,
-      ratePerHour: [
-        { type: 'native', amount: 20 },
-        { type: 'usdc', amount: 50 },
-        { type: 'sher', amount: 10 }
-      ],
-      overtimeRatePerHour: [],
-      nextWageId: null,
-      disabled: false,
-      createdAt: '2024-01-01T00:00:00Z',
-      updatedAt: '2024-01-01T00:00:00Z'
-    },
-    {
-      id: 2,
-      teamId: 1,
-      userAddress: '0x5678' as Address,
-      maximumHoursPerWeek: 30,
-      maximumOvertimeHoursPerWeek: 5,
-      ratePerHour: [
-        { type: 'native', amount: 25 },
-        { type: 'usdc', amount: 45 },
-        { type: 'sher', amount: 15 }
-      ],
-      overtimeRatePerHour: [
-        { type: 'native', amount: 35 },
-        { type: 'usdc', amount: 55 },
-        { type: 'sher', amount: 20 }
-      ],
-      nextWageId: null,
-      disabled: false,
-      createdAt: '2024-01-01T00:00:00Z',
-      updatedAt: '2024-01-01T00:00:00Z'
-    }
-  ]
+vi.mock('@nuxt/ui/components/Table.vue', () => ({
+  default: {
+    name: 'UTable',
+    props: ['data', 'columns', 'loading'],
+    template: `
+      <div data-test="members-table-stub">
+        <div data-test="table-loading">{{ String(loading) }}</div>
+        <div data-test="column-count">{{ columns.length }}</div>
+          <slot name="wage-header" />
+        <div v-for="row in data" :key="row.address" :data-test="'row-' + row.address">
+          <slot name="member-cell" :row="{ original: row }" />
+          <slot name="standard-cell" :row="{ original: row }" />
+          <slot name="overtime-cell" :row="{ original: row }" />
+          <slot
+            v-if="columns.some((column) => column.id === 'action')"
+            name="action-cell"
+            :row="{ original: row }"
+          />
+        </div>
+      </div>
+    `
+  }
+}))
 
-  const createWrapper = (
-    ownerAddress: Address = '0x1234' as Address,
-    userAddress: Address = '0x1234' as Address
-  ) => {
-    mockWageData.value = wageDataMock
-    mockWageError.value = null
-    mockWageIsFetching.value = false
-    mockUserDataStore.address = userAddress
-    mockTeamStore.currentTeamId = '1'
-    mockTeamStore.currentTeam = {
-      ...mockTeamStore.currentTeam,
-      id: '1',
-      ownerAddress,
-      members: [...baseMembers]
-    }
-    mockTeamStore.currentTeamMeta = {
-      isPending: false,
-      data: {
-        ...mockTeamStore.currentTeam,
-        ownerAddress,
-        members: [...baseMembers]
-      }
-    }
+const mockMutateToggle = vi.fn()
+const mockInvalidateQueries = vi.fn()
 
-    vi.mocked(useGetTeamWagesQuery).mockReturnValue({
-      data: mockWageData,
-      isLoading: mockWageIsFetching,
-      error: mockWageError
-    } as ReturnType<typeof useGetTeamWagesQuery>)
-
-    wrapper = mount(MemberSection, {
-      global: {
-        stubs: {
-          TableComponent: {
-            name: 'TableComponent',
-            props: ['rows', 'loading', 'columns'],
-            template: `
-              <div data-test="table">
-                <div
-                  v-for="(row, index) in rows || []"
-                  :key="row.address ?? index"
-                  :data-test="String(index) + '-row'"
-                >
-                  <slot name="member-data" :row="row">{{ row.name }}</slot>
-                  <slot name="maxWeeklyHours-data" :row="row" />
-                  <slot name="wage-data" :row="row" />
-                  <slot
-                    v-if="(columns || []).some((column) => column.key === 'action')"
-                    name="action-data"
-                    :row="row"
-                  />
-                </div>
-              </div>
-            `
-          },
-          UserComponent: {
-            name: 'UserComponent',
-            props: ['user'],
-            template: '<div data-test="user-component">{{ user.name }}</div>'
-          },
-          UModal: {
-            name: 'UModal',
-            props: ['open'],
-            emits: ['update:open'],
-            template: '<div data-test="modal-component"><slot name="body" /></div>'
-          },
-          AddMemberForm: {
-            name: 'AddMemberForm',
-            props: ['teamId'],
-            emits: ['memberAdded'],
-            template: '<div data-test="add-member-form" />'
-          },
-          DeleteMemberModal: {
-            name: 'DeleteMemberModal',
-            props: ['member', 'teamId'],
-            template: '<div data-test="delete-member-modal" />'
-          },
-          SetMemberWageModal: {
-            name: 'SetMemberWageModal',
-            props: ['member', 'teamId', 'wage'],
-            template: '<div data-test="set-member-wage-modal" />'
+const teamStoreState = {
+  currentTeamId: '1',
+  currentTeamMeta: {
+    isPending: false,
+    data: {
+      name: 'Core Team',
+      ownerAddress: '0xOWNER',
+      members: [
+        {
+          name: 'Alice',
+          address: '0xAAA',
+          imageUrl: '',
+          currentWage: {
+            id: 11,
+            disabled: false,
+            maximumHoursPerWeek: 40,
+            maximumOvertimeHoursPerWeek: 10,
+            ratePerHour: [{ type: 'native', amount: 20 }],
+            overtimeRatePerHour: [{ type: 'native', amount: 25 }]
           }
         },
-        plugins: [
-          createTestingPinia({
-            createSpy: vi.fn
-          })
-        ]
-      }
-    })
-
-    return wrapper
+        {
+          name: 'Bob',
+          address: '0xBBB',
+          imageUrl: '',
+          currentWage: {
+            id: 12,
+            disabled: true,
+            maximumHoursPerWeek: 30,
+            maximumOvertimeHoursPerWeek: 0,
+            ratePerHour: [{ type: 'native', amount: 15 }],
+            overtimeRatePerHour: []
+          }
+        },
+        {
+          name: 'Charlie',
+          address: '0xCCC',
+          imageUrl: '',
+          currentWage: null
+        }
+      ]
+    }
   }
+}
 
+const userStoreState = {
+  address: '0xOWNER'
+}
+
+const makeWrapper = () =>
+  mount(MemberSection, {
+    global: {
+      plugins: [createTestingPinia({ createSpy: vi.fn })],
+      stubs: {
+        UserComponent: { template: '<div data-test="user-component" />' },
+        RateDotList: { template: '<div data-test="rate-dot-list" />' },
+        AddMemberForm: {
+          emits: ['memberAdded'],
+          template:
+            '<button data-test="emit-member-added" @click="$emit(\'memberAdded\')">ok</button>'
+        },
+        DeleteMemberModal: { template: '<div data-test="delete-member-modal" />' },
+        SetMemberWageModal: { template: '<div data-test="set-member-wage-modal" />' }
+      }
+    }
+  })
+
+describe('MemberSection.vue', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockToast.add.mockClear()
-    createWrapper()
+
+    vi.mocked(useTeamStore).mockReturnValue(teamStoreState as never)
+    vi.mocked(useUserDataStore).mockReturnValue(userStoreState as never)
+    vi.mocked(useQueryClient).mockReturnValue({
+      invalidateQueries: mockInvalidateQueries
+    } as never)
+    vi.mocked(useToggleWageStatusMutation).mockReturnValue({
+      mutate: mockMutateToggle,
+      isPending: ref(false)
+    } as never)
   })
 
-  describe('Wage Rendering', () => {
-    it('renders N/A values when wage data is empty', async () => {
-      mockWageData.value = []
-      await wrapper.vm.$nextTick()
-
-      const firstRow = wrapper.find('[data-test="0-row"]')
-      expect(firstRow.text()).toContain('N/A')
-    })
-
-    it('renders member wage values when wage data is found', () => {
-      const firstRow = wrapper.find('[data-test="0-row"]')
-
-      expect(firstRow.text()).toContain('Member 1')
-      expect(firstRow.text()).toContain('40 hrs/wk')
-      expect(firstRow.text()).toContain(`20 ${NETWORK.currencySymbol}/hr`)
-      expect(firstRow.text()).toContain('50 USDC/hr')
-      expect(firstRow.text()).toContain('10 SHER/hr')
-    })
-
-    it('renders overtime values for members with overtime rates', () => {
-      const secondRow = wrapper.find('[data-test="1-row"]')
-
-      expect(secondRow.text()).toContain('30 hrs/wk')
-      expect(secondRow.text()).toContain('OT: 5 hrs/wk')
-      expect(secondRow.text()).toContain(`OT: 35 ${NETWORK.currencySymbol}/hr`)
-      expect(secondRow.text()).toContain('OT: 55 USDC/hr')
-      expect(secondRow.text()).toContain('OT: 20 SHER/hr')
-    })
+  it('renders owner action column and add-member button for owner', () => {
+    const wrapper = makeWrapper()
+    expect(wrapper.find('[data-test="add-member-button"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="column-count"]').text()).toBe('5')
+    expect(wrapper.text()).toContain('SHER')
   })
 
-  describe('Component Rendering', () => {
-    it('renders table with correct columns when user is owner', () => {
-      createWrapper('0x1234' as Address, '0x1234' as Address)
-      const table = wrapper.findComponent({ name: 'TableComponent' })
-      expect(table.exists()).toBe(true)
-      expect(table.props('columns')).toEqual([
-        { key: 'index', label: '#' },
-        { key: 'member', label: 'Member' },
-        { key: 'maxWeeklyHours', label: 'Max Weekly Hours' },
-        { key: 'wage', label: `Hourly Rate` },
-        { key: 'action', label: 'Action' }
-      ])
-    })
-
-    it('renders table without action column when user is not owner', () => {
-      createWrapper('0xowner' as Address, '0xnotowner' as Address)
-      const table = wrapper.findComponent({ name: 'TableComponent' })
-      expect(table.exists()).toBe(true)
-      expect(table.props('columns')).toEqual([
-        { key: 'index', label: '#' },
-        { key: 'member', label: 'Member' },
-        { key: 'maxWeeklyHours', label: 'Max Weekly Hours' },
-        { key: 'wage', label: `Hourly Rate` }
-      ])
-    })
-
-    // it('renders Add Member button only for team owner', () => {
-    //   createWrapper('0x1234' as Address, '0x1234' as Address)
-    //   const addButton = wrapper.find('[data-test="add-member-button"]')
-    //   expect(addButton.exists()).toBe(true)
-    // })
-
-    it('does not render Add Member button for non-owners', () => {
-      createWrapper('0xowner' as Address, '0xnotowner' as Address)
-      const addButton = wrapper.find('[data-test="add-member-button"]')
-      expect(addButton.exists()).toBe(false)
-    })
-
-    it('displays loading skeletons when data is fetching', async () => {
-      mockWageIsFetching.value = true
-      await wrapper.vm.$nextTick()
-
-      expect(wrapper.html()).toContain('skeleton')
-    })
+  it('hides owner-only actions for non-owner users', () => {
+    vi.mocked(useUserDataStore).mockReturnValue({ address: '0xNOT_OWNER' } as never)
+    const wrapper = makeWrapper()
+    expect(wrapper.find('[data-test="add-member-button"]').exists()).toBe(false)
+    expect(wrapper.find('[data-test="column-count"]').text()).toBe('4')
+    expect(wrapper.find('[data-test="delete-member-modal"]').exists()).toBe(false)
   })
 
-  describe('User Interactions', () => {
-    it('opens modal when Add Member button is clicked', async () => {
-      createWrapper('0x1234' as Address, '0x1234' as Address)
-      const addButton = wrapper.find('[data-test="add-member-button"]')
-      await addButton.trigger('click')
-      await wrapper.vm.$nextTick()
+  it('opens and closes add-member modal through click, event and modal close', async () => {
+    const wrapper = makeWrapper()
 
-      expect(wrapper.find('[data-test="add-member-form"]').exists()).toBe(true)
-    })
+    expect(wrapper.find('[data-test="emit-member-added"]').exists()).toBe(false)
+    await wrapper.find('[data-test="add-member-button"]').trigger('click')
+    expect(wrapper.find('[data-test="emit-member-added"]').exists()).toBe(true)
 
-    it('closes modal when memberAdded event is emitted', async () => {
-      createWrapper('0x1234' as Address, '0x1234' as Address)
-      const addButton = wrapper.find('[data-test="add-member-button"]')
-      await addButton.trigger('click')
-      await wrapper.vm.$nextTick()
+    await wrapper.find('[data-test="emit-member-added"]').trigger('click')
+    await wrapper.vm.$nextTick()
+    expect(wrapper.find('[data-test="emit-member-added"]').exists()).toBe(false)
 
-      const addMemberForm = wrapper.findComponent({ name: 'AddMemberForm' })
-      expect(addMemberForm.exists()).toBe(true)
-
-      await addMemberForm.vm.$emit('memberAdded')
-      await wrapper.vm.$nextTick()
-
-      expect(wrapper.find('[data-test="add-member-form"]').exists()).toBe(false)
-    })
-
-    it('closes modal on reset event', async () => {
-      createWrapper('0x1234' as Address, '0x1234' as Address)
-      const addButton = wrapper.find('[data-test="add-member-button"]')
-      await addButton.trigger('click')
-      await wrapper.vm.$nextTick()
-
-      const modal = wrapper.findComponent({ name: 'UModal' })
-      expect(wrapper.find('[data-test="add-member-form"]').exists()).toBe(true)
-
-      await modal.vm.$emit('update:open', false)
-      await wrapper.vm.$nextTick()
-
-      expect(wrapper.find('[data-test="add-member-form"]').exists()).toBe(false)
-    })
+    await wrapper.find('[data-test="add-member-button"]').trigger('click')
+    expect(wrapper.find('[data-test="emit-member-added"]').exists()).toBe(true)
+    await wrapper.find('[data-test="close-wage-modal-button"]').trigger('click')
+    await wrapper.vm.$nextTick()
+    expect(wrapper.find('[data-test="emit-member-added"]').exists()).toBe(false)
   })
 
-  describe('Error Handling', () => {
-    it('shows error toast when wage data fetch fails', async () => {
-      mockWageError.value = new Error('New error')
-      await wrapper.vm.$nextTick()
+  it('does not mount AddMemberForm when current team id is missing', async () => {
+    vi.mocked(useTeamStore).mockReturnValue({
+      ...teamStoreState,
+      currentTeamId: ''
+    } as never)
 
-      expect(mockToast.add).toHaveBeenCalledWith({
-        title: 'Failed to fetch team wage data',
-        color: 'error'
-      })
-    })
+    const wrapper = makeWrapper()
+    await wrapper.find('[data-test="add-member-button"]').trigger('click')
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.find('[data-test="emit-member-added"]').exists()).toBe(false)
   })
 
-  describe('Table Data', () => {
-    it('passes correct loading state to table', () => {
-      const table = wrapper.findComponent({ name: 'TableComponent' })
-      expect(table.props('loading')).toBe(false)
+  it('renders standard/overtime placeholders and values for wage states', () => {
+    const wrapper = makeWrapper()
+    const firstRowText = wrapper.find('[data-test="row-0xAAA"]').text()
+    const secondRowText = wrapper.find('[data-test="row-0xBBB"]').text()
+    const thirdRowText = wrapper.find('[data-test="row-0xCCC"]').text()
+
+    expect(firstRowText).toContain('40h/wk')
+    expect(firstRowText).toContain('10h/wk')
+    expect(secondRowText).toContain('30h/wk')
+    expect(secondRowText).toContain('0h/wk')
+    expect(thirdRowText).toContain('—')
+  })
+
+  it('disables toggle button when member has no current wage', () => {
+    const wrapper = makeWrapper()
+    const noWageRowButtons = wrapper.find('[data-test="row-0xCCC"]').findAll('button')
+    const toggleButton = noWageRowButtons.find((btn) => {
+      const testAttr = btn.attributes('data-test')
+      return testAttr === 'pause-wage-button' || testAttr === 'resume-wage-button'
     })
 
-    it('passes correctly formatted row data to table', () => {
-      const table = wrapper.findComponent({ name: 'TableComponent' })
-      const rows = table.props('rows')
-      expect(rows).toHaveLength(2)
-      expect(rows[0]).toEqual(
-        expect.objectContaining({
-          index: 1,
-          address: '0x1234',
-          name: 'Member 1'
-        })
-      )
+    expect(toggleButton).toBeDefined()
+    expect(toggleButton?.attributes('disabled')).toBeDefined()
+  })
+
+  it('calls toggle mutation success path and invalidates team detail query', async () => {
+    mockMutateToggle.mockImplementationOnce((_payload, options) => {
+      options?.onSuccess?.()
     })
+    const wrapper = makeWrapper()
+
+    await wrapper.find('[data-test="row-0xAAA"] [data-test="pause-wage-button"]').trigger('click')
+
+    expect(mockMutateToggle).toHaveBeenCalledWith(
+      {
+        pathParams: { wageId: 11 },
+        queryParams: { action: 'disable' }
+      },
+      expect.objectContaining({ onSuccess: expect.any(Function), onError: expect.any(Function) })
+    )
+    expect(mockInvalidateQueries).toHaveBeenCalled()
+  })
+
+  it('calls toggle mutation error path', async () => {
+    mockMutateToggle.mockImplementationOnce((_payload, options) => {
+      options?.onError?.()
+    })
+
+    const wrapper = makeWrapper()
+    await wrapper.find('[data-test="row-0xBBB"] [data-test="resume-wage-button"]').trigger('click')
+
+    expect(mockMutateToggle).toHaveBeenCalled()
+  })
+
+  it('passes table loading when team meta is pending or toggling is pending', () => {
+    vi.mocked(useToggleWageStatusMutation).mockReturnValue({
+      mutate: mockMutateToggle,
+      isPending: computed(() => true)
+    } as never)
+
+    const wrapper = makeWrapper()
+    expect(wrapper.find('[data-test="table-loading"]').text()).toBe('true')
   })
 })

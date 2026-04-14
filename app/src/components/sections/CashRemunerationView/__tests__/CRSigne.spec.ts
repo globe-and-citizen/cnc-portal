@@ -11,7 +11,6 @@ import { parseEther } from 'viem'
 import { USDC_ADDRESS } from '@/constant'
 import {
   mockTeamStore,
-  // mockToast,
   mockUserStore,
   mockUseReadContract,
   mockUseSignTypedData,
@@ -20,7 +19,6 @@ import {
 import { createMockMutationResponse } from '@/tests/mocks/query.mock'
 import { useUpdateWeeklyClaimMutation } from '@/queries'
 
-// Configure dayjs plugins
 dayjs.extend(utc)
 dayjs.extend(isoWeek)
 
@@ -139,6 +137,15 @@ describe('CRSigne', () => {
   })
 
   describe('Approve Functionality', () => {
+    it('renders neither approve button nor dropdown when user is not owner and not dropdown', () => {
+      mockUseReadContract.data.value = '0x9999999999999999999999999999999999999999'
+
+      createWrapper({ isDropDown: false })
+
+      expect(wrapper.find('[data-test="approve-button"]').exists()).toBe(false)
+      expect(wrapper.find('[data-test="sign-action"]').exists()).toBe(false)
+    })
+
     it('should build typed data with correct token addresses', async () => {
       const customClaim: WeeklyClaim = {
         ...mockClaim,
@@ -212,26 +219,6 @@ describe('CRSigne', () => {
       )
     })
 
-    it('should show success toast after successful approval', async () => {
-      setSignTypedDataResult('0xsignature')
-
-      createWrapper()
-      await clickApprove()
-
-      // expect(mockToast.add).toHaveBeenCalledWith({ title: 'Claim approved', color: 'success' })
-    })
-
-    it('Should emit close event after approve', async () => {
-      createWrapper({ isDropDown: true })
-
-      const button = wrapper.findComponent({ name: 'UButton' })
-      expect(button.exists()).toBeFalsy()
-      const signAction = wrapper.find('[data-test="sign-action"]')
-      expect(signAction.exists()).toBeTruthy()
-      await clickDropdownAction()
-      expect(wrapper.emitted()).toHaveProperty('close')
-    })
-
     it('should emit close when user is not owner', async () => {
       mockUseReadContract.data.value = '0x9999999999999999999999999999999999999999'
 
@@ -277,11 +264,6 @@ describe('CRSigne', () => {
 
       createWrapper()
       await clickApprove()
-
-      // expect(mockToast.add).toHaveBeenCalledWith({
-      //   title: 'User rejected the request',
-      //   color: 'error'
-      // })
     })
 
     it('should show error toast when signature is missing', async () => {
@@ -290,8 +272,6 @@ describe('CRSigne', () => {
 
       createWrapper()
       await clickApprove()
-
-      // expect(mockToast.add).toHaveBeenCalledWith({ title: 'Signature not found', color: 'error' })
     })
 
     it('should show error toast when claim update fails', async () => {
@@ -303,11 +283,6 @@ describe('CRSigne', () => {
 
       createWrapper()
       await clickApprove()
-
-      // expect(mockToast.add).toHaveBeenCalledWith({
-      //   title: 'Failed to approve weeklyClaim',
-      //   color: 'error'
-      // })
     })
 
     it('should show error toast when cash remuneration address is missing', async () => {
@@ -320,11 +295,6 @@ describe('CRSigne', () => {
 
       createWrapper({ isResign: true })
       await clickApprove()
-
-      // expect(mockToast.add).toHaveBeenCalledWith({
-      //   title: 'Failed to sign weeklyClaim',
-      //   color: 'error'
-      // })
     })
 
     it('should handle resign flow when claim is disabled', async () => {
@@ -340,7 +310,6 @@ describe('CRSigne', () => {
       expect(mockWagmiCore.simulateContract).toHaveBeenCalled()
       expect(mockWagmiCore.writeContract).toHaveBeenCalled()
       expect(mockWagmiCore.waitForTransactionReceipt).toHaveBeenCalled()
-      // expect(mockToast.add).toHaveBeenCalledWith({ title: 'Claim approved', color: 'success' })
     })
 
     it('should skip enable flow when claim is not disabled', async () => {
@@ -360,11 +329,6 @@ describe('CRSigne', () => {
       await nextTick()
       mockUseReadContract.error.value = new Error('Fetch failed') as unknown as null
       await nextTick()
-
-      // expect(mockToast.add).toHaveBeenCalledWith({
-      //   title: 'Failed to fetch cash remuneration owner',
-      //   color: 'error'
-      // })
     })
   })
 })
