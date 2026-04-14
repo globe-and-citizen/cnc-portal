@@ -98,6 +98,7 @@ const props = defineProps<{
     amount: string
     tokenId: TokenId
   }
+  feeBps?: number
   isLoading?: boolean
 }>()
 
@@ -170,7 +171,17 @@ const schema = computed(() =>
 )
 
 const useMaxBalance = () => {
-  amount.value = String(availableBalance.value.toFixed(6))
+  const balance = availableBalance.value ?? 0
+  const bps = props.feeBps ?? 0
+
+  if (bps <= 0) {
+    amount.value = String(balance.toFixed(6))
+    return
+  }
+
+  // Convert gross max balance to net amount so fees are included.
+  const netMaxAmount = (balance * (10000 - bps)) / 10000
+  amount.value = String(Math.max(netMaxAmount, 0).toFixed(6))
 }
 
 const usePercentageOfBalance = (percentage: number) => {
