@@ -10,7 +10,12 @@
     <SelectMemberContractsInput v-model="model.address" @selectItem="handleSelectItem" />
 
     <UFormField class="w-full" name="amount">
-      <TokenAmount :tokens="tokens" v-model="tokenAmountModel" :isLoading="props.loading">
+      <TokenAmount
+        :tokens="tokens"
+        v-model="tokenAmountModel"
+        :isLoading="props.loading"
+        :fee-bps="props.feeBps"
+      >
         <template #label>
           <slot name="label">
             <div class="flex w-full items-center justify-between text-sm font-medium">
@@ -53,7 +58,7 @@
       <div
         class="flex items-center justify-between border-t border-green-200 pt-2 dark:border-green-800"
       >
-        <span class="font-semibold text-gray-800 dark:text-gray-200">Total you send</span>
+        <span class="font-semibold text-gray-800 dark:text-gray-200">Total you transfer</span>
         <span class="font-bold text-green-600 dark:text-green-400">
           {{ totalToSend.toFixed(2) }} {{ model.token.symbol }}
         </span>
