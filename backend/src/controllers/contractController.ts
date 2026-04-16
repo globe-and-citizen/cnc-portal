@@ -106,8 +106,7 @@ export const syncContracts = async (req: Request, res: Response) => {
       return errorResponse(403, 'Unauthorized: Caller is not the owner of the team', res);
 
     const currentOfficer = await findCurrentOfficer(teamId);
-    if (!currentOfficer)
-      return errorResponse(400, 'Team has no Officer deployed', res);
+    if (!currentOfficer) return errorResponse(400, 'Team has no Officer deployed', res);
 
     console.log(
       'Syncing contracts for team:',
@@ -264,4 +263,3 @@ export const getTeamOfficers = async (req: Request, res: Response) => {
     return errorResponse(500, 'Internal server error', res);
   }
 };
-

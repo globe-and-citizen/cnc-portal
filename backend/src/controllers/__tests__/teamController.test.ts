@@ -97,7 +97,6 @@ const mockTeamData = {
     { address: faker.finance.ethereumAddress(), name: 'Member 1' },
     { address: faker.finance.ethereumAddress(), name: 'Member 2' },
   ],
-
 };
 
 const teamMockResolve = {
@@ -453,7 +452,7 @@ describe('Team Controller', () => {
         ownerAddress: faker.finance.ethereumAddress(),
         name: 'Test Team',
         description: 'Test Description',
-            };
+      };
 
       vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(mockTeam);
 
@@ -473,7 +472,7 @@ describe('Team Controller', () => {
         ownerAddress: mockOwner.address,
         name: 'Test Team',
         description: 'Test Description',
-              createdAt: new Date(),
+        createdAt: new Date(),
         updatedAt: new Date(),
       };
 
@@ -502,7 +501,7 @@ describe('Team Controller', () => {
         ownerAddress: mockOwner.address,
         name: 'Test Team',
         description: 'Test Description',
-              createdAt: new Date(),
+        createdAt: new Date(),
         updatedAt: new Date(),
       });
       vi.spyOn(prisma.team, 'update').mockRejectedValue(new Error('Server error'));

@@ -514,5 +514,4 @@ describe('contractController', () => {
       expect(response.body.message).toBe('Internal server error has occured');
     });
   });
-
 });
