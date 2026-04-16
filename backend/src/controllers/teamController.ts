@@ -6,6 +6,13 @@ import { errorResponse } from '../utils/utils';
 import { resolveStorageImageUrl } from '../utils/profileImage.util';
 //const prisma = new PrismaClient();
 
+// Shared: include the immediate predecessor (id + address only) so clients
+// can walk one step back for copy-forward flows (e.g. shareholder migration)
+// without a second round-trip.
+const previousOfficerInclude = {
+  previousOfficer: { select: { id: true, address: true } },
+} as const;
+
 // Prisma include shape that fetches the linked list head — the TeamOfficer
 // row that has no successor pointing back to it. This is the team's current
 // Officer. Returned as a single-element array because Prisma includes are
@@ -14,6 +21,7 @@ export const currentOfficerInclude = {
   teamOfficers: {
     where: { nextOfficer: { is: null } },
     take: 1,
+    include: previousOfficerInclude,
   },
 } as const;
 
@@ -25,7 +33,7 @@ export const currentOfficerWithContractsInclude = {
   teamOfficers: {
     where: { nextOfficer: { is: null } },
     take: 1,
-    include: { contracts: true },
+    include: { ...previousOfficerInclude, contracts: true },
   },
 } as const;
 

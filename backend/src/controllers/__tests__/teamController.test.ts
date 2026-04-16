@@ -342,7 +342,11 @@ describe('Team Controller', () => {
       expect(prisma.team.findMany).toHaveBeenCalledWith({
         include: {
           _count: { select: { members: true } },
-          teamOfficers: { where: { nextOfficer: { is: null } }, take: 1 },
+          teamOfficers: {
+            where: { nextOfficer: { is: null } },
+            take: 1,
+            include: { previousOfficer: { select: { id: true, address: true } } },
+          },
         },
       });
     });
@@ -379,7 +383,11 @@ describe('Team Controller', () => {
         where: { members: { some: { address: mockOwner.address } } },
         include: {
           _count: { select: { members: true } },
-          teamOfficers: { where: { nextOfficer: { is: null } }, take: 1 },
+          teamOfficers: {
+            where: { nextOfficer: { is: null } },
+            take: 1,
+            include: { previousOfficer: { select: { id: true, address: true } } },
+          },
         },
       });
     });
