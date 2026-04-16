@@ -11,7 +11,7 @@
         </p>
 
         <p
-          v-if="migrationStatus === 'blocked-inconsistent'"
+          v-if="isInconsistent"
           class="text-error mt-2 text-sm"
           data-test="migration-banner-blocked"
         >
@@ -21,17 +21,17 @@
         </p>
 
         <p
-          v-else-if="migrationStatus === 'error' && migrationError"
+          v-else-if="migrate.isError.value && migrate.error.value"
           class="text-error mt-2 text-sm"
           data-test="migration-banner-error"
         >
-          Last attempt failed: {{ migrationError.message }}
+          Last attempt failed: {{ migrate.error.value.message }}
         </p>
 
         <div class="mt-3 flex gap-3">
           <UButton
-            :loading="isRunning"
-            :disabled="isRunning || migrationStatus === 'blocked-inconsistent'"
+            :loading="migrate.isPending.value"
+            :disabled="migrate.isPending.value || isInconsistent"
             color="primary"
             @click="onRun"
             data-test="migrate-from-previous-button"
@@ -47,13 +47,16 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { Address } from 'viem'
+import { useQueryClient } from '@tanstack/vue-query'
 import { useTeamStore } from '@/stores'
 import {
   useInvestorAddress,
   useInvestorTotalSupply
 } from '@/composables/investor/reads'
-import { useShareholderMigration } from '@/composables/investor/useShareholderMigration'
-import { useQueryClient } from '@tanstack/vue-query'
+import {
+  useMigrateShareholders,
+  InconsistentSupplyError
+} from '@/composables/investor/useShareholderMigration'
 
 const teamStore = useTeamStore()
 const queryClient = useQueryClient()
@@ -62,22 +65,19 @@ const toast = useToast()
 const currentInvestorAddress = useInvestorAddress()
 const { data: currentTotalSupply, refetch: refetchTotalSupply } = useInvestorTotalSupply()
 
-const {
-  migrate,
-  status: migrationStatus,
-  error: migrationError,
-  isRunning
-} = useShareholderMigration()
+const migrate = useMigrateShareholders()
 
 const previousOfficerAddress = computed<Address | null>(() => {
   const prev = teamStore.currentTeamMeta.data?.currentOfficer?.previousOfficer
   return prev?.address ? (prev.address as Address) : null
 })
 
-// Banner visibility: we only surface it when there is a previous Officer to
-// migrate from AND the new InvestorV1 is still empty (totalSupply === 0). A
-// non-zero supply means either the migration already happened or someone
-// minted through a different path — either way, don't offer a second mint.
+const isInconsistent = computed(() => migrate.error.value instanceof InconsistentSupplyError)
+
+// Visible only when there is a previous Officer to migrate from AND the new
+// InvestorV1 is still empty (totalSupply === 0). Non-zero supply means
+// either the migration already happened or tokens arrived through another
+// path — either way, don't offer a second mint.
 const showBanner = computed(() => {
   if (!previousOfficerAddress.value) return false
   if (!currentInvestorAddress.value) return false
@@ -88,24 +88,24 @@ const showBanner = computed(() => {
 const onRun = async () => {
   if (!previousOfficerAddress.value || !currentInvestorAddress.value) return
   try {
-    const result = await migrate({
+    const result = await migrate.mutateAsync({
       previousOfficerAddress: previousOfficerAddress.value,
       newInvestorAddress: currentInvestorAddress.value as Address
     })
-    if (result.status === 'done') {
+    if (result.kind === 'done') {
       toast.add({
         title: `Migrated ${result.migratedCount} shareholder${result.migratedCount === 1 ? '' : 's'}`,
         color: 'success'
       })
-    } else if (result.status === 'noop-already-migrated') {
+    } else if (result.kind === 'noop-already-migrated') {
       toast.add({ title: 'Shareholders were already migrated', color: 'success' })
-    } else if (result.status === 'noop-empty') {
+    } else if (result.kind === 'noop-empty') {
       toast.add({ title: 'No shareholders to migrate', color: 'info' })
     }
     await refetchTotalSupply()
     await queryClient.invalidateQueries({ queryKey: ['contracts'] })
   } catch {
-    // migrationStatus + migrationError expose the failure in the banner.
+    // Error surfaced via migrate.error in the banner.
   }
 }
 </script>

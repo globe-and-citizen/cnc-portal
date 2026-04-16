@@ -90,7 +90,7 @@
         <p v-if="migrationError" class="mt-2 font-mono text-xs opacity-70">
           {{ migrationError.message }}
         </p>
-        <p v-if="migrationStatus === 'blocked-inconsistent'" class="text-error mt-2">
+        <p v-if="isInconsistent" class="text-error mt-2">
           Retry is blocked: the new InvestorV1 already has a totalSupply that does not match
           the previous shareholders. Migrating again would double-mint.
         </p>
@@ -109,7 +109,7 @@
           v-if="migrationFailed"
           color="primary"
           :loading="isRunning"
-          :disabled="isRunning || migrationStatus === 'blocked-inconsistent'"
+          :disabled="isRunning || isInconsistent"
           @click="retryMigration()"
           data-test="retry-migration"
         >
@@ -172,8 +172,8 @@ const {
   reset,
   isRunning,
   migrationFailed,
-  migrationStatus,
-  migrationError
+  migrationError,
+  isInconsistent
 } = useOfficerRedeploy()
 
 const canRedeploy = computed(
