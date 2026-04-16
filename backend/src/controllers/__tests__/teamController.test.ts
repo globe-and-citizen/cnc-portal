@@ -337,7 +337,7 @@ describe('Team Controller', () => {
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual(
-        mockTeams.map(({ teamOfficers, ...t }) => ({ ...t, currentOfficer: null }))
+        mockTeams.map(({ teamOfficers: _teamOfficers, ...t }) => ({ ...t, currentOfficer: null }))
       );
       expect(prisma.team.findMany).toHaveBeenCalledWith({
         include: {
@@ -377,7 +377,7 @@ describe('Team Controller', () => {
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual(
-        mockTeams.map(({ teamOfficers, ...t }) => ({ ...t, currentOfficer: null }))
+        mockTeams.map(({ teamOfficers: _teamOfficers, ...t }) => ({ ...t, currentOfficer: null }))
       );
       expect(prisma.team.findMany).toHaveBeenCalledWith({
         where: { members: { some: { address: mockOwner.address } } },
