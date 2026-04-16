@@ -40,8 +40,8 @@
         class="mb-6"
       >
         <template #description>
-          After the new Officer is deployed, the current share token holders will be reissued
-          the same balances on the new Investor contract via
+          After the new Officer is deployed, the current share token holders will be reissued the
+          same balances on the new Investor contract via
           <code>distributeMint</code>. This is a separate transaction you'll need to sign right
           after the deploy.
         </template>
@@ -120,16 +120,15 @@
       >
         <template #description>
           <p>
-            The new Officer is deployed and registered, but the shareholder mint did not
-            complete. You can retry below, or skip and finish the migration later from the Share
-            Token page.
+            The new Officer is deployed and registered, but the shareholder mint did not complete.
+            You can retry below, or skip and finish the migration later from the Share Token page.
           </p>
           <p v-if="migrationError" class="mt-2 font-mono text-xs opacity-70">
             {{ migrationError.message }}
           </p>
           <p v-if="isInconsistent" class="mt-2">
-            Retry is blocked: the new InvestorV1 already has a totalSupply that does not match
-            the previous shareholders. Migrating again would double-mint.
+            Retry is blocked: the new InvestorV1 already has a totalSupply that does not match the
+            previous shareholders. Migrating again would double-mint.
           </p>
         </template>
       </UAlert>
@@ -218,9 +217,7 @@ const {
   workflowError
 } = useOfficerRedeploy()
 
-const canRedeploy = computed(
-  () => !!form.value.name.trim() && !!form.value.symbol.trim()
-)
+const canRedeploy = computed(() => !!form.value.name.trim() && !!form.value.symbol.trim())
 
 const shareholderCount = computed(() => {
   const list = currentShareholders.value as readonly Shareholder[] | undefined

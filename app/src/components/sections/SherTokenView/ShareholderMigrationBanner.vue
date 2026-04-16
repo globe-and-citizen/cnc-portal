@@ -5,9 +5,9 @@
       <div class="flex-1">
         <p class="font-semibold">Shareholder migration pending</p>
         <p class="mt-1 text-sm">
-          A new Officer was deployed for this team but the previous share token holders have
-          not been reissued on the new InvestorV1 contract yet. Click below to read the
-          previous shareholders on-chain and mint them here.
+          A new Officer was deployed for this team but the previous share token holders have not
+          been reissued on the new InvestorV1 contract yet. Click below to read the previous
+          shareholders on-chain and mint them here.
         </p>
 
         <UAlert
@@ -53,10 +53,7 @@ import { computed } from 'vue'
 import type { Address } from 'viem'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useTeamStore } from '@/stores'
-import {
-  useInvestorAddress,
-  useInvestorTotalSupply
-} from '@/composables/investor/reads'
+import { useInvestorAddress, useInvestorTotalSupply } from '@/composables/investor/reads'
 import {
   useMigrateShareholders,
   InconsistentSupplyError

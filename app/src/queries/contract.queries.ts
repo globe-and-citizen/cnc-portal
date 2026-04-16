@@ -132,4 +132,3 @@ export const useCreateOfficerMutation = createMutationHook<
   endpoint: 'contract/officer',
   invalidateKeys: [contractKeys.all, teamKeys.all]
 })
-

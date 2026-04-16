@@ -63,9 +63,7 @@ export function useOfficerRedeploy() {
     () => migrateMutation.error.value instanceof InconsistentSupplyError
   )
 
-  const findNewInvestorAddress = async (
-    officerAddress: Address
-  ): Promise<Address | null> => {
+  const findNewInvestorAddress = async (officerAddress: Address): Promise<Address | null> => {
     const contracts = (await readContract(config, {
       address: officerAddress,
       abi: OFFICER_ABI,
@@ -124,9 +122,7 @@ export function useOfficerRedeploy() {
     // Errors remain on deployMutation.error / registerMutation.error so the
     // template can render them reactively. `.catch(() => null)` just aborts
     // the sequence without leaking a rejection.
-    const metadata = await deployMutation
-      .mutateAsync({ investorInput, teamId })
-      .catch(() => null)
+    const metadata = await deployMutation.mutateAsync({ investorInput, teamId }).catch(() => null)
     if (!metadata) return
 
     const registerResult = await registerMutation

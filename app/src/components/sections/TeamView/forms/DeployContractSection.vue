@@ -59,9 +59,7 @@ const deployMutation = useDeployOfficer()
 const registerMutation = useCreateOfficerMutation()
 const invalidateQueries = useInvalidateOfficerQueries()
 
-const isBusy = computed(
-  () => deployMutation.isPending.value || registerMutation.isPending.value
-)
+const isBusy = computed(() => deployMutation.isPending.value || registerMutation.isPending.value)
 
 const deployButtonText = computed(() =>
   deployMutation.isPending.value ? 'Deploying Officer Contracts...' : 'Deploy Company Contracts'
@@ -80,15 +78,14 @@ const onClick = async () => {
     .catch(() => null)
   if (!metadata) return
 
-  const registered = await registerMutation
-    .mutateAsync({
-      body: {
-        teamId,
-        address: metadata.officerAddress,
-        deployBlockNumber: metadata.deployBlockNumber,
-        deployedAt: metadata.deployedAt.toISOString()
-      }
-    })
+  const registered = await registerMutation.mutateAsync({
+    body: {
+      teamId,
+      address: metadata.officerAddress,
+      deployBlockNumber: metadata.deployBlockNumber,
+      deployedAt: metadata.deployedAt.toISOString()
+    }
+  })
   if (!registered) return
 
   await invalidateQueries(teamId)
