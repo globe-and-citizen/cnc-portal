@@ -36,14 +36,37 @@
 
     <!-- Hours worked -->
     <UFormField label="Hours worked" name="hoursWorked" required>
-      <UInput
-        v-model="formData.hoursWorked"
-        type="text"
-        placeholder="10"
-        class="w-full"
-        size="lg"
-        data-test="hours-worked-input"
-      />
+      <div class="flex w-full items-start gap-x-2">
+        <div class="flex-1">
+          <UInput
+            v-model="formData.hoursWorked"
+            type="text"
+            placeholder="0"
+            class="w-full"
+            size="lg"
+            data-test="hours-worked-input"
+          >
+            <template #trailing>
+              <span class="text-sm text-gray-500">h</span>
+            </template>
+          </UInput>
+        </div>
+        <span class="shrink-0 text-lg text-gray-400">:</span>
+        <div class="flex-1">
+          <USelectMenu
+            v-model="formData.minutesWorked"
+            :items="minutesOptions"
+            placeholder="0"
+            class="w-full"
+            size="lg"
+            data-test="minutes-worked-input"
+          >
+            <template #trailing>
+              <span class="text-sm text-gray-500">min</span>
+            </template>
+          </USelectMenu>
+        </div>
+      </div>
     </UFormField>
 
     <!-- Memo -->
@@ -156,20 +179,34 @@ const emit = defineEmits<{
 }>()
 
 // Zod validation schema
-const claimSchema = z.object({
-  hoursWorked: z
-    .union([z.string(), z.number()])
-    .refine((val) => String(val).trim() !== '', { message: 'Hours worked is required' })
-    .refine((val) => !isNaN(Number(val)), { message: 'Must be a valid number' })
-    .refine((val) => Number(val) >= 1, { message: 'Must be at least 1 hour' })
-    .refine((val) => Number(val) <= 24, { message: 'Cannot exceed 24 hours' }),
-  memo: z.string().min(1, 'Memo is required').max(3000, 'Memo must not exceed 3000 characters'),
-  dayWorked: z.string().min(1, 'Date is required')
-})
+const claimSchema = z
+  .object({
+    hoursWorked: z
+      .union([z.string(), z.number()])
+      .refine((val) => String(val).trim() !== '', { message: 'Hours is required' })
+      .refine((val) => !isNaN(Number(val)), { message: 'Must be a valid number' })
+      .refine((val) => Number(val) >= 0, { message: 'Hours cannot be negative' })
+      .refine((val) => Number(val) <= 24, { message: 'Cannot exceed 24 hours' })
+      .refine((val) => Number.isInteger(Number(val)), { message: 'Hours must be a whole number' }),
+    minutesWorked: z
+      .union([z.string(), z.number()])
+      .refine((val) => !isNaN(Number(val)), { message: 'Must be a valid number' }),
+    memo: z.string().min(1, 'Memo is required').max(3000, 'Memo must not exceed 3000 characters'),
+    dayWorked: z.string().min(1, 'Date is required')
+  })
+  .refine((data) => [0, 10, 20, 30, 40, 50].includes(Number(data.minutesWorked)), {
+    message: 'Minutes must be 0, 10, 20, 30, 40, or 50',
+    path: ['hoursWorked']
+  })
+  .refine((data) => Number(data.hoursWorked) * 60 + Number(data.minutesWorked) > 0, {
+    message: 'Duration must be greater than 0',
+    path: ['hoursWorked']
+  })
 
 const uploadFileRef = ref<InstanceType<typeof UploadFileDB> | null>(null)
 const uploadedFiles = ref<File[]>([])
 const datePickerOpen = ref(false)
+const minutesOptions = ['0', '10', '20', '30', '40', '50']
 
 const onFilesUpdate = (files: File[]): void => {
   uploadedFiles.value = files
@@ -196,7 +233,8 @@ const existingFilePreviews = computed(() => {
 })
 
 const createDefaultFormData = (overrides?: Partial<ClaimFormData>): ClaimFormData => ({
-  hoursWorked: overrides?.hoursWorked ?? '',
+  hoursWorked: overrides?.hoursWorked ?? '0',
+  minutesWorked: overrides?.minutesWorked ?? '0',
   memo: overrides?.memo ?? '',
   dayWorked: overrides?.dayWorked ?? dayjs().utc().startOf('day').toISOString()
 })
@@ -303,7 +341,7 @@ const handleSubmit = async () => {
   }
 
   emit('submit', {
-    hoursWorked: Number(formData.value.hoursWorked),
+    hoursWorked: Number(formData.value.hoursWorked) * 60 + Number(formData.value.minutesWorked),
     memo: formData.value.memo,
     dayWorked: formData.value.dayWorked,
     files: uploadedFiles.value.length ? uploadedFiles.value : undefined
