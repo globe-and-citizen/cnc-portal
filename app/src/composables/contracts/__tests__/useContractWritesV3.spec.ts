@@ -90,11 +90,11 @@ describe('executeContractWrite (standalone)', () => {
 
   it('throws ContractWriteRevertedError with BaseError cause when replay decodes the revert', async () => {
     const replayErr = new BaseError('execution reverted: InsufficientTokenBalance')
-    vi.mocked(simulateContract)
-      .mockResolvedValueOnce(okSimulation)
-      .mockRejectedValueOnce(replayErr)
+    vi.mocked(simulateContract).mockResolvedValueOnce(okSimulation).mockRejectedValueOnce(replayErr)
     vi.mocked(writeContract).mockResolvedValueOnce(HASH)
-    vi.mocked(waitForTransactionReceipt).mockResolvedValueOnce(revertedReceipt({ blockNumber: 100n }))
+    vi.mocked(waitForTransactionReceipt).mockResolvedValueOnce(
+      revertedReceipt({ blockNumber: 100n })
+    )
 
     let caught: unknown
     try {
@@ -194,9 +194,7 @@ describe('executeContractWrite (standalone)', () => {
 })
 
 describe('useContractWritesV3 — input validation & logging', () => {
-  const baseConfig = (
-    overrides: Partial<ContractWriteV3Config> = {}
-  ): ContractWriteV3Config => ({
+  const baseConfig = (overrides: Partial<ContractWriteV3Config> = {}): ContractWriteV3Config => ({
     contractAddress: ADDRESS,
     abi: ABI as unknown as Abi,
     functionName: 'foo',

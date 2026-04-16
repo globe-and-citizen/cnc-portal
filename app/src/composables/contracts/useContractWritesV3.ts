@@ -204,10 +204,7 @@ export function useContractWritesV3(cfg: ContractWriteV3Config) {
         value: variables.value,
         onReplayError: shouldLog
           ? (err) =>
-              log.error(
-                `useContractWritesV3(${functionName}) revert-cause replay failed:\n`,
-                err
-              )
+              log.error(`useContractWritesV3(${functionName}) revert-cause replay failed:\n`, err)
           : undefined
       })
     },

@@ -22,9 +22,7 @@ beforeEach(() => {
   })
 })
 
-const baseConfig = (
-  overrides: Partial<ContractWriteV3Config> = {}
-): ContractWriteV3Config => ({
+const baseConfig = (overrides: Partial<ContractWriteV3Config> = {}): ContractWriteV3Config => ({
   contractAddress: ADDRESS,
   abi: ABI as unknown as Abi,
   functionName: 'foo',
@@ -40,9 +38,7 @@ describe('useContractWritesV3 — onSuccess invalidation predicate', () => {
     vi.mocked(waitForTransactionReceipt).mockResolvedValueOnce(successReceipt())
   }
 
-  const captureInvalidationPredicate = async (
-    cfg: ContractWriteV3Config
-  ): Promise<Predicate> => {
+  const captureInvalidationPredicate = async (cfg: ContractWriteV3Config): Promise<Predicate> => {
     stubSuccessfulWrite()
     const m = useContractWritesV3(cfg)
     await m.mutateAsync({})
@@ -60,9 +56,9 @@ describe('useContractWritesV3 — onSuccess invalidation predicate', () => {
 
   it('ignores queries that do not start with "readContract"', async () => {
     const predicate = await captureInvalidationPredicate(baseConfig())
-    expect(
-      predicate({ queryKey: ['simulateContract', { address: ADDRESS, chainId: 1 }] })
-    ).toBe(false)
+    expect(predicate({ queryKey: ['simulateContract', { address: ADDRESS, chainId: 1 }] })).toBe(
+      false
+    )
     expect(predicate({ queryKey: ['readContract'] })).toBe(false)
   })
 
@@ -77,9 +73,9 @@ describe('useContractWritesV3 — onSuccess invalidation predicate', () => {
 
   it('only invalidates the pinned chainId when one is configured', async () => {
     const predicate = await captureInvalidationPredicate(baseConfig({ chainId: 31337 }))
-    expect(
-      predicate({ queryKey: ['readContract', { address: ADDRESS, chainId: 31337 }] })
-    ).toBe(true)
+    expect(predicate({ queryKey: ['readContract', { address: ADDRESS, chainId: 31337 }] })).toBe(
+      true
+    )
     expect(predicate({ queryKey: ['readContract', { address: ADDRESS, chainId: 1 }] })).toBe(false)
   })
 
@@ -95,9 +91,9 @@ describe('useContractWritesV3 — onSuccess invalidation predicate', () => {
     const predicate = await captureInvalidationPredicate(baseConfig())
     expect(predicate({ queryKey: 'not-an-array' as unknown as unknown[] })).toBe(false)
     expect(predicate({ queryKey: ['readContract', null as unknown as object] })).toBe(false)
-    expect(
-      predicate({ queryKey: ['readContract', { address: 12345 as unknown as string }] })
-    ).toBe(false)
+    expect(predicate({ queryKey: ['readContract', { address: 12345 as unknown as string }] })).toBe(
+      false
+    )
   })
 
   it('skips invalidation entirely when the reactive address goes undefined between write and onSuccess', async () => {

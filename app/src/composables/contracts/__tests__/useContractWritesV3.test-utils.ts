@@ -2,8 +2,7 @@ import type { Abi, Address } from 'viem'
 import type { simulateContract, waitForTransactionReceipt } from '@wagmi/core'
 
 export const ADDRESS = '0x1234567890123456789012345678901234567890' as Address
-export const HASH =
-  '0xdeadbeef00000000000000000000000000000000000000000000000000000000' as const
+export const HASH = '0xdeadbeef00000000000000000000000000000000000000000000000000000000' as const
 
 export const ABI = [
   {
