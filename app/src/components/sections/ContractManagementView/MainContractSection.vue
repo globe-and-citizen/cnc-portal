@@ -90,16 +90,47 @@
                     </UFormField>
                   </UForm>
 
+                  <div
+                    v-if="migrationFailed"
+                    class="border-error bg-error/5 mb-4 rounded-lg border p-4 text-sm"
+                    data-test="migration-error-block"
+                  >
+                    <p class="text-error font-semibold">Shareholder migration failed</p>
+                    <p class="mt-1">
+                      The new Officer is deployed and registered, but the shareholder mint did
+                      not complete. You can retry below, or skip and finish the migration later
+                      from the Share Token page.
+                    </p>
+                    <p v-if="migrationError" class="mt-2 font-mono text-xs opacity-70">
+                      {{ migrationError.message }}
+                    </p>
+                    <p v-if="migrationStatus === 'blocked-inconsistent'" class="text-error mt-2">
+                      Retry is blocked: the new InvestorV1 already has a totalSupply that does
+                      not match the previous shareholders. Migrating again would double-mint.
+                    </p>
+                  </div>
+
                   <div class="flex justify-between gap-3">
                     <UButton
                       color="secondary"
                       :disabled="isRedeploying"
-                      @click="showModal = false"
+                      @click="migrationFailed ? skipMigration() : (showModal = false)"
                       data-test="cancel-redeploy-contracts"
                     >
-                      Cancel
+                      {{ migrationFailed ? 'Skip & close' : 'Cancel' }}
                     </UButton>
                     <UButton
+                      v-if="migrationFailed"
+                      color="primary"
+                      :loading="isRedeploying"
+                      :disabled="isRedeploying || migrationStatus === 'blocked-inconsistent'"
+                      @click="retryMigration()"
+                      data-test="retry-migration"
+                    >
+                      Retry shareholder migration
+                    </UButton>
+                    <UButton
+                      v-else
                       color="primary"
                       :loading="isRedeploying"
                       :disabled="!canRedeploy || isRedeploying"
@@ -130,7 +161,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { writeContract, waitForTransactionReceipt, readContract } from '@wagmi/core'
+import { readContract } from '@wagmi/core'
 import type { Address } from 'viem'
 import { config } from '@/wagmi.config'
 import { useUserDataStore } from '@/stores/user'
@@ -143,12 +174,12 @@ import {
   useInvestorSymbol,
   useInvestorShareholders
 } from '@/composables/investor/reads'
+import { useShareholderMigration } from '@/composables/investor/useShareholderMigration'
 import { useCreateOfficerMutation } from '@/queries/contract.queries'
-import { INVESTOR_ABI } from '@/artifacts/abi/investors'
 import { OFFICER_ABI } from '@/artifacts/abi/officer'
 import { log } from '@/utils'
 
-interface ShareholderSnapshot {
+interface Shareholder {
   shareholder: Address
   amount: bigint
 }
@@ -176,21 +207,36 @@ const { data: currentInvestorName } = useInvestorName()
 const { data: currentInvestorSymbol } = useInvestorSymbol()
 const { data: currentShareholders } = useInvestorShareholders()
 
-const isMigratingShareholders = ref(false)
-
 const {
   isLoading: isDeploying,
   deployOfficerContract: deployOfficer,
   invalidateQueries
 } = useOfficerDeployment()
 const { mutateAsync: registerOfficer, isPending: isRegistering } = useCreateOfficerMutation()
+const {
+  migrate: runMigration,
+  reset: resetMigration,
+  status: migrationStatus,
+  error: migrationError,
+  isRunning: isMigrating
+} = useShareholderMigration()
+
+// When register succeeds but the mint fails (or reverts, or user rejects the
+// second wallet popup), we keep the addresses around so the modal can offer a
+// one-click retry without re-deploying the Officer.
+const pendingMigration = ref<{
+  previousOfficerAddress: Address
+  newInvestorAddress: Address
+} | null>(null)
 
 const isRedeploying = computed(
-  () => isDeploying.value || isRegistering.value || isMigratingShareholders.value
+  () => isDeploying.value || isRegistering.value || isMigrating.value
 )
 
+const migrationFailed = computed(() => pendingMigration.value !== null && !isMigrating.value)
+
 const shareholderCount = computed(() => {
-  const list = currentShareholders.value as readonly ShareholderSnapshot[] | undefined
+  const list = currentShareholders.value as readonly Shareholder[] | undefined
   return list?.length ?? 0
 })
 
@@ -217,54 +263,61 @@ const openRedeployModal = () => {
   showModal.value = true
 }
 
-// Given an Officer address, returns the InvestorV1 sub-contract address from
-// its getTeam() list. Used both to find the old Investor (on the previous
-// Officer) and the new one (on the freshly deployed Officer).
-const findInvestorAddress = async (officerAddress: Address): Promise<Address | null> => {
+// Resolves the InvestorV1 sub-contract address off the given Officer via
+// getTeam(). Used to find the new InvestorV1 right after deploy, before the
+// team store has been refreshed.
+const findNewInvestorAddress = async (officerAddress: Address): Promise<Address | null> => {
   const contracts = (await readContract(config, {
     address: officerAddress,
     abi: OFFICER_ABI,
     functionName: 'getTeam'
   })) as readonly { contractType: string; contractAddress: Address }[]
-
   return contracts.find((c) => c.contractType === 'InvestorV1')?.contractAddress ?? null
 }
 
-// Reads the live shareholder list from an old InvestorV1 contract. Because we
-// find the old Investor via the on-chain linked list (previousOfficer → old
-// Officer → old InvestorV1), this is durable across page refreshes — no JS
-// snapshot involved.
-const readOldShareholders = async (
-  oldInvestorAddress: Address
-): Promise<readonly ShareholderSnapshot[]> => {
-  const result = (await readContract(config, {
-    address: oldInvestorAddress,
-    abi: INVESTOR_ABI,
-    functionName: 'getShareholders'
-  })) as readonly ShareholderSnapshot[]
-  return result
+// Runs the migration with the pending addresses. Used by both the automatic
+// post-redeploy attempt and the inline retry button. Clears pendingMigration
+// on success (or on terminal noop states) so the modal closes cleanly.
+const runPendingMigration = async (ctx: {
+  previousOfficerAddress: Address
+  newInvestorAddress: Address
+}) => {
+  try {
+    const result = await runMigration(ctx)
+    if (result.status === 'done') {
+      toast.add({
+        title: `Migrated ${result.migratedCount} shareholder${result.migratedCount === 1 ? '' : 's'}`,
+        color: 'success'
+      })
+    } else if (result.status === 'noop-already-migrated') {
+      toast.add({ title: 'Shareholders were already migrated', color: 'success' })
+    } else if (result.status === 'noop-empty') {
+      toast.add({ title: 'No shareholders to migrate', color: 'info' })
+    }
+    pendingMigration.value = null
+  } catch {
+    // Error is surfaced via migrationStatus/migrationError; keep modal open
+    // so the user can retry. Intentionally swallowed here — no rethrow.
+  }
 }
 
-const migrateShareholders = async (
-  newInvestorAddress: Address,
-  snapshot: readonly ShareholderSnapshot[]
-) => {
-  isMigratingShareholders.value = true
-  try {
-    const hash = await writeContract(config, {
-      address: newInvestorAddress,
-      abi: INVESTOR_ABI,
-      functionName: 'distributeMint',
-      args: [snapshot.map((s) => ({ shareholder: s.shareholder, amount: s.amount }))]
-    })
-    await waitForTransactionReceipt(config, { hash })
-    toast.add({
-      title: `Migrated ${snapshot.length} shareholder${snapshot.length === 1 ? '' : 's'}`,
-      color: 'success'
-    })
-  } finally {
-    isMigratingShareholders.value = false
+const retryMigration = () => {
+  if (pendingMigration.value) {
+    runPendingMigration(pendingMigration.value)
   }
+}
+
+const skipMigration = async () => {
+  const teamId = teamStore.currentTeamId
+  pendingMigration.value = null
+  resetMigration()
+  if (teamId) await invalidateQueries(teamId)
+  toast.add({
+    title:
+      'Migration skipped. You can retry it later from the Share Token page (Migrate from previous Officer).',
+    color: 'warning'
+  })
+  showModal.value = false
 }
 
 const handleRedeploySuccess = async (metadata: OfficerDeploymentMetadata) => {
@@ -281,31 +334,25 @@ const handleRedeploySuccess = async (metadata: OfficerDeploymentMetadata) => {
       }
     })
 
-    // Shareholder migration: read the live set off the old InvestorV1 (found
-    // via the previousOfficer the backend just linked for us) and reissue it
-    // on the new one. Skipped if this is the team's first Officer.
     if (previousOfficer) {
-      try {
-        const oldInvestorAddress = await findInvestorAddress(previousOfficer.address as Address)
-        if (oldInvestorAddress) {
-          const shareholders = await readOldShareholders(oldInvestorAddress)
-          if (shareholders.length > 0) {
-            const newInvestorAddress = await findInvestorAddress(metadata.officerAddress)
-            if (!newInvestorAddress) {
-              throw new Error('New InvestorV1 address not found in Officer.getTeam()')
-            }
-            await migrateShareholders(newInvestorAddress, shareholders)
-          }
-        }
-      } catch (migrationError) {
-        // Officer is already registered; the linked list persists, so the
-        // migration can be retried later from the new InvestorV1.
-        log.error('Shareholder migration failed:', migrationError)
+      const newInvestorAddress = await findNewInvestorAddress(metadata.officerAddress)
+      if (!newInvestorAddress) {
+        log.error('New InvestorV1 address not found in Officer.getTeam()')
         toast.add({
           title:
-            'Officer redeployed, but shareholder migration failed. You can retry it later from the new InvestorV1 contract.',
+            'Officer redeployed, but the new InvestorV1 could not be located. Retry from the Share Token page.',
           color: 'error'
         })
+      } else {
+        pendingMigration.value = {
+          previousOfficerAddress: previousOfficer.address as Address,
+          newInvestorAddress
+        }
+        await runPendingMigration(pendingMigration.value)
+        // If the migration threw, pendingMigration stays set and the modal
+        // renders the retry/skip UI. Don't invalidate or close in that case —
+        // we want the user to make a choice first.
+        if (pendingMigration.value) return
       }
     }
 
@@ -320,9 +367,8 @@ const handleRedeploySuccess = async (metadata: OfficerDeploymentMetadata) => {
 
 const redeployContracts = async () => {
   if (!canRedeploy.value || !teamStore.currentTeamId) return
-
-  // No JS snapshot needed — the backend response gives us previousOfficer and
-  // we read the live shareholder list off the old InvestorV1 after deploy.
+  resetMigration()
+  pendingMigration.value = null
   await deployOfficer({
     investorInput: { ...investorContractInput.value },
     teamId: teamStore.currentTeamId,

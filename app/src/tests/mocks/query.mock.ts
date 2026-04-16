@@ -55,6 +55,7 @@ export const mockTeamData: Team = {
     deployBlockNumber: null,
     deployedAt: null,
     previousOfficerId: null,
+    previousOfficer: null,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   }

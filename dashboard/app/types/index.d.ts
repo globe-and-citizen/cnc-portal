@@ -59,6 +59,11 @@ export interface Range {
   end: Date
 }
 
+export interface PreviousOfficerRef {
+  id: number
+  address: string
+}
+
 export interface CurrentOfficer {
   id: number
   address: string
@@ -67,6 +72,7 @@ export interface CurrentOfficer {
   deployBlockNumber: string | null
   deployedAt: string | null
   previousOfficerId: number | null
+  previousOfficer: PreviousOfficerRef | null
   createdAt: string
   updatedAt: string
 }
