@@ -94,17 +94,26 @@ export interface CreateOfficerParams {
   body: CreateOfficerBody
 }
 
+export interface TeamOfficerResponse {
+  id: number
+  address: string
+  teamId: number
+  deployer: string
+  deployBlockNumber: string | null
+  deployedAt: string | null
+  previousOfficerId: number | null
+  createdAt: string
+  updatedAt: string
+}
+
 export interface CreateOfficerResponse {
-  officer: {
-    id: number
-    address: string
-    teamId: number
-    deployer: string
-    deployBlockNumber: string | null
-    deployedAt: string | null
-    createdAt: string
-    updatedAt: string
-  }
+  officer: TeamOfficerResponse
+  /**
+   * The TeamOfficer the new one points back to, or null if this is the first
+   * Officer ever deployed for the team. Use `previousOfficer.address` to read
+   * state off the old Officer generation (e.g. shareholder migration).
+   */
+  previousOfficer: TeamOfficerResponse | null
   contractsCreated: number
 }
 

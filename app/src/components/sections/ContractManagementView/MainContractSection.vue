@@ -240,10 +240,10 @@ const openRedeployModal = () => {
   showModal.value = true
 }
 
-// Reads the new InvestorV1 address by calling getTeam() on the freshly deployed
-// Officer. We can't rely on the teamStore yet because the cache invalidation
-// and refetch happen asynchronously after registerOfficer.
-const findNewInvestorAddress = async (officerAddress: Address): Promise<Address | null> => {
+// Given an Officer address, returns the InvestorV1 sub-contract address from
+// its getTeam() list. Used both to find the old Investor (on the previous
+// Officer) and the new one (on the freshly deployed Officer).
+const findInvestorAddress = async (officerAddress: Address): Promise<Address | null> => {
   const contracts = (await readContract(config, {
     address: officerAddress,
     abi: OFFICER_ABI,
@@ -251,6 +251,21 @@ const findNewInvestorAddress = async (officerAddress: Address): Promise<Address 
   })) as readonly { contractType: string; contractAddress: Address }[]
 
   return contracts.find((c) => c.contractType === 'InvestorV1')?.contractAddress ?? null
+}
+
+// Reads the live shareholder list from an old InvestorV1 contract. Because we
+// find the old Investor via the on-chain linked list (previousOfficer → old
+// Officer → old InvestorV1), this is durable across page refreshes — no JS
+// snapshot involved.
+const readOldShareholders = async (
+  oldInvestorAddress: Address
+): Promise<readonly ShareholderSnapshot[]> => {
+  const result = (await readContract(config, {
+    address: oldInvestorAddress,
+    abi: INVESTOR_ABI,
+    functionName: 'getShareholders'
+  })) as readonly ShareholderSnapshot[]
+  return result
 }
 
 const migrateShareholders = async (
@@ -275,64 +290,66 @@ const migrateShareholders = async (
   }
 }
 
-const buildHandleRedeploySuccess =
-  (snapshot: readonly ShareholderSnapshot[]) =>
-  async (metadata: OfficerDeploymentMetadata) => {
-    const teamId = teamStore.currentTeamId
-    if (!teamId) return
+const handleRedeploySuccess = async (metadata: OfficerDeploymentMetadata) => {
+  const teamId = teamStore.currentTeamId
+  if (!teamId) return
 
-    try {
-      await registerOfficer({
-        body: {
-          teamId,
-          address: metadata.officerAddress,
-          deployBlockNumber: metadata.deployBlockNumber,
-          deployedAt: metadata.deployedAt.toISOString()
-        }
-      })
-
-      // Migrate shareholders BEFORE invalidating queries so the team store
-      // doesn't briefly show a zero-balance state for existing holders.
-      if (snapshot.length > 0) {
-        try {
-          const newInvestorAddress = await findNewInvestorAddress(metadata.officerAddress)
-          if (!newInvestorAddress) {
-            throw new Error('New InvestorV1 address not found in Officer.getTeam()')
-          }
-          await migrateShareholders(newInvestorAddress, snapshot)
-        } catch (migrationError) {
-          // Officer is already registered; surface the failure but don't
-          // unwind. The user can retry the migration manually.
-          log.error('Shareholder migration failed:', migrationError)
-          toast.add({
-            title:
-              'Officer redeployed, but shareholder migration failed. You can retry from the new InvestorV1 contract.',
-            color: 'error'
-          })
-        }
+  try {
+    const { previousOfficer } = await registerOfficer({
+      body: {
+        teamId,
+        address: metadata.officerAddress,
+        deployBlockNumber: metadata.deployBlockNumber,
+        deployedAt: metadata.deployedAt.toISOString()
       }
+    })
 
-      await invalidateQueries(teamId)
-      toast.add({ title: 'Officer redeployed and contracts synced', color: 'success' })
-      showModal.value = false
-    } catch (error) {
-      log.error('Error registering redeployed officer:', error)
-      toast.add({ title: 'Failed to register the new Officer contract', color: 'error' })
+    // Shareholder migration: read the live set off the old InvestorV1 (found
+    // via the previousOfficer the backend just linked for us) and reissue it
+    // on the new one. Skipped if this is the team's first Officer.
+    if (previousOfficer) {
+      try {
+        const oldInvestorAddress = await findInvestorAddress(previousOfficer.address as Address)
+        if (oldInvestorAddress) {
+          const shareholders = await readOldShareholders(oldInvestorAddress)
+          if (shareholders.length > 0) {
+            const newInvestorAddress = await findInvestorAddress(metadata.officerAddress)
+            if (!newInvestorAddress) {
+              throw new Error('New InvestorV1 address not found in Officer.getTeam()')
+            }
+            await migrateShareholders(newInvestorAddress, shareholders)
+          }
+        }
+      } catch (migrationError) {
+        // Officer is already registered; the linked list persists, so the
+        // migration can be retried later from the new InvestorV1.
+        log.error('Shareholder migration failed:', migrationError)
+        toast.add({
+          title:
+            'Officer redeployed, but shareholder migration failed. You can retry it later from the new InvestorV1 contract.',
+          color: 'error'
+        })
+      }
     }
+
+    await invalidateQueries(teamId)
+    toast.add({ title: 'Officer redeployed and contracts synced', color: 'success' })
+    showModal.value = false
+  } catch (error) {
+    log.error('Error registering redeployed officer:', error)
+    toast.add({ title: 'Failed to register the new Officer contract', color: 'error' })
   }
+}
 
 const redeployContracts = async () => {
   if (!canRedeploy.value || !teamStore.currentTeamId) return
 
-  // Snapshot the shareholders BEFORE deploy. After deploy the teamStore points
-  // at the new (empty) InvestorV1, so we'd lose the old state.
-  const snapshot = ((currentShareholders.value as readonly ShareholderSnapshot[] | undefined) ??
-    []) as readonly ShareholderSnapshot[]
-
+  // No JS snapshot needed — the backend response gives us previousOfficer and
+  // we read the live shareholder list off the old InvestorV1 after deploy.
   await deployOfficer({
     investorInput: { ...investorContractInput.value },
     teamId: teamStore.currentTeamId,
-    onDeploymentComplete: buildHandleRedeploySuccess(snapshot)
+    onDeploymentComplete: handleRedeploySuccess
   })
 }
 </script>

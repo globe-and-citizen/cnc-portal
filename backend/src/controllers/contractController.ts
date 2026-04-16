@@ -166,11 +166,19 @@ export const createOfficer = async (req: Request, res: Response) => {
       previousHead?.id ?? null
     );
 
+    // Expose previousOfficer so the frontend can drive a shareholder migration
+    // (or any other copy-forward logic) without a second round-trip.
     return res.status(200).json({
       officer: {
         ...officer,
         deployBlockNumber: officer.deployBlockNumber?.toString() ?? null,
       },
+      previousOfficer: previousHead
+        ? {
+            ...previousHead,
+            deployBlockNumber: previousHead.deployBlockNumber?.toString() ?? null,
+          }
+        : null,
       contractsCreated: created.count,
     });
   } catch (error) {

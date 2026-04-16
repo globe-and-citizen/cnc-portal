@@ -474,6 +474,10 @@ describe('contractController', () => {
       expect(response.body.contractsCreated).toBe(1);
       expect(response.body.officer.id).toBe(42);
       expect(response.body.officer.deployBlockNumber).toBe('12345');
+      expect(response.body.previousOfficer).toMatchObject({
+        id: 7,
+        address: mockOfficerAddress,
+      });
     });
 
     it('should set previousOfficerId to null when the team has no prior Officer', async () => {
@@ -498,6 +502,7 @@ describe('contractController', () => {
         })
       );
       expect(response.status).toBe(200);
+      expect(response.body.previousOfficer).toBeNull();
     });
 
     it('should return 500 on internal error', async () => {

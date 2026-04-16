@@ -230,6 +230,22 @@ contractRoutes.put('/sync', validateBody(syncContractsBodySchema), syncContracts
  *   responses:
  *     200:
  *       description: Officer registered and contracts synced
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               officer:
+ *                 type: object
+ *                 description: The new TeamOfficer row (head of the linked list).
+ *               previousOfficer:
+ *                 type: object
+ *                 nullable: true
+ *                 description: The TeamOfficer the new one points back to, or
+ *                   null if this is the first Officer ever deployed. Frontend
+ *                   uses its address to copy shareholders / state forward.
+ *               contractsCreated:
+ *                 type: integer
  *     403:
  *       description: Caller is not the team owner
  *     404:
