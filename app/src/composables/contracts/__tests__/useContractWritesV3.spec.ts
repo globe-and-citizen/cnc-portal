@@ -2,67 +2,39 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { ref } from 'vue'
 import { BaseError, type Abi } from 'viem'
 import { simulateContract, writeContract, waitForTransactionReceipt } from '@wagmi/core'
+import {
+  mockInvalidateQueries,
+  smartUseMutation,
+  useMutationFn,
+  useQueryClientFn
+} from '@/tests/mocks/composables.mock'
 import { mockLog } from '@/tests/mocks/utils.mock'
-import { ABI, ADDRESS, HASH, okSimulation, revertedReceipt, successReceipt } from './useContractWritesV3.test-utils'
-
-// Override the global @tanstack/vue-query mock for this file: we want
-// `useMutation` to actually invoke `mutationFn` / `onSuccess` / `onError`
-// so we can assert on the V3 wrapper's behaviour without spinning up a real
-// QueryClient.
-const { mockInvalidateQueries, mockUseMutation, mockUseQueryClient } = vi.hoisted(() => {
-  const mockInvalidateQueries = vi.fn().mockResolvedValue(undefined)
-  const mockUseQueryClient = vi.fn(() => ({ invalidateQueries: mockInvalidateQueries }))
-
-  type MutationOptions<TData, TVariables> = {
-    mutationFn: (vars: TVariables) => Promise<TData>
-    onSuccess?: (data: TData, vars: TVariables, ctx: unknown) => unknown
-    onError?: (err: unknown, vars: TVariables, ctx: unknown) => unknown
-  }
-
-  const mockUseMutation = vi.fn(<TData, TVariables>(options: MutationOptions<TData, TVariables>) => {
-    return {
-      mutate: vi.fn(),
-      mutateAsync: async (variables: TVariables) => {
-        try {
-          const data = await options.mutationFn(variables)
-          if (options.onSuccess) await options.onSuccess(data, variables, undefined)
-          return data
-        } catch (err) {
-          if (options.onError) await options.onError(err, variables, undefined)
-          throw err
-        }
-      },
-      isPending: ref(false),
-      isSuccess: ref(false),
-      isError: ref(false),
-      error: ref(null),
-      data: ref(null),
-      reset: vi.fn()
-    }
-  })
-
-  return { mockInvalidateQueries, mockUseMutation, mockUseQueryClient }
-})
-
-vi.mock('@tanstack/vue-query', async (importOriginal) => {
-  const actual = (await importOriginal()) as object
-  return {
-    ...actual,
-    useMutation: mockUseMutation,
-    useQueryClient: mockUseQueryClient
-  }
-})
-
 import {
   executeContractWrite,
   useContractWritesV3,
   ContractWriteRevertedError,
   type ContractWriteV3Config
 } from '../useContractWritesV3'
+import {
+  ABI,
+  ADDRESS,
+  HASH,
+  okSimulation,
+  revertedReceipt,
+  successReceipt
+} from './useContractWritesV3.test-utils'
 
 beforeEach(() => {
   vi.clearAllMocks()
-  mockInvalidateQueries.mockResolvedValue(undefined)
+  // Opt into the smart mutation impl so mutationFn / onSuccess / onError fire.
+  useMutationFn.mockImplementation(smartUseMutation)
+  // Opt into the stable invalidateQueries spy so onSuccess assertions are inspectable.
+  useQueryClientFn.mockReturnValue({
+    invalidateQueries: mockInvalidateQueries,
+    getQueryData: vi.fn(),
+    setQueryData: vi.fn(),
+    removeQueries: vi.fn()
+  })
 })
 
 describe('executeContractWrite (standalone)', () => {
