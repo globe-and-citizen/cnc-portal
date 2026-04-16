@@ -1,9 +1,8 @@
 <template>
   <div class="flex flex-col gap-6">
-    <span
-      v-if="teamStore.currentTeamMeta.isPending"
-      class="loading loading-spinner loading-lg"
-    ></span>
+    <div v-if="teamStore.currentTeamMeta.isPending" class="flex justify-center">
+      <UIcon name="i-lucide-loader-circle" class="text-primary h-10 w-10 animate-spin" />
+    </div>
     <div
       v-if="!teamStore.currentTeamMeta.isPending && teamStore"
       class="flex w-full flex-col items-center gap-5"
@@ -20,81 +19,47 @@
                 description="Deploy a new Officer contract for this team. The previous Officer is archived, not deleted."
               >
                 <template #body>
-                  <div class="alert alert-warning my-6">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      class="h-6 w-6 shrink-0 stroke-current"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                      />
-                    </svg>
-                    <span class="text-base font-semibold">Read this before continuing</span>
-                  </div>
+                  <UAlert
+                    color="warning"
+                    variant="soft"
+                    icon="i-heroicons-exclamation-triangle"
+                    title="Read this before continuing"
+                    class="my-6"
+                  />
 
                   <div class="mb-6 space-y-4 text-sm">
-                    <div class="border-warning bg-warning/5 rounded-lg border p-4">
-                      <h4 class="mb-2 font-semibold">What happens</h4>
-                      <ul class="list-inside list-disc space-y-1">
-                        <li>
-                          A brand-new Officer contract is deployed on-chain, along with fresh
-                          sub-contracts (Bank, Voting, Board of Directors, Expense Account, Cash
-                          Remuneration, Investor / Share token).
-                        </li>
-                        <li>
-                          The previous Officer and its sub-contracts are
-                          <strong>archived</strong>: their database rows stay in place, linked to
-                          the old Officer, and remain visible in the team's contract history.
-                        </li>
-                        <li>
-                          Your <strong>Safe contract is preserved</strong> — it is not affected by
-                          this operation.
-                        </li>
-                      </ul>
-                    </div>
+                    <UAlert color="warning" variant="soft" title="What happens">
+                      <template #description>
+                        <ul class="list-inside list-disc space-y-1">
+                          <li v-for="(item, i) in whatHappensItems" :key="i" v-html="item" />
+                        </ul>
+                      </template>
+                    </UAlert>
 
-                    <div class="border-error bg-error/5 rounded-lg border p-4">
-                      <h4 class="text-error mb-2 font-semibold">What you will lose access to</h4>
-                      <ul class="list-inside list-disc space-y-1">
-                        <li>
-                          Funds held in the <strong>old</strong> Bank, Expense Account and Cash
-                          Remuneration contracts are still on-chain but are no longer reachable
-                          through the new Officer's UI. Withdraw or migrate them first if you need
-                          them.
-                        </li>
-                        <li>
-                          Existing share tokens issued by the old Investor contract remain valid
-                          on-chain but the new Investor contract starts from zero. Token holders
-                          must be redistributed manually.
-                        </li>
-                        <li>
-                          Voting and Board of Directors history attached to the old Officer remains
-                          visible in the archive but is not carried over.
-                        </li>
-                      </ul>
-                    </div>
+                    <UAlert color="error" variant="soft" title="What you will lose access to">
+                      <template #description>
+                        <ul class="list-inside list-disc space-y-1">
+                          <li v-for="(item, i) in whatYouLoseItems" :key="i" v-html="item" />
+                        </ul>
+                      </template>
+                    </UAlert>
                   </div>
 
-                  <div
+                  <UAlert
                     v-if="shareholderCount > 0"
-                    class="border-info bg-info/5 mb-6 rounded-lg border p-4 text-sm"
+                    color="info"
+                    variant="soft"
+                    icon="i-heroicons-information-circle"
+                    :title="`${shareholderCount} shareholder${shareholderCount === 1 ? '' : 's'} will be migrated automatically`"
+                    class="mb-6"
                   >
-                    <p class="font-semibold">
-                      {{ shareholderCount }} shareholder{{ shareholderCount === 1 ? '' : 's' }}
-                      will be migrated automatically
-                    </p>
-                    <p class="mt-1">
+                    <template #description>
                       After the new Officer is deployed, the current share token holders will be
                       reissued the same balances on the new Investor contract via
                       <code>distributeMint</code>. This is a separate transaction you'll need to
                       sign right after the deploy.
-                    </p>
-                  </div>
+                    </template>
+                  </UAlert>
 
                   <UForm :state="investorContractInput" class="mb-6 flex flex-col gap-4">
                     <UFormField
@@ -190,6 +155,18 @@ interface ShareholderSnapshot {
 
 const showModal = ref(false)
 const investorContractInput = ref({ name: '', symbol: '' })
+
+const whatHappensItems = [
+  'A brand-new Officer contract is deployed on-chain, along with fresh sub-contracts (Bank, Voting, Board of Directors, Expense Account, Cash Remuneration, Investor / Share token).',
+  "The previous Officer and its sub-contracts are <strong>archived</strong>: their database rows stay in place, linked to the old Officer, and remain visible in the team's contract history.",
+  'Your <strong>Safe contract is preserved</strong> — it is not affected by this operation.'
+]
+
+const whatYouLoseItems = [
+  "Funds held in the <strong>old</strong> Bank, Expense Account and Cash Remuneration contracts are still on-chain but are no longer reachable through the new Officer's UI. Withdraw or migrate them first if you need them.",
+  'Existing share tokens issued by the old Investor contract remain valid on-chain but the new Investor contract starts from zero. Token holders must be redistributed manually.',
+  'Voting and Board of Directors history attached to the old Officer remains visible in the archive but is not carried over.'
+]
 
 const teamStore = useTeamStore()
 const userStore = useUserDataStore()
