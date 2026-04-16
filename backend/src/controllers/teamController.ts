@@ -1,4 +1,4 @@
-import { /*PrismaClient,*/ TeamOfficer, User } from '@prisma/client';
+import { /*PrismaClient,*/ TeamContract, TeamOfficer, User } from '@prisma/client';
 import { Request, Response } from 'express';
 import { isAddress } from 'viem';
 import { addNotification, prisma } from '../utils';
@@ -14,6 +14,18 @@ export const currentOfficerInclude = {
   teamOfficers: {
     where: { nextOfficer: { is: null } },
     take: 1,
+  },
+} as const;
+
+// Same as currentOfficerInclude, but also loads the contracts governed by the
+// current Officer. Use on endpoints that expose `teamContracts` on the team —
+// we want the live set (contracts of the current Officer), not the union of
+// every Officer's contracts across history.
+export const currentOfficerWithContractsInclude = {
+  teamOfficers: {
+    where: { nextOfficer: { is: null } },
+    take: 1,
+    include: { contracts: true },
   },
 } as const;
 
@@ -35,6 +47,24 @@ const withCurrentOfficer = <T extends { teamOfficers?: TeamOfficer[] }>(team: T)
   return {
     ...rest,
     currentOfficer: serializeOfficer(teamOfficers?.[0]),
+  };
+};
+
+// Same as withCurrentOfficer but additionally surfaces the current Officer's
+// contracts as `teamContracts` on the team — scoping the contract list to the
+// currently active generation so archived contracts don't leak out.
+const withCurrentOfficerAndContracts = <
+  T extends { teamOfficers?: (TeamOfficer & { contracts: TeamContract[] })[] },
+>(
+  team: T
+) => {
+  const { teamOfficers, ...rest } = team;
+  const head = teamOfficers?.[0];
+  const { contracts, ...headWithoutContracts } = head ?? { contracts: [] };
+  return {
+    ...rest,
+    currentOfficer: serializeOfficer(head ? (headWithoutContracts as TeamOfficer) : null),
+    teamContracts: contracts,
   };
 };
 
@@ -141,8 +171,7 @@ const getTeam = async (req: Request, res: Response) => {
             },
           },
         },
-        teamContracts: true,
-        ...currentOfficerInclude,
+        ...currentOfficerWithContractsInclude,
       },
     });
 
@@ -165,7 +194,7 @@ const getTeam = async (req: Request, res: Response) => {
     );
 
     res.status(200).json({
-      ...withCurrentOfficer(team),
+      ...withCurrentOfficerAndContracts(team),
       members: membersWithResolvedImages,
     });
   } catch (error: unknown) {
@@ -264,11 +293,10 @@ const updateTeam = async (req: Request, res: Response) => {
             name: true,
           },
         },
-        teamContracts: true,
-        ...currentOfficerInclude,
+        ...currentOfficerWithContractsInclude,
       },
     });
-    res.status(200).json(withCurrentOfficer(teamU));
+    res.status(200).json(withCurrentOfficerAndContracts(teamU));
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal Server Error';
     return errorResponse(500, message, res);
