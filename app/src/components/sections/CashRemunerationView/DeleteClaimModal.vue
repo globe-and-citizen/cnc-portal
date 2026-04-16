@@ -1,11 +1,9 @@
 <template>
   <div class="flex flex-col gap-4">
-    <h3 class="text-xl font-bold">Delete Claim</h3>
-    <hr />
     <p>
       Are you sure you want to delete
-      <span class="font-semibold">{{ claim?.hoursWorked }} h</span>
-      claims submitted on
+      <span class="font-semibold">{{ formatMinutesAsDuration(claim?.hoursWorked ?? 0) }}</span>
+      claim submitted on
       <span class="font-semibold">{{ formattedDate }}</span>
       ?
     </p>
@@ -37,6 +35,7 @@
 import { computed } from 'vue'
 import dayjs from 'dayjs'
 import type { Claim } from '@/types'
+import { formatMinutesAsDuration } from '@/utils/wageUtil'
 
 import { useDeleteClaimMutation } from '@/queries/weeklyClaim.queries'
 
