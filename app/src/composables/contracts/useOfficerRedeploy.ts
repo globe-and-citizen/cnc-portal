@@ -25,6 +25,12 @@ import { log } from '@/utils'
  * `useCreateOfficerMutation`, `useMigrateShareholders`), so their own
  * loading/error state lives in TanStack — this composable only owns the
  * higher-level workflow state that spans multiple calls.
+ *
+ * Errors are **not** surfaced via toast from here. Each mutation's `error`
+ * ref is exposed as-is plus a workflow-level `workflowError` for things that
+ * don't belong to any single mutation (e.g. "new InvestorV1 not found in
+ * getTeam()"). The consumer template is expected to render them via reactive
+ * UAlert components.
  */
 export function useOfficerRedeploy() {
   const teamStore = useTeamStore()
@@ -35,12 +41,14 @@ export function useOfficerRedeploy() {
   const migrateMutation = useMigrateShareholders()
   const invalidateQueries = useInvalidateOfficerQueries()
 
-  // Workflow-level state that spans multiple mutations. Not provided by any
-  // single TanStack mutation, so kept as local refs.
+  // Workflow-level state that spans multiple mutations.
   const pendingMigration = ref<{
     previousOfficerAddress: Address
     newInvestorAddress: Address
   } | null>(null)
+  // Workflow-level error that doesn't map to any single mutation (e.g. the
+  // on-chain lookup that runs between register and migrate).
+  const workflowError = ref<Error | null>(null)
 
   const isRunning = computed(
     () =>
@@ -51,7 +59,6 @@ export function useOfficerRedeploy() {
   const migrationFailed = computed(
     () => pendingMigration.value !== null && !migrateMutation.isPending.value
   )
-  const migrationError = computed(() => migrateMutation.error.value)
   const isInconsistent = computed(
     () => migrateMutation.error.value instanceof InconsistentSupplyError
   )
@@ -73,8 +80,6 @@ export function useOfficerRedeploy() {
   }) => {
     // Outcome toasts come from useMigrateShareholders default onSuccess.
     // Errors remain on migrateMutation.error for the caller's retry UI.
-    // We await so the orchestrator can sequence the next step, but swallow
-    // rejection — the workflow decides what to do next by reading state.
     await migrateMutation.mutateAsync(ctx).catch(() => null)
     if (migrateMutation.isSuccess.value) {
       pendingMigration.value = null
@@ -105,6 +110,9 @@ export function useOfficerRedeploy() {
 
   const reset = () => {
     pendingMigration.value = null
+    workflowError.value = null
+    deployMutation.reset()
+    registerMutation.reset()
     migrateMutation.reset()
   }
 
@@ -113,8 +121,9 @@ export function useOfficerRedeploy() {
     if (!teamId) return
     reset()
 
-    // Error toast handled by useDeployOfficer onError. A .catch(() => null)
-    // lets us abort the sequence cleanly without wrapping in try/catch.
+    // Errors remain on deployMutation.error / registerMutation.error so the
+    // template can render them reactively. `.catch(() => null)` just aborts
+    // the sequence without leaking a rejection.
     const metadata = await deployMutation
       .mutateAsync({ investorInput, teamId })
       .catch(() => null)
@@ -129,11 +138,7 @@ export function useOfficerRedeploy() {
           deployedAt: metadata.deployedAt.toISOString()
         }
       })
-      .catch((error) => {
-        log.error('Error registering redeployed officer:', error)
-        toast.add({ title: 'Failed to register the new Officer contract', color: 'error' })
-        return null
-      })
+      .catch(() => null)
     if (!registerResult) return
 
     const { previousOfficer } = registerResult
@@ -142,19 +147,17 @@ export function useOfficerRedeploy() {
       const newInvestorAddress = await findNewInvestorAddress(metadata.officerAddress)
       if (!newInvestorAddress) {
         log.error('New InvestorV1 address not found in Officer.getTeam()')
-        toast.add({
-          title:
-            'Officer redeployed, but the new InvestorV1 could not be located. Retry from the Share Token page.',
-          color: 'error'
-        })
-      } else {
-        pendingMigration.value = {
-          previousOfficerAddress: previousOfficer.address as Address,
-          newInvestorAddress
-        }
-        await tryMigration(pendingMigration.value)
-        if (pendingMigration.value) return
+        workflowError.value = new Error(
+          'Officer redeployed, but the new InvestorV1 could not be located in Officer.getTeam(). Retry from the Share Token page.'
+        )
+        return
       }
+      pendingMigration.value = {
+        previousOfficerAddress: previousOfficer.address as Address,
+        newInvestorAddress
+      }
+      await tryMigration(pendingMigration.value)
+      if (pendingMigration.value) return
     }
 
     await invalidateQueries(teamId)
@@ -171,7 +174,12 @@ export function useOfficerRedeploy() {
     // State
     isRunning,
     migrationFailed,
-    migrationError,
-    isInconsistent
+    isInconsistent,
+
+    // Reactive errors — bind directly to UAlert in the template
+    deployError: deployMutation.error,
+    registerError: registerMutation.error,
+    migrationError: migrateMutation.error,
+    workflowError
   }
 }

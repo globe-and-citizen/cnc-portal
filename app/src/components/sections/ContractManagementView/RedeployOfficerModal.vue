@@ -76,25 +76,63 @@
         </UFormField>
       </UForm>
 
-      <div
+      <UAlert
+        v-if="deployError"
+        color="error"
+        variant="soft"
+        icon="i-heroicons-x-circle"
+        title="Officer deploy failed"
+        :description="formatDeployError(deployError)"
+        class="mb-4"
+        data-test="deploy-error-alert"
+      />
+
+      <UAlert
+        v-if="registerError"
+        color="error"
+        variant="soft"
+        icon="i-heroicons-x-circle"
+        title="Failed to register the new Officer with the backend"
+        :description="registerError.message"
+        class="mb-4"
+        data-test="register-error-alert"
+      />
+
+      <UAlert
+        v-if="workflowError"
+        color="error"
+        variant="soft"
+        icon="i-heroicons-x-circle"
+        title="Officer redeployed, but a follow-up step failed"
+        :description="workflowError.message"
+        class="mb-4"
+        data-test="workflow-error-alert"
+      />
+
+      <UAlert
         v-if="migrationFailed"
-        class="border-error bg-error/5 mb-4 rounded-lg border p-4 text-sm"
-        data-test="migration-error-block"
+        color="error"
+        variant="soft"
+        icon="i-heroicons-x-circle"
+        title="Shareholder migration failed"
+        class="mb-4"
+        data-test="migration-error-alert"
       >
-        <p class="text-error font-semibold">Shareholder migration failed</p>
-        <p class="mt-1">
-          The new Officer is deployed and registered, but the shareholder mint did not
-          complete. You can retry below, or skip and finish the migration later from the Share
-          Token page.
-        </p>
-        <p v-if="migrationError" class="mt-2 font-mono text-xs opacity-70">
-          {{ migrationError.message }}
-        </p>
-        <p v-if="isInconsistent" class="text-error mt-2">
-          Retry is blocked: the new InvestorV1 already has a totalSupply that does not match
-          the previous shareholders. Migrating again would double-mint.
-        </p>
-      </div>
+        <template #description>
+          <p>
+            The new Officer is deployed and registered, but the shareholder mint did not
+            complete. You can retry below, or skip and finish the migration later from the Share
+            Token page.
+          </p>
+          <p v-if="migrationError" class="mt-2 font-mono text-xs opacity-70">
+            {{ migrationError.message }}
+          </p>
+          <p v-if="isInconsistent" class="mt-2">
+            Retry is blocked: the new InvestorV1 already has a totalSupply that does not match
+            the previous shareholders. Migrating again would double-mint.
+          </p>
+        </template>
+      </UAlert>
 
       <div class="flex justify-between gap-3">
         <UButton
@@ -139,6 +177,7 @@ import {
   useInvestorSymbol
 } from '@/composables/investor/reads'
 import { useOfficerRedeploy } from '@/composables/contracts/useOfficerRedeploy'
+import { formatDeployError } from '@/composables/contracts/useOfficerDeployment'
 
 const isOpen = defineModel<boolean>('open', { default: false })
 
@@ -172,8 +211,11 @@ const {
   reset,
   isRunning,
   migrationFailed,
+  isInconsistent,
+  deployError,
+  registerError,
   migrationError,
-  isInconsistent
+  workflowError
 } = useOfficerRedeploy()
 
 const canRedeploy = computed(

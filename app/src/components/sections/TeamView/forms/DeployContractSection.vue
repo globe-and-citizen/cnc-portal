@@ -1,5 +1,25 @@
 <template>
   <div class="space-y-4">
+    <UAlert
+      v-if="deployMutation.error.value"
+      color="error"
+      variant="soft"
+      icon="i-heroicons-x-circle"
+      title="Officer deploy failed"
+      :description="formatDeployError(deployMutation.error.value)"
+      data-test="deploy-error-alert"
+    />
+
+    <UAlert
+      v-if="registerMutation.error.value"
+      color="error"
+      variant="soft"
+      icon="i-heroicons-x-circle"
+      title="Failed to complete deployment setup"
+      :description="registerMutation.error.value.message"
+      data-test="register-error-alert"
+    />
+
     <UButton
       color="primary"
       :loading="isBusy"
@@ -14,9 +34,12 @@
 <script lang="ts" setup>
 import type { Team } from '@/types'
 import { computed } from 'vue'
-import { useDeployOfficer, useInvalidateOfficerQueries } from '@/composables/contracts'
+import {
+  useDeployOfficer,
+  useInvalidateOfficerQueries,
+  formatDeployError
+} from '@/composables/contracts'
 import { useCreateOfficerMutation } from '@/queries/contract.queries'
-import { log } from '@/utils'
 
 const props = withDefaults(
   defineProps<{
@@ -51,7 +74,7 @@ const onClick = async () => {
   }
   const teamId = props.createdTeamData.id
 
-  // Error toast already emitted by useDeployOfficer onError.
+  // Errors remain on the mutation refs so the UAlerts above render them.
   const metadata = await deployMutation
     .mutateAsync({ investorInput: props.investorContractInput, teamId })
     .catch(() => null)
@@ -65,11 +88,6 @@ const onClick = async () => {
         deployBlockNumber: metadata.deployBlockNumber,
         deployedAt: metadata.deployedAt.toISOString()
       }
-    })
-    .catch((error) => {
-      log.error('Error in post-deployment processing:', error)
-      toast.add({ title: 'Failed to complete deployment setup', color: 'error' })
-      return null
     })
   if (!registered) return
 

@@ -3,6 +3,7 @@ export {
   deployOfficer,
   useDeployOfficer,
   useInvalidateOfficerQueries,
+  formatDeployError,
   type DeployOfficerArgs,
   type OfficerDeploymentMetadata,
   type OfficerDeploymentResult

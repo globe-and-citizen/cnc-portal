@@ -10,23 +10,27 @@
           previous shareholders on-chain and mint them here.
         </p>
 
-        <p
+        <UAlert
           v-if="isInconsistent"
-          class="text-error mt-2 text-sm"
+          color="error"
+          variant="soft"
+          icon="i-heroicons-x-circle"
+          title="Retry blocked to prevent double-minting"
+          description="The new InvestorV1 already has a totalSupply that does not match the previous shareholders. Inspect the contract state before retrying."
+          class="mt-3"
           data-test="migration-banner-blocked"
-        >
-          The new InvestorV1 already has a totalSupply that does not match the previous
-          shareholders. Migration is blocked to prevent double-minting. Inspect the contract
-          state before retrying.
-        </p>
+        />
 
-        <p
+        <UAlert
           v-else-if="migrate.isError.value && migrate.error.value"
-          class="text-error mt-2 text-sm"
+          color="error"
+          variant="soft"
+          icon="i-heroicons-x-circle"
+          title="Last migration attempt failed"
+          :description="migrate.error.value.message"
+          class="mt-3"
           data-test="migration-banner-error"
-        >
-          Last attempt failed: {{ migrate.error.value.message }}
-        </p>
+        />
 
         <div class="mt-3 flex gap-3">
           <UButton

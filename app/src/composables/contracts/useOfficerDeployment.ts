@@ -121,7 +121,9 @@ export async function deployOfficer(args: DeployOfficerArgs): Promise<OfficerDep
 /**
  * TanStack-wrapped variant of {@link deployOfficer}. Exposes `mutateAsync`,
  * `isPending`, `error`, `data`. On success shows a toast and invalidates the
- * related team / contracts queries; on error shows a decoded error toast.
+ * related team / contracts queries. Errors are left on `mutation.error` so
+ * the consumer can render them inline (e.g. via UAlert) — no default error
+ * toast, since reactive error display is preferred for in-flow feedback.
  */
 export function useDeployOfficer() {
   const toast = useToast()
@@ -144,10 +146,17 @@ export function useDeployOfficer() {
     },
     onError: (error) => {
       log.error('Officer deployment error:', error)
-      const errorMessage = parseError(error, FACTORY_BEACON_ABI)
-      toast.add({ title: `Failed to deploy officer contract: ${errorMessage}`, color: 'error' })
     }
   })
+}
+
+/**
+ * Decodes an error from a deploy attempt into a human-readable message.
+ * Templates use this when rendering `deployMutation.error.value` to show the
+ * parsed ABI revert reason rather than the raw blockchain error.
+ */
+export function formatDeployError(error: unknown): string {
+  return parseError(error, FACTORY_BEACON_ABI)
 }
 
 /**
