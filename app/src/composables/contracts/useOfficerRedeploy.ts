@@ -71,21 +71,13 @@ export function useOfficerRedeploy() {
     previousOfficerAddress: Address
     newInvestorAddress: Address
   }) => {
-    try {
-      const result = await migrateMutation.mutateAsync(ctx)
-      if (result.kind === 'done') {
-        toast.add({
-          title: `Migrated ${result.migratedCount} shareholder${result.migratedCount === 1 ? '' : 's'}`,
-          color: 'success'
-        })
-      } else if (result.kind === 'noop-already-migrated') {
-        toast.add({ title: 'Shareholders were already migrated', color: 'success' })
-      } else if (result.kind === 'noop-empty') {
-        toast.add({ title: 'No shareholders to migrate', color: 'info' })
-      }
+    // Outcome toasts come from useMigrateShareholders default onSuccess.
+    // Errors remain on migrateMutation.error for the caller's retry UI.
+    // We await so the orchestrator can sequence the next step, but swallow
+    // rejection — the workflow decides what to do next by reading state.
+    await migrateMutation.mutateAsync(ctx).catch(() => null)
+    if (migrateMutation.isSuccess.value) {
       pendingMigration.value = null
-    } catch {
-      // Error exposed via migrateMutation.error. Caller renders the retry UI.
     }
   }
 
@@ -121,16 +113,15 @@ export function useOfficerRedeploy() {
     if (!teamId) return
     reset()
 
-    let metadata
-    try {
-      metadata = await deployMutation.mutateAsync({ investorInput, teamId })
-    } catch {
-      // Toast handled inside the mutation's onError — nothing to do here.
-      return
-    }
+    // Error toast handled by useDeployOfficer onError. A .catch(() => null)
+    // lets us abort the sequence cleanly without wrapping in try/catch.
+    const metadata = await deployMutation
+      .mutateAsync({ investorInput, teamId })
+      .catch(() => null)
+    if (!metadata) return
 
-    try {
-      const { previousOfficer } = await registerMutation.mutateAsync({
+    const registerResult = await registerMutation
+      .mutateAsync({
         body: {
           teamId,
           address: metadata.officerAddress,
@@ -138,32 +129,36 @@ export function useOfficerRedeploy() {
           deployedAt: metadata.deployedAt.toISOString()
         }
       })
+      .catch((error) => {
+        log.error('Error registering redeployed officer:', error)
+        toast.add({ title: 'Failed to register the new Officer contract', color: 'error' })
+        return null
+      })
+    if (!registerResult) return
 
-      if (previousOfficer) {
-        const newInvestorAddress = await findNewInvestorAddress(metadata.officerAddress)
-        if (!newInvestorAddress) {
-          log.error('New InvestorV1 address not found in Officer.getTeam()')
-          toast.add({
-            title:
-              'Officer redeployed, but the new InvestorV1 could not be located. Retry from the Share Token page.',
-            color: 'error'
-          })
-        } else {
-          pendingMigration.value = {
-            previousOfficerAddress: previousOfficer.address as Address,
-            newInvestorAddress
-          }
-          await tryMigration(pendingMigration.value)
-          if (pendingMigration.value) return
+    const { previousOfficer } = registerResult
+
+    if (previousOfficer) {
+      const newInvestorAddress = await findNewInvestorAddress(metadata.officerAddress)
+      if (!newInvestorAddress) {
+        log.error('New InvestorV1 address not found in Officer.getTeam()')
+        toast.add({
+          title:
+            'Officer redeployed, but the new InvestorV1 could not be located. Retry from the Share Token page.',
+          color: 'error'
+        })
+      } else {
+        pendingMigration.value = {
+          previousOfficerAddress: previousOfficer.address as Address,
+          newInvestorAddress
         }
+        await tryMigration(pendingMigration.value)
+        if (pendingMigration.value) return
       }
-
-      await invalidateQueries(teamId)
-      toast.add({ title: 'Officer redeployed and contracts synced', color: 'success' })
-    } catch (error) {
-      log.error('Error registering redeployed officer:', error)
-      toast.add({ title: 'Failed to register the new Officer contract', color: 'error' })
     }
+
+    await invalidateQueries(teamId)
+    toast.add({ title: 'Officer redeployed and contracts synced', color: 'success' })
   }
 
   return {

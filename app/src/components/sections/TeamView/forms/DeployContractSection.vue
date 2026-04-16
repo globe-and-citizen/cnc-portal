@@ -51,19 +51,14 @@ const onClick = async () => {
   }
   const teamId = props.createdTeamData.id
 
-  let metadata
-  try {
-    metadata = await deployMutation.mutateAsync({
-      investorInput: props.investorContractInput,
-      teamId
-    })
-  } catch {
-    // Error toast already emitted by useDeployOfficer onError.
-    return
-  }
+  // Error toast already emitted by useDeployOfficer onError.
+  const metadata = await deployMutation
+    .mutateAsync({ investorInput: props.investorContractInput, teamId })
+    .catch(() => null)
+  if (!metadata) return
 
-  try {
-    await registerMutation.mutateAsync({
+  const registered = await registerMutation
+    .mutateAsync({
       body: {
         teamId,
         address: metadata.officerAddress,
@@ -71,12 +66,15 @@ const onClick = async () => {
         deployedAt: metadata.deployedAt.toISOString()
       }
     })
-    await invalidateQueries(teamId)
-    toast.add({ title: 'Officer contracts deployed and synced successfully', color: 'success' })
-    emits('contractDeployed')
-  } catch (error) {
-    log.error('Error in post-deployment processing:', error)
-    toast.add({ title: 'Failed to complete deployment setup', color: 'error' })
-  }
+    .catch((error) => {
+      log.error('Error in post-deployment processing:', error)
+      toast.add({ title: 'Failed to complete deployment setup', color: 'error' })
+      return null
+    })
+  if (!registered) return
+
+  await invalidateQueries(teamId)
+  toast.add({ title: 'Officer contracts deployed and synced successfully', color: 'success' })
+  emits('contractDeployed')
 }
 </script>

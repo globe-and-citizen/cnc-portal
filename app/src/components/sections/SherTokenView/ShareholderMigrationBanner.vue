@@ -60,7 +60,6 @@ import {
 
 const teamStore = useTeamStore()
 const queryClient = useQueryClient()
-const toast = useToast()
 
 const currentInvestorAddress = useInvestorAddress()
 const { data: currentTotalSupply, refetch: refetchTotalSupply } = useInvestorTotalSupply()
@@ -85,27 +84,21 @@ const showBanner = computed(() => {
   return (currentTotalSupply.value as bigint) === 0n
 })
 
-const onRun = async () => {
+const onRun = () => {
   if (!previousOfficerAddress.value || !currentInvestorAddress.value) return
-  try {
-    const result = await migrate.mutateAsync({
+  // Fire-and-forget: outcome toasts come from useMigrateShareholders default
+  // onSuccess, errors are rendered inline via migrate.error on the banner.
+  migrate.mutate(
+    {
       previousOfficerAddress: previousOfficerAddress.value,
       newInvestorAddress: currentInvestorAddress.value as Address
-    })
-    if (result.kind === 'done') {
-      toast.add({
-        title: `Migrated ${result.migratedCount} shareholder${result.migratedCount === 1 ? '' : 's'}`,
-        color: 'success'
-      })
-    } else if (result.kind === 'noop-already-migrated') {
-      toast.add({ title: 'Shareholders were already migrated', color: 'success' })
-    } else if (result.kind === 'noop-empty') {
-      toast.add({ title: 'No shareholders to migrate', color: 'info' })
+    },
+    {
+      onSuccess: async () => {
+        await refetchTotalSupply()
+        await queryClient.invalidateQueries({ queryKey: ['contracts'] })
+      }
     }
-    await refetchTotalSupply()
-    await queryClient.invalidateQueries({ queryKey: ['contracts'] })
-  } catch {
-    // Error surfaced via migrate.error in the banner.
-  }
+  )
 }
 </script>

@@ -104,10 +104,29 @@ export async function migrateShareholders(
  * TanStack-wrapped variant of {@link migrateShareholders}. Prefer this in
  * components: it exposes `mutateAsync`, `isPending`, `error`, `data` without
  * any manual ref juggling.
+ *
+ * Side effects: emits a success toast describing the outcome (done / noop).
+ * Error toasts are intentionally left to the caller because the right
+ * message depends on where the migration was triggered from (inline retry,
+ * standalone banner, orchestrated redeploy). Callers typically surface the
+ * error via `mutation.error` on their own UI instead.
  */
 export function useMigrateShareholders() {
+  const toast = useToast()
   return useMutation<MigrateShareholdersResult, Error, MigrateShareholdersArgs>({
     mutationKey: ['migrateShareholders'],
-    mutationFn: migrateShareholders
+    mutationFn: migrateShareholders,
+    onSuccess: (result) => {
+      if (result.kind === 'done') {
+        toast.add({
+          title: `Migrated ${result.migratedCount} shareholder${result.migratedCount === 1 ? '' : 's'}`,
+          color: 'success'
+        })
+      } else if (result.kind === 'noop-already-migrated') {
+        toast.add({ title: 'Shareholders were already migrated', color: 'success' })
+      } else if (result.kind === 'noop-empty') {
+        toast.add({ title: 'No shareholders to migrate', color: 'info' })
+      }
+    }
   })
 }
