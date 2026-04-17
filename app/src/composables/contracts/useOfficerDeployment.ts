@@ -1,9 +1,10 @@
 import { useMutation, useQueryClient } from '@tanstack/vue-query'
-import { writeContract, waitForTransactionReceipt, getConnections } from '@wagmi/core'
+import { getConnections } from '@wagmi/core'
 import { encodeFunctionData, type Address, type Hex } from 'viem'
 import { getLogs } from 'viem/actions'
 import { config } from '@/wagmi.config'
 import { log, parseError } from '@/utils'
+import { executeContractWrite } from '@/composables/contracts/useContractWritesV3'
 import {
   validateBeaconAddresses,
   getBeaconConfigs,
@@ -71,17 +72,14 @@ export async function deployOfficer(args: DeployOfficerArgs): Promise<OfficerDep
     args: [address, beaconConfigs, deployments, true] as const
   })
 
-  const hash = await writeContract(config, {
+  const { hash, receipt } = await executeContractWrite({
     address: OFFICER_BEACON,
     abi: FACTORY_BEACON_ABI,
     functionName: 'createBeaconProxy',
     args: [encodedFunction]
   })
 
-  log.info('Officer contract deployment transaction sent:', hash)
-
-  const receipt = await waitForTransactionReceipt(config, { hash })
-  log.info('Officer contract deployment confirmed:', receipt)
+  log.info('Officer contract deployment confirmed:', { hash, receipt })
 
   const publicClient = config.getClient()
   const blockNumber = receipt.blockNumber
