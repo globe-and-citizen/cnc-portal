@@ -75,7 +75,7 @@
           variant="soft"
           icon="i-heroicons-x-circle"
           title="Failed to complete deployment setup"
-          :description="registerMutation.error.value.message"
+          :description="registerErrorMessage"
           data-test="register-error-alert"
         />
     </div>
@@ -85,6 +85,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { z } from 'zod'
+import type { AxiosError } from 'axios'
 import type { Team } from '@/types'
 import {
   useDeployOfficer,
@@ -118,6 +119,11 @@ const isBusy = computed(() => deployMutation.isPending.value || registerMutation
 const deployButtonText = computed(() =>
   deployMutation.isPending.value ? 'Deploying Officer Contracts...' : 'Deploy Company Contracts'
 )
+
+const registerErrorMessage = computed(() => {
+  const err = registerMutation.error.value as AxiosError<{ message?: string }> | null
+  return err?.response?.data?.message ?? err?.message ?? ''
+})
 
 
 const investorSchema = z.object({
