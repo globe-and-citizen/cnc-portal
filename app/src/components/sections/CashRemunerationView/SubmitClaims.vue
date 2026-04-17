@@ -65,7 +65,8 @@ const errorMessage = ref<{ message: string } | null>(null)
 const addWageClaimError = ref(false)
 const claimFormRef = ref<InstanceType<typeof ClaimForm> | null>(null)
 const createDefaultFormData = (): ClaimFormData => ({
-  hoursWorked: '',
+  hoursWorked: '0',
+  minutesWorked: '0',
   memo: '',
   dayWorked: dayjs().utc().startOf('day').toISOString()
 })
