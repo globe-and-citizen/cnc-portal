@@ -52,6 +52,7 @@ export interface FileAttachment {
 
 export interface ClaimFormData {
   hoursWorked: string
+  minutesWorked: string
   memo: string
   dayWorked: string
 }
@@ -77,7 +78,7 @@ export interface WeeklyClaim {
   wageId: number
   createdAt: string // ISO date string
   updatedAt: string // ISO date string
-  hoursWorked: number // total hours worked in the week, calculated field
+  hoursWorked: number // total minutes worked in the week, calculated field
   wage: Wage
   claims: Claim[]
   member?: User
