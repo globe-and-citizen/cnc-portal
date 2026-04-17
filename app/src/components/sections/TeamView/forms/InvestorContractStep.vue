@@ -59,25 +59,25 @@
       />
     </div>
     <div>
-        <UAlert
-          v-if="deployMutation.error.value"
-          color="error"
-          variant="soft"
-          icon="i-heroicons-x-circle"
-          title="Officer deploy failed"
-          :description="formatDeployError(deployMutation.error.value)"
-          data-test="deploy-error-alert"
-        />
+      <UAlert
+        v-if="deployMutation.error.value"
+        color="error"
+        variant="soft"
+        icon="i-heroicons-x-circle"
+        title="Officer deploy failed"
+        :description="formatDeployError(deployMutation.error.value)"
+        data-test="deploy-error-alert"
+      />
 
-        <UAlert
-          v-if="registerMutation.error.value"
-          color="error"
-          variant="soft"
-          icon="i-heroicons-x-circle"
-          title="Failed to complete deployment setup"
-          :description="registerErrorMessage"
-          data-test="register-error-alert"
-        />
+      <UAlert
+        v-if="registerMutation.error.value"
+        color="error"
+        variant="soft"
+        icon="i-heroicons-x-circle"
+        title="Failed to complete deployment setup"
+        :description="registerErrorMessage"
+        data-test="register-error-alert"
+      />
     </div>
   </UForm>
 </template>
@@ -124,7 +124,6 @@ const registerErrorMessage = computed(() => {
   const err = registerMutation.error.value as AxiosError<{ message?: string }> | null
   return err?.response?.data?.message ?? err?.message ?? ''
 })
-
 
 const investorSchema = z.object({
   name: z.string().min(1, 'Share name is required'),

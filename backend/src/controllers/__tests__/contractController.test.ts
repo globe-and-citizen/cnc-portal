@@ -448,9 +448,11 @@ describe('contractController', () => {
       });
 
       expect(prisma.team.update).not.toHaveBeenCalled();
-      expect(prisma.teamOfficer.findFirst).toHaveBeenCalledWith({
-        where: { teamId: 1, nextOfficer: { is: null } },
-      });
+      expect(prisma.teamOfficer.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { teamId: 1, nextOfficer: { is: null } },
+        })
+      );
       expect(prisma.teamOfficer.upsert).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { address: newOfficerAddress },

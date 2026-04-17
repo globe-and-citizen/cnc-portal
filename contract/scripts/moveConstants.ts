@@ -5,7 +5,7 @@ const sourceDir = path.join(__dirname, '../ignition/deployments')
 
 const destinationDirs = [
   path.resolve(__dirname, '../../app/src/artifacts/deployed_addresses'),
-  path.resolve(__dirname, '../../dashboard/app/artifacts/deployed_addresses'),
+  path.resolve(__dirname, '../../dashboard/app/artifacts/deployed_addresses')
 ]
 
 destinationDirs.forEach((dir) => {

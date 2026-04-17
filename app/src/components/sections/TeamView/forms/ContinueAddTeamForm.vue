@@ -1,4 +1,3 @@
-
 <template>
   <div>
     <p class="text-sm">
@@ -35,7 +34,6 @@ import InvestorContractStep from './InvestorContractStep.vue'
 const props = defineProps<{
   team: Team
 }>()
-
 
 const open = ref(false)
 
