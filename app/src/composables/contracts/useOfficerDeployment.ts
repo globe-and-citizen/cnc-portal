@@ -13,7 +13,6 @@ import {
 import { OFFICER_BEACON, validateAddresses } from '@/constant'
 import { OFFICER_ABI } from '@/artifacts/abi/officer'
 import { FACTORY_BEACON_ABI } from '@/artifacts/abi/factory-beacon'
-console.log('OFFICER_BEACON:', OFFICER_BEACON)
 
 export interface OfficerDeploymentMetadata {
   officerAddress: Address

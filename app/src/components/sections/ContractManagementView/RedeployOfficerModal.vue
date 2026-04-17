@@ -246,7 +246,15 @@ const onRedeploy = async () => {
   // Close only if the full flow (including any shareholder migration)
   // completed cleanly. If migration is pending-retry, stay open so the user
   // sees the retry button.
-  if (!migrationFailed.value) {
+  // Keep the modal open whenever any error ref is populated so the user can
+  // read the UAlert; the watch on isOpen fires reset() on close, which would
+  // wipe the error refs before they're ever shown.
+  if (
+    !migrationFailed.value &&
+    !deployError.value &&
+    !registerError.value &&
+    !workflowError.value
+  ) {
     isOpen.value = false
   }
 }

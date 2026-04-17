@@ -78,14 +78,16 @@ const onClick = async () => {
     .catch(() => null)
   if (!metadata) return
 
-  const registered = await registerMutation.mutateAsync({
-    body: {
-      teamId,
-      address: metadata.officerAddress,
-      deployBlockNumber: metadata.deployBlockNumber,
-      deployedAt: metadata.deployedAt.toISOString()
-    }
-  })
+  const registered = await registerMutation
+    .mutateAsync({
+      body: {
+        teamId,
+        address: metadata.officerAddress,
+        deployBlockNumber: metadata.deployBlockNumber,
+        deployedAt: metadata.deployedAt.toISOString()
+      }
+    })
+    .catch(() => null)
   if (!registered) return
 
   await invalidateQueries(teamId)
