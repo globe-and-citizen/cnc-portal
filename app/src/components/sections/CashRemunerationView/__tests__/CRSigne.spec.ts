@@ -7,7 +7,6 @@ import { nextTick } from 'vue'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import isoWeek from 'dayjs/plugin/isoWeek'
-import { parseEther } from 'viem'
 import { USDC_ADDRESS } from '@/constant'
 import {
   mockTeamStore,

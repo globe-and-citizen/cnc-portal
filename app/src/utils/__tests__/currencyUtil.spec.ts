@@ -1,10 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import {
-  formatAmountWithPrecision,
-  formatCryptoAmount,
-  formatCryptoAmountWithPrecision,
-  formatCurrencyShort
-} from '../currencyUtil'
+import { formatAmountWithPrecision, formatCryptoAmount, formatCurrencyShort } from '../currencyUtil'
 
 describe('formatCurrencyShort', () => {
   it('should format numbers less than 1,000 without a suffix', () => {
