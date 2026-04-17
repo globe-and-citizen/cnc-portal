@@ -6,6 +6,16 @@ ALTER TABLE "TeamOfficer" ADD COLUMN "previousOfficerId" INTEGER;
 
 CREATE UNIQUE INDEX "TeamOfficer_previousOfficerId_key" ON "TeamOfficer"("previousOfficerId");
 
+-- Enforce at-most-one head per team. Postgres treats NULLs as distinct in a
+-- normal unique index, so two concurrent createOfficer calls for a team with
+-- no prior Officer could both succeed with previousOfficerId = NULL, creating
+-- two linked-list heads. A partial unique index on teamId scoped to rows with
+-- NULL previousOfficerId collapses that race into a P2002 conflict that the
+-- application can handle (returned as 409 Conflict).
+CREATE UNIQUE INDEX "TeamOfficer_one_head_per_team"
+  ON "TeamOfficer"("teamId")
+  WHERE "previousOfficerId" IS NULL;
+
 ALTER TABLE "TeamOfficer" ADD CONSTRAINT "TeamOfficer_previousOfficerId_fkey"
   FOREIGN KEY ("previousOfficerId") REFERENCES "TeamOfficer"("id")
   ON DELETE SET NULL ON UPDATE CASCADE;

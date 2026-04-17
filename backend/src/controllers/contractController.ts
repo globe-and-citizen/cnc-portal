@@ -42,6 +42,7 @@ interface CreateOfficerBody {
 const findCurrentOfficer = (teamId: number) =>
   prisma.teamOfficer.findFirst({
     where: { teamId, nextOfficer: { is: null } },
+    orderBy: [{ deployBlockNumber: { sort: 'desc', nulls: 'last' } }, { createdAt: 'desc' }],
   });
 
 // Shared logic: upsert the TeamOfficer for the given address, read the
@@ -154,16 +155,46 @@ export const createOfficer = async (req: Request, res: Response) => {
     if (team.ownerAddress !== callerAddress)
       return errorResponse(403, 'Unauthorized: Caller is not the owner of the team', res);
 
+    // TeamOfficer.address is globally unique. If the address is already
+    // registered to a different team, the upsert below would silently return
+    // the other team's row (update: {}), leaking its metadata and allowing
+    // address squatting. Reject explicitly.
+    const existingByAddress = await prisma.teamOfficer.findUnique({
+      where: { address: officerAddress },
+    });
+    if (existingByAddress && existingByAddress.teamId !== teamId) {
+      return errorResponse(409, 'Officer address already registered to another team', res);
+    }
+
     const previousHead = await findCurrentOfficer(teamId);
 
-    const { officer, created } = await upsertOfficerAndSyncContracts(
-      teamId,
-      officerAddress,
-      callerAddress,
-      deployBlockNumber,
-      deployedAt,
-      previousHead?.id ?? null
-    );
+    let officer;
+    let created;
+    try {
+      ({ officer, created } = await upsertOfficerAndSyncContracts(
+        teamId,
+        officerAddress,
+        callerAddress,
+        deployBlockNumber,
+        deployedAt,
+        previousHead?.id ?? null
+      ));
+    } catch (err) {
+      // Concurrent createOfficer calls race on findCurrentOfficer + insert.
+      // The partial unique index TeamOfficer_one_head_per_team (first Officer
+      // case) and previousOfficerId unique (Nth Officer case) turn the race
+      // into a P2002 unique-constraint violation. Surface it as 409 Conflict
+      // so the client can retry cleanly rather than burning more gas on an
+      // opaque 500.
+      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
+        return errorResponse(
+          409,
+          'Officer registration conflict: another deploy for this team completed first. Refresh and retry.',
+          res
+        );
+      }
+      throw err;
+    }
 
     // Expose previousOfficer so the frontend can drive a shareholder migration
     // (or any other copy-forward logic) without a second round-trip.

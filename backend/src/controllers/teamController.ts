@@ -29,11 +29,18 @@ export const currentOfficerInclude = {
 // current Officer. Use on endpoints that expose `teamContracts` on the team —
 // we want the live set (contracts of the current Officer), not the union of
 // every Officer's contracts across history.
+//
+// Safe and SafeDepositRouter are intentionally stored with officerId = NULL
+// because they survive Officer redeploys. Load them off the team relation
+// directly so they remain visible alongside the current Officer's contracts.
 export const currentOfficerWithContractsInclude = {
   teamOfficers: {
     where: { nextOfficer: { is: null } },
     take: 1,
     include: { ...previousOfficerInclude, contracts: true },
+  },
+  teamContracts: {
+    where: { officerId: null },
   },
 } as const;
 
@@ -62,17 +69,22 @@ const withCurrentOfficer = <T extends { teamOfficers?: TeamOfficer[] }>(team: T)
 // contracts as `teamContracts` on the team — scoping the contract list to the
 // currently active generation so archived contracts don't leak out.
 const withCurrentOfficerAndContracts = <
-  T extends { teamOfficers?: (TeamOfficer & { contracts: TeamContract[] })[] },
+  T extends {
+    teamOfficers?: (TeamOfficer & { contracts: TeamContract[] })[];
+    teamContracts?: TeamContract[];
+  },
 >(
   team: T
 ) => {
-  const { teamOfficers, ...rest } = team;
+  const { teamOfficers, teamContracts, ...rest } = team;
   const head = teamOfficers?.[0];
   const { contracts, ...headWithoutContracts } = head ?? { contracts: [] };
   return {
     ...rest,
     currentOfficer: serializeOfficer(head ? (headWithoutContracts as TeamOfficer) : null),
-    teamContracts: contracts,
+    // Merge the current Officer's contracts with officer-less contracts
+    // (Safe / SafeDepositRouter) so the client sees the full live set.
+    teamContracts: [...contracts, ...(teamContracts ?? [])],
   };
 };
 

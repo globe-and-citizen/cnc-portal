@@ -35,6 +35,28 @@ ALTER TABLE "TeamOfficer" ADD CONSTRAINT "TeamOfficer_teamId_fkey" FOREIGN KEY (
 -- deployBlockNumber and deployedAt stay NULL: never captured before.
 -- ============================================================
 
+-- Pre-flight: Team.officerAddress was never unique before this migration, but
+-- TeamOfficer.address is globally unique. Any duplicate officerAddress across
+-- teams would be silently collapsed by the INSERT below, orphaning the losing
+-- team's contracts once the follow-up migration drops Team.officerAddress.
+-- Fail loudly so duplicates can be resolved before the data becomes
+-- unrecoverable.
+DO $$
+DECLARE
+  dupes INTEGER;
+BEGIN
+  SELECT COUNT(*) INTO dupes FROM (
+    SELECT 1 FROM "Team"
+    WHERE "officerAddress" IS NOT NULL
+    GROUP BY "officerAddress" HAVING COUNT(*) > 1
+  ) d;
+  IF dupes > 0 THEN
+    RAISE EXCEPTION
+      'Refusing to backfill TeamOfficer: % duplicate officerAddress value(s) in Team. De-duplicate before re-running this migration.',
+      dupes;
+  END IF;
+END $$;
+
 -- One TeamOfficer per team that already has an officerAddress.
 INSERT INTO "TeamOfficer" ("address", "teamId", "deployer", "createdAt", "updatedAt")
 SELECT t."officerAddress", t."id", t."ownerAddress", t."createdAt", NOW()
