@@ -148,7 +148,7 @@ describe.skip('ContinueAddTeamForm', () => {
     const deployComponent = wrapper.findComponent(InvestorContractStep)
     expect(wrapper.emitted('done')).toBeFalsy()
 
-    await deployComponent.vm.$emit('contractDeployed')
+    deployComponent.vm.$emit('contractDeployed')
 
     // Check if wrapper emit done event
     expect(wrapper.emitted('done')).toBeTruthy()
@@ -218,7 +218,7 @@ describe.skip('ContinueAddTeamForm', () => {
 
     expect(wrapper.emitted('done')).toBeFalsy()
 
-    await deployComponent.vm.$emit('contractDeployed')
+    deployComponent.vm.$emit('contractDeployed')
 
     expect(wrapper.emitted('done')).toBeTruthy()
     expect(wrapper.emitted('done')).toHaveLength(1)
