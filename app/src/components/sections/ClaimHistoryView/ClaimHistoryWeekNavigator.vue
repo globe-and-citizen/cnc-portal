@@ -67,6 +67,7 @@ import { useTeamStore } from '@/stores'
 import { useGetTeamWeeklyClaimsQuery } from '@/queries'
 import type { WeeklyClaim } from '@/types'
 import MonthSelector from '@/components/MonthSelector.vue'
+import { formatMinutesAsDuration } from '@/utils/wageUtil'
 
 import { use } from 'echarts/core'
 import { BarChart } from 'echarts/charts'
@@ -122,30 +123,34 @@ const barChartOption = computed(() => {
   const labels: string[] = []
   const weekStart = dayjs(internalSelectedWeek.value.isoString).utc().startOf('isoWeek')
   const maxRegularHours = selectWeekWeelyClaim.value?.wage?.maximumHoursPerWeek ?? Infinity
-  let cumulativeHours = 0
+  let cumulativeMinutes = 0
 
   for (let i = 0; i < 7; i++) {
     const date = weekStart.add(i, 'day')
     labels.push(dayjs(date).format('dd'))
-    const dailyHours =
+    const dailyTimes =
       selectWeekWeelyClaim.value?.claims
         .filter((claim) => dayjs(date).isSame(dayjs(claim.dayWorked).utc(), 'day'))
         .reduce((sum: number, claim) => sum + claim.hoursWorked, 0) ?? 0
 
-    const regularBefore = Math.min(cumulativeHours, maxRegularHours)
-    const regularAfter = Math.min(cumulativeHours + dailyHours, maxRegularHours)
-    const regularToday = regularAfter - regularBefore
-    const overtimeToday = dailyHours - regularToday
+    const maxRegularMinutes = maxRegularHours * 60
+    const regularBefore = Math.min(cumulativeMinutes, maxRegularMinutes)
+    const regularAfter = Math.min(cumulativeMinutes + dailyTimes, maxRegularMinutes)
+    const regularTodayMinutes = regularAfter - regularBefore
+    const overtimeTodayMinutes = dailyTimes - regularTodayMinutes
+
+    const regularTodayHours = regularTodayMinutes / 60
+    const overtimeTodayHours = overtimeTodayMinutes / 60
 
     regularData.push({
-      value: regularToday,
+      value: regularTodayHours,
       itemStyle: {
         color: '#10B981',
-        borderRadius: overtimeToday > 0 ? [0, 0, 0, 0] : [6, 6, 0, 0]
+        borderRadius: overtimeTodayHours > 0 ? [0, 0, 0, 0] : [6, 6, 0, 0]
       }
     })
-    overtimeData.push(overtimeToday)
-    cumulativeHours += dailyHours
+    overtimeData.push(overtimeTodayHours)
+    cumulativeMinutes += dailyTimes
   }
 
   const totals = regularData.map((r, i) => r.value + (overtimeData?.[i] ?? 0))
@@ -161,15 +166,22 @@ const barChartOption = computed(() => {
         const day = params[0]?.name ?? ''
         const regularH = params[0]?.value ?? 0
         const overtimeH = params[1]?.value ?? 0
-        const total = regularH + overtimeH
-        if (overtimeH > 0) {
-          return `<b>${day}</b><br/>Regular: ${regularH}h<br/>Overtime: ${overtimeH}h<br/>Total: ${total}h`
+        const totalMinutes = Math.round((regularH + overtimeH) * 60)
+        const regularMinutes = Math.round(regularH * 60)
+        const overtimeMinutes = Math.round(overtimeH * 60)
+        if (overtimeMinutes > 0) {
+          return `<b>${day}</b><br/>Regular: ${formatMinutesAsDuration(regularMinutes)}<br/>Overtime: ${formatMinutesAsDuration(overtimeMinutes)}<br/>Total: ${formatMinutesAsDuration(totalMinutes)}`
         }
-        return `<b>${day}</b><br/>${total}h`
+        return `<b>${day}</b><br/>${formatMinutesAsDuration(totalMinutes)}`
       }
     },
     xAxis: { type: 'category', data: labels, axisTick: { alignWithLabel: true } },
-    yAxis: { type: 'value', min: 0, max: yMax, axisLabel: { formatter: '{value} h' } },
+    yAxis: {
+      type: 'value',
+      min: 0,
+      max: yMax,
+      axisLabel: { formatter: (val: number) => `${parseFloat(val.toFixed(1))} h` }
+    },
     series: [
       {
         name: 'Regular',
@@ -193,8 +205,8 @@ const barChartOption = computed(() => {
           color: '#374151',
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           formatter: (params: any) => {
-            const total = totals[params.dataIndex]
-            return `${total}h`
+            const totalMinutes = Math.round((totals?.[params.dataIndex] ?? 0) * 60)
+            return totalMinutes > 0 ? formatMinutesAsDuration(totalMinutes) : ''
           }
         }
       }
