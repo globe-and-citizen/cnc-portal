@@ -27,6 +27,7 @@ vi.mock('../../utils', async () => {
       },
       teamContract: {
         createMany: vi.fn(),
+        updateMany: vi.fn(),
         findMany: vi.fn(),
         create: vi.fn(),
       },
@@ -34,6 +35,7 @@ vi.mock('../../utils', async () => {
         upsert: vi.fn(),
         findMany: vi.fn(),
         findFirst: vi.fn(),
+        findUnique: vi.fn(),
       },
     },
   };
@@ -86,6 +88,7 @@ describe('contractController', () => {
     vi.clearAllMocks();
     vi.mocked(publicClient.getChainId).mockResolvedValue(11155111);
     vi.mocked(prisma.teamContract.findMany).mockResolvedValue([]);
+    vi.mocked(prisma.teamContract.updateMany).mockResolvedValue({ count: 0 });
     vi.mocked(prisma.teamOfficer.findFirst).mockResolvedValue(buildMockTeamOfficer());
     vi.mocked(prisma.teamOfficer.upsert).mockResolvedValue(buildMockTeamOfficer());
   });

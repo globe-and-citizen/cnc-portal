@@ -65,6 +65,15 @@ const teamRoutes = express.Router();
  *             previousOfficerId:
  *               type: integer
  *               nullable: true
+ *             previousOfficer:
+ *               type: object
+ *               nullable: true
+ *               description: The prior Officer generation this one points back to. Null for the first Officer ever deployed on the team.
+ *               properties:
+ *                 id:
+ *                   type: integer
+ *                 address:
+ *                   type: string
  *         members:
  *           type: array
  *           items:

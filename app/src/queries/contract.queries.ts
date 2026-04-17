@@ -119,8 +119,8 @@ export interface CreateOfficerResponse {
 
 /**
  * Register a freshly deployed Officer contract on a team.
- * Updates team.officerAddress, records a TeamOfficer row and syncs the
- * contracts it governs in a single call.
+ * Records a new TeamOfficer row as the team's current Officer head and syncs
+ * the contracts it governs in a single call.
  *
  * @endpoint POST /contract/officer
  */

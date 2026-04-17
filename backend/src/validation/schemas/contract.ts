@@ -36,7 +36,7 @@ export const syncContractsBodySchema = z.object({
 });
 
 // Create officer contract request body — registers a freshly deployed Officer
-// on a team. Updates team.officerAddress, creates the TeamOfficer record and
+// on a team. Inserts a TeamOfficer row as the new head of the linked list and
 // syncs the contracts it governs in a single call.
 export const createOfficerBodySchema = z.object({
   teamId: teamIdSchema,

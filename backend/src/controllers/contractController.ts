@@ -63,6 +63,10 @@ const upsertOfficerAndSyncContracts = async (
     functionName: 'getTeam',
   })) as { contractType: string; contractAddress: string }[];
 
+  // Caller is responsible for ensuring the officerAddress is not already
+  // registered to a different team (createOfficer performs that guard and
+  // returns 409 explicitly; syncContracts passes the team's own current Officer
+  // address, so a mismatch is impossible there).
   const officer = await prisma.teamOfficer.upsert({
     where: { address: officerAddress },
     create: {
@@ -83,12 +87,32 @@ const upsertOfficerAndSyncContracts = async (
     deployer: callerAddress,
     officerId: officer.id,
   }));
-  const created = await prisma.teamContract.createMany({
+
+  // Backfill officerId on pre-existing TeamContract rows (same team + address)
+  // so rows created before officerId was tracked become visible via
+  // TeamOfficer.contracts. createMany({ skipDuplicates }) alone would leave
+  // them with officerId = NULL.
+  const updatedCounts = await Promise.all(
+    contractsToCreate.map((contract) =>
+      prisma.teamContract.updateMany({
+        where: {
+          teamId: contract.teamId,
+          address: contract.address,
+          officerId: null,
+        },
+        data: { officerId: officer.id },
+      })
+    )
+  );
+
+  const createdResult = await prisma.teamContract.createMany({
     data: contractsToCreate,
     skipDuplicates: true,
   });
 
-  return { officer, created };
+  const updatedCount = updatedCounts.reduce((total, r) => total + r.count, 0);
+
+  return { officer, created: { count: createdResult.count + updatedCount } };
 };
 
 export const syncContracts = async (req: Request, res: Response) => {
