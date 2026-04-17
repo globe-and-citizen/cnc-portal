@@ -43,14 +43,39 @@
       >
         Skip for now
       </UButton>
-      <DeployContractSection
-        :disable="!canDeploy"
-        :investorContractInput="investorContractInput"
-        :createdTeamData="team"
-        @contractDeployed="$emit('contractDeployed')"
-      >
-        Deploy Contracts
-      </DeployContractSection>
+
+      <div class="space-y-4">
+
+        <UButton
+          color="primary"
+          :loading="isBusy"
+          :disabled="!canDeploy || isBusy"
+          data-test="deploy-contracts-button"
+          @click="onClick"
+          :label="deployButtonText"
+        />
+      </div>
+    </div>
+    <div>
+        <UAlert
+          v-if="deployMutation.error.value"
+          color="error"
+          variant="soft"
+          icon="i-heroicons-x-circle"
+          title="Officer deploy failed"
+          :description="formatDeployError(deployMutation.error.value)"
+          data-test="deploy-error-alert"
+        />
+
+        <UAlert
+          v-if="registerMutation.error.value"
+          color="error"
+          variant="soft"
+          icon="i-heroicons-x-circle"
+          title="Failed to complete deployment setup"
+          :description="registerMutation.error.value.message"
+          data-test="register-error-alert"
+        />
     </div>
   </UForm>
 </template>
@@ -59,11 +84,16 @@
 import { ref, computed } from 'vue'
 import { z } from 'zod'
 import type { Team } from '@/types'
-import DeployContractSection from './DeployContractSection.vue'
+import {
+  useDeployOfficer,
+  useInvalidateOfficerQueries,
+  formatDeployError
+} from '@/composables/contracts'
+import { useCreateOfficerMutation } from '@/queries/contract.queries'
 
-withDefaults(
+const props = withDefaults(
   defineProps<{
-    team: Partial<Team>
+    team: Partial<Team & {}>
     showAlert?: boolean
     showSkip?: boolean
   }>(),
@@ -73,7 +103,20 @@ withDefaults(
   }
 )
 
-defineEmits(['skip', 'contractDeployed'])
+const emits = defineEmits(['skip', 'contractDeployed'])
+
+const toast = useToast()
+
+const deployMutation = useDeployOfficer()
+const registerMutation = useCreateOfficerMutation()
+const invalidateQueries = useInvalidateOfficerQueries()
+
+const isBusy = computed(() => deployMutation.isPending.value || registerMutation.isPending.value)
+
+const deployButtonText = computed(() =>
+  deployMutation.isPending.value ? 'Deploying Officer Contracts...' : 'Deploy Company Contracts'
+)
+
 
 const investorSchema = z.object({
   name: z.string().min(1, 'Share name is required'),
@@ -88,4 +131,31 @@ const investorContractInput = ref({
 const canDeploy = computed(
   () => !!investorContractInput.value.name && !!investorContractInput.value.symbol
 )
+const onClick = async () => {
+  if (!props.team?.id) {
+    toast.add({ title: 'Team data not found', color: 'error' })
+    return
+  }
+  const teamId = props.team.id
+
+  // Errors remain on the mutation refs so the UAlerts above render them.
+  const metadata = await deployMutation
+    .mutateAsync({ investorInput: investorContractInput.value, teamId })
+  if (!metadata) return
+
+  const registered = await registerMutation
+    .mutateAsync({
+      body: {
+        teamId,
+        address: metadata.officerAddress,
+        deployBlockNumber: metadata.deployBlockNumber,
+        deployedAt: metadata.deployedAt.toISOString()
+      }
+    })
+  if (!registered) return
+
+  await invalidateQueries(teamId)
+  toast.add({ title: 'Officer contracts deployed and synced successfully', color: 'success' })
+  emits('contractDeployed')
+}
 </script>
