@@ -773,9 +773,9 @@
             "type": "address"
           },
           {
-            "internalType": "uint8",
+            "internalType": "uint16",
             "name": "hoursWorked",
-            "type": "uint8"
+            "type": "uint16"
           },
           {
             "components": [
