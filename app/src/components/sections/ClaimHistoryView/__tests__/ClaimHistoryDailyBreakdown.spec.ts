@@ -33,7 +33,7 @@ describe('ClaimHistoryDailyBreakdown', () => {
         ...mockWeeklyClaimData[0]?.claims[0],
         id: 1,
         dayWorked: day0,
-        hoursWorked: 3,
+        hoursWorked: 180,
         memo: 'Daily coding',
         fileAttachments: [
           {
@@ -48,7 +48,7 @@ describe('ClaimHistoryDailyBreakdown', () => {
         ...mockWeeklyClaimData[0]?.claims[0],
         id: 2,
         dayWorked: day0,
-        hoursWorked: 2,
+        hoursWorked: 120,
         memo: 'Review PR',
         fileAttachments: []
       },
@@ -56,7 +56,7 @@ describe('ClaimHistoryDailyBreakdown', () => {
         ...mockWeeklyClaimData[0]?.claims[0],
         id: 3,
         dayWorked: day1,
-        hoursWorked: 1,
+        hoursWorked: 60,
         memo: 'Docs update',
         fileAttachments: [
           {
@@ -165,7 +165,7 @@ describe('ClaimHistoryDailyBreakdown', () => {
     const vm = wrapper.vm as unknown as { canModifyClaims: boolean }
 
     expect(wrapper.findAll('.bg-gray-100.text-gray-400').length).toBe(7)
-    expect(wrapper.text()).toContain('0 hours')
+    expect(wrapper.text()).toContain('0h')
     expect(wrapper.find('[data-test="claim-actions"]').exists()).toBe(false)
     expect(vm.canModifyClaims).toBe(false)
   })
