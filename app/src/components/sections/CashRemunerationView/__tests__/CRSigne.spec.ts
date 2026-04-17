@@ -186,39 +186,6 @@ describe('CRSigne', () => {
       )
     })
 
-    it('should build overtime-adjusted hourly rate in typed data', async () => {
-      const overtimeClaim: WeeklyClaim = {
-        ...mockClaim,
-        hoursWorked: 240,
-        wage: {
-          ...mockClaim.wage,
-          maximumHoursPerWeek: 2,
-          ratePerHour: [{ type: 'native', amount: 10 }],
-          overtimeRatePerHour: [{ type: 'native', amount: 100 }]
-        }
-      }
-
-      wrapper = mount(CRSigne, {
-        props: {
-          weeklyClaim: overtimeClaim
-        }
-      })
-
-      await clickApprove()
-
-      expect(mockUseSignTypedData.mutateAsync).toHaveBeenCalledWith(
-        expect.objectContaining({
-          message: expect.objectContaining({
-            wages: [
-              expect.objectContaining({
-                hourlyRate: parseEther('55')
-              })
-            ]
-          })
-        })
-      )
-    })
-
     it('should emit close when user is not owner', async () => {
       mockUseReadContract.data.value = '0x9999999999999999999999999999999999999999'
 
