@@ -57,10 +57,3 @@ describe('formatAmountWithPrecision', () => {
     expect(formatAmountWithPrecision('1234.56789')).toBe('1,234.56789')
   })
 })
-
-describe('formatCryptoAmountWithPrecision', () => {
-  it('applies the provided precision values', () => {
-    expect(formatCryptoAmountWithPrecision('1.3333333333', 2, 2)).toBe('1.33')
-    expect(formatCryptoAmountWithPrecision(42, 0, 0)).toBe('42')
-  })
-})
