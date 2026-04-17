@@ -46,3 +46,8 @@ gasReporterOutput.json
 backend/.env.production
 app/.env.production
 .mcp.json
+
+# Local review / architecture notes (not for public repo)
+/reviews/
+/archi-update.md
+.claude/
