@@ -71,4 +71,4 @@ FROM "TeamOfficer" o, "Team" t
 WHERE tc."teamId" = t."id"
   AND o."teamId" = t."id"
   AND o."address" = t."officerAddress"
-  AND tc."type" NOT IN ('Safe', 'SafeDepositRouter');
+  AND tc."type" != 'Safe';
