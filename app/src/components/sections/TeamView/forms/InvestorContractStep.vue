@@ -44,17 +44,14 @@
         Skip for now
       </UButton>
 
-      <div class="space-y-4">
-
-        <UButton
-          color="primary"
-          :loading="isBusy"
-          :disabled="!canDeploy || isBusy"
-          data-test="deploy-contracts-button"
-          @click="onClick"
-          :label="deployButtonText"
-        />
-      </div>
+      <UButton
+        color="primary"
+        :loading="isBusy"
+        :disabled="!canDeploy || isBusy"
+        data-test="deploy-contracts-button"
+        @click="onClick"
+        :label="deployButtonText"
+      />
     </div>
     <div>
         <UAlert
@@ -93,7 +90,7 @@ import { useCreateOfficerMutation } from '@/queries/contract.queries'
 
 const props = withDefaults(
   defineProps<{
-    team: Partial<Team & {}>
+    team: Partial<Team>
     showAlert?: boolean
     showSkip?: boolean
   }>(),
@@ -131,31 +128,39 @@ const investorContractInput = ref({
 const canDeploy = computed(
   () => !!investorContractInput.value.name && !!investorContractInput.value.symbol
 )
-const onClick = async () => {
+const onClick = () => {
   if (!props.team?.id) {
     toast.add({ title: 'Team data not found', color: 'error' })
     return
   }
   const teamId = props.team.id
 
-  // Errors remain on the mutation refs so the UAlerts above render them.
-  const metadata = await deployMutation
-    .mutateAsync({ investorInput: investorContractInput.value, teamId })
-  if (!metadata) return
-
-  const registered = await registerMutation
-    .mutateAsync({
-      body: {
-        teamId,
-        address: metadata.officerAddress,
-        deployBlockNumber: metadata.deployBlockNumber,
-        deployedAt: metadata.deployedAt.toISOString()
+  deployMutation.mutate(
+    { investorInput: investorContractInput.value, teamId },
+    {
+      onSuccess: (metadata) => {
+        registerMutation.mutate(
+          {
+            body: {
+              teamId,
+              address: metadata.officerAddress,
+              deployBlockNumber: metadata.deployBlockNumber,
+              deployedAt: metadata.deployedAt.toISOString()
+            }
+          },
+          {
+            onSuccess: async () => {
+              await invalidateQueries(teamId)
+              toast.add({
+                title: 'Officer contracts deployed and synced successfully',
+                color: 'success'
+              })
+              emits('contractDeployed')
+            }
+          }
+        )
       }
-    })
-  if (!registered) return
-
-  await invalidateQueries(teamId)
-  toast.add({ title: 'Officer contracts deployed and synced successfully', color: 'success' })
-  emits('contractDeployed')
+    }
+  )
 }
 </script>
