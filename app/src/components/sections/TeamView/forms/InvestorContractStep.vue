@@ -1,7 +1,12 @@
 <template>
-  <UForm :schema="investorSchema" :state="investorContractInput" class="flex flex-col gap-5">
+  <UForm
+    :schema="investorSchema"
+    :state="investorContractInput"
+    class="flex flex-col gap-5"
+    @submit="onSubmit"
+  >
     <UAlert
-      v-if="showAlert && team?.name"
+      v-if="showAlert"
       color="success"
       icon="i-heroicons-check-circle"
       :title="`Company &quot;${team.name}&quot; created! To use CNC features, deploy all your company contracts in one action.`"
@@ -45,11 +50,11 @@
       </UButton>
 
       <UButton
+        type="submit"
         color="primary"
         :loading="isBusy"
         :disabled="!canDeploy || isBusy"
         data-test="deploy-contracts-button"
-        @click="onClick"
         :label="deployButtonText"
       />
     </div>
@@ -90,7 +95,7 @@ import { useCreateOfficerMutation } from '@/queries/contract.queries'
 
 const props = withDefaults(
   defineProps<{
-    team: Partial<Team>
+    team: Team
     showAlert?: boolean
     showSkip?: boolean
   }>(),
@@ -128,11 +133,7 @@ const investorContractInput = ref({
 const canDeploy = computed(
   () => !!investorContractInput.value.name && !!investorContractInput.value.symbol
 )
-const onClick = () => {
-  if (!props.team?.id) {
-    toast.add({ title: 'Team data not found', color: 'error' })
-    return
-  }
+const onSubmit = () => {
   const teamId = props.team.id
 
   deployMutation.mutate(
