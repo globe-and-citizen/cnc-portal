@@ -33,7 +33,7 @@ import type { Team } from '@/types'
 import InvestorContractStep from './InvestorContractStep.vue'
 
 const props = defineProps<{
-  team: Partial<Team>
+  team: Team
 }>()
 
 
