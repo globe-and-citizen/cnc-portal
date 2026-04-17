@@ -28,7 +28,7 @@
     >
       <!-- Continue Team Creation section -->
       <div v-if="!hasContract">
-        <ContinueAddTeamForm :team="teamStore.currentTeamMeta.data" @done="() => {}" />
+        <ContinueAddTeamForm :team="teamStore.currentTeamMeta.data" />
       </div>
       <TeamMeta />
       <CompanyOverview />
