@@ -98,7 +98,7 @@ describe('CashRemuneration*** (EIP712)', () => {
           ],
           WageClaim: [
             { name: 'employeeAddress', type: 'address' },
-            { name: 'hoursWorked', type: 'uint8' },
+            { name: 'hoursWorked', type: 'uint16' },
             { name: 'wages', type: 'Wage[]' },
             { name: 'date', type: 'uint256' }
           ]
@@ -147,7 +147,7 @@ describe('CashRemuneration*** (EIP712)', () => {
       it('Then I can authorise an employee to withdraw their wage', async () => {
         const wageClaim = {
           employeeAddress: employee.address,
-          hoursWorked: 5,
+          hoursWorked: 300,
           wages: [
             {
               hourlyRate: ethers.parseEther('10'),
@@ -186,7 +186,7 @@ describe('CashRemuneration*** (EIP712)', () => {
         it('the signer is not the contract employer', async () => {
           const wageClaim = {
             employeeAddress: employee.address,
-            hoursWorked: 5,
+            hoursWorked: 300,
             wages: [
               {
                 hourlyRate: ethers.parseEther('10'),
@@ -209,7 +209,7 @@ describe('CashRemuneration*** (EIP712)', () => {
         it('the withdrawer is not the approved user', async () => {
           const wageClaim = {
             employeeAddress: employee.address,
-            hoursWorked: 5,
+            hoursWorked: 300,
             wages: [
               {
                 hourlyRate: ethers.parseEther('10'),
@@ -232,7 +232,7 @@ describe('CashRemuneration*** (EIP712)', () => {
         it('the wage has already been paid', async () => {
           const wageClaim = {
             employeeAddress: employee.address,
-            hoursWorked: 8,
+            hoursWorked: 480,
             wages: [
               {
                 hourlyRate: ethers.parseEther('10'),
@@ -265,7 +265,7 @@ describe('CashRemuneration*** (EIP712)', () => {
         it('the wage amount exceeds the contract balance', async () => {
           const wageClaim = {
             employeeAddress: employee.address,
-            hoursWorked: 5,
+            hoursWorked: 300,
             wages: [
               {
                 hourlyRate: ethers.parseEther('1000'),
@@ -291,7 +291,7 @@ describe('CashRemuneration*** (EIP712)', () => {
 
           const wageClaim = {
             employeeAddress: employee.address,
-            hoursWorked: 5,
+            hoursWorked: 300,
             wages: [
               {
                 hourlyRate: ethers.parseEther('10'),
@@ -355,7 +355,7 @@ describe('CashRemuneration*** (EIP712)', () => {
         ],
         WageClaim: [
           { name: 'employeeAddress', type: 'address' },
-          { name: 'hoursWorked', type: 'uint8' },
+          { name: 'hoursWorked', type: 'uint16' },
           { name: 'wages', type: 'Wage[]' },
           { name: 'date', type: 'uint256' }
         ]
@@ -371,7 +371,7 @@ describe('CashRemuneration*** (EIP712)', () => {
     it('should prevent replay of a valid signature (same wage claim used twice)', async () => {
       const wageClaim = {
         employeeAddress: employee.address,
-        hoursWorked: 5,
+        hoursWorked: 300,
         wages: [
           {
             hourlyRate: ethers.parseEther('1'),
@@ -398,7 +398,7 @@ describe('CashRemuneration*** (EIP712)', () => {
       // First claim
       const wageClaimA = {
         employeeAddress: employee.address,
-        hoursWorked: 3,
+        hoursWorked: 180,
         wages: [{ hourlyRate: ethers.parseEther('1'), tokenAddress: ethers.ZeroAddress }],
         date: Math.floor(Date.now() / 1000)
       }
@@ -407,7 +407,7 @@ describe('CashRemuneration*** (EIP712)', () => {
       // Second distinct claim (different date)
       const wageClaimB = {
         employeeAddress: employee.address,
-        hoursWorked: 4,
+        hoursWorked: 240,
         wages: [{ hourlyRate: ethers.parseEther('1'), tokenAddress: ethers.ZeroAddress }],
         date: Math.floor(Date.now() / 1000) + 10
       }
