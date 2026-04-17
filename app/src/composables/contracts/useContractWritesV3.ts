@@ -1,4 +1,4 @@
-import { computed, unref, type MaybeRef } from 'vue'
+import { unref, type MaybeRef } from 'vue'
 import { useMutation, useQueryClient } from '@tanstack/vue-query'
 import {
   simulateContract,
@@ -14,6 +14,10 @@ import { log, parseErrorV2 } from '@/utils'
 type WagmiConfig = typeof wagmiConfigType
 type SimulateParams = SimulateContractParameters<Abi, string, readonly unknown[], WagmiConfig>
 type WaitParams = WaitForTransactionReceiptParameters<WagmiConfig>
+// The wagmi config narrows chainId to a union of its configured chain ids.
+// We isolate that single narrowing in one alias so the broader literals can
+// be validated structurally with `satisfies` rather than cast wholesale.
+type AppChainId = SimulateParams['chainId']
 
 export interface ContractWriteV3Config {
   contractAddress: MaybeRef<Address | undefined>
@@ -68,6 +72,14 @@ export interface ExecuteContractWriteParams {
   chainId?: number
   args?: readonly unknown[]
   value?: bigint
+  /**
+   * Optional callback invoked when the post-revert simulation replay throws
+   * something other than a viem `BaseError` (e.g. an RPC/network failure).
+   * The replay is best-effort — it only exists to recover the ABI-decoded
+   * revert reason — so we never re-throw its failure, but we still want the
+   * caller to be able to surface it for diagnostics.
+   */
+  onReplayError?: (err: unknown) => void
 }
 
 export type ExecuteContractWriteResult = {
@@ -79,25 +91,37 @@ export type ExecuteContractWriteResult = {
 /**
  * Standalone contract write: simulate -> write -> wait for receipt.
  *
- * Framework-agnostic (no Vue/TanStack dependencies). Throws
- * `ContractWriteRevertedError` when the transaction is mined but reverts,
- * with the ABI-decoded revert reason attached as `cause` when recoverable.
+ * Framework-agnostic (no Vue/TanStack dependencies).
+ *
+ * ## Errors
+ * - `ContractWriteRevertedError` — transaction mined but reverted on-chain.
+ *   When recoverable, the ABI-decoded revert reason is attached as `cause`
+ *   via a simulation replay at the block before inclusion.
+ * - Any error thrown by `simulateContract` during the pre-flight (revert at
+ *   simulation time, RPC failure, etc.) propagates unchanged.
+ * - Any error thrown by `writeContract` (user rejection, RPC failure, signing
+ *   error, etc.) propagates unchanged — typically a viem `UserRejectedRequestError`
+ *   inside a `BaseError` chain.
+ * - Any error thrown by `waitForTransactionReceipt` (timeout, RPC failure,
+ *   reorg-related issues) propagates unchanged.
  */
 export async function executeContractWrite(
   params: ExecuteContractWriteParams
 ): Promise<ExecuteContractWriteResult> {
-  const { address, abi, functionName, args = [], value } = params
-  const chainId = params.chainId as SimulateParams['chainId']
+  const { address, abi, functionName, args = [], value, onReplayError } = params
+  const chainId = params.chainId as AppChainId
 
-  // 1) Simulate
-  const simulation = await simulateContract(wagmiConfig, {
+  const simulateInput = {
     address,
     abi,
     functionName,
     args,
     chainId,
     ...(value !== undefined ? { value } : {})
-  } as SimulateParams)
+  } satisfies SimulateParams
+
+  // 1) Simulate
+  const simulation = await simulateContract(wagmiConfig, simulateInput)
 
   // 2) Write — reuse the validated request from the simulation
   const hash = await writeContract(wagmiConfig, simulation.request)
@@ -106,25 +130,28 @@ export async function executeContractWrite(
   const receipt = await waitForTransactionReceipt(wagmiConfig, {
     hash,
     chainId
-  } as WaitParams)
+  } satisfies WaitParams)
 
   if (receipt.status !== 'success') {
     // Replay at the block just before mining to recover the ABI-decoded
     // revert reason (receipts don't carry it). viem will throw a
     // BaseError containing a ContractFunctionRevertedError in its chain.
+    //
+    // Skip when blockNumber is 0n: receipt.blockNumber - 1n would underflow
+    // to -1n and crash the RPC call, which is meaningless on a fresh chain
+    // (Anvil/Hardhat fixtures start at block 0). Genesis-block reverts lose
+    // the decoded cause — acceptable for a near-impossible production edge case.
     let revertCause: BaseError | undefined
-    try {
-      await simulateContract(wagmiConfig, {
-        address,
-        abi,
-        functionName,
-        args,
-        chainId,
-        blockNumber: receipt.blockNumber - 1n,
-        ...(value !== undefined ? { value } : {})
-      } as SimulateParams)
-    } catch (replayErr) {
-      if (replayErr instanceof BaseError) revertCause = replayErr
+    if (receipt.blockNumber > 0n) {
+      try {
+        await simulateContract(wagmiConfig, {
+          ...simulateInput,
+          blockNumber: receipt.blockNumber - 1n
+        } satisfies SimulateParams)
+      } catch (replayErr) {
+        if (replayErr instanceof BaseError) revertCause = replayErr
+        else onReplayError?.(replayErr)
+      }
     }
     throw new ContractWriteRevertedError({ hash, receipt, simulation, cause: revertCause })
   }
@@ -139,11 +166,26 @@ export async function executeContractWrite(
  * Wraps `executeContractWrite` in a TanStack mutation.
  *
  * `args` and `value` are provided per-call to `executeWrite` / `mutate`.
+ *
+ * ## Behaviour notes
+ *
+ * - **chainId resolution.** When `cfg.chainId` is omitted, wagmi resolves the
+ *   chain from the connected wallet at call time. There is no explicit
+ *   `useChainId()` fallback (this is a deliberate divergence from V2).
+ * - **Type safety on `args`.** `abi` is widened to `Abi` and `functionName`
+ *   to `string` inside this composable, so `variables.args` is **not**
+ *   structurally checked against the ABI signature. Callers wanting compile-
+ *   time safety should wrap this composable behind an `abitype`-typed
+ *   factory (see `composables/bank/writes.ts` for the
+ *   `ExtractAbiFunctionNames` pattern).
+ * - **Cross-chain invalidation.** When `cfg.chainId` is omitted, the success
+ *   handler invalidates `useReadContract` queries for this address across
+ *   *every* chain in the cache. Pin `chainId` to scope the invalidation.
  */
 export function useContractWritesV3(cfg: ContractWriteV3Config) {
   const queryClient = useQueryClient()
 
-  const shouldLog = computed(() => cfg.config?.log ?? true)
+  const shouldLog = cfg.config?.log ?? true
 
   return useMutation({
     mutationFn: async (variables: ExecuteWriteVariables = {}) => {
@@ -151,7 +193,7 @@ export function useContractWritesV3(cfg: ContractWriteV3Config) {
       const functionName = unref(cfg.functionName)
 
       if (!address) throw new Error('Contract address is undefined')
-      if (!functionName) throw new Error('Function name is undefined')
+      if (!functionName) throw new Error('Function name is empty')
 
       return executeContractWrite({
         address,
@@ -159,11 +201,15 @@ export function useContractWritesV3(cfg: ContractWriteV3Config) {
         functionName,
         chainId: unref(cfg.chainId),
         args: variables.args,
-        value: variables.value
+        value: variables.value,
+        onReplayError: shouldLog
+          ? (err) =>
+              log.error(`useContractWritesV3(${functionName}) revert-cause replay failed:\n`, err)
+          : undefined
       })
     },
     onError: (error) => {
-      if (shouldLog.value) {
+      if (shouldLog) {
         log.error(`useContractWritesV3(${unref(cfg.functionName)}) failed:\n`, parseErrorV2(error))
       }
     },

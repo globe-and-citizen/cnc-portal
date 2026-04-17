@@ -336,3 +336,86 @@ export const useQueryFn = vi.fn(() => ({
   isLoading: vi.fn(),
   error: vi.fn()
 }))
+
+/**
+ * Stable spy for `queryClient.invalidateQueries` — opt-in.
+ *
+ * The default `useQueryClientFn` returns a fresh `vi.fn()` per call, which is
+ * fine for "was it called?" assertions but makes it impossible to inspect the
+ * predicate / queryKey passed to `invalidateQueries`. Tests that need that
+ * introspection should rebind in `beforeEach`:
+ *
+ *   useQueryClientFn.mockReturnValue({
+ *     invalidateQueries: mockInvalidateQueries,
+ *     getQueryData: vi.fn(),
+ *     setQueryData: vi.fn(),
+ *     removeQueries: vi.fn()
+ *   })
+ */
+export const mockInvalidateQueries = vi.fn().mockResolvedValue(undefined)
+
+/**
+ * Default mock for TanStack Vue Query's `useMutation`.
+ *
+ * Returns an inert mutation observer (mutate/mutateAsync are stub `vi.fn()`s,
+ * status refs are idle). This matches the conservative behaviour the test
+ * suite expected before V3 — no `mutationFn` runs unless a test opts in.
+ *
+ * For tests that DO want to exercise the real mutation lifecycle (mutationFn
+ * / onSuccess / onError), swap in `smartUseMutation` per file:
+ *
+ *   beforeEach(() => useMutationFn.mockImplementation(smartUseMutation))
+ */
+export const useMutationFn = vi.fn(() => ({
+  mutate: vi.fn(),
+  mutateAsync: vi.fn(),
+  isPending: ref(false),
+  isSuccess: ref(false),
+  isError: ref(false),
+  error: ref(null),
+  data: ref(null),
+  reset: vi.fn(),
+  status: ref<'idle' | 'pending' | 'error' | 'success'>('idle'),
+  variables: ref(undefined)
+}))
+
+type SmartMutationOptions<TData, TVariables> = {
+  mutationFn: (vars: TVariables) => Promise<TData>
+  onSuccess?: (data: TData, vars: TVariables, ctx: unknown) => unknown
+  onError?: (err: unknown, vars: TVariables, ctx: unknown) => unknown
+}
+
+/**
+ * Drop-in implementation for `useMutationFn` that actually runs `mutationFn`
+ * and dispatches `onSuccess` / `onError` when `mutateAsync` is awaited.
+ *
+ * Use it via `useMutationFn.mockImplementation(smartUseMutation)` in tests
+ * that exercise composables built on `useMutation` (e.g. V3 contract writes).
+ *
+ * Note: `mutate` is left as a no-op `vi.fn()` here because most existing
+ * call sites only care about whether `mutate` was invoked, not its side
+ * effects. Tests that need fire-and-forget behaviour can override.
+ */
+export const smartUseMutation = <TData, TVariables>(
+  options: SmartMutationOptions<TData, TVariables>
+) => ({
+  mutate: vi.fn(),
+  mutateAsync: async (variables: TVariables) => {
+    try {
+      const data = await options.mutationFn(variables)
+      if (options.onSuccess) await options.onSuccess(data, variables, undefined)
+      return data
+    } catch (err) {
+      if (options.onError) await options.onError(err, variables, undefined)
+      throw err
+    }
+  },
+  isPending: ref(false),
+  isSuccess: ref(false),
+  isError: ref(false),
+  error: ref(null),
+  data: ref(null),
+  reset: vi.fn(),
+  status: ref<'idle' | 'pending' | 'error' | 'success'>('idle'),
+  variables: ref(undefined)
+})
