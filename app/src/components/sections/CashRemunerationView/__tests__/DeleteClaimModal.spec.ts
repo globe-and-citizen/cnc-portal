@@ -10,7 +10,7 @@ import { useDeleteClaimMutation } from '@/queries/weeklyClaim.queries'
 // Test data
 const defaultClaim: Claim = {
   id: 1,
-  hoursWorked: 8,
+  hoursWorked: 480,
   memo: 'Test work',
   dayWorked: dayjs().startOf('day').toISOString(),
   wageId: 1,
@@ -71,7 +71,7 @@ describe('DeleteClaimModal', () => {
 
     it('should display claim details', () => {
       const wrapper = createWrapper()
-      expect(wrapper.text()).toContain('8 h')
+      expect(wrapper.text()).toContain('8h')
       expect(wrapper.text()).toContain(dayjs(defaultClaim.dayWorked).format('MMM DD, YYYY'))
     })
 

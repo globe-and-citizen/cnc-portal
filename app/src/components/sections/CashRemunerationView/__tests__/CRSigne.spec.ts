@@ -31,7 +31,7 @@ describe('CRSigne', () => {
   const mockClaim: WeeklyClaim = {
     id: 1,
     status: 'pending',
-    hoursWorked: 8,
+    hoursWorked: 480,
     createdAt: '2024-01-01T00:00:00Z',
     wage: {
       userAddress: MOCK_OWNER_ADDRESS,
@@ -189,7 +189,7 @@ describe('CRSigne', () => {
     it('should build overtime-adjusted hourly rate in typed data', async () => {
       const overtimeClaim: WeeklyClaim = {
         ...mockClaim,
-        hoursWorked: 4,
+        hoursWorked: 240,
         wage: {
           ...mockClaim.wage,
           maximumHoursPerWeek: 2,

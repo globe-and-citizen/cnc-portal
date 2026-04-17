@@ -73,7 +73,7 @@ describe('SubmitClaims', () => {
 
     const claimForm = wrapper.findComponent({ name: 'ClaimForm' })
     const submitData = {
-      hoursWorked: 8,
+      hoursWorked: 480,
       memo: 'Test work',
       dayWorked: '2024-01-10T00:00:00.000Z',
       files: []
@@ -99,7 +99,7 @@ describe('SubmitClaims', () => {
 
     const claimForm = wrapper.findComponent({ name: 'ClaimForm' })
     claimForm.vm.$emit('submit', {
-      hoursWorked: 8,
+      hoursWorked: 480,
       memo: 'Test work',
       dayWorked: '2024-01-10T00:00:00.000Z',
       files: []
@@ -146,7 +146,7 @@ describe('SubmitClaims', () => {
       errorMessage: { message: string } | null
     }
     await vm.handleSubmit({
-      hoursWorked: 8,
+      hoursWorked: 480,
       memo: 'Test work',
       dayWorked: '2024-01-10T00:00:00.000Z',
       files: []
@@ -172,7 +172,7 @@ describe('SubmitClaims', () => {
       errorMessage: { message: string } | null
     }
     await vm.handleSubmit({
-      hoursWorked: 8,
+      hoursWorked: 480,
       memo: 'Test work',
       dayWorked: '2024-01-10T00:00:00.000Z',
       files: []

@@ -11,7 +11,7 @@ import { mockLog } from '@/tests/mocks/utils.mock'
 const mockClaims = ref([
   {
     id: 1,
-    hoursWorked: 10,
+    hoursWorked: 600,
     wage: {
       cashRatePerHour: 1,
       ratePerHour: [{ type: 'native', amount: 1 }]
@@ -27,7 +27,7 @@ describe('CashRemunerationPendingClaim', () => {
     mockClaims.value = [
       {
         id: 1,
-        hoursWorked: 10,
+        hoursWorked: 600,
         wage: {
           cashRatePerHour: 1,
           ratePerHour: [{ type: 'native', amount: 1 }]
@@ -63,7 +63,7 @@ describe('CashRemunerationPendingClaim', () => {
     const wrapper = createComponent()
     const card = wrapper.findComponent(OverviewCard)
 
-    // 10 hours * (1 native * local price 2000) = 20000 => $20K
+    // 600 minutes = 10 hours * (1 native * local price 2000) = 20000 => $20K
     expect(card.props('title')).toBe('$20K')
   })
 

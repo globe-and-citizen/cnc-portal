@@ -11,7 +11,7 @@ import { mockTeamStore } from '@/tests/mocks'
 import { createMockMutationResponse } from '@/tests/mocks/query.mock'
 
 const SUBMIT_PAYLOAD = {
-  hoursWorked: 6,
+  hoursWorked: 360,
   memo: 'Updated memo',
   dayWorked: '2024-02-01T00:00:00.000Z',
   uploadedFiles: []
@@ -19,7 +19,7 @@ const SUBMIT_PAYLOAD = {
 
 const defaultClaim: Claim = {
   id: 1,
-  hoursWorked: 4,
+  hoursWorked: 240,
   dayWorked: '2024-01-01T00:00:00.000Z',
   memo: 'Initial memo',
   wageId: 2,
