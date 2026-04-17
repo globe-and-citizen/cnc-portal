@@ -14,7 +14,7 @@
             Done
           </span>
           <span
-            v-else-if="props.weeklyClaim && hasOvertimeWage && overtimeHoursWorked > 0"
+            v-else-if="props.weeklyClaim && hasOvertimeWage && overtimeMinutesWorked > 0"
             class="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-800"
           >
             <span class="inline-block h-1.5 w-1.5 rounded-full bg-amber-600" />
@@ -36,7 +36,7 @@
           </span>
         </div>
 
-        <div class="text-xl font-bold">{{ submittedHours }}h</div>
+        <div class="text-xl font-bold">{{ formatMinutesAsDuration(submittedTime) }}</div>
 
         <span class="text-center text-sm text-gray-500" v-if="props.weeklyClaim && hasOvertimeWage">
           of {{ effectiveWage?.maximumHoursPerWeek ?? '-' }} hrs weekly limit &amp;
@@ -86,7 +86,11 @@
         <div class="stat-title">Total Amount</div>
         <div class="text-center text-xl">
           <template v-if="props.weeklyClaim">
-            <RateDotList :rates="combinedTokenAmounts" :text-class="'text-center'" />
+            <RateDotList
+              :rates="combinedTokenAmounts"
+              :text-class="'text-center'"
+              :maximum-fraction-digits="2"
+            />
           </template>
           <span v-else class="text-gray-300">—</span>
         </div>
@@ -106,6 +110,7 @@ import { computed } from 'vue'
 import { useCurrencyStore } from '@/stores'
 import type { RatePerHour, Wage, WeeklyClaim } from '@/types/cash-remuneration'
 import RateDotList from '@/components/RateDotList.vue'
+import { formatMinutesAsDuration } from '@/utils/wageUtil'
 
 const props = defineProps<{
   weeklyClaim?: WeeklyClaim
@@ -115,7 +120,7 @@ const props = defineProps<{
 const currencyStore = useCurrencyStore()
 
 const effectiveWage = computed(() => props.weeklyClaim?.wage ?? props.wage)
-const submittedHours = computed(() => props.weeklyClaim?.hoursWorked ?? 0)
+const submittedTime = computed(() => props.weeklyClaim?.hoursWorked ?? 0)
 
 const hasOvertimeWage = computed(() => {
   const rates = effectiveWage.value?.overtimeRatePerHour
@@ -126,20 +131,16 @@ const isSignedClaim = computed(
   () => props.weeklyClaim?.status === 'signed' || props.weeklyClaim?.status === 'withdrawn'
 )
 
-const regularHoursWorked = computed(() => {
-  if (!hasOvertimeWage.value) return submittedHours.value
-  return Math.min(
-    submittedHours.value,
-    effectiveWage.value?.maximumHoursPerWeek ?? submittedHours.value
-  )
+const regularMinutesWorked = computed(() => {
+  if (!hasOvertimeWage.value) return submittedTime.value
+  const maxRegularMinutes = (effectiveWage.value?.maximumHoursPerWeek ?? Infinity) * 60
+  return Math.min(submittedTime.value, maxRegularMinutes)
 })
 
-const overtimeHoursWorked = computed(() => {
+const overtimeMinutesWorked = computed(() => {
   if (!hasOvertimeWage.value) return 0
-  return Math.max(
-    0,
-    submittedHours.value - (effectiveWage.value?.maximumHoursPerWeek ?? submittedHours.value)
-  )
+  const maxRegularMinutes = (effectiveWage.value?.maximumHoursPerWeek ?? Infinity) * 60
+  return Math.max(0, submittedTime.value - maxRegularMinutes)
 })
 
 function getHourlyRateInUserCurrency(
@@ -167,16 +168,16 @@ const overtimeHourlyRateInUserCurrency = computed(() =>
 
 const combinedTokenAmounts = computed(() => {
   const result = new Map<string, number>()
-  const regHours = regularHoursWorked.value
+  const regMinutes = regularMinutesWorked.value
 
   for (const rate of effectiveWage.value?.ratePerHour ?? []) {
-    result.set(rate.type, (result.get(rate.type) ?? 0) + rate.amount * regHours)
+    result.set(rate.type, (result.get(rate.type) ?? 0) + (rate.amount * regMinutes) / 60)
   }
 
   if (hasOvertimeWage.value) {
-    const otHours = overtimeHoursWorked.value
+    const otMinutes = overtimeMinutesWorked.value
     for (const rate of (effectiveWage.value?.overtimeRatePerHour as RatePerHour[]) ?? []) {
-      result.set(rate.type, (result.get(rate.type) ?? 0) + rate.amount * otHours)
+      result.set(rate.type, (result.get(rate.type) ?? 0) + (rate.amount * otMinutes) / 60)
     }
   }
 
@@ -184,8 +185,8 @@ const combinedTokenAmounts = computed(() => {
 })
 
 const totalAmount = computed(() => {
-  const regularTotal = regularHoursWorked.value * hourlyRateInUserCurrency.value
-  const overtimeTotal = overtimeHoursWorked.value * overtimeHourlyRateInUserCurrency.value
+  const regularTotal = (regularMinutesWorked.value / 60) * hourlyRateInUserCurrency.value
+  const overtimeTotal = (overtimeMinutesWorked.value / 60) * overtimeHourlyRateInUserCurrency.value
   return (regularTotal + overtimeTotal).toFixed(2)
 })
 </script>
