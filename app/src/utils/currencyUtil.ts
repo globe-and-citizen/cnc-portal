@@ -35,8 +35,8 @@ export function formatCryptoAmount(amount: string | number) {
 
 export function formatCryptoAmountWithPrecision(
   amount: string | number,
-  minimumFractionDigits: number,
-  maximumFractionDigits: number
+  minimumFractionDigits: number = 4,
+  maximumFractionDigits: number = 20
 ) {
   const num = typeof amount === 'string' ? parseFloat(amount) : amount
 

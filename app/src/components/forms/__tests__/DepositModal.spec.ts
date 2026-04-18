@@ -1,29 +1,28 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { mount, VueWrapper } from '@vue/test-utils'
-import { nextTick } from 'vue'
 import DepositModal from '../DepositModal.vue'
 
 describe('DepositModal', () => {
   let wrapper: VueWrapper
-
-  // Mock test data
   const mockBankAddress = '0x1234567890123456789012345678901234567890' as const
 
-  // Test selectors
-  const SELECTORS = {
-    depositButton: '[data-test="deposit-button"]',
-    depositModal: '[data-test="deposit-modal"]'
-  } as const
-
-  // Helper function to create component
-  const mountComponent = (props = {}) => {
-    return mount(DepositModal, {
+  const mountComponent = () =>
+    mount(DepositModal, {
       props: {
-        bankAddress: mockBankAddress,
-        ...props
+        bankAddress: mockBankAddress
+      },
+      global: {
+        stubs: {
+          DepositSafeForm: {
+            name: 'DepositSafeForm',
+            props: ['safeAddress'],
+            emits: ['close-modal'],
+            template:
+              '<button data-test="close-form" @click="$emit(\'close-modal\')">Close</button>'
+          }
+        }
       }
     })
-  }
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -33,30 +32,27 @@ describe('DepositModal', () => {
     if (wrapper) wrapper.unmount()
   })
 
-  describe('Edge Cases', () => {
-    it.skip('should handle closing modal that is not open', () => {
-      wrapper = mountComponent()
+  it('renders the trigger and starts closed', () => {
+    wrapper = mountComponent()
 
-      // Try to close without opening
-      expect(() => {
-        // This shouldn't throw
-        wrapper.vm.closeModal()
-      }).not.toThrow()
-    })
+    expect(wrapper.find('[data-test="deposit-button"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="close-form"]').exists()).toBe(false)
+  })
 
-    it.skip('should maintain proper state when component is remounted', async () => {
-      wrapper = mountComponent()
+  it('opens through the modal v-model and closes when the child emits close-modal', async () => {
+    wrapper = mountComponent()
 
-      await wrapper.find(SELECTORS.depositButton).trigger('click')
-      await nextTick()
-      expect(wrapper.find(SELECTORS.depositModal).exists()).toBe(true)
+    await wrapper.findComponent({ name: 'UModal' }).vm.$emit('update:open', true)
+    await wrapper.vm.$nextTick()
 
-      // Unmount and remount
-      wrapper.unmount()
-      wrapper = mountComponent()
+    expect(wrapper.find('[data-test="close-form"]').exists()).toBe(true)
+    expect(wrapper.findComponent({ name: 'DepositSafeForm' }).props('safeAddress')).toBe(
+      mockBankAddress
+    )
 
-      // Modal should be closed after remount
-      expect(wrapper.find(SELECTORS.depositModal).exists()).toBe(false)
-    })
+    await wrapper.find('[data-test="close-form"]').trigger('click')
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.find('[data-test="close-form"]').exists()).toBe(false)
   })
 })

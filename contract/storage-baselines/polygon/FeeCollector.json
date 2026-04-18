@@ -1,0 +1,78 @@
+{
+  "storage": [
+    {
+      "astId": 15877,
+      "contract": "contracts/FeeCollector.sol:FeeCollector",
+      "label": "feeConfigs",
+      "offset": 0,
+      "slot": "0",
+      "type": "t_array(t_struct(FeeConfig)15873_storage)dyn_storage"
+    },
+    {
+      "astId": 15882,
+      "contract": "contracts/FeeCollector.sol:FeeCollector",
+      "label": "supportedTokens",
+      "offset": 0,
+      "slot": "1",
+      "type": "t_mapping(t_address,t_bool)"
+    }
+  ],
+  "types": {
+    "t_address": {
+      "encoding": "inplace",
+      "label": "address",
+      "numberOfBytes": "20"
+    },
+    "t_array(t_struct(FeeConfig)15873_storage)dyn_storage": {
+      "base": "t_struct(FeeConfig)15873_storage",
+      "encoding": "dynamic_array",
+      "label": "struct FeeCollector.FeeConfig[]",
+      "numberOfBytes": "32"
+    },
+    "t_bool": {
+      "encoding": "inplace",
+      "label": "bool",
+      "numberOfBytes": "1"
+    },
+    "t_mapping(t_address,t_bool)": {
+      "encoding": "mapping",
+      "key": "t_address",
+      "label": "mapping(address => bool)",
+      "numberOfBytes": "32",
+      "value": "t_bool"
+    },
+    "t_string_storage": {
+      "encoding": "bytes",
+      "label": "string",
+      "numberOfBytes": "32"
+    },
+    "t_struct(FeeConfig)15873_storage": {
+      "encoding": "inplace",
+      "label": "struct FeeCollector.FeeConfig",
+      "members": [
+        {
+          "astId": 15870,
+          "contract": "contracts/FeeCollector.sol:FeeCollector",
+          "label": "contractType",
+          "offset": 0,
+          "slot": "0",
+          "type": "t_string_storage"
+        },
+        {
+          "astId": 15872,
+          "contract": "contracts/FeeCollector.sol:FeeCollector",
+          "label": "feeBps",
+          "offset": 0,
+          "slot": "1",
+          "type": "t_uint16"
+        }
+      ],
+      "numberOfBytes": "64"
+    },
+    "t_uint16": {
+      "encoding": "inplace",
+      "label": "uint16",
+      "numberOfBytes": "2"
+    }
+  }
+}

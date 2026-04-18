@@ -8,6 +8,8 @@ import type { WeeklyClaim } from '@/types'
 import { USDC_ADDRESS } from '@/constant'
 import { useSyncWeeklyClaimsMutation } from '@/queries'
 import { mockTeamStore, mockGetBalance, mockUseWriteContract, mockWagmiCore } from '@/tests/mocks'
+import { mockLog } from '@/tests/mocks/utils.mock'
+import * as utils from '@/utils'
 
 vi.mock('@/composables/contracts/useContractWritesV3', () => ({
   useContractWritesV3: vi.fn(() => mockUseWriteContract)
@@ -307,5 +309,41 @@ describe('CRWithdrawClaim', () => {
     await clickWithdrawButton()
 
     // expect(mockToast.add).toHaveBeenCalledWith({ title: 'Unknown failure', color: 'error' })
+  })
+
+  it('handles withdraw mutation onError with user_rejected silently', async () => {
+    vi.spyOn(utils, 'classifyError').mockReturnValue({
+      category: 'user_rejected',
+      message: 'User rejected'
+    } as ReturnType<typeof utils.classifyError>)
+
+    mockUseWriteContract.mutate = vi.fn(
+      async (_variables: unknown, options?: { onError?: (error: unknown) => void }) => {
+        options?.onError?.(new Error('rejected'))
+      }
+    )
+
+    createWrapper()
+    await clickWithdrawButton()
+
+    expect(mockLog.error).toHaveBeenCalledWith('Withdraw error', expect.any(Error))
+  })
+
+  it('handles withdraw mutation onError with regular error', async () => {
+    vi.spyOn(utils, 'classifyError').mockReturnValue({
+      category: 'unknown',
+      message: 'Failure'
+    } as ReturnType<typeof utils.classifyError>)
+
+    mockUseWriteContract.mutate = vi.fn(
+      async (_variables: unknown, options?: { onError?: (error: unknown) => void }) => {
+        options?.onError?.(new Error('boom'))
+      }
+    )
+
+    createWrapper()
+    await clickWithdrawButton()
+
+    expect(mockLog.error).toHaveBeenCalledWith('Withdraw error', expect.any(Error))
   })
 })

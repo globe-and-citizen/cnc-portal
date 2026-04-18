@@ -51,6 +51,7 @@ type AddTeamFormVm = {
   teamData: { name: string; description: string; members: Array<{ address: string; name: string }> }
   currentStep: number
   canProceed: boolean
+  stepperItems: Array<{ title: string; value: number }>
   nextStep: () => void
   saveTeamToDatabase: () => Promise<void>
 }
@@ -141,9 +142,38 @@ describe('AddTeamForm.vue', () => {
 
       expect(vm.teamData.members.length).toBe(1)
     })
+
+    it('shows the member count in the step label when step index and members match the computed branch', async () => {
+      wrapper = mountComponent()
+      const vm = wrapper.vm as unknown as AddTeamFormVm
+
+      vm.currentStep = 3
+      vm.teamData.members = [
+        { address: '0x4b6Bf5cD91446408290725879F5666dcd9785F62', name: 'Alice' },
+        { address: '0x8473AA8b4d95E27F364157DBA0768D7BaeD6931a', name: 'Bob' }
+      ]
+      await wrapper.vm.$nextTick()
+
+      expect(vm.stepperItems[1]?.title).toBe('Members (2)')
+    })
   })
 
   describe('Team Creation', () => {
+    it('should create the team successfully and advance to the next step', async () => {
+      const mutation = createMockMutationResponse(mockTeamData)
+      vi.mocked(useCreateTeamMutation).mockReturnValue(
+        mutation as ReturnType<typeof useCreateTeamMutation>
+      )
+
+      wrapper = mountComponent()
+      await goToStep2(wrapper)
+      await (wrapper.vm as unknown as AddTeamFormVm).saveTeamToDatabase()
+      await flushPromises()
+
+      expect(mutation.mutateAsync).toHaveBeenCalled()
+      expect((wrapper.vm as unknown as AddTeamFormVm).currentStep).toBe(2)
+    })
+
     it('should show error message when creation fails', async () => {
       vi.mocked(useCreateTeamMutation).mockReturnValue(
         createMockMutationResponse(null, false, new Error('Failed')) as ReturnType<
@@ -176,6 +206,15 @@ describe('AddTeamForm.vue', () => {
       await vm.saveTeamToDatabase()
 
       expect(mutation.mutateAsync).not.toHaveBeenCalled()
+    })
+
+    it('goes back to step 1 when the previous button is clicked', async () => {
+      wrapper = mountComponent()
+      await goToStep2(wrapper)
+
+      await wrapper.find('[data-test="previous-button"]').trigger('click')
+
+      expect((wrapper.vm as unknown as AddTeamFormVm).currentStep).toBe(0)
     })
   })
 

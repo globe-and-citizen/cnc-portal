@@ -22,7 +22,11 @@ const createWrapper = (overrides = {}) =>
 type TokenAmountVm = ComponentPublicInstance & {
   tokenOptions: { label: string; value: string }[]
   selectedTokenId: string
+  estimatedPrice: string
+  handleTokenSelect: (val: string) => void
   handleAmountInput: (event: Event) => void
+  useMaxBalance: () => void
+  usePercentageOfBalance: (percentage: number) => void
 }
 
 const getVm = (wrapper: VueWrapper<ComponentPublicInstance>): TokenAmountVm =>
@@ -97,6 +101,17 @@ describe('TokenAmount.vue', () => {
         wrapper.find('[data-test="percentButton-25"]').attributes('disabled')
       ).not.toBeUndefined()
     })
+
+    it('disables token select when there is only one option', () => {
+      const wrapper = createWrapper({
+        tokens: [
+          { symbol: 'USDC', tokenId: 'usdc' as TokenId, balance: 10, price: 1, code: 'USD' }
+        ],
+        modelValue: { amount: '', tokenId: 'usdc' as TokenId }
+      })
+
+      expect(wrapper.find('[data-test="tokenSelect"]').attributes('disabled')).not.toBeUndefined()
+    })
   })
 
   describe('amount helpers', () => {
@@ -121,10 +136,37 @@ describe('TokenAmount.vue', () => {
       await wrapper.find('[data-test="percentButton-75"]').trigger('click')
       expect(getLastModelValue(wrapper)?.amount).toBe('75.0000')
     })
+
+    it('uses spendableBalance for max balance when present', async () => {
+      const wrapper = createWrapper({
+        tokens: [
+          {
+            symbol: 'ETH',
+            tokenId: 'native' as TokenId,
+            balance: 100,
+            spendableBalance: 40,
+            price: 2000,
+            code: 'USD'
+          }
+        ]
+      })
+
+      await wrapper.find('[data-test="maxButton"]').trigger('click')
+
+      expect(getLastModelValue(wrapper)?.amount).toBe('40.000000')
+    })
+
+    it('should apply feeBps to max balance when fee is configured', async () => {
+      const wrapper = createWrapper({ feeBps: 100 })
+
+      await wrapper.find('[data-test="maxButton"]').trigger('click')
+
+      expect(getLastModelValue(wrapper)?.amount).toBe('99.000000')
+    })
   })
 
   describe('input sanitization', () => {
-    it('sanitizes input: removes non-numeric and extra dots', async () => {
+    it('should sanitize input: removes non-numeric and extra dots', async () => {
       const wrapper = createWrapper()
       const vm = getVm(wrapper)
 
@@ -137,7 +179,7 @@ describe('TokenAmount.vue', () => {
       expect(getLastModelValue(wrapper)?.amount).toBe('42.53')
     })
 
-    it('preserves decimal input correctly', async () => {
+    it('should preserve decimal input correctly', async () => {
       const wrapper = createWrapper()
       const input = wrapper.find('input[data-test="amountInput"]')
 
@@ -150,7 +192,7 @@ describe('TokenAmount.vue', () => {
   })
 
   describe('validation errors', () => {
-    it('shows invalid validation state for zero or negative amount', async () => {
+    it('should show invalid validation state for zero or negative amount', async () => {
       const wrapper = createWrapper({ modelValue: { amount: '0', tokenId: 'native' } })
       expect(getLastValidation(wrapper)).toBe(false)
 
@@ -167,6 +209,62 @@ describe('TokenAmount.vue', () => {
     it('keeps validation valid for more than 4 decimal places', () => {
       const wrapper = createWrapper({ modelValue: { amount: '1.12345', tokenId: 'native' } })
       expect(getLastValidation(wrapper)).toBe(true)
+    })
+
+    it('shows invalid validation state when amount exceeds balance', async () => {
+      const wrapper = createWrapper({ modelValue: { amount: '999', tokenId: 'native' } })
+
+      await nextTick()
+
+      expect(getLastValidation(wrapper)).toBe(false)
+    })
+  })
+
+  describe('fallback behavior', () => {
+    it('falls back to native tokenId when modelValue.tokenId is missing on amount input', async () => {
+      const wrapper = createWrapper({
+        modelValue: { amount: '' } as { amount: string; tokenId: TokenId }
+      })
+      const input = wrapper.find('input[data-test="amountInput"]')
+
+      await input.setValue('5')
+
+      expect(getLastModelValue(wrapper)?.tokenId).toBe('native')
+      expect(getLastModelValue(wrapper)?.amount).toBe('5')
+    })
+
+    it('falls back to empty amount when modelValue.amount is missing and token changes', async () => {
+      const wrapper = createWrapper({
+        modelValue: { tokenId: 'native' } as { amount: string; tokenId: TokenId }
+      })
+
+      getVm(wrapper).selectedTokenId = 'usdc'
+      await nextTick()
+
+      expect(getLastModelValue(wrapper)?.amount).toBe('')
+      expect(getLastModelValue(wrapper)?.tokenId).toBe('usdc')
+    })
+  })
+
+  describe('estimated price', () => {
+    it('should use fallback currency code and zero amount conversion when values are missing', () => {
+      localStorage.setItem('currency', JSON.stringify({ name: 'No code currency' }))
+
+      const wrapper = createWrapper({
+        modelValue: { amount: '', tokenId: 'native' }
+      })
+
+      expect(getVm(wrapper).estimatedPrice).toBe('$0')
+    })
+
+    it('should use zero price fallback when selected token is not found', () => {
+      localStorage.removeItem('currency')
+
+      const wrapper = createWrapper({
+        modelValue: { amount: '1', tokenId: 'missing-token' as TokenId }
+      })
+
+      expect(getVm(wrapper).estimatedPrice).toBe('$0')
     })
   })
 })

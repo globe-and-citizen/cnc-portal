@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { formatCurrencyShort } from '../currencyUtil'
+import { formatAmountWithPrecision, formatCryptoAmount, formatCurrencyShort } from '../currencyUtil'
 
 describe('formatCurrencyShort', () => {
   it('should format numbers less than 1,000 without a suffix', () => {
@@ -32,5 +32,23 @@ describe('formatCurrencyShort', () => {
 
   it('should handle zero correctly', () => {
     expect(formatCurrencyShort(0)).toBe('$0')
+  })
+})
+
+describe('formatCryptoAmount', () => {
+  it('formats numeric input with at least 2 decimals', () => {
+    expect(formatCryptoAmount(42)).toBe('42.00')
+    expect(formatCryptoAmount(1234.5)).toBe('1,234.50')
+  })
+
+  it('formats string input by parsing it as number', () => {
+    expect(formatCryptoAmount('0.123456789')).toBe('0.123456789')
+  })
+})
+
+describe('formatAmountWithPrecision', () => {
+  it('uses default precision values when not provided', () => {
+    expect(formatAmountWithPrecision(1)).toBe('1.0000')
+    expect(formatAmountWithPrecision('1234.56789')).toBe('1,234.56789')
   })
 })

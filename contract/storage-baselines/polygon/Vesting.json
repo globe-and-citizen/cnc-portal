@@ -1,0 +1,226 @@
+{
+  "storage": [
+    {
+      "astId": 20197,
+      "contract": "contracts/Vesting.sol:Vesting",
+      "label": "teams",
+      "offset": 0,
+      "slot": "0",
+      "type": "t_mapping(t_uint256,t_struct(TeamInfo)20192_storage)"
+    },
+    {
+      "astId": 20202,
+      "contract": "contracts/Vesting.sol:Vesting",
+      "label": "userTeams",
+      "offset": 0,
+      "slot": "1",
+      "type": "t_mapping(t_address,t_array(t_uint256)dyn_storage)"
+    },
+    {
+      "astId": 20209,
+      "contract": "contracts/Vesting.sol:Vesting",
+      "label": "vestings",
+      "offset": 0,
+      "slot": "2",
+      "type": "t_mapping(t_address,t_mapping(t_uint256,t_struct(VestingInfo)20184_storage))"
+    },
+    {
+      "astId": 20217,
+      "contract": "contracts/Vesting.sol:Vesting",
+      "label": "archivedVestings",
+      "offset": 0,
+      "slot": "3",
+      "type": "t_mapping(t_address,t_mapping(t_uint256,t_array(t_struct(VestingInfo)20184_storage)dyn_storage))"
+    },
+    {
+      "astId": 20223,
+      "contract": "contracts/Vesting.sol:Vesting",
+      "label": "isUserInTeam",
+      "offset": 0,
+      "slot": "4",
+      "type": "t_mapping(t_address,t_mapping(t_uint256,t_bool))"
+    }
+  ],
+  "types": {
+    "t_address": {
+      "encoding": "inplace",
+      "label": "address",
+      "numberOfBytes": "20"
+    },
+    "t_array(t_address)dyn_storage": {
+      "base": "t_address",
+      "encoding": "dynamic_array",
+      "label": "address[]",
+      "numberOfBytes": "32"
+    },
+    "t_array(t_struct(VestingInfo)20184_storage)dyn_storage": {
+      "base": "t_struct(VestingInfo)20184_storage",
+      "encoding": "dynamic_array",
+      "label": "struct Vesting.VestingInfo[]",
+      "numberOfBytes": "32"
+    },
+    "t_array(t_uint256)dyn_storage": {
+      "base": "t_uint256",
+      "encoding": "dynamic_array",
+      "label": "uint256[]",
+      "numberOfBytes": "32"
+    },
+    "t_bool": {
+      "encoding": "inplace",
+      "label": "bool",
+      "numberOfBytes": "1"
+    },
+    "t_mapping(t_address,t_array(t_uint256)dyn_storage)": {
+      "encoding": "mapping",
+      "key": "t_address",
+      "label": "mapping(address => uint256[])",
+      "numberOfBytes": "32",
+      "value": "t_array(t_uint256)dyn_storage"
+    },
+    "t_mapping(t_address,t_mapping(t_uint256,t_array(t_struct(VestingInfo)20184_storage)dyn_storage))": {
+      "encoding": "mapping",
+      "key": "t_address",
+      "label": "mapping(address => mapping(uint256 => struct Vesting.VestingInfo[]))",
+      "numberOfBytes": "32",
+      "value": "t_mapping(t_uint256,t_array(t_struct(VestingInfo)20184_storage)dyn_storage)"
+    },
+    "t_mapping(t_address,t_mapping(t_uint256,t_bool))": {
+      "encoding": "mapping",
+      "key": "t_address",
+      "label": "mapping(address => mapping(uint256 => bool))",
+      "numberOfBytes": "32",
+      "value": "t_mapping(t_uint256,t_bool)"
+    },
+    "t_mapping(t_address,t_mapping(t_uint256,t_struct(VestingInfo)20184_storage))": {
+      "encoding": "mapping",
+      "key": "t_address",
+      "label": "mapping(address => mapping(uint256 => struct Vesting.VestingInfo))",
+      "numberOfBytes": "32",
+      "value": "t_mapping(t_uint256,t_struct(VestingInfo)20184_storage)"
+    },
+    "t_mapping(t_uint256,t_array(t_struct(VestingInfo)20184_storage)dyn_storage)": {
+      "encoding": "mapping",
+      "key": "t_uint256",
+      "label": "mapping(uint256 => struct Vesting.VestingInfo[])",
+      "numberOfBytes": "32",
+      "value": "t_array(t_struct(VestingInfo)20184_storage)dyn_storage"
+    },
+    "t_mapping(t_uint256,t_bool)": {
+      "encoding": "mapping",
+      "key": "t_uint256",
+      "label": "mapping(uint256 => bool)",
+      "numberOfBytes": "32",
+      "value": "t_bool"
+    },
+    "t_mapping(t_uint256,t_struct(TeamInfo)20192_storage)": {
+      "encoding": "mapping",
+      "key": "t_uint256",
+      "label": "mapping(uint256 => struct Vesting.TeamInfo)",
+      "numberOfBytes": "32",
+      "value": "t_struct(TeamInfo)20192_storage"
+    },
+    "t_mapping(t_uint256,t_struct(VestingInfo)20184_storage)": {
+      "encoding": "mapping",
+      "key": "t_uint256",
+      "label": "mapping(uint256 => struct Vesting.VestingInfo)",
+      "numberOfBytes": "32",
+      "value": "t_struct(VestingInfo)20184_storage"
+    },
+    "t_struct(TeamInfo)20192_storage": {
+      "encoding": "inplace",
+      "label": "struct Vesting.TeamInfo",
+      "members": [
+        {
+          "astId": 20186,
+          "contract": "contracts/Vesting.sol:Vesting",
+          "label": "owner",
+          "offset": 0,
+          "slot": "0",
+          "type": "t_address"
+        },
+        {
+          "astId": 20188,
+          "contract": "contracts/Vesting.sol:Vesting",
+          "label": "token",
+          "offset": 0,
+          "slot": "1",
+          "type": "t_address"
+        },
+        {
+          "astId": 20191,
+          "contract": "contracts/Vesting.sol:Vesting",
+          "label": "members",
+          "offset": 0,
+          "slot": "2",
+          "type": "t_array(t_address)dyn_storage"
+        }
+      ],
+      "numberOfBytes": "96"
+    },
+    "t_struct(VestingInfo)20184_storage": {
+      "encoding": "inplace",
+      "label": "struct Vesting.VestingInfo",
+      "members": [
+        {
+          "astId": 20173,
+          "contract": "contracts/Vesting.sol:Vesting",
+          "label": "start",
+          "offset": 0,
+          "slot": "0",
+          "type": "t_uint64"
+        },
+        {
+          "astId": 20175,
+          "contract": "contracts/Vesting.sol:Vesting",
+          "label": "duration",
+          "offset": 8,
+          "slot": "0",
+          "type": "t_uint64"
+        },
+        {
+          "astId": 20177,
+          "contract": "contracts/Vesting.sol:Vesting",
+          "label": "cliff",
+          "offset": 16,
+          "slot": "0",
+          "type": "t_uint64"
+        },
+        {
+          "astId": 20179,
+          "contract": "contracts/Vesting.sol:Vesting",
+          "label": "totalAmount",
+          "offset": 0,
+          "slot": "1",
+          "type": "t_uint256"
+        },
+        {
+          "astId": 20181,
+          "contract": "contracts/Vesting.sol:Vesting",
+          "label": "released",
+          "offset": 0,
+          "slot": "2",
+          "type": "t_uint256"
+        },
+        {
+          "astId": 20183,
+          "contract": "contracts/Vesting.sol:Vesting",
+          "label": "active",
+          "offset": 0,
+          "slot": "3",
+          "type": "t_bool"
+        }
+      ],
+      "numberOfBytes": "128"
+    },
+    "t_uint256": {
+      "encoding": "inplace",
+      "label": "uint256",
+      "numberOfBytes": "32"
+    },
+    "t_uint64": {
+      "encoding": "inplace",
+      "label": "uint64",
+      "numberOfBytes": "8"
+    }
+  }
+}
