@@ -17,7 +17,10 @@ export interface ClaimFormFileData {
 }
 
 interface UseClaimFormToast {
-  add: (payload: { title: string; color: 'error' | 'success' | 'warning' | 'info' | 'primary' }) => void
+  add: (payload: {
+    title: string
+    color: 'error' | 'success' | 'warning' | 'info' | 'primary'
+  }) => void
 }
 
 interface UseClaimFormOptions {
