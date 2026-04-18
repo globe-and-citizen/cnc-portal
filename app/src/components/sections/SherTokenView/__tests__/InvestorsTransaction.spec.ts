@@ -3,9 +3,26 @@ import { mount } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
 import InvestorsTransactions from '@/components/sections/SherTokenView/InvestorsTransactions.vue'
 import { ref } from 'vue'
-import { mockUseApolloQuery, resetComposableMocks } from '@/tests/mocks'
+const mockUseQuery = {
+  result: ref({
+    investorDividendPaids: {
+      items: []
+    },
+    investorDividendDistributeds: {
+      items: []
+    }
+  }),
+  error: ref<Error | null>(null),
+  loading: ref(false)
+}
 
-const mockContractAddress = ref<string | undefined>('0xcontract')
+vi.mock('@vue/apollo-composable', async (importOriginal) => {
+  const original: object = await importOriginal()
+  return {
+    ...original,
+    useQuery: vi.fn(() => ({ ...mockUseQuery }))
+  }
+})
 
 describe('InvestorsTransactions.vue', () => {
   const createComponent = () => {
@@ -17,24 +34,35 @@ describe('InvestorsTransactions.vue', () => {
   }
 
   afterEach(() => {
-    resetComposableMocks()
+    mockUseQuery.result.value = {
+      investorDividendPaids: {
+        items: []
+      },
+      investorDividendDistributeds: {
+        items: []
+      }
+    }
+    mockUseQuery.error.value = null
     vi.clearAllMocks()
   })
 
   it('should mount properly', () => {
-    mockUseApolloQuery.result.value = {
-      dividendClaims: [
-        {
-          id: '1',
-          transactionHash: '0xtxhash1',
-          from: '0xfrom1',
-          to: '0xto1',
-          amount: '1000000000000000000',
-          tokenAddress: '0xtoken1',
-          blockTimestamp: '1677649200',
-          transactionType: 'dividend'
-        }
-      ]
+    mockUseQuery.result.value = {
+      investorDividendPaids: {
+        items: [
+          {
+            id: '0xtxhash1-0',
+            contractAddress: '0xfrom1',
+            shareholder: '0xto1',
+            token: '0xtoken1',
+            amount: '1000000000000000000',
+            timestamp: 1677649200
+          }
+        ]
+      },
+      investorDividendDistributeds: {
+        items: []
+      }
     }
 
     const wrapper = createComponent()
@@ -42,19 +70,22 @@ describe('InvestorsTransactions.vue', () => {
   })
 
   it('should format transactions correctly', () => {
-    mockUseApolloQuery.result.value = {
-      dividendClaims: [
-        {
-          id: '1',
-          transactionHash: '0xtxhash1',
-          from: '0xfrom1',
-          to: '0xto1',
-          amount: '1000000000000000000',
-          tokenAddress: '0xtoken1',
-          blockTimestamp: '1677649200',
-          transactionType: 'dividend'
-        }
-      ]
+    mockUseQuery.result.value = {
+      investorDividendPaids: {
+        items: [
+          {
+            id: '0xtxhash1-0',
+            contractAddress: '0xfrom1',
+            shareholder: '0xto1',
+            token: '0xtoken1',
+            amount: '1000000000000000000',
+            timestamp: 1677649200
+          }
+        ]
+      },
+      investorDividendDistributeds: {
+        items: []
+      }
     }
 
     const wrapper = createComponent()
@@ -65,7 +96,7 @@ describe('InvestorsTransactions.vue', () => {
       txHash: '0xtxhash1',
       from: '0xfrom1',
       to: '0xto1',
-      type: 'dividend'
+      type: 'dividendPaid'
     })
   })
 
@@ -79,19 +110,22 @@ describe('InvestorsTransactions.vue', () => {
   //   })
 
   it('should calculate USD amounts correctly', () => {
-    mockUseApolloQuery.result.value = {
-      dividendClaims: [
-        {
-          id: '1',
-          transactionHash: '0xtxhash1',
-          from: '0xfrom1',
-          to: '0xto1',
-          amount: '1000000000000000000',
-          tokenAddress: '0xtoken1',
-          blockTimestamp: '1677649200',
-          transactionType: 'dividend'
-        }
-      ]
+    mockUseQuery.result.value = {
+      investorDividendPaids: {
+        items: [
+          {
+            id: '0xtxhash1-0',
+            contractAddress: '0xfrom1',
+            shareholder: '0xto1',
+            token: '0xtoken1',
+            amount: '1000000000000000000',
+            timestamp: 1677649200
+          }
+        ]
+      },
+      investorDividendDistributeds: {
+        items: []
+      }
     }
 
     const wrapper = createComponent()
@@ -101,21 +135,5 @@ describe('InvestorsTransactions.vue', () => {
 
     expect(transactions[0]).toHaveProperty('amountUSD')
     expect(typeof transactions[0].amountUSD).toBe('number')
-  })
-
-  it.skip('should set enabled to true when bankAddress is defined', () => {
-    const wrapper = createComponent()
-    // Access the enabled computed property
-    const enabled = (wrapper.vm as unknown as { enabled: boolean }).enabled
-    expect(enabled).toBe(true)
-  })
-
-  it.skip('should set enabled to false when bankAddress is undefined', () => {
-    // Mock bankAddress as undefined
-    mockContractAddress.value = undefined
-
-    const wrapper = createComponent()
-    const enabled = (wrapper.vm as unknown as { enabled: boolean }).enabled
-    expect(enabled).toBe(false)
   })
 })

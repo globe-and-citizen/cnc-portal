@@ -4,7 +4,9 @@
       <AddressToolTip :address="row.txHash" :slice="true" type="transaction" />
     </template>
 
-    <template #date-cell="{ row: { original: row } }">{{ formatDate(String(row.date)) }}</template>
+    <template #date-cell="{ row: { original: row } }">
+      {{ formatDateShort(String(row.date)) }}
+    </template>
 
     <template #type-cell="{ row: { original: row } }">
       <span class="badge" :class="getTypeClass(row.type)">{{ row.type }}</span>
@@ -18,7 +20,9 @@
       <AddressToolTip :address="row.to" :slice="true" type="address" />
     </template>
 
-    <template #amount-cell="{ row: { original: row } }">{{ row.amount }} {{ row.token }}</template>
+    <template #amount-cell="{ row: { original: row } }">
+      {{ formatCryptoAmountWithPrecision(row.amount, 6, 6) }} {{ row.token }}
+    </template>
     <template #amountUSD-cell="{ row: { original: row } }">
       {{ formatCurrencyShort(row.amountUSD, 'USD') }}
     </template>
@@ -27,7 +31,8 @@
 
 <script setup lang="ts">
 import type { InvestorsTransaction } from '@/types/transactions'
-import { formatCurrencyShort } from '@/utils'
+import { formatCryptoAmountWithPrecision, formatCurrencyShort } from '@/utils'
+import { formatDateShort } from '@/utils/dayUtils'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 
 defineProps<{
@@ -44,13 +49,13 @@ const columns = [
   { accessorKey: 'amountUSD', header: 'USD Value' }
 ]
 
-const formatDate = (date: string) => new Date(date).toLocaleString()
-
 const getTypeClass = (type: string) => {
+  const normalized = type.toLowerCase()
   return {
-    'bg-success': type === 'mint',
-    'bg-warning': type === 'dividend',
-    'bg-info': type === 'transfer'
+    'badge-success': normalized.includes('mint') || normalized.includes('paid'),
+    'badge-warning': normalized.includes('distributed'),
+    'badge-error': normalized.includes('failed'),
+    'badge-info': normalized.includes('transfer')
   }
 }
 </script>

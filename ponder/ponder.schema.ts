@@ -31,6 +31,62 @@ export const teamContract = onchainTable(
   }),
 );
 
+// Raw ERC20 transfers touching Officer-managed contracts
+export const rawContractTokenTransfer = onchainTable(
+  "raw_contract_token_transfer",
+  (t) => ({
+    id: t.text().primaryKey(), // `${txHash}-${logIndex}-${direction}`
+    tokenAddress: t.hex().notNull(), // ERC20 contract address
+    contractAddress: t.hex().notNull(), // Officer-managed contract involved
+    teamAddress: t.hex().notNull(), // Officer address
+    contractType: t.text().notNull(), // "Bank", "InvestorV1", ...
+    direction: t.text().notNull(), // "in" | "out" | "internal"
+    from: t.hex().notNull(),
+    to: t.hex().notNull(),
+    amount: t.bigint().notNull(),
+    blockNumber: t.bigint().notNull(),
+    timestamp: t.integer().notNull(),
+  }),
+  (table) => ({
+    tokenAddressIdx: index("raw_contract_token_transfer_token_index").on(table.tokenAddress),
+    contractAddressIdx: index("raw_contract_token_transfer_contract_index").on(table.contractAddress),
+    teamAddressIdx: index("raw_contract_token_transfer_team_index").on(table.teamAddress),
+    contractTypeIdx: index("raw_contract_token_transfer_type_index").on(table.contractType),
+    directionIdx: index("raw_contract_token_transfer_direction_index").on(table.direction),
+    fromIdx: index("raw_contract_token_transfer_from_index").on(table.from),
+    toIdx: index("raw_contract_token_transfer_to_index").on(table.to),
+  }),
+);
+
+export const officerBeaconConfigured = onchainTable(
+  "officer_beacon_configured",
+  (t) => ({
+    id: t.text().primaryKey(),
+    teamAddress: t.hex().notNull(),
+    contractType: t.text().notNull(),
+    beaconAddress: t.hex().notNull(),
+    blockNumber: t.bigint().notNull(),
+    timestamp: t.integer().notNull(),
+  }),
+  (table) => ({
+    teamAddressIdx: index("officer_beacon_configured_team_index").on(table.teamAddress),
+  }),
+);
+
+export const officerBeaconProxiesDeployed = onchainTable(
+  "officer_beacon_proxies_deployed",
+  (t) => ({
+    id: t.text().primaryKey(),
+    teamAddress: t.hex().notNull(),
+    beaconProxies: t.text().notNull(),
+    blockNumber: t.bigint().notNull(),
+    timestamp: t.integer().notNull(),
+  }),
+  (table) => ({
+    teamAddressIdx: index("officer_beacon_proxies_deployed_team_index").on(table.teamAddress),
+  }),
+);
+
 // Bank events
 export const bankDeposit = onchainTable(
   "bank_deposit",
@@ -106,12 +162,14 @@ export const bankFeePaid = onchainTable(
     id: t.text().primaryKey(),
     contractAddress: t.hex().notNull(),
     feeCollector: t.hex().notNull(),
+    token: t.hex(),
     amount: t.bigint().notNull(),
     blockNumber: t.bigint().notNull(),
     timestamp: t.integer().notNull(),
   }),
   (table) => ({
     contractAddressIdx: index("bank_fee_paid_contract_index").on(table.contractAddress),
+    tokenIdx: index("bank_fee_paid_token_index").on(table.token),
   }),
 );
 
@@ -130,6 +188,36 @@ export const bankDividendDistributionTriggered = onchainTable(
     contractAddressIdx: index("bank_dividend_distribution_triggered_contract_index").on(
       table.contractAddress,
     ),
+  }),
+);
+
+export const bankTokenSupportAdded = onchainTable(
+  "bank_token_support_added",
+  (t) => ({
+    id: t.text().primaryKey(),
+    contractAddress: t.hex().notNull(),
+    tokenAddress: t.hex().notNull(),
+    blockNumber: t.bigint().notNull(),
+    timestamp: t.integer().notNull(),
+  }),
+  (table) => ({
+    contractAddressIdx: index("bank_token_support_added_contract_index").on(table.contractAddress),
+    tokenAddressIdx: index("bank_token_support_added_token_index").on(table.tokenAddress),
+  }),
+);
+
+export const bankTokenSupportRemoved = onchainTable(
+  "bank_token_support_removed",
+  (t) => ({
+    id: t.text().primaryKey(),
+    contractAddress: t.hex().notNull(),
+    tokenAddress: t.hex().notNull(),
+    blockNumber: t.bigint().notNull(),
+    timestamp: t.integer().notNull(),
+  }),
+  (table) => ({
+    contractAddressIdx: index("bank_token_support_removed_contract_index").on(table.contractAddress),
+    tokenAddressIdx: index("bank_token_support_removed_token_index").on(table.tokenAddress),
   }),
 );
 
@@ -276,6 +364,34 @@ export const boardApproval = onchainTable(
   (table) => ({
     contractAddressIdx: index("board_approval_contract_index").on(table.contractAddress),
     approverIdx: index("board_approval_approver_index").on(table.approver),
+  }),
+);
+
+export const boardDirectorsChanged = onchainTable(
+  "board_directors_changed",
+  (t) => ({
+    id: t.text().primaryKey(),
+    contractAddress: t.hex().notNull(),
+    members: t.text().notNull(),
+    blockNumber: t.bigint().notNull(),
+    timestamp: t.integer().notNull(),
+  }),
+  (table) => ({
+    contractAddressIdx: index("board_directors_changed_contract_index").on(table.contractAddress),
+  }),
+);
+
+export const boardOwnersChanged = onchainTable(
+  "board_owners_changed",
+  (t) => ({
+    id: t.text().primaryKey(),
+    contractAddress: t.hex().notNull(),
+    owners: t.text().notNull(),
+    blockNumber: t.bigint().notNull(),
+    timestamp: t.integer().notNull(),
+  }),
+  (table) => ({
+    contractAddressIdx: index("board_owners_changed_contract_index").on(table.contractAddress),
   }),
 );
 
@@ -431,6 +547,84 @@ export const cashRemunerationWageClaim = onchainTable(
   }),
 );
 
+export const cashRemunerationOwnerTreasuryWithdrawNative = onchainTable(
+  "cash_remuneration_owner_treasury_withdraw_native",
+  (t) => ({
+    id: t.text().primaryKey(),
+    contractAddress: t.hex().notNull(),
+    ownerAddress: t.hex().notNull(),
+    amount: t.bigint().notNull(),
+    blockNumber: t.bigint().notNull(),
+    timestamp: t.integer().notNull(),
+  }),
+  (table) => ({
+    contractAddressIdx: index("cash_rem_owner_withdraw_native_contract_index").on(table.contractAddress),
+    ownerIdx: index("cash_rem_owner_withdraw_native_owner_index").on(table.ownerAddress),
+  }),
+);
+
+export const cashRemunerationOwnerTreasuryWithdrawToken = onchainTable(
+  "cash_remuneration_owner_treasury_withdraw_token",
+  (t) => ({
+    id: t.text().primaryKey(),
+    contractAddress: t.hex().notNull(),
+    ownerAddress: t.hex().notNull(),
+    tokenAddress: t.hex().notNull(),
+    amount: t.bigint().notNull(),
+    blockNumber: t.bigint().notNull(),
+    timestamp: t.integer().notNull(),
+  }),
+  (table) => ({
+    contractAddressIdx: index("cash_rem_owner_withdraw_token_contract_index").on(table.contractAddress),
+    ownerIdx: index("cash_rem_owner_withdraw_token_owner_index").on(table.ownerAddress),
+  }),
+);
+
+export const cashRemunerationOfficerUpdated = onchainTable(
+  "cash_remuneration_officer_updated",
+  (t) => ({
+    id: t.text().primaryKey(),
+    contractAddress: t.hex().notNull(),
+    newOfficerAddress: t.hex().notNull(),
+    blockNumber: t.bigint().notNull(),
+    timestamp: t.integer().notNull(),
+  }),
+  (table) => ({
+    contractAddressIdx: index("cash_rem_officer_updated_contract_index").on(table.contractAddress),
+    officerIdx: index("cash_rem_officer_updated_officer_index").on(table.newOfficerAddress),
+  }),
+);
+
+export const cashRemunerationTokenSupportAdded = onchainTable(
+  "cash_remuneration_token_support_added",
+  (t) => ({
+    id: t.text().primaryKey(),
+    contractAddress: t.hex().notNull(),
+    tokenAddress: t.hex().notNull(),
+    blockNumber: t.bigint().notNull(),
+    timestamp: t.integer().notNull(),
+  }),
+  (table) => ({
+    contractAddressIdx: index("cash_rem_token_support_added_contract_index").on(table.contractAddress),
+    tokenIdx: index("cash_rem_token_support_added_token_index").on(table.tokenAddress),
+  }),
+);
+
+export const cashRemunerationTokenSupportRemoved = onchainTable(
+  "cash_remuneration_token_support_removed",
+  (t) => ({
+    id: t.text().primaryKey(),
+    contractAddress: t.hex().notNull(),
+    tokenAddress: t.hex().notNull(),
+    blockNumber: t.bigint().notNull(),
+    timestamp: t.integer().notNull(),
+  }),
+  (table) => ({
+    contractAddressIdx: index("cash_rem_token_support_removed_contract_index").on(table.contractAddress),
+    tokenIdx: index("cash_rem_token_support_removed_token_index").on(table.tokenAddress),
+  }),
+);
+
 // SafeDepositRouter events
 export const safeDeposit = onchainTable(
   "safe_deposit",
@@ -448,6 +642,114 @@ export const safeDeposit = onchainTable(
   (table) => ({
     contractAddressIdx: index("safe_deposit_contract_index").on(table.contractAddress),
     depositorIdx: index("safe_deposit_depositor_index").on(table.depositor),
+  }),
+);
+
+export const safeDepositsEnabled = onchainTable(
+  "safe_deposits_enabled",
+  (t) => ({
+    id: t.text().primaryKey(),
+    contractAddress: t.hex().notNull(),
+    enabledBy: t.hex().notNull(),
+    blockNumber: t.bigint().notNull(),
+    timestamp: t.integer().notNull(),
+  }),
+  (table) => ({
+    contractAddressIdx: index("safe_deposits_enabled_contract_index").on(table.contractAddress),
+    enabledByIdx: index("safe_deposits_enabled_by_index").on(table.enabledBy),
+  }),
+);
+
+export const safeDepositsDisabled = onchainTable(
+  "safe_deposits_disabled",
+  (t) => ({
+    id: t.text().primaryKey(),
+    contractAddress: t.hex().notNull(),
+    disabledBy: t.hex().notNull(),
+    blockNumber: t.bigint().notNull(),
+    timestamp: t.integer().notNull(),
+  }),
+  (table) => ({
+    contractAddressIdx: index("safe_deposits_disabled_contract_index").on(table.contractAddress),
+    disabledByIdx: index("safe_deposits_disabled_by_index").on(table.disabledBy),
+  }),
+);
+
+export const safeAddressUpdated = onchainTable(
+  "safe_address_updated",
+  (t) => ({
+    id: t.text().primaryKey(),
+    contractAddress: t.hex().notNull(),
+    oldSafe: t.hex().notNull(),
+    newSafe: t.hex().notNull(),
+    blockNumber: t.bigint().notNull(),
+    timestamp: t.integer().notNull(),
+  }),
+  (table) => ({
+    contractAddressIdx: index("safe_address_updated_contract_index").on(table.contractAddress),
+  }),
+);
+
+export const safeMultiplierUpdated = onchainTable(
+  "safe_multiplier_updated",
+  (t) => ({
+    id: t.text().primaryKey(),
+    contractAddress: t.hex().notNull(),
+    oldMultiplier: t.bigint().notNull(),
+    newMultiplier: t.bigint().notNull(),
+    blockNumber: t.bigint().notNull(),
+    timestamp: t.integer().notNull(),
+  }),
+  (table) => ({
+    contractAddressIdx: index("safe_multiplier_updated_contract_index").on(table.contractAddress),
+  }),
+);
+
+export const safeTokenSupportAdded = onchainTable(
+  "safe_token_support_added",
+  (t) => ({
+    id: t.text().primaryKey(),
+    contractAddress: t.hex().notNull(),
+    tokenAddress: t.hex().notNull(),
+    decimals: t.integer(),
+    blockNumber: t.bigint().notNull(),
+    timestamp: t.integer().notNull(),
+  }),
+  (table) => ({
+    contractAddressIdx: index("safe_token_support_added_contract_index").on(table.contractAddress),
+    tokenAddressIdx: index("safe_token_support_added_token_index").on(table.tokenAddress),
+  }),
+);
+
+export const safeTokenSupportRemoved = onchainTable(
+  "safe_token_support_removed",
+  (t) => ({
+    id: t.text().primaryKey(),
+    contractAddress: t.hex().notNull(),
+    tokenAddress: t.hex().notNull(),
+    blockNumber: t.bigint().notNull(),
+    timestamp: t.integer().notNull(),
+  }),
+  (table) => ({
+    contractAddressIdx: index("safe_token_support_removed_contract_index").on(table.contractAddress),
+    tokenAddressIdx: index("safe_token_support_removed_token_index").on(table.tokenAddress),
+  }),
+);
+
+export const safeTokensRecovered = onchainTable(
+  "safe_tokens_recovered",
+  (t) => ({
+    id: t.text().primaryKey(),
+    contractAddress: t.hex().notNull(),
+    token: t.hex().notNull(),
+    to: t.hex().notNull(),
+    amount: t.bigint().notNull(),
+    blockNumber: t.bigint().notNull(),
+    timestamp: t.integer().notNull(),
+  }),
+  (table) => ({
+    contractAddressIdx: index("safe_tokens_recovered_contract_index").on(table.contractAddress),
+    tokenIdx: index("safe_tokens_recovered_token_index").on(table.token),
   }),
 );
 
@@ -532,6 +834,332 @@ export const expenseApproval = onchainTable(
   }),
   (table) => ({
     contractAddressIdx: index("expense_approval_contract_index").on(table.contractAddress),
+  }),
+);
+
+export const expenseOwnerTreasuryWithdrawNative = onchainTable(
+  "expense_owner_treasury_withdraw_native",
+  (t) => ({
+    id: t.text().primaryKey(),
+    contractAddress: t.hex().notNull(),
+    ownerAddress: t.hex().notNull(),
+    amount: t.bigint().notNull(),
+    blockNumber: t.bigint().notNull(),
+    timestamp: t.integer().notNull(),
+  }),
+  (table) => ({
+    contractAddressIdx: index("expense_owner_withdraw_native_contract_index").on(table.contractAddress),
+    ownerIdx: index("expense_owner_withdraw_native_owner_index").on(table.ownerAddress),
+  }),
+);
+
+export const expenseOwnerTreasuryWithdrawToken = onchainTable(
+  "expense_owner_treasury_withdraw_token",
+  (t) => ({
+    id: t.text().primaryKey(),
+    contractAddress: t.hex().notNull(),
+    ownerAddress: t.hex().notNull(),
+    token: t.hex().notNull(),
+    amount: t.bigint().notNull(),
+    blockNumber: t.bigint().notNull(),
+    timestamp: t.integer().notNull(),
+  }),
+  (table) => ({
+    contractAddressIdx: index("expense_owner_withdraw_token_contract_index").on(table.contractAddress),
+    ownerIdx: index("expense_owner_withdraw_token_owner_index").on(table.ownerAddress),
+  }),
+);
+
+export const expenseTokenSupportAdded = onchainTable(
+  "expense_token_support_added",
+  (t) => ({
+    id: t.text().primaryKey(),
+    contractAddress: t.hex().notNull(),
+    tokenAddress: t.hex().notNull(),
+    blockNumber: t.bigint().notNull(),
+    timestamp: t.integer().notNull(),
+  }),
+  (table) => ({
+    contractAddressIdx: index("expense_token_support_added_contract_index").on(table.contractAddress),
+    tokenAddressIdx: index("expense_token_support_added_token_index").on(table.tokenAddress),
+  }),
+);
+
+export const expenseTokenSupportRemoved = onchainTable(
+  "expense_token_support_removed",
+  (t) => ({
+    id: t.text().primaryKey(),
+    contractAddress: t.hex().notNull(),
+    tokenAddress: t.hex().notNull(),
+    blockNumber: t.bigint().notNull(),
+    timestamp: t.integer().notNull(),
+  }),
+  (table) => ({
+    contractAddressIdx: index("expense_token_support_removed_contract_index").on(table.contractAddress),
+    tokenAddressIdx: index("expense_token_support_removed_token_index").on(table.tokenAddress),
+  }),
+);
+
+export const expenseTokenAddressChanged = onchainTable(
+  "expense_token_address_changed",
+  (t) => ({
+    id: t.text().primaryKey(),
+    contractAddress: t.hex().notNull(),
+    addressWhoChanged: t.hex().notNull(),
+    tokenSymbol: t.text().notNull(),
+    oldAddress: t.hex().notNull(),
+    newAddress: t.hex().notNull(),
+    blockNumber: t.bigint().notNull(),
+    timestamp: t.integer().notNull(),
+  }),
+  (table) => ({
+    contractAddressIdx: index("expense_token_address_changed_contract_index").on(table.contractAddress),
+    tokenSymbolIdx: index("expense_token_address_changed_symbol_index").on(table.tokenSymbol),
+  }),
+);
+
+// FeeCollector events
+export const feeCollectorFeePaid = onchainTable(
+  "fee_collector_fee_paid",
+  (t) => ({
+    id: t.text().primaryKey(),
+    contractAddress: t.hex().notNull(),
+    contractType: t.text().notNull(),
+    payer: t.hex().notNull(),
+    token: t.hex().notNull(),
+    amount: t.bigint().notNull(),
+    blockNumber: t.bigint().notNull(),
+    timestamp: t.integer().notNull(),
+  }),
+  (table) => ({
+    contractAddressIdx: index("fee_collector_fee_paid_contract_index").on(table.contractAddress),
+    payerIdx: index("fee_collector_fee_paid_payer_index").on(table.payer),
+    contractTypeIdx: index("fee_collector_fee_paid_type_index").on(table.contractType),
+  }),
+);
+
+export const feeCollectorWithdrawn = onchainTable(
+  "fee_collector_withdrawn",
+  (t) => ({
+    id: t.text().primaryKey(),
+    contractAddress: t.hex().notNull(),
+    recipient: t.hex().notNull(),
+    amount: t.bigint().notNull(),
+    blockNumber: t.bigint().notNull(),
+    timestamp: t.integer().notNull(),
+  }),
+  (table) => ({
+    contractAddressIdx: index("fee_collector_withdrawn_contract_index").on(table.contractAddress),
+    recipientIdx: index("fee_collector_withdrawn_recipient_index").on(table.recipient),
+  }),
+);
+
+export const feeCollectorTokenWithdrawn = onchainTable(
+  "fee_collector_token_withdrawn",
+  (t) => ({
+    id: t.text().primaryKey(),
+    contractAddress: t.hex().notNull(),
+    recipient: t.hex().notNull(),
+    token: t.hex().notNull(),
+    amount: t.bigint().notNull(),
+    blockNumber: t.bigint().notNull(),
+    timestamp: t.integer().notNull(),
+  }),
+  (table) => ({
+    contractAddressIdx: index("fee_collector_token_withdrawn_contract_index").on(
+      table.contractAddress,
+    ),
+    recipientIdx: index("fee_collector_token_withdrawn_recipient_index").on(table.recipient),
+    tokenIdx: index("fee_collector_token_withdrawn_token_index").on(table.token),
+  }),
+);
+
+export const feeCollectorBeneficiaryUpdated = onchainTable(
+  "fee_collector_beneficiary_updated",
+  (t) => ({
+    id: t.text().primaryKey(),
+    contractAddress: t.hex().notNull(),
+    previousBeneficiary: t.hex().notNull(),
+    currentBeneficiary: t.hex().notNull(),
+    blockNumber: t.bigint().notNull(),
+    timestamp: t.integer().notNull(),
+  }),
+  (table) => ({
+    contractAddressIdx: index("fee_collector_beneficiary_contract_index").on(table.contractAddress),
+    currentIdx: index("fee_collector_beneficiary_current_index").on(table.currentBeneficiary),
+  }),
+);
+
+export const feeCollectorConfigUpdated = onchainTable(
+  "fee_collector_config_updated",
+  (t) => ({
+    id: t.text().primaryKey(),
+    contractAddress: t.hex().notNull(),
+    contractType: t.text().notNull(),
+    feeBps: t.integer().notNull(),
+    blockNumber: t.bigint().notNull(),
+    timestamp: t.integer().notNull(),
+  }),
+  (table) => ({
+    contractAddressIdx: index("fee_collector_config_contract_index").on(table.contractAddress),
+    contractTypeIdx: index("fee_collector_config_type_index").on(table.contractType),
+  }),
+);
+
+export const feeCollectorTokenSupportAdded = onchainTable(
+  "fee_collector_token_support_added",
+  (t) => ({
+    id: t.text().primaryKey(),
+    contractAddress: t.hex().notNull(),
+    tokenAddress: t.hex().notNull(),
+    blockNumber: t.bigint().notNull(),
+    timestamp: t.integer().notNull(),
+  }),
+  (table) => ({
+    contractAddressIdx: index("fee_collector_token_added_contract_index").on(table.contractAddress),
+    tokenIdx: index("fee_collector_token_added_token_index").on(table.tokenAddress),
+  }),
+);
+
+export const feeCollectorTokenSupportRemoved = onchainTable(
+  "fee_collector_token_support_removed",
+  (t) => ({
+    id: t.text().primaryKey(),
+    contractAddress: t.hex().notNull(),
+    tokenAddress: t.hex().notNull(),
+    blockNumber: t.bigint().notNull(),
+    timestamp: t.integer().notNull(),
+  }),
+  (table) => ({
+    contractAddressIdx: index("fee_collector_token_removed_contract_index").on(
+      table.contractAddress,
+    ),
+    tokenIdx: index("fee_collector_token_removed_token_index").on(table.tokenAddress),
+  }),
+);
+
+// Vesting events
+export const vestingCreated = onchainTable(
+  "vesting_created",
+  (t) => ({
+    id: t.text().primaryKey(),
+    contractAddress: t.hex().notNull(),
+    member: t.hex().notNull(),
+    teamId: t.bigint().notNull(),
+    amount: t.bigint().notNull(),
+    blockNumber: t.bigint().notNull(),
+    timestamp: t.integer().notNull(),
+  }),
+  (table) => ({
+    contractAddressIdx: index("vesting_created_contract_index").on(table.contractAddress),
+    memberIdx: index("vesting_created_member_index").on(table.member),
+    teamIdIdx: index("vesting_created_team_id_index").on(table.teamId),
+  }),
+);
+
+export const vestingTokensReleased = onchainTable(
+  "vesting_tokens_released",
+  (t) => ({
+    id: t.text().primaryKey(),
+    contractAddress: t.hex().notNull(),
+    member: t.hex().notNull(),
+    teamId: t.bigint().notNull(),
+    amount: t.bigint().notNull(),
+    blockNumber: t.bigint().notNull(),
+    timestamp: t.integer().notNull(),
+  }),
+  (table) => ({
+    contractAddressIdx: index("vesting_released_contract_index").on(table.contractAddress),
+    memberIdx: index("vesting_released_member_index").on(table.member),
+    teamIdIdx: index("vesting_released_team_id_index").on(table.teamId),
+  }),
+);
+
+export const vestingStopped = onchainTable(
+  "vesting_stopped",
+  (t) => ({
+    id: t.text().primaryKey(),
+    contractAddress: t.hex().notNull(),
+    member: t.hex().notNull(),
+    teamId: t.bigint().notNull(),
+    blockNumber: t.bigint().notNull(),
+    timestamp: t.integer().notNull(),
+  }),
+  (table) => ({
+    contractAddressIdx: index("vesting_stopped_contract_index").on(table.contractAddress),
+    memberIdx: index("vesting_stopped_member_index").on(table.member),
+    teamIdIdx: index("vesting_stopped_team_id_index").on(table.teamId),
+  }),
+);
+
+export const vestingUnvestedWithdrawn = onchainTable(
+  "vesting_unvested_withdrawn",
+  (t) => ({
+    id: t.text().primaryKey(),
+    contractAddress: t.hex().notNull(),
+    member: t.hex().notNull(),
+    teamId: t.bigint().notNull(),
+    amount: t.bigint().notNull(),
+    blockNumber: t.bigint().notNull(),
+    timestamp: t.integer().notNull(),
+  }),
+  (table) => ({
+    contractAddressIdx: index("vesting_unvested_contract_index").on(table.contractAddress),
+    memberIdx: index("vesting_unvested_member_index").on(table.member),
+    teamIdIdx: index("vesting_unvested_team_id_index").on(table.teamId),
+  }),
+);
+
+// Tips events
+export const tipsPushTip = onchainTable(
+  "tips_push_tip",
+  (t) => ({
+    id: t.text().primaryKey(),
+    contractAddress: t.hex().notNull(),
+    from: t.hex().notNull(),
+    teamMembers: t.text().notNull(),
+    totalAmount: t.bigint().notNull(),
+    amountPerAddress: t.bigint().notNull(),
+    blockNumber: t.bigint().notNull(),
+    timestamp: t.integer().notNull(),
+  }),
+  (table) => ({
+    contractAddressIdx: index("tips_push_contract_index").on(table.contractAddress),
+    fromIdx: index("tips_push_from_index").on(table.from),
+  }),
+);
+
+export const tipsSendTip = onchainTable(
+  "tips_send_tip",
+  (t) => ({
+    id: t.text().primaryKey(),
+    contractAddress: t.hex().notNull(),
+    from: t.hex().notNull(),
+    teamMembers: t.text().notNull(),
+    totalAmount: t.bigint().notNull(),
+    amountPerAddress: t.bigint().notNull(),
+    blockNumber: t.bigint().notNull(),
+    timestamp: t.integer().notNull(),
+  }),
+  (table) => ({
+    contractAddressIdx: index("tips_send_contract_index").on(table.contractAddress),
+    fromIdx: index("tips_send_from_index").on(table.from),
+  }),
+);
+
+export const tipsWithdrawal = onchainTable(
+  "tips_withdrawal",
+  (t) => ({
+    id: t.text().primaryKey(),
+    contractAddress: t.hex().notNull(),
+    to: t.hex().notNull(),
+    amount: t.bigint().notNull(),
+    blockNumber: t.bigint().notNull(),
+    timestamp: t.integer().notNull(),
+  }),
+  (table) => ({
+    contractAddressIdx: index("tips_withdrawal_contract_index").on(table.contractAddress),
+    toIdx: index("tips_withdrawal_to_index").on(table.to),
   }),
 );
 

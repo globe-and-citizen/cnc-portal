@@ -10,10 +10,33 @@ import { INVESTOR_V1_ABI } from "./abis/investor-v1";
 import { CASH_REMUNERATION_EIP712_ABI } from "./abis/cash-remuneration-eip712";
 import { SAFE_DEPOSIT_ROUTER_ABI } from "./abis/safe-deposit-router";
 import { EXPENSE_ACCOUNT_EIP712_ABI } from "./abis/expense-account-eip712";
+import { FEE_COLLECTOR_ABI } from "./abis/fee-collector";
+import { VESTING_ABI } from "./abis/vesting";
+import { TIPS_ABI } from "./abis/tips";
 
 const CONTRACT_DEPLOYED_EVENT = parseAbiItem(
   "event ContractDeployed(string contractType, address deployedAddress)"
 );
+const ERC20_TRANSFER_EVENT = parseAbiItem(
+  "event Transfer(address indexed from, address indexed to, uint256 value)"
+);
+const ERC20_TRANSFER_ABI = [ERC20_TRANSFER_EVENT] as const;
+const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000" as const;
+
+const getRequiredAddress = (
+  value: string | undefined,
+  label: string
+): `0x${string}` => {
+  if (!value || value.trim() === "") {
+    throw new Error(`${label} must be set in .env.local`);
+  }
+  return value as `0x${string}`;
+};
+
+const getOptionalAddress = (value: string | undefined): `0x${string}` => {
+  if (!value || value.trim() === "") return ZERO_ADDRESS;
+  return value as `0x${string}`;
+};
 
 // ─── Network selection ────────────────────────────────────────────────────────
 // Set NETWORK=hardhat in .env.local to index a local Hardhat node.
@@ -25,21 +48,23 @@ const isHardhat = process.env.NETWORK === "hardhat";
 const chainName = isHardhat ? "hardhat" : "polygon";
 
 // Factory contract address differs per network.
-// On Hardhat this changes every redeployment — set FACTORY_ADDRESS in .env.local.
-if (isHardhat && !process.env.FACTORY_ADDRESS) {
-  throw new Error(
-    "FACTORY_ADDRESS must be set in .env.local when NETWORK=hardhat. " +
-      "Deploy contracts and copy the OfficerFactoryBeacon address."
-  );
-}
-const factoryAddress = (
-  isHardhat
-    ? process.env.FACTORY_ADDRESS!
-    : "0x0205fd32175241aA6f7398073b64bC03f910a6A0"
-) as `0x${string}`;
+// On Hardhat this changes every redeployment, but we keep one env name for all networks.
+const factoryAddress = getRequiredAddress(
+  process.env.FACTORY_ADDRESS,
+  "FACTORY_ADDRESS"
+);
 
 // On Hardhat start from block 0; on Polygon skip pre-deployment blocks.
 const startBlock = isHardhat ? 0 : 79743826;
+
+const feeCollectorAddress = getOptionalAddress(process.env.FEE_COLLECTOR_ADDRESS);
+
+const vestingAddress = getOptionalAddress(process.env.VESTING_ADDRESS);
+
+const tipsAddress = getOptionalAddress(process.env.TIPS_ADDRESS);
+const usdcAddress = getOptionalAddress(process.env.USDC_ADDRESS);
+const usdceAddress = getOptionalAddress(process.env.USDC_E_ADDRESS);
+const usdtAddress = getOptionalAddress(process.env.USDT_ADDRESS);
 
 // ─── Shared factory helper ────────────────────────────────────────────────────
 const subContractFactory = factory({
@@ -123,6 +148,42 @@ export default createConfig({
       chain: chainName,
       abi: EXPENSE_ACCOUNT_EIP712_ABI,
       address: subContractFactory,
+      startBlock,
+    },
+    FeeCollector: {
+      chain: chainName,
+      abi: FEE_COLLECTOR_ABI,
+      address: feeCollectorAddress,
+      startBlock,
+    },
+    Vesting: {
+      chain: chainName,
+      abi: VESTING_ABI,
+      address: vestingAddress,
+      startBlock,
+    },
+    Tips: {
+      chain: chainName,
+      abi: TIPS_ABI,
+      address: tipsAddress,
+      startBlock,
+    },
+    USDC: {
+      chain: chainName,
+      abi: ERC20_TRANSFER_ABI,
+      address: usdcAddress,
+      startBlock,
+    },
+    USDCe: {
+      chain: chainName,
+      abi: ERC20_TRANSFER_ABI,
+      address: usdceAddress,
+      startBlock,
+    },
+    USDT: {
+      chain: chainName,
+      abi: ERC20_TRANSFER_ABI,
+      address: usdtAddress,
       startBlock,
     },
   },
