@@ -39,6 +39,7 @@ vi.mock('../../utils/cashRemunerationUtil', () => ({
 
 vi.mock('../../controllers/wageController', () => ({
   isUserMemberOfTeam: vi.fn().mockResolvedValue(true),
+  isOwnerOfTeam: vi.fn().mockResolvedValue(true),
 }));
 
 vi.mock('../../utils/viem.config', () => ({

@@ -5,21 +5,27 @@ import { Request, Response } from 'express';
 import { prisma } from '../utils';
 import { errorResponse } from '../utils/utils';
 
-import { Claim, Prisma } from '@prisma/client';
-import { isUserMemberOfTeam } from './wageController';
+import { Prisma } from '@prisma/client';
 import {
   refreshAttachmentUrls,
   deleteAttachments,
   type FileAttachmentData,
 } from '../services/attachmentService';
+import {
+  addClaimBodySchema,
+  claimIdParamsSchema,
+  getClaimsQuerySchema,
+  updateClaimBodySchema,
+  z,
+} from '../validation';
 
 dayjs.extend(utc);
 dayjs.extend(isoWeek);
 
-type claimBodyRequest = Pick<Claim, 'hoursWorked' | 'dayWorked' | 'memo'> & {
-  teamId: string;
-  attachments?: FileAttachmentData[];
-};
+type AddClaimBody = z.infer<typeof addClaimBodySchema>;
+type UpdateClaimBody = z.infer<typeof updateClaimBodySchema>;
+type GetClaimsQuery = z.infer<typeof getClaimsQuerySchema>;
+type ClaimIdParams = z.infer<typeof claimIdParamsSchema>;
 
 const buildWeeklyHoursExceededMessage = ({
   action,
@@ -47,14 +53,17 @@ const buildWeeklyHoursExceededMessage = ({
 export const addClaim = async (req: Request, res: Response) => {
   const callerAddress = req.address;
 
-  const body = req.body as claimBodyRequest;
-  const hoursWorked = Number(body.hoursWorked);
-  const memo = body.memo as string;
-  const dayWorked = body.dayWorked
-    ? dayjs.utc(body.dayWorked).startOf('day').toDate()
+  const {
+    teamId,
+    hoursWorked,
+    memo,
+    dayWorked: dayWorkedInput,
+    attachments: rawAttachments,
+  } = req.body as AddClaimBody;
+  const dayWorked = dayWorkedInput
+    ? dayjs.utc(dayWorkedInput).startOf('day').toDate()
     : dayjs.utc().startOf('day').toDate();
-  const teamId = Number(body.teamId);
-  const attachments = body.attachments || [];
+  const attachments: FileAttachmentData[] = rawAttachments ?? [];
 
   const weekStart = dayjs.utc(dayWorked).startOf('isoWeek').toDate(); // Monday 00:00 UTC
 
@@ -178,15 +187,10 @@ export const addClaim = async (req: Request, res: Response) => {
 };
 
 export const getClaims = async (req: Request, res: Response) => {
-  const callerAddress = req.address;
-  const teamId = Number(req.query.teamId);
-  const memberAddress = req.query.memberAddress as string | undefined;
+  const { teamId, memberAddress } = req.query as unknown as GetClaimsQuery;
 
   try {
-    // Check if the user is a member of the provided team
-    if (!(await isUserMemberOfTeam(callerAddress, teamId))) {
-      return errorResponse(403, 'Caller is not a member of the team', res);
-    }
+    // authz enforced by requireTeamMember middleware
 
     // add filter for memberAddress if provided
     let memberFilter: Prisma.ClaimWhereInput = {};
@@ -239,19 +243,8 @@ export const getClaims = async (req: Request, res: Response) => {
 
 export const updateClaim = async (req: Request, res: Response) => {
   const callerAddress = req.address;
-  const claimId = Number(req.params.claimId);
-
-  const {
-    hoursWorked,
-    memo,
-    deletedFileIndexes,
-    attachments,
-  }: {
-    hoursWorked?: number;
-    memo?: string;
-    deletedFileIndexes?: number[];
-    attachments?: FileAttachmentData[];
-  } = req.body;
+  const { claimId } = req.params as unknown as ClaimIdParams;
+  const { hoursWorked, memo, deletedFileIndexes, attachments } = req.body as UpdateClaimBody;
 
   try {
     // Fetch the claim including the required data (include weeklyClaim.claims)
@@ -359,7 +352,7 @@ export const updateClaim = async (req: Request, res: Response) => {
 
 export const deleteClaim = async (req: Request, res: Response) => {
   const callerAddress = req.address;
-  const claimId = Number(req.params.claimId);
+  const { claimId } = req.params as unknown as ClaimIdParams;
 
   try {
     const claim = await prisma.claim.findFirst({

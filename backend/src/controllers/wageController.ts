@@ -1,43 +1,35 @@
 import { Request, Response } from 'express';
 
-import { Prisma, Wage } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { Address } from 'viem';
 import { prisma } from '../utils';
 import { errorResponse } from '../utils/utils';
+import {
+  getWagesQuerySchema,
+  setWageBodySchema,
+  toggleWageStatusParamsSchema,
+  toggleWageStatusQuerySchema,
+  z,
+} from '../validation';
 
-type WageRate = {
-  type: string;
-  amount: number;
-};
-
-type wageBodyRequest = Pick<Wage, 'teamId' | 'userAddress' | 'maximumHoursPerWeek'> & {
-  ratePerHour: WageRate[];
-  overtimeRatePerHour?: WageRate[] | null;
-  maximumOvertimeHoursPerWeek?: number | null;
-};
+type SetWageBody = z.infer<typeof setWageBodySchema>;
 
 export const setWage = async (req: Request, res: Response) => {
   const callerAddress = req.address;
 
-  const body = req.body as wageBodyRequest;
-  const teamId = Number(body.teamId);
-  const userAddress = body.userAddress as Address;
-  const maximumHoursPerWeek = Number(body.maximumHoursPerWeek);
-  const maximumOvertimeHoursPerWeek =
-    body.maximumOvertimeHoursPerWeek != null ? Number(body.maximumOvertimeHoursPerWeek) : 0;
-
-  const ratePerHour = body.ratePerHour?.map((rate) => ({
-    type: rate.type,
-    amount: Number(rate.amount),
-  }));
-
-  const overtimeRatePerHour = body.overtimeRatePerHour?.map((rate) => ({
-    type: rate.type,
-    amount: Number(rate.amount),
-  }));
+  const body = req.body as SetWageBody;
+  const {
+    teamId,
+    userAddress,
+    maximumHoursPerWeek,
+    maximumOvertimeHoursPerWeek: rawOvertimeHours,
+    ratePerHour,
+    overtimeRatePerHour,
+  } = body;
+  const maximumOvertimeHoursPerWeek = rawOvertimeHours ?? 0;
 
   const overtimeRatePerHourValue =
-    body.overtimeRatePerHour === null ? Prisma.DbNull : (overtimeRatePerHour ?? Prisma.DbNull);
+    overtimeRatePerHour === null ? Prisma.DbNull : (overtimeRatePerHour ?? Prisma.DbNull);
 
   const wagePayload = {
     teamId,
@@ -102,13 +94,10 @@ export const setWage = async (req: Request, res: Response) => {
   }
 };
 export const getWages = async (req: Request, res: Response) => {
-  const callerAddress = req.address;
-  const teamId = Number(req.query.teamId);
+  const { teamId } = req.query as unknown as z.infer<typeof getWagesQuerySchema>;
 
   try {
-    if (!(await isUserMemberOfTeam(callerAddress, teamId))) {
-      return errorResponse(403, 'Member is not a team member', res);
-    }
+    // authz enforced by requireTeamMember middleware
     const wages = await prisma.wage.findMany({
       where: {
         teamId,
@@ -132,8 +121,8 @@ export const getWages = async (req: Request, res: Response) => {
 
 export const toggleWageStatus = async (req: Request, res: Response) => {
   const callerAddress = req.address;
-  const wageId = Number(req.params.wageId);
-  const action = req.query.action as 'disable' | 'enable';
+  const { wageId } = req.params as unknown as z.infer<typeof toggleWageStatusParamsSchema>;
+  const { action } = req.query as unknown as z.infer<typeof toggleWageStatusQuerySchema>;
 
   try {
     const wage = await prisma.wage.findFirst({

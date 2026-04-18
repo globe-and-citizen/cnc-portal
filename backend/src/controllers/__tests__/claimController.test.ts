@@ -45,7 +45,8 @@ vi.mock('../../utils/cashRemunerationUtil', () => ({
 
 // Mock the wage controller
 vi.mock('../wageController', () => ({
-  isUserMemberOfTeam: vi.fn(),
+  isUserMemberOfTeam: vi.fn().mockResolvedValue(true),
+  isOwnerOfTeam: vi.fn().mockResolvedValue(true),
 }));
 
 // Mock the storage service

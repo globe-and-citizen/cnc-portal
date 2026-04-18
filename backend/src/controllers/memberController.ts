@@ -1,50 +1,38 @@
 import { Request, Response } from 'express';
 
-import { User } from '@prisma/client';
-import { isAddress } from 'viem';
 import { prisma } from '../utils';
 import { errorResponse } from '../utils/utils';
+import { addMembersBodySchema, deleteMemberParamsSchema, z } from '../validation';
+
+type AddMembersBody = z.infer<typeof addMembersBodySchema>;
+type DeleteMemberParams = z.infer<typeof deleteMemberParamsSchema>;
 
 export const deleteMember = async (req: Request, res: Response) => {
-  const { id, memberAddress } = req.params;
-  const callerAddress = req.address;
+  const { id, memberAddress } = req.params as unknown as DeleteMemberParams;
   try {
     // Find the team
     const team = await prisma.team.findUnique({
-      where: { id: Number(id) },
+      where: { id },
       include: { members: true },
     });
 
-    // Check if the team exists
+    // Check if the team exists (authz enforced by requireTeamOwner middleware)
     if (!team) {
       return errorResponse(404, 'Team not found', res);
-    }
-    if (team.ownerAddress !== callerAddress) {
-      return errorResponse(403, 'Unauthorized: Only the owner can delete a member', res);
     }
     if (team.ownerAddress === memberAddress) {
       return errorResponse(403, 'Unauthorized: The Owner cannot be removed', res);
     }
 
-    // Find the index of the member in the team
-    const memberIndex = team.members.findIndex((member) => member.address === memberAddress);
-
     // If member not found in the team, throw an error
-    if (memberIndex === -1) {
+    if (!team.members.some((member) => member.address === memberAddress)) {
       return errorResponse(404, 'Member not found in the team', res);
     }
-
-    // Update the team to disconnect the specified member
-    const name = team.name;
-    const description = team.description;
 
     try {
       await prisma.memberTeamsData.delete({
         where: {
-          memberAddress_teamId: {
-            memberAddress: memberAddress,
-            teamId: Number(id),
-          },
+          memberAddress_teamId: { memberAddress, teamId: id },
         },
       });
     } catch (error: unknown) {
@@ -53,12 +41,12 @@ export const deleteMember = async (req: Request, res: Response) => {
     }
 
     const updatedTeam = await prisma.team.update({
-      where: { id: Number(id) },
+      where: { id },
       data: {
-        name,
-        description,
+        name: team.name,
+        description: team.description,
         members: {
-          disconnect: { address: String(memberAddress) },
+          disconnect: { address: memberAddress },
         },
       },
       include: {
@@ -72,39 +60,23 @@ export const deleteMember = async (req: Request, res: Response) => {
     });
     res.status(204).json({ ...updatedTeam });
   } catch (error: unknown) {
-    // Handle errors
     const message = error instanceof Error ? error.message : 'Internal Server Error';
     return errorResponse(500, message, res);
   }
 };
 
 export const addMembers = async (req: Request, res: Response) => {
-  const { id } = req.params;
-  const membersData = req.body as Array<Pick<User, 'address'>>;
+  const { id } = req.params as unknown as { id: number };
+  const membersData = req.body as AddMembersBody;
 
-  // Check if the data is valid
-  if (
-    !Array.isArray(membersData) ||
-    membersData.length === 0 ||
-    !membersData.every((member) => isAddress(member.address))
-  ) {
-    return res.status(400).json({
-      message: 'Bad Request: Members data is not well formated',
-    });
-  }
   try {
-    // Fetch the team and its current members
+    // Fetch the team and its current members (authz enforced by requireTeamOwner middleware)
     const team = await prisma.team.findUnique({
-      where: { id: Number(id) },
+      where: { id },
       include: { members: true },
     });
     if (!team) {
       return res.status(404).json({ message: 'Team not found' });
-    }
-
-    const callerAddress = req.address;
-    if (team.ownerAddress !== callerAddress) {
-      return errorResponse(403, 'Unauthorized: Only the owner can Add a member', res);
     }
 
     // List of members in membersData that already exist in the team.members
@@ -119,7 +91,7 @@ export const addMembers = async (req: Request, res: Response) => {
     }
 
     const updatedTeam = await prisma.team.update({
-      where: { id: Number(id) },
+      where: { id },
       data: {
         members: {
           connect: membersData.map((member) => ({

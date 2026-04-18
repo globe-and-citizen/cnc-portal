@@ -432,7 +432,7 @@ describe('Wage Controller', () => {
       const response = await request(app).get('/').query({ teamId: 1 });
 
       expect(response.status).toBe(403);
-      expect(response.body.message).toBe('Member is not a team member');
+      expect(response.body.message).toBe('Caller is not a member of the team');
     });
 
     it('should return 200 and wages if user is a team member', async () => {

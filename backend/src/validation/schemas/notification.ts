@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { positiveIntegerSchema } from './common';
+import { addressSchema, positiveIntegerSchema } from './common';
 
 /**
  * Notification-related validation schemas
@@ -25,11 +25,9 @@ export const updateNotificationBodySchema = z
   })
   .default({});
 
-export const createBulkNotificationsBodySchema = z
-  .object({
-    userIds: z.any().optional(),
-    message: z.any().optional(),
-    subject: z.any().optional(),
-    resource: z.any().optional(),
-  })
-  .default({});
+export const createBulkNotificationsBodySchema = z.object({
+  userIds: z.array(addressSchema).min(1, 'userIds must be a non-empty array'),
+  message: z.string().min(1, 'message is required'),
+  subject: z.string().optional(),
+  resource: z.string().optional(),
+});

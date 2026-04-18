@@ -217,7 +217,7 @@ describe('Notification Controller', () => {
       });
 
       expect(response.status).toBe(400);
-      expect(response.body.message).toBe('userIds must be a non-empty array');
+      expect(response.body.message).toContain('userIds');
     });
 
     it('should return 400 if userIds is empty array', async () => {
@@ -227,7 +227,7 @@ describe('Notification Controller', () => {
       });
 
       expect(response.status).toBe(400);
-      expect(response.body.message).toBe('userIds must be a non-empty array');
+      expect(response.body.message).toContain('userIds must be a non-empty array');
     });
 
     it('should return 400 if message is missing', async () => {
@@ -238,7 +238,7 @@ describe('Notification Controller', () => {
         });
 
       expect(response.status).toBe(400);
-      expect(response.body.message).toBe('message is required');
+      expect(response.body.message).toContain('message');
     });
 
     it('should return 400 if message is not a string', async () => {
@@ -250,7 +250,7 @@ describe('Notification Controller', () => {
         });
 
       expect(response.status).toBe(400);
-      expect(response.body.message).toBe('message is required');
+      expect(response.body.message).toContain('message');
     });
 
     it('should return 500 if addNotification throws error', async () => {
