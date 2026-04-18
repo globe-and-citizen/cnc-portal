@@ -9,7 +9,7 @@ import { mockLog } from '@/tests/mocks/utils.mock'
 const mockClaims = ref([
   {
     id: 1,
-    claims: [{ hoursWorked: 2 }, { hoursWorked: 3 }],
+    claims: [{ hoursWorked: 120 }, { hoursWorked: 180 }],
     wage: {
       ratePerHour: [{ type: 'native', amount: 2 }]
     }
@@ -38,7 +38,7 @@ describe('CashRemunerationMonthlyClaim.vue', () => {
     mockClaims.value = [
       {
         id: 1,
-        claims: [{ hoursWorked: 2 }, { hoursWorked: 3 }],
+        claims: [{ hoursWorked: 120 }, { hoursWorked: 180 }],
         wage: {
           ratePerHour: [{ type: 'native', amount: 2 }]
         }

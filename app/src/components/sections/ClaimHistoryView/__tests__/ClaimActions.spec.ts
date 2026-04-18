@@ -8,7 +8,7 @@ import type { Claim, SupportedTokens } from '@/types'
 describe('ClaimActions', () => {
   const mockClaim: Claim = {
     id: 1,
-    hoursWorked: 8,
+    hoursWorked: 480,
     memo: 'Test work',
     dayWorked: '2024-01-01T00:00:00.000Z',
     wageId: 1,

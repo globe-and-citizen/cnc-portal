@@ -3,6 +3,14 @@ import { parseEther, parseUnits } from 'viem'
 
 export const requiredRateTypes: RatePerHour['type'][] = ['native', 'usdc', 'sher']
 
+export const formatMinutesAsDuration = (totalMinutes: number): string => {
+  const h = Math.floor(totalMinutes / 60)
+  const m = totalMinutes % 60
+  if (m === 0) return `${h}h`
+  if (h === 0) return `${m}min`
+  return `${h}h ${m}min`
+}
+
 export const normalizeRatePerHour = (rates?: RatePerHour[] | null): RatePerHourWithEnabled[] => {
   return requiredRateTypes.map((type) => {
     const existingRate = rates?.find((rate) => rate.type === type)
@@ -32,26 +40,26 @@ const parseRateAmount = (amount: number, type: RatePerHour['type']) => {
 }
 
 export const getRegularAndOvertimeHours = (
-  hoursWorked: number,
+  totalMinutesWorked: number,
   maximumHoursPerWeek?: number | null
 ) => {
-  const safeHoursWorked = Math.max(0, Math.floor(hoursWorked))
+  const safeMinutes = Math.max(0, Math.floor(totalMinutesWorked))
   const hasValidWeeklyLimit =
     typeof maximumHoursPerWeek === 'number' &&
     Number.isFinite(maximumHoursPerWeek) &&
     maximumHoursPerWeek > 0
 
-  const maxRegularHours = hasValidWeeklyLimit
-    ? Math.max(0, Math.floor(maximumHoursPerWeek as number))
-    : safeHoursWorked
+  const maxRegularMinutes = hasValidWeeklyLimit
+    ? Math.max(0, Math.floor((maximumHoursPerWeek as number) * 60))
+    : safeMinutes
 
-  const regularHours = Math.min(safeHoursWorked, maxRegularHours)
-  const overtimeHours = Math.max(0, safeHoursWorked - regularHours)
+  const regularMinutes = Math.min(safeMinutes, maxRegularMinutes)
+  const overtimeMinutes = Math.max(0, safeMinutes - regularMinutes)
 
   return {
-    regularHours,
-    overtimeHours,
-    totalHours: safeHoursWorked
+    regularMinutes,
+    overtimeMinutes,
+    totalMinutes: safeMinutes
   }
 }
 
@@ -66,7 +74,7 @@ export const buildClaimRatesWithOvertime = ({
   ratePerHour: RatePerHour[]
   overtimeRatePerHour?: RatePerHour[] | null
 }): ClaimRateWithTotals[] => {
-  const { regularHours, overtimeHours, totalHours } = getRegularAndOvertimeHours(
+  const { regularMinutes, overtimeMinutes, totalMinutes } = getRegularAndOvertimeHours(
     hoursWorked,
     maximumHoursPerWeek
   )
@@ -78,8 +86,11 @@ export const buildClaimRatesWithOvertime = ({
       ? parseRateAmount(overtimeRate.amount, baseRate.type)
       : baseRateWei
 
-    const totalAmount = baseRateWei * BigInt(regularHours) + overtimeRateWei * BigInt(overtimeHours)
-    const hourlyRate = totalHours > 0 ? totalAmount / BigInt(totalHours) : baseRateWei
+    // totalAmount = (baseRate * regularMinutes + overtimeRate * overtimeMinutes) / 60
+    const totalAmount =
+      (baseRateWei * BigInt(regularMinutes) + overtimeRateWei * BigInt(overtimeMinutes)) / 60n
+    // Per-minute rate for on-chain: totalAmount / totalMinutes
+    const hourlyRate = totalMinutes > 0 ? totalAmount / BigInt(totalMinutes) : baseRateWei / 60n
 
     return {
       type: baseRate.type,

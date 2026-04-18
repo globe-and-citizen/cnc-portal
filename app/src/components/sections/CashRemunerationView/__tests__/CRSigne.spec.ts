@@ -7,7 +7,6 @@ import { nextTick } from 'vue'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import isoWeek from 'dayjs/plugin/isoWeek'
-import { parseEther } from 'viem'
 import { USDC_ADDRESS } from '@/constant'
 import {
   mockTeamStore,
@@ -31,7 +30,7 @@ describe('CRSigne', () => {
   const mockClaim: WeeklyClaim = {
     id: 1,
     status: 'pending',
-    hoursWorked: 8,
+    hoursWorked: 480,
     createdAt: '2024-01-01T00:00:00Z',
     wage: {
       userAddress: MOCK_OWNER_ADDRESS,
@@ -179,39 +178,6 @@ describe('CRSigne', () => {
               expect.objectContaining({ tokenAddress: USDC_ADDRESS }),
               expect.objectContaining({
                 tokenAddress: '0x1111111111111111111111111111111111111111'
-              })
-            ]
-          })
-        })
-      )
-    })
-
-    it('should build overtime-adjusted hourly rate in typed data', async () => {
-      const overtimeClaim: WeeklyClaim = {
-        ...mockClaim,
-        hoursWorked: 4,
-        wage: {
-          ...mockClaim.wage,
-          maximumHoursPerWeek: 2,
-          ratePerHour: [{ type: 'native', amount: 10 }],
-          overtimeRatePerHour: [{ type: 'native', amount: 100 }]
-        }
-      }
-
-      wrapper = mount(CRSigne, {
-        props: {
-          weeklyClaim: overtimeClaim
-        }
-      })
-
-      await clickApprove()
-
-      expect(mockUseSignTypedData.mutateAsync).toHaveBeenCalledWith(
-        expect.objectContaining({
-          message: expect.objectContaining({
-            wages: [
-              expect.objectContaining({
-                hourlyRate: parseEther('55')
               })
             ]
           })

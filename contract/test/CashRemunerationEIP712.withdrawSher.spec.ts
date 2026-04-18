@@ -133,7 +133,7 @@ describe('Cash Remuneration - Withdraw SHER', function () {
       ],
       WageClaim: [
         { name: 'employeeAddress', type: 'address' },
-        { name: 'hoursWorked', type: 'uint8' },
+        { name: 'hoursWorked', type: 'uint16' },
         { name: 'wages', type: 'Wage[]' },
         { name: 'date', type: 'uint256' }
       ]
@@ -171,7 +171,7 @@ describe('Cash Remuneration - Withdraw SHER', function () {
   it('Should mint SHER to user if they earned SHER', async () => {
     const wageClaim = {
       employeeAddress: addr1.address,
-      hoursWorked: 5,
+      hoursWorked: 300,
       wages: [
         {
           hourlyRate: BigInt(20 * 1e6),
@@ -204,7 +204,7 @@ describe('Cash Remuneration - Withdraw SHER', function () {
   it('Should disable claims so the user cannot withdraw SHER', async () => {
     const wageClaim = {
       employeeAddress: addr1.address,
-      hoursWorked: 5,
+      hoursWorked: 300,
       wages: [
         {
           hourlyRate: BigInt(20 * 1e6),
@@ -230,7 +230,7 @@ describe('Cash Remuneration - Withdraw SHER', function () {
   it('Should enable claims so the user can withdraw SHER again', async () => {
     const wageClaim = {
       employeeAddress: addr1.address,
-      hoursWorked: 5,
+      hoursWorked: 300,
       wages: [
         {
           hourlyRate: BigInt(20 * 1e6),
@@ -270,7 +270,7 @@ describe('Cash Remuneration - Withdraw SHER', function () {
   it('Should prevent replay of the same SHER mint signature (EIP-712 replay protection)', async () => {
     const wageClaim = {
       employeeAddress: addr1.address,
-      hoursWorked: 5,
+      hoursWorked: 300,
       wages: [
         {
           hourlyRate: BigInt(20 * 1e6),
@@ -302,7 +302,7 @@ describe('Cash Remuneration - Withdraw SHER', function () {
   it('Should prevent replay once a claim has been disabled after use', async () => {
     const wageClaim = {
       employeeAddress: addr1.address,
-      hoursWorked: 2,
+      hoursWorked: 120,
       wages: [
         {
           hourlyRate: BigInt(10 * 1e6),
