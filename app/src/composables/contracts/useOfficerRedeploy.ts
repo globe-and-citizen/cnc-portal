@@ -78,7 +78,7 @@ export function useOfficerRedeploy() {
   }) => {
     // Outcome toasts come from useMigrateShareholders default onSuccess.
     // Errors remain on migrateMutation.error for the caller's retry UI.
-    await migrateMutation.mutateAsync(ctx).catch(() => null)
+    await migrateMutation.mutateAsync(ctx)
     if (migrateMutation.isSuccess.value) {
       pendingMigration.value = null
     }
@@ -120,9 +120,9 @@ export function useOfficerRedeploy() {
     reset()
 
     // Errors remain on deployMutation.error / registerMutation.error so the
-    // template can render them reactively. `.catch(() => null)` just aborts
+    // template can render them reactively. `` just aborts
     // the sequence without leaking a rejection.
-    const metadata = await deployMutation.mutateAsync({ investorInput, teamId }).catch(() => null)
+    const metadata = await deployMutation.mutateAsync({ investorInput, teamId })
     if (!metadata) return
 
     const registerResult = await registerMutation
@@ -134,7 +134,7 @@ export function useOfficerRedeploy() {
           deployedAt: metadata.deployedAt.toISOString()
         }
       })
-      .catch(() => null)
+      
     if (!registerResult) return
 
     const { previousOfficer } = registerResult
