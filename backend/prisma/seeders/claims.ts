@@ -89,7 +89,7 @@ export async function seedWeeklyClaimsAndClaims(
       let totalHours = 0;
 
       for (let j = 0; j < numClaims; j++) {
-        const hoursWorked = faker.number.int({ min: 1, max: 8 });
+        const hoursWorked = faker.helpers.arrayElement([60, 120, 180, 240, 300, 360, 420, 480]);
         totalHours += hoursWorked;
 
         const claimDate = new Date(weekStart);

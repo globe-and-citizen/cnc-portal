@@ -31,7 +31,9 @@
       </template>
 
       <template #hoursWorked-cell="{ row: { original: row } }">
-        <span class="font-bold"> {{ getTotalHoursWorked(row.claims) }}:00 hrs </span>
+        <span class="font-bold">
+          {{ formatMinutesAsDuration(getTotalTimeWorked(row.claims)) }}
+        </span>
         <br />
         <span>of {{ row.wage.maximumHoursPerWeek ?? '-' }} hrs weekly limit</span>
       </template>
@@ -55,13 +57,14 @@
           <RatePerHourTotalList
             :rate-per-hour="row.wage.ratePerHour"
             :currency-symbol="NETWORK.currencySymbol"
-            :total-hours="getTotalHoursWorked(row.claims)"
+            :total-hours="getTotalTimeWorked(row.claims) / 60"
             :class="'font-bold'"
           />
           <span class="">
             ≃ ${{
               (
-                getTotalHoursWorked(row.claims) * getHoulyRateInUserCurrency(row.wage.ratePerHour)
+                (getTotalTimeWorked(row.claims) / 60) *
+                getHoulyRateInUserCurrency(row.wage.ratePerHour)
               ).toFixed(2)
             }}
             {{ currencyStore.localCurrency.code }}
@@ -126,12 +129,13 @@ import { RouterLink } from 'vue-router'
 import { useGetTeamWeeklyClaimsQuery } from '@/queries'
 import WeeklyClaimActionDropdown from './WeeklyClaimActionDropdown.vue'
 import type { Address } from 'viem'
+import { formatMinutesAsDuration } from '@/utils/wageUtil'
 
 dayjs.extend(utc)
 dayjs.extend(isoWeek)
 dayjs.extend(weekday)
 
-function getTotalHoursWorked(claims: { hoursWorked: number }[]) {
+function getTotalTimeWorked(claims: { hoursWorked: number }[]) {
   return claims.reduce((sum, claim) => sum + claim.hoursWorked, 0)
 }
 

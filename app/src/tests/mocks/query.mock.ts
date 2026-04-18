@@ -135,7 +135,7 @@ export const mockWeeklyClaimData: WeeklyClaim[] = [
     weekStart: '2024-01-01T00:00:00.000Z',
     memberAddress: '0x1234567890123456789012345678901234567890',
     teamId: 1,
-    hoursWorked: 40,
+    hoursWorked: 2400,
     data: {},
     signature: null,
     wageId: 1,
@@ -143,7 +143,7 @@ export const mockWeeklyClaimData: WeeklyClaim[] = [
     claims: [
       {
         id: 1,
-        hoursWorked: 8,
+        hoursWorked: 480,
         dayWorked: '2024-01-01',
         createdAt: '2024-01-01T08:00:00Z',
         updatedAt: '2024-01-01T08:00:00Z',

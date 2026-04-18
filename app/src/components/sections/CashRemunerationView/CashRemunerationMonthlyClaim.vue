@@ -49,7 +49,7 @@ const {
   }
 })
 
-function getTotalHoursWorked(claims: { hoursWorked: number }[]) {
+function getTotalTimeWorked(claims: { hoursWorked: number }[]) {
   return claims.reduce((sum, claim) => sum + claim.hoursWorked, 0)
 }
 
@@ -67,9 +67,9 @@ function getHourlyRateInUserCurrency(
 const totalMonthlyClaim = computed(() => {
   if (!weeklyClaims.value || !Array.isArray(weeklyClaims.value)) return ''
   const total = weeklyClaims.value.reduce((sum: number, weeklyClaim: WeeklyClaim) => {
-    const hours = getTotalHoursWorked(weeklyClaim.claims)
+    const timeWorked = getTotalTimeWorked(weeklyClaim.claims)
     const rate = getHourlyRateInUserCurrency(weeklyClaim.wage.ratePerHour)
-    return sum + hours * rate
+    return sum + (timeWorked / 60) * rate
   }, 0)
   return formatCurrencyShort(total, currency.value.code)
 })

@@ -64,7 +64,7 @@ const totalPendingAmount = computed(() => {
   if (!weeklyClaims.value || !Array.isArray(weeklyClaims.value)) return ''
   const total = weeklyClaims.value.reduce((sum: number, weeklyClaim: WeeklyClaim) => {
     const rate = getHoulyRateInUserCurrency(weeklyClaim.wage.ratePerHour)
-    return sum + weeklyClaim.hoursWorked * rate
+    return sum + (weeklyClaim.hoursWorked / 60) * rate
   }, 0)
   return formatCurrencyShort(total, currency.value.code)
 })

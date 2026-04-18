@@ -41,7 +41,7 @@ describe('CRWithdrawClaim', () => {
     wageId: 1,
     createdAt: '2024-01-01T00:00:00Z',
     updatedAt: '2024-01-01T00:00:00Z',
-    hoursWorked: 40,
+    hoursWorked: 2400,
     wage: {
       id: 1,
       teamId: 1,
@@ -181,7 +181,7 @@ describe('CRWithdrawClaim', () => {
 
     const overtimeClaim: WeeklyClaim = {
       ...mockClaim,
-      hoursWorked: 4,
+      hoursWorked: 240,
       wage: {
         ...mockClaim.wage,
         maximumHoursPerWeek: 2,
