@@ -232,7 +232,7 @@ describe('CashRemuneration*** (EIP712)', () => {
         it('the wage has already been paid', async () => {
           const wageClaim = {
             employeeAddress: employee.address,
-            hoursWorked: 480,
+            hoursWorked: 100,
             wages: [
               {
                 hourlyRate: ethers.parseEther('10'),
@@ -371,7 +371,7 @@ describe('CashRemuneration*** (EIP712)', () => {
     it('should prevent replay of a valid signature (same wage claim used twice)', async () => {
       const wageClaim = {
         employeeAddress: employee.address,
-        hoursWorked: 300,
+        hoursWorked: 30,
         wages: [
           {
             hourlyRate: ethers.parseEther('1'),
@@ -398,7 +398,7 @@ describe('CashRemuneration*** (EIP712)', () => {
       // First claim
       const wageClaimA = {
         employeeAddress: employee.address,
-        hoursWorked: 180,
+        hoursWorked: 30,
         wages: [{ hourlyRate: ethers.parseEther('1'), tokenAddress: ethers.ZeroAddress }],
         date: Math.floor(Date.now() / 1000)
       }
@@ -407,7 +407,7 @@ describe('CashRemuneration*** (EIP712)', () => {
       // Second distinct claim (different date)
       const wageClaimB = {
         employeeAddress: employee.address,
-        hoursWorked: 240,
+        hoursWorked: 40,
         wages: [{ hourlyRate: ethers.parseEther('1'), tokenAddress: ethers.ZeroAddress }],
         date: Math.floor(Date.now() / 1000) + 10
       }
