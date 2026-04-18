@@ -125,16 +125,15 @@ export function useOfficerRedeploy() {
     const metadata = await deployMutation.mutateAsync({ investorInput, teamId })
     if (!metadata) return
 
-    const registerResult = await registerMutation
-      .mutateAsync({
-        body: {
-          teamId,
-          address: metadata.officerAddress,
-          deployBlockNumber: metadata.deployBlockNumber,
-          deployedAt: metadata.deployedAt.toISOString()
-        }
-      })
-      
+    const registerResult = await registerMutation.mutateAsync({
+      body: {
+        teamId,
+        address: metadata.officerAddress,
+        deployBlockNumber: metadata.deployBlockNumber,
+        deployedAt: metadata.deployedAt.toISOString()
+      }
+    })
+
     if (!registerResult) return
 
     const { previousOfficer } = registerResult
