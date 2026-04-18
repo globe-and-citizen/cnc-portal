@@ -63,14 +63,24 @@ describe('ClaimForm.vue', () => {
   it('handles edit actions and prop updates', async () => {
     const wrapper = createWrapper({
       isEdit: true,
-      initialData: { hoursWorked: '3', memo: 'Initial', dayWorked: '2024-01-01T00:00:00.000Z' }
+      initialData: {
+        hoursWorked: '3',
+        minutesWorked: '20',
+        memo: 'Initial',
+        dayWorked: '2024-01-01T00:00:00.000Z'
+      }
     })
 
     await wrapper.find('[data-test="cancel-button"]').trigger('click')
     expect(wrapper.emitted('cancel')).toBeTruthy()
 
     await wrapper.setProps({
-      initialData: { hoursWorked: '6', memo: 'Updated memo', dayWorked: '2024-01-15T00:00:00.000Z' }
+      initialData: {
+        hoursWorked: '6',
+        minutesWorked: '40',
+        memo: 'Updated memo',
+        dayWorked: '2024-01-15T00:00:00.000Z'
+      }
     })
     await flushPromises()
 
@@ -80,6 +90,9 @@ describe('ClaimForm.vue', () => {
     expect(
       (wrapper.find('textarea[data-test="memo-input"]').element as HTMLTextAreaElement).value
     ).toBe('Updated memo')
+    expect((wrapper.vm as { formData: { minutesWorked: string } }).formData.minutesWorked).toBe(
+      '40'
+    )
     expect(wrapper.find('[data-test="date-input"]').text()).toBe('2024-01-15 UTC')
   })
 
