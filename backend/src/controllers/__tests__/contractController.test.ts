@@ -90,6 +90,7 @@ describe('contractController', () => {
     vi.mocked(prisma.teamContract.findMany).mockResolvedValue([]);
     vi.mocked(prisma.teamContract.updateMany).mockResolvedValue({ count: 0 });
     vi.mocked(prisma.teamOfficer.findFirst).mockResolvedValue(buildMockTeamOfficer());
+    vi.mocked(prisma.teamOfficer.findUnique).mockResolvedValue(null);
     vi.mocked(prisma.teamOfficer.upsert).mockResolvedValue(buildMockTeamOfficer());
   });
 
@@ -415,6 +416,32 @@ describe('contractController', () => {
         .send({ teamId: 1, address: newOfficerAddress });
       expect(response.status).toBe(403);
       expect(response.body.message).toContain('Unauthorized: Caller is not the owner of the team');
+    });
+
+    it('should return 409 if address is already registered to another team', async () => {
+      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(mockTeam);
+      vi.mocked(prisma.teamOfficer.findUnique).mockResolvedValue(
+        buildMockTeamOfficer({ address: newOfficerAddress, teamId: 99 })
+      );
+      const response = await request(app)
+        .post('/officer')
+        .send({ teamId: 1, address: newOfficerAddress });
+      expect(response.status).toBe(409);
+      expect(response.body.message).toContain('already registered to another team');
+      expect(prisma.teamOfficer.upsert).not.toHaveBeenCalled();
+    });
+
+    it('should return 409 if address is already registered to the same team', async () => {
+      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(mockTeam);
+      vi.mocked(prisma.teamOfficer.findUnique).mockResolvedValue(
+        buildMockTeamOfficer({ address: newOfficerAddress, teamId: mockTeam.id })
+      );
+      const response = await request(app)
+        .post('/officer')
+        .send({ teamId: 1, address: newOfficerAddress });
+      expect(response.status).toBe(409);
+      expect(response.body.message).toContain('already registered to this team');
+      expect(prisma.teamOfficer.upsert).not.toHaveBeenCalled();
     });
 
     it('should link to previous officer, upsert and sync contracts', async () => {
