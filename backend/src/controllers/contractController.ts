@@ -63,7 +63,6 @@ export const getContracts = async (req: Request, res: Response) => {
   const { teamId } = req.query as unknown as GetContractsQuery;
 
   try {
-    // TODO restrict access to the team members
     const contracts = await prisma.teamContract.findMany({
       where: { teamId },
     });
