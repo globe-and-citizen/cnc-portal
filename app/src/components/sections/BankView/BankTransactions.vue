@@ -233,7 +233,8 @@ const enrichedTransactions = computed<BankTransactionRow[]>(() => {
       (token) => token.address.toLowerCase() === tokenAddress
     )
 
-    const token = matchedToken?.symbol || tokenSymbol(tokenAddress) || tx.token || NETWORK.currencySymbol
+    const token =
+      matchedToken?.symbol || tokenSymbol(tokenAddress) || tx.token || NETWORK.currencySymbol
     const tokenId = matchedToken?.id ?? resolveTokenIdByAddress(tokenAddress)
     const amount = tx.amount ?? 0
     const numericAmount = Number(amount)

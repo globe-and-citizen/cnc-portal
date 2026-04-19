@@ -148,7 +148,10 @@ const transactionData = computed<InvestorsTransaction[]>(() =>
     const token =
       tx.transactionType === 'mint'
         ? investorTokenSymbol.value
-        : matchedToken?.symbol || tokenSymbol(tokenAddress) || investorTokenSymbol.value || NETWORK.currencySymbol
+        : matchedToken?.symbol ||
+          tokenSymbol(tokenAddress) ||
+          investorTokenSymbol.value ||
+          NETWORK.currencySymbol
 
     const amount = formatEtherUtil(parseAmount(tx.amount), tx.tokenAddress)
     const numericAmount = Number(amount)
