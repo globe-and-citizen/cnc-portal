@@ -64,11 +64,13 @@ FROM "Team" t
 WHERE t."officerAddress" IS NOT NULL
 ON CONFLICT ("address") DO NOTHING;
 
--- Link existing TeamContract rows to their TeamOfficer, excluding Safe contracts.
+-- Link existing TeamContract rows to their TeamOfficer, excluding Safe and
+-- SafeDepositRouter contracts (they live outside the Officer beacon system
+-- and stay with officerId = NULL across redeploys).
 UPDATE "TeamContract" tc
 SET "officerId" = o."id"
 FROM "TeamOfficer" o, "Team" t
 WHERE tc."teamId" = t."id"
   AND o."teamId" = t."id"
   AND o."address" = t."officerAddress"
-  AND tc."type" != 'Safe';
+  AND tc."type" NOT IN ('Safe', 'SafeDepositRouter');
