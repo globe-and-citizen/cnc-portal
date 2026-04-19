@@ -120,6 +120,8 @@ const selectWeekWeelyClaim = computed(() =>
 const barChartOption = computed(() => {
   const regularData: { value: number; itemStyle: object }[] = []
   const overtimeData: number[] = []
+  const regularMinutesData: number[] = []
+  const overtimeMinutesData: number[] = []
   const labels: string[] = []
   const weekStart = dayjs(internalSelectedWeek.value.isoString).utc().startOf('isoWeek')
   const maxRegularHours = selectWeekWeelyClaim.value?.wage?.maximumHoursPerWeek ?? Infinity
@@ -142,6 +144,9 @@ const barChartOption = computed(() => {
     const regularTodayHours = regularTodayMinutes / 60
     const overtimeTodayHours = overtimeTodayMinutes / 60
 
+    regularMinutesData.push(regularTodayMinutes)
+    overtimeMinutesData.push(overtimeTodayMinutes)
+
     regularData.push({
       value: regularTodayHours,
       itemStyle: {
@@ -154,6 +159,7 @@ const barChartOption = computed(() => {
   }
 
   const totals = regularData.map((r, i) => r.value + (overtimeData?.[i] ?? 0))
+  const totalMinutesPerDay = regularMinutesData.map((r, i) => r + (overtimeMinutesData?.[i] ?? 0))
   const yMax = Math.max(...totals) > 0 ? Math.max(...totals) : 24
 
   return {
@@ -164,15 +170,14 @@ const barChartOption = computed(() => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       formatter: (params: any[]) => {
         const day = params[0]?.name ?? ''
-        const regularH = params[0]?.value ?? 0
-        const overtimeH = params[1]?.value ?? 0
-        const totalMinutes = Math.round((regularH + overtimeH) * 60)
-        const regularMinutes = Math.round(regularH * 60)
-        const overtimeMinutes = Math.round(overtimeH * 60)
-        if (overtimeMinutes > 0) {
-          return `<b>${day}</b><br/>Regular: ${formatMinutesAsDuration(regularMinutes)}<br/>Overtime: ${formatMinutesAsDuration(overtimeMinutes)}<br/>Total: ${formatMinutesAsDuration(totalMinutes)}`
+        const idx = params[0]?.dataIndex ?? 0
+        const totalMin = totalMinutesPerDay[idx] ?? 0
+        const regularMin = regularMinutesData[idx] ?? 0
+        const overtimeMin = overtimeMinutesData[idx] ?? 0
+        if (overtimeMin > 0) {
+          return `<b>${day}</b><br/>Regular: ${formatMinutesAsDuration(regularMin)}<br/>Overtime: ${formatMinutesAsDuration(overtimeMin)}<br/>Total: ${formatMinutesAsDuration(totalMin)}`
         }
-        return `<b>${day}</b><br/>${formatMinutesAsDuration(totalMinutes)}`
+        return `<b>${day}</b><br/>${formatMinutesAsDuration(totalMin)}`
       }
     },
     xAxis: { type: 'category', data: labels, axisTick: { alignWithLabel: true } },
@@ -205,8 +210,8 @@ const barChartOption = computed(() => {
           color: '#374151',
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           formatter: (params: any) => {
-            const totalMinutes = Math.round((totals?.[params.dataIndex] ?? 0) * 60)
-            return totalMinutes > 0 ? formatMinutesAsDuration(totalMinutes) : ''
+            const totalMin = totalMinutesPerDay[params.dataIndex] ?? 0
+            return totalMin > 0 ? formatMinutesAsDuration(totalMin) : ''
           }
         }
       }
