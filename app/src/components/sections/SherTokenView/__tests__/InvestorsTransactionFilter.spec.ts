@@ -22,6 +22,11 @@ describe('InvestorsTransactionFilter.vue', () => {
     vi.clearAllMocks()
   })
 
+  interface FilterVm {
+    selectedType: string
+    typeOptions: Array<{ label: string; value: string }>
+  }
+
   describe('Rendering', () => {
     it('displays date picker when showDateFilter is true', () => {
       const datePicker = wrapper.findComponent({ name: 'CustomDatePicker' })
@@ -34,53 +39,28 @@ describe('InvestorsTransactionFilter.vue', () => {
       expect(datePicker.exists()).toBeFalsy()
     })
 
-    it('displays type filter button with correct label', () => {
-      const button = wrapper.find(`[data-test="${defaultProps.dataTestPrefix}-type-filter"]`)
-      expect(button.exists()).toBeTruthy()
-      expect(button.text()).toBe('All Types')
+    it('displays type filter select with default "all" value', () => {
+      const select = wrapper.find(`[data-test="${defaultProps.dataTestPrefix}-type-filter"]`)
+      expect(select.exists()).toBeTruthy()
+      expect((wrapper.vm as unknown as FilterVm).selectedType).toBe('all')
     })
   })
 
-  describe('Type Filter Dropdown', () => {
-    it('shows dropdown when clicking type filter button', async () => {
-      const button = wrapper.find(`[data-test="${defaultProps.dataTestPrefix}-type-filter"]`)
-      await button.trigger('click')
-
-      const dropdown = wrapper.find('ul')
-      expect(dropdown.exists()).toBeTruthy()
-    })
-
-    it('displays all type options including "All Types"', async () => {
-      const button = wrapper.find(`[data-test="${defaultProps.dataTestPrefix}-type-filter"]`)
-      await button.trigger('click')
-
-      const options = wrapper.findAll('li')
-      expect(options).toHaveLength(defaultProps.uniqueTypes.length + 1) // +1 for "All Types"
-      expect(options[0].text()).toBe('All Types')
+  describe('Type Filter Options', () => {
+    it('displays all type options including "All Types"', () => {
+      const vm = wrapper.vm as unknown as FilterVm
+      expect(vm.typeOptions).toHaveLength(defaultProps.uniqueTypes.length + 1)
+      expect(vm.typeOptions[0]).toEqual({ label: 'All Types', value: 'all' })
       defaultProps.uniqueTypes.forEach((type, index) => {
-        expect(options[index + 1].text()).toBe(type)
+        expect(vm.typeOptions[index + 1]).toEqual({ label: type, value: type })
       })
-    })
-
-    it('closes dropdown when selecting a type', async () => {
-      const button = wrapper.find(`[data-test="${defaultProps.dataTestPrefix}-type-filter"]`)
-      await button.trigger('click')
-
-      const typeOption = wrapper.findAll('li')[1]
-      await typeOption.trigger('click')
-
-      const dropdown = wrapper.find('ul')
-      expect(dropdown.exists()).toBeFalsy()
     })
   })
 
   describe('Events', () => {
-    it('emits update:selectedType when selecting a type', async () => {
-      const button = wrapper.find(`[data-test="${defaultProps.dataTestPrefix}-type-filter"]`)
-      await button.trigger('click')
-
-      const typeOption = wrapper.findAll('li')[1]
-      await typeOption.trigger('click')
+    it('emits update:selectedType when selectedType changes', async () => {
+      ;(wrapper.vm as unknown as FilterVm).selectedType = defaultProps.uniqueTypes[0]
+      await wrapper.vm.$nextTick()
 
       expect(wrapper.emitted('update:selectedType')).toBeTruthy()
       expect(wrapper.emitted('update:selectedType')?.[0]).toEqual([defaultProps.uniqueTypes[0]])
@@ -110,41 +90,18 @@ describe('InvestorsTransactionFilter.vue', () => {
     })
   })
 
-  //   describe('Outside Click', () => {
-  //     it('registers onClickOutside handler', () => {
-  //       expect(onClickOutside).toHaveBeenCalled()
-  //     })
-
-  //     it('closes dropdown when clicking outside', async () => {
-  //       const button = wrapper.find(`[data-test="${defaultProps.dataTestPrefix}-type-filter"]`)
-  //       await button.trigger('click')
-
-  //       // Simulate outside click by calling the handler directly
-  //       const handler = vi.mocked(onClickOutside).mock.calls[0][1]
-  //       handler()
-
-  //       await wrapper.vm.$nextTick()
-  //       const dropdown = wrapper.find('ul')
-  //       expect(dropdown.exists()).toBeFalsy()
-  //     })
-  //   })
-
   describe('Edge Cases', () => {
     it('handles empty uniqueTypes array', () => {
       wrapper = mountComponent({ ...defaultProps, uniqueTypes: [] })
-      const button = wrapper.find(`[data-test="${defaultProps.dataTestPrefix}-type-filter"]`)
-      expect(button.exists()).toBeTruthy()
+      const vm = wrapper.vm as unknown as FilterVm
+      expect(vm.typeOptions).toEqual([{ label: 'All Types', value: 'all' }])
     })
 
-    it('preserves selected type after dropdown reopens', async () => {
-      const button = wrapper.find(`[data-test="${defaultProps.dataTestPrefix}-type-filter"]`)
-      await button.trigger('click')
-
-      const typeOption = wrapper.findAll('li')[1]
-      await typeOption.trigger('click')
-
-      await button.trigger('click')
-      expect(button.text()).toBe(defaultProps.uniqueTypes[0])
+    it('preserves selected type while component remains mounted', async () => {
+      const vm = wrapper.vm as unknown as FilterVm
+      vm.selectedType = defaultProps.uniqueTypes[0]
+      await wrapper.vm.$nextTick()
+      expect(vm.selectedType).toBe(defaultProps.uniqueTypes[0])
     })
   })
 })
