@@ -1,5 +1,4 @@
-import { /*PrismaClient,*/ TeamContract, TeamOfficer, User } from '@prisma/client';
-// import { User } from '@prisma/client';
+import { TeamContract, TeamOfficer, User } from '@prisma/client';
 import { Request, Response } from 'express';
 import { isAddress } from 'viem';
 import { addNotification, prisma } from '../utils';
