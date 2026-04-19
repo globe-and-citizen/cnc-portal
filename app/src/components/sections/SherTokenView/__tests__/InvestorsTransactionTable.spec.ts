@@ -3,6 +3,7 @@ import { mount } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
 import InvestorsTransactionTable from '../InvestorsTransactionTable.vue'
 import type { InvestorsTransaction } from '@/types/transactions'
+import { formatDateShort } from '@/utils/dayUtils'
 
 const mockTransactions: InvestorsTransaction[] = [
   {
@@ -66,30 +67,39 @@ describe('InvestorsTransactionTable.vue', () => {
 
   it('should format date correctly', () => {
     const wrapper = createComponent()
-    const result = wrapper.vm.formatDate('2023-03-01 10:00:00')
-
-    expect(result).toBe(new Date('2023-03-01 10:00:00').toLocaleString())
+    const expectedDate = formatDateShort('2023-03-01 10:00:00')
+    expect(wrapper.text()).toContain(expectedDate)
   })
 
   it('should return correct type classes', () => {
     const wrapper = createComponent()
 
     expect(wrapper.vm.getTypeClass('mint')).toEqual({
-      'bg-success': true,
-      'bg-warning': false,
-      'bg-info': false
+      'badge-success': true,
+      'badge-warning': false,
+      'badge-error': false,
+      'badge-info': false
     })
 
-    expect(wrapper.vm.getTypeClass('dividend')).toEqual({
-      'bg-success': false,
-      'bg-warning': true,
-      'bg-info': false
+    expect(wrapper.vm.getTypeClass('dividenddistributed')).toEqual({
+      'badge-success': false,
+      'badge-warning': true,
+      'badge-error': false,
+      'badge-info': false
     })
 
     expect(wrapper.vm.getTypeClass('transfer')).toEqual({
-      'bg-success': false,
-      'bg-warning': false,
-      'bg-info': true
+      'badge-success': false,
+      'badge-warning': false,
+      'badge-error': false,
+      'badge-info': true
+    })
+
+    expect(wrapper.vm.getTypeClass('dividendpaymentfailed')).toEqual({
+      'badge-success': false,
+      'badge-warning': false,
+      'badge-error': true,
+      'badge-info': false
     })
   })
 
