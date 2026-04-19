@@ -158,6 +158,13 @@ export const createOfficer = async (req: Request, res: Response) => {
     if (existingByAddress && existingByAddress.teamId !== teamId) {
       return errorResponse(409, 'Officer address already registered to another team', res);
     }
+    // Re-registering the same Officer address on the same team is a no-op —
+    // but we must not return previousOfficer = the row itself (which would
+    // break the client's migrate-from-previous flow). Reject so the caller
+    // retries with a fresh address or falls back to syncContracts.
+    if (existingByAddress) {
+      return errorResponse(409, 'Officer address already registered to this team', res);
+    }
 
     const previousHead = await findCurrentOfficer(teamId);
 
