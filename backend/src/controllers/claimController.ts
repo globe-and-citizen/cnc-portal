@@ -15,7 +15,7 @@ import {
   updateClaimBodySchema,
   z,
   type FileAttachmentData,
-} from '../services/attachmentService';
+} from '../validation';
 import { formatMinutesAsDuration } from '../utils/wageUtil';
 
 dayjs.extend(utc);
