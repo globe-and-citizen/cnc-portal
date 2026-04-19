@@ -12,6 +12,7 @@ import {
   deleteAttachments,
   type FileAttachmentData,
 } from '../services/attachmentService';
+import { formatMinutesAsDuration } from '../utils/wageUtil';
 
 dayjs.extend(utc);
 dayjs.extend(isoWeek);
@@ -19,14 +20,6 @@ dayjs.extend(isoWeek);
 type claimBodyRequest = Pick<Claim, 'hoursWorked' | 'dayWorked' | 'memo'> & {
   teamId: string;
   attachments?: FileAttachmentData[];
-};
-
-const formatMinutesAsDuration = (totalMinutes: number): string => {
-  const h = Math.floor(totalMinutes / 60);
-  const m = totalMinutes % 60;
-  if (m === 0) return `${h}h`;
-  if (h === 0) return `${m}min`;
-  return `${h}h ${m}min`;
 };
 
 const buildWeeklyHoursExceededMessage = ({

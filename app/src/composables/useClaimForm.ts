@@ -94,6 +94,10 @@ const claimSchema = z
     message: 'Duration must be greater than 0',
     path: ['hoursWorked']
   })
+  .refine((data) => Number(data.hoursWorked) * 60 + Number(data.minutesWorked) <= 1440, {
+    message: 'Total duration cannot exceed 24 hours (1440 minutes)',
+    path: ['hoursWorked']
+  })
 
 export function useClaimForm(options: UseClaimFormOptions) {
   const maxFiles = options.maxFiles ?? DEFAULT_MAX_FILES
