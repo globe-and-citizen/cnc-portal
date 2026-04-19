@@ -5,10 +5,7 @@ import { computed, ref } from 'vue'
 import type { Address } from 'viem'
 import ShareholderMigrationBanner from '@/components/sections/SherTokenView/ShareholderMigrationBanner.vue'
 import { useInvestorAddress, useInvestorTotalSupply } from '@/composables/investor/reads'
-import {
-  useMigrateShareholders,
-  InconsistentSupplyError
-} from '@/composables/investor/useShareholderMigration'
+import { InconsistentSupplyError } from '@/composables/investor/useShareholderMigration'
 import { useTeamStore } from '@/stores'
 import { mockInvestorReads, mockTeamStore } from '@/tests/mocks'
 
