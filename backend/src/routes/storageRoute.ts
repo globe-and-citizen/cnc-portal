@@ -87,45 +87,4 @@ const storageRouter = express.Router();
  */
 storageRouter.get('/url', authorizeUser, validateQuery(getPresignedUrlQuerySchema), getFileUrl);
 
-// Note: The /download/* route is commented out as it's redundant.
-// The frontend already receives fileUrl from upload, and can use /file/url
-// to regenerate expired URLs. Direct download can be done client-side.
-/*
-storageRouter.get('/download/*', authorizeUser, async (req: Request, res: Response) => {
-  try {
-    // Get the key from the path (everything after /download/)
-    const key = req.params[0];
-
-    if (!key) {
-      return res.status(400).json({
-        error: 'Missing required parameter',
-        details: 'File key is required in the path',
-      });
-    }
-
-    // Decode the key in case it's URL-encoded
-    const decodedKey = decodeURIComponent(key);
-
-    // Check if Railway Storage is configured
-    if (!isStorageConfigured()) {
-      return res.status(500).json({
-        error: 'Storage not configured',
-        details: 'Railway Storage is not configured. Please contact support.',
-      });
-    }
-
-    // Generate presigned URL and redirect (will fail if file doesn't exist)
-    const url = await getPresignedDownloadUrl(decodedKey, PRESIGNED_URL_EXPIRATION);
-    res.redirect(302, url);
-  } catch (err: unknown) {
-    const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
-    console.error('Error redirecting to file:', err);
-    res.status(500).json({
-      error: 'Failed to access file',
-      details: errorMessage,
-    });
-  }
-});
-*/
-
 export default storageRouter;

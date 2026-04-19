@@ -1,5 +1,6 @@
 import express from 'express';
 import { addClaim, getClaims, updateClaim, deleteClaim } from '../controllers/claimController';
+import { requireTeamMember } from '../middleware/teamAuthzMiddleware';
 import {
   validateBody,
   validateQuery,
@@ -152,7 +153,12 @@ claimRoutes.post('/', validateBody(addClaimBodySchema), addClaim);
  *           schema:
  *             $ref: '#/components/schemas/ErrorResponse'
  */
-claimRoutes.get('/', validateQuery(getClaimsQuerySchema), getClaims);
+claimRoutes.get(
+  '/',
+  validateQuery(getClaimsQuerySchema),
+  requireTeamMember('query.teamId'),
+  getClaims
+);
 
 /**
  * @openapi

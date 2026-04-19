@@ -1,13 +1,11 @@
 import { Request, Response } from 'express';
 import { errorResponse, getMondayStart, prisma } from '../utils';
-// import { errorResponse } from "../utils/utils";
 import { Prisma } from '@prisma/client';
 import { Hex, isAddress, isHex, keccak256 } from 'viem';
 import CASH_REMUNERATION_ABI from '../artifacts/cash_remuneration_eip712_abi.json';
 import { isCashRemunerationOwner } from '../utils/cashRemunerationUtil';
 import publicClient from '../utils/viem.config';
 import { FileAttachmentData, refreshAttachmentUrls } from '../services/attachmentService';
-import { isUserMemberOfTeam } from './wageController';
 
 export type WeeklyClaimAction = 'sign' | 'withdraw' | 'disable' | 'enable';
 type statusType = 'pending' | 'signed' | 'withdrawn' | 'disabled';
@@ -200,13 +198,8 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
 };
 
 export const getTeamWeeklyClaims = async (req: Request, res: Response) => {
-  const callerAddress = req.address;
   const teamId = Number(req.query.teamId);
   const status = req.query.status as string;
-
-  if (!teamId || isNaN(teamId)) {
-    return errorResponse(400, 'Missing or invalid teamId', res);
-  }
 
   const rawFilterAddress = (req.query.userAddress ??
     req.query.memberAddress ??
@@ -246,9 +239,7 @@ export const getTeamWeeklyClaims = async (req: Request, res: Response) => {
   }
 
   try {
-    if (!(await isUserMemberOfTeam(callerAddress, teamId))) {
-      return errorResponse(403, 'Caller is not a member of the team', res);
-    }
+    // authz enforced by requireTeamMember middleware
     console.log({ teamId, ...memberAddressFilter, ...statusFilter });
 
     // Filter directly on WeeklyClaim team/member to avoid leaking other members' records.
@@ -320,18 +311,10 @@ export const getTeamWeeklyClaims = async (req: Request, res: Response) => {
 };
 
 export const syncWeeklyClaims = async (req: Request, res: Response) => {
-  const callerAddress = req.address;
   const teamId = Number(req.query.teamId);
 
-  if (!teamId || Number.isNaN(teamId)) {
-    return errorResponse(400, 'Missing or invalid teamId', res);
-  }
-
   try {
-    if (!(await isUserMemberOfTeam(callerAddress, teamId))) {
-      return errorResponse(403, 'Caller is not a member of the team', res);
-    }
-
+    // authz enforced by requireTeamMember middleware
     const teamContract = await prisma.teamContract.findFirst({
       where: {
         teamId,

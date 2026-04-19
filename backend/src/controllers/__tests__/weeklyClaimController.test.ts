@@ -4,7 +4,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import weeklyClaimRoutes from '../../routes/weeklyClaimRoute';
 import { prisma } from '../../utils';
 import { isCashRemunerationOwner } from '../../utils/cashRemunerationUtil';
-import { isUserMemberOfTeam } from '../../controllers/wageController';
 import type { Address } from 'viem';
 
 const CALLER = '0x1234567890123456789012345678901234567890';
@@ -37,10 +36,6 @@ vi.mock('../../utils/cashRemunerationUtil', () => ({
   isCashRemunerationOwner: vi.fn().mockResolvedValue(true),
 }));
 
-vi.mock('../../controllers/wageController', () => ({
-  isUserMemberOfTeam: vi.fn().mockResolvedValue(true),
-}));
-
 vi.mock('../../utils/viem.config', () => ({
   default: { readContract: readContractMock },
 }));
@@ -50,6 +45,9 @@ vi.mock('../../utils', async () => {
   return {
     ...actual,
     prisma: {
+      team: {
+        findFirst: vi.fn().mockResolvedValue({ id: 1 }),
+      },
       weeklyClaim: {
         findMany: vi.fn(),
         update: vi.fn(),
@@ -314,7 +312,7 @@ describe('Weekly Claim Controller', () => {
 
   describe('GET /', () => {
     it('should return 403 if caller is not team member', async () => {
-      vi.mocked(isUserMemberOfTeam).mockResolvedValueOnce(false);
+      vi.mocked(prisma.team.findFirst).mockResolvedValueOnce(null);
 
       const response = await request(app).get('/?teamId=1');
       expect(response.status).toBe(403);
@@ -439,7 +437,7 @@ describe('Weekly Claim Controller', () => {
     });
 
     it('should return 403 if caller is not team member', async () => {
-      vi.mocked(isUserMemberOfTeam).mockResolvedValueOnce(false);
+      vi.mocked(prisma.team.findFirst).mockResolvedValueOnce(null);
 
       const response = await request(app).post('/sync?teamId=1');
       expect(response.status).toBe(403);

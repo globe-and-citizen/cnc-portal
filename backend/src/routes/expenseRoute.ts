@@ -1,5 +1,6 @@
 import express from 'express';
 import { addExpense, getExpenses, updateExpense } from '../controllers/expenseController';
+import { requireTeamMember } from '../middleware/teamAuthzMiddleware';
 import {
   addExpenseBodySchema,
   getExpensesQuerySchema,
@@ -65,7 +66,12 @@ expenseRoutes.post('/', validateBody(addExpenseBodySchema), addExpense);
  *     500:
  *       description: Internal server error
  */
-expenseRoutes.get('/', validateQuery(getExpensesQuerySchema), getExpenses);
+expenseRoutes.get(
+  '/',
+  validateQuery(getExpensesQuerySchema),
+  requireTeamMember('query.teamId'),
+  getExpenses
+);
 
 /**
  * @openapi

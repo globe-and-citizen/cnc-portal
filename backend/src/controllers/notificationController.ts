@@ -1,5 +1,13 @@
 import { Request, Response } from 'express';
 import { addNotification, errorResponse, prisma } from '../utils';
+import {
+  createBulkNotificationsBodySchema,
+  updateNotificationParamsSchema,
+  z,
+} from '../validation';
+
+type CreateBulkNotificationsBody = z.infer<typeof createBulkNotificationsBodySchema>;
+type UpdateNotificationParams = z.infer<typeof updateNotificationParamsSchema>;
 
 const getNotification = async (req: Request, res: Response) => {
   //check if userAddress property is set
@@ -8,9 +16,7 @@ const getNotification = async (req: Request, res: Response) => {
   try {
     //retrieve notification
     const notifications = await prisma.notification.findMany({
-      where: {
-        userAddress: callerAddress as string,
-      },
+      where: { userAddress: callerAddress },
       orderBy: {
         createdAt: 'desc',
       },
@@ -30,51 +36,27 @@ const getNotification = async (req: Request, res: Response) => {
 };
 
 const updateNotification = async (req: Request, res: Response) => {
-  const { id } = req.params;
-
-  const _id = parseInt(id as string);
-
-  if (isNaN(_id)) {
-    return errorResponse(400, 'Notification ID invalid format', res);
-  }
-
+  const { id } = req.params as unknown as UpdateNotificationParams;
   const callerAddress = req.address;
 
   try {
-    let notification = await prisma.notification.findUnique({
-      where: {
-        id: _id,
-      },
-    });
-
-    if (callerAddress === notification?.userAddress) {
-      notification = await prisma.notification.update({
-        where: { id: _id },
-        data: { isRead: true },
-      });
-
-      res.status(200).json(notification);
-    } else {
+    const existing = await prisma.notification.findUnique({ where: { id } });
+    if (!existing) return errorResponse(404, 'Notification not found', res);
+    if (existing.userAddress !== callerAddress)
       return errorResponse(403, 'Unauthorized access', res);
-    }
+
+    const notification = await prisma.notification.update({
+      where: { id },
+      data: { isRead: true },
+    });
+    res.status(200).json(notification);
   } catch (error) {
     return errorResponse(500, error, res);
   }
 };
 
 const createBulkNotifications = async (req: Request, res: Response) => {
-  const { userIds, message, subject, resource } = req.body as {
-    userIds: string[];
-    message: string;
-    subject?: string;
-    resource?: string;
-  };
-  if (!Array.isArray(userIds) || userIds.length === 0) {
-    return errorResponse(400, 'userIds must be a non-empty array', res);
-  }
-  if (!message || typeof message !== 'string') {
-    return errorResponse(400, 'message is required', res);
-  }
+  const { userIds, message, subject, resource } = req.body as CreateBulkNotificationsBody;
 
   try {
     const notifications = await addNotification(userIds, {
