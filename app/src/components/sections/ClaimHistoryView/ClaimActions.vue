@@ -27,11 +27,7 @@
       </template>
     </UModal>
     <!-- Delete Modal -->
-    <UModal
-      v-model:open="showDeleteModal"
-      title="Delete Claim"
-      :description="`Are you sure you want to delete this claim? This action cannot be undone.`"
-    >
+    <UModal v-model:open="showDeleteModal" title="Delete Claim">
       <template #body>
         <DeleteClaimModal :claim="claim" @close="showDeleteModal = false" />
       </template>

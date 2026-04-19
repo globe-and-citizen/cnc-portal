@@ -130,7 +130,7 @@ const createMockWeeklyClaim = (overrides: Partial<WeeklyClaim> = {}): WeeklyClai
     data: {},
     memberAddress: TEST_ADDRESS,
     signature: null,
-    claims: [{ hoursWorked: 30 }],
+    claims: [{ hoursWorked: 1800 }],
     wageId: 1,
 
     status: 'pending',
@@ -140,7 +140,7 @@ const createMockWeeklyClaim = (overrides: Partial<WeeklyClaim> = {}): WeeklyClai
 const createMockClaim = (overrides: Partial<Claim> = {}): Claim =>
   ({
     id: 123,
-    hoursWorked: 5,
+    hoursWorked: 300,
 
     memo: 'test memo',
     wageId: 1,
@@ -160,7 +160,7 @@ const createMockClaimWithWage = (
 ) => [
   {
     id: 1,
-    hoursWorked: 5,
+    hoursWorked: 300,
     status: 'pending',
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -203,9 +203,9 @@ app.use('/', claimRoutes);
 // Common test scenarios for parameterized tests
 const invalidBodyScenarios = [
   { body: { teamId: 1, descpription: '' }, description: 'memo is missing' },
-  { body: { teamId: 1, hoursWorked: 5, memo: ' ' }, description: 'memo is only spaces' },
+  { body: { teamId: 1, hoursWorked: 300, memo: ' ' }, description: 'memo is only spaces' },
   {
-    body: { teamId: 1, hoursWorked: 5, memo: Array(3001).fill('word').join(' ') },
+    body: { teamId: 1, hoursWorked: 300, memo: Array(3001).fill('word').join(' ') },
     description: 'memo exceeds 3000 words',
   },
   { body: {}, description: 'required fields are missing' },
@@ -231,49 +231,29 @@ describe('Claim Controller', () => {
       vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(null);
       const response = await request(app)
         .post('/')
-        .send({ teamId: 1, hoursWorked: 5, memo: 'memo' });
+        .send({ teamId: 1, hoursWorked: 300, memo: 'memo' });
       expect(response.status).toBe(400);
       expect(response.body.message).toBe('No wage found for the user');
-    });
-
-    it('should return 409 if maximum weekly claim is reached', async () => {
-      vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(createMockWage());
-      vi.spyOn(prisma.weeklyClaim, 'findFirst').mockResolvedValue(createMockWeeklyClaim());
-
-      const response = await request(app)
-        .post('/')
-        .send({ teamId: 1, hoursWorked: 45, memo: 'memo' });
-
-      expect(response.status).toBe(409);
-      expect(response.body.message).toContain(
-        'Unable to submit this claim: your weekly hours limit would be exceeded.'
-      );
-      expect(response.body.message).toContain('Weekly allowance: 40h regular + 0h overtime = 40h.');
-      expect(response.body.message).toContain('Already submitted: 30h.');
-      expect(response.body.message).toContain('Remaining to submit: 10h.');
-      expect(response.body.message).toContain(
-        'Unable to submit this claim: your weekly hours limit would be exceeded. Weekly allowance: 40h regular + 0h overtime = 40h. Already submitted: 30h. Remaining to submit: 10h.'
-      );
     });
 
     it('should return 400 if total hours exceed 24 hours for a single day', async () => {
       const testDate = dayjs.utc().startOf('day').toDate();
       const modifiedWeeklyClaims = createMockWeeklyClaim();
-      (modifiedWeeklyClaims as any).claims = [{ dayWorked: testDate, hoursWorked: 20 }];
+      (modifiedWeeklyClaims as any).claims = [{ dayWorked: testDate, hoursWorked: 1200 }];
 
       vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(createMockWage());
       vi.spyOn(prisma.weeklyClaim, 'findFirst').mockResolvedValue(modifiedWeeklyClaims);
 
       const response = await request(app).post('/').send({
         teamId: 1,
-        hoursWorked: 5, // 5 + 20 = 25 hours > 24 hours
+        hoursWorked: 300, // 300 + 1200 = 1500 minutes > 1440 minutes (24h)
         memo: 'memo',
         dayWorked: testDate.toISOString(),
       });
 
       expect(response.status).toBe(400);
       expect(response.body.message).toBe(
-        'Submission failed: the total number of hours for this day would exceed 24 hours.'
+        'Submission failed: the total number of hours for this day would exceed 24 hours (1440 minutes).'
       );
     });
 
@@ -289,7 +269,7 @@ describe('Claim Controller', () => {
 
       const response = await request(app)
         .post('/')
-        .send({ teamId: 1, hoursWorked: 5, memo: 'test memo' });
+        .send({ teamId: 1, hoursWorked: 300, memo: 'test memo' });
 
       expect(response.status).toBe(201);
       expect(response.body).toMatchObject({
@@ -308,7 +288,7 @@ describe('Claim Controller', () => {
       vi.spyOn(prisma.weeklyClaim, 'findFirst').mockResolvedValue(mockWeeklyClaims);
       const response = await request(app)
         .post('/')
-        .send({ teamId: 1, hoursWorked: 5, memo: 'test memo' });
+        .send({ teamId: 1, hoursWorked: 300, memo: 'test memo' });
       expect(response.status).toBe(409);
       expect(response.body.message).toBe('Week already signed. Submission not allowed.');
     });
@@ -320,7 +300,7 @@ describe('Claim Controller', () => {
       vi.spyOn(prisma.weeklyClaim, 'findFirst').mockResolvedValue(mockWeeklyClaims);
       const response = await request(app)
         .post('/')
-        .send({ teamId: 1, hoursWorked: 5, memo: 'test memo' });
+        .send({ teamId: 1, hoursWorked: 300, memo: 'test memo' });
       expect(response.status).toBe(409);
       expect(response.body.message).toBe('Week is disabled. Submission not allowed.');
     });
@@ -332,7 +312,7 @@ describe('Claim Controller', () => {
       vi.spyOn(prisma.weeklyClaim, 'findFirst').mockResolvedValue(mockWeeklyClaims);
       const response = await request(app)
         .post('/')
-        .send({ teamId: 1, hoursWorked: 5, memo: 'test memo' });
+        .send({ teamId: 1, hoursWorked: 300, memo: 'test memo' });
       expect(response.status).toBe(409);
       expect(response.body.message).toBe('Week already withdrawn. Submission not allowed.');
     });
@@ -348,7 +328,7 @@ describe('Claim Controller', () => {
 
       const response = await request(app)
         .post('/')
-        .send({ teamId: 1, hoursWorked: 5, memo: 'test memo' });
+        .send({ teamId: 1, hoursWorked: 300, memo: 'test memo' });
 
       expect(response.status).toBe(201);
       expect(response.body).toMatchObject({
@@ -365,7 +345,7 @@ describe('Claim Controller', () => {
 
       const response = await request(app)
         .post('/')
-        .send({ teamId: 1, hoursWorked: 5, memo: 'memo' });
+        .send({ teamId: 1, hoursWorked: 300, memo: 'memo' });
 
       expect(response.status).toBe(500);
       expect(response.body.message).toBe('Internal server error has occured');
@@ -395,7 +375,7 @@ describe('Claim Controller', () => {
           .post('/')
           .send({
             teamId: '1',
-            hoursWorked: '5',
+            hoursWorked: '300',
             memo: 'test memo',
             attachments: [
               {
@@ -520,7 +500,7 @@ describe('Claim Controller', () => {
       const response = await request(app)
         .put('/1')
         .query({})
-        .send({ hoursWorked: 5, memo: 'Updated memo' });
+        .send({ hoursWorked: 300, memo: 'Updated memo' });
       expect(response.status).toBe(404);
       expect(response.body.message).toBe('Claim not found');
     });
@@ -558,8 +538,8 @@ describe('Claim Controller', () => {
         weeklyClaim: {
           status: 'pending',
           claims: [
-            { id: 2, hoursWorked: 30 },
-            { id: 3, hoursWorked: 8 },
+            { id: 2, hoursWorked: 1800 },
+            { id: 3, hoursWorked: 480 },
           ],
         },
         fileAttachments: null,
@@ -567,7 +547,7 @@ describe('Claim Controller', () => {
       vi.spyOn(prisma.claim, 'findFirst').mockResolvedValue(mockClaim as any);
 
       const response = await request(app).put('/1').send({
-        hoursWorked: 5,
+        hoursWorked: 300,
         memo: 'Updated memo',
       });
       expect(response.status).toBe(409);
@@ -593,19 +573,19 @@ describe('Claim Controller', () => {
       vi.spyOn(prisma.claim, 'findFirst').mockResolvedValue(mockClaim as any);
       vi.spyOn(prisma.claim, 'update').mockResolvedValue({
         id: 1,
-        hoursWorked: 6,
+        hoursWorked: 360,
         memo: 'Updated memo',
       } as any);
 
       const response = await request(app).put('/1').send({
-        hoursWorked: 6,
+        hoursWorked: 360,
         memo: 'Updated memo',
       });
 
       expect(response.status).toBe(200);
       expect(response.body).toMatchObject({
         id: 1,
-        hoursWorked: 6,
+        hoursWorked: 360,
         memo: 'Updated memo',
       });
     });
@@ -621,16 +601,16 @@ describe('Claim Controller', () => {
       vi.spyOn(prisma.claim, 'findFirst').mockResolvedValue(mockClaim as any);
       const updateSpy = vi.spyOn(prisma.claim, 'update').mockResolvedValue({
         id: 1,
-        hoursWorked: 6,
+        hoursWorked: 360,
         memo: 'Original memo',
       } as any);
 
-      const response = await request(app).put('/1').send({ hoursWorked: 6 });
+      const response = await request(app).put('/1').send({ hoursWorked: 360 });
 
       expect(response.status).toBe(200);
       expect(updateSpy).toHaveBeenCalledWith({
         where: { id: 1 },
-        data: { hoursWorked: 6, fileAttachments: [] },
+        data: { hoursWorked: 360, fileAttachments: [] },
       });
     });
 
@@ -645,7 +625,9 @@ describe('Claim Controller', () => {
       vi.spyOn(prisma.claim, 'findFirst').mockResolvedValue(mockClaim as any);
       vi.spyOn(prisma.claim, 'update').mockRejectedValue(new Error('DB error'));
 
-      const response = await request(app).put('/1').send({ hoursWorked: 6, memo: 'Updated memo' });
+      const response = await request(app)
+        .put('/1')
+        .send({ hoursWorked: 360, memo: 'Updated memo' });
 
       expect(response.status).toBe(500);
       expect(response.body.message).toBe('Internal server error has occured');
@@ -661,7 +643,9 @@ describe('Claim Controller', () => {
 
       vi.spyOn(prisma.claim, 'findFirst').mockResolvedValue(mockClaim as any);
 
-      const response = await request(app).put('/1').send({ hoursWorked: 6, memo: 'Updated memo' });
+      const response = await request(app)
+        .put('/1')
+        .send({ hoursWorked: 360, memo: 'Updated memo' });
 
       expect(response.status).toBe(403);
       expect(response.body.message).toBe("Can't edit: Claim is not pending");

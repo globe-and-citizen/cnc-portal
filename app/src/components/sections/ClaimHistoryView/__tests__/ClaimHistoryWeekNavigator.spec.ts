@@ -163,7 +163,7 @@ describe('ClaimHistoryWeekNavigator', () => {
       claims: [
         {
           id: 1,
-          hoursWorked: 10,
+          hoursWorked: 600,
           dayWorked: '2024-01-01',
           createdAt: '2024-01-01T08:00:00Z',
           updatedAt: '2024-01-01T08:00:00Z',

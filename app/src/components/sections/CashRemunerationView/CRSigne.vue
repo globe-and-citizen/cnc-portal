@@ -98,7 +98,7 @@ const TYPED_DATA_TYPES = {
   ],
   WageClaim: [
     { name: 'employeeAddress', type: 'address' },
-    { name: 'hoursWorked', type: 'uint8' },
+    { name: 'hoursWorked', type: 'uint16' },
     { name: 'wages', type: 'Wage[]' },
     { name: 'date', type: 'uint256' }
   ]

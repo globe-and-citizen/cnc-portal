@@ -21,25 +21,33 @@ type claimBodyRequest = Pick<Claim, 'hoursWorked' | 'dayWorked' | 'memo'> & {
   attachments?: FileAttachmentData[];
 };
 
+const formatMinutesAsDuration = (totalMinutes: number): string => {
+  const h = Math.floor(totalMinutes / 60);
+  const m = totalMinutes % 60;
+  if (m === 0) return `${h}h`;
+  if (h === 0) return `${m}min`;
+  return `${h}h ${m}min`;
+};
+
 const buildWeeklyHoursExceededMessage = ({
   action,
   regularHours,
   overtimeHours,
-  submittedHours,
+  submittedMinutes,
 }: {
   action: 'submit' | 'update';
   regularHours: number;
   overtimeHours: number;
-  submittedHours: number;
+  submittedMinutes: number;
 }) => {
-  const totalAllowedHours = regularHours + overtimeHours;
-  const remainingHours = Math.max(0, totalAllowedHours - submittedHours);
+  const totalAllowedMinutes = (regularHours + overtimeHours) * 60;
+  const remainingMinutes = Math.max(0, totalAllowedMinutes - submittedMinutes);
 
   return {
     message:
       `Unable to ${action} this claim: your weekly hours limit would be exceeded. ` +
-      `Weekly allowance: ${regularHours}h regular + ${overtimeHours}h overtime = ${totalAllowedHours}h. ` +
-      `Already submitted: ${submittedHours}h. Remaining to submit: ${remainingHours}h.`,
+      `Weekly allowance: ${regularHours}h regular + ${overtimeHours}h overtime = ${formatMinutesAsDuration(totalAllowedMinutes)}. ` +
+      `Already submitted: ${formatMinutesAsDuration(submittedMinutes)}. Remaining to submit: ${formatMinutesAsDuration(remainingMinutes)}.`,
   };
 };
 
@@ -100,19 +108,20 @@ export const addClaim = async (req: Request, res: Response) => {
       }
     }
 
-    // Check total max hours (regular + overtime).
+    // Check total max minutes (regular + overtime).
 
-    const totalHours = weeklyClaim?.claims.reduce((sum, claim) => sum + claim.hoursWorked, 0) ?? 0;
+    const totalMinutes =
+      weeklyClaim?.claims.reduce((sum, claim) => sum + claim.hoursWorked, 0) ?? 0;
     const regularHours = wage.maximumHoursPerWeek;
     const overtimeHours = wage.maximumOvertimeHoursPerWeek ?? 0;
-    const totalMaxHours = regularHours + overtimeHours;
+    const totalMaxMinutes = (regularHours + overtimeHours) * 60;
 
-    if (totalHours + hoursWorked > totalMaxHours) {
+    if (totalMinutes + hoursWorked > totalMaxMinutes) {
       const { message } = buildWeeklyHoursExceededMessage({
         action: 'submit',
         regularHours,
         overtimeHours,
-        submittedHours: totalHours,
+        submittedMinutes: totalMinutes,
       });
       return errorResponse(409, message, res);
     }
@@ -138,11 +147,11 @@ export const addClaim = async (req: Request, res: Response) => {
         .filter((claim) => claim.dayWorked && claim.dayWorked.getTime() === dayWorked.getTime())
         .reduce((sum, claim) => sum + Number(claim.hoursWorked), 0) ?? 0) +
         Number(hoursWorked) >
-      24
+      1440
     ) {
       return errorResponse(
         400,
-        'Submission failed: the total number of hours for this day would exceed 24 hours.',
+        'Submission failed: the total number of hours for this day would exceed 24 hours (1440 minutes).',
         res
       );
     }
@@ -288,24 +297,24 @@ export const updateClaim = async (req: Request, res: Response) => {
     }
 
     if (hoursWorked !== undefined) {
-      // Sum other claims in the same weeklyClaim excluding the current claim
+      // Sum other claims in the same weeklyClaim excluding the current claim (values are in minutes)
       const otherClaimsTotal =
         (weeklyClaim?.claims ?? [])
           .filter((c) => c.id !== claim.id)
           .reduce((sum, c) => sum + Number(c.hoursWorked), 0) ?? 0;
 
-      const newHours = Number(hoursWorked);
+      const newMinutes = Number(hoursWorked);
 
       const regularHours = wage.maximumHoursPerWeek;
       const overtimeHours = wage.maximumOvertimeHoursPerWeek ?? 0;
-      const totalMaxHours = regularHours + overtimeHours;
+      const totalMaxMinutes = (regularHours + overtimeHours) * 60;
 
-      if (otherClaimsTotal + newHours > totalMaxHours) {
+      if (otherClaimsTotal + newMinutes > totalMaxMinutes) {
         const { message } = buildWeeklyHoursExceededMessage({
           action: 'update',
           regularHours,
           overtimeHours,
-          submittedHours: otherClaimsTotal,
+          submittedMinutes: otherClaimsTotal,
         });
         return errorResponse(409, message, res);
       }
