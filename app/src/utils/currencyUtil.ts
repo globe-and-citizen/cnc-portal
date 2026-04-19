@@ -33,7 +33,7 @@ export function formatCryptoAmount(amount: string | number) {
   }).format(num)
 }
 
-export function formatCryptoAmountWithPrecision(
+export function formatAmountWithPrecision(
   amount: string | number,
   minimumFractionDigits: number = 4,
   maximumFractionDigits: number = 20
