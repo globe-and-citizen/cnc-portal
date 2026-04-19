@@ -31,9 +31,8 @@ describe('contract.queries', () => {
   })
 
   it('exports contractKeys.all', async () => {
-    const { contractKeys } = await vi.importActual<typeof import('../contract.queries')>(
-      '../contract.queries'
-    )
+    const { contractKeys } =
+      await vi.importActual<typeof import('../contract.queries')>('../contract.queries')
     expect(contractKeys.all).toEqual(['contracts'])
   })
 
@@ -102,12 +101,13 @@ describe('contract.queries', () => {
 
   it('propagates API errors from the mutation', async () => {
     const mod = await vi.importActual<typeof import('../contract.queries')>('../contract.queries')
-    const err = Object.assign(new Error('conflict'), { isAxiosError: true, response: { status: 409 } })
+    const err = Object.assign(new Error('conflict'), {
+      isAxiosError: true,
+      response: { status: 409 }
+    })
     vi.mocked(apiClient.post).mockRejectedValue(err)
 
     const mutation = mod.useCreateOfficerMutation()
-    await expect(
-      mutation.mutateAsync({ body: { teamId: 1, address: '0xdup' } })
-    ).rejects.toBe(err)
+    await expect(mutation.mutateAsync({ body: { teamId: 1, address: '0xdup' } })).rejects.toBe(err)
   })
 })
