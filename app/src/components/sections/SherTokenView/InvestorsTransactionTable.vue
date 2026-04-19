@@ -21,7 +21,7 @@
     </template>
 
     <template #amount-cell="{ row: { original: row } }">
-      {{ formatCryptoAmountWithPrecision(row.amount, 6, 6) }} {{ row.token }}
+      {{ formatAmountWithPrecision(row.amount, 6, 6) }} {{ row.token }}
     </template>
     <template #amountUSD-cell="{ row: { original: row } }">
       {{ formatCurrencyShort(row.amountUSD, 'USD') }}
@@ -31,7 +31,7 @@
 
 <script setup lang="ts">
 import type { InvestorsTransaction } from '@/types/transactions'
-import { formatCryptoAmountWithPrecision, formatCurrencyShort } from '@/utils'
+import { formatAmountWithPrecision, formatCurrencyShort } from '@/utils'
 import { formatDateShort } from '@/utils/dayUtils'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 
