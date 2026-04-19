@@ -53,6 +53,9 @@ contract CashRemunerationEIP712 is
    */
   struct WageClaim {
     address employeeAddress;
+    // TODO: rename to `minutesWorked` — this field now stores minutes, not hours.
+    // Requires coordinated change: Solidity struct, EIP-712 type string, frontend
+    // typed data types, backend types, Prisma schema, and all tests.
     uint16 hoursWorked;
     // uint256 hourlyRate;
     Wage[] wages;

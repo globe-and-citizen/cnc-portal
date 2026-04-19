@@ -45,7 +45,13 @@ const props = withDefaults(
 const formatRateAmount = (amount: number) => {
   const tokenAmount = Number(amount)
 
-  if (tokenAmount <= 0) return new Intl.NumberFormat('en-US').format(0)
+  if (tokenAmount < 0)
+    return `-${new Intl.NumberFormat('en-US', {
+      minimumFractionDigits: props.minimumFractionDigits,
+      maximumFractionDigits: props.maximumFractionDigits
+    }).format(Math.abs(tokenAmount))}`
+
+  if (tokenAmount === 0) return new Intl.NumberFormat('en-US').format(0)
 
   return new Intl.NumberFormat('en-US', {
     minimumFractionDigits: props.minimumFractionDigits,
