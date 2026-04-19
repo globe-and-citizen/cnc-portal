@@ -1,11 +1,8 @@
-import { getPresignedDownloadUrl, deleteFile } from './storageService';
+import { z } from 'zod';
+import { type FileAttachmentData } from '../validation';
+import { deleteFile, getPresignedDownloadUrl } from './storageService';
 
-export type FileAttachmentData = {
-  fileType: string;
-  fileSize: number;
-  fileKey: string;
-  fileUrl: string;
-};
+export type { FileAttachmentData };
 
 type RefreshedKey = { fileKey: string; fileUrl: string };
 type RefreshError = { fileKey: string; error: string };
@@ -16,35 +13,43 @@ export type BatchRefreshResult = {
 };
 
 /**
- * Refreshes presigned URLs for an array of file attachments.
- * Returns the original attachment if refresh fails (graceful degradation).
+ * Minimal shape needed to *address* a stored file: just a non-empty fileKey.
+ * Used on the delete path so we can still clean up legacy rows that are
+ * missing other fields (fileUrl/fileType/fileSize) but whose fileKey is valid
+ * — those rows would otherwise orphan files in object storage.
  */
-export const refreshAttachmentUrls = async (
-  attachments: FileAttachmentData[] | null | undefined
-): Promise<FileAttachmentData[] | null | undefined> => {
+const fileKeyOnlySchema = z.object({
+  fileKey: z.string().min(1),
+});
+
+/**
+ * True when `item` is sufficiently well-formed to refresh. We only require
+ * the schema here as an existence check for fileKey; the original `item` is
+ * returned to preserve any extra keys the canonical schema would strip.
+ */
+const hasValidFileKey = (item: unknown): item is Record<string, unknown> & { fileKey: string } =>
+  fileKeyOnlySchema.safeParse(item).success;
+
+/**
+ * Refreshes presigned URLs for an array of file attachments.
+ * Preserves the original entry (including any extra fields not covered by
+ * the canonical schema) when the presigned URL fetch fails or when the entry
+ * lacks a usable fileKey. Only `fileUrl` is ever rewritten.
+ */
+export const refreshAttachmentUrls = async (attachments: unknown): Promise<unknown> => {
   if (!Array.isArray(attachments) || attachments.length === 0) {
     return attachments;
   }
 
   return Promise.all(
-    attachments.map(async (attachment) => {
-      if (!attachment || typeof attachment !== 'object') {
-        return attachment;
-      }
-
-      const typedAttachment = attachment as FileAttachmentData;
-      if (!typedAttachment.fileKey) {
-        return attachment;
-      }
+    attachments.map(async (item) => {
+      if (!hasValidFileKey(item)) return item;
 
       try {
-        const freshUrl = await getPresignedDownloadUrl(typedAttachment.fileKey);
-        return {
-          ...typedAttachment,
-          fileUrl: freshUrl,
-        };
+        const freshUrl = await getPresignedDownloadUrl(item.fileKey);
+        return { ...item, fileUrl: freshUrl };
       } catch {
-        return attachment;
+        return item;
       }
     })
   );
@@ -52,25 +57,24 @@ export const refreshAttachmentUrls = async (
 
 /**
  * Deletes all files associated with an array of attachments.
- * Failures are logged but do not throw — caller is never blocked.
+ * Only requires a non-empty `fileKey` — intentionally more permissive than
+ * the canonical schema so legacy / partially-formed rows still get cleaned
+ * up instead of orphaning files in object storage. Delete failures are
+ * logged but do not throw — caller is never blocked.
  */
-export const deleteAttachments = async (
-  attachments: FileAttachmentData[] | null | undefined
-): Promise<void> => {
+export const deleteAttachments = async (attachments: unknown): Promise<void> => {
   if (!Array.isArray(attachments) || attachments.length === 0) {
     return;
   }
 
-  for (const attachment of attachments) {
-    if (!attachment || typeof attachment !== 'object') continue;
-
-    const typedAttachment = attachment as FileAttachmentData;
-    if (!typedAttachment.fileKey || typedAttachment.fileKey.length === 0) continue;
+  for (const item of attachments) {
+    const parsed = fileKeyOnlySchema.safeParse(item);
+    if (!parsed.success) continue;
 
     try {
-      await deleteFile(typedAttachment.fileKey);
+      await deleteFile(parsed.data.fileKey);
     } catch (e) {
-      console.warn(`Could not delete file ${typedAttachment.fileKey}:`, e);
+      console.warn(`Could not delete file ${parsed.data.fileKey}:`, e);
     }
   }
 };

@@ -1,5 +1,6 @@
 import express from 'express';
 import { getWages, setWage, toggleWageStatus } from '../controllers/wageController';
+import { requireTeamMember, requireTeamOwner } from '../middleware/teamAuthzMiddleware';
 import {
   validateBody,
   validateQuery,
@@ -185,7 +186,12 @@ const wageRoutes = express.Router();
  *           schema:
  *             $ref: '#/components/schemas/ErrorResponse'
  */
-wageRoutes.put('/setWage', validateBody(setWageBodySchema), setWage);
+wageRoutes.put(
+  '/setWage',
+  validateBody(setWageBodySchema),
+  requireTeamOwner('body.teamId'),
+  setWage
+);
 
 /**
  * @openapi
@@ -247,7 +253,12 @@ wageRoutes.put('/setWage', validateBody(setWageBodySchema), setWage);
  *           schema:
  *             $ref: '#/components/schemas/ErrorResponse'
  */
-wageRoutes.get('/', validateQuery(getWagesQuerySchema), getWages);
+wageRoutes.get(
+  '/',
+  validateQuery(getWagesQuerySchema),
+  requireTeamMember('query.teamId'),
+  getWages
+);
 
 /**
  * @openapi

@@ -11,6 +11,9 @@ vi.mock('../../utils', async () => {
   return {
     ...actual,
     prisma: {
+      team: {
+        findFirst: vi.fn().mockResolvedValue({ id: 1 }),
+      },
       wage: {
         findFirst: vi.fn(),
         findMany: vi.fn(),
@@ -41,11 +44,6 @@ vi.mock('../../utils/viem.config');
 vi.mock('../../utils/cashRemunerationUtil', () => ({
   isCashRemunerationOwner: vi.fn(),
   getCashRemunerationOwner: vi.fn(),
-}));
-
-// Mock the wage controller
-vi.mock('../wageController', () => ({
-  isUserMemberOfTeam: vi.fn(),
 }));
 
 // Mock the storage service
@@ -99,7 +97,6 @@ vi.mock('../../middleware/authMiddleware', () => ({
 
 // Import the mocked functions after mocking
 import { isCashRemunerationOwner } from '../../utils/cashRemunerationUtil';
-import { isUserMemberOfTeam } from '../wageController';
 
 // Test constants
 
@@ -183,7 +180,6 @@ const createMockClaimWithWage = (
 
 // Test utilities
 const mockIsCashRemunerationOwner = vi.mocked(isCashRemunerationOwner);
-const mockIsUserMemberOfTeam = vi.mocked(isUserMemberOfTeam);
 
 const createTestApp = (address = TEST_ADDRESS) => {
   const testApp = express();
@@ -406,7 +402,8 @@ describe('Claim Controller', () => {
   describe('GET: /', () => {
     beforeEach(() => {
       vi.clearAllMocks();
-      mockIsUserMemberOfTeam.mockResolvedValue(true);
+      // requireTeamMember passes when prisma.team.findFirst returns a team
+      vi.spyOn(prisma.team, 'findFirst').mockResolvedValue({ id: 1 } as any);
     });
 
     it('should return 400 if teamId is invalid', async () => {
@@ -416,7 +413,7 @@ describe('Claim Controller', () => {
     });
 
     it('should return 403 if caller is not a member of the team', async () => {
-      mockIsUserMemberOfTeam.mockResolvedValue(false);
+      vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(null);
       const response = await request(app).get('/').query({ teamId: 1 });
       expect(response.status).toBe(403);
       expect(response.body.message).toBe('Caller is not a member of the team');
@@ -452,7 +449,7 @@ describe('Claim Controller', () => {
     });
 
     it('should return 500 if an error occurs', async () => {
-      mockIsUserMemberOfTeam.mockRejectedValue(new Error('Test error'));
+      vi.spyOn(prisma.team, 'findFirst').mockRejectedValue(new Error('Test error'));
       const response = await request(app).get('/').query({ teamId: 1 });
       expect(response.status).toBe(500);
       expect(response.body.message).toBe('Internal server error has occured');

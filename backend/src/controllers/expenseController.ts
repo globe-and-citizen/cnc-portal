@@ -1,6 +1,5 @@
-import { Request as ExpressRequest, Response } from 'express';
+import { Request, Response } from 'express';
 import { errorResponse } from '../utils/utils';
-import { isUserMemberOfTeam } from './wageController';
 
 import { Address, formatEther, keccak256, parseEther, parseUnits, zeroAddress } from 'viem';
 import { prisma } from '../utils';
@@ -9,28 +8,25 @@ import publicClient from '../utils/viem.config';
 import { Expense } from '@prisma/client';
 import ABI from '../artifacts/expense-account-eip712.json';
 import { BudgetLimit } from '../types';
+import {
+  addExpenseBodySchema,
+  getExpensesQuerySchema,
+  updateExpenseBodySchema,
+  updateExpenseParamsSchema,
+  z,
+} from '../validation';
 
-// type expenseBodyRequest = Pick<Expens
-type expenseBodyRequest = Pick<Expense, 'signature' | 'data'> & {
-  teamId: string;
-};
-
-type Request = ExpressRequest & {
-  address?: string;
-};
+type AddExpenseBody = z.infer<typeof addExpenseBodySchema>;
+type GetExpensesQuery = z.infer<typeof getExpensesQuerySchema>;
+type UpdateExpenseBody = z.infer<typeof updateExpenseBodySchema>;
+type UpdateExpenseParams = z.infer<typeof updateExpenseParamsSchema>;
 
 export const addExpense = async (req: Request, res: Response) => {
-  const callerAddress = req.address as Address;
-  const body = req.body as expenseBodyRequest;
-  const teamId = Number(body.teamId);
-  const signature = body.signature as string;
-  const data: BudgetLimit = typeof body.data === 'string' ? JSON.parse(body.data) : body.data;
+  const callerAddress = req.address;
+  const { teamId, signature, data } = req.body as AddExpenseBody;
 
   const expenseAccountEip712Address = await prisma.teamContract.findFirst({
-    where: {
-      teamId: teamId,
-      type: 'ExpenseAccountEIP712',
-    },
+    where: { teamId, type: 'ExpenseAccountEIP712' },
   });
 
   const owner = (await publicClient.readContract({
@@ -40,7 +36,7 @@ export const addExpense = async (req: Request, res: Response) => {
   })) as unknown as string;
 
   try {
-    // Check if the caller is the owner of the team
+    // Check if the caller is the owner of the team (on-chain owner, not DB team owner)
     if (callerAddress != owner) {
       return errorResponse(403, 'Caller is not the owner of the team', res);
     }
@@ -50,7 +46,7 @@ export const addExpense = async (req: Request, res: Response) => {
       data: {
         teamId,
         signature,
-        data: data,
+        data,
         userAddress: data.approvedAddress,
         status: 'signed',
       },
@@ -62,15 +58,10 @@ export const addExpense = async (req: Request, res: Response) => {
 };
 
 export const getExpenses = async (req: Request, res: Response) => {
-  const callerAddress = req.address as Address;
-  const teamId = Number(req.query.teamId);
-  const status = String(req.query.status || 'all');
+  const { teamId, status } = req.query as unknown as GetExpensesQuery;
 
   try {
-    // Check if the user is a member of the provided team
-    if (!(await isUserMemberOfTeam(callerAddress, teamId))) {
-      return errorResponse(403, 'Caller is not a member of the team', res);
-    }
+    // authz enforced by requireTeamMember middleware
 
     // Build where clause based on status
     const whereClause: { teamId: number; status?: string } = { teamId };
@@ -203,11 +194,9 @@ const syncExpenseStatus = async (expense: Expense) => {
 };
 
 export const updateExpense = async (req: Request, res: Response) => {
-  const expenseId = Number(req.params.id);
+  const { id: expenseId } = req.params as unknown as UpdateExpenseParams;
   const callerAddress = req.address;
-  const { status } = req.body as {
-    status: 'disable' | 'expired' | 'limitReached';
-  };
+  const { status } = req.body as UpdateExpenseBody;
 
   // TODO: logic to check if the status is already expired or limit reached
 

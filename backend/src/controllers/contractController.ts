@@ -1,41 +1,27 @@
 import { Prisma } from '@prisma/client';
 import { Request, Response } from 'express';
-import { Address } from 'viem';
 import OFFICER_ABI from '../artifacts/officer_abi.json';
 import { errorResponse, prisma } from '../utils';
 import publicClient from '../utils/viem.config';
-const ContractType = {
-  Bank: 'Bank',
-  InvestorV1: 'InvestorV1',
-  Voting: 'Voting',
-  BoardOfDirectors: 'BoardOfDirectors',
-  ExpenseAccount: 'ExpenseAccount',
-  ExpenseAccountEIP712: 'ExpenseAccountEIP712',
-  CashRemunerationEIP712: 'CashRemunerationEIP712',
-  Campaign: 'Campaign',
-} as const;
+import {
+  addContractBodySchema,
+  getContractsQuerySchema,
+  syncContractsBodySchema,
+  z,
+} from '../validation';
 
-type ContractType = keyof typeof ContractType;
-
-interface ContractBodyRequest {
-  teamId: number;
-  contractAddress: string;
-  contractType: ContractType;
-}
+type AddContractBody = z.infer<typeof addContractBodySchema>;
+type SyncContractsBody = z.infer<typeof syncContractsBodySchema>;
+type GetContractsQuery = z.infer<typeof getContractsQuerySchema>;
 
 export const syncContracts = async (req: Request, res: Response) => {
-  const callerAddress = req.address as Address;
-  const body = req.body as unknown as Pick<ContractBodyRequest, 'teamId'>;
-
-  const teamId = Number(body.teamId);
+  const callerAddress = req.address;
+  const { teamId } = req.body as SyncContractsBody;
 
   try {
-    const team = await prisma.team.findUnique({
-      where: { id: Number(teamId) },
-    });
+    // authz + existence enforced by requireTeamOwner middleware
+    const team = await prisma.team.findUnique({ where: { id: teamId } });
     if (!team) return errorResponse(404, 'Team not found', res);
-    if (team.ownerAddress !== callerAddress)
-      return errorResponse(403, 'Unauthorized: Caller is not the owner of the team', res);
 
     console.log(
       'Syncing contracts for team:',
@@ -74,12 +60,11 @@ export const syncContracts = async (req: Request, res: Response) => {
 };
 
 export const getContracts = async (req: Request, res: Response) => {
-  const teamId = Number(req.query.teamId);
+  const { teamId } = req.query as unknown as GetContractsQuery;
 
   try {
-    // TODO restrict access to the team members
     const contracts = await prisma.teamContract.findMany({
-      where: { teamId: Number(teamId) },
+      where: { teamId },
     });
     // If no contracts are found, return a 404 error
     if (contracts.length === 0) {
@@ -93,24 +78,14 @@ export const getContracts = async (req: Request, res: Response) => {
 };
 
 export const addContract = async (req: Request, res: Response) => {
-  const callerAddress = req.address as Address;
-  const body = req.body as unknown as ContractBodyRequest;
-
-  const teamId = Number(body.teamId);
-  const contractAddress = body.contractAddress;
-  const contractType = body.contractType;
+  const callerAddress = req.address;
+  const { teamId, contractAddress, contractType } = req.body as AddContractBody;
 
   try {
-    const team = await prisma.team.findUnique({
-      where: { id: Number(teamId) },
-    });
-    if (!team) return errorResponse(404, 'Team not found', res);
-    if (team.ownerAddress !== callerAddress)
-      return errorResponse(403, 'Unauthorized: Caller is not the owner of the team', res);
-
+    // authz + existence enforced by requireTeamOwner middleware
     const contract = await prisma.teamContract.create({
       data: {
-        teamId: teamId,
+        teamId,
         address: contractAddress,
         deployer: callerAddress,
         type: contractType,
@@ -124,25 +99,13 @@ export const addContract = async (req: Request, res: Response) => {
 };
 
 export const resetTeamContracts = async (req: Request, res: Response) => {
-  const teamId = Number(req.body.teamId);
+  const { teamId } = req.body as SyncContractsBody;
 
   try {
-    const team = await prisma.team.findUnique({
-      where: { id: Number(teamId) },
-    });
-    if (!team) return errorResponse(404, 'Team not found', res);
-
-    // Only the team owner can reset contracts
-    const callerAddress = req.address as Address;
-    if (team.ownerAddress !== callerAddress)
-      return errorResponse(403, 'Unauthorized: Caller is not the owner of the team', res);
-
-    await prisma.teamContract.deleteMany({
-      where: { teamId: Number(teamId) },
-    });
-    // Set team officerAddress to null
+    // authz + existence enforced by requireTeamOwner middleware
+    await prisma.teamContract.deleteMany({ where: { teamId } });
     await prisma.team.update({
-      where: { id: Number(teamId) },
+      where: { id: teamId },
       data: { officerAddress: null },
     });
     return res.status(200).json({ message: 'Team contracts reset successfully' });
