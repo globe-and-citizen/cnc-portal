@@ -79,7 +79,6 @@ export const deleteAttachments = async (attachments: unknown): Promise<void> => 
   }
 };
 
-
 /**
  * Deletes a single file by its storage key.
  * Returns true if deleted, false on error. Never throws.
