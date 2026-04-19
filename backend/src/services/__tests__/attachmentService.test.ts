@@ -57,8 +57,18 @@ describe('attachmentService', () => {
         .mockResolvedValueOnce('https://fresh2.com');
 
       const attachments: FileAttachmentData[] = [
-        { fileKey: 'uploads/a.pdf', fileUrl: 'old1', fileType: 'application/pdf', fileSize: 100 },
-        { fileKey: 'uploads/b.png', fileUrl: 'old2', fileType: 'image/png', fileSize: 200 },
+        {
+          fileKey: 'uploads/a.pdf',
+          fileUrl: 'https://old1.example.com',
+          fileType: 'application/pdf',
+          fileSize: 100,
+        },
+        {
+          fileKey: 'uploads/b.png',
+          fileUrl: 'https://old2.example.com',
+          fileType: 'image/png',
+          fileSize: 200,
+        },
       ];
 
       const result = (await refreshAttachmentUrls(attachments)) as FileAttachmentData[];
@@ -123,8 +133,18 @@ describe('attachmentService', () => {
       mockDeleteFile.mockResolvedValue(true);
 
       const attachments: FileAttachmentData[] = [
-        { fileKey: 'uploads/a.pdf', fileUrl: 'url1', fileType: 'application/pdf', fileSize: 100 },
-        { fileKey: 'uploads/b.png', fileUrl: 'url2', fileType: 'image/png', fileSize: 200 },
+        {
+          fileKey: 'uploads/a.pdf',
+          fileUrl: 'https://example.com/a.pdf',
+          fileType: 'application/pdf',
+          fileSize: 100,
+        },
+        {
+          fileKey: 'uploads/b.png',
+          fileUrl: 'https://example.com/b.png',
+          fileType: 'image/png',
+          fileSize: 200,
+        },
       ];
 
       await deleteAttachments(attachments);
@@ -136,8 +156,13 @@ describe('attachmentService', () => {
 
     it('should skip attachments with empty or missing fileKey', async () => {
       const attachments = [
-        { fileKey: '', fileUrl: 'url1', fileType: 'text/plain', fileSize: 10 },
-        { fileUrl: 'url2', fileType: 'text/plain', fileSize: 10 },
+        {
+          fileKey: '',
+          fileUrl: 'https://example.com/a.txt',
+          fileType: 'text/plain',
+          fileSize: 10,
+        },
+        { fileUrl: 'https://example.com/b.txt', fileType: 'text/plain', fileSize: 10 },
         null,
         'string',
       ];
@@ -152,7 +177,12 @@ describe('attachmentService', () => {
       mockDeleteFile.mockRejectedValue(new Error('delete failed'));
 
       const attachments: FileAttachmentData[] = [
-        { fileKey: 'uploads/fail.pdf', fileUrl: 'url', fileType: 'application/pdf', fileSize: 100 },
+        {
+          fileKey: 'uploads/fail.pdf',
+          fileUrl: 'https://example.com/fail.pdf',
+          fileType: 'application/pdf',
+          fileSize: 100,
+        },
       ];
 
       await expect(deleteAttachments(attachments)).resolves.toBeUndefined();

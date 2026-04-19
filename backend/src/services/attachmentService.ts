@@ -1,11 +1,7 @@
-import { getPresignedDownloadUrl, deleteFile } from './storageService';
+import { fileAttachmentSchema, type FileAttachmentData } from '../validation';
+import { deleteFile, getPresignedDownloadUrl } from './storageService';
 
-export type FileAttachmentData = {
-  fileType: string;
-  fileSize: number;
-  fileKey: string;
-  fileUrl: string;
-};
+export type { FileAttachmentData };
 
 type RefreshedKey = { fileKey: string; fileUrl: string };
 type RefreshError = { fileKey: string; error: string };
@@ -16,35 +12,36 @@ export type BatchRefreshResult = {
 };
 
 /**
- * Refreshes presigned URLs for an array of file attachments.
- * Returns the original attachment if refresh fails (graceful degradation).
+ * Parse a single stored attachment entry against the canonical schema.
+ * Returns null for legacy / malformed rows so callers can skip them without
+ * crashing. The stored JSON column historically had no schema enforcement, so
+ * tolerance on read is intentional.
  */
-export const refreshAttachmentUrls = async (
-  attachments: FileAttachmentData[] | null | undefined
-): Promise<FileAttachmentData[] | null | undefined> => {
+const parseAttachment = (item: unknown): FileAttachmentData | null => {
+  const parsed = fileAttachmentSchema.safeParse(item);
+  return parsed.success ? parsed.data : null;
+};
+
+/**
+ * Refreshes presigned URLs for an array of file attachments.
+ * Preserves the original entry when it doesn't match the schema or when the
+ * presigned URL fetch fails (graceful degradation).
+ */
+export const refreshAttachmentUrls = async (attachments: unknown): Promise<unknown> => {
   if (!Array.isArray(attachments) || attachments.length === 0) {
     return attachments;
   }
 
   return Promise.all(
-    attachments.map(async (attachment) => {
-      if (!attachment || typeof attachment !== 'object') {
-        return attachment;
-      }
-
-      const typedAttachment = attachment as FileAttachmentData;
-      if (!typedAttachment.fileKey) {
-        return attachment;
-      }
+    attachments.map(async (item) => {
+      const valid = parseAttachment(item);
+      if (!valid) return item;
 
       try {
-        const freshUrl = await getPresignedDownloadUrl(typedAttachment.fileKey);
-        return {
-          ...typedAttachment,
-          fileUrl: freshUrl,
-        };
+        const freshUrl = await getPresignedDownloadUrl(valid.fileKey);
+        return { ...valid, fileUrl: freshUrl };
       } catch {
-        return attachment;
+        return valid;
       }
     })
   );
@@ -52,25 +49,22 @@ export const refreshAttachmentUrls = async (
 
 /**
  * Deletes all files associated with an array of attachments.
- * Failures are logged but do not throw — caller is never blocked.
+ * Skips entries that fail schema validation. Failures on delete are logged
+ * but do not throw — caller is never blocked.
  */
-export const deleteAttachments = async (
-  attachments: FileAttachmentData[] | null | undefined
-): Promise<void> => {
+export const deleteAttachments = async (attachments: unknown): Promise<void> => {
   if (!Array.isArray(attachments) || attachments.length === 0) {
     return;
   }
 
-  for (const attachment of attachments) {
-    if (!attachment || typeof attachment !== 'object') continue;
-
-    const typedAttachment = attachment as FileAttachmentData;
-    if (!typedAttachment.fileKey || typedAttachment.fileKey.length === 0) continue;
+  for (const item of attachments) {
+    const valid = parseAttachment(item);
+    if (!valid) continue;
 
     try {
-      await deleteFile(typedAttachment.fileKey);
+      await deleteFile(valid.fileKey);
     } catch (e) {
-      console.warn(`Could not delete file ${typedAttachment.fileKey}:`, e);
+      console.warn(`Could not delete file ${valid.fileKey}:`, e);
     }
   }
 };

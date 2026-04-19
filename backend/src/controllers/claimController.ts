@@ -6,17 +6,15 @@ import { prisma } from '../utils';
 import { errorResponse } from '../utils/utils';
 
 import { Prisma } from '@prisma/client';
-import {
-  refreshAttachmentUrls,
-  deleteAttachments,
-  type FileAttachmentData,
-} from '../services/attachmentService';
+import { refreshAttachmentUrls, deleteAttachments } from '../services/attachmentService';
 import {
   addClaimBodySchema,
   claimIdParamsSchema,
   getClaimsQuerySchema,
+  parseStoredAttachments,
   updateClaimBodySchema,
   z,
+  type FileAttachmentData,
 } from '../validation';
 
 dayjs.extend(utc);
@@ -237,9 +235,7 @@ export const getClaims = async (req: Request, res: Response) => {
     const claimsWithFreshAttachmentUrls = await Promise.all(
       claims.map(async (claim) => ({
         ...claim,
-        fileAttachments: await refreshAttachmentUrls(
-          claim.fileAttachments as FileAttachmentData[] | null | undefined
-        ),
+        fileAttachments: await refreshAttachmentUrls(claim.fileAttachments),
       }))
     );
 
@@ -313,8 +309,10 @@ export const updateClaim = async (req: Request, res: Response) => {
       }
     }
 
-    // Build file attachments from uploaded files and merge with existing ones
-    const existingAttachments = (claim.fileAttachments as FileAttachmentData[]) || [];
+    // Build file attachments from uploaded files and merge with existing ones.
+    // parseStoredAttachments drops any legacy / malformed entries that predate
+    // schema enforcement.
+    const existingAttachments = parseStoredAttachments(claim.fileAttachments);
     let fileAttachmentsData: FileAttachmentData[] | undefined = existingAttachments;
 
     // Handle deleted file indexes first
@@ -399,7 +397,7 @@ export const deleteClaim = async (req: Request, res: Response) => {
     }
 
     // Delete attached files from S3 if any exist
-    await deleteAttachments(claim.fileAttachments as FileAttachmentData[] | null | undefined);
+    await deleteAttachments(claim.fileAttachments);
 
     await prisma.claim.delete({
       where: { id: claimId },
