@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { Team, TeamOfficer } from '@prisma/client';
+import { Prisma, Team, TeamOfficer } from '@prisma/client';
 import express, { NextFunction, Request, Response } from 'express';
 import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -544,6 +544,47 @@ describe('contractController', () => {
         .send({ teamId: 1, address: newOfficerAddress });
       expect(response.status).toBe(500);
       expect(response.body.message).toBe('Internal server error has occured');
+    });
+
+    // Concurrent deploys race on the findCurrentOfficer + insert window; the
+    // DB-level partial unique indexes turn the loser's insert into a P2002.
+    // The controller must surface that as a retryable 409 rather than an
+    // opaque 500 so the client doesn't redeploy an already-replaced Officer.
+    it('should return 409 when the upsert races into a P2002 unique-constraint violation', async () => {
+      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(mockTeam);
+      vi.spyOn(publicClient, 'readContract').mockResolvedValue([
+        { contractType: 'Voting', contractAddress: '0xABCDEF1234567890123456789012345678901234' },
+      ]);
+      const raceErr = new Prisma.PrismaClientKnownRequestError(
+        'Unique constraint failed on fields: (`teamId`, `nextOfficerId`)',
+        { code: 'P2002', clientVersion: '5.0.0' }
+      );
+      vi.mocked(prisma.teamOfficer.upsert).mockRejectedValue(raceErr);
+
+      const response = await request(app)
+        .post('/officer')
+        .send({ teamId: 1, address: newOfficerAddress });
+
+      expect(response.status).toBe(409);
+      expect(response.body.message).toContain('Officer registration conflict');
+    });
+
+    it('should let non-P2002 prisma errors fall through to the 500 handler', async () => {
+      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(mockTeam);
+      vi.spyOn(publicClient, 'readContract').mockResolvedValue([
+        { contractType: 'Voting', contractAddress: '0xABCDEF1234567890123456789012345678901234' },
+      ]);
+      const otherErr = new Prisma.PrismaClientKnownRequestError('Foreign key violated', {
+        code: 'P2003',
+        clientVersion: '5.0.0',
+      });
+      vi.mocked(prisma.teamOfficer.upsert).mockRejectedValue(otherErr);
+
+      const response = await request(app)
+        .post('/officer')
+        .send({ teamId: 1, address: newOfficerAddress });
+
+      expect(response.status).toBe(500);
     });
   });
 });
