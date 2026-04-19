@@ -53,7 +53,7 @@ contract CashRemunerationEIP712 is
    */
   struct WageClaim {
     address employeeAddress;
-    uint8 hoursWorked;
+    uint16 hoursWorked;
     // uint256 hourlyRate;
     Wage[] wages;
     uint256 date;
@@ -62,7 +62,7 @@ contract CashRemunerationEIP712 is
   /// @dev String representations of the Wage and WageClaim structs, used in EIP-712 encoding.
   string private constant WAGE_TYPE = 'Wage(uint256 hourlyRate,address tokenAddress)';
   string private constant WAGE_CLAIM_TYPE =
-    'WageClaim(address employeeAddress,uint8 hoursWorked,Wage[] wages,uint256 date)';
+    'WageClaim(address employeeAddress,uint16 hoursWorked,Wage[] wages,uint256 date)';
 
   /// @dev Typehash for the Wage struct, used in EIP-712 encoding.
   bytes32 constant WAGE_TYPEHASH = keccak256(abi.encodePacked(WAGE_TYPE));

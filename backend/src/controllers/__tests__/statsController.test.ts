@@ -105,7 +105,7 @@ describe('Statistics Controller', () => {
         .mockResolvedValueOnce(20); // previousPeriodClaims
 
       vi.mocked(prisma.claim.aggregate).mockResolvedValue({
-        _sum: { hoursWorked: 500 },
+        _sum: { hoursWorked: 30000 },
         _count: null,
         _avg: null,
         _min: null,
@@ -149,7 +149,7 @@ describe('Statistics Controller', () => {
       expect(response.body).toHaveProperty('activeTeams', 8);
       expect(response.body).toHaveProperty('totalMembers', 50);
       expect(response.body).toHaveProperty('totalClaims', 100);
-      expect(response.body).toHaveProperty('totalHoursWorked', 500);
+      expect(response.body).toHaveProperty('totalHoursWorked', 30000);
       expect(response.body).toHaveProperty('totalWeeklyClaims', 25);
       expect(response.body).toHaveProperty('weeklyClaimsByStatus');
       expect(response.body.weeklyClaimsByStatus).toEqual({
@@ -170,7 +170,7 @@ describe('Statistics Controller', () => {
       vi.mocked(prisma.user.count).mockResolvedValue(50);
       vi.mocked(prisma.claim.count).mockResolvedValue(100);
       vi.mocked(prisma.claim.aggregate).mockResolvedValue({
-        _sum: { hoursWorked: 500 },
+        _sum: { hoursWorked: 30000 },
         _count: null,
         _avg: null,
         _min: null,
@@ -273,7 +273,7 @@ describe('Statistics Controller', () => {
       const mockClaims = [
         {
           id: 1,
-          hoursWorked: 8,
+          hoursWorked: 480,
           dayWorked: new Date(),
           memo: 'Work done',
           wageId: 1,
@@ -293,7 +293,7 @@ describe('Statistics Controller', () => {
       vi.mocked(prisma.claim.count).mockResolvedValue(100);
       vi.mocked(prisma.claim.aggregate)
         .mockResolvedValueOnce({
-          _sum: { hoursWorked: 800 },
+          _sum: { hoursWorked: 48000 },
           _count: null,
           _avg: null,
           _min: null,
@@ -313,7 +313,7 @@ describe('Statistics Controller', () => {
 
       expect(response.status).toBe(200);
       expect(response.body).toHaveProperty('totalClaims', 100);
-      expect(response.body).toHaveProperty('totalHoursWorked', 800);
+      expect(response.body).toHaveProperty('totalHoursWorked', 48000);
       expect(response.body).toHaveProperty('avgHoursPerClaim', 8);
       expect(response.body).toHaveProperty('claimsByTeam');
     });

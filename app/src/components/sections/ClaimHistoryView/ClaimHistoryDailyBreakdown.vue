@@ -7,7 +7,7 @@
         :key="index"
         :class="[
           'mb-2 flex items-center justify-between rounded-lg border px-4 py-3',
-          entry.hours > 0
+          entry.totalMinutes > 0
             ? 'border border-emerald-500 bg-green-50 text-emerald-700'
             : 'bg-gray-100 text-gray-400'
         ]"
@@ -15,13 +15,13 @@
         <div class="flex min-w-30 items-center gap-2">
           <span
             class="h-3 w-3 rounded-full"
-            :class="entry.hours > 0 ? 'bg-emerald-700' : 'bg-gray-300'"
+            :class="entry.totalMinutes > 0 ? 'bg-emerald-700' : 'bg-gray-300'"
           />
           <span class="font-medium">{{ entry.date.format('ddd DD MMM') }}</span>
 
           <!-- Attachment icon if files exist -->
           <span
-            v-if="entry.hours > 0 && hasAttachments(entry.claims)"
+            v-if="entry.totalMinutes > 0 && hasAttachments(entry.claims)"
             class="inline-flex items-center"
             data-test="attachment-icon"
             title="Has attachments"
@@ -30,7 +30,7 @@
           </span>
         </div>
 
-        <div v-if="entry.hours > 0" class="w-3/5 space-y-3 pl-10 text-sm text-gray-500">
+        <div v-if="entry.totalMinutes > 0" class="w-3/5 space-y-3 pl-10 text-sm text-gray-500">
           <div v-for="claim in entry.claims" :key="claim.id" class="space-y-2">
             <!-- Memo above -->
             <div class="flex items-center justify-between gap-3">
@@ -53,7 +53,7 @@
 
         <div class="flex min-w-22.5 items-center justify-end gap-2 text-base">
           <IconifyIcon icon="heroicons:clock" class="h-4 w-4 text-gray-500" />
-          {{ entry.hours }} hours
+          {{ formatMinutesAsDuration(entry.totalMinutes) }}
         </div>
       </div>
     </div>
@@ -69,6 +69,7 @@ import { Icon as IconifyIcon } from '@iconify/vue'
 import { Icon } from '@iconify/vue'
 import type { Address } from 'viem'
 import type { Week } from '@/utils/dayUtils'
+import { formatMinutesAsDuration } from '@/utils/wageUtil'
 import { useUserDataStore } from '@/stores'
 import type { WeeklyClaim, Claim } from '@/types'
 import ClaimActions from '@/components/sections/ClaimHistoryView/ClaimActions.vue'
@@ -127,7 +128,7 @@ const weekDayClaims = computed(() => {
     return {
       date,
       claims: dailyClaims,
-      hours: dailyClaims.reduce((sum: number, claim) => sum + claim.hoursWorked, 0)
+      totalMinutes: dailyClaims.reduce((sum: number, claim) => sum + claim.hoursWorked, 0)
     }
   })
 })

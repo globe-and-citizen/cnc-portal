@@ -16,7 +16,7 @@
         }"
       />
       {{ rate.type === 'native' ? NETWORK.currencySymbol : rate.type.toUpperCase() }}
-      {{ rate.amount }}
+      {{ formatRateAmount(rate.amount) }}
     </div>
   </div>
 </template>
@@ -24,8 +24,32 @@
 <script setup lang="ts">
 import { NETWORK } from '@/constant'
 
-defineProps<{
-  rates: Array<{ type: string; amount: number }>
-  textClass?: string
-}>()
+interface RateItem {
+  type: string
+  amount: number
+}
+
+const props = withDefaults(
+  defineProps<{
+    rates: RateItem[]
+    textClass?: string
+    minimumFractionDigits?: number
+    maximumFractionDigits?: number
+  }>(),
+  {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2
+  }
+)
+
+const formatRateAmount = (amount: number) => {
+  const tokenAmount = Number(amount)
+
+  if (tokenAmount <= 0) return new Intl.NumberFormat('en-US').format(0)
+
+  return new Intl.NumberFormat('en-US', {
+    minimumFractionDigits: props.minimumFractionDigits,
+    maximumFractionDigits: props.maximumFractionDigits
+  }).format(tokenAmount)
+}
 </script>

@@ -14,7 +14,7 @@ describe('WeeklyClaimActionEnable', () => {
   const weeklyClaim: WeeklyClaim = {
     id: 1,
     status: 'pending',
-    hoursWorked: 8,
+    hoursWorked: 480,
     createdAt: '2024-01-01T00:00:00Z',
     wage: {
       userAddress: '0xOwnerAddress',

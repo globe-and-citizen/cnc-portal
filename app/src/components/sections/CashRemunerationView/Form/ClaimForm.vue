@@ -36,14 +36,37 @@
 
     <!-- Hours worked -->
     <UFormField label="Hours worked" name="hoursWorked" required>
-      <UInput
-        v-model="formData.hoursWorked"
-        type="text"
-        placeholder="10"
-        class="w-full"
-        size="lg"
-        data-test="hours-worked-input"
-      />
+      <div class="flex w-full items-start gap-x-2">
+        <div class="flex-1">
+          <UInput
+            v-model="formData.hoursWorked"
+            type="text"
+            placeholder="0"
+            class="w-full"
+            size="lg"
+            data-test="hours-worked-input"
+          >
+            <template #trailing>
+              <span class="text-sm text-gray-500">h</span>
+            </template>
+          </UInput>
+        </div>
+        <span class="shrink-0 text-lg text-gray-400">:</span>
+        <div class="flex-1">
+          <USelectMenu
+            v-model="formData.minutesWorked"
+            :items="minutesOptions"
+            placeholder="0"
+            class="w-full"
+            size="lg"
+            data-test="minutes-worked-input"
+          >
+            <template #trailing>
+              <span class="text-sm text-gray-500">min</span>
+            </template>
+          </USelectMenu>
+        </div>
+      </div>
     </UFormField>
 
     <!-- Memo -->
@@ -106,23 +129,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue'
-import { z } from 'zod'
-import { parseDate } from '@internationalized/date'
-import type { DateValue, CalendarDate } from '@internationalized/date'
+import { ref, toRef } from 'vue'
 import type { ClaimFormData } from '@/types'
-import dayjs from 'dayjs'
-import utc from 'dayjs/plugin/utc'
 import FilePreviewGallery from '@/components/sections/CashRemunerationView/Form/FilePreviewGallery.vue'
 import UploadFileDB from '@/components/sections/CashRemunerationView/Form/UploadFileDB.vue'
-
-interface FileData {
-  fileName?: string // Optional - can be derived from fileKey if not provided
-  fileType: string
-  fileSize: number
-  fileKey: string
-  fileUrl: string
-}
+import { useClaimForm, type ClaimFormFileData } from '@/composables/useClaimForm'
 
 interface Props {
   initialData?: Partial<ClaimFormData>
@@ -130,14 +141,10 @@ interface Props {
   isLoading?: boolean
   disabledWeekStarts?: string[]
   restrictSubmit?: boolean
-  // Accept partial FileData without fileName
-  existingFiles?: Partial<FileData>[]
+  existingFiles?: Partial<ClaimFormFileData>[]
   deletingFileIndex?: number | null
 }
 
-dayjs.extend(utc)
-
-const MAX_FILES = 10
 const toast = useToast()
 
 const props = withDefaults(defineProps<Props>(), {
@@ -155,164 +162,38 @@ const emit = defineEmits<{
   'delete-file': [index: number]
 }>()
 
-// Zod validation schema
-const claimSchema = z.object({
-  hoursWorked: z
-    .union([z.string(), z.number()])
-    .refine((val) => String(val).trim() !== '', { message: 'Hours worked is required' })
-    .refine((val) => !isNaN(Number(val)), { message: 'Must be a valid number' })
-    .refine((val) => Number(val) >= 1, { message: 'Must be at least 1 hour' })
-    .refine((val) => Number(val) <= 24, { message: 'Cannot exceed 24 hours' }),
-  memo: z.string().min(1, 'Memo is required').max(3000, 'Memo must not exceed 3000 characters'),
-  dayWorked: z.string().min(1, 'Date is required')
-})
-
 const uploadFileRef = ref<InstanceType<typeof UploadFileDB> | null>(null)
-const uploadedFiles = ref<File[]>([])
-const datePickerOpen = ref(false)
-
-const onFilesUpdate = (files: File[]): void => {
-  uploadedFiles.value = files
-}
-
-// Convert FileData to PreviewItem for FilePreviewGallery
-const existingFilePreviews = computed(() => {
-  return (props.existingFiles ?? [])
-    .filter((file) => file && file.fileUrl && file.fileType && file.fileKey)
-    .map((file) => {
-      const fileUrl = file.fileUrl!
-      const fileType = file.fileType!
-      const fileSize = file.fileSize || 0
-      const fileKey = file.fileKey!
-      const fileName = file.fileName || fileKey.split('/').pop() || 'file'
-      return {
-        previewUrl: fileUrl,
-        fileName,
-        fileSize,
-        fileType,
-        isImage: fileType.startsWith('image/')
-      }
-    })
-})
-
-const createDefaultFormData = (overrides?: Partial<ClaimFormData>): ClaimFormData => ({
-  hoursWorked: overrides?.hoursWorked ?? '',
-  memo: overrides?.memo ?? '',
-  dayWorked: overrides?.dayWorked ?? dayjs().utc().startOf('day').toISOString()
-})
-
-const formData = ref<ClaimFormData>(createDefaultFormData(props.initialData))
-
-watch(
-  () => props.initialData,
-  (newInitialData) => {
-    formData.value = createDefaultFormData(newInitialData)
-  },
-  { deep: true }
-)
-
-// Kept for backward compatibility with existing tests
-const formatUTC = (value: Date | string | null | undefined): string => {
-  if (!value) return ''
-  if (value instanceof Date) {
-    const year = value.getFullYear()
-    const month = value.getMonth()
-    const day = value.getDate()
-    return dayjs.utc(Date.UTC(year, month, day)).format('YYYY-MM-DD [UTC]')
-  }
-  return dayjs.utc(value).format('YYYY-MM-DD [UTC]')
-}
-
-// Display label shown on the date picker button
-const calendarDisplayDate = computed(() => {
-  if (!formData.value.dayWorked) return 'Select a date'
-  return formatUTC(formData.value.dayWorked)
-})
-
-// CalendarDate derived from the ISO dayWorked string
-const calendarValue = computed<CalendarDate | undefined>(() => {
-  if (!formData.value.dayWorked) return undefined
-  try {
-    const [isoDatePart] = formData.value.dayWorked.split('T')
-    if (!isoDatePart) return undefined
-    return parseDate(isoDatePart) as CalendarDate
-  } catch {
-    return undefined
-  }
-})
-
-const isSingleDateValue = (value: unknown): value is DateValue => {
-  if (!value || Array.isArray(value) || typeof value !== 'object') return false
-  return 'year' in value && 'month' in value && 'day' in value
-}
-
-type CalendarSelectionValue =
-  | DateValue
-  | { start: DateValue | undefined; end: DateValue | undefined }
-  | DateValue[]
-  | null
-  | undefined
-
-// Convert a CalendarDate selection back to an ISO string and close the picker
-const onDateSelect = (value: CalendarSelectionValue) => {
-  if (!isSingleDateValue(value)) return
-  const { year, month, day } = value
-  formData.value.dayWorked = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}T00:00:00.000Z`
-  datePickerOpen.value = false
-}
-
-// Reactive disabled-date function for UCalendar
-const isDateDisabledFn = computed(() => {
-  return (date: DateValue): boolean => {
-    const { year, month, day } = date
-    const d = dayjs
-      .utc(`${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`)
-      .startOf('day')
-    const today = dayjs.utc().startOf('day')
-
-    const disabledWeekKeys = (props.disabledWeekStarts ?? []).map((w) =>
-      dayjs.utc(w).startOf('isoWeek').format('YYYY-MM-DD')
-    )
-    const dateWeekKey = d.startOf('isoWeek').format('YYYY-MM-DD')
-
-    // 🔒 Rule 1: approved weeks are ALWAYS disabled
-    if (disabledWeekKeys.includes(dateWeekKey)) return true
-
-    // 🔐 Rule 2: restriction mode (current week only)
-    if (props.restrictSubmit) {
-      const currentWeekStart = today.startOf('isoWeek')
-      const currentWeekEnd = today.endOf('isoWeek')
-      if (d.isBefore(currentWeekStart, 'day') || d.isAfter(currentWeekEnd, 'day')) return true
-      const daysDiff = today.diff(d, 'day')
-      return daysDiff < 0 || daysDiff > 4
-    }
-
-    return false
-  }
+const {
+  claimSchema,
+  formData,
+  datePickerOpen,
+  minutesOptions,
+  existingFilePreviews,
+  calendarDisplayDate,
+  calendarValue,
+  isDateDisabledFn,
+  onFilesUpdate,
+  onDateSelect,
+  buildSubmitPayload,
+  resetUploadedFiles,
+  formatUTC
+} = useClaimForm({
+  initialData: toRef(props, 'initialData'),
+  existingFiles: toRef(props, 'existingFiles'),
+  disabledWeekStarts: toRef(props, 'disabledWeekStarts'),
+  restrictSubmit: toRef(props, 'restrictSubmit'),
+  toast
 })
 
 const handleSubmit = async () => {
-  // Validate total file count before emitting
-  const totalFiles = (props.existingFiles?.length ?? 0) + uploadedFiles.value.length
-  if (totalFiles > MAX_FILES) {
-    toast.add({
-      title: `Maximum ${MAX_FILES} files allowed. Currently you have ${totalFiles} files. Please remove ${totalFiles - MAX_FILES} file(s).`,
-      color: 'error'
-    })
-    return
-  }
-
-  emit('submit', {
-    hoursWorked: Number(formData.value.hoursWorked),
-    memo: formData.value.memo,
-    dayWorked: formData.value.dayWorked,
-    files: uploadedFiles.value.length ? uploadedFiles.value : undefined
-  })
+  const payload = buildSubmitPayload()
+  if (!payload) return
+  emit('submit', payload)
 }
 
 const resetForm = () => {
   uploadFileRef.value?.resetUpload()
-  uploadedFiles.value = []
+  resetUploadedFiles()
 }
 
 defineExpose({
