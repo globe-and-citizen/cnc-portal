@@ -102,7 +102,9 @@ model Wage {
   createdAt                   DateTime      @default(now())
   updatedAt                   DateTime      @updatedAt
 
-  @@unique([teamId, userAddress, nextWageId]) // Need to be checked
+  // Only one "active" wage (nextWageId IS NULL) per (teamId, userAddress).
+  // Enforced by a partial unique index created in migration 20260418_wage_active_unique_and_indexes
+  // because Prisma Schema Language cannot express partial unique indexes.
 }
 
 model Claim {
@@ -136,6 +138,7 @@ model WeeklyClaim {
   updatedAt     DateTime @updatedAt
 
   @@unique([wageId, weekStart])
+  @@index([weekStart])
 }
 
 model Notification {
@@ -149,6 +152,8 @@ model Notification {
   resource    String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  @@index([userAddress])
 }
 
 model TeamContract {

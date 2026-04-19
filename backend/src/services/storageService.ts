@@ -259,44 +259,13 @@ export async function deleteFile(fileKey: string): Promise<boolean> {
   }
 }
 
-// Note: fileExists() is not currently used but kept for future use cases
-// (e.g., validation before downloading, existence checks, etc.)
-/*
-export async function fileExists(fileKey: string): Promise<boolean> {
-  try {
-    const cfg = getStorageConfig();
-    const client = createS3Client();
-    await client.send(new HeadObjectCommand({ Bucket: cfg.bucket, Key: fileKey }));
-    return true;
-  } catch {
-    return false;
-  }
-}
-*/
-
-// Note: uploadProfileImage() is redundant - use uploadFile(file, `profiles/${userAddress}`) instead
-// Kept commented for reference but should be removed in future cleanup
-/*
-export async function uploadProfileImage(
-  file: Express.Multer.File,
-  userAddress: string
-): Promise<UploadResult> {
-  const validation = validateFile(file, ALLOWED_IMAGE_MIMETYPES, MAX_FILE_SIZE);
-  if (!validation.valid) return { success: false, error: validation.error };
-  const folder = `profiles/${userAddress.toLowerCase()}`;
-  return uploadFile(file, folder);
-}
-*/
-
 export default {
   isStorageConfigured,
   uploadFile,
   uploadFiles,
   deleteFile,
   getPublicFileUrl,
-  // fileExists, // Commented out - not currently used
   getPresignedDownloadUrl,
-  // uploadProfileImage, // Commented out - redundant, use uploadFile with folder
   validateFile,
   generateFileKey,
   ALLOWED_IMAGE_MIMETYPES,

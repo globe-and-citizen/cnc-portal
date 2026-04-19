@@ -7,6 +7,7 @@ import {
   getTeamOfficers,
   createOfficer,
 } from '../controllers/contractController';
+import { requireTeamOwner } from '../middleware/teamAuthzMiddleware';
 import {
   validateBody,
   validateQuery,
@@ -104,7 +105,12 @@ const contractRoutes = express.Router();
  *           schema:
  *             $ref: '#/components/schemas/ErrorResponse'
  */
-contractRoutes.post('/', validateBody(addContractBodySchema), addContract);
+contractRoutes.post(
+  '/',
+  validateBody(addContractBodySchema),
+  requireTeamOwner('body.teamId'),
+  addContract
+);
 
 /**
  * @openapi
@@ -195,7 +201,12 @@ contractRoutes.get('/', validateQuery(getContractsQuerySchema), getContracts);
  *           schema:
  *             $ref: '#/components/schemas/ErrorResponse'
  */
-contractRoutes.put('/sync', validateBody(syncContractsBodySchema), syncContracts);
+contractRoutes.put(
+  '/sync',
+  validateBody(syncContractsBodySchema),
+  requireTeamOwner('body.teamId'),
+  syncContracts
+);
 
 /**
  * @openapi

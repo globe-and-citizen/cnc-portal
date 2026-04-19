@@ -4,7 +4,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import weeklyClaimRoutes from '../../routes/weeklyClaimRoute';
 import { prisma } from '../../utils';
 import { isCashRemunerationOwner } from '../../utils/cashRemunerationUtil';
-import { isUserMemberOfTeam } from '../../controllers/wageController';
 import type { Address } from 'viem';
 
 const CALLER = '0x1234567890123456789012345678901234567890';
@@ -37,10 +36,6 @@ vi.mock('../../utils/cashRemunerationUtil', () => ({
   isCashRemunerationOwner: vi.fn().mockResolvedValue(true),
 }));
 
-vi.mock('../../controllers/wageController', () => ({
-  isUserMemberOfTeam: vi.fn().mockResolvedValue(true),
-}));
-
 vi.mock('../../utils/viem.config', () => ({
   default: { readContract: readContractMock },
 }));
@@ -50,6 +45,9 @@ vi.mock('../../utils', async () => {
   return {
     ...actual,
     prisma: {
+      team: {
+        findFirst: vi.fn().mockResolvedValue({ id: 1 }),
+      },
       weeklyClaim: {
         findMany: vi.fn(),
         update: vi.fn(),
@@ -314,7 +312,7 @@ describe('Weekly Claim Controller', () => {
 
   describe('GET /', () => {
     it('should return 403 if caller is not team member', async () => {
-      vi.mocked(isUserMemberOfTeam).mockResolvedValueOnce(false);
+      vi.mocked(prisma.team.findFirst).mockResolvedValueOnce(null);
 
       const response = await request(app).get('/?teamId=1');
       expect(response.status).toBe(403);
@@ -343,7 +341,7 @@ describe('Weekly Claim Controller', () => {
       const memberAddress = '0x000000000000000000000000000000000000dEaD';
 
       mockGetPresignedDownloadUrl
-        .mockResolvedValueOnce('fresh-1')
+        .mockResolvedValueOnce('https://fresh-1.example.com')
         .mockRejectedValueOnce(new Error('presign failed'));
 
       const weeklyClaims = [
@@ -354,13 +352,20 @@ describe('Weekly Claim Controller', () => {
               id: 101,
               hoursWorked: undefined,
               fileAttachments: [
-                { fileKey: 'k1', fileUrl: 'old', fileType: 'image/png', fileSize: 1 },
+                {
+                  fileKey: 'k1',
+                  fileUrl: 'https://old.example.com',
+                  fileType: 'image/png',
+                  fileSize: 1,
+                },
               ],
             },
             {
               id: 102,
               hoursWorked: 2,
-              fileAttachments: [{ fileUrl: 'no-key', fileType: 'image/png', fileSize: 2 }],
+              fileAttachments: [
+                { fileUrl: 'https://no-key.example.com', fileType: 'image/png', fileSize: 2 },
+              ],
             },
             {
               id: 103,
@@ -371,7 +376,12 @@ describe('Weekly Claim Controller', () => {
               id: 104,
               hoursWorked: 4,
               fileAttachments: [
-                { fileKey: 'k2', fileUrl: 'old2', fileType: 'image/png', fileSize: 4 },
+                {
+                  fileKey: 'k2',
+                  fileUrl: 'https://old2.example.com',
+                  fileType: 'image/png',
+                  fileSize: 4,
+                },
               ],
             },
             {
@@ -400,8 +410,12 @@ describe('Weekly Claim Controller', () => {
       );
 
       expect(response.body[0].hoursWorked).toBe(10);
-      expect(response.body[0].claims[0].fileAttachments[0].fileUrl).toBe('fresh-1');
-      expect(response.body[0].claims[3].fileAttachments[0].fileUrl).toBe('old2');
+      expect(response.body[0].claims[0].fileAttachments[0].fileUrl).toBe(
+        'https://fresh-1.example.com'
+      );
+      expect(response.body[0].claims[3].fileAttachments[0].fileUrl).toBe(
+        'https://old2.example.com'
+      );
     });
 
     it('should return 200 for empty claims list', async () => {
@@ -439,7 +453,7 @@ describe('Weekly Claim Controller', () => {
     });
 
     it('should return 403 if caller is not team member', async () => {
-      vi.mocked(isUserMemberOfTeam).mockResolvedValueOnce(false);
+      vi.mocked(prisma.team.findFirst).mockResolvedValueOnce(null);
 
       const response = await request(app).post('/sync?teamId=1');
       expect(response.status).toBe(403);

@@ -1,10 +1,10 @@
 import { /*PrismaClient,*/ TeamContract, TeamOfficer, User } from '@prisma/client';
+// import { User } from '@prisma/client';
 import { Request, Response } from 'express';
 import { isAddress } from 'viem';
 import { addNotification, prisma } from '../utils';
 import { errorResponse } from '../utils/utils';
 import { resolveStorageImageUrl } from '../utils/profileImage.util';
-//const prisma = new PrismaClient();
 
 // Shared: include the immediate predecessor (id + address only) so clients
 // can walk one step back for copy-forward flows (e.g. shareholder migration)
@@ -283,23 +283,8 @@ const getAllTeams = async (req: Request, res: Response) => {
 const updateTeam = async (req: Request, res: Response) => {
   const { id } = req.params;
   const { name, description } = req.body;
-  const callerAddress = req.address;
 
   try {
-    const team = await prisma.team.findUnique({
-      where: {
-        id: Number(id),
-      },
-    });
-
-    if (!team) {
-      return errorResponse(404, 'Team not found', res);
-    }
-
-    if (team.ownerAddress !== callerAddress) {
-      return errorResponse(403, 'Unauthorized', res);
-    }
-
     const teamU = await prisma.team.update({
       where: { id: Number(id) },
       data: {
@@ -329,15 +314,7 @@ const deleteTeam = async (req: Request, res: Response) => {
   #swagger.tags = ['Teams']
   */
   const { id } = req.params;
-  const callerAddress = req.address;
   try {
-    const team = await prisma.team.findUnique({ where: { id: Number(id) } });
-    if (!team) {
-      return errorResponse(404, 'Team not found', res);
-    }
-    if (team.ownerAddress !== callerAddress) {
-      return errorResponse(403, 'Unauthorized', res);
-    }
     // Cascading deletes handle all related records (teamContracts, memberTeamsData, wages, claims, etc.)
     await prisma.team.delete({ where: { id: Number(id) } });
 
@@ -354,19 +331,5 @@ const isUserPartOfTheTeam = (
 ) => {
   return members.some((member) => member.address === callerAddress);
 };
-
-// const buildFilterMember = (queryParams: Request["query"]) => {
-//   const filterQuery: Prisma.UserWhereInput = {};
-//   if (queryParams.query) {
-//     filterQuery.OR = [
-//       { name: { contains: String(queryParams.query), mode: "insensitive" } },
-//       { address: { contains: String(queryParams.query), mode: "insensitive" } },
-//     ];
-//   }
-
-//   // can add others filter
-
-//   return filterQuery;
-// };
 
 export { addTeam, deleteTeam, getAllTeams, getTeam, updateTeam };

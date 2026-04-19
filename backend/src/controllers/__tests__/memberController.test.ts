@@ -102,7 +102,7 @@ describe('Member Controller', () => {
 
   describe('POST: /team/:id/member', () => {
     it('should add members', async () => {
-      vi.mocked(prisma.team.findUnique).mockResolvedValueOnce(mockResolvedTeam);
+      vi.mocked(prisma.team.findUnique).mockResolvedValue(mockResolvedTeam);
       vi.mocked(prisma.team.update).mockResolvedValueOnce(mockResolvedTeam);
 
       const response = await request(app).post('/team/1/member').send(fakeMembers);
@@ -138,7 +138,7 @@ describe('Member Controller', () => {
 
         members: fakeMembers.map((member) => ({ address: member.address, name: member.name })),
       };
-      vi.mocked(prisma.team.findUnique).mockResolvedValueOnce(teamWithExistingMembers as any);
+      vi.mocked(prisma.team.findUnique).mockResolvedValue(teamWithExistingMembers as any);
 
       const response = await request(app).post('/team/1/member').send(fakeMembers);
 
@@ -154,13 +154,13 @@ describe('Member Controller', () => {
         ownerAddress: '0xNotOwnerAddress',
       };
 
-      vi.mocked(prisma.team.findUnique).mockResolvedValueOnce(teamWithDifferentOwner);
+      vi.mocked(prisma.team.findUnique).mockResolvedValue(teamWithDifferentOwner);
 
       const response = await request(app).post('/team/1/member').send(fakeMembers);
 
       expect(response.status).toBe(403);
       expect(response.body).toEqual({
-        message: 'Unauthorized: Only the owner can Add a member',
+        message: 'Unauthorized: Caller is not the owner of the team',
       });
     });
 
@@ -182,8 +182,8 @@ describe('Member Controller', () => {
 
   describe('DELETE: /team/:id/member/:memberAddress', () => {
     it('should delete member', async () => {
-      vi.mocked(prisma.team.findUnique).mockResolvedValueOnce(mockResolvedTeam);
-      vi.mocked(prisma.team.update).mockResolvedValueOnce(mockResolvedTeam);
+      vi.mocked(prisma.team.findUnique).mockResolvedValue(mockResolvedTeam);
+      vi.mocked(prisma.team.update).mockResolvedValue(mockResolvedTeam);
       vi.mocked(prisma.memberTeamsData.delete).mockResolvedValueOnce({} as any);
 
       const response = await request(app).delete(
@@ -205,7 +205,7 @@ describe('Member Controller', () => {
     });
 
     it('should return 404 when member is not found in the team', async () => {
-      vi.mocked(prisma.team.findUnique).mockResolvedValueOnce(mockResolvedTeam);
+      vi.mocked(prisma.team.findUnique).mockResolvedValue(mockResolvedTeam);
 
       const response = await request(app).delete(
         '/team/1/member/0x5555555555555555555555555555555555555555'
@@ -223,7 +223,7 @@ describe('Member Controller', () => {
         ownerAddress: '0xNotOwnerAddress',
       };
 
-      vi.mocked(prisma.team.findUnique).mockResolvedValueOnce(teamWithDifferentOwner);
+      vi.mocked(prisma.team.findUnique).mockResolvedValue(teamWithDifferentOwner);
 
       const response = await request(app).delete(
         '/team/1/member/0x2222222222222222222222222222222222222222'
@@ -231,12 +231,13 @@ describe('Member Controller', () => {
 
       expect(response.status).toBe(403);
       expect(response.body).toEqual({
-        message: 'Unauthorized: Only the owner can delete a member',
+        message: 'Unauthorized: Caller is not the owner of the team',
       });
     });
 
     it('should return 403 when the owner is trying to delete himself', async () => {
-      vi.mocked(prisma.team.findUnique).mockResolvedValueOnce(mockResolvedTeam);
+      vi.mocked(prisma.team.findUnique).mockResolvedValue(mockResolvedTeam);
+      vi.mocked(prisma.team.update).mockResolvedValue(mockResolvedTeam);
 
       const response = await request(app).delete(`/team/1/member/${mockOwner.address}`);
 

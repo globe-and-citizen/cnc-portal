@@ -4,6 +4,7 @@ import {
   syncWeeklyClaims,
   updateWeeklyClaims,
 } from '../controllers/weeklyClaimController';
+import { requireTeamMember } from '../middleware/teamAuthzMiddleware';
 import {
   validateQuery,
   validateParamsAndQuery,
@@ -151,7 +152,12 @@ const weeklyClaimRoutes = express.Router();
  *           schema:
  *             $ref: '#/components/schemas/ErrorResponse'
  */
-weeklyClaimRoutes.get('/', validateQuery(getWeeklyClaimsQuerySchema), getTeamWeeklyClaims);
+weeklyClaimRoutes.get(
+  '/',
+  validateQuery(getWeeklyClaimsQuerySchema),
+  requireTeamMember('query.teamId'),
+  getTeamWeeklyClaims
+);
 
 /**
  * @openapi
@@ -211,7 +217,12 @@ weeklyClaimRoutes.get('/', validateQuery(getWeeklyClaimsQuerySchema), getTeamWee
  *           schema:
  *             $ref: '#/components/schemas/ErrorResponse'
  */
-weeklyClaimRoutes.post('/sync', validateQuery(syncWeeklyClaimsQuerySchema), syncWeeklyClaims);
+weeklyClaimRoutes.post(
+  '/sync',
+  validateQuery(syncWeeklyClaimsQuerySchema),
+  requireTeamMember('query.teamId'),
+  syncWeeklyClaims
+);
 
 /**
  * @openapi

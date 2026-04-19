@@ -9,6 +9,7 @@ import {
 
 import { deleteMember, addMembers } from '../controllers/memberController';
 import { checkSubmitRestriction } from '../controllers/featureController';
+import { requireTeamOwner } from '../middleware/teamAuthzMiddleware';
 import {
   validateBody,
   validateQuery,
@@ -326,6 +327,7 @@ teamRoutes.get(
 teamRoutes.post(
   '/:id/member',
   validateBodyAndParams(addMembersBodySchema, teamIdParamsSchema),
+  requireTeamOwner('params.id'),
   addMembers
 );
 
@@ -380,6 +382,7 @@ teamRoutes.post(
 teamRoutes.delete(
   '/:id/member/:memberAddress',
   validateParams(deleteMemberParamsSchema),
+  requireTeamOwner('params.id'),
   deleteMember
 );
 
@@ -488,7 +491,12 @@ teamRoutes.get('/:id', validateParams(teamIdParamsSchema), getTeam);
  *           schema:
  *             $ref: '#/components/schemas/ErrorResponse'
  */
-teamRoutes.put('/:id', validateBodyAndParams(updateTeamBodySchema, teamIdParamsSchema), updateTeam);
+teamRoutes.put(
+  '/:id',
+  validateBodyAndParams(updateTeamBodySchema, teamIdParamsSchema),
+  requireTeamOwner('params.id'),
+  updateTeam
+);
 
 /**
  * @openapi
@@ -531,6 +539,11 @@ teamRoutes.put('/:id', validateBodyAndParams(updateTeamBodySchema, teamIdParamsS
  *           schema:
  *             $ref: '#/components/schemas/ErrorResponse'
  */
-teamRoutes.delete('/:id', validateParams(teamIdParamsSchema), deleteTeam);
+teamRoutes.delete(
+  '/:id',
+  validateParams(teamIdParamsSchema),
+  requireTeamOwner('params.id'),
+  deleteTeam
+);
 
 export default teamRoutes;

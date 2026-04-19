@@ -463,7 +463,7 @@ describe('Team Controller', () => {
       });
 
       expect(response.status).toBe(403);
-      expect(response.body.message).toBe('Unauthorized');
+      expect(response.body.message).toBe('Unauthorized: Caller is not the owner of the team');
     });
 
     it('should return 200 and update the team successfully', async () => {
@@ -551,7 +551,7 @@ describe('Team Controller', () => {
       const response = await request(app).delete('/1').set('address', '0xAnotherAddress');
 
       expect(response.status).toBe(403);
-      expect(response.body.message).toBe('Unauthorized');
+      expect(response.body.message).toBe('Unauthorized: Caller is not the owner of the team');
     });
 
     it('should return 200 and delete the team successfully', async () => {
