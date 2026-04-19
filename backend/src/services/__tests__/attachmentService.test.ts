@@ -114,6 +114,27 @@ describe('attachmentService', () => {
 
       expect(result).toEqual(attachments);
     });
+
+    it('should preserve unknown extra keys on the refreshed entry', async () => {
+      mockGetPresignedDownloadUrl.mockResolvedValue('https://fresh.example.com');
+
+      const stored = [
+        {
+          fileKey: 'uploads/abc.pdf',
+          fileUrl: 'https://old.example.com',
+          fileType: 'application/pdf',
+          fileSize: 100,
+          uploadedBy: '0x1234567890123456789012345678901234567890',
+          legacyFlag: true,
+        },
+      ];
+
+      const result = (await refreshAttachmentUrls(stored)) as Array<Record<string, unknown>>;
+
+      expect(result[0].fileUrl).toBe('https://fresh.example.com');
+      expect(result[0].uploadedBy).toBe('0x1234567890123456789012345678901234567890');
+      expect(result[0].legacyFlag).toBe(true);
+    });
   });
 
   describe('deleteAttachments', () => {
@@ -170,6 +191,23 @@ describe('attachmentService', () => {
       await deleteAttachments(attachments);
 
       expect(mockDeleteFile).not.toHaveBeenCalled();
+    });
+
+    it('should still delete legacy entries that have only a fileKey', async () => {
+      mockDeleteFile.mockResolvedValue(true);
+
+      // Legacy rows predate the full schema and only contain fileKey.
+      // They must still be cleaned up to avoid orphaning files in storage.
+      const attachments = [
+        { fileKey: 'uploads/legacy-1.pdf' },
+        { fileKey: 'uploads/legacy-2.png', fileType: 'image/png' }, // partial shape
+      ];
+
+      await deleteAttachments(attachments);
+
+      expect(mockDeleteFile).toHaveBeenCalledTimes(2);
+      expect(mockDeleteFile).toHaveBeenCalledWith('uploads/legacy-1.pdf');
+      expect(mockDeleteFile).toHaveBeenCalledWith('uploads/legacy-2.png');
     });
 
     it('should log warning but not throw on delete failure', async () => {
