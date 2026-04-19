@@ -1,10 +1,12 @@
 import { Prisma } from '@prisma/client';
 import { Request, Response } from 'express';
+import { Address } from 'viem';
 import OFFICER_ABI from '../artifacts/officer_abi.json';
 import { errorResponse, prisma } from '../utils';
 import publicClient from '../utils/viem.config';
 import {
   addContractBodySchema,
+  createOfficerBodySchema,
   getContractsQuerySchema,
   syncContractsBodySchema,
   z,
@@ -12,20 +14,8 @@ import {
 
 type AddContractBody = z.infer<typeof addContractBodySchema>;
 type SyncContractsBody = z.infer<typeof syncContractsBodySchema>;
+type CreateOfficerBody = z.infer<typeof createOfficerBodySchema>;
 type GetContractsQuery = z.infer<typeof getContractsQuerySchema>;
-
-interface SyncContractsBody {
-  teamId: number;
-  deployBlockNumber?: number;
-  deployedAt?: Date;
-}
-
-interface CreateOfficerBody {
-  teamId: number;
-  address: string;
-  deployBlockNumber?: number;
-  deployedAt?: Date;
-}
 
 // Look up the head of a team's Officer linked list — the row with no
 // successor pointing back to it. Returns null if the team has never had an
