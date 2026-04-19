@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import { errorResponse, prisma } from '../utils';
-import { isUserMemberOfTeam } from '../controllers/wageController';
+import { isUserMemberOfTeam } from './teamAuthz';
+export { isOwnerOfTeam, isUserMemberOfTeam } from './teamAuthz';
 
 type TeamIdLocation = 'body.teamId' | 'query.teamId' | 'params.id' | 'params.teamId';
 

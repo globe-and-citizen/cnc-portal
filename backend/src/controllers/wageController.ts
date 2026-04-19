@@ -1,9 +1,9 @@
 import { Request, Response } from 'express';
 
 import { Prisma } from '@prisma/client';
-import { Address } from 'viem';
 import { prisma } from '../utils';
 import { errorResponse } from '../utils/utils';
+import { isOwnerOfTeam } from '../middleware/teamAuthzMiddleware';
 import {
   getWagesQuerySchema,
   setWageBodySchema,
@@ -15,8 +15,6 @@ import {
 type SetWageBody = z.infer<typeof setWageBodySchema>;
 
 export const setWage = async (req: Request, res: Response) => {
-  const callerAddress = req.address;
-
   const body = req.body as SetWageBody;
   const {
     teamId,
@@ -41,10 +39,7 @@ export const setWage = async (req: Request, res: Response) => {
   };
 
   try {
-    // Check if the caller is the owner of the team
-    if (!(await isOwnerOfTeam(callerAddress, teamId))) {
-      return errorResponse(403, 'Caller is not the owner of the team', res);
-    }
+    // authz enforced by requireTeamOwner middleware
 
     // Check if the user has a current wage
     const currentWage = await prisma.wage.findFirst({
@@ -147,35 +142,4 @@ export const toggleWageStatus = async (req: Request, res: Response) => {
     console.log('Error: ', error);
     return errorResponse(500, 'Internal server error', res);
   }
-};
-
-export const isUserMemberOfTeam = async (
-  userAddress: Address,
-  teamId: number
-): Promise<boolean> => {
-  const team = await prisma.team.findFirst({
-    where: {
-      id: teamId,
-      members: {
-        some: {
-          address: userAddress,
-        },
-      },
-    },
-  });
-
-  return !!team;
-};
-
-export const isOwnerOfTeam = async (userAddress: Address, teamId: number) => {
-  const team = await prisma.team.findFirst({
-    where: {
-      id: teamId,
-      owner: {
-        address: userAddress,
-      },
-    },
-  });
-
-  return !!team;
 };

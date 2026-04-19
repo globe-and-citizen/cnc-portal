@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import weeklyClaimRoutes from '../../routes/weeklyClaimRoute';
 import { prisma } from '../../utils';
 import { isCashRemunerationOwner } from '../../utils/cashRemunerationUtil';
-import { isUserMemberOfTeam } from '../../controllers/wageController';
+import { isUserMemberOfTeam } from '../../middleware/teamAuthz';
 import type { Address } from 'viem';
 
 const CALLER = '0x1234567890123456789012345678901234567890';
@@ -37,7 +37,7 @@ vi.mock('../../utils/cashRemunerationUtil', () => ({
   isCashRemunerationOwner: vi.fn().mockResolvedValue(true),
 }));
 
-vi.mock('../../controllers/wageController', () => ({
+vi.mock('../../middleware/teamAuthz', () => ({
   isUserMemberOfTeam: vi.fn().mockResolvedValue(true),
   isOwnerOfTeam: vi.fn().mockResolvedValue(true),
 }));

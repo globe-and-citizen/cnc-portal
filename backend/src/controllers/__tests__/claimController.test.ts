@@ -43,8 +43,8 @@ vi.mock('../../utils/cashRemunerationUtil', () => ({
   getCashRemunerationOwner: vi.fn(),
 }));
 
-// Mock the wage controller
-vi.mock('../wageController', () => ({
+// Mock the team authz helpers
+vi.mock('../../middleware/teamAuthz', () => ({
   isUserMemberOfTeam: vi.fn().mockResolvedValue(true),
   isOwnerOfTeam: vi.fn().mockResolvedValue(true),
 }));
@@ -100,7 +100,7 @@ vi.mock('../../middleware/authMiddleware', () => ({
 
 // Import the mocked functions after mocking
 import { isCashRemunerationOwner } from '../../utils/cashRemunerationUtil';
-import { isUserMemberOfTeam } from '../wageController';
+import { isUserMemberOfTeam } from '../../middleware/teamAuthz';
 
 // Test constants
 

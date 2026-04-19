@@ -40,6 +40,11 @@ const mockAuthorizeUser = vi.mocked(authorizeUser);
 
 const app = express();
 app.use(express.json());
+// Simulate authorizeUser setting req.address; wageRoutes mounts below.
+app.use((req: Request, _res: Response, next: NextFunction) => {
+  req.address = '0x1234567890123456789012345678901234567890';
+  next();
+});
 // Use the actual wageRoutes from the routes file
 app.use('/', wageRoutes);
 
@@ -78,6 +83,8 @@ describe('Wage Controller', () => {
         req.address = '0x1234567890123456789012345678901234567890';
         next();
       });
+      // Default: requireTeamOwner middleware finds the team owned by the caller
+      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(mockTeam);
     });
 
     it('should return 400 if required parameters are missing', async () => {
@@ -105,8 +112,10 @@ describe('Wage Controller', () => {
     });
 
     it('should return 403 if caller is not the owner of the team', async () => {
-      vi.spyOn(prisma.team, 'findFirst').mockResolvedValueOnce(null);
-      vi.spyOn(prisma.wage, 'create').mockResolvedValue(mockWage);
+      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue({
+        ...mockTeam,
+        ownerAddress: '0x0000000000000000000000000000000000000000',
+      });
       const response = await request(app)
         .put('/setWage')
         .send({
@@ -120,7 +129,7 @@ describe('Wage Controller', () => {
         });
 
       expect(response.status).toBe(403);
-      expect(response.body.message).toBe('Caller is not the owner of the team');
+      expect(response.body.message).toBe('Unauthorized: Caller is not the owner of the team');
     });
 
     it('should create a new wage if no previous wage exists', async () => {
@@ -298,7 +307,7 @@ describe('Wage Controller', () => {
     });
 
     it('should return 500 on internal server error', async () => {
-      vi.spyOn(prisma.team, 'findFirst').mockRejectedValue(new Error('Database error'));
+      vi.spyOn(prisma.team, 'findUnique').mockRejectedValue(new Error('Database error'));
 
       const response = await request(app)
         .put('/setWage')

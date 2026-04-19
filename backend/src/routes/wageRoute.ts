@@ -1,6 +1,6 @@
 import express from 'express';
 import { getWages, setWage, toggleWageStatus } from '../controllers/wageController';
-import { requireTeamMember } from '../middleware/teamAuthzMiddleware';
+import { requireTeamMember, requireTeamOwner } from '../middleware/teamAuthzMiddleware';
 import {
   validateBody,
   validateQuery,
@@ -186,7 +186,12 @@ const wageRoutes = express.Router();
  *           schema:
  *             $ref: '#/components/schemas/ErrorResponse'
  */
-wageRoutes.put('/setWage', validateBody(setWageBodySchema), setWage);
+wageRoutes.put(
+  '/setWage',
+  validateBody(setWageBodySchema),
+  requireTeamOwner('body.teamId'),
+  setWage
+);
 
 /**
  * @openapi
