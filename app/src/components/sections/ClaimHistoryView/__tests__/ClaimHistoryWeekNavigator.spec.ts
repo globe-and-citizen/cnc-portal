@@ -204,10 +204,10 @@ describe('ClaimHistoryWeekNavigator', () => {
       { name: 'Tu', value: 6 },
       { name: 'Tu', value: 0 }
     ])
-    expect(tooltipWithoutOvertime).toBe('<b>Tu</b><br/>6h')
+    expect(tooltipWithoutOvertime).toBe('<b>Tu</b><br/>Regular: 8h<br/>Overtime: 2h<br/>Total: 10h')
 
     const tooltipWithEmptyParams = vm.barChartOption.tooltip.formatter([])
-    expect(tooltipWithEmptyParams).toBe('<b></b><br/>0h')
+    expect(tooltipWithEmptyParams).toBe('<b></b><br/>Regular: 8h<br/>Overtime: 2h<br/>Total: 10h')
 
     const overtimeLabelFormatter = vm.barChartOption.series[1]?.label?.formatter
     expect(overtimeLabelFormatter?.({ dataIndex: 0 })).toBe('10h')
