@@ -40,12 +40,8 @@ const mockAuthorizeUser = vi.mocked(authorizeUser);
 
 const app = express();
 app.use(express.json());
-// Simulate authorizeUser setting req.address; wageRoutes mounts below.
-app.use((req: Request, _res: Response, next: NextFunction) => {
-  req.address = '0x1234567890123456789012345678901234567890';
-  next();
-});
-// Use the actual wageRoutes from the routes file
+// Mount the mocked authorizeUser so it sets req.address, matching production wiring.
+app.use(mockAuthorizeUser);
 app.use('/', wageRoutes);
 
 const mockTeam = {

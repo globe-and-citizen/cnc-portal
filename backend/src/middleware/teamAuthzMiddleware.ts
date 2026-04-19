@@ -18,7 +18,10 @@ export const requireTeamOwner =
     if (teamId === null) return errorResponse(400, `Missing or invalid teamId at ${location}`, res);
 
     try {
-      const team = await prisma.team.findUnique({ where: { id: teamId } });
+      const team = await prisma.team.findUnique({
+        where: { id: teamId },
+        select: { ownerAddress: true },
+      });
       if (!team) return errorResponse(404, 'Team not found', res);
       if (team.ownerAddress !== callerAddress) {
         return errorResponse(403, 'Unauthorized: Caller is not the owner of the team', res);
@@ -38,6 +41,7 @@ export const requireTeamMember =
     try {
       const team = await prisma.team.findFirst({
         where: { id: teamId, members: { some: { address: callerAddress } } },
+        select: { id: true },
       });
       if (!team) return errorResponse(403, 'Caller is not a member of the team', res);
       return next();

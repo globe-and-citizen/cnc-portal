@@ -40,18 +40,16 @@ const updateNotification = async (req: Request, res: Response) => {
   const callerAddress = req.address;
 
   try {
-    let notification = await prisma.notification.findUnique({ where: { id } });
-
-    if (callerAddress === notification?.userAddress) {
-      notification = await prisma.notification.update({
-        where: { id },
-        data: { isRead: true },
-      });
-
-      res.status(200).json(notification);
-    } else {
+    const existing = await prisma.notification.findUnique({ where: { id } });
+    if (!existing) return errorResponse(404, 'Notification not found', res);
+    if (existing.userAddress !== callerAddress)
       return errorResponse(403, 'Unauthorized access', res);
-    }
+
+    const notification = await prisma.notification.update({
+      where: { id },
+      data: { isRead: true },
+    });
+    res.status(200).json(notification);
   } catch (error) {
     return errorResponse(500, error, res);
   }

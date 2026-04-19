@@ -40,25 +40,15 @@ export const deleteMember = async (req: Request, res: Response) => {
       return errorResponse(500, message, res);
     }
 
-    const updatedTeam = await prisma.team.update({
+    await prisma.team.update({
       where: { id },
       data: {
-        name: team.name,
-        description: team.description,
         members: {
           disconnect: { address: memberAddress },
         },
       },
-      include: {
-        members: {
-          select: {
-            address: true,
-            name: true,
-          },
-        },
-      },
     });
-    res.status(204).json({ ...updatedTeam });
+    return res.status(204).end();
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal Server Error';
     return errorResponse(500, message, res);

@@ -144,6 +144,15 @@ describe('Notification Controller', () => {
       expect(response.body.message).toBe('Unauthorized access');
     });
 
+    it('should return 404 if notification does not exist', async () => {
+      vi.spyOn(prisma.notification, 'findUnique').mockResolvedValue(null);
+
+      const response = await request(app).put('/1');
+
+      expect(response.status).toBe(404);
+      expect(response.body.message).toBe('Notification not found');
+    });
+
     it('should return 500 on server error', async () => {
       vi.spyOn(prisma.notification, 'findUnique').mockRejectedValue(new Error('Database error'));
 
