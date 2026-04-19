@@ -564,8 +564,10 @@ describe('Wage Controller', () => {
     });
 
     it('should return 403 if caller is not the owner of the team', async () => {
-      vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(mockWage);
-      vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(null);
+      vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue({
+        ...mockWage,
+        team: { ownerAddress: '0x0000000000000000000000000000000000000000' },
+      } as unknown as Wage);
 
       const response = await request(app).put('/1').query({ action: 'disable' });
 
@@ -574,8 +576,10 @@ describe('Wage Controller', () => {
     });
 
     it('should disable a wage', async () => {
-      vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(mockWage);
-      vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(mockTeam);
+      vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue({
+        ...mockWage,
+        team: { ownerAddress: mockTeam.ownerAddress },
+      } as unknown as Wage);
       vi.spyOn(prisma.wage, 'update').mockResolvedValue({ ...mockWage, disabled: true } as Wage);
 
       const response = await request(app).put('/1').query({ action: 'disable' });
@@ -588,8 +592,11 @@ describe('Wage Controller', () => {
     });
 
     it('should enable a wage', async () => {
-      vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue({ ...mockWage, disabled: true } as Wage);
-      vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(mockTeam);
+      vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue({
+        ...mockWage,
+        disabled: true,
+        team: { ownerAddress: mockTeam.ownerAddress },
+      } as unknown as Wage);
       vi.spyOn(prisma.wage, 'update').mockResolvedValue({ ...mockWage, disabled: false } as Wage);
 
       const response = await request(app).put('/1').query({ action: 'enable' });

@@ -1,7 +1,5 @@
 import { NextFunction, Request, Response } from 'express';
 import { errorResponse, prisma } from '../utils';
-import { isUserMemberOfTeam } from './teamAuthz';
-export { isOwnerOfTeam, isUserMemberOfTeam } from './teamAuthz';
 
 type TeamIdLocation = 'body.teamId' | 'query.teamId' | 'params.id' | 'params.teamId';
 
@@ -38,9 +36,10 @@ export const requireTeamMember =
     if (teamId === null) return errorResponse(400, `Missing or invalid teamId at ${location}`, res);
 
     try {
-      if (!(await isUserMemberOfTeam(callerAddress, teamId))) {
-        return errorResponse(403, 'Caller is not a member of the team', res);
-      }
+      const team = await prisma.team.findFirst({
+        where: { id: teamId, members: { some: { address: callerAddress } } },
+      });
+      if (!team) return errorResponse(403, 'Caller is not a member of the team', res);
       return next();
     } catch (error) {
       return errorResponse(500, error, res);

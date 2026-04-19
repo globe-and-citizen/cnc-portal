@@ -3,7 +3,6 @@ import { Request, Response } from 'express';
 import { Prisma } from '@prisma/client';
 import { prisma } from '../utils';
 import { errorResponse } from '../utils/utils';
-import { isOwnerOfTeam } from '../middleware/teamAuthzMiddleware';
 import {
   getWagesQuerySchema,
   setWageBodySchema,
@@ -122,13 +121,14 @@ export const toggleWageStatus = async (req: Request, res: Response) => {
   try {
     const wage = await prisma.wage.findFirst({
       where: { id: wageId, nextWageId: null },
+      include: { team: { select: { ownerAddress: true } } },
     });
 
     if (!wage) {
       return errorResponse(404, 'Wage not found', res);
     }
 
-    if (!(await isOwnerOfTeam(callerAddress, wage.teamId))) {
+    if (wage.team.ownerAddress !== callerAddress) {
       return errorResponse(403, 'Caller is not the owner of the team', res);
     }
 
