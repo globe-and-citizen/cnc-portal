@@ -31,33 +31,6 @@ export const teamContract = onchainTable(
   }),
 );
 
-// Raw ERC20 transfers touching Officer-managed contracts
-export const rawContractTokenTransfer = onchainTable(
-  "raw_contract_token_transfer",
-  (t) => ({
-    id: t.text().primaryKey(), // `${txHash}-${logIndex}-${direction}`
-    tokenAddress: t.hex().notNull(), // ERC20 contract address
-    contractAddress: t.hex().notNull(), // Officer-managed contract involved
-    teamAddress: t.hex().notNull(), // Officer address
-    contractType: t.text().notNull(), // "Bank", "InvestorV1", ...
-    direction: t.text().notNull(), // "in" | "out" | "internal"
-    from: t.hex().notNull(),
-    to: t.hex().notNull(),
-    amount: t.bigint().notNull(),
-    blockNumber: t.bigint().notNull(),
-    timestamp: t.integer().notNull(),
-  }),
-  (table) => ({
-    tokenAddressIdx: index("raw_contract_token_transfer_token_index").on(table.tokenAddress),
-    contractAddressIdx: index("raw_contract_token_transfer_contract_index").on(table.contractAddress),
-    teamAddressIdx: index("raw_contract_token_transfer_team_index").on(table.teamAddress),
-    contractTypeIdx: index("raw_contract_token_transfer_type_index").on(table.contractType),
-    directionIdx: index("raw_contract_token_transfer_direction_index").on(table.direction),
-    fromIdx: index("raw_contract_token_transfer_from_index").on(table.from),
-    toIdx: index("raw_contract_token_transfer_to_index").on(table.to),
-  }),
-);
-
 export const officerBeaconConfigured = onchainTable(
   "officer_beacon_configured",
   (t) => ({
@@ -1107,59 +1080,6 @@ export const vestingUnvestedWithdrawn = onchainTable(
     contractAddressIdx: index("vesting_unvested_contract_index").on(table.contractAddress),
     memberIdx: index("vesting_unvested_member_index").on(table.member),
     teamIdIdx: index("vesting_unvested_team_id_index").on(table.teamId),
-  }),
-);
-
-// Tips events
-export const tipsPushTip = onchainTable(
-  "tips_push_tip",
-  (t) => ({
-    id: t.text().primaryKey(),
-    contractAddress: t.hex().notNull(),
-    from: t.hex().notNull(),
-    teamMembers: t.text().notNull(),
-    totalAmount: t.bigint().notNull(),
-    amountPerAddress: t.bigint().notNull(),
-    blockNumber: t.bigint().notNull(),
-    timestamp: t.integer().notNull(),
-  }),
-  (table) => ({
-    contractAddressIdx: index("tips_push_contract_index").on(table.contractAddress),
-    fromIdx: index("tips_push_from_index").on(table.from),
-  }),
-);
-
-export const tipsSendTip = onchainTable(
-  "tips_send_tip",
-  (t) => ({
-    id: t.text().primaryKey(),
-    contractAddress: t.hex().notNull(),
-    from: t.hex().notNull(),
-    teamMembers: t.text().notNull(),
-    totalAmount: t.bigint().notNull(),
-    amountPerAddress: t.bigint().notNull(),
-    blockNumber: t.bigint().notNull(),
-    timestamp: t.integer().notNull(),
-  }),
-  (table) => ({
-    contractAddressIdx: index("tips_send_contract_index").on(table.contractAddress),
-    fromIdx: index("tips_send_from_index").on(table.from),
-  }),
-);
-
-export const tipsWithdrawal = onchainTable(
-  "tips_withdrawal",
-  (t) => ({
-    id: t.text().primaryKey(),
-    contractAddress: t.hex().notNull(),
-    to: t.hex().notNull(),
-    amount: t.bigint().notNull(),
-    blockNumber: t.bigint().notNull(),
-    timestamp: t.integer().notNull(),
-  }),
-  (table) => ({
-    contractAddressIdx: index("tips_withdrawal_contract_index").on(table.contractAddress),
-    toIdx: index("tips_withdrawal_to_index").on(table.to),
   }),
 );
 
