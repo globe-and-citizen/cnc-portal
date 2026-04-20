@@ -42,7 +42,7 @@
           :token-symbol="safeTokenSymbol"
           :shareholders-count="safeShareholders.length"
           :investors-address="investorAddress"
-          :investors-owner="safeInvestorsOwner"
+          :bank-owner="safeBankOwner"
           :bank-address="bankAddress"
         />
         <ToggleSherCompensationAction />
@@ -69,6 +69,7 @@ import {
   useInvestorShareholders,
   useInvestorOwner
 } from '@/composables/investor/reads'
+import { useBankOwner } from '@/composables/bank/reads'
 
 defineEmits<{
   refetchShareholders: []
@@ -105,6 +106,9 @@ const safeInvestorsOwner = computed(() =>
   typeof investorsOwner.value === 'string' ? investorsOwner.value : ''
 )
 
+const { data: bankOwner, error: bankOwnerError } = useBankOwner()
+const safeBankOwner = computed(() => (typeof bankOwner.value === 'string' ? bankOwner.value : ''))
+
 watch(tokenSymbolError, (value) => {
   if (value) {
     log.error('Error fetching token symbol', value)
@@ -123,6 +127,13 @@ watch(errorInvestorsOwner, (value) => {
   if (value) {
     log.error('Error fetching investors owner', value)
     toast.add({ title: 'Error fetching investors owner', color: 'error' })
+  }
+})
+
+watch(bankOwnerError, (value) => {
+  if (value) {
+    log.error('Error fetching bank owner', value)
+    toast.add({ title: 'Error fetching bank owner', color: 'error' })
   }
 })
 </script>
