@@ -61,7 +61,6 @@ const SKIP_LIST = new Set([
   "Tips",
   "Voting",
   "Vesting",
-  "FeeCollector",
 ]);
 
 function toKebabCase(name: string): string {

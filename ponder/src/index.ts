@@ -2,7 +2,6 @@ import { ponder } from "ponder:registry";
 import {
   team,
   teamContract,
-  rawContractTokenTransfer,
   officerBeaconConfigured,
   officerBeaconProxiesDeployed,
   bankDeposit,
@@ -65,18 +64,7 @@ import {
   vestingTokensReleased,
   vestingStopped,
   vestingUnvestedWithdrawn,
-  tipsPushTip,
-  tipsSendTip,
-  tipsWithdrawal,
 } from "ponder:schema";
-
-type ManagedContract = {
-  teamAddress: `0x${string}`;
-  contractType: string;
-  contractAddress: `0x${string}`;
-};
-
-const managedContractsByAddress = new Map<string, ManagedContract>();
 
 // ─── Officer Factory ─────────────────────────────────────────────────────────
 
@@ -104,12 +92,6 @@ ponder.on("Officer:ContractDeployed", async ({ event, context }) => {
     blockNumber: event.block.number,
     timestamp: Number(event.block.timestamp),
   });
-
-  managedContractsByAddress.set(contractAddress, {
-    teamAddress,
-    contractType: event.args.contractType,
-    contractAddress,
-  });
 });
 
 ponder.on("Officer:BeaconConfigured", async ({ event, context }) => {
@@ -132,82 +114,6 @@ ponder.on("Officer:BeaconProxiesDeployed", async ({ event, context }) => {
     timestamp: Number(event.block.timestamp),
   });
 });
-
-// ─── Raw ERC20 transfers (against Officer-managed contracts) ─────────────────
-
-const registerRawTokenTransferHandler = (
-  source: "USDC" | "USDCe" | "USDT",
-) => {
-  ponder.on(`${source}:Transfer`, async ({ event, context }) => {
-    const from = event.args.from.toLowerCase() as `0x${string}`;
-    const to = event.args.to.toLowerCase() as `0x${string}`;
-    const tokenAddress = event.log.address.toLowerCase() as `0x${string}`;
-    const amount = event.args.value;
-    const baseId = `${event.transaction.hash}-${event.log.logIndex}`;
-
-    const fromContract = managedContractsByAddress.get(from);
-    const toContract = managedContractsByAddress.get(to);
-
-    if (!fromContract && !toContract) return;
-
-    if (
-      fromContract &&
-      toContract &&
-      fromContract.contractAddress === toContract.contractAddress
-    ) {
-      await context.db.insert(rawContractTokenTransfer).values({
-        id: `${baseId}-internal`,
-        tokenAddress,
-        contractAddress: fromContract.contractAddress,
-        teamAddress: fromContract.teamAddress,
-        contractType: fromContract.contractType,
-        direction: "internal",
-        from,
-        to,
-        amount,
-        blockNumber: event.block.number,
-        timestamp: Number(event.block.timestamp),
-      });
-      return;
-    }
-
-    if (fromContract) {
-      await context.db.insert(rawContractTokenTransfer).values({
-        id: `${baseId}-out`,
-        tokenAddress,
-        contractAddress: fromContract.contractAddress,
-        teamAddress: fromContract.teamAddress,
-        contractType: fromContract.contractType,
-        direction: "out",
-        from,
-        to,
-        amount,
-        blockNumber: event.block.number,
-        timestamp: Number(event.block.timestamp),
-      });
-    }
-
-    if (toContract) {
-      await context.db.insert(rawContractTokenTransfer).values({
-        id: `${baseId}-in`,
-        tokenAddress,
-        contractAddress: toContract.contractAddress,
-        teamAddress: toContract.teamAddress,
-        contractType: toContract.contractType,
-        direction: "in",
-        from,
-        to,
-        amount,
-        blockNumber: event.block.number,
-        timestamp: Number(event.block.timestamp),
-      });
-    }
-  });
-};
-
-registerRawTokenTransferHandler("USDC");
-registerRawTokenTransferHandler("USDCe");
-registerRawTokenTransferHandler("USDT");
 
 // ─── Bank ─────────────────────────────────────────────────────────────────────
 
@@ -392,45 +298,6 @@ ponder.on("Vesting:UnvestedWithdrawn", async ({ event, context }) => {
     contractAddress: event.log.address,
     member: event.args.member,
     teamId: event.args.teamId,
-    amount: event.args.amount,
-    blockNumber: event.block.number,
-    timestamp: Number(event.block.timestamp),
-  });
-});
-
-// ─── Tips ─────────────────────────────────────────────────────────────────────
-
-ponder.on("Tips:PushTip", async ({ event, context }) => {
-  await context.db.insert(tipsPushTip).values({
-    id: `${event.transaction.hash}-${event.log.logIndex}`,
-    contractAddress: event.log.address,
-    from: event.args.from,
-    teamMembers: JSON.stringify(event.args.teamMembers),
-    totalAmount: event.args.totalAmount,
-    amountPerAddress: event.args.amountPerAddress,
-    blockNumber: event.block.number,
-    timestamp: Number(event.block.timestamp),
-  });
-});
-
-ponder.on("Tips:SendTip", async ({ event, context }) => {
-  await context.db.insert(tipsSendTip).values({
-    id: `${event.transaction.hash}-${event.log.logIndex}`,
-    contractAddress: event.log.address,
-    from: event.args.from,
-    teamMembers: JSON.stringify(event.args.teamMembers),
-    totalAmount: event.args.totalAmount,
-    amountPerAddress: event.args.amountPerAddress,
-    blockNumber: event.block.number,
-    timestamp: Number(event.block.timestamp),
-  });
-});
-
-ponder.on("Tips:TipWithdrawal", async ({ event, context }) => {
-  await context.db.insert(tipsWithdrawal).values({
-    id: `${event.transaction.hash}-${event.log.logIndex}`,
-    contractAddress: event.log.address,
-    to: event.args.to,
     amount: event.args.amount,
     blockNumber: event.block.number,
     timestamp: Number(event.block.timestamp),
@@ -873,17 +740,33 @@ ponder.on("SafeDepositRouter:MultiplierUpdated", async ({ event, context }) => {
   });
 });
 
-ponder.on("SafeDepositRouter:TokenSupportAdded", async ({ event, context }) => {
-  const args = event.args as { tokenAddress: `0x${string}`; decimals?: number };
-  await context.db.insert(safeTokenSupportAdded).values({
-    id: `${event.transaction.hash}-${event.log.logIndex}`,
-    contractAddress: event.log.address,
-    tokenAddress: args.tokenAddress,
-    decimals: args.decimals ?? null,
-    blockNumber: event.block.number,
-    timestamp: Number(event.block.timestamp),
-  });
-});
+ponder.on(
+  "SafeDepositRouter:TokenSupportAdded(address indexed tokenAddress, uint8 decimals)",
+  async ({ event, context }) => {
+    await context.db.insert(safeTokenSupportAdded).values({
+      id: `${event.transaction.hash}-${event.log.logIndex}`,
+      contractAddress: event.log.address,
+      tokenAddress: event.args.tokenAddress,
+      decimals: event.args.decimals,
+      blockNumber: event.block.number,
+      timestamp: Number(event.block.timestamp),
+    });
+  },
+);
+
+ponder.on(
+  "SafeDepositRouter:TokenSupportAdded(address indexed tokenAddress)",
+  async ({ event, context }) => {
+    await context.db.insert(safeTokenSupportAdded).values({
+      id: `${event.transaction.hash}-${event.log.logIndex}`,
+      contractAddress: event.log.address,
+      tokenAddress: event.args.tokenAddress,
+      decimals: null,
+      blockNumber: event.block.number,
+      timestamp: Number(event.block.timestamp),
+    });
+  },
+);
 
 ponder.on("SafeDepositRouter:TokenSupportRemoved", async ({ event, context }) => {
   await context.db.insert(safeTokenSupportRemoved).values({
