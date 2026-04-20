@@ -53,7 +53,7 @@ interface Props {
   tokenSymbol?: string
   shareholdersCount?: number
   investorsAddress?: Address
-  investorsOwner?: Address
+  bankOwner?: Address
   bankAddress?: Address
 }
 
@@ -90,15 +90,15 @@ const currentTeam = computed(() => teamStore.currentTeam)
 const canPayDividends = computed(() => {
   const hasTokenSymbol = !!props.tokenSymbol
   const hasShareholders = (props.shareholdersCount ?? 0) > 0
-  const isAuthorized = isBodAction.value || currentAddress === props.investorsOwner
+  const isAuthorized = isBodAction.value || currentAddress === props.bankOwner
   return hasTokenSymbol && hasShareholders && isAuthorized
 })
 
 const cannotPayDividendsReason = computed(() => {
   if (!props.tokenSymbol) return 'Token symbol not available'
   if ((props.shareholdersCount ?? 0) === 0) return 'No shareholders available to pay dividends'
-  if (!isBodAction.value && currentAddress !== props.investorsOwner) {
-    return 'Only the bank owner can pay dividends'
+  if (!isBodAction.value && currentAddress !== props.bankOwner) {
+    return 'Only the bank owner can pay dividends '
   }
   return ''
 })
