@@ -40,7 +40,8 @@ const mockAuthorizeUser = vi.mocked(authorizeUser);
 
 const app = express();
 app.use(express.json());
-// Use the actual wageRoutes from the routes file
+// Mount the mocked authorizeUser so it sets req.address, matching production wiring.
+app.use(mockAuthorizeUser);
 app.use('/', wageRoutes);
 
 const mockTeam = {
@@ -78,6 +79,8 @@ describe('Wage Controller', () => {
         req.address = '0x1234567890123456789012345678901234567890';
         next();
       });
+      // Default: requireTeamOwner middleware finds the team owned by the caller
+      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(mockTeam);
     });
 
     it('should return 400 if required parameters are missing', async () => {
@@ -105,8 +108,10 @@ describe('Wage Controller', () => {
     });
 
     it('should return 403 if caller is not the owner of the team', async () => {
-      vi.spyOn(prisma.team, 'findFirst').mockResolvedValueOnce(null);
-      vi.spyOn(prisma.wage, 'create').mockResolvedValue(mockWage);
+      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue({
+        ...mockTeam,
+        ownerAddress: '0x0000000000000000000000000000000000000000',
+      });
       const response = await request(app)
         .put('/setWage')
         .send({
@@ -120,7 +125,7 @@ describe('Wage Controller', () => {
         });
 
       expect(response.status).toBe(403);
-      expect(response.body.message).toBe('Caller is not the owner of the team');
+      expect(response.body.message).toBe('Unauthorized: Caller is not the owner of the team');
     });
 
     it('should create a new wage if no previous wage exists', async () => {
@@ -298,7 +303,7 @@ describe('Wage Controller', () => {
     });
 
     it('should return 500 on internal server error', async () => {
-      vi.spyOn(prisma.team, 'findFirst').mockRejectedValue(new Error('Database error'));
+      vi.spyOn(prisma.team, 'findUnique').mockRejectedValue(new Error('Database error'));
 
       const response = await request(app)
         .put('/setWage')
@@ -432,7 +437,7 @@ describe('Wage Controller', () => {
       const response = await request(app).get('/').query({ teamId: 1 });
 
       expect(response.status).toBe(403);
-      expect(response.body.message).toBe('Member is not a team member');
+      expect(response.body.message).toBe('Caller is not a member of the team');
     });
 
     it('should return 200 and wages if user is a team member', async () => {
@@ -555,8 +560,10 @@ describe('Wage Controller', () => {
     });
 
     it('should return 403 if caller is not the owner of the team', async () => {
-      vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(mockWage);
-      vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(null);
+      vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue({
+        ...mockWage,
+        team: { ownerAddress: '0x0000000000000000000000000000000000000000' },
+      } as unknown as Wage);
 
       const response = await request(app).put('/1').query({ action: 'disable' });
 
@@ -565,8 +572,10 @@ describe('Wage Controller', () => {
     });
 
     it('should disable a wage', async () => {
-      vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(mockWage);
-      vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(mockTeam);
+      vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue({
+        ...mockWage,
+        team: { ownerAddress: mockTeam.ownerAddress },
+      } as unknown as Wage);
       vi.spyOn(prisma.wage, 'update').mockResolvedValue({ ...mockWage, disabled: true } as Wage);
 
       const response = await request(app).put('/1').query({ action: 'disable' });
@@ -579,8 +588,11 @@ describe('Wage Controller', () => {
     });
 
     it('should enable a wage', async () => {
-      vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue({ ...mockWage, disabled: true } as Wage);
-      vi.spyOn(prisma.team, 'findFirst').mockResolvedValue(mockTeam);
+      vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue({
+        ...mockWage,
+        disabled: true,
+        team: { ownerAddress: mockTeam.ownerAddress },
+      } as unknown as Wage);
       vi.spyOn(prisma.wage, 'update').mockResolvedValue({ ...mockWage, disabled: false } as Wage);
 
       const response = await request(app).put('/1').query({ action: 'enable' });

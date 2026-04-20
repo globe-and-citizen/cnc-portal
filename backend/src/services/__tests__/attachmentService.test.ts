@@ -57,8 +57,18 @@ describe('attachmentService', () => {
         .mockResolvedValueOnce('https://fresh2.com');
 
       const attachments: FileAttachmentData[] = [
-        { fileKey: 'uploads/a.pdf', fileUrl: 'old1', fileType: 'application/pdf', fileSize: 100 },
-        { fileKey: 'uploads/b.png', fileUrl: 'old2', fileType: 'image/png', fileSize: 200 },
+        {
+          fileKey: 'uploads/a.pdf',
+          fileUrl: 'https://old1.example.com',
+          fileType: 'application/pdf',
+          fileSize: 100,
+        },
+        {
+          fileKey: 'uploads/b.png',
+          fileUrl: 'https://old2.example.com',
+          fileType: 'image/png',
+          fileSize: 200,
+        },
       ];
 
       const result = (await refreshAttachmentUrls(attachments)) as FileAttachmentData[];
@@ -104,6 +114,27 @@ describe('attachmentService', () => {
 
       expect(result).toEqual(attachments);
     });
+
+    it('should preserve unknown extra keys on the refreshed entry', async () => {
+      mockGetPresignedDownloadUrl.mockResolvedValue('https://fresh.example.com');
+
+      const stored = [
+        {
+          fileKey: 'uploads/abc.pdf',
+          fileUrl: 'https://old.example.com',
+          fileType: 'application/pdf',
+          fileSize: 100,
+          uploadedBy: '0x1234567890123456789012345678901234567890',
+          legacyFlag: true,
+        },
+      ];
+
+      const result = (await refreshAttachmentUrls(stored)) as Array<Record<string, unknown>>;
+
+      expect(result[0].fileUrl).toBe('https://fresh.example.com');
+      expect(result[0].uploadedBy).toBe('0x1234567890123456789012345678901234567890');
+      expect(result[0].legacyFlag).toBe(true);
+    });
   });
 
   describe('deleteAttachments', () => {
@@ -123,8 +154,18 @@ describe('attachmentService', () => {
       mockDeleteFile.mockResolvedValue(true);
 
       const attachments: FileAttachmentData[] = [
-        { fileKey: 'uploads/a.pdf', fileUrl: 'url1', fileType: 'application/pdf', fileSize: 100 },
-        { fileKey: 'uploads/b.png', fileUrl: 'url2', fileType: 'image/png', fileSize: 200 },
+        {
+          fileKey: 'uploads/a.pdf',
+          fileUrl: 'https://example.com/a.pdf',
+          fileType: 'application/pdf',
+          fileSize: 100,
+        },
+        {
+          fileKey: 'uploads/b.png',
+          fileUrl: 'https://example.com/b.png',
+          fileType: 'image/png',
+          fileSize: 200,
+        },
       ];
 
       await deleteAttachments(attachments);
@@ -136,8 +177,13 @@ describe('attachmentService', () => {
 
     it('should skip attachments with empty or missing fileKey', async () => {
       const attachments = [
-        { fileKey: '', fileUrl: 'url1', fileType: 'text/plain', fileSize: 10 },
-        { fileUrl: 'url2', fileType: 'text/plain', fileSize: 10 },
+        {
+          fileKey: '',
+          fileUrl: 'https://example.com/a.txt',
+          fileType: 'text/plain',
+          fileSize: 10,
+        },
+        { fileUrl: 'https://example.com/b.txt', fileType: 'text/plain', fileSize: 10 },
         null,
         'string',
       ];
@@ -147,12 +193,34 @@ describe('attachmentService', () => {
       expect(mockDeleteFile).not.toHaveBeenCalled();
     });
 
+    it('should still delete legacy entries that have only a fileKey', async () => {
+      mockDeleteFile.mockResolvedValue(true);
+
+      // Legacy rows predate the full schema and only contain fileKey.
+      // They must still be cleaned up to avoid orphaning files in storage.
+      const attachments = [
+        { fileKey: 'uploads/legacy-1.pdf' },
+        { fileKey: 'uploads/legacy-2.png', fileType: 'image/png' }, // partial shape
+      ];
+
+      await deleteAttachments(attachments);
+
+      expect(mockDeleteFile).toHaveBeenCalledTimes(2);
+      expect(mockDeleteFile).toHaveBeenCalledWith('uploads/legacy-1.pdf');
+      expect(mockDeleteFile).toHaveBeenCalledWith('uploads/legacy-2.png');
+    });
+
     it('should log warning but not throw on delete failure', async () => {
       const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
       mockDeleteFile.mockRejectedValue(new Error('delete failed'));
 
       const attachments: FileAttachmentData[] = [
-        { fileKey: 'uploads/fail.pdf', fileUrl: 'url', fileType: 'application/pdf', fileSize: 100 },
+        {
+          fileKey: 'uploads/fail.pdf',
+          fileUrl: 'https://example.com/fail.pdf',
+          fileType: 'application/pdf',
+          fileSize: 100,
+        },
       ];
 
       await expect(deleteAttachments(attachments)).resolves.toBeUndefined();
