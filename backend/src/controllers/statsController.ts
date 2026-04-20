@@ -286,11 +286,11 @@ export const getTeamsStats = async (req: Request, res: Response) => {
           },
         }),
 
-        // Teams with officer in period
+        // Teams with at least one Officer ever deployed in period
         prisma.team.count({
           where: {
             ...whereClause,
-            officerAddress: { not: null },
+            teamOfficers: { some: {} },
           },
         }),
 

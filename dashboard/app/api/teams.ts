@@ -5,13 +5,11 @@ export interface CreateTeamPayload {
   name: string
   description?: string
   ownerAddress: string
-  officerAddress?: string
 }
 
 export interface UpdateTeamPayload {
   name?: string
   description?: string
-  officerAddress?: string
 }
 
 export interface AddMembersPayload {

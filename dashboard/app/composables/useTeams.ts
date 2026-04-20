@@ -58,7 +58,7 @@ export function useTeams() {
   const stats = computed(() => {
     const totalTeams = teams.value.length
     const totalMembers = teams.value.reduce((sum, team) => sum + (team._count?.members || 0), 0)
-    const teamsWithOfficer = teams.value.filter(team => team.officerAddress).length
+    const teamsWithOfficer = teams.value.filter(team => team.currentOfficer).length
     const avgMembersPerTeam = totalTeams > 0 ? Math.round(totalMembers / totalTeams) : 0
 
     return {
