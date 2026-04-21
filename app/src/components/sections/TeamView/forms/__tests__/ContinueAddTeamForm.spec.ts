@@ -4,7 +4,7 @@ import { ref } from 'vue'
 import ContinueAddTeamForm from '@/components/sections/TeamView/forms/ContinueAddTeamForm.vue'
 import type { Team } from '@/types/team'
 import { createTestingPinia } from '@pinia/testing'
-import InvestorContractStep from '@/components/sections/TeamView/forms/InvestorContractStep.vue'
+import DeployContractSection from '@/components/sections/TeamView/forms/DeployContractSection.vue'
 
 // Hoisted mocks for Safe composables
 const { mockUseSafe } = vi.hoisted(() => ({
@@ -88,7 +88,8 @@ const team = ref<Partial<Team>>({
   id: '1',
   name: 'Team 1',
   description: 'Team 1 description',
-  ownerAddress: '0x4b6Bf5cD91446408290725879F5666dcd9785F62'
+  ownerAddress: '0x4b6Bf5cD91446408290725879F5666dcd9785F62',
+  officerAddress: '0x4b6Bf5cD91446408290725879F5666dcd9785F62'
 })
 
 describe.skip('ContinueAddTeamForm', () => {
@@ -145,10 +146,10 @@ describe.skip('ContinueAddTeamForm', () => {
     // Expect the error message to not be displayed
     expect(wrapper.find("[data-test='share-name-error']").exists()).toBeFalsy()
 
-    const deployComponent = wrapper.findComponent(InvestorContractStep)
+    const deployComponent = wrapper.findComponent(DeployContractSection)
     expect(wrapper.emitted('done')).toBeFalsy()
 
-    deployComponent.vm.$emit('contractDeployed')
+    await deployComponent.vm.$emit('contractDeployed')
 
     // Check if wrapper emit done event
     expect(wrapper.emitted('done')).toBeTruthy()
@@ -214,11 +215,11 @@ describe.skip('ContinueAddTeamForm', () => {
       }
     })
 
-    const deployComponent = wrapper.findComponent(InvestorContractStep)
+    const deployComponent = wrapper.findComponent(DeployContractSection)
 
     expect(wrapper.emitted('done')).toBeFalsy()
 
-    deployComponent.vm.$emit('contractDeployed')
+    await deployComponent.vm.$emit('contractDeployed')
 
     expect(wrapper.emitted('done')).toBeTruthy()
     expect(wrapper.emitted('done')).toHaveLength(1)

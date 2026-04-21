@@ -76,59 +76,29 @@ export const useSyncContractsMutation = createMutationHook<void, SyncContractsPa
 })
 
 // ============================================================================
-// POST /contract/officer - Register a freshly deployed Officer contract
+// DELETE /contract/reset - Reset contracts
 // ============================================================================
 
-export interface CreateOfficerBody {
-  /** Team ID */
-  teamId: string | number
-  /** Newly deployed Officer contract address */
-  address: string
-  /** Block number of the deploy transaction receipt */
-  deployBlockNumber?: number
-  /** Timestamp of the deploy transaction, ISO string */
-  deployedAt?: string
-}
-
-export interface CreateOfficerParams {
-  body: CreateOfficerBody
-}
-
-export interface TeamOfficerResponse {
-  id: number
-  address: string
-  teamId: number
-  deployer: string
-  deployBlockNumber: string | null
-  deployedAt: string | null
-  previousOfficerId: number | null
-  createdAt: string
-  updatedAt: string
-}
-
-export interface CreateOfficerResponse {
-  officer: TeamOfficerResponse
-  /**
-   * The TeamOfficer the new one points back to, or null if this is the first
-   * Officer ever deployed for the team. Use `previousOfficer.address` to read
-   * state off the old Officer generation (e.g. shareholder migration).
-   */
-  previousOfficer: TeamOfficerResponse | null
-  contractsCreated: number
+/**
+ * Combined parameters for useResetContractsMutation
+ */
+export interface ResetContractsParams {
+  body: {
+    /** Team ID */
+    teamId: string
+  }
 }
 
 /**
- * Register a freshly deployed Officer contract on a team.
- * Records a new TeamOfficer row as the team's current Officer head and syncs
- * the contracts it governs in a single call.
+ * Reset/delete contracts for a team
  *
- * @endpoint POST /contract/officer
+ * @endpoint DELETE /contract/reset
+ * @pathParams none
+ * @queryParams none
+ * @body { teamId: string }
  */
-export const useCreateOfficerMutation = createMutationHook<
-  CreateOfficerResponse,
-  CreateOfficerParams
->({
-  method: 'POST',
-  endpoint: 'contract/officer',
+export const useResetContractsMutation = createMutationHook<void, ResetContractsParams>({
+  method: 'DELETE',
+  endpoint: 'contract/reset',
   invalidateKeys: [contractKeys.all, teamKeys.all]
 })

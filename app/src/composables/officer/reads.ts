@@ -6,7 +6,7 @@ import { OFFICER_ABI } from '@/artifacts/abi/officer'
 
 export function useOfficerAddress() {
   const teamStore = useTeamStore()
-  return computed(() => teamStore.currentTeamMeta.data?.currentOfficer?.address)
+  return computed(() => teamStore.currentTeamMeta.data?.officerAddress)
 }
 
 export function useOfficerFeeBps(contractType: string) {

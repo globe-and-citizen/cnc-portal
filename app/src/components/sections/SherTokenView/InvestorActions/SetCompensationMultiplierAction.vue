@@ -4,8 +4,11 @@
       icon="heroicons:calculator"
       icon-bg="bg-amber-50 dark:bg-amber-950"
       icon-color="text-amber-700 dark:text-amber-400"
+<<<<<<< Updated upstream:app/src/components/sections/SherTokenView/InvestorActions/SetCompensationMultiplierAction.vue
       title="Set Multiplier"
       tone-class="border-orange-200 bg-orange-50/60 hover:border-orange-300 hover:bg-orange-100/70 disabled:border-orange-200 disabled:bg-orange-50/50 dark:border-orange-900 dark:bg-orange-950/30 dark:hover:border-orange-800 dark:hover:bg-orange-900/40 dark:disabled:border-orange-900 dark:disabled:bg-orange-950/30"
+=======
+>>>>>>> Stashed changes:app/src/components/sections/SherTokenView/InvestorActions/SetCompensationMultiplierButton.vue
       :loading="isLoading"
       :disabled="!canManageMultiplier || isLoading"
       :badge="
@@ -15,7 +18,13 @@
       "
       data-test="set-compensation-multiplier-button"
       @click="openModal"
+<<<<<<< Updated upstream:app/src/components/sections/SherTokenView/InvestorActions/SetCompensationMultiplierAction.vue
     />
+=======
+    >
+      {{ `Set\nMultiplier` }}
+    </ActionButton>
+>>>>>>> Stashed changes:app/src/components/sections/SherTokenView/InvestorActions/SetCompensationMultiplierButton.vue
 
     <dialog ref="modalRef" class="modal" data-test="multiplier-modal">
       <div class="modal-box">
@@ -105,92 +114,63 @@ import {
 const toast = useToast()
 const connection = useConnection()
 
-// Modal reference
 const modalRef = ref<HTMLDialogElement | null>(null)
-
-// Form state - now accepts string to handle decimals properly
 const newMultiplier = ref<string>('1')
 
-// Constants
 const MULTIPLIER_DECIMALS = 6
 const MIN_MULTIPLIER = 1
 const MAX_MULTIPLIER = 1000000
 
-// Get SafeDepositRouter address
 const safeDepositRouterAddress = useSafeDepositRouterAddress()
 
-// Read current state
 const { data: currentMultiplier, isLoading: isMultiplierLoading } = useSafeDepositRouterMultiplier()
 const { data: owner, isLoading: isOwnerLoading } = useSafeDepositRouterOwner()
 
-// Write function
 const setMultiplierWrite = useSetMultiplier()
 
-// ============================================================================
-// COMPUTED PROPERTIES
-// ============================================================================
-
-// Format the multiplier for display using utility function
 const formattedCurrentMultiplier = computed(() => {
   const safeMultiplier =
     typeof currentMultiplier.value === 'bigint' ? currentMultiplier.value : undefined
   return formatSafeDepositRouterMultiplier(safeMultiplier, MULTIPLIER_DECIMALS)
 })
 
-// Format display for example text
 const displayMultiplierExample = computed(() => {
   if (!newMultiplier.value || newMultiplier.value === '') return '1'
   return formatSherAmount(newMultiplier.value, MULTIPLIER_DECIMALS)
 })
 
-// Combined loading state
 const isReadLoading = computed(() => isMultiplierLoading.value || isOwnerLoading.value)
-
 const isWriteLoading = computed(() => setMultiplierWrite.writeResult.isPending.value)
-
 const isLoading = computed(() => isReadLoading.value || isWriteLoading.value)
 
-// Check if connected user is the owner
 const canManageMultiplier = computed(() => {
   if (!connection.isConnected.value || !connection.address?.value) return false
   if (!owner.value) return false
   return connection.address.value.toLowerCase() === (owner.value as string).toLowerCase()
 })
 
-// Validate multiplier input
 const multiplierError = computed(() => {
   if (!newMultiplier.value || newMultiplier.value === '') return 'Multiplier is required'
-
   const numValue = parseFloat(newMultiplier.value)
   if (isNaN(numValue)) return 'Must be a valid number'
   if (numValue < MIN_MULTIPLIER) return `Multiplier must be at least ${MIN_MULTIPLIER}`
   if (numValue > MAX_MULTIPLIER) return 'Multiplier is too large'
-
   return null
 })
 
 const isMultiplierValid = computed(() => {
   if (multiplierError.value) return false
-
-  // Check if value has actually changed
   const currentValue = parseFloat(formattedCurrentMultiplier.value)
   const newValue = parseFloat(newMultiplier.value)
-
   return !isNaN(newValue) && newValue !== currentValue
 })
 
-// ============================================================================
-// WATCH PATTERNS - Following established patterns
-// ============================================================================
-
-// Watch for set multiplier errors
 watch(
   () => setMultiplierWrite.writeResult.error.value,
   (error) => {
     if (error) {
       console.error('Error setting multiplier:', error)
       const errorMessage = parseError(error)
-
       if (errorMessage.includes('User rejected') || errorMessage.includes('User denied')) {
         toast.add({ title: 'Transaction cancelled by user', color: 'error' })
       } else {
@@ -200,7 +180,6 @@ watch(
   }
 )
 
-// Watch for set multiplier success
 watch(
   () => setMultiplierWrite.receiptResult.isSuccess.value,
   (success) => {
@@ -214,7 +193,6 @@ watch(
   }
 )
 
-// Initialize newMultiplier when currentMultiplier loads
 watch(
   formattedCurrentMultiplier,
   (value) => {
@@ -225,66 +203,43 @@ watch(
   { immediate: true }
 )
 
-// ============================================================================
-// METHODS
-// ============================================================================
-
-/**
- * Open the modal
- */
 function openModal() {
   if (!canManageMultiplier.value) {
     toast.add({ title: 'Only the owner can set the multiplier', color: 'error' })
     return
   }
-
-  // Reset to current multiplier
   if (formattedCurrentMultiplier.value !== '0') {
     newMultiplier.value = formattedCurrentMultiplier.value
   }
-
   modalRef.value?.showModal()
 }
 
-/**
- * Close the modal
- */
 function closeModal() {
   modalRef.value?.close()
 }
 
-/**
- * Handle multiplier update
- * Converts decimal input to contract format using utility function
- */
 async function handleSetMultiplier() {
   if (!safeDepositRouterAddress.value) {
     toast.add({ title: 'SafeDepositRouter address not found', color: 'error' })
     return
   }
-
   if (!canManageMultiplier.value) {
     toast.add({ title: 'Only the owner can set the multiplier', color: 'error' })
     return
   }
-
   if (!isMultiplierValid.value) {
     toast.add({ title: 'Please enter a valid multiplier', color: 'error' })
     return
   }
-
   try {
-    // Use utility function to convert decimal string to contract format
     const multiplierInWei = parseSafeDepositRouterMultiplier(
       newMultiplier.value,
       MULTIPLIER_DECIMALS
     )
-
     if (multiplierInWei === 0n) {
       toast.add({ title: 'Invalid multiplier format', color: 'error' })
       return
     }
-
     await setMultiplierWrite.executeWrite(multiplierInWei)
   } catch (error) {
     console.error('Error formatting multiplier:', error)

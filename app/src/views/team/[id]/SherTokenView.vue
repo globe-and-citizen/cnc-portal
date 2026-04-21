@@ -1,7 +1,6 @@
 <template>
   <div class="flex flex-col gap-y-8">
     <InvestorsHeader />
-    <ShareholderMigrationBanner />
     <InvestorsActions />
     <ShareholderList />
     <InvestorsTransactions />
@@ -17,7 +16,6 @@ import InvestorsHeader from '@/components/sections/SherTokenView/InvestorsHeader
 import InvestorsActions from '@/components/sections/SherTokenView/InvestorsActions.vue'
 import ShareholderList from '@/components/sections/SherTokenView/ShareholderList.vue'
 import InvestorsTransactions from '@/components/sections/SherTokenView/InvestorsTransactions.vue'
-import ShareholderMigrationBanner from '@/components/sections/SherTokenView/ShareholderMigrationBanner.vue'
 
 const teamStore = useTeamStore()
 

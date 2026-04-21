@@ -1,4 +1,7 @@
-{
+{"FeeCollectorProxyModule#FeeCollector": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+  "FeeCollectorProxyModule#TransparentUpgradeableProxy": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+  "FeeCollectorProxyModule#ProxyAdmin": "0xCafac3dD18aC6c6e92c921884f9E4176737C052c",
+  "FeeCollectorModule#FeeCollector": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
   "ProxyModule#Tips": "0xf45F9E2ECf94aC5C872a58A1e7581198b3137727",
   "ProxyModule#TransparentUpgradeableProxy": "0x736171B7c0b14710682A32B7e838D62888dc09C4",
   "ProxyModule#ProxyAdmin": "0x84aC9b205347475fbc50140Ea1246e480fdc7019",

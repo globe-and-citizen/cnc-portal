@@ -97,6 +97,8 @@ const mockTeamData = {
     { address: faker.finance.ethereumAddress(), name: 'Member 1' },
     { address: faker.finance.ethereumAddress(), name: 'Member 2' },
   ],
+
+  officerAddress: '0x3333333333333333333333333333333333333333',
 };
 
 const teamMockResolve = {
@@ -191,7 +193,7 @@ describe('Team Controller', () => {
       expect(response.body.message).toEqual('Internal server error has occured');
     });
 
-    it('should not write any officerAddress field on team creation', async () => {
+    it('should create team with null officer address when not provided', async () => {
       vi.spyOn(prisma.user, 'findUnique').mockResolvedValue(mockOwner);
       vi.spyOn(prisma.team, 'create').mockResolvedValue(teamMockResolve);
 
@@ -202,10 +204,11 @@ describe('Team Controller', () => {
       });
 
       expect(response.status).toBe(201);
-      // Officer is now managed via POST /contract/officer; team.create must
-      // not touch any officerAddress column (the column no longer exists).
-      const createCall = vi.mocked(prisma.team.create).mock.calls[0][0];
-      expect(createCall.data).not.toHaveProperty('officerAddress');
+      expect(prisma.team.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ officerAddress: null }),
+        })
+      );
     });
 
     it('should fallback notification author to empty string when owner address is missing', async () => {
@@ -257,6 +260,7 @@ describe('Team Controller', () => {
         name: 'Test Team',
         ownerAddress: '0xOwnerAddress',
         description: 'Test Description',
+        officerAddress: '0xOfficerAddress',
       });
 
       const response = await request(app).get('/1').query({ teamId: 1 }).set('address', '0xDEF');
@@ -318,7 +322,6 @@ describe('Team Controller', () => {
           description: 'Description 1',
           ownerAddress: '0xOtherOwner',
           _count: { members: 3 },
-          teamOfficers: [],
         },
         {
           id: 2,
@@ -326,7 +329,6 @@ describe('Team Controller', () => {
           description: 'Description 2',
           ownerAddress: mockOwner.address,
           _count: { members: 5 },
-          teamOfficers: [],
         },
       ];
 
@@ -335,16 +337,13 @@ describe('Team Controller', () => {
       const response = await request(app).get('/');
 
       expect(response.status).toBe(200);
-      expect(response.body).toEqual(
-        mockTeams.map(({ teamOfficers: _teamOfficers, ...t }) => ({ ...t, currentOfficer: null }))
-      );
+      expect(response.body).toEqual(mockTeams);
       expect(prisma.team.findMany).toHaveBeenCalledWith({
         include: {
-          _count: { select: { members: true } },
-          teamOfficers: {
-            where: { nextOfficer: { is: null } },
-            take: 1,
-            include: { previousOfficer: { select: { id: true, address: true } } },
+          _count: {
+            select: {
+              members: true,
+            },
           },
         },
       });
@@ -358,7 +357,6 @@ describe('Team Controller', () => {
           description: 'Description 1',
           ownerAddress: mockOwner.address,
           _count: { members: 3 },
-          teamOfficers: [],
         },
         {
           id: 2,
@@ -366,7 +364,6 @@ describe('Team Controller', () => {
           description: 'Description 2',
           ownerAddress: mockOwner.address,
           _count: { members: 5 },
-          teamOfficers: [],
         },
       ];
 
@@ -375,17 +372,20 @@ describe('Team Controller', () => {
       const response = await request(app).get('/').query({ userAddress: mockOwner.address });
 
       expect(response.status).toBe(200);
-      expect(response.body).toEqual(
-        mockTeams.map(({ teamOfficers: _teamOfficers, ...t }) => ({ ...t, currentOfficer: null }))
-      );
+      expect(response.body).toEqual(mockTeams);
       expect(prisma.team.findMany).toHaveBeenCalledWith({
-        where: { members: { some: { address: mockOwner.address } } },
+        where: {
+          members: {
+            some: {
+              address: mockOwner.address,
+            },
+          },
+        },
         include: {
-          _count: { select: { members: true } },
-          teamOfficers: {
-            where: { nextOfficer: { is: null } },
-            take: 1,
-            include: { previousOfficer: { select: { id: true, address: true } } },
+          _count: {
+            select: {
+              members: true,
+            },
           },
         },
       });
@@ -440,6 +440,7 @@ describe('Team Controller', () => {
         id: 1,
         name: 'Updated Team',
         description: 'Updated Description',
+        officerAddress: '0x4444444444444444444444444444444444444444',
       });
 
       expect(response.status).toBe(404);
@@ -452,6 +453,7 @@ describe('Team Controller', () => {
         ownerAddress: faker.finance.ethereumAddress(),
         name: 'Test Team',
         description: 'Test Description',
+        officerAddress: '0x3333333333333333333333333333333333333333',
       };
 
       vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(mockTeam);
@@ -460,6 +462,7 @@ describe('Team Controller', () => {
         id: 1,
         name: 'Updated Team',
         description: 'Updated Description',
+        officerAddress: '0x4444444444444444444444444444444444444444',
       });
 
       expect(response.status).toBe(403);
@@ -472,6 +475,7 @@ describe('Team Controller', () => {
         ownerAddress: mockOwner.address,
         name: 'Test Team',
         description: 'Test Description',
+        officerAddress: '0x3333333333333333333333333333333333333333',
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -481,6 +485,7 @@ describe('Team Controller', () => {
         ...mockTeam,
         name: 'Updated Team',
         description: 'Updated Description',
+        officerAddress: '0x4444444444444444444444444444444444444444',
       });
 
       const response = await request(app).put('/1').send({
@@ -489,6 +494,7 @@ describe('Team Controller', () => {
         owenrAddress: mockOwner.address,
         name: 'Updated Team',
         description: 'Updated Description',
+        officerAddress: '0x4444444444444444444444444444444444444444',
       });
 
       expect(response.status).toBe(200);
@@ -501,6 +507,7 @@ describe('Team Controller', () => {
         ownerAddress: mockOwner.address,
         name: 'Test Team',
         description: 'Test Description',
+        officerAddress: '0x3333333333333333333333333333333333333333',
         createdAt: new Date(),
         updatedAt: new Date(),
       });
@@ -542,6 +549,7 @@ describe('Team Controller', () => {
         ownerAddress: '0xDifferentAddress',
         name: 'Test Team',
         description: 'Test Description',
+        officerAddress: '0xOfficerAddress',
         createdAt: new Date(),
         updatedAt: new Date(),
       };

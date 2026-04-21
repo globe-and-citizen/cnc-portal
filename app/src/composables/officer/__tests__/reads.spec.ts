@@ -33,8 +33,8 @@ describe('Officer Composable Reads', () => {
   describe('useOfficerFeeBps', () => {
     it.each([
       ['missing', null],
-      ['invalid', { currentOfficer: { address: 'not-a-valid-address' } }]
-    ])('disables the query when current officer address is %s', (_label, teamData) => {
+      ['invalid', { officerAddress: 'not-a-valid-address' }]
+    ])('disables the query when officerAddress is %s', (_label, teamData) => {
       mockTeamMeta(teamData)
 
       const { config } = getReadContractCall()

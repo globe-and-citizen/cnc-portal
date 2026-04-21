@@ -36,25 +36,24 @@ export async function seedTeams(prisma: PrismaClient, config: SeedConfig, users:
     // All team members including owner
     const allMembers = [owner, ...selectedUsers];
 
-    // Create team with owner, members, current Officer, and memberships.
-    // Contracts are created in a follow-up step so we can link them to both
-    // the team (required FK) and the officer (so they surface via the
-    // currentOfficerWithContractsInclude relation).
+    // Create team with owner, members, contracts, and memberships (all in one atomic transaction)
     const team = await prisma.team.create({
       data: {
         name: faker.company.name(),
         description: faker.company.catchPhrase(),
         ownerAddress: owner.address,
+        officerAddress: officerAddress,
         createdAt: teamCreatedAt,
         members: {
           connect: allMembers.map((user) => ({ address: user.address })),
         },
-        teamOfficers: {
-          create: {
-            address: officerAddress,
+        teamContracts: {
+          create: CONTRACT_TYPES.map((contractType) => ({
+            type: contractType,
+            address: faker.finance.ethereumAddress(),
             deployer: owner.address,
             createdAt: teamCreatedAt,
-          },
+          })),
         },
         memberTeamsData: {
           create: allMembers.map((member, index) => ({
@@ -69,19 +68,6 @@ export async function seedTeams(prisma: PrismaClient, config: SeedConfig, users:
           })),
         },
       },
-      include: { teamOfficers: true },
-    });
-
-    const officerId = team.teamOfficers[0].id;
-    await prisma.teamContract.createMany({
-      data: CONTRACT_TYPES.map((contractType) => ({
-        type: contractType,
-        address: faker.finance.ethereumAddress(),
-        deployer: owner.address,
-        teamId: team.id,
-        officerId,
-        createdAt: teamCreatedAt,
-      })),
     });
 
     totalMembers += allMembers.length;

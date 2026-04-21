@@ -55,7 +55,7 @@ BankBeacon:              Check /app/src/constant.ts
 **Frontend**:
 
 ```typescript
-// /app/src/components/sections/TeamView/forms/InvestorContractStep.vue
+// /app/src/components/sections/TeamView/forms/DeployContractSection.vue
 createOfficer({
   address: OFFICER_BEACON,
   abi: FACTORY_BEACON_ABI,
@@ -522,7 +522,7 @@ error BoardOfDirectorAddressNotSet();  // BoD address not configured
 
 | Component        | Path                                                                    |
 | ---------------- | ----------------------------------------------------------------------- |
-| Deploy Contracts | `/app/src/components/sections/TeamView/forms/InvestorContractStep.vue` |
+| Deploy Contracts | `/app/src/components/sections/TeamView/forms/DeployContractSection.vue` |
 | Constants        | `/app/src/constant.ts`                                                  |
 | ABIs             | `/app/src/artifacts/abi/`                                               |
 

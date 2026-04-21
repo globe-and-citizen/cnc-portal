@@ -15,6 +15,7 @@ const memberSchema = z.object({
 export const addTeamBodySchema = z.object({
   name: nonEmptyStringSchema,
   description: z.string().optional(),
+  officerAddress: addressSchema.optional(),
   members: z.array(memberSchema).default([]),
 });
 
@@ -22,6 +23,7 @@ export const addTeamBodySchema = z.object({
 export const updateTeamBodySchema = z.object({
   name: nonEmptyStringSchema.optional(),
   description: z.string().optional(),
+  officerAddress: addressSchema.nullable().optional(),
 });
 
 // Get all teams query parameters
