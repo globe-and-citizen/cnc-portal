@@ -23,7 +23,6 @@ vi.mock('@/composables/investor/reads', () => ({
  * Mock all Investor write composables
  */
 vi.mock('@/composables/investor/writes', () => ({
-  useInvestorContractWrite: vi.fn(() => mockInvestorWrites.mint),
   useIndividualMint: vi.fn(() => mockInvestorWrites.mint),
   useDistributeMint: vi.fn(() => mockInvestorWrites.mint),
   useTransfer: vi.fn(() => mockInvestorWrites.transfer),
@@ -31,5 +30,7 @@ vi.mock('@/composables/investor/writes', () => ({
   useUnpause: vi.fn(() => mockInvestorWrites.unpause),
   useInitialize: vi.fn(() => mockInvestorWrites.initialize),
   useTransferOwnership: vi.fn(() => mockInvestorWrites.transferOwnership),
-  useRenounceOwnership: vi.fn(() => mockInvestorWrites.renounceOwnership)
+  useRenounceOwnership: vi.fn(() => mockInvestorWrites.renounceOwnership),
+  useDepositDividends: vi.fn(() => mockInvestorWrites.mint),
+  useDepositTokenDividends: vi.fn(() => mockInvestorWrites.mint)
 }))
