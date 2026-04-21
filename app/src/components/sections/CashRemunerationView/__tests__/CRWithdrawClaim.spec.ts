@@ -314,7 +314,8 @@ describe('CRWithdrawClaim', () => {
   it('handles withdraw mutation onError with user_rejected silently', async () => {
     vi.spyOn(utils, 'classifyError').mockReturnValue({
       category: 'user_rejected',
-      message: 'User rejected'
+      userMessage: 'User rejected',
+      raw: new Error('rejected')
     } as ReturnType<typeof utils.classifyError>)
 
     mockUseWriteContract.mutate = vi.fn(
@@ -332,7 +333,8 @@ describe('CRWithdrawClaim', () => {
   it('handles withdraw mutation onError with regular error', async () => {
     vi.spyOn(utils, 'classifyError').mockReturnValue({
       category: 'unknown',
-      message: 'Failure'
+      userMessage: 'Failure',
+      raw: new Error('boom')
     } as ReturnType<typeof utils.classifyError>)
 
     mockUseWriteContract.mutate = vi.fn(

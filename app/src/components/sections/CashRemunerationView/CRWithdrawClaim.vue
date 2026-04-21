@@ -2,13 +2,13 @@
   <a
     v-if="isDropDown"
     data-test="withdraw-action"
-    :class="['text-sm', { disabled: isLoad }]"
-    :aria-disabled="isLoad"
-    :tabindex="isLoad ? -1 : 0"
-    :style="{ pointerEvents: isLoad ? 'none' : undefined }"
+    :class="['text-sm', { disabled: withdrawTx.isPending.value }]"
+    :aria-disabled="withdrawTx.isPending.value"
+    :tabindex="withdrawTx.isPending.value ? -1 : 0"
+    :style="{ pointerEvents: withdrawTx.isPending.value ? 'none' : undefined }"
     @click="
       async () => {
-        if (isLoad) return
+        if (withdrawTx.isPending.value) return
         if (!isClaimOwner) {
           emit('claim-withdrawn')
           return
@@ -18,13 +18,13 @@
       }
     "
   >
-    <span v-if="isLoad" class="loading loading-spinner loading-xs mr-2"></span>
+    <span v-if="withdrawTx.isPending.value" class="loading loading-spinner loading-xs mr-2"></span>
     Withdraw
   </a>
   <UButton
     v-else
     :disabled="disabled"
-    :loading="isLoad"
+    :loading="withdrawTx.isPending.value"
     color="warning"
     data-test="withdraw-button"
     size="sm"
@@ -37,15 +37,12 @@
 import { useTeamStore } from '@/stores'
 import { buildClaimRatesWithOvertime, classifyError, log } from '@/utils'
 import { zeroAddress, type Address } from 'viem'
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import { CASH_REMUNERATION_EIP712_ABI } from '@/artifacts/abi/cash-remuneration-eip712'
-import { getBalance } from 'viem/actions'
-import { config } from '@/wagmi.config'
 import { USDC_ADDRESS } from '@/constant'
 import type { WeeklyClaim } from '@/types'
 import { useSyncWeeklyClaimsMutation } from '@/queries'
 import { useContractWritesV3 } from '@/composables/contracts/useContractWritesV3'
-import { CASH_REMUNERATION_ERRORS, resolveMessage } from '@/composables/contracts/errorCatalogs'
 
 const props = defineProps<{
   weeklyClaim: WeeklyClaim
@@ -68,12 +65,7 @@ const withdrawTx = useContractWritesV3({
   functionName: 'withdraw'
 })
 
-// const weeklyClaimUrl = computed(() => `/weeklyclaim/${props.weeklyClaim.id}/?action=withdraw`)
-
 const { mutateAsync: syncWeeklyClaim, error: syncWeeklyClaimError } = useSyncWeeklyClaimsMutation()
-
-const isLoading = ref(false)
-const isLoad = computed(() => isLoading.value as boolean)
 
 const getTokenAddress = (type: string): Address => {
   if (type === 'native') return zeroAddress as Address
@@ -82,10 +74,9 @@ const getTokenAddress = (type: string): Address => {
 }
 
 const withdrawClaim = async () => {
-  isLoading.value = true
+  if (withdrawTx.isPending.value) return
 
   if (!cashRemunerationEip712Address.value) {
-    isLoading.value = false
     toast.add({ title: 'Cash Remuneration EIP712 contract address not found', color: 'error' })
     return
   }
@@ -96,18 +87,6 @@ const withdrawClaim = async () => {
     ratePerHour: props.weeklyClaim.wage.ratePerHour,
     overtimeRatePerHour: props.weeklyClaim.wage.overtimeRatePerHour
   })
-
-  // balance check
-  const balance = await getBalance(config.getClient(), {
-    address: cashRemunerationEip712Address.value
-  })
-  const nativeAmountToPay = claimRates.find((rate) => rate.type === 'native')?.totalAmount ?? 0n
-
-  if (balance < nativeAmountToPay) {
-    isLoading.value = false
-    toast.add({ title: 'Insufficient balance', color: 'error' })
-    return
-  }
 
   const claimData = {
     hoursWorked: props.weeklyClaim.hoursWorked,
@@ -135,19 +114,17 @@ const withdrawClaim = async () => {
         }
 
         emit('claim-withdrawn')
-        isLoading.value = false
       },
       onError: (error) => {
-        isLoading.value = false
         log.error('Withdraw error', error)
 
-        const classified = classifyError(error)
+        const classified = classifyError(error, { contract: 'CashRemuneration' })
 
         // Silent when user cancels from wallet — nothing to show.
         if (classified.category === 'user_rejected') return
 
         toast.add({
-          title: resolveMessage(classified, CASH_REMUNERATION_ERRORS),
+          title: classified.userMessage,
           color: 'error'
         })
       }
