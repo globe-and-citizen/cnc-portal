@@ -1,2 +1,11 @@
 // Contract-specific writes composables
-export { useOfficerDeployment, type OfficerDeploymentOptions } from './useOfficerDeployment'
+export {
+  deployOfficer,
+  useDeployOfficer,
+  useInvalidateOfficerQueries,
+  formatDeployError,
+  type DeployOfficerArgs,
+  type OfficerDeploymentMetadata,
+  type OfficerDeploymentResult
+} from './useOfficerDeployment'
+export { useOfficerRedeploy } from './useOfficerRedeploy'

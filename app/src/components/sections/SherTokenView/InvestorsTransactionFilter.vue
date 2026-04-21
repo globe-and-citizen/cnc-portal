@@ -3,7 +3,6 @@
     <CustomDatePicker
       v-if="showDateFilter"
       v-model="dateRange"
-      class="min-w-[140px]"
       :data-test-prefix="dataTestPrefix"
     />
     <div class="relative">

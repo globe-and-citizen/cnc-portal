@@ -1,31 +1,3 @@
-<script setup lang="ts">
-import { ref, computed } from 'vue'
-import type { Team } from '@/types'
-import InvestorContractStep from './InvestorContractStep.vue'
-
-const props = defineProps<{
-  team: Partial<Team>
-}>()
-
-const emit = defineEmits(['done'])
-
-const open = ref(false)
-
-const stepperItems = computed(() => [
-  { title: 'Team Details', value: 1 },
-  {
-    title: props.team.members?.length ? `Members (${props.team.members.length})` : 'Members',
-    value: 2
-  },
-  { title: 'Investor Contract', value: 3 }
-])
-
-const handleDone = () => {
-  open.value = false
-  emit('done')
-}
-</script>
-
 <template>
   <div>
     <p class="text-sm">
@@ -53,3 +25,28 @@ const handleDone = () => {
     </UModal>
   </div>
 </template>
+
+<script setup lang="ts">
+import { ref, computed } from 'vue'
+import type { Team } from '@/types'
+import InvestorContractStep from './InvestorContractStep.vue'
+
+const props = defineProps<{
+  team: Team
+}>()
+
+const open = ref(false)
+
+const stepperItems = computed(() => [
+  { title: 'Team Details', value: 1 },
+  {
+    title: props.team.members?.length ? `Members (${props.team.members.length})` : 'Members',
+    value: 2
+  },
+  { title: 'Investor Contract', value: 3 }
+])
+
+const handleDone = () => {
+  open.value = false
+}
+</script>

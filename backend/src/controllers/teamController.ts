@@ -1,16 +1,98 @@
-import { User } from '@prisma/client';
+import { TeamContract, TeamOfficer, User } from '@prisma/client';
 import { Request, Response } from 'express';
 import { isAddress } from 'viem';
 import { addNotification, prisma } from '../utils';
 import { errorResponse } from '../utils/utils';
 import { resolveStorageImageUrl } from '../utils/profileImage.util';
 
+// Shared: include the immediate predecessor (id + address only) so clients
+// can walk one step back for copy-forward flows (e.g. shareholder migration)
+// without a second round-trip.
+const previousOfficerInclude = {
+  previousOfficer: { select: { id: true, address: true } },
+} as const;
+
+// Prisma include shape that fetches the linked list head — the TeamOfficer
+// row that has no successor pointing back to it. This is the team's current
+// Officer. Returned as a single-element array because Prisma includes are
+// always relations; we flatten it to `currentOfficer` in the response.
+export const currentOfficerInclude = {
+  teamOfficers: {
+    where: { nextOfficer: { is: null } },
+    take: 1,
+    include: previousOfficerInclude,
+  },
+} as const;
+
+// Same as currentOfficerInclude, but also loads the contracts governed by the
+// current Officer. Use on endpoints that expose `teamContracts` on the team —
+// we want the live set (contracts of the current Officer), not the union of
+// every Officer's contracts across history.
+//
+// Safe and SafeDepositRouter are intentionally stored with officerId = NULL
+// because they survive Officer redeploys. Load them off the team relation
+// directly so they remain visible alongside the current Officer's contracts.
+export const currentOfficerWithContractsInclude = {
+  teamOfficers: {
+    where: { nextOfficer: { is: null } },
+    take: 1,
+    include: { ...previousOfficerInclude, contracts: true },
+  },
+  teamContracts: {
+    where: { officerId: null },
+  },
+} as const;
+
+// Serialize a TeamOfficer for API responses: BigInt isn't valid JSON, so
+// deployBlockNumber must be stringified.
+export const serializeOfficer = (o: TeamOfficer | undefined | null) =>
+  o
+    ? {
+        ...o,
+        deployBlockNumber: o.deployBlockNumber?.toString() ?? null,
+      }
+    : null;
+
+// Pulls the head of the linked list out of an `include: currentOfficerInclude`
+// result and exposes it as `currentOfficer`. Removes the raw `teamOfficers`
+// array so consumers don't accidentally rely on the implementation detail.
+const withCurrentOfficer = <T extends { teamOfficers?: TeamOfficer[] }>(team: T) => {
+  const { teamOfficers, ...rest } = team;
+  return {
+    ...rest,
+    currentOfficer: serializeOfficer(teamOfficers?.[0]),
+  };
+};
+
+// Same as withCurrentOfficer but additionally surfaces the current Officer's
+// contracts as `teamContracts` on the team — scoping the contract list to the
+// currently active generation so archived contracts don't leak out.
+const withCurrentOfficerAndContracts = <
+  T extends {
+    teamOfficers?: (TeamOfficer & { contracts: TeamContract[] })[];
+    teamContracts?: TeamContract[];
+  },
+>(
+  team: T
+) => {
+  const { teamOfficers, teamContracts, ...rest } = team;
+  const head = teamOfficers?.[0];
+  const { contracts, ...headWithoutContracts } = head ?? { contracts: [] };
+  return {
+    ...rest,
+    currentOfficer: serializeOfficer(head ? (headWithoutContracts as TeamOfficer) : null),
+    // Merge the current Officer's contracts with officer-less contracts
+    // (Safe / SafeDepositRouter) so the client sees the full live set.
+    teamContracts: [...contracts, ...(teamContracts ?? [])],
+  };
+};
+
 // Create a new team
 const addTeam = async (req: Request, res: Response) => {
   /*
   #swagger.tags = ['Teams']
   */
-  const { name, members, description, officerAddress } = req.body;
+  const { name, members, description } = req.body;
   const callerAddress = req.address;
   try {
     // Validate all members' wallet addresses
@@ -55,7 +137,6 @@ const addTeam = async (req: Request, res: Response) => {
             memberAddress: member.address,
           })),
         },
-        officerAddress: officerAddress || null,
       },
       include: {
         members: {
@@ -109,7 +190,7 @@ const getTeam = async (req: Request, res: Response) => {
             },
           },
         },
-        teamContracts: true,
+        ...currentOfficerWithContractsInclude,
       },
     });
 
@@ -132,7 +213,7 @@ const getTeam = async (req: Request, res: Response) => {
     );
 
     res.status(200).json({
-      ...team,
+      ...withCurrentOfficerAndContracts(team),
       members: membersWithResolvedImages,
     });
   } catch (error: unknown) {
@@ -170,10 +251,11 @@ const getAllTeams = async (req: Request, res: Response) => {
               members: true,
             },
           },
+          ...currentOfficerInclude,
         },
       });
 
-      return res.status(200).json(memberTeams);
+      return res.status(200).json(memberTeams.map(withCurrentOfficer));
     }
 
     // No userAddress provided - return all teams
@@ -184,10 +266,11 @@ const getAllTeams = async (req: Request, res: Response) => {
             members: true,
           },
         },
+        ...currentOfficerInclude,
       },
     });
 
-    res.status(200).json(allTeams);
+    res.status(200).json(allTeams.map(withCurrentOfficer));
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal Server Error';
     return errorResponse(500, message, res);
@@ -198,7 +281,7 @@ const getAllTeams = async (req: Request, res: Response) => {
 
 const updateTeam = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { name, description, officerAddress } = req.body;
+  const { name, description } = req.body;
 
   try {
     const teamU = await prisma.team.update({
@@ -206,7 +289,6 @@ const updateTeam = async (req: Request, res: Response) => {
       data: {
         name,
         description,
-        officerAddress,
       },
       include: {
         members: {
@@ -215,10 +297,10 @@ const updateTeam = async (req: Request, res: Response) => {
             name: true,
           },
         },
-        teamContracts: true,
+        ...currentOfficerWithContractsInclude,
       },
     });
-    res.status(200).json(teamU);
+    res.status(200).json(withCurrentOfficerAndContracts(teamU));
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal Server Error';
     return errorResponse(500, message, res);
