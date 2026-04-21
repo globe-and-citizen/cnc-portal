@@ -90,22 +90,5 @@ export const GET_BANK_EVENTS = gql`
         timestamp
       }
     }
-    rawContractTokenTransfers(
-      where: { contractAddress: $contractAddress }
-      orderBy: "timestamp"
-      orderDirection: "desc"
-      limit: $limit
-    ) {
-      items {
-        id
-        tokenAddress
-        contractAddress
-        direction
-        from
-        to
-        amount
-        timestamp
-      }
-    }
   }
 `
