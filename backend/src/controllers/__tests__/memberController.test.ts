@@ -73,7 +73,6 @@ const mockResolvedTeam = {
   name: 'Test Team',
   description: 'Test Description',
   ownerAddress: mockOwner.address,
-  officerAddress: '0x3333333333333333333333333333333333333333',
   bankAddress: null,
   votingAddress: null,
   boardOfDirectorsAddress: null,

@@ -4,7 +4,8 @@ import {
   getContracts,
   syncContracts,
   addContract,
-  resetTeamContracts,
+  getTeamOfficers,
+  createOfficer,
 } from '../controllers/contractController';
 import { requireTeamOwner } from '../middleware/teamAuthzMiddleware';
 import {
@@ -13,6 +14,7 @@ import {
   addContractBodySchema,
   syncContractsBodySchema,
   getContractsQuerySchema,
+  createOfficerBodySchema,
 } from '../validation';
 
 const contractRoutes = express.Router();
@@ -206,11 +208,87 @@ contractRoutes.put(
   syncContracts
 );
 
-contractRoutes.delete(
-  '/reset',
-  validateBody(syncContractsBodySchema),
-  requireTeamOwner('body.teamId'),
-  resetTeamContracts
-);
+/**
+ * @openapi
+ * /contract/officer:
+ *  post:
+ *   summary: Register a freshly deployed Officer contract on a team
+ *   description: Inserts a new TeamOfficer row at the head of the team's
+ *     Officer linked list (linking it to the previous head if any) and syncs
+ *     the contracts the new Officer governs in a single call. Intended to be
+ *     called by the frontend right after a successful Officer deployment.
+ *   requestBody:
+ *     required: true
+ *     content:
+ *       application/json:
+ *         schema:
+ *           type: object
+ *           required: [teamId, address]
+ *           properties:
+ *             teamId:
+ *               type: integer
+ *               minimum: 1
+ *             address:
+ *               type: string
+ *               description: The newly deployed Officer contract address
+ *             deployBlockNumber:
+ *               type: integer
+ *               description: Block number of the deploy transaction receipt
+ *             deployedAt:
+ *               type: string
+ *               format: date-time
+ *               description: Timestamp of the deploy transaction
+ *   responses:
+ *     200:
+ *       description: Officer registered and contracts synced
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               officer:
+ *                 type: object
+ *                 description: The new TeamOfficer row (head of the linked list).
+ *               previousOfficer:
+ *                 type: object
+ *                 nullable: true
+ *                 description: The TeamOfficer the new one points back to, or
+ *                   null if this is the first Officer ever deployed. Frontend
+ *                   uses its address to copy shareholders / state forward.
+ *               contractsCreated:
+ *                 type: integer
+ *     403:
+ *       description: Caller is not the team owner
+ *     404:
+ *       description: Team not found
+ *     500:
+ *       description: Internal server error
+ */
+contractRoutes.post('/officer', validateBody(createOfficerBodySchema), createOfficer);
+
+/**
+ * @openapi
+ * /contract/officers:
+ *  get:
+ *   summary: List Officer contract history for a team
+ *   parameters:
+ *     - in: query
+ *       name: teamId
+ *       required: true
+ *       schema:
+ *         type: integer
+ *         description: The ID of the team
+ *         minimum: 1
+ *   responses:
+ *     200:
+ *       description: Ordered list of TeamOfficer rows, newest first. Each row
+ *         includes its related contracts and an `isCurrent` flag — true for
+ *         the head of the linked list (no successor exists).
+ *     404:
+ *       description: Team not found
+ *     500:
+ *       description: Internal server error
+ */
+contractRoutes.get('/officers', validateQuery(getContractsQuerySchema), getTeamOfficers);
 
 export default contractRoutes;
