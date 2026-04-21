@@ -51,7 +51,6 @@ const mockTeam = {
   description: null,
   createdAt: new Date(),
   updatedAt: new Date(),
-  officerAddress: '0x2234567890123456789012345678901234567890',
 } as Team;
 
 const mockWage = {

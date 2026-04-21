@@ -214,7 +214,7 @@ Each team deploys their own set of contract instances:
 
 ```
 1. User Clicks "Deploy Contracts" in Frontend
-   └─ Triggers: DeployContractSection.vue
+   └─ Triggers: InvestorContractStep.vue
 
 2. Frontend Calls FactoryBeacon.createBeaconProxy()
    ├─ Parameters:
@@ -274,7 +274,7 @@ Each team deploys their own set of contract instances:
 | --------------- | ----------------------------------------------------------------------- |
 | Beacon Modules  | `/contract/ignition/modules/*BeaconModule.ts`                           |
 | Officer Module  | `/contract/ignition/modules/OfficerModule.ts`                           |
-| Frontend Deploy | `/app/src/components/sections/TeamView/forms/DeployContractSection.vue` |
+| Frontend Deploy | `/app/src/components/sections/TeamView/forms/InvestorContractStep.vue` |
 | Constants       | `/app/src/constant.ts`                                                  |
 
 ---

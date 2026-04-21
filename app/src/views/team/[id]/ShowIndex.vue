@@ -28,7 +28,7 @@
     >
       <!-- Continue Team Creation section -->
       <div v-if="!hasContract">
-        <ContinueAddTeamForm :team="teamStore.currentTeamMeta.data" @done="() => {}" />
+        <ContinueAddTeamForm :team="teamStore.currentTeamMeta.data" />
       </div>
       <TeamMeta />
       <CompanyOverview />
@@ -64,7 +64,7 @@ onMounted(() => {
 watch(teamStore.currentTeamMeta, () => {
   if (
     teamStore.currentTeamId &&
-    teamStore.currentTeamMeta.data?.officerAddress &&
+    teamStore.currentTeamMeta.data?.currentOfficer?.address &&
     teamStore.currentTeamMeta.data?.teamContracts.length === 0
   ) {
     syncContracts({ body: { teamId: teamStore.currentTeamId } })
@@ -88,7 +88,7 @@ const breadcrumbItems = computed(() => {
 watch(
   [
     () => route.params.id,
-    () => teamStore.currentTeamMeta.data?.officerAddress,
+    () => teamStore.currentTeamMeta.data?.currentOfficer?.address,
     () => (teamStore.currentTeamMeta.data?.teamContracts ?? []).length
   ],
   async ([teamId]) => {

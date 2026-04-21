@@ -59,12 +59,30 @@ export interface Range {
   end: Date
 }
 
+export interface PreviousOfficerRef {
+  id: number
+  address: string
+}
+
+export interface CurrentOfficer {
+  id: number
+  address: string
+  teamId: number
+  deployer: string
+  deployBlockNumber: string | null
+  deployedAt: string | null
+  previousOfficerId: number | null
+  previousOfficer: PreviousOfficerRef | null
+  createdAt: string
+  updatedAt: string
+}
+
 export interface Team {
   id: number
   name: string
   description: string | null
   ownerAddress: string
-  officerAddress: string | null
+  currentOfficer: CurrentOfficer | null
   createdAt: string
   updatedAt: string
   _count?: {

@@ -75,7 +75,7 @@ graph TB
 
 ```mermaid
 graph TB
-    Frontend["FRONTEND APPLICATION<br/>DeployContractSection.vue"]
+    Frontend["FRONTEND APPLICATION<br/>InvestorContractStep.vue"]
 
     subgraph OfficerHub["OFFICER CONTRACT (Central Hub)"]
         OfficerState["<b>State:</b><br/>• contractBeacons<br/>• deployedContracts<br/>• bodContract"]
@@ -128,7 +128,7 @@ graph TB
 ```mermaid
 sequenceDiagram
     actor User
-    participant Frontend as Frontend<br/>DeployContractSection.vue
+    participant Frontend as Frontend<br/>InvestorContractStep.vue
     participant FB as FactoryBeacon
     participant Officer as Officer Contract
     participant Bank as Bank Proxy
