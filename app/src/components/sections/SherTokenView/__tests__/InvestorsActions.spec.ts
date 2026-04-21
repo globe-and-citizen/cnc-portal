@@ -3,7 +3,7 @@ import { mount } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
 import InvestorsActions from '@/components/sections/SherTokenView/InvestorsActions.vue'
 import type { Address } from 'viem'
-import { mockBankReads, mockInvestorReads, mockTeamStore, resetContractMocks } from '@/tests/mocks'
+import { mockInvestorReads, mockTeamStore, resetContractMocks } from '@/tests/mocks'
 
 const DistributeMintActionStub = {
   props: ['tokenSymbol', 'investorsAddress'],
@@ -16,7 +16,7 @@ const MintTokenActionStub = {
 }
 
 const PayDividendsActionStub = {
-  props: ['tokenSymbol', 'shareholdersCount', 'investorsAddress', 'bankOwner', 'bankAddress'],
+  props: ['tokenSymbol', 'shareholdersCount', 'investorsAddress', 'bankAddress'],
   template: '<div data-test="pay-dividends-action" />'
 }
 
@@ -45,8 +45,7 @@ describe('InvestorsActions.vue', () => {
 
     mockInvestorReads.symbol.data.value = 'SHER'
     mockInvestorReads.owner.data.value = '0xOwner'
-    mockInvestorReads.shareholders.data.value = ['0x123', '0x456']
-    mockBankReads.owner.data.value = '0xBankOwner'
+    mockInvestorReads.shareholders.data.value = ['0x123', '0x456'] as never[]
     mockInvestorReads.symbol.isLoading.value = false
     mockInvestorReads.owner.isLoading.value = false
   })
@@ -108,7 +107,6 @@ describe('InvestorsActions.vue', () => {
     expect(pay.props('investorsAddress')).toBe(
       '0x2222222222222222222222222222222222222222' as Address
     )
-    expect(pay.props('bankOwner')).toBe('0xBankOwner' as Address)
     expect(pay.props('bankAddress')).toBe('0x1111111111111111111111111111111111111111' as Address)
   })
 
