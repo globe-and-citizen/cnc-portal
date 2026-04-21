@@ -1,179 +1,67 @@
-import { computed, unref, type MaybeRef } from 'vue'
-import type { Address, Hash, Hex } from 'viem'
-import { useContractWrites } from '@/composables/contracts/useContractWritesV2'
-import { useTeamStore } from '@/stores'
+import { computed } from 'vue'
 import { CASH_REMUNERATION_EIP712_ABI } from '@/artifacts/abi/cash-remuneration-eip712'
+import { useContractWritesV3 } from '@/composables/contracts/useContractWritesV3'
+import { useTeamStore } from '@/stores/teamStore'
 import type { ExtractAbiFunctionNames } from 'abitype'
 
 type CashRemunerationFunctionNames = ExtractAbiFunctionNames<typeof CASH_REMUNERATION_EIP712_ABI>
 
-export interface CashRemunerationWage {
-  hourlyRate: bigint
-  tokenAddress: Address
-}
-
-export interface CashRemunerationWageClaim {
-  employeeAddress: Address
-  hoursWorked: number
-  wages: readonly CashRemunerationWage[]
-  date: bigint
-}
-
-export function useCashRemunerationContractWrite(options: {
-  functionName: CashRemunerationFunctionNames
-  args?: MaybeRef<readonly unknown[]>
-  value?: MaybeRef<bigint>
-}) {
+function useCashRemunerationContractWrite(functionName: CashRemunerationFunctionNames) {
   const teamStore = useTeamStore()
   const contractAddress = computed(() =>
     teamStore.getContractAddressByType('CashRemunerationEIP712')
   )
-
-  return useContractWrites({
+  return useContractWritesV3({
     contractAddress,
     abi: CASH_REMUNERATION_EIP712_ABI,
-    functionName: options.functionName,
-    args: options.args ?? [],
-    ...(options.value !== undefined ? { value: options.value } : {})
+    functionName
   })
 }
 
-export function useCashRemunerationAddTokenSupport(tokenAddress: MaybeRef<Address>) {
-  const write = useCashRemunerationContractWrite({
-    functionName: 'addTokenSupport',
-    args: []
-  })
-
-  return {
-    ...write,
-    executeWrite: () => write.executeWrite([unref(tokenAddress)] as readonly unknown[])
-  }
+export function useWithdraw() {
+  return useCashRemunerationContractWrite('withdraw')
 }
 
-export function useCashRemunerationRemoveTokenSupport(tokenAddress: MaybeRef<Address>) {
-  const write = useCashRemunerationContractWrite({
-    functionName: 'removeTokenSupport',
-    args: []
-  })
-
-  return {
-    ...write,
-    executeWrite: () => write.executeWrite([unref(tokenAddress)] as readonly unknown[])
-  }
+export function useAddTokenSupport() {
+  return useCashRemunerationContractWrite('addTokenSupport')
 }
 
-export function useCashRemunerationDisableClaim(signatureHash: MaybeRef<Hash>) {
-  const write = useCashRemunerationContractWrite({
-    functionName: 'disableClaim',
-    args: []
-  })
-
-  return {
-    ...write,
-    executeWrite: () => write.executeWrite([unref(signatureHash)] as readonly unknown[])
-  }
+export function useRemoveTokenSupport() {
+  return useCashRemunerationContractWrite('removeTokenSupport')
 }
 
-export function useCashRemunerationEnableClaim(signatureHash: MaybeRef<Hash>) {
-  const write = useCashRemunerationContractWrite({
-    functionName: 'enableClaim',
-    args: []
-  })
-
-  return {
-    ...write,
-    executeWrite: () => write.executeWrite([unref(signatureHash)] as readonly unknown[])
-  }
+export function useEnableClaim() {
+  return useCashRemunerationContractWrite('enableClaim')
 }
 
-export function useCashRemunerationInitialize(
-  owner: MaybeRef<Address>,
-  tokenAddresses: MaybeRef<readonly Address[]>
-) {
-  const write = useCashRemunerationContractWrite({
-    functionName: 'initialize',
-    args: []
-  })
-
-  return {
-    ...write,
-    executeWrite: () =>
-      write.executeWrite([unref(owner), unref(tokenAddresses)] as readonly unknown[])
-  }
+export function useDisableClaim() {
+  return useCashRemunerationContractWrite('disableClaim')
 }
 
-export function useCashRemunerationSetOfficerAddress(officerAddress: MaybeRef<Address>) {
-  const write = useCashRemunerationContractWrite({
-    functionName: 'setOfficerAddress',
-    args: []
-  })
-
-  return {
-    ...write,
-    executeWrite: () => write.executeWrite([unref(officerAddress)] as readonly unknown[])
-  }
+export function useInitialize() {
+  return useCashRemunerationContractWrite('initialize')
 }
 
-export function useCashRemunerationWithdraw(
-  wageClaim: MaybeRef<CashRemunerationWageClaim>,
-  signature: MaybeRef<Hex>
-) {
-  const write = useCashRemunerationContractWrite({
-    functionName: 'withdraw',
-    args: []
-  })
-
-  return {
-    ...write,
-    executeWrite: () =>
-      write.executeWrite([unref(wageClaim), unref(signature)] as readonly unknown[])
-  }
+export function useSetOfficerAddress() {
+  return useCashRemunerationContractWrite('setOfficerAddress')
 }
 
-export function useCashRemunerationTransferOwnership(newOwner: MaybeRef<Address>) {
-  const write = useCashRemunerationContractWrite({
-    functionName: 'transferOwnership',
-    args: []
-  })
-
-  return {
-    ...write,
-    executeWrite: () => write.executeWrite([unref(newOwner)] as readonly unknown[])
-  }
+export function useOwnerWithdrawAllToBank() {
+  return useCashRemunerationContractWrite('ownerWithdrawAllToBank')
 }
 
-export function useCashRemunerationRenounceOwnership() {
-  const write = useCashRemunerationContractWrite({
-    functionName: 'renounceOwnership',
-    args: []
-  })
-
-  return {
-    ...write,
-    executeWrite: () => write.executeWrite([])
-  }
+export function useTransferOwnership() {
+  return useCashRemunerationContractWrite('transferOwnership')
 }
 
-export function useCashRemunerationPause() {
-  const write = useCashRemunerationContractWrite({
-    functionName: 'pause',
-    args: []
-  })
-
-  return {
-    ...write,
-    executeWrite: () => write.executeWrite([])
-  }
+export function useRenounceOwnership() {
+  return useCashRemunerationContractWrite('renounceOwnership')
 }
 
-export function useCashRemunerationUnpause() {
-  const write = useCashRemunerationContractWrite({
-    functionName: 'unpause',
-    args: []
-  })
+export function usePause() {
+  return useCashRemunerationContractWrite('pause')
+}
 
-  return {
-    ...write,
-    executeWrite: () => write.executeWrite([])
-  }
+export function useUnpause() {
+  return useCashRemunerationContractWrite('unpause')
 }
