@@ -128,7 +128,7 @@ export const mockExpenseAccountReads = {
 }
 
 export const mockExpenseAccountWrites = {
-  ownerWithdrawAllToBank: createContractWriteMock()
+  ownerWithdrawAllToBank: createContractWriteV3Mock()
 }
 
 /**
@@ -174,14 +174,13 @@ export const resetContractMocks = () => {
     mockExpenseAccountReads
   ]
 
-  const allWriteV2Mocks = [
-    mockElectionsWrites,
-    mockBODWrites,
-    mockInvestorWrites,
+  const allWriteV2Mocks = [mockElectionsWrites, mockBODWrites, mockInvestorWrites]
+
+  const allWriteV3Mocks = [
+    mockBankWrites,
+    mockCashRemunerationWrites,
     mockExpenseAccountWrites
   ]
-
-  const allWriteV3Mocks = [mockBankWrites, mockCashRemunerationWrites]
 
   // Reset all read mocks
   allReadMocks.forEach((mockGroup) => {

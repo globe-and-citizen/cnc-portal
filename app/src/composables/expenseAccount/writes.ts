@@ -1,111 +1,69 @@
-import { computed, unref, type MaybeRef } from 'vue'
-import type { Address, Hash, Hex } from 'viem'
-import { useContractWrites } from '@/composables/contracts/useContractWritesV2'
-import { useTeamStore } from '@/stores'
+import { computed } from 'vue'
 import { EXPENSE_ACCOUNT_EIP712_ABI } from '@/artifacts/abi/expense-account-eip712'
-import type { BudgetLimit } from '@/types/expense-account'
+import { useContractWritesV3 } from '@/composables/contracts/useContractWritesV3'
+import { useTeamStore } from '@/stores/teamStore'
 import type { ExtractAbiFunctionNames } from 'abitype'
 
 type ExpenseAccountFunctionNames = ExtractAbiFunctionNames<typeof EXPENSE_ACCOUNT_EIP712_ABI>
 
-export function useExpenseAccountContractWrite(options: {
-  functionName: ExpenseAccountFunctionNames
-  args?: MaybeRef<readonly unknown[]>
-  value?: MaybeRef<bigint>
-}) {
+function useExpenseAccountContractWrite(functionName: ExpenseAccountFunctionNames) {
   const teamStore = useTeamStore()
   const contractAddress = computed(() => teamStore.getContractAddressByType('ExpenseAccountEIP712'))
-
-  return useContractWrites({
+  return useContractWritesV3({
     contractAddress,
     abi: EXPENSE_ACCOUNT_EIP712_ABI,
-    functionName: options.functionName,
-    args: options.args ?? [],
-    ...(options.value !== undefined ? { value: options.value } : {})
+    functionName
   })
 }
 
-export function useExpenseAccountActivateApproval(signatureHash: MaybeRef<Hash>) {
-  const args = computed(() => [unref(signatureHash)] as readonly unknown[])
-  return useExpenseAccountContractWrite({
-    functionName: 'activateApproval',
-    args
-  })
+export function useTransfer() {
+  return useExpenseAccountContractWrite('transfer')
 }
 
-export function useExpenseAccountDeactivateApproval(signatureHash: MaybeRef<Hash>) {
-  const args = computed(() => [unref(signatureHash)] as readonly unknown[])
-  return useExpenseAccountContractWrite({
-    functionName: 'deactivateApproval',
-    args
-  })
+export function useDepositToken() {
+  return useExpenseAccountContractWrite('depositToken')
 }
 
-export function useExpenseAccountDepositToken(
-  tokenAddress: MaybeRef<Address>,
-  amount: MaybeRef<bigint>
-) {
-  const args = computed(() => [unref(tokenAddress), unref(amount)] as readonly unknown[])
-  return useExpenseAccountContractWrite({
-    functionName: 'depositToken',
-    args
-  })
+export function useActivateApproval() {
+  return useExpenseAccountContractWrite('activateApproval')
 }
 
-export function useExpenseAccountTransfer(
-  to: MaybeRef<Address>,
-  amount: MaybeRef<bigint>,
-  budgetLimit: MaybeRef<BudgetLimit>,
-  signature: MaybeRef<Hex>
-) {
-  const args = computed(
-    () => [unref(to), unref(amount), unref(budgetLimit), unref(signature)] as readonly unknown[]
-  )
-  return useExpenseAccountContractWrite({
-    functionName: 'transfer',
-    args
-  })
+export function useDeactivateApproval() {
+  return useExpenseAccountContractWrite('deactivateApproval')
 }
 
-export function useExpenseAccountInitialize(
-  owner: MaybeRef<Address>,
-  usdtAddress: MaybeRef<Address>,
-  usdcAddress: MaybeRef<Address>
-) {
-  const args = computed(
-    () => [unref(owner), unref(usdtAddress), unref(usdcAddress)] as readonly unknown[]
-  )
-  return useExpenseAccountContractWrite({
-    functionName: 'initialize',
-    args
-  })
+export function useAddTokenSupport() {
+  return useExpenseAccountContractWrite('addTokenSupport')
 }
 
-export function useExpenseAccountTransferOwnership(newOwner: MaybeRef<Address>) {
-  const args = computed(() => [unref(newOwner)] as readonly unknown[])
-  return useExpenseAccountContractWrite({
-    functionName: 'transferOwnership',
-    args
-  })
+export function useRemoveTokenSupport() {
+  return useExpenseAccountContractWrite('removeTokenSupport')
 }
 
-export function useExpenseAccountRenounceOwnership() {
-  return useExpenseAccountContractWrite({
-    functionName: 'renounceOwnership',
-    args: []
-  })
+export function useInitialize() {
+  return useExpenseAccountContractWrite('initialize')
 }
 
-export function useExpenseAccountPause() {
-  return useExpenseAccountContractWrite({
-    functionName: 'pause',
-    args: []
-  })
+export function useSetOfficerAddress() {
+  return useExpenseAccountContractWrite('setOfficerAddress')
 }
 
-export function useExpenseAccountUnpause() {
-  return useExpenseAccountContractWrite({
-    functionName: 'unpause',
-    args: []
-  })
+export function useOwnerWithdrawAllToBank() {
+  return useExpenseAccountContractWrite('ownerWithdrawAllToBank')
+}
+
+export function useTransferOwnership() {
+  return useExpenseAccountContractWrite('transferOwnership')
+}
+
+export function useRenounceOwnership() {
+  return useExpenseAccountContractWrite('renounceOwnership')
+}
+
+export function usePause() {
+  return useExpenseAccountContractWrite('pause')
+}
+
+export function useUnpause() {
+  return useExpenseAccountContractWrite('unpause')
 }

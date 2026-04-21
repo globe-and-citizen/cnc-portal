@@ -140,7 +140,9 @@ describe('CRWithdrawClaim', () => {
 
   it('skips dropdown click while loading', async () => {
     // Don't invoke onSuccess so isLoading stays true
-    mockUseWriteContract.mutate = vi.fn()
+    mockUseWriteContract.mutate = vi.fn(() => {
+      mockUseWriteContract.isPending.value = true
+    })
 
     createWrapper({ isDropDown: true, isClaimOwner: true })
 
@@ -152,6 +154,7 @@ describe('CRWithdrawClaim', () => {
     await nextTick()
 
     expect(mockUseWriteContract.mutate).toHaveBeenCalledTimes(1)
+    mockUseWriteContract.isPending.value = false
   })
 
   it('shows error when contract address is missing', async () => {

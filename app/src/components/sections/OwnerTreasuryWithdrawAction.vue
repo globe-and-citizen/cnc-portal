@@ -64,13 +64,15 @@ import { computed, ref, watch } from 'vue'
 import { encodeFunctionData, type Address } from 'viem'
 import { useContractBalance } from '@/composables'
 import { useCashRemunerationOwner } from '@/composables/cashRemuneration/reads'
-import { useOwnerWithdrawAllToBank } from '@/composables/cashRemuneration/writes'
+import { useOwnerWithdrawAllToBank as useCashOwnerWithdrawAll } from '@/composables/cashRemuneration/writes'
 import { useExpenseAccountOwner } from '@/composables/expenseAccount/reads'
-import { useExpenseAccountContractWrite } from '@/composables/expenseAccount/writes'
+import { useOwnerWithdrawAllToBank as useExpenseOwnerWithdrawAll } from '@/composables/expenseAccount/writes'
 import { CASH_REMUNERATION_EIP712_ABI } from '@/artifacts/abi/cash-remuneration-eip712'
 import { EXPENSE_ACCOUNT_EIP712_ABI } from '@/artifacts/abi/expense-account-eip712'
 import { useTeamStore, useUserDataStore } from '@/stores'
 import type { ContractType } from '@/types'
+import type { ContractKey } from '@/composables/contracts/errorCatalogs.types'
+import { classifyError } from '@/utils'
 import { useBodAddAction } from '@/composables/bod/writes'
 import { useBodIsBodAction } from '@/composables/bod/reads'
 import { useQueryClient } from '@tanstack/vue-query'
@@ -89,33 +91,31 @@ const queryClient = useQueryClient()
 const chainId = useChainId()
 
 const isSubmitting = ref(false)
-const withdrawModal = ref({
-  mount: false,
-  show: false
-})
+const withdrawModal = ref({ mount: false, show: false })
 const modalWarningMessage = ref('')
+
+const isCash = computed(() => props.contractType === 'CashRemunerationEIP712')
 
 const contractAddress = computed(
   () => teamStore.getContractAddressByType(props.contractType) as Address | undefined
 )
 
 const abi = computed(() =>
-  props.contractType === 'CashRemunerationEIP712'
-    ? CASH_REMUNERATION_EIP712_ABI
-    : EXPENSE_ACCOUNT_EIP712_ABI
+  isCash.value ? CASH_REMUNERATION_EIP712_ABI : EXPENSE_ACCOUNT_EIP712_ABI
+)
+
+const errorContract = computed<ContractKey>(() =>
+  isCash.value ? 'CashRemuneration' : 'ExpenseAccount'
 )
 
 const { data: cashRemunerationOwnerAddress } = useCashRemunerationOwner()
 const { data: expenseAccountOwnerAddress } = useExpenseAccountOwner()
 
 const ownerAddress = computed(() =>
-  props.contractType === 'CashRemunerationEIP712'
-    ? cashRemunerationOwnerAddress.value
-    : expenseAccountOwnerAddress.value
+  isCash.value ? cashRemunerationOwnerAddress.value : expenseAccountOwnerAddress.value
 )
 
 const { isBodAction } = useBodIsBodAction(contractAddress as unknown as Address)
-
 const bodAddAction = useBodAddAction()
 
 const isOwner = computed(() => {
@@ -126,66 +126,24 @@ const isOwner = computed(() => {
 const hasTheRight = computed(() => isOwner.value || isBodAction.value)
 
 const { balances } = useContractBalance(contractAddress)
-
 const hasWithdrawableBalance = computed(() => balances.value.some((b) => b.amount > 0))
 
-const cashWithdrawAllWrite = useOwnerWithdrawAllToBank()
-const expenseWithdrawAllWrite = useExpenseAccountContractWrite({
-  functionName: 'ownerWithdrawAllToBank'
-})
+const cashWithdraw = useCashOwnerWithdrawAll()
+const expenseWithdraw = useExpenseOwnerWithdrawAll()
 
-const isLoadingWrite = computed(
-  () =>
-    cashWithdrawAllWrite.isPending.value ||
-    expenseWithdrawAllWrite.writeResult.isPending.value ||
-    expenseWithdrawAllWrite.receiptResult.isLoading.value
-)
+const withdrawTx = computed(() => (isCash.value ? cashWithdraw : expenseWithdraw))
 
 const isLoadingAction = computed(
   () =>
     isSubmitting.value ||
-    isLoadingWrite.value ||
+    withdrawTx.value.isPending.value ||
     bodAddAction.isPending.value ||
     bodAddAction.isConfirming.value
-)
-
-const isConfirmingWithdraw = computed(
-  () =>
-    cashWithdrawAllWrite.isPending.value ||
-    expenseWithdrawAllWrite.receiptResult.isLoading.value
 )
 
 const resetWithdrawState = () => {
   withdrawModal.value = { mount: false, show: false }
   modalWarningMessage.value = ''
-}
-
-const getRawErrorMessage = (error: unknown) => {
-  if (typeof error === 'object' && error !== null) {
-    if ('shortMessage' in error && typeof error.shortMessage === 'string') {
-      return error.shortMessage
-    }
-
-    if ('message' in error && typeof error.message === 'string') {
-      return error.message
-    }
-  }
-
-  return ''
-}
-
-const isUserRejectedError = (error: unknown) => {
-  const message = getRawErrorMessage(error).toLowerCase()
-
-  if (!message) return false
-
-  return (
-    message.includes('user rejected') ||
-    message.includes('user denied') ||
-    message.includes('cancelled') ||
-    message.includes('user cancelled') ||
-    message.includes('denied transaction signature')
-  )
 }
 
 const refreshContractBalances = async () => {
@@ -207,61 +165,41 @@ const openWithdrawModal = () => {
 }
 
 const confirmWithdrawFromModal = async () => {
-  await submitWithdrawAll()
-}
-
-const submitWithdrawAll = async () => {
   if (!contractAddress.value) return
   isSubmitting.value = true
   modalWarningMessage.value = ''
 
   try {
     if (isBodAction.value) {
-      const encodedData = encodeFunctionData({
-        abi: abi.value,
-        functionName: 'ownerWithdrawAllToBank',
-        args: []
-      })
-
-      const description = JSON.stringify({
-        text: 'Withdraw all funds to Bank',
-        title: 'Owner Treasury Withdraw All to Bank'
-      })
-
       await bodAddAction.executeAddAction({
         targetAddress: contractAddress.value,
-        description,
-        data: encodedData,
+        description: JSON.stringify({
+          text: 'Withdraw all funds to Bank',
+          title: 'Owner Treasury Withdraw All to Bank'
+        }),
+        data: encodeFunctionData({
+          abi: abi.value,
+          functionName: 'ownerWithdrawAllToBank',
+          args: []
+        }),
         userAddress: userStore.address
       })
       return
     }
 
-    if (props.contractType === 'CashRemunerationEIP712') {
-      await cashWithdrawAllWrite.mutateAsync({ args: [] })
-    } else {
-      const hash = await expenseWithdrawAllWrite.executeWrite([], undefined, {
-        skipGasEstimation: true
-      })
-
-      if (!hash) {
-        if (isUserRejectedError(expenseWithdrawAllWrite.writeResult.error.value)) {
-          modalWarningMessage.value = 'Owner rejected the request.'
-          return
-        }
-
-        toast.add({ title: 'Withdraw failed', color: 'error' })
-      }
-    }
+    await withdrawTx.value.mutateAsync({ args: [] })
+    toast.add({ title: 'Withdraw successful', color: 'success' })
+    resetWithdrawState()
+    await refreshContractBalances()
   } catch (error: unknown) {
-    console.error(error)
+    const classified = classifyError(error, { contract: errorContract.value })
 
-    if (isUserRejectedError(error)) {
+    if (classified.category === 'user_rejected') {
       modalWarningMessage.value = 'Owner rejected the request.'
       return
     }
 
-    toast.add({ title: 'Failed to withdraw funds', color: 'error' })
+    toast.add({ title: classified.userMessage, color: 'error' })
   } finally {
     isSubmitting.value = false
   }
@@ -270,21 +208,12 @@ const submitWithdrawAll = async () => {
 watch(
   () => bodAddAction.isActionAdded.value,
   (added) => {
-    if (added) {
-      toast.add({
-        title: 'Action added successfully, waiting for board confirmation',
-        color: 'success'
-      })
-      resetWithdrawState()
-    }
+    if (!added) return
+    toast.add({
+      title: 'Action added successfully, waiting for board confirmation',
+      color: 'success'
+    })
+    resetWithdrawState()
   }
 )
-
-watch(isConfirmingWithdraw, async (newIsConfirming, oldIsConfirming) => {
-  if (newIsConfirming || !oldIsConfirming) return
-
-  toast.add({ title: 'Withdraw successful', color: 'success' })
-  resetWithdrawState()
-  await refreshContractBalances()
-})
 </script>

@@ -19,10 +19,5 @@ vi.mock('@/composables/cashRemuneration/writes', () => ({
 }))
 
 vi.mock('@/composables/expenseAccount/writes', () => ({
-  useExpenseAccountContractWrite: vi.fn((options?: { functionName?: string }) => {
-    if (options?.functionName === 'ownerWithdrawAllToBank') {
-      return mockExpenseAccountWrites.ownerWithdrawAllToBank
-    }
-    return mockExpenseAccountWrites.ownerWithdrawAllToBank
-  })
+  useOwnerWithdrawAllToBank: vi.fn(() => mockExpenseAccountWrites.ownerWithdrawAllToBank)
 }))

@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
+import { BaseError, UserRejectedRequestError } from 'viem'
 import OwnerTreasuryWithdrawAction from '../OwnerTreasuryWithdrawAction.vue'
 import {
   mockBodAddAction,
@@ -72,13 +73,6 @@ const submit = async (
   return wrapper
 }
 
-const simulatePendingCashReceipt = () => {
-  mockCashRemunerationWrites.ownerWithdrawAllToBank.mutateAsync.mockImplementationOnce(async () => {
-    mockCashRemunerationWrites.ownerWithdrawAllToBank.isPending.value = true
-    return { hash: '0xhash' }
-  })
-}
-
 const simulateCashThrow = (error: unknown) => {
   mockCashRemunerationWrites.ownerWithdrawAllToBank.mutateAsync.mockRejectedValueOnce(error)
 }
@@ -106,7 +100,9 @@ describe('OwnerTreasuryWithdrawAction', () => {
     mockCashRemunerationWrites.ownerWithdrawAllToBank.mutateAsync.mockResolvedValue({
       hash: '0xhash'
     })
-    mockExpenseAccountWrites.ownerWithdrawAllToBank.executeWrite.mockResolvedValue('0xhash')
+    mockExpenseAccountWrites.ownerWithdrawAllToBank.mutateAsync.mockResolvedValue({
+      hash: '0xhash'
+    })
     mockTeamStore.getContractAddressByType = vi.fn((type) => {
       if (type === 'CashRemunerationEIP712') return CASH_ADDRESS
       if (type === 'ExpenseAccountEIP712') return EXPENSE_ADDRESS
@@ -159,28 +155,20 @@ describe('OwnerTreasuryWithdrawAction', () => {
   })
 
   it('refreshes balances and closes the modal after a successful cash withdrawal', async () => {
-    simulatePendingCashReceipt()
-    const wrapper = createWrapper()
-    await openModal(wrapper)
-    await wrapper.get(CONFIRM).trigger('click')
-    await flushPromises()
-    expect(wrapper.find(CONFIRM).exists()).toBe(true)
+    const wrapper = await submit()
 
-    mockCashRemunerationWrites.ownerWithdrawAllToBank.isPending.value = false
-    await flushPromises()
-
+    expect(mockCashRemunerationWrites.ownerWithdrawAllToBank.mutateAsync).toHaveBeenCalledWith({
+      args: []
+    })
     expect(invalidateQueries).toHaveBeenCalled()
-    expect(mockCashRemunerationWrites.ownerWithdrawAllToBank.mutateAsync).toHaveBeenCalled()
     expect(wrapper.find(CONFIRM).exists()).toBe(false)
   })
 
   it('uses the expense account writer for direct expense withdrawals', async () => {
     await submit('ExpenseAccountEIP712')
-    expect(mockExpenseAccountWrites.ownerWithdrawAllToBank.executeWrite).toHaveBeenCalledWith(
-      [],
-      undefined,
-      { skipGasEstimation: true }
-    )
+    expect(mockExpenseAccountWrites.ownerWithdrawAllToBank.mutateAsync).toHaveBeenCalledWith({
+      args: []
+    })
     expect(mockCashRemunerationWrites.ownerWithdrawAllToBank.mutateAsync).not.toHaveBeenCalled()
   })
 
@@ -199,7 +187,7 @@ describe('OwnerTreasuryWithdrawAction', () => {
         data: expect.any(String)
       })
     )
-    expect(mockExpenseAccountWrites.ownerWithdrawAllToBank.executeWrite).not.toHaveBeenCalled()
+    expect(mockExpenseAccountWrites.ownerWithdrawAllToBank.mutateAsync).not.toHaveBeenCalled()
   })
 
   it('routes CashRemunerationEIP712 withdrawals through BOD action creation', async () => {
@@ -220,24 +208,18 @@ describe('OwnerTreasuryWithdrawAction', () => {
     expect(mockCashRemunerationWrites.ownerWithdrawAllToBank.mutateAsync).not.toHaveBeenCalled()
   })
 
-  it.each([
-    ['message', { message: 'User rejected the request' }],
-    ['shortMessage', { shortMessage: 'User denied transaction signature' }],
-    ['shortMessage (cancelled)', { shortMessage: 'cancelled in MetaMask' }]
-  ])('shows an inline warning when mutateAsync throws %s user cancellation', async (_, error) => {
-    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-    simulateCashThrow(error)
+  it('shows an inline warning when the wallet rejects the request', async () => {
+    const rejection = new BaseError('rejected', {
+      cause: new UserRejectedRequestError(new Error('rejected'))
+    })
+    simulateCashThrow(rejection)
     const wrapper = await submit()
     expect(wrapper.find(WARNING).text()).toContain('Owner rejected the request.')
-    consoleErrorSpy.mockRestore()
   })
 
   it('keeps the inline warning hidden for unexpected thrown errors', async () => {
-    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
     simulateCashThrow(new Error('RPC node unavailable'))
     const wrapper = await submit()
-    expect(consoleErrorSpy).toHaveBeenCalled()
     expect(wrapper.find(WARNING).exists()).toBe(false)
-    consoleErrorSpy.mockRestore()
   })
 })
