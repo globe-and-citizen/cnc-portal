@@ -30,9 +30,8 @@ function useBodContractWrite(options: {
   })
 }
 
-/**
- * Set board of directors
- */
+// UNUSED — no consumers outside bod.setup.ts + spec.
+/*
 export function useBodSetBoardOfDirectors(addresses: MaybeRef<Address[]>) {
   const addressesValue = computed(() => unref(addresses))
 
@@ -41,6 +40,7 @@ export function useBodSetBoardOfDirectors(addresses: MaybeRef<Address[]>) {
     args: addressesValue
   })
 }
+*/
 
 /**
  * Add a BOD action

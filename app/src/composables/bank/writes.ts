@@ -28,6 +28,9 @@ export function useDistributeTokenDividends() {
   return useBankContractWrite('distributeTokenDividends')
 }
 
+// UNUSED — no consumers outside bank.setup.ts + bankWrites.spec.ts.
+// See inline comment for the commented-out definitions.
+/*
 export function useAddTokenSupport() {
   return useBankContractWrite('addTokenSupport')
 }
@@ -59,3 +62,4 @@ export function usePause() {
 export function useUnpause() {
   return useBankContractWrite('unpause')
 }
+*/

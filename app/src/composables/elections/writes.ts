@@ -1,3 +1,7 @@
+// UNUSED — all Elections write composables currently have no consumers
+// outside their own spec + mock setup. Kept for reference; re-enable when
+// wiring up an Elections write flow.
+/*
 import { computed } from 'vue'
 import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
 import { useContractWritesV3 } from '@/composables/contracts/useContractWritesV3'
@@ -25,3 +29,5 @@ export function useElectionsCastVote() {
 export function useElectionsPublishResults() {
   return useElectionsContractWrite('publishResults')
 }
+*/
+export {}

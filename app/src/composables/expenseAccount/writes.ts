@@ -16,6 +16,16 @@ function useExpenseAccountContractWrite(functionName: ExpenseAccountFunctionName
   })
 }
 
+export function useOwnerWithdrawAllToBank() {
+  return useExpenseAccountContractWrite('ownerWithdrawAllToBank')
+}
+
+// UNUSED — no consumers outside this file. See the commented-out block for
+// useTransfer, useDepositToken, useActivateApproval, useDeactivateApproval,
+// useAddTokenSupport, useRemoveTokenSupport, useInitialize,
+// useSetOfficerAddress, useTransferOwnership, useRenounceOwnership, usePause,
+// useUnpause.
+/*
 export function useTransfer() {
   return useExpenseAccountContractWrite('transfer')
 }
@@ -48,10 +58,6 @@ export function useSetOfficerAddress() {
   return useExpenseAccountContractWrite('setOfficerAddress')
 }
 
-export function useOwnerWithdrawAllToBank() {
-  return useExpenseAccountContractWrite('ownerWithdrawAllToBank')
-}
-
 export function useTransferOwnership() {
   return useExpenseAccountContractWrite('transferOwnership')
 }
@@ -67,3 +73,4 @@ export function usePause() {
 export function useUnpause() {
   return useExpenseAccountContractWrite('unpause')
 }
+*/

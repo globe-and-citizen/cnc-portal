@@ -1,15 +1,5 @@
 import { computed } from 'vue'
-import { useReadContract } from '@wagmi/vue'
-import { isAddress } from 'viem'
 import { useTeamStore } from '@/stores'
-import { BANK_ABI } from '@/artifacts/abi/bank'
-
-const BANK_FUNCTION_NAMES = {
-  PAUSED: 'paused',
-  OWNER: 'owner',
-  SUPPORTED_TOKENS: 'getSupportedTokens',
-  BALANCE: 'getBalance'
-} as const
 
 /**
  * Bank contract address helper
@@ -19,12 +9,22 @@ export function useBankAddress() {
   return computed(() => teamStore.getContractAddressByType('Bank'))
 }
 
-/**
- * Bank contract read operations (mirrors the style of ERC20 reads)
- */
+// UNUSED — no consumers outside bank.setup.ts + tests. See commented-out
+// block below for the definitions.
+/*
+import { useReadContract } from '@wagmi/vue'
+import { isAddress } from 'viem'
+import { BANK_ABI } from '@/artifacts/abi/bank'
+
+const BANK_FUNCTION_NAMES = {
+  PAUSED: 'paused',
+  OWNER: 'owner',
+  SUPPORTED_TOKENS: 'getSupportedTokens',
+  BALANCE: 'getBalance'
+} as const
+
 export function useBankPaused() {
   const bankAddress = useBankAddress()
-
   return useReadContract({
     address: bankAddress,
     abi: BANK_ABI,
@@ -35,7 +35,6 @@ export function useBankPaused() {
 
 export function useBankOwner() {
   const bankAddress = useBankAddress()
-
   return useReadContract({
     address: bankAddress,
     abi: BANK_ABI,
@@ -46,7 +45,6 @@ export function useBankOwner() {
 
 export function useBankSupportedTokens() {
   const bankAddress = useBankAddress()
-
   return useReadContract({
     address: bankAddress,
     abi: BANK_ABI,
@@ -57,7 +55,6 @@ export function useBankSupportedTokens() {
 
 export function useBankBalance() {
   const bankAddress = useBankAddress()
-
   return useReadContract({
     address: bankAddress,
     abi: BANK_ABI,
@@ -66,9 +63,7 @@ export function useBankBalance() {
   })
 }
 
-/**
- * @deprecated Use useBankBalance instead.
- */
 export function useUnlockedBalance() {
   return useBankBalance()
 }
+*/

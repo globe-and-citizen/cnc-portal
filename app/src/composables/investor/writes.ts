@@ -1,3 +1,7 @@
+// UNUSED — all exported writes in this module currently have no consumers
+// outside their own spec + mock setup. Kept for reference; re-enable when
+// wiring up an InvestorV1 write flow.
+/*
 import { computed } from 'vue'
 import { INVESTOR_ABI } from '@/artifacts/abi/investors'
 import { useContractWritesV3 } from '@/composables/contracts/useContractWritesV3'
@@ -55,3 +59,5 @@ export function useDepositDividends() {
 export function useDepositTokenDividends() {
   return useInvestorContractWrite('distributeTokenDividends')
 }
+*/
+export {}
