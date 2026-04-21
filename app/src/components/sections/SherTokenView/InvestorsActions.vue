@@ -1,5 +1,4 @@
 <template>
-<<<<<<< Updated upstream
   <UCard>
     <template #header>
       <div class="mt-6 flex items-center justify-between">
@@ -10,20 +9,6 @@
         </div>
       </div>
     </template>
-=======
-  <div
-    class="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl p-6"
-  >
-    <div class="flex items-center justify-between mb-5">
-      <h3 class="text-lg font-medium text-neutral-900 dark:text-white">Investor actions</h3>
-      <div class="flex items-center gap-2 px-3 py-1.5">
-        <span class="">Contract Address :</span>
-        <AddressToolTip :address="investorAddress" v-if="investorAddress" />
-      </div>
-    </div>
-
-    <div class="h-px bg-neutral-100 dark:bg-neutral-800 mb-5" />
->>>>>>> Stashed changes
 
     <template
       v-if="
@@ -34,7 +19,6 @@
         !investorAddress
       "
     >
-<<<<<<< Updated upstream
       <div class="grid grid-cols-2 gap-2.5 md:grid-cols-3 xl:grid-cols-6">
         <div
           v-for="i in 6"
@@ -49,14 +33,6 @@
         class="grid grid-cols-2 gap-2.5 md:grid-cols-3 xl:grid-cols-6"
         data-test="investors-actions"
       >
-=======
-      <div class="grid grid-cols-3 gap-2 sm:grid-cols-6">
-        <div v-for="i in 6" :key="i" class="skeleton h-20 rounded-lg" />
-      </div>
-    </template>
-    <template v-else>
-      <div class="grid grid-cols-3 gap-2 sm:grid-cols-6" data-test="investors-actions">
->>>>>>> Stashed changes
         <DistributeMintAction
           :token-symbol="safeTokenSymbol"
           :investors-address="investorAddress"
@@ -66,7 +42,6 @@
           :token-symbol="safeTokenSymbol"
           :shareholders-count="safeShareholders.length"
           :investors-address="investorAddress"
-<<<<<<< Updated upstream
           :bank-address="bankAddress"
         />
         <ToggleSherCompensationAction />
@@ -75,22 +50,6 @@
       </div>
     </template>
   </UCard>
-=======
-          :investors-owner="safeInvestorsOwner"
-          :bank-address="bankAddress"
-        />
-        <ToggleSherCompensationButton />
-        <SetCompensationMultiplierButton />
-        <InvestInSafeButton />
-      </div>
-    </template>
-
-    <!-- <div class="flex items-center gap-2 mt-4">
-      <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-      <span class="text-xs text-neutral-400">Some features are coming soon</span>
-    </div> -->
-  </div>
->>>>>>> Stashed changes
 </template>
 
 <script setup lang="ts">

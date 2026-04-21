@@ -1,7 +1,6 @@
 <template>
   <div v-if="safeDepositRouterAddress">
     <ActionButton
-<<<<<<< Updated upstream:app/src/components/sections/SherTokenView/InvestorActions/ToggleSherCompensationAction.vue
       :icon="depositsEnabled ? 'heroicons:lock-open' : 'heroicons:lock-closed'"
       :icon-bg="
         depositsEnabled ? 'bg-amber-50 dark:bg-amber-950' : 'bg-purple-50 dark:bg-purple-950'
@@ -17,22 +16,11 @@
           ? 'border-amber-200 bg-amber-50/60 hover:border-amber-300 hover:bg-amber-100/70 disabled:border-amber-200 disabled:bg-amber-50/50 dark:border-amber-900 dark:bg-amber-950/30 dark:hover:border-amber-800 dark:hover:bg-amber-900/40 dark:disabled:border-amber-900 dark:disabled:bg-amber-950/30'
           : 'border-violet-200 bg-violet-50/60 hover:border-violet-300 hover:bg-violet-100/70 disabled:border-violet-200 disabled:bg-violet-50/50 dark:border-violet-900 dark:bg-violet-950/30 dark:hover:border-violet-800 dark:hover:bg-violet-900/40 dark:disabled:border-violet-900 dark:disabled:bg-violet-950/30'
       "
-=======
-      :icon="depositsEnabled ? 'heroicons:lock-closed' : 'heroicons:lock-open'"
-      icon-bg="bg-purple-50 dark:bg-purple-950"
-      icon-color="text-purple-700 dark:text-purple-400"
->>>>>>> Stashed changes:app/src/components/sections/SherTokenView/InvestorActions/ToggleSherCompensationButton.vue
       :loading="isLoading"
       :disabled="!canManageDeposits || isLoading"
       data-test="toggle-sher-compensation-button"
       @click="handleToggleCompensation"
-<<<<<<< Updated upstream:app/src/components/sections/SherTokenView/InvestorActions/ToggleSherCompensationAction.vue
     />
-=======
-    >
-      {{ `Enable SHER\nCompensation` }}
-    </ActionButton>
->>>>>>> Stashed changes:app/src/components/sections/SherTokenView/InvestorActions/ToggleSherCompensationButton.vue
   </div>
 </template>
 
@@ -99,14 +87,6 @@ const isSafeAddressCorrect = computed(() => {
   return (contractSafeAddress.value as string).toLowerCase() === safeAddress.toLowerCase()
 })
 
-<<<<<<< Updated upstream:app/src/components/sections/SherTokenView/InvestorActions/ToggleSherCompensationAction.vue
-// ============================================================================
-// WATCH PATTERNS - Following established patterns
-// ============================================================================
-
-// Watch for enable deposits errors
-=======
->>>>>>> Stashed changes:app/src/components/sections/SherTokenView/InvestorActions/ToggleSherCompensationButton.vue
 watch(
   () => enableDepositsWrite.writeResult.error.value,
   (error) => {
@@ -195,11 +175,8 @@ async function updateSafeAddress() {
     isSettingSafeAddress.value = false
     return
   }
-<<<<<<< Updated upstream:app/src/components/sections/SherTokenView/InvestorActions/ToggleSherCompensationAction.vue
 
   safeAddressErrorShown.value = false
-=======
->>>>>>> Stashed changes:app/src/components/sections/SherTokenView/InvestorActions/ToggleSherCompensationButton.vue
   toast.add({ title: 'Updating Safe address...', color: 'info' })
   await setSafeAddressWrite.executeWrite(safeAddress)
 }

@@ -4,21 +4,12 @@
       icon="heroicons:arrow-trending-up"
       icon-bg="bg-blue-50 dark:bg-blue-950"
       icon-color="text-blue-700 dark:text-blue-400"
-<<<<<<< Updated upstream
       title="Pay Dividends"
       tone-class="border-blue-200 bg-blue-50/60 hover:border-blue-300 hover:bg-blue-100/70 disabled:border-blue-200 disabled:bg-blue-50/50 dark:border-blue-900 dark:bg-blue-950/30 dark:hover:border-blue-800 dark:hover:bg-blue-900/40 dark:disabled:border-blue-900 dark:disabled:bg-blue-950/30"
       :disabled="!canPayDividends"
       data-test="pay-dividends-button"
       @click="openModal"
     />
-=======
-      :disabled="!canPayDividends"
-      data-test="pay-dividends-button"
-      @click="openModal"
-    >
-      {{ `Pay\nDividends` }}
-    </ActionButton>
->>>>>>> Stashed changes
 
     <UModal
       v-if="modalState.mount"
@@ -103,11 +94,7 @@ const currentTeam = computed(() => teamStore.currentTeam)
 const canPayDividends = computed(() => {
   const hasTokenSymbol = !!props.tokenSymbol
   const hasShareholders = (props.shareholdersCount ?? 0) > 0
-<<<<<<< Updated upstream
   const isAuthorized = isBodAction.value || currentAddress === bankOwner.value
-=======
-  const isAuthorized = isBodAction.value || currentAddress === props.investorsOwner
->>>>>>> Stashed changes
   return hasTokenSymbol && hasShareholders && isAuthorized
 })
 
@@ -157,17 +144,8 @@ const handleSubmit = async (value: bigint, selectedTokenId: TokenId) => {
     if (selectedTokenId === 'native') {
       await distributeNativeDividendsWrite.mutateAsync({ args: [value] })
     } else {
-<<<<<<< Updated upstream
       const tokenAddress = tokenSymbolAddresses[selectedTokenId] as Address
       await distributeTokenDividendsWrite.mutateAsync({ args: [tokenAddress, value] })
-=======
-      depositTokenAddress.value = tokenSymbolAddresses[selectedTokenId] as Address
-      const result = await distributeTokenDividendsWrite.executeWrite([
-        depositTokenAddress.value,
-        value
-      ])
-      if (!result) return
->>>>>>> Stashed changes
     }
 
     closeModal()
