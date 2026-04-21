@@ -37,12 +37,10 @@
 import { useTeamStore } from '@/stores'
 import { buildClaimRatesWithOvertime, classifyError, log } from '@/utils'
 import { zeroAddress, type Address } from 'viem'
-import { computed } from 'vue'
-import { CASH_REMUNERATION_EIP712_ABI } from '@/artifacts/abi/cash-remuneration-eip712'
 import { USDC_ADDRESS } from '@/constant'
 import type { WeeklyClaim } from '@/types'
 import { useSyncWeeklyClaimsMutation } from '@/queries'
-import { useContractWritesV3 } from '@/composables/contracts/useContractWritesV3'
+import { useWithdraw } from '@/composables/cashRemuneration/writes'
 
 const props = defineProps<{
   weeklyClaim: WeeklyClaim
@@ -56,14 +54,7 @@ const emit = defineEmits(['claim-withdrawn'])
 const teamStore = useTeamStore()
 const toast = useToast()
 
-const cashRemunerationEip712Address = computed(() =>
-  teamStore.getContractAddressByType('CashRemunerationEIP712')
-)
-const withdrawTx = useContractWritesV3({
-  contractAddress: cashRemunerationEip712Address,
-  abi: CASH_REMUNERATION_EIP712_ABI,
-  functionName: 'withdraw'
-})
+const withdrawTx = useWithdraw()
 
 const { mutateAsync: syncWeeklyClaim, error: syncWeeklyClaimError } = useSyncWeeklyClaimsMutation()
 
@@ -76,7 +67,7 @@ const getTokenAddress = (type: string): Address => {
 const withdrawClaim = async () => {
   if (withdrawTx.isPending.value) return
 
-  if (!cashRemunerationEip712Address.value) {
+  if (!teamStore.getContractAddressByType('CashRemunerationEIP712')) {
     toast.add({ title: 'Cash Remuneration EIP712 contract address not found', color: 'error' })
     return
   }

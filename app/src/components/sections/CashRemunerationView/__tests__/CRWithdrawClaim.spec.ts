@@ -15,6 +15,10 @@ vi.mock('@/composables/contracts/useContractWritesV3', () => ({
   useContractWritesV3: vi.fn(() => mockUseWriteContract)
 }))
 
+vi.mock('@/composables/cashRemuneration/writes', () => ({
+  useWithdraw: vi.fn(() => mockUseWriteContract)
+}))
+
 type WrapperProps = {
   weeklyClaim: WeeklyClaim
   disabled?: boolean
