@@ -2,8 +2,6 @@ import { ponder } from "ponder:registry";
 import {
   team,
   teamContract,
-  officerBeaconConfigured,
-  officerBeaconProxiesDeployed,
   bankDeposit,
   bankTokenDeposit,
   bankTransfer,
@@ -89,27 +87,6 @@ ponder.on("Officer:ContractDeployed", async ({ event, context }) => {
     teamAddress,
     contractType: event.args.contractType,
     contractAddress,
-    blockNumber: event.block.number,
-    timestamp: Number(event.block.timestamp),
-  });
-});
-
-ponder.on("Officer:BeaconConfigured", async ({ event, context }) => {
-  await context.db.insert(officerBeaconConfigured).values({
-    id: `${event.transaction.hash}-${event.log.logIndex}`,
-    teamAddress: event.log.address,
-    contractType: event.args.contractType,
-    beaconAddress: event.args.beaconAddress,
-    blockNumber: event.block.number,
-    timestamp: Number(event.block.timestamp),
-  });
-});
-
-ponder.on("Officer:BeaconProxiesDeployed", async ({ event, context }) => {
-  await context.db.insert(officerBeaconProxiesDeployed).values({
-    id: `${event.transaction.hash}-${event.log.logIndex}`,
-    teamAddress: event.log.address,
-    beaconProxies: JSON.stringify(event.args.beaconProxies),
     blockNumber: event.block.number,
     timestamp: Number(event.block.timestamp),
   });

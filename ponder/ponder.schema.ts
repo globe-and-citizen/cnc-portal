@@ -31,35 +31,6 @@ export const teamContract = onchainTable(
   }),
 );
 
-export const officerBeaconConfigured = onchainTable(
-  "officer_beacon_configured",
-  (t) => ({
-    id: t.text().primaryKey(),
-    teamAddress: t.hex().notNull(),
-    contractType: t.text().notNull(),
-    beaconAddress: t.hex().notNull(),
-    blockNumber: t.bigint().notNull(),
-    timestamp: t.integer().notNull(),
-  }),
-  (table) => ({
-    teamAddressIdx: index("officer_beacon_configured_team_index").on(table.teamAddress),
-  }),
-);
-
-export const officerBeaconProxiesDeployed = onchainTable(
-  "officer_beacon_proxies_deployed",
-  (t) => ({
-    id: t.text().primaryKey(),
-    teamAddress: t.hex().notNull(),
-    beaconProxies: t.text().notNull(),
-    blockNumber: t.bigint().notNull(),
-    timestamp: t.integer().notNull(),
-  }),
-  (table) => ({
-    teamAddressIdx: index("officer_beacon_proxies_deployed_team_index").on(table.teamAddress),
-  }),
-);
-
 // Bank events
 export const bankDeposit = onchainTable(
   "bank_deposit",

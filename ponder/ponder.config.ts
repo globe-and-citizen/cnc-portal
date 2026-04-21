@@ -14,73 +14,44 @@ import { FEE_COLLECTOR_ABI } from "./abis/fee-collector";
 import { VESTING_ABI } from "./abis/vesting";
 
 const CONTRACT_DEPLOYED_EVENT = parseAbiItem(
-  "event ContractDeployed(string contractType, address deployedAddress)",
+  "event ContractDeployed(string contractType, address deployedAddress)"
 );
-const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000" as const;
-
-const getRequiredAddress = (
-  value: string | undefined,
-  label: string,
-): `0x${string}` => {
-  if (!value || value.trim() === "") {
-    throw new Error(`${label} must be set in .env.local`);
-  }
-  return value as `0x${string}`;
-};
-
-const getOptionalAddress = (value: string | undefined): `0x${string}` => {
-  if (!value || value.trim() === "") return ZERO_ADDRESS;
-  return value as `0x${string}`;
-};
-
-const getStartBlock = (value: string | undefined, fallback: number): number => {
-  if (!value || value.trim() === "") return fallback;
-  const parsed = Number(value);
-  if (!Number.isInteger(parsed) || parsed < 0) {
-    throw new Error("START_BLOCK must be a non-negative integer");
-  }
-  return parsed;
-};
 
 // ─── Network selection ────────────────────────────────────────────────────────
 // Set NETWORK=hardhat in .env.local to index a local Hardhat node.
 // Default: polygon
 const isHardhat = process.env.NETWORK === "hardhat";
 
+// Both chains are defined so TypeScript can resolve contract `chain` references.
+// Only the active chain is actually used by ponder at runtime.
 const chainName = isHardhat ? "hardhat" : "polygon";
 
-const activeChains = isHardhat
-  ? {
-      hardhat: {
-        id: 31337,
-        rpc: process.env.PONDER_RPC_URL_HARDHAT ?? "http://127.0.0.1:8545",
-      },
-    }
-  : {
-      polygon: {
-        id: 137,
-        rpc: process.env.PONDER_RPC_URL_137,
-      },
-    };
-
 // Factory contract address differs per network.
-// On Hardhat this changes every redeployment, but we keep one env name for all networks.
-const factoryAddress = getRequiredAddress(
-  process.env.FACTORY_ADDRESS,
-  "FACTORY_ADDRESS",
-);
+// On Hardhat this changes every redeployment — set FACTORY_ADDRESS in .env.local.
+if (isHardhat && !process.env.FACTORY_ADDRESS) {
+  throw new Error(
+    "FACTORY_ADDRESS must be set in .env.local when NETWORK=hardhat. " +
+      "Deploy contracts and copy the OfficerFactoryBeacon address."
+  );
+}
+const factoryAddress = (
+  isHardhat
+    ? process.env.FACTORY_ADDRESS!
+    : "0x0205fd32175241aA6f7398073b64bC03f910a6A0"
+) as `0x${string}`;
 
-console.log(`Using factory address ${factoryAddress} on chain ${chainName}`);
-// On Hardhat start from block 0; on Polygon use an early deployment block by default.
-// You can override with START_BLOCK in .env.local.
-const defaultStartBlock = isHardhat ? 0 : 79743826;
-const startBlock = getStartBlock(process.env.START_BLOCK, defaultStartBlock);
+if (!process.env.FEE_COLLECTOR_ADDRESS) {
+  throw new Error("FEE_COLLECTOR_ADDRESS must be set in .env.local.");
+}
+const feeCollectorAddress = process.env.FEE_COLLECTOR_ADDRESS as `0x${string}`;
 
-const feeCollectorAddress = getOptionalAddress(
-  process.env.FEE_COLLECTOR_ADDRESS,
-);
+if (!process.env.VESTING_ADDRESS) {
+  throw new Error("VESTING_ADDRESS must be set in .env.local.");
+}
+const vestingAddress = process.env.VESTING_ADDRESS as `0x${string}`;
 
-const vestingAddress = getOptionalAddress(process.env.VESTING_ADDRESS);
+// On Hardhat start from block 0; on Polygon skip pre-deployment blocks.
+const startBlock = isHardhat ? 0 : Number(process.env.START_BLOCK);
 
 // ─── Shared factory helper ────────────────────────────────────────────────────
 const subContractFactory = factory({
@@ -89,7 +60,16 @@ const subContractFactory = factory({
 });
 
 export default createConfig({
-  chains: activeChains,
+  chains: {
+    polygon: {
+      id: 137,
+      rpc: process.env.PONDER_RPC_URL_137,
+    },
+    hardhat: {
+      id: 31337,
+      rpc: process.env.PONDER_RPC_URL_HARDHAT ?? "http://127.0.0.1:8545",
+    },
+  },
   contracts: {
     OfficerFactoryBeacon: {
       chain: chainName,
