@@ -46,14 +46,15 @@ import {
   useDistributeNativeDividends,
   useDistributeTokenDividends
 } from '@/composables/bank/writes'
+import { useBankOwner } from '@/composables/bank/reads'
 import { tokenSymbol as tokenSymbolUtils, tokenSymbolAddresses } from '@/utils'
+import { log } from '@/utils'
 import type { TokenId } from '@/constant'
 
 interface Props {
   tokenSymbol?: string
   shareholdersCount?: number
   investorsAddress?: Address
-  bankOwner?: Address
   bankAddress?: Address
 }
 
@@ -61,6 +62,9 @@ const props = defineProps<Props>()
 
 const { address: currentAddress } = useUserDataStore()
 const teamStore = useTeamStore()
+const toast = useToast()
+
+const { data: bankOwner, error: bankOwnerError } = useBankOwner()
 
 const modalState = ref({
   mount: false,
@@ -90,14 +94,14 @@ const currentTeam = computed(() => teamStore.currentTeam)
 const canPayDividends = computed(() => {
   const hasTokenSymbol = !!props.tokenSymbol
   const hasShareholders = (props.shareholdersCount ?? 0) > 0
-  const isAuthorized = isBodAction.value || currentAddress === props.bankOwner
+  const isAuthorized = isBodAction.value || currentAddress === bankOwner.value
   return hasTokenSymbol && hasShareholders && isAuthorized
 })
 
 const cannotPayDividendsReason = computed(() => {
   if (!props.tokenSymbol) return 'Token symbol not available'
   if ((props.shareholdersCount ?? 0) === 0) return 'No shareholders available to pay dividends'
-  if (!isBodAction.value && currentAddress !== props.bankOwner) {
+  if (!isBodAction.value && currentAddress !== bankOwner.value) {
     return 'Only the bank owner can pay dividends '
   }
   return ''
@@ -151,6 +155,13 @@ const handleSubmit = async (value: bigint, selectedTokenId: TokenId) => {
 watch(isActionAdded, (isAdded) => {
   if (isAdded) {
     closeModal()
+  }
+})
+
+watch(bankOwnerError, (value) => {
+  if (value) {
+    log.error('Error fetching bank owner', value)
+    toast.add({ title: 'Error fetching bank owner', color: 'error' })
   }
 })
 
