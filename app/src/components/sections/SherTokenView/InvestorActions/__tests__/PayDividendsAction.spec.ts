@@ -4,7 +4,7 @@ import { createTestingPinia } from '@pinia/testing'
 import { nextTick } from 'vue'
 import type { Address } from 'viem'
 import PayDividendsAction from '../PayDividendsAction.vue'
-import { mockBodAddAction, mockBodIsBodAction, mockTeamStore, mockUserStore } from '@/tests/mocks'
+import { mockBankWrites, mockBodAddAction, mockBodIsBodAction, mockTeamStore, mockUserStore } from '@/tests/mocks'
 
 describe.skip('PayDividendsAction.vue', () => {
   const ownerAddress = '0x3333333333333333333333333333333333333333' as Address
@@ -50,7 +50,6 @@ describe.skip('PayDividendsAction.vue', () => {
       name: 'Test Team'
     } as unknown as typeof mockTeamStore.currentTeam
   })
-
   it('enables action for owner', () => {
     const wrapper = createWrapper()
 
