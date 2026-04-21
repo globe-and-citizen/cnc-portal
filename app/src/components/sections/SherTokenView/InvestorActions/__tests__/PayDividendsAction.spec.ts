@@ -81,7 +81,9 @@ describe('PayDividendsAction.vue', () => {
 
     expect(wrapper.classes()).not.toContain('tooltip')
     expect(wrapper.attributes('data-tip')).toBe('')
-    expect(wrapper.find('[data-test="pay-dividends-button"]').attributes('disabled')).toBeUndefined()
+    expect(
+      wrapper.find('[data-test="pay-dividends-button"]').attributes('disabled')
+    ).toBeUndefined()
   })
 
   it('shows token missing reason', () => {
@@ -113,8 +115,6 @@ describe('PayDividendsAction.vue', () => {
     expect(wrapper.find('[data-test="pay-dividends-button"]').attributes('disabled')).toBeDefined()
   })
 
- 
-
   it('opens and closes modal through UI events', async () => {
     const wrapper = createWrapper()
 
@@ -128,8 +128,6 @@ describe('PayDividendsAction.vue', () => {
 
     expect(wrapper.find('[data-test="pay-dividends-form"]').exists()).toBe(false)
   })
-
-
 
   it('does not render form body when current team is missing', async () => {
     mockTeamStore.currentTeam = null as unknown as typeof mockTeamStore.currentTeam
@@ -212,7 +210,9 @@ describe('PayDividendsAction.vue', () => {
     await vm.handleSubmit(5n, 'native')
     await nextTick()
 
-    expect(mockBankWrites.distributeNativeDividends.mutateAsync).toHaveBeenCalledWith({ args: [5n] })
+    expect(mockBankWrites.distributeNativeDividends.mutateAsync).toHaveBeenCalledWith({
+      args: [5n]
+    })
     expect(wrapper.find('[data-test="pay-dividends-form"]').exists()).toBe(false)
   })
 
@@ -233,10 +233,7 @@ describe('PayDividendsAction.vue', () => {
     mockBankReads.owner.error.value = new Error('bank owner read failed')
     await nextTick()
 
-    expect(mockLog.error).toHaveBeenCalledWith(
-      'Error fetching bank owner',
-      expect.any(Error)
-    )
+    expect(mockLog.error).toHaveBeenCalledWith('Error fetching bank owner', expect.any(Error))
     expect(wrapper.exists()).toBe(true)
   })
 
