@@ -64,7 +64,7 @@ import { computed, ref, watch } from 'vue'
 import { encodeFunctionData, type Address } from 'viem'
 import { useContractBalance } from '@/composables'
 import { useCashRemunerationOwner } from '@/composables/cashRemuneration/reads'
-import { useCashRemunerationContractWrite } from '@/composables/cashRemuneration/writes'
+import { useOwnerWithdrawAllToBank } from '@/composables/cashRemuneration/writes'
 import { useExpenseAccountOwner } from '@/composables/expenseAccount/reads'
 import { useExpenseAccountContractWrite } from '@/composables/expenseAccount/writes'
 import { CASH_REMUNERATION_EIP712_ABI } from '@/artifacts/abi/cash-remuneration-eip712'
@@ -129,17 +129,14 @@ const { balances } = useContractBalance(contractAddress)
 
 const hasWithdrawableBalance = computed(() => balances.value.some((b) => b.amount > 0))
 
-const cashWithdrawAllWrite = useCashRemunerationContractWrite({
-  functionName: 'ownerWithdrawAllToBank'
-})
+const cashWithdrawAllWrite = useOwnerWithdrawAllToBank()
 const expenseWithdrawAllWrite = useExpenseAccountContractWrite({
   functionName: 'ownerWithdrawAllToBank'
 })
 
 const isLoadingWrite = computed(
   () =>
-    cashWithdrawAllWrite.writeResult.isPending.value ||
-    cashWithdrawAllWrite.receiptResult.isLoading.value ||
+    cashWithdrawAllWrite.isPending.value ||
     expenseWithdrawAllWrite.writeResult.isPending.value ||
     expenseWithdrawAllWrite.receiptResult.isLoading.value
 )
@@ -154,7 +151,7 @@ const isLoadingAction = computed(
 
 const isConfirmingWithdraw = computed(
   () =>
-    cashWithdrawAllWrite.receiptResult.isLoading.value ||
+    cashWithdrawAllWrite.isPending.value ||
     expenseWithdrawAllWrite.receiptResult.isLoading.value
 )
 
@@ -240,20 +237,21 @@ const submitWithdrawAll = async () => {
       return
     }
 
-    const write =
-      props.contractType === 'CashRemunerationEIP712'
-        ? cashWithdrawAllWrite
-        : expenseWithdrawAllWrite
+    if (props.contractType === 'CashRemunerationEIP712') {
+      await cashWithdrawAllWrite.mutateAsync({ args: [] })
+    } else {
+      const hash = await expenseWithdrawAllWrite.executeWrite([], undefined, {
+        skipGasEstimation: true
+      })
 
-    const hash = await write.executeWrite([], undefined, { skipGasEstimation: true })
+      if (!hash) {
+        if (isUserRejectedError(expenseWithdrawAllWrite.writeResult.error.value)) {
+          modalWarningMessage.value = 'Owner rejected the request.'
+          return
+        }
 
-    if (!hash) {
-      if (isUserRejectedError(write.writeResult.error.value)) {
-        modalWarningMessage.value = 'Owner rejected the request.'
-        return
+        toast.add({ title: 'Withdraw failed', color: 'error' })
       }
-
-      toast.add({ title: 'Withdraw failed', color: 'error' })
     }
   } catch (error: unknown) {
     console.error(error)
