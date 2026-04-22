@@ -12,11 +12,8 @@ vi.mock('@/composables/erc20/reads', () => ({
 }))
 
 /**
- * Mock ERC20 write composables that are actually consumed. Unused writes
- * (useERC20Transfer, useERC20TransferFrom) are commented out in
- * src/composables/erc20/writes.ts.
+ * Mock ERC20 write composables. Only `useERC20Approve` is exposed.
  */
 vi.mock('@/composables/erc20/writes', () => ({
-  useERC20ContractWrite: vi.fn(() => mockERC20Writes.approve),
   useERC20Approve: vi.fn(() => mockERC20Writes.approve)
 }))

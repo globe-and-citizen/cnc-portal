@@ -217,11 +217,7 @@ const { data: allowance } = useErc20Allowance(
 )
 
 // ERC20 Approve composable
-const approveWrite = useERC20Approve(
-  selectedTokenAddress,
-  safeDepositRouterAddress as unknown as Address,
-  bigIntAmount
-)
+const approveWrite = useERC20Approve(selectedTokenAddress)
 
 // Deposit composable
 const depositWrite = useDeposit()
@@ -231,7 +227,7 @@ const isLoading = computed(
   () =>
     isBalanceLoading.value ||
     isTokenSymbolLoading.value ||
-    approveWrite.writeResult.isPending.value ||
+    approveWrite.isPending.value ||
     depositWrite.writeResult.isPending.value
 )
 
@@ -247,7 +243,7 @@ watch(multiplierError, (error) => {
 })
 
 watch(
-  () => approveWrite.writeResult.error.value,
+  () => approveWrite.error.value,
   (error) => {
     if (error) {
       console.error('Error approving tokens:', error)
@@ -266,7 +262,7 @@ watch(
 )
 
 watch(
-  () => approveWrite.receiptResult.isSuccess.value,
+  () => approveWrite.isSuccess.value,
   (success) => {
     if (success) {
       toast.add({ title: 'Token approval successful', color: 'success' })
@@ -362,11 +358,9 @@ const submitForm = async () => {
   if (currentAllowance < bigIntAmount.value) {
     currentStep.value = 1
 
-    try {
-      await approveWrite.executeWrite([safeDepositRouterAddress.value, bigIntAmount.value])
-    } catch (error) {
-      console.error('Approve execution error:', error)
-    }
+    approveWrite.mutate({
+      args: [safeDepositRouterAddress.value, bigIntAmount.value]
+    })
   } else {
     currentStep.value = 2
     await performDeposit()
