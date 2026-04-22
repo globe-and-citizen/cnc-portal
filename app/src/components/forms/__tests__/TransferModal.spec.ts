@@ -1,18 +1,14 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { mount, VueWrapper } from '@vue/test-utils'
-import { nextTick } from 'vue'
+import { nextTick, ref } from 'vue'
 import { NETWORK } from '@/constant'
 import TransferModal from '../TransferModal.vue'
 import {
-  mockUseWriteContract,
   mockUseReadContract,
-  mockUseWaitForTransactionReceipt,
   mockBodIsBodAction,
   mockBodAddAction,
   mockUserStore,
   mockUseContractBalance,
-  mockWagmiCore,
-  transferHash,
   useQueryClientFn
 } from '@/tests/mocks'
 
@@ -41,6 +37,20 @@ vi.mock('@/artifacts/abi/bank', () => ({
       ]
     }
   ]
+}))
+
+const mockTransferNative = {
+  mutate: vi.fn(),
+  isPending: ref(false)
+}
+const mockTransferToken = {
+  mutate: vi.fn(),
+  isPending: ref(false)
+}
+
+vi.mock('@/composables/bank/writes', () => ({
+  useTransfer: vi.fn(() => mockTransferNative),
+  useTransferToken: vi.fn(() => mockTransferToken)
 }))
 
 type TransferModalVm = {
@@ -125,10 +135,19 @@ describe('TransferModal', () => {
     mockBodAddAction.isPending.value = false
     mockBodAddAction.isConfirming.value = false
     mockBodAddAction.isActionAdded.value = false
-    mockUseWaitForTransactionReceipt.isLoading.value = false
-    mockUseWriteContract.mutateAsync.mockResolvedValue(undefined)
-    mockWagmiCore.waitForTransactionReceipt.mockResolvedValue({ status: 'success' })
-    transferHash.value = undefined
+    mockTransferNative.isPending.value = false
+    mockTransferToken.isPending.value = false
+    // Default: invoke onSuccess to simulate successful mutation
+    mockTransferNative.mutate = vi.fn(
+      async (_vars: unknown, options?: { onSuccess?: () => Promise<void> | void }) => {
+        await options?.onSuccess?.()
+      }
+    )
+    mockTransferToken.mutate = vi.fn(
+      async (_vars: unknown, options?: { onSuccess?: () => Promise<void> | void }) => {
+        await options?.onSuccess?.()
+      }
+    )
   })
 
   afterEach(() => {
@@ -185,14 +204,14 @@ describe('TransferModal', () => {
     })
 
     expect(mockBodAddAction.executeAddAction).toHaveBeenCalledOnce()
-    expect(mockUseWriteContract.mutateAsync).not.toHaveBeenCalled()
+    expect(mockTransferNative.mutate).not.toHaveBeenCalled()
+    expect(mockTransferToken.mutate).not.toHaveBeenCalled()
   })
 
   it('handles direct token transfers and invalidates the token balance query', async () => {
     const { invalidateQueries } = createQueryClient()
     wrapper = mountComponent()
     const vm = getVm(wrapper)
-    transferHash.value = '0xhash'
 
     await vm.handleTransfer({
       address: { address: mockRecipientAddress },
@@ -200,18 +219,21 @@ describe('TransferModal', () => {
       amount: '100'
     })
 
-    expect(mockUseWriteContract.mutateAsync).toHaveBeenCalledWith(
-      expect.objectContaining({ functionName: 'transferToken' })
-    )
-    expect(mockWagmiCore.waitForTransactionReceipt).toHaveBeenCalled()
+    expect(mockTransferToken.mutate).toHaveBeenCalledOnce()
     expect(invalidateQueries).toHaveBeenCalledWith(
       expect.objectContaining({ queryKey: expect.arrayContaining(['readContract']) })
     )
   })
 
-  it('handles direct native transfers and exposes errors when no receipt hash is available', async () => {
+  it('handles direct native transfers and surfaces errors from the mutation', async () => {
     wrapper = mountComponent()
     const vm = getVm(wrapper)
+
+    mockTransferNative.mutate = vi.fn(
+      (_vars: unknown, options?: { onError?: (err: unknown) => void }) => {
+        options?.onError?.(new Error('boom'))
+      }
+    )
 
     await vm.handleTransfer({
       address: { address: mockRecipientAddress },
@@ -219,14 +241,11 @@ describe('TransferModal', () => {
       amount: '1.5'
     })
 
-    expect(mockUseWriteContract.mutateAsync).toHaveBeenCalledWith(
-      expect.objectContaining({ functionName: 'transfer' })
-    )
-    expect(vm.errorMessage).toBe(`Failed to transfer ${NETWORK.currencySymbol}`)
+    expect(mockTransferNative.mutate).toHaveBeenCalledOnce()
+    expect(vm.errorMessage).not.toBe('')
   })
 
-  it('resets after action-added and transfer-confirmed watchers fire', async () => {
-    const { invalidateQueries } = createQueryClient()
+  it('resets modal when the bod action-added watcher fires', async () => {
     wrapper = mountComponent()
     const vm = getVm(wrapper)
 
@@ -238,16 +257,5 @@ describe('TransferModal', () => {
     await nextTick()
     expect(vm.modal.show).toBe(false)
     expect(vm.errorMessage).toBe('')
-
-    vm.openModal()
-    mockUseWaitForTransactionReceipt.isLoading.value = true
-    await nextTick()
-    mockUseWaitForTransactionReceipt.isLoading.value = false
-    await nextTick()
-
-    expect(vm.modal.show).toBe(false)
-    expect(invalidateQueries).toHaveBeenCalledWith(
-      expect.objectContaining({ queryKey: expect.arrayContaining(['readContract']) })
-    )
   })
 })

@@ -148,10 +148,9 @@ describe('DepositBankForm.vue', () => {
     await getVm(wrapper).submitForm()
     await flushPromises()
 
-    expect(mockERC20Writes.approve.executeWrite).toHaveBeenCalledWith([
-      defaultProps.bankAddress,
-      1000000n
-    ])
+    expect(mockERC20Writes.approve.mutateAsync).toHaveBeenCalledWith({
+      args: [defaultProps.bankAddress, 1000000n]
+    })
     expect(mockBankWrites.deposit.mutateAsync).toHaveBeenCalledWith({
       args: ['0xA3492D046095AFFE351cFac15de9b86425E235dB', 1000000n]
     })
@@ -167,14 +166,14 @@ describe('DepositBankForm.vue', () => {
     await getVm(wrapper).submitForm()
     await flushPromises()
 
-    expect(mockERC20Writes.approve.executeWrite).not.toHaveBeenCalled()
+    expect(mockERC20Writes.approve.mutateAsync).not.toHaveBeenCalled()
     expect(mockBankWrites.deposit.mutateAsync).toHaveBeenCalledOnce()
     expect(getVm(wrapper).currentStep).toBe(2)
   })
 
   it('surfaces approval failures and resets submitting state', async () => {
     mockERC20Reads.allowance.data.value = 0n
-    mockERC20Writes.approve.writeResult.error.value = new Error('Approval failed')
+    mockERC20Writes.approve.mutateAsync.mockRejectedValueOnce(new Error('Approval failed'))
     const wrapper = createWrapper()
 
     await setTokenAmount(wrapper, '1', 'usdc', true)

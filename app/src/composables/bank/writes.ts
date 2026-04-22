@@ -1,4 +1,5 @@
-import { computed } from 'vue'
+import { computed, unref, type MaybeRef } from 'vue'
+import type { Address } from 'viem'
 import { BANK_ABI } from '@/artifacts/abi/bank'
 import { useContractWritesV3 } from '@/composables/contracts/useContractWritesV3'
 import { useTeamStore } from '@/stores/teamStore'
@@ -6,11 +7,16 @@ import type { ExtractAbiFunctionNames } from 'abitype'
 
 type BankFunctionNames = ExtractAbiFunctionNames<typeof BANK_ABI>
 
-function useBankContractWrite(functionName: BankFunctionNames) {
+function useBankContractWrite(
+  functionName: BankFunctionNames,
+  bankAddress?: MaybeRef<Address | undefined>
+) {
   const teamStore = useTeamStore()
-  const bankAddress = computed(() => teamStore.getContractAddressByType('Bank'))
+  const resolvedAddress = computed(
+    () => unref(bankAddress) ?? (teamStore.getContractAddressByType('Bank') as Address | undefined)
+  )
   return useContractWritesV3({
-    contractAddress: bankAddress,
+    contractAddress: resolvedAddress,
     abi: BANK_ABI,
     functionName
   })
@@ -28,38 +34,10 @@ export function useDistributeTokenDividends() {
   return useBankContractWrite('distributeTokenDividends')
 }
 
-// UNUSED — no consumers outside bank.setup.ts + bankWrites.spec.ts.
-// See inline comment for the commented-out definitions.
-/*
-export function useAddTokenSupport() {
-  return useBankContractWrite('addTokenSupport')
+export function useTransfer(bankAddress?: MaybeRef<Address | undefined>) {
+  return useBankContractWrite('transfer', bankAddress)
 }
 
-export function useRemoveTokenSupport() {
-  return useBankContractWrite('removeTokenSupport')
+export function useTransferToken(bankAddress?: MaybeRef<Address | undefined>) {
+  return useBankContractWrite('transferToken', bankAddress)
 }
-
-export function useTransfer() {
-  return useBankContractWrite('transfer')
-}
-
-export function useTransferToken() {
-  return useBankContractWrite('transferToken')
-}
-
-export function useTransferOwnership() {
-  return useBankContractWrite('transferOwnership')
-}
-
-export function useRenounceOwnership() {
-  return useBankContractWrite('renounceOwnership')
-}
-
-export function usePause() {
-  return useBankContractWrite('pause')
-}
-
-export function useUnpause() {
-  return useBankContractWrite('unpause')
-}
-*/

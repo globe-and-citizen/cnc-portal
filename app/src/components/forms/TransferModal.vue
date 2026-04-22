@@ -55,23 +55,18 @@
 
 <script setup lang="ts">
 import TransferForm, { type TransferModel } from '@/components/forms/TransferForm.vue'
-import { ref, watch, computed, type Ref } from 'vue'
+import { ref, watch, computed, toRef, type Ref } from 'vue'
 import { type Address, parseEther, encodeFunctionData, parseUnits } from 'viem'
-import {
-  useWriteContract,
-  useWaitForTransactionReceipt,
-  useChainId,
-  useReadContract
-} from '@wagmi/vue'
+import { useChainId, useReadContract } from '@wagmi/vue'
 import { useQueryClient } from '@tanstack/vue-query'
-import { waitForTransactionReceipt } from '@wagmi/core'
-import { config } from '@/wagmi.config'
 import { BANK_ABI } from '@/artifacts/abi/bank'
 import { NETWORK, USDC_ADDRESS, USDC_E_ADDRESS } from '@/constant'
 import { useUserDataStore } from '@/stores'
 import { useBodAddAction } from '@/composables/bod/writes'
 import { useBodIsBodAction } from '@/composables/bod/reads'
 import { useOfficerFeeBps } from '@/composables/officer/reads'
+import { useTransfer, useTransferToken } from '@/composables/bank/writes'
+import { classifyError, log } from '@/utils'
 import type { TokenOption } from '@/types'
 import { useContractBalance } from '@/composables'
 
@@ -118,17 +113,15 @@ const modal = ref({
 const errorMessage = ref('')
 
 // Contract interactions for transfer
-const { data: transferHash, isPending: transferLoading, mutateAsync: transfer } = useWriteContract()
-
-const { isLoading: isConfirmingTransfer } = useWaitForTransactionReceipt({
-  hash: transferHash
-})
+const bankAddressRef = toRef(props, 'bankAddress')
+const transferNative = useTransfer(bankAddressRef)
+const transferToken = useTransferToken(bankAddressRef)
 
 // Computed loading state
 const isLoading = computed(
   () =>
-    transferLoading.value ||
-    isConfirmingTransfer.value ||
+    transferNative.isPending.value ||
+    transferToken.isPending.value ||
     isLoadingAddAction.value ||
     isConfirmingAddAction.value
 )
@@ -194,72 +187,50 @@ const handleTransfer = async (data: {
   if (!props.bankAddress) return
 
   const tokenAddress = data.token.symbol === 'USDCe' ? USDC_E_ADDRESS : USDC_ADDRESS
-  try {
-    const isNativeToken = data.token.symbol === NETWORK.currencySymbol
+  const isNativeToken = data.token.symbol === NETWORK.currencySymbol
 
-    // Exact formula: the contract deducts fee from _amount and sends net to recipient.
-    // To give recipient exactly `userAmountBigInt`, we must send: amount * 10000 / (10000 - feeBps)
-    const userAmountBigInt = isNativeToken ? parseEther(data.amount) : parseUnits(data.amount, 6)
-    const feeBps = BigInt(feeBpsNumber.value)
-    const transferAmount =
-      feeBps > 0n ? (userAmountBigInt * 10000n) / (10000n - feeBps) : userAmountBigInt
+  // Exact formula: the contract deducts fee from _amount and sends net to recipient.
+  // To give recipient exactly `userAmountBigInt`, we must send: amount * 10000 / (10000 - feeBps)
+  const userAmountBigInt = isNativeToken ? parseEther(data.amount) : parseUnits(data.amount, 6)
+  const feeBps = BigInt(feeBpsNumber.value)
+  const transferAmount =
+    feeBps > 0n ? (userAmountBigInt * 10000n) / (10000n - feeBps) : userAmountBigInt
 
-    if (isBodAction.value) {
-      // BOD Action path
-      const encodedData = isNativeToken
-        ? encodeFunctionData({
-            abi: BANK_ABI,
-            functionName: 'transfer',
-            args: [data.address.address, transferAmount]
-          })
-        : encodeFunctionData({
-            abi: BANK_ABI,
-            functionName: 'transferToken',
-            args: [tokenAddress as Address, data.address.address, transferAmount]
-          })
+  if (isBodAction.value) {
+    // BOD Action path
+    const encodedData = isNativeToken
+      ? encodeFunctionData({
+          abi: BANK_ABI,
+          functionName: 'transfer',
+          args: [data.address.address, transferAmount]
+        })
+      : encodeFunctionData({
+          abi: BANK_ABI,
+          functionName: 'transferToken',
+          args: [tokenAddress as Address, data.address.address, transferAmount]
+        })
 
-      const description = JSON.stringify({
-        text: `Transfer ${data.amount} ${data.token.symbol} to ${data.address.address}`,
-        title: 'Bank Transfer Request'
-      })
+    const description = JSON.stringify({
+      text: `Transfer ${data.amount} ${data.token.symbol} to ${data.address.address}`,
+      title: 'Bank Transfer Request'
+    })
 
+    try {
       await addAction({
         targetAddress: props.bankAddress,
         description,
         data: encodedData
       })
-      return
+    } catch (error) {
+      log.error('Transfer (BOD action) failed:', error)
+      errorMessage.value = `Failed to transfer ${data.token.symbol}`
     }
+    return
+  }
 
-    // Direct transfer (non-BOD action)
-    // Set a reasonable gas limit to avoid exceeding network gas cap
-    const gasLimit = 500000n
+  const onSuccess = async () => {
+    toast.add({ title: 'Transferred successfully', color: 'success' })
 
-    if (isNativeToken) {
-      await transfer({
-        address: props.bankAddress,
-        abi: BANK_ABI,
-        functionName: 'transfer',
-        args: [data.address.address, transferAmount],
-        gas: gasLimit
-      })
-    } else {
-      await transfer({
-        address: props.bankAddress,
-        abi: BANK_ABI,
-        functionName: 'transferToken',
-        args: [tokenAddress, data.address.address, transferAmount],
-        gas: gasLimit
-      })
-    }
-
-    if (!transferHash.value) {
-      throw new Error('There is no receipt for this transaction')
-    }
-
-    await waitForTransactionReceipt(config, { hash: transferHash.value })
-
-    // Invalidate relevant queries
     const queryKey = isNativeToken
       ? ['balance', { address: props.bankAddress, chainId: chainId.value }]
       : [
@@ -270,11 +241,28 @@ const handleTransfer = async (data: {
             chainId: chainId.value
           }
         ]
+    await queryClient.invalidateQueries({ queryKey })
 
-    queryClient.invalidateQueries({ queryKey })
-  } catch (error) {
-    console.error('Transfer failed:', error)
-    errorMessage.value = `Failed to transfer ${data.token.symbol}`
+    resetTransferValues()
+  }
+
+  const onError = (error: unknown) => {
+    log.error('Transfer failed:', error)
+    const classified = classifyError(error, { contract: 'Bank' })
+    if (classified.category === 'user_rejected') return
+    errorMessage.value = classified.userMessage
+  }
+
+  if (isNativeToken) {
+    transferNative.mutate(
+      { args: [data.address.address, transferAmount] },
+      { onSuccess, onError }
+    )
+  } else {
+    transferToken.mutate(
+      { args: [tokenAddress, data.address.address, transferAmount] },
+      { onSuccess, onError }
+    )
   }
 }
 
@@ -283,25 +271,6 @@ watch(isActionAdded, (added) => {
   if (added) {
     toast.add({ title: 'Action added successfully, waiting for confirmation', color: 'success' })
     resetTransferValues()
-  }
-})
-
-// Watch for transfer confirmation
-watch(isConfirmingTransfer, (newIsConfirming, oldIsConfirming) => {
-  if (!newIsConfirming && oldIsConfirming) {
-    toast.add({ title: 'Transferred successfully', color: 'success' })
-    resetTransferValues()
-
-    // Refresh bank owner data after a successful transfer
-    queryClient.invalidateQueries({
-      queryKey: [
-        'readContract',
-        {
-          address: props.bankAddress,
-          functionName: 'owner'
-        }
-      ]
-    })
   }
 })
 </script>
