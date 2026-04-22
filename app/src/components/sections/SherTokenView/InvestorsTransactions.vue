@@ -1,25 +1,69 @@
 <template>
-  <UCard class="w-full">
+  <UCard class="w-full" data-test="investor-transactions">
     <template #header>
       <div class="flex items-center justify-between">
         <span>Transactions History</span>
-        <InvestorsTransactionFilters
-          :unique-types="uniqueTypes"
-          :show-date-filter="true"
-          data-test-prefix="investor-transaction-history"
-          v-model:date-range="dateRange"
-          v-model:selected-type="selectedType"
-        />
+        <div class="flex items-center gap-2">
+          <CustomDatePicker
+            v-model="dateRange"
+            class="min-w-[140px]"
+            data-test-prefix="investor-transaction-history"
+          />
+          <USelect
+            v-model="selectedType"
+            :items="typeOptions"
+            class="min-w-[160px]"
+            data-test="investor-transaction-history-type-filter"
+          />
+        </div>
       </div>
     </template>
-    <InvestorsTransactionTable :transactions="displayedTransactions" />
+
+    <UTable :data="displayedTransactions" :columns="columns" :loading="loading">
+      <template #txHash-cell="{ row: { original: row } }">
+        <AddressToolTip :address="row.txHash" :slice="true" type="transaction" />
+      </template>
+
+      <template #date-cell="{ row: { original: row } }">
+        {{ formatDateShort(String(row.date)) }}
+      </template>
+
+      <template #type-cell="{ row: { original: row } }">
+        <span class="badge" :class="getTypeClass(row.type)">{{ row.type }}</span>
+      </template>
+
+      <template #from-cell="{ row: { original: row } }">
+        <AddressToolTip :address="row.from" :slice="true" type="address" />
+      </template>
+
+      <template #to-cell="{ row: { original: row } }">
+        <AddressToolTip :address="row.to" :slice="true" type="address" />
+      </template>
+
+      <template #amount-cell="{ row: { original: row } }">
+        {{ formatCryptoAmount(row.amount) }} {{ row.token }}
+      </template>
+
+      <template #valueUSD-cell="{ row: { original: row } }">
+        {{ formatCurrencyShort(row.amountUSD, 'USD') }}
+      </template>
+    </UTable>
   </UCard>
 </template>
 
 <script setup lang="ts">
+import AddressToolTip from '@/components/AddressToolTip.vue'
+import CustomDatePicker from '@/components/CustomDatePicker.vue'
 import { useTeamStore } from '@/stores'
 import type { InvestorsTransaction } from '@/types/transactions'
-import { formatEtherUtil, getTokenAddress, log, tokenSymbol } from '@/utils'
+import {
+  formatCryptoAmount,
+  formatCurrencyShort,
+  formatEtherUtil,
+  getTokenAddress,
+  log,
+  tokenSymbol
+} from '@/utils'
 import { useQuery } from '@vue/apollo-composable'
 import { computed, watch, ref } from 'vue'
 import { GRAPHQL_POLL_INTERVAL, NETWORK } from '@/constant'
@@ -29,8 +73,7 @@ import { zeroAddress } from 'viem'
 import { useInvestorSymbol } from '@/composables/investor/reads'
 import { GET_INVESTOR_EVENTS } from '@/queries/ponder/investor.queries'
 import type { InvestorEventsQuery, RawInvestorTransaction } from '@/types/ponder/investor'
-import InvestorsTransactionFilters from '@/components/sections/SherTokenView/InvestorsTransactionFilter.vue'
-import InvestorsTransactionTable from '@/components/sections/SherTokenView/InvestorsTransactionTable.vue'
+import { formatDateShort } from '@/utils/dayUtils'
 
 const teamStore = useTeamStore()
 const currencyStore = useCurrencyStore()
@@ -77,7 +120,7 @@ const getUsdPrice = (tokenId: TokenId | null): number => {
   return 0
 }
 
-const { result, error } = useQuery<InvestorEventsQuery>(
+const { result, error, loading } = useQuery<InvestorEventsQuery>(
   GET_INVESTOR_EVENTS,
   {
     contractAddress: investorAddress,
@@ -182,6 +225,11 @@ const uniqueTypes = computed(() => {
   return Array.from(types).sort()
 })
 
+const typeOptions = computed(() => [
+  { label: 'All Types', value: 'all' },
+  ...uniqueTypes.value.map((type) => ({ label: type, value: type }))
+])
+
 const displayedTransactions = computed(() => {
   let filtered = transactionData.value
 
@@ -198,6 +246,23 @@ const displayedTransactions = computed(() => {
   }
 
   return filtered
+})
+
+const columns = computed(() => [
+  { accessorKey: 'txHash', header: 'Tx Hash' },
+  { accessorKey: 'date', header: 'Date' },
+  { accessorKey: 'type', header: 'Type' },
+  { accessorKey: 'from', header: 'From' },
+  { accessorKey: 'to', header: 'To' },
+  { accessorKey: 'amount', header: 'Amount' },
+  { accessorKey: 'valueUSD', header: 'Value (USD)' }
+])
+
+const getTypeClass = (type: string) => ({
+  'badge-success': type.toLowerCase().includes('mint') || type.toLowerCase().includes('paid'),
+  'badge-warning': type.toLowerCase().includes('distributed'),
+  'badge-error': type.toLowerCase().includes('failed'),
+  'badge-info': type.toLowerCase().includes('transfer')
 })
 
 const lastError = ref<string | null>(null)

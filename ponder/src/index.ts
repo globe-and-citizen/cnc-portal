@@ -58,10 +58,6 @@ import {
   feeCollectorConfigUpdated,
   feeCollectorTokenSupportAdded,
   feeCollectorTokenSupportRemoved,
-  vestingCreated,
-  vestingTokensReleased,
-  vestingStopped,
-  vestingUnvestedWithdrawn,
 } from "ponder:schema";
 
 // ─── Officer Factory ─────────────────────────────────────────────────────────
@@ -227,55 +223,6 @@ ponder.on("FeeCollector:TokenSupportRemoved", async ({ event, context }) => {
     id: `${event.transaction.hash}-${event.log.logIndex}`,
     contractAddress: event.log.address,
     tokenAddress: event.args.tokenAddress,
-    blockNumber: event.block.number,
-    timestamp: Number(event.block.timestamp),
-  });
-});
-
-// ─── Vesting ──────────────────────────────────────────────────────────────────
-
-ponder.on("Vesting:VestingCreated", async ({ event, context }) => {
-  await context.db.insert(vestingCreated).values({
-    id: `${event.transaction.hash}-${event.log.logIndex}`,
-    contractAddress: event.log.address,
-    member: event.args.member,
-    teamId: event.args.teamId,
-    amount: event.args.amount,
-    blockNumber: event.block.number,
-    timestamp: Number(event.block.timestamp),
-  });
-});
-
-ponder.on("Vesting:TokensReleased", async ({ event, context }) => {
-  await context.db.insert(vestingTokensReleased).values({
-    id: `${event.transaction.hash}-${event.log.logIndex}`,
-    contractAddress: event.log.address,
-    member: event.args.member,
-    teamId: event.args.teamId,
-    amount: event.args.amount,
-    blockNumber: event.block.number,
-    timestamp: Number(event.block.timestamp),
-  });
-});
-
-ponder.on("Vesting:VestingStopped", async ({ event, context }) => {
-  await context.db.insert(vestingStopped).values({
-    id: `${event.transaction.hash}-${event.log.logIndex}`,
-    contractAddress: event.log.address,
-    member: event.args.member,
-    teamId: event.args.teamId,
-    blockNumber: event.block.number,
-    timestamp: Number(event.block.timestamp),
-  });
-});
-
-ponder.on("Vesting:UnvestedWithdrawn", async ({ event, context }) => {
-  await context.db.insert(vestingUnvestedWithdrawn).values({
-    id: `${event.transaction.hash}-${event.log.logIndex}`,
-    contractAddress: event.log.address,
-    member: event.args.member,
-    teamId: event.args.teamId,
-    amount: event.args.amount,
     blockNumber: event.block.number,
     timestamp: Number(event.block.timestamp),
   });
