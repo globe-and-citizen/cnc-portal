@@ -9,6 +9,7 @@ import utc from 'dayjs/plugin/utc'
 import isoWeek from 'dayjs/plugin/isoWeek'
 import { USDC_ADDRESS } from '@/constant'
 import {
+  mockCashRemunerationWrites,
   mockTeamStore,
   mockUserStore,
   mockUseReadContract,
@@ -17,6 +18,13 @@ import {
 } from '@/tests/mocks'
 import { createMockMutationResponse } from '@/tests/mocks/query.mock'
 import { useUpdateWeeklyClaimMutation } from '@/queries'
+
+vi.mock('@/composables/cashRemuneration/writes', () => ({
+  useEnableClaim: vi.fn(() => mockCashRemunerationWrites.enableClaim),
+  useDisableClaim: vi.fn(() => mockCashRemunerationWrites.disableClaim),
+  useWithdraw: vi.fn(() => mockCashRemunerationWrites.ownerWithdrawAllToBank),
+  useOwnerWithdrawAllToBank: vi.fn(() => mockCashRemunerationWrites.ownerWithdrawAllToBank)
+}))
 
 dayjs.extend(utc)
 dayjs.extend(isoWeek)
@@ -265,29 +273,24 @@ describe('CRSigne', () => {
 
     it('should handle resign flow when claim is disabled', async () => {
       mockWagmiCore.readContract.mockResolvedValue(true)
-      mockWagmiCore.simulateContract.mockResolvedValue(undefined)
-      mockWagmiCore.writeContract.mockResolvedValue('0xhash')
-      mockWagmiCore.waitForTransactionReceipt.mockResolvedValue({})
+      mockCashRemunerationWrites.enableClaim.mutateAsync = vi.fn().mockResolvedValue('0xhash')
 
       createWrapper({ isResign: true })
       await clickApprove()
 
       expect(mockWagmiCore.readContract).toHaveBeenCalled()
-      expect(mockWagmiCore.simulateContract).toHaveBeenCalled()
-      expect(mockWagmiCore.writeContract).toHaveBeenCalled()
-      expect(mockWagmiCore.waitForTransactionReceipt).toHaveBeenCalled()
+      expect(mockCashRemunerationWrites.enableClaim.mutateAsync).toHaveBeenCalled()
     })
 
     it('should skip enable flow when claim is not disabled', async () => {
       mockWagmiCore.readContract.mockResolvedValue(false)
+      mockCashRemunerationWrites.enableClaim.mutateAsync = vi.fn()
 
       createWrapper({ isResign: true })
       await clickApprove()
 
       expect(mockWagmiCore.readContract).toHaveBeenCalled()
-      expect(mockWagmiCore.simulateContract).not.toHaveBeenCalled()
-      expect(mockWagmiCore.writeContract).not.toHaveBeenCalled()
-      expect(mockWagmiCore.waitForTransactionReceipt).not.toHaveBeenCalled()
+      expect(mockCashRemunerationWrites.enableClaim.mutateAsync).not.toHaveBeenCalled()
     })
 
     it('should show error toast when cash remuneration owner fetch fails', async () => {

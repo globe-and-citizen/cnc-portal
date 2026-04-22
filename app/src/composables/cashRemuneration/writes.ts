@@ -26,10 +26,18 @@ export function useOwnerWithdrawAllToBank() {
   return useCashRemunerationContractWrite('ownerWithdrawAllToBank')
 }
 
+export function useEnableClaim() {
+  return useCashRemunerationContractWrite('enableClaim')
+}
+
+export function useDisableClaim() {
+  return useCashRemunerationContractWrite('disableClaim')
+}
+
 // UNUSED — no consumers outside this file. See the commented-out block for
-// definitions of useAddTokenSupport, useRemoveTokenSupport, useEnableClaim,
-// useDisableClaim, useInitialize, useSetOfficerAddress, useTransferOwnership,
-// useRenounceOwnership, usePause, useUnpause.
+// definitions of useAddTokenSupport, useRemoveTokenSupport, useInitialize,
+// useSetOfficerAddress, useTransferOwnership, useRenounceOwnership,
+// usePause, useUnpause.
 /*
 export function useAddTokenSupport() {
   return useCashRemunerationContractWrite('addTokenSupport')
@@ -37,14 +45,6 @@ export function useAddTokenSupport() {
 
 export function useRemoveTokenSupport() {
   return useCashRemunerationContractWrite('removeTokenSupport')
-}
-
-export function useEnableClaim() {
-  return useCashRemunerationContractWrite('enableClaim')
-}
-
-export function useDisableClaim() {
-  return useCashRemunerationContractWrite('disableClaim')
 }
 
 export function useInitialize() {

@@ -1,16 +1,22 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
+import { keccak256 } from 'viem'
 import DropdownActions from '../WeeklyClaimActionDropdown.vue'
 import type { Status } from '../WeeklyClaimActionDropdown.vue'
 import type { WeeklyClaim } from '@/types'
 import {
+  mockCashRemunerationWrites,
   mockSyncWeeklyClaimsMutation,
   mockTeamStore,
   mockUserStore,
-  mockWagmiCore,
   mockUseReadContract,
   useQueryClientFn
 } from '@/tests/mocks'
+
+vi.mock('@/composables/cashRemuneration/writes', () => ({
+  useEnableClaim: vi.fn(() => mockCashRemunerationWrites.enableClaim),
+  useDisableClaim: vi.fn(() => mockCashRemunerationWrites.disableClaim)
+}))
 
 describe('WeeklyClaimActionDropdown', () => {
   const weeklyClaim: WeeklyClaim = {
@@ -53,6 +59,14 @@ describe('WeeklyClaimActionDropdown', () => {
     return mutateAsync
   }
 
+  const setDisableSuccess = () => {
+    mockCashRemunerationWrites.disableClaim.mutate = vi.fn(
+      async (_vars: unknown, opts?: { onSuccess?: () => Promise<void> | void }) => {
+        await opts?.onSuccess?.()
+      }
+    )
+  }
+
   const createWrapper = (status: Status = 'pending') => {
     return mount(DropdownActions, {
       props: {
@@ -93,9 +107,8 @@ describe('WeeklyClaimActionDropdown', () => {
     mockUserStore.address = '0xOwner'
     mockUseReadContract.data.value = '0xOwner'
 
-    mockWagmiCore.simulateContract.mockResolvedValue({})
-    mockWagmiCore.writeContract.mockResolvedValue('0xhash')
-    mockWagmiCore.waitForTransactionReceipt.mockResolvedValue({ status: 'success' })
+    mockCashRemunerationWrites.disableClaim.isPending.value = false
+    setDisableSuccess()
 
     setupSyncMutation()
   })
@@ -155,9 +168,9 @@ describe('WeeklyClaimActionDropdown', () => {
 
     const disableLink = wrapper.find('[data-test="signed-disable"] a')
     await disableLink.trigger('click')
+    await flushPromises()
 
-    expect(mockWagmiCore.simulateContract).not.toHaveBeenCalled()
-    expect(mockWagmiCore.writeContract).not.toHaveBeenCalled()
+    expect(mockCashRemunerationWrites.disableClaim.mutate).not.toHaveBeenCalled()
   })
 
   it('disables claim successfully and syncs weekly claims', async () => {
@@ -170,9 +183,10 @@ describe('WeeklyClaimActionDropdown', () => {
     await disableLink.trigger('click')
     await flushPromises()
 
-    expect(mockWagmiCore.simulateContract).toHaveBeenCalled()
-    expect(mockWagmiCore.writeContract).toHaveBeenCalled()
-    expect(mockWagmiCore.waitForTransactionReceipt).toHaveBeenCalled()
+    expect(mockCashRemunerationWrites.disableClaim.mutate).toHaveBeenCalledWith(
+      { args: [keccak256('0x1234')] },
+      expect.anything()
+    )
     expect(mutateAsync).toHaveBeenCalledWith({ queryParams: { teamId: '1' } })
 
     const queryClient = useQueryClientFn.mock.results.at(-1)?.value
