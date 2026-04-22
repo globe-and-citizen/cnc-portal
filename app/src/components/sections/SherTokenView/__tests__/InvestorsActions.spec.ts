@@ -16,7 +16,7 @@ const MintTokenActionStub = {
 }
 
 const PayDividendsActionStub = {
-  props: ['tokenSymbol', 'shareholdersCount', 'investorsAddress', 'investorsOwner', 'bankAddress'],
+  props: ['tokenSymbol', 'shareholdersCount', 'investorsAddress', 'bankAddress'],
   template: '<div data-test="pay-dividends-action" />'
 }
 
@@ -107,7 +107,6 @@ describe('InvestorsActions.vue', () => {
     expect(pay.props('investorsAddress')).toBe(
       '0x2222222222222222222222222222222222222222' as Address
     )
-    expect(pay.props('investorsOwner')).toBe('0xOwner' as Address)
     expect(pay.props('bankAddress')).toBe('0x1111111111111111111111111111111111111111' as Address)
   })
 
