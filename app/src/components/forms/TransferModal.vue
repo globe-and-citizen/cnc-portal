@@ -55,7 +55,7 @@
 
 <script setup lang="ts">
 import TransferForm, { type TransferModel } from '@/components/forms/TransferForm.vue'
-import { ref, watch, computed, toRef, type Ref } from 'vue'
+import { ref, watch, computed, type Ref } from 'vue'
 import { type Address, parseEther, encodeFunctionData, parseUnits } from 'viem'
 import { useChainId, useReadContract } from '@wagmi/vue'
 import { useQueryClient } from '@tanstack/vue-query'
@@ -113,9 +113,8 @@ const modal = ref({
 const errorMessage = ref('')
 
 // Contract interactions for transfer
-const bankAddressRef = toRef(props, 'bankAddress')
-const transferNative = useTransfer(bankAddressRef)
-const transferToken = useTransferToken(bankAddressRef)
+const transferNative = useTransfer()
+const transferToken = useTransferToken()
 
 // Computed loading state
 const isLoading = computed(

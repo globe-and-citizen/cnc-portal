@@ -1,5 +1,4 @@
-import { computed, unref, type MaybeRef } from 'vue'
-import type { Address } from 'viem'
+import { computed } from 'vue'
 import { BANK_ABI } from '@/artifacts/abi/bank'
 import { useContractWritesV3 } from '@/composables/contracts/useContractWritesV3'
 import { useTeamStore } from '@/stores/teamStore'
@@ -7,16 +6,11 @@ import type { ExtractAbiFunctionNames } from 'abitype'
 
 type BankFunctionNames = ExtractAbiFunctionNames<typeof BANK_ABI>
 
-function useBankContractWrite(
-  functionName: BankFunctionNames,
-  bankAddress?: MaybeRef<Address | undefined>
-) {
+function useBankContractWrite(functionName: BankFunctionNames) {
   const teamStore = useTeamStore()
-  const resolvedAddress = computed(
-    () => unref(bankAddress) ?? (teamStore.getContractAddressByType('Bank') as Address | undefined)
-  )
+  const bankAddress = computed(() => teamStore.getContractAddressByType('Bank'))
   return useContractWritesV3({
-    contractAddress: resolvedAddress,
+    contractAddress: bankAddress,
     abi: BANK_ABI,
     functionName
   })
@@ -34,10 +28,10 @@ export function useDistributeTokenDividends() {
   return useBankContractWrite('distributeTokenDividends')
 }
 
-export function useTransfer(bankAddress?: MaybeRef<Address | undefined>) {
-  return useBankContractWrite('transfer', bankAddress)
+export function useTransfer() {
+  return useBankContractWrite('transfer')
 }
 
-export function useTransferToken(bankAddress?: MaybeRef<Address | undefined>) {
-  return useBankContractWrite('transferToken', bankAddress)
+export function useTransferToken() {
+  return useBankContractWrite('transferToken')
 }
