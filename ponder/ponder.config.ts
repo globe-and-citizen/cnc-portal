@@ -11,10 +11,9 @@ import { CASH_REMUNERATION_EIP712_ABI } from "./abis/cash-remuneration-eip712";
 import { SAFE_DEPOSIT_ROUTER_ABI } from "./abis/safe-deposit-router";
 import { EXPENSE_ACCOUNT_EIP712_ABI } from "./abis/expense-account-eip712";
 import { FEE_COLLECTOR_ABI } from "./abis/fee-collector";
-import { VESTING_ABI } from "./abis/vesting";
 
 const CONTRACT_DEPLOYED_EVENT = parseAbiItem(
-  "event ContractDeployed(string contractType, address deployedAddress)"
+  "event ContractDeployed(string contractType, address deployedAddress)",
 );
 
 // ─── Network selection ────────────────────────────────────────────────────────
@@ -31,7 +30,7 @@ const chainName = isHardhat ? "hardhat" : "polygon";
 if (isHardhat && !process.env.FACTORY_ADDRESS) {
   throw new Error(
     "FACTORY_ADDRESS must be set in .env.local when NETWORK=hardhat. " +
-      "Deploy contracts and copy the OfficerFactoryBeacon address."
+      "Deploy contracts and copy the OfficerFactoryBeacon address.",
   );
 }
 const factoryAddress = (
@@ -44,11 +43,6 @@ if (!process.env.FEE_COLLECTOR_ADDRESS) {
   throw new Error("FEE_COLLECTOR_ADDRESS must be set in .env.local.");
 }
 const feeCollectorAddress = process.env.FEE_COLLECTOR_ADDRESS as `0x${string}`;
-
-if (!process.env.VESTING_ADDRESS) {
-  throw new Error("VESTING_ADDRESS must be set in .env.local.");
-}
-const vestingAddress = process.env.VESTING_ADDRESS as `0x${string}`;
 
 // On Hardhat start from block 0; on Polygon skip pre-deployment blocks.
 const startBlock = isHardhat ? 0 : Number(process.env.START_BLOCK);
@@ -141,12 +135,6 @@ export default createConfig({
       chain: chainName,
       abi: FEE_COLLECTOR_ABI,
       address: feeCollectorAddress,
-      startBlock,
-    },
-    Vesting: {
-      chain: chainName,
-      abi: VESTING_ABI,
-      address: vestingAddress,
       startBlock,
     },
   },

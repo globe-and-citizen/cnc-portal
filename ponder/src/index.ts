@@ -75,7 +75,8 @@ ponder.on(
 );
 
 ponder.on("Officer:ContractDeployed", async ({ event, context }) => {
-  const contractAddress = event.args.deployedAddress.toLowerCase() as `0x${string}`;
+  const contractAddress =
+    event.args.deployedAddress.toLowerCase() as `0x${string}`;
   const teamAddress = event.log.address.toLowerCase() as `0x${string}`;
 
   await context.db.insert(teamContract).values({
@@ -400,15 +401,18 @@ ponder.on("BoardOfDirectors:Revocation", async ({ event, context }) => {
     });
 });
 
-ponder.on("BoardOfDirectors:BoardOfDirectorsChanged", async ({ event, context }) => {
-  await context.db.insert(boardDirectorsChanged).values({
-    id: `${event.transaction.hash}-${event.log.logIndex}`,
-    contractAddress: event.log.address,
-    members: JSON.stringify(event.args.boardOfDirectors),
-    blockNumber: event.block.number,
-    timestamp: Number(event.block.timestamp),
-  });
-});
+ponder.on(
+  "BoardOfDirectors:BoardOfDirectorsChanged",
+  async ({ event, context }) => {
+    await context.db.insert(boardDirectorsChanged).values({
+      id: `${event.transaction.hash}-${event.log.logIndex}`,
+      contractAddress: event.log.address,
+      members: JSON.stringify(event.args.boardOfDirectors),
+      blockNumber: event.block.number,
+      timestamp: Number(event.block.timestamp),
+    });
+  },
+);
 
 ponder.on("BoardOfDirectors:OwnersChanged", async ({ event, context }) => {
   await context.db.insert(boardOwnersChanged).values({
@@ -541,14 +545,16 @@ ponder.on(
 ponder.on(
   "CashRemunerationEIP712:OwnerTreasuryWithdrawNative",
   async ({ event, context }) => {
-    await context.db.insert(cashRemunerationOwnerTreasuryWithdrawNative).values({
-      id: `${event.transaction.hash}-${event.log.logIndex}`,
-      contractAddress: event.log.address,
-      ownerAddress: event.args.ownerAddress,
-      amount: event.args.amount,
-      blockNumber: event.block.number,
-      timestamp: Number(event.block.timestamp),
-    });
+    await context.db
+      .insert(cashRemunerationOwnerTreasuryWithdrawNative)
+      .values({
+        id: `${event.transaction.hash}-${event.log.logIndex}`,
+        contractAddress: event.log.address,
+        ownerAddress: event.args.ownerAddress,
+        amount: event.args.amount,
+        blockNumber: event.block.number,
+        timestamp: Number(event.block.timestamp),
+      });
   },
 );
 
@@ -642,16 +648,19 @@ ponder.on("SafeDepositRouter:DepositsDisabled", async ({ event, context }) => {
   });
 });
 
-ponder.on("SafeDepositRouter:SafeAddressUpdated", async ({ event, context }) => {
-  await context.db.insert(safeAddressUpdated).values({
-    id: `${event.transaction.hash}-${event.log.logIndex}`,
-    contractAddress: event.log.address,
-    oldSafe: event.args.oldSafe,
-    newSafe: event.args.newSafe,
-    blockNumber: event.block.number,
-    timestamp: Number(event.block.timestamp),
-  });
-});
+ponder.on(
+  "SafeDepositRouter:SafeAddressUpdated",
+  async ({ event, context }) => {
+    await context.db.insert(safeAddressUpdated).values({
+      id: `${event.transaction.hash}-${event.log.logIndex}`,
+      contractAddress: event.log.address,
+      oldSafe: event.args.oldSafe,
+      newSafe: event.args.newSafe,
+      blockNumber: event.block.number,
+      timestamp: Number(event.block.timestamp),
+    });
+  },
+);
 
 ponder.on("SafeDepositRouter:MultiplierUpdated", async ({ event, context }) => {
   await context.db.insert(safeMultiplierUpdated).values({
@@ -692,15 +701,18 @@ ponder.on(
   },
 );
 
-ponder.on("SafeDepositRouter:TokenSupportRemoved", async ({ event, context }) => {
-  await context.db.insert(safeTokenSupportRemoved).values({
-    id: `${event.transaction.hash}-${event.log.logIndex}`,
-    contractAddress: event.log.address,
-    tokenAddress: event.args.tokenAddress,
-    blockNumber: event.block.number,
-    timestamp: Number(event.block.timestamp),
-  });
-});
+ponder.on(
+  "SafeDepositRouter:TokenSupportRemoved",
+  async ({ event, context }) => {
+    await context.db.insert(safeTokenSupportRemoved).values({
+      id: `${event.transaction.hash}-${event.log.logIndex}`,
+      contractAddress: event.log.address,
+      tokenAddress: event.args.tokenAddress,
+      blockNumber: event.block.number,
+      timestamp: Number(event.block.timestamp),
+    });
+  },
+);
 
 ponder.on("SafeDepositRouter:TokensRecovered", async ({ event, context }) => {
   await context.db.insert(safeTokensRecovered).values({

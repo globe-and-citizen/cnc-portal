@@ -27,7 +27,9 @@ export const teamContract = onchainTable(
   }),
   (table) => ({
     teamAddressIdx: index("team_contract_team_index").on(table.teamAddress),
-    contractAddressIdx: index("team_contract_address_index").on(table.contractAddress),
+    contractAddressIdx: index("team_contract_address_index").on(
+      table.contractAddress,
+    ),
   }),
 );
 
@@ -43,7 +45,9 @@ export const bankDeposit = onchainTable(
     timestamp: t.integer().notNull(),
   }),
   (table) => ({
-    contractAddressIdx: index("bank_deposit_contract_index").on(table.contractAddress),
+    contractAddressIdx: index("bank_deposit_contract_index").on(
+      table.contractAddress,
+    ),
     depositorIdx: index("bank_deposit_depositor_index").on(table.depositor),
   }),
 );
@@ -60,8 +64,12 @@ export const bankTokenDeposit = onchainTable(
     timestamp: t.integer().notNull(),
   }),
   (table) => ({
-    contractAddressIdx: index("bank_token_deposit_contract_index").on(table.contractAddress),
-    depositorIdx: index("bank_token_deposit_depositor_index").on(table.depositor),
+    contractAddressIdx: index("bank_token_deposit_contract_index").on(
+      table.contractAddress,
+    ),
+    depositorIdx: index("bank_token_deposit_depositor_index").on(
+      table.depositor,
+    ),
   }),
 );
 
@@ -77,7 +85,9 @@ export const bankTransfer = onchainTable(
     timestamp: t.integer().notNull(),
   }),
   (table) => ({
-    contractAddressIdx: index("bank_transfer_contract_index").on(table.contractAddress),
+    contractAddressIdx: index("bank_transfer_contract_index").on(
+      table.contractAddress,
+    ),
     senderIdx: index("bank_transfer_sender_index").on(table.sender),
   }),
 );
@@ -95,7 +105,9 @@ export const bankTokenTransfer = onchainTable(
     timestamp: t.integer().notNull(),
   }),
   (table) => ({
-    contractAddressIdx: index("bank_token_transfer_contract_index").on(table.contractAddress),
+    contractAddressIdx: index("bank_token_transfer_contract_index").on(
+      table.contractAddress,
+    ),
     senderIdx: index("bank_token_transfer_sender_index").on(table.sender),
   }),
 );
@@ -112,7 +124,9 @@ export const bankFeePaid = onchainTable(
     timestamp: t.integer().notNull(),
   }),
   (table) => ({
-    contractAddressIdx: index("bank_fee_paid_contract_index").on(table.contractAddress),
+    contractAddressIdx: index("bank_fee_paid_contract_index").on(
+      table.contractAddress,
+    ),
     tokenIdx: index("bank_fee_paid_token_index").on(table.token),
   }),
 );
@@ -129,9 +143,9 @@ export const bankDividendDistributionTriggered = onchainTable(
     timestamp: t.integer().notNull(),
   }),
   (table) => ({
-    contractAddressIdx: index("bank_dividend_distribution_triggered_contract_index").on(
-      table.contractAddress,
-    ),
+    contractAddressIdx: index(
+      "bank_dividend_distribution_triggered_contract_index",
+    ).on(table.contractAddress),
   }),
 );
 
@@ -145,8 +159,12 @@ export const bankTokenSupportAdded = onchainTable(
     timestamp: t.integer().notNull(),
   }),
   (table) => ({
-    contractAddressIdx: index("bank_token_support_added_contract_index").on(table.contractAddress),
-    tokenAddressIdx: index("bank_token_support_added_token_index").on(table.tokenAddress),
+    contractAddressIdx: index("bank_token_support_added_contract_index").on(
+      table.contractAddress,
+    ),
+    tokenAddressIdx: index("bank_token_support_added_token_index").on(
+      table.tokenAddress,
+    ),
   }),
 );
 
@@ -160,8 +178,12 @@ export const bankTokenSupportRemoved = onchainTable(
     timestamp: t.integer().notNull(),
   }),
   (table) => ({
-    contractAddressIdx: index("bank_token_support_removed_contract_index").on(table.contractAddress),
-    tokenAddressIdx: index("bank_token_support_removed_token_index").on(table.tokenAddress),
+    contractAddressIdx: index("bank_token_support_removed_contract_index").on(
+      table.contractAddress,
+    ),
+    tokenAddressIdx: index("bank_token_support_removed_token_index").on(
+      table.tokenAddress,
+    ),
   }),
 );
 
@@ -198,7 +220,9 @@ export const electionVote = onchainTable(
     timestamp: t.integer().notNull(),
   }),
   (table) => ({
-    contractAddressIdx: index("election_vote_contract_index").on(table.contractAddress),
+    contractAddressIdx: index("election_vote_contract_index").on(
+      table.contractAddress,
+    ),
     voterIdx: index("election_vote_voter_index").on(table.voter),
   }),
 );
@@ -214,7 +238,9 @@ export const electionResult = onchainTable(
     timestamp: t.integer().notNull(),
   }),
   (table) => ({
-    contractAddressIdx: index("election_result_contract_index").on(table.contractAddress),
+    contractAddressIdx: index("election_result_contract_index").on(
+      table.contractAddress,
+    ),
   }),
 );
 
@@ -251,7 +277,9 @@ export const proposalVote = onchainTable(
     timestamp: t.integer().notNull(),
   }),
   (table) => ({
-    contractAddressIdx: index("proposal_vote_contract_index").on(table.contractAddress),
+    contractAddressIdx: index("proposal_vote_contract_index").on(
+      table.contractAddress,
+    ),
     voterIdx: index("proposal_vote_voter_index").on(table.voter),
   }),
 );
@@ -270,7 +298,9 @@ export const proposalTally = onchainTable(
     timestamp: t.integer().notNull(),
   }),
   (table) => ({
-    contractAddressIdx: index("proposal_tally_contract_index").on(table.contractAddress),
+    contractAddressIdx: index("proposal_tally_contract_index").on(
+      table.contractAddress,
+    ),
   }),
 );
 
@@ -290,7 +320,10 @@ export const boardAction = onchainTable(
   }),
   (table) => ({
     contractIdx: index("board_action_contract_index").on(table.contractAddress),
-    executedIdx: index("board_action_executed_index").on(table.contractAddress, table.executed),
+    executedIdx: index("board_action_executed_index").on(
+      table.contractAddress,
+      table.executed,
+    ),
   }),
 );
 
@@ -306,7 +339,9 @@ export const boardApproval = onchainTable(
     timestamp: t.integer().notNull(),
   }),
   (table) => ({
-    contractAddressIdx: index("board_approval_contract_index").on(table.contractAddress),
+    contractAddressIdx: index("board_approval_contract_index").on(
+      table.contractAddress,
+    ),
     approverIdx: index("board_approval_approver_index").on(table.approver),
   }),
 );
@@ -321,7 +356,9 @@ export const boardDirectorsChanged = onchainTable(
     timestamp: t.integer().notNull(),
   }),
   (table) => ({
-    contractAddressIdx: index("board_directors_changed_contract_index").on(table.contractAddress),
+    contractAddressIdx: index("board_directors_changed_contract_index").on(
+      table.contractAddress,
+    ),
   }),
 );
 
@@ -335,7 +372,9 @@ export const boardOwnersChanged = onchainTable(
     timestamp: t.integer().notNull(),
   }),
   (table) => ({
-    contractAddressIdx: index("board_owners_changed_contract_index").on(table.contractAddress),
+    contractAddressIdx: index("board_owners_changed_contract_index").on(
+      table.contractAddress,
+    ),
   }),
 );
 
@@ -351,8 +390,12 @@ export const investorMint = onchainTable(
     timestamp: t.integer().notNull(),
   }),
   (table) => ({
-    contractAddressIdx: index("investor_mint_contract_index").on(table.contractAddress),
-    shareholderIdx: index("investor_mint_shareholder_index").on(table.shareholder),
+    contractAddressIdx: index("investor_mint_contract_index").on(
+      table.contractAddress,
+    ),
+    shareholderIdx: index("investor_mint_shareholder_index").on(
+      table.shareholder,
+    ),
   }),
 );
 
@@ -369,9 +412,9 @@ export const investorDividendDistributed = onchainTable(
     timestamp: t.integer().notNull(),
   }),
   (table) => ({
-    contractAddressIdx: index("investor_dividend_distributed_contract_index").on(
-      table.contractAddress,
-    ),
+    contractAddressIdx: index(
+      "investor_dividend_distributed_contract_index",
+    ).on(table.contractAddress),
   }),
 );
 
@@ -387,8 +430,12 @@ export const investorDividendPaid = onchainTable(
     timestamp: t.integer().notNull(),
   }),
   (table) => ({
-    contractAddressIdx: index("investor_dividend_paid_contract_index").on(table.contractAddress),
-    shareholderIdx: index("investor_dividend_paid_shareholder_index").on(table.shareholder),
+    contractAddressIdx: index("investor_dividend_paid_contract_index").on(
+      table.contractAddress,
+    ),
+    shareholderIdx: index("investor_dividend_paid_shareholder_index").on(
+      table.shareholder,
+    ),
   }),
 );
 
@@ -405,12 +452,12 @@ export const investorDividendPaymentFailed = onchainTable(
     timestamp: t.integer().notNull(),
   }),
   (table) => ({
-    contractAddressIdx: index("investor_dividend_payment_failed_contract_index").on(
-      table.contractAddress,
-    ),
-    shareholderIdx: index("investor_dividend_payment_failed_shareholder_index").on(
-      table.shareholder,
-    ),
+    contractAddressIdx: index(
+      "investor_dividend_payment_failed_contract_index",
+    ).on(table.contractAddress),
+    shareholderIdx: index(
+      "investor_dividend_payment_failed_shareholder_index",
+    ).on(table.shareholder),
   }),
 );
 
@@ -429,7 +476,9 @@ export const cashRemunerationDeposit = onchainTable(
     contractAddressIdx: index("cash_remuneration_deposit_contract_index").on(
       table.contractAddress,
     ),
-    depositorIdx: index("cash_remuneration_deposit_depositor_index").on(table.depositor),
+    depositorIdx: index("cash_remuneration_deposit_depositor_index").on(
+      table.depositor,
+    ),
   }),
 );
 
@@ -447,7 +496,9 @@ export const cashRemunerationWithdraw = onchainTable(
     contractAddressIdx: index("cash_remuneration_withdraw_contract_index").on(
       table.contractAddress,
     ),
-    withdrawerIdx: index("cash_remuneration_withdraw_withdrawer_index").on(table.withdrawer),
+    withdrawerIdx: index("cash_remuneration_withdraw_withdrawer_index").on(
+      table.withdrawer,
+    ),
   }),
 );
 
@@ -463,10 +514,12 @@ export const cashRemunerationWithdrawToken = onchainTable(
     timestamp: t.integer().notNull(),
   }),
   (table) => ({
-    contractAddressIdx: index("cash_remuneration_withdraw_token_contract_index").on(
-      table.contractAddress,
-    ),
-    withdrawerIdx: index("cash_remuneration_withdraw_token_withdrawer_index").on(table.withdrawer),
+    contractAddressIdx: index(
+      "cash_remuneration_withdraw_token_contract_index",
+    ).on(table.contractAddress),
+    withdrawerIdx: index(
+      "cash_remuneration_withdraw_token_withdrawer_index",
+    ).on(table.withdrawer),
   }),
 );
 
@@ -502,8 +555,12 @@ export const cashRemunerationOwnerTreasuryWithdrawNative = onchainTable(
     timestamp: t.integer().notNull(),
   }),
   (table) => ({
-    contractAddressIdx: index("cash_rem_owner_withdraw_native_contract_index").on(table.contractAddress),
-    ownerIdx: index("cash_rem_owner_withdraw_native_owner_index").on(table.ownerAddress),
+    contractAddressIdx: index(
+      "cash_rem_owner_withdraw_native_contract_index",
+    ).on(table.contractAddress),
+    ownerIdx: index("cash_rem_owner_withdraw_native_owner_index").on(
+      table.ownerAddress,
+    ),
   }),
 );
 
@@ -519,8 +576,12 @@ export const cashRemunerationOwnerTreasuryWithdrawToken = onchainTable(
     timestamp: t.integer().notNull(),
   }),
   (table) => ({
-    contractAddressIdx: index("cash_rem_owner_withdraw_token_contract_index").on(table.contractAddress),
-    ownerIdx: index("cash_rem_owner_withdraw_token_owner_index").on(table.ownerAddress),
+    contractAddressIdx: index(
+      "cash_rem_owner_withdraw_token_contract_index",
+    ).on(table.contractAddress),
+    ownerIdx: index("cash_rem_owner_withdraw_token_owner_index").on(
+      table.ownerAddress,
+    ),
   }),
 );
 
@@ -534,8 +595,12 @@ export const cashRemunerationOfficerUpdated = onchainTable(
     timestamp: t.integer().notNull(),
   }),
   (table) => ({
-    contractAddressIdx: index("cash_rem_officer_updated_contract_index").on(table.contractAddress),
-    officerIdx: index("cash_rem_officer_updated_officer_index").on(table.newOfficerAddress),
+    contractAddressIdx: index("cash_rem_officer_updated_contract_index").on(
+      table.contractAddress,
+    ),
+    officerIdx: index("cash_rem_officer_updated_officer_index").on(
+      table.newOfficerAddress,
+    ),
   }),
 );
 
@@ -549,8 +614,12 @@ export const cashRemunerationTokenSupportAdded = onchainTable(
     timestamp: t.integer().notNull(),
   }),
   (table) => ({
-    contractAddressIdx: index("cash_rem_token_support_added_contract_index").on(table.contractAddress),
-    tokenIdx: index("cash_rem_token_support_added_token_index").on(table.tokenAddress),
+    contractAddressIdx: index("cash_rem_token_support_added_contract_index").on(
+      table.contractAddress,
+    ),
+    tokenIdx: index("cash_rem_token_support_added_token_index").on(
+      table.tokenAddress,
+    ),
   }),
 );
 
@@ -564,8 +633,12 @@ export const cashRemunerationTokenSupportRemoved = onchainTable(
     timestamp: t.integer().notNull(),
   }),
   (table) => ({
-    contractAddressIdx: index("cash_rem_token_support_removed_contract_index").on(table.contractAddress),
-    tokenIdx: index("cash_rem_token_support_removed_token_index").on(table.tokenAddress),
+    contractAddressIdx: index(
+      "cash_rem_token_support_removed_contract_index",
+    ).on(table.contractAddress),
+    tokenIdx: index("cash_rem_token_support_removed_token_index").on(
+      table.tokenAddress,
+    ),
   }),
 );
 
@@ -584,7 +657,9 @@ export const safeDeposit = onchainTable(
     timestamp: t.integer().notNull(),
   }),
   (table) => ({
-    contractAddressIdx: index("safe_deposit_contract_index").on(table.contractAddress),
+    contractAddressIdx: index("safe_deposit_contract_index").on(
+      table.contractAddress,
+    ),
     depositorIdx: index("safe_deposit_depositor_index").on(table.depositor),
   }),
 );
@@ -599,7 +674,9 @@ export const safeDepositsEnabled = onchainTable(
     timestamp: t.integer().notNull(),
   }),
   (table) => ({
-    contractAddressIdx: index("safe_deposits_enabled_contract_index").on(table.contractAddress),
+    contractAddressIdx: index("safe_deposits_enabled_contract_index").on(
+      table.contractAddress,
+    ),
     enabledByIdx: index("safe_deposits_enabled_by_index").on(table.enabledBy),
   }),
 );
@@ -614,8 +691,12 @@ export const safeDepositsDisabled = onchainTable(
     timestamp: t.integer().notNull(),
   }),
   (table) => ({
-    contractAddressIdx: index("safe_deposits_disabled_contract_index").on(table.contractAddress),
-    disabledByIdx: index("safe_deposits_disabled_by_index").on(table.disabledBy),
+    contractAddressIdx: index("safe_deposits_disabled_contract_index").on(
+      table.contractAddress,
+    ),
+    disabledByIdx: index("safe_deposits_disabled_by_index").on(
+      table.disabledBy,
+    ),
   }),
 );
 
@@ -630,7 +711,9 @@ export const safeAddressUpdated = onchainTable(
     timestamp: t.integer().notNull(),
   }),
   (table) => ({
-    contractAddressIdx: index("safe_address_updated_contract_index").on(table.contractAddress),
+    contractAddressIdx: index("safe_address_updated_contract_index").on(
+      table.contractAddress,
+    ),
   }),
 );
 
@@ -645,7 +728,9 @@ export const safeMultiplierUpdated = onchainTable(
     timestamp: t.integer().notNull(),
   }),
   (table) => ({
-    contractAddressIdx: index("safe_multiplier_updated_contract_index").on(table.contractAddress),
+    contractAddressIdx: index("safe_multiplier_updated_contract_index").on(
+      table.contractAddress,
+    ),
   }),
 );
 
@@ -660,8 +745,12 @@ export const safeTokenSupportAdded = onchainTable(
     timestamp: t.integer().notNull(),
   }),
   (table) => ({
-    contractAddressIdx: index("safe_token_support_added_contract_index").on(table.contractAddress),
-    tokenAddressIdx: index("safe_token_support_added_token_index").on(table.tokenAddress),
+    contractAddressIdx: index("safe_token_support_added_contract_index").on(
+      table.contractAddress,
+    ),
+    tokenAddressIdx: index("safe_token_support_added_token_index").on(
+      table.tokenAddress,
+    ),
   }),
 );
 
@@ -675,8 +764,12 @@ export const safeTokenSupportRemoved = onchainTable(
     timestamp: t.integer().notNull(),
   }),
   (table) => ({
-    contractAddressIdx: index("safe_token_support_removed_contract_index").on(table.contractAddress),
-    tokenAddressIdx: index("safe_token_support_removed_token_index").on(table.tokenAddress),
+    contractAddressIdx: index("safe_token_support_removed_contract_index").on(
+      table.contractAddress,
+    ),
+    tokenAddressIdx: index("safe_token_support_removed_token_index").on(
+      table.tokenAddress,
+    ),
   }),
 );
 
@@ -692,7 +785,9 @@ export const safeTokensRecovered = onchainTable(
     timestamp: t.integer().notNull(),
   }),
   (table) => ({
-    contractAddressIdx: index("safe_tokens_recovered_contract_index").on(table.contractAddress),
+    contractAddressIdx: index("safe_tokens_recovered_contract_index").on(
+      table.contractAddress,
+    ),
     tokenIdx: index("safe_tokens_recovered_token_index").on(table.token),
   }),
 );
@@ -709,7 +804,9 @@ export const expenseDeposit = onchainTable(
     timestamp: t.integer().notNull(),
   }),
   (table) => ({
-    contractAddressIdx: index("expense_deposit_contract_index").on(table.contractAddress),
+    contractAddressIdx: index("expense_deposit_contract_index").on(
+      table.contractAddress,
+    ),
     depositorIdx: index("expense_deposit_depositor_index").on(table.depositor),
   }),
 );
@@ -726,8 +823,12 @@ export const expenseTokenDeposit = onchainTable(
     timestamp: t.integer().notNull(),
   }),
   (table) => ({
-    contractAddressIdx: index("expense_token_deposit_contract_index").on(table.contractAddress),
-    depositorIdx: index("expense_token_deposit_depositor_index").on(table.depositor),
+    contractAddressIdx: index("expense_token_deposit_contract_index").on(
+      table.contractAddress,
+    ),
+    depositorIdx: index("expense_token_deposit_depositor_index").on(
+      table.depositor,
+    ),
   }),
 );
 
@@ -743,8 +844,12 @@ export const expenseTransfer = onchainTable(
     timestamp: t.integer().notNull(),
   }),
   (table) => ({
-    contractAddressIdx: index("expense_transfer_contract_index").on(table.contractAddress),
-    withdrawerIdx: index("expense_transfer_withdrawer_index").on(table.withdrawer),
+    contractAddressIdx: index("expense_transfer_contract_index").on(
+      table.contractAddress,
+    ),
+    withdrawerIdx: index("expense_transfer_withdrawer_index").on(
+      table.withdrawer,
+    ),
   }),
 );
 
@@ -761,8 +866,12 @@ export const expenseTokenTransfer = onchainTable(
     timestamp: t.integer().notNull(),
   }),
   (table) => ({
-    contractAddressIdx: index("expense_token_transfer_contract_index").on(table.contractAddress),
-    withdrawerIdx: index("expense_token_transfer_withdrawer_index").on(table.withdrawer),
+    contractAddressIdx: index("expense_token_transfer_contract_index").on(
+      table.contractAddress,
+    ),
+    withdrawerIdx: index("expense_token_transfer_withdrawer_index").on(
+      table.withdrawer,
+    ),
   }),
 );
 
@@ -777,7 +886,9 @@ export const expenseApproval = onchainTable(
     timestamp: t.integer().notNull(),
   }),
   (table) => ({
-    contractAddressIdx: index("expense_approval_contract_index").on(table.contractAddress),
+    contractAddressIdx: index("expense_approval_contract_index").on(
+      table.contractAddress,
+    ),
   }),
 );
 
@@ -792,8 +903,12 @@ export const expenseOwnerTreasuryWithdrawNative = onchainTable(
     timestamp: t.integer().notNull(),
   }),
   (table) => ({
-    contractAddressIdx: index("expense_owner_withdraw_native_contract_index").on(table.contractAddress),
-    ownerIdx: index("expense_owner_withdraw_native_owner_index").on(table.ownerAddress),
+    contractAddressIdx: index(
+      "expense_owner_withdraw_native_contract_index",
+    ).on(table.contractAddress),
+    ownerIdx: index("expense_owner_withdraw_native_owner_index").on(
+      table.ownerAddress,
+    ),
   }),
 );
 
@@ -809,8 +924,12 @@ export const expenseOwnerTreasuryWithdrawToken = onchainTable(
     timestamp: t.integer().notNull(),
   }),
   (table) => ({
-    contractAddressIdx: index("expense_owner_withdraw_token_contract_index").on(table.contractAddress),
-    ownerIdx: index("expense_owner_withdraw_token_owner_index").on(table.ownerAddress),
+    contractAddressIdx: index("expense_owner_withdraw_token_contract_index").on(
+      table.contractAddress,
+    ),
+    ownerIdx: index("expense_owner_withdraw_token_owner_index").on(
+      table.ownerAddress,
+    ),
   }),
 );
 
@@ -824,8 +943,12 @@ export const expenseTokenSupportAdded = onchainTable(
     timestamp: t.integer().notNull(),
   }),
   (table) => ({
-    contractAddressIdx: index("expense_token_support_added_contract_index").on(table.contractAddress),
-    tokenAddressIdx: index("expense_token_support_added_token_index").on(table.tokenAddress),
+    contractAddressIdx: index("expense_token_support_added_contract_index").on(
+      table.contractAddress,
+    ),
+    tokenAddressIdx: index("expense_token_support_added_token_index").on(
+      table.tokenAddress,
+    ),
   }),
 );
 
@@ -839,8 +962,12 @@ export const expenseTokenSupportRemoved = onchainTable(
     timestamp: t.integer().notNull(),
   }),
   (table) => ({
-    contractAddressIdx: index("expense_token_support_removed_contract_index").on(table.contractAddress),
-    tokenAddressIdx: index("expense_token_support_removed_token_index").on(table.tokenAddress),
+    contractAddressIdx: index(
+      "expense_token_support_removed_contract_index",
+    ).on(table.contractAddress),
+    tokenAddressIdx: index("expense_token_support_removed_token_index").on(
+      table.tokenAddress,
+    ),
   }),
 );
 
@@ -857,8 +984,12 @@ export const expenseTokenAddressChanged = onchainTable(
     timestamp: t.integer().notNull(),
   }),
   (table) => ({
-    contractAddressIdx: index("expense_token_address_changed_contract_index").on(table.contractAddress),
-    tokenSymbolIdx: index("expense_token_address_changed_symbol_index").on(table.tokenSymbol),
+    contractAddressIdx: index(
+      "expense_token_address_changed_contract_index",
+    ).on(table.contractAddress),
+    tokenSymbolIdx: index("expense_token_address_changed_symbol_index").on(
+      table.tokenSymbol,
+    ),
   }),
 );
 
@@ -876,9 +1007,13 @@ export const feeCollectorFeePaid = onchainTable(
     timestamp: t.integer().notNull(),
   }),
   (table) => ({
-    contractAddressIdx: index("fee_collector_fee_paid_contract_index").on(table.contractAddress),
+    contractAddressIdx: index("fee_collector_fee_paid_contract_index").on(
+      table.contractAddress,
+    ),
     payerIdx: index("fee_collector_fee_paid_payer_index").on(table.payer),
-    contractTypeIdx: index("fee_collector_fee_paid_type_index").on(table.contractType),
+    contractTypeIdx: index("fee_collector_fee_paid_type_index").on(
+      table.contractType,
+    ),
   }),
 );
 
@@ -893,8 +1028,12 @@ export const feeCollectorWithdrawn = onchainTable(
     timestamp: t.integer().notNull(),
   }),
   (table) => ({
-    contractAddressIdx: index("fee_collector_withdrawn_contract_index").on(table.contractAddress),
-    recipientIdx: index("fee_collector_withdrawn_recipient_index").on(table.recipient),
+    contractAddressIdx: index("fee_collector_withdrawn_contract_index").on(
+      table.contractAddress,
+    ),
+    recipientIdx: index("fee_collector_withdrawn_recipient_index").on(
+      table.recipient,
+    ),
   }),
 );
 
@@ -910,11 +1049,15 @@ export const feeCollectorTokenWithdrawn = onchainTable(
     timestamp: t.integer().notNull(),
   }),
   (table) => ({
-    contractAddressIdx: index("fee_collector_token_withdrawn_contract_index").on(
-      table.contractAddress,
+    contractAddressIdx: index(
+      "fee_collector_token_withdrawn_contract_index",
+    ).on(table.contractAddress),
+    recipientIdx: index("fee_collector_token_withdrawn_recipient_index").on(
+      table.recipient,
     ),
-    recipientIdx: index("fee_collector_token_withdrawn_recipient_index").on(table.recipient),
-    tokenIdx: index("fee_collector_token_withdrawn_token_index").on(table.token),
+    tokenIdx: index("fee_collector_token_withdrawn_token_index").on(
+      table.token,
+    ),
   }),
 );
 
@@ -929,8 +1072,12 @@ export const feeCollectorBeneficiaryUpdated = onchainTable(
     timestamp: t.integer().notNull(),
   }),
   (table) => ({
-    contractAddressIdx: index("fee_collector_beneficiary_contract_index").on(table.contractAddress),
-    currentIdx: index("fee_collector_beneficiary_current_index").on(table.currentBeneficiary),
+    contractAddressIdx: index("fee_collector_beneficiary_contract_index").on(
+      table.contractAddress,
+    ),
+    currentIdx: index("fee_collector_beneficiary_current_index").on(
+      table.currentBeneficiary,
+    ),
   }),
 );
 
@@ -945,8 +1092,12 @@ export const feeCollectorConfigUpdated = onchainTable(
     timestamp: t.integer().notNull(),
   }),
   (table) => ({
-    contractAddressIdx: index("fee_collector_config_contract_index").on(table.contractAddress),
-    contractTypeIdx: index("fee_collector_config_type_index").on(table.contractType),
+    contractAddressIdx: index("fee_collector_config_contract_index").on(
+      table.contractAddress,
+    ),
+    contractTypeIdx: index("fee_collector_config_type_index").on(
+      table.contractType,
+    ),
   }),
 );
 
@@ -960,8 +1111,12 @@ export const feeCollectorTokenSupportAdded = onchainTable(
     timestamp: t.integer().notNull(),
   }),
   (table) => ({
-    contractAddressIdx: index("fee_collector_token_added_contract_index").on(table.contractAddress),
-    tokenIdx: index("fee_collector_token_added_token_index").on(table.tokenAddress),
+    contractAddressIdx: index("fee_collector_token_added_contract_index").on(
+      table.contractAddress,
+    ),
+    tokenIdx: index("fee_collector_token_added_token_index").on(
+      table.tokenAddress,
+    ),
   }),
 );
 
@@ -978,7 +1133,9 @@ export const feeCollectorTokenSupportRemoved = onchainTable(
     contractAddressIdx: index("fee_collector_token_removed_contract_index").on(
       table.contractAddress,
     ),
-    tokenIdx: index("fee_collector_token_removed_token_index").on(table.tokenAddress),
+    tokenIdx: index("fee_collector_token_removed_token_index").on(
+      table.tokenAddress,
+    ),
   }),
 );
 
