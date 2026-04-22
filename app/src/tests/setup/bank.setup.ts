@@ -17,13 +17,15 @@ vi.mock('@/composables/bank/reads', () => ({
 /**
  * Mock Bank write composables that are actually consumed.
  * The remaining writes (useAddTokenSupport, useRemoveTokenSupport, usePause,
- * useUnpause, useTransferOwnership, useRenounceOwnership, useTransfer,
- * useTransferToken) are commented out in src/composables/bank/writes.ts.
+ * useUnpause, useTransferOwnership, useRenounceOwnership) are commented out
+ * in src/composables/bank/writes.ts.
  */
 vi.mock('@/composables/bank/writes', () => ({
   useDepositToken: vi.fn(() => mockBankWrites.deposit),
   useDistributeNativeDividends: vi.fn(() => mockBankWrites.distributeNativeDividends),
-  useDistributeTokenDividends: vi.fn(() => mockBankWrites.distributeTokenDividends)
+  useDistributeTokenDividends: vi.fn(() => mockBankWrites.distributeTokenDividends),
+  useTransfer: vi.fn(() => mockBankWrites.transfer),
+  useTransferToken: vi.fn(() => mockBankWrites.transferToken)
 }))
 
 void mockBankReads

@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { mount, VueWrapper } from '@vue/test-utils'
-import { nextTick, ref } from 'vue'
+import { nextTick } from 'vue'
 import { NETWORK } from '@/constant'
 import TransferModal from '../TransferModal.vue'
 import {
@@ -9,6 +9,7 @@ import {
   mockBodAddAction,
   mockUserStore,
   mockUseContractBalance,
+  mockBankWrites,
   useQueryClientFn
 } from '@/tests/mocks'
 
@@ -37,20 +38,6 @@ vi.mock('@/artifacts/abi/bank', () => ({
       ]
     }
   ]
-}))
-
-const mockTransferNative = {
-  mutate: vi.fn(),
-  isPending: ref(false)
-}
-const mockTransferToken = {
-  mutate: vi.fn(),
-  isPending: ref(false)
-}
-
-vi.mock('@/composables/bank/writes', () => ({
-  useTransfer: vi.fn(() => mockTransferNative),
-  useTransferToken: vi.fn(() => mockTransferToken)
 }))
 
 type TransferModalVm = {
@@ -135,15 +122,15 @@ describe('TransferModal', () => {
     mockBodAddAction.isPending.value = false
     mockBodAddAction.isConfirming.value = false
     mockBodAddAction.isActionAdded.value = false
-    mockTransferNative.isPending.value = false
-    mockTransferToken.isPending.value = false
+    mockBankWrites.transfer.isPending.value = false
+    mockBankWrites.transferToken.isPending.value = false
     // Default: invoke onSuccess to simulate successful mutation
-    mockTransferNative.mutate = vi.fn(
+    mockBankWrites.transfer.mutate = vi.fn(
       async (_vars: unknown, options?: { onSuccess?: () => Promise<void> | void }) => {
         await options?.onSuccess?.()
       }
     )
-    mockTransferToken.mutate = vi.fn(
+    mockBankWrites.transferToken.mutate = vi.fn(
       async (_vars: unknown, options?: { onSuccess?: () => Promise<void> | void }) => {
         await options?.onSuccess?.()
       }
@@ -204,8 +191,8 @@ describe('TransferModal', () => {
     })
 
     expect(mockBodAddAction.executeAddAction).toHaveBeenCalledOnce()
-    expect(mockTransferNative.mutate).not.toHaveBeenCalled()
-    expect(mockTransferToken.mutate).not.toHaveBeenCalled()
+    expect(mockBankWrites.transfer.mutate).not.toHaveBeenCalled()
+    expect(mockBankWrites.transferToken.mutate).not.toHaveBeenCalled()
   })
 
   it('handles direct token transfers and invalidates the token balance query', async () => {
@@ -219,7 +206,7 @@ describe('TransferModal', () => {
       amount: '100'
     })
 
-    expect(mockTransferToken.mutate).toHaveBeenCalledOnce()
+    expect(mockBankWrites.transferToken.mutate).toHaveBeenCalledOnce()
     expect(invalidateQueries).toHaveBeenCalledWith(
       expect.objectContaining({ queryKey: expect.arrayContaining(['readContract']) })
     )
@@ -229,7 +216,7 @@ describe('TransferModal', () => {
     wrapper = mountComponent()
     const vm = getVm(wrapper)
 
-    mockTransferNative.mutate = vi.fn(
+    mockBankWrites.transfer.mutate = vi.fn(
       (_vars: unknown, options?: { onError?: (err: unknown) => void }) => {
         options?.onError?.(new Error('boom'))
       }
@@ -241,7 +228,7 @@ describe('TransferModal', () => {
       amount: '1.5'
     })
 
-    expect(mockTransferNative.mutate).toHaveBeenCalledOnce()
+    expect(mockBankWrites.transfer.mutate).toHaveBeenCalledOnce()
     expect(vm.errorMessage).not.toBe('')
   })
 
