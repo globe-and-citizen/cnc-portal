@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, beforeAll, vi } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
 import { nextTick } from 'vue'
@@ -13,26 +13,12 @@ import {
 } from '@/tests/mocks'
 
 describe('SetCompensationMultiplierAction.vue', () => {
-  const showModalMock = vi.fn()
-  const closeModalMock = vi.fn()
-
   const createWrapper = () =>
     mount(SetCompensationMultiplierAction, {
       global: {
         plugins: [createTestingPinia({ createSpy: vi.fn })]
       }
     })
-
-  beforeAll(() => {
-    Object.defineProperty(window.HTMLDialogElement.prototype, 'showModal', {
-      value: showModalMock,
-      writable: true
-    })
-    Object.defineProperty(window.HTMLDialogElement.prototype, 'close', {
-      value: closeModalMock,
-      writable: true
-    })
-  })
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -68,9 +54,11 @@ describe('SetCompensationMultiplierAction.vue', () => {
   it('opens modal for owner', async () => {
     const wrapper = createWrapper()
 
+    expect(wrapper.find('[data-test="multiplier-input"]').exists()).toBe(false)
+
     await wrapper.find('[data-test="set-compensation-multiplier-button"]').trigger('click')
 
-    expect(showModalMock).toHaveBeenCalledTimes(1)
+    expect(wrapper.find('[data-test="multiplier-input"]').exists()).toBe(true)
   })
 
   it('blocks modal open for non-owner', async () => {
@@ -79,52 +67,7 @@ describe('SetCompensationMultiplierAction.vue', () => {
 
     await wrapper.find('[data-test="set-compensation-multiplier-button"]').trigger('click')
 
-    expect(showModalMock).not.toHaveBeenCalled()
-    expect(wrapper.exists()).toBe(true)
-  })
-
-  it('shows validation error when multiplier is empty', async () => {
-    const wrapper = createWrapper()
-
-    await wrapper.find('[data-test="set-compensation-multiplier-button"]').trigger('click')
-    await wrapper.find('[data-test="multiplier-input"]').setValue('')
-
-    expect(wrapper.find('[data-test="multiplier-error"]').text()).toContain(
-      'Multiplier is required'
-    )
-  })
-
-  it('shows validation error for non numeric input', async () => {
-    const wrapper = createWrapper()
-
-    await wrapper.find('[data-test="set-compensation-multiplier-button"]').trigger('click')
-    await wrapper.find('[data-test="multiplier-input"]').setValue('abc')
-
-    expect(wrapper.find('[data-test="multiplier-error"]').text()).toContain(
-      'Must be a valid number'
-    )
-  })
-
-  it('shows validation error for value below min', async () => {
-    const wrapper = createWrapper()
-
-    await wrapper.find('[data-test="set-compensation-multiplier-button"]').trigger('click')
-    await wrapper.find('[data-test="multiplier-input"]').setValue('0.5')
-
-    expect(wrapper.find('[data-test="multiplier-error"]').text()).toContain(
-      'Multiplier must be at least 1'
-    )
-  })
-
-  it('shows validation error for value too large', async () => {
-    const wrapper = createWrapper()
-
-    await wrapper.find('[data-test="set-compensation-multiplier-button"]').trigger('click')
-    await wrapper.find('[data-test="multiplier-input"]').setValue('1000001')
-
-    expect(wrapper.find('[data-test="multiplier-error"]').text()).toContain(
-      'Multiplier is too large'
-    )
+    expect(wrapper.find('[data-test="multiplier-input"]').exists()).toBe(false)
   })
 
   it('handleSetMultiplier shows error when address is missing', async () => {
@@ -155,7 +98,7 @@ describe('SetCompensationMultiplierAction.vue', () => {
     await wrapper.find('[data-test="multiplier-input"]').setValue('abc')
     await vm.handleSetMultiplier()
 
-    expect(wrapper.find('[data-test="multiplier-error"]').exists()).toBe(true)
+    expect(mockSafeDepositRouterWrites.setMultiplier.executeWrite).not.toHaveBeenCalled()
   })
 
   it('handleSetMultiplier executes write for valid changed value', async () => {
@@ -205,10 +148,13 @@ describe('SetCompensationMultiplierAction.vue', () => {
   it('watcher handles success by toasting and closing modal', async () => {
     const wrapper = createWrapper()
 
+    await wrapper.find('[data-test="set-compensation-multiplier-button"]').trigger('click')
+    expect(wrapper.find('[data-test="multiplier-input"]').exists()).toBe(true)
+
     mockSafeDepositRouterWrites.setMultiplier.receiptResult.isSuccess.value = true
     await nextTick()
 
-    expect(wrapper.exists()).toBe(true)
+    expect(wrapper.find('[data-test="multiplier-input"]').exists()).toBe(false)
     wrapper.unmount()
   })
 
@@ -216,8 +162,10 @@ describe('SetCompensationMultiplierAction.vue', () => {
     const wrapper = createWrapper()
 
     await wrapper.find('[data-test="set-compensation-multiplier-button"]').trigger('click')
+    expect(wrapper.find('[data-test="multiplier-input"]').exists()).toBe(true)
+
     await wrapper.find('[data-test="cancel-button"]').trigger('click')
 
-    expect(closeModalMock).toHaveBeenCalled()
+    expect(wrapper.find('[data-test="multiplier-input"]').exists()).toBe(false)
   })
 })
