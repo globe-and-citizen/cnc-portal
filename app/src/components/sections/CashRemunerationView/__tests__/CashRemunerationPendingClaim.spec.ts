@@ -12,6 +12,7 @@ const mockClaims = ref([
   {
     id: 1,
     hoursWorked: 600,
+    minutesWorked: 600,
     wage: {
       cashRatePerHour: 1,
       ratePerHour: [{ type: 'native', amount: 1 }]
@@ -28,6 +29,7 @@ describe('CashRemunerationPendingClaim', () => {
       {
         id: 1,
         hoursWorked: 600,
+        minutesWorked: 600,
         wage: {
           cashRatePerHour: 1,
           ratePerHour: [{ type: 'native', amount: 1 }]

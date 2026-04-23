@@ -39,6 +39,7 @@ describe('CRSigne', () => {
     id: 1,
     status: 'pending',
     hoursWorked: 480,
+    minutesWorked: 480,
     createdAt: '2024-01-01T00:00:00Z',
     wage: {
       userAddress: MOCK_OWNER_ADDRESS,
@@ -180,7 +181,7 @@ describe('CRSigne', () => {
       expect(mockUseSignTypedData.mutateAsync).toHaveBeenCalledWith(
         expect.objectContaining({
           message: expect.objectContaining({
-            minutesWorked: customClaim.hoursWorked,
+            minutesWorked: customClaim.minutesWorked,
             wages: [
               expect.objectContaining({
                 tokenAddress: '0x0000000000000000000000000000000000000000'
@@ -243,8 +244,7 @@ describe('CRSigne', () => {
     })
 
     it('should show error toast when signature is missing', async () => {
-      mockUseSignTypedData.data.value = ''
-      mockUseSignTypedData.mutateAsync.mockResolvedValue('0xsignature')
+      mockUseSignTypedData.mutateAsync.mockResolvedValue(undefined)
 
       createWrapper()
       await clickApprove()

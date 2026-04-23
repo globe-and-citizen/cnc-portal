@@ -11,6 +11,7 @@ import { useDeleteClaimMutation } from '@/queries/weeklyClaim.queries'
 const defaultClaim: Claim = {
   id: 1,
   hoursWorked: 480,
+  minutesWorked: 480,
   memo: 'Test work',
   dayWorked: dayjs().startOf('day').toISOString(),
   wageId: 1,

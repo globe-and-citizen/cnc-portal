@@ -46,6 +46,7 @@ describe('CRWithdrawClaim', () => {
     createdAt: '2024-01-01T00:00:00Z',
     updatedAt: '2024-01-01T00:00:00Z',
     hoursWorked: 2400,
+    minutesWorked: 2400,
     wage: {
       id: 1,
       teamId: 1,
@@ -179,6 +180,7 @@ describe('CRWithdrawClaim', () => {
     const overtimeClaim: WeeklyClaim = {
       ...mockClaim,
       hoursWorked: 240,
+      minutesWorked: 240,
       wage: {
         ...mockClaim.wage,
         maximumHoursPerWeek: 2,
@@ -230,7 +232,7 @@ describe('CRWithdrawClaim', () => {
       expect.objectContaining({
         args: [
           expect.objectContaining({
-            minutesWorked: customClaim.hoursWorked,
+            minutesWorked: customClaim.minutesWorked,
             wages: [
               expect.objectContaining({ tokenAddress: zeroAddress }),
               expect.objectContaining({ tokenAddress: USDC_ADDRESS }),
