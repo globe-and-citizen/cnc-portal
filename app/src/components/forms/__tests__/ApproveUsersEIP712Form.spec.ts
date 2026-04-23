@@ -249,6 +249,15 @@ describe('ApproveUsersEIP712Form.vue', () => {
     expect(result.success).toBe(true)
   })
 
+  it('renders the inline error alert when errorMessage prop is provided', async () => {
+    const wrapper = createWrapper()
+    expect(wrapper.find('[data-test="error-alert"]').exists()).toBe(false)
+
+    const withError = createWrapper({ errorMessage: 'Signing failed' })
+    expect(withError.find('[data-test="error-alert"]').exists()).toBe(true)
+    expect(withError.find('[data-test="error-alert"]').text()).toContain('Signing failed')
+  })
+
   it('updates amount, custom frequency and renders both calendars', async () => {
     const wrapper = createWrapper({ isBodAction: true })
     const vm = getVm(wrapper)
