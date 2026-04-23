@@ -1,0 +1,32 @@
+name: Ponder Code Quality Check
+permissions:
+  contents: read
+
+on:
+  pull_request:
+    branches: ["**"]
+    paths:
+      - "ponder/**"
+  workflow_dispatch:
+
+jobs:
+  ponder_code_quality_check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🛫 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🏗 Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24.x
+          cache: "npm"
+          cache-dependency-path: ./ponder/package-lock.json
+
+      - name: ⚙️ NPM install
+        run: npm ci
+        working-directory: ./ponder
+
+      - name: 🧹 Format check
+        run: npm run format-check
+        working-directory: ./ponder
