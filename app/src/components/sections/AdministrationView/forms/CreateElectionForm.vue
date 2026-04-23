@@ -26,12 +26,7 @@
           />
         </UFormField>
 
-        <UFormField
-          name="startDate"
-          label="Start Date"
-          class="mt-4 mb-4"
-          :error="errors.startDate"
-        >
+        <UFormField name="startDate" label="Start Date" class="mt-4 mb-4" :error="errors.startDate">
           <UPopover v-model:open="startDateOpen" class="mt-2 block" data-test="date-picker">
             <UButton
               variant="outline"
