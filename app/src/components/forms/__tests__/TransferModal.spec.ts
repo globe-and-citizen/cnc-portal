@@ -155,6 +155,38 @@ describe('TransferModal', () => {
     expect(wrapper.find('[data-test="transfer-button"]').exists()).toBe(true)
   })
 
+  it('disables the trigger when user is owner but bank balance is zero', async () => {
+    wrapper = mountComponent()
+    setBalances([
+      {
+        token: { id: 'native', symbol: NETWORK.currencySymbol, name: 'Native', code: 'ETH' },
+        amount: 0,
+        values: { USD: { price: 2000 } }
+      }
+    ])
+    await nextTick()
+
+    expect(wrapper.find('[data-test="transfer-button"]').attributes('disabled')).toBeDefined()
+  })
+
+  it('keeps the trigger enabled for a bod action member with positive balance', () => {
+    mockUseReadContract.data.value = '0xOtherOwner'
+    mockBodIsBodAction.isBodAction.value = true
+    wrapper = mountComponent()
+
+    expect(wrapper.find('[data-test="transfer-button"]').attributes('disabled')).toBeUndefined()
+  })
+
+  it('exposes isLoading true while a transfer mutation is pending', async () => {
+    wrapper = mountComponent()
+    const vm = getVm(wrapper)
+    mockBankWrites.transfer.isPending.value = true
+    vm.openModal()
+    await nextTick()
+
+    expect(wrapper.findComponent({ name: 'TransferForm' }).props('loading')).toBe(true)
+  })
+
   it('opens and resets the modal state', async () => {
     wrapper = mountComponent()
     const vm = getVm(wrapper)
@@ -230,6 +262,21 @@ describe('TransferModal', () => {
 
     expect(mockBankWrites.transfer.mutate).toHaveBeenCalledOnce()
     expect(vm.errorMessage).not.toBe('')
+  })
+
+  it('surfaces an error message when the bod action path throws', async () => {
+    wrapper = mountComponent()
+    const vm = getVm(wrapper)
+    mockBodIsBodAction.isBodAction.value = true
+    mockBodAddAction.executeAddAction.mockRejectedValueOnce(new Error('bod boom'))
+
+    await vm.handleTransfer({
+      address: { address: mockRecipientAddress },
+      token: { symbol: 'USDC' },
+      amount: '10'
+    })
+
+    expect(vm.errorMessage).toBe('Failed to transfer USDC')
   })
 
   it('resets modal when the bod action-added watcher fires', async () => {
