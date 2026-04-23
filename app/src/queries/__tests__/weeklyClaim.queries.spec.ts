@@ -20,9 +20,8 @@ vi.mock('@/lib/axios', () => ({
   }
 }))
 
-const weeklyClaimQueries = await vi.importActual<typeof import('../weeklyClaim.queries')>(
-  '../weeklyClaim.queries'
-)
+const weeklyClaimQueries =
+  await vi.importActual<typeof import('../weeklyClaim.queries')>('../weeklyClaim.queries')
 
 const createClaimResponse = (
   overrides: Partial<Claim> & { minutesWorked?: number | null } = {}
@@ -75,7 +74,6 @@ describe('weeklyClaim.queries', () => {
   })
 
   describe('normalization helpers', () => {
-   
     it('falls back to hoursWorked and then zero when minutesWorked is absent', () => {
       const legacyClaim = weeklyClaimQueries.normalizeClaimResponse(
         createClaimResponse({ hoursWorked: 75, minutesWorked: null })
@@ -89,11 +87,7 @@ describe('weeklyClaim.queries', () => {
       expect(emptyClaim.hoursWorked).toBe(0)
       expect(emptyClaim.minutesWorked).toBe(0)
     })
-
-   
   })
-
-  
 
   describe('query hooks', () => {
     it('configures the team weekly claims query and transforms the response', async () => {
@@ -140,8 +134,6 @@ describe('weeklyClaim.queries', () => {
       expect(data[0]?.minutesWorked).toBe(120)
     })
 
-   
-
     it('configures the weekly claim detail query and supports disabled state', async () => {
       vi.mocked(apiClient.get).mockResolvedValue({
         data: createWeeklyClaimResponse({
@@ -174,8 +166,6 @@ describe('weeklyClaim.queries', () => {
       expect(options.enabled?.()).toBe(false)
     })
   })
-
- 
 
   describe('custom mutations with file handling', () => {
     it('submits a claim with uploaded files and invalidates team queries', async () => {
@@ -304,8 +294,6 @@ describe('weeklyClaim.queries', () => {
         queryKey: weeklyClaimQueries.weeklyClaimKeys.detail(31)
       })
     })
-
-   
 
     it('surfaces backend errors when editing a claim with files', async () => {
       vi.mocked(apiClient.put).mockRejectedValue({
