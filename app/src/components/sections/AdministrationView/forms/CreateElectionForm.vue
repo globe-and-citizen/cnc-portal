@@ -73,7 +73,7 @@
           </UPopover>
         </UFormField>
 
-        <UFormField name="candidates" :error="errors.candidates">
+        <UFormField name="candidates" label="Candidates" required :error="errors.candidates">
           <MultiSelectMemberInput
             v-model="formData"
             :show-on-focus="true"
