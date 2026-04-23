@@ -8,7 +8,7 @@ export interface RatePerHour {
   amount: number
 }
 export interface WageClaim {
-  hoursWorked: number
+  minutesWorked: number
   hourlyRate: number | bigint
   date: number
   employeeAddress: string
