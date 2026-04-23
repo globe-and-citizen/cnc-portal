@@ -1,6 +1,6 @@
-import { computed, unref, type MaybeRef } from 'vue'
+import { computed } from 'vue'
 import { useReadContract } from '@wagmi/vue'
-import { isAddress, type Address, type Hash } from 'viem'
+import { isAddress } from 'viem'
 import { useTeamStore } from '@/stores'
 import { CASH_REMUNERATION_EIP712_ABI } from '@/artifacts/abi/cash-remuneration-eip712'
 
@@ -10,17 +10,6 @@ import { CASH_REMUNERATION_EIP712_ABI } from '@/artifacts/abi/cash-remuneration-
 export function useCashRemunerationAddress() {
   const teamStore = useTeamStore()
   return computed(() => teamStore.getContractAddressByType('CashRemunerationEIP712'))
-}
-
-export function useCashRemunerationPaused() {
-  const contractAddress = useCashRemunerationAddress()
-
-  return useReadContract({
-    address: contractAddress,
-    abi: CASH_REMUNERATION_EIP712_ABI,
-    functionName: 'paused',
-    query: { enabled: !!contractAddress.value && isAddress(contractAddress.value) }
-  })
 }
 
 export function useCashRemunerationOwner() {
@@ -34,9 +23,27 @@ export function useCashRemunerationOwner() {
   })
 }
 
+// UNUSED — no consumers outside this file's own context. See the commented-out
+// block for definitions of useCashRemunerationPaused, useCashRemunerationOfficerAddress,
+// useCashRemunerationBalance, useCashRemunerationTokenSupport,
+// useCashRemunerationSupportedTokens, useCashRemunerationPaidWageClaim,
+// useCashRemunerationDisabledWageClaim, useCashRemunerationEip712Domain.
+/*
+import { unref, type MaybeRef } from 'vue'
+import type { Address, Hash } from 'viem'
+
+export function useCashRemunerationPaused() {
+  const contractAddress = useCashRemunerationAddress()
+  return useReadContract({
+    address: contractAddress,
+    abi: CASH_REMUNERATION_EIP712_ABI,
+    functionName: 'paused',
+    query: { enabled: !!contractAddress.value && isAddress(contractAddress.value) }
+  })
+}
+
 export function useCashRemunerationOfficerAddress() {
   const contractAddress = useCashRemunerationAddress()
-
   return useReadContract({
     address: contractAddress,
     abi: CASH_REMUNERATION_EIP712_ABI,
@@ -47,7 +54,6 @@ export function useCashRemunerationOfficerAddress() {
 
 export function useCashRemunerationBalance() {
   const contractAddress = useCashRemunerationAddress()
-
   return useReadContract({
     address: contractAddress,
     abi: CASH_REMUNERATION_EIP712_ABI,
@@ -59,7 +65,6 @@ export function useCashRemunerationBalance() {
 export function useCashRemunerationTokenSupport(tokenAddress: MaybeRef<Address>) {
   const contractAddress = useCashRemunerationAddress()
   const tokenAddressValue = computed(() => unref(tokenAddress))
-
   return useReadContract({
     address: contractAddress,
     abi: CASH_REMUNERATION_EIP712_ABI,
@@ -84,7 +89,6 @@ export function useCashRemunerationSupportedTokens(tokenAddress: MaybeRef<Addres
 export function useCashRemunerationPaidWageClaim(signatureHash: MaybeRef<Hash>) {
   const contractAddress = useCashRemunerationAddress()
   const signatureHashValue = computed(() => unref(signatureHash))
-
   return useReadContract({
     address: contractAddress,
     abi: CASH_REMUNERATION_EIP712_ABI,
@@ -102,7 +106,6 @@ export function useCashRemunerationPaidWageClaim(signatureHash: MaybeRef<Hash>) 
 export function useCashRemunerationDisabledWageClaim(signatureHash: MaybeRef<Hash>) {
   const contractAddress = useCashRemunerationAddress()
   const signatureHashValue = computed(() => unref(signatureHash))
-
   return useReadContract({
     address: contractAddress,
     abi: CASH_REMUNERATION_EIP712_ABI,
@@ -119,7 +122,6 @@ export function useCashRemunerationDisabledWageClaim(signatureHash: MaybeRef<Has
 
 export function useCashRemunerationEip712Domain() {
   const contractAddress = useCashRemunerationAddress()
-
   return useReadContract({
     address: contractAddress,
     abi: CASH_REMUNERATION_EIP712_ABI,
@@ -127,3 +129,4 @@ export function useCashRemunerationEip712Domain() {
     query: { enabled: !!contractAddress.value && isAddress(contractAddress.value) }
   })
 }
+*/

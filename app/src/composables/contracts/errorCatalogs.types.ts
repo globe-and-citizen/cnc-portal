@@ -1,33 +1,56 @@
-import type { ClassifiedError } from '@/utils/classifyError'
-
-/**
- * Per-contract registry of Solidity custom-error names → user-facing messages.
- *
- * Values can be:
- *  - a plain string (the message to show)
- *  - a function that receives the decoded `revertArgs` and returns a message
- *    (use this when you want to include dynamic data, e.g. addresses/amounts)
- */
 export type RevertMessageResolver = (args?: readonly unknown[]) => string
 
+export type ContractKey =
+  | 'CashRemuneration'
+  | 'ExpenseAccount'
+  | 'SafeDepositRouter'
+  | 'Bank'
+  | 'AdCampaignManager'
+  | 'Vesting'
+  | 'InvestorV1'
+  | 'Tips'
+  | 'FeeCollector'
+  | 'TokenSupport'
+  | 'Elections'
+  | 'Proposals'
+  | 'Voting'
+  | 'BoardOfDirectors'
+  | 'Officer'
+
 export interface ContractErrorCatalog {
-  /** Map of Solidity custom-error name → user message. */
-  reverts: Record<string, string | RevertMessageResolver>
-  /** Fallback for reverts this catalog doesn't know about. */
-  fallback?: string
+  /** Shared messages: OZ-inherited errors and names with identical semantics across contracts. */
+  common: Record<string, string | RevertMessageResolver>
+  /** Per-contract overrides for names whose meaning or arg shape differs per contract. */
+  perContract: Partial<Record<ContractKey, Record<string, string | RevertMessageResolver>>>
+  /** Fallback text when a revert name isn't mapped. `default` is required. */
+  fallbacks: Partial<Record<ContractKey, string>> & { default: string }
+}
+
+function applyEntry(
+  entry: string | RevertMessageResolver | undefined,
+  args?: readonly unknown[]
+): string | undefined {
+  if (typeof entry === 'function') return entry(args)
+  if (typeof entry === 'string') return entry
+  return undefined
 }
 
 /**
- * Resolves a `ClassifiedError` to a user-facing message using a contract's
- * catalog. For non-revert errors (user_rejected, network, etc.) we fall back
- * to the classifier's default `userMessage`.
+ * Resolves a revert name to a user-facing message using the unified catalog.
+ * Resolution order: perContract[contract][name] → common[name] → fallbacks[contract] → fallbacks.default.
  */
-export function resolveMessage(classified: ClassifiedError, catalog: ContractErrorCatalog): string {
-  if (classified.category !== 'contract_revert' || !classified.revertName) {
-    return classified.userMessage
+export function resolveFromCatalog(
+  catalog: ContractErrorCatalog,
+  revertName: string,
+  revertArgs?: readonly unknown[],
+  contract?: ContractKey
+): string {
+  if (contract) {
+    const override = applyEntry(catalog.perContract[contract]?.[revertName], revertArgs)
+    if (override !== undefined) return override
   }
-  const entry = catalog.reverts[classified.revertName]
-  if (typeof entry === 'function') return entry(classified.revertArgs)
-  if (typeof entry === 'string') return entry
-  return catalog.fallback ?? classified.userMessage
+  const shared = applyEntry(catalog.common[revertName], revertArgs)
+  if (shared !== undefined) return shared
+  if (contract && catalog.fallbacks[contract]) return catalog.fallbacks[contract] as string
+  return catalog.fallbacks.default
 }

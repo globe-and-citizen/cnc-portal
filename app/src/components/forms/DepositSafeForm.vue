@@ -138,8 +138,7 @@ const toast = useToast()
 const errorMessage = computed(() => {
   const err =
     nativeDeposit.error.value ||
-    ERC20ApproveResult.writeResult.error.value ||
-    ERC20ApproveResult.receiptResult.error.value ||
+    ERC20ApproveResult.error.value ||
     transferError.value ||
     transferReceiptError.value
   return err ? ((err as { shortMessage?: string }).shortMessage ?? err.message) : null
@@ -192,11 +191,7 @@ const bigIntAmount = computed(() => {
   return isNaN(Number(amount.value)) ? 0n : BigInt(Number(amount.value) * 1e6)
 })
 
-const ERC20ApproveResult = useERC20Approve(
-  selectedTokenAddress,
-  computed(() => props.safeAddress),
-  bigIntAmount
-)
+const ERC20ApproveResult = useERC20Approve(selectedTokenAddress)
 
 // ERC20 transfer for Safe
 const { data: transferHash, mutateAsync: writeTransfer, error: transferError } = useWriteContract()
@@ -232,13 +227,9 @@ const submitForm = async () => {
         currentStep.value = 1
 
         // Run spending cap approval and wait for confirmation
-        await ERC20ApproveResult.executeWrite([props.safeAddress, bigIntAmount.value])
-        if (
-          ERC20ApproveResult.receiptResult.error.value ||
-          ERC20ApproveResult.writeResult.error.value
-        ) {
-          throw new Error('Approval failed')
-        }
+        await ERC20ApproveResult.mutateAsync({
+          args: [props.safeAddress, bigIntAmount.value]
+        })
       }
 
       // Step 3: Proceed to transfer (continue from step 2 if approval was done)

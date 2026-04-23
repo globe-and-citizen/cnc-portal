@@ -95,23 +95,31 @@ vi.mock('@/composables/erc20/reads', () => ({
 
 vi.mock('@/composables/erc20/writes', () => ({
   useERC20Approve: vi.fn(() => ({
-    executeWrite: vi.fn((args: readonly unknown[]) => {
-      mockWriteContract.mutateAsync({
-        address: '0x000000000000000000000000000000000000beef',
-        functionName: 'approve',
-        args
-      })
-      return Promise.resolve(undefined)
-    }),
-    writeResult: {
-      error: mockWriteContract.error,
-      isPending: mockWriteContract.isPending
-    },
-    receiptResult: {
-      isLoading: mockWaitForReceipt.isLoading,
-      isSuccess: mockWaitForReceipt.isSuccess,
-      error: mockWaitForReceipt.error
-    }
+    mutate: vi.fn(
+      (
+        variables: { args?: readonly unknown[] },
+        options?: { onSuccess?: () => void; onError?: (e: Error) => void }
+      ) => {
+        mockWriteContract.mutateAsync({
+          address: '0x000000000000000000000000000000000000beef',
+          functionName: 'approve',
+          args: variables.args ?? []
+        })
+        if (mockWriteContract.error.value) {
+          options?.onError?.(mockWriteContract.error.value)
+        } else {
+          options?.onSuccess?.()
+        }
+      }
+    ),
+    mutateAsync: vi.fn(),
+    isPending: mockWriteContract.isPending,
+    isSuccess: mockWaitForReceipt.isSuccess,
+    isError: mockWriteContract.isError,
+    error: mockWriteContract.error,
+    data: mockWriteContract.data,
+    status: mockWriteContract.status,
+    reset: vi.fn()
   }))
 }))
 
