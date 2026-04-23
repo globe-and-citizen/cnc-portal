@@ -98,7 +98,7 @@ const TYPED_DATA_TYPES = {
   ],
   WageClaim: [
     { name: 'employeeAddress', type: 'address' },
-    { name: 'hoursWorked', type: 'uint16' },
+    { name: 'minutesWorked', type: 'uint16' },
     { name: 'wages', type: 'Wage[]' },
     { name: 'date', type: 'uint256' }
   ]
@@ -120,7 +120,7 @@ const buildTypedDataMessage = (weeklyClaim: WeeklyClaim) => {
   })
 
   return {
-    hoursWorked: weeklyClaim.hoursWorked,
+    minutesWorked: weeklyClaim.hoursWorked,
     employeeAddress: weeklyClaim.wage.userAddress as Address,
     date: BigInt(Math.floor(new Date(weeklyClaim.createdAt).getTime() / 1000)),
     wages: claimRates.map((rate) => ({

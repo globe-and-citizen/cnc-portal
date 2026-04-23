@@ -157,7 +157,7 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const emit = defineEmits<{
-  submit: [data: { hoursWorked: number; memo: string; dayWorked: string; files?: File[] }]
+  submit: [data: { minutesWorked: number; memo: string; dayWorked: string; files?: File[] }]
   cancel: []
   'delete-file': [index: number]
 }>()

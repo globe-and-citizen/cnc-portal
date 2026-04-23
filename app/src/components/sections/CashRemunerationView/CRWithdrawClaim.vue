@@ -110,7 +110,7 @@ const withdrawClaim = async () => {
   }
 
   const claimData = {
-    hoursWorked: props.weeklyClaim.hoursWorked,
+    minutesWorked: props.weeklyClaim.hoursWorked,
     employeeAddress: props.weeklyClaim.wage.userAddress as Address,
     date: BigInt(Math.floor(new Date(props.weeklyClaim.createdAt).getTime() / 1000)),
     wages: claimRates.map((rate) => ({
