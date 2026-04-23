@@ -2,21 +2,9 @@
   <div class="flex flex-col gap-4">
     <div class="flex flex-row items-center justify-between">
       <div class="flex flex-row items-center gap-2">
-        <select class="select select-bordered w-40">
-          <option v-for="type in types" :key="type.value" :value="type.value">
-            {{ type.label }}
-          </option>
-        </select>
-        <select class="select select-bordered w-40">
-          <option v-for="creator in creators" :key="creator.value" :value="creator.value">
-            {{ creator.label }}
-          </option>
-        </select>
-        <select class="select select-bordered w-40">
-          <option v-for="status in statuses" :key="status.value" :value="status.value">
-            {{ status.label }}
-          </option>
-        </select>
+        <USelect v-model="selectedType" :items="types" class="w-40" />
+        <USelect v-model="selectedCreator" :items="creators" class="w-40" />
+        <USelect v-model="selectedStatus" :items="statuses" class="w-40" />
       </div>
       <UButton
         color="primary"
@@ -71,6 +59,10 @@ const statuses = [
   { label: 'Rejected', value: 2 },
   { label: 'Tied', value: 3 }
 ]
+
+const selectedType = ref<string>('')
+const selectedCreator = ref<string>('')
+const selectedStatus = ref<string | number>('')
 
 const handleProposalCreated = () => {
   // Close the modal
