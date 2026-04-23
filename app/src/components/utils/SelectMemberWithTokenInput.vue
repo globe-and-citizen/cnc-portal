@@ -9,22 +9,24 @@
       class="input input-bordered input-md flex w-full items-center gap-2"
       :data-test="`member-input`"
     >
-      <input
+      <UInput
         type="text"
+        variant="none"
         class="w-24"
         v-model="input.name"
         ref="nameInput"
-        :placeholder="'Member Name '"
+        placeholder="Member Name "
         :data-test="`member-name-input`"
       />
       |
-      <input
+      <UInput
         type="text"
+        variant="none"
         class="grow"
         ref="addressInput"
         v-model="input.address"
         :data-test="`member-address-input`"
-        :placeholder="`Member Address`"
+        placeholder="Member Address"
       />
       |
       <SelectComponent
@@ -68,7 +70,7 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, ref, useTemplateRef } from 'vue'
+import { computed, ref } from 'vue'
 import { NETWORK, USDC_ADDRESS } from '@/constant'
 import { zeroAddress } from 'viem'
 import SelectComponent from '@/components/SelectComponent.vue'
@@ -87,10 +89,14 @@ const input = defineModel({
 const teamStore = useTeamStore()
 const showDropdown = ref(false)
 const formRef = ref<HTMLElement | null>(null)
-const nameInput = useTemplateRef<HTMLInputElement>('nameInput')
-const addressInput = useTemplateRef<HTMLInputElement>('addressInput')
-const { focused: nameInputFocus } = useFocus(nameInput)
-const { focused: addressInputFocus } = useFocus(addressInput)
+const nameInput = ref<{ inputRef: HTMLInputElement } | null>(null)
+const addressInput = ref<{ inputRef: HTMLInputElement } | null>(null)
+const { focused: nameInputFocus } = useFocus(
+  computed(() => nameInput.value?.inputRef ?? null)
+)
+const { focused: addressInputFocus } = useFocus(
+  computed(() => addressInput.value?.inputRef ?? null)
+)
 const tokens = ref({
   USDC: USDC_ADDRESS,
   [NETWORK.currencySymbol]: zeroAddress
