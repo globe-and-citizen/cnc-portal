@@ -51,7 +51,8 @@ describe('CRSigne', () => {
       maximumHoursPerWeek: 0,
       nextWageId: null,
       createdAt: '',
-      updatedAt: ''
+      updatedAt: '',
+      disabled: false
     },
     weekStart: '2024-01-01T00:00:00Z',
     data: {
