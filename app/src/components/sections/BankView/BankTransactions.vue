@@ -29,7 +29,9 @@
       </template>
 
       <template #type-cell="{ row: { original: row } }">
-        <span class="badge" :class="getTypeClass(row.type)">{{ row.type }}</span>
+        <UBadge :color="getBankTransactionTypeColor(row.type)" variant="soft">
+          {{ row.type }}
+        </UBadge>
       </template>
 
       <template #from-cell="{ row: { original: row } }">
@@ -62,6 +64,9 @@ import CustomDatePicker from '@/components/CustomDatePicker.vue'
 import { useCurrencyStore } from '@/stores/currencyStore'
 import type { BankTransaction } from '@/types/transactions'
 import {
+  buildRawBankTransactions,
+  formatBankTransactionDate,
+  getBankTransactionTypeColor,
   formatCryptoAmount,
   formatCurrencyShort,
   formatEtherUtil,
@@ -71,7 +76,7 @@ import {
 } from '@/utils'
 import { formatDateShort } from '@/utils/dayUtils'
 import { GET_BANK_EVENTS } from '@/queries/ponder/bank.queries'
-import type { BankEventsQuery, RawBankTransaction } from '@/types/ponder/bank'
+import type { BankEventsQuery } from '@/types/ponder/bank'
 
 const props = defineProps<{
   bankAddress: Address
@@ -93,11 +98,6 @@ const { result, error, loading } = useQuery<BankEventsQuery>(
   }
 )
 
-const txHashFromId = (id: string): string => {
-  const [txHash] = id.split('-')
-  return txHash ?? id
-}
-
 const parseAmount = (value: string): bigint => {
   try {
     return BigInt(value)
@@ -106,94 +106,12 @@ const parseAmount = (value: string): bigint => {
   }
 }
 
-const rawTransactions = computed<RawBankTransaction[]>(() => {
-  const data = result.value
-  const deposits = data?.bankDeposits?.items ?? []
-  const tokenDeposits = data?.bankTokenDeposits?.items ?? []
-  const transfers = data?.bankTransfers?.items ?? []
-  const tokenTransfers = data?.bankTokenTransfers?.items ?? []
-  const dividends = data?.bankDividendDistributionTriggereds?.items ?? []
-  const fees = data?.bankFeePaids?.items ?? []
-  const rawTokenTransfers = data?.rawContractTokenTransfers?.items ?? []
-
-  const merged: RawBankTransaction[] = [
-    ...deposits.map((row) => ({
-      txHash: txHashFromId(row.id),
-      timestamp: row.timestamp,
-      from: row.depositor,
-      to: row.contractAddress,
-      amount: row.amount,
-      tokenAddress: zeroAddress,
-      type: 'deposit'
-    })),
-    ...tokenDeposits.map((row) => ({
-      txHash: txHashFromId(row.id),
-      timestamp: row.timestamp,
-      from: row.depositor,
-      to: row.contractAddress,
-      amount: row.amount,
-      tokenAddress: row.token,
-      type: 'tokenDeposit'
-    })),
-    ...transfers.map((row) => ({
-      txHash: txHashFromId(row.id),
-      timestamp: row.timestamp,
-      from: row.sender,
-      to: row.to,
-      amount: row.amount,
-      tokenAddress: zeroAddress,
-      type: 'transfer'
-    })),
-    ...tokenTransfers.map((row) => ({
-      txHash: txHashFromId(row.id),
-      timestamp: row.timestamp,
-      from: row.sender,
-      to: row.to,
-      amount: row.amount,
-      tokenAddress: row.token,
-      type: 'tokenTransfer'
-    })),
-    ...dividends.map((row) => ({
-      txHash: txHashFromId(row.id),
-      timestamp: row.timestamp,
-      from: row.contractAddress,
-      to: row.investor,
-      amount: row.totalAmount,
-      tokenAddress: row.token,
-      type: 'dividendDistribution'
-    })),
-    ...fees.map((row) => ({
-      txHash: txHashFromId(row.id),
-      timestamp: row.timestamp,
-      from: row.contractAddress,
-      to: row.feeCollector,
-      amount: row.amount,
-      tokenAddress: row.token ?? zeroAddress,
-      type: 'feePaid'
-    })),
-    ...rawTokenTransfers.map((row) => ({
-      txHash: txHashFromId(row.id),
-      timestamp: row.timestamp,
-      from: row.from,
-      to: row.to,
-      amount: row.amount,
-      tokenAddress: row.tokenAddress,
-      type:
-        row.direction === 'in'
-          ? 'rawTokenIn'
-          : row.direction === 'out'
-            ? 'rawTokenOut'
-            : 'rawTokenInternal'
-    }))
-  ]
-
-  return merged.sort((a, b) => b.timestamp - a.timestamp)
-})
+const rawTransactions = computed(() => buildRawBankTransactions(result.value))
 
 const transactions = computed<BankTransaction[]>(() =>
   rawTransactions.value.map((row) => ({
     txHash: row.txHash,
-    date: new Date(Number(row.timestamp) * 1000).toLocaleString('en-US'),
+    date: formatBankTransactionDate(Number(row.timestamp)),
     from: row.from,
     to: row.to,
     amount: formatEtherUtil(parseAmount(row.amount), row.tokenAddress),
@@ -288,13 +206,6 @@ const columns = computed(() => [
   { accessorKey: 'amount', header: 'Amount' },
   { accessorKey: 'valueLocal', header: `Value (${currencyStore.localCurrency.code})` }
 ])
-
-const getTypeClass = (type: string) => ({
-  'badge-success': type.toLowerCase().includes('deposit'),
-  'badge-info': type.toLowerCase().includes('transfer') || type.toLowerCase().includes('raw'),
-  'badge-warning': type.toLowerCase().includes('dividend'),
-  'badge-error': type.toLowerCase().includes('fee')
-})
 
 watch(error, (newError) => {
   if (newError) {
