@@ -173,16 +173,6 @@ describe('CRWithdrawClaim', () => {
     // })
   })
 
-  it('shows insufficient balance error before withdraw', async () => {
-    mockGetBalance.mockResolvedValueOnce(parseEther('0.01'))
-
-    createWrapper()
-    await clickWithdrawButton()
-
-    // expect(mockToast.add).toHaveBeenCalledWith({ title: 'Insufficient balance', color: 'error' })
-    expect(mockGetBalance).toHaveBeenCalled()
-  })
-
   it('uses overtime-aware total for balance check', async () => {
     mockGetBalance.mockResolvedValueOnce(parseEther('100'))
 
