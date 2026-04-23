@@ -43,17 +43,19 @@ export const parseStoredAttachments = (stored: unknown): FileAttachmentData[] =>
   });
 };
 
+const workedMinutesSchema = z.coerce
+  .number()
+  .int('Minutes worked must be a whole number of minutes')
+  .min(10, 'Minimum 10 minutes')
+  .max(1440, 'Cannot exceed 24 hours (1440 minutes)')
+  .refine((val) => val % 10 === 0, {
+    message: 'Minutes must be in 10-minute increments (10, 20, 30, ...)',
+  });
+
 // Claim creation request body
 export const addClaimBodySchema = z.object({
   teamId: teamIdSchema,
-  hoursWorked: z.coerce
-    .number()
-    .int('Hours worked must be a whole number of minutes')
-    .min(10, 'Minimum 10 minutes')
-    .max(1440, 'Cannot exceed 24 hours (1440 minutes)')
-    .refine((val) => val % 10 === 0, {
-      message: 'Minutes must be in 10-minute increments (10, 20, 30, ...)',
-    }),
+  minutesWorked: workedMinutesSchema,
   memo: z
     .string()
     .trim()
@@ -67,15 +69,7 @@ export const addClaimBodySchema = z.object({
 
 // Claim update request body (for signature)
 export const updateClaimBodySchema = z.object({
-  hoursWorked: z.coerce
-    .number()
-    .int('Hours worked must be a whole number of minutes')
-    .min(10, 'Minimum 10 minutes')
-    .max(1440, 'Cannot exceed 24 hours (1440 minutes)')
-    .refine((val) => val % 10 === 0, {
-      message: 'Minutes must be in 10-minute increments (10, 20, 30, ...)',
-    })
-    .optional(),
+  minutesWorked: workedMinutesSchema.optional(),
   memo: z
     .string()
     .trim()
