@@ -1,9 +1,8 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { Claim, WeeklyClaim } from '@/types'
 
-const { normalizeClaimResponse, normalizeWeeklyClaimResponse } = await vi.importActual<
-  typeof import('../weeklyClaim.queries')
->('../weeklyClaim.queries')
+const { normalizeClaimResponse, normalizeWeeklyClaimResponse } =
+  await vi.importActual<typeof import('../weeklyClaim.queries')>('../weeklyClaim.queries')
 
 describe('weeklyClaim query normalization', () => {
   it('prefers minutesWorked for individual claims and keeps hoursWorked aligned', () => {

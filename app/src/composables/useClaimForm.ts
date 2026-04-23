@@ -199,8 +199,7 @@ export function useClaimForm(options: UseClaimFormOptions) {
     }
 
     return {
-      minutesWorked:
-        Number(formData.value.hoursWorked) * 60 + Number(formData.value.minutesWorked),
+      minutesWorked: Number(formData.value.hoursWorked) * 60 + Number(formData.value.minutesWorked),
       memo: formData.value.memo,
       dayWorked: formData.value.dayWorked,
       files: uploadedFiles.value.length ? uploadedFiles.value : undefined

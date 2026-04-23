@@ -32,9 +32,7 @@ export const normalizeClaimResponse = (claim: ClaimResponse): Claim => {
   }
 }
 
-export const normalizeWeeklyClaimResponse = (
-  weeklyClaim: WeeklyClaimResponse
-): WeeklyClaim => {
+export const normalizeWeeklyClaimResponse = (weeklyClaim: WeeklyClaimResponse): WeeklyClaim => {
   const claims = weeklyClaim.claims.map(normalizeClaimResponse)
   const totalWorkedMinutes =
     weeklyClaim.minutesWorked ?? claims.reduce((sum, claim) => sum + claim.hoursWorked, 0)
