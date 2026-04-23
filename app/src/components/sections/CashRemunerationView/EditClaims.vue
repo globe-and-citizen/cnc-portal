@@ -49,8 +49,8 @@ const { isRestricted, checkRestriction } = useSubmitRestriction()
 const teamId = computed(() => teamStore.currentTeamMeta?.data?.id)
 
 const claimFormInitialData = computed<ClaimFormData>(() => ({
-  hoursWorked: String(Math.floor((props.claim.hoursWorked ?? 0) / 60)),
-  minutesWorked: String((props.claim.hoursWorked ?? 0) % 60),
+  hoursWorked: String(Math.floor((props.claim.minutesWorked ?? 0) / 60)),
+  minutesWorked: String((props.claim.minutesWorked ?? 0) % 60),
   memo: props.claim.memo ?? '',
   dayWorked: props.claim.dayWorked
 }))

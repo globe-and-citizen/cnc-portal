@@ -49,8 +49,8 @@ const {
   }
 })
 
-function getTotalTimeWorked(claims: { hoursWorked: number }[]) {
-  return claims.reduce((sum, claim) => sum + claim.hoursWorked, 0)
+function getTotalTimeWorked(claims: { minutesWorked: number }[]) {
+  return claims.reduce((sum, claim) => sum + claim.minutesWorked, 0)
 }
 
 function getHourlyRateInUserCurrency(

@@ -29,7 +29,7 @@ import { CASH_REMUNERATION_EIP712_ABI } from '@/artifacts/abi/cash-remuneration-
 import { USDC_ADDRESS } from '@/constant'
 import { useTeamStore, useUserDataStore } from '@/stores'
 import type { WeeklyClaim } from '@/types'
-import { buildClaimRatesWithOvertime, log } from '@/utils'
+import { buildWageClaimPayload, log } from '@/utils'
 import { useChainId, useReadContract, useSignTypedData } from '@wagmi/vue'
 import { readContract } from '@wagmi/core'
 import dayjs from 'dayjs'
@@ -62,7 +62,7 @@ const currentWeekStart = dayjs().utc().startOf('isoWeek').toISOString()
 const isCurrentWeek = computed(() => currentWeekStart === props.weeklyClaim.weekStart)
 
 // Composables
-const { mutateAsync, data: signature } = useSignTypedData()
+const { mutateAsync } = useSignTypedData()
 const chainId = useChainId()
 
 const isLoading = ref(false)
@@ -110,22 +110,7 @@ const getTokenAddress = (type: string): Address => {
 }
 
 const buildTypedDataMessage = (weeklyClaim: WeeklyClaim) => {
-  const claimRates = buildClaimRatesWithOvertime({
-    hoursWorked: weeklyClaim.hoursWorked,
-    maximumHoursPerWeek: weeklyClaim.wage.maximumHoursPerWeek,
-    ratePerHour: weeklyClaim.wage.ratePerHour,
-    overtimeRatePerHour: weeklyClaim.wage.overtimeRatePerHour
-  })
-
-  return {
-    minutesWorked: weeklyClaim.hoursWorked,
-    employeeAddress: weeklyClaim.wage.userAddress as Address,
-    date: BigInt(Math.floor(new Date(weeklyClaim.createdAt).getTime() / 1000)),
-    wages: claimRates.map((rate) => ({
-      hourlyRate: rate.hourlyRate,
-      tokenAddress: getTokenAddress(rate.type)
-    }))
-  }
+  return buildWageClaimPayload({ weeklyClaim, getTokenAddress })
 }
 
 const setLoadingState = (state: boolean) => {
@@ -155,23 +140,23 @@ const approveClaim = async (weeklyClaim: WeeklyClaim) => {
   setLoadingState(true)
 
   try {
-    await mutateAsync({
+    const signature = await mutateAsync({
       domain: typedDataDomain.value,
       types: TYPED_DATA_TYPES,
       message: buildTypedDataMessage(weeklyClaim),
       primaryType: 'WageClaim'
     })
 
-    if (!signature.value) {
+    if (!signature) {
       toast.add({ title: 'Signature not found', color: 'error' })
       return
     }
 
-    await enableClaim(signature.value as `0x${string}`)
+    await enableClaim(signature as `0x${string}`)
     await executeUpdateClaim({
       pathParams: { claimId: weeklyClaim.id },
       queryParams: { action: 'sign' },
-      body: { signature: signature.value }
+      body: { signature }
     })
 
     if (claimError.value) {
