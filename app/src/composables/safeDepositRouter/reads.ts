@@ -1,6 +1,6 @@
-import { computed, unref, type MaybeRef } from 'vue'
+import { computed } from 'vue'
 import { useReadContract } from '@wagmi/vue'
-import { isAddress, type Address } from 'viem'
+import { isAddress } from 'viem'
 import { useTeamStore } from '@/stores'
 import { SAFE_DEPOSIT_ROUTER_ABI } from '@/artifacts/abi/safe-deposit-router'
 
@@ -80,6 +80,8 @@ export function useSafeDepositRouterSafeAddress() {
   })
 }
 
+// UNUSED — no consumers outside safeDepositRouter.setup.ts.
+/*
 export function useSafeDepositRouterOfficerAddress() {
   const safeDepositRouterAddress = useSafeDepositRouterAddress()
 
@@ -92,6 +94,7 @@ export function useSafeDepositRouterOfficerAddress() {
     }
   })
 }
+*/
 
 export function useSafeDepositRouterMultiplier() {
   const safeDepositRouterAddress = useSafeDepositRouterAddress()
@@ -106,6 +109,8 @@ export function useSafeDepositRouterMultiplier() {
   })
 }
 
+// UNUSED — no consumers outside safeDepositRouter.setup.ts.
+/*
 export function useSafeDepositRouterMinMultiplier() {
   const safeDepositRouterAddress = useSafeDepositRouterAddress()
 
@@ -187,3 +192,4 @@ export function useSafeDepositRouterCalculateCompensation(
     }
   })
 }
+*/

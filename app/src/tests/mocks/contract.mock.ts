@@ -21,9 +21,9 @@ export const mockElectionsReads = {
 }
 
 export const mockElectionsWrites = {
-  createElection: createContractWriteMock(),
-  castVote: createContractWriteMock(),
-  publishResults: createContractWriteMock()
+  createElection: createContractWriteV3Mock(),
+  castVote: createContractWriteV3Mock(),
+  publishResults: createContractWriteV3Mock()
 }
 
 /**
@@ -117,7 +117,9 @@ export const mockCashRemunerationReads = {
 }
 
 export const mockCashRemunerationWrites = {
-  ownerWithdrawAllToBank: createContractWriteMock()
+  ownerWithdrawAllToBank: createContractWriteV3Mock(),
+  enableClaim: createContractWriteV3Mock(),
+  disableClaim: createContractWriteV3Mock()
 }
 
 /**
@@ -128,7 +130,7 @@ export const mockExpenseAccountReads = {
 }
 
 export const mockExpenseAccountWrites = {
-  ownerWithdrawAllToBank: createContractWriteMock()
+  ownerWithdrawAllToBank: createContractWriteV3Mock()
 }
 
 /**
@@ -149,16 +151,16 @@ export const mockInvestorReads = {
 }
 
 export const mockInvestorWrites = {
-  invest: createContractWriteMock(),
-  claimDividend: createContractWriteMock(),
-  withdraw: createContractWriteMock(),
-  mint: createContractWriteMock(),
-  transfer: createContractWriteMock(),
-  pause: createContractWriteMock(),
-  unpause: createContractWriteMock(),
-  initialize: createContractWriteMock(),
-  transferOwnership: createContractWriteMock(),
-  renounceOwnership: createContractWriteMock()
+  invest: createContractWriteV3Mock(),
+  claimDividend: createContractWriteV3Mock(),
+  withdraw: createContractWriteV3Mock(),
+  mint: createContractWriteV3Mock(),
+  transfer: createContractWriteV3Mock(),
+  pause: createContractWriteV3Mock(),
+  unpause: createContractWriteV3Mock(),
+  initialize: createContractWriteV3Mock(),
+  transferOwnership: createContractWriteV3Mock(),
+  renounceOwnership: createContractWriteV3Mock()
 }
 
 /**
@@ -174,15 +176,15 @@ export const resetContractMocks = () => {
     mockExpenseAccountReads
   ]
 
-  const allWriteV2Mocks = [
-    mockElectionsWrites,
-    mockBODWrites,
-    mockInvestorWrites,
-    mockCashRemunerationWrites,
-    mockExpenseAccountWrites
-  ]
+  const allWriteV2Mocks = [mockBODWrites]
 
-  const allWriteV3Mocks = [mockBankWrites]
+  const allWriteV3Mocks = [
+    mockBankWrites,
+    mockCashRemunerationWrites,
+    mockExpenseAccountWrites,
+    mockElectionsWrites,
+    mockInvestorWrites
+  ]
 
   // Reset all read mocks
   allReadMocks.forEach((mockGroup) => {

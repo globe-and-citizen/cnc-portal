@@ -1,9 +1,8 @@
-import { computed, unref, type MaybeRef } from 'vue'
+import { computed } from 'vue'
 import { useReadContract } from '@wagmi/vue'
-import { isAddress, type Address, type Hash } from 'viem'
+import { isAddress } from 'viem'
 import { useTeamStore } from '@/stores'
 import { EXPENSE_ACCOUNT_EIP712_ABI } from '@/artifacts/abi/expense-account-eip712'
-import type { BudgetLimit } from '@/types/expense-account'
 
 /**
  * ExpenseAccountEIP712 contract address helper
@@ -24,9 +23,21 @@ export function useExpenseAccountOwner() {
   })
 }
 
+// UNUSED — no consumers outside this file's own context. See the commented-out
+// block below for definitions of:
+//   useExpenseAccountPaused, useExpenseAccountBalance,
+//   useExpenseAccountGetTokenBalance, useExpenseAccountSupportedTokens,
+//   useExpenseAccountIsTokenSupported, useExpenseAccountBudgetLimitHash,
+//   useExpenseAccountExpenseBalances, useExpenseAccountCurrentPeriod,
+//   useExpenseAccountPeriod, useExpenseAccountIsNewPeriod,
+//   useExpenseAccountValidateTransfer, useExpenseAccountEip712Domain.
+/*
+import { unref, type MaybeRef } from 'vue'
+import type { Address, Hash } from 'viem'
+import type { BudgetLimit } from '@/types/expense-account'
+
 export function useExpenseAccountPaused() {
   const contractAddress = useExpenseAccountAddress()
-
   return useReadContract({
     address: contractAddress,
     abi: EXPENSE_ACCOUNT_EIP712_ABI,
@@ -37,7 +48,6 @@ export function useExpenseAccountPaused() {
 
 export function useExpenseAccountBalance() {
   const contractAddress = useExpenseAccountAddress()
-
   return useReadContract({
     address: contractAddress,
     abi: EXPENSE_ACCOUNT_EIP712_ABI,
@@ -49,7 +59,6 @@ export function useExpenseAccountBalance() {
 export function useExpenseAccountGetTokenBalance(tokenAddress: MaybeRef<Address>) {
   const contractAddress = useExpenseAccountAddress()
   const tokenAddressValue = computed(() => unref(tokenAddress))
-
   return useReadContract({
     address: contractAddress,
     abi: EXPENSE_ACCOUNT_EIP712_ABI,
@@ -70,7 +79,6 @@ export function useExpenseAccountGetTokenBalance(tokenAddress: MaybeRef<Address>
 export function useExpenseAccountSupportedTokens(symbol: MaybeRef<string>) {
   const contractAddress = useExpenseAccountAddress()
   const symbolValue = computed(() => unref(symbol))
-
   return useReadContract({
     address: contractAddress,
     abi: EXPENSE_ACCOUNT_EIP712_ABI,
@@ -87,7 +95,6 @@ export function useExpenseAccountSupportedTokens(symbol: MaybeRef<string>) {
 export function useExpenseAccountIsTokenSupported(tokenAddress: MaybeRef<Address>) {
   const contractAddress = useExpenseAccountAddress()
   const tokenAddressValue = computed(() => unref(tokenAddress))
-
   return useReadContract({
     address: contractAddress,
     abi: EXPENSE_ACCOUNT_EIP712_ABI,
@@ -108,7 +115,6 @@ export function useExpenseAccountIsTokenSupported(tokenAddress: MaybeRef<Address
 export function useExpenseAccountBudgetLimitHash(budgetLimit: MaybeRef<BudgetLimit>) {
   const contractAddress = useExpenseAccountAddress()
   const budgetLimitValue = computed(() => unref(budgetLimit))
-
   return useReadContract({
     address: contractAddress,
     abi: EXPENSE_ACCOUNT_EIP712_ABI,
@@ -123,7 +129,6 @@ export function useExpenseAccountBudgetLimitHash(budgetLimit: MaybeRef<BudgetLim
 export function useExpenseAccountExpenseBalances(signatureHash: MaybeRef<Hash>) {
   const contractAddress = useExpenseAccountAddress()
   const signatureHashValue = computed(() => unref(signatureHash))
-
   return useReadContract({
     address: contractAddress,
     abi: EXPENSE_ACCOUNT_EIP712_ABI,
@@ -141,7 +146,6 @@ export function useExpenseAccountExpenseBalances(signatureHash: MaybeRef<Hash>) 
 export function useExpenseAccountCurrentPeriod(budgetLimit: MaybeRef<BudgetLimit>) {
   const contractAddress = useExpenseAccountAddress()
   const budgetLimitValue = computed(() => unref(budgetLimit))
-
   return useReadContract({
     address: contractAddress,
     abi: EXPENSE_ACCOUNT_EIP712_ABI,
@@ -160,7 +164,6 @@ export function useExpenseAccountPeriod(
   const contractAddress = useExpenseAccountAddress()
   const budgetLimitValue = computed(() => unref(budgetLimit))
   const timestampValue = computed(() => unref(timestamp))
-
   return useReadContract({
     address: contractAddress,
     abi: EXPENSE_ACCOUNT_EIP712_ABI,
@@ -181,7 +184,6 @@ export function useExpenseAccountIsNewPeriod(
   const contractAddress = useExpenseAccountAddress()
   const budgetLimitValue = computed(() => unref(budgetLimit))
   const signatureHashValue = computed(() => unref(signatureHash))
-
   return useReadContract({
     address: contractAddress,
     abi: EXPENSE_ACCOUNT_EIP712_ABI,
@@ -205,7 +207,6 @@ export function useExpenseAccountValidateTransfer(
   const budgetLimitValue = computed(() => unref(budgetLimit))
   const amountValue = computed(() => unref(amount))
   const signatureHashValue = computed(() => unref(signatureHash))
-
   return useReadContract({
     address: contractAddress,
     abi: EXPENSE_ACCOUNT_EIP712_ABI,
@@ -225,7 +226,6 @@ export function useExpenseAccountValidateTransfer(
 
 export function useExpenseAccountEip712Domain() {
   const contractAddress = useExpenseAccountAddress()
-
   return useReadContract({
     address: contractAddress,
     abi: EXPENSE_ACCOUNT_EIP712_ABI,
@@ -233,3 +233,4 @@ export function useExpenseAccountEip712Domain() {
     query: { enabled: !!contractAddress.value && isAddress(contractAddress.value) }
   })
 }
+*/
