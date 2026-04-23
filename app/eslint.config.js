@@ -19,7 +19,8 @@ export default [
       'src/components/GenericTransactionHistory.vue',
       'src/components/sections/VestingView/forms/CreateVesting.vue',
       'src/components/TableComponent.vue',
-      'src/components/sections/DashboardView/forms/ApproveUsersEIP712Form.vue'
+      'src/components/sections/DashboardView/forms/ApproveUsersEIP712Form.vue',
+      'src/components/forms/SafeDepositRouterForm.vue'
     ],
     rules: {
       'max-lines': 'off'
