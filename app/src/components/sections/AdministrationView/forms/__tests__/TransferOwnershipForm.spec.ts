@@ -36,7 +36,7 @@ describe('TransferOwnershipForm.vue', () => {
     })
   })
 
-  describe('Emits', async () => {
+  describe('Emits', () => {
     it('should emit transferOwnership event when form is submitted', async () => {
       const wrapper = mountComponent()
       const input = wrapper.find('[data-test="new-owner-input"]')
