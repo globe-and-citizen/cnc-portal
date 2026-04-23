@@ -171,6 +171,7 @@ describe('CRSigne', () => {
       expect(mockUseSignTypedData.mutateAsync).toHaveBeenCalledWith(
         expect.objectContaining({
           message: expect.objectContaining({
+            minutesWorked: customClaim.hoursWorked,
             wages: [
               expect.objectContaining({
                 tokenAddress: '0x0000000000000000000000000000000000000000'

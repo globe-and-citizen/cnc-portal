@@ -233,6 +233,7 @@ describe('CRWithdrawClaim', () => {
       expect.objectContaining({
         args: [
           expect.objectContaining({
+            minutesWorked: customClaim.hoursWorked,
             wages: [
               expect.objectContaining({ tokenAddress: zeroAddress }),
               expect.objectContaining({ tokenAddress: USDC_ADDRESS }),
