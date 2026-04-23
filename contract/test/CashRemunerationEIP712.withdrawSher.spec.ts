@@ -133,7 +133,7 @@ describe('Cash Remuneration - Withdraw SHER', function () {
       ],
       WageClaim: [
         { name: 'employeeAddress', type: 'address' },
-        { name: 'hoursWorked', type: 'uint16' },
+        { name: 'minutesWorked', type: 'uint16' },
         { name: 'wages', type: 'Wage[]' },
         { name: 'date', type: 'uint256' }
       ]
@@ -171,7 +171,7 @@ describe('Cash Remuneration - Withdraw SHER', function () {
   it('Should mint SHER to user if they earned SHER', async () => {
     const wageClaim = {
       employeeAddress: addr1.address,
-      hoursWorked: 300,
+      minutesWorked: 300,
       wages: [
         {
           hourlyRate: BigInt(20 * 1e6),
@@ -185,7 +185,7 @@ describe('Cash Remuneration - Withdraw SHER', function () {
     const signatureHash = ethers.keccak256(signature)
     const tx = await cashRemunerationEip712Proxy.connect(addr1).withdraw(wageClaim, signature)
 
-    const amountSher = BigInt(wageClaim.hoursWorked) * wageClaim.wages[0].hourlyRate
+    const amountSher = BigInt(wageClaim.minutesWorked) * wageClaim.wages[0].hourlyRate
 
     await expect(tx)
       .to.emit(cashRemunerationEip712Proxy, 'WithdrawToken')
@@ -204,7 +204,7 @@ describe('Cash Remuneration - Withdraw SHER', function () {
   it('Should disable claims so the user cannot withdraw SHER', async () => {
     const wageClaim = {
       employeeAddress: addr1.address,
-      hoursWorked: 300,
+      minutesWorked: 300,
       wages: [
         {
           hourlyRate: BigInt(20 * 1e6),
@@ -230,7 +230,7 @@ describe('Cash Remuneration - Withdraw SHER', function () {
   it('Should enable claims so the user can withdraw SHER again', async () => {
     const wageClaim = {
       employeeAddress: addr1.address,
-      hoursWorked: 300,
+      minutesWorked: 300,
       wages: [
         {
           hourlyRate: BigInt(20 * 1e6),
@@ -251,7 +251,7 @@ describe('Cash Remuneration - Withdraw SHER', function () {
 
     tx = await cashRemunerationEip712Proxy.connect(addr1).withdraw(wageClaim, signature)
 
-    const amountSher = BigInt(wageClaim.hoursWorked) * wageClaim.wages[0].hourlyRate
+    const amountSher = BigInt(wageClaim.minutesWorked) * wageClaim.wages[0].hourlyRate
 
     await expect(tx)
       .to.emit(cashRemunerationEip712Proxy, 'WithdrawToken')
@@ -270,7 +270,7 @@ describe('Cash Remuneration - Withdraw SHER', function () {
   it('Should prevent replay of the same SHER mint signature (EIP-712 replay protection)', async () => {
     const wageClaim = {
       employeeAddress: addr1.address,
-      hoursWorked: 300,
+      minutesWorked: 300,
       wages: [
         {
           hourlyRate: BigInt(20 * 1e6),
@@ -287,7 +287,7 @@ describe('Cash Remuneration - Withdraw SHER', function () {
     await cashRemunerationEip712Proxy.connect(addr1).withdraw(wageClaim, signature)
     expect(await cashRemunerationEip712Proxy.paidWageClaims(signatureHash)).to.equal(true)
 
-    const amountSher = BigInt(wageClaim.hoursWorked) * wageClaim.wages[0].hourlyRate
+    const amountSher = BigInt(wageClaim.minutesWorked) * wageClaim.wages[0].hourlyRate
     expect(await investorV1Proxy.balanceOf(addr1.address)).to.equal(amountSher)
 
     // Replay attempt with identical signature/claim must revert with WageAlreadyPaid
@@ -302,7 +302,7 @@ describe('Cash Remuneration - Withdraw SHER', function () {
   it('Should prevent replay once a claim has been disabled after use', async () => {
     const wageClaim = {
       employeeAddress: addr1.address,
-      hoursWorked: 120,
+      minutesWorked: 120,
       wages: [
         {
           hourlyRate: BigInt(10 * 1e6),
