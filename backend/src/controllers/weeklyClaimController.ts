@@ -289,19 +289,19 @@ export const getTeamWeeklyClaims = async (req: Request, res: Response) => {
       }))
     );
 
-    const weeklyClaimsWithHours = weeklyClaimsWithFreshAttachmentUrls.map((wc) => {
-      const hoursWorked = wc.claims.reduce((sum, claim) => {
-        const h = claim.hoursWorked ?? 0;
+    const weeklyClaimsWithMinutes = weeklyClaimsWithFreshAttachmentUrls.map((wc) => {
+      const minutesWorked = wc.claims.reduce((sum, claim) => {
+        const h = claim.minutesWorked ?? 0;
         return sum + h;
       }, 0);
 
       return {
         ...wc,
-        hoursWorked,
+        minutesWorked,
       };
     });
 
-    return res.status(200).json(weeklyClaimsWithHours);
+    return res.status(200).json(weeklyClaimsWithMinutes);
   } catch (error) {
     console.error(error);
     return errorResponse(500, 'Internal Server Error', res);
