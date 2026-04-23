@@ -44,9 +44,9 @@ const weeklyClaimRoutes = express.Router();
  *           type: string
  *           description: The EIP-712 signature
  *           nullable: true
- *         hoursWorked:
+ *         minutesWorked:
  *           type: number
- *           description: Total hours worked in the week (derived from individual claims)
+ *           description: Total minutes worked in the week (derived from individual claims)
  *         wage:
  *           type: object
  *           description: The associated wage record

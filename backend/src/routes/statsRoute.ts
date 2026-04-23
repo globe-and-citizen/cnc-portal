@@ -67,6 +67,8 @@ const statsRoutes = express.Router();
  *                 type: integer
  *               totalClaims:
  *                 type: integer
+ *               totalMinutesWorked:
+ *                 type: integer
  *               totalHoursWorked:
  *                 type: number
  *               totalWeeklyClaims:
@@ -280,7 +282,11 @@ statsRoutes.get('/users', validateQuery(userStatsQuerySchema), getUsersStats);
  *             properties:
  *               totalClaims:
  *                 type: integer
+ *               totalMinutesWorked:
+ *                 type: integer
  *               totalHoursWorked:
+ *                 type: number
+ *               avgMinutesPerClaim:
  *                 type: number
  *               avgHoursPerClaim:
  *                 type: number
@@ -294,6 +300,8 @@ statsRoutes.get('/users', validateQuery(userStatsQuerySchema), getUsersStats);
  *                     teamName:
  *                       type: string
  *                     claimCount:
+ *                       type: integer
+ *                     totalMinutes:
  *                       type: integer
  *                     totalHours:
  *                       type: number
