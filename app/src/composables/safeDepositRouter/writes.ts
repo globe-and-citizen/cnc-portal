@@ -56,6 +56,8 @@ export function useDisableDeposits() {
   }
 }
 
+// UNUSED — no consumers outside safeDepositRouter.setup.ts.
+/*
 export function usePauseContract() {
   const write = useSafeDepositRouterContractWrite({
     functionName: 'pause'
@@ -77,6 +79,7 @@ export function useUnpauseContract() {
     executeWrite: () => write.executeWrite([])
   }
 }
+*/
 
 export function useRenounceOwnership() {
   const write = useSafeDepositRouterContractWrite({
@@ -189,6 +192,8 @@ export function useDeposit() {
   }
 }
 
+// UNUSED — no consumers outside safeDepositRouter.setup.ts.
+/*
 export function useDepositWithSlippage() {
   const queryClient = useQueryClient()
   const teamStore = useTeamStore()
@@ -200,7 +205,6 @@ export function useDepositWithSlippage() {
     functionName: 'depositWithSlippage'
   })
 
-  // Override invalidateQueries
   const originalInvalidateQueries = write.invalidateQueries
   write.invalidateQueries = async () => {
     await originalInvalidateQueries()
@@ -216,15 +220,10 @@ export function useDepositWithSlippage() {
 
   return {
     ...write,
-    // Always skip gas estimation for depositWithSlippage (same reasoning as deposit)
     executeWrite: (tokenAddress: Address, amount: bigint, minSherOut: bigint) =>
       write.executeWrite([tokenAddress, amount, minSherOut], undefined, { skipGasEstimation: true })
   }
 }
-
-// ============================================================================
-// Recovery Functions
-// ============================================================================
 
 export function useRecoverERC20() {
   const write = useSafeDepositRouterContractWrite({
@@ -237,3 +236,4 @@ export function useRecoverERC20() {
       write.executeWrite([tokenAddress, amount])
   }
 }
+*/

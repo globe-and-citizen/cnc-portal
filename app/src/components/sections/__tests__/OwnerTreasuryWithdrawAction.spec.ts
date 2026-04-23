@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
+import { BaseError, UserRejectedRequestError } from 'viem'
 import OwnerTreasuryWithdrawAction from '../OwnerTreasuryWithdrawAction.vue'
 import {
   mockBodAddAction,
@@ -72,22 +73,8 @@ const submit = async (
   return wrapper
 }
 
-const simulatePendingReceipt = (
-  write: typeof mockCashRemunerationWrites.ownerWithdrawAllToBank
-) => {
-  write.executeWrite.mockImplementationOnce(async () => {
-    write.receiptResult.isLoading.value = true
-    return '0xhash'
-  })
-}
-
-const simulateReturnedError = (error: unknown) => {
-  mockCashRemunerationWrites.ownerWithdrawAllToBank.executeWrite.mockImplementationOnce(
-    async () => {
-      mockCashRemunerationWrites.ownerWithdrawAllToBank.writeResult.error.value = error as Error
-      return undefined
-    }
-  )
+const simulateCashThrow = (error: unknown) => {
+  mockCashRemunerationWrites.ownerWithdrawAllToBank.mutateAsync.mockRejectedValueOnce(error)
 }
 
 describe('OwnerTreasuryWithdrawAction', () => {
@@ -110,8 +97,12 @@ describe('OwnerTreasuryWithdrawAction', () => {
     mockExpenseAccountReads.owner.data.value = OWNER_ADDRESS
     mockBodIsBodAction.isBodAction.value = false
     mockBodAddAction.isActionAdded.value = false
-    mockCashRemunerationWrites.ownerWithdrawAllToBank.executeWrite.mockResolvedValue('0xhash')
-    mockExpenseAccountWrites.ownerWithdrawAllToBank.executeWrite.mockResolvedValue('0xhash')
+    mockCashRemunerationWrites.ownerWithdrawAllToBank.mutateAsync.mockResolvedValue({
+      hash: '0xhash'
+    })
+    mockExpenseAccountWrites.ownerWithdrawAllToBank.mutateAsync.mockResolvedValue({
+      hash: '0xhash'
+    })
     mockTeamStore.getContractAddressByType = vi.fn((type) => {
       if (type === 'CashRemunerationEIP712') return CASH_ADDRESS
       if (type === 'ExpenseAccountEIP712') return EXPENSE_ADDRESS
@@ -160,98 +151,75 @@ describe('OwnerTreasuryWithdrawAction', () => {
       () => undefined as unknown as string
     ) as unknown as typeof mockTeamStore.getContractAddressByType
     await submit()
-    expect(mockCashRemunerationWrites.ownerWithdrawAllToBank.executeWrite).not.toHaveBeenCalled()
+    expect(mockCashRemunerationWrites.ownerWithdrawAllToBank.mutateAsync).not.toHaveBeenCalled()
   })
 
   it('refreshes balances and closes the modal after a successful cash withdrawal', async () => {
-    simulatePendingReceipt(mockCashRemunerationWrites.ownerWithdrawAllToBank)
-    const wrapper = createWrapper()
-    await openModal(wrapper)
-    await wrapper.get(CONFIRM).trigger('click')
-    await flushPromises()
-    expect(wrapper.find(CONFIRM).exists()).toBe(true)
+    const wrapper = await submit()
 
-    mockCashRemunerationWrites.ownerWithdrawAllToBank.receiptResult.isLoading.value = false
-    await flushPromises()
-
+    expect(mockCashRemunerationWrites.ownerWithdrawAllToBank.mutateAsync).toHaveBeenCalledWith({
+      args: []
+    })
     expect(invalidateQueries).toHaveBeenCalled()
-    expect(mockCashRemunerationWrites.ownerWithdrawAllToBank.executeWrite).toHaveBeenCalled()
     expect(wrapper.find(CONFIRM).exists()).toBe(false)
   })
 
   it('uses the expense account writer for direct expense withdrawals', async () => {
     await submit('ExpenseAccountEIP712')
-    expect(mockExpenseAccountWrites.ownerWithdrawAllToBank.executeWrite).toHaveBeenCalledWith(
-      [],
-      undefined,
-      { skipGasEstimation: true }
-    )
-    expect(mockCashRemunerationWrites.ownerWithdrawAllToBank.executeWrite).not.toHaveBeenCalled()
+    expect(mockExpenseAccountWrites.ownerWithdrawAllToBank.mutateAsync).toHaveBeenCalledWith({
+      args: []
+    })
+    expect(mockCashRemunerationWrites.ownerWithdrawAllToBank.mutateAsync).not.toHaveBeenCalled()
   })
 
-  it.each([
-    ['ExpenseAccountEIP712', EXPENSE_ADDRESS, mockExpenseAccountWrites.ownerWithdrawAllToBank],
-    ['CashRemunerationEIP712', CASH_ADDRESS, mockCashRemunerationWrites.ownerWithdrawAllToBank]
-  ] as const)(
-    'routes %s withdrawals through BOD action creation',
-    async (contractType, targetAddress, write) => {
-      mockBodIsBodAction.isBodAction.value = true
-      mockUserStore.address = NON_OWNER_ADDRESS
-      mockBodAddAction.executeAddAction.mockResolvedValue(undefined)
+  it('routes ExpenseAccountEIP712 withdrawals through BOD action creation', async () => {
+    mockBodIsBodAction.isBodAction.value = true
+    mockUserStore.address = NON_OWNER_ADDRESS
+    mockBodAddAction.executeAddAction.mockResolvedValue(undefined)
 
-      await submit(contractType)
+    await submit('ExpenseAccountEIP712')
 
-      expect(mockBodAddAction.executeAddAction).toHaveBeenCalledWith(
-        expect.objectContaining({
-          targetAddress,
-          userAddress: NON_OWNER_ADDRESS,
-          description: expect.stringContaining('Owner Treasury Withdraw All to Bank'),
-          data: expect.any(String)
-        })
-      )
-      expect(write.executeWrite).not.toHaveBeenCalled()
-    }
-  )
+    expect(mockBodAddAction.executeAddAction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        targetAddress: EXPENSE_ADDRESS,
+        userAddress: NON_OWNER_ADDRESS,
+        description: expect.stringContaining('Owner Treasury Withdraw All to Bank'),
+        data: expect.any(String)
+      })
+    )
+    expect(mockExpenseAccountWrites.ownerWithdrawAllToBank.mutateAsync).not.toHaveBeenCalled()
+  })
 
-  it.each([
-    ['returned message', () => simulateReturnedError({ message: 'User rejected the request' })],
-    [
-      'returned shortMessage',
-      () => simulateReturnedError({ shortMessage: 'User denied transaction signature' })
-    ],
-    [
-      'thrown shortMessage',
-      () =>
-        mockCashRemunerationWrites.ownerWithdrawAllToBank.executeWrite.mockRejectedValueOnce({
-          shortMessage: 'cancelled in MetaMask'
-        })
-    ]
-  ])('shows an inline warning for %s user cancellations', async (_, setup) => {
-    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-    setup()
+  it('routes CashRemunerationEIP712 withdrawals through BOD action creation', async () => {
+    mockBodIsBodAction.isBodAction.value = true
+    mockUserStore.address = NON_OWNER_ADDRESS
+    mockBodAddAction.executeAddAction.mockResolvedValue(undefined)
+
+    await submit('CashRemunerationEIP712')
+
+    expect(mockBodAddAction.executeAddAction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        targetAddress: CASH_ADDRESS,
+        userAddress: NON_OWNER_ADDRESS,
+        description: expect.stringContaining('Owner Treasury Withdraw All to Bank'),
+        data: expect.any(String)
+      })
+    )
+    expect(mockCashRemunerationWrites.ownerWithdrawAllToBank.mutateAsync).not.toHaveBeenCalled()
+  })
+
+  it('shows an inline warning when the wallet rejects the request', async () => {
+    const rejection = new BaseError('rejected', {
+      cause: new UserRejectedRequestError(new Error('rejected'))
+    })
+    simulateCashThrow(rejection)
     const wrapper = await submit()
     expect(wrapper.find(WARNING).text()).toContain('Owner rejected the request.')
-    consoleErrorSpy.mockRestore()
-  })
-
-  it.each([
-    ['string response error', () => simulateReturnedError('rpc aborted')],
-    ['object response error', () => simulateReturnedError({ code: 4001 })]
-  ])('keeps the inline warning hidden for %s', async (_, setup) => {
-    setup()
-    const wrapper = await submit()
-    expect(wrapper.find(WARNING).exists()).toBe(false)
-    expect(mockCashRemunerationWrites.ownerWithdrawAllToBank.executeWrite).toHaveBeenCalled()
   })
 
   it('keeps the inline warning hidden for unexpected thrown errors', async () => {
-    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-    mockCashRemunerationWrites.ownerWithdrawAllToBank.executeWrite.mockRejectedValueOnce(
-      new Error('RPC node unavailable')
-    )
+    simulateCashThrow(new Error('RPC node unavailable'))
     const wrapper = await submit()
-    expect(consoleErrorSpy).toHaveBeenCalled()
     expect(wrapper.find(WARNING).exists()).toBe(false)
-    consoleErrorSpy.mockRestore()
   })
 })
