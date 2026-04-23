@@ -145,7 +145,7 @@ export const mockWeeklyClaimData: WeeklyClaim[] = [
       {
         id: 1,
         hoursWorked: 480,
-        minutesWorked: 440,
+        minutesWorked: 480,
         dayWorked: '2024-01-01',
         createdAt: '2024-01-01T08:00:00Z',
         updatedAt: '2024-01-01T08:00:00Z',

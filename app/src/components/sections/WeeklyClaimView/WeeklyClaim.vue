@@ -30,7 +30,7 @@
         <span>{{ formatIsoWeekRange(dayjs(row.weekStart).utc().startOf('isoWeek')) }}</span>
       </template>
 
-      <template #hoursWorked-cell="{ row: { original: row } }">
+      <template #minutesWorked-cell="{ row: { original: row } }">
         <span class="font-bold">
           {{ formatMinutesAsDuration(getTotalTimeWorked(row.claims)) }}
         </span>
@@ -135,8 +135,8 @@ dayjs.extend(utc)
 dayjs.extend(isoWeek)
 dayjs.extend(weekday)
 
-function getTotalTimeWorked(claims: { hoursWorked: number }[]) {
-  return claims.reduce((sum, claim) => sum + claim.hoursWorked, 0)
+function getTotalTimeWorked(claims: { minutesWorked: number }[]) {
+  return claims.reduce((sum, claim) => sum + claim.minutesWorked, 0)
 }
 
 // const userStore = useUserDataStore()
@@ -198,7 +198,7 @@ const columns = [
     enableSorting: false
   },
   {
-    accessorKey: 'hoursWorked',
+    accessorKey: 'minutesWorked',
     header: 'Hour Worked',
     enableSorting: false
   },
