@@ -31,17 +31,13 @@ import { useTeamStore, useUserDataStore } from '@/stores'
 import type { WeeklyClaim } from '@/types'
 import { buildClaimRatesWithOvertime, log } from '@/utils'
 import { useChainId, useReadContract, useSignTypedData } from '@wagmi/vue'
-import {
-  readContract,
-  writeContract,
-  simulateContract,
-  waitForTransactionReceipt
-} from '@wagmi/core'
+import { readContract } from '@wagmi/core'
 import dayjs from 'dayjs'
 import { keccak256, zeroAddress, type Address } from 'viem'
 import { computed, ref, watch } from 'vue'
 import { config } from '@/wagmi.config'
 import { useUpdateWeeklyClaimMutation } from '@/queries'
+import { useEnableClaim } from '@/composables/cashRemuneration/writes'
 
 const props = defineProps<{
   weeklyClaim: WeeklyClaim
@@ -81,6 +77,8 @@ const { data: cashRemunerationOwner, error: cashRemunerationOwnerError } = useRe
 const isCashRemunerationOwner = computed(() => cashRemunerationOwner.value === userStore.address)
 
 const { error: claimError, mutateAsync: executeUpdateClaim } = useUpdateWeeklyClaimMutation()
+
+const enableTx = useEnableClaim()
 
 // Domain configuration (constant)
 const typedDataDomain = computed(() => ({
@@ -150,21 +148,7 @@ const enableClaim = async (signature: `0x${string}`) => {
 
   if (!isDisabled) return
 
-  await simulateContract(config, {
-    address: cashRemunerationAddress.value,
-    abi: CASH_REMUNERATION_EIP712_ABI,
-    functionName: 'enableClaim',
-    args: [keccak256(signature)]
-  })
-
-  const hash = await writeContract(config, {
-    address: cashRemunerationAddress.value,
-    abi: CASH_REMUNERATION_EIP712_ABI,
-    functionName: 'enableClaim',
-    args: [keccak256(signature)]
-  })
-
-  await waitForTransactionReceipt(config, { hash })
+  await enableTx.mutateAsync({ args: [keccak256(signature)] })
 }
 
 const approveClaim = async (weeklyClaim: WeeklyClaim) => {

@@ -28,34 +28,10 @@ export function useDistributeTokenDividends() {
   return useBankContractWrite('distributeTokenDividends')
 }
 
-export function useAddTokenSupport() {
-  return useBankContractWrite('addTokenSupport')
-}
-
-export function useRemoveTokenSupport() {
-  return useBankContractWrite('removeTokenSupport')
-}
-
 export function useTransfer() {
   return useBankContractWrite('transfer')
 }
 
 export function useTransferToken() {
   return useBankContractWrite('transferToken')
-}
-
-export function useTransferOwnership() {
-  return useBankContractWrite('transferOwnership')
-}
-
-export function useRenounceOwnership() {
-  return useBankContractWrite('renounceOwnership')
-}
-
-export function usePause() {
-  return useBankContractWrite('pause')
-}
-
-export function useUnpause() {
-  return useBankContractWrite('unpause')
 }

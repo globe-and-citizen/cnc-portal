@@ -1,3 +1,5 @@
+import type { ContractKey } from '@/composables/contracts/errorCatalogs.types'
+import { resolveRevertMessage } from '@/composables/contracts/errorCatalogs'
 import {
   BaseError,
   ChainDisconnectedError,
@@ -40,10 +42,15 @@ export interface ClassifiedError {
   revertName?: string
   /** Decoded args from the custom error, if any */
   revertArgs?: readonly unknown[]
-  /** Short, user-friendly fallback message. Override per-feature with your own mapping. */
+  /** Resolved, user-facing message. For contract reverts this comes from the unified catalog. */
   userMessage: string
   /** The original error for logging / deep inspection. */
   raw: unknown
+}
+
+export interface ClassifyOptions {
+  /** Identifies which contract emitted the revert so per-contract overrides apply. */
+  contract?: ContractKey
 }
 
 /**
@@ -53,13 +60,12 @@ export interface ClassifiedError {
  *
  * @example
  * onError: (error) => {
- *   const c = classifyError(error)
+ *   const c = classifyError(error, { contract: 'CashRemuneration' })
  *   if (c.category === 'user_rejected') return // silent
- *   const custom = MY_FEATURE_MESSAGES[c.revertName ?? '']
- *   toast.add({ title: custom ?? c.userMessage, color: 'error' })
+ *   toast.add({ title: c.userMessage, color: 'error' })
  * }
  */
-export function classifyError(error: unknown): ClassifiedError {
+export function classifyError(error: unknown, options?: ClassifyOptions): ClassifiedError {
   if (!(error instanceof Error)) {
     return {
       category: 'unknown',
@@ -102,12 +108,15 @@ export function classifyError(error: unknown): ClassifiedError {
     const name = isPlainError
       ? ((revert.data?.args?.[0] as string) ?? 'Error')
       : (revert.data?.errorName ?? 'ContractRevert')
+    const args = revert.data?.args as readonly unknown[] | undefined
+
+    const userMessage = isPlainError ? name : resolveRevertMessage(name, args, options?.contract)
 
     return {
       category: 'contract_revert',
       revertName: name,
-      revertArgs: revert.data?.args as readonly unknown[] | undefined,
-      userMessage: name,
+      revertArgs: args,
+      userMessage,
       raw: error
     }
   }

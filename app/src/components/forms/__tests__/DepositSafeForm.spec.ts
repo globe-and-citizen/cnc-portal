@@ -202,7 +202,7 @@ describe('DepositSafeForm.vue', () => {
   describe('ERC20 Token Deposit - With Insufficient Allowance', () => {
     it('should handle approval errors gracefully', async () => {
       mockERC20Reads.allowance.data.value = 0n
-      mockERC20Writes.approve.writeResult.error.value = new Error('Approval failed')
+      mockERC20Writes.approve.mutateAsync.mockRejectedValueOnce(new Error('Approval failed'))
 
       const wrapper = createWrapper()
       await setTokenAmount(wrapper, '1', 'usdc', true)
@@ -230,7 +230,7 @@ describe('DepositSafeForm.vue', () => {
       await configureErc20Submit(wrapper)
       await flushPromises()
 
-      expect(mockERC20Writes.approve.executeWrite).toHaveBeenCalled()
+      expect(mockERC20Writes.approve.mutateAsync).toHaveBeenCalled()
     })
 
     it('throws into the catch path when the transfer hash is missing', async () => {
