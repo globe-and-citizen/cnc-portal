@@ -263,22 +263,15 @@ async function handleSetMultiplier(event?: FormSubmitEvent<MultiplierFormSchema>
   }
 
   const multiplierString = event?.data.multiplier ?? formState.multiplier
+  const multiplierInWei = parseSafeDepositRouterMultiplier(multiplierString, MULTIPLIER_DECIMALS)
 
-  try {
-    const multiplierInWei = parseSafeDepositRouterMultiplier(multiplierString, MULTIPLIER_DECIMALS)
-
-    if (multiplierInWei === 0n) {
-      submissionError.value = 'Invalid multiplier format'
-      toast.add({ title: 'Invalid multiplier format', color: 'error' })
-      return
-    }
-
-    await setMultiplierWrite.executeWrite(multiplierInWei)
-  } catch (error) {
-    console.error('Error formatting multiplier:', error)
+  if (multiplierInWei === 0n) {
     submissionError.value = 'Invalid multiplier format'
     toast.add({ title: 'Invalid multiplier format', color: 'error' })
+    return
   }
+
+  await setMultiplierWrite.executeWrite(multiplierInWei)
 }
 
 defineExpose({ handleSetMultiplier })

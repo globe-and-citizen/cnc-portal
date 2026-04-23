@@ -163,16 +163,16 @@ describe('SetCompensationMultiplierAction.vue', () => {
     expect(mockSafeDepositRouterWrites.setMultiplier.executeWrite).toHaveBeenCalledTimes(1)
   })
 
-  it('handleSetMultiplier catches formatting errors', async () => {
-    mockSafeDepositRouterWrites.setMultiplier.executeWrite.mockRejectedValue(new Error('fail'))
+  it('handleSetMultiplier blocks submission when parse returns 0n', async () => {
+    mockSafeDepositRouterReads.multiplier.data.value = 5000000n
     const wrapper = createWrapper()
     const vm = wrapper.vm as unknown as { handleSetMultiplier: () => Promise<void> }
 
     await wrapper.find('[data-test="set-compensation-multiplier-button"]').trigger('click')
-    await wrapper.find('[data-test="multiplier-input"]').setValue('3')
+    await wrapper.find('[data-test="multiplier-input"]').setValue('+3')
     await vm.handleSetMultiplier()
 
-    expect(mockSafeDepositRouterWrites.setMultiplier.executeWrite).toHaveBeenCalled()
+    expect(mockSafeDepositRouterWrites.setMultiplier.executeWrite).not.toHaveBeenCalled()
   })
 
   it('watcher handles write error with generic message', async () => {
