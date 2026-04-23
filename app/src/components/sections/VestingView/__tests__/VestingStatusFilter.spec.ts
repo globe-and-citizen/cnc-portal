@@ -1,29 +1,48 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { mount, type VueWrapper } from '@vue/test-utils'
+import { defineComponent, h } from 'vue'
 import VestingStatusFilter from '@/components/sections/VestingView/VestingStatusFilter.vue'
 import type { VestingStatus } from '@/types/vesting'
+
+const USelectStub = defineComponent({
+  name: 'USelectStub',
+  props: ['modelValue', 'items', 'id', 'size'],
+  emits: ['update:modelValue'],
+  setup() {
+    return () => h('div')
+  }
+})
 
 describe('VestingStatusFilter.vue', () => {
   let wrapper: VueWrapper
 
   const mountComponent = (props = {}) => {
     return mount(VestingStatusFilter, {
-      props
+      props,
+      global: {
+        stubs: {
+          USelect: USelectStub,
+          Select: USelectStub
+        }
+      }
     })
   }
+
+  const getSelect = () => wrapper.findComponent(USelectStub)
 
   beforeEach(() => {
     wrapper = mountComponent()
   })
 
   describe('Rendering', () => {
-    it('displays all status options', () => {
-      const options = wrapper.findAll('option')
+    it('passes all status options to the select', () => {
+      const select = getSelect()
+      const items = select.props('items') as Array<{ label: string; value: string }>
       const expectedOptions = ['All', 'Active', 'Completed', 'Cancelled']
 
-      expect(options).toHaveLength(4)
-      options.forEach((option, index) => {
-        expect(option.text()).toBe(expectedOptions[index])
+      expect(items).toHaveLength(4)
+      items.forEach((item, index) => {
+        expect(item.label).toBe(expectedOptions[index])
       })
     })
 
@@ -32,26 +51,23 @@ describe('VestingStatusFilter.vue', () => {
       expect(label.text()).toBe('Status:')
     })
 
-    it('has correct select element attributes', () => {
-      const select = wrapper.find('select')
-      expect(select.attributes('id')).toBe('vesting-status-select')
-      expect(select.attributes('class')).toContain('select')
-      expect(select.attributes('class')).toContain('select-bordered')
-      expect(select.attributes('class')).toContain('select-sm')
+    it('has correct select attributes', () => {
+      const select = getSelect()
+      expect(select.props('id')).toBe('vesting-status-select')
+      expect(wrapper.find('[data-test="vesting-status-filter"]').exists()).toBe(true)
     })
   })
 
   describe('Default State', () => {
     it('initializes with "all" as default value', () => {
-      const select = wrapper.find('select')
-      expect(select.element.value).toBe('all')
+      expect(getSelect().props('modelValue')).toBe('all')
     })
   })
 
   describe('User Interaction', () => {
     it('emits statusChange event when selecting a new status', async () => {
-      const select = wrapper.find('[data-test="vesting-status-filter"]')
-      await select.setValue('active')
+      await getSelect().vm.$emit('update:modelValue', 'active')
+      await wrapper.vm.$nextTick()
 
       expect(wrapper.emitted('statusChange')).toBeTruthy()
       expect(wrapper.emitted('statusChange')?.[0]).toEqual(['active'])
@@ -59,24 +75,24 @@ describe('VestingStatusFilter.vue', () => {
   })
 
   describe('Model Update', () => {
-    it('updates v-model value when selecting different options', async () => {
-      const select = wrapper.find('select')
+    it('updates value when selecting different options', async () => {
+      await getSelect().vm.$emit('update:modelValue', 'active')
+      await wrapper.vm.$nextTick()
+      expect(getSelect().props('modelValue')).toBe('active')
 
-      await select.setValue('active')
-      expect(select.element.value).toBe('active')
-
-      await select.setValue('completed')
-      expect(select.element.value).toBe('completed')
+      await getSelect().vm.$emit('update:modelValue', 'completed')
+      await wrapper.vm.$nextTick()
+      expect(getSelect().props('modelValue')).toBe('completed')
     })
   })
 
   describe('Edge Cases', () => {
     it('handles rapid status changes correctly', async () => {
-      const select = wrapper.find('[data-test="vesting-status-filter"]')
       const statuses: VestingStatus[] = ['active', 'completed', 'cancelled', 'all']
 
       for (const status of statuses) {
-        await select.setValue(status)
+        await getSelect().vm.$emit('update:modelValue', status)
+        await wrapper.vm.$nextTick()
       }
 
       const emittedEvents = wrapper.emitted('statusChange')
@@ -87,11 +103,11 @@ describe('VestingStatusFilter.vue', () => {
     })
 
     it('preserves selected value after component re-render', async () => {
-      const select = wrapper.find('select')
-      await select.setValue('completed')
+      await getSelect().vm.$emit('update:modelValue', 'completed')
+      await wrapper.vm.$nextTick()
       wrapper.vm.$forceUpdate()
 
-      expect(select.element.value).toBe('completed')
+      expect(getSelect().props('modelValue')).toBe('completed')
     })
   })
 })

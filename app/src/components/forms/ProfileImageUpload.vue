@@ -40,9 +40,15 @@
       </div>
     </div>
   </div>
-  <p v-if="errorMessage" class="mt-2 text-sm text-red-500" data-test="profile-image-error">
-    {{ errorMessage }}
-  </p>
+  <UAlert
+    v-if="errorMessage"
+    color="error"
+    variant="soft"
+    :description="errorMessage"
+    icon="i-lucide-circle-alert"
+    class="mt-2"
+    data-test="profile-image-error"
+  />
 </template>
 
 <script setup lang="ts">
