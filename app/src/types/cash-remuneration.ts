@@ -79,7 +79,7 @@ export interface WeeklyClaim {
   wageId: number
   createdAt: string // ISO date string
   updatedAt: string // ISO date string
-  hoursWorked: number // legacy compatibility field kept for existing UI paths
+  // hoursWorked: number // legacy compatibility field kept for existing UI paths
   minutesWorked: number
   wage: Wage
   claims: Claim[]

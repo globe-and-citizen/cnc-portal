@@ -96,11 +96,14 @@ export const buildClaimRatesWithOvertime = ({
       ? parseRateAmount(overtimeRate.amount, baseRate.type)
       : baseRateWei
 
-    // totalAmount = (baseRate * regularMinutes + overtimeRate * overtimeMinutes) / 60
+    // totalAmount expected payout:
+    // (baseHourlyRate * regularMinutes + overtimeHourlyRate * overtimeMinutes) / 60
     const totalAmount =
       (baseRateWei * BigInt(regularMinutes) + overtimeRateWei * BigInt(overtimeMinutes)) / 60n
-    // Per-minute rate for on-chain: totalAmount / totalMinutes
-    const hourlyRate = totalMinutes > 0 ? totalAmount / BigInt(totalMinutes) : baseRateWei / 60n
+
+    // Effective hourly rate for on-chain formula:
+    // amountToPay = minutesWorked * hourlyRate / 60
+    const hourlyRate = totalMinutes > 0 ? (totalAmount * 60n) / BigInt(totalMinutes) : baseRateWei
 
     return {
       type: baseRate.type,

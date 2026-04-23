@@ -15,19 +15,16 @@ type WeeklyClaimResponse = Omit<WeeklyClaim, 'minutesWorked' | 'claims'> & {
 }
 
 const getClaimWorkedMinutes = ({
-  hoursWorked,
   minutesWorked
 }: {
-  hoursWorked?: number | null
   minutesWorked?: number | null
-}) => minutesWorked ?? hoursWorked ?? 0
+}) => minutesWorked ?? 0
 
 export const normalizeClaimResponse = (claim: ClaimResponse): Claim => {
   const workedMinutes = getClaimWorkedMinutes(claim)
 
   return {
     ...claim,
-    hoursWorked: workedMinutes,
     minutesWorked: workedMinutes
   }
 }
@@ -35,12 +32,11 @@ export const normalizeClaimResponse = (claim: ClaimResponse): Claim => {
 export const normalizeWeeklyClaimResponse = (weeklyClaim: WeeklyClaimResponse): WeeklyClaim => {
   const claims = weeklyClaim.claims.map(normalizeClaimResponse)
   const totalWorkedMinutes =
-    weeklyClaim.minutesWorked ?? claims.reduce((sum, claim) => sum + claim.hoursWorked, 0)
+    weeklyClaim.minutesWorked ?? claims.reduce((sum, claim) => sum + claim.minutesWorked, 0)
 
   return {
     ...weeklyClaim,
     claims,
-    hoursWorked: totalWorkedMinutes,
     minutesWorked: totalWorkedMinutes
   }
 }
