@@ -72,7 +72,13 @@ import type { TokenId } from '@/constant'
 import { zeroAddress } from 'viem'
 import { useInvestorSymbol } from '@/composables/investor/reads'
 import { GET_INVESTOR_EVENTS } from '@/queries/ponder/investor.queries'
-import type { InvestorEventsQuery, RawInvestorTransaction } from '@/types/ponder/investor'
+import { GET_SAFE_DEPOSIT_ROUTER_EVENTS } from '@/queries/ponder/safe-deposit-router.queries'
+import type {
+  InvestorEventsQuery,
+  RawInvestorTransaction,
+  SafeDepositRouterEventsQuery
+} from '@/types/ponder/investor'
+import { formatSafeDepositRouterMultiplier } from '@/utils/safeDepositRouterUtil'
 import { formatDateShort } from '@/utils/dayUtils'
 
 const teamStore = useTeamStore()
@@ -84,6 +90,11 @@ const investorTokenSymbol = computed(() =>
 
 const investorAddress = computed(() => {
   const address = teamStore.getContractAddressByType('InvestorV1')
+  return address ? address.toLowerCase() : ''
+})
+
+const safeDepositRouterAddress = computed(() => {
+  const address = teamStore.getContractAddressByType('SafeDepositRouter')
   return address ? address.toLowerCase() : ''
 })
 
@@ -133,11 +144,29 @@ const { result, error, loading } = useQuery<InvestorEventsQuery>(
   }
 )
 
+const { result: safeResult, error: safeError } = useQuery<SafeDepositRouterEventsQuery>(
+  GET_SAFE_DEPOSIT_ROUTER_EVENTS,
+  {
+    contractAddress: safeDepositRouterAddress,
+    limit: 500
+  },
+  {
+    pollInterval: GRAPHQL_POLL_INTERVAL,
+    fetchPolicy: 'cache-and-network',
+    enabled: computed(() => Boolean(safeDepositRouterAddress.value))
+  }
+)
+
 const rawTransactions = computed<RawInvestorTransaction[]>(() => {
   const mints = result.value?.investorMints?.items ?? []
   const distributed = result.value?.investorDividendDistributeds?.items ?? []
   const paids = result.value?.investorDividendPaids?.items ?? []
   const faileds = result.value?.investorDividendPaymentFaileds?.items ?? []
+  const safeDeposits = safeResult.value?.safeDeposits?.items ?? []
+  const safeDepositsEnableds = safeResult.value?.safeDepositsEnableds?.items ?? []
+  const safeDepositsDisableds = safeResult.value?.safeDepositsDisableds?.items ?? []
+  const safeAddressUpdateds = safeResult.value?.safeAddressUpdateds?.items ?? []
+  const safeMultiplierUpdateds = safeResult.value?.safeMultiplierUpdateds?.items ?? []
 
   const merged: RawInvestorTransaction[] = [
     ...mints.map((row) => ({
@@ -176,6 +205,51 @@ const rawTransactions = computed<RawInvestorTransaction[]>(() => {
       tokenAddress: row.token,
       transactionType: 'dividendPaymentFailed' as const,
       reason: row.reason
+    })),
+    ...safeDeposits.map((row) => ({
+      txHash: txHashFromId(row.id),
+      timestamp: row.timestamp,
+      from: row.depositor,
+      to: row.contractAddress,
+      amount: row.tokenAmount,
+      tokenAddress: row.token,
+      transactionType: 'safeDeposit' as const
+    })),
+    ...safeDepositsEnableds.map((row) => ({
+      txHash: txHashFromId(row.id),
+      timestamp: row.timestamp,
+      from: row.enabledBy,
+      to: row.contractAddress,
+      amount: '0',
+      tokenAddress: zeroAddress,
+      transactionType: 'safeDepositsEnabled' as const
+    })),
+    ...safeDepositsDisableds.map((row) => ({
+      txHash: txHashFromId(row.id),
+      timestamp: row.timestamp,
+      from: row.disabledBy,
+      to: row.contractAddress,
+      amount: '0',
+      tokenAddress: zeroAddress,
+      transactionType: 'safeDepositsDisabled' as const
+    })),
+    ...safeAddressUpdateds.map((row) => ({
+      txHash: txHashFromId(row.id),
+      timestamp: row.timestamp,
+      from: row.oldSafe,
+      to: row.newSafe,
+      amount: '0',
+      tokenAddress: zeroAddress,
+      transactionType: 'safeAddressUpdated' as const
+    })),
+    ...safeMultiplierUpdateds.map((row) => ({
+      txHash: txHashFromId(row.id),
+      timestamp: row.timestamp,
+      from: row.contractAddress,
+      to: row.contractAddress,
+      amount: row.newMultiplier,
+      tokenAddress: zeroAddress,
+      transactionType: 'safeMultiplierUpdated' as const
     }))
   ]
 
@@ -184,21 +258,38 @@ const rawTransactions = computed<RawInvestorTransaction[]>(() => {
 
 const transactionData = computed<InvestorsTransaction[]>(() =>
   rawTransactions.value.map((tx) => {
+    const isConfigEvent =
+      tx.transactionType === 'safeDepositsEnabled' ||
+      tx.transactionType === 'safeDepositsDisabled' ||
+      tx.transactionType === 'safeAddressUpdated'
+
+    const isMultiplierEvent = tx.transactionType === 'safeMultiplierUpdated'
     const tokenAddress = String(tx.tokenAddress ?? '').toLowerCase()
     const matchedToken = currencyStore.supportedTokens.find(
       (token) => token.address.toLowerCase() === tokenAddress
     )
-    const token =
-      tx.transactionType === 'mint'
-        ? investorTokenSymbol.value
-        : matchedToken?.symbol ||
-          tokenSymbol(tokenAddress) ||
-          investorTokenSymbol.value ||
-          NETWORK.currencySymbol
 
-    const amount = formatEtherUtil(parseAmount(tx.amount), tx.tokenAddress)
+    const token = isConfigEvent
+      ? '-'
+      : isMultiplierEvent
+        ? 'x'
+        : tx.transactionType === 'mint'
+          ? investorTokenSymbol.value
+          : matchedToken?.symbol ||
+            tokenSymbol(tokenAddress) ||
+            investorTokenSymbol.value ||
+            NETWORK.currencySymbol
+
+    const amount = isConfigEvent
+      ? '0'
+      : isMultiplierEvent
+        ? formatSafeDepositRouterMultiplier(parseAmount(tx.amount), 6)
+        : formatEtherUtil(parseAmount(tx.amount), tx.tokenAddress)
     const numericAmount = Number(amount)
-    const tokenId = matchedToken?.id ?? resolveTokenIdByAddress(tokenAddress)
+    const tokenId =
+      isConfigEvent || isMultiplierEvent
+        ? null
+        : (matchedToken?.id ?? resolveTokenIdByAddress(tokenAddress))
     const usdPrice = getUsdPrice(tokenId)
     const amountUSD = Number.isFinite(numericAmount) ? numericAmount * usdPrice : 0
 
@@ -272,6 +363,17 @@ watch(
     if (newMessage && newMessage !== lastError.value) {
       log.error('Ponder investor transaction query error:', error.value)
       lastError.value = newMessage
+    }
+  }
+)
+
+const safeLastError = ref<string | null>(null)
+watch(
+  () => safeError.value?.message,
+  (newMessage) => {
+    if (newMessage && newMessage !== safeLastError.value) {
+      log.error('Ponder safe deposit router transaction query error:', safeError.value)
+      safeLastError.value = newMessage
     }
   }
 )

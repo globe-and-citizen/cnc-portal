@@ -10,6 +10,7 @@ import {
   bankDividendDistributionTriggered,
   bankTokenSupportAdded,
   bankTokenSupportRemoved,
+  bankOwnershipTransferred,
   election,
   electionVote,
   electionResult,
@@ -256,6 +257,17 @@ ponder.on("Bank:TokenSupportRemoved", async ({ event, context }) => {
     id: `${event.transaction.hash}-${event.log.logIndex}`,
     contractAddress: event.log.address,
     tokenAddress: event.args.tokenAddress,
+    blockNumber: event.block.number,
+    timestamp: Number(event.block.timestamp),
+  });
+});
+
+ponder.on("Bank:OwnershipTransferred", async ({ event, context }) => {
+  await context.db.insert(bankOwnershipTransferred).values({
+    id: `${event.transaction.hash}-${event.log.logIndex}`,
+    contractAddress: event.log.address,
+    previousOwner: event.args.previousOwner,
+    newOwner: event.args.newOwner,
     blockNumber: event.block.number,
     timestamp: Number(event.block.timestamp),
   });

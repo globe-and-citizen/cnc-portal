@@ -50,6 +50,14 @@ export type BankFeePaidRow = {
   timestamp: number
 }
 
+export type BankOwnershipTransferredRow = {
+  id: string
+  contractAddress: string
+  previousOwner: string
+  newOwner: string
+  timestamp: number
+}
+
 export type RawContractTokenTransferRow = {
   id: string
   tokenAddress: string
@@ -78,5 +86,6 @@ export type BankEventsQuery = {
   bankTokenTransfers: { items: BankTokenTransferRow[] }
   bankDividendDistributionTriggereds: { items: BankDividendDistributionRow[] }
   bankFeePaids: { items: BankFeePaidRow[] }
+  bankOwnershipTransferreds: { items: BankOwnershipTransferredRow[] }
   rawContractTokenTransfers: { items: RawContractTokenTransferRow[] }
 }

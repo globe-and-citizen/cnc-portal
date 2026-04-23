@@ -90,5 +90,19 @@ export const GET_BANK_EVENTS = gql`
         timestamp
       }
     }
+    bankOwnershipTransferreds(
+      where: { contractAddress: $contractAddress }
+      orderBy: "timestamp"
+      orderDirection: "desc"
+      limit: $limit
+    ) {
+      items {
+        id
+        contractAddress
+        previousOwner
+        newOwner
+        timestamp
+      }
+    }
   }
 `

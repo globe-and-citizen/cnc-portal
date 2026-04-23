@@ -187,6 +187,27 @@ export const bankTokenSupportRemoved = onchainTable(
   }),
 );
 
+export const bankOwnershipTransferred = onchainTable(
+  "bank_ownership_transferred",
+  (t) => ({
+    id: t.text().primaryKey(),
+    contractAddress: t.hex().notNull(),
+    previousOwner: t.hex().notNull(),
+    newOwner: t.hex().notNull(),
+    blockNumber: t.bigint().notNull(),
+    timestamp: t.integer().notNull(),
+  }),
+  (table) => ({
+    contractAddressIdx: index("bank_ownership_transferred_contract_index").on(
+      table.contractAddress,
+    ),
+    previousOwnerIdx: index("bank_ownership_transferred_previous_owner_index").on(
+      table.previousOwner,
+    ),
+    newOwnerIdx: index("bank_ownership_transferred_new_owner_index").on(table.newOwner),
+  }),
+);
+
 // Elections events
 export const election = onchainTable(
   "election",
