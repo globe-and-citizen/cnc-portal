@@ -268,7 +268,6 @@ const submitForm = async () => {
       (error as Error)?.message ??
       `Failed to deposit ${selectedTokenId.value}`
     submitError.value = message
-    toast.add({ title: `Failed to deposit ${selectedTokenId.value}`, color: 'error' })
     submitting.value = false
   }
 }
