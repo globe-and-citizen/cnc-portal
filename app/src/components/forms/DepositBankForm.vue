@@ -171,11 +171,7 @@ const allowanceValue = computed<bigint>(() =>
 // Computed values for approval composable
 const bigIntAmount = computed(() => BigInt(Math.floor(Number(amount.value) * 1e6)))
 
-const ERC20ApproveResult = useERC20Approve(
-  selectedTokenAddress,
-  computed(() => props.bankAddress),
-  bigIntAmount
-)
+const ERC20ApproveResult = useERC20Approve(selectedTokenAddress)
 
 const bankDepositTokenResult = useDepositToken()
 
@@ -200,13 +196,9 @@ const submitForm = async () => {
         currentStep.value = 1
 
         // Run spending cap
-        await ERC20ApproveResult.executeWrite([props.bankAddress, bigIntAmount.value])
-        if (
-          ERC20ApproveResult.receiptResult.error.value ||
-          ERC20ApproveResult.writeResult.error.value
-        ) {
-          throw new Error('Approval failed')
-        }
+        await ERC20ApproveResult.mutateAsync({
+          args: [props.bankAddress, bigIntAmount.value]
+        })
       }
       currentStep.value = 2
       await bankDepositTokenResult.mutateAsync({

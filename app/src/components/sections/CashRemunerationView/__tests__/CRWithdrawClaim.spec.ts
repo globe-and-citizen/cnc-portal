@@ -15,6 +15,10 @@ vi.mock('@/composables/contracts/useContractWritesV3', () => ({
   useContractWritesV3: vi.fn(() => mockUseWriteContract)
 }))
 
+vi.mock('@/composables/cashRemuneration/writes', () => ({
+  useWithdraw: vi.fn(() => mockUseWriteContract)
+}))
+
 type WrapperProps = {
   weeklyClaim: WeeklyClaim
   disabled?: boolean
@@ -136,7 +140,9 @@ describe('CRWithdrawClaim', () => {
 
   it('skips dropdown click while loading', async () => {
     // Don't invoke onSuccess so isLoading stays true
-    mockUseWriteContract.mutate = vi.fn()
+    mockUseWriteContract.mutate = vi.fn(() => {
+      mockUseWriteContract.isPending.value = true
+    })
 
     createWrapper({ isDropDown: true, isClaimOwner: true })
 
@@ -148,6 +154,7 @@ describe('CRWithdrawClaim', () => {
     await nextTick()
 
     expect(mockUseWriteContract.mutate).toHaveBeenCalledTimes(1)
+    mockUseWriteContract.isPending.value = false
   })
 
   it('shows error when contract address is missing', async () => {
@@ -164,16 +171,6 @@ describe('CRWithdrawClaim', () => {
     //   title: 'Cash Remuneration EIP712 contract address not found',
     //   color: 'error'
     // })
-  })
-
-  it('shows insufficient balance error before withdraw', async () => {
-    mockGetBalance.mockResolvedValueOnce(parseEther('0.01'))
-
-    createWrapper()
-    await clickWithdrawButton()
-
-    // expect(mockToast.add).toHaveBeenCalledWith({ title: 'Insufficient balance', color: 'error' })
-    expect(mockGetBalance).toHaveBeenCalled()
   })
 
   it('uses overtime-aware total for balance check', async () => {
@@ -314,7 +311,8 @@ describe('CRWithdrawClaim', () => {
   it('handles withdraw mutation onError with user_rejected silently', async () => {
     vi.spyOn(utils, 'classifyError').mockReturnValue({
       category: 'user_rejected',
-      message: 'User rejected'
+      userMessage: 'User rejected',
+      raw: new Error('rejected')
     } as ReturnType<typeof utils.classifyError>)
 
     mockUseWriteContract.mutate = vi.fn(
@@ -332,7 +330,8 @@ describe('CRWithdrawClaim', () => {
   it('handles withdraw mutation onError with regular error', async () => {
     vi.spyOn(utils, 'classifyError').mockReturnValue({
       category: 'unknown',
-      message: 'Failure'
+      userMessage: 'Failure',
+      raw: new Error('boom')
     } as ReturnType<typeof utils.classifyError>)
 
     mockUseWriteContract.mutate = vi.fn(

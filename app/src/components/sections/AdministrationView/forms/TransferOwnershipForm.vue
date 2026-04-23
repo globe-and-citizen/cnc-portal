@@ -23,6 +23,16 @@
         />
       </UFormField>
     </div>
+    <UAlert
+      v-if="errorMessage"
+      color="error"
+      variant="soft"
+      :description="errorMessage"
+      icon="i-lucide-circle-alert"
+      class="mt-4"
+      data-test="error-alert"
+    />
+
     <div class="modal-action justify-center">
       <UButton
         type="submit"
@@ -50,6 +60,11 @@ const props = defineProps({
     type: Boolean,
     required: false,
     default: false
+  },
+  errorMessage: {
+    type: String,
+    required: false,
+    default: ''
   }
 })
 

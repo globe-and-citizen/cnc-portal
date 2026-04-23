@@ -124,7 +124,7 @@ describe('SafeDepositRouterForm.vue', () => {
     vm.submitting = true
     vm.currentStep = 1
     mockParseError.mockReturnValueOnce('User rejected request')
-    mockERC20Writes.approve.writeResult.error.value = new Error('approve rejected')
+    mockERC20Writes.approve.error.value = new Error('approve rejected')
     await wrapper.vm.$nextTick()
     expect(vm.currentStep).toBe(0)
 
@@ -144,7 +144,7 @@ describe('SafeDepositRouterForm.vue', () => {
     vm.handleSherAmountChange('5')
     mockSafeDepositRouterWrites.deposit.executeWrite.mockResolvedValue(undefined)
 
-    mockERC20Writes.approve.receiptResult.isSuccess.value = true
+    mockERC20Writes.approve.isSuccess.value = true
     await flushPromises()
     expect(mockSafeDepositRouterWrites.deposit.executeWrite).toHaveBeenCalled()
 
@@ -161,12 +161,12 @@ describe('SafeDepositRouterForm.vue', () => {
     const vm = getVm(wrapper)
 
     await vm.submitForm()
-    expect(mockERC20Writes.approve.executeWrite).not.toHaveBeenCalled()
+    expect(mockERC20Writes.approve.mutate).not.toHaveBeenCalled()
 
     vm.isAmountValid = true
     mockSafeDepositRouterAddress.value = ''
     await vm.submitForm()
-    expect(mockERC20Writes.approve.executeWrite).not.toHaveBeenCalled()
+    expect(mockERC20Writes.approve.mutate).not.toHaveBeenCalled()
 
     mockSafeDepositRouterAddress.value = '0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'
     vm.selectedTokenId = 'missing-token'
@@ -187,10 +187,9 @@ describe('SafeDepositRouterForm.vue', () => {
     await vm.submitForm()
     await flushPromises()
 
-    expect(mockERC20Writes.approve.executeWrite).toHaveBeenCalledWith([
-      '0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB',
-      1000000n
-    ])
+    expect(mockERC20Writes.approve.mutate).toHaveBeenCalledWith({
+      args: ['0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB', 1000000n]
+    })
     expect(vm.currentStep).toBe(1)
 
     mockERC20Reads.allowance.data.value = 1000000n
@@ -217,7 +216,7 @@ describe('SafeDepositRouterForm.vue', () => {
     )
     await vm.performDeposit()
 
-    mockERC20Writes.approve.executeWrite.mockRejectedValueOnce(new Error('approve boom'))
+    mockERC20Writes.approve.mutate.mockRejectedValueOnce(new Error('approve boom'))
     await setTokenAmount(wrapper, '1', 'usdc', true)
     mockERC20Reads.allowance.data.value = 0n
     await vm.submitForm()
