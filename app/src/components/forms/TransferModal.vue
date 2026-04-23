@@ -32,18 +32,12 @@
       :close="{ onClick: resetTransferValues }"
     >
       <template #body>
-        <UAlert
-          v-if="errorMessage"
-          color="error"
-          variant="soft"
-          :description="errorMessage"
-          class="mb-4"
-        />
         <TransferForm
           v-model="transferData"
           :tokens="tokens"
           :loading="isLoading"
           :fee-bps="feeBpsNumber"
+          :error-message="errorMessage"
           @transfer="handleTransfer"
           @closeModal="resetTransferValues"
           :is-bod-action="isBodAction"
