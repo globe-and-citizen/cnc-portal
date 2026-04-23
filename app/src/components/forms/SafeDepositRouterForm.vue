@@ -15,7 +15,10 @@
         <template #label>
           <span class="label-text">Deposit</span>
           <span class="label-text-alt"
-            >tokenSymbol Balance: {{ selectedToken?.amount }} {{ selectedToken?.token.symbol }}
+            >{{
+              selectedToken?.token.symbol ? `${selectedToken.token.symbol} Balance:` : 'Balance:'
+            }}
+            {{ selectedToken?.amount }} {{ selectedToken?.token.symbol }}
           </span>
         </template>
       </TokenAmount>
