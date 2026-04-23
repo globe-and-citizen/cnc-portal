@@ -2,12 +2,7 @@
   <div class="flex flex-col gap-4">
     <div class="flex flex-row items-center justify-between">
       <div class="flex flex-row items-center gap-2">
-        <USelect
-          v-model="selectedType"
-          :items="types"
-          class="w-40"
-          aria-label="Filter by type"
-        />
+        <USelect v-model="selectedType" :items="types" class="w-40" aria-label="Filter by type" />
         <USelect
           v-model="selectedCreator"
           :items="creators"
