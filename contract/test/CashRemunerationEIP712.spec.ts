@@ -168,8 +168,8 @@ describe('CashRemuneration*** (EIP712)', () => {
 
         console.log(`\t    Gas used: ${receipt?.gasUsed.toString()}`)
 
-        const amount = BigInt(wageClaim.minutesWorked) * wageClaim.wages[0].hourlyRate
-        const amountUSDC = BigInt(wageClaim.minutesWorked) * wageClaim.wages[1].hourlyRate
+        const amount = (BigInt(wageClaim.minutesWorked) * wageClaim.wages[0].hourlyRate) / 60n
+        const amountUSDC = (BigInt(wageClaim.minutesWorked) * wageClaim.wages[1].hourlyRate) / 60n
 
         await expect(tx).to.changeEtherBalance(employee, amount)
         await expect(tx)
@@ -249,7 +249,7 @@ describe('CashRemuneration*** (EIP712)', () => {
           const signature = await employer.signTypedData(domain, types, wageClaim)
           const sigHash = ethers.keccak256(signature)
           const tx = await cashRemunerationProxy.connect(employee).withdraw(wageClaim, signature)
-          const amount = BigInt(wageClaim.minutesWorked) * wageClaim.wages[0].hourlyRate
+          const amount = (BigInt(wageClaim.minutesWorked) * wageClaim.wages[0].hourlyRate) / 60n
 
           await expect(tx).to.changeEtherBalance(employee, amount)
           await expect(tx)

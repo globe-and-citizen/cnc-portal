@@ -185,7 +185,7 @@ describe('Cash Remuneration - Withdraw SHER', function () {
     const signatureHash = ethers.keccak256(signature)
     const tx = await cashRemunerationEip712Proxy.connect(addr1).withdraw(wageClaim, signature)
 
-    const amountSher = BigInt(wageClaim.minutesWorked) * wageClaim.wages[0].hourlyRate
+    const amountSher = (BigInt(wageClaim.minutesWorked) * wageClaim.wages[0].hourlyRate) / 60n
 
     await expect(tx)
       .to.emit(cashRemunerationEip712Proxy, 'WithdrawToken')
@@ -251,7 +251,7 @@ describe('Cash Remuneration - Withdraw SHER', function () {
 
     tx = await cashRemunerationEip712Proxy.connect(addr1).withdraw(wageClaim, signature)
 
-    const amountSher = BigInt(wageClaim.minutesWorked) * wageClaim.wages[0].hourlyRate
+    const amountSher = (BigInt(wageClaim.minutesWorked) * wageClaim.wages[0].hourlyRate) / 60n
 
     await expect(tx)
       .to.emit(cashRemunerationEip712Proxy, 'WithdrawToken')
@@ -287,7 +287,7 @@ describe('Cash Remuneration - Withdraw SHER', function () {
     await cashRemunerationEip712Proxy.connect(addr1).withdraw(wageClaim, signature)
     expect(await cashRemunerationEip712Proxy.paidWageClaims(signatureHash)).to.equal(true)
 
-    const amountSher = BigInt(wageClaim.minutesWorked) * wageClaim.wages[0].hourlyRate
+    const amountSher = (BigInt(wageClaim.minutesWorked) * wageClaim.wages[0].hourlyRate) / 60n
     expect(await investorV1Proxy.balanceOf(addr1.address)).to.equal(amountSher)
 
     // Replay attempt with identical signature/claim must revert with WageAlreadyPaid

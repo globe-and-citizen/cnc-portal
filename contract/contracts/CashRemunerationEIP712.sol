@@ -333,7 +333,7 @@ contract CashRemunerationEIP712 is
     // A wage claim can contain multiple wage types (ETH and/or multiple tokens)
     for (uint8 i = 0; i < wageClaim.wages.length; i++) {
       // Calculate the total amount to pay for this wage component
-      uint256 amountToPay = wageClaim.minutesWorked * wageClaim.wages[i].hourlyRate;
+      uint256 amountToPay = (wageClaim.minutesWorked * wageClaim.wages[i].hourlyRate) / 60;
 
       // Step 7a: Handle Native ETH Payments
       // tokenAddress == address(0) indicates native ETH
