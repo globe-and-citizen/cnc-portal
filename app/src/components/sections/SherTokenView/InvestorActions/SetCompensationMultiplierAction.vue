@@ -17,10 +17,12 @@
       @click="openModal"
     />
 
-    <dialog ref="modalRef" class="modal" data-test="multiplier-modal">
-      <div class="modal-box">
-        <h3 class="mb-4 text-lg font-bold">Set SHER Compensation Multiplier</h3>
-
+    <UModal
+      v-model:open="isModalOpen"
+      title="Set SHER Compensation Multiplier"
+      data-test="multiplier-modal"
+    >
+      <template #body>
         <div class="mb-4">
           <p class="text-base-content/70 mb-2 text-sm">
             Current multiplier:
@@ -34,59 +36,68 @@
           </p>
         </div>
 
-        <div class="form-control w-full">
-          <label class="label">
-            <span class="label-text">New Multiplier</span>
-          </label>
-          <input
-            v-model="newMultiplier"
-            type="text"
-            inputmode="decimal"
-            placeholder="Enter multiplier (e.g., 1.5)"
-            class="input input-bordered w-full"
-            data-test="multiplier-input"
-            :disabled="isLoading"
-          />
-          <label class="label" v-if="multiplierError">
-            <span class="label-text-alt text-error" data-test="multiplier-error">
-              {{ multiplierError }}
-            </span>
-          </label>
-          <label class="label" v-else>
-            <span class="label-text-alt">
-              Example: Multiplier of {{ displayMultiplierExample }} means 1 USDC =
-              {{ displayMultiplierExample }} SHER
-            </span>
-          </label>
-        </div>
+        <UAlert
+          v-if="submissionError"
+          color="error"
+          variant="soft"
+          icon="i-heroicons-x-circle"
+          :description="submissionError"
+          class="mb-4"
+          data-test="submission-error-alert"
+        />
 
-        <div class="modal-action">
-          <UButton
-            variant="ghost"
-            :disabled="isLoading"
-            data-test="cancel-button"
-            @click="closeModal"
-            label="Cancel"
-          />
-          <UButton
-            color="primary"
-            :loading="isLoading"
-            :disabled="!isMultiplierValid || isLoading"
-            data-test="confirm-button"
-            @click="handleSetMultiplier"
-            label="Update Multiplier"
-          />
-        </div>
-      </div>
-      <form method="dialog" class="modal-backdrop">
-        <button @click="closeModal">close</button>
-      </form>
-    </dialog>
+        <UForm
+          :schema="formSchema"
+          :state="formState"
+          class="flex flex-col gap-4"
+          @submit="handleSetMultiplier"
+        >
+          <UFormField label="New Multiplier" name="multiplier">
+            <UInput
+              v-model="formState.multiplier"
+              type="text"
+              inputmode="decimal"
+              placeholder="Enter multiplier (e.g., 1.5)"
+              class="w-full"
+              data-test="multiplier-input"
+              :disabled="isLoading"
+            />
+            <template #hint>
+              <span v-if="!hasValidationError">
+                Example: Multiplier of {{ displayMultiplierExample }} means 1 USDC =
+                {{ displayMultiplierExample }} SHER
+              </span>
+            </template>
+          </UFormField>
+
+          <div class="modal-action flex justify-end gap-2">
+            <UButton
+              variant="ghost"
+              type="button"
+              :disabled="isLoading"
+              data-test="cancel-button"
+              @click="closeModal"
+              label="Cancel"
+            />
+            <UButton
+              color="primary"
+              type="submit"
+              :loading="isLoading"
+              :disabled="!isMultiplierValid || isLoading"
+              data-test="confirm-button"
+              label="Update Multiplier"
+            />
+          </div>
+        </UForm>
+      </template>
+    </UModal>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
+import { z } from 'zod'
+import type { FormSubmitEvent } from '@nuxt/ui'
 import { useConnection } from '@wagmi/vue'
 import ActionButton from '@/components/sections/SherTokenView/ActionButton.vue'
 import { useSetMultiplier } from '@/composables/safeDepositRouter/writes'
@@ -105,63 +116,49 @@ import {
 const toast = useToast()
 const connection = useConnection()
 
-// Modal reference
-const modalRef = ref<HTMLDialogElement | null>(null)
+const isModalOpen = ref(false)
+const submissionError = ref<string | null>(null)
 
-// Form state - now accepts string to handle decimals properly
-const newMultiplier = ref<string>('1')
+const formState = reactive({
+  multiplier: '1'
+})
 
-// Constants
 const MULTIPLIER_DECIMALS = 6
 const MIN_MULTIPLIER = 1
 const MAX_MULTIPLIER = 1000000
 
-// Get SafeDepositRouter address
 const safeDepositRouterAddress = useSafeDepositRouterAddress()
 
-// Read current state
 const { data: currentMultiplier, isLoading: isMultiplierLoading } = useSafeDepositRouterMultiplier()
 const { data: owner, isLoading: isOwnerLoading } = useSafeDepositRouterOwner()
 
-// Write function
 const setMultiplierWrite = useSetMultiplier()
 
-// ============================================================================
-// COMPUTED PROPERTIES
-// ============================================================================
-
-// Format the multiplier for display using utility function
 const formattedCurrentMultiplier = computed(() => {
   const safeMultiplier =
     typeof currentMultiplier.value === 'bigint' ? currentMultiplier.value : undefined
   return formatSafeDepositRouterMultiplier(safeMultiplier, MULTIPLIER_DECIMALS)
 })
 
-// Format display for example text
 const displayMultiplierExample = computed(() => {
-  if (!newMultiplier.value || newMultiplier.value === '') return '1'
-  return formatSherAmount(newMultiplier.value, MULTIPLIER_DECIMALS)
+  if (!formState.multiplier || formState.multiplier === '') return '1'
+  return formatSherAmount(formState.multiplier, MULTIPLIER_DECIMALS)
 })
 
-// Combined loading state
 const isReadLoading = computed(() => isMultiplierLoading.value || isOwnerLoading.value)
-
 const isWriteLoading = computed(() => setMultiplierWrite.writeResult.isPending.value)
-
 const isLoading = computed(() => isReadLoading.value || isWriteLoading.value)
 
-// Check if connected user is the owner
 const canManageMultiplier = computed(() => {
   if (!connection.isConnected.value || !connection.address?.value) return false
   if (!owner.value) return false
   return connection.address.value.toLowerCase() === (owner.value as string).toLowerCase()
 })
 
-// Validate multiplier input
 const multiplierError = computed(() => {
-  if (!newMultiplier.value || newMultiplier.value === '') return 'Multiplier is required'
+  if (!formState.multiplier || formState.multiplier === '') return 'Multiplier is required'
 
-  const numValue = parseFloat(newMultiplier.value)
+  const numValue = parseFloat(formState.multiplier)
   if (isNaN(numValue)) return 'Must be a valid number'
   if (numValue < MIN_MULTIPLIER) return `Multiplier must be at least ${MIN_MULTIPLIER}`
   if (numValue > MAX_MULTIPLIER) return 'Multiplier is too large'
@@ -169,21 +166,32 @@ const multiplierError = computed(() => {
   return null
 })
 
+const hasValidationError = computed(() => multiplierError.value !== null)
+
 const isMultiplierValid = computed(() => {
   if (multiplierError.value) return false
 
-  // Check if value has actually changed
   const currentValue = parseFloat(formattedCurrentMultiplier.value)
-  const newValue = parseFloat(newMultiplier.value)
+  const newValue = parseFloat(formState.multiplier)
 
   return !isNaN(newValue) && newValue !== currentValue
 })
 
-// ============================================================================
-// WATCH PATTERNS - Following established patterns
-// ============================================================================
+const formSchema = z.object({
+  multiplier: z
+    .string()
+    .trim()
+    .min(1, 'Multiplier is required')
+    .refine((value) => !isNaN(parseFloat(value)), 'Must be a valid number')
+    .refine(
+      (value) => parseFloat(value) >= MIN_MULTIPLIER,
+      `Multiplier must be at least ${MIN_MULTIPLIER}`
+    )
+    .refine((value) => parseFloat(value) <= MAX_MULTIPLIER, 'Multiplier is too large')
+})
 
-// Watch for set multiplier errors
+type MultiplierFormSchema = z.output<typeof formSchema>
+
 watch(
   () => setMultiplierWrite.writeResult.error.value,
   (error) => {
@@ -192,21 +200,22 @@ watch(
       const errorMessage = parseError(error)
 
       if (errorMessage.includes('User rejected') || errorMessage.includes('User denied')) {
+        submissionError.value = 'Transaction cancelled by user'
         toast.add({ title: 'Transaction cancelled by user', color: 'error' })
       } else {
+        submissionError.value = 'Failed to update multiplier'
         toast.add({ title: 'Failed to update multiplier', color: 'error' })
       }
     }
   }
 )
 
-// Watch for set multiplier success
 watch(
   () => setMultiplierWrite.receiptResult.isSuccess.value,
   (success) => {
     if (success) {
       toast.add({
-        title: `Multiplier updated successfully to ${formatSherAmount(newMultiplier.value, MULTIPLIER_DECIMALS)}x`,
+        title: `Multiplier updated successfully to ${formatSherAmount(formState.multiplier, MULTIPLIER_DECIMALS)}x`,
         color: 'success'
       })
       closeModal()
@@ -214,73 +223,65 @@ watch(
   }
 )
 
-// Initialize newMultiplier when currentMultiplier loads
 watch(
   formattedCurrentMultiplier,
   (value) => {
     if (value !== undefined && value !== null && value !== '0') {
-      newMultiplier.value = value
+      formState.multiplier = value
     }
   },
   { immediate: true }
 )
 
-// ============================================================================
-// METHODS
-// ============================================================================
-
-/**
- * Open the modal
- */
 function openModal() {
   if (!canManageMultiplier.value) {
     toast.add({ title: 'Only the owner can set the multiplier', color: 'error' })
     return
   }
 
-  // Reset to current multiplier
   if (formattedCurrentMultiplier.value !== '0') {
-    newMultiplier.value = formattedCurrentMultiplier.value
+    formState.multiplier = formattedCurrentMultiplier.value
   }
 
-  modalRef.value?.showModal()
+  submissionError.value = null
+  isModalOpen.value = true
 }
 
-/**
- * Close the modal
- */
 function closeModal() {
-  modalRef.value?.close()
+  isModalOpen.value = false
 }
 
-/**
- * Handle multiplier update
- * Converts decimal input to contract format using utility function
- */
-async function handleSetMultiplier() {
+async function handleSetMultiplier(event?: FormSubmitEvent<MultiplierFormSchema>) {
+  submissionError.value = null
+
   if (!safeDepositRouterAddress.value) {
+    submissionError.value = 'SafeDepositRouter address not found'
     toast.add({ title: 'SafeDepositRouter address not found', color: 'error' })
     return
   }
 
   if (!canManageMultiplier.value) {
+    submissionError.value = 'Only the owner can set the multiplier'
     toast.add({ title: 'Only the owner can set the multiplier', color: 'error' })
     return
   }
 
   if (!isMultiplierValid.value) {
+    submissionError.value = 'Please enter a valid multiplier'
     toast.add({ title: 'Please enter a valid multiplier', color: 'error' })
     return
   }
 
+  const multiplierString = event?.data.multiplier ?? formState.multiplier
+
   try {
-    // Use utility function to convert decimal string to contract format
     const multiplierInWei = parseSafeDepositRouterMultiplier(
-      newMultiplier.value,
+      multiplierString,
       MULTIPLIER_DECIMALS
     )
 
     if (multiplierInWei === 0n) {
+      submissionError.value = 'Invalid multiplier format'
       toast.add({ title: 'Invalid multiplier format', color: 'error' })
       return
     }
@@ -288,7 +289,10 @@ async function handleSetMultiplier() {
     await setMultiplierWrite.executeWrite(multiplierInWei)
   } catch (error) {
     console.error('Error formatting multiplier:', error)
+    submissionError.value = 'Invalid multiplier format'
     toast.add({ title: 'Invalid multiplier format', color: 'error' })
   }
 }
+
+defineExpose({ handleSetMultiplier })
 </script>
