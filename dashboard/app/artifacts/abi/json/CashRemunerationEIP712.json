@@ -774,7 +774,7 @@
           },
           {
             "internalType": "uint16",
-            "name": "hoursWorked",
+            "name": "minutesWorked",
             "type": "uint16"
           },
           {
