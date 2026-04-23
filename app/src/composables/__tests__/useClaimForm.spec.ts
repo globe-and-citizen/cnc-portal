@@ -69,7 +69,7 @@ describe('useClaimForm', () => {
 
     onFilesUpdate([new File(['1'], 'a.png'), new File(['2'], 'b.png')])
     const payload = buildSubmitPayload()
-    expect(payload?.minutesWorked).toBe(130)
+    expect(payload?.minutesWorked).toBe(10)
     expect(payload?.memo).toBe('Initial memo')
     expect(payload?.files).toHaveLength(2)
 

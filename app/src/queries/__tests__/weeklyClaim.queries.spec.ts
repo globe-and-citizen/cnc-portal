@@ -74,7 +74,7 @@ describe('weeklyClaim.queries', () => {
   })
 
   describe('normalization helpers', () => {
-    it('falls back to hoursWorked and then zero when minutesWorked is absent', () => {
+    it('defaults claim worked minutes to zero when minutesWorked is absent', () => {
       const legacyClaim = weeklyClaimQueries.normalizeClaimResponse(
         createClaimResponse({ hoursWorked: 75, minutesWorked: null })
       )
@@ -83,8 +83,8 @@ describe('weeklyClaim.queries', () => {
       )
 
       expect(legacyClaim.hoursWorked).toBe(75)
-      expect(legacyClaim.minutesWorked).toBe(75)
-      expect(emptyClaim.hoursWorked).toBe(0)
+      expect(legacyClaim.minutesWorked).toBe(0)
+      expect(emptyClaim.hoursWorked).toBeNull()
       expect(emptyClaim.minutesWorked).toBe(0)
     })
   })
@@ -130,8 +130,8 @@ describe('weeklyClaim.queries', () => {
           status: 'pending'
         }
       })
-      expect(data[0]?.hoursWorked).toBe(120)
-      expect(data[0]?.minutesWorked).toBe(120)
+      expect(data[0]?.hoursWorked).toBe(0)
+      expect(data[0]?.minutesWorked).toBe(0)
     })
 
     it('configures the weekly claim detail query and supports disabled state', async () => {
