@@ -201,10 +201,12 @@ export const bankOwnershipTransferred = onchainTable(
     contractAddressIdx: index("bank_ownership_transferred_contract_index").on(
       table.contractAddress,
     ),
-    previousOwnerIdx: index("bank_ownership_transferred_previous_owner_index").on(
-      table.previousOwner,
+    previousOwnerIdx: index(
+      "bank_ownership_transferred_previous_owner_index",
+    ).on(table.previousOwner),
+    newOwnerIdx: index("bank_ownership_transferred_new_owner_index").on(
+      table.newOwner,
     ),
-    newOwnerIdx: index("bank_ownership_transferred_new_owner_index").on(table.newOwner),
   }),
 );
 
