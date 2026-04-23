@@ -2,16 +2,12 @@ import { mount, flushPromises } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
 import TransferOwnershipForm from '@/components/sections/AdministrationView/forms/TransferOwnershipForm.vue'
 
-interface ComponentData {
-  transferOwnershipLoading: boolean
-}
-
 describe('TransferOwnershipForm.vue', () => {
-  function mountComponent(props?: ComponentData) {
+  function mountComponent(props?: Record<string, unknown>) {
     return mount(TransferOwnershipForm, {
-      ...props,
       props: {
-        transferOwnershipLoading: false
+        transferOwnershipLoading: false,
+        ...props
       }
     })
   }
@@ -26,6 +22,17 @@ describe('TransferOwnershipForm.vue', () => {
       const wrapper = mountComponent()
       expect(wrapper.find('[data-test="submit-button"]').exists()).toBeTruthy()
       expect(wrapper.find('[data-test="submit-button"]').text()).toBe('Submit')
+    })
+
+    it('renders the inline error alert when errorMessage prop is provided', () => {
+      const wrapper = mountComponent()
+      expect(wrapper.find('[data-test="error-alert"]').exists()).toBe(false)
+
+      const withError = mountComponent({ errorMessage: 'Ownership transfer failed' })
+      expect(withError.find('[data-test="error-alert"]').exists()).toBe(true)
+      expect(withError.find('[data-test="error-alert"]').text()).toContain(
+        'Ownership transfer failed'
+      )
     })
   })
 
