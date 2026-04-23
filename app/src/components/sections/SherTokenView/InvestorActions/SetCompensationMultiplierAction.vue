@@ -275,10 +275,7 @@ async function handleSetMultiplier(event?: FormSubmitEvent<MultiplierFormSchema>
   const multiplierString = event?.data.multiplier ?? formState.multiplier
 
   try {
-    const multiplierInWei = parseSafeDepositRouterMultiplier(
-      multiplierString,
-      MULTIPLIER_DECIMALS
-    )
+    const multiplierInWei = parseSafeDepositRouterMultiplier(multiplierString, MULTIPLIER_DECIMALS)
 
     if (multiplierInWei === 0n) {
       submissionError.value = 'Invalid multiplier format'

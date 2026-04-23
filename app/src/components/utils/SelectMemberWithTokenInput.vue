@@ -91,9 +91,7 @@ const showDropdown = ref(false)
 const formRef = ref<HTMLElement | null>(null)
 const nameInput = ref<{ inputRef: HTMLInputElement } | null>(null)
 const addressInput = ref<{ inputRef: HTMLInputElement } | null>(null)
-const { focused: nameInputFocus } = useFocus(
-  computed(() => nameInput.value?.inputRef ?? null)
-)
+const { focused: nameInputFocus } = useFocus(computed(() => nameInput.value?.inputRef ?? null))
 const { focused: addressInputFocus } = useFocus(
   computed(() => addressInput.value?.inputRef ?? null)
 )
