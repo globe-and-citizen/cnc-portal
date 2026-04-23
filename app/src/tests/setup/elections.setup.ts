@@ -1,7 +1,7 @@
 import { vi } from 'vitest'
 import { computed } from 'vue'
 import type { Address } from 'viem'
-import { mockElectionsReads, mockElectionsWrites } from '../mocks/contract.mock'
+import { mockElectionsReads } from '../mocks/contract.mock'
 
 const MOCK_ELECTIONS_ADDRESS = '0x1234567890123456789012345678901234567890' as Address
 
@@ -19,11 +19,5 @@ vi.mock('@/composables/elections/reads', () => ({
   useElectionsHasVoted: vi.fn(() => mockElectionsReads.hasVoted)
 }))
 
-/**
- * Mock all Elections write composables
- */
-vi.mock('@/composables/elections/writes', () => ({
-  useElectionsCreateElection: vi.fn(() => mockElectionsWrites.createElection),
-  useElectionsCastVote: vi.fn(() => mockElectionsWrites.castVote),
-  useElectionsPublishResults: vi.fn(() => mockElectionsWrites.publishResults)
-}))
+// All Elections write composables are unused; see src/composables/elections/writes.ts.
+// vi.mock('@/composables/elections/writes', () => ({}))
