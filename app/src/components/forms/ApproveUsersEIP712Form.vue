@@ -99,6 +99,16 @@
       </UFormField>
     </div>
 
+    <UAlert
+      v-if="errorMessage"
+      color="error"
+      variant="soft"
+      :description="errorMessage"
+      icon="i-lucide-circle-alert"
+      class="mt-2"
+      data-test="error-alert"
+    />
+
     <!-- Actions -->
     <div class="mt-2 flex justify-center gap-3">
       <UButton
@@ -134,6 +144,7 @@ const props = defineProps<{
   isBodAction: boolean
   formData: Array<{ name: string; address: string }>
   users: User[]
+  errorMessage?: string
 }>()
 
 // Dates are kept in shallowRef to avoid Vue's reactive proxy breaking

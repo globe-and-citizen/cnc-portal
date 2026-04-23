@@ -1,17 +1,14 @@
 <template>
   <div class="flex items-center gap-2">
     <label class="text-sm font-medium" for="vesting-status-select">Status:</label>
-    <select
+    <USelect
       id="vesting-status-select"
       v-model="selectedStatus"
-      class="select select-bordered select-sm"
+      :items="statusOptions"
+      size="sm"
       data-test="vesting-status-filter"
-    >
-      <option value="all">All</option>
-      <option value="active">Active</option>
-      <option value="completed">Completed</option>
-      <option value="cancelled">Cancelled</option>
-    </select>
+      class="w-36"
+    />
   </div>
 </template>
 
@@ -23,6 +20,13 @@ const emit = defineEmits<{
 }>()
 
 const selectedStatus = ref<VestingStatus>('all')
+
+const statusOptions = [
+  { label: 'All', value: 'all' },
+  { label: 'Active', value: 'active' },
+  { label: 'Completed', value: 'completed' },
+  { label: 'Cancelled', value: 'cancelled' }
+]
 
 watch(selectedStatus, (newValue) => {
   emit('statusChange', newValue)

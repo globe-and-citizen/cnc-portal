@@ -26,8 +26,7 @@
           />
         </UFormField>
 
-        <div class="mt-4 mb-4">
-          <label class="text-sm font-medium">Start Date</label>
+        <UFormField name="startDate" label="Start Date" class="mt-4 mb-4" :error="errors.startDate">
           <UPopover v-model:open="startDateOpen" class="mt-2 block" data-test="date-picker">
             <UButton
               variant="outline"
@@ -49,13 +48,9 @@
               />
             </template>
           </UPopover>
-          <span v-if="errors.startDate" class="pl-4 text-sm text-red-500">
-            {{ errors.startDate }}
-          </span>
-        </div>
+        </UFormField>
 
-        <div class="mb-4">
-          <label class="text-sm font-medium">End Date</label>
+        <UFormField name="endDate" label="End Date" class="mb-4" :error="errors.endDate">
           <UPopover v-model:open="endDateOpen" class="mt-2 block" data-test="date-picker">
             <UButton
               variant="outline"
@@ -76,19 +71,15 @@
               />
             </template>
           </UPopover>
-          <span v-if="errors.endDate" class="pl-4 text-sm text-red-500">
-            {{ errors.endDate }}
-          </span>
-        </div>
+        </UFormField>
 
-        <MultiSelectMemberInput
-          v-model="formData"
-          :show-on-focus="true"
-          :only-team-members="true"
-        />
-        <span v-if="errors.candidates" class="pl-4 text-sm text-red-500">
-          {{ errors.candidates }}
-        </span>
+        <UFormField name="candidates" label="Candidates" required :error="errors.candidates">
+          <MultiSelectMemberInput
+            v-model="formData"
+            :show-on-focus="true"
+            :only-team-members="true"
+          />
+        </UFormField>
       </div>
 
       <div class="flex justify-center">
@@ -171,6 +162,17 @@ const submitForm = () => {
     name: user.name || '',
     candidateAddress: user.address || ''
   }))
+
+  if (candidates.length < 1) {
+    errors.candidates = 'At least one candidate is required.'
+    return
+  }
+
+  const minCandidates = Number(state.winnerCount)
+  if (Number.isFinite(minCandidates) && candidates.length < minCandidates) {
+    errors.candidates = `At least ${minCandidates} candidates are required.`
+    return
+  }
 
   const addresses = candidates.map((c) => c.candidateAddress)
   if (new Set(addresses).size !== addresses.length) {
