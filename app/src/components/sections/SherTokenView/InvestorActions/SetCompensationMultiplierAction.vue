@@ -155,28 +155,6 @@ const canManageMultiplier = computed(() => {
   return connection.address.value.toLowerCase() === (owner.value as string).toLowerCase()
 })
 
-const multiplierError = computed(() => {
-  if (!formState.multiplier || formState.multiplier === '') return 'Multiplier is required'
-
-  const numValue = parseFloat(formState.multiplier)
-  if (isNaN(numValue)) return 'Must be a valid number'
-  if (numValue < MIN_MULTIPLIER) return `Multiplier must be at least ${MIN_MULTIPLIER}`
-  if (numValue > MAX_MULTIPLIER) return 'Multiplier is too large'
-
-  return null
-})
-
-const hasValidationError = computed(() => multiplierError.value !== null)
-
-const isMultiplierValid = computed(() => {
-  if (multiplierError.value) return false
-
-  const currentValue = parseFloat(formattedCurrentMultiplier.value)
-  const newValue = parseFloat(formState.multiplier)
-
-  return !isNaN(newValue) && newValue !== currentValue
-})
-
 const formSchema = z.object({
   multiplier: z
     .string()
@@ -191,6 +169,18 @@ const formSchema = z.object({
 })
 
 type MultiplierFormSchema = z.output<typeof formSchema>
+
+const schemaValidation = computed(() => formSchema.safeParse(formState))
+const hasValidationError = computed(() => !schemaValidation.value.success)
+
+const isMultiplierValid = computed(() => {
+  if (!schemaValidation.value.success) return false
+
+  const currentValue = parseFloat(formattedCurrentMultiplier.value)
+  const newValue = parseFloat(schemaValidation.value.data.multiplier)
+
+  return !isNaN(newValue) && newValue !== currentValue
+})
 
 watch(
   () => setMultiplierWrite.writeResult.error.value,
