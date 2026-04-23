@@ -157,6 +157,10 @@ export interface UpdateWeeklyClaimParams {
   body?: {
     /** Signature (required only for 'sign' action) */
     signature?: string
+    /** Address of the CashRemunerationEIP712 contract used for signing (sign action) */
+    contractAddress?: string
+    /** Chain ID used for signing (sign action) */
+    chainId?: number
   }
 }
 

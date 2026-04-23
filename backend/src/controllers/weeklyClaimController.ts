@@ -24,7 +24,7 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
   const callerAddress = req.address;
   const id = Number(req.params.id);
   const action = req.query.action as WeeklyClaimAction;
-  const { signature } = req.body;
+  const { signature, contractAddress, chainId } = req.body;
 
   // Validation stricte des actions autorisées
   const errors: string[] = [];
@@ -33,6 +33,12 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
 
   if (action == 'sign' && (!signature || !isHex(signature)))
     errors.push('Missing or invalid signature');
+
+  if (action == 'sign' && contractAddress && !isAddress(contractAddress))
+    errors.push('Invalid contractAddress');
+
+  if (action == 'sign' && chainId !== undefined && (!Number.isInteger(chainId) || chainId <= 0))
+    errors.push('Invalid chainId');
 
   if (!id || isNaN(id)) errors.push('Missing or invalid id');
 
@@ -159,7 +165,15 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
 
         if (signErrors.length > 0) return errorResponse(400, signErrors.join('; '), res);
 
-        data = { signature, status: 'signed', data: { ownerAddress: callerAddress } };
+        data = {
+          signature,
+          status: 'signed',
+          data: {
+            ownerAddress: callerAddress,
+            ...(contractAddress ? { contractAddress } : {}),
+            ...(chainId ? { chainId } : {}),
+          },
+        };
         // singleClaimStatus = "signed";
         break;
       }

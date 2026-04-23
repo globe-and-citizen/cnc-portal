@@ -156,7 +156,11 @@ const approveClaim = async (weeklyClaim: WeeklyClaim) => {
     await executeUpdateClaim({
       pathParams: { claimId: weeklyClaim.id },
       queryParams: { action: 'sign' },
-      body: { signature }
+      body: {
+        signature,
+        contractAddress: cashRemunerationAddress.value,
+        chainId: chainId.value
+      }
     })
 
     if (claimError.value) {
