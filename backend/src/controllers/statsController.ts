@@ -516,7 +516,7 @@ export const getClaimsStats = async (req: Request, res: Response) => {
       totalMinutesWorked: totalMinutesWorked._sum.minutesWorked || 0,
       avgMinutesPerClaim: Math.round((avgMinutesPerClaim._avg.minutesWorked || 0) * 100) / 100,
       totalHoursWorked: Math.round(((totalMinutesWorked._sum.minutesWorked || 0) / 60) * 100) / 100,
-      avgHoursPerClaim: Math.round((((avgMinutesPerClaim._avg.minutesWorked || 0) / 60) * 100)) / 100,
+      avgHoursPerClaim: Math.round(((avgMinutesPerClaim._avg.minutesWorked || 0) / 60) * 100) / 100,
       claimsByTeam,
       period,
     });
