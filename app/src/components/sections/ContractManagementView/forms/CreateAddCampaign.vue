@@ -58,7 +58,7 @@
         size="sm"
         type="submit"
         :loading="loading"
-        :disabled="loading"
+        :disabled="loading || bankMissing"
         data-test="confirm-button"
         label="confirm"
       />
@@ -106,7 +106,7 @@ const positiveAmount = z
   .refine((value) => Number(value) > 0, 'Must be greater than 0')
 
 const formSchema = z.object({
-  bankAddress: z.string().min(1, 'Bank address is required'),
+  bankAddress: z.string().optional(),
   costPerClick: positiveAmount,
   costPerImpression: positiveAmount
 })
@@ -121,7 +121,10 @@ function reset() {
 }
 defineExpose({ reset })
 
-const submissionError = ref<string | null>(null)
+const bankMissing = computed(() => !formState.bankAddress)
+const submissionError = ref<string | null>(
+  bankMissing.value ? 'Bank contract must be set up before deploying a campaign.' : null
+)
 
 const {
   deploy,
@@ -170,15 +173,15 @@ watch(contractAddress, async (newAddress) => {
 })
 
 const deployAdCampaign = async (event: FormSubmitEvent<CampaignFormSchema>) => {
-  submissionError.value = null
   costPerClick.value = event.data.costPerClick
   costPerImpression.value = event.data.costPerImpression
 
   if (!event.data.bankAddress) {
-    submissionError.value = 'Bank address is missing.'
+    submissionError.value = 'Bank contract must be set up before deploying a campaign.'
     return
   }
 
+  submissionError.value = null
   await deploy(event.data.bankAddress, event.data.costPerClick, event.data.costPerImpression)
 }
 
