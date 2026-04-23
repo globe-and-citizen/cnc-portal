@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { flushPromises, mount } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
 import { nextTick } from 'vue'
 import SetCompensationMultiplierAction from '../SetCompensationMultiplierAction.vue'
@@ -16,7 +16,8 @@ describe('SetCompensationMultiplierAction.vue', () => {
   const createWrapper = () =>
     mount(SetCompensationMultiplierAction, {
       global: {
-        plugins: [createTestingPinia({ createSpy: vi.fn })]
+        plugins: [createTestingPinia({ createSpy: vi.fn })],
+        stubs: { teleport: true }
       }
     })
 
@@ -99,6 +100,56 @@ describe('SetCompensationMultiplierAction.vue', () => {
     await vm.handleSetMultiplier()
 
     expect(mockSafeDepositRouterWrites.setMultiplier.executeWrite).not.toHaveBeenCalled()
+  })
+
+  describe('schema validation', () => {
+    it('blocks submit and surfaces required error when multiplier is empty', async () => {
+      const wrapper = createWrapper()
+
+      await wrapper.find('[data-test="set-compensation-multiplier-button"]').trigger('click')
+      await wrapper.find('[data-test="multiplier-input"]').setValue('')
+      await wrapper.find('form').trigger('submit')
+      await flushPromises()
+
+      expect(mockSafeDepositRouterWrites.setMultiplier.executeWrite).not.toHaveBeenCalled()
+      expect(wrapper.text()).toContain('Multiplier is required')
+    })
+
+    it('blocks submit and surfaces numeric error when multiplier is not a number', async () => {
+      const wrapper = createWrapper()
+
+      await wrapper.find('[data-test="set-compensation-multiplier-button"]').trigger('click')
+      await wrapper.find('[data-test="multiplier-input"]').setValue('abc')
+      await wrapper.find('form').trigger('submit')
+      await flushPromises()
+
+      expect(mockSafeDepositRouterWrites.setMultiplier.executeWrite).not.toHaveBeenCalled()
+      expect(wrapper.text()).toContain('Must be a valid number')
+    })
+
+    it('blocks submit and surfaces min error when multiplier is below minimum', async () => {
+      const wrapper = createWrapper()
+
+      await wrapper.find('[data-test="set-compensation-multiplier-button"]').trigger('click')
+      await wrapper.find('[data-test="multiplier-input"]').setValue('0.5')
+      await wrapper.find('form').trigger('submit')
+      await flushPromises()
+
+      expect(mockSafeDepositRouterWrites.setMultiplier.executeWrite).not.toHaveBeenCalled()
+      expect(wrapper.text()).toContain('Multiplier must be at least 1')
+    })
+
+    it('blocks submit and surfaces max error when multiplier exceeds maximum', async () => {
+      const wrapper = createWrapper()
+
+      await wrapper.find('[data-test="set-compensation-multiplier-button"]').trigger('click')
+      await wrapper.find('[data-test="multiplier-input"]').setValue('9999999999')
+      await wrapper.find('form').trigger('submit')
+      await flushPromises()
+
+      expect(mockSafeDepositRouterWrites.setMultiplier.executeWrite).not.toHaveBeenCalled()
+      expect(wrapper.text()).toContain('Multiplier is too large')
+    })
   })
 
   it('handleSetMultiplier executes write for valid changed value', async () => {
