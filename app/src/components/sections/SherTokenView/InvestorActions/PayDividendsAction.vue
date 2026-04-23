@@ -42,18 +42,19 @@ import { BANK_ABI } from '@/artifacts/abi/bank'
 import { useTeamStore, useUserDataStore } from '@/stores'
 import { useBodAddAction } from '@/composables/bod/writes'
 import { useBodIsBodAction } from '@/composables/bod/reads'
+import { useBankOwner } from '@/composables/bank/reads'
 import {
   useDistributeNativeDividends,
   useDistributeTokenDividends
 } from '@/composables/bank/writes'
 import { tokenSymbol as tokenSymbolUtils, tokenSymbolAddresses } from '@/utils'
 import type { TokenId } from '@/constant'
+import { log } from '@/utils'
 
 interface Props {
   tokenSymbol?: string
   shareholdersCount?: number
   investorsAddress?: Address
-  investorsOwner?: Address
   bankAddress?: Address
 }
 
@@ -84,21 +85,24 @@ const {
 } = addActionComposable
 
 const { isBodAction } = useBodIsBodAction(props.bankAddress as Address)
+const { data: bankOwner, error: bankOwnerError } = useBankOwner()
+
+const toast = useToast()
 
 const currentTeam = computed(() => teamStore.currentTeam)
 
 const canPayDividends = computed(() => {
   const hasTokenSymbol = !!props.tokenSymbol
   const hasShareholders = (props.shareholdersCount ?? 0) > 0
-  const isAuthorized = isBodAction.value || currentAddress === props.investorsOwner
+  const isAuthorized = isBodAction.value || currentAddress === bankOwner.value
   return hasTokenSymbol && hasShareholders && isAuthorized
 })
 
 const cannotPayDividendsReason = computed(() => {
   if (!props.tokenSymbol) return 'Token symbol not available'
   if ((props.shareholdersCount ?? 0) === 0) return 'No shareholders available to pay dividends'
-  if (!isBodAction.value && currentAddress !== props.investorsOwner) {
-    return 'Only the bank owner can pay dividends'
+  if (!isBodAction.value && currentAddress !== bankOwner.value) {
+    return 'Only the bank owner can pay dividends '
   }
   return ''
 })
@@ -147,6 +151,13 @@ const handleSubmit = async (value: bigint, selectedTokenId: TokenId) => {
     closeModal()
   }
 }
+
+watch(bankOwnerError, (error) => {
+  if (error) {
+    log.error('Error fetching bank owner', error)
+    toast.add({ title: 'Error fetching bank owner', color: 'error' })
+  }
+})
 
 watch(isActionAdded, (isAdded) => {
   if (isAdded) {

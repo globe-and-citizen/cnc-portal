@@ -42,7 +42,6 @@
           :token-symbol="safeTokenSymbol"
           :shareholders-count="safeShareholders.length"
           :investors-address="investorAddress"
-          :investors-owner="safeInvestorsOwner"
           :bank-address="bankAddress"
         />
         <ToggleSherCompensationAction />
