@@ -1,18 +1,34 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { mount, type VueWrapper } from '@vue/test-utils'
+import { defineComponent, h } from 'vue'
 import VestingStatusFilter from '@/components/sections/VestingView/VestingStatusFilter.vue'
 import type { VestingStatus } from '@/types/vesting'
+
+const USelectStub = defineComponent({
+  name: 'USelectStub',
+  props: ['modelValue', 'items', 'id', 'size'],
+  emits: ['update:modelValue'],
+  setup() {
+    return () => h('div')
+  }
+})
 
 describe('VestingStatusFilter.vue', () => {
   let wrapper: VueWrapper
 
   const mountComponent = (props = {}) => {
     return mount(VestingStatusFilter, {
-      props
+      props,
+      global: {
+        stubs: {
+          USelect: USelectStub,
+          Select: USelectStub
+        }
+      }
     })
   }
 
-  const getSelect = () => wrapper.findComponent({ name: 'Select' })
+  const getSelect = () => wrapper.findComponent(USelectStub)
 
   beforeEach(() => {
     wrapper = mountComponent()
