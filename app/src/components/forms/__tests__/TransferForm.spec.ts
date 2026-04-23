@@ -115,6 +115,14 @@ describe('TransferForm.vue', () => {
       expect(wrapper.emitted('closeModal')).toBeTruthy()
     })
 
+    it('renders the inline error alert when errorMessage prop is provided', () => {
+      expect(wrapper.find('[data-test="error-alert"]').exists()).toBe(false)
+
+      const withError = factory({ errorMessage: 'Transfer failed' })
+      expect(withError.find('[data-test="error-alert"]').exists()).toBe(true)
+      expect(withError.find('[data-test="error-alert"]').text()).toContain('Transfer failed')
+    })
+
     it('emits transfer event when the form is submitted', async () => {
       await wrapper.setProps({ modelValue: createModelValue({ amount: '10' }) })
       await wrapper.find('form').trigger('submit')

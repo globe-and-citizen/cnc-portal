@@ -350,12 +350,10 @@ watch(
 )
 
 const loading = computed(() => {
-  const tokenApprovalPending =
-    loadingApproveToken.value || (isConfirmingApproveToken.value && !isConfirmedApproveToken.value)
   const vestingCreationPending =
     loadingAddVesting.value || (isConfirmingAddVesting.value && !isConfirmedAddVesting.value)
 
-  return tokenApprovalPending || vestingCreationPending
+  return approveTokenWrite.isPending.value || vestingCreationPending
 })
 
 const {
@@ -402,27 +400,7 @@ watch(errorAddVesting, () => {
 })
 
 const approvalAmountUnits = ref<bigint>(0n)
-const approveTokenWrite = useERC20Approve(vestingTokenAddress, vestingAddress, approvalAmountUnits)
-const loadingApproveToken = computed(() => approveTokenWrite.writeResult.isPending.value)
-const isConfirmingApproveToken = computed(() => approveTokenWrite.receiptResult.isLoading.value)
-const isConfirmedApproveToken = computed(() => approveTokenWrite.receiptResult.isSuccess.value)
-const errorApproveToken = computed(
-  () => approveTokenWrite.writeResult.error.value || approveTokenWrite.receiptResult.error.value
-)
-
-watch(isConfirmingApproveToken, async (isConfirming, wasConfirming) => {
-  if (wasConfirming && !isConfirming && isConfirmedApproveToken.value) {
-    toast.add({ title: 'Approval added successfully', color: 'success' })
-    submit()
-  }
-})
-
-watch(errorApproveToken, () => {
-  if (errorApproveToken.value) {
-    toast.add({ title: 'Approval failed', color: 'error' })
-    console.error('Approval error ', errorApproveToken.value)
-  }
-})
+const approveTokenWrite = useERC20Approve(vestingTokenAddress)
 
 function checkDuplicateVesting() {
   if (
@@ -445,9 +423,19 @@ async function approveAllowance() {
 
     if (totalAmount.value > 0) {
       approvalAmountUnits.value = parseUnits(totalAmount.value.toString(), VESTING_TOKEN_DECIMALS)
-      void approveTokenWrite.executeWrite([vestingSpender, approvalAmountUnits.value], undefined, {
-        skipGasEstimation: true
-      })
+      approveTokenWrite.mutate(
+        { args: [vestingSpender, approvalAmountUnits.value] },
+        {
+          onSuccess: () => {
+            toast.add({ title: 'Approval added successfully', color: 'success' })
+            submit()
+          },
+          onError: (err) => {
+            toast.add({ title: 'Approval failed', color: 'error' })
+            console.error('Approval error ', err)
+          }
+        }
+      )
     } else {
       toast.add({ title: 'total amount value should be greater than zero', color: 'error' })
     }

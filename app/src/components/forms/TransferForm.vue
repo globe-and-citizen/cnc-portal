@@ -65,6 +65,16 @@
       </div>
     </div>
 
+    <UAlert
+      v-if="errorMessage"
+      color="error"
+      variant="soft"
+      :description="errorMessage"
+      icon="i-lucide-circle-alert"
+      class="mt-2"
+      data-test="error-alert"
+    />
+
     <div class="mt-4 flex justify-between">
       <UButton
         type="button"
@@ -118,10 +128,12 @@ const props = withDefaults(
     tokens: TokenOption[]
     isBodAction?: boolean
     feeBps?: number
+    errorMessage?: string
   }>(),
   {
     isBodAction: false,
-    feeBps: 0
+    feeBps: 0,
+    errorMessage: ''
   }
 )
 
