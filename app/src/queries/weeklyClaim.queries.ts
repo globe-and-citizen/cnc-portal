@@ -14,11 +14,8 @@ type WeeklyClaimResponse = Omit<WeeklyClaim, 'minutesWorked' | 'claims'> & {
   claims: ClaimResponse[]
 }
 
-const getClaimWorkedMinutes = ({
-  minutesWorked
-}: {
-  minutesWorked?: number | null
-}) => minutesWorked ?? 0
+const getClaimWorkedMinutes = ({ minutesWorked }: { minutesWorked?: number | null }) =>
+  minutesWorked ?? 0
 
 export const normalizeClaimResponse = (claim: ClaimResponse): Claim => {
   const workedMinutes = getClaimWorkedMinutes(claim)
