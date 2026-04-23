@@ -55,6 +55,7 @@ describe('ClaimHistory WeeklyRecap', () => {
     const wrapper = createWrapper({
       weeklyClaim: {
         hoursWorked: 2700,
+        minutesWorked: 2700,
         wage: {
           maximumHoursPerWeek: 40,
           maximumOvertimeHoursPerWeek: 10,
@@ -89,6 +90,7 @@ describe('ClaimHistory WeeklyRecap', () => {
     const wrapper = createWrapper({
       weeklyClaim: {
         hoursWorked: 2400,
+        minutesWorked: 2400,
         wage: {
           maximumHoursPerWeek: 40,
           ratePerHour: [{ type: 'native', amount: 5 }],
@@ -129,6 +131,7 @@ describe('ClaimHistory WeeklyRecap', () => {
     const wrapper = createWrapper({
       weeklyClaim: {
         hoursWorked: 480,
+        minutesWorked: 480,
         wage: {
           maximumHoursPerWeek: undefined,
           ratePerHour: [{ type: 'mystery', amount: 3 }],
@@ -165,6 +168,7 @@ describe('ClaimHistory WeeklyRecap', () => {
     const wrapper = createWrapper({
       weeklyClaim: {
         hoursWorked: 360,
+        minutesWorked: 360,
         wage: {
           maximumHoursPerWeek: undefined,
           maximumOvertimeHoursPerWeek: undefined,

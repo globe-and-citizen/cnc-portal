@@ -120,7 +120,7 @@ const props = defineProps<{
 const currencyStore = useCurrencyStore()
 
 const effectiveWage = computed(() => props.weeklyClaim?.wage ?? props.wage)
-const submittedTime = computed(() => props.weeklyClaim?.hoursWorked ?? 0)
+const submittedTime = computed(() => props.weeklyClaim?.minutesWorked ?? 0)
 
 const hasOvertimeWage = computed(() => {
   const rates = effectiveWage.value?.overtimeRatePerHour

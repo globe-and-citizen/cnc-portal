@@ -133,7 +133,7 @@ const barChartOption = computed(() => {
     const dailyTimes =
       selectWeekWeelyClaim.value?.claims
         .filter((claim) => dayjs(date).isSame(dayjs(claim.dayWorked).utc(), 'day'))
-        .reduce((sum: number, claim) => sum + claim.hoursWorked, 0) ?? 0
+        .reduce((sum: number, claim) => sum + claim.minutesWorked, 0) ?? 0
 
     const maxRegularMinutes = maxRegularHours * 60
     const regularBefore = Math.min(cumulativeMinutes, maxRegularMinutes)
