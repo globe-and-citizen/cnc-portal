@@ -1,4 +1,4 @@
-import { computed, ref, unref, type MaybeRef } from 'vue'
+import { computed, ref, type MaybeRef } from 'vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import { type Address } from 'viem'
 import { readContract } from '@wagmi/core'
