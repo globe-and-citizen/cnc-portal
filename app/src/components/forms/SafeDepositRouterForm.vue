@@ -184,14 +184,20 @@ const formSchema = computed(() =>
       .trim()
       .min(1, 'Amount is required.')
       .refine(
-        (value) => /^(?:\d+\.?\d*|\.\d+)$/.test(value) && Number.isFinite(Number(value)) && Number(value) > 0,
+        (value) =>
+          /^(?:\d+\.?\d*|\.\d+)$/.test(value) &&
+          Number.isFinite(Number(value)) &&
+          Number(value) > 0,
         'Enter a valid amount greater than 0.'
       )
       .refine(
         (value) => !selectedToken.value || Number(value) <= (selectedToken.value.amount ?? 0),
         'Amount exceeds available balance.'
       )
-      .refine(isValidDecimals, `Enter a valid token amount with up to ${TOKEN_DECIMALS} decimal places.`)
+      .refine(
+        isValidDecimals,
+        `Enter a valid token amount with up to ${TOKEN_DECIMALS} decimal places.`
+      )
   })
 )
 
@@ -246,25 +252,11 @@ const isLoading = computed(
 
 const errorMessage = computed(() => {
   if (submitError.value) return submitError.value
-  const err = (approveWrite.writeResult.error.value ||
-    approveWrite.receiptResult.error.value ||
+  const err = (approveWrite.error.value ||
     depositWrite.writeResult.error.value ||
     depositWrite.receiptResult.error.value) as Error | null
   return err ? parseError(err) || err.message || 'Transaction failed' : null
 })
-
-const handleWriteError = (fallbackTitle: string) => (error: Error | null) => {
-  if (!error) return
-  console.error(fallbackTitle, error)
-  const errorMsg = parseError(error)
-  const title =
-    errorMsg.includes('User rejected') || errorMsg.includes('User denied')
-      ? 'Transaction cancelled by user'
-      : fallbackTitle
-  toast.add({ title, color: 'error' })
-  submitting.value = false
-  currentStep.value = 0
-}
 
 watch(multiplierError, (error) => {
   if (error) {
@@ -299,6 +291,25 @@ watch(
     toast.add({ title: 'Token approval successful', color: 'success' })
     currentStep.value = 2
     performDeposit()
+  }
+)
+
+watch(
+  () => depositWrite.writeResult.error.value,
+  (error) => {
+    if (error) {
+      console.error('Error depositing tokens:', error)
+      const errorMessage = parseError(error)
+
+      if (errorMessage.includes('User rejected') || errorMessage.includes('User denied')) {
+        toast.add({ title: 'Transaction cancelled by user', color: 'error' })
+      } else {
+        toast.add({ title: 'Failed to deposit', color: 'error' })
+      }
+
+      submitting.value = false
+      currentStep.value = 0
+    }
   }
 )
 
