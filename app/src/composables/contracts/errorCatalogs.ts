@@ -5,7 +5,11 @@ import type {
 } from './errorCatalogs.types'
 import { resolveFromCatalog } from './errorCatalogs.types'
 
-export type { ContractErrorCatalog, ContractKey, RevertMessageResolver } from './errorCatalogs.types'
+export type {
+  ContractErrorCatalog,
+  ContractKey,
+  RevertMessageResolver
+} from './errorCatalogs.types'
 export { resolveFromCatalog } from './errorCatalogs.types'
 
 const tokenAlreadySupported: RevertMessageResolver = (args) => {

@@ -110,9 +110,7 @@ export function classifyError(error: unknown, options?: ClassifyOptions): Classi
       : (revert.data?.errorName ?? 'ContractRevert')
     const args = revert.data?.args as readonly unknown[] | undefined
 
-    const userMessage = isPlainError
-      ? name
-      : resolveRevertMessage(name, args, options?.contract)
+    const userMessage = isPlainError ? name : resolveRevertMessage(name, args, options?.contract)
 
     return {
       category: 'contract_revert',

@@ -32,9 +32,9 @@ describe('Bank Contract Writes', () => {
     expect(out).toEqual({ hash: '0xdep' })
 
     mockBankWrites.deposit.mutateAsync.mockRejectedValueOnce(new Error('Deposit failed'))
-    await expect(
-      useDepositToken().mutateAsync({ args: ['0xtoken', 100n] })
-    ).rejects.toThrow('Deposit failed')
+    await expect(useDepositToken().mutateAsync({ args: ['0xtoken', 100n] })).rejects.toThrow(
+      'Deposit failed'
+    )
   })
 
   it('exposes the V3 mutation interface', () => {

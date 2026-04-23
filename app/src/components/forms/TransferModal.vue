@@ -253,10 +253,7 @@ const handleTransfer = async (data: {
   }
 
   if (isNativeToken) {
-    transferNative.mutate(
-      { args: [data.address.address, transferAmount] },
-      { onSuccess, onError }
-    )
+    transferNative.mutate({ args: [data.address.address, transferAmount] }, { onSuccess, onError })
   } else {
     transferToken.mutate(
       { args: [tokenAddress, data.address.address, transferAmount] },
