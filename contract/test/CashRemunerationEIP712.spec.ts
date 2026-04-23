@@ -168,8 +168,8 @@ describe('CashRemuneration*** (EIP712)', () => {
 
         console.log(`\t    Gas used: ${receipt?.gasUsed.toString()}`)
 
-  const amount = BigInt(wageClaim.minutesWorked) * wageClaim.wages[0].hourlyRate
-  const amountUSDC = BigInt(wageClaim.minutesWorked) * wageClaim.wages[1].hourlyRate
+        const amount = BigInt(wageClaim.minutesWorked) * wageClaim.wages[0].hourlyRate
+        const amountUSDC = BigInt(wageClaim.minutesWorked) * wageClaim.wages[1].hourlyRate
 
         await expect(tx).to.changeEtherBalance(employee, amount)
         await expect(tx)
