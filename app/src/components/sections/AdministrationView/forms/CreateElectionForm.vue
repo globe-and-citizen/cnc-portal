@@ -163,6 +163,17 @@ const submitForm = () => {
     candidateAddress: user.address || ''
   }))
 
+  if (candidates.length < 1) {
+    errors.candidates = 'At least one candidate is required.'
+    return
+  }
+
+  const minCandidates = Number(state.winnerCount)
+  if (Number.isFinite(minCandidates) && candidates.length < minCandidates) {
+    errors.candidates = `At least ${minCandidates} candidates are required.`
+    return
+  }
+
   const addresses = candidates.map((c) => c.candidateAddress)
   if (new Set(addresses).size !== addresses.length) {
     errors.candidates = 'Duplicate candidates are not allowed.'
