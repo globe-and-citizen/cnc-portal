@@ -163,7 +163,11 @@ const allowanceValue = computed<bigint>(() =>
   typeof allowance.value === 'bigint' ? allowance.value : 0n
 )
 
-const bigIntAmount = computed(() => BigInt(Math.floor(Number(amount.value) * 1e6)))
+const bigIntAmount = computed(() => {
+  const numericAmount = Number(amount.value)
+  if (!Number.isFinite(numericAmount)) return 0n
+  return BigInt(Math.floor(numericAmount * 1e6))
+})
 
 const ERC20ApproveResult = useERC20Approve(
   selectedTokenAddress,
