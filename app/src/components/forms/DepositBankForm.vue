@@ -192,6 +192,12 @@ const formSchema = computed(() =>
         if (!selectedToken.value) return true
         return Number(value) <= (selectedToken.value.amount ?? 0)
       }, 'Amount exceeds available balance.')
+      .refine((value) => {
+        if (!selectedToken.value || selectedToken.value.token.id === 'native') return true
+        const [, fractionalPart = ''] = value.split('.')
+        if (fractionalPart.length > 6) return false
+        return Math.floor(Number(value) * 1e6) >= 1
+      }, 'Enter a valid token amount with up to 6 decimal places.')
   })
 )
 
