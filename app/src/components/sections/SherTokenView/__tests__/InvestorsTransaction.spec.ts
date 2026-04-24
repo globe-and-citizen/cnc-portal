@@ -8,12 +8,7 @@ const USDC_ADDRESS = '0xa3492d046095affe351cfac15de9b86425e235db'
 const INVESTOR_ADDRESS = '0x1111111111111111111111111111111111111111'
 const SAFE_ROUTER_ADDRESS = '0x2222222222222222222222222222222222222222'
 
-const {
-  apolloState,
-  mockUseQuery,
-  mockGetTokenPrice,
-  mockInvestorSymbolData
-} = vi.hoisted(() => {
+const { apolloState, mockUseQuery, mockGetTokenPrice, mockInvestorSymbolData } = vi.hoisted(() => {
   const apolloState = {
     investorResult: null as unknown as { value: unknown },
     investorError: null as unknown as { value: Error | null },
@@ -220,9 +215,9 @@ describe('InvestorsTransactions', () => {
       expect.arrayContaining(['mint', 'safeDeposit', 'safeMultiplierUpdated'])
     )
     expect(vm.displayedTransactions.find((row) => row.type === 'mint')?.token).toBe('SHER')
-    expect(vm.displayedTransactions.find((row) => row.type === 'safeMultiplierUpdated')?.token).toBe(
-      'x'
-    )
+    expect(
+      vm.displayedTransactions.find((row) => row.type === 'safeMultiplierUpdated')?.token
+    ).toBe('x')
     expect(vm.columns.at(-1)?.header).toBe('Value (USD)')
   })
 
