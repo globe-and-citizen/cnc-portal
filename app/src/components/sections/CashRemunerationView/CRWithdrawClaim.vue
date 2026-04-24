@@ -45,6 +45,10 @@ import { USDC_ADDRESS } from '@/constant'
 import type { WeeklyClaim } from '@/types'
 import { useSyncWeeklyClaimsMutation } from '@/queries'
 import { useWithdraw } from '@/composables/cashRemuneration/writes'
+import {
+  CASH_REMUNERATION_EIP712_TYPES,
+  buildCashRemunerationDomain
+} from './cashRemunerationEip712'
 
 const props = defineProps<{
   weeklyClaim: WeeklyClaim
@@ -62,19 +66,6 @@ const withdrawTx = useWithdraw()
 const chainId = useChainId()
 
 const { mutateAsync: syncWeeklyClaim, error: syncWeeklyClaimError } = useSyncWeeklyClaimsMutation()
-
-const TYPED_DATA_TYPES = {
-  Wage: [
-    { name: 'hourlyRate', type: 'uint256' },
-    { name: 'tokenAddress', type: 'address' }
-  ],
-  WageClaim: [
-    { name: 'employeeAddress', type: 'address' },
-    { name: 'minutesWorked', type: 'uint16' },
-    { name: 'wages', type: 'Wage[]' },
-    { name: 'date', type: 'uint256' }
-  ]
-} as const
 
 const getTokenAddress = (type: string): Address => {
   if (type === 'native') return zeroAddress as Address
@@ -130,13 +121,11 @@ const withdrawClaim = async () => {
   try {
     const [recovered, contractOwner] = await Promise.all([
       recoverTypedDataAddress({
-        domain: {
-          name: 'CashRemuneration',
-          version: '1',
+        domain: buildCashRemunerationDomain({
           chainId: chainId.value,
           verifyingContract: currentContract
-        },
-        types: TYPED_DATA_TYPES,
+        }),
+        types: CASH_REMUNERATION_EIP712_TYPES,
         primaryType: 'WageClaim',
         message: {
           employeeAddress: claimData.employeeAddress,
