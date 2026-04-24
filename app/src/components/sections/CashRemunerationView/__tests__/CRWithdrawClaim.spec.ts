@@ -354,4 +354,59 @@ describe('CRWithdrawClaim', () => {
 
     expect(mockLog.error).toHaveBeenCalledWith('Withdraw error', expect.any(Error))
   })
+
+  it('blocks withdraw when claim was signed for a different contract', async () => {
+    const claimOnOtherContract: WeeklyClaim = {
+      ...mockClaim,
+      data: {
+        ownerAddress: '0xOwnerAddress' as Address,
+        contractAddress: '0xDeadBeefDeadBeefDeadBeefDeadBeefDeadBeef' as Address,
+        chainId: 1
+      }
+    }
+
+    createWrapper({ weeklyClaim: claimOnOtherContract })
+    await clickWithdrawButton()
+
+    expect(mockUseWriteContract.mutate).not.toHaveBeenCalled()
+  })
+
+  it('blocks withdraw when claim was signed on a different chain', async () => {
+    const claimOnOtherChain: WeeklyClaim = {
+      ...mockClaim,
+      data: {
+        ownerAddress: '0xOwnerAddress' as Address,
+        contractAddress: MOCK_CONTRACT_ADDRESS as Address,
+        chainId: 999999
+      }
+    }
+
+    createWrapper({ weeklyClaim: claimOnOtherChain })
+    await clickWithdrawButton()
+
+    expect(mockUseWriteContract.mutate).not.toHaveBeenCalled()
+  })
+
+  it('blocks withdraw when recovered signer does not match contract owner', async () => {
+    vi.spyOn(viem, 'recoverTypedDataAddress').mockResolvedValueOnce(
+      '0x3333333333333333333333333333333333333333' as Address
+    )
+
+    createWrapper()
+    await clickWithdrawButton()
+
+    expect(mockUseWriteContract.mutate).not.toHaveBeenCalled()
+  })
+
+  it('allows withdraw for legacy claims with no data.contractAddress when recovery matches owner', async () => {
+    const legacyClaim: WeeklyClaim = {
+      ...mockClaim,
+      data: { ownerAddress: '0xOwnerAddress' as Address }
+    }
+
+    createWrapper({ weeklyClaim: legacyClaim })
+    await clickWithdrawButton()
+
+    expect(mockUseWriteContract.mutate).toHaveBeenCalled()
+  })
 })
