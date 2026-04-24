@@ -46,7 +46,7 @@ export const getOverviewStats = async (req: Request, res: Response) => {
       activeTeams,
       totalMembers,
       totalClaims,
-      totalHoursWorked,
+      totalMinutesWorked,
       totalWeeklyClaims,
       weeklyClaimsByStatus,
       totalExpenses,
@@ -91,10 +91,10 @@ export const getOverviewStats = async (req: Request, res: Response) => {
         where: whereClause,
       }),
 
-      // Total hours worked in period
+      // Total minutes worked in period
       prisma.claim.aggregate({
         where: whereClause,
-        _sum: { hoursWorked: true },
+        _sum: { minutesWorked: true },
       }),
 
       // Total weekly claims in period
@@ -209,7 +209,8 @@ export const getOverviewStats = async (req: Request, res: Response) => {
       activeTeams,
       totalMembers,
       totalClaims,
-      totalHoursWorked: totalHoursWorked._sum.hoursWorked || 0,
+      totalMinutesWorked: totalMinutesWorked._sum.minutesWorked || 0,
+      totalHoursWorked: Math.round(((totalMinutesWorked._sum.minutesWorked || 0) / 60) * 100) / 100,
       totalWeeklyClaims,
       weeklyClaimsByStatus: weeklyClaimsByStatus.reduce(
         (acc, item) => {
@@ -443,25 +444,25 @@ export const getClaimsStats = async (req: Request, res: Response) => {
       createdAt: { gte: startDate },
     };
 
-    const [totalClaims, totalHoursWorked, avgHoursPerClaim, allClaims] = await Promise.all([
+    const [totalClaims, totalMinutesWorked, avgMinutesPerClaim, allClaims] = await Promise.all([
       // Total claims in period
       prisma.claim.count({
         where: whereClause,
       }),
 
-      // Total hours worked
+      // Total minutes worked
       prisma.claim.aggregate({
         where: whereClause,
         _sum: {
-          hoursWorked: true,
+          minutesWorked: true,
         },
       }),
 
-      // Average hours per claim
+      // Average minutes per claim
       prisma.claim.aggregate({
         where: whereClause,
         _avg: {
-          hoursWorked: true,
+          minutesWorked: true,
         },
       }),
 
@@ -486,7 +487,7 @@ export const getClaimsStats = async (req: Request, res: Response) => {
     // Group claims by team
     const teamClaimsMap = new Map<
       number,
-      { teamName: string; claimCount: number; totalHours: number }
+      { teamName: string; claimCount: number; totalMinutes: number }
     >();
     allClaims.forEach((claim) => {
       if (claim.weeklyClaim) {
@@ -494,10 +495,10 @@ export const getClaimsStats = async (req: Request, res: Response) => {
         const existing = teamClaimsMap.get(teamId) || {
           teamName: claim.weeklyClaim.team.name,
           claimCount: 0,
-          totalHours: 0,
+          totalMinutes: 0,
         };
         existing.claimCount++;
-        existing.totalHours += claim.hoursWorked;
+        existing.totalMinutes += claim.minutesWorked;
         teamClaimsMap.set(teamId, existing);
       }
     });
@@ -506,13 +507,16 @@ export const getClaimsStats = async (req: Request, res: Response) => {
       teamId,
       teamName: data.teamName,
       claimCount: data.claimCount,
-      totalHours: data.totalHours,
+      totalMinutes: data.totalMinutes,
+      totalHours: Math.round((data.totalMinutes / 60) * 100) / 100,
     }));
 
     res.status(200).json({
       totalClaims,
-      totalHoursWorked: totalHoursWorked._sum.hoursWorked || 0,
-      avgHoursPerClaim: Math.round((avgHoursPerClaim._avg.hoursWorked || 0) * 100) / 100,
+      totalMinutesWorked: totalMinutesWorked._sum.minutesWorked || 0,
+      avgMinutesPerClaim: Math.round((avgMinutesPerClaim._avg.minutesWorked || 0) * 100) / 100,
+      totalHoursWorked: Math.round(((totalMinutesWorked._sum.minutesWorked || 0) / 60) * 100) / 100,
+      avgHoursPerClaim: Math.round(((avgMinutesPerClaim._avg.minutesWorked || 0) / 60) * 100) / 100,
       claimsByTeam,
       period,
     });

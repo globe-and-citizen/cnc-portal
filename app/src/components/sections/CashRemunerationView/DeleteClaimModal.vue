@@ -2,7 +2,7 @@
   <div class="flex flex-col gap-4">
     <p>
       Are you sure you want to delete
-      <span class="font-semibold">{{ formatMinutesAsDuration(claim?.hoursWorked ?? 0) }}</span>
+      <span class="font-semibold">{{ formatMinutesAsDuration(claim?.minutesWorked ?? 0) }}</span>
       claim submitted on
       <span class="font-semibold">{{ formattedDate }}</span>
       ?

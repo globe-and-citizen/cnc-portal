@@ -109,7 +109,8 @@ model Wage {
 
 model Claim {
   id              Int         @id @default(autoincrement()) // Add an ID for easy referencing
-  hoursWorked     Int
+  hoursWorked     Int         @default(0)
+  minutesWorked   Int
   dayWorked       DateTime?
   memo            String?
   fileAttachments Json? // Stores file metadata and data for images and documents

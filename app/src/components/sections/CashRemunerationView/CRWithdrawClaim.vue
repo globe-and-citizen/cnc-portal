@@ -35,7 +35,7 @@
 
 <script setup lang="ts">
 import { useTeamStore } from '@/stores'
-import { buildClaimRatesWithOvertime, classifyError, log } from '@/utils'
+import { buildWageClaimPayload, classifyError, log } from '@/utils'
 import { zeroAddress, type Address } from 'viem'
 import { USDC_ADDRESS } from '@/constant'
 import type { WeeklyClaim } from '@/types'
@@ -72,22 +72,7 @@ const withdrawClaim = async () => {
     return
   }
 
-  const claimRates = buildClaimRatesWithOvertime({
-    hoursWorked: props.weeklyClaim.hoursWorked,
-    maximumHoursPerWeek: props.weeklyClaim.wage.maximumHoursPerWeek,
-    ratePerHour: props.weeklyClaim.wage.ratePerHour,
-    overtimeRatePerHour: props.weeklyClaim.wage.overtimeRatePerHour
-  })
-
-  const claimData = {
-    hoursWorked: props.weeklyClaim.hoursWorked,
-    employeeAddress: props.weeklyClaim.wage.userAddress as Address,
-    date: BigInt(Math.floor(new Date(props.weeklyClaim.createdAt).getTime() / 1000)),
-    wages: claimRates.map((rate) => ({
-      hourlyRate: rate.hourlyRate,
-      tokenAddress: getTokenAddress(rate.type)
-    }))
-  }
+  const claimData = buildWageClaimPayload({ weeklyClaim: props.weeklyClaim, getTokenAddress })
 
   // withdraw
   withdrawTx.mutate(

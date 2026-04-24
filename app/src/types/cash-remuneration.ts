@@ -8,7 +8,7 @@ export interface RatePerHour {
   amount: number
 }
 export interface WageClaim {
-  hoursWorked: number
+  minutesWorked: number
   hourlyRate: number | bigint
   date: number
   employeeAddress: string
@@ -33,7 +33,8 @@ export interface Wage {
 
 export interface Claim {
   id: number
-  hoursWorked: number
+  hoursWorked: number // legacy compatibility field; new claims store 0 here
+  minutesWorked: number
   dayWorked: string // ISO date string
   memo: string
   fileAttachments?: FileAttachment[] | null // Files stored as JSON in database
@@ -58,7 +59,7 @@ export interface ClaimFormData {
 }
 
 export interface ClaimSubmitPayload {
-  hoursWorked: number
+  minutesWorked: number
   memo: string
   dayWorked: string
   imageScreens?: string[] // Deprecated field kept for backwards compatibility
@@ -78,7 +79,8 @@ export interface WeeklyClaim {
   wageId: number
   createdAt: string // ISO date string
   updatedAt: string // ISO date string
-  hoursWorked: number // total minutes worked in the week, calculated field
+  // hoursWorked: number // legacy compatibility field kept for existing UI paths
+  minutesWorked: number
   wage: Wage
   claims: Claim[]
   member?: User

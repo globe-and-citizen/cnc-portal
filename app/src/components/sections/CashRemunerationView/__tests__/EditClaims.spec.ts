@@ -11,7 +11,7 @@ import { mockTeamStore } from '@/tests/mocks'
 import { createMockMutationResponse } from '@/tests/mocks/query.mock'
 
 const SUBMIT_PAYLOAD = {
-  hoursWorked: 360,
+  minutesWorked: 360,
   memo: 'Updated memo',
   dayWorked: '2024-02-01T00:00:00.000Z',
   uploadedFiles: []

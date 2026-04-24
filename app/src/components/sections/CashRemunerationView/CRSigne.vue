@@ -29,7 +29,7 @@ import { CASH_REMUNERATION_EIP712_ABI } from '@/artifacts/abi/cash-remuneration-
 import { USDC_ADDRESS } from '@/constant'
 import { useTeamStore, useUserDataStore } from '@/stores'
 import type { WeeklyClaim } from '@/types'
-import { buildClaimRatesWithOvertime, log } from '@/utils'
+import { buildWageClaimPayload, log } from '@/utils'
 import { useChainId, useReadContract, useSignTypedData } from '@wagmi/vue'
 import { readContract } from '@wagmi/core'
 import dayjs from 'dayjs'
@@ -62,7 +62,7 @@ const currentWeekStart = dayjs().utc().startOf('isoWeek').toISOString()
 const isCurrentWeek = computed(() => currentWeekStart === props.weeklyClaim.weekStart)
 
 // Composables
-const { mutateAsync, data: signature } = useSignTypedData()
+const { mutateAsync } = useSignTypedData()
 const chainId = useChainId()
 
 const isLoading = ref(false)
@@ -96,7 +96,7 @@ const TYPED_DATA_TYPES = {
   ],
   WageClaim: [
     { name: 'employeeAddress', type: 'address' },
-    { name: 'hoursWorked', type: 'uint16' },
+    { name: 'minutesWorked', type: 'uint16' },
     { name: 'wages', type: 'Wage[]' },
     { name: 'date', type: 'uint256' }
   ]
@@ -109,24 +109,9 @@ const getTokenAddress = (type: string): Address => {
   return teamStore.getContractAddressByType('InvestorV1') as Address
 }
 
-const buildTypedDataMessage = (weeklyClaim: WeeklyClaim) => {
-  const claimRates = buildClaimRatesWithOvertime({
-    hoursWorked: weeklyClaim.hoursWorked,
-    maximumHoursPerWeek: weeklyClaim.wage.maximumHoursPerWeek,
-    ratePerHour: weeklyClaim.wage.ratePerHour,
-    overtimeRatePerHour: weeklyClaim.wage.overtimeRatePerHour
-  })
-
-  return {
-    hoursWorked: weeklyClaim.hoursWorked,
-    employeeAddress: weeklyClaim.wage.userAddress as Address,
-    date: BigInt(Math.floor(new Date(weeklyClaim.createdAt).getTime() / 1000)),
-    wages: claimRates.map((rate) => ({
-      hourlyRate: rate.hourlyRate,
-      tokenAddress: getTokenAddress(rate.type)
-    }))
-  }
-}
+const typedDataMessage = computed(() =>
+  buildWageClaimPayload({ weeklyClaim: props.weeklyClaim, getTokenAddress })
+)
 
 const setLoadingState = (state: boolean) => {
   isLoading.value = state
@@ -151,27 +136,27 @@ const enableClaim = async (signature: `0x${string}`) => {
   await enableTx.mutateAsync({ args: [keccak256(signature)] })
 }
 
-const approveClaim = async (weeklyClaim: WeeklyClaim) => {
+const approveClaim = async () => {
   setLoadingState(true)
 
   try {
-    await mutateAsync({
+    const signature = await mutateAsync({
       domain: typedDataDomain.value,
       types: TYPED_DATA_TYPES,
-      message: buildTypedDataMessage(weeklyClaim),
+      message: typedDataMessage.value,
       primaryType: 'WageClaim'
     })
 
-    if (!signature.value) {
+    if (!signature) {
       toast.add({ title: 'Signature not found', color: 'error' })
       return
     }
 
-    await enableClaim(signature.value as `0x${string}`)
+    await enableClaim(signature as `0x${string}`)
     await executeUpdateClaim({
-      pathParams: { claimId: weeklyClaim.id },
+      pathParams: { claimId: props.weeklyClaim.id },
       queryParams: { action: 'sign' },
-      body: { signature: signature.value }
+      body: { signature }
     })
 
     if (claimError.value) {
@@ -195,7 +180,7 @@ const approveClaim = async (weeklyClaim: WeeklyClaim) => {
 
 // Event handlers
 const handleApprove = async () => {
-  await approveClaim(props.weeklyClaim)
+  await approveClaim()
 }
 
 const handleDropdownClick = async () => {
@@ -206,7 +191,7 @@ const handleDropdownClick = async () => {
     return
   }
 
-  await approveClaim(props.weeklyClaim)
+  await approveClaim()
   emit('close')
 }
 

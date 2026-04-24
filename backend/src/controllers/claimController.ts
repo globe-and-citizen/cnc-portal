@@ -16,6 +16,7 @@ import {
   z,
   type FileAttachmentData,
 } from '../validation';
+import { formatMinutesAsDuration } from '../utils/wageUtil';
 
 dayjs.extend(utc);
 dayjs.extend(isoWeek);
@@ -24,14 +25,6 @@ type AddClaimBody = z.infer<typeof addClaimBodySchema>;
 type UpdateClaimBody = z.infer<typeof updateClaimBodySchema>;
 type GetClaimsQuery = z.infer<typeof getClaimsQuerySchema>;
 type ClaimIdParams = z.infer<typeof claimIdParamsSchema>;
-
-const formatMinutesAsDuration = (totalMinutes: number): string => {
-  const h = Math.floor(totalMinutes / 60);
-  const m = totalMinutes % 60;
-  if (m === 0) return `${h}h`;
-  if (h === 0) return `${m}min`;
-  return `${h}h ${m}min`;
-};
 
 const buildWeeklyHoursExceededMessage = ({
   action,
@@ -61,7 +54,7 @@ export const addClaim = async (req: Request, res: Response) => {
 
   const {
     teamId,
-    hoursWorked,
+    minutesWorked,
     memo,
     dayWorked: dayWorkedInput,
     attachments: rawAttachments,
@@ -118,12 +111,12 @@ export const addClaim = async (req: Request, res: Response) => {
     // Check total max minutes (regular + overtime).
 
     const totalMinutes =
-      weeklyClaim?.claims.reduce((sum, claim) => sum + claim.hoursWorked, 0) ?? 0;
+      weeklyClaim?.claims.reduce((sum, claim) => sum + claim.minutesWorked, 0) ?? 0;
     const regularHours = wage.maximumHoursPerWeek;
     const overtimeHours = wage.maximumOvertimeHoursPerWeek ?? 0;
     const totalMaxMinutes = (regularHours + overtimeHours) * 60;
 
-    if (totalMinutes + hoursWorked > totalMaxMinutes) {
+    if (totalMinutes + minutesWorked > totalMaxMinutes) {
       const { message } = buildWeeklyHoursExceededMessage({
         action: 'submit',
         regularHours,
@@ -152,8 +145,8 @@ export const addClaim = async (req: Request, res: Response) => {
     if (
       (weeklyClaim?.claims
         .filter((claim) => claim.dayWorked && claim.dayWorked.getTime() === dayWorked.getTime())
-        .reduce((sum, claim) => sum + Number(claim.hoursWorked), 0) ?? 0) +
-        Number(hoursWorked) >
+        .reduce((sum, claim) => sum + Number(claim.minutesWorked), 0) ?? 0) +
+        Number(minutesWorked) >
       1440
     ) {
       return errorResponse(
@@ -178,7 +171,8 @@ export const addClaim = async (req: Request, res: Response) => {
     // Create the claim with file attachments
     const claim = await prisma.claim.create({
       data: {
-        hoursWorked,
+        hoursWorked: 0,
+        minutesWorked,
         memo,
         wageId: wage.id,
         weeklyClaimId: weeklyClaim.id,
@@ -249,7 +243,7 @@ export const getClaims = async (req: Request, res: Response) => {
 export const updateClaim = async (req: Request, res: Response) => {
   const callerAddress = req.address;
   const { claimId } = req.params as unknown as ClaimIdParams;
-  const { hoursWorked, memo, deletedFileIndexes, attachments } = req.body as UpdateClaimBody;
+  const { minutesWorked, memo, deletedFileIndexes, attachments } = req.body as UpdateClaimBody;
 
   try {
     // Fetch the claim including the required data (include weeklyClaim.claims)
@@ -285,14 +279,14 @@ export const updateClaim = async (req: Request, res: Response) => {
       return errorResponse(403, "Can't edit: Claim is not pending", res);
     }
 
-    if (hoursWorked !== undefined) {
+    if (minutesWorked !== undefined) {
       // Sum other claims in the same weeklyClaim excluding the current claim (values are in minutes)
       const otherClaimsTotal =
         (weeklyClaim?.claims ?? [])
           .filter((c) => c.id !== claim.id)
-          .reduce((sum, c) => sum + Number(c.hoursWorked), 0) ?? 0;
+          .reduce((sum, c) => sum + Number(c.minutesWorked), 0) ?? 0;
 
-      const newMinutes = Number(hoursWorked);
+      const newMinutes = Number(minutesWorked);
 
       const regularHours = wage.maximumHoursPerWeek;
       const overtimeHours = wage.maximumOvertimeHoursPerWeek ?? 0;
@@ -345,7 +339,7 @@ export const updateClaim = async (req: Request, res: Response) => {
       where: { id: claimId },
       data: {
         ...(memo !== undefined && { memo }),
-        ...(hoursWorked !== undefined && { hoursWorked: Number(hoursWorked) }),
+        ...(minutesWorked !== undefined && { minutesWorked: Number(minutesWorked) }),
         ...(fileAttachmentsData !== undefined && { fileAttachments: fileAttachmentsData }),
       },
     });

@@ -11,6 +11,7 @@ import { useDeleteClaimMutation } from '@/queries/weeklyClaim.queries'
 const defaultClaim: Claim = {
   id: 1,
   hoursWorked: 480,
+  minutesWorked: 480,
   memo: 'Test work',
   dayWorked: dayjs().startOf('day').toISOString(),
   wageId: 1,
@@ -131,11 +132,6 @@ describe('DeleteClaimModal', () => {
       })
 
       expect(wrapper.text()).toContain('Jun 15, 2024')
-    })
-
-    it.skip('returns empty formatted date when claim is not provided', () => {
-      const wrapper = createWrapper({ claim: undefined as unknown as Claim })
-      expect(wrapper.text()).toContain('claims submitted on')
     })
   })
 })

@@ -7,7 +7,6 @@ const createOptions = () => {
 
   return {
     initialData: ref({
-      hoursWorked: '2',
       minutesWorked: '10',
       memo: 'Initial memo',
       dayWorked: '2024-01-10T00:00:00.000Z'
@@ -36,14 +35,12 @@ describe('useClaimForm', () => {
     const { formData } = useClaimForm(options)
 
     options.initialData.value = {
-      hoursWorked: '5',
       minutesWorked: '40',
       memo: 'Updated',
       dayWorked: '2024-01-15T00:00:00.000Z'
     }
     await nextTick()
 
-    expect(formData.value.hoursWorked).toBe('5')
     expect(formData.value.minutesWorked).toBe('40')
     expect(formData.value.memo).toBe('Updated')
     expect(formData.value.dayWorked).toBe('2024-01-15T00:00:00.000Z')
@@ -72,7 +69,7 @@ describe('useClaimForm', () => {
 
     onFilesUpdate([new File(['1'], 'a.png'), new File(['2'], 'b.png')])
     const payload = buildSubmitPayload()
-    expect(payload?.hoursWorked).toBe(130)
+    expect(payload?.minutesWorked).toBe(10)
     expect(payload?.memo).toBe('Initial memo')
     expect(payload?.files).toHaveLength(2)
 

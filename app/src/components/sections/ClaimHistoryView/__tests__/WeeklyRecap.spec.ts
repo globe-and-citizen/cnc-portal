@@ -54,7 +54,8 @@ describe('ClaimHistory WeeklyRecap', () => {
   it('renders overtime status, overtime block, and combined totals when overtime is reached', () => {
     const wrapper = createWrapper({
       weeklyClaim: {
-        hoursWorked: 2700,
+        hoursWorked: 0,
+        minutesWorked: 2700,
         wage: {
           maximumHoursPerWeek: 40,
           maximumOvertimeHoursPerWeek: 10,
@@ -88,7 +89,8 @@ describe('ClaimHistory WeeklyRecap', () => {
   it('renders submitted state without overtime section when overtime wage is not configured', () => {
     const wrapper = createWrapper({
       weeklyClaim: {
-        hoursWorked: 2400,
+        hoursWorked: 0,
+        minutesWorked: 2400,
         wage: {
           maximumHoursPerWeek: 40,
           ratePerHour: [{ type: 'native', amount: 5 }],
@@ -128,7 +130,8 @@ describe('ClaimHistory WeeklyRecap', () => {
 
     const wrapper = createWrapper({
       weeklyClaim: {
-        hoursWorked: 480,
+        hoursWorked: 0,
+        minutesWorked: 480,
         wage: {
           maximumHoursPerWeek: undefined,
           ratePerHour: [{ type: 'mystery', amount: 3 }],
@@ -164,7 +167,8 @@ describe('ClaimHistory WeeklyRecap', () => {
   it('handles undefined limits and missing regular rates with overtime enabled', () => {
     const wrapper = createWrapper({
       weeklyClaim: {
-        hoursWorked: 360,
+        hoursWorked: 0,
+        minutesWorked: 360,
         wage: {
           maximumHoursPerWeek: undefined,
           maximumOvertimeHoursPerWeek: undefined,

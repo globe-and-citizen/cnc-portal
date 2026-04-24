@@ -44,7 +44,7 @@ contract CashRemunerationEIP712 is
   /**
    * @dev Represents a wage claim by an employee.
    * @param employeeAddress The address of the employee claiming the wage.
-   * @param hoursWorked The number of hours worked by the employee.
+   * @param minutesWorked The number of minutes worked by the employee.
    * @param hourlyRate The hourly wage rate for the employee (in wei).
    * In ether so the employer is presented with a user friendly intuitive
    * value when they sign or approve the claim.
@@ -53,7 +53,7 @@ contract CashRemunerationEIP712 is
    */
   struct WageClaim {
     address employeeAddress;
-    uint16 hoursWorked;
+    uint16 minutesWorked;
     // uint256 hourlyRate;
     Wage[] wages;
     uint256 date;
@@ -62,7 +62,7 @@ contract CashRemunerationEIP712 is
   /// @dev String representations of the Wage and WageClaim structs, used in EIP-712 encoding.
   string private constant WAGE_TYPE = 'Wage(uint256 hourlyRate,address tokenAddress)';
   string private constant WAGE_CLAIM_TYPE =
-    'WageClaim(address employeeAddress,uint16 hoursWorked,Wage[] wages,uint256 date)';
+    'WageClaim(address employeeAddress,uint16 minutesWorked,Wage[] wages,uint256 date)';
 
   /// @dev Typehash for the Wage struct, used in EIP-712 encoding.
   bytes32 constant WAGE_TYPEHASH = keccak256(abi.encodePacked(WAGE_TYPE));
@@ -248,7 +248,7 @@ contract CashRemunerationEIP712 is
         abi.encode(
           WAGE_CLAIM_TYPEHASH,
           wageClaim.employeeAddress,
-          wageClaim.hoursWorked,
+          wageClaim.minutesWorked,
           wageHashes(wageClaim.wages),
           wageClaim.date
         )
@@ -261,7 +261,7 @@ contract CashRemunerationEIP712 is
    *      handling for mintable tokens (InvestorV1) when an officer address is configured.
    *      It uses EIP-712 for secure signature verification to prevent unauthorized access.
    *
-   * @param wageClaim The structured wage claim containing employee details, hours worked, and wage information.
+   * @param wageClaim The structured wage claim containing employee details, minutes worked, and wage information.
    * @param signature The ECDSA signature signed by the contract owner authorizing this wage claim.
    *
    * Requirements:
@@ -333,7 +333,7 @@ contract CashRemunerationEIP712 is
     // A wage claim can contain multiple wage types (ETH and/or multiple tokens)
     for (uint8 i = 0; i < wageClaim.wages.length; i++) {
       // Calculate the total amount to pay for this wage component
-      uint256 amountToPay = wageClaim.hoursWorked * wageClaim.wages[i].hourlyRate;
+      uint256 amountToPay = (wageClaim.minutesWorked * wageClaim.wages[i].hourlyRate) / 60;
 
       // Step 7a: Handle Native ETH Payments
       // tokenAddress == address(0) indicates native ETH

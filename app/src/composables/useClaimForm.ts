@@ -40,7 +40,7 @@ export type CalendarSelectionValue =
   | undefined
 
 export interface ClaimFormSubmitPayload {
-  hoursWorked: number
+  minutesWorked: number
   memo: string
   dayWorked: string
   files?: File[]
@@ -92,6 +92,10 @@ const claimSchema = z
   })
   .refine((data) => Number(data.hoursWorked) * 60 + Number(data.minutesWorked) > 0, {
     message: 'Duration must be greater than 0',
+    path: ['hoursWorked']
+  })
+  .refine((data) => Number(data.hoursWorked) * 60 + Number(data.minutesWorked) <= 1440, {
+    message: 'Total duration cannot exceed 24 hours (1440 minutes)',
     path: ['hoursWorked']
   })
 
@@ -195,7 +199,7 @@ export function useClaimForm(options: UseClaimFormOptions) {
     }
 
     return {
-      hoursWorked: Number(formData.value.hoursWorked) * 60 + Number(formData.value.minutesWorked),
+      minutesWorked: Number(formData.value.hoursWorked) * 60 + Number(formData.value.minutesWorked),
       memo: formData.value.memo,
       dayWorked: formData.value.dayWorked,
       files: uploadedFiles.value.length ? uploadedFiles.value : undefined

@@ -1,5 +1,5 @@
-import type { RatePerHour, RatePerHourWithEnabled } from '@/types'
-import { parseEther, parseUnits } from 'viem'
+import type { RatePerHour, RatePerHourWithEnabled, WeeklyClaim } from '@/types'
+import { parseEther, parseUnits, type Address } from 'viem'
 
 export const requiredRateTypes: RatePerHour['type'][] = ['native', 'usdc', 'sher']
 
@@ -35,6 +35,16 @@ export interface ClaimRateWithTotals {
   totalAmount: bigint
 }
 
+export interface WageClaimPayload {
+  minutesWorked: number
+  employeeAddress: Address
+  date: bigint
+  wages: Array<{
+    hourlyRate: bigint
+    tokenAddress: Address
+  }>
+}
+
 const parseRateAmount = (amount: number, type: RatePerHour['type']) => {
   return type === 'native' ? parseEther(`${amount}`) : parseUnits(`${amount}`, 6)
 }
@@ -64,18 +74,18 @@ export const getRegularAndOvertimeHours = (
 }
 
 export const buildClaimRatesWithOvertime = ({
-  hoursWorked,
+  totalMinutesWorked,
   maximumHoursPerWeek,
   ratePerHour,
   overtimeRatePerHour
 }: {
-  hoursWorked: number
+  totalMinutesWorked: number
   maximumHoursPerWeek?: number | null
   ratePerHour: RatePerHour[]
   overtimeRatePerHour?: RatePerHour[] | null
 }): ClaimRateWithTotals[] => {
   const { regularMinutes, overtimeMinutes, totalMinutes } = getRegularAndOvertimeHours(
-    hoursWorked,
+    totalMinutesWorked,
     maximumHoursPerWeek
   )
 
@@ -86,11 +96,14 @@ export const buildClaimRatesWithOvertime = ({
       ? parseRateAmount(overtimeRate.amount, baseRate.type)
       : baseRateWei
 
-    // totalAmount = (baseRate * regularMinutes + overtimeRate * overtimeMinutes) / 60
+    // totalAmount expected payout:
+    // (baseHourlyRate * regularMinutes + overtimeHourlyRate * overtimeMinutes) / 60
     const totalAmount =
       (baseRateWei * BigInt(regularMinutes) + overtimeRateWei * BigInt(overtimeMinutes)) / 60n
-    // Per-minute rate for on-chain: totalAmount / totalMinutes
-    const hourlyRate = totalMinutes > 0 ? totalAmount / BigInt(totalMinutes) : baseRateWei / 60n
+
+    // Effective hourly rate for on-chain formula:
+    // amountToPay = minutesWorked * hourlyRate / 60
+    const hourlyRate = totalMinutes > 0 ? (totalAmount * 60n) / BigInt(totalMinutes) : baseRateWei
 
     return {
       type: baseRate.type,
@@ -98,4 +111,29 @@ export const buildClaimRatesWithOvertime = ({
       totalAmount
     }
   })
+}
+
+export const buildWageClaimPayload = ({
+  weeklyClaim,
+  getTokenAddress
+}: {
+  weeklyClaim: Pick<WeeklyClaim, 'minutesWorked' | 'createdAt' | 'wage'>
+  getTokenAddress: (type: string) => Address
+}): WageClaimPayload => {
+  const claimRates = buildClaimRatesWithOvertime({
+    totalMinutesWorked: weeklyClaim.minutesWorked,
+    maximumHoursPerWeek: weeklyClaim.wage.maximumHoursPerWeek,
+    ratePerHour: weeklyClaim.wage.ratePerHour,
+    overtimeRatePerHour: weeklyClaim.wage.overtimeRatePerHour
+  })
+
+  return {
+    minutesWorked: weeklyClaim.minutesWorked,
+    employeeAddress: weeklyClaim.wage.userAddress as Address,
+    date: BigInt(Math.floor(new Date(weeklyClaim.createdAt).getTime() / 1000)),
+    wages: claimRates.map((rate) => ({
+      hourlyRate: rate.hourlyRate,
+      tokenAddress: getTokenAddress(rate.type)
+    }))
+  }
 }

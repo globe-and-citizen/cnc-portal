@@ -351,6 +351,7 @@ describe('Weekly Claim Controller', () => {
             {
               id: 101,
               hoursWorked: undefined,
+              minutesWorked: undefined,
               fileAttachments: [
                 {
                   fileKey: 'k1',
@@ -362,19 +363,22 @@ describe('Weekly Claim Controller', () => {
             },
             {
               id: 102,
-              hoursWorked: 2,
+              hoursWorked: 0,
+              minutesWorked: 2,
               fileAttachments: [
                 { fileUrl: 'https://no-key.example.com', fileType: 'image/png', fileSize: 2 },
               ],
             },
             {
               id: 103,
-              hoursWorked: 3,
+              hoursWorked: 0,
+              minutesWorked: 3,
               fileAttachments: ['non-object'],
             },
             {
               id: 104,
-              hoursWorked: 4,
+              hoursWorked: 0,
+              minutesWorked: 4,
               fileAttachments: [
                 {
                   fileKey: 'k2',
@@ -386,7 +390,8 @@ describe('Weekly Claim Controller', () => {
             },
             {
               id: 105,
-              hoursWorked: 1,
+              hoursWorked: 0,
+              minutesWorked: 1,
               fileAttachments: [],
             },
           ],
@@ -409,7 +414,7 @@ describe('Weekly Claim Controller', () => {
         })
       );
 
-      expect(response.body[0].hoursWorked).toBe(10);
+      expect(response.body[0].minutesWorked).toBe(10);
       expect(response.body[0].claims[0].fileAttachments[0].fileUrl).toBe(
         'https://fresh-1.example.com'
       );

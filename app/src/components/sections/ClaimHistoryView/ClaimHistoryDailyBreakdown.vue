@@ -128,7 +128,7 @@ const weekDayClaims = computed(() => {
     return {
       date,
       claims: dailyClaims,
-      totalMinutes: dailyClaims.reduce((sum: number, claim) => sum + claim.hoursWorked, 0)
+      totalMinutes: dailyClaims.reduce((sum: number, claim) => sum + claim.minutesWorked, 0)
     }
   })
 })

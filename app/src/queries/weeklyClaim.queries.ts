@@ -2,11 +2,41 @@ import type { MaybeRefOrGetter } from 'vue'
 import { toValue } from 'vue'
 import type { Address } from 'viem'
 import { useMutation, useQueryClient } from '@tanstack/vue-query'
-import type { FileAttachment, WeeklyClaim } from '@/types/cash-remuneration'
+import type { Claim, FileAttachment, WeeklyClaim } from '@/types/cash-remuneration'
 import type { ClaimSubmitPayload } from '@/types'
 import apiClient from '@/lib/axios'
 import { uploadFileApi } from '@/api'
 import { createQueryHook, createMutationHook, queryPresets } from './queryFactory'
+
+type ClaimResponse = Omit<Claim, 'minutesWorked'> & { minutesWorked?: number | null }
+type WeeklyClaimResponse = Omit<WeeklyClaim, 'minutesWorked' | 'claims'> & {
+  minutesWorked?: number | null
+  claims: ClaimResponse[]
+}
+
+const getClaimWorkedMinutes = ({ minutesWorked }: { minutesWorked?: number | null }) =>
+  minutesWorked ?? 0
+
+export const normalizeClaimResponse = (claim: ClaimResponse): Claim => {
+  const workedMinutes = getClaimWorkedMinutes(claim)
+
+  return {
+    ...claim,
+    minutesWorked: workedMinutes
+  }
+}
+
+export const normalizeWeeklyClaimResponse = (weeklyClaim: WeeklyClaimResponse): WeeklyClaim => {
+  const claims = weeklyClaim.claims.map(normalizeClaimResponse)
+  const totalWorkedMinutes =
+    weeklyClaim.minutesWorked ?? claims.reduce((sum, claim) => sum + claim.minutesWorked, 0)
+
+  return {
+    ...weeklyClaim,
+    claims,
+    minutesWorked: totalWorkedMinutes
+  }
+}
 
 /**
  * Query key factory for weekly claim-related queries
@@ -59,6 +89,7 @@ export const useGetTeamWeeklyClaimsQuery = createQueryHook<
       toValue(params.queryParams.status)
     ),
   enabled: (params) => !!toValue(params.queryParams.teamId),
+  transformResponse: (data) => (data as WeeklyClaimResponse[]).map(normalizeWeeklyClaimResponse),
   options: {
     ...queryPresets.stable,
     retry: false,
@@ -93,6 +124,7 @@ export const useGetWeeklyClaimByIdQuery = createQueryHook<WeeklyClaim, GetWeekly
   endpoint: (params) => `weeklyClaim/${toValue(params.pathParams.claimId)}`,
   queryKey: (params) => weeklyClaimKeys.detail(toValue(params.pathParams.claimId)),
   enabled: (params) => !!toValue(params.pathParams.claimId),
+  transformResponse: (data) => normalizeWeeklyClaimResponse(data as WeeklyClaimResponse),
   options: {
     ...queryPresets.stable,
     retry: false,
@@ -254,7 +286,7 @@ export const useSubmitClaimMutation = () => {
 
       await apiClient.post('/claim', {
         teamId: payload.teamId.toString(),
-        hoursWorked: payload.hoursWorked.toString(),
+        minutesWorked: payload.minutesWorked.toString(),
         memo: payload.memo,
         dayWorked: payload.dayWorked,
         attachments: attachments.length > 0 ? attachments : undefined
@@ -294,7 +326,7 @@ export const useEditClaimWithFilesMutation = () => {
 
       try {
         await apiClient.put(`/claim/${payload.claimId}`, {
-          hoursWorked: payload.hoursWorked.toString(),
+          minutesWorked: payload.minutesWorked.toString(),
           memo: payload.memo,
           dayWorked: payload.dayWorked,
           deletedFileIndexes:
@@ -329,8 +361,8 @@ export interface EditClaimParams {
     claimId: number | string
   }
   body: {
-    /** Hours worked */
-    hoursWorked: string
+    /** Minutes worked */
+    minutesWorked: string
     /** Claim memo */
     memo: string
     /** ISO date string */
@@ -348,7 +380,7 @@ export interface EditClaimParams {
  * @endpoint PUT /claim/{claimId}
  * @pathParams { claimId: number | string }
  * @queryParams none
- * @body { hoursWorked: string, memo: string, dayWorked: string, deletedFileIndexes?: number[], attachments?: FileAttachment[] }
+ * @body { minutesWorked: string, memo: string, dayWorked: string, deletedFileIndexes?: number[], attachments?: FileAttachment[] }
  */
 export const useEditClaimMutation = createMutationHook<void, EditClaimParams>({
   method: 'PUT',
