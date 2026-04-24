@@ -222,7 +222,7 @@ describe('Weekly Claim Controller', () => {
     it('should return 400 for missing signature on sign', async () => {
       const response = await putAction('sign', '1', {});
       expect(response.status).toBe(400);
-      expect(response.body).toEqual({ message: 'Missing or invalid signature' });
+      expect(response.body).toEqual({ message: 'Missing signature for sign action' });
     });
 
     it('should return 404 if weekly claim is not found', async () => {

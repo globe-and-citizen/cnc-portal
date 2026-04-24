@@ -10,10 +10,6 @@ import { refreshAttachmentUrls } from '../services/attachmentService';
 export type WeeklyClaimAction = 'sign' | 'withdraw' | 'disable' | 'enable';
 type statusType = 'pending' | 'signed' | 'withdrawn' | 'disabled';
 
-function isValidWeeklyClaimAction(action: unknown): action is WeeklyClaimAction {
-  return ['sign', 'withdraw', 'pending', 'disable', 'enable'].includes(action as string);
-}
-
 const deriveWeeklyClaimStatus = (isPaid: boolean, isDisabled: boolean): statusType => {
   if (isPaid) return 'withdrawn';
   if (isDisabled) return 'disabled';
@@ -26,28 +22,11 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
   const action = req.query.action as WeeklyClaimAction;
   const { signature, contractAddress, chainId } = req.body;
 
-  // Validation stricte des actions autorisées
-  const errors: string[] = [];
-  if (!action || !isValidWeeklyClaimAction(action))
-    errors.push('Invalid action. Allowed actions are: sign, withdraw');
-
-  if (action == 'sign' && (!signature || !isHex(signature)))
-    errors.push('Missing or invalid signature');
-
-  if (
-    action == 'sign' &&
-    contractAddress !== undefined &&
-    (typeof contractAddress !== 'string' || !isAddress(contractAddress))
-  )
-    errors.push('Invalid contractAddress');
-
-  if (action == 'sign' && chainId !== undefined && (!Number.isInteger(chainId) || chainId <= 0))
-    errors.push('Invalid chainId');
-
-  if (!id || isNaN(id)) errors.push('Missing or invalid id');
-
-  if (errors.length > 0) {
-    return errorResponse(400, errors.join('; '), res);
+  // Format-level checks (action enum, id, signature hex format, contractAddress,
+  // chainId) are enforced by the route-level Zod middleware. Here we only assert
+  // the cross-field business rule that depends on the query action.
+  if (action === 'sign' && !signature) {
+    return errorResponse(400, 'Missing signature for sign action', res);
   }
 
   let data: Prisma.WeeklyClaimUpdateInput = {};
