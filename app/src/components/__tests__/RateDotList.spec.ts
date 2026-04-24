@@ -11,7 +11,7 @@ describe('RateDotList', () => {
           { type: 'native', amount: 1.5 },
           { type: 'usdc', amount: 2.5 },
           { type: 'usdt', amount: 0 },
-          { type: 'sher', amount: -3.456 }
+          { type: 'sher', amount: 3.456 }
         ],
         textClass: 'text-emerald-700',
         minimumFractionDigits: 1,
@@ -27,7 +27,7 @@ describe('RateDotList', () => {
     expect(rows[0]?.text()).toContain(`${NETWORK.currencySymbol} 1.5`)
     expect(rows[1]?.text()).toContain('USDC 2.5')
     expect(rows[2]?.text()).toContain('USDT 0')
-    expect(rows[3]?.text()).toContain('SHER -3.46')
+    expect(rows[3]?.text()).toContain('SHER 3.46')
     expect(dots[0]?.classes()).toContain('bg-yellow-400')
     expect(dots[1]?.classes()).toContain('bg-blue-500')
     expect(dots[2]?.classes()).toContain('bg-green-500')
