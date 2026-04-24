@@ -1,139 +1,271 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
-import { mount } from '@vue/test-utils'
-import { createTestingPinia } from '@pinia/testing'
-import InvestorsTransactions from '@/components/sections/SherTokenView/InvestorsTransactions.vue'
-import { ref } from 'vue'
-const mockUseQuery = {
-  result: ref({
-    investorDividendPaids: {
-      items: []
-    },
-    investorDividendDistributeds: {
-      items: []
-    }
-  }),
-  error: ref<Error | null>(null),
-  loading: ref(false)
-}
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { mount, type VueWrapper } from '@vue/test-utils'
+import { defineComponent, nextTick } from 'vue'
+import * as utils from '@/utils'
+import InvestorsTransactions from '../InvestorsTransactions.vue'
 
-vi.mock('@vue/apollo-composable', async (importOriginal) => {
-  const original: object = await importOriginal()
+const USDC_ADDRESS = '0xa3492d046095affe351cfac15de9b86425e235db'
+const INVESTOR_ADDRESS = '0x1111111111111111111111111111111111111111'
+const SAFE_ROUTER_ADDRESS = '0x2222222222222222222222222222222222222222'
+
+const {
+  apolloState,
+  mockUseQuery,
+  mockGetTokenPrice,
+  mockInvestorSymbolData
+} = vi.hoisted(() => {
+  const apolloState = {
+    investorResult: null as unknown as { value: unknown },
+    investorError: null as unknown as { value: Error | null },
+    investorLoading: null as unknown as { value: boolean },
+    safeResult: null as unknown as { value: unknown },
+    safeError: null as unknown as { value: Error | null },
+    safeLoading: null as unknown as { value: boolean }
+  }
+
+  const mockUseQuery = vi.fn()
+  const mockGetTokenPrice = vi.fn(() => 1)
+  const mockInvestorSymbolData = { value: 'SHER' }
+
   return {
-    ...original,
-    useQuery: vi.fn(() => ({ ...mockUseQuery }))
+    apolloState,
+    mockUseQuery,
+    mockGetTokenPrice,
+    mockInvestorSymbolData
   }
 })
 
-describe('InvestorsTransactions.vue', () => {
-  const createComponent = () => {
-    return mount<typeof InvestorsTransactions>(InvestorsTransactions, {
-      global: {
-        plugins: [createTestingPinia({ createSpy: vi.fn })]
-      }
+vi.mock('@vue/apollo-composable', async () => {
+  const { ref } = await import('vue')
+  apolloState.investorResult = ref()
+  apolloState.investorError = ref<Error | null>(null)
+  apolloState.investorLoading = ref(false)
+  apolloState.safeResult = ref()
+  apolloState.safeError = ref<Error | null>(null)
+  apolloState.safeLoading = ref(false)
+  return { useQuery: mockUseQuery }
+})
+
+vi.mock('@/stores', () => ({
+  useTeamStore: () => ({
+    getContractAddressByType: vi.fn((type: string) => {
+      if (type === 'InvestorV1') return INVESTOR_ADDRESS
+      if (type === 'SafeDepositRouter') return SAFE_ROUTER_ADDRESS
+      return null
     })
+  }),
+  useCurrencyStore: () => ({
+    localCurrency: { code: 'USD' },
+    supportedTokens: [{ id: 'usdc', symbol: 'USDC', address: USDC_ADDRESS }],
+    getTokenPrice: mockGetTokenPrice
+  })
+}))
+
+vi.mock('@/composables/investor/reads', () => ({
+  useInvestorSymbol: () => ({
+    data: mockInvestorSymbolData
+  })
+}))
+
+const UCardStub = defineComponent({
+  name: 'UCard',
+  template: '<div><slot name="header" /><slot /></div>'
+})
+
+const UTableStub = defineComponent({
+  name: 'UTable',
+  props: {
+    data: { type: Array, required: false },
+    columns: { type: Array, required: false },
+    loading: { type: Boolean, required: false }
+  },
+  template: '<div data-test="investor-table"></div>'
+})
+
+const USelectStub = defineComponent({
+  name: 'USelect',
+  props: {
+    modelValue: { type: String, required: false },
+    items: { type: Array, required: false }
+  },
+  emits: ['update:modelValue'],
+  template: '<div data-test="investor-type-filter"></div>'
+})
+
+const CustomDatePickerStub = defineComponent({
+  name: 'CustomDatePicker',
+  props: {
+    modelValue: { type: Array, required: false }
+  },
+  emits: ['update:modelValue'],
+  template: '<div data-test="investor-date-filter"></div>'
+})
+
+const AddressToolTipStub = defineComponent({
+  name: 'AddressToolTip',
+  template: '<div />'
+})
+
+const UBadgeStub = defineComponent({
+  name: 'UBadge',
+  template: '<span><slot /></span>'
+})
+
+const buildInvestorResult = () => ({
+  investorMints: {
+    items: [
+      {
+        id: '0xminttx-0',
+        contractAddress: INVESTOR_ADDRESS,
+        shareholder: '0x3333333333333333333333333333333333333333',
+        amount: '1000000',
+        timestamp: 1_700_000_000
+      }
+    ]
+  },
+  investorDividendDistributeds: { items: [] },
+  investorDividendPaids: { items: [] },
+  investorDividendPaymentFaileds: { items: [] }
+})
+
+const buildSafeResult = () => ({
+  safeDeposits: {
+    items: [
+      {
+        id: '0xsafedeposit-0',
+        contractAddress: SAFE_ROUTER_ADDRESS,
+        depositor: '0x4444444444444444444444444444444444444444',
+        token: USDC_ADDRESS,
+        tokenAmount: '5000000',
+        sherAmount: '0',
+        timestamp: 1_700_000_100
+      }
+    ]
+  },
+  safeDepositsEnableds: { items: [] },
+  safeDepositsDisableds: { items: [] },
+  safeAddressUpdateds: { items: [] },
+  safeMultiplierUpdateds: {
+    items: [
+      {
+        id: '0xmultiplier-0',
+        contractAddress: SAFE_ROUTER_ADDRESS,
+        oldMultiplier: '1000000',
+        newMultiplier: '1500000',
+        timestamp: 1_700_000_200
+      }
+    ]
   }
+})
+
+const createWrapper = (): VueWrapper =>
+  mount(InvestorsTransactions, {
+    global: {
+      stubs: {
+        UCard: UCardStub,
+        UTable: UTableStub,
+        USelect: USelectStub,
+        UBadge: UBadgeStub,
+        AddressToolTip: AddressToolTipStub,
+        CustomDatePicker: CustomDatePickerStub
+      }
+    }
+  })
+
+describe('InvestorsTransactions', () => {
+  let wrapper: VueWrapper
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+
+    apolloState.investorResult.value = buildInvestorResult()
+    apolloState.investorError.value = null
+    apolloState.investorLoading.value = false
+
+    apolloState.safeResult.value = buildSafeResult()
+    apolloState.safeError.value = null
+    apolloState.safeLoading.value = false
+
+    mockGetTokenPrice.mockReturnValue(1)
+    mockInvestorSymbolData.value = 'SHER'
+
+    mockUseQuery.mockReset()
+    mockUseQuery
+      .mockReturnValueOnce({
+        result: apolloState.investorResult,
+        error: apolloState.investorError,
+        loading: apolloState.investorLoading
+      })
+      .mockReturnValueOnce({
+        result: apolloState.safeResult,
+        error: apolloState.safeError,
+        loading: apolloState.safeLoading
+      })
+  })
 
   afterEach(() => {
-    mockUseQuery.result.value = {
-      investorDividendPaids: {
-        items: []
-      },
-      investorDividendDistributeds: {
-        items: []
-      }
-    }
-    mockUseQuery.error.value = null
-    vi.clearAllMocks()
+    if (wrapper) wrapper.unmount()
   })
 
-  it('should mount properly', () => {
-    mockUseQuery.result.value = {
-      investorDividendPaids: {
-        items: [
-          {
-            id: '0xtxhash1-0',
-            contractAddress: '0xfrom1',
-            shareholder: '0xto1',
-            token: '0xtoken1',
-            amount: '1000000000000000000',
-            timestamp: 1677649200
-          }
-        ]
-      },
-      investorDividendDistributeds: {
-        items: []
-      }
+  it('maps investor and safe router events into table rows', () => {
+    wrapper = createWrapper()
+
+    const vm = wrapper.vm as unknown as {
+      displayedTransactions: Array<{ type: string; token: string }>
+      columns: Array<{ header: string }>
     }
 
-    const wrapper = createComponent()
-    expect(wrapper.exists()).toBeTruthy()
+    expect(vm.displayedTransactions).toHaveLength(3)
+    expect(vm.displayedTransactions.map((row) => row.type)).toEqual(
+      expect.arrayContaining(['mint', 'safeDeposit', 'safeMultiplierUpdated'])
+    )
+    expect(vm.displayedTransactions.find((row) => row.type === 'mint')?.token).toBe('SHER')
+    expect(vm.displayedTransactions.find((row) => row.type === 'safeMultiplierUpdated')?.token).toBe(
+      'x'
+    )
+    expect(vm.columns.at(-1)?.header).toBe('Value (USD)')
   })
 
-  it('should format transactions correctly', () => {
-    mockUseQuery.result.value = {
-      investorDividendPaids: {
-        items: [
-          {
-            id: '0xtxhash1-0',
-            contractAddress: '0xfrom1',
-            shareholder: '0xto1',
-            token: '0xtoken1',
-            amount: '1000000000000000000',
-            timestamp: 1677649200
-          }
-        ]
-      },
-      investorDividendDistributeds: {
-        items: []
-      }
-    }
+  it('passes loading from investor query to table', () => {
+    apolloState.investorLoading.value = true
+    wrapper = createWrapper()
 
-    const wrapper = createComponent()
-    const transactions = (wrapper.vm as unknown as { transactionData: unknown[] }).transactionData
-
-    expect(transactions).toHaveLength(1)
-    expect(transactions[0]).toMatchObject({
-      txHash: '0xtxhash1',
-      from: '0xfrom1',
-      to: '0xto1',
-      type: 'dividendPaid'
-    })
+    const vm = wrapper.vm as unknown as { loading: boolean }
+    expect(vm.loading).toBe(true)
   })
 
-  //   it.skip('should not fetch data when investor address is not available', () => {
-  //     vi.mocked(useTeamStore).mockImplementationOnce(() => ({
-  //       getContractAddressByType: vi.fn(() => null)
-  //     }))
-
-  //     const wrapper = createComponent()
-  //     expect(wrapper.vm.transactionData).toHaveLength(0)
-  //   })
-
-  it('should calculate USD amounts correctly', () => {
-    mockUseQuery.result.value = {
-      investorDividendPaids: {
-        items: [
-          {
-            id: '0xtxhash1-0',
-            contractAddress: '0xfrom1',
-            shareholder: '0xto1',
-            token: '0xtoken1',
-            amount: '1000000000000000000',
-            timestamp: 1677649200
-          }
-        ]
-      },
-      investorDividendDistributeds: {
-        items: []
-      }
+  it('filters displayed rows by selected type', async () => {
+    wrapper = createWrapper()
+    const vm = wrapper.vm as unknown as {
+      selectedType: string
+      displayedTransactions: Array<{ type: string }>
     }
 
-    const wrapper = createComponent()
-    const transactions = (
-      wrapper.vm as unknown as { transactionData: Array<{ amountUSD: number }> }
-    ).transactionData
+    vm.selectedType = 'safeDeposit'
+    await nextTick()
 
-    expect(transactions[0]).toHaveProperty('amountUSD')
-    expect(typeof transactions[0].amountUSD).toBe('number')
+    expect(vm.displayedTransactions).toHaveLength(1)
+    expect(vm.displayedTransactions[0]?.type).toBe('safeDeposit')
+  })
+
+  it('logs investor and safe router query errors', async () => {
+    const logErrorSpy = vi.spyOn(utils.log, 'error')
+    wrapper = createWrapper()
+
+    const investorQueryError = new Error('investor query failed')
+    apolloState.investorError.value = investorQueryError
+    await nextTick()
+    expect(logErrorSpy).toHaveBeenCalledWith(
+      'Ponder investor transaction query error:',
+      investorQueryError
+    )
+
+    const safeQueryError = new Error('safe router query failed')
+    apolloState.safeError.value = safeQueryError
+    await nextTick()
+    expect(logErrorSpy).toHaveBeenCalledWith(
+      'Ponder safe deposit router transaction query error:',
+      safeQueryError
+    )
   })
 })
