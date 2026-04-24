@@ -62,10 +62,7 @@ import { useTeamStore } from '@/stores'
 import { useGetTeamWeeklyClaimsQuery } from '@/queries'
 import MonthSelector from '@/components/MonthSelector.vue'
 import { formatMinutesAsDuration } from '@/utils/wageUtil'
-import {
-  formatWeekTooltipText,
-  getClaimStatusColor
-} from '@/utils/claimHistoryWeekNavigator'
+import { formatWeekTooltipText, getClaimStatusColor } from '@/utils/claimHistoryWeekNavigator'
 
 import { use } from 'echarts/core'
 import { BarChart } from 'echarts/charts'
