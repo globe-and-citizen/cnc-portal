@@ -103,50 +103,17 @@ export const createWrapper = (): VueWrapper =>
     global: {
       stubs: {
         UCard: UCardStub,
+        'u-card': UCardStub,
         UTable: UTableStub,
+        'u-table': UTableStub,
         USelect: USelectStub,
+        'u-select': USelectStub,
         UBadge: UBadgeStub,
+        'u-badge': UBadgeStub,
         AddressToolTip: AddressToolTipStub,
-        CustomDatePicker: CustomDatePickerStub
+        'address-tool-tip': AddressToolTipStub,
+        CustomDatePicker: CustomDatePickerStub,
+        'custom-date-picker': CustomDatePickerStub
       }
     }
   })
-
-export const triggerVModelUpdate = (
-  wrapper: VueWrapper,
-  selector: string,
-  value: unknown
-): boolean => {
-  const element = wrapper.get(selector).element as HTMLElement & {
-    __vueParentComponent?: {
-      vnode?: { props?: Record<string, unknown> }
-      parent?: unknown
-    }
-  }
-
-  let component = element.__vueParentComponent as
-    | {
-        vnode?: { props?: Record<string, unknown> }
-        parent?: unknown
-      }
-    | undefined
-
-  while (component) {
-    const handler = component.vnode?.props?.['onUpdate:modelValue']
-    if (typeof handler === 'function') {
-      ;(handler as (payload: unknown) => void)(value)
-      return true
-    }
-
-    if (Array.isArray(handler)) {
-      handler.forEach((fn) => {
-        if (typeof fn === 'function') fn(value)
-      })
-      return true
-    }
-
-    component = component.parent as typeof component
-  }
-
-  return false
-}
