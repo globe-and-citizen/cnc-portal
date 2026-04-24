@@ -109,9 +109,9 @@ const getTokenAddress = (type: string): Address => {
   return teamStore.getContractAddressByType('InvestorV1') as Address
 }
 
-const buildTypedDataMessage = (weeklyClaim: WeeklyClaim) => {
-  return buildWageClaimPayload({ weeklyClaim, getTokenAddress })
-}
+const typedDataMessage = computed(() =>
+  buildWageClaimPayload({ weeklyClaim: props.weeklyClaim, getTokenAddress })
+)
 
 const setLoadingState = (state: boolean) => {
   isLoading.value = state
@@ -136,14 +136,14 @@ const enableClaim = async (signature: `0x${string}`) => {
   await enableTx.mutateAsync({ args: [keccak256(signature)] })
 }
 
-const approveClaim = async (weeklyClaim: WeeklyClaim) => {
+const approveClaim = async () => {
   setLoadingState(true)
 
   try {
     const signature = await mutateAsync({
       domain: typedDataDomain.value,
       types: TYPED_DATA_TYPES,
-      message: buildTypedDataMessage(weeklyClaim),
+      message: typedDataMessage.value,
       primaryType: 'WageClaim'
     })
 
@@ -154,7 +154,7 @@ const approveClaim = async (weeklyClaim: WeeklyClaim) => {
 
     await enableClaim(signature as `0x${string}`)
     await executeUpdateClaim({
-      pathParams: { claimId: weeklyClaim.id },
+      pathParams: { claimId: props.weeklyClaim.id },
       queryParams: { action: 'sign' },
       body: { signature }
     })
@@ -180,7 +180,7 @@ const approveClaim = async (weeklyClaim: WeeklyClaim) => {
 
 // Event handlers
 const handleApprove = async () => {
-  await approveClaim(props.weeklyClaim)
+  await approveClaim()
 }
 
 const handleDropdownClick = async () => {
@@ -191,7 +191,7 @@ const handleDropdownClick = async () => {
     return
   }
 
-  await approveClaim(props.weeklyClaim)
+  await approveClaim()
   emit('close')
 }
 
