@@ -12,6 +12,9 @@ export * from './safe'
 export * from './fileUtil'
 // SafeDepositRouter utilities
 export * from './safeDepositRouterUtil'
+export * from './rawTransactionsUtil'
+export * from './investorsTransactionUtil'
+export * from './bankTransactionUtil'
 /**
  * Utility function to wait for a condition to be met
  * @description This function repeatedly checks a condition until it returns true or a timeout occurs.

@@ -61,7 +61,6 @@ const SKIP_LIST = new Set([
   "Tips",
   "Voting",
   "Vesting",
-  "FeeCollector",
 ]);
 
 function toKebabCase(name: string): string {
@@ -87,7 +86,9 @@ function formatValue(val: unknown, indent: number): string {
   if (typeof val === "string") return JSON.stringify(val);
   if (Array.isArray(val)) {
     if (val.length === 0) return "[]";
-    const items = val.map((v) => `${pad}  ${formatValue(v, indent + 1)}`).join(",\n");
+    const items = val
+      .map((v) => `${pad}  ${formatValue(v, indent + 1)}`)
+      .join(",\n");
     return `[\n${items},\n${pad}]`;
   }
   if (typeof val === "object") {
@@ -101,7 +102,11 @@ function formatValue(val: unknown, indent: number): string {
   return String(val);
 }
 
-function generateFile(contractName: string, abi: unknown[], eventsOnly: boolean): string {
+function generateFile(
+  contractName: string,
+  abi: unknown[],
+  eventsOnly: boolean,
+): string {
   const exportName = `${toScreamingSnakeCase(contractName)}_ABI`;
   const entries = eventsOnly ? abi.filter((e: any) => e.type === "event") : abi;
 
@@ -119,7 +124,7 @@ const filterContracts = args.filter((a) => !a.startsWith("--"));
 
 if (!existsSync(ABIS_JSON_DIR)) {
   console.error(
-    `Error: ${ABIS_JSON_DIR} does not exist.\nRun 'npx hardhat compile' in the contract/ directory first.`
+    `Error: ${ABIS_JSON_DIR} does not exist.\nRun 'npx hardhat compile' in the contract/ directory first.`,
   );
   process.exit(1);
 }
@@ -145,7 +150,9 @@ for (const file of jsonFiles) {
   const entries = eventsOnly ? abi.filter((e: any) => e.type === "event") : abi;
 
   if (entries.length === 0) {
-    console.log(`  skip  ${contractName} (no ${eventsOnly ? "events" : "entries"})`);
+    console.log(
+      `  skip  ${contractName} (no ${eventsOnly ? "events" : "entries"})`,
+    );
     continue;
   }
 

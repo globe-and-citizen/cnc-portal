@@ -31,7 +31,7 @@ export interface InvestorsTransaction extends BaseTransaction {
 }
 
 export interface RawInvestorsTransaction {
-  amount: number
+  amount: string | number
   blockTimestamp: string
   from: string
   to: string

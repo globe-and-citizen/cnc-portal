@@ -1,7 +1,5 @@
 <template>
-  <div>
-    <WeeklyClaim />
-  </div>
+  <WeeklyClaim />
 </template>
 
 <script setup lang="ts">
