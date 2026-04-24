@@ -3,6 +3,7 @@ import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { nextTick, ref } from 'vue'
 import { parseEther, zeroAddress, type Address } from 'viem'
+import * as viem from 'viem'
 import CRWithdrawClaim from '../CRWithdrawClaim.vue'
 import type { WeeklyClaim } from '@/types'
 import { USDC_ADDRESS } from '@/constant'
@@ -31,6 +32,7 @@ describe('CRWithdrawClaim', () => {
 
   const MOCK_CONTRACT_ADDRESS = '0x9876543210987654321098765432109876543210'
   const MOCK_INVESTOR_ADDRESS = '0x1111111111111111111111111111111111111111'
+  const MOCK_OWNER_ADDRESS = '0x2222222222222222222222222222222222222222' as Address
 
   const mockClaim: WeeklyClaim = {
     id: 1,
@@ -108,6 +110,10 @@ describe('CRWithdrawClaim', () => {
     mockUseWriteContract.mutateAsync = vi.fn().mockResolvedValue('0xhash')
 
     mockGetBalance.mockResolvedValue(parseEther('100'))
+
+    // Guard 2 (EIP-712 recovery) — bypass by aligning the recovered signer with owner()
+    mockWagmiCore.readContract.mockResolvedValue(MOCK_OWNER_ADDRESS)
+    vi.spyOn(viem, 'recoverTypedDataAddress').mockResolvedValue(MOCK_OWNER_ADDRESS)
   })
 
   afterEach(() => {

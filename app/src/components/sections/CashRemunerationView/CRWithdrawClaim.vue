@@ -154,10 +154,18 @@ const withdrawClaim = async () => {
     ])
 
     if (recovered.toLowerCase() !== contractOwner.toLowerCase()) {
+      const sameContractAndChain =
+        !!signedFor?.contractAddress &&
+        signedFor.contractAddress.toLowerCase() === currentContract.toLowerCase() &&
+        signedFor.chainId === chainId.value
+
       toast.add({
-        title: 'Invalid signature for this contract',
-        description:
-          'This signature was issued for a different contract or network. Please request a new signature.',
+        title: sameContractAndChain
+          ? 'Signature no longer valid — contract ownership has changed'
+          : 'Invalid signature for this contract',
+        description: sameContractAndChain
+          ? `Signed by ${recovered}, current owner is ${contractOwner}. Please request a new signature from the current owner.`
+          : 'This signature was issued for a different contract or network. Please request a new signature.',
         color: 'error'
       })
       return
