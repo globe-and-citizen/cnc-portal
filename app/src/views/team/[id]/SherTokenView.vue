@@ -4,9 +4,11 @@
     <ShareholderMigrationBanner />
     <InvestorsActions />
     <ShareholderList />
-    <InvestorsTransactions />
   </div>
-  <ContractOwnerCard v-if="investorsAddress" :contractAddress="investorsAddress" />
+  <div class="flex flex-col gap-y-8">
+    <InvestorsTransactions />
+    <ContractOwnerCard v-if="investorsAddress" :contractAddress="investorsAddress" />
+  </div>
 </template>
 
 <script setup lang="ts">
