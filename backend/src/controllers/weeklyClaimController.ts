@@ -34,7 +34,11 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
   if (action == 'sign' && (!signature || !isHex(signature)))
     errors.push('Missing or invalid signature');
 
-  if (action == 'sign' && contractAddress && !isAddress(contractAddress))
+  if (
+    action == 'sign' &&
+    contractAddress !== undefined &&
+    (typeof contractAddress !== 'string' || !isAddress(contractAddress))
+  )
     errors.push('Invalid contractAddress');
 
   if (action == 'sign' && chainId !== undefined && (!Number.isInteger(chainId) || chainId <= 0))

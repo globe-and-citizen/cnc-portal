@@ -38,6 +38,4 @@ export const updateWeeklyClaimQuerySchema = z.object({
 // Update weekly claim request body
 export const updateWeeklyClaimBodySchema = z.object({
   signature: z.string().optional(),
-  contractAddress: addressSchema.optional(),
-  chainId: z.number().int().positive().optional(),
 });
