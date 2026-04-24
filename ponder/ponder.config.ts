@@ -20,9 +20,6 @@ const CONTRACT_DEPLOYED_EVENT = parseAbiItem(
 // Set NETWORK=hardhat in .env.local to index a local Hardhat node.
 // Default: polygon
 const isHardhat = process.env.NETWORK === "hardhat";
-
-// Both chains are defined so TypeScript can resolve contract `chain` references.
-// Only the active chain is actually used by ponder at runtime.
 const chainName = isHardhat ? "hardhat" : "polygon";
 
 // Factory contract address differs per network.
@@ -52,17 +49,20 @@ const subContractFactory = factory({
   event: CONTRACT_DEPLOYED_EVENT,
   parameter: "deployedAddress",
 });
-
 export default createConfig({
   chains: {
     polygon: {
       id: 137,
       rpc: process.env.PONDER_RPC_URL_137,
     },
-    hardhat: {
-      id: 31337,
-      rpc: process.env.PONDER_RPC_URL_HARDHAT ?? "http://127.0.0.1:8545",
-    },
+    ...(isHardhat
+      ? {
+          hardhat: {
+            id: 31337,
+            rpc: process.env.PONDER_RPC_URL_HARDHAT ?? "http://127.0.0.1:8545",
+          },
+        }
+      : {}),
   },
   contracts: {
     OfficerFactoryBeacon: {
