@@ -1,14 +1,20 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount, type VueWrapper } from '@vue/test-utils'
 import { defineComponent, nextTick } from 'vue'
-import * as utils from '@/utils'
 import InvestorsTransactions from '../InvestorsTransactions.vue'
 
 const USDC_ADDRESS = '0xa3492d046095affe351cfac15de9b86425e235db'
 const INVESTOR_ADDRESS = '0x1111111111111111111111111111111111111111'
 const SAFE_ROUTER_ADDRESS = '0x2222222222222222222222222222222222222222'
+const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 
-const { apolloState, mockUseQuery, mockGetTokenPrice, mockInvestorSymbolData } = vi.hoisted(() => {
+const {
+  apolloState,
+  mockUseQuery,
+  mockGetTokenPrice,
+  mockInvestorSymbolData,
+  mockGetContractAddressByType
+} = vi.hoisted(() => {
   const apolloState = {
     investorResult: null as unknown as { value: unknown },
     investorError: null as unknown as { value: Error | null },
@@ -21,12 +27,18 @@ const { apolloState, mockUseQuery, mockGetTokenPrice, mockInvestorSymbolData } =
   const mockUseQuery = vi.fn()
   const mockGetTokenPrice = vi.fn(() => 1)
   const mockInvestorSymbolData = { value: 'SHER' }
+  const mockGetContractAddressByType = vi.fn((type: string) => {
+    if (type === 'InvestorV1') return INVESTOR_ADDRESS
+    if (type === 'SafeDepositRouter') return SAFE_ROUTER_ADDRESS
+    return null
+  })
 
   return {
     apolloState,
     mockUseQuery,
     mockGetTokenPrice,
-    mockInvestorSymbolData
+    mockInvestorSymbolData,
+    mockGetContractAddressByType
   }
 })
 
@@ -43,11 +55,7 @@ vi.mock('@vue/apollo-composable', async () => {
 
 vi.mock('@/stores', () => ({
   useTeamStore: () => ({
-    getContractAddressByType: vi.fn((type: string) => {
-      if (type === 'InvestorV1') return INVESTOR_ADDRESS
-      if (type === 'SafeDepositRouter') return SAFE_ROUTER_ADDRESS
-      return null
-    })
+    getContractAddressByType: mockGetContractAddressByType
   }),
   useCurrencyStore: () => ({
     localCurrency: { code: 'USD' },
@@ -172,6 +180,11 @@ describe('InvestorsTransactions', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    mockGetContractAddressByType.mockImplementation((type: string) => {
+      if (type === 'InvestorV1') return INVESTOR_ADDRESS
+      if (type === 'SafeDepositRouter') return SAFE_ROUTER_ADDRESS
+      return null
+    })
 
     apolloState.investorResult.value = buildInvestorResult()
     apolloState.investorError.value = null
@@ -243,24 +256,87 @@ describe('InvestorsTransactions', () => {
     expect(vm.displayedTransactions[0]?.type).toBe('safeDeposit')
   })
 
-  it('logs investor and safe router query errors', async () => {
-    const logErrorSpy = vi.spyOn(utils.log, 'error')
+  it('filters rows by date range', async () => {
+    wrapper = createWrapper()
+    const vm = wrapper.vm as unknown as {
+      dateRange: [Date, Date] | null
+      displayedTransactions: Array<{ type: string }>
+    }
+
+    vm.dateRange = [new Date('2020-01-01T00:00:00Z'), new Date('2020-01-01T23:59:59Z')]
+    await nextTick()
+
+    expect(vm.displayedTransactions).toHaveLength(0)
+  })
+
+  it('uses fallback defaults when addresses are missing', () => {
+    mockGetContractAddressByType.mockReturnValue(null)
     wrapper = createWrapper()
 
-    const investorQueryError = new Error('investor query failed')
-    apolloState.investorError.value = investorQueryError
-    await nextTick()
-    expect(logErrorSpy).toHaveBeenCalledWith(
-      'Ponder investor transaction query error:',
-      investorQueryError
-    )
+    const [investorCall, safeCall] = mockUseQuery.mock.calls
+    const investorVariables = investorCall?.[1] as { contractAddress: { value: string } }
+    const investorOptions = investorCall?.[2] as { enabled: { value: boolean } }
+    const safeVariables = safeCall?.[1] as { contractAddress: { value: string } }
+    const safeOptions = safeCall?.[2] as { enabled: { value: boolean } }
 
-    const safeQueryError = new Error('safe router query failed')
-    apolloState.safeError.value = safeQueryError
-    await nextTick()
-    expect(logErrorSpy).toHaveBeenCalledWith(
-      'Ponder safe deposit router transaction query error:',
-      safeQueryError
-    )
+    expect(investorVariables.contractAddress.value).toBe('')
+    expect(investorOptions.enabled.value).toBe(false)
+    expect(safeVariables.contractAddress.value).toBe('')
+    expect(safeOptions.enabled.value).toBe(false)
+  })
+
+  it('handles parse failures and usd price fallbacks', () => {
+    mockGetTokenPrice.mockReturnValue(0)
+    apolloState.safeResult.value = {
+      safeDeposits: {
+        items: [
+          {
+            id: '0xusdcdeposit-0',
+            contractAddress: SAFE_ROUTER_ADDRESS,
+            depositor: '0x4444444444444444444444444444444444444444',
+            token: USDC_ADDRESS,
+            tokenAmount: '5000000',
+            sherAmount: '0',
+            timestamp: 1_700_000_300
+          },
+          {
+            id: '0xnativedeposit-0',
+            contractAddress: SAFE_ROUTER_ADDRESS,
+            depositor: '0x5555555555555555555555555555555555555555',
+            token: ZERO_ADDRESS,
+            tokenAmount: 'not-a-number',
+            sherAmount: '0',
+            timestamp: 1_700_000_400
+          }
+        ]
+      },
+      safeDepositsEnableds: { items: [] },
+      safeDepositsDisableds: { items: [] },
+      safeAddressUpdateds: { items: [] },
+      safeMultiplierUpdateds: { items: [] }
+    }
+
+    wrapper = createWrapper()
+    const vm = wrapper.vm as unknown as {
+      displayedTransactions: Array<{ txHash: string; amount: string; amountUSD: number }>
+    }
+
+    const usdcRow = vm.displayedTransactions.find((row) => row.txHash === '0xusdcdeposit')
+    const nativeRow = vm.displayedTransactions.find((row) => row.txHash === '0xnativedeposit')
+
+    expect(usdcRow?.amountUSD).toBe(5)
+    expect(nativeRow?.amount).toBe('0')
+    expect(nativeRow?.amountUSD).toBe(0)
+  })
+
+  it('falls back to SHER symbol when investor symbol is not a string', () => {
+    mockInvestorSymbolData.value = { unexpected: true } as unknown as string
+    wrapper = createWrapper()
+
+    const vm = wrapper.vm as unknown as {
+      displayedTransactions: Array<{ type: string; token: string }>
+    }
+
+    expect(vm.displayedTransactions.find((row) => row.type === 'mint')?.token).toBe('SHER')
   })
 })

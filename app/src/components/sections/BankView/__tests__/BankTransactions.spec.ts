@@ -93,6 +93,8 @@ const UBadgeStub = defineComponent({
 })
 
 const BANK_ADDRESS = '0x1111111111111111111111111111111111111111' as Address
+const USDC_ADDRESS = '0xa3492d046095affe351cfac15de9b86425e235db'
+const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 
 const buildBankQueryResult = () => ({
   bankDeposits: {
@@ -137,10 +139,10 @@ const buildBankQueryResult = () => ({
   }
 })
 
-const createWrapper = (): VueWrapper =>
+const createWrapper = (bankAddress: Address = BANK_ADDRESS): VueWrapper =>
   mount(BankTransactions, {
     props: {
-      bankAddress: BANK_ADDRESS
+      bankAddress
     },
     global: {
       stubs: {
@@ -162,6 +164,10 @@ describe('BankTransactions', () => {
     apolloState.queryResult.value = buildBankQueryResult()
     apolloState.queryError.value = null
     apolloState.queryLoading.value = false
+    mockCurrencyStore.supportedTokens = [
+      { id: 'native', symbol: 'ETH', address: ZERO_ADDRESS },
+      { id: 'usdc', symbol: 'USDC', address: USDC_ADDRESS }
+    ]
     mockGetTokenPrice.mockReturnValue(1)
   })
 
@@ -206,6 +212,85 @@ describe('BankTransactions', () => {
     expect(vm.displayedTransactions[0]?.type).toBe('deposit')
   })
 
+  it('filters displayed rows by date range', async () => {
+    wrapper = createWrapper()
+    const vm = wrapper.vm as unknown as {
+      dateRange: [Date, Date] | null
+      displayedTransactions: Array<{ type: string }>
+    }
+
+    vm.dateRange = [new Date('2020-01-01T00:00:00Z'), new Date('2020-01-01T23:59:59Z')]
+    await nextTick()
+
+    expect(vm.displayedTransactions).toHaveLength(0)
+  })
+
+  it('uses disabled query option when bank address is empty', () => {
+    wrapper = createWrapper('' as Address)
+
+    const queryVariables = mockUseQuery.mock.calls[0]?.[1] as { contractAddress: { value: string } }
+    const queryOptions = mockUseQuery.mock.calls[0]?.[2] as { enabled: { value: boolean } }
+
+    expect(queryVariables.contractAddress.value).toBe('')
+    expect(queryOptions.enabled.value).toBe(false)
+  })
+
+  it('handles token resolution fallback and invalid amounts', () => {
+    mockCurrencyStore.supportedTokens = []
+    mockGetTokenPrice.mockImplementation((tokenId: string) => (tokenId === 'native' ? 3 : 0))
+    apolloState.queryResult.value = {
+      bankDeposits: {
+        items: [
+          {
+            id: '0xnativedeposit-0',
+            contractAddress: BANK_ADDRESS,
+            depositor: '0x2222222222222222222222222222222222222222',
+            amount: '1000000000000000000',
+            timestamp: 1_700_000_500
+          }
+        ]
+      },
+      bankTokenDeposits: {
+        items: []
+      },
+      bankTransfers: { items: [] },
+      bankTokenTransfers: {
+        items: [
+          {
+            id: '0xunknowntx-0',
+            sender: '0x3333333333333333333333333333333333333333',
+            to: '0x4444444444444444444444444444444444444444',
+            token: '0x9999999999999999999999999999999999999999',
+            amount: 'not-a-number',
+            timestamp: 1_700_000_600
+          }
+        ]
+      },
+      bankDividendDistributionTriggereds: { items: [] },
+      bankFeePaids: { items: [] },
+      bankOwnershipTransferreds: { items: [] },
+      rawContractTokenTransfers: { items: [] }
+    }
+
+    wrapper = createWrapper()
+    const vm = wrapper.vm as unknown as {
+      displayedTransactions: Array<{
+        txHash: string
+        amount: string | number
+        amountLocal: number
+        token: string
+      }>
+    }
+
+    const nativeRow = vm.displayedTransactions.find((row) => row.txHash === '0xnativedeposit')
+    const unknownRow = vm.displayedTransactions.find((row) => row.txHash === '0xunknowntx')
+
+    expect(nativeRow?.amountLocal).toBe(3)
+    expect(unknownRow?.amount).toBe('0')
+    expect(unknownRow?.amountLocal).toBe(0)
+    expect(unknownRow?.token).toBe('ERC20')
+  })
+
   it('logs query errors', async () => {
     const logErrorSpy = vi.spyOn(utils.log, 'error')
     wrapper = createWrapper()
@@ -215,5 +300,10 @@ describe('BankTransactions', () => {
     await nextTick()
 
     expect(logErrorSpy).toHaveBeenCalledWith('Ponder bank transaction query error:', error)
+
+    apolloState.queryError.value = null
+    await nextTick()
+
+    expect(logErrorSpy).toHaveBeenCalledTimes(1)
   })
 })
