@@ -8,10 +8,12 @@ import { requireTeamMember } from '../middleware/teamAuthzMiddleware';
 import {
   validateQuery,
   validateParamsAndQuery,
+  validateAll,
   getWeeklyClaimsQuerySchema,
   syncWeeklyClaimsQuerySchema,
   weeklyClaimIdParamsSchema,
   updateWeeklyClaimQuerySchema,
+  updateWeeklyClaimBodySchema,
 } from '../validation';
 
 const weeklyClaimRoutes = express.Router();
@@ -288,7 +290,11 @@ weeklyClaimRoutes.post(
  */
 weeklyClaimRoutes.put(
   '/:id',
-  validateParamsAndQuery(weeklyClaimIdParamsSchema, updateWeeklyClaimQuerySchema),
+  validateAll(
+    updateWeeklyClaimBodySchema,
+    updateWeeklyClaimQuerySchema,
+    weeklyClaimIdParamsSchema
+  ),
   updateWeeklyClaims
 );
 

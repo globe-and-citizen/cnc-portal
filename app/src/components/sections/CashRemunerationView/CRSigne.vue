@@ -38,6 +38,10 @@ import { computed, ref, watch } from 'vue'
 import { config } from '@/wagmi.config'
 import { useUpdateWeeklyClaimMutation } from '@/queries'
 import { useEnableClaim } from '@/composables/cashRemuneration/writes'
+import {
+  CASH_REMUNERATION_EIP712_TYPES,
+  buildCashRemunerationDomain
+} from './cashRemunerationEip712'
 
 const props = defineProps<{
   weeklyClaim: WeeklyClaim
@@ -80,27 +84,12 @@ const { error: claimError, mutateAsync: executeUpdateClaim } = useUpdateWeeklyCl
 
 const enableTx = useEnableClaim()
 
-// Domain configuration (constant)
-const typedDataDomain = computed(() => ({
-  name: 'CashRemuneration',
-  version: '1',
-  chainId: chainId.value,
-  verifyingContract: cashRemunerationAddress.value as Address
-}))
-
-// Type definitions (constant)
-const TYPED_DATA_TYPES = {
-  Wage: [
-    { name: 'hourlyRate', type: 'uint256' },
-    { name: 'tokenAddress', type: 'address' }
-  ],
-  WageClaim: [
-    { name: 'employeeAddress', type: 'address' },
-    { name: 'minutesWorked', type: 'uint16' },
-    { name: 'wages', type: 'Wage[]' },
-    { name: 'date', type: 'uint256' }
-  ]
-} as const
+const typedDataDomain = computed(() =>
+  buildCashRemunerationDomain({
+    chainId: chainId.value,
+    verifyingContract: cashRemunerationAddress.value as Address
+  })
+)
 
 // Helper functions
 const getTokenAddress = (type: string): Address => {
@@ -142,7 +131,7 @@ const approveClaim = async (weeklyClaim: WeeklyClaim) => {
   try {
     const signature = await mutateAsync({
       domain: typedDataDomain.value,
-      types: TYPED_DATA_TYPES,
+      types: CASH_REMUNERATION_EIP712_TYPES,
       message: buildTypedDataMessage(weeklyClaim),
       primaryType: 'WageClaim'
     })
@@ -156,7 +145,11 @@ const approveClaim = async (weeklyClaim: WeeklyClaim) => {
     await executeUpdateClaim({
       pathParams: { claimId: weeklyClaim.id },
       queryParams: { action: 'sign' },
-      body: { signature }
+      body: {
+        signature,
+        contractAddress: cashRemunerationAddress.value,
+        chainId: chainId.value
+      }
     })
 
     if (claimError.value) {

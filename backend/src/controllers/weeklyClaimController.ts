@@ -10,10 +10,6 @@ import { refreshAttachmentUrls } from '../services/attachmentService';
 export type WeeklyClaimAction = 'sign' | 'withdraw' | 'disable' | 'enable';
 type statusType = 'pending' | 'signed' | 'withdrawn' | 'disabled';
 
-function isValidWeeklyClaimAction(action: unknown): action is WeeklyClaimAction {
-  return ['sign', 'withdraw', 'pending', 'disable', 'enable'].includes(action as string);
-}
-
 const deriveWeeklyClaimStatus = (isPaid: boolean, isDisabled: boolean): statusType => {
   if (isPaid) return 'withdrawn';
   if (isDisabled) return 'disabled';
@@ -24,20 +20,13 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
   const callerAddress = req.address;
   const id = Number(req.params.id);
   const action = req.query.action as WeeklyClaimAction;
-  const { signature } = req.body;
+  const { signature, contractAddress, chainId } = req.body;
 
-  // Validation stricte des actions autorisées
-  const errors: string[] = [];
-  if (!action || !isValidWeeklyClaimAction(action))
-    errors.push('Invalid action. Allowed actions are: sign, withdraw');
-
-  if (action == 'sign' && (!signature || !isHex(signature)))
-    errors.push('Missing or invalid signature');
-
-  if (!id || isNaN(id)) errors.push('Missing or invalid id');
-
-  if (errors.length > 0) {
-    return errorResponse(400, errors.join('; '), res);
+  // Format-level checks (action enum, id, signature hex format, contractAddress,
+  // chainId) are enforced by the route-level Zod middleware. Here we only assert
+  // the cross-field business rule that depends on the query action.
+  if (action === 'sign' && !signature) {
+    return errorResponse(400, 'Missing signature for sign action', res);
   }
 
   let data: Prisma.WeeklyClaimUpdateInput = {};
@@ -159,7 +148,15 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
 
         if (signErrors.length > 0) return errorResponse(400, signErrors.join('; '), res);
 
-        data = { signature, status: 'signed', data: { ownerAddress: callerAddress } };
+        data = {
+          signature,
+          status: 'signed',
+          data: {
+            ownerAddress: callerAddress,
+            ...(contractAddress ? { contractAddress } : {}),
+            ...(chainId ? { chainId } : {}),
+          },
+        };
         // singleClaimStatus = "signed";
         break;
       }
