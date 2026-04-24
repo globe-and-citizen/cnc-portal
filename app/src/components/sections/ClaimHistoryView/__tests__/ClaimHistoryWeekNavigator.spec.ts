@@ -189,6 +189,7 @@ describe('ClaimHistoryWeekNavigator', () => {
       { name: 'Mo', value: 8 },
       { name: 'Mo', value: 2 }
     ])
+    expect(tooltipWithOvertime).toContain('Mo')
     expect(tooltipWithOvertime).toContain('Regular: 8h')
     expect(tooltipWithOvertime).toContain('Overtime: 2h')
     expect(tooltipWithOvertime).toContain('Total: 10h')
@@ -197,13 +198,13 @@ describe('ClaimHistoryWeekNavigator', () => {
       { name: 'Tu', value: 0, dataIndex: 1 },
       { name: 'Tu', value: 0, dataIndex: 1 }
     ])
-    expect(tooltipWithoutOvertime).toBe('<b>Tu</b><br/>0h')
+    expect(tooltipWithoutOvertime).toBe('Tu\n0h')
 
     const tooltipWithEmptyParams = vm.barChartOption.tooltip.formatter([])
-    expect(tooltipWithEmptyParams).toBe('<b></b><br/>Regular: 8h<br/>Overtime: 2h<br/>Total: 10h')
+    expect(tooltipWithEmptyParams).toBe('Regular: 8h\nOvertime: 2h\nTotal: 10h')
 
     const tooltipOutOfRange = vm.barChartOption.tooltip.formatter([{ name: 'Sa', dataIndex: 12 }])
-    expect(tooltipOutOfRange).toBe('<b>Sa</b><br/>0h')
+    expect(tooltipOutOfRange).toBe('Sa\n0h')
 
     expect(vm.barChartOption.yAxis.axisLabel.formatter(1.25)).toBe('1.3 h')
 
