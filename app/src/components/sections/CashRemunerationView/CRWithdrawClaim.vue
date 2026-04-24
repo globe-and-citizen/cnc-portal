@@ -85,9 +85,9 @@ const getTokenAddress = (type: string): Address => {
 const withdrawClaim = async () => {
   if (withdrawTx.isPending.value) return
 
-  const currentContract = teamStore.getContractAddressByType(
-    'CashRemunerationEIP712'
-  ) as Address | undefined
+  const currentContract = teamStore.getContractAddressByType('CashRemunerationEIP712') as
+    | Address
+    | undefined
 
   if (!currentContract) {
     toast.add({ title: 'Cash Remuneration EIP712 contract address not found', color: 'error' })
