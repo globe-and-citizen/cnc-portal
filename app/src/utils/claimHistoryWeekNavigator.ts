@@ -11,20 +11,20 @@ export const getClaimStatusColor = (weeklyClaim?: WeeklyClaim) => {
 
 export const formatWeekTooltipText = (
   day: string,
-  totalMin: number,
-  regularMin: number,
-  overtimeMin: number
+  totalMinutes: number,
+  regularMinutes: number,
+  overtimeMinutes: number
 ) => {
   const dayLine = day ? [day] : []
 
-  if (overtimeMin > 0) {
+  if (overtimeMinutes > 0) {
     return [
       ...dayLine,
-      `Regular: ${formatMinutesAsDuration(regularMin)}`,
-      `Overtime: ${formatMinutesAsDuration(overtimeMin)}`,
-      `Total: ${formatMinutesAsDuration(totalMin)}`
+      `Regular: ${formatMinutesAsDuration(regularMinutes)}`,
+      `Overtime: ${formatMinutesAsDuration(overtimeMinutes)}`,
+      `Total: ${formatMinutesAsDuration(totalMinutes)}`
     ].join('\n')
   }
 
-  return [...dayLine, formatMinutesAsDuration(totalMin)].join('\n')
+  return [...dayLine, formatMinutesAsDuration(totalMinutes)].join('\n')
 }

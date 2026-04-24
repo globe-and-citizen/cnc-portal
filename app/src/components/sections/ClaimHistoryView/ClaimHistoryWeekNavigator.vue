@@ -178,10 +178,10 @@ const barChartOption = computed(() => {
       formatter: (params: any[]) => {
         const day = params[0]?.name ?? ''
         const idx = params[0]?.dataIndex ?? 0
-        const totalMin = totalMinutesPerDay[idx] ?? 0
-        const regularMin = regularMinutesData[idx] ?? 0
-        const overtimeMin = overtimeMinutesData[idx] ?? 0
-        return formatWeekTooltipText(day, totalMin, regularMin, overtimeMin)
+        const totalMinutes = totalMinutesPerDay[idx] ?? 0
+        const regularMinutes = regularMinutesData[idx] ?? 0
+        const overtimeMinutes = overtimeMinutesData[idx] ?? 0
+        return formatWeekTooltipText(day, totalMinutes, regularMinutes, overtimeMinutes)
       }
     },
     xAxis: { type: 'category', data: labels, axisTick: { alignWithLabel: true } },
@@ -214,8 +214,8 @@ const barChartOption = computed(() => {
           color: '#374151',
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           formatter: (params: any) => {
-            const totalMin = totalMinutesPerDay[params.dataIndex] ?? 0
-            return totalMin > 0 ? formatMinutesAsDuration(totalMin) : ''
+            const totalMinutes = totalMinutesPerDay[params.dataIndex] ?? 0
+            return totalMinutes > 0 ? formatMinutesAsDuration(totalMinutes) : ''
           }
         }
       }
