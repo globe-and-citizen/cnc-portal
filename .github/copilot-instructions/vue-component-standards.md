@@ -132,25 +132,43 @@ const doubledCount = computed(() => count.value * 2)
 
 ## Error Handling in Components
 
-### Toast Notifications
+### Notifications
+
+Two complementary surfaces — pick the right one:
+
+- **`useToast()` (Nuxt UI)** for transient, global notifications (success after an action, network/wallet failures the user must notice). Auto-imported. Reference call sites: `app/src/composables/useSiwe.ts`, `app/src/App.vue`.
+- **`<UAlert />`** for inline, reactive errors scoped to a form or section. Reference: `app/src/components/sections/ContractManagementView/forms/TransferOwnershipForm.vue`.
+
+Prefer `<UAlert />` over `try/catch + toast` when the error is tied to a specific form field or mutation — it composes naturally with the TanStack Query mutation pattern (see `AGENTS.md`).
 
 ```typescript
-import { useToastStore } from '@/stores'
-
-const { addSuccessToast, addErrorToast } = useToastStore()
+// Global notification
+const toast = useToast()
 
 const handleSubmit = async () => {
-  try {
-    loading.value = true
-    await submitForm()
-    addSuccessToast('Form submitted successfully')
-  } catch (error) {
-    console.error('Form submission failed:', error)
-    addErrorToast('Failed to submit form. Please try again.')
-  } finally {
-    loading.value = false
-  }
+  loading.value = true
+  await submitForm()
+  toast.add({ title: 'Form submitted successfully', color: 'success' })
+  loading.value = false
 }
+```
+
+```vue
+<!-- Inline reactive error -->
+<UAlert v-if="errorMessage" color="error" :description="errorMessage" />
+```
+
+For mutations, surface `mutation.error` reactively via `<UAlert />` rather than wrapping `mutateAsync` in `try/catch`:
+
+```vue
+<script setup lang="ts">
+const { mutate, error, isPending } = useSubmitFormMutation()
+</script>
+
+<template>
+  <UAlert v-if="error" color="error" :description="error.message" />
+  <UButton :loading="isPending" @click="mutate(payload)">Submit</UButton>
+</template>
 ```
 
 ## Accessibility Standards

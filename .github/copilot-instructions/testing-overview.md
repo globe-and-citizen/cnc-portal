@@ -222,13 +222,11 @@ const waitForAsyncOperation = async () => {
   await flushPromises()
 }
 
-// Toast message verification
-const expectToastMessage = (type: 'success' | 'error', message: string) => {
-  if (type === 'success') {
-    expect(mockToastStore.addSuccessToast).toHaveBeenCalledWith(message)
-  } else {
-    expect(mockToastStore.addErrorToast).toHaveBeenCalledWith(message)
-  }
+// Toast verification (Nuxt UI useToast)
+const expectToast = (color: 'success' | 'error', title: string) => {
+  expect(mockToast.add).toHaveBeenCalledWith(
+    expect.objectContaining({ title, color })
+  )
 }
 ```
 
@@ -236,14 +234,15 @@ const expectToastMessage = (type: 'success' | 'error', message: string) => {
 
 ```typescript
 // Hoisted mock variables for consistency
-const { mockReadContract, mockWriteContract, mockToastStore } = vi.hoisted(() => ({
+const { mockReadContract, mockWriteContract, mockToast } = vi.hoisted(() => ({
   mockReadContract: vi.fn(),
   mockWriteContract: vi.fn(),
-  mockToastStore: {
-    addErrorToast: vi.fn(),
-    addSuccessToast: vi.fn()
-  }
+  mockToast: { add: vi.fn() }
 }))
+
+// Stub Nuxt UI's auto-imported `useToast` (adjust the import path
+// to match the project's setup, e.g. '#imports' or '@nuxt/ui')
+vi.mock('#imports', () => ({ useToast: () => mockToast }))
 
 // Proper mock setup and cleanup
 beforeEach(() => {
@@ -274,14 +273,9 @@ afterEach(() => {
 
 ## Quality Assurance
 
-### Pre-commit Hooks
+### Local quality gate
 
-Tests are automatically run before commits to ensure:
-
-- All tests pass
-- Code coverage thresholds are met
-- No lint errors in test files
-- TypeScript compilation succeeds
+Before pushing, run the per-subproject lint/type-check/test commands documented in `AGENTS.md`. The repository does not currently configure husky/commitlint, so this gate is enforced manually plus by CI on PRs.
 
 ### CI/CD Integration
 

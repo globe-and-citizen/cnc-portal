@@ -58,7 +58,7 @@ describe('ComponentName', () => {
 
 ```typescript
 // Hoisted variables for mocks (before vi.mock calls)
-const { mockReadContract, mockWriteContract, mockTeamStore, mockToastStore } = vi.hoisted(() => ({
+const { mockReadContract, mockWriteContract, mockTeamStore, mockToast } = vi.hoisted(() => ({
   mockReadContract: vi.fn(),
   mockWriteContract: vi.fn(),
   mockTeamStore: {
@@ -67,10 +67,7 @@ const { mockReadContract, mockWriteContract, mockTeamStore, mockToastStore } = v
       return undefined
     })
   },
-  mockToastStore: {
-    addErrorToast: vi.fn(),
-    addSuccessToast: vi.fn()
-  }
+  mockToast: { add: vi.fn() }
 }))
 
 // Mock external dependencies
@@ -80,9 +77,11 @@ vi.mock('@wagmi/core', () => ({
 }))
 
 vi.mock('@/stores', () => ({
-  useTeamStore: vi.fn(() => mockTeamStore),
-  useToastStore: vi.fn(() => mockToastStore)
+  useTeamStore: vi.fn(() => mockTeamStore)
 }))
+
+// Stub Nuxt UI's auto-imported `useToast` (adjust import path to match project setup)
+vi.mock('#imports', () => ({ useToast: () => mockToast }))
 
 // Reset mocks between tests
 beforeEach(() => {
@@ -246,8 +245,8 @@ describe('Error Handling', () => {
       'Error message prefix:',
       expect.any(Error)
     )
-    expect(mockToastStore.addErrorToast).toHaveBeenCalledWith(
-      'User-friendly error message'
+    expect(mockToast.add).toHaveBeenCalledWith(
+      expect.objectContaining({ title: 'User-friendly error message', color: 'error' })
     )
     
     consoleErrorSpy.mockRestore()
@@ -504,13 +503,10 @@ const waitForAsyncOperation = async () => {
   await flushPromises()
 }
 
-const expectToastMessage = (type: 'success' | 'error', message: string) => {
-  if (type === 'success') {
-    expect(mockToastStore.addSuccessToast).toHaveBeenCalledWith(message)
-  } else {
-    expect(mockToastStore.addErrorToast).toHaveBeenCalledWith(message)
-  }
-}
+const expectToast = (color: 'success' | 'error', title: string) =>
+  expect(mockToast.add).toHaveBeenCalledWith(
+    expect.objectContaining({ title, color })
+  )
 
 // Component mounting with defaults
 const createWrapper = (props = {}, options = {}) => {

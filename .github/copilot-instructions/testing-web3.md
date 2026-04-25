@@ -121,8 +121,8 @@ describe('Contract State Reading', () => {
       'Error checking token support:',
       expect.any(Error)
     )
-    expect(mockToastStore.addErrorToast).toHaveBeenCalledWith(
-      'Failed to check token support status'
+    expect(mockToast.add).toHaveBeenCalledWith(
+      expect.objectContaining({ color: 'error', title: 'Failed to check token support status' })
     )
     
     consoleErrorSpy.mockRestore()
@@ -162,8 +162,8 @@ describe('Contract Write Operations', () => {
       }
     )
 
-    expect(mockToastStore.addSuccessToast).toHaveBeenCalledWith(
-      'Token support added successfully'
+    expect(mockToast.add).toHaveBeenCalledWith(
+      expect.objectContaining({ color: 'success', title: 'Token support added successfully' })
     )
   })
 
@@ -192,8 +192,8 @@ describe('Contract Write Operations', () => {
       }
     )
 
-    expect(mockToastStore.addSuccessToast).toHaveBeenCalledWith(
-      'Token support removed successfully'
+    expect(mockToast.add).toHaveBeenCalledWith(
+      expect.objectContaining({ color: 'success', title: 'Token support removed successfully' })
     )
   })
 })
@@ -251,8 +251,8 @@ describe('Transaction State Management', () => {
       expect.any(Object),
       { hash: '0xabcdef1234567890' }
     )
-    expect(mockToastStore.addSuccessToast).toHaveBeenCalledWith(
-      'Transaction confirmed successfully'
+    expect(mockToast.add).toHaveBeenCalledWith(
+      expect.objectContaining({ color: 'success', title: 'Transaction confirmed successfully' })
     )
   })
 })
@@ -318,8 +318,8 @@ describe('Contract Error Handling', () => {
       'Error Updating token support:',
       expect.any(Error)
     )
-    expect(mockToastStore.addErrorToast).toHaveBeenCalledWith(
-      'Failed to add token support: Transaction reverted: insufficient funds'
+    expect(mockToast.add).toHaveBeenCalledWith(
+      expect.objectContaining({ color: 'error', title: 'Failed to add token support: Transaction reverted: insufficient funds' })
     )
     
     consoleErrorSpy.mockRestore()
@@ -335,8 +335,8 @@ describe('Contract Error Handling', () => {
     await wrapper.vm.checkTokenSupport('0x1234567890123456789012345678901234567890')
     await flushPromises()
 
-    expect(mockToastStore.addErrorToast).toHaveBeenCalledWith(
-      'Failed to check token support status'
+    expect(mockToast.add).toHaveBeenCalledWith(
+      expect.objectContaining({ color: 'error', title: 'Failed to check token support status' })
     )
     
     consoleErrorSpy.mockRestore()
@@ -350,8 +350,8 @@ describe('Contract Error Handling', () => {
     await wrapper.vm.performTransaction()
     await flushPromises()
 
-    expect(mockToastStore.addErrorToast).toHaveBeenCalledWith(
-      'Transaction was cancelled by user'
+    expect(mockToast.add).toHaveBeenCalledWith(
+      expect.objectContaining({ color: 'error', title: 'Transaction was cancelled by user' })
     )
   })
 })
@@ -392,8 +392,8 @@ describe('Gas and Fee Handling', () => {
     await wrapper.vm.performTransaction()
     await flushPromises()
 
-    expect(mockToastStore.addErrorToast).toHaveBeenCalledWith(
-      'Insufficient funds for transaction'
+    expect(mockToast.add).toHaveBeenCalledWith(
+      expect.objectContaining({ color: 'error', title: 'Insufficient funds for transaction' })
     )
   })
 })
@@ -433,8 +433,8 @@ describe('Multi-step Transactions', () => {
       })
     )
 
-    expect(mockToastStore.addSuccessToast).toHaveBeenCalledWith(
-      'Approve and transfer completed successfully'
+    expect(mockToast.add).toHaveBeenCalledWith(
+      expect.objectContaining({ color: 'success', title: 'Approve and transfer completed successfully' })
     )
   })
 
@@ -447,8 +447,8 @@ describe('Multi-step Transactions', () => {
 
     // Should only attempt approve, not transfer
     expect(mockWriteContract).toHaveBeenCalledTimes(1)
-    expect(mockToastStore.addErrorToast).toHaveBeenCalledWith(
-      'Failed to approve token: Approve failed'
+    expect(mockToast.add).toHaveBeenCalledWith(
+      expect.objectContaining({ color: 'error', title: 'Failed to approve token: Approve failed' })
     )
   })
 })
@@ -496,8 +496,8 @@ describe('Contract Events', () => {
     wrapper.vm.handleTokenSupportEvent([eventData])
     await nextTick()
 
-    expect(mockToastStore.addSuccessToast).toHaveBeenCalledWith(
-      'Token support updated via blockchain event'
+    expect(mockToast.add).toHaveBeenCalledWith(
+      expect.objectContaining({ color: 'success', title: 'Token support updated via blockchain event' })
     )
   })
 })
