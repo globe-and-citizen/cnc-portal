@@ -1,0 +1,130 @@
+# AGENTS.md
+
+Guidance for AI coding agents (GitHub Copilot, Cursor, Codex, Claude Code, etc.) working in this repository. Human contributors should read `README.md` and `CONTRIBUTION.md`.
+
+> Detailed area guides live in `.github/copilot-instructions/` (Vue standards, testing patterns, Web3 testing anti-patterns, review checklist, commit conventions). Consult them for specifics; this file is the orientation layer.
+
+## Repository layout
+
+Monorepo without a workspace tool — each subproject has its own `package.json` and `node_modules`. Run commands from the relevant subdirectory.
+
+- `app/` — **active** Vue 3 SPA. TypeScript, Vite, Pinia, wagmi/viem, TanStack Query, Apollo Client, Tailwind v4, Nuxt UI v4. The main user-facing product.
+- `dashboard/` — separate Nuxt app for stats/dashboards (not the SPA).
+- `backend/` — Express + TypeScript REST API, Prisma ORM (PostgreSQL), JWT auth. Bruno collections in `backend/bruno/`.
+- `contract/` — Hardhat + Solidity. Deployed addresses are mirrored from `contract/ignition/deployments/` into `app/src/artifacts/deployed_addresses/chain-*.json` and `dashboard/app/artifacts/deployed_addresses/`.
+- `ponder/` — Ponder indexer.
+- `the-graph/` — The Graph subgraph.
+
+Frontend talks to backend over REST and to chain via wagmi/viem. Backend is a thin auth + data gateway; on-chain governance/contribution logic lives in `contract/`.
+
+## Setup
+
+- Node.js v22.18.0+
+- PostgreSQL (or `docker-compose -f docker-compose.dev.yml up` to get one)
+- Required env vars:
+  - Backend: `SECRET_KEY`, `DATABASE_URL`, `FRONTEND_URL`, `CHAIN_ID`
+  - Frontend: `VITE_APP_BACKEND_URL`, `VITE_APP_NETWORK_ALIAS`, `VITE_APP_ETHERSCAN_URL`
+  - Contracts: `ALCHEMY_API_KEY`, `ALCHEMY_HTTP`, `PRIVATE_KEY`
+
+After cloning: `npm install` in each subproject you'll touch (`app/`, `backend/`, `contract/`, etc.).
+
+## Commands
+
+### Frontend (`app/`)
+
+- `npm run dev` — Vite dev server
+- `npm run build` — `type-check` + `build-only` in parallel
+- `npm run type-check` — `vue-tsc --build tsconfig.app.json --force`
+- `npm run lint` — `eslint . --fix`
+- `npm run format` / `format-check`
+- `npm run test:unit` — Vitest. Single file: `npx vitest run path/to/file.spec.ts`. Single test: append `-t "name"`.
+- `npm run test:e2e` (`:headed`, `:ui`, `:debug`) — Playwright + Synpress. `npm run test:build:cache` prebuilds the MetaMask cache.
+
+### Backend (`backend/`)
+
+- `npm run start` — nodemon on `src/index.ts`
+- `npm run build` — `tsc` + Sentry sourcemap upload (Sentry creds required; run `tsc` directly for plain local builds)
+- `npm run test` / `test:unit` / `test:e2e` — Vitest (separate configs)
+- `npm run test:bruno` — runs the Bruno API collection (auto-runs auth setup)
+- `npx prisma generate` — required after editing the schema
+- `npm run prisma:migrate` / `npm run seed` (`:dev` / `:test` / `:staging` / `:reset`)
+- `npm run lint` / `lint:fix`
+
+### Contracts (`contract/`)
+
+- `npm run compile`, `npm run test` (single file: `npx hardhat test test/Foo.test.ts`), `npm run coverage`
+- `npm run deploy` (localhost) / `npm run deploy:polygon`
+- `npm run validate-upgrade[:polygon|:local]` — OpenZeppelin upgrade safety check
+- `npm run update-abi` — copies ABIs into the frontend
+- `npm run lint` (solhint + eslint), `npm run format`
+
+### Whole stack
+
+- `docker-compose -f docker-compose.dev.yml up` — dev stack including Postgres
+- `docker-compose up` — full stack
+
+## Architecture notes
+
+**Frontend mutation pattern.** Mutations are a pure async function plus a `useXxxMutation` composable wrapping `@tanstack/vue-query`. Use `onSuccess` / `onError` callbacks rather than awaiting + try/catch in components. Surface errors reactively via `UAlert`. Issue #1776 documents the canonical pattern.
+
+**Single source of truth.** Prefer deriving values (computed / selectors) over denormalizing or duplicating state. Don't mirror server data into Pinia stores when a query already owns it — even if the refactor is non-trivial.
+
+**Chain config.** Deployed contract addresses are per-chain JSON files committed under `app/src/artifacts/deployed_addresses/`. After local deploys, `app/package.json` exposes `git:ignore-locally` to keep local-only `chain-31337.json` edits out of commits.
+
+**Auth.** Backend issues JWTs; frontend stores via Pinia.
+
+**Web3 stack.** wagmi + viem for chain reads/writes, Apollo Client for subgraph queries, Safe SDK (`@safe-global/*`) for multisig flows.
+
+## Conventions
+
+- **Conventional Commits with gitmoji**: `<type><emoji>: <subject>` — `feat: ✨ ...`, `fix: 🐛 ...`, `refactor: ♻️ ...`, `docs: 📝 ...`, `test: ✅ ...`, `chore: 🔧 ...`, `perf: ⚡️ ...`, `build: 📦 ...`, `ci: 👷 ...`, `style: 💄 ...`. Same format for issue and PR titles. See `.github/copilot-instructions/commit-conventions.md`.
+- **Atomic commits** — commit each logical change as it lands. Don't squash an entire PR into one commit at the end.
+- Issues, PRs, commit messages, and user-facing UI strings/toasts are **English**.
+- Vue components: `<script setup lang="ts">` Composition API. Pinia for global state, TanStack Query for server state.
+- TypeScript strict mode across frontend and backend.
+
+## Code quality gate (mandatory before pushing)
+
+Every subproject ships its own quality checks and CI runs them. **Before pushing to GitHub, run the full check set in every subproject you touched and make sure all of them pass with zero errors.** Do not push with a failing or skipped check — fix the root cause.
+
+Per-subproject checklist:
+
+### `app/`
+
+```bash
+cd app
+npm run lint
+npm run format-check
+npm run type-check
+npm run test:unit -- --run
+```
+
+### `backend/`
+
+```bash
+cd backend
+npm run lint
+npm run format:check
+npx prisma generate   # if you touched prisma/schema.prisma
+npm run test:unit -- --run
+```
+
+### `contract/`
+
+```bash
+cd contract
+npm run lint           # solhint + eslint
+npm run format-check   # sol + ts
+npm run compile
+npm run test
+```
+
+### `dashboard/`, `ponder/`, `the-graph/`
+
+Run whatever lint / type-check / test scripts the subproject's `package.json` exposes. If a script exists, it must pass.
+
+## Before opening a PR
+
+1. The code quality gate above passed in every touched subproject.
+2. Reviewed against `.github/copilot-instructions/review-checklist.md`.
+3. PR title follows Conventional Commits + gitmoji. Use the template in `.github/pull_request_template.md`.
