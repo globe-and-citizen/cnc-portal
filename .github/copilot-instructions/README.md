@@ -20,7 +20,7 @@ CNC Portal is a Crypto Native Corporation Portal built with:
 
 For every feature create documentation in the `/docs` folder using Markdown files. Follow the existing structure and naming conventions.
 
-Try to keep each feature documentation short, and use mairmaid for diagrams where applicable.
+Try to keep each feature documentation short, and use mermaid for diagrams where applicable.
 
 ### Date Manipulation
 
