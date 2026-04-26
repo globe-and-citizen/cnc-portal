@@ -139,6 +139,14 @@ npm run test
 
 Run whatever lint / type-check / test scripts the subproject's `package.json` exposes. If a script exists, it must pass.
 
+### Docs (if you touched any `.md` agent-instruction file)
+
+```bash
+bash scripts/audit-doc-drift.sh
+```
+
+Greps for known-stale terms, broken intra-doc links, and missing canonical reference files. Runs in CI on every PR that touches agent docs.
+
 ## Before opening a PR
 
 1. The code quality gate above passed in every touched subproject.
