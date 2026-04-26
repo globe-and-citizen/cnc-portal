@@ -83,6 +83,14 @@ After cloning: `npm install` in each subproject you'll touch (`app/`, `backend/`
 - **One responsibility per composable / util.** Name it for what it returns (`useTeamRoster`, `formatTokenAmount`) — if you can't name it cleanly, it's doing too much.
 - **Keep the mutation pattern**: pure async fn (often a util) + `useXxxMutation` composable. Components consume them; they don't orchestrate fetch/mutate logic inline.
 
+**Surface drift proactively.** When you open a file to do work and notice it doesn't follow the rules above (oversized component, inline try/catch around mutations, duplicated util, denormalized state, dead `useToastStore` references, etc.), **don't silently ignore it and don't unilaterally rewrite the whole file either**. Tell the developer:
+
+1. What you noticed (be specific — file + the rule it violates).
+2. Why fixing it now is worth it (concrete DX/reviewability/maintenance benefit, not generic platitudes).
+3. That these are exactly the items reviewers check during PR review per `.github/copilot-instructions/review-checklist.md` — fixing in the same PR avoids a follow-up round.
+
+Then ask whether to do it now (scoped to this PR), defer (open a tracking issue), or skip. Default to *proposing*, not *imposing* — but always raise it.
+
 ## Conventions
 
 - **Conventional Commits with gitmoji**: `<type><emoji>: <subject>` — `feat: ✨ ...`, `fix: 🐛 ...`, `refactor: ♻️ ...`, `docs: 📝 ...`, `test: ✅ ...`, `chore: 🔧 ...`, `perf: ⚡️ ...`, `build: 📦 ...`, `ci: 👷 ...`, `style: 💄 ...`. Same format for issue and PR titles. See `.github/copilot-instructions/commit-conventions.md`.
