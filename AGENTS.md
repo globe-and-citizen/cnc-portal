@@ -3,7 +3,7 @@
 Guidance for AI coding agents (GitHub Copilot, Cursor, Codex, Claude Code, etc.) working in this repository. Human contributors should read `README.md` and `CONTRIBUTION.md`.
 
 > Detailed area guides live in `.github/copilot-instructions/` (Vue standards, testing patterns, Web3 testing anti-patterns, review checklist, commit conventions). Consult them for specifics; this file is the orientation layer.
-
+>
 > **Working todolist**: a gitignored `todolist.md` at the repo root is the shared working list between the dev and any AI agent. Read it at the start of a session, keep it accurate as you work (mark items in_progress / done, add discoveries, remove stale items). Don't commit it. If it doesn't exist, create one with the same convention.
 
 ## Repository layout
