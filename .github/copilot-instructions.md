@@ -1,12 +1,14 @@
 # CNC Portal GitHub Copilot Instructions
 
+> **Primary entry point for AI agents is [`AGENTS.md`](../AGENTS.md) at the repo root.** This file and the [`copilot-instructions/`](./copilot-instructions/) folder hold deeper area-specific guides referenced from there.
+
 The CNC Portal is a multi-component application enabling financial recognition of micro contributions in open-source projects and promoting effective governance tools.
 
 ## Architecture Overview
 
 **Tech Stack:**
 
-- **Frontend** (`app/`): Vue.js 3, TypeScript, Vite, Pinia (state management), Web3 integration with wagmi, tailwind & daisyUI
+- **Frontend** (`app/`): Vue 3, TypeScript, Vite, Pinia, TanStack Query, wagmi/viem, Apollo Client, Tailwind v4, Nuxt UI v4
 - **Backend** (`backend/`): Express.js, TypeScript, Prisma ORM, PostgreSQL, JWT authentication
 - **Contracts** (`contract/`): Hardhat, Solidity, TypeScript testing, Ethereum blockchain integration
 - **Subgraph** (`the-graph/`): The Graph Protocol
@@ -19,14 +21,11 @@ The CNC Portal is a multi-component application enabling financial recognition o
 
 ## Comprehensive Instructions
 
-For detailed coding guidelines and best practices, please refer to the organized instruction files in the [`copilot-instructions/`](./copilot-instructions/) directory:
+For detailed coding guidelines and best practices, see the instruction files in the [`copilot-instructions/`](./copilot-instructions/) directory:
 
 ### Core Development Guidelines
 
 - [Vue.js Component Standards](./copilot-instructions/vue-component-standards.md)
-- [TypeScript Guidelines](./copilot-instructions/typescript-guidelines.md)
-- [Web3 Integration](./copilot-instructions/web3-integration.md)
-- [State Management](./copilot-instructions/state-management.md)
 
 ### Testing Guidelines
 
@@ -35,16 +34,8 @@ For detailed coding guidelines and best practices, please refer to the organized
 - [Web3 Testing](./copilot-instructions/testing-web3.md)
 - [Testing Anti-Patterns](./copilot-instructions/testing-anti-patterns.md)
 
-### Quality & Performance
-
-- [Performance Optimization](./copilot-instructions/performance-optimization.md)
-- [Accessibility](./copilot-instructions/accessibility.md)
-- [Security](./copilot-instructions/security.md)
-- [Error Handling](./copilot-instructions/error-handling.md)
-
 ### Project Specific
 
-- [Repository Patterns](./copilot-instructions/repository-patterns.md)
 - [Review Checklist](./copilot-instructions/review-checklist.md)
 - [Commit Conventions](./copilot-instructions/commit-conventions.md)
 
@@ -120,14 +111,14 @@ For detailed coding guidelines and best practices, please refer to the organized
 
 **Backend:**
 
+- ESLint + Prettier
 - TypeScript compilation
-- Prisma client generation required
-- Comprehensive test suite (163 tests)
-- Note: Linting scripts not currently available
+- Prisma client generation required (`npx prisma generate`)
+- Comprehensive Vitest unit + e2e test suites
 
 **Contracts:**
 
-- Solidity linting and formatting
-- Extensive test coverage (350+ tests)
+- Solhint + ESLint, Prettier (with `prettier-plugin-solidity`)
+- Extensive Hardhat test coverage
 - TypeScript for test files
 - Gas usage reporting
