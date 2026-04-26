@@ -75,6 +75,14 @@ After cloning: `npm install` in each subproject you'll touch (`app/`, `backend/`
 
 **Web3 stack.** wagmi + viem for chain reads/writes, Apollo Client for subgraph queries, Safe SDK (`@safe-global/*`) for multisig flows.
 
+**Frontend authoring — keep components small and readable (DX-first).** A component should fit on a screen and read like a description of the UI, not like a script. Whenever you edit a Vue file, take it as an opportunity to make it leaner.
+
+- **Extract logic, not just markup.** Push pure data shaping into `app/src/utils/` (utility functions) and stateful/reactive logic into `app/src/composables/` (`useXxx`). The component is left declaring *what* it shows — the *how* lives outside.
+- **Search before you create.** Before adding a new utility, grep `app/src/utils/` for one that already does the job (or can be generalized). Same rule for composables in `app/src/composables/` — reuse `useXxxMutation`, `useSiwe`, formatters, address/amount helpers, etc. rather than reinventing them. Prefer extending an existing helper to introducing a near-duplicate.
+- **Split when a component grows.** Signs that it's time to refactor: the `<script setup>` block is longer than the `<template>`, multiple unrelated `ref`s/`watch`es, more than one `try/catch`, repeated bits of logic that could be a composable, or formatting/derivation work inline that belongs in a util.
+- **One responsibility per composable / util.** Name it for what it returns (`useTeamRoster`, `formatTokenAmount`) — if you can't name it cleanly, it's doing too much.
+- **Keep the mutation pattern**: pure async fn (often a util) + `useXxxMutation` composable. Components consume them; they don't orchestrate fetch/mutate logic inline.
+
 ## Conventions
 
 - **Conventional Commits with gitmoji**: `<type><emoji>: <subject>` — `feat: ✨ ...`, `fix: 🐛 ...`, `refactor: ♻️ ...`, `docs: 📝 ...`, `test: ✅ ...`, `chore: 🔧 ...`, `perf: ⚡️ ...`, `build: 📦 ...`, `ci: 👷 ...`, `style: 💄 ...`. Same format for issue and PR titles. See `.github/copilot-instructions/commit-conventions.md`.
