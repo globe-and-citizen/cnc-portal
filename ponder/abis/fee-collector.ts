@@ -1,11 +1,61 @@
-export const CASH_REMUNERATION_EIP712_ABI = [
+export const FEE_COLLECTOR_ABI = [
   {
     anonymous: false,
     inputs: [
       {
         indexed: true,
         internalType: "address",
-        name: "depositor",
+        name: "previous",
+        type: "address",
+      },
+      {
+        indexed: true,
+        internalType: "address",
+        name: "current",
+        type: "address",
+      },
+    ],
+    name: "FeeBeneficiaryUpdated",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "string",
+        name: "contractType",
+        type: "string",
+      },
+      {
+        indexed: false,
+        internalType: "uint16",
+        name: "feeBps",
+        type: "uint16",
+      },
+    ],
+    name: "FeeConfigUpdated",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "string",
+        name: "contractType",
+        type: "string",
+      },
+      {
+        indexed: true,
+        internalType: "address",
+        name: "payer",
+        type: "address",
+      },
+      {
+        indexed: true,
+        internalType: "address",
+        name: "token",
         type: "address",
       },
       {
@@ -15,13 +65,7 @@ export const CASH_REMUNERATION_EIP712_ABI = [
         type: "uint256",
       },
     ],
-    name: "Deposited",
-    type: "event",
-  },
-  {
-    anonymous: false,
-    inputs: [],
-    name: "EIP712DomainChanged",
+    name: "FeePaid",
     type: "event",
   },
   {
@@ -43,63 +87,6 @@ export const CASH_REMUNERATION_EIP712_ABI = [
       {
         indexed: true,
         internalType: "address",
-        name: "newOfficerAddress",
-        type: "address",
-      },
-    ],
-    name: "OfficerAddressUpdated",
-    type: "event",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: true,
-        internalType: "address",
-        name: "ownerAddress",
-        type: "address",
-      },
-      {
-        indexed: false,
-        internalType: "uint256",
-        name: "amount",
-        type: "uint256",
-      },
-    ],
-    name: "OwnerTreasuryWithdrawNative",
-    type: "event",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: true,
-        internalType: "address",
-        name: "ownerAddress",
-        type: "address",
-      },
-      {
-        indexed: true,
-        internalType: "address",
-        name: "tokenAddress",
-        type: "address",
-      },
-      {
-        indexed: false,
-        internalType: "uint256",
-        name: "amount",
-        type: "uint256",
-      },
-    ],
-    name: "OwnerTreasuryWithdrawToken",
-    type: "event",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: true,
-        internalType: "address",
         name: "previousOwner",
         type: "address",
       },
@@ -111,19 +98,6 @@ export const CASH_REMUNERATION_EIP712_ABI = [
       },
     ],
     name: "OwnershipTransferred",
-    type: "event",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: false,
-        internalType: "address",
-        name: "account",
-        type: "address",
-      },
-    ],
-    name: "Paused",
     type: "event",
   },
   {
@@ -156,48 +130,15 @@ export const CASH_REMUNERATION_EIP712_ABI = [
     anonymous: false,
     inputs: [
       {
-        indexed: false,
+        indexed: true,
         internalType: "address",
-        name: "account",
+        name: "recipient",
         type: "address",
       },
-    ],
-    name: "Unpaused",
-    type: "event",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: true,
-        internalType: "bytes32",
-        name: "signatureHash",
-        type: "bytes32",
-      },
-    ],
-    name: "WageClaimDisabled",
-    type: "event",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: true,
-        internalType: "bytes32",
-        name: "signatureHash",
-        type: "bytes32",
-      },
-    ],
-    name: "WageClaimEnabled",
-    type: "event",
-  },
-  {
-    anonymous: false,
-    inputs: [
       {
         indexed: true,
         internalType: "address",
-        name: "withdrawer",
+        name: "token",
         type: "address",
       },
       {
@@ -207,7 +148,7 @@ export const CASH_REMUNERATION_EIP712_ABI = [
         type: "uint256",
       },
     ],
-    name: "Withdraw",
+    name: "TokenWithdrawn",
     type: "event",
   },
   {
@@ -216,13 +157,7 @@ export const CASH_REMUNERATION_EIP712_ABI = [
       {
         indexed: true,
         internalType: "address",
-        name: "withdrawer",
-        type: "address",
-      },
-      {
-        indexed: true,
-        internalType: "address",
-        name: "tokenAddress",
+        name: "recipient",
         type: "address",
       },
       {
@@ -232,7 +167,7 @@ export const CASH_REMUNERATION_EIP712_ABI = [
         type: "uint256",
       },
     ],
-    name: "WithdrawToken",
+    name: "Withdrawn",
     type: "event",
   },
 ] as const

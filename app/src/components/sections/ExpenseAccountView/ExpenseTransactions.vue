@@ -1,19 +1,19 @@
 <template>
-  <UCard class="w-full" data-test="cash-remuneration-transactions">
+  <UCard class="w-full" data-test="expense-transactions">
     <template #header>
       <div class="flex items-center justify-between">
-        <span>Cash Remuneration Transactions History</span>
+        <span>Expense Account Transactions History</span>
         <div class="flex items-center gap-2">
           <CustomDatePicker
             v-model="dateRange"
             class="min-w-[140px]"
-            data-test-prefix="cash-remuneration-transaction-history"
+            data-test-prefix="expense-transaction-history"
           />
           <USelect
             v-model="selectedType"
             :items="typeOptions"
             class="min-w-[160px]"
-            data-test="cash-remuneration-transaction-history-type-filter"
+            data-test="expense-transaction-history-type-filter"
           />
         </div>
       </div>
@@ -29,7 +29,7 @@
       </template>
 
       <template #type-cell="{ row: { original: row } }">
-        <UBadge :color="getCashRemunerationTransactionTypeColor(row.type)" variant="soft">
+        <UBadge :color="getExpenseTransactionTypeColor(row.type)" variant="soft">
           {{ row.type }}
         </UBadge>
       </template>
@@ -62,11 +62,11 @@ import { useQuery } from '@vue/apollo-composable'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import CustomDatePicker from '@/components/CustomDatePicker.vue'
 import { useCurrencyStore } from '@/stores/currencyStore'
-import type { CashRemunerationTransaction } from '@/types/transactions'
+import type { ExpenseTransaction } from '@/types/transactions'
 import {
-  buildRawCashRemunerationTransactions,
-  formatCashRemunerationTransactionDate,
-  getCashRemunerationTransactionTypeColor,
+  buildRawExpenseTransactions,
+  formatExpenseTransactionDate,
+  getExpenseTransactionTypeColor,
   formatCryptoAmount,
   formatCurrencyShort,
   formatEtherUtil,
@@ -75,20 +75,20 @@ import {
   tokenSymbol
 } from '@/utils'
 import { formatDateShort } from '@/utils/dayUtils'
+import { GET_EXPENSE_EVENTS } from '@/queries/ponder/expense.queries'
 import { GET_INCOMING_BANK_TOKEN_TRANSFERS } from '@/queries/ponder/bank.queries'
-import { GET_CASH_REMUNERATION_EVENTS } from '@/queries/ponder/cash-remuneration.queries'
 import type { IncomingBankTokenTransfersQuery } from '@/types/ponder/bank'
-import type { CashRemunerationEventsQuery } from '@/types/ponder/cash-remuneration'
+import type { ExpenseEventsQuery } from '@/types/ponder/expense'
 
 const props = defineProps<{
-  cashRemunerationAddress: Address
+  expenseAddress: Address
 }>()
 
 const currencyStore = useCurrencyStore()
-const contractAddress = computed(() => props.cashRemunerationAddress.toLowerCase())
+const contractAddress = computed(() => props.expenseAddress.toLowerCase())
 
-const { result, error, loading: cashRemunerationLoading } = useQuery<CashRemunerationEventsQuery>(
-  GET_CASH_REMUNERATION_EVENTS,
+const { result, error, loading: expenseLoading } = useQuery<ExpenseEventsQuery>(
+  GET_EXPENSE_EVENTS,
   {
     contractAddress,
     limit: 500
@@ -117,7 +117,7 @@ const {
   }
 )
 
-const loading = computed(() => cashRemunerationLoading.value || incomingTokenTransfersLoading.value)
+const loading = computed(() => expenseLoading.value || incomingTokenTransfersLoading.value)
 
 const parseAmount = (value: string): bigint => {
   try {
@@ -128,13 +128,13 @@ const parseAmount = (value: string): bigint => {
 }
 
 const rawTransactions = computed(() =>
-  buildRawCashRemunerationTransactions(result.value, incomingTokenTransfersResult.value)
+  buildRawExpenseTransactions(result.value, incomingTokenTransfersResult.value)
 )
 
-const transactions = computed<CashRemunerationTransaction[]>(() =>
+const transactions = computed<ExpenseTransaction[]>(() =>
   rawTransactions.value.map((row) => ({
     txHash: row.txHash,
-    date: formatCashRemunerationTransactionDate(Number(row.timestamp)),
+    date: formatExpenseTransactionDate(Number(row.timestamp)),
     from: row.from,
     to: row.to,
     amount: formatEtherUtil(parseAmount(row.amount), row.tokenAddress),
@@ -148,7 +148,7 @@ const transactions = computed<CashRemunerationTransaction[]>(() =>
 const dateRange = ref<[Date, Date] | null>(null)
 const selectedType = ref('all')
 
-type CashRemunerationTransactionRow = CashRemunerationTransaction & {
+type ExpenseTransactionRow = ExpenseTransaction & {
   amount: string | number
   token: string
   tokenAddress: string
@@ -167,7 +167,7 @@ const resolveTokenIdByAddress = (tokenAddress: string): TokenId | null => {
   return knownId ?? null
 }
 
-const enrichedTransactions = computed<CashRemunerationTransactionRow[]>(() => {
+const enrichedTransactions = computed<ExpenseTransactionRow[]>(() => {
   return transactions.value.map((tx) => {
     const tokenAddress = String(tx.tokenAddress ?? '').toLowerCase()
     const matchedToken = currencyStore.supportedTokens.find(
@@ -232,7 +232,7 @@ const columns = computed(() => [
 
 watch([error, incomingTokenTransfersError], ([newError, newIncomingTransfersError]) => {
   if (newError || newIncomingTransfersError) {
-    log.error('Ponder cash remuneration transaction query error:', newError ?? newIncomingTransfersError)
+    log.error('Ponder expense transaction query error:', newError ?? newIncomingTransfersError)
   }
 })
 </script>

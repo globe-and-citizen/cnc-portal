@@ -1,17 +1,15 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { mount, type VueWrapper } from '@vue/test-utils'
 import { defineComponent, nextTick } from 'vue'
 import type { Address } from 'viem'
-import CashRemunerationTransactions from '../CashRemunerationTransactions.vue'
-import { mockUseApolloQuery } from '@/tests/mocks/composables.mock'
-import { mockLog } from '@/tests/mocks/utils.mock'
-import * as stores from '@/stores'
-
+import * as utils from '@/utils'
+import ExpenseTransactions from '../ExpenseTransactions.vue'
 
 const { apolloState, mockUseQuery, mockCurrencyStore, mockGetTokenPrice } = vi.hoisted(() => {
   const apolloState = {
-    cashRemunerationQueryResult: null as unknown as { value: unknown },
-    cashRemunerationQueryError: null as unknown as { value: Error | null },
-    cashRemunerationQueryLoading: null as unknown as { value: boolean },
+    expenseQueryResult: null as unknown as { value: unknown },
+    expenseQueryError: null as unknown as { value: Error | null },
+    expenseQueryLoading: null as unknown as { value: boolean },
     incomingTransfersQueryResult: null as unknown as { value: unknown },
     incomingTransfersQueryError: null as unknown as { value: Error | null },
     incomingTransfersQueryLoading: null as unknown as { value: boolean }
@@ -38,9 +36,9 @@ const { apolloState, mockUseQuery, mockCurrencyStore, mockGetTokenPrice } = vi.h
 
 vi.mock('@vue/apollo-composable', async () => {
   const { ref } = await import('vue')
-  apolloState.cashRemunerationQueryResult = ref()
-  apolloState.cashRemunerationQueryError = ref<Error | null>(null)
-  apolloState.cashRemunerationQueryLoading = ref(false)
+  apolloState.expenseQueryResult = ref()
+  apolloState.expenseQueryError = ref<Error | null>(null)
+  apolloState.expenseQueryLoading = ref(false)
   apolloState.incomingTransfersQueryResult = ref()
   apolloState.incomingTransfersQueryError = ref<Error | null>(null)
   apolloState.incomingTransfersQueryLoading = ref(false)
@@ -54,9 +52,9 @@ vi.mock('@vue/apollo-composable', async () => {
     }
 
     return {
-      result: apolloState.cashRemunerationQueryResult,
-      error: apolloState.cashRemunerationQueryError,
-      loading: apolloState.cashRemunerationQueryLoading
+      result: apolloState.expenseQueryResult,
+      error: apolloState.expenseQueryError,
+      loading: apolloState.expenseQueryLoading
     }
   })
   return { useQuery: mockUseQuery }
@@ -74,12 +72,11 @@ const UCardStub = defineComponent({
 const UTableStub = defineComponent({
   name: 'UTable',
   props: {
-    transactions: { type: Array, required: false },
-    title: { type: String, required: false },
-    currencies: { type: Array, required: false },
-    showReceiptModal: { type: Boolean, required: false }
+    data: { type: Array, required: false },
+    columns: { type: Array, required: false },
+    loading: { type: Boolean, required: false }
   },
-  template: '<div data-test="history-stub" />'
+  template: '<div data-test="expense-table"></div>'
 })
 
 const USelectStub = defineComponent({
@@ -111,52 +108,56 @@ const UBadgeStub = defineComponent({
   template: '<span><slot /></span>'
 })
 
-const CONTRACT_ADDRESS = '0x1111111111111111111111111111111111111111' as Address
+const EXPENSE_ADDRESS = '0x1111111111111111111111111111111111111111' as Address
 const USDC_ADDRESS = '0xa3492d046095affe351cfac15de9b86425e235db'
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 
-const buildCashRemunerationQueryResult = () => ({
-  cashRemunerationDeposits: {
+const buildExpenseQueryResult = () => ({
+  expenseDeposits: {
     items: [
       {
         id: '0xdeposithash-0',
-        contractAddress: CONTRACT_ADDRESS,
+        contractAddress: EXPENSE_ADDRESS,
         depositor: '0x2222222222222222222222222222222222222222',
         amount: '1000000000000000000',
         timestamp: 1_700_000_000
       }
     ]
   },
-  cashRemunerationWithdraws: {
+  expenseTokenDeposits: {
+    items: []
+  },
+  expenseTransfers: {
     items: [
       {
-        id: '0xwithdrawhash-0',
-        contractAddress: CONTRACT_ADDRESS,
+        id: '0xtransferhash-0',
+        contractAddress: EXPENSE_ADDRESS,
         withdrawer: '0x3333333333333333333333333333333333333333',
-        amount: '2000000000000000000',
+        to: '0x4444444444444444444444444444444444444444',
+        amount: '5000000',
         timestamp: 1_700_000_100
       }
     ]
   },
-  cashRemunerationWithdrawTokens: {
+  expenseTokenTransfers: {
     items: []
   },
-  cashRemunerationWageClaims: {
+  expenseApprovals: {
     items: []
   },
-  cashRemunerationOwnerTreasuryWithdrawNatives: {
+  expenseOwnerTreasuryWithdrawNatives: {
     items: []
   },
-  cashRemunerationOwnerTreasuryWithdrawTokens: {
+  expenseOwnerTreasuryWithdrawTokens: {
     items: []
   },
-  cashRemunerationOfficerUpdateds: {
+  expenseTokenSupportAddeds: {
     items: []
   },
-  cashRemunerationTokenSupportAddeds: {
+  expenseTokenSupportRemoveds: {
     items: []
   },
-  cashRemunerationTokenSupportRemoveds: {
+  expenseTokenAddressChangeds: {
     items: []
   }
 })
@@ -168,7 +169,7 @@ const buildIncomingTransfersQueryResult = () => ({
         id: '0xbankfundinghash-0',
         contractAddress: '0x9999999999999999999999999999999999999999',
         sender: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
-        to: CONTRACT_ADDRESS,
+        to: EXPENSE_ADDRESS,
         token: USDC_ADDRESS,
         amount: '1000000',
         timestamp: 1_700_000_050
@@ -177,10 +178,10 @@ const buildIncomingTransfersQueryResult = () => ({
   }
 })
 
-const createWrapper = (cashRemunerationAddress: Address = CONTRACT_ADDRESS): VueWrapper =>
-  mount(CashRemunerationTransactions, {
+const createWrapper = (expenseAddress: Address = EXPENSE_ADDRESS): VueWrapper =>
+  mount(ExpenseTransactions, {
     props: {
-      cashRemunerationAddress
+      expenseAddress
     },
     global: {
       stubs: {
@@ -194,12 +195,14 @@ const createWrapper = (cashRemunerationAddress: Address = CONTRACT_ADDRESS): Vue
     }
   })
 
-describe('CashRemunerationTransactions', () => {
+describe('ExpenseTransactions', () => {
+  let wrapper: VueWrapper
+
   beforeEach(() => {
     vi.clearAllMocks()
-    apolloState.cashRemunerationQueryResult.value = buildCashRemunerationQueryResult()
-    apolloState.cashRemunerationQueryError.value = null
-    apolloState.cashRemunerationQueryLoading.value = false
+    apolloState.expenseQueryResult.value = buildExpenseQueryResult()
+    apolloState.expenseQueryError.value = null
+    apolloState.expenseQueryLoading.value = false
     apolloState.incomingTransfersQueryResult.value = buildIncomingTransfersQueryResult()
     apolloState.incomingTransfersQueryError.value = null
     apolloState.incomingTransfersQueryLoading.value = false
@@ -221,11 +224,10 @@ describe('CashRemunerationTransactions', () => {
       displayedTransactions: Array<{ type: string }>
       columns: Array<{ header: string }>
     }
-    mockUseApolloQuery.error.value = null
 
     expect(vm.displayedTransactions).toHaveLength(3)
     expect(vm.displayedTransactions.map((row) => row.type)).toEqual(
-      expect.arrayContaining(['deposit', 'tokenDeposit', 'withdraw'])
+      expect.arrayContaining(['deposit', 'tokenDeposit', 'transfer'])
     )
     expect(vm.columns.at(-1)?.header).toBe('Value (USD)')
   })
@@ -233,40 +235,19 @@ describe('CashRemunerationTransactions', () => {
   it('passes loading state to UTable', () => {
     apolloState.incomingTransfersQueryLoading.value = true
 
-  it('maps transactions and passes props to GenericTransactionHistory', () => {
-    const wrapper = createWrapper()
-    const history = wrapper.findComponent(GenericTransactionHistoryStub)
-
-    expect(history.exists()).toBe(true)
-    expect(history.props('title')).toBe('Cash Remuneration Transactions History')
-    expect(history.props('showReceiptModal')).toBe(true)
-    expect(history.props('currencies')).toEqual(['USD'])
-    expect(history.props('transactions')).toEqual([
-      expect.objectContaining({
-        txHash: '0xhash1',
-        from: '0xfrom',
-        to: '0xto',
-        amount: '1.0',
-        token: 'ETH',
-        type: 'withdraw'
-      })
-    ])
+    wrapper = createWrapper()
+    const vm = wrapper.vm as unknown as { loading: boolean }
+    expect(vm.loading).toBe(true)
   })
 
-  it('adds local currency when it is not USD', () => {
-    vi.spyOn(stores, 'useCurrencyStore').mockReturnValue({
-      localCurrency: { code: 'EUR' }
-    } as unknown as ReturnType<typeof stores.useCurrencyStore>)
+  it('filters displayed rows by selected type', async () => {
+    wrapper = createWrapper()
+    const vm = wrapper.vm as unknown as {
+      selectedType: string
+      displayedTransactions: Array<{ type: string }>
+    }
 
-    const wrapper = createWrapper()
-    const history = wrapper.findComponent(GenericTransactionHistoryStub)
-    expect(history.props('currencies')).toEqual(['USD', 'EUR'])
-  })
-
-  it('logs when apollo query returns an error', async () => {
-    createWrapper()
-
-    mockUseApolloQuery.error.value = new Error('Apollo error')
+    vm.selectedType = 'deposit'
     await nextTick()
 
     expect(vm.displayedTransactions).toHaveLength(1)
@@ -286,58 +267,65 @@ describe('CashRemunerationTransactions', () => {
     expect(vm.displayedTransactions).toHaveLength(0)
   })
 
-  it('uses disabled query option when contract address is empty', () => {
+  it('uses disabled query option when expense address is empty', () => {
     wrapper = createWrapper('' as Address)
 
-    const cashQueryVariables = mockUseQuery.mock.calls[0]?.[1] as {
+    const expenseQueryVariables = mockUseQuery.mock.calls[0]?.[1] as {
       contractAddress: { value: string }
     }
+    const expenseQueryOptions = mockUseQuery.mock.calls[0]?.[2] as { enabled: { value: boolean } }
 
-    const incomingQueryVariables = mockUseQuery.mock.calls[1]?.[1] as {
+    const incomingTransfersVariables = mockUseQuery.mock.calls[1]?.[1] as {
       toAddress: { value: string }
     }
-    const incomingQueryOptions = mockUseQuery.mock.calls[1]?.[2] as { enabled: { value: boolean } }
+    const incomingTransfersOptions = mockUseQuery.mock.calls[1]?.[2] as {
+      enabled: { value: boolean }
+    }
 
-    expect(cashQueryVariables.contractAddress.value).toBe('')
-
-    expect(incomingQueryVariables.toAddress.value).toBe('')
-    expect(incomingQueryOptions.enabled.value).toBe(false)
+    expect(expenseQueryVariables.contractAddress.value).toBe('')
+    expect(expenseQueryOptions.enabled.value).toBe(false)
+    expect(incomingTransfersVariables.toAddress.value).toBe('')
+    expect(incomingTransfersOptions.enabled.value).toBe(false)
   })
 
   it('handles token resolution fallback and invalid amounts', () => {
     mockCurrencyStore.supportedTokens = []
     mockGetTokenPrice.mockImplementation((tokenId: string) => (tokenId === 'native' ? 3 : 0))
-    apolloState.cashRemunerationQueryResult.value = {
-      cashRemunerationDeposits: {
+    apolloState.expenseQueryResult.value = {
+      expenseDeposits: {
         items: [
           {
             id: '0xnativedeposit-0',
-            contractAddress: CONTRACT_ADDRESS,
+            contractAddress: EXPENSE_ADDRESS,
             depositor: '0x2222222222222222222222222222222222222222',
             amount: '1000000000000000000',
             timestamp: 1_700_000_500
           }
         ]
       },
-      cashRemunerationWithdraws: { items: [] },
-      cashRemunerationWithdrawTokens: {
+      expenseTokenDeposits: {
+        items: []
+      },
+      expenseTransfers: { items: [] },
+      expenseTokenTransfers: {
         items: [
           {
             id: '0xunknowntx-0',
-            contractAddress: CONTRACT_ADDRESS,
-            withdrawer: '0x4444444444444444444444444444444444444444',
-            tokenAddress: '0x9999999999999999999999999999999999999999',
+            contractAddress: EXPENSE_ADDRESS,
+            withdrawer: '0x3333333333333333333333333333333333333333',
+            to: '0x4444444444444444444444444444444444444444',
+            token: '0x9999999999999999999999999999999999999999',
             amount: 'not-a-number',
             timestamp: 1_700_000_600
           }
         ]
       },
-      cashRemunerationWageClaims: { items: [] },
-      cashRemunerationOwnerTreasuryWithdrawNatives: { items: [] },
-      cashRemunerationOwnerTreasuryWithdrawTokens: { items: [] },
-      cashRemunerationOfficerUpdateds: { items: [] },
-      cashRemunerationTokenSupportAddeds: { items: [] },
-      cashRemunerationTokenSupportRemoveds: { items: [] }
+      expenseApprovals: { items: [] },
+      expenseOwnerTreasuryWithdrawNatives: { items: [] },
+      expenseOwnerTreasuryWithdrawTokens: { items: [] },
+      expenseTokenSupportAddeds: { items: [] },
+      expenseTokenSupportRemoveds: { items: [] },
+      expenseTokenAddressChangeds: { items: [] }
     }
 
     wrapper = createWrapper()
@@ -349,6 +337,7 @@ describe('CashRemunerationTransactions', () => {
         token: string
       }>
     }
+
     const nativeRow = vm.displayedTransactions.find((row) => row.txHash === '0xnativedeposit')
     const unknownRow = vm.displayedTransactions.find((row) => row.txHash === '0xunknowntx')
 
@@ -356,5 +345,22 @@ describe('CashRemunerationTransactions', () => {
     expect(unknownRow?.amount).toBe('0')
     expect(unknownRow?.amountLocal).toBe(0)
     expect(unknownRow?.token).toBe('ERC20')
+  })
+
+  it('logs query errors', async () => {
+    const logErrorSpy = vi.spyOn(utils.log, 'error')
+    wrapper = createWrapper()
+
+    const error = new Error('expense query failed')
+    apolloState.expenseQueryError.value = error
+    await nextTick()
+
+    expect(logErrorSpy).toHaveBeenCalledWith('Ponder expense transaction query error:', error)
+
+    apolloState.expenseQueryError.value = null
+    apolloState.incomingTransfersQueryError.value = error
+    await nextTick()
+
+    expect(logErrorSpy).toHaveBeenCalledTimes(2)
   })
 })
