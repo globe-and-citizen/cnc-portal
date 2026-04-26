@@ -1,11 +1,8 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { mount, type VueWrapper } from '@vue/test-utils'
 import { defineComponent, nextTick } from 'vue'
 import type { Address } from 'viem'
 import CashRemunerationTransactions from '../CashRemunerationTransactions.vue'
-import { mockUseApolloQuery } from '@/tests/mocks/composables.mock'
-import { mockLog } from '@/tests/mocks/utils.mock'
-import * as stores from '@/stores'
-
 
 const { apolloState, mockUseQuery, mockCurrencyStore, mockGetTokenPrice } = vi.hoisted(() => {
   const apolloState = {
@@ -74,12 +71,11 @@ const UCardStub = defineComponent({
 const UTableStub = defineComponent({
   name: 'UTable',
   props: {
-    transactions: { type: Array, required: false },
-    title: { type: String, required: false },
-    currencies: { type: Array, required: false },
-    showReceiptModal: { type: Boolean, required: false }
+    data: { type: Array, required: false },
+    columns: { type: Array, required: false },
+    loading: { type: Boolean, required: false }
   },
-  template: '<div data-test="history-stub" />'
+  template: '<div data-test="cash-remuneration-table"></div>'
 })
 
 const USelectStub = defineComponent({
@@ -195,6 +191,8 @@ const createWrapper = (cashRemunerationAddress: Address = CONTRACT_ADDRESS): Vue
   })
 
 describe('CashRemunerationTransactions', () => {
+  let wrapper: VueWrapper
+
   beforeEach(() => {
     vi.clearAllMocks()
     apolloState.cashRemunerationQueryResult.value = buildCashRemunerationQueryResult()
@@ -221,7 +219,6 @@ describe('CashRemunerationTransactions', () => {
       displayedTransactions: Array<{ type: string }>
       columns: Array<{ header: string }>
     }
-    mockUseApolloQuery.error.value = null
 
     expect(vm.displayedTransactions).toHaveLength(3)
     expect(vm.displayedTransactions.map((row) => row.type)).toEqual(
@@ -233,40 +230,19 @@ describe('CashRemunerationTransactions', () => {
   it('passes loading state to UTable', () => {
     apolloState.incomingTransfersQueryLoading.value = true
 
-  it('maps transactions and passes props to GenericTransactionHistory', () => {
-    const wrapper = createWrapper()
-    const history = wrapper.findComponent(GenericTransactionHistoryStub)
-
-    expect(history.exists()).toBe(true)
-    expect(history.props('title')).toBe('Cash Remuneration Transactions History')
-    expect(history.props('showReceiptModal')).toBe(true)
-    expect(history.props('currencies')).toEqual(['USD'])
-    expect(history.props('transactions')).toEqual([
-      expect.objectContaining({
-        txHash: '0xhash1',
-        from: '0xfrom',
-        to: '0xto',
-        amount: '1.0',
-        token: 'ETH',
-        type: 'withdraw'
-      })
-    ])
+    wrapper = createWrapper()
+    const vm = wrapper.vm as unknown as { loading: boolean }
+    expect(vm.loading).toBe(true)
   })
 
-  it('adds local currency when it is not USD', () => {
-    vi.spyOn(stores, 'useCurrencyStore').mockReturnValue({
-      localCurrency: { code: 'EUR' }
-    } as unknown as ReturnType<typeof stores.useCurrencyStore>)
+  it('filters displayed rows by selected type', async () => {
+    wrapper = createWrapper()
+    const vm = wrapper.vm as unknown as {
+      selectedType: string
+      displayedTransactions: Array<{ type: string }>
+    }
 
-    const wrapper = createWrapper()
-    const history = wrapper.findComponent(GenericTransactionHistoryStub)
-    expect(history.props('currencies')).toEqual(['USD', 'EUR'])
-  })
-
-  it('logs when apollo query returns an error', async () => {
-    createWrapper()
-
-    mockUseApolloQuery.error.value = new Error('Apollo error')
+    vm.selectedType = 'deposit'
     await nextTick()
 
     expect(vm.displayedTransactions).toHaveLength(1)

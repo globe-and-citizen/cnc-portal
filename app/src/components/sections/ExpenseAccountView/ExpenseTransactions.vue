@@ -87,7 +87,11 @@ const props = defineProps<{
 const currencyStore = useCurrencyStore()
 const contractAddress = computed(() => props.expenseAddress.toLowerCase())
 
-const { result, error, loading: expenseLoading } = useQuery<ExpenseEventsQuery>(
+const {
+  result,
+  error,
+  loading: expenseLoading
+} = useQuery<ExpenseEventsQuery>(
   GET_EXPENSE_EVENTS,
   {
     contractAddress,

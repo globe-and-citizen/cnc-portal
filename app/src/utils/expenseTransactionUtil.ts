@@ -18,7 +18,8 @@ export const buildRawExpenseTransactions = (
   const transfers = expenseResult?.expenseTransfers?.items ?? []
   const tokenTransfers = expenseResult?.expenseTokenTransfers?.items ?? []
   const approvals = expenseResult?.expenseApprovals?.items ?? []
-  const ownerTreasuryWithdrawNatives = expenseResult?.expenseOwnerTreasuryWithdrawNatives?.items ?? []
+  const ownerTreasuryWithdrawNatives =
+    expenseResult?.expenseOwnerTreasuryWithdrawNatives?.items ?? []
   const ownerTreasuryWithdrawTokens = expenseResult?.expenseOwnerTreasuryWithdrawTokens?.items ?? []
   const tokenSupportAddeds = expenseResult?.expenseTokenSupportAddeds?.items ?? []
   const tokenSupportRemoveds = expenseResult?.expenseTokenSupportRemoveds?.items ?? []
@@ -131,6 +132,7 @@ export const getExpenseTransactionTypeColor = (type: string): UBadgeColor => {
   if (normalizedType.includes('deposit')) return 'success'
   if (normalizedType.includes('transfer') || normalizedType.includes('withdraw')) return 'info'
   if (normalizedType.includes('approval')) return 'warning'
-  if (normalizedType.includes('support') || normalizedType.includes('addresschanged')) return 'primary'
+  if (normalizedType.includes('support') || normalizedType.includes('addresschanged'))
+    return 'primary'
   return 'neutral'
 }

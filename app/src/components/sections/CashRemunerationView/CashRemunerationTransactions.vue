@@ -87,7 +87,11 @@ const props = defineProps<{
 const currencyStore = useCurrencyStore()
 const contractAddress = computed(() => props.cashRemunerationAddress.toLowerCase())
 
-const { result, error, loading: cashRemunerationLoading } = useQuery<CashRemunerationEventsQuery>(
+const {
+  result,
+  error,
+  loading: cashRemunerationLoading
+} = useQuery<CashRemunerationEventsQuery>(
   GET_CASH_REMUNERATION_EVENTS,
   {
     contractAddress,
@@ -232,7 +236,10 @@ const columns = computed(() => [
 
 watch([error, incomingTokenTransfersError], ([newError, newIncomingTransfersError]) => {
   if (newError || newIncomingTransfersError) {
-    log.error('Ponder cash remuneration transaction query error:', newError ?? newIncomingTransfersError)
+    log.error(
+      'Ponder cash remuneration transaction query error:',
+      newError ?? newIncomingTransfersError
+    )
   }
 })
 </script>
