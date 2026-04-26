@@ -1,301 +1,105 @@
 # Testing Overview
 
-## Testing Philosophy
+> **Canonical references in the codebase** (read these instead of trusting outdated snippets):
+>
+> - Component spec — `app/src/components/__tests__/SelectComponent.spec.ts`
+> - Composable spec with `vi.hoisted` — `app/src/composables/__tests__/useContractFunction.spec.ts`
+> - Web3 / wagmi spec — `app/src/__tests__/wagmi.spec.ts`
+> - Pure-utility spec — `app/src/utils/__tests__/currencyUtil.spec.ts`
+> - Mutation + query spec — `app/src/queries/__tests__/weeklyClaim.queries.spec.ts`
 
-The CNC Portal project follows a comprehensive testing strategy that ensures code reliability, maintainability, and user experience quality. Our testing approach prioritizes behavior-driven testing over implementation details.
+This file documents _principles_. When you need to write a new test, copy the structure from the closest canonical reference above — those files are the source of truth and stay correct because CI runs them.
 
-## Testing Framework Stack
+## Philosophy
 
-- **Unit & Component Testing**: Vitest
-- **Test Utilities**: Vue Test Utils
-- **Mocking**: Vitest mocking system
-- **E2E Testing**: Playwright
-- **Coverage**: Built-in Vitest coverage
+Behavior over implementation. Tests should fail when the user-visible contract breaks, not when an internal variable is renamed.
 
-## Test File Organization
+## Stack
 
-### Directory Structure
+- **Unit & component**: Vitest
+- **Test utilities**: `@vue/test-utils`
+- **Mocking**: Vitest (`vi.hoisted`, `vi.mock`)
+- **E2E**: Playwright (+ Synpress for wallet flows)
+- **Coverage**: Vitest istanbul
+
+## File layout
+
+Co-locate tests with the code they cover, in `__tests__/`:
 
 ```text
-src/
-├── components/
-│   ├── ComponentName.vue
-│   └── __tests__/
-│       ├── ComponentName.spec.ts          # Basic functionality tests
-│       └── ComponentName.advanced.spec.ts # Complex features & edge cases
-├── composables/
-│   ├── useCustomComposable.ts
-│   └── __tests__/
-│       └── useCustomComposable.spec.ts
-└── utils/
-    ├── helpers.ts
-    └── __tests__/
-        └── helpers.spec.ts
+src/components/Foo.vue
+src/components/__tests__/Foo.spec.ts
+src/composables/useFoo.ts
+src/composables/__tests__/useFoo.spec.ts
+src/utils/foo.ts
+src/utils/__tests__/foo.spec.ts
 ```
 
-### Test Categories
+Naming:
 
-#### 1. Unit Tests (`*.spec.ts`)
+- `Foo.spec.ts` — basic
+- `Foo.advanced.spec.ts` — complex / edge cases
+- `Foo.integration.spec.ts` — multi-component / store interaction
+- E2E in `app/test/e2e/`
 
-- Pure functions and utilities
-- Individual component behavior
-- Composable functions
-- Store actions and getters
+## Core principles
 
-#### 2. Integration Tests (`*.integration.spec.ts`)
+- **Use `data-test` attributes**, never CSS classes or DOM structure, to query elements. The component standard requires `data-test` on every interactive element.
+- **Test what users see**, not `wrapper.vm.someInternalRef`.
+- **One responsibility per test**, descriptive name (`should emit update:modelValue when option is selected`, not `works correctly`).
+- **Cover, for each component**: rendering with different props, user interactions, prop/state changes, event emissions, error states, loading states, accessibility, edge cases.
 
-- Component interaction with stores
-- API integration with composables
-- Multi-component workflows
+## Mocking conventions
 
-#### 3. E2E Tests (`test/e2e/`)
+The canonical pattern is `vi.hoisted` for mocks that need to be referenced inside `vi.mock` factories. See lines 9–19 of `useContractFunction.spec.ts` for the exact shape.
 
-- Full user journeys
-- Cross-browser compatibility
-- Real blockchain interaction testing
+Toast notifications use Nuxt UI's `useToast()`. Mock it once per spec (auto-import path varies per setup — usually `#imports`):
 
-## Test Naming Conventions
+```ts
+const { mockToast } = vi.hoisted(() => ({ mockToast: { add: vi.fn() } }));
+vi.mock("#imports", () => ({ useToast: () => mockToast }));
 
-### File Naming
-
-- **Basic tests**: `ComponentName.spec.ts`
-- **Advanced tests**: `ComponentName.advanced.spec.ts`
-- **Integration tests**: `ComponentName.integration.spec.ts`
-- **E2E tests**: `component-name.e2e.spec.ts`
-
-### Test Structure
-
-```typescript
-describe('ComponentName', () => {
-  describe('Component Rendering', () => {
-    // Basic rendering tests
-  })
-
-  describe('User Interactions', () => {
-    // Click, keyboard, form interactions
-  })
-
-  describe('State Management', () => {
-    // Props, emits, reactive state
-  })
-
-  describe('Loading States', () => {
-    // Async operations and loading indicators
-  })
-
-  describe('Error Handling', () => {
-    // Error scenarios and fallbacks
-  })
-
-  describe('Edge Cases', () => {
-    // Boundary conditions and unusual inputs
-  })
-})
+// assertion
+expect(mockToast.add).toHaveBeenCalledWith(
+  expect.objectContaining({ title: "Saved", color: "success" }),
+);
 ```
 
-## Test Data Management
+For wagmi, mock `@wagmi/core` directly:
 
-### Mock Data Organization
-
-```typescript
-// Constants for reusable test data
-const MOCK_DATA = {
-  validAddress: '0x1234567890123456789012345678901234567890',
-  invalidAddress: 'invalid-address',
-  options: [
-    { value: 'ETH', label: 'Ethereum' },
-    { value: 'USDC', label: 'USD Coin' }
-  ],
-  userProfiles: [
-    { id: 1, name: 'John Doe', address: '0x123...' },
-    { id: 2, name: 'Jane Doe', address: '0x456...' }
-  ]
-} as const
-```
-
-### Test Selectors
-
-```typescript
-// Centralized selectors for consistent element targeting
-const SELECTORS = {
-  trigger: '[data-test="component-trigger"]',
-  dropdown: '[data-test="options-dropdown"]',
-  submitBtn: '[data-test="submit-btn"]',
-  loadingSpinner: '[data-test="loading-spinner"]',
-  errorMessage: '[data-test="error-message"]'
-} as const
-```
-
-## Testing Principles
-
-### 1. Test Behavior, Not Implementation
-
-```typescript
-// ❌ Bad: Testing internal state
-expect(wrapper.vm.internalValue).toBe('expected')
-
-// ✅ Good: Testing user-visible behavior
-expect(wrapper.find('[data-test="display-value"]').text()).toBe('Expected Value')
-```
-
-### 2. Use Data-Test Attributes
-
-```typescript
-// ❌ Bad: Fragile selectors
-wrapper.find('.btn-primary')
-wrapper.find('div > ul > li:first-child')
-
-// ✅ Good: Stable test attributes
-wrapper.find('[data-test="submit-button"]')
-wrapper.find('[data-test="first-option"]')
-```
-
-### 3. Descriptive Test Names
-
-```typescript
-// ❌ Bad: Generic descriptions
-it('works correctly', () => {})
-it('handles events', () => {})
-
-// ✅ Good: Specific behavior descriptions
-it('should emit update:modelValue when option is selected', () => {})
-it('should disable submit button when form validation fails', () => {})
-```
-
-### 4. Single Responsibility Per Test
-
-```typescript
-// ❌ Bad: Multiple concerns
-it('should handle form submission and validation and error states', () => {
-  // Too many responsibilities
-})
-
-// ✅ Good: Single responsibility
-it('should validate required fields before submission', () => {})
-it('should show error message when submission fails', () => {})
-it('should reset form after successful submission', () => {})
-```
-
-## Test Coverage Requirements
-
-### Minimum Coverage Targets
-
-- **Unit Tests**: 90% line coverage
-- **Component Tests**: 85% line coverage
-- **Integration Tests**: 70% line coverage
-
-### Required Test Areas
-
-For every component, ensure coverage of:
-
-1. **Initial Rendering** - Component displays correctly with different props
-2. **User Interactions** - Clicks, keyboard navigation, form submissions
-3. **State Changes** - Reactive updates and prop changes
-4. **Event Emissions** - Correct events with proper payloads
-5. **Error Handling** - Error states and fallback behaviors
-6. **Loading States** - Async operations and loading indicators
-7. **Accessibility** - ARIA attributes and keyboard support
-8. **Edge Cases** - Empty data, invalid inputs, boundary conditions
-9. **Component Communication** - Parent-child component interaction
-10. **Conditional Rendering** - Dynamic content based on state/props
-
-## Testing Tools and Utilities
-
-### Component Test Helpers
-
-```typescript
-// Reusable component mounting function
-const mountComponent = (props = {}, options = {}) => {
-  return mount(Component, {
-    props: { ...defaultProps, ...props },
-    global: {
-      components: { RequiredChildComponent },
-      plugins: [createTestingPinia({ createSpy: vi.fn })],
-      ...options.global
-    }
-  })
-}
-
-// Async operation helpers
-const waitForAsyncOperation = async () => {
-  await nextTick()
-  await flushPromises()
-}
-
-// Toast verification (Nuxt UI useToast)
-const expectToast = (color: 'success' | 'error', title: string) => {
-  expect(mockToast.add).toHaveBeenCalledWith(
-    expect.objectContaining({ title, color })
-  )
-}
-```
-
-### Mock Management
-
-```typescript
-// Hoisted mock variables for consistency
-const { mockReadContract, mockWriteContract, mockToast } = vi.hoisted(() => ({
+```ts
+const { mockReadContract, mockWriteContract } = vi.hoisted(() => ({
   mockReadContract: vi.fn(),
   mockWriteContract: vi.fn(),
-  mockToast: { add: vi.fn() }
-}))
-
-// Stub Nuxt UI's auto-imported `useToast` (adjust the import path
-// to match the project's setup, e.g. '#imports' or '@nuxt/ui')
-vi.mock('#imports', () => ({ useToast: () => mockToast }))
-
-// Proper mock setup and cleanup
-beforeEach(() => {
-  vi.clearAllMocks()
-})
-
-afterEach(() => {
-  if (wrapper) wrapper.unmount()
-})
+}));
+vi.mock("@wagmi/core", () => ({
+  readContract: mockReadContract,
+  writeContract: mockWriteContract,
+}));
 ```
 
-## Performance Considerations
+Reset between tests:
 
-### Test Performance Best Practices
+```ts
+beforeEach(() => vi.clearAllMocks());
+afterEach(() => wrapper?.unmount());
+```
 
-- Use `shallowMount` for isolated component testing
-- Mock heavy dependencies and external services
-- Reuse component instances when testing multiple scenarios
-- Clean up properly to prevent memory leaks
-- Use `vi.clearAllMocks()` instead of recreating mocks
+## Coverage targets
 
-### Parallel Test Execution
+- Unit: ~90% line
+- Component: ~85% line
+- Integration: ~70% line
 
-- Design tests to be independent and stateless
-- Avoid shared global state between tests
-- Use unique test data for each test case
-- Properly clean up after each test
+Coverage is a smell detector, not a goal. A 95%-covered component with no behavioral assertions is worse than 70% coverage that exercises the contract.
 
-## Quality Assurance
+## Local quality gate
 
-### Local quality gate
+Before pushing, run the per-subproject lint / type-check / test commands documented in [`AGENTS.md`](../../AGENTS.md). The repo does not configure husky/commitlint, so this gate is enforced manually plus by CI on PRs.
 
-Before pushing, run the per-subproject lint/type-check/test commands documented in `AGENTS.md`. The repository does not currently configure husky/commitlint, so this gate is enforced manually plus by CI on PRs.
+## Performance hygiene
 
-### CI/CD Integration
-
-- Tests run on all pull requests
-- Coverage reports are generated and tracked
-- E2E tests run on staging deployments
-- Test results are reported in PR comments
-
-## Documentation Standards
-
-### Test Documentation
-
-- Include JSDoc comments for complex test setups
-- Document the purpose of unusual mock configurations
-- Explain business logic being tested
-- Provide examples for reusable test utilities
-
-### README Updates
-
-- Update component README files with testing examples
-- Document testing patterns for new features
-- Include troubleshooting guides for common test issues
-- Maintain examples of proper test structure
+- Mock heavy deps; don't network in unit tests.
+- Tests must be independent — no shared mutable state across files.
+- Use `vi.clearAllMocks()` in `beforeEach`, not full re-creation.
+- For very heavy components, `shallowMount` is acceptable when you're only testing the wrapper's contract.

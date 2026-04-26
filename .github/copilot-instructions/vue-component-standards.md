@@ -1,168 +1,88 @@
-# Vue.js Component Standards
+# Vue Component Standards
 
-## Composition API Standards
+> **Canonical reference**: `app/src/components/__tests__/SelectComponent.spec.ts` shows the props/emits/data-test contract from the test side.
+>
+> See [`AGENTS.md`](../../AGENTS.md) §"Frontend authoring" for the leanness rule (extract logic into utils + composables, search before creating).
 
-Always use Composition API with `<script setup lang="ts">` syntax for all new components.
+## Composition API only
 
-### Component Structure
+`<script setup lang="ts">` for every new component. No Options API, no JS-only files.
 
-## Props and Events
+## Props
 
-### Props Definition
+Define with TypeScript interface; use `withDefaults` for optionals:
 
-Always define props with TypeScript interfaces and provide defaults where appropriate:
-
-```typescript
+```ts
 interface Props {
-  // Required props (no default value)
-  options: Array<{ value: string; label: string }>
-  
-  // Optional props (with defaults)
-  modelValue?: string
-  disabled?: boolean
-  placeholder?: string
-  
-  // Complex types
-  validator?: (value: string) => boolean
-  formatValue?: (value: string) => string
+  options: Array<{ value: string; label: string }>;
+  modelValue?: string;
+  disabled?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  modelValue: '',
+  modelValue: "",
   disabled: false,
-  placeholder: 'Select an option'
-})
+});
 ```
 
-### Event Emissions
+Avoid `Object as PropType<…>` runtime declarations — strict TS interfaces are clearer and catch more.
 
-Use `defineEmits` with proper TypeScript typing:
+## Emits
 
-```typescript
+Type emits, don't rely on string-only signatures:
+
+```ts
 const emit = defineEmits<{
-  'update:modelValue': [value: string]
-  submit: [data: FormData]
-  close: []
-  error: [error: Error]
-}>()
-
-// Usage
-emit('update:modelValue', newValue)
-emit('submit', formData)
-emit('close')
-emit('error', new Error('Something went wrong'))
+  "update:modelValue": [value: string];
+  submit: [data: FormData];
+  close: [];
+}>();
 ```
 
-## Data-Test Attributes
+## `data-test` is mandatory on interactive elements
 
-All interactive elements must have `data-test` attributes for testing:
+Buttons, inputs, error messages, dropdowns — anything a test needs to find. CSS classes change; `data-test` is a contract.
 
-```html
-<template>
-  <div class="component">
-    <button 
-      data-test="submit-button"
-      :disabled="!isValid"
-      @click="handleSubmit"
-    >
-      Submit
-    </button>
-    
-    <input 
-      data-test="email-input"
-      v-model="email"
-      type="email"
-    />
-    
-    <div 
-      data-test="error-message"
-      v-if="hasError"
-    >
-      {{ errorMessage }}
-    </div>
-  </div>
-</template>
+```vue
+<button data-test="submit-button" :disabled="!isValid" @click="handleSubmit">
+  Submit
+</button>
+<UAlert
+  v-if="errorMessage"
+  data-test="error-message"
+  color="error"
+  :description="errorMessage"
+/>
 ```
 
-## Reactivity Best Practices
+## Reactivity
 
-### Use Appropriate Reactivity APIs
+- `ref()` for primitives.
+- `reactive()` only when you genuinely need a deeply-reactive object (rare — most cases are better as multiple `ref`s or `computed`).
+- `computed()` for derived values. **Never** mirror with a `watch` what `computed` can do.
+- `shallowRef()` for large frozen datasets you'll replace wholesale.
 
-```typescript
-// Use ref() for primitive values
-const count = ref(0)
-const message = ref('Hello')
-const isVisible = ref(true)
+## Notifications & errors
 
-// Use reactive() for objects that need deep reactivity
-const user = reactive({
-  name: 'John',
-  email: 'john@example.com',
-  preferences: {
-    theme: 'dark',
-    notifications: true
-  }
-})
+Two surfaces, pick the right one:
 
-// Use shallowRef() for large objects that don't need deep reactivity
-const largeDataset = shallowRef([])
+- **`useToast()`** (Nuxt UI, auto-imported) for transient global notifications. Reference: `app/src/composables/useSiwe.ts`, `app/src/App.vue`.
+- **`<UAlert />`** for inline reactive errors scoped to a form / section. Reference: `app/src/components/sections/ContractManagementView/forms/TransferOwnershipForm.vue`.
 
-// Use computed() for derived state
-const fullName = computed(() => `${user.firstName} ${user.lastName}`)
-const isFormValid = computed(() => {
-  return email.value.includes('@') && password.value.length >= 8
-})
-```
-
-### Avoid Unnecessary Watchers
-
-```typescript
-// ❌ Bad: Unnecessary watcher
-const count = ref(0)
-const doubledCount = ref(0)
-
-watch(count, (newCount) => {
-  doubledCount.value = newCount * 2
-})
-
-// ✅ Good: Use computed instead
-const count = ref(0)
-const doubledCount = computed(() => count.value * 2)
-```
-
-## Error Handling in Components
-
-### Notifications
-
-Two complementary surfaces — pick the right one:
-
-- **`useToast()` (Nuxt UI)** for transient, global notifications (success after an action, network/wallet failures the user must notice). Auto-imported. Reference call sites: `app/src/composables/useSiwe.ts`, `app/src/App.vue`.
-- **`<UAlert />`** for inline, reactive errors scoped to a form or section. Reference: `app/src/components/sections/ContractManagementView/forms/TransferOwnershipForm.vue`.
-
-Prefer `<UAlert />` over `try/catch + toast` when the error is tied to a specific form field or mutation — it composes naturally with the TanStack Query mutation pattern (see `AGENTS.md`).
-
-```typescript
-// Global notification
-const toast = useToast()
-
-const handleSubmit = async () => {
-  loading.value = true
-  await submitForm()
-  toast.add({ title: 'Form submitted successfully', color: 'success' })
-  loading.value = false
-}
+```ts
+const toast = useToast();
+toast.add({ title: "Saved", color: "success" });
 ```
 
 ```vue
-<!-- Inline reactive error -->
 <UAlert v-if="errorMessage" color="error" :description="errorMessage" />
 ```
 
-For mutations, surface `mutation.error` reactively via `<UAlert />` rather than wrapping `mutateAsync` in `try/catch`:
+For mutations, surface `mutation.error` reactively via `<UAlert />` rather than wrapping `mutateAsync` in `try/catch` — this composes with the documented mutation pattern in [`AGENTS.md`](../../AGENTS.md):
 
 ```vue
 <script setup lang="ts">
-const { mutate, error, isPending } = useSubmitFormMutation()
+const { mutate, error, isPending } = useSubmitFormMutation();
 </script>
 
 <template>
@@ -171,123 +91,27 @@ const { mutate, error, isPending } = useSubmitFormMutation()
 </template>
 ```
 
-## Accessibility Standards
+## Accessibility
 
-### ARIA Attributes
+ARIA + semantic HTML + keyboard support. The tests must reach every interactive element via keyboard, and screen-readers must announce state changes.
 
-```html
-<template>
-  <button
-    data-test="dropdown-trigger"
-    :aria-expanded="isOpen"
-    :aria-describedby="errorId"
-    aria-haspopup="true"
-    :aria-label="ariaLabel"
-    role="button"
-    tabindex="0"
-    @click="toggleDropdown"
-    @keydown.enter="toggleDropdown"
-    @keydown.space.prevent="toggleDropdown"
-    @keydown.escape="closeDropdown"
-  >
-    {{ displayValue }}
-  </button>
-  
-  <ul
-    v-if="isOpen"
-    data-test="dropdown-options"
-    role="listbox"
-    :aria-activedescendant="focusedOptionId"
-  >
-    <li
-      v-for="(option, index) in options"
-      :key="option.value"
-      :id="`option-${index}`"
-      role="option"
-      :aria-selected="option.value === modelValue"
-      @click="selectOption(option.value)"
-    >
-      {{ option.label }}
-    </li>
-  </ul>
-</template>
-```
+Minimum for a custom dropdown / disclosure:
 
-## Performance Optimization
+- `aria-expanded` reflects open state
+- `aria-haspopup` set
+- `Enter`, `Space`, and `Escape` handled
+- `role="listbox"` / `role="option"` + `aria-selected` for option lists
+- `aria-describedby` for error messages
 
-### Lazy Loading Components
+## Performance
 
-```typescript
-// Use defineAsyncComponent for heavy components
-import { defineAsyncComponent } from 'vue'
+- `defineAsyncComponent(() => import('./Heavy.vue'))` for heavy / rarely-used components.
+- Don't memoize prematurely. `computed` is already memoized; don't wrap it in `useMemo`-like helpers.
+- Clean up listeners and intervals in `onUnmounted` — every `addEventListener` needs a partner `removeEventListener`.
 
-const HeavyComponent = defineAsyncComponent(
-  () => import('./HeavyComponent.vue')
-)
-```
+## Anti-patterns
 
-## Component Testing Helpers
-
-### Component Props Interface for Testing
-
-```typescript
-// Export interfaces for testing
-export interface ComponentProps {
-  modelValue?: string
-  options: Array<{ value: string; label: string }>
-  disabled?: boolean
-}
-
-export interface ComponentData {
-  isOpen: boolean
-  focusedIndex: number
-  loading: boolean
-}
-
-export interface ComponentMethods {
-  toggleDropdown: () => void
-  selectOption: (value: string) => void
-  validateInput: () => boolean
-}
-```
-
-## Common Anti-Patterns to Avoid
-
-### Avoid Memory Leaks
-
-```typescript
-// ❌ Bad: Not cleaning up event listeners
-onMounted(() => {
-  window.addEventListener('scroll', handleScroll)
-})
-
-// ✅ Good: Clean up in onUnmounted
-onMounted(() => {
-  window.addEventListener('scroll', handleScroll)
-})
-
-onUnmounted(() => {
-  window.removeEventListener('scroll', handleScroll)
-})
-```
-
-### Don't Use v-if and v-for Together
-
-```html
-<!-- ❌ Bad: v-if and v-for on same element -->
-<li v-for="user in users" v-if="user.isActive" :key="user.id">
-  {{ user.name }}
-</li>
-
-<!-- ✅ Good: Use computed property or template wrapper -->
-<li v-for="user in activeUsers" :key="user.id">
-  {{ user.name }}
-</li>
-
-<!-- Or use template wrapper -->
-<template v-for="user in users" :key="user.id">
-  <li v-if="user.isActive">
-    {{ user.name }}
-  </li>
-</template>
-```
+- **`v-if` + `v-for` on the same element.** Use a `computed` filtered list, or `<template v-for>` wrapping a `<li v-if>`.
+- **Watchers as substitutes for `computed`.** If a watcher only sets one value from another, it's a `computed`.
+- **Inline business logic.** If the script block grows past ~50 lines or you have multiple unrelated `try/catch`, extract a composable. See [`AGENTS.md`](../../AGENTS.md) §"Frontend authoring".
+- **`wrapper.vm.foo` in tests.** Test the rendered DOM, not internals.
