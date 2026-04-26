@@ -99,7 +99,64 @@ else
   fail=1
 fi
 
-# 4. Soft warnings (non-blocking) ----------------------------------------------
+# 4. Repo paths quoted in docs must exist --------------------------------------
+# Picks up references like `app/src/foo/bar.ts` in markdown and verifies them.
+echo
+echo "── Repo path references in docs ─────────────────────────────"
+section_fail=0
+# Match paths containing a slash + a known source extension, inside backticks.
+while IFS= read -r hit; do
+  [ -z "$hit" ] && continue
+  src_file="${hit%%:*}"
+  rest="${hit#*:}"
+  rest="${rest#*:}"
+  rel_path="${rest#\`}"; rel_path="${rel_path%\`}"
+  if [ ! -e "$rel_path" ]; then
+    echo -e "${RED}✖ $src_file references missing path: $rel_path${NC}"
+    section_fail=1
+  fi
+done < <(grep -rnoE --include='*.md' \
+  '`(app|backend|contract|dashboard|ponder|the-graph|scripts)/[A-Za-z0-9_./-]+\.(ts|tsx|vue|js|mjs|cjs|sol|json|md|sh|yml|yaml)`' \
+  "${DOC_PATHS[@]}" 2>/dev/null || true)
+if [ $section_fail -eq 0 ]; then
+  echo -e "${GREEN}✓ all referenced repo paths exist${NC}"
+else
+  fail=1
+fi
+
+# 5. Stack drift: docs claim a tool the project doesn't depend on ---------------
+# Format: "<label-found-in-docs>|<package-name-expected-in-app/package.json>"
+echo
+echo "── Stack claims vs package.json ─────────────────────────────"
+section_fail=0
+APP_PKG="app/package.json"
+STACK_CLAIMS=(
+  "Nuxt UI|@nuxt/ui"
+  "Tailwind v4|@tailwindcss/vite"
+  "TanStack Query|@tanstack/vue-query"
+  "wagmi|@wagmi/vue"
+  "Apollo Client|@apollo/client"
+  "Pinia|pinia"
+)
+if [ -f "$APP_PKG" ]; then
+  for entry in "${STACK_CLAIMS[@]}"; do
+    label="${entry%%|*}"
+    dep="${entry##*|}"
+    if grep -rln --include='*.md' -- "$label" "${DOC_PATHS[@]}" >/dev/null 2>&1; then
+      if ! grep -q "\"$dep\"" "$APP_PKG"; then
+        echo -e "${RED}✖ docs claim '$label' but $APP_PKG has no dep '$dep'${NC}"
+        section_fail=1
+      fi
+    fi
+  done
+fi
+if [ $section_fail -eq 0 ]; then
+  echo -e "${GREEN}✓ stack claims match dependencies${NC}"
+else
+  fail=1
+fi
+
+# 6. Soft warnings (non-blocking) ----------------------------------------------
 echo
 echo "── Soft warnings ────────────────────────────────────────────"
 # Hard-coded test counts (any "N tests" or "N+ tests" claim is suspicious)
