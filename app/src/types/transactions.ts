@@ -16,6 +16,7 @@ export interface ExpenseTransaction extends BaseTransaction {
 
 export interface CashRemunerationTransaction extends BaseTransaction {
   amount: string | number
+  token: string
 }
 
 export interface BankTransaction extends BaseTransaction {
