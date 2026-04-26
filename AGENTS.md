@@ -154,3 +154,4 @@ Greps for known-stale terms, broken intra-doc links, and missing canonical refer
 1. The code quality gate above passed in every touched subproject.
 2. Reviewed against `.github/copilot-instructions/review-checklist.md`.
 3. PR title follows Conventional Commits + gitmoji. Use the template in `.github/pull_request_template.md`.
+4. **Every PR must be linked to a GitHub issue.** Search existing open issues first; if none fits, open one before (or alongside) the PR and reference it in the PR body with a closing keyword (`Closes #N`, `Fixes #N`). Trivial chores (typo fix, doc drift, dependency bump) follow the same rule — open a small tracking issue rather than skipping it. The issue is the "why"; the PR is the "how".
