@@ -65,6 +65,22 @@ describe('SubmitClaims', () => {
     expect(submitButton.attributes('disabled')).toBeDefined()
   })
 
+  it('disables submit button when the team is not migrated (issue #1825)', () => {
+    const previous = mockTeamStore.currentTeamMeta
+    mockTeamStore.currentTeamMeta = {
+      isPending: false,
+      data: { ...previous.data, isMigrated: false }
+    } as typeof mockTeamStore.currentTeamMeta
+
+    try {
+      const wrapper = createComponent({ weeklyClaim: { status: 'pending' } })
+      const submitButton = wrapper.find('[data-test="modal-submit-hours-button"]')
+      expect(submitButton.attributes('disabled')).toBeDefined()
+    } finally {
+      mockTeamStore.currentTeamMeta = previous
+    }
+  })
+
   it('shows success toast and resets form after successful claim submission', async () => {
     const wrapper = createComponent()
 
