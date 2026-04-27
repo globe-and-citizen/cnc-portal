@@ -3,7 +3,10 @@ import { errorResponse, getMondayStart, prisma } from '../utils';
 import { Prisma } from '@prisma/client';
 import { Address, Hex, isAddress, isHex, keccak256, recoverTypedDataAddress } from 'viem';
 import CASH_REMUNERATION_ABI from '../artifacts/cash_remuneration_eip712_abi.json';
-import { isCashRemunerationOwner } from '../utils/cashRemunerationUtil';
+import {
+  getCurrentCashRemunerationContract,
+  isCashRemunerationOwner,
+} from '../utils/cashRemunerationUtil';
 import publicClient from '../utils/viem.config';
 import { refreshAttachmentUrls } from '../services/attachmentService';
 
@@ -56,7 +59,7 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
   // Validation stricte des actions autorisées
   const errors: string[] = [];
   if (!action || !isValidWeeklyClaimAction(action))
-    errors.push('Invalid action. Allowed actions are: sign, withdraw');
+    errors.push('Invalid action. Allowed actions are: sign, withdraw, disable, enable');
 
   if (action == 'sign') {
     if (!signature || !isHex(signature)) errors.push('Missing or invalid signature');
@@ -194,11 +197,17 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
         }
 
         // The signed-against contract must be the team's current
-        // CashRemunerationEIP712. Reject otherwise so the row is never
-        // persisted with a signature bound to a stale or foreign contract.
-        const currentCashRemunerationContract = await prisma.teamContract.findFirst({
-          where: { teamId: weeklyClaim.wage.team.id, type: 'CashRemunerationEIP712' },
-        });
+        // CashRemunerationEIP712 — the one governed by the current Officer
+        // (linked-list head). Scoping via the helper rather than an
+        // unscoped findFirst is required because after an Officer redeploy
+        // the team has multiple TeamContract rows of this type and we
+        // would otherwise non-deterministically pick an archived one.
+        // `isCashRemunerationOwner` reads from the same helper, so the
+        // owner check above and this contract-match check are guaranteed
+        // to be looking at the same generation of the contract.
+        const currentCashRemunerationContract = await getCurrentCashRemunerationContract(
+          weeklyClaim.wage.team.id
+        );
         if (
           !currentCashRemunerationContract ||
           currentCashRemunerationContract.address.toLowerCase() !==
@@ -410,13 +419,10 @@ export const syncWeeklyClaims = async (req: Request, res: Response) => {
   const teamId = Number(req.query.teamId);
 
   try {
-    // authz enforced by requireTeamMember middleware
-    const teamContract = await prisma.teamContract.findFirst({
-      where: {
-        teamId,
-        type: 'CashRemunerationEIP712',
-      },
-    });
+    // authz enforced by requireTeamMember middleware. Scope to the current
+    // Officer so a redeployed team syncs against its live contract, not an
+    // archived one (multiple rows of the same type exist post-redeploy).
+    const teamContract = await getCurrentCashRemunerationContract(teamId);
 
     if (!teamContract || !teamContract.address || !isAddress(teamContract.address)) {
       return errorResponse(404, 'Cash Remuneration contract not found for the team', res);

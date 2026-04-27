@@ -3,7 +3,10 @@ import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import weeklyClaimRoutes from '../../routes/weeklyClaimRoute';
 import { prisma } from '../../utils';
-import { isCashRemunerationOwner } from '../../utils/cashRemunerationUtil';
+import {
+  getCurrentCashRemunerationContract,
+  isCashRemunerationOwner,
+} from '../../utils/cashRemunerationUtil';
 import { recoverTypedDataAddress, type Address } from 'viem';
 
 const CALLER = '0x1234567890123456789012345678901234567890';
@@ -53,6 +56,15 @@ vi.mock('../../middleware/authMiddleware', () => ({
 
 vi.mock('../../utils/cashRemunerationUtil', () => ({
   isCashRemunerationOwner: vi.fn().mockResolvedValue(true),
+  // Default: helper returns the team's current CashRemunerationEIP712 — the
+  // address the sign body declares it signed against. Individual tests
+  // override to exercise the mismatch / missing branches.
+  getCurrentCashRemunerationContract: vi.fn().mockResolvedValue({
+    id: 1,
+    teamId: 1,
+    type: 'CashRemunerationEIP712',
+    address: '0xcacacacacacacacacacacacacacacacacacacaca',
+  }),
 }));
 
 vi.mock('../../utils/viem.config', () => ({
@@ -131,7 +143,7 @@ describe('Weekly Claim Controller', () => {
     // Default: the team's current CashRemunerationEIP712 matches what the
     // sign body declares it signed against. Individual tests can override
     // to exercise the mismatch branch.
-    vi.mocked(prisma.teamContract.findFirst).mockResolvedValue({
+    vi.mocked(getCurrentCashRemunerationContract).mockResolvedValue({
       id: 1,
       teamId: 1,
       type: 'CashRemunerationEIP712',
@@ -295,12 +307,25 @@ describe('Weekly Claim Controller', () => {
       vi.spyOn(prisma.weeklyClaim, 'findUnique').mockResolvedValue(
         weeklyClaimFactory({ status: 'pending' }) as any
       );
-      vi.mocked(prisma.teamContract.findFirst).mockResolvedValue({
+      // Helper returns a different address than what the body declares.
+      vi.mocked(getCurrentCashRemunerationContract).mockResolvedValue({
         id: 1,
         teamId: 1,
         type: 'CashRemunerationEIP712',
         address: '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
       } as never);
+      const response = await putAction('sign');
+      expect(response.status).toBe(400);
+      expect(response.body.message).toContain(
+        'signedAgainstContractAddress does not match the team current CashRemunerationEIP712'
+      );
+    });
+
+    it('should return 400 on sign when there is no current CashRemunerationEIP712 (helper returns null)', async () => {
+      vi.spyOn(prisma.weeklyClaim, 'findUnique').mockResolvedValue(
+        weeklyClaimFactory({ status: 'pending' }) as any
+      );
+      vi.mocked(getCurrentCashRemunerationContract).mockResolvedValue(null);
       const response = await putAction('sign');
       expect(response.status).toBe(400);
       expect(response.body.message).toContain(
@@ -600,7 +625,7 @@ describe('Weekly Claim Controller', () => {
         contract: { ...validContract, address: 'not-an-eth-address' },
       },
     ])('should return 404 when $title', async ({ contract }) => {
-      vi.spyOn(prisma.teamContract, 'findFirst').mockResolvedValue(contract as any);
+      vi.mocked(getCurrentCashRemunerationContract).mockResolvedValue(contract as any);
       const response = await request(app).post('/sync?teamId=1');
       expect(response.status).toBe(404);
       expect(response.body).toEqual({
@@ -609,7 +634,7 @@ describe('Weekly Claim Controller', () => {
     });
 
     it('should return empty sync result when no weekly claims', async () => {
-      vi.spyOn(prisma.teamContract, 'findFirst').mockResolvedValue(validContract as any);
+      vi.mocked(getCurrentCashRemunerationContract).mockResolvedValue(validContract as any);
       vi.spyOn(prisma.weeklyClaim, 'findMany').mockResolvedValue([] as any);
 
       const response = await request(app).post('/sync?teamId=1');
@@ -618,7 +643,7 @@ describe('Weekly Claim Controller', () => {
     });
 
     it('should update status from signed to withdrawn when paid on-chain', async () => {
-      vi.spyOn(prisma.teamContract, 'findFirst').mockResolvedValue(validContract as any);
+      vi.mocked(getCurrentCashRemunerationContract).mockResolvedValue(validContract as any);
 
       vi.spyOn(prisma.weeklyClaim, 'findMany').mockResolvedValue([
         { id: 1, status: 'signed', signature: 'not-hex' },
@@ -642,7 +667,7 @@ describe('Weekly Claim Controller', () => {
     });
 
     it('should keep signed status when neither paid nor disabled', async () => {
-      vi.spyOn(prisma.teamContract, 'findFirst').mockResolvedValue(validContract as any);
+      vi.mocked(getCurrentCashRemunerationContract).mockResolvedValue(validContract as any);
       vi.spyOn(prisma.weeklyClaim, 'findMany').mockResolvedValue([
         { id: 7, status: 'signed', signature: '0xfeed' },
       ] as any);
@@ -657,7 +682,7 @@ describe('Weekly Claim Controller', () => {
     });
 
     it('should update with unknown previous status when claim.status is null', async () => {
-      vi.spyOn(prisma.teamContract, 'findFirst').mockResolvedValue(validContract as any);
+      vi.mocked(getCurrentCashRemunerationContract).mockResolvedValue(validContract as any);
       vi.spyOn(prisma.weeklyClaim, 'findMany').mockResolvedValue([
         { id: 8, status: null, signature: '0xface' },
       ] as any);
@@ -677,7 +702,7 @@ describe('Weekly Claim Controller', () => {
     });
 
     it('should skip claim on readContract error', async () => {
-      vi.spyOn(prisma.teamContract, 'findFirst').mockResolvedValue(validContract as any);
+      vi.mocked(getCurrentCashRemunerationContract).mockResolvedValue(validContract as any);
       vi.spyOn(prisma.weeklyClaim, 'findMany').mockResolvedValue([
         { id: 5, status: 'signed', signature: '0xdeadbeef' },
       ] as any);
@@ -692,7 +717,7 @@ describe('Weekly Claim Controller', () => {
     });
 
     it('should return 500 when sync setup throws', async () => {
-      vi.spyOn(prisma.teamContract, 'findFirst').mockResolvedValue(validContract as any);
+      vi.mocked(getCurrentCashRemunerationContract).mockResolvedValue(validContract as any);
       vi.spyOn(prisma.weeklyClaim, 'findMany').mockRejectedValue(new Error('Database failure'));
 
       const response = await request(app).post('/sync?teamId=1');
