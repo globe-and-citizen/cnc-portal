@@ -4,8 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "ponder dev",
-    "start": "bash ./scripts/start-with-auto-schema.sh",
-    "start:raw": "ponder start",
+    "start": "ponder start",
     "db": "ponder db",
     "codegen": "ponder codegen",
     "serve": "ponder serve",
