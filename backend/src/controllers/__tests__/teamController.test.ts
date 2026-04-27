@@ -286,6 +286,61 @@ describe('Team Controller', () => {
       // expect(response.body).toEqual(teamMockResolve);
     });
 
+    it('exposes isMigrated=true when current officer is on CURRENT_OFFICER_VERSION', async () => {
+      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue({
+        ...teamMockResolve,
+        teamOfficers: [
+          {
+            id: 7,
+            address: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+            teamId: 1,
+            deployer: mockOwner.address,
+            deployBlockNumber: null,
+            deployedAt: null,
+            previousOfficerId: null,
+            version: 'v0.10',
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            previousOfficer: null,
+            contracts: [],
+          },
+        ],
+        teamContracts: [],
+      } as never);
+
+      const response = await request(app).get('/1');
+      expect(response.status).toBe(200);
+      expect(response.body.isMigrated).toBe(true);
+      expect(response.body.currentOfficer?.version).toBe('v0.10');
+    });
+
+    it('exposes isMigrated=false when current officer is legacy', async () => {
+      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue({
+        ...teamMockResolve,
+        teamOfficers: [
+          {
+            id: 7,
+            address: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+            teamId: 1,
+            deployer: mockOwner.address,
+            deployBlockNumber: null,
+            deployedAt: null,
+            previousOfficerId: null,
+            version: 'legacy',
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            previousOfficer: null,
+            contracts: [],
+          },
+        ],
+        teamContracts: [],
+      } as never);
+
+      const response = await request(app).get('/1');
+      expect(response.status).toBe(200);
+      expect(response.body.isMigrated).toBe(false);
+    });
+
     it('should return 500 if an exception is thrown', async () => {
       vi.spyOn(prisma.team, 'findUnique').mockRejectedValue(new Error('DB failure'));
 
@@ -336,7 +391,11 @@ describe('Team Controller', () => {
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual(
-        mockTeams.map(({ teamOfficers: _teamOfficers, ...t }) => ({ ...t, currentOfficer: null }))
+        mockTeams.map(({ teamOfficers: _teamOfficers, ...t }) => ({
+          ...t,
+          currentOfficer: null,
+          isMigrated: false,
+        }))
       );
       expect(prisma.team.findMany).toHaveBeenCalledWith({
         include: {
@@ -376,7 +435,11 @@ describe('Team Controller', () => {
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual(
-        mockTeams.map(({ teamOfficers: _teamOfficers, ...t }) => ({ ...t, currentOfficer: null }))
+        mockTeams.map(({ teamOfficers: _teamOfficers, ...t }) => ({
+          ...t,
+          currentOfficer: null,
+          isMigrated: false,
+        }))
       );
       expect(prisma.team.findMany).toHaveBeenCalledWith({
         where: { members: { some: { address: mockOwner.address } } },

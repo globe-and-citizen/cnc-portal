@@ -488,6 +488,7 @@ describe('contractController', () => {
             teamId: 1,
             deployBlockNumber: 12345,
             previousOfficerId: 7,
+            version: 'v0.10',
           }),
         })
       );
