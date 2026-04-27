@@ -15,7 +15,7 @@ The CNC Portal is a multi-component application enabling financial recognition o
 
 **Component Relationships:**
 
-- Frontend communicates with backend via REST API and directly with smart contracts via Web3
+- Frontend communicates with backend via REST (TanStack Query) and GraphQL (Apollo Client), and directly with smart contracts via Web3
 - Backend manages user data, authentication, and serves as API gateway
 - Smart contracts handle on-chain governance and contribution tracking
 

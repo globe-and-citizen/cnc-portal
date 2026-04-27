@@ -705,12 +705,12 @@ _Reports:_
 
 **Technology:**
 
-- Nuxt 3 (Vue 3 framework)
+- Nuxt 4 (Vue 3 framework)
 - TypeScript
 - Pinia for state management
 - Vue Router (built-in with Nuxt)
 - Chart.js or ApexCharts for visualizations
-- TailwindCSS + DaisyUI for styling
+- TailwindCSS + Nuxt UI v4 for styling
 - Viem for Ethereum address handling
 - Apollo Client for GraphQL queries
 
@@ -864,7 +864,7 @@ _Reports:_
 
 ### Phase 1: Foundation (Week 1-2)
 
-- [ ] Set up Nuxt 3 project structure
+- [ ] Set up Nuxt 4 project structure
 - [ ] Authentication system (wallet-based)
 - [ ] Admin dashboard layout and navigation
 - [ ] Overview dashboard with basic stats
