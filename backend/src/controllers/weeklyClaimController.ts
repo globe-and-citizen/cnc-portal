@@ -1,11 +1,28 @@
 import { Request, Response } from 'express';
 import { errorResponse, getMondayStart, prisma } from '../utils';
 import { Prisma } from '@prisma/client';
-import { Hex, isAddress, isHex, keccak256 } from 'viem';
+import { Address, Hex, isAddress, isHex, keccak256, recoverTypedDataAddress } from 'viem';
 import CASH_REMUNERATION_ABI from '../artifacts/cash_remuneration_eip712_abi.json';
 import { isCashRemunerationOwner } from '../utils/cashRemunerationUtil';
 import publicClient from '../utils/viem.config';
 import { refreshAttachmentUrls } from '../services/attachmentService';
+
+// EIP-712 typed-data envelope for the WageClaim signature, mirroring the
+// frontend definition in app/src/components/sections/CashRemunerationView/
+// CRSigne.vue. Mirrored (not imported) so a future tweak to the frontend
+// types triggers a backend change as well — that's the failure mode we want.
+const WAGE_CLAIM_TYPES = {
+  Wage: [
+    { name: 'hourlyRate', type: 'uint256' },
+    { name: 'tokenAddress', type: 'address' },
+  ],
+  WageClaim: [
+    { name: 'employeeAddress', type: 'address' },
+    { name: 'minutesWorked', type: 'uint16' },
+    { name: 'wages', type: 'Wage[]' },
+    { name: 'date', type: 'uint256' },
+  ],
+} as const;
 
 export type WeeklyClaimAction = 'sign' | 'withdraw' | 'disable' | 'enable';
 type statusType = 'pending' | 'signed' | 'withdrawn' | 'disabled';
@@ -24,15 +41,34 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
   const callerAddress = req.address;
   const id = Number(req.params.id);
   const action = req.query.action as WeeklyClaimAction;
-  const { signature } = req.body;
+  const { signature, signedAgainstContractAddress, typedDataMessage, chainId } = req.body as {
+    signature?: string;
+    signedAgainstContractAddress?: string;
+    typedDataMessage?: {
+      employeeAddress: string;
+      minutesWorked: number;
+      date: string;
+      wages: { hourlyRate: string; tokenAddress: string }[];
+    };
+    chainId?: number;
+  };
 
   // Validation stricte des actions autorisées
   const errors: string[] = [];
   if (!action || !isValidWeeklyClaimAction(action))
     errors.push('Invalid action. Allowed actions are: sign, withdraw');
 
-  if (action == 'sign' && (!signature || !isHex(signature)))
-    errors.push('Missing or invalid signature');
+  if (action == 'sign') {
+    if (!signature || !isHex(signature)) errors.push('Missing or invalid signature');
+    // signedAgainstContractAddress + typedDataMessage + chainId are required
+    // for sign so the backend can authenticate the EIP-712 signature and
+    // tag the row with the verifying contract for stale-detection.
+    if (!signedAgainstContractAddress || !isAddress(signedAgainstContractAddress))
+      errors.push('Missing or invalid signedAgainstContractAddress');
+    if (!typedDataMessage) errors.push('Missing typedDataMessage');
+    if (!chainId || !Number.isInteger(chainId) || chainId <= 0)
+      errors.push('Missing or invalid chainId');
+  }
 
   if (!id || isNaN(id)) errors.push('Missing or invalid id');
 
@@ -157,9 +193,71 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
           }
         }
 
+        // The signed-against contract must be the team's current
+        // CashRemunerationEIP712. Reject otherwise so the row is never
+        // persisted with a signature bound to a stale or foreign contract.
+        const currentCashRemunerationContract = await prisma.teamContract.findFirst({
+          where: { teamId: weeklyClaim.wage.team.id, type: 'CashRemunerationEIP712' },
+        });
+        if (
+          !currentCashRemunerationContract ||
+          currentCashRemunerationContract.address.toLowerCase() !==
+            (signedAgainstContractAddress as string).toLowerCase()
+        ) {
+          signErrors.push(
+            'signedAgainstContractAddress does not match the team current CashRemunerationEIP712'
+          );
+        }
+
+        // Authenticate the EIP-712 signature: rebuild the typed-data envelope
+        // from the body and recover the signer. Reject if it isn't the caller.
+        // viem's recoverTypedDataAddress handles the EIP-712 hash + ECDSA
+        // recovery; the bigint-coerced fields (`date`, `hourlyRate`) come back
+        // as strings on the wire.
+        let recovered: Address | null = null;
+        if (signErrors.length === 0) {
+          try {
+            recovered = await recoverTypedDataAddress({
+              domain: {
+                name: 'CashRemuneration',
+                version: '1',
+                chainId: chainId as number,
+                verifyingContract: signedAgainstContractAddress as Address,
+              },
+              types: WAGE_CLAIM_TYPES,
+              primaryType: 'WageClaim',
+              message: {
+                employeeAddress: typedDataMessage!.employeeAddress as Address,
+                minutesWorked: typedDataMessage!.minutesWorked,
+                wages: typedDataMessage!.wages.map((w) => ({
+                  hourlyRate: BigInt(w.hourlyRate),
+                  tokenAddress: w.tokenAddress as Address,
+                })),
+                date: BigInt(typedDataMessage!.date),
+              },
+              signature: signature as Hex,
+            });
+          } catch (err) {
+            console.error('Failed to recover signer for weeklyClaim sign:', err);
+            signErrors.push('Failed to verify signature');
+          }
+        }
+
+        if (
+          signErrors.length === 0 &&
+          (!recovered || recovered.toLowerCase() !== callerAddress.toLowerCase())
+        ) {
+          signErrors.push('Recovered signer does not match the caller');
+        }
+
         if (signErrors.length > 0) return errorResponse(400, signErrors.join('; '), res);
 
-        data = { signature, status: 'signed', data: { ownerAddress: callerAddress } };
+        data = {
+          signature,
+          status: 'signed',
+          data: { ownerAddress: callerAddress },
+          signedAgainstContractAddress,
+        };
         // singleClaimStatus = "signed";
         break;
       }
