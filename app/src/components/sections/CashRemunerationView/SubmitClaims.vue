@@ -118,13 +118,11 @@ watch(
   { immediate: true }
 )
 
-// Freeze new submissions while the team is still on the previous Officer
-// generation (issue #1825). Withdrawals on already-signed rows remain
-// enabled because the old contract is still live on-chain.
-const isTeamMigrated = computed(() => teamStore.currentTeamMeta.data?.isMigrated !== false)
-
+// Submissions stay enabled while the team is on the previous Officer
+// generation (issue #1825): submitting only creates a `pending` row that
+// the approver can sign once the team migrates. Only the sign action is
+// frozen — see CRSigne.vue.
 const canSubmitClaim = computed(() => {
-  if (!isTeamMigrated.value) return false
   if (!props.weeklyClaim) return true
 
   return props.weeklyClaim.status === 'pending'
