@@ -132,6 +132,11 @@ model WeeklyClaim {
   teamId        Int
   team          Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
   signature     String?
+  // EIP-712 verifying contract address the signature was bound to. Populated
+  // at sign time so `signed` rows can be classified as stale (and surfaced
+  // for re-signing) when the team's CashRemunerationEIP712 contract is later
+  // redeployed. Nullable for legacy rows signed before this column existed.
+  signedAgainstContractAddress String?
   claims        Claim[]  @relation("WeeklyClaimToClaims")
   wageId        Int
   wage          Wage     @relation(fields: [wageId], references: [id], onDelete: Cascade)
@@ -181,6 +186,12 @@ model TeamOfficer {
   deployer          String
   deployBlockNumber BigInt?
   deployedAt        DateTime?
+  // Officer-generation tag. New deploys land as 'v0.10' (the
+  // CashRemunerationEIP712 minutesWorked typehash); legacy rows backfilled
+  // to 'legacy'. Used to derive `isMigrated` on the Team payload so the UI
+  // can freeze new sign/submit flows on teams still on the previous
+  // contract version. Nullable to keep schema rollouts safe.
+  version           String?
   // Linked list: each row points back to its predecessor. The current Officer
   // for a team is the row with no nextOfficer (no successor exists).
   previousOfficerId Int?           @unique
