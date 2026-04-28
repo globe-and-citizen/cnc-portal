@@ -3,6 +3,7 @@ import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import weeklyClaimRoutes from '../../routes/weeklyClaimRoute';
 import { prisma } from '../../utils';
+import { Prisma } from '@prisma/client';
 import {
   getCurrentCashRemunerationContract,
   isCashRemunerationOwner,
@@ -646,8 +647,18 @@ describe('Weekly Claim Controller', () => {
       vi.mocked(getCurrentCashRemunerationContract).mockResolvedValue(validContract as any);
 
       vi.spyOn(prisma.weeklyClaim, 'findMany').mockResolvedValue([
-        { id: 1, status: 'signed', signature: 'not-hex' },
-        { id: 2, status: 'signed', signature: '0xabcdef' },
+        {
+          id: 1,
+          status: 'signed',
+          signature: 'not-hex',
+          signedAgainstContractAddress: validContract.address,
+        },
+        {
+          id: 2,
+          status: 'signed',
+          signature: '0xabcdef',
+          signedAgainstContractAddress: validContract.address,
+        },
       ] as any);
 
       readContractMock.mockReset();
@@ -669,7 +680,12 @@ describe('Weekly Claim Controller', () => {
     it('should keep signed status when neither paid nor disabled', async () => {
       vi.mocked(getCurrentCashRemunerationContract).mockResolvedValue(validContract as any);
       vi.spyOn(prisma.weeklyClaim, 'findMany').mockResolvedValue([
-        { id: 7, status: 'signed', signature: '0xfeed' },
+        {
+          id: 7,
+          status: 'signed',
+          signature: '0xfeed',
+          signedAgainstContractAddress: validContract.address,
+        },
       ] as any);
 
       readContractMock.mockReset();
@@ -684,7 +700,12 @@ describe('Weekly Claim Controller', () => {
     it('should update with unknown previous status when claim.status is null', async () => {
       vi.mocked(getCurrentCashRemunerationContract).mockResolvedValue(validContract as any);
       vi.spyOn(prisma.weeklyClaim, 'findMany').mockResolvedValue([
-        { id: 8, status: null, signature: '0xface' },
+        {
+          id: 8,
+          status: null,
+          signature: '0xface',
+          signedAgainstContractAddress: validContract.address,
+        },
       ] as any);
 
       readContractMock.mockReset();
@@ -704,7 +725,12 @@ describe('Weekly Claim Controller', () => {
     it('should skip claim on readContract error', async () => {
       vi.mocked(getCurrentCashRemunerationContract).mockResolvedValue(validContract as any);
       vi.spyOn(prisma.weeklyClaim, 'findMany').mockResolvedValue([
-        { id: 5, status: 'signed', signature: '0xdeadbeef' },
+        {
+          id: 5,
+          status: 'signed',
+          signature: '0xdeadbeef',
+          signedAgainstContractAddress: validContract.address,
+        },
       ] as any);
 
       readContractMock.mockReset();
@@ -714,6 +740,76 @@ describe('Weekly Claim Controller', () => {
       expect(response.status).toBe(200);
       expect(response.body.updated).toEqual([]);
       expect(response.body.skipped).toEqual([{ id: 5, reason: 'Failed to read contract state' }]);
+    });
+
+    it('should reset to pending when claim was signed against a previous contract', async () => {
+      vi.mocked(getCurrentCashRemunerationContract).mockResolvedValue(validContract as any);
+      vi.spyOn(prisma.weeklyClaim, 'findMany').mockResolvedValue([
+        {
+          id: 21,
+          status: 'signed',
+          signature: '0xabcd',
+          signedAgainstContractAddress: '0x9999999999999999999999999999999999999999',
+        },
+        {
+          id: 22,
+          status: 'disabled',
+          signature: '0xef01',
+          signedAgainstContractAddress: null,
+        },
+      ] as any);
+
+      readContractMock.mockReset();
+      const updateSpy = vi
+        .spyOn(prisma.weeklyClaim, 'update')
+        .mockResolvedValue({} as any);
+
+      const response = await request(app).post('/sync?teamId=1');
+
+      expect(response.status).toBe(200);
+      expect(response.body.updated).toEqual([
+        { id: 21, previousStatus: 'signed', newStatus: 'pending' },
+        { id: 22, previousStatus: 'disabled', newStatus: 'pending' },
+      ]);
+      expect(readContractMock).not.toHaveBeenCalled();
+      expect(updateSpy).toHaveBeenCalledWith({
+        where: { id: 21 },
+        data: {
+          status: 'pending',
+          signature: null,
+          signedAgainstContractAddress: null,
+          data: Prisma.JsonNull,
+        },
+      });
+      expect(updateSpy).toHaveBeenCalledWith({
+        where: { id: 22 },
+        data: {
+          status: 'pending',
+          signature: null,
+          signedAgainstContractAddress: null,
+          data: Prisma.JsonNull,
+        },
+      });
+    });
+
+    it('should match signedAgainstContractAddress case-insensitively', async () => {
+      vi.mocked(getCurrentCashRemunerationContract).mockResolvedValue(validContract as any);
+      vi.spyOn(prisma.weeklyClaim, 'findMany').mockResolvedValue([
+        {
+          id: 30,
+          status: 'signed',
+          signature: '0xabcd',
+          signedAgainstContractAddress: validContract.address.toUpperCase(),
+        },
+      ] as any);
+
+      readContractMock.mockReset();
+      readContractMock.mockResolvedValueOnce(false).mockResolvedValueOnce(false);
+
+      const response = await request(app).post('/sync?teamId=1');
+      expect(response.status).toBe(200);
+      expect(response.body.updated).toEqual([]);
+      expect(readContractMock).toHaveBeenCalled();
     });
 
     it('should return 500 when sync setup throws', async () => {

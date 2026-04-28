@@ -439,6 +439,7 @@ export const syncWeeklyClaims = async (req: Request, res: Response) => {
         id: true,
         status: true,
         signature: true,
+        signedAgainstContractAddress: true,
       },
     });
 
@@ -454,9 +455,34 @@ export const syncWeeklyClaims = async (req: Request, res: Response) => {
     const updatedClaims: Array<{ id: number; previousStatus: string; newStatus: string }> = [];
     const skippedClaims: Array<{ id: number; reason: string }> = [];
 
+    const currentContractAddress = teamContract.address.toLowerCase();
+
     for (const claim of weeklyClaims) {
       if (!claim.signature || !isHex(claim.signature)) {
         skippedClaims.push({ id: claim.id, reason: 'Missing or invalid signature' });
+        continue;
+      }
+
+      // If the claim was signed against a previous CashRemuneration contract
+      // (Officer redeploy), the live contract has no record of it. Reset to
+      // pending and clear signature artifacts so the user re-signs against
+      // the current contract.
+      const signedAgainst = claim.signedAgainstContractAddress?.toLowerCase();
+      if (!signedAgainst || signedAgainst !== currentContractAddress) {
+        await prisma.weeklyClaim.update({
+          where: { id: claim.id },
+          data: {
+            status: 'pending',
+            signature: null,
+            signedAgainstContractAddress: null,
+            data: Prisma.JsonNull,
+          },
+        });
+        updatedClaims.push({
+          id: claim.id,
+          previousStatus: claim.status ?? 'unknown',
+          newStatus: 'pending',
+        });
         continue;
       }
 
