@@ -1,0 +1,25 @@
+name: Docs drift check
+permissions:
+  contents: read
+
+on:
+  pull_request:
+    branches: ["**"]
+    paths:
+      - "AGENTS.md"
+      - "CLAUDE.md"
+      - ".github/copilot-instructions.md"
+      - ".github/copilot-instructions/**"
+      - "scripts/audit-doc-drift.sh"
+      - ".github/workflows/docs-drift.yml"
+  workflow_dispatch:
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🛫 Checkout code
+        uses: actions/checkout@v6
+
+      - name: 🔍 Audit AI-agent docs for drift
+        run: bash scripts/audit-doc-drift.sh

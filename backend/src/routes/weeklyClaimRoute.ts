@@ -6,12 +6,13 @@ import {
 } from '../controllers/weeklyClaimController';
 import { requireTeamMember } from '../middleware/teamAuthzMiddleware';
 import {
+  validate,
   validateQuery,
-  validateParamsAndQuery,
   getWeeklyClaimsQuerySchema,
   syncWeeklyClaimsQuerySchema,
   weeklyClaimIdParamsSchema,
   updateWeeklyClaimQuerySchema,
+  updateWeeklyClaimBodySchema,
 } from '../validation';
 
 const weeklyClaimRoutes = express.Router();
@@ -253,7 +254,46 @@ weeklyClaimRoutes.post(
  *           properties:
  *             signature:
  *               type: string
- *               description: The EIP-712 signature (required for sign and enable actions)
+ *               description: The EIP-712 signature. Required for `action=sign` and `action=enable`.
+ *             signedAgainstContractAddress:
+ *               type: string
+ *               description: |
+ *                 EIP-712 verifyingContract the signature was bound to. Required for
+ *                 `action=sign`. The backend validates this matches the team's current
+ *                 CashRemunerationEIP712 (scoped to the current Officer) and persists it
+ *                 on the row so post-redeploy stale-detection works without a sweep.
+ *             chainId:
+ *               type: integer
+ *               description: Chain ID the signature was produced on. Required for `action=sign`.
+ *             typedDataMessage:
+ *               type: object
+ *               description: |
+ *                 The EIP-712 WageClaim message envelope as signed. Required for
+ *                 `action=sign`. The backend rebuilds the typed data from this envelope
+ *                 plus `signedAgainstContractAddress`/`chainId` and runs
+ *                 `recoverTypedDataAddress` to confirm the signer is the caller.
+ *               required: [employeeAddress, minutesWorked, date, wages]
+ *               properties:
+ *                 employeeAddress:
+ *                   type: string
+ *                 minutesWorked:
+ *                   type: integer
+ *                   minimum: 0
+ *                   maximum: 65535
+ *                 date:
+ *                   type: string
+ *                   description: Stringified unsigned integer (Unix seconds — JSON can't carry bigint).
+ *                 wages:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     required: [hourlyRate, tokenAddress]
+ *                     properties:
+ *                       hourlyRate:
+ *                         type: string
+ *                         description: Stringified unsigned integer (wei).
+ *                       tokenAddress:
+ *                         type: string
  *   responses:
  *     200:
  *       description: Weekly claim updated successfully
@@ -288,7 +328,11 @@ weeklyClaimRoutes.post(
  */
 weeklyClaimRoutes.put(
   '/:id',
-  validateParamsAndQuery(weeklyClaimIdParamsSchema, updateWeeklyClaimQuerySchema),
+  validate({
+    params: weeklyClaimIdParamsSchema,
+    query: updateWeeklyClaimQuerySchema,
+    body: updateWeeklyClaimBodySchema,
+  }),
   updateWeeklyClaims
 );
 

@@ -118,6 +118,10 @@ watch(
   { immediate: true }
 )
 
+// Submissions stay enabled while the team is on the previous Officer
+// generation (issue #1825): submitting only creates a `pending` row that
+// the approver can sign once the team migrates. Only the sign action is
+// frozen — see CRSigne.vue.
 const canSubmitClaim = computed(() => {
   if (!props.weeklyClaim) return true
 

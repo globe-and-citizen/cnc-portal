@@ -51,3 +51,6 @@ app/.env.production
 /reviews/
 /archi-update.md
 .claude/
+
+# Local working todolist shared between dev and AI agents (never committed)
+/todolist.md

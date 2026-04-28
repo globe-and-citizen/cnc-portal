@@ -65,6 +65,22 @@ describe('SubmitClaims', () => {
     expect(submitButton.attributes('disabled')).toBeDefined()
   })
 
+  it('keeps submit enabled on un-migrated teams (issue #1825 — submission is not frozen, only signing)', () => {
+    const previous = mockTeamStore.currentTeamMeta
+    mockTeamStore.currentTeamMeta = {
+      isPending: false,
+      data: { ...previous.data, isMigrated: false }
+    } as typeof mockTeamStore.currentTeamMeta
+
+    try {
+      const wrapper = createComponent({ weeklyClaim: { status: 'pending' } })
+      const submitButton = wrapper.find('[data-test="modal-submit-hours-button"]')
+      expect(submitButton.attributes('disabled')).toBeUndefined()
+    } finally {
+      mockTeamStore.currentTeamMeta = previous
+    }
+  })
+
   it('shows success toast and resets form after successful claim submission', async () => {
     const wrapper = createComponent()
 

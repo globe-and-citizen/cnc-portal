@@ -1,27 +1,37 @@
 <template>
-  <UButton
+  <UTooltip
     v-if="isCashRemunerationOwner && !isDropDown"
-    color="success"
-    data-test="approve-button"
-    :disabled="isLoad || disabled || isCurrentWeek"
-    :loading="isLoad"
-    size="sm"
-    @click="handleApprove"
+    :text="isSignFrozen ? frozenTooltip : undefined"
+    :content="{ side: 'top' }"
   >
-    Approve
-  </UButton>
-  <div
+    <UButton
+      color="success"
+      data-test="approve-button"
+      :disabled="isLoad || disabled || isCurrentWeek || isSignFrozen"
+      :loading="isLoad"
+      size="sm"
+      @click="handleApprove"
+    >
+      Approve
+    </UButton>
+  </UTooltip>
+  <UTooltip
     v-else-if="isDropDown"
-    data-test="sign-action"
-    :class="['text-sm', { disabled: isLoad }]"
-    :aria-disabled="isLoad"
-    :tabindex="isLoad ? -1 : 0"
-    :style="{ pointerEvents: isLoad ? 'none' : undefined }"
-    @click="handleDropdownClick"
+    :text="isSignFrozen ? frozenTooltip : undefined"
+    :content="{ side: 'top' }"
   >
-    <span v-if="isLoad" class="loading loading-spinner loading-xs mr-2"></span>
-    {{ isResign ? 'Resign' : 'Sign' }}
-  </div>
+    <div
+      data-test="sign-action"
+      :class="['text-sm', { disabled: isLoad || isSignFrozen }]"
+      :aria-disabled="isLoad || isSignFrozen"
+      :tabindex="isLoad || isSignFrozen ? -1 : 0"
+      :style="{ pointerEvents: isLoad ? 'none' : undefined }"
+      @click="handleDropdownClick"
+    >
+      <span v-if="isLoad" class="loading loading-spinner loading-xs mr-2"></span>
+      {{ isResign ? 'Resign' : 'Sign' }}
+    </div>
+  </UTooltip>
 </template>
 
 <script setup lang="ts">
@@ -75,6 +85,16 @@ const { data: cashRemunerationOwner, error: cashRemunerationOwnerError } = useRe
 })
 
 const isCashRemunerationOwner = computed(() => cashRemunerationOwner.value === userStore.address)
+
+// Block sign actions while the team is on the previous Officer generation
+// (issue #1825). A new signature would be bound to the new contract typehash
+// while the team is still using the old contract on-chain — pointless and
+// confusing. Resigning a stale signature against the *current* contract is
+// the explicit follow-up flow once the redeploy lands.
+const isTeamMigrated = computed(() => teamStore.currentTeamMeta.data?.isMigrated !== false)
+const isSignFrozen = computed(() => !isTeamMigrated.value)
+const frozenTooltip =
+  'Signing is disabled until your team migrates to the new CashRemuneration contract.'
 
 const { error: claimError, mutateAsync: executeUpdateClaim } = useUpdateWeeklyClaimMutation()
 
@@ -153,10 +173,27 @@ const approveClaim = async () => {
     }
 
     await enableClaim(signature as `0x${string}`)
+    // Send the verifying contract + the typed-data envelope so the backend
+    // can authenticate the signature (recoverTypedDataAddress) and tag the
+    // row with the contract it was bound to. bigint fields (`date`,
+    // `hourlyRate`) are stringified — JSON can't carry bigints natively.
     await executeUpdateClaim({
       pathParams: { claimId: props.weeklyClaim.id },
       queryParams: { action: 'sign' },
-      body: { signature }
+      body: {
+        signature,
+        signedAgainstContractAddress: cashRemunerationAddress.value as Address,
+        chainId: chainId.value,
+        typedDataMessage: {
+          employeeAddress: typedDataMessage.value.employeeAddress,
+          minutesWorked: typedDataMessage.value.minutesWorked,
+          date: typedDataMessage.value.date.toString(),
+          wages: typedDataMessage.value.wages.map((w) => ({
+            hourlyRate: w.hourlyRate.toString(),
+            tokenAddress: w.tokenAddress
+          }))
+        }
+      }
     })
 
     if (claimError.value) {
@@ -184,7 +221,7 @@ const handleApprove = async () => {
 }
 
 const handleDropdownClick = async () => {
-  if (isLoad.value) return
+  if (isLoad.value || isSignFrozen.value) return
 
   if (!isCashRemunerationOwner.value) {
     emit('close')

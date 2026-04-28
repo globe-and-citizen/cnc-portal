@@ -106,3 +106,24 @@ export const GET_BANK_EVENTS = gql`
     }
   }
 `
+
+export const GET_INCOMING_BANK_TOKEN_TRANSFERS = gql`
+  query GetIncomingBankTokenTransfers($toAddress: String!, $limit: Int!) {
+    bankTokenTransfers(
+      where: { to: $toAddress }
+      orderBy: "timestamp"
+      orderDirection: "desc"
+      limit: $limit
+    ) {
+      items {
+        id
+        contractAddress
+        sender
+        to
+        token
+        amount
+        timestamp
+      }
+    }
+  }
+`
