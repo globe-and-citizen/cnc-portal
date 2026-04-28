@@ -36,8 +36,9 @@ describe('NavBar', () => {
 
   it('opens profile modal when settings item is selected', async () => {
     const wrapper = createWrapper()
-    const profileItems = (wrapper.vm as unknown as { profileItems: Array<{ onSelect: () => void }> })
-      .profileItems
+    const profileItems = (
+      wrapper.vm as unknown as { profileItems: Array<{ onSelect: () => void }> }
+    ).profileItems
 
     profileItems[0].onSelect()
     await wrapper.vm.$nextTick()
@@ -47,8 +48,9 @@ describe('NavBar', () => {
 
   it('calls logout when logout item is selected', () => {
     const wrapper = createWrapper()
-    const profileItems = (wrapper.vm as unknown as { profileItems: Array<{ onSelect: () => void }> })
-      .profileItems
+    const profileItems = (
+      wrapper.vm as unknown as { profileItems: Array<{ onSelect: () => void }> }
+    ).profileItems
 
     profileItems[1].onSelect()
 

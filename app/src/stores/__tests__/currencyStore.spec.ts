@@ -10,9 +10,8 @@ let useCurrencyStore: typeof import('../currencyStore').useCurrencyStore
 
 describe('Currency Store', () => {
   beforeEach(async () => {
-    ;({ useCurrencyStore } = await vi.importActual<typeof import('../currencyStore')>(
-      '../currencyStore'
-    ))
+    ;({ useCurrencyStore } =
+      await vi.importActual<typeof import('../currencyStore')>('../currencyStore'))
     setActivePinia(createPinia())
     localStorage.clear()
     vi.clearAllMocks()

@@ -3,10 +3,7 @@ import { nextTick } from 'vue'
 import { describe, it, expect, beforeEach } from 'vitest'
 import NotificationDropdown from '@/components/NotificationDropdown.vue'
 import type { Notification } from '@/types/notification'
-import {
-  mockNotificationsRef,
-  mockUpdateNotificationMutateAsync
-} from '@/tests/mocks/query.mock'
+import { mockNotificationsRef, mockUpdateNotificationMutateAsync } from '@/tests/mocks/query.mock'
 import { mockRouterPush } from '@/tests/mocks/router.mock'
 
 const buildNotification = (overrides: Partial<Notification> = {}): Notification => ({
@@ -52,8 +49,6 @@ describe('NotificationDropdown.vue', () => {
     const badge = wrapper.find('.badge')
     expect(badge.exists()).toBe(true)
   })
-
-  
 
   it('does not render pagination controls when there are no notifications', async () => {
     mockNotificationsRef.value = []
