@@ -37,8 +37,8 @@ vi.mock('multer', () => {
     (options: unknown) => {
       multerState.options = options;
       return {
-      single: vi.fn(),
-      array: vi.fn(),
+        single: vi.fn(),
+        array: vi.fn(),
       };
     }
   );
@@ -68,11 +68,7 @@ describe('upload', () => {
       await import('../upload');
 
       const callback = vi.fn();
-      multerState.options.fileFilter(
-        {} as any,
-        { mimetype: 'image/png' } as any,
-        callback
-      );
+      multerState.options.fileFilter({} as any, { mimetype: 'image/png' } as any, callback);
 
       expect(callback).toHaveBeenCalledWith(null, true);
     });
