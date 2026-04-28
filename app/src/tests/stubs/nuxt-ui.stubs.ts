@@ -60,7 +60,9 @@ export const UModalStub = defineComponent({
       props.open
         ? h('div', { 'data-test': 'u-modal', role: 'dialog' }, [
             props.title ? h('h2', props.title) : undefined,
-            slots.body?.() ?? slots.default?.()
+            slots.header?.(),
+            slots.body?.() ?? slots.default?.(),
+            slots.footer?.()
           ])
         : undefined
   }
