@@ -6,8 +6,8 @@
     <ShareholderList />
   </div>
   <div class="flex flex-col gap-y-8">
-    <InvestorsTransactions />
     <ContractOwnerCard v-if="investorsAddress" :contractAddress="investorsAddress" />
+    <InvestorsTransactions />
   </div>
 </template>
 

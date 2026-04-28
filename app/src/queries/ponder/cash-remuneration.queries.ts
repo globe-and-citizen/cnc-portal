@@ -1,8 +1,8 @@
 import gql from 'graphql-tag'
 
-export const GET_BANK_EVENTS = gql`
-  query GetBankEvents($contractAddress: String!, $limit: Int!) {
-    bankDeposits(
+export const GET_CASH_REMUNERATION_EVENTS = gql`
+  query GetCashRemunerationEvents($contractAddress: String!, $limit: Int!) {
+    cashRemunerationDeposits(
       where: { contractAddress: $contractAddress }
       orderBy: "timestamp"
       orderDirection: "desc"
@@ -16,7 +16,7 @@ export const GET_BANK_EVENTS = gql`
         timestamp
       }
     }
-    bankTokenDeposits(
+    cashRemunerationWithdraws(
       where: { contractAddress: $contractAddress }
       orderBy: "timestamp"
       orderDirection: "desc"
@@ -25,42 +25,12 @@ export const GET_BANK_EVENTS = gql`
       items {
         id
         contractAddress
-        depositor
-        token
+        withdrawer
         amount
         timestamp
       }
     }
-    bankTransfers(
-      where: { contractAddress: $contractAddress }
-      orderBy: "timestamp"
-      orderDirection: "desc"
-      limit: $limit
-    ) {
-      items {
-        id
-        sender
-        to
-        amount
-        timestamp
-      }
-    }
-    bankTokenTransfers(
-      where: { contractAddress: $contractAddress }
-      orderBy: "timestamp"
-      orderDirection: "desc"
-      limit: $limit
-    ) {
-      items {
-        id
-        sender
-        to
-        token
-        amount
-        timestamp
-      }
-    }
-    bankDividendDistributionTriggereds(
+    cashRemunerationWithdrawTokens(
       where: { contractAddress: $contractAddress }
       orderBy: "timestamp"
       orderDirection: "desc"
@@ -69,13 +39,13 @@ export const GET_BANK_EVENTS = gql`
       items {
         id
         contractAddress
-        investor
-        token
-        totalAmount
+        withdrawer
+        tokenAddress
+        amount
         timestamp
       }
     }
-    bankFeePaids(
+    cashRemunerationWageClaims(
       where: { contractAddress: $contractAddress }
       orderBy: "timestamp"
       orderDirection: "desc"
@@ -84,13 +54,12 @@ export const GET_BANK_EVENTS = gql`
       items {
         id
         contractAddress
-        feeCollector
-        token
-        amount
+        signatureHash
+        enabled
         timestamp
       }
     }
-    bankOwnershipTransferreds(
+    cashRemunerationOwnerTreasuryWithdrawNatives(
       where: { contractAddress: $contractAddress }
       orderBy: "timestamp"
       orderDirection: "desc"
@@ -99,18 +68,13 @@ export const GET_BANK_EVENTS = gql`
       items {
         id
         contractAddress
-        previousOwner
-        newOwner
+        ownerAddress
+        amount
         timestamp
       }
     }
-  }
-`
-
-export const GET_INCOMING_BANK_TOKEN_TRANSFERS = gql`
-  query GetIncomingBankTokenTransfers($toAddress: String!, $limit: Int!) {
-    bankTokenTransfers(
-      where: { to: $toAddress }
+    cashRemunerationOwnerTreasuryWithdrawTokens(
+      where: { contractAddress: $contractAddress }
       orderBy: "timestamp"
       orderDirection: "desc"
       limit: $limit
@@ -118,10 +82,48 @@ export const GET_INCOMING_BANK_TOKEN_TRANSFERS = gql`
       items {
         id
         contractAddress
-        sender
-        to
-        token
+        ownerAddress
+        tokenAddress
         amount
+        timestamp
+      }
+    }
+    cashRemunerationOfficerUpdateds(
+      where: { contractAddress: $contractAddress }
+      orderBy: "timestamp"
+      orderDirection: "desc"
+      limit: $limit
+    ) {
+      items {
+        id
+        contractAddress
+        newOfficerAddress
+        timestamp
+      }
+    }
+    cashRemunerationTokenSupportAddeds(
+      where: { contractAddress: $contractAddress }
+      orderBy: "timestamp"
+      orderDirection: "desc"
+      limit: $limit
+    ) {
+      items {
+        id
+        contractAddress
+        tokenAddress
+        timestamp
+      }
+    }
+    cashRemunerationTokenSupportRemoveds(
+      where: { contractAddress: $contractAddress }
+      orderBy: "timestamp"
+      orderDirection: "desc"
+      limit: $limit
+    ) {
+      items {
+        id
+        contractAddress
+        tokenAddress
         timestamp
       }
     }

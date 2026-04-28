@@ -1,8 +1,8 @@
 import gql from 'graphql-tag'
 
-export const GET_BANK_EVENTS = gql`
-  query GetBankEvents($contractAddress: String!, $limit: Int!) {
-    bankDeposits(
+export const GET_EXPENSE_EVENTS = gql`
+  query GetExpenseEvents($contractAddress: String!, $limit: Int!) {
+    expenseDeposits(
       where: { contractAddress: $contractAddress }
       orderBy: "timestamp"
       orderDirection: "desc"
@@ -16,7 +16,7 @@ export const GET_BANK_EVENTS = gql`
         timestamp
       }
     }
-    bankTokenDeposits(
+    expenseTokenDeposits(
       where: { contractAddress: $contractAddress }
       orderBy: "timestamp"
       orderDirection: "desc"
@@ -31,7 +31,7 @@ export const GET_BANK_EVENTS = gql`
         timestamp
       }
     }
-    bankTransfers(
+    expenseTransfers(
       where: { contractAddress: $contractAddress }
       orderBy: "timestamp"
       orderDirection: "desc"
@@ -39,13 +39,14 @@ export const GET_BANK_EVENTS = gql`
     ) {
       items {
         id
-        sender
+        contractAddress
+        withdrawer
         to
         amount
         timestamp
       }
     }
-    bankTokenTransfers(
+    expenseTokenTransfers(
       where: { contractAddress: $contractAddress }
       orderBy: "timestamp"
       orderDirection: "desc"
@@ -53,14 +54,15 @@ export const GET_BANK_EVENTS = gql`
     ) {
       items {
         id
-        sender
+        contractAddress
+        withdrawer
         to
         token
         amount
         timestamp
       }
     }
-    bankDividendDistributionTriggereds(
+    expenseApprovals(
       where: { contractAddress: $contractAddress }
       orderBy: "timestamp"
       orderDirection: "desc"
@@ -69,13 +71,12 @@ export const GET_BANK_EVENTS = gql`
       items {
         id
         contractAddress
-        investor
-        token
-        totalAmount
+        signatureHash
+        activated
         timestamp
       }
     }
-    bankFeePaids(
+    expenseOwnerTreasuryWithdrawNatives(
       where: { contractAddress: $contractAddress }
       orderBy: "timestamp"
       orderDirection: "desc"
@@ -84,13 +85,27 @@ export const GET_BANK_EVENTS = gql`
       items {
         id
         contractAddress
-        feeCollector
+        ownerAddress
+        amount
+        timestamp
+      }
+    }
+    expenseOwnerTreasuryWithdrawTokens(
+      where: { contractAddress: $contractAddress }
+      orderBy: "timestamp"
+      orderDirection: "desc"
+      limit: $limit
+    ) {
+      items {
+        id
+        contractAddress
+        ownerAddress
         token
         amount
         timestamp
       }
     }
-    bankOwnershipTransferreds(
+    expenseTokenSupportAddeds(
       where: { contractAddress: $contractAddress }
       orderBy: "timestamp"
       orderDirection: "desc"
@@ -99,18 +114,12 @@ export const GET_BANK_EVENTS = gql`
       items {
         id
         contractAddress
-        previousOwner
-        newOwner
+        tokenAddress
         timestamp
       }
     }
-  }
-`
-
-export const GET_INCOMING_BANK_TOKEN_TRANSFERS = gql`
-  query GetIncomingBankTokenTransfers($toAddress: String!, $limit: Int!) {
-    bankTokenTransfers(
-      where: { to: $toAddress }
+    expenseTokenSupportRemoveds(
+      where: { contractAddress: $contractAddress }
       orderBy: "timestamp"
       orderDirection: "desc"
       limit: $limit
@@ -118,10 +127,23 @@ export const GET_INCOMING_BANK_TOKEN_TRANSFERS = gql`
       items {
         id
         contractAddress
-        sender
-        to
-        token
-        amount
+        tokenAddress
+        timestamp
+      }
+    }
+    expenseTokenAddressChangeds(
+      where: { contractAddress: $contractAddress }
+      orderBy: "timestamp"
+      orderDirection: "desc"
+      limit: $limit
+    ) {
+      items {
+        id
+        contractAddress
+        addressWhoChanged
+        tokenSymbol
+        oldAddress
+        newAddress
         timestamp
       }
     }
