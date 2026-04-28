@@ -1,27 +1,37 @@
 <template>
-  <UButton
+  <UTooltip
     v-if="isCashRemunerationOwner && !isDropDown"
-    color="success"
-    data-test="approve-button"
-    :disabled="isLoad || disabled || isCurrentWeek || isSignFrozen"
-    :loading="isLoad"
-    size="sm"
-    @click="handleApprove"
+    :text="isSignFrozen ? frozenTooltip : undefined"
+    :content="{ side: 'top' }"
   >
-    Approve
-  </UButton>
-  <div
+    <UButton
+      color="success"
+      data-test="approve-button"
+      :disabled="isLoad || disabled || isCurrentWeek || isSignFrozen"
+      :loading="isLoad"
+      size="sm"
+      @click="handleApprove"
+    >
+      Approve
+    </UButton>
+  </UTooltip>
+  <UTooltip
     v-else-if="isDropDown"
-    data-test="sign-action"
-    :class="['text-sm', { disabled: isLoad || isSignFrozen }]"
-    :aria-disabled="isLoad || isSignFrozen"
-    :tabindex="isLoad || isSignFrozen ? -1 : 0"
-    :style="{ pointerEvents: isLoad || isSignFrozen ? 'none' : undefined }"
-    @click="handleDropdownClick"
+    :text="isSignFrozen ? frozenTooltip : undefined"
+    :content="{ side: 'top' }"
   >
-    <span v-if="isLoad" class="loading loading-spinner loading-xs mr-2"></span>
-    {{ isResign ? 'Resign' : 'Sign' }}
-  </div>
+    <div
+      data-test="sign-action"
+      :class="['text-sm', { disabled: isLoad || isSignFrozen }]"
+      :aria-disabled="isLoad || isSignFrozen"
+      :tabindex="isLoad || isSignFrozen ? -1 : 0"
+      :style="{ pointerEvents: isLoad ? 'none' : undefined }"
+      @click="handleDropdownClick"
+    >
+      <span v-if="isLoad" class="loading loading-spinner loading-xs mr-2"></span>
+      {{ isResign ? 'Resign' : 'Sign' }}
+    </div>
+  </UTooltip>
 </template>
 
 <script setup lang="ts">
@@ -83,6 +93,8 @@ const isCashRemunerationOwner = computed(() => cashRemunerationOwner.value === u
 // the explicit follow-up flow once the redeploy lands.
 const isTeamMigrated = computed(() => teamStore.currentTeamMeta.data?.isMigrated !== false)
 const isSignFrozen = computed(() => !isTeamMigrated.value)
+const frozenTooltip =
+  'Signing is disabled until your team migrates to the new CashRemuneration contract.'
 
 const { error: claimError, mutateAsync: executeUpdateClaim } = useUpdateWeeklyClaimMutation()
 
@@ -209,7 +221,7 @@ const handleApprove = async () => {
 }
 
 const handleDropdownClick = async () => {
-  if (isLoad.value) return
+  if (isLoad.value || isSignFrozen.value) return
 
   if (!isCashRemunerationOwner.value) {
     emit('close')
