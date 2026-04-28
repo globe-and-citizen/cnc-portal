@@ -88,6 +88,16 @@
           >
             {{ row.status.charAt(0).toUpperCase() + row.status.slice(1) }}
           </span>
+          <!-- Surface stale signatures (signed against a previous Officer's
+               CashRemunerationEIP712) so the approver knows a Re-sign is
+               required before withdrawal works on the current contract. -->
+          <span
+            v-if="isStaleSignature(row)"
+            class="ml-2 rounded-2xl border-2 border-amber-500 bg-amber-50 px-3 py-1 text-sm text-amber-700"
+            data-test="needs-resigning-badge"
+          >
+            Needs re-signing
+          </span>
         </template>
         <template v-else-if="!row.status || row.status === 'pending'">
           <span
@@ -149,6 +159,20 @@ const props = defineProps<{
 
 function assertWeeklyClaimRow(row: unknown): WeeklyClaim {
   return row as WeeklyClaim
+}
+
+const currentCashRemunerationAddress = computed(() =>
+  teamStore.getContractAddressByType('CashRemunerationEIP712')
+)
+
+// True iff the row's stored verifying contract diverges from the team's
+// current CashRemunerationEIP712. Drives the "needs re-signing" badge —
+// see WeeklyClaimActionDropdown.vue for the matching action swap.
+function isStaleSignature(row: WeeklyClaim): boolean {
+  const signedAgainst = row.signedAgainstContractAddress
+  const current = currentCashRemunerationAddress.value
+  if (!signedAgainst || !current) return false
+  return signedAgainst.toLowerCase() !== current.toLowerCase()
 }
 
 const { data: fetchedData, error } = useGetTeamWeeklyClaimsQuery({
