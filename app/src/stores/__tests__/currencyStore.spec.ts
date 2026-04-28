@@ -1,14 +1,18 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
-import { useCurrencyStore } from '../currencyStore'
 import { nextTick, ref } from 'vue'
 import { useQueryFn } from '@/tests/mocks'
 
 // @tanstack/vue-query is mocked globally via composables.setup.ts
 // useQueryFn is exported from composables.mock.ts and used as the useQuery implementation
 
+let useCurrencyStore: typeof import('../currencyStore').useCurrencyStore
+
 describe('Currency Store', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
+    ;({ useCurrencyStore } = await vi.importActual<typeof import('../currencyStore')>(
+      '../currencyStore'
+    ))
     setActivePinia(createPinia())
     localStorage.clear()
     vi.clearAllMocks()
@@ -105,14 +109,18 @@ describe('Currency Store', () => {
 
   it('fetchTokenPrice queryFn throws on fetch error', async () => {
     global.fetch = vi.fn().mockResolvedValue({ ok: false }) as unknown as typeof fetch
-    useQueryFn.mockReturnValue({
-      data: ref(undefined),
-      refetch: vi.fn(),
-      isFetching: ref(false)
+    let capturedQueryFn: (() => Promise<unknown>) | undefined
+    useQueryFn.mockImplementation((options: { queryFn: () => Promise<unknown> }) => {
+      capturedQueryFn = options.queryFn
+      return {
+        data: ref(undefined),
+        refetch: vi.fn(),
+        isFetching: ref(false)
+      }
     })
     const store = useCurrencyStore()
-    const call = useQueryFn.mock.calls[0][0]
-    await expect(call.queryFn()).rejects.toThrow('Failed to fetch price')
+    expect(capturedQueryFn).toBeDefined()
+    await expect(capturedQueryFn!()).rejects.toThrow('Failed to fetch price')
     // getTokenInfo should return null prices
     const native = store.getTokenInfo('native')
     expect(native).toMatchSnapshot()

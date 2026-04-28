@@ -138,12 +138,11 @@ describe('TeamSelectMenu', () => {
       await wrapper.find('button').trigger('click')
       await wrapper.vm.$nextTick()
 
-      const options = wrapper.findAll('[role="option"]')
-      if (options[0]) {
-        await options[0].trigger('click')
-        await wrapper.vm.$nextTick()
-        expect(mockTeamStore.setCurrentTeamId).toHaveBeenCalledWith(mockTeamsData[0]!.id)
-      }
+      const options = Array.from(document.querySelectorAll('[role="option"]'))
+      expect(options.length).toBeGreaterThan(0)
+      await (options[0] as HTMLElement).click()
+      await wrapper.vm.$nextTick()
+      expect(mockTeamStore.setCurrentTeamId).toHaveBeenCalledWith(mockTeamsData[0]!.id)
     })
 
     it('navigates to /teams/:id when a team is selected', async () => {
@@ -151,12 +150,21 @@ describe('TeamSelectMenu', () => {
       await wrapper.find('button').trigger('click')
       await wrapper.vm.$nextTick()
 
-      const options = wrapper.findAll('[role="option"]')
-      if (options[0]) {
-        await options[0].trigger('click')
-        await wrapper.vm.$nextTick()
-        expect(mockRouterPush).toHaveBeenCalledWith(`/teams/${mockTeamsData[0]!.id}`)
-      }
+      const options = Array.from(document.querySelectorAll('[role="option"]'))
+      expect(options.length).toBeGreaterThan(0)
+      await (options[0] as HTMLElement).click()
+      await wrapper.vm.$nextTick()
+      expect(mockRouterPush).toHaveBeenCalledWith(`/teams/${mockTeamsData[0]!.id}`)
+    })
+  })
+
+  describe('query params', () => {
+    it('passes the reactive user address to useGetTeamsQuery', () => {
+      createWrapper()
+      const callArg = vi.mocked(useGetTeamsQuery).mock.calls[0]?.[0]
+      const userAddress = callArg?.queryParams?.userAddress
+      // Evaluate the computed to cover the arrow function in the component
+      expect(userAddress?.value).toBeDefined()
     })
   })
 
@@ -195,6 +203,39 @@ describe('TeamSelectMenu', () => {
       const listbox = document.querySelector('[role="listbox"]')
       expect(listbox?.textContent).toContain('Beta Squad')
       expect(listbox?.textContent).not.toContain('Alpha Team')
+    })
+  })
+
+  describe('edge cases', () => {
+    it('shows placeholder when teams data is null/undefined', () => {
+      vi.mocked(useGetTeamsQuery).mockReturnValueOnce({
+        data: ref(undefined),
+        isPending: ref(false)
+      } as unknown as ReturnType<typeof useGetTeamsQuery>)
+      const wrapper = createWrapper()
+      expect(wrapper.text()).toContain('Select Company')
+    })
+
+    it('shows placeholder when neither route param nor store has an active team id', () => {
+      mockCurrentTeamId.value = null
+      vi.mocked(useRoute).mockReturnValueOnce({
+        params: {},
+        path: '/teams',
+        meta: {}
+      } as ReturnType<typeof useRoute>)
+      const wrapper = createWrapper()
+      expect(wrapper.text()).toContain('Select Company')
+    })
+
+    it('does nothing when the selected item is cleared (item is undefined)', async () => {
+      // Use global stub (no real component override) so we can emit directly
+      const wrapper = mount(TeamSelectMenu, { attachTo: document.body })
+      const selectMenu = wrapper.findComponent({ name: 'USelectMenu' })
+      // Emit update:modelValue with undefined to exercise the if(item) false branch
+      await selectMenu.vm.$emit('update:modelValue', undefined)
+      await wrapper.vm.$nextTick()
+      expect(mockTeamStore.setCurrentTeamId).not.toHaveBeenCalled()
+      expect(mockRouterPush).not.toHaveBeenCalled()
     })
   })
 })
