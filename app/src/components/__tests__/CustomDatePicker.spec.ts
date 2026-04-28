@@ -1,26 +1,9 @@
 import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { nextTick } from 'vue'
-import { defineComponent, h } from 'vue'
 import { CalendarDate } from '@internationalized/date'
 import CustomDatePicker from '../CustomDatePicker.vue'
-import { UCalendarStub, USelectMenuStub } from '@/tests/stubs/nuxt-ui.stubs'
-
-const UModalWithFooterStub = defineComponent({
-  name: 'UModal',
-  props: ['open', 'close', 'title'],
-  emits: ['update:open'],
-  setup(props, { slots }) {
-    return () =>
-      props.open
-        ? h('div', { 'data-test': 'u-modal', role: 'dialog' }, [
-            props.title ? h('h2', props.title) : undefined,
-            slots.body?.(),
-            slots.footer?.()
-          ])
-        : undefined
-  }
-})
+import { UCalendarStub, UModalStub, USelectMenuStub } from '@/tests/stubs/nuxt-ui.stubs'
 
 describe('CustomDatePicker', () => {
   const mountComponent = (modelValue: [Date, Date] | null = null) =>
@@ -29,7 +12,7 @@ describe('CustomDatePicker', () => {
       global: {
         stubs: {
           USelectMenu: USelectMenuStub,
-          UModal: UModalWithFooterStub,
+          UModal: UModalStub,
           UCalendar: UCalendarStub
         }
       }
