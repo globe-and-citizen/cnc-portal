@@ -69,11 +69,11 @@ describe('WeeklyClaimActionDropdown', () => {
     )
   }
 
-  const createWrapper = (status: Status = 'pending') => {
+  const createWrapper = (status: Status = 'pending', overrides: Partial<WeeklyClaim> = {}) => {
     return mount(DropdownActions, {
       props: {
         status,
-        weeklyClaim
+        weeklyClaim: { ...weeklyClaim, ...overrides }
       },
       global: {
         stubs: {
@@ -182,6 +182,30 @@ describe('WeeklyClaimActionDropdown', () => {
 
     await wrapper.find('[data-test="withdraw-action"]').trigger('click')
     expect(wrapper.find('ul').exists()).toBe(false)
+  })
+
+  it('swaps Withdraw → Re-sign for stale signed rows (issue #1825)', async () => {
+    // Stored signature is bound to a contract that doesn't match the team's
+    // current CashRemunerationEIP712 — Re-sign is the only meaningful action.
+    const wrapper = createWrapper('signed', {
+      signedAgainstContractAddress: '0x000000000000000000000000000000000000dead'
+    })
+    await wrapper.find('button').trigger('click')
+
+    expect(wrapper.find('[data-test="signed-resign"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="signed-withdraw"]').exists()).toBe(false)
+  })
+
+  it('keeps Withdraw on signed rows whose signature matches the current contract', async () => {
+    const current = '0x6666666666666666666666666666666666666666'
+    mockTeamStore.getContractAddressByType.mockReturnValue(current)
+    const wrapper = createWrapper('signed', {
+      signedAgainstContractAddress: current
+    })
+    await wrapper.find('button').trigger('click')
+
+    expect(wrapper.find('[data-test="signed-resign"]').exists()).toBe(false)
+    expect(wrapper.find('[data-test="signed-withdraw"]').exists()).toBe(true)
   })
 
   it('closes menu when the disabled resign child emits close', async () => {

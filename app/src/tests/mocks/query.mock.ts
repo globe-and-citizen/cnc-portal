@@ -55,10 +55,12 @@ export const mockTeamData: Team = {
     deployBlockNumber: null,
     deployedAt: null,
     previousOfficerId: null,
+    version: 'v0.10',
     previousOfficer: null,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
-  }
+  },
+  isMigrated: true
 }
 
 export const mockTeamsData: Team[] = [mockTeamData]
@@ -138,6 +140,7 @@ export const mockWeeklyClaimData: WeeklyClaim[] = [
     minutesWorked: 2400,
     data: {},
     signature: null,
+    signedAgainstContractAddress: null,
     wageId: 1,
     wage: mockWageData[0] as Wage,
     claims: [

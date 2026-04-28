@@ -157,6 +157,21 @@ export interface UpdateWeeklyClaimParams {
   body?: {
     /** Signature (required only for 'sign' action) */
     signature?: string
+    /**
+     * EIP-712 verifyingContract address that the signature was produced
+     * against. Required for 'sign' so the backend can authenticate the
+     * signature and tag the row for stale-detection (issue #1825).
+     */
+    signedAgainstContractAddress?: Address
+    /** Signed typed-data message envelope (required for 'sign'). */
+    typedDataMessage?: {
+      employeeAddress: Address
+      minutesWorked: number
+      date: string
+      wages: Array<{ hourlyRate: string; tokenAddress: Address }>
+    }
+    /** Chain ID the signature was produced on (required for 'sign'). */
+    chainId?: number
   }
 }
 

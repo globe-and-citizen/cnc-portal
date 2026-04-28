@@ -76,6 +76,13 @@ export interface WeeklyClaim {
   memberAddress: Address
   teamId: number
   signature: string | null
+  /**
+   * EIP-712 verifying contract address the signature was bound to. Set at
+   * sign time and compared against the team's current CashRemunerationEIP712
+   * to detect stale signatures after a contract redeploy. Null on legacy
+   * rows signed before this column existed.
+   */
+  signedAgainstContractAddress: Address | null
   wageId: number
   createdAt: string // ISO date string
   updatedAt: string // ISO date string

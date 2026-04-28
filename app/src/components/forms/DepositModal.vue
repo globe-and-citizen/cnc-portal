@@ -14,13 +14,13 @@
     />
 
     <template #body>
-      <DepositSafeForm :safe-address="bankAddress" @close-modal="isOpen = false" />
+      <DepositBankForm :bank-address="bankAddress" @close-modal="isOpen = false" />
     </template>
   </UModal>
 </template>
 
 <script setup lang="ts">
-import DepositSafeForm from '@/components/forms/DepositSafeForm.vue'
+import DepositBankForm from '@/components/forms/DepositBankForm.vue'
 import { ref } from 'vue'
 import { type Address } from 'viem'
 

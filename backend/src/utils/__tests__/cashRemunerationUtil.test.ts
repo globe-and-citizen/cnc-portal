@@ -48,10 +48,14 @@ describe('cashRemunerationUtil', () => {
       const result = await getCashRemunerationOwner(teamId);
 
       expect(result).toBe(ownerAddress);
+      // Scoped to the current Officer (linked-list head) — required after
+      // an Officer redeploy leaves multiple TeamContract rows of this type
+      // for the team. See cashRemunerationUtil.ts.
       expect(prisma.teamContract.findFirst).toHaveBeenCalledWith({
         where: {
           teamId,
           type: 'CashRemunerationEIP712',
+          officer: { nextOfficer: { is: null } },
         },
       });
       expect(publicClient.readContract).toHaveBeenCalledWith({

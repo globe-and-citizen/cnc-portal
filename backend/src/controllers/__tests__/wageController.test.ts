@@ -7,20 +7,22 @@ import { prisma } from '../../utils';
 
 vi.mock('../../utils', async () => {
   const actual = await vi.importActual('../../utils');
+  const prismaMock: Record<string, unknown> = {
+    team: {
+      findFirst: vi.fn(),
+      findUnique: vi.fn(),
+    },
+    wage: {
+      findFirst: vi.fn(),
+      findMany: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+    },
+  };
+  prismaMock.$transaction = vi.fn(async (cb: (tx: unknown) => unknown) => cb(prismaMock));
   return {
     ...actual,
-    prisma: {
-      team: {
-        findFirst: vi.fn(),
-        findUnique: vi.fn(),
-      },
-      wage: {
-        findFirst: vi.fn(),
-        findMany: vi.fn(),
-        create: vi.fn(),
-        update: vi.fn(),
-      },
-    },
+    prisma: prismaMock,
   };
 });
 vi.mock('../../utils/viem.config');
