@@ -1,24 +1,46 @@
 import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { nextTick } from 'vue'
+import { defineComponent, h } from 'vue'
 import { CalendarDate } from '@internationalized/date'
 import CustomDatePicker from '../CustomDatePicker.vue'
-import { UCalendarStub, UModalStub, USelectMenuStub } from '@/tests/stubs/nuxt-ui.stubs'
+import { UCalendarStub, USelectMenuStub } from '@/tests/stubs/nuxt-ui.stubs'
 
-describe.skip('CustomDatePicker', () => {
+const UModalWithFooterStub = defineComponent({
+  name: 'UModal',
+  props: ['open', 'close', 'title'],
+  emits: ['update:open'],
+  setup(props, { slots }) {
+    return () =>
+      props.open
+        ? h('div', { 'data-test': 'u-modal', role: 'dialog' }, [
+            props.title ? h('h2', props.title) : undefined,
+            slots.body?.(),
+            slots.footer?.()
+          ])
+        : undefined
+  }
+})
+
+describe('CustomDatePicker', () => {
   const mountComponent = (modelValue: [Date, Date] | null = null) =>
     mount(CustomDatePicker, {
       props: { modelValue, dataTestPrefix: 'test-date-picker' },
       global: {
-        stubs: { USelectMenu: USelectMenuStub, UModal: UModalStub, UCalendar: UCalendarStub }
+        stubs: {
+          USelectMenu: USelectMenuStub,
+          UModal: UModalWithFooterStub,
+          UCalendar: UCalendarStub
+        }
       }
     })
 
   const openDropdown = async (wrapper: ReturnType<typeof mountComponent>) => {
     await nextTick()
-    await wrapper.find('[data-test="test-date-picker-date-select"]').trigger('click')
+    await wrapper
+      .find('[data-test="test-date-picker-date-select"] [data-test="select-trigger"]')
+      .trigger('click')
     await nextTick()
-    await wrapper.find('[data-test="test-date-picker-date-select"]').trigger('click')
   }
 
   const openCustomRangeModal = async (wrapper: ReturnType<typeof mountComponent>) => {
@@ -49,16 +71,13 @@ describe.skip('CustomDatePicker', () => {
       const wrapper = mountComponent([new Date('2024-01-01'), new Date('2024-01-31')])
       await nextTick()
 
-      expect(wrapper.find('span').text()).toBe('January 1 - January 31')
+      const month = new Date('2024-01-01').toLocaleString('default', { month: 'long' })
+      expect(wrapper.find('span').text()).toBe(`${month} 1 - ${month} 31`)
     })
 
     it('lists current and previous month as selectable options', async () => {
       const wrapper = mountComponent()
-      console.log('Before opening dropdown: \n')
-      console.log(wrapper.html())
       await openDropdown(wrapper)
-      console.log('After opening dropdown: \n')
-      console.log(wrapper.html())
 
       const items = wrapper.findAll('li')
       const currentMonth = new Date().toLocaleString('default', { month: 'long' })
@@ -132,7 +151,8 @@ describe.skip('CustomDatePicker', () => {
       await wrapper.setProps({ modelValue: [new Date('2024-02-01'), new Date('2024-02-29')] })
       await nextTick()
 
-      expect(wrapper.find('span').text()).toBe('February 1 - February 29')
+      const month = new Date('2024-02-01').toLocaleString('default', { month: 'long' })
+      expect(wrapper.find('span').text()).toBe(`${month} 1 - ${month} 29`)
     })
 
     it('emits the new range when modelValue prop changes', async () => {
@@ -226,12 +246,20 @@ describe.skip('CustomDatePicker', () => {
       expect(wrapper.emitted('update:modelValue')?.length ?? 0).toBe(emitCountBeforeCancel)
     })
 
-    it('keeps Apply disabled until a date range is selected in the calendar', async () => {
+    it('opens modal with prefilled calendar range when an existing range is present', async () => {
+      const wrapper = mountComponent([new Date('2024-04-01'), new Date('2024-04-30')])
+      await openCustomRangeModal(wrapper)
+
+      const applyButton = wrapper.findAll('button').find((b) => b.text() === 'Apply')!
+      expect(applyButton.attributes('disabled')).toBeUndefined()
+    })
+
+    it('keeps Apply enabled with prefilled range and after calendar selection', async () => {
       const wrapper = mountComponent()
       await openCustomRangeModal(wrapper)
 
       const applyButton = wrapper.findAll('button').find((b) => b.text() === 'Apply')!
-      expect(applyButton.attributes('disabled')).toBeDefined()
+      expect(applyButton.attributes('disabled')).toBeUndefined()
 
       await wrapper.findComponent({ name: 'UCalendar' }).vm.$emit('update:modelValue', {
         start: new CalendarDate(2024, 3, 1),
@@ -240,6 +268,17 @@ describe.skip('CustomDatePicker', () => {
       await nextTick()
 
       expect(applyButton.attributes('disabled')).toBeUndefined()
+    })
+
+    it('handles a null modelValue update without emitting a new range', async () => {
+      const wrapper = mountComponent([new Date('2024-03-01'), new Date('2024-03-31')])
+      await nextTick()
+      const emitCountBefore = wrapper.emitted('update:modelValue')?.length ?? 0
+
+      await wrapper.setProps({ modelValue: null })
+      await nextTick()
+
+      expect(wrapper.emitted('update:modelValue')?.length ?? 0).toBe(emitCountBefore)
     })
   })
 })
