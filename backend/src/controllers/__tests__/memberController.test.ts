@@ -2,6 +2,7 @@ import { faker } from '@faker-js/faker';
 import express, { NextFunction, Request, Response } from 'express';
 import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { addMembers, deleteMember } from '../memberController';
 import teamRoutes from '../../routes/teamRoutes';
 import { prisma } from '../../utils';
 
@@ -86,6 +87,14 @@ const mockResolvedTeam = {
     { address: '0x4444444444444444444444444444444444444444', name: 'Member 2' },
     { address: mockOwner.address, name: mockOwner.name },
   ],
+};
+
+const createMockRes = () => {
+  const res: Partial<Response> = {};
+  res.status = vi.fn().mockReturnValue(res);
+  res.json = vi.fn().mockReturnValue(res);
+  res.end = vi.fn().mockReturnValue(res);
+  return res as Response;
 };
 
 describe('Member Controller', () => {
@@ -262,6 +271,143 @@ describe('Member Controller', () => {
       });
 
       consoleErrorSpy.mockRestore();
+    });
+  });
+
+  describe('Direct controller coverage', () => {
+    it('addMembers should return 404 when team is missing in controller', async () => {
+      vi.mocked(prisma.team.findUnique).mockResolvedValueOnce(null);
+
+      const req = {
+        params: { id: 1 },
+        body: fakeMembers,
+      } as unknown as Request;
+      const res = createMockRes();
+
+      await addMembers(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(404);
+      expect(res.json).toHaveBeenCalledWith({ message: 'Team not found' });
+    });
+
+    it('addMembers should return 500 with Error message when findUnique throws Error', async () => {
+      vi.mocked(prisma.team.findUnique).mockRejectedValueOnce(new Error('findUnique failed'));
+
+      const req = {
+        params: { id: 1 },
+        body: fakeMembers,
+      } as unknown as Request;
+      const res = createMockRes();
+
+      await addMembers(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.json).toHaveBeenCalledWith({
+        message: 'Internal server error has occured',
+        error: '',
+      });
+    });
+
+    it('addMembers should return 500 fallback when findUnique throws non-Error', async () => {
+      vi.mocked(prisma.team.findUnique).mockRejectedValueOnce('findUnique failed');
+
+      const req = {
+        params: { id: 1 },
+        body: fakeMembers,
+      } as unknown as Request;
+      const res = createMockRes();
+
+      await addMembers(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.json).toHaveBeenCalledWith({
+        message: 'Internal server error has occured',
+        error: '',
+      });
+    });
+
+    it('deleteMember should return 404 when team is missing in controller', async () => {
+      vi.mocked(prisma.team.findUnique).mockResolvedValueOnce(null);
+
+      const req = {
+        params: { id: 1, memberAddress: '0x2222222222222222222222222222222222222222' },
+      } as unknown as Request;
+      const res = createMockRes();
+
+      await deleteMember(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(404);
+      expect(res.json).toHaveBeenCalledWith({ message: 'Team not found' });
+    });
+
+    it('deleteMember should return 500 when memberTeamsData.delete throws Error', async () => {
+      vi.mocked(prisma.team.findUnique).mockResolvedValueOnce(mockResolvedTeam as any);
+      vi.mocked(prisma.memberTeamsData.delete).mockRejectedValueOnce(new Error('delete failed'));
+
+      const req = {
+        params: { id: 1, memberAddress: '0x2222222222222222222222222222222222222222' },
+      } as unknown as Request;
+      const res = createMockRes();
+
+      await deleteMember(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.json).toHaveBeenCalledWith({
+        message: 'Internal server error has occured',
+        error: '',
+      });
+    });
+
+    it('deleteMember should return 500 fallback when memberTeamsData.delete throws non-Error', async () => {
+      vi.mocked(prisma.team.findUnique).mockResolvedValueOnce(mockResolvedTeam as any);
+      vi.mocked(prisma.memberTeamsData.delete).mockRejectedValueOnce('delete failed');
+
+      const req = {
+        params: { id: 1, memberAddress: '0x2222222222222222222222222222222222222222' },
+      } as unknown as Request;
+      const res = createMockRes();
+
+      await deleteMember(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.json).toHaveBeenCalledWith({
+        message: 'Internal server error has occured',
+        error: '',
+      });
+    });
+
+    it('deleteMember should return 500 with Error message when outer try fails with Error', async () => {
+      vi.mocked(prisma.team.findUnique).mockRejectedValueOnce(new Error('team lookup failed'));
+
+      const req = {
+        params: { id: 1, memberAddress: '0x2222222222222222222222222222222222222222' },
+      } as unknown as Request;
+      const res = createMockRes();
+
+      await deleteMember(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.json).toHaveBeenCalledWith({
+        message: 'Internal server error has occured',
+        error: '',
+      });
+    });
+
+    it('deleteMember should return 500 fallback when outer try fails with non-Error', async () => {
+      vi.mocked(prisma.team.findUnique).mockRejectedValueOnce('team lookup failed');
+
+      const req = {
+        params: { id: 1, memberAddress: '0x2222222222222222222222222222222222222222' },
+      } as unknown as Request;
+      const res = createMockRes();
+
+      await deleteMember(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.json).toHaveBeenCalledWith({
+        message: 'Internal server error has occured',
+        error: '',
+      });
     });
   });
 });
