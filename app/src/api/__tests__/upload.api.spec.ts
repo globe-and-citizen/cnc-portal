@@ -36,16 +36,4 @@ describe('uploadFileApi', () => {
       }
     })
   })
-
- 
-  
-
-  
-
- 
-
-  
-
-  
-    
 })
