@@ -1,7 +1,6 @@
 import { flushPromises, mount } from '@vue/test-utils'
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import ReceiptComponent from '@/components/ReceiptComponent.vue'
-import { createTestingPinia } from '@pinia/testing'
 import { NETWORK } from '@/constant'
 
 const DATE = new Date().toLocaleDateString()
@@ -11,26 +10,13 @@ const mockReceiptData = {
   type: 'deposit',
   from: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
   to: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
-  amountUsd: 10,
-  amountCad: 12,
+  valueUSD: 10,
   receipt: 'Receipt',
   amount: '0.01',
   token: 'POL'
 }
 
-vi.mock('@/composables', async (importOriginal) => {
-  const original: object = await importOriginal()
-  return {
-    ...original,
-    useNativeToken: vi.fn(() => ({
-      value: {
-        priceInUSD: 1.5
-      }
-    }))
-  }
-})
-
-describe.skip('ReceiptComponent', () => {
+describe('ReceiptComponent', () => {
   interface ComponentOptions {
     props?: Record<string, unknown>
     data?: () => Record<string, unknown>
@@ -40,11 +26,11 @@ describe.skip('ReceiptComponent', () => {
   const createComponent = ({ props = {}, data = () => ({}), global = {} }: ComponentOptions = {}) =>
     mount(ReceiptComponent, {
       props: {
-        ...props,
-        receiptData: mockReceiptData
+        receiptData: mockReceiptData,
+        ...props
       },
       data,
-      global: { ...global, plugins: [createTestingPinia({ createSpy: vi.fn })] }
+      global
     })
   describe('Render', () => {
     it('should show correct values and labels', async () => {
@@ -90,17 +76,36 @@ describe.skip('ReceiptComponent', () => {
   })
 
   describe('Export', () => {
-    it('should export to excel', async () => {
+    it('emits export-excel with receipt data', async () => {
       const wrapper = createComponent()
       const exportExcelButton = wrapper.find('[data-test="export-excel"]')
       await exportExcelButton.trigger('click')
       expect(exportExcelButton.exists()).toBeTruthy()
+      expect(wrapper.emitted('export-excel')).toEqual([[mockReceiptData]])
     })
-    it('should export to pdf', async () => {
+
+    it('emits export-pdf with receipt data', async () => {
       const wrapper = createComponent()
       const exportPdfButton = wrapper.find('[data-test="export-pdf"]')
       await exportPdfButton.trigger('click')
       expect(exportPdfButton.exists()).toBeTruthy()
+      expect(wrapper.emitted('export-pdf')).toEqual([[mockReceiptData]])
+    })
+
+    it('renders empty hash when txHash is not provided', async () => {
+      const wrapper = createComponent({
+        props: {
+          receiptData: {
+            ...mockReceiptData,
+            txHash: undefined
+          }
+        }
+      })
+      await flushPromises()
+
+      const txHash = wrapper.find('[data-test="receipt-data-txHash"]')
+      expect(txHash.text()).toContain('Transaction Hash')
+      expect(txHash.find('a').exists()).toBe(false)
     })
   })
 })
