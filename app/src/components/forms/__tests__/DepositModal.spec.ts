@@ -13,9 +13,9 @@ describe('DepositModal', () => {
       },
       global: {
         stubs: {
-          DepositSafeForm: {
-            name: 'DepositSafeForm',
-            props: ['safeAddress'],
+          DepositBankForm: {
+            name: 'DepositBankForm',
+            props: ['bankAddress'],
             emits: ['close-modal'],
             template:
               '<button data-test="close-form" @click="$emit(\'close-modal\')">Close</button>'
@@ -46,7 +46,7 @@ describe('DepositModal', () => {
     await wrapper.vm.$nextTick()
 
     expect(wrapper.find('[data-test="close-form"]').exists()).toBe(true)
-    expect(wrapper.findComponent({ name: 'DepositSafeForm' }).props('safeAddress')).toBe(
+    expect(wrapper.findComponent({ name: 'DepositBankForm' }).props('bankAddress')).toBe(
       mockBankAddress
     )
 

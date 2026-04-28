@@ -89,3 +89,17 @@ export type BankEventsQuery = {
   bankOwnershipTransferreds: { items: BankOwnershipTransferredRow[] }
   rawContractTokenTransfers: { items: RawContractTokenTransferRow[] }
 }
+
+export type IncomingBankTokenTransfersQuery = {
+  bankTokenTransfers: {
+    items: Array<{
+      id: string
+      contractAddress: string
+      sender: string
+      to: string
+      token: string
+      amount: string
+      timestamp: number
+    }>
+  }
+}
