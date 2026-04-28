@@ -760,9 +760,7 @@ describe('Weekly Claim Controller', () => {
       ] as any);
 
       readContractMock.mockReset();
-      const updateSpy = vi
-        .spyOn(prisma.weeklyClaim, 'update')
-        .mockResolvedValue({} as any);
+      const updateSpy = vi.spyOn(prisma.weeklyClaim, 'update').mockResolvedValue({} as any);
 
       const response = await request(app).post('/sync?teamId=1');
 
