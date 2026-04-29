@@ -229,13 +229,13 @@ describe('SelectComponent', () => {
       await nextTick()
 
       const anchors = wrapper.findAll(SELECTORS.optionAnchors)
-      expect(anchors[1].classes()).toContain('focus')
+      expect(anchors[1].attributes('data-focused')).toBe('true')
 
       // Navigate back up to first option
       await wrapper.find(SELECTORS.trigger).trigger('keydown', { key: 'ArrowUp' })
       await nextTick()
 
-      expect(anchors[0].classes()).toContain('focus')
+      expect(anchors[0].attributes('data-focused')).toBe('true')
     })
 
     it('should respect option boundaries during keyboard navigation', async () => {
@@ -252,7 +252,7 @@ describe('SelectComponent', () => {
       // Try to navigate above first option - should stay at first
       await trigger.trigger('keydown', { key: 'ArrowUp' })
       await nextTick()
-      expect(anchors[0].classes()).toContain('focus')
+      expect(anchors[0].attributes('data-focused')).toBe('true')
 
       // Navigate to last option and try to go beyond
       await trigger.trigger('keydown', { key: 'ArrowDown' })
@@ -260,7 +260,7 @@ describe('SelectComponent', () => {
       await trigger.trigger('keydown', { key: 'ArrowDown' }) // Try to go beyond last
       await nextTick()
 
-      expect(anchors[2].classes()).toContain('focus') // Should stay at last option
+      expect(anchors[2].attributes('data-focused')).toBe('true') // Should stay at last option
     })
 
     it('should ignore keyboard navigation when dropdown is closed', async () => {

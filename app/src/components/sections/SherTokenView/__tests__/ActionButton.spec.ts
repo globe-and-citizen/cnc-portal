@@ -31,17 +31,6 @@ describe('ActionButton.vue', () => {
     expect(wrapper.find('[data-test="u-icon"]').exists()).toBe(true)
   })
 
-  it('applies tone and icon classes', () => {
-    const wrapper = createWrapper()
-
-    const button = wrapper.find('button')
-    const iconContainer = wrapper.find('div.rounded-full')
-
-    expect(button.classes()).toContain('border-teal-200')
-    expect(iconContainer.classes()).toContain('bg-teal-50')
-    expect(wrapper.html()).toContain('text-teal-700')
-  })
-
   it('does not render badge when badge is not provided', () => {
     const wrapper = createWrapper()
 

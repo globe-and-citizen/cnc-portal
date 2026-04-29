@@ -139,29 +139,6 @@ describe('SelectContractResults', () => {
     expect(wrapper.findAll(SELECTORS.contractRow).length).toBe(3)
   })
 
-  it('should apply correct CSS classes to contract rows', async () => {
-    wrapper = createWrapper({ contracts: MOCK_CONTRACTS })
-    await nextTick()
-
-    const rows = wrapper.findAll(SELECTORS.contractRow)
-    rows.forEach((row) => {
-      expect(row.classes()).toContain('cursor-pointer')
-      expect(row.classes()).toContain('group')
-    })
-  })
-
-  it('should apply correct CSS classes to UserComponent', async () => {
-    wrapper = createWrapper({ contracts: MOCK_CONTRACTS })
-    await nextTick()
-
-    MOCK_CONTRACTS.forEach((contract) => {
-      const userComp = wrapper.find(SELECTORS.contractComponent(contract.address))
-      expect(userComp.classes()).toContain('rounded-lg')
-      expect(userComp.classes()).toContain('bg-white')
-      expect(userComp.classes()).toContain('hover:bg-base-300')
-    })
-  })
-
   it('should pass correct props to UserComponent', async () => {
     wrapper = createWrapper({ contracts: MOCK_CONTRACTS })
     await nextTick()

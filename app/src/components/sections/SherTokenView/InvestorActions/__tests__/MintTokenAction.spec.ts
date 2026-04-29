@@ -57,7 +57,6 @@ describe('MintTokenAction.vue', () => {
       investorsOwner: '0x2222222222222222222222222222222222222222' as Address
     })
 
-    expect(wrapper.classes()).toContain('tooltip')
     expect(wrapper.attributes('data-tip')).toBe('Only the token owner can mint tokens')
     expect(wrapper.find('[data-test="mint-button"]').attributes('disabled')).toBeDefined()
   })

@@ -13,6 +13,7 @@
           :class="{ 'pointer-events-none opacity-50': isUploading || disabled }"
           @click="open()"
           data-test="upload-zone"
+          :data-disabled="isUploading || disabled || undefined"
         >
           <div class="flex flex-col items-center text-gray-500">
             <p>Add Screenshot or File</p>

@@ -18,6 +18,8 @@
               'badge-info': row.type === 'ERC20_TRANSFER',
               'badge-warning': row.type === 'ERC721_TRANSFER'
             }"
+            :data-transfer-type="row.type"
+            data-test="transfer-type-badge"
           >
             {{ formatSafeTransferType(row.type) }}
           </span>

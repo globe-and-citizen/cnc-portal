@@ -33,29 +33,10 @@ const vmCast = {
     'Avoid casting `wrapper.vm as Xxx` to reach component internals — it couples tests to implementation. Drive the component through DOM events (setValue, trigger) and assert via emitted()/text()/props. See app/src/tests/README.md.'
 }
 
-// Legacy offenders. Each list grants an opt-out for ONE pattern only — the
-// other pattern is still enforced. Files in `bothLegacyFiles` are exempted
-// from both. Refactor and remove from these lists; once empty, drop the
-// override blocks entirely.
-const tailwindLegacyFiles = [
-  'src/components/__tests__/BodAlert.spec.ts',
-  'src/components/__tests__/OverviewCard.spec.ts',
-  'src/components/__tests__/RateDotList.spec.ts',
-  'src/components/__tests__/SelectComponent.advanced.spec.ts',
-  'src/components/__tests__/SelectComponent.spec.ts',
-  'src/components/__tests__/UserAvatarComponent.spec.ts',
-  'src/components/__tests__/UserComponent.spec.ts',
-  'src/components/forms/__tests__/ProfileImageUpload.spec.ts',
-  'src/components/sections/AdministrationView/__tests__/ElectionStatus.spec.ts',
-  'src/components/sections/DashboardView/__tests__/SetMemberWageStandardStep.spec.ts',
-  'src/components/sections/SafeView/__tests__/SafeIncomingTransactions.spec.ts',
-  'src/components/sections/SherTokenView/__tests__/ActionButton.spec.ts',
-  'src/components/utils/__tests__/SelectContractResults.spec.ts',
-  'src/components/utils/__tests__/SelectMemberContractsInput.spec.ts',
-  'src/components/utils/__tests__/SelectMemberInput.spec.ts',
-  'src/components/utils/__tests__/SelectMemberResults.spec.ts',
-  'src/views/team/__tests__/ListIndex.spec.ts'
-]
+// Legacy offenders for the wrapper.vm cast rule. Tailwind class assertions
+// are now banned globally — all previous Tailwind offenders were refactored.
+// Refactor and remove from this list; once empty, drop the override block
+// and the helper lists below.
 
 const vmCastLegacyFiles = [
   'src/components/__tests__/MonthSelector.spec.ts',
@@ -100,7 +81,9 @@ const vmCastLegacyFiles = [
   'src/components/ui/__tests__/SidebarLayout.spec.ts'
 ]
 
-const bothLegacyFiles = [
+// These three were originally Tailwind+vm offenders. The Tailwind half is
+// refactored; the vm casts remain pending refactor.
+const vmCastLegacyExtraFiles = [
   'src/components/sections/CashRemunerationView/Form/__tests__/UploadFileDB.spec.ts',
   'src/components/sections/SherTokenView/InvestorActions/__tests__/DistributeMintAction.spec.ts',
   'src/components/sections/SherTokenView/InvestorActions/__tests__/MintTokenAction.spec.ts'
@@ -174,16 +157,8 @@ export default [
     }
   },
   {
-    name: 'app/test-fragility-bans-tailwind-legacy',
-    files: tailwindLegacyFiles,
-    rules: {
-      // Allow Tailwind class assertions in these files only; vm casts still error.
-      'no-restricted-syntax': ['error', vmCast]
-    }
-  },
-  {
     name: 'app/test-fragility-bans-vm-legacy',
-    files: vmCastLegacyFiles,
+    files: [...vmCastLegacyFiles, ...vmCastLegacyExtraFiles],
     rules: {
       // Allow wrapper.vm casts in these files only; Tailwind class assertions still error.
       'no-restricted-syntax': [
@@ -192,13 +167,6 @@ export default [
         tailwindClassAssertionOptional,
         tailwindClassIncludes
       ]
-    }
-  },
-  {
-    name: 'app/test-fragility-bans-both-legacy',
-    files: bothLegacyFiles,
-    rules: {
-      'no-restricted-syntax': 'off'
     }
   },
   skipFormatting
