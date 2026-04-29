@@ -108,58 +108,6 @@ describe('VestingView.vue', () => {
     mockWaitReceipt.isSuccess.value = false
   })
 
-  it.skip('renders main cards and tables', () => {
-    expect(wrapper.text()).toContain('Vesting Stats')
-    expect(wrapper.text()).toContain('Vesting Overview')
-    expect(wrapper.find('[data-test="vesting-stats"]').exists()).toBe(true)
-    expect(wrapper.find('[data-test="vesting-overview"]').exists()).toBe(true)
-  })
-
-  it.skip('shows and opens add vesting modal', async () => {
-    const btn = wrapper.find('[data-test="createAddVesting"]')
-    expect(btn.exists()).toBe(true)
-    await btn.trigger('click')
-    expect(wrapper.findComponent({ name: 'UModal' }).exists()).toBe(true)
-    expect(wrapper.findComponent({ name: 'CreateVesting' }).exists()).toBe(true)
-  })
-
-  it.skip('opens modal with correct props when add vesting button is clicked', async () => {
-    // Click the add vesting button
-    const addButton = wrapper.find('[data-test="createAddVesting"]')
-    await addButton.trigger('click')
-
-    // Check if modal is opened
-    expect(wrapper.findComponent({ name: 'UModal' }).exists()).toBe(true)
-
-    // Find the CreateVesting component
-    const createVesting = wrapper.findComponent({ name: 'CreateVesting' })
-    expect(createVesting.exists()).toBe(true)
-
-    // Verify props
-    expect(createVesting.props()).toMatchObject({
-      reloadKey: mockReloadKey.value,
-      tokenAddress: '0x000000000000000000000000000000000000beef' // This comes from the mocked sherToken
-    })
-  })
-
-  it.skip('handles CreateVesting component events correctly', async () => {
-    // Open modal
-    await wrapper.find('[data-test="createAddVesting"]').trigger('click')
-
-    const createVesting = wrapper.findComponent({ name: 'CreateVesting' })
-
-    await createVesting.vm.$emit('reload')
-    await wrapper.vm.$nextTick()
-    // Test closeAddVestingModal event
-    await createVesting.vm.$emit('closeAddVestingModal')
-    await wrapper.vm.$nextTick()
-
-    expect(wrapper.find('[data-test="createAddVestingModal"]').exists()).toBe(false)
-
-    // Test reloadVestingInfos event
-    expect(refetchVestingInfos).toHaveBeenCalled()
-  })
-
   it('passes correct props to CreateVesting', async () => {
     const btn = wrapper.find('[data-test="createAddVesting"]')
     await btn.trigger('click')
