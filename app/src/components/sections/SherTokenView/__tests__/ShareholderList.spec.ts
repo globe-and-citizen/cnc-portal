@@ -78,17 +78,4 @@ describe('ShareholderList', () => {
     expect((wrapper.vm as unknown as ComponentData).selectedShareholder).toBe('0x123')
     // expect(wrapper.find('[data-test="u-modal"]').exists()).toBe(true)
   })
-
-  it.skip('closes modal when UModal emits update:open', async () => {
-    const wrapper = createComponent()
-
-    await wrapper.find('[data-test="mint-individual"]').trigger('click')
-    await wrapper.vm.$nextTick()
-
-    const modalComponent = wrapper.findComponent({ name: 'UModal' })
-    modalComponent.vm.$emit('update:open', false)
-    await wrapper.vm.$nextTick()
-
-    expect((wrapper.vm as unknown as ComponentData).mintIndividualModal.show).toBe(false)
-  })
 })

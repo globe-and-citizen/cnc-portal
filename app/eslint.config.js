@@ -1,6 +1,6 @@
 import pluginVue from 'eslint-plugin-vue'
 import vueTsEslintConfig from '@vue/eslint-config-typescript'
-// import pluginVitest from '@vitest/eslint-plugin'
+import pluginVitest from '@vitest/eslint-plugin'
 import skipFormatting from '@vue/eslint-config-prettier/skip-formatting'
 
 const tailwindClassAssertionMessage =
@@ -50,7 +50,6 @@ const vmCastLegacyFiles = [
   'src/components/forms/__tests__/TransferModal.spec.ts',
   'src/components/sections/AdministrationView/__tests__/CurrentBoDElectionSection.spec.ts',
   'src/components/sections/AdministrationView/__tests__/CurrentBoDSection.spec.ts',
-  'src/components/sections/AdministrationView/forms/__tests__/CreateELectionForm.spec.ts',
   'src/components/sections/BankView/__tests__/BankTransactions.spec.ts',
   'src/components/sections/CashRemunerationView/Form/__tests__/ClaimForm.spec.ts',
   'src/components/sections/CashRemunerationView/Form/__tests__/ExpandableFileGallery.spec.ts',
@@ -73,8 +72,6 @@ const vmCastLegacyFiles = [
   'src/components/sections/SherTokenView/__tests__/InvestorsTransaction.advanced.spec.ts',
   'src/components/sections/SherTokenView/__tests__/InvestorsTransaction.spec.ts',
   'src/components/sections/SherTokenView/__tests__/ShareholderList.spec.ts',
-  'src/components/sections/SherTokenView/forms/__tests__/DistributeMintForm.spec.ts',
-  'src/components/sections/SherTokenView/forms/__tests__/MintForm.spec.ts',
   'src/components/sections/VestingView/__tests__/VestingStats.spec.ts',
   'src/components/sections/VestingView/forms/__tests__/CreateVestingInitial.spec.ts',
   'src/components/sections/VestingView/forms/__tests__/CreateVestingSubmission.spec.ts',
@@ -125,10 +122,14 @@ export default [
   },
   ...pluginVue.configs['flat/essential'],
   ...vueTsEslintConfig(),
-  // {
-  //   ...pluginVitest.configs.recommended,
-  //   files: ['src/**/__tests__/*']
-  // },
+  {
+    name: 'app/vitest-tests',
+    files: ['**/__tests__/**/*.{ts,tsx,vue}', '**/*.spec.{ts,tsx}', '**/*.test.{ts,tsx}'],
+    plugins: { vitest: pluginVitest },
+    rules: {
+      'vitest/no-disabled-tests': 'warn'
+    }
+  },
   {
     languageOptions: {
       ecmaVersion: 'latest'

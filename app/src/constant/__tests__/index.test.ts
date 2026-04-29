@@ -44,13 +44,6 @@ describe('Contract Address Resolution', () => {
   })
 
   describe('TOKEN_ADDRESSES', () => {
-    // it.skip('should use mock addresses for Sepolia network', () => {
-    //   expect(TOKEN_ADDRESSES[11155111]).toEqual({
-    //     USDC: '0xabcd',
-    //     USDT: '0xbcde'
-    //   })
-    // })
-
     it('should use hardcoded addresses for Polygon network', () => {
       // Mock network to return Polygon chain ID
       vi.spyOn(networkModule, 'getNetwork').mockReturnValue({

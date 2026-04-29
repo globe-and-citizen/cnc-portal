@@ -136,52 +136,6 @@ describe('useSafeApproval', () => {
     })
   })
 
-  describe('Successful Approval', () => {
-    it.skip('should sign and submit approval successfully', async () => {
-      const mockSignHash = vi.fn().mockResolvedValue({
-        data: MOCK_DATA.signature
-      })
-
-      mockLoadSafe.mockResolvedValue({
-        signHash: mockSignHash
-      })
-
-      const { approveTransaction } = useSafeApproval()
-
-      const result = await approveTransaction(MOCK_DATA.validSafeAddress, MOCK_DATA.safeTxHash)
-
-      expect(result).toBe(MOCK_DATA.signature)
-      expect(mockLoadSafe).toHaveBeenCalledWith(MOCK_DATA.validSafeAddress)
-      expect(mockSignHash).toHaveBeenCalledWith(MOCK_DATA.safeTxHash)
-      expect(mockMutation.mutateAsync).toHaveBeenCalledWith({
-        chainId: 137,
-        safeAddress: MOCK_DATA.validSafeAddress,
-        safeTxHash: MOCK_DATA.safeTxHash,
-        signature: {
-          data: MOCK_DATA.signature,
-          signer: MOCK_DATA.connectedAddress
-        }
-      })
-      // TODO: Re-enable toast verification once implementation is fixed
-      // expect(mockAddSuccessToast).toHaveBeenCalledWith('Transaction approved successfully')
-    })
-
-    it.skip('should handle different chain IDs correctly', async () => {
-      const arbitrumChainId = 42161
-      mockUseChainId.mockReturnValue(ref(arbitrumChainId))
-
-      const { approveTransaction } = useSafeApproval()
-
-      await approveTransaction(MOCK_DATA.validSafeAddress, MOCK_DATA.safeTxHash)
-
-      expect(mockMutation.mutateAsync).toHaveBeenCalledWith(
-        expect.objectContaining({
-          chainId: arbitrumChainId
-        })
-      )
-    })
-  })
-
   describe('Error Handling', () => {
     it('should handle Safe SDK loading errors', async () => {
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})

@@ -134,14 +134,4 @@ describe('TeamContractEventList.vue', () => {
     const budgetCell = wrapper.findAll('.campaign-budget')[3]
     expect(budgetCell.text()).toBe('N/A POL')
   })
-
-  it.skip('handles empty events gracefully', async () => {
-    // Mount the component with no events
-    const emptyWrapper = mount(TeamContractEventList, {
-      props: { eventsByCampaignCode: {} as EventsByCampaignCode }
-    })
-
-    // Verify no rows are rendered
-    expect(emptyWrapper.find('[data-test="empty-state"]').exists()).toBe(true)
-  })
 })

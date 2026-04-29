@@ -15,16 +15,9 @@ describe('NavBar', () => {
     }
   })
 
-  // Check if the component is rendered properly
   describe('Render', () => {
     it('Should Render the component', () => {
       expect(wrapper.exists()).toBe(true)
     })
   })
-
-  it.skip('Should logout the user', async () => {
-    await wrapper.find('[data-test="logout"]').trigger('click')
-    // TODO: check a user is connected, then check if he is logged out
-  })
-  // TODO: click on logout
 })

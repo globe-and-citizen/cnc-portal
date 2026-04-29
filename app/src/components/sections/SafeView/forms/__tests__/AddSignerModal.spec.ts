@@ -1,5 +1,4 @@
 import AddSignerModal from '@/components/sections/SafeView/forms/AddSignerModal.vue'
-import MultiSelectMemberInput from '@/components/utils/MultiSelectMemberInput.vue'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount, flushPromises, VueWrapper } from '@vue/test-utils'
 import { nextTick, ref, type ComponentPublicInstance } from 'vue'
@@ -103,19 +102,6 @@ describe('AddSignerModal', () => {
       await wrapper.setProps({ modelValue: true })
       await nextTick()
       expect(wrapper.vm.isOpen).toBe(true)
-    })
-  })
-
-  describe('MultiSelectMemberInput v-model (newSigners)', () => {
-    it.skip('should update newSigners when MultiSelectMemberInput emits update', async () => {
-      wrapper = createWrapper()
-      const input = wrapper.findComponent(MultiSelectMemberInput)
-
-      await input.vm.$emit('update:modelValue', [MOCK_USERS[0]!])
-      await nextTick()
-
-      expect(wrapper.vm.newSigners).toHaveLength(1)
-      expect(wrapper.vm.newSigners[0]).toEqual(MOCK_USERS[0])
     })
   })
 
