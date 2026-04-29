@@ -38,6 +38,51 @@ These are replaced automatically in every test via `src/tests/setup/nuxt-ui.setu
 
 If one of these causes issues in your test, stub it locally in your `mount()` call.
 
+## Banned Test Patterns
+
+Two patterns are flagged by ESLint and must not be added to new specs.
+
+### 1. Asserting on Tailwind / utility classes
+
+Tests that assert on framework-specific class names break on every styling refactor — a class rename in a Vue file triggers test failures unrelated to behavior.
+
+```typescript
+// ❌ Don't
+expect(wrapper.classes()).toContain('bg-teal-50')
+expect(badge.classes()).toContain('badge-warning')
+
+// ✅ Prefer behavioral assertions
+expect(wrapper.find('[data-test="confirm-button"]').exists()).toBe(true)
+expect(wrapper.text()).toContain('Pending')
+expect(wrapper.emitted('confirm')).toBeTruthy()
+```
+
+If a class genuinely encodes domain semantics (rare), use a `data-test`/`data-state` attribute on the element instead and assert against that.
+
+### 2. Casting `wrapper.vm` to reach internal state
+
+`wrapper.vm as XxxVm` couples tests to component internals — refs, computed properties, helper functions. The test passes whether or not the component is wired to the DOM, so it can't catch wiring regressions, and any rename inside the component breaks the test for no good reason.
+
+```typescript
+// ❌ Don't
+const vm = wrapper.vm as unknown as { handleSelect: (id: string) => void; isOpen: boolean }
+vm.handleSelect('usdc')
+expect(vm.isOpen).toBe(true)
+
+// ✅ Drive the component through its public surface
+await wrapper.find('[data-test="token-select"]').setValue('usdc')
+expect(wrapper.emitted('update:modelValue')?.at(-1)?.[0]).toEqual('usdc')
+```
+
+Use:
+
+- `data-test` selectors and DOM events (`trigger('click')`, `setValue(...)`) to drive the component.
+- `wrapper.emitted(...)` to assert outputs.
+- `wrapper.setProps(...)` and rendered text/attributes to assert state.
+- `wrapper.findComponent({ name: 'UFoo' }).props(...)` when you need to verify what a child receives — props are part of the contract, internal helpers are not.
+
+`app/src/components/forms/__tests__/TokenAmount.spec.ts` is the reference example for the pattern.
+
 ## Common Testing Patterns
 
 ### Finding stubbed buttons and icons

@@ -9,7 +9,5 @@ describe('BodAlert', () => {
     expect(wrapper.text()).toContain('Info')
     expect(wrapper.text()).toContain('This will create a BOD action which requires approval')
     expect(wrapper.find('svg').exists()).toBe(true)
-    // basic style sanity check
-    expect(wrapper.classes()).toContain('flex')
   })
 })

@@ -3,6 +3,92 @@ import vueTsEslintConfig from '@vue/eslint-config-typescript'
 // import pluginVitest from '@vitest/eslint-plugin'
 import skipFormatting from '@vue/eslint-config-prettier/skip-formatting'
 
+const tailwindClassAssertionMessage =
+  'Avoid asserting on Tailwind / utility classes — they break on every styling refactor. Prefer data-test selectors and behavioral assertions (text, emitted, attributes). See app/src/tests/README.md.'
+
+// Direct: expect(x.classes()).toContain(...)
+const tailwindClassAssertion = {
+  selector:
+    "CallExpression[callee.object.callee.name='expect'][callee.object.arguments.0.type='CallExpression'][callee.object.arguments.0.callee.property.name='classes']",
+  message: tailwindClassAssertionMessage
+}
+
+// Optional chain: expect(x?.classes()).toContain(...)
+const tailwindClassAssertionOptional = {
+  selector:
+    "CallExpression[callee.object.callee.name='expect'][callee.object.arguments.0.type='ChainExpression'][callee.object.arguments.0.expression.callee.property.name='classes']",
+  message: tailwindClassAssertionMessage
+}
+
+// Includes matcher: x.classes().includes('...') — same fragility, different assertion shape
+const tailwindClassIncludes = {
+  selector:
+    "CallExpression[callee.property.name='includes'][callee.object.type='CallExpression'][callee.object.callee.property.name='classes']",
+  message: tailwindClassAssertionMessage
+}
+
+const vmCast = {
+  selector: "TSAsExpression > MemberExpression.expression[property.name='vm']",
+  message:
+    'Avoid casting `wrapper.vm as Xxx` to reach component internals — it couples tests to implementation. Drive the component through DOM events (setValue, trigger) and assert via emitted()/text()/props. See app/src/tests/README.md.'
+}
+
+// Legacy offenders for the wrapper.vm cast rule. Tailwind class assertions
+// are now banned globally — all previous Tailwind offenders were refactored.
+// Refactor and remove from this list; once empty, drop the override block
+// and the helper lists below.
+
+const vmCastLegacyFiles = [
+  'src/components/__tests__/MonthSelector.spec.ts',
+  'src/components/forms/__tests__/AddTeamForm.spec.ts',
+  'src/components/forms/__tests__/ApproveUsersEIP712Form.spec.ts',
+  'src/components/forms/__tests__/DepositBankForm.spec.ts',
+  'src/components/forms/__tests__/DepositSafeForm.spec.ts',
+  'src/components/forms/__tests__/EditUserForm.spec.ts',
+  'src/components/forms/__tests__/SafeDepositRouterForm.spec.ts',
+  'src/components/forms/__tests__/TransferForm.spec.ts',
+  'src/components/forms/__tests__/TransferModal.spec.ts',
+  'src/components/sections/AdministrationView/__tests__/CurrentBoDElectionSection.spec.ts',
+  'src/components/sections/AdministrationView/__tests__/CurrentBoDSection.spec.ts',
+  'src/components/sections/AdministrationView/forms/__tests__/CreateELectionForm.spec.ts',
+  'src/components/sections/BankView/__tests__/BankTransactions.spec.ts',
+  'src/components/sections/CashRemunerationView/Form/__tests__/ClaimForm.spec.ts',
+  'src/components/sections/CashRemunerationView/Form/__tests__/ExpandableFileGallery.spec.ts',
+  'src/components/sections/CashRemunerationView/__tests__/CashRemunerationTransactions.spec.ts',
+  'src/components/sections/CashRemunerationView/__tests__/SubmitClaims.spec.ts',
+  'src/components/sections/ClaimHistoryView/__tests__/ClaimHistoryActionAlerts.spec.ts',
+  'src/components/sections/ClaimHistoryView/__tests__/ClaimHistoryDailyBreakdown.spec.ts',
+  'src/components/sections/ClaimHistoryView/__tests__/ClaimHistoryWeekNavigator.spec.ts',
+  'src/components/sections/ContractManagementView/forms/__tests__/CreateAddCampaign.spec.ts',
+  'src/components/sections/DashboardView/__tests__/SetMemberWageModal.spec.ts',
+  'src/components/sections/DashboardView/__tests__/TeamMetaSection.spec.ts',
+  'src/components/sections/DashboardView/forms/__tests__/AddMemberForm.spec.ts',
+  'src/components/sections/ExpenseAccountView/__tests__/ExpenseTransactions.spec.ts',
+  'src/components/sections/SafeView/__tests__/SafeBalanceSection.rendering.spec.ts',
+  'src/components/sections/SafeView/__tests__/SafeBalanceSection.transfer.spec.ts',
+  'src/components/sections/SherTokenView/InvestorActions/__tests__/InvestInSafeAction.spec.ts',
+  'src/components/sections/SherTokenView/InvestorActions/__tests__/PayDividendsAction.spec.ts',
+  'src/components/sections/SherTokenView/InvestorActions/__tests__/SetCompensationMultiplierAction.spec.ts',
+  'src/components/sections/SherTokenView/InvestorActions/__tests__/ToggleSherCompensationAction.spec.ts',
+  'src/components/sections/SherTokenView/__tests__/InvestorsTransaction.advanced.spec.ts',
+  'src/components/sections/SherTokenView/__tests__/InvestorsTransaction.spec.ts',
+  'src/components/sections/SherTokenView/__tests__/ShareholderList.spec.ts',
+  'src/components/sections/SherTokenView/forms/__tests__/DistributeMintForm.spec.ts',
+  'src/components/sections/SherTokenView/forms/__tests__/MintForm.spec.ts',
+  'src/components/sections/VestingView/__tests__/VestingStats.spec.ts',
+  'src/components/sections/VestingView/forms/__tests__/CreateVestingInitial.spec.ts',
+  'src/components/sections/VestingView/forms/__tests__/CreateVestingSubmission.spec.ts',
+  'src/components/ui/__tests__/SidebarLayout.spec.ts'
+]
+
+// These three were originally Tailwind+vm offenders. The Tailwind half is
+// refactored; the vm casts remain pending refactor.
+const vmCastLegacyExtraFiles = [
+  'src/components/sections/CashRemunerationView/Form/__tests__/UploadFileDB.spec.ts',
+  'src/components/sections/SherTokenView/InvestorActions/__tests__/DistributeMintAction.spec.ts',
+  'src/components/sections/SherTokenView/InvestorActions/__tests__/MintTokenAction.spec.ts'
+]
+
 export default [
   {
     // TODO turn this rule into an error by march 2025
@@ -55,6 +141,32 @@ export default [
       '@typescript-eslint/no-explicit-any': 'error',
       // TODO: remove @typescript-eslint/no-empty-object-type
       '@typescript-eslint/no-empty-object-type': 'off'
+    }
+  },
+  {
+    name: 'app/test-fragility-bans',
+    files: ['**/*.spec.ts', '**/*.spec.tsx', '**/__tests__/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        tailwindClassAssertion,
+        tailwindClassAssertionOptional,
+        tailwindClassIncludes,
+        vmCast
+      ]
+    }
+  },
+  {
+    name: 'app/test-fragility-bans-vm-legacy',
+    files: [...vmCastLegacyFiles, ...vmCastLegacyExtraFiles],
+    rules: {
+      // Allow wrapper.vm casts in these files only; Tailwind class assertions still error.
+      'no-restricted-syntax': [
+        'error',
+        tailwindClassAssertion,
+        tailwindClassAssertionOptional,
+        tailwindClassIncludes
+      ]
     }
   },
   skipFormatting

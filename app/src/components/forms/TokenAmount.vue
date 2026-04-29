@@ -145,13 +145,15 @@ const selectedToken = computed(() =>
 const availableBalance = computed(() => {
   const token = selectedToken.value
   if (!token) return 0
-  return token.spendableBalance ?? token.balance ?? 0
+  return token.spendableBalance ?? token.balance
 })
 
 const estimatedPrice = computed(() => {
   const price = selectedToken.value?.price ?? 0
   const code = currency.value?.code ?? 'USD'
-  const value = (Number(amount.value) || 0) * price
+  // Template guards rendering with `amount && parseFloat(amount) > 0`,
+  // so Number(amount.value) is always a positive number here.
+  const value = Number(amount.value) * price
   return formatCurrencyShort(value, code)
 })
 
@@ -171,7 +173,7 @@ const schema = computed(() =>
 )
 
 const useMaxBalance = () => {
-  const balance = availableBalance.value ?? 0
+  const balance = availableBalance.value
   const bps = props.feeBps ?? 0
 
   if (bps <= 0) {
@@ -185,7 +187,7 @@ const useMaxBalance = () => {
 }
 
 const usePercentageOfBalance = (percentage: number) => {
-  amount.value = (((availableBalance.value ?? 0) * percentage) / 100).toFixed(4)
+  amount.value = ((availableBalance.value * percentage) / 100).toFixed(4)
 }
 
 const handleAmountInput = (event: Event) => {

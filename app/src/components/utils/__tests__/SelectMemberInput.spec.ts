@@ -126,7 +126,7 @@ describe.skip('SelectMemberInput', () => {
     ).toBe(false)
   })
 
-  it('should add loading class when fetching', () => {
+  it('should mark input as loading when fetching', () => {
     vi.mocked(useGetSearchUsersQuery).mockReturnValueOnce({
       data: ref(undefined),
       isFetching: ref(true),
@@ -138,7 +138,7 @@ describe.skip('SelectMemberInput', () => {
       isFetched: ref(true)
     } as unknown as ReturnType<typeof useGetSearchUsersQuery>)
     wrapper = createWrapper({})
-    expect(wrapper.find(SELECTORS.container).classes()).toContain('animate-pulse')
+    expect(wrapper.find(SELECTORS.container).attributes('data-loading')).toBe('true')
   })
 
   it('should refetch on debounced input when not limited to team members', async () => {

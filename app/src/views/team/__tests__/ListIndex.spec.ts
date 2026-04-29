@@ -143,8 +143,7 @@ describe('ListIndex - Team List View', () => {
       await wrapper.vm.$nextTick()
 
       const errorAlert = wrapper.find('[data-test="error-state"]')
-      expect(errorAlert.classes()).toContain('alert')
-      expect(errorAlert.classes()).toContain('alert-warning')
+      expect(errorAlert.exists()).toBe(true)
       expect(errorAlert.text()).toContain('We are unable to retrieve your teams')
     })
 
@@ -190,39 +189,12 @@ describe('ListIndex - Team List View', () => {
       expect(teamCard.text()).toContain(mockTeamData.name)
     })
 
-    it('should apply correct CSS classes to team list', async () => {
-      const wrapper = createWrapper(mockTeamsData)
-      await wrapper.vm.$nextTick()
-
-      const teamList = wrapper.find('[data-test="team-list"]')
-      expect(teamList.classes()).toContain('grid')
-      expect(teamList.classes()).toContain('grid-cols-1')
-      expect(teamList.classes()).toContain('md:grid-cols-2')
-      expect(teamList.classes()).toContain('lg:grid-cols-3')
-    })
-
     it('should display add team button even when teams exist and not loading', async () => {
       const wrapper = createWrapper(mockTeamsData, false)
       await wrapper.vm.$nextTick()
 
       // The button shows when there's no error and not loading, regardless of team count
       expect(wrapper.find('[data-test="add-team-button"]').exists()).toBe(true)
-    })
-
-    it('should apply hover and animation classes to team cards', async () => {
-      const wrapper = createWrapper(mockTeamsData)
-      await wrapper.vm.$nextTick()
-
-      const teamCardContainer = wrapper.find('.grid.grid-cols-1')
-      const teamCardChildren = teamCardContainer.findAll('.cursor-pointer')
-
-      expect(teamCardChildren.length).toBeGreaterThan(0)
-      teamCardChildren.forEach((element) => {
-        expect(element.classes()).toContain('cursor-pointer')
-        expect(element.classes()).toContain('transition')
-        expect(element.classes()).toContain('duration-300')
-        expect(element.classes()).toContain('hover:scale-105')
-      })
     })
   })
 
@@ -285,23 +257,6 @@ describe('ListIndex - Team List View', () => {
       await wrapper.vm.$nextTick()
 
       expect(wrapper.find('[data-test="add-team-button"]').exists()).toBe(true)
-    })
-
-    it('should apply correct styling to add team button container', async () => {
-      const wrapper = createWrapper([], false)
-      await wrapper.vm.$nextTick()
-
-      const buttonContainer = wrapper.find('[data-test="add-team-button"]')
-      expect(buttonContainer.classes()).toContain('flex')
-      expect(buttonContainer.classes()).toContain('justify-center')
-    })
-
-    it('should apply animation class to add team card', async () => {
-      const wrapper = createWrapper([], false)
-      await wrapper.vm.$nextTick()
-
-      const addTeamCard = wrapper.find('[data-test="add-team-card"]')
-      expect(addTeamCard.classes()).toContain('animate-fade-in')
     })
   })
 
