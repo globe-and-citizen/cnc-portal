@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { useDeployContract, getContractData } from '../useContractFunctions'
+import { getContractData } from '../useContractFunctions'
 import { nextTick } from 'vue'
 import { parseUnits, formatUnits } from 'viem/utils'
 import type { Abi, Address } from 'viem'
@@ -44,6 +44,14 @@ describe('useDeployContract', () => {
     mockUseWaitForTransactionReceipt.isLoading.value = false
   })
 
+  const getActualUseDeployContract = async () => {
+    const actual = await vi.importActual<typeof import('../useContractFunctions')>(
+      '../useContractFunctions'
+    )
+
+    return actual.useDeployContract
+  }
+
   it('should deploy contract with correct args', async () => {
     mockDeployContract.mockResolvedValue('0xHASH')
 
@@ -52,6 +60,7 @@ describe('useDeployContract', () => {
     mockUseWaitForTransactionReceipt.isSuccess.value = true
     mockUseWaitForTransactionReceipt.data.value = { contractAddress: '0xDEADBEEF' } as never
 
+    const useDeployContract = await getActualUseDeployContract()
     const { deploy, contractAddress, error, isDeploying } = useDeployContract(mockAbi, mockBytecode)
     await deploy('0xBANK', '1.5', '2.5')
 
@@ -74,6 +83,7 @@ describe('useDeployContract', () => {
   it('should handle wallet not connected error', async () => {
     mockWagmiCore.getWalletClient.mockResolvedValueOnce(null)
 
+    const useDeployContract = await getActualUseDeployContract()
     const { deploy, error, contractAddress, isDeploying } = useDeployContract(mockAbi, mockBytecode)
     await deploy('0xBANK', '1', '1')
 
