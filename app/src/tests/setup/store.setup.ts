@@ -35,3 +35,11 @@ vi.mock('@/stores/teamStore', async (importOriginal) => {
     useTeamStore: vi.fn(() => ({ ...mocks.mockTeamStore }))
   }
 })
+
+vi.mock('@/stores/currencyStore', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    useCurrencyStore: vi.fn(() => mocks.mockUseCurrencyStore())
+  }
+})

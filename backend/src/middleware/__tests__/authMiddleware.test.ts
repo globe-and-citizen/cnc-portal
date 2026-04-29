@@ -2,11 +2,20 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { Request, Response } from 'express';
 import { authorizeUser } from '../authMiddleware';
 import jwt from 'jsonwebtoken';
+import { prisma } from '../../utils/dependenciesUtil';
 
 // Mock dependencies
 vi.mock('jsonwebtoken');
+vi.mock('../../utils/dependenciesUtil', () => ({
+  prisma: {
+    user: {
+      findUnique: vi.fn(),
+    },
+  },
+}));
+
 vi.mock('../../utils/utils', () => ({
-  errorResponse: vi.fn((status: number, error: Error, res: Response) => {
+  errorResponse: vi.fn((status: number, error: unknown, res: Response) => {
     res.status(status).json({ message: typeof error === 'string' ? error : error.message });
   }),
 }));
@@ -110,7 +119,7 @@ describe('authMiddleware', () => {
       expect(mockNext).not.toHaveBeenCalled();
     });
 
-    it.skip('should set address and call next if token is valid', async () => {
+    it('should return 401 if user does not exist', async () => {
       const testAddress = '0x1234567890123456789012345678901234567890';
       mockRequest.headers = {
         authorization: 'Bearer valid-token',
@@ -118,11 +127,38 @@ describe('authMiddleware', () => {
 
       vi.mocked(jwt.verify).mockReturnValue({
         address: testAddress,
-      } as unknown);
+      } as any);
+      vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
+
+      await authorizeUser(mockRequest as Request, mockResponse as Response, mockNext);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(401);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        message: 'Unauthorized: User not found',
+      });
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it('should set address and user then call next if token is valid', async () => {
+      const testAddress = '0x1234567890123456789012345678901234567890';
+      const testUser = {
+        address: testAddress,
+        name: 'Test user',
+      };
+
+      mockRequest.headers = {
+        authorization: 'Bearer valid-token',
+      };
+
+      vi.mocked(jwt.verify).mockReturnValue({
+        address: testAddress,
+      } as any);
+      vi.mocked(prisma.user.findUnique).mockResolvedValue(testUser as any);
 
       await authorizeUser(mockRequest as Request, mockResponse as Response, mockNext);
 
       expect((mockRequest as any).address).toBe(testAddress);
+      expect((mockRequest as any).user).toEqual(testUser);
       expect(mockNext).toHaveBeenCalled();
       expect(mockResponse.status).not.toHaveBeenCalled();
     });
@@ -132,26 +168,18 @@ describe('authMiddleware', () => {
         authorization: 'Bearer valid-token',
       };
 
-      const unexpectedError = new Error('Unexpected error');
-      vi.mocked(jwt.verify).mockImplementation(() => {
-        throw unexpectedError;
-      });
-
-      // Mock errorResponse to throw on 401 so we can catch 500 path
-      const { errorResponse } = await import('../../utils/utils');
-      vi.mocked(errorResponse).mockImplementation((status: number, error: Error, res: Response) => {
-        if (status === 401) {
-          throw new Error('Triggering 500 path');
-        }
-        res.status(status).json({ message: typeof error === 'string' ? error : error.message });
-      });
+      vi.mocked(jwt.verify).mockReturnValue({
+        address: '0x1234567890123456789012345678901234567890',
+      } as any);
+      vi.mocked(prisma.user.findUnique).mockRejectedValue(new Error('DB failure'));
 
       await authorizeUser(mockRequest as Request, mockResponse as Response, mockNext);
 
       expect(mockResponse.status).toHaveBeenCalledWith(500);
+      expect(mockNext).not.toHaveBeenCalled();
     });
 
-    it.skip('should verify token with correct secret key', async () => {
+    it('should verify token with correct secret key', async () => {
       const testAddress = '0x1234567890123456789012345678901234567890';
       const testToken = 'test-token';
       mockRequest.headers = {
@@ -160,6 +188,10 @@ describe('authMiddleware', () => {
 
       vi.mocked(jwt.verify).mockReturnValue({
         address: testAddress,
+      } as any);
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({
+        address: testAddress,
+        name: 'Test user',
       } as any);
 
       await authorizeUser(mockRequest as Request, mockResponse as Response, mockNext);
