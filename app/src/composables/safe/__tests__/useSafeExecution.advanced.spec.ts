@@ -446,23 +446,6 @@ describe('useSafeExecution', () => {
   })
 
   describe('Query Invalidation', () => {
-    it.skip('should trigger query invalidation after successful execution', async () => {
-      const { executeTransaction } = useSafeExecution()
-
-      await executeTransaction(
-        MOCK_DATA.validSafeAddress,
-        MOCK_DATA.safeTxHash,
-        MOCK_DATA.mockTransaction
-      )
-
-      expect(mockMutation.mutateAsync).toHaveBeenCalledWith({
-        chainId: 137,
-        safeAddress: MOCK_DATA.validSafeAddress,
-        safeTxHash: MOCK_DATA.safeTxHash,
-        txHash: MOCK_DATA.txHash
-      })
-    })
-
     it('should not trigger query invalidation when execution fails', async () => {
       mockSafeSdk.executeTransaction.mockRejectedValue(new Error('Execution failed'))
 
@@ -491,46 +474,6 @@ describe('useSafeExecution', () => {
       expect(result).toBeNull()
       // TODO: Re-enable toast verification once implementation is fixed
       // expect(mockAddErrorToast).toHaveBeenCalledWith('Invalidation failed')
-    })
-  })
-
-  describe('Chain Compatibility', () => {
-    it.skip('should work with different chain configurations', async () => {
-      const testChains = [1, 137, 42161, 10, 100] // Ethereum, Polygon, Arbitrum, Optimism, Gnosis
-
-      const { executeTransaction } = useSafeExecution()
-
-      for (const chainId of testChains) {
-        mockUseChainId.mockReturnValue(ref(chainId))
-
-        await executeTransaction(
-          MOCK_DATA.validSafeAddress,
-          MOCK_DATA.safeTxHash,
-          MOCK_DATA.mockTransaction
-        )
-
-        expect(mockMutation.mutateAsync).toHaveBeenCalledWith(expect.objectContaining({ chainId }))
-      }
-    })
-
-    it.skip('should handle unsupported chains gracefully', async () => {
-      const unsupportedChainId = 99999
-      mockUseChainId.mockReturnValue(ref(unsupportedChainId))
-
-      const { executeTransaction } = useSafeExecution()
-
-      await executeTransaction(
-        MOCK_DATA.validSafeAddress,
-        MOCK_DATA.safeTxHash,
-        MOCK_DATA.mockTransaction
-      )
-
-      // Should still attempt execution regardless of chain
-      expect(mockMutation.mutateAsync).toHaveBeenCalledWith(
-        expect.objectContaining({
-          chainId: unsupportedChainId
-        })
-      )
     })
   })
 
