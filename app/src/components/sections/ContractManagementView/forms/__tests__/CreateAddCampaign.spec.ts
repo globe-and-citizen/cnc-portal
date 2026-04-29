@@ -79,16 +79,6 @@ describe('CreateAddCampaign.vue', () => {
       expect(wrapper.find('h3').text()).toContain('By clicking "Deploy Advertisement Contract"')
     })
 
-    it.skip('shows the bank address input and is disabled', () => {
-      const wrapper = mount(CreateAddCampaign, {
-        props: { bankAddress: '0xTeamContractAddress' }
-      })
-
-      const bankAddressInput = wrapper.find('input[data-testid="bank-address-input"]')
-      expect((bankAddressInput.element as HTMLInputElement)?.value).toBe('0xTeamContractAddress')
-      expect(bankAddressInput.attributes('disabled')).toBeDefined()
-    })
-
     it('shows loading button when contract is deploying', async () => {
       deployState.isDeploying.value = true
       await flushPromises()

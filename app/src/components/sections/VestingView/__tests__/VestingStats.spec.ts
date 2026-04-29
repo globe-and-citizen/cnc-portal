@@ -104,10 +104,6 @@ describe('VestingStats.vue', () => {
     mockWaitReceipt.isSuccess.value = false
   })
 
-  it.skip('renders vesting stats component', () => {
-    expect(wrapper.find('[data-test="vesting-stats"]').exists()).toBe(true)
-  })
-
   it('calculates token summary correctly from vestings data', async () => {
     // Setup mock data with multiple vestings
     mockVestingInfos.value = [
