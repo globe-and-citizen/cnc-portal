@@ -133,55 +133,6 @@ describe('SafeIncomingTransactions', () => {
     if (wrapper) wrapper.unmount()
   })
 
-  describe('Component Rendering', () => {
-    it.skip('should render transfer data correctly', () => {
-      wrapper = createWrapper()
-      expect(wrapper.findAll('[data-test="table-row"]')).toHaveLength(3)
-    })
-
-    it.skip('should show loading state when data is fetching', () => {
-      mockUseGetSafeIncomingTransfersQuery.mockReturnValue({
-        data: ref(null),
-        isLoading: ref(true),
-        error: ref(null)
-      })
-      wrapper = createWrapper()
-      expect(wrapper.findComponent(TableStub).props('loading')).toBe(true)
-    })
-
-    it.skip('should handle empty and null data gracefully', () => {
-      mockUseGetSafeIncomingTransfersQuery.mockReturnValue({
-        data: ref(null),
-        isLoading: ref(false),
-        error: ref(null)
-      })
-      wrapper = createWrapper()
-      expect(wrapper.findComponent(TableStub).props('rows')).toEqual([])
-    })
-  })
-
-  describe('Table Configuration', () => {
-    it.skip('should configure table with correct columns', () => {
-      wrapper = createWrapper()
-      const columns = wrapper.findComponent(TableStub).props('columns')
-      expect(columns).toEqual([
-        { key: 'type', label: 'Type' },
-        { key: 'from', label: 'From' },
-        { key: 'amount', label: 'Amount' },
-        { key: 'executionDate', label: 'Date', sortable: true },
-        { key: 'transactionHash', label: 'Tx Hash' }
-      ])
-    })
-
-    it.skip('should enable pagination with correct settings', () => {
-      wrapper = createWrapper()
-      const table = wrapper.findComponent(TableStub)
-      expect(table.props('showPagination')).toBe(true)
-      expect(table.props('itemsPerPageProp')).toBe(5)
-      expect(table.props('emptyState')).toEqual({ label: 'No incoming transfers found' })
-    })
-  })
-
   describe('Transfer Type Display', () => {
     it('should display correct badge styling for each transfer type', () => {
       const testCases = [
@@ -245,19 +196,6 @@ describe('SafeIncomingTransactions', () => {
       expect(wrapper.find('.text-xs.text-gray-500').exists()).toBe(false)
     })
 
-    it.skip('should handle large datasets efficiently', () => {
-      const largeDataset = Array.from({ length: 50 }, (_, i) => ({
-        ...MOCK_DATA.mockTransfers[0],
-        transactionHash: `0x${i.toString().padStart(64, '0')}` as Address
-      }))
-      mockUseGetSafeIncomingTransfersQuery.mockReturnValue({
-        data: ref(largeDataset),
-        isLoading: ref(false),
-        error: ref(null)
-      })
-      wrapper = createWrapper()
-      expect(wrapper.findComponent(TableStub).props('rows')).toHaveLength(50)
-    })
   })
 
   describe('Component Stability', () => {

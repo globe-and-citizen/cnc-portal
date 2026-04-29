@@ -178,51 +178,6 @@ describe('SafeBalanceSection', () => {
       expect(transferMock.isTransferring.value).toBe(false)
     })
 
-    it.skip('should invalidate ERC20 token queries after successful token transfer', async () => {
-      const mockTransferFromSafe = vi.fn().mockResolvedValue('0xmocktxhash')
-      mockUseSafeTransfer.mockReturnValue({
-        transferFromSafe: mockTransferFromSafe,
-        transferNative: vi.fn(),
-        transferToken: vi.fn(),
-        isTransferring: ref(false),
-        error: ref(null)
-      })
-
-      // Add USDC balance to balances
-      mockUseContractBalance.balances.value = [
-        ...MOCK_DATA.balances,
-        {
-          token: { symbol: 'USDC', id: 'usdc', name: 'USD Coin', code: 'USDC' },
-          amount: 1000,
-          values: { USD: { value: 1000, formated: '$1,000', price: 1 } }
-        }
-      ] as typeof mockUseContractBalance.balances.value
-
-      wrapper = createWrapper()
-
-      const component = wrapper.vm as {
-        handleTransfer: (data: Record<string, unknown>) => Promise<void>
-      }
-      await component.handleTransfer({
-        address: { address: '0x9876543210987654321098765432109876543210' as Address },
-        token: { tokenId: 'usdc', symbol: 'USDC' },
-        amount: '100'
-      })
-      await nextTick()
-
-      // Verify ERC20 readContract invalidation was called
-      expect(mockQueryClient.invalidateQueries).toHaveBeenCalledWith({
-        queryKey: [
-          'readContract',
-          {
-            address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48' as Address,
-            args: [MOCK_DATA.safeAddress],
-            chainId: 137
-          }
-        ]
-      })
-    })
-
     it('should handle transfer loading state', () => {
       const transferringRef = ref(true)
       mockUseSafeTransfer.mockReturnValue({

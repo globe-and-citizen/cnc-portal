@@ -106,19 +106,6 @@ describe('AddSignerModal', () => {
     })
   })
 
-  describe('MultiSelectMemberInput v-model (newSigners)', () => {
-    it.skip('should update newSigners when MultiSelectMemberInput emits update', async () => {
-      wrapper = createWrapper()
-      const input = wrapper.findComponent(MultiSelectMemberInput)
-
-      await input.vm.$emit('update:modelValue', [MOCK_USERS[0]!])
-      await nextTick()
-
-      expect(wrapper.vm.newSigners).toHaveLength(1)
-      expect(wrapper.vm.newSigners[0]).toEqual(MOCK_USERS[0])
-    })
-  })
-
   describe('Validation', () => {
     it('should filter out signers with invalid addresses', async () => {
       wrapper = createWrapper()

@@ -235,11 +235,6 @@ describe('SafeBalanceSection', () => {
       expect(wrapper.text()).toContain('0')
     })
 
-    it.skip('should display "Open in Safe App" button when safeAddress exists', () => {
-      wrapper = createWrapper()
-
-      expect(wrapper.find('[data-test="open-safe-app-button"]').exists()).toBe(true)
-    })
   })
 
   describe('Tokens Computation', () => {
