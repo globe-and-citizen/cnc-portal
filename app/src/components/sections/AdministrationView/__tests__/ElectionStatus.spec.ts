@@ -200,7 +200,9 @@ describe('ElectionStatus.vue', () => {
       ['Upcoming', 'warning'],
       ['Active', 'success'],
       ['Completed', 'neutral'],
-      ['Error', 'error']
+      ['Error', 'error'],
+      // Falls through dotClass default branch — a value the switch doesn't recognise.
+      ['Unknown', 'unknown']
     ])('exposes %s elections via data-status="%s"', (text, color) => {
       mockElectionData.electionStatus.value = { text, color }
       wrapper = createComponent()
@@ -208,6 +210,7 @@ describe('ElectionStatus.vue', () => {
       expect(wrapper.find('[data-test="election-status-badge"]').attributes('data-status')).toBe(
         color
       )
+      expect(wrapper.find('[data-test="election-status-dot"]').exists()).toBe(true)
     })
   })
 
