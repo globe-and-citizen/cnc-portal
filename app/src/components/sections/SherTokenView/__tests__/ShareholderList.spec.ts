@@ -78,5 +78,4 @@ describe('ShareholderList', () => {
     expect((wrapper.vm as unknown as ComponentData).selectedShareholder).toBe('0x123')
     // expect(wrapper.find('[data-test="u-modal"]').exists()).toBe(true)
   })
-
 })

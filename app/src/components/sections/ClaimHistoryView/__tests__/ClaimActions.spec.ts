@@ -144,7 +144,6 @@ describe('ClaimActions', () => {
       expect(wrapper.findComponent({ name: 'EditClaims' }).exists()).toBe(false)
       expect(wrapper.findComponent({ name: 'DeleteClaimModal' }).exists()).toBe(true)
     })
-
   })
 
   describe('Button Interactions', () => {
@@ -175,5 +174,4 @@ describe('ClaimActions', () => {
       expect(wrapper.findComponent({ name: 'EditClaims' }).exists()).toBe(true)
     })
   })
-
 })

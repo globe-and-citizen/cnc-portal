@@ -195,7 +195,6 @@ describe('SafeIncomingTransactions', () => {
       wrapper = createWrapper()
       expect(wrapper.find('.text-xs.text-gray-500').exists()).toBe(false)
     })
-
   })
 
   describe('Component Stability', () => {

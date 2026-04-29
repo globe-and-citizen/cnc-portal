@@ -14,7 +14,6 @@ import { useTeamStore, useUserDataStore } from '@/stores'
 
 // Constants
 const memberAddress = '0x000000000000000000000000000000000000dead'
-const mockReloadKey = ref<number>(0)
 // Mocks
 const mockVestingInfos = ref([
   [memberAddress],

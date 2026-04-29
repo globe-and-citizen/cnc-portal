@@ -483,7 +483,6 @@ describe('useSafeExecution', () => {
       await promise2
       expect(isExecuting.value).toBe(false)
     })
-
   })
 
   describe('Integration with Safe SDK', () => {

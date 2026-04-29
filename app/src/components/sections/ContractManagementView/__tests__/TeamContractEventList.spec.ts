@@ -134,5 +134,4 @@ describe('TeamContractEventList.vue', () => {
     const budgetCell = wrapper.findAll('.campaign-budget')[3]
     expect(budgetCell.text()).toBe('N/A POL')
   })
-
 })

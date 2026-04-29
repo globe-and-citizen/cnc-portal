@@ -241,7 +241,6 @@ describe('SafeOwnersCard', () => {
       const removeButtons = wrapper.findAll(SELECTORS.removeOwnerBtn)
       expect(removeButtons).toHaveLength(MOCK_DATA.safeInfo.owners.length)
     })
-
   })
 
   describe('User Permissions', () => {

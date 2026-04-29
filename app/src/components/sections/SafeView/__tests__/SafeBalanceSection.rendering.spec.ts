@@ -234,7 +234,6 @@ describe('SafeBalanceSection', () => {
       expect(wrapper.text()).toContain('-')
       expect(wrapper.text()).toContain('0')
     })
-
   })
 
   describe('Tokens Computation', () => {
