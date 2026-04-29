@@ -321,6 +321,26 @@ export const resetComposableMocks = () => {
 export const resetTransactionMocks = resetComposableMocks
 
 /**
+ * Mock useDeployContract composable (useContractFunctions.ts)
+ * Shared refs allow tests to trigger watchers and inspect state.
+ */
+export const mockDeployState = {
+  isDeploying: ref(false),
+  contractAddress: ref<string | null>(null),
+  error: ref<Error | null>(null),
+  deploy: vi.fn()
+}
+
+export const mockUseDeployContract = vi.fn(() => mockDeployState)
+
+export function resetDeployState() {
+  mockDeployState.isDeploying.value = false
+  mockDeployState.contractAddress.value = null
+  mockDeployState.error.value = null
+  mockDeployState.deploy.mockClear()
+}
+
+/**
  * Exported vi.fn() factory functions for TanStack Vue Query.
  * Use these in tests that need per-test configuration via mockReturnValue/mockReturnValueOnce.
  */

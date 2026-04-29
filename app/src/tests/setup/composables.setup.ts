@@ -15,7 +15,8 @@ import {
   useMutationFn,
   mockUseFetch,
   mockUseWalletChecks,
-  mockUseSubmitRestriction
+  mockUseSubmitRestriction,
+  mockUseDeployContract
 } from '@/tests/mocks/composables.mock'
 import { mockUploadFileApi } from '@/tests/mocks/api.mock'
 import { mockGetBalance, mockGetLogs } from '@/tests/mocks/viem.actions.mock'
@@ -258,6 +259,17 @@ vi.mock('@/composables/useAuth', () => ({
 vi.mock('@/composables/useContractBalance', () => ({
   useContractBalance: vi.fn(() => mockUseContractBalance)
 }))
+
+/**
+ * Mock useDeployContract composable
+ */
+vi.mock('@/composables/useContractFunctions', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    useDeployContract: mockUseDeployContract
+  }
+})
 
 /**
  * Mock useWalletChecks composable
