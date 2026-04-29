@@ -57,5 +57,25 @@ export default [
       '@typescript-eslint/no-empty-object-type': 'off'
     }
   },
+  {
+    name: 'app/test-fragility-bans',
+    files: ['**/*.spec.ts', '**/*.spec.tsx', '**/__tests__/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-syntax': [
+        'warn',
+        {
+          selector:
+            "CallExpression[callee.object.callee.name='expect'][callee.object.arguments.0.type='CallExpression'][callee.object.arguments.0.callee.property.name='classes']",
+          message:
+            'Avoid asserting on Tailwind / utility classes — they break on every styling refactor. Prefer data-test selectors and behavioral assertions (text, emitted, attributes). See app/src/tests/README.md.'
+        },
+        {
+          selector: "TSAsExpression > MemberExpression.expression[property.name='vm']",
+          message:
+            'Avoid casting `wrapper.vm as Xxx` to reach component internals — it couples tests to implementation. Drive the component through DOM events (setValue, trigger) and assert via emitted()/text()/props. See app/src/tests/README.md.'
+        }
+      ]
+    }
+  },
   skipFormatting
 ]
