@@ -28,7 +28,7 @@
     "format": "prettier --write .",
     "format-check": "prettier . --check",
     "sentry:releases": "sentry-cli releases new \"$(git rev-parse --short HEAD)\" --project cnc-portal-app && sentry-cli releases set-commits \"$(git rev-parse --short HEAD)\" --auto --project cnc-portal-app",
-    "git:ignore-locally": "git update-index --assume-unchanged src/artifacts/deployed_addresses/chain-31337.json"
+    "git:ignore-locally": "git -C .. update-index --assume-unchanged app/src/artifacts/deployed_addresses/chain-31337.json dashboard/app/artifacts/deployed_addresses/chain-31337.json"
   },
   "dependencies": {
     "@apollo/client": "^3.13.1",
@@ -49,8 +49,6 @@
     "@types/pdfmake": "^0.2.11",
     "@types/xlsx": "^0.0.35",
     "@vue/apollo-composable": "^4.2.1",
-    "@vuelidate/core": "^2.0.3",
-    "@vuelidate/validators": "^2.0.4",
     "@vuepic/vue-datepicker": "^11.0.3",
     "@vueuse/core": "^14.1.0",
     "@wagmi/core": "^3.0.0",
@@ -79,7 +77,7 @@
   },
   "devDependencies": {
     "@pinia/testing": "^1.0.3",
-    "@playwright/test": "1.58.2",
+    "@playwright/test": "1.48.2",
     "@synthetixio/synpress": "^4.1.1",
     "@tsconfig/node20": "^20.1.2",
     "@types/jsdom": "^27.0.0",
@@ -99,7 +97,8 @@
     "jsdom": "^27.2.0",
     "npm-run-all2": "^8.0.2",
     "postcss": "^8.4.35",
-    "prettier": "^3.0.3",
+    "prettier": "^3.8.1",
+    "prettier-plugin-tailwindcss": "^0.7.2",
     "sass": "^1.75.0",
     "start-server-and-test": "^2.0.3",
     "tailwindcss": "^4.1.18",

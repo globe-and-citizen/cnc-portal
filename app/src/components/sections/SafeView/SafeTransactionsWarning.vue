@@ -1,61 +1,67 @@
 <template>
-  <ModalComponent v-model="isOpen" @reset="handleClose">
-    <div class="flex flex-col gap-5 max-w-md">
-      <div class="flex items-center justify-between">
-        <h2 class="font-bold text-2xl">Conflicting Transactions</h2>
-      </div>
+  <UModal
+    v-model:open="isOpen"
+    title="Conflicting Transactions"
+    description="You have pending transactions that conflict by nonce; confirming this action will invalidate others."
+    :close="{ onClick: handleClose }"
+  >
+    <template #body>
+      <div class="flex max-w-md flex-col gap-5">
+        <div class="flex items-center justify-between">
+          <!-- Title is provided by modal header -->
+        </div>
 
-      <hr />
+        <hr />
 
-      <div class="space-y-4">
-        <!-- Warning Message -->
-        <div class="bg-warning/10 border border-warning rounded-lg p-4">
-          <div class="flex items-start gap-3">
-            <IconifyIcon
-              icon="heroicons:exclamation-triangle"
-              class="w-6 h-6 text-red mt-0.5 shrink-0"
-            />
-            <div class="space-y-2">
-              <p class="font-semibold text-red">Warning: Transaction Conflict Detected</p>
-              <p class="text-sm text-gray-700">
-                Confirming this transaction will invalidate the others
-              </p>
+        <div class="space-y-4">
+          <!-- Warning Message -->
+          <div class="bg-warning/10 border-warning rounded-lg border p-4">
+            <div class="flex items-start gap-3">
+              <IconifyIcon
+                icon="heroicons:exclamation-triangle"
+                class="text-red mt-0.5 h-6 w-6 shrink-0"
+              />
+              <div class="space-y-2">
+                <p class="text-red font-semibold">Warning: Transaction Conflict Detected</p>
+                <p class="text-sm text-gray-700">
+                  Confirming this transaction will invalidate the others
+                </p>
+              </div>
             </div>
+          </div>
+
+          <!-- Explanation -->
+          <div class="space-y-2 text-sm text-gray-600">
+            <p>
+              <span class="font-semibold">Why this happens:</span>
+              Safe transactions must follow nonce order. This action will invalidates earlier
+              nonces.
+            </p>
           </div>
         </div>
 
-        <!-- Explanation -->
-        <div class="text-sm text-gray-600 space-y-2">
-          <p>
-            <span class="font-semibold">Why this happens:</span>
-            Safe transactions must follow nonce order. This action will invalidates earlier nonces.
-          </p>
+        <hr />
+
+        <!-- Action Buttons -->
+        <div class="flex justify-end gap-3">
+          <UButton color="secondary" @click="handleCancel" data-test="cancel-execute-button">
+            Cancel
+          </UButton>
+          <UButton
+            color="warning"
+            @click="handleConfirm"
+            :loading="isExecuting"
+            data-test="confirm-execute-button"
+          >
+            {{ action }} Anyway
+          </UButton>
         </div>
       </div>
-
-      <hr />
-
-      <!-- Action Buttons -->
-      <div class="flex gap-3 justify-end">
-        <ButtonUI variant="secondary" @click="handleCancel" data-test="cancel-execute-button">
-          Cancel
-        </ButtonUI>
-        <ButtonUI
-          variant="warning"
-          @click="handleConfirm"
-          :loading="isExecuting"
-          data-test="confirm-execute-button"
-        >
-          {{ action }} Anyway
-        </ButtonUI>
-      </div>
-    </div>
-  </ModalComponent>
+    </template>
+  </UModal>
 </template>
 
 <script setup lang="ts">
-import ModalComponent from '@/components/ModalComponent.vue'
-import ButtonUI from '@/components/ButtonUI.vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
 
 interface Props {

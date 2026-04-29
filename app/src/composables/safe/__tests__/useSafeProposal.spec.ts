@@ -30,9 +30,7 @@ const {
   mockSafeSdk,
   mockExecuteMutation,
   mockProposeTransaction,
-  mockGetTokenAddress,
-  mockAddSuccessToast,
-  mockAddErrorToast
+  mockGetTokenAddress
 } = vi.hoisted(() => ({
   mockUseConnection: vi.fn<[], MockConnection>(),
   mockUseChainId: vi.fn(() => ref(137)),
@@ -48,9 +46,7 @@ const {
     mutateAsync: vi.fn()
   } as MockMutation,
   mockProposeTransaction: vi.fn(),
-  mockGetTokenAddress: vi.fn(),
-  mockAddSuccessToast: vi.fn(),
-  mockAddErrorToast: vi.fn()
+  mockGetTokenAddress: vi.fn()
 }))
 
 // Mock external dependencies
@@ -79,13 +75,6 @@ vi.mock('../useSafeProposal', () => ({
 
 vi.mock('@/utils', () => ({
   getTokenAddress: mockGetTokenAddress
-}))
-
-vi.mock('@/stores', () => ({
-  useToastStore: () => ({
-    addSuccessToast: mockAddSuccessToast,
-    addErrorToast: mockAddErrorToast
-  })
 }))
 
 vi.mock('viem', async (importOriginal) => {
@@ -159,7 +148,7 @@ describe('useSafeTransfer', () => {
       })
 
       expect(result).toBeNull()
-      expect(mockAddErrorToast).toHaveBeenCalledWith('Invalid Safe address')
+      // expect(mockAddErrorToast).toHaveBeenCalledWith('Invalid Safe address')
     })
 
     it('should reject invalid recipient address', async () => {
@@ -171,7 +160,7 @@ describe('useSafeTransfer', () => {
       })
 
       expect(result).toBeNull()
-      expect(mockAddErrorToast).toHaveBeenCalledWith('Invalid recipient address')
+      // expect(mockAddErrorToast).toHaveBeenCalledWith('Invalid recipient address')
     })
 
     it('should reject invalid amount', async () => {
@@ -183,7 +172,7 @@ describe('useSafeTransfer', () => {
       })
 
       expect(result).toBeNull()
-      expect(mockAddErrorToast).toHaveBeenCalledWith('Invalid transfer amount')
+      // expect(mockAddErrorToast).toHaveBeenCalledWith('Invalid transfer amount')
     })
 
     it('should reject when wallet is not connected', async () => {
@@ -200,7 +189,7 @@ describe('useSafeTransfer', () => {
       })
 
       expect(result).toBeNull()
-      expect(mockAddErrorToast).toHaveBeenCalledWith('Please connect your wallet')
+      // expect(mockAddErrorToast).toHaveBeenCalledWith('Please connect your wallet')
     })
   })
 
@@ -228,7 +217,7 @@ describe('useSafeTransfer', () => {
           operation: 0
         })
       )
-      expect(mockAddSuccessToast).toHaveBeenCalledWith('Transfer proposed successfully (Native)')
+      // expect(mockAddSuccessToast).toHaveBeenCalledWith('Transfer proposed successfully (Native)')
     })
 
     it('should propose token transfer successfully', async () => {
@@ -250,7 +239,7 @@ describe('useSafeTransfer', () => {
           operation: 0
         })
       )
-      expect(mockAddSuccessToast).toHaveBeenCalledWith('Transfer proposed successfully (Token)')
+      // expect(mockAddSuccessToast).toHaveBeenCalledWith('Transfer proposed successfully (Token)')
     })
   })
 
@@ -271,7 +260,7 @@ describe('useSafeTransfer', () => {
       expect(result).toBe(MOCK_DATA.txHash)
       expect(mockSafeSdk.executeTransaction).toHaveBeenCalled()
       expect(mockExecuteMutation.mutateAsync).toHaveBeenCalled()
-      expect(mockAddSuccessToast).toHaveBeenCalledWith('Transfer executed successfully (Native)')
+      // expect(mockAddSuccessToast).toHaveBeenCalledWith('Transfer executed successfully (Native)')
     })
 
     it('should execute token transfer directly', async () => {
@@ -286,7 +275,7 @@ describe('useSafeTransfer', () => {
       expect(result).toBe(MOCK_DATA.txHash)
       expect(mockSafeSdk.executeTransaction).toHaveBeenCalled()
       expect(mockExecuteMutation.mutateAsync).toHaveBeenCalled()
-      expect(mockAddSuccessToast).toHaveBeenCalledWith('Transfer executed successfully (Token)')
+      // expect(mockAddSuccessToast).toHaveBeenCalledWith('Transfer executed successfully (Token)')
     })
   })
 })

@@ -4,9 +4,11 @@ This directory contains comprehensive coding guidelines and instructions for the
 
 ## Project Overview
 
+> Repo-wide orientation lives in [`AGENTS.md`](../../AGENTS.md). This folder holds deeper area-specific guides.
+
 CNC Portal is a Crypto Native Corporation Portal built with:
 
-- **App**: Vue.js 3 + TypeScript + Vite + Tailwind CSS
+- **App**: Vue 3 + TypeScript + Vite + Tailwind v4 + Nuxt UI v4
 - **Backend**: Node.js + TypeScript + Prisma + PostgreSQL
 - **Smart Contracts**: Hardhat + Solidity
 - **Dashboard**: Nuxt 4 + Nuxt UI + TypeScript + Tailwind CSS
@@ -18,7 +20,7 @@ CNC Portal is a Crypto Native Corporation Portal built with:
 
 For every feature create documentation in the `/docs` folder using Markdown files. Follow the existing structure and naming conventions.
 
-Try to keep each feature documentation short, and use mairmaid for diagrams where applicable.
+Try to keep each feature documentation short, and use mermaid for diagrams where applicable.
 
 ### Date Manipulation
 
@@ -97,18 +99,6 @@ Make all interfaces accessible for everyone, including users with disabilities
 ## Usage
 
 When working on the CNC Portal project, GitHub Copilot will automatically reference these instructions to provide contextually appropriate suggestions that follow the established patterns and best practices.
-
-## File Status
-
-### Complete Files
-
-- ✅ [Testing Overview](./testing-overview.md) - Comprehensive testing philosophy and organization
-- ✅ [Testing Patterns](./testing-patterns.md) - Detailed testing patterns with examples
-- ✅ [Web3 Testing](./testing-web3.md) - Web3/contract specific testing patterns
-- ✅ [Testing Anti-Patterns](./testing-anti-patterns.md) - What to avoid in testing
-- ✅ [Vue.js Component Standards](./vue-component-standards.md) - Complete Vue.js guidelines
-- ✅ [Review Checklist](./review-checklist.md) - Comprehensive code review checklist
-- ✅ [Commit Conventions](./commit-conventions.md) - Detailed commit message standards
 
 ## Contributing
 

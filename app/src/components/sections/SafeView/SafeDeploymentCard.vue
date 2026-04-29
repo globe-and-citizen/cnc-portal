@@ -1,8 +1,8 @@
 <template>
   <div class="card bg-base-200 shadow-xl">
     <div class="card-body">
-      <div class="flex items-center gap-3 mb-4">
-        <IconifyIcon icon="heroicons:shield-check" class="w-8 h-8 text-primary" />
+      <div class="mb-4 flex items-center gap-3">
+        <IconifyIcon icon="heroicons:shield-check" class="text-primary h-8 w-8" />
         <div>
           <h2 class="card-title">Deploy Team Safe</h2>
           <p class="text-sm text-gray-500">
@@ -11,11 +11,11 @@
         </div>
       </div>
 
-      <div class="bg-base-300 rounded-lg p-4 mb-4">
+      <div class="bg-base-300 mb-4 rounded-lg p-4">
         <div class="space-y-2 text-sm">
           <div class="flex justify-between">
             <span class="text-gray-500">Owner:</span>
-            <span class="font-mono">{{ currentUserAddress }}</span>
+            <span class="font-mono">{{ userDataStore.address }}</span>
           </div>
           <div class="flex justify-between">
             <span class="text-gray-500">Threshold:</span>
@@ -29,22 +29,22 @@
       </div>
 
       <div class="alert alert-info mb-4">
-        <IconifyIcon icon="heroicons:information-circle" class="w-5 h-5" />
+        <IconifyIcon icon="heroicons:information-circle" class="h-5 w-5" />
         <span class="text-sm"
           >This will create a Gnosis Safe wallet for your team. You can add more owners later.</span
         >
       </div>
 
       <div class="card-actions justify-end">
-        <ButtonUI
-          variant="primary"
+        <UButton
+          color="primary"
           :loading="isDeploying"
           :disabled="isDeploying || !canDeploy"
           data-test="deploy-safe-button"
           @click="handleDeploySafe"
         >
           {{ isDeploying ? 'Deploying Safe...' : 'Deploy Safe Wallet' }}
-        </ButtonUI>
+        </UButton>
       </div>
     </div>
   </div>
@@ -54,13 +54,13 @@
 import { computed } from 'vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import { isAddress } from 'viem'
-import ButtonUI from '@/components/ButtonUI.vue'
-import { useUserDataStore } from '@/stores/user'
-import { useToastStore } from '@/stores/useToastStore'
+import { useTeamStore, useUserDataStore } from '@/stores'
+
 import { useSafeDeployment } from '@/composables/safe'
 import { useCreateContractMutation } from '@/queries/contract.queries'
 import { log } from '@/utils'
 import { NETWORK } from '@/constant'
+import { useToast } from '@nuxt/ui/composables'
 
 interface Props {
   teamId: number
@@ -68,19 +68,22 @@ interface Props {
 
 const props = defineProps<Props>()
 const emits = defineEmits(['safeDeployed'])
+const toast = useToast()
 
 // Stores
+const teamStore = useTeamStore()
 const userDataStore = useUserDataStore()
-const { addSuccessToast, addErrorToast } = useToastStore()
 
 // Composables
 const { deploySafe, isDeploying } = useSafeDeployment()
 const { mutateAsync: createContract } = useCreateContractMutation()
 
-// Computed
-const currentUserAddress = computed(() => userDataStore.address)
-
-const canDeploy = computed(() => !!currentUserAddress.value && isAddress(currentUserAddress.value))
+const canDeploy = computed(
+  () =>
+    !!userDataStore.address &&
+    isAddress(userDataStore.address) &&
+    teamStore.currentTeam?.ownerAddress == userDataStore.address
+)
 
 const networkName = computed(() => NETWORK || 'Polygon')
 
@@ -89,11 +92,11 @@ const networkName = computed(() => NETWORK || 'Polygon')
  */
 const handleDeploySafe = async () => {
   if (!canDeploy.value) {
-    addErrorToast('Please connect your wallet')
+    toast.add({ title: 'Error', description: 'connect your wallet', color: 'error' })
     return
   }
 
-  const safeAddress = await deploySafe([currentUserAddress.value!], 1)
+  const safeAddress = await deploySafe([userDataStore.address!], 1)
 
   if (!safeAddress) {
     // Error already handled by deploySafe composable
@@ -106,11 +109,16 @@ const handleDeploySafe = async () => {
       teamId: String(props.teamId),
       contractAddress: safeAddress,
       contractType: 'Safe',
-      deployer: currentUserAddress.value!
+      deployer: userDataStore.address!
     }
   })
 
-  addSuccessToast('Safe wallet deployed successfully')
+  toast.add({
+    title: 'Success',
+    description: 'Safe wallet deployed successfully',
+    color: 'success'
+  })
+
   log.info('Safe deployed:', safeAddress)
 
   // Notify parent component

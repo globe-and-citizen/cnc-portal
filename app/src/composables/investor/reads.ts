@@ -2,7 +2,7 @@ import { computed, unref, type MaybeRef } from 'vue'
 import { useReadContract } from '@wagmi/vue'
 import { isAddress, type Address } from 'viem'
 import { useTeamStore } from '@/stores'
-import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
+import { INVESTOR_ABI } from '@/artifacts/abi/investors'
 
 /**
  * InvestorV1 contract address helper
@@ -12,9 +12,6 @@ export function useInvestorAddress() {
   return computed(() => teamStore.getContractAddressByType('InvestorV1'))
 }
 
-/**
- * InvestorV1 read composables
- */
 export function useInvestorName() {
   const investorsAddress = useInvestorAddress()
   return useReadContract({
@@ -41,16 +38,6 @@ export function useInvestorTotalSupply() {
     address: investorsAddress,
     abi: INVESTOR_ABI,
     functionName: 'totalSupply' as const,
-    query: { enabled: !!investorsAddress.value && isAddress(investorsAddress.value) }
-  })
-}
-
-export function useInvestorPaused() {
-  const investorsAddress = useInvestorAddress()
-  return useReadContract({
-    address: investorsAddress,
-    abi: INVESTOR_ABI,
-    functionName: 'paused' as const,
     query: { enabled: !!investorsAddress.value && isAddress(investorsAddress.value) }
   })
 }
@@ -93,3 +80,16 @@ export function useInvestorShareholders() {
     query: { enabled: !!investorsAddress.value && isAddress(investorsAddress.value) }
   })
 }
+
+// UNUSED — no consumers outside this file's own context.
+/*
+export function useInvestorPaused() {
+  const investorsAddress = useInvestorAddress()
+  return useReadContract({
+    address: investorsAddress,
+    abi: INVESTOR_ABI,
+    functionName: 'paused' as const,
+    query: { enabled: !!investorsAddress.value && isAddress(investorsAddress.value) }
+  })
+}
+*/

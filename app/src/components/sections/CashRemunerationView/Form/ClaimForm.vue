@@ -1,70 +1,90 @@
 <template>
-  <div class="flex flex-col gap-4">
-    <div class="flex flex-col gap-2">
-      <label class="flex items-center">
-        <span class="w-full" data-test="hours-worked-label">Date</span>
-      </label>
-      <!-- :key forces VueDatePicker to re-render when restriction mode changes -->
-      <VueDatePicker
-        v-model="formData.dayWorked"
-        model-type="iso"
-        :format="formatUTC"
-        :enable-time-picker="false"
-        auto-apply
-        :key="restrictSubmitKey"
-        :disabled-dates="disabledDatesFn"
-        :ui="{
-          input: 'input input-bordered input-md'
-        }"
-        data-test="date-input"
-        utc="preserve"
-        :disabled="isEdit"
-      />
-    </div>
-    <div class="flex flex-col gap-2">
-      <label class="flex items-center">
-        <span class="w-full">Hours worked</span>
-      </label>
-      <input
-        type="text"
-        class="input input-bordered input-md grow w-full"
-        data-test="hours-worked-input"
-        placeholder="10"
-        v-model="formData.hoursWorked"
-      />
-      <div
-        class="pl-4 text-red-500 text-sm"
-        v-for="error of v$.formData.hoursWorked.$errors"
-        :key="error.$uid"
-        data-test="hours-worked-error"
-      >
-        {{ error.$message }}
+  <UForm
+    :schema="claimSchema"
+    :state="formData"
+    :loading-auto="false"
+    class="flex flex-col gap-4"
+    @submit="handleSubmit"
+  >
+    <!-- Date -->
+    <UFormField label="Date" name="dayWorked" required>
+      <UPopover v-model:open="datePickerOpen">
+        <UButton
+          variant="outline"
+          color="neutral"
+          class="w-full justify-start font-normal"
+          leading-icon="i-lucide-calendar"
+          :disabled="isEdit"
+          type="button"
+          size="lg"
+          data-test="date-input"
+          @click="!isEdit && (datePickerOpen = true)"
+        >
+          {{ calendarDisplayDate }}
+        </UButton>
+        <template #content>
+          <UCalendar
+            :year-controls="false"
+            :model-value="calendarValue"
+            :is-date-disabled="isDateDisabledFn"
+            class="p-2"
+            @update:model-value="onDateSelect"
+          />
+        </template>
+      </UPopover>
+    </UFormField>
+
+    <!-- Hours worked -->
+    <UFormField label="Hours worked" name="hoursWorked" required>
+      <div class="flex w-full items-start gap-x-2">
+        <div class="flex-1">
+          <UInput
+            v-model="formData.hoursWorked"
+            type="text"
+            placeholder="0"
+            class="w-full"
+            size="lg"
+            data-test="hours-worked-input"
+          >
+            <template #trailing>
+              <span class="text-sm text-gray-500">h</span>
+            </template>
+          </UInput>
+        </div>
+        <span class="shrink-0 text-lg text-gray-400">:</span>
+        <div class="flex-1">
+          <USelectMenu
+            v-model="formData.minutesWorked"
+            :items="minutesOptions"
+            placeholder="0"
+            class="w-full"
+            size="lg"
+            data-test="minutes-worked-input"
+          >
+            <template #trailing>
+              <span class="text-sm text-gray-500">min</span>
+            </template>
+          </USelectMenu>
+        </div>
       </div>
-    </div>
-    <div class="flex flex-col gap-2">
-      <label class="flex items-center">
-        <span class="w-full">Memo</span>
-      </label>
-      <textarea
-        class="textarea input-bordered w-full"
-        :placeholder="isEdit ? 'I worked on...' : 'I worked on the ....'"
-        data-test="memo-input"
+    </UFormField>
+
+    <!-- Memo -->
+    <UFormField label="Memo" name="memo" required :hint="`${String(formData.memo).length} / 3000`">
+      <UTextarea
         v-model="formData.memo"
-      ></textarea>
-    </div>
-    <div
-      class="pl-4 text-red-500 text-sm"
-      v-for="error of v$.formData.memo.$errors"
-      :key="error.$uid"
-    >
-      {{ error.$message }}
-    </div>
+        :placeholder="isEdit ? 'I worked on...' : 'I worked on the ....'"
+        class="w-full"
+        :rows="3"
+        data-test="memo-input"
+      />
+    </UFormField>
 
     <UploadFileDB
       ref="uploadFileRef"
-      @update:files="onFilesUpdate"
       :disabled="isLoading"
       :existing-file-count="props.existingFiles?.length ?? 0"
+      @update:files="onFilesUpdate"
     />
 
     <!-- Existing Files Display - File Preview Gallery with Lightbox -->
@@ -72,7 +92,7 @@
       v-if="isEdit && existingFiles && existingFiles.length > 0"
       data-test="attached-files-section"
     >
-      <h4 class="text-sm font-semibold mb-3 text-gray-700">Attached Files:</h4>
+      <h4 class="mb-3 text-sm font-semibold text-gray-700">Attached Files:</h4>
       <FilePreviewGallery
         :previews="existingFilePreviews"
         can-remove
@@ -83,50 +103,37 @@
     </div>
 
     <div class="flex justify-center gap-4">
-      <ButtonUI
+      <UButton
         v-if="isEdit"
-        variant="error"
-        class="w-32"
+        color="error"
+        class="w-32 justify-center"
         :disabled="isLoading"
+        type="button"
         data-test="cancel-button"
         @click="$emit('cancel')"
       >
         Cancel
-      </ButtonUI>
-      <ButtonUI
-        variant="success"
-        class="w-32"
+      </UButton>
+      <UButton
+        type="submit"
+        color="success"
+        class="w-32 justify-center"
         :disabled="isLoading"
         :loading="isLoading"
         :data-test="isEdit ? 'update-claim-button' : 'submit-claim-button'"
-        @click="handleSubmit"
       >
         {{ isEdit ? 'Update' : 'Submit' }}
-      </ButtonUI>
+      </UButton>
     </div>
-  </div>
+  </UForm>
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue'
-import { useVuelidate } from '@vuelidate/core'
-import { required, numeric, minValue, maxValue, maxLength } from '@vuelidate/validators'
+import { ref, toRef } from 'vue'
 import type { ClaimFormData } from '@/types'
-import dayjs from 'dayjs'
-import utc from 'dayjs/plugin/utc'
-import ButtonUI from '@/components/ButtonUI.vue'
 import FilePreviewGallery from '@/components/sections/CashRemunerationView/Form/FilePreviewGallery.vue'
-import { useToastStore } from '@/stores'
-// import UploadImage from '@/components/sections/CashRemunerationView/Form/UploadImage.vue' // Deprecated: cloud storage
-import UploadFileDB from '@/components/sections/CashRemunerationView/Form/UploadFileDB.vue' // New: database storage
-
-interface FileData {
-  fileName?: string // Optional - can be derived from fileKey if not provided
-  fileType: string
-  fileSize: number
-  fileKey: string
-  fileUrl: string
-}
+import UploadFileDB from '@/components/sections/CashRemunerationView/Form/UploadFileDB.vue'
+import { useClaimForm, type ClaimFormFileData } from '@/composables/useClaimForm'
 
 interface Props {
   initialData?: Partial<ClaimFormData>
@@ -134,15 +141,11 @@ interface Props {
   isLoading?: boolean
   disabledWeekStarts?: string[]
   restrictSubmit?: boolean
-  // Accept partial FileData without fileName
-  existingFiles?: Partial<FileData>[]
+  existingFiles?: Partial<ClaimFormFileData>[]
   deletingFileIndex?: number | null
 }
 
-dayjs.extend(utc)
-
-const MAX_FILES = 10
-const toastStore = useToastStore()
+const toast = useToast()
 
 const props = withDefaults(defineProps<Props>(), {
   isEdit: false,
@@ -153,146 +156,48 @@ const props = withDefaults(defineProps<Props>(), {
   deletingFileIndex: null
 })
 
-// Key to force VueDatePicker re-render when restriction mode or disabled weeks change
-const restrictSubmitKey = computed(() => {
-  return `restrict-${props.restrictSubmit}-${(props.disabledWeekStarts ?? []).length}`
-})
-
 const emit = defineEmits<{
-  submit: [data: { hoursWorked: number; memo: string; dayWorked: string; files?: File[] }]
+  submit: [data: { minutesWorked: number; memo: string; dayWorked: string; files?: File[] }]
   cancel: []
   'delete-file': [index: number]
 }>()
 
 const uploadFileRef = ref<InstanceType<typeof UploadFileDB> | null>(null)
-const uploadedFiles = ref<File[]>([])
-
-const onFilesUpdate = (files: File[]): void => {
-  uploadedFiles.value = files
-}
-
-// Convert FileData to PreviewItem for FilePreviewGallery
-const existingFilePreviews = computed(() => {
-  return (props.existingFiles ?? [])
-    .filter((file) => file && file.fileUrl && file.fileType && file.fileKey)
-    .map((file) => {
-      // file is guaranteed to have these properties after filter
-      const fileUrl = file.fileUrl!
-      const fileType = file.fileType!
-      const fileSize = file.fileSize || 0
-      const fileKey = file.fileKey!
-      const fileName = file.fileName || fileKey.split('/').pop() || 'file'
-      return {
-        previewUrl: fileUrl,
-        fileName,
-        fileSize,
-        fileType,
-        isImage: fileType.startsWith('image/')
-      }
-    })
-})
-
-const createDefaultFormData = (overrides?: Partial<ClaimFormData>): ClaimFormData => ({
-  hoursWorked: overrides?.hoursWorked ?? '',
-  memo: overrides?.memo ?? '',
-  dayWorked: overrides?.dayWorked ?? dayjs().utc().startOf('day').toISOString()
-})
-
-const formData = ref<ClaimFormData>(createDefaultFormData(props.initialData))
-
-const rules = {
-  formData: {
-    hoursWorked: { required, numeric, minValue: minValue(1), maxValue: maxValue(24) },
-    memo: { required, maxLength: maxLength(3000) },
-    dayWorked: { required }
-  }
-}
-
-const v$ = useVuelidate(rules, { formData })
-
-watch(
-  () => props.initialData,
-  (newInitialData) => {
-    formData.value = createDefaultFormData(newInitialData)
-  },
-  { deep: true }
-)
-
-const formatUTC = (value: Date | string | null | undefined) => {
-  if (!value) return ''
-  if (value instanceof Date) {
-    const year = value.getFullYear()
-    const month = value.getMonth()
-    const day = value.getDate()
-    return dayjs.utc(Date.UTC(year, month, day)).format('YYYY-MM-DD [UTC]')
-  }
-  return dayjs.utc(value).format('YYYY-MM-DD [UTC]')
-}
-
-const disabledDatesFn = computed(() => {
-  return (value: Date | string | null): boolean => {
-    if (!value) return false
-
-    const date = dayjs.utc(value).startOf('day')
-    const today = dayjs.utc().startOf('day')
-
-    const disabledWeekKeys = (props.disabledWeekStarts ?? []).map((w) =>
-      dayjs.utc(w).startOf('isoWeek').format('YYYY-MM-DD')
-    )
-
-    const dateWeekKey = date.startOf('isoWeek').format('YYYY-MM-DD')
-
-    // 🔒 Rule 1: approved weeks are ALWAYS disabled
-    if (disabledWeekKeys.includes(dateWeekKey)) {
-      return true
-    }
-
-    // 🔐 Rule 2: restriction mode (current week only)
-    if (props.restrictSubmit) {
-      const currentWeekStart = today.startOf('isoWeek')
-      const currentWeekEnd = today.endOf('isoWeek')
-
-      // Outside current week
-      if (date.isBefore(currentWeekStart, 'day') || date.isAfter(currentWeekEnd, 'day')) {
-        return true
-      }
-
-      // Max 4 days in the past (within current week)
-      const daysDiff = today.diff(date, 'day')
-      return daysDiff < 0 || daysDiff > 4
-    }
-
-    return false
-  }
+const {
+  claimSchema,
+  formData,
+  datePickerOpen,
+  minutesOptions,
+  existingFilePreviews,
+  calendarDisplayDate,
+  calendarValue,
+  isDateDisabledFn,
+  onFilesUpdate,
+  onDateSelect,
+  buildSubmitPayload,
+  resetUploadedFiles,
+  formatUTC
+} = useClaimForm({
+  initialData: toRef(props, 'initialData'),
+  existingFiles: toRef(props, 'existingFiles'),
+  disabledWeekStarts: toRef(props, 'disabledWeekStarts'),
+  restrictSubmit: toRef(props, 'restrictSubmit'),
+  toast
 })
 
 const handleSubmit = async () => {
-  v$.value.$touch()
-  if (v$.value.$invalid) return
-
-  // Validate total file count
-  const totalFiles = (props.existingFiles?.length ?? 0) + uploadedFiles.value.length
-  if (totalFiles > MAX_FILES) {
-    toastStore.addErrorToast(
-      `Maximum ${MAX_FILES} files allowed. Currently you have ${totalFiles} files. Please remove ${totalFiles - MAX_FILES} file(s).`
-    )
-    return
-  }
-
-  emit('submit', {
-    hoursWorked: Number(formData.value.hoursWorked),
-    memo: formData.value.memo,
-    dayWorked: formData.value.dayWorked,
-    files: uploadedFiles.value.length ? uploadedFiles.value : undefined
-  })
+  const payload = buildSubmitPayload()
+  if (!payload) return
+  emit('submit', payload)
 }
 
 const resetForm = () => {
   uploadFileRef.value?.resetUpload()
-  uploadedFiles.value = []
+  resetUploadedFiles()
 }
 
 defineExpose({
-  resetForm
+  resetForm,
+  formatUTC
 })
 </script>

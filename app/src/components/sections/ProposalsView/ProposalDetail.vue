@@ -3,9 +3,9 @@
   <div v-else-if="error">Error: {{ error }}</div>
   <div v-else-if="!proposal">No proposal found</div>
   <div v-else>
-    <div class="flex flex-col shadow-md rounded-xl p-6 gap-8 bg-white">
-      <div class="flex flex-row justify-between items-center">
-        <div class="font-bold text-2xl">{{ proposal.title }}</div>
+    <div class="flex flex-col gap-8 rounded-xl bg-white p-6 shadow-md">
+      <div class="flex flex-row items-center justify-between">
+        <div class="text-2xl font-bold">{{ proposal.title }}</div>
         <div
           :class="{
             'bg-purple-600': proposal.state == ProposalState.Active,
@@ -13,7 +13,7 @@
             'bg-red-500': proposal.state == ProposalState.Rejected,
             'bg-gray-300': proposal.state == ProposalState.Tied
           }"
-          class="py-1 px-2 rounded-full"
+          class="rounded-full px-2 py-1"
         >
           {{
             proposal.state == ProposalState.Active
@@ -29,7 +29,7 @@
       <div class="grid grid-cols-4 grid-rows-1 gap-4">
         <!-- Created By -->
         <div class="col-span-1 row-span-1">
-          <div class="text-sm text-gray-500 font-medium">Created By</div>
+          <div class="text-sm font-medium text-gray-500">Created By</div>
           <div class="flex flex-row items-center gap-2">
             <div class="text-lg font-semibold">
               {{
@@ -44,13 +44,13 @@
 
         <!-- Type -->
         <div class="col-span-1 row-span-1">
-          <div class="text-sm text-gray-500 font-medium">Type</div>
+          <div class="text-sm font-medium text-gray-500">Type</div>
           <div class="text-lg font-semibold">{{ proposal.proposalType }}</div>
         </div>
 
         <!-- Start Date -->
         <div class="col-span-1 row-span-1">
-          <div class="text-sm text-gray-500 font-medium">Start Date</div>
+          <div class="text-sm font-medium text-gray-500">Start Date</div>
           <div class="text-lg font-semibold">
             {{ formatDate(proposal.startDate) }}
           </div>
@@ -58,7 +58,7 @@
 
         <!-- End Date -->
         <div class="col-span-1 row-span-1">
-          <div class="text-sm text-gray-500 font-medium">End Date</div>
+          <div class="text-sm font-medium text-gray-500">End Date</div>
           <div class="text-lg font-semibold">
             {{ formatDate(proposal.endDate) }}
           </div>
@@ -66,26 +66,32 @@
       </div>
       <div>{{ proposal.description }}</div>
       <div v-if="!hasVoted" class="flex flex-row justify-end gap-2">
-        <ButtonUI variant="primary" @click="vote('yes')" :disabled="isVoting || isConfirmingVote"
-          >Vote for yes
-        </ButtonUI>
-        <ButtonUI variant="error" @click="vote('no')" :disabled="isVoting || isConfirmingVote"
-          >Vote for no</ButtonUI
-        >
-        <ButtonUI
+        <UButton
+          color="primary"
+          @click="vote('yes')"
+          :disabled="isVoting || isConfirmingVote"
+          label="Vote for yes"
+        />
+        <UButton
+          color="error"
+          @click="vote('no')"
+          :disabled="isVoting || isConfirmingVote"
+          label="Vote for no"
+        />
+        <UButton
           class="bg-gray-300"
           @click="vote('abstain')"
           :disabled="isVoting || isConfirmingVote"
-          >Vote for abstain
-        </ButtonUI>
+          label="Vote for abstain"
+        />
       </div>
       <div class="flex flex-col">
-        <div class="text-lg font-semibold mb-4">Current Results</div>
+        <div class="mb-4 text-lg font-semibold">Current Results</div>
         <div class="flex flex-row justify-between gap-6">
-          <div class="bg-gray-100 rounded-lg w-full p-6 flex flex-col gap-4">
-            <div class="flex flex-row justify-between items-center">
+          <div class="flex w-full flex-col gap-4 rounded-lg bg-gray-100 p-6">
+            <div class="flex flex-row items-center justify-between">
               <div class="font-bold text-gray-600">Total Votes</div>
-              <div class="font-bold text-xl">
+              <div class="text-xl font-bold">
                 {{ proposal.voteCount }}/{{ proposal.totalVoters }}
               </div>
             </div>
@@ -94,15 +100,15 @@
             <div class="flex flex-col gap-3">
               <!-- For Votes -->
               <div class="flex flex-col">
-                <div class="flex justify-between items-center mb-1">
-                  <span class="text-green-600 font-medium">For</span>
-                  <span class="text-green-600 font-bold"
+                <div class="mb-1 flex items-center justify-between">
+                  <span class="font-medium text-green-600">For</span>
+                  <span class="font-bold text-green-600"
                     >{{ proposal.yesCount }} ({{ calculateVotePercentage('yes') }}%)</span
                   >
                 </div>
-                <div class="w-full bg-gray-200 rounded-full h-2">
+                <div class="h-2 w-full rounded-full bg-gray-200">
                   <div
-                    class="bg-green-500 h-2 rounded-full"
+                    class="h-2 rounded-full bg-green-500"
                     :style="{ width: calculateVotePercentage('yes') + '%' }"
                   ></div>
                 </div>
@@ -110,15 +116,15 @@
 
               <!-- Against Votes -->
               <div class="flex flex-col">
-                <div class="flex justify-between items-center mb-1">
-                  <span class="text-red-600 font-medium">Against</span>
-                  <span class="text-red-600 font-bold"
+                <div class="mb-1 flex items-center justify-between">
+                  <span class="font-medium text-red-600">Against</span>
+                  <span class="font-bold text-red-600"
                     >{{ proposal.noCount }} ({{ calculateVotePercentage('no') }}%)</span
                   >
                 </div>
-                <div class="w-full bg-gray-200 rounded-full h-2">
+                <div class="h-2 w-full rounded-full bg-gray-200">
                   <div
-                    class="bg-red-500 h-2 rounded-full"
+                    class="h-2 rounded-full bg-red-500"
                     :style="{ width: calculateVotePercentage('no') + '%' }"
                   ></div>
                 </div>
@@ -126,14 +132,14 @@
             </div>
           </div>
 
-          <div class="bg-gray-100 rounded-lg w-full p-6 flex flex-col gap-4">
+          <div class="flex w-full flex-col gap-4 rounded-lg bg-gray-100 p-6">
             <div class="font-bold text-gray-600">Recent Votes</div>
             <div class="flex flex-col gap-3">
               <!-- Recent Vote Items -->
               <div
                 v-for="vote in recentVotes"
                 :key="vote.voter"
-                class="flex justify-between items-center"
+                class="flex items-center justify-between"
               >
                 <span class="font-medium">{{
                   teamStore.currentTeam?.members.find((member) => member.address === vote.voter)
@@ -153,11 +159,11 @@
                       vote.vote === 'yes' ? 'For' : vote.vote === 'no' ? 'Against' : 'Abstain'
                     }}</span
                   >
-                  <span class="text-gray-500 text-sm">{{ vote.timestamp }}</span>
+                  <span class="text-sm text-gray-500">{{ vote.timestamp }}</span>
                 </div>
               </div>
               <!-- Show message if no votes -->
-              <div v-if="recentVotes.length === 0" class="text-gray-500 text-sm text-center py-4">
+              <div v-if="recentVotes.length === 0" class="py-4 text-center text-sm text-gray-500">
                 No recent votes to display
               </div>
             </div>
@@ -169,9 +175,8 @@
 </template>
 <script setup lang="ts">
 import { PROPOSALS_ABI } from '@/artifacts/abi/proposals'
-import ButtonUI from '@/components/ButtonUI.vue'
-import { useTeamStore, useToastStore, useUserDataStore } from '@/stores'
-import { ProposalState, type ProposalVoteEvent } from '@/types'
+import { useTeamStore, useUserDataStore } from '@/stores'
+import { ProposalState, type Proposal, type ProposalVoteEvent } from '@/types'
 import { config } from '@/wagmi.config'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
@@ -185,7 +190,7 @@ const route = useRoute()
 const teamStore = useTeamStore()
 const emits = defineEmits(['proposal-voted'])
 const proposalsAddress = computed(() => teamStore.getContractAddressByType('Proposals') as Address)
-const toastStore = useToastStore()
+const toast = useToast()
 const userDataStore = useUserDataStore()
 
 // Helper function to format dates
@@ -228,7 +233,7 @@ const recentVotes = ref<ProposalVoteEvent[]>([])
 const queryClient = useQueryClient()
 
 const {
-  data: proposal,
+  data: proposalData,
   error,
   isLoading,
   queryKey: proposalQueryKey
@@ -240,18 +245,17 @@ const {
   scopeKey: 'proposalDetail'
 })
 
-const {
-  mutate: voteOnProposal,
-  isPending: isVoting,
-  error: voteError,
-  data: txHash
-} = useWriteContract()
+const proposal = computed<Proposal | undefined>(() => {
+  if (!proposalData.value || typeof proposalData.value !== 'object') {
+    return undefined
+  }
 
-const {
-  isLoading: isConfirmingVote,
-  isSuccess: isVoteConfirmed
-  // error: errorConfirmingVote
-} = useWaitForTransactionReceipt({
+  return proposalData.value as Proposal
+})
+
+const { mutate: voteOnProposal, isPending: isVoting, data: txHash } = useWriteContract()
+
+const { isLoading: isConfirmingVote, isSuccess: isVoteConfirmed } = useWaitForTransactionReceipt({
   hash: txHash
 })
 
@@ -308,12 +312,12 @@ onMounted(async () => {
   await fetchRecentVotes()
 })
 
-watch(voteError, (error) => {
-  if (error) {
-    console.error('Error voting on proposal:', error)
-    toastStore.addErrorToast('Failed to cast vote')
-  }
-})
+// watch(voteError, (error) => {
+//   if (error) {
+//     console.error('Error voting on proposal:', error)
+//     toastStore.addErrorToast('Failed to cast vote')
+//   }
+// })
 
 // watch(errorConfirmingVote, (error) => {
 //   if (error) {
@@ -326,7 +330,7 @@ watch(isVoteConfirmed, async (success) => {
   if (success) {
     emits('proposal-voted')
     await queryClient.invalidateQueries({ queryKey: [proposalQueryKey, hasVotedQueryKey] })
-    toastStore.addSuccessToast('Vote cast successfully!')
+    toast.add({ title: 'Vote cast successfully!', color: 'success' })
     await fetchRecentVotes()
   }
 })

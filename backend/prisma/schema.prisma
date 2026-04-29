@@ -45,9 +45,9 @@ model Team {
   ownerAddress           String
   description            String?
   name                   String                   @unique
-  officerAddress         String?
   BoardOfDirectorActions BoardOfDirectorActions[]
   teamContracts          TeamContract[]
+  teamOfficers           TeamOfficer[]
   memberTeamsData        MemberTeamsData[]
   Wage                   Wage[]
   weeklyClaims           WeeklyClaim[]
@@ -84,27 +84,34 @@ model Expense {
 }
 
 model Wage {
-  id                  Int           @id @default(autoincrement())
-  team                Team          @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  user                User          @relation(fields: [userAddress], references: [address], onDelete: Cascade)
-  teamId              Int
-  userAddress         String
-  ratePerHour         Json          @default("[{\"type\": \"cash\", \"amount\": 0},{\"type\": \"usdc\", \"amount\": 0},{\"type\": \"token\", \"amount\": 0}]")
-  maximumHoursPerWeek Int
-  nextWageId          Int?          @unique
-  nextWage            Wage?         @relation("wageRelated", fields: [nextWageId], references: [id], onDelete: SetNull)
-  previousWage        Wage?         @relation("wageRelated")
-  claims              Claim[]
-  weeklyClaims        WeeklyClaim[]
-  createdAt           DateTime      @default(now())
-  updatedAt           DateTime      @updatedAt
+  id                          Int           @id @default(autoincrement())
+  team                        Team          @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user                        User          @relation(fields: [userAddress], references: [address], onDelete: Cascade)
+  teamId                      Int
+  userAddress                 String
+  ratePerHour                 Json          @default("[{\"type\": \"cash\", \"amount\": 0},{\"type\": \"usdc\", \"amount\": 0},{\"type\": \"token\", \"amount\": 0}]")
+  overtimeRatePerHour         Json?
+  maximumOvertimeHoursPerWeek Int           @default(0)
+  maximumHoursPerWeek         Int
+  disabled                    Boolean       @default(false)
+  nextWageId                  Int?          @unique
+  nextWage                    Wage?         @relation("wageRelated", fields: [nextWageId], references: [id], onDelete: SetNull)
+  previousWage                Wage?         @relation("wageRelated")
+  claims                      Claim[]
+  weeklyClaims                WeeklyClaim[]
+  createdAt                   DateTime      @default(now())
+  updatedAt                   DateTime      @updatedAt
 
-  @@unique([teamId, userAddress, nextWageId]) // Need to be checked
+  // Only one "active" wage (nextWageId IS NULL) per (teamId, userAddress).
+  // Enforced by a deferrable EXCLUDE constraint (Wage_active_unique) in
+  // migration 20260428_wage_active_deferrable. Deferrable so chained
+  // create-and-relink can run inside a single transaction.
 }
 
 model Claim {
   id              Int         @id @default(autoincrement()) // Add an ID for easy referencing
-  hoursWorked     Int
+  hoursWorked     Int         @default(0)
+  minutesWorked   Int
   dayWorked       DateTime?
   memo            String?
   fileAttachments Json? // Stores file metadata and data for images and documents
@@ -126,6 +133,11 @@ model WeeklyClaim {
   teamId        Int
   team          Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
   signature     String?
+  // EIP-712 verifying contract address the signature was bound to. Populated
+  // at sign time so `signed` rows can be classified as stale (and surfaced
+  // for re-signing) when the team's CashRemunerationEIP712 contract is later
+  // redeployed. Nullable for legacy rows signed before this column existed.
+  signedAgainstContractAddress String?
   claims        Claim[]  @relation("WeeklyClaimToClaims")
   wageId        Int
   wage          Wage     @relation(fields: [wageId], references: [id], onDelete: Cascade)
@@ -133,6 +145,7 @@ model WeeklyClaim {
   updatedAt     DateTime @updatedAt
 
   @@unique([wageId, weekStart])
+  @@index([weekStart])
 }
 
 model Notification {
@@ -146,19 +159,50 @@ model Notification {
   resource    String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  @@index([userAddress])
 }
 
 model TeamContract {
-  id        Int      @id @default(autoincrement())
-  address   String   @unique
+  id        Int          @id @default(autoincrement())
+  address   String       @unique
   type      String
   deployer  String
   teamId    Int
-  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  team      Team         @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  officerId Int?
+  officer   TeamOfficer? @relation(fields: [officerId], references: [id], onDelete: SetNull)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
 
   @@index([address])
+  @@index([officerId])
+}
+
+model TeamOfficer {
+  id                Int            @id @default(autoincrement())
+  address           String         @unique
+  teamId            Int
+  team              Team           @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  deployer          String
+  deployBlockNumber BigInt?
+  deployedAt        DateTime?
+  // Officer-generation tag. New deploys land as 'v0.10' (the
+  // CashRemunerationEIP712 minutesWorked typehash); legacy rows backfilled
+  // to 'legacy'. Used to derive `isMigrated` on the Team payload so the UI
+  // can freeze new sign/submit flows on teams still on the previous
+  // contract version. Nullable to keep schema rollouts safe.
+  version           String?
+  // Linked list: each row points back to its predecessor. The current Officer
+  // for a team is the row with no nextOfficer (no successor exists).
+  previousOfficerId Int?           @unique
+  previousOfficer   TeamOfficer?   @relation("OfficerHistory", fields: [previousOfficerId], references: [id])
+  nextOfficer       TeamOfficer?   @relation("OfficerHistory")
+  contracts         TeamContract[]
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  @@index([teamId])
 }
 
 model BoardOfDirectorActions {

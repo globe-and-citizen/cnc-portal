@@ -1,5 +1,5 @@
 import { expect } from 'chai'
-import { ethers } from 'hardhat'
+import { ethers, upgrades } from 'hardhat'
 import { loadFixture, time } from '@nomicfoundation/hardhat-toolbox/network-helpers'
 import { ExpenseAccountEIP712 } from '../typechain-types'
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers'
@@ -22,11 +22,15 @@ describe('ExpenseAccountEIP712V2', function () {
     const usdc = await USDC.deploy('USDC', 'USDC')
     await usdc.waitForDeployment()
 
+    // Deploy through a proxy; the implementation's constructor now calls
+    // `_disableInitializers()`, so `initialize` can only be invoked on a proxy.
     const ExpenseAccount = await ethers.getContractFactory('ExpenseAccountEIP712')
-    const expenseAccount = await ExpenseAccount.deploy()
+    const expenseAccount = (await upgrades.deployProxy(
+      ExpenseAccount,
+      [owner.address, [await usdt.getAddress(), await usdc.getAddress()]],
+      { initializer: 'initialize' }
+    )) as unknown as ExpenseAccountEIP712
     await expenseAccount.waitForDeployment()
-
-    await expenseAccount.initialize(owner.address, await usdt.getAddress(), await usdc.getAddress())
 
     // Fund the contract with native tokens
     await owner.sendTransaction({

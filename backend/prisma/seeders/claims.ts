@@ -86,11 +86,11 @@ export async function seedWeeklyClaimsAndClaims(
 
       // Create claims for this weekly claim
       const numClaims = faker.number.int({ min: 2, max: config.claimsPerWeeklyClaim });
-      let totalHours = 0;
+      let totalMinutes = 0;
 
       for (let j = 0; j < numClaims; j++) {
-        const hoursWorked = faker.number.int({ min: 1, max: 8 });
-        totalHours += hoursWorked;
+        const minutesWorked = faker.helpers.arrayElement([60, 120, 180, 240, 300, 360, 420, 480]);
+        totalMinutes += minutesWorked;
 
         const claimDate = new Date(weekStart);
         claimDate.setDate(claimDate.getDate() + j);
@@ -100,7 +100,8 @@ export async function seedWeeklyClaimsAndClaims(
           data: {
             wageId: wage.id,
             weeklyClaimId: weeklyClaim.id,
-            hoursWorked,
+            hoursWorked: 0,
+            minutesWorked,
             dayWorked,
             memo: faker.lorem.sentence({ min: 10, max: 200 }),
             createdAt: dayWorked,
@@ -109,13 +110,13 @@ export async function seedWeeklyClaimsAndClaims(
         claimCount++;
       }
 
-      // Update weekly claim with total hours
+      // Update weekly claim with total minutes
       await prisma.weeklyClaim.update({
         where: { id: weeklyClaim.id },
         data: {
           data: {
             period: `Week of ${weekStart.toISOString().split('T')[0]}`,
-            totalHours,
+            totalMinutes,
           },
         },
       });

@@ -10,7 +10,7 @@
     </div>
     <ul
       tabindex="0"
-      class="p-2 shadow-sm menu dropdown-content z-1 bg-base-100 rounded-box w-[300px]"
+      class="menu dropdown-content bg-base-100 rounded-box z-1 w-[300px] p-2 shadow-sm"
       data-test="notification-dropdown"
     >
       <li v-for="notification in paginatedNotifications" :key="notification.id">
@@ -25,28 +25,26 @@
       </li>
       <!-- Pagination Controls -->
       <div
-        class="join flex justify-between items-center p-2"
+        class="join flex items-center justify-between p-2"
         v-if="paginatedNotifications.length > 0"
       >
-        <ButtonUI
-          variant="primary"
+        <UButton
+          color="primary"
           size="xs"
           class="join-item"
-          :class="currentPage === 1 ? 'btn-disabled' : ''"
+          :disabled="currentPage === 1"
           @click="currentPage > 1 ? currentPage-- : currentPage"
-        >
-          <IconifyIcon icon="heroicons:chevron-left" class="size-6" />
-        </ButtonUI>
+          icon="heroicons:chevron-left"
+        />
         <span class="join-item btn-primary"> {{ currentPage }} / {{ totalPages }} </span>
-        <ButtonUI
-          variant="primary"
+        <UButton
+          color="primary"
           size="xs"
-          class="join-item btn"
-          :class="currentPage == totalPages ? 'btn-disabled' : ''"
+          class="join-item"
+          :disabled="currentPage === totalPages"
           @click="currentPage < totalPages ? currentPage++ : currentPage"
-        >
-          <IconifyIcon icon="heroicons:chevron-right" class="size-6" />
-        </ButtonUI>
+          icon="heroicons:chevron-right"
+        />
       </div>
     </ul>
   </div>
@@ -55,7 +53,6 @@
 import { ref, computed } from 'vue'
 import { type Notification } from '@/types'
 import { Icon as IconifyIcon } from '@iconify/vue'
-import ButtonUI from './ButtonUI.vue'
 import { useRouter } from 'vue-router'
 import {
   useGetNotificationsQuery,

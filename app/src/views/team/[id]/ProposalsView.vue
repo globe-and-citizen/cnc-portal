@@ -1,45 +1,51 @@
 <template>
   <div class="flex flex-col gap-4">
-    <div class="flex flex-row justify-between items-center">
-      <div class="flex flex-row gap-2 items-center">
-        <select class="select select-bordered w-40">
-          <option v-for="type in types" :key="type.value" :value="type.value">
-            {{ type.label }}
-          </option>
-        </select>
-        <select class="select select-bordered w-40">
-          <option v-for="creator in creators" :key="creator.value" :value="creator.value">
-            {{ creator.label }}
-          </option>
-        </select>
-        <select class="select select-bordered w-40">
-          <option v-for="status in statuses" :key="status.value" :value="status.value">
-            {{ status.label }}
-          </option>
-        </select>
+    <div class="flex flex-row items-center justify-between">
+      <div class="flex flex-row items-center gap-2">
+        <USelect v-model="selectedType" :items="types" class="w-40" aria-label="Filter by type" />
+        <USelect
+          v-model="selectedCreator"
+          :items="creators"
+          class="w-40"
+          aria-label="Filter by creator"
+        />
+        <USelect
+          v-model="selectedStatus"
+          :items="statuses"
+          class="w-40"
+          aria-label="Filter by status"
+        />
       </div>
-      <ButtonUI variant="primary" @click="createProposalModal = { mount: true, show: true }"
-        >Create Proposal</ButtonUI
-      >
+      <UButton
+        color="primary"
+        @click="createProposalModal = { mount: true, show: true }"
+        label="Create Proposal"
+      />
     </div>
 
     <ProposalsList ref="proposalsListRef" />
-    <ModalComponent
-      v-model="createProposalModal.show"
+    <UModal
       v-if="createProposalModal.mount"
-      @reset="() => (createProposalModal = { mount: false, show: false })"
+      v-model:open="createProposalModal.show"
+      :close="{
+        onClick: () => {
+          createProposalModal = { mount: false, show: false }
+        }
+      }"
+      title="Create Proposal"
+      description="Submit a new proposal for team review and voting."
     >
-      <CreateProposalForm
-        :loading="false"
-        @close-modal="createProposalModal = { mount: false, show: false }"
-        @proposal-created="handleProposalCreated"
-      />
-    </ModalComponent>
+      <template #body>
+        <CreateProposalForm
+          :loading="false"
+          @close-modal="createProposalModal = { mount: false, show: false }"
+          @proposal-created="handleProposalCreated"
+        />
+      </template>
+    </UModal>
   </div>
 </template>
 <script setup lang="ts">
-import ButtonUI from '@/components/ButtonUI.vue'
-import ModalComponent from '@/components/ModalComponent.vue'
 import CreateProposalForm from '@/components/sections/ProposalsView/forms/CreateProposalForm.vue'
 import ProposalsList from '@/components/sections/ProposalsView/ProposalsList.vue'
 import { ref } from 'vue'
@@ -63,6 +69,10 @@ const statuses = [
   { label: 'Rejected', value: 2 },
   { label: 'Tied', value: 3 }
 ]
+
+const selectedType = ref<string>('')
+const selectedCreator = ref<string>('')
+const selectedStatus = ref<string | number>('')
 
 const handleProposalCreated = () => {
   // Close the modal

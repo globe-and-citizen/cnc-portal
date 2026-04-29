@@ -1,45 +1,44 @@
 <template>
-  <CardComponent title="Vesting Stats">
-    <TableComponent
-      :rows="tokenSummaryRows"
+  <UCard>
+    <template #header>Vesting Stats</template>
+    <UTable
+      :data="tokenSummaryRows"
       :columns="tokenSummaryColumns"
       :sticky="true"
       :showPagination="true"
     >
-      <template #totalReleased-data="{ row }">
+      <template #totalReleased-cell="{ row: { original: row } }">
         <span class="flex items-center gap-1 text-sm text-gray-700">
           {{ row.totalReleased }}
-          <span class="text-xs">{{ tokenSymbol }}</span>
+          <span class="text-xs">{{ tokenSymbolText }}</span>
         </span>
       </template>
-      <template #totalVested-data="{ row }">
+      <template #totalVested-cell="{ row: { original: row } }">
         <span class="flex items-center gap-1 text-sm text-gray-700">
           {{ row.totalVested }}
-          <span class="text-xs">{{ tokenSymbol }}</span>
+          <span class="text-xs">{{ tokenSymbolText }}</span>
         </span>
       </template>
-      <template #totalWithdrawn-data="{ row }">
+      <template #totalWithdrawn-cell="{ row: { original: row } }">
         <span class="flex items-center gap-1 text-sm text-gray-700">
           {{ row.totalWithdrawn }}
-          <span class="text-xs">{{ tokenSymbol }}</span>
+          <span class="text-xs">{{ tokenSymbolText }}</span>
         </span>
       </template>
-    </TableComponent>
-  </CardComponent>
+    </UTable>
+  </UCard>
 </template>
 
 <script setup lang="ts">
-import TableComponent from '@/components/TableComponent.vue'
-import CardComponent from '@/components/CardComponent.vue'
 import { computed, ref, watch } from 'vue'
-import { useReadContract } from '@wagmi/vue'
 import { useTeamStore } from '@/stores'
-import { useToastStore } from '@/stores/useToastStore'
 import { type TokenSummary } from '@/types/vesting'
-import { VESTING_ADDRESS } from '@/constant'
-import { INVESTOR_ABI } from '@/artifacts/abi/investorsV1'
-import { VESTING_ABI } from '@/artifacts/abi/vesting'
-import { type Address, formatUnits } from 'viem'
+import { formatUnits } from 'viem'
+import { useInvestorSymbol } from '@/composables/investor/reads'
+import {
+  useVestingGetTeamAllArchivedVestingsFlat,
+  useVestingGetTeamVestingsWithMembers
+} from '@/composables/vesting/reads'
 
 const teamStore = useTeamStore()
 const team = computed(() => teamStore.currentTeam)
@@ -100,67 +99,52 @@ const totals = computed<{ totalAmount: number; totalReleased: number; totalWithd
 )
 
 // Define columns including the new "Actions" column
-const { addErrorToast } = useToastStore()
+const toast = useToast()
 
 const {
   data: archivedVestingInfos,
   //isLoading: isLoadingArchivedVestingInfos,
   error: errorGetArchivedVestingInfo,
   refetch: getArchivedVestingInfos
-} = useReadContract({
-  functionName: 'getTeamAllArchivedVestingsFlat',
-  address: VESTING_ADDRESS as Address,
-  abi: VESTING_ABI,
-  args: [BigInt(team?.value?.id ?? 0)]
-})
+} = useVestingGetTeamAllArchivedVestingsFlat(computed(() => BigInt(team?.value?.id ?? 0)))
 
 watch(errorGetArchivedVestingInfo, () => {
   if (errorGetArchivedVestingInfo.value) {
-    addErrorToast('get archived  failed')
+    toast.add({ title: 'get archived  failed', color: 'error' })
     console.error('get archived  failed ====', errorGetArchivedVestingInfo)
   }
-})
-
-const investorsAddress = computed(() => {
-  return teamStore?.currentTeam?.teamContracts?.find((contract) => contract.type === 'InvestorV1')
-    ?.address as Address
 })
 
 const {
   data: tokenSymbol
   //isLoading: isLoadingTokenSymbol
   //error: tokenSymbolError
-} = useReadContract({
-  abi: INVESTOR_ABI,
-  address: investorsAddress,
-  functionName: 'symbol'
-})
+} = useInvestorSymbol()
+
+const tokenSymbolText = computed(() =>
+  typeof tokenSymbol.value === 'string' ? tokenSymbol.value : 'default'
+)
 
 const {
   data: vestingInfos,
   //isLoading: isLoadingVestingInfos,
   error: errorGetVestingInfo,
   refetch: getVestingInfos
-} = useReadContract({
-  functionName: 'getTeamVestingsWithMembers',
-  address: VESTING_ADDRESS as Address,
-  abi: VESTING_ABI,
-  args: [BigInt(team?.value?.id ?? 0)]
-})
+} = useVestingGetTeamVestingsWithMembers(computed(() => BigInt(team?.value?.id ?? 0)))
 watch(errorGetVestingInfo, () => {
   if (errorGetVestingInfo.value) {
-    addErrorToast('Add admin failed')
+    toast.add({ title: 'Add admin failed', color: 'error' })
   }
 })
 
 const tokenSummaryColumns = [
-  { key: 'symbol', label: 'Token Symbol', sortable: false },
-  { key: 'totalVested', label: 'Total Vested', sortable: false },
-  { key: 'totalReleased', label: 'Total Released', sortable: false },
-  { key: 'totalWithdrawn', label: 'Total Withdrawn', sortable: false }
+  { accessorKey: 'symbol', header: 'Token Symbol', enableSorting: false },
+  { accessorKey: 'totalVested', header: 'Total Vested', enableSorting: false },
+  { accessorKey: 'totalReleased', header: 'Total Released', enableSorting: false },
+  { accessorKey: 'totalWithdrawn', header: 'Total Withdrawn', enableSorting: false }
 ]
 const tokenSummaryRows = computed(() => {
-  const defaultToken = tokenSymbol.value ? tokenSymbol.value : 'default'
+  const defaultToken = tokenSymbolText.value
   const summaryMap: Record<string, TokenSummary> = {}
   summaryMap[defaultToken] = {
     symbol: defaultToken,

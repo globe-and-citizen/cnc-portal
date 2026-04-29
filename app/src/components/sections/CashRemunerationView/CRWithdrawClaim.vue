@@ -2,13 +2,13 @@
   <a
     v-if="isDropDown"
     data-test="withdraw-action"
-    :class="['text-sm', { disabled: isLoad }]"
-    :aria-disabled="isLoad"
-    :tabindex="isLoad ? -1 : 0"
-    :style="{ pointerEvents: isLoad ? 'none' : undefined }"
+    :class="['text-sm', { disabled: withdrawTx.isPending.value }]"
+    :aria-disabled="withdrawTx.isPending.value"
+    :tabindex="withdrawTx.isPending.value ? -1 : 0"
+    :style="{ pointerEvents: withdrawTx.isPending.value ? 'none' : undefined }"
     @click="
       async () => {
-        if (isLoad) return
+        if (withdrawTx.isPending.value) return
         if (!isClaimOwner) {
           emit('claim-withdrawn')
           return
@@ -18,36 +18,29 @@
       }
     "
   >
-    <span v-if="isLoad" class="loading loading-spinner loading-xs mr-2"></span>
+    <span v-if="withdrawTx.isPending.value" class="loading loading-spinner loading-xs mr-2"></span>
     Withdraw
   </a>
-  <ButtonUI
+  <UButton
     v-else
     :disabled="disabled"
-    :loading="isLoad"
-    variant="warning"
+    :loading="withdrawTx.isPending.value"
+    color="warning"
     data-test="withdraw-button"
     size="sm"
     @click="async () => await withdrawClaim()"
-    >Withdraw</ButtonUI
-  >
+    label="Withdraw"
+  />
 </template>
 
 <script setup lang="ts">
-import { useTeamStore, useToastStore } from '@/stores'
-import { log, parseError } from '@/utils'
-import { useWriteContract } from '@wagmi/vue'
-import { formatEther, parseEther, parseUnits, zeroAddress, type Address } from 'viem'
-import { computed, ref } from 'vue'
-import { CASH_REMUNERATION_EIP712_ABI } from '@/artifacts/abi/cash-remuneration-eip712'
-import { getBalance } from 'viem/actions'
-import { config } from '@/wagmi.config'
-import ButtonUI from '@/components/ButtonUI.vue'
+import { useTeamStore } from '@/stores'
+import { buildWageClaimPayload, classifyError, log } from '@/utils'
+import { zeroAddress, type Address } from 'viem'
 import { USDC_ADDRESS } from '@/constant'
-import { simulateContract } from '@wagmi/core'
-import { waitForTransactionReceipt } from '@wagmi/core'
 import type { WeeklyClaim } from '@/types'
 import { useSyncWeeklyClaimsMutation } from '@/queries'
+import { useWithdraw } from '@/composables/cashRemuneration/writes'
 
 const props = defineProps<{
   weeklyClaim: WeeklyClaim
@@ -59,117 +52,59 @@ const props = defineProps<{
 const emit = defineEmits(['claim-withdrawn'])
 
 const teamStore = useTeamStore()
-const toastStore = useToastStore()
+const toast = useToast()
 
-const cashRemunerationEip712Address = computed(() =>
-  teamStore.getContractAddressByType('CashRemunerationEIP712')
-)
-const { mutateAsync: withdraw } = useWriteContract()
-
-// const weeklyClaimUrl = computed(() => `/weeklyclaim/${props.weeklyClaim.id}/?action=withdraw`)
+const withdrawTx = useWithdraw()
 
 const { mutateAsync: syncWeeklyClaim, error: syncWeeklyClaimError } = useSyncWeeklyClaimsMutation()
 
-const isLoading = ref(false)
-const isLoad = computed(() => isLoading.value as boolean)
+const getTokenAddress = (type: string): Address => {
+  if (type === 'native') return zeroAddress as Address
+  if (type === 'usdc') return USDC_ADDRESS as Address
+  return teamStore.getContractAddressByType('InvestorV1') as Address
+}
 
 const withdrawClaim = async () => {
-  isLoading.value = true
+  if (withdrawTx.isPending.value) return
 
-  if (!cashRemunerationEip712Address.value) {
-    isLoading.value = false
-    toastStore.addErrorToast('Cash Remuneration EIP712 contract address not found')
-    return
-  }
-  // balance check
-  const balance = formatEther(
-    await getBalance(config.getClient(), {
-      address: cashRemunerationEip712Address.value
-    })
-  )
-  if (
-    Number(balance) <
-    Number(props.weeklyClaim.wage.ratePerHour.find((rate) => rate.type === 'native')?.amount || 0) *
-      Number(props.weeklyClaim.hoursWorked)
-  ) {
-    isLoading.value = false
-    toastStore.addErrorToast('Insufficient balance')
+  if (!teamStore.getContractAddressByType('CashRemunerationEIP712')) {
+    toast.add({ title: 'Cash Remuneration EIP712 contract address not found', color: 'error' })
     return
   }
 
-  const claimData = {
-    hoursWorked: props.weeklyClaim.hoursWorked,
-    employeeAddress: props.weeklyClaim.wage.userAddress as Address,
-    date: BigInt(Math.floor(new Date(props.weeklyClaim.createdAt).getTime() / 1000)),
-    wages: props.weeklyClaim.wage.ratePerHour.map((rate) => ({
-      hourlyRate:
-        rate.type === 'native' ? parseEther(`${rate.amount}`) : parseUnits(`${rate.amount}`, 6), // Convert to wei (assuming 6 decimals for USDC)
-      tokenAddress:
-        rate.type === 'native'
-          ? (zeroAddress as Address)
-          : rate.type === 'usdc'
-            ? (USDC_ADDRESS as Address)
-            : (teamStore.getContractAddressByType('InvestorV1') as Address)
-    }))
-  }
+  const claimData = buildWageClaimPayload({ weeklyClaim: props.weeklyClaim, getTokenAddress })
 
   // withdraw
-  try {
-    const args = {
-      abi: CASH_REMUNERATION_EIP712_ABI,
-      functionName: 'withdraw' as const,
-      args: [claimData, props.weeklyClaim.signature as Address] as const
-    }
+  withdrawTx.mutate(
+    { args: [claimData, props.weeklyClaim.signature as `0x${string}`] },
+    {
+      onSuccess: async () => {
+        toast.add({ title: 'Claim withdrawn', color: 'success' })
 
-    await simulateContract(config, {
-      ...args,
-      address: cashRemunerationEip712Address.value
-    })
+        if (teamStore.currentTeamId) {
+          await syncWeeklyClaim({ queryParams: { teamId: teamStore.currentTeamId } })
 
-    const hash = await withdraw({
-      ...args,
-      address: cashRemunerationEip712Address.value
-    })
-
-    // Wait for transaction receipt
-    const receipt = await waitForTransactionReceipt(config, {
-      hash
-    })
-
-    if (receipt.status === 'success') {
-      toastStore.addSuccessToast('Claim withdrawn')
-
-      if (teamStore.currentTeamId) {
-        await syncWeeklyClaim({ queryParams: { teamId: teamStore.currentTeamId } })
-
-        if (syncWeeklyClaimError.value) {
-          toastStore.addErrorToast('Failed to update Claim status')
+          if (syncWeeklyClaimError.value) {
+            toast.add({ title: 'Failed to update Claim status', color: 'error' })
+          }
         }
+
+        emit('claim-withdrawn')
+      },
+      onError: (error) => {
+        log.error('Withdraw error', error)
+
+        const classified = classifyError(error, { contract: 'CashRemuneration' })
+
+        // Silent when user cancels from wallet — nothing to show.
+        if (classified.category === 'user_rejected') return
+
+        toast.add({
+          title: classified.userMessage,
+          color: 'error'
+        })
       }
-
-      emit('claim-withdrawn')
-      isLoading.value = false
-    } else {
-      toastStore.addErrorToast('Transaction failed: Failed to withdraw claim')
-      // keep loading until explicit success
     }
-  } catch (error) {
-    // Stop loading on cancel or explicit error
-    isLoading.value = false
-    log.error('Withdraw error', error)
-    const parsed = parseError(error, CASH_REMUNERATION_EIP712_ABI)
-
-    if (parsed.includes('Insufficient token balance')) {
-      toastStore.addErrorToast('Insufficient token balance')
-    } else if (
-      parsed.includes('Token not supported') ||
-      parsed.includes('Token not support') ||
-      parsed.includes('unsupported token')
-    ) {
-      toastStore.addErrorToast('Add Token support: Token not supported')
-    } else {
-      toastStore.addErrorToast(/*'Failed to withdraw'*/ parsed)
-    }
-  }
+  )
 }
 </script>

@@ -73,7 +73,7 @@ describe('VestingSummary.vue', () => {
     it('disables confirm button when loading', async () => {
       wrapper = mountComponent({ loading: true })
       const confirmBtn = wrapper.find('[data-test="confirm-btn"]')
-      expect(confirmBtn.attributes('class')).toContain('btn-disabled')
+      expect(confirmBtn.attributes('disabled')).toBeDefined()
     })
   })
 

@@ -16,6 +16,7 @@ export interface ExpenseTransaction extends BaseTransaction {
 
 export interface CashRemunerationTransaction extends BaseTransaction {
   amount: string | number
+  token: string
 }
 
 export interface BankTransaction extends BaseTransaction {
@@ -31,7 +32,7 @@ export interface InvestorsTransaction extends BaseTransaction {
 }
 
 export interface RawInvestorsTransaction {
-  amount: number
+  amount: string | number
   blockTimestamp: string
   from: string
   to: string

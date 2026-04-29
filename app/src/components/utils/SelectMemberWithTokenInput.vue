@@ -6,25 +6,27 @@
     data-test="member-input"
   >
     <label
-      class="w-full input input-bordered flex items-center gap-2 input-md"
+      class="input input-bordered input-md flex w-full items-center gap-2"
       :data-test="`member-input`"
     >
-      <input
+      <UInput
         type="text"
+        variant="none"
         class="w-24"
         v-model="input.name"
         ref="nameInput"
-        :placeholder="'Member Name '"
+        placeholder="Member Name "
         :data-test="`member-name-input`"
       />
       |
-      <input
+      <UInput
         type="text"
+        variant="none"
         class="grow"
         ref="addressInput"
         v-model="input.address"
         :data-test="`member-address-input`"
-        :placeholder="`Member Address`"
+        placeholder="Member Address"
       />
       |
       <SelectComponent
@@ -42,7 +44,7 @@
     <!-- Dropdown positioned relative to the input -->
     <div
       v-if="showDropdown && filteredMembers && filteredMembers.length > 0"
-      class="left-0 top-full mt-4 w-full border rounded-xl p-4"
+      class="top-full left-0 mt-4 w-full rounded-xl border p-4"
       data-test="user-dropdown"
     >
       <p class="pb-3 font-bold">Click to select Member</p>
@@ -52,11 +54,11 @@
             v-for="user in filteredMembers.slice(0, 8)"
             :key="user.address"
             @click="selectMember(user)"
-            class="flex items-center cursor-pointer"
+            class="flex cursor-pointer items-center"
             data-test="user-row"
           >
             <UserComponent
-              class="bg-base-200 p-4 grow rounded-lg hover:bg-base-300"
+              class="bg-base-200 hover:bg-base-300 grow rounded-lg p-4"
               :user="user"
               :data-test="`user-dropdown-${user.address}`"
             />
@@ -68,7 +70,7 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, ref, useTemplateRef } from 'vue'
+import { computed, ref } from 'vue'
 import { NETWORK, USDC_ADDRESS } from '@/constant'
 import { zeroAddress } from 'viem'
 import SelectComponent from '@/components/SelectComponent.vue'
@@ -87,10 +89,12 @@ const input = defineModel({
 const teamStore = useTeamStore()
 const showDropdown = ref(false)
 const formRef = ref<HTMLElement | null>(null)
-const nameInput = useTemplateRef<HTMLInputElement>('nameInput')
-const addressInput = useTemplateRef<HTMLInputElement>('addressInput')
-const { focused: nameInputFocus } = useFocus(nameInput)
-const { focused: addressInputFocus } = useFocus(addressInput)
+const nameInput = ref<{ inputRef: HTMLInputElement } | null>(null)
+const addressInput = ref<{ inputRef: HTMLInputElement } | null>(null)
+const { focused: nameInputFocus } = useFocus(computed(() => nameInput.value?.inputRef ?? null))
+const { focused: addressInputFocus } = useFocus(
+  computed(() => addressInput.value?.inputRef ?? null)
+)
 const tokens = ref({
   USDC: USDC_ADDRESS,
   [NETWORK.currencySymbol]: zeroAddress

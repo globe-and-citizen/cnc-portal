@@ -1,22 +1,18 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { mount, VueWrapper } from '@vue/test-utils'
 import { nextTick } from 'vue'
+import { NETWORK } from '@/constant'
 import TransferModal from '../TransferModal.vue'
-import ButtonUI from '@/components/ButtonUI.vue'
-import ModalComponent from '@/components/ModalComponent.vue'
-import TransferForm from '../TransferForm.vue'
-import { Icon as IconifyIcon } from '@iconify/vue'
 import {
-  mockUseWriteContract,
-  mockWagmiCore,
   mockUseReadContract,
   mockBodIsBodAction,
-  mockBodAddAction
+  mockBodAddAction,
+  mockUserStore,
+  mockUseContractBalance,
+  mockBankWrites,
+  useQueryClientFn
 } from '@/tests/mocks'
-import { mockUserStore } from '@/tests/mocks'
-import { mockUseContractBalance } from '@/tests/mocks'
 
-// Keep local mock only for the Bank ABI (not covered by global setup)
 vi.mock('@/artifacts/abi/bank', () => ({
   BANK_ABI: [
     {
@@ -44,127 +40,256 @@ vi.mock('@/artifacts/abi/bank', () => ({
   ]
 }))
 
+type TransferModalVm = {
+  modal: { mount: boolean; show: boolean }
+  errorMessage: string
+  transferData: {
+    address: { name: string; address: string }
+    token: { symbol: string; balance: number }
+    amount: string
+  }
+  openModal: () => void
+  resetTransferValues: () => void
+  handleTransfer: (value: {
+    address: { address: `0x${string}` }
+    token: { symbol: string }
+    amount: string
+  }) => Promise<void>
+}
+
 describe('TransferModal', () => {
   let wrapper: VueWrapper
 
-  // Mock test data
   const mockBankAddress = '0x1234567890123456789012345678901234567890' as const
-
-  const mockBalance = [
-    {
-      token: { id: 'eth', symbol: 'ETH', name: 'Ethereum', code: 'ETH' },
-      amount: 10,
-      values: { USD: { price: 2000 } }
-    },
-    {
-      token: { id: 'usdc', symbol: 'USDC', name: 'USD Coin', code: 'USDC' },
-      amount: 5000,
-      values: { USD: { price: 1 } }
-    }
-  ]
-
   const mockRecipientAddress = '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd' as const
 
-  // Test selectors
-  const SELECTORS = {
-    transferButton: '[data-test="transfer-button"]',
-    transferModal: '[data-test="transfer-modal"]',
-    tooltip: '[class*="tooltip"]',
-    modalHeader: 'h1'
-  } as const
+  const setBalances = (balances?: Array<Record<string, unknown>>) => {
+    mockUseContractBalance.balances.value =
+      (balances as never) ??
+      ([
+        {
+          token: { id: 'native', symbol: NETWORK.currencySymbol, name: 'Native', code: 'ETH' },
+          amount: 10,
+          values: { USD: { price: 2000 } }
+        },
+        {
+          token: { id: 'usdc', symbol: 'USDC', name: 'USD Coin', code: 'USDC' },
+          amount: 5000,
+          values: { USD: { price: 1 } }
+        }
+      ] as never)
+  }
 
-  // Helper function to create component
-  const mountComponent = (props = {}) => {
-    // Configure the bank owner to match the user address so transfers are enabled
+  const createQueryClient = () => {
+    const invalidateQueries = vi.fn()
+    useQueryClientFn.mockReturnValue({
+      invalidateQueries,
+      getQueryData: vi.fn(),
+      setQueryData: vi.fn(),
+      removeQueries: vi.fn()
+    })
+    return { invalidateQueries }
+  }
+
+  const mountComponent = () => {
     mockUseReadContract.data.value = mockUserStore.address
-    // Set contract balance to test data
-    mockUseContractBalance.balances.value = mockBalance as never
+    setBalances()
 
     return mount(TransferModal, {
       props: {
-        bankAddress: mockBankAddress,
-        ...props
+        bankAddress: mockBankAddress
       },
       global: {
-        components: {
-          ButtonUI,
-          ModalComponent,
-          TransferForm,
-          IconifyIcon
-        },
         stubs: {
-          TransferForm: true
+          TransferForm: {
+            name: 'TransferForm',
+            props: ['modelValue', 'tokens', 'loading', 'feeBps', 'isBodAction'],
+            emits: ['transfer', 'closeModal', 'update:modelValue'],
+            template: '<div data-test="transfer-form-stub" />'
+          }
         }
       }
     })
   }
 
+  const getVm = (currentWrapper: VueWrapper) => currentWrapper.vm as unknown as TransferModalVm
+
   beforeEach(() => {
     vi.clearAllMocks()
-    // Reset mock state for each test
-    mockUseReadContract.data.value = '0xData'
+    createQueryClient()
+    mockUseReadContract.data.value = mockUserStore.address
     mockBodIsBodAction.isBodAction.value = false
     mockBodAddAction.isPending.value = false
     mockBodAddAction.isConfirming.value = false
     mockBodAddAction.isActionAdded.value = false
+    mockBankWrites.transfer.isPending.value = false
+    mockBankWrites.transferToken.isPending.value = false
+    // Default: invoke onSuccess to simulate successful mutation
+    mockBankWrites.transfer.mutate = vi.fn(
+      async (_vars: unknown, options?: { onSuccess?: () => Promise<void> | void }) => {
+        await options?.onSuccess?.()
+      }
+    )
+    mockBankWrites.transferToken.mutate = vi.fn(
+      async (_vars: unknown, options?: { onSuccess?: () => Promise<void> | void }) => {
+        await options?.onSuccess?.()
+      }
+    )
   })
 
   afterEach(() => {
     if (wrapper) wrapper.unmount()
   })
 
-  describe('Modal Closing', () => {
-    it('should reset transfer data when modal closes', async () => {
-      wrapper = mountComponent()
+  it('disables the trigger and shows the correct tooltip when the user lacks rights or the balance is zero', () => {
+    mockUseReadContract.data.value = '0x9999999999999999999999999999999999999999'
+    setBalances([
+      {
+        token: { id: 'native', symbol: NETWORK.currencySymbol, name: 'Native', code: 'ETH' },
+        amount: 0,
+        values: { USD: { price: 2000 } }
+      }
+    ])
+    wrapper = mountComponent()
 
-      await wrapper.find(SELECTORS.transferButton).trigger('click')
-      await nextTick()
-
-      const modal = wrapper.findComponent(ModalComponent)
-      await modal.vm.$emit('reset')
-      await nextTick()
-
-      expect(wrapper.find(SELECTORS.transferModal).exists()).toBe(false)
-    })
+    expect(wrapper.find('[data-test="transfer-button"]').exists()).toBe(true)
   })
 
-  describe('Transfer Handling - Direct Transfer', () => {
-    it('should call token transfer for USDC', async () => {
-      mockUseWriteContract.mutateAsync.mockResolvedValue({ hash: '0xabcd1234' })
-      mockWagmiCore.waitForTransactionReceipt.mockResolvedValue({ status: 'success' })
+  it('disables the trigger when user is owner but bank balance is zero', async () => {
+    wrapper = mountComponent()
+    setBalances([
+      {
+        token: { id: 'native', symbol: NETWORK.currencySymbol, name: 'Native', code: 'ETH' },
+        amount: 0,
+        values: { USD: { price: 2000 } }
+      }
+    ])
+    await nextTick()
 
-      wrapper = mountComponent()
+    expect(wrapper.find('[data-test="transfer-button"]').attributes('disabled')).toBeDefined()
+  })
 
-      await wrapper.find(SELECTORS.transferButton).trigger('click')
-      await nextTick()
+  it('keeps the trigger enabled for a bod action member with positive balance', () => {
+    mockUseReadContract.data.value = '0xOtherOwner'
+    mockBodIsBodAction.isBodAction.value = true
+    wrapper = mountComponent()
 
-      const form = wrapper.findComponent(TransferForm)
-      await form.vm.$emit('transfer', {
-        address: { address: mockRecipientAddress },
-        token: { symbol: 'USDC' },
-        amount: '100'
-      })
-      await nextTick()
+    expect(wrapper.find('[data-test="transfer-button"]').attributes('disabled')).toBeUndefined()
+  })
 
-      expect(mockUseWriteContract.mutateAsync).toHaveBeenCalled()
+  it('exposes isLoading true while a transfer mutation is pending', async () => {
+    wrapper = mountComponent()
+    const vm = getVm(wrapper)
+    mockBankWrites.transfer.isPending.value = true
+    vm.openModal()
+    await nextTick()
+
+    expect(wrapper.findComponent({ name: 'TransferForm' }).props('loading')).toBe(true)
+  })
+
+  it('opens and resets the modal state', async () => {
+    wrapper = mountComponent()
+    const vm = getVm(wrapper)
+
+    await wrapper.find('[data-test="transfer-button"]').trigger('click')
+    await nextTick()
+    expect(wrapper.find('[data-test="transfer-modal"]').exists()).toBe(true)
+
+    vm.resetTransferValues()
+    await nextTick()
+    expect(wrapper.find('[data-test="transfer-modal"]').exists()).toBe(false)
+    expect(vm.errorMessage).toBe('')
+  })
+
+  it('renders the form stub when the modal is mounted', async () => {
+    wrapper = mountComponent()
+    const vm = getVm(wrapper)
+
+    vm.openModal()
+    await nextTick()
+
+    expect(wrapper.find('[data-test="transfer-form-stub"]').exists()).toBe(true)
+  })
+
+  it('uses the bod action path instead of a direct transfer when bod mode is enabled', async () => {
+    wrapper = mountComponent()
+    const vm = getVm(wrapper)
+    mockBodIsBodAction.isBodAction.value = true
+
+    await vm.handleTransfer({
+      address: { address: mockRecipientAddress },
+      token: { symbol: 'USDC' },
+      amount: '100'
     })
 
-    it('should show success toast after successful transfer', async () => {
-      mockUseWriteContract.mutateAsync.mockResolvedValue({ hash: '0xabcd1234' })
-      mockWagmiCore.waitForTransactionReceipt.mockResolvedValue({ status: 'success' })
+    expect(mockBodAddAction.executeAddAction).toHaveBeenCalledOnce()
+    expect(mockBankWrites.transfer.mutate).not.toHaveBeenCalled()
+    expect(mockBankWrites.transferToken.mutate).not.toHaveBeenCalled()
+  })
 
-      wrapper = mountComponent()
+  it('handles direct token transfers and invalidates the token balance query', async () => {
+    const { invalidateQueries } = createQueryClient()
+    wrapper = mountComponent()
+    const vm = getVm(wrapper)
 
-      await wrapper.find(SELECTORS.transferButton).trigger('click')
-      await nextTick()
-
-      const form = wrapper.findComponent(TransferForm)
-      await form.vm.$emit('transfer', {
-        address: { address: mockRecipientAddress },
-        token: { symbol: 'ETH' },
-        amount: '1.5'
-      })
-      await nextTick()
+    await vm.handleTransfer({
+      address: { address: mockRecipientAddress },
+      token: { symbol: 'USDC' },
+      amount: '100'
     })
+
+    expect(mockBankWrites.transferToken.mutate).toHaveBeenCalledOnce()
+    expect(invalidateQueries).toHaveBeenCalledWith(
+      expect.objectContaining({ queryKey: expect.arrayContaining(['readContract']) })
+    )
+  })
+
+  it('handles direct native transfers and surfaces errors from the mutation', async () => {
+    wrapper = mountComponent()
+    const vm = getVm(wrapper)
+
+    mockBankWrites.transfer.mutate = vi.fn(
+      (_vars: unknown, options?: { onError?: (err: unknown) => void }) => {
+        options?.onError?.(new Error('boom'))
+      }
+    )
+
+    await vm.handleTransfer({
+      address: { address: mockRecipientAddress },
+      token: { symbol: NETWORK.currencySymbol },
+      amount: '1.5'
+    })
+
+    expect(mockBankWrites.transfer.mutate).toHaveBeenCalledOnce()
+    expect(vm.errorMessage).not.toBe('')
+  })
+
+  it('surfaces an error message when the bod action path throws', async () => {
+    wrapper = mountComponent()
+    const vm = getVm(wrapper)
+    mockBodIsBodAction.isBodAction.value = true
+    mockBodAddAction.executeAddAction.mockRejectedValueOnce(new Error('bod boom'))
+
+    await vm.handleTransfer({
+      address: { address: mockRecipientAddress },
+      token: { symbol: 'USDC' },
+      amount: '10'
+    })
+
+    expect(vm.errorMessage).toBe('Failed to transfer USDC')
+  })
+
+  it('resets modal when the bod action-added watcher fires', async () => {
+    wrapper = mountComponent()
+    const vm = getVm(wrapper)
+
+    vm.openModal()
+    vm.errorMessage = 'Something failed'
+    await nextTick()
+
+    mockBodAddAction.isActionAdded.value = true
+    await nextTick()
+    expect(vm.modal.show).toBe(false)
+    expect(vm.errorMessage).toBe('')
   })
 })

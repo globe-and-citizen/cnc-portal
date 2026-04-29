@@ -5,69 +5,64 @@ import { Request, Response } from 'express';
 import { prisma } from '../utils';
 import { errorResponse } from '../utils/utils';
 
-import { Claim, Prisma } from '@prisma/client';
-import { isUserMemberOfTeam } from './wageController';
-import { deleteFile, getPresignedDownloadUrl } from '../services/storageService';
-
-// Type for file attachment data (updated for Railway S3)
-type FileAttachmentData = {
-  fileType: string;
-  fileSize: number;
-  fileKey: string; // S3 object key - unique identifier
-  fileUrl: string; // Presigned download URL
-};
-
-const refreshAttachmentUrls = async (attachments: unknown): Promise<unknown> => {
-  if (!Array.isArray(attachments) || attachments.length === 0) {
-    return attachments;
-  }
-
-  const refreshed = await Promise.all(
-    attachments.map(async (attachment) => {
-      if (!attachment || typeof attachment !== 'object') {
-        return attachment;
-      }
-
-      const typedAttachment = attachment as FileAttachmentData;
-      if (!typedAttachment.fileKey) {
-        return attachment;
-      }
-
-      try {
-        const freshUrl = await getPresignedDownloadUrl(typedAttachment.fileKey);
-        return {
-          ...typedAttachment,
-          fileUrl: freshUrl,
-        };
-      } catch {
-        return attachment;
-      }
-    })
-  );
-
-  return refreshed;
-};
+import { Prisma } from '@prisma/client';
+import { refreshAttachmentUrls, deleteAttachments } from '../services/attachmentService';
+import {
+  addClaimBodySchema,
+  claimIdParamsSchema,
+  getClaimsQuerySchema,
+  parseStoredAttachments,
+  updateClaimBodySchema,
+  z,
+  type FileAttachmentData,
+} from '../validation';
+import { formatMinutesAsDuration } from '../utils/wageUtil';
 
 dayjs.extend(utc);
 dayjs.extend(isoWeek);
 
-type claimBodyRequest = Pick<Claim, 'hoursWorked' | 'dayWorked' | 'memo'> & {
-  teamId: string;
-  attachments?: FileAttachmentData[];
+type AddClaimBody = z.infer<typeof addClaimBodySchema>;
+type UpdateClaimBody = z.infer<typeof updateClaimBodySchema>;
+type GetClaimsQuery = z.infer<typeof getClaimsQuerySchema>;
+type ClaimIdParams = z.infer<typeof claimIdParamsSchema>;
+
+const buildWeeklyHoursExceededMessage = ({
+  action,
+  regularHours,
+  overtimeHours,
+  submittedMinutes,
+}: {
+  action: 'submit' | 'update';
+  regularHours: number;
+  overtimeHours: number;
+  submittedMinutes: number;
+}) => {
+  const totalAllowedMinutes = (regularHours + overtimeHours) * 60;
+  const remainingMinutes = Math.max(0, totalAllowedMinutes - submittedMinutes);
+
+  return {
+    message:
+      `Unable to ${action} this claim: your weekly hours limit would be exceeded. ` +
+      `Weekly allowance: ${regularHours}h regular + ${overtimeHours}h overtime = ${formatMinutesAsDuration(totalAllowedMinutes)}. ` +
+      `Already submitted: ${formatMinutesAsDuration(submittedMinutes)}. Remaining to submit: ${formatMinutesAsDuration(remainingMinutes)}.`,
+  };
 };
 
 // TODO limit weeday only for the current week. Betwen Monday and the current day
 export const addClaim = async (req: Request, res: Response) => {
   const callerAddress = req.address;
 
-  const body = req.body as claimBodyRequest;
-  const hoursWorked = Number(body.hoursWorked);
-  const memo = body.memo as string;
-  const dayWorked = body.dayWorked
-    ? dayjs.utc(body.dayWorked).startOf('day').toDate()
+  const {
+    teamId,
+    minutesWorked,
+    memo,
+    dayWorked: dayWorkedInput,
+    attachments: rawAttachments,
+  } = req.body as AddClaimBody;
+  const dayWorked = dayWorkedInput
+    ? dayjs.utc(dayWorkedInput).startOf('day').toDate()
     : dayjs.utc().startOf('day').toDate();
-  const teamId = Number(body.teamId);
-  const attachments = body.attachments || [];
+  const attachments: FileAttachmentData[] = rawAttachments ?? [];
 
   const weekStart = dayjs.utc(dayWorked).startOf('isoWeek').toDate(); // Monday 00:00 UTC
 
@@ -79,6 +74,10 @@ export const addClaim = async (req: Request, res: Response) => {
 
     if (!wage) {
       return errorResponse(400, 'No wage found for the user', res);
+    }
+
+    if (wage.disabled) {
+      return errorResponse(400, 'Cannot add claim: the wage is disabled', res);
     }
 
     // get the member current wage
@@ -109,17 +108,22 @@ export const addClaim = async (req: Request, res: Response) => {
       }
     }
 
-    // Check total max hours.
+    // Check total max minutes (regular + overtime).
 
-    const totalHours = weeklyClaim?.claims.reduce((sum, claim) => sum + claim.hoursWorked, 0) ?? 0;
+    const totalMinutes =
+      weeklyClaim?.claims.reduce((sum, claim) => sum + claim.minutesWorked, 0) ?? 0;
+    const regularHours = wage.maximumHoursPerWeek;
+    const overtimeHours = wage.maximumOvertimeHoursPerWeek ?? 0;
+    const totalMaxMinutes = (regularHours + overtimeHours) * 60;
 
-    if (totalHours + hoursWorked > wage.maximumHoursPerWeek) {
-      const remainingHours = Math.max(0, wage.maximumHoursPerWeek - totalHours);
-      return errorResponse(
-        400,
-        `Maximum weekly hours reached, cannot submit more claims for this week. You have ${remainingHours} hours remaining.`,
-        res
-      );
+    if (totalMinutes + minutesWorked > totalMaxMinutes) {
+      const { message } = buildWeeklyHoursExceededMessage({
+        action: 'submit',
+        regularHours,
+        overtimeHours,
+        submittedMinutes: totalMinutes,
+      });
+      return errorResponse(409, message, res);
     }
 
     if (!weeklyClaim) {
@@ -141,13 +145,13 @@ export const addClaim = async (req: Request, res: Response) => {
     if (
       (weeklyClaim?.claims
         .filter((claim) => claim.dayWorked && claim.dayWorked.getTime() === dayWorked.getTime())
-        .reduce((sum, claim) => sum + Number(claim.hoursWorked), 0) ?? 0) +
-        Number(hoursWorked) >
-      24
+        .reduce((sum, claim) => sum + Number(claim.minutesWorked), 0) ?? 0) +
+        Number(minutesWorked) >
+      1440
     ) {
       return errorResponse(
         400,
-        'Submission failed: the total number of hours for this day would exceed 24 hours.',
+        'Submission failed: the total number of hours for this day would exceed 24 hours (1440 minutes).',
         res
       );
     }
@@ -167,7 +171,8 @@ export const addClaim = async (req: Request, res: Response) => {
     // Create the claim with file attachments
     const claim = await prisma.claim.create({
       data: {
-        hoursWorked,
+        hoursWorked: 0,
+        minutesWorked,
         memo,
         wageId: wage.id,
         weeklyClaimId: weeklyClaim.id,
@@ -183,15 +188,10 @@ export const addClaim = async (req: Request, res: Response) => {
 };
 
 export const getClaims = async (req: Request, res: Response) => {
-  const callerAddress = req.address;
-  const teamId = Number(req.query.teamId);
-  const memberAddress = req.query.memberAddress as string | undefined;
+  const { teamId, memberAddress } = req.query as unknown as GetClaimsQuery;
 
   try {
-    // Check if the user is a member of the provided team
-    if (!(await isUserMemberOfTeam(callerAddress, teamId))) {
-      return errorResponse(403, 'Caller is not a member of the team', res);
-    }
+    // authz enforced by requireTeamMember middleware
 
     // add filter for memberAddress if provided
     let memberFilter: Prisma.ClaimWhereInput = {};
@@ -242,19 +242,8 @@ export const getClaims = async (req: Request, res: Response) => {
 
 export const updateClaim = async (req: Request, res: Response) => {
   const callerAddress = req.address;
-  const claimId = Number(req.params.claimId);
-
-  const {
-    hoursWorked,
-    memo,
-    deletedFileIndexes,
-    attachments,
-  }: {
-    hoursWorked?: number;
-    memo?: string;
-    deletedFileIndexes?: number[];
-    attachments?: FileAttachmentData[];
-  } = req.body;
+  const { claimId } = req.params as unknown as ClaimIdParams;
+  const { minutesWorked, memo, deletedFileIndexes, attachments } = req.body as UpdateClaimBody;
 
   try {
     // Fetch the claim including the required data (include weeklyClaim.claims)
@@ -281,32 +270,43 @@ export const updateClaim = async (req: Request, res: Response) => {
       return errorResponse(403, 'Caller is not the owner of the claim', res);
     }
 
+    if (wage.disabled) {
+      return errorResponse(403, 'Cannot update claim: the wage is disabled', res);
+    }
+
     // Can only edit pending claims
     if (claim.weeklyClaim?.status !== 'pending' && claim.weeklyClaim?.status !== 'disabled') {
       return errorResponse(403, "Can't edit: Claim is not pending", res);
     }
 
-    if (hoursWorked !== undefined) {
-      // Sum other claims in the same weeklyClaim excluding the current claim
+    if (minutesWorked !== undefined) {
+      // Sum other claims in the same weeklyClaim excluding the current claim (values are in minutes)
       const otherClaimsTotal =
         (weeklyClaim?.claims ?? [])
           .filter((c) => c.id !== claim.id)
-          .reduce((sum, c) => sum + Number(c.hoursWorked), 0) ?? 0;
+          .reduce((sum, c) => sum + Number(c.minutesWorked), 0) ?? 0;
 
-      const newHours = Number(hoursWorked);
+      const newMinutes = Number(minutesWorked);
 
-      if (otherClaimsTotal + newHours > wage.maximumHoursPerWeek) {
-        const remainingHours = Math.max(0, wage.maximumHoursPerWeek - otherClaimsTotal);
-        return errorResponse(
-          400,
-          `Maximum weekly hours reached, cannot update claim. You have ${remainingHours} hours remaining for this week.`,
-          res
-        );
+      const regularHours = wage.maximumHoursPerWeek;
+      const overtimeHours = wage.maximumOvertimeHoursPerWeek ?? 0;
+      const totalMaxMinutes = (regularHours + overtimeHours) * 60;
+
+      if (otherClaimsTotal + newMinutes > totalMaxMinutes) {
+        const { message } = buildWeeklyHoursExceededMessage({
+          action: 'update',
+          regularHours,
+          overtimeHours,
+          submittedMinutes: otherClaimsTotal,
+        });
+        return errorResponse(409, message, res);
       }
     }
 
-    // Build file attachments from uploaded files and merge with existing ones
-    const existingAttachments = (claim.fileAttachments as FileAttachmentData[]) || [];
+    // Build file attachments from uploaded files and merge with existing ones.
+    // parseStoredAttachments drops any legacy / malformed entries that predate
+    // schema enforcement.
+    const existingAttachments = parseStoredAttachments(claim.fileAttachments);
     let fileAttachmentsData: FileAttachmentData[] | undefined = existingAttachments;
 
     // Handle deleted file indexes first
@@ -339,7 +339,7 @@ export const updateClaim = async (req: Request, res: Response) => {
       where: { id: claimId },
       data: {
         ...(memo !== undefined && { memo }),
-        ...(hoursWorked !== undefined && { hoursWorked: Number(hoursWorked) }),
+        ...(minutesWorked !== undefined && { minutesWorked: Number(minutesWorked) }),
         ...(fileAttachmentsData !== undefined && { fileAttachments: fileAttachmentsData }),
       },
     });
@@ -353,7 +353,7 @@ export const updateClaim = async (req: Request, res: Response) => {
 
 export const deleteClaim = async (req: Request, res: Response) => {
   const callerAddress = req.address;
-  const claimId = Number(req.params.claimId);
+  const { claimId } = req.params as unknown as ClaimIdParams;
 
   try {
     const claim = await prisma.claim.findFirst({
@@ -376,6 +376,10 @@ export const deleteClaim = async (req: Request, res: Response) => {
       return errorResponse(403, 'Caller is not the owner of the claim', res);
     }
 
+    if (claim.wage.disabled) {
+      return errorResponse(403, 'Cannot delete claim: the wage is disabled', res);
+    }
+
     const weeklyClaim = claim.weeklyClaim;
 
     if (
@@ -387,23 +391,7 @@ export const deleteClaim = async (req: Request, res: Response) => {
     }
 
     // Delete attached files from S3 if any exist
-    if (claim.fileAttachments && Array.isArray(claim.fileAttachments)) {
-      try {
-        const attachments = claim.fileAttachments as FileAttachmentData[];
-        for (const attachment of attachments) {
-          if (attachment.fileKey && attachment.fileKey.length > 0) {
-            try {
-              await deleteFile(attachment.fileKey);
-            } catch (e) {
-              console.warn(`Could not delete file ${attachment.fileKey}:`, e);
-              // Don't fail the claim deletion if file deletion fails
-            }
-          }
-        }
-      } catch (e) {
-        console.warn('Error deleting claim files:', e);
-      }
-    }
+    await deleteAttachments(claim.fileAttachments);
 
     await prisma.claim.delete({
       where: { id: claimId },

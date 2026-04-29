@@ -6,34 +6,11 @@ import '@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol';
 import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
-import './interfaces/ICashRemuneration.sol';
-import './interfaces/IInvestorV1.sol';
-
-interface IBodContract {
-  function initialize(address[] memory votingAddress) external;
-}
-interface IElections {
-  function setBoardOfDirectorsContractAddress(address _bodAddress) external;
-}
-interface IProposal {
-  function setBoardOfDirectorsContractAddress(address _bodAddress) external;
-}
-interface IInvestorV1Contract {
-  function initialize(string calldata _name, string calldata _symbol, address _owner) external;
-}
-interface IBank {
-  function setInvestorAddress(address _investorAddress) external;
-}
-
-interface IFeeCollector {
-  function getFeeFor(string memory contractType) external view returns (uint16);
-  function supportedTokens(address token) external view returns (bool);
-}
-
-interface ISafeDepositRouter {
-  function setInvestorAddress(address _investorAddress) external;
-  function transferOwnership(address newOwner) external;
-}
+import {IBoardOfDirectors} from './interfaces/IBoardOfDirectors.sol';
+import {ICashRemuneration} from './interfaces/ICashRemuneration.sol';
+import {IInvestorV1} from './interfaces/IInvestorV1.sol';
+import {ISafeDepositRouter} from './interfaces/ISafeDepositRouter.sol';
+import {IFeeCollector} from './interfaces/IFeeCollector.sol';
 
 /**
  * @notice Struct for contract deployment data
@@ -46,9 +23,10 @@ struct DeploymentData {
 }
 
 /**
- * @title Officer Contract
- * @dev Manages team creation, beacon proxy deployment, and contract upgrades
- * Inherits from OwnableUpgradeable, ReentrancyGuardUpgradeable, and PausableUpgradeable
+ * @title Officer
+ * @notice Manages a team's beacon registry, proxy deployments, and fee routing.
+ * @dev Upgradeable; owned by the team. Configures beacons, deploys proxies for contract types,
+ *      and exposes discovery helpers used by peer contracts (Bank, Investor, etc.).
  */
 contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgradeable {
   /// @notice Mapping of contract type to beacon address
@@ -62,7 +40,11 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
   /// @notice Emitted when beacon proxies are deployed
   event BeaconProxiesDeployed(address[] beaconProxies);
 
-  /// @notice Configuration struct for beacon initialization
+  /**
+   * @notice Configuration struct for beacon initialization.
+   * @param beaconType Identifier of the contract type this beacon powers.
+   * @param beaconAddress Address of the beacon contract.
+   */
   struct BeaconConfig {
     string beaconType;
     address beaconAddress;
@@ -71,7 +53,11 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
   /// @notice Array to store configured contract types
   string[] public contractTypes;
 
-  /// @notice Struct for deployed contract information
+  /**
+   * @notice Struct for deployed contract information.
+   * @param contractType Identifier of the contract type.
+   * @param contractAddress Address of the deployed proxy.
+   */
   struct DeployedContract {
     string contractType;
     address contractAddress;
@@ -80,6 +66,28 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
   /// @notice Array to store deployed contract information
   DeployedContract[] private deployedContracts;
 
+  /// @dev A required address argument was the zero address.
+  error ZeroAddress();
+  /// @dev The beaconType string was empty.
+  error EmptyBeaconType();
+  /// @dev Duplicate beacon types are not allowed.
+  /// @param beaconType The duplicated type.
+  error DuplicateBeaconType(string beaconType);
+  /// @dev No beacon is configured for this contract type.
+  /// @param contractType The requested contract type.
+  error BeaconNotConfigured(string contractType);
+  /// @dev BoardOfDirectors must be deployed through Elections.
+  error BodMustBeDeployedViaElections();
+  /// @dev The caller is not authorized for this action.
+  error Unauthorized();
+  /// @dev The contractType string was empty.
+  error EmptyContractType();
+  /// @dev Missing initializer data for deployment.
+  /// @param contractType The deployment contract type.
+  error MissingInitializerData(string contractType);
+  /// @dev The caller is neither the contract owner nor is initialization in progress.
+  error NotOwnerOrInitializing();
+
   /// @notice Address of the Board of Directors contract
   address private bodContract;
 
@@ -87,17 +95,22 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
   address private immutable feeCollector;
 
   /**
-   * @notice Address of the fee collector contract
+   * @notice Sets the immutable fee collector used by this officer.
+   * @param _feeCollector Address of the fee collector contract.
    */
+  /// @custom:oz-upgrades-unsafe-allow constructor
   constructor(address _feeCollector) {
-    require(_feeCollector != address(0), 'Invalid feeCollector');
+    if (_feeCollector == address(0)) revert ZeroAddress();
     feeCollector = _feeCollector;
+    _disableInitializers();
   }
 
   /**
-   * @notice Initializes the contract with owner and optional beacon configurations
-   * @param _owner Address of the contract owner
-   * @param beaconConfigs Array of beacon configurations to initialize
+   * @notice Initializes the contract with owner and optional beacon configurations.
+   * @param _owner Address of the contract owner.
+   * @param beaconConfigs Array of beacon configurations to initialize.
+   * @param _deployments Deployment descriptors run when `_isDeployAllContracts` is true.
+   * @param _isDeployAllContracts When true, immediately deploys all described proxies.
    */
   function initialize(
     address _owner,
@@ -118,16 +131,17 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
 
   function _configureBeacons(BeaconConfig[] memory beaconConfigs) internal {
     for (uint256 i = 0; i < beaconConfigs.length; i++) {
-      require(beaconConfigs[i].beaconAddress != address(0), 'Invalid beacon address');
-      require(bytes(beaconConfigs[i].beaconType).length > 0, 'Empty beacon type');
+      if (beaconConfigs[i].beaconAddress == address(0)) revert ZeroAddress();
+      if (bytes(beaconConfigs[i].beaconType).length == 0) revert EmptyBeaconType();
 
       // Check for duplicate beacon types
       for (uint256 j = 0; j < i; j++) {
-        require(
-          keccak256(bytes(beaconConfigs[i].beaconType)) !=
-            keccak256(bytes(beaconConfigs[j].beaconType)),
-          'Duplicate beacon type'
-        );
+        if (
+          keccak256(bytes(beaconConfigs[i].beaconType)) ==
+          keccak256(bytes(beaconConfigs[j].beaconType))
+        ) {
+          revert DuplicateBeaconType(beaconConfigs[i].beaconType);
+        }
       }
 
       contractBeacons[beaconConfigs[i].beaconType] = beaconConfigs[i].beaconAddress;
@@ -170,13 +184,11 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
 
     // Setup SafeDepositRouter permissions if deployed
     if (depositRouterAddress != address(0)) {
-      ISafeDepositRouter depositRouter = ISafeDepositRouter(depositRouterAddress);
-      // Grant MINTER_ROLE first (required by SafeDepositRouter.setInvestorAddress)
+      // Grant MINTER_ROLE to SafeDepositRouter (no longer needs setInvestorAddress)
       investorV1.grantRole(minterRole, depositRouterAddress);
-      // Set investor address (Officer is owner at this point)
-      depositRouter.setInvestorAddress(investorV1Address);
 
-      //ADD: Transfer ownership to final owner (like CashRemuneration)
+      // Transfer ownership to final owner
+      ISafeDepositRouter depositRouter = ISafeDepositRouter(depositRouterAddress);
       depositRouter.transferOwnership(_owner);
     }
 
@@ -213,14 +225,10 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     bytes calldata initializerData
   ) public whenNotPaused onlyInitializingOrOwners returns (address) {
     // Validate inputs
-    require(
-      contractBeacons[contractType] != address(0),
-      'Beacon not configured for this contract type'
-    );
-    require(
-      keccak256(bytes(contractType)) != keccak256(bytes('BoardOfDirectors')),
-      'BoardOfDirectors must be deployed through Elections'
-    );
+    if (contractBeacons[contractType] == address(0)) revert BeaconNotConfigured(contractType);
+    if (keccak256(bytes(contractType)) == keccak256(bytes('BoardOfDirectors'))) {
+      revert BodMustBeDeployedViaElections();
+    }
     BeaconProxy proxy = new BeaconProxy(contractBeacons[contractType], initializerData);
 
     address proxyAddress = address(proxy);
@@ -234,60 +242,11 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
       bodContract = address(
         new BeaconProxy(
           bodContractBeacon,
-          abi.encodeWithSelector(IBodContract.initialize.selector, args)
+          abi.encodeWithSelector(IBoardOfDirectors.initialize.selector, args)
         )
       );
       deployedContracts.push(DeployedContract('BoardOfDirectors', bodContract));
       emit ContractDeployed('BoardOfDirectors', bodContract);
-      IElections(proxyAddress).setBoardOfDirectorsContractAddress(bodContract);
-    } else if (keccak256(bytes(contractType)) == keccak256(bytes('Proposals'))) {
-      IProposal(proxyAddress).setBoardOfDirectorsContractAddress(bodContract);
-    } else if (keccak256(bytes(contractType)) == keccak256(bytes('Bank'))) {
-      address foundInvestorsV1Contract = findDeployedContract('InvestorV1');
-      if (foundInvestorsV1Contract != address(0)) {
-        // InvestorV1 already deployed, set the investor address
-        IBank(proxyAddress).setInvestorAddress(foundInvestorsV1Contract);
-      }
-    } else if (keccak256(bytes(contractType)) == keccak256(bytes('SafeDepositRouter'))) {
-      address foundInvestorsV1Contract = findDeployedContract('InvestorV1');
-      if (foundInvestorsV1Contract != address(0)) {
-        IInvestorV1 investorV1 = IInvestorV1(foundInvestorsV1Contract);
-        bytes32 minterRole = investorV1.MINTER_ROLE();
-
-        if (!investorV1.hasRole(minterRole, proxyAddress)) {
-          investorV1.grantRole(minterRole, proxyAddress);
-        }
-
-        ISafeDepositRouter(proxyAddress).setInvestorAddress(foundInvestorsV1Contract);
-
-        // Only transfer ownership if NOT in batch deployment (will be handled by _setupContractPermissions)
-        if (!_isInitializing()) {
-          ISafeDepositRouter(proxyAddress).transferOwnership(owner());
-        }
-      }
-    } else if (keccak256(bytes(contractType)) == keccak256(bytes('InvestorV1'))) {
-      address foundBankContract = findDeployedContract('Bank');
-      if (foundBankContract != address(0)) {
-        // Bank already deployed, set the investor address
-        IBank(foundBankContract).setInvestorAddress(proxyAddress);
-      }
-
-      address foundSafeDepositRouter = findDeployedContract('SafeDepositRouter');
-      if (foundSafeDepositRouter != address(0)) {
-        IInvestorV1 investorV1 = IInvestorV1(proxyAddress);
-        bytes32 minterRole = investorV1.MINTER_ROLE();
-
-        if (!investorV1.hasRole(minterRole, foundSafeDepositRouter)) {
-          investorV1.grantRole(minterRole, foundSafeDepositRouter);
-        }
-
-        ISafeDepositRouter(foundSafeDepositRouter).setInvestorAddress(proxyAddress);
-
-        // Only transfer ownership if NOT in batch deployment (will be handled by _setupContractPermissions)
-        if (!_isInitializing()) {
-          ISafeDepositRouter(foundSafeDepositRouter).transferOwnership(owner());
-        }
-      }
     }
 
     return proxyAddress;
@@ -323,7 +282,7 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
       _;
       return;
     }
-    revert('You are not authorized to perform this action');
+    revert Unauthorized();
   }
 
   /**
@@ -359,19 +318,16 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     address[] memory deployedAddresses = new address[](deployments.length);
 
     for (uint256 i = 0; i < deployments.length; i++) {
-      require(bytes(deployments[i].contractType).length > 0, 'Contract type cannot be empty');
-      require(
-        deployments[i].initializerData.length > 0,
-        string.concat('Missing initializer data for ', deployments[i].contractType)
-      );
-      require(
-        contractBeacons[deployments[i].contractType] != address(0),
-        string.concat('Beacon not configured for ', deployments[i].contractType)
-      );
-      require(
-        keccak256(bytes(deployments[i].contractType)) != keccak256(bytes('BoardOfDirectors')),
-        'BoardOfDirectors must be deployed through Elections'
-      );
+      if (bytes(deployments[i].contractType).length == 0) revert EmptyContractType();
+      if (deployments[i].initializerData.length == 0) {
+        revert MissingInitializerData(deployments[i].contractType);
+      }
+      if (contractBeacons[deployments[i].contractType] == address(0)) {
+        revert BeaconNotConfigured(deployments[i].contractType);
+      }
+      if (keccak256(bytes(deployments[i].contractType)) == keccak256(bytes('BoardOfDirectors'))) {
+        revert BodMustBeDeployedViaElections();
+      }
       deployedAddresses[i] = deployBeaconProxy(
         deployments[i].contractType,
         deployments[i].initializerData
@@ -390,13 +346,15 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
   }
 
   modifier onlyInitializingOrOwners() {
-    require(
-      _isInitializing() || owner() == msg.sender,
-      'Caller is not an owner and contract is not initializing'
-    );
+    if (!(_isInitializing() || owner() == msg.sender)) revert NotOwnerOrInitializing();
     _;
   }
 
+  /**
+   * @notice Returns the fee in basis points for a contract type.
+   * @param contractType The contract type identifier.
+   * @return Fee in basis points.
+   */
   function getFeeFor(string memory contractType) external view returns (uint16) {
     return IFeeCollector(feeCollector).getFeeFor(contractType);
   }
@@ -416,6 +374,6 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
    */
   function isFeeCollectorToken(address _tokenAddress) external view returns (bool) {
     if (_tokenAddress == address(0)) return false;
-    return IFeeCollector(feeCollector).supportedTokens(_tokenAddress);
+    return IFeeCollector(feeCollector).isTokenSupported(_tokenAddress);
   }
 }

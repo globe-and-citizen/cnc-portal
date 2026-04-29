@@ -1,34 +1,33 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
+import { keccak256 } from 'viem'
 import DropdownActions from '../WeeklyClaimActionDropdown.vue'
 import type { Status } from '../WeeklyClaimActionDropdown.vue'
-import { createPinia, setActivePinia } from 'pinia'
 import type { WeeklyClaim } from '@/types'
-import dayjs from 'dayjs'
-import utc from 'dayjs/plugin/utc'
-import isoWeek from 'dayjs/plugin/isoWeek'
-import { mockUserStore, mockWagmiCore } from '@/tests/mocks'
+import {
+  mockCashRemunerationWrites,
+  mockSyncWeeklyClaimsMutation,
+  mockTeamStore,
+  mockUserStore,
+  mockUseReadContract,
+  useQueryClientFn
+} from '@/tests/mocks'
+import { mockLog } from '@/tests/mocks/utils.mock'
+import * as utils from '@/utils'
 
-// Configure dayjs plugins
-dayjs.extend(utc)
-dayjs.extend(isoWeek)
-
-vi.mock('@iconify/vue', () => ({
-  Icon: {
-    template: '<span>Icon</span>'
-  }
+vi.mock('@/composables/cashRemuneration/writes', () => ({
+  useEnableClaim: vi.fn(() => mockCashRemunerationWrites.enableClaim),
+  useDisableClaim: vi.fn(() => mockCashRemunerationWrites.disableClaim)
 }))
 
-describe('DropdownActions', () => {
-  const MOCK_OWNER_ADDRESS = '0xOwnerAddress'
-
+describe('WeeklyClaimActionDropdown', () => {
   const weeklyClaim: WeeklyClaim = {
     id: 1,
     status: 'pending',
-    hoursWorked: 8,
+    hoursWorked: 480,
     createdAt: '2024-01-01T00:00:00Z',
     wage: {
-      userAddress: MOCK_OWNER_ADDRESS,
+      userAddress: '0xOwner',
       ratePerHour: [{ type: 'native', amount: 10 }],
       id: 0,
       teamId: 0,
@@ -38,30 +37,46 @@ describe('DropdownActions', () => {
       maximumHoursPerWeek: 0,
       nextWageId: null,
       createdAt: '',
-      updatedAt: ''
+      updatedAt: '',
+      disabled: false
     },
     weekStart: '2024-01-01T00:00:00Z',
-    data: {
-      ownerAddress: MOCK_OWNER_ADDRESS
-    },
-    memberAddress: MOCK_OWNER_ADDRESS,
-    teamId: 0,
-    signature: null,
+    data: { ownerAddress: '0xOwner' },
+    memberAddress: '0xMember',
+    teamId: 1,
+    signature: '0x1234',
     wageId: 0,
     updatedAt: '',
     claims: []
   }
 
-  const createWrapper = (status: Status = 'pending') => {
+  const setupSyncMutation = (mutateAsync = vi.fn().mockResolvedValue(undefined)) => {
+    mockSyncWeeklyClaimsMutation.mutate.mockClear()
+    mockSyncWeeklyClaimsMutation.reset.mockClear()
+    mockSyncWeeklyClaimsMutation.isPending.value = false
+    mockSyncWeeklyClaimsMutation.isError.value = false
+    mockSyncWeeklyClaimsMutation.error.value = null
+    mockSyncWeeklyClaimsMutation.data.value = null
+    mockSyncWeeklyClaimsMutation.mutateAsync = mutateAsync
+    return mutateAsync
+  }
+
+  const setDisableSuccess = () => {
+    mockCashRemunerationWrites.disableClaim.mutate = vi.fn(
+      async (_vars: unknown, opts?: { onSuccess?: () => Promise<void> | void }) => {
+        await opts?.onSuccess?.()
+      }
+    )
+  }
+
+  const createWrapper = (status: Status = 'pending', overrides: Partial<WeeklyClaim> = {}) => {
     return mount(DropdownActions, {
       props: {
         status,
-        weeklyClaim
+        weeklyClaim: { ...weeklyClaim, ...overrides }
       },
       global: {
         stubs: {
-          IconifyIcon: true,
-          ButtonUI: true,
           CRWithdrawClaim: {
             name: 'CRWithdrawClaim',
             template:
@@ -83,144 +98,229 @@ describe('DropdownActions', () => {
   }
 
   beforeEach(() => {
-    setActivePinia(createPinia())
+    vi.clearAllMocks()
     vi.useFakeTimers()
-    mockUserStore.address = '0xContractOwner'
-    mockWagmiCore.simulateContract.mockResolvedValue({})
-    mockWagmiCore.writeContract.mockResolvedValue('0xhash')
-    mockWagmiCore.waitForTransactionReceipt.mockResolvedValue({ status: 'success' })
+
+    mockTeamStore.currentTeamId = '1'
+    mockTeamStore.getContractAddressByType.mockReturnValue(
+      '0x6666666666666666666666666666666666666666'
+    )
+
+    mockUserStore.address = '0xOwner'
+    mockUseReadContract.data.value = '0xOwner'
+
+    mockCashRemunerationWrites.disableClaim.isPending.value = false
+    setDisableSuccess()
+
+    setupSyncMutation()
   })
 
   afterEach(() => {
-    vi.restoreAllMocks()
     vi.useRealTimers()
   })
 
-  it('renders Enable and Resign actions for disabled status', async () => {
-    const wrapper = createWrapper('disabled')
-    const button = wrapper.findComponent({ name: 'ButtonUI' })
-    button.trigger('click')
-
-    await flushPromises()
-
-    expect(wrapper.text()).toContain('Withdraw')
-    const disabledWithdraw = wrapper.find('[data-test="disabled-withdraw"]')
-    expect(disabledWithdraw.exists()).toBeTruthy()
-    expect(disabledWithdraw.classes()).toContain('disabled')
-    const disabledResign = wrapper.find('[data-test="disabled-resign"]')
-    expect(disabledResign.exists()).toBeTruthy()
-    expect(disabledResign.classes()).toContain('disabled')
-    const disabledEnable = wrapper.find('[data-test="disabled-enable"]')
-    expect(disabledEnable.exists()).toBeTruthy()
-    expect(disabledEnable.classes()).toContain('disabled')
-    expect(wrapper.text()).not.toContain('Sign')
-  })
-
-  it('closes dropdown after action is selected', async () => {
-    const wrapper = createWrapper('pending')
-    const button = wrapper.findComponent({ name: 'ButtonUI' })
-
-    // Open dropdown
-    await button.trigger('click')
-    //@ts-expect-error not visible wrapper
-    expect(wrapper.vm.isOpen).toBe(true)
-    // Click action
-    // const signAction = wrapper.find('[data-test="sign-action"]')
-    const crSign = wrapper.findComponent({ name: 'CRSigne' })
-    expect(crSign.exists()).toBeTruthy()
-    const signAction = crSign.find('[data-test="sign-action"]')
-    expect(signAction.exists()).toBeTruthy()
-    await signAction.trigger('click')
-
-    // Check dropdown is closed
-    //@ts-expect-error not visible wrapper
-    expect(wrapper.vm.isOpen).toBe(false)
+  it('does not render dropdown actions for withdrawn status', () => {
+    const wrapper = createWrapper('withdrawn')
+    expect(wrapper.find('button').exists()).toBe(false)
     expect(wrapper.find('ul').exists()).toBe(false)
   })
 
-  it('closes dropdown after withdraw action', async () => {
-    const wrapper = createWrapper('signed')
-    const button = wrapper.findComponent({ name: 'ButtonUI' })
+  it('opens and closes menu when clicking trigger button', async () => {
+    const wrapper = createWrapper('pending')
+    const trigger = wrapper.find('button')
 
-    await button.trigger('click')
+    expect(wrapper.find('ul').exists()).toBe(false)
 
-    const crWithdrawClaim = wrapper.findComponent({ name: 'CRWithdrawClaim' })
-    const withdrawAction = crWithdrawClaim.find('[data-test="withdraw-action"]')
-    expect(withdrawAction.exists()).toBeTruthy()
+    await trigger.trigger('click')
+    expect(wrapper.find('ul').exists()).toBe(true)
 
-    // Test Withdraw action
-    await withdrawAction.trigger('click')
-    expect(crWithdrawClaim.emitted()).toHaveProperty('claim-withdrawn')
-    //@ts-expect-error not visible on wrapper
-    expect(wrapper.vm.isOpen).toBeFalsy()
+    await trigger.trigger('click')
+    expect(wrapper.find('ul').exists()).toBe(false)
   })
 
-  it('closes dropdown when clicking outside', async () => {
+  it('renders pending actions and closes when sign child emits close', async () => {
     const wrapper = createWrapper('pending')
-    const button = wrapper.findComponent({ name: 'ButtonUI' })
 
-    // Open dropdown
-    await button.trigger('click')
-    //@ts-expect-error not visible wrapper
-    expect(wrapper.vm.isOpen).toBe(true)
+    await wrapper.find('button').trigger('click')
+    expect(wrapper.find('[data-test="pending-withdraw"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="pending-sign"]').exists()).toBe(true)
 
-    // Advance timers to ensure event listener is set up
+    await wrapper.find('[data-test="sign-action"]').trigger('click')
+    expect(wrapper.find('ul').exists()).toBe(false)
+  })
+
+  it('renders disabled actions and closes when enable child emits close', async () => {
+    const wrapper = createWrapper('disabled')
+
+    await wrapper.find('button').trigger('click')
+    expect(wrapper.find('[data-test="disabled-withdraw"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="disabled-enable"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="disabled-resign"]').exists()).toBe(true)
+
+    await wrapper.find('[data-test="enable-action"]').trigger('click')
+    expect(wrapper.find('ul').exists()).toBe(false)
+  })
+
+  it('does not call disable flow when current user is not remuneration owner', async () => {
+    mockUserStore.address = '0xNotOwner'
+    mockUseReadContract.data.value = '0xOwner'
+
+    const wrapper = createWrapper('signed')
+    await wrapper.find('button').trigger('click')
+
+    const disableLink = wrapper.find('[data-test="signed-disable"] a')
+    await disableLink.trigger('click')
+    await flushPromises()
+
+    expect(mockCashRemunerationWrites.disableClaim.mutate).not.toHaveBeenCalled()
+  })
+
+  it('closes menu when the signed withdraw child emits claim-withdrawn', async () => {
+    const wrapper = createWrapper('signed')
+    await wrapper.find('button').trigger('click')
+    expect(wrapper.find('ul').exists()).toBe(true)
+
+    await wrapper.find('[data-test="withdraw-action"]').trigger('click')
+    expect(wrapper.find('ul').exists()).toBe(false)
+  })
+
+  it('swaps Withdraw → Re-sign for stale signed rows (issue #1825)', async () => {
+    // Stored signature is bound to a contract that doesn't match the team's
+    // current CashRemunerationEIP712 — Re-sign is the only meaningful action.
+    const wrapper = createWrapper('signed', {
+      signedAgainstContractAddress: '0x000000000000000000000000000000000000dead'
+    })
+    await wrapper.find('button').trigger('click')
+
+    expect(wrapper.find('[data-test="signed-resign"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="signed-withdraw"]').exists()).toBe(false)
+  })
+
+  it('keeps Withdraw on signed rows whose signature matches the current contract', async () => {
+    const current = '0x6666666666666666666666666666666666666666'
+    mockTeamStore.getContractAddressByType.mockReturnValue(current)
+    const wrapper = createWrapper('signed', {
+      signedAgainstContractAddress: current
+    })
+    await wrapper.find('button').trigger('click')
+
+    expect(wrapper.find('[data-test="signed-resign"]').exists()).toBe(false)
+    expect(wrapper.find('[data-test="signed-withdraw"]').exists()).toBe(true)
+  })
+
+  it('closes menu when the disabled resign child emits close', async () => {
+    const wrapper = createWrapper('disabled')
+    await wrapper.find('button').trigger('click')
+
+    await wrapper.find('[data-test="disabled-resign"] [data-test="sign-action"]').trigger('click')
+    expect(wrapper.find('ul').exists()).toBe(false)
+  })
+
+  it('toasts when sync weekly claims rejects after a successful disable', async () => {
+    setupSyncMutation(vi.fn().mockRejectedValueOnce(new Error('sync failed')))
+
+    const wrapper = createWrapper('signed')
+    await wrapper.find('button').trigger('click')
+
+    await wrapper.find('[data-test="signed-disable"] a').trigger('click')
+    await flushPromises()
+
+    expect(mockCashRemunerationWrites.disableClaim.mutate).toHaveBeenCalledOnce()
+  })
+
+  it('disables claim successfully and syncs weekly claims', async () => {
+    const mutateAsync = setupSyncMutation(vi.fn().mockResolvedValue(undefined))
+
+    const wrapper = createWrapper('signed')
+    await wrapper.find('button').trigger('click')
+
+    const disableLink = wrapper.find('[data-test="signed-disable"] a')
+    await disableLink.trigger('click')
+    await flushPromises()
+
+    expect(mockCashRemunerationWrites.disableClaim.mutate).toHaveBeenCalledWith(
+      { args: [keccak256('0x1234')] },
+      expect.anything()
+    )
+    expect(mutateAsync).toHaveBeenCalledWith({ queryParams: { teamId: '1' } })
+
+    const queryClient = useQueryClientFn.mock.results.at(-1)?.value
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith({
+      queryKey: ['weekly-claims', '1']
+    })
+
+    expect(wrapper.find('ul').exists()).toBe(false)
+  })
+
+  it('closes the dropdown when a click happens outside of it', async () => {
+    const wrapper = createWrapper('pending')
+    document.body.appendChild(wrapper.element)
+
     vi.runAllTimers()
 
-    // Simulate click outside
-    document.dispatchEvent(new MouseEvent('click'))
+    await wrapper.find('button').trigger('click')
+    expect(wrapper.find('ul').exists()).toBe(true)
 
-    // Check dropdown is closed
-    //@ts-expect-error not visible wrapper
-    expect(wrapper.vm.isOpen).toBe(false)
+    const outside = document.createElement('div')
+    document.body.appendChild(outside)
+    outside.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    await flushPromises()
+
+    expect(wrapper.find('ul').exists()).toBe(false)
+
+    outside.remove()
   })
 
-  it('removes event listener on unmount', () => {
+  it('swallows disable errors classified as user_rejected', async () => {
+    const classifySpy = vi.spyOn(utils, 'classifyError').mockReturnValue({
+      category: 'user_rejected',
+      userMessage: 'rejected',
+      raw: new Error('rejected')
+    } as ReturnType<typeof utils.classifyError>)
+
+    mockCashRemunerationWrites.disableClaim.mutate = vi.fn(
+      (_vars: unknown, opts?: { onError?: (err: unknown) => void }) => {
+        opts?.onError?.(new Error('rejected'))
+      }
+    )
+
+    const wrapper = createWrapper('signed')
+    await wrapper.find('button').trigger('click')
+    await wrapper.find('[data-test="signed-disable"] a').trigger('click')
+    await flushPromises()
+
+    expect(mockLog.error).toHaveBeenCalledWith('Disable error', expect.any(Error))
+    expect(classifySpy).toHaveBeenCalledWith(expect.any(Error), { contract: 'CashRemuneration' })
+  })
+
+  it('runs the onError toast branch for non-rejected disable errors', async () => {
+    vi.spyOn(utils, 'classifyError').mockReturnValue({
+      category: 'unknown',
+      userMessage: 'Could not disable',
+      raw: new Error('boom')
+    } as ReturnType<typeof utils.classifyError>)
+
+    mockCashRemunerationWrites.disableClaim.mutate = vi.fn(
+      (_vars: unknown, opts?: { onError?: (err: unknown) => void }) => {
+        opts?.onError?.(new Error('boom'))
+      }
+    )
+
+    const wrapper = createWrapper('signed')
+    await wrapper.find('button').trigger('click')
+    await wrapper.find('[data-test="signed-disable"] a').trigger('click')
+    await flushPromises()
+
+    expect(mockLog.error).toHaveBeenCalledWith('Disable error', expect.any(Error))
+  })
+
+  it('removes document click listener on unmount', () => {
     const removeEventListenerSpy = vi.spyOn(document, 'removeEventListener')
 
     const wrapper = createWrapper('pending')
+    vi.runAllTimers()
     wrapper.unmount()
 
     expect(removeEventListenerSpy).toHaveBeenCalledWith('click', expect.any(Function))
-  })
-
-  describe('Disabled status', () => {
-    it('closes dropdown after enable action', async () => {
-      const wrapper = createWrapper('disabled')
-      const button = wrapper.findComponent({ name: 'ButtonUI' })
-      await button.trigger('click')
-
-      const enableComponent = wrapper.findComponent({ name: 'WeeklyClaimActionEnable' })
-      const enableAction = enableComponent.find('[data-test="enable-action"]')
-      expect(enableAction.exists()).toBeTruthy()
-
-      await enableAction.trigger('click')
-      expect(enableComponent.emitted()).toHaveProperty('close')
-      //@ts-expect-error not visible on wrapper
-      expect(wrapper.vm.isOpen).toBeFalsy()
-    })
-  })
-
-  describe.skip('Signed status', () => {
-    it('calls disableClaim and closes dropdown on Disable action', async () => {
-      //@ts-expect-error only mocking necessary fields
-      vi.mocked(useUserDataStore).mockReturnValue({
-        address: '0xContractOwner'
-      })
-
-      const wrapper = createWrapper('signed')
-      const button = wrapper.findComponent({ name: 'ButtonUI' })
-      await button.trigger('click')
-
-      const signedDisable = wrapper.find('[data-test="signed-disable"]')
-      const disableLink = signedDisable.find('a')
-
-      await disableLink.trigger('click')
-      await flushPromises()
-      await wrapper.vm.$nextTick()
-
-      //@ts-expect-error not visible on wrapper
-      expect(wrapper.vm.isOpen).toBeFalsy()
-    })
   })
 })

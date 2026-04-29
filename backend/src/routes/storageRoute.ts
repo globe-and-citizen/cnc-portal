@@ -1,7 +1,8 @@
 // routes/storageRoute.ts
-import express, { Request, Response } from 'express';
+import express from 'express';
 import { authorizeUser } from '../middleware/authMiddleware';
-import { getPresignedDownloadUrl, PRESIGNED_URL_EXPIRATION } from '../services/storageService';
+import { validateQuery, getPresignedUrlQuerySchema } from '../validation';
+import { getFileUrl } from '../controllers/storageController';
 
 const storageRouter = express.Router();
 
@@ -60,89 +61,30 @@ const storageRouter = express.Router();
  *             schema:
  *               $ref: '#/components/schemas/FileUrlResponse'
  *       400:
- *         description: Missing or invalid parameters
+ *         description: Bad request - missing or invalid parameters
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       403:
+ *         description: Forbidden - authentication required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  *       404:
- *         description: File not found
+ *         description: File not found in storage
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  *       500:
- *         description: Storage not configured or error generating URL
+ *         description: Internal server error - storage not configured or URL generation failed
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
-storageRouter.get('/url', authorizeUser, async (req: Request, res: Response) => {
-  try {
-    const { key, expiresIn } = req.query;
-
-    if (!key || typeof key !== 'string') {
-      return res.status(400).json({
-        error: 'Missing required parameter',
-        details: 'The "key" query parameter is required',
-      });
-    }
-
-    // Parse and validate expiration time
-    let expirationSeconds = PRESIGNED_URL_EXPIRATION;
-    if (expiresIn) {
-      const parsedExpiration = parseInt(expiresIn as string, 10);
-      if (!isNaN(parsedExpiration) && parsedExpiration > 0) {
-        // Cap at 7 days (604800 seconds)
-        expirationSeconds = Math.min(parsedExpiration, 604800);
-      }
-    }
-
-    // Generate presigned URL (will fail if file doesn't exist)
-    const url = await getPresignedDownloadUrl(key, expirationSeconds);
-
-    res.json({
-      url,
-      expiresIn: expirationSeconds,
-    });
-  } catch (err: unknown) {
-    const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
-    console.error('Error generating presigned URL:', err);
-    res.status(500).json({
-      error: 'Failed to generate file URL',
-      details: errorMessage,
-    });
-  }
-});
-
-// Note: The /download/* route is commented out as it's redundant.
-// The frontend already receives fileUrl from upload, and can use /file/url
-// to regenerate expired URLs. Direct download can be done client-side.
-/*
-storageRouter.get('/download/*', authorizeUser, async (req: Request, res: Response) => {
-  try {
-    // Get the key from the path (everything after /download/)
-    const key = req.params[0];
-
-    if (!key) {
-      return res.status(400).json({
-        error: 'Missing required parameter',
-        details: 'File key is required in the path',
-      });
-    }
-
-    // Decode the key in case it's URL-encoded
-    const decodedKey = decodeURIComponent(key);
-
-    // Check if Railway Storage is configured
-    if (!isStorageConfigured()) {
-      return res.status(500).json({
-        error: 'Storage not configured',
-        details: 'Railway Storage is not configured. Please contact support.',
-      });
-    }
-
-    // Generate presigned URL and redirect (will fail if file doesn't exist)
-    const url = await getPresignedDownloadUrl(decodedKey, PRESIGNED_URL_EXPIRATION);
-    res.redirect(302, url);
-  } catch (err: unknown) {
-    const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
-    console.error('Error redirecting to file:', err);
-    res.status(500).json({
-      error: 'Failed to access file',
-      details: errorMessage,
-    });
-  }
-});
-*/
+storageRouter.get('/url', authorizeUser, validateQuery(getPresignedUrlQuerySchema), getFileUrl);
 
 export default storageRouter;

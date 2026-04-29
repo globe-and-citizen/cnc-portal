@@ -56,10 +56,6 @@ vi.mock('@/views/team/[id]/ShowIndex.vue', () => ({
   default: { name: 'ShowIndex', template: '<div>Team Show</div>' }
 }))
 
-vi.mock('@/views/team/[id]/DemoExample.vue', () => ({
-  default: { name: 'DemoExample', template: '<div>Demo Example</div>' }
-}))
-
 vi.mock('@/views/team/[id]/Accounts/WeeklyClaimView.vue', () => ({
   default: { name: 'WeeklyClaimView', template: '<div>Weekly Claim</div>' }
 }))
@@ -134,7 +130,7 @@ describe('Router Configuration', () => {
 
       expect(teamRoute).toBeDefined()
       expect(teamRoute?.path).toBe('/teams/:id')
-      expect(teamRoute?.meta?.name).toBe('Team View')
+      expect(teamRoute?.meta?.name).toBe('Overview')
 
       // Check nested routes exist
       const nestedRoutes = routes.filter((route) => route.path.includes('/teams/:id/'))
@@ -145,7 +141,6 @@ describe('Router Configuration', () => {
       const routes = router.getRoutes()
 
       const expectedNestedRoutes = [
-        { name: 'team-demo', path: '/teams/:id/demo' },
         { name: 'team-payroll', path: '/teams/:id/accounts/team-payroll' },
         {
           name: 'payroll-history',
@@ -179,22 +174,21 @@ describe('Router Configuration', () => {
       const routes = router.getRoutes()
 
       const routesWithMeta = [
-        { name: 'teams', expectedMeta: { name: 'Teams List' } },
-        { name: 'show-team', expectedMeta: { name: 'Team View' } },
-        { name: 'team-demo', expectedMeta: { name: 'Team Demo' } },
-        { name: 'team-payroll', expectedMeta: { name: 'Team Payroll' } },
+        { name: 'teams', expectedMeta: { name: 'Companies' } },
+        { name: 'show-team', expectedMeta: { name: 'Overview' } },
+        { name: 'team-payroll', expectedMeta: { name: 'Company Payroll' } },
         { name: 'payroll-history', expectedMeta: { name: 'Payroll History' } },
         { name: 'safe-account', expectedMeta: { name: 'Safe Account' } },
         { name: 'payroll-account', expectedMeta: { name: 'Payroll Account' } },
-        { name: 'cash-remunerations-member', expectedMeta: { name: 'Cash Remuneration Member' } },
+        { name: 'cash-remunerations-member', expectedMeta: { name: 'Member Compensation' } },
         { name: 'expense-account', expectedMeta: { name: 'Expense Account' } },
         { name: 'vesting', expectedMeta: { name: 'Vesting' } },
         { name: 'bank-account', expectedMeta: { name: 'Bank Account' } },
         { name: 'contract-management', expectedMeta: { name: 'Contract Management' } },
-        { name: 'bod-elections', expectedMeta: { name: 'BoD Election' } },
+        { name: 'bod-elections', expectedMeta: { name: 'Board Election' } },
         { name: 'bod-proposals', expectedMeta: { name: 'Proposals' } },
         { name: 'proposal-detail', expectedMeta: { name: 'Proposals' } },
-        { name: 'bod-elections-details', expectedMeta: { name: 'BoD Election Details' } },
+        { name: 'bod-elections-details', expectedMeta: { name: 'Board Election Details' } },
         { name: 'sher-token', expectedMeta: { name: 'SHER Token' } }
       ]
 
@@ -228,7 +222,7 @@ describe('Router Configuration', () => {
       await nextTick()
 
       const homeRoute = router.currentRoute.value
-      expect(homeRoute.name).toBe('home')
+      expect(homeRoute.name).toBe('teams')
 
       // Test teams route component loading
       await router.push('/teams')
@@ -285,7 +279,7 @@ describe('Router Configuration', () => {
         mockIsAuth.value = true
 
         await router.push('/')
-        expect(router.currentRoute.value.name).toBe('home')
+        expect(router.currentRoute.value.name).toBe('teams')
 
         await router.push('/teams')
         expect(router.currentRoute.value.name).toBe('teams')
@@ -299,11 +293,11 @@ describe('Router Configuration', () => {
 
         // Navigate to home first, then try to go to login
         await router.push('/')
-        expect(router.currentRoute.value.name).toBe('home')
+        expect(router.currentRoute.value.name).toBe('teams')
 
         // Now try to access login while authenticated
         await router.push('/login')
-        expect(router.currentRoute.value.name).toBe('home')
+        expect(router.currentRoute.value.name).toBe('teams')
       })
 
       it('should allow access to login when not authenticated', async () => {
@@ -344,12 +338,12 @@ describe('Router Configuration', () => {
         // Simulate authentication
         mockIsAuth.value = true
         await router.push('/')
-        expect(router.currentRoute.value.name).toBe('home')
+        expect(router.currentRoute.value.name).toBe('teams')
 
         // Simulate logout
         mockIsAuth.value = false
         await router.push('/teams')
-        expect(router.currentRoute.value.name).toBe('login')
+        expect(router.currentRoute.value.name).toBe('teams')
       })
     })
   })

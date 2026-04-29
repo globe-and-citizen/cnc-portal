@@ -67,8 +67,6 @@ export const mocks = {
   mockProposeMutation: {
     mutateAsync: vi.fn<[Record<string, unknown>], Promise<void>>()
   } as MockMutation,
-  mockAddSuccessToast: vi.fn(),
-  mockAddErrorToast: vi.fn(),
   mockGetInjectedProvider: vi.fn(() => ({}))
 }
 
@@ -81,8 +79,6 @@ const {
   mockSafeSdk,
   mockUpdateMutation,
   mockProposeMutation,
-  mockAddSuccessToast,
-  mockAddErrorToast,
   mockGetInjectedProvider
 } = mocks
 
@@ -102,13 +98,6 @@ vi.mock('../useSafeSdk', () => ({
 
 vi.mock('../useSafeProposal', () => ({
   useSafeProposal: mockUseSafeProposal
-}))
-
-vi.mock('@/stores', () => ({
-  useToastStore: () => ({
-    addSuccessToast: mockAddSuccessToast,
-    addErrorToast: mockAddErrorToast
-  })
 }))
 
 vi.mock('@/types/safe', () => ({

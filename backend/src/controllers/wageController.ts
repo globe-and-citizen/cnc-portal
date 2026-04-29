@@ -1,115 +1,102 @@
 import { Request, Response } from 'express';
 
-import { Wage } from '@prisma/client';
-import { Address } from 'viem';
+import { Prisma } from '@prisma/client';
 import { prisma } from '../utils';
 import { errorResponse } from '../utils/utils';
+import {
+  getWagesQuerySchema,
+  setWageBodySchema,
+  toggleWageStatusParamsSchema,
+  toggleWageStatusQuerySchema,
+  z,
+} from '../validation';
 
-type wageBodyRequest = Pick<
-  Wage,
-  'teamId' | 'userAddress' | 'maximumHoursPerWeek' | 'ratePerHour'
-> & {
-  ratePerHour: Array<{
-    type: string;
-    amount: number;
-  }>;
-};
+type SetWageBody = z.infer<typeof setWageBodySchema>;
+
 export const setWage = async (req: Request, res: Response) => {
-  const callerAddress = req.address;
+  const body = req.body as SetWageBody;
+  const {
+    teamId,
+    userAddress,
+    maximumHoursPerWeek,
+    maximumOvertimeHoursPerWeek: rawOvertimeHours,
+    ratePerHour,
+    overtimeRatePerHour,
+  } = body;
+  const maximumOvertimeHoursPerWeek = rawOvertimeHours ?? 0;
 
-  const body = req.body as wageBodyRequest;
-  const teamId = Number(body.teamId);
-  const userAddress = body.userAddress as Address;
-  const maximumHoursPerWeek = Number(body.maximumHoursPerWeek);
-  let ratePerHour = body.ratePerHour;
+  const overtimeRatePerHourValue =
+    overtimeRatePerHour === null ? Prisma.DbNull : (overtimeRatePerHour ?? Prisma.DbNull);
 
-  ratePerHour = ratePerHour?.map((rate) => ({
-    type: rate.type,
-    amount: Number(rate.amount),
-  }));
+  const wagePayload = {
+    teamId,
+    userAddress,
+    maximumHoursPerWeek,
+    maximumOvertimeHoursPerWeek,
+    ratePerHour,
+    overtimeRatePerHour: overtimeRatePerHourValue,
+  };
 
   try {
-    // Check if the caller is the owner of the team
-    if (!(await isOwnerOfTeam(callerAddress, teamId))) {
-      return errorResponse(403, 'Caller is not the owner of the team', res);
-    }
+    // authz enforced by requireTeamOwner middleware
 
     // Check if the user has a current wage
-    const wage = await prisma.wage.findFirst({
+    const currentWage = await prisma.wage.findFirst({
       where: {
-        teamId: teamId,
+        teamId,
         userAddress,
         nextWageId: null,
       },
     });
 
-    if (wage) {
-      // Create wage and chain it to the previous wage
-      await prisma.wage.create({
-        data: {
-          teamId: Number(teamId),
-          userAddress,
-          maximumHoursPerWeek,
-          ratePerHour,
-          previousWage: {
-            connect: {
-              id: wage.id,
-            },
-          },
-        },
-      });
-
-      res.status(201).json(wage);
-    } else {
-      // check if the user has wage not chained
-      const wages = await prisma.wage.findMany({
-        where: {
-          teamId: Number(teamId),
-          userAddress,
-        },
-      });
-
-      // This should not be possible, but if it is, return an error
-      if (wages.length > 0) {
-        return errorResponse(500, 'User has a wage not chained', res);
+    if (currentWage) {
+      if (currentWage.disabled) {
+        return errorResponse(400, 'Cannot set wage: the current wage is disabled', res);
       }
 
-      // Create first wage
-      const createdWage = await prisma.wage.create({
-        data: {
-          teamId: Number(teamId),
-          userAddress,
-          // cashRatePerHour,
-          // tokenRatePerHour,
-          maximumHoursPerWeek,
-          // usdcRatePerHour
-          ratePerHour,
-        },
+      // Create wage and chain it to the previous wage. Done in a transaction
+      // so the deferrable Wage_active_unique constraint is checked at COMMIT,
+      // after the old wage's nextWageId has been set.
+      const createdWage = await prisma.$transaction(async (tx) => {
+        const newWage = await tx.wage.create({ data: wagePayload });
+        await tx.wage.update({
+          where: { id: currentWage.id },
+          data: { nextWageId: newWage.id },
+        });
+        return newWage;
       });
-      res.status(201).json(createdWage);
+
+      return res.status(201).json(createdWage);
     }
+
+    // Check if the user has wages not chained (should not be possible)
+    const wages = await prisma.wage.findMany({
+      where: { teamId, userAddress },
+    });
+
+    if (wages.length > 0) {
+      return errorResponse(500, 'User has a wage not chained', res);
+    }
+
+    // Create first wage
+    const createdWage = await prisma.wage.create({
+      data: wagePayload,
+    });
+
+    return res.status(201).json(createdWage);
   } catch (error) {
     console.log('Error: ', error);
     return errorResponse(500, 'Internal server error', res);
   }
 };
-// /wage/?teamId=teamId
 export const getWages = async (req: Request, res: Response) => {
-  const callerAddress = req.address;
-  const teamId = Number(req.query.teamId);
+  const { teamId } = req.query as unknown as z.infer<typeof getWagesQuerySchema>;
 
-  // find the team and check if the caller is the owner
-  // TODO: in the future only the owner should be able to see the wages
-
-  // Find user wages
   try {
-    // check if the member is part of the provided team
-    if (!(await isUserMemberOfTeam(callerAddress, teamId))) {
-      return errorResponse(403, 'Member is not a team member', res);
-    }
+    // authz enforced by requireTeamMember middleware
     const wages = await prisma.wage.findMany({
       where: {
-        teamId: teamId,
+        teamId,
         nextWageId: null,
       },
       include: {
@@ -128,33 +115,33 @@ export const getWages = async (req: Request, res: Response) => {
   }
 };
 
-export const isUserMemberOfTeam = async (
-  userAddress: Address,
-  teamId: number
-): Promise<boolean> => {
-  const team = await prisma.team.findFirst({
-    where: {
-      id: teamId,
-      members: {
-        some: {
-          address: userAddress,
-        },
-      },
-    },
-  });
+export const toggleWageStatus = async (req: Request, res: Response) => {
+  const callerAddress = req.address;
+  const { wageId } = req.params as unknown as z.infer<typeof toggleWageStatusParamsSchema>;
+  const { action } = req.query as unknown as z.infer<typeof toggleWageStatusQuerySchema>;
 
-  return !!team;
-};
+  try {
+    const wage = await prisma.wage.findFirst({
+      where: { id: wageId, nextWageId: null },
+      include: { team: { select: { ownerAddress: true } } },
+    });
 
-export const isOwnerOfTeam = async (userAddress: Address, teamId: number) => {
-  const team = await prisma.team.findFirst({
-    where: {
-      id: teamId,
-      owner: {
-        address: userAddress,
-      },
-    },
-  });
+    if (!wage) {
+      return errorResponse(404, 'Wage not found', res);
+    }
 
-  return !!team;
+    if (wage.team.ownerAddress !== callerAddress) {
+      return errorResponse(403, 'Caller is not the owner of the team', res);
+    }
+
+    const updatedWage = await prisma.wage.update({
+      where: { id: wageId },
+      data: { disabled: action === 'disable' },
+    });
+
+    return res.status(200).json(updatedWage);
+  } catch (error) {
+    console.log('Error: ', error);
+    return errorResponse(500, 'Internal server error', res);
+  }
 };

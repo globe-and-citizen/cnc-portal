@@ -1,16 +1,16 @@
 <template>
   <div v-if="contracts.length > 0">
-    <div class="px-2 pt-2 pb-1 text-xs uppercase text-gray-500">Contracts</div>
+    <div class="pb-1 text-xs text-gray-500 uppercase">Contracts</div>
     <div class="grid grid-cols-2 gap-4 px-2 pb-3" data-test="contract-search-results">
       <div
         v-for="contract in contracts"
         :key="contract.address"
-        class="flex items-center relative group cursor-pointer"
+        class="group relative flex cursor-pointer items-center"
         data-test="contract-row"
         @click="handleSelect(contract)"
       >
         <UserComponent
-          class="p-4 flex-grow rounded-lg bg-white hover:bg-base-300"
+          class="hover:bg-base-300 grow rounded-lg bg-white p-4"
           :user="{ name: contract.type, address: contract.address, imageUrl: contract.imageUrl }"
           :data-test="`contract-dropdown-${contract.address}`"
         />

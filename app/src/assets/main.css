@@ -3,8 +3,8 @@
 @import 'tailwindcss';
 
 @import '@nuxt/ui';
-@plugin "daisyui";
-@plugin "daisyui/theme" {
+@plugin 'daisyui';
+@plugin 'daisyui/theme' {
   name: 'light';
   default: true; /* set as default */
   prefersdark: false; /* set as default dark mode (prefers-color-scheme:dark) */

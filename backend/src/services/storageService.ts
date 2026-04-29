@@ -18,7 +18,7 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 // Defaults and limits
 export const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-export const MAX_FILES_PER_CLAIM = 10;
+export const MAX_FILES_UPLOAD = 10;
 
 export const ALLOWED_IMAGE_MIMETYPES = [
   'image/png',
@@ -46,6 +46,7 @@ type StorageConfig = {
   secretAccessKey: string;
   region: string;
   endpoint: string;
+  publicBaseUrl: string;
 };
 
 const REQUIRED_ENV_VARS = {
@@ -78,12 +79,17 @@ export function getStorageConfig(): StorageConfig {
   const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
   const region = process.env.AWS_DEFAULT_REGION ?? 'auto';
   const endpoint = process.env.AWS_ENDPOINT_URL ?? 'https://storage.railway.app';
+  const publicBaseUrl =
+    process.env.AWS_PUBLIC_BASE_URL ??
+    process.env.AWS_S3_PUBLIC_BASE_URL ??
+    `${endpoint.replace(/\/$/, '')}/${bucket}`;
   return {
     bucket: bucket as string,
     accessKeyId: accessKeyId as string,
     secretAccessKey: secretAccessKey as string,
     region,
     endpoint,
+    publicBaseUrl,
   };
 }
 
@@ -179,20 +185,53 @@ export async function uploadFile(
 }
 
 export async function uploadFiles(
-  files: Express.Multer.File[],
+  files: unknown,
   folder: string = 'uploads'
 ): Promise<UploadResult[]> {
+  if (!Array.isArray(files)) {
+    return [{ success: false, error: 'Invalid files payload' }];
+  }
+
+  const validFiles = files.filter(
+    (file): file is Express.Multer.File =>
+      !!file &&
+      typeof file === 'object' &&
+      typeof file.mimetype === 'string' &&
+      typeof file.originalname === 'string' &&
+      typeof file.size === 'number' &&
+      Buffer.isBuffer(file.buffer)
+  );
+
+  if (validFiles.length === 0) {
+    return [{ success: false, error: 'No valid files provided' }];
+  }
+
   // Validate file count limit
-  if (files.length > MAX_FILES_PER_CLAIM) {
-    return Array(files.length).fill({
+  if (validFiles.length > MAX_FILES_UPLOAD) {
+    return Array(validFiles.length).fill({
       success: false,
-      error: `Cannot upload more than ${MAX_FILES_PER_CLAIM} files per claim`,
+      error: `Cannot upload more than ${MAX_FILES_UPLOAD} files`,
     }) as UploadResult[];
   }
 
   const results: UploadResult[] = [];
-  for (const f of files) results.push(await uploadFile(f, folder));
+  for (const f of validFiles) results.push(await uploadFile(f, folder));
   return results;
+}
+
+const normalizeStorageKey = (fileKey: string): string => {
+  return fileKey
+    .split('/')
+    .filter((segment) => segment.length > 0)
+    .map((segment) => encodeURIComponent(segment))
+    .join('/');
+};
+
+export function getPublicFileUrl(fileKey: string): string {
+  const cfg = getStorageConfig();
+  const normalizedBase = cfg.publicBaseUrl.replace(/\/$/, '');
+  const normalizedKey = normalizeStorageKey(fileKey);
+  return `${normalizedBase}/${normalizedKey}`;
 }
 
 export async function getPresignedDownloadUrl(
@@ -201,7 +240,6 @@ export async function getPresignedDownloadUrl(
 ): Promise<string> {
   const cfg = getStorageConfig();
   const client = createS3Client();
-  // Optionally probe existence; ignore errors
   await client
     .send(new HeadObjectCommand({ Bucket: cfg.bucket, Key: fileKey }))
     .catch(() => undefined);
@@ -221,48 +259,18 @@ export async function deleteFile(fileKey: string): Promise<boolean> {
   }
 }
 
-// Note: fileExists() is not currently used but kept for future use cases
-// (e.g., validation before downloading, existence checks, etc.)
-/*
-export async function fileExists(fileKey: string): Promise<boolean> {
-  try {
-    const cfg = getStorageConfig();
-    const client = createS3Client();
-    await client.send(new HeadObjectCommand({ Bucket: cfg.bucket, Key: fileKey }));
-    return true;
-  } catch {
-    return false;
-  }
-}
-*/
-
-// Note: uploadProfileImage() is redundant - use uploadFile(file, `profiles/${userAddress}`) instead
-// Kept commented for reference but should be removed in future cleanup
-/*
-export async function uploadProfileImage(
-  file: Express.Multer.File,
-  userAddress: string
-): Promise<UploadResult> {
-  const validation = validateFile(file, ALLOWED_IMAGE_MIMETYPES, MAX_FILE_SIZE);
-  if (!validation.valid) return { success: false, error: validation.error };
-  const folder = `profiles/${userAddress.toLowerCase()}`;
-  return uploadFile(file, folder);
-}
-*/
-
 export default {
   isStorageConfigured,
   uploadFile,
   uploadFiles,
   deleteFile,
-  // fileExists, // Commented out - not currently used
+  getPublicFileUrl,
   getPresignedDownloadUrl,
-  // uploadProfileImage, // Commented out - redundant, use uploadFile with folder
   validateFile,
   generateFileKey,
   ALLOWED_IMAGE_MIMETYPES,
   ALLOWED_DOCUMENT_MIMETYPES,
   ALLOWED_MIMETYPES,
   MAX_FILE_SIZE,
-  MAX_FILES_PER_CLAIM,
+  MAX_FILES_UPLOAD,
 };

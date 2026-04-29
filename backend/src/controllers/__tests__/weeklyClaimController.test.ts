@@ -3,14 +3,38 @@ import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import weeklyClaimRoutes from '../../routes/weeklyClaimRoute';
 import { prisma } from '../../utils';
-import { isCashRemunerationOwner } from '../../utils/cashRemunerationUtil';
-import { isUserMemberOfTeam } from '../../controllers/wageController';
-import type { Address } from 'viem';
+import { Prisma } from '@prisma/client';
+import {
+  getCurrentCashRemunerationContract,
+  isCashRemunerationOwner,
+} from '../../utils/cashRemunerationUtil';
+import { recoverTypedDataAddress, type Address } from 'viem';
 
 const CALLER = '0x1234567890123456789012345678901234567890';
+const CASH_REMUNERATION_ADDRESS = '0xcacacacacacacacacacacacacacacacacacacaca';
+// Valid EIP-712 sign body. Tests start from this and override fields to
+// exercise individual validation branches.
+const VALID_SIGN_BODY = {
+  signature: '0xabc',
+  signedAgainstContractAddress: CASH_REMUNERATION_ADDRESS,
+  chainId: 31337,
+  typedDataMessage: {
+    employeeAddress: '0x1111111111111111111111111111111111111111',
+    minutesWorked: 60,
+    date: '1700000000',
+    wages: [
+      {
+        hourlyRate: '1000000000000000000',
+        tokenAddress: '0x0000000000000000000000000000000000000000',
+      },
+    ],
+  },
+};
 
 const { mockGetPresignedDownloadUrl } = vi.hoisted(() => ({
-  mockGetPresignedDownloadUrl: vi.fn(),
+  mockGetPresignedDownloadUrl: vi.fn(
+    (key: string) => `https://storage.railway.app/test-bucket/${key}`
+  ),
 }));
 
 const { readContractMock } = vi.hoisted(() => ({
@@ -19,6 +43,7 @@ const { readContractMock } = vi.hoisted(() => ({
 
 vi.mock('../../services/storageService', () => ({
   getPresignedDownloadUrl: mockGetPresignedDownloadUrl,
+  refreshPresignedUrl: mockGetPresignedDownloadUrl,
 }));
 
 vi.mock('../../middleware/authMiddleware', () => ({
@@ -32,21 +57,42 @@ vi.mock('../../middleware/authMiddleware', () => ({
 
 vi.mock('../../utils/cashRemunerationUtil', () => ({
   isCashRemunerationOwner: vi.fn().mockResolvedValue(true),
-}));
-
-vi.mock('../../controllers/wageController', () => ({
-  isUserMemberOfTeam: vi.fn().mockResolvedValue(true),
+  // Default: helper returns the team's current CashRemunerationEIP712 — the
+  // address the sign body declares it signed against. Individual tests
+  // override to exercise the mismatch / missing branches.
+  getCurrentCashRemunerationContract: vi.fn().mockResolvedValue({
+    id: 1,
+    teamId: 1,
+    type: 'CashRemunerationEIP712',
+    address: '0xcacacacacacacacacacacacacacacacacacacaca',
+  }),
 }));
 
 vi.mock('../../utils/viem.config', () => ({
   default: { readContract: readContractMock },
 }));
 
+// Mock viem's recoverTypedDataAddress so tests can drive the recovery result
+// (matching CALLER vs mismatch vs throw) without producing real signatures.
+// vi.mock is hoisted; the inline 0x1234...7890 mirrors the CALLER constant.
+vi.mock('viem', async () => {
+  const actual = await vi.importActual<typeof import('viem')>('viem');
+  return {
+    ...actual,
+    recoverTypedDataAddress: vi
+      .fn()
+      .mockResolvedValue('0x1234567890123456789012345678901234567890'),
+  };
+});
+
 vi.mock('../../utils', async () => {
   const actual = await vi.importActual('../../utils');
   return {
     ...actual,
     prisma: {
+      team: {
+        findFirst: vi.fn().mockResolvedValue({ id: 1 }),
+      },
       weeklyClaim: {
         findMany: vi.fn(),
         update: vi.fn(),
@@ -88,13 +134,25 @@ const weeklyClaimFactory = (overrides: Record<string, unknown> = {}) => ({
 const putAction = (
   action: string,
   id = '1',
-  body: Record<string, unknown> = { signature: '0xabc' }
+  body: Record<string, unknown> = action === 'sign' ? VALID_SIGN_BODY : { signature: '0xabc' }
 ) => request(app).put(`/${id}?action=${action}`).send(body);
 
 describe('Weekly Claim Controller', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(isCashRemunerationOwner).mockResolvedValue(true);
+    // Default: the team's current CashRemunerationEIP712 matches what the
+    // sign body declares it signed against. Individual tests can override
+    // to exercise the mismatch branch.
+    vi.mocked(getCurrentCashRemunerationContract).mockResolvedValue({
+      id: 1,
+      teamId: 1,
+      type: 'CashRemunerationEIP712',
+      address: CASH_REMUNERATION_ADDRESS,
+    } as never);
+    // Default: signature recovers to the caller. Individual tests override
+    // to exercise the mismatch / throw branches.
+    vi.mocked(recoverTypedDataAddress).mockResolvedValue(CALLER as Address);
   });
 
   describe('PUT /:id', () => {
@@ -209,21 +267,116 @@ describe('Weekly Claim Controller', () => {
     it('should return 400 for invalid action', async () => {
       const response = await putAction('invalid');
       expect(response.status).toBe(400);
-      expect(response.body).toEqual({
-        message: 'Invalid action. Allowed actions are: sign, withdraw',
-      });
+      expect(response.body.message).toContain('Invalid');
     });
 
     it('should return 400 for invalid id on sign', async () => {
       const response = await putAction('sign', 'invalidId');
       expect(response.status).toBe(400);
-      expect(response.body).toEqual({ message: 'Missing or invalid id' });
+      expect(response.body.message).toContain('Invalid');
     });
 
     it('should return 400 for missing signature on sign', async () => {
-      const response = await putAction('sign', '1', {});
+      const response = await putAction('sign', '1', { ...VALID_SIGN_BODY, signature: undefined });
       expect(response.status).toBe(400);
-      expect(response.body).toEqual({ message: 'Missing or invalid signature' });
+      expect(response.body.message).toContain('Missing or invalid signature');
+    });
+
+    it.each([
+      {
+        title: 'missing signedAgainstContractAddress',
+        body: { ...VALID_SIGN_BODY, signedAgainstContractAddress: undefined },
+        message: 'Missing or invalid signedAgainstContractAddress',
+      },
+      {
+        title: 'missing typedDataMessage',
+        body: { ...VALID_SIGN_BODY, typedDataMessage: undefined },
+        message: 'Missing typedDataMessage',
+      },
+      {
+        title: 'missing chainId',
+        body: { ...VALID_SIGN_BODY, chainId: undefined },
+        message: 'Missing or invalid chainId',
+      },
+    ])('should return 400 on sign for $title', async ({ body, message }) => {
+      const response = await putAction('sign', '1', body);
+      expect(response.status).toBe(400);
+      expect(response.body.message).toContain(message);
+    });
+
+    it('should return 400 on sign when signedAgainstContractAddress does not match team current', async () => {
+      vi.spyOn(prisma.weeklyClaim, 'findUnique').mockResolvedValue(
+        weeklyClaimFactory({ status: 'pending' }) as any
+      );
+      // Helper returns a different address than what the body declares.
+      vi.mocked(getCurrentCashRemunerationContract).mockResolvedValue({
+        id: 1,
+        teamId: 1,
+        type: 'CashRemunerationEIP712',
+        address: '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
+      } as never);
+      const response = await putAction('sign');
+      expect(response.status).toBe(400);
+      expect(response.body.message).toContain(
+        'signedAgainstContractAddress does not match the team current CashRemunerationEIP712'
+      );
+    });
+
+    it('should return 400 on sign when there is no current CashRemunerationEIP712 (helper returns null)', async () => {
+      vi.spyOn(prisma.weeklyClaim, 'findUnique').mockResolvedValue(
+        weeklyClaimFactory({ status: 'pending' }) as any
+      );
+      vi.mocked(getCurrentCashRemunerationContract).mockResolvedValue(null);
+      const response = await putAction('sign');
+      expect(response.status).toBe(400);
+      expect(response.body.message).toContain(
+        'signedAgainstContractAddress does not match the team current CashRemunerationEIP712'
+      );
+    });
+
+    it('should return 400 on sign when recovered signer does not match caller', async () => {
+      vi.spyOn(prisma.weeklyClaim, 'findUnique').mockResolvedValue(
+        weeklyClaimFactory({ status: 'pending' }) as any
+      );
+      vi.mocked(recoverTypedDataAddress).mockResolvedValue(
+        '0x9999999999999999999999999999999999999999' as Address
+      );
+      const response = await putAction('sign');
+      expect(response.status).toBe(400);
+      expect(response.body.message).toContain('Recovered signer does not match the caller');
+    });
+
+    it('should return 400 on sign when recoverTypedDataAddress throws', async () => {
+      vi.spyOn(prisma.weeklyClaim, 'findUnique').mockResolvedValue(
+        weeklyClaimFactory({ status: 'pending' }) as any
+      );
+      vi.mocked(recoverTypedDataAddress).mockRejectedValue(new Error('bad sig'));
+      const response = await putAction('sign');
+      expect(response.status).toBe(400);
+      expect(response.body.message).toContain('Failed to verify signature');
+    });
+
+    it('should persist signedAgainstContractAddress on successful sign', async () => {
+      vi.spyOn(prisma.weeklyClaim, 'findUnique').mockResolvedValue(
+        weeklyClaimFactory({ status: 'pending' }) as any
+      );
+      const updateSpy = vi
+        .spyOn(prisma, '$transaction')
+        .mockResolvedValue([weeklyClaimFactory({ status: 'signed' }) as any]);
+      const updateMock = vi.spyOn(prisma.weeklyClaim, 'update').mockReturnValue({} as never);
+
+      const response = await putAction('sign');
+      expect(response.status).toBe(200);
+      expect(updateSpy).toHaveBeenCalled();
+      expect(updateMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 1 },
+          data: expect.objectContaining({
+            status: 'signed',
+            signedAgainstContractAddress: CASH_REMUNERATION_ADDRESS,
+          }),
+        })
+      );
     });
 
     it('should return 404 if weekly claim is not found', async () => {
@@ -313,7 +466,7 @@ describe('Weekly Claim Controller', () => {
 
   describe('GET /', () => {
     it('should return 403 if caller is not team member', async () => {
-      vi.mocked(isUserMemberOfTeam).mockResolvedValueOnce(false);
+      vi.mocked(prisma.team.findFirst).mockResolvedValueOnce(null);
 
       const response = await request(app).get('/?teamId=1');
       expect(response.status).toBe(403);
@@ -323,28 +476,26 @@ describe('Weekly Claim Controller', () => {
     it('should return 400 if teamId is missing', async () => {
       const response = await request(app).get('/');
       expect(response.status).toBe(400);
-      expect(response.body).toEqual({ message: 'Missing or invalid teamId' });
+      expect(response.body.message).toContain('teamId');
     });
 
     it('should return 400 if status is invalid', async () => {
       const response = await request(app).get('/?teamId=1&status=invalid');
       expect(response.status).toBe(400);
-      expect(response.body).toEqual({
-        message: 'Invalid status. Allowed statuses are: pending, signed, withdrawn, disabled',
-      });
+      expect(response.body.message).toContain('Invalid status');
     });
 
     it('should return 400 if memberAddress is invalid', async () => {
       const response = await request(app).get('/?teamId=1&memberAddress=invalid-address');
       expect(response.status).toBe(400);
-      expect(response.body).toEqual({ message: 'Invalid member address' });
+      expect(response.body.message).toContain('Invalid');
     });
 
     it('should return filtered claims and refresh attachment URLs', async () => {
       const memberAddress = '0x000000000000000000000000000000000000dEaD';
 
       mockGetPresignedDownloadUrl
-        .mockResolvedValueOnce('fresh-1')
+        .mockResolvedValueOnce('https://fresh-1.example.com')
         .mockRejectedValueOnce(new Error('presign failed'));
 
       const weeklyClaims = [
@@ -354,30 +505,47 @@ describe('Weekly Claim Controller', () => {
             {
               id: 101,
               hoursWorked: undefined,
+              minutesWorked: undefined,
               fileAttachments: [
-                { fileKey: 'k1', fileUrl: 'old', fileType: 'image/png', fileSize: 1 },
+                {
+                  fileKey: 'k1',
+                  fileUrl: 'https://old.example.com',
+                  fileType: 'image/png',
+                  fileSize: 1,
+                },
               ],
             },
             {
               id: 102,
-              hoursWorked: 2,
-              fileAttachments: [{ fileUrl: 'no-key', fileType: 'image/png', fileSize: 2 }],
+              hoursWorked: 0,
+              minutesWorked: 2,
+              fileAttachments: [
+                { fileUrl: 'https://no-key.example.com', fileType: 'image/png', fileSize: 2 },
+              ],
             },
             {
               id: 103,
-              hoursWorked: 3,
+              hoursWorked: 0,
+              minutesWorked: 3,
               fileAttachments: ['non-object'],
             },
             {
               id: 104,
-              hoursWorked: 4,
+              hoursWorked: 0,
+              minutesWorked: 4,
               fileAttachments: [
-                { fileKey: 'k2', fileUrl: 'old2', fileType: 'image/png', fileSize: 4 },
+                {
+                  fileKey: 'k2',
+                  fileUrl: 'https://old2.example.com',
+                  fileType: 'image/png',
+                  fileSize: 4,
+                },
               ],
             },
             {
               id: 105,
-              hoursWorked: 1,
+              hoursWorked: 0,
+              minutesWorked: 1,
               fileAttachments: [],
             },
           ],
@@ -400,9 +568,13 @@ describe('Weekly Claim Controller', () => {
         })
       );
 
-      expect(response.body[0].hoursWorked).toBe(10);
-      expect(response.body[0].claims[0].fileAttachments[0].fileUrl).toBe('fresh-1');
-      expect(response.body[0].claims[3].fileAttachments[0].fileUrl).toBe('old2');
+      expect(response.body[0].minutesWorked).toBe(10);
+      expect(response.body[0].claims[0].fileAttachments[0].fileUrl).toBe(
+        'https://fresh-1.example.com'
+      );
+      expect(response.body[0].claims[3].fileAttachments[0].fileUrl).toBe(
+        'https://old2.example.com'
+      );
     });
 
     it('should return 200 for empty claims list', async () => {
@@ -436,11 +608,11 @@ describe('Weekly Claim Controller', () => {
     it('should return 400 if teamId is missing', async () => {
       const response = await request(app).post('/sync');
       expect(response.status).toBe(400);
-      expect(response.body).toEqual({ message: 'Missing or invalid teamId' });
+      expect(response.body.message).toContain('teamId');
     });
 
     it('should return 403 if caller is not team member', async () => {
-      vi.mocked(isUserMemberOfTeam).mockResolvedValueOnce(false);
+      vi.mocked(prisma.team.findFirst).mockResolvedValueOnce(null);
 
       const response = await request(app).post('/sync?teamId=1');
       expect(response.status).toBe(403);
@@ -454,7 +626,7 @@ describe('Weekly Claim Controller', () => {
         contract: { ...validContract, address: 'not-an-eth-address' },
       },
     ])('should return 404 when $title', async ({ contract }) => {
-      vi.spyOn(prisma.teamContract, 'findFirst').mockResolvedValue(contract as any);
+      vi.mocked(getCurrentCashRemunerationContract).mockResolvedValue(contract as any);
       const response = await request(app).post('/sync?teamId=1');
       expect(response.status).toBe(404);
       expect(response.body).toEqual({
@@ -463,7 +635,7 @@ describe('Weekly Claim Controller', () => {
     });
 
     it('should return empty sync result when no weekly claims', async () => {
-      vi.spyOn(prisma.teamContract, 'findFirst').mockResolvedValue(validContract as any);
+      vi.mocked(getCurrentCashRemunerationContract).mockResolvedValue(validContract as any);
       vi.spyOn(prisma.weeklyClaim, 'findMany').mockResolvedValue([] as any);
 
       const response = await request(app).post('/sync?teamId=1');
@@ -472,11 +644,21 @@ describe('Weekly Claim Controller', () => {
     });
 
     it('should update status from signed to withdrawn when paid on-chain', async () => {
-      vi.spyOn(prisma.teamContract, 'findFirst').mockResolvedValue(validContract as any);
+      vi.mocked(getCurrentCashRemunerationContract).mockResolvedValue(validContract as any);
 
       vi.spyOn(prisma.weeklyClaim, 'findMany').mockResolvedValue([
-        { id: 1, status: 'signed', signature: 'not-hex' },
-        { id: 2, status: 'signed', signature: '0xabcdef' },
+        {
+          id: 1,
+          status: 'signed',
+          signature: 'not-hex',
+          signedAgainstContractAddress: validContract.address,
+        },
+        {
+          id: 2,
+          status: 'signed',
+          signature: '0xabcdef',
+          signedAgainstContractAddress: validContract.address,
+        },
       ] as any);
 
       readContractMock.mockReset();
@@ -496,9 +678,14 @@ describe('Weekly Claim Controller', () => {
     });
 
     it('should keep signed status when neither paid nor disabled', async () => {
-      vi.spyOn(prisma.teamContract, 'findFirst').mockResolvedValue(validContract as any);
+      vi.mocked(getCurrentCashRemunerationContract).mockResolvedValue(validContract as any);
       vi.spyOn(prisma.weeklyClaim, 'findMany').mockResolvedValue([
-        { id: 7, status: 'signed', signature: '0xfeed' },
+        {
+          id: 7,
+          status: 'signed',
+          signature: '0xfeed',
+          signedAgainstContractAddress: validContract.address,
+        },
       ] as any);
 
       readContractMock.mockReset();
@@ -511,9 +698,14 @@ describe('Weekly Claim Controller', () => {
     });
 
     it('should update with unknown previous status when claim.status is null', async () => {
-      vi.spyOn(prisma.teamContract, 'findFirst').mockResolvedValue(validContract as any);
+      vi.mocked(getCurrentCashRemunerationContract).mockResolvedValue(validContract as any);
       vi.spyOn(prisma.weeklyClaim, 'findMany').mockResolvedValue([
-        { id: 8, status: null, signature: '0xface' },
+        {
+          id: 8,
+          status: null,
+          signature: '0xface',
+          signedAgainstContractAddress: validContract.address,
+        },
       ] as any);
 
       readContractMock.mockReset();
@@ -531,9 +723,14 @@ describe('Weekly Claim Controller', () => {
     });
 
     it('should skip claim on readContract error', async () => {
-      vi.spyOn(prisma.teamContract, 'findFirst').mockResolvedValue(validContract as any);
+      vi.mocked(getCurrentCashRemunerationContract).mockResolvedValue(validContract as any);
       vi.spyOn(prisma.weeklyClaim, 'findMany').mockResolvedValue([
-        { id: 5, status: 'signed', signature: '0xdeadbeef' },
+        {
+          id: 5,
+          status: 'signed',
+          signature: '0xdeadbeef',
+          signedAgainstContractAddress: validContract.address,
+        },
       ] as any);
 
       readContractMock.mockReset();
@@ -545,8 +742,76 @@ describe('Weekly Claim Controller', () => {
       expect(response.body.skipped).toEqual([{ id: 5, reason: 'Failed to read contract state' }]);
     });
 
+    it('should reset to pending when claim was signed against a previous contract', async () => {
+      vi.mocked(getCurrentCashRemunerationContract).mockResolvedValue(validContract as any);
+      vi.spyOn(prisma.weeklyClaim, 'findMany').mockResolvedValue([
+        {
+          id: 21,
+          status: 'signed',
+          signature: '0xabcd',
+          signedAgainstContractAddress: '0x9999999999999999999999999999999999999999',
+        },
+        {
+          id: 22,
+          status: 'disabled',
+          signature: '0xef01',
+          signedAgainstContractAddress: null,
+        },
+      ] as any);
+
+      readContractMock.mockReset();
+      const updateSpy = vi.spyOn(prisma.weeklyClaim, 'update').mockResolvedValue({} as any);
+
+      const response = await request(app).post('/sync?teamId=1');
+
+      expect(response.status).toBe(200);
+      expect(response.body.updated).toEqual([
+        { id: 21, previousStatus: 'signed', newStatus: 'pending' },
+        { id: 22, previousStatus: 'disabled', newStatus: 'pending' },
+      ]);
+      expect(readContractMock).not.toHaveBeenCalled();
+      expect(updateSpy).toHaveBeenCalledWith({
+        where: { id: 21 },
+        data: {
+          status: 'pending',
+          signature: null,
+          signedAgainstContractAddress: null,
+          data: Prisma.JsonNull,
+        },
+      });
+      expect(updateSpy).toHaveBeenCalledWith({
+        where: { id: 22 },
+        data: {
+          status: 'pending',
+          signature: null,
+          signedAgainstContractAddress: null,
+          data: Prisma.JsonNull,
+        },
+      });
+    });
+
+    it('should match signedAgainstContractAddress case-insensitively', async () => {
+      vi.mocked(getCurrentCashRemunerationContract).mockResolvedValue(validContract as any);
+      vi.spyOn(prisma.weeklyClaim, 'findMany').mockResolvedValue([
+        {
+          id: 30,
+          status: 'signed',
+          signature: '0xabcd',
+          signedAgainstContractAddress: validContract.address.toUpperCase(),
+        },
+      ] as any);
+
+      readContractMock.mockReset();
+      readContractMock.mockResolvedValueOnce(false).mockResolvedValueOnce(false);
+
+      const response = await request(app).post('/sync?teamId=1');
+      expect(response.status).toBe(200);
+      expect(response.body.updated).toEqual([]);
+      expect(readContractMock).toHaveBeenCalled();
+    });
+
     it('should return 500 when sync setup throws', async () => {
-      vi.spyOn(prisma.teamContract, 'findFirst').mockResolvedValue(validContract as any);
+      vi.mocked(getCurrentCashRemunerationContract).mockResolvedValue(validContract as any);
       vi.spyOn(prisma.weeklyClaim, 'findMany').mockRejectedValue(new Error('Database failure'));
 
       const response = await request(app).post('/sync?teamId=1');

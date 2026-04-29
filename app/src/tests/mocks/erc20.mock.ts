@@ -22,6 +22,24 @@ export function createContractReadMock<T>(defaultValue?: T) {
 }
 
 /**
+ * Mock factory for V3 contract write operations (TanStack mutation shape)
+ * Used by composables built on useContractWritesV3
+ */
+export function createContractWriteV3Mock() {
+  return {
+    mutate: vi.fn(),
+    mutateAsync: vi.fn(),
+    isPending: ref(false),
+    isSuccess: ref(false),
+    isError: ref(false),
+    error: ref<Error | null>(null),
+    data: ref(null),
+    reset: vi.fn(),
+    status: ref<'idle' | 'pending' | 'error' | 'success'>('idle')
+  }
+}
+
+/**
  * Generic mock factory for contract write operations
  * Can be used for ERC20, ERC721, or any contract write function
  * that uses useContractWrite and returns the same structure
@@ -68,9 +86,7 @@ export const mockERC20Reads = {
 }
 
 export const mockERC20Writes = {
-  transfer: createContractWriteMock(),
-  transferFrom: createContractWriteMock(),
-  approve: createContractWriteMock()
+  approve: createContractWriteV3Mock()
 }
 
 /**
@@ -92,31 +108,21 @@ export const resetERC20Mocks = () => {
     }
   })
 
-  // Reset write mocks
+  // Reset V3 write mocks
   Object.values(mockERC20Writes).forEach((mock) => {
-    // Reset write results
-    mock.writeResult.data.value = null
-    mock.writeResult.error.value = null
-    mock.writeResult.isLoading.value = false
-    mock.writeResult.isSuccess.value = false
-    mock.writeResult.isError.value = false
-    mock.writeResult.isPending.value = false
-    mock.writeResult.status.value = 'idle'
+    mock.data.value = null
+    mock.error.value = null
+    mock.isPending.value = false
+    mock.isSuccess.value = false
+    mock.isError.value = false
+    mock.status.value = 'idle'
 
-    // Reset receipt results
-    mock.receiptResult.data.value = null
-    mock.receiptResult.error.value = null
-    mock.receiptResult.isLoading.value = false
-    mock.receiptResult.isSuccess.value = false
-    mock.receiptResult.isError.value = false
-    mock.receiptResult.isPending.value = false
-    mock.receiptResult.status.value = 'idle'
-
-    // Reset execute function
-    if (vi.isMockFunction(mock.executeWrite)) {
-      mock.executeWrite.mockClear()
-      mock.executeWrite.mockResolvedValue(undefined)
+    if (vi.isMockFunction(mock.mutate)) mock.mutate.mockClear()
+    if (vi.isMockFunction(mock.mutateAsync)) {
+      mock.mutateAsync.mockClear()
+      mock.mutateAsync.mockResolvedValue(undefined)
     }
+    if (vi.isMockFunction(mock.reset)) mock.reset.mockClear()
   })
 
   // Set default values for common scenarios

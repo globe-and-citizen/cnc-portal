@@ -27,7 +27,7 @@ const router = Router();
 
 /**
  * @swagger
- * /api/admin/features:
+ * /admin/features:
  *   get:
  *     summary: List all features
  *     tags: [Features]
@@ -60,7 +60,7 @@ router.get('/', listFeatures);
 
 /**
  * @swagger
- * /api/admin/features/{functionName}:
+ * /admin/features/{functionName}:
  *   get:
  *     summary: Get a specific feature
  *     tags: [Features]
@@ -83,7 +83,7 @@ router.get('/:functionName', validateParams(functionNameParamSchema), getFeature
 
 /**
  * @swagger
- * /api/admin/features:
+ * /admin/features:
  *   post:
  *     summary: Create a new feature
  *     tags: [Features]
@@ -116,7 +116,7 @@ router.post('/', validateBody(createFeatureSchema), createNewFeature);
 
 /**
  * @swagger
- * /api/admin/features/{functionName}:
+ * /admin/features/{functionName}:
  *   put:
  *     summary: Update a feature's status
  *     tags: [Features]
@@ -154,7 +154,7 @@ router.put(
 
 /**
  * @swagger
- * /api/admin/features/{functionName}:
+ * /admin/features/{functionName}:
  *   delete:
  *     summary: Delete a feature and all its overrides
  *     tags: [Features]
@@ -179,7 +179,7 @@ router.delete('/:functionName', validateParams(functionNameParamSchema), deleteF
 // ============================================
 /**
  * @swagger
- * /api/admin/features/{functionName}/teams:
+ * /admin/features/{functionName}/teams:
  *   post:
  *     summary: Create a team override for a feature
  *     tags: [Features]
@@ -224,7 +224,7 @@ router.post(
 
 /**
  * @swagger
- * /api/admin/features/{functionName}/teams/{teamId}:
+ * /admin/features/{functionName}/teams/{teamId}:
  *   put:
  *     summary: Update a team override
  *     tags: [Features]
@@ -267,7 +267,7 @@ router.put(
 
 /**
  * @swagger
- * /api/admin/features/{functionName}/teams/{teamId}:
+ * /admin/features/{functionName}/teams/{teamId}:
  *   delete:
  *     summary: Delete a team override
  *     tags: [Features]

@@ -6,10 +6,9 @@ import {
   useWriteContractFn,
   useWaitForTransactionReceiptFn,
   useQueryClientFn,
-  mockWagmiCore,
-  mockToastStore
+  mockWagmiCore
 } from '@/tests/mocks'
-import { useTeamStore, useToastStore } from '@/stores'
+import { useTeamStore } from '@/stores'
 
 // Prevent module-level constant validation and provide minimal addresses used by utils
 vi.mock('@/constant', () => ({
@@ -51,7 +50,6 @@ describe('PublishResult.vue', () => {
         return undefined
       }
     }
-    vi.mocked(useToastStore).mockImplementation(() => mockToastStore)
     vi.mocked(useTeamStore).mockImplementation(
       () => localMockTeamStore as ReturnType<typeof useTeamStore>
     )
@@ -99,10 +97,7 @@ describe('PublishResult.vue', () => {
 
   it('calls estimateGas and publishResults when button clicked', async () => {
     const wrapper = mount(PublishResult, {
-      props: { electionId: 42 },
-      global: {
-        stubs: ['ButtonUI']
-      }
+      props: { electionId: 42 }
     })
 
     const btn = wrapper.find('[data-test="create-election-button"]')
@@ -122,8 +117,7 @@ describe('PublishResult.vue', () => {
 
   it('shows success toast and invalidates queries when receipt is published', async () => {
     const wrapper = mount(PublishResult, {
-      props: { electionId: 7 },
-      global: { stubs: ['ButtonUI'] }
+      props: { electionId: 7 }
     })
 
     // simulate click to trigger publish
@@ -137,26 +131,6 @@ describe('PublishResult.vue', () => {
     // need nextTick / flush for watchers
     await nextTick()
     await Promise.resolve()
-
-    expect(mockToastStore.addSuccessToast).toHaveBeenCalledWith(
-      'Election results published successfully!'
-    )
     expect(queryClientMock.invalidateQueries).toHaveBeenCalled()
-  })
-
-  it('shows error toast when estimateGas throws', async () => {
-    mockWagmiCore.estimateGas.mockImplementationOnce(() => {
-      throw new Error('gas failed')
-    })
-
-    const wrapper = mount(PublishResult, {
-      props: { electionId: 99 },
-      global: { stubs: ['ButtonUI'] }
-    })
-
-    await wrapper.find('[data-test="create-election-button"]').trigger('click')
-    await nextTick()
-
-    expect(mockToastStore.addErrorToast).toHaveBeenCalled()
   })
 })

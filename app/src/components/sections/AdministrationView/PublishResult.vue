@@ -1,18 +1,16 @@
 <template>
-  <ButtonUI
-    variant="primary"
+  <UButton
+    color="primary"
     size="md"
     @click="handlePublishResults(electionId)"
     :loading="isPending || isWaiting"
     data-test="create-election-button"
-  >
-    Publish Results
-  </ButtonUI>
+    label="Publish Results"
+  />
 </template>
 <script lang="ts" setup>
 import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
-import ButtonUI from '@/components/ButtonUI.vue'
-import { useTeamStore, useToastStore } from '@/stores'
+import { useTeamStore } from '@/stores'
 import { log, parseError } from '@/utils'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
@@ -21,7 +19,7 @@ import { type Address, encodeFunctionData } from 'viem'
 import { computed, watch } from 'vue'
 import { config } from '@/wagmi.config'
 
-const toastStore = useToastStore()
+const toast = useToast()
 const queryClient = useQueryClient()
 const { mutate: publishResults, isPending, error, data: publishResultsHash } = useWriteContract()
 const {
@@ -58,7 +56,7 @@ const handlePublishResults = async (electionId: number) => {
       args: [BigInt(electionId)]
     })
   } catch (err) {
-    toastStore.addErrorToast(parseError(err, ELECTIONS_ABI))
+    toast.add({ title: parseError(err, ELECTIONS_ABI), color: 'error' })
     log.error('Error creating election:', parseError(err, ELECTIONS_ABI))
   }
 }
@@ -66,18 +64,18 @@ const handlePublishResults = async (electionId: number) => {
 watch(error, (newError) => {
   if (newError) {
     console.error('Error publishing results:', parseError(newError))
-    toastStore.addErrorToast('Failed to publish election results')
+    toast.add({ title: 'Failed to publish election results', color: 'error' })
   }
 })
 watch(waitError, (newError) => {
   if (newError) {
     console.error('Error waiting for transaction receipt:', parseError(newError))
-    toastStore.addErrorToast('Failed to wait for transaction receipt')
+    toast.add({ title: 'Failed to wait for transaction receipt', color: 'error' })
   }
 })
 watch(isPublished, async (success) => {
   if (success) {
-    toastStore.addSuccessToast('Election results published successfully!')
+    toast.add({ title: 'Election results published successfully!', color: 'success' })
     await queryClient.invalidateQueries({
       queryKey: ['readContract']
     })

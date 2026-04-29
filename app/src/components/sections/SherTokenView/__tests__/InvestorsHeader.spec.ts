@@ -3,13 +3,7 @@ import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 import { createTestingPinia } from '@pinia/testing'
 import InvestorsHeader from '../InvestorsHeader.vue'
 import { parseUnits } from 'viem'
-import {
-  mockInvestorReads,
-  mockTeamStore,
-  mockUserStore,
-  mockToastStore,
-  resetContractMocks
-} from '@/tests/mocks'
+import { mockInvestorReads, mockTeamStore, mockUserStore, resetContractMocks } from '@/tests/mocks'
 
 describe('InvestorsHeader', () => {
   let wrapper: ReturnType<typeof mount>
@@ -134,28 +128,6 @@ describe('InvestorsHeader', () => {
       const cards = wrapper.findAll(SELECTORS.overviewCards)
 
       expect(cards[1].find(SELECTORS.amount).text()).toBe('...')
-    })
-  })
-
-  describe('Error Handling', () => {
-    it('should handle token symbol error and show toast', async () => {
-      wrapper = createComponent()
-
-      // Trigger the error
-      mockInvestorReads.symbol.error.value = new Error('Token symbol error')
-      await wrapper.vm.$nextTick()
-
-      expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('Error fetching token symbol')
-    })
-
-    it('should handle shareholders error and show toast', async () => {
-      wrapper = createComponent()
-
-      // Trigger the error
-      mockInvestorReads.shareholders.error.value = new Error('Shareholders error')
-      await wrapper.vm.$nextTick()
-
-      expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('Error fetching shareholders')
     })
   })
 

@@ -1,6 +1,6 @@
 <template>
-  <TableComponent
-    :rows="
+  <UTable
+    :data="
       Object.entries(eventsByCampaignCode).map(([campaignCode, events]) => ({
         campaignCode,
         budget: getBudget(events),
@@ -9,20 +9,20 @@
       }))
     "
     :columns="[
-      { key: 'campaignCode', label: 'Campaign Code' },
-      { key: 'budget', label: 'Budget (POL)' },
-      { key: 'details', label: 'Details' }
+      { accessorKey: 'campaignCode', header: 'Campaign Code' },
+      { accessorKey: 'budget', header: 'Budget (POL)' },
+      { accessorKey: 'details', header: 'Details' }
     ]"
   >
-    <template #campaignCode-data="{ row }">
+    <template #campaignCode-cell="{ row: { original: row } }">
       <span class="campaign-code font-bold">{{ row.campaignCode }}</span>
     </template>
 
-    <template #budget-data="{ row }">
+    <template #budget-cell="{ row: { original: row } }">
       <span class="campaign-budget">{{ row.budget }} POL</span>
     </template>
 
-    <template #details-data="{ row }">
+    <template #details-cell="{ row: { original: row } }">
       <input
         type="checkbox"
         :checked="row.expanded"
@@ -51,13 +51,12 @@
         </ul>
       </div>
     </template>
-  </TableComponent>
+  </UTable>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
 import type { EventsByCampaignCode, ExtendedEvent } from '@/services/AddCampaignService'
-import TableComponent from '@/components/TableComponent.vue'
 // Props
 defineProps<{
   eventsByCampaignCode: EventsByCampaignCode

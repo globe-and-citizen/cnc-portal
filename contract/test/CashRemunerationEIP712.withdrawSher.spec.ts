@@ -86,11 +86,19 @@ describe('Cash Remuneration - Withdraw SHER', function () {
       ])
     })
 
-    // Deploy Officer contract
+    // Deploy Officer through a proxy; the implementation's constructor now calls
+    // `_disableInitializers()`, so `initialize` can only be invoked on a proxy.
     const Officer = await ethers.getContractFactory('Officer')
-    officer = (await Officer.deploy(await feeCollector.getAddress())) as unknown as Officer
+    officer = (await upgrades.deployProxy(
+      Officer,
+      [owner.address, beaconConfigs, deployments, true],
+      {
+        initializer: 'initialize',
+        constructorArgs: [await feeCollector.getAddress()],
+        unsafeAllow: ['constructor', 'state-variable-immutable']
+      }
+    )) as unknown as Officer
     await officer.waitForDeployment()
-    await officer.initialize(owner.address, beaconConfigs, deployments, true)
 
     const deployedContracts = await officer.getDeployedContracts()
 
@@ -125,7 +133,7 @@ describe('Cash Remuneration - Withdraw SHER', function () {
       ],
       WageClaim: [
         { name: 'employeeAddress', type: 'address' },
-        { name: 'hoursWorked', type: 'uint8' },
+        { name: 'minutesWorked', type: 'uint16' },
         { name: 'wages', type: 'Wage[]' },
         { name: 'date', type: 'uint256' }
       ]
@@ -140,7 +148,7 @@ describe('Cash Remuneration - Withdraw SHER', function () {
       owner.address.toLocaleLowerCase()
     )
     expect(
-      await cashRemunerationEip712Proxy.supportedTokens(await investorV1Proxy.getAddress())
+      await cashRemunerationEip712Proxy.isTokenSupported(await investorV1Proxy.getAddress())
     ).to.be.equal(true)
 
     expect((await investorV1Proxy.owner()).toLocaleLowerCase()).to.be.equal(
@@ -163,7 +171,7 @@ describe('Cash Remuneration - Withdraw SHER', function () {
   it('Should mint SHER to user if they earned SHER', async () => {
     const wageClaim = {
       employeeAddress: addr1.address,
-      hoursWorked: 5,
+      minutesWorked: 300,
       wages: [
         {
           hourlyRate: BigInt(20 * 1e6),
@@ -177,7 +185,7 @@ describe('Cash Remuneration - Withdraw SHER', function () {
     const signatureHash = ethers.keccak256(signature)
     const tx = await cashRemunerationEip712Proxy.connect(addr1).withdraw(wageClaim, signature)
 
-    const amountSher = BigInt(wageClaim.hoursWorked) * wageClaim.wages[0].hourlyRate
+    const amountSher = (BigInt(wageClaim.minutesWorked) * wageClaim.wages[0].hourlyRate) / 60n
 
     await expect(tx)
       .to.emit(cashRemunerationEip712Proxy, 'WithdrawToken')
@@ -196,7 +204,7 @@ describe('Cash Remuneration - Withdraw SHER', function () {
   it('Should disable claims so the user cannot withdraw SHER', async () => {
     const wageClaim = {
       employeeAddress: addr1.address,
-      hoursWorked: 5,
+      minutesWorked: 300,
       wages: [
         {
           hourlyRate: BigInt(20 * 1e6),
@@ -216,13 +224,13 @@ describe('Cash Remuneration - Withdraw SHER', function () {
 
     await expect(
       cashRemunerationEip712Proxy.connect(addr1).withdraw(wageClaim, signature)
-    ).to.be.revertedWith('Wage claim disabled')
+    ).to.be.revertedWithCustomError(cashRemunerationEip712Proxy, 'ClaimIsDisabled')
   })
 
   it('Should enable claims so the user can withdraw SHER again', async () => {
     const wageClaim = {
       employeeAddress: addr1.address,
-      hoursWorked: 5,
+      minutesWorked: 300,
       wages: [
         {
           hourlyRate: BigInt(20 * 1e6),
@@ -243,7 +251,7 @@ describe('Cash Remuneration - Withdraw SHER', function () {
 
     tx = await cashRemunerationEip712Proxy.connect(addr1).withdraw(wageClaim, signature)
 
-    const amountSher = BigInt(wageClaim.hoursWorked) * wageClaim.wages[0].hourlyRate
+    const amountSher = (BigInt(wageClaim.minutesWorked) * wageClaim.wages[0].hourlyRate) / 60n
 
     await expect(tx)
       .to.emit(cashRemunerationEip712Proxy, 'WithdrawToken')
@@ -253,15 +261,69 @@ describe('Cash Remuneration - Withdraw SHER', function () {
     expect(await investorV1Proxy.balanceOf(addr1.address)).to.be.equal(amountSher)
   })
 
-  it('Should update officer address', async () => {
-    const tx = await cashRemunerationEip712Proxy.connect(owner).setOfficerAddress(addr1.address)
-
-    await expect(tx)
-      .to.emit(cashRemunerationEip712Proxy, 'OfficerAddressUpdated')
-      .withArgs(addr1.address)
-
+  it('Should set officer address during deployment', async () => {
     expect((await cashRemunerationEip712Proxy.officerAddress()).toLocaleLowerCase()).to.be.equal(
-      addr1.address.toLocaleLowerCase()
+      (await officer.getAddress()).toLocaleLowerCase()
     )
+  })
+
+  it('Should prevent replay of the same SHER mint signature (EIP-712 replay protection)', async () => {
+    const wageClaim = {
+      employeeAddress: addr1.address,
+      minutesWorked: 300,
+      wages: [
+        {
+          hourlyRate: BigInt(20 * 1e6),
+          tokenAddress: await investorV1Proxy.getAddress()
+        }
+      ],
+      date: Math.floor(Date.now() / 1000)
+    }
+
+    const signature = await owner.signTypedData(domain, types, wageClaim)
+    const signatureHash = ethers.keccak256(signature)
+
+    // First invocation mints SHER successfully
+    await cashRemunerationEip712Proxy.connect(addr1).withdraw(wageClaim, signature)
+    expect(await cashRemunerationEip712Proxy.paidWageClaims(signatureHash)).to.equal(true)
+
+    const amountSher = (BigInt(wageClaim.minutesWorked) * wageClaim.wages[0].hourlyRate) / 60n
+    expect(await investorV1Proxy.balanceOf(addr1.address)).to.equal(amountSher)
+
+    // Replay attempt with identical signature/claim must revert with WageAlreadyPaid
+    await expect(cashRemunerationEip712Proxy.connect(addr1).withdraw(wageClaim, signature))
+      .to.be.revertedWithCustomError(cashRemunerationEip712Proxy, 'WageAlreadyPaid')
+      .withArgs(signatureHash)
+
+    // Balance unchanged after failed replay
+    expect(await investorV1Proxy.balanceOf(addr1.address)).to.equal(amountSher)
+  })
+
+  it('Should prevent replay once a claim has been disabled after use', async () => {
+    const wageClaim = {
+      employeeAddress: addr1.address,
+      minutesWorked: 120,
+      wages: [
+        {
+          hourlyRate: BigInt(10 * 1e6),
+          tokenAddress: await investorV1Proxy.getAddress()
+        }
+      ],
+      date: Math.floor(Date.now() / 1000) + 1
+    }
+
+    const signature = await owner.signTypedData(domain, types, wageClaim)
+    const signatureHash = ethers.keccak256(signature)
+
+    // Use the claim once
+    await cashRemunerationEip712Proxy.connect(addr1).withdraw(wageClaim, signature)
+
+    // Owner disables it afterwards
+    await cashRemunerationEip712Proxy.connect(owner).disableClaim(signatureHash)
+
+    // Replay: WageAlreadyPaid is checked first in the contract, so it should hit that error
+    await expect(
+      cashRemunerationEip712Proxy.connect(addr1).withdraw(wageClaim, signature)
+    ).to.be.revertedWithCustomError(cashRemunerationEip712Proxy, 'WageAlreadyPaid')
   })
 })

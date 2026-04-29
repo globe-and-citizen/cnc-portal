@@ -1,5 +1,6 @@
 import express from 'express';
 import { addClaim, getClaims, updateClaim, deleteClaim } from '../controllers/claimController';
+import { requireTeamMember } from '../middleware/teamAuthzMiddleware';
 import {
   validateBody,
   validateQuery,
@@ -27,7 +28,10 @@ const claimRoutes = express.Router();
  *           description: The status of the claim
  *         hoursWorked:
  *           type: integer
- *           description: The number of hours worked
+ *           description: Legacy hours field kept for backward compatibility. New claims store 0 here.
+ *         minutesWorked:
+ *           type: integer
+ *           description: The number of minutes worked
  *         signature:
  *           type: string
  *           description: The signature of the claim
@@ -68,7 +72,7 @@ const claimRoutes = express.Router();
  * @openapi
  * /claim:
  *  post:
- *   summary: Add a claim for hours worked
+ *   summary: Add a claim for minutes worked
  *   requestBody:
  *     required: true
  *     content:
@@ -80,10 +84,10 @@ const claimRoutes = express.Router();
  *               type: integer
  *               description: The ID of the team
  *               minimum: 1
- *             hoursWorked:
+ *             minutesWorked:
  *               type: number
- *               description: The number of hours worked
- *               minimum: 1
+ *               description: The number of minutes worked
+ *               minimum: 10
  *   responses:
  *     201:
  *       description: Claim added successfully
@@ -152,13 +156,18 @@ claimRoutes.post('/', validateBody(addClaimBodySchema), addClaim);
  *           schema:
  *             $ref: '#/components/schemas/ErrorResponse'
  */
-claimRoutes.get('/', validateQuery(getClaimsQuerySchema), getClaims);
+claimRoutes.get(
+  '/',
+  validateQuery(getClaimsQuerySchema),
+  requireTeamMember('query.teamId'),
+  getClaims
+);
 
 /**
  * @openapi
  * /claim/{claimId}:
  *  put:
- *   summary: Update claim details (hours worked, memo, or date)
+ *   summary: Update claim details (minutes worked, memo, or date)
  *   description: Allows the claim owner to edit their own pending claim details.
  *   parameters:
  *     - in: path
@@ -175,11 +184,11 @@ claimRoutes.get('/', validateQuery(getClaimsQuerySchema), getClaims);
  *         schema:
  *           type: object
  *           properties:
- *             hoursWorked:
+ *             minutesWorked:
  *               type: number
- *               minimum: 1
- *               maximum: 24
- *               description: Updated number of hours worked
+ *               minimum: 10
+ *               maximum: 1440
+ *               description: Updated number of minutes worked
  *             memo:
  *               type: string
  *               description: Updated memo

@@ -1,62 +1,30 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
+import { keccak256 } from 'viem'
 import WeeklyClaimActionEnable from '../WeeklyClaimActionEnable.vue'
-import { createPinia, setActivePinia } from 'pinia'
-import { useTeamStore, useToastStore } from '@/stores'
 import type { WeeklyClaim } from '@/types'
-import { ref } from 'vue'
-import * as mocks from '@/tests/mocks'
-import dayjs from 'dayjs'
-import utc from 'dayjs/plugin/utc'
-import isoWeek from 'dayjs/plugin/isoWeek'
-import { useReadContract } from '@wagmi/vue'
-import { simulateContract, waitForTransactionReceipt } from '@wagmi/core'
-import { log } from '@/utils'
-import { useSyncWeeklyClaimsMutation } from '@/queries/weeklyClaim.queries'
+import {
+  mockCashRemunerationWrites,
+  mockSyncWeeklyClaimsMutation,
+  mockTeamStore,
+  useQueryClientFn
+} from '@/tests/mocks'
+import { mockLog } from '@/tests/mocks/utils.mock'
+import * as utils from '@/utils'
 
-// Configure dayjs plugins
-dayjs.extend(utc)
-dayjs.extend(isoWeek)
-
-// Mock the dependencies
-vi.mock('viem', async (importOriginal) => {
-  const actual: object = await importOriginal()
-  return {
-    ...actual,
-    keccak256: vi.fn()
-  }
-})
-vi.mock('@iconify/vue', () => ({
-  Icon: {
-    template: '<span>Icon</span>'
-  }
+vi.mock('@/composables/cashRemuneration/writes', () => ({
+  useEnableClaim: vi.fn(() => mockCashRemunerationWrites.enableClaim),
+  useDisableClaim: vi.fn(() => mockCashRemunerationWrites.disableClaim)
 }))
 
-vi.mock('@/components/ButtonUI.vue', () => ({
-  default: {
-    template: '<button><slot /></button>',
-    props: ['size', 'class']
-  }
-}))
-
-vi.mock('@/utils', () => ({
-  log: {
-    error: vi.fn()
-  },
-  parseError: vi.fn(() => 'Parsed error message')
-}))
-
-describe('DropdownActions', () => {
-  const MOCK_OWNER_ADDRESS = '0xOwnerAddress'
-  const mockSyncMutateAsync = vi.fn().mockResolvedValue(undefined)
-
+describe('WeeklyClaimActionEnable', () => {
   const weeklyClaim: WeeklyClaim = {
     id: 1,
     status: 'pending',
-    hoursWorked: 8,
+    hoursWorked: 480,
     createdAt: '2024-01-01T00:00:00Z',
     wage: {
-      userAddress: MOCK_OWNER_ADDRESS,
+      userAddress: '0xOwnerAddress',
       ratePerHour: [{ type: 'native', amount: 10 }],
       id: 0,
       teamId: 0,
@@ -66,164 +34,153 @@ describe('DropdownActions', () => {
       maximumHoursPerWeek: 0,
       nextWageId: null,
       createdAt: '',
-      updatedAt: ''
+      updatedAt: '',
+      disabled: false
     },
     weekStart: '2024-01-01T00:00:00Z',
-    data: {
-      ownerAddress: MOCK_OWNER_ADDRESS
-    },
-    memberAddress: MOCK_OWNER_ADDRESS,
-    teamId: 0,
-    signature: null,
+    data: { ownerAddress: '0xOwnerAddress' },
+    memberAddress: '0xOwnerAddress',
+    teamId: 1,
+    signature: '0x1234',
     wageId: 0,
     updatedAt: '',
     claims: []
   }
 
-  const createWrapper = (isCashRemunerationOwner: boolean) => {
-    // Mock the sync mutation
-    vi.mocked(useSyncWeeklyClaimsMutation).mockReturnValue({
-      mutateAsync: mockSyncMutateAsync,
-      mutate: vi.fn(),
-      isPending: ref(false),
-      isError: ref(false),
-      error: ref(null),
-      data: ref(null),
-      reset: vi.fn()
-    } as unknown as ReturnType<typeof useSyncWeeklyClaimsMutation>)
+  const setupSyncMutation = (mutateAsync = vi.fn().mockResolvedValue(undefined)) => {
+    mockSyncWeeklyClaimsMutation.mutate.mockClear()
+    mockSyncWeeklyClaimsMutation.reset.mockClear()
+    mockSyncWeeklyClaimsMutation.isPending.value = false
+    mockSyncWeeklyClaimsMutation.isError.value = false
+    mockSyncWeeklyClaimsMutation.error.value = null
+    mockSyncWeeklyClaimsMutation.data.value = null
+    mockSyncWeeklyClaimsMutation.mutateAsync = mutateAsync
+    return mutateAsync
+  }
 
-    return mount(WeeklyClaimActionEnable, {
+  const setEnableSuccess = () => {
+    mockCashRemunerationWrites.enableClaim.mutate = vi.fn(
+      async (_vars: unknown, opts?: { onSuccess?: () => Promise<void> | void }) => {
+        await opts?.onSuccess?.()
+      }
+    )
+  }
+
+  const setEnableError = (error: unknown) => {
+    mockCashRemunerationWrites.enableClaim.mutate = vi.fn(
+      (_vars: unknown, opts?: { onError?: (e: unknown) => void }) => {
+        opts?.onError?.(error)
+      }
+    )
+  }
+
+  const createWrapper = (isCashRemunerationOwner = true) =>
+    mount(WeeklyClaimActionEnable, {
       props: {
         isCashRemunerationOwner,
         weeklyClaim
-      },
-      global: {
-        stubs: {
-          IconifyIcon: true,
-          ButtonUI: true
-        }
       }
     })
-  }
 
   beforeEach(() => {
-    setActivePinia(createPinia())
-    vi.useFakeTimers()
-    mockSyncMutateAsync.mockClear()
-
-    // Set up team store with currentTeamId
-    const teamStore = useTeamStore()
-    teamStore.currentTeamId = '1'
+    vi.clearAllMocks()
+    mockTeamStore.currentTeamId = '1'
+    mockTeamStore.getContractAddressByType.mockReturnValue(
+      '0x6666666666666666666666666666666666666666'
+    )
+    mockCashRemunerationWrites.enableClaim.isPending.value = false
+    setEnableSuccess()
   })
 
-  afterEach(() => {
-    vi.restoreAllMocks()
-    vi.useRealTimers()
+  it('does nothing on-chain when user is not contract owner', async () => {
+    setupSyncMutation()
+    const wrapper = createWrapper(false)
+
+    await wrapper.find('[data-test="enable-action"]').trigger('click')
+    await flushPromises()
+
+    expect(mockCashRemunerationWrites.enableClaim.mutate).not.toHaveBeenCalled()
   })
 
-  describe('Action handling', () => {
-    it('should handle enable claim properly', async () => {
-      //@ts-expect-error only mocking necessary variables
-      vi.mocked(useReadContract).mockReturnValue({
-        ...mocks.mockUseReadContract,
-        data: ref('0xUserAddress')
-      })
+  it('enables claim successfully and syncs backend state', async () => {
+    const mutateAsync = setupSyncMutation(vi.fn().mockResolvedValue(undefined))
 
-      //@ts-expect-error only mocking necessary values
-      vi.mocked(waitForTransactionReceipt).mockResolvedValue({
-        status: 'success'
-      })
+    const wrapper = createWrapper(true)
+    await wrapper.find('[data-test="enable-action"]').trigger('click')
+    await flushPromises()
 
-      const wrapper = createWrapper(true)
+    expect(mockCashRemunerationWrites.enableClaim.mutate).toHaveBeenCalledWith(
+      { args: [keccak256('0x1234')] },
+      expect.anything()
+    )
+    expect(mutateAsync).toHaveBeenCalledWith({ queryParams: { teamId: '1' } })
 
-      // Trigger the claim function
-      //@ts-expect-error not visible on wrapper.vm
-      await wrapper.vm.enableClaim()
-
-      // Should show success toast after mutation
-      expect(mocks.mockWagmiCore.writeContract).toBeCalled()
-      expect(mockSyncMutateAsync).toHaveBeenCalled()
-      expect(mocks.mockToastStore.addSuccessToast).toHaveBeenCalledWith('Claim enabled')
+    const queryClient = useQueryClientFn.mock.results.at(-1)?.value
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith({
+      queryKey: ['weekly-claims', '1']
     })
 
-    it('should handle enable claim errors properly', async () => {
-      // Test when CashRemuneration address is not found
-      //@ts-expect-error only mocking necessary values
-      vi.mocked(useTeamStore).mockReturnValue({
-        ...mocks.mockTeamStore,
-        getContractAddressByType: vi.fn(() => undefined)
-      })
+    expect(wrapper.emitted('close')).toBeTruthy()
+  })
 
-      //@ts-expect-error only mocking necessary variables
-      vi.mocked(useReadContract).mockReturnValue({
-        ...mocks.mockUseReadContract,
-        data: ref('0xUserAddress')
-      })
+  it('shows sync error toast when mutation fails after successful tx', async () => {
+    const mutateAsync = setupSyncMutation(vi.fn().mockRejectedValue(new Error('sync failed')))
 
-      let wrapper = createWrapper(true)
+    const wrapper = createWrapper(true)
+    await wrapper.find('[data-test="enable-action"]').trigger('click')
+    await flushPromises()
+    const queryClient = useQueryClientFn.mock.results.at(-1)?.value
 
-      //@ts-expect-error not visible on wrapper
-      await wrapper.vm.enableClaim()
-
-      //@ts-expect-error not visible on wrapper
-      expect(wrapper.vm.isLoading).toBeFalsy()
-      expect(mocks.mockToastStore.addErrorToast).toBeCalledWith(
-        'Cash Remuneration EIP712 contract address not found'
-      )
-
-      vi.mocked(useTeamStore).mockRestore()
-
-      //@ts-expect-error only mocking necessary values
-      vi.mocked(waitForTransactionReceipt).mockResolvedValue({
-        status: 'success'
-      })
-      await flushPromises()
-
-      const logError = vi.spyOn(log, 'error')
-
-      // Test sync failure
-      mockSyncMutateAsync.mockRejectedValueOnce(new Error('Sync failed'))
-
-      wrapper = createWrapper(true)
-
-      //@ts-expect-error not visible on wrapper
-      await wrapper.vm.enableClaim()
-      expect(mocks.mockToastStore.addErrorToast).toBeCalledWith('Failed to update Claim status')
-
-      vi.mocked(useToastStore).mockClear()
-
-      // Test transaction reverted
-      //@ts-expect-error only mocking necessary values
-      vi.mocked(waitForTransactionReceipt).mockResolvedValue({
-        status: 'reverted'
-      })
-
-      wrapper = createWrapper(true)
-
-      //@ts-expect-error not visible on wrapper
-      await wrapper.vm.enableClaim()
-
-      expect(mocks.mockToastStore.addErrorToast).toBeCalledWith(
-        'Transaction failed: Failed to enable claim'
-      )
-
-      vi.mocked(useToastStore).mockClear()
-
-      // Test simulate error
-      //@ts-expect-error only mocking necessary values
-      vi.mocked(waitForTransactionReceipt).mockResolvedValue({
-        status: 'success'
-      })
-      const simulateError = new Error('Simulate error')
-      vi.mocked(simulateContract).mockRejectedValue(simulateError)
-
-      wrapper = createWrapper(true)
-
-      //@ts-expect-error not visible on wrapper
-      await wrapper.vm.enableClaim()
-
-      expect(logError).toBeCalledWith('Enable error', simulateError)
-      expect(mocks.mockToastStore.addErrorToast).toBeCalledWith('Parsed error message')
+    expect(mutateAsync).toHaveBeenCalled()
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith({
+      queryKey: ['weekly-claims', '1']
     })
+  })
+
+  it('handles enable mutation onError with user_rejected silently', async () => {
+    vi.spyOn(utils, 'classifyError').mockReturnValue({
+      category: 'user_rejected',
+      userMessage: 'User rejected',
+      raw: new Error('rejected')
+    } as ReturnType<typeof utils.classifyError>)
+
+    setupSyncMutation()
+    setEnableError(new Error('rejected'))
+
+    const wrapper = createWrapper(true)
+    await wrapper.find('[data-test="enable-action"]').trigger('click')
+    await flushPromises()
+
+    expect(mockLog.error).toHaveBeenCalledWith('Enable error', expect.any(Error))
+  })
+
+  it('handles enable mutation onError with regular error', async () => {
+    vi.spyOn(utils, 'classifyError').mockReturnValue({
+      category: 'unknown',
+      userMessage: 'Failure',
+      raw: new Error('boom')
+    } as ReturnType<typeof utils.classifyError>)
+
+    setupSyncMutation()
+    setEnableError(new Error('boom'))
+
+    const wrapper = createWrapper(true)
+    await wrapper.find('[data-test="enable-action"]').trigger('click')
+    await flushPromises()
+
+    expect(mockLog.error).toHaveBeenCalledWith('Enable error', expect.any(Error))
+  })
+
+  it('skips click while mutation is pending', async () => {
+    setupSyncMutation()
+    mockCashRemunerationWrites.enableClaim.isPending.value = true
+    mockCashRemunerationWrites.enableClaim.mutate = vi.fn()
+
+    const wrapper = createWrapper(true)
+    await wrapper.find('[data-test="enable-action"]').trigger('click')
+    await flushPromises()
+
+    expect(mockCashRemunerationWrites.enableClaim.mutate).not.toHaveBeenCalled()
+    mockCashRemunerationWrites.enableClaim.isPending.value = false
   })
 })

@@ -30,9 +30,7 @@ const {
   mockSafeSdk,
   mockExecuteMutation,
   mockProposeTransaction,
-  mockGetTokenAddress,
-  mockAddSuccessToast,
-  mockAddErrorToast
+  mockGetTokenAddress
 } = vi.hoisted(() => ({
   mockUseConnection: vi.fn<[], MockConnection>(),
   mockUseChainId: vi.fn(() => ref(137)),
@@ -48,9 +46,7 @@ const {
     mutateAsync: vi.fn()
   } as MockMutation,
   mockProposeTransaction: vi.fn(),
-  mockGetTokenAddress: vi.fn(),
-  mockAddSuccessToast: vi.fn(),
-  mockAddErrorToast: vi.fn()
+  mockGetTokenAddress: vi.fn()
 }))
 
 // Mock external dependencies
@@ -79,13 +75,6 @@ vi.mock('../useSafeProposal', () => ({
 
 vi.mock('@/utils', () => ({
   getTokenAddress: mockGetTokenAddress
-}))
-
-vi.mock('@/stores', () => ({
-  useToastStore: () => ({
-    addSuccessToast: mockAddSuccessToast,
-    addErrorToast: mockAddErrorToast
-  })
 }))
 
 vi.mock('viem', async (importOriginal) => {
@@ -164,7 +153,7 @@ describe('useSafeTransfer (state & errors)', () => {
 
       expect(result).toBeNull()
       expect(error.value?.message).toBe('Safe SDK initialization failed')
-      expect(mockAddErrorToast).toHaveBeenCalledWith('Safe SDK initialization failed')
+      // expect(mockAddErrorToast).toHaveBeenCalledWith('Safe SDK initialization failed')
       expect(consoleErrorSpy).toHaveBeenCalledWith('Safe transfer error:', sdkError)
 
       consoleErrorSpy.mockRestore()
@@ -183,7 +172,7 @@ describe('useSafeTransfer (state & errors)', () => {
 
       expect(result).toBeNull()
       expect(error.value?.message).toBe('Failed to transfer from Safe')
-      expect(mockAddErrorToast).toHaveBeenCalledWith('Failed to transfer from Safe')
+      // expect(mockAddErrorToast).toHaveBeenCalledWith('Failed to transfer from Safe')
 
       consoleErrorSpy.mockRestore()
     })

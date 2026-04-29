@@ -1,13 +1,9 @@
 import { ethers } from 'hardhat'
 import { expect } from 'chai'
-import { time } from '@nomicfoundation/hardhat-network-helpers'
-import { HardhatEthersSigner } from '@nomicfoundation/hardhat-ethers/signers'
-import { Proposals } from '../typechain-types'
+import { time, loadFixture } from '@nomicfoundation/hardhat-network-helpers'
 
-// --- Constants ---
 const ONE_DAY_IN_SECS = 24 * 60 * 60
 
-// --- Enums ---
 enum VoteOption {
   Yes,
   No,
@@ -22,27 +18,38 @@ enum ProposalState {
 }
 
 describe('Proposals Contract', function () {
-  // --- Test Fixture ---
   async function deployContracts() {
-    // --- Get Signers ---
     const [owner, boardMember1, boardMember2, boardMember3, nonMember] = await ethers.getSigners()
 
-    // --- Deploy Mocks ---
+    const MockOfficerFactory = await ethers.getContractFactory('MockOfficer')
+    const mockOfficer = await MockOfficerFactory.deploy()
+
     const BoardOfDirectorsMockFactory = await ethers.getContractFactory('MockBoardOfDirectors')
     const boardOfDirectorsMock = await BoardOfDirectorsMockFactory.deploy()
-
-    // --- Add Members to Mock ---
     await boardOfDirectorsMock.addMember(boardMember1.address)
     await boardOfDirectorsMock.addMember(boardMember2.address)
     await boardOfDirectorsMock.addMember(boardMember3.address)
 
-    // --- Deploy Proposals Contract ---
+    // Deploy Proposals behind a beacon proxy. The implementation's constructor calls
+    // `_disableInitializers()`, so `initialize` can only run in the context of a proxy.
+    // Spawning the proxy through MockOfficer ensures the Proposals proxy records
+    // `officerAddress = mockOfficer`.
     const ProposalsFactory = await ethers.getContractFactory('Proposals')
-    const proposalsContract = await (await ProposalsFactory.deploy()).waitForDeployment()
-    await proposalsContract.initialize(owner.address)
+    const proposalsImpl = await ProposalsFactory.deploy()
+    const BeaconFactory = await ethers.getContractFactory('Beacon')
+    const proposalsBeacon = await BeaconFactory.deploy(await proposalsImpl.getAddress())
+    const initData = proposalsImpl.interface.encodeFunctionData('initialize', [owner.address])
+    const tx = await mockOfficer.deployBeaconProxy(
+      await proposalsBeacon.getAddress(),
+      initData,
+      'Proposals'
+    )
+    await tx.wait()
+    const proposalsProxyAddress = await mockOfficer.findDeployedContract('Proposals')
+    const proposalsContract = await ethers.getContractAt('Proposals', proposalsProxyAddress)
 
-    // --- Set Board of Directors Address ---
-    await proposalsContract.setBoardOfDirectorsContractAddress(
+    await mockOfficer.setDeployedContract(
+      'BoardOfDirectors',
       await boardOfDirectorsMock.getAddress()
     )
 
@@ -53,341 +60,402 @@ describe('Proposals Contract', function () {
       boardMember1,
       boardMember2,
       boardMember3,
-      nonMember
+      nonMember,
+      mockOfficer
     }
   }
 
-  describe('Deployment and Initialization', function () {
-    it('Should set the right owner', async function () {
-      const { proposalsContract, owner } = await deployContracts()
-      expect(await proposalsContract.owner()).to.equal(owner.address)
-    })
+  it('sets owner and starts IDs from 1', async function () {
+    const { proposalsContract, owner, boardMember1 } = await deployContracts()
+    const now = await time.latest()
 
-    it('Should start with proposal ID 1', async function () {
-      const { proposalsContract, boardMember1 } = await deployContracts()
-      const now = await time.latest()
-      await proposalsContract
-        .connect(boardMember1)
-        .createProposal(
-          'Test Title',
-          'Test Description',
-          'Budget',
-          now + ONE_DAY_IN_SECS,
-          now + 2 * ONE_DAY_IN_SECS
-        )
-      const proposal = await proposalsContract.getProposal(1)
-      expect(proposal.id).to.equal(1)
-    })
+    expect(await proposalsContract.owner()).to.equal(owner.address)
+
+    await proposalsContract
+      .connect(boardMember1)
+      .createProposal('Test', 'Description', 'Budget', now + 1, now + ONE_DAY_IN_SECS)
+
+    const proposal = await proposalsContract.getProposal(1)
+    expect(proposal.id).to.equal(1)
   })
 
-  describe('Proposal Creation', function () {
-    it('Should allow a board member to create a proposal', async function () {
-      const { proposalsContract, boardMember1 } = await deployContracts()
-      const now = await time.latest()
-      const startDate = now + ONE_DAY_IN_SECS
-      const endDate = now + 2 * ONE_DAY_IN_SECS
+  it('allows only board members to create proposals', async function () {
+    const { proposalsContract, boardMember1, nonMember } = await deployContracts()
+    const now = await time.latest()
 
-      await expect(
-        proposalsContract
-          .connect(boardMember1)
-          .createProposal('Test Proposal', 'A description', 'Budget', startDate, endDate)
-      )
-        .to.emit(proposalsContract, 'ProposalCreated')
-        .withArgs(1, 'Test Proposal', boardMember1.address, startDate, endDate)
-    })
+    await expect(
+      proposalsContract
+        .connect(boardMember1)
+        .createProposal('Valid', 'Description', 'Policy', now + 1, now + ONE_DAY_IN_SECS)
+    ).to.emit(proposalsContract, 'ProposalCreated')
 
-    it('Should revert if a non-board member tries to create a proposal', async function () {
-      const { proposalsContract, nonMember } = await deployContracts()
-      const now = await time.latest()
-      await expect(
-        proposalsContract
-          .connect(nonMember)
-          .createProposal('Invalid Proposal', '...', 'Financial', now + 1, now + 2)
-      ).to.be.revertedWithCustomError(proposalsContract, 'OnlyBoardMember')
-    })
-
-    it('Should revert if title more than 100 characters', async function () {
-      const { proposalsContract, boardMember1 } = await deployContracts()
-      const now = await time.latest()
-      const longTitle = 'T'.repeat(101) // 101 characters
-      await expect(
-        proposalsContract
-          .connect(boardMember1)
-          .createProposal(longTitle, 'Description', 'Technical', now + 1, now + 2)
-      ).to.be.revertedWithCustomError(proposalsContract, 'InvalidProposalContent')
-    })
-
-    it('Should revert with invalid dates (start >= end)', async function () {
-      const { proposalsContract, boardMember1 } = await deployContracts()
-      const now = await time.latest()
-      await expect(
-        proposalsContract
-          .connect(boardMember1)
-          .createProposal('Title', 'Desc', 'Technical', now + 2, now + 1)
-      ).to.be.revertedWithCustomError(proposalsContract, 'InvalidProposalDates')
-    })
-
-    it('Should revert with invalid dates (start in the past)', async function () {
-      const { proposalsContract, boardMember1 } = await deployContracts()
-      const now = await time.latest()
-      await expect(
-        proposalsContract
-          .connect(boardMember1)
-          .createProposal('Title', 'Desc', 'Technical', now - 1, now + 1)
-      ).to.be.revertedWithCustomError(proposalsContract, 'InvalidProposalDates')
-    })
-
-    it('Should revert with invalid content (empty title)', async function () {
-      const { proposalsContract, boardMember1 } = await deployContracts()
-      const now = await time.latest()
-      await expect(
-        proposalsContract
-          .connect(boardMember1)
-          .createProposal('', 'Description', 'Technical', now + 1, now + 2)
-      ).to.be.revertedWithCustomError(proposalsContract, 'InvalidProposalContent')
-    })
+    await expect(
+      proposalsContract
+        .connect(nonMember)
+        .createProposal('Invalid', 'Description', 'Policy', now + 2, now + ONE_DAY_IN_SECS + 1)
+    ).to.be.revertedWithCustomError(proposalsContract, 'OnlyBoardMember')
   })
 
-  describe('Voting', function () {
-    let proposalsContract: Proposals
-    let boardMember1: HardhatEthersSigner,
-      boardMember2: HardhatEthersSigner,
-      boardMember3: HardhatEthersSigner
-    let proposalId: number
+  it('tracks voting and tallies to succeeded', async function () {
+    const { proposalsContract, boardMember1, boardMember2, boardMember3 } = await deployContracts()
+    const now = await time.latest()
 
-    beforeEach(async function () {
-      const deployed = await deployContracts()
-      proposalsContract = deployed.proposalsContract
-      boardMember1 = deployed.boardMember1
-      boardMember2 = deployed.boardMember2
-      boardMember3 = deployed.boardMember3
+    await proposalsContract
+      .connect(boardMember1)
+      .createProposal('Vote Test', 'Description', 'Budget', now + 1, now + ONE_DAY_IN_SECS + 1)
 
-      const now = await time.latest()
-      await proposalsContract
-        .connect(boardMember1)
-        .createProposal(
-          'Voting Test',
-          'Desc',
-          'Technical',
-          now + ONE_DAY_IN_SECS,
-          now + 3 * ONE_DAY_IN_SECS
-        )
-      proposalId = 1
-      await time.increase(ONE_DAY_IN_SECS + 1) // Move time forward to voting period
-    })
+    await time.increase(2)
 
-    it("Should allow a board member to cast a 'Yes' vote", async function () {
-      await expect(proposalsContract.connect(boardMember1).castVote(proposalId, VoteOption.Yes))
-        .to.emit(proposalsContract, 'ProposalVoted')
-        .withArgs(
-          proposalId,
-          boardMember1.address,
-          VoteOption.Yes,
-          (value: bigint) => typeof value === 'bigint'
-        )
+    await proposalsContract.connect(boardMember1).castVote(1, VoteOption.Yes)
+    await proposalsContract.connect(boardMember2).castVote(1, VoteOption.Yes)
+    await proposalsContract.connect(boardMember3).castVote(1, VoteOption.No)
 
-      const proposal = await proposalsContract.getProposal(proposalId)
-      expect(proposal.yesCount).to.equal(1)
-      expect(proposal.voteCount).to.equal(1)
-    })
-
-    it("Should allow a board member to cast a 'No' vote", async function () {
-      await proposalsContract.connect(boardMember2).castVote(proposalId, VoteOption.No)
-      const proposal = await proposalsContract.getProposal(proposalId)
-      expect(proposal.noCount).to.equal(1)
-    })
-
-    it('Should allow a board member to cast an "Abstain" vote', async function () {
-      await proposalsContract.connect(boardMember3).castVote(proposalId, VoteOption.Abstain)
-      const proposal = await proposalsContract.getProposal(proposalId)
-      expect(proposal.abstainCount).to.equal(1)
-    })
-
-    it("Should revert if trying to vote on a proposal that doesn't exist", async function () {
-      await expect(
-        proposalsContract.connect(boardMember1).castVote(999, VoteOption.Yes)
-      ).to.be.revertedWithCustomError(proposalsContract, 'ProposalNotFound')
-    })
-
-    it('Should revert if voting before the start date', async function () {
-      const { proposalsContract, boardMember1 } = await deployContracts()
-      const now = await time.latest()
-      await proposalsContract
-        .connect(boardMember1)
-        .createProposal(
-          'Future Vote',
-          'Desc',
-          'Technical',
-          now + 5 * ONE_DAY_IN_SECS,
-          now + 6 * ONE_DAY_IN_SECS
-        )
-      await expect(
-        proposalsContract.connect(boardMember1).castVote(1, VoteOption.Yes)
-      ).to.be.revertedWithCustomError(proposalsContract, 'ProposalVotingNotStarted')
-    })
-
-    it('Should revert if voting after the end date', async function () {
-      await time.increase(3 * ONE_DAY_IN_SECS) // Move time past the end date
-      await expect(
-        proposalsContract.connect(boardMember1).castVote(proposalId, VoteOption.Yes)
-      ).to.be.revertedWithCustomError(proposalsContract, 'ProposalVotingEnded')
-    })
-
-    it('Should revert if a member tries to vote twice', async function () {
-      await proposalsContract.connect(boardMember1).castVote(proposalId, VoteOption.Yes)
-      await expect(
-        proposalsContract.connect(boardMember1).castVote(proposalId, VoteOption.Yes)
-      ).to.be.revertedWithCustomError(proposalsContract, 'ProposalAlreadyVoted')
-    })
+    const proposal = await proposalsContract.getProposal(1)
+    expect(proposal.voteCount).to.equal(3)
+    expect(proposal.yesCount).to.equal(2)
+    expect(proposal.noCount).to.equal(1)
+    expect(proposal.state).to.equal(1) // Succeeded
   })
 
-  describe('Tallying Results', function () {
-    let proposalsContract: Proposals
-    let boardMember1: HardhatEthersSigner,
-      boardMember2: HardhatEthersSigner,
-      boardMember3: HardhatEthersSigner
-    let proposalId: number
+  it('returns board members through officer wiring', async function () {
+    const { proposalsContract, boardMember1, boardMember2, boardMember3 } = await deployContracts()
+    const members = await proposalsContract.getBoardOfDirectors()
 
-    beforeEach(async function () {
-      const deployed = await deployContracts()
-      proposalsContract = deployed.proposalsContract
-      boardMember1 = deployed.boardMember1
-      boardMember2 = deployed.boardMember2
-      boardMember3 = deployed.boardMember3
-
-      const now = await time.latest()
-      await proposalsContract
-        .connect(boardMember1)
-        .createProposal('Tally Test', 'Desc', 'Technical', now + 1, now + ONE_DAY_IN_SECS)
-      proposalId = 1
-      await time.increase(2) // Move time to active voting period
-    })
-
-    it('Should automatically tally and set state to Succeeded', async function () {
-      await proposalsContract.connect(boardMember1).castVote(proposalId, VoteOption.Yes)
-      await proposalsContract.connect(boardMember2).castVote(proposalId, VoteOption.Yes)
-      await proposalsContract.connect(boardMember3).castVote(proposalId, VoteOption.No) // 2 Yes, 1 No
-
-      const proposal = await proposalsContract.getProposal(proposalId)
-      expect(proposal.state).to.equal(ProposalState.Succeeded)
-    })
-
-    it('Should automatically tally and set state to Defeated', async function () {
-      await proposalsContract.connect(boardMember1).castVote(proposalId, VoteOption.No)
-      await proposalsContract.connect(boardMember2).castVote(proposalId, VoteOption.No)
-      await proposalsContract.connect(boardMember3).castVote(proposalId, VoteOption.Yes) // 1 Yes, 2 No
-
-      const proposal = await proposalsContract.getProposal(proposalId)
-      expect(proposal.state).to.equal(ProposalState.Defeated)
-    })
-
-    it('Should automatically tally and set state to Expired on a tie', async function () {
-      // Need to adjust board members for a tie scenario
-      const { proposalsContract, boardMember1, boardMember2, boardOfDirectorsMock } =
-        await deployContracts()
-      await boardOfDirectorsMock.removeMember((await ethers.getSigners())[3].address) // Remove 3rd member for even count
-      await proposalsContract
-        .connect(boardMember1)
-        .createProposal(
-          'Tie Test',
-          'Desc',
-          'Technical',
-          (await time.latest()) + 1,
-          (await time.latest()) + ONE_DAY_IN_SECS
-        )
-      await time.increase(2)
-
-      await proposalsContract.connect(boardMember1).castVote(1, VoteOption.Yes)
-      await proposalsContract.connect(boardMember2).castVote(1, VoteOption.No)
-
-      const proposal = await proposalsContract.getProposal(1)
-      expect(proposal.state).to.equal(ProposalState.Expired)
-    })
-
-    it('Should allow manual tallying by a board member', async function () {
-      await proposalsContract.connect(boardMember1).castVote(proposalId, VoteOption.Yes)
-      await proposalsContract.connect(boardMember2).castVote(proposalId, VoteOption.Yes)
-      // Not all members voted
-      await time.increase(ONE_DAY_IN_SECS) // Expire the proposal
-
-      await proposalsContract.connect(boardMember3).tallyResults(proposalId)
-      const proposal = await proposalsContract.getProposal(proposalId)
-      expect(proposal.state).to.equal(ProposalState.Succeeded)
-    })
+    expect(members).to.have.lengthOf(3)
+    expect(members).to.include(boardMember1.address)
+    expect(members).to.include(boardMember2.address)
+    expect(members).to.include(boardMember3.address)
   })
 
-  describe('View Functions and Modifiers', function () {
-    it('getProposal should return correct proposal data', async function () {
-      const { proposalsContract, boardMember1 } = await deployContracts()
-      const now = await time.latest()
-      const startDate = now + 1
-      const endDate = now + ONE_DAY_IN_SECS
-      await proposalsContract
-        .connect(boardMember1)
-        .createProposal('Title A', 'Desc B', 'Technical', startDate, endDate)
+  it('reverts when board contract is not configured in officer', async function () {
+    const [owner] = await ethers.getSigners()
+    const MockOfficerFactory = await ethers.getContractFactory('MockOfficer')
+    const mockOfficer = await MockOfficerFactory.deploy()
 
-      const proposal = await proposalsContract.getProposal(1)
-      expect(proposal.id).to.equal(1)
-      expect(proposal.title).to.equal('Title A')
-      expect(proposal.description).to.equal('Desc B')
-      expect(proposal.creator).to.equal(boardMember1.address)
-    })
+    // Deploy Proposals behind a beacon proxy so `_disableInitializers()` on the impl
+    // doesn't block initialization, and `officerAddress` is set to mockOfficer.
+    const ProposalsFactory = await ethers.getContractFactory('Proposals')
+    const proposalsImpl = await ProposalsFactory.deploy()
+    const BeaconFactory = await ethers.getContractFactory('Beacon')
+    const proposalsBeacon = await BeaconFactory.deploy(await proposalsImpl.getAddress())
+    const initData = proposalsImpl.interface.encodeFunctionData('initialize', [owner.address])
+    await mockOfficer.deployBeaconProxy(await proposalsBeacon.getAddress(), initData, 'Proposals')
+    const proposalsProxyAddress = await mockOfficer.findDeployedContract('Proposals')
+    const proposalsContract = await ethers.getContractAt('Proposals', proposalsProxyAddress)
 
-    it('hasVoted should return true for a member who has voted', async function () {
-      const { proposalsContract, boardMember1 } = await deployContracts()
-      const now = await time.latest()
-      await proposalsContract
-        .connect(boardMember1)
-        .createProposal('Vote Test', 'Desc', 'Technical', now + 1, now + 2)
+    const now = await time.latest()
 
-      await proposalsContract.connect(boardMember1).castVote(1, VoteOption.Yes)
-      const hasVoted = await proposalsContract.hasVoted(1, boardMember1.address)
-      expect(hasVoted).to.be.true
-    })
-
-    it('getProposal should revert for a non-existent proposal', async function () {
-      const { proposalsContract } = await deployContracts()
-      await expect(proposalsContract.getProposal(99)).to.be.revertedWithCustomError(
-        proposalsContract,
-        'ProposalNotFound'
-      )
-    })
-
-    it('getBoardOfDirectors should return the list of members', async function () {
-      const { proposalsContract, boardMember1, boardMember2, boardMember3 } =
-        await deployContracts()
-      const members = await proposalsContract.getBoardOfDirectors()
-      expect(members).to.have.lengthOf(3)
-      expect(members).to.include(boardMember1.address)
-      expect(members).to.include(boardMember2.address)
-      expect(members).to.include(boardMember3.address)
-    })
-
-    it('should revert calls if board of directors address is not set', async function () {
-      const ProposalsFactory = await ethers.getContractFactory('Proposals')
-      const proposalsContract = await (await ProposalsFactory.deploy()).waitForDeployment()
-      await proposalsContract.initialize((await ethers.provider.getSigner(0)).address)
-      const now = await time.latest()
-
-      await expect(
-        proposalsContract.createProposal('T', 'D', 't', now + 1, now + 2)
-      ).to.be.revertedWithCustomError(proposalsContract, 'BoardOfDirectorAddressNotSet')
-    })
+    await expect(
+      proposalsContract.createProposal('T', 'D', 'Type', now + 1, now + ONE_DAY_IN_SECS)
+    ).to.be.revertedWithCustomError(proposalsContract, 'BoardOfDirectorsNotFound')
   })
-})
 
-// A mock contract for BoardOfDirectors to isolate testing of Proposals
-describe('BoardOfDirectorsMock', function () {
-  it('Should allow adding and checking members', async function () {
-    const [member1, member2] = await ethers.getSigners()
-    const BoardOfDirectorsMockFactory = await ethers.getContractFactory('MockBoardOfDirectors')
-    const mock = await BoardOfDirectorsMockFactory.deploy()
+  it('tallies to Defeated when No votes exceed Yes votes', async function () {
+    const { proposalsContract, boardMember1, boardMember2, boardMember3 } =
+      await loadFixture(deployContracts)
+    const now = await time.latest()
 
-    await mock.addMember(member1.address)
-    expect(await mock.isMember(member1.address)).to.be.true
-    expect(await mock.isMember(member2.address)).to.be.false
+    await proposalsContract
+      .connect(boardMember1)
+      .createProposal('Rejected', 'Description', 'Budget', now + 1, now + ONE_DAY_IN_SECS + 1)
 
-    const members = await mock.getBoardOfDirectors()
-    expect(members).to.include(member1.address)
+    await time.increase(2)
+
+    await proposalsContract.connect(boardMember1).castVote(1, VoteOption.No)
+    await proposalsContract.connect(boardMember2).castVote(1, VoteOption.No)
+    await proposalsContract.connect(boardMember3).castVote(1, VoteOption.Yes)
+
+    const proposal = await proposalsContract.getProposal(1)
+    expect(proposal.state).to.equal(ProposalState.Defeated)
+    expect(proposal.noCount).to.equal(2)
+    expect(proposal.yesCount).to.equal(1)
+  })
+
+  it('tallies to Expired on a tie (yes == no)', async function () {
+    const { proposalsContract, boardMember1, boardMember2, boardMember3 } =
+      await loadFixture(deployContracts)
+    const now = await time.latest()
+
+    await proposalsContract
+      .connect(boardMember1)
+      .createProposal('Tied', 'Description', 'Budget', now + 1, now + ONE_DAY_IN_SECS + 1)
+
+    await time.increase(2)
+
+    await proposalsContract.connect(boardMember1).castVote(1, VoteOption.Yes)
+    await proposalsContract.connect(boardMember2).castVote(1, VoteOption.No)
+    await proposalsContract.connect(boardMember3).castVote(1, VoteOption.Abstain)
+
+    const proposal = await proposalsContract.getProposal(1)
+    expect(proposal.state).to.equal(ProposalState.Expired)
+    expect(proposal.yesCount).to.equal(1)
+    expect(proposal.noCount).to.equal(1)
+    expect(proposal.abstainCount).to.equal(1)
+  })
+
+  it('emits ProposalVoted with the correct arguments', async function () {
+    const { proposalsContract, boardMember1 } = await loadFixture(deployContracts)
+    const now = await time.latest()
+
+    await proposalsContract
+      .connect(boardMember1)
+      .createProposal('Emit Test', 'Description', 'Budget', now + 1, now + ONE_DAY_IN_SECS + 1)
+
+    await time.increase(2)
+
+    const tx = await proposalsContract.connect(boardMember1).castVote(1, VoteOption.Yes)
+    const receipt = await tx.wait()
+    const blk = await ethers.provider.getBlock(receipt!.blockNumber)
+
+    await expect(tx)
+      .to.emit(proposalsContract, 'ProposalVoted')
+      .withArgs(1, boardMember1.address, VoteOption.Yes, blk!.timestamp)
+  })
+
+  it('emits ProposalTallyResults when the last member votes', async function () {
+    const { proposalsContract, boardMember1, boardMember2, boardMember3 } =
+      await loadFixture(deployContracts)
+    const now = await time.latest()
+
+    await proposalsContract
+      .connect(boardMember1)
+      .createProposal('Auto Tally', 'Description', 'Budget', now + 1, now + ONE_DAY_IN_SECS + 1)
+
+    await time.increase(2)
+
+    await proposalsContract.connect(boardMember1).castVote(1, VoteOption.Yes)
+    await proposalsContract.connect(boardMember2).castVote(1, VoteOption.Yes)
+
+    await expect(proposalsContract.connect(boardMember3).castVote(1, VoteOption.No))
+      .to.emit(proposalsContract, 'ProposalTallyResults')
+      .withArgs(1, ProposalState.Succeeded, 2, 1, 0)
+  })
+
+  it('rejects castVote before voting has started', async function () {
+    const { proposalsContract, boardMember1 } = await loadFixture(deployContracts)
+    const now = await time.latest()
+
+    await proposalsContract
+      .connect(boardMember1)
+      .createProposal('Future', 'Description', 'Budget', now + 1000, now + ONE_DAY_IN_SECS + 1000)
+
+    // Do not advance time
+    await expect(
+      proposalsContract.connect(boardMember1).castVote(1, VoteOption.Yes)
+    ).to.be.revertedWithCustomError(proposalsContract, 'ProposalVotingNotStarted')
+  })
+
+  it('rejects castVote after the voting period has ended', async function () {
+    const { proposalsContract, boardMember1 } = await loadFixture(deployContracts)
+    const now = await time.latest()
+    const startDate = now + 5
+    const endDate = startDate + 60
+
+    await proposalsContract
+      .connect(boardMember1)
+      .createProposal('Expired', 'Description', 'Budget', startDate, endDate)
+
+    await time.increaseTo(endDate + 10)
+
+    await expect(
+      proposalsContract.connect(boardMember1).castVote(1, VoteOption.Yes)
+    ).to.be.revertedWithCustomError(proposalsContract, 'ProposalVotingEnded')
+  })
+
+  it('rejects duplicate votes from the same member', async function () {
+    const { proposalsContract, boardMember1 } = await loadFixture(deployContracts)
+    const now = await time.latest()
+
+    await proposalsContract
+      .connect(boardMember1)
+      .createProposal('No Double', 'Description', 'Budget', now + 1, now + ONE_DAY_IN_SECS + 1)
+
+    await time.increase(2)
+
+    await proposalsContract.connect(boardMember1).castVote(1, VoteOption.Yes)
+    await expect(
+      proposalsContract.connect(boardMember1).castVote(1, VoteOption.No)
+    ).to.be.revertedWithCustomError(proposalsContract, 'ProposalAlreadyVoted')
+  })
+
+  it('rejects castVote on a non-existent proposal', async function () {
+    const { proposalsContract, boardMember1 } = await loadFixture(deployContracts)
+
+    await expect(
+      proposalsContract.connect(boardMember1).castVote(999, VoteOption.Yes)
+    ).to.be.revertedWithCustomError(proposalsContract, 'ProposalNotFound')
+  })
+
+  it('rejects castVote from a non board member', async function () {
+    const { proposalsContract, boardMember1, nonMember } = await loadFixture(deployContracts)
+    const now = await time.latest()
+
+    await proposalsContract
+      .connect(boardMember1)
+      .createProposal('Members Only', 'Description', 'Budget', now + 1, now + ONE_DAY_IN_SECS + 1)
+
+    await time.increase(2)
+
+    await expect(
+      proposalsContract.connect(nonMember).castVote(1, VoteOption.Yes)
+    ).to.be.revertedWithCustomError(proposalsContract, 'OnlyBoardMember')
+  })
+
+  it('rejects createProposal with empty title', async function () {
+    const { proposalsContract, boardMember1 } = await loadFixture(deployContracts)
+    const now = await time.latest()
+
+    await expect(
+      proposalsContract
+        .connect(boardMember1)
+        .createProposal('', 'Description', 'Budget', now + 1, now + ONE_DAY_IN_SECS)
+    ).to.be.revertedWithCustomError(proposalsContract, 'InvalidProposalContent')
+  })
+
+  it('rejects createProposal with empty description', async function () {
+    const { proposalsContract, boardMember1 } = await loadFixture(deployContracts)
+    const now = await time.latest()
+
+    await expect(
+      proposalsContract
+        .connect(boardMember1)
+        .createProposal('Title', '', 'Budget', now + 1, now + ONE_DAY_IN_SECS)
+    ).to.be.revertedWithCustomError(proposalsContract, 'InvalidProposalContent')
+  })
+
+  it('rejects createProposal with title too long', async function () {
+    const { proposalsContract, boardMember1 } = await loadFixture(deployContracts)
+    const now = await time.latest()
+
+    const longTitle = 'a'.repeat(101)
+    await expect(
+      proposalsContract
+        .connect(boardMember1)
+        .createProposal(longTitle, 'Description', 'Budget', now + 1, now + ONE_DAY_IN_SECS)
+    ).to.be.revertedWithCustomError(proposalsContract, 'InvalidProposalContent')
+  })
+
+  it('rejects createProposal with invalid dates (start >= end)', async function () {
+    const { proposalsContract, boardMember1 } = await loadFixture(deployContracts)
+    const now = await time.latest()
+
+    await expect(
+      proposalsContract
+        .connect(boardMember1)
+        .createProposal('Title', 'Description', 'Budget', now + 1000, now + 500)
+    ).to.be.revertedWithCustomError(proposalsContract, 'InvalidProposalDates')
+  })
+
+  it('rejects createProposal with start date in the past', async function () {
+    const { proposalsContract, boardMember1 } = await loadFixture(deployContracts)
+    const now = await time.latest()
+
+    await expect(
+      proposalsContract
+        .connect(boardMember1)
+        .createProposal('Title', 'Description', 'Budget', now - 100, now + ONE_DAY_IN_SECS)
+    ).to.be.revertedWithCustomError(proposalsContract, 'InvalidProposalDates')
+  })
+
+  it('rejects createProposal with zero dates', async function () {
+    const { proposalsContract, boardMember1 } = await loadFixture(deployContracts)
+
+    await expect(
+      proposalsContract.connect(boardMember1).createProposal('Title', 'Description', 'Budget', 0, 0)
+    ).to.be.revertedWithCustomError(proposalsContract, 'InvalidProposalDates')
+  })
+
+  it('getProposal reverts for non-existent proposal', async function () {
+    const { proposalsContract } = await loadFixture(deployContracts)
+
+    await expect(proposalsContract.getProposal(999)).to.be.revertedWithCustomError(
+      proposalsContract,
+      'ProposalNotFound'
+    )
+  })
+
+  it('hasVoted reflects vote status and reverts for unknown proposal', async function () {
+    const { proposalsContract, boardMember1, boardMember2 } = await loadFixture(deployContracts)
+    const now = await time.latest()
+
+    await proposalsContract
+      .connect(boardMember1)
+      .createProposal('Track', 'Description', 'Budget', now + 1, now + ONE_DAY_IN_SECS + 1)
+
+    await time.increase(2)
+
+    expect(await proposalsContract.hasVoted(1, boardMember1.address)).to.equal(false)
+    await proposalsContract.connect(boardMember1).castVote(1, VoteOption.Yes)
+    expect(await proposalsContract.hasVoted(1, boardMember1.address)).to.equal(true)
+    expect(await proposalsContract.hasVoted(1, boardMember2.address)).to.equal(false)
+
+    await expect(
+      proposalsContract.hasVoted(999, boardMember1.address)
+    ).to.be.revertedWithCustomError(proposalsContract, 'ProposalNotFound')
+  })
+
+  it('tallyResults can be called manually by a board member and reverts for non-member', async function () {
+    const { proposalsContract, boardMember1, boardMember2, nonMember } =
+      await loadFixture(deployContracts)
+    const now = await time.latest()
+
+    await proposalsContract
+      .connect(boardMember1)
+      .createProposal('Manual Tally', 'Description', 'Budget', now + 1, now + ONE_DAY_IN_SECS + 1)
+
+    await time.increase(2)
+
+    await proposalsContract.connect(boardMember1).castVote(1, VoteOption.Yes)
+    await proposalsContract.connect(boardMember2).castVote(1, VoteOption.No)
+
+    // Non-member cannot tally
+    await expect(
+      proposalsContract.connect(nonMember).tallyResults(1)
+    ).to.be.revertedWithCustomError(proposalsContract, 'OnlyBoardMember')
+
+    // Board member can tally manually (yes == no -> Expired)
+    await expect(proposalsContract.connect(boardMember1).tallyResults(1)).to.emit(
+      proposalsContract,
+      'ProposalTallyResults'
+    )
+
+    const proposal = await proposalsContract.getProposal(1)
+    expect(proposal.state).to.equal(ProposalState.Expired)
+  })
+
+  it('tallyResults reverts for non-existent proposal', async function () {
+    const { proposalsContract, boardMember1 } = await loadFixture(deployContracts)
+
+    await expect(
+      proposalsContract.connect(boardMember1).tallyResults(999)
+    ).to.be.revertedWithCustomError(proposalsContract, 'ProposalNotFound')
+  })
+
+  it('tallyResults reverts before voting has started', async function () {
+    const { proposalsContract, boardMember1 } = await loadFixture(deployContracts)
+    const now = await time.latest()
+
+    await proposalsContract
+      .connect(boardMember1)
+      .createProposal('Not yet', 'Description', 'Budget', now + 1000, now + ONE_DAY_IN_SECS + 1000)
+
+    await expect(
+      proposalsContract.connect(boardMember1).tallyResults(1)
+    ).to.be.revertedWithCustomError(proposalsContract, 'ProposalVotingNotStarted')
+  })
+
+  it('emits ProposalCreated with the expected arguments', async function () {
+    const { proposalsContract, boardMember1 } = await loadFixture(deployContracts)
+    const now = await time.latest()
+    const startDate = now + 10
+    const endDate = now + ONE_DAY_IN_SECS
+
+    await expect(
+      proposalsContract
+        .connect(boardMember1)
+        .createProposal('Created', 'Description', 'Policy', startDate, endDate)
+    )
+      .to.emit(proposalsContract, 'ProposalCreated')
+      .withArgs(1, 'Created', boardMember1.address, startDate, endDate)
   })
 })

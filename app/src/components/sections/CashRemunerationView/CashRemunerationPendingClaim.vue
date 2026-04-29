@@ -2,15 +2,15 @@
   <OverviewCard
     :title="totalPendingAmount"
     subtitle="Pending Claim"
-    variant="info"
+    color="info"
     :card-icon="personIcon"
     :loading="isFetching"
   >
     <div class="flex flex-row gap-1 text-black">
       <img :src="uptrendIcon" alt="status-icon" />
       <div>
-        <span class="font-semibold text-sm" data-test="percentage-increase">+ 12.3% </span>
-        <span class="font-medium text-[#637381] text-xs">than last week</span>
+        <span class="text-sm font-semibold" data-test="percentage-increase">+ 12.3% </span>
+        <span class="text-xs font-medium text-[#637381]">than last week</span>
       </div>
     </div>
   </OverviewCard>
@@ -20,7 +20,7 @@
 import personIcon from '@/assets/person.svg'
 import uptrendIcon from '@/assets/uptrend.svg'
 import OverviewCard from '@/components/OverviewCard.vue'
-import { useCurrencyStore, useTeamStore, useToastStore } from '@/stores'
+import { useCurrencyStore, useTeamStore } from '@/stores'
 import { formatCurrencyShort, log } from '@/utils'
 import { watch, computed } from 'vue'
 import { useGetTeamWeeklyClaimsQuery } from '@/queries'
@@ -29,7 +29,7 @@ import type { TokenId } from '@/constant'
 import type { RatePerHour, WeeklyClaim } from '@/types/cash-remuneration'
 
 const teamStore = useTeamStore()
-const toastStore = useToastStore()
+const toast = useToast()
 const currencyStore = useCurrencyStore()
 
 const currency = useStorage('currency', {
@@ -64,14 +64,14 @@ const totalPendingAmount = computed(() => {
   if (!weeklyClaims.value || !Array.isArray(weeklyClaims.value)) return ''
   const total = weeklyClaims.value.reduce((sum: number, weeklyClaim: WeeklyClaim) => {
     const rate = getHoulyRateInUserCurrency(weeklyClaim.wage.ratePerHour)
-    return sum + weeklyClaim.hoursWorked * rate
+    return sum + (weeklyClaim.minutesWorked / 60) * rate
   }, 0)
   return formatCurrencyShort(total, currency.value.code)
 })
 
 watch(error, (err) => {
   if (err) {
-    toastStore.addErrorToast('Failed to fetch monthly pending amount')
+    toast.add({ title: 'Failed to fetch monthly pending amount', color: 'error' })
     log.error('Failed to fetch monthly pending amount', err)
   }
 })

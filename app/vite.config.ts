@@ -55,6 +55,38 @@ export default defineConfig(({ mode }) => {
         events: 'events'
       }
     },
+    ui: {
+      button: {
+        defaultVariant: {
+          size: 'xl'
+        }
+      },
+      input: {
+        defaultVariant: {
+          size: 'xl'
+        }
+      },
+      select: {
+        defaultVariant: {
+          size: 'xl'
+        }
+      },
+      selectMenu: {
+        defaultVariant: {
+          size: 'xl'
+        }
+      },
+      textarea: {
+        defaultVariant: {
+          size: 'xl'
+        }
+      },
+      switch: {
+        defaultVariant: {
+          size: 'xl'
+        }
+      }
+    },
     server: {
       host: true,
       port: 5173

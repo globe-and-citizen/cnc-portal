@@ -1,72 +1,78 @@
 <template>
-  <h4 class="font-bold text-lg">Deploy Advertisement Campaign contract</h4>
-  <div class="flex flex-col gap-5">
-    <h3 class="pt-8">By clicking "Deploy Advertisement"</h3>
-    <label class="input input-bordered flex items-center gap-2 input-md mt-4">
-      <span class="w-28">Bank Contract</span>
-      <input
-        type="string"
-        class="grow"
-        v-model="bankAddress"
-        disabled="true"
-        required
+  <h4 class="text-lg font-bold">Deploy Advertisement Campaign contract</h4>
+
+  <UForm
+    :schema="formSchema"
+    :state="formState"
+    class="flex flex-col gap-5"
+    @submit="deployAdCampaign"
+  >
+    <h3 class="pt-4">
+      By clicking "Deploy Advertisement Contract" you agree to deploy an advertisement campaign
+      contract and this may take some time and pay for gas fee.
+      <UButton color="secondary" size="xs" @click="viewContractCode()" label="view code" />
+    </h3>
+
+    <UFormField name="bankAddress" label="Bank Contract">
+      <UInput
+        v-model="formState.bankAddress"
+        type="text"
+        class="w-full"
+        disabled
         data-testid="bank-address-input"
       />
-    </label>
-    <label class="input input-bordered flex items-center gap-2 input-md mt-4">
-      <span class="w-28">click rate</span>
-      <input
+    </UFormField>
+
+    <UFormField name="costPerClick" label="Click rate">
+      <UInput
+        v-model="formState.costPerClick"
         type="number"
-        class="grow"
+        step="any"
+        class="w-full"
         placeholder="cost per click in matic"
-        v-model="costPerClick"
-        required
       />
-    </label>
-    <label class="input input-bordered flex items-center gap-2 input-md mt-4">
-      <span class="w-28">impression rate</span>
-      <input
+    </UFormField>
+
+    <UFormField name="costPerImpression" label="Impression rate">
+      <UInput
+        v-model="formState.costPerImpression"
         type="number"
-        class="grow"
+        step="any"
+        class="w-full"
         placeholder="cost per in matic"
-        v-model="costPerImpression"
-        required
       />
-    </label>
-  </div>
+    </UFormField>
 
-  <h3 class="pt-8">
-    By clicking "Deploy Advertisement Contract" you agree to deploy an advertisment campaign
-    contract and this may take some time and pay for gas fee.
-    <ButtonUI class="btn btn-secondary btn-xs" @click="viewContractCode()">view code</ButtonUI>
-  </h3>
+    <UAlert
+      v-if="errorMessage"
+      color="error"
+      variant="soft"
+      icon="i-heroicons-x-circle"
+      :description="errorMessage"
+      data-test="deploy-error-alert"
+    />
 
-  <div class="modal-action justify-right">
-    <ButtonUI
-      variant="primary"
-      size="sm"
-      @click="deployAdCampaign"
-      :loading="loading"
-      :disabled="
-        loading ||
-        !costPerClick ||
-        !costPerImpression ||
-        parseFloat(costPerClick) <= 0 ||
-        parseFloat(costPerImpression) <= 0
-      "
-    >
-      confirm
-    </ButtonUI>
-  </div>
+    <div class="modal-action justify-right">
+      <UButton
+        color="primary"
+        size="sm"
+        type="submit"
+        :loading="loading"
+        :disabled="loading || bankMissing"
+        data-test="confirm-button"
+        label="confirm"
+      />
+    </div>
+  </UForm>
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
-import ButtonUI from '@/components/ButtonUI.vue'
+import { computed, reactive, ref, watch } from 'vue'
+import { z } from 'zod'
+import type { FormSubmitEvent } from '@nuxt/ui'
 
 import { useDeployContract } from '@/composables/useContractFunctions'
 import { useUserDataStore } from '@/stores/user'
-import { useToastStore } from '@/stores'
 import { useTeamStore } from '@/stores'
 import { AD_CAMPAIGN_MANAGER_ABI } from '@/artifacts/abi/ad-campaign-manager'
 import { CAMPAIGN_BYTECODE } from '@/artifacts/bytecode/adCampaignManager.ts'
@@ -75,7 +81,7 @@ import { useCreateContractMutation } from '@/queries/contract.queries'
 import { useQueryClient } from '@tanstack/vue-query'
 
 const emit = defineEmits(['closeAddCampaignModal'])
-const { addErrorToast, addSuccessToast } = useToastStore()
+const toast = useToast()
 
 const campaignBytecode = CAMPAIGN_BYTECODE as Hex
 const teamStore = useTeamStore()
@@ -86,14 +92,40 @@ const queryClient = useQueryClient()
 const costPerClick = ref<string | null>(null)
 const costPerImpression = ref<string | null>(null)
 
+const formState = reactive({
+  bankAddress: bankAddress ?? '',
+  costPerClick: '' as string,
+  costPerImpression: '' as string
+})
+
+const positiveAmount = z
+  .string()
+  .trim()
+  .min(1, 'Required')
+  .refine((value) => /^(?:\d+\.?\d*|\.\d+)$/.test(value), 'Must be a valid number')
+  .refine((value) => Number(value) > 0, 'Must be greater than 0')
+
+const formSchema = z.object({
+  bankAddress: z.string().optional(),
+  costPerClick: positiveAmount,
+  costPerImpression: positiveAmount
+})
+
+type CampaignFormSchema = z.output<typeof formSchema>
+
 function reset() {
   costPerClick.value = null
   costPerImpression.value = null
+  formState.costPerClick = ''
+  formState.costPerImpression = ''
 }
 defineExpose({ reset })
 
-//import composable..
-// Import composable
+const bankMissing = computed(() => !formState.bankAddress)
+const submissionError = ref<string | null>(
+  bankMissing.value ? 'Bank contract must be set up before deploying a campaign.' : null
+)
+
 const {
   deploy,
   isDeploying: loading,
@@ -103,10 +135,18 @@ const {
 
 const { mutateAsync: createContract } = useCreateContractMutation()
 
+const errorMessage = computed(() => {
+  if (submissionError.value) return submissionError.value
+  const err = deployError.value
+  if (!err) return null
+  const message = (err as { shortMessage?: string; message?: string }).shortMessage ?? err.message
+  if (message?.includes('User rejected the request')) return 'User rejected the request'
+  return message ?? 'Deployment failed, please retry'
+})
+
 watch(contractAddress, async (newAddress) => {
   if (newAddress && teamStore.currentTeam) {
     try {
-      // First try to add contract to team
       await createContract({
         body: {
           teamId: teamStore.currentTeam.id,
@@ -120,35 +160,29 @@ watch(contractAddress, async (newAddress) => {
         queryKey: ['team', { teamId: String(teamStore.currentTeam.id) }]
       })
 
-      // Only show success and close modal if everything succeeds
-      addSuccessToast(`Contract deployed and added to team successfully`)
+      toast.add({ title: `Contract deployed and added to team successfully`, color: 'success' })
       emit('closeAddCampaignModal')
     } catch (error) {
       console.error('Failed to add contract to team:', error)
-      addErrorToast('Contract deployed but failed to add to team. Please try again.')
+      toast.add({
+        title: 'Contract deployed but failed to add to team. Please try again.',
+        color: 'error'
+      })
     }
   }
 })
 
-// Trigger deployment
-const deployAdCampaign = async () => {
-  if (!costPerClick.value || !costPerImpression.value) {
-    addErrorToast('Please enter valid numeric values for both rates.')
-    return
-  }
-  if (!bankAddress) {
-    addErrorToast('Bank address is missing.')
-    return
-  }
-  await deploy(bankAddress, costPerClick.value, costPerImpression.value)
+const deployAdCampaign = async (event: FormSubmitEvent<CampaignFormSchema>) => {
+  costPerClick.value = event.data.costPerClick
+  costPerImpression.value = event.data.costPerImpression
 
-  if (deployError.value) {
-    let errorMessage = deployError.value?.message || 'deployment failed, please retry'
-    if (errorMessage.includes('User rejected the request')) {
-      errorMessage = 'User rejected the request'
-    }
-    addErrorToast(`${errorMessage}`)
+  if (!event.data.bankAddress) {
+    submissionError.value = 'Bank contract must be set up before deploying a campaign.'
+    return
   }
+
+  submissionError.value = null
+  await deploy(event.data.bankAddress, event.data.costPerClick, event.data.costPerImpression)
 }
 
 const viewContractCode = () => {

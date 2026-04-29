@@ -1,59 +1,32 @@
 <!-- DepositModal.vue -->
 <template>
-  <div>
-    <!-- Deposit Button -->
-    <ButtonUI
-      variant="secondary"
-      class="flex items-center gap-2"
-      @click="openModal"
+  <UModal
+    v-model:open="isOpen"
+    data-test="deposit-modal"
+    title="Deposit to Bank Contract"
+    description="Deposit assets to the Bank contract to fund your team’s operations."
+  >
+    <UButton
+      color="secondary"
+      leading-icon="heroicons-outline:plus"
+      label="Deposit"
       data-test="deposit-button"
-    >
-      <IconifyIcon icon="heroicons-outline:plus" class="w-5 h-5" />
-      Deposit
-    </ButtonUI>
+    />
 
-    <!-- Deposit Modal -->
-    <ModalComponent
-      v-model="DepositModal.show"
-      v-if="DepositModal.mount"
-      data-test="deposit-modal"
-      @reset="closeModal"
-    >
-      <DepositSafeForm
-        v-if="bankAddress"
-        :safe-address="bankAddress"
-        title="Deposit to Bank Contract"
-        @close-modal="closeModal"
-      />
-    </ModalComponent>
-  </div>
+    <template #body>
+      <DepositBankForm :bank-address="bankAddress" @close-modal="isOpen = false" />
+    </template>
+  </UModal>
 </template>
 
 <script setup lang="ts">
-import ButtonUI from '@/components/ButtonUI.vue'
-import ModalComponent from '@/components/ModalComponent.vue'
-
-import DepositSafeForm from '@/components/forms/DepositSafeForm.vue'
-import { Icon as IconifyIcon } from '@iconify/vue'
+import DepositBankForm from '@/components/forms/DepositBankForm.vue'
 import { ref } from 'vue'
 import { type Address } from 'viem'
 
-interface Props {
+defineProps<{
   bankAddress: Address
-}
+}>()
 
-defineProps<Props>()
-
-const DepositModal = ref({
-  mount: false,
-  show: false
-})
-
-const openModal = () => {
-  DepositModal.value = { mount: true, show: true }
-}
-
-const closeModal = () => {
-  DepositModal.value = { mount: false, show: false }
-}
+const isOpen = ref(false)
 </script>

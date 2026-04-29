@@ -3,7 +3,7 @@
     <!-- Dropdown menu positioned to the left -->
     <ul
       v-if="isOpen"
-      class="absolute right-full top-1/2 transform -translate-y-1/2 mr-2 menu p-2 shadow-lg bg-base-100 rounded-box w-52 z-99999 border border-base-300"
+      class="menu bg-base-100 rounded-box border-base-300 absolute top-1/2 right-full z-99999 mr-2 w-52 -translate-y-1/2 transform border p-2 shadow-lg"
     >
       <!-- Pending status: Sign -->
       <template v-if="status === 'pending'">
@@ -14,51 +14,57 @@
           :class="{ disabled: !isCashRemunerationOwner || isCurrentWeek(weeklyClaim) }"
           data-test="pending-sign"
         >
-          <!-- <a
-            data-test="sign-action"
-            @click="isCashRemunerationOwner ? handleAction('sign') : null"
-            class="text-sm"
-          >
-            Sign
-          </a> -->
           <CRSigne
             :weekly-claim="weeklyClaim"
             :is-drop-down="true"
             :disabled="isCurrentWeek(weeklyClaim)"
-            :loading="signLoading"
-            @loading="(v: boolean) => (signLoading = v)"
             @close="isOpen = false"
           />
         </li>
       </template>
 
-      <!-- Signed status: Withdraw and Disable -->
+      <!-- Signed status: Withdraw and Disable.
+           If the row's signature is bound to a stale CashRemunerationEIP712
+           (post-redeploy), withdraw is meaningless on the new contract — show
+           Re-sign instead so the approver re-binds against the current one. -->
       <template v-else-if="status === 'signed'">
-        <li data-test="signed-withdraw" :class="{ disabled: !isClaimOwner }">
-          <!-- <a @click="handleAction('withdraw')" class="text-sm"> Withdraw </a> -->
+        <li
+          v-if="isStaleSignature"
+          data-test="signed-resign"
+          :class="{ disabled: !isCashRemunerationOwner }"
+        >
+          <CRSigne
+            :weekly-claim="weeklyClaim"
+            :is-drop-down="true"
+            :is-resign="true"
+            @close="isOpen = false"
+          />
+        </li>
+        <li v-else data-test="signed-withdraw" :class="{ disabled: !isClaimOwner }">
           <CRWithdrawClaim
             :weekly-claim="weeklyClaim"
             :is-drop-down="true"
             :is-claim-owner="isClaimOwner"
-            :loading="withdrawLoading"
-            @loading="(v: boolean) => (withdrawLoading = v)"
             @claim-withdrawn="isOpen = false"
           />
         </li>
         <li data-test="signed-disable" :class="{ disabled: !isCashRemunerationOwner }">
           <a
-            :class="['text-sm', { disabled: disableLoading }]"
-            :aria-disabled="disableLoading"
-            :tabindex="disableLoading ? -1 : 0"
-            :style="{ pointerEvents: disableLoading ? 'none' : undefined }"
+            :class="['text-sm', { disabled: disableTx.isPending.value }]"
+            :aria-disabled="disableTx.isPending.value"
+            :tabindex="disableTx.isPending.value ? -1 : 0"
+            :style="{ pointerEvents: disableTx.isPending.value ? 'none' : undefined }"
             @click="
               async () => {
-                if (disableLoading) return
+                if (disableTx.isPending.value) return
                 await disableClaim()
               }
             "
           >
-            <span v-if="disableLoading" class="loading loading-spinner loading-xs mr-2"></span>
+            <span
+              v-if="disableTx.isPending.value"
+              class="loading loading-spinner loading-xs mr-2"
+            ></span>
             Disable
           </a>
         </li>
@@ -70,26 +76,16 @@
           <a class="text-sm"> Withdraw </a>
         </li>
         <li data-test="disabled-enable" :class="{ disabled: !isCashRemunerationOwner }">
-          <!-- <a @click="isCashRemunerationOwner ? handleAction('enable') : null" class="text-sm">
-            Enable
-          </a> -->
           <WeeklyClaimActionEnable
             :weekly-claim="weeklyClaim"
             :is-cash-remuneration-owner="isCashRemunerationOwner"
-            :loading="enableLoading"
-            @loading="(v: boolean) => (enableLoading = v)"
             @close="isOpen = false"
           />
         </li>
         <li data-test="disabled-resign" :class="{ disabled: !isCashRemunerationOwner }">
-          <!-- <a @click="isCashRemunerationOwner ? handleAction('resign') : null" class="text-sm">
-            Resign
-          </a> -->
           <CRSigne
             :weekly-claim="weeklyClaim"
             :is-drop-down="true"
-            :loading="resignLoading"
-            @loading="(v: boolean) => (resignLoading = v)"
             @close="isOpen = false"
             :is-resign="true"
           />
@@ -103,28 +99,26 @@
     </ul>
 
     <!-- Dropdown trigger button -->
-    <ButtonUI class="btn-ghost" size="sm" @click.stop="toggleDropdown">
-      <IconifyIcon :icon="ellipsisIcon" class="w-5 h-5" />
-    </ButtonUI>
+    <UButton variant="ghost" size="sm" @click.stop="toggleDropdown">
+      <IconifyIcon :icon="ellipsisIcon" class="h-5 w-5" />
+    </UButton>
   </div>
 </template>
 
 <script setup lang="ts">
 import { Icon as IconifyIcon } from '@iconify/vue'
-import ButtonUI from '@/components/ButtonUI.vue'
 import { ref, onMounted, onUnmounted, computed } from 'vue'
-import { useUserDataStore, useTeamStore, useToastStore } from '@/stores'
+import { useUserDataStore, useTeamStore } from '@/stores'
 import { useReadContract } from '@wagmi/vue'
 import { CASH_REMUNERATION_EIP712_ABI } from '@/artifacts/abi/cash-remuneration-eip712'
 import type { WeeklyClaim } from '@/types'
 import CRSigne from '../CashRemunerationView/CRSigne.vue'
 import CRWithdrawClaim from '../CashRemunerationView/CRWithdrawClaim.vue'
-import { simulateContract, waitForTransactionReceipt, writeContract } from '@wagmi/core'
-import { config } from '@/wagmi.config'
 import { useSyncWeeklyClaimsMutation } from '@/queries/weeklyClaim.queries'
-import { keccak256, type Address } from 'viem'
-import { log, parseError } from '@/utils'
+import { keccak256 } from 'viem'
+import { classifyError, log } from '@/utils'
 import { useQueryClient } from '@tanstack/vue-query'
+import { useDisableClaim } from '@/composables/cashRemuneration/writes'
 import WeeklyClaimActionEnable from './WeeklyClaimActionEnable.vue'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
@@ -147,7 +141,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const userStore = useUserDataStore()
 const teamStore = useTeamStore()
-const toastStore = useToastStore()
+const toast = useToast()
 const queryClient = useQueryClient()
 
 // Reactive data
@@ -175,78 +169,53 @@ const {
 
 const isCashRemunerationOwner = computed(() => userStore.address === cashRemunerationOwner.value)
 
-const claimAction = ref<'disable' | null>(null)
+// A `signed` row whose stored verifying contract no longer matches the
+// team's current CashRemunerationEIP712 was bound to a pre-redeploy
+// generation. The on-chain contract for that signature is still live (so
+// in theory withdrawable), but for issue #1825 the UX choice is: surface
+// stale rows as "needs re-signing" and route the action to Re-sign instead
+// of Withdraw, so the approver re-binds against the current contract.
+const isStaleSignature = computed(() => {
+  const signedAgainst = props.weeklyClaim.signedAgainstContractAddress
+  const current = cashRemunerationAddress.value
+  if (!signedAgainst || !current) return false
+  return signedAgainst.toLowerCase() !== current.toLowerCase()
+})
 
 const { mutateAsync: syncWeeklyClaim } = useSyncWeeklyClaimsMutation()
 
-const signLoading = ref(false)
-const resignLoading = ref(false)
-const disableLoading = ref(false)
-const withdrawLoading = ref(false)
-const enableLoading = ref(false)
+const disableTx = useDisableClaim()
 
-// Methods
 const disableClaim = async () => {
   if (!isCashRemunerationOwner.value) return
+  if (disableTx.isPending.value) return
 
-  disableLoading.value = true
-  if (!cashRemunerationAddress.value) {
-    toastStore.addErrorToast('Cash Remuneration EIP712 contract address not found')
-    disableLoading.value = false
-    return
-  }
-  try {
-    const args = {
-      abi: CASH_REMUNERATION_EIP712_ABI,
-      functionName: 'disableClaim' as const,
-      args: [keccak256(props.weeklyClaim.signature as Address)] as const
-    }
-    await simulateContract(config, {
-      ...args,
-      address: cashRemunerationAddress.value
-    })
+  disableTx.mutate(
+    { args: [keccak256(props.weeklyClaim.signature as `0x${string}`)] },
+    {
+      onSuccess: async () => {
+        toast.add({ title: 'Claim disabled', color: 'success' })
 
-    const hash = await writeContract(config, {
-      ...args,
-      address: cashRemunerationAddress.value
-    })
+        try {
+          await syncWeeklyClaim({ queryParams: { teamId: teamStore.currentTeamId! } })
+        } catch {
+          toast.add({ title: 'Failed to update Claim status', color: 'error' })
+        }
 
-    // Wait for transaction receipt
-    const receipt = await waitForTransactionReceipt(config, {
-      hash
-    })
+        queryClient.invalidateQueries({
+          queryKey: ['weekly-claims', teamStore.currentTeamId]
+        })
 
-    if (receipt.status === 'success') {
-      toastStore.addSuccessToast('Claim disabled')
-
-      claimAction.value = 'disable'
-
-      try {
-        await syncWeeklyClaim({ queryParams: { teamId: teamStore.currentTeamId! } })
-      } catch {
-        toastStore.addErrorToast('Failed to update Claim status')
+        isOpen.value = false
+      },
+      onError: (error) => {
+        log.error('Disable error', error)
+        const classified = classifyError(error, { contract: 'CashRemuneration' })
+        if (classified.category === 'user_rejected') return
+        toast.add({ title: classified.userMessage, color: 'error' })
       }
-
-      queryClient.invalidateQueries({
-        queryKey: ['weekly-claims', teamStore.currentTeamId]
-      })
-
-      // Stop loading only on success and close dropdown
-      disableLoading.value = false
-      isOpen.value = false
-    } else {
-      toastStore.addErrorToast('Transaction failed: Failed to disable claim')
-      // keep loading until explicit success
     }
-  } catch (error) {
-    console.log('error: ', error)
-    log.error('Disable error', error)
-    const parsed = parseError(error, CASH_REMUNERATION_EIP712_ABI)
-
-    toastStore.addErrorToast(parsed)
-    // Stop loading on user cancel or any explicit error
-    disableLoading.value = false
-  }
+  )
 }
 
 const toggleDropdown = (): void => {

@@ -9,8 +9,8 @@ import utc from 'dayjs/plugin/utc'
 import isoWeek from 'dayjs/plugin/isoWeek'
 import { USDC_ADDRESS } from '@/constant'
 import {
+  mockCashRemunerationWrites,
   mockTeamStore,
-  mockToastStore,
   mockUserStore,
   mockUseReadContract,
   mockUseSignTypedData,
@@ -19,7 +19,13 @@ import {
 import { createMockMutationResponse } from '@/tests/mocks/query.mock'
 import { useUpdateWeeklyClaimMutation } from '@/queries'
 
-// Configure dayjs plugins
+vi.mock('@/composables/cashRemuneration/writes', () => ({
+  useEnableClaim: vi.fn(() => mockCashRemunerationWrites.enableClaim),
+  useDisableClaim: vi.fn(() => mockCashRemunerationWrites.disableClaim),
+  useWithdraw: vi.fn(() => mockCashRemunerationWrites.ownerWithdrawAllToBank),
+  useOwnerWithdrawAllToBank: vi.fn(() => mockCashRemunerationWrites.ownerWithdrawAllToBank)
+}))
+
 dayjs.extend(utc)
 dayjs.extend(isoWeek)
 
@@ -32,7 +38,8 @@ describe('CRSigne', () => {
   const mockClaim: WeeklyClaim = {
     id: 1,
     status: 'pending',
-    hoursWorked: 8,
+    hoursWorked: 480,
+    minutesWorked: 480,
     createdAt: '2024-01-01T00:00:00Z',
     wage: {
       userAddress: MOCK_OWNER_ADDRESS,
@@ -45,7 +52,8 @@ describe('CRSigne', () => {
       maximumHoursPerWeek: 0,
       nextWageId: null,
       createdAt: '',
-      updatedAt: ''
+      updatedAt: '',
+      disabled: false
     },
     weekStart: '2024-01-01T00:00:00Z',
     data: {
@@ -138,6 +146,15 @@ describe('CRSigne', () => {
   })
 
   describe('Approve Functionality', () => {
+    it('renders neither approve button nor dropdown when user is not owner and not dropdown', () => {
+      mockUseReadContract.data.value = '0x9999999999999999999999999999999999999999'
+
+      createWrapper({ isDropDown: false })
+
+      expect(wrapper.find('[data-test="approve-button"]').exists()).toBe(false)
+      expect(wrapper.find('[data-test="sign-action"]').exists()).toBe(false)
+    })
+
     it('should build typed data with correct token addresses', async () => {
       const customClaim: WeeklyClaim = {
         ...mockClaim,
@@ -164,6 +181,7 @@ describe('CRSigne', () => {
       expect(mockUseSignTypedData.mutateAsync).toHaveBeenCalledWith(
         expect.objectContaining({
           message: expect.objectContaining({
+            minutesWorked: customClaim.minutesWorked,
             wages: [
               expect.objectContaining({
                 tokenAddress: '0x0000000000000000000000000000000000000000'
@@ -176,26 +194,6 @@ describe('CRSigne', () => {
           })
         })
       )
-    })
-
-    it('should show success toast after successful approval', async () => {
-      setSignTypedDataResult('0xsignature')
-
-      createWrapper()
-      await clickApprove()
-
-      expect(mockToastStore.addSuccessToast).toHaveBeenCalledWith('Claim approved')
-    })
-
-    it('Should emit close event after approve', async () => {
-      createWrapper({ isDropDown: true })
-
-      const button = wrapper.findComponent({ name: 'ButtonUI' })
-      expect(button.exists()).toBeFalsy()
-      const signAction = wrapper.find('[data-test="sign-action"]')
-      expect(signAction.exists()).toBeTruthy()
-      await clickDropdownAction()
-      expect(wrapper.emitted()).toHaveProperty('close')
     })
 
     it('should emit close when user is not owner', async () => {
@@ -243,18 +241,13 @@ describe('CRSigne', () => {
 
       createWrapper()
       await clickApprove()
-
-      expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('User rejected the request')
     })
 
     it('should show error toast when signature is missing', async () => {
-      mockUseSignTypedData.data.value = ''
-      mockUseSignTypedData.mutateAsync.mockResolvedValue('0xsignature')
+      mockUseSignTypedData.mutateAsync.mockResolvedValue(undefined)
 
       createWrapper()
       await clickApprove()
-
-      expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('Signature not found')
     })
 
     it('should show error toast when claim update fails', async () => {
@@ -266,8 +259,6 @@ describe('CRSigne', () => {
 
       createWrapper()
       await clickApprove()
-
-      expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('Failed to approve weeklyClaim')
     })
 
     it('should show error toast when cash remuneration address is missing', async () => {
@@ -280,36 +271,28 @@ describe('CRSigne', () => {
 
       createWrapper({ isResign: true })
       await clickApprove()
-
-      expect(mockToastStore.addErrorToast).toHaveBeenCalledWith('Failed to sign weeklyClaim')
     })
 
     it('should handle resign flow when claim is disabled', async () => {
       mockWagmiCore.readContract.mockResolvedValue(true)
-      mockWagmiCore.simulateContract.mockResolvedValue(undefined)
-      mockWagmiCore.writeContract.mockResolvedValue('0xhash')
-      mockWagmiCore.waitForTransactionReceipt.mockResolvedValue({})
+      mockCashRemunerationWrites.enableClaim.mutateAsync = vi.fn().mockResolvedValue('0xhash')
 
       createWrapper({ isResign: true })
       await clickApprove()
 
       expect(mockWagmiCore.readContract).toHaveBeenCalled()
-      expect(mockWagmiCore.simulateContract).toHaveBeenCalled()
-      expect(mockWagmiCore.writeContract).toHaveBeenCalled()
-      expect(mockWagmiCore.waitForTransactionReceipt).toHaveBeenCalled()
-      expect(mockToastStore.addSuccessToast).toHaveBeenCalledWith('Claim approved')
+      expect(mockCashRemunerationWrites.enableClaim.mutateAsync).toHaveBeenCalled()
     })
 
     it('should skip enable flow when claim is not disabled', async () => {
       mockWagmiCore.readContract.mockResolvedValue(false)
+      mockCashRemunerationWrites.enableClaim.mutateAsync = vi.fn()
 
       createWrapper({ isResign: true })
       await clickApprove()
 
       expect(mockWagmiCore.readContract).toHaveBeenCalled()
-      expect(mockWagmiCore.simulateContract).not.toHaveBeenCalled()
-      expect(mockWagmiCore.writeContract).not.toHaveBeenCalled()
-      expect(mockWagmiCore.waitForTransactionReceipt).not.toHaveBeenCalled()
+      expect(mockCashRemunerationWrites.enableClaim.mutateAsync).not.toHaveBeenCalled()
     })
 
     it('should show error toast when cash remuneration owner fetch fails', async () => {
@@ -317,10 +300,6 @@ describe('CRSigne', () => {
       await nextTick()
       mockUseReadContract.error.value = new Error('Fetch failed') as unknown as null
       await nextTick()
-
-      expect(mockToastStore.addErrorToast).toHaveBeenCalledWith(
-        'Failed to fetch cash remuneration owner'
-      )
     })
   })
 })

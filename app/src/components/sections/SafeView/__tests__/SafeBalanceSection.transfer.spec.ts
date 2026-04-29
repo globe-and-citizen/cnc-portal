@@ -4,7 +4,7 @@ import { nextTick, ref, defineComponent } from 'vue'
 import { useStorage } from '@vueuse/core'
 import type { Address } from 'viem'
 import SafeBalanceSection from '../SafeBalanceSection.vue'
-import { mockUseContractBalance } from '@/tests/mocks'
+import { mockUseContractBalance, mockUseAccount } from '@/tests/mocks'
 
 const {
   mockGetSafeHomeUrl,
@@ -43,9 +43,13 @@ vi.mock('@/composables/safe', async (importOriginal) => {
   }
 })
 
-vi.mock('@vueuse/core', () => ({
-  useStorage: vi.fn()
-}))
+vi.mock('@vueuse/core', async () => {
+  const actual = await vi.importActual<typeof import('@vueuse/core')>('@vueuse/core')
+  return {
+    ...actual,
+    useStorage: vi.fn()
+  }
+})
 
 vi.mock('@/queries/safe.queries', () => ({
   useGetSafeInfoQuery: mockuseGetSafeInfoQuery
@@ -95,16 +99,7 @@ const MOCK_DATA = {
 } as const
 
 // Component stubs
-const CardStub = defineComponent({ template: '<div><slot /></div>' })
-const ButtonStub = defineComponent({
-  template: '<button @click="$emit(\'click\')"><slot /></button>'
-})
 const AddressToolTipStub = defineComponent({ template: '<div></div>' })
-const ModalStub = defineComponent({
-  props: ['modelValue'],
-  template: '<div v-if="modelValue"><slot /></div>'
-})
-const DepositBankFormStub = defineComponent({ template: '<div></div>' })
 const TransferFormStub = defineComponent({ template: '<div><slot name="header" /></div>' })
 
 describe('SafeBalanceSection', () => {
@@ -117,11 +112,7 @@ describe('SafeBalanceSection', () => {
       props,
       global: {
         stubs: {
-          CardComponent: CardStub,
-          ButtonUI: ButtonStub,
           AddressToolTip: AddressToolTipStub,
-          ModalComponent: ModalStub,
-          DepositBankForm: DepositBankFormStub,
           TransferForm: TransferFormStub
         }
       }
@@ -140,6 +131,8 @@ describe('SafeBalanceSection', () => {
     mockuseGetSafeInfoQuery.mockReturnValue({
       data: mockSafeInfo
     })
+
+    mockUseAccount.address.value = MOCK_DATA.safeInfo.owners[0]
 
     mockUseChainId.mockReturnValue(ref(137))
     mockUseTeamStore.mockReturnValue({

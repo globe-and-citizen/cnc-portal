@@ -32,3 +32,16 @@ export function formatCryptoAmount(amount: string | number) {
     maximumFractionDigits: 20
   }).format(num)
 }
+
+export function formatAmountWithPrecision(
+  amount: string | number,
+  minimumFractionDigits: number = 4,
+  maximumFractionDigits: number = 20
+) {
+  const num = typeof amount === 'string' ? parseFloat(amount) : amount
+
+  return new Intl.NumberFormat('en-US', {
+    minimumFractionDigits,
+    maximumFractionDigits
+  }).format(num)
+}

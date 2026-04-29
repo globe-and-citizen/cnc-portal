@@ -1,7 +1,7 @@
 <template>
   <div id="team-contracts" class="overflow-x-auto">
-    <TableComponent
-      :rows="
+    <UTable
+      :data="
         teamStore.currentTeam?.teamContracts
           .filter((contract) => contract.type === 'Campaign')
           .map((contract, index) => ({
@@ -10,20 +10,20 @@
           }))
       "
       :columns="[
-        { key: 'index', label: '#' },
-        { key: 'type', label: 'Type' },
-        { key: 'address', label: 'Contract Address' },
-        { key: 'admins', label: 'Admins' },
-        { key: 'details', label: 'Details' },
-        { key: 'events', label: 'Events' }
+        { accessorKey: 'index', header: '#' },
+        { accessorKey: 'type', header: 'Type' },
+        { accessorKey: 'address', header: 'Contract Address' },
+        { accessorKey: 'admins', header: 'Admins' },
+        { accessorKey: 'details', header: 'Details' },
+        { accessorKey: 'events', header: 'Events' }
       ]"
     >
-      <template #address-data="{ row }">
+      <template #address-cell="{ row: { original: row } }">
         <AddressToolTip :address="row.address" class="text-xs" />
       </template>
 
-      <template #admins-data="{ row }">
-        <button
+      <template #admins-cell="{ row: { original: row } }">
+        <UButton
           :disabled="row.type !== 'Campaign'"
           @click="
             openAdminsModal(
@@ -36,14 +36,14 @@
               row.index
             )
           "
-          class="btn btn-xs btn-secondary"
+          color="secondary"
+          size="xs"
           data-test="open-admin-modal-btn"
-        >
-          <IconifyIcon icon="material-symbols:person" class="size-4 text-white" />
-        </button>
+          icon="material-symbols:person"
+        />
       </template>
 
-      <template #details-data="{ row }">
+      <template #details-cell="{ row: { original: row } }">
         <button
           :disabled="row.type !== 'Campaign'"
           @click="openContractDataModal(row.address)"
@@ -53,65 +53,77 @@
         </button>
       </template>
 
-      <template #events-data="{ row }">
+      <template #events-cell="{ row: { original: row } }">
         <button @click="openEventsModal(row.address)" class="btn btn-ghost btn-xs">
           View Events
         </button>
       </template>
-    </TableComponent>
+    </UTable>
 
     <!-- Admin Modal -->
-    <ModalComponent v-model="contractAdminDialog.show">
-      <div class="max-w-lg">
-        <TeamContractAdmins
-          :contract="contractAdminDialog.contract"
-          :range="contractAdminDialog.range"
-        />
-      </div>
-    </ModalComponent>
+    <UModal
+      v-model:open="contractAdminDialog.show"
+      title="Contract Admins"
+      description="View and manage contract administrators for this campaign."
+    >
+      <template #body>
+        <div class="max-w-lg">
+          <TeamContractAdmins
+            :contract="contractAdminDialog.contract"
+            :range="contractAdminDialog.range"
+          />
+        </div>
+      </template>
+    </UModal>
 
     <!-- Contract Data Modal -->
-    <ModalComponent v-model="contractDataDialog.show">
-      <div class="max-w-lg">
-        <h3 class="text-lg font-bold">Contract Details</h3>
-        <TeamContractsDetail
-          :contract-address="contractDataDialog.address"
-          :datas="contractDataDialog.datas"
-          :reset="contractDetailReset"
-          @closeContractDataDialog="contractDataDialog.show = false"
-        />
-      </div>
-    </ModalComponent>
+    <UModal
+      v-model:open="contractDataDialog.show"
+      title="Contract Details"
+      description="View the details of the selected campaign contract."
+    >
+      <template #body>
+        <div class="max-w-lg">
+          <TeamContractsDetail
+            :contract-address="contractDataDialog.address"
+            :datas="contractDataDialog.datas"
+            :reset="contractDetailReset"
+            @closeContractDataDialog="contractDataDialog.show = false"
+          />
+        </div>
+      </template>
+    </UModal>
 
-    <ModalComponent v-model="contractEventsDialog.show">
-      <div class="max-w-lg">
-        <h3 class="text-lg font-bold">Contract Events</h3>
-        <TeamContractEventList
-          :eventsByCampaignCode="groupEventsByCampaignCode(contractEventsDialog.events)"
-        />
-      </div>
-    </ModalComponent>
+    <UModal
+      v-model:open="contractEventsDialog.show"
+      title="Contract Events"
+      description="Review events emitted by the contract to track actions and state changes."
+    >
+      <template #body>
+        <div class="max-w-lg">
+          <TeamContractEventList
+            :eventsByCampaignCode="groupEventsByCampaignCode(contractEventsDialog.events)"
+          />
+        </div>
+      </template>
+    </UModal>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import { Icon as IconifyIcon } from '@iconify/vue'
-import ModalComponent from '@/components/ModalComponent.vue'
 import TeamContractAdmins from './TeamContractAdmins.vue'
 import TeamContractsDetail from './TeamContractsDetail.vue'
 import { AddCampaignService } from '@/services/AddCampaignService'
 import { getContractData } from '@/composables/useContractFunctions'
 
 import { AD_CAMPAIGN_MANAGER_ABI } from '@/artifacts/abi/ad-campaign-manager'
-import TableComponent from '@/components/TableComponent.vue'
 
 import type {
   GetEventsGroupedByCampaignCodeResult,
   ExtendedEvent
 } from '@/services/AddCampaignService'
-import { useToastStore } from '@/stores/useToastStore'
-const { addErrorToast } = useToastStore()
+const toast = useToast()
 import { useTeamStore } from '@/stores/'
 import type { Address } from 'viem'
 import TeamContractEventList from './TeamContractEventList.vue'
@@ -188,7 +200,7 @@ const openEventsModal = async (contractAddress: Address) => {
       contractEventsDialog.value.show = true
     }
   } else {
-    addErrorToast('Failed to fetch events')
+    toast.add({ title: 'Failed to fetch events', color: 'error' })
   }
 }
 

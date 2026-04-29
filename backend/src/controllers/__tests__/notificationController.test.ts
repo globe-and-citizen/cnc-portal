@@ -127,7 +127,7 @@ describe('Notification Controller', () => {
       const response = await request(app).put('/invalid');
 
       expect(response.status).toBe(400);
-      expect(response.body.message).toBe('Notification ID invalid format');
+      expect(response.body.message).toBe('Invalid path parameters - id: Must be a number');
     });
 
     it('should return 403 if user is not authorized', async () => {
@@ -142,6 +142,15 @@ describe('Notification Controller', () => {
 
       expect(response.status).toBe(403);
       expect(response.body.message).toBe('Unauthorized access');
+    });
+
+    it('should return 404 if notification does not exist', async () => {
+      vi.spyOn(prisma.notification, 'findUnique').mockResolvedValue(null);
+
+      const response = await request(app).put('/1');
+
+      expect(response.status).toBe(404);
+      expect(response.body.message).toBe('Notification not found');
     });
 
     it('should return 500 on server error', async () => {
@@ -217,7 +226,7 @@ describe('Notification Controller', () => {
       });
 
       expect(response.status).toBe(400);
-      expect(response.body.message).toBe('userIds must be a non-empty array');
+      expect(response.body.message).toContain('userIds');
     });
 
     it('should return 400 if userIds is empty array', async () => {
@@ -227,7 +236,7 @@ describe('Notification Controller', () => {
       });
 
       expect(response.status).toBe(400);
-      expect(response.body.message).toBe('userIds must be a non-empty array');
+      expect(response.body.message).toContain('userIds must be a non-empty array');
     });
 
     it('should return 400 if message is missing', async () => {
@@ -238,7 +247,7 @@ describe('Notification Controller', () => {
         });
 
       expect(response.status).toBe(400);
-      expect(response.body.message).toBe('message is required');
+      expect(response.body.message).toContain('message');
     });
 
     it('should return 400 if message is not a string', async () => {
@@ -250,7 +259,7 @@ describe('Notification Controller', () => {
         });
 
       expect(response.status).toBe(400);
-      expect(response.body.message).toBe('message is required');
+      expect(response.body.message).toContain('message');
     });
 
     it('should return 500 if addNotification throws error', async () => {

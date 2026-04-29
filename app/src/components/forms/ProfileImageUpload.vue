@@ -1,12 +1,12 @@
 <template>
   <!-- Upload -->
-  <div class="flex items-center gap-4 justify-between">
+  <div class="flex items-center justify-between gap-4">
     <div
-      class="w-40 h-40 border-2 rounded-full flex items-center justify-center relative overflow-hidden bg-white transition-all duration-300"
+      class="relative flex h-40 w-40 items-center justify-center overflow-hidden rounded-full border-2 bg-white transition-all duration-300"
       :style="uploadBoxStyle"
       :class="[
         imageUrl ? 'border-green-500' : 'border-dashed border-gray-400',
-        { 'opacity-60 cursor-not-allowed': isUploading }
+        { 'cursor-not-allowed opacity-60': isUploading }
       ]"
       data-test="profile-image-upload-box"
     >
@@ -25,7 +25,7 @@
         ref="fileInput"
         type="file"
         :accept="ACCEPTED_FILE_TYPES"
-        class="absolute inset-0 opacity-0 cursor-pointer z-10"
+        class="absolute inset-0 z-10 cursor-pointer opacity-0"
         @change="onFileChange"
         :disabled="isUploading"
         data-test="profile-image-input"
@@ -34,22 +34,26 @@
       <!-- Upload label (only show when no image) -->
       <div
         v-if="!imageUrl"
-        class="relative text-sm font-medium text-white bg-emerald-700 px-3 py-2 rounded-sm z-0"
+        class="relative z-0 rounded-sm bg-emerald-700 px-3 py-2 text-sm font-medium text-white"
       >
         {{ isUploading ? 'Uploading...' : 'Upload image' }}
       </div>
     </div>
   </div>
-  <p v-if="errorMessage" class="text-sm text-red-500 mt-2" data-test="profile-image-error">
-    {{ errorMessage }}
-  </p>
+  <UAlert
+    v-if="errorMessage"
+    color="error"
+    variant="soft"
+    :description="errorMessage"
+    icon="i-lucide-circle-alert"
+    class="mt-2"
+    data-test="profile-image-error"
+  />
 </template>
 
 <script setup lang="ts">
-import { useStorage } from '@vueuse/core'
 import { computed, ref } from 'vue'
-import { BACKEND_URL } from '@/constant/index'
-import { useToastStore } from '@/stores'
+import { uploadFileApi } from '@/api'
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10 MB
 const ALLOWED_IMAGE_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.webp', '.gif', '.bmp', '.svg']
@@ -70,8 +74,7 @@ const fileInput = ref<HTMLInputElement | null>(null)
 const imageUrl = defineModel<string>({ default: '' })
 const isUploading = ref(false)
 const errorMessage = ref('')
-const authToken = useStorage('authToken', '')
-const { addErrorToast, addSuccessToast } = useToastStore()
+const toast = useToast()
 
 // Helper: Detect if file is image (MIME type + extension fallback)
 const isImageFile = (file: File): boolean => {
@@ -102,14 +105,17 @@ const onFileChange = async (event: Event) => {
 
   if (!isImageFile(file)) {
     errorMessage.value = 'Only images (png, jpg, jpeg, webp, gif, bmp, svg) are allowed'
-    addErrorToast('Only images (png, jpg, jpeg, webp, gif, bmp, svg) are allowed')
+    toast.add({
+      title: 'Only images (png, jpg, jpeg, webp, gif, bmp, svg) are allowed',
+      color: 'error'
+    })
     input.value = ''
     return
   }
 
   if (file.size > MAX_FILE_SIZE) {
     errorMessage.value = 'Image must be 10 MB or smaller'
-    addErrorToast('Image must be 10 MB or smaller')
+    toast.add({ title: 'Image must be 10 MB or smaller', color: 'error' })
     input.value = ''
     return
   }
@@ -123,36 +129,19 @@ const uploadSelectedFile = async (file: File) => {
   errorMessage.value = ''
 
   try {
-    const formData = new FormData()
-    formData.append('file', file) // Use 'file' field (unified endpoint)
+    const responseBody = await uploadFileApi([file])
 
-    const headers: Record<string, string> = {}
-    if (authToken.value) {
-      headers.Authorization = `Bearer ${authToken.value}`
-    }
-
-    const response = await fetch(`${BACKEND_URL}/api/upload`, {
-      method: 'POST',
-      headers,
-      body: formData
-    })
-
-    const responseBody = await response.json().catch(() => ({}))
-
-    if (!response.ok) {
-      throw new Error(responseBody?.error || 'Failed to upload image')
-    }
-
-    if (!responseBody?.fileUrl) {
+    const uploadedFileUrl = responseBody?.files?.[0]?.fileUrl
+    if (!uploadedFileUrl) {
       throw new Error('Upload response missing fileUrl')
     }
 
-    imageUrl.value = responseBody.fileUrl
-    addSuccessToast('Image uploaded')
+    imageUrl.value = uploadedFileUrl
+    toast.add({ title: 'Image uploaded', color: 'success' })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to upload image'
     errorMessage.value = message
-    addErrorToast(message)
+    toast.add({ title: message, color: 'error' })
   } finally {
     isUploading.value = false
   }

@@ -1,6 +1,5 @@
 <template>
   <div class="flex flex-col gap-4">
-    <h2>Pay Dividends to the shareholders</h2>
     <BodAlert v-if="isBodAction" />
     <h3>
       Please input amount to divide to the shareholders. This will move funds from bank contract to
@@ -22,12 +21,7 @@
       Please fund the bank contract before paying dividends.
     </div>
 
-    <TokenAmount
-      v-model:modelValue="amount"
-      v-model:modelToken="selectedTokenId"
-      :tokens="tokens"
-      :loading="loading"
-    >
+    <TokenAmount v-model="tokenAmountModel" :tokens="tokens" :loading="loading">
       <template #label>
         <span class="label-text">Amount</span>
         <span class="label-text-alt">Available: {{ formattedUnlockedBalance }}</span>
@@ -35,22 +29,20 @@
     </TokenAmount>
 
     <div class="text-center">
-      <ButtonUI
+      <UButton
         :loading="loading"
         :disabled="loading || (formattedUnlockedBalance ?? 0) === 0"
-        class="btn btn-primary w-44 text-center"
+        color="primary"
+        class="w-44 text-center"
         @click="onSubmit()"
-      >
-        submit
-      </ButtonUI>
+        label="submit"
+      />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import ButtonUI from '@/components/ButtonUI.vue'
 import { NETWORK } from '@/constant'
-// import { useToastStore } from '@/stores'
 import type { Team } from '@/types'
 
 import { parseUnits } from 'viem'
@@ -65,6 +57,13 @@ import TokenAmount from '@/components/forms/TokenAmount.vue'
 import type { Address } from 'viem'
 const amount = ref<string>('')
 const selectedTokenId = ref<TokenId>('native')
+const tokenAmountModel = computed({
+  get: () => ({ amount: amount.value, tokenId: selectedTokenId.value }),
+  set: (value: { amount: string; tokenId: TokenId | string }) => {
+    amount.value = value.amount ?? ''
+    selectedTokenId.value = (value.tokenId as TokenId) ?? 'native'
+  }
+})
 const teamStore = useTeamStore()
 
 defineProps<{
@@ -109,7 +108,14 @@ const emits = defineEmits(['submit'])
 
 const onSubmit = () => {
   if (!amount.value) return
+
+  const amountAsNumber = Number(amount.value)
+  if (!Number.isFinite(amountAsNumber) || amountAsNumber <= 0) return
+  if (amountAsNumber > selectedTokenBalance.value) return
+
   const parsed = parseUnits(amount.value, selectedTokenDecimals.value)
+  if (parsed <= 0n) return
+
   emits('submit', parsed, selectedTokenId.value)
 }
 </script>

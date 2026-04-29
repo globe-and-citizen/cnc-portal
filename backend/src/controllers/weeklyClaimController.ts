@@ -1,54 +1,34 @@
 import { Request, Response } from 'express';
 import { errorResponse, getMondayStart, prisma } from '../utils';
-// import { errorResponse } from "../utils/utils";
 import { Prisma } from '@prisma/client';
-import { Hex, isAddress, isHex, keccak256 } from 'viem';
+import { Address, Hex, isAddress, isHex, keccak256, recoverTypedDataAddress } from 'viem';
 import CASH_REMUNERATION_ABI from '../artifacts/cash_remuneration_eip712_abi.json';
-import { isCashRemunerationOwner } from '../utils/cashRemunerationUtil';
+import {
+  getCurrentCashRemunerationContract,
+  isCashRemunerationOwner,
+} from '../utils/cashRemunerationUtil';
 import publicClient from '../utils/viem.config';
-import { getPresignedDownloadUrl } from '../services/storageService';
-import { isUserMemberOfTeam } from './wageController';
+import { refreshAttachmentUrls } from '../services/attachmentService';
+
+// EIP-712 typed-data envelope for the WageClaim signature, mirroring the
+// frontend definition in app/src/components/sections/CashRemunerationView/
+// CRSigne.vue. Mirrored (not imported) so a future tweak to the frontend
+// types triggers a backend change as well — that's the failure mode we want.
+const WAGE_CLAIM_TYPES = {
+  Wage: [
+    { name: 'hourlyRate', type: 'uint256' },
+    { name: 'tokenAddress', type: 'address' },
+  ],
+  WageClaim: [
+    { name: 'employeeAddress', type: 'address' },
+    { name: 'minutesWorked', type: 'uint16' },
+    { name: 'wages', type: 'Wage[]' },
+    { name: 'date', type: 'uint256' },
+  ],
+} as const;
 
 export type WeeklyClaimAction = 'sign' | 'withdraw' | 'disable' | 'enable';
 type statusType = 'pending' | 'signed' | 'withdrawn' | 'disabled';
-
-type FileAttachmentData = {
-  fileType: string;
-  fileSize: number;
-  fileKey: string;
-  fileUrl: string;
-};
-
-const refreshAttachmentUrls = async (attachments: unknown): Promise<unknown> => {
-  if (!Array.isArray(attachments) || attachments.length === 0) {
-    return attachments;
-  }
-
-  const refreshed = await Promise.all(
-    attachments.map(async (attachment) => {
-      if (!attachment || typeof attachment !== 'object') {
-        return attachment;
-      }
-
-      const typedAttachment = attachment as FileAttachmentData;
-      if (!typedAttachment.fileKey) {
-        return attachment;
-      }
-
-      try {
-        const freshUrl = await getPresignedDownloadUrl(typedAttachment.fileKey);
-        return {
-          ...typedAttachment,
-          fileUrl: freshUrl,
-        };
-      } catch {
-        return attachment;
-      }
-    })
-  );
-
-  return refreshed;
-};
 
 function isValidWeeklyClaimAction(action: unknown): action is WeeklyClaimAction {
   return ['sign', 'withdraw', 'pending', 'disable', 'enable'].includes(action as string);
@@ -64,15 +44,34 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
   const callerAddress = req.address;
   const id = Number(req.params.id);
   const action = req.query.action as WeeklyClaimAction;
-  const { signature } = req.body;
+  const { signature, signedAgainstContractAddress, typedDataMessage, chainId } = req.body as {
+    signature?: string;
+    signedAgainstContractAddress?: string;
+    typedDataMessage?: {
+      employeeAddress: string;
+      minutesWorked: number;
+      date: string;
+      wages: { hourlyRate: string; tokenAddress: string }[];
+    };
+    chainId?: number;
+  };
 
   // Validation stricte des actions autorisées
   const errors: string[] = [];
   if (!action || !isValidWeeklyClaimAction(action))
-    errors.push('Invalid action. Allowed actions are: sign, withdraw');
+    errors.push('Invalid action. Allowed actions are: sign, withdraw, disable, enable');
 
-  if (action == 'sign' && (!signature || !isHex(signature)))
-    errors.push('Missing or invalid signature');
+  if (action == 'sign') {
+    if (!signature || !isHex(signature)) errors.push('Missing or invalid signature');
+    // signedAgainstContractAddress + typedDataMessage + chainId are required
+    // for sign so the backend can authenticate the EIP-712 signature and
+    // tag the row with the verifying contract for stale-detection.
+    if (!signedAgainstContractAddress || !isAddress(signedAgainstContractAddress))
+      errors.push('Missing or invalid signedAgainstContractAddress');
+    if (!typedDataMessage) errors.push('Missing typedDataMessage');
+    if (!chainId || !Number.isInteger(chainId) || chainId <= 0)
+      errors.push('Missing or invalid chainId');
+  }
 
   if (!id || isNaN(id)) errors.push('Missing or invalid id');
 
@@ -197,9 +196,77 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
           }
         }
 
+        // The signed-against contract must be the team's current
+        // CashRemunerationEIP712 — the one governed by the current Officer
+        // (linked-list head). Scoping via the helper rather than an
+        // unscoped findFirst is required because after an Officer redeploy
+        // the team has multiple TeamContract rows of this type and we
+        // would otherwise non-deterministically pick an archived one.
+        // `isCashRemunerationOwner` reads from the same helper, so the
+        // owner check above and this contract-match check are guaranteed
+        // to be looking at the same generation of the contract.
+        const currentCashRemunerationContract = await getCurrentCashRemunerationContract(
+          weeklyClaim.wage.team.id
+        );
+        if (
+          !currentCashRemunerationContract ||
+          currentCashRemunerationContract.address.toLowerCase() !==
+            (signedAgainstContractAddress as string).toLowerCase()
+        ) {
+          signErrors.push(
+            'signedAgainstContractAddress does not match the team current CashRemunerationEIP712'
+          );
+        }
+
+        // Authenticate the EIP-712 signature: rebuild the typed-data envelope
+        // from the body and recover the signer. Reject if it isn't the caller.
+        // viem's recoverTypedDataAddress handles the EIP-712 hash + ECDSA
+        // recovery; the bigint-coerced fields (`date`, `hourlyRate`) come back
+        // as strings on the wire.
+        let recovered: Address | null = null;
+        if (signErrors.length === 0) {
+          try {
+            recovered = await recoverTypedDataAddress({
+              domain: {
+                name: 'CashRemuneration',
+                version: '1',
+                chainId: chainId as number,
+                verifyingContract: signedAgainstContractAddress as Address,
+              },
+              types: WAGE_CLAIM_TYPES,
+              primaryType: 'WageClaim',
+              message: {
+                employeeAddress: typedDataMessage!.employeeAddress as Address,
+                minutesWorked: typedDataMessage!.minutesWorked,
+                wages: typedDataMessage!.wages.map((w) => ({
+                  hourlyRate: BigInt(w.hourlyRate),
+                  tokenAddress: w.tokenAddress as Address,
+                })),
+                date: BigInt(typedDataMessage!.date),
+              },
+              signature: signature as Hex,
+            });
+          } catch (err) {
+            console.error('Failed to recover signer for weeklyClaim sign:', err);
+            signErrors.push('Failed to verify signature');
+          }
+        }
+
+        if (
+          signErrors.length === 0 &&
+          (!recovered || recovered.toLowerCase() !== callerAddress.toLowerCase())
+        ) {
+          signErrors.push('Recovered signer does not match the caller');
+        }
+
         if (signErrors.length > 0) return errorResponse(400, signErrors.join('; '), res);
 
-        data = { signature, status: 'signed', data: { ownerAddress: callerAddress } };
+        data = {
+          signature,
+          status: 'signed',
+          data: { ownerAddress: callerAddress },
+          signedAgainstContractAddress,
+        };
         // singleClaimStatus = "signed";
         break;
       }
@@ -238,13 +305,8 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
 };
 
 export const getTeamWeeklyClaims = async (req: Request, res: Response) => {
-  const callerAddress = req.address;
   const teamId = Number(req.query.teamId);
   const status = req.query.status as string;
-
-  if (!teamId || isNaN(teamId)) {
-    return errorResponse(400, 'Missing or invalid teamId', res);
-  }
 
   const rawFilterAddress = (req.query.userAddress ??
     req.query.memberAddress ??
@@ -284,9 +346,7 @@ export const getTeamWeeklyClaims = async (req: Request, res: Response) => {
   }
 
   try {
-    if (!(await isUserMemberOfTeam(callerAddress, teamId))) {
-      return errorResponse(403, 'Caller is not a member of the team', res);
-    }
+    // authz enforced by requireTeamMember middleware
     console.log({ teamId, ...memberAddressFilter, ...statusFilter });
 
     // Filter directly on WeeklyClaim team/member to avoid leaking other members' records.
@@ -336,19 +396,19 @@ export const getTeamWeeklyClaims = async (req: Request, res: Response) => {
       }))
     );
 
-    const weeklyClaimsWithHours = weeklyClaimsWithFreshAttachmentUrls.map((wc) => {
-      const hoursWorked = wc.claims.reduce((sum, claim) => {
-        const h = claim.hoursWorked ?? 0;
+    const weeklyClaimsWithMinutes = weeklyClaimsWithFreshAttachmentUrls.map((wc) => {
+      const minutesWorked = wc.claims.reduce((sum, claim) => {
+        const h = claim.minutesWorked ?? 0;
         return sum + h;
       }, 0);
 
       return {
         ...wc,
-        hoursWorked,
+        minutesWorked,
       };
     });
 
-    return res.status(200).json(weeklyClaimsWithHours);
+    return res.status(200).json(weeklyClaimsWithMinutes);
   } catch (error) {
     console.error(error);
     return errorResponse(500, 'Internal Server Error', res);
@@ -356,24 +416,13 @@ export const getTeamWeeklyClaims = async (req: Request, res: Response) => {
 };
 
 export const syncWeeklyClaims = async (req: Request, res: Response) => {
-  const callerAddress = req.address;
   const teamId = Number(req.query.teamId);
 
-  if (!teamId || Number.isNaN(teamId)) {
-    return errorResponse(400, 'Missing or invalid teamId', res);
-  }
-
   try {
-    if (!(await isUserMemberOfTeam(callerAddress, teamId))) {
-      return errorResponse(403, 'Caller is not a member of the team', res);
-    }
-
-    const teamContract = await prisma.teamContract.findFirst({
-      where: {
-        teamId,
-        type: 'CashRemunerationEIP712',
-      },
-    });
+    // authz enforced by requireTeamMember middleware. Scope to the current
+    // Officer so a redeployed team syncs against its live contract, not an
+    // archived one (multiple rows of the same type exist post-redeploy).
+    const teamContract = await getCurrentCashRemunerationContract(teamId);
 
     if (!teamContract || !teamContract.address || !isAddress(teamContract.address)) {
       return errorResponse(404, 'Cash Remuneration contract not found for the team', res);
@@ -390,6 +439,7 @@ export const syncWeeklyClaims = async (req: Request, res: Response) => {
         id: true,
         status: true,
         signature: true,
+        signedAgainstContractAddress: true,
       },
     });
 
@@ -405,9 +455,34 @@ export const syncWeeklyClaims = async (req: Request, res: Response) => {
     const updatedClaims: Array<{ id: number; previousStatus: string; newStatus: string }> = [];
     const skippedClaims: Array<{ id: number; reason: string }> = [];
 
+    const currentContractAddress = teamContract.address.toLowerCase();
+
     for (const claim of weeklyClaims) {
       if (!claim.signature || !isHex(claim.signature)) {
         skippedClaims.push({ id: claim.id, reason: 'Missing or invalid signature' });
+        continue;
+      }
+
+      // If the claim was signed against a previous CashRemuneration contract
+      // (Officer redeploy), the live contract has no record of it. Reset to
+      // pending and clear signature artifacts so the user re-signs against
+      // the current contract.
+      const signedAgainst = claim.signedAgainstContractAddress?.toLowerCase();
+      if (!signedAgainst || signedAgainst !== currentContractAddress) {
+        await prisma.weeklyClaim.update({
+          where: { id: claim.id },
+          data: {
+            status: 'pending',
+            signature: null,
+            signedAgainstContractAddress: null,
+            data: Prisma.JsonNull,
+          },
+        });
+        updatedClaims.push({
+          id: claim.id,
+          previousStatus: claim.status ?? 'unknown',
+          newStatus: 'pending',
+        });
         continue;
       }
 

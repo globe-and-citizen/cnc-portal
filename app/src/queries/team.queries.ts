@@ -164,7 +164,7 @@ export interface DeleteTeamParams {
 export const useDeleteTeamMutation = createMutationHook<void, DeleteTeamParams>({
   method: 'DELETE',
   endpoint: 'teams/{teamId}',
-  invalidateKeys: [teamKeys.all]
+  invalidateKeys: [teamKeys.lists()]
 })
 
 // ============================================================================

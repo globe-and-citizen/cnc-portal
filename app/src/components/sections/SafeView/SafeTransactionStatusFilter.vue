@@ -1,16 +1,14 @@
 <template>
   <div class="flex items-center gap-2">
     <label class="text-sm font-medium" for="safe-transaction-status-select">Status:</label>
-    <select
+    <USelect
       id="safe-transaction-status-select"
       v-model="selectedStatus"
-      class="select select-bordered select-sm"
+      :items="statusOptions"
+      size="lg"
       data-test="safe-transaction-status-filter"
-    >
-      <option value="all">All</option>
-      <option value="pending">Pending</option>
-      <option value="executed">Executed</option>
-    </select>
+      class="w-36"
+    />
   </div>
 </template>
 
@@ -24,6 +22,12 @@ const emit = defineEmits<{
 }>()
 
 const selectedStatus = ref<SafeTransactionStatus>('all')
+
+const statusOptions = [
+  { value: 'all', label: 'All' },
+  { value: 'pending', label: 'Pending' },
+  { value: 'executed', label: 'Executed' }
+]
 
 watch(selectedStatus, (newValue) => {
   emit('statusChange', newValue)

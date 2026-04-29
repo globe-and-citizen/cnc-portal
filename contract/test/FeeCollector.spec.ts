@@ -12,16 +12,15 @@ describe('FeeCollector', () => {
   let mockUSDC: MockERC20
 
   const ERRORS = {
-    OWNER_ZERO: 'Owner is zero',
-    EMPTY_TYPE: 'Empty type',
-    INVALID_BPS: 'Invalid BPS',
-    DUPLICATE_TYPE: 'Duplicate contractType',
-    INSUFFICIENT_BALANCE: 'Insufficient balance',
-    TOKEN_ADDRESS_ZERO: 'Token address cannot be zero',
-    TOKEN_ALREADY_SUPPORTED: 'Token already supported',
-    TOKEN_NOT_SUPPORTED: 'Token not supported',
-    AMOUNT_ZERO: 'Amount must be greater than zero',
-    INSUFFICIENT_TOKEN_BALANCE: 'Insufficient token balance',
+    ZERO_ADDRESS: 'ZeroAddress',
+    EMPTY_TYPE: 'EmptyContractType',
+    INVALID_BPS: 'InvalidBps',
+    DUPLICATE_TYPE: 'DuplicateContractType',
+    TOKEN_SUPPORT_ZERO_ADDRESS: 'TokenSupportZeroAddress',
+    TOKEN_ALREADY_SUPPORTED: 'TokenSupportAlreadyAdded',
+    TOKEN_NOT_SUPPORTED: 'TokenNotSupported',
+    TOKEN_SUPPORT_NOT_FOUND: 'TokenSupportNotFound',
+    AMOUNT_ZERO: 'ZeroAmount',
     UNAUTHORIZED: 'OwnableUnauthorizedAccount'
   } as const
 
@@ -71,18 +70,21 @@ describe('FeeCollector', () => {
       const tokenAddresses = await deployMockTokens()
       feeCollector = await deployFeeCollector(INITIAL_CONFIGS, tokenAddresses)
 
-      expect(await feeCollector.supportedTokens(tokenAddresses[0])).to.be.true
-      expect(await feeCollector.supportedTokens(tokenAddresses[1])).to.be.true
+      expect(await feeCollector.isTokenSupported(tokenAddresses[0])).to.be.true
+      expect(await feeCollector.isTokenSupported(tokenAddresses[1])).to.be.true
     })
 
     it('should reject zero address as owner', async () => {
       const FeeCollectorFactory = await ethers.getContractFactory('FeeCollector')
+      const tempProxy = (await upgrades.deployProxy(FeeCollectorFactory, [owner.address, [], []], {
+        initializer: 'initialize'
+      })) as unknown as FeeCollector
 
       await expect(
         upgrades.deployProxy(FeeCollectorFactory, [ethers.ZeroAddress, INITIAL_CONFIGS, []], {
           initializer: 'initialize'
         })
-      ).to.be.revertedWith(ERRORS.OWNER_ZERO)
+      ).to.be.revertedWithCustomError(tempProxy, ERRORS.ZERO_ADDRESS)
     })
 
     it('should reject empty contract type', async () => {
@@ -92,12 +94,15 @@ describe('FeeCollector', () => {
       ]
 
       const FeeCollectorFactory = await ethers.getContractFactory('FeeCollector')
+      const tempProxy = (await upgrades.deployProxy(FeeCollectorFactory, [owner.address, [], []], {
+        initializer: 'initialize'
+      })) as unknown as FeeCollector
 
       await expect(
         upgrades.deployProxy(FeeCollectorFactory, [owner.address, invalidConfigs, []], {
           initializer: 'initialize'
         })
-      ).to.be.revertedWith(ERRORS.EMPTY_TYPE)
+      ).to.be.revertedWithCustomError(tempProxy, ERRORS.EMPTY_TYPE)
     })
 
     it('should reject invalid BPS (> 10000)', async () => {
@@ -107,12 +112,15 @@ describe('FeeCollector', () => {
       ]
 
       const FeeCollectorFactory = await ethers.getContractFactory('FeeCollector')
+      const tempProxy = (await upgrades.deployProxy(FeeCollectorFactory, [owner.address, [], []], {
+        initializer: 'initialize'
+      })) as unknown as FeeCollector
 
       await expect(
         upgrades.deployProxy(FeeCollectorFactory, [owner.address, invalidConfigs, []], {
           initializer: 'initialize'
         })
-      ).to.be.revertedWith(ERRORS.INVALID_BPS)
+      ).to.be.revertedWithCustomError(tempProxy, ERRORS.INVALID_BPS)
     })
 
     it('should reject duplicate contract types', async () => {
@@ -122,16 +130,22 @@ describe('FeeCollector', () => {
       ]
 
       const FeeCollectorFactory = await ethers.getContractFactory('FeeCollector')
+      const tempProxy = (await upgrades.deployProxy(FeeCollectorFactory, [owner.address, [], []], {
+        initializer: 'initialize'
+      })) as unknown as FeeCollector
 
       await expect(
         upgrades.deployProxy(FeeCollectorFactory, [owner.address, duplicateConfigs, []], {
           initializer: 'initialize'
         })
-      ).to.be.revertedWith(ERRORS.DUPLICATE_TYPE)
+      ).to.be.revertedWithCustomError(tempProxy, ERRORS.DUPLICATE_TYPE)
     })
 
     it('should reject zero token address in initialization', async () => {
       const FeeCollectorFactory = await ethers.getContractFactory('FeeCollector')
+      const tempProxy = (await upgrades.deployProxy(FeeCollectorFactory, [owner.address, [], []], {
+        initializer: 'initialize'
+      })) as unknown as FeeCollector
 
       await expect(
         upgrades.deployProxy(
@@ -141,7 +155,7 @@ describe('FeeCollector', () => {
             initializer: 'initialize'
           }
         )
-      ).to.be.revertedWith(ERRORS.TOKEN_ADDRESS_ZERO)
+      ).to.be.revertedWithCustomError(tempProxy, ERRORS.ZERO_ADDRESS)
     })
 
     it('should allow initialization with empty configs array', async () => {
@@ -307,18 +321,19 @@ describe('FeeCollector', () => {
         .to.emit(feeCollector, 'TokenSupportAdded')
         .withArgs(await newToken.getAddress())
 
-      expect(await feeCollector.supportedTokens(await newToken.getAddress())).to.be.true
+      expect(await feeCollector.isTokenSupported(await newToken.getAddress())).to.be.true
     })
 
     it('should not allow adding already supported token', async () => {
-      await expect(feeCollector.addTokenSupport(await mockUSDT.getAddress())).to.be.revertedWith(
-        ERRORS.TOKEN_ALREADY_SUPPORTED
-      )
+      await expect(
+        feeCollector.addTokenSupport(await mockUSDT.getAddress())
+      ).to.be.revertedWithCustomError(feeCollector, ERRORS.TOKEN_ALREADY_SUPPORTED)
     })
 
     it('should not allow adding zero address token', async () => {
-      await expect(feeCollector.addTokenSupport(ethers.ZeroAddress)).to.be.revertedWith(
-        ERRORS.TOKEN_ADDRESS_ZERO
+      await expect(feeCollector.addTokenSupport(ethers.ZeroAddress)).to.be.revertedWithCustomError(
+        feeCollector,
+        ERRORS.TOKEN_SUPPORT_ZERO_ADDRESS
       )
     })
 
@@ -327,16 +342,16 @@ describe('FeeCollector', () => {
         .to.emit(feeCollector, 'TokenSupportRemoved')
         .withArgs(await mockUSDT.getAddress())
 
-      expect(await feeCollector.supportedTokens(await mockUSDT.getAddress())).to.be.false
+      expect(await feeCollector.isTokenSupported(await mockUSDT.getAddress())).to.be.false
     })
 
     it('should not allow removing unsupported token', async () => {
       const MockToken = await ethers.getContractFactory('MockERC20')
       const newToken = (await MockToken.deploy('DAI', 'DAI')) as unknown as MockERC20
 
-      await expect(feeCollector.removeTokenSupport(await newToken.getAddress())).to.be.revertedWith(
-        ERRORS.TOKEN_NOT_SUPPORTED
-      )
+      await expect(
+        feeCollector.removeTokenSupport(await newToken.getAddress())
+      ).to.be.revertedWithCustomError(feeCollector, ERRORS.TOKEN_SUPPORT_NOT_FOUND)
     })
 
     it('should not allow non-owner to manage token support', async () => {
@@ -373,52 +388,41 @@ describe('FeeCollector', () => {
 
       await expect(
         feeCollector.getTokenBalance(await unsupportedToken.getAddress())
-      ).to.be.revertedWith(ERRORS.TOKEN_NOT_SUPPORTED)
+      ).to.be.revertedWithCustomError(feeCollector, ERRORS.TOKEN_NOT_SUPPORTED)
     })
 
-    it('should allow owner to withdraw ERC20 tokens', async () => {
-      const amount = ethers.parseUnits('100', 6)
-      await mockUSDT.mint(await feeCollector.getAddress(), amount)
+    it('should sweep full ERC20 balances of every supported token', async () => {
+      const usdtAmount = ethers.parseUnits('100', 6)
+      const usdcAmount = ethers.parseUnits('250', 6)
+      await mockUSDT.mint(await feeCollector.getAddress(), usdtAmount)
+      await mockUSDC.mint(await feeCollector.getAddress(), usdcAmount)
 
-      const tx = feeCollector.withdrawToken(await mockUSDT.getAddress(), amount)
+      const tx = feeCollector.withdraw()
 
-      await expect(tx).to.changeTokenBalances(mockUSDT, [feeCollector, owner], [-amount, amount])
-
-      expect(await mockUSDT.balanceOf(await feeCollector.getAddress())).to.equal(0)
-    })
-
-    it('should not allow withdrawing more than token balance', async () => {
-      const amount = ethers.parseUnits('50', 6)
-      await mockUSDT.mint(await feeCollector.getAddress(), amount)
-
-      await expect(
-        feeCollector.withdrawToken(await mockUSDT.getAddress(), amount + 1n)
-      ).to.be.revertedWith(ERRORS.INSUFFICIENT_TOKEN_BALANCE)
-    })
-
-    it('should not allow withdrawing zero amount', async () => {
-      await expect(feeCollector.withdrawToken(await mockUSDT.getAddress(), 0)).to.be.revertedWith(
-        ERRORS.AMOUNT_ZERO
+      await expect(tx).to.changeTokenBalances(
+        mockUSDT,
+        [feeCollector, owner],
+        [-usdtAmount, usdtAmount]
       )
+      await expect(feeCollector.withdraw()).to.not.be.reverted // idempotent no-op after sweep
+      expect(await mockUSDT.balanceOf(await feeCollector.getAddress())).to.equal(0)
+      expect(await mockUSDC.balanceOf(await feeCollector.getAddress())).to.equal(0)
     })
 
-    it('should not allow withdrawing unsupported tokens', async () => {
-      const MockToken = await ethers.getContractFactory('MockERC20')
-      const unsupportedToken = (await MockToken.deploy(
-        'UNSUPPORTED',
-        'UNS'
-      )) as unknown as MockERC20
-
-      await expect(
-        feeCollector.withdrawToken(await unsupportedToken.getAddress(), 1)
-      ).to.be.revertedWith(ERRORS.TOKEN_NOT_SUPPORTED)
+    it('should skip supported tokens with zero balance', async () => {
+      const amount = ethers.parseUnits('10', 6)
+      await mockUSDT.mint(await feeCollector.getAddress(), amount)
+      // mockUSDC is supported but has zero balance — sweep should not move it
+      const tx = feeCollector.withdraw()
+      await expect(tx).to.changeTokenBalances(mockUSDT, [feeCollector, owner], [-amount, amount])
+      await expect(tx).to.changeTokenBalances(mockUSDC, [feeCollector, owner], [0n, 0n])
     })
 
-    it('should not allow non-owner to withdraw ERC20 tokens', async () => {
+    it('should not allow non-owner to trigger token sweep', async () => {
       const amount = ethers.parseUnits('10', 6)
       await mockUSDT.mint(await feeCollector.getAddress(), amount)
 
-      await expect(feeCollector.connect(user1).withdrawToken(await mockUSDT.getAddress(), amount))
+      await expect(feeCollector.connect(user1).withdraw())
         .to.be.revertedWithCustomError(feeCollector, ERRORS.UNAUTHORIZED)
         .withArgs(user1.address)
     })
@@ -427,80 +431,84 @@ describe('FeeCollector', () => {
   describe('Withdrawals', () => {
     beforeEach(async () => {
       ;[owner, user1, user2] = await ethers.getSigners()
-      feeCollector = await deployFeeCollector()
+      const supportedTokens = await deployMockTokens()
+      feeCollector = await deployFeeCollector(INITIAL_CONFIGS, supportedTokens)
 
-      // Fund the contract
+      // Fund the contract with native
       await owner.sendTransaction({
         to: await feeCollector.getAddress(),
         value: ethers.parseEther('100')
       })
     })
 
-    it('should allow owner to withdraw funds', async () => {
-      const withdrawAmount = ethers.parseEther('10')
-      const initialBalance = await feeCollector.getBalance()
-
-      await expect(() => feeCollector.withdraw(withdrawAmount)).to.changeEtherBalance(
-        owner,
-        withdrawAmount
-      )
-
-      expect(await feeCollector.getBalance()).to.equal(initialBalance - withdrawAmount)
-    })
-
-    it('should allow owner to withdraw full balance', async () => {
+    it('should sweep full native balance to owner when no beneficiary is set', async () => {
       const fullBalance = await feeCollector.getBalance()
 
-      await expect(() => feeCollector.withdraw(fullBalance)).to.changeEtherBalance(
-        owner,
-        fullBalance
-      )
-
+      await expect(() => feeCollector.withdraw()).to.changeEtherBalance(owner, fullBalance)
       expect(await feeCollector.getBalance()).to.equal(0)
     })
 
-    it('should allow multiple partial withdrawals', async () => {
-      const withdrawal1 = ethers.parseEther('30')
-      const withdrawal2 = ethers.parseEther('20')
-      const withdrawal3 = ethers.parseEther('10')
+    it('should sweep native and all token balances in a single call', async () => {
+      const usdtAmount = ethers.parseUnits('500', 6)
+      const usdcAmount = ethers.parseUnits('750', 6)
+      await mockUSDT.mint(await feeCollector.getAddress(), usdtAmount)
+      await mockUSDC.mint(await feeCollector.getAddress(), usdcAmount)
 
-      await feeCollector.withdraw(withdrawal1)
-      await feeCollector.withdraw(withdrawal2)
-      await feeCollector.withdraw(withdrawal3)
+      const fullNative = await feeCollector.getBalance()
 
-      const expectedRemaining = ethers.parseEther('100') - withdrawal1 - withdrawal2 - withdrawal3
-      expect(await feeCollector.getBalance()).to.equal(expectedRemaining)
+      const tx = feeCollector.withdraw()
+      await expect(tx).to.changeEtherBalance(owner, fullNative)
+      await expect(tx).to.changeTokenBalances(
+        mockUSDT,
+        [feeCollector, owner],
+        [-usdtAmount, usdtAmount]
+      )
+      await expect(tx).to.changeTokenBalances(
+        mockUSDC,
+        [feeCollector, owner],
+        [-usdcAmount, usdcAmount]
+      )
+
+      expect(await feeCollector.getBalance()).to.equal(0)
+      expect(await mockUSDT.balanceOf(await feeCollector.getAddress())).to.equal(0)
+      expect(await mockUSDC.balanceOf(await feeCollector.getAddress())).to.equal(0)
+    })
+
+    it('should route the sweep to the fee beneficiary when set', async () => {
+      await expect(feeCollector.setFeeBeneficiary(user2.address))
+        .to.emit(feeCollector, 'FeeBeneficiaryUpdated')
+        .withArgs(ethers.ZeroAddress, user2.address)
+
+      const fullNative = await feeCollector.getBalance()
+      const tx = feeCollector.withdraw()
+      await expect(tx).to.changeEtherBalance(user2, fullNative)
+      await expect(tx).to.emit(feeCollector, 'Withdrawn').withArgs(user2.address, fullNative)
+    })
+
+    it('should fall back to owner when beneficiary is cleared', async () => {
+      await feeCollector.setFeeBeneficiary(user2.address)
+      await feeCollector.setFeeBeneficiary(ethers.ZeroAddress)
+
+      const fullNative = await feeCollector.getBalance()
+      await expect(() => feeCollector.withdraw()).to.changeEtherBalance(owner, fullNative)
     })
 
     it('should not allow non-owner to withdraw', async () => {
-      const withdrawAmount = ethers.parseEther('10')
-
-      await expect(feeCollector.connect(user1).withdraw(withdrawAmount))
+      await expect(feeCollector.connect(user1).withdraw())
         .to.be.revertedWithCustomError(feeCollector, ERRORS.UNAUTHORIZED)
         .withArgs(user1.address)
     })
 
-    it('should not allow withdrawal of more than balance', async () => {
-      const contractBalance = await feeCollector.getBalance()
-      const excessAmount = contractBalance + ethers.parseEther('1')
-
-      await expect(feeCollector.withdraw(excessAmount)).to.be.revertedWith(
-        ERRORS.INSUFFICIENT_BALANCE
-      )
+    it('should not allow non-owner to change the fee beneficiary', async () => {
+      await expect(feeCollector.connect(user1).setFeeBeneficiary(user2.address))
+        .to.be.revertedWithCustomError(feeCollector, ERRORS.UNAUTHORIZED)
+        .withArgs(user1.address)
     })
 
-    it('should allow withdrawal of zero amount', async () => {
-      const initialBalance = await feeCollector.getBalance()
-
-      await feeCollector.withdraw(0)
-
-      expect(await feeCollector.getBalance()).to.equal(initialBalance)
-    })
-
-    it('should handle withdrawal when balance is zero', async () => {
+    it('should be a no-op when every balance is zero', async () => {
       const emptyFeeCollector = await deployFeeCollector()
-
-      await expect(emptyFeeCollector.withdraw(1)).to.be.revertedWith(ERRORS.INSUFFICIENT_BALANCE)
+      await expect(emptyFeeCollector.withdraw()).to.not.be.reverted
+      expect(await emptyFeeCollector.getBalance()).to.equal(0)
     })
   })
 
@@ -510,7 +518,7 @@ describe('FeeCollector', () => {
       feeCollector = await deployFeeCollector()
     })
 
-    it('should correctly report balance after deposits and withdrawals', async () => {
+    it('should correctly report balance after deposits and a full sweep', async () => {
       // Initial deposit
       await owner.sendTransaction({
         to: await feeCollector.getAddress(),
@@ -527,10 +535,10 @@ describe('FeeCollector', () => {
 
       expect(await feeCollector.getBalance()).to.equal(ethers.parseEther('80'))
 
-      // Partial withdrawal
-      await feeCollector.withdraw(ethers.parseEther('20'))
+      // Full sweep
+      await feeCollector.withdraw()
 
-      expect(await feeCollector.getBalance()).to.equal(ethers.parseEther('60'))
+      expect(await feeCollector.getBalance()).to.equal(0)
     })
 
     it('should match contract balance with getBalance()', async () => {
@@ -549,32 +557,36 @@ describe('FeeCollector', () => {
     })
   })
 
-  // describe.skip('Reentrancy Protection', () => {
-  //   beforeEach(async () => {
-  //     ;[owner, user1, user2] = await ethers.getSigners()
-  //     feeCollector = await deployFeeCollector()
-  //   })
+  describe('Reentrancy Protection', () => {
+    beforeEach(async () => {
+      ;[owner, user1, user2] = await ethers.getSigners()
+      feeCollector = await deployFeeCollector()
+    })
 
-  //   it('should prevent reentrancy attacks on withdraw', async () => {
-  //     // Deploy a malicious contract that attempts reentrancy
-  //     const MaliciousContract = await ethers.getContractFactory('MaliciousReentrancy')
-  //     const malicious = await MaliciousContract.deploy()
+    it('should prevent reentrancy attacks on withdraw', async () => {
+      // Deploy a malicious contract that attempts reentrancy
+      const MaliciousContract = await ethers.getContractFactory('MaliciousReentrancy')
+      const malicious = await MaliciousContract.deploy()
 
-  //     // Fund the fee collector
-  //     await owner.sendTransaction({
-  //       to: await feeCollector.getAddress(),
-  //       value: ethers.parseEther('10')
-  //     })
+      // Fund the fee collector
+      await owner.sendTransaction({
+        to: await feeCollector.getAddress(),
+        value: ethers.parseEther('10')
+      })
 
-  //     // Transfer ownership to malicious contract
-  //     await feeCollector.transferOwnership(await malicious.getAddress())
+      // Transfer ownership to malicious contract so withdraw passes onlyOwner
+      await feeCollector.transferOwnership(await malicious.getAddress())
 
-  //     // Attempt reentrancy attack
-  //     await expect(
-  //       malicious.attack(await feeCollector.getAddress(), ethers.parseEther('1'))
-  //     ).to.be.revertedWithCustomError(feeCollector, 'ReentrancyGuardReentrantCall')
-  //   })
-  // })
+      // Attempt reentrancy attack. The outer withdraw call triggers a native
+      // transfer to the malicious owner, whose receive() re-enters withdraw.
+      // The re-entrant call reverts via nonReentrant, causing the native
+      // transfer (.call) to return false, which surfaces as WithdrawalFailed.
+      await expect(malicious.attack(await feeCollector.getAddress())).to.be.revertedWithCustomError(
+        feeCollector,
+        'WithdrawalFailed'
+      )
+    })
+  })
 
   describe('Edge Cases', () => {
     beforeEach(async () => {
@@ -609,7 +621,7 @@ describe('FeeCollector', () => {
 
       expect(await feeCollector.getBalance()).to.equal(smallAmount)
 
-      await feeCollector.withdraw(smallAmount)
+      await feeCollector.withdraw()
       expect(await feeCollector.getBalance()).to.equal(0)
     })
 
@@ -652,17 +664,18 @@ describe('FeeCollector', () => {
     it('should allow new owner to withdraw after ownership transfer', async () => {
       await feeCollector.transferOwnership(user1.address)
 
-      const withdrawAmount = ethers.parseEther('10')
+      const fullBalance = await feeCollector.getBalance()
 
-      await expect(() =>
-        feeCollector.connect(user1).withdraw(withdrawAmount)
-      ).to.changeEtherBalance(user1, withdrawAmount)
+      await expect(() => feeCollector.connect(user1).withdraw()).to.changeEtherBalance(
+        user1,
+        fullBalance
+      )
     })
 
     it('should not allow previous owner to withdraw after transfer', async () => {
       await feeCollector.transferOwnership(user1.address)
 
-      await expect(feeCollector.connect(owner).withdraw(ethers.parseEther('10')))
+      await expect(feeCollector.connect(owner).withdraw())
         .to.be.revertedWithCustomError(feeCollector, ERRORS.UNAUTHORIZED)
         .withArgs(owner.address)
     })
@@ -701,11 +714,17 @@ describe('FeeCollector', () => {
     })
 
     it('should reject empty contract type', async () => {
-      await expect(feeCollector.setFee('', 100)).to.be.revertedWith(ERRORS.EMPTY_TYPE)
+      await expect(feeCollector.setFee('', 100)).to.be.revertedWithCustomError(
+        feeCollector,
+        ERRORS.EMPTY_TYPE
+      )
     })
 
     it('should reject invalid BPS (> 10000)', async () => {
-      await expect(feeCollector.setFee('BANK', 10001)).to.be.revertedWith(ERRORS.INVALID_BPS)
+      await expect(feeCollector.setFee('BANK', 10001)).to.be.revertedWithCustomError(
+        feeCollector,
+        ERRORS.INVALID_BPS
+      )
     })
   })
 })

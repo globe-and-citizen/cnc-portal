@@ -5,13 +5,11 @@ import { ref } from 'vue'
 import { NETWORK, USDC_ADDRESS } from '@/constant'
 import { createTestingPinia } from '@pinia/testing'
 import { useWriteContract } from '@wagmi/vue'
-import ButtonUI from '@/components/ButtonUI.vue'
 import * as util from '@/utils'
 import * as mocks from './mock/MyApprovedExpenseSection.mock'
 import { EXPENSE_ACCOUNT_EIP712_ABI } from '@/artifacts/abi/expense-account-eip712'
 import * as viem from 'viem'
 import { estimateGas, readContract } from '@wagmi/core'
-import { mockToastStore } from '@/tests/mocks/store.mock'
 
 const mockUseQuery = {
   result: ref({
@@ -79,7 +77,7 @@ describe('ExpenseAccountSection', () => {
         `${mocks.budgetData.amountPerTransaction} ${NETWORK.currencySymbol}`
       )
       expect(firstRow.html()).toContain('Spend')
-      const spendButton = firstRow.findComponent(ButtonUI)
+      const spendButton = firstRow.findComponent({ name: 'UButton' })
       expect(spendButton.exists()).toBeTruthy()
       expect(spendButton.props('disabled')).toBe(false)
       spendButton.trigger('click')
@@ -147,7 +145,7 @@ describe('ExpenseAccountSection', () => {
 
       expect(firstRow.html()).toContain('20')
 
-      const spendButton = firstRow.findComponent(ButtonUI)
+      const spendButton = firstRow.findComponent({ name: 'UButton' })
       expect(spendButton.exists()).toBeTruthy()
       expect(spendButton.props('disabled')).toBe(true)
     })
@@ -158,7 +156,6 @@ describe('ExpenseAccountSection', () => {
       wrapper.vm.errorTransfer = new Error('Error getting amount withdrawn')
       await flushPromises()
 
-      expect(mockToastStore.addErrorToast).toBeCalledWith('Failed to transfer')
       expect(logErrorSpy).toBeCalledWith('Error getting amount withdrawn')
     })
     it.skip('should call correct logs when transferNativeToken fails', async () => {
@@ -182,7 +179,6 @@ describe('ExpenseAccountSection', () => {
         'Error in transferNativeToken:',
         'Error getting amount withdrawn'
       )
-      expect(mockToastStore.addErrorToast).toBeCalledWith('Failed to transfer')
       //@ts-expect-error: not visible from vm
       expect(vm.transferERC20loading).toBe(false)
       //@ts-expect-error: not visible from vm
@@ -212,7 +208,6 @@ describe('ExpenseAccountSection', () => {
         'Error in transferErc20Token:',
         new Error('Error getting erc20 allowance')
       )
-      expect(mockToastStore.addErrorToast).toBeCalledWith('Failed to transfer')
       //@ts-expect-error: not visible from vm
       expect(vm.transferERC20loading).toBe(false)
       //@ts-expect-error: not visible from vm

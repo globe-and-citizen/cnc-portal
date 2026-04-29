@@ -1,5 +1,5 @@
 import { expect } from 'chai'
-import { ethers } from 'hardhat'
+import { ethers, upgrades } from 'hardhat'
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers'
 import { ExpenseAccountEIP712 } from '../typechain-types'
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers'
@@ -23,11 +23,15 @@ describe('ExpenseAccountEIP712V2', function () {
     const usdc = await USDC.deploy('USDC', 'USDC')
     await usdc.waitForDeployment()
 
+    // Deploy through a proxy; the implementation's constructor now calls
+    // `_disableInitializers()`, so `initialize` can only be invoked on a proxy.
     const ExpenseAccount = await ethers.getContractFactory('ExpenseAccountEIP712')
-    const expenseAccount = await ExpenseAccount.deploy()
+    const expenseAccount = (await upgrades.deployProxy(
+      ExpenseAccount,
+      [owner.address, [await usdt.getAddress(), await usdc.getAddress()]],
+      { initializer: 'initialize' }
+    )) as unknown as ExpenseAccountEIP712
     await expenseAccount.waitForDeployment()
-
-    await expenseAccount.initialize(owner.address, await usdt.getAddress(), await usdc.getAddress())
 
     // Fund the contract with native tokens
     await owner.sendTransaction({
@@ -209,7 +213,7 @@ describe('ExpenseAccountEIP712V2', function () {
         expenseAccount
           .connect(approvedAddress)
           .transfer(recipient.address, ethers.parseEther('0.3'), budgetLimit, signature)
-      ).to.be.revertedWith('Exceeds period budget')
+      ).to.be.revertedWithCustomError(expenseAccount, 'AmountExceedsPeriodBudget')
 
       // Move to 1st of next month (period 1)
       await time.setNextBlockTimestamp(nextMonthTimestamp)
@@ -316,9 +320,9 @@ describe('ExpenseAccountEIP712V2', function () {
       const currentTime = await time.latest()
       const currentDate = new Date(currentTime * 1000)
 
-      // Calculate next Wednesday from current time
+      // Calculate next Wednesday from current time (always at least 1 day ahead)
       const currentDay = currentDate.getUTCDay() // 0 = Sunday, 1 = Monday, ..., 3 = Wednesday
-      const daysUntilWednesday = currentDay <= 3 ? 3 - currentDay : 10 - currentDay
+      const daysUntilWednesday = currentDay < 3 ? 3 - currentDay : 10 - currentDay
       const nextWednesday = new Date(currentDate)
       nextWednesday.setUTCDate(currentDate.getUTCDate() + daysUntilWednesday)
       nextWednesday.setUTCHours(12, 0, 0, 0) // Wednesday at 12:00:00 UTC

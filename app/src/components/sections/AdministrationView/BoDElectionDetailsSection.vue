@@ -1,6 +1,7 @@
 <template>
-  <CardComponent title="Candidates">
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-4">
+  <UCard>
+    <template #header>Candidates</template>
+    <div class="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
       <ElectionDetailsCard
         v-for="(election, index) in candidates"
         :key="index"
@@ -9,16 +10,15 @@
         :is-loading="isLoadingCastVote"
       />
     </div>
-  </CardComponent>
+  </UCard>
 </template>
 
 <script lang="ts" setup>
-import CardComponent from '@/components/CardComponent.vue'
 import ElectionDetailsCard from './BoDElectionDetailsCard.vue'
 import { computed, reactive, watch } from 'vue'
 import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
 // import { BOD_ABI } from '@/artifacts/abi/bod'
-import { useTeamStore, useToastStore } from '@/stores'
+import { useTeamStore } from '@/stores'
 import { encodeFunctionData, zeroAddress, type Address } from 'viem'
 import { useWriteContract, useWaitForTransactionReceipt, useReadContract } from '@wagmi/vue'
 import { estimateGas, readContract } from '@wagmi/core'
@@ -30,7 +30,7 @@ import { useQueryClient } from '@tanstack/vue-query'
 const props = defineProps<{ electionId: bigint }>()
 const queryClient = useQueryClient()
 const teamStore = useTeamStore()
-const { addSuccessToast, addErrorToast } = useToastStore()
+const toast = useToast()
 const electionId = computed(() => props.electionId)
 
 const votesPerCandidate = reactive<Record<Address, number>>({})
@@ -77,20 +77,25 @@ const { isLoading: isConfirmingCastVote, isSuccess: isConfirmedCastVote } =
     hash: hashCastVote
   })
 
+type ElectionTuple = [bigint, string, string, Address, bigint, bigint, bigint, boolean]
+
+const electionTuple = computed<ElectionTuple | null>(() => {
+  if (!Array.isArray(election.value) || election.value.length < 8) {
+    return null
+  }
+  return election.value as unknown as ElectionTuple
+})
+
 const candidates = computed(() => {
-  if (
-    electionCandidates.value &&
-    Array.isArray(electionCandidates.value) &&
-    Array.isArray(election.value)
-  ) {
+  const tuple = electionTuple.value
+  if (electionCandidates.value && Array.isArray(electionCandidates.value) && tuple) {
     return electionCandidates.value.map((candidate: Address) => {
       const user = teamStore.currentTeam?.members?.find(
         (member) => member.address === candidate
       ) as User & { role?: string }
       const currentVotes = votesPerCandidate[candidate] ?? 0
       return {
-        // @ts-expect-error type issue
-        id: BigInt((election.value as string | bigint[])[0]),
+        id: BigInt(tuple[0]),
         user: {
           address: candidate,
           name: user?.name || 'Unknown',
@@ -99,10 +104,8 @@ const candidates = computed(() => {
         },
         totalVotes: Number(voteCount.value) || 0,
         currentVotes: currentVotes as number,
-        // @ts-expect-error type issue
-        startDate: new Date(Number((election.value as bigint[])[4]) * 1000),
-        // @ts-expect-error type issue
-        endDate: new Date(Number((election.value as bigint[])[5]) * 1000)
+        startDate: new Date(Number(tuple[4]) * 1000),
+        endDate: new Date(Number(tuple[5]) * 1000)
       }
     })
   } else return []
@@ -111,15 +114,14 @@ const candidates = computed(() => {
 const castVote = async (candidateAddress: Address) => {
   try {
     if (!electionsAddress.value) {
-      addErrorToast('Elections contract address not found')
+      toast.add({ title: 'Elections contract address not found', color: 'error' })
       return
     }
-    const args = [electionId.value, candidateAddress]
+    const args: readonly [bigint, Address] = [electionId.value, candidateAddress]
 
     const data = encodeFunctionData({
       abi: ELECTIONS_ABI,
       functionName: 'castVote',
-      // @ts-expect-error type issue
       args
     })
 
@@ -132,11 +134,10 @@ const castVote = async (candidateAddress: Address) => {
       address: electionsAddress.value,
       abi: ELECTIONS_ABI,
       functionName: 'castVote',
-      // @ts-expect-error type issue
       args
     })
   } catch (error) {
-    addErrorToast(parseError(error, ELECTIONS_ABI))
+    toast.add({ title: parseError(error, ELECTIONS_ABI), color: 'error' })
     log.error('Error creating election:', parseError(error, ELECTIONS_ABI))
   }
 }
@@ -144,7 +145,7 @@ const castVote = async (candidateAddress: Address) => {
 const fetchVotes = async () => {
   try {
     if (!electionsAddress.value) {
-      addErrorToast('Elections contract address not found')
+      toast.add({ title: 'Elections contract address not found', color: 'error' })
       return
     }
     const candidatesList = electionCandidates.value as Address[]
@@ -162,14 +163,14 @@ const fetchVotes = async () => {
       )
     }
   } catch (error) {
-    addErrorToast(parseError(error, ELECTIONS_ABI))
+    toast.add({ title: parseError(error, ELECTIONS_ABI), color: 'error' })
     log.error('Error fetching votes:', parseError(error, ELECTIONS_ABI))
   }
 }
 
 watch(isConfirmingCastVote, async (isConfirming, wasConfirming) => {
   if (wasConfirming && !isConfirming && isConfirmedCastVote.value) {
-    addSuccessToast('Vote Casted successfully!')
+    toast.add({ title: 'Vote Casted successfully!', color: 'success' })
     await fetchVotes()
     await queryClient.invalidateQueries({
       queryKey: ['readContract']

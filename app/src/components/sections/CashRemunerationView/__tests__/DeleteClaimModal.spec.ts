@@ -7,16 +7,11 @@ import type { Claim } from '@/types'
 import dayjs from 'dayjs'
 import { useDeleteClaimMutation } from '@/queries/weeklyClaim.queries'
 
-import { useToastStore } from '@/stores'
-
-// Toast mocks
-const successToastMock = vi.fn()
-const errorToastMock = vi.fn()
-
 // Test data
 const defaultClaim: Claim = {
   id: 1,
-  hoursWorked: 8,
+  hoursWorked: 480,
+  minutesWorked: 480,
   memo: 'Test work',
   dayWorked: dayjs().startOf('day').toISOString(),
   wageId: 1,
@@ -37,17 +32,12 @@ const defaultClaim: Claim = {
   updatedAt: '2024-01-01T00:00:00.000Z'
 }
 
-describe.skip('DeleteClaimModal', () => {
+describe('DeleteClaimModal', () => {
   afterEach(() => {
     vi.clearAllMocks()
   })
 
   const createWrapper = (props = {}, mutationOverrides = {}) => {
-    vi.mocked(useToastStore).mockReturnValue({
-      addErrorToast: errorToastMock,
-      addSuccessToast: successToastMock
-    } as ReturnType<typeof useToastStore>)
-
     // Mock the delete mutation
     const mockMutateAsync = vi.fn().mockResolvedValue(undefined)
     const mockIsPending = ref(false)
@@ -82,7 +72,7 @@ describe.skip('DeleteClaimModal', () => {
 
     it('should display claim details', () => {
       const wrapper = createWrapper()
-      expect(wrapper.text()).toContain('8 h')
+      expect(wrapper.text()).toContain('8h')
       expect(wrapper.text()).toContain(dayjs(defaultClaim.dayWorked).format('MMM DD, YYYY'))
     })
 
@@ -94,51 +84,24 @@ describe.skip('DeleteClaimModal', () => {
   })
 
   describe('Delete Functionality', () => {
-    it('should show success toast on successful claim deletion', async () => {
+    it('should call delete mutation and emit close on success', async () => {
       const mockMutateAsync = vi.fn().mockResolvedValue(undefined)
       const wrapper = createWrapper({}, { mutateAsync: mockMutateAsync })
 
       await wrapper.find('[data-test="confirm-delete-claim-button"]').trigger('click')
       await flushPromises()
 
-      expect(mockMutateAsync).toHaveBeenCalledWith({ claimId: 1 })
-      expect(successToastMock).toHaveBeenCalledWith('Claim deleted successfully')
-    })
-
-    it('should emit close event after successful deletion', async () => {
-      const mockMutateAsync = vi.fn().mockResolvedValue(undefined)
-      const wrapper = createWrapper({}, { mutateAsync: mockMutateAsync })
-
-      await wrapper.find('[data-test="confirm-delete-claim-button"]').trigger('click')
-      await flushPromises()
-
+      expect(mockMutateAsync).toHaveBeenCalledWith({ pathParams: { claimId: 1 } })
       expect(wrapper.emitted('close')).toBeTruthy()
     })
   })
 
-  describe('Error Handling', () => {
-    it('should show error toast when deletion fails', async () => {
-      const mockMutateAsync = vi.fn().mockRejectedValue(new Error('Network error'))
-      const mockError = ref({
-        response: { data: { message: 'Failed to delete claim' } }
-      })
-      const wrapper = createWrapper({}, { mutateAsync: mockMutateAsync, error: mockError })
+  describe('Error State', () => {
+    it('shows error alert when mutation has an error', () => {
+      const wrapper = createWrapper({}, { error: ref(new Error('delete failed')) })
 
-      await wrapper.find('[data-test="confirm-delete-claim-button"]').trigger('click')
-      await flushPromises()
-
-      expect(errorToastMock).toHaveBeenCalled()
-    })
-
-    it('should not emit close when deletion fails', async () => {
-      const mockMutateAsync = vi.fn().mockRejectedValue(new Error('Error'))
-      const wrapper = createWrapper({}, { mutateAsync: mockMutateAsync })
-
-      await wrapper.find('[data-test="confirm-delete-claim-button"]').trigger('click')
-      await flushPromises()
-
-      // Should not emit close on error
-      expect(wrapper.emitted('close')).toBeUndefined()
+      expect(wrapper.find('[data-test="delete-claim-error"]').exists()).toBe(true)
+      expect(wrapper.text()).toContain('Failed to delete claim')
     })
   })
 

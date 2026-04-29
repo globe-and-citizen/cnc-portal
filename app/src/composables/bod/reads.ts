@@ -9,8 +9,6 @@ import { BOD_ABI } from '@/artifacts/abi/bod'
  */
 export const BOD_FUNCTION_NAMES = {
   // Read functions
-  PAUSED: 'paused',
-  OWNER: 'owner',
   IS_ACTION_EXECUTED: 'isActionExecuted',
   IS_APPROVED: 'isApproved',
   GET_OWNERS: 'getOwners',
@@ -19,9 +17,6 @@ export const BOD_FUNCTION_NAMES = {
   APPROVAL_COUNT: 'approvalCount',
 
   // Write functions
-  PAUSE: 'pause',
-  UNPAUSE: 'unpause',
-  TRANSFER_OWNERSHIP: 'transferOwnership',
   ADD_ACTION: 'addAction',
   APPROVE: 'approve',
   REVOKE: 'revoke',
@@ -76,9 +71,8 @@ export function useBodIsActionExecuted(actionId: MaybeRef<number>) {
   })
 }
 
-/**
- * Check if a member has approved an action
- */
+// UNUSED — no consumers outside bod.setup.ts.
+/*
 export function useBodIsApproved(actionId: MaybeRef<number>, memberAddress: MaybeRef<Address>) {
   const teamStore = useTeamStore()
   const bodAddress = computed(() => teamStore.getContractAddressByType('BoardOfDirectors'))
@@ -97,9 +91,6 @@ export function useBodIsApproved(actionId: MaybeRef<number>, memberAddress: Mayb
   })
 }
 
-/**
- * Get the current board of directors
- */
 export function useBodGetBoardOfDirectors() {
   const teamStore = useTeamStore()
   const bodAddress = computed(() => teamStore.getContractAddressByType('BoardOfDirectors'))
@@ -112,6 +103,7 @@ export function useBodGetBoardOfDirectors() {
     query: { enabled: isBodAddressValid }
   })
 }
+*/
 
 /**
  * Check if an address is a BOD member
@@ -133,9 +125,8 @@ export function useBodIsMember(memberAddress: MaybeRef<Address>) {
   })
 }
 
-/**
- * Get the approval count for an action
- */
+// UNUSED — no consumers outside bod.setup.ts.
+/*
 export function useBodApprovalCount() {
   const teamStore = useTeamStore()
   const bodAddress = computed(() => teamStore.getContractAddressByType('BoardOfDirectors'))
@@ -148,6 +139,7 @@ export function useBodApprovalCount() {
     query: { enabled: isBodAddressValid }
   })
 }
+*/
 
 /**
  * Check if an action is a BOD action (combine multiple reads)

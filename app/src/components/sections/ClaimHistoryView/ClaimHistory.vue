@@ -1,7 +1,7 @@
 <template>
   <div v-if="selectedMemberAddress">
     <ClaimHistoryMemberHeader :member-address="selectedMemberAddress" />
-    <div class="flex bg-transparent gap-x-4">
+    <div class="flex gap-x-4 bg-transparent">
       <!-- Left Sidebar -->
       <ClaimHistoryWeekNavigator
         v-model="selectedMonthObject"

@@ -2,7 +2,6 @@ import { configDefaults, defineConfig, mergeConfig } from 'vitest/config'
 
 import { fileURLToPath } from 'node:url'
 import viteConfig from './vite.config'
-
 import dotenv from 'dotenv'
 
 dotenv.config()
@@ -15,10 +14,14 @@ const mockFiles = [
   'erc20',
   'elections',
   'bank',
+  'treasury',
   'bod',
   'investor',
-  'nuxt-ui'
+  'safeDepositRouter',
+  'nuxt-ui',
+  'utils'
 ].map((name) => `./src/tests/setup/${name}.setup.ts`)
+
 export default defineConfig((env) =>
   mergeConfig(viteConfig(env), {
     test: {
@@ -34,8 +37,9 @@ export default defineConfig((env) =>
           : false
       },
       env: {
-        VITE_APP_NETWORK_ALIAS: 'sepolia'
-      }
+        VITE_APP_NETWORK_ALIAS: 'hardhat'
+      },
+      globals: true
     }
   })
 )

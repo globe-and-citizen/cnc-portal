@@ -51,7 +51,7 @@ const mockAction = {
   teamId: 1,
   actionId: 100,
   description: 'Test action description',
-  targetAddress: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcdef',
+  targetAddress: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd',
   userAddress: mockUserAddress,
   data: '0x123456789abcdef',
   isExecuted: false,
@@ -197,7 +197,7 @@ describe('Action Controller', () => {
       teamId: '1',
       actionId: '100',
       description: 'Test action description',
-      targetAddress: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcdef',
+      targetAddress: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd',
       data: '0x123456789abcdef',
     };
 
@@ -212,7 +212,7 @@ describe('Action Controller', () => {
           teamId: 1,
           actionId: 100,
           description: 'Test action description',
-          targetAddress: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcdef',
+          targetAddress: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd',
           userAddress: mockUserAddress,
           data: '0x123456789abcdef',
           isExecuted: false,
@@ -224,7 +224,7 @@ describe('Action Controller', () => {
           teamId: 1,
           actionId: 100,
           description: 'Test action description',
-          targetAddress: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcdef',
+          targetAddress: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd',
           userAddress: mockUserAddress,
           data: '0x123456789abcdef',
         },
@@ -361,7 +361,7 @@ describe('Action Controller', () => {
         teamId: '1',
         actionId: '100',
         description: 'Test action description',
-        targetAddress: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcdef',
+        targetAddress: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd',
         data: '0x123456789abcdef',
       };
 
@@ -373,7 +373,7 @@ describe('Action Controller', () => {
           teamId: 1,
           actionId: 100,
           description: 'Test action description',
-          targetAddress: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcdef',
+          targetAddress: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd',
           userAddress: customUserAddress,
           data: '0x123456789abcdef',
         },

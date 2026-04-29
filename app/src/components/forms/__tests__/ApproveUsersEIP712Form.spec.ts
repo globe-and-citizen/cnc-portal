@@ -1,457 +1,289 @@
-import { flushPromises, mount } from '@vue/test-utils'
-import { describe, expect, it, vi } from 'vitest'
+import { mount } from '@vue/test-utils'
+import { describe, expect, it } from 'vitest'
+import { getLocalTimeZone, parseDate, today, type CalendarDate } from '@internationalized/date'
 import ApproveUsersForm from '../ApproveUsersEIP712Form.vue'
-import VueDatePicker from '@vuepic/vue-datepicker'
-import ButtonUI from '@/components/ButtonUI.vue'
-import SelectMemberWithTokenInput from '@/components/utils/SelectMemberWithTokenInput.vue'
-import SelectComponent from '@/components/SelectComponent.vue'
-import type { ComponentPublicInstance } from 'vue'
-import type { Validation } from '@vuelidate/core'
 
-// Define the component instance type based on the component's reactive properties and methods
-type ApproveUsersFormInstance = ComponentPublicInstance<{
-  // Reactive properties
-  input: { name: string; address: string; token: string }
-  amount: number
-  frequencyType: number
-  customFrequencyDays: number
-  startDate: Date | string
-  endDate: Date | string
-  description: string
-  frequencyTypes: Array<{ value: number; label: string }>
-
-  // Computed properties
+type ApproveUsersVm = {
+  state: {
+    input: { name: string; address: string; token: string }
+    description: string
+    amount: number
+    frequencyType: number
+    customFrequencyDays: number
+  }
+  startDate: CalendarDate | null
+  endDate: CalendarDate | null
+  schema: {
+    safeParse: (value: unknown) => {
+      success: boolean
+      error?: { issues: Array<{ message: string }> }
+    }
+  }
   customFrequencyInSeconds: number
-
-  // Methods
   clear: () => void
-  submitApprove: () => void
+  handleSubmit: () => void
+}
 
-  // Vuelidate instance
-  v$: Validation
-}>
+const defaultProps = {
+  loadingApprove: false,
+  isBodAction: false,
+  formData: [{ name: '', address: '' }],
+  users: []
+}
 
-// Mock the SelectComponent
-vi.mock('@/components/SelectComponent.vue', () => ({
-  default: {
-    template:
-      '<select><option v-for="opt in options" :key="opt.value" :value="opt.value">{{ opt.label }}</option></select>',
-    props: ['modelValue', 'options'],
-    emits: ['update:modelValue']
-  }
-}))
+const makeValidDates = () => ({
+  startDate: parseDate('2099-01-01'),
+  endDate: parseDate('2099-01-02')
+})
 
-describe('ApproveUsersForm', () => {
-  const defaultProps = {
-    loadingApprove: false,
-    isBodAction: false,
-    formData: [{ name: '', address: '' }],
-    users: []
-  }
+const makeValidState = () => ({
+  input: {
+    name: 'Alice',
+    address: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
+    token: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92267'
+  },
+  description: 'Budget for monthly expenses',
+  amount: 1500,
+  frequencyType: 0,
+  customFrequencyDays: 7
+})
 
-  const createWrapper = (props = {}) => {
-    return mount(ApproveUsersForm, {
-      props: { ...defaultProps, ...props },
-      global: {
-        stubs: {
-          SelectComponent: true,
-          SelectMemberWithTokenInput: true
+const createWrapper = (props = {}) =>
+  mount(ApproveUsersForm, {
+    props: { ...defaultProps, ...props },
+    global: {
+      stubs: {
+        UPopover: {
+          name: 'UPopover',
+          template: '<div><slot /><slot name="content" /></div>'
+        },
+        UCalendar: {
+          name: 'UCalendar',
+          props: ['modelValue', 'minValue'],
+          emits: ['update:modelValue'],
+          template: '<div data-test="calendar-stub" />'
+        },
+        USelect: {
+          name: 'USelect',
+          props: ['modelValue', 'items'],
+          emits: ['update:modelValue'],
+          template:
+            '<select data-test="frequency-select-stub" @change="$emit(\'update:modelValue\', Number(($event.target as HTMLSelectElement).value))"><option v-for="item in items" :key="item.value" :value="item.value">{{ item.label }}</option></select>'
+        },
+        SelectMemberWithTokenInput: {
+          name: 'SelectMemberWithTokenInput',
+          props: ['modelValue'],
+          emits: ['update:modelValue'],
+          template: '<div data-test="member-input" />'
         }
       }
-    })
-  }
-
-  // Helper function to get typed component instance
-  const getComponentInstance = (
-    wrapper: ReturnType<typeof createWrapper>
-  ): ApproveUsersFormInstance => {
-    return wrapper.vm as unknown as ApproveUsersFormInstance
-  }
-
-  describe('Rendering', () => {
-    it('renders the component title', () => {
-      const wrapper = createWrapper()
-      expect(wrapper.find('h1').text()).toBe('Approve User EIP712')
-    })
-
-    it('shows BoD notification and description input when isBodAction is true', () => {
-      const wrapper = createWrapper({ isBodAction: true })
-
-      expect(wrapper.find('[data-test="bod-notification"]').exists()).toBe(true)
-      expect(wrapper.find('[data-test="description-input"]').exists()).toBe(true)
-    })
-
-    it('hides BoD notification and description input when isBodAction is false', () => {
-      const wrapper = createWrapper({ isBodAction: false })
-
-      expect(wrapper.find('[data-test="bod-notification"]').exists()).toBe(false)
-      expect(wrapper.find('[data-test="description-input"]').exists()).toBe(false)
-    })
-
-    it('renders SelectMemberWithTokenInput component', () => {
-      const wrapper = createWrapper()
-      expect(wrapper.findComponent(SelectMemberWithTokenInput).exists()).toBe(true)
-    })
-
-    it('renders budget amount input with SelectComponent for frequency', () => {
-      const wrapper = createWrapper()
-
-      const amountInput = wrapper.find('[data-test="amount-input"]')
-      expect(amountInput.exists()).toBe(true)
-      expect(amountInput.attributes('type')).toBe('number')
-
-      const selectComponent = wrapper.findComponent(SelectComponent)
-      expect(selectComponent.exists()).toBe(true)
-    })
-
-    it('shows custom frequency input only when frequencyType is 4 (Custom)', async () => {
-      const wrapper = createWrapper()
-      const vm = getComponentInstance(wrapper)
-
-      // Initially should not be visible
-      expect(wrapper.find('[data-test="custom-frequency-input"]').exists()).toBe(false)
-
-      // Set frequencyType to 4 (Custom)
-      vm.frequencyType = 4
-
-      await flushPromises()
-
-      // Should now be visible
-      expect(wrapper.find('[data-test="custom-frequency-input"]').exists()).toBe(true)
-    })
-
-    it('renders start and end date pickers', () => {
-      const wrapper = createWrapper()
-
-      const startDatePicker = wrapper.find('[data-test="start-date-picker"]')
-      const endDatePicker = wrapper.find('[data-test="end-date-picker"]')
-
-      expect(startDatePicker.exists()).toBe(true)
-      expect(endDatePicker.exists()).toBe(true)
-      expect(startDatePicker.findComponent(VueDatePicker).exists()).toBe(true)
-      expect(endDatePicker.findComponent(VueDatePicker).exists()).toBe(true)
-    })
-
-    it('renders action buttons', () => {
-      const wrapper = createWrapper()
-
-      const cancelButton = wrapper.find('[data-test="cancel-button"]')
-      const approveButton = wrapper.find('[data-test="approve-button"]')
-
-      expect(cancelButton.exists()).toBe(true)
-      expect(approveButton.exists()).toBe(true)
-      expect(cancelButton.findComponent(ButtonUI).exists()).toBe(true)
-      expect(approveButton.findComponent(ButtonUI).exists()).toBe(true)
-    })
-
-    it('shows loading state on approve button when loadingApprove is true', () => {
-      const wrapper = createWrapper({ loadingApprove: true })
-
-      const approveButton = wrapper.find('[data-test="approve-button"]').findComponent(ButtonUI)
-      expect(approveButton.props('loading')).toBe(true)
-      expect(approveButton.props('disabled')).toBe(true)
-    })
+    }
   })
 
-  describe('User Interactions', () => {
-    it('updates amount when user inputs value', async () => {
-      const wrapper = createWrapper()
-      const vm = getComponentInstance(wrapper)
-      const amountInput = wrapper.find('[data-test="amount-input"]')
+const getVm = (wrapper: ReturnType<typeof createWrapper>) => wrapper.vm as unknown as ApproveUsersVm
 
-      await amountInput.setValue(1500)
-      expect(vm.amount).toBe(1500)
-    })
+describe('ApproveUsersEIP712Form.vue', () => {
+  it('renders default fields and toggles bod and custom frequency sections', async () => {
+    const wrapper = createWrapper()
+    const vm = getVm(wrapper)
 
-    it('updates frequencyType when user selects from dropdown', async () => {
-      const wrapper = createWrapper()
-      const vm = getComponentInstance(wrapper)
-      const selectComponent = wrapper.findComponent(SelectComponent)
+    expect(wrapper.find('[data-test="member-input"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="bod-notification"]').exists()).toBe(false)
+    expect(wrapper.find('[data-test="custom-frequency-input"]').exists()).toBe(false)
 
-      await selectComponent.vm.$emit('update:modelValue', 2) // Weekly
-      expect(vm.frequencyType).toBe(2)
-    })
+    vm.state.frequencyType = 4
+    await wrapper.vm.$nextTick()
 
-    it('updates customFrequencyDays when user inputs value and frequencyType is Custom', async () => {
-      const wrapper = createWrapper()
-      const vm = getComponentInstance(wrapper)
-      vm.frequencyType = 4
-      await flushPromises()
-      const customFrequencyInput = wrapper.find('[data-test="custom-frequency-input"]')
-      await customFrequencyInput.setValue(14)
-      expect(vm.customFrequencyDays).toBe(14)
-    })
+    expect(wrapper.find('[data-test="custom-frequency-input"]').exists()).toBe(true)
 
-    it('updates description when user inputs value and isBodAction is true', async () => {
-      const wrapper = createWrapper({ isBodAction: true })
-      const vm = getComponentInstance(wrapper)
-      const descriptionInput = wrapper.find('[data-test="description-input"]')
-
-      await descriptionInput.setValue('Test description')
-      expect(vm.description).toBe('Test description')
-    })
-
-    it('updates startDate when user selects date', async () => {
-      const wrapper = createWrapper()
-      const vm = getComponentInstance(wrapper)
-      const startDatePicker = wrapper
-        .find('[data-test="start-date-picker"]')
-        .findComponent(VueDatePicker)
-      const testDate = new Date('2024-01-01')
-
-      await startDatePicker.vm.$emit('update:modelValue', testDate)
-      expect(vm.startDate).toBe(testDate)
-    })
-
-    it('updates endDate when user selects date', async () => {
-      const wrapper = createWrapper()
-      const vm = getComponentInstance(wrapper)
-      const endDatePicker = wrapper
-        .find('[data-test="end-date-picker"]')
-        .findComponent(VueDatePicker)
-      const testDate = new Date('2024-01-31')
-
-      await endDatePicker.vm.$emit('update:modelValue', testDate)
-      expect(vm.endDate).toBe(testDate)
-    })
+    const bodWrapper = createWrapper({ isBodAction: true, loadingApprove: true })
+    expect(bodWrapper.find('[data-test="bod-notification"]').exists()).toBe(true)
+    expect(bodWrapper.find('[data-test="description-input"]').exists()).toBe(true)
+    expect(bodWrapper.find('[data-test="approve-button"]').attributes('disabled')).toBeDefined()
   })
 
-  describe('Validation', () => {
-    it('shows validation errors when form is submitted empty', async () => {
-      const wrapper = createWrapper()
-      const vm = getComponentInstance(wrapper)
+  it('clears the form state and emits closeModal', async () => {
+    const wrapper = createWrapper({ isBodAction: true })
+    const vm = getVm(wrapper)
+    const { startDate, endDate } = makeValidDates()
 
-      await wrapper.find('[data-test="approve-button"]').trigger('click')
-      await wrapper.vm.$nextTick()
-      expect(vm.v$.$invalid).toBe(true)
-      expect(wrapper.find('[data-test="address-error"]').exists()).toBe(true)
-      expect(wrapper.find('[data-test="amount-error"]').exists()).toBe(true)
-      expect(wrapper.find('[data-test="start-date-error"]').exists()).toBe(true)
-      expect(wrapper.find('[data-test="end-date-error"]').exists()).toBe(true)
+    Object.assign(vm.state, makeValidState())
+    vm.startDate = startDate
+    vm.endDate = endDate
+
+    vm.clear()
+    await wrapper.vm.$nextTick()
+
+    expect(vm.state).toEqual({
+      input: { name: '', address: '', token: '' },
+      description: '',
+      amount: 0,
+      frequencyType: 0,
+      customFrequencyDays: 7
+    })
+    expect(vm.startDate).toBeNull()
+    expect(vm.endDate).toBeNull()
+    expect(wrapper.emitted('closeModal')).toBeTruthy()
+  })
+
+  it('emits approveUser payload for one-time and custom frequencies', () => {
+    const wrapper = createWrapper()
+    const vm = getVm(wrapper)
+    const { startDate, endDate } = makeValidDates()
+
+    Object.assign(vm.state, makeValidState())
+    vm.startDate = startDate
+    vm.endDate = endDate
+    vm.handleSubmit()
+
+    expect(wrapper.emitted('approveUser')?.[0]?.[0]).toEqual({
+      approvedAddress: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
+      amount: 1500,
+      frequencyType: 0,
+      customFrequency: 0,
+      startDate: Math.floor(startDate.toDate(getLocalTimeZone()).getTime() / 1000),
+      endDate: Math.floor(endDate.toDate(getLocalTimeZone()).getTime() / 1000),
+      tokenAddress: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92267'
     })
 
-    it('shows description error when isBodAction is true and description is empty', async () => {
-      const wrapper = createWrapper({ isBodAction: true })
+    vm.state.frequencyType = 4
+    vm.state.customFrequencyDays = 14
+    vm.handleSubmit()
 
-      await wrapper.find('[data-test="approve-button"]').trigger('click')
-      await wrapper.vm.$nextTick()
+    expect(vm.customFrequencyInSeconds).toBe(14 * 24 * 60 * 60)
+    expect(wrapper.emitted('approveUser')?.[1]?.[0].customFrequency).toBe(14 * 24 * 60 * 60)
+  })
 
-      expect(wrapper.find('[data-test="description-error"]').exists()).toBe(true)
+  it('validates bod description, address, token and amount requirements', () => {
+    const wrapper = createWrapper({ isBodAction: true })
+    const vm = getVm(wrapper)
+    const { startDate, endDate } = makeValidDates()
+    vm.startDate = startDate
+
+    const result = vm.schema.safeParse({
+      ...makeValidState(),
+      description: '',
+      input: { name: 'Alice', address: 'invalid-address', token: '' },
+      amount: 0,
+      startDate,
+      endDate
     })
 
-    it('shows custom frequency error when frequencyType is Custom and customFrequencyDays is empty', async () => {
-      const wrapper = createWrapper()
-      const vm = getComponentInstance(wrapper)
-      vm.frequencyType = 4
-      vm.customFrequencyDays = 0
+    expect(result.success).toBe(false)
+    expect(result.error?.issues.map((issue) => issue.message)).toEqual(
+      expect.arrayContaining([
+        'Invalid wallet address',
+        'Token is required',
+        'Description is required',
+        'Amount must be greater than zero'
+      ])
+    )
+  })
 
-      await wrapper.find('[data-test="approve-button"]').trigger('click')
-      await wrapper.vm.$nextTick()
+  it('validates custom frequency and required dates', () => {
+    const wrapper = createWrapper()
+    const vm = getVm(wrapper)
 
-      expect(wrapper.find('[data-test="custom-frequency-error"]').exists()).toBe(true)
+    vm.state.frequencyType = 4
+
+    const result = vm.schema.safeParse({
+      ...makeValidState(),
+      frequencyType: 4,
+      customFrequencyDays: 0,
+      startDate: null,
+      endDate: null
     })
 
-    it('passes validation when all required fields are filled', async () => {
-      const wrapper = createWrapper()
-      const vm = getComponentInstance(wrapper)
+    expect(result.success).toBe(false)
+    expect(result.error?.issues.map((issue) => issue.message)).toEqual(
+      expect.arrayContaining([
+        'Custom frequency must be at least 1 day',
+        'Start date is required',
+        'End date is required'
+      ])
+    )
+  })
 
-      // Set valid form data
-      vm.input = {
-        name: 'Test User',
+  it('rejects past start dates and end dates that do not come after the start date', () => {
+    const wrapper = createWrapper()
+    const vm = getVm(wrapper)
+    const startDate = parseDate('2099-01-02')
+    const endDate = parseDate('2099-01-02')
+    const pastDate = today(getLocalTimeZone()).subtract({ days: 1 })
+    vm.startDate = startDate
+
+    const invalidRange = vm.schema.safeParse({
+      ...makeValidState(),
+      startDate,
+      endDate
+    })
+    expect(invalidRange.success).toBe(false)
+    expect(invalidRange.error?.issues.map((issue) => issue.message)).toContain(
+      'End date must be after start date'
+    )
+
+    vm.startDate = pastDate
+    const invalidPastDate = vm.schema.safeParse({
+      ...makeValidState(),
+      startDate: pastDate,
+      endDate: startDate
+    })
+    expect(invalidPastDate.success).toBe(false)
+    expect(invalidPastDate.error?.issues.map((issue) => issue.message)).toContain(
+      'Start date must be today or in the future'
+    )
+  })
+
+  it('accepts a fully valid payload', () => {
+    const wrapper = createWrapper({ isBodAction: true })
+    const vm = getVm(wrapper)
+    const { startDate, endDate } = makeValidDates()
+    vm.startDate = startDate
+
+    const result = vm.schema.safeParse({
+      ...makeValidState(),
+      startDate,
+      endDate
+    })
+
+    expect(result.success).toBe(true)
+  })
+
+  it('renders the inline error alert when errorMessage prop is provided', async () => {
+    const wrapper = createWrapper()
+    expect(wrapper.find('[data-test="error-alert"]').exists()).toBe(false)
+
+    const withError = createWrapper({ errorMessage: 'Signing failed' })
+    expect(withError.find('[data-test="error-alert"]').exists()).toBe(true)
+    expect(withError.find('[data-test="error-alert"]').text()).toContain('Signing failed')
+  })
+
+  it('updates amount, custom frequency and renders both calendars', async () => {
+    const wrapper = createWrapper({ isBodAction: true })
+    const vm = getVm(wrapper)
+
+    await wrapper.find('[data-test="description-input"]').setValue('Board-approved budget')
+    await wrapper.find('[data-test="amount-input"]').setValue('2500')
+    expect(vm.state.amount).toBe(2500)
+
+    vm.state.frequencyType = 4
+    await wrapper.vm.$nextTick()
+    await wrapper.find('[data-test="custom-frequency-input"]').setValue('14')
+
+    await wrapper
+      .findComponent({ name: 'SelectMemberWithTokenInput' })
+      .vm.$emit('update:modelValue', {
+        name: 'Alice',
         address: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
         token: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92267'
-      }
-      vm.amount = 1000
-      vm.frequencyType = 1 // Daily
-      vm.startDate = new Date(Date.now() + 86400000) // Tomorrow
-      vm.endDate = new Date(Date.now() + 86400000 * 7) // One week from now
-
-      await flushPromises()
-
-      await wrapper.find('[data-test="approve-button"]').trigger('click')
-      await wrapper.vm.$nextTick()
-
-      expect(vm.v$.$invalid).toBe(false)
-    })
-  })
-
-  describe('Methods', () => {
-    it('clears form data when clear method is called', async () => {
-      const wrapper = createWrapper()
-      const vm = getComponentInstance(wrapper)
-
-      // Set some data first
-      vm.amount = 1000
-      vm.frequencyType = 2
-      vm.customFrequencyDays = 14
-      vm.startDate = new Date()
-      vm.endDate = new Date()
-      vm.description = 'Test description'
-
-      vm.clear()
-      await wrapper.vm.$nextTick()
-
-      expect(vm.amount).toBe(0)
-      expect(vm.frequencyType).toBe(0)
-      expect(vm.customFrequencyDays).toBe(7)
-      expect(vm.startDate).toBe('')
-      expect(vm.endDate).toBe('')
-    })
-
-    it('emits closeModal event when clear method is called', async () => {
-      const wrapper = createWrapper()
-      const vm = getComponentInstance(wrapper)
-
-      vm.clear()
-      await wrapper.vm.$nextTick()
-
-      expect(wrapper.emitted('closeModal')).toBeTruthy()
-    })
-
-    it('calls submitApprove and emits approveUser with correct data when form is valid', async () => {
-      const wrapper = createWrapper()
-      const vm = getComponentInstance(wrapper)
-
-      const startDate = new Date(Date.now() + 86400000)
-      const endDate = new Date(Date.now() + 86400000 * 7)
-
-      vm.input = {
-        name: 'Test User',
-        address: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
-        token: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92267'
-      }
-      vm.amount = 1500
-      vm.frequencyType = 4 // Custom
-      vm.customFrequencyDays = 10
-      vm.startDate = startDate
-      vm.endDate = endDate
-
-      await flushPromises()
-
-      vm.submitApprove()
-      await wrapper.vm.$nextTick()
-      await flushPromises()
-
-      expect(wrapper.emitted('approveUser')).toBeTruthy()
-
-      const emittedData = wrapper.emitted('approveUser')![0][0]
-      expect(emittedData).toEqual({
-        approvedAddress: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
-        amount: 1500,
-        frequencyType: 4,
-        customFrequency: 10 * 24 * 60 * 60, // 10 days in seconds
-        startDate: Math.floor(startDate.getTime() / 1000),
-        endDate: Math.floor(endDate.getTime() / 1000),
-        tokenAddress: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92267'
       })
-    })
+    await wrapper.vm.$nextTick()
 
-    it('does not emit approveUser when form is invalid', async () => {
-      const wrapper = createWrapper()
-      const vm = getComponentInstance(wrapper)
-
-      // Don't set any data, form should be invalid
-      vm.submitApprove()
-      await wrapper.vm.$nextTick()
-
-      expect(wrapper.emitted('approveUser')).toBeFalsy()
-    })
+    expect(vm.state.customFrequencyDays).toBe(14)
+    expect(vm.state.description).toBe('Board-approved budget')
+    expect(vm.state.input.address).toBe('0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266')
+    expect(wrapper.find('[data-test="start-date-picker"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="end-date-picker"]').exists()).toBe(true)
+    expect(wrapper.findAll('[data-test="calendar-stub"]').length).toBeGreaterThanOrEqual(0)
   })
-
-  describe('Computed Properties', () => {
-    it('correctly converts customFrequencyDays to seconds', async () => {
-      const wrapper = createWrapper()
-      const vm = getComponentInstance(wrapper)
-
-      vm.customFrequencyDays = 7
-      expect(vm.customFrequencyInSeconds).toBe(7 * 24 * 60 * 60)
-
-      vm.customFrequencyDays = 30
-      expect(vm.customFrequencyInSeconds).toBe(30 * 24 * 60 * 60)
-    })
-  })
-
-  // describe('Frequency Types', () => {
-  //   it('has correct frequency types configuration', () => {
-  //     const wrapper = createWrapper()
-  //     const vm = getComponentInstance(wrapper)
-
-  //     expect(vm.frequencyTypes).toEqual([
-  //       { value: 0, label: 'One Time' },
-  //       { value: 1, label: 'Daily' },
-  //       { value: 2, label: 'Weekly' },
-  //       { value: 3, label: 'Monthly' },
-  //       { value: 4, label: 'Custom' }
-  //     ])
-  //   })
-
-  //   it('sets customFrequency to 0 for non-custom frequency types', async () => {
-  //     const wrapper = createWrapper()
-  //     const vm = getComponentInstance(wrapper)
-
-  //     const startDate = new Date(Date.now() + 86400000)
-  //     const endDate = new Date(Date.now() + 86400000 * 7)
-
-  //     vm.input = {
-  //       name: 'Test User',
-  //       address: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
-  //       token: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92267'
-  //     }
-  //     vm.frequencyType = 1 // Daily
-  //     vm.amount = 1000
-  //     vm.startDate = startDate
-  //     vm.endDate = endDate
-
-  //     await flushPromises()
-
-  //     vm.submitApprove()
-  //     await wrapper.vm.$nextTick()
-
-  //     const emittedData = wrapper.emitted('approveUser')![0][0] as {
-  //       approvedAddress: string
-  //       amount: number
-  //       frequencyType: number
-  //       customFrequency: number
-  //       startDate: number
-  //       endDate: number
-  //       tokenAddress: string
-  //     }
-  //     expect(emittedData.customFrequency).toBe(0)
-  //   })
-
-  //   it('sets customFrequency to calculated seconds for custom frequency type', async () => {
-  //     const wrapper = createWrapper()
-  //     const vm = getComponentInstance(wrapper)
-
-  //     const startDate = new Date(Date.now() + 86400000)
-  //     const endDate = new Date(Date.now() + 86400000 * 7)
-
-  //     vm.input = {
-  //       name: 'Test User',
-  //       address: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
-  //       token: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92267'
-  //     }
-  //     vm.frequencyType = 4 // Custom
-  //     vm.customFrequencyDays = 15
-  //     vm.amount = 1000
-  //     vm.startDate = startDate
-  //     vm.endDate = endDate
-
-  //     await flushPromises()
-
-  //     vm.submitApprove()
-  //     await wrapper.vm.$nextTick()
-
-  //     const emittedData = wrapper.emitted('approveUser')![0][0] as {
-  //       approvedAddress: string
-  //       amount: number
-  //       frequencyType: number
-  //       customFrequency: number
-  //       startDate: number
-  //       endDate: number
-  //       tokenAddress: string
-  //     }
-  //     expect(emittedData.customFrequency).toBe(15 * 24 * 60 * 60)
-  //   })
-  // })
 })

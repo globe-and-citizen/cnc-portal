@@ -4,18 +4,16 @@
     <GenericTokenHoldingsSection v-if="bankAddress" :address="bankAddress!" />
 
     <ContractOwnerCard v-if="bankAddress" :contractAddress="bankAddress" />
-    <!-- <TransactionsHistorySection /> -->
+    <BankTransactions v-if="bankAddress" :bank-address="bankAddress!" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-// import { type Address } from 'viem'
 import BankBalanceSection from '@/components/sections/BankView/BankBalanceSection.vue'
+import BankTransactions from '@/components/sections/BankView/BankTransactions.vue'
 import GenericTokenHoldingsSection from '@/components/GenericTokenHoldingsSection.vue'
 import ContractOwnerCard from '@/components/ContractOwnerCard.vue'
-
-// import TransactionsHistorySection from '@/components/sections/BankView/TransactionsHistorySection.vue'
 import { useTeamStore } from '@/stores'
 
 const teamStore = useTeamStore()

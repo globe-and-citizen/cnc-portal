@@ -35,6 +35,7 @@ coverage
 
 *.tsbuildinfo
 .env
+docs/dummy
 
 # Synpress
 .cache-synpress
@@ -44,3 +45,12 @@ test-results
 gasReporterOutput.json
 backend/.env.production
 app/.env.production
+.mcp.json
+
+# Local review / architecture notes (not for public repo)
+/reviews/
+/archi-update.md
+.claude/
+
+# Local working todolist shared between dev and AI agents (never committed)
+/todolist.md

@@ -8,7 +8,22 @@ pragma solidity ^0.8.24;
  */
 library ElectionTypes {
   /**
-   * @notice Struct for an election
+   * @dev Full election record including configuration, voter state, and results.
+   * @param id Election identifier.
+   * @param title Election title.
+   * @param description Election description.
+   * @param createdBy Team owner who created this election.
+   * @param startDate Start timestamp (block time).
+   * @param endDate End timestamp (block time).
+   * @param seatCount Number of BOD seats to fill (must be odd).
+   * @param isEligibleVoter Lookup of voter eligibility.
+   * @param isCandidate Lookup of candidacy.
+   * @param candidateList List of candidate addresses.
+   * @param voterList List of eligible voter addresses.
+   * @param hasVoted Tracks which voters have cast a vote.
+   * @param winners Published winners after results are finalized.
+   * @param resultsPublished True once results have been published.
+   * @param voteCount Running total of votes cast.
    */
   struct Election {
     uint256 id;

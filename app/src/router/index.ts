@@ -6,7 +6,7 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      component: () => import('@/views/HomeView.vue')
+      redirect: { name: 'teams' }
     },
     {
       path: '/login',
@@ -18,7 +18,7 @@ const router = createRouter({
     {
       path: '/teams',
       name: 'teams',
-      meta: { name: 'Teams List' },
+      meta: { name: 'Companies' },
       components: {
         default: () => import('@/views/team/ListIndex.vue')
       }
@@ -27,14 +27,8 @@ const router = createRouter({
       path: '/teams/:id',
       component: () => import('@/views/team/[id]/ShowIndex.vue'),
       name: 'show-team',
-      meta: { name: 'Team View' },
+      meta: { name: 'Overview' },
       children: [
-        {
-          path: '/teams/:id/demo',
-          name: 'team-demo',
-          meta: { name: 'Team Demo' },
-          component: () => import('@/views/team/[id]/DemoExample.vue')
-        },
         {
           path: '/teams/:id/accounts/bank-account',
           name: 'bank-account',
@@ -62,7 +56,7 @@ const router = createRouter({
         {
           path: '/teams/:id/accounts/team-payroll',
           name: 'team-payroll',
-          meta: { name: 'Team Payroll' },
+          meta: { name: 'Company Payroll' },
           component: () => import('@/views/team/[id]/Accounts/WeeklyClaimView.vue')
         },
         {
@@ -74,7 +68,7 @@ const router = createRouter({
         {
           path: '/teams/:id/cash-remunerations/member/:memberAddress',
           name: 'cash-remunerations-member',
-          meta: { name: 'Cash Remuneration Member' },
+          meta: { name: 'Member Compensation' },
           component: () => import('@/views/team/[id]/Accounts/CashRemunerationView.vue')
         },
         {
@@ -93,7 +87,7 @@ const router = createRouter({
         {
           path: '/teams/:id/administration/bod-elections',
           name: 'bod-elections',
-          meta: { name: 'BoD Election' },
+          meta: { name: 'Board Election' },
           component: () => import('@/views/team/[id]/BodElectionView.vue')
         },
         {
@@ -111,7 +105,7 @@ const router = createRouter({
         {
           path: '/teams/:id/administration/bod-elections-details',
           name: 'bod-elections-details',
-          meta: { name: 'BoD Election Details' },
+          meta: { name: 'Board Election Details' },
           component: () => import('@/views/team/[id]/BodElectionDetailsView.vue')
         },
         {
@@ -146,9 +140,9 @@ router.beforeEach(async (to) => {
   if (!isAuth.value && to.name !== 'login') {
     return { name: 'login' }
   }
-  // Redirect to home page if logged in
+  // Redirect to teams page if logged in
   if (to.name === 'login' && isAuth.value) {
-    return { name: 'home' }
+    return { name: 'teams' }
   }
 })
 // router.

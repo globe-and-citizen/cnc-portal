@@ -1,0 +1,225 @@
+import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { mount, flushPromises } from '@vue/test-utils'
+import { createPinia, setActivePinia } from 'pinia'
+import { BaseError, UserRejectedRequestError } from 'viem'
+import OwnerTreasuryWithdrawAction from '../OwnerTreasuryWithdrawAction.vue'
+import {
+  mockBodAddAction,
+  mockBodIsBodAction,
+  mockCashRemunerationReads,
+  mockCashRemunerationWrites,
+  mockExpenseAccountReads,
+  mockExpenseAccountWrites,
+  mockTeamStore,
+  mockUseChainId,
+  mockUseContractBalance,
+  mockUserStore,
+  resetComposableMocks,
+  resetContractMocks,
+  useQueryClientFn
+} from '@/tests/mocks'
+
+const OWNER_ADDRESS = '0x00000000000000000000000000000000000000aa'
+const NON_OWNER_ADDRESS = '0x00000000000000000000000000000000000000bb'
+const CASH_ADDRESS = '0x6666666666666666666666666666666666666666'
+const EXPENSE_ADDRESS = '0x5555555555555555555555555555555555555555'
+const BUTTON = '[data-test="owner-withdraw-button"]'
+const CONFIRM = '[data-test="owner-withdraw-modal-confirm-button"]'
+const WARNING = '[data-test="owner-withdraw-modal-warning"]'
+
+const makeBalance = (amount: number) => ({
+  amount,
+  token: {
+    id: 'native',
+    name: 'ETH',
+    symbol: 'ETH',
+    code: 'ETH',
+    coingeckoId: 'ethereum',
+    decimals: 18,
+    address: '0x0000000000000000000000000000000000000000'
+  },
+  values: {
+    USD: {
+      value: amount,
+      formated: `$${amount}`,
+      id: 'usd',
+      code: 'USD',
+      symbol: '$',
+      price: 1,
+      formatedPrice: '$1'
+    }
+  }
+})
+
+const createWrapper = (
+  contractType: 'CashRemunerationEIP712' | 'ExpenseAccountEIP712' = 'CashRemunerationEIP712'
+) =>
+  mount(OwnerTreasuryWithdrawAction, {
+    props: { contractType },
+    global: { stubs: { teleport: true } }
+  })
+
+const openModal = async (wrapper: ReturnType<typeof createWrapper>) => {
+  await wrapper.get(BUTTON).trigger('click')
+}
+
+const submit = async (
+  contractType: 'CashRemunerationEIP712' | 'ExpenseAccountEIP712' = 'CashRemunerationEIP712'
+) => {
+  const wrapper = createWrapper(contractType)
+  await openModal(wrapper)
+  await wrapper.get(CONFIRM).trigger('click')
+  await flushPromises()
+  return wrapper
+}
+
+const simulateCashThrow = (error: unknown) => {
+  mockCashRemunerationWrites.ownerWithdrawAllToBank.mutateAsync.mockRejectedValueOnce(error)
+}
+
+describe('OwnerTreasuryWithdrawAction', () => {
+  const invalidateQueries = vi.fn()
+
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    vi.clearAllMocks()
+    resetContractMocks()
+    resetComposableMocks()
+    vi.mocked(useQueryClientFn).mockReturnValue({
+      invalidateQueries,
+      getQueryData: vi.fn(),
+      setQueryData: vi.fn(),
+      removeQueries: vi.fn()
+    })
+    mockUseChainId.value = 11155111
+    mockUserStore.address = OWNER_ADDRESS.toLowerCase()
+    mockCashRemunerationReads.owner.data.value = OWNER_ADDRESS
+    mockExpenseAccountReads.owner.data.value = OWNER_ADDRESS
+    mockBodIsBodAction.isBodAction.value = false
+    mockBodAddAction.isActionAdded.value = false
+    mockCashRemunerationWrites.ownerWithdrawAllToBank.mutateAsync.mockResolvedValue({
+      hash: '0xhash'
+    })
+    mockExpenseAccountWrites.ownerWithdrawAllToBank.mutateAsync.mockResolvedValue({
+      hash: '0xhash'
+    })
+    mockTeamStore.getContractAddressByType = vi.fn((type) => {
+      if (type === 'CashRemunerationEIP712') return CASH_ADDRESS
+      if (type === 'ExpenseAccountEIP712') return EXPENSE_ADDRESS
+      return '0x1111111111111111111111111111111111111111'
+    })
+    mockUseContractBalance.balances.value = [makeBalance(3)]
+  })
+
+  it('applies visibility and balance rules before any withdrawal', () => {
+    mockUserStore.address = NON_OWNER_ADDRESS
+    mockCashRemunerationReads.owner.data.value = '0x00000000000000000000000000000000000000cc'
+    expect(createWrapper().find(BUTTON).exists()).toBe(false)
+
+    mockUserStore.address = ''
+    mockCashRemunerationReads.owner.data.value = OWNER_ADDRESS
+    expect(createWrapper().find(BUTTON).exists()).toBe(false)
+
+    mockUserStore.address = OWNER_ADDRESS.toLowerCase()
+    mockUseContractBalance.balances.value = [makeBalance(0)]
+    expect(createWrapper().get(BUTTON).attributes('disabled')).toBeDefined()
+
+    mockUseContractBalance.balances.value = [makeBalance(3)]
+    expect(createWrapper().get(BUTTON).attributes('disabled')).toBeUndefined()
+  })
+
+  it('opens and closes the modal through the UModal v-model', async () => {
+    const wrapper = createWrapper()
+    await openModal(wrapper)
+    expect(wrapper.find(CONFIRM).exists()).toBe(true)
+    await wrapper.findComponent({ name: 'UModal' }).vm.$emit('update:open', false)
+    await flushPromises()
+    expect(wrapper.find(CONFIRM).exists()).toBe(false)
+  })
+
+  it('closes the modal when a BOD action is added', async () => {
+    mockBodIsBodAction.isBodAction.value = true
+    const wrapper = createWrapper()
+    await openModal(wrapper)
+    mockBodAddAction.isActionAdded.value = true
+    await flushPromises()
+    expect(wrapper.find(CONFIRM).exists()).toBe(false)
+  })
+
+  it('does not submit without a resolved contract address', async () => {
+    mockTeamStore.getContractAddressByType = vi.fn(
+      () => undefined as unknown as string
+    ) as unknown as typeof mockTeamStore.getContractAddressByType
+    await submit()
+    expect(mockCashRemunerationWrites.ownerWithdrawAllToBank.mutateAsync).not.toHaveBeenCalled()
+  })
+
+  it('refreshes balances and closes the modal after a successful cash withdrawal', async () => {
+    const wrapper = await submit()
+
+    expect(mockCashRemunerationWrites.ownerWithdrawAllToBank.mutateAsync).toHaveBeenCalledWith({
+      args: []
+    })
+    expect(invalidateQueries).toHaveBeenCalled()
+    expect(wrapper.find(CONFIRM).exists()).toBe(false)
+  })
+
+  it('uses the expense account writer for direct expense withdrawals', async () => {
+    await submit('ExpenseAccountEIP712')
+    expect(mockExpenseAccountWrites.ownerWithdrawAllToBank.mutateAsync).toHaveBeenCalledWith({
+      args: []
+    })
+    expect(mockCashRemunerationWrites.ownerWithdrawAllToBank.mutateAsync).not.toHaveBeenCalled()
+  })
+
+  it('routes ExpenseAccountEIP712 withdrawals through BOD action creation', async () => {
+    mockBodIsBodAction.isBodAction.value = true
+    mockUserStore.address = NON_OWNER_ADDRESS
+    mockBodAddAction.executeAddAction.mockResolvedValue(undefined)
+
+    await submit('ExpenseAccountEIP712')
+
+    expect(mockBodAddAction.executeAddAction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        targetAddress: EXPENSE_ADDRESS,
+        userAddress: NON_OWNER_ADDRESS,
+        description: expect.stringContaining('Owner Treasury Withdraw All to Bank'),
+        data: expect.any(String)
+      })
+    )
+    expect(mockExpenseAccountWrites.ownerWithdrawAllToBank.mutateAsync).not.toHaveBeenCalled()
+  })
+
+  it('routes CashRemunerationEIP712 withdrawals through BOD action creation', async () => {
+    mockBodIsBodAction.isBodAction.value = true
+    mockUserStore.address = NON_OWNER_ADDRESS
+    mockBodAddAction.executeAddAction.mockResolvedValue(undefined)
+
+    await submit('CashRemunerationEIP712')
+
+    expect(mockBodAddAction.executeAddAction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        targetAddress: CASH_ADDRESS,
+        userAddress: NON_OWNER_ADDRESS,
+        description: expect.stringContaining('Owner Treasury Withdraw All to Bank'),
+        data: expect.any(String)
+      })
+    )
+    expect(mockCashRemunerationWrites.ownerWithdrawAllToBank.mutateAsync).not.toHaveBeenCalled()
+  })
+
+  it('shows an inline warning when the wallet rejects the request', async () => {
+    const rejection = new BaseError('rejected', {
+      cause: new UserRejectedRequestError(new Error('rejected'))
+    })
+    simulateCashThrow(rejection)
+    const wrapper = await submit()
+    expect(wrapper.find(WARNING).text()).toContain('Owner rejected the request.')
+  })
+
+  it('keeps the inline warning hidden for unexpected thrown errors', async () => {
+    simulateCashThrow(new Error('RPC node unavailable'))
+    const wrapper = await submit()
+    expect(wrapper.find(WARNING).exists()).toBe(false)
+  })
+})

@@ -1,5 +1,5 @@
 <template>
-  <CardComponent data-test="action-alerts">
+  <UCard data-test="action-alerts">
     <div class="flex flex-col gap-4">
       <!-- Submit Claims Alert (for member's own view) -->
       <div
@@ -7,24 +7,23 @@
         class="alert alert-vertical sm:alert-horizontal"
         v-if="memberAddress === userStore.address"
       >
-        <IconifyIcon icon="heroicons:information-circle" class="w-8 h-8 text-info" />
+        <IconifyIcon icon="heroicons:information-circle" class="text-info h-8 w-8" />
         <span>{{ claimSubmitMessage }}</span>
         <div>
           <SubmitClaims
             v-if="hasWage"
             :weekly-claim="weeklyClaim"
             :signed-week-starts="signedWeekStarts"
-            :restrict-submit="false"
           />
-          <ButtonUI
+          <UButton
             v-else
-            variant="success"
+            color="success"
             size="sm"
             :disabled="true"
             data-test="submit-claim-disabled-button"
           >
             Submit Claim
-          </ButtonUI>
+          </UButton>
         </div>
       </div>
 
@@ -34,7 +33,7 @@
         class="alert alert-vertical sm:alert-horizontal"
         v-if="weeklyClaim && !weeklyClaim.signature"
       >
-        <IconifyIcon icon="heroicons:information-circle" class="w-8 h-8 text-info" />
+        <IconifyIcon icon="heroicons:information-circle" class="text-info h-8 w-8" />
         <span>{{
           weeklyClaim?.weekStart === currentWeekStart
             ? 'You cannot approve the current week claim, wait until the week is over'
@@ -63,7 +62,7 @@
           userStore.address === weeklyClaim.wage.userAddress
         "
       >
-        <IconifyIcon icon="heroicons:information-circle" class="w-8 h-8 text-info" />
+        <IconifyIcon icon="heroicons:information-circle" class="text-info h-8 w-8" />
         <span v-if="weeklyClaim.status == 'withdrawn'">You have withdrawn your weekly claim.</span>
         <span v-else>Your weekly claim has been approved. You can now withdraw it.</span>
         <div>
@@ -75,7 +74,7 @@
         </div>
       </div>
     </div>
-  </CardComponent>
+  </UCard>
 </template>
 
 <script setup lang="ts">
@@ -85,13 +84,11 @@ import utc from 'dayjs/plugin/utc'
 import isoWeek from 'dayjs/plugin/isoWeek'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import type { Address } from 'viem'
-import { useTeamStore, useToastStore, useUserDataStore } from '@/stores'
+import { useTeamStore, useUserDataStore } from '@/stores'
 import { useGetTeamWagesQuery, useGetTeamWeeklyClaimsQuery } from '@/queries'
 import type { WeeklyClaim } from '@/types'
-import CardComponent from '@/components/CardComponent.vue'
 import SubmitClaims from '../CashRemunerationView/SubmitClaims.vue'
 import CRSigne from '../CashRemunerationView/CRSigne.vue'
-import ButtonUI from '@/components/ButtonUI.vue'
 import CRWithdrawClaim from '../CashRemunerationView/CRWithdrawClaim.vue'
 
 dayjs.extend(utc)
@@ -106,7 +103,7 @@ const props = defineProps<Props>()
 
 const teamStore = useTeamStore()
 const userStore = useUserDataStore()
-const toastStore = useToastStore()
+const toast = useToast()
 
 const { data: teamWageData, error: teamWageDataError } = useGetTeamWagesQuery({
   queryParams: { teamId: computed(() => teamStore.currentTeamId) }
@@ -128,7 +125,7 @@ const hasWage = computed(() => {
 
 watch(teamWageDataError, (newVal) => {
   if (newVal) {
-    toastStore.addErrorToast('Failed to fetch user wage data')
+    toast.add({ title: 'Failed to fetch user wage data', color: 'error' })
   }
 })
 

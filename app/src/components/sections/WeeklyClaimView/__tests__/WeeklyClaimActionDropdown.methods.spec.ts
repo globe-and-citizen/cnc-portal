@@ -5,7 +5,7 @@ import type { Status } from '../WeeklyClaimActionDropdown.vue'
 import { createPinia, setActivePinia } from 'pinia'
 import { useTeamStore, useUserDataStore } from '@/stores'
 import type { WeeklyClaim } from '@/types'
-import { mockUseReadContract, mockWagmiCore, mockToastStore, mockUserStore } from '@/tests/mocks'
+import { mockUseReadContract, mockWagmiCore, mockToast, mockUserStore } from '@/tests/mocks'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import isoWeek from 'dayjs/plugin/isoWeek'
@@ -20,7 +20,7 @@ describe('DropdownActions', () => {
   const weeklyClaim: WeeklyClaim = {
     id: 1,
     status: 'pending',
-    hoursWorked: 8,
+    hoursWorked: 480,
     createdAt: '2024-01-01T00:00:00Z',
     wage: {
       userAddress: MOCK_OWNER_ADDRESS,
@@ -52,12 +52,6 @@ describe('DropdownActions', () => {
       props: {
         status,
         weeklyClaim
-      },
-      global: {
-        stubs: {
-          IconifyIcon: true,
-          ButtonUI: true
-        }
       }
     })
   }
@@ -82,7 +76,7 @@ describe('DropdownActions', () => {
   describe.skip('Action handling', () => {
     it('should close menu after click enable', async () => {
       const wrapper = createWrapper('disabled')
-      const button = wrapper.findComponent({ name: 'ButtonUI' })
+      const button = wrapper.findComponent({ name: 'UButton' })
       button.trigger('click')
 
       await flushPromises()
@@ -113,13 +107,13 @@ describe('DropdownActions', () => {
       expect(mockWagmiCore.writeContract).toBeCalled()
       //@ts-expect-error not visible on wrapper
       expect(wrapper.vm.weeklyClaimSyncUrl).toBe('/weeklyclaim/sync/?teamId=1')
-      expect(mockToastStore.addSuccessToast).toHaveBeenCalledWith('Claim disabled')
+      expect(mockToast.add).toHaveBeenCalledWith({ title: 'Claim disabled', color: 'success' })
     })
 
     it.skip('closes dropdown after action is selected', async () => {
       mockUserStore.address = '0xContractOwner'
       const wrapper = createWrapper('pending')
-      const button = wrapper.findComponent({ name: 'ButtonUI' })
+      const button = wrapper.findComponent({ name: 'UButton' })
 
       // Open dropdown
       await button.trigger('click')
@@ -141,7 +135,7 @@ describe('DropdownActions', () => {
     it('closes dropdown after withdraw action', async () => {
       mockUserStore.address = '0xContractOwner'
       const wrapper = createWrapper('signed')
-      const button = wrapper.findComponent({ name: 'ButtonUI' })
+      const button = wrapper.findComponent({ name: 'UButton' })
 
       await button.trigger('click')
 

@@ -1,11 +1,11 @@
 <template>
-  <div ref="clickOutside" class="w-full relative">
+  <div ref="clickOutside" class="relative w-full">
     <!-- Trigger with selected user avatar + name -->
     <div class="flex justify-end">
-      <span class="font-bold text-xl">Select a User</span>
+      <span class="text-xl font-bold">Select a User</span>
     </div>
     <div
-      class="input input-bordered input-lg flex items-center gap-2 cursor-pointer"
+      class="input input-bordered input-lg flex cursor-pointer items-center gap-2"
       data-test="select-member-item-trigger"
       @click="toggleOpen"
     >
@@ -19,7 +19,7 @@
 
       <IconifyIcon
         :icon="isOpen.show ? 'heroicons:chevron-up' : 'heroicons:chevron-down'"
-        class="w-4 h-4 ml-auto text-gray-500 transition-transform duration-400"
+        class="ml-auto h-4 w-4 text-gray-500 transition-transform duration-400"
         :class="isOpen.show ? 'rotate-180' : 'rotate-0'"
       />
     </div>
@@ -28,11 +28,11 @@
     <div
       v-if="isOpen.mount"
       v-show="isOpen.show"
-      class="absolute left-0 mt-2 w-full rounded-box bg-base-100 shadow-sm max-h-72 overflow-y-auto z-50"
+      class="rounded-box bg-base-100 absolute left-0 z-[9999] mt-2 max-h-72 w-full overflow-y-auto shadow-lg"
       data-test="select-member-item-dropdown"
     >
       <!-- Search input -->
-      <div class="p-2 border-b border-base-300">
+      <div class="border-base-300 border-b p-2">
         <input
           v-model="search"
           type="text"
@@ -53,7 +53,7 @@
           @click="select(member)"
         >
           <UserComponent
-            class="p-3 w-full hover:bg-base-200 flex items-center gap-2"
+            class="hover:bg-base-200 flex w-full items-center gap-2 p-3"
             :user="member"
             data-test="select-member-item-option-user"
           />
@@ -68,7 +68,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, onUnmounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import UserComponent from '@/components/UserComponent.vue'
 import { useTeamStore } from '@/stores'
@@ -109,7 +109,6 @@ const selectedUser = computed<User | undefined>(() =>
 )
 
 const open = () => {
-  //   if (props.disabled) return
   isOpen.value = { mount: true, show: true }
 }
 
@@ -127,7 +126,6 @@ const toggleOpen = () => {
 
 const select = (member: User) => {
   //   const memberAddress = member.address ?? ''
-
   search.value = ''
   close()
 
@@ -144,17 +142,9 @@ const select = (member: User) => {
   }
 }
 
-// watch(
-//   () => props.modelValue,
-//   () => {
-//     search.value = ''
-//   }
-// )
-
 const handleClickOutside = (event: MouseEvent) => {
   const target = event.target as HTMLElement
   if (!clickOutside.value) return
-
   if (!clickOutside.value.contains(target)) {
     close()
   }
@@ -170,4 +160,15 @@ watch(
     }
   }
 )
+
+watch(
+  () => props.address,
+  () => {
+    search.value = ''
+  }
+)
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside)
+})
 </script>

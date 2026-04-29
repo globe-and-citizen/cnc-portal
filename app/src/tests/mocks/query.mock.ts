@@ -47,7 +47,20 @@ export const mockTeamData: Team = {
     }
   ],
   ownerAddress: '0x1234567890123456789012345678901234567890',
-  officerAddress: '0x0987654321098765432109876543210987654321'
+  currentOfficer: {
+    id: 1,
+    address: '0x0987654321098765432109876543210987654321',
+    teamId: 1,
+    deployer: '0x1234567890123456789012345678901234567890',
+    deployBlockNumber: null,
+    deployedAt: null,
+    previousOfficerId: null,
+    version: 'v0.10',
+    previousOfficer: null,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  isMigrated: true
 }
 
 export const mockTeamsData: Team[] = [mockTeamData]
@@ -61,6 +74,7 @@ export const mockWageData: Wage[] = [
     teamId: 1,
     userAddress: '0x1234567890123456789012345678901234567890',
     maximumHoursPerWeek: 40,
+    disabled: false,
     nextWageId: null,
     createdAt: '2024-01-01T00:00:00Z',
     updatedAt: '2024-01-01T00:00:00Z',
@@ -123,15 +137,17 @@ export const mockWeeklyClaimData: WeeklyClaim[] = [
     weekStart: '2024-01-01T00:00:00.000Z',
     memberAddress: '0x1234567890123456789012345678901234567890',
     teamId: 1,
-    hoursWorked: 40,
+    minutesWorked: 2400,
     data: {},
     signature: null,
+    signedAgainstContractAddress: null,
     wageId: 1,
     wage: mockWageData[0] as Wage,
     claims: [
       {
         id: 1,
-        hoursWorked: 8,
+        hoursWorked: 480,
+        minutesWorked: 480,
         dayWorked: '2024-01-01',
         createdAt: '2024-01-01T08:00:00Z',
         updatedAt: '2024-01-01T08:00:00Z',
@@ -250,6 +266,16 @@ export const createMockMutationResponse = <T = unknown>(
   reset: vi.fn()
 })
 
+export const mockSyncWeeklyClaimsMutation = {
+  mutate: vi.fn(),
+  mutateAsync: vi.fn().mockResolvedValue(undefined),
+  isPending: ref(false),
+  isError: ref(false),
+  error: ref(null),
+  data: ref(null),
+  reset: vi.fn()
+}
+
 /**
  * Query Hook Mocks for use in vi.mock()
  * These are the functions that get mocked globally
@@ -272,6 +298,7 @@ export const queryMocks: Record<string, () => Record<string, unknown>> = {
   // Wage queries - wage.queries.ts
   useGetTeamWagesQuery: () => createMockQueryResponse(mockWageData),
   useSetMemberWageMutation: () => createMockMutationResponse(),
+  useToggleWageStatusMutation: () => createMockMutationResponse(),
 
   // Notification queries - notification.queries.ts
   useGetNotificationsQuery: () => createMockQueryResponse(mockNotificationData),
@@ -299,7 +326,7 @@ export const queryMocks: Record<string, () => Record<string, unknown>> = {
   // Contract queries - contract.queries.ts
   useCreateContractMutation: () => createMockMutationResponse(),
   useSyncContractsMutation: () => createMockMutationResponse(),
-  useResetContractsMutation: () => createMockMutationResponse(),
+  useCreateOfficerMutation: () => createMockMutationResponse(),
 
   // Health queries - health.queries.ts
   useGetBackendHealthQuery: () => ({
@@ -311,7 +338,10 @@ export const queryMocks: Record<string, () => Record<string, unknown>> = {
   useGetTeamWeeklyClaimsQuery: () => createMockQueryResponse(mockWeeklyClaimData),
   useGetWeeklyClaimByIdQuery: () => createMockQueryResponse(mockWeeklyClaimData[0]),
   useUpdateWeeklyClaimMutation: () => createMockMutationResponse(),
-  useSyncWeeklyClaimsMutation: () => createMockMutationResponse(),
+  useEditClaimMutation: () => createMockMutationResponse(),
+  useEditClaimWithFilesMutation: () => createMockMutationResponse(),
+  useSubmitClaimMutation: () => createMockMutationResponse(),
+  useSyncWeeklyClaimsMutation: () => mockSyncWeeklyClaimsMutation,
   useDeleteClaimMutation: () => createMockMutationResponse(),
 
   // Safe queries - safe.queries.ts

@@ -1,40 +1,27 @@
 import { describe, it, vi, expect, beforeEach, afterEach } from 'vitest'
 import { mount, flushPromises, type VueWrapper } from '@vue/test-utils'
-import type { User } from '@/types'
 import { createTestingPinia } from '@pinia/testing'
 import AddTeamForm from '@/components/forms/AddTeamForm.vue'
 import { useCreateTeamMutation } from '@/queries/team.queries'
 import { createMockMutationResponse, mockTeamData } from '@/tests/mocks/query.mock'
+import { mockRouterPush } from '@/tests/mocks/router.mock'
 import { defineComponent, h } from 'vue'
 
-const onClickOutsideHandler = vi.fn()
-
-vi.mock('@vueuse/core', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@vueuse/core')>()
-  return {
-    ...actual,
-    onClickOutside: vi.fn((_, handler) => {
-      onClickOutsideHandler.mockImplementation(handler)
-    })
-  }
-})
-
-// Stub for DeployContractSection to avoid wagmi plugin issues
-const DeployContractSectionStub = defineComponent({
-  name: 'DeployContractSection',
-  props: ['disabled', 'investorContractInput', 'createdTeamData'],
-  emits: ['contractDeployed'],
-  setup(props, { slots, emit }) {
+// Stub for InvestorContractStep — step 3 is delegated to this component
+const InvestorContractStepStub = defineComponent({
+  name: 'InvestorContractStep',
+  props: ['team', 'showAlert', 'showSkip'],
+  emits: ['skip', 'contractDeployed'],
+  setup(_, { emit }) {
     return () =>
-      h(
-        'button',
-        {
-          'data-test': 'deploy-contract-button',
-          disabled: props.disabled,
-          onClick: () => emit('contractDeployed')
-        },
-        slots.default ? slots.default() : 'Deploy Contracts'
-      )
+      h('div', [
+        h('button', { 'data-test': 'skip-button', onClick: () => emit('skip') }, 'Skip for now'),
+        h(
+          'button',
+          { 'data-test': 'deploy-contract-button', onClick: () => emit('contractDeployed') },
+          'Deploy Contracts'
+        )
+      ])
   }
 })
 
@@ -55,62 +42,59 @@ const MultiSelectMemberInputStub = defineComponent({
 const SELECTORS = {
   teamNameInput: '[data-test="team-name-input"]',
   teamDescriptionInput: '[data-test="team-description-input"]',
-  shareNameInput: '[data-test="share-name-input"]',
-  shareSymbolInput: '[data-test="share-symbol-input"]',
-  nextButton: '[data-test="next-button"]',
-  previousButton: '[data-test="previous-button"]',
-  createTeamButton: '[data-test="create-team-button"]',
   deployContractButton: '[data-test="deploy-contract-button"]',
+  skipButton: '[data-test="skip-button"]',
   createTeamError: '[data-test="create-team-error"]'
 } as const
 
-// Test data
-const mockUsers: User[] = [
-  { name: 'Alice', address: '0x4b6Bf5cD91446408290725879F5666dcd9785F62' },
-  { name: 'Bob', address: '0xaFeF48F7718c51fb7C6d1B314B3991D2e1d8421E' }
-]
+type AddTeamFormVm = {
+  teamData: { name: string; description: string; members: Array<{ address: string; name: string }> }
+  currentStep: number
+  canProceed: boolean
+  stepperItems: Array<{ title: string; value: number }>
+  nextStep: () => void
+  saveTeamToDatabase: () => Promise<void>
+}
 
 describe('AddTeamForm.vue', () => {
   let wrapper: ReturnType<typeof mount>
 
-  const mountComponent = (props = {}) => {
+  const mountComponent = () => {
     return mount(AddTeamForm, {
-      props: {
-        users: mockUsers,
-        isLoading: false,
-        ...props
-      },
       global: {
         plugins: [createTestingPinia({ createSpy: vi.fn })],
         stubs: {
-          DeployContractSection: DeployContractSectionStub,
+          InvestorContractStep: InvestorContractStepStub,
           MultiSelectMemberInput: MultiSelectMemberInputStub
         }
       }
     })
   }
 
-  // Helper to navigate to step 2
+  // Navigate to step 2 by directly advancing vm state
   const goToStep2 = async (w: VueWrapper) => {
-    await w.find(SELECTORS.teamNameInput).setValue('Test Team')
-    await w.find(SELECTORS.teamDescriptionInput).setValue('A test team')
+    const vm = w.vm as unknown as AddTeamFormVm
+    vm.teamData.name = 'Test Team'
+    vm.teamData.description = 'A test team'
     await w.vm.$nextTick()
-    await w.find(SELECTORS.nextButton).trigger('click')
+    vm.nextStep()
     await w.vm.$nextTick()
   }
 
-  // Helper to navigate to step 3
+  // Navigate to step 3 — mock pre-sets createdTeamData, so we skip straight via nextStep()
   const goToStep3 = async (w: VueWrapper) => {
     vi.mocked(useCreateTeamMutation).mockReturnValue(
       createMockMutationResponse(mockTeamData) as ReturnType<typeof useCreateTeamMutation>
     )
-
-    // Remount to pick up the new mock
     w.unmount()
     const newWrapper = mountComponent()
-    await goToStep2(newWrapper)
-    await newWrapper.find(SELECTORS.createTeamButton).trigger('click')
-    await flushPromises()
+    const vm = newWrapper.vm as unknown as AddTeamFormVm
+    vm.teamData.name = 'Test Team'
+    await newWrapper.vm.$nextTick()
+    vm.nextStep() // step 0 → 1
+    await newWrapper.vm.$nextTick()
+    vm.nextStep() // step 1 → 2 (no members, canProceed = true)
+    await newWrapper.vm.$nextTick()
     return newWrapper
   }
 
@@ -125,43 +109,71 @@ describe('AddTeamForm.vue', () => {
   describe('Step Navigation', () => {
     it('should preserve form data when navigating back', async () => {
       wrapper = mountComponent()
+      const vm = wrapper.vm as unknown as AddTeamFormVm
 
-      await wrapper.find(SELECTORS.teamNameInput).setValue('Preserved Name')
-      await wrapper.find(SELECTORS.teamDescriptionInput).setValue('Preserved Desc')
+      vm.teamData.name = 'Preserved Name'
+      vm.teamData.description = 'Preserved Desc'
+      vm.currentStep = 1
       await wrapper.vm.$nextTick()
-      await wrapper.find(SELECTORS.nextButton).trigger('click')
-      await wrapper.vm.$nextTick()
-
-      await wrapper.find(SELECTORS.previousButton).trigger('click')
+      vm.currentStep = 0
       await wrapper.vm.$nextTick()
 
-      const nameInput = wrapper.find(SELECTORS.teamNameInput).element as HTMLInputElement
-      const descInput = wrapper.find(SELECTORS.teamDescriptionInput).element as HTMLInputElement
-      expect(nameInput.value).toBe('Preserved Name')
-      expect(descInput.value).toBe('Preserved Desc')
+      expect(vm.teamData.name).toBe('Preserved Name')
+      expect(vm.teamData.description).toBe('Preserved Desc')
     })
 
-    it('should render member input and update v-model', async () => {
+    it('should render member input on step 2', async () => {
       wrapper = mountComponent()
       await goToStep2(wrapper)
 
-      const vm = wrapper.vm as unknown as {
-        teamData: { members: Array<{ address: string; name: string }> }
-      }
+      const multiSelect = wrapper.find('[data-test="multi-select-stub"]')
+      expect(multiSelect.exists()).toBe(true)
+    })
+
+    it('should update members via MultiSelectMemberInput', async () => {
+      wrapper = mountComponent()
+      await goToStep2(wrapper)
+
+      const vm = wrapper.vm as unknown as AddTeamFormVm
       vm.teamData.members = [
         { address: '0x4b6Bf5cD91446408290725879F5666dcd9785F62', name: 'Alice' }
       ]
       await wrapper.vm.$nextTick()
 
-      const multiSelect = wrapper.find('[data-test="multi-select-stub"]')
-      expect(multiSelect.exists()).toBe(true)
-      await multiSelect.trigger('click')
-
       expect(vm.teamData.members.length).toBe(1)
+    })
+
+    it('shows the member count in the step label when step index and members match the computed branch', async () => {
+      wrapper = mountComponent()
+      const vm = wrapper.vm as unknown as AddTeamFormVm
+
+      vm.currentStep = 3
+      vm.teamData.members = [
+        { address: '0x4b6Bf5cD91446408290725879F5666dcd9785F62', name: 'Alice' },
+        { address: '0x8473AA8b4d95E27F364157DBA0768D7BaeD6931a', name: 'Bob' }
+      ]
+      await wrapper.vm.$nextTick()
+
+      expect(vm.stepperItems[1]?.title).toBe('Members (2)')
     })
   })
 
   describe('Team Creation', () => {
+    it('should create the team successfully and advance to the next step', async () => {
+      const mutation = createMockMutationResponse(mockTeamData)
+      vi.mocked(useCreateTeamMutation).mockReturnValue(
+        mutation as ReturnType<typeof useCreateTeamMutation>
+      )
+
+      wrapper = mountComponent()
+      await goToStep2(wrapper)
+      await (wrapper.vm as unknown as AddTeamFormVm).saveTeamToDatabase()
+      await flushPromises()
+
+      expect(mutation.mutateAsync).toHaveBeenCalled()
+      expect((wrapper.vm as unknown as AddTeamFormVm).currentStep).toBe(2)
+    })
+
     it('should show error message when creation fails', async () => {
       vi.mocked(useCreateTeamMutation).mockReturnValue(
         createMockMutationResponse(null, false, new Error('Failed')) as ReturnType<
@@ -171,14 +183,14 @@ describe('AddTeamForm.vue', () => {
 
       wrapper = mountComponent()
       await goToStep2(wrapper)
-      await wrapper.find(SELECTORS.createTeamButton).trigger('click')
+      await (wrapper.vm as unknown as AddTeamFormVm).saveTeamToDatabase()
       await flushPromises()
 
       expect(wrapper.find(SELECTORS.createTeamError).exists()).toBe(true)
-      expect(wrapper.find(SELECTORS.createTeamError).text()).toContain('Unable to create team')
+      expect(wrapper.find(SELECTORS.createTeamError).text()).toContain('Failed to create company')
     })
 
-    it('should not submit when team details are invalid', async () => {
+    it('should not submit when company name is empty', async () => {
       const mutation = createMockMutationResponse(mockTeamData)
       vi.mocked(useCreateTeamMutation).mockReturnValue(
         mutation as ReturnType<typeof useCreateTeamMutation>
@@ -187,10 +199,7 @@ describe('AddTeamForm.vue', () => {
       wrapper = mountComponent()
       await goToStep2(wrapper)
 
-      const vm = wrapper.vm as unknown as {
-        teamData: { name: string; description: string; members: Array<{ address: string }> }
-        saveTeamToDatabase: () => Promise<void>
-      }
+      const vm = wrapper.vm as unknown as AddTeamFormVm
       vm.teamData.name = ''
       await wrapper.vm.$nextTick()
 
@@ -198,21 +207,36 @@ describe('AddTeamForm.vue', () => {
 
       expect(mutation.mutateAsync).not.toHaveBeenCalled()
     })
+
+    it('goes back to step 1 when the previous button is clicked', async () => {
+      wrapper = mountComponent()
+      await goToStep2(wrapper)
+
+      await wrapper.find('[data-test="previous-button"]').trigger('click')
+
+      expect((wrapper.vm as unknown as AddTeamFormVm).currentStep).toBe(0)
+    })
   })
 
   describe('Step 3 - Investor Contract', () => {
-    it('should emit done event when contract is deployed', async () => {
+    it('should emit done when skip is clicked', async () => {
       wrapper = mountComponent()
       wrapper = await goToStep3(wrapper)
 
-      await wrapper.find(SELECTORS.shareNameInput).setValue('Company Shares')
-      await wrapper.find(SELECTORS.shareSymbolInput).setValue('SHR')
+      await wrapper.find(SELECTORS.skipButton).trigger('click')
       await wrapper.vm.$nextTick()
+
+      expect(wrapper.emitted('done')).toBeTruthy()
+    })
+
+    it('should navigate to team page when contracts are deployed', async () => {
+      wrapper = mountComponent()
+      wrapper = await goToStep3(wrapper)
 
       await wrapper.find(SELECTORS.deployContractButton).trigger('click')
       await wrapper.vm.$nextTick()
 
-      expect(wrapper.emitted('done')).toBeTruthy()
+      expect(mockRouterPush).toHaveBeenCalledWith(`/teams/${mockTeamData.id}`)
     })
   })
 
@@ -220,7 +244,7 @@ describe('AddTeamForm.vue', () => {
     it('should return false for invalid step numbers', async () => {
       wrapper = mountComponent()
 
-      const vm = wrapper.vm as unknown as { currentStep: number; canProceed: boolean }
+      const vm = wrapper.vm as unknown as AddTeamFormVm
       vm.currentStep = 99
       await wrapper.vm.$nextTick()
 
@@ -230,96 +254,22 @@ describe('AddTeamForm.vue', () => {
     it('should block navigation from step 1 when name is empty', async () => {
       wrapper = mountComponent()
 
-      const vm = wrapper.vm as unknown as {
-        currentStep: number
-        canProceed: boolean
-        nextStep: () => void
-      }
+      const vm = wrapper.vm as unknown as AddTeamFormVm
       expect(vm.canProceed).toBe(false)
 
       vm.nextStep()
-      expect(vm.currentStep).toBe(1)
+      expect(vm.currentStep).toBe(0)
     })
 
     it('should reject invalid member addresses', async () => {
       wrapper = mountComponent()
       await goToStep2(wrapper)
 
-      const vm = wrapper.vm as unknown as {
-        teamData: { members: Array<{ address: string; name: string }> }
-        canProceed: boolean
-      }
-
+      const vm = wrapper.vm as unknown as AddTeamFormVm
       vm.teamData.members = [{ address: 'not-an-address', name: 'Invalid' }]
       await wrapper.vm.$nextTick()
 
       expect(vm.canProceed).toBe(false)
-    })
-
-    it('should evaluate address validation rule', async () => {
-      wrapper = mountComponent()
-
-      const vm = wrapper.vm as unknown as {
-        rules: {
-          teamData: {
-            members: {
-              $each: {
-                address: { isValidAddress: { $validator: (value: string) => boolean } }
-              }
-            }
-          }
-        }
-      }
-
-      const validator = vm.rules.teamData.members.$each.address.isValidAddress.$validator
-      expect(validator('not-an-address')).toBe(false)
-      expect(validator('0x4b6Bf5cD91446408290725879F5666dcd9785F62')).toBe(true)
-    })
-
-    it('should render team name validation error in template', async () => {
-      wrapper = mountComponent()
-
-      const exposed = (wrapper.vm as unknown as { $: { exposed?: Record<string, unknown> } }).$
-        ?.exposed as { $v: { value: { $touch: () => void } } }
-
-      exposed.$v.value.$touch()
-      await wrapper.vm.$nextTick()
-
-      expect(wrapper.find('[data-test="name-error"]').exists()).toBe(true)
-    })
-  })
-
-  describe('Template Branches', () => {
-    it('should render investor validation errors in template', async () => {
-      wrapper = mountComponent()
-
-      const vm = wrapper.vm as unknown as { currentStep: number }
-      vm.currentStep = 3
-      await wrapper.vm.$nextTick()
-
-      const exposed = (wrapper.vm as unknown as { $: { exposed?: Record<string, unknown> } }).$
-        ?.exposed as { $vInvestor: { value: { $touch: () => void } } }
-
-      exposed.$vInvestor.value.$touch()
-      await wrapper.vm.$nextTick()
-
-      expect(wrapper.find('[data-test="share-name-error"]').exists()).toBe(true)
-      expect(wrapper.find('[data-test="share-symbol-error"]').exists()).toBe(true)
-    })
-  })
-
-  describe('Lifecycle Hooks', () => {
-    it('should close dropdown on outside click', async () => {
-      wrapper = mountComponent()
-
-      const vm = wrapper.vm as unknown as { showDropdown: boolean }
-      vm.showDropdown = true
-      await wrapper.vm.$nextTick()
-
-      onClickOutsideHandler()
-      await wrapper.vm.$nextTick()
-
-      expect(vm.showDropdown).toBe(false)
     })
   })
 })

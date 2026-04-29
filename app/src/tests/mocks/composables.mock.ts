@@ -99,13 +99,17 @@ export const mockTransactionFunctions = {
 }
 
 /**
- * Mock native transaction composable
+ * Mock native transaction composable (TanStack mutation shape)
  */
 export const mockUseSafeSendTransaction = {
-  sendTransaction: mockTransactionFunctions.mockSendTransaction,
-  isLoading: ref(false),
-  isConfirmed: ref(false),
-  receipt: ref<{ status: string } | null>(null)
+  mutateAsync: mockTransactionFunctions.mockMutateAsync,
+  mutate: mockTransactionFunctions.mockSendTransaction,
+  isPending: ref(false),
+  isSuccess: ref(false),
+  isError: ref(false),
+  error: ref<Error | null>(null),
+  data: ref<{ hash: string; receipt: { status: string } } | null>(null),
+  reset: vi.fn()
 }
 
 /**
@@ -181,51 +185,6 @@ export const mockUseSafeDeployment = {
 }
 
 /**
- * Mock useGetDividendBalances composable
- */
-export const mockUseGetDividendBalances = {
-  data: ref([]),
-  isLoading: ref(false),
-  error: ref(null)
-}
-
-/**
- * Mock useClaimDividend composable (for native token claims)
- */
-export const mockUseClaimDividend = {
-  claimWrite: vi.fn(),
-  isLoading: ref(false),
-  error: ref(null)
-}
-
-/**
- * Mock useClaimTokenDividend composable (for token claims)
- */
-export const mockUseClaimTokenDividend = {
-  tokenClaimWrite: vi.fn(),
-  isLoading: ref(false),
-  error: ref(null)
-}
-
-/**
- * Mock useDepositDividends composable
- */
-export const mockUseDepositDividends = {
-  depositWrite: vi.fn(),
-  isLoading: ref(false),
-  error: ref(null)
-}
-
-/**
- * Mock useDepositTokenDividends composable
- */
-export const mockUseDepositTokenDividends = {
-  tokenDepositWrite: vi.fn(),
-  isLoading: ref(false),
-  error: ref(null)
-}
-
-/**
  * Mock useBodAddAction composable
  */
 export const mockUseBodAddAction = {
@@ -244,6 +203,17 @@ export const mockUseBodIsBodAction = {
 }
 
 /**
+ * Mock useSubmitRestriction composable
+ */
+export const mockUseSubmitRestriction = {
+  isRestricted: ref(false),
+  effectiveStatus: ref('enabled'),
+  canSubmitAnytime: ref(true),
+  checkRestriction: vi.fn().mockResolvedValue(false),
+  errorMessage: ref(null)
+}
+
+/**
  * Reset function for composable mocks
  */
 export const resetComposableMocks = () => {
@@ -253,9 +223,11 @@ export const resetComposableMocks = () => {
   mockUseContractBalance.dividends.value = []
 
   // Reset native transaction states
-  mockUseSafeSendTransaction.isLoading.value = false
-  mockUseSafeSendTransaction.isConfirmed.value = false
-  mockUseSafeSendTransaction.receipt.value = null
+  mockUseSafeSendTransaction.isPending.value = false
+  mockUseSafeSendTransaction.isSuccess.value = false
+  mockUseSafeSendTransaction.isError.value = false
+  mockUseSafeSendTransaction.error.value = null
+  mockUseSafeSendTransaction.data.value = null
 
   // Clear all native transaction function mocks
   Object.values(mockTransactionFunctions).forEach((mock) => {
@@ -320,35 +292,6 @@ export const resetComposableMocks = () => {
     mockUseSafeDeployment.deploySafe.mockClear()
   }
 
-  // Reset dividend-related composables
-  mockUseGetDividendBalances.data.value = []
-  mockUseGetDividendBalances.isLoading.value = false
-  mockUseGetDividendBalances.error.value = null
-
-  mockUseClaimDividend.isLoading.value = false
-  mockUseClaimDividend.error.value = null
-  if (vi.isMockFunction(mockUseClaimDividend.claimWrite)) {
-    mockUseClaimDividend.claimWrite.mockClear()
-  }
-
-  mockUseClaimTokenDividend.isLoading.value = false
-  mockUseClaimTokenDividend.error.value = null
-  if (vi.isMockFunction(mockUseClaimTokenDividend.tokenClaimWrite)) {
-    mockUseClaimTokenDividend.tokenClaimWrite.mockClear()
-  }
-
-  mockUseDepositDividends.isLoading.value = false
-  mockUseDepositDividends.error.value = null
-  if (vi.isMockFunction(mockUseDepositDividends.depositWrite)) {
-    mockUseDepositDividends.depositWrite.mockClear()
-  }
-
-  mockUseDepositTokenDividends.isLoading.value = false
-  mockUseDepositTokenDividends.error.value = null
-  if (vi.isMockFunction(mockUseDepositTokenDividends.tokenDepositWrite)) {
-    mockUseDepositTokenDividends.tokenDepositWrite.mockClear()
-  }
-
   mockUseBodAddAction.isLoading.value = false
   mockUseBodAddAction.error.value = null
   if (vi.isMockFunction(mockUseBodAddAction.addActionWrite)) {
@@ -358,6 +301,15 @@ export const resetComposableMocks = () => {
   mockUseBodIsBodAction.isBod.value = false
   mockUseBodIsBodAction.isLoading.value = false
   mockUseBodIsBodAction.error.value = null
+
+  // Reset submit restriction mock
+  mockUseSubmitRestriction.isRestricted.value = false
+  mockUseSubmitRestriction.effectiveStatus.value = 'enabled'
+  mockUseSubmitRestriction.canSubmitAnytime.value = true
+  mockUseSubmitRestriction.errorMessage.value = null
+  if (vi.isMockFunction(mockUseSubmitRestriction.checkRestriction)) {
+    mockUseSubmitRestriction.checkRestriction.mockClear()
+  }
 
   // Reset Apollo query mock
   mockUseApolloQuery.result.value = null
@@ -384,3 +336,86 @@ export const useQueryFn = vi.fn(() => ({
   isLoading: vi.fn(),
   error: vi.fn()
 }))
+
+/**
+ * Stable spy for `queryClient.invalidateQueries` — opt-in.
+ *
+ * The default `useQueryClientFn` returns a fresh `vi.fn()` per call, which is
+ * fine for "was it called?" assertions but makes it impossible to inspect the
+ * predicate / queryKey passed to `invalidateQueries`. Tests that need that
+ * introspection should rebind in `beforeEach`:
+ *
+ *   useQueryClientFn.mockReturnValue({
+ *     invalidateQueries: mockInvalidateQueries,
+ *     getQueryData: vi.fn(),
+ *     setQueryData: vi.fn(),
+ *     removeQueries: vi.fn()
+ *   })
+ */
+export const mockInvalidateQueries = vi.fn().mockResolvedValue(undefined)
+
+/**
+ * Default mock for TanStack Vue Query's `useMutation`.
+ *
+ * Returns an inert mutation observer (mutate/mutateAsync are stub `vi.fn()`s,
+ * status refs are idle). This matches the conservative behaviour the test
+ * suite expected before V3 — no `mutationFn` runs unless a test opts in.
+ *
+ * For tests that DO want to exercise the real mutation lifecycle (mutationFn
+ * / onSuccess / onError), swap in `smartUseMutation` per file:
+ *
+ *   beforeEach(() => useMutationFn.mockImplementation(smartUseMutation))
+ */
+export const useMutationFn = vi.fn(() => ({
+  mutate: vi.fn(),
+  mutateAsync: vi.fn(),
+  isPending: ref(false),
+  isSuccess: ref(false),
+  isError: ref(false),
+  error: ref(null),
+  data: ref(null),
+  reset: vi.fn(),
+  status: ref<'idle' | 'pending' | 'error' | 'success'>('idle'),
+  variables: ref(undefined)
+}))
+
+type SmartMutationOptions<TData, TVariables> = {
+  mutationFn: (vars: TVariables) => Promise<TData>
+  onSuccess?: (data: TData, vars: TVariables, ctx: unknown) => unknown
+  onError?: (err: unknown, vars: TVariables, ctx: unknown) => unknown
+}
+
+/**
+ * Drop-in implementation for `useMutationFn` that actually runs `mutationFn`
+ * and dispatches `onSuccess` / `onError` when `mutateAsync` is awaited.
+ *
+ * Use it via `useMutationFn.mockImplementation(smartUseMutation)` in tests
+ * that exercise composables built on `useMutation` (e.g. V3 contract writes).
+ *
+ * Note: `mutate` is left as a no-op `vi.fn()` here because most existing
+ * call sites only care about whether `mutate` was invoked, not its side
+ * effects. Tests that need fire-and-forget behaviour can override.
+ */
+export const smartUseMutation = <TData, TVariables>(
+  options: SmartMutationOptions<TData, TVariables>
+) => ({
+  mutate: vi.fn(),
+  mutateAsync: async (variables: TVariables) => {
+    try {
+      const data = await options.mutationFn(variables)
+      if (options.onSuccess) await options.onSuccess(data, variables, undefined)
+      return data
+    } catch (err) {
+      if (options.onError) await options.onError(err, variables, undefined)
+      throw err
+    }
+  },
+  isPending: ref(false),
+  isSuccess: ref(false),
+  isError: ref(false),
+  error: ref(null),
+  data: ref(null),
+  reset: vi.fn(),
+  status: ref<'idle' | 'pending' | 'error' | 'success'>('idle'),
+  variables: ref(undefined)
+})

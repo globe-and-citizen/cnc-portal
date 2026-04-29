@@ -70,7 +70,7 @@ async function bulkSendEth() {
       const txParams = {
         to: recipient,
         value: amount,
-        ...(gasLimit ? { gasLimit } : {})
+        ...(gasLimit ? { gasLimit } : { gasLimit: 21000n })
       }
 
       // Send transaction

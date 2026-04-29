@@ -1,15 +1,17 @@
 <template>
-  <CardComponent title="Shareholders List" class="w-full justify-between">
-    <TableComponent
-      :rows="
-        shareholders?.map((shareholder, index) => ({
+  <UCard class="w-full justify-between">
+    <template #header>Shareholders List</template>
+    <UTable
+      :data="
+        shareholdersList.map((shareholder, index) => ({
           index: index + 1,
           name: getShareholderName(shareholder.shareholder) || 'Unknown',
           address: shareholder.shareholder,
-          balance: `${formatUnits(shareholder.amount, 6)} ${tokenSymbol}`,
-          percentage: !totalSupplyLoading
-            ? `${((BigInt(shareholder.amount) * BigInt(100)) / BigInt(totalSupply!)).toString()}%`
-            : '...%',
+          balance: `${formatUnits(shareholder.amount, 6)} ${tokenSymbolText}`,
+          percentage:
+            !totalSupplyLoading && totalSupplyValue != null
+              ? `${((shareholder.amount * 100n) / totalSupplyValue).toString()}%`
+              : '...%',
           shareholder: shareholder.shareholder,
           amount: shareholder.amount
         })) ?? []
@@ -17,7 +19,7 @@
       :columns="columns"
       :loading="shareholdersLoading"
     >
-      <template #address-data="{ row }">
+      <template #address-cell="{ row: { original: row } }">
         <div class="flex w-full">
           <UserComponent
             :user="
@@ -30,7 +32,7 @@
         </div>
       </template>
 
-      <template #actions-data="{ row }">
+      <template #actions-cell="{ row: { original: row } }">
         <div class="flex w-full">
           <div
             :class="{ tooltip: userStore.address != teamStore.currentTeam?.ownerAddress }"
@@ -40,8 +42,8 @@
                 : null
             "
           >
-            <ButtonUI
-              variant="primary"
+            <UButton
+              color="primary"
               :disabled="userStore.address != teamStore.currentTeam?.ownerAddress"
               data-test="mint-individual"
               @click="
@@ -52,34 +54,38 @@
               "
             >
               Mint Individual
-            </ButtonUI>
+            </UButton>
           </div>
         </div>
       </template>
-    </TableComponent>
-    <ModalComponent
-      v-model="mintIndividualModal.show"
-      @reset="() => (mintIndividualModal = { mount: false, show: false })"
+    </UTable>
+    <UModal
+      v-model:open="mintIndividualModal.show"
+      title="Mint Tokens for Shareholder"
+      description="Mint tokens directly for the selected shareholder."
+      :close="{
+        onClick: () => {
+          mintIndividualModal = { mount: false, show: false }
+        }
+      }"
     >
-      <MintForm
-        v-if="mintIndividualModal.mount"
-        v-model="mintIndividualModal.show"
-        :memberInput="{
-          name: getShareholderName(selectedShareholder!),
-          address: selectedShareholder!
-        }"
-        :disabled="true"
-        @close-modal="() => (mintIndividualModal = { mount: false, show: false })"
-      />
-    </ModalComponent>
-  </CardComponent>
+      <template #body>
+        <MintForm
+          v-if="mintIndividualModal.mount"
+          v-model="mintIndividualModal.show"
+          :memberInput="{
+            name: getShareholderName(selectedShareholder!),
+            address: selectedShareholder!
+          }"
+          :disabled="true"
+          @close-modal="() => (mintIndividualModal = { mount: false, show: false })"
+        />
+      </template>
+    </UModal>
+  </UCard>
 </template>
 <script setup lang="ts">
-import ButtonUI from '@/components/ButtonUI.vue'
-import CardComponent from '@/components/CardComponent.vue'
-import ModalComponent from '@/components/ModalComponent.vue'
 import MintForm from '@/components/sections/SherTokenView/forms/MintForm.vue'
-import TableComponent from '@/components/TableComponent.vue'
 import UserComponent from '@/components/UserComponent.vue'
 import {
   useInvestorShareholders,
@@ -89,7 +95,12 @@ import {
 import { useTeamStore, useUserDataStore } from '@/stores'
 import { log } from '@/utils'
 import { formatUnits, type Address } from 'viem'
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
+
+type ShareholderInfo = {
+  shareholder: Address
+  amount: bigint
+}
 
 const mintIndividualModal = ref({
   mount: false,
@@ -113,6 +124,18 @@ const {
   isLoading: shareholdersLoading,
   error: shareholderError
 } = useInvestorShareholders()
+
+const shareholdersList = computed<ShareholderInfo[]>(() => {
+  return Array.isArray(shareholders.value) ? (shareholders.value as ShareholderInfo[]) : []
+})
+
+const tokenSymbolText = computed(() =>
+  typeof tokenSymbol.value === 'string' ? tokenSymbol.value : ''
+)
+
+const totalSupplyValue = computed(() =>
+  typeof totalSupply.value === 'bigint' ? totalSupply.value : undefined
+)
 
 const getShareholderName = (address: Address) => {
   const member = teamStore.currentTeam?.members?.find((member) => member.address === address)
@@ -141,10 +164,10 @@ watch(shareholderError, (value) => {
 })
 
 const columns = [
-  { key: 'index', label: 'No', class: 'w-1/6 text-center' },
-  { key: 'address', label: 'Member' },
-  { key: 'percentage', label: 'Percentage' },
-  { key: 'balance', label: 'Balance' },
-  { key: 'actions', label: 'Actions', class: 'w-1/6 text-center' }
+  { accessorKey: 'index', header: 'No' },
+  { accessorKey: 'address', header: 'Member' },
+  { accessorKey: 'percentage', header: 'Percentage' },
+  { accessorKey: 'balance', header: 'Balance' },
+  { accessorKey: 'actions', header: 'Actions' }
 ]
 </script>

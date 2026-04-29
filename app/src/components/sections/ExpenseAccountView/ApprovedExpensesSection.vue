@@ -1,75 +1,92 @@
 <template>
-  <CardComponent title="Approved Addresses" data-test="claims-table">
-    <template #card-action>
-      <div
-        :class="{ tooltip: !(userDataStore.address === contractOwnerAddress || isBodAction()) }"
-        :data-tip="
-          !(userDataStore.address === contractOwnerAddress || isBodAction())
-            ? 'Only the contract owner can approve expenses'
-            : null
-        "
-      >
-        <ButtonUI
-          variant="success"
-          :disabled="!(userDataStore.address === contractOwnerAddress || isBodAction())"
-          @click="
-            () => {
-              approveUsersModal = { mount: true, show: true }
-            }
+  <UCard data-test="claims-table">
+    <template #header>
+      <div class="flex items-center justify-between">
+        <span>Spending Approvals</span>
+        <div
+          :class="{ tooltip: !(userDataStore.address === contractOwnerAddress || isBodAction()) }"
+          :data-tip="
+            !(userDataStore.address === contractOwnerAddress || isBodAction())
+              ? 'Only the contract owner can grant approvals'
+              : null
           "
-          data-test="approve-users-button"
         >
-          Approve User Expense
-        </ButtonUI>
+          <UButton
+            color="success"
+            :disabled="!(userDataStore.address === contractOwnerAddress || isBodAction())"
+            @click="
+              () => {
+                approveUsersModal = { mount: true, show: true }
+              }
+            "
+            data-test="approve-users-button"
+          >
+            Approve Member
+          </UButton>
+        </div>
       </div>
     </template>
 
     <ExpenseAccountTable />
 
-    <ModalComponent
-      v-model="approveUsersModal.show"
+    <UModal
       v-if="approveUsersModal.mount"
-      @reset="
-        () => {
+      v-model:open="approveUsersModal.show"
+      :close="{
+        onClick: () => {
           approveUsersModal = { mount: false, show: false }
         }
-      "
+      }"
+      title="Grant Spending Approval"
+      description="Set spending limits and authorize a member to submit expenses."
     >
-      <ApproveUsersForm
-        v-if="approveUsersModal.mount"
-        :form-data="teamMembers"
-        :users="foundUsers"
-        :loading-approve="loadingApprove"
-        :is-bod-action="isBodAction()"
-        @approve-user="
-          (data: BudgetLimit) => {
-            approveData = data
-            confirmationModal = true
-          }
-        "
-        @close-modal="approveUsersModal = { mount: false, show: false }"
-      />
-    </ModalComponent>
+      <template #body>
+        <ApproveUsersEIP712Form
+          v-if="approveUsersModal.mount"
+          :form-data="teamMembers"
+          :users="foundUsers"
+          :loading-approve="loadingApprove"
+          :is-bod-action="isBodAction()"
+          @approve-user="
+            (data: BudgetLimit) => {
+              approveData = data
+              confirmationModal = true
+            }
+          "
+          @close-modal="approveUsersModal = { mount: false, show: false }"
+        />
 
-    <ModalComponent v-model="confirmationModal">
-      <ApproveExpenseSummaryForm
-        v-if="confirmationModal"
-        :budget-limit="approveData!"
-        :loading="loadingApprove"
-        @submit="approveUser"
-        @close="confirmationModal = false"
-      />
-    </ModalComponent>
-  </CardComponent>
+        <UModal
+          v-model:open="confirmationModal"
+          title="Review & Sign"
+          description="Confirm spending approval details and sign the transaction."
+        >
+          <template #body>
+            <UAlert
+              v-if="approveErrorMessage"
+              color="error"
+              variant="soft"
+              :description="approveErrorMessage"
+              class="mb-4"
+            />
+            <ApproveExpenseSummaryForm
+              v-if="confirmationModal"
+              :budget-limit="approveData!"
+              :loading="loadingApprove"
+              @submit="approveUser"
+              @close="confirmationModal = false"
+            />
+          </template>
+        </UModal>
+      </template>
+    </UModal>
+  </UCard>
 </template>
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import ButtonUI from '@/components/ButtonUI.vue'
-import ModalComponent from '@/components/ModalComponent.vue'
-import CardComponent from '@/components/CardComponent.vue'
 import ExpenseAccountTable from '@/components/sections/ExpenseAccountView/ExpenseAccountTable.vue'
-import ApproveUsersForm from '@/components/forms/ApproveUsersEIP712Form.vue'
-import { useUserDataStore, useToastStore, useTeamStore } from '@/stores'
+import ApproveUsersEIP712Form from '@/components/forms/ApproveUsersEIP712Form.vue'
+import { useUserDataStore, useTeamStore } from '@/stores'
 import { useRoute } from 'vue-router'
 import { useReadContract, useChainId, useSignTypedData } from '@wagmi/vue'
 import { parseEther, zeroAddress, type Address } from 'viem'
@@ -80,6 +97,7 @@ import ApproveExpenseSummaryForm from '@/components/forms/ApproveExpenseSummaryF
 import { useCreateExpenseMutation } from '@/queries/expense.queries'
 
 const confirmationModal = ref(false)
+const approveErrorMessage = ref('')
 const approveUsersModal = ref({ mount: false, show: false })
 const foundUsers = ref<User[]>([])
 const teamMembers = ref([{ name: '', address: '', isValid: false }])
@@ -88,7 +106,7 @@ const approveData = ref<BudgetLimit>()
 
 const teamStore = useTeamStore()
 const userDataStore = useUserDataStore()
-const { addErrorToast } = useToastStore()
+const toast = useToast()
 const route = useRoute()
 const chainId = useChainId()
 const { signTypedDataAsync, data: signature, error: signTypedDataError } = useSignTypedData()
@@ -177,6 +195,7 @@ const approveUser = async (data: BudgetLimit) => {
   await refetchExpenseAccountGetOwner()
   loadingApprove.value = false
   approveUsersModal.value = { mount: false, show: false }
+  approveErrorMessage.value = ''
   confirmationModal.value = false
 }
 
@@ -189,17 +208,18 @@ const isBodAction = () => false
 //#region Watchers
 watch(errorAddExpenseData, (newVal) => {
   if (newVal) {
-    addErrorToast(errorMessage(newVal, 'Error Adding Expense Data'))
+    approveErrorMessage.value = errorMessage(newVal, 'Error Adding Expense Data')
     log.error('errorAddExpenseData.value', parseError(newVal))
     loadingApprove.value = false
   }
 })
 watch(errorGetOwner, (newVal) => {
-  if (newVal) addErrorToast(errorMessage(newVal, 'Error Getting Contract Owner'))
+  if (newVal)
+    toast.add({ title: errorMessage(newVal, 'Error Getting Contract Owner'), color: 'error' })
 })
 watch(signTypedDataError, async (newVal) => {
   if (newVal) {
-    addErrorToast('Error signing expense data')
+    approveErrorMessage.value = 'Error signing expense data'
     log.error('signTypedDataError.value', parseError(newVal))
     loadingApprove.value = false
   }

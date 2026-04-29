@@ -1,6 +1,6 @@
-import { computed, unref, type MaybeRef } from 'vue'
+import { computed } from 'vue'
 import { useReadContract } from '@wagmi/vue'
-import { isAddress, type Address } from 'viem'
+import { isAddress } from 'viem'
 import { useTeamStore } from '@/stores'
 import { SAFE_DEPOSIT_ROUTER_ABI } from '@/artifacts/abi/safe-deposit-router'
 
@@ -9,10 +9,10 @@ const SAFE_DEPOSIT_ROUTER_FUNCTION_NAMES = {
   OWNER: 'owner',
   DEPOSITS_ENABLED: 'depositsEnabled',
   SAFE_ADDRESS: 'safeAddress',
-  INVESTOR_ADDRESS: 'investorAddress',
+  OFFICER_ADDRESS: 'officerAddress',
   MULTIPLIER: 'multiplier',
   MIN_MULTIPLIER: 'MIN_MULTIPLIER',
-  SUPPORTED_TOKENS: 'supportedTokens',
+  IS_TOKEN_SUPPORTED: 'isTokenSupported',
   TOKEN_DECIMALS: 'tokenDecimals',
   CALCULATE_COMPENSATION: 'calculateCompensation'
 } as const
@@ -80,18 +80,21 @@ export function useSafeDepositRouterSafeAddress() {
   })
 }
 
-export function useSafeDepositRouterInvestorAddress() {
+// UNUSED — no consumers outside safeDepositRouter.setup.ts.
+/*
+export function useSafeDepositRouterOfficerAddress() {
   const safeDepositRouterAddress = useSafeDepositRouterAddress()
 
   return useReadContract({
     address: safeDepositRouterAddress,
     abi: SAFE_DEPOSIT_ROUTER_ABI,
-    functionName: SAFE_DEPOSIT_ROUTER_FUNCTION_NAMES.INVESTOR_ADDRESS,
+    functionName: SAFE_DEPOSIT_ROUTER_FUNCTION_NAMES.OFFICER_ADDRESS,
     query: {
       enabled: !!safeDepositRouterAddress.value && isAddress(safeDepositRouterAddress.value)
     }
   })
 }
+*/
 
 export function useSafeDepositRouterMultiplier() {
   const safeDepositRouterAddress = useSafeDepositRouterAddress()
@@ -106,6 +109,8 @@ export function useSafeDepositRouterMultiplier() {
   })
 }
 
+// UNUSED — no consumers outside safeDepositRouter.setup.ts.
+/*
 export function useSafeDepositRouterMinMultiplier() {
   const safeDepositRouterAddress = useSafeDepositRouterAddress()
 
@@ -119,14 +124,14 @@ export function useSafeDepositRouterMinMultiplier() {
   })
 }
 
-export function useSafeDepositRouterSupportedTokens(tokenAddress: MaybeRef<Address>) {
+export function useSafeDepositRouterIsTokenSupported(tokenAddress: MaybeRef<Address>) {
   const safeDepositRouterAddress = useSafeDepositRouterAddress()
   const tokenValue = computed(() => unref(tokenAddress))
 
   return useReadContract({
     address: safeDepositRouterAddress,
     abi: SAFE_DEPOSIT_ROUTER_ABI,
-    functionName: SAFE_DEPOSIT_ROUTER_FUNCTION_NAMES.SUPPORTED_TOKENS,
+    functionName: SAFE_DEPOSIT_ROUTER_FUNCTION_NAMES.IS_TOKEN_SUPPORTED,
     args: [tokenValue],
     query: {
       enabled: computed(
@@ -187,3 +192,4 @@ export function useSafeDepositRouterCalculateCompensation(
     }
   })
 }
+*/
