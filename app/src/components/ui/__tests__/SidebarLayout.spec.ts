@@ -3,6 +3,7 @@ import { mount } from '@vue/test-utils'
 import { createRouter, createMemoryHistory } from 'vue-router'
 import { nextTick } from 'vue'
 import SidebarLayout from '@/components/ui/SidebarLayout.vue'
+import { useUserDataStore } from '@/stores/user'
 
 describe('SidebarLayout.vue', () => {
   let router: ReturnType<typeof createRouter>
@@ -155,5 +156,48 @@ describe('SidebarLayout.vue', () => {
     await nextTick()
 
     expect((wrapper.vm as { open: boolean }).open).toBe(true)
+  })
+
+  it('falls back to default avatar and name when user store is empty', async () => {
+    vi.mocked(useUserDataStore).mockReturnValueOnce({
+      address: '0xUSER',
+      name: '',
+      imageUrl: '',
+      isAuth: false
+    } as never)
+
+    await router.push('/teams/1')
+    await router.isReady()
+
+    const wrapper = mount(SidebarLayout, {
+      global: {
+        stubs: {
+          UDashboardSidebar: {
+            template: `
+              <div>
+                <slot name="header" :collapsed="false" />
+                <slot name="default" :collapsed="false" />
+                <slot name="footer" :collapsed="false" />
+              </div>
+            `,
+            props: ['collapsible', 'resizable', 'class', 'ui']
+          },
+          UNavigationMenu: true,
+          UModal: {
+            template: `<div><slot /></div>`,
+            props: ['open', 'title', 'description'],
+            emits: ['update:open']
+          },
+          EditUserForm: true
+        },
+        plugins: [router]
+      }
+    })
+
+    const avatarImg = wrapper.find('img[alt="User Avatar"]')
+    expect(avatarImg.attributes('src')).toContain('img.daisyui.com')
+
+    const userName = wrapper.find('[data-test="user-name"]')
+    expect(userName.text()).toBe('User')
   })
 })
