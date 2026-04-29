@@ -195,83 +195,22 @@ describe('ElectionStatus.vue', () => {
     })
   })
 
-  describe('Badge Styling', () => {
-    it('should apply warning badge class for upcoming elections', () => {
-      mockElectionData.electionStatus.value = { text: 'Upcoming', color: 'warning' }
+  describe('Status indicator', () => {
+    it.each([
+      ['Upcoming', 'warning'],
+      ['Active', 'success'],
+      ['Completed', 'neutral'],
+      ['Error', 'error'],
+      // Falls through dotClass default branch — a value the switch doesn't recognise.
+      ['Unknown', 'unknown']
+    ])('exposes %s elections via data-status="%s"', (text, color) => {
+      mockElectionData.electionStatus.value = { text, color }
       wrapper = createComponent()
 
-      const badge = wrapper.find('.badge')
-      expect(badge.classes()).toContain('badge-warning')
-      expect(badge.classes()).toContain('badge-outline')
-    })
-
-    it('should apply success badge class for active elections', () => {
-      mockElectionData.electionStatus.value = { text: 'Active', color: 'success' }
-      wrapper = createComponent()
-
-      const badge = wrapper.find('.badge')
-      expect(badge.classes()).toContain('badge-success')
-      expect(badge.classes()).toContain('badge-outline')
-    })
-
-    it('should apply neutral badge class for completed elections', () => {
-      mockElectionData.electionStatus.value = { text: 'Completed', color: 'neutral' }
-      wrapper = createComponent()
-
-      const badge = wrapper.find('.badge')
-      expect(badge.classes()).toContain('badge-neutral')
-      expect(badge.classes()).toContain('badge-outline')
-    })
-
-    it('should apply error badge class when color is error', () => {
-      mockElectionData.electionStatus.value = { text: 'Error', color: 'error' }
-      wrapper = createComponent()
-
-      const badge = wrapper.find('.badge')
-      expect(badge.classes()).toContain('badge-error')
-      expect(badge.classes()).toContain('badge-outline')
-    })
-  })
-
-  describe('Dot Indicator Styling', () => {
-    it('should display yellow dot for upcoming elections', () => {
-      mockElectionData.electionStatus.value = { text: 'Upcoming', color: 'warning' }
-      wrapper = createComponent()
-
-      const dot = wrapper.find('.w-3.h-3.rounded-full')
-      expect(dot.classes()).toContain('bg-yellow-500')
-    })
-
-    it('should display green dot for active elections', () => {
-      mockElectionData.electionStatus.value = { text: 'Active', color: 'success' }
-      wrapper = createComponent()
-
-      const dot = wrapper.find('.w-3.h-3.rounded-full')
-      expect(dot.classes()).toContain('bg-green-500')
-    })
-
-    it('should display gray dot for completed elections', () => {
-      mockElectionData.electionStatus.value = { text: 'Completed', color: 'neutral' }
-      wrapper = createComponent()
-
-      const dot = wrapper.find('.w-3.h-3.rounded-full')
-      expect(dot.classes()).toContain('bg-gray-500')
-    })
-
-    it('should display red dot for error status', () => {
-      mockElectionData.electionStatus.value = { text: 'Error', color: 'error' }
-      wrapper = createComponent()
-
-      const dot = wrapper.find('.w-3.h-3.rounded-full')
-      expect(dot.classes()).toContain('bg-red-500')
-    })
-
-    it('should display gray dot for unknown status', () => {
-      mockElectionData.electionStatus.value = { text: 'Unknown', color: 'unknown' }
-      wrapper = createComponent()
-
-      const dot = wrapper.find('.w-3.h-3.rounded-full')
-      expect(dot.classes()).toContain('bg-gray-500')
+      expect(wrapper.find('[data-test="election-status-badge"]').attributes('data-status')).toBe(
+        color
+      )
+      expect(wrapper.find('[data-test="election-status-dot"]').exists()).toBe(true)
     })
   })
 

@@ -1,4 +1,4 @@
-import { mount, VueWrapper } from '@vue/test-utils'
+import { mount, type VueWrapper } from '@vue/test-utils'
 import { describe, it, expect } from 'vitest'
 import { nextTick, type ComponentPublicInstance } from 'vue'
 import TokenAmount from '../TokenAmount.vue'
@@ -12,52 +12,46 @@ const tokens: TokenOption[] = [
 
 const defaultProps = {
   tokens,
-  modelValue: { amount: '', tokenId: 'native' },
+  modelValue: { amount: '', tokenId: 'native' as TokenId },
   isLoading: false
 }
 
-const createWrapper = (overrides = {}) =>
+const createWrapper = (overrides: Record<string, unknown> = {}) =>
   mount(TokenAmount, { props: { ...defaultProps, ...overrides } })
 
-type TokenAmountVm = ComponentPublicInstance & {
-  tokenOptions: { label: string; value: string }[]
-  selectedTokenId: string
-  estimatedPrice: string
-  handleTokenSelect: (val: string) => void
-  handleAmountInput: (event: Event) => void
-  useMaxBalance: () => void
-  usePercentageOfBalance: (percentage: number) => void
-}
-
-const getVm = (wrapper: VueWrapper<ComponentPublicInstance>): TokenAmountVm =>
-  wrapper.vm as unknown as TokenAmountVm
-
-const getLastValidation = (wrapper: VueWrapper<ComponentPublicInstance>): boolean | undefined => {
-  const emissions = wrapper.emitted('validation')
+const lastEmitted = <T>(
+  wrapper: VueWrapper<ComponentPublicInstance>,
+  event: string
+): T | undefined => {
+  const emissions = wrapper.emitted(event)
   if (!emissions || emissions.length === 0) return undefined
-  return emissions[emissions.length - 1]?.[0] as boolean
+  return emissions[emissions.length - 1]?.[0] as T
 }
 
-const getLastModelValue = (
-  wrapper: VueWrapper<ComponentPublicInstance>
-): { amount: string; tokenId: string } | undefined => {
-  const emissions = wrapper.emitted('update:modelValue')
-  if (!emissions || emissions.length === 0) return undefined
-  return emissions[emissions.length - 1]?.[0] as { amount: string; tokenId: string }
-}
+const lastValidation = (wrapper: VueWrapper<ComponentPublicInstance>) =>
+  lastEmitted<boolean>(wrapper, 'validation')
 
-const makeInputEvent = (value: string): Event =>
-  ({
-    target: { value }
-  }) as unknown as Event
+const lastModelValue = (wrapper: VueWrapper<ComponentPublicInstance>) =>
+  lastEmitted<{ amount: string; tokenId: string }>(wrapper, 'update:modelValue')
+
+// USelect (Nuxt UI) renders a button trigger, not a native <select>, so we drive its
+// v-model through the component contract instead of dispatching a DOM event.
+const findTokenSelect = (wrapper: VueWrapper<ComponentPublicInstance>) =>
+  wrapper.findComponent({ name: 'Select' })
+
+const selectToken = (
+  wrapper: VueWrapper<ComponentPublicInstance>,
+  tokenId: string
+): Promise<void> => findTokenSelect(wrapper).setValue(tokenId)
 
 describe('TokenAmount.vue', () => {
-  it('renders token options and balance', () => {
+  it('renders the available token options and balance', () => {
     const wrapper = createWrapper({ modelValue: { amount: '0', tokenId: 'native' } })
-    const options = getVm(wrapper).tokenOptions
 
-    expect(options.some((o) => o.label === 'ETH')).toBe(true)
-    expect(options.some((o) => o.label === 'USDC')).toBe(true)
+    expect(findTokenSelect(wrapper).props('items')).toEqual([
+      { label: 'ETH', value: 'native' },
+      { label: 'USDC', value: 'usdc' }
+    ])
     expect(wrapper.text()).toContain('Balance: 100')
   })
 
@@ -66,22 +60,20 @@ describe('TokenAmount.vue', () => {
     const input = wrapper.find('input[data-test="amountInput"]')
     await input.setValue('42')
 
-    expect(wrapper.emitted('update:modelValue')).toBeTruthy()
-    expect(wrapper.emitted('update:modelValue')![0]).toEqual([{ amount: '42', tokenId: 'native' }])
+    expect(lastModelValue(wrapper)).toEqual({ amount: '42', tokenId: 'native' })
   })
 
   it('emits update:modelValue object when token is changed', async () => {
     const wrapper = createWrapper()
 
-    getVm(wrapper).selectedTokenId = 'usdc'
+    await selectToken(wrapper, 'usdc')
     await nextTick()
 
-    expect(wrapper.emitted('update:modelValue')).toBeTruthy()
-    expect(wrapper.emitted('update:modelValue')![0]).toEqual([{ amount: '', tokenId: 'usdc' }])
+    expect(lastModelValue(wrapper)).toEqual({ amount: '', tokenId: 'usdc' })
   })
 
   describe('button states', () => {
-    it('disables percent and max buttons when loading or no balance', () => {
+    it('disables percent and max buttons when loading', () => {
       const wrapper = createWrapper({ isLoading: true })
 
       expect(wrapper.find('[data-test="maxButton"]').attributes('disabled')).not.toBeUndefined()
@@ -119,22 +111,20 @@ describe('TokenAmount.vue', () => {
       const wrapper = createWrapper()
       await wrapper.find('[data-test="maxButton"]').trigger('click')
 
-      expect(wrapper.emitted('update:modelValue')).toBeTruthy()
-      expect(getLastModelValue(wrapper)?.amount).toBe('100.000000')
-      expect(getLastModelValue(wrapper)?.tokenId).toBe('native')
+      expect(lastModelValue(wrapper)).toEqual({ amount: '100.000000', tokenId: 'native' })
     })
 
     it('fills input with 25/50/75% of balance when percent buttons are clicked', async () => {
       const wrapper = createWrapper()
 
       await wrapper.find('[data-test="percentButton-25"]').trigger('click')
-      expect(getLastModelValue(wrapper)?.amount).toBe('25.0000')
+      expect(lastModelValue(wrapper)?.amount).toBe('25.0000')
 
       await wrapper.find('[data-test="percentButton-50"]').trigger('click')
-      expect(getLastModelValue(wrapper)?.amount).toBe('50.0000')
+      expect(lastModelValue(wrapper)?.amount).toBe('50.0000')
 
       await wrapper.find('[data-test="percentButton-75"]').trigger('click')
-      expect(getLastModelValue(wrapper)?.amount).toBe('75.0000')
+      expect(lastModelValue(wrapper)?.amount).toBe('75.0000')
     })
 
     it('uses spendableBalance for max balance when present', async () => {
@@ -153,70 +143,80 @@ describe('TokenAmount.vue', () => {
 
       await wrapper.find('[data-test="maxButton"]').trigger('click')
 
-      expect(getLastModelValue(wrapper)?.amount).toBe('40.000000')
+      expect(lastModelValue(wrapper)?.amount).toBe('40.000000')
     })
 
-    it('should apply feeBps to max balance when fee is configured', async () => {
+    it('applies feeBps to max balance when fee is configured', async () => {
       const wrapper = createWrapper({ feeBps: 100 })
 
       await wrapper.find('[data-test="maxButton"]').trigger('click')
 
-      expect(getLastModelValue(wrapper)?.amount).toBe('99.000000')
+      expect(lastModelValue(wrapper)?.amount).toBe('99.000000')
     })
   })
 
   describe('input sanitization', () => {
-    it('should sanitize input: removes non-numeric and extra dots', async () => {
+    // The handler emits update:modelValue with the sanitized amount alongside UInput's
+    // own raw emission, so we assert it appears in the emission stream rather than as
+    // the last value (UInput emits after the @input handler in the same tick).
+    it('removes non-numeric characters from input', async () => {
       const wrapper = createWrapper()
-      const vm = getVm(wrapper)
+      await wrapper.find('input[data-test="amountInput"]').setValue('abc123.45def')
 
-      vm.handleAmountInput(makeInputEvent('abc123.45def'))
-      await nextTick()
-      expect(getLastModelValue(wrapper)?.amount).toBe('123.45')
-
-      vm.handleAmountInput(makeInputEvent('42.5.3'))
-      await nextTick()
-      expect(getLastModelValue(wrapper)?.amount).toBe('42.53')
+      expect(wrapper.emitted('update:modelValue')).toContainEqual([
+        { amount: '123.45', tokenId: 'native' }
+      ])
     })
 
-    it('should preserve decimal input correctly', async () => {
+    it('collapses multiple decimal points to a single one', async () => {
+      const wrapper = createWrapper()
+      await wrapper.find('input[data-test="amountInput"]').setValue('42.5.3')
+
+      expect(wrapper.emitted('update:modelValue')).toContainEqual([
+        { amount: '42.53', tokenId: 'native' }
+      ])
+    })
+
+    it('preserves decimal input correctly', async () => {
       const wrapper = createWrapper()
       const input = wrapper.find('input[data-test="amountInput"]')
 
       await input.setValue('0.')
-      expect(getLastModelValue(wrapper)?.amount).toBe('0.')
+      expect(wrapper.emitted('update:modelValue')).toContainEqual([
+        { amount: '0.', tokenId: 'native' }
+      ])
 
       await input.setValue('0.5')
-      expect(getLastModelValue(wrapper)?.amount).toBe('0.5')
+      expect(wrapper.emitted('update:modelValue')).toContainEqual([
+        { amount: '0.5', tokenId: 'native' }
+      ])
     })
   })
 
   describe('validation errors', () => {
-    it('should show invalid validation state for zero or negative amount', async () => {
+    it('emits invalid validation for zero or negative amount', async () => {
       const wrapper = createWrapper({ modelValue: { amount: '0', tokenId: 'native' } })
-      expect(getLastValidation(wrapper)).toBe(false)
+      expect(lastValidation(wrapper)).toBe(false)
 
       await wrapper.setProps({ modelValue: { amount: '-1', tokenId: 'native' } })
       await nextTick()
-      expect(getLastValidation(wrapper)).toBe(false)
+      expect(lastValidation(wrapper)).toBe(false)
     })
 
-    it('shows invalid validation state for non-numeric input', () => {
+    it('emits invalid validation for non-numeric input', () => {
       const wrapper = createWrapper({ modelValue: { amount: 'abc', tokenId: 'native' } })
-      expect(getLastValidation(wrapper)).toBe(false)
+      expect(lastValidation(wrapper)).toBe(false)
     })
 
-    it('keeps validation valid for more than 4 decimal places', () => {
+    it('emits valid validation for amounts with more than 4 decimal places', () => {
       const wrapper = createWrapper({ modelValue: { amount: '1.12345', tokenId: 'native' } })
-      expect(getLastValidation(wrapper)).toBe(true)
+      expect(lastValidation(wrapper)).toBe(true)
     })
 
-    it('shows invalid validation state when amount exceeds balance', async () => {
+    it('emits invalid validation when amount exceeds balance', async () => {
       const wrapper = createWrapper({ modelValue: { amount: '999', tokenId: 'native' } })
-
       await nextTick()
-
-      expect(getLastValidation(wrapper)).toBe(false)
+      expect(lastValidation(wrapper)).toBe(false)
     })
   })
 
@@ -225,12 +225,10 @@ describe('TokenAmount.vue', () => {
       const wrapper = createWrapper({
         modelValue: { amount: '' } as { amount: string; tokenId: TokenId }
       })
-      const input = wrapper.find('input[data-test="amountInput"]')
 
-      await input.setValue('5')
+      await wrapper.find('input[data-test="amountInput"]').setValue('5')
 
-      expect(getLastModelValue(wrapper)?.tokenId).toBe('native')
-      expect(getLastModelValue(wrapper)?.amount).toBe('5')
+      expect(lastModelValue(wrapper)).toEqual({ amount: '5', tokenId: 'native' })
     })
 
     it('falls back to empty amount when modelValue.amount is missing and token changes', async () => {
@@ -238,33 +236,31 @@ describe('TokenAmount.vue', () => {
         modelValue: { tokenId: 'native' } as { amount: string; tokenId: TokenId }
       })
 
-      getVm(wrapper).selectedTokenId = 'usdc'
+      await selectToken(wrapper, 'usdc')
       await nextTick()
 
-      expect(getLastModelValue(wrapper)?.amount).toBe('')
-      expect(getLastModelValue(wrapper)?.tokenId).toBe('usdc')
+      expect(lastModelValue(wrapper)).toEqual({ amount: '', tokenId: 'usdc' })
     })
   })
 
   describe('estimated price', () => {
-    it('should use fallback currency code and zero amount conversion when values are missing', () => {
+    it('formats estimated price using USD fallback when currency lacks code', () => {
       localStorage.setItem('currency', JSON.stringify({ name: 'No code currency' }))
 
-      const wrapper = createWrapper({
-        modelValue: { amount: '', tokenId: 'native' }
-      })
+      const wrapper = createWrapper({ modelValue: { amount: '0.5', tokenId: 'native' } })
 
-      expect(getVm(wrapper).estimatedPrice).toBe('$0')
+      // 0.5 * 2000 = 1000 → '$1K' (USD fallback applied because currency.code is missing)
+      expect(wrapper.text()).toContain('$1K')
     })
 
-    it('should use zero price fallback when selected token is not found', () => {
+    it('shows $0 estimated price when selected token is not found', () => {
       localStorage.removeItem('currency')
 
       const wrapper = createWrapper({
         modelValue: { amount: '1', tokenId: 'missing-token' as TokenId }
       })
 
-      expect(getVm(wrapper).estimatedPrice).toBe('$0')
+      expect(wrapper.text()).toContain('≈ $0')
     })
   })
 })
