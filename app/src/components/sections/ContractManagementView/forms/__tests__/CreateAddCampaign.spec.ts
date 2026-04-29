@@ -15,7 +15,6 @@ describe('CreateAddCampaign.vue', () => {
     resetDeployState()
   })
 
-
   describe('rendering', () => {
     it('renders the title and description', () => {
       const wrapper = mountComponent()
@@ -70,7 +69,6 @@ describe('CreateAddCampaign.vue', () => {
     })
   })
 
-
   describe('errorMessage computed', () => {
     it('shows deploy error with shortMessage containing "User rejected"', async () => {
       mockDeployState.error.value = Object.assign(new Error('rejected'), {
@@ -106,7 +104,6 @@ describe('CreateAddCampaign.vue', () => {
     })
   })
 
-
   describe('form submission', () => {
     it('calls deploy with correct args when form is valid', async () => {
       const wrapper = mountComponent()
@@ -132,9 +129,8 @@ describe('CreateAddCampaign.vue', () => {
       } as unknown as ReturnType<typeof useTeamStore>)
       const wrapper = mountComponent()
       // Set form values via setupState so validation passes and deployAdCampaign is called
-      const formState = (
-        wrapper.getCurrentComponent().setupState as Record<string, unknown>
-      ).formState as { costPerClick: string; costPerImpression: string }
+      const formState = (wrapper.getCurrentComponent().setupState as Record<string, unknown>)
+        .formState as { costPerClick: string; costPerImpression: string }
       formState.costPerClick = '0.5'
       formState.costPerImpression = '0.2'
       await wrapper.vm.$nextTick()
@@ -150,7 +146,6 @@ describe('CreateAddCampaign.vue', () => {
       expect(mockDeployState.deploy).not.toHaveBeenCalled()
     })
   })
-
 
   describe('contractAddress watcher', () => {
     it('emits closeAddCampaignModal and shows toast on successful contract creation', async () => {
@@ -193,7 +188,6 @@ describe('CreateAddCampaign.vue', () => {
     })
   })
 
-
   describe('reset()', () => {
     it('clears costPerClick, costPerImpression and form fields', async () => {
       const wrapper = mountComponent()
@@ -210,7 +204,6 @@ describe('CreateAddCampaign.vue', () => {
       ).toBe('')
     })
   })
-
 
   describe('viewContractCode()', () => {
     it('opens the correct URL in a new tab', async () => {

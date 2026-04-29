@@ -45,9 +45,8 @@ describe('useDeployContract', () => {
   })
 
   const getActualUseDeployContract = async () => {
-    const actual = await vi.importActual<typeof import('../useContractFunctions')>(
-      '../useContractFunctions'
-    )
+    const actual =
+      await vi.importActual<typeof import('../useContractFunctions')>('../useContractFunctions')
 
     return actual.useDeployContract
   }
