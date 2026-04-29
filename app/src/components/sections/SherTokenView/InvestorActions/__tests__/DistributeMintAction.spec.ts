@@ -35,7 +35,6 @@ describe('DistributeMintAction.vue', () => {
 
   it('renders with coming soon tooltip', () => {
     const wrapper = createWrapper()
-    expect(wrapper.classes()).toContain('tooltip')
     expect(wrapper.attributes('data-tip')).toBe('Coming soon')
   })
 

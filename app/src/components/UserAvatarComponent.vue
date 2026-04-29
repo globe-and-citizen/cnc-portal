@@ -6,6 +6,7 @@
     <div role="button" class="group relative">
       <div
         data-test="avatar-container"
+        :data-size="isDetailedView ? 'lg' : 'sm'"
         class="relative overflow-hidden rounded-full border border-gray-400"
         :class="{
           'h-24 w-24 ring-4 ring-gray-200': isDetailedView,

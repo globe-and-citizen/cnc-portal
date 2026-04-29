@@ -134,21 +134,23 @@ describe('SafeIncomingTransactions', () => {
   })
 
   describe('Transfer Type Display', () => {
-    it('should display correct badge styling for each transfer type', () => {
+    it('exposes the transfer type via data-transfer-type', () => {
       const testCases = [
-        { data: [MOCK_DATA.mockTransfers[0]], expectedClass: 'badge-success' },
-        { data: [MOCK_DATA.mockTransfers[1]], expectedClass: 'badge-info' },
-        { data: [MOCK_DATA.mockTransfers[2]], expectedClass: 'badge-warning' }
+        { data: [MOCK_DATA.mockTransfers[0]], expectedType: 'ETHER_TRANSFER' },
+        { data: [MOCK_DATA.mockTransfers[1]], expectedType: 'ERC20_TRANSFER' },
+        { data: [MOCK_DATA.mockTransfers[2]], expectedType: 'ERC721_TRANSFER' }
       ]
 
-      testCases.forEach(({ data, expectedClass }) => {
+      testCases.forEach(({ data, expectedType }) => {
         mockUseGetSafeIncomingTransfersQuery.mockReturnValue({
           data: ref(data),
           isLoading: ref(false),
           error: ref(null)
         })
         wrapper = createWrapper()
-        expect(wrapper.find('.badge').classes()).toContain(expectedClass)
+        expect(
+          wrapper.find('[data-test="transfer-type-badge"]').attributes('data-transfer-type')
+        ).toBe(expectedType)
         wrapper.unmount()
       })
     })

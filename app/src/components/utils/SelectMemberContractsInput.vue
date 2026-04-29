@@ -4,6 +4,7 @@
     :class="isFetching ? 'animate-pulse' : ''"
     ref="formRef"
     data-test="member-contracts-input"
+    :data-loading="isFetching || undefined"
   >
     <UFieldGroup :data-test="`member-contracts-input`" class="w-full">
       <UInput

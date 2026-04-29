@@ -5,6 +5,8 @@
       :key="rate.type"
       class="flex items-center gap-1 font-semibold"
       :class="textClass"
+      :data-rate-type="rate.type"
+      data-test="rate-row"
     >
       <span
         class="inline-block h-2 w-2 shrink-0 rounded-full"

@@ -63,6 +63,7 @@
             : 'border-base-200 bg-base-100'
         "
         data-test="enable-overtime-card"
+        :data-active="wageData.enableOvertimeRules ? 'true' : 'false'"
       >
         <UCheckbox
           v-model="wageData.enableOvertimeRules"
