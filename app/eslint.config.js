@@ -1,6 +1,6 @@
 import pluginVue from 'eslint-plugin-vue'
 import vueTsEslintConfig from '@vue/eslint-config-typescript'
-// import pluginVitest from '@vitest/eslint-plugin'
+import pluginVitest from '@vitest/eslint-plugin'
 import skipFormatting from '@vue/eslint-config-prettier/skip-formatting'
 
 export default [
@@ -39,10 +39,14 @@ export default [
   },
   ...pluginVue.configs['flat/essential'],
   ...vueTsEslintConfig(),
-  // {
-  //   ...pluginVitest.configs.recommended,
-  //   files: ['src/**/__tests__/*']
-  // },
+  {
+    name: 'app/vitest-tests',
+    files: ['**/__tests__/**/*.{ts,tsx,vue}', '**/*.spec.{ts,tsx}', '**/*.test.{ts,tsx}'],
+    plugins: { vitest: pluginVitest },
+    rules: {
+      'vitest/no-disabled-tests': 'warn'
+    }
+  },
   {
     languageOptions: {
       ecmaVersion: 'latest'
