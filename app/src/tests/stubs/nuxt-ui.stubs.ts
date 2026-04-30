@@ -130,3 +130,18 @@ export const UCalendarStub = defineComponent({
     return () => h('div', { 'data-test': 'u-calendar' })
   }
 })
+
+export const UPopoverStub = defineComponent({
+  name: 'UPopover',
+  props: {
+    open: { type: Boolean, default: false }
+  },
+  emits: ['update:open'],
+  setup(props, { slots, attrs }) {
+    return () =>
+      h('div', { ...attrs, 'data-test': 'u-popover', 'data-open': String(props.open) }, [
+        slots.default?.(),
+        slots.content?.()
+      ])
+  }
+})
