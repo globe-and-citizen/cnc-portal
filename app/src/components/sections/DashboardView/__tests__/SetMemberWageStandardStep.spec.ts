@@ -75,12 +75,12 @@ describe('SetMemberWageStandardStep.vue', () => {
     const disabledWrapper = createWrapper(createWageData({ enableOvertimeRules: false }))
     const enabledWrapper = createWrapper(createWageData({ enableOvertimeRules: true }))
 
-    expect(disabledWrapper.find('[data-test="enable-overtime-card"]').classes()).toContain(
-      'border-base-200'
-    )
-    expect(enabledWrapper.find('[data-test="enable-overtime-card"]').classes()).toContain(
-      'border-emerald-400'
-    )
+    expect(
+      disabledWrapper.find('[data-test="enable-overtime-card"]').attributes('data-active')
+    ).toBe('false')
+    expect(
+      enabledWrapper.find('[data-test="enable-overtime-card"]').attributes('data-active')
+    ).toBe('true')
     expect(disabledWrapper.get('[data-test="add-wage-button"]').text()).toContain('Save wage')
     expect(enabledWrapper.get('[data-test="add-wage-button"]').text()).toContain('Continue')
   })

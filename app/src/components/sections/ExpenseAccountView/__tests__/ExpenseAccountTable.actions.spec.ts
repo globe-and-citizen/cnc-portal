@@ -135,66 +135,6 @@ describe('ExpenseAccountTable - Actions and Loading', () => {
   })
 
   describe('Action Buttons and Loading States', () => {
-    it.skip('should show loading button if enabling approval', async () => {
-      const wrapper = createComponent()
-      wrapper.vm.contractOwnerAddress = '0xUserAddress'
-      const statusDisabledInput = wrapper.find('[data-test="status-input-disabled"]')
-      expect(statusDisabledInput.exists()).toBeTruthy()
-      //@ts-expect-error: setChecked for setting the input to checked works instead of click
-      await statusDisabledInput.setChecked()
-      await flushPromises()
-      expect(wrapper.vm.selectedRadio).toBe('disabled')
-      const expenseAccountTable = wrapper.findComponent({ name: 'UTable' })
-      expect(expenseAccountTable.exists()).toBeTruthy()
-      expect(expenseAccountTable.find('[data-test="table"]').exists()).toBeTruthy()
-      const firstRow = expenseAccountTable.find('[data-test="0-row"]')
-      expect(firstRow.exists()).toBeTruthy()
-      expect(firstRow.html()).toContain(mockApprovals[1]!.amount)
-      // Set loading state and signature to update so button will show loading
-      wrapper.vm.isLoadingSetStatus = true
-      wrapper.vm.signatureToUpdate = mockApprovals[1]!.signature
-      await flushPromises()
-      // Verify component state reflects loading condition
-      expect(wrapper.vm.isLoadingSetStatus).toBe(true)
-      expect(wrapper.vm.signatureToUpdate).toBe(mockApprovals[1]!.signature)
-    })
-
-    it.skip('should show loading button if disabling approvals', async () => {
-      const wrapper = createComponent()
-      const statusEnabledInput = wrapper.find('[data-test="status-input-enabled"]')
-      expect(statusEnabledInput.exists()).toBeTruthy()
-      //@ts-expect-error: setChecked for setting the input to checked works instead of click
-      await statusEnabledInput.setChecked()
-      await flushPromises()
-      expect(wrapper.vm.selectedRadio).toBe('enabled')
-      const expenseAccountTable = wrapper.findComponent({ name: 'UTable' })
-      expect(expenseAccountTable.exists()).toBeTruthy()
-      expect(expenseAccountTable.find('[data-test="table"]').exists()).toBeTruthy()
-      const firstRow = expenseAccountTable.find('[data-test="0-row"]')
-      expect(firstRow.exists()).toBeTruthy()
-      expect(firstRow.html()).toContain(mockApprovals[0]!.amount)
-      // Set loading state to show button should display loading indicator
-      wrapper.vm.isLoadingSetStatus = true
-      await flushPromises()
-      expect(wrapper.vm.isLoadingSetStatus).toBe(true)
-    })
-
-    it.skip('should disable action buttons if not contract owner', async () => {
-      const wrapper = createComponent()
-      await flushPromises()
-      const expenseAccountTable = wrapper.findComponent({ name: 'UTable' })
-      expect(expenseAccountTable.exists()).toBeTruthy()
-      expect(expenseAccountTable.find('[data-test="table"]').exists()).toBeTruthy()
-      const firstRow = expenseAccountTable.find('[data-test="0-row"]')
-      expect(firstRow.exists()).toBeTruthy()
-      const secondRow = expenseAccountTable.find('[data-test="1-row"]')
-      expect(secondRow.exists()).toBeTruthy()
-      // User address from pinia initialState doesn't match contract owner address
-      // so buttons should be disabled
-      expect(wrapper.vm.contractOwnerAddress).not.toBe('0xInitialUser')
-      expect(wrapper.vm.contractOwnerAddress).toBe('0xContractOwner')
-    })
-
     it('should notify success if activate successful', async () => {
       const wrapper = createComponent()
       wrapper.vm.isConfirmingActivate = true

@@ -36,6 +36,7 @@
             focus: index === focusedIndex,
             active: option.value === selectedValue && options.length > 2
           }"
+          :data-focused="index === focusedIndex || undefined"
           >{{ option.label || option.value }}</a
         >
       </li>

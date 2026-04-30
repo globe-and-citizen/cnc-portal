@@ -86,21 +86,6 @@ describe('TeamSelectMenu', () => {
       expect(wrapper.text()).toContain(mockTeamsData[0]!.name)
     })
 
-    it.skip('auto-selects first company and navigates when no company is active', async () => {
-      mockCurrentTeamId.value = null
-      vi.mocked(useRoute).mockReturnValueOnce({
-        params: {},
-        path: '/teams',
-        meta: {}
-      } as ReturnType<typeof useRoute>)
-
-      createWrapper()
-      await new Promise((r) => setTimeout(r, 0))
-
-      expect(mockTeamStore.setCurrentTeamId).toHaveBeenCalledWith(mockTeamsData[0]!.id)
-      expect(mockRouterPush).toHaveBeenCalledWith(`/teams/${mockTeamsData[0]!.id}`)
-    })
-
     it('does not auto-navigate when a team is already active via route param', async () => {
       // useRoute returns params.id = '1' by default — team is already "active"
       createWrapper()

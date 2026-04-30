@@ -1,5 +1,10 @@
 <template>
-  <div class="relative" :class="isFetching ? 'animate-pulse' : ''" data-test="member-input">
+  <div
+    class="relative"
+    :class="isFetching ? 'animate-pulse' : ''"
+    data-test="member-input"
+    :data-loading="isFetching || undefined"
+  >
     <UInput
       type="text"
       v-model="input"

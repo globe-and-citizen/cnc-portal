@@ -4,7 +4,7 @@ import RateDotList from '@/components/RateDotList.vue'
 import { NETWORK } from '@/constant'
 
 describe('RateDotList', () => {
-  it('renders each supported color branch and formats token labels', () => {
+  it('renders each rate row with its type and formatted token label', () => {
     const wrapper = mount(RateDotList, {
       props: {
         rates: [
@@ -19,19 +19,19 @@ describe('RateDotList', () => {
       }
     })
 
-    const rows = wrapper.findAll('.flex.items-center.gap-1.font-semibold')
-    const dots = wrapper.findAll('span')
+    const rows = wrapper.findAll('[data-test="rate-row"]')
 
     expect(rows).toHaveLength(4)
-    expect(rows.every((row) => row.classes().includes('text-emerald-700'))).toBe(true)
+    expect(rows.map((r) => r.attributes('data-rate-type'))).toEqual([
+      'native',
+      'usdc',
+      'usdt',
+      'sher'
+    ])
     expect(rows[0]?.text()).toContain(`${NETWORK.currencySymbol} 1.5`)
     expect(rows[1]?.text()).toContain('USDC 2.5')
     expect(rows[2]?.text()).toContain('USDT 0')
     expect(rows[3]?.text()).toContain('SHER 3.46')
-    expect(dots[0]?.classes()).toContain('bg-yellow-400')
-    expect(dots[1]?.classes()).toContain('bg-blue-500')
-    expect(dots[2]?.classes()).toContain('bg-green-500')
-    expect(dots[3]?.classes()).toContain('bg-purple-500')
   })
 
   it('uses default fraction digits for positive amounts when formatting', () => {

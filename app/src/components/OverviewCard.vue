@@ -1,5 +1,5 @@
 <template>
-  <div class="card w-full rounded-2xl py-6" :class="[bgColor, textColor]">
+  <div class="card w-full rounded-2xl py-6" :class="[bgColor, textColor]" :data-variant="variant">
     <div class="flex flex-col items-center gap-4">
       <img :src="cardIcon" alt="icon" class="h-16 w-16" data-test="card-icon" />
       <span v-if="!loading" class="text-4xl font-bold" data-test="amount">{{ title }}</span>

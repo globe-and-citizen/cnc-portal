@@ -6,7 +6,6 @@ import { config } from '@/wagmi.config'
 import { readContract } from '@wagmi/core'
 import { log } from '@/utils'
 import { parseError } from '@/utils'
-import * as utils from '@/utils'
 import { EXPENSE_ACCOUNT_EIP712_ABI } from '@/artifacts/abi/expense-account-eip712'
 import TransferAction from '../TransferAction.vue'
 import { useWriteContractFn, useWaitForTransactionReceiptFn } from '@/tests/mocks'
@@ -127,28 +126,6 @@ describe('TransferComponent', () => {
     setActivePinia(createPinia())
     vi.clearAllMocks()
     setupMocks()
-  })
-
-  it.skip('should render correctly', async () => {
-    vi.spyOn(utils, 'getTokens').mockReturnValue([
-      {
-        symbol: 'USDC',
-        balance: 500,
-        spendableBalance: 0,
-        tokenId: 'usdc',
-        price: 0.999801,
-        code: 'USDC'
-      }
-    ])
-    wrapper = createComponent()
-    //@ts-expect-error not visible on wrapper.vm
-    wrapper.vm.showModal = { mount: true, show: true }
-    await flushPromises()
-    const transferForm = wrapper.findComponent({ name: 'TransferForm' })
-    expect(transferForm.exists()).toBe(false)
-    const spendableBalance = transferForm.find('[data-test="spendable-balance"]')
-    expect(spendableBalance.exists()).toBe(true)
-    expect(spendableBalance.text()).toContain('Spendable balance: 0 USDC')
   })
 
   it('should call simulateContract with correct arguments when transferring ERC20 token', async () => {

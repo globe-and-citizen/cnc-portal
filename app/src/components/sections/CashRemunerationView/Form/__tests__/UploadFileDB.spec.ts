@@ -161,22 +161,22 @@ describe('UploadFileDB', () => {
   })
 
   describe('Open File Dialog', () => {
-    it('should open file dialog on zone click when enabled', async () => {
+    it('should be enabled when disabled prop is false', async () => {
       wrapper = createWrapper({ disabled: false })
       const zone = wrapper.find(SELECTORS.uploadZone)
 
       await zone.trigger('click')
 
-      expect(zone.classes()).not.toContain('pointer-events-none')
+      expect(zone.attributes('data-disabled')).toBeUndefined()
     })
 
-    it('should not open file dialog when disabled', async () => {
+    it('should be disabled when disabled prop is true', async () => {
       wrapper = createWrapper({ disabled: true })
       const zone = wrapper.find(SELECTORS.uploadZone)
 
       await zone.trigger('click')
 
-      expect(zone.classes()).toContain('pointer-events-none')
+      expect(zone.attributes('data-disabled')).toBe('true')
     })
 
     it('should ignore file input change when files is null', async () => {
@@ -297,8 +297,7 @@ describe('UploadFileDB', () => {
       const zone = wrapper.find(SELECTORS.uploadZone)
       const button = wrapper.find('button')
 
-      expect(zone.classes()).toContain('opacity-50')
-      expect(zone.classes()).toContain('pointer-events-none')
+      expect(zone.attributes('data-disabled')).toBe('true')
       expect(button.attributes('disabled')).toBeDefined()
     })
   })

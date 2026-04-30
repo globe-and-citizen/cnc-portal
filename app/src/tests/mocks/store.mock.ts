@@ -43,22 +43,10 @@ export const mockToast = {
 export const mockUserStore = {
   address: '0x0000000000000000000000000000000000000001',
   name: 'Test User',
+  nonce: '',
   imageUrl: 'https://example.com/avatar.jpg',
   isAuth: true,
   setUserData: vi.fn(),
-  clearUserData: vi.fn(),
-  setAuthStatus: vi.fn()
-}
-
-/**
- * Mock useUserDataStore - for tracking current user address
- */
-export const mockUserDataStore = {
-  address: '0xUSER1',
-  name: 'Test User',
-  setAddress: vi.fn(),
-  setUserData: vi.fn(),
-  clear: vi.fn(),
   clearUserData: vi.fn(),
   setAuthStatus: vi.fn()
 }

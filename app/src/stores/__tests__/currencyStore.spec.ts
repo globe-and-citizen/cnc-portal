@@ -1,5 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
+
+// Unmock the store file so we can test the real implementation
+vi.unmock('@/stores/currencyStore')
 import { nextTick, ref } from 'vue'
 import { useQueryFn } from '@/tests/mocks'
 

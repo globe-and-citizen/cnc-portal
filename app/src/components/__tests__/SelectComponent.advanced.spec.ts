@@ -98,7 +98,7 @@ describe('SelectComponent - Advanced Features & Edge Cases', () => {
 
       // Second option should be focused (has focus class on anchor)
       const anchors = wrapper.findAll(SELECTORS.optionAnchors)
-      expect(anchors[1].classes()).toContain('focus')
+      expect(anchors[1].attributes('data-focused')).toBe('true')
     })
 
     it('should reset focused index when closing dropdown', async () => {
@@ -122,7 +122,7 @@ describe('SelectComponent - Advanced Features & Edge Cases', () => {
       await nextTick()
 
       const anchors = wrapper.findAll(SELECTORS.optionAnchors)
-      expect(anchors[0].classes()).toContain('focus')
+      expect(anchors[0].attributes('data-focused')).toBe('true')
     })
   })
 
@@ -168,7 +168,7 @@ describe('SelectComponent - Advanced Features & Edge Cases', () => {
 
       // Should end up on second option without errors
       const anchors = wrapper.findAll(SELECTORS.optionAnchors)
-      expect(anchors[1].classes()).toContain('focus')
+      expect(anchors[1].attributes('data-focused')).toBe('true')
     })
 
     it('should handle disabled state for all interaction types', async () => {

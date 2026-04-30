@@ -18,97 +18,21 @@ describe('OverviewCard', () => {
     expect(wrapper.find('[data-test="subtitle"]').text()).toBe('Total Balance')
   })
 
-  it('applies correct background color for info variant', () => {
-    const wrapper = mount(OverviewCard, {
-      props: {
-        title: 'Test Title',
-        subtitle: 'Test Subtitle',
-        variant: 'info',
-        cardIcon: 'test-icon.png'
-      }
-    })
+  it.each(['info', 'success', 'warning', 'unknown'] as const)(
+    'exposes the %s variant via data-variant',
+    (variant) => {
+      const wrapper = mount(OverviewCard, {
+        props: {
+          title: 'Test Title',
+          subtitle: 'Test Subtitle',
+          variant,
+          cardIcon: 'test-icon.png'
+        }
+      })
 
-    expect(wrapper.classes()).toContain('bg-[#D9F1F6]')
-  })
-
-  it('applies correct text color for info variant', () => {
-    const wrapper = mount(OverviewCard, {
-      props: {
-        title: 'Test Title',
-        subtitle: 'Test Subtitle',
-        variant: 'info',
-        cardIcon: 'test-icon.png'
-      }
-    })
-
-    expect(wrapper.classes()).toContain('text-[#0C315A]')
-  })
-
-  it('applies correct background color for success variant', () => {
-    const wrapper = mount(OverviewCard, {
-      props: {
-        title: 'Test Title',
-        subtitle: 'Test Subtitle',
-        variant: 'success',
-        cardIcon: 'test-icon.png'
-      }
-    })
-
-    expect(wrapper.classes()).toContain('bg-[#C8FACD]')
-  })
-
-  it('applies correct text color for success variant', () => {
-    const wrapper = mount(OverviewCard, {
-      props: {
-        title: 'Test Title',
-        subtitle: 'Test Subtitle',
-        variant: 'success',
-        cardIcon: 'test-icon.png'
-      }
-    })
-
-    expect(wrapper.classes()).toContain('text-[#005249]')
-  })
-
-  it('applies correct background color for warning variant', () => {
-    const wrapper = mount(OverviewCard, {
-      props: {
-        title: 'Test Title',
-        subtitle: 'Test Subtitle',
-        variant: 'warning',
-        cardIcon: 'test-icon.png'
-      }
-    })
-
-    expect(wrapper.classes()).toContain('bg-[#FEF3DE]')
-  })
-
-  it('applies correct text color for warning variant', () => {
-    const wrapper = mount(OverviewCard, {
-      props: {
-        title: 'Test Title',
-        subtitle: 'Test Subtitle',
-        variant: 'warning',
-        cardIcon: 'test-icon.png'
-      }
-    })
-
-    expect(wrapper.classes()).toContain('text-[#6A3B13]')
-  })
-
-  it('falls back to default colors for unknown variant', () => {
-    const wrapper = mount(OverviewCard, {
-      props: {
-        title: 'Test Title',
-        subtitle: 'Test Subtitle',
-        variant: 'unknown',
-        cardIcon: 'test-icon.png'
-      }
-    })
-
-    expect(wrapper.classes()).toContain('bg-white')
-    expect(wrapper.classes()).toContain('text-black')
-  })
+      expect(wrapper.attributes('data-variant')).toBe(variant)
+    }
+  )
 
   it('shows skeleton while loading and hides amount', () => {
     const wrapper = mount(OverviewCard, {

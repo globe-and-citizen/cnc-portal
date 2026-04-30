@@ -26,7 +26,6 @@ describe('NavBar', () => {
     }
   })
 
-  // Check if the component is rendered properly
   describe('Render', () => {
     it('Should Render the component', () => {
       const wrapper = createWrapper()

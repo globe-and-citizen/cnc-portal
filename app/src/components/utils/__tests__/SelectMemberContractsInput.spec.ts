@@ -206,11 +206,11 @@ describe('SelectMemberContractsInput.vue', () => {
     expect(wrapper.find('[data-test="search-dropdown"]').exists()).toBe(false)
   })
 
-  it('adds animate-pulse class when isFetching is true', async () => {
+  it('marks input as loading when team meta is pending', async () => {
     mockTeamStore.currentTeamMeta.isPending = true
     wrapper = mount(WrapperComponent)
-    expect(wrapper.find('[data-test="member-contracts-input"]').classes()).toContain(
-      'animate-pulse'
+    expect(wrapper.find('[data-test="member-contracts-input"]').attributes('data-loading')).toBe(
+      'true'
     )
     mockTeamStore.currentTeamMeta.isPending = false
   })
