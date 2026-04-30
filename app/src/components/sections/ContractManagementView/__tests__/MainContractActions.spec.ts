@@ -174,7 +174,9 @@ describe('MainContractActions.vue', () => {
 
     const wrapper = mountComponent({ paused: false })
     await wrapper.findAll('button')[0]?.trigger('click')
-    expect(pauseWrite.mutate).toHaveBeenCalledWith(expect.objectContaining({ functionName: 'pause' }))
+    expect(pauseWrite.mutate).toHaveBeenCalledWith(
+      expect.objectContaining({ functionName: 'pause' })
+    )
   })
 
   it('calls unpause write when contract is paused', async () => {

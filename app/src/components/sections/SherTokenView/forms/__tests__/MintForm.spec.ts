@@ -3,7 +3,13 @@ import { mount, flushPromises } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
 import MintForm from '../MintForm.vue'
-import { mockToast, mockTeamStore, useReadContractFn, useWaitForTransactionReceiptFn, useWriteContractFn } from '@/tests/mocks'
+import {
+  mockToast,
+  mockTeamStore,
+  useReadContractFn,
+  useWaitForTransactionReceiptFn,
+  useWriteContractFn
+} from '@/tests/mocks'
 
 const VALID_ADDRESS = '0x1234567890123456789012345678901234567890'
 
@@ -67,15 +73,19 @@ describe('MintForm.vue', () => {
     symbolRef.value = 'SHER'
     totalSupplyRef.value = undefined
 
-    mockTeamStore.getContractAddressByType = vi.fn(() => '0x2222222222222222222222222222222222222222')
+    mockTeamStore.getContractAddressByType = vi.fn(
+      () => '0x2222222222222222222222222222222222222222'
+    )
 
     useWriteContractFn.mockReset().mockReturnValue(writeState as never)
     useWaitForTransactionReceiptFn.mockReset().mockReturnValue(receiptState as never)
-    useReadContractFn.mockReset().mockImplementation(({ functionName }: { functionName: string }) => {
-      if (functionName === 'symbol') return { data: symbolRef }
-      if (functionName === 'totalSupply') return { data: totalSupplyRef }
-      return { data: ref(undefined) }
-    })
+    useReadContractFn
+      .mockReset()
+      .mockImplementation(({ functionName }: { functionName: string }) => {
+        if (functionName === 'symbol') return { data: symbolRef }
+        if (functionName === 'totalSupply') return { data: totalSupplyRef }
+        return { data: ref(undefined) }
+      })
   })
 
   afterEach(() => {
@@ -107,7 +117,9 @@ describe('MintForm.vue', () => {
   it('prefills member input from prop', async () => {
     const wrapper = mountForm({ memberInput: { name: 'Bob', address: VALID_ADDRESS } })
     await wrapper.vm.$nextTick()
-    expect(wrapper.findComponent({ name: 'SelectMemberContractsInput' }).props('modelValue')).toEqual({
+    expect(
+      wrapper.findComponent({ name: 'SelectMemberContractsInput' }).props('modelValue')
+    ).toEqual({
       name: 'Bob',
       address: VALID_ADDRESS
     })
@@ -116,7 +128,9 @@ describe('MintForm.vue', () => {
   it('updates selected member on update:modelValue', async () => {
     const wrapper = mountForm()
     await wrapper.find('[data-test="emit-member-input"]').trigger('click')
-    expect(wrapper.findComponent({ name: 'SelectMemberContractsInput' }).props('modelValue')).toEqual({
+    expect(
+      wrapper.findComponent({ name: 'SelectMemberContractsInput' }).props('modelValue')
+    ).toEqual({
       name: 'Alice',
       address: VALID_ADDRESS
     })
@@ -127,7 +141,9 @@ describe('MintForm.vue', () => {
     const wrapper = mountForm()
 
     await wrapper.find('[data-test="percentage-input"]').setValue('50')
-    expect(Number((wrapper.find('[data-test="amount-input"]').element as HTMLInputElement).value)).toBeGreaterThan(0)
+    expect(
+      Number((wrapper.find('[data-test="amount-input"]').element as HTMLInputElement).value)
+    ).toBeGreaterThan(0)
 
     await wrapper.find('[data-test="amount-input"]').setValue('1')
     expect(
