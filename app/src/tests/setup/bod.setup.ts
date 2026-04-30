@@ -24,5 +24,10 @@ vi.mock('@/composables/bod/reads', () => ({
  */
 vi.mock('@/composables/bod/writes', () => ({
   useBodAddAction: vi.fn(() => mockBodAddAction),
-  useBodApproveAction: vi.fn(() => mockBODWrites.approve)
+  useBodApproveAction: vi.fn(() => ({
+    ...mockBODWrites.approve,
+    executeApproveAction: mockBODWrites.approve.executeWrite,
+    isLoadingApproveAction: mockBODWrites.approve.writeResult.isPending,
+    isActionApproved: mockBODWrites.approve.receiptResult.isSuccess
+  }))
 }))
