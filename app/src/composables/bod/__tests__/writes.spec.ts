@@ -27,8 +27,14 @@ describe('BOD Contract Writes', () => {
   describe('useBodApproveAction', () => {
     it('returns the approve mock', () => {
       const result = useBodApproveAction()
-      expect(result).toBe(mockBODWrites.approve)
+      expect(result).toMatchObject({
+        ...mockBODWrites.approve,
+        executeApproveAction: mockBODWrites.approve.executeWrite,
+        isLoadingApproveAction: mockBODWrites.approve.writeResult.isPending,
+        isActionApproved: mockBODWrites.approve.receiptResult.isSuccess
+      })
       expect(result.executeWrite).toBeInstanceOf(Function)
+      expect(result.executeApproveAction).toBeInstanceOf(Function)
     })
 
     it('forwards multiple mock scenarios', async () => {
