@@ -4,6 +4,7 @@ import NavBar from '@/components/NavBar.vue'
 import { mount } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
 import { mockUseAuth } from '@/tests/mocks/composables.mock'
+import { nextTick } from 'vue'
 
 describe('NavBar', () => {
   const createWrapper = () =>
@@ -35,23 +36,21 @@ describe('NavBar', () => {
 
   it('opens profile modal when settings item is selected', async () => {
     const wrapper = createWrapper()
-    const profileItems = (
-      wrapper.vm as unknown as { profileItems: Array<{ onSelect: () => void }> }
-    ).profileItems
+    const dropdown = wrapper.findComponent({ name: 'UDropdown' })
+    const items = dropdown.props('items') as Array<{ onSelect?: () => void }>
 
-    profileItems[0].onSelect()
-    await wrapper.vm.$nextTick()
+    items[0]?.onSelect?.()
+    await nextTick()
 
     expect(wrapper.find('[data-test="close-wage-modal-button"]').exists()).toBe(true)
   })
 
   it('calls logout when logout item is selected', () => {
     const wrapper = createWrapper()
-    const profileItems = (
-      wrapper.vm as unknown as { profileItems: Array<{ onSelect: () => void }> }
-    ).profileItems
+    const dropdown = wrapper.findComponent({ name: 'UDropdown' })
+    const items = dropdown.props('items') as Array<{ onSelect?: () => void }>
 
-    profileItems[1].onSelect()
+    items[1]?.onSelect?.()
 
     expect(mockUseAuth.logout).toHaveBeenCalledTimes(1)
   })
