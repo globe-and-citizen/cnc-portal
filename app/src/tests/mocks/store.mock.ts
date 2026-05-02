@@ -52,6 +52,9 @@ export const mockUserStore = {
 }
 
 export const mockUseCurrencyStore = () => ({
+  nativeToken: ref({
+    priceInUSD: 1.5
+  }),
   localCurrency: ref({
     code: 'USD',
     name: 'US Dollar',

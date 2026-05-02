@@ -8,6 +8,7 @@ import {
   UCalendarStub,
   UDropdownStub,
   UIconStub,
+  UPopoverStub,
   USelectMenuStub
 } from '../stubs/nuxt-ui.stubs'
 
@@ -76,6 +77,12 @@ vi.mock('@nuxt/ui/components/Calendar.vue', async () => {
   return { default: UCalendarStub }
 })
 
+// Popover vi.mock so content slot is consistently available in tests.
+vi.mock('@nuxt/ui/components/Popover.vue', async () => {
+  const { UPopoverStub } = await import('../stubs/nuxt-ui.stubs')
+  return { default: UPopoverStub }
+})
+
 // DropdownMenu vi.mock.
 vi.mock('@nuxt/ui/components/DropdownMenu.vue', async () => {
   const { UDropdownStub } = await import('../stubs/nuxt-ui.stubs')
@@ -99,7 +106,9 @@ config.global.stubs = {
   USelectMenu: USelectMenuStub,
   SelectMenu: USelectMenuStub,
   UCalendar: UCalendarStub,
-  Calendar: UCalendarStub
+  Calendar: UCalendarStub,
+  UPopover: UPopoverStub,
+  Popover: UPopoverStub
 }
 
 // ---------------------------------------------------------------------------

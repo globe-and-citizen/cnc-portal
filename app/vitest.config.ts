@@ -7,6 +7,7 @@ import dotenv from 'dotenv'
 dotenv.config()
 process.env.TZ = 'UTC'
 const mockFiles = [
+  'axios',
   'store',
   'composables',
   'wagmi.vue',

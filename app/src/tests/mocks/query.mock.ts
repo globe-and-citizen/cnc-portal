@@ -102,6 +102,9 @@ export const mockNotificationData: Notification[] = [
   }
 ]
 
+export const mockNotificationsRef = ref<Notification[]>([...mockNotificationData])
+export const mockUpdateNotificationMutateAsync = vi.fn().mockResolvedValue(undefined)
+
 /**
  * User Query Mocks
  */
@@ -301,9 +304,20 @@ export const queryMocks: Record<string, () => Record<string, unknown>> = {
   useToggleWageStatusMutation: () => createMockMutationResponse(),
 
   // Notification queries - notification.queries.ts
-  useGetNotificationsQuery: () => createMockQueryResponse(mockNotificationData),
+  useGetNotificationsQuery: () => ({
+    data: mockNotificationsRef,
+    isLoading: ref(false),
+    error: ref(null),
+    refetch: vi.fn(),
+    isFetched: ref(true),
+    isPending: ref(false),
+    isSuccess: ref(true)
+  }),
   useCreateBulkNotificationsMutation: () => createMockMutationResponse(),
-  useUpdateNotificationMutation: () => createMockMutationResponse(),
+  useUpdateNotificationMutation: () => ({
+    ...createMockMutationResponse(),
+    mutateAsync: mockUpdateNotificationMutateAsync
+  }),
 
   // Expense queries - expense.queries.ts
   useGetExpensesQuery: () => createMockQueryResponse([]),

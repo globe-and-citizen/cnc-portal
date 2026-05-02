@@ -60,7 +60,9 @@ export const UModalStub = defineComponent({
       props.open
         ? h('div', { 'data-test': 'u-modal', role: 'dialog' }, [
             props.title ? h('h2', props.title) : undefined,
-            slots.body?.() ?? slots.default?.()
+            slots.header?.(),
+            slots.body?.() ?? slots.default?.(),
+            slots.footer?.()
           ])
         : undefined
   }
@@ -126,5 +128,20 @@ export const UCalendarStub = defineComponent({
   emits: ['update:modelValue'],
   setup() {
     return () => h('div', { 'data-test': 'u-calendar' })
+  }
+})
+
+export const UPopoverStub = defineComponent({
+  name: 'UPopover',
+  props: {
+    open: { type: Boolean, default: false }
+  },
+  emits: ['update:open'],
+  setup(props, { slots, attrs }) {
+    return () =>
+      h('div', { ...attrs, 'data-test': 'u-popover', 'data-open': String(props.open) }, [
+        slots.default?.(),
+        slots.content?.()
+      ])
   }
 })
