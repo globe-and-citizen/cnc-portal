@@ -1,4 +1,4 @@
-import axios from 'axios'
+import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios'
 import { BACKEND_URL } from '@/constant'
 import type { Router } from 'vue-router'
 import { useUserDataStore } from '@/stores/user'
@@ -25,6 +25,35 @@ apiClient.interceptors.request.use((config) => {
   }
   return config
 })
+
+// Retry transient failures (serverless cold starts, brief upstream blips).
+// Retriable on network errors and on these status codes.
+const RETRY_STATUSES = new Set([408, 425, 429, 500, 502, 503, 504])
+const MAX_RETRIES = 3
+const RETRY_DELAY_MS = 500
+
+type RetryableConfig = InternalAxiosRequestConfig & { __retryCount?: number }
+
+apiClient.interceptors.response.use(
+  (response) => response,
+  async (error: AxiosError) => {
+    const config = error.config as RetryableConfig | undefined
+    if (!config) return Promise.reject(error)
+
+    const status = error.response?.status
+    const shouldRetry =
+      (status !== undefined && RETRY_STATUSES.has(status)) ||
+      (status === undefined && error.code !== 'ERR_CANCELED')
+
+    if (!shouldRetry) return Promise.reject(error)
+
+    config.__retryCount = (config.__retryCount ?? 0) + 1
+    if (config.__retryCount > MAX_RETRIES) return Promise.reject(error)
+
+    await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS))
+    return apiClient.request(config)
+  }
+)
 
 /**
  * Setup the 401 response interceptor
