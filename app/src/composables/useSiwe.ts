@@ -1,22 +1,19 @@
 import router from '@/router'
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
 import { useUserDataStore } from '@/stores'
 import type { User } from '@/types'
 import { log } from '@/utils'
-import { useFetch, useStorage } from '@vueuse/core'
+import { useStorage } from '@vueuse/core'
 import { useSignMessage, useChainId, useConnection } from '@wagmi/vue'
 import { SiweMessage } from 'siwe'
 import { useWalletChecks } from '@/composables'
-import { BACKEND_URL } from '@/constant/index'
 import { useGetUserQuery } from '@/queries/user.queries'
+import { useSiweAuthMutation } from '@/queries/auth.queries'
+import { getUserNonce } from '@/api/user.api'
 
 export function useSiwe() {
-  //#region Refs
-  const authData = ref({ signature: '', message: '' })
   const isProcessing = ref(false)
-  //#endregion
 
-  //#region Composables
   const toast = useToast()
   const userDataStore = useUserDataStore()
 
@@ -29,37 +26,15 @@ export function useSiwe() {
   } = useSignMessage()
   const { performChecks, isSuccess: isSuccessWalletCheck } = useWalletChecks()
 
-  //#endregion
+  const { mutateAsync: siweAuthAsync } = useSiweAuthMutation()
 
-  const fetchNonceEndpoint = computed(
-    () => `${BACKEND_URL}/api/user/nonce/${connection.address.value}`
-  )
-
-  //#region useCustomeFetch
-  const {
-    error: siweError,
-    data: siweData,
-    execute: executeAddAuthData
-  } = useFetch(`${BACKEND_URL}/api/auth/siwe`, { immediate: false })
-    .post(authData)
-    .json<{ accessToken: string }>()
-
-  const {
-    error: fetchUserNonceError,
-    data: nonce,
-    execute: executeFetchUserNonce
-  } = useFetch(fetchNonceEndpoint, { immediate: false }).get().json<Partial<User>>()
-
-  // Use TanStack Query for fetching user data (authenticated)
-  // Only fetch user data when address is available
+  // Authenticated user data — fetched after the JWT is in storage.
   const {
     data: userData,
     error: fetchUserError,
     refetch: refetchUser
   } = useGetUserQuery({ pathParams: { address: connection.address } })
-  //#endregion
 
-  //#region Functions
   async function siwe() {
     isProcessing.value = true
     await performChecks()
@@ -68,12 +43,14 @@ export function useSiwe() {
       return
     }
 
-    // Fetch user nonce from backend
-    await executeFetchUserNonce()
-
-    // Check if nonce is fetched successfully
-    if (!nonce.value || fetchUserNonceError.value) {
-      log.info('fetchError.value', fetchUserNonceError.value)
+    let nonce: string | undefined
+    try {
+      const result = await getUserNonce(connection.address.value as `0x${string}`)
+      nonce = result.nonce
+    } catch (error) {
+      log.info('fetchUserNonce error', error)
+    }
+    if (!nonce) {
       toast.add({ title: 'Failed to fetch nonce', color: 'error' })
       isProcessing.value = false
       return
@@ -82,16 +59,16 @@ export function useSiwe() {
     const siweMessage = new SiweMessage({
       address: connection.address.value as string,
       statement: 'Sign in with Ethereum to the app.',
-      nonce: nonce.value.nonce,
+      nonce,
       chainId: chainId.value,
       uri: window.location.origin,
       domain: window.location.origin,
       version: '1'
     })
-    authData.value.message = siweMessage.prepareMessage()
+    const message = siweMessage.prepareMessage()
 
     try {
-      await signMessageAsync({ message: authData.value.message })
+      await signMessageAsync({ message })
     } catch (error) {
       if (signMessageError.value) {
         toast.add({
@@ -109,16 +86,18 @@ export function useSiwe() {
       isProcessing.value = false
       return
     }
-    //update authData payload signature field with user's signature
-    authData.value.signature = signature.value
-    //send authData payload to backend for authentication
-    await executeAddAuthData()
-    //get returned JWT authentication token and save to storage
-    const token = siweData.value?.accessToken
-    if (!token || siweError.value) {
-      log.info('siweError.value', siweError.value)
-      toast.add({ title: 'Failed to get authentication token', color: 'error' })
 
+    let token: string | undefined
+    try {
+      const result = await siweAuthAsync({
+        body: { message, signature: signature.value }
+      })
+      token = result.accessToken
+    } catch (error) {
+      log.info('siweAuth error', error)
+    }
+    if (!token) {
+      toast.add({ title: 'Failed to get authentication token', color: 'error' })
       isProcessing.value = false
       return
     }
@@ -130,17 +109,14 @@ export function useSiwe() {
     // wait for token to be available in storage
     await new Promise((resolve) => setTimeout(resolve, 100))
 
-    //fetch user data from backend
     await refetchUser()
     const user = userData.value
     if (!user || fetchUserError.value) {
       log.info('fetchUserError.value', fetchUserError.value)
       toast.add({ title: 'Failed to fetch user data', color: 'error' })
-
       isProcessing.value = false
       return
     }
-    //save user data to user store
     const userDataForStore: Partial<User> = user
     userDataStore.setUserData(
       userDataForStore.name || '',
@@ -151,10 +127,8 @@ export function useSiwe() {
     userDataStore.setAuthStatus(true)
 
     isProcessing.value = false
-    //redirect user to teams page
     router.push('/teams')
   }
-  //#endregion
 
   return { isProcessing, siwe }
 }
