@@ -336,6 +336,7 @@ export const queryMocks: Record<string, () => Record<string, unknown>> = {
 
   // Auth queries - auth.queries.ts
   useGetValidateTokenQuery: () => createMockQueryResponse(null),
+  useSiweAuthMutation: () => createMockMutationResponse({ accessToken: 'mock-token' }),
 
   // Contract queries - contract.queries.ts
   useCreateContractMutation: () => createMockMutationResponse(),
