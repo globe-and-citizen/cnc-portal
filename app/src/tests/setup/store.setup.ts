@@ -38,3 +38,11 @@ vi.mock('@nuxt/ui', async (importOriginal) => {
     useToast: vi.fn(() => mocks.mockToast)
   }
 })
+
+vi.mock('@nuxt/ui/composables', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    useToast: vi.fn(() => mocks.mockToast)
+  }
+})
