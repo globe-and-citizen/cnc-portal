@@ -1,4 +1,4 @@
-import { createMutationHook, createQueryHook, queryPresets } from './queryFactory'
+import { createQueryHook, queryPresets } from './queryFactory'
 
 /**
  * Query key factory for auth-related queries
@@ -30,34 +30,4 @@ export const useGetValidateTokenQuery = createQueryHook<unknown, GetValidateToke
   endpoint: 'auth/token',
   queryKey: () => authKeys.validateToken(),
   options: queryPresets.once
-})
-
-// ============================================================================
-// POST /auth/siwe - Exchange SIWE signature for an access token
-// ============================================================================
-
-export interface SiweAuthBody {
-  message: string
-  signature: string
-}
-
-export interface SiweAuthResponse {
-  accessToken: string
-}
-
-export interface SiweAuthParams {
-  body: SiweAuthBody
-}
-
-/**
- * Exchange a signed SIWE message for a JWT access token.
- *
- * @endpoint POST /auth/siwe
- * @pathParams none
- * @queryParams none
- * @body { message, signature }
- */
-export const useSiweAuthMutation = createMutationHook<SiweAuthResponse, SiweAuthParams>({
-  method: 'POST',
-  endpoint: 'auth/siwe'
 })
