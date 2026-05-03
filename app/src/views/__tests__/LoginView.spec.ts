@@ -1,16 +1,20 @@
 import { mount } from '@vue/test-utils'
 import { describe, it, expect, vi } from 'vitest'
-import LoginView from '@/views/LoginView.vue'
-import { useSiwe } from '@/composables/useSiwe'
 import { ref } from 'vue'
 
-// Mock useSiwe composable
-vi.mock('@/composables/useSiwe', () => ({
-  useSiwe: vi.fn().mockReturnValue({
-    isProcessing: false,
-    siwe: vi.fn()
-  })
-}))
+const { sharedMutate } = vi.hoisted(() => ({ sharedMutate: vi.fn() }))
+vi.mock('@/composables/useSiwe', async () => {
+  const { ref } = await vi.importActual<typeof import('vue')>('vue')
+  return {
+    useSiweMutation: vi.fn(() => ({
+      mutate: sharedMutate,
+      isPending: ref(false)
+    }))
+  }
+})
+
+import LoginView from '@/views/LoginView.vue'
+import { useSiweMutation } from '@/composables/useSiwe'
 
 describe('LoginView.vue', () => {
   describe('Render', () => {
@@ -35,26 +39,37 @@ describe('LoginView.vue', () => {
   })
 
   describe('Actions', () => {
-    it('should call siwe when sign-in button is clicked', async () => {
+    it('should call mutate when sign-in button is clicked', async () => {
       const wrapper = mount(LoginView)
-      const { siwe } = useSiwe()
+      const { mutate } = useSiweMutation()
 
       const signInButton = wrapper.find('button[data-testid="sign-in"]')
       await signInButton.trigger('click')
 
-      expect(siwe).toHaveBeenCalled()
+      expect(mutate).toHaveBeenCalled()
     })
 
-    it('should display "Processing..." when isProcessing is true', () => {
-      vi.mocked(useSiwe).mockReturnValueOnce({
-        isProcessing: ref<boolean>(true),
-        siwe: vi.fn()
-      })
+    it('should display "Processing..." when isPending is true', () => {
+      vi.mocked(useSiweMutation).mockReturnValueOnce({
+        mutate: vi.fn(),
+        isPending: ref(true)
+      } as unknown as ReturnType<typeof useSiweMutation>)
 
       const wrapper = mount(LoginView)
 
       const signInButton = wrapper.find('button[data-testid="sign-in"]')
       expect(signInButton.text()).toBe('Processing...')
+    })
+
+    it('also accepts a real ref for isPending (typing sanity)', () => {
+      vi.mocked(useSiweMutation).mockReturnValueOnce({
+        mutate: vi.fn(),
+        isPending: ref(false)
+      } as unknown as ReturnType<typeof useSiweMutation>)
+
+      const wrapper = mount(LoginView)
+      const signInButton = wrapper.find('button[data-testid="sign-in"]')
+      expect(signInButton.text()).toBe('Sign In With Ethereum')
     })
   })
 })
