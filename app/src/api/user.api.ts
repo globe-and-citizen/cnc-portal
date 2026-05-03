@@ -1,4 +1,5 @@
 import apiClient from '@/lib/axios'
+import type { User } from '@/types'
 import type { Address } from 'viem'
 
 export interface UserNonceResponse {
@@ -14,5 +15,16 @@ export interface UserNonceResponse {
  */
 export const getUserNonce = async (address: Address): Promise<UserNonceResponse> => {
   const { data } = await apiClient.get<UserNonceResponse>(`user/nonce/${address}`)
+  return data
+}
+
+/**
+ * Imperative fetch of the authenticated user profile by address.
+ *
+ * Used inside `useSiweMutation` after the JWT is in storage; component
+ * consumers should prefer `useGetUserQuery` for reactive reads.
+ */
+export const getUser = async (address: Address): Promise<Partial<User>> => {
+  const { data } = await apiClient.get<Partial<User>>(`user/${address}`)
   return data
 }
