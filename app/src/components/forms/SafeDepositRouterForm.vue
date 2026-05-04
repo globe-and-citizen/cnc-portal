@@ -320,20 +320,10 @@ watch(
   async (success) => {
     if (!success) return
     // V3 invalidates reads on the SafeDepositRouter automatically; the deposit
-    // also mints SHER, so we additionally flush InvestorV1 reads (balances,
-    // total supply) which the V2 wrapper used to handle in invalidateQueries.
-    const investorAddress = teamStore.getContractAddressByType('InvestorV1')
-    if (investorAddress) {
-      const lower = investorAddress.toLowerCase()
-      await queryClient.invalidateQueries({
-        predicate: (query) => {
-          const key = query.queryKey
-          if (!Array.isArray(key) || key[0] !== 'readContract') return false
-          const params = key[1] as { address?: string } | undefined
-          return typeof params?.address === 'string' && params.address.toLowerCase() === lower
-        }
-      })
-    }
+    // also mints SHER, so flush InvestorV1 reads (balances, total supply) too.
+    await queryClient.invalidateQueries({
+      queryKey: ['readContract', { address: teamStore.getContractAddressByType('InvestorV1') }]
+    })
     toast.add({
       title: `Successfully deposited ${amount.value} ${selectedToken.value?.token.symbol} and minted ${sherAmount.value} ${tokenSymbol.value || 'SHER'} tokens`,
       color: 'success'
