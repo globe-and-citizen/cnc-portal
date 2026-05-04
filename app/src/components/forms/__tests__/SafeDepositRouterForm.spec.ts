@@ -210,9 +210,7 @@ describe('SafeDepositRouterForm.vue', () => {
     await setTokenAmount(wrapper, 'invalid', 'usdc', true)
     expect(vm.bigIntAmount).toBe(0n)
 
-    mockSafeDepositRouterWrites.deposit.mutateAsync.mockRejectedValueOnce(
-      new Error('deposit boom')
-    )
+    mockSafeDepositRouterWrites.deposit.mutateAsync.mockRejectedValueOnce(new Error('deposit boom'))
     await vm.performDeposit()
 
     mockERC20Writes.approve.mutate.mockRejectedValueOnce(new Error('approve boom'))
