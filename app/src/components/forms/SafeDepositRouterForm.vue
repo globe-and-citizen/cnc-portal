@@ -88,6 +88,8 @@ import {
 } from '@/composables/safeDepositRouter/reads'
 import { useDeposit } from '@/composables/safeDepositRouter/writes'
 import { useInvestorSymbol } from '@/composables/investor/reads'
+import { useTeamStore } from '@/stores/teamStore'
+import { useQueryClient } from '@tanstack/vue-query'
 
 const emits = defineEmits<{
   closeModal: []
@@ -118,6 +120,8 @@ const submitError = ref<string | null>(null)
 
 const currencyStore = useCurrencyStore()
 const userDataStore = useUserDataStore()
+const teamStore = useTeamStore()
+const queryClient = useQueryClient()
 const toast = useToast()
 
 const safeDepositRouterAddress = useSafeDepositRouterAddress()
@@ -247,14 +251,12 @@ const isLoading = computed(
     isBalanceLoading.value ||
     isTokenSymbolLoading.value ||
     approveWrite.isPending.value ||
-    depositWrite.writeResult.isPending.value
+    depositWrite.isPending.value
 )
 
 const errorMessage = computed(() => {
   if (submitError.value) return submitError.value
-  const err = (approveWrite.error.value ||
-    depositWrite.writeResult.error.value ||
-    depositWrite.receiptResult.error.value) as Error | null
+  const err = (approveWrite.error.value || depositWrite.error.value) as Error | null
   return err ? parseError(err) || err.message || 'Transaction failed' : null
 })
 
@@ -295,7 +297,7 @@ watch(
 )
 
 watch(
-  () => depositWrite.writeResult.error.value,
+  () => depositWrite.error.value,
   (error) => {
     if (error) {
       console.error('Error depositing tokens:', error)
@@ -314,9 +316,24 @@ watch(
 )
 
 watch(
-  () => depositWrite.receiptResult.isSuccess.value,
-  (success) => {
+  () => depositWrite.isSuccess.value,
+  async (success) => {
     if (!success) return
+    // V3 invalidates reads on the SafeDepositRouter automatically; the deposit
+    // also mints SHER, so we additionally flush InvestorV1 reads (balances,
+    // total supply) which the V2 wrapper used to handle in invalidateQueries.
+    const investorAddress = teamStore.getContractAddressByType('InvestorV1')
+    if (investorAddress) {
+      const lower = investorAddress.toLowerCase()
+      await queryClient.invalidateQueries({
+        predicate: (query) => {
+          const key = query.queryKey
+          if (!Array.isArray(key) || key[0] !== 'readContract') return false
+          const params = key[1] as { address?: string } | undefined
+          return typeof params?.address === 'string' && params.address.toLowerCase() === lower
+        }
+      })
+    }
     toast.add({
       title: `Successfully deposited ${amount.value} ${selectedToken.value?.token.symbol} and minted ${sherAmount.value} ${tokenSymbol.value || 'SHER'} tokens`,
       color: 'success'
@@ -346,7 +363,7 @@ function handleCancel() {
 
 async function performDeposit() {
   await depositWrite
-    .executeWrite(selectedTokenAddress.value, bigIntAmount.value)
+    .mutateAsync({ args: [selectedTokenAddress.value, bigIntAmount.value] })
     .catch((error) => console.error('Deposit execution error:', error))
 }
 

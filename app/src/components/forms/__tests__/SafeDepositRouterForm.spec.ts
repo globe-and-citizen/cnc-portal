@@ -131,7 +131,7 @@ describe('SafeDepositRouterForm.vue', () => {
     vm.submitting = true
     vm.currentStep = 2
     mockParseError.mockReturnValueOnce('Deposit failed')
-    mockSafeDepositRouterWrites.deposit.writeResult.error.value = new Error('deposit failed')
+    mockSafeDepositRouterWrites.deposit.error.value = new Error('deposit failed')
     await wrapper.vm.$nextTick()
     expect(vm.submitting).toBe(false)
   })
@@ -142,13 +142,13 @@ describe('SafeDepositRouterForm.vue', () => {
 
     await setTokenAmount(wrapper, '1', 'usdc', true)
     vm.handleSherAmountChange('5')
-    mockSafeDepositRouterWrites.deposit.executeWrite.mockResolvedValue(undefined)
+    mockSafeDepositRouterWrites.deposit.mutateAsync.mockResolvedValue(undefined)
 
     mockERC20Writes.approve.isSuccess.value = true
     await flushPromises()
-    expect(mockSafeDepositRouterWrites.deposit.executeWrite).toHaveBeenCalled()
+    expect(mockSafeDepositRouterWrites.deposit.mutateAsync).toHaveBeenCalled()
 
-    mockSafeDepositRouterWrites.deposit.receiptResult.isSuccess.value = true
+    mockSafeDepositRouterWrites.deposit.isSuccess.value = true
     await flushPromises()
 
     expect(vm.amount).toBe('')
@@ -171,12 +171,12 @@ describe('SafeDepositRouterForm.vue', () => {
     mockSafeDepositRouterAddress.value = '0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'
     vm.selectedTokenId = 'missing-token'
     await vm.submitForm()
-    expect(mockSafeDepositRouterWrites.deposit.executeWrite).not.toHaveBeenCalled()
+    expect(mockSafeDepositRouterWrites.deposit.mutateAsync).not.toHaveBeenCalled()
 
     vm.selectedTokenId = 'usdc'
     mockSafeDepositRouterReads.multiplier.data.value = undefined as never
     await vm.submitForm()
-    expect(mockSafeDepositRouterWrites.deposit.executeWrite).not.toHaveBeenCalled()
+    expect(mockSafeDepositRouterWrites.deposit.mutateAsync).not.toHaveBeenCalled()
   })
 
   it('runs approval when allowance is too low and deposits directly otherwise', async () => {
@@ -193,14 +193,13 @@ describe('SafeDepositRouterForm.vue', () => {
     expect(vm.currentStep).toBe(1)
 
     mockERC20Reads.allowance.data.value = 1000000n
-    mockSafeDepositRouterWrites.deposit.executeWrite.mockResolvedValue(undefined)
+    mockSafeDepositRouterWrites.deposit.mutateAsync.mockResolvedValue(undefined)
     await vm.submitForm()
     await flushPromises()
 
-    expect(mockSafeDepositRouterWrites.deposit.executeWrite).toHaveBeenCalledWith(
-      '0xA3492D046095AFFE351cFac15de9b86425E235dB',
-      1000000n
-    )
+    expect(mockSafeDepositRouterWrites.deposit.mutateAsync).toHaveBeenCalledWith({
+      args: ['0xA3492D046095AFFE351cFac15de9b86425E235dB', 1000000n]
+    })
     expect(vm.currentStep).toBe(2)
   })
 
@@ -211,7 +210,7 @@ describe('SafeDepositRouterForm.vue', () => {
     await setTokenAmount(wrapper, 'invalid', 'usdc', true)
     expect(vm.bigIntAmount).toBe(0n)
 
-    mockSafeDepositRouterWrites.deposit.executeWrite.mockRejectedValueOnce(
+    mockSafeDepositRouterWrites.deposit.mutateAsync.mockRejectedValueOnce(
       new Error('deposit boom')
     )
     await vm.performDeposit()
@@ -222,6 +221,6 @@ describe('SafeDepositRouterForm.vue', () => {
     await vm.submitForm()
     await flushPromises()
 
-    expect(mockSafeDepositRouterWrites.deposit.executeWrite).toHaveBeenCalledTimes(1)
+    expect(mockSafeDepositRouterWrites.deposit.mutateAsync).toHaveBeenCalledTimes(1)
   })
 })
