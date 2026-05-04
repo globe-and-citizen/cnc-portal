@@ -31,9 +31,9 @@
               color="primary"
               size="xl"
               class="w-full justify-center"
-              @click="siwe()"
-              :disabled="isProcessing"
-              :label="isProcessing ? 'Processing...' : 'Sign In With Ethereum'"
+              @click="mutate()"
+              :disabled="isPending"
+              :label="isPending ? 'Processing...' : 'Sign In With Ethereum'"
             />
           </div>
         </div>
@@ -43,7 +43,7 @@
 </template>
 
 <script setup lang="ts">
-import { useSiwe } from '@/composables/useSiwe'
+import { useSiweMutation } from '@/composables/useSiwe'
 
-const { isProcessing, siwe } = useSiwe()
+const { mutate, isPending } = useSiweMutation()
 </script>
