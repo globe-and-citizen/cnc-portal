@@ -64,7 +64,7 @@ export function getMonthWeeks(year: number, month: number): Week[] {
         year: weekYear,
         month: current.month(),
         isoWeek: week,
-        isoString: current.toISOString(),
+        isoString: current.startOf('isoWeek').toISOString(),
         formatted: formatIsoWeekRange(current)
       })
     }
