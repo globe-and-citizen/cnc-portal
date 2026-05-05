@@ -101,6 +101,13 @@ export function formatIsoWeekRange(base: dayjs.Dayjs): string {
   }
 }
 
+/**
+ * Return the UTC Monday (ISO week start) for the provided date-like value.
+ */
+export function startOfWeek(date: string | Date | dayjs.Dayjs): dayjs.Dayjs {
+  return dayjs.utc(date).startOf('isoWeek')
+}
+
 /* Calculates the number of calendar days between two dates.
  * The calculation is done in UTC to avoid daylight saving time issues.
  *
