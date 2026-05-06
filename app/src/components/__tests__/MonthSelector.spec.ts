@@ -65,7 +65,7 @@ describe('MonthSelector', () => {
         year: 2023,
         isoWeek: d.isoWeek(),
         formatted: formatIsoWeekRange(d),
-        isoString: d.toISOString()
+        isoString: d.startOf('isoWeek').toISOString()
       })
     })
   })

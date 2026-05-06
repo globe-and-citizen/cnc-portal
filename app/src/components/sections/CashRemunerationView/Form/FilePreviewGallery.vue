@@ -77,128 +77,128 @@
     </div>
 
     <!-- Image Lightbox Modal -->
+    <div
+      v-if="modalState.type === 'image'"
+      class="bg-opacity-90 fixed inset-0 z-999 flex items-center justify-center bg-black p-4"
+      @click="closeModal"
+      @keydown.esc="closeModal"
+      data-test="upload-lightbox-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="lightbox-title"
+    >
       <div
-        v-if="modalState.type === 'image'"
-        class="bg-opacity-90 fixed inset-0 z-999 flex items-center justify-center bg-black p-4"
-        @click="closeModal"
-        @keydown.esc="closeModal"
-        data-test="upload-lightbox-modal"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="lightbox-title"
+        class="relative flex max-h-full max-w-4xl flex-col items-center justify-center rounded-lg bg-black"
+        @click.stop
       >
-        <div
-          class="relative flex max-h-full max-w-4xl flex-col items-center justify-center rounded-lg bg-black"
-          @click.stop
-        >
-          <div class="absolute top-4 right-4 z-20 flex gap-2">
-            <button
-              type="button"
-              class="btn btn-sm btn-ghost bg-opacity-60 hover:bg-opacity-80 bg-black text-white"
-              @click="closeModal"
-              data-test="upload-lightbox-close"
-              aria-label="Close lightbox"
-            >
-              <Icon icon="heroicons:x-mark" class="h-6 w-6" />
-            </button>
-            <button
-              type="button"
-              class="btn btn-sm btn-ghost bg-opacity-60 hover:bg-opacity-80 bg-black text-white"
-              @click="downloadFile(modalState.url)"
-              data-test="upload-lightbox-download"
-              aria-label="Download image"
-            >
-              <Icon icon="heroicons:arrow-down-tray" class="h-5 w-5" />
-            </button>
-          </div>
-          <h2 id="lightbox-title" class="sr-only">{{ modalState.fileName }}</h2>
-          <img
-            :src="modalState.url"
-            :alt="modalState.fileName"
-            class="max-h-full max-w-full object-contain"
-          />
+        <div class="absolute top-4 right-4 z-20 flex gap-2">
+          <button
+            type="button"
+            class="btn btn-sm btn-ghost bg-opacity-60 hover:bg-opacity-80 bg-black text-white"
+            @click="closeModal"
+            data-test="upload-lightbox-close"
+            aria-label="Close lightbox"
+          >
+            <Icon icon="heroicons:x-mark" class="h-6 w-6" />
+          </button>
+          <button
+            type="button"
+            class="btn btn-sm btn-ghost bg-opacity-60 hover:bg-opacity-80 bg-black text-white"
+            @click="downloadFile(modalState.url)"
+            data-test="upload-lightbox-download"
+            aria-label="Download image"
+          >
+            <Icon icon="heroicons:arrow-down-tray" class="h-5 w-5" />
+          </button>
         </div>
+        <h2 id="lightbox-title" class="sr-only">{{ modalState.fileName }}</h2>
+        <img
+          :src="modalState.url"
+          :alt="modalState.fileName"
+          class="max-h-full max-w-full object-contain"
+        />
       </div>
+    </div>
 
     <!-- Document Preview Modal -->
+    <div
+      v-if="modalState.type === 'document'"
+      class="bg-opacity-80 fixed inset-0 z-999 flex items-center justify-center bg-black p-4"
+      @click="closeModal"
+      @keydown.esc="closeModal"
+      data-test="upload-doc-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="doc-title"
+    >
       <div
-        v-if="modalState.type === 'document'"
-        class="bg-opacity-80 fixed inset-0 z-999 flex items-center justify-center bg-black p-4"
-        @click="closeModal"
-        @keydown.esc="closeModal"
-        data-test="upload-doc-modal"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="doc-title"
+        class="relative flex h-[80vh] w-full max-w-4xl flex-col rounded-lg bg-white p-4 shadow-xl"
+        @click.stop
       >
-        <div
-          class="relative flex h-[80vh] w-full max-w-4xl flex-col rounded-lg bg-white p-4 shadow-xl"
-          @click.stop
-        >
-          <div class="mb-3 flex items-center justify-between">
-            <div
-              id="doc-title"
-              class="truncate font-semibold text-gray-800"
-              :title="modalState.fileName"
-            >
-              {{ modalState.fileName }}
-            </div>
-            <div class="flex gap-2">
-              <button
-                type="button"
-                class="btn btn-sm btn-ghost"
-                @click="closeModal"
-                data-test="upload-doc-close"
-              >
-                Close
-              </button>
-              <button
-                type="button"
-                class="btn btn-sm btn-success"
-                @click="downloadFile(modalState.url)"
-                data-test="upload-doc-download"
-              >
-                Download
-              </button>
-            </div>
+        <div class="mb-3 flex items-center justify-between">
+          <div
+            id="doc-title"
+            class="truncate font-semibold text-gray-800"
+            :title="modalState.fileName"
+          >
+            {{ modalState.fileName }}
           </div>
-
-          <div class="flex-1 overflow-hidden rounded-sm border border-gray-200 bg-gray-50">
-            <!-- PDF Preview -->
-            <iframe
-              v-if="modalState.contentType === 'pdf'"
-              :src="modalState.url"
-              class="h-full w-full"
-              title="Document preview"
-            ></iframe>
-
-            <!-- Text File Preview -->
-            <pre
-              v-else-if="modalState.contentType === 'text'"
-              class="h-full w-full overflow-auto bg-white p-4 font-mono text-sm whitespace-pre-wrap text-gray-800"
-              >{{ modalState.textContent }}</pre
+          <div class="flex gap-2">
+            <button
+              type="button"
+              class="btn btn-sm btn-ghost"
+              @click="closeModal"
+              data-test="upload-doc-close"
             >
+              Close
+            </button>
+            <button
+              type="button"
+              class="btn btn-sm btn-success"
+              @click="downloadFile(modalState.url)"
+              data-test="upload-doc-download"
+            >
+              Download
+            </button>
+          </div>
+        </div>
 
-            <!-- Non-previewable files -->
-            <div v-else class="flex h-full w-full flex-col items-center justify-center gap-4 p-8">
-              <Icon :icon="getFileIcon(modalState.fileName)" class="h-24 w-24 text-gray-400" />
-              <div class="text-center">
-                <div class="mb-2 text-xl font-semibold text-gray-700">
-                  {{ modalState.fileName }}
-                </div>
-                <div class="mb-4 text-sm text-gray-500">
-                  Type: {{ modalState.fileType || 'Unknown' }}
-                </div>
-                <p class="mb-6 text-gray-600">This file type cannot be previewed in the browser.</p>
-                <button type="button" class="btn btn-success" @click="downloadFile(modalState.url)">
-                  <Icon icon="heroicons:arrow-down-tray" class="mr-2 h-5 w-5" />
-                  Download to view
-                </button>
+        <div class="flex-1 overflow-hidden rounded-sm border border-gray-200 bg-gray-50">
+          <!-- PDF Preview -->
+          <iframe
+            v-if="modalState.contentType === 'pdf'"
+            :src="modalState.url"
+            class="h-full w-full"
+            title="Document preview"
+          ></iframe>
+
+          <!-- Text File Preview -->
+          <pre
+            v-else-if="modalState.contentType === 'text'"
+            class="h-full w-full overflow-auto bg-white p-4 font-mono text-sm whitespace-pre-wrap text-gray-800"
+            >{{ modalState.textContent }}</pre
+          >
+
+          <!-- Non-previewable files -->
+          <div v-else class="flex h-full w-full flex-col items-center justify-center gap-4 p-8">
+            <Icon :icon="getFileIcon(modalState.fileName)" class="h-24 w-24 text-gray-400" />
+            <div class="text-center">
+              <div class="mb-2 text-xl font-semibold text-gray-700">
+                {{ modalState.fileName }}
               </div>
+              <div class="mb-4 text-sm text-gray-500">
+                Type: {{ modalState.fileType || 'Unknown' }}
+              </div>
+              <p class="mb-6 text-gray-600">This file type cannot be previewed in the browser.</p>
+              <button type="button" class="btn btn-success" @click="downloadFile(modalState.url)">
+                <Icon icon="heroicons:arrow-down-tray" class="mr-2 h-5 w-5" />
+                Download to view
+              </button>
             </div>
           </div>
         </div>
       </div>
+    </div>
   </div>
 </template>
 
