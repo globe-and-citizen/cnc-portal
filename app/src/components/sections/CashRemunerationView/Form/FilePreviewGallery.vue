@@ -66,6 +66,7 @@
       <!-- Remove button -->
       <button
         v-if="canRemove"
+        type="button"
         class="bg-error absolute -top-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full text-xs text-white opacity-0 shadow-xs transition-all group-hover:opacity-100 hover:shadow-sm"
         @click.stop="emit('remove', index)"
         data-test="remove-button"
@@ -76,7 +77,6 @@
     </div>
 
     <!-- Image Lightbox Modal -->
-    <Teleport to="body">
       <div
         v-if="modalState.type === 'image'"
         class="bg-opacity-90 fixed inset-0 z-999 flex items-center justify-center bg-black p-4"
@@ -93,6 +93,7 @@
         >
           <div class="absolute top-4 right-4 z-20 flex gap-2">
             <button
+              type="button"
               class="btn btn-sm btn-ghost bg-opacity-60 hover:bg-opacity-80 bg-black text-white"
               @click="closeModal"
               data-test="upload-lightbox-close"
@@ -101,6 +102,7 @@
               <Icon icon="heroicons:x-mark" class="h-6 w-6" />
             </button>
             <button
+              type="button"
               class="btn btn-sm btn-ghost bg-opacity-60 hover:bg-opacity-80 bg-black text-white"
               @click="downloadFile(modalState.url)"
               data-test="upload-lightbox-download"
@@ -117,10 +119,8 @@
           />
         </div>
       </div>
-    </Teleport>
 
     <!-- Document Preview Modal -->
-    <Teleport to="body">
       <div
         v-if="modalState.type === 'document'"
         class="bg-opacity-80 fixed inset-0 z-999 flex items-center justify-center bg-black p-4"
@@ -144,10 +144,16 @@
               {{ modalState.fileName }}
             </div>
             <div class="flex gap-2">
-              <button class="btn btn-sm btn-ghost" @click="closeModal" data-test="upload-doc-close">
+              <button
+                type="button"
+                class="btn btn-sm btn-ghost"
+                @click="closeModal"
+                data-test="upload-doc-close"
+              >
                 Close
               </button>
               <button
+                type="button"
                 class="btn btn-sm btn-success"
                 @click="downloadFile(modalState.url)"
                 data-test="upload-doc-download"
@@ -184,7 +190,7 @@
                   Type: {{ modalState.fileType || 'Unknown' }}
                 </div>
                 <p class="mb-6 text-gray-600">This file type cannot be previewed in the browser.</p>
-                <button class="btn btn-success" @click="downloadFile(modalState.url)">
+                <button type="button" class="btn btn-success" @click="downloadFile(modalState.url)">
                   <Icon icon="heroicons:arrow-down-tray" class="mr-2 h-5 w-5" />
                   Download to view
                 </button>
@@ -193,7 +199,6 @@
           </div>
         </div>
       </div>
-    </Teleport>
   </div>
 </template>
 
