@@ -27,7 +27,7 @@
               title="Update Company Details"
               description="Update your company name and description to keep your profile current and accurate"
             >
-              <UButton size="sm" color="secondary" label="Update" @click="prefillUpdateForm" />
+              <UButton size="sm" color="secondary" icon="i-lucide-edit" label="Update" @click="prefillUpdateForm" />
               <template #body>
                 <UAlert
                   v-if="updateTeamError"
@@ -78,11 +78,57 @@
             </UModal>
 
             <UModal
+              v-model:open="showArchiveTeamConfirmModal"
+              :title="currentTeam?.archived ? 'Unarchive Company' : 'Archive Company'"
+              :description="
+                currentTeam?.archived
+                  ? 'This action will make the company visible and usable again.'
+                  : 'This action will remove the company from the dashboard and prevent it from being used.'
+              "
+            >
+              <UButton
+                size="sm"
+                :color="currentTeam?.archived ? 'success' : 'warning'"
+                :icon="currentTeam?.archived ? 'i-lucide-archive-restore' : 'i-lucide-archive'"
+                :label="currentTeam?.archived ? 'Unarchive' : 'Archive'"
+              />
+              <template #body>
+                <UAlert
+                  v-if="archiveTeamError"
+                  color="error"
+                  variant="soft"
+                  class="mb-4"
+                />
+                <p>
+                  Are you sure you want to {{ currentTeam?.archived ? 'unarchive' : 'archive' }} the company
+                  <span class="font-bold">{{ teamStore.currentTeamMeta.data?.name }}</span
+                  >?
+                </p>
+                <div class="mt-4 flex justify-center gap-2">
+                  <UButton
+                    :color="currentTeam?.archived ? 'success' : 'error'"
+                    data-test="archive-team-button"
+                    @click="currentTeam?.archived ? unarchiveTeam() : archiveTeam()"
+                    :loading="teamIsArchiving || teamIsUnarchiving"
+                    :disabled="teamIsArchiving || teamIsUnarchiving"
+                    :label="currentTeam?.archived ? 'Unarchive' : 'Archive'"
+                  />
+                  <UButton
+                    color="primary"
+                    variant="outline"
+                    @click="showArchiveTeamConfirmModal = false"
+                    label="Cancel"
+                  />
+                </div>
+              </template>
+            </UModal>
+            
+            <UModal
               v-model:open="showDeleteTeamConfirmModal"
               title="Confirmation"
               description="This action cannot be undone. Please confirm that you want to permanently delete this company."
             >
-              <UButton size="sm" color="error" label="Delete" />
+              <UButton size="sm" color="error" icon="i-lucide-trash" label="Delete" />
               <template #body>
                 <UAlert
                   v-if="deleteTeamError"
@@ -128,9 +174,15 @@ import type { Member } from '@/types'
 import { useRouter } from 'vue-router'
 import { useTeamStore } from '@/stores'
 import { useUserDataStore } from '@/stores/user'
-import { useUpdateTeamMutation, useDeleteTeamMutation } from '@/queries/team.queries'
+import {
+  useUpdateTeamMutation,
+  useDeleteTeamMutation,
+  useArchiveTeamMutation,
+  useUnarchiveTeamMutation
+} from '@/queries/team.queries'
 
 const showDeleteTeamConfirmModal = ref(false)
+const showArchiveTeamConfirmModal = ref(false)
 const showModal = ref(false)
 const teamStore = useTeamStore()
 const currentTeam = computed(() => teamStore.currentTeamMeta.data)
@@ -157,6 +209,12 @@ const {
   isPending: teamIsDeleting,
   error: deleteTeamError
 } = useDeleteTeamMutation()
+const {
+  mutate: archiveTeamMutate,
+  isPending: teamIsArchiving,
+  error: archiveTeamError
+} = useArchiveTeamMutation()
+const { mutate: unarchiveTeamMutate, isPending: teamIsUnarchiving } = useUnarchiveTeamMutation()
 
 const executeUpdateTeam = () => {
   updateTeamMutate(
@@ -194,6 +252,44 @@ const deleteTeam = async () => {
     }
   )
 }
+
+const archiveTeam = async () => {
+  const teamId = teamStore.currentTeamId
+  if (!teamId) {
+    toast.add({ title: 'Company ID is required', color: 'error' })
+    return
+  }
+
+  archiveTeamMutate(
+    { pathParams: { id: String(teamId) } },
+    {
+      onSuccess: async () => {
+        toast.add({ title: 'Company archived successfully', color: 'success' })
+        showArchiveTeamConfirmModal.value = false
+        
+      }
+    }
+  )
+}
+
+const unarchiveTeam = async () => {
+  const teamId = teamStore.currentTeamId
+  if (!teamId) {
+    toast.add({ title: 'Company ID is required', color: 'error' })
+    return
+  }
+
+  unarchiveTeamMutate(
+    { pathParams: { id: String(teamId) } },
+    {
+      onSuccess: async () => {
+        toast.add({ title: 'Company unarchived successfully', color: 'success' })
+        showArchiveTeamConfirmModal.value = false
+      }
+    }
+  )
+}
+
 
 const prefillUpdateForm = () => {
   updateTeamInput.value.name = teamStore.currentTeamMeta.data?.name || ''
