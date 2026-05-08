@@ -125,6 +125,47 @@
             </UModal>
 
             <UModal
+              v-model:open="showVisibilityTeamConfirmModal"
+              :title="isVisible ? 'Hide Company' : 'Show Company'"
+              :description="
+                isVisible
+                  ? 'This action will hide the company from your dashboard only.'
+                  : 'This action will show the company on your dashboard again.'
+              "
+            >
+              <UButton
+                size="sm"
+                :color="isVisible ? 'success' : 'warning'"
+                :icon="isVisible ? 'i-lucide-eye-off' : 'i-lucide-eye'"
+                :label="isVisible ? 'Hide' : 'Show'"
+              />
+              <template #body>
+                <UAlert v-if="hideTeamError" color="error" variant="soft" class="mb-4" />
+                <p>
+                  Are you sure you want to {{ isVisible ? 'hide' : 'show' }} the company
+                  <span class="font-bold">{{ teamStore.currentTeamMeta.data?.name }}</span
+                  >?
+                </p>
+                <div class="mt-4 flex justify-center gap-2">
+                  <UButton
+                    :color="isVisible ? 'success' : 'error'"
+                    data-test="visibility-team-button"
+                    @click="isVisible ? hideTeam() : showTeam()"
+                    :loading="teamIsHiding || teamIsShowing"
+                    :disabled="teamIsHiding || teamIsShowing"
+                    :label="isVisible ? 'Hide' : 'Show'"
+                  />
+                  <UButton
+                    color="primary"
+                    variant="outline"
+                    @click="showVisibilityTeamConfirmModal = false"
+                    label="Cancel"
+                  />
+                </div>
+              </template>
+            </UModal>
+
+            <UModal
               v-model:open="showDeleteTeamConfirmModal"
               title="Confirmation"
               description="This action cannot be undone. Please confirm that you want to permanently delete this company."
@@ -162,47 +203,6 @@
               </template>
             </UModal>
           </template>
-
-          <UModal
-            v-model:open="showVisibilityTeamConfirmModal"
-            :title="isVisible ? 'Hide Company' : 'Show Company'"
-            :description="
-              isVisible
-                ? 'This action will hide the company from your dashboard only.'
-                : 'This action will show the company on your dashboard again.'
-            "
-          >
-            <UButton
-              size="sm"
-              :color="isVisible ? 'success' : 'warning'"
-              :icon="isVisible ? 'i-lucide-eye-off' : 'i-lucide-eye'"
-              :label="isVisible ? 'Hide' : 'Show'"
-            />
-            <template #body>
-              <UAlert v-if="hideTeamError" color="error" variant="soft" class="mb-4" />
-              <p>
-                Are you sure you want to {{ isVisible ? 'hide' : 'show' }} the company
-                <span class="font-bold">{{ teamStore.currentTeamMeta.data?.name }}</span
-                >?
-              </p>
-              <div class="mt-4 flex justify-center gap-2">
-                <UButton
-                  :color="isVisible ? 'success' : 'error'"
-                  data-test="visibility-team-button"
-                  @click="isVisible ? hideTeam() : showTeam()"
-                  :loading="teamIsHiding || teamIsShowing"
-                  :disabled="teamIsHiding || teamIsShowing"
-                  :label="isVisible ? 'Hide' : 'Show'"
-                />
-                <UButton
-                  color="primary"
-                  variant="outline"
-                  @click="showVisibilityTeamConfirmModal = false"
-                  label="Cancel"
-                />
-              </div>
-            </template>
-          </UModal>
         </div>
       </div>
     </div>
