@@ -27,7 +27,8 @@ const mountSection = () =>
         TeamMetaActions: {
           name: 'TeamMetaActions',
           props: ['currentTeam', 'isOwner'],
-          template: '<div data-test="team-meta-actions-stub">{{ isOwner ? "owner" : "employee" }}</div>'
+          template:
+            '<div data-test="team-meta-actions-stub">{{ isOwner ? "owner" : "employee" }}</div>'
         }
       }
     }

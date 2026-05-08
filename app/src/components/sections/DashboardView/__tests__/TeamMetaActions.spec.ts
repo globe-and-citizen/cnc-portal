@@ -295,7 +295,9 @@ describe('TeamMetaActions.vue', () => {
     expect(deleteMutateSpy).toHaveBeenCalled()
 
     const visibilityCancelWrapper = mountActions()
-    const visibilityVm = visibilityCancelWrapper.vm as unknown as { showVisibilityTeamConfirmModal: boolean }
+    const visibilityVm = visibilityCancelWrapper.vm as unknown as {
+      showVisibilityTeamConfirmModal: boolean
+    }
     visibilityVm.showVisibilityTeamConfirmModal = true
     await visibilityCancelWrapper.vm.$nextTick()
     const visibilityCancel = visibilityCancelWrapper.findAll('button').at(-1)
@@ -319,6 +321,5 @@ describe('TeamMetaActions.vue', () => {
     await unarchiveWrapper.vm.$nextTick()
     await unarchiveWrapper.get('[data-test="archive-team-button"]').trigger('click')
     expect(unarchiveMutateSpy).toHaveBeenCalled()
-
   })
 })
