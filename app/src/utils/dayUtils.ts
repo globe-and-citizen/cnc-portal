@@ -64,7 +64,7 @@ export function getMonthWeeks(year: number, month: number): Week[] {
         year: weekYear,
         month: current.month(),
         isoWeek: week,
-        isoString: current.toISOString(),
+        isoString: current.startOf('isoWeek').toISOString(),
         formatted: formatIsoWeekRange(current)
       })
     }
@@ -99,6 +99,13 @@ export function formatIsoWeekRange(base: dayjs.Dayjs): string {
     console.error('Error formatting ISO week range:', error)
     return `${base.format('YYYY-MM-DD')} - ${base.add(6, 'day').format('YYYY-MM-DD')}`
   }
+}
+
+/**
+ * Return the UTC Monday (ISO week start) for the provided date-like value.
+ */
+export function startOfWeek(date: string | Date | dayjs.Dayjs): dayjs.Dayjs {
+  return dayjs.utc(date).startOf('isoWeek')
 }
 
 /* Calculates the number of calendar days between two dates.

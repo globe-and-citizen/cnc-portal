@@ -37,8 +37,7 @@ const pageTitle = computed(() => {
     'settings': 'Settings',
     'settings-members': 'Members',
     'settings-notifications': 'Notifications',
-    'settings-security': 'Security',
-    'safe': 'Safe'
+    'settings-security': 'Security'
   }
 
   // Return mapped title or capitalize first segment of path
@@ -84,14 +83,6 @@ const links = [
       label: 'Micropayments',
       icon: 'i-lucide-wallet',
       to: '/micropayments',
-      onSelect: () => {
-        open.value = false
-      }
-    },
-    {
-      label: 'Safe',
-      icon: 'i-lucide-wallet',
-      to: '/safe',
       onSelect: () => {
         open.value = false
       }
