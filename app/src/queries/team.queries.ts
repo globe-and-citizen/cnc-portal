@@ -26,6 +26,8 @@ export interface GetTeamsParams {
   queryParams?: {
     /** Optional user address to filter teams */
     userAddress?: MaybeRefOrGetter<string | null | undefined>
+    /** Optional team mode filter handled server-side */
+    mode?: MaybeRefOrGetter<'current' | 'hide' | 'archive' | 'all' | undefined>
   }
 }
 
@@ -39,7 +41,10 @@ export interface GetTeamsParams {
  */
 export const useGetTeamsQuery = createQueryHook<Team[], GetTeamsParams>({
   endpoint: 'teams',
-  queryKey: (params) => teamKeys.list(toValue(params?.queryParams?.userAddress)),
+  queryKey: (params) => [
+    ...teamKeys.list(toValue(params?.queryParams?.userAddress)),
+    { mode: toValue(params?.queryParams?.mode) ?? 'current' }
+  ],
   options: queryPresets.stable
 })
 
@@ -125,6 +130,14 @@ export interface UpdateTeamParams {
   body: UpdateTeamBody
 }
 
+export interface UpdateTeamArchiveBody {
+  isArchived: boolean
+}
+
+export interface UpdateTeamVisibilityBody {
+  isVisible: boolean
+}
+
 /**
  * Update an existing team
  *
@@ -134,6 +147,88 @@ export interface UpdateTeamParams {
  * @body UpdateTeamBody - team data to update
  */
 export const useUpdateTeamMutation = createMutationHook<Team, UpdateTeamParams>({
+  method: 'PUT',
+  endpoint: 'teams/{id}',
+  invalidateKeys: (params) => [teamKeys.detail(params.pathParams.id), teamKeys.all]
+})
+
+// ============================================================================
+// PATCH /teams/{teamId}/archive - Archive team
+// ============================================================================
+
+/**
+ * Combined parameters for useArchiveTeamMutation
+ */
+export interface ArchiveTeamParams {
+  pathParams: {
+    /** Team ID */
+    id: string
+  }
+  body: UpdateTeamArchiveBody
+}
+
+/**
+ * Archive a team
+ *
+ * @endpoint PATCH /teams/{id}/archive
+ * @pathParams { id: string }
+ * @queryParams none
+ * @body none
+ */
+export const useArchiveTeamMutation = createMutationHook<Team, ArchiveTeamParams>({
+  method: 'PUT',
+  endpoint: 'teams/{id}',
+  invalidateKeys: (params) => [teamKeys.detail(params.pathParams.id), teamKeys.all]
+})
+
+// ============================================================================
+// PATCH /teams/{id}/unarchive - Unarchive team
+// ============================================================================
+
+/**
+ * Combined parameters for useUnarchiveTeamMutation
+ */
+export interface UnarchiveTeamParams {
+  pathParams: {
+    /** Team ID */
+    id: string
+  }
+  body: UpdateTeamArchiveBody
+}
+
+/**
+ * Unarchive a team
+ *
+ * @endpoint PATCH /teams/{id}/unarchive
+ * @pathParams { id: string }
+ * @queryParams none
+ * @body none
+ */
+export const useUnarchiveTeamMutation = createMutationHook<Team, UnarchiveTeamParams>({
+  method: 'PUT',
+  endpoint: 'teams/{id}',
+  invalidateKeys: (params) => [teamKeys.detail(params.pathParams.id), teamKeys.all]
+})
+
+// ============================================================================
+// PUT /teams/{id} - Update team visibility for caller
+// ============================================================================
+
+export interface UpdateTeamVisibilityParams {
+  pathParams: {
+    /** Team ID */
+    id: string
+  }
+  body: UpdateTeamVisibilityBody
+}
+
+export const useHideTeamMutation = createMutationHook<Team, UpdateTeamVisibilityParams>({
+  method: 'PUT',
+  endpoint: 'teams/{id}',
+  invalidateKeys: (params) => [teamKeys.detail(params.pathParams.id), teamKeys.all]
+})
+
+export const useShowTeamMutation = createMutationHook<Team, UpdateTeamVisibilityParams>({
   method: 'PUT',
   endpoint: 'teams/{id}',
   invalidateKeys: (params) => [teamKeys.detail(params.pathParams.id), teamKeys.all]
