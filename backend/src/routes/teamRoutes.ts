@@ -4,7 +4,7 @@ import {
   updateTeam,
   deleteTeam,
   getTeam,
-  getAllTeams
+  getAllTeams,
 } from '../controllers/teamController';
 
 import { deleteMember, addMembers } from '../controllers/memberController';
@@ -545,6 +545,5 @@ teamRoutes.delete(
   requireTeamOwner('params.id'),
   deleteTeam
 );
-
 
 export default teamRoutes;

@@ -337,16 +337,14 @@ const getAllTeams = async (req: Request, res: Response) => {
 
       const visibilityByTeamId = new Map(visibilityRows.map((row) => [row.teamId, row.isVisible]));
 
-      return res
-        .status(200)
-        .json(
-          memberTeams.map((team) => ({
-            ...withVisibilityFlags({
-              ...withArchiveFlags(withCurrentOfficer(team)),
-              isVisible: visibilityByTeamId.get(team.id) ?? true,
-            }),
-          }))
-        );
+      return res.status(200).json(
+        memberTeams.map((team) => ({
+          ...withVisibilityFlags({
+            ...withArchiveFlags(withCurrentOfficer(team)),
+            isVisible: visibilityByTeamId.get(team.id) ?? true,
+          }),
+        }))
+      );
     }
 
     // No userAddress provided - return all teams
@@ -366,7 +364,9 @@ const getAllTeams = async (req: Request, res: Response) => {
 
     res
       .status(200)
-      .json(allTeams.map((team) => withVisibilityFlags(withArchiveFlags(withCurrentOfficer(team)))));
+      .json(
+        allTeams.map((team) => withVisibilityFlags(withArchiveFlags(withCurrentOfficer(team))))
+      );
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal Server Error';
     return errorResponse(500, message, res);
@@ -407,10 +407,19 @@ const updateTeam = async (req: Request, res: Response) => {
     }
 
     if (isArchived !== undefined && !isOwner) {
-      return errorResponse(403, 'Unauthorized: Only team owner can archive/unarchive the team', res);
+      return errorResponse(
+        403,
+        'Unauthorized: Only team owner can archive/unarchive the team',
+        res
+      );
     }
 
-    if (name === undefined && description === undefined && isArchived === undefined && isVisible === undefined) {
+    if (
+      name === undefined &&
+      description === undefined &&
+      isArchived === undefined &&
+      isVisible === undefined
+    ) {
       return errorResponse(400, 'No fields to update', res);
     }
 
@@ -493,7 +502,4 @@ const isUserPartOfTheTeam = (
   return members.some((member) => member.address === callerAddress);
 };
 
-
-
-
-export { addTeam, deleteTeam, getAllTeams, getTeam, updateTeam};
+export { addTeam, deleteTeam, getAllTeams, getTeam, updateTeam };
