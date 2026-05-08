@@ -199,7 +199,9 @@ const props = defineProps<{
 
 const currentTeam = computed(() => props.currentTeam)
 const isOwner = computed(() => props.isOwner)
-const isArchived = computed(() => Boolean(props.currentTeam?.isArchived ?? props.currentTeam?.isArchived))
+const isArchived = computed(() =>
+  Boolean(props.currentTeam?.isArchived ?? props.currentTeam?.isArchived)
+)
 const isVisible = computed(() => props.currentTeam?.isVisible ?? true)
 
 const {

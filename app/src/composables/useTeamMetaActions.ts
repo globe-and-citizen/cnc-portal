@@ -27,15 +27,27 @@ export const useTeamMetaActions = () => {
     description: z.string().min(10, 'Description must be at least 10 characters')
   })
 
-  const { isPending: teamIsUpdating, error: updateTeamError, mutate: updateTeamMutate } =
-    useUpdateTeamMutation()
-  const { mutate: deleteTeamMutate, isPending: teamIsDeleting, error: deleteTeamError } =
-    useDeleteTeamMutation()
-  const { mutate: archiveTeamMutate, isPending: teamIsArchiving, error: archiveTeamError } =
-    useArchiveTeamMutation()
+  const {
+    isPending: teamIsUpdating,
+    error: updateTeamError,
+    mutate: updateTeamMutate
+  } = useUpdateTeamMutation()
+  const {
+    mutate: deleteTeamMutate,
+    isPending: teamIsDeleting,
+    error: deleteTeamError
+  } = useDeleteTeamMutation()
+  const {
+    mutate: archiveTeamMutate,
+    isPending: teamIsArchiving,
+    error: archiveTeamError
+  } = useArchiveTeamMutation()
   const { mutate: unarchiveTeamMutate, isPending: teamIsUnarchiving } = useUnarchiveTeamMutation()
-  const { mutate: hideTeamMutate, isPending: teamIsHiding, error: hideTeamError } =
-    useHideTeamMutation()
+  const {
+    mutate: hideTeamMutate,
+    isPending: teamIsHiding,
+    error: hideTeamError
+  } = useHideTeamMutation()
   const { mutate: showTeamMutate, isPending: teamIsShowing } = useShowTeamMutation()
 
   const getRequiredTeamId = (): string | null => {
