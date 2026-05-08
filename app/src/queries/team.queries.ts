@@ -9,10 +9,8 @@ import { createQueryHook, createMutationHook, queryPresets } from './queryFactor
 export const teamKeys = {
   all: ['teams'] as const,
   lists: () => [...teamKeys.all, 'list'] as const,
-  list: (
-    userAddress?: string | null,
-    filters?: { showHidden?: boolean; showArchived?: boolean }
-  ) => [...teamKeys.lists(), { userAddress, ...filters }] as const,
+  list: (userAddress?: string | null, filters?: { showHidden?: boolean; showArchived?: boolean }) =>
+    [...teamKeys.lists(), { userAddress, ...filters }] as const,
   details: () => [...teamKeys.all, 'detail'] as const,
   detail: (teamId: string | null) => [...teamKeys.details(), { teamId }] as const
 }
@@ -49,7 +47,7 @@ export const useGetTeamsQuery = createQueryHook<Team[], GetTeamsParams>({
   queryKey: (params) => [
     ...teamKeys.list(toValue(params?.queryParams?.userAddress), {
       showHidden: toValue(params?.queryParams?.showHidden) ?? false,
-      showArchived: toValue(params?.queryParams?.showArchived) ?? false,
+      showArchived: toValue(params?.queryParams?.showArchived) ?? false
     })
   ],
   options: queryPresets.stable
