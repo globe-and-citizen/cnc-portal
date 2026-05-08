@@ -19,6 +19,11 @@ vi.mock('../../middleware/authMiddleware', () => ({
   }),
 }));
 
+vi.mock('../../middleware/teamAuthzMiddleware', () => ({
+  requireTeamMember: vi.fn(() => (req: Request, res: Response, next: NextFunction) => next()),
+  requireTeamOwner: vi.fn(() => (req: Request, res: Response, next: NextFunction) => next()),
+}));
+
 // Mock prisma
 vi.mock('../../utils', async () => {
   const actual = await vi.importActual('../../utils');
@@ -45,6 +50,8 @@ vi.mock('../../utils', async () => {
         deleteMany: vi.fn(),
       },
       memberTeamsData: {
+        findUnique: vi.fn(),
+        findMany: vi.fn(),
         deleteMany: vi.fn(),
       },
       teamContract: {
@@ -276,6 +283,7 @@ describe('Team Controller', () => {
 
     it('should return 200 and team data if user is part of the team', async () => {
       vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(teamMockResolve);
+      vi.spyOn(prisma.memberTeamsData, 'findUnique').mockResolvedValue({ isVisible: true } as never);
 
       const response = await request(app)
         .get('/1')
@@ -307,6 +315,7 @@ describe('Team Controller', () => {
         ],
         teamContracts: [],
       } as never);
+      vi.spyOn(prisma.memberTeamsData, 'findUnique').mockResolvedValue({ isVisible: true } as never);
 
       const response = await request(app).get('/1');
       expect(response.status).toBe(200);
@@ -335,6 +344,7 @@ describe('Team Controller', () => {
         ],
         teamContracts: [],
       } as never);
+      vi.spyOn(prisma.memberTeamsData, 'findUnique').mockResolvedValue({ isVisible: true } as never);
 
       const response = await request(app).get('/1');
       expect(response.status).toBe(200);
@@ -395,9 +405,13 @@ describe('Team Controller', () => {
           ...t,
           currentOfficer: null,
           isMigrated: false,
+          isArchived: false,
+          isVisible: true,
+          isHidden: false,
         }))
       );
       expect(prisma.team.findMany).toHaveBeenCalledWith({
+        where: { isArchived: false },
         include: {
           _count: { select: { members: true } },
           teamOfficers: {
@@ -430,6 +444,10 @@ describe('Team Controller', () => {
       ];
 
       vi.spyOn(prisma.team, 'findMany').mockResolvedValue(mockTeams);
+      vi.spyOn(prisma.memberTeamsData, 'findMany').mockResolvedValue([
+        { teamId: 1, isVisible: true },
+        { teamId: 2, isVisible: true },
+      ] as never);
 
       const response = await request(app).get('/').query({ userAddress: mockOwner.address });
 
@@ -439,10 +457,25 @@ describe('Team Controller', () => {
           ...t,
           currentOfficer: null,
           isMigrated: false,
+          isArchived: false,
+          isVisible: true,
+          isHidden: false,
         }))
       );
       expect(prisma.team.findMany).toHaveBeenCalledWith({
-        where: { members: { some: { address: mockOwner.address } } },
+        where: {
+          OR: [
+            {
+              isArchived: false,
+              memberTeamsData: {
+                some: {
+                  memberAddress: mockOwner.address,
+                  isVisible: true,
+                },
+              },
+            },
+          ],
+        },
         include: {
           _count: { select: { members: true } },
           teamOfficers: {
@@ -513,6 +546,7 @@ describe('Team Controller', () => {
       const mockTeam = {
         id: 1,
         ownerAddress: faker.finance.ethereumAddress(),
+        members: [{ address: mockOwner.address }],
         name: 'Test Team',
         description: 'Test Description',
       };
@@ -526,13 +560,14 @@ describe('Team Controller', () => {
       });
 
       expect(response.status).toBe(403);
-      expect(response.body.message).toBe('Unauthorized: Caller is not the owner of the team');
+      expect(response.body.message).toBe('Unauthorized: Only team owner can update metadata');
     });
 
     it('should return 200 and update the team successfully', async () => {
       const mockTeam = {
         id: 1,
         ownerAddress: mockOwner.address,
+        members: [{ address: mockOwner.address }],
         name: 'Test Team',
         description: 'Test Description',
         createdAt: new Date(),
@@ -545,6 +580,7 @@ describe('Team Controller', () => {
         name: 'Updated Team',
         description: 'Updated Description',
       });
+      vi.spyOn(prisma.memberTeamsData, 'findUnique').mockResolvedValue({ isVisible: true } as never);
 
       const response = await request(app).put('/1').send({
         id: 1,
@@ -590,31 +626,20 @@ describe('Team Controller', () => {
       vi.clearAllMocks();
     });
 
-    it('should return 404 if team not found', async () => {
-      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(null);
+    it('should return 204 when delete is called', async () => {
+      vi.spyOn(prisma.team, 'delete').mockResolvedValue(teamMockResolve);
 
       const response = await request(app).delete('/1').set('address', '0xOwnerAddress');
 
-      expect(response.status).toBe(404);
-      expect(response.body.message).toBe('Team not found');
+      expect(response.status).toBe(204);
     });
 
-    it('should return 403 if user is not the team owner', async () => {
-      const mockTeam = {
-        id: 1,
-        ownerAddress: '0xDifferentAddress',
-        name: 'Test Team',
-        description: 'Test Description',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-
-      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(mockTeam);
+    it('should still return 204 regardless of caller address when authz middleware allows request', async () => {
+      vi.spyOn(prisma.team, 'delete').mockResolvedValue(teamMockResolve);
 
       const response = await request(app).delete('/1').set('address', '0xAnotherAddress');
 
-      expect(response.status).toBe(403);
-      expect(response.body.message).toBe('Unauthorized: Caller is not the owner of the team');
+      expect(response.status).toBe(204);
     });
 
     it('should return 200 and delete the team successfully', async () => {
