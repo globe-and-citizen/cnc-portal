@@ -15,6 +15,7 @@
         <ClaimHistoryActionAlerts
           :weekly-claim="selectWeekWeelyClaim"
           :member-address="selectedMemberAddress"
+          :selected-week-start="selectedMonthObject.isoString"
         />
 
         <ClaimHistoryDailyBreakdown
@@ -32,7 +33,7 @@ import { ref, computed } from 'vue'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import isoWeek from 'dayjs/plugin/isoWeek'
-import { formatIsoWeekRange, type Week } from '@/utils/dayUtils'
+import { formatIsoWeekRange, startOfWeek, type Week } from '@/utils/dayUtils'
 import { useTeamStore } from '@/stores'
 import { useRoute } from 'vue-router'
 import { useGetTeamWeeklyClaimsQuery, useGetTeamWagesQuery } from '@/queries'
@@ -52,12 +53,14 @@ const teamStore = useTeamStore()
 
 const selectedMemberAddress = computed(() => route.params.memberAddress as Address | undefined)
 
+const currentWeekStart = startOfWeek(dayjs.utc())
+
 const selectedMonthObject = ref<Week>({
-  year: dayjs().utc().year(),
-  month: dayjs().utc().month(),
-  isoWeek: dayjs().utc().isoWeek(),
-  isoString: dayjs().utc().startOf('isoWeek').toISOString(),
-  formatted: formatIsoWeekRange(dayjs().utc().startOf('isoWeek'))
+  year: currentWeekStart.year(),
+  month: currentWeekStart.month(),
+  isoWeek: currentWeekStart.isoWeek(),
+  isoString: currentWeekStart.toISOString(),
+  formatted: formatIsoWeekRange(currentWeekStart)
 })
 
 const { data: memberWeeklyClaims } = useGetTeamWeeklyClaimsQuery({

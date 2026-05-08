@@ -67,7 +67,7 @@ watch(monthPicked, (newVal) => {
       year: newVal.year,
       isoWeek: day.isoWeek(),
       formatted: formatIsoWeekRange(day),
-      isoString: day.toISOString()
+      isoString: day.startOf('isoWeek').toISOString()
     }
   }
 })
@@ -88,7 +88,13 @@ function goToPrevMonth() {
 
   const format = formatIsoWeekRange(monthFirstDate)
 
-  model.value = { month, year, isoWeek, formatted: format, isoString: monthFirstDate.toISOString() }
+  model.value = {
+    month,
+    year,
+    isoWeek,
+    formatted: format,
+    isoString: monthFirstDate.startOf('isoWeek').toISOString()
+  }
 }
 
 function goToNextMonth() {
@@ -105,7 +111,13 @@ function goToNextMonth() {
 
   const format = formatIsoWeekRange(monthFirstDate)
 
-  model.value = { month, year, isoWeek, formatted: format, isoString: monthFirstDate.toISOString() }
+  model.value = {
+    month,
+    year,
+    isoWeek,
+    formatted: format,
+    isoString: monthFirstDate.startOf('isoWeek').toISOString()
+  }
 }
 
 function toggleMonthPicker() {

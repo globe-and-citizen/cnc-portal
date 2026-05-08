@@ -14,6 +14,7 @@
             v-if="hasWage"
             :weekly-claim="weeklyClaim"
             :signed-week-starts="signedWeekStarts"
+            :selected-week-start="selectedWeekStart"
           />
           <UButton
             v-else
@@ -97,6 +98,7 @@ dayjs.extend(isoWeek)
 interface Props {
   weeklyClaim?: WeeklyClaim
   memberAddress: Address
+  selectedWeekStart: string
 }
 
 const props = defineProps<Props>()
