@@ -1,7 +1,7 @@
 <template>
   <div
     class="card h-36 w-80 border"
-    :class="`${team.ownerAddress == userStore.address ? 'bg-green-100' : 'bg-blue-100'}`"
+    :class="[team.ownerAddress == userStore.address ? 'bg-green-100' : 'bg-blue-100']"
   >
     <div class="card-body">
       <div class="flex flex-row items-start justify-between">
@@ -16,12 +16,32 @@
       <div>
         <p class="line-clamp-3 text-xs">{{ props.team.description }}</p>
       </div>
-      <div class="card-actions justify-between"></div>
+      <div class="card-actions mt-auto justify-between">
+        <div class="flex items-center gap-1">
+          <UBadge
+            v-if="isHidden"
+            label="Hidden"
+            icon="i-tabler-eye-off"
+            color="success"
+            variant="soft"
+            size="sm"
+          />
+          <UBadge
+            v-if="isArchived"
+            label="Archived"
+            icon="i-tabler-archive"
+            color="warning"
+            variant="soft"
+            size="sm"
+          />
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useUserDataStore } from '@/stores/user'
 import type { Team } from '@/types'
 
@@ -30,4 +50,6 @@ interface Props {
 }
 const userStore = useUserDataStore()
 const props = defineProps<Props>()
+const isHidden = computed(() => Boolean(props.team.isHidden ?? props.team.isVisible === false))
+const isArchived = computed(() => Boolean(props.team.isArchived ?? props.team.archived))
 </script>
