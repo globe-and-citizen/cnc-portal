@@ -22,11 +22,14 @@ export const addTeamBodySchema = z.object({
 export const updateTeamBodySchema = z.object({
   name: nonEmptyStringSchema.optional(),
   description: z.string().optional(),
+  isArchived: z.boolean().optional(),
+  isVisible: z.boolean().optional(),
 });
 
 // Get all teams query parameters
 export const getAllTeamsQuerySchema = z.object({
   userAddress: addressSchema.optional(),
+  mode: z.enum(['current', 'hide', 'archive', 'all']).optional(),
 });
 
 // Add members request body

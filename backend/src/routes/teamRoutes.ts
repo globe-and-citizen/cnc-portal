@@ -4,12 +4,12 @@ import {
   updateTeam,
   deleteTeam,
   getTeam,
-  getAllTeams,
+  getAllTeams
 } from '../controllers/teamController';
 
 import { deleteMember, addMembers } from '../controllers/memberController';
 import { checkSubmitRestriction } from '../controllers/featureController';
-import { requireTeamOwner } from '../middleware/teamAuthzMiddleware';
+import { requireTeamMember, requireTeamOwner } from '../middleware/teamAuthzMiddleware';
 import {
   validateBody,
   validateQuery,
@@ -494,7 +494,7 @@ teamRoutes.get('/:id', validateParams(teamIdParamsSchema), getTeam);
 teamRoutes.put(
   '/:id',
   validateBodyAndParams(updateTeamBodySchema, teamIdParamsSchema),
-  requireTeamOwner('params.id'),
+  requireTeamMember('params.id'),
   updateTeam
 );
 
@@ -545,5 +545,6 @@ teamRoutes.delete(
   requireTeamOwner('params.id'),
   deleteTeam
 );
+
 
 export default teamRoutes;
