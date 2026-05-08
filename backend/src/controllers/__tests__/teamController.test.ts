@@ -283,7 +283,9 @@ describe('Team Controller', () => {
 
     it('should return 200 and team data if user is part of the team', async () => {
       vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(teamMockResolve);
-      vi.spyOn(prisma.memberTeamsData, 'findUnique').mockResolvedValue({ isVisible: true } as never);
+      vi.spyOn(prisma.memberTeamsData, 'findUnique').mockResolvedValue({
+        isVisible: true,
+      } as never);
 
       const response = await request(app)
         .get('/1')
@@ -315,7 +317,9 @@ describe('Team Controller', () => {
         ],
         teamContracts: [],
       } as never);
-      vi.spyOn(prisma.memberTeamsData, 'findUnique').mockResolvedValue({ isVisible: true } as never);
+      vi.spyOn(prisma.memberTeamsData, 'findUnique').mockResolvedValue({
+        isVisible: true,
+      } as never);
 
       const response = await request(app).get('/1');
       expect(response.status).toBe(200);
@@ -344,7 +348,9 @@ describe('Team Controller', () => {
         ],
         teamContracts: [],
       } as never);
-      vi.spyOn(prisma.memberTeamsData, 'findUnique').mockResolvedValue({ isVisible: true } as never);
+      vi.spyOn(prisma.memberTeamsData, 'findUnique').mockResolvedValue({
+        isVisible: true,
+      } as never);
 
       const response = await request(app).get('/1');
       expect(response.status).toBe(200);
@@ -580,7 +586,9 @@ describe('Team Controller', () => {
         name: 'Updated Team',
         description: 'Updated Description',
       });
-      vi.spyOn(prisma.memberTeamsData, 'findUnique').mockResolvedValue({ isVisible: true } as never);
+      vi.spyOn(prisma.memberTeamsData, 'findUnique').mockResolvedValue({
+        isVisible: true,
+      } as never);
 
       const response = await request(app).put('/1').send({
         id: 1,
