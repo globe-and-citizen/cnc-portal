@@ -1,7 +1,55 @@
 <template>
   <div class="flex flex-col gap-6">
-    <div>
+    <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
       <h2>{{ route.meta.name }}</h2>
+      <div
+        class="flex items-center gap-3"
+        v-if="!teamsError && !teamsAreFetching"
+        data-test="team-visibility-toggles"
+      >
+        <span class="text-muted text-sm">Show also</span>
+        <div
+          class="border-default bg-default/70 inline-flex items-center rounded-full border px-2 py-1 shadow-xs"
+        >
+          <div class="flex items-center gap-2 px-2">
+            <USwitch
+              v-model="showHidden"
+              size="sm"
+              :ui="{ base: showHidden ? 'data-[state=checked]:bg-success  ' : '' }"
+              data-test="toggle-show-hidden"
+            />
+            <UIcon
+              name="i-tabler-eye-off"
+              class="size-4 transition-colors"
+              :class="showHidden ? 'text-success' : 'text-muted'"
+            />
+            <span
+              class="text-sm font-medium transition-colors"
+              :class="showHidden ? 'text-success' : 'text-muted'"
+              >Hidden</span
+            >
+          </div>
+          <div class="bg-default/70 mx-1 h-6 w-px" />
+          <div class="flex items-center gap-2 px-2">
+            <USwitch
+              v-model="showArchived"
+              size="sm"
+              :ui="{ base: showArchived ? 'data-[state=checked]:bg-warning' : '' }"
+              data-test="toggle-show-archived"
+            />
+            <UIcon
+              name="i-tabler-archive"
+              class="size-4 transition-colors"
+              :class="showArchived ? 'text-warning' : 'text-muted'"
+            />
+            <span
+              class="text-sm font-medium transition-colors"
+              :class="showArchived ? 'text-warning' : 'text-muted'"
+              >Archived</span
+            >
+          </div>
+        </div>
+      </div>
     </div>
     <!-- Loader -->
     <div class="flex gap-3" data-test="loader" v-if="teamsAreFetching">
@@ -14,7 +62,10 @@
     </div>
 
     <!-- Empty team or Error -->
-    <div class="animate-fade-in flex flex-col items-center" v-if="teams?.length == 0 || teamsError">
+    <div
+      class="animate-fade-in flex flex-col items-center"
+      v-if="teams?.length == 0 || teamsList.length == 0 || teamsError"
+    >
       <img src="../../assets/login-illustration.png" alt="Login illustration" width="300" />
 
       <span
@@ -29,6 +80,13 @@
       <div class="alert alert-warning" v-if="teamsError" data-test="error-state">
         We are unable to retrieve your teams. Please try again in some time.
       </div>
+      <span
+        v-else-if="teams?.length && teamsList.length == 0"
+        class="my-4 text-sm font-bold text-gray-500"
+        data-test="empty-filter-state"
+      >
+        No company matches the selected filters.
+      </span>
     </div>
 
     <!-- Teams List -->
@@ -36,10 +94,10 @@
     <div
       class="grid grid-cols-1 gap-20 md:grid-cols-2 lg:grid-cols-3"
       data-test="team-list"
-      v-if="teams?.length != 0"
+      v-if="teamsList.length != 0"
     >
       <TeamCard
-        v-for="team in teams"
+        v-for="team in teamsList"
         :key="team.id"
         :team="team"
         :data-test="`team-card-${team.id}`"
@@ -86,9 +144,11 @@ import { useUserDataStore } from '@/stores'
 import AddTeamCard from '@/components/sections/TeamView/AddTeamCard.vue'
 import TeamCard from '@/components/sections/TeamView/TeamCard.vue'
 import { useGetTeamsQuery } from '@/queries/team.queries'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 
 const openModal = ref(false)
+const showHidden = ref(false)
+const showArchived = ref(false)
 
 const route = useRoute()
 const userDataStore = useUserDataStore()
@@ -97,7 +157,14 @@ const {
   data: teams,
   isPending: teamsAreFetching,
   error: teamsError
-} = useGetTeamsQuery({ queryParams: { userAddress: userDataStore.address } })
+} = useGetTeamsQuery({
+  queryParams: {
+    userAddress: userDataStore.address,
+    showHidden,
+    showArchived
+  }
+})
+const teamsList = computed(() => teams.value ?? [])
 
 const router = useRouter()
 

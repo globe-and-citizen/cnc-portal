@@ -2,7 +2,7 @@
   <div class="flex w-full justify-between gap-5">
     <div
       class="collapse-arrow collapse static border"
-      :class="`${currentTeam?.ownerAddress == address ? 'bg-green-100' : 'bg-blue-100'}`"
+      :class="`${isOwner ? 'bg-green-100' : 'bg-blue-100'}`"
     >
       <input type="checkbox" />
       <div class="collapse-title text-xl font-medium">
@@ -10,7 +10,7 @@
           <h2 class="pl-5">{{ currentTeam?.name }}</h2>
           <div
             class="badge badge-lg badge-primary ml-2 flex items-center justify-center"
-            v-if="currentTeam?.ownerAddress == address"
+            v-if="isOwner"
           >
             Owner
           </div>
@@ -21,13 +21,19 @@
         <p class="pl-5">{{ currentTeam?.description }}</p>
 
         <div class="mt-5 flex flex-row items-center justify-center gap-2 pl-5">
-          <template v-if="currentTeam?.ownerAddress == address">
+          <template v-if="isOwner">
             <UModal
               v-model:open="showModal"
               title="Update Company Details"
               description="Update your company name and description to keep your profile current and accurate"
             >
-              <UButton size="sm" color="secondary" icon="i-lucide-edit" label="Update" @click="prefillUpdateForm" />
+              <UButton
+                size="sm"
+                color="secondary"
+                icon="i-lucide-edit"
+                label="Update"
+                @click="prefillUpdateForm"
+              />
               <template #body>
                 <UAlert
                   v-if="updateTeamError"
@@ -79,39 +85,34 @@
 
             <UModal
               v-model:open="showArchiveTeamConfirmModal"
-              :title="currentTeam?.archived ? 'Unarchive Company' : 'Archive Company'"
+              :title="isArchived ? 'Unarchive Company' : 'Archive Company'"
               :description="
-                currentTeam?.archived
+                isArchived
                   ? 'This action will make the company visible and usable again.'
                   : 'This action will remove the company from the dashboard and prevent it from being used.'
               "
             >
               <UButton
                 size="sm"
-                :color="currentTeam?.archived ? 'success' : 'warning'"
-                :icon="currentTeam?.archived ? 'i-lucide-archive-restore' : 'i-lucide-archive'"
-                :label="currentTeam?.archived ? 'Unarchive' : 'Archive'"
+                :color="isArchived ? 'success' : 'warning'"
+                :icon="isArchived ? 'i-lucide-archive-restore' : 'i-lucide-archive'"
+                :label="isArchived ? 'Unarchive' : 'Archive'"
               />
               <template #body>
-                <UAlert
-                  v-if="archiveTeamError"
-                  color="error"
-                  variant="soft"
-                  class="mb-4"
-                />
+                <UAlert v-if="archiveTeamError" color="error" variant="soft" class="mb-4" />
                 <p>
-                  Are you sure you want to {{ currentTeam?.archived ? 'unarchive' : 'archive' }} the company
+                  Are you sure you want to {{ isArchived ? 'unarchive' : 'archive' }} the company
                   <span class="font-bold">{{ teamStore.currentTeamMeta.data?.name }}</span
                   >?
                 </p>
                 <div class="mt-4 flex justify-center gap-2">
                   <UButton
-                    :color="currentTeam?.archived ? 'success' : 'error'"
+                    :color="isArchived ? 'success' : 'error'"
                     data-test="archive-team-button"
-                    @click="currentTeam?.archived ? unarchiveTeam() : archiveTeam()"
+                    @click="isArchived ? unarchiveTeam() : archiveTeam()"
                     :loading="teamIsArchiving || teamIsUnarchiving"
                     :disabled="teamIsArchiving || teamIsUnarchiving"
-                    :label="currentTeam?.archived ? 'Unarchive' : 'Archive'"
+                    :label="isArchived ? 'Unarchive' : 'Archive'"
                   />
                   <UButton
                     color="primary"
@@ -122,7 +123,7 @@
                 </div>
               </template>
             </UModal>
-            
+
             <UModal
               v-model:open="showDeleteTeamConfirmModal"
               title="Confirmation"
@@ -161,6 +162,47 @@
               </template>
             </UModal>
           </template>
+
+          <UModal
+            v-model:open="showVisibilityTeamConfirmModal"
+            :title="isVisible ? 'Hide Company' : 'Show Company'"
+            :description="
+              isVisible
+                ? 'This action will hide the company from your dashboard only.'
+                : 'This action will show the company on your dashboard again.'
+            "
+          >
+            <UButton
+              size="sm"
+              :color="isVisible ? 'success' : 'warning'"
+              :icon="isVisible ? 'i-lucide-eye-off' : 'i-lucide-eye'"
+              :label="isVisible ? 'Hide' : 'Show'"
+            />
+            <template #body>
+              <UAlert v-if="hideTeamError" color="error" variant="soft" class="mb-4" />
+              <p>
+                Are you sure you want to {{ isVisible ? 'hide' : 'show' }} the company
+                <span class="font-bold">{{ teamStore.currentTeamMeta.data?.name }}</span
+                >?
+              </p>
+              <div class="mt-4 flex justify-center gap-2">
+                <UButton
+                  :color="isVisible ? 'success' : 'error'"
+                  data-test="visibility-team-button"
+                  @click="isVisible ? hideTeam() : showTeam()"
+                  :loading="teamIsHiding || teamIsShowing"
+                  :disabled="teamIsHiding || teamIsShowing"
+                  :label="isVisible ? 'Hide' : 'Show'"
+                />
+                <UButton
+                  color="primary"
+                  variant="outline"
+                  @click="showVisibilityTeamConfirmModal = false"
+                  label="Cancel"
+                />
+              </div>
+            </template>
+          </UModal>
         </div>
       </div>
     </div>
@@ -178,16 +220,24 @@ import {
   useUpdateTeamMutation,
   useDeleteTeamMutation,
   useArchiveTeamMutation,
-  useUnarchiveTeamMutation
+  useUnarchiveTeamMutation,
+  useHideTeamMutation,
+  useShowTeamMutation
 } from '@/queries/team.queries'
 
 const showDeleteTeamConfirmModal = ref(false)
 const showArchiveTeamConfirmModal = ref(false)
+const showVisibilityTeamConfirmModal = ref(false)
 const showModal = ref(false)
 const teamStore = useTeamStore()
 const currentTeam = computed(() => teamStore.currentTeamMeta.data)
 const { address } = useUserDataStore()
 const toast = useToast()
+const isOwner = computed(() => currentTeam.value?.ownerAddress === address)
+const isArchived = computed(() =>
+  Boolean(currentTeam.value?.isArchived ?? currentTeam.value?.isArchived)
+)
+const isVisible = computed(() => currentTeam.value?.isVisible ?? true)
 
 const router = useRouter()
 const inputs = ref<Member[]>([])
@@ -215,7 +265,12 @@ const {
   error: archiveTeamError
 } = useArchiveTeamMutation()
 const { mutate: unarchiveTeamMutate, isPending: teamIsUnarchiving } = useUnarchiveTeamMutation()
-
+const {
+  mutate: hideTeamMutate,
+  isPending: teamIsHiding,
+  error: hideTeamError
+} = useHideTeamMutation()
+const { mutate: showTeamMutate, isPending: teamIsShowing } = useShowTeamMutation()
 const executeUpdateTeam = () => {
   updateTeamMutate(
     {
@@ -261,12 +316,11 @@ const archiveTeam = async () => {
   }
 
   archiveTeamMutate(
-    { pathParams: { id: String(teamId) } },
+    { pathParams: { id: String(teamId) }, body: { isArchived: true } },
     {
       onSuccess: async () => {
         toast.add({ title: 'Company archived successfully', color: 'success' })
         showArchiveTeamConfirmModal.value = false
-        
       }
     }
   )
@@ -280,7 +334,7 @@ const unarchiveTeam = async () => {
   }
 
   unarchiveTeamMutate(
-    { pathParams: { id: String(teamId) } },
+    { pathParams: { id: String(teamId) }, body: { isArchived: false } },
     {
       onSuccess: async () => {
         toast.add({ title: 'Company unarchived successfully', color: 'success' })
@@ -290,6 +344,39 @@ const unarchiveTeam = async () => {
   )
 }
 
+const hideTeam = async () => {
+  const teamId = teamStore.currentTeamId
+  if (!teamId) {
+    toast.add({ title: 'Company ID is required', color: 'error' })
+    return
+  }
+  hideTeamMutate(
+    { pathParams: { id: String(teamId) }, body: { isVisible: false } },
+    {
+      onSuccess: async () => {
+        toast.add({ title: 'Company hidden successfully', color: 'success' })
+        showVisibilityTeamConfirmModal.value = false
+      }
+    }
+  )
+}
+
+const showTeam = async () => {
+  const teamId = teamStore.currentTeamId
+  if (!teamId) {
+    toast.add({ title: 'Company ID is required', color: 'error' })
+    return
+  }
+  showTeamMutate(
+    { pathParams: { id: String(teamId) }, body: { isVisible: true } },
+    {
+      onSuccess: async () => {
+        toast.add({ title: 'Company is visible again', color: 'success' })
+        showVisibilityTeamConfirmModal.value = false
+      }
+    }
+  )
+}
 
 const prefillUpdateForm = () => {
   updateTeamInput.value.name = teamStore.currentTeamMeta.data?.name || ''
