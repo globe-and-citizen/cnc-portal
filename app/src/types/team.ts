@@ -35,7 +35,9 @@ export interface Team {
   id: string
   name: string
   description: string
+  isHidden?: boolean
   isArchived?: boolean
+  archived?: boolean
   isVisible?: boolean
   members: Member[]
   ownerAddress: Address
