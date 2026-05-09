@@ -37,7 +37,9 @@ export function useMintStakeAllocation(
   const hasRecipientBalance = computed(
     () => recipientBalanceRaw.value !== undefined && recipientBalanceRaw.value !== null
   )
-  const hasRecipientContext = computed(() => isRecipientAddressValid.value && hasRecipientBalance.value)
+  const hasRecipientContext = computed(
+    () => isRecipientAddressValid.value && hasRecipientBalance.value
+  )
 
   const recipientBalanceNumber = computed(() => {
     if (!hasRecipientContext.value) return 0
