@@ -100,7 +100,7 @@
               <p v-if="recapTokenStakeLine" data-test="recap-token-stake-line">
                 {{ recapTokenStakeLine }}
               </p>
-              <p v-if="newTotalSupplyRecap" data-test="new-total-supply-recap">
+              <p v-if="recapSupplyLine" data-test="new-total-supply-recap">
                 {{ recapSupplyLine }}
               </p>
             </div>
@@ -236,7 +236,6 @@ const {
   setStakeMode,
   isEndingStakeInvalid,
   endingStakeValidationMessage,
-  newTotalSupplyRecap,
   recapIssuedLine,
   recapStakeLine,
   recapTokenStakeLine,

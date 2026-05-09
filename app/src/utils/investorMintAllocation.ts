@@ -127,27 +127,6 @@ export const formatStakePercentageFromSupply = (
   return `${integerPart}.${fractionalString}`
 }
 
-export const getRecapIssuedLine = (allocationRecap: string | null | undefined): string | null => {
-  if (!allocationRecap) return null
-  const [issued] = allocationRecap.split('→')
-  return issued?.trim() ?? null
-}
-
-export const getRecapStakeLine = (allocationRecap: string | null | undefined): string | null => {
-  if (!allocationRecap) return null
-  const parts = allocationRecap.split('→')
-  if (!parts[1]) return null
-  const stakeText = parts[1].trim()
-  return stakeText.replace(/^recipient stake/i, 'Recipient stake →')
-}
-
-export const getRecapSupplyLine = (
-  newTotalSupplyRecap: string | null | undefined
-): string | null => {
-  if (!newTotalSupplyRecap) return null
-  return newTotalSupplyRecap.replace(/^New total supply:/i, 'New total supply →')
-}
-
 export const getRecapTokenStakeLine = (
   finalBalance: number | null,
   currentBalance: number,

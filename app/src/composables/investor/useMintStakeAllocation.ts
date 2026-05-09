@@ -6,10 +6,7 @@ import {
   computePercentageFromAmountInput,
   formatDisplayNumber,
   getFinalStakeFromAmount,
-  getRecapIssuedLine,
   getRecapTokenStakeLine,
-  getRecapStakeLine,
-  getRecapSupplyLine,
   roundToDecimals,
   truncateToDecimals
 } from '@/utils/investorMintAllocation'
@@ -144,7 +141,16 @@ export function useMintStakeAllocation(
     }
   })
 
-  const allocationRecap = computed(() => {
+  const recapIssuedLine = computed(() => {
+    if (!hasRecipientContext.value) return null
+    const amount = issuedAmount.value
+    const symbol = tokenSymbol.value
+    if (amount === null || isNaN(amount) || amount <= 0 || !symbol) return null
+
+    return `Issuing ${formatDisplayNumber(amount)} ${symbol}`
+  })
+
+  const recapStakeLine = computed(() => {
     if (!hasRecipientContext.value) return null
     const amount = issuedAmount.value
     const finalStake = getFinalStakeFromAmount(
@@ -152,26 +158,23 @@ export function useMintStakeAllocation(
       totalSupplyNumber.value,
       recipientBalanceNumber.value
     )
-    const symbol = tokenSymbol.value
-    if (amount === null || isNaN(amount) || amount <= 0 || finalStake === null || !symbol)
-      return null
+    if (amount === null || isNaN(amount) || amount <= 0 || finalStake === null) return null
 
     const currentStake = truncateToDecimals(
       currentStakePercentage.value,
       PERCENTAGE_DISPLAY_DECIMALS
     )
     const formattedFinalStake = roundToDecimals(finalStake, PERCENTAGE_DISPLAY_DECIMALS)
-
-    return `Issuing ${formatDisplayNumber(amount)} ${symbol} → recipient stake ${formattedFinalStake}% (was ${currentStake}%)`
+    return `Recipient stake → ${formattedFinalStake}% (was ${currentStake}%)`
   })
 
-  const newTotalSupplyRecap = computed(() => {
+  const recapSupplyLine = computed(() => {
     if (!hasRecipientContext.value) return null
     const amount = issuedAmount.value
     const symbol = tokenSymbol.value
     if (amount === null || isNaN(amount) || amount <= 0 || totalSupplyNumber.value <= 0 || !symbol)
       return null
-    return `New total supply: ${formatDisplayNumber(totalSupplyNumber.value + amount)} ${symbol}`
+    return `New total supply → ${formatDisplayNumber(totalSupplyNumber.value + amount)} ${symbol}`
   })
 
   const finalRecipientBalance = computed(() => {
@@ -180,17 +183,23 @@ export function useMintStakeAllocation(
     return recipientBalanceNumber.value + amount
   })
 
-  const recapIssuedLine = computed(() => getRecapIssuedLine(allocationRecap.value))
-  const recapStakeLine = computed(() => getRecapStakeLine(allocationRecap.value))
   const recapTokenStakeLine = computed(() =>
-    getRecapTokenStakeLine(
-      finalRecipientBalance.value,
-      recipientBalanceNumber.value,
-      tokenSymbol.value
+    hasRecipientContext.value
+      ? getRecapTokenStakeLine(
+          finalRecipientBalance.value,
+          recipientBalanceNumber.value,
+          tokenSymbol.value
+        )
+      : null
+  )
+  const showRecap = computed(() =>
+    Boolean(
+      recapIssuedLine.value ||
+      recapStakeLine.value ||
+      recapTokenStakeLine.value ||
+      recapSupplyLine.value
     )
   )
-  const recapSupplyLine = computed(() => getRecapSupplyLine(newTotalSupplyRecap.value))
-  const showRecap = computed(() => Boolean(allocationRecap.value || newTotalSupplyRecap.value))
 
   const isEndingStakeInvalid = computed(() => {
     if (state.stakeMode !== 'ending') return false
@@ -226,10 +235,8 @@ export function useMintStakeAllocation(
   })
 
   return {
-    allocationRecap,
     isEndingStakeInvalid,
     endingStakeValidationMessage,
-    newTotalSupplyRecap,
     onAmountChange,
     onPercentageChange,
     recapIssuedLine,
