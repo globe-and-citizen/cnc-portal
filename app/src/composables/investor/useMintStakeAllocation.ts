@@ -2,9 +2,14 @@ import { computed, ref, watch, type Ref } from 'vue'
 import { formatUnits } from 'viem'
 import {
   computeAmountFromPercentageInput,
+  computeIssuedAmountFromAmountInput,
   computePercentageFromAmountInput,
   formatDisplayNumber,
   getFinalStakeFromAmount,
+  getRecapIssuedLine,
+  getRecapTokenStakeLine,
+  getRecapStakeLine,
+  getRecapSupplyLine,
   roundToDecimals,
   truncateToDecimals
 } from '@/utils/investorMintAllocation'
@@ -18,7 +23,8 @@ export function useMintStakeAllocation(
   state: MintStakeFormState,
   totalSupplyRaw: Ref<bigint | null | undefined>,
   recipientBalanceRaw: Ref<bigint | null | undefined>,
-  tokenSymbol: Ref<string | undefined>
+  tokenSymbol: Ref<string | undefined>,
+  isRecipientAddressValid: Ref<boolean>
 ) {
   const lastEditedField = ref<InputField>('percentage')
 
@@ -28,15 +34,30 @@ export function useMintStakeAllocation(
   })
 
   const totalSupplyNumber = computed(() => Number(totalSupplyDisplay.value ?? '0'))
+  const hasRecipientBalance = computed(
+    () => recipientBalanceRaw.value !== undefined && recipientBalanceRaw.value !== null
+  )
+  const hasRecipientContext = computed(() => isRecipientAddressValid.value && hasRecipientBalance.value)
+
   const recipientBalanceNumber = computed(() => {
-    if (recipientBalanceRaw.value === undefined || recipientBalanceRaw.value === null) return 0
-    return Number(formatUnits(recipientBalanceRaw.value, TOKEN_DECIMALS))
+    if (!hasRecipientContext.value) return 0
+    const recipientBalance = recipientBalanceRaw.value
+    if (recipientBalance === undefined || recipientBalance === null) return 0
+    return Number(formatUnits(recipientBalance, TOKEN_DECIMALS))
   })
 
   const currentStakePercentage = computed(() => {
     if (totalSupplyNumber.value <= 0) return 0
     return (recipientBalanceNumber.value / totalSupplyNumber.value) * 100
   })
+
+  const issuedAmount = computed(() =>
+    computeIssuedAmountFromAmountInput(
+      Number(state.amount),
+      state.stakeMode,
+      recipientBalanceNumber.value
+    )
+  )
 
   const syncAmountFromPercentage = () => {
     state.amount = computeAmountFromPercentageInput(
@@ -60,6 +81,10 @@ export function useMintStakeAllocation(
 
   const onPercentageChange = (value: string | number) => {
     lastEditedField.value = 'percentage'
+    if (!hasRecipientContext.value) {
+      state.amount = ''
+      return
+    }
     state.amount = computeAmountFromPercentageInput(
       Number(value),
       state.stakeMode,
@@ -71,6 +96,10 @@ export function useMintStakeAllocation(
 
   const onAmountChange = (value: string | number) => {
     lastEditedField.value = 'amount'
+    if (!hasRecipientContext.value) {
+      state.percentage = ''
+      return
+    }
     state.percentage = computePercentageFromAmountInput(
       Number(value),
       state.stakeMode,
@@ -95,6 +124,15 @@ export function useMintStakeAllocation(
   }
 
   watch([() => state.address, () => state.stakeMode, totalSupplyRaw, recipientBalanceRaw], () => {
+    if (!hasRecipientContext.value) {
+      if (lastEditedField.value === 'amount') {
+        state.percentage = ''
+      } else if (lastEditedField.value === 'percentage') {
+        state.amount = ''
+      }
+      return
+    }
+
     if (lastEditedField.value === 'amount' && state.amount) {
       syncPercentageFromAmount()
       return
@@ -105,14 +143,16 @@ export function useMintStakeAllocation(
   })
 
   const allocationRecap = computed(() => {
-    const amount = Number(state.amount)
+    if (!hasRecipientContext.value) return null
+    const amount = issuedAmount.value
     const finalStake = getFinalStakeFromAmount(
-      amount,
+      amount ?? 0,
       totalSupplyNumber.value,
       recipientBalanceNumber.value
     )
     const symbol = tokenSymbol.value
-    if (isNaN(amount) || amount <= 0 || finalStake === null || !symbol) return null
+    if (amount === null || isNaN(amount) || amount <= 0 || finalStake === null || !symbol)
+      return null
 
     const currentStake = truncateToDecimals(
       currentStakePercentage.value,
@@ -124,35 +164,79 @@ export function useMintStakeAllocation(
   })
 
   const newTotalSupplyRecap = computed(() => {
-    const amount = Number(state.amount)
+    if (!hasRecipientContext.value) return null
+    const amount = issuedAmount.value
     const symbol = tokenSymbol.value
-    if (isNaN(amount) || amount <= 0 || totalSupplyNumber.value <= 0 || !symbol) return null
+    if (amount === null || isNaN(amount) || amount <= 0 || totalSupplyNumber.value <= 0 || !symbol)
+      return null
     return `New total supply: ${formatDisplayNumber(totalSupplyNumber.value + amount)} ${symbol}`
   })
 
-  const endingStakeValidationMessage = computed(() => {
-    if (state.stakeMode !== 'ending') return null
-    if (totalSupplyNumber.value <= 0) return null
+  const finalRecipientBalance = computed(() => {
+    const amount = issuedAmount.value
+    if (amount === null || isNaN(amount) || amount <= 0) return null
+    return recipientBalanceNumber.value + amount
+  })
+
+  const recapIssuedLine = computed(() => getRecapIssuedLine(allocationRecap.value))
+  const recapStakeLine = computed(() => getRecapStakeLine(allocationRecap.value))
+  const recapTokenStakeLine = computed(() =>
+    getRecapTokenStakeLine(
+      finalRecipientBalance.value,
+      recipientBalanceNumber.value,
+      tokenSymbol.value
+    )
+  )
+  const recapSupplyLine = computed(() => getRecapSupplyLine(newTotalSupplyRecap.value))
+  const showRecap = computed(() => Boolean(allocationRecap.value || newTotalSupplyRecap.value))
+
+  const isEndingStakeInvalid = computed(() => {
+    if (state.stakeMode !== 'ending') return false
+    if (!hasRecipientContext.value) return false
+    if (totalSupplyNumber.value <= 0) return false
+
+    const endingAmountValue = Number(state.amount)
+    if (
+      !isNaN(endingAmountValue) &&
+      endingAmountValue > 0 &&
+      endingAmountValue <= recipientBalanceNumber.value
+    ) {
+      return true
+    }
 
     const endingPercentage = Number(state.percentage)
-    if (isNaN(endingPercentage) || endingPercentage <= 0) return null
+    if (isNaN(endingPercentage) || endingPercentage <= 0) return false
 
     const currentStake = truncateToDecimals(
       currentStakePercentage.value,
       PERCENTAGE_DISPLAY_DECIMALS
     )
-    if (endingPercentage > currentStake) return null
+    return endingPercentage <= currentStake
+  })
 
+  const endingStakeValidationMessage = computed(() => {
+    if (!isEndingStakeInvalid.value) return null
+    const currentStake = truncateToDecimals(
+      currentStakePercentage.value,
+      PERCENTAGE_DISPLAY_DECIMALS
+    )
     return `Ending % must be greater than recipient's current stake (${currentStake}%).`
   })
 
   return {
     allocationRecap,
+    isEndingStakeInvalid,
     endingStakeValidationMessage,
     newTotalSupplyRecap,
     onAmountChange,
     onPercentageChange,
+    recapIssuedLine,
+    recapStakeLine,
+    recapTokenStakeLine,
+    recapSupplyLine,
     setStakeMode,
-    totalSupplyDisplay
+    showRecap,
+    totalSupplyDisplay,
+    issuedAmount
   }
 }

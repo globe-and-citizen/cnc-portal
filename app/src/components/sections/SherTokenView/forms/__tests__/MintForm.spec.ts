@@ -2,6 +2,7 @@ import { describe, it, vi, expect, beforeEach, afterEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
+import { parseUnits } from 'viem'
 import MintForm from '../MintForm.vue'
 import {
   mockToast,
@@ -143,7 +144,9 @@ describe('MintForm.vue', () => {
 
   it('keeps percentage and amount synchronized for valid supply', async () => {
     totalSupplyRef.value = BigInt(1_000_000)
+    recipientBalanceRef.value = BigInt(100_000)
     const wrapper = mountForm()
+    await wrapper.find('[data-test="emit-member-input"]').trigger('click')
 
     await wrapper.find('[data-test="percentage-input"]').setValue('50')
     expect(
@@ -171,6 +174,20 @@ describe('MintForm.vue', () => {
     expect(computedAmount).toBeLessThan(80)
   })
 
+  it('treats token amount as ending balance in ending mode', async () => {
+    totalSupplyRef.value = BigInt(100_000_000) // 100 tokens with 6 decimals
+    recipientBalanceRef.value = BigInt(20_000_000) // 20 tokens -> 20%
+    const wrapper = mountForm({ memberInput: { name: 'Bob', address: VALID_ADDRESS } })
+
+    await wrapper.find('[data-test="amount-input"]').setValue('30')
+
+    const percentage = Number(
+      (wrapper.find('[data-test="percentage-input"]').element as HTMLInputElement).value
+    )
+    expect(percentage).toBeGreaterThan(27)
+    expect(percentage).toBeLessThan(28)
+  })
+
   it('shows allocation recap for resulting stake and new total supply', async () => {
     totalSupplyRef.value = BigInt(1_000_000_000) // 1,000 tokens with 6 decimals
     recipientBalanceRef.value = BigInt(230_000_000) // 230 tokens -> 23%
@@ -178,8 +195,12 @@ describe('MintForm.vue', () => {
 
     await wrapper.find('[data-test="percentage-input"]').setValue('28')
 
-    expect(wrapper.find('[data-test="allocation-recap"]').text()).toContain('recipient stake 28%')
-    expect(wrapper.find('[data-test="allocation-recap"]').text()).toContain('(was 23%)')
+    expect(wrapper.find('[data-test="allocation-recap"]').text()).toContain('Issuing')
+    expect(wrapper.find('[data-test="recap-stake-line"]').text()).toContain('Recipient stake → 28%')
+    expect(wrapper.find('[data-test="recap-stake-line"]').text()).toContain('(was 23%)')
+    expect(wrapper.find('[data-test="recap-token-stake-line"]').text()).toContain(
+      'Recipient SHER stake → 299.444444 (was 230 SHER)'
+    )
     expect(wrapper.find('[data-test="new-total-supply-recap"]').text()).toContain(
       'New total supply'
     )
@@ -192,7 +213,7 @@ describe('MintForm.vue', () => {
 
     await wrapper.find('[data-test="percentage-input"]').setValue('15')
 
-    expect(wrapper.find('[data-test="allocation-recap"]').text()).toContain('(was 9.99%)')
+    expect(wrapper.find('[data-test="recap-stake-line"]').text()).toContain('(was 9.99%)')
   })
 
   it('shows validation when ending stake is lower than current recipient stake', async () => {
@@ -205,6 +226,29 @@ describe('MintForm.vue', () => {
     expect(wrapper.find('[data-test="ending-stake-validation-message"]').text()).toContain(
       'Ending % must be greater than recipient'
     )
+  })
+
+  it('shows validation when ending amount is lower than current recipient balance', async () => {
+    totalSupplyRef.value = BigInt(100_000_000) // 100 tokens
+    recipientBalanceRef.value = BigInt(12_000_000) // 12 tokens
+    const wrapper = mountForm({ memberInput: { name: 'Bob', address: VALID_ADDRESS } })
+
+    await wrapper.find('[data-test="amount-input"]').setValue('10')
+
+    expect(wrapper.find('[data-test="ending-stake-validation-message"]').text()).toContain(
+      'Ending % must be greater than recipient'
+    )
+    expect(wrapper.find('[data-test="submit-button"]').attributes('disabled')).toBeDefined()
+  })
+
+  it('disables submit when ending stake is not greater than current recipient stake', async () => {
+    totalSupplyRef.value = BigInt(1_000_000_000)
+    recipientBalanceRef.value = BigInt(230_000_000)
+    const wrapper = mountForm({ memberInput: { name: 'Bob', address: VALID_ADDRESS } })
+
+    await wrapper.find('[data-test="percentage-input"]').setValue('20')
+
+    expect(wrapper.find('[data-test="submit-button"]').attributes('disabled')).toBeDefined()
   })
 
   it('keeps computed fields empty for invalid or zero-edge cases', async () => {
@@ -242,15 +286,44 @@ describe('MintForm.vue', () => {
   it('submits valid form and calls mint', async () => {
     const wrapper = mountForm()
     await wrapper.find('[data-test="emit-member-input"]').trigger('click')
+    await wrapper.find('[data-test="add-mode-button"]').trigger('click')
     await wrapper.find('[data-test="amount-input"]').setValue('10')
     await wrapper.find('form').trigger('submit')
     await flushPromises()
     expect(mintMock).toHaveBeenCalled()
   })
 
+  it('does not show ending stake warning for invalid recipient address context', async () => {
+    totalSupplyRef.value = BigInt(100_000_000)
+    recipientBalanceRef.value = BigInt(20_000_000)
+    const wrapper = mountForm({ memberInput: { name: 'Bob', address: '0x123' } })
+
+    await wrapper.find('[data-test="amount-input"]').setValue('10')
+
+    expect(wrapper.find('[data-test="ending-stake-validation-message"]').exists()).toBe(false)
+    expect(wrapper.find('[data-test="recap-card"]').exists()).toBe(false)
+  })
+
+  it('submits issued delta when ending-mode amount is final balance', async () => {
+    totalSupplyRef.value = BigInt(100_000_000) // 100 tokens
+    recipientBalanceRef.value = BigInt(20_000_000) // 20 tokens
+    const wrapper = mountForm({ memberInput: { name: 'Bob', address: VALID_ADDRESS } })
+
+    await wrapper.find('[data-test="amount-input"]').setValue('30') // ending balance target
+    await wrapper.find('form').trigger('submit')
+    await flushPromises()
+
+    expect(mintMock).toHaveBeenCalled()
+    const latestCall = mintMock.mock.calls.at(-1)
+    expect(latestCall?.[0]).toMatchObject({
+      args: [VALID_ADDRESS, parseUnits('10', 6)]
+    })
+  })
+
   it('shows mint error message using shortMessage/message/fallback', async () => {
     const wrapper = mountForm()
     await wrapper.find('[data-test="emit-member-input"]').trigger('click')
+    await wrapper.find('[data-test="add-mode-button"]').trigger('click')
     await wrapper.find('[data-test="amount-input"]').setValue('10')
 
     mintMock.mockImplementationOnce(async (_p: unknown, opts?: MintOptions) => {

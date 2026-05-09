@@ -44,7 +44,28 @@ export const computeAmountFromPercentageInput = (
   const targetStakePercentage =
     mode === 'ending' ? percentageValue : currentStakePercentage + percentageValue
 
-  return computeAmountFromTargetStake(targetStakePercentage, supply, balance)
+  const issuedAmount = Number(computeAmountFromTargetStake(targetStakePercentage, supply, balance))
+  if (isNaN(issuedAmount) || issuedAmount <= 0) return ''
+
+  if (mode === 'add') {
+    return String(roundToDecimals(issuedAmount, TOKEN_DECIMALS))
+  }
+
+  return String(roundToDecimals(balance + issuedAmount, TOKEN_DECIMALS))
+}
+
+export const computeIssuedAmountFromAmountInput = (
+  amountInput: number,
+  mode: StakeMode,
+  balance: number
+): number | null => {
+  if (isNaN(amountInput) || amountInput <= 0) return null
+
+  if (mode === 'add') return amountInput
+
+  const issuedAmount = amountInput - balance
+  if (!isFinite(issuedAmount) || issuedAmount <= 0) return null
+  return issuedAmount
 }
 
 export const getFinalStakeFromAmount = (
@@ -59,14 +80,17 @@ export const getFinalStakeFromAmount = (
 }
 
 export const computePercentageFromAmountInput = (
-  amount: number,
+  amountInput: number,
   mode: StakeMode,
   currentStakePercentage: number,
   supply: number,
   balance: number
 ): string => {
-  if (isNaN(amount) || amount <= 0) return ''
-  const finalStakePercentage = getFinalStakeFromAmount(amount, supply, balance)
+  const issuedAmount = computeIssuedAmountFromAmountInput(amountInput, mode, balance)
+  if (issuedAmount === null) return ''
+
+  if (isNaN(issuedAmount) || issuedAmount <= 0) return ''
+  const finalStakePercentage = getFinalStakeFromAmount(issuedAmount, supply, balance)
   if (finalStakePercentage === null) return ''
 
   if (mode === 'ending') {
@@ -101,4 +125,35 @@ export const formatStakePercentageFromSupply = (
     ? fractionalStringRaw
     : fractionalStringRaw.replace(/0+$/, '')
   return `${integerPart}.${fractionalString}`
+}
+
+export const getRecapIssuedLine = (allocationRecap: string | null | undefined): string | null => {
+  if (!allocationRecap) return null
+  const [issued] = allocationRecap.split('→')
+  return issued?.trim() ?? null
+}
+
+export const getRecapStakeLine = (allocationRecap: string | null | undefined): string | null => {
+  if (!allocationRecap) return null
+  const parts = allocationRecap.split('→')
+  if (!parts[1]) return null
+  const stakeText = parts[1].trim()
+  return stakeText.replace(/^recipient stake/i, 'Recipient stake →')
+}
+
+export const getRecapSupplyLine = (
+  newTotalSupplyRecap: string | null | undefined
+): string | null => {
+  if (!newTotalSupplyRecap) return null
+  return newTotalSupplyRecap.replace(/^New total supply:/i, 'New total supply →')
+}
+
+export const getRecapTokenStakeLine = (
+  finalBalance: number | null,
+  currentBalance: number,
+  symbol: string | undefined
+): string | null => {
+  if (finalBalance === null || finalBalance <= 0 || !symbol) return null
+
+  return `Recipient ${symbol} stake → ${formatDisplayNumber(finalBalance)} (was ${formatDisplayNumber(currentBalance)} ${symbol})`
 }

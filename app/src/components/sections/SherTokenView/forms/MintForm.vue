@@ -1,6 +1,6 @@
 <template>
   <UForm :schema="schema" :state="state" @submit="onSubmit">
-    <div class="flex flex-col gap-4">
+    <div class="flex flex-col gap-6">
       <UFormField name="address" label="Recipient">
         <SelectMemberContractsInput
           :modelValue="memberInputInternal"
@@ -10,28 +10,37 @@
         />
       </UFormField>
 
-      <UFormField name="amount" label="Ownership stake" hint="Both fields stay in sync.">
+      <div class="space-y-3">
+        <p class="text-sm font-semibold text-gray-900">Stake mode</p>
+        <div class="grid grid-cols-2 rounded-xl border border-gray-200 bg-gray-100 p-1">
+          <UButton
+            size="sm"
+            :color="state.stakeMode === 'add' ? 'primary' : 'neutral'"
+            :variant="state.stakeMode === 'add' ? 'solid' : 'ghost'"
+            class="justify-center rounded-lg font-semibold"
+            data-test="add-mode-button"
+            @click="setStakeMode('add')"
+            label="Add %"
+          />
+          <UButton
+            size="sm"
+            :color="state.stakeMode === 'ending' ? 'primary' : 'neutral'"
+            :variant="state.stakeMode === 'ending' ? 'solid' : 'ghost'"
+            class="justify-center rounded-lg font-semibold"
+            data-test="ending-mode-button"
+            @click="setStakeMode('ending')"
+            :label="state.stakeMode === 'ending' ? 'Ending % ✓' : 'Ending %'"
+          />
+        </div>
+      </div>
+
+      <UFormField name="amount" label="Ownership stake">
         <div class="flex flex-col gap-2">
-          <div class="inline-flex w-fit items-center gap-2 rounded-lg border border-gray-200 p-1">
-            <UButton
-              size="xs"
-              :color="state.stakeMode === 'ending' ? 'primary' : 'neutral'"
-              :variant="state.stakeMode === 'ending' ? 'solid' : 'ghost'"
-              data-test="ending-mode-button"
-              @click="setStakeMode('ending')"
-              label="Ending %"
-            />
-            <UButton
-              size="xs"
-              :color="state.stakeMode === 'add' ? 'primary' : 'neutral'"
-              :variant="state.stakeMode === 'add' ? 'solid' : 'ghost'"
-              data-test="add-mode-button"
-              @click="setStakeMode('add')"
-              label="Add %"
-            />
+          <div class="flex items-center justify-end">
+            <span class="text-xs text-gray-500">Both fields stay in sync.</span>
           </div>
 
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-2 md:gap-3">
             <UInput
               class="flex-1"
               data-test="percentage-input"
@@ -44,7 +53,7 @@
               </template>
             </UInput>
 
-            <UIcon name="i-lucide-equal" class="size-4 shrink-0 text-gray-400" />
+            <UIcon name="i-lucide-equal" class="size-5 shrink-0 text-gray-400" />
 
             <UInput
               class="flex-1"
@@ -76,16 +85,26 @@
             {{ endingStakeValidationMessage }}
           </p>
 
-          <p v-if="allocationRecap" class="text-xs text-gray-500" data-test="allocation-recap">
-            {{ allocationRecap }}
-          </p>
-          <p
-            v-if="newTotalSupplyRecap"
-            class="text-xs text-gray-500"
-            data-test="new-total-supply-recap"
+          <div
+            v-if="showRecap"
+            class="rounded-xl border border-blue-200 bg-blue-50 p-4"
+            data-test="recap-card"
           >
-            {{ newTotalSupplyRecap }}
-          </p>
+            <div class="mb-2 flex items-center gap-2 text-sm font-semibold text-blue-700">
+              <UIcon name="i-lucide-info" class="size-4" />
+              <span>Recap</span>
+            </div>
+            <div class="space-y-1.5 text-sm text-blue-900">
+              <p v-if="recapIssuedLine" data-test="allocation-recap">{{ recapIssuedLine }}</p>
+              <p v-if="recapStakeLine" data-test="recap-stake-line">{{ recapStakeLine }}</p>
+              <p v-if="recapTokenStakeLine" data-test="recap-token-stake-line">
+                {{ recapTokenStakeLine }}
+              </p>
+              <p v-if="newTotalSupplyRecap" data-test="new-total-supply-recap">
+                {{ recapSupplyLine }}
+              </p>
+            </div>
+          </div>
         </div>
       </UFormField>
 
@@ -109,7 +128,7 @@
         <UButton
           type="submit"
           :loading="isConfirmingMint || isMintPending"
-          :disabled="isConfirmingMint || isMintPending"
+          :disabled="isConfirmingMint || isMintPending || isEndingStakeInvalid"
           color="primary"
           class="text-center"
           data-test="submit-button"
@@ -190,7 +209,7 @@ const { data: recipientBalanceRaw } = useReadContract({
   abi: INVESTOR_ABI,
   address: investorsAddress,
   functionName: 'balanceOf',
-  args: [computed(() => state.address as Address)],
+  args: computed(() => [state.address as Address]),
   query: {
     enabled: computed(
       () =>
@@ -208,16 +227,29 @@ const recipientBalanceValue = computed(() =>
 const tokenSymbolValue = computed(() =>
   typeof tokenSymbol.value === 'string' ? tokenSymbol.value : undefined
 )
+const isRecipientAddressValid = computed(() => isAddress(state.address))
 
 const {
   totalSupplyDisplay,
   onPercentageChange,
   onAmountChange,
   setStakeMode,
+  isEndingStakeInvalid,
   endingStakeValidationMessage,
-  allocationRecap,
-  newTotalSupplyRecap
-} = useMintStakeAllocation(state, totalSupplyValue, recipientBalanceValue, tokenSymbolValue)
+  newTotalSupplyRecap,
+  recapIssuedLine,
+  recapStakeLine,
+  recapTokenStakeLine,
+  recapSupplyLine,
+  showRecap,
+  issuedAmount
+} = useMintStakeAllocation(
+  state,
+  totalSupplyValue,
+  recipientBalanceValue,
+  tokenSymbolValue,
+  isRecipientAddressValid
+)
 
 const handleMemberInput = (v: { name: string; address: string }) => {
   memberInputInternal.value = v
@@ -225,13 +257,16 @@ const handleMemberInput = (v: { name: string; address: string }) => {
 }
 
 const onSubmit = async () => {
+  if (isEndingStakeInvalid.value) return
+  if (issuedAmount.value === null || issuedAmount.value <= 0) return
+
   mintErrorMessage.value = null
   await mint(
     {
       abi: INVESTOR_ABI,
       address: investorsAddress.value as Address,
       functionName: 'individualMint',
-      args: [state.address as Address, parseUnits(state.amount, TOKEN_DECIMALS)]
+      args: [state.address as Address, parseUnits(String(issuedAmount.value), TOKEN_DECIMALS)]
     },
     {
       onSuccess: (hash) => {
