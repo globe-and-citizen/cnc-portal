@@ -40,12 +40,9 @@ import GenericTokenHoldingsSection from '@/components/GenericTokenHoldingsSectio
 import SafeTransactions from '@/components/sections/SafeView/SafeTransactions.vue'
 import SafeIncomingTransactions from '@/components/sections/SafeView/SafeIncomingTransactions.vue'
 import SafeDeploymentCard from '@/components/sections/SafeView/SafeDeploymentCard.vue'
-import { useTeamStore } from '@/stores'
-
-import { type Address } from 'viem'
+import { type Address, isAddress } from 'viem'
 
 const route = useRoute()
-const teamStore = useTeamStore()
 
 const isLoadingSafe = ref(false)
 
@@ -54,8 +51,10 @@ const teamId = computed(() => {
   return id ? parseInt(id, 10) : null
 })
 
-// Computed property to get Safe address once per render cycle
-const safeAddress = computed(() => teamStore.getContractAddressByType('Safe') as Address)
+const safeAddress = computed(() => {
+  const address = route.params.address as string | undefined
+  return address && isAddress(address) ? (address as Address) : undefined
+})
 
 /**
  * Handle successful Safe deployment
