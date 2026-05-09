@@ -12,6 +12,25 @@
 
       <UFormField name="amount" label="Ownership stake" hint="Both fields stay in sync.">
         <div class="flex flex-col gap-2">
+          <div class="inline-flex w-fit items-center gap-2 rounded-lg border border-gray-200 p-1">
+            <UButton
+              size="xs"
+              :color="state.stakeMode === 'ending' ? 'primary' : 'neutral'"
+              :variant="state.stakeMode === 'ending' ? 'solid' : 'ghost'"
+              data-test="ending-mode-button"
+              @click="setStakeMode('ending')"
+              label="Ending %"
+            />
+            <UButton
+              size="xs"
+              :color="state.stakeMode === 'add' ? 'primary' : 'neutral'"
+              :variant="state.stakeMode === 'add' ? 'solid' : 'ghost'"
+              data-test="add-mode-button"
+              @click="setStakeMode('add')"
+              label="Add %"
+            />
+          </div>
+
           <div class="flex items-center gap-2">
             <UInput
               class="flex-1"
@@ -49,6 +68,24 @@
               >— issue a fixed amount first before using percentage mode</span
             >
           </p>
+          <p
+            v-if="endingStakeValidationMessage"
+            class="text-xs text-amber-600"
+            data-test="ending-stake-validation-message"
+          >
+            {{ endingStakeValidationMessage }}
+          </p>
+
+          <p v-if="allocationRecap" class="text-xs text-gray-500" data-test="allocation-recap">
+            {{ allocationRecap }}
+          </p>
+          <p
+            v-if="newTotalSupplyRecap"
+            class="text-xs text-gray-500"
+            data-test="new-total-supply-recap"
+          >
+            {{ newTotalSupplyRecap }}
+          </p>
         </div>
       </UFormField>
 
@@ -85,7 +122,7 @@
 
 <script setup lang="ts">
 import { z } from 'zod'
-import { isAddress, parseUnits, formatUnits, type Address } from 'viem'
+import { isAddress, parseUnits, type Address } from 'viem'
 import { onMounted, reactive, ref, computed } from 'vue'
 import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 import SelectMemberContractsInput from '@/components/utils/SelectMemberContractsInput.vue'
@@ -94,11 +131,18 @@ import { watch } from 'vue'
 import { useTeamStore } from '@/stores'
 import { log } from '@/utils'
 import { useQueryClient } from '@tanstack/vue-query'
+import { useMintStakeAllocation } from '@/composables/investor/useMintStakeAllocation'
+import { type StakeMode } from '@/types/investor'
 
 const TOKEN_DECIMALS = 6
 
 const memberInputInternal = ref<{ name: string; address: string }>({ name: '', address: '' })
-const state = reactive({ address: '', amount: '', percentage: '' })
+const state = reactive({
+  address: '',
+  amount: '',
+  percentage: '',
+  stakeMode: 'ending' as StakeMode
+})
 const mintErrorMessage = ref<string | null>(null)
 const mintHash = ref<`0x${string}` | undefined>()
 const emit = defineEmits(['close-modal'])
@@ -142,41 +186,38 @@ const { data: totalSupplyRaw } = useReadContract({
   functionName: 'totalSupply'
 })
 
-const totalSupplyDisplay = computed(() => {
-  if (totalSupplyRaw.value === undefined || totalSupplyRaw.value === null) return null
-  return formatUnits(totalSupplyRaw.value as bigint, TOKEN_DECIMALS)
+const { data: recipientBalanceRaw } = useReadContract({
+  abi: INVESTOR_ABI,
+  address: investorsAddress,
+  functionName: 'balanceOf',
+  args: [computed(() => state.address as Address)],
+  query: {
+    enabled: computed(
+      () =>
+        !!investorsAddress.value && isAddress(investorsAddress.value) && isAddress(state.address)
+    )
+  }
 })
 
-/**
- * Ownership percentage after mint:  p = X / (S + X)  → X = (p * S) / (1 - p)
- * where S = totalSupply (in display units) and X = amount to mint (in display units)
- */
-const computeAmountFromPercentage = (percentageStr: string): string => {
-  const pct = Number(percentageStr)
-  if (isNaN(pct) || pct <= 0 || pct >= 100) return ''
-  const supply = Number(totalSupplyDisplay.value ?? '0')
-  if (supply <= 0) return ''
-  const p = pct / 100
-  const amount = (p * supply) / (1 - p)
-  return String(Math.round(amount * 10 ** TOKEN_DECIMALS) / 10 ** TOKEN_DECIMALS)
-}
+const totalSupplyValue = computed(() =>
+  typeof totalSupplyRaw.value === 'bigint' ? totalSupplyRaw.value : undefined
+)
+const recipientBalanceValue = computed(() =>
+  typeof recipientBalanceRaw.value === 'bigint' ? recipientBalanceRaw.value : undefined
+)
+const tokenSymbolValue = computed(() =>
+  typeof tokenSymbol.value === 'string' ? tokenSymbol.value : undefined
+)
 
-const computePercentageFromAmount = (amountStr: string): string => {
-  const amount = Number(amountStr)
-  if (isNaN(amount) || amount <= 0) return ''
-  const supply = Number(totalSupplyDisplay.value ?? '0')
-  if (supply <= 0) return ''
-  const pct = (amount / (supply + amount)) * 100
-  return String(Math.round(pct * 100) / 100)
-}
-
-const onPercentageChange = (v: string | number) => {
-  state.amount = computeAmountFromPercentage(String(v))
-}
-
-const onAmountChange = (v: string | number) => {
-  state.percentage = computePercentageFromAmount(String(v))
-}
+const {
+  totalSupplyDisplay,
+  onPercentageChange,
+  onAmountChange,
+  setStakeMode,
+  endingStakeValidationMessage,
+  allocationRecap,
+  newTotalSupplyRecap
+} = useMintStakeAllocation(state, totalSupplyValue, recipientBalanceValue, tokenSymbolValue)
 
 const handleMemberInput = (v: { name: string; address: string }) => {
   memberInputInternal.value = v

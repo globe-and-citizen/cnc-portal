@@ -35,6 +35,7 @@ const receiptState = {
 
 const symbolRef = ref('SHER')
 const totalSupplyRef = ref<bigint | undefined>(undefined)
+const recipientBalanceRef = ref<bigint | undefined>(undefined)
 
 const mountForm = (props: Record<string, unknown> = {}) =>
   mount(MintForm, {
@@ -72,6 +73,7 @@ describe('MintForm.vue', () => {
     receiptState.isSuccess.value = false
     symbolRef.value = 'SHER'
     totalSupplyRef.value = undefined
+    recipientBalanceRef.value = undefined
 
     mockTeamStore.getContractAddressByType = vi.fn(
       () => '0x2222222222222222222222222222222222222222'
@@ -84,6 +86,7 @@ describe('MintForm.vue', () => {
       .mockImplementation(({ functionName }: { functionName: string }) => {
         if (functionName === 'symbol') return { data: symbolRef }
         if (functionName === 'totalSupply') return { data: totalSupplyRef }
+        if (functionName === 'balanceOf') return { data: recipientBalanceRef }
         return { data: ref(undefined) }
       })
   })
@@ -95,6 +98,8 @@ describe('MintForm.vue', () => {
   it('renders form essentials and token symbol', () => {
     const wrapper = mountForm()
     expect(wrapper.find('[data-test="address-input"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="ending-mode-button"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="add-mode-button"]').exists()).toBe(true)
     expect(wrapper.find('[data-test="percentage-input"]').exists()).toBe(true)
     expect(wrapper.find('[data-test="amount-input"]').exists()).toBe(true)
     expect(wrapper.find('[data-test="submit-button"]').exists()).toBe(true)
@@ -149,6 +154,57 @@ describe('MintForm.vue', () => {
     expect(
       Number((wrapper.find('[data-test="percentage-input"]').element as HTMLInputElement).value)
     ).toBeGreaterThan(0)
+  })
+
+  it('supports add-mode percentage based on current stake', async () => {
+    totalSupplyRef.value = BigInt(1_000_000_000) // 1,000 tokens with 6 decimals
+    recipientBalanceRef.value = BigInt(230_000_000) // 230 tokens -> 23%
+    const wrapper = mountForm({ memberInput: { name: 'Bob', address: VALID_ADDRESS } })
+
+    await wrapper.find('[data-test="add-mode-button"]').trigger('click')
+    await wrapper.find('[data-test="percentage-input"]').setValue('5')
+
+    const computedAmount = Number(
+      (wrapper.find('[data-test="amount-input"]').element as HTMLInputElement).value
+    )
+    expect(computedAmount).toBeGreaterThan(60)
+    expect(computedAmount).toBeLessThan(80)
+  })
+
+  it('shows allocation recap for resulting stake and new total supply', async () => {
+    totalSupplyRef.value = BigInt(1_000_000_000) // 1,000 tokens with 6 decimals
+    recipientBalanceRef.value = BigInt(230_000_000) // 230 tokens -> 23%
+    const wrapper = mountForm({ memberInput: { name: 'Bob', address: VALID_ADDRESS } })
+
+    await wrapper.find('[data-test="percentage-input"]').setValue('28')
+
+    expect(wrapper.find('[data-test="allocation-recap"]').text()).toContain('recipient stake 28%')
+    expect(wrapper.find('[data-test="allocation-recap"]').text()).toContain('(was 23%)')
+    expect(wrapper.find('[data-test="new-total-supply-recap"]').text()).toContain(
+      'New total supply'
+    )
+  })
+
+  it('truncates current stake display instead of rounding up', async () => {
+    totalSupplyRef.value = BigInt(24_814_814)
+    recipientBalanceRef.value = BigInt(2_481_481)
+    const wrapper = mountForm({ memberInput: { name: 'Bob', address: VALID_ADDRESS } })
+
+    await wrapper.find('[data-test="percentage-input"]').setValue('15')
+
+    expect(wrapper.find('[data-test="allocation-recap"]').text()).toContain('(was 9.99%)')
+  })
+
+  it('shows validation when ending stake is lower than current recipient stake', async () => {
+    totalSupplyRef.value = BigInt(1_000_000_000) // 1,000 tokens with 6 decimals
+    recipientBalanceRef.value = BigInt(230_000_000) // 230 tokens -> 23%
+    const wrapper = mountForm({ memberInput: { name: 'Bob', address: VALID_ADDRESS } })
+
+    await wrapper.find('[data-test="percentage-input"]').setValue('20')
+
+    expect(wrapper.find('[data-test="ending-stake-validation-message"]').text()).toContain(
+      'Ending % must be greater than recipient'
+    )
   })
 
   it('keeps computed fields empty for invalid or zero-edge cases', async () => {
