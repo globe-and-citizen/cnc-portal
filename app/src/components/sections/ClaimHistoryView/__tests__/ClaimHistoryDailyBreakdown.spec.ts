@@ -169,4 +169,44 @@ describe('ClaimHistoryDailyBreakdown', () => {
     expect(wrapper.find('[data-test="claim-actions"]').exists()).toBe(false)
     expect(vm.canModifyClaims).toBe(false)
   })
+
+  it('renders quick submit button on empty days for own member and emits quick-submit on row click', async () => {
+    const wrapper = createWrapper({
+      weeklyClaim: {
+        ...createWeeklyClaim(),
+        claims: []
+      }
+    })
+
+    const quickButtons = wrapper.findAll('[data-test="quick-submit-day-button"]')
+    expect(quickButtons.length).toBe(7)
+
+    const clickableRows = wrapper.findAll('[role="button"]')
+    expect(clickableRows.length).toBe(7)
+
+    await clickableRows[0]?.trigger('click')
+    const emitted = wrapper.emitted('quick-submit')
+    expect(emitted).toBeTruthy()
+    expect((emitted?.[0] ?? [])[0]).toBe(day0)
+  })
+
+  it('does not emit quick-submit on filled days and hides quick button for non-owner', async () => {
+    const wrapper = createWrapper({ weeklyClaim: createWeeklyClaim() })
+    expect(wrapper.findAll('[data-test="quick-submit-day-button"]').length).toBe(5)
+
+    const emittedBefore = wrapper.emitted('quick-submit')?.length ?? 0
+    await wrapper.findAll('.rounded-lg')[0]?.trigger('click')
+    const emittedAfter = wrapper.emitted('quick-submit')?.length ?? 0
+    expect(emittedAfter).toBe(emittedBefore)
+
+    mockUserStore.address = '0x9999999999999999999999999999999999999999'
+    const nonOwnerWrapper = createWrapper({
+      weeklyClaim: {
+        ...createWeeklyClaim(),
+        claims: []
+      }
+    })
+    expect(nonOwnerWrapper.find('[data-test="quick-submit-day-button"]').exists()).toBe(false)
+    expect(nonOwnerWrapper.find('[role="button"]').exists()).toBe(false)
+  })
 })
