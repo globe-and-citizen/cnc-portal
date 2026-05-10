@@ -11,6 +11,7 @@
         <span>{{ claimSubmitMessage }}</span>
         <div>
           <SubmitClaims
+            ref="submitClaimsRef"
             v-if="hasWage"
             :weekly-claim="weeklyClaim"
             :signed-week-starts="signedWeekStarts"
@@ -79,7 +80,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import isoWeek from 'dayjs/plugin/isoWeek'
@@ -134,6 +135,12 @@ watch(teamWageDataError, (newVal) => {
 const currentWeekStart = dayjs().utc().startOf('isoWeek').toISOString()
 const nextWeekStart = dayjs().utc().add(1, 'week').startOf('isoWeek').toISOString()
 
+type SubmitClaimsExposed = {
+  openModalForDay: (dayIso: string) => void
+}
+
+const submitClaimsRef = ref<SubmitClaimsExposed | null>(null)
+
 const claimSubmitMessage = computed(() => {
   if (hasWage.value && props.weeklyClaim && props.weeklyClaim?.status !== 'pending') {
     return `This week claim is already ${props.weeklyClaim?.status}, you cannot submit new claims`
@@ -153,5 +160,13 @@ const signedWeekStarts = computed(() => {
       ?.filter((weeklyClaim) => weeklyClaim.status === 'signed' || weeklyClaim.signature)
       .map((weeklyClaim) => weeklyClaim.weekStart) ?? []
   )
+})
+
+const openSubmitClaimForDay = (dayIso: string) => {
+  submitClaimsRef.value?.openModalForDay(dayIso)
+}
+
+defineExpose({
+  openSubmitClaimForDay
 })
 </script>
