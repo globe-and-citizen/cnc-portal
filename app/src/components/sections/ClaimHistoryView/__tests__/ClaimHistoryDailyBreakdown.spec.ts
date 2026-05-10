@@ -190,12 +190,31 @@ describe('ClaimHistoryDailyBreakdown', () => {
     expect((emitted?.[0] ?? [])[0]).toBe(day0)
   })
 
+  it('emits quick-submit from keyboard shortcuts and plus button', async () => {
+    const wrapper = createWrapper({
+      weeklyClaim: {
+        ...createWeeklyClaim(),
+        claims: []
+      }
+    })
+
+    const clickableRows = wrapper.findAll('[role="button"]')
+    await clickableRows[0]?.trigger('keydown.enter')
+    await clickableRows[1]?.trigger('keydown.space')
+    await wrapper.findAll('[data-test="quick-submit-day-button"]')[2]?.trigger('click')
+
+    const emitted = wrapper.emitted('quick-submit') ?? []
+    expect(emitted.length).toBe(3)
+    expect(emitted[0]?.[0]).toBe(day0)
+    expect(emitted[1]?.[0]).toBe(day1)
+  })
+
   it('does not emit quick-submit on filled days and hides quick button for non-owner', async () => {
     const wrapper = createWrapper({ weeklyClaim: createWeeklyClaim() })
     expect(wrapper.findAll('[data-test="quick-submit-day-button"]').length).toBe(5)
 
     const emittedBefore = wrapper.emitted('quick-submit')?.length ?? 0
-    await wrapper.findAll('.rounded-lg')[0]?.trigger('click')
+    await wrapper.findAll('.cursor-default')[0]?.trigger('click')
     const emittedAfter = wrapper.emitted('quick-submit')?.length ?? 0
     expect(emittedAfter).toBe(emittedBefore)
 
