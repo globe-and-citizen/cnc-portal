@@ -32,7 +32,7 @@ describe('ClaimHistory.vue', () => {
           ClaimHistoryWeekNavigator: {
             emits: ['update:modelValue'],
             template:
-              '<button data-test="week-nav" @click="$emit(\'update:modelValue\', { year: 2025, month: 0, isoWeek: 1, isoString: \'2024-12-30T00:00:00.000Z\', formatted: \'Dec 30-Jan 5\' })" />'
+              "<button data-test=\"week-nav\" @click=\"$emit('update:modelValue', { year: 2025, month: 0, isoWeek: 1, isoString: '2024-12-30T00:00:00.000Z', formatted: 'Dec 30-Jan 5' })\" />"
           },
           WeeklyRecap: {
             template: '<div class="r" data-test="weekly-recap" />'
@@ -61,9 +61,11 @@ describe('ClaimHistory.vue', () => {
   })
 
   it('renders claim history content when route contains memberAddress', () => {
-    ;(useRoute as unknown as { mockReturnValueOnce: (value: unknown) => void }).mockReturnValueOnce({
-      params: { memberAddress: '0x1234567890123456789012345678901234567890' }
-    })
+    ;(useRoute as unknown as { mockReturnValueOnce: (value: unknown) => void }).mockReturnValueOnce(
+      {
+        params: { memberAddress: '0x1234567890123456789012345678901234567890' }
+      }
+    )
 
     const wrapper = createWrapper()
 
@@ -73,8 +75,9 @@ describe('ClaimHistory.vue', () => {
     expect(wrapper.find('[data-test="action-alerts"]').exists()).toBe(true)
     expect(useGetTeamWeeklyClaimsQuery).toHaveBeenCalledTimes(1)
     expect(useGetTeamWagesQuery).toHaveBeenCalledTimes(1)
-    const weeklyClaimsArgs = (useGetTeamWeeklyClaimsQuery as unknown as { mock: { calls: unknown[][] } }).mock
-      .calls[0]?.[0] as {
+    const weeklyClaimsArgs = (
+      useGetTeamWeeklyClaimsQuery as unknown as { mock: { calls: unknown[][] } }
+    ).mock.calls[0]?.[0] as {
       queryParams: { teamId: { value: string | number }; userAddress: { value: string } }
     }
     const wagesArgs = (useGetTeamWagesQuery as unknown as { mock: { calls: unknown[][] } }).mock
@@ -98,9 +101,11 @@ describe('ClaimHistory.vue', () => {
     const memberAddress = '0x1234567890123456789012345678901234567890'
     const currentWeekIso = dayjs.utc().startOf('isoWeek').toISOString()
 
-    ;(useRoute as unknown as { mockReturnValueOnce: (value: unknown) => void }).mockReturnValueOnce({
-      params: { memberAddress }
-    })
+    ;(useRoute as unknown as { mockReturnValueOnce: (value: unknown) => void }).mockReturnValueOnce(
+      {
+        params: { memberAddress }
+      }
+    )
     ;(
       useGetTeamWeeklyClaimsQuery as unknown as { mockReturnValueOnce: (value: unknown) => void }
     ).mockReturnValueOnce({
@@ -109,8 +114,13 @@ describe('ClaimHistory.vue', () => {
         { weekStart: currentWeekIso, status: 'pending', wage: { userAddress: memberAddress } }
       ])
     })
-    ;(useGetTeamWagesQuery as unknown as { mockReturnValueOnce: (value: unknown) => void }).mockReturnValueOnce({
-      data: ref([{ userAddress: memberAddress }, { userAddress: '0x0000000000000000000000000000000000000000' }])
+    ;(
+      useGetTeamWagesQuery as unknown as { mockReturnValueOnce: (value: unknown) => void }
+    ).mockReturnValueOnce({
+      data: ref([
+        { userAddress: memberAddress },
+        { userAddress: '0x0000000000000000000000000000000000000000' }
+      ])
     })
 
     const wrapper = createWrapper()
@@ -119,7 +129,9 @@ describe('ClaimHistory.vue', () => {
     expect(wrapper.vm.selectWeekWeelyClaim).toEqual(
       expect.objectContaining({ weekStart: currentWeekIso })
     )
-    expect(wrapper.vm.selectedMemberWage).toEqual(expect.objectContaining({ userAddress: memberAddress }))
+    expect(wrapper.vm.selectedMemberWage).toEqual(
+      expect.objectContaining({ userAddress: memberAddress })
+    )
   })
 
   it('updates selected week claim when selectedMonthObject changes', async () => {
@@ -127,9 +139,11 @@ describe('ClaimHistory.vue', () => {
     const firstWeekIso = '2025-04-07T00:00:00.000Z'
     const secondWeekIso = '2025-04-14T00:00:00.000Z'
 
-    ;(useRoute as unknown as { mockReturnValueOnce: (value: unknown) => void }).mockReturnValueOnce({
-      params: { memberAddress }
-    })
+    ;(useRoute as unknown as { mockReturnValueOnce: (value: unknown) => void }).mockReturnValueOnce(
+      {
+        params: { memberAddress }
+      }
+    )
     ;(
       useGetTeamWeeklyClaimsQuery as unknown as { mockReturnValueOnce: (value: unknown) => void }
     ).mockReturnValueOnce({
@@ -147,7 +161,9 @@ describe('ClaimHistory.vue', () => {
     }
     await nextTick()
 
-    expect(wrapper.vm.selectWeekWeelyClaim).toEqual(expect.objectContaining({ weekStart: firstWeekIso }))
+    expect(wrapper.vm.selectWeekWeelyClaim).toEqual(
+      expect.objectContaining({ weekStart: firstWeekIso })
+    )
 
     wrapper.vm.selectedMonthObject = {
       year: 2025,
@@ -164,9 +180,11 @@ describe('ClaimHistory.vue', () => {
   })
 
   it('forwards quick-submit event to action alerts exposed method', async () => {
-    ;(useRoute as unknown as { mockReturnValueOnce: (value: unknown) => void }).mockReturnValueOnce({
-      params: { memberAddress: '0x1234567890123456789012345678901234567890' }
-    })
+    ;(useRoute as unknown as { mockReturnValueOnce: (value: unknown) => void }).mockReturnValueOnce(
+      {
+        params: { memberAddress: '0x1234567890123456789012345678901234567890' }
+      }
+    )
 
     const wrapper = createWrapper()
     await wrapper.find('[data-test="quick-submit-trigger"]').trigger('click')
@@ -175,9 +193,11 @@ describe('ClaimHistory.vue', () => {
   })
 
   it('updates selectedMonthObject when week navigator emits v-model update', async () => {
-    ;(useRoute as unknown as { mockReturnValueOnce: (value: unknown) => void }).mockReturnValueOnce({
-      params: { memberAddress: '0x1234567890123456789012345678901234567890' }
-    })
+    ;(useRoute as unknown as { mockReturnValueOnce: (value: unknown) => void }).mockReturnValueOnce(
+      {
+        params: { memberAddress: '0x1234567890123456789012345678901234567890' }
+      }
+    )
 
     const wrapper = createWrapper()
     await wrapper.find('[data-test="week-nav"]').trigger('click')
