@@ -349,9 +349,7 @@ watch(
   }
 )
 
-const loading = computed(
-  () => approveTokenWrite.isPending.value || addVestingWrite.isPending.value
-)
+const loading = computed(() => approveTokenWrite.isPending.value || addVestingWrite.isPending.value)
 
 const {
   data: allowance,
