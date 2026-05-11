@@ -101,7 +101,7 @@ const tokenAmountModel = computed({
   set: (value: { amount: string; tokenId: TokenId | string }) => {
     amount.value = value.amount ?? ''
     selectedTokenId.value = (value.tokenId as TokenId) ?? 'usdc'
-    submitError.value = null
+    guardError.value = null
   }
 })
 const stepperItems = [
@@ -111,10 +111,9 @@ const stepperItems = [
 ]
 
 const currentStep = ref(0)
-const submitting = ref(false)
 const isAmountValid = ref(false)
 const isUpdatingFromSher = ref(false)
-const submitError = ref<string | null>(null)
+const guardError = ref<string | null>(null)
 
 const currencyStore = useCurrencyStore()
 const userDataStore = useUserDataStore()
@@ -218,7 +217,7 @@ const handleSherAmountChange = (value: string) => {
 
 watch(amount, (newAmount) => {
   currentStep.value = 0
-  submitError.value = null
+  guardError.value = null
   if (isUpdatingFromSher.value) {
     isUpdatingFromSher.value = false
     return
@@ -239,22 +238,25 @@ const { data: allowance } = useErc20Allowance(
 // ERC20 Approve composable
 const approveWrite = useERC20Approve(selectedTokenAddress)
 
-// Deposit composable
+// Deposit composable — handles cross-contract invalidation (router + InvestorV1)
+// internally on success. See useDeposit in safeDepositRouter/writes.ts.
 const depositWrite = useDeposit()
 
+// Submitting state derives from the underlying mutations: no manual flag to
+// keep in sync, no resets to forget on every error path.
+const submitting = computed(() => approveWrite.isPending.value || depositWrite.isPending.value)
+
 const isLoading = computed(
-  () =>
-    isBalanceLoading.value ||
-    isTokenSymbolLoading.value ||
-    approveWrite.isPending.value ||
-    depositWrite.writeResult.isPending.value
+  () => isBalanceLoading.value || isTokenSymbolLoading.value || submitting.value
 )
 
+// Errors from the mutations stay reactive on `approveWrite.error.value` /
+// `depositWrite.error.value` and surface inline via UAlert. Toasts and modal
+// close are handled by per-call onSuccess/onError callbacks so the side
+// effects sit next to the action that triggered them.
 const errorMessage = computed(() => {
-  if (submitError.value) return submitError.value
-  const err = (approveWrite.error.value ||
-    depositWrite.writeResult.error.value ||
-    depositWrite.receiptResult.error.value) as Error | null
+  if (guardError.value) return guardError.value
+  const err = (approveWrite.error.value || depositWrite.error.value) as Error | null
   return err ? parseError(err) || err.message || 'Transaction failed' : null
 })
 
@@ -265,76 +267,26 @@ watch(multiplierError, (error) => {
   }
 })
 
-watch(
-  () => approveWrite.error.value,
-  (error) => {
-    if (error) {
-      console.error('Error approving tokens:', error)
-      const errorMessage = parseError(error)
+const isUserRejection = (err: unknown) => {
+  const msg = parseError(err as Error)
+  return msg.includes('User rejected') || msg.includes('User denied')
+}
 
-      if (errorMessage.includes('User rejected') || errorMessage.includes('User denied')) {
-        toast.add({ title: 'Transaction cancelled by user', color: 'error' })
-      } else {
-        toast.add({ title: 'Failed to approve tokens', color: 'error' })
-      }
-
-      submitting.value = false
-      currentStep.value = 0
-    }
-  }
-)
-
-watch(
-  () => approveWrite.isSuccess.value,
-  (success) => {
-    if (!success) return
-    toast.add({ title: 'Token approval successful', color: 'success' })
-    currentStep.value = 2
-    performDeposit()
-  }
-)
-
-watch(
-  () => depositWrite.writeResult.error.value,
-  (error) => {
-    if (error) {
-      console.error('Error depositing tokens:', error)
-      const errorMessage = parseError(error)
-
-      if (errorMessage.includes('User rejected') || errorMessage.includes('User denied')) {
-        toast.add({ title: 'Transaction cancelled by user', color: 'error' })
-      } else {
-        toast.add({ title: 'Failed to deposit', color: 'error' })
-      }
-
-      submitting.value = false
-      currentStep.value = 0
-    }
-  }
-)
-
-watch(
-  () => depositWrite.receiptResult.isSuccess.value,
-  (success) => {
-    if (!success) return
-    toast.add({
-      title: `Successfully deposited ${amount.value} ${selectedToken.value?.token.symbol} and minted ${sherAmount.value} ${tokenSymbol.value || 'SHER'} tokens`,
-      color: 'success'
-    })
-    reset()
-    emits('closeModal')
-  }
-)
+const toastFailure = (err: unknown, fallback: string) => {
+  toast.add({
+    title: isUserRejection(err) ? 'Transaction cancelled by user' : fallback,
+    color: 'error'
+  })
+}
 
 function reset() {
   amount.value = ''
   sherAmount.value = '0'
   selectedTokenId.value = 'usdc'
   currentStep.value = 0
-  submitting.value = false
   isAmountValid.value = false
   isUpdatingFromSher.value = false
-  submitError.value = null
+  guardError.value = null
 }
 
 defineExpose({ reset })
@@ -344,14 +296,8 @@ function handleCancel() {
   emits('closeModal')
 }
 
-async function performDeposit() {
-  await depositWrite
-    .executeWrite(selectedTokenAddress.value, bigIntAmount.value)
-    .catch((error) => console.error('Deposit execution error:', error))
-}
-
 const failGuard = (msg: string) => {
-  submitError.value = msg
+  guardError.value = msg
   toast.add({ title: msg, color: 'error' })
 }
 
@@ -361,18 +307,50 @@ const submitForm = async () => {
   if (!selectedToken.value) return failGuard('No token selected')
   if (!multiplier.value) return failGuard('Unable to calculate SHER compensation')
 
-  submitError.value = null
-  submitting.value = true
+  guardError.value = null
   const currentAllowance = (allowance.value as bigint | undefined) ?? 0n
-  if (currentAllowance < bigIntAmount.value) {
-    currentStep.value = 1
 
-    approveWrite.mutate({
-      args: [safeDepositRouterAddress.value, bigIntAmount.value]
-    })
-  } else {
+  // Sequential: approve (if needed) → deposit. mutateAsync throws on failure;
+  // we handle the toast in onError per-call and stop the chain via try/catch
+  // at the top of the flow. UAlert keeps showing the reactive error.
+  try {
+    if (currentAllowance < bigIntAmount.value) {
+      currentStep.value = 1
+      await approveWrite.mutateAsync(
+        { args: [safeDepositRouterAddress.value, bigIntAmount.value] },
+        {
+          onSuccess: () => toast.add({ title: 'Token approval successful', color: 'success' }),
+          onError: (err) => {
+            console.error('Error approving tokens:', err)
+            toastFailure(err, 'Failed to approve tokens')
+            currentStep.value = 0
+          }
+        }
+      )
+    }
+
     currentStep.value = 2
-    await performDeposit()
+    await depositWrite.mutateAsync(
+      { args: [selectedTokenAddress.value, bigIntAmount.value] },
+      {
+        onSuccess: () => {
+          toast.add({
+            title: `Successfully deposited ${amount.value} ${selectedToken.value?.token.symbol} and minted ${sherAmount.value} ${tokenSymbol.value || 'SHER'} tokens`,
+            color: 'success'
+          })
+          reset()
+          emits('closeModal')
+        },
+        onError: (err) => {
+          console.error('Error depositing tokens:', err)
+          toastFailure(err, 'Failed to deposit')
+          currentStep.value = 0
+        }
+      }
+    )
+  } catch {
+    // Per-call onError already surfaced the toast and reset the step. The
+    // error stays reactive on the mutation for UAlert. Nothing to do here.
   }
 }
 </script>
