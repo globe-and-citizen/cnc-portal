@@ -6,11 +6,19 @@
         v-for="(entry, index) in weekDayClaims"
         :key="index"
         :class="[
-          'mb-2 flex items-center justify-between rounded-lg border px-4 py-3',
+          'mb-2 flex items-center justify-between rounded-lg border px-4 py-3 transition-colors',
           entry.totalMinutes > 0
             ? 'border border-emerald-500 bg-green-50 text-emerald-700'
-            : 'bg-gray-100 text-gray-400'
+            : 'bg-gray-100 text-gray-400',
+          canQuickSubmitDay(entry)
+            ? 'cursor-pointer hover:border-emerald-300 hover:bg-emerald-50/60'
+            : 'cursor-default'
         ]"
+        :role="canQuickSubmitDay(entry) ? 'button' : undefined"
+        :tabindex="canQuickSubmitDay(entry) ? 0 : undefined"
+        @click="onDayRowClick(entry)"
+        @keydown.enter.prevent="onDayRowClick(entry)"
+        @keydown.space.prevent="onDayRowClick(entry)"
       >
         <div class="flex min-w-30 items-center gap-2">
           <span
@@ -52,6 +60,17 @@
         </div>
 
         <div class="flex min-w-22.5 items-center justify-end gap-2 text-base">
+          <UButton
+            v-if="canQuickSubmitDay(entry)"
+            variant="soft"
+            color="neutral"
+            size="xs"
+            class="h-7 w-7 justify-center rounded-md p-0 text-lg leading-none"
+            data-test="quick-submit-day-button"
+            @click.stop="onQuickSubmitClick(entry)"
+          >
+            +
+          </UButton>
           <IconifyIcon icon="heroicons:clock" class="h-4 w-4 text-gray-500" />
           {{ formatMinutesAsDuration(entry.totalMinutes) }}
         </div>
@@ -85,6 +104,9 @@ interface Props {
 }
 
 const props = defineProps<Props>()
+const emit = defineEmits<{
+  'quick-submit': [dayIso: string]
+}>()
 
 const userStore = useUserDataStore()
 
@@ -140,4 +162,23 @@ const canModifyClaims = computed(() => {
     props.weeklyClaim.wage.userAddress === userStore.address
   )
 })
+
+type DayEntry = {
+  date: dayjs.Dayjs
+  claims: Claim[]
+  totalMinutes: number
+}
+
+const canQuickSubmitDay = (entry: DayEntry): boolean => {
+  return entry.totalMinutes === 0 && props.memberAddress === userStore.address
+}
+
+const onQuickSubmitClick = (entry: DayEntry) => {
+  if (!canQuickSubmitDay(entry)) return
+  emit('quick-submit', entry.date.toISOString())
+}
+
+const onDayRowClick = (entry: DayEntry) => {
+  onQuickSubmitClick(entry)
+}
 </script>

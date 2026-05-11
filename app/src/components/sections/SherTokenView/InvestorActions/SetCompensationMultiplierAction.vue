@@ -146,7 +146,7 @@ const displayMultiplierExample = computed(() => {
 })
 
 const isReadLoading = computed(() => isMultiplierLoading.value || isOwnerLoading.value)
-const isWriteLoading = computed(() => setMultiplierWrite.writeResult.isPending.value)
+const isWriteLoading = computed(() => setMultiplierWrite.isPending.value)
 const isLoading = computed(() => isReadLoading.value || isWriteLoading.value)
 
 const canManageMultiplier = computed(() => {
@@ -183,7 +183,7 @@ const isMultiplierValid = computed(() => {
 })
 
 watch(
-  () => setMultiplierWrite.writeResult.error.value,
+  () => setMultiplierWrite.error.value,
   (error) => {
     if (error) {
       console.error('Error setting multiplier:', error)
@@ -201,7 +201,7 @@ watch(
 )
 
 watch(
-  () => setMultiplierWrite.receiptResult.isSuccess.value,
+  () => setMultiplierWrite.isSuccess.value,
   (success) => {
     if (success) {
       toast.add({
@@ -271,7 +271,7 @@ async function handleSetMultiplier(event?: FormSubmitEvent<MultiplierFormSchema>
     return
   }
 
-  await setMultiplierWrite.executeWrite(multiplierInWei)
+  await setMultiplierWrite.mutateAsync({ args: [multiplierInWei] })
 }
 
 defineExpose({ handleSetMultiplier })

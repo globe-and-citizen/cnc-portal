@@ -247,64 +247,43 @@ const handleReload = () => {
 const teamId = computed(() => BigInt(team?.value?.id ?? 0))
 
 const stopVestingWrite = useVestingStopVestingWrite()
-const loadingStopVesting = computed(() => stopVestingWrite.writeResult.isPending.value)
-const isConfirmingStopVesting = computed(() => stopVestingWrite.receiptResult.isLoading.value)
-const isConfirmedStopVesting = computed(() => stopVestingWrite.receiptResult.isSuccess.value)
-const errorStopVesting = computed(
-  () => stopVestingWrite.writeResult.error.value || stopVestingWrite.receiptResult.error.value
-)
 
-const stopVesting = async (member: string) => {
-  await stopVestingWrite.executeWrite([member, teamId.value], undefined, {
-    skipGasEstimation: true
-  })
+const stopVesting = (member: string) => {
+  stopVestingWrite.mutate(
+    { args: [member, teamId.value] },
+    {
+      onSuccess: () => {
+        toast.add({ title: 'vesting stoped successfully', color: 'success' })
+        emit('reload')
+      },
+      onError: (err) => {
+        toast.add({ title: 'stop vesting failed', color: 'error' })
+        console.error('stop vesting error', err)
+      }
+    }
+  )
 }
-
-watch(isConfirmingStopVesting, async (isConfirming, wasConfirming) => {
-  if (wasConfirming && !isConfirming && isConfirmedStopVesting.value) {
-    toast.add({ title: 'vesting stoped successfully', color: 'success' })
-    emit('reload')
-  }
-})
-watch(errorStopVesting, () => {
-  if (errorStopVesting.value) {
-    toast.add({ title: 'stop vesting failed', color: 'error' })
-    console.error('add vesting error', errorStopVesting.value)
-  }
-})
 
 const releaseVestingWrite = useVestingReleaseWrite()
-const loadingReleaseVesting = computed(() => releaseVestingWrite.writeResult.isPending.value)
-const isConfirmingReleaseVesting = computed(() => releaseVestingWrite.receiptResult.isLoading.value)
-const isConfirmedReleaseVesting = computed(() => releaseVestingWrite.receiptResult.isSuccess.value)
-const errorReleaseVesting = computed(
-  () => releaseVestingWrite.writeResult.error.value || releaseVestingWrite.receiptResult.error.value
-)
 
-const releaseVesting = async () => {
-  await releaseVestingWrite.executeWrite([teamId.value], undefined, { skipGasEstimation: true })
+const releaseVesting = () => {
+  releaseVestingWrite.mutate(
+    { args: [teamId.value] },
+    {
+      onSuccess: () => {
+        toast.add({ title: 'vesting Releaseed successfully', color: 'success' })
+        emit('reload')
+      },
+      onError: (err) => {
+        toast.add({ title: 'Release vesting failed', color: 'error' })
+        console.error('release vesting error', err)
+      }
+    }
+  )
 }
 
-watch(isConfirmingReleaseVesting, async (isConfirming, wasConfirming) => {
-  if (wasConfirming && !isConfirming && isConfirmedReleaseVesting.value) {
-    toast.add({ title: 'vesting Releaseed successfully', color: 'success' })
-    emit('reload')
-  }
-})
-
-watch(errorReleaseVesting, () => {
-  if (errorReleaseVesting.value) {
-    toast.add({ title: 'Release vesting failed', color: 'error' })
-    console.error('add vesting error', errorReleaseVesting.value)
-  }
-})
-
 const loading = computed(
-  () =>
-    loadingReleaseVesting.value ||
-    (isConfirmingReleaseVesting.value && !isConfirmedReleaseVesting.value) ||
-    loadingStopVesting.value ||
-    (isConfirmingStopVesting.value && !isConfirmedStopVesting.value)
+  () => releaseVestingWrite.isPending.value || stopVestingWrite.isPending.value
 )
 
 // Define columns including the new "Actions" column

@@ -56,7 +56,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import type { EventsByCampaignCode, ExtendedEvent } from '@/services/AddCampaignService'
+import type { EventsByCampaignCode, ExtendedEvent } from '@/lib/campaign/events'
 // Props
 defineProps<{
   eventsByCampaignCode: EventsByCampaignCode

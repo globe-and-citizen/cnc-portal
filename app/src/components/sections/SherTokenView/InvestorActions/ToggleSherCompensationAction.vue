@@ -72,9 +72,9 @@ const isReadLoading = computed(
 
 const isWriteLoading = computed(() => {
   return (
-    enableDepositsWrite.writeResult.isPending.value ||
-    disableDepositsWrite.writeResult.isPending.value ||
-    setSafeAddressWrite.writeResult.isPending.value
+    enableDepositsWrite.isPending.value ||
+    disableDepositsWrite.isPending.value ||
+    setSafeAddressWrite.isPending.value
   )
 })
 
@@ -101,7 +101,7 @@ const isSafeAddressCorrect = computed(() => {
 
 // Watch for enable deposits errors
 watch(
-  () => enableDepositsWrite.writeResult.error.value,
+  () => enableDepositsWrite.error.value,
   (error) => {
     if (error) {
       console.error('Error enabling deposits:', error)
@@ -119,7 +119,7 @@ watch(
 
 // Watch for enable deposits success
 watch(
-  () => enableDepositsWrite.receiptResult.isSuccess.value,
+  () => enableDepositsWrite.isSuccess.value,
   (success) => {
     if (success) {
       toast.add({ title: 'SHER compensation enabled successfully', color: 'success' })
@@ -130,7 +130,7 @@ watch(
 
 // Watch for disable deposits errors
 watch(
-  () => disableDepositsWrite.writeResult.error.value,
+  () => disableDepositsWrite.error.value,
   (error) => {
     if (error) {
       console.error('Error disabling deposits:', error)
@@ -147,7 +147,7 @@ watch(
 
 // Watch for disable deposits success
 watch(
-  () => disableDepositsWrite.receiptResult.isSuccess.value,
+  () => disableDepositsWrite.isSuccess.value,
   (success) => {
     if (success) {
       toast.add({ title: 'SHER compensation disabled successfully', color: 'success' })
@@ -157,7 +157,7 @@ watch(
 
 // Watch for set safe address errors
 watch(
-  () => setSafeAddressWrite.writeResult.error.value,
+  () => setSafeAddressWrite.error.value,
   (error) => {
     if (error) {
       console.error('Error setting safe address:', error)
@@ -175,7 +175,7 @@ watch(
 
 // Watch for set safe address success - automatically enable deposits after
 watch(
-  () => setSafeAddressWrite.receiptResult.isSuccess.value,
+  () => setSafeAddressWrite.isSuccess.value,
   (success) => {
     if (success && isSettingSafeAddress.value) {
       toast.add({ title: 'Safe address updated successfully', color: 'success' })
@@ -205,21 +205,21 @@ async function updateSafeAddress() {
 
   safeAddressErrorShown.value = false
   toast.add({ title: 'Updating Safe address...', color: 'info' })
-  await setSafeAddressWrite.executeWrite(safeAddress)
+  await setSafeAddressWrite.mutateAsync({ args: [safeAddress] })
 }
 
 /**
  * Enable deposits
  */
 async function handleEnableDeposits() {
-  await enableDepositsWrite.executeWrite()
+  await enableDepositsWrite.mutateAsync({})
 }
 
 /**
  * Disable deposits
  */
 async function handleDisableDeposits() {
-  await disableDepositsWrite.executeWrite()
+  await disableDepositsWrite.mutateAsync({})
 }
 
 /**

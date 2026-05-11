@@ -69,6 +69,19 @@ After cloning: `npm install` in each subproject you'll touch (`app/`, `backend/`
 
 **Frontend mutation pattern.** Mutations are a pure async function plus a `useXxxMutation` composable wrapping `@tanstack/vue-query`. Use `onSuccess` / `onError` callbacks rather than awaiting + try/catch in components. Surface errors reactively via `UAlert`. Issue #1776 documents the canonical pattern.
 
+**One hook per endpoint, not per action.** In `app/src/queries/**`, do not create multiple mutation or query hooks that share the same `method` + `endpoint` and differ only by request body or query params. Reuse the single existing hook and vary the input at the call site; on the read side, add a query param instead of forking the hook. Example: archive / unarchive / hide / show all reuse `useUpdateTeamMutation` — they do not need their own hooks. Reason: forking creates near-duplicate code, multiplies the query-key surface, and forces components to import N hooks where one would do. See issue #1903.
+
+```ts
+const { mutate: updateTeam, reset } = useUpdateTeamMutation()
+
+function archive() {
+  updateTeam(
+    { pathParams: { id: teamId }, body: { isArchived: true } },
+    { onSuccess: () => reset() }
+  )
+}
+```
+
 **Single source of truth.** Prefer deriving values (computed / selectors) over denormalizing or duplicating state. Don't mirror server data into Pinia stores when a query already owns it — even if the refactor is non-trivial.
 
 **Chain config.** Deployed contract addresses are per-chain JSON files committed under `app/src/artifacts/deployed_addresses/`. After local deploys, `app/package.json` exposes `git:ignore-locally` to keep local-only `chain-31337.json` edits out of commits.
@@ -100,6 +113,15 @@ Then ask whether to do it now (scoped to this PR), defer (open a tracking issue)
 - Issues, PRs, commit messages, and user-facing UI strings/toasts are **English**.
 - Vue components: `<script setup lang="ts">` Composition API. Pinia for global state, TanStack Query for server state.
 - TypeScript strict mode across frontend and backend.
+
+## Public-repo hygiene
+
+This repository is **public on GitHub** (`globe-and-citizen/cnc-portal`). Default-treat everything that lands in the repo as world-readable.
+
+- **Never include infrastructure identifiers** — hostnames, ports, bucket names, or cloud provider names — in issues, PR descriptions, commit messages, committed docs, or review comments. Use abstract placeholders: `postgresql://<user>:<password>@<host>:<port>/<db>`. The hostname alone is a credential-stuffing target, even with the password redacted.
+- Refer to providers generically in public text ("our managed provider", "the secrets manager"). Internal docs that need to name them should live outside the repo (e.g. a private wiki).
+- When documenting an ops procedure that needs real credentials, the doc tells the reader *where* to find them (internal dashboard, CLI tool) but never embeds them.
+- Add an explicit safety note to any ops procedure: *"Don't paste the prod connection string anywhere public — issues, PR descriptions, Slack, commit messages."*
 
 ## Code quality gate (mandatory before pushing)
 

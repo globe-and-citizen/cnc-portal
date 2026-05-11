@@ -6,8 +6,8 @@ import MainContractActions from '../MainContractActions.vue'
 import { mockToast, mockUserStore } from '@/tests/mocks'
 import {
   mockBodAddAction,
+  mockBodApproveAction,
   mockBodIsBodAction,
-  mockBODWrites,
   useWaitForTransactionReceiptFn,
   useWriteContractFn
 } from '@/tests/mocks'
@@ -141,10 +141,10 @@ describe('MainContractActions.vue', () => {
 
     mockUserStore.address = '0x0000000000000000000000000000000000000001'
     mockBodIsBodAction.isBodAction.value = false
-    mockBodAddAction.isActionAdded.value = false
+    mockBodAddAction.isSuccess.value = false
     mockBodAddAction.isPending.value = false
-    mockBODWrites.approve.writeResult.isPending.value = false
-    mockBODWrites.approve.receiptResult.isSuccess.value = false
+    mockBodApproveAction.isPending.value = false
+    mockBodApproveAction.isSuccess.value = false
 
     vi.spyOn(utils, 'filterAndFormatActions').mockReturnValue([])
   })
@@ -233,7 +233,7 @@ describe('MainContractActions.vue', () => {
     await wrapper.findComponent({ name: 'PendingEventsList' }).vm.$emit('view-details', { id: 1 })
     await wrapper.find('[data-test="emit-approve"]')?.trigger('click')
 
-    expect(mockBODWrites.approve.executeWrite).toHaveBeenCalledWith(1, 2)
+    expect(mockBodApproveAction.executeApproveAction).toHaveBeenCalledWith(1, 2)
   })
 
   it('closes approval modal on close event', async () => {
@@ -254,11 +254,11 @@ describe('MainContractActions.vue', () => {
     const wrapper = mountComponent()
 
     await wrapper.findAll('button')[1]?.trigger('click')
-    mockBodAddAction.isActionAdded.value = true
+    mockBodAddAction.isSuccess.value = true
     await wrapper.vm.$nextTick()
 
     await wrapper.findAll('button')[2]?.trigger('click')
-    mockBODWrites.approve.receiptResult.isSuccess.value = true
+    mockBodApproveAction.isSuccess.value = true
     await wrapper.vm.$nextTick()
 
     expect(wrapper.emitted('contract-status-changed')).toBeTruthy()

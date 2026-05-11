@@ -40,35 +40,6 @@ export function createContractWriteV3Mock() {
 }
 
 /**
- * Generic mock factory for contract write operations
- * Can be used for ERC20, ERC721, or any contract write function
- * that uses useContractWrite and returns the same structure
- */
-export function createContractWriteMock() {
-  return {
-    executeWrite: vi.fn(),
-    writeResult: {
-      data: ref(null),
-      error: ref<Error | null>(null),
-      isLoading: ref(false),
-      isSuccess: ref(false),
-      isError: ref(false),
-      isPending: ref(false),
-      status: ref<'idle' | 'pending' | 'error' | 'success'>('idle')
-    },
-    receiptResult: {
-      data: ref(null),
-      error: ref<Error | null>(null),
-      isLoading: ref(false),
-      isSuccess: ref(false),
-      isError: ref(false),
-      isPending: ref(false),
-      status: ref<'idle' | 'pending' | 'error' | 'success'>('idle')
-    }
-  }
-}
-
-/**
  * Pre-configured mock instances for common ERC20 operations
  */
 export const mockERC20Reads = {

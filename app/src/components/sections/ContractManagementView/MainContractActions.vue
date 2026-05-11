@@ -52,10 +52,7 @@
           :is-bod-action="isBodAction"
           @transfer-ownership="transferOwnership"
           :loading="
-            isLoadingTransferOwnership ||
-            isConfirmingTransferOwnership ||
-            isLoadingAddAction ||
-            isConfirmingAddAction
+            isLoadingTransferOwnership || isConfirmingTransferOwnership || isLoadingAddAction
           "
         />
       </template>
@@ -125,12 +122,15 @@ const { isBodAction } = useBodIsBodAction(props.row.address as Address)
 const {
   executeAddAction,
   isPending: isLoadingAddAction,
-  isConfirming: isConfirmingAddAction,
-  isActionAdded
+  isSuccess: isActionAdded
 } = addActionComposable
 
 // Destructure approveAction properties
-const { executeApproveAction, isLoadingApproveAction, isActionApproved } = approveActionComposable
+const {
+  executeApproveAction,
+  isPending: isLoadingApproveAction,
+  isSuccess: isActionApproved
+} = approveActionComposable
 
 // Create wrapper functions for template usage
 const addAction = executeAddAction
