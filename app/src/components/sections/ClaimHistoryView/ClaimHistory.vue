@@ -13,6 +13,7 @@
         <WeeklyRecap :weekly-claim="selectWeekWeelyClaim" :wage="selectedMemberWage" />
 
         <ClaimHistoryActionAlerts
+          ref="actionAlertsRef"
           :weekly-claim="selectWeekWeelyClaim"
           :member-address="selectedMemberAddress"
           :selected-week-start="selectedMonthObject.isoString"
@@ -22,6 +23,7 @@
           :weekly-claim="selectWeekWeelyClaim"
           :selected-week="selectedMonthObject"
           :member-address="selectedMemberAddress"
+          @quick-submit="handleQuickSubmit"
         />
       </div>
     </div>
@@ -83,6 +85,16 @@ const selectWeekWeelyClaim = computed(() => {
 const selectedMemberWage = computed(() => {
   return teamWageData.value?.find((wage) => wage.userAddress === selectedMemberAddress.value)
 })
+
+type ActionAlertsExposed = {
+  openSubmitClaimForDay: (dayIso: string) => void
+}
+
+const actionAlertsRef = ref<ActionAlertsExposed | null>(null)
+
+const handleQuickSubmit = (dayIso: string) => {
+  actionAlertsRef.value?.openSubmitClaimForDay(dayIso)
+}
 
 defineExpose({
   selectedMemberAddress,

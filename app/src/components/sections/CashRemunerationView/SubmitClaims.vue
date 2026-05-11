@@ -93,11 +93,22 @@ const props = defineProps<{
 
 const formInitialData = ref<ClaimFormData>(createDefaultFormData(props.selectedWeekStart))
 
-const openModal = () => {
-  formInitialData.value = createDefaultFormData(props.selectedWeekStart)
+const openModalWithData = (initialData: ClaimFormData) => {
+  formInitialData.value = initialData
   errorMessage.value = null
   addWageClaimError.value = false
   modal.value = { mount: true, show: true }
+}
+
+const openModal = () => {
+  openModalWithData(createDefaultFormData(props.selectedWeekStart))
+}
+
+const openModalForDay = (dayIso: string) => {
+  openModalWithData({
+    ...createDefaultFormData(props.selectedWeekStart),
+    dayWorked: dayIso
+  })
 }
 
 const closeModal = () => {
@@ -191,6 +202,7 @@ defineExpose({
   handleSubmit,
   modal,
   errorMessage,
-  formInitialData
+  formInitialData,
+  openModalForDay
 })
 </script>
