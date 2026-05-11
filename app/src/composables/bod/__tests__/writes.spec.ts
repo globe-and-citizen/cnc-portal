@@ -38,9 +38,7 @@ describe('BOD Contract Writes', () => {
       await expect(useBodApproveAction().executeApproveAction(1)).resolves.toBe('approval-tx-1')
 
       mockBodApproveAction.executeApproveAction.mockRejectedValueOnce(new Error('Approve failed'))
-      await expect(useBodApproveAction().executeApproveAction(1)).rejects.toThrow(
-        'Approve failed'
-      )
+      await expect(useBodApproveAction().executeApproveAction(1)).rejects.toThrow('Approve failed')
     })
   })
 })

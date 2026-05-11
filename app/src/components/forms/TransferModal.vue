@@ -111,10 +111,7 @@ const transferToken = useTransferToken()
 
 // Computed loading state
 const isLoading = computed(
-  () =>
-    transferNative.isPending.value ||
-    transferToken.isPending.value ||
-    isLoadingAddAction.value
+  () => transferNative.isPending.value || transferToken.isPending.value || isLoadingAddAction.value
 )
 
 // Get available tokens for transfer
