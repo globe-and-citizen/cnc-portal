@@ -24,17 +24,9 @@
           :is-loading="isWageClaimAdding"
           :disabled-week-starts="props.signedWeekStarts"
           :restrict-submit="isRestricted"
+          :error-message="addWageClaimError && errorMessage ? errorMessage.message : ''"
+          error-title="Failed to submit claim"
           @submit="handleSubmit"
-        />
-        <UAlert
-          v-if="addWageClaimError && errorMessage"
-          color="error"
-          variant="soft"
-          icon="i-heroicons-x-circle"
-          title="Failed to submit claim"
-          :description="errorMessage.message"
-          class="mt-4"
-          data-test="submit-claim-error"
         />
       </div>
     </template>
