@@ -1,7 +1,7 @@
 <template>
   <h3 class="mb-4 text-lg font-bold">
     Contract Admin List {{ range }}
-    <span class="loading loading-spinner" v-if="isLoading || isUpdating"></span>
+    <span class="loading loading-spinner" v-if="isLoading"></span>
   </h3>
 
   <!-- Inline form to add new admin -->
@@ -52,7 +52,7 @@
     </UTable>
   </div>
   <div
-    v-if="isLoading || isUpdating"
+    v-if="isLoading"
     class="bg-opacity-75 absolute inset-0 flex items-center justify-center bg-white"
   ></div>
 </template>
@@ -61,20 +61,16 @@
 import { ref, watch, computed } from 'vue'
 
 import { useWaitForTransactionReceipt, useWriteContract, useReadContract } from '@wagmi/vue'
-import { AddCampaignService } from '@/services/AddCampaignService'
 import type { TeamContract } from '@/types'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import { AD_CAMPAIGN_MANAGER_ABI } from '@/artifacts/abi/ad-campaign-manager'
 import type { Address } from 'viem'
 const toast = useToast()
-const addCampaignService = new AddCampaignService()
 
 const props = defineProps<{
   contract: TeamContract
   range: number
 }>()
-
-const isUpdating = ref(false)
 
 const isLoading = computed(
   () =>
@@ -137,16 +133,6 @@ const {
 const adminsList = computed<Address[]>(() => {
   return Array.isArray(admins.value) ? (admins.value as Address[]) : []
 })
-
-watch(
-  () => props.contract,
-  async (newContract) => {
-    isUpdating.value = true
-    await new Promise((resolve) => setTimeout(resolve, 5000))
-    await addCampaignService.getEventsGroupedByCampaignCode(newContract.address)
-    isUpdating.value = false
-  }
-)
 
 watch(errorAddAdmin, () => {
   if (errorAddAdmin.value) {
