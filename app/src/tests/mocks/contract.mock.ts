@@ -134,6 +134,15 @@ export const mockExpenseAccountWrites = {
 }
 
 /**
+ * Vesting Contract Mocks
+ */
+export const mockVestingWrites = {
+  addVesting: createContractWriteV3Mock(),
+  stopVesting: createContractWriteV3Mock(),
+  release: createContractWriteV3Mock()
+}
+
+/**
  * Investor Contract Mocks
  */
 export const mockInvestorReads = {
@@ -183,7 +192,8 @@ export const resetContractMocks = () => {
     mockCashRemunerationWrites,
     mockExpenseAccountWrites,
     mockElectionsWrites,
-    mockInvestorWrites
+    mockInvestorWrites,
+    mockVestingWrites
   ]
 
   // Reset all read mocks

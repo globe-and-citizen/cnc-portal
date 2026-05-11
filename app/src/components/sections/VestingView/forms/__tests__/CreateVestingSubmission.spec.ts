@@ -6,6 +6,7 @@ import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
 import { parseUnits } from 'viem'
 import { mockUseContractBalance } from '@/tests/mocks/composables.mock'
+import { mockVestingWrites } from '@/tests/mocks/contract.mock'
 import { CalendarDate } from '@internationalized/date'
 
 // vi.mock('@/artifacts/abi/InvestorV1', () => MOCK_INVESTOR_ABI)
@@ -231,6 +232,8 @@ describe('CreateVesting.vue', () => {
     mockWriteContract.error.value = null
     mockWaitForReceipt.isLoading.value = false
     mockWaitForReceipt.isSuccess.value = false
+    mockVestingWrites.addVesting.isSuccess.value = false
+    mockVestingWrites.addVesting.error.value = null
     wrapper = mountComponent()
   })
 
@@ -286,10 +289,7 @@ describe('CreateVesting.vue', () => {
 
       expect(mockWriteContract.mutateAsync).toHaveBeenCalled()
 
-      mockWaitForReceipt.isLoading.value = true
-      await wrapper.vm.$nextTick()
-      mockWaitForReceipt.isSuccess.value = true
-      mockWaitForReceipt.isLoading.value = false
+      mockVestingWrites.addVesting.isSuccess.value = true
       await wrapper.vm.$nextTick()
 
       expect((wrapper.vm as unknown as { totalAmount: number }).totalAmount).toBe(0)
