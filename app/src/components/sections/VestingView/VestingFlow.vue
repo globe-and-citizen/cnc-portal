@@ -248,54 +248,39 @@ const teamId = computed(() => BigInt(team?.value?.id ?? 0))
 
 const stopVestingWrite = useVestingStopVestingWrite()
 
-const stopVesting = async (member: string) => {
-  await stopVestingWrite.mutateAsync({ args: [member, teamId.value] })
+const stopVesting = (member: string) => {
+  stopVestingWrite.mutate(
+    { args: [member, teamId.value] },
+    {
+      onSuccess: () => {
+        toast.add({ title: 'vesting stoped successfully', color: 'success' })
+        emit('reload')
+      },
+      onError: (err) => {
+        toast.add({ title: 'stop vesting failed', color: 'error' })
+        console.error('stop vesting error', err)
+      }
+    }
+  )
 }
-
-watch(
-  () => stopVestingWrite.isSuccess.value,
-  (success) => {
-    if (success) {
-      toast.add({ title: 'vesting stoped successfully', color: 'success' })
-      emit('reload')
-    }
-  }
-)
-watch(
-  () => stopVestingWrite.error.value,
-  (err) => {
-    if (err) {
-      toast.add({ title: 'stop vesting failed', color: 'error' })
-      console.error('stop vesting error', err)
-    }
-  }
-)
 
 const releaseVestingWrite = useVestingReleaseWrite()
 
-const releaseVesting = async () => {
-  await releaseVestingWrite.mutateAsync({ args: [teamId.value] })
+const releaseVesting = () => {
+  releaseVestingWrite.mutate(
+    { args: [teamId.value] },
+    {
+      onSuccess: () => {
+        toast.add({ title: 'vesting Releaseed successfully', color: 'success' })
+        emit('reload')
+      },
+      onError: (err) => {
+        toast.add({ title: 'Release vesting failed', color: 'error' })
+        console.error('release vesting error', err)
+      }
+    }
+  )
 }
-
-watch(
-  () => releaseVestingWrite.isSuccess.value,
-  (success) => {
-    if (success) {
-      toast.add({ title: 'vesting Releaseed successfully', color: 'success' })
-      emit('reload')
-    }
-  }
-)
-
-watch(
-  () => releaseVestingWrite.error.value,
-  (err) => {
-    if (err) {
-      toast.add({ title: 'Release vesting failed', color: 'error' })
-      console.error('release vesting error', err)
-    }
-  }
-)
 
 const loading = computed(
   () => releaseVestingWrite.isPending.value || stopVestingWrite.isPending.value

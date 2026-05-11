@@ -234,6 +234,14 @@ describe('CreateVesting.vue', () => {
     mockWaitForReceipt.isSuccess.value = false
     mockVestingWrites.addVesting.isSuccess.value = false
     mockVestingWrites.addVesting.error.value = null
+    // Default: mutate invokes onSuccess to simulate a confirmed write.
+    mockVestingWrites.addVesting.mutate
+      .mockReset()
+      .mockImplementation(
+        (_vars: unknown, opts?: { onSuccess?: () => void; onError?: (e: Error) => void }) => {
+          opts?.onSuccess?.()
+        }
+      )
     wrapper = mountComponent()
   })
 
@@ -288,12 +296,12 @@ describe('CreateVesting.vue', () => {
       await wrapper.vm.$nextTick()
 
       expect(mockWriteContract.mutateAsync).toHaveBeenCalled()
-
-      mockVestingWrites.addVesting.isSuccess.value = true
+      // mutate's onSuccess (configured in beforeEach) resets the form
       await wrapper.vm.$nextTick()
 
       expect((wrapper.vm as unknown as { totalAmount: number }).totalAmount).toBe(0)
       expect((wrapper.vm as unknown as { cliff: number }).cliff).toBe(0)
+      expect(mockVestingWrites.addVesting.mutate).toHaveBeenCalled()
     })
     it('prevents submission when form is invalid', async () => {
       ;(wrapper.vm as unknown as { totalAmount: number }).totalAmount = 0

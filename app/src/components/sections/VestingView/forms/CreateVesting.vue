@@ -366,34 +366,6 @@ watch(allowanceError, () => {
 
 const addVestingWrite = useVestingAddVestingWrite()
 
-watch(
-  () => addVestingWrite.isSuccess.value,
-  (success) => {
-    if (success) {
-      toast.add({ title: 'vesting added successfully', color: 'success' })
-      cliff.value = 0
-      totalAmount.value = 0
-      dateRange.value = null
-      calendarRange.value = null
-      member.value = { name: '', address: '' }
-      duration.value = { years: 0, months: 0, days: 0 }
-      showSummary.value = false
-      emit('closeAddVestingModal')
-      emit('reload')
-    }
-  }
-)
-
-watch(
-  () => addVestingWrite.error.value,
-  (err) => {
-    if (err) {
-      toast.add({ title: 'Add vesting failed', color: 'error' })
-      console.error('add vesting error', err)
-    }
-  }
-)
-
 const approvalAmountUnits = ref<bigint>(0n)
 const approveTokenWrite = useERC20Approve(vestingTokenAddress)
 
@@ -461,16 +433,36 @@ async function submit() {
     toast.add({ title: 'Allowance is less than the total amount', color: 'error' })
     return
   }
-  await addVestingWrite.mutateAsync({
-    args: [
-      BigInt(teamStore.currentTeamId ?? 0),
-      member.value.address as Address,
-      BigInt(start),
-      BigInt(durationInSeconds),
-      BigInt(cliffInSeconds),
-      totalAmountInUnits,
-      props.tokenAddress as Address
-    ]
-  })
+  addVestingWrite.mutate(
+    {
+      args: [
+        BigInt(teamStore.currentTeamId ?? 0),
+        member.value.address as Address,
+        BigInt(start),
+        BigInt(durationInSeconds),
+        BigInt(cliffInSeconds),
+        totalAmountInUnits,
+        props.tokenAddress as Address
+      ]
+    },
+    {
+      onSuccess: () => {
+        toast.add({ title: 'vesting added successfully', color: 'success' })
+        cliff.value = 0
+        totalAmount.value = 0
+        dateRange.value = null
+        calendarRange.value = null
+        member.value = { name: '', address: '' }
+        duration.value = { years: 0, months: 0, days: 0 }
+        showSummary.value = false
+        emit('closeAddVestingModal')
+        emit('reload')
+      },
+      onError: (err) => {
+        toast.add({ title: 'Add vesting failed', color: 'error' })
+        console.error('add vesting error', err)
+      }
+    }
+  )
 }
 </script>
