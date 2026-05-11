@@ -10,6 +10,8 @@ import {
   type EventsByCampaignCode
 } from '@/lib/campaign/events'
 
+type ConfiguredChainId = (typeof config)['chains'][number]['id']
+
 export function useCampaignEventsByCode(
   contractAddress: MaybeRef<Address | undefined>,
   options?: { enabled?: MaybeRef<boolean> }
@@ -22,7 +24,9 @@ export function useCampaignEventsByCode(
     queryKey: ['campaign', 'events', address, chainId],
     enabled,
     queryFn: async () => {
-      const client = getPublicClient(config, { chainId: chainId.value }) as PublicClient
+      const client = getPublicClient(config, {
+        chainId: chainId.value as ConfiguredChainId
+      }) as PublicClient
       const logs = await fetchCampaignLogs(client, address.value!)
       return groupCampaignEventsByCode(logs)
     }
