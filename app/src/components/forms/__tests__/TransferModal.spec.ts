@@ -120,8 +120,7 @@ describe('TransferModal', () => {
     mockUseReadContract.data.value = mockUserStore.address
     mockBodIsBodAction.isBodAction.value = false
     mockBodAddAction.isPending.value = false
-    mockBodAddAction.isConfirming.value = false
-    mockBodAddAction.isActionAdded.value = false
+    mockBodAddAction.isSuccess.value = false
     mockBankWrites.transfer.isPending.value = false
     mockBankWrites.transferToken.isPending.value = false
     // Default: invoke onSuccess to simulate successful mutation
@@ -287,7 +286,7 @@ describe('TransferModal', () => {
     vm.errorMessage = 'Something failed'
     await nextTick()
 
-    mockBodAddAction.isActionAdded.value = true
+    mockBodAddAction.isSuccess.value = true
     await nextTick()
     expect(vm.modal.show).toBe(false)
     expect(vm.errorMessage).toBe('')

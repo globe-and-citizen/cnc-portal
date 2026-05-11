@@ -95,8 +95,7 @@ const isBankOwner = computed(() => bankOwner.value === userStore.address)
 const {
   executeAddAction: addAction,
   isPending: isLoadingAddAction,
-  isConfirming: isConfirmingAddAction,
-  isActionAdded
+  isSuccess: isActionAdded
 } = useBodAddAction()
 
 // Modal state
@@ -112,11 +111,7 @@ const transferToken = useTransferToken()
 
 // Computed loading state
 const isLoading = computed(
-  () =>
-    transferNative.isPending.value ||
-    transferToken.isPending.value ||
-    isLoadingAddAction.value ||
-    isConfirmingAddAction.value
+  () => transferNative.isPending.value || transferToken.isPending.value || isLoadingAddAction.value
 )
 
 // Get available tokens for transfer

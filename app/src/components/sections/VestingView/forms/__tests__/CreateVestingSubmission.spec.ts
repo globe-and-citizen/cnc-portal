@@ -6,6 +6,7 @@ import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
 import { parseUnits } from 'viem'
 import { mockUseContractBalance } from '@/tests/mocks/composables.mock'
+import { mockVestingWrites } from '@/tests/mocks/contract.mock'
 import { CalendarDate } from '@internationalized/date'
 
 // vi.mock('@/artifacts/abi/InvestorV1', () => MOCK_INVESTOR_ABI)
@@ -231,6 +232,16 @@ describe('CreateVesting.vue', () => {
     mockWriteContract.error.value = null
     mockWaitForReceipt.isLoading.value = false
     mockWaitForReceipt.isSuccess.value = false
+    mockVestingWrites.addVesting.isSuccess.value = false
+    mockVestingWrites.addVesting.error.value = null
+    // Default: mutate invokes onSuccess to simulate a confirmed write.
+    mockVestingWrites.addVesting.mutate
+      .mockReset()
+      .mockImplementation(
+        (_vars: unknown, opts?: { onSuccess?: () => void; onError?: (e: Error) => void }) => {
+          opts?.onSuccess?.()
+        }
+      )
     wrapper = mountComponent()
   })
 
@@ -285,15 +296,12 @@ describe('CreateVesting.vue', () => {
       await wrapper.vm.$nextTick()
 
       expect(mockWriteContract.mutateAsync).toHaveBeenCalled()
-
-      mockWaitForReceipt.isLoading.value = true
-      await wrapper.vm.$nextTick()
-      mockWaitForReceipt.isSuccess.value = true
-      mockWaitForReceipt.isLoading.value = false
+      // mutate's onSuccess (configured in beforeEach) resets the form
       await wrapper.vm.$nextTick()
 
       expect((wrapper.vm as unknown as { totalAmount: number }).totalAmount).toBe(0)
       expect((wrapper.vm as unknown as { cliff: number }).cliff).toBe(0)
+      expect(mockVestingWrites.addVesting.mutate).toHaveBeenCalled()
     })
     it('prevents submission when form is invalid', async () => {
       ;(wrapper.vm as unknown as { totalAmount: number }).totalAmount = 0

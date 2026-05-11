@@ -1,44 +1,28 @@
-import { computed, type MaybeRef } from 'vue'
+import { computed } from 'vue'
 import type { ExtractAbiFunctionNames } from 'abitype'
 import { VESTING_ABI } from '@/artifacts/abi/vesting'
-import { useContractWrites } from '@/composables/contracts/useContractWritesV2'
+import { useContractWritesV3 } from '@/composables/contracts/useContractWritesV3'
 import { useVestingAddress } from './reads'
 
 type VestingFunctionNames = ExtractAbiFunctionNames<typeof VESTING_ABI>
 
-export function useVestingContractWrite(options: {
-  functionName: VestingFunctionNames
-  args?: MaybeRef<readonly unknown[]>
-  value?: MaybeRef<bigint>
-}) {
+function useVestingContractWrite(functionName: VestingFunctionNames) {
   const vestingAddress = useVestingAddress()
-
-  return useContractWrites({
+  return useContractWritesV3({
     contractAddress: computed(() => vestingAddress.value ?? undefined),
     abi: VESTING_ABI,
-    functionName: options.functionName,
-    args: options.args ?? [],
-    ...(options.value !== undefined ? { value: options.value } : {})
+    functionName
   })
 }
 
 export function useVestingAddVestingWrite() {
-  return useVestingContractWrite({
-    functionName: 'addVesting',
-    args: []
-  })
+  return useVestingContractWrite('addVesting')
 }
 
 export function useVestingStopVestingWrite() {
-  return useVestingContractWrite({
-    functionName: 'stopVesting',
-    args: []
-  })
+  return useVestingContractWrite('stopVesting')
 }
 
 export function useVestingReleaseWrite() {
-  return useVestingContractWrite({
-    functionName: 'release',
-    args: []
-  })
+  return useVestingContractWrite('release')
 }

@@ -349,12 +349,7 @@ watch(
   }
 )
 
-const loading = computed(() => {
-  const vestingCreationPending =
-    loadingAddVesting.value || (isConfirmingAddVesting.value && !isConfirmedAddVesting.value)
-
-  return approveTokenWrite.isPending.value || vestingCreationPending
-})
+const loading = computed(() => approveTokenWrite.isPending.value || addVestingWrite.isPending.value)
 
 const {
   data: allowance,
@@ -370,34 +365,6 @@ watch(allowanceError, () => {
 })
 
 const addVestingWrite = useVestingAddVestingWrite()
-const loadingAddVesting = computed(() => addVestingWrite.writeResult.isPending.value)
-const isConfirmingAddVesting = computed(() => addVestingWrite.receiptResult.isLoading.value)
-const isConfirmedAddVesting = computed(() => addVestingWrite.receiptResult.isSuccess.value)
-const errorAddVesting = computed(
-  () => addVestingWrite.writeResult.error.value || addVestingWrite.receiptResult.error.value
-)
-
-watch(isConfirmingAddVesting, async (isConfirming, wasConfirming) => {
-  if (wasConfirming && !isConfirming && isConfirmedAddVesting.value) {
-    toast.add({ title: 'vesting added successfully', color: 'success' })
-    cliff.value = 0
-    totalAmount.value = 0
-    dateRange.value = null
-    calendarRange.value = null
-    member.value = { name: '', address: '' }
-    duration.value = { years: 0, months: 0, days: 0 }
-    showSummary.value = false
-    emit('closeAddVestingModal')
-    emit('reload')
-  }
-})
-
-watch(errorAddVesting, () => {
-  if (errorAddVesting.value) {
-    toast.add({ title: 'Add vesting failed', color: 'error' })
-    console.error('add vesting error', errorAddVesting.value)
-  }
-})
 
 const approvalAmountUnits = ref<bigint>(0n)
 const approveTokenWrite = useERC20Approve(vestingTokenAddress)
@@ -466,18 +433,36 @@ async function submit() {
     toast.add({ title: 'Allowance is less than the total amount', color: 'error' })
     return
   }
-  await addVestingWrite.executeWrite(
-    [
-      BigInt(teamStore.currentTeamId ?? 0),
-      member.value.address as Address,
-      BigInt(start),
-      BigInt(durationInSeconds),
-      BigInt(cliffInSeconds),
-      totalAmountInUnits,
-      props.tokenAddress as Address
-    ],
-    undefined,
-    { skipGasEstimation: true }
+  addVestingWrite.mutate(
+    {
+      args: [
+        BigInt(teamStore.currentTeamId ?? 0),
+        member.value.address as Address,
+        BigInt(start),
+        BigInt(durationInSeconds),
+        BigInt(cliffInSeconds),
+        totalAmountInUnits,
+        props.tokenAddress as Address
+      ]
+    },
+    {
+      onSuccess: () => {
+        toast.add({ title: 'vesting added successfully', color: 'success' })
+        cliff.value = 0
+        totalAmount.value = 0
+        dateRange.value = null
+        calendarRange.value = null
+        member.value = { name: '', address: '' }
+        duration.value = { years: 0, months: 0, days: 0 }
+        showSummary.value = false
+        emit('closeAddVestingModal')
+        emit('reload')
+      },
+      onError: (err) => {
+        toast.add({ title: 'Add vesting failed', color: 'error' })
+        console.error('add vesting error', err)
+      }
+    }
   )
 }
 </script>
