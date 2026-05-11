@@ -1,131 +1,49 @@
-import { ref } from 'vue'
-import { useConnection } from '@wagmi/vue'
-import Safe, { type SafeAccountConfig } from '@safe-global/protocol-kit'
-import type { SafeVersion } from '@safe-global/types-kit'
 import { isAddress } from 'viem'
-
-import { getInjectedProvider, randomSaltNonce } from '@/utils/safe' // Use centralized utils
-
-const SAFE_VERSION: SafeVersion = '1.4.1'
+import { useDeploySafeMutation } from '@/queries/safe.mutations'
 
 /**
- * Deploy a new Safe
+ * Thin compatibility wrapper around Safe deployment mutation.
  */
 export function useSafeDeployment() {
-  const connection = useConnection()
-
   const toast = useToast()
-
-  const isDeploying = ref(false)
-  const error = ref<Error | null>(null)
+  const { mutateAsync: deploy, isPending: isDeploying, error } = useDeploySafeMutation()
 
   const deploySafe = async (owners: string[], threshold: number): Promise<string | null> => {
-    if (!connection.isConnected.value || !connection.address.value) {
-      error.value = new Error('Wallet not connected')
-      toast.add({ title: 'Error', description: 'Please connect your wallet', color: 'error' })
-      return null
-    }
-
-    // Validation
     if (!owners || owners.length === 0) {
-      error.value = new Error('At least one owner required')
       toast.add({ title: 'Error', description: 'At least one owner required', color: 'error' })
       return null
     }
 
-    if (threshold < 1 || threshold > owners.length) {
-      error.value = new Error(`Threshold must be between 1 and ${owners.length}`)
-      toast.add({
-        title: 'Error',
-        description: `Threshold must be between 1 and ${owners.length}`,
-        color: 'error'
-      })
-      return null
-    }
-
-    owners.forEach((owner, i) => {
+    for (const owner of owners) {
       if (!isAddress(owner)) {
-        error.value = new Error(`Invalid owner address [${i}]: ${owner}`)
         toast.add({
           title: 'Error',
           description: `Invalid owner address: ${owner}`,
           color: 'error'
         })
-        throw error.value
+        return null
       }
-    })
-
-    isDeploying.value = true
-    error.value = null
+    }
 
     try {
-      // Use centralized utilities (no duplication)
-      const provider = getInjectedProvider()
-      const saltNonce = randomSaltNonce()
+      const safeAddress = await deploy({ owners, threshold })
 
-      const safeAccountConfig: SafeAccountConfig = {
-        owners,
-        threshold
-      }
-
-      const predictedSafe = {
-        safeAccountConfig,
-        safeDeploymentConfig: {
-          saltNonce,
-          safeVersion: SAFE_VERSION
-        }
-      }
-
-      // Initialize Protocol Kit with predicted Safe
-      const safeSdk = await Safe.init({
-        provider,
-        signer: connection.address.value,
-        predictedSafe
-      })
-
-      const deploymentTx = await safeSdk.createSafeDeploymentTransaction()
-      const walletClient = await safeSdk.getSafeProvider().getExternalSigner()
-
-      if (!walletClient) {
-        throw new Error('Wallet signer not available')
-      }
-
-      // Send deployment transaction
-      const txHash = await walletClient.sendTransaction({
-        account: walletClient.account,
-        to: deploymentTx.to as `0x${string}`,
-        data: deploymentTx.data as `0x${string}`,
-        value: BigInt(deploymentTx.value || '0'),
-        chain: null
-      })
-
-      // Wait for deployment
-      const publicClient = safeSdk.getSafeProvider().getExternalProvider()
-      await publicClient.waitForTransactionReceipt({ hash: txHash })
-
-      const safeAddress = await safeSdk.getAddress()
       toast.add({
-        title: 'Succes',
+        title: 'Success',
         description: `Safe deployed successfully at ${safeAddress}`,
         color: 'success'
       })
 
       return safeAddress
     } catch (err) {
-      error.value = err instanceof Error ? err : new Error('Failed to deploy Safe')
-      console.error('Safe deployment error:', err)
+      const message = err instanceof Error ? err.message : 'Failed to deploy Safe'
 
       toast.add({
         title: 'Error',
-        description: error.value.message.includes('User rejected')
-          ? 'Transaction approval rejected'
-          : error.value.message,
+        description: message.includes('User rejected') ? 'Transaction approval rejected' : message,
         color: 'error'
       })
-
       return null
-    } finally {
-      isDeploying.value = false
     }
   }
 

@@ -112,6 +112,7 @@
 </template>
 
 <script setup lang="ts">
+/* eslint-disable max-lines */
 import { watch, computed, ref } from 'vue'
 import { useAccount } from '@wagmi/vue'
 import type { SafeTransaction } from '@/types/safe'
@@ -123,7 +124,10 @@ import SafeTransactionDetailsModal from './SafeTransactionDetailsModal.vue'
 
 // Stores and composables
 import { useGetSafeTransactionsQuery, useGetSafeInfoQuery } from '@/queries/safe.queries'
-import { useSafeApproval, useSafeExecution } from '@/composables/safe'
+import {
+  useApproveTransactionMutation,
+  useExecuteTransactionMutation
+} from '@/queries/safe.mutations'
 import { useSafeTransactionConflicts } from '@/composables/safe/useSafeTransactionConflicts'
 import SafeTransactionStatusFilter, {
   type SafeTransactionStatus
@@ -139,6 +143,7 @@ interface Props {
 }
 
 const props = defineProps<Props>()
+const toast = useToast()
 
 // Status filtering
 const selectedStatus = ref<SafeTransactionStatus>('all')
@@ -167,8 +172,8 @@ const { data: safeInfo } = useGetSafeInfoQuery({
 })
 
 // Safe operations
-const { approveTransaction, isApproving } = useSafeApproval()
-const { executeTransaction, isExecuting } = useSafeExecution()
+const { mutateAsync: approve, isPending: isApproving } = useApproveTransactionMutation()
+const { mutateAsync: execute, isPending: isExecuting } = useExecuteTransactionMutation()
 
 // Transaction conflict detection - now only needs safeAddress!
 const { isTransactionNonceValid, hasConflictingTransactions, willApprovalCauseConflict } =
@@ -305,8 +310,26 @@ const handleApproveTransaction = async (transaction: SafeTransaction) => {
   const safeAddress = props.address
   if (!safeAddress) return
   approvingTransactions.value.add(transaction.safeTxHash)
-  await approveTransaction(safeAddress, transaction.safeTxHash)
-  approvingTransactions.value.delete(transaction.safeTxHash)
+  try {
+    await approve({
+      safeAddress,
+      safeTxHash: transaction.safeTxHash
+    })
+    toast.add({
+      title: 'Success',
+      description: 'Transaction approved successfully',
+      color: 'success'
+    })
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Failed to approve transaction'
+    toast.add({
+      title: 'Error',
+      description: message.includes('User rejected') ? 'Transaction rejected' : message,
+      color: 'error'
+    })
+  } finally {
+    approvingTransactions.value.delete(transaction.safeTxHash)
+  }
 }
 
 const handleExecuteClick = (transaction: SafeTransaction) => {
@@ -342,8 +365,27 @@ const handleExecuteTransaction = async (transaction: SafeTransaction) => {
   const safeAddress = props.address
   if (!safeAddress) return
   executingTransactions.value.add(transaction.safeTxHash)
-  await executeTransaction(safeAddress, transaction.safeTxHash, transaction)
-  executingTransactions.value.delete(transaction.safeTxHash)
+  try {
+    await execute({
+      safeAddress,
+      safeTxHash: transaction.safeTxHash,
+      transactionData: transaction
+    })
+    toast.add({
+      title: 'Success',
+      description: 'Transaction executed successfully',
+      color: 'success'
+    })
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Failed to execute transaction'
+    toast.add({
+      title: 'Error',
+      description: message.includes('User rejected') ? 'Transaction rejected' : message,
+      color: 'error'
+    })
+  } finally {
+    executingTransactions.value.delete(transaction.safeTxHash)
+  }
 }
 
 const handleStatusChange = (status: SafeTransactionStatus) => {

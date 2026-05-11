@@ -1,84 +1,56 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ref } from 'vue'
 import { useSafeDeployment } from '../useSafeDeployment'
 
-// Hoisted mocks
-const { mockUseConnection, mockSafeInit, mockSendTransaction, mockWaitForReceipt, mockGetAddress } =
-  vi.hoisted(() => ({
-    mockUseConnection: vi.fn(),
-    mockSafeInit: vi.fn(),
-    mockSendTransaction: vi.fn(),
-    mockWaitForReceipt: vi.fn(),
-    mockGetAddress: vi.fn()
-  }))
+const mockMutateAsync = vi.fn()
+const isPending = ref(false)
+const error = ref<Error | null>(null)
 
-// Mock external dependencies
-vi.mock('@wagmi/vue', () => ({
-  useConnection: mockUseConnection
-}))
-
-vi.mock('@safe-global/protocol-kit', () => ({
-  __esModule: true,
-  default: {
-    init: mockSafeInit
-  }
-}))
-
-vi.mock('@/utils/safe', () => ({
-  getInjectedProvider: vi.fn(() => ({ provider: true })),
-  randomSaltNonce: vi.fn(() => '0xsalt')
+vi.mock('@/queries/safe.mutations', () => ({
+  useDeploySafeMutation: () => ({
+    mutateAsync: mockMutateAsync,
+    isPending,
+    error
+  })
 }))
 
 describe('useSafeDeployment', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    isPending.value = false
+    error.value = null
+    vi.stubGlobal('useToast', () => ({ add: vi.fn() }))
   })
 
-  it('returns null and shows toast when wallet is not connected', async () => {
-    mockUseConnection.mockReturnValue({
-      isConnected: ref(false),
-      address: ref(null)
-    })
-
+  it('returns null for empty owners', async () => {
     const { deploySafe } = useSafeDeployment()
-    const result = await deploySafe(['0xowner'], 1)
+
+    const result = await deploySafe([], 1)
 
     expect(result).toBeNull()
-    // TODO: Re-enable toast verification once implementation is fixed
-    // expect(mockAddErrorToast).toHaveBeenCalledWith('Please connect your wallet')
+    expect(mockMutateAsync).not.toHaveBeenCalled()
   })
 
-  it('deploys a Safe and returns address', async () => {
-    mockUseConnection.mockReturnValue({
-      isConnected: ref(true),
-      address: ref('0x1234567890123456789012345678901234567890')
-    })
-
-    mockSafeInit.mockResolvedValue({
-      createSafeDeploymentTransaction: vi.fn().mockResolvedValue({
-        to: '0x1111111111111111111111111111111111111111',
-        data: '0x',
-        value: '0'
-      }),
-      getSafeProvider: () => ({
-        getExternalSigner: () => ({
-          account: '0x1234567890123456789012345678901234567890',
-          sendTransaction: mockSendTransaction.mockResolvedValue('0xtxhash')
-        }),
-        getExternalProvider: () => ({
-          waitForTransactionReceipt: mockWaitForReceipt
-        })
-      }),
-      getAddress: mockGetAddress.mockResolvedValue('0xSAFEADDRESS')
-    })
-
+  it('calls mutation and returns safe address', async () => {
+    mockMutateAsync.mockResolvedValueOnce('0x1111111111111111111111111111111111111111')
     const { deploySafe } = useSafeDeployment()
-    const result = await deploySafe(['0x1234567890123456789012345678901234567890'], 1)
 
-    expect(result).toBe('0xSAFEADDRESS')
-    expect(mockSendTransaction).toHaveBeenCalled()
-    expect(mockWaitForReceipt).toHaveBeenCalledWith({ hash: '0xtxhash' })
-    // TODO: Re-enable toast verification once implementation is fixed
-    // expect(mockAddSuccessToast).toHaveBeenCalledWith('Safe deployed successfully at 0xSAFEADDRESS')
+    const result = await deploySafe(['0x1111111111111111111111111111111111111111'], 1)
+
+    expect(result).toBe('0x1111111111111111111111111111111111111111')
+    expect(mockMutateAsync).toHaveBeenCalledWith({
+      owners: ['0x1111111111111111111111111111111111111111'],
+      threshold: 1
+    })
+  })
+
+  it('exposes mutation state', () => {
+    isPending.value = true
+    error.value = new Error('boom')
+
+    const { isDeploying, error: exposedError } = useSafeDeployment()
+
+    expect(isDeploying.value).toBe(true)
+    expect(exposedError.value?.message).toBe('boom')
   })
 })

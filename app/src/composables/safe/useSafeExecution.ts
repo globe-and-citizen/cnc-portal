@@ -1,109 +1,43 @@
-import { ref } from 'vue'
-import { useConnection, useChainId } from '@wagmi/vue'
 import { isAddress } from 'viem'
+import type { SafeTransaction } from '@/types/safe'
 import { useExecuteTransactionMutation } from '@/queries/safe.mutations'
-import { useSafeSDK } from './useSafeSdk'
-import type { SafeTransaction, SafeMultisigTransactionResponse } from '@/types/safe'
-import { transformToSafeMultisigResponse } from '@/utils/safe'
 
 /**
- * Execute Safe transactions
+ * Thin compatibility wrapper around Safe execution mutation.
  */
 export function useSafeExecution() {
-  const connection = useConnection()
-  const chainId = useChainId()
   const toast = useToast()
-  const mutation = useExecuteTransactionMutation()
-  const { loadSafe } = useSafeSDK()
+  const { mutateAsync: execute, isPending: isExecuting, error } = useExecuteTransactionMutation()
 
-  const isExecuting = ref(false)
-  const error = ref<Error | null>(null)
-
-  /**
-   * Execute a Safe transaction on-chain
-   * @param safeAddress - Safe wallet address
-   * @param safeTxHash - Transaction hash
-   * @param transactionData - Optional transaction data (avoids additional query)
-   */
   const executeTransaction = async (
     safeAddress: string,
     safeTxHash: string,
     transactionData?: SafeTransaction
   ): Promise<string | null> => {
     if (!isAddress(safeAddress)) {
-      error.value = new Error('Invalid Safe address')
-      toast.add({
-        title: 'Error',
-        description: 'Invalid Safe address',
-        color: 'error'
-      })
+      toast.add({ title: 'Error', description: 'Invalid Safe address', color: 'error' })
       return null
     }
 
     if (!safeTxHash) {
-      error.value = new Error('Missing Safe transaction hash')
+      toast.add({ title: 'Error', description: 'Missing Safe transaction hash', color: 'error' })
+      return null
+    }
+
+    if (!transactionData) {
       toast.add({
         title: 'Error',
-        description: 'Missing Safe transaction hash',
+        description: 'Transaction data is required',
         color: 'error'
       })
       return null
     }
-
-    if (!connection.isConnected.value || !connection.address.value) {
-      error.value = new Error('Wallet not connected')
-      toast.add({
-        title: 'Error',
-        description: 'Please connect your wallet',
-        color: 'error'
-      })
-      return null
-    }
-
-    isExecuting.value = true
-    error.value = null
 
     try {
-      const currentChainId = chainId.value
-
-      // Use provided transaction data or throw error
-      if (!transactionData) {
-        throw new Error(
-          'Transaction data is required. Please pass the transaction data from the component.'
-        )
-      }
-
-      // Use centralized SDK manager
-      const safeSdk = await loadSafe(safeAddress)
-
-      const sdkTransactionData: SafeMultisigTransactionResponse =
-        transformToSafeMultisigResponse(transactionData)
-      // Execute the transaction on-chain
-      const txResponse = await safeSdk.executeTransaction(sdkTransactionData)
-      const txHash =
-        (txResponse.transactionResponse as { hash?: string } | undefined)?.hash || txResponse.hash
-
-      // Wait for confirmation (if available)
-      const waitFn = (
-        txResponse.transactionResponse as { wait?: () => Promise<unknown> } | undefined
-      )?.wait
-
-      if (typeof waitFn === 'function') {
-        await waitFn()
-      }
-
-      // Trigger query invalidation
-      await mutation.mutateAsync({
-        pathParams: {
-          safeAddress,
-          safeTxHash
-        },
-        queryParams: {
-          chainId: currentChainId
-        },
-        body: {
-          txHash
-        }
+      const txHash = await execute({
+        safeAddress,
+        safeTxHash,
+        transactionData
       })
 
       toast.add({
@@ -113,19 +47,13 @@ export function useSafeExecution() {
       })
       return txHash
     } catch (err) {
-      error.value = err instanceof Error ? err : new Error('Failed to execute transaction')
-      console.error('Safe execution error:', err)
-
+      const message = err instanceof Error ? err.message : 'Failed to execute transaction'
       toast.add({
         title: 'Error',
-        description: error.value.message.includes('User rejected')
-          ? 'Transaction rejected'
-          : error.value.message,
+        description: message.includes('User rejected') ? 'Transaction rejected' : message,
         color: 'error'
       })
       return null
-    } finally {
-      isExecuting.value = false
     }
   }
 

@@ -124,13 +124,10 @@ import { useGetSafeInfoQuery } from '@/queries/safe.queries'
 import TransferForm, { type TransferModel } from '@/components/forms/TransferForm.vue'
 import type { TokenOption } from '@/types'
 import { useSafeTransfer } from '@/composables/safe'
-import { useQueryClient } from '@tanstack/vue-query'
 import DepositSafeForm from '@/components/forms/DepositSafeForm.vue'
-import { getTokenAddress } from '@/utils'
 
 const chainId = useChainId()
 const userDataStore = useUserDataStore()
-const queryClient = useQueryClient()
 const currency = useStorage('currency', {
   code: 'USD',
   name: 'US Dollar',
@@ -220,27 +217,6 @@ const resetTransferValues = () => {
   transferData.value = initialTransferDataValue()
 }
 
-const invalidateSafeBalances = async (safeAddress: Address) => {
-  await queryClient.invalidateQueries({
-    queryKey: ['balance', { address: safeAddress, chainId: chainId.value }]
-  })
-
-  const tokenAddresses = tokens.value
-    .map((token) => getTokenAddress(token.tokenId))
-    .filter((address): address is string => !!address)
-
-  await Promise.all(
-    tokenAddresses.map((tokenAddress) =>
-      queryClient.invalidateQueries({
-        queryKey: [
-          'readContract',
-          { address: tokenAddress as Address, args: [safeAddress], chainId: chainId.value }
-        ]
-      })
-    )
-  )
-}
-
 const handleTransfer = async (transferData: TransferModel) => {
   const safeAddress = props.address
   if (!safeAddress) return
@@ -254,10 +230,6 @@ const handleTransfer = async (transferData: TransferModel) => {
 
   if (result) {
     resetTransferValues()
-    await invalidateSafeBalances(safeAddress as Address)
-    await queryClient.invalidateQueries({
-      queryKey: ['safe', 'info', { safeAddress }]
-    })
   }
 }
 

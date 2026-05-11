@@ -56,7 +56,7 @@ import { Icon as IconifyIcon } from '@iconify/vue'
 import { isAddress } from 'viem'
 import { useTeamStore, useUserDataStore } from '@/stores'
 
-import { useSafeDeployment } from '@/composables/safe'
+import { useDeploySafeMutation } from '@/queries/safe.mutations'
 import { useCreateContractMutation } from '@/queries/contract.queries'
 import { log } from '@/utils'
 import { NETWORK } from '@/constant'
@@ -74,8 +74,7 @@ const toast = useToast()
 const teamStore = useTeamStore()
 const userDataStore = useUserDataStore()
 
-// Composables
-const { deploySafe, isDeploying } = useSafeDeployment()
+const { mutateAsync: deploySafe, isPending: isDeploying } = useDeploySafeMutation()
 const { mutateAsync: createContract } = useCreateContractMutation()
 
 const canDeploy = computed(
@@ -96,10 +95,19 @@ const handleDeploySafe = async () => {
     return
   }
 
-  const safeAddress = await deploySafe([userDataStore.address!], 1)
-
-  if (!safeAddress) {
-    // Error already handled by deploySafe composable
+  let safeAddress: string
+  try {
+    safeAddress = await deploySafe({
+      owners: [userDataStore.address!],
+      threshold: 1
+    })
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Failed to deploy Safe'
+    toast.add({
+      title: 'Error',
+      description: message.includes('User rejected') ? 'Transaction approval rejected' : message,
+      color: 'error'
+    })
     return
   }
 

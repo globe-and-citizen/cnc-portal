@@ -1,29 +1,148 @@
+import Safe, { type SafeAccountConfig } from '@safe-global/protocol-kit'
 import { useMutation, useQueryClient } from '@tanstack/vue-query'
-import type { SafeSignature, SafeDeploymentParams } from '@/types/safe'
-import { TX_SERVICE_BY_CHAIN, type ProposeTransactionParams } from '@/types/safe'
+import { useChainId, useConnection } from '@wagmi/vue'
+import { isAddress } from 'viem'
+
 import externalApiClient from '@/lib/external.axios.ts'
+import type {
+  ProposeTransactionBody,
+  SafeMultisigTransactionResponse,
+  SafeSignature,
+  SafeTransaction
+} from '@/types'
+import { SAFE_VERSION, TX_SERVICE_BY_CHAIN, type ProposeTransactionParams } from '@/types/safe'
+import { transformToSafeMultisigResponse } from '@/utils/safe'
+import { getInjectedProvider, randomSaltNonce } from '@/utils/safe'
 import { safeKeys } from './safe.queries'
-import type { ProposeTransactionBody, ExecuteTransactionParams } from '@/types'
+import { useSafeSDK } from '@/composables/safe/useSafeSdk'
 
-// ============================================================================
-// Deploy Safe - Mutation
-// ============================================================================
+interface DeploySafeParams {
+  owners: string[]
+  threshold: number
+}
 
-/**
- * Mutation: Deploy a new Safe
- *
- * @endpoint N/A - Deployment logic implemented in composable
- * @pathParams none
- * @queryParams none
- * @body none
- */
+export interface ApproveTransactionParams {
+  safeAddress: string
+  safeTxHash: string
+}
+
+interface ExecuteSafeTransactionParams {
+  safeAddress: string
+  safeTxHash: string
+  transactionData: SafeTransaction
+}
+
+export interface UpdateSafeOwnersParams {
+  pathParams: {
+    safeAddress: string
+  }
+  queryParams: {
+    chainId: number
+  }
+  body: {
+    ownersToAdd?: string[]
+    ownersToRemove?: string[]
+    newThreshold?: number
+    shouldPropose?: boolean
+    safeTxHash?: string
+    signature?: SafeSignature | string
+  }
+}
+
+function getTxServiceUrl(chainId: number): string {
+  const txService = TX_SERVICE_BY_CHAIN[chainId]
+  if (!txService) {
+    throw new Error(`Transaction service not configured for chain ${chainId}`)
+  }
+
+  return txService.url
+}
+
+async function postTransactionProposal(params: ProposeTransactionParams): Promise<void> {
+  const { chainId, safeAddress, safeTxHash, transactionData, sender, signature, origin } = params
+  const txServiceUrl = getTxServiceUrl(chainId)
+
+  const body: ProposeTransactionBody = {
+    ...transactionData,
+    contractTransactionHash: safeTxHash,
+    sender,
+    signature,
+    origin: origin || null
+  }
+
+  await externalApiClient.post(
+    `${txServiceUrl}/api/v1/safes/${safeAddress}/multisig-transactions/`,
+    body
+  )
+}
+
+function assertWalletConnected(connection: ReturnType<typeof useConnection>): string {
+  if (!connection.isConnected.value || !connection.address.value) {
+    throw new Error('Wallet not connected')
+  }
+
+  return connection.address.value
+}
+
 export function useDeploySafeMutation() {
   const queryClient = useQueryClient()
+  const connection = useConnection()
 
-  return useMutation<string, Error, SafeDeploymentParams>({
-    mutationFn: async () => {
-      // Deployment logic will be in the composable
-      throw new Error('Deploy Safe logic must be implemented in composable')
+  return useMutation<string, Error, DeploySafeParams>({
+    mutationFn: async ({ owners, threshold }) => {
+      const signer = assertWalletConnected(connection)
+
+      if (!owners.length) {
+        throw new Error('At least one owner required')
+      }
+
+      if (threshold < 1 || threshold > owners.length) {
+        throw new Error(`Threshold must be between 1 and ${owners.length}`)
+      }
+
+      owners.forEach((owner, index) => {
+        if (!isAddress(owner)) {
+          throw new Error(`Invalid owner address [${index}]: ${owner}`)
+        }
+      })
+
+      const provider = getInjectedProvider()
+      const safeAccountConfig: SafeAccountConfig = {
+        owners,
+        threshold
+      }
+
+      const safeSdk = await Safe.init({
+        provider,
+        signer,
+        predictedSafe: {
+          safeAccountConfig,
+          safeDeploymentConfig: {
+            saltNonce: randomSaltNonce(),
+            safeVersion: SAFE_VERSION
+          }
+        }
+      })
+
+      const deploymentTx = await safeSdk.createSafeDeploymentTransaction()
+      const walletClient = await safeSdk.getSafeProvider().getExternalSigner()
+
+      if (!walletClient) {
+        throw new Error('Wallet signer not available')
+      }
+
+      const txHash = await walletClient.sendTransaction({
+        account: walletClient.account,
+        to: deploymentTx.to as `0x${string}`,
+        data: deploymentTx.data as `0x${string}`,
+        value: BigInt(deploymentTx.value || '0'),
+        chain: null
+      })
+
+      const publicClient = safeSdk.getSafeProvider().getExternalProvider()
+      await publicClient.waitForTransactionReceipt({ hash: txHash })
+
+      return safeSdk.getAddress()
     },
     onSuccess: (safeAddress) => {
       queryClient.invalidateQueries({
@@ -33,107 +152,42 @@ export function useDeploySafeMutation() {
   })
 }
 
-// ============================================================================
-// POST /api/v1/multisig-transactions/{safeTxHash}/confirmations/ - Approve
-// ============================================================================
-
-/**
- * Request body for approving a transaction
- */
-export interface ApproveTransactionBody {
-  /** Signature data */
-  signature: string
-}
-
-/**
- * Combined parameters for useApproveTransactionMutation
- */
-export interface ApproveTransactionParams {
-  pathParams: {
-    /** Safe transaction hash */
-    safeTxHash: string
-    /** Safe address for query invalidation */
-    safeAddress: string
-  }
-  queryParams: {
-    /** Chain ID for transaction service lookup */
-    chainId: number
-  }
-  body: {
-    /** Signature data */
-    signature: SafeSignature
-  }
-}
-
-/**
- * Mutation: Approve a Safe transaction
- *
- * @endpoint POST {txService.url}/api/v1/multisig-transactions/{safeTxHash}/confirmations/
- * @pathParams { safeTxHash: string }
- * @queryParams { chainId: number }
- * @body { signature: string }
- */
 export function useApproveTransactionMutation() {
+  const chainId = useChainId()
+  const connection = useConnection()
   const queryClient = useQueryClient()
+  const { loadSafe } = useSafeSDK()
 
-  return useMutation<void, Error, ApproveTransactionParams>({
-    mutationFn: async (params: ApproveTransactionParams) => {
-      const { pathParams, queryParams, body } = params
-      const txService = TX_SERVICE_BY_CHAIN[queryParams.chainId]
-      if (!txService) throw new Error(`Unsupported chainId: ${queryParams.chainId}`)
+  return useMutation<string, Error, ApproveTransactionParams>({
+    mutationFn: async ({ safeAddress, safeTxHash }) => {
+      const signer = assertWalletConnected(connection)
 
-      await externalApiClient.post(
-        `${txService.url}/api/v1/multisig-transactions/${pathParams.safeTxHash}/confirmations/`,
-        { signature: body.signature.data }
-      )
-    },
-    onSuccess: (_, variables) => {
-      // Invalidate pending transactions
-      queryClient.invalidateQueries({
-        queryKey: safeKeys.transactions(variables.pathParams.safeAddress)
-      })
-    }
-  })
-}
-
-// ============================================================================
-// POST /api/v1/safes/{safeAddress}/multisig-transactions/ - Propose
-// ============================================================================
-
-/**
- * Mutation: Propose a Safe transaction
- *
- * @endpoint POST {txService.url}/api/v1/safes/{safeAddress}/multisig-transactions/
- * @pathParams { safeAddress: string }
- * @queryParams none
- * @body ProposeTransactionBody - full transaction data
- */
-export function useProposeTransactionMutation() {
-  const queryClient = useQueryClient()
-
-  return useMutation<void, Error, ProposeTransactionParams>({
-    mutationFn: async (params) => {
-      const { chainId, safeAddress, safeTxHash, transactionData, sender, signature, origin } =
-        params
-      const txServiceUrl = TX_SERVICE_BY_CHAIN[chainId]?.url
-
-      if (!txServiceUrl) {
-        throw new Error(`Transaction service not configured for chain ${chainId}`)
+      if (!isAddress(safeAddress)) {
+        throw new Error('Invalid Safe address')
       }
 
-      // Body: transaction data to propose
-      const body: ProposeTransactionBody = {
-        ...transactionData,
-        contractTransactionHash: safeTxHash,
-        sender,
-        signature,
-        origin: origin || null
+      if (!safeTxHash) {
+        throw new Error('Missing Safe transaction hash')
       }
 
+      const safeSdk = await loadSafe(safeAddress)
+      const signature = await safeSdk.signHash(safeTxHash)
+      const txServiceUrl = getTxServiceUrl(chainId.value)
+
       await externalApiClient.post(
-        `${txServiceUrl}/api/v1/safes/${safeAddress}/multisig-transactions/`,
-        body
+        `${txServiceUrl}/api/v1/multisig-transactions/${safeTxHash}/confirmations/`,
+        {
+          signature: signature.data
+        }
       )
+
+      // keep signer usage explicit for typed payload parity with previous flow
+      const _signedBy: SafeSignature = {
+        data: signature.data,
+        signer
+      }
+
+      return _signedBy.data
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
@@ -143,88 +197,71 @@ export function useProposeTransactionMutation() {
   })
 }
 
-// ============================================================================
-// Execute Safe transaction - Mutation
-// ============================================================================
-
-/**
- * Mutation: Execute a Safe transaction
- *
- * @endpoint N/A - Execution logic implemented in composable
- * @pathParams none
- * @queryParams none
- * @body none
- */
-export function useExecuteTransactionMutation() {
+export function useProposeTransactionMutation() {
   const queryClient = useQueryClient()
 
-  return useMutation<void, Error, ExecuteTransactionParams>({
-    mutationFn: async () => {
-      // Actual execution happens in the composable
-      // This mutation is just for query invalidation
-    },
+  return useMutation<void, Error, ProposeTransactionParams>({
+    mutationFn: postTransactionProposal,
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
-        queryKey: safeKeys.info(variables.pathParams.safeAddress)
-      })
-      queryClient.invalidateQueries({
-        queryKey: safeKeys.transactions(variables.pathParams.safeAddress)
+        queryKey: safeKeys.transactions(variables.safeAddress)
       })
     }
   })
 }
 
-// ============================================================================
-// Update Safe owners - Mutation
-// ============================================================================
+export function useExecuteTransactionMutation() {
+  const connection = useConnection()
+  const queryClient = useQueryClient()
+  const { loadSafe } = useSafeSDK()
 
-/**
- * Combined parameters for useUpdateSafeOwnersMutation
- */
-export interface UpdateSafeOwnersParams {
-  pathParams: {
-    /** Safe address for query invalidation */
-    safeAddress: string
-  }
-  queryParams: {
-    /** Chain ID for transaction service lookup */
-    chainId: number
-  }
-  body: {
-    /** Owners to add */
-    ownersToAdd?: string[]
-    /** Owners to remove */
-    ownersToRemove?: string[]
-    /** New threshold */
-    newThreshold?: number
-    /** Whether to propose the transaction */
-    shouldPropose?: boolean
-    /** Safe transaction hash */
-    safeTxHash?: string
-    /** Signature data */
-    signature?: SafeSignature | string
-  }
+  return useMutation<string, Error, ExecuteSafeTransactionParams>({
+    mutationFn: async ({ safeAddress, safeTxHash, transactionData }) => {
+      assertWalletConnected(connection)
+
+      if (!isAddress(safeAddress)) {
+        throw new Error('Invalid Safe address')
+      }
+
+      if (!safeTxHash) {
+        throw new Error('Missing Safe transaction hash')
+      }
+
+      const safeSdk = await loadSafe(safeAddress)
+
+      const sdkTransactionData: SafeMultisigTransactionResponse =
+        transformToSafeMultisigResponse(transactionData)
+      const txResponse = await safeSdk.executeTransaction(sdkTransactionData)
+      const txHash =
+        (txResponse.transactionResponse as { hash?: string } | undefined)?.hash || txResponse.hash
+
+      const waitFn = (
+        txResponse.transactionResponse as { wait?: () => Promise<unknown> } | undefined
+      )?.wait
+
+      if (typeof waitFn === 'function') {
+        await waitFn()
+      }
+
+      return txHash
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: safeKeys.info(variables.safeAddress)
+      })
+      queryClient.invalidateQueries({
+        queryKey: safeKeys.transactions(variables.safeAddress)
+      })
+    }
+  })
 }
 
-/**
- * Mutation: Update Safe owners
- *
- * @endpoint N/A - Update logic implemented in composable
- * @pathParams none
- * @queryParams none
- * @body none
- */
 export function useUpdateSafeOwnersMutation() {
   const queryClient = useQueryClient()
 
   return useMutation<void, Error, UpdateSafeOwnersParams>({
-    mutationFn: async () => {
-      // Actual update happens in the composable
-      // This mutation is just for query invalidation
-    },
+    mutationFn: async () => undefined,
     onSuccess: (_, variables) => {
-      console.log('the variables in useUpdateSafeOwnersMutation onSuccess:', variables)
-
       queryClient.invalidateQueries({
         queryKey: safeKeys.info(variables.pathParams.safeAddress)
       })
