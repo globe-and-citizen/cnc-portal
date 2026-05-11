@@ -34,8 +34,7 @@ export interface ExtendedBudgetWithdrawnEvent extends BudgetWithdrawnArgs {
   eventName: 'BudgetWithdrawn'
 }
 
-export interface ExtendedPaymentReleasedOnWithdrawApprovalEvent
-  extends PaymentReleasedOnWithdrawApprovalArgs {
+export interface ExtendedPaymentReleasedOnWithdrawApprovalEvent extends PaymentReleasedOnWithdrawApprovalArgs {
   eventName: 'PaymentReleasedOnWithdrawApproval'
 }
 
@@ -110,7 +109,9 @@ export async function fetchCampaignLogs(
     adCreated: adCreated as readonly { args: AdCampaignCreatedArgs }[],
     released: released as readonly { args: PaymentReleasedArgs }[],
     withdrawn: withdrawn as readonly { args: BudgetWithdrawnArgs }[],
-    releasedOnApproval: releasedOnApproval as readonly { args: PaymentReleasedOnWithdrawApprovalArgs }[]
+    releasedOnApproval: releasedOnApproval as readonly {
+      args: PaymentReleasedOnWithdrawApprovalArgs
+    }[]
   }
 }
 
