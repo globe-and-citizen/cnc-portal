@@ -69,6 +69,19 @@ After cloning: `npm install` in each subproject you'll touch (`app/`, `backend/`
 
 **Frontend mutation pattern.** Mutations are a pure async function plus a `useXxxMutation` composable wrapping `@tanstack/vue-query`. Use `onSuccess` / `onError` callbacks rather than awaiting + try/catch in components. Surface errors reactively via `UAlert`. Issue #1776 documents the canonical pattern.
 
+**One hook per endpoint, not per action.** In `app/src/queries/**`, do not create multiple mutation or query hooks that share the same `method` + `endpoint` and differ only by request body or query params. Reuse the single existing hook and vary the input at the call site; on the read side, add a query param instead of forking the hook. Example: archive / unarchive / hide / show all reuse `useUpdateTeamMutation` — they do not need their own hooks. Reason: forking creates near-duplicate code, multiplies the query-key surface, and forces components to import N hooks where one would do. See issue #1903.
+
+```ts
+const { mutate: updateTeam, reset } = useUpdateTeamMutation()
+
+function archive() {
+  updateTeam(
+    { pathParams: { id: teamId }, body: { isArchived: true } },
+    { onSuccess: () => reset() }
+  )
+}
+```
+
 **Single source of truth.** Prefer deriving values (computed / selectors) over denormalizing or duplicating state. Don't mirror server data into Pinia stores when a query already owns it — even if the refactor is non-trivial.
 
 **Chain config.** Deployed contract addresses are per-chain JSON files committed under `app/src/artifacts/deployed_addresses/`. After local deploys, `app/package.json` exposes `git:ignore-locally` to keep local-only `chain-31337.json` edits out of commits.
