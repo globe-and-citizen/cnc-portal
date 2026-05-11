@@ -16,7 +16,9 @@ const ClaimFormStub = defineComponent({
     initialData: { type: Object, required: false },
     isLoading: { type: Boolean, required: false },
     disabledWeekStarts: { type: Array, required: false },
-    restrictSubmit: { type: Boolean, required: false }
+    restrictSubmit: { type: Boolean, required: false },
+    errorMessage: { type: String, required: false, default: '' },
+    errorTitle: { type: String, required: false, default: '' }
   },
   emits: ['submit'],
   setup(_, { expose }) {

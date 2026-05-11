@@ -7,20 +7,11 @@
       :is-loading="isUpdating"
       :restrict-submit="isRestricted"
       :existing-files="existingFiles"
+      :error-message="updateClaimError?.message ?? ''"
+      error-title="Failed to update claim"
       @submit="updateClaim"
       @cancel="$emit('close')"
       @delete-file="deleteFile"
-    />
-
-    <UAlert
-      v-if="updateClaimError"
-      color="error"
-      variant="soft"
-      icon="i-heroicons-x-circle"
-      title="Failed to update claim"
-      :description="updateClaimError.message"
-      class="mt-4"
-      data-test="edit-claim-error"
     />
   </div>
 </template>

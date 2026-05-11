@@ -50,7 +50,9 @@ const ClaimFormStub = defineComponent({
     isEdit: { type: Boolean, required: false },
     isLoading: { type: Boolean, required: false },
     restrictSubmit: { type: Boolean, required: false },
-    existingFiles: { type: Array, required: false }
+    existingFiles: { type: Array, required: false },
+    errorMessage: { type: String, required: false, default: '' },
+    errorTitle: { type: String, required: false, default: '' }
   },
   emits: ['submit', 'cancel', 'delete-file'],
   setup(_, { expose }) {
@@ -114,7 +116,7 @@ describe('EditClaims', () => {
     expect(wrapper.emitted('close')).toBeUndefined()
   })
 
-  it('renders backend error message when mutation returns an error', async () => {
+  it('passes backend error message to ClaimForm when mutation returns an error', async () => {
     vi.mocked(useEditClaimWithFilesMutation).mockReturnValueOnce(
       createMockMutationResponse(null, false, new Error('Server unavailable')) as ReturnType<
         typeof useEditClaimWithFilesMutation
@@ -124,8 +126,9 @@ describe('EditClaims', () => {
     const wrapper = createWrapper()
     await flushPromises()
 
-    expect(wrapper.find('[data-test="edit-claim-error"]').exists()).toBe(true)
-    expect(wrapper.find('[data-test="edit-claim-error"]').text()).toContain('Server unavailable')
+    const form = wrapper.findComponent({ name: 'ClaimForm' })
+    expect(form.props('errorMessage')).toBe('Server unavailable')
+    expect(form.props('errorTitle')).toBe('Failed to update claim')
   })
 
   it('emits close when cancel is triggered', async () => {

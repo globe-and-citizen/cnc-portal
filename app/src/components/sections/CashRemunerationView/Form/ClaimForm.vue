@@ -102,6 +102,16 @@
       />
     </div>
 
+    <UAlert
+      v-if="errorMessage"
+      color="error"
+      variant="soft"
+      icon="i-heroicons-x-circle"
+      :title="errorTitle"
+      :description="errorMessage"
+      data-test="claim-error-alert"
+    />
+
     <div class="flex justify-center gap-4">
       <UButton
         v-if="isEdit"
@@ -143,6 +153,8 @@ interface Props {
   restrictSubmit?: boolean
   existingFiles?: Partial<ClaimFormFileData>[]
   deletingFileIndex?: number | null
+  errorMessage?: string
+  errorTitle?: string
 }
 
 const toast = useToast()
@@ -153,7 +165,9 @@ const props = withDefaults(defineProps<Props>(), {
   disabledWeekStarts: () => [],
   restrictSubmit: true,
   existingFiles: () => [],
-  deletingFileIndex: null
+  deletingFileIndex: null,
+  errorMessage: '',
+  errorTitle: 'Failed to submit claim'
 })
 
 const emit = defineEmits<{
