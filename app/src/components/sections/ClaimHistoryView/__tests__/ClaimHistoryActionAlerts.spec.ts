@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
-import { nextTick, ref } from 'vue'
+import { defineComponent, nextTick, ref } from 'vue'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import isoWeek from 'dayjs/plugin/isoWeek'
@@ -14,6 +14,7 @@ dayjs.extend(isoWeek)
 
 describe('ClaimHistoryActionAlerts', () => {
   const baseAddress = '0x1234567890123456789012345678901234567890'
+  const openModalForDayMock = vi.fn()
 
   const createWeeklyClaim = (overrides: Record<string, unknown> = {}) => {
     return {
@@ -39,11 +40,17 @@ describe('ClaimHistoryActionAlerts', () => {
       global: {
         plugins: [createTestingPinia({ createSpy: vi.fn })],
         stubs: {
-          SubmitClaims: {
+          SubmitClaims: defineComponent({
             name: 'SubmitClaims',
-            props: ['signedWeekStarts'],
+            props: {
+              signedWeekStarts: { type: Array, required: true }
+            },
+            setup(_, { expose }) {
+              expose({ openModalForDay: openModalForDayMock })
+              return {}
+            },
             template: '<div data-test="submit-claims">{{ signedWeekStarts.length }}</div>'
-          },
+          }),
           CRSigne: {
             name: 'CRSigne',
             props: ['disabled'],
@@ -65,6 +72,7 @@ describe('ClaimHistoryActionAlerts', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockUserStore.address = baseAddress
+    openModalForDayMock.mockReset()
   })
 
   it('renders submit claim alert with SubmitClaims when user has wage', () => {
@@ -271,5 +279,15 @@ describe('ClaimHistoryActionAlerts', () => {
 
     expect(wrapper.findAll('[role="alert"]').length).toBe(0)
     expect(wrapper.text()).not.toContain('Submit Claim')
+  })
+
+  it('bridges openSubmitClaimForDay to SubmitClaims exposed method', () => {
+    const wrapper = createWrapper({ weeklyClaim: createWeeklyClaim() })
+    const vm = wrapper.vm as unknown as { openSubmitClaimForDay: (dayIso: string) => void }
+    const dayIso = '2024-01-10T00:00:00.000Z'
+
+    vm.openSubmitClaimForDay(dayIso)
+
+    expect(openModalForDayMock).toHaveBeenCalledWith(dayIso)
   })
 })

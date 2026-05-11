@@ -40,6 +40,16 @@ describe('ClaimActions', () => {
       },
       global: {
         stubs: {
+          UModal: {
+            name: 'UModal',
+            props: ['open'],
+            emits: ['update:open'],
+            template: `
+              <div data-test="u-modal">
+                <slot v-if="open" name="body" />
+              </div>
+            `
+          },
           EditClaims: {
             name: 'EditClaims',
             template: '<div data-test="edit-claims-stub" />',
