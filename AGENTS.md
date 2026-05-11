@@ -114,6 +114,15 @@ Then ask whether to do it now (scoped to this PR), defer (open a tracking issue)
 - Vue components: `<script setup lang="ts">` Composition API. Pinia for global state, TanStack Query for server state.
 - TypeScript strict mode across frontend and backend.
 
+## Public-repo hygiene
+
+This repository is **public on GitHub** (`globe-and-citizen/cnc-portal`). Default-treat everything that lands in the repo as world-readable.
+
+- **Never include infrastructure identifiers** — hostnames, ports, bucket names, or cloud provider names — in issues, PR descriptions, commit messages, committed docs, or review comments. Use abstract placeholders: `postgresql://<user>:<password>@<host>:<port>/<db>`. The hostname alone is a credential-stuffing target, even with the password redacted.
+- Refer to providers generically in public text ("our managed provider", "the secrets manager"). Internal docs that need to name them should live outside the repo (e.g. a private wiki).
+- When documenting an ops procedure that needs real credentials, the doc tells the reader *where* to find them (internal dashboard, CLI tool) but never embeds them.
+- Add an explicit safety note to any ops procedure: *"Don't paste the prod connection string anywhere public — issues, PR descriptions, Slack, commit messages."*
+
 ## Code quality gate (mandatory before pushing)
 
 Every subproject ships its own quality checks and CI runs them. **Before pushing to GitHub, run the full check set in every subproject you touched and make sure all of them pass with zero errors.** Do not push with a failing or skipped check — fix the root cause.
