@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { ref } from 'vue'
-import { BaseError, type Abi } from 'viem'
+import { BaseError, type Abi, type Address } from 'viem'
 import { simulateContract, writeContract, waitForTransactionReceipt } from '@wagmi/core'
 import {
   mockInvalidateQueries,
@@ -240,5 +240,66 @@ describe('useContractWritesV3 — input validation & logging', () => {
     await expect(m.mutateAsync({})).rejects.toBeInstanceOf(ContractWriteRevertedError)
 
     expect(mockLog.error).not.toHaveBeenCalled()
+  })
+})
+
+describe('useContractWritesV3 — caller callbacks', () => {
+  const baseConfig = (overrides: Partial<ContractWriteV3Config> = {}): ContractWriteV3Config => ({
+    contractAddress: ADDRESS,
+    abi: ABI as unknown as Abi,
+    functionName: 'foo',
+    ...overrides
+  })
+
+  it('awaits the caller onSuccess after invalidating the built-in reads', async () => {
+    vi.mocked(simulateContract).mockResolvedValueOnce(okSimulation)
+    vi.mocked(writeContract).mockResolvedValueOnce(HASH)
+    vi.mocked(waitForTransactionReceipt).mockResolvedValueOnce(successReceipt())
+
+    const order: string[] = []
+    mockInvalidateQueries.mockImplementationOnce(async () => {
+      order.push('builtin-invalidate')
+    })
+    const onSuccess = vi.fn(async () => {
+      order.push('caller-onSuccess-start')
+      await Promise.resolve()
+      order.push('caller-onSuccess-end')
+    })
+
+    const m = useContractWritesV3(baseConfig({ onSuccess }))
+    await m.mutateAsync({ args: [1n] })
+
+    expect(onSuccess).toHaveBeenCalledTimes(1)
+    expect(onSuccess.mock.calls[0]![1]).toEqual({ args: [1n] })
+    expect(order).toEqual(['builtin-invalidate', 'caller-onSuccess-start', 'caller-onSuccess-end'])
+  })
+
+  it('still fires onSuccess when the address went undefined and built-in invalidation was skipped', async () => {
+    const address = ref<Address | undefined>(ADDRESS)
+    vi.mocked(simulateContract).mockResolvedValueOnce(okSimulation)
+    vi.mocked(writeContract).mockImplementationOnce(async () => {
+      address.value = undefined
+      return HASH
+    })
+    vi.mocked(waitForTransactionReceipt).mockResolvedValueOnce(successReceipt())
+
+    const onSuccess = vi.fn()
+    const m = useContractWritesV3(baseConfig({ contractAddress: address, onSuccess }))
+    await m.mutateAsync({})
+
+    expect(mockInvalidateQueries).not.toHaveBeenCalled()
+    expect(onSuccess).toHaveBeenCalledTimes(1)
+  })
+
+  it('invokes the caller onError after the built-in failure log', async () => {
+    const err = new BaseError('boom')
+    vi.mocked(simulateContract).mockRejectedValueOnce(err)
+
+    const onError = vi.fn<NonNullable<ContractWriteV3Config['onError']>>()
+    const m = useContractWritesV3(baseConfig({ onError }))
+    await expect(m.mutateAsync({ args: [7n] })).rejects.toBe(err)
+
+    expect(mockLog.error).toHaveBeenCalled()
+    expect(onError).toHaveBeenCalledWith(err, { args: [7n] })
   })
 })

@@ -1,10 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { readContract, writeContract, waitForTransactionReceipt } from '@wagmi/core'
+import { readContract } from '@wagmi/core'
 import {
   migrateShareholders,
   useMigrateShareholders,
   InconsistentSupplyError
 } from '../useShareholderMigration'
+import { executeContractWrite } from '@/composables/contracts/useContractWritesV3'
 import {
   useMutationFn,
   smartUseMutation,
@@ -12,6 +13,16 @@ import {
   mockInvalidateQueries
 } from '@/tests/mocks/composables.mock'
 import type { Address } from 'viem'
+
+// Stub out the V3 executor — we're testing the migration helper, not its
+// simulate/write/wait plumbing.
+vi.mock('@/composables/contracts/useContractWritesV3', async (importOriginal) => {
+  const actual = (await importOriginal()) as object
+  return {
+    ...actual,
+    executeContractWrite: vi.fn()
+  }
+})
 
 const PREV_OFFICER = '0x1111111111111111111111111111111111111111' as Address
 const OLD_INVESTOR = '0x2222222222222222222222222222222222222222' as Address
@@ -54,8 +65,11 @@ describe('migrateShareholders (pure)', () => {
 
   it('mints on the new InvestorV1 when supply is 0', async () => {
     stubReads({ shareholders, newSupply: 0n })
-    vi.mocked(writeContract).mockResolvedValue(TX_HASH)
-    vi.mocked(waitForTransactionReceipt).mockResolvedValue({ status: 'success' } as never)
+    vi.mocked(executeContractWrite).mockResolvedValue({
+      hash: TX_HASH,
+      receipt: { status: 'success' } as never,
+      simulation: {} as never
+    })
 
     const res = await migrateShareholders({
       previousOfficerAddress: PREV_OFFICER,
@@ -63,8 +77,7 @@ describe('migrateShareholders (pure)', () => {
     })
 
     expect(res).toEqual({ kind: 'done', migratedCount: 2, shareholders })
-    expect(writeContract).toHaveBeenCalledWith(
-      expect.anything(),
+    expect(executeContractWrite).toHaveBeenCalledWith(
       expect.objectContaining({
         address: NEW_INVESTOR,
         functionName: 'distributeMint',
@@ -76,7 +89,6 @@ describe('migrateShareholders (pure)', () => {
         ]
       })
     )
-    expect(waitForTransactionReceipt).toHaveBeenCalledWith(expect.anything(), { hash: TX_HASH })
   })
 
   it('returns noop-empty when the previous InvestorV1 has no shareholders', async () => {
@@ -88,7 +100,7 @@ describe('migrateShareholders (pure)', () => {
     })
 
     expect(res).toEqual({ kind: 'noop-empty' })
-    expect(writeContract).not.toHaveBeenCalled()
+    expect(executeContractWrite).not.toHaveBeenCalled()
   })
 
   it('returns noop-already-migrated when supply matches sum', async () => {
@@ -100,7 +112,7 @@ describe('migrateShareholders (pure)', () => {
     })
 
     expect(res).toEqual({ kind: 'noop-already-migrated', matchedCount: 2 })
-    expect(writeContract).not.toHaveBeenCalled()
+    expect(executeContractWrite).not.toHaveBeenCalled()
   })
 
   it('throws InconsistentSupplyError when supply is non-zero and differs', async () => {
@@ -112,7 +124,7 @@ describe('migrateShareholders (pure)', () => {
         newInvestorAddress: NEW_INVESTOR
       })
     ).rejects.toBeInstanceOf(InconsistentSupplyError)
-    expect(writeContract).not.toHaveBeenCalled()
+    expect(executeContractWrite).not.toHaveBeenCalled()
   })
 
   it('exposes newSupply and expectedSupply on the error', async () => {
@@ -158,8 +170,11 @@ describe('useMigrateShareholders (TanStack wrapper)', () => {
 
   it('resolves with done result when supply is 0', async () => {
     stubReads({ shareholders, newSupply: 0n })
-    vi.mocked(writeContract).mockResolvedValue(TX_HASH)
-    vi.mocked(waitForTransactionReceipt).mockResolvedValue({ status: 'success' } as never)
+    vi.mocked(executeContractWrite).mockResolvedValue({
+      hash: TX_HASH,
+      receipt: { status: 'success' } as never,
+      simulation: {} as never
+    })
 
     const m = useMigrateShareholders()
     const res = await m.mutateAsync({

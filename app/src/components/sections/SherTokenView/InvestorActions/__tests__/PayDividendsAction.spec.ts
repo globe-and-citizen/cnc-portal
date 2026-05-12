@@ -60,7 +60,7 @@ describe('PayDividendsAction.vue', () => {
     mockBankReads.owner.data.value = ownerAddress
 
     mockBodIsBodAction.isBodAction.value = false
-    mockBodAddAction.isActionAdded.value = false
+    mockBodAddAction.isSuccess.value = false
     mockBodAddAction.executeAddAction.mockResolvedValue(undefined)
 
     mockBankWrites.distributeNativeDividends.mutateAsync.mockResolvedValue(undefined)
@@ -244,7 +244,7 @@ describe('PayDividendsAction.vue', () => {
     await nextTick()
     expect(wrapper.find('[data-test="pay-dividends-form"]').exists()).toBe(true)
 
-    mockBodAddAction.isActionAdded.value = true
+    mockBodAddAction.isSuccess.value = true
     await nextTick()
 
     expect(wrapper.find('[data-test="pay-dividends-form"]').exists()).toBe(false)
@@ -257,7 +257,7 @@ describe('PayDividendsAction.vue', () => {
     await nextTick()
     expect(wrapper.find('[data-test="pay-dividends-form"]').exists()).toBe(true)
 
-    mockBodAddAction.isActionAdded.value = false
+    mockBodAddAction.isSuccess.value = false
     await nextTick()
 
     expect(wrapper.find('[data-test="pay-dividends-form"]').exists()).toBe(true)

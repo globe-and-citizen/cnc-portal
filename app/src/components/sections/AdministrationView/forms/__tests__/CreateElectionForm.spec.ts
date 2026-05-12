@@ -50,6 +50,19 @@ describe('CreateElectionForm.vue', () => {
     )
   })
 
+  it('renders error alert when errorMessage prop is set', async () => {
+    const wrapper = mount(CreateElectionForm, {
+      props: { isLoading: false, errorMessage: 'Contract reverted' }
+    })
+
+    const alert = wrapper.find('[data-test="error-alert"]')
+    expect(alert.exists()).toBe(true)
+    expect(alert.text()).toContain('Contract reverted')
+
+    await wrapper.setProps({ errorMessage: '' })
+    expect(wrapper.find('[data-test="error-alert"]').exists()).toBe(false)
+  })
+
   it('syncs input and popover v-model bindings with component state', async () => {
     const wrapper = mountComponent()
     const vm = getVm(wrapper)
