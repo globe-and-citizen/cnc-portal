@@ -493,6 +493,30 @@ describe('Team Controller', () => {
       });
     });
 
+    it('should constrain hidden branch to non-archived teams when showHidden is true', async () => {
+      vi.spyOn(prisma.team, 'findMany').mockResolvedValue([]);
+      vi.spyOn(prisma.memberTeamsData, 'findMany').mockResolvedValue([] as never);
+
+      await request(app)
+        .get('/')
+        .query({ userAddress: mockOwner.address, showHidden: 'true', showArchived: 'false' });
+
+      expect(prisma.team.findMany).toHaveBeenCalled();
+      const callArg = vi.mocked(prisma.team.findMany).mock.calls[0][0] as {
+        where: { OR: Array<Record<string, unknown>> };
+      };
+      const hiddenBranch = callArg.where.OR.find(
+        (clause) =>
+          'memberTeamsData' in clause &&
+          typeof clause.memberTeamsData === 'object' &&
+          clause.memberTeamsData !== null &&
+          'some' in clause.memberTeamsData &&
+          (clause.memberTeamsData.some as { isVisible?: boolean }).isVisible === false
+      );
+      expect(hiddenBranch).toBeDefined();
+      expect(hiddenBranch).toMatchObject({ isArchived: false });
+    });
+
     it('should return 400 when userAddress is invalid', async () => {
       const response = await request(app)
         .get('/')

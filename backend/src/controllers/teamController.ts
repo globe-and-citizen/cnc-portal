@@ -293,6 +293,7 @@ const getAllTeams = async (req: Request, res: Response) => {
           ...(showHidden
             ? [
                 {
+                  isArchived: false,
                   memberTeamsData: {
                     some: {
                       ...memberFilter,
