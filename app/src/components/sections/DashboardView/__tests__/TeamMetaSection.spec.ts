@@ -24,7 +24,10 @@ const mountSection = () =>
     global: {
       plugins: [createTestingPinia({ createSpy: vi.fn })],
       stubs: {
-        TeamMetaUpdateModal: { name: 'TeamMetaUpdateModal', template: '<div data-test="update" />' },
+        TeamMetaUpdateModal: {
+          name: 'TeamMetaUpdateModal',
+          template: '<div data-test="update" />'
+        },
         TeamMetaArchiveModal: {
           name: 'TeamMetaArchiveModal',
           props: ['currentTeam'],
