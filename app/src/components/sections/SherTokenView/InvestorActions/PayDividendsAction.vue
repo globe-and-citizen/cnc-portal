@@ -20,7 +20,7 @@
       <template #body>
         <PayDividendsForm
           v-if="modalState.show && currentTeam"
-          :loading="isBankWriteLoading || isLoadingAddAction || isConfirmingAddAction"
+          :loading="isBankWriteLoading || isLoadingAddAction"
           :token-symbol="tokenSymbol!"
           :team="currentTeam"
           :is-bod-action="isBodAction"
@@ -80,8 +80,7 @@ const addActionComposable = useBodAddAction()
 const {
   executeAddAction: addAction,
   isPending: isLoadingAddAction,
-  isConfirming: isConfirmingAddAction,
-  isActionAdded
+  isSuccess: isActionAdded
 } = addActionComposable
 
 const { isBodAction } = useBodIsBodAction(props.bankAddress as Address)

@@ -1,49 +1,28 @@
-import { computed, ref, type MaybeRef } from 'vue'
+import { computed, ref } from 'vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import { type Address } from 'viem'
 import { readContract } from '@wagmi/core'
 import { useTeamStore } from '@/stores'
-import { useContractWrites } from '../contracts/useContractWritesV2'
+import { useContractWritesV3 } from '@/composables/contracts/useContractWritesV3'
 import { config } from '@/wagmi.config'
 import { BOD_ABI } from '@/artifacts/abi/bod'
 import { log } from '@/utils'
 import { useCreateActionMutation, useUpdateActionMutation } from '@/queries/action.queries'
 import { useCreateBulkNotificationsMutation } from '@/queries/notification.queries'
 import type { Action } from '@/types'
-import { BOD_FUNCTION_NAMES, type BodFunctionName } from './reads'
+import { BOD_FUNCTION_NAMES } from './reads'
 
 /**
- * Helper function to create a BOD contract write
- */
-function useBodContractWrite(options: {
-  functionName: BodFunctionName
-  args?: MaybeRef<readonly unknown[]>
-}) {
-  const teamStore = useTeamStore()
-  const bodAddress = computed(() => teamStore.getContractAddressByType('BoardOfDirectors'))
-
-  return useContractWrites({
-    contractAddress: bodAddress,
-    abi: BOD_ABI,
-    functionName: options.functionName,
-    args: options.args ?? []
-  })
-}
-
-// UNUSED — no consumers outside bod.setup.ts + spec.
-/*
-export function useBodSetBoardOfDirectors(addresses: MaybeRef<Address[]>) {
-  const addressesValue = computed(() => unref(addresses))
-
-  return useBodContractWrite({
-    functionName: BOD_FUNCTION_NAMES.SET_BOARD_OF_DIRECTORS,
-    args: addressesValue
-  })
-}
-*/
-
-/**
- * Add a BOD action
+ * Add a BOD action.
+ *
+ * The on-chain write is followed (in V3 `onSuccess`) by:
+ *   1. creating the action in the backend DB,
+ *   2. invalidating the `getBodActions` cache,
+ *   3. notifying the other board members (best-effort).
+ *
+ * Consumers call `executeAddAction(partialAction)`; the wrapper reads
+ * `actionCount` on-chain to build the action body before triggering the
+ * mutation, and stashes that body in a closure ref for `onSuccess` to read.
  */
 export function useBodAddAction() {
   const teamStore = useTeamStore()
@@ -56,56 +35,45 @@ export function useBodAddAction() {
 
   const action = ref<Partial<Action> | null>(null)
 
-  // Prepare dynamic arguments - will be set when executing
-  const args = ref<readonly unknown[]>([])
-
-  const writeResult = useBodContractWrite({
+  const mutation = useContractWritesV3({
+    contractAddress: bodAddress,
+    abi: BOD_ABI,
     functionName: BOD_FUNCTION_NAMES.ADD_ACTION,
-    args
-  })
-
-  // Override invalidateQueries to handle post-action logic
-  const originalInvalidateQueries = writeResult.invalidateQueries
-  writeResult.invalidateQueries = async () => {
-    await originalInvalidateQueries()
-
-    // Create action in database
-    if (action.value) {
-      await createActionMutation.mutateAsync({ body: action.value })
-    }
-
-    // Invalidate action queries
-    await queryClient.invalidateQueries({ queryKey: ['getBodActions'] })
-
-    // Send notifications to board members
-    try {
-      const members = bodAddress.value
-        ? ((await readContract(config, {
-            address: bodAddress.value,
-            abi: BOD_ABI,
-            functionName: 'getBoardOfDirectors'
-          })) as Address[])
-        : []
-
-      if (members.length > 0 && action.value) {
-        const recipients = members.filter(
-          (m) => m?.toLowerCase() !== (action.value?.userAddress || '').toLowerCase()
-        )
-        await addBulkNotifications({
-          body: {
-            userIds: recipients,
-            message: 'New board action requires your approval',
-            subject: 'New Board Action Created',
-            author: action.value.userAddress ?? '',
-            resource: `teams/${teamStore.currentTeamId}/contract-management`
-          }
-        })
+    onSuccess: async () => {
+      if (action.value) {
+        await createActionMutation.mutateAsync({ body: action.value })
       }
-    } catch (err) {
-      console.error('Error in notification process:', err)
-      log.error('Error creating notifications:', err)
+
+      await queryClient.invalidateQueries({ queryKey: ['getBodActions'] })
+
+      try {
+        const members = bodAddress.value
+          ? ((await readContract(config, {
+              address: bodAddress.value,
+              abi: BOD_ABI,
+              functionName: 'getBoardOfDirectors'
+            })) as Address[])
+          : []
+
+        if (members.length > 0 && action.value) {
+          const recipients = members.filter(
+            (m) => m?.toLowerCase() !== (action.value?.userAddress || '').toLowerCase()
+          )
+          await addBulkNotifications({
+            body: {
+              userIds: recipients,
+              message: 'New board action requires your approval',
+              subject: 'New Board Action Created',
+              author: action.value.userAddress ?? '',
+              resource: `teams/${teamStore.currentTeamId}/contract-management`
+            }
+          })
+        }
+      } catch (err) {
+        log.error('Error creating notifications:', err)
+      }
     }
-  }
+  })
 
   const executeAddAction = async (data: Partial<Action>) => {
     try {
@@ -130,30 +98,27 @@ export function useBodAddAction() {
         ...data
       }
 
-      // Execute the write using executeWrite
-      return writeResult.executeWrite([
-        data.targetAddress,
-        data.description,
-        data.data
-      ] as readonly unknown[])
+      return await mutation.mutateAsync({
+        args: [data.targetAddress, data.description, data.data] as readonly unknown[]
+      })
     } catch (err) {
       console.error(err)
     }
   }
 
   return {
-    ...writeResult,
-    executeAddAction,
-    // Expose commonly used states for backward compatibility
-    isPending: writeResult.writeResult.isPending,
-    isConfirming: writeResult.receiptResult.isLoading,
-    isActionAdded: writeResult.receiptResult.isSuccess
+    ...mutation,
+    executeAddAction
   }
 }
 
 /**
- * Approve a BOD action
- * Returns a composable that can approve multiple actions with different IDs
+ * Approve a BOD action.
+ *
+ * After the on-chain approval confirms, `onSuccess` checks whether the action
+ * has reached its execution threshold and, if so, marks it as executed in the
+ * backend DB. It then invalidates the related read caches (`isMember`,
+ * `owner`, `getBodActions`).
  */
 export function useBodApproveAction() {
   const teamStore = useTeamStore()
@@ -162,66 +127,53 @@ export function useBodApproveAction() {
 
   const updateActionMutation = useUpdateActionMutation()
 
-  // Dynamic refs that will be set when executeApproveAction is called
   const currentActionId = ref<bigint>(0n)
   const currentDbId = ref<number | undefined>(undefined)
 
-  const args = computed(() => [currentActionId.value] as const)
-
-  const writeResult = useBodContractWrite({
+  const mutation = useContractWritesV3({
+    contractAddress: bodAddress,
+    abi: BOD_ABI,
     functionName: BOD_FUNCTION_NAMES.APPROVE,
-    args
+    onSuccess: async () => {
+      if (bodAddress.value && currentDbId.value) {
+        try {
+          const isActionExecuted = await readContract(config, {
+            address: bodAddress.value,
+            abi: BOD_ABI,
+            functionName: 'isActionExecuted',
+            args: [currentActionId.value]
+          })
+
+          if (isActionExecuted) {
+            await updateActionMutation.mutateAsync({ pathParams: { id: currentDbId.value } })
+          }
+        } catch (error) {
+          log.error('Error checking action execution status:', error)
+        }
+      }
+
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ['readContract', { functionName: 'isMember' }],
+          exact: false
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ['readContract', { functionName: 'owner' }],
+          exact: false
+        }),
+        queryClient.invalidateQueries({ queryKey: ['getBodActions'] })
+      ])
+    }
   })
 
-  // Override invalidateQueries to handle post-approval logic
-  const originalInvalidateQueries = writeResult.invalidateQueries
-  writeResult.invalidateQueries = async () => {
-    await originalInvalidateQueries()
-
-    // Check if action was executed and update database
-    if (bodAddress.value && currentDbId.value) {
-      try {
-        const isActionExecuted = await readContract(config, {
-          address: bodAddress.value,
-          abi: BOD_ABI,
-          functionName: 'isActionExecuted',
-          args: [currentActionId.value]
-        })
-
-        if (isActionExecuted) {
-          await updateActionMutation.mutateAsync({ pathParams: { id: currentDbId.value } })
-        }
-      } catch (error) {
-        log.error('Error checking action execution status:', error)
-      }
-    }
-
-    // Invalidate all relevant queries
-    await Promise.all([
-      queryClient.invalidateQueries({
-        queryKey: ['readContract', { functionName: 'isMember' }],
-        exact: false
-      }),
-      queryClient.invalidateQueries({
-        queryKey: ['readContract', { functionName: 'owner' }],
-        exact: false
-      }),
-      queryClient.invalidateQueries({ queryKey: ['getBodActions'] })
-    ])
-  }
-
-  // Execute approve action with dynamic actionId and dbId
   const executeApproveAction = async (actionId: number, dbId?: number) => {
     currentActionId.value = BigInt(actionId)
     currentDbId.value = dbId
-    return writeResult.executeWrite([BigInt(actionId)] as readonly unknown[])
+    return mutation.mutateAsync({ args: [BigInt(actionId)] as readonly unknown[] })
   }
 
   return {
-    ...writeResult,
-    executeApproveAction,
-    // Expose commonly used states for backward compatibility
-    isLoadingApproveAction: writeResult.writeResult.isPending,
-    isActionApproved: writeResult.receiptResult.isSuccess
+    ...mutation,
+    executeApproveAction
   }
 }

@@ -16,7 +16,9 @@ const ClaimFormStub = defineComponent({
     initialData: { type: Object, required: false },
     isLoading: { type: Boolean, required: false },
     disabledWeekStarts: { type: Array, required: false },
-    restrictSubmit: { type: Boolean, required: false }
+    restrictSubmit: { type: Boolean, required: false },
+    errorMessage: { type: String, required: false, default: '' },
+    errorTitle: { type: String, required: false, default: '' }
   },
   emits: ['submit'],
   setup(_, { expose }) {
@@ -196,5 +198,21 @@ describe('SubmitClaims', () => {
     await flushPromises()
 
     expect(vm.errorMessage?.message).toBe('Plain failure message')
+  })
+
+  it('opens modal with clicked day when using openModalForDay', async () => {
+    const wrapper = createComponent({ selectedWeekStart: '2024-01-08T00:00:00.000Z' })
+    const vm = wrapper.vm as unknown as {
+      openModalForDay: (dayIso: string) => void
+      modal: { show: boolean }
+      formInitialData: { dayWorked: string }
+    }
+    const dayIso = '2024-01-10T00:00:00.000Z'
+
+    vm.openModalForDay(dayIso)
+    await flushPromises()
+
+    expect(vm.modal.show).toBe(true)
+    expect(vm.formInitialData.dayWorked).toBe(dayIso)
   })
 })

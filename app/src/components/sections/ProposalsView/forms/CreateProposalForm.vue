@@ -77,6 +77,16 @@
       </UFormField>
     </div>
 
+    <UAlert
+      v-if="errorMessage"
+      color="error"
+      variant="soft"
+      icon="i-lucide-circle-alert"
+      :description="errorMessage"
+      class="mt-2"
+      data-test="error-alert"
+    />
+
     <div class="modal-action">
       <UButton color="error" variant="outline" @click="emit('closeModal')" label="Cancel" />
       <UButton
@@ -111,6 +121,7 @@ const toast = useToast()
 
 const startDateOpen = ref(false)
 const endDateOpen = ref(false)
+const errorMessage = ref('')
 
 const state = reactive({
   title: '',
@@ -170,23 +181,19 @@ const {
 const dateToTimestamp = (date: Date): number => Math.floor(date.getTime() / 1000)
 
 const handleSubmit = async () => {
-  try {
-    createProposal({
-      address: proposalsAddress.value,
-      abi: PROPOSALS_ABI,
-      functionName: 'createProposal',
-      args: [
-        state.title,
-        state.description,
-        state.type,
-        BigInt(dateToTimestamp(state.startDate!)),
-        BigInt(dateToTimestamp(state.endDate!))
-      ]
-    })
-  } catch (error) {
-    console.error('Error creating proposal:', error)
-    toast.add({ title: 'Failed to create proposal', color: 'error' })
-  }
+  errorMessage.value = ''
+  createProposal({
+    address: proposalsAddress.value,
+    abi: PROPOSALS_ABI,
+    functionName: 'createProposal',
+    args: [
+      state.title,
+      state.description,
+      state.type,
+      BigInt(dateToTimestamp(state.startDate!)),
+      BigInt(dateToTimestamp(state.endDate!))
+    ]
+  })
 }
 
 watch(isProposalCreated, (success) => {
@@ -199,10 +206,11 @@ watch(isProposalCreated, (success) => {
 watch(createError, (error) => {
   if (!error) return
   console.error(error)
+  errorMessage.value = error.message || 'Failed to create proposal'
 })
 
 watch(errorConfirmingProposal, (error) => {
   if (!error) return
-  toast.add({ title: 'Failed to confirm proposal creation', color: 'error' })
+  errorMessage.value = error.message || 'Failed to confirm proposal creation'
 })
 </script>

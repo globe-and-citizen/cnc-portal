@@ -34,9 +34,9 @@ describe('ToggleSherCompensationAction.vue', () => {
     mockUseConnection.isConnected.value = true
     mockUseConnection.address.value = '0xaAaAaAaaAaAaAaaAaAAAAAAAAaaaAaAaAaaAaaAa'
 
-    mockSafeDepositRouterWrites.enableDeposits.executeWrite.mockResolvedValue(undefined)
-    mockSafeDepositRouterWrites.disableDeposits.executeWrite.mockResolvedValue(undefined)
-    mockSafeDepositRouterWrites.setSafeAddress.executeWrite.mockResolvedValue(undefined)
+    mockSafeDepositRouterWrites.enableDeposits.mutateAsync.mockResolvedValue(undefined)
+    mockSafeDepositRouterWrites.disableDeposits.mutateAsync.mockResolvedValue(undefined)
+    mockSafeDepositRouterWrites.setSafeAddress.mutateAsync.mockResolvedValue(undefined)
   })
 
   afterEach(() => {
@@ -91,8 +91,8 @@ describe('ToggleSherCompensationAction.vue', () => {
 
     await vm.handleToggleCompensation()
 
-    expect(mockSafeDepositRouterWrites.enableDeposits.executeWrite).not.toHaveBeenCalled()
-    expect(mockSafeDepositRouterWrites.disableDeposits.executeWrite).not.toHaveBeenCalled()
+    expect(mockSafeDepositRouterWrites.enableDeposits.mutateAsync).not.toHaveBeenCalled()
+    expect(mockSafeDepositRouterWrites.disableDeposits.mutateAsync).not.toHaveBeenCalled()
   })
 
   it('disables deposits when currently enabled', async () => {
@@ -102,7 +102,7 @@ describe('ToggleSherCompensationAction.vue', () => {
 
     await vm.handleToggleCompensation()
 
-    expect(mockSafeDepositRouterWrites.disableDeposits.executeWrite).toHaveBeenCalledTimes(1)
+    expect(mockSafeDepositRouterWrites.disableDeposits.mutateAsync).toHaveBeenCalledTimes(1)
   })
 
   it('enables deposits directly when safe address is correct', async () => {
@@ -113,7 +113,7 @@ describe('ToggleSherCompensationAction.vue', () => {
 
     await vm.handleToggleCompensation()
 
-    expect(mockSafeDepositRouterWrites.enableDeposits.executeWrite).toHaveBeenCalledTimes(1)
+    expect(mockSafeDepositRouterWrites.enableDeposits.mutateAsync).toHaveBeenCalledTimes(1)
   })
 
   it('updates safe address before enabling when safe address mismatches', async () => {
@@ -124,8 +124,8 @@ describe('ToggleSherCompensationAction.vue', () => {
 
     await vm.handleToggleCompensation()
 
-    expect(mockSafeDepositRouterWrites.setSafeAddress.executeWrite).toHaveBeenCalledTimes(1)
-    expect(mockSafeDepositRouterWrites.enableDeposits.executeWrite).not.toHaveBeenCalled()
+    expect(mockSafeDepositRouterWrites.setSafeAddress.mutateAsync).toHaveBeenCalledTimes(1)
+    expect(mockSafeDepositRouterWrites.enableDeposits.mutateAsync).not.toHaveBeenCalled()
   })
 
   it('updateSafeAddress returns early when safe address is missing', async () => {
@@ -140,7 +140,7 @@ describe('ToggleSherCompensationAction.vue', () => {
     await vm.handleToggleCompensation()
     await vm.handleToggleCompensation()
 
-    expect(mockSafeDepositRouterWrites.setSafeAddress.executeWrite).not.toHaveBeenCalled()
+    expect(mockSafeDepositRouterWrites.setSafeAddress.mutateAsync).not.toHaveBeenCalled()
     expect(wrapper.exists()).toBe(true)
   })
 
@@ -153,19 +153,19 @@ describe('ToggleSherCompensationAction.vue', () => {
     const vm = wrapper.vm as unknown as { handleToggleCompensation: () => Promise<void> }
 
     await vm.handleToggleCompensation()
-    mockSafeDepositRouterWrites.setSafeAddress.receiptResult.isSuccess.value = true
+    mockSafeDepositRouterWrites.setSafeAddress.isSuccess.value = true
     await nextTick()
 
     vi.runAllTimers()
     await nextTick()
 
-    expect(mockSafeDepositRouterWrites.enableDeposits.executeWrite).toHaveBeenCalled()
+    expect(mockSafeDepositRouterWrites.enableDeposits.mutateAsync).toHaveBeenCalled()
     wrapper.unmount()
   })
 
   it('watch enable error path executes', async () => {
     const wrapper = createWrapper()
-    mockSafeDepositRouterWrites.enableDeposits.writeResult.error.value = new Error('boom')
+    mockSafeDepositRouterWrites.enableDeposits.error.value = new Error('boom')
     await nextTick()
     expect(wrapper.exists()).toBe(true)
     wrapper.unmount()
@@ -174,7 +174,7 @@ describe('ToggleSherCompensationAction.vue', () => {
   it('watch enable error handles user rejected message', async () => {
     mockParseError.mockReturnValue('User denied signature')
     const wrapper = createWrapper()
-    mockSafeDepositRouterWrites.enableDeposits.writeResult.error.value = new Error('boom')
+    mockSafeDepositRouterWrites.enableDeposits.error.value = new Error('boom')
     await nextTick()
     expect(wrapper.exists()).toBe(true)
     wrapper.unmount()
@@ -182,7 +182,7 @@ describe('ToggleSherCompensationAction.vue', () => {
 
   it('watch disable error path executes', async () => {
     const wrapper = createWrapper()
-    mockSafeDepositRouterWrites.disableDeposits.writeResult.error.value = new Error('boom')
+    mockSafeDepositRouterWrites.disableDeposits.error.value = new Error('boom')
     await nextTick()
     expect(wrapper.exists()).toBe(true)
     wrapper.unmount()
@@ -190,7 +190,7 @@ describe('ToggleSherCompensationAction.vue', () => {
 
   it('watch setSafeAddress error path executes', async () => {
     const wrapper = createWrapper()
-    mockSafeDepositRouterWrites.setSafeAddress.writeResult.error.value = new Error('boom')
+    mockSafeDepositRouterWrites.setSafeAddress.error.value = new Error('boom')
     await nextTick()
     expect(wrapper.exists()).toBe(true)
     wrapper.unmount()
@@ -198,8 +198,8 @@ describe('ToggleSherCompensationAction.vue', () => {
 
   it('watch success paths execute for enable and disable', async () => {
     const wrapper = createWrapper()
-    mockSafeDepositRouterWrites.enableDeposits.receiptResult.isSuccess.value = true
-    mockSafeDepositRouterWrites.disableDeposits.receiptResult.isSuccess.value = true
+    mockSafeDepositRouterWrites.enableDeposits.isSuccess.value = true
+    mockSafeDepositRouterWrites.disableDeposits.isSuccess.value = true
     await nextTick()
     expect(wrapper.exists()).toBe(true)
     wrapper.unmount()

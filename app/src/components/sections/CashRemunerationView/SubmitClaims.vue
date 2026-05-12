@@ -24,17 +24,9 @@
           :is-loading="isWageClaimAdding"
           :disabled-week-starts="props.signedWeekStarts"
           :restrict-submit="isRestricted"
+          :error-message="addWageClaimError && errorMessage ? errorMessage.message : ''"
+          error-title="Failed to submit claim"
           @submit="handleSubmit"
-        />
-        <UAlert
-          v-if="addWageClaimError && errorMessage"
-          color="error"
-          variant="soft"
-          icon="i-heroicons-x-circle"
-          title="Failed to submit claim"
-          :description="errorMessage.message"
-          class="mt-4"
-          data-test="submit-claim-error"
         />
       </div>
     </template>
@@ -93,11 +85,22 @@ const props = defineProps<{
 
 const formInitialData = ref<ClaimFormData>(createDefaultFormData(props.selectedWeekStart))
 
-const openModal = () => {
-  formInitialData.value = createDefaultFormData(props.selectedWeekStart)
+const openModalWithData = (initialData: ClaimFormData) => {
+  formInitialData.value = initialData
   errorMessage.value = null
   addWageClaimError.value = false
   modal.value = { mount: true, show: true }
+}
+
+const openModal = () => {
+  openModalWithData(createDefaultFormData(props.selectedWeekStart))
+}
+
+const openModalForDay = (dayIso: string) => {
+  openModalWithData({
+    ...createDefaultFormData(props.selectedWeekStart),
+    dayWorked: dayIso
+  })
 }
 
 const closeModal = () => {
@@ -191,6 +194,7 @@ defineExpose({
   handleSubmit,
   modal,
   errorMessage,
-  formInitialData
+  formInitialData,
+  openModalForDay
 })
 </script>

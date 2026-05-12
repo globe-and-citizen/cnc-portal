@@ -1,9 +1,9 @@
 import { vi } from 'vitest'
 import {
   mockBODReads,
-  mockBODWrites,
   mockBodIsBodAction,
-  mockBodAddAction
+  mockBodAddAction,
+  mockBodApproveAction
 } from '../mocks/contract.mock'
 
 /**
@@ -24,10 +24,5 @@ vi.mock('@/composables/bod/reads', () => ({
  */
 vi.mock('@/composables/bod/writes', () => ({
   useBodAddAction: vi.fn(() => mockBodAddAction),
-  useBodApproveAction: vi.fn(() => ({
-    ...mockBODWrites.approve,
-    executeApproveAction: mockBODWrites.approve.executeWrite,
-    isLoadingApproveAction: mockBODWrites.approve.writeResult.isPending,
-    isActionApproved: mockBODWrites.approve.receiptResult.isSuccess
-  }))
+  useBodApproveAction: vi.fn(() => mockBodApproveAction)
 }))

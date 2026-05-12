@@ -19,10 +19,6 @@ const mockUseWaitForTransactionReceipt = {
 
 //mock wagmi vue (handled globally via useWriteContractFn / useWaitForTransactionReceiptFn)
 
-vi.mock('@/services/AddCampaignService', () => ({
-  AddCampaignService: vi.fn().mockImplementation(() => ({}))
-}))
-
 describe('TeamContractsDetail.vue', () => {
   const contractAddress = '0xE55978c9f7B9bFc190B355d65e7F1dEc2F41D320'
 

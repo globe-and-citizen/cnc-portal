@@ -82,6 +82,16 @@
         </UFormField>
       </div>
 
+      <UAlert
+        v-if="errorMessage"
+        color="error"
+        variant="soft"
+        :description="errorMessage"
+        icon="i-lucide-circle-alert"
+        class="mt-2"
+        data-test="error-alert"
+      />
+
       <div class="flex justify-center">
         <UButton
           type="submit"
@@ -114,7 +124,9 @@ const startDateOpen = ref(false)
 const endDateOpen = ref(false)
 
 const emits = defineEmits(['createProposal'])
-defineProps<{ isLoading: boolean }>()
+withDefaults(defineProps<{ isLoading: boolean; errorMessage?: string }>(), {
+  errorMessage: ''
+})
 
 const formData = ref<Array<Pick<User, 'address' | 'name'>>>([])
 const errors = reactive({ startDate: '', endDate: '', candidates: '' })

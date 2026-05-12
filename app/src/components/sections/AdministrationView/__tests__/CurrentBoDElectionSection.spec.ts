@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import ElectionComponent from '@/components/sections/AdministrationView/CurrentBoDElectionSection.vue'
-import { mockElectionsReads, mockWagmiCore } from '@/tests/mocks'
+import { mockElectionsReads, mockElectionsWrites } from '@/tests/mocks'
 
 describe('ElectionComponent', () => {
   let wrapper: ReturnType<typeof mount> | undefined
@@ -62,9 +62,7 @@ describe('ElectionComponent', () => {
     }
 
     beforeEach(() => {
-      mockWagmiCore.simulateContract.mockResolvedValue({})
-      mockWagmiCore.writeContract.mockResolvedValue('0xTXNHASH')
-      mockWagmiCore.waitForTransactionReceipt.mockResolvedValue({})
+      mockElectionsWrites.createElection.mutateAsync.mockResolvedValue({})
     })
 
     it('handles past start date by adjusting to future', async () => {
@@ -83,7 +81,9 @@ describe('ElectionComponent', () => {
 
       await vm.createElection(mockPastElectionData)
 
-      const args = mockWagmiCore.simulateContract.mock.calls[0]![1].args as unknown[]
+      const [{ args }] = mockElectionsWrites.createElection.mutateAsync.mock.calls[0]! as [
+        { args: readonly unknown[] }
+      ]
       const startTime = Number(args[2])
       const endTime = Number(args[3])
 
