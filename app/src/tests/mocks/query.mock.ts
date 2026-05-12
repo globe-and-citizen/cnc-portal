@@ -291,10 +291,6 @@ export const queryMocks: Record<string, () => Record<string, unknown>> = {
   useCreateTeamMutation: () => createMockMutationResponse(),
   useUpdateTeamMutation: () => createMockMutationResponse(),
   useDeleteTeamMutation: () => createMockMutationResponse(),
-  useArchiveTeamMutation: () => createMockMutationResponse(),
-  useUnarchiveTeamMutation: () => createMockMutationResponse(),
-  useHideTeamMutation: () => createMockMutationResponse(),
-  useShowTeamMutation: () => createMockMutationResponse(),
   useGetSubmitRestrictionQuery: () =>
     createMockQueryResponse({ isRestricted: false, effectiveStatus: 'enabled' }),
 

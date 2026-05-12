@@ -131,10 +131,6 @@ vi.mock('@/queries/team.queries', () => ({
   useCreateTeamMutation: vi.fn(queryMocks.useCreateTeamMutation),
   useUpdateTeamMutation: vi.fn(queryMocks.useUpdateTeamMutation),
   useDeleteTeamMutation: vi.fn(queryMocks.useDeleteTeamMutation),
-  useArchiveTeamMutation: vi.fn(queryMocks.useArchiveTeamMutation),
-  useUnarchiveTeamMutation: vi.fn(queryMocks.useUnarchiveTeamMutation),
-  useHideTeamMutation: vi.fn(queryMocks.useHideTeamMutation),
-  useShowTeamMutation: vi.fn(queryMocks.useShowTeamMutation),
   useGetSubmitRestrictionQuery: vi.fn(queryMocks.useGetSubmitRestrictionQuery)
 }))
 
