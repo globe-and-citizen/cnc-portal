@@ -60,6 +60,21 @@ describe('ClaimForm.vue', () => {
     resetUploadMock.mockClear()
   })
 
+  it('renders error alert when errorMessage prop is set', async () => {
+    const wrapper = createWrapper({
+      errorMessage: 'Server unavailable',
+      errorTitle: 'Failed to submit claim'
+    })
+
+    const alert = wrapper.find('[data-test="claim-error-alert"]')
+    expect(alert.exists()).toBe(true)
+    expect(alert.text()).toContain('Server unavailable')
+    expect(alert.text()).toContain('Failed to submit claim')
+
+    await wrapper.setProps({ errorMessage: '' })
+    expect(wrapper.find('[data-test="claim-error-alert"]').exists()).toBe(false)
+  })
+
   it('handles edit actions and prop updates', async () => {
     const wrapper = createWrapper({
       isEdit: true,

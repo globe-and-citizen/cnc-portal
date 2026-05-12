@@ -197,6 +197,7 @@ const approveUser = async (data: BudgetLimit) => {
   approveUsersModal.value = { mount: false, show: false }
   approveErrorMessage.value = ''
   confirmationModal.value = false
+  toast.add({ title: 'User approved successfully', color: 'success' })
 }
 
 const errorMessage = (error: {}, message: string) =>
