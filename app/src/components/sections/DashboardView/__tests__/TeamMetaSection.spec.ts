@@ -24,11 +24,21 @@ const mountSection = () =>
     global: {
       plugins: [createTestingPinia({ createSpy: vi.fn })],
       stubs: {
-        TeamMetaActions: {
-          name: 'TeamMetaActions',
-          props: ['currentTeam', 'isOwner'],
-          template:
-            '<div data-test="team-meta-actions-stub">{{ isOwner ? "owner" : "employee" }}</div>'
+        TeamMetaUpdateModal: { name: 'TeamMetaUpdateModal', template: '<div data-test="update" />' },
+        TeamMetaArchiveModal: {
+          name: 'TeamMetaArchiveModal',
+          props: ['currentTeam'],
+          template: '<div data-test="archive" />'
+        },
+        TeamMetaVisibilityModal: {
+          name: 'TeamMetaVisibilityModal',
+          props: ['currentTeam'],
+          template: '<div data-test="visibility" />'
+        },
+        TeamMetaDeleteModal: {
+          name: 'TeamMetaDeleteModal',
+          props: ['currentTeam'],
+          template: '<div data-test="delete" />'
         }
       }
     }
@@ -55,10 +65,28 @@ describe('TeamMetaSection.vue', () => {
     expect(wrapper.text()).not.toContain('Owner')
   })
 
-  it('passes currentTeam and ownership state to TeamMetaActions', () => {
+  it('passes currentTeam to archive/visibility/delete actions', () => {
     const wrapper = mountSection()
-    const actions = wrapper.getComponent({ name: 'TeamMetaActions' })
-    expect(actions.props('currentTeam')).toEqual(teamStoreState.currentTeamMeta.data)
-    expect(actions.props('isOwner')).toBe(true)
+    const archive = wrapper.getComponent({ name: 'TeamMetaArchiveModal' })
+    const visibility = wrapper.getComponent({ name: 'TeamMetaVisibilityModal' })
+    const del = wrapper.getComponent({ name: 'TeamMetaDeleteModal' })
+
+    expect(archive.props('currentTeam')).toEqual(teamStoreState.currentTeamMeta.data)
+    expect(visibility.props('currentTeam')).toEqual(teamStoreState.currentTeamMeta.data)
+    expect(del.props('currentTeam')).toEqual(teamStoreState.currentTeamMeta.data)
+  })
+
+  it('shows owner-only actions only for owner', () => {
+    const ownerWrapper = mountSection()
+    expect(ownerWrapper.find('[data-test="update"]').exists()).toBe(true)
+    expect(ownerWrapper.find('[data-test="archive"]').exists()).toBe(true)
+    expect(ownerWrapper.find('[data-test="delete"]').exists()).toBe(true)
+
+    vi.mocked(useUserDataStore).mockReturnValue({ address: '0xEMP' } as never)
+    const employeeWrapper = mountSection()
+    expect(employeeWrapper.find('[data-test="update"]').exists()).toBe(false)
+    expect(employeeWrapper.find('[data-test="archive"]').exists()).toBe(false)
+    expect(employeeWrapper.find('[data-test="delete"]').exists()).toBe(false)
+    expect(employeeWrapper.find('[data-test="visibility"]').exists()).toBe(true)
   })
 })

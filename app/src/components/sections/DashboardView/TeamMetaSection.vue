@@ -19,7 +19,12 @@
       </div>
       <div class="collapse-content">
         <p class="pl-5">{{ currentTeam?.description }}</p>
-        <TeamMetaActions :current-team="currentTeam" :is-owner="isOwner" />
+        <div class="mt-5 flex flex-row items-center justify-center gap-2 pl-5">
+          <TeamMetaUpdateModal v-if="isOwner" />
+          <TeamMetaArchiveModal v-if="isOwner" :current-team="currentTeam" />
+          <TeamMetaVisibilityModal :current-team="currentTeam" />
+          <TeamMetaDeleteModal v-if="isOwner" :current-team="currentTeam" />
+        </div>
       </div>
     </div>
   </div>
@@ -29,7 +34,10 @@
 import { computed } from 'vue'
 import { useTeamStore } from '@/stores'
 import { useUserDataStore } from '@/stores/user'
-import TeamMetaActions from './TeamMetaActions.vue'
+import TeamMetaArchiveModal from './TeamMetaArchiveModal.vue'
+import TeamMetaDeleteModal from './TeamMetaDeleteModal.vue'
+import TeamMetaUpdateModal from './TeamMetaUpdateModal.vue'
+import TeamMetaVisibilityModal from './TeamMetaVisibilityModal.vue'
 
 const teamStore = useTeamStore()
 const currentTeam = computed(() => teamStore.currentTeamMeta.data)
