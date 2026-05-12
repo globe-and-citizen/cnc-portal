@@ -64,13 +64,15 @@
     <!-- Empty team or Error -->
     <div
       class="animate-fade-in flex flex-col items-center"
-      v-if="teams?.length == 0 || teamsList.length == 0 || teamsError"
+      v-if="teamsError || (!teamsAreFetching && Array.isArray(teams) && teams.length === 0)"
     >
       <img src="../../assets/login-illustration.png" alt="Login illustration" width="300" />
 
       <span
         class="my-4 text-sm font-bold text-gray-500"
-        v-if="teams?.length == 0"
+        v-if="
+          !teamsError && Array.isArray(teams) && teams.length === 0 && !showHidden && !showArchived
+        "
         data-test="empty-state"
       >
         You are currently not a part of any team, <strong>{{ userDataStore.name }}</strong> . Create
@@ -81,7 +83,7 @@
         We are unable to retrieve your teams. Please try again in some time.
       </div>
       <span
-        v-else-if="teams?.length && teamsList.length == 0"
+        v-else-if="Array.isArray(teams) && teams.length === 0 && (showHidden || showArchived)"
         class="my-4 text-sm font-bold text-gray-500"
         data-test="empty-filter-state"
       >
@@ -94,10 +96,10 @@
     <div
       class="grid grid-cols-1 gap-20 md:grid-cols-2 lg:grid-cols-3"
       data-test="team-list"
-      v-if="teamsList.length != 0"
+      v-if="Array.isArray(teams) && teams.length > 0"
     >
       <TeamCard
-        v-for="team in teamsList"
+        v-for="team in teams"
         :key="team.id"
         :team="team"
         :data-test="`team-card-${team.id}`"
@@ -144,7 +146,7 @@ import { useUserDataStore } from '@/stores'
 import AddTeamCard from '@/components/sections/TeamView/AddTeamCard.vue'
 import TeamCard from '@/components/sections/TeamView/TeamCard.vue'
 import { useGetTeamsQuery } from '@/queries/team.queries'
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
 
 const openModal = ref(false)
 const showHidden = ref(false)
@@ -164,7 +166,6 @@ const {
     showArchived
   }
 })
-const teamsList = computed(() => teams.value ?? [])
 
 const router = useRouter()
 
