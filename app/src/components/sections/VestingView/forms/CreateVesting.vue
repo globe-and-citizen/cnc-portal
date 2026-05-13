@@ -8,6 +8,15 @@
   >
     <h4 class="text-lg font-bold">Create Vesting Schedule</h4>
 
+    <UAlert
+      v-if="errorMessage"
+      color="error"
+      variant="soft"
+      icon="i-lucide-circle-alert"
+      :description="errorMessage"
+      data-test="error-alert"
+    />
+
     <UFormField name="member" label="Choose Member" class="mt-4 gap-2">
       <div v-if="member.address" class="h-20">
         <UserComponent
@@ -99,7 +108,15 @@
       />
     </div>
   </UForm>
-  <div v-if="showSummary">
+  <div v-if="showSummary" class="flex flex-col gap-3">
+    <UAlert
+      v-if="errorMessage"
+      color="error"
+      variant="soft"
+      icon="i-lucide-circle-alert"
+      :description="errorMessage"
+      data-test="summary-error-alert"
+    />
     <VestingSummary
       :vesting="vestingData"
       :loading="loading"
@@ -212,6 +229,7 @@ const isDatePickerOpen = ref(false)
 const duration = ref({ years: 0, months: 0, days: 0 })
 const durationInDays = ref(0)
 const showSummary = ref(false)
+const errorMessage = ref('')
 
 const formState = computed(() => ({
   member: member.value,
@@ -374,17 +392,18 @@ function checkDuplicateVesting() {
     member.value.address &&
     activeMembers.value.some((m) => m.toLowerCase() === member.value.address.toLowerCase())
   ) {
-    toast.add({ title: 'The member address already has an active vesting.', color: 'error' })
+    errorMessage.value = 'The member address already has an active vesting.'
     return true
   }
   return false
 }
 
 async function approveAllowance() {
+  errorMessage.value = ''
   if (!checkDuplicateVesting()) {
     const vestingSpender = vestingAddressResult.value
     if (!vestingSpender || !isAddress(vestingSpender)) {
-      toast.add({ title: 'Invalid vesting contract address', color: 'error' })
+      errorMessage.value = 'Invalid vesting contract address'
       return
     }
 
@@ -398,18 +417,19 @@ async function approveAllowance() {
             submit()
           },
           onError: (err) => {
-            toast.add({ title: 'Approval failed', color: 'error' })
+            errorMessage.value = 'Approval failed'
             console.error('Approval error ', err)
           }
         }
       )
     } else {
-      toast.add({ title: 'total amount value should be greater than zero', color: 'error' })
+      errorMessage.value = 'total amount value should be greater than zero'
     }
   }
 }
 
 function handleDisplaySummary() {
+  errorMessage.value = ''
   const result = schema.value.safeParse(formState.value)
   if (result.success) showSummary.value = true
 }
@@ -424,13 +444,13 @@ async function submit() {
 
   const balanceInUnits = connectedUserTokenBalanceUnits.value
   if (balanceInUnits !== undefined && balanceInUnits < totalAmountInUnits) {
-    toast.add({ title: 'Insufficient token balance', color: 'error' })
+    errorMessage.value = 'Insufficient token balance'
     return
   }
 
   await getAllowance()
   if (typeof allowance.value === 'bigint' && allowance.value < totalAmountInUnits) {
-    toast.add({ title: 'Allowance is less than the total amount', color: 'error' })
+    errorMessage.value = 'Allowance is less than the total amount'
     return
   }
   addVestingWrite.mutate(
@@ -455,11 +475,12 @@ async function submit() {
         member.value = { name: '', address: '' }
         duration.value = { years: 0, months: 0, days: 0 }
         showSummary.value = false
+        errorMessage.value = ''
         emit('closeAddVestingModal')
         emit('reload')
       },
       onError: (err) => {
-        toast.add({ title: 'Add vesting failed', color: 'error' })
+        errorMessage.value = 'Add vesting failed'
         console.error('add vesting error', err)
       }
     }
