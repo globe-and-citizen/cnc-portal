@@ -1,4 +1,7 @@
+import { isAddress } from 'viem'
 import type { PolymarketActivity } from '~/types/polymarket'
+
+const POLYMARKET_ACTIVITY_URL = 'https://data-api.polymarket.com/activity'
 
 export type PolymarketActivitySortBy = 'TIMESTAMP' | 'TOKENS' | 'CASH'
 export type PolymarketActivitySortDirection = 'ASC' | 'DESC'
@@ -28,20 +31,53 @@ function serializeCsv(value: string | number | readonly string[] | readonly numb
   return String(value)
 }
 
+function clampLimit(raw: number | undefined): number {
+  if (raw == null || Number.isNaN(raw)) {
+    return 100
+  }
+  return Math.min(500, Math.max(0, Math.floor(raw)))
+}
+
+function clampOffset(raw: number | undefined): number {
+  if (raw == null || Number.isNaN(raw)) {
+    return 0
+  }
+  return Math.min(10_000, Math.max(0, Math.floor(raw)))
+}
+
+function appendOptionalParams(url: URL, params: FetchPolymarketActivityParams): void {
+  const entries: [string, string | undefined][] = [
+    ['market', serializeCsv(params.market)],
+    ['eventId', serializeCsv(params.eventId)],
+    ['type', serializeCsv(params.type)],
+    ['start', params.start != null ? String(params.start) : undefined],
+    ['end', params.end != null ? String(params.end) : undefined],
+    ['sortBy', params.sortBy],
+    ['sortDirection', params.sortDirection],
+    ['side', params.side]
+  ]
+  for (const [key, value] of entries) {
+    if (value !== undefined && value !== '') {
+      url.searchParams.set(key, value)
+    }
+  }
+}
+
+/**
+ * Fetches user activity from the Polymarket Data API (browser-side).
+ * @see https://docs.polymarket.com/api-reference/core/get-user-activity
+ */
 export async function fetchPolymarketActivity(params: FetchPolymarketActivityParams): Promise<PolymarketActivity[]> {
-  const query: Record<string, string | number | undefined> = {
-    user: params.user.trim(),
-    limit: params.limit,
-    offset: params.offset,
-    market: serializeCsv(params.market),
-    eventId: serializeCsv(params.eventId),
-    type: serializeCsv(params.type),
-    start: params.start,
-    end: params.end,
-    sortBy: params.sortBy,
-    sortDirection: params.sortDirection,
-    side: params.side
+  const user = params.user.trim()
+  if (!isAddress(user as `0x${string}`)) {
+    throw new Error('Invalid Polymarket user address')
   }
 
-  return await $fetch<PolymarketActivity[]>('/api/polymarket/activity', { query })
+  const url = new URL(POLYMARKET_ACTIVITY_URL)
+  url.searchParams.set('user', user)
+  url.searchParams.set('limit', String(clampLimit(params.limit)))
+  url.searchParams.set('offset', String(clampOffset(params.offset)))
+  appendOptionalParams(url, params)
+
+  return await $fetch<PolymarketActivity[]>(url.toString())
 }
