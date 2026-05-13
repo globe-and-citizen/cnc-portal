@@ -1,18 +1,18 @@
 <template>
   <UModal
     v-model:open="showVisibilityTeamConfirmModal"
-    :title="isVisible ? 'Hide Company' : 'Show Company'"
+    :title="companyIsShown ? 'Hide Company' : 'Show Company'"
     :description="
-      isVisible
+      companyIsShown
         ? 'This action will hide the company from your dashboard only.'
         : 'This action will show the company on your dashboard again.'
     "
   >
     <UButton
       size="sm"
-      :color="isVisible ? 'success' : 'warning'"
-      :icon="isVisible ? 'i-lucide-eye-off' : 'i-lucide-eye'"
-      :label="isVisible ? 'Hide' : 'Show'"
+      :color="companyIsShown ? 'success' : 'warning'"
+      :icon="companyIsShown ? 'i-lucide-eye-off' : 'i-lucide-eye'"
+      :label="companyIsShown ? 'Hide' : 'Show'"
       data-test="team-meta-visibility-open"
     />
     <template #body>
@@ -24,18 +24,18 @@
         class="mb-4"
       />
       <p>
-        Are you sure you want to {{ isVisible ? 'hide' : 'show' }} the company
+        Are you sure you want to {{ companyIsShown ? 'hide' : 'show' }} the company
         <span class="font-bold">{{ currentTeam?.name }}</span
         >?
       </p>
       <div class="mt-4 flex justify-center gap-2">
         <UButton
-          :color="isVisible ? 'success' : 'error'"
+          :color="companyIsShown ? 'success' : 'error'"
           data-test="visibility-team-button"
-          @click="isVisible ? hideTeam() : showTeam()"
+          @click="companyIsShown ? hideTeam() : showTeam()"
           :loading="teamIsUpdating"
           :disabled="teamIsUpdating"
-          :label="isVisible ? 'Hide' : 'Show'"
+          :label="companyIsShown ? 'Hide' : 'Show'"
         />
         <UButton
           color="primary"
@@ -69,7 +69,7 @@ const {
   reset
 } = useUpdateTeamMutation()
 
-const isVisible = computed(() => props.currentTeam?.isVisible ?? true)
+const companyIsShown = computed(() => !(props.currentTeam?.isHidden ?? false))
 
 function getRequiredTeamId(): string | null {
   const teamId = teamStore.currentTeamId
@@ -84,7 +84,7 @@ function hideTeam() {
   const teamId = getRequiredTeamId()
   if (!teamId) return
   updateTeamMutate(
-    { pathParams: { id: teamId }, body: { isVisible: false } },
+    { pathParams: { id: teamId }, body: { isHidden: true } },
     {
       onSuccess: () => {
         toast.add({ title: 'Company hidden successfully', color: 'success' })
@@ -99,7 +99,7 @@ function showTeam() {
   const teamId = getRequiredTeamId()
   if (!teamId) return
   updateTeamMutate(
-    { pathParams: { id: teamId }, body: { isVisible: true } },
+    { pathParams: { id: teamId }, body: { isHidden: false } },
     {
       onSuccess: () => {
         toast.add({ title: 'Company is visible again', color: 'success' })

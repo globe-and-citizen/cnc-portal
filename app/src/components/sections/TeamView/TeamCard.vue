@@ -50,6 +50,6 @@ interface Props {
 }
 const userStore = useUserDataStore()
 const props = defineProps<Props>()
-const isHidden = computed(() => Boolean(props.team.isHidden ?? props.team.isVisible === false))
-const isArchived = computed(() => Boolean(props.team.isArchived ?? props.team.archived))
+const isHidden = computed(() => props.team.isHidden)
+const isArchived = computed(() => props.team.isArchived)
 </script>

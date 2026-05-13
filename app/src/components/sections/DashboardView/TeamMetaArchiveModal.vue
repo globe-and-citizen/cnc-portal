@@ -69,9 +69,7 @@ const {
   reset
 } = useUpdateTeamMutation()
 
-const isArchived = computed(() =>
-  Boolean(props.currentTeam?.isArchived ?? props.currentTeam?.archived)
-)
+const isArchived = computed(() => props.currentTeam?.isArchived ?? false)
 
 function getRequiredTeamId(): string | null {
   const teamId = teamStore.currentTeamId
