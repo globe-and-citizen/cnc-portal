@@ -56,12 +56,9 @@ describe('DistributeMintForm.vue', () => {
   it('emits submit with parsed shareholder amounts when all rows are valid', async () => {
     const wrapper = mountForm()
 
-    const vm = wrapper.vm as unknown as {
-      shareholderWithAmounts: { shareholder: string; amount: number }[]
-    }
-    vm.shareholderWithAmounts[0]!.shareholder = '0x1234567890123456789012345678901234567890'
-    vm.shareholderWithAmounts[0]!.amount = 5
-    await wrapper.vm.$nextTick()
+    const validAddress = '0x1234567890123456789012345678901234567890'
+    await wrapper.find('input[data-test="address-input"]').setValue(validAddress)
+    await wrapper.find('input[data-test="amount-input"]').setValue(5)
 
     await wrapper.find('[data-test="submit-button"]').trigger('click')
     await flushPromises()
@@ -70,7 +67,7 @@ describe('DistributeMintForm.vue', () => {
     expect(submitted).toBeTruthy()
     const payload = submitted?.[0]?.[0] as Array<{ shareholder: string; amount: bigint }>
     expect(payload).toHaveLength(1)
-    expect(payload[0]!.shareholder).toBe('0x1234567890123456789012345678901234567890')
+    expect(payload[0]!.shareholder).toBe(validAddress)
     expect(typeof payload[0]!.amount).toBe('bigint')
   })
 })
