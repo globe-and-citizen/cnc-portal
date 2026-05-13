@@ -96,7 +96,20 @@ watch(
   }
 )
 
-const monthLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+const monthLabels = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec'
+]
 
 function buildWeekFromMonth(year: number, month: number): Week {
   const day = dayjs.utc().year(year).month(month).startOf('month')
@@ -110,7 +123,9 @@ function buildWeekFromMonth(year: number, month: number): Week {
 }
 
 function isSelected(monthIdx: number): boolean {
-  return Boolean(model.value && model.value.year === viewYear.value && model.value.month === monthIdx)
+  return Boolean(
+    model.value && model.value.year === viewYear.value && model.value.month === monthIdx
+  )
 }
 
 function selectMonth(monthIdx: number) {
