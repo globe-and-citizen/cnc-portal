@@ -14,7 +14,9 @@ const teamStoreState = {
       description: 'Team description for testing coverage.',
       ownerAddress: '0xOWNER',
       members: [{ name: 'Alice', description: 'dev' }],
-      teamContracts: []
+      teamContracts: [],
+      isHidden: false,
+      isArchived: false
     }
   }
 }
