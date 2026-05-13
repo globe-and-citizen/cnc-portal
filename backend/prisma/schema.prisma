@@ -62,7 +62,7 @@ model MemberTeamsData {
   id            Int      @id @default(autoincrement()) // Add an ID for easy referencing
   member        User     @relation(fields: [memberAddress], references: [address], onDelete: Cascade)
   team          Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  isVisible     Boolean  @default(true)
+  isHidden      Boolean  @default(false)
   memberAddress String
   teamId        Int
   createdAt     DateTime @default(now())
