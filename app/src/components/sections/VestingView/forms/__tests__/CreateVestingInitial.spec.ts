@@ -253,6 +253,23 @@ describe('CreateVesting.vue', () => {
     })
 
     it('sets errorMessage when approveAllowance hits a duplicate-member guard', async () => {
+      // Restore the duplicate-bearing state; an earlier test in this file mutates
+      // mockVestingInfos.value to null, which would otherwise empty activeMembers.
+      mockVestingInfos.value = [
+        [memberAddress],
+        [
+          {
+            start: `${Math.floor(Date.now() / 1000) - 3600}`,
+            duration: `${30 * 86400}`,
+            cliff: '0',
+            totalAmount: BigInt(10e18),
+            released: BigInt(2e18),
+            active: true
+          }
+        ]
+      ]
+      wrapper = mountComponent()
+
       ;(wrapper.vm as unknown as { member: { name: string; address: string } }).member = {
         name: 'Bob',
         address: memberAddress
