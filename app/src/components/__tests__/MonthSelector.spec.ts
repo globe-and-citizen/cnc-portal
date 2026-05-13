@@ -149,6 +149,48 @@ describe('MonthSelector', () => {
     })
   })
 
+  describe('viewYear synchronization', () => {
+    it('falls back to current year when initial modelValue is undefined', async () => {
+      const wrapper = mount(MonthSelector, {
+        global: {
+          components: {
+            UButton: {
+              template:
+                '<button :data-test="$attrs[\'data-test\']" @click="$emit(\'click\', $event)"><slot /></button>'
+            },
+            UPopover: {
+              template: '<div><slot /><slot name="content" /></div>',
+              props: ['open']
+            },
+            IconifyIcon: {
+              template: '<span :class="icon" />',
+              props: ['icon']
+            }
+          }
+        }
+      })
+      const currentYear = dayjs.utc().year()
+      expect(wrapper.text()).toContain(String(currentYear))
+    })
+
+    it('updates viewYear when modelValue.year changes from the parent', async () => {
+      const wrapper = createWrapper({ month: 5, year: 2024 })
+      expect(wrapper.text()).toContain('2024')
+
+      await wrapper.setProps({
+        modelValue: {
+          month: 5,
+          year: 2030,
+          isoWeek: 23,
+          formatted: '2030-W23',
+          isoString: dayjs.utc('2030-06-01').toISOString()
+        }
+      })
+
+      expect(wrapper.text()).toContain('2030')
+    })
+  })
+
   describe('Model Updates Structure', () => {
     it('should emit correct model structure when month changes', async () => {
       const initialModel = {
