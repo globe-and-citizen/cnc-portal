@@ -47,7 +47,6 @@
 
 <script setup lang="ts">
 import { VueQueryDevtools } from '@tanstack/vue-query-devtools'
-import '@vuepic/vue-datepicker/dist/main.css'
 import { useChainId, useConnection, useConnectionEffect, useSwitchChain } from '@wagmi/vue'
 import { computed, watch } from 'vue'
 import { RouterView, useRoute } from 'vue-router'
