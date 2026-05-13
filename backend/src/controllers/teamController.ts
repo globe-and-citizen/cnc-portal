@@ -75,17 +75,6 @@ const withCurrentOfficer = <T extends { teamOfficers?: TeamOfficer[] }>(team: T)
   };
 };
 
-const withArchiveFlags = <T extends { isArchived?: boolean }>(team: T) => ({
-  ...team,
-  isArchived: team.isArchived ?? false,
-});
-
-const withVisibilityFlags = <T extends object>(team: T & { isVisible?: boolean }) => ({
-  ...team,
-  isVisible: team.isVisible ?? true,
-  isHidden: !(team.isVisible ?? true),
-});
-
 const isTruthyQueryFlag = (value: unknown) => value === true || value === 'true';
 
 // Same as withCurrentOfficer but additionally surfaces the current Officer's
@@ -183,7 +172,11 @@ const addTeam = async (req: Request, res: Response) => {
         resource: `teams/${team.id}`,
       }
     );
-    res.status(201).json(team);
+    res.status(201).json({
+      ...team,
+      isHidden: false,
+      isArchived: team.isArchived ?? false,
+    });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal Server Error';
     return errorResponse(500, message, res);
@@ -245,14 +238,12 @@ const getTeam = async (req: Request, res: Response) => {
           teamId: Number(id),
         },
       },
-      select: { isVisible: true },
+      select: { isHidden: true },
     });
 
     res.status(200).json({
-      ...withVisibilityFlags({
-        ...withArchiveFlags(withCurrentOfficerAndContracts(team)),
-        isVisible: callerMemberData?.isVisible ?? true,
-      }),
+      ...withCurrentOfficerAndContracts(team),
+      isHidden: callerMemberData?.isHidden ?? false,
       members: membersWithResolvedImages,
     });
   } catch (error: unknown) {
@@ -278,7 +269,12 @@ const getAllTeams = async (req: Request, res: Response) => {
       }
 
       const memberFilter = { memberAddress: callerAddress };
-      // Current teams are always included; hidden/archived are additive flags.
+      // Union of list slices; each branch is scoped so hidden vs archived toggles compose.
+      // - Default: active (non-archived) teams the member has not hidden.
+      // - showHidden: also active teams the member has hidden; if archived is off, also
+      //   archived teams that are still hidden (archived+visible stay off until Archived on).
+      // - showArchived: archived teams; if Hidden is off, only those the member still lists
+      //   as visible (isHidden false), so archived+hidden does not leak into "Archived" alone.
       const memberTeamsWhere = {
         OR: [
           {
@@ -286,7 +282,7 @@ const getAllTeams = async (req: Request, res: Response) => {
             memberTeamsData: {
               some: {
                 ...memberFilter,
-                isVisible: true,
+                isHidden: false,
               },
             },
           },
@@ -297,7 +293,7 @@ const getAllTeams = async (req: Request, res: Response) => {
                   memberTeamsData: {
                     some: {
                       ...memberFilter,
-                      isVisible: false,
+                      isHidden: true,
                     },
                   },
                 },
@@ -308,7 +304,23 @@ const getAllTeams = async (req: Request, res: Response) => {
                 {
                   isArchived: true,
                   memberTeamsData: {
-                    some: memberFilter,
+                    some: {
+                      ...memberFilter,
+                      ...(showHidden ? {} : { isHidden: false }),
+                    },
+                  },
+                },
+              ]
+            : []),
+          ...(showHidden && !showArchived
+            ? [
+                {
+                  isArchived: true,
+                  memberTeamsData: {
+                    some: {
+                      ...memberFilter,
+                      isHidden: true,
+                    },
                   },
                 },
               ]
@@ -333,17 +345,16 @@ const getAllTeams = async (req: Request, res: Response) => {
           memberAddress: callerAddress,
           teamId: { in: memberTeams.map((team) => team.id) },
         },
-        select: { teamId: true, isVisible: true },
+        select: { teamId: true, isHidden: true },
       });
 
-      const visibilityByTeamId = new Map(visibilityRows.map((row) => [row.teamId, row.isVisible]));
+      const hiddenByTeamId = new Map(visibilityRows.map((row) => [row.teamId, row.isHidden]));
 
       return res.status(200).json(
         memberTeams.map((team) => ({
-          ...withVisibilityFlags({
-            ...withArchiveFlags(withCurrentOfficer(team)),
-            isVisible: visibilityByTeamId.get(team.id) ?? true,
-          }),
+          ...withCurrentOfficer(team),
+          isHidden: hiddenByTeamId.get(team.id) ?? false,
+          isArchived: team.isArchived ?? false,
         }))
       );
     }
@@ -363,11 +374,13 @@ const getAllTeams = async (req: Request, res: Response) => {
       },
     });
 
-    res
-      .status(200)
-      .json(
-        allTeams.map((team) => withVisibilityFlags(withArchiveFlags(withCurrentOfficer(team))))
-      );
+    res.status(200).json(
+      allTeams.map((team) => ({
+        ...withCurrentOfficer(team),
+        isHidden: false,
+        isArchived: team.isArchived ?? false,
+      }))
+    );
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal Server Error';
     return errorResponse(500, message, res);
@@ -378,7 +391,7 @@ const getAllTeams = async (req: Request, res: Response) => {
 
 const updateTeam = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { name, description, isArchived, isVisible } = req.body;
+  const { name, description, isArchived, isHidden } = req.body;
   const callerAddress = String(req.address);
   const teamId = Number(id);
 
@@ -419,7 +432,7 @@ const updateTeam = async (req: Request, res: Response) => {
       name === undefined &&
       description === undefined &&
       isArchived === undefined &&
-      isVisible === undefined
+      isHidden === undefined
     ) {
       return errorResponse(400, 'No fields to update', res);
     }
@@ -430,7 +443,7 @@ const updateTeam = async (req: Request, res: Response) => {
         ...(name !== undefined ? { name } : {}),
         ...(description !== undefined ? { description } : {}),
         ...(isArchived !== undefined ? { isArchived: Boolean(isArchived) } : {}),
-        ...(isVisible !== undefined
+        ...(isHidden !== undefined
           ? {
               memberTeamsData: {
                 updateMany: {
@@ -439,7 +452,7 @@ const updateTeam = async (req: Request, res: Response) => {
                     memberAddress: callerAddress,
                   },
                   data: {
-                    isVisible: Boolean(isVisible),
+                    isHidden: Boolean(isHidden),
                   },
                 },
               },
@@ -464,15 +477,13 @@ const updateTeam = async (req: Request, res: Response) => {
           teamId,
         },
       },
-      select: { isVisible: true },
+      select: { isHidden: true },
     });
 
-    res.status(200).json(
-      withVisibilityFlags({
-        ...withArchiveFlags(withCurrentOfficerAndContracts(teamU)),
-        isVisible: callerMemberData?.isVisible ?? true,
-      })
-    );
+    res.status(200).json({
+      ...withCurrentOfficerAndContracts(teamU),
+      isHidden: callerMemberData?.isHidden ?? false,
+    });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal Server Error';
     return errorResponse(500, message, res);

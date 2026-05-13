@@ -23,7 +23,7 @@ export const updateTeamBodySchema = z.object({
   name: nonEmptyStringSchema.optional(),
   description: z.string().optional(),
   isArchived: z.boolean().optional(),
-  isVisible: z.boolean().optional(),
+  isHidden: z.boolean().optional(),
 });
 
 const booleanQueryParamSchema = z.preprocess((value) => {
