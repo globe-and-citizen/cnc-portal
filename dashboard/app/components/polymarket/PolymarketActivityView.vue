@@ -159,29 +159,29 @@
       </UTable>
 
       <div
-        class="mt-4 flex items-center justify-between gap-3 border-t border-default pt-4"
+        v-if="polymarketUserAddress.trim() && paginationTotal > 0"
+        class="mt-4 flex flex-col gap-3 border-t border-default pt-4 sm:flex-row sm:items-center sm:justify-between"
       >
         <div class="text-sm text-muted">
-          Page {{ currentPage }}
+          <template v-if="rowCount === 0 && !isLoading">
+            No rows on this page.
+          </template>
+          <template v-else>
+            Rows {{ showingFrom }}–{{ showingTo }}
+            <span v-if="hasNextPage"> · more may be available</span>
+            <span v-else> · end of loaded activity</span>
+          </template>
         </div>
-        <div class="flex items-center gap-2">
-          <UButton
-            label="Previous"
-            color="neutral"
-            variant="outline"
-            icon="i-lucide-chevron-left"
-            :disabled="!hasPreviousPage || isFetching"
-            @click="goToPreviousPage"
-          />
-          <UButton
-            label="Next"
-            color="neutral"
-            variant="outline"
-            trailing-icon="i-lucide-chevron-right"
-            :disabled="!hasNextPage || isFetching"
-            @click="goToNextPage"
-          />
-        </div>
+        <UPagination
+          v-model:page="currentPage"
+          :items-per-page="pageSize"
+          :total="paginationTotal"
+          :disabled="isFetching"
+          :sibling-count="1"
+          show-edges
+          color="neutral"
+          variant="outline"
+        />
       </div>
     </UPageCard>
   </div>
@@ -288,8 +288,51 @@ const tableRows = computed<ActivityRow[]>(() => {
   }))
 })
 
-const hasPreviousPage = computed(() => currentPage.value > 1)
-const hasNextPage = computed(() => (data.value?.length ?? 0) === pageSize)
+const rowCount = computed(() => data.value?.length ?? 0)
+const hasNextPage = computed(() => rowCount.value === pageSize)
+
+/**
+ * Polymarket activity API does not return a total count. We expose a minimum
+ * total so UPagination can reach the next page while a full page is returned,
+ * and an exact total on the last (partial) page.
+ */
+const paginationTotal = computed(() => {
+  if (!polymarketUserAddress.value.trim()) {
+    return 0
+  }
+  if (rowCount.value === 0) {
+    return (currentPage.value - 1) * pageSize
+  }
+  const loadedThrough = (currentPage.value - 1) * pageSize + rowCount.value
+  if (hasNextPage.value) {
+    return loadedThrough + 1
+  }
+  return loadedThrough
+})
+
+const showingFrom = computed(() => {
+  if (rowCount.value === 0) {
+    return 0
+  }
+  return (currentPage.value - 1) * pageSize + 1
+})
+
+const showingTo = computed(() => {
+  if (rowCount.value === 0) {
+    return 0
+  }
+  return (currentPage.value - 1) * pageSize + rowCount.value
+})
+
+watch([paginationTotal, currentPage], () => {
+  if (paginationTotal.value <= 0) {
+    return
+  }
+  const maxPage = Math.max(1, Math.ceil(paginationTotal.value / pageSize))
+  if (currentPage.value > maxPage) {
+    currentPage.value = maxPage
+  }
+})
 
 const columns = [
   { accessorKey: 'formattedTime', header: 'Time' },
@@ -320,17 +363,5 @@ const fetchErrorMessage = computed(() => {
 
 function onRefreshClick(): void {
   void refetch()
-}
-
-function goToPreviousPage(): void {
-  if (hasPreviousPage.value) {
-    currentPage.value -= 1
-  }
-}
-
-function goToNextPage(): void {
-  if (hasNextPage.value) {
-    currentPage.value += 1
-  }
 }
 </script>
