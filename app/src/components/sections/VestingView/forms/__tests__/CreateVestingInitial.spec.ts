@@ -235,4 +235,52 @@ describe('CreateVesting.vue', () => {
       }
     })
   })
+
+  describe('In-form UAlert error feedback', () => {
+    const setError = async (message: string) => {
+      ;(wrapper.vm as unknown as { errorMessage: string }).errorMessage = message
+      await wrapper.vm.$nextTick()
+    }
+
+    it('renders the in-form UAlert when errorMessage is set in the form view', async () => {
+      expect(wrapper.find('[data-test="error-alert"]').exists()).toBe(false)
+
+      await setError('Insufficient token balance')
+
+      const alert = wrapper.find('[data-test="error-alert"]')
+      expect(alert.exists()).toBe(true)
+      expect(alert.text()).toContain('Insufficient token balance')
+    })
+
+    it('sets errorMessage when approveAllowance hits a duplicate-member guard', async () => {
+      ;(wrapper.vm as unknown as { member: { name: string; address: string } }).member = {
+        name: 'Bob',
+        address: memberAddress
+      }
+      await wrapper.vm.$nextTick()
+
+      await (wrapper.vm as unknown as { approveAllowance: () => Promise<void> }).approveAllowance()
+      await wrapper.vm.$nextTick()
+
+      expect((wrapper.vm as unknown as { errorMessage: string }).errorMessage).toBe(
+        'The member address already has an active vesting.'
+      )
+    })
+
+    it('sets errorMessage when approveAllowance is called with zero totalAmount', async () => {
+      ;(wrapper.vm as unknown as { member: { name: string; address: string } }).member = {
+        name: 'Carol',
+        address: '0x9999999999999999999999999999999999999999'
+      }
+      ;(wrapper.vm as unknown as { totalAmount: number }).totalAmount = 0
+      await wrapper.vm.$nextTick()
+
+      await (wrapper.vm as unknown as { approveAllowance: () => Promise<void> }).approveAllowance()
+      await wrapper.vm.$nextTick()
+
+      expect((wrapper.vm as unknown as { errorMessage: string }).errorMessage).toBe(
+        'total amount value should be greater than zero'
+      )
+    })
+  })
 })
