@@ -73,6 +73,7 @@ const vmCastLegacyFiles = [
   'src/components/sections/SherTokenView/__tests__/InvestorsTransaction.spec.ts',
   'src/components/sections/SherTokenView/__tests__/ShareholderList.spec.ts',
   'src/components/sections/VestingView/__tests__/VestingStats.spec.ts',
+  'src/components/sections/VestingView/forms/__tests__/CreateVestingErrors.spec.ts',
   'src/components/sections/VestingView/forms/__tests__/CreateVestingInitial.spec.ts',
   'src/components/sections/VestingView/forms/__tests__/CreateVestingSubmission.spec.ts',
   'src/components/ui/__tests__/SidebarLayout.spec.ts'
