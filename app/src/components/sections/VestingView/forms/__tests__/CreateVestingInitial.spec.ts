@@ -269,7 +269,6 @@ describe('CreateVesting.vue', () => {
         ]
       ]
       wrapper = mountComponent()
-
       ;(wrapper.vm as unknown as { member: { name: string; address: string } }).member = {
         name: 'Bob',
         address: memberAddress
