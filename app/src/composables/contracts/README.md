@@ -1,162 +1,247 @@
-# Contract Writes Composables
+# Contract write composables
 
-This directory contains a generic contract writes system that eliminates code duplication across different contract interactions.
+`useContractWritesV3` is the single entry point for every on-chain write in the
+app. Every feature composable under `app/src/composables/<contract>/writes.ts`
+wraps it; no feature code reaches into `@wagmi/vue` `useWriteContract` /
+`useWaitForTransactionReceipt` or `@wagmi/core` `writeContract` /
+`waitForTransactionReceipt` directly.
 
-## Architecture
+V2 (`useContractWritesV2`) has been removed. The legacy `useContractWrites` /
+`useBankWrites` / `useVestingWrites` API documented in previous revisions of
+this file no longer exists.
 
-### 1. Generic Base Composable (`useContractWrites`)
+The deployment helpers `useOfficerDeployment` / `useOfficerRedeploy` are the
+two exceptions exported from this directory — they target `deployContract`
+flows, not regular function calls, and are out of scope for this guide.
 
-The base composable provides all common functionality for contract write operations:
+## What V3 gives you
 
-- ✅ **Transaction execution** with `mutateAsync`
-- ✅ **Gas estimation** with encoded function data
-- ✅ **Error handling** with toast notifications
-- ✅ **Loading states** for pending and confirming transactions
-- ✅ **Query invalidation** (customizable per contract)
-- ✅ **Transaction validation** before execution
+`useContractWritesV3(cfg)` returns a TanStack mutation. The `mutationFn`:
 
-### 2. Contract-Specific Wrappers
+1. simulates the call against the configured chain,
+2. submits the validated request via `writeContract`,
+3. waits for the receipt and throws `ContractWriteRevertedError` if the
+   transaction reverted on-chain — with the ABI-decoded revert reason attached
+   as `cause` when recoverable,
+4. on success, invalidates every `useReadContract` query targeting the same
+   contract address (scoped to `chainId` when pinned).
 
-Each contract gets its own wrapper that extends the base composable with:
+`cfg.onSuccess` is awaited, so cross-contract invalidation queued by the caller
+settles before `mutateAsync` resolves. `cfg.onError` runs after the built-in
+error log.
 
-- ✅ **Function name validation** (e.g., Bank functions vs Vesting functions)
-- ✅ **Custom query invalidation** based on specific function behaviors
-- ✅ **Contract-specific error handling** and validation
+## 1. Shape of a write composable
 
-## Usage Examples
+Every feature wraps `useContractWritesV3` behind a thin, ABI-typed factory.
+The factory exists for two reasons: it injects the contract address from the
+team store, and it narrows `functionName` to the contract's ABI so callers get
+compile-time errors for typos.
 
-### Using the Generic Base (for any contract)
+`app/src/composables/bank/writes.ts` is the canonical shape — copy it when
+adding a new contract:
 
-```typescript
-import { useContractWrites } from '@/composables/contracts'
-import MyContractABI from '@/artifacts/abi/MyContract.json'
+```ts
+import { computed } from 'vue'
+import { BANK_ABI } from '@/artifacts/abi/bank'
+import { useContractWritesV3 } from '@/composables/contracts/useContractWritesV3'
+import { useTeamStore } from '@/stores/teamStore'
+import type { ExtractAbiFunctionNames } from 'abitype'
 
-const contractWrites = useContractWrites({
-  contractAddress: '0x1234...',
-  abi: MyContractABI,
-  chainId: 1
-})
+type BankFunctionNames = ExtractAbiFunctionNames<typeof BANK_ABI>
 
-// Execute any function
-await contractWrites.executeWrite('myFunction', ['arg1', 'arg2'])
-
-// Estimate gas
-const gasNeeded = await contractWrites.estimateGas('myFunction', ['arg1', 'arg2'])
-
-// Check if transaction will succeed
-const canExecute = await contractWrites.canExecuteTransaction('myFunction', ['arg1', 'arg2'])
-```
-
-### Using Contract-Specific Wrappers
-
-```typescript
-import { useBankWrites, useVestingWrites } from '@/composables/contracts'
-
-// Bank contract (with Bank-specific validation and query invalidation)
-const bankWrites = useBankWrites()
-await bankWrites.executeWrite('transfer', [recipient, amount])
-
-// Vesting contract (with Vesting-specific validation and query invalidation)
-const vestingWrites = useVestingWrites()
-await vestingWrites.executeWrite('addVesting', [member, amount, duration])
-```
-
-## Creating New Contract Wrappers
-
-To create a wrapper for a new contract:
-
-1. **Define function names constants:**
-
-```typescript
-export const MY_CONTRACT_FUNCTION_NAMES = {
-  MY_FUNCTION: 'myFunction',
-  ANOTHER_FUNCTION: 'anotherFunction'
-} as const
-
-export type MyContractFunctionName =
-  (typeof MY_CONTRACT_FUNCTION_NAMES)[keyof typeof MY_CONTRACT_FUNCTION_NAMES]
-```
-
-1. **Create the wrapper composable:**
-
-```typescript
-import { useContractWrites } from './useContractWrites'
-import MyContractABI from '@/artifacts/abi/MyContract.json'
-
-export function useMyContractWrites() {
+function useBankContractWrite(functionName: BankFunctionNames) {
   const teamStore = useTeamStore()
-  const chainId = useChainId()
-  const contractAddress = computed(() => teamStore.getContractAddressByType('MyContract'))
-
-  const baseWrites = useContractWrites({
-    contractAddress: contractAddress.value!,
-    abi: MyContractABI,
-    chainId: chainId.value
+  const bankAddress = computed(() => teamStore.getContractAddressByType('Bank'))
+  return useContractWritesV3({
+    contractAddress: bankAddress,
+    abi: BANK_ABI,
+    functionName
   })
+}
 
-  // Custom query invalidation logic
-  const invalidateMyContractQueries = async (functionName: MyContractFunctionName) => {
-    // Contract-specific invalidation logic here
-  }
+export function useTransfer() {
+  return useBankContractWrite('transfer')
+}
 
-  // Wrapper functions with validation
-  const executeWrite = async (
-    functionName: MyContractFunctionName,
-    args: readonly unknown[] = [],
-    value?: bigint,
-    options?: ContractWriteOptions
-  ) => {
-    // Add contract-specific validation
-    return baseWrites.executeWrite(functionName, args, value, options)
-  }
-
-  return {
-    ...baseWrites,
-    executeWrite,
-    invalidateMyContractQueries
-  }
+export function useTransferToken() {
+  return useBankContractWrite('transferToken')
 }
 ```
 
-1. **Export from index.ts:**
+Rules of thumb:
 
-```typescript
-export { useMyContractWrites } from './useMyContractWrites'
+- **One composable, one function.** `useTransfer` wraps `transfer`,
+  `useDepositToken` wraps `depositToken`. Do not bundle several writes behind
+  one composable — callers need independent `isPending` / `error` states per
+  call site.
+- **Pass refs, not values, for addresses.** `useContractWritesV3` accepts
+  `MaybeRef` for `contractAddress`, `abi`, `functionName`, and `chainId`. Keep
+  the address reactive so the mutation tracks store updates.
+- **Pin `chainId` only when you mean it.** Omitting `chainId` lets wagmi
+  resolve the chain from the connected wallet at call time and invalidates
+  reads across every chain in the cache. Pin it when the contract is single-
+  chain and you want narrow invalidation.
+- **No `args` / `value` at composable construction.** They are per-call:
+
+  ```ts
+  const transfer = useTransfer()
+  await transfer.mutateAsync({ args: [to, amount] })
+  ```
+
+`abi` is widened to `Abi` inside `useContractWritesV3`, so `variables.args` is
+**not** structurally validated against the function signature. The
+`ExtractAbiFunctionNames` factory above gives you function-name safety; argument
+typing remains the caller's responsibility.
+
+## 2. Error handling
+
+The convention is **reactive error + `classifyError` + `UAlert`**. Components
+keep their own `errorMessage` ref and a `UAlert` slot; the mutation's `error`
+state is consumed via `classifyError` (`@/utils`) which buckets every viem /
+wagmi error into a semantic category and resolves a user-facing message from
+the per-contract revert catalog.
+
+```vue
+<template>
+  <UAlert v-if="errorMessage" color="error" variant="soft" :description="errorMessage" />
+  <UButton :loading="withdraw.isPending.value" @click="onWithdraw">Withdraw</UButton>
+</template>
+
+<script setup lang="ts">
+import { ref } from 'vue'
+import { classifyError } from '@/utils'
+import { useOwnerWithdrawAllToBank } from '@/composables/cashRemuneration/writes'
+
+const errorMessage = ref('')
+const withdraw = useOwnerWithdrawAllToBank()
+const toast = useToast()
+
+const onWithdraw = async () => {
+  errorMessage.value = ''
+  try {
+    await withdraw.mutateAsync({ args: [] })
+    toast.add({ title: 'Withdraw successful', color: 'success' })
+  } catch (error) {
+    const classified = classifyError(error, { contract: 'CashRemuneration' })
+
+    if (classified.category === 'user_rejected') {
+      errorMessage.value = 'You rejected the request.'
+      return
+    }
+
+    toast.add({ title: classified.userMessage, color: 'error' })
+  }
+}
+</script>
 ```
 
-## Benefits
+Apply this everywhere:
 
-### ✅ **Code Reuse**
+- **Branch on `category`, never parse `userMessage`.** The categories are
+  `user_rejected`, `insufficient_gas`, `chain_mismatch`, `contract_revert`,
+  `no_contract`, `network`, `tx_dropped`, `unknown`. Each maps to a stable
+  UX decision (silent, retry, escalate, etc.).
+- **Pass `{ contract }` to `classifyError`.** Without it you get the generic
+  catalog. The contract key is what unlocks per-contract overrides for
+  `contract_revert` errors (e.g. `InsufficientTokenBalance` → "You do not have
+  enough tokens to complete this transfer").
+- **Silence `user_rejected`.** Treat it as a UI state, not an error — set a
+  warning in the modal or simply clear the loading state. Do not toast.
+- **`UAlert` for in-context errors, `toast` for transient ones.** Use the
+  alert when the user is mid-flow inside a modal/form (they need to see the
+  message and decide what to do). Use the toast for fire-and-forget actions.
+- **Log with `parseErrorV2(error)` or `parseError(error, abi)` before
+  surfacing.** `useContractWritesV3` already logs via `parseErrorV2` on the
+  built-in `onError`, so additional logging in the component is only needed
+  when you want extra context.
 
-- Common functionality written once
-- No duplication across contracts
+For non-V3 paths that still need an error message — e.g. a `simulateContract`
+preflight or a `readContract` allowance check — use `parseError(error, abi)`
+which returns a plain string (see
+`src/components/sections/ExpenseAccountView/TransferAction.vue` for the
+pattern).
 
-### ✅ **Consistency**
+## 3. Testing recipe
 
-- Same API pattern for all contracts
-- Consistent error handling and loading states
+`createContractWriteV3Mock()` from `@/tests/mocks/erc20.mock` returns a
+TanStack-mutation-shaped object with `vi.fn()` for `mutate` / `mutateAsync` /
+`reset` and refs for `isPending` / `isSuccess` / `isError` / `error` / `data` /
+`status`. Pre-baked mock groups for each contract live in
+`@/tests/mocks/contract.mock` (`mockBankWrites`, `mockExpenseAccountWrites`,
+…), and per-contract setup files in `src/tests/setup/<contract>.setup.ts` wire
+them in via `vi.mock(...)` so the corresponding feature composables resolve to
+the mocks during tests.
 
-### ✅ **Maintainability**
+Standard pattern:
 
-- Fix bugs in one place
-- Add features to all contracts at once
+```ts
+import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { mount, flushPromises } from '@vue/test-utils'
+import { UserRejectedRequestError, BaseError } from 'viem'
+import { mockCashRemunerationWrites, resetContractMocks } from '@/tests/mocks'
+import OwnerTreasuryWithdrawAction from '../OwnerTreasuryWithdrawAction.vue'
 
-### ✅ **Type Safety**
+describe('OwnerTreasuryWithdrawAction', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    resetContractMocks()
+    mockCashRemunerationWrites.ownerWithdrawAllToBank.mutateAsync.mockResolvedValue({
+      hash: '0xhash'
+    })
+  })
 
-- Full TypeScript support
-- Contract-specific function name validation
+  it('toasts success and refreshes balances', async () => {
+    const wrapper = mount(OwnerTreasuryWithdrawAction, {
+      props: { contractType: 'CashRemunerationEIP712' }
+    })
+    await wrapper.get('[data-test="owner-withdraw-button"]').trigger('click')
+    await wrapper.get('[data-test="owner-withdraw-modal-confirm-button"]').trigger('click')
+    await flushPromises()
 
-### ✅ **Performance**
+    expect(mockCashRemunerationWrites.ownerWithdrawAllToBank.mutateAsync).toHaveBeenCalledWith({
+      args: []
+    })
+  })
 
-- Gas estimation prevents failed transactions
-- Smart query invalidation reduces unnecessary refetches
+  it('surfaces the rejection warning when the user rejects', async () => {
+    mockCashRemunerationWrites.ownerWithdrawAllToBank.mutateAsync.mockRejectedValueOnce(
+      new BaseError('reject', {
+        cause: new UserRejectedRequestError(new Error('rejected'))
+      })
+    )
+    // …mount, click, assert warning rendered without a toast.
+  })
+})
+```
 
-## Available Composables
+Practical notes:
 
-- `useContractWrites` - Generic base composable
-- `useBankWrites` - Bank contract wrapper
-- `useVestingWrites` - Vesting contract wrapper
+- **Always call `resetContractMocks()` in `beforeEach`.** It restores every V3
+  write mock to `isPending=false`, `data=null`, etc., and clears `mutate` /
+  `mutateAsync` call counts. Without it, tests leak state across cases.
+- **Drive through the user-facing surface, not `wrapper.vm`.** Trigger clicks
+  / inputs and assert on `mutateAsync` calls + emitted toasts / alerts.
+- **`mutateAsync.mockRejectedValueOnce(viemError)` is how you exercise error
+  paths.** Wrap rejections in `new BaseError('…', { cause })` so
+  `classifyError` walks the chain and picks up the category. Plain `new
+Error()` falls into `category: 'unknown'`.
+- **`mutateAsync` resolves to whatever you set with `mockResolvedValue`.**
+  The default returned by `resetContractMocks` is `undefined`; pass `{ hash:
+'0xhash' }` (or the full V3 result shape) when the component reads from the
+  resolved value.
+- **`createContractWriteV3Mock()` directly** is for ad-hoc cases (a new
+  contract not yet pre-baked, or a component-local mock). The pre-baked
+  groups under `mockBankWrites`, `mockBODWrites`, etc. cover everything
+  currently wired in `tests/setup/*.setup.ts`.
 
-## Migration
+## API surface
 
-Existing code using `useBankWrites` will continue to work unchanged due to backward compatibility exports in `/bank/writes.ts`.
+| Export                        | Where                         | Purpose                                                                                                              |
+| ----------------------------- | ----------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `useContractWritesV3`         | `useContractWritesV3.ts`      | TanStack mutation wrapper — what every feature `writes.ts` calls.                                                    |
+| `executeContractWrite`        | `useContractWritesV3.ts`      | Framework-agnostic simulate → write → wait. Use from services that have no Vue scope.                                |
+| `ContractWriteRevertedError`  | `useContractWritesV3.ts`      | Thrown when a tx mined but reverted. Carries `hash`, `receipt`, `simulation`, and the ABI-decoded revert as `cause`. |
+| `classifyError`               | `@/utils/classifyError`       | Buckets any viem/wagmi error into a category + resolves a user-facing message.                                       |
+| `parseError` / `parseErrorV2` | `@/utils/errorUtil`           | String formatters for logging or non-V3 paths.                                                                       |
+| `createContractWriteV3Mock`   | `@/tests/mocks/erc20.mock`    | TanStack-mutation-shaped mock factory.                                                                               |
+| `resetContractMocks`          | `@/tests/mocks/contract.mock` | Resets every pre-baked V3 write/read mock between tests.                                                             |
