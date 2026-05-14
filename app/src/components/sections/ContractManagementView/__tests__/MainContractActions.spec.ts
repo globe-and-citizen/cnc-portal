@@ -255,16 +255,16 @@ describe('MainContractActions.vue', () => {
     mockBodIsBodAction.isBodAction.value = true
     type MutateOpts = { onSuccess?: () => void }
 
-    mutationByFn.pause.mutate.mockImplementationOnce(
-      (_v: unknown, opts?: MutateOpts) => opts?.onSuccess?.()
+    mutationByFn.pause.mutate.mockImplementationOnce((_v: unknown, opts?: MutateOpts) =>
+      opts?.onSuccess?.()
     )
     const pauseWrapper = mountComponent({ paused: false })
     await pauseWrapper.findAll('button')[0]?.trigger('click')
     await flushPromises()
     expect(pauseWrapper.emitted('contract-status-changed')).toBeTruthy()
 
-    mutationByFn.unpause.mutate.mockImplementationOnce(
-      (_v: unknown, opts?: MutateOpts) => opts?.onSuccess?.()
+    mutationByFn.unpause.mutate.mockImplementationOnce((_v: unknown, opts?: MutateOpts) =>
+      opts?.onSuccess?.()
     )
     const unpauseWrapper = mountComponent({ paused: true })
     await unpauseWrapper.findAll('button')[0]?.trigger('click')

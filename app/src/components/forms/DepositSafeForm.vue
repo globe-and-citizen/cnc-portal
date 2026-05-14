@@ -134,9 +134,7 @@ const toast = useToast()
 
 const errorMessage = computed(() => {
   const err =
-    nativeDeposit.error.value ||
-    ERC20ApproveResult.error.value ||
-    erc20Transfer.error.value
+    nativeDeposit.error.value || ERC20ApproveResult.error.value || erc20Transfer.error.value
   return err ? ((err as { shortMessage?: string }).shortMessage ?? err.message) : null
 })
 

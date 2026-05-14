@@ -147,8 +147,6 @@ describe('DistributeMintAction.vue', () => {
     const vm = wrapper.vm as unknown as { openModal: () => void }
     await vm.openModal()
     await nextTick()
-    expect(
-      wrapper.findComponent({ name: 'DistributeMintForm' }).props('loading')
-    ).toBe(true)
+    expect(wrapper.findComponent({ name: 'DistributeMintForm' }).props('loading')).toBe(true)
   })
 })

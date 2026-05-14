@@ -70,9 +70,7 @@ const pendingTransactions = ref(0)
 const originalCostPerClick = ref<number>(0)
 const originalCostPerImpression = ref<number>(0)
 
-const isLoading = computed(
-  () => loadingSetCostPerClick.value || loadingSetCostPerImpression.value
-)
+const isLoading = computed(() => loadingSetCostPerClick.value || loadingSetCostPerImpression.value)
 
 const originalValues = ref<Record<string, number>>({})
 
