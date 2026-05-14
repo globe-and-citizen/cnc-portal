@@ -1,12 +1,18 @@
 <template>
   <div class="dropdown dropdown-end">
     <div tabindex="0" role="button" class="">
-      <div class="btn btn-ghost btn-circle m-1" data-test="notifications">
-        <div class="indicator">
+      <UButton variant="ghost" color="neutral" class="m-1 rounded-full" data-test="notifications">
+        <div class="relative">
           <IconifyIcon icon="heroicons:bell" class="size-6" />
-          <span v-if="isUnread" class="badge badge-xs badge-primary indicator-item"></span>
+          <UBadge
+            v-if="isUnread"
+            color="primary"
+            size="xs"
+            class="absolute -top-1 -right-1 h-2 w-2 min-w-0 rounded-full p-0"
+            data-test="unread-badge"
+          />
         </div>
-      </div>
+      </UButton>
     </div>
     <ul
       tabindex="0"
@@ -36,7 +42,9 @@
           @click="currentPage > 1 ? currentPage-- : currentPage"
           icon="heroicons:chevron-left"
         />
-        <span class="join-item btn-primary"> {{ currentPage }} / {{ totalPages }} </span>
+        <span class="join-item text-primary px-2 text-sm">
+          {{ currentPage }} / {{ totalPages }}
+        </span>
         <UButton
           color="primary"
           size="xs"

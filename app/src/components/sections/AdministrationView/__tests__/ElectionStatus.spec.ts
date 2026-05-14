@@ -68,7 +68,7 @@ describe('ElectionStatus.vue', () => {
       mockElectionData.electionStatus.value = { text: 'Active', color: 'success' }
       wrapper = createComponent()
 
-      expect(wrapper.find('.badge').exists()).toBe(true)
+      expect(wrapper.find('[data-test="election-status-badge"]').exists()).toBe(true)
       expect(wrapper.text()).toContain('Active')
     })
 
@@ -76,14 +76,14 @@ describe('ElectionStatus.vue', () => {
       mockElectionData.electionStatus.value = null
       wrapper = createComponent()
 
-      expect(wrapper.find('.badge').exists()).toBe(false)
+      expect(wrapper.find('[data-test="election-status-badge"]').exists()).toBe(false)
     })
 
     it('should display status badge with correct text', () => {
       mockElectionData.electionStatus.value = { text: 'Upcoming', color: 'warning' }
       wrapper = createComponent()
 
-      const badge = wrapper.find('.badge')
+      const badge = wrapper.find('[data-test="election-status-badge"]')
       expect(badge.text()).toContain('Upcoming')
     })
   })
@@ -190,7 +190,7 @@ describe('ElectionStatus.vue', () => {
       mockElectionData.electionStatus.value = { text: 'Completed', color: 'neutral' }
       wrapper = createComponent()
 
-      const badge = wrapper.find('.badge')
+      const badge = wrapper.find('[data-test="election-status-badge"]')
       expect(badge.text()).not.toContain('•')
     })
   })
@@ -237,7 +237,7 @@ describe('ElectionStatus.vue', () => {
       wrapper = createComponent()
 
       // Component should still render but might show fallback
-      expect(wrapper.find('.badge').exists()).toBe(true)
+      expect(wrapper.find('[data-test="election-status-badge"]').exists()).toBe(true)
     })
 
     it('should handle negative time values gracefully', () => {
@@ -293,7 +293,7 @@ describe('ElectionStatus.vue', () => {
       mockElectionData.leftToEnd.value = 7200 // 2 hours
       wrapper = createComponent()
 
-      const badge = wrapper.find('.badge')
+      const badge = wrapper.find('[data-test="election-status-badge"]')
       expect(badge.text()).toMatch(/Active\s*•\s*2 hours left/)
     })
   })

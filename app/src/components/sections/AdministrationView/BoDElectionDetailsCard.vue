@@ -4,12 +4,15 @@
     :class="{ 'border-warning': isElectionWinner }"
   >
     <!-- Winner Badge (aligned to straddle border) -->
-    <div
+    <UBadge
       v-if="isElectionWinner"
-      class="badge badge-warning badge-lg border-base-100 absolute top-0 right-0 z-10 -translate-x-1/4 -translate-y-1/2 gap-2 border-2 shadow-lg"
+      color="warning"
+      variant="solid"
+      size="lg"
+      class="absolute top-0 right-0 z-10 -translate-x-1/4 -translate-y-1/2 gap-2 border-2 border-white shadow-lg"
     >
       <span class=""> Winner </span>
-    </div>
+    </UBadge>
     <div class="card-body">
       <!-- User Component -->
       <UserComponent layout="alternate" :user="election.user" />
