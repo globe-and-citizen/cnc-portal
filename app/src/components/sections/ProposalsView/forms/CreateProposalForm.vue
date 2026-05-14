@@ -87,7 +87,7 @@
       data-test="error-alert"
     />
 
-    <div class="modal-action">
+    <div class="mt-6 flex justify-end gap-2">
       <UButton color="error" variant="outline" @click="emit('closeModal')" label="Cancel" />
       <UButton
         type="submit"
