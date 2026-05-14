@@ -27,7 +27,7 @@
         />
         <DistributeMintForm
           v-if="modalState.show"
-          :loading="isLoading || isConfirming"
+          :loading="isLoading"
           :token-symbol="tokenSymbol"
           @submit="handleSubmit"
         />
@@ -41,8 +41,7 @@ import { ref, watch } from 'vue'
 import type { Address } from 'viem'
 import DistributeMintForm from '@/components/sections/SherTokenView/forms/DistributeMintForm.vue'
 import ActionButton from '@/components/sections/SherTokenView/ActionButton.vue'
-import { INVESTOR_ABI } from '@/artifacts/abi/investors'
-import { useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
+import { useDistributeMint } from '@/composables/investor/writes'
 import { log } from '@/utils'
 
 interface Props {
@@ -63,15 +62,10 @@ const modalState = ref({
 })
 
 const {
-  data: distributeMintHash,
   mutate: distributeMint,
   isPending: isLoading,
   error: distributeMintError
-} = useWriteContract()
-
-const { isLoading: isConfirming, isSuccess: isSuccessDistributing } = useWaitForTransactionReceipt({
-  hash: distributeMintHash
-})
+} = useDistributeMint()
 
 const openModal = () => {
   modalState.value = { mount: true, show: true }
@@ -89,27 +83,20 @@ const handleSubmit = (
 ) => {
   if (!props.investorsAddress) return
 
-  distributeMint({
-    abi: INVESTOR_ABI,
-    address: props.investorsAddress,
-    functionName: 'distributeMint',
-    args: [shareholders]
-  })
+  distributeMint(
+    { args: [shareholders] },
+    {
+      onSuccess: () => {
+        emit('refetchShareholders')
+        toast.add({ title: 'Distributed mint successfully', color: 'success' })
+        closeModal()
+      },
+      onError: (error) => {
+        log.error('Failed to distribute mint', error)
+      }
+    }
+  )
 }
-
-watch(distributeMintError, () => {
-  if (distributeMintError.value) {
-    log.error('Failed to distribute mint', distributeMintError.value)
-  }
-})
-
-watch([isConfirming, isSuccessDistributing], ([newIsConfirming, newIsSuccess]) => {
-  if (!newIsConfirming && newIsSuccess) {
-    emit('refetchShareholders')
-    toast.add({ title: 'Distributed mint successfully', color: 'success' })
-    closeModal()
-  }
-})
 
 watch(
   () => modalState.value.show,

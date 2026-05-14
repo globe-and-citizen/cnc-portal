@@ -57,7 +57,8 @@ export const mockERC20Reads = {
 }
 
 export const mockERC20Writes = {
-  approve: createContractWriteV3Mock()
+  approve: createContractWriteV3Mock(),
+  transfer: createContractWriteV3Mock()
 }
 
 /**

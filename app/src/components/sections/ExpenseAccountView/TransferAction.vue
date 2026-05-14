@@ -38,7 +38,7 @@
           v-if="showModal.mount && tokens.length > 0"
           v-model="transferData"
           :tokens="tokens"
-          :loading="isLoadingTransfer || isConfirmingTransfer || transferERC20loading"
+          :loading="transferMutation.isPending.value || approveMutation.isPending.value"
           @transfer="
             async (data) => {
               await transferFromExpenseAccount(data.address.address, data.amount)
@@ -64,19 +64,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed } from 'vue'
 import TransferForm from '@/components/forms/TransferForm.vue'
 import { USDC_ADDRESS, type TokenId } from '@/constant'
 import type { BudgetLimit } from '@/types'
 import { useContractBalance } from '@/composables'
 import { useTeamStore, useUserDataStore } from '@/stores'
 import { getTokens, log, parseError } from '@/utils'
-import { useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
 import { encodeFunctionData, parseEther, zeroAddress, type Address } from 'viem'
 import { EXPENSE_ACCOUNT_EIP712_ABI } from '@/artifacts/abi/expense-account-eip712'
-import { estimateGas, readContract, simulateContract } from '@wagmi/core'
+import { estimateGas, readContract } from '@wagmi/core'
 import { config } from '@/wagmi.config'
 import { ERC20_ABI } from '@/artifacts/abi/erc20'
+import { useERC20Approve } from '@/composables/erc20/writes'
+import { useExpenseAccountTransfer } from '@/composables/expenseAccount/writes'
 import { useQueryClient } from '@tanstack/vue-query'
 import type { TableRow } from '@/types/table'
 import type { TransferData } from '@/types'
@@ -92,10 +93,7 @@ const queryClient = useQueryClient()
 
 const showModal = ref({ mount: false, show: false })
 const errorMessage = ref('')
-const tokenAmount = ref('')
-const tokenRecipient = ref('')
 
-// Helper function to create default transfer data
 const createDefaultTransferData = (): TransferData => ({
   address: { name: '', address: '' },
   token: {
@@ -118,204 +116,131 @@ const expenseBalance = computed(() => {
     : null
 })
 
-//#region Computed Values
 const expenseAccountEip712Address = computed(() =>
   teamStore.getContractAddressByType('ExpenseAccountEIP712')
 )
 
 const tokens = computed(() => getTokens([props.row], props.row.signature, balances.value))
-//#endregion
 
-//#region Composables
-//expense account transfer
-const {
-  mutate: executeExpenseAccountTransfer,
-  isPending: isLoadingTransfer,
-  error: errorTransfer,
-  data: transferHash
-} = useWriteContract()
+const transferMutation = useExpenseAccountTransfer()
+const approveMutation = useERC20Approve(computed(() => USDC_ADDRESS as Address))
 
-const {
-  isLoading: isConfirmingTransfer,
-  isSuccess: isConfirmedTransfer,
-  error: confirmingTransferError
-} = useWaitForTransactionReceipt({
-  hash: transferHash
-})
-
-// Token approval
-const { mutate: approve, error: approveError, data: approveHash } = useWriteContract()
-
-const { isLoading: isConfirmingApprove, isSuccess: isConfirmedApprove } =
-  useWaitForTransactionReceipt({
-    hash: approveHash
-  })
-//#endregion
-
-//#region Functions
 const transferFromExpenseAccount = async (to: string, amount: string) => {
-  tokenAmount.value = amount
-  tokenRecipient.value = to
-
+  errorMessage.value = ''
   const budgetLimit = props.row.data
+  if (!expenseAccountEip712Address.value || !props.row) return
 
-  if (expenseAccountEip712Address.value && props.row) {
-    if (budgetLimit.tokenAddress === zeroAddress) await transferNativeToken(to, amount, budgetLimit)
-    else await transferErc20Token()
+  if (budgetLimit.tokenAddress === zeroAddress) {
+    await transferNativeToken(to, amount, budgetLimit)
+  } else {
+    await transferErc20Token(to, amount, budgetLimit)
   }
 }
 
+const submitExpenseAccountTransfer = (args: readonly unknown[]) => {
+  transferMutation.mutate(
+    { args },
+    {
+      onSuccess: () => {
+        toast.add({ title: 'Transfer Successful', color: 'success' })
+        showModal.value = { mount: false, show: false }
+        queryClient.invalidateQueries({ queryKey: ['getExpenseData'] })
+      },
+      onError: (err) => {
+        log.error(parseError(err, EXPENSE_ACCOUNT_EIP712_ABI))
+        errorMessage.value = 'Failed to transfer'
+      }
+    }
+  )
+}
+
 const transferNativeToken = async (to: string, amount: string, budgetLimit: BudgetLimit) => {
+  if (!expenseAccountEip712Address.value || !amount || !to) return
+  const args = [
+    to,
+    parseEther(amount),
+    {
+      ...budgetLimit,
+      amount:
+        budgetLimit.tokenAddress === zeroAddress
+          ? parseEther(`${budgetLimit.amount}`)
+          : BigInt(Number(budgetLimit.amount) * 1e6),
+      frequencyType: Number(budgetLimit.frequencyType),
+      customFrequency: BigInt(Number(budgetLimit.customFrequency)),
+      startDate: Number(budgetLimit.startDate),
+      endDate: Number(budgetLimit.endDate)
+    },
+    props.row.signature
+  ] as const
+
   try {
-    if (!expenseAccountEip712Address.value || !amount || !to) return
-    const args = [
+    const data = encodeFunctionData({
+      abi: EXPENSE_ACCOUNT_EIP712_ABI,
+      functionName: 'transfer',
+      args
+    })
+    await estimateGas(config, { to: expenseAccountEip712Address.value, data })
+  } catch (error) {
+    log.error('Error in transferNativeToken:', parseError(error, EXPENSE_ACCOUNT_EIP712_ABI))
+    errorMessage.value = parseError(error, EXPENSE_ACCOUNT_EIP712_ABI)
+    return
+  }
+
+  submitExpenseAccountTransfer(args)
+}
+
+const transferErc20Token = async (to: string, amount: string, budgetLimit: BudgetLimit) => {
+  if (!expenseAccountEip712Address.value) return
+
+  const _amount = BigInt(Number(amount) * 1e6)
+  const tokenAddress = USDC_ADDRESS as Address
+
+  let allowance: bigint
+  try {
+    allowance = (await readContract(config, {
+      address: tokenAddress,
+      abi: ERC20_ABI,
+      functionName: 'allowance',
+      args: [userDataStore.address as Address, expenseAccountEip712Address.value]
+    })) as bigint
+  } catch (error) {
+    log.error('Error reading allowance:', parseError(error))
+    errorMessage.value = 'Failed to read allowance'
+    return
+  }
+
+  const buildArgs = () =>
+    [
       to,
-      parseEther(amount),
+      _amount,
       {
         ...budgetLimit,
-        amount:
-          budgetLimit.tokenAddress === zeroAddress
-            ? parseEther(`${budgetLimit.amount}`)
-            : BigInt(Number(budgetLimit.amount) * 1e6),
+        amount: BigInt(Number(budgetLimit.amount) * 1e6),
         frequencyType: Number(budgetLimit.frequencyType),
         customFrequency: BigInt(Number(budgetLimit.customFrequency)),
         startDate: Number(budgetLimit.startDate),
         endDate: Number(budgetLimit.endDate)
       },
       props.row.signature
-    ]
-    const data = encodeFunctionData({
-      abi: EXPENSE_ACCOUNT_EIP712_ABI,
-      functionName: 'transfer',
-      args
-    })
-    await estimateGas(config, {
-      to: expenseAccountEip712Address.value,
-      data
-    })
-    executeExpenseAccountTransfer({
-      address: expenseAccountEip712Address.value,
-      args,
-      abi: EXPENSE_ACCOUNT_EIP712_ABI,
-      functionName: 'transfer'
-    })
-  } catch (error) {
-    console.error('Error in transferNativeToken:', parseError(error, EXPENSE_ACCOUNT_EIP712_ABI))
-    log.error('Error in transferNativeToken:', parseError(error, EXPENSE_ACCOUNT_EIP712_ABI))
-    errorMessage.value = parseError(error, EXPENSE_ACCOUNT_EIP712_ABI)
-    transferERC20loading.value = false
-    isLoadingTransfer.value = false
-  }
-}
-const transferERC20loading = ref(false)
-// Token transfer function
-const transferErc20Token = async () => {
-  if (
-    !expenseAccountEip712Address.value ||
-    !tokenAmount.value ||
-    !tokenRecipient.value ||
-    !props.row
-  )
-    return
+    ] as const
 
-  const tokenAddress = USDC_ADDRESS
-
-  transferERC20loading.value = true
-  const _amount = BigInt(Number(tokenAmount.value) * 1e6)
-
-  const budgetLimit = props.row.data
-
-  const allowance = await readContract(config, {
-    address: tokenAddress as Address,
-    abi: ERC20_ABI,
-    functionName: 'allowance',
-    args: [userDataStore.address as Address, expenseAccountEip712Address.value]
-  })
-
-  const currentAllowance = allowance ? allowance.toString() : 0n
-  if (Number(currentAllowance) < Number(_amount)) {
-    approve({
-      address: tokenAddress as Address,
-      abi: ERC20_ABI,
-      functionName: 'approve',
-      args: [expenseAccountEip712Address.value, _amount]
-    })
-  } else {
-    try {
-      const args = [
-        tokenRecipient.value,
-        _amount,
-        {
-          ...budgetLimit,
-          amount: BigInt(Number(budgetLimit.amount) * 1e6),
-          frequencyType: Number(budgetLimit.frequencyType),
-          customFrequency: BigInt(Number(budgetLimit.customFrequency)),
-          startDate: Number(budgetLimit.startDate),
-          endDate: Number(budgetLimit.endDate)
+  if (allowance < _amount) {
+    approveMutation.mutate(
+      { args: [expenseAccountEip712Address.value, _amount] },
+      {
+        onSuccess: () => {
+          toast.add({ title: 'Approval granted successfully', color: 'success' })
+          submitExpenseAccountTransfer(buildArgs())
         },
-        props.row.signature
-      ]
-
-      await simulateContract(config, {
-        address: expenseAccountEip712Address.value,
-        abi: EXPENSE_ACCOUNT_EIP712_ABI,
-        functionName: 'transfer',
-        args
-      })
-      executeExpenseAccountTransfer({
-        address: expenseAccountEip712Address.value,
-        abi: EXPENSE_ACCOUNT_EIP712_ABI,
-        functionName: 'transfer',
-        args
-      })
-    } catch (error) {
-      log.error('Error in transferErc20Token:', error)
-      errorMessage.value = parseError(error, EXPENSE_ACCOUNT_EIP712_ABI)
-      transferERC20loading.value = false
-      isLoadingTransfer.value = false
-    }
+        onError: (err) => {
+          log.error(parseError(err))
+          errorMessage.value = 'Failed to approve token spending'
+        }
+      }
+    )
+    return
   }
+
+  submitExpenseAccountTransfer(buildArgs())
 }
-//#endregion
-
-//#region Watchers
-watch(isConfirmingTransfer, async (isConfirming, wasConfirming) => {
-  if (!isConfirming && wasConfirming && isConfirmedTransfer.value) {
-    toast.add({ title: 'Transfer Successful', color: 'success' })
-    showModal.value = { mount: false, show: false }
-    transferERC20loading.value = false
-    queryClient.invalidateQueries({ queryKey: ['getExpenseData'] })
-  }
-})
-watch(errorTransfer, (newVal) => {
-  if (errorTransfer.value) {
-    transferERC20loading.value = false
-    isLoadingTransfer.value = false
-    log.error(parseError(newVal, EXPENSE_ACCOUNT_EIP712_ABI))
-    errorMessage.value = 'Failed to transfer'
-  }
-})
-watch(isConfirmingApprove, (newIsConfirming, oldIsConfirming) => {
-  if (!newIsConfirming && oldIsConfirming && isConfirmedApprove.value) {
-    toast.add({ title: 'Approval granted successfully', color: 'success' })
-    transferERC20loading.value = false
-    transferErc20Token()
-  }
-})
-watch(approveError, () => {
-  if (approveError.value) {
-    transferERC20loading.value = false
-    log.error(parseError(approveError.value))
-    errorMessage.value = 'Failed to approve token spending'
-  }
-})
-watch(confirmingTransferError, (newError) => {
-  if (newError) {
-    transferERC20loading.value = false
-    isLoadingTransfer.value = false
-    log.error(parseError(newError, EXPENSE_ACCOUNT_EIP712_ABI))
-    errorMessage.value = 'Failed to transfer after approval'
-  }
-})
-//#endregion
 </script>

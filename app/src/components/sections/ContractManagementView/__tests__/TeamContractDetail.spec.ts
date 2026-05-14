@@ -1,25 +1,32 @@
 import { mount, flushPromises } from '@vue/test-utils'
-//import type { ComponentPublicInstance } from 'vue'
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import TeamContractsDetail from '@/components/sections/ContractManagementView/TeamContractsDetail.vue'
-import { AD_CAMPAIGN_MANAGER_ABI } from '@/artifacts/abi/ad-campaign-manager'
-
 import { ref } from 'vue'
-import { useWriteContractFn, useWaitForTransactionReceiptFn } from '@/tests/mocks'
 
-const setCostPerClickMock = vi.fn().mockResolvedValue({ status: 1 })
-const setCostPerImpressionMock = vi.fn().mockResolvedValue({ status: 1 })
+const setCostPerClickMock = vi.fn()
+const setCostPerImpressionMock = vi.fn()
 export const mockErrorSetCostPerClick = ref<Error | null>(null)
 export const mockErrorSetCostPerImpression = ref<Error | null>(null)
+const isPendingSetCostPerClick = ref(false)
+const isPendingSetCostPerImpression = ref(false)
 
-const mockUseWaitForTransactionReceipt = {
-  data: ref({ contractAddress: '0xDEADBEEF' }),
-  isSuccess: ref(true),
-  isLoading: ref(false)
-}
-
-//mock wagmi vue (handled globally via useWriteContractFn / useWaitForTransactionReceiptFn)
+vi.mock('@/composables/contracts/useContractWritesV3', () => ({
+  useContractWritesV3: vi.fn(({ functionName }: { functionName: string }) => {
+    if (functionName === 'setCostPerClick') {
+      return {
+        mutate: setCostPerClickMock,
+        error: mockErrorSetCostPerClick,
+        isPending: isPendingSetCostPerClick
+      }
+    }
+    return {
+      mutate: setCostPerImpressionMock,
+      error: mockErrorSetCostPerImpression,
+      isPending: isPendingSetCostPerImpression
+    }
+  })
+}))
 
 describe('TeamContractsDetail.vue', () => {
   const contractAddress = '0xE55978c9f7B9bFc190B355d65e7F1dEc2F41D320'
@@ -38,26 +45,12 @@ describe('TeamContractsDetail.vue', () => {
   }
 
   beforeEach(() => {
-    const pinia = createPinia()
-    setActivePinia(pinia)
+    setActivePinia(createPinia())
     vi.clearAllMocks()
-    mockUseWaitForTransactionReceipt.data.value = { contractAddress: '0xDEADBEEF' }
-    mockUseWaitForTransactionReceipt.isSuccess.value = true
-    mockUseWaitForTransactionReceipt.isLoading.value = false
-    useWriteContractFn
-      .mockReturnValueOnce({
-        mutate: setCostPerClickMock,
-        error: mockErrorSetCostPerClick,
-        isPending: ref(false),
-        data: ref(null)
-      })
-      .mockReturnValueOnce({
-        mutate: setCostPerImpressionMock,
-        error: mockErrorSetCostPerImpression,
-        isPending: ref(false),
-        data: ref(null)
-      })
-    useWaitForTransactionReceiptFn.mockReturnValue(mockUseWaitForTransactionReceipt)
+    mockErrorSetCostPerClick.value = null
+    mockErrorSetCostPerImpression.value = null
+    isPendingSetCostPerClick.value = false
+    isPendingSetCostPerImpression.value = false
   })
 
   it('renders table headers and  rows correctly based on key types', () => {
@@ -136,18 +129,14 @@ describe('TeamContractsDetail.vue', () => {
     // Wait for Vue to process updates
     await flushPromises()
     // Check that the correct functions were called
-    expect(setCostPerClickMock).toHaveBeenCalledWith({
-      address: contractAddress,
-      abi: AD_CAMPAIGN_MANAGER_ABI,
-      functionName: 'setCostPerClick',
-      args: [200000000000000000n]
-    })
-    expect(setCostPerImpressionMock).toHaveBeenCalledWith({
-      address: contractAddress,
-      abi: AD_CAMPAIGN_MANAGER_ABI,
-      functionName: 'setCostPerImpression',
-      args: [400000000000000000n]
-    })
+    expect(setCostPerClickMock).toHaveBeenCalledWith(
+      { args: [200000000000000000n] },
+      expect.any(Object)
+    )
+    expect(setCostPerImpressionMock).toHaveBeenCalledWith(
+      { args: [400000000000000000n] },
+      expect.any(Object)
+    )
     // expect(setCostPerClickMock).toHaveBeenCalledWith(contractAddress, '0.2')
     // expect(setCostPerImpressionMock).toHaveBeenCalledWith(contractAddress, '0.4')
   })

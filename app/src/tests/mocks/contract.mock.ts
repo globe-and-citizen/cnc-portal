@@ -109,7 +109,10 @@ export const mockExpenseAccountReads = {
 }
 
 export const mockExpenseAccountWrites = {
-  ownerWithdrawAllToBank: createContractWriteV3Mock()
+  ownerWithdrawAllToBank: createContractWriteV3Mock(),
+  transfer: createContractWriteV3Mock(),
+  activateApproval: createContractWriteV3Mock(),
+  deactivateApproval: createContractWriteV3Mock()
 }
 
 /**
@@ -143,6 +146,8 @@ export const mockInvestorWrites = {
   claimDividend: createContractWriteV3Mock(),
   withdraw: createContractWriteV3Mock(),
   mint: createContractWriteV3Mock(),
+  individualMint: createContractWriteV3Mock(),
+  distributeMint: createContractWriteV3Mock(),
   transfer: createContractWriteV3Mock(),
   pause: createContractWriteV3Mock(),
   unpause: createContractWriteV3Mock(),

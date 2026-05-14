@@ -1,26 +1,14 @@
-import { ref, watch } from 'vue'
+import { ref } from 'vue'
 import { config } from '@/wagmi.config'
-import { useWaitForTransactionReceipt } from '@wagmi/vue'
-import { getWalletClient, readContract } from '@wagmi/core'
+import { getWalletClient, readContract, waitForTransactionReceipt } from '@wagmi/core'
 import { parseUnits, formatUnits } from 'viem/utils'
 
-import type { Abi, Hex, Address } from 'viem'
+import type { Abi, Address } from 'viem'
 
-export function useDeployContract(contractAbi: Abi, contractByteCode: Hex) {
-  const hash = ref<`0x${string}` | undefined>()
+export function useDeployContract(contractAbi: Abi, contractByteCode: `0x${string}`) {
   const contractAddress = ref<string | null>(null)
   const error = ref<Error | null>(null)
   const isDeploying = ref(false)
-
-  // Watch for transaction confirmation
-  const { data: receipt, isSuccess, isLoading } = useWaitForTransactionReceipt({ hash })
-
-  watch(isLoading, (isConfirming, wasConfirming) => {
-    if (!isConfirming && wasConfirming && isSuccess.value && receipt.value?.contractAddress) {
-      contractAddress.value = receipt.value.contractAddress
-      isDeploying.value = false
-    }
-  })
 
   const deploy = async (bankAddress: Address, costPerClick: string, costPerImpression: string) => {
     isDeploying.value = true
@@ -41,13 +29,13 @@ export function useDeployContract(contractAbi: Abi, contractByteCode: Hex) {
         account: walletClient.account.address
       })
 
-      hash.value = txHash
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        error.value = err
-      } else {
-        error.value = new Error('An unknown error occurred')
+      const receipt = await waitForTransactionReceipt(config, { hash: txHash })
+      if (receipt.contractAddress) {
+        contractAddress.value = receipt.contractAddress
       }
+    } catch (err: unknown) {
+      error.value = err instanceof Error ? err : new Error('An unknown error occurred')
+    } finally {
       isDeploying.value = false
     }
   }
