@@ -5,7 +5,7 @@
       <span class="text-xl font-bold">Select a User</span>
     </div>
     <div
-      class="input input-bordered input-lg flex cursor-pointer items-center gap-2"
+      class="border-default flex h-12 cursor-pointer items-center gap-2 rounded-md border bg-white px-3 dark:bg-gray-900"
       data-test="select-member-item-trigger"
       @click="toggleOpen"
     >
@@ -33,10 +33,10 @@
     >
       <!-- Search input -->
       <div class="border-base-300 border-b p-2">
-        <input
+        <UInput
           v-model="search"
           type="text"
-          class="input input-bordered input-md w-full"
+          class="w-full"
           placeholder="Search…"
           data-test="select-member-item-search"
         />
