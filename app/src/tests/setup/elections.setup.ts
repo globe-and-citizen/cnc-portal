@@ -20,5 +20,7 @@ vi.mock('@/composables/elections/reads', () => ({
 }))
 
 vi.mock('@/composables/elections/writes', () => ({
-  useElectionsCreateElection: vi.fn(() => mockElectionsWrites.createElection)
+  useElectionsCreateElection: vi.fn(() => mockElectionsWrites.createElection),
+  useElectionsPublishResults: vi.fn(() => mockElectionsWrites.publishResults),
+  useElectionsCastVote: vi.fn(() => mockElectionsWrites.castVote)
 }))
