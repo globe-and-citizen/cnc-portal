@@ -38,7 +38,7 @@
         ]"
         data-test="image-loading"
       >
-        <span class="loading loading-spinner loading-sm text-gray-400"></span>
+        <UIcon name="i-lucide-loader-circle" class="h-4 w-4 animate-spin text-gray-400" />
         <span class="mt-1 text-[10px] text-gray-500">Loading...</span>
       </div>
 
