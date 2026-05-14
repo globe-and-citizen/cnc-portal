@@ -90,6 +90,8 @@ function archive() {
 
 **Web3 stack.** wagmi + viem for chain reads/writes, Apollo Client for subgraph queries, Safe SDK (`@safe-global/*`) for multisig flows.
 
+**Contract writes — always V3.** All on-chain writes go through `useContractWritesV3` from `@/composables/contracts`. Do **not** import `useWriteContract` / `useWaitForTransactionReceipt` from `@wagmi/vue`, and do **not** import `writeContract` / `waitForTransactionReceipt` from `@wagmi/core` in feature code (components, services, feature composables). Read paths — `readContract`, `estimateGas`, `simulateContract` — stay as-is. The V3 composable owns simulation, send, receipt-wait, error classification, and lifecycle callbacks; reaching past it splinters error handling and breaks the migration tracked in #1798. The rule is enforced by ESLint (`no-restricted-imports` in `app/eslint.config.js`); a legacy allow-list there names the files still pending migration, and each migration PR removes its file from that list.
+
 **Frontend authoring — keep components small and readable (DX-first).** A component should fit on a screen and read like a description of the UI, not like a script. Whenever you edit a Vue file, take it as an opportunity to make it leaner.
 
 - **Extract logic, not just markup.** Push pure data shaping into `app/src/utils/` (utility functions) and stateful/reactive logic into `app/src/composables/` (`useXxx`). The component is left declaring *what* it shows — the *how* lives outside.
