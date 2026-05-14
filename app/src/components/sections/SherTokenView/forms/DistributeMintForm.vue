@@ -5,26 +5,23 @@
         <UBadge color="primary" variant="solid">Shareholder {{ index + 1 }}</UBadge>
         <UFormField
           :name="`shareholders.${index}.shareholder`"
+          label="Address"
           :error="rowErrors[index]?.shareholder"
           :ui="{ error: 'pl-4', root: 'mt-2' }"
           data-test="error-message-shareholder"
         >
-          <label class="input input-bordered input-md flex w-full items-center gap-2">
-            <p>Address</p>
-            |
-            <UInput
-              type="text"
-              class="grow"
-              data-test="address-input"
-              v-model="shareholder.shareholder"
-              @keyup.stop="
-                () => {
-                  searchUsers(shareholder.shareholder ?? '')
-                  showDropdown[index] = true
-                }
-              "
-            />
-          </label>
+          <UInput
+            type="text"
+            class="w-full"
+            data-test="address-input"
+            v-model="shareholder.shareholder"
+            @keyup.stop="
+              () => {
+                searchUsers(shareholder.shareholder ?? '')
+                showDropdown[index] = true
+              }
+            "
+          />
         </UFormField>
 
         <div
@@ -57,22 +54,22 @@
 
         <UFormField
           :name="`shareholders.${index}.amount`"
+          label="Amount"
           :error="rowErrors[index]?.amount"
           :ui="{ error: 'pl-4', root: 'mt-2' }"
           data-test="error-message-amount"
         >
-          <label class="input input-bordered input-md flex w-full items-center gap-2">
-            <p>Amount</p>
-            |
-            <UInput
-              type="number"
-              class="grow"
-              data-test="amount-input"
-              :model-value="shareholder.amount"
-              @update:model-value="(v: string | number) => (shareholder.amount = Number(v))"
-            />
-            {{ tokenSymbol }}
-          </label>
+          <UInput
+            type="number"
+            class="w-full"
+            data-test="amount-input"
+            :model-value="shareholder.amount"
+            @update:model-value="(v: string | number) => (shareholder.amount = Number(v))"
+          >
+            <template #trailing>
+              <span class="text-sm font-semibold text-gray-500 select-none">{{ tokenSymbol }}</span>
+            </template>
+          </UInput>
         </UFormField>
       </div>
     </div>
