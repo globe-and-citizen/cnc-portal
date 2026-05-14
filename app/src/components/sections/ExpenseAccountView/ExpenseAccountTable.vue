@@ -76,8 +76,12 @@ import { computed, ref, watch } from 'vue'
 import { log, parseError, tokenSymbol } from '@/utils'
 import { useUserDataStore, useTeamStore } from '@/stores'
 import { keccak256 } from 'viem'
-import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
+import { useReadContract } from '@wagmi/vue'
 import { EXPENSE_ACCOUNT_EIP712_ABI } from '@/artifacts/abi/expense-account-eip712'
+import {
+  useExpenseAccountActivateApproval,
+  useExpenseAccountDeactivateApproval
+} from '@/composables/expenseAccount/writes'
 import UserComponent from '@/components/UserComponent.vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useGetExpensesQuery } from '@/queries'
@@ -151,29 +155,9 @@ const { data: contractOwnerAddress, error: errorGetOwner } = useReadContract({
   address: expenseAccountEip712Address,
   abi: EXPENSE_ACCOUNT_EIP712_ABI
 })
-//deactivate approval
-const {
-  mutate: executeDeactivateApproval,
-  error: errorDeactivateApproval,
-  data: deactivateHash
-} = useWriteContract()
 
-const { isLoading: isConfirmingDeactivate, isSuccess: isConfirmedDeactivate } =
-  useWaitForTransactionReceipt({
-    hash: deactivateHash
-  })
-
-//activate approval
-const {
-  mutate: executeActivateApproval,
-  error: errorActivateApproval,
-  data: activateHash
-} = useWriteContract()
-
-const { isLoading: isConfirmingActivate, isSuccess: isConfirmedActivate } =
-  useWaitForTransactionReceipt({
-    hash: activateHash
-  })
+const { mutate: executeDeactivateApproval } = useExpenseAccountDeactivateApproval()
+const { mutate: executeActivateApproval } = useExpenseAccountActivateApproval()
 //#region
 
 const filteredApprovals = computed(() => {
@@ -187,73 +171,59 @@ const filteredApprovals = computed(() => {
 })
 
 //#region Functions
-const deactivateApproval = async (signature: `0x{string}`) => {
+const deactivateApproval = (signature: `0x{string}`) => {
   if (!expenseAccountEip712Address.value) {
     toast.add({ title: 'Failed to deactivate approval', color: 'error' })
     log.error('ExpenseAccountEip712Address is undefined')
     return
   }
 
-  const signatureHash = keccak256(signature)
-
-  executeDeactivateApproval({
-    address: expenseAccountEip712Address.value,
-    args: [signatureHash],
-    abi: EXPENSE_ACCOUNT_EIP712_ABI,
-    functionName: 'deactivateApproval'
-  })
+  executeDeactivateApproval(
+    { args: [keccak256(signature)] },
+    {
+      onSuccess: () => {
+        signatureToUpdate.value = ''
+        isLoadingSetStatus.value = false
+        queryClient.invalidateQueries({ queryKey: ['getExpenseData'] })
+        toast.add({ title: 'Approval deactivated', color: 'success' })
+      },
+      onError: (err) => {
+        isLoadingSetStatus.value = false
+        log.error(parseError(err))
+        toast.add({ title: 'Failed to deactivate approval', color: 'error' })
+      }
+    }
+  )
 }
 
-const activateApproval = async (signature: `0x{string}`) => {
+const activateApproval = (signature: `0x{string}`) => {
   if (!expenseAccountEip712Address.value) {
     toast.add({ title: 'Failed to activate approval', color: 'error' })
     log.error('ExpenseAccountEip712Address is undefined')
     return
   }
 
-  const signatureHash = keccak256(signature)
-
-  executeActivateApproval({
-    address: expenseAccountEip712Address.value,
-    args: [signatureHash],
-    abi: EXPENSE_ACCOUNT_EIP712_ABI,
-    functionName: 'activateApproval'
-  })
+  executeActivateApproval(
+    { args: [keccak256(signature)] },
+    {
+      onSuccess: () => {
+        signatureToUpdate.value = ''
+        isLoadingSetStatus.value = false
+        queryClient.invalidateQueries({ queryKey: ['getExpenseData'] })
+        toast.add({ title: 'Approval activated', color: 'success' })
+      },
+      onError: (err) => {
+        isLoadingSetStatus.value = false
+        log.error(parseError(err))
+        toast.add({ title: 'Failed to activate approval', color: 'error' })
+      }
+    }
+  )
 }
 
 //#endregion
 
 //#region Watch
-watch(isConfirmingActivate, async (isConfirming, wasConfirming) => {
-  if (!isConfirming && wasConfirming && isConfirmedActivate.value) {
-    signatureToUpdate.value = ''
-    isLoadingSetStatus.value = false
-    queryClient.invalidateQueries({ queryKey: ['getExpenseData'] })
-    toast.add({ title: 'Approval activated', color: 'success' })
-  }
-})
-watch(isConfirmingDeactivate, async (isConfirming, wasConfirming) => {
-  if (!isConfirming && wasConfirming && isConfirmedDeactivate.value) {
-    signatureToUpdate.value = ''
-    isLoadingSetStatus.value = false
-    queryClient.invalidateQueries({ queryKey: ['getExpenseData'] })
-    toast.add({ title: 'Approval deactivated', color: 'success' })
-  }
-})
-watch(errorDeactivateApproval, (newVal) => {
-  if (newVal) {
-    isLoadingSetStatus.value = false
-    log.error(parseError(newVal))
-    toast.add({ title: 'Failed to deactivate approval', color: 'error' })
-  }
-})
-watch(errorActivateApproval, (newVal) => {
-  if (newVal) {
-    isLoadingSetStatus.value = false
-    log.error(parseError(newVal))
-    toast.add({ title: 'Failed to activate approval', color: 'error' })
-  }
-})
 watch(errorGetOwner, (newVal) => {
   if (newVal) {
     log.error(parseError(newVal))

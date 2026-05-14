@@ -2,210 +2,142 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { ref } from 'vue'
-import { config } from '@/wagmi.config'
-import { readContract } from '@wagmi/core'
-import { log } from '@/utils'
-import { parseError } from '@/utils'
-import { EXPENSE_ACCOUNT_EIP712_ABI } from '@/artifacts/abi/expense-account-eip712'
+import { readContract, estimateGas } from '@wagmi/core'
 import TransferAction from '../TransferAction.vue'
-import { useWriteContractFn, useWaitForTransactionReceiptFn } from '@/tests/mocks'
-
-const { simulateContractMock } = vi.hoisted(() => ({
-  simulateContractMock: vi.fn()
-}))
+import {
+  mockExpenseAccountWrites,
+  mockERC20Writes,
+  resetContractMocks,
+  resetERC20Mocks
+} from '@/tests/mocks'
 
 vi.mock('@/utils', () => ({
-  log: {
-    error: vi.fn()
-  },
-  parseError: vi.fn(() => `Parsed error:`),
-  getTokens: vi.fn(() => [])
+  log: { error: vi.fn() },
+  parseError: vi.fn(() => 'Parsed error:'),
+  getTokens: vi.fn(() => [{ symbol: 'USDC', balance: 100, spendableBalance: 100 }])
 }))
 
 vi.mock('@/composables', () => ({
-  useContractBalance: () => ({
-    balances: ref({})
-  })
+  useContractBalance: () => ({ balances: ref({}) })
 }))
 
 vi.mock('@wagmi/core', () => ({
-  simulateContract: simulateContractMock,
   readContract: vi.fn(),
   estimateGas: vi.fn()
 }))
 
-// Mock the components
-// const MockUButton = {
-//   template: '<button @click="$emit(\'click\')"><slot></slot></button>'
-// }
-
 const MockTransferForm = {
-  template: '<div></div>',
+  template: '<div data-test="transfer-form" />',
   props: ['tokens', 'loading', 'modelValue'],
   emits: ['transfer', 'closeModal']
 }
 
-describe('TransferComponent', () => {
-  let wrapper
-  let logErrorMock: unknown
+type Vm = {
+  transferFromExpenseAccount: (to: string, amount: string) => Promise<void>
+  errorMessage: string
+}
 
-  const START_DATE = Math.floor(new Date().getTime() / 1000)
-  const END_DATE = START_DATE + 86400 * 30
-  const budgetLimit = {
-    tokenAddress: '0xTokenAddress',
+type MutationOpts = { onSuccess?: () => void; onError?: (e: unknown) => void }
+
+describe('TransferAction.vue', () => {
+  const transfer = mockExpenseAccountWrites.transfer
+  const approve = mockERC20Writes.approve
+
+  const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
+  const NATIVE_BUDGET = {
+    tokenAddress: ZERO_ADDRESS,
     approvedAddress: '0xApprovedAddress',
-    amount: 100,
+    amount: 1,
     frequencyType: 3,
-    startDate: START_DATE,
-    endDate: END_DATE,
+    startDate: 1,
+    endDate: 2,
     customFrequency: 0
   }
+  const ERC20_BUDGET = {
+    ...NATIVE_BUDGET,
+    tokenAddress: '0x0000000000000000000000000000000000000001'
+  }
 
-  // Component factory function
-  const createComponent = (props: { row?: Record<string, unknown> } = {}) => {
-    return mount(TransferAction, {
+  const createComponent = (data = ERC20_BUDGET) =>
+    mount(TransferAction, {
       global: {
-        stubs: {
-          TransferForm: MockTransferForm,
-          teleport: true
-        }
+        stubs: { TransferForm: MockTransferForm, teleport: true }
       },
       props: {
         row: {
           status: 'enabled',
           signature: '0xSignature',
-          data: {
-            ...budgetLimit
-          },
-          balances: ['0', '0'],
-          ...(props.row ?? {})
-        },
-        ...props
+          data,
+          balances: ['0', '0']
+        }
       }
     })
-  }
 
-  // Mock setup function
-  const setupMocks = (
-    options: {
-      writeContractError?: Error | null
-      writeContractPending?: boolean
-      writeContractData?: unknown
-      waitForReceiptError?: Error | null
-      waitForReceiptLoading?: boolean
-      waitForReceiptSuccess?: boolean
-    } = {}
-  ) => {
-    const {
-      writeContractError = null,
-      writeContractPending = false,
-      writeContractData = null,
-      waitForReceiptError = null,
-      waitForReceiptLoading = false,
-      waitForReceiptSuccess = false
-    } = options
-
-    useWriteContractFn.mockReturnValue({
-      mutate: vi.fn(),
-      isPending: ref(writeContractPending),
-      error: ref(writeContractError),
-      data: ref(writeContractData)
-    })
-
-    useWaitForTransactionReceiptFn.mockReturnValue({
-      isLoading: ref(waitForReceiptLoading),
-      isSuccess: ref(waitForReceiptSuccess),
-      error: ref(waitForReceiptError)
-    })
-
-    // Get mock references
-    logErrorMock = vi.spyOn(log, 'error')
-  }
-
-  beforeEach(async () => {
+  beforeEach(() => {
     setActivePinia(createPinia())
     vi.clearAllMocks()
-    setupMocks()
+    resetContractMocks()
+    resetERC20Mocks()
+    vi.mocked(estimateGas).mockResolvedValue(21000n)
   })
 
-  it('should call simulateContract with correct arguments when transferring ERC20 token', async () => {
-    vi.mocked(readContract).mockResolvedValue(BigInt(200 * 1e6))
-    wrapper = createComponent()
-    //@ts-expect-error not visible on wrapper.vm
-    wrapper.vm.tokenAmount = '100'
-    //@ts-expect-error not visible on wrapper.vm
-    wrapper.vm.tokenRecipient = '0xRecipientAddress'
-    //@ts-expect-error not visible on wrapper.vm
-    await wrapper.vm.transferErc20Token()
+  it('invokes transfer when ERC20 allowance is sufficient', async () => {
+    vi.mocked(readContract).mockResolvedValueOnce(BigInt(200 * 1e6))
+    const wrapper = createComponent()
+    await (wrapper.vm as unknown as Vm).transferFromExpenseAccount('0xRecipient', '1')
+    await flushPromises()
 
-    // Check that simulateContract was called with correct arguments
-    expect(simulateContractMock).toHaveBeenCalledWith(config, {
-      abi: EXPENSE_ACCOUNT_EIP712_ABI,
-      functionName: 'transfer',
-      address: '0x5555555555555555555555555555555555555555',
-      args: [
-        '0xRecipientAddress',
-        100000000n,
-        {
-          ...budgetLimit,
-          amount: BigInt(Number(budgetLimit.amount) * 1e6),
-          customFrequency: 0n
-        },
-        '0xSignature'
-      ]
+    expect(approve.mutate).not.toHaveBeenCalled()
+    expect(transfer.mutate).toHaveBeenCalled()
+  })
+
+  it('approves then transfers when allowance is insufficient', async () => {
+    vi.mocked(readContract).mockResolvedValueOnce(0n)
+    approve.mutate.mockImplementationOnce((_v: unknown, opts?: MutationOpts) => {
+      opts?.onSuccess?.()
     })
-  })
 
-  it('should log error and show toast when errorTransfer value changes', async () => {
-    const mockError = new Error('Transfer failed')
-    wrapper = createComponent()
-    //@ts-expect-error not visible on wrapper.vm
-    wrapper.vm.errorTransfer = mockError
-
-    // Wait for next tick to ensure watcher runs
-    await wrapper.vm.$nextTick()
-
-    // Check that log.error was called with parsed error
-    expect(logErrorMock).toHaveBeenCalledWith(parseError(mockError, EXPENSE_ACCOUNT_EIP712_ABI))
-    // Check that error toast was shown
-    // expect(mockToast.add).toHaveBeenCalledWith({ title: 'Failed to transfer', color: 'error' })
-  })
-
-  it('should handle confirming transfer error and show appropriate error message', async () => {
-    const mockError = new Error('Confirmation failed')
-
-    wrapper = createComponent()
-
-    //@ts-expect-error not visible on wrapper.vm
-    wrapper.vm.confirmingTransferError = mockError
-
-    await wrapper.vm.$nextTick()
-
-    expect(logErrorMock).toHaveBeenCalledWith(parseError(mockError, EXPENSE_ACCOUNT_EIP712_ABI))
-    // expect(mockToast.add).toHaveBeenCalledWith({
-    //   title: 'Failed to transfer after approval',
-    //   color: 'error'
-    // })
-  })
-
-  it('should reset loading states when confirming transfer error occurs', async () => {
-    const mockError = new Error('Confirmation failed')
-    wrapper = createComponent()
-
-    //@ts-expect-error not visible on wrapper.vm
-    wrapper.vm.transferERC20loading = true
-    //@ts-expect-error not visible on wrapper.vm
-    wrapper.vm.isLoadingTransfer = true
-
-    await flushPromises()
-    //@ts-expect-error not visible on wrapper.vm
-    wrapper.vm.confirmingTransferError = mockError
-
+    const wrapper = createComponent()
+    await (wrapper.vm as unknown as Vm).transferFromExpenseAccount('0xRecipient', '1')
     await flushPromises()
 
-    //@ts-expect-error not visible on wrapper.vm
-    expect(wrapper.vm.transferERC20loading).toBe(false)
-    //@ts-expect-error not visible on wrapper.vm
-    expect(wrapper.vm.isLoadingTransfer).toBe(false)
+    expect(approve.mutate).toHaveBeenCalled()
+    expect(transfer.mutate).toHaveBeenCalled()
+  })
+
+  it('surfaces approve errors via errorMessage', async () => {
+    vi.mocked(readContract).mockResolvedValueOnce(0n)
+    approve.mutate.mockImplementationOnce((_v: unknown, opts?: MutationOpts) => {
+      opts?.onError?.(new Error('approve failed'))
+    })
+
+    const wrapper = createComponent()
+    await (wrapper.vm as unknown as Vm).transferFromExpenseAccount('0xRecipient', '1')
+    await flushPromises()
+
+    expect(transfer.mutate).not.toHaveBeenCalled()
+    expect((wrapper.vm as unknown as Vm).errorMessage).toBe('Failed to approve token spending')
+  })
+
+  it('surfaces transfer errors via errorMessage', async () => {
+    vi.mocked(readContract).mockResolvedValueOnce(BigInt(200 * 1e6))
+    transfer.mutate.mockImplementationOnce((_v: unknown, opts?: MutationOpts) => {
+      opts?.onError?.(new Error('transfer failed'))
+    })
+
+    const wrapper = createComponent()
+    await (wrapper.vm as unknown as Vm).transferFromExpenseAccount('0xRecipient', '1')
+    await flushPromises()
+
+    expect((wrapper.vm as unknown as Vm).errorMessage).toBe('Failed to transfer')
+  })
+
+  it('estimates gas then transfers a native deposit', async () => {
+    const wrapper = createComponent(NATIVE_BUDGET)
+    await (wrapper.vm as unknown as Vm).transferFromExpenseAccount('0xRecipient', '1')
+    await flushPromises()
+
+    expect(estimateGas).toHaveBeenCalled()
+    expect(transfer.mutate).toHaveBeenCalled()
   })
 })
