@@ -68,11 +68,19 @@ const timeRemaining = computed(() => {
   return 'Election ended'
 })
 
-const badgeColor = computed(
-  () =>
-    (electionStatus.value?.color as 'warning' | 'error' | 'neutral' | 'success' | undefined) ??
-    'neutral'
-)
+type BadgeColor = 'warning' | 'error' | 'neutral' | 'success'
+
+const badgeColor = computed<BadgeColor>(() => {
+  switch (electionStatus.value?.color) {
+    case 'warning':
+    case 'error':
+    case 'success':
+      return electionStatus.value.color
+    default:
+      return 'neutral'
+  }
+})
+
 const dotClass = computed(() => {
   switch (electionStatus.value?.color) {
     case 'warning':
