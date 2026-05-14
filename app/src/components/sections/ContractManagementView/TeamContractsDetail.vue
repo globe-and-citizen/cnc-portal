@@ -41,10 +41,9 @@
       </template>
     </UTable>
     <div class="mt-4">
-      <button @click="submit" class="btn btn-primary" :loading="isLoading" :disabled="isLoading">
-        <span v-if="isLoading" class="loading loading-spinner loading-xs text-green-800"></span>
+      <UButton @click="submit" color="primary" :loading="isLoading" :disabled="isLoading">
         save changes
-      </button>
+      </UButton>
     </div>
   </div>
 </template>

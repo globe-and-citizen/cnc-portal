@@ -13,13 +13,13 @@
       {{ selectedTokenId === 'native' ? NETWORK.currencySymbol : selectedTokenId.toUpperCase() }}
     </h6>
 
-    <div
+    <UAlert
       v-if="(formattedUnlockedBalance ?? 0) === 0"
-      class="alert alert-warning"
+      color="warning"
+      variant="soft"
+      description="Please fund the bank contract before paying dividends."
       data-test="bank-empty-warning"
-    >
-      Please fund the bank contract before paying dividends.
-    </div>
+    />
 
     <TokenAmount v-model="tokenAmountModel" :tokens="tokens" :loading="loading">
       <template #label>

@@ -1,8 +1,12 @@
 <template>
   <div class="relative">
-    <div
+    <UBadge
+      as="div"
       role="button"
-      class="badge badge-md badge-info flex cursor-pointer items-center text-xs"
+      color="info"
+      variant="solid"
+      size="md"
+      class="flex cursor-pointer items-center text-xs"
       @click="toggleDropdown"
       @keydown.enter="toggleDropdown"
       @keydown.space.prevent="toggleDropdown"
@@ -16,7 +20,7 @@
     >
       <span>{{ formattedSelectedValue }}</span>
       <IconifyIcon v-if="!disabled" icon="heroicons-outline:chevron-down" class="h-4 w-4" />
-    </div>
+    </UBadge>
     <ul
       class="menu bg-base-200 rounded-box absolute right-0 z-10 mt-2 border-2 p-2 shadow-sm"
       ref="target"
