@@ -5,8 +5,8 @@
     ref="formRef"
     data-test="member-input"
   >
-    <label
-      class="input input-bordered input-md flex w-full items-center gap-2"
+    <div
+      class="border-default flex h-12 w-full items-center gap-2 rounded-md border bg-white px-3 dark:bg-gray-900"
       :data-test="`member-input`"
     >
       <UInput
@@ -40,7 +40,7 @@
           }
         "
       />
-    </label>
+    </div>
     <!-- Dropdown positioned relative to the input -->
     <div
       v-if="showDropdown && filteredMembers && filteredMembers.length > 0"

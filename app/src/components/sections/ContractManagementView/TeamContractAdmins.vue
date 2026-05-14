@@ -9,12 +9,13 @@
     @submit.prevent="handleAdminAction(newAdminAddress as `0x${string}`, 'addAdmin')"
     class="mb-4 flex items-center space-x-2"
   >
-    <input
+    <UInput
       v-model="newAdminAddress"
       type="text"
+      size="sm"
       placeholder="Enter new admin address"
-      class="input input-bordered input-sm w-full max-w-xs"
-      required
+      class="w-full max-w-xs"
+      :required="true"
     />
     <div>
       <UButton type="submit" color="primary" size="sm"> Add Admin</UButton>
