@@ -30,6 +30,10 @@ jobs:
         run: npm run lint
         working-directory: ./app
 
+      - name: 🚫 Guard against DaisyUI residual classes
+        run: npm run lint:no-daisy
+        working-directory: ./app
+
       - name: 🧹Format code
         run: npm run format-check
         working-directory: ./app
