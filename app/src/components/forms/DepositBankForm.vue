@@ -36,7 +36,7 @@
       data-test="error-alert"
     />
 
-    <div class="modal-action justify-between">
+    <div class="mt-6 flex justify-between gap-2">
       <UButton
         color="error"
         variant="outline"

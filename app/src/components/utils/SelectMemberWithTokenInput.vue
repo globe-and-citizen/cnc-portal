@@ -1,6 +1,6 @@
 <template>
   <div
-    class="input-group relative"
+    class="relative"
     :class="teamStore.currentTeamMeta.isPending ? 'animate-pulse' : ''"
     ref="formRef"
     data-test="member-input"

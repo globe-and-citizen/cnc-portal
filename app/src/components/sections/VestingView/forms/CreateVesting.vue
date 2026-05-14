@@ -89,7 +89,7 @@
       By clicking "Create Vesting", you agree to lock this token amount under a vesting schedule.
       Ensure your contract is approved to transfer these tokens.
     </h3>
-    <div class="modal-action justify-end">
+    <div class="mt-6 flex justify-end gap-2">
       <UButton
         type="button"
         color="primary"

@@ -70,7 +70,7 @@
             </template>
           </UFormField>
 
-          <div class="modal-action flex justify-end gap-2">
+          <div class="mt-6 flex justify-end gap-2">
             <UButton
               variant="ghost"
               type="button"

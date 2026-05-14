@@ -25,6 +25,7 @@
     "build-only": "vite build",
     "type-check": "vue-tsc --build tsconfig.app.json --force",
     "lint": "eslint . --fix ",
+    "lint:no-daisy": "node scripts/check-no-daisy.mjs",
     "format": "prettier --write .",
     "format-check": "prettier . --check",
     "sentry:releases": "sentry-cli releases new \"$(git rev-parse --short HEAD)\" --project cnc-portal-app && sentry-cli releases set-commits \"$(git rev-parse --short HEAD)\" --auto --project cnc-portal-app",
