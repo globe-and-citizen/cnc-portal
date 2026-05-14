@@ -24,18 +24,18 @@
           />
         </UFormField>
 
-        <div
-          class="dropdown"
-          :class="{
-            'dropdown-open':
-              !!usersData?.users && usersData?.users.length > 0 && showDropdown[index]
-          }"
-          :key="index"
-          v-if="showDropdown[index]"
-        >
-          <ul class="menu dropdown-content bg-base-100 rounded-box z-1 w-96 p-2 shadow-sm">
-            <li v-for="user in usersData?.users" :key="user.address">
+        <div class="relative" :key="index" v-if="showDropdown[index]">
+          <ul
+            class="bg-default z-1 mt-1 flex w-96 flex-col gap-1 rounded-lg p-2 shadow-sm"
+            v-if="!!usersData?.users && usersData?.users.length > 0"
+          >
+            <li
+              v-for="user in usersData?.users"
+              :key="user.address"
+              class="hover:bg-muted rounded-md"
+            >
               <a
+                class="block cursor-pointer px-3 py-2"
                 data-test="found-user"
                 @click="
                   () => {
