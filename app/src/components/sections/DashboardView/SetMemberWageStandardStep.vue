@@ -127,6 +127,7 @@
 </template>
 
 <script setup lang="ts">
+import { watch } from 'vue'
 import * as z from 'zod'
 import { NETWORK } from '@/constant'
 import type { Wage, WageWithForm } from '@/types'
@@ -140,6 +141,24 @@ defineProps<{
   wage?: Wage
   errorMessage?: string
 }>()
+
+watch(
+  () => wageData.value.ratePerHour.map((r) => Number(r.amount)),
+  (amounts) => {
+    wageData.value.ratePerHour.forEach((rate, i) => {
+      if (amounts[i] === 0 && rate.enabled) rate.enabled = false
+    })
+  }
+)
+
+watch(
+  () => wageData.value.ratePerHour.map((r) => r.enabled),
+  (enabled) => {
+    wageData.value.ratePerHour.forEach((rate, i) => {
+      if (!enabled[i] && Number(rate.amount) !== 0) rate.amount = 0
+    })
+  }
+)
 
 const rateSchema = z.object({
   type: z.enum(['native', 'usdc', 'sher', 'usdc.e']),
@@ -156,15 +175,6 @@ const standardSchema = z.object({
   ratePerHour: z.array(rateSchema).superRefine((rates, ctx) => {
     if (rates.filter((r) => r.enabled).length === 0) {
       ctx.addIssue({ code: z.ZodIssueCode.custom, path: [], message: 'Enable at least one rate' })
-    }
-    for (const [index, rate] of rates.entries()) {
-      if (rate.enabled && rate.amount <= 0) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: [index, 'amount'],
-          message: 'Enabled rates must be greater than 0'
-        })
-      }
     }
   })
 })
