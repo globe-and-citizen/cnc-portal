@@ -9,8 +9,8 @@ const SELECTORS = {
   compensationAmount: '[data-test="compensation-amount"]',
   compensationInput: '[data-test="compensation-input"]',
   tokenSymbolBadge: '[data-test="token-symbol-badge"]',
-  labelText: '.label-text',
-  labelTextAlt: '.label-text-alt'
+  labelText: '[data-test="compensation-label-text"]',
+  labelTextAlt: '[data-test="compensation-label-text-alt"]'
 } as const
 
 const MOCK_DATA = {

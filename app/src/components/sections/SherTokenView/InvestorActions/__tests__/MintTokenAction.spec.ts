@@ -43,8 +43,7 @@ describe('MintTokenAction.vue', () => {
   it('enables mint button for token owner and opens modal', async () => {
     const wrapper = createWrapper()
 
-    expect(wrapper.attributes('data-tip')).toBe('')
-    expect(wrapper.classes()).not.toContain('tooltip')
+    expect(wrapper.findComponent({ name: 'UTooltip' }).props('text')).toBeUndefined()
 
     await wrapper.find('[data-test="mint-button"]').trigger('click')
     await nextTick()
@@ -57,7 +56,9 @@ describe('MintTokenAction.vue', () => {
       investorsOwner: '0x2222222222222222222222222222222222222222' as Address
     })
 
-    expect(wrapper.attributes('data-tip')).toBe('Only the token owner can mint tokens')
+    expect(wrapper.findComponent({ name: 'UTooltip' }).props('text')).toBe(
+      'Only the token owner can mint tokens'
+    )
     expect(wrapper.find('[data-test="mint-button"]').attributes('disabled')).toBeDefined()
   })
 

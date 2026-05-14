@@ -1,8 +1,5 @@
 <template>
-  <div
-    :class="{ tooltip: !canDeposit }"
-    :data-tip="!canDeposit ? 'SHER compensation deposits are not available' : null"
-  >
+  <UTooltip :text="!canDeposit ? 'SHER compensation deposits are not available' : undefined">
     <ActionButton
       icon="heroicons-outline:plus"
       icon-bg="bg-teal-50 dark:bg-teal-950"
@@ -30,7 +27,7 @@
         />
       </template>
     </UModal>
-  </div>
+  </UTooltip>
 </template>
 
 <script setup lang="ts">

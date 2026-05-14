@@ -1,5 +1,5 @@
 <template>
-  <div class="tooltip" data-tip="Coming soon">
+  <UTooltip text="Coming soon">
     <ActionButton
       icon="heroicons:banknotes"
       icon-bg="bg-green-50 dark:bg-green-950"
@@ -33,7 +33,7 @@
         />
       </template>
     </UModal>
-  </div>
+  </UTooltip>
 </template>
 
 <script setup lang="ts">

@@ -1,5 +1,5 @@
 <template>
-  <div :class="{ tooltip: !canPayDividends }" :data-tip="cannotPayDividendsReason">
+  <UTooltip :text="!canPayDividends ? cannotPayDividendsReason : undefined">
     <ActionButton
       icon="heroicons:arrow-trending-up"
       icon-bg="bg-blue-50 dark:bg-blue-950"
@@ -29,7 +29,7 @@
         />
       </template>
     </UModal>
-  </div>
+  </UTooltip>
 </template>
 
 <script setup lang="ts">

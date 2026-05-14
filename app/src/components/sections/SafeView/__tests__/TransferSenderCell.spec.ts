@@ -50,7 +50,7 @@ describe('TransferSenderCell', () => {
 
     const wrapper = createWrapper()
 
-    expect(wrapper.find('.skeleton').exists()).toBe(true)
+    expect(wrapper.find('[aria-busy="true"]').exists()).toBe(true)
     expect(wrapper.find('[data-test="user-component"]').exists()).toBe(false)
   })
 
@@ -99,12 +99,12 @@ describe('TransferSenderCell', () => {
 
     const wrapper = createWrapper()
 
-    expect(wrapper.find('.skeleton').exists()).toBe(true)
+    expect(wrapper.find('[aria-busy="true"]').exists()).toBe(true)
 
     response.isLoading.value = false
     await nextTick()
 
-    expect(wrapper.find('.skeleton').exists()).toBe(false)
+    expect(wrapper.find('[aria-busy="true"]').exists()).toBe(false)
     expect(wrapper.find('[data-test="user-component"]').exists()).toBe(true)
   })
 })

@@ -35,7 +35,7 @@ describe('DistributeMintAction.vue', () => {
 
   it('renders with coming soon tooltip', () => {
     const wrapper = createWrapper()
-    expect(wrapper.attributes('data-tip')).toBe('Coming soon')
+    expect(wrapper.findComponent({ name: 'UTooltip' }).props('text')).toBe('Coming soon')
   })
 
   it('renders action button as disabled', () => {
