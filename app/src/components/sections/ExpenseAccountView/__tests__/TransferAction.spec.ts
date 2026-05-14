@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { mount, flushPromises } from '@vue/test-utils'
+import { mount, flushPromises, type VueWrapper } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { ref } from 'vue'
 import { readContract, estimateGas } from '@wagmi/core'
@@ -27,36 +27,32 @@ vi.mock('@wagmi/core', () => ({
 }))
 
 const MockTransferForm = {
+  name: 'TransferForm',
   template: '<div data-test="transfer-form" />',
   props: ['tokens', 'loading', 'modelValue'],
   emits: ['transfer', 'closeModal']
 }
 
-type Vm = {
-  transferFromExpenseAccount: (to: string, amount: string) => Promise<void>
-  errorMessage: string
-}
-
 type MutationOpts = { onSuccess?: () => void; onError?: (e: unknown) => void }
+
+const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
+const NATIVE_BUDGET = {
+  tokenAddress: ZERO_ADDRESS,
+  approvedAddress: '0xApprovedAddress',
+  amount: 1,
+  frequencyType: 3,
+  startDate: 1,
+  endDate: 2,
+  customFrequency: 0
+}
+const ERC20_BUDGET = {
+  ...NATIVE_BUDGET,
+  tokenAddress: '0x0000000000000000000000000000000000000001'
+}
 
 describe('TransferAction.vue', () => {
   const transfer = mockExpenseAccountWrites.transfer
   const approve = mockERC20Writes.approve
-
-  const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
-  const NATIVE_BUDGET = {
-    tokenAddress: ZERO_ADDRESS,
-    approvedAddress: '0xApprovedAddress',
-    amount: 1,
-    frequencyType: 3,
-    startDate: 1,
-    endDate: 2,
-    customFrequency: 0
-  }
-  const ERC20_BUDGET = {
-    ...NATIVE_BUDGET,
-    tokenAddress: '0x0000000000000000000000000000000000000001'
-  }
 
   const createComponent = (data = ERC20_BUDGET) =>
     mount(TransferAction, {
@@ -73,6 +69,20 @@ describe('TransferAction.vue', () => {
       }
     })
 
+  // Open the modal (click Spend) and submit the TransferForm with the given
+  // recipient/amount via the same `transfer` event the real form emits.
+  const submitTransfer = async (
+    wrapper: VueWrapper,
+    { to = '0xRecipient', amount = '1' }: { to?: string; amount?: string } = {}
+  ) => {
+    await wrapper.find('[data-test="transfer-button"]').trigger('click')
+    await flushPromises()
+    const form = wrapper.findComponent({ name: 'TransferForm' })
+    expect(form.exists()).toBe(true)
+    await form.vm.$emit('transfer', { address: { address: to }, amount })
+    await flushPromises()
+  }
+
   beforeEach(() => {
     setActivePinia(createPinia())
     vi.clearAllMocks()
@@ -83,9 +93,9 @@ describe('TransferAction.vue', () => {
 
   it('invokes transfer when ERC20 allowance is sufficient', async () => {
     vi.mocked(readContract).mockResolvedValueOnce(BigInt(200 * 1e6))
+
     const wrapper = createComponent()
-    await (wrapper.vm as unknown as Vm).transferFromExpenseAccount('0xRecipient', '1')
-    await flushPromises()
+    await submitTransfer(wrapper)
 
     expect(approve.mutate).not.toHaveBeenCalled()
     expect(transfer.mutate).toHaveBeenCalled()
@@ -98,44 +108,40 @@ describe('TransferAction.vue', () => {
     })
 
     const wrapper = createComponent()
-    await (wrapper.vm as unknown as Vm).transferFromExpenseAccount('0xRecipient', '1')
-    await flushPromises()
+    await submitTransfer(wrapper)
 
     expect(approve.mutate).toHaveBeenCalled()
     expect(transfer.mutate).toHaveBeenCalled()
   })
 
-  it('surfaces approve errors via errorMessage', async () => {
+  it('shows approve error in the alert and skips the transfer', async () => {
     vi.mocked(readContract).mockResolvedValueOnce(0n)
     approve.mutate.mockImplementationOnce((_v: unknown, opts?: MutationOpts) => {
       opts?.onError?.(new Error('approve failed'))
     })
 
     const wrapper = createComponent()
-    await (wrapper.vm as unknown as Vm).transferFromExpenseAccount('0xRecipient', '1')
-    await flushPromises()
+    await submitTransfer(wrapper)
 
     expect(transfer.mutate).not.toHaveBeenCalled()
-    expect((wrapper.vm as unknown as Vm).errorMessage).toBe('Failed to approve token spending')
+    expect(wrapper.text()).toContain('Failed to approve token spending')
   })
 
-  it('surfaces transfer errors via errorMessage', async () => {
+  it('shows transfer error in the alert', async () => {
     vi.mocked(readContract).mockResolvedValueOnce(BigInt(200 * 1e6))
     transfer.mutate.mockImplementationOnce((_v: unknown, opts?: MutationOpts) => {
       opts?.onError?.(new Error('transfer failed'))
     })
 
     const wrapper = createComponent()
-    await (wrapper.vm as unknown as Vm).transferFromExpenseAccount('0xRecipient', '1')
-    await flushPromises()
+    await submitTransfer(wrapper)
 
-    expect((wrapper.vm as unknown as Vm).errorMessage).toBe('Failed to transfer')
+    expect(wrapper.text()).toContain('Failed to transfer')
   })
 
   it('estimates gas then transfers a native deposit', async () => {
     const wrapper = createComponent(NATIVE_BUDGET)
-    await (wrapper.vm as unknown as Vm).transferFromExpenseAccount('0xRecipient', '1')
-    await flushPromises()
+    await submitTransfer(wrapper)
 
     expect(estimateGas).toHaveBeenCalled()
     expect(transfer.mutate).toHaveBeenCalled()
