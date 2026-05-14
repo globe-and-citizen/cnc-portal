@@ -51,7 +51,6 @@ const mountSection = () =>
 
 describe('TeamMetaSection.vue', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
     vi.mocked(useTeamStore).mockReturnValue(teamStoreState as never)
     vi.mocked(useUserDataStore).mockReturnValue({ address: '0xOWNER' } as never)
   })
@@ -93,5 +92,15 @@ describe('TeamMetaSection.vue', () => {
     expect(employeeWrapper.find('[data-test="archive"]').exists()).toBe(false)
     expect(employeeWrapper.find('[data-test="delete"]').exists()).toBe(false)
     expect(employeeWrapper.find('[data-test="visibility"]').exists()).toBe(true)
+  })
+
+  it('renders empty heading when team meta is not loaded', () => {
+    vi.mocked(useTeamStore).mockReturnValue({
+      currentTeamId: '22',
+      currentTeamMeta: { data: undefined }
+    } as never)
+    const wrapper = mountSection()
+    expect(wrapper.find('h2').text()).toBe('')
+    expect(wrapper.text()).toContain('Employee')
   })
 })
