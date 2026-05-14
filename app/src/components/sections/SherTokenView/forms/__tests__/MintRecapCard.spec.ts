@@ -44,7 +44,9 @@ describe('MintRecapCard.vue', () => {
     expect(wrapper.find('[data-test="recap-stake-line"]').text()).toContain('Recipient stake')
     expect(wrapper.find('[data-test="recap-stake-line"]').text()).toContain('issuing')
     expect(wrapper.find('[data-test="recap-token-stake-line"]').text()).toContain('issuing')
-    expect(wrapper.find('[data-test="new-total-supply-recap"]').text()).toContain('New total supply')
+    expect(wrapper.find('[data-test="new-total-supply-recap"]').text()).toContain(
+      'New total supply'
+    )
   })
 
   it('shows estimated stake when recipient address is invalid', () => {
@@ -94,7 +96,9 @@ describe('MintRecapCard.vue', () => {
     expect(wrapper.find('[data-test="allocation-recap"]').text()).toBe(
       'Add % is outside the allowed range shown above.'
     )
-    expect(wrapper.find('[data-test="new-total-supply-recap"]').text()).toBe('Current supply: 50 shr')
+    expect(wrapper.find('[data-test="new-total-supply-recap"]').text()).toBe(
+      'Current supply: 50 shr'
+    )
   })
 
   it('does not render recap card when token symbol is unavailable', () => {

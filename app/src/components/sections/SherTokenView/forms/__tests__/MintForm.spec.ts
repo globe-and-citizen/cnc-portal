@@ -142,8 +142,7 @@ describe('MintForm.vue', () => {
     const computedAmount = Number(
       (wrapper.find('[data-test="amount-input"]').element as HTMLInputElement).value
     )
-    expect(computedAmount).toBeGreaterThan(60)
-    expect(computedAmount).toBeLessThan(80)
+    expect(computedAmount).toBeCloseTo(69.44, 1)
   })
 
   it('shows validation when ending stake is lower than current recipient stake', async () => {
@@ -205,7 +204,6 @@ describe('MintForm.vue', () => {
       'Ending % must be greater than 23%'
     )
   })
-
 
   it('emits close-modal on cancel', async () => {
     const wrapper = mountForm()

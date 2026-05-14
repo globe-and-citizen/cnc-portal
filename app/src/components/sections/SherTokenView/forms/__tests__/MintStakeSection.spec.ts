@@ -235,5 +235,4 @@ describe('MintStakeSection.vue', () => {
     await flushPromises()
     expect(wrapper.find('[data-test="stub-input-color"]').text()).toBe('primary')
   })
-
 })
