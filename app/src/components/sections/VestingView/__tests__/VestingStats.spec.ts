@@ -24,18 +24,6 @@ const refetchVestingInfos = vi.fn()
 
 const mockArchivedInfos = ref([[], []])
 
-// Wagmi mocks
-const mockWriteContract = {
-  mutate: vi.fn(),
-  error: ref<Error | null>(null),
-  isPending: ref(false),
-  data: ref(null)
-}
-const mockWaitReceipt = {
-  isLoading: ref(false),
-  isSuccess: ref(false)
-}
-
 vi.mock('@/composables/investor/reads', () => ({
   useInvestorSymbol: vi.fn(() => ({
     data: mockSymbol,
@@ -48,8 +36,6 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
   const actual: object = await importOriginal()
   return {
     ...actual,
-    useWriteContract: vi.fn(() => mockWriteContract),
-    useWaitForTransactionReceipt: vi.fn(() => mockWaitReceipt),
     useReadContract: vi.fn(({ functionName }: { functionName: string }) => {
       if (functionName === 'getTeamVestingsWithMembers') {
         return {
@@ -99,9 +85,6 @@ describe('VestingStats.vue', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     wrapper = mountComponent()
-    mockWriteContract.mutate.mockReset()
-    mockWaitReceipt.isLoading.value = false
-    mockWaitReceipt.isSuccess.value = false
   })
 
   it('calculates token summary correctly from vestings data', async () => {
