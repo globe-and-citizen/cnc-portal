@@ -3,12 +3,11 @@
     <template #header>
       <div class="flex items-center justify-between">
         <span>Spending Approvals</span>
-        <div
-          :class="{ tooltip: !(userDataStore.address === contractOwnerAddress || isBodAction()) }"
-          :data-tip="
+        <UTooltip
+          :text="
             !(userDataStore.address === contractOwnerAddress || isBodAction())
               ? 'Only the contract owner can grant approvals'
-              : null
+              : undefined
           "
         >
           <UButton
@@ -23,7 +22,7 @@
           >
             Approve Member
           </UButton>
-        </div>
+        </UTooltip>
       </div>
     </template>
 
