@@ -30,7 +30,7 @@ import featureRoutes from '../routes/featureRoutes';
 
 import { authorizeUser } from '../middleware/authMiddleware';
 import { requireAdmin } from '../middleware/roleMiddleware';
-import { errorMessages } from '../utils/serverConfigUtil';
+import { errorMessages, wildcardToRegex } from '../utils/serverConfigUtil';
 
 // Swagger import
 
@@ -118,13 +118,36 @@ class Server {
 
   private middleware() {
     this.app.use(express.json());
-    const allowedOrigins = process.env.FRONTEND_URL
-      ? process.env.FRONTEND_URL.split(',').map((origin) => origin.trim())
+    const rawOrigins = process.env.FRONTEND_URL
+      ? process.env.FRONTEND_URL.split(',')
+          .map((o) => o.trim())
+          .filter(Boolean)
       : [];
+    const exactOrigins: string[] = [];
+    const patternOrigins: RegExp[] = [];
+    for (const origin of rawOrigins) {
+      if (origin.includes('*')) {
+        patternOrigins.push(wildcardToRegex(origin));
+      } else {
+        exactOrigins.push(origin);
+      }
+    }
     console.log('FRONTEND_URL:', process.env.FRONTEND_URL);
-    console.log('Allowed Origins for CORS:', allowedOrigins);
+    console.log('Allowed exact origins for CORS:', exactOrigins);
+    console.log('Allowed origin patterns for CORS:', patternOrigins);
 
-    this.app.use(cors({ origin: allowedOrigins, credentials: true }));
+    this.app.use(
+      cors({
+        origin: (origin, callback) => {
+          if (!origin) return callback(null, true);
+          if (exactOrigins.includes(origin) || patternOrigins.some((re) => re.test(origin))) {
+            return callback(null, true);
+          }
+          return callback(new Error(`Origin ${origin} not allowed by CORS`));
+        },
+        credentials: true,
+      })
+    );
   }
 
   private routes() {
