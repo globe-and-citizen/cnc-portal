@@ -10,8 +10,7 @@ import {
   createMockQueryResponse,
   mockUseBalance,
   mockUseReadContract,
-  mockUseSignTypedData,
-  mockUseWaitForTransactionReceipt
+  mockUseSignTypedData
 } from '@/tests/mocks'
 import { useGetExpensesQuery } from '@/queries/expense.queries'
 
@@ -126,8 +125,6 @@ describe('ExpenseAccountTable - Actions and Loading', () => {
     mockUseBalance.data.value = null
     mockUseSignTypedData.data.value = '0xExpenseDataSignature'
     mockUseSignTypedData.error.value = null
-    mockUseWaitForTransactionReceipt.isLoading.value = false
-    mockUseWaitForTransactionReceipt.isSuccess.value = false
 
     vi.mocked(useGetExpensesQuery).mockReturnValue(
       createMockQueryResponse(mockApprovals) as ReturnType<typeof useGetExpensesQuery>

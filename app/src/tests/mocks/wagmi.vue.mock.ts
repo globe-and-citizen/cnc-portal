@@ -129,8 +129,6 @@ export const mockUseAccount = {
  * Exported vi.fn() factory functions for wagmi composables.
  * Use these in tests that need per-test configuration via mockReturnValue/mockReturnValueOnce.
  */
-export const useWriteContractFn = vi.fn(() => ({ ...mockUseWriteContract }))
-export const useWaitForTransactionReceiptFn = vi.fn(() => ({ ...mockUseWaitForTransactionReceipt }))
 export const useChainIdFn = vi.fn(() => mockUseChainId)
 export const useReadContractFn = vi.fn(() => ({ ...mockUseReadContract }))
 export const useSignTypedDataFn = vi.fn(() => ({ ...mockUseSignTypedData }))
