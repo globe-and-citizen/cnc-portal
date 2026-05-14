@@ -45,7 +45,7 @@
     <div>
       <p class="line-clamp-3 text-xs">{{ props.team.description }}</p>
     </div>
-  </UCard>
+  </div>
 </template>
 
 <script setup lang="ts">
