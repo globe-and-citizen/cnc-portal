@@ -143,6 +143,8 @@ export const mockInvestorWrites = {
   claimDividend: createContractWriteV3Mock(),
   withdraw: createContractWriteV3Mock(),
   mint: createContractWriteV3Mock(),
+  individualMint: createContractWriteV3Mock(),
+  distributeMint: createContractWriteV3Mock(),
   transfer: createContractWriteV3Mock(),
   pause: createContractWriteV3Mock(),
   unpause: createContractWriteV3Mock(),

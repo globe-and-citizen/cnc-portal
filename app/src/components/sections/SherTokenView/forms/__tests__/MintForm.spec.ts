@@ -7,7 +7,7 @@ import {
   mockToast,
   mockTeamStore,
   mockInvestorWrites,
-  resetInvestorMocks,
+  resetContractMocks,
   useReadContractFn
 } from '@/tests/mocks'
 
@@ -52,7 +52,7 @@ describe('MintForm.vue', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    resetInvestorMocks()
+    resetContractMocks()
     vi.stubGlobal('useToast', () => mockToast)
 
     symbolRef.value = 'SHER'
