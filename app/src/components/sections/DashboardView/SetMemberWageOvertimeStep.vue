@@ -135,6 +135,7 @@
 </template>
 
 <script setup lang="ts">
+import { watch } from 'vue'
 import * as z from 'zod'
 import { NETWORK } from '@/constant'
 import type { WageWithForm } from '@/types'
@@ -148,6 +149,24 @@ defineProps<{
   isPending: boolean
   errorMessage?: string
 }>()
+
+watch(
+  () => wageData.value.overtimeRatePerHour.map((r) => Number(r.amount)),
+  (amounts) => {
+    wageData.value.overtimeRatePerHour.forEach((rate, i) => {
+      if (amounts[i] === 0 && rate.enabled) rate.enabled = false
+    })
+  }
+)
+
+watch(
+  () => wageData.value.overtimeRatePerHour.map((r) => r.enabled),
+  (enabled) => {
+    wageData.value.overtimeRatePerHour.forEach((rate, i) => {
+      if (!enabled[i] && Number(rate.amount) !== 0) rate.amount = 0
+    })
+  }
+)
 
 const rateSchema = z.object({
   type: z.enum(['native', 'usdc', 'sher', 'usdc.e']),
@@ -168,15 +187,6 @@ const overtimeSchema = z.object({
         path: [],
         message: 'Enable at least one overtime rate'
       })
-    }
-    for (const [index, rate] of rates.entries()) {
-      if (rate.enabled && rate.amount <= 0) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: [index, 'amount'],
-          message: 'Enabled overtime rates must be greater than 0'
-        })
-      }
     }
   })
 })
