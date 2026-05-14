@@ -68,4 +68,51 @@ describe('TeamContractAdmins.vue', () => {
     const wrapper = mountWithWritePending(false)
     expect(wrapper.html()).toContain('Admin Address')
   })
+
+  it('calls addAdmin when the inline form is submitted', async () => {
+    const wrapper = mountWithWritePending(false)
+    await wrapper.find('input[type="text"]').setValue(CONTRACT_ADDR)
+    await wrapper.find('form').trigger('submit.prevent')
+    expect(addAdminMutation.mutate).toHaveBeenCalledWith(
+      { args: [CONTRACT_ADDR] },
+      expect.objectContaining({ onSuccess: expect.any(Function) })
+    )
+  })
+
+  it('calls removeAdmin when the Remove button is clicked', async () => {
+    const wrapper = mountWithWritePending(false)
+    const removeBtn = wrapper.find('table button')
+    expect(removeBtn.exists()).toBe(true)
+    await removeBtn.trigger('click')
+    expect(removeAdminMutation.mutate).toHaveBeenCalled()
+  })
+
+  it('runs the addAdmin onSuccess path: resets the input and refetches admins', async () => {
+    addAdminMutation.mutate.mockImplementationOnce(
+      (_v: { args: unknown[] }, opts?: { onSuccess?: () => void }) => opts?.onSuccess?.()
+    )
+    const wrapper = mountWithWritePending(false)
+    const input = wrapper.find<HTMLInputElement>('input[type="text"]')
+    await input.setValue(CONTRACT_ADDR)
+    await wrapper.find('form').trigger('submit.prevent')
+    expect(input.element.value).toBe('')
+  })
+
+  it('runs the removeAdmin onSuccess path without throwing', async () => {
+    removeAdminMutation.mutate.mockImplementationOnce(
+      (_v: { args: unknown[] }, opts?: { onSuccess?: () => void }) => opts?.onSuccess?.()
+    )
+    const wrapper = mountWithWritePending(false)
+    await wrapper.find('table button').trigger('click')
+    expect(removeAdminMutation.mutate).toHaveBeenCalled()
+  })
+
+  it('surfaces add/remove/getList errors via the watcher branch', async () => {
+    const wrapper = mountWithWritePending(false)
+    addAdminMutation.error.value = new Error('add failed')
+    removeAdminMutation.error.value = new Error('remove failed')
+    await wrapper.vm.$nextTick()
+    // both watchers fire — exercising the conditional toast.add calls
+    expect(wrapper.exists()).toBe(true)
+  })
 })

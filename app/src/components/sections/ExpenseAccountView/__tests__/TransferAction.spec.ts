@@ -146,4 +146,35 @@ describe('TransferAction.vue', () => {
     expect(estimateGas).toHaveBeenCalled()
     expect(transfer.mutate).toHaveBeenCalled()
   })
+
+  it('closes the modal when the transfer mutation resolves', async () => {
+    vi.mocked(readContract).mockResolvedValueOnce(BigInt(200 * 1e6))
+    transfer.mutate.mockImplementationOnce((_v: unknown, opts?: MutationOpts) =>
+      opts?.onSuccess?.()
+    )
+
+    const wrapper = createComponent()
+    await submitTransfer(wrapper)
+
+    expect(wrapper.find('[data-test="transfer-form"]').exists()).toBe(false)
+  })
+
+  it('shows the parsed error when estimateGas rejects on native transfer', async () => {
+    vi.mocked(estimateGas).mockRejectedValueOnce(new Error('insufficient funds'))
+    const wrapper = createComponent(NATIVE_BUDGET)
+    await submitTransfer(wrapper)
+
+    expect(transfer.mutate).not.toHaveBeenCalled()
+    expect(wrapper.text()).toContain('Parsed error:')
+  })
+
+  it('surfaces "Failed to read allowance" when readContract rejects', async () => {
+    vi.mocked(readContract).mockRejectedValueOnce(new Error('rpc error'))
+    const wrapper = createComponent()
+    await submitTransfer(wrapper)
+
+    expect(transfer.mutate).not.toHaveBeenCalled()
+    expect(approve.mutate).not.toHaveBeenCalled()
+    expect(wrapper.text()).toContain('Failed to read allowance')
+  })
 })

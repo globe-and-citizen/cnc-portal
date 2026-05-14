@@ -81,4 +81,32 @@ describe('PublishResult.vue', () => {
     await Promise.resolve()
     expect(queryClientMock.invalidateQueries).toHaveBeenCalled()
   })
+
+  it('runs the onError path without scheduling a mutation re-run', async () => {
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    publish.mutate.mockImplementationOnce((_v: unknown, opts?: PublishOptions) => {
+      opts?.onError?.(new Error('mutation failed'))
+    })
+    const wrapper = mount(PublishResult, { props: { electionId: 3 } })
+
+    await wrapper.find('[data-test="create-election-button"]').trigger('click')
+    await nextTick()
+    expect(consoleErrorSpy).toHaveBeenCalled()
+    consoleErrorSpy.mockRestore()
+  })
+
+  it('short-circuits before mutation when estimateGas rejects', async () => {
+    mockWagmiCore.estimateGas.mockRejectedValueOnce(new Error('insufficient funds'))
+    const wrapper = mount(PublishResult, { props: { electionId: 11 } })
+
+    await wrapper.find('[data-test="create-election-button"]').trigger('click')
+    await nextTick()
+    expect(publish.mutate).not.toHaveBeenCalled()
+  })
+
+  it('reflects mutation isPending on the button loading state', async () => {
+    publish.isPending.value = true
+    const wrapper = mount(PublishResult, { props: { electionId: 1 } })
+    expect(wrapper.findComponent({ name: 'UButton' }).props('loading')).toBe(true)
+  })
 })

@@ -189,4 +189,24 @@ describe('TeamContractsDetail.vue', () => {
     await flushPromises()
     expect(wrapper.emitted('closeContractDataDialog')?.length).toBe(1)
   })
+
+  it('runs setCostPerImpression onSuccess when only the impression value changes', async () => {
+    setCostPerImpressionMock.mockImplementationOnce((_v: unknown, opts?: MutateOpts) =>
+      opts?.onSuccess?.()
+    )
+    const datas = getClonedTestData()
+    // Change the impression value before mount so the watcher sees it as the
+    // original and bumps when the input differs.
+    datas[1].value = '0.5'
+    const wrapper = mount(TeamContractsDetail, {
+      props: { datas, contractAddress, reset: true }
+    })
+    await flushPromises()
+    wrapper.vm.initialized = true
+    wrapper.vm.originalCostPerImpression = 0.5
+    datas[1].value = '0.7'
+    await wrapper.find('button').trigger('click')
+    await flushPromises()
+    expect(setCostPerImpressionMock).toHaveBeenCalled()
+  })
 })
