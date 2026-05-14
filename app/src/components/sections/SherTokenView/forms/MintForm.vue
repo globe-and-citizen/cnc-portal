@@ -65,14 +65,14 @@
           variant="outline"
           color="error"
           data-test="cancel-button"
-          :disabled="isConfirmingMint || isMintPending"
+          :disabled="isMintPending"
           @click="emit('close-modal')"
           label="Cancel"
         />
         <UButton
           type="submit"
-          :loading="isConfirmingMint || isMintPending"
-          :disabled="isConfirmingMint || isMintPending"
+          :loading="isMintPending"
+          :disabled="isMintPending"
           color="primary"
           class="text-center"
           data-test="submit-button"
@@ -85,13 +85,13 @@
 
 <script setup lang="ts">
 import { z } from 'zod'
-import { isAddress, parseUnits, formatUnits, type Address } from 'viem'
+import { isAddress, parseUnits, formatUnits } from 'viem'
 import { onMounted, reactive, ref, computed } from 'vue'
-import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
+import { useReadContract } from '@wagmi/vue'
 import SelectMemberContractsInput from '@/components/utils/SelectMemberContractsInput.vue'
 import { INVESTOR_ABI } from '@/artifacts/abi/investors'
-import { watch } from 'vue'
 import { useTeamStore } from '@/stores'
+import { useIndividualMint } from '@/composables/investor/writes'
 import { log } from '@/utils'
 import { useQueryClient } from '@tanstack/vue-query'
 
@@ -100,7 +100,6 @@ const TOKEN_DECIMALS = 6
 const memberInputInternal = ref<{ name: string; address: string }>({ name: '', address: '' })
 const state = reactive({ address: '', amount: '', percentage: '' })
 const mintErrorMessage = ref<string | null>(null)
-const mintHash = ref<`0x${string}` | undefined>()
 const emit = defineEmits(['close-modal'])
 
 const mintModal = defineModel({ default: false })
@@ -124,11 +123,7 @@ const schema = z.object({
     .refine((v) => !isNaN(Number(v)) && Number(v) > 0, { message: 'Amount must be greater than 0' })
 })
 
-const { mutateAsync: mint, isPending: isMintPending } = useWriteContract()
-
-const { isLoading: isConfirmingMint, isSuccess: isSuccessMinting } = useWaitForTransactionReceipt({
-  hash: mintHash
-})
+const { mutate: mint, isPending: isMintPending } = useIndividualMint()
 
 const { data: tokenSymbol } = useReadContract({
   abi: INVESTOR_ABI,
@@ -183,18 +178,16 @@ const handleMemberInput = (v: { name: string; address: string }) => {
   state.address = v.address
 }
 
-const onSubmit = async () => {
+const onSubmit = () => {
   mintErrorMessage.value = null
-  await mint(
+  mint(
+    { args: [state.address, parseUnits(state.amount, TOKEN_DECIMALS)] },
     {
-      abi: INVESTOR_ABI,
-      address: investorsAddress.value as Address,
-      functionName: 'individualMint',
-      args: [state.address as Address, parseUnits(state.amount, TOKEN_DECIMALS)]
-    },
-    {
-      onSuccess: (hash) => {
-        mintHash.value = hash
+      onSuccess: async () => {
+        toast.add({ title: 'Tokens issued successfully', color: 'success' })
+        await queryClient.invalidateQueries({ queryKey: ['readContract'] })
+        mintModal.value = false
+        emit('close-modal')
       },
       onError: (error) => {
         log.error('Failed to mint', error)
@@ -211,15 +204,6 @@ onMounted(() => {
   if (props.memberInput) {
     memberInputInternal.value = props.memberInput
     state.address = props.memberInput.address
-  }
-})
-
-watch(isConfirmingMint, async (isConfirming, wasConfirming) => {
-  if (wasConfirming && !isConfirming && isSuccessMinting.value) {
-    toast.add({ title: 'Tokens issued successfully', color: 'success' })
-    await queryClient.invalidateQueries({ queryKey: ['readContract'] })
-    mintModal.value = false
-    emit('close-modal')
   }
 })
 </script>
