@@ -45,7 +45,7 @@ describe('OverviewCard', () => {
     })
 
     expect(wrapper.find('[data-test="amount"]').exists()).toBe(false)
-    expect(wrapper.findComponent({ name: 'SkeletonLoading' }).exists()).toBe(true)
+    expect(wrapper.find('[aria-busy="true"]').exists()).toBe(true)
   })
 
   it('renders slot content', () => {
