@@ -1,36 +1,8 @@
 import { type StakeMode } from '@/types/investor'
+import { formatAmountWithPrecision } from '@/utils/currencyUtil'
 
-const TOKEN_DECIMALS = 6
+export const TOKEN_DECIMALS = 6
 const PERCENTAGE_DISPLAY_DECIMALS = 2
-
-export const roundToDecimals = (value: number, decimals: number): number => {
-  return Math.round(value * 10 ** decimals) / 10 ** decimals
-}
-
-export const truncateToDecimals = (value: number, decimals: number): number => {
-  return Math.trunc(value * 10 ** decimals) / 10 ** decimals
-}
-
-export const formatDisplayNumber = (value: number, maxFractionDigits = TOKEN_DECIMALS): string => {
-  return value.toLocaleString('en-US', { maximumFractionDigits: maxFractionDigits })
-}
-
-export const computeAmountFromTargetStake = (
-  targetStakePercentage: number,
-  supply: number,
-  balance: number
-): string => {
-  if (isNaN(targetStakePercentage) || targetStakePercentage <= 0 || targetStakePercentage >= 100) {
-    return ''
-  }
-  if (supply <= 0) return ''
-
-  const targetStake = targetStakePercentage / 100
-  const amount = (targetStake * supply - balance) / (1 - targetStake)
-  if (!isFinite(amount) || amount <= 0) return ''
-
-  return String(roundToDecimals(amount, TOKEN_DECIMALS))
-}
 
 export const computeAmountFromPercentageInput = (
   percentageValue: number,
@@ -39,19 +11,29 @@ export const computeAmountFromPercentageInput = (
   supply: number,
   balance: number
 ): string => {
-  if (isNaN(percentageValue) || percentageValue <= 0) return ''
+  if (!isFinite(percentageValue) || percentageValue <= 0) return ''
 
-  const targetStakePercentage =
-    mode === 'ending' ? percentageValue : currentStakePercentage + percentageValue
+  if (mode === 'ending') {
+    const targetStake = percentageValue / 100
+    if (supply <= 0 || targetStake >= 1) return ''
 
-  const issuedAmount = Number(computeAmountFromTargetStake(targetStakePercentage, supply, balance))
-  if (isNaN(issuedAmount) || issuedAmount <= 0) return ''
+    const issuedAmount = (targetStake * supply - balance) / (1 - targetStake)
+    if (!isFinite(issuedAmount)) return ''
 
-  if (mode === 'add') {
-    return String(roundToDecimals(issuedAmount, TOKEN_DECIMALS))
+    const targetAmount = balance + issuedAmount
+    if (!isFinite(targetAmount) || targetAmount <= 0) return ''
+    return formatAmountWithPrecision(targetAmount, 0, 2)
   }
 
-  return String(roundToDecimals(balance + issuedAmount, TOKEN_DECIMALS))
+  // Add mode: calculate issued amount from target stake percentage
+  const targetStakePercentage = currentStakePercentage + percentageValue
+  if (targetStakePercentage <= 0 || targetStakePercentage >= 100 || supply <= 0) return ''
+
+  const targetStake = targetStakePercentage / 100
+  const issuedAmount = (targetStake * supply - balance) / (1 - targetStake)
+  if (!isFinite(issuedAmount) || issuedAmount <= 0) return ''
+
+  return formatAmountWithPrecision(issuedAmount, 0, 2)
 }
 
 export const computeIssuedAmountFromAmountInput = (
@@ -59,21 +41,29 @@ export const computeIssuedAmountFromAmountInput = (
   mode: StakeMode,
   balance: number
 ): number | null => {
-  if (isNaN(amountInput) || amountInput <= 0) return null
+  if (!isFinite(amountInput) || amountInput <= 0) return null
 
   if (mode === 'add') return amountInput
 
   const issuedAmount = amountInput - balance
-  if (!isFinite(issuedAmount) || issuedAmount <= 0) return null
+  if (!isFinite(issuedAmount)) return null
+  // Don't validate if issuedAmount <= 0 - just return it for calculation purposes
   return issuedAmount
 }
 
-export const getFinalStakeFromAmount = (
+const getFinalStakeFromAmount = (
   amount: number,
   supply: number,
   balance: number
 ): number | null => {
-  if (supply <= 0 || amount <= 0) return null
+  if (supply <= 0) return null
+  // When amount is 0, return the current stake (no change)
+  if (amount === 0) {
+    const currentStake = (balance / supply) * 100
+    if (!isFinite(currentStake)) return null
+    return currentStake
+  }
+  if (amount < 0) return null
   const stake = ((balance + amount) / (supply + amount)) * 100
   if (!isFinite(stake)) return null
   return stake
@@ -86,20 +76,26 @@ export const computePercentageFromAmountInput = (
   supply: number,
   balance: number
 ): string => {
-  const issuedAmount = computeIssuedAmountFromAmountInput(amountInput, mode, balance)
-  if (issuedAmount === null) return ''
+  if (!isFinite(amountInput) || amountInput <= 0) return ''
 
-  if (isNaN(issuedAmount) || issuedAmount <= 0) return ''
+  if (mode === 'ending') {
+    // In ending mode, amountInput is the target final recipient balance.
+    // Final stake = targetBalance / (currentSupply + issuedAmount),
+    // where issuedAmount = targetBalance - currentRecipientBalance.
+    const denominator = supply + amountInput - balance
+    if (denominator <= 0) return ''
+    const targetPercentage = (amountInput / denominator) * 100
+    if (!isFinite(targetPercentage)) return ''
+    return formatAmountWithPrecision(targetPercentage, 0, PERCENTAGE_DISPLAY_DECIMALS)
+  }
+
+  // In add mode, calculate the issued amount and the resulting percentage
+  const issuedAmount = amountInput
   const finalStakePercentage = getFinalStakeFromAmount(issuedAmount, supply, balance)
   if (finalStakePercentage === null) return ''
 
-  if (mode === 'ending') {
-    return String(roundToDecimals(finalStakePercentage, PERCENTAGE_DISPLAY_DECIMALS))
-  }
-
   const deltaPercentage = finalStakePercentage - currentStakePercentage
-  if (deltaPercentage <= 0) return ''
-  return String(roundToDecimals(deltaPercentage, PERCENTAGE_DISPLAY_DECIMALS))
+  return formatAmountWithPrecision(Math.max(0, deltaPercentage), 0, PERCENTAGE_DISPLAY_DECIMALS)
 }
 
 export const formatStakePercentageFromSupply = (
@@ -127,12 +123,86 @@ export const formatStakePercentageFromSupply = (
   return `${integerPart}.${fractionalString}`
 }
 
-export const getRecapTokenStakeLine = (
-  finalBalance: number | null,
-  currentBalance: number,
-  symbol: string | undefined
-): string | null => {
-  if (finalBalance === null || finalBalance <= 0 || !symbol) return null
+export const getMintRecap = (
+  hasRecipientContext: boolean,
+  amount: number | null,
+  symbol: string | undefined,
+  supply: number,
+  recipientBalance: number,
+  currentStakePercentage: number,
+  placeholderMessage?: string
+) => {
+  // If no symbol, can't show anything useful
+  if (!symbol) {
+    return {
+      recapIssuedLine: null,
+      recapStakeLine: null,
+      recapTokenStakeLine: null,
+      recapSupplyLine: null,
+      showRecap: false,
+      isPlaceholder: false
+    }
+  }
 
-  return `Recipient ${symbol} stake → ${formatDisplayNumber(finalBalance)} (was ${formatDisplayNumber(currentBalance)} ${symbol})`
+  // Invalid amount: show placeholder to help user understand what would happen
+  if (amount === null || isNaN(amount)) {
+    return {
+      recapIssuedLine: placeholderMessage || 'Enter or Update amount to see the impact',
+      recapStakeLine: null,
+      recapTokenStakeLine: null,
+      recapSupplyLine:
+        supply > 0
+          ? `Current supply: ${formatAmountWithPrecision(supply, 0, TOKEN_DECIMALS)} ${symbol}`
+          : 'No tokens issued yet',
+      showRecap: true,
+      isPlaceholder: true
+    }
+  }
+
+  // Special case: initial supply (supply = 0)
+  // Any amount issued = 100% stake, creating the first tokens
+  if (supply === 0) {
+    return {
+      recapIssuedLine: null,
+      recapStakeLine: `Recipient stake → 100% (initial supply)`,
+      recapTokenStakeLine: `Recipient ${symbol} stake → ${formatAmountWithPrecision(amount, 0, TOKEN_DECIMALS)} ${symbol} (was 0 ${symbol}; issuing ${formatAmountWithPrecision(amount, 0, TOKEN_DECIMALS)} ${symbol})`,
+      recapSupplyLine: `New total supply → ${formatAmountWithPrecision(amount, 0, TOKEN_DECIMALS)} ${symbol}`,
+      showRecap: true
+    }
+  }
+
+  // When we don't have recipient context yet (loading or invalid address)
+  // Still show a basic recap with what we know
+  if (!hasRecipientContext) {
+    const estimatedStake = getFinalStakeFromAmount(amount, supply, 0)
+    return {
+      recapIssuedLine: null,
+      recapStakeLine: estimatedStake
+        ? `Recipient stake → ${formatAmountWithPrecision(estimatedStake, 0, PERCENTAGE_DISPLAY_DECIMALS)}% (estimated)`
+        : null,
+      recapTokenStakeLine: `Recipient ${symbol} stake → ${formatAmountWithPrecision(amount, 0, TOKEN_DECIMALS)} ${symbol}`,
+      recapSupplyLine: `New total supply → ${formatAmountWithPrecision(supply + amount, 0, TOKEN_DECIMALS)} ${symbol}`,
+      showRecap: true
+    }
+  }
+
+  // Normal case: existing supply with recipient context
+  const finalStake = getFinalStakeFromAmount(amount, supply, recipientBalance)
+  const finalRecipientBalance = recipientBalance + amount
+  const issuedStakePercentage =
+    finalStake === null ? 0 : Math.max(0, finalStake - currentStakePercentage)
+
+  return {
+    recapIssuedLine: null,
+    recapStakeLine:
+      finalStake !== null
+        ? `Recipient stake → ${formatAmountWithPrecision(finalStake, 0, PERCENTAGE_DISPLAY_DECIMALS)}% (was ${formatAmountWithPrecision(currentStakePercentage, 0, PERCENTAGE_DISPLAY_DECIMALS)}%; issuing ${formatAmountWithPrecision(issuedStakePercentage, 0, PERCENTAGE_DISPLAY_DECIMALS)}%)`
+        : null,
+    recapTokenStakeLine: `Recipient ${symbol} stake → ${formatAmountWithPrecision(finalRecipientBalance, 0, TOKEN_DECIMALS)} ${symbol} (was ${formatAmountWithPrecision(recipientBalance, 0, TOKEN_DECIMALS)} ${symbol}; issuing ${formatAmountWithPrecision(amount, 0, TOKEN_DECIMALS)} ${symbol})`,
+    recapSupplyLine:
+      supply > 0
+        ? `New total supply → ${formatAmountWithPrecision(supply + amount, 0, TOKEN_DECIMALS)} ${symbol}`
+        : null,
+    showRecap: true
+  }
 }
