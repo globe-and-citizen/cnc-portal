@@ -19,14 +19,10 @@
         >
           <div class="flex items-center justify-between text-base font-medium">
             Week
-            <div
-              class="badge badge-outline gap-3"
-              v-if="weekItem.claim"
-              :class="`badge-${weekItem.color}`"
-            >
+            <UBadge v-if="weekItem.claim" variant="outline" :color="weekItem.color" class="gap-3">
               {{ weekItem.claim.status }}
               <span class="h-3 w-3 rounded-full" :class="`bg-${weekItem.color}`" />
-            </div>
+            </UBadge>
           </div>
 
           <div

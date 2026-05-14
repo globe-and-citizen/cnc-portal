@@ -28,12 +28,13 @@
         </div>
       </div>
 
-      <div class="alert alert-info mb-4">
-        <IconifyIcon icon="heroicons:information-circle" class="h-5 w-5" />
-        <span class="text-sm"
-          >This will create a Gnosis Safe wallet for your team. You can add more owners later.</span
-        >
-      </div>
+      <UAlert
+        color="info"
+        variant="soft"
+        icon="heroicons:information-circle"
+        description="This will create a Gnosis Safe wallet for your team. You can add more owners later."
+        class="mb-4"
+      />
 
       <div class="card-actions justify-end">
         <UButton

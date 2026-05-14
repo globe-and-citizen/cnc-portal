@@ -1,9 +1,11 @@
 <template>
   <!-- Status and Countdown -->
   <div v-if="electionStatus" class="flex items-center justify-start gap-2">
-    <span
-      class="badge badge-lg flex h-10 items-center gap-1 px-2 py-1 text-sm"
-      :class="badgeClass"
+    <UBadge
+      size="lg"
+      variant="outline"
+      :color="badgeColor"
+      class="flex h-10 items-center gap-1 px-2 py-1 text-sm"
       :data-status="electionStatus.color"
       data-test="election-status-badge"
     >
@@ -17,7 +19,7 @@
         <span class="mx-1">•</span>
         {{ timeRemaining }} left
       </span>
-    </span>
+    </UBadge>
   </div>
 </template>
 <script setup lang="ts">
@@ -66,11 +68,19 @@ const timeRemaining = computed(() => {
   return 'Election ended'
 })
 
-const badgeClass = computed(() => {
-  return electionStatus.value
-    ? `badge-${electionStatus.value.color} badge-outline`
-    : 'badge-neutral badge-outline'
+type BadgeColor = 'warning' | 'error' | 'neutral' | 'success'
+
+const badgeColor = computed<BadgeColor>(() => {
+  switch (electionStatus.value?.color) {
+    case 'warning':
+    case 'error':
+    case 'success':
+      return electionStatus.value.color
+    default:
+      return 'neutral'
+  }
 })
+
 const dotClass = computed(() => {
   switch (electionStatus.value?.color) {
     case 'warning':

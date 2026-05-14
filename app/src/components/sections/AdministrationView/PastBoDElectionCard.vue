@@ -3,7 +3,7 @@
     <div class="card-body">
       <!-- Status and Date -->
       <div class="mb-3 flex items-start justify-between">
-        <span class="badge bg-gray-100"> Completed </span>
+        <UBadge color="neutral" variant="soft"> Completed </UBadge>
         <span class="text-gray-600">
           {{ formatDate(election.endDate) }}
         </span>
@@ -31,11 +31,11 @@
       <div class="mb-5">
         <p class="mb-2 text-gray-600">Elected Members:</p>
         <div class="flex flex-wrap gap-2">
-          <span v-for="(member, i) in electionResults" :key="i" class="badge badge-info">
+          <UBadge v-for="(member, i) in electionResults" :key="i" color="info" variant="subtle">
             {{
               teamStore.currentTeam?.members.find((m) => m.address === member)?.name || 'Unknown'
             }}
-          </span>
+          </UBadge>
         </div>
       </div>
 

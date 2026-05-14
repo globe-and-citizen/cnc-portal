@@ -79,16 +79,13 @@
         a new team now!
       </span>
 
-      <div class="alert alert-warning" v-if="teamsError" data-test="error-state">
-        We are unable to retrieve your teams. Please try again in some time.
-      </div>
-      <span
-        v-else-if="Array.isArray(teams) && teams.length === 0 && (showHidden || showArchived)"
-        class="my-4 text-sm font-bold text-gray-500"
-        data-test="empty-filter-state"
-      >
-        No company matches the selected filters.
-      </span>
+      <UAlert
+        v-if="teamsError"
+        color="warning"
+        variant="soft"
+        description="We are unable to retrieve your teams. Please try again in some time."
+        data-test="error-state"
+      />
     </div>
 
     <!-- Teams List -->

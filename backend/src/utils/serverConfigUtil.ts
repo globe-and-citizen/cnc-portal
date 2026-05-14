@@ -1,3 +1,13 @@
+/**
+ * Convert a wildcard origin pattern (e.g. `https://frontend-cnc-portal-pr-*.up.railway.app`)
+ * into an anchored RegExp. `*` matches one or more chars that are not a dot, so wildcards
+ * stay within a single subdomain label and cannot cross domain boundaries.
+ */
+export const wildcardToRegex = (pattern: string): RegExp => {
+  const escaped = pattern.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '[^.]*');
+  return new RegExp(`^${escaped}$`);
+};
+
 export const errorMessages = {
   frontendUrl: `
         Required environment variable 'FRONTEND_URL' not set.

@@ -20,9 +20,9 @@
   <!-- Approval Progress -->
   <div class="mt-5 flex justify-between py-2">
     <span>Approval progress</span>
-    <span class="badge badge-warning badge-outline font-semibold">
+    <UBadge color="warning" variant="outline" class="font-semibold">
       {{ approvalCount.approved }}/{{ approvalCount.total }} Approvals
-    </span>
+    </UBadge>
   </div>
   <progress
     class="progress progress-info mb-1"
@@ -42,16 +42,18 @@
       class="flex items-center justify-between gap-2 rounded-lg border border-gray-200 p-2"
     >
       <UserComponent :user="{ name: approval.name, address: approval.address }" />
-      <p
-        class="badge"
-        :class="{
-          'badge-warning': approval.status === 'pending',
-          'badge-success': approval.status === 'approved',
-          'badge-error': approval.status === 'rejected'
-        }"
+      <UBadge
+        :color="
+          approval.status === 'approved'
+            ? 'success'
+            : approval.status === 'rejected'
+              ? 'error'
+              : 'warning'
+        "
+        variant="subtle"
       >
         {{ approval.status }}
-      </p>
+      </UBadge>
     </div>
   </div>
   <div class="mt-6 flex justify-end gap-2">
