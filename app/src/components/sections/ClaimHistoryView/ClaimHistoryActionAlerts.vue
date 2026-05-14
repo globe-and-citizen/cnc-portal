@@ -2,14 +2,14 @@
   <UCard data-test="action-alerts">
     <div class="flex flex-col gap-4">
       <!-- Submit Claims Alert (for member's own view) -->
-      <div
-        role="alert"
-        class="alert alert-vertical sm:alert-horizontal"
+      <UAlert
         v-if="memberAddress === userStore.address"
+        color="info"
+        variant="soft"
+        icon="heroicons:information-circle"
+        :description="claimSubmitMessage"
       >
-        <IconifyIcon icon="heroicons:information-circle" class="text-info h-8 w-8" />
-        <span>{{ claimSubmitMessage }}</span>
-        <div>
+        <template #actions>
           <SubmitClaims
             ref="submitClaimsRef"
             v-if="hasWage"
@@ -26,24 +26,24 @@
           >
             Submit Claim
           </UButton>
-        </div>
-      </div>
+        </template>
+      </UAlert>
 
       <!-- Approve Claims Alert (for owner view) -->
-      <div
-        role="alert"
-        class="alert alert-vertical sm:alert-horizontal"
+      <UAlert
         v-if="weeklyClaim && !weeklyClaim.signature"
-      >
-        <IconifyIcon icon="heroicons:information-circle" class="text-info h-8 w-8" />
-        <span>{{
+        color="info"
+        variant="soft"
+        icon="heroicons:information-circle"
+        :description="
           weeklyClaim?.weekStart === currentWeekStart
             ? 'You cannot approve the current week claim, wait until the week is over'
             : weeklyClaim?.weekStart === nextWeekStart
               ? 'You cannot approve the next week claim, wait until the week is over'
               : 'As the owner of the Cash Remuneration contract, you can approve this claim'
-        }}</span>
-        <div>
+        "
+      >
+        <template #actions>
           <CRSigne
             v-if="weeklyClaim.claims.length > 0"
             :disabled="
@@ -51,30 +51,33 @@
             "
             :weekly-claim="weeklyClaim"
           />
-        </div>
-      </div>
+        </template>
+      </UAlert>
 
       <!-- Withdraw Claims Alert (for signed claims) -->
-      <div
-        role="alert"
-        class="alert alert-vertical sm:alert-horizontal"
+      <UAlert
         v-if="
           weeklyClaim &&
           (weeklyClaim.status == 'signed' || weeklyClaim.status == 'withdrawn') &&
           userStore.address === weeklyClaim.wage.userAddress
         "
+        color="info"
+        variant="soft"
+        icon="heroicons:information-circle"
+        :description="
+          weeklyClaim.status == 'withdrawn'
+            ? 'You have withdrawn your weekly claim.'
+            : 'Your weekly claim has been approved. You can now withdraw it.'
+        "
       >
-        <IconifyIcon icon="heroicons:information-circle" class="text-info h-8 w-8" />
-        <span v-if="weeklyClaim.status == 'withdrawn'">You have withdrawn your weekly claim.</span>
-        <span v-else>Your weekly claim has been approved. You can now withdraw it.</span>
-        <div>
+        <template #actions>
           <CRWithdrawClaim
             v-if="weeklyClaim.claims.length > 0"
             :disabled="weeklyClaim.status == 'withdrawn'"
             :weekly-claim="weeklyClaim"
           />
-        </div>
-      </div>
+        </template>
+      </UAlert>
     </div>
   </UCard>
 </template>
@@ -84,7 +87,6 @@ import { computed, ref, watch } from 'vue'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import isoWeek from 'dayjs/plugin/isoWeek'
-import { Icon as IconifyIcon } from '@iconify/vue'
 import type { Address } from 'viem'
 import { useTeamStore, useUserDataStore } from '@/stores'
 import { useGetTeamWagesQuery, useGetTeamWeeklyClaimsQuery } from '@/queries'
