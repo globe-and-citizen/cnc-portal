@@ -52,8 +52,8 @@
           @closeModal="showModal = { mount: false, show: false }"
         >
           <template #label>
-            <span class="label-text">Transfer From</span>
-            <span class="label-text-alt"
+            <span class="text-sm font-medium">Transfer From</span>
+            <span class="text-xs text-gray-500"
               >Limit: {{ row.data.amount }} {{ transferData.token.symbol }}
             </span>
           </template>

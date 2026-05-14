@@ -18,8 +18,8 @@
         @validation="isAmountValid = $event"
       >
         <template #label>
-          <span class="label-text">Deposit</span>
-          <span class="label-text-alt"
+          <span class="text-sm font-medium">Deposit</span>
+          <span class="text-xs text-gray-500"
             >Balance: {{ selectedToken?.amount }} {{ selectedToken?.token.symbol }}</span
           >
         </template>
