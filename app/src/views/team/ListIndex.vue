@@ -6,10 +6,10 @@
     <!-- Loader -->
     <div class="flex gap-3" data-test="loader" v-if="teamsAreFetching">
       <div class="flex w-1/4 flex-col gap-4" v-for="i in 4" :key="i">
-        <div class="skeleton h-32 w-full"></div>
-        <div class="skeleton h-4 w-28"></div>
-        <div class="skeleton h-4 w-full"></div>
-        <div class="skeleton h-4 w-full"></div>
+        <USkeleton class="h-32 w-full" />
+        <USkeleton class="h-4 w-28" />
+        <USkeleton class="h-4 w-full" />
+        <USkeleton class="h-4 w-full" />
       </div>
     </div>
 
