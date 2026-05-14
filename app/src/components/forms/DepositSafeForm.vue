@@ -64,16 +64,13 @@ import { z } from 'zod'
 import { parseEther, zeroAddress, type Address } from 'viem'
 import { useContractBalance } from '@/composables/useContractBalance'
 import { useSafeSendTransaction } from '@/composables/transactions/useSafeSendTransaction'
-import { useERC20Approve } from '@/composables/erc20/writes'
+import { useERC20Approve, useERC20Transfer } from '@/composables/erc20/writes'
 import { useErc20Allowance } from '@/composables/erc20/reads'
-import { SUPPORTED_TOKENS, type TokenId, USDC_ADDRESS, USDC_E_ADDRESS } from '@/constant'
+import { SUPPORTED_TOKENS, type TokenId } from '@/constant'
 import { useCurrencyStore, useUserDataStore } from '@/stores'
 import TokenAmount from './TokenAmount.vue'
 import { useQueryClient } from '@tanstack/vue-query'
-import { useChainId, useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
-import { ERC20_ABI } from '@/artifacts/abi/erc20'
-import { waitForTransactionReceipt } from '@wagmi/core'
-import { config } from '@/wagmi.config'
+import { useChainId } from '@wagmi/vue'
 
 const queryClient = useQueryClient()
 const chainId = useChainId()
@@ -137,10 +134,7 @@ const toast = useToast()
 
 const errorMessage = computed(() => {
   const err =
-    nativeDeposit.error.value ||
-    ERC20ApproveResult.error.value ||
-    transferError.value ||
-    transferReceiptError.value
+    nativeDeposit.error.value || ERC20ApproveResult.error.value || erc20Transfer.error.value
   return err ? ((err as { shortMessage?: string }).shortMessage ?? err.message) : null
 })
 
@@ -192,13 +186,7 @@ const bigIntAmount = computed(() => {
 })
 
 const ERC20ApproveResult = useERC20Approve(selectedTokenAddress)
-
-// ERC20 transfer for Safe
-const { data: transferHash, mutateAsync: writeTransfer, error: transferError } = useWriteContract()
-
-const { error: transferReceiptError } = useWaitForTransactionReceipt({
-  hash: transferHash
-})
+const erc20Transfer = useERC20Transfer(selectedTokenAddress)
 
 const handleCancel = () => {
   reset()
@@ -235,49 +223,12 @@ const submitForm = async () => {
       // Step 3: Proceed to transfer (continue from step 2 if approval was done)
       currentStep.value = 2
 
-      // Transfer USDC to Safe (not deposit to a bank contract)
-      if (selectedTokenId.value === 'usdc.e') {
-        await writeTransfer({
-          address: USDC_E_ADDRESS as Address,
-          abi: ERC20_ABI,
-          functionName: 'transfer',
-          args: [props.safeAddress, bigIntAmount.value]
-        })
-      }
+      await erc20Transfer.mutateAsync({
+        args: [props.safeAddress, bigIntAmount.value]
+      })
 
-      if (selectedTokenId.value === 'usdc') {
-        await writeTransfer({
-          address: USDC_ADDRESS as Address,
-          abi: ERC20_ABI,
-          functionName: 'transfer',
-          args: [props.safeAddress, bigIntAmount.value]
-        })
-      }
-
-      if (!transferHash.value) {
-        throw new Error('Transfer transaction not initiated')
-      }
-
-      // Wait for transaction confirmation
-      await waitForTransactionReceipt(config, { hash: transferHash.value })
-
-      // Invalidate ERC20 balance query for Safe
-      const invalidateErc20Balance = (tokenAddress: Address, target: Address) =>
-        queryClient.invalidateQueries({
-          queryKey: [
-            'readContract',
-            {
-              address: tokenAddress,
-              chainId,
-              functionName: 'balanceOf',
-              args: [target]
-            }
-          ]
-        })
-      const invalidationAddress = selectedTokenId.value === 'usdc' ? USDC_ADDRESS : USDC_E_ADDRESS
-      invalidateErc20Balance(invalidationAddress as Address, props.safeAddress)
-
-      // Also invalidate native balance
+      // V3 invalidates `readContract` queries on the token address; the
+      // Safe's native balance lives on a separate key, so invalidate it here.
       await queryClient.invalidateQueries({
         queryKey: ['balance', { address: props.safeAddress, chainId }]
       })

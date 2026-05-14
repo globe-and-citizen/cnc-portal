@@ -71,16 +71,14 @@
 
     <div class="grid gap-4 md:grid-cols-2">
       <div
-        class="border-base-300 bg-base-100 min-h-40 rounded-2xl border px-5 py-5"
+        class="border-default bg-default min-h-40 rounded-2xl border px-5 py-5"
         data-test="standard-rate-recap"
       >
-        <p class="text-base-content/50 text-sm font-semibold tracking-[0.2em] uppercase">
-          Standard rates
-        </p>
+        <p class="text-muted text-sm font-semibold tracking-[0.2em] uppercase">Standard rates</p>
         <RateDotList
           class="mt-3"
           :rates="wageData.ratePerHour.filter((r) => r.enabled && r.amount > 0)"
-          text-class="text-base-content/80"
+          text-class="text-default"
         />
       </div>
       <div
@@ -135,6 +133,7 @@
 </template>
 
 <script setup lang="ts">
+import { watch } from 'vue'
 import * as z from 'zod'
 import { NETWORK } from '@/constant'
 import type { WageWithForm } from '@/types'
@@ -148,6 +147,24 @@ defineProps<{
   isPending: boolean
   errorMessage?: string
 }>()
+
+watch(
+  () => wageData.value.overtimeRatePerHour.map((r) => Number(r.amount)),
+  (amounts) => {
+    wageData.value.overtimeRatePerHour.forEach((rate, i) => {
+      if (amounts[i] === 0 && rate.enabled) rate.enabled = false
+    })
+  }
+)
+
+watch(
+  () => wageData.value.overtimeRatePerHour.map((r) => r.enabled),
+  (enabled) => {
+    wageData.value.overtimeRatePerHour.forEach((rate, i) => {
+      if (!enabled[i] && Number(rate.amount) !== 0) rate.amount = 0
+    })
+  }
+)
 
 const rateSchema = z.object({
   type: z.enum(['native', 'usdc', 'sher', 'usdc.e']),
@@ -168,15 +185,6 @@ const overtimeSchema = z.object({
         path: [],
         message: 'Enable at least one overtime rate'
       })
-    }
-    for (const [index, rate] of rates.entries()) {
-      if (rate.enabled && rate.amount <= 0) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: [index, 'amount'],
-          message: 'Enabled overtime rates must be greater than 0'
-        })
-      }
     }
   })
 })

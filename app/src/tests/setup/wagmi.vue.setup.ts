@@ -8,8 +8,6 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
     useChainId: mocks.useChainIdFn,
     useReadContract: mocks.useReadContractFn,
     useSignTypedData: mocks.useSignTypedDataFn,
-    useWriteContract: mocks.useWriteContractFn,
-    useWaitForTransactionReceipt: mocks.useWaitForTransactionReceiptFn,
     useConnection: vi.fn(() => ({ ...mocks.mockUseConnection })),
     useDisconnect: vi.fn(() => ({ ...mocks.mockUseDisconnect })),
     useConnectionEffect: mocks.mockUseConnectionEffect,

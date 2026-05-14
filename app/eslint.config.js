@@ -88,6 +88,54 @@ const vmCastLegacyExtraFiles = [
   'src/components/sections/SherTokenView/InvestorActions/__tests__/MintTokenAction.spec.ts'
 ]
 
+// Contract-writes V3 enforcement (issues #1798, #1926).
+//
+// All on-chain writes must go through `useContractWritesV3` from
+// `@/composables/contracts`. Raw wagmi write hooks are banned in feature
+// code so AI agents and humans cannot regress to V2-shaped patterns.
+//
+// Allowed importers (override below):
+//   - `src/composables/contracts/**` — the V3 implementation itself.
+//   - `src/composables/transactions/useSafeSendTransaction.ts` — Safe SDK
+//     wrapper that legitimately wraps `waitForTransactionReceipt`.
+//   - test-only mock setup files under `tests/`.
+//
+// Legacy allow-list: files pending migration are listed in
+// `v3MigrationLegacyFiles` and tracked in issue #1798. Each migration PR
+// removes its file from the list; when empty, drop the override block.
+const v3WriteRestrictedImports = {
+  paths: [
+    {
+      name: '@wagmi/vue',
+      importNames: ['useWriteContract', 'useWaitForTransactionReceipt'],
+      message:
+        'Use `useContractWritesV3` from `@/composables/contracts` for on-chain writes. See AGENTS.md and issue #1798.'
+    },
+    {
+      name: '@wagmi/core',
+      importNames: ['writeContract', 'waitForTransactionReceipt'],
+      message:
+        'Use `useContractWritesV3` from `@/composables/contracts` for on-chain writes. `readContract` / `estimateGas` / `simulateContract` remain allowed. See AGENTS.md and issue #1798.'
+    }
+  ]
+}
+
+const v3MigrationLegacyFiles = [
+  'src/composables/useContractFunctions.ts',
+  'src/components/forms/DepositSafeForm.vue',
+  'src/components/sections/AdministrationView/BoDElectionDetailsSection.vue',
+  'src/components/sections/AdministrationView/PublishResult.vue',
+  'src/components/sections/ContractManagementView/MainContractActions.vue',
+  'src/components/sections/ContractManagementView/TeamContractAdmins.vue',
+  'src/components/sections/ContractManagementView/TeamContractsDetail.vue',
+  'src/components/sections/ExpenseAccountView/ExpenseAccountTable.vue',
+  'src/components/sections/ExpenseAccountView/TransferAction.vue',
+  'src/components/sections/ProposalsView/ProposalDetail.vue',
+  'src/components/sections/ProposalsView/forms/CreateProposalForm.vue',
+  'src/components/sections/SherTokenView/InvestorActions/DistributeMintAction.vue',
+  'src/components/sections/SherTokenView/forms/MintForm.vue'
+]
+
 export default [
   {
     // TODO turn this rule into an error by march 2025
@@ -170,6 +218,22 @@ export default [
         tailwindClassAssertionOptional,
         tailwindClassIncludes
       ]
+    }
+  },
+  {
+    name: 'app/contract-writes-v3-only',
+    files: ['src/**/*.{ts,tsx,vue}'],
+    ignores: [
+      'src/composables/contracts/**',
+      'src/composables/transactions/useSafeSendTransaction.ts',
+      '**/__tests__/**',
+      '**/*.spec.ts',
+      '**/*.spec.tsx',
+      'tests/**',
+      ...v3MigrationLegacyFiles
+    ],
+    rules: {
+      'no-restricted-imports': ['error', v3WriteRestrictedImports]
     }
   },
   skipFormatting

@@ -47,7 +47,7 @@ describe('InvestInSafeAction', () => {
     expect(
       wrapper.find('[data-test="invest-in-safe-button"]').attributes('disabled')
     ).toBeUndefined()
-    expect(wrapper.attributes('data-tip')).toBeUndefined()
+    expect(wrapper.findComponent({ name: 'UTooltip' }).props('text')).toBeUndefined()
   })
 
   it('disables button and shows tooltip when deposits are disabled', () => {
@@ -55,7 +55,9 @@ describe('InvestInSafeAction', () => {
     const wrapper = createWrapper()
 
     expect(wrapper.find('[data-test="invest-in-safe-button"]').attributes('disabled')).toBeDefined()
-    expect(wrapper.attributes('data-tip')).toBe('SHER compensation deposits are not available')
+    expect(wrapper.findComponent({ name: 'UTooltip' }).props('text')).toBe(
+      'SHER compensation deposits are not available'
+    )
   })
 
   it('disables button while loading', () => {

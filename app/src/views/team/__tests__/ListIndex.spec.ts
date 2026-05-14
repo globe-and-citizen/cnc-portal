@@ -69,7 +69,7 @@ describe('ListIndex - Team List View', () => {
       await wrapper.vm.$nextTick()
 
       expect(wrapper.find('[data-test="loader"]').exists()).toBe(true)
-      expect(wrapper.findAll('[data-test="loader"] .skeleton')).toHaveLength(16) // 4 skeletons × 4 items
+      expect(wrapper.findAll('[data-test="loader"] [aria-busy="true"]')).toHaveLength(16) // 4 skeletons × 4 items
     })
 
     it('should hide team list during loading', async () => {

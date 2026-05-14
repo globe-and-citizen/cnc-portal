@@ -19,5 +19,8 @@ vi.mock('@/composables/cashRemuneration/writes', () => ({
 }))
 
 vi.mock('@/composables/expenseAccount/writes', () => ({
-  useOwnerWithdrawAllToBank: vi.fn(() => mockExpenseAccountWrites.ownerWithdrawAllToBank)
+  useOwnerWithdrawAllToBank: vi.fn(() => mockExpenseAccountWrites.ownerWithdrawAllToBank),
+  useExpenseAccountTransfer: vi.fn(() => mockExpenseAccountWrites.transfer),
+  useExpenseAccountActivateApproval: vi.fn(() => mockExpenseAccountWrites.activateApproval),
+  useExpenseAccountDeactivateApproval: vi.fn(() => mockExpenseAccountWrites.deactivateApproval)
 }))

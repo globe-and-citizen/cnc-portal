@@ -24,11 +24,7 @@
       {{ approvalCount.approved }}/{{ approvalCount.total }} Approvals
     </UBadge>
   </div>
-  <progress
-    class="progress progress-info mb-1"
-    :value="approvalCount.approved"
-    :max="approvalCount.total"
-  ></progress>
+  <UProgress class="mb-1" color="info" :value="approvalCount.approved" :max="approvalCount.total" />
   <span class="text-sm text-gray-500"
     >{{ Math.floor(approvalCount.total / 2) + 1 - approvalCount.approved }} Approval(s) left</span
   >
@@ -65,7 +61,7 @@
       leading-icon="heroicons:arrow-left"
       label="Close"
     />
-    <ToolTip :content="hasApproved ? 'You have already approved' : 'Click to approve this action'">
+    <UTooltip :text="hasApproved ? 'You have already approved' : 'Click to approve this action'">
       <UButton
         color="primary"
         data-test="transfer-ownership-button"
@@ -74,7 +70,7 @@
         :disabled="hasApproved || loading"
         label="Approve Action"
       />
-    </ToolTip>
+    </UTooltip>
   </div>
 </template>
 <script setup lang="ts">
@@ -89,7 +85,6 @@ import { log, parseError } from '@/utils'
 import { readContract } from '@wagmi/core'
 import { config } from '@/wagmi.config'
 import type { Address } from 'viem'
-import ToolTip from '@/components/ToolTip.vue'
 import BodApprovalDetails from './BodApprovalDetails.vue'
 
 const props = defineProps<{ row: TableRow; loading: boolean }>()

@@ -54,7 +54,7 @@ describe('NotificationDropdown.vue', () => {
     mockNotificationsRef.value = []
     await nextTick()
 
-    expect(wrapper.find('.join').exists()).toBe(false)
+    expect(wrapper.find('[data-test="pagination-controls"]').exists()).toBe(false)
   })
 
   it('handles notification click and redirects to team route', async () => {

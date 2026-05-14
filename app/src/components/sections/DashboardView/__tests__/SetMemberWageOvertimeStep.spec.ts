@@ -145,16 +145,6 @@ describe('SetMemberWageOvertimeStep.vue', () => {
     await invalidNoRate.get('[data-test="overtime-rules-step"]').trigger('submit')
     expect(invalidNoRate.find('[data-test="save-overtime-wage-button"]').exists()).toBe(true)
 
-    const invalidAmount = createWrapper(
-      createWageData({
-        overtimeRatePerHour: [
-          { type: 'native', amount: 0, enabled: true }
-        ] as WageWithForm['overtimeRatePerHour']
-      })
-    )
-    await invalidAmount.get('[data-test="overtime-rules-step"]').trigger('submit')
-    expect(invalidAmount.find('[data-test="save-overtime-wage-button"]').exists()).toBe(true)
-
     const validWrapper = createWrapper(
       createWageData({
         overtimeRatePerHour: [
@@ -164,5 +154,38 @@ describe('SetMemberWageOvertimeStep.vue', () => {
     )
     await validWrapper.get('[data-test="overtime-rules-step"]').trigger('submit')
     expect(validWrapper.find('[data-test="save-overtime-wage-button"]').exists()).toBe(true)
+  })
+
+  it('auto-disables the overtime toggle when the rate amount is cleared to 0', async () => {
+    const wageData = createWageData({
+      overtimeRatePerHour: [
+        { type: 'native', amount: 15, enabled: true },
+        { type: 'usdc', amount: 0, enabled: false },
+        { type: 'sher', amount: 0, enabled: false }
+      ]
+    })
+    const wrapper = createWrapper(wageData)
+    const overtimeAmountInputs = wrapper.findAll('input[type="number"]')
+
+    await overtimeAmountInputs[1]?.setValue('0')
+
+    expect(wageData.overtimeRatePerHour[0]?.enabled).toBe(false)
+    expect(Number(wageData.overtimeRatePerHour[0]?.amount)).toBe(0)
+  })
+
+  it('auto-zeroes the overtime rate amount when the toggle is turned off', async () => {
+    const wageData = createWageData({
+      overtimeRatePerHour: [
+        { type: 'native', amount: 15, enabled: true },
+        { type: 'usdc', amount: 0, enabled: false },
+        { type: 'sher', amount: 0, enabled: false }
+      ]
+    })
+    const wrapper = createWrapper(wageData)
+
+    await wrapper.findAll('button[role="switch"]')?.[0]?.trigger('click')
+
+    expect(wageData.overtimeRatePerHour[0]?.enabled).toBe(false)
+    expect(Number(wageData.overtimeRatePerHour[0]?.amount)).toBe(0)
   })
 })

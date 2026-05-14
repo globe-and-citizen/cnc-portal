@@ -13,13 +13,15 @@
         data-test="token-amount"
       >
         <template #label>
-          <span class="label-text">Deposit</span>
-          <span class="label-text-alt"
-            >{{
-              selectedToken?.token.symbol ? `${selectedToken.token.symbol} Balance:` : 'Balance:'
-            }}
-            {{ selectedToken?.amount }} {{ selectedToken?.token.symbol }}
-          </span>
+          <div class="flex w-full items-center justify-between text-sm font-medium">
+            <span>Deposit</span>
+            <span class="text-xs text-gray-500 dark:text-gray-400"
+              >{{
+                selectedToken?.token.symbol ? `${selectedToken.token.symbol} Balance:` : 'Balance:'
+              }}
+              {{ selectedToken?.amount }} {{ selectedToken?.token.symbol }}
+            </span>
+          </div>
         </template>
       </TokenAmount>
     </UFormField>
@@ -42,7 +44,7 @@
       data-test="error-alert"
     />
 
-    <div class="modal-action justify-between">
+    <div class="mt-6 flex justify-between gap-2">
       <UButton
         color="error"
         variant="outline"

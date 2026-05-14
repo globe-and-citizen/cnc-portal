@@ -17,18 +17,16 @@
 import ElectionDetailsCard from './BoDElectionDetailsCard.vue'
 import { computed, reactive, watch } from 'vue'
 import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
-// import { BOD_ABI } from '@/artifacts/abi/bod'
 import { useTeamStore } from '@/stores'
 import { encodeFunctionData, zeroAddress, type Address } from 'viem'
-import { useWriteContract, useWaitForTransactionReceipt, useReadContract } from '@wagmi/vue'
+import { useReadContract } from '@wagmi/vue'
+import { useElectionsCastVote } from '@/composables/elections/writes'
 import { estimateGas, readContract } from '@wagmi/core'
 import type { User } from '@/types'
 import { config } from '@/wagmi.config'
 import { log, parseError } from '@/utils'
-import { useQueryClient } from '@tanstack/vue-query'
 
 const props = defineProps<{ electionId: bigint }>()
-const queryClient = useQueryClient()
 const teamStore = useTeamStore()
 const toast = useToast()
 const electionId = computed(() => props.electionId)
@@ -66,16 +64,7 @@ const {
   }
 })
 
-const {
-  data: hashCastVote,
-  mutate: executeCastVote,
-  isPending: isLoadingCastVote
-} = useWriteContract()
-
-const { isLoading: isConfirmingCastVote, isSuccess: isConfirmedCastVote } =
-  useWaitForTransactionReceipt({
-    hash: hashCastVote
-  })
+const { mutate: executeCastVote, isPending: isLoadingCastVote } = useElectionsCastVote()
 
 type ElectionTuple = [bigint, string, string, Address, bigint, bigint, bigint, boolean]
 
@@ -112,34 +101,41 @@ const candidates = computed(() => {
 })
 
 const castVote = async (candidateAddress: Address) => {
-  try {
-    if (!electionsAddress.value) {
-      toast.add({ title: 'Elections contract address not found', color: 'error' })
-      return
-    }
-    const args: readonly [bigint, Address] = [electionId.value, candidateAddress]
+  if (!electionsAddress.value) {
+    toast.add({ title: 'Elections contract address not found', color: 'error' })
+    return
+  }
+  const args: readonly [bigint, Address] = [electionId.value, candidateAddress]
 
+  try {
     const data = encodeFunctionData({
       abi: ELECTIONS_ABI,
       functionName: 'castVote',
       args
     })
-
     await estimateGas(config, {
       to: electionsAddress.value,
       data
     })
-
-    executeCastVote({
-      address: electionsAddress.value,
-      abi: ELECTIONS_ABI,
-      functionName: 'castVote',
-      args
-    })
   } catch (error) {
     toast.add({ title: parseError(error, ELECTIONS_ABI), color: 'error' })
-    log.error('Error creating election:', parseError(error, ELECTIONS_ABI))
+    log.error('Error estimating gas:', parseError(error, ELECTIONS_ABI))
+    return
   }
+
+  executeCastVote(
+    { args },
+    {
+      onSuccess: async () => {
+        toast.add({ title: 'Vote Casted successfully!', color: 'success' })
+        await fetchVotes()
+      },
+      onError: (error) => {
+        toast.add({ title: parseError(error, ELECTIONS_ABI), color: 'error' })
+        log.error('Error casting vote:', parseError(error, ELECTIONS_ABI))
+      }
+    }
+  )
 }
 
 const fetchVotes = async () => {
@@ -167,16 +163,6 @@ const fetchVotes = async () => {
     log.error('Error fetching votes:', parseError(error, ELECTIONS_ABI))
   }
 }
-
-watch(isConfirmingCastVote, async (isConfirming, wasConfirming) => {
-  if (wasConfirming && !isConfirming && isConfirmedCastVote.value) {
-    toast.add({ title: 'Vote Casted successfully!', color: 'success' })
-    await fetchVotes()
-    await queryClient.invalidateQueries({
-      queryKey: ['readContract']
-    })
-  }
-})
 
 watch(
   electionCandidates,

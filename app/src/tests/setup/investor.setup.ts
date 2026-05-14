@@ -1,7 +1,7 @@
 import { vi } from 'vitest'
 import { computed } from 'vue'
 import type { Address } from 'viem'
-import { mockInvestorReads } from '../mocks/contract.mock'
+import { mockInvestorReads, mockInvestorWrites } from '../mocks/contract.mock'
 
 const MOCK_INVESTOR_ADDRESS = '0x4234567890123456789012345678901234567890' as Address
 
@@ -19,5 +19,7 @@ vi.mock('@/composables/investor/reads', () => ({
   useInvestorShareholders: vi.fn(() => mockInvestorReads.shareholders)
 }))
 
-// All investor write composables are unused; see src/composables/investor/writes.ts.
-// vi.mock('@/composables/investor/writes', () => ({}))
+vi.mock('@/composables/investor/writes', () => ({
+  useIndividualMint: vi.fn(() => mockInvestorWrites.individualMint),
+  useDistributeMint: vi.fn(() => mockInvestorWrites.distributeMint)
+}))

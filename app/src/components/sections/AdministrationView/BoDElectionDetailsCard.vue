@@ -1,8 +1,5 @@
 <template>
-  <div
-    class="bg-base-100 card relative flex flex-col border border-gray-300"
-    :class="{ 'border-warning': isElectionWinner }"
-  >
+  <UCard class="relative flex flex-col" :class="{ 'border-warning': isElectionWinner }">
     <!-- Winner Badge (aligned to straddle border) -->
     <UBadge
       v-if="isElectionWinner"
@@ -13,49 +10,48 @@
     >
       <span class=""> Winner </span>
     </UBadge>
-    <div class="card-body">
-      <!-- User Component -->
-      <UserComponent layout="alternate" :user="election.user" />
+    <!-- User Component -->
+    <UserComponent layout="alternate" :user="election.user" />
 
-      <!-- Votes Stat - Right-aligned below UserComponent -->
-      <div class="mt-2 flex justify-end">
-        <span class="text-lg font-bold text-gray-700">
-          {{ election.currentVotes }}/{{ election.totalVotes }}
-        </span>
-      </div>
-
-      <progress
-        class="progress progress-success my-4"
-        :value="election.currentVotes"
-        :max="election.totalVotes"
-      ></progress>
-
-      <!-- Conditional Button/Indicator -->
-      <div
-        v-if="hasVoted && voterChoice === election.user.address"
-        class="border-warning text-warning inline-flex h-12 items-center justify-center gap-2 rounded-full border-2 px-6 py-3 text-base font-bold"
-      >
-        <IconifyIcon icon="heroicons-solid:check" class="h-5 w-5" />
-        <span>Your Vote</span>
-      </div>
-
-      <!-- View Results Button -->
-      <UButton
-        v-else
-        color="success"
-        variant="outline"
-        :disabled="isVoteDisabled"
-        :loading="isLoadingCastVoteLocal && isLoading"
-        @click="
-          () => {
-            isLoadingCastVoteLocal = true
-            emits('castVote', election.user.address)
-          }
-        "
-        label="Cast a Vote"
-      />
+    <!-- Votes Stat - Right-aligned below UserComponent -->
+    <div class="mt-2 flex justify-end">
+      <span class="text-lg font-bold text-gray-700">
+        {{ election.currentVotes }}/{{ election.totalVotes }}
+      </span>
     </div>
-  </div>
+
+    <UProgress
+      class="my-4"
+      color="success"
+      :value="election.currentVotes"
+      :max="election.totalVotes"
+    />
+
+    <!-- Conditional Button/Indicator -->
+    <div
+      v-if="hasVoted && voterChoice === election.user.address"
+      class="border-warning text-warning inline-flex h-12 items-center justify-center gap-2 rounded-full border-2 px-6 py-3 text-base font-bold"
+    >
+      <IconifyIcon icon="heroicons-solid:check" class="h-5 w-5" />
+      <span>Your Vote</span>
+    </div>
+
+    <!-- View Results Button -->
+    <UButton
+      v-else
+      color="success"
+      variant="outline"
+      :disabled="isVoteDisabled"
+      :loading="isLoadingCastVoteLocal && isLoading"
+      @click="
+        () => {
+          isLoadingCastVoteLocal = true
+          emits('castVote', election.user.address)
+        }
+      "
+      label="Cast a Vote"
+    />
+  </UCard>
 </template>
 
 <script setup lang="ts">

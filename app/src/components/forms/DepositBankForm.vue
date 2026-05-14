@@ -18,8 +18,8 @@
         @validation="isAmountValid = $event"
       >
         <template #label>
-          <span class="label-text">Deposit</span>
-          <span class="label-text-alt"
+          <span class="text-sm font-medium">Deposit</span>
+          <span class="text-xs text-gray-500"
             >Balance: {{ selectedToken?.amount }} {{ selectedToken?.token.symbol }}</span
           >
         </template>
@@ -36,7 +36,7 @@
       data-test="error-alert"
     />
 
-    <div class="modal-action justify-between">
+    <div class="mt-6 flex justify-between gap-2">
       <UButton
         color="error"
         variant="outline"

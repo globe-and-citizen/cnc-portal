@@ -42,7 +42,10 @@
         </div>
       </div>
     </div>
-  </div>
+    <div>
+      <p class="line-clamp-3 text-xs">{{ props.team.description }}</p>
+    </div>
+  </UCard>
 </template>
 
 <script setup lang="ts">

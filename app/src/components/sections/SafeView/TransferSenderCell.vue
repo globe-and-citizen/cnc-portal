@@ -1,5 +1,5 @@
 <template>
-  <div v-if="isLoading" class="skeleton h-10 w-32"></div>
+  <USkeleton v-if="isLoading" class="h-10 w-32" />
   <UserComponent v-else :user="userInfo" />
 </template>
 

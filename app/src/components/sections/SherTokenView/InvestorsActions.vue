@@ -20,12 +20,7 @@
       "
     >
       <div class="grid grid-cols-2 gap-2.5 md:grid-cols-3 xl:grid-cols-6">
-        <div
-          v-for="i in 6"
-          :key="i"
-          class="skeleton h-20 rounded-lg"
-          :data-test="`skeleton-${i}`"
-        />
+        <USkeleton v-for="i in 6" :key="i" class="h-20 rounded-lg" :data-test="`skeleton-${i}`" />
       </div>
     </template>
     <template v-else>

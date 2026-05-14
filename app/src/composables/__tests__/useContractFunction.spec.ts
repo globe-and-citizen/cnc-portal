@@ -1,9 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { getContractData } from '../useContractFunctions'
-import { nextTick } from 'vue'
 import { parseUnits, formatUnits } from 'viem/utils'
 import type { Abi, Address } from 'viem'
-import { mockUseWaitForTransactionReceipt, mockWagmiCore } from '@/tests/mocks'
+import { mockWagmiCore } from '@/tests/mocks'
 
 //  Declare only the composable-specific mock (wallet client) with vi.hoisted
 const { mockDeployContract, mockWalletClient } = vi.hoisted(() => {
@@ -39,9 +38,9 @@ describe('useDeployContract', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockWagmiCore.getWalletClient.mockResolvedValue(mockWalletClient)
-    mockUseWaitForTransactionReceipt.data.value = { contractAddress: '0xDEADBEEF' } as never
-    mockUseWaitForTransactionReceipt.isSuccess.value = true
-    mockUseWaitForTransactionReceipt.isLoading.value = false
+    mockWagmiCore.waitForTransactionReceipt.mockResolvedValue({
+      contractAddress: '0xDEADBEEF'
+    } as never)
   })
 
   const getActualUseDeployContract = async () => {
@@ -54,18 +53,9 @@ describe('useDeployContract', () => {
   it('should deploy contract with correct args', async () => {
     mockDeployContract.mockResolvedValue('0xHASH')
 
-    // Initially loading
-    mockUseWaitForTransactionReceipt.isLoading.value = true
-    mockUseWaitForTransactionReceipt.isSuccess.value = true
-    mockUseWaitForTransactionReceipt.data.value = { contractAddress: '0xDEADBEEF' } as never
-
     const useDeployContract = await getActualUseDeployContract()
     const { deploy, contractAddress, error, isDeploying } = useDeployContract(mockAbi, mockBytecode)
     await deploy('0xBANK', '1.5', '2.5')
-
-    // Simulate confirmation step
-    mockUseWaitForTransactionReceipt.isLoading.value = false
-    await nextTick()
 
     expect(mockDeployContract).toHaveBeenCalledWith({
       abi: mockAbi,
