@@ -28,11 +28,11 @@
     <div
       v-if="isOpen.mount"
       v-show="isOpen.show"
-      class="rounded-box bg-base-100 absolute left-0 z-[9999] mt-2 max-h-72 w-full overflow-y-auto shadow-lg"
+      class="bg-default absolute left-0 z-[9999] mt-2 max-h-72 w-full overflow-y-auto rounded-lg shadow-lg"
       data-test="select-member-item-dropdown"
     >
       <!-- Search input -->
-      <div class="border-base-300 border-b p-2">
+      <div class="border-default border-b p-2">
         <UInput
           v-model="search"
           type="text"
@@ -53,7 +53,7 @@
           @click="select(member)"
         >
           <UserComponent
-            class="hover:bg-base-200 flex w-full items-center gap-2 p-3"
+            class="hover:bg-muted flex w-full items-center gap-2 p-3"
             :user="member"
             data-test="select-member-item-option-user"
           />

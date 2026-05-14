@@ -20,7 +20,7 @@
     <UFormField name="member" label="Choose Member" class="mt-4 gap-2">
       <div v-if="member.address" class="h-20">
         <UserComponent
-          class="bg-base-200 grow rounded-lg p-4"
+          class="bg-muted grow rounded-lg p-4"
           :user="member"
           data-test="selected-member"
         />

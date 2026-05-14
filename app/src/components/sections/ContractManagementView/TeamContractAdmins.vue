@@ -1,7 +1,7 @@
 <template>
   <h3 class="mb-4 text-lg font-bold">
     Contract Admin List {{ range }}
-    <span class="loading loading-spinner" v-if="isLoading"></span>
+    <UIcon v-if="isLoading" name="i-lucide-loader-circle" class="h-5 w-5 animate-spin" />
   </h3>
 
   <!-- Inline form to add new admin -->

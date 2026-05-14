@@ -10,7 +10,7 @@
         @click="handleSelect(contract)"
       >
         <UserComponent
-          class="hover:bg-base-300 grow rounded-lg bg-white p-4"
+          class="hover:bg-elevated grow rounded-lg bg-white p-4"
           :user="{ name: contract.type, address: contract.address, imageUrl: contract.imageUrl }"
           :data-test="`contract-dropdown-${contract.address}`"
         />

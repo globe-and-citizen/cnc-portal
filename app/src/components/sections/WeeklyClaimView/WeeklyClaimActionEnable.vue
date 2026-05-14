@@ -1,7 +1,7 @@
 <template>
   <a
     data-test="enable-action"
-    :class="['text-sm', { disabled: enableTx.isPending.value }]"
+    :class="['text-sm', { 'pointer-events-none opacity-50': enableTx.isPending.value }]"
     :aria-disabled="enableTx.isPending.value"
     :tabindex="enableTx.isPending.value ? -1 : 0"
     :style="{ pointerEvents: enableTx.isPending.value ? 'none' : undefined }"
@@ -12,7 +12,11 @@
       }
     "
   >
-    <span v-if="enableTx.isPending.value" class="loading loading-spinner loading-xs mr-2"></span>
+    <UIcon
+      v-if="enableTx.isPending.value"
+      name="i-lucide-loader-circle"
+      class="mr-2 h-3 w-3 animate-spin"
+    />
     Enable
   </a>
 </template>

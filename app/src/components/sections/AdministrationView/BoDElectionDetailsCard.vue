@@ -20,11 +20,12 @@
       </span>
     </div>
 
-    <progress
-      class="progress progress-success my-4"
+    <UProgress
+      class="my-4"
+      color="success"
       :value="election.currentVotes"
       :max="election.totalVotes"
-    ></progress>
+    />
 
     <!-- Conditional Button/Indicator -->
     <div

@@ -56,12 +56,12 @@ describe('TeamContractAdmins.vue', () => {
 
   it('hides the loading spinner when no write is in-flight', () => {
     const wrapper = mountWithWritePending(false)
-    expect(wrapper.find('.loading-spinner').exists()).toBe(false)
+    expect(wrapper.find('[data-icon="i-lucide-loader-circle"]').exists()).toBe(false)
   })
 
   it('shows the loading spinner while a write is pending', () => {
     const wrapper = mountWithWritePending(true)
-    expect(wrapper.find('.loading-spinner').exists()).toBe(true)
+    expect(wrapper.find('[data-icon="i-lucide-loader-circle"]').exists()).toBe(true)
   })
 
   it('renders one row per admin returned by the read', () => {

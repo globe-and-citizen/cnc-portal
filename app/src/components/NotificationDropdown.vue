@@ -1,6 +1,6 @@
 <template>
-  <div class="dropdown dropdown-end">
-    <div tabindex="0" role="button" class="">
+  <UPopover :content="{ align: 'end' }">
+    <div role="button">
       <UButton variant="ghost" color="neutral" class="m-1 rounded-full" data-test="notifications">
         <div class="relative">
           <IconifyIcon icon="heroicons:bell" class="size-6" />
@@ -14,45 +14,53 @@
         </div>
       </UButton>
     </div>
-    <ul
-      tabindex="0"
-      class="menu dropdown-content bg-base-100 rounded-box z-1 w-[300px] p-2 shadow-sm"
-      data-test="notification-dropdown"
-    >
-      <li v-for="notification in paginatedNotifications" :key="notification.id">
-        <a @click="handleNotification(notification)" :data-test="`notification-${notification.id}`">
-          <div class="notification__body">
-            <span :class="{ 'font-bold': !notification.isRead }">
-              {{ notification.message }}
-            </span>
-          </div>
-          <!--<div class="notification__footer">{{ notification.author }} {{ notification.createdAt }}</div>-->
-        </a>
-      </li>
-      <!-- Pagination Controls -->
-      <div
-        class="flex items-center justify-between gap-1 p-2"
-        data-test="pagination-controls"
-        v-if="paginatedNotifications.length > 0"
+    <template #content>
+      <ul
+        class="bg-default flex w-[300px] flex-col gap-1 rounded-lg p-2 shadow-sm"
+        data-test="notification-dropdown"
       >
-        <UButton
-          color="primary"
-          size="xs"
-          :disabled="currentPage === 1"
-          @click="currentPage > 1 ? currentPage-- : currentPage"
-          icon="heroicons:chevron-left"
-        />
-        <span class="text-primary px-2 text-sm"> {{ currentPage }} / {{ totalPages }} </span>
-        <UButton
-          color="primary"
-          size="xs"
-          :disabled="currentPage === totalPages"
-          @click="currentPage < totalPages ? currentPage++ : currentPage"
-          icon="heroicons:chevron-right"
-        />
-      </div>
-    </ul>
-  </div>
+        <li
+          v-for="notification in paginatedNotifications"
+          :key="notification.id"
+          class="hover:bg-muted rounded-md"
+        >
+          <a
+            class="block cursor-pointer px-3 py-2"
+            @click="handleNotification(notification)"
+            :data-test="`notification-${notification.id}`"
+          >
+            <div class="notification__body">
+              <span :class="{ 'font-bold': !notification.isRead }">
+                {{ notification.message }}
+              </span>
+            </div>
+          </a>
+        </li>
+        <!-- Pagination Controls -->
+        <div
+          class="flex items-center justify-between gap-1 p-2"
+          data-test="pagination-controls"
+          v-if="paginatedNotifications.length > 0"
+        >
+          <UButton
+            color="primary"
+            size="xs"
+            :disabled="currentPage === 1"
+            @click="currentPage > 1 ? currentPage-- : currentPage"
+            icon="heroicons:chevron-left"
+          />
+          <span class="text-primary px-2 text-sm"> {{ currentPage }} / {{ totalPages }} </span>
+          <UButton
+            color="primary"
+            size="xs"
+            :disabled="currentPage === totalPages"
+            @click="currentPage < totalPages ? currentPage++ : currentPage"
+            icon="heroicons:chevron-right"
+          />
+        </div>
+      </ul>
+    </template>
+  </UPopover>
 </template>
 <script setup lang="ts">
 import { ref, computed } from 'vue'

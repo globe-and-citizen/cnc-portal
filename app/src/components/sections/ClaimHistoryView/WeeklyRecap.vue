@@ -1,9 +1,11 @@
 <template>
   <div class="w-full bg-white">
-    <div class="stats w-full shadow-sm">
+    <div
+      class="grid w-full grid-cols-2 divide-x divide-gray-200 rounded-lg shadow-sm md:grid-cols-4"
+    >
       <!-- Total Hours -->
-      <div class="stat place-items-center">
-        <div class="stat-title">Total Hours</div>
+      <div class="flex flex-col items-center justify-center gap-1 p-4">
+        <div class="text-xs font-semibold text-gray-500 uppercase">Total Hours</div>
 
         <div class="mb-2">
           <span
@@ -55,8 +57,8 @@
       </div>
 
       <!-- Hourly Rate -->
-      <div class="stat place-items-center">
-        <div class="stat-title">Hourly Rate</div>
+      <div class="flex flex-col items-center justify-center gap-1 p-4">
+        <div class="text-xs font-semibold text-gray-500 uppercase">Hourly Rate</div>
         <div class="text-center text-xl">
           <RateDotList :rates="effectiveWage?.ratePerHour || []" :text-class="'text-center'" />
         </div>
@@ -66,8 +68,8 @@
       </div>
 
       <!-- Overtime Rate (only when overtime wage is configured) -->
-      <div v-if="hasOvertimeWage" class="stat place-items-center">
-        <div class="stat-title">Overtime Rate</div>
+      <div v-if="hasOvertimeWage" class="flex flex-col items-center justify-center gap-1 p-4">
+        <div class="text-xs font-semibold text-gray-500 uppercase">Overtime Rate</div>
         <div class="text-center text-xl">
           <RateDotList
             :rates="(effectiveWage?.overtimeRatePerHour as RatePerHour[]) || []"
@@ -82,8 +84,8 @@
       </div>
 
       <!-- Total Amount -->
-      <div class="stat place-items-center">
-        <div class="stat-title">Total Amount</div>
+      <div class="flex flex-col items-center justify-center gap-1 p-4">
+        <div class="text-xs font-semibold text-gray-500 uppercase">Total Amount</div>
         <div class="text-center text-xl">
           <template v-if="props.weeklyClaim">
             <RateDotList

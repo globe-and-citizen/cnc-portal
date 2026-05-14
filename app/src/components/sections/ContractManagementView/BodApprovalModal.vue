@@ -24,11 +24,7 @@
       {{ approvalCount.approved }}/{{ approvalCount.total }} Approvals
     </UBadge>
   </div>
-  <progress
-    class="progress progress-info mb-1"
-    :value="approvalCount.approved"
-    :max="approvalCount.total"
-  ></progress>
+  <UProgress class="mb-1" color="info" :value="approvalCount.approved" :max="approvalCount.total" />
   <span class="text-sm text-gray-500"
     >{{ Math.floor(approvalCount.total / 2) + 1 - approvalCount.approved }} Approval(s) left</span
   >

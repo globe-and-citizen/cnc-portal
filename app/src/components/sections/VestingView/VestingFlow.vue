@@ -11,7 +11,7 @@
       </div>
     </template>
 
-    <span class="loading loading-spinner" v-if="loading"></span>
+    <UIcon v-if="loading" name="i-lucide-loader-circle" class="h-5 w-5 animate-spin" />
 
     <UTable
       :data="vestings"
