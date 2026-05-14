@@ -81,7 +81,7 @@
     "siwe": "^3.0.0",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
-    "uuid": "^13.0.0",
+    "uuid": "^14.0.0",
     "viem": "^2.29.4",
     "yaml": "^2.8.2",
     "yamljs": "^0.3.0",
