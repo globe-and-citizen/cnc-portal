@@ -44,19 +44,24 @@
       </template>
 
       <template #details-cell="{ row: { original: row } }">
-        <button
+        <UButton
           :disabled="row.type !== 'Campaign'"
           @click="openContractDataModal(row.address)"
-          class="btn btn-ghost btn-xs"
-        >
-          View Details
-        </button>
+          variant="ghost"
+          color="neutral"
+          size="xs"
+          label="View Details"
+        />
       </template>
 
       <template #events-cell="{ row: { original: row } }">
-        <button @click="openEventsModal(row.address)" class="btn btn-ghost btn-xs">
-          View Events
-        </button>
+        <UButton
+          @click="openEventsModal(row.address)"
+          variant="ghost"
+          color="neutral"
+          size="xs"
+          label="View Events"
+        />
       </template>
     </UTable>
 

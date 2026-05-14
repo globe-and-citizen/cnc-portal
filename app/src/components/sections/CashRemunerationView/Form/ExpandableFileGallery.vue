@@ -77,18 +77,22 @@
         >
           <!-- Contrôles -->
           <div class="absolute top-4 right-4 z-20 flex gap-2">
-            <button
-              class="btn btn-sm btn-ghost bg-opacity-60 hover:bg-opacity-80 bg-black text-white"
+            <UButton
+              variant="ghost"
+              color="neutral"
+              size="sm"
+              class="bg-opacity-60 hover:bg-opacity-80 bg-black text-white"
+              icon="heroicons:x-mark"
               @click="closeModal"
-            >
-              <Icon icon="heroicons:x-mark" class="h-6 w-6" />
-            </button>
-            <button
-              class="btn btn-sm btn-ghost bg-opacity-60 hover:bg-opacity-80 bg-black text-white"
+            />
+            <UButton
+              variant="ghost"
+              color="neutral"
+              size="sm"
+              class="bg-opacity-60 hover:bg-opacity-80 bg-black text-white"
+              icon="heroicons:arrow-down-tray"
               @click="downloadFile"
-            >
-              <Icon icon="heroicons:arrow-down-tray" class="h-5 w-5" />
-            </button>
+            />
           </div>
 
           <!-- Contenu -->

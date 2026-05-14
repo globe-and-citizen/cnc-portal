@@ -2,7 +2,7 @@
   <div class="flex flex-col gap-4">
     <div class="flex flex-col gap-6">
       <div v-for="(shareholder, index) in shareholderWithAmounts" :key="index">
-        <h4 class="badge badge-primary">Shareholder {{ index + 1 }}</h4>
+        <UBadge color="primary" variant="solid">Shareholder {{ index + 1 }}</UBadge>
         <UFormField
           :name="`shareholders.${index}.shareholder`"
           :error="rowErrors[index]?.shareholder"

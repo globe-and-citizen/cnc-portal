@@ -58,7 +58,7 @@ describe('ClaimHistoryWeekNavigator', () => {
     const weeklyClaimsSpy = useGetTeamWeeklyClaimsQuery as any
 
     expect(wrapper.find('[data-test="v-chart"]').exists()).toBe(true)
-    expect(wrapper.find('.badge-primary').exists()).toBe(true)
+    expect(wrapper.find('.bg-primary').exists()).toBe(true)
     expect(wrapper.text()).toContain('pending')
     expect(weeklyClaimsSpy.mock.calls[0]?.[0]?.queryParams?.teamId?.value).toBeTruthy()
     expect(weeklyClaimsSpy.mock.calls[0]?.[0]?.queryParams?.userAddress?.value).toBe(
@@ -137,7 +137,7 @@ describe('ClaimHistoryWeekNavigator', () => {
         typeof entry === 'number' ? entry : entry.value
       ) ?? []
 
-    expect(wrapper.find('.badge-primary').exists()).toBe(false)
+    expect(wrapper.find('.bg-primary').exists()).toBe(false)
     expect(vm.barChartOption.yAxis.max).toBe(24)
     expect(regularSeriesValues.every((value) => value === 0)).toBe(true)
   })
@@ -146,11 +146,11 @@ describe('ClaimHistoryWeekNavigator', () => {
     const wrapper = createWrapper()
     const getColor = (wrapper.vm as any).getColor
 
-    expect(getColor()).toBe('accent')
+    expect(getColor()).toBe('neutral')
     expect(getColor({ status: 'pending' })).toBe('primary')
     expect(getColor({ status: 'signed' })).toBe('warning')
     expect(getColor({ status: 'withdrawn' })).toBe('info')
-    expect(getColor({ status: 'processing' })).toBe('accent')
+    expect(getColor({ status: 'processing' })).toBe('neutral')
   })
 
   it('covers tooltip and label formatters and overtime bar styling', () => {

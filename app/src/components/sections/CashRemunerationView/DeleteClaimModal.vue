@@ -7,9 +7,13 @@
       <span class="font-semibold">{{ formattedDate }}</span>
       ?
     </p>
-    <div v-if="deleteClaimError" class="alert alert-error" data-test="delete-claim-error">
-      Failed to delete claim
-    </div>
+    <UAlert
+      v-if="deleteClaimError"
+      color="error"
+      variant="soft"
+      description="Failed to delete claim"
+      data-test="delete-claim-error"
+    />
     <div class="flex justify-end gap-2">
       <UButton
         color="error"

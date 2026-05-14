@@ -26,9 +26,13 @@
         a new team now!
       </span>
 
-      <div class="alert alert-warning" v-if="teamsError" data-test="error-state">
-        We are unable to retrieve your teams. Please try again in some time.
-      </div>
+      <UAlert
+        v-if="teamsError"
+        color="warning"
+        variant="soft"
+        description="We are unable to retrieve your teams. Please try again in some time."
+        data-test="error-state"
+      />
     </div>
 
     <!-- Teams List -->

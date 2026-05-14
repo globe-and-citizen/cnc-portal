@@ -8,13 +8,16 @@
       <div class="collapse-title text-xl font-medium">
         <div class="flex items-center justify-center">
           <h2 class="pl-5">{{ currentTeam?.name }}</h2>
-          <div
-            class="badge badge-lg badge-primary ml-2 flex items-center justify-center"
+          <UBadge
+            size="lg"
+            color="primary"
+            variant="solid"
+            class="ml-2 flex items-center justify-center"
             v-if="currentTeam?.ownerAddress == address"
           >
             Owner
-          </div>
-          <div class="badge badge-sm badge-secondary ml-2" v-else>Employee</div>
+          </UBadge>
+          <UBadge size="sm" color="secondary" variant="solid" class="ml-2" v-else>Employee</UBadge>
         </div>
       </div>
       <div class="collapse-content">
