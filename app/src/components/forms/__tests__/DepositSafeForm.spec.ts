@@ -11,9 +11,6 @@ import {
   mockERC20Writes,
   resetTransactionMocks,
   resetERC20Mocks,
-  transferHash,
-  mockUseWriteContract,
-  mockWagmiCore,
   useQueryClientFn
 } from '@/tests/mocks'
 
@@ -78,10 +75,7 @@ describe('DepositSafeForm.vue', () => {
   beforeEach(() => {
     resetTransactionMocks()
     resetERC20Mocks()
-    transferHash.value = undefined
     createQueryClient()
-    mockUseWriteContract.mutateAsync.mockResolvedValue(undefined)
-    mockWagmiCore.waitForTransactionReceipt.mockResolvedValue({ status: 'success' })
   })
 
   afterEach(() => {
@@ -169,32 +163,34 @@ describe('DepositSafeForm.vue', () => {
   describe('ERC20 Token Deposit - With Sufficient Allowance', () => {
     it('should show success toast and close modal after ERC20 deposit', async () => {
       mockERC20Reads.allowance.data.value = 1000000n
-      mockUseWriteContract.mutateAsync.mockResolvedValueOnce('0xtransfertx')
-      mockWagmiCore.waitForTransactionReceipt.mockResolvedValueOnce({ status: 'success' })
-      transferHash.value = '0xtransfertx'
+      mockERC20Writes.transfer.mutateAsync.mockResolvedValueOnce({ hash: '0xtransfertx' })
 
       const wrapper = createWrapper()
       await setTokenAmount(wrapper, '1', 'usdc', true)
       await configureErc20Submit(wrapper)
       await flushPromises()
 
-      expect(mockUseWriteContract.mutateAsync).toHaveBeenCalledWith(
-        expect.objectContaining({ functionName: 'transfer' })
+      expect(mockERC20Writes.transfer.mutateAsync).toHaveBeenCalledWith(
+        expect.objectContaining({
+          args: [defaultProps.safeAddress, expect.any(BigInt)]
+        })
       )
       expect(wrapper.emitted('closeModal')).toBeTruthy()
     })
 
-    it('uses the USDC.e address when depositing usdc.e', async () => {
+    it('invokes the transfer mutation for usdc.e deposits', async () => {
       mockERC20Reads.allowance.data.value = 1000000n
-      transferHash.value = '0xusdcetransfer'
+      mockERC20Writes.transfer.mutateAsync.mockResolvedValueOnce({ hash: '0xusdcetransfer' })
       const wrapper = createWrapper()
 
       await setTokenAmount(wrapper, '1', 'usdc.e', true)
       await configureErc20Submit(wrapper)
       await flushPromises()
 
-      expect(mockUseWriteContract.mutateAsync).toHaveBeenCalledWith(
-        expect.objectContaining({ functionName: 'transfer' })
+      expect(mockERC20Writes.transfer.mutateAsync).toHaveBeenCalledWith(
+        expect.objectContaining({
+          args: [defaultProps.safeAddress, expect.any(BigInt)]
+        })
       )
     })
   })
@@ -209,7 +205,7 @@ describe('DepositSafeForm.vue', () => {
       await configureErc20Submit(wrapper)
       await flushPromises()
 
-      expect(mockUseWriteContract.mutateAsync).not.toHaveBeenCalled()
+      expect(mockERC20Writes.transfer.mutateAsync).not.toHaveBeenCalled()
       expect(getVm(wrapper).currentStep).toBe(1)
     })
   })
@@ -233,9 +229,9 @@ describe('DepositSafeForm.vue', () => {
       expect(mockERC20Writes.approve.mutateAsync).toHaveBeenCalled()
     })
 
-    it('throws into the catch path when the transfer hash is missing', async () => {
+    it('keeps the modal open when the transfer mutation rejects', async () => {
       mockERC20Reads.allowance.data.value = 1000000n
-      transferHash.value = undefined
+      mockERC20Writes.transfer.mutateAsync.mockRejectedValueOnce(new Error('Transfer failed'))
       const wrapper = createWrapper()
 
       await setTokenAmount(wrapper, '1', 'usdc', true)
