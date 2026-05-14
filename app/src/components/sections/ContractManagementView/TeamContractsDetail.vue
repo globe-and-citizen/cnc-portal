@@ -15,18 +15,20 @@
     >
       <template #value-cell="{ row: { original: row } }">
         <template v-if="row.key.startsWith('cost')">
-          <input
+          <UInput
             type="number"
             step="any"
-            :value="row.value"
-            @input="
-              updateValue(
-                datas.findIndex((d) => d.key === row.key),
-                Math.abs(parseFloat(($event.target as HTMLInputElement).value) || 0)
-              )
+            size="sm"
+            :model-value="row.value"
+            :required="true"
+            class="w-24"
+            @update:model-value="
+              (v: string | number) =>
+                updateValue(
+                  datas.findIndex((d) => d.key === row.key),
+                  Math.abs(parseFloat(String(v)) || 0)
+                )
             "
-            class="input input-bordered w-24 text-sm"
-            required
           />
           ETH
         </template>
