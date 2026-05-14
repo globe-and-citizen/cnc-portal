@@ -31,24 +31,21 @@
       </li>
       <!-- Pagination Controls -->
       <div
-        class="join flex items-center justify-between p-2"
+        class="flex items-center justify-between gap-1 p-2"
+        data-test="pagination-controls"
         v-if="paginatedNotifications.length > 0"
       >
         <UButton
           color="primary"
           size="xs"
-          class="join-item"
           :disabled="currentPage === 1"
           @click="currentPage > 1 ? currentPage-- : currentPage"
           icon="heroicons:chevron-left"
         />
-        <span class="join-item text-primary px-2 text-sm">
-          {{ currentPage }} / {{ totalPages }}
-        </span>
+        <span class="text-primary px-2 text-sm"> {{ currentPage }} / {{ totalPages }} </span>
         <UButton
           color="primary"
           size="xs"
-          class="join-item"
           :disabled="currentPage === totalPages"
           @click="currentPage < totalPages ? currentPage++ : currentPage"
           icon="heroicons:chevron-right"
