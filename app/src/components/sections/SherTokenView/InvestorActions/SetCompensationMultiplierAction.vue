@@ -24,13 +24,13 @@
     >
       <template #body>
         <div class="mb-4">
-          <p class="text-base-content/70 mb-2 text-sm">
+          <p class="text-muted mb-2 text-sm">
             Current multiplier:
             <span class="font-semibold" data-test="current-multiplier">
               {{ isMultiplierLoading ? 'Loading...' : `${formattedCurrentMultiplier}x` }}
             </span>
           </p>
-          <p class="text-base-content/70 text-sm">
+          <p class="text-muted text-sm">
             The multiplier determines how many SHER tokens are minted per deposited token. You can
             use decimal values (e.g., 1.5, 2.75).
           </p>

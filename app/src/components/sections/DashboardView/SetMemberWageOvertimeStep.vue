@@ -71,16 +71,14 @@
 
     <div class="grid gap-4 md:grid-cols-2">
       <div
-        class="border-base-300 bg-base-100 min-h-40 rounded-2xl border px-5 py-5"
+        class="border-default bg-default min-h-40 rounded-2xl border px-5 py-5"
         data-test="standard-rate-recap"
       >
-        <p class="text-base-content/50 text-sm font-semibold tracking-[0.2em] uppercase">
-          Standard rates
-        </p>
+        <p class="text-muted text-sm font-semibold tracking-[0.2em] uppercase">Standard rates</p>
         <RateDotList
           class="mt-3"
           :rates="wageData.ratePerHour.filter((r) => r.enabled && r.amount > 0)"
-          text-class="text-base-content/80"
+          text-class="text-default"
         />
       </div>
       <div

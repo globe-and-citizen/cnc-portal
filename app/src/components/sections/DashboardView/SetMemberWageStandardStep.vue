@@ -54,13 +54,13 @@
       </div>
     </UFormField>
 
-    <div class="border-base-200 border-t pt-4">
+    <div class="border-muted border-t pt-4">
       <label
         class="flex cursor-pointer items-start gap-3 rounded-2xl border px-4 py-4 transition"
         :class="
           wageData.enableOvertimeRules
             ? 'border-emerald-400 bg-emerald-50/60'
-            : 'border-base-200 bg-base-100'
+            : 'border-muted bg-default'
         "
         data-test="enable-overtime-card"
         :data-active="wageData.enableOvertimeRules ? 'true' : 'false'"
@@ -73,7 +73,7 @@
         />
         <div>
           <p class="font-semibold">Add overtime rates</p>
-          <p class="text-base-content/60 text-sm">
+          <p class="text-muted text-sm">
             Set different rates for hours worked beyond the weekly cap.
           </p>
         </div>

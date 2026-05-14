@@ -8,7 +8,7 @@
       </div>
     </div>
 
-    <div class="bg-base-300 mb-4 rounded-lg p-4">
+    <div class="bg-elevated mb-4 rounded-lg p-4">
       <div class="space-y-2 text-sm">
         <div class="flex justify-between">
           <span class="text-gray-500">Owner:</span>

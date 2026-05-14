@@ -1,6 +1,6 @@
 <template>
   <URadioGroup v-model="selectedRadio" :items="statuses" orientation="horizontal" />
-  <div class="bg-base-100 w-full">
+  <div class="bg-default w-full">
     <UTable :data="filteredApprovals" :columns="columns" :loading="isFetchingExpenseData">
       <template #action-cell="{ row: { original: row } }">
         <UButton

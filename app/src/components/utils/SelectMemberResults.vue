@@ -10,7 +10,7 @@
         @click="handleSelect(member)"
       >
         <UserComponent
-          class="hover:bg-base-300 flex-grow rounded-lg bg-white p-4"
+          class="hover:bg-elevated flex-grow rounded-lg bg-white p-4"
           :user="member"
           :data-test="`user-dropdown-${member.address}`"
         />
