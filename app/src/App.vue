@@ -14,7 +14,7 @@
               }"
             >
               <template #header>
-                <UDashboardNavbar :title="pageTitle" :ui="{ right: 'gap-3' }" class="bg-white">
+                <UDashboardNavbar :title="pageTitle" :ui="{ right: 'gap-3' }" class="bg-default">
                   <template #leading>
                     <UDashboardSidebarCollapse
                       icon="heroicons:arrow-left-start-on-rectangle"
