@@ -2,7 +2,7 @@
   <UDashboardSidebar
     collapsible
     resizable
-    class="bg-white"
+    class="bg-default"
     :ui="{ root: 'min-w-24', footer: 'border-t border-default' }"
   >
     <template #header="{ collapsed }">
