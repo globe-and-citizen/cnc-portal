@@ -98,11 +98,10 @@ const vmCastLegacyExtraFiles = [
 //   - `src/composables/contracts/**` — the V3 implementation itself.
 //   - `src/composables/transactions/useSafeSendTransaction.ts` — Safe SDK
 //     wrapper that legitimately wraps `waitForTransactionReceipt`.
+//   - `src/composables/useContractFunctions.ts` — contract *deployment*
+//     path; `waitForTransactionReceipt` awaits a deploy receipt, not a
+//     write. Deployment is out of scope for the V3 writes migration.
 //   - test-only mock setup files under `tests/`.
-//
-// Legacy allow-list: files pending migration are listed in
-// `v3MigrationLegacyFiles` and tracked in issue #1798. Each migration PR
-// removes its file from the list; when empty, drop the override block.
 const v3WriteRestrictedImports = {
   paths: [
     {
@@ -119,22 +118,6 @@ const v3WriteRestrictedImports = {
     }
   ]
 }
-
-const v3MigrationLegacyFiles = [
-  'src/composables/useContractFunctions.ts',
-  'src/components/forms/DepositSafeForm.vue',
-  'src/components/sections/AdministrationView/BoDElectionDetailsSection.vue',
-  'src/components/sections/AdministrationView/PublishResult.vue',
-  'src/components/sections/ContractManagementView/MainContractActions.vue',
-  'src/components/sections/ContractManagementView/TeamContractAdmins.vue',
-  'src/components/sections/ContractManagementView/TeamContractsDetail.vue',
-  'src/components/sections/ExpenseAccountView/ExpenseAccountTable.vue',
-  'src/components/sections/ExpenseAccountView/TransferAction.vue',
-  'src/components/sections/ProposalsView/ProposalDetail.vue',
-  'src/components/sections/ProposalsView/forms/CreateProposalForm.vue',
-  'src/components/sections/SherTokenView/InvestorActions/DistributeMintAction.vue',
-  'src/components/sections/SherTokenView/forms/MintForm.vue'
-]
 
 export default [
   {
@@ -230,7 +213,7 @@ export default [
       '**/*.spec.ts',
       '**/*.spec.tsx',
       'tests/**',
-      ...v3MigrationLegacyFiles
+      'src/composables/useContractFunctions.ts'
     ],
     rules: {
       'no-restricted-imports': ['error', v3WriteRestrictedImports]
