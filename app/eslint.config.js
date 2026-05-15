@@ -87,6 +87,37 @@ const vmCastLegacyExtraFiles = [
   'src/components/sections/SherTokenView/InvestorActions/__tests__/MintTokenAction.spec.ts'
 ]
 
+// Contract-writes V3 enforcement (issues #1798, #1926).
+//
+// All on-chain writes must go through `useContractWritesV3` from
+// `@/composables/contracts`. Raw wagmi write hooks are banned in feature
+// code so AI agents and humans cannot regress to V2-shaped patterns.
+//
+// Allowed importers (override below):
+//   - `src/composables/contracts/**` — the V3 implementation itself.
+//   - `src/composables/transactions/useSafeSendTransaction.ts` — Safe SDK
+//     wrapper that legitimately wraps `waitForTransactionReceipt`.
+//   - `src/composables/useContractFunctions.ts` — contract *deployment*
+//     path; `waitForTransactionReceipt` awaits a deploy receipt, not a
+//     write. Deployment is out of scope for the V3 writes migration.
+//   - test-only mock setup files under `tests/`.
+const v3WriteRestrictedImports = {
+  paths: [
+    {
+      name: '@wagmi/vue',
+      importNames: ['useWriteContract', 'useWaitForTransactionReceipt'],
+      message:
+        'Use `useContractWritesV3` from `@/composables/contracts` for on-chain writes. See AGENTS.md and issue #1798.'
+    },
+    {
+      name: '@wagmi/core',
+      importNames: ['writeContract', 'waitForTransactionReceipt'],
+      message:
+        'Use `useContractWritesV3` from `@/composables/contracts` for on-chain writes. `readContract` / `estimateGas` / `simulateContract` remain allowed. See AGENTS.md and issue #1798.'
+    }
+  ]
+}
+
 export default [
   {
     // TODO turn this rule into an error by march 2025
@@ -169,6 +200,22 @@ export default [
         tailwindClassAssertionOptional,
         tailwindClassIncludes
       ]
+    }
+  },
+  {
+    name: 'app/contract-writes-v3-only',
+    files: ['src/**/*.{ts,tsx,vue}'],
+    ignores: [
+      'src/composables/contracts/**',
+      'src/composables/transactions/useSafeSendTransaction.ts',
+      '**/__tests__/**',
+      '**/*.spec.ts',
+      '**/*.spec.tsx',
+      'tests/**',
+      'src/composables/useContractFunctions.ts'
+    ],
+    rules: {
+      'no-restricted-imports': ['error', v3WriteRestrictedImports]
     }
   },
   skipFormatting

@@ -1,42 +1,39 @@
 <template>
-  <div class="card bg-base-200 shadow-xl">
-    <div class="card-body">
-      <div class="mb-4 flex items-center gap-3">
-        <IconifyIcon icon="heroicons:shield-check" class="text-primary h-8 w-8" />
-        <div>
-          <h2 class="card-title">Deploy Team Safe</h2>
-          <p class="text-sm text-gray-500">
-            Your team's multi-signature wallet is not deployed yet
-          </p>
+  <UCard>
+    <div class="mb-4 flex items-center gap-3">
+      <IconifyIcon icon="heroicons:shield-check" class="text-primary h-8 w-8" />
+      <div>
+        <h2 class="text-lg font-semibold">Deploy Team Safe</h2>
+        <p class="text-sm text-gray-500">Your team's multi-signature wallet is not deployed yet</p>
+      </div>
+    </div>
+
+    <div class="bg-elevated mb-4 rounded-lg p-4">
+      <div class="space-y-2 text-sm">
+        <div class="flex justify-between">
+          <span class="text-gray-500">Owner:</span>
+          <span class="font-mono">{{ userDataStore.address }}</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-gray-500">Threshold:</span>
+          <span class="font-semibold">1 of 1</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-gray-500">Network:</span>
+          <span class="font-semibold">{{ networkName.networkName }}</span>
         </div>
       </div>
+    </div>
 
-      <div class="bg-base-300 mb-4 rounded-lg p-4">
-        <div class="space-y-2 text-sm">
-          <div class="flex justify-between">
-            <span class="text-gray-500">Owner:</span>
-            <span class="font-mono">{{ userDataStore.address }}</span>
-          </div>
-          <div class="flex justify-between">
-            <span class="text-gray-500">Threshold:</span>
-            <span class="font-semibold">1 of 1</span>
-          </div>
-          <div class="flex justify-between">
-            <span class="text-gray-500">Network:</span>
-            <span class="font-semibold">{{ networkName.networkName }}</span>
-          </div>
-        </div>
-      </div>
+    <UAlert
+      color="info"
+      variant="soft"
+      icon="heroicons:information-circle"
+      description="This will create a Gnosis Safe wallet for your team. You can add more owners later."
+    />
 
-      <UAlert
-        color="info"
-        variant="soft"
-        icon="heroicons:information-circle"
-        description="This will create a Gnosis Safe wallet for your team. You can add more owners later."
-        class="mb-4"
-      />
-
-      <div class="card-actions justify-end">
+    <template #footer>
+      <div class="flex justify-end gap-2">
         <UButton
           color="primary"
           :loading="isDeploying"
@@ -47,8 +44,8 @@
           {{ isDeploying ? 'Deploying Safe...' : 'Deploy Safe Wallet' }}
         </UButton>
       </div>
-    </div>
-  </div>
+    </template>
+  </UCard>
 </template>
 
 <script setup lang="ts">

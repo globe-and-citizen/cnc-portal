@@ -28,7 +28,7 @@
       :style="{ pointerEvents: isLoad ? 'none' : undefined }"
       @click="handleDropdownClick"
     >
-      <span v-if="isLoad" class="loading loading-spinner loading-xs mr-2"></span>
+      <UIcon v-if="isLoad" name="i-lucide-loader-circle" class="mr-2 h-3 w-3 animate-spin" />
       {{ isResign ? 'Resign' : 'Sign' }}
     </div>
   </UTooltip>

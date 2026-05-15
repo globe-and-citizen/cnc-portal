@@ -1,29 +1,26 @@
 <template>
-  <div
-    class="card h-36 w-80 border"
-    :class="`${team.ownerAddress == userStore.address ? 'bg-green-100' : 'bg-blue-100'}`"
+  <UCard
+    class="h-36 w-80"
+    :class="team.ownerAddress == userStore.address ? 'bg-green-100' : 'bg-blue-100'"
   >
-    <div class="card-body">
-      <div class="flex flex-row items-start justify-between">
-        <h1 class="card-title text-md overflow-hidden">
-          {{ props.team.name }}
-        </h1>
-        <UBadge
-          size="sm"
-          color="primary"
-          variant="solid"
-          v-if="team.ownerAddress == userStore.address"
-        >
-          Owner
-        </UBadge>
-        <UBadge size="sm" color="secondary" variant="solid" v-else>Employee</UBadge>
-      </div>
-      <div>
-        <p class="line-clamp-3 text-xs">{{ props.team.description }}</p>
-      </div>
-      <div class="card-actions justify-between"></div>
+    <div class="flex flex-row items-start justify-between">
+      <h1 class="text-md overflow-hidden font-semibold">
+        {{ props.team.name }}
+      </h1>
+      <UBadge
+        size="sm"
+        color="primary"
+        variant="solid"
+        v-if="team.ownerAddress == userStore.address"
+      >
+        Owner
+      </UBadge>
+      <UBadge size="sm" color="secondary" variant="solid" v-else>Employee</UBadge>
     </div>
-  </div>
+    <div>
+      <p class="line-clamp-3 text-xs">{{ props.team.description }}</p>
+    </div>
+  </UCard>
 </template>
 
 <script setup lang="ts">

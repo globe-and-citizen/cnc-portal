@@ -20,7 +20,7 @@
     <UFormField name="member" label="Choose Member" class="mt-4 gap-2">
       <div v-if="member.address" class="h-20">
         <UserComponent
-          class="bg-base-200 grow rounded-lg p-4"
+          class="bg-muted grow rounded-lg p-4"
           :user="member"
           data-test="selected-member"
         />
@@ -63,31 +63,25 @@
     </UFormField>
 
     <div class="mt-4 flex w-full items-start gap-3">
-      <UFormField name="totalAmount" class="min-w-0 flex-1">
-        <label class="input input-bordered input-md flex w-full items-center gap-2">
-          <span class="shrink-0 text-xs">Amount</span>
-          <UInput
-            data-test="total-amount"
-            type="number"
-            class="grow border-none shadow-none"
-            :model-value="totalAmount"
-            @update:model-value="(v: string | number) => (totalAmount = Number(v))"
-            required
-          />
-        </label>
+      <UFormField name="totalAmount" label="Amount" class="min-w-0 flex-1">
+        <UInput
+          data-test="total-amount"
+          type="number"
+          class="w-full"
+          :model-value="totalAmount"
+          @update:model-value="(v: string | number) => (totalAmount = Number(v))"
+          :required="true"
+        />
       </UFormField>
-      <UFormField name="cliff" class="min-w-0 flex-1">
-        <label class="input input-bordered flex w-full items-center gap-2">
-          <span class="shrink-0 text-xs">Cliff(days)</span>
-          <UInput
-            data-test="cliff"
-            type="number"
-            class="grow border-none text-sm shadow-none"
-            :model-value="cliff"
-            @update:model-value="(v: string | number) => (cliff = Number(v))"
-            required
-          />
-        </label>
+      <UFormField name="cliff" label="Cliff (days)" class="min-w-0 flex-1">
+        <UInput
+          data-test="cliff"
+          type="number"
+          class="w-full"
+          :model-value="cliff"
+          @update:model-value="(v: string | number) => (cliff = Number(v))"
+          :required="true"
+        />
       </UFormField>
     </div>
 
@@ -95,7 +89,7 @@
       By clicking "Create Vesting", you agree to lock this token amount under a vesting schedule.
       Ensure your contract is approved to transfer these tokens.
     </h3>
-    <div class="modal-action justify-end">
+    <div class="mt-6 flex justify-end gap-2">
       <UButton
         type="button"
         color="primary"

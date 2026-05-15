@@ -26,9 +26,9 @@ describe('AddressToolTip.vue', () => {
       await wrapper.vm.$nextTick()
 
       const copyAddressTooltip = wrapper.find('[data-test="copy-address-tooltip"]').findComponent({
-        name: 'ToolTip'
+        name: 'UTooltip'
       })
-      expect(copyAddressTooltip.props().content).toBe('Copied!')
+      expect(copyAddressTooltip.props().text).toBe('Copied!')
     })
 
     it('not render the copy button if copy is not supported', async () => {

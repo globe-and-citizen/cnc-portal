@@ -1,12 +1,12 @@
 <template>
   <div
-    class="input-group relative"
+    class="relative"
     :class="teamStore.currentTeamMeta.isPending ? 'animate-pulse' : ''"
     ref="formRef"
     data-test="member-input"
   >
-    <label
-      class="input input-bordered input-md flex w-full items-center gap-2"
+    <div
+      class="border-default flex h-12 w-full items-center gap-2 rounded-md border bg-white px-3 dark:bg-gray-900"
       :data-test="`member-input`"
     >
       <UInput
@@ -40,7 +40,7 @@
           }
         "
       />
-    </label>
+    </div>
     <!-- Dropdown positioned relative to the input -->
     <div
       v-if="showDropdown && filteredMembers && filteredMembers.length > 0"
@@ -48,7 +48,7 @@
       data-test="user-dropdown"
     >
       <p class="pb-3 font-bold">Click to select Member</p>
-      <div class="bg-base-100 rounded-box">
+      <div class="bg-default rounded-lg">
         <div class="grid grid-cols-2 gap-4" data-test="user-search-results">
           <div
             v-for="user in filteredMembers.slice(0, 8)"
@@ -58,7 +58,7 @@
             data-test="user-row"
           >
             <UserComponent
-              class="bg-base-200 hover:bg-base-300 grow rounded-lg p-4"
+              class="bg-muted hover:bg-elevated grow rounded-lg p-4"
               :user="user"
               :data-test="`user-dropdown-${user.address}`"
             />

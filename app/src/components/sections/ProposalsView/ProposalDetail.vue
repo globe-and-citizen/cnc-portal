@@ -66,22 +66,12 @@
       </div>
       <div>{{ proposal.description }}</div>
       <div v-if="!hasVoted" class="flex flex-row justify-end gap-2">
-        <UButton
-          color="primary"
-          @click="vote('yes')"
-          :disabled="isVoting || isConfirmingVote"
-          label="Vote for yes"
-        />
-        <UButton
-          color="error"
-          @click="vote('no')"
-          :disabled="isVoting || isConfirmingVote"
-          label="Vote for no"
-        />
+        <UButton color="primary" @click="vote('yes')" :disabled="isVoting" label="Vote for yes" />
+        <UButton color="error" @click="vote('no')" :disabled="isVoting" label="Vote for no" />
         <UButton
           class="bg-gray-300"
           @click="vote('abstain')"
-          :disabled="isVoting || isConfirmingVote"
+          :disabled="isVoting"
           label="Vote for abstain"
         />
       </div>
@@ -179,10 +169,11 @@ import { useTeamStore, useUserDataStore } from '@/stores'
 import { ProposalState, type Proposal, type ProposalVoteEvent } from '@/types'
 import { config } from '@/wagmi.config'
 import { useQueryClient } from '@tanstack/vue-query'
-import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
+import { useReadContract } from '@wagmi/vue'
+import { useProposalsCastVote } from '@/composables/proposals/writes'
 import { parseAbiItem, type Address } from 'viem'
 import { createEventFilter, getFilterLogs } from 'viem/actions'
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 
 const client = config.getClient()
@@ -253,11 +244,7 @@ const proposal = computed<Proposal | undefined>(() => {
   return proposalData.value as Proposal
 })
 
-const { mutate: voteOnProposal, isPending: isVoting, data: txHash } = useWriteContract()
-
-const { isLoading: isConfirmingVote, isSuccess: isVoteConfirmed } = useWaitForTransactionReceipt({
-  hash: txHash
-})
+const { mutate: voteOnProposal, isPending: isVoting } = useProposalsCastVote()
 
 const { data: hasVoted, queryKey: hasVotedQueryKey } = useReadContract({
   address: proposalsAddress.value! as Address,
@@ -267,21 +254,25 @@ const { data: hasVoted, queryKey: hasVotedQueryKey } = useReadContract({
   scopeKey: 'hasVoted'
 })
 
-const vote = async (voteType: 'yes' | 'no' | 'abstain') => {
+const vote = (voteType: 'yes' | 'no' | 'abstain') => {
   if (!proposal.value) return
 
   const voteValue = voteType === 'yes' ? 0 : voteType === 'no' ? 2 : 1 // Assuming 0 for yes, 2 for no, and 1 for abstain
 
-  try {
-    voteOnProposal({
-      address: proposalsAddress.value! as Address,
-      abi: PROPOSALS_ABI,
-      functionName: 'castVote',
-      args: [BigInt(route.params.proposalId as string), voteValue]
-    })
-  } catch (err) {
-    console.error('Error voting on proposal:', err)
-  }
+  voteOnProposal(
+    { args: [BigInt(route.params.proposalId as string), voteValue] },
+    {
+      onSuccess: async () => {
+        emits('proposal-voted')
+        await queryClient.invalidateQueries({ queryKey: [proposalQueryKey, hasVotedQueryKey] })
+        toast.add({ title: 'Vote cast successfully!', color: 'success' })
+        await fetchRecentVotes()
+      },
+      onError: (err) => {
+        console.error('Error voting on proposal:', err)
+      }
+    }
+  )
 }
 
 const fetchRecentVotes = async () => {
@@ -310,28 +301,5 @@ const fetchRecentVotes = async () => {
 
 onMounted(async () => {
   await fetchRecentVotes()
-})
-
-// watch(voteError, (error) => {
-//   if (error) {
-//     console.error('Error voting on proposal:', error)
-//     toastStore.addErrorToast('Failed to cast vote')
-//   }
-// })
-
-// watch(errorConfirmingVote, (error) => {
-//   if (error) {
-//     console.error('Error confirming vote:', error)
-//     toastStore.addErrorToast('Failed to confirm vote')
-//   }
-// })
-
-watch(isVoteConfirmed, async (success) => {
-  if (success) {
-    emits('proposal-voted')
-    await queryClient.invalidateQueries({ queryKey: [proposalQueryKey, hasVotedQueryKey] })
-    toast.add({ title: 'Vote cast successfully!', color: 'success' })
-    await fetchRecentVotes()
-  }
 })
 </script>

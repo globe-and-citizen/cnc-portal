@@ -33,7 +33,7 @@
         formattedReceiptData[key as keyof typeof labels]
       }}</span>
     </div>
-    <div class="modal-action justify-center">
+    <div class="mt-6 flex justify-center gap-2">
       <UButton
         color="primary"
         @click="handleExportPdf"

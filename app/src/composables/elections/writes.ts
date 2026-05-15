@@ -17,3 +17,11 @@ function useElectionsContractWrite(functionName: ElectionsFunctionName) {
 export function useElectionsCreateElection() {
   return useElectionsContractWrite('createElection')
 }
+
+export function useElectionsPublishResults() {
+  return useElectionsContractWrite('publishResults')
+}
+
+export function useElectionsCastVote() {
+  return useElectionsContractWrite('castVote')
+}

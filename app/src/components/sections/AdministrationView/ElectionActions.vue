@@ -31,9 +31,8 @@
       :disabled="userStore.address !== owner"
       :election-id="formattedElection?.id ?? 1"
     />
-    <div
-      :class="{ tooltip: userStore.address != owner }"
-      :data-tip="userStore.address != owner ? 'Only the owner can create elections' : null"
+    <UTooltip
+      :text="userStore.address != owner ? 'Only the owner can create elections' : undefined"
     >
       <UButton
         v-if="!electionStatus || formattedElection?.resultsPublished"
@@ -42,7 +41,7 @@
         :disabled="userStore.address != owner"
         label="Create Election"
       />
-    </div>
+    </UTooltip>
   </div>
 </template>
 <script setup lang="ts">

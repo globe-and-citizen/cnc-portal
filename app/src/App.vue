@@ -1,6 +1,6 @@
 <template>
   <UApp>
-    <div class="bg-base-200 min-h-screen">
+    <div class="bg-muted min-h-screen">
       <LockScreen v-if="lock" :user="{ address: userStore.address }" />
       <template v-else>
         <RouterView name="login" />

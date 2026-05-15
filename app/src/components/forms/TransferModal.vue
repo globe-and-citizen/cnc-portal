@@ -2,14 +2,13 @@
 <template>
   <div>
     <!-- Transfer Button with Tooltip -->
-    <div
-      :class="{ tooltip: !hasTheRight || !isBalanceGreaterThanZero }"
-      :data-tip="
+    <UTooltip
+      :text="
         !hasTheRight
           ? 'Only the bank owner can transfer funds'
           : !isBalanceGreaterThanZero
             ? 'Bank balance is 0'
-            : null
+            : undefined
       "
     >
       <UButton
@@ -20,7 +19,7 @@
         :disabled="!hasTheRight || !isBalanceGreaterThanZero"
         data-test="transfer-button"
       />
-    </div>
+    </UTooltip>
 
     <!-- Transfer Modal -->
     <UModal

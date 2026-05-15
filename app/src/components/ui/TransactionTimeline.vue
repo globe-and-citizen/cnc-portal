@@ -1,79 +1,37 @@
 <template>
   <div v-if="show" class="mb-6" data-test="transaction-timeline">
     <h5 class="mb-3 text-sm font-medium">{{ title || 'Transaction Progress' }}</h5>
-    <ul class="timeline timeline-vertical timeline-compact">
-      <!-- Step 1: Initiate Transaction -->
-      <li>
-        <div class="timeline-end timeline-box">
+    <ol class="flex flex-col">
+      <li
+        v-for="(step, index) in orderedSteps"
+        :key="step.key"
+        class="relative grid grid-cols-[auto_1fr] gap-x-3"
+      >
+        <div class="flex flex-col items-center">
+          <TimelineIcon :status="step.status" />
+          <div
+            v-if="index < orderedSteps.length - 1"
+            class="my-1 w-0.5 flex-1"
+            :class="step.connectorColor"
+          />
+        </div>
+        <div
+          class="mb-4 rounded-md border border-gray-200 bg-white px-3 py-2 dark:bg-gray-900"
+          :class="{ 'mb-0': index === orderedSteps.length - 1 }"
+        >
           <div class="flex items-center gap-2">
-            <span class="font-medium" :class="initiateTextColor">{{
-              steps.initiate.title || 'Initiate'
-            }}</span>
+            <span class="font-medium" :class="step.textColor">{{ step.title }}</span>
           </div>
-          <p class="mt-1 text-sm text-gray-600">{{ steps.initiate.description }}</p>
-        </div>
-        <div class="timeline-middle">
-          <TimelineIcon :status="steps.initiate.status" />
-        </div>
-        <hr :class="initiateHrColor" />
-      </li>
-
-      <!-- Step 2: Transaction Pending -->
-      <li>
-        <hr :class="pendingHrColor" />
-        <div class="timeline-middle">
-          <TimelineIcon :status="steps.pending.status" />
-        </div>
-        <div class="timeline-end timeline-box">
-          <div class="flex items-center gap-2">
-            <span class="font-medium" :class="pendingTextColor">{{
-              steps.pending.title || 'Transaction Sent'
-            }}</span>
+          <p class="mt-1 text-sm text-gray-600">{{ step.description }}</p>
+          <div v-if="step.hashLine" class="mt-1 font-mono text-xs text-gray-500">
+            {{ step.hashLine }}
           </div>
-          <p class="mt-1 text-sm text-gray-600">{{ steps.pending.description }}</p>
-          <div v-if="transactionHash" class="mt-1 font-mono text-xs text-gray-500">
-            Hash: {{ transactionHash.slice(0, 10) }}...{{ transactionHash.slice(-8) }}
-          </div>
-        </div>
-        <hr :class="confirmingHrColor" />
-      </li>
-
-      <!-- Step 3: Transaction Confirming -->
-      <li>
-        <hr :class="confirmingHrColor" />
-        <div class="timeline-middle">
-          <TimelineIcon :status="steps.confirming.status" />
-        </div>
-        <div class="timeline-end timeline-box">
-          <div class="flex items-center gap-2">
-            <span class="font-medium" :class="confirmingTextColor">{{
-              steps.confirming.title || 'Confirming'
-            }}</span>
-          </div>
-          <p class="mt-1 text-sm text-gray-600">{{ steps.confirming.description }}</p>
-        </div>
-        <hr :class="completeHrColor" />
-      </li>
-
-      <!-- Step 4: Complete -->
-      <li>
-        <hr :class="completeHrColor" />
-        <div class="timeline-middle">
-          <TimelineIcon :status="steps.complete.status" />
-        </div>
-        <div class="timeline-end timeline-box">
-          <div class="flex items-center gap-2">
-            <span class="font-medium" :class="completeTextColor">{{
-              steps.complete.title || 'Complete'
-            }}</span>
-          </div>
-          <p class="mt-1 text-sm text-gray-600">{{ steps.complete.description }}</p>
-          <div v-if="blockNumber" class="mt-1 font-mono text-xs text-gray-500">
-            Block: {{ blockNumber }}
+          <div v-if="step.blockLine" class="mt-1 font-mono text-xs text-gray-500">
+            {{ step.blockLine }}
           </div>
         </div>
       </li>
-    </ul>
+    </ol>
   </div>
 </template>
 
@@ -104,8 +62,7 @@ interface Props {
 
 const props = defineProps<Props>()
 
-// Helper function to get timeline colors based on status
-const getStatusColor = (status: TimelineStep['status']) => {
+const getConnectorColor = (status: TimelineStep['status']) => {
   switch (status) {
     case 'completed':
       return 'bg-success'
@@ -113,13 +70,11 @@ const getStatusColor = (status: TimelineStep['status']) => {
       return 'bg-primary'
     case 'error':
       return 'bg-error'
-    case 'pending':
     default:
       return 'bg-gray-300'
   }
 }
 
-// Helper function to get text colors based on status
 const getTextColor = (status: TimelineStep['status']) => {
   switch (status) {
     case 'completed':
@@ -128,22 +83,47 @@ const getTextColor = (status: TimelineStep['status']) => {
       return 'text-primary'
     case 'error':
       return 'text-error'
-    case 'pending':
     default:
       return 'text-gray-600'
   }
 }
 
-// Computed properties for each step's colors
-const initiateHrColor = computed(() => getStatusColor(props.steps.initiate.status))
-const initiateTextColor = computed(() => getTextColor(props.steps.initiate.status))
-
-const pendingHrColor = computed(() => getStatusColor(props.steps.pending.status))
-const pendingTextColor = computed(() => getTextColor(props.steps.pending.status))
-
-const confirmingHrColor = computed(() => getStatusColor(props.steps.confirming.status))
-const confirmingTextColor = computed(() => getTextColor(props.steps.confirming.status))
-
-const completeHrColor = computed(() => getStatusColor(props.steps.complete.status))
-const completeTextColor = computed(() => getTextColor(props.steps.complete.status))
+const orderedSteps = computed(() => [
+  {
+    key: 'initiate',
+    status: props.steps.initiate.status,
+    title: props.steps.initiate.title || 'Initiate',
+    description: props.steps.initiate.description,
+    textColor: getTextColor(props.steps.initiate.status),
+    connectorColor: getConnectorColor(props.steps.initiate.status)
+  },
+  {
+    key: 'pending',
+    status: props.steps.pending.status,
+    title: props.steps.pending.title || 'Transaction Sent',
+    description: props.steps.pending.description,
+    textColor: getTextColor(props.steps.pending.status),
+    connectorColor: getConnectorColor(props.steps.pending.status),
+    hashLine: props.transactionHash
+      ? `Hash: ${props.transactionHash.slice(0, 10)}...${props.transactionHash.slice(-8)}`
+      : undefined
+  },
+  {
+    key: 'confirming',
+    status: props.steps.confirming.status,
+    title: props.steps.confirming.title || 'Confirming',
+    description: props.steps.confirming.description,
+    textColor: getTextColor(props.steps.confirming.status),
+    connectorColor: getConnectorColor(props.steps.confirming.status)
+  },
+  {
+    key: 'complete',
+    status: props.steps.complete.status,
+    title: props.steps.complete.title || 'Complete',
+    description: props.steps.complete.description,
+    textColor: getTextColor(props.steps.complete.status),
+    connectorColor: getConnectorColor(props.steps.complete.status),
+    blockLine: props.blockNumber ? `Block: ${props.blockNumber}` : undefined
+  }
+])
 </script>
