@@ -164,8 +164,6 @@ describe('TeamMetaVisibilityModal.vue', () => {
 
     const wrapper = mountModal(teamProps())
     await openModal(wrapper)
-    expect(
-      wrapper.get('[data-test="visibility-team-button"]').attributes('disabled')
-    ).toBeDefined()
+    expect(wrapper.get('[data-test="visibility-team-button"]').attributes('disabled')).toBeDefined()
   })
 })

@@ -110,9 +110,7 @@ describe('TeamMetaUpdateModal.vue', () => {
     await openModal(wrapper)
 
     await wrapper.find('input').setValue('New company name')
-    await wrapper
-      .find('textarea')
-      .setValue('A long enough description for validation rules.')
+    await wrapper.find('textarea').setValue('A long enough description for validation rules.')
 
     await submitForm(wrapper)
 
