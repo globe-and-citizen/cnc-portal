@@ -40,7 +40,6 @@ describe('MintRecapCard.vue', () => {
   it('renders recap lines for valid recipient context', () => {
     const wrapper = mountRecap()
     expect(wrapper.find('[data-test="recap-card"]').exists()).toBe(true)
-    expect(wrapper.find('[data-test="allocation-recap"]').exists()).toBe(false)
     expect(wrapper.find('[data-test="recap-stake-line"]').text()).toContain('Recipient stake')
     expect(wrapper.find('[data-test="recap-stake-line"]').text()).toContain('issuing')
     expect(wrapper.find('[data-test="recap-token-stake-line"]').text()).toContain('issuing')
@@ -49,9 +48,13 @@ describe('MintRecapCard.vue', () => {
     )
   })
 
-  it('shows estimated stake when recipient address is invalid', () => {
+  it('keeps same recap structure when recipient address is invalid', () => {
     const wrapper = mountRecap({ recipientAddress: '0x123' })
-    expect(wrapper.find('[data-test="recap-stake-line"]').text()).toContain('(estimated)')
+    expect(wrapper.find('[data-test="recap-stake-line"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="recap-token-stake-line"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="new-total-supply-recap"]').text()).toContain(
+      'New total supply'
+    )
   })
 
   it('formats recap stake and supply lines with expected precision for decimal issuance', () => {
@@ -66,7 +69,7 @@ describe('MintRecapCard.vue', () => {
       'Recipient shr stake → 29.162791 shr (was 28 shr; issuing 1.162791 shr)'
     )
     expect(wrapper.find('[data-test="new-total-supply-recap"]').text()).toBe(
-      'New total supply → 51.162791 shr'
+      'New total supply → 51.162791 shr (current supply 50 shr)'
     )
   })
 
@@ -82,22 +85,24 @@ describe('MintRecapCard.vue', () => {
     )
   })
 
-  it('shows the validation reason in recap placeholder when amount is unsolvable', () => {
+  it('shows status-only recap lines when amount is unsolvable', () => {
     totalSupplyRef.value = 50_000_000n
     recipientBalanceRef.value = 28_000_000n
     symbolRef.value = 'shr'
 
     const wrapper = mountRecap({
       issuedAmount: null,
-      hasValidationError: true,
-      validationMessage: 'Add % is outside the allowed range shown above.'
+      hasValidationError: true
     })
 
-    expect(wrapper.find('[data-test="allocation-recap"]').text()).toBe(
-      'Add % is outside the allowed range shown above.'
+    expect(wrapper.find('[data-test="recap-stake-line"]').text()).toContain(
+      'Recipient stake → 56% (was 56%; issuing 0%)'
+    )
+    expect(wrapper.find('[data-test="recap-token-stake-line"]').text()).toBe(
+      'Recipient shr stake → 28 shr (was 28 shr; issuing 0 shr)'
     )
     expect(wrapper.find('[data-test="new-total-supply-recap"]').text()).toBe(
-      'Current supply: 50 shr'
+      'New total supply → 50 shr (current supply 50 shr)'
     )
   })
 

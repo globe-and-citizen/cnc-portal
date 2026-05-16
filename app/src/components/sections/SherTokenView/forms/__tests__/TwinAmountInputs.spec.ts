@@ -15,8 +15,10 @@ vi.mock('@/composables/investor/reads', () => ({
 const mountInputs = (props: Record<string, unknown> = {}) =>
   mount(TwinAmountInputs, {
     props: {
-      percentage: '25',
-      amount: '10',
+      percentage: 25,
+      amount: 10,
+      minPercentage: 5,
+      maxPercentage: 80,
       inputColor: 'neutral',
       ...props
     },
@@ -34,6 +36,8 @@ describe('TwinAmountInputs.vue', () => {
 
   it('renders sync helper and token symbol', () => {
     const wrapper = mountInputs()
+    expect(wrapper.find('[data-test="percentage-min"]').text()).toContain('Min > 5%')
+    expect(wrapper.find('[data-test="percentage-max"]').text()).toContain('Max < 80%')
     expect(wrapper.text()).toContain('Both fields stay in sync.')
     expect(wrapper.text()).toContain('SHER')
   })
@@ -44,17 +48,16 @@ describe('TwinAmountInputs.vue', () => {
     await wrapper.find('[data-test="percentage-input"]').setValue('33')
     await wrapper.find('[data-test="amount-input"]').setValue('12')
 
-    expect(wrapper.emitted('update:percentage')?.at(-1)).toEqual(['33'])
-    expect(wrapper.emitted('update:amount')?.at(-1)).toEqual(['12'])
+    expect(wrapper.emitted('update:percentage')?.at(-1)).toEqual([33])
+    expect(wrapper.emitted('update:amount')?.at(-1)).toEqual([12])
   })
 
   it('disables percentage input when total supply is zero', () => {
     totalSupplyRef.value = 0n
-    const wrapper = mountInputs({ percentage: '40' })
+    const wrapper = mountInputs({ percentage: 40 })
 
-    const percentageInput = wrapper.find('[data-test="percentage-input"]')
+    const percentageInput = wrapper.find('input[data-test="percentage-input"]')
     expect(percentageInput.attributes('disabled')).toBeDefined()
     expect((percentageInput.element as HTMLInputElement).value).toBe('100')
-    expect(wrapper.text()).toContain('issue a fixed amount first to enable percentage mode')
   })
 })

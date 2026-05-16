@@ -7,6 +7,15 @@ export type MintStakeFormState = {
   stakeMode: StakeMode
 }
 
+export type StakePayload = {
+  amount: number
+  percentage: number
+  stakeMode: StakeMode
+  addMax: number
+  endingMin: number
+  totalSupply: number
+}
+
 export type MintRecapData = {
   showRecap: boolean
   symbol: string

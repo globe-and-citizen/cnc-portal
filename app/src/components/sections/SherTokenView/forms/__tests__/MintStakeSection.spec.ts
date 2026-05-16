@@ -16,25 +16,32 @@ vi.mock('@/composables/investor/reads', () => ({
 
 const mountSection = (recipientAddress = VALID_ADDRESS) =>
   mount(MintStakeSection, {
-    props: { recipientAddress },
+    props: { recipientAddress, stakeValidationMessage: null },
     global: {
       plugins: [createTestingPinia({ createSpy: vi.fn })],
       stubs: {
         TwinAmountInputs: {
           name: 'TwinAmountInputs',
-          props: ['percentage', 'amount', 'inputColor'],
+          props: ['percentage', 'amount', 'inputColor', 'minPercentage', 'maxPercentage'],
           emits: ['update:percentage', 'update:amount'],
           template: `<div data-test="twin-inputs-stub">
             <div data-test="stub-input-color">{{ inputColor }}</div>
-            <button data-test="emit-percentage" @click="$emit('update:percentage', '20')">percentage</button>
-            <button data-test="emit-amount" @click="$emit('update:amount', '30')">amount</button>
+            <div data-test="stub-min">{{ minPercentage }}</div>
+            <div data-test="stub-max">{{ maxPercentage }}</div>
+            <button data-test="emit-percentage" @click="$emit('update:percentage', 20)">percentage</button>
+            <button data-test="emit-amount" @click="$emit('update:amount', 30)">amount</button>
           </div>`
         },
         MintRecapCard: {
           name: 'MintRecapCard',
-          props: ['recipientAddress', 'issuedAmount', 'hasValidationError', 'validationMessage'],
+          props: [
+            'recipientAddress',
+            'issuedAmount',
+            'requestedStakePercentage',
+            'hasValidationError'
+          ],
           template:
-            '<div data-test="recap-stub">{{ issuedAmount }}|{{ hasValidationError }}|{{ validationMessage }}</div>'
+            '<div data-test="recap-stub">{{ issuedAmount }}|{{ requestedStakePercentage }}|{{ hasValidationError }}</div>'
         }
       }
     }
@@ -43,7 +50,6 @@ const mountSection = (recipientAddress = VALID_ADDRESS) =>
 describe('MintStakeSection.vue', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-
     totalSupplyRef.value = 100_000_000n
     recipientBalanceRef.value = 20_000_000n
   })
@@ -54,153 +60,68 @@ describe('MintStakeSection.vue', () => {
     expect(wrapper.find('[data-test="ending-mode-button"]').exists()).toBe(true)
     expect(wrapper.find('[data-test="twin-inputs-stub"]').exists()).toBe(true)
     expect(wrapper.find('[data-test="recap-stub"]').exists()).toBe(true)
-    expect(wrapper.find('[data-test="stake-range-hint"]').text()).toContain(
-      'Allowed Ending % range: > 20% and < 100%'
-    )
+    expect(wrapper.find('[data-test="stub-min"]').text()).toBe('20')
+    expect(wrapper.find('[data-test="stub-max"]').text()).toBe('100')
   })
 
-  it('emits initial invalid state on mount', () => {
+  it('emits initial stake payload and issued amount on mount', () => {
     const wrapper = mountSection()
-    expect(wrapper.emitted('update:issuedAmount')?.[0]).toEqual([null])
-    expect(wrapper.emitted('update:isStakeInvalid')?.[0]).toEqual([true])
+    expect(wrapper.emitted('update:issuedAmount')?.[0]).toEqual([0])
+    expect(wrapper.emitted('update:stakePayload')?.[0]).toEqual([
+      expect.objectContaining({
+        amount: 0,
+        percentage: 0,
+        stakeMode: 'ending',
+        totalSupply: 100
+      })
+    ])
   })
 
-  it('emits issued amount and valid state after amount update', async () => {
+  it('emits issued amount and payload after amount update', async () => {
     const wrapper = mountSection()
 
     await wrapper.find('[data-test="emit-amount"]').trigger('click')
     await flushPromises()
 
     const issuedEvents = wrapper.emitted('update:issuedAmount') ?? []
-    const invalidEvents = wrapper.emitted('update:isStakeInvalid') ?? []
+    const payloadEvents = wrapper.emitted('update:stakePayload') ?? []
+    const latestPayload = payloadEvents.at(-1)?.[0] as
+      | { amount: number; percentage: number; stakeMode: string }
+      | undefined
 
     expect(issuedEvents.at(-1)).toEqual([10])
-    expect(invalidEvents.at(-1)).toEqual([false])
+    expect(latestPayload?.amount).toBe(30)
+    expect(latestPayload?.stakeMode).toBe('ending')
+    expect(latestPayload?.percentage).toBeCloseTo(27.27272727272727, 10)
   })
 
   it('converts ending amount to final stake percentage (not amount/supply)', async () => {
     totalSupplyRef.value = 50_000_000n
     recipientBalanceRef.value = 28_000_000n
     const wrapper = mountSection()
-    wrapper.findComponent({ name: 'TwinAmountInputs' }).vm.$emit('update:amount', '100')
+    wrapper.findComponent({ name: 'TwinAmountInputs' }).vm.$emit('update:amount', 100)
     await flushPromises()
 
-    expect(wrapper.findComponent({ name: 'TwinAmountInputs' }).props('percentage')).toBe('81.97')
-  })
-
-  it('uses estimated ending percentage with invalid recipient context for amount sync', async () => {
-    totalSupplyRef.value = 50_000_000n
-    const wrapper = mountSection('0x123')
-    wrapper.findComponent({ name: 'TwinAmountInputs' }).vm.$emit('update:amount', '100')
-    await flushPromises()
-
-    expect(wrapper.findComponent({ name: 'TwinAmountInputs' }).props('percentage')).toBe('66.67')
-  })
-
-  it('keeps percentage-to-amount sync when recipient address is invalid', async () => {
-    const wrapper = mountSection('0x123')
-
-    await wrapper.find('[data-test="emit-percentage"]').trigger('click')
-    await flushPromises()
-
-    expect(wrapper.findComponent({ name: 'TwinAmountInputs' }).props('amount')).toBe('25')
+    expect(wrapper.findComponent({ name: 'TwinAmountInputs' }).props('percentage')).toBeCloseTo(
+      81.97,
+      2
+    )
   })
 
   it('keeps add-mode percentage-to-amount sync for high percentages', async () => {
     totalSupplyRef.value = 50_000_000n
-    const wrapper = mountSection('0x123')
-    await wrapper.find('[data-test="add-mode-button"]').trigger('click')
-    wrapper.findComponent({ name: 'TwinAmountInputs' }).vm.$emit('update:percentage', '99')
-    await flushPromises()
-
-    expect(wrapper.findComponent({ name: 'TwinAmountInputs' }).props('amount')).toBe('4,950')
-  })
-
-  it('keeps add-mode sync active without recipient context', async () => {
-    totalSupplyRef.value = 50_000_000n
-    const wrapper = mountSection('0x123')
-    await wrapper.find('[data-test="add-mode-button"]').trigger('click')
-    wrapper.findComponent({ name: 'TwinAmountInputs' }).vm.$emit('update:percentage', '56')
-    await flushPromises()
-
-    expect(wrapper.findComponent({ name: 'TwinAmountInputs' }).props('amount')).toBe('63.64')
-    expect(wrapper.find('[data-test="recap-stub"]').text()).toContain('|false')
-  })
-
-  it('keeps ending percentage-to-amount sync even when ending % is below current stake', async () => {
-    recipientBalanceRef.value = 40_000_000n
-    const wrapper = mountSection()
-
-    await wrapper.find('[data-test="emit-percentage"]').trigger('click')
-    await flushPromises()
-
-    expect(wrapper.findComponent({ name: 'TwinAmountInputs' }).props('amount')).toBe('15')
-    expect(wrapper.find('[data-test="ending-stake-validation-message"]').text()).toContain(
-      'Ending % must be greater than 40%'
-    )
-  })
-
-  it('shows validation when ending stake exceeds 100%', async () => {
-    const wrapper = mountSection()
-    wrapper.findComponent({ name: 'TwinAmountInputs' }).vm.$emit('update:percentage', '120')
-    await flushPromises()
-
-    expect(wrapper.find('[data-test="ending-stake-validation-message"]').text()).toContain(
-      'must stay below 100%'
-    )
-    expect(wrapper.find('[data-test="recap-stub"]').text()).toContain('true')
-  })
-
-  it('shows add-mode validation when added stake is not solvable', async () => {
-    recipientBalanceRef.value = 28_000_000n
-    totalSupplyRef.value = 50_000_000n
+    recipientBalanceRef.value = undefined
     const wrapper = mountSection()
     await wrapper.find('[data-test="add-mode-button"]').trigger('click')
-    wrapper.findComponent({ name: 'TwinAmountInputs' }).vm.$emit('update:percentage', '56')
+    wrapper.findComponent({ name: 'TwinAmountInputs' }).vm.$emit('update:percentage', 99)
     await flushPromises()
 
-    expect(wrapper.find('[data-test="stake-range-hint"]').text()).toContain(
-      'Allowed Add % range: > 0% and < 44% (current stake 56%).'
-    )
-    expect(wrapper.find('[data-test="ending-stake-validation-message"]').text()).toContain(
-      'Add % is outside the allowed range shown above.'
-    )
-    expect(wrapper.find('[data-test="recap-stub"]').text()).toContain(
-      '|true|Add % is outside the allowed range shown above.'
-    )
-    expect(wrapper.findComponent({ name: 'TwinAmountInputs' }).props('amount')).toBe('')
-  })
-
-  it('does not keep stale recap amount when ending percentage is above 100', async () => {
-    const wrapper = mountSection()
-    wrapper.findComponent({ name: 'TwinAmountInputs' }).vm.$emit('update:amount', '100')
-    await flushPromises()
-    wrapper.findComponent({ name: 'TwinAmountInputs' }).vm.$emit('update:percentage', '200')
-    await flushPromises()
-
-    expect(wrapper.find('[data-test="recap-stub"]').text()).toBe(
-      '|true|Ending % must stay below 100%.'
-    )
-  })
-
-  it('keeps ending sync valid when computed amount has thousand separators', async () => {
-    const wrapper = mountSection()
-    wrapper.findComponent({ name: 'TwinAmountInputs' }).vm.$emit('update:percentage', '99')
-    await flushPromises()
-
-    expect(wrapper.find('[data-test="ending-stake-validation-message"]').exists()).toBe(false)
-    expect(wrapper.find('[data-test="recap-stub"]').text()).toContain('|false')
-  })
-
-  it('treats non-finite amount as invalid input', async () => {
-    const wrapper = mountSection()
-    wrapper.findComponent({ name: 'TwinAmountInputs' }).vm.$emit('update:amount', 'Infinity')
-    await flushPromises()
-
-    expect(wrapper.find('[data-test="ending-stake-validation-message"]').text()).toContain(
-      'Amount must be greater than 0'
-    )
-    expect(wrapper.find('[data-test="recap-stub"]').text()).toContain('|true')
+    expect(wrapper.findComponent({ name: 'TwinAmountInputs' }).props('amount')).toBeCloseTo(4950, 6)
+    const payloadEvents = wrapper.emitted('update:stakePayload') ?? []
+    expect(payloadEvents.at(-1)?.[0]).toMatchObject({
+      addMax: 100,
+      stakeMode: 'add'
+    })
   })
 
   it('disables ending mode and defaults to add mode on empty supply', async () => {
@@ -210,29 +131,8 @@ describe('MintStakeSection.vue', () => {
     await flushPromises()
 
     expect(wrapper.find('[data-test="ending-mode-button"]').attributes('disabled')).toBeDefined()
-    expect(wrapper.find('[data-test="stake-range-hint"]').text()).toContain(
-      'Add mode: enter shr amount to create initial supply.'
-    )
-    expect(wrapper.find('[data-test="stub-input-color"]').text()).toBe('primary')
-  })
-
-  it('shows explicit validation when ending stake is exactly 100%', async () => {
-    const wrapper = mountSection()
-    wrapper.findComponent({ name: 'TwinAmountInputs' }).vm.$emit('update:percentage', '100')
-    await flushPromises()
-
-    expect(wrapper.find('[data-test="ending-stake-validation-message"]').text()).toContain(
-      'must stay below 100%'
-    )
-    expect(wrapper.find('[data-test="recap-stub"]').text()).toContain('true')
-  })
-
-  it('switches input color with mode', async () => {
-    const wrapper = mountSection()
-    expect(wrapper.find('[data-test="stub-input-color"]').text()).toBe('neutral')
-
-    await wrapper.find('[data-test="add-mode-button"]').trigger('click')
-    await flushPromises()
+    expect(wrapper.find('[data-test="stub-min"]').text()).toBe('0')
+    expect(wrapper.find('[data-test="stub-max"]').text()).toBe('100')
     expect(wrapper.find('[data-test="stub-input-color"]').text()).toBe('primary')
   })
 })

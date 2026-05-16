@@ -106,7 +106,10 @@ const schema = computed(() =>
   z.object({
     address: z.string().refine((v) => isAddress(v), { message: 'Invalid address' }),
     stake: z.object({
-    amount: z.number().positive('Amount must be greater than 0').refine(v => v !== 0, { message: 'Amount cannot be zero' }),
+      amount: z
+        .number()
+        .positive('Amount must be greater than 0')
+        .refine((v) => v !== 0, { message: 'Amount cannot be zero' }),
       percentage:
         state.stake.stakeMode === 'add'
           ? z
