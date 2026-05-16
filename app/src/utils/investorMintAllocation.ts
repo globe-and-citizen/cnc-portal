@@ -9,7 +9,7 @@ const computeIssuedDelta = (
   supply: number,
   balance: number
 ): number => {
-  if (!isFinite(targetStakePercentage) || supply <= 0) return 0
+  if (!Number.isFinite(targetStakePercentage) || supply <= 0) return 0
   const targetStake = targetStakePercentage / 100
   const denominator = 1 - targetStake
   const safeDenominator =
@@ -19,7 +19,7 @@ const computeIssuedDelta = (
         : Number.EPSILON
       : denominator
   const delta = (targetStake * supply - balance) / safeDenominator
-  return isFinite(delta) ? delta : 0
+  return Number.isFinite(delta) ? delta : 0
 }
 
 // Converts a percentage input into the paired amount field value for the current mode.
@@ -30,7 +30,7 @@ export const computeAmountFromPercentageInput = (
   supply: number,
   balance: number
 ): number => {
-  if (!isFinite(percentageValue) || percentageValue <= 0) return 0
+  if (!Number.isFinite(percentageValue) || percentageValue <= 0) return 0
 
   const targetStakePercentage =
     mode === 'ending' ? percentageValue : currentStakePercentage + percentageValue
@@ -57,12 +57,12 @@ const getFinalStakeFromAmount = (amount: number, supply: number, balance: number
   if (supply <= 0) return 0
   if (amount === 0) {
     const currentStake = (balance / supply) * 100
-    if (!isFinite(currentStake)) return 0
+    if (!Number.isFinite(currentStake)) return 0
     return currentStake
   }
   if (amount < 0) return 0
   const stake = ((balance + amount) / (supply + amount)) * 100
-  if (!isFinite(stake)) return 0
+  if (!Number.isFinite(stake)) return 0
   return stake
 }
 
@@ -74,7 +74,7 @@ export const computePercentageFromAmountInput = (
   supply: number,
   balance: number
 ): number => {
-  if (!isFinite(amountInput)) return 0
+  if (!Number.isFinite(amountInput)) return 0
   if (supply <= 0) return 0
 
   const issuedDelta = mode === 'ending' ? amountInput - balance : amountInput
@@ -83,7 +83,7 @@ export const computePercentageFromAmountInput = (
   if (newSupply <= 0 || newBalance < 0) return 0
 
   const endingPercentage = (newBalance / newSupply) * 100
-  if (!isFinite(endingPercentage)) return 0
+  if (!Number.isFinite(endingPercentage)) return 0
 
   return mode === 'ending' ? endingPercentage : endingPercentage - currentStakePercentage
 }
