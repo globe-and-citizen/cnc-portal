@@ -18,37 +18,44 @@
           :variant="state.stakeMode === 'ending' ? 'solid' : 'ghost'"
           class="justify-center rounded-lg font-semibold"
           data-test="ending-mode-button"
-          :disabled="isEndingModeDisabled"
+          :disabled="totalSupplyNumber === 0"
           @click="setStakeMode('ending')"
-          :label="state.stakeMode === 'ending' ? 'Ending % ✓' : 'Ending %'"
+          label="Ending %"
         />
       </div>
     </div>
-    <UFormField name="amount" label="Ownership stake" :error="stakeValidationMessage ?? false">
-      <p class="mb-2 text-xs text-gray-500" data-test="stake-range-hint">{{ stakeRangeHint }}</p>
+    <UFormField
+      name="stake.amount"
+      label="Ownership stake"
+      :error="props.stakeValidationMessage ?? false"
+    >
       <TwinAmountInputs
         :percentage="state.percentage"
         :amount="state.amount"
-        :inputColor="stakeInputColor"
+        :inputColor="state.stakeMode === 'add' ? 'primary' : 'neutral'"
+        :minPercentage="state.stakeMode === 'add' ? 0 : stakeConstraints.endingMin"
+        :maxPercentage="state.stakeMode === 'add' ? stakeConstraints.addMax : 100"
         @update:percentage="onPercentageChange"
         @update:amount="onAmountChange"
-      />
-      <MintRecapCard
-        :recipientAddress="recipientAddress"
-        :issuedAmount="issuedAmount"
-        :hasValidationError="!!stakeValidationMessage"
-        :validationMessage="stakeValidationMessage ?? undefined"
       />
       <template #error="{ error }">
         <span v-if="error" data-test="ending-stake-validation-message">{{ error }}</span>
       </template>
     </UFormField>
+    <MintRecapCard
+      :recipientAddress="recipientAddress"
+      :issuedAmount="recapIssuedAmount"
+      :requestedStakePercentage="
+        state.stakeMode === 'ending' ? state.percentage : currentStakePercentage + state.percentage
+      "
+      :hasValidationError="!!props.stakeValidationMessage"
+    />
   </div>
 </template>
+
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
-import { z } from 'zod'
-import { formatUnits, isAddress } from 'viem'
+import { formatUnits } from 'viem'
 import { useInvestorTotalSupply, useInvestorBalanceOf } from '@/composables/investor/reads'
 import {
   computeAmountFromPercentageInput,
@@ -56,225 +63,175 @@ import {
   computePercentageFromAmountInput,
   TOKEN_DECIMALS
 } from '@/utils/investorMintAllocation'
-import { formatAmountWithPrecision } from '@/utils/currencyUtil'
 import { type StakeMode } from '@/types/investor'
 import TwinAmountInputs from './TwinAmountInputs.vue'
 import MintRecapCard from './MintRecapCard.vue'
-const props = defineProps<{ recipientAddress: string }>()
-const emit = defineEmits<{
-  'update:issuedAmount': [value: number | null]
-  'update:isStakeInvalid': [value: boolean]
+import { type Address } from 'viem'
+
+type StakePayload = {
+  amount: number
+  percentage: number
+  stakeMode: StakeMode
+  addMax: number
+  endingMin: number
+  totalSupply: number
+}
+
+const props = defineProps<{
+  recipientAddress: Address
+  stakeValidationMessage?: string | null
 }>()
-const state = reactive({ amount: '', percentage: '', stakeMode: 'ending' as StakeMode })
+
+const emit = defineEmits<{
+  'update:issuedAmount': [value: number]
+  'update:stakePayload': [value: StakePayload]
+}>()
+
+// State stores RAW numeric values (or 0 for invalid/empty)
+const state = reactive({
+  amount: 0,
+  percentage: 0,
+  stakeMode: 'ending' as StakeMode
+})
+
+// Track which field the user last edited
+const lastEditedField = ref<'amount' | 'percentage'>('percentage')
+
 const { data: totalSupplyRaw } = useInvestorTotalSupply()
 const { data: recipientBalanceRaw } = useInvestorBalanceOf(computed(() => props.recipientAddress))
+
 const totalSupplyNumber = computed(() =>
-  typeof totalSupplyRaw.value === 'bigint'
-    ? Number(formatUnits(totalSupplyRaw.value, TOKEN_DECIMALS))
-    : 0
+  Number(formatUnits((totalSupplyRaw.value as bigint | undefined) ?? 0n, TOKEN_DECIMALS))
 )
-const isEndingModeDisabled = computed(
-  () => typeof totalSupplyRaw.value === 'bigint' && totalSupplyRaw.value === 0n
-)
-const hasRecipientContext = computed(
-  () => isAddress(props.recipientAddress) && typeof recipientBalanceRaw.value === 'bigint'
-)
+
 const recipientBalanceNumber = computed(() =>
-  hasRecipientContext.value && typeof recipientBalanceRaw.value === 'bigint'
-    ? Number(formatUnits(recipientBalanceRaw.value, TOKEN_DECIMALS))
-    : 0
+  Number(formatUnits((recipientBalanceRaw.value as bigint | undefined) ?? 0n, TOKEN_DECIMALS))
 )
+
 const currentStakePercentage = computed(() =>
   totalSupplyNumber.value > 0 ? (recipientBalanceNumber.value / totalSupplyNumber.value) * 100 : 0
 )
-const stakeConstraints = computed(() => {
-  const current = Math.trunc(currentStakePercentage.value * 100) / 100
-  return {
-    addMax: Math.max(0, 100 - current),
-    endingMin: hasRecipientContext.value ? current : 0,
-    endingMax: 100,
-    current
-  }
-})
-const stakeRangeHint = computed(() => {
-  if (state.stakeMode === 'add') {
-    if (totalSupplyNumber.value <= 0) return 'Add mode: enter shr amount to create initial supply.'
-    return `Allowed Add % range: > 0% and < ${formatAmountWithPrecision(stakeConstraints.value.addMax, 0, 2)}% (current stake ${formatAmountWithPrecision(stakeConstraints.value.current, 0, 2)}%).`
-  }
-  if (totalSupplyNumber.value <= 0) return 'Allowed Ending % range: unavailable while supply is 0.'
-  return `Allowed Ending % range: > ${formatAmountWithPrecision(stakeConstraints.value.endingMin, 0, 2)}% and < 100% (current stake ${formatAmountWithPrecision(stakeConstraints.value.current, 0, 2)}%).`
-})
 
-const schema = z.object({
-  amount: z.string().refine(
-    (v) => {
-      if (v.trim() === '') return true
-      const num = Number(String(v).replace(/,/g, '').trim())
-      return Number.isFinite(num) && num > 0
-    },
-    { message: 'Amount must be greater than 0' }
-  ),
-  percentage: z.string(),
-  stakeMode: z.enum(['add', 'ending'])
-})
+const stakeConstraints = computed(() => ({
+  addMax: Math.max(0, 100 - currentStakePercentage.value),
+  endingMin: recipientBalanceRaw.value !== undefined ? currentStakePercentage.value : 0
+}))
+
+// Transaction-safe delta used for submit flow (negative or tiny values collapse to 0)
 const issuedAmount = computed(() => {
-  const amount = Number(String(state.amount).replace(/,/g, '').trim())
-  return computeIssuedAmountFromAmountInput(amount, state.stakeMode, recipientBalanceNumber.value)
+  if (state.amount === 0) return 0
+  return computeIssuedAmountFromAmountInput(
+    state.amount,
+    state.stakeMode,
+    recipientBalanceNumber.value
+  )
 })
-const lastEditedField = ref<'amount' | 'percentage'>('percentage')
-const stakeValidationMessage = computed(() => {
-  if (!state.amount && !state.percentage) return null
-  const amountResult = schema.safeParse(state)
-  if (!amountResult.success) {
-    const amountIssue = amountResult.error.issues.find((issue) => issue.path[0] === 'amount')
-    if (amountIssue) return amountIssue.message
-  }
 
-  const percentage = Number(String(state.percentage).replace(/,/g, '').trim())
-  if (!Number.isFinite(percentage) || percentage <= 0) return null
-
-  if (state.stakeMode === 'add') {
-    if (totalSupplyNumber.value <= 0) return null
-    if (percentage >= stakeConstraints.value.addMax) {
-      return 'Add % is outside the allowed range shown above.'
-    }
-    return null
+// Recap delta follows the field the user last edited, while submit uses issuedAmount.
+const recapIssuedAmount = computed(() => {
+  if (lastEditedField.value === 'percentage') {
+    const amount = computeAmountFromPercentageInput(
+      state.percentage,
+      state.stakeMode,
+      currentStakePercentage.value,
+      totalSupplyNumber.value,
+      recipientBalanceNumber.value
+    )
+    return state.stakeMode === 'ending' ? amount - recipientBalanceNumber.value : amount
   }
-
-  if (totalSupplyNumber.value <= 0) {
-    return 'Ending % is unavailable while supply is 0. Switch to Add mode.'
-  }
-  if (percentage <= stakeConstraints.value.endingMin) {
-    return `Ending % must be greater than ${formatAmountWithPrecision(stakeConstraints.value.endingMin, 0, 2)}%.`
-  }
-  if (percentage >= stakeConstraints.value.endingMax) {
-    return 'Ending % must stay below 100%.'
-  }
-  return null
+  if (!Number.isFinite(state.amount) || state.amount === 0) return 0
+  if (state.stakeMode === 'add') return state.amount
+  return state.amount - recipientBalanceNumber.value
 })
-const stakeInputColor = computed<'primary' | 'neutral'>(() =>
-  state.stakeMode === 'add' ? 'primary' : 'neutral'
-)
-const onPercentageChange = (value: string | number) => {
+
+// Syncs the field the user didn't edit from the one they did
+const syncOtherField = () => {
+  if (totalSupplyNumber.value === 0) {
+    if (lastEditedField.value === 'percentage') state.amount = 0
+    else state.percentage = 100
+    return
+  }
+  if (lastEditedField.value === 'amount') {
+    state.percentage = computePercentageFromAmountInput(
+      state.amount,
+      state.stakeMode,
+      currentStakePercentage.value,
+      totalSupplyNumber.value,
+      recipientBalanceNumber.value
+    )
+  } else {
+    state.amount = computeAmountFromPercentageInput(
+      state.percentage,
+      state.stakeMode,
+      currentStakePercentage.value,
+      totalSupplyNumber.value,
+      recipientBalanceNumber.value
+    )
+  }
+}
+
+const onPercentageChange = (value: number) => {
+  if (value === state.percentage) return
   lastEditedField.value = 'percentage'
-  state.percentage = String(value)
-  if (totalSupplyNumber.value === 0) {
-    state.amount = ''
-    return
-  }
-  const percentage = Number(String(value).replace(/,/g, '').trim())
-  state.amount = computeAmountFromPercentageInput(
-    percentage,
-    state.stakeMode,
-    currentStakePercentage.value,
-    totalSupplyNumber.value,
-    recipientBalanceNumber.value
-  )
+  state.percentage = value
+  syncOtherField()
 }
-const onAmountChange = (value: string | number) => {
+
+const onAmountChange = (value: number) => {
+  if (value === state.amount) return
   lastEditedField.value = 'amount'
-  state.amount = String(value)
-  if (totalSupplyNumber.value === 0) {
-    state.percentage = '100'
-    return
-  }
-  const amount = Number(String(value).replace(/,/g, '').trim())
-  state.percentage = computePercentageFromAmountInput(
-    amount,
-    state.stakeMode,
-    currentStakePercentage.value,
-    totalSupplyNumber.value,
-    recipientBalanceNumber.value
-  )
+  state.amount = value
+  syncOtherField()
 }
+
 const setStakeMode = (mode: StakeMode) => {
-  if (mode === 'ending' && isEndingModeDisabled.value) return
+  if (mode === 'ending' && totalSupplyNumber.value === 0) return
   if (state.stakeMode === mode) return
   state.stakeMode = mode
-  if (lastEditedField.value === 'amount' && state.amount) {
-    const amount = Number(String(state.amount).replace(/,/g, '').trim())
-    state.percentage = computePercentageFromAmountInput(
-      amount,
-      state.stakeMode,
-      currentStakePercentage.value,
-      totalSupplyNumber.value,
-      recipientBalanceNumber.value
-    )
-    return
-  }
-  if (state.percentage) {
-    const percentage = Number(String(state.percentage).replace(/,/g, '').trim())
-    state.amount = computeAmountFromPercentageInput(
-      percentage,
-      state.stakeMode,
-      currentStakePercentage.value,
-      totalSupplyNumber.value,
-      recipientBalanceNumber.value
-    )
-  }
+  syncOtherField()
 }
-watch(
-  () => isEndingModeDisabled.value,
-  (disabled) => {
-    if (disabled && state.stakeMode === 'ending') {
-      setStakeMode('add')
-    }
-  },
-  { immediate: true }
-)
+
+if (totalSupplyNumber.value === 0 && state.stakeMode === 'ending') {
+  setStakeMode('add')
+}
+
 watch(
   [
     () => props.recipientAddress,
-    () => state.stakeMode,
-    () => hasRecipientContext.value,
+    () => recipientBalanceRaw.value,
     () => totalSupplyNumber.value,
     () => recipientBalanceNumber.value
   ],
   () => {
-    if (totalSupplyNumber.value === 0) {
-      if (state.amount) state.percentage = '100'
+    if (totalSupplyNumber.value === 0 && state.stakeMode === 'ending') {
+      setStakeMode('add')
       return
     }
-    if (
-      state.stakeMode === 'ending' &&
-      recipientBalanceNumber.value > 0 &&
-      (!state.amount || Number(String(state.amount).replace(/,/g, '').trim()) === 0)
-    ) {
-      state.amount = formatAmountWithPrecision(recipientBalanceNumber.value, 0, TOKEN_DECIMALS)
-      state.percentage = formatAmountWithPrecision(currentStakePercentage.value, 0, 2)
+    // Pre-fill ending mode when recipient balance first loads
+    if (state.stakeMode === 'ending' && recipientBalanceNumber.value > 0 && state.amount === 0) {
+      state.amount = recipientBalanceNumber.value
+      state.percentage = currentStakePercentage.value
       return
     }
-    if (lastEditedField.value === 'amount' && state.amount) {
-      const amount = Number(String(state.amount).replace(/,/g, '').trim())
-      state.percentage = computePercentageFromAmountInput(
-        amount,
-        state.stakeMode,
-        currentStakePercentage.value,
-        totalSupplyNumber.value,
-        recipientBalanceNumber.value
-      )
-      return
-    }
-    if (state.percentage) {
-      const percentage = Number(String(state.percentage).replace(/,/g, '').trim())
-      state.amount = computeAmountFromPercentageInput(
-        percentage,
-        state.stakeMode,
-        currentStakePercentage.value,
-        totalSupplyNumber.value,
-        recipientBalanceNumber.value
-      )
-    }
+    syncOtherField()
   }
 )
+
 watch(
-  [issuedAmount, stakeValidationMessage],
-  () => {
-    emit('update:issuedAmount', issuedAmount.value)
-    emit(
-      'update:isStakeInvalid',
-      !!stakeValidationMessage.value || issuedAmount.value === null || issuedAmount.value <= 0
-    )
+  () => ({
+    issuedAmount: issuedAmount.value,
+    payload: {
+      amount: state.amount,
+      percentage: state.percentage,
+      stakeMode: state.stakeMode,
+      addMax: stakeConstraints.value.addMax,
+      endingMin: stakeConstraints.value.endingMin,
+      totalSupply: totalSupplyNumber.value
+    }
+  }),
+  ({ issuedAmount, payload }) => {
+    emit('update:issuedAmount', issuedAmount)
+    emit('update:stakePayload', payload)
   },
   { immediate: true }
 )

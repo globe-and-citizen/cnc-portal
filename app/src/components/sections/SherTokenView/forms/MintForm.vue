@@ -22,8 +22,9 @@
 
       <MintStakeSection
         :recipientAddress="state.address"
+        :stakeValidationMessage="stakeValidationMessage"
         @update:issuedAmount="(v) => (issuedAmount = v)"
-        @update:isStakeInvalid="(v) => (isStakeInvalid = v)"
+        @update:stakePayload="onStakePayloadUpdate"
       />
 
       <UAlert
@@ -67,14 +68,25 @@ import { useIndividualMint } from '@/composables/investor/writes'
 import { log } from '@/utils'
 import { useQueryClient } from '@tanstack/vue-query'
 import { TOKEN_DECIMALS } from '@/utils/investorMintAllocation'
+import { formatAmountWithPrecision } from '@/utils/currencyUtil'
+import { type StakeMode } from '@/types/investor'
 
 const memberInputInternal = ref<{ name: string; address: string }>({ name: '', address: '' })
 const state = reactive({
-  address: ''
+  address: '',
+  stake: {
+    amount: 0,
+    percentage: 0,
+    stakeMode: 'ending' as StakeMode
+  }
 })
 const mintErrorMessage = ref<string | null>(null)
 const issuedAmount = ref<number | null>(null)
-const isStakeInvalid = ref(true)
+const stakeContext = reactive({
+  addMax: 100,
+  endingMin: 0,
+  totalSupply: 0
+})
 const emit = defineEmits(['close-modal'])
 
 const props = defineProps<{
@@ -90,13 +102,66 @@ if (props.memberInput) {
 const queryClient = useQueryClient()
 const toast = useToast()
 
-const schema = z.object({
-  address: z.string().refine((v) => isAddress(v), { message: 'Invalid address' })
-})
+const schema = computed(() =>
+  z.object({
+    address: z.string().refine((v) => isAddress(v), { message: 'Invalid address' }),
+    stake: z.object({
+    amount: z.number().positive('Amount must be greater than 0').refine(v => v !== 0, { message: 'Amount cannot be zero' }),
+      percentage:
+        state.stake.stakeMode === 'add'
+          ? z
+              .number()
+              .positive('Add % must be greater than 0')
+              .max(
+                stakeContext.addMax,
+                `Add % must be less than ${formatAmountWithPrecision(stakeContext.addMax, 0, 2)}%`
+              )
+          : z
+              .number()
+              .gt(
+                stakeContext.endingMin,
+                `Ending % must be greater than ${formatAmountWithPrecision(stakeContext.endingMin, 0, 2)}%`
+              )
+              .lt(100, 'Ending % must stay below 100%'),
+      stakeMode: z.enum(['add', 'ending'])
+    })
+  })
+)
 
 const { mutate: mint, isPending: isMintPending } = useIndividualMint()
 
-const isSubmitDisabled = computed(() => isMintPending.value || isStakeInvalid.value)
+const stakeValidationMessage = computed(() => {
+  if (state.stake.amount === 0 && state.stake.percentage === 0) return null
+
+  if (state.stake.stakeMode === 'ending' && stakeContext.totalSupply <= 0) {
+    return 'Ending % is unavailable while supply is 0. Switch to Add mode.'
+  }
+
+  const result = schema.value.safeParse(state)
+  if (result.success) return null
+  const stakeIssue = result.error.issues.find((issue) => issue.path[0] === 'stake')
+  return stakeIssue?.message ?? null
+})
+
+const isSubmitDisabled = computed(
+  () => isMintPending.value || !!stakeValidationMessage.value || (issuedAmount.value ?? 0) <= 0
+)
+
+const onStakePayloadUpdate = (payload: {
+  amount: number
+  percentage: number
+  stakeMode: StakeMode
+  addMax: number
+  endingMin: number
+  totalSupply: number
+}) => {
+  state.stake.amount = payload.amount
+  state.stake.percentage = payload.percentage
+  state.stake.stakeMode = payload.stakeMode
+  stakeContext.addMax = payload.addMax
+  stakeContext.endingMin = payload.endingMin
+  stakeContext.totalSupply = payload.totalSupply
+}
 
 const onSubmit = () => {
   if (issuedAmount.value === null || issuedAmount.value <= 0 || !isAddress(state.address)) return

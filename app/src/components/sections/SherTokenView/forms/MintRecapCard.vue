@@ -17,46 +17,34 @@
       <span>Recap</span>
     </div>
     <div :class="['space-y-1.5 text-sm', hasValidationError ? 'text-red-900' : 'text-blue-900']">
-      <p v-if="recap.recapIssuedLine" data-test="allocation-recap">
-        {{ recap.recapIssuedLine }}
-      </p>
-      <p v-if="recap.recapStakeLine" data-test="recap-stake-line">
-        {{ recap.recapStakeLine }}
-      </p>
-      <p v-if="recap.recapTokenStakeLine" data-test="recap-token-stake-line">
-        {{ recap.recapTokenStakeLine }}
-      </p>
-      <p v-if="recap.recapSupplyLine" data-test="new-total-supply-recap">
-        {{ recap.recapSupplyLine }}
-      </p>
+      <p data-test="recap-stake-line">{{ recapStakeLine }}</p>
+      <p data-test="recap-token-stake-line">{{ recapTokenStakeLine }}</p>
+      <p data-test="new-total-supply-recap">{{ recapSupplyLine }}</p>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { formatUnits, isAddress } from 'viem'
+import { formatUnits } from 'viem'
 import {
   useInvestorSymbol,
   useInvestorTotalSupply,
   useInvestorBalanceOf
 } from '@/composables/investor/reads'
 import { getMintRecap, TOKEN_DECIMALS } from '@/utils/investorMintAllocation'
+import { formatAmountWithPrecision } from '@/utils/currencyUtil'
 
 const props = defineProps<{
   recipientAddress: string
   issuedAmount: number | null
+  requestedStakePercentage?: number
   hasValidationError?: boolean
-  validationMessage?: string
 }>()
 
 const { data: tokenSymbol } = useInvestorSymbol()
 const { data: totalSupplyRaw } = useInvestorTotalSupply()
 const { data: recipientBalanceRaw } = useInvestorBalanceOf(computed(() => props.recipientAddress))
-
-const tokenSymbolValue = computed(() =>
-  typeof tokenSymbol.value === 'string' ? tokenSymbol.value : undefined
-)
 
 const totalSupplyNumber = computed(() => {
   if (typeof totalSupplyRaw.value !== 'bigint') return 0
@@ -68,27 +56,38 @@ const recipientBalanceNumber = computed(() => {
   return Number(formatUnits(recipientBalanceRaw.value, TOKEN_DECIMALS))
 })
 
-const currentStakePercentage = computed(() => {
-  if (totalSupplyNumber.value === 0) return 0
-  return (recipientBalanceNumber.value / totalSupplyNumber.value) * 100
-})
-
-const hasRecipientContext = computed(
-  () =>
-    typeof recipientBalanceRaw.value === 'bigint' &&
-    typeof totalSupplyRaw.value === 'bigint' &&
-    isAddress(props.recipientAddress)
-)
-
 const recap = computed(() =>
   getMintRecap(
-    hasRecipientContext.value,
-    props.issuedAmount,
-    tokenSymbolValue.value,
+    props.issuedAmount ?? 0,
+    tokenSymbol.value as string,
     totalSupplyNumber.value,
-    recipientBalanceNumber.value,
-    currentStakePercentage.value,
-    props.validationMessage
+    recipientBalanceNumber.value
   )
+)
+
+const recapStakeAfterDisplay = computed(() => {
+  if (
+    typeof props.requestedStakePercentage === 'number' &&
+    Number.isFinite(props.requestedStakePercentage) &&
+    props.requestedStakePercentage > 0
+  ) {
+    return props.requestedStakePercentage
+  }
+  return recap.value.recipientStakeAfter
+})
+
+const recapStakeLine = computed(
+  () =>
+    `Recipient stake → ${formatAmountWithPrecision(recapStakeAfterDisplay.value, 0, 2)}% (was ${formatAmountWithPrecision(recap.value.recipientStakeBefore, 0, 2)}%; issuing ${formatAmountWithPrecision(recapStakeAfterDisplay.value - recap.value.recipientStakeBefore, 0, 2)}%)`
+)
+
+const recapTokenStakeLine = computed(
+  () =>
+    `Recipient ${recap.value.symbol} stake → ${formatAmountWithPrecision(recap.value.recipientBalanceAfter, 0, TOKEN_DECIMALS)} ${recap.value.symbol} (was ${formatAmountWithPrecision(recap.value.recipientBalanceBefore, 0, TOKEN_DECIMALS)} ${recap.value.symbol}; issuing ${formatAmountWithPrecision(recap.value.issuedAmount, 0, TOKEN_DECIMALS)} ${recap.value.symbol})`
+)
+
+const recapSupplyLine = computed(
+  () =>
+    `New total supply → ${formatAmountWithPrecision(recap.value.totalSupplyAfter, 0, TOKEN_DECIMALS)} ${recap.value.symbol} (current supply ${formatAmountWithPrecision(recap.value.totalSupplyBefore, 0, TOKEN_DECIMALS)} ${recap.value.symbol})`
 )
 </script>

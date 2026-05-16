@@ -6,3 +6,16 @@ export type MintStakeFormState = {
   percentage: string
   stakeMode: StakeMode
 }
+
+export type MintRecapData = {
+  showRecap: boolean
+  symbol: string
+  issuedAmount: number
+  recipientStakeBefore: number
+  recipientStakeAfter: number
+  recipientStakeIssued: number
+  recipientBalanceBefore: number
+  recipientBalanceAfter: number
+  totalSupplyBefore: number
+  totalSupplyAfter: number
+}
