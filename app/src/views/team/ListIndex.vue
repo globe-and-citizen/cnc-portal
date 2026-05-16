@@ -1,9 +1,9 @@
 <template>
   <div class="flex flex-col gap-6">
-    <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-      <h2>{{ route.meta.name }}</h2>
+    <div class="flex flex-col gap-3 md:flex-row md:items-center ">
+      <h2 v-if="hasVisibleTeams">{{ route.meta.name }}</h2>
       <div
-        class="flex items-center gap-3"
+        class="flex items-center gap-3 md:ml-auto"
         v-if="!teamsError && !teamsAreFetching"
         data-test="team-visibility-toggles"
       >
@@ -143,7 +143,7 @@ import { useUserDataStore } from '@/stores'
 import AddTeamCard from '@/components/sections/TeamView/AddTeamCard.vue'
 import TeamCard from '@/components/sections/TeamView/TeamCard.vue'
 import { useGetTeamsQuery } from '@/queries/team.queries'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 
 const openModal = ref(false)
 const showHidden = ref(false)
@@ -163,6 +163,14 @@ const {
     showArchived
   }
 })
+
+const hasVisibleTeams = computed(
+  () =>
+    !teamsAreFetching.value &&
+    !teamsError.value &&
+    Array.isArray(teams.value) &&
+    teams.value.length > 0
+)
 
 const router = useRouter()
 
