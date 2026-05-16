@@ -63,19 +63,10 @@ import {
   computePercentageFromAmountInput,
   TOKEN_DECIMALS
 } from '@/utils/investorMintAllocation'
-import { type StakeMode } from '@/types/investor'
+import { type StakeMode, type StakePayload } from '@/types/investor'
 import TwinAmountInputs from './TwinAmountInputs.vue'
 import MintRecapCard from './MintRecapCard.vue'
 import { type Address } from 'viem'
-
-type StakePayload = {
-  amount: number
-  percentage: number
-  stakeMode: StakeMode
-  addMax: number
-  endingMin: number
-  totalSupply: number
-}
 
 const props = defineProps<{
   recipientAddress: Address

@@ -69,7 +69,7 @@ import { log } from '@/utils'
 import { useQueryClient } from '@tanstack/vue-query'
 import { TOKEN_DECIMALS } from '@/utils/investorMintAllocation'
 import { formatAmountWithPrecision } from '@/utils/currencyUtil'
-import { type StakeMode } from '@/types/investor'
+import { type StakeMode, type StakePayload } from '@/types/investor'
 
 const memberInputInternal = ref<{ name: string; address: string }>({ name: '', address: '' })
 const state = reactive({
@@ -147,14 +147,7 @@ const isSubmitDisabled = computed(
   () => isMintPending.value || !!stakeValidationMessage.value || (issuedAmount.value ?? 0) <= 0
 )
 
-const onStakePayloadUpdate = (payload: {
-  amount: number
-  percentage: number
-  stakeMode: StakeMode
-  addMax: number
-  endingMin: number
-  totalSupply: number
-}) => {
+const onStakePayloadUpdate = (payload: StakePayload) => {
   state.stake.amount = payload.amount
   state.stake.percentage = payload.percentage
   state.stake.stakeMode = payload.stakeMode
