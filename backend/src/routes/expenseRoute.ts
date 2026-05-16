@@ -18,6 +18,9 @@ const expenseRoutes = express.Router();
  * /expense:
  *  post:
  *   summary: Add a new expense
+ *   tags: [Expenses]
+ *   security:
+ *     - bearerAuth: []
  *   requestBody:
  *     required: true
  *     content:
@@ -49,6 +52,9 @@ expenseRoutes.post('/', validateBody(addExpenseBodySchema), addExpense);
  * /expense:
  *  get:
  *   summary: Get expenses for a team
+ *   tags: [Expenses]
+ *   security:
+ *     - bearerAuth: []
  *   parameters:
  *     - in: query
  *       name: teamId
@@ -78,6 +84,9 @@ expenseRoutes.get(
  * /expense/{id}:
  *  patch:
  *   summary: Update an expense
+ *   tags: [Expenses]
+ *   security:
+ *     - bearerAuth: []
  *   parameters:
  *     - in: path
  *       name: id
