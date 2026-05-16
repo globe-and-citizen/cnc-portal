@@ -60,7 +60,9 @@ export const mockTeamData: Team = {
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   },
-  isMigrated: true
+  isMigrated: true,
+  isHidden: false,
+  isArchived: false
 }
 
 export const mockTeamsData: Team[] = [mockTeamData]

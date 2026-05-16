@@ -10,6 +10,7 @@ const authRoutes = express.Router();
  * /auth/siwe:
  *   post:
  *     summary: Authenticate using Sign-In with Ethereum (SIWE)
+ *     tags: [Auth]
  *     requestBody:
  *       required: true
  *       content:
@@ -70,6 +71,7 @@ authRoutes.post('/siwe', validateBody(siweAuthRequestSchema), authenticateSiwe);
  * /auth/token:
  *   get:
  *     summary: Validate JWT token
+ *     tags: [Auth]
  *     security:
  *       - bearerAuth: []
  *     responses:
