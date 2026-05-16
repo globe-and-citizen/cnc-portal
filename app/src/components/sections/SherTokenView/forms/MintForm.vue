@@ -1,8 +1,10 @@
 <template>
   <UForm
+    ref="form"
     :schema="schema"
     :state="state"
     :validate-on="['blur', 'change', 'input']"
+    :validate-on-input-delay="0"
     @submit="onSubmit"
   >
     <div class="flex flex-col gap-6">
@@ -22,7 +24,7 @@
 
       <MintStakeSection
         :recipientAddress="state.address"
-        :stakeValidationMessage="stakeValidationMessage"
+        :hasValidationError="!isStakeValid"
         @update:issuedAmount="(v) => (issuedAmount = v)"
         @update:stakePayload="onStakePayloadUpdate"
       />
@@ -61,7 +63,7 @@
 <script setup lang="ts">
 import { z } from 'zod'
 import { isAddress, parseUnits } from 'viem'
-import { reactive, ref, computed } from 'vue'
+import { reactive, ref, computed, watch } from 'vue'
 import SelectMemberContractsInput from '@/components/utils/SelectMemberContractsInput.vue'
 import MintStakeSection from './MintStakeSection.vue'
 import { useIndividualMint } from '@/composables/investor/writes'
@@ -102,52 +104,70 @@ if (props.memberInput) {
 const queryClient = useQueryClient()
 const toast = useToast()
 
-const schema = computed(() =>
-  z.object({
-    address: z.string().refine((v) => isAddress(v), { message: 'Invalid address' }),
-    stake: z.object({
-      amount: z
-        .number()
-        .positive('Amount must be greater than 0')
-        .refine((v) => v !== 0, { message: 'Amount cannot be zero' }),
-      percentage:
-        state.stake.stakeMode === 'add'
-          ? z
-              .number()
-              .positive('Add % must be greater than 0')
-              .max(
-                stakeContext.addMax,
-                `Add % must be less than ${formatAmountWithPrecision(stakeContext.addMax, 0, 2)}%`
-              )
-          : z
-              .number()
-              .gt(
-                stakeContext.endingMin,
-                `Ending % must be greater than ${formatAmountWithPrecision(stakeContext.endingMin, 0, 2)}%`
-              )
-              .lt(100, 'Ending % must stay below 100%'),
-      stakeMode: z.enum(['add', 'ending'])
-    })
+// Every stake rule lives here and reports on `amount`, so `UForm`/`UFormField` render the
+// message natively under the Ownership stake field — no manual message wiring.
+const stakeSchema = z
+  .object({
+    amount: z.number(),
+    percentage: z.number(),
+    stakeMode: z.enum(['add', 'ending'])
   })
-)
+  .superRefine((stake, ctx) => {
+    const fail = (message: string) =>
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['amount'], message })
+
+    // Untouched form: stay silent — the empty case is guarded by the submit button.
+    if (stake.amount === 0 && stake.percentage === 0) return
+
+    if (stake.stakeMode === 'ending' && stakeContext.totalSupply <= 0) {
+      fail('Ending % is unavailable while supply is 0. Switch to Add mode.')
+      return
+    }
+
+    if (!(stake.amount > 0)) fail('Amount must be greater than 0')
+
+    if (stake.stakeMode === 'add') {
+      if (!(stake.percentage > 0)) fail('Add % must be greater than 0')
+      else if (stake.percentage > stakeContext.addMax)
+        fail(`Add % must be less than ${formatAmountWithPrecision(stakeContext.addMax, 0, 2)}%`)
+    } else {
+      if (!(stake.percentage > stakeContext.endingMin))
+        fail(
+          `Ending % must be greater than ${formatAmountWithPrecision(stakeContext.endingMin, 0, 2)}%`
+        )
+      else if (stake.percentage >= 100) fail('Ending % must stay below 100%')
+    }
+  })
+
+const schema = z.object({
+  address: z.string().refine((v) => isAddress(v), { message: 'Invalid address' }),
+  stake: stakeSchema
+})
 
 const { mutate: mint, isPending: isMintPending } = useIndividualMint()
 
-const stakeValidationMessage = computed(() => {
-  if (state.stake.amount === 0 && state.stake.percentage === 0) return null
-
-  if (state.stake.stakeMode === 'ending' && stakeContext.totalSupply <= 0) {
-    return 'Ending % is unavailable while supply is 0. Switch to Add mode.'
-  }
-
-  const result = schema.value.safeParse(state)
-  if (result.success) return null
-  const stakeIssue = result.error.issues.find((issue) => issue.path[0] === 'stake')
-  return stakeIssue?.message ?? null
-})
+const isStakeValid = computed(() => stakeSchema.safeParse(state.stake).success)
 
 const isSubmitDisabled = computed(
-  () => isMintPending.value || !!stakeValidationMessage.value || (issuedAmount.value ?? 0) <= 0
+  () => isMintPending.value || !isStakeValid.value || (issuedAmount.value ?? 0) <= 0
+)
+
+// The stake fields live in MintStakeSection and reach this form through an emitted
+// payload, so they land after the input event UForm validates on. Re-validate whenever
+// that payload settles to keep the natively-rendered message in sync.
+const form = ref<{ validate: (opts?: Record<string, unknown>) => Promise<unknown> } | null>(null)
+watch(
+  () => [
+    state.stake.amount,
+    state.stake.percentage,
+    state.stake.stakeMode,
+    stakeContext.addMax,
+    stakeContext.endingMin,
+    stakeContext.totalSupply
+  ],
+  () => {
+    form.value?.validate({ name: 'stake.amount', silent: true }).catch(() => {})
+  }
 )
 
 const onStakePayloadUpdate = (payload: StakePayload) => {

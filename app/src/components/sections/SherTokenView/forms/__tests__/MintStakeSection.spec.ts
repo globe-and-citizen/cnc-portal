@@ -16,7 +16,7 @@ vi.mock('@/composables/investor/reads', () => ({
 
 const mountSection = (recipientAddress = VALID_ADDRESS) =>
   mount(MintStakeSection, {
-    props: { recipientAddress, stakeValidationMessage: null },
+    props: { recipientAddress, hasValidationError: false },
     global: {
       plugins: [createTestingPinia({ createSpy: vi.fn })],
       stubs: {

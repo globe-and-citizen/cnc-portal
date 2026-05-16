@@ -17,6 +17,7 @@
 
     <div class="flex items-center gap-2 md:gap-3">
       <UInput
+        ref="percentageInput"
         class="flex-1"
         data-test="percentage-input"
         :color="inputColor"
@@ -33,6 +34,7 @@
       <UIcon name="i-lucide-equal" class="size-5 shrink-0 text-gray-400" />
 
       <UInput
+        ref="amountInput"
         class="flex-1"
         data-test="amount-input"
         :color="inputColor"
@@ -49,7 +51,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, nextTick, useTemplateRef } from 'vue'
 import { useInvestorSymbol, useInvestorTotalSupply } from '@/composables/investor/reads'
 import { formatAmountWithPrecision } from '@/utils/currencyUtil'
 
@@ -72,13 +74,37 @@ const { data: totalSupplyRaw } = useInvestorTotalSupply()
 const totalSupplyBigInt = computed<bigint>(() => (totalSupplyRaw.value as bigint | undefined) ?? 0n)
 const hasTotalSupply = computed(() => totalSupplyRaw.value !== undefined)
 
+const percentageInput = useTemplateRef<{ inputRef: HTMLInputElement | null }>('percentageInput')
+const amountInput = useTemplateRef<{ inputRef: HTMLInputElement | null }>('amountInput')
+
 const parseInput = (value: string | number) => {
   const parsed = Number(String(value).replace(/,/g, '').trim())
   if (!Number.isFinite(parsed)) return 0
   return parsed < 0 ? 0 : parsed
 }
 
-const handlePercentageUpdate = (value: string | number) =>
-  emit('update:percentage', parseInput(value))
-const handleAmountUpdate = (value: string | number) => emit('update:amount', parseInput(value))
+// When a typed value is clamped (e.g. a negative) the bound model may not change, so Vue
+// won't repaint the field. Reflect the clamped value into the input element directly.
+const reflectClamp = (
+  input: { inputRef: HTMLInputElement | null } | null,
+  raw: string | number,
+  parsed: number
+) => {
+  if (String(raw) === String(parsed)) return
+  nextTick(() => {
+    if (input?.inputRef) input.inputRef.value = String(parsed)
+  })
+}
+
+const handlePercentageUpdate = (value: string | number) => {
+  const parsed = parseInput(value)
+  emit('update:percentage', parsed)
+  reflectClamp(percentageInput.value, value, parsed)
+}
+
+const handleAmountUpdate = (value: string | number) => {
+  const parsed = parseInput(value)
+  emit('update:amount', parsed)
+  reflectClamp(amountInput.value, value, parsed)
+}
 </script>
