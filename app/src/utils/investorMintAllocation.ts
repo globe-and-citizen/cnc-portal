@@ -1,5 +1,21 @@
 import { type MintRecapData, type StakeMode } from '@/types/investor'
 
+/**
+ * Mint allocation maths and stake-percentage formatting.
+ *
+ * Two precision regimes coexist here, on purpose:
+ *
+ * - **Form maths** (`computeIssuedDelta`, the `compute*Input` helpers, `getMintRecap`)
+ *   work in floating point. The mint form is a float domain — users type decimal
+ *   percentages and token amounts, and the issuance equation
+ *   `(balance + X) / (supply + X) = p` needs real division. Precision only degrades
+ *   above ~2^53 base units, far beyond any realistic token supply.
+ * - **Display formatting** (`formatStakePercentageFromSupply`) is bigint-pure. It is the
+ *   shared stake-percentage formatter used by both `ShareholderList` and the mint recap,
+ *   so a stake percentage is computed identically wherever it is shown — no rounding
+ *   drift between what the recap promises and what the holders table displays.
+ */
+
 export const TOKEN_DECIMALS = 6
 const EPSILON = 1e-9
 
@@ -52,20 +68,6 @@ export const computeIssuedAmountFromAmountInput = (
   return issuedAmount
 }
 
-// Computes final recipient stake percentage after applying an issued delta.
-const getFinalStakeFromAmount = (amount: number, supply: number, balance: number): number => {
-  if (supply <= 0) return 0
-  if (amount === 0) {
-    const currentStake = (balance / supply) * 100
-    if (!Number.isFinite(currentStake)) return 0
-    return currentStake
-  }
-  if (amount < 0) return 0
-  const stake = ((balance + amount) / (supply + amount)) * 100
-  if (!Number.isFinite(stake)) return 0
-  return stake
-}
-
 // Converts an amount input into the paired percentage field value for the current mode.
 export const computePercentageFromAmountInput = (
   amountInput: number,
@@ -114,7 +116,9 @@ export const formatStakePercentageFromSupply = (
   return `${integerPart}.${fractionalString}`
 }
 
-// Produces structured recap metrics (no UI strings) from the current issuance context.
+// Produces structured token/supply recap metrics (no UI strings) for the current issuance.
+// Stake percentages are intentionally excluded: the recap derives them in bigint via
+// `formatStakePercentageFromSupply` so they match the holders table exactly.
 export const getMintRecap = (
   amount: number,
   symbol: string,
@@ -126,9 +130,6 @@ export const getMintRecap = (
       showRecap: false,
       symbol: '',
       issuedAmount: 0,
-      recipientStakeBefore: 0,
-      recipientStakeAfter: 0,
-      recipientStakeIssued: 0,
       recipientBalanceBefore: 0,
       recipientBalanceAfter: 0,
       totalSupplyBefore: 0,
@@ -137,17 +138,12 @@ export const getMintRecap = (
   }
 
   const normalizedAmount = Number.isFinite(amount) && Math.abs(amount) > EPSILON ? amount : 0
-  const recipientStakeBefore = getFinalStakeFromAmount(0, supply, recipientBalance)
-  const recipientStakeAfter = getFinalStakeFromAmount(normalizedAmount, supply, recipientBalance)
   const totalSupplyBefore = Math.max(0, supply)
 
   return {
     showRecap: true,
     symbol,
     issuedAmount: normalizedAmount,
-    recipientStakeBefore,
-    recipientStakeAfter,
-    recipientStakeIssued: recipientStakeAfter - recipientStakeBefore,
     recipientBalanceBefore: Math.max(0, recipientBalance),
     recipientBalanceAfter: Math.max(0, recipientBalance + normalizedAmount),
     totalSupplyBefore,
