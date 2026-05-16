@@ -60,6 +60,7 @@ const vmCastLegacyFiles = [
   'src/components/sections/ClaimHistoryView/__tests__/ClaimHistoryWeekNavigator.spec.ts',
   'src/components/sections/ContractManagementView/forms/__tests__/CreateAddCampaign.spec.ts',
   'src/components/sections/DashboardView/__tests__/SetMemberWageModal.spec.ts',
+  'src/components/sections/DashboardView/__tests__/TeamMetaActions.spec.ts',
   'src/components/sections/DashboardView/__tests__/TeamMetaSection.spec.ts',
   'src/components/sections/DashboardView/forms/__tests__/AddMemberForm.spec.ts',
   'src/components/sections/ExpenseAccountView/__tests__/ExpenseTransactions.spec.ts',

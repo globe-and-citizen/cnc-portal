@@ -45,6 +45,7 @@ model Team {
   ownerAddress           String
   description            String?
   name                   String                   @unique
+  isArchived             Boolean                  @default(false)
   BoardOfDirectorActions BoardOfDirectorActions[]
   teamContracts          TeamContract[]
   teamOfficers           TeamOfficer[]
@@ -61,6 +62,7 @@ model MemberTeamsData {
   id            Int      @id @default(autoincrement()) // Add an ID for easy referencing
   member        User     @relation(fields: [memberAddress], references: [address], onDelete: Cascade)
   team          Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  isHidden      Boolean  @default(false)
   memberAddress String
   teamId        Int
   createdAt     DateTime @default(now())
@@ -124,25 +126,25 @@ model Claim {
 }
 
 model WeeklyClaim {
-  id            Int      @id @default(autoincrement())
-  status        String?
-  weekStart     DateTime
-  data          Json
-  memberAddress String
-  member        User     @relation(fields: [memberAddress], references: [address], onDelete: Cascade)
-  teamId        Int
-  team          Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  signature     String?
+  id                           Int      @id @default(autoincrement())
+  status                       String?
+  weekStart                    DateTime
+  data                         Json
+  memberAddress                String
+  member                       User     @relation(fields: [memberAddress], references: [address], onDelete: Cascade)
+  teamId                       Int
+  team                         Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  signature                    String?
   // EIP-712 verifying contract address the signature was bound to. Populated
   // at sign time so `signed` rows can be classified as stale (and surfaced
   // for re-signing) when the team's CashRemunerationEIP712 contract is later
   // redeployed. Nullable for legacy rows signed before this column existed.
   signedAgainstContractAddress String?
-  claims        Claim[]  @relation("WeeklyClaimToClaims")
-  wageId        Int
-  wage          Wage     @relation(fields: [wageId], references: [id], onDelete: Cascade)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  claims                       Claim[]  @relation("WeeklyClaimToClaims")
+  wageId                       Int
+  wage                         Wage     @relation(fields: [wageId], references: [id], onDelete: Cascade)
+  createdAt                    DateTime @default(now())
+  updatedAt                    DateTime @updatedAt
 
   @@unique([wageId, weekStart])
   @@index([weekStart])

@@ -1,15 +1,9 @@
 import { mount } from '@vue/test-utils'
-import { ref } from 'vue'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createTestingPinia } from '@pinia/testing'
 import { useTeamStore } from '@/stores'
 import { useUserDataStore } from '@/stores/user'
-import { useDeleteTeamMutation, useUpdateTeamMutation } from '@/queries/team.queries'
-import { mockRouterPush } from '@/tests/mocks/router.mock'
 import TeamMetaSection from '../TeamMetaSection.vue'
-
-const updateMutateSpy = vi.fn()
-const deleteMutateSpy = vi.fn()
 
 const teamStoreState = {
   currentTeamId: '22',
@@ -19,7 +13,10 @@ const teamStoreState = {
       name: 'Sher Team',
       description: 'Team description for testing coverage.',
       ownerAddress: '0xOWNER',
-      members: [{ name: 'Alice', description: 'dev' }]
+      members: [{ name: 'Alice', description: 'dev' }],
+      teamContracts: [],
+      isHidden: false,
+      isArchived: false
     }
   }
 }
@@ -27,181 +24,83 @@ const teamStoreState = {
 const mountSection = () =>
   mount(TeamMetaSection, {
     global: {
-      plugins: [createTestingPinia({ createSpy: vi.fn })]
+      plugins: [createTestingPinia({ createSpy: vi.fn })],
+      stubs: {
+        TeamMetaUpdateModal: {
+          name: 'TeamMetaUpdateModal',
+          template: '<div data-test="update" />'
+        },
+        TeamMetaArchiveModal: {
+          name: 'TeamMetaArchiveModal',
+          props: ['currentTeam'],
+          template: '<div data-test="archive" />'
+        },
+        TeamMetaVisibilityModal: {
+          name: 'TeamMetaVisibilityModal',
+          props: ['currentTeam'],
+          template: '<div data-test="visibility" />'
+        },
+        TeamMetaDeleteModal: {
+          name: 'TeamMetaDeleteModal',
+          props: ['currentTeam'],
+          template: '<div data-test="delete" />'
+        }
+      }
     }
   })
 
 describe('TeamMetaSection.vue', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
-
     vi.mocked(useTeamStore).mockReturnValue(teamStoreState as never)
     vi.mocked(useUserDataStore).mockReturnValue({ address: '0xOWNER' } as never)
-    vi.mocked(useUpdateTeamMutation).mockReturnValue({
-      isPending: ref(false),
-      error: ref(null),
-      mutate: updateMutateSpy
-    } as never)
-    vi.mocked(useDeleteTeamMutation).mockReturnValue({
-      isPending: ref(false),
-      error: ref(null),
-      mutate: deleteMutateSpy
-    } as never)
   })
 
-  it('renders owner badge and owner action buttons', () => {
+  it('renders team name, description and owner badge', () => {
     const wrapper = mountSection()
+    expect(wrapper.text()).toContain('Sher Team')
+    expect(wrapper.text()).toContain('Team description for testing coverage.')
     expect(wrapper.text()).toContain('Owner')
-    expect(wrapper.text()).toContain('Update')
-    expect(wrapper.text()).toContain('Delete')
   })
 
-  it('renders employee badge when viewer is not owner', () => {
+  it('renders employee badge when user is not owner', () => {
     vi.mocked(useUserDataStore).mockReturnValue({ address: '0xEMP' } as never)
     const wrapper = mountSection()
     expect(wrapper.text()).toContain('Employee')
-    expect(wrapper.text()).not.toContain('Update')
+    expect(wrapper.text()).not.toContain('Owner')
   })
 
-  it('prefills update form and submits mutation successfully', async () => {
-    updateMutateSpy.mockImplementation((_payload, options) => options?.onSuccess?.())
-
+  it('passes currentTeam to archive/visibility/delete actions', () => {
     const wrapper = mountSection()
-    await wrapper.find('button').trigger('click')
-    await wrapper.vm.$nextTick()
+    const archive = wrapper.getComponent({ name: 'TeamMetaArchiveModal' })
+    const visibility = wrapper.getComponent({ name: 'TeamMetaVisibilityModal' })
+    const del = wrapper.getComponent({ name: 'TeamMetaDeleteModal' })
 
-    const vm = wrapper.vm as unknown as {
-      prefillUpdateForm: () => void
-      executeUpdateTeam: () => void
-      updateTeamInput: { name: string; description: string }
-      showModal: boolean
-      inputs: unknown[]
-    }
-
-    vm.prefillUpdateForm()
-    expect(vm.updateTeamInput.name).toBe('Sher Team')
-    expect(vm.inputs).toHaveLength(1)
-
-    vm.updateTeamInput.name = 'Sher Team v2'
-    vm.updateTeamInput.description = 'Updated description for assertions.'
-    vm.executeUpdateTeam()
-
-    expect(updateMutateSpy).toHaveBeenCalledWith(
-      {
-        pathParams: { id: '22' },
-        body: {
-          name: 'Sher Team v2',
-          description: 'Updated description for assertions.'
-        }
-      },
-      expect.objectContaining({ onSuccess: expect.any(Function) })
-    )
-    expect(vm.showModal).toBe(false)
+    expect(archive.props('currentTeam')).toEqual(teamStoreState.currentTeamMeta.data)
+    expect(visibility.props('currentTeam')).toEqual(teamStoreState.currentTeamMeta.data)
+    expect(del.props('currentTeam')).toEqual(teamStoreState.currentTeamMeta.data)
   })
 
-  it('shows update and delete mutation errors in modal body', async () => {
-    vi.mocked(useUpdateTeamMutation).mockReturnValueOnce({
-      isPending: ref(false),
-      error: ref(new Error('Update failed')),
-      mutate: updateMutateSpy
-    } as never)
-    vi.mocked(useDeleteTeamMutation).mockReturnValueOnce({
-      isPending: ref(false),
-      error: ref(new Error('Delete failed')),
-      mutate: deleteMutateSpy
-    } as never)
+  it('shows owner-only actions only for owner', () => {
+    const ownerWrapper = mountSection()
+    expect(ownerWrapper.find('[data-test="update"]').exists()).toBe(true)
+    expect(ownerWrapper.find('[data-test="archive"]').exists()).toBe(true)
+    expect(ownerWrapper.find('[data-test="delete"]').exists()).toBe(true)
 
-    const wrapper = mountSection()
-    const vm = wrapper.vm as unknown as { showModal: boolean; showDeleteTeamConfirmModal: boolean }
-    vm.showModal = true
-    vm.showDeleteTeamConfirmModal = true
-    await wrapper.vm.$nextTick()
-
-    expect(wrapper.text()).toContain('Update failed')
-    expect(wrapper.text()).toContain('Delete failed')
+    vi.mocked(useUserDataStore).mockReturnValue({ address: '0xEMP' } as never)
+    const employeeWrapper = mountSection()
+    expect(employeeWrapper.find('[data-test="update"]').exists()).toBe(false)
+    expect(employeeWrapper.find('[data-test="archive"]').exists()).toBe(false)
+    expect(employeeWrapper.find('[data-test="delete"]').exists()).toBe(false)
+    expect(employeeWrapper.find('[data-test="visibility"]').exists()).toBe(true)
   })
 
-  it('handles deleteTeam guard when current team id is missing', async () => {
+  it('renders empty heading when team meta is not loaded', () => {
     vi.mocked(useTeamStore).mockReturnValue({
-      ...teamStoreState,
-      currentTeamId: ''
+      currentTeamId: '22',
+      currentTeamMeta: { data: undefined }
     } as never)
-
     const wrapper = mountSection()
-    const vm = wrapper.vm as unknown as { deleteTeam: () => Promise<void> }
-    await vm.deleteTeam()
-
-    expect(deleteMutateSpy).not.toHaveBeenCalled()
-  })
-
-  it('handles successful delete by closing modal and redirecting', async () => {
-    deleteMutateSpy.mockImplementation((_payload, options) => options?.onSuccess?.())
-
-    const wrapper = mountSection()
-    const vm = wrapper.vm as unknown as {
-      deleteTeam: () => Promise<void>
-      showDeleteTeamConfirmModal: boolean
-    }
-
-    vm.showDeleteTeamConfirmModal = true
-    await vm.deleteTeam()
-
-    expect(deleteMutateSpy).toHaveBeenCalledWith(
-      { pathParams: { teamId: '22' } },
-      expect.objectContaining({ onSuccess: expect.any(Function) })
-    )
-    expect(vm.showDeleteTeamConfirmModal).toBe(false)
-    expect(mockRouterPush).toHaveBeenCalledWith('/teams')
-  })
-
-  it('closes update modal with modal close event and updates textarea model', async () => {
-    const wrapper = mountSection()
-    const vm = wrapper.vm as unknown as {
-      showModal: boolean
-      updateTeamInput: { description: string }
-    }
-
-    vm.showModal = true
-    await wrapper.vm.$nextTick()
-
-    const textarea = wrapper.find('textarea')
-    if (textarea.exists()) {
-      await textarea.setValue('new description through textarea')
-    }
-
-    await wrapper.find('[data-test="close-wage-modal-button"]').trigger('click')
-    await wrapper.vm.$nextTick()
-
-    expect(vm.showModal).toBe(false)
-  })
-
-  it('opens delete modal actions and closes with cancel button', async () => {
-    const wrapper = mountSection()
-    const vm = wrapper.vm as unknown as { showDeleteTeamConfirmModal: boolean }
-
-    vm.showDeleteTeamConfirmModal = true
-    await wrapper.vm.$nextTick()
-
-    expect(wrapper.find('[data-test="delete-team-button"]').exists()).toBe(true)
-    const buttons = wrapper.findAll('button')
-    const cancelButton = buttons.find((btn) => btn.text().includes('Cancel'))
-    expect(cancelButton).toBeDefined()
-
-    await cancelButton?.trigger('click')
-    await wrapper.vm.$nextTick()
-
-    expect(vm.showDeleteTeamConfirmModal).toBe(false)
-  })
-
-  it('triggers deleteTeam from delete button click in modal body', async () => {
-    deleteMutateSpy.mockImplementation((_payload, options) => options?.onSuccess?.())
-
-    const wrapper = mountSection()
-    const vm = wrapper.vm as unknown as { showDeleteTeamConfirmModal: boolean }
-    vm.showDeleteTeamConfirmModal = true
-    await wrapper.vm.$nextTick()
-
-    await wrapper.find('[data-test="delete-team-button"]').trigger('click')
-    expect(deleteMutateSpy).toHaveBeenCalled()
+    expect(wrapper.find('h2').text()).toBe('')
+    expect(wrapper.text()).toContain('Employee')
   })
 })

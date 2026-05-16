@@ -9,7 +9,8 @@ import { createQueryHook, createMutationHook, queryPresets } from './queryFactor
 export const teamKeys = {
   all: ['teams'] as const,
   lists: () => [...teamKeys.all, 'list'] as const,
-  list: (userAddress?: string | null) => [...teamKeys.lists(), { userAddress }] as const,
+  list: (userAddress?: string | null, filters?: { showHidden?: boolean; showArchived?: boolean }) =>
+    [...teamKeys.lists(), { userAddress, ...filters }] as const,
   details: () => [...teamKeys.all, 'detail'] as const,
   detail: (teamId: string | null) => [...teamKeys.details(), { teamId }] as const
 }
@@ -26,6 +27,10 @@ export interface GetTeamsParams {
   queryParams?: {
     /** Optional user address to filter teams */
     userAddress?: MaybeRefOrGetter<string | null | undefined>
+    /** Include hidden teams in addition to current teams */
+    showHidden?: MaybeRefOrGetter<boolean | undefined>
+    /** Include archived teams in addition to current teams */
+    showArchived?: MaybeRefOrGetter<boolean | undefined>
   }
 }
 
@@ -39,7 +44,12 @@ export interface GetTeamsParams {
  */
 export const useGetTeamsQuery = createQueryHook<Team[], GetTeamsParams>({
   endpoint: 'teams',
-  queryKey: (params) => teamKeys.list(toValue(params?.queryParams?.userAddress)),
+  queryKey: (params) => [
+    ...teamKeys.list(toValue(params?.queryParams?.userAddress), {
+      showHidden: toValue(params?.queryParams?.showHidden) ?? false,
+      showArchived: toValue(params?.queryParams?.showArchived) ?? false
+    })
+  ],
   options: queryPresets.stable
 })
 
