@@ -50,6 +50,7 @@
       <template #status-cell="{ row: { original: row } }">
         <UBadge
           :label="row.status"
+          :icon="statusIcon(row.status)"
           variant="outline"
           class="rounded-full"
           :color="
@@ -66,6 +67,22 @@
       </template>
       <template #amountTransferred-cell="{ row: { original: row } }">
         <span>{{ row.balances[1] }}/{{ row.amount }} {{ tokenSymbol(row.tokenAddress) }}</span>
+      </template>
+      <template #empty>
+        <div
+          v-if="errorFetchingExpenseData"
+          class="py-6 text-center text-sm text-error"
+          data-test="approvals-error"
+        >
+          Failed to load spending approvals.
+        </div>
+        <div v-else class="py-6 text-center text-sm text-gray-500" data-test="approvals-empty">
+          {{
+            selectedRadio === 'all'
+              ? 'No spending approvals yet.'
+              : `No ${selectedRadio} approvals.`
+          }}
+        </div>
       </template>
     </UTable>
   </div>
@@ -96,7 +113,11 @@ const selectedRadio = ref('all')
 const signatureToUpdate = ref('')
 const isLoadingSetStatus = ref(false)
 
-const { data: expenseData, isLoading: isFetchingExpenseData } = useGetExpensesQuery({
+const {
+  data: expenseData,
+  isLoading: isFetchingExpenseData,
+  error: errorFetchingExpenseData
+} = useGetExpensesQuery({
   queryParams: { teamId: computed(() => teamStore.currentTeamId) }
 })
 
@@ -112,6 +133,13 @@ const formattedExpenseData = computed(() => {
 const expenseAccountEip712Address = computed(() =>
   teamStore.getContractAddressByType('ExpenseAccountEIP712')
 )
+
+// Pairs each status with an icon so it is not conveyed by color alone.
+const statusIcon = (status: string): string => {
+  if (status === 'enabled') return 'i-lucide-circle-check'
+  if (status === 'disabled') return 'i-lucide-circle-x'
+  return 'i-lucide-clock'
+}
 const columns = [
   {
     accessorKey: 'member',
