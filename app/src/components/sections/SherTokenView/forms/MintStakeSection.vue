@@ -24,11 +24,7 @@
         />
       </div>
     </div>
-    <UFormField
-      name="stake.amount"
-      label="Ownership stake"
-      :error="props.stakeValidationMessage ?? false"
-    >
+    <UFormField name="stake.amount" label="Ownership stake">
       <TwinAmountInputs
         :percentage="state.percentage"
         :amount="state.amount"
@@ -48,7 +44,7 @@
       :requestedStakePercentage="
         state.stakeMode === 'ending' ? state.percentage : currentStakePercentage + state.percentage
       "
-      :hasValidationError="!!props.stakeValidationMessage"
+      :hasValidationError="!!props.hasValidationError"
     />
   </div>
 </template>
@@ -70,7 +66,8 @@ import { type Address } from 'viem'
 
 const props = defineProps<{
   recipientAddress: Address
-  stakeValidationMessage?: string | null
+  /** Whether the parent form's schema currently rejects the stake — drives the recap's error state. */
+  hasValidationError?: boolean
 }>()
 
 const emit = defineEmits<{

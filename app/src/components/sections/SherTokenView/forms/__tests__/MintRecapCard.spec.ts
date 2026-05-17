@@ -73,15 +73,16 @@ describe('MintRecapCard.vue', () => {
     )
   })
 
-  it('does not round recap stake up to 100% when it is only near 100%', () => {
+  it('truncates a near-100% recap stake instead of rounding it up', () => {
     totalSupplyRef.value = 50_000_000n
     recipientBalanceRef.value = 28_000_000n
     symbolRef.value = 'shr'
 
     const wrapper = mountRecap({ issuedAmount: 219_999_949.871549 })
 
+    // bigint truncation, matching ShareholderList — never rounds up to a misleading 100%
     expect(wrapper.find('[data-test="recap-stake-line"]').text()).toContain(
-      'Recipient stake → 100%'
+      'Recipient stake → 99.99%'
     )
   })
 
@@ -96,7 +97,7 @@ describe('MintRecapCard.vue', () => {
     })
 
     expect(wrapper.find('[data-test="recap-stake-line"]').text()).toContain(
-      'Recipient stake → 56% (was 56%; issuing 0%)'
+      'Recipient stake → 56.00% (was 56.00%; issuing 0.00%)'
     )
     expect(wrapper.find('[data-test="recap-token-stake-line"]').text()).toBe(
       'Recipient shr stake → 28 shr (was 28 shr; issuing 0 shr)'
