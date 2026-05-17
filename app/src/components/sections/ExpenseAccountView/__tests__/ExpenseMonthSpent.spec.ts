@@ -35,12 +35,8 @@ const usdc = (whole: number) => ({
   tokenAddress: USDC_ADDRESS
 })
 
-const createWrapper = (): VueWrapper =>
-  mount(ExpenseMonthSpent, {
-    global: {
-      stubs: { OverviewCard: { template: '<div><slot /></div>' } }
-    }
-  })
+const createWrapper = (): VueWrapper => mount(ExpenseMonthSpent)
+const delta = (wrapper: VueWrapper) => wrapper.find('[data-test="percentage-change"]')
 
 describe('ExpenseMonthSpent', () => {
   beforeEach(() => {
@@ -50,41 +46,26 @@ describe('ExpenseMonthSpent', () => {
     apolloState.error.value = null
   })
 
-  it('formats the current month spent total', () => {
+  it('renders the current month spent total', () => {
     apolloState.current.value = { transactions: [usdc(250)] }
-    const vm = createWrapper().vm as unknown as { totalMonthlySpentAmount: string }
-    expect(vm.totalMonthlySpentAmount).toContain('250')
+    expect(createWrapper().find('[data-test="amount"]').text()).toContain('250')
   })
 
   it('hides the delta when there is no previous-month baseline', () => {
     apolloState.current.value = { transactions: [usdc(100)] }
     apolloState.previous.value = { transactions: [] }
-    const vm = createWrapper().vm as unknown as { spendingDelta: unknown }
-    expect(vm.spendingDelta).toBeNull()
+    expect(delta(createWrapper()).exists()).toBe(false)
   })
 
-  it('computes an upward delta when spending increased', () => {
+  it('shows an upward delta when spending increased', () => {
     apolloState.current.value = { transactions: [usdc(200)] }
     apolloState.previous.value = { transactions: [usdc(100)] }
-    const vm = createWrapper().vm as unknown as {
-      spendingDelta: { percent: string; direction: string }
-    }
-    expect(vm.spendingDelta).toEqual({ percent: '100.0', direction: 'up' })
+    expect(delta(createWrapper()).text()).toContain('+ 100.0%')
   })
 
-  it('computes a downward delta when spending decreased', () => {
+  it('shows a downward delta when spending decreased', () => {
     apolloState.current.value = { transactions: [usdc(60)] }
     apolloState.previous.value = { transactions: [usdc(120)] }
-    const vm = createWrapper().vm as unknown as {
-      spendingDelta: { percent: string; direction: string }
-    }
-    expect(vm.spendingDelta).toEqual({ percent: '50.0', direction: 'down' })
-  })
-
-  it('renders the delta direction in the slot', () => {
-    apolloState.current.value = { transactions: [usdc(200)] }
-    apolloState.previous.value = { transactions: [usdc(100)] }
-    const wrapper = createWrapper()
-    expect(wrapper.find('[data-test="percentage-change"]').text()).toContain('+ 100.0%')
+    expect(delta(createWrapper()).text()).toContain('- 50.0%')
   })
 })

@@ -4,13 +4,15 @@ import { createMockQueryResponse } from '@/tests/mocks'
 import { useGetExpensesQuery } from '@/queries/expense.queries'
 
 // UTable is auto-imported by @nuxt/ui/vite, so config.global.stubs cannot catch
-// it — the module itself must be mocked. Renders only the empty slot so data
-// rows never reach the cell templates.
+// it — the module itself must be mocked. The stub exposes the row count and the
+// empty slot so the section can be asserted without reaching component internals.
 vi.mock('@nuxt/ui/components/Table.vue', () => ({
   default: {
     name: 'UTable',
     props: { data: { type: Array, required: false } },
-    template: '<div><slot name="empty" v-if="!data || data.length === 0" /></div>'
+    template:
+      '<div><span data-test="row-count">{{ data ? data.length : 0 }}</span>' +
+      '<slot name="empty" v-if="!data || data.length === 0" /></div>'
   }
 }))
 
@@ -36,12 +38,10 @@ describe('MyApprovedExpenseSection', () => {
         { data: { approvedAddress: '0x00000000000000000000000000000000000000ff' } }
       ])
     )
-    const vm = createWrapper().vm as unknown as { myExpenses: unknown[] }
-    expect(vm.myExpenses).toHaveLength(1)
+    expect(createWrapper().find('[data-test="row-count"]').text()).toBe('1')
   })
 
   it('shows an empty state when the user has no approvals', () => {
-    const wrapper = createWrapper()
-    expect(wrapper.find('[data-test="my-expenses-empty"]').exists()).toBe(true)
+    expect(createWrapper().find('[data-test="my-expenses-empty"]').exists()).toBe(true)
   })
 })
