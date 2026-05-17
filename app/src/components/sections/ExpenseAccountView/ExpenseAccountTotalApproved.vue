@@ -1,17 +1,28 @@
 <template>
-  <OverviewCard :title="10" subtitle="Total Approved" color="info" :card-icon="personIcon">
-    <div class="flex flex-row gap-1 text-black">
-      <img :src="uptrendIcon" alt="status-icon" />
-      <div>
-        <span class="text-sm font-semibold" data-test="percentage-increase">+ 12.3% </span>
-        <span class="text-xs font-medium text-[#637381]">TODO: Update this</span>
-        <!-- <span class="font-medium text-[#637381] text-xs">than last week</span> -->
-      </div>
-    </div>
-  </OverviewCard>
+  <OverviewCard
+    :title="totalApproved"
+    subtitle="Total Approved"
+    color="info"
+    :card-icon="personIcon"
+    :loading="isLoading"
+  />
 </template>
 <script setup lang="ts">
 import personIcon from '@/assets/person.svg'
-import uptrendIcon from '@/assets/uptrend.svg'
 import OverviewCard from '@/components/OverviewCard.vue'
+import { computed } from 'vue'
+import { useTeamStore } from '@/stores'
+import { useGetExpensesQuery } from '@/queries'
+
+const teamStore = useTeamStore()
+
+const { data: expenseData, isLoading } = useGetExpensesQuery({
+  queryParams: { teamId: computed(() => teamStore.currentTeamId) }
+})
+
+// Number of distinct members with at least one approved expense.
+const totalApproved = computed(() => {
+  const approvals = expenseData.value ?? []
+  return new Set(approvals.map((expense) => expense.userAddress.toLowerCase())).size
+})
 </script>
