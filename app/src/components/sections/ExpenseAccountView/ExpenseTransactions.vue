@@ -49,6 +49,23 @@
       <template #valueLocal-cell="{ row: { original: row } }">
         {{ formatCurrencyShort(row.amountLocal, currencyStore.localCurrency.code) }}
       </template>
+
+      <template #empty>
+        <div
+          v-if="hasError"
+          class="text-error py-6 text-center text-sm"
+          data-test="expense-transactions-error"
+        >
+          Failed to load transactions. Please try again later.
+        </div>
+        <div
+          v-else
+          class="py-6 text-center text-sm text-gray-500"
+          data-test="expense-transactions-empty"
+        >
+          No transactions for the selected filters.
+        </div>
+      </template>
     </UTable>
   </UCard>
 </template>
@@ -122,6 +139,7 @@ const {
 )
 
 const loading = computed(() => expenseLoading.value || incomingTokenTransfersLoading.value)
+const hasError = computed(() => Boolean(error.value || incomingTokenTransfersError.value))
 
 const parseAmount = (value: string): bigint => {
   try {
