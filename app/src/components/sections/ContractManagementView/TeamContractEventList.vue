@@ -23,12 +23,7 @@
     </template>
 
     <template #details-cell="{ row: { original: row } }">
-      <input
-        type="checkbox"
-        :checked="row.expanded"
-        @change="toggleCampaign(row.campaignCode)"
-        class="toggle"
-      />
+      <USwitch :model-value="row.expanded" @update:model-value="toggleCampaign(row.campaignCode)" />
       <div v-if="row.expanded">
         <ul>
           <li

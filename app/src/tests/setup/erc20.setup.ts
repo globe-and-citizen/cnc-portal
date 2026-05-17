@@ -12,8 +12,9 @@ vi.mock('@/composables/erc20/reads', () => ({
 }))
 
 /**
- * Mock ERC20 write composables. Only `useERC20Approve` is exposed.
+ * Mock ERC20 write composables.
  */
 vi.mock('@/composables/erc20/writes', () => ({
-  useERC20Approve: vi.fn(() => mockERC20Writes.approve)
+  useERC20Approve: vi.fn(() => mockERC20Writes.approve),
+  useERC20Transfer: vi.fn(() => mockERC20Writes.transfer)
 }))

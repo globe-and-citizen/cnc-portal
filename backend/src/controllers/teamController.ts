@@ -75,6 +75,8 @@ const withCurrentOfficer = <T extends { teamOfficers?: TeamOfficer[] }>(team: T)
   };
 };
 
+const isTruthyQueryFlag = (value: unknown) => value === true || value === 'true';
+
 // Same as withCurrentOfficer but additionally surfaces the current Officer's
 // contracts as `teamContracts` on the team — scoping the contract list to the
 // currently active generation so archived contracts don't leak out.
@@ -138,6 +140,7 @@ const addTeam = async (req: Request, res: Response) => {
       data: {
         name,
         description,
+        isArchived: false,
         ownerAddress: String(callerAddress),
         members: {
           connect: members.map((member: User) => ({
@@ -169,7 +172,11 @@ const addTeam = async (req: Request, res: Response) => {
         resource: `teams/${team.id}`,
       }
     );
-    res.status(201).json(team);
+    res.status(201).json({
+      ...team,
+      isHidden: false,
+      isArchived: team.isArchived ?? false,
+    });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal Server Error';
     return errorResponse(500, message, res);
@@ -224,8 +231,19 @@ const getTeam = async (req: Request, res: Response) => {
       }))
     );
 
+    const callerMemberData = await prisma.memberTeamsData.findUnique({
+      where: {
+        memberAddress_teamId: {
+          memberAddress: String(callerAddress),
+          teamId: Number(id),
+        },
+      },
+      select: { isHidden: true },
+    });
+
     res.status(200).json({
       ...withCurrentOfficerAndContracts(team),
+      isHidden: callerMemberData?.isHidden ?? false,
       members: membersWithResolvedImages,
     });
   } catch (error: unknown) {
@@ -241,6 +259,8 @@ const getAllTeams = async (req: Request, res: Response) => {
   */
   const callerAddress = String(req.address);
   const userAddress = req.query.userAddress as string | undefined;
+  const showHidden = isTruthyQueryFlag(req.query.showHidden);
+  const showArchived = isTruthyQueryFlag(req.query.showArchived);
   try {
     // If userAddress is provided, verify the caller is requesting their own teams
     if (userAddress) {
@@ -248,15 +268,68 @@ const getAllTeams = async (req: Request, res: Response) => {
         return errorResponse(403, 'Unauthorized', res);
       }
 
-      // Get teams where the user is a member
-      const memberTeams = await prisma.team.findMany({
-        where: {
-          members: {
-            some: {
-              address: callerAddress,
+      const memberFilter = { memberAddress: callerAddress };
+      // Union of list slices; each branch is scoped so hidden vs archived toggles compose.
+      // - Default: active (non-archived) teams the member has not hidden.
+      // - showHidden: also active teams the member has hidden; if archived is off, also
+      //   archived teams that are still hidden (archived+visible stay off until Archived on).
+      // - showArchived: archived teams; if Hidden is off, only those the member still lists
+      //   as visible (isHidden false), so archived+hidden does not leak into "Archived" alone.
+      const memberTeamsWhere = {
+        OR: [
+          {
+            isArchived: false,
+            memberTeamsData: {
+              some: {
+                ...memberFilter,
+                isHidden: false,
+              },
             },
           },
-        },
+          ...(showHidden
+            ? [
+                {
+                  isArchived: false,
+                  memberTeamsData: {
+                    some: {
+                      ...memberFilter,
+                      isHidden: true,
+                    },
+                  },
+                },
+              ]
+            : []),
+          ...(showArchived
+            ? [
+                {
+                  isArchived: true,
+                  memberTeamsData: {
+                    some: {
+                      ...memberFilter,
+                      ...(showHidden ? {} : { isHidden: false }),
+                    },
+                  },
+                },
+              ]
+            : []),
+          ...(showHidden && !showArchived
+            ? [
+                {
+                  isArchived: true,
+                  memberTeamsData: {
+                    some: {
+                      ...memberFilter,
+                      isHidden: true,
+                    },
+                  },
+                },
+              ]
+            : []),
+        ],
+      };
+
+      const memberTeams = await prisma.team.findMany({
+        where: memberTeamsWhere,
         include: {
           _count: {
             select: {
@@ -267,11 +340,30 @@ const getAllTeams = async (req: Request, res: Response) => {
         },
       });
 
-      return res.status(200).json(memberTeams.map(withCurrentOfficer));
+      const visibilityRows = await prisma.memberTeamsData.findMany({
+        where: {
+          memberAddress: callerAddress,
+          teamId: { in: memberTeams.map((team) => team.id) },
+        },
+        select: { teamId: true, isHidden: true },
+      });
+
+      const hiddenByTeamId = new Map(visibilityRows.map((row) => [row.teamId, row.isHidden]));
+
+      return res.status(200).json(
+        memberTeams.map((team) => ({
+          ...withCurrentOfficer(team),
+          isHidden: hiddenByTeamId.get(team.id) ?? false,
+          isArchived: team.isArchived ?? false,
+        }))
+      );
     }
 
     // No userAddress provided - return all teams
+    const allTeamsWhere = showArchived ? {} : { isArchived: false };
+
     const allTeams = await prisma.team.findMany({
+      where: allTeamsWhere,
       include: {
         _count: {
           select: {
@@ -282,7 +374,13 @@ const getAllTeams = async (req: Request, res: Response) => {
       },
     });
 
-    res.status(200).json(allTeams.map(withCurrentOfficer));
+    res.status(200).json(
+      allTeams.map((team) => ({
+        ...withCurrentOfficer(team),
+        isHidden: false,
+        isArchived: team.isArchived ?? false,
+      }))
+    );
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal Server Error';
     return errorResponse(500, message, res);
@@ -293,14 +391,73 @@ const getAllTeams = async (req: Request, res: Response) => {
 
 const updateTeam = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { name, description } = req.body;
+  const { name, description, isArchived, isHidden } = req.body;
+  const callerAddress = String(req.address);
+  const teamId = Number(id);
 
   try {
+    const existingTeam = await prisma.team.findUnique({
+      where: { id: teamId },
+      include: {
+        members: {
+          select: { address: true },
+        },
+      },
+    });
+
+    if (!existingTeam) {
+      return errorResponse(404, 'Team not found', res);
+    }
+
+    const isOwner = existingTeam.ownerAddress === callerAddress;
+    const isMember = existingTeam.members.some((member) => member.address === callerAddress);
+
+    if (!isMember) {
+      return errorResponse(403, 'Unauthorized: Caller is not a member of the team', res);
+    }
+
+    if ((name !== undefined || description !== undefined) && !isOwner) {
+      return errorResponse(403, 'Unauthorized: Only team owner can update metadata', res);
+    }
+
+    if (isArchived !== undefined && !isOwner) {
+      return errorResponse(
+        403,
+        'Unauthorized: Only team owner can archive/unarchive the team',
+        res
+      );
+    }
+
+    if (
+      name === undefined &&
+      description === undefined &&
+      isArchived === undefined &&
+      isHidden === undefined
+    ) {
+      return errorResponse(400, 'No fields to update', res);
+    }
+
     const teamU = await prisma.team.update({
-      where: { id: Number(id) },
+      where: { id: teamId },
       data: {
-        name,
-        description,
+        ...(name !== undefined ? { name } : {}),
+        ...(description !== undefined ? { description } : {}),
+        ...(isArchived !== undefined ? { isArchived: Boolean(isArchived) } : {}),
+        ...(isHidden !== undefined
+          ? {
+              memberTeamsData: {
+                updateMany: {
+                  where: {
+                    teamId,
+                    memberAddress: callerAddress,
+                  },
+                  data: {
+                    isHidden: Boolean(isHidden),
+                  },
+                },
+              },
+            }
+          : {}),
       },
       include: {
         members: {
@@ -312,7 +469,21 @@ const updateTeam = async (req: Request, res: Response) => {
         ...currentOfficerWithContractsInclude,
       },
     });
-    res.status(200).json(withCurrentOfficerAndContracts(teamU));
+
+    const callerMemberData = await prisma.memberTeamsData.findUnique({
+      where: {
+        memberAddress_teamId: {
+          memberAddress: callerAddress,
+          teamId,
+        },
+      },
+      select: { isHidden: true },
+    });
+
+    res.status(200).json({
+      ...withCurrentOfficerAndContracts(teamU),
+      isHidden: callerMemberData?.isHidden ?? false,
+    });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal Server Error';
     return errorResponse(500, message, res);

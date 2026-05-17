@@ -92,6 +92,9 @@ const weeklyClaimRoutes = express.Router();
  * /weekly-claim:
  *  get:
  *   summary: Get weekly claims for a team
+ *   tags: [Weekly Claims]
+ *   security:
+ *     - bearerAuth: []
  *   description: Retrieves weekly claims for a specific team with optional filtering by status and member address.
  *   parameters:
  *     - in: query
@@ -165,6 +168,9 @@ weeklyClaimRoutes.get(
  * /weekly-claim/sync:
  *  post:
  *   summary: Sync weekly claims with smart contract state
+ *   tags: [Weekly Claims]
+ *   security:
+ *     - bearerAuth: []
  *   description: Synchronizes weekly claim statuses against the on-chain CashRemunerationEIP712 contract to detect paid or disabled claims.
  *   parameters:
  *     - in: query
@@ -230,6 +236,9 @@ weeklyClaimRoutes.post(
  * /weekly-claim/{id}:
  *  put:
  *   summary: Update a weekly claim
+ *   tags: [Weekly Claims]
+ *   security:
+ *     - bearerAuth: []
  *   description: Performs an action on a weekly claim (sign, withdraw, enable, or disable). Requires appropriate permissions.
  *   parameters:
  *     - in: path

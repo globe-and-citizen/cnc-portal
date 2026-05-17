@@ -11,5 +11,10 @@ export function useERC20Approve(tokenAddress: MaybeRef<Address | undefined>) {
   })
 }
 
-// UNUSED — no consumers. See git history for the V2 useERC20Transfer /
-// useERC20TransferFrom / generic useERC20ContractWrite factory.
+export function useERC20Transfer(tokenAddress: MaybeRef<Address | undefined>) {
+  return useContractWritesV3({
+    contractAddress: tokenAddress,
+    abi: erc20Abi,
+    functionName: 'transfer'
+  })
+}

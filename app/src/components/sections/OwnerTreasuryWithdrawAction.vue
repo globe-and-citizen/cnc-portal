@@ -1,5 +1,5 @@
 <template>
-  <div v-if="hasTheRight" class="card-actions justify-end">
+  <div v-if="hasTheRight" class="flex justify-end gap-2">
     <UButton
       color="warning"
       size="sm"

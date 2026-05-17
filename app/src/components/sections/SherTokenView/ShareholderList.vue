@@ -34,12 +34,11 @@
 
       <template #actions-cell="{ row: { original: row } }">
         <div class="flex w-full">
-          <div
-            :class="{ tooltip: userStore.address != teamStore.currentTeam?.ownerAddress }"
-            :data-tip="
+          <UTooltip
+            :text="
               userStore.address != teamStore.currentTeam?.ownerAddress
                 ? 'Only the team owner can mint tokens for shareholders'
-                : null
+                : undefined
             "
           >
             <UButton
@@ -55,7 +54,7 @@
             >
               Mint Individual
             </UButton>
-          </div>
+          </UTooltip>
         </div>
       </template>
     </UTable>

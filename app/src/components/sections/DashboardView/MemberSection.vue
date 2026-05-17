@@ -47,7 +47,7 @@
           <div class="pb-1 text-center">
             <span>Hourly Rates</span>
           </div>
-          <div class="border-base-400 flex flex-row justify-between border-t">
+          <div class="border-default flex flex-row justify-between border-t">
             <span class="w-1/3 bg-[#C8FACD] p-1 text-center text-xs">{{
               NETWORK.currencySymbol
             }}</span>

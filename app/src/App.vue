@@ -1,6 +1,6 @@
 <template>
   <UApp>
-    <div class="bg-base-200 min-h-screen">
+    <div class="bg-muted min-h-screen">
       <LockScreen v-if="lock" :user="{ address: userStore.address }" />
       <template v-else>
         <RouterView name="login" />
@@ -14,7 +14,7 @@
               }"
             >
               <template #header>
-                <UDashboardNavbar :title="pageTitle" :ui="{ right: 'gap-3' }" class="bg-white">
+                <UDashboardNavbar :title="pageTitle" :ui="{ right: 'gap-3' }" class="bg-default">
                   <template #leading>
                     <UDashboardSidebarCollapse
                       icon="heroicons:arrow-left-start-on-rectangle"
@@ -47,7 +47,6 @@
 
 <script setup lang="ts">
 import { VueQueryDevtools } from '@tanstack/vue-query-devtools'
-import '@vuepic/vue-datepicker/dist/main.css'
 import { useChainId, useConnection, useConnectionEffect, useSwitchChain } from '@wagmi/vue'
 import { computed, watch } from 'vue'
 import { RouterView, useRoute } from 'vue-router'

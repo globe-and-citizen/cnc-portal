@@ -52,7 +52,7 @@
       data-test="deploy-error-alert"
     />
 
-    <div class="modal-action justify-right">
+    <div class="mt-6 flex justify-end gap-2">
       <UButton
         color="primary"
         size="sm"

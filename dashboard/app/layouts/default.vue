@@ -33,6 +33,7 @@ const pageTitle = computed(() => {
     'features': 'Submit Restriction',
     'feature': 'Feature',
     'micropayments': 'Micropayments',
+    'polymarket': 'Polymarket',
     'contracts': 'Contracts',
     'settings': 'Settings',
     'settings-members': 'Members',
@@ -83,6 +84,14 @@ const links = [
       label: 'Micropayments',
       icon: 'i-lucide-wallet',
       to: '/micropayments',
+      onSelect: () => {
+        open.value = false
+      }
+    },
+    {
+      label: 'Polymarket',
+      icon: 'i-lucide-activity',
+      to: '/polymarket',
       onSelect: () => {
         open.value = false
       }

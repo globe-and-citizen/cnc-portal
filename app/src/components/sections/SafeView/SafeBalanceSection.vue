@@ -15,11 +15,12 @@
         <div class="flex items-baseline gap-2">
           <span class="text-4xl font-bold">
             <span class="inline-block h-10 min-w-16">
-              <span
+              <UIcon
                 v-if="isLoading"
-                class="loading loading-spinner loading-lg"
+                name="i-lucide-loader-circle"
+                class="text-primary h-10 w-10 animate-spin"
                 data-test="safe-balance-loading"
-              ></span>
+              />
               <span v-else>{{ total['USD']?.formated ?? 0 }}</span>
             </span>
           </span>

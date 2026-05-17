@@ -25,7 +25,7 @@
   <!-- Loading state -->
   <div v-else class="flex items-center justify-center p-8">
     <div class="text-center">
-      <div class="loading loading-spinner loading-lg"></div>
+      <UIcon name="i-lucide-loader-circle" class="text-primary mx-auto h-10 w-10 animate-spin" />
       <p class="mt-4 text-gray-500">Loading safe...</p>
     </div>
   </div>

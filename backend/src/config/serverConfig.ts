@@ -30,7 +30,7 @@ import featureRoutes from '../routes/featureRoutes';
 
 import { authorizeUser } from '../middleware/authMiddleware';
 import { requireAdmin } from '../middleware/roleMiddleware';
-import { errorMessages } from '../utils/serverConfigUtil';
+import { errorMessages, wildcardToRegex } from '../utils/serverConfigUtil';
 
 // Swagger import
 
@@ -41,14 +41,46 @@ const options = {
   definition: {
     openapi: '3.0.0',
     info: {
-      title: 'API Documentation',
+      title: 'CNC Portal API',
       version: '1.0.0',
+      description:
+        'REST API for the CNC Portal. Most endpoints require a JWT obtained from `POST /auth/siwe`; ' +
+        'use the **Authorize** button to set the bearer token before trying protected routes.',
     },
     servers: [
       {
         url: '/api',
         description: 'API base path',
       },
+    ],
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+          description: 'JWT issued by `POST /auth/siwe`.',
+        },
+      },
+    },
+    tags: [
+      { name: 'Auth', description: 'SIWE authentication and JWT validation' },
+      { name: 'Users', description: 'User accounts and profiles' },
+      { name: 'Teams', description: 'Team creation, membership and settings' },
+      { name: 'Contracts', description: 'Team smart-contract registration and sync' },
+      { name: 'Claims', description: 'Worked-minutes claims' },
+      { name: 'Weekly Claims', description: 'Weekly aggregated claims and on-chain sync' },
+      { name: 'Wages', description: 'Team member wages' },
+      { name: 'Expenses', description: 'Team expenses' },
+      { name: 'Board Actions', description: 'Board of Directors actions' },
+      { name: 'Elections', description: 'Board elections and notifications' },
+      { name: 'Notifications', description: 'User notifications' },
+      { name: 'Files', description: 'File download access' },
+      { name: 'Upload', description: 'File and asset uploads' },
+      { name: 'Statistics', description: 'Platform statistics (admin only)' },
+      { name: 'Features', description: 'Feature flags (admin only)' },
+      { name: 'Health', description: 'Service health checks' },
+      { name: 'Development', description: 'Development-only helpers' },
     ],
   },
   apis: ['./src/routes/*.ts'], // Point to route files containing JSDoc comments
@@ -118,13 +150,36 @@ class Server {
 
   private middleware() {
     this.app.use(express.json());
-    const allowedOrigins = process.env.FRONTEND_URL
-      ? process.env.FRONTEND_URL.split(',').map((origin) => origin.trim())
+    const rawOrigins = process.env.FRONTEND_URL
+      ? process.env.FRONTEND_URL.split(',')
+          .map((o) => o.trim())
+          .filter(Boolean)
       : [];
+    const exactOrigins: string[] = [];
+    const patternOrigins: RegExp[] = [];
+    for (const origin of rawOrigins) {
+      if (origin.includes('*')) {
+        patternOrigins.push(wildcardToRegex(origin));
+      } else {
+        exactOrigins.push(origin);
+      }
+    }
     console.log('FRONTEND_URL:', process.env.FRONTEND_URL);
-    console.log('Allowed Origins for CORS:', allowedOrigins);
+    console.log('Allowed exact origins for CORS:', exactOrigins);
+    console.log('Allowed origin patterns for CORS:', patternOrigins);
 
-    this.app.use(cors({ origin: allowedOrigins, credentials: true }));
+    this.app.use(
+      cors({
+        origin: (origin, callback) => {
+          if (!origin) return callback(null, true);
+          if (exactOrigins.includes(origin) || patternOrigins.some((re) => re.test(origin))) {
+            return callback(null, true);
+          }
+          return callback(new Error(`Origin ${origin} not allowed by CORS`));
+        },
+        credentials: true,
+      })
+    );
   }
 
   private routes() {
@@ -152,7 +207,6 @@ class Server {
       console.log('🔧 Dev routes enabled for development environment');
     }
 
-    this.app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
     this.app.use(this.paths.elections, authorizeUser, electionsRoute);
     this.app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
     // The error handler must be registered before any other error middleware and after all controllers

@@ -29,11 +29,12 @@ describe('MonthSelector', () => {
       global: {
         components: {
           UButton: {
-            template: '<button><slot /></button>'
+            template:
+              '<button :data-test="$attrs[\'data-test\']" @click="$emit(\'click\', $event)"><slot /></button>'
           },
-          VueDatePicker: {
-            template: '<div><slot name="trigger" /></div>',
-            props: ['modelValue', 'monthPicker', 'yearPicker', 'autoApply']
+          UPopover: {
+            template: '<div><slot /><slot name="content" /></div>',
+            props: ['open']
           },
           IconifyIcon: {
             template: '<span :class="icon" />',
@@ -48,25 +49,36 @@ describe('MonthSelector', () => {
     vi.clearAllMocks()
   })
 
-  describe('Watcher', () => {
-    it('updates model when monthPicked changes', async () => {
-      const wrapper = createWrapper()
-      const setup = (wrapper.vm as unknown as { $?: { setupState?: Record<string, unknown> } }).$
-        ?.setupState
-      const payload = { month: 2, year: 2023 }
-      if (!setup) throw new Error('setupState not available')
-      ;(setup as { monthPicked?: unknown }).monthPicked = payload
+  describe('Month selection from picker', () => {
+    it('emits updated model when a month is picked', async () => {
+      const wrapper = createWrapper({ month: 5, year: 2024 })
+      const marchButton = wrapper.find('[data-test="month-2"]')
+      await marchButton.trigger('click')
       await wrapper.vm.$nextTick()
 
       const emitted = wrapper.emitted('update:modelValue')?.[0]?.[0]
-      const d = dayjs.utc().year(2023).month(2).startOf('month')
+      const d = dayjs.utc().year(2024).month(2).startOf('month')
       expect(emitted).toEqual({
         month: 2,
-        year: 2023,
+        year: 2024,
         isoWeek: d.isoWeek(),
         formatted: formatIsoWeekRange(d),
         isoString: d.startOf('isoWeek').toISOString()
       })
+    })
+
+    it('navigates view year forward and selects in the new year', async () => {
+      const wrapper = createWrapper({ month: 5, year: 2024 })
+      await wrapper.find('[data-test="next-year"]').trigger('click')
+      await wrapper.find('[data-test="month-0"]').trigger('click')
+      await wrapper.vm.$nextTick()
+
+      const emitted = wrapper.emitted('update:modelValue')?.[0]?.[0] as {
+        month: number
+        year: number
+      }
+      expect(emitted.month).toBe(0)
+      expect(emitted.year).toBe(2025)
     })
   })
 
@@ -81,9 +93,7 @@ describe('MonthSelector', () => {
       }
 
       const wrapper = createWrapper(initialModel)
-      const prevButton = wrapper.findAll('button')[0]
-
-      await prevButton.trigger('click')
+      await wrapper.find('[data-test="prev-month"]').trigger('click')
       await wrapper.vm.$nextTick()
 
       const emitted = wrapper.emitted('update:modelValue')
@@ -106,9 +116,7 @@ describe('MonthSelector', () => {
       }
 
       const wrapper = createWrapper(initialModel)
-      const prevButton = wrapper.findAll('button')[0]
-
-      await prevButton.trigger('click')
+      await wrapper.find('[data-test="prev-month"]').trigger('click')
       await wrapper.vm.$nextTick()
 
       const emitted = wrapper.emitted('update:modelValue')
@@ -130,9 +138,7 @@ describe('MonthSelector', () => {
       }
 
       const wrapper = createWrapper(initialModel)
-      const nextButton = wrapper.findAll('button')[2]
-
-      await nextButton.trigger('click')
+      await wrapper.find('[data-test="next-month"]').trigger('click')
       await wrapper.vm.$nextTick()
 
       const emitted = wrapper.emitted('update:modelValue')
@@ -140,6 +146,48 @@ describe('MonthSelector', () => {
       const newValue = (emitted?.[0] as any[])[0]
       expect(newValue.month).toBe(0) // January
       expect(newValue.year).toBe(2025)
+    })
+  })
+
+  describe('viewYear synchronization', () => {
+    it('falls back to current year when initial modelValue is undefined', async () => {
+      const wrapper = mount(MonthSelector, {
+        global: {
+          components: {
+            UButton: {
+              template:
+                '<button :data-test="$attrs[\'data-test\']" @click="$emit(\'click\', $event)"><slot /></button>'
+            },
+            UPopover: {
+              template: '<div><slot /><slot name="content" /></div>',
+              props: ['open']
+            },
+            IconifyIcon: {
+              template: '<span :class="icon" />',
+              props: ['icon']
+            }
+          }
+        }
+      })
+      const currentYear = dayjs.utc().year()
+      expect(wrapper.text()).toContain(String(currentYear))
+    })
+
+    it('updates viewYear when modelValue.year changes from the parent', async () => {
+      const wrapper = createWrapper({ month: 5, year: 2024 })
+      expect(wrapper.text()).toContain('2024')
+
+      await wrapper.setProps({
+        modelValue: {
+          month: 5,
+          year: 2030,
+          isoWeek: 23,
+          formatted: '2030-W23',
+          isoString: dayjs.utc('2030-06-01').toISOString()
+        }
+      })
+
+      expect(wrapper.text()).toContain('2030')
     })
   })
 
@@ -154,9 +202,7 @@ describe('MonthSelector', () => {
       }
 
       const wrapper = createWrapper(initialModel)
-      const nextButton = wrapper.findAll('button')[2]
-
-      await nextButton.trigger('click')
+      await wrapper.find('[data-test="next-month"]').trigger('click')
       await wrapper.vm.$nextTick()
 
       const emitted = wrapper.emitted('update:modelValue')
@@ -168,29 +214,6 @@ describe('MonthSelector', () => {
       expect(newValue).toHaveProperty('isoWeek')
       expect(newValue).toHaveProperty('formatted')
       expect(newValue).toHaveProperty('isoString')
-    })
-  })
-
-  describe('toggleMonthPicker', () => {
-    it('toggles isMonthPickerOpen when center button is clicked', async () => {
-      const wrapper = createWrapper()
-      const setup = (
-        wrapper.vm as unknown as { $?: { setupState?: { isMonthPickerOpen?: boolean } } }
-      ).$?.setupState
-      if (!setup) throw new Error('setupState not available')
-
-      // initial value should be false
-      expect(Boolean((setup as { isMonthPickerOpen?: boolean }).isMonthPickerOpen)).toBe(false)
-
-      const centerButton = wrapper.findAll('button')[1]
-      await centerButton.trigger('click')
-      await wrapper.vm.$nextTick()
-      expect((setup as { isMonthPickerOpen?: boolean }).isMonthPickerOpen).toBe(true)
-
-      // clicking again should close
-      await centerButton.trigger('click')
-      await wrapper.vm.$nextTick()
-      expect((setup as { isMonthPickerOpen?: boolean }).isMonthPickerOpen).toBe(false)
     })
   })
 })
