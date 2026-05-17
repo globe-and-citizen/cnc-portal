@@ -84,7 +84,7 @@ import {
 } from '@/composables/expenseAccount/writes'
 import UserComponent from '@/components/UserComponent.vue'
 import { useQueryClient } from '@tanstack/vue-query'
-import { useGetExpensesQuery } from '@/queries'
+import { useGetExpensesQuery, expenseKeys } from '@/queries'
 import { getFrequencyType, getCustomFrequency } from '@/utils'
 
 const teamStore = useTeamStore()
@@ -184,7 +184,7 @@ const deactivateApproval = (signature: `0x{string}`) => {
       onSuccess: () => {
         signatureToUpdate.value = ''
         isLoadingSetStatus.value = false
-        queryClient.invalidateQueries({ queryKey: ['getExpenseData'] })
+        queryClient.invalidateQueries({ queryKey: expenseKeys.list(teamStore.currentTeamId) })
         toast.add({ title: 'Approval deactivated', color: 'success' })
       },
       onError: (err) => {
@@ -209,7 +209,7 @@ const activateApproval = (signature: `0x{string}`) => {
       onSuccess: () => {
         signatureToUpdate.value = ''
         isLoadingSetStatus.value = false
-        queryClient.invalidateQueries({ queryKey: ['getExpenseData'] })
+        queryClient.invalidateQueries({ queryKey: expenseKeys.list(teamStore.currentTeamId) })
         toast.add({ title: 'Approval activated', color: 'success' })
       },
       onError: (err) => {
