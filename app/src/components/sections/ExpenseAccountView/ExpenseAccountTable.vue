@@ -71,7 +71,7 @@
       <template #empty>
         <div
           v-if="errorFetchingExpenseData"
-          class="py-6 text-center text-sm text-error"
+          class="text-error py-6 text-center text-sm"
           data-test="approvals-error"
         >
           Failed to load spending approvals.

@@ -53,7 +53,7 @@
       <template #empty>
         <div
           v-if="hasError"
-          class="py-6 text-center text-sm text-error"
+          class="text-error py-6 text-center text-sm"
           data-test="expense-transactions-error"
         >
           Failed to load transactions. Please try again later.

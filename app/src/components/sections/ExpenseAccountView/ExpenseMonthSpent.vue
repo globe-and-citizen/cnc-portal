@@ -74,9 +74,7 @@ const { result: prevResult, error: prevError } = useQuery(EXPENSE_TRANSACTIONS_Q
 })
 
 /** Sums `transfer` transactions, converted to the local currency. */
-const sumInLocalCurrency = (
-  transactions: { amount: bigint; tokenAddress: string }[]
-): number => {
+const sumInLocalCurrency = (transactions: { amount: bigint; tokenAddress: string }[]): number => {
   const spentByToken: Record<string, number> = {}
   for (const token of SUPPORTED_TOKENS) {
     spentByToken[token.id] = 0
