@@ -7,7 +7,7 @@ import externalApiClient from '@/lib/external.axios.ts'
 /**
  * Post a transaction proposal to the Safe Transaction Service
  */
-export async function postTransactionProposal(params: ProposeTransactionParams): Promise<void> {
+async function postTransactionProposal(params: ProposeTransactionParams): Promise<void> {
   const { chainId, safeAddress, safeTxHash, transactionData, sender, signature, origin } = params
   const txServiceUrl = getTxServiceUrl(chainId)
 
@@ -26,19 +26,10 @@ export async function postTransactionProposal(params: ProposeTransactionParams):
 }
 
 /**
- * Validate Safe address
- */
-export function assertValidSafeAddress(safeAddress: string): void {
-  if (!isAddress(safeAddress)) {
-    throw new Error('Invalid Safe address')
-  }
-}
-
-/**
  * Extract transaction hash from Safe transaction response
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function extractTransactionHash(txResponse: any): string {
+function extractTransactionHash(txResponse: any): string {
   const hash = txResponse.transactionResponse?.hash || txResponse.hash
   if (!hash) {
     throw new Error('Transaction hash not found in response')
@@ -50,79 +41,12 @@ export function extractTransactionHash(txResponse: any): string {
  * Wait for transaction confirmation if wait function is available
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function waitForTransaction(txResponse: any): Promise<void> {
+async function waitForTransaction(txResponse: any): Promise<void> {
   const waitFn = txResponse.transactionResponse?.wait
 
   if (typeof waitFn === 'function') {
     await waitFn()
   }
-}
-
-/**
- * Build Safe owner management transaction data
- */
-export async function buildOwnerManagementTransactions(params: {
-  safeSdk: Awaited<ReturnType<typeof import('@safe-global/protocol-kit').default.init>>
-  ownersToAdd: string[]
-  ownersToRemove: string[]
-  newThreshold?: number
-  currentThreshold: number
-}): Promise<
-  Array<{
-    to: string
-    value: string
-    data: string
-    operation: number
-  }>
-> {
-  const { safeSdk, ownersToAdd, ownersToRemove, newThreshold, currentThreshold } = params
-  const transactionData: Array<{
-    to: string
-    value: string
-    data: string
-    operation: number
-  }> = []
-
-  // Add owners
-  for (const owner of ownersToAdd) {
-    const safeTx = await safeSdk.createAddOwnerTx({
-      ownerAddress: owner as Address,
-      threshold: newThreshold
-    })
-    transactionData.push({
-      to: safeTx.data.to,
-      value: safeTx.data.value,
-      data: safeTx.data.data,
-      operation: safeTx.data.operation || 0
-    })
-  }
-
-  // Remove owners
-  for (const owner of ownersToRemove) {
-    const safeTx = await safeSdk.createRemoveOwnerTx({
-      ownerAddress: owner as Address,
-      threshold: newThreshold || currentThreshold
-    })
-    transactionData.push({
-      to: safeTx.data.to,
-      value: safeTx.data.value,
-      data: safeTx.data.data,
-      operation: safeTx.data.operation || 0
-    })
-  }
-
-  // Update threshold when no owner operations provided
-  if (ownersToAdd.length === 0 && ownersToRemove.length === 0 && newThreshold !== undefined) {
-    const safeTx = await safeSdk.createChangeThresholdTx(newThreshold)
-    transactionData.push({
-      to: safeTx.data.to,
-      value: safeTx.data.value,
-      data: safeTx.data.data,
-      operation: safeTx.data.operation || 0
-    })
-  }
-
-  return transactionData
 }
 
 /**
