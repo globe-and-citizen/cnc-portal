@@ -5,7 +5,7 @@ import { useStorage } from '@vueuse/core'
 import type { Address } from 'viem'
 import SafeBalanceSection from '../SafeBalanceSection.vue'
 import { mockUseContractBalance, mockUseAccount } from '@/tests/mocks'
-import { mockUserStore, mockToast } from '@/tests/mocks/store.mock'
+import { mockUserStore } from '@/tests/mocks/store.mock'
 
 const {
   mockGetSafeHomeUrl,
@@ -160,7 +160,6 @@ describe('SafeBalanceSection', () => {
     mockTransferPending.value = false
     mockTransferMutate.mockReset()
     mockTransferReset.mockReset()
-    mockToast.add.mockReset()
 
     vi.mocked(useStorage).mockReturnValue(mockCurrency as never)
 
@@ -217,6 +216,51 @@ describe('SafeBalanceSection', () => {
       await nextTick()
 
       expect(mockTransferMutate).not.toHaveBeenCalled()
+    })
+
+    it('should handle transfer success callback', async () => {
+      wrapper = createWrapper()
+      await wrapper.find('[data-test="transfer-button"]').trigger('click')
+      await nextTick()
+      await wrapper.find('[data-test="emit-transfer"]').trigger('click')
+      await nextTick()
+
+      const callbacks = mockTransferMutate.mock.calls[0]?.[1]
+      callbacks?.onSuccess?.()
+      await nextTick()
+
+      expect(mockTransferReset).toHaveBeenCalledTimes(1)
+      expect(wrapper.find('[data-test="transfer-modal"]').exists()).toBe(false)
+    })
+
+    it('should map rejected transfer error to approval message', async () => {
+      wrapper = createWrapper()
+      await wrapper.find('[data-test="transfer-button"]').trigger('click')
+      await nextTick()
+      await wrapper.find('[data-test="emit-transfer"]').trigger('click')
+      await nextTick()
+
+      const callbacks = mockTransferMutate.mock.calls[0]?.[1]
+      callbacks?.onError?.(new Error('User rejected signature'))
+      await nextTick()
+
+      expect(mockTransferReset).not.toHaveBeenCalled()
+      expect(wrapper.find('[data-test="transfer-modal"]').exists()).toBe(true)
+    })
+
+    it('should surface generic transfer error message', async () => {
+      wrapper = createWrapper()
+      await wrapper.find('[data-test="transfer-button"]').trigger('click')
+      await nextTick()
+      await wrapper.find('[data-test="emit-transfer"]').trigger('click')
+      await nextTick()
+
+      const callbacks = mockTransferMutate.mock.calls[0]?.[1]
+      callbacks?.onError?.(new Error('RPC failure'))
+      await nextTick()
+
+      expect(mockTransferReset).not.toHaveBeenCalled()
+      expect(wrapper.find('[data-test="transfer-modal"]').exists()).toBe(true)
     })
   })
 })
