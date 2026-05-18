@@ -34,7 +34,7 @@ export default defineConfig({
     headless: process.env.HEADLESS !== 'false'
   },
 
-  // Synpress currently only supports Chromium
+  // Web3 e2e runs on Chromium.
   projects: [
     {
       name: 'chromium',
@@ -46,7 +46,7 @@ export default defineConfig({
   webServer: process.env.SKIP_SERVER
     ? undefined
     : {
-        command: 'VITE_APP_NETWORK_ALIAS=hardhat npm run dev',
+        command: 'VITE_E2E=true VITE_APP_NETWORK_ALIAS=hardhat npm run dev',
         port: 5173,
         reuseExistingServer: true,
         timeout: 120000,
