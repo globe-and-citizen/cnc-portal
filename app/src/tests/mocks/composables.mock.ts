@@ -113,13 +113,6 @@ export const mockUseSafeSendTransaction = {
 }
 
 /**
- * Mock useSafeOwnerManagement composable
- */
-export const mockUseSafeOwnerManagement = {
-  isUpdating: ref(false),
-  updateOwners: vi.fn()
-}
-/**
  * Mock useBackendWake composable
  * Returns a function that does nothing - individual tests can override if needed
  */
@@ -263,11 +256,6 @@ export const resetComposableMocks = () => {
   mockUseFetch.get.error.value = null
   if (vi.isMockFunction(mockUseFetch.get.execute)) {
     mockUseFetch.get.execute.mockClear()
-  }
-
-  mockUseSafeOwnerManagement.isUpdating.value = false
-  if (vi.isMockFunction(mockUseSafeOwnerManagement.updateOwners)) {
-    mockUseSafeOwnerManagement.updateOwners.mockClear()
   }
 
   // Reset clipboard mock
