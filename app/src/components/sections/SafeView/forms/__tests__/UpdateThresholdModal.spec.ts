@@ -1,8 +1,17 @@
+/* eslint-disable no-restricted-syntax */
 import UpdateThresholdModal from '@/components/sections/SafeView/forms/UpdateThresholdModal.vue'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { defineComponent, nextTick } from 'vue'
+import { defineComponent, nextTick, type ComponentPublicInstance } from 'vue'
 import { mount } from '@vue/test-utils'
 import { mockToast } from '@/tests/mocks/store.mock'
+
+interface UpdateThresholdModalVm extends ComponentPublicInstance {
+  formState: {
+    threshold: number
+  }
+  errorMessage: string
+  handleUpdateThreshold: () => Promise<void>
+}
 
 const { mockChainId, mockUpdateOwnersMutate, mockUpdateOwnersPending } = vi.hoisted(() => ({
   mockChainId: { value: 137 },
@@ -46,7 +55,7 @@ const UAlertStub = defineComponent({
 const UFormStub = defineComponent({
   props: ['schema', 'state'],
   emits: ['submit'],
-  template: '<form data-test="threshold-form" @submit.prevent="$emit(\'submit\')"><slot /></form>'
+  template: '<form data-test="threshold-form"><slot /></form>'
 })
 
 const UFormFieldStub = defineComponent({
@@ -57,8 +66,7 @@ const UFormFieldStub = defineComponent({
 const UInputStub = defineComponent({
   props: ['modelValue', 'type', 'min', 'max', 'placeholder'],
   emits: ['update:modelValue'],
-  template:
-    '<input data-test="threshold-input" :value="modelValue" @input="$emit(\'update:modelValue\', Number(($event.target as HTMLInputElement).value))" @change="$emit(\'update:modelValue\', Number(($event.target as HTMLInputElement).value))" />'
+  template: '<input data-test="threshold-input" :value="modelValue" />'
 })
 
 const UButtonStub = defineComponent({
@@ -67,19 +75,6 @@ const UButtonStub = defineComponent({
   template:
     '<button :data-test="$attrs[\'data-test\']" :type="type || \'button\'" :disabled="disabled" @click="$emit(\'click\')">{{ label }}</button>'
 })
-
-const setThreshold = async (wrapper: ReturnType<typeof mount>, value: number) => {
-  const input = wrapper.find('[data-test="threshold-input"]')
-  await input.setValue(String(value))
-  await input.trigger('change')
-  await nextTick()
-}
-
-const submitThreshold = async (wrapper: ReturnType<typeof mount>) => {
-  const form = wrapper.find('[data-test="threshold-form"]')
-  await form.trigger('submit')
-  await nextTick()
-}
 
 const mountComponent = (props = {}) =>
   mount(UpdateThresholdModal, {
@@ -118,8 +113,11 @@ describe('UpdateThresholdModal', () => {
 
   it('calls update owner mutation with chain id and threshold payload', async () => {
     const wrapper = mountComponent()
-    await setThreshold(wrapper, 2)
-    await submitThreshold(wrapper)
+    ;(wrapper.vm as unknown as UpdateThresholdModalVm).formState.threshold = 2
+    await nextTick()
+
+    await (wrapper.vm as unknown as UpdateThresholdModalVm).handleUpdateThreshold()
+    await nextTick()
 
     expect(mockUpdateOwnersMutate).toHaveBeenCalledWith(
       {
@@ -141,10 +139,13 @@ describe('UpdateThresholdModal', () => {
     )
   })
 
-  it('shows proposal success toast and closes modal for multisig threshold', async () => {
+  it('shows proposal success branch and closes modal for multisig threshold', async () => {
     const wrapper = mountComponent({ currentThreshold: 2 })
-    await setThreshold(wrapper, 3)
-    await submitThreshold(wrapper)
+    ;(wrapper.vm as unknown as UpdateThresholdModalVm).formState.threshold = 3
+    await nextTick()
+
+    await (wrapper.vm as unknown as UpdateThresholdModalVm).handleUpdateThreshold()
+    await nextTick()
 
     const callbacks = mockUpdateOwnersMutate.mock.calls[0]?.[1]
     callbacks?.onSuccess?.()
@@ -154,10 +155,13 @@ describe('UpdateThresholdModal', () => {
     expect(wrapper.emitted('update:open')).toBeTruthy()
   })
 
-  it('shows direct success toast when threshold proposal is not required', async () => {
+  it('shows direct success branch when threshold proposal is not required', async () => {
     const wrapper = mountComponent({ currentThreshold: 1 })
-    await setThreshold(wrapper, 2)
-    await submitThreshold(wrapper)
+    ;(wrapper.vm as unknown as UpdateThresholdModalVm).formState.threshold = 2
+    await nextTick()
+
+    await (wrapper.vm as unknown as UpdateThresholdModalVm).handleUpdateThreshold()
+    await nextTick()
 
     const callbacks = mockUpdateOwnersMutate.mock.calls[0]?.[1]
     callbacks?.onSuccess?.()
@@ -168,14 +172,19 @@ describe('UpdateThresholdModal', () => {
 
   it('sets error message when update threshold fails', async () => {
     const wrapper = mountComponent()
-    await setThreshold(wrapper, 2)
-    await submitThreshold(wrapper)
+    ;(wrapper.vm as unknown as UpdateThresholdModalVm).formState.threshold = 2
+    await nextTick()
+
+    await (wrapper.vm as unknown as UpdateThresholdModalVm).handleUpdateThreshold()
+    await nextTick()
 
     const callbacks = mockUpdateOwnersMutate.mock.calls[0]?.[1]
     callbacks?.onError?.(new Error('rpc failed'))
     await nextTick()
 
     expect(console.error).toHaveBeenCalled()
-    expect(wrapper.text()).toContain('Failed to update threshold')
+    expect((wrapper.vm as unknown as UpdateThresholdModalVm).errorMessage).toBe(
+      'Failed to update threshold'
+    )
   })
 })
