@@ -55,22 +55,6 @@ export interface ExecuteTransactionParams {
 }
 
 /**
- * Path parameters for Safe transaction endpoints
- */
-export interface SafeTransactionPathParams {
-  /** Safe transaction hash */
-  safeTxHash: string
-}
-
-/**
- * Request body for approving a transaction
- */
-export interface ApproveTransactionBody {
-  /** Signature data */
-  signature: string
-}
-
-/**
  * Combined parameters for useApproveTransactionMutation
  */
 export interface ApproveTransactionParams {
