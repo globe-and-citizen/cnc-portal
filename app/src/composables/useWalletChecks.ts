@@ -1,6 +1,7 @@
 import { ref, watch } from 'vue'
 import { useConnect, useSwitchChain, injected, useConnection } from '@wagmi/vue'
 import { NETWORK } from '@/constant'
+import { config } from '@/wagmi.config'
 import { log } from '@/utils'
 
 export function useWalletChecks() {
@@ -13,7 +14,10 @@ export function useWalletChecks() {
   const connect = useConnect()
   const connection = useConnection()
   const switchChain = useSwitchChain()
-  // const
+
+  // Use the pre-registered connector when present (the e2e mock wallet),
+  // otherwise fall back to the browser-injected wallet (MetaMask).
+  const connector = config.connectors[0] ?? injected()
 
   // Functions
   async function performChecks() {
@@ -21,17 +25,16 @@ export function useWalletChecks() {
     isProcessing.value = true
     const networkChainId = parseInt(NETWORK.chainId)
 
-    if (!connection.isConnected.value) {
-      connect.mutate({ connector: injected(), chainId: networkChainId })
-    }
-
-    switchChain.mutate({ chainId: networkChainId })
-
-    if (connection.isConnected.value) {
+    try {
+      if (!connection.isConnected.value) {
+        await connect.mutateAsync({ connector, chainId: networkChainId })
+      }
+      await switchChain.mutateAsync({ chainId: networkChainId })
       isSuccess.value = true
-    } else {
+    } catch (error) {
+      // connect / switchChain failures are surfaced by the watchers below
+      log.error('performChecks error', error)
       isProcessing.value = false
-      return
     }
   }
 
