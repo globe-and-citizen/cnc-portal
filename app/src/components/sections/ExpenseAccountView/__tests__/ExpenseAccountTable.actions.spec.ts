@@ -219,4 +219,35 @@ describe('ExpenseAccountTable - Actions and Loading', () => {
       expect(logErrorSpy).toHaveBeenCalled()
     })
   })
+
+  describe('Empty and error states', () => {
+    it('shows an empty message when there are no approvals', () => {
+      vi.mocked(useGetExpensesQuery).mockReturnValue(
+        createMockQueryResponse([]) as ReturnType<typeof useGetExpensesQuery>
+      )
+      const wrapper = createComponent()
+      expect(wrapper.find('[data-test="approvals-empty"]').exists()).toBe(true)
+      expect(wrapper.find('[data-test="approvals-error"]').exists()).toBe(false)
+    })
+
+    it('shows an error message when the approvals fetch fails', () => {
+      vi.mocked(useGetExpensesQuery).mockReturnValue(
+        createMockQueryResponse([], false, new Error('boom')) as ReturnType<
+          typeof useGetExpensesQuery
+        >
+      )
+      const wrapper = createComponent()
+      expect(wrapper.find('[data-test="approvals-error"]').exists()).toBe(true)
+    })
+
+    it('renders an icon-bearing badge for an expired approval', () => {
+      vi.mocked(useGetExpensesQuery).mockReturnValue(
+        createMockQueryResponse([{ ...mockApprovals[0], status: 'expired' }]) as ReturnType<
+          typeof useGetExpensesQuery
+        >
+      )
+      const wrapper = createComponent()
+      expect(wrapper.text()).toContain('expired')
+    })
+  })
 })

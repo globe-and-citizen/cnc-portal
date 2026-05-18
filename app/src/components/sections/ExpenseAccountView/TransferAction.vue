@@ -78,6 +78,7 @@ import { config } from '@/wagmi.config'
 import { ERC20_ABI } from '@/artifacts/abi/erc20'
 import { useERC20Approve } from '@/composables/erc20/writes'
 import { useExpenseAccountTransfer } from '@/composables/expenseAccount/writes'
+import { expenseKeys } from '@/queries'
 import { useQueryClient } from '@tanstack/vue-query'
 import type { TableRow } from '@/types/table'
 import type { TransferData } from '@/types'
@@ -144,7 +145,7 @@ const submitExpenseAccountTransfer = (args: readonly unknown[]) => {
       onSuccess: () => {
         toast.add({ title: 'Transfer Successful', color: 'success' })
         showModal.value = { mount: false, show: false }
-        queryClient.invalidateQueries({ queryKey: ['getExpenseData'] })
+        queryClient.invalidateQueries({ queryKey: expenseKeys.list(teamStore.currentTeamId) })
       },
       onError: (err) => {
         log.error(parseError(err, EXPENSE_ACCOUNT_EIP712_ABI))
