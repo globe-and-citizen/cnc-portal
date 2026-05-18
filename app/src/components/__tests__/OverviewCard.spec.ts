@@ -19,18 +19,18 @@ describe('OverviewCard', () => {
   })
 
   it.each(['info', 'success', 'warning', 'unknown'] as const)(
-    'exposes the %s variant via data-variant',
-    (variant) => {
+    'exposes the %s color via data-color',
+    (color) => {
       const wrapper = mount(OverviewCard, {
         props: {
           title: 'Test Title',
           subtitle: 'Test Subtitle',
-          variant,
+          color,
           cardIcon: 'test-icon.png'
         }
       })
 
-      expect(wrapper.attributes('data-variant')).toBe(variant)
+      expect(wrapper.attributes('data-color')).toBe(color)
     }
   )
 

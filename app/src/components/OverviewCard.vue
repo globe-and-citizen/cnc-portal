@@ -1,5 +1,5 @@
 <template>
-  <div class="w-full rounded-2xl py-6" :class="[bgColor, textColor]" :data-variant="variant">
+  <div class="w-full rounded-2xl py-6" :class="[bgColor, textColor]" :data-color="color">
     <div class="flex flex-col items-center gap-4">
       <img :src="cardIcon" alt="" aria-hidden="true" class="h-16 w-16" data-test="card-icon" />
       <span v-if="!loading" class="text-4xl font-bold" data-test="amount">{{ title }}</span>
@@ -21,7 +21,7 @@ const props = defineProps({
     type: String,
     required: true
   },
-  variant: {
+  color: {
     type: String,
     default: 'primary'
   },
@@ -36,7 +36,7 @@ const props = defineProps({
 })
 
 const bgColor = computed(() => {
-  switch (props.variant) {
+  switch (props.color) {
     case 'info':
       return 'bg-[#D9F1F6]'
     case 'success':
@@ -49,7 +49,7 @@ const bgColor = computed(() => {
 })
 
 const textColor = computed(() => {
-  switch (props.variant) {
+  switch (props.color) {
     case 'info':
       return 'text-[#0C315A]'
     case 'success':
