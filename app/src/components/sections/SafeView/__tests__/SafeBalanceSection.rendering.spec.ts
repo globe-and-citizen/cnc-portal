@@ -5,6 +5,7 @@ import { useStorage } from '@vueuse/core'
 import type { Address } from 'viem'
 import SafeBalanceSection from '../SafeBalanceSection.vue'
 import { mockUseContractBalance, mockUseAccount } from '@/tests/mocks'
+import { mockUserStore } from '@/tests/mocks/store.mock'
 
 // Mock @iconify/vue
 vi.mock('@iconify/vue', () => ({
@@ -22,29 +23,23 @@ const {
   mockUseChainId,
   mockUseTeamStore,
   mockUseCurrencyStore,
-  mockUseUserDataStore,
-
   mockuseGetSafeInfoQuery,
   mockQueryClient,
-  mockUseSafeTransfer
+  mockUseTransferFromSafeMutation
 } = vi.hoisted(() => ({
   mockGetSafeHomeUrl: vi.fn(),
   mockOpenSafeAppUrl: vi.fn(),
   mockUseChainId: vi.fn(),
   mockUseTeamStore: vi.fn(),
   mockUseCurrencyStore: vi.fn(),
-  mockUseUserDataStore: vi.fn(),
   mockuseGetSafeInfoQuery: vi.fn(),
   mockQueryClient: {
     invalidateQueries: vi.fn()
   },
-  // Add the missing useSafeTransfer mock
-  mockUseSafeTransfer: vi.fn(() => ({
-    transferFromSafe: vi.fn(),
-    transferNative: vi.fn(),
-    transferToken: vi.fn(),
-    isTransferring: ref(false),
-    error: ref(null)
+  mockUseTransferFromSafeMutation: vi.fn(() => ({
+    mutate: vi.fn(),
+    isPending: ref(false),
+    reset: vi.fn()
   }))
 }))
 
@@ -54,8 +49,7 @@ vi.mock('@/composables/safe', async (importOriginal) => {
   return {
     ...actual,
     getSafeHomeUrl: mockGetSafeHomeUrl,
-    openSafeAppUrl: mockOpenSafeAppUrl,
-    useSafeTransfer: mockUseSafeTransfer
+    openSafeAppUrl: mockOpenSafeAppUrl
   }
 })
 
@@ -69,6 +63,10 @@ vi.mock('@vueuse/core', async () => {
 
 vi.mock('@/queries/safe.queries', () => ({
   useGetSafeInfoQuery: mockuseGetSafeInfoQuery
+}))
+
+vi.mock('@/queries/safe.mutations', () => ({
+  useTransferFromSafeMutation: mockUseTransferFromSafeMutation
 }))
 
 vi.mock('@tanstack/vue-query', () => ({
@@ -165,7 +163,10 @@ describe('SafeBalanceSection', () => {
 
   const createWrapper = (props = {}) =>
     mount(SafeBalanceSection, {
-      props,
+      props: {
+        address: MOCK_DATA.safeAddress,
+        ...props
+      },
       global: {
         stubs: {
           AddressToolTip: AddressToolTipStub,
@@ -200,9 +201,7 @@ describe('SafeBalanceSection', () => {
       currency: mockCurrency
     })
 
-    mockUseUserDataStore.mockReturnValue({
-      address: ref('0x1234567890123456789012345678901234567890')
-    })
+    mockUserStore.address = MOCK_DATA.safeInfo.owners[0]
 
     vi.mocked(useStorage).mockReturnValue(mockCurrency as never)
 
@@ -261,7 +260,7 @@ describe('SafeBalanceSection', () => {
 
   describe('Transfer Modal', () => {
     it('should disable transfer button for non-owner', async () => {
-      mockUseAccount.address.value = '0x9999999999999999999999999999999999999999'
+      mockUserStore.address = '0x9999999999999999999999999999999999999999'
       wrapper = createWrapper()
 
       const transferButton = wrapper.find('[data-test="transfer-button"]')

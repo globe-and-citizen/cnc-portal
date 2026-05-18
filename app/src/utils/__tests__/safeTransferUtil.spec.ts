@@ -2,7 +2,6 @@ import { describe, it, expect } from 'vitest'
 import { validateSafeTransfer } from '@/utils/safe'
 
 describe('validateSafeTransfer', () => {
-  const validSafeAddress = '0x1111111111111111111111111111111111111111'
   const validRecipient = '0x2222222222222222222222222222222222222222'
   const validOptions = {
     to: validRecipient,
@@ -12,29 +11,15 @@ describe('validateSafeTransfer', () => {
 
   describe('valid inputs', () => {
     it('should return valid for correct safe transfer', () => {
-      const result = validateSafeTransfer(validSafeAddress, validOptions)
+      const result = validateSafeTransfer(validOptions)
       expect(result.isValid).toBe(true)
       expect(result.error).toBeUndefined()
     })
   })
 
-  describe('invalid safe address', () => {
-    it('should reject invalid safe address', () => {
-      const result = validateSafeTransfer('invalid-address', validOptions)
-      expect(result.isValid).toBe(false)
-      expect(result.error).toBe('Invalid Safe address')
-    })
-
-    it('should reject empty safe address', () => {
-      const result = validateSafeTransfer('', validOptions)
-      expect(result.isValid).toBe(false)
-      expect(result.error).toBe('Invalid Safe address')
-    })
-  })
-
   describe('invalid recipient address', () => {
     it('should reject invalid recipient address', () => {
-      const result = validateSafeTransfer(validSafeAddress, {
+      const result = validateSafeTransfer({
         ...validOptions,
         to: 'invalid-recipient'
       })
@@ -43,7 +28,7 @@ describe('validateSafeTransfer', () => {
     })
 
     it('should reject empty recipient address', () => {
-      const result = validateSafeTransfer(validSafeAddress, {
+      const result = validateSafeTransfer({
         ...validOptions,
         to: ''
       })
@@ -54,7 +39,7 @@ describe('validateSafeTransfer', () => {
 
   describe('invalid amount', () => {
     it('should reject zero amount', () => {
-      const result = validateSafeTransfer(validSafeAddress, {
+      const result = validateSafeTransfer({
         ...validOptions,
         amount: '0'
       })
@@ -63,7 +48,7 @@ describe('validateSafeTransfer', () => {
     })
 
     it('should reject negative amount', () => {
-      const result = validateSafeTransfer(validSafeAddress, {
+      const result = validateSafeTransfer({
         ...validOptions,
         amount: '-10'
       })
@@ -72,7 +57,7 @@ describe('validateSafeTransfer', () => {
     })
 
     it('should reject empty amount', () => {
-      const result = validateSafeTransfer(validSafeAddress, {
+      const result = validateSafeTransfer({
         ...validOptions,
         amount: ''
       })
@@ -81,7 +66,7 @@ describe('validateSafeTransfer', () => {
     })
 
     it('should reject undefined amount', () => {
-      const result = validateSafeTransfer(validSafeAddress, {
+      const result = validateSafeTransfer({
         ...validOptions,
         amount: undefined as unknown as string
       })

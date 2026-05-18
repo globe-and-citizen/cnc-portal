@@ -5,6 +5,7 @@ import { useStorage } from '@vueuse/core'
 import type { Address } from 'viem'
 import SafeBalanceSection from '../SafeBalanceSection.vue'
 import { mockUseContractBalance, mockUseAccount } from '@/tests/mocks'
+import { mockUserStore, mockToast } from '@/tests/mocks/store.mock'
 
 const {
   mockGetSafeHomeUrl,
@@ -13,7 +14,10 @@ const {
   mockUseTeamStore,
   mockuseGetSafeInfoQuery,
   mockQueryClient,
-  mockUseSafeTransfer
+  mockTransferMutate,
+  mockTransferReset,
+  mockTransferPending,
+  mockUseTransferFromSafeMutation
 } = vi.hoisted(() => ({
   mockGetSafeHomeUrl: vi.fn(),
   mockOpenSafeAppUrl: vi.fn(),
@@ -23,12 +27,13 @@ const {
   mockQueryClient: {
     invalidateQueries: vi.fn()
   },
-  mockUseSafeTransfer: vi.fn(() => ({
-    transferFromSafe: vi.fn(),
-    transferNative: vi.fn(),
-    transferToken: vi.fn(),
-    isTransferring: ref(false),
-    error: ref(null)
+  mockTransferMutate: vi.fn(),
+  mockTransferReset: vi.fn(),
+  mockTransferPending: { value: false },
+  mockUseTransferFromSafeMutation: vi.fn(() => ({
+    mutate: mockTransferMutate,
+    isPending: mockTransferPending,
+    reset: mockTransferReset
   }))
 }))
 
@@ -38,8 +43,7 @@ vi.mock('@/composables/safe', async (importOriginal) => {
   return {
     ...actual,
     getSafeHomeUrl: mockGetSafeHomeUrl,
-    openSafeAppUrl: mockOpenSafeAppUrl,
-    useSafeTransfer: mockUseSafeTransfer
+    openSafeAppUrl: mockOpenSafeAppUrl
   }
 })
 
@@ -53,6 +57,10 @@ vi.mock('@vueuse/core', async () => {
 
 vi.mock('@/queries/safe.queries', () => ({
   useGetSafeInfoQuery: mockuseGetSafeInfoQuery
+}))
+
+vi.mock('@/queries/safe.mutations', () => ({
+  useTransferFromSafeMutation: mockUseTransferFromSafeMutation
 }))
 
 vi.mock('@tanstack/vue-query', () => ({
@@ -100,7 +108,12 @@ const MOCK_DATA = {
 
 // Component stubs
 const AddressToolTipStub = defineComponent({ template: '<div></div>' })
-const TransferFormStub = defineComponent({ template: '<div><slot name="header" /></div>' })
+const TransferFormStub = defineComponent({
+  emits: ['transfer', 'closeModal', 'update:modelValue'],
+  props: ['modelValue', 'loading', 'tokens'],
+  template:
+    "<div><button data-test=\"emit-transfer\" @click=\"$emit('transfer', { address: { name: 'Recipient', address: '0x3333333333333333333333333333333333333333' }, token: modelValue.token, amount: '1' })\">Transfer</button><button data-test=\"emit-invalid-transfer\" @click=\"$emit('transfer', { address: { name: '', address: '' }, token: modelValue.token, amount: '0' })\">Invalid</button></div>"
+})
 
 describe('SafeBalanceSection', () => {
   let wrapper: VueWrapper
@@ -109,7 +122,10 @@ describe('SafeBalanceSection', () => {
 
   const createWrapper = (props = {}) =>
     mount(SafeBalanceSection, {
-      props,
+      props: {
+        address: MOCK_DATA.safeAddress,
+        ...props
+      },
       global: {
         stubs: {
           AddressToolTip: AddressToolTipStub,
@@ -133,6 +149,7 @@ describe('SafeBalanceSection', () => {
     })
 
     mockUseAccount.address.value = MOCK_DATA.safeInfo.owners[0]
+    mockUserStore.address = MOCK_DATA.safeInfo.owners[0]
 
     mockUseChainId.mockReturnValue(ref(137))
     mockUseTeamStore.mockReturnValue({
@@ -140,14 +157,10 @@ describe('SafeBalanceSection', () => {
       currentTeamMeta: MOCK_DATA.teamMeta
     })
 
-    // Setup useSafeTransfer mock
-    mockUseSafeTransfer.mockReturnValue({
-      transferFromSafe: vi.fn().mockResolvedValue('0xmocktxhash'),
-      transferNative: vi.fn().mockResolvedValue('0xmocktxhash'),
-      transferToken: vi.fn().mockResolvedValue('0xmocktxhash'),
-      isTransferring: ref(false),
-      error: ref(null)
-    })
+    mockTransferPending.value = false
+    mockTransferMutate.mockReset()
+    mockTransferReset.mockReset()
+    mockToast.add.mockReset()
 
     vi.mocked(useStorage).mockReturnValue(mockCurrency as never)
 
@@ -168,46 +181,42 @@ describe('SafeBalanceSection', () => {
     it('should call transferFromSafe when transfer is initiated', async () => {
       wrapper = createWrapper()
 
-      // Mock transfer form interaction
+      await wrapper.find('[data-test="transfer-button"]').trigger('click')
+      await nextTick()
+      await wrapper.find('[data-test="emit-transfer"]').trigger('click')
+      await nextTick()
+
+      expect(mockTransferMutate).toHaveBeenCalledTimes(1)
+      expect(mockTransferMutate).toHaveBeenCalledWith(
+        {
+          safeAddress: MOCK_DATA.safeAddress,
+          options: {
+            to: '0x3333333333333333333333333333333333333333',
+            amount: '1',
+            tokenId: 'ethereum'
+          }
+        },
+        expect.objectContaining({ onSuccess: expect.any(Function), onError: expect.any(Function) })
+      )
+    })
+
+    it('should handle transfer loading state', async () => {
+      mockTransferPending.value = true
+      wrapper = createWrapper()
       await wrapper.find('[data-test="transfer-button"]').trigger('click')
       await nextTick()
 
-      // Verify the transfer composable is available
-      const transferMock = mockUseSafeTransfer()
-      expect(transferMock.transferFromSafe).toBeDefined()
-      expect(transferMock.isTransferring.value).toBe(false)
+      expect(wrapper.findComponent(TransferFormStub).props('loading').value).toBe(true)
     })
 
-    it('should handle transfer loading state', () => {
-      const transferringRef = ref(true)
-      mockUseSafeTransfer.mockReturnValue({
-        transferFromSafe: vi.fn(),
-        transferNative: vi.fn(),
-        transferToken: vi.fn(),
-        isTransferring: transferringRef,
-        error: ref(null)
-      })
-
+    it('should handle transfer validation errors', async () => {
       wrapper = createWrapper()
+      await wrapper.find('[data-test="transfer-button"]').trigger('click')
+      await nextTick()
+      await wrapper.find('[data-test="emit-invalid-transfer"]').trigger('click')
+      await nextTick()
 
-      // Component should react to loading state
-      expect(transferringRef.value).toBe(true)
-    })
-
-    it('should handle transfer errors', () => {
-      const errorRef = ref(new Error('Transfer failed'))
-      mockUseSafeTransfer.mockReturnValue({
-        transferFromSafe: vi.fn(),
-        transferNative: vi.fn(),
-        transferToken: vi.fn(),
-        isTransferring: ref(false),
-        error: errorRef
-      })
-
-      wrapper = createWrapper()
-
-      // Component should handle error state
-      expect(errorRef.value?.message).toBe('Transfer failed')
+      expect(mockTransferMutate).not.toHaveBeenCalled()
     })
   })
 })
