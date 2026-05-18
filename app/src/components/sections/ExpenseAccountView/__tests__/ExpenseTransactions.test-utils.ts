@@ -13,7 +13,8 @@ export const UTableStub = defineComponent({
     columns: { type: Array, required: false },
     loading: { type: Boolean, required: false }
   },
-  template: '<div data-test="expense-table"></div>'
+  template:
+    '<div data-test="expense-table"><slot name="empty" v-if="!data || data.length === 0" /></div>'
 })
 
 export const USelectStub = defineComponent({

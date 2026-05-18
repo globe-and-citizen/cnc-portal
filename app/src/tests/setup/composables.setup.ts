@@ -161,8 +161,10 @@ vi.mock('@/queries/notification.queries', () => ({
 
 /**
  * Mock Expense Queries (expense.queries.ts)
+ * Keep the real `expenseKeys` factory so query-key invalidations resolve correctly.
  */
-vi.mock('@/queries/expense.queries', () => ({
+vi.mock('@/queries/expense.queries', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/queries/expense.queries')>()),
   useGetExpensesQuery: vi.fn(queryMocks.useGetExpensesQuery)
 }))
 
