@@ -1,4 +1,5 @@
-import Safe from '@safe-global/protocol-kit'
+import Safe, { type SafeAccountConfig } from '@safe-global/protocol-kit'
+import type { SafeVersion } from '@safe-global/types-kit'
 import { useConnection } from '@wagmi/vue'
 import { isAddress } from 'viem'
 import { getInjectedProvider } from '@/utils/safe'
@@ -61,9 +62,63 @@ export function useSafeSDK() {
     safeInstanceCache.delete(cacheKey)
   }
 
+  /**
+   * Deploy a new Safe
+   * Initializes a Safe SDK instance with predicted safe configuration
+   *
+   * @param safeAccountConfig - Safe configuration (owners, threshold)
+   * @param deploymentConfig - Deployment configuration (saltNonce, safeVersion)
+   * @returns Safe SDK instance ready for deployment
+   */
+  const deploySafe = async (
+    safeAccountConfig: SafeAccountConfig,
+    deploymentConfig: {
+      saltNonce: string
+      safeVersion: SafeVersion
+    }
+  ): Promise<Safe> => {
+    if (!connection.isConnected.value || !connection.address.value) {
+      throw new Error('Wallet not connected')
+    }
+
+    // Validate owners
+    const { owners, threshold } = safeAccountConfig
+    if (!owners || owners.length === 0) {
+      throw new Error('At least one owner required')
+    }
+
+    if (threshold < 1 || threshold > owners.length) {
+      throw new Error(`Threshold must be between 1 and ${owners.length}`)
+    }
+
+    owners.forEach((owner, i) => {
+      if (!isAddress(owner)) {
+        throw new Error(`Invalid owner address [${i}]: ${owner}`)
+      }
+    })
+
+    const provider = getInjectedProvider()
+
+    const predictedSafe = {
+      safeAccountConfig,
+      safeDeploymentConfig: {
+        saltNonce: deploymentConfig.saltNonce,
+        safeVersion: deploymentConfig.safeVersion
+      }
+    }
+
+    // Initialize Protocol Kit with predicted Safe
+    return Safe.init({
+      provider,
+      signer: connection.address.value,
+      predictedSafe
+    })
+  }
+
   return {
     loadSafe,
     clearCache,
-    clearSafeCache
+    clearSafeCache,
+    deploySafe
   }
 }

@@ -48,7 +48,6 @@ export const mocks = {
   mockUseConnection: vi.fn<[], MockConnection>(),
   mockUseChainId: vi.fn(() => ref(137)),
   mockUseSafeSDK: vi.fn(),
-  mockUseSafeProposal: vi.fn(),
   mockLoadSafe: vi.fn<[string], Promise<MockSafeSDK>>(),
   mockSafeSdk: {
     getThreshold: vi.fn<[], Promise<number>>(),
@@ -66,20 +65,17 @@ export const mocks = {
   } as MockMutation,
   mockProposeMutation: {
     mutateAsync: vi.fn<[Record<string, unknown>], Promise<void>>()
-  } as MockMutation,
-  mockGetInjectedProvider: vi.fn(() => ({}))
+  } as MockMutation
 }
 
 const {
   mockUseConnection,
   mockUseChainId,
   mockUseSafeSDK,
-  mockUseSafeProposal,
   mockLoadSafe,
   mockSafeSdk,
   mockUpdateMutation,
-  mockProposeMutation,
-  mockGetInjectedProvider
+  mockProposeMutation
 } = mocks
 
 vi.mock('@wagmi/vue', () => ({
@@ -88,16 +84,12 @@ vi.mock('@wagmi/vue', () => ({
 }))
 
 vi.mock('@/queries/safe.mutations', () => ({
-  useUpdateSafeOwnersMutation: () => mockUpdateMutation,
+  invalidateSafeQueries: vi.fn(),
   useProposeTransactionMutation: () => mockProposeMutation
 }))
 
 vi.mock('../useSafeSdk', () => ({
   useSafeSDK: mockUseSafeSDK
-}))
-
-vi.mock('../useSafeProposal', () => ({
-  useSafeProposal: mockUseSafeProposal
 }))
 
 vi.mock('@/types/safe', () => ({
@@ -106,10 +98,6 @@ vi.mock('@/types/safe', () => ({
     1: { url: 'https://mainnet.tx.service' },
     42161: { url: 'https://arbitrum.tx.service' }
   }
-}))
-
-vi.mock('@/utils/safe', () => ({
-  getInjectedProvider: mockGetInjectedProvider
 }))
 
 vi.mock('viem', async (importOriginal) => {
@@ -156,13 +144,6 @@ export const setupDefaultMocks = () => {
 
   mockUseSafeSDK.mockReturnValue({
     loadSafe: mockLoadSafe
-  })
-
-  mockUseSafeProposal.mockReturnValue({
-    proposeTransaction: vi.fn().mockImplementation(async () => {
-      await mockProposeMutation.mutateAsync({ chainId: mockUseChainId().value })
-      return MOCK_DATA.txHash
-    })
   })
 
   mockLoadSafe.mockResolvedValue(mockSafeSdk)

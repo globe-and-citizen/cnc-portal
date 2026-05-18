@@ -367,6 +367,6 @@ export const queryMocks: Record<string, () => Record<string, unknown>> = {
   useProposeTransactionMutation: () => createMockMutationResponse(),
   useApproveTransactionMutation: () => createMockMutationResponse(),
   useExecuteTransactionMutation: () => createMockMutationResponse(),
-  useUpdateSafeOwnersMutation: () => createMockMutationResponse(),
+
   useGetSafeTransactionQuery: () => createMockQueryResponse(mockSafeTransactionData)
 }

@@ -112,7 +112,6 @@ export interface SafeSignature {
 }
 
 export interface SafeDeploymentParams {
-  chainId: number
   owners: string[]
   threshold: number
 }
@@ -229,4 +228,40 @@ export interface SafeIncomingTransfersResponse {
   next: string | null
   previous: string | null
   results: SafeIncomingTransfer[]
+}
+
+// Mutation parameter interfaces
+
+export interface DeploySafeParams {
+  owners: string[]
+  threshold: number
+}
+
+export interface ApproveTransactionParams {
+  safeAddress: string
+  safeTxHash: string
+}
+
+export interface ExecuteSafeTransactionParams {
+  safeAddress: string
+  safeTxHash: string
+  transactionData: SafeTransaction
+}
+
+export interface TransferFromSafeParams {
+  safeAddress: string
+  options: {
+    to: string
+    amount: string
+    tokenId?: string
+    tokenAddress?: string
+  }
+}
+
+export interface UpdateSafeOwnersParams {
+  safeAddress: string
+  ownersToAdd?: string[]
+  ownersToRemove?: string[]
+  newThreshold?: number
+  shouldPropose?: boolean
 }

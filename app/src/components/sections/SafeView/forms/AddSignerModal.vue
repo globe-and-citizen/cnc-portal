@@ -96,10 +96,11 @@
 import { computed, ref, watch } from 'vue'
 import { z } from 'zod'
 import { type Address, isAddress } from 'viem'
+import { useChainId } from '@wagmi/vue'
 import MultiSelectMemberInput from '@/components/utils/MultiSelectMemberInput.vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
 
-import { useSafeOwnerManagement } from '@/composables/safe'
+import { useUpdateSafeOwnersMutation } from '@/queries/safe.mutations'
 import type { User } from '@/types'
 import { useToast } from '@nuxt/ui/composables'
 
@@ -117,10 +118,11 @@ const emit = defineEmits<{
 }>()
 
 const toast = useToast()
+const chainId = useChainId()
 const errorMessage = ref('')
 
 // Stores and composables
-const { isUpdating: isLoading, updateOwners } = useSafeOwnerManagement()
+const { mutate: updateOwners, isPending: isLoading } = useUpdateSafeOwnersMutation()
 
 // Modal state
 const isOpen = defineModel<boolean>({ default: false })
@@ -207,30 +209,40 @@ const handleAddSigners = async () => {
   }
 
   errorMessage.value = ''
-  try {
-    const ownersToAdd = validNewSigners.value.map((signer) => signer.address as string)
+  const ownersToAdd = validNewSigners.value.map((signer) => signer.address as string)
 
-    const txHash = await updateOwners(props.safeAddress, {
-      ownersToAdd,
-      shouldPropose: requiresProposal.value
-    })
+  updateOwners(
+    {
+      pathParams: {
+        safeAddress: props.safeAddress
+      },
+      queryParams: {
+        chainId: chainId.value
+      },
+      body: {
+        ownersToAdd,
+        shouldPropose: requiresProposal.value
+      }
+    },
+    {
+      onSuccess: () => {
+        const message = requiresProposal.value
+          ? 'Signer addition proposal submitted successfully'
+          : 'Signers added successfully'
+        toast.add({ title: 'Success', description: message, color: 'success' })
 
-    if (txHash) {
-      const message = requiresProposal.value
-        ? 'Signer addition proposal submitted successfully'
-        : 'Signers added successfully'
-      toast.add({ title: 'Success', description: message, color: 'success' })
-
-      emit('signer-added')
-      handleClose()
+        emit('signer-added')
+        handleClose()
+      },
+      onError: (error) => {
+        console.error('Failed to add signers:', error)
+        errorMessage.value =
+          error instanceof Error && error.message
+            ? `Failed to add signers: ${error.message}`
+            : 'Failed to add signers'
+      }
     }
-  } catch (error) {
-    console.error('Failed to add signers:', error)
-    errorMessage.value =
-      error instanceof Error && error.message
-        ? `Failed to add signers: ${error.message}`
-        : 'Failed to add signers'
-  }
+  )
 }
 
 const handleClose = () => {

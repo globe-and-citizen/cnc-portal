@@ -1,3 +1,5 @@
+import type { SafeSignature, SafeTransferOptions, SafeTransaction } from './safe'
+
 /**
  * Request body for proposing a transaction
  */
@@ -46,9 +48,9 @@ export interface ExecuteTransactionParams {
     /** Chain ID for transaction service lookup */
     chainId: number
   }
-  body?: {
-    /** Optional blockchain transaction hash */
-    txHash?: string
+  body: {
+    /** Transaction data to execute */
+    transactionData: SafeTransaction
   }
 }
 
@@ -58,4 +60,64 @@ export interface ExecuteTransactionParams {
 export interface SafeTransactionPathParams {
   /** Safe transaction hash */
   safeTxHash: string
+}
+
+/**
+ * Request body for approving a transaction
+ */
+export interface ApproveTransactionBody {
+  /** Signature data */
+  signature: string
+}
+
+/**
+ * Combined parameters for useApproveTransactionMutation
+ */
+export interface ApproveTransactionParams {
+  pathParams: {
+    /** Safe address */
+    safeAddress: string
+    /** Safe transaction hash */
+    safeTxHash: string
+  }
+  queryParams: {
+    /** Chain ID for transaction service lookup */
+    chainId: number
+  }
+}
+
+/**
+ * Combined parameters for useUpdateSafeOwnersMutation
+ */
+export interface UpdateSafeOwnersParams {
+  pathParams: {
+    /** Safe address for query invalidation */
+    safeAddress: string
+  }
+  queryParams: {
+    /** Chain ID for transaction service lookup */
+    chainId: number
+  }
+  body: {
+    /** Owners to add */
+    ownersToAdd?: string[]
+    /** Owners to remove */
+    ownersToRemove?: string[]
+    /** New threshold */
+    newThreshold?: number
+    /** Whether to propose the transaction */
+    shouldPropose?: boolean
+    /** Safe transaction hash */
+    safeTxHash?: string
+    /** Signature data */
+    signature?: SafeSignature | string
+  }
+}
+
+/**
+ * Combined parameters for useTransferFromSafeMutation
+ */
+export interface TransferFromSafeParams {
+  safeAddress: string
+  options: SafeTransferOptions
 }

@@ -7,22 +7,10 @@
 export * from '@/types/safe'
 
 // Utilities - use centralized utils
-export {
-  getInjectedProvider,
-  randomSaltNonce,
-  getSafeHomeUrl,
-  getSafeSettingsUrl,
-  openSafeAppUrl
-} from '@/utils/safe'
+export { randomSaltNonce, getSafeHomeUrl, getSafeSettingsUrl, openSafeAppUrl } from '@/utils/safe'
 
 // SDK Management - centralized
 export { useSafeSDK } from './useSafeSdk'
 
 // Mutations (actions)
-export { useSafeDeployment } from './useSafeDeployment'
-export { useSafeProposal } from './useSafeProposal'
-export { useSafeApproval } from './useSafeApproval'
-export { useSafeExecution } from './useSafeExecution'
-export { useSafeOwnerManagement } from './useSafeOwnerManagement'
 export { useSafeTransactionConflicts } from './useSafeTransactionConflicts'
-export { useSafeTransfer } from './useSafeTransfer' // New transfer composable

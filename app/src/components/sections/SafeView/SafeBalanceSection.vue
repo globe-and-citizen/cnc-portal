@@ -124,7 +124,8 @@ import { useContractBalance } from '@/composables/useContractBalance'
 import { useGetSafeInfoQuery } from '@/queries/safe.queries'
 import TransferForm, { type TransferModel } from '@/components/forms/TransferForm.vue'
 import type { TokenOption } from '@/types'
-import { useSafeTransfer } from '@/composables/safe'
+import { useTransferFromSafeMutation } from '@/queries/safe.mutations'
+import { validateSafeTransfer } from '@/utils/safe'
 import DepositSafeForm from '@/components/forms/DepositSafeForm.vue'
 
 const chainId = useChainId()
@@ -168,7 +169,8 @@ const transferModal = ref({
   show: false
 })
 
-const { transferFromSafe, isTransferring } = useSafeTransfer()
+const toast = useToast()
+const { mutate: transferFromSafe, isPending: isTransferring, reset } = useTransferFromSafeMutation()
 
 const { data: safeInfo } = useGetSafeInfoQuery({ pathParams: { safeAddress: props.address } })
 
@@ -218,20 +220,42 @@ const resetTransferValues = () => {
   transferData.value = initialTransferDataValue()
 }
 
-const handleTransfer = async (transferData: TransferModel) => {
+const handleTransfer = (transferData: TransferModel) => {
   const safeAddress = props.address
   if (!safeAddress) return
+
   const options = {
     to: transferData.address.address,
     amount: transferData.amount,
     tokenId: transferData.token.tokenId
   }
 
-  const result = await transferFromSafe(safeAddress, options)
-
-  if (result) {
-    resetTransferValues()
+  const validation = validateSafeTransfer(options)
+  if (!validation.isValid) {
+    toast.add({ title: 'Error', description: validation.error, color: 'error' })
+    return
   }
+
+  transferFromSafe(
+    { safeAddress, options },
+    {
+      onSuccess: () => {
+        toast.add({
+          title: 'Success',
+          description: 'Transfer submitted successfully',
+          color: 'success'
+        })
+        resetTransferValues()
+        reset()
+      },
+      onError: (error) => {
+        const message = error.message.includes('User rejected')
+          ? 'Transaction approval rejected'
+          : error.message
+        toast.add({ title: 'Error', description: message, color: 'error' })
+      }
+    }
+  )
 }
 
 const closeDepositModal = () => {

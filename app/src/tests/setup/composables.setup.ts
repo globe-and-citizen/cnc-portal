@@ -8,7 +8,6 @@ import {
   mockUseApolloQuery,
   mockUseSafeSendTransaction,
   mockUseSafeOwnerManagement,
-  mockUseSafeDeployment,
   mockUseClipboard,
   useQueryClientFn,
   useQueryFn,
@@ -235,7 +234,7 @@ vi.mock('@/queries/safe.mutations', () => ({
   useProposeTransactionMutation: vi.fn(queryMocks.useProposeTransactionMutation),
   useApproveTransactionMutation: vi.fn(queryMocks.useApproveTransactionMutation),
   useExecuteTransactionMutation: vi.fn(queryMocks.useExecuteTransactionMutation),
-  useUpdateSafeOwnersMutation: vi.fn(queryMocks.useUpdateSafeOwnersMutation),
+
   useGetSafeTransactionQuery: vi.fn(queryMocks.useGetSafeTransactionQuery)
 }))
 
@@ -291,14 +290,13 @@ vi.mock('@/composables/transactions/useSafeSendTransaction', () => ({
 }))
 
 /**
- * Mock useSafeOwnerManagement and useSafeDeployment composables
+ * Mock useSafeOwnerManagement composable
  */
 vi.mock('@/composables/safe', async (importOriginal) => {
   const actual: object = await importOriginal()
   return {
     ...actual,
-    useSafeOwnerManagement: vi.fn(() => mockUseSafeOwnerManagement),
-    useSafeDeployment: vi.fn(() => mockUseSafeDeployment)
+    useSafeOwnerManagement: vi.fn(() => mockUseSafeOwnerManagement)
   }
 })
 ;(

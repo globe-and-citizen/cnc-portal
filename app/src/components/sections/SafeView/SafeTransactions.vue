@@ -114,7 +114,7 @@
 <script setup lang="ts">
 /* eslint-disable max-lines */
 import { watch, computed, ref } from 'vue'
-import { useAccount } from '@wagmi/vue'
+import { useAccount, useChainId } from '@wagmi/vue'
 import type { SafeTransaction } from '@/types/safe'
 
 // Components
@@ -172,6 +172,7 @@ const { data: safeInfo } = useGetSafeInfoQuery({
 })
 
 // Safe operations
+const chainId = useChainId()
 const { mutateAsync: approve, isPending: isApproving } = useApproveTransactionMutation()
 const { mutateAsync: execute, isPending: isExecuting } = useExecuteTransactionMutation()
 
@@ -312,8 +313,13 @@ const handleApproveTransaction = async (transaction: SafeTransaction) => {
   approvingTransactions.value.add(transaction.safeTxHash)
   try {
     await approve({
-      safeAddress,
-      safeTxHash: transaction.safeTxHash
+      pathParams: {
+        safeAddress,
+        safeTxHash: transaction.safeTxHash
+      },
+      queryParams: {
+        chainId: chainId.value
+      }
     })
     toast.add({
       title: 'Success',
@@ -321,6 +327,7 @@ const handleApproveTransaction = async (transaction: SafeTransaction) => {
       color: 'success'
     })
   } catch (err) {
+    console.error('Failed to approve transaction:', err)
     const message = err instanceof Error ? err.message : 'Failed to approve transaction'
     toast.add({
       title: 'Error',
@@ -367,9 +374,16 @@ const handleExecuteTransaction = async (transaction: SafeTransaction) => {
   executingTransactions.value.add(transaction.safeTxHash)
   try {
     await execute({
-      safeAddress,
-      safeTxHash: transaction.safeTxHash,
-      transactionData: transaction
+      pathParams: {
+        safeAddress,
+        safeTxHash: transaction.safeTxHash
+      },
+      queryParams: {
+        chainId: chainId.value
+      },
+      body: {
+        transactionData: transaction
+      }
     })
     toast.add({
       title: 'Success',
@@ -377,6 +391,7 @@ const handleExecuteTransaction = async (transaction: SafeTransaction) => {
       color: 'success'
     })
   } catch (err) {
+    console.error('Failed to execute transaction:', err)
     const message = err instanceof Error ? err.message : 'Failed to execute transaction'
     toast.add({
       title: 'Error',

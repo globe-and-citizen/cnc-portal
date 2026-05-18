@@ -54,8 +54,7 @@ const {
   mockLoadSafe,
   mockSafeSdk,
   mockUpdateMutation,
-  mockProposeMutation,
-  mockGetInjectedProvider
+  mockProposeMutation
 } = vi.hoisted(() => ({
   mockUseConnection: vi.fn<[], MockConnection>(),
   mockUseChainId: vi.fn(() => ref(137)),
@@ -77,8 +76,7 @@ const {
   } as MockMutation,
   mockProposeMutation: {
     mutateAsync: vi.fn<[Record<string, unknown>], Promise<void>>()
-  } as MockMutation,
-  mockGetInjectedProvider: vi.fn(() => ({}))
+  } as MockMutation
 }))
 
 // Mock external dependencies
@@ -88,7 +86,7 @@ vi.mock('@wagmi/vue', () => ({
 }))
 
 vi.mock('@/queries/safe.mutations', () => ({
-  useUpdateSafeOwnersMutation: () => mockUpdateMutation,
+  invalidateSafeQueries: vi.fn(),
   useProposeTransactionMutation: () => mockProposeMutation
 }))
 
@@ -102,10 +100,6 @@ vi.mock('@/types/safe', () => ({
     1: { url: 'https://mainnet.tx.service' },
     42161: { url: 'https://arbitrum.tx.service' }
   }
-}))
-
-vi.mock('@/utils/safe', () => ({
-  getInjectedProvider: mockGetInjectedProvider
 }))
 
 vi.mock('viem', async (importOriginal) => {

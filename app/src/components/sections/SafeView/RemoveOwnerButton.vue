@@ -15,12 +15,11 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { useAccount } from '@wagmi/vue'
+import { useAccount, useChainId } from '@wagmi/vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import { type Address } from 'viem'
 
-import { useSafeOwnerManagement } from '@/composables/safe'
-import { log } from '@/utils'
+import { useUpdateSafeOwnersMutation } from '@/queries/safe.mutations'
 
 interface Props {
   ownerAddress: string
@@ -32,8 +31,10 @@ interface Props {
 
 const props = defineProps<Props>()
 
+const toast = useToast()
+const chainId = useChainId()
 const { address: connectedAddress } = useAccount()
-const { updateOwners, isUpdating } = useSafeOwnerManagement()
+const { mutate: updateOwners, isPending: isUpdating } = useUpdateSafeOwnersMutation()
 
 const isRemoving = ref(false)
 
@@ -56,34 +57,43 @@ const isDisabled = computed(() => {
 // Methods
 const handleRemove = async () => {
   if (props.totalOwners <= 1) {
-    log.warn('Cannot remove the last owner', { ownerAddress: props.ownerAddress })
     return
   }
 
   if (isCurrentUserAddress.value) {
-    log.warn('Cannot remove self as owner', { ownerAddress: props.ownerAddress })
     return
   }
 
   isRemoving.value = true
 
-  try {
-    log.info('Attempting to remove owner:', { ownerAddress: props.ownerAddress })
-    const txHash = await updateOwners(props.safeAddress, {
-      ownersToRemove: [props.ownerAddress],
-      shouldPropose: props.threshold >= 2
-    })
-    if (txHash) {
-      log.info('Owner removal transaction submitted:', {
-        txHash,
-        ownerAddress: props.ownerAddress
-      })
+  updateOwners(
+    {
+      pathParams: { safeAddress: props.safeAddress },
+      queryParams: { chainId: chainId.value },
+      body: {
+        ownersToRemove: [props.ownerAddress],
+        shouldPropose: props.threshold >= 2
+      }
+    },
+    {
+      onSuccess: () => {
+        const message =
+          props.threshold >= 2
+            ? 'Owner removal proposal submitted successfully'
+            : 'Owner removed successfully'
+        toast.add({ title: 'Success', description: message, color: 'success' })
+        isRemoving.value = false
+      },
+      onError: (error) => {
+        console.error('Failed to remove owner:', error)
+        const message =
+          error instanceof Error && error.message.includes('User rejected')
+            ? 'Transaction approval rejected'
+            : 'Failed to remove owner'
+        toast.add({ title: 'Error', description: message, color: 'error' })
+        isRemoving.value = false
+      }
     }
-  } catch (error) {
-    const err = error instanceof Error ? error : new Error('Failed to remove owner')
-    log.error('Failed to remove owner:', err, { ownerAddress: props.ownerAddress })
-  } finally {
-    isRemoving.value = false
-  }
+  )
 }
 </script>
