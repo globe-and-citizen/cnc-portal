@@ -91,6 +91,13 @@ export default defineConfig(({ mode }) => {
       host: true,
       port: 5173
     },
+    optimizeDeps: {
+      // Pre-bundle in the initial pass so Vite never re-optimizes mid-session.
+      // `viem/accounts` is pulled in only by the e2e mock connector and would
+      // otherwise be discovered late, triggering an "Outdated Optimize Dep"
+      // reload that breaks Playwright runs against a cold dev server.
+      include: ['viem/accounts']
+    },
     build: {
       sourcemap: true
     },
