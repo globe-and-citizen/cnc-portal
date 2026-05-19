@@ -45,13 +45,14 @@
         label="Cancel"
         @click="handleCancel"
       />
-      <UButton
-        color="primary"
-        type="submit"
-        :loading="submitting"
-        :disabled="isLoading || !isAmountValid"
-        data-test="deposit-button"
-      >
+      <TeamArchivedTooltip v-slot="{ disabled: archivedDisabled }">
+        <UButton
+          color="primary"
+          type="submit"
+          :loading="submitting"
+          :disabled="isLoading || !isAmountValid || archivedDisabled"
+          data-test="deposit-button"
+        >
         {{
           selectedToken?.token.id !== 'native' && currentStep === 1
             ? 'Approval'
@@ -59,13 +60,15 @@
               ? 'Deposit'
               : 'Deposit'
         }}
-      </UButton>
+        </UButton>
+      </TeamArchivedTooltip>
     </div>
   </UForm>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
 import { z } from 'zod'
 import { parseEther, zeroAddress, type Address } from 'viem'
 import { useContractBalance } from '@/composables/useContractBalance'
