@@ -110,14 +110,24 @@ const handleDeploySafe = async () => {
   }
 
   // Save Safe contract to database
-  await createContract({
-    body: {
-      teamId: String(props.teamId),
-      contractAddress: safeAddress,
-      contractType: 'Safe',
-      deployer: userDataStore.address!
-    }
-  })
+  try {
+    await createContract({
+      body: {
+        teamId: String(props.teamId),
+        contractAddress: safeAddress,
+        contractType: 'Safe',
+        deployer: userDataStore.address!
+      }
+    })
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Failed to register Safe contract'
+    toast.add({
+      title: 'Warning',
+      description: `Safe deployed on-chain, but registration failed: ${message}`,
+      color: 'warning'
+    })
+    log.error('Safe registration failed:', err)
+  }
 
   toast.add({
     title: 'Success',

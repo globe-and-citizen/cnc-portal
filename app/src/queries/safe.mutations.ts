@@ -47,8 +47,8 @@ export function useDeploySafeMutation() {
       const deploymentTx = await safeSdk.createSafeDeploymentTransaction()
       const walletClient = await safeSdk.getSafeProvider().getExternalSigner()
 
-      if (!walletClient) {
-        throw new Error('Wallet signer not available')
+      if (!walletClient?.account) {
+        throw new Error('Wallet signer account not available')
       }
 
       const txHash = await walletClient.sendTransaction({
@@ -56,7 +56,7 @@ export function useDeploySafeMutation() {
         to: deploymentTx.to as `0x${string}`,
         data: deploymentTx.data as `0x${string}`,
         value: BigInt(deploymentTx.value || '0'),
-        chain: null
+        chain: undefined
       })
 
       const publicClient = safeSdk.getSafeProvider().getExternalProvider()
