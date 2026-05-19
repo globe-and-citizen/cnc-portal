@@ -644,7 +644,9 @@ describe('Team Controller', () => {
         teamContracts: [],
         members: mockTeam.members.map((m) => ({ ...m, name: mockOwner.name })),
       } as never);
-      vi.spyOn(prisma.memberTeamsData, 'findUnique').mockResolvedValue({ isHidden: false } as never);
+      vi.spyOn(prisma.memberTeamsData, 'findUnique').mockResolvedValue({
+        isHidden: false,
+      } as never);
 
       const response = await request(app).put('/1').send({ isArchived: false });
 

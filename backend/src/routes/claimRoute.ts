@@ -112,12 +112,7 @@ const claimRoutes = express.Router();
  *             $ref: '#/components/schemas/ErrorResponse'
  */
 // Updated to accept JSON with pre-uploaded file attachments
-claimRoutes.post(
-  '/',
-  validateBody(addClaimBodySchema),
-  rejectIfArchived('body.teamId'),
-  addClaim
-);
+claimRoutes.post('/', validateBody(addClaimBodySchema), rejectIfArchived('body.teamId'), addClaim);
 
 /**
  * @openapi

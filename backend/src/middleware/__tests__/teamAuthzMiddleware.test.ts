@@ -20,14 +20,14 @@ vi.mock('../../utils', async () => {
       boardOfDirectorActions: {
         findUnique: vi.fn(),
       },
-    weeklyClaim: {
-      findUnique: vi.fn(),
+      weeklyClaim: {
+        findUnique: vi.fn(),
+      },
+      expense: {
+        findUnique: vi.fn(),
+      },
     },
-    expense: {
-      findUnique: vi.fn(),
-    },
-  },
-};
+  };
 });
 
 describe('rejectIfArchived', () => {

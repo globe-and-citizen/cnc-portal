@@ -178,19 +178,21 @@ describe('archived team guard on write routes', () => {
     it('returns 409 for archived team', async () => {
       mockTeamArchiveLookups(true);
 
-      const response = await request(app).post('/').send({
-        teamId: 1,
-        signature: '0xsig',
-        data: {
-          approvedAddress: OWNER_ADDRESS,
-          amount: 150,
-          frequencyType: 3,
-          customFrequency: 0,
-          tokenAddress: '0x1111111111111111111111111111111111111111',
-          startDate: START_DATE,
-          endDate: END_DATE,
-        },
-      });
+      const response = await request(app)
+        .post('/')
+        .send({
+          teamId: 1,
+          signature: '0xsig',
+          data: {
+            approvedAddress: OWNER_ADDRESS,
+            amount: 150,
+            frequencyType: 3,
+            customFrequency: 0,
+            tokenAddress: '0x1111111111111111111111111111111111111111',
+            startDate: START_DATE,
+            endDate: END_DATE,
+          },
+        });
 
       expect(response.status).toBe(409);
     });
@@ -221,9 +223,7 @@ describe('archived team guard on write routes', () => {
       } as never);
       mockTeamArchiveLookups(true);
 
-      const response = await request(app)
-        .put('/1')
-        .send({ minutesWorked: 60, memo: 'updated' });
+      const response = await request(app).put('/1').send({ minutesWorked: 60, memo: 'updated' });
 
       expect(response.status).toBe(409);
     });
@@ -250,12 +250,14 @@ describe('archived team guard on write routes', () => {
     it('returns 409 for archived team', async () => {
       mockTeamArchiveLookups(true);
 
-      const response = await request(app).put('/setWage').send({
-        teamId: 1,
-        userAddress: OWNER_ADDRESS,
-        maximumHoursPerWeek: 40,
-        ratePerHour: [{ type: 'cash', amount: 25 }],
-      });
+      const response = await request(app)
+        .put('/setWage')
+        .send({
+          teamId: 1,
+          userAddress: OWNER_ADDRESS,
+          maximumHoursPerWeek: 40,
+          ratePerHour: [{ type: 'cash', amount: 25 }],
+        });
 
       expect(response.status).toBe(409);
     });
