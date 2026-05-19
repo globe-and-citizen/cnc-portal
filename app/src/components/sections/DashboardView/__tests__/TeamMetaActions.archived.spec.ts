@@ -22,7 +22,10 @@ const archivedTeamMeta = {
   }
 }
 
-const activeTeamMeta = { ...archivedTeamMeta, data: { ...archivedTeamMeta.data, isArchived: false } }
+const activeTeamMeta = {
+  ...archivedTeamMeta,
+  data: { ...archivedTeamMeta.data, isArchived: false }
+}
 
 vi.mock('@/queries/team.queries', () => ({
   useUpdateTeamMutation: vi.fn(() => ({
@@ -130,7 +133,9 @@ describe('archived team write guard (TeamMetaActions)', () => {
         }
       })
 
-      expect(wrapper.find('[data-test="add-members-submit"]').attributes('disabled')).toBeUndefined()
+      expect(
+        wrapper.find('[data-test="add-members-submit"]').attributes('disabled')
+      ).toBeUndefined()
     })
   })
 
@@ -149,7 +154,9 @@ describe('archived team write guard (TeamMetaActions)', () => {
         }
       })
 
-      expect(wrapper.find('[data-test="invest-in-safe-button"]').attributes('disabled')).toBeDefined()
+      expect(
+        wrapper.find('[data-test="invest-in-safe-button"]').attributes('disabled')
+      ).toBeDefined()
     })
 
     it('does not block invest via archive guard when team is not archived', () => {
@@ -208,12 +215,16 @@ describe('archived team write guard (TeamMetaActions)', () => {
         }
       })
 
-      expect(wrapper.find('[data-test="team-meta-update-open"]').attributes('disabled')).toBeDefined()
+      expect(
+        wrapper.find('[data-test="team-meta-update-open"]').attributes('disabled')
+      ).toBeDefined()
 
       teamData.value = { ...teamData.value, isArchived: false }
       await wrapper.vm.$nextTick()
 
-      expect(wrapper.find('[data-test="team-meta-update-open"]').attributes('disabled')).toBeUndefined()
+      expect(
+        wrapper.find('[data-test="team-meta-update-open"]').attributes('disabled')
+      ).toBeUndefined()
     })
   })
 })

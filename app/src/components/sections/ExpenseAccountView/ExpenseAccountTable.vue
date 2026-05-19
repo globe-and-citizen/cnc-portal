@@ -4,40 +4,40 @@
     <UTable :data="filteredApprovals" :columns="columns" :loading="isFetchingExpenseData">
       <template #action-cell="{ row: { original: row } }">
         <UTooltip :text="archivedTooltip">
-        <UButton
-          v-if="row.status == 'enabled'"
-          color="error"
-          data-test="disable-button"
-          size="sm"
-          :loading="isLoadingSetStatus && signatureToUpdate === row.signature"
-          :disabled="isWriteDisabled || !(contractOwnerAddress === userDataStore.address)"
-          @click="
-            () => {
-              isLoadingSetStatus = true
-              signatureToUpdate = row.signature
-              deactivateApproval(row.signature as `0x{string}`)
-            }
-          "
-          label="Disable"
-        />
+          <UButton
+            v-if="row.status == 'enabled'"
+            color="error"
+            data-test="disable-button"
+            size="sm"
+            :loading="isLoadingSetStatus && signatureToUpdate === row.signature"
+            :disabled="isWriteDisabled || !(contractOwnerAddress === userDataStore.address)"
+            @click="
+              () => {
+                isLoadingSetStatus = true
+                signatureToUpdate = row.signature
+                deactivateApproval(row.signature as `0x{string}`)
+              }
+            "
+            label="Disable"
+          />
         </UTooltip>
         <UTooltip :text="archivedTooltip">
-        <UButton
-          v-if="row.status == 'disabled'"
-          color="info"
-          data-test="enable-button"
-          size="sm"
-          :loading="isLoadingSetStatus && signatureToUpdate === row.signature"
-          :disabled="isWriteDisabled || !(contractOwnerAddress === userDataStore.address)"
-          @click="
-            () => {
-              isLoadingSetStatus = true
-              signatureToUpdate = row.signature
-              activateApproval(row.signature as `0x{string}`)
-            }
-          "
-          label="Enable"
-        />
+          <UButton
+            v-if="row.status == 'disabled'"
+            color="info"
+            data-test="enable-button"
+            size="sm"
+            :loading="isLoadingSetStatus && signatureToUpdate === row.signature"
+            :disabled="isWriteDisabled || !(contractOwnerAddress === userDataStore.address)"
+            @click="
+              () => {
+                isLoadingSetStatus = true
+                signatureToUpdate = row.signature
+                activateApproval(row.signature as `0x{string}`)
+              }
+            "
+            label="Enable"
+          />
         </UTooltip>
       </template>
       <template #member-cell="{ row: { original: row } }">

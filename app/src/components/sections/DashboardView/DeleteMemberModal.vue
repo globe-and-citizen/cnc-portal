@@ -81,9 +81,7 @@ const emits = defineEmits<{
 
 const showModal = ref(false)
 const { isWriteDisabled, archivedTooltip } = useTeamWriteGuard()
-const deleteMemberTooltip = computed(
-  () => archivedTooltip.value ?? 'Remove member'
-)
+const deleteMemberTooltip = computed(() => archivedTooltip.value ?? 'Remove member')
 
 const toast = useToast()
 const {

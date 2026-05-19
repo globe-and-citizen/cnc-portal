@@ -34,12 +34,12 @@
 
       <template #actions-cell="{ row: { original: row } }">
         <div class="flex w-full">
-          <UTooltip
-            :text="mintIndividualTooltip"
-          >
+          <UTooltip :text="mintIndividualTooltip">
             <UButton
               color="primary"
-              :disabled="isWriteDisabled || userStore.address != teamStore.currentTeam?.ownerAddress"
+              :disabled="
+                isWriteDisabled || userStore.address != teamStore.currentTeam?.ownerAddress
+              "
               data-test="mint-individual"
               @click="openMintIndividualModal(row.shareholder)"
             >

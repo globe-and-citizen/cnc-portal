@@ -15,12 +15,7 @@
         variant="soft"
         description="You don't have permission to add members."
       />
-      <UAlert
-        v-else
-        color="error"
-        variant="soft"
-        :description="addMembersErrorMessage"
-      />
+      <UAlert v-else color="error" variant="soft" :description="addMembersErrorMessage" />
     </template>
 
     <TeamArchivedTooltip v-slot="{ disabled: archivedDisabled }">

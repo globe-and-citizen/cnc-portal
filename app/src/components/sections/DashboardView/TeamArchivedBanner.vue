@@ -39,11 +39,7 @@ const archivedDescription =
   'This team is frozen. Unarchive to edit settings, members, contracts, and claims.'
 
 const toast = useToast()
-const {
-  isPending: teamIsUpdating,
-  mutate: updateTeamMutate,
-  reset
-} = useUpdateTeamMutation()
+const { isPending: teamIsUpdating, mutate: updateTeamMutate, reset } = useUpdateTeamMutation()
 
 function unarchiveTeam() {
   const teamId = teamStore.currentTeamId

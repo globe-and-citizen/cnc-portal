@@ -2,42 +2,42 @@
   <div class="flex items-center gap-2">
     <UTooltip :text="archivedTooltip">
       <UButton
-      :color="row.paused ? 'info' : 'error'"
-      size="sm"
-      @click="changeContractStatus(row.paused)"
-      :loading="isLoadingPauseContract || isLoadingUnpauseContract"
-      :disabled="isWriteDisabled || (row.owner !== userDataStore.address && !isBodAction)"
-    >
-      <IconifyIcon
-        v-if="!isLoadingPauseContract && !isLoadingUnpauseContract"
-        :icon="`heroicons:${row.paused ? 'play' : 'pause-circle'}-solid`"
+        :color="row.paused ? 'info' : 'error'"
+        size="sm"
+        @click="changeContractStatus(row.paused)"
+        :loading="isLoadingPauseContract || isLoadingUnpauseContract"
+        :disabled="isWriteDisabled || (row.owner !== userDataStore.address && !isBodAction)"
+      >
+        <IconifyIcon
+          v-if="!isLoadingPauseContract && !isLoadingUnpauseContract"
+          :icon="`heroicons:${row.paused ? 'play' : 'pause-circle'}-solid`"
+        />
+      </UButton>
+    </UTooltip>
+    <UTooltip :text="archivedTooltip">
+      <UButton
+        color="success"
+        variant="outline"
+        size="sm"
+        @click="showModal = true"
+        :disabled="isWriteDisabled || (row.owner !== userDataStore.address && !isBodAction)"
+        label="Transfer Ownership"
       />
-    </UButton>
     </UTooltip>
     <UTooltip :text="archivedTooltip">
       <UButton
-      color="success"
-      variant="outline"
-      size="sm"
-      @click="showModal = true"
-      :disabled="isWriteDisabled || (row.owner !== userDataStore.address && !isBodAction)"
-      label="Transfer Ownership"
-    />
-    </UTooltip>
-    <UTooltip :text="archivedTooltip">
-      <UButton
-      :disabled="isWriteDisabled || !isBodAction || formatedActions.length <= 0"
-      color="success"
-      variant="outline"
-      size="sm"
-      @click="
-        () => {
-          showApprovalModal = true
-          currentStep = 1
-        }
-      "
-      label="Pending Actions"
-    />
+        :disabled="isWriteDisabled || !isBodAction || formatedActions.length <= 0"
+        color="success"
+        variant="outline"
+        size="sm"
+        @click="
+          () => {
+            showApprovalModal = true
+            currentStep = 1
+          }
+        "
+        label="Pending Actions"
+      />
     </UTooltip>
 
     <UModal

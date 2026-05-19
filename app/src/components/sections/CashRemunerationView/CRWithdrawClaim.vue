@@ -28,14 +28,14 @@
   </a>
   <UTooltip v-else :text="archivedTooltip">
     <UButton
-    :disabled="disabled || isTeamArchived"
-    :loading="withdrawTx.isPending.value"
-    color="warning"
-    data-test="withdraw-button"
-    size="sm"
-    @click="async () => await withdrawClaim()"
-    label="Withdraw"
-  />
+      :disabled="disabled || isTeamArchived"
+      :loading="withdrawTx.isPending.value"
+      color="warning"
+      data-test="withdraw-button"
+      size="sm"
+      @click="async () => await withdrawClaim()"
+      label="Withdraw"
+    />
   </UTooltip>
 </template>
 

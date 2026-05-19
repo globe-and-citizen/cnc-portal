@@ -92,10 +92,7 @@
             :member="{ name: row.original.name, address: row.original.address }"
             :teamId="teamId"
           />
-          <UTooltip
-            :text="pauseWageTooltip(row.original.currentWage)"
-            :delay-duration="0"
-          >
+          <UTooltip :text="pauseWageTooltip(row.original.currentWage)" :delay-duration="0">
             <UButton
               :color="row.original.currentWage?.disabled ? 'success' : 'warning'"
               :loading="isToggling"

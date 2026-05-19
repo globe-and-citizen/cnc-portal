@@ -11,13 +11,13 @@
         :color="electionStatus?.text === 'Active' ? 'primary' : undefined"
         :disabled="isVoteNowDisabled"
       >
-      {{
-        electionStatus?.text === 'Active'
-          ? 'Vote Now'
-          : electionStatus?.text == 'Completed'
-            ? 'View Results'
-            : 'View Details'
-      }}
+        {{
+          electionStatus?.text === 'Active'
+            ? 'Vote Now'
+            : electionStatus?.text == 'Completed'
+              ? 'View Results'
+              : 'View Details'
+        }}
       </UButton>
     </UTooltip>
     <PublishResult

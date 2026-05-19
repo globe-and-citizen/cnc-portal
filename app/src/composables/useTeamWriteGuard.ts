@@ -16,9 +16,7 @@ export function useTeamWriteGuard(teamRef?: MaybeRefOrGetter<Team | null | undef
 
   const isWriteDisabled = computed(() => isTeamArchived.value)
 
-  const archivedTooltip = computed(() =>
-    isTeamArchived.value ? TEAM_ARCHIVED_TOOLTIP : undefined
-  )
+  const archivedTooltip = computed(() => (isTeamArchived.value ? TEAM_ARCHIVED_TOOLTIP : undefined))
 
   const mergeWriteDisabled = (disabled?: MaybeRefOrGetter<boolean>) =>
     computed(() => Boolean(toValue(disabled)) || isWriteDisabled.value)

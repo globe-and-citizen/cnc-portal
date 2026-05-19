@@ -53,13 +53,13 @@
           :disabled="isLoading || !isAmountValid || archivedDisabled"
           data-test="deposit-button"
         >
-        {{
-          selectedToken?.token.id !== 'native' && currentStep === 1
-            ? 'Approval'
-            : currentStep === 2
-              ? 'Deposit'
-              : 'Deposit'
-        }}
+          {{
+            selectedToken?.token.id !== 'native' && currentStep === 1
+              ? 'Approval'
+              : currentStep === 2
+                ? 'Deposit'
+                : 'Deposit'
+          }}
         </UButton>
       </TeamArchivedTooltip>
     </div>

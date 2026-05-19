@@ -2,21 +2,21 @@
   <div v-if="safeDepositRouterAddress">
     <UTooltip :text="multiplierTooltip">
       <ActionButton
-      icon="heroicons:calculator"
-      icon-bg="bg-amber-50 dark:bg-amber-950"
-      icon-color="text-amber-700 dark:text-amber-400"
-      title="Set Multiplier"
-      tone-class="border-orange-200 bg-orange-50/60 hover:border-orange-300 hover:bg-orange-100/70 disabled:border-orange-200 disabled:bg-orange-50/50 dark:border-orange-900 dark:bg-orange-950/30 dark:hover:border-orange-800 dark:hover:bg-orange-900/40 dark:disabled:border-orange-900 dark:disabled:bg-orange-950/30"
-      :loading="isLoading"
-      :disabled="isWriteDisabled || !canManageMultiplier || isLoading"
-      :badge="
-        !isMultiplierLoading && formattedCurrentMultiplier !== '0'
-          ? `${formattedCurrentMultiplier}x`
-          : undefined
-      "
-      data-test="set-compensation-multiplier-button"
-      @click="openModal"
-    />
+        icon="heroicons:calculator"
+        icon-bg="bg-amber-50 dark:bg-amber-950"
+        icon-color="text-amber-700 dark:text-amber-400"
+        title="Set Multiplier"
+        tone-class="border-orange-200 bg-orange-50/60 hover:border-orange-300 hover:bg-orange-100/70 disabled:border-orange-200 disabled:bg-orange-50/50 dark:border-orange-900 dark:bg-orange-950/30 dark:hover:border-orange-800 dark:hover:bg-orange-900/40 dark:disabled:border-orange-900 dark:disabled:bg-orange-950/30"
+        :loading="isLoading"
+        :disabled="isWriteDisabled || !canManageMultiplier || isLoading"
+        :badge="
+          !isMultiplierLoading && formattedCurrentMultiplier !== '0'
+            ? `${formattedCurrentMultiplier}x`
+            : undefined
+        "
+        data-test="set-compensation-multiplier-button"
+        @click="openModal"
+      />
     </UTooltip>
 
     <UModal

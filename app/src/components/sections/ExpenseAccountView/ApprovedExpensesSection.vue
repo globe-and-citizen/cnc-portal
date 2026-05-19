@@ -7,8 +7,7 @@
           <UButton
             color="success"
             :disabled="
-              isWriteDisabled ||
-              !(userDataStore.address === contractOwnerAddress || isBodAction())
+              isWriteDisabled || !(userDataStore.address === contractOwnerAddress || isBodAction())
             "
             @click="
               () => {
