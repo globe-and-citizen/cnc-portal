@@ -4,20 +4,30 @@
     title="Update Company Details"
     description="Update your company name and description to keep your profile current and accurate"
   >
-    <UButton
-      size="sm"
-      color="secondary"
-      icon="i-lucide-edit"
-      label="Update"
-      data-test="team-meta-update-open"
-      @click="prefillUpdateForm"
-    />
+    <TeamArchivedTooltip v-slot="{ disabled: archivedDisabled }">
+      <UButton
+        size="sm"
+        color="secondary"
+        icon="i-lucide-edit"
+        label="Update"
+        data-test="team-meta-update-open"
+        :disabled="archivedDisabled"
+        @click="prefillUpdateForm"
+      />
+    </TeamArchivedTooltip>
     <template #body>
       <UAlert
-        v-if="updateTeamError"
+        v-if="archivedTeamErrorMessage"
+        color="warning"
+        variant="soft"
+        :description="archivedTeamErrorMessage"
+        class="mb-4"
+      />
+      <UAlert
+        v-else-if="updateTeamError"
         color="error"
         variant="soft"
-        :description="updateTeamError.message"
+        :description="getAxiosErrorMessage(updateTeamError, 'Failed to update company')"
         class="mb-4"
       />
       <UForm
@@ -67,6 +77,9 @@ import { ref } from 'vue'
 import { z } from 'zod'
 import { useTeamStore } from '@/stores'
 import { useUpdateTeamMutation } from '@/queries/team.queries'
+import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
+import { useArchivedTeamMutationError } from '@/composables/useArchivedTeamMutationError'
+import { getAxiosErrorMessage } from '@/utils/errorUtil'
 
 const showUpdateModal = ref(false)
 const updateTeamInput = ref({ name: '', description: '' })
@@ -84,6 +97,8 @@ const {
   mutate: updateTeamMutate,
   reset
 } = useUpdateTeamMutation()
+
+const archivedTeamErrorMessage = useArchivedTeamMutationError(() => updateTeamError.value)
 
 function getRequiredTeamId(): string | null {
   const teamId = teamStore.currentTeamId

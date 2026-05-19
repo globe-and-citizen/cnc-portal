@@ -5,12 +5,13 @@
     description="Confirm removing a member from the team permanently."
     :ui="{ content: 'rounded-2xl' }"
   >
-    <UTooltip text="Remove member" :delay-duration="0">
+    <UTooltip :text="deleteMemberTooltip" :delay-duration="0">
       <UButton
         color="error"
         size="lg"
         icon="heroicons-outline:trash"
         data-test="delete-member-button"
+        :disabled="isWriteDisabled"
         @click="showModal = true"
       />
     </UTooltip>
@@ -35,10 +36,7 @@
           v-if="deleteError"
           color="error"
           variant="soft"
-          :description="
-            (deleteError as AxiosError<{ message?: string }>).response?.data?.message ??
-            'Failed to remove member'
-          "
+          :description="getAxiosErrorMessage(deleteError, 'Failed to remove member')"
           data-test="delete-member-error"
         />
 
@@ -66,12 +64,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
+import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
+import { getAxiosErrorMessage } from '@/utils/errorUtil'
 import type { Member } from '@/types'
 import { useDeleteMemberMutation } from '@/queries/member.queries'
 import UserComponent from '@/components/UserComponent.vue'
-import type { AxiosError } from 'axios'
-
 const props = defineProps<{
   member: Partial<Member>
   teamId: number | string
@@ -82,6 +80,10 @@ const emits = defineEmits<{
 }>()
 
 const showModal = ref(false)
+const { isWriteDisabled, archivedTooltip } = useTeamWriteGuard()
+const deleteMemberTooltip = computed(
+  () => archivedTooltip.value ?? 'Remove member'
+)
 
 const toast = useToast()
 const {
