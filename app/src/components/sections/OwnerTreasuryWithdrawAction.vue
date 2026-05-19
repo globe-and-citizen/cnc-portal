@@ -1,13 +1,15 @@
 <template>
   <div v-if="hasTheRight" class="flex justify-end gap-2">
-    <UButton
-      color="warning"
-      size="sm"
-      :disabled="!hasWithdrawableBalance || isLoadingAction"
-      data-test="owner-withdraw-button"
-      label="Withdraw"
-      @click="openWithdrawModal"
-    />
+    <TeamArchivedTooltip v-slot="{ disabled: archivedDisabled }">
+      <UButton
+        color="warning"
+        size="sm"
+        :disabled="!hasWithdrawableBalance || isLoadingAction || archivedDisabled"
+        data-test="owner-withdraw-button"
+        label="Withdraw"
+        @click="openWithdrawModal"
+      />
+    </TeamArchivedTooltip>
 
     <UModal
       v-if="withdrawModal.mount"
@@ -77,6 +79,7 @@ import { useBodAddAction } from '@/composables/bod/writes'
 import { useBodIsBodAction } from '@/composables/bod/reads'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useChainId } from '@wagmi/vue'
+import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
 
 type WithdrawContractType = Extract<ContractType, 'CashRemunerationEIP712' | 'ExpenseAccountEIP712'>
 
