@@ -1,4 +1,4 @@
-import { type Address, encodeFunctionData, erc20Abi, parseEther, parseUnits, isAddress } from 'viem'
+import { type Address, encodeFunctionData, erc20Abi, parseEther, parseUnits } from 'viem'
 import { getTxServiceUrl } from './safe'
 import { type ProposeTransactionParams } from '@/types/safe'
 import { type ProposeTransactionBody } from '@/types/safe.mutation'
