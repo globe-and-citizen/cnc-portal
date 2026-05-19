@@ -14,13 +14,17 @@
           <div class="flex items-center justify-between">
             <span>Advertise Contract</span>
             <div>
-              <UButton
-                color="primary"
-                :disabled="teamStore.currentTeam?.ownerAddress != userStore.address"
-                data-test="createAddCampaign"
-                @click="showAdCampaignModal = { mount: true, show: true }"
-                label="Deploy Advertise Contract"
-              />
+              <TeamArchivedTooltip v-slot="{ disabled: archivedDisabled }">
+                <UButton
+                  color="primary"
+                  :disabled="
+                    teamStore.currentTeam?.ownerAddress != userStore.address || archivedDisabled
+                  "
+                  data-test="createAddCampaign"
+                  @click="openAdCampaignModal"
+                  label="Deploy Advertise Contract"
+                />
+              </TeamArchivedTooltip>
             </div>
           </div>
         </template>
@@ -48,9 +52,17 @@ import { useUserDataStore } from '@/stores/user'
 import { useTeamStore } from '@/stores'
 
 import CreateAddCampaign from '@/components/sections/ContractManagementView/forms/CreateAddCampaign.vue'
+import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
+import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 
 const teamStore = useTeamStore()
 const userStore = useUserDataStore()
+const { isWriteDisabled } = useTeamWriteGuard()
 
 const showAdCampaignModal = ref({ mount: false, show: false })
+
+function openAdCampaignModal() {
+  if (isWriteDisabled.value) return
+  showAdCampaignModal.value = { mount: true, show: true }
+}
 </script>

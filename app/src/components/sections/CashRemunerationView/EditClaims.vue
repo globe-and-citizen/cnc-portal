@@ -7,7 +7,7 @@
       :is-loading="isUpdating"
       :restrict-submit="isRestricted"
       :existing-files="existingFiles"
-      :error-message="updateClaimError?.message ?? ''"
+      :error-message="updateClaimErrorMessage"
       error-title="Failed to update claim"
       @submit="updateClaim"
       @cancel="$emit('close')"
@@ -23,6 +23,7 @@ import { useSubmitRestriction } from '@/composables'
 import { useTeamStore } from '@/stores'
 import type { Claim, ClaimFormData, ClaimSubmitPayload } from '@/types'
 import { useEditClaimWithFilesMutation } from '@/queries/weeklyClaim.queries'
+import { getAxiosErrorMessage } from '@/utils/errorUtil'
 
 const props = defineProps<{
   claim: Claim
@@ -104,6 +105,12 @@ const {
   isPending: isUpdating,
   error: updateClaimError
 } = useEditClaimWithFilesMutation()
+
+const updateClaimErrorMessage = computed(() =>
+  updateClaimError.value
+    ? getAxiosErrorMessage(updateClaimError.value, 'Failed to update claim')
+    : ''
+)
 
 const updateClaim = async (data: ClaimSubmitPayload & { files?: File[] }) => {
   if (!teamId.value) {

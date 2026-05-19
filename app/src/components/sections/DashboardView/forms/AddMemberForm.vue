@@ -4,7 +4,13 @@
 
     <template v-if="addMembersError">
       <UAlert
-        v-if="addMembersError?.status === 401"
+        v-if="archivedTeamErrorMessage"
+        color="warning"
+        variant="soft"
+        :description="archivedTeamErrorMessage"
+      />
+      <UAlert
+        v-else-if="isUnauthorizedError"
         color="warning"
         variant="soft"
         description="You don't have permission to add members."
@@ -13,24 +19,30 @@
         v-else
         color="error"
         variant="soft"
-        description="Something went wrong. Unable to add members."
+        :description="addMembersErrorMessage"
       />
     </template>
 
-    <UButton
-      color="primary"
-      class="justify-center"
-      :loading="addMembersLoading"
-      :disabled="addMembersLoading"
-      @click="handleAddMembers"
-      label="Add Members"
-    />
+    <TeamArchivedTooltip v-slot="{ disabled: archivedDisabled }">
+      <UButton
+        color="primary"
+        class="justify-center"
+        :loading="addMembersLoading"
+        :disabled="addMembersLoading || archivedDisabled"
+        data-test="add-members-submit"
+        @click="handleAddMembers"
+        label="Add Members"
+      />
+    </TeamArchivedTooltip>
   </div>
 
   <hr class="my-0" />
 </template>
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
+import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
+import { useArchivedTeamMutationError } from '@/composables/useArchivedTeamMutationError'
+import { getAxiosErrorMessage } from '@/utils/errorUtil'
 import MultiSelectMemberInput from '@/components/utils/MultiSelectMemberInput.vue'
 import type { Member } from '@/types'
 import { useAddMembersMutation, type MemberInput } from '@/queries/member.queries'
@@ -50,6 +62,16 @@ const {
   isPending: addMembersLoading,
   error: addMembersError
 } = useAddMembersMutation()
+
+const archivedTeamErrorMessage = useArchivedTeamMutationError(() => addMembersError.value)
+
+const isUnauthorizedError = computed(
+  () => (addMembersError.value as { response?: { status?: number } })?.response?.status === 401
+)
+
+const addMembersErrorMessage = computed(() =>
+  getAxiosErrorMessage(addMembersError.value, 'Something went wrong. Unable to add members.')
+)
 
 const handleAddMembers = async () => {
   executeAddMembers(

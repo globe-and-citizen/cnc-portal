@@ -77,15 +77,17 @@
             Cancel
           </UButton>
 
-          <UButton
-            color="primary"
-            type="submit"
-            :disabled="!canSubmit || isLoading"
-            :loading="isLoading"
-            data-test="add-signers-button"
-          >
-            {{ requiresProposal ? 'Propose' : 'Execute' }} Add Signers
-          </UButton>
+          <TeamArchivedTooltip v-slot="{ disabled: archivedDisabled }">
+            <UButton
+              color="primary"
+              type="submit"
+              :disabled="!canSubmit || isLoading || archivedDisabled"
+              :loading="isLoading"
+              data-test="add-signers-button"
+            >
+              {{ requiresProposal ? 'Propose' : 'Execute' }} Add Signers
+            </UButton>
+          </TeamArchivedTooltip>
         </div>
       </UForm>
     </template>
@@ -102,6 +104,7 @@ import { Icon as IconifyIcon } from '@iconify/vue'
 import { useSafeOwnerManagement } from '@/composables/safe'
 import type { User } from '@/types'
 import { useToast } from '@nuxt/ui/composables'
+import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
 
 interface Props {
   safeAddress: Address

@@ -69,15 +69,17 @@
           @click="emit('close-modal')"
           label="Cancel"
         />
-        <UButton
-          type="submit"
-          :loading="isMintPending"
-          :disabled="isMintPending"
-          color="primary"
-          class="text-center"
-          data-test="submit-button"
-          label="Issue tokens"
-        />
+        <TeamArchivedTooltip v-slot="{ disabled: archivedDisabled }">
+          <UButton
+            type="submit"
+            :loading="isMintPending"
+            :disabled="isMintPending || archivedDisabled"
+            color="primary"
+            class="text-center"
+            data-test="submit-button"
+            label="Issue tokens"
+          />
+        </TeamArchivedTooltip>
       </div>
     </div>
   </UForm>
@@ -91,6 +93,7 @@ import { useReadContract } from '@wagmi/vue'
 import SelectMemberContractsInput from '@/components/utils/SelectMemberContractsInput.vue'
 import { INVESTOR_ABI } from '@/artifacts/abi/investors'
 import { useTeamStore } from '@/stores'
+import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
 import { useIndividualMint } from '@/composables/investor/writes'
 import { log } from '@/utils'
 import { useQueryClient } from '@tanstack/vue-query'

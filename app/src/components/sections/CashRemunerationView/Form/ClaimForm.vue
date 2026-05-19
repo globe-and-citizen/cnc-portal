@@ -124,16 +124,18 @@
       >
         Cancel
       </UButton>
-      <UButton
-        type="submit"
-        color="success"
-        class="w-32 justify-center"
-        :disabled="isLoading"
-        :loading="isLoading"
-        :data-test="isEdit ? 'update-claim-button' : 'submit-claim-button'"
-      >
-        {{ isEdit ? 'Update' : 'Submit' }}
-      </UButton>
+      <UTooltip :text="archivedTooltip">
+        <UButton
+          type="submit"
+          color="success"
+          class="w-32 justify-center"
+          :disabled="isLoading || isWriteDisabled"
+          :loading="isLoading"
+          :data-test="isEdit ? 'update-claim-button' : 'submit-claim-button'"
+        >
+          {{ isEdit ? 'Update' : 'Submit' }}
+        </UButton>
+      </UTooltip>
     </div>
   </UForm>
 </template>
@@ -144,6 +146,9 @@ import type { ClaimFormData } from '@/types'
 import FilePreviewGallery from '@/components/sections/CashRemunerationView/Form/FilePreviewGallery.vue'
 import UploadFileDB from '@/components/sections/CashRemunerationView/Form/UploadFileDB.vue'
 import { useClaimForm, type ClaimFormFileData } from '@/composables/useClaimForm'
+import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
+
+const { isWriteDisabled, archivedTooltip } = useTeamWriteGuard()
 
 interface Props {
   initialData?: Partial<ClaimFormData>

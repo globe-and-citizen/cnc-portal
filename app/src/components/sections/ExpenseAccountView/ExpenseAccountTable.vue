@@ -3,13 +3,14 @@
   <div class="bg-default w-full">
     <UTable :data="filteredApprovals" :columns="columns" :loading="isFetchingExpenseData">
       <template #action-cell="{ row: { original: row } }">
+        <UTooltip :text="archivedTooltip">
         <UButton
           v-if="row.status == 'enabled'"
           color="error"
           data-test="disable-button"
           size="sm"
           :loading="isLoadingSetStatus && signatureToUpdate === row.signature"
-          :disabled="!(contractOwnerAddress === userDataStore.address)"
+          :disabled="isWriteDisabled || !(contractOwnerAddress === userDataStore.address)"
           @click="
             () => {
               isLoadingSetStatus = true
@@ -19,13 +20,15 @@
           "
           label="Disable"
         />
+        </UTooltip>
+        <UTooltip :text="archivedTooltip">
         <UButton
           v-if="row.status == 'disabled'"
           color="info"
           data-test="enable-button"
           size="sm"
           :loading="isLoadingSetStatus && signatureToUpdate === row.signature"
-          :disabled="!(contractOwnerAddress === userDataStore.address)"
+          :disabled="isWriteDisabled || !(contractOwnerAddress === userDataStore.address)"
           @click="
             () => {
               isLoadingSetStatus = true
@@ -35,6 +38,7 @@
           "
           label="Enable"
         />
+        </UTooltip>
       </template>
       <template #member-cell="{ row: { original: row } }">
         <UserComponent
@@ -86,8 +90,10 @@ import UserComponent from '@/components/UserComponent.vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useGetExpensesQuery } from '@/queries'
 import { getFrequencyType, getCustomFrequency } from '@/utils'
+import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 
 const teamStore = useTeamStore()
+const { isWriteDisabled, archivedTooltip } = useTeamWriteGuard()
 const toast = useToast()
 const userDataStore = useUserDataStore()
 const queryClient = useQueryClient()

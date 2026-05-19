@@ -33,15 +33,17 @@
         />
 
         <div class="mt-3 flex gap-3">
-          <UButton
-            :loading="migrate.isPending.value"
-            :disabled="migrate.isPending.value || isInconsistent"
-            color="primary"
-            @click="onRun"
-            data-test="migrate-from-previous-button"
-          >
-            Migrate from previous Officer
-          </UButton>
+          <TeamArchivedTooltip v-slot="{ disabled: archivedDisabled }">
+            <UButton
+              :loading="migrate.isPending.value"
+              :disabled="migrate.isPending.value || isInconsistent || archivedDisabled"
+              color="primary"
+              @click="onRun"
+              data-test="migrate-from-previous-button"
+            >
+              Migrate from previous Officer
+            </UButton>
+          </TeamArchivedTooltip>
         </div>
       </div>
     </div>
@@ -53,6 +55,7 @@ import { computed } from 'vue'
 import type { Address } from 'viem'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useTeamStore } from '@/stores'
+import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
 import { useInvestorAddress, useInvestorTotalSupply } from '@/composables/investor/reads'
 import {
   useMigrateShareholders,
