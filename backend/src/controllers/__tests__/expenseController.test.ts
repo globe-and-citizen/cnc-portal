@@ -91,6 +91,7 @@ const mockTeam = {
 describe('Expense Controller', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(prisma.team.findUnique).mockResolvedValue({ isArchived: false } as never);
   });
 
   describe('POST: /', () => {

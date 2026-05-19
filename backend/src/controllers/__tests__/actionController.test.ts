@@ -23,6 +23,9 @@ vi.mock('../../utils', async () => {
   return {
     ...actual,
     prisma: {
+      team: {
+        findUnique: vi.fn().mockResolvedValue({ isArchived: false }),
+      },
       boardOfDirectorActions: {
         findMany: vi.fn(),
         count: vi.fn(),
@@ -75,6 +78,8 @@ describe('Action Controller', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(prisma.team.findUnique).mockResolvedValue({ isArchived: false } as never);
+    vi.mocked(prisma.boardOfDirectorActions.findUnique).mockResolvedValue(mockAction as never);
     app = createTestApp();
     mockAuthorizeUser.mockImplementation((req: Request, res: Response, next: NextFunction) => {
       req.address = mockUserAddress;
@@ -296,7 +301,9 @@ describe('Action Controller', () => {
     });
 
     it('should return 404 when action is not found', async () => {
-      vi.mocked(prisma.boardOfDirectorActions.findUnique).mockResolvedValueOnce(null);
+      vi.mocked(prisma.boardOfDirectorActions.findUnique)
+        .mockResolvedValueOnce({ teamId: 1 } as never)
+        .mockResolvedValueOnce(null);
 
       const response = await request(app).patch('/actions/999');
 
@@ -313,7 +320,9 @@ describe('Action Controller', () => {
 
     it('should return 500 on database error during findUnique', async () => {
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-      vi.mocked(prisma.boardOfDirectorActions.findUnique).mockRejectedValue('Database error');
+      vi.mocked(prisma.boardOfDirectorActions.findUnique)
+        .mockResolvedValueOnce({ teamId: 1 } as never)
+        .mockRejectedValueOnce('Database error');
 
       const response = await request(app).patch('/actions/1');
 
