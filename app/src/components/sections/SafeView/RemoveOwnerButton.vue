@@ -4,7 +4,7 @@
     color="error"
     variant="outline"
     :disabled="isDisabled"
-    :loading="isRemoving"
+    :loading="isUpdating"
     @click="handleRemove"
     data-test="remove-owner-button"
     class="flex items-center gap-1"
@@ -14,7 +14,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import { useAccount, useChainId } from '@wagmi/vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import { type Address } from 'viem'
@@ -36,9 +36,6 @@ const chainId = useChainId()
 const { address: connectedAddress } = useAccount()
 const { mutate: updateOwners, isPending: isUpdating } = useUpdateSafeOwnersMutation()
 
-const isRemoving = ref(false)
-
-// Computed properties
 const isCurrentUserAddress = computed(() => {
   return connectedAddress.value?.toLowerCase() === props.ownerAddress.toLowerCase()
 })
@@ -46,7 +43,6 @@ const isCurrentUserAddress = computed(() => {
 const isDisabled = computed(() => {
   return (
     props.totalOwners <= 1 ||
-    isRemoving.value ||
     isUpdating.value ||
     !props.isConnectedUserOwner ||
     isCurrentUserAddress.value ||
@@ -64,8 +60,6 @@ const handleRemove = async () => {
     return
   }
 
-  isRemoving.value = true
-
   updateOwners(
     {
       pathParams: { safeAddress: props.safeAddress },
@@ -82,7 +76,6 @@ const handleRemove = async () => {
             ? 'Owner removal proposal submitted successfully'
             : 'Owner removed successfully'
         toast.add({ title: 'Success', description: message, color: 'success' })
-        isRemoving.value = false
       },
       onError: (error) => {
         console.error('Failed to remove owner:', error)
@@ -91,7 +84,6 @@ const handleRemove = async () => {
             ? 'Transaction approval rejected'
             : 'Failed to remove owner'
         toast.add({ title: 'Error', description: message, color: 'error' })
-        isRemoving.value = false
       }
     }
   )

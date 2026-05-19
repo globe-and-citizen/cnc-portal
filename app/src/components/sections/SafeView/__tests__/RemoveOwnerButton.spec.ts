@@ -47,7 +47,7 @@ const UButtonStub = defineComponent({
   props: ['disabled', 'loading'],
   emits: ['click'],
   template:
-    '<button data-test="remove-owner-button" :disabled="disabled" :data-loading="loading" @click="$emit(\'click\')"><slot /></button>'
+    '<button data-test="remove-owner-button" :disabled="disabled" :data-loading="loading?.value ?? loading" @click="$emit(\'click\')"><slot /></button>'
 })
 
 const mountComponent = (props = {}) =>
@@ -107,7 +107,7 @@ describe('RemoveOwnerButton', () => {
     await wrapper.find('[data-test="remove-owner-button"]').trigger('click')
     await nextTick()
     expect(wrapper.find('[data-test="remove-owner-button"]').attributes('data-loading')).toBe(
-      'true'
+      'false'
     )
 
     const callbacks = mockUpdateOwnersMutate.mock.calls[0]?.[1]
@@ -116,6 +116,15 @@ describe('RemoveOwnerButton', () => {
 
     expect(wrapper.find('[data-test="remove-owner-button"]').attributes('data-loading')).toBe(
       'false'
+    )
+  })
+
+  it('shows loading state from mutation pending ref', async () => {
+    mockIsPending.value = true
+    const wrapper = mountComponent()
+
+    expect(wrapper.find('[data-test="remove-owner-button"]').attributes('data-loading')).toBe(
+      'true'
     )
   })
 
