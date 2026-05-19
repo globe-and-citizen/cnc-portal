@@ -1,13 +1,15 @@
 <template>
   <div>
-    <UButton
-      color="success"
-      :disabled="row.status !== 'enabled'"
-      @click="showModal = { mount: true, show: true }"
-      data-test="transfer-button"
-    >
-      Spend
-    </UButton>
+    <TeamArchivedTooltip v-slot="{ disabled: archivedDisabled }">
+      <UButton
+        color="success"
+        :disabled="row.status !== 'enabled' || archivedDisabled"
+        @click="showModal = { mount: true, show: true }"
+        data-test="transfer-button"
+      >
+        Spend
+      </UButton>
+    </TeamArchivedTooltip>
 
     <UModal
       v-if="showModal.mount"
@@ -65,6 +67,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
 import TransferForm from '@/components/forms/TransferForm.vue'
 import { USDC_ADDRESS, type TokenId } from '@/constant'
 import type { BudgetLimit } from '@/types'
