@@ -1,6 +1,7 @@
 import express from 'express';
 import { addElectionNotifications } from '../controllers/electionsController';
 import { authorizeUser } from '../middleware/authMiddleware';
+import { rejectIfArchived } from '../middleware/teamAuthzMiddleware';
 import {
   validateParams,
   validateBody,
@@ -292,6 +293,7 @@ electionRoute.post(
   authorizeUser,
   validateParams(addElectionNotificationsParamsSchema),
   validateBody(addElectionNotificationsBodySchema),
+  rejectIfArchived('params.teamId'),
   addElectionNotifications
 );
 
