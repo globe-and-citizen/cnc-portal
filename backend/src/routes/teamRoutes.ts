@@ -106,6 +106,9 @@ const teamRoutes = express.Router();
  * /teams:
  *  post:
  *   summary: Create a new team
+ *   tags: [Teams]
+ *   security:
+ *     - bearerAuth: []
  *   description: Creates a new team with the specified members. The caller is automatically added as a member.
  *   requestBody:
  *     required: true
@@ -166,6 +169,9 @@ teamRoutes.post('/', validateBody(addTeamBodySchema), addTeam);
  * /teams:
  *  get:
  *   summary: Get all teams or teams for a specific user
+ *   tags: [Teams]
+ *   security:
+ *     - bearerAuth: []
  *   description: Retrieves all teams, or teams filtered by userAddress if provided. Caller can only request their own teams.
  *   parameters:
  *     - in: query
@@ -271,6 +277,9 @@ teamRoutes.get(
  * /teams/{id}/member:
  *  post:
  *   summary: Add members to a team
+ *   tags: [Teams]
+ *   security:
+ *     - bearerAuth: []
  *   description: Adds one or more members to a team. Only the team owner can add members.
  *   parameters:
  *     - in: path
@@ -341,6 +350,9 @@ teamRoutes.post(
  * /teams/{id}/member/{memberAddress}:
  *  delete:
  *   summary: Remove a member from a team
+ *   tags: [Teams]
+ *   security:
+ *     - bearerAuth: []
  *   description: Removes a specific member from a team. Only the team owner can remove members. The owner cannot be removed.
  *   parameters:
  *     - in: path
@@ -397,6 +409,9 @@ teamRoutes.delete(
  * /teams/{id}:
  *  get:
  *   summary: Get a specific team by ID
+ *   tags: [Teams]
+ *   security:
+ *     - bearerAuth: []
  *   description: Retrieves team details including members and contracts. Caller must be a team member.
  *   parameters:
  *     - in: path
@@ -444,6 +459,9 @@ teamRoutes.get('/:id', validateParams(teamIdParamsSchema), getTeam);
  * /teams/{id}:
  *  put:
  *   summary: Update a team
+ *   tags: [Teams]
+ *   security:
+ *     - bearerAuth: []
  *   description: Updates team metadata (name, description). Only the team owner can update. The current Officer is managed via POST /contract/officer.
  *   parameters:
  *     - in: path
@@ -509,6 +527,9 @@ teamRoutes.put(
  * /teams/{id}:
  *  delete:
  *   summary: Delete a team
+ *   tags: [Teams]
+ *   security:
+ *     - bearerAuth: []
  *   description: Deletes a team and all related records (cascading). Only the team owner can delete.
  *   parameters:
  *     - in: path

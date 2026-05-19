@@ -83,6 +83,9 @@ const wageRoutes = express.Router();
  * /wage/setWage:
  *  put:
  *   summary: Set wage for a user
+ *   tags: [Wages]
+ *   security:
+ *     - bearerAuth: []
  *   description: Sets or updates the wage configuration for a team member including rates and maximum hours.
  *   requestBody:
  *     required: true
@@ -203,6 +206,9 @@ wageRoutes.put(
  * /wage:
  *  get:
  *   summary: Get Team members wages
+ *   tags: [Wages]
+ *   security:
+ *     - bearerAuth: []
  *   description: Retrieves all wage records for members of a specific team.
  *   parameters:
  *     - in: query
@@ -270,6 +276,9 @@ wageRoutes.get(
  * /wage/{wageId}:
  *  put:
  *   summary: Toggle wage status (disable or enable)
+ *   tags: [Wages]
+ *   security:
+ *     - bearerAuth: []
  *   description: Disables or enables a member wage. A disabled wage prevents the member from submitting claims.
  *   parameters:
  *     - in: path
