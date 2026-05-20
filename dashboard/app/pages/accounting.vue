@@ -7,13 +7,24 @@ import { useAccounting } from '~/composables/useAccounting'
 const walletAddress = useLocalStorage('dashboard-polymarket-user-address', '')
 const hasAddress = computed(() => walletAddress.value.trim().length > 0)
 
-const { entries, summary, positions, activities, isLoading, isFetching, error, transfersTruncated, refetch }
-  = useAccounting(() => walletAddress.value)
+const {
+  entries, summary, positions, activities, realizedTrades,
+  isLoading, isFetching, error, transfersTruncated, refetch
+} = useAccounting(() => walletAddress.value)
+
+// "As of" reporting date (#1885) — drives the three financial statements.
+const todayStr = new Date().toISOString().slice(0, 10)
+const asOfDateStr = ref(todayStr)
+/** Inclusive upper bound, end of the selected day, in unix seconds. */
+const asOf = computed(() => Math.floor(new Date(`${asOfDateStr.value}T23:59:59`).getTime() / 1000))
+const isAsOfToday = computed(() => asOfDateStr.value >= todayStr)
 
 const tabs: TabsItem[] = [
   { label: 'Summary', icon: 'i-lucide-layout-dashboard', slot: 'summary' },
   { label: 'Income Statement', icon: 'i-lucide-trending-up', slot: 'income' },
-  { label: 'Ledger', icon: 'i-lucide-receipt-text', slot: 'ledger' },
+  { label: 'Balance Sheet', icon: 'i-lucide-scale', slot: 'balance' },
+  { label: 'Activity Ledger', icon: 'i-lucide-receipt-text', slot: 'activity' },
+  { label: 'General Ledger', icon: 'i-lucide-book-open', slot: 'ledger' },
   { label: 'Positions', icon: 'i-lucide-wallet', slot: 'positions' }
 ]
 
@@ -31,7 +42,7 @@ const errorMessage = computed(() => {
     <div class="space-y-6">
       <UPageCard
         title="Polymarket accounting"
-        description="Full ledger reconstructed from the Polymarket Data API (activity + positions) and on-chain USDC transfers (Etherscan / Polygon)."
+        description="Financial statements reconstructed from the Polymarket Data API (activity + positions) and on-chain USDC transfers (Etherscan / Polygon)."
         variant="naked"
         orientation="horizontal"
       >
@@ -47,19 +58,27 @@ const errorMessage = computed(() => {
       </UPageCard>
 
       <UPageCard variant="subtle">
-        <UFormField
-          label="Wallet address"
-          description="The Polymarket proxy wallet (EOA/Safe used on Polymarket). Stored locally in this browser."
-          class="flex max-sm:flex-col justify-between items-start gap-4"
-          :ui="{ container: 'w-full max-w-2xl' }"
-        >
-          <UInput
-            v-model="walletAddress"
-            class="w-full font-mono text-sm"
-            placeholder="0x..."
-            autocomplete="off"
-          />
-        </UFormField>
+        <div class="flex max-lg:flex-col gap-4 lg:items-end justify-between">
+          <UFormField
+            label="Wallet address"
+            description="The Polymarket proxy wallet (EOA/Safe used on Polymarket). Stored locally in this browser."
+            :ui="{ container: 'w-full max-w-xl' }"
+          >
+            <UInput
+              v-model="walletAddress"
+              class="w-full font-mono text-sm"
+              placeholder="0x..."
+              autocomplete="off"
+            />
+          </UFormField>
+
+          <UFormField
+            label="Reporting date"
+            description="Drives the Income Statement, Balance Sheet and General Ledger."
+          >
+            <UInput v-model="asOfDateStr" type="date" :max="todayStr" />
+          </UFormField>
+        </div>
       </UPageCard>
 
       <UAlert
@@ -95,16 +114,40 @@ const errorMessage = computed(() => {
             :positions="positions"
             :is-loading="isLoading"
             :has-address="hasAddress"
+            :as-of="asOf"
           />
         </template>
 
-        <template #ledger>
+        <template #balance>
+          <AccountingBalanceSheet
+            class="mt-4"
+            :ledger-entries="entries"
+            :realized-trades="realizedTrades"
+            :positions="positions"
+            :has-address="hasAddress"
+            :as-of="asOf"
+            :is-as-of-today="isAsOfToday"
+          />
+        </template>
+
+        <template #activity>
           <AccountingLedger
             class="mt-4"
             :entries="entries"
             :is-loading="isLoading"
             :has-address="hasAddress"
             :wallet-address="walletAddress"
+          />
+        </template>
+
+        <template #ledger>
+          <AccountingGeneralLedger
+            class="mt-4"
+            :ledger-entries="entries"
+            :realized-trades="realizedTrades"
+            :is-loading="isLoading"
+            :has-address="hasAddress"
+            :as-of="asOf"
           />
         </template>
 
