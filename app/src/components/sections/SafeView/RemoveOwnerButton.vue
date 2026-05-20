@@ -15,11 +15,12 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useAccount, useChainId } from '@wagmi/vue'
+import { useChainId } from '@wagmi/vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import { type Address } from 'viem'
 
 import { useUpdateSafeOwnersMutation } from '@/queries/safe.mutations'
+import { useUserDataStore } from '@/stores'
 
 interface Props {
   ownerAddress: string
@@ -33,11 +34,11 @@ const props = defineProps<Props>()
 
 const toast = useToast()
 const chainId = useChainId()
-const { address: connectedAddress } = useAccount()
+const userDataStore = useUserDataStore()
 const { mutate: updateOwners, isPending: isUpdating } = useUpdateSafeOwnersMutation()
 
 const isCurrentUserAddress = computed(() => {
-  return connectedAddress.value?.toLowerCase() === props.ownerAddress.toLowerCase()
+  return userDataStore.address?.toLowerCase() === props.ownerAddress.toLowerCase()
 })
 
 const isDisabled = computed(() => {

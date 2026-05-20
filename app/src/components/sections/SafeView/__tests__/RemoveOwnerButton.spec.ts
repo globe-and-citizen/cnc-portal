@@ -5,14 +5,14 @@ import RemoveOwnerButton from '../RemoveOwnerButton.vue'
 
 const {
   mockChainId,
-  mockConnectedAddress,
   mockIsPending,
+  mockUserStore,
   mockUpdateOwnersMutate,
   mockUseUpdateSafeOwnersMutation
 } = vi.hoisted(() => ({
   mockChainId: { value: 137 },
-  mockConnectedAddress: { value: '0x1111111111111111111111111111111111111111' },
   mockIsPending: { value: false },
+  mockUserStore: { address: '0x1111111111111111111111111111111111111111' },
   mockUpdateOwnersMutate: vi.fn(),
   mockUseUpdateSafeOwnersMutation: vi.fn()
 }))
@@ -21,10 +21,7 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@wagmi/vue')>()
   return {
     ...actual,
-    useChainId: vi.fn(() => mockChainId),
-    useAccount: vi.fn(() => ({
-      address: mockConnectedAddress
-    }))
+    useChainId: vi.fn(() => mockChainId)
   }
 })
 
@@ -33,6 +30,10 @@ vi.mock('@/queries/safe.mutations', () => ({
     mutate: mockUpdateOwnersMutate,
     isPending: mockIsPending
   })
+}))
+
+vi.mock('@/stores', () => ({
+  useUserDataStore: () => mockUserStore
 }))
 
 vi.mock('@iconify/vue', () => ({
@@ -71,8 +72,8 @@ describe('RemoveOwnerButton', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockChainId.value = 137
-    mockConnectedAddress.value = '0x1111111111111111111111111111111111111111'
     mockIsPending.value = false
+    mockUserStore.address = '0x1111111111111111111111111111111111111111'
     mockUpdateOwnersMutate.mockImplementation(() => undefined)
     mockUseUpdateSafeOwnersMutation.mockReturnValue({
       mutate: mockUpdateOwnersMutate,

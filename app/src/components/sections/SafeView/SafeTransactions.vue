@@ -114,7 +114,7 @@
 <script setup lang="ts">
 /* eslint-disable max-lines */
 import { watch, computed, ref } from 'vue'
-import { useAccount, useChainId } from '@wagmi/vue'
+import { useChainId } from '@wagmi/vue'
 import type { SafeTransaction } from '@/types/safe'
 
 // Components
@@ -135,8 +135,9 @@ import SafeTransactionStatusFilter, {
 import { type Address } from 'viem'
 
 import { formatSafeTransactionValue, getSafeTransactionMethod } from '@/utils'
+import { useUserDataStore } from '@/stores'
 
-const { address: connectedAddress } = useAccount()
+const userDataStore = useUserDataStore()
 
 interface Props {
   address: Address
@@ -182,10 +183,10 @@ const { isTransactionNonceValid, hasConflictingTransactions, willApprovalCauseCo
 
 // Computed values
 const isConnectedUserOwner = computed(() => {
-  if (!connectedAddress.value || !safeInfo.value?.owners?.length) return false
+  if (!userDataStore.address || !safeInfo.value?.owners?.length) return false
 
   return safeInfo.value.owners.some(
-    (owner) => owner.toLowerCase() === connectedAddress.value!.toLowerCase()
+    (owner) => owner.toLowerCase() === userDataStore.address.toLowerCase()
   )
 })
 
@@ -267,7 +268,7 @@ const canApprove = (transaction: SafeTransaction): boolean => {
   if (!isTransactionNonceValid(transaction)) return false
 
   const userAlreadyConfirmed = transaction.confirmations?.some(
-    (confirmation) => confirmation.owner.toLowerCase() === connectedAddress.value?.toLowerCase()
+    (confirmation) => confirmation.owner.toLowerCase() === userDataStore.address?.toLowerCase()
   )
 
   return !userAlreadyConfirmed
