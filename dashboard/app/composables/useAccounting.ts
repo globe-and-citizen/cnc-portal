@@ -6,6 +6,7 @@ import {
   usePolymarketPositionsQuery
 } from '~/queries/polymarket.queries'
 import { buildLedger } from '~/utils/accounting'
+import { computeRealizedTrades } from '~/utils/incomeStatement'
 
 /**
  * Aggregates the three Polymarket accounting data sources (activity, positions,
@@ -35,6 +36,11 @@ export function useAccounting(address: MaybeRefOrGetter<string>) {
   /** True when the Etherscan history was too long to fetch in full. */
   const transfersTruncated = computed(() => transfersQuery.data.value?.truncated ?? false)
 
+  // Dated realized disposals (lot accounting) — shared by every statement.
+  const realizedTrades = computed(() =>
+    computeRealizedTrades(activityQuery.data.value ?? [], positionsQuery.data.value ?? [])
+  )
+
   function refetch(): void {
     void activityQuery.refetch()
     void positionsQuery.refetch()
@@ -46,6 +52,7 @@ export function useAccounting(address: MaybeRefOrGetter<string>) {
     summary: computed(() => ledger.value.summary),
     positions: computed(() => positionsQuery.data.value ?? []),
     activities: computed(() => activityQuery.data.value ?? []),
+    realizedTrades,
     isLoading,
     isFetching,
     error,

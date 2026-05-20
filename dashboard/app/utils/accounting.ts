@@ -311,7 +311,7 @@ export function buildLedger(input: BuildLedgerInput): AccountingLedger {
   return { entries, summary }
 }
 
-/** Serializes a ledger to CSV for export into accounting software. */
+/** Serializes the activity ledger to CSV for export into accounting software. */
 export function ledgerToCsv(entries: LedgerEntry[]): string {
   const header = [
     'Date', 'Category', 'Market', 'Outcome', 'Quantity', 'Unit price',
@@ -365,6 +365,14 @@ export function formatUsd(value: number | undefined): string {
     return '—'
   }
   return `$${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+}
+
+/** Formats a USD amount with full USDC precision (6 decimals). */
+export function formatUsd6(value: number | undefined): string {
+  if (value == null || Number.isNaN(value)) {
+    return '—'
+  }
+  return `$${value.toLocaleString(undefined, { minimumFractionDigits: 6, maximumFractionDigits: 6 })}`
 }
 
 /** Formats a signed USD amount, e.g. -12 → "−$12.00". */
