@@ -2,7 +2,7 @@
   <UPageCard variant="subtle">
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
       <h3 class="font-semibold text-black dark:text-white">
-        Ledger · {{ filteredEntries.length }} entries
+        Activity Ledger · {{ filteredEntries.length }} entries
       </h3>
       <div class="flex items-center gap-2">
         <USelect
@@ -38,9 +38,9 @@
     >
       <template #empty>
         <div class="flex flex-col items-center justify-center py-8 text-muted">
-          <UIcon name="i-lucide-calculator" class="w-12 h-12 mb-3 opacity-60" />
+          <UIcon name="i-lucide-receipt-text" class="w-12 h-12 mb-3 opacity-60" />
           <p v-if="!hasAddress">
-            Enter a wallet address to build the accounting ledger.
+            Enter a wallet address to build the activity ledger.
           </p>
           <p v-else>
             No ledger entries for this filter.
@@ -99,13 +99,35 @@
       </template>
 
       <template #amount-cell="{ row }">
-        <span class="tabular-nums">{{ formatUsd(row.original.amount) }}</span>
+        <span class="tabular-nums">{{ formatUsd6(row.original.amount) }}</span>
       </template>
 
       <template #cashFlow-cell="{ row }">
         <span class="tabular-nums font-medium" :class="signClass(row.original.cashFlow)">
           {{ formatSignedUsd(row.original.cashFlow) }}
         </span>
+      </template>
+
+      <template #counterparty-cell="{ row }">
+        <a
+          v-if="row.original.counterparty"
+          :href="`https://polygonscan.com/address/${row.original.counterparty}`"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="font-mono text-xs text-primary hover:underline"
+        >
+          {{ shortenAddress(row.original.counterparty) }}
+        </a>
+        <span v-else class="text-muted">—</span>
+      </template>
+
+      <template #source-cell="{ row }">
+        <UBadge
+          :color="row.original.source === 'polygonscan' ? 'neutral' : 'primary'"
+          variant="subtle"
+        >
+          {{ row.original.source === 'polygonscan' ? 'On-chain' : 'Polymarket' }}
+        </UBadge>
       </template>
 
       <template #tx-cell="{ row }">
@@ -144,7 +166,7 @@ import { format } from 'date-fns'
 import {
   CATEGORY_META,
   formatSignedUsd,
-  formatUsd,
+  formatUsd6,
   ledgerToCsv,
   type LedgerCategory,
   type LedgerEntry,
@@ -194,6 +216,8 @@ const columns = [
   { accessorKey: 'unitPrice', header: 'Unit price' },
   { accessorKey: 'amount', header: 'Amount' },
   { accessorKey: 'cashFlow', header: 'Cash flow' },
+  { accessorKey: 'counterparty', header: 'Counterparty' },
+  { accessorKey: 'source', header: 'Source' },
   { id: 'tx', header: 'Tx' }
 ]
 
@@ -207,6 +231,10 @@ function formatQty(qty: number | undefined): string {
 
 function formatPrice(price: number | undefined): string {
   return price == null ? '—' : `$${price.toFixed(4)}`
+}
+
+function shortenAddress(address: string): string {
+  return `${address.slice(0, 6)}…${address.slice(-4)}`
 }
 
 function marketUrl(entry: LedgerEntry): string | null {

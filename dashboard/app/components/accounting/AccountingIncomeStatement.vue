@@ -157,6 +157,8 @@ const props = defineProps<{
   positions: PolymarketPosition[]
   isLoading: boolean
   hasAddress: boolean
+  /** Reporting date (unix seconds) — the period always ends here. */
+  asOf: number
 }>()
 
 type Period = 'ALL' | 'YTD' | 'MONTH' | 'M30'
@@ -170,19 +172,19 @@ const periodOptions = [
   { label: 'Last 30 days', value: 'M30' as const }
 ]
 
-/** Resolves the selected preset to inclusive unix-second bounds. */
+/** Resolves the preset to inclusive unix-second bounds; the period ends at "as of". */
 const range = computed<{ start?: number, end?: number }>(() => {
-  const now = new Date()
-  const nowSec = Math.floor(now.getTime() / 1000)
+  const asOfDate = new Date(props.asOf * 1000)
+  const end = props.asOf
   switch (period.value) {
     case 'YTD':
-      return { start: Math.floor(new Date(now.getFullYear(), 0, 1).getTime() / 1000), end: nowSec }
+      return { start: Math.floor(new Date(asOfDate.getFullYear(), 0, 1).getTime() / 1000), end }
     case 'MONTH':
-      return { start: Math.floor(new Date(now.getFullYear(), now.getMonth(), 1).getTime() / 1000), end: nowSec }
+      return { start: Math.floor(new Date(asOfDate.getFullYear(), asOfDate.getMonth(), 1).getTime() / 1000), end }
     case 'M30':
-      return { start: nowSec - 30 * 24 * 60 * 60, end: nowSec }
+      return { start: end - 30 * 24 * 60 * 60, end }
     default:
-      return { start: undefined, end: undefined }
+      return { start: undefined, end }
   }
 })
 
