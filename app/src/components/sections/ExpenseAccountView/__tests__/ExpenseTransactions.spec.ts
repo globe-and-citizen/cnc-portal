@@ -15,6 +15,7 @@ import {
   USDC_ADDRESS,
   ZERO_ADDRESS,
   buildExpenseQueryResult,
+  buildGroupedExpenseQueryResult,
   buildFallbackExpenseQueryResult,
   buildIncomingTransfersQueryResult
 } from './ExpenseTransactions.test-utils'
@@ -143,6 +144,31 @@ describe('ExpenseTransactions', () => {
 
     expect(vm.displayedTransactions).toHaveLength(1)
     expect(vm.displayedTransactions[0]?.type).toBe('deposit')
+  })
+
+  it('groups multiple events sharing the same tx hash as sub-rows', () => {
+    apolloState.expenseQueryResult.value = buildGroupedExpenseQueryResult()
+    apolloState.incomingTransfersQueryResult.value = undefined
+    wrapper = createWrapper()
+    const vm = wrapper.vm as unknown as {
+      displayedTransactions: Array<{
+        txHash: string
+        groupedEventCount: number
+        subRows?: Array<{ txHash: string }>
+      }>
+    }
+
+    expect(vm.displayedTransactions).toHaveLength(2)
+
+    const groupedRow = vm.displayedTransactions.find((row) => row.txHash === '0xsharedhash')
+    const singleRow = vm.displayedTransactions.find((row) => row.txHash === '0xsinglehash')
+
+    expect(groupedRow?.groupedEventCount).toBe(2)
+    expect(groupedRow?.subRows).toHaveLength(1)
+    expect(groupedRow?.subRows?.[0]?.txHash).toBe('0xsharedhash')
+
+    expect(singleRow?.groupedEventCount).toBe(1)
+    expect(singleRow?.subRows).toEqual([])
   })
 
   it('filters displayed rows by date range', async () => {

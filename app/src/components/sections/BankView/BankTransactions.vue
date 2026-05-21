@@ -55,8 +55,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { zeroAddress, type Address } from 'viem'
-import type { TokenId } from '@/constant'
+import { type Address } from 'viem'
 import { GRAPHQL_POLL_INTERVAL, NETWORK } from '@/constant'
 import { useQuery } from '@vue/apollo-composable'
 import AddressToolTip from '@/components/AddressToolTip.vue'
@@ -70,8 +69,8 @@ import {
   formatCryptoAmount,
   formatCurrencyShort,
   formatEtherUtil,
-  getTokenAddress,
   log,
+  resolveTokenIdByAddress,
   tokenSymbol
 } from '@/utils'
 import { formatDateShort } from '@/utils/dayUtils'
@@ -130,18 +129,6 @@ type BankTransactionRow = BankTransaction & {
   token: string
   tokenAddress: string
   amountLocal: number
-}
-
-const KNOWN_TOKEN_IDS: TokenId[] = ['native', 'usdc', 'usdc.e', 'usdt', 'sher']
-
-const resolveTokenIdByAddress = (tokenAddress: string): TokenId | null => {
-  const normalizedAddress = tokenAddress.toLowerCase()
-  const knownId = KNOWN_TOKEN_IDS.find((tokenId) => {
-    const knownAddress = (getTokenAddress(tokenId) ?? zeroAddress).toLowerCase()
-    return knownAddress === normalizedAddress
-  })
-
-  return knownId ?? null
 }
 
 const enrichedTransactions = computed<BankTransactionRow[]>(() => {
