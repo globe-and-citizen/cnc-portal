@@ -1,30 +1,24 @@
 <script setup lang="ts">
 import type { TabsItem } from '@nuxt/ui'
-import { useLocalStorage } from '@vueuse/core'
 import { useAccounting } from '~/composables/useAccounting'
+import { useWalletAddress } from '~/composables/useWalletAddress'
 
-// Shared with the previous Polymarket page key so the address carries over.
-const walletAddress = useLocalStorage('dashboard-polymarket-user-address', '')
+// Per-tab address: URL query first (`?address=0x…`), localStorage as default.
+// Each browser tab keeps its own wallet — two tabs analyze two wallets at once.
+const { address: walletAddress, set: setWalletAddress } = useWalletAddress()
 const hasAddress = computed(() => walletAddress.value.trim().length > 0)
 
 const {
   entries, summary, positions, activities, realizedTrades,
+  identities,
   isLoading, isFetching, error, transfersTruncated, refetch
-} = useAccounting(() => walletAddress.value)
-
-// "As of" reporting date (#1885) — drives the three financial statements.
-const todayStr = new Date().toISOString().slice(0, 10)
-const asOfDateStr = ref(todayStr)
-/** Inclusive upper bound, end of the selected day, in unix seconds. */
-const asOf = computed(() => Math.floor(new Date(`${asOfDateStr.value}T23:59:59`).getTime() / 1000))
-const isAsOfToday = computed(() => asOfDateStr.value >= todayStr)
+} = useAccounting(walletAddress)
 
 const tabs: TabsItem[] = [
   { label: 'Summary', icon: 'i-lucide-layout-dashboard', slot: 'summary' },
   { label: 'Income Statement', icon: 'i-lucide-trending-up', slot: 'income' },
   { label: 'Balance Sheet', icon: 'i-lucide-scale', slot: 'balance' },
-  { label: 'Activity Ledger', icon: 'i-lucide-receipt-text', slot: 'activity' },
-  { label: 'General Ledger', icon: 'i-lucide-book-open', slot: 'ledger' },
+  { label: 'General Ledger', icon: 'i-lucide-receipt-text', slot: 'activity' },
   { label: 'Positions', icon: 'i-lucide-wallet', slot: 'positions' }
 ]
 
@@ -58,27 +52,19 @@ const errorMessage = computed(() => {
       </UPageCard>
 
       <UPageCard variant="subtle">
-        <div class="flex max-lg:flex-col gap-4 lg:items-end justify-between">
-          <UFormField
-            label="Wallet address"
-            description="The Polymarket proxy wallet (EOA/Safe used on Polymarket). Stored locally in this browser."
-            :ui="{ container: 'w-full max-w-xl' }"
-          >
-            <UInput
-              v-model="walletAddress"
-              class="w-full font-mono text-sm"
-              placeholder="0x..."
-              autocomplete="off"
-            />
-          </UFormField>
-
-          <UFormField
-            label="Reporting date"
-            description="Drives the Income Statement, Balance Sheet and General Ledger."
-          >
-            <UInput v-model="asOfDateStr" type="date" :max="todayStr" />
-          </UFormField>
-        </div>
+        <UFormField
+          label="Wallet address"
+          description="Synced with the page URL — open a second tab with a different ?address= to analyze two wallets at once."
+          :ui="{ container: 'w-full max-w-xl' }"
+        >
+          <UInput
+            :model-value="walletAddress"
+            class="w-full font-mono text-sm"
+            placeholder="0x..."
+            autocomplete="off"
+            @update:model-value="setWalletAddress"
+          />
+        </UFormField>
       </UPageCard>
 
       <UAlert
@@ -99,7 +85,13 @@ const errorMessage = computed(() => {
 
       <UTabs :items="tabs" variant="link" class="w-full">
         <template #summary>
-          <AccountingSummary v-if="hasAddress" :summary="summary" class="mt-4" />
+          <div v-if="hasAddress" class="mt-4 space-y-6">
+            <AccountingSummary :summary="summary" />
+            <!-- Live audit: each line proves one of the 8 accounting equations
+                 over the loaded data. A non-zero gap points at the failing source
+                 (truncated history, missing market, lot-accounting regression). -->
+            <AccountingIdentitiesCard :identities="identities" :has-address="hasAddress" />
+          </div>
           <UPageCard v-else variant="subtle" class="mt-4">
             <p class="text-muted text-center py-8">
               Enter a wallet address to see the accounting summary.
@@ -114,7 +106,6 @@ const errorMessage = computed(() => {
             :positions="positions"
             :is-loading="isLoading"
             :has-address="hasAddress"
-            :as-of="asOf"
           />
         </template>
 
@@ -125,8 +116,6 @@ const errorMessage = computed(() => {
             :realized-trades="realizedTrades"
             :positions="positions"
             :has-address="hasAddress"
-            :as-of="asOf"
-            :is-as-of-today="isAsOfToday"
           />
         </template>
 
@@ -134,20 +123,10 @@ const errorMessage = computed(() => {
           <AccountingLedger
             class="mt-4"
             :entries="entries"
-            :is-loading="isLoading"
-            :has-address="hasAddress"
-            :wallet-address="walletAddress"
-          />
-        </template>
-
-        <template #ledger>
-          <AccountingGeneralLedger
-            class="mt-4"
-            :ledger-entries="entries"
             :realized-trades="realizedTrades"
             :is-loading="isLoading"
             :has-address="hasAddress"
-            :as-of="asOf"
+            :wallet-address="walletAddress"
           />
         </template>
 
