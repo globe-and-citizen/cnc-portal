@@ -119,6 +119,13 @@ function marketEndSeconds(position: PolymarketPosition): number | null {
 /**
  * Replays the activity feed with weighted-average-cost lot accounting and
  * returns every realized disposal (all-time, newest first).
+ *
+ * REDEEM rows often arrive with an empty `asset` field because the on-chain
+ * `payoutRedemption` event only carries `conditionId` (± `outcomeIndex`). We
+ * recover the outcome-token id from a `(conditionId, outcomeIndex) → asset`
+ * index built off the buys, sells and positions (all of which do carry it),
+ * and fall back to liquidating every lot in the condition when even
+ * `outcomeIndex` is missing.
  */
 export function computeRealizedTrades(
   activities: PolymarketActivity[],
@@ -128,22 +135,115 @@ export function computeRealizedTrades(
   const lots = new Map<string, Lot>()
   const realized: RealizedTrade[] = []
 
+  // (conditionId, outcomeIndex) → asset. Populated from any source that
+  // carries all three (TRADE / SPLIT / MERGE activities and /positions rows).
+  // First entry wins — every BUY for the same outcome maps to the same asset.
+  const conditionOutcomeKey = (c?: string, i?: number | null): string | null =>
+    c && i != null ? `${c}:${i}` : null
+  const assetByConditionOutcome = new Map<string, string>()
   for (const activity of sorted) {
-    const asset = activity.asset
-    if (!asset) {
-      // Without an outcome-token id the lot cannot be tracked.
-      continue
+    if (!activity.asset) continue
+    const key = conditionOutcomeKey(activity.conditionId, activity.outcomeIndex)
+    if (key && !assetByConditionOutcome.has(key)) {
+      assetByConditionOutcome.set(key, activity.asset)
     }
+  }
+  for (const position of positions) {
+    if (!position.asset) continue
+    const key = conditionOutcomeKey(position.conditionId, position.outcomeIndex)
+    if (key && !assetByConditionOutcome.has(key)) {
+      assetByConditionOutcome.set(key, position.asset)
+    }
+  }
+
+  /** Books one disposal against `lot` and pushes the matching RealizedTrade. */
+  const bookDisposal = (
+    activity: PolymarketActivity,
+    asset: string,
+    lot: Lot,
+    requestedSize: number,
+    proceeds: number,
+    kind: RealizedTradeKind
+  ): void => {
+    // Clamp to held shares: incomplete history must not produce phantom basis.
+    const disposed = lot.shares > 0 ? Math.min(requestedSize, lot.shares) : requestedSize
+    const avgCost = lot.shares > 0 ? lot.cost / lot.shares : 0
+    const costBasis = avgCost * disposed
+    realized.push({
+      timestamp: activity.timestamp ?? 0,
+      market: activity.title ?? lot.title ?? '—',
+      outcome: activity.outcome ?? lot.outcome,
+      asset,
+      conditionId: activity.conditionId ?? lot.conditionId,
+      proceeds,
+      costBasis,
+      realizedPnl: proceeds - costBasis,
+      kind
+    })
+    lot.shares -= disposed
+    lot.cost -= costBasis
+    if (lot.shares < DUST) {
+      lot.shares = 0
+      lot.cost = 0
+    }
+  }
+
+  for (const activity of sorted) {
+    // Resolve the outcome-token id: prefer the row's own asset, otherwise
+    // look it up from the (conditionId, outcomeIndex) index.
+    let asset = activity.asset
+    if (!asset) {
+      const key = conditionOutcomeKey(activity.conditionId, activity.outcomeIndex)
+      if (key) asset = assetByConditionOutcome.get(key)
+    }
+
     const size = activity.size ?? 0
     const usd = activity.usdcSize ?? 0
+    const isBuy = activity.type === 'TRADE' && activity.side === 'BUY'
+    const isSell = activity.type === 'TRADE' && activity.side === 'SELL'
+    const isRedeem = activity.type === 'REDEEM'
+
+    // Last-resort REDEEM fallback: still no asset, but a conditionId — the
+    // on-chain redeem closes every outcome of that condition at once, so we
+    // liquidate every lot tied to it. Winning side gets the usdcSize as
+    // proceeds, losers get 0; their residual cost basis becomes a real loss.
+    if (isRedeem && !asset && activity.conditionId) {
+      const condition = activity.conditionId
+      const lotsInCondition = [...lots.entries()].filter(
+        ([, l]) => l.conditionId === condition && l.shares > DUST
+      )
+      if (lotsInCondition.length === 0) continue
+
+      // Identify the winning outcome: prefer a position flagged redeemable
+      // for this condition; else if there's only one positive lot, it is the
+      // winner; otherwise we can't attribute — split proceeds pro-rata by
+      // shares so aggregate P&L stays exact even if per-lot attribution isn't.
+      const redeemable = positions.find(p =>
+        p.conditionId === condition && p.redeemable && p.asset
+      )
+      const winnerAsset = redeemable?.asset
+        ?? (lotsInCondition.length === 1 ? lotsInCondition[0]![0] : undefined)
+      const totalShares = lotsInCondition.reduce((s, [, l]) => s + l.shares, 0)
+
+      for (const [a, lot] of lotsInCondition) {
+        const proceeds = winnerAsset
+          ? (a === winnerAsset ? usd : 0)
+          : usd * (lot.shares / totalShares)
+        bookDisposal(activity, a, lot, lot.shares, proceeds, 'REDEEM')
+      }
+      continue
+    }
+
+    if (!asset) {
+      // No outcome-token id and no condition fallback — cannot track.
+      continue
+    }
+
     const lot = lots.get(asset) ?? { shares: 0, cost: 0 }
     lot.title = activity.title ?? lot.title
     lot.outcome = activity.outcome ?? lot.outcome
     lot.conditionId = activity.conditionId ?? lot.conditionId
     lots.set(asset, lot)
-
-    const isBuy = activity.type === 'TRADE' && activity.side === 'BUY'
-    const isSell = activity.type === 'TRADE' && activity.side === 'SELL'
 
     if (isBuy || activity.type === 'SPLIT') {
       lot.shares += size
@@ -151,28 +251,9 @@ export function computeRealizedTrades(
       continue
     }
 
-    if (isSell || activity.type === 'REDEEM' || activity.type === 'MERGE') {
-      // Clamp to held shares: incomplete history must not produce phantom basis.
-      const disposed = lot.shares > 0 ? Math.min(size, lot.shares) : size
-      const avgCost = lot.shares > 0 ? lot.cost / lot.shares : 0
-      const costBasis = avgCost * disposed
-      realized.push({
-        timestamp: activity.timestamp ?? 0,
-        market: activity.title ?? lot.title ?? '—',
-        outcome: activity.outcome ?? lot.outcome,
-        asset,
-        conditionId: activity.conditionId ?? lot.conditionId,
-        proceeds: usd,
-        costBasis,
-        realizedPnl: usd - costBasis,
-        kind: activity.type === 'REDEEM' ? 'REDEEM' : activity.type === 'MERGE' ? 'MERGE' : 'SELL'
-      })
-      lot.shares -= disposed
-      lot.cost -= costBasis
-      if (lot.shares < DUST) {
-        lot.shares = 0
-        lot.cost = 0
-      }
+    if (isSell || isRedeem || activity.type === 'MERGE') {
+      const kind: RealizedTradeKind = isRedeem ? 'REDEEM' : activity.type === 'MERGE' ? 'MERGE' : 'SELL'
+      bookDisposal(activity, asset, lot, size, usd, kind)
     }
     // CONVERSION and reward rows carry no trading P&L — skipped here.
   }
