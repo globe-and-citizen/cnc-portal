@@ -2,7 +2,7 @@
   <OverviewCard
     :title="totalMonthlySpentAmount"
     subtitle="Month Spent"
-    color="warning"
+    variant="warning"
     :card-icon="cartIcon"
     :loading="loading"
   >
