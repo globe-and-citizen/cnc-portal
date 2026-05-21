@@ -24,6 +24,11 @@ export interface BalanceSheet {
   asOf: number
   // Assets (at cost basis)
   cash: number
+  /** Σ BUY/SPLIT cost — opening cost of every contract ever acquired. */
+  acquisitionCost: number
+  /** Σ cost basis of every disposal (SELL/REDEEM/MERGE/RESOLUTION_LOSS). */
+  disposedCost: number
+  /** acquisitionCost − disposedCost. Cost-basis identity #4 holds by construction. */
   openContractsAtCost: number
   totalAssets: number
   // Liabilities
@@ -104,6 +109,8 @@ export function buildBalanceSheet(input: BuildBalanceSheetInput): BalanceSheet {
   return {
     asOf: Number.isFinite(asOf) ? asOf : Math.floor(Date.now() / 1000),
     cash,
+    acquisitionCost,
+    disposedCost,
     openContractsAtCost,
     totalAssets,
     totalLiabilities,

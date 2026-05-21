@@ -51,8 +51,30 @@ export interface IncomeStatement {
   polyRewards: number
   /** Trading fees and other costs (Polymarket charges no trading fees → 0). */
   expenses: number
-  /** netTradingResult + polyRewards − expenses. */
+  /**
+   * Net income on realized exposure only — netTradingResult + polyRewards − expenses.
+   * This is the classical income statement bottom line.
+   */
   netIncome: number
+  /**
+   * Mark-to-market change on still-open positions (Σ position.cashPnl). Meaningful
+   * only when the reporting date is "today" (no historical price data).
+   */
+  unrealizedPnl: number
+  /** Σ position.currentValue — memo line, paired with unrealizedPnl. */
+  openPositionsValue: number
+  /**
+   * Comprehensive net income — `netIncome + unrealizedPnl`. With everything
+   * included (realized + unrealized + rewards), this equals
+   * `summary.totalReturn` so the Income Statement and Summary agree end-to-end.
+   */
+  comprehensiveNetIncome: number
+  /**
+   * True when the period ends within ~today's window. Unrealized P&L and
+   * comprehensiveNetIncome are only meaningful in that case — for back-dated
+   * reports we have no historical /positions prices and suppress them.
+   */
+  asOfTodayOnly: boolean
   /** Realized disposals within the period, newest first (detail rows). */
   realizedTrades: RealizedTrade[]
   /** All-time realized total from this lot accounting (audit). */
@@ -235,6 +257,22 @@ export function buildIncomeStatement(input: BuildIncomeStatementInput): IncomeSt
   const allTimeRealized = allRealized.reduce((sum, trade) => sum + trade.realizedPnl, 0)
   const positionsRealizedPnl = input.positions.reduce((sum, position) => sum + (position.realizedPnl ?? 0), 0)
 
+  // Open positions add unrealized P&L when the report ends "now" — there is no
+  // historical /positions snapshot, so back-dated comprehensive income would be
+  // nonsensical.
+  const nowSeconds = Math.floor(Date.now() / 1000)
+  const periodEnd = input.periodEnd
+  const asOfTodayOnly = periodEnd == null || periodEnd >= nowSeconds - 24 * 60 * 60
+  let unrealizedPnl = 0
+  let openPositionsValue = 0
+  if (asOfTodayOnly) {
+    for (const position of input.positions) {
+      unrealizedPnl += position.cashPnl ?? 0
+      openPositionsValue += position.currentValue ?? 0
+    }
+  }
+  const comprehensiveNetIncome = netIncome + unrealizedPnl
+
   return {
     periodStart: input.periodStart,
     periodEnd: input.periodEnd,
@@ -246,6 +284,10 @@ export function buildIncomeStatement(input: BuildIncomeStatementInput): IncomeSt
     polyRewards,
     expenses,
     netIncome,
+    unrealizedPnl,
+    openPositionsValue,
+    comprehensiveNetIncome,
+    asOfTodayOnly,
     realizedTrades,
     allTimeRealized,
     positionsRealizedPnl,

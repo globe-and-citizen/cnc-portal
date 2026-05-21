@@ -1,5 +1,6 @@
 import type { PolygonTokenTransfer } from '~/api/polygonscan'
 import type { PolymarketActivity, PolymarketPosition } from '~/types/polymarket'
+import type { RealizedTrade } from '~/utils/incomeStatement'
 
 /**
  * Polymarket accounting model.
@@ -64,8 +65,18 @@ export interface AccountingSummary {
   totalWithdrawals: number
   /** Deposits − withdrawals: net capital committed to Polymarket. */
   netDeposits: number
-  /** Realized P&L on closed exposure (from /positions). */
+  /**
+   * Realized P&L from our own lot accounting (sells + redeems + merges +
+   * resolution losses). Canonical figure — same source as the Income Statement,
+   * so the two screens agree by construction.
+   */
   realizedPnl: number
+  /**
+   * Polymarket's reported all-time realized P&L (sum of `positions.realizedPnl`).
+   * Kept for audit only — drift between this and `realizedPnl` always equals
+   * the cost basis of markets resolved-worthless without a redeem tx.
+   */
+  positionsRealizedPnl: number
   /** Unrealized P&L on open positions (from /positions). */
   unrealizedPnl: number
   /** Mark-to-market value of still-open positions. */
@@ -99,6 +110,15 @@ export interface BuildLedgerInput {
   activities: PolymarketActivity[]
   positions: PolymarketPosition[]
   transfers: PolygonTokenTransfer[]
+  /**
+   * Lot-accounting realized disposals (sells, redeems, merges, resolution losses).
+   * When provided, `summary.realizedPnl` is sourced from these so that the
+   * Summary tab and the Income Statement agree on the same realized figure.
+   * If omitted, `summary.realizedPnl` falls back to Polymarket's reported
+   * `positions.realizedPnl` (legacy behavior, kept for callers that don't
+   * have access to the lot-accounting results).
+   */
+  realizedTrades?: RealizedTrade[]
 }
 
 const REWARD_CATEGORIES: ReadonlySet<LedgerCategory> = new Set<LedgerCategory>([
@@ -255,6 +275,7 @@ export function buildLedger(input: BuildLedgerInput): AccountingLedger {
     totalWithdrawals: 0,
     netDeposits: 0,
     realizedPnl: 0,
+    positionsRealizedPnl: 0,
     unrealizedPnl: 0,
     openPositionsValue: 0,
     totalRewards: 0,
@@ -281,9 +302,16 @@ export function buildLedger(input: BuildLedgerInput): AccountingLedger {
   summary.netDeposits = summary.totalDeposits - summary.totalWithdrawals
 
   for (const position of input.positions) {
-    summary.realizedPnl += position.realizedPnl ?? 0
+    summary.positionsRealizedPnl += position.realizedPnl ?? 0
     summary.unrealizedPnl += position.cashPnl ?? 0
     summary.openPositionsValue += position.currentValue ?? 0
+  }
+  // Canonical realizedPnl comes from lot accounting (Income Statement source);
+  // falls back to Polymarket's reported figure when no realizedTrades supplied.
+  if (input.realizedTrades) {
+    summary.realizedPnl = input.realizedTrades.reduce((sum, t) => sum + t.realizedPnl, 0)
+  } else {
+    summary.realizedPnl = summary.positionsRealizedPnl
   }
 
   // Exact free USDC balance: every stablecoin transfer in/out of the wallet,
@@ -309,33 +337,6 @@ export function buildLedger(input: BuildLedgerInput): AccountingLedger {
   summary.reconciliationGap = summary.totalReturn - pnlBasedReturn
 
   return { entries, summary }
-}
-
-/** Serializes the activity ledger to CSV for export into accounting software. */
-export function ledgerToCsv(entries: LedgerEntry[]): string {
-  const header = [
-    'Date', 'Category', 'Market', 'Outcome', 'Quantity', 'Unit price',
-    'Amount (USD)', 'Cash flow (USD)', 'Source', 'Counterparty', 'Tx hash'
-  ]
-  const rows = entries.map((entry) => {
-    const date = entry.timestamp ? new Date(entry.timestamp * 1000).toISOString() : ''
-    return [
-      date,
-      entry.category,
-      entry.description,
-      entry.outcome ?? '',
-      entry.quantity != null ? String(entry.quantity) : '',
-      entry.unitPrice != null ? entry.unitPrice.toFixed(4) : '',
-      entry.amount.toFixed(2),
-      entry.cashFlow.toFixed(2),
-      entry.source,
-      entry.counterparty ?? '',
-      entry.txHash ?? ''
-    ]
-  })
-  return [header, ...rows]
-    .map(cells => cells.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
-    .join('\n')
 }
 
 // --- Presentation helpers (shared by the accounting components) ---

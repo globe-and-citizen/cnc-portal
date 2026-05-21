@@ -85,6 +85,8 @@ export interface GeneralLedger {
 export interface BuildGeneralLedgerInput {
   ledgerEntries: LedgerEntry[]
   realizedTrades: RealizedTrade[]
+  /** Inclusive lower bound (unix seconds); omit for all-time. */
+  periodStart?: number
   /** Inclusive upper bound (unix seconds); omit for all-time. */
   asOf?: number
 }
@@ -109,14 +111,25 @@ const DISPOSAL_LABEL: Record<RealizedTrade['kind'], string> = {
   RESOLUTION_LOSS: 'Loss at resolution'
 }
 
-/** Builds the double-entry general ledger and its trial balance. */
-export function buildGeneralLedger(input: BuildGeneralLedgerInput): GeneralLedger {
-  const asOf = input.asOf ?? Number.POSITIVE_INFINITY
+/**
+ * Builds just the journal entries (no trial balance). Exported so the merged
+ * Activity Ledger can attach journal lines to its activity rows without
+ * recomputing the trial balance on every render.
+ */
+function inPeriod(timestamp: number, periodStart?: number, asOf?: number): boolean {
+  if (periodStart != null && timestamp < periodStart) {
+    return false
+  }
+  const end = asOf ?? Number.POSITIVE_INFINITY
+  return timestamp <= end
+}
+
+export function buildJournalEntries(input: BuildGeneralLedgerInput): JournalEntry[] {
   const entries: JournalEntry[] = []
 
   // Cash movements, acquisitions and rewards — from the classified ledger feed.
   for (const e of input.ledgerEntries) {
-    if (e.timestamp > asOf) {
+    if (!inPeriod(e.timestamp, input.periodStart, input.asOf)) {
       continue
     }
     let lines: JournalLine[] | null = null
@@ -155,7 +168,7 @@ export function buildGeneralLedger(input: BuildGeneralLedgerInput): GeneralLedge
 
   // Disposals — proceeds, cost basis and realized P&L from lot accounting.
   for (const t of input.realizedTrades) {
-    if (t.timestamp > asOf) {
+    if (!inPeriod(t.timestamp, input.periodStart, input.asOf)) {
       continue
     }
     const lines: JournalLine[] = []
@@ -183,6 +196,13 @@ export function buildGeneralLedger(input: BuildGeneralLedgerInput): GeneralLedge
       lines
     })
   }
+
+  return entries
+}
+
+/** Builds the double-entry general ledger and its trial balance. */
+export function buildGeneralLedger(input: BuildGeneralLedgerInput): GeneralLedger {
+  const entries = buildJournalEntries(input)
 
   // A ledger is read chronologically.
   entries.sort((a, b) => a.timestamp - b.timestamp)
@@ -228,26 +248,4 @@ export function buildGeneralLedger(input: BuildGeneralLedgerInput): GeneralLedge
     totalCredit: round6(totalCredit),
     balanced: Math.abs(totalDebit - totalCredit) < 0.01
   }
-}
-
-/** Serializes the journal to CSV (one row per journal line). */
-export function generalLedgerToCsv(entries: JournalEntry[]): string {
-  const header = ['Date', 'Description', 'Account', 'Debit', 'Credit', 'Tx hash']
-  const rows: string[][] = []
-  for (const entry of entries) {
-    const date = entry.timestamp ? new Date(entry.timestamp * 1000).toISOString() : ''
-    entry.lines.forEach((line, index) => {
-      rows.push([
-        index === 0 ? date : '',
-        index === 0 ? entry.description : '',
-        line.account,
-        line.debit ? line.debit.toFixed(6) : '',
-        line.credit ? line.credit.toFixed(6) : '',
-        index === 0 ? entry.reference ?? '' : ''
-      ])
-    })
-  }
-  return [header, ...rows]
-    .map(cells => cells.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
-    .join('\n')
 }
