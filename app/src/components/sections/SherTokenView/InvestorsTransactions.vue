@@ -65,8 +65,8 @@ import {
   formatEtherUtil,
   formatInvestorTransactionDate,
   getInvestorTransactionTypeColor,
-  getTokenAddress,
   log,
+  resolveTokenIdByAddress,
   tokenSymbol
 } from '@/utils'
 import { useQuery } from '@vue/apollo-composable'
@@ -74,7 +74,6 @@ import { computed, watch, ref } from 'vue'
 import { GRAPHQL_POLL_INTERVAL, NETWORK } from '@/constant'
 import { useCurrencyStore } from '@/stores'
 import type { TokenId } from '@/constant'
-import { zeroAddress } from 'viem'
 import { useInvestorSymbol } from '@/composables/investor/reads'
 import { GET_INVESTOR_EVENTS } from '@/queries/ponder/investor.queries'
 import { GET_SAFE_DEPOSIT_ROUTER_EVENTS } from '@/queries/ponder/safe-deposit-router.queries'
@@ -105,18 +104,6 @@ const parseAmount = (value: string): bigint => {
   } catch {
     return 0n
   }
-}
-
-const KNOWN_TOKEN_IDS: TokenId[] = ['native', 'usdc', 'usdc.e', 'usdt', 'sher']
-
-const resolveTokenIdByAddress = (tokenAddress: string): TokenId | null => {
-  const normalizedAddress = tokenAddress.toLowerCase()
-  const knownId = KNOWN_TOKEN_IDS.find((tokenId) => {
-    const knownAddress = (getTokenAddress(tokenId) ?? zeroAddress).toLowerCase()
-    return knownAddress === normalizedAddress
-  })
-
-  return knownId ?? null
 }
 
 const getUsdPrice = (tokenId: TokenId | null): number => {

@@ -19,7 +19,26 @@
       </div>
     </template>
 
-    <UTable :data="displayedTransactions" :columns="columns" :loading="loading">
+    <UTable
+      v-model:expanded="expandedRows"
+      :data="displayedTransactions"
+      :columns="columns"
+      :loading="loading"
+      :get-sub-rows="getSubRows"
+      :ui="{ td: 'empty:p-0 group-has-[td:not(:empty)]:border-b border-default' }"
+    >
+      <template #expand-cell="{ row }">
+        <button
+          v-if="row.getCanExpand()"
+          type="button"
+          class="text-muted hover:text-default inline-flex h-6 w-6 items-center justify-center rounded transition"
+          :aria-label="row.getIsExpanded() ? 'Collapse transaction events' : 'Expand transaction events'"
+          @click="row.toggleExpanded()"
+        >
+          {{ row.getIsExpanded() ? '−' : '+' }}
+        </button>
+      </template>
+
       <template #txHash-cell="{ row: { original: row } }">
         <AddressToolTip :address="row.txHash" :slice="true" type="transaction" />
       </template>
@@ -28,10 +47,18 @@
         {{ formatDateShort(String(row.date)) }}
       </template>
 
-      <template #type-cell="{ row: { original: row } }">
-        <UBadge :color="getExpenseTransactionTypeColor(row.type)" variant="soft">
-          {{ row.type }}
-        </UBadge>
+      <template #type-cell="{ row }">
+        <div class="flex items-center gap-2" :class="{ 'pl-4': row.depth > 0 }">
+          <UBadge :color="getExpenseTransactionTypeColor(row.original.type)" variant="soft">
+            {{ row.original.type }}
+          </UBadge>
+          <span
+            v-if="row.depth === 0 && row.original.groupedEventCount > 1"
+            class="text-muted text-xs"
+          >
+            {{ row.original.groupedEventCount }} events
+          </span>
+        </div>
       </template>
 
       <template #from-cell="{ row: { original: row } }">
@@ -72,13 +99,16 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { zeroAddress, type Address } from 'viem'
-import type { TokenId } from '@/constant'
+import { type Address } from 'viem'
 import { GRAPHQL_POLL_INTERVAL, NETWORK } from '@/constant'
 import { useQuery } from '@vue/apollo-composable'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import CustomDatePicker from '@/components/CustomDatePicker.vue'
 import { useCurrencyStore } from '@/stores/currencyStore'
+import type {
+  ExpenseTransactionRow,
+  TransactionHistoryItemRow
+} from '@/types/transaction-history'
 import type { ExpenseTransaction } from '@/types/transactions'
 import {
   buildRawExpenseTransactions,
@@ -87,8 +117,9 @@ import {
   formatCryptoAmount,
   formatCurrencyShort,
   formatEtherUtil,
-  getTokenAddress,
+  groupTransactionsByTxHash,
   log,
+  resolveTokenIdByAddress,
   tokenSymbol
 } from '@/utils'
 import { formatDateShort } from '@/utils/dayUtils'
@@ -170,26 +201,7 @@ const transactions = computed<ExpenseTransaction[]>(() =>
 const dateRange = ref<[Date, Date] | null>(null)
 const selectedType = ref('all')
 
-type ExpenseTransactionRow = ExpenseTransaction & {
-  amount: string | number
-  token: string
-  tokenAddress: string
-  amountLocal: number
-}
-
-const KNOWN_TOKEN_IDS: TokenId[] = ['native', 'usdc', 'usdc.e', 'usdt', 'sher']
-
-const resolveTokenIdByAddress = (tokenAddress: string): TokenId | null => {
-  const normalizedAddress = tokenAddress.toLowerCase()
-  const knownId = KNOWN_TOKEN_IDS.find((tokenId) => {
-    const knownAddress = (getTokenAddress(tokenId) ?? zeroAddress).toLowerCase()
-    return knownAddress === normalizedAddress
-  })
-
-  return knownId ?? null
-}
-
-const enrichedTransactions = computed<ExpenseTransactionRow[]>(() => {
+const enrichedTransactions = computed<TransactionHistoryItemRow[]>(() => {
   return transactions.value.map((tx) => {
     const tokenAddress = String(tx.tokenAddress ?? '').toLowerCase()
     const matchedToken = currencyStore.supportedTokens.find(
@@ -224,7 +236,7 @@ const typeOptions = computed(() => [
   ...uniqueTypes.value.map((type) => ({ label: type, value: type }))
 ])
 
-const displayedTransactions = computed(() => {
+const filteredTransactions = computed(() => {
   let filtered = enrichedTransactions.value
 
   if (dateRange.value) {
@@ -242,7 +254,15 @@ const displayedTransactions = computed(() => {
   return filtered
 })
 
+const displayedTransactions = computed<ExpenseTransactionRow[]>(() => {
+  return groupTransactionsByTxHash(filteredTransactions.value)
+})
+
+const expandedRows = ref<Record<string, boolean>>({})
+const getSubRows = (row: ExpenseTransactionRow): ExpenseTransactionRow[] => row.subRows ?? []
+
 const columns = computed(() => [
+  { accessorKey: 'expand', header: '' },
   { accessorKey: 'txHash', header: 'Tx Hash' },
   { accessorKey: 'date', header: 'Date' },
   { accessorKey: 'type', header: 'Type' },
@@ -256,5 +276,9 @@ watch([error, incomingTokenTransfersError], ([newError, newIncomingTransfersErro
   if (newError || newIncomingTransfersError) {
     log.error('Ponder expense transaction query error:', newError ?? newIncomingTransfersError)
   }
+})
+
+watch(filteredTransactions, () => {
+  expandedRows.value = {}
 })
 </script>

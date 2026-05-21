@@ -132,3 +132,48 @@ export const buildFallbackExpenseQueryResult = () => ({
   expenseTokenSupportRemoveds: { items: [] },
   expenseTokenAddressChangeds: { items: [] }
 })
+
+export const buildGroupedExpenseQueryResult = () => ({
+  expenseDeposits: {
+    items: [
+      {
+        id: '0xsharedhash-0',
+        contractAddress: EXPENSE_ADDRESS,
+        depositor: '0x2222222222222222222222222222222222222222',
+        amount: '1000000000000000000',
+        timestamp: 1_700_000_700
+      }
+    ]
+  },
+  expenseTokenDeposits: {
+    items: [
+      {
+        id: '0xsharedhash-1',
+        contractAddress: EXPENSE_ADDRESS,
+        depositor: '0x2222222222222222222222222222222222222222',
+        token: USDC_ADDRESS,
+        amount: '500000',
+        timestamp: 1_700_000_699
+      }
+    ]
+  },
+  expenseTransfers: {
+    items: [
+      {
+        id: '0xsinglehash-0',
+        contractAddress: EXPENSE_ADDRESS,
+        withdrawer: '0x3333333333333333333333333333333333333333',
+        to: '0x4444444444444444444444444444444444444444',
+        amount: '1000',
+        timestamp: 1_700_000_650
+      }
+    ]
+  },
+  expenseTokenTransfers: { items: [] },
+  expenseApprovals: { items: [] },
+  expenseOwnerTreasuryWithdrawNatives: { items: [] },
+  expenseOwnerTreasuryWithdrawTokens: { items: [] },
+  expenseTokenSupportAddeds: { items: [] },
+  expenseTokenSupportRemoveds: { items: [] },
+  expenseTokenAddressChangeds: { items: [] }
+})
