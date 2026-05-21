@@ -58,25 +58,6 @@
       </UPageCard>
     </div>
 
-    <!-- Reconciliation: the two profit measures should agree -->
-    <UAlert
-      :color="isReconciled ? 'success' : 'warning'"
-      variant="subtle"
-      :icon="isReconciled ? 'i-lucide-check-circle' : 'i-lucide-alert-triangle'"
-      :title="isReconciled ? 'Books reconciled' : 'Reconciliation gap detected'"
-    >
-      <template #description>
-        <span class="tabular-nums">
-          P&L-based return ({{ formatSignedUsd(pnlBasedReturn) }})
-          vs cash-based return ({{ formatSignedUsd(summary.totalReturn) }})
-          — gap {{ formatSignedUsd(summary.reconciliationGap) }}.
-        </span>
-        <span v-if="!isReconciled" class="block mt-1">
-          A non-zero gap usually means truncated transfer history or a market missing from the positions feed.
-        </span>
-      </template>
-    </UAlert>
-
     <!-- Detail stats -->
     <div class="grid grid-cols-2 lg:grid-cols-3 gap-4">
       <UPageCard
@@ -116,17 +97,11 @@ const stats = computed<Stat[]>(() => {
   return [
     { label: 'Total deposits', value: formatUsd(s.totalDeposits), valueClass: 'text-emerald-600 dark:text-emerald-400' },
     { label: 'Total withdrawals', value: formatUsd(s.totalWithdrawals), valueClass: 'text-rose-600 dark:text-rose-400' },
-    { label: 'Realized P&L', value: formatSignedUsd(s.realizedPnl), valueClass: signClass(s.realizedPnl), hint: 'Closed exposure' },
+    { label: 'Realized P&L', value: formatSignedUsd(s.realizedPnl), valueClass: signClass(s.realizedPnl), hint: 'Lot accounting — same as Income Statement' },
+    { label: 'Polymarket realized', value: formatSignedUsd(s.positionsRealizedPnl), valueClass: signClass(s.positionsRealizedPnl), hint: 'Reported by /positions (audit only)' },
     { label: 'Unrealized P&L', value: formatSignedUsd(s.unrealizedPnl), valueClass: signClass(s.unrealizedPnl), hint: 'Open positions' },
     { label: 'Rewards earned', value: formatUsd(s.totalRewards), valueClass: 'text-emerald-600 dark:text-emerald-400' },
     { label: 'Trading volume', value: formatUsd(s.tradingVolume), hint: `${s.tradeCount} trades` }
   ]
 })
-
-// The two independent profit figures (see AccountingSummary.reconciliationGap).
-const pnlBasedReturn = computed(() =>
-  props.summary.realizedPnl + props.summary.unrealizedPnl + props.summary.totalRewards
-)
-/** Books are considered reconciled when the gap is under $1. */
-const isReconciled = computed(() => Math.abs(props.summary.reconciliationGap) < 1)
 </script>

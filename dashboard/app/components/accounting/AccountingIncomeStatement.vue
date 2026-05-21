@@ -64,20 +64,45 @@
           <span class="tabular-nums">{{ formatUsd(statement.expenses) }}</span>
         </div>
 
-        <!-- Net income -->
-        <div class="flex justify-between py-3 mt-2 border-t-2 border-default text-lg font-bold">
-          <span>Net income</span>
+        <!-- Net income (realized only) -->
+        <div class="flex justify-between py-2 mt-1 border-t border-default font-semibold">
+          <span>Net income <span class="text-muted text-xs">(realized)</span></span>
           <span class="tabular-nums" :class="signClass(statement.netIncome)">
             {{ formatSignedUsd(statement.netIncome) }}
           </span>
         </div>
 
+        <!-- Unrealized P&L on open positions — only meaningful "as of today" -->
+        <p class="text-xs uppercase tracking-wide text-muted pt-3">
+          Unrealized changes <span v-if="!statement.asOfTodayOnly" class="lowercase">(as-of-today only)</span>
+        </p>
+        <div class="flex justify-between py-1.5 pl-3">
+          <span>Mark-to-market on open positions</span>
+          <span v-if="statement.asOfTodayOnly" class="tabular-nums" :class="signClass(statement.unrealizedPnl)">
+            {{ formatSignedUsd(statement.unrealizedPnl) }}
+          </span>
+          <span v-else class="text-muted">—</span>
+        </div>
+        <div v-if="statement.asOfTodayOnly" class="flex justify-between py-1.5 pl-3">
+          <span class="text-muted text-sm">Open positions market value <span class="text-muted">(memo)</span></span>
+          <span class="tabular-nums text-muted">{{ formatUsd(statement.openPositionsValue) }}</span>
+        </div>
+
+        <!-- Comprehensive net income — bottom line, reconciles to Summary.totalReturn -->
+        <div class="flex justify-between py-3 mt-2 border-t-2 border-default text-lg font-bold">
+          <span>Comprehensive net income</span>
+          <span class="tabular-nums" :class="signClass(statement.comprehensiveNetIncome)">
+            {{ formatSignedUsd(statement.comprehensiveNetIncome) }}
+          </span>
+        </div>
+
         <p class="text-xs text-muted">
-          Polymarket-reported all-time realized P&L: {{ formatSignedUsd(statement.positionsRealizedPnl) }}.
-          This statement books markets lost at resolution as realized
-          <template v-if="!isReconciled">
-            — difference {{ formatSignedUsd(statement.reconciliationGap) }}.
-          </template>
+          Net income covers realized results only. Comprehensive net income adds
+          unrealized P&L on still-open positions — this is the figure that should
+          match Total Return on the Summary tab when the selected period is current.
+          Polymarket-reported all-time realized: {{ formatSignedUsd(statement.positionsRealizedPnl) }}<template v-if="!isReconciled">
+            ; lot-accounting difference {{ formatSignedUsd(statement.reconciliationGap) }} (markets resolved-worthless without a redeem tx).
+          </template>.
         </p>
       </div>
     </UPageCard>
@@ -157,8 +182,6 @@ const props = defineProps<{
   positions: PolymarketPosition[]
   isLoading: boolean
   hasAddress: boolean
-  /** Reporting date (unix seconds) — the period always ends here. */
-  asOf: number
 }>()
 
 type Period = 'ALL' | 'YTD' | 'MONTH' | 'M30'
@@ -172,19 +195,18 @@ const periodOptions = [
   { label: 'Last 30 days', value: 'M30' as const }
 ]
 
-/** Resolves the preset to inclusive unix-second bounds; the period ends at "as of". */
 const range = computed<{ start?: number, end?: number }>(() => {
-  const asOfDate = new Date(props.asOf * 1000)
-  const end = props.asOf
+  const now = Math.floor(Date.now() / 1000)
+  const nowDate = new Date()
   switch (period.value) {
     case 'YTD':
-      return { start: Math.floor(new Date(asOfDate.getFullYear(), 0, 1).getTime() / 1000), end }
+      return { start: Math.floor(new Date(nowDate.getFullYear(), 0, 1).getTime() / 1000), end: now }
     case 'MONTH':
-      return { start: Math.floor(new Date(asOfDate.getFullYear(), asOfDate.getMonth(), 1).getTime() / 1000), end }
+      return { start: Math.floor(new Date(nowDate.getFullYear(), nowDate.getMonth(), 1).getTime() / 1000), end: now }
     case 'M30':
-      return { start: end - 30 * 24 * 60 * 60, end }
+      return { start: now - 30 * 24 * 60 * 60, end: now }
     default:
-      return { start: undefined, end }
+      return { start: undefined, end: undefined }
   }
 })
 

@@ -11,22 +11,17 @@ const props = defineProps<{
   realizedTrades: RealizedTrade[]
   positions: PolymarketPosition[]
   hasAddress: boolean
-  /** Reporting date (unix seconds). */
-  asOf: number
-  /** Whether the reporting date is today (mark-to-market memo is only valid then). */
-  isAsOfToday: boolean
 }>()
 
 const sheet = computed(() =>
   buildBalanceSheet({
     ledgerEntries: props.ledgerEntries,
     realizedTrades: props.realizedTrades,
-    positions: props.positions,
-    asOf: props.asOf
+    positions: props.positions
   })
 )
 
-const asOfLabel = computed(() => format(new Date(props.asOf * 1000), 'MMMM d, yyyy'))
+const asOfLabel = computed(() => format(new Date(sheet.value.asOf * 1000), 'MMMM d, yyyy'))
 
 /** The cost-basis identity holds to the cent for any date. */
 const balances = computed(() => Math.abs(sheet.value.identityGap) < 0.01)
@@ -106,15 +101,11 @@ const balances = computed(() => Math.abs(sheet.value.identityGap) < 0.01)
       </div>
 
       <!-- Mark-to-market memo (only meaningful as of today) -->
-      <p v-if="isAsOfToday" class="text-xs text-muted pt-2">
+      <p class="text-xs text-muted pt-2">
         Memo — open contracts at current market value:
         {{ formatUsd(sheet.openContractsMarketValue) }}
         (unrealized P&L {{ formatSignedUsd(sheet.unrealizedPnl) }}).
         Contracts are carried at cost above so the statement balances for any date.
-      </p>
-      <p v-else class="text-xs text-muted pt-2">
-        Open contracts are carried at cost basis: historical market prices are not
-        available, so this is the only figure that can be stated for a past date.
       </p>
     </div>
   </UPageCard>
