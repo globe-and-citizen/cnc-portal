@@ -24,6 +24,8 @@ export default defineNuxtConfig({
   css: ['~/assets/css/main.css'],
 
   runtimeConfig: {
+    // Private — server-only. Maps from env var NUXT_ETHERSCAN_API_KEY.
+    etherscanApiKey: process.env.NUXT_ETHERSCAN_API_KEY || '',
     public: {
       backendUrl: process.env.NUXT_PUBLIC_BACKEND_URL || 'https://apiv2.cncportal.io',
       chainId: process.env.NUXT_PUBLIC_CHAIN_ID || '137',
