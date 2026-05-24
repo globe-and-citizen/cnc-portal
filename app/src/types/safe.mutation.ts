@@ -1,3 +1,11 @@
+import type { SafeTransferOptions, SafeTransaction } from './safe'
+import type Safe from '@safe-global/protocol-kit'
+
+export interface SafeDeploymentParams {
+  owners: string[]
+  threshold: number
+}
+
 /**
  * Request body for proposing a transaction
  */
@@ -46,16 +54,85 @@ export interface ExecuteTransactionParams {
     /** Chain ID for transaction service lookup */
     chainId: number
   }
-  body?: {
-    /** Optional blockchain transaction hash */
-    txHash?: string
+  body: {
+    /** Transaction data to execute */
+    transactionData: SafeTransaction
   }
 }
 
 /**
- * Path parameters for Safe transaction endpoints
+ * Combined parameters for useApproveTransactionMutation
  */
-export interface SafeTransactionPathParams {
-  /** Safe transaction hash */
-  safeTxHash: string
+export interface ApproveTransactionParams {
+  pathParams: {
+    /** Safe address */
+    safeAddress: string
+    /** Safe transaction hash */
+    safeTxHash: string
+  }
+  queryParams: {
+    /** Chain ID for transaction service lookup */
+    chainId: number
+  }
+}
+
+/**
+ * Combined parameters for useUpdateSafeOwnersMutation
+ */
+export interface UpdateSafeOwnersParams {
+  pathParams: {
+    /** Safe address for query invalidation */
+    safeAddress: string
+  }
+  queryParams: {
+    /** Chain ID for transaction service lookup */
+    chainId: number
+  }
+  body: {
+    /** Owners to add */
+    ownersToAdd?: string[]
+    /** Owners to remove */
+    ownersToRemove?: string[]
+    /** New threshold */
+    newThreshold?: number
+    /** Whether to propose the transaction */
+    shouldPropose?: boolean
+  }
+}
+
+/**
+ * Combined parameters for useTransferFromSafeMutation
+ */
+export interface TransferFromSafeParams {
+  pathParams: {
+    /** Safe address */
+    safeAddress: string
+  }
+  queryParams?: Record<string, never>
+  body: {
+    /** Transfer options */
+    options: SafeTransferOptions
+  }
+}
+
+export interface SafeExecutionResult {
+  hash: string
+  executed: boolean
+}
+
+export type SafeSdkInstance = Awaited<ReturnType<typeof Safe.init>>
+
+export interface SafeTransactionInput {
+  to: string
+  value: string
+  data: string
+  operation: number
+}
+
+export interface BuildOwnerManagementTransactionsParams {
+  safeSdk: SafeSdkInstance
+  ownersToAdd: string[]
+  ownersToRemove: string[]
+  newThreshold?: number
+  currentThreshold: number
 }

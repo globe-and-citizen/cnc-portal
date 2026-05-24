@@ -3,8 +3,8 @@ import { mount, type VueWrapper } from '@vue/test-utils'
 import { nextTick, ref, defineComponent } from 'vue'
 import type { Address } from 'viem'
 import SafeOwnersCard from '../SafeOwnersCard.vue'
-import { useAccountFn, useChainIdFn } from '@/tests/mocks'
-import { useTeamStore } from '@/stores'
+import { useChainIdFn } from '@/tests/mocks'
+import { useTeamStore, useUserDataStore } from '@/stores'
 
 // Mock @iconify/vue FIRST
 vi.mock('@iconify/vue', () => ({
@@ -158,17 +158,15 @@ describe('SafeOwnersCard', () => {
     })
 
     // Setup default mocks
-    useAccountFn.mockReturnValue({
-      address: ref(undefined),
-      isConnected: ref(false)
-    })
-
     useChainIdFn.mockReturnValue(ref(137))
 
     vi.mocked(useTeamStore).mockReturnValue({
       currentTeam: MOCK_DATA.team,
       currentTeamMeta: { data: { safeAddress: MOCK_DATA.safeAddress } }
     } as ReturnType<typeof useTeamStore>)
+    vi.mocked(useUserDataStore).mockReturnValue({
+      address: ''
+    } as ReturnType<typeof useUserDataStore>)
 
     mockGetSafeSettingsUrl.mockReturnValue(
       'https://app.safe.global/settings/setup?safe=polygon:0x1234567890123456789012345678901234567890'
@@ -245,10 +243,9 @@ describe('SafeOwnersCard', () => {
 
   describe('User Permissions', () => {
     it('should disable add signer button when user is not an owner', async () => {
-      useAccountFn.mockReturnValue({
-        address: ref('0x9999999999999999999999999999999999999999' as Address),
-        isConnected: ref(true)
-      })
+      vi.mocked(useUserDataStore).mockReturnValue({
+        address: '0x9999999999999999999999999999999999999999' as Address
+      } as ReturnType<typeof useUserDataStore>)
       mockSafeInfoData.value = MOCK_DATA.safeInfo
       wrapper = createWrapper()
       await nextTick()
