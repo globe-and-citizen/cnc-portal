@@ -19,7 +19,7 @@ vi.mock('@/constant', () => ({
   ELECTIONS_IMPL_ADDRESS: '0x0000000000000000000000000000000000000004'
 }))
 vi.mock('viem', async () => {
-  const actual = await vi.importActual<typeof import('viem')>('viem')
+  const actual = await vi.importActual('viem')
   return {
     ...actual,
     encodeFunctionData: vi.fn(() => '0xdeadbeef')
@@ -33,7 +33,7 @@ type PublishOptions = {
 
 describe('PublishResult.vue', () => {
   const publish = mockElectionsWrites.publishResults
-  let queryClientMock: ReturnType<typeof useQueryClientFn>
+  let queryClientMock: { invalidateQueries: ReturnType<typeof vi.fn> }
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -52,12 +52,7 @@ describe('PublishResult.vue', () => {
         }) as ReturnType<typeof useTeamStore>
     )
 
-    queryClientMock = {
-      invalidateQueries: vi.fn(async () => undefined),
-      getQueryData: vi.fn(() => undefined),
-      setQueryData: vi.fn(() => undefined),
-      removeQueries: vi.fn(() => undefined)
-    }
+    queryClientMock = { invalidateQueries: vi.fn() }
     useQueryClientFn.mockImplementation(() => queryClientMock)
     mockWagmiCore.estimateGas.mockImplementation(async () => ({ gas: 21000n }))
   })
