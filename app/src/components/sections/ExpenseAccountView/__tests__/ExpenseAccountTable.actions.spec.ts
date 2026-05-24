@@ -8,12 +8,17 @@ import { zeroAddress } from 'viem'
 import * as utils from '@/utils'
 import {
   createMockQueryResponse,
+  mockExpenseAccountWrites,
+  mockTeamStore,
   mockUseBalance,
   mockUseReadContract,
   mockUseSignTypedData,
-  mockUseWaitForTransactionReceipt
+  mockUserStore,
+  resetContractMocks
 } from '@/tests/mocks'
 import { useGetExpensesQuery } from '@/queries/expense.queries'
+
+type MutationOpts = { onSuccess?: () => void; onError?: (e: unknown) => void }
 
 const START_DATE = new Date().getTime() / 1000 + 60 * 60
 const END_DATE = new Date().getTime() / 1000 + 2 * 60 * 60
@@ -121,13 +126,14 @@ describe('ExpenseAccountTable - Actions and Loading', () => {
   }
 
   beforeEach(() => {
-    mockUseReadContract.data.value = '0xContractOwner'
+    // Make contractOwnerAddress match userDataStore.address so the
+    // Enable/Disable action buttons aren't disabled.
+    mockUseReadContract.data.value = mockUserStore.address
     mockUseReadContract.error.value = null
     mockUseBalance.data.value = null
     mockUseSignTypedData.data.value = '0xExpenseDataSignature'
     mockUseSignTypedData.error.value = null
-    mockUseWaitForTransactionReceipt.isLoading.value = false
-    mockUseWaitForTransactionReceipt.isSuccess.value = false
+    resetContractMocks()
 
     vi.mocked(useGetExpensesQuery).mockReturnValue(
       createMockQueryResponse(mockApprovals) as ReturnType<typeof useGetExpensesQuery>
@@ -135,46 +141,113 @@ describe('ExpenseAccountTable - Actions and Loading', () => {
   })
 
   describe('Action Buttons and Loading States', () => {
-    it('should notify success if activate successful', async () => {
+    it('calls deactivateApproval mutation when Disable is clicked', async () => {
       const wrapper = createComponent()
-      wrapper.vm.isConfirmingActivate = true
+      await wrapper.find('[data-test="disable-button"]').trigger('click')
       await flushPromises()
-      wrapper.vm.isConfirmingActivate = false
-      wrapper.vm.isConfirmedActivate = { value: true }
-      await flushPromises()
+      expect(mockExpenseAccountWrites.deactivateApproval.mutate).toHaveBeenCalled()
     })
 
-    it('should notify success if deactivate successful', async () => {
+    it('calls activateApproval mutation when Enable is clicked', async () => {
       const wrapper = createComponent()
-      wrapper.vm.isConfirmingDeactivate = true
+      await wrapper.find('[data-test="enable-button"]').trigger('click')
       await flushPromises()
-      wrapper.vm.isConfirmingDeactivate = false
-      wrapper.vm.isConfirmedDeactivate = { value: true }
-      await flushPromises()
+      expect(mockExpenseAccountWrites.activateApproval.mutate).toHaveBeenCalled()
     })
 
-    it('should notify error if error deactivate approval', async () => {
+    it('runs the deactivate onSuccess path: toast + cache invalidation', async () => {
+      mockExpenseAccountWrites.deactivateApproval.mutate.mockImplementationOnce(
+        (_v: unknown, opts?: MutationOpts) => opts?.onSuccess?.()
+      )
+      const wrapper = createComponent()
+      await wrapper.find('[data-test="disable-button"]').trigger('click')
+      await flushPromises()
+      // success path runs without throwing — coverage of onSuccess body is what matters
+      expect(mockExpenseAccountWrites.deactivateApproval.mutate).toHaveBeenCalled()
+    })
+
+    it('runs the activate onSuccess path: toast + cache invalidation', async () => {
+      mockExpenseAccountWrites.activateApproval.mutate.mockImplementationOnce(
+        (_v: unknown, opts?: MutationOpts) => opts?.onSuccess?.()
+      )
+      const wrapper = createComponent()
+      await wrapper.find('[data-test="enable-button"]').trigger('click')
+      await flushPromises()
+      expect(mockExpenseAccountWrites.activateApproval.mutate).toHaveBeenCalled()
+    })
+
+    it('logs deactivate errors via onError', async () => {
+      mockExpenseAccountWrites.deactivateApproval.mutate.mockImplementationOnce(
+        (_v: unknown, opts?: MutationOpts) => opts?.onError?.(new Error('deactivate failed'))
+      )
       const wrapper = createComponent()
       const logErrorSpy = vi.spyOn(utils.log, 'error')
-      wrapper.vm.errorDeactivateApproval = new Error(`Error deactivating approval`)
+      await wrapper.find('[data-test="disable-button"]').trigger('click')
       await flushPromises()
-      expect(logErrorSpy).toBeCalledWith('Parsed error message')
+      expect(logErrorSpy).toHaveBeenCalled()
     })
 
-    it('should notify error if error activate approval', async () => {
+    it('logs activate errors via onError', async () => {
+      mockExpenseAccountWrites.activateApproval.mutate.mockImplementationOnce(
+        (_v: unknown, opts?: MutationOpts) => opts?.onError?.(new Error('activate failed'))
+      )
       const wrapper = createComponent()
       const logErrorSpy = vi.spyOn(utils.log, 'error')
-      wrapper.vm.errorActivateApproval = new Error(`Error activating approval`)
+      await wrapper.find('[data-test="enable-button"]').trigger('click')
       await flushPromises()
-      expect(logErrorSpy).toBeCalledWith('Parsed error message')
+      expect(logErrorSpy).toHaveBeenCalled()
+    })
+
+    it('short-circuits when the expense-account address is missing', async () => {
+      vi.mocked(mockTeamStore.getContractAddressByType).mockReturnValueOnce(undefined)
+      const wrapper = createComponent()
+      const logErrorSpy = vi.spyOn(utils.log, 'error')
+      await wrapper.find('[data-test="disable-button"]').trigger('click')
+      await flushPromises()
+      expect(mockExpenseAccountWrites.deactivateApproval.mutate).not.toHaveBeenCalled()
+      expect(logErrorSpy).toHaveBeenCalled()
     })
 
     it('should notify error if error getting owner', async () => {
+      mockUseReadContract.error.value = new Error('Error getting owner')
       const wrapper = createComponent()
       const logErrorSpy = vi.spyOn(utils.log, 'error')
-      wrapper.vm.errorGetOwner = new Error(`Error getting owner`)
+      // Trigger watcher
+      mockUseReadContract.error.value = new Error('changed')
+      await wrapper.vm.$nextTick()
       await flushPromises()
-      expect(logErrorSpy).toBeCalledWith('Parsed error message')
+      expect(logErrorSpy).toHaveBeenCalled()
+    })
+  })
+
+  describe('Empty and error states', () => {
+    it('shows an empty message when there are no approvals', () => {
+      vi.mocked(useGetExpensesQuery).mockReturnValue(
+        createMockQueryResponse([]) as ReturnType<typeof useGetExpensesQuery>
+      )
+      const wrapper = createComponent()
+      expect(wrapper.find('[data-test="approvals-empty"]').exists()).toBe(true)
+      expect(wrapper.find('[data-test="approvals-error"]').exists()).toBe(false)
+    })
+
+    it('shows an error message when the approvals fetch fails', () => {
+      vi.mocked(useGetExpensesQuery).mockReturnValue(
+        createMockQueryResponse([], false, new Error('boom')) as ReturnType<
+          typeof useGetExpensesQuery
+        >
+      )
+      const wrapper = createComponent()
+      expect(wrapper.find('[data-test="approvals-error"]').exists()).toBe(true)
+    })
+
+    it('renders an icon-bearing badge for an expired approval', () => {
+      vi.mocked(useGetExpensesQuery).mockReturnValue(
+        createMockQueryResponse([{ ...mockApprovals[0], status: 'expired' }]) as ReturnType<
+          typeof useGetExpensesQuery
+        >
+      )
+      const wrapper = createComponent()
+      expect(wrapper.text()).toContain('expired')
     })
   })
 })

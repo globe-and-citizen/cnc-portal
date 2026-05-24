@@ -8,8 +8,8 @@ import { mockInvestorReads, resetContractMocks } from '@/tests/mocks'
 const SELECTORS = {
   compensationAmount: '[data-test="compensation-amount"]',
   compensationInput: '[data-test="compensation-input"]',
-  labelTextAlt: '.label-text-alt',
-  labelText: '.label-text'
+  labelTextAlt: '[data-test="compensation-label-text-alt"]',
+  labelText: '[data-test="compensation-label-text"]'
 } as const
 
 const MOCK_DATA = {

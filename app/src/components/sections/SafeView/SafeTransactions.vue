@@ -36,9 +36,9 @@
 
       <template #status-cell="{ row: { original: row } }">
         <span>{{ getTransactionStatus(row as SafeTransaction) }}</span>
-        <span class="badge badge-sm badge-neutral badge-outline flex items-center gap-1">
+        <UBadge color="neutral" variant="outline" size="sm" class="flex items-center gap-1">
           {{ row.confirmations?.length || 0 }} / {{ row.confirmationsRequired }}
-        </span>
+        </UBadge>
       </template>
 
       <template #txHash-cell="{ row: { original: row } }">

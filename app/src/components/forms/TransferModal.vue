@@ -2,14 +2,13 @@
 <template>
   <div>
     <!-- Transfer Button with Tooltip -->
-    <div
-      :class="{ tooltip: !hasTheRight || !isBalanceGreaterThanZero }"
-      :data-tip="
+    <UTooltip
+      :text="
         !hasTheRight
           ? 'Only the bank owner can transfer funds'
           : !isBalanceGreaterThanZero
             ? 'Bank balance is 0'
-            : null
+            : undefined
       "
     >
       <UButton
@@ -20,7 +19,7 @@
         :disabled="!hasTheRight || !isBalanceGreaterThanZero"
         data-test="transfer-button"
       />
-    </div>
+    </UTooltip>
 
     <!-- Transfer Modal -->
     <UModal
@@ -95,8 +94,7 @@ const isBankOwner = computed(() => bankOwner.value === userStore.address)
 const {
   executeAddAction: addAction,
   isPending: isLoadingAddAction,
-  isConfirming: isConfirmingAddAction,
-  isActionAdded
+  isSuccess: isActionAdded
 } = useBodAddAction()
 
 // Modal state
@@ -112,11 +110,7 @@ const transferToken = useTransferToken()
 
 // Computed loading state
 const isLoading = computed(
-  () =>
-    transferNative.isPending.value ||
-    transferToken.isPending.value ||
-    isLoadingAddAction.value ||
-    isConfirmingAddAction.value
+  () => transferNative.isPending.value || transferToken.isPending.value || isLoadingAddAction.value
 )
 
 // Get available tokens for transfer

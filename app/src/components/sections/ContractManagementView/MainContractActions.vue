@@ -51,12 +51,7 @@
           v-if="showModal"
           :is-bod-action="isBodAction"
           @transfer-ownership="transferOwnership"
-          :loading="
-            isLoadingTransferOwnership ||
-            isConfirmingTransferOwnership ||
-            isLoadingAddAction ||
-            isConfirmingAddAction
-          "
+          :loading="isLoadingTransferOwnership || isLoadingAddAction"
         />
       </template>
     </UModal>
@@ -90,10 +85,9 @@
 </template>
 <script setup lang="ts">
 import { Icon as IconifyIcon } from '@iconify/vue'
-import { encodeFunctionData, type Address } from 'viem'
+import { encodeFunctionData, type Abi, type Address } from 'viem'
 import type { TableRow } from '@/types/table'
-import { useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
-import { watch, ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useTeamStore, useUserDataStore } from '@/stores'
 import TransferOwnershipForm from './forms/TransferOwnershipForm.vue'
 import { filterAndFormatActions, log, parseError } from '@/utils'
@@ -102,6 +96,7 @@ import BodApprovalModal from './BodApprovalModal.vue'
 import { useGetBodActionsQuery } from '@/queries'
 import { useBodAddAction, useBodApproveAction } from '@/composables/bod/writes'
 import { useBodIsBodAction } from '@/composables/bod/reads'
+import { useContractWritesV3 } from '@/composables/contracts/useContractWritesV3'
 import { useQueryClient } from '@tanstack/vue-query'
 
 const props = defineProps<{
@@ -125,12 +120,15 @@ const { isBodAction } = useBodIsBodAction(props.row.address as Address)
 const {
   executeAddAction,
   isPending: isLoadingAddAction,
-  isConfirming: isConfirmingAddAction,
-  isActionAdded
+  isSuccess: isActionAdded
 } = addActionComposable
 
 // Destructure approveAction properties
-const { executeApproveAction, isLoadingApproveAction, isActionApproved } = approveActionComposable
+const {
+  executeApproveAction,
+  isPending: isLoadingApproveAction,
+  isSuccess: isActionApproved
+} = approveActionComposable
 
 // Create wrapper functions for template usage
 const addAction = executeAddAction
@@ -160,41 +158,38 @@ const formatedActions = computed(() => {
   )
 })
 
+const rowAddress = computed(() => props.row.address as Address)
+const rowAbi = computed(() => props.row.abi as Abi)
+
 const {
-  data: hashTransferOwnership,
   mutate: executeTransferOwnership,
   isPending: isLoadingTransferOwnership,
   error: errorTransferOwnership
-} = useWriteContract()
-
-const { isLoading: isConfirmingTransferOwnership, isSuccess: isConfirmedTransferOwnership } =
-  useWaitForTransactionReceipt({
-    hash: hashTransferOwnership
-  })
+} = useContractWritesV3({
+  contractAddress: rowAddress,
+  abi: rowAbi,
+  functionName: 'transferOwnership'
+})
 
 const {
-  data: hashPauseContract,
   mutate: executePauseContract,
   isPending: isLoadingPauseContract,
   error: errorPauseContract
-} = useWriteContract()
-
-const { isLoading: isConfirmingPauseContract, isSuccess: isConfirmedPauseContract } =
-  useWaitForTransactionReceipt({
-    hash: hashPauseContract
-  })
+} = useContractWritesV3({
+  contractAddress: rowAddress,
+  abi: rowAbi,
+  functionName: 'pause'
+})
 
 const {
-  data: hashUnpauseContract,
   mutate: executeUnpauseContract,
   isPending: isLoadingUnpauseContract,
   error: errorUnpauseContract
-} = useWriteContract()
-
-const { isLoading: isConfirmingUnpauseContract, isSuccess: isConfirmedUnpauseContract } =
-  useWaitForTransactionReceipt({
-    hash: hashUnpauseContract
-  })
+} = useContractWritesV3({
+  contractAddress: rowAddress,
+  abi: rowAbi,
+  functionName: 'unpause'
+})
 
 const transferOwnership = async (address: Address) => {
   if (isBodAction.value) {
@@ -213,30 +208,51 @@ const transferOwnership = async (address: Address) => {
       description,
       data
     })
-  } else
-    executeTransferOwnership({
-      address: props.row.address as Address,
-      abi: props.row.abi,
-      functionName: 'transferOwnership',
-      args: [address]
-    })
+    return
+  }
+
+  executeTransferOwnership(
+    { args: [address] },
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: ['readContract', { functionName: 'isMember' }],
+          exact: false
+        })
+        queryClient.invalidateQueries({
+          queryKey: ['readContract', { functionName: 'owner' }],
+          exact: false
+        })
+        showModal.value = false
+        transferOwnershipErrorMessage.value = ''
+        toast.add({ title: 'Ownership transferred successfully!', color: 'success' })
+        emits('contract-status-changed')
+      }
+    }
+  )
 }
 
-const changeContractStatus = async (paused: boolean) => {
+const changeContractStatus = (paused: boolean) => {
   if (paused) {
-    executeUnpauseContract({
-      address: props.row.address as Address,
-      abi: props.row.abi,
-      functionName: 'unpause' as const,
-      args: []
-    })
+    executeUnpauseContract(
+      { args: [] },
+      {
+        onSuccess: () => {
+          toast.add({ title: 'Contract resumed successfully!', color: 'success' })
+          emits('contract-status-changed')
+        }
+      }
+    )
   } else {
-    executePauseContract({
-      address: props.row.address as Address,
-      abi: props.row.abi,
-      functionName: 'pause' as const,
-      args: []
-    })
+    executePauseContract(
+      { args: [] },
+      {
+        onSuccess: () => {
+          toast.add({ title: 'Contract paused successfully!', color: 'success' })
+          emits('contract-status-changed')
+        }
+      }
+    )
   }
 }
 
@@ -250,37 +266,6 @@ watch(isActionAdded, (isAdded) => {
 watch(isActionApproved, (isApproved) => {
   if (isApproved) {
     showApprovalModal.value = false
-    emits('contract-status-changed')
-  }
-})
-
-watch(isConfirmingTransferOwnership, async (isConfirming, wasConfirming) => {
-  if (wasConfirming && !isConfirming && isConfirmedTransferOwnership.value) {
-    queryClient.invalidateQueries({
-      queryKey: ['readContract', { functionName: 'isMember' }],
-      exact: false
-    })
-    queryClient.invalidateQueries({
-      queryKey: ['readContract', { functionName: 'owner' }],
-      exact: false
-    })
-    showModal.value = false
-    transferOwnershipErrorMessage.value = ''
-    toast.add({ title: 'Ownership transferred successfully!', color: 'success' })
-    emits('contract-status-changed')
-  }
-})
-
-watch(isConfirmingPauseContract, async (isConfirming, wasConfirming) => {
-  if (wasConfirming && !isConfirming && isConfirmedPauseContract.value) {
-    toast.add({ title: 'Contract paused successfully!', color: 'success' })
-    emits('contract-status-changed')
-  }
-})
-
-watch(isConfirmingUnpauseContract, async (isConfirming, wasConfirming) => {
-  if (wasConfirming && !isConfirming && isConfirmedUnpauseContract.value) {
-    toast.add({ title: 'Contract paused successfully!', color: 'success' })
     emits('contract-status-changed')
   }
 })

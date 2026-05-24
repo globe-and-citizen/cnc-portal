@@ -1,5 +1,5 @@
 <template>
-  <div :class="{ tooltip: !canMint }" :data-tip="cannotMintReason">
+  <UTooltip :text="!canMint ? cannotMintReason : undefined">
     <ActionButton
       icon="heroicons:plus-circle"
       icon-bg="bg-teal-50 dark:bg-teal-950"
@@ -22,7 +22,7 @@
         <MintForm v-model="modalState.show" @close-modal="closeModal" />
       </template>
     </UModal>
-  </div>
+  </UTooltip>
 </template>
 
 <script setup lang="ts">

@@ -1,23 +1,34 @@
 import { mount, flushPromises } from '@vue/test-utils'
-//import type { ComponentPublicInstance } from 'vue'
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import TeamContractsDetail from '@/components/sections/ContractManagementView/TeamContractsDetail.vue'
 import { ref } from 'vue'
-import { useWriteContractFn, useWaitForTransactionReceiptFn } from '@/tests/mocks'
 
-const setCostPerClickMock = vi.fn().mockResolvedValue({ status: 1 })
-const setCostPerImpressionMock = vi.fn().mockResolvedValue({ status: 1 })
+type MutateOpts = { onSuccess?: () => void; onError?: (e: unknown) => void }
+
+const setCostPerClickMock = vi.fn()
+const setCostPerImpressionMock = vi.fn()
 export const mockErrorSetCostPerClick = ref<Error | null>(null)
 export const mockErrorSetCostPerImpression = ref<Error | null>(null)
+const isPendingSetCostPerClick = ref(false)
+const isPendingSetCostPerImpression = ref(false)
 
-const mockUseWaitForTransactionReceipt = {
-  data: ref({ contractAddress: '0xDEADBEEF' }),
-  isSuccess: ref(true),
-  isLoading: ref(false)
-}
-
-//mock wagmi vue (handled globally via useWriteContractFn / useWaitForTransactionReceiptFn)
+vi.mock('@/composables/contracts/useContractWritesV3', () => ({
+  useContractWritesV3: vi.fn(({ functionName }: { functionName: string }) => {
+    if (functionName === 'setCostPerClick') {
+      return {
+        mutate: setCostPerClickMock,
+        error: mockErrorSetCostPerClick,
+        isPending: isPendingSetCostPerClick
+      }
+    }
+    return {
+      mutate: setCostPerImpressionMock,
+      error: mockErrorSetCostPerImpression,
+      isPending: isPendingSetCostPerImpression
+    }
+  })
+}))
 
 describe('TeamContractsDetail.vue', () => {
   const contractAddress = '0xE55978c9f7B9bFc190B355d65e7F1dEc2F41D320'
@@ -32,26 +43,12 @@ describe('TeamContractsDetail.vue', () => {
   }
 
   beforeEach(() => {
-    const pinia = createPinia()
-    setActivePinia(pinia)
+    setActivePinia(createPinia())
     vi.clearAllMocks()
-    mockUseWaitForTransactionReceipt.data.value = { contractAddress: '0xDEADBEEF' }
-    mockUseWaitForTransactionReceipt.isSuccess.value = true
-    mockUseWaitForTransactionReceipt.isLoading.value = false
-    useWriteContractFn
-      .mockReturnValueOnce({
-        mutate: setCostPerClickMock,
-        error: mockErrorSetCostPerClick,
-        isPending: ref(false),
-        data: ref(null)
-      })
-      .mockReturnValueOnce({
-        mutate: setCostPerImpressionMock,
-        error: mockErrorSetCostPerImpression,
-        isPending: ref(false),
-        data: ref(null)
-      })
-    useWaitForTransactionReceiptFn.mockReturnValue(mockUseWaitForTransactionReceipt)
+    mockErrorSetCostPerClick.value = null
+    mockErrorSetCostPerImpression.value = null
+    isPendingSetCostPerClick.value = false
+    isPendingSetCostPerImpression.value = false
   })
 
   it('shows error toast if submit throws error', async () => {
@@ -174,6 +171,9 @@ describe('TeamContractsDetail.vue', () => {
     expect(wrapper.vm.initialized).toBe(false)
   })
   it('confirms setCostPerClick transaction and emits closeContractDataDialog', async () => {
+    setCostPerClickMock.mockImplementationOnce((_v: unknown, opts?: MutateOpts) =>
+      opts?.onSuccess?.()
+    )
     const datas = getClonedTestData()
     const wrapper = mount(TeamContractsDetail, {
       props: {
@@ -186,14 +186,27 @@ describe('TeamContractsDetail.vue', () => {
     wrapper.vm.initialized = true
     await wrapper.find('input[type="number"]').setValue('0.2')
     await wrapper.find('button').trigger('click')
-    // simulate confirmation
-    mockUseWaitForTransactionReceipt.isLoading.value = true
-    await wrapper.vm.$nextTick()
-    mockUseWaitForTransactionReceipt.isLoading.value = false
-    mockUseWaitForTransactionReceipt.isSuccess.value = true
-    wrapper.vm.pendingTransactions--
-    await wrapper.vm.$nextTick()
     await flushPromises()
     expect(wrapper.emitted('closeContractDataDialog')?.length).toBe(1)
+  })
+
+  it('runs setCostPerImpression onSuccess when only the impression value changes', async () => {
+    setCostPerImpressionMock.mockImplementationOnce((_v: unknown, opts?: MutateOpts) =>
+      opts?.onSuccess?.()
+    )
+    const datas = getClonedTestData()
+    // Change the impression value before mount so the watcher sees it as the
+    // original and bumps when the input differs.
+    datas[1].value = '0.5'
+    const wrapper = mount(TeamContractsDetail, {
+      props: { datas, contractAddress, reset: true }
+    })
+    await flushPromises()
+    wrapper.vm.initialized = true
+    wrapper.vm.originalCostPerImpression = 0.5
+    datas[1].value = '0.7'
+    await wrapper.find('button').trigger('click')
+    await flushPromises()
+    expect(setCostPerImpressionMock).toHaveBeenCalled()
   })
 })

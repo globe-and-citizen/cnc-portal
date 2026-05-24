@@ -4,15 +4,23 @@ import { createTestingPinia } from '@pinia/testing'
 import { nextTick } from 'vue'
 import type { Address } from 'viem'
 import DistributeMintAction from '@/components/sections/SherTokenView/InvestorActions/DistributeMintAction.vue'
-import { mockUseWriteContract, mockUseWaitForTransactionReceipt, mockLog } from '@/tests/mocks'
+import { mockInvestorWrites, resetContractMocks, mockLog } from '@/tests/mocks'
+
+type DistributeOptions = {
+  onSuccess?: () => void
+  onError?: (e: unknown) => void
+}
 
 describe('DistributeMintAction.vue', () => {
+  const distribute = mockInvestorWrites.distributeMint
+
   const createWrapper = (props = {}) =>
     mount(DistributeMintAction, {
       global: {
         plugins: [createTestingPinia({ createSpy: vi.fn })],
         stubs: {
           DistributeMintForm: {
+            name: 'DistributeMintForm',
             props: ['loading', 'tokenSymbol'],
             emits: ['submit'],
             template: "<div data-test='distribute-mint-form' @click=\"\$emit('submit', [])\" />"
@@ -28,14 +36,12 @@ describe('DistributeMintAction.vue', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    mockUseWriteContract.error.value = null
-    mockUseWaitForTransactionReceipt.isLoading.value = false
-    mockUseWaitForTransactionReceipt.isSuccess.value = false
+    resetContractMocks()
   })
 
   it('renders with coming soon tooltip', () => {
     const wrapper = createWrapper()
-    expect(wrapper.attributes('data-tip')).toBe('Coming soon')
+    expect(wrapper.findComponent({ name: 'UTooltip' }).props('text')).toBe('Coming soon')
   })
 
   it('renders action button as disabled', () => {
@@ -73,7 +79,7 @@ describe('DistributeMintAction.vue', () => {
     await vm.openModal()
     await nextTick()
     await wrapper.find('[data-test="distribute-mint-form"]').trigger('click')
-    expect(mockUseWriteContract.mutate).toHaveBeenCalled()
+    expect(distribute.mutate).toHaveBeenCalled()
   })
 
   it('handleSubmit returns early when investorsAddress is empty', async () => {
@@ -82,26 +88,33 @@ describe('DistributeMintAction.vue', () => {
       handleSubmit: (shareholders: ReadonlyArray<{ shareholder: Address; amount: bigint }>) => void
     }
     vm.handleSubmit([{ shareholder: '0xabc' as Address, amount: 100n }])
-    expect(mockUseWriteContract.mutate).not.toHaveBeenCalled()
+    expect(distribute.mutate).not.toHaveBeenCalled()
   })
 
-  it('watch distributeMintError logs the error', async () => {
-    const wrapper = createWrapper()
-    mockUseWriteContract.error.value = new Error('distribute failed') as never
-    await nextTick()
-    expect(mockLog.error).toHaveBeenCalled()
-    wrapper.unmount()
-  })
-
-  it('watch isConfirming+isSuccess emits refetchShareholders and closes modal', async () => {
+  it('onError callback logs distribute failures', async () => {
+    distribute.mutate.mockImplementationOnce((_p: unknown, opts?: DistributeOptions) => {
+      opts?.onError?.(new Error('distribute failed'))
+    })
     const wrapper = createWrapper()
     const vm = wrapper.vm as unknown as { openModal: () => void }
     await vm.openModal()
     await nextTick()
-    mockUseWaitForTransactionReceipt.isLoading.value = false
-    mockUseWaitForTransactionReceipt.isSuccess.value = true
+    await wrapper.find('[data-test="distribute-mint-form"]').trigger('click')
+    expect(mockLog.error).toHaveBeenCalled()
+  })
+
+  it('onSuccess callback emits refetchShareholders and closes modal', async () => {
+    distribute.mutate.mockImplementationOnce((_p: unknown, opts?: DistributeOptions) => {
+      opts?.onSuccess?.()
+    })
+    const wrapper = createWrapper()
+    const vm = wrapper.vm as unknown as { openModal: () => void }
+    await vm.openModal()
+    await nextTick()
+    await wrapper.find('[data-test="distribute-mint-form"]').trigger('click')
     await nextTick()
     expect(wrapper.emitted('refetchShareholders')).toBeTruthy()
+    expect(wrapper.find('[data-test="distribute-mint-form"]').exists()).toBe(false)
   })
 
   it('watch modalState.show=false triggers closeModal', async () => {
@@ -128,13 +141,12 @@ describe('DistributeMintAction.vue', () => {
     expect(wrapper.find('[data-test="distribute-mint-form"]').exists()).toBe(false)
   })
 
-  it('form loading prop reflects isConfirming state', async () => {
+  it('form loading prop reflects mutation isPending state', async () => {
+    distribute.isPending.value = true
     const wrapper = createWrapper()
     const vm = wrapper.vm as unknown as { openModal: () => void }
     await vm.openModal()
     await nextTick()
-    mockUseWaitForTransactionReceipt.isLoading.value = true
-    await nextTick()
-    expect(wrapper.find('[data-test="distribute-mint-form"]').exists()).toBe(true)
+    expect(wrapper.findComponent({ name: 'DistributeMintForm' }).props('loading')).toBe(true)
   })
 })

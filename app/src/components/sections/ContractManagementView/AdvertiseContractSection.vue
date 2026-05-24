@@ -1,9 +1,10 @@
 <template>
   <div class="flex flex-col gap-6">
-    <span
+    <UIcon
       v-if="teamStore.currentTeamMeta.isPending"
-      class="loading loading-spinner loading-lg"
-    ></span>
+      name="i-lucide-loader-circle"
+      class="text-primary h-10 w-10 animate-spin"
+    />
     <div
       v-if="!teamStore.currentTeamMeta.isPending && teamStore"
       class="flex w-full flex-col items-center gap-5"

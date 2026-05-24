@@ -96,7 +96,7 @@ describe('OwnerTreasuryWithdrawAction', () => {
     mockCashRemunerationReads.owner.data.value = OWNER_ADDRESS
     mockExpenseAccountReads.owner.data.value = OWNER_ADDRESS
     mockBodIsBodAction.isBodAction.value = false
-    mockBodAddAction.isActionAdded.value = false
+    mockBodAddAction.isSuccess.value = false
     mockCashRemunerationWrites.ownerWithdrawAllToBank.mutateAsync.mockResolvedValue({
       hash: '0xhash'
     })
@@ -141,7 +141,7 @@ describe('OwnerTreasuryWithdrawAction', () => {
     mockBodIsBodAction.isBodAction.value = true
     const wrapper = createWrapper()
     await openModal(wrapper)
-    mockBodAddAction.isActionAdded.value = true
+    mockBodAddAction.isSuccess.value = true
     await flushPromises()
     expect(wrapper.find(CONFIRM).exists()).toBe(false)
   })

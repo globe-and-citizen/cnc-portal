@@ -1,8 +1,12 @@
 <template>
   <div class="relative">
-    <div
+    <UBadge
+      as="div"
       role="button"
-      class="badge badge-md badge-info flex cursor-pointer items-center text-xs"
+      color="info"
+      variant="solid"
+      size="md"
+      class="flex cursor-pointer items-center text-xs"
       @click="toggleDropdown"
       @keydown.enter="toggleDropdown"
       @keydown.space.prevent="toggleDropdown"
@@ -16,9 +20,9 @@
     >
       <span>{{ formattedSelectedValue }}</span>
       <IconifyIcon v-if="!disabled" icon="heroicons-outline:chevron-down" class="h-4 w-4" />
-    </div>
+    </UBadge>
     <ul
-      class="menu bg-base-200 rounded-box absolute right-0 z-10 mt-2 border-2 p-2 shadow-sm"
+      class="bg-muted absolute right-0 z-10 mt-2 flex flex-col gap-1 rounded-lg border-2 p-2 shadow-sm"
       ref="target"
       data-test="options-dropdown"
       v-if="isDropdown"
@@ -30,11 +34,12 @@
         @click="selectOption(option)"
         role="option"
         :aria-selected="option.value === selectedValue"
+        class="hover:bg-elevated cursor-pointer rounded-md px-3 py-1.5"
       >
         <a
           :class="{
-            focus: index === focusedIndex,
-            active: option.value === selectedValue && options.length > 2
+            'font-semibold': index === focusedIndex,
+            'text-primary': option.value === selectedValue && options.length > 2
           }"
           :data-focused="index === focusedIndex || undefined"
           >{{ option.label || option.value }}</a

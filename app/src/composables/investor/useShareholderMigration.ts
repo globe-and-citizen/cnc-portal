@@ -1,9 +1,10 @@
 import { useMutation } from '@tanstack/vue-query'
-import { readContract, writeContract, waitForTransactionReceipt } from '@wagmi/core'
+import { readContract } from '@wagmi/core'
 import type { Address } from 'viem'
 import { config } from '@/wagmi.config'
 import { INVESTOR_ABI } from '@/artifacts/abi/investors'
 import { OFFICER_ABI } from '@/artifacts/abi/officer'
+import { executeContractWrite } from '@/composables/contracts/useContractWritesV3'
 
 export interface Shareholder {
   shareholder: Address
@@ -89,13 +90,12 @@ export async function migrateShareholders(
     throw new InconsistentSupplyError(newSupply, expected)
   }
 
-  const hash = await writeContract(config, {
+  await executeContractWrite({
     address: args.newInvestorAddress,
     abi: INVESTOR_ABI,
     functionName: 'distributeMint',
     args: [shareholders.map((s) => ({ shareholder: s.shareholder, amount: s.amount }))]
   })
-  await waitForTransactionReceipt(config, { hash })
 
   return { kind: 'done', migratedCount: shareholders.length, shareholders }
 }

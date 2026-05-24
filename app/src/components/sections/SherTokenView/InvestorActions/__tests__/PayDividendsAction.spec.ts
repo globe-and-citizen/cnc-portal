@@ -60,7 +60,7 @@ describe('PayDividendsAction.vue', () => {
     mockBankReads.owner.data.value = ownerAddress
 
     mockBodIsBodAction.isBodAction.value = false
-    mockBodAddAction.isActionAdded.value = false
+    mockBodAddAction.isSuccess.value = false
     mockBodAddAction.executeAddAction.mockResolvedValue(undefined)
 
     mockBankWrites.distributeNativeDividends.mutateAsync.mockResolvedValue(undefined)
@@ -79,8 +79,7 @@ describe('PayDividendsAction.vue', () => {
   it('enables action for bank owner', () => {
     const wrapper = createWrapper()
 
-    expect(wrapper.classes()).not.toContain('tooltip')
-    expect(wrapper.attributes('data-tip')).toBe('')
+    expect(wrapper.findComponent({ name: 'UTooltip' }).props('text')).toBeUndefined()
     expect(
       wrapper.find('[data-test="pay-dividends-button"]').attributes('disabled')
     ).toBeUndefined()
@@ -89,21 +88,27 @@ describe('PayDividendsAction.vue', () => {
   it('shows token missing reason', () => {
     const wrapper = createWrapper({ tokenSymbol: undefined })
 
-    expect(wrapper.attributes('data-tip')).toBe('Token symbol not available')
+    expect(wrapper.findComponent({ name: 'UTooltip' }).props('text')).toBe(
+      'Token symbol not available'
+    )
     expect(wrapper.find('[data-test="pay-dividends-button"]').attributes('disabled')).toBeDefined()
   })
 
   it('shows shareholders missing reason when zero', () => {
     const wrapper = createWrapper({ shareholdersCount: 0 })
 
-    expect(wrapper.attributes('data-tip')).toBe('No shareholders available to pay dividends')
+    expect(wrapper.findComponent({ name: 'UTooltip' }).props('text')).toBe(
+      'No shareholders available to pay dividends'
+    )
     expect(wrapper.find('[data-test="pay-dividends-button"]').attributes('disabled')).toBeDefined()
   })
 
   it('treats undefined shareholders as missing', () => {
     const wrapper = createWrapper({ shareholdersCount: undefined })
 
-    expect(wrapper.attributes('data-tip')).toBe('No shareholders available to pay dividends')
+    expect(wrapper.findComponent({ name: 'UTooltip' }).props('text')).toBe(
+      'No shareholders available to pay dividends'
+    )
     expect(wrapper.find('[data-test="pay-dividends-button"]').attributes('disabled')).toBeDefined()
   })
 
@@ -111,7 +116,9 @@ describe('PayDividendsAction.vue', () => {
     mockUserStore.address = memberAddress
     const wrapper = createWrapper()
 
-    expect(wrapper.attributes('data-tip')).toContain('Only the bank owner can pay dividends')
+    expect(wrapper.findComponent({ name: 'UTooltip' }).props('text')).toContain(
+      'Only the bank owner can pay dividends'
+    )
     expect(wrapper.find('[data-test="pay-dividends-button"]').attributes('disabled')).toBeDefined()
   })
 
@@ -244,7 +251,7 @@ describe('PayDividendsAction.vue', () => {
     await nextTick()
     expect(wrapper.find('[data-test="pay-dividends-form"]').exists()).toBe(true)
 
-    mockBodAddAction.isActionAdded.value = true
+    mockBodAddAction.isSuccess.value = true
     await nextTick()
 
     expect(wrapper.find('[data-test="pay-dividends-form"]').exists()).toBe(false)
@@ -257,7 +264,7 @@ describe('PayDividendsAction.vue', () => {
     await nextTick()
     expect(wrapper.find('[data-test="pay-dividends-form"]').exists()).toBe(true)
 
-    mockBodAddAction.isActionAdded.value = false
+    mockBodAddAction.isSuccess.value = false
     await nextTick()
 
     expect(wrapper.find('[data-test="pay-dividends-form"]').exists()).toBe(true)

@@ -1,5 +1,5 @@
 <template>
-  <div :class="{ tooltip: !canPayDividends }" :data-tip="cannotPayDividendsReason">
+  <UTooltip :text="!canPayDividends ? cannotPayDividendsReason : undefined">
     <ActionButton
       icon="heroicons:arrow-trending-up"
       icon-bg="bg-blue-50 dark:bg-blue-950"
@@ -20,7 +20,7 @@
       <template #body>
         <PayDividendsForm
           v-if="modalState.show && currentTeam"
-          :loading="isBankWriteLoading || isLoadingAddAction || isConfirmingAddAction"
+          :loading="isBankWriteLoading || isLoadingAddAction"
           :token-symbol="tokenSymbol!"
           :team="currentTeam"
           :is-bod-action="isBodAction"
@@ -29,7 +29,7 @@
         />
       </template>
     </UModal>
-  </div>
+  </UTooltip>
 </template>
 
 <script setup lang="ts">
@@ -80,8 +80,7 @@ const addActionComposable = useBodAddAction()
 const {
   executeAddAction: addAction,
   isPending: isLoadingAddAction,
-  isConfirming: isConfirmingAddAction,
-  isActionAdded
+  isSuccess: isActionAdded
 } = addActionComposable
 
 const { isBodAction } = useBodIsBodAction(props.bankAddress as Address)

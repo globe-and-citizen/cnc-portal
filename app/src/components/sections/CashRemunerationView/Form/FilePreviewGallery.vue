@@ -38,7 +38,7 @@
         ]"
         data-test="image-loading"
       >
-        <span class="loading loading-spinner loading-sm text-gray-400"></span>
+        <UIcon name="i-lucide-loader-circle" class="h-4 w-4 animate-spin text-gray-400" />
         <span class="mt-1 text-[10px] text-gray-500">Loading...</span>
       </div>
 
@@ -92,24 +92,28 @@
         @click.stop
       >
         <div class="absolute top-4 right-4 z-20 flex gap-2">
-          <button
+          <UButton
             type="button"
-            class="btn btn-sm btn-ghost bg-opacity-60 hover:bg-opacity-80 bg-black text-white"
+            variant="ghost"
+            color="neutral"
+            size="sm"
+            icon="heroicons:x-mark"
+            class="bg-opacity-60 hover:bg-opacity-80 bg-black text-white"
             @click="closeModal"
             data-test="upload-lightbox-close"
             aria-label="Close lightbox"
-          >
-            <Icon icon="heroicons:x-mark" class="h-6 w-6" />
-          </button>
-          <button
+          />
+          <UButton
             type="button"
-            class="btn btn-sm btn-ghost bg-opacity-60 hover:bg-opacity-80 bg-black text-white"
+            variant="ghost"
+            color="neutral"
+            size="sm"
+            icon="heroicons:arrow-down-tray"
+            class="bg-opacity-60 hover:bg-opacity-80 bg-black text-white"
             @click="downloadFile(modalState.url)"
             data-test="upload-lightbox-download"
             aria-label="Download image"
-          >
-            <Icon icon="heroicons:arrow-down-tray" class="h-5 w-5" />
-          </button>
+          />
         </div>
         <h2 id="lightbox-title" class="sr-only">{{ modalState.fileName }}</h2>
         <img
@@ -144,22 +148,23 @@
             {{ modalState.fileName }}
           </div>
           <div class="flex gap-2">
-            <button
+            <UButton
               type="button"
-              class="btn btn-sm btn-ghost"
+              variant="ghost"
+              color="neutral"
+              size="sm"
+              label="Close"
               @click="closeModal"
               data-test="upload-doc-close"
-            >
-              Close
-            </button>
-            <button
+            />
+            <UButton
               type="button"
-              class="btn btn-sm btn-success"
+              color="success"
+              size="sm"
+              label="Download"
               @click="downloadFile(modalState.url)"
               data-test="upload-doc-download"
-            >
-              Download
-            </button>
+            />
           </div>
         </div>
 
@@ -190,10 +195,13 @@
                 Type: {{ modalState.fileType || 'Unknown' }}
               </div>
               <p class="mb-6 text-gray-600">This file type cannot be previewed in the browser.</p>
-              <button type="button" class="btn btn-success" @click="downloadFile(modalState.url)">
-                <Icon icon="heroicons:arrow-down-tray" class="mr-2 h-5 w-5" />
-                Download to view
-              </button>
+              <UButton
+                type="button"
+                color="success"
+                icon="heroicons:arrow-down-tray"
+                label="Download to view"
+                @click="downloadFile(modalState.url)"
+              />
             </div>
           </div>
         </div>

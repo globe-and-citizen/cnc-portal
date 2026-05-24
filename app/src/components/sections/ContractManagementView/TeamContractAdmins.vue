@@ -1,7 +1,7 @@
 <template>
   <h3 class="mb-4 text-lg font-bold">
     Contract Admin List {{ range }}
-    <span class="loading loading-spinner" v-if="isLoading"></span>
+    <UIcon v-if="isLoading" name="i-lucide-loader-circle" class="h-5 w-5 animate-spin" />
   </h3>
 
   <!-- Inline form to add new admin -->
@@ -9,12 +9,13 @@
     @submit.prevent="handleAdminAction(newAdminAddress as `0x${string}`, 'addAdmin')"
     class="mb-4 flex items-center space-x-2"
   >
-    <input
+    <UInput
       v-model="newAdminAddress"
       type="text"
+      size="sm"
       placeholder="Enter new admin address"
-      class="input input-bordered input-sm w-full max-w-xs"
-      required
+      class="w-full max-w-xs"
+      :required="true"
     />
     <div>
       <UButton type="submit" color="primary" size="sm"> Add Admin</UButton>
@@ -60,7 +61,8 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
 
-import { useWaitForTransactionReceipt, useWriteContract, useReadContract } from '@wagmi/vue'
+import { useReadContract } from '@wagmi/vue'
+import { useContractWritesV3 } from '@/composables/contracts/useContractWritesV3'
 import type { TeamContract } from '@/types'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import { AD_CAMPAIGN_MANAGER_ABI } from '@/artifacts/abi/ad-campaign-manager'
@@ -72,52 +74,31 @@ const props = defineProps<{
   range: number
 }>()
 
-const isLoading = computed(
-  () =>
-    loadingRemoveAdmin.value ||
-    (isConfirmingRemoveAdmin.value && !isConfirmedRemoveAdmin.value) ||
-    loadingAddAdmin.value ||
-    (isConfirmingAddAdmin.value && !isConfirmedAddAdmin.value)
-)
+const isLoading = computed(() => loadingRemoveAdmin.value || loadingAddAdmin.value)
 
 // State for new admin address
 const newAdminAddress = ref('')
 
+const contractAddress = computed(() => (props.contract?.address || '') as Address)
+
 const {
   mutate: addAdmin,
   error: errorAddAdmin,
-  isPending: loadingAddAdmin,
-  data: hashAddAdmin
-} = useWriteContract()
-
-const { isLoading: isConfirmingAddAdmin, isSuccess: isConfirmedAddAdmin } =
-  useWaitForTransactionReceipt({
-    hash: hashAddAdmin
-  })
-watch(isConfirmingAddAdmin, async (isConfirming, wasConfirming) => {
-  if (wasConfirming && !isConfirming && isConfirmedAddAdmin.value) {
-    toast.add({ title: 'Admin added successfully', color: 'success' })
-    newAdminAddress.value = ''
-    executeGetAdminList()
-  }
+  isPending: loadingAddAdmin
+} = useContractWritesV3({
+  contractAddress,
+  abi: AD_CAMPAIGN_MANAGER_ABI,
+  functionName: 'addAdmin'
 })
 
 const {
   mutate: removeAdmin,
   error: errorRemoveAdmin,
-  isPending: loadingRemoveAdmin,
-  data: hashRemoveAdmin
-} = useWriteContract()
-
-const { isLoading: isConfirmingRemoveAdmin, isSuccess: isConfirmedRemoveAdmin } =
-  useWaitForTransactionReceipt({
-    hash: hashRemoveAdmin
-  })
-watch(isConfirmingRemoveAdmin, async (isConfirming, wasConfirming) => {
-  if (wasConfirming && !isConfirming && isConfirmedRemoveAdmin.value) {
-    toast.add({ title: 'Admin removed successfully', color: 'success' })
-    executeGetAdminList()
-  }
+  isPending: loadingRemoveAdmin
+} = useContractWritesV3({
+  contractAddress,
+  abi: AD_CAMPAIGN_MANAGER_ABI,
+  functionName: 'removeAdmin'
 })
 
 const {
@@ -126,7 +107,7 @@ const {
   error: errorGetAdminList
 } = useReadContract({
   functionName: 'getAdminList',
-  address: computed(() => props.contract?.address || ''),
+  address: contractAddress,
   abi: AD_CAMPAIGN_MANAGER_ABI
 })
 
@@ -154,19 +135,26 @@ watch(errorRemoveAdmin, () => {
 
 function handleAdminAction(adminAddress: Address, action: string) {
   if (action === 'removeAdmin') {
-    removeAdmin({
-      address: props.contract.address,
-      abi: AD_CAMPAIGN_MANAGER_ABI,
-      functionName: 'removeAdmin',
-      args: [adminAddress]
-    })
+    removeAdmin(
+      { args: [adminAddress] },
+      {
+        onSuccess: () => {
+          toast.add({ title: 'Admin removed successfully', color: 'success' })
+          executeGetAdminList()
+        }
+      }
+    )
   } else {
-    addAdmin({
-      address: props.contract.address,
-      abi: AD_CAMPAIGN_MANAGER_ABI,
-      functionName: 'addAdmin',
-      args: [adminAddress]
-    })
+    addAdmin(
+      { args: [adminAddress] },
+      {
+        onSuccess: () => {
+          toast.add({ title: 'Admin added successfully', color: 'success' })
+          newAdminAddress.value = ''
+          executeGetAdminList()
+        }
+      }
+    )
   }
 }
 </script>

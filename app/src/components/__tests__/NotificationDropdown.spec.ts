@@ -46,7 +46,7 @@ describe('NotificationDropdown.vue', () => {
 
   it('shows the badge when there are unread notifications', async () => {
     await wrapper.vm.$nextTick()
-    const badge = wrapper.find('.badge')
+    const badge = wrapper.find('[data-test="unread-badge"]')
     expect(badge.exists()).toBe(true)
   })
 
@@ -54,7 +54,7 @@ describe('NotificationDropdown.vue', () => {
     mockNotificationsRef.value = []
     await nextTick()
 
-    expect(wrapper.find('.join').exists()).toBe(false)
+    expect(wrapper.find('[data-test="pagination-controls"]').exists()).toBe(false)
   })
 
   it('handles notification click and redirects to team route', async () => {
@@ -97,8 +97,8 @@ describe('NotificationDropdown.vue', () => {
     await nextTick()
 
     const buttons = wrapper.findAll('button')
-    const prev = buttons[0]
-    const next = buttons[1]
+    const prev = buttons[1]
+    const next = buttons[2]
 
     expect(wrapper.text()).toContain('1 / 2')
     expect(prev.attributes('disabled')).toBeDefined()

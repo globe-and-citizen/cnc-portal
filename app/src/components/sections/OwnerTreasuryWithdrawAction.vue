@@ -1,5 +1,5 @@
 <template>
-  <div v-if="hasTheRight" class="card-actions justify-end">
+  <div v-if="hasTheRight" class="flex justify-end gap-2">
     <UButton
       color="warning"
       size="sm"
@@ -134,11 +134,7 @@ const expenseWithdraw = useExpenseOwnerWithdrawAll()
 const withdrawTx = computed(() => (isCash.value ? cashWithdraw : expenseWithdraw))
 
 const isLoadingAction = computed(
-  () =>
-    isSubmitting.value ||
-    withdrawTx.value.isPending.value ||
-    bodAddAction.isPending.value ||
-    bodAddAction.isConfirming.value
+  () => isSubmitting.value || withdrawTx.value.isPending.value || bodAddAction.isPending.value
 )
 
 const resetWithdrawState = () => {
@@ -206,7 +202,7 @@ const confirmWithdrawFromModal = async () => {
 }
 
 watch(
-  () => bodAddAction.isActionAdded.value,
+  () => bodAddAction.isSuccess.value,
   (added) => {
     if (!added) return
     toast.add({

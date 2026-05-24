@@ -215,4 +215,20 @@ describe('ExpenseTransactions', () => {
     await nextTick()
     expect(logErrorSpy).toHaveBeenCalledTimes(2)
   })
+
+  it('shows an empty state when there are no transactions', () => {
+    apolloState.expenseQueryResult.value = undefined
+    apolloState.incomingTransfersQueryResult.value = undefined
+    wrapper = createWrapper()
+    expect(wrapper.find('[data-test="expense-transactions-empty"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="expense-transactions-error"]').exists()).toBe(false)
+  })
+
+  it('shows an error state when a transactions query fails', () => {
+    apolloState.expenseQueryResult.value = undefined
+    apolloState.incomingTransfersQueryResult.value = undefined
+    apolloState.expenseQueryError.value = new Error('expense query failed')
+    wrapper = createWrapper()
+    expect(wrapper.find('[data-test="expense-transactions-error"]').exists()).toBe(true)
+  })
 })

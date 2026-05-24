@@ -3,13 +3,7 @@ import { mount, type VueWrapper } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
 import VestingView from '../VestingView.vue'
 import { ref } from 'vue'
-import {
-  useWriteContractFn,
-  useWaitForTransactionReceiptFn,
-  useReadContractFn,
-  mockTeamStore,
-  mockUserStore
-} from '@/tests/mocks'
+import { useReadContractFn, mockTeamStore, mockUserStore } from '@/tests/mocks'
 import { useTeamStore, useUserDataStore } from '@/stores'
 
 // Constants
@@ -43,28 +37,6 @@ const mockCurrentTeam = ref({
   ]
 })
 
-// Wagmi mocks - local refs for per-test state
-const mockWriteContract = {
-  mutate: vi.fn(),
-  mutateAsync: vi.fn(),
-  error: ref<Error | null>(null),
-  isPending: ref(false),
-  data: ref(null),
-  isError: ref(false),
-  status: ref('idle' as const),
-  variables: ref(undefined),
-  reset: vi.fn()
-}
-const mockWaitReceipt = {
-  isLoading: ref(false),
-  isSuccess: ref(false),
-  error: ref<Error | null>(null),
-  isPending: ref(false),
-  isError: ref(false),
-  data: ref(null),
-  status: ref('idle' as const)
-}
-
 // Test suite
 describe('VestingView.vue', () => {
   let wrapper: VueWrapper
@@ -79,9 +51,6 @@ describe('VestingView.vue', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    // Configure wagmi composable mocks
-    useWriteContractFn.mockReturnValue(mockWriteContract)
-    useWaitForTransactionReceiptFn.mockReturnValue(mockWaitReceipt)
     useReadContractFn.mockImplementation(({ functionName }: { functionName: string }) => {
       if (functionName === 'getTeamVestingsWithMembers') {
         return { data: mockVestingInfos, error: ref(null), refetch: refetchVestingInfos }
@@ -102,9 +71,6 @@ describe('VestingView.vue', () => {
       )
     } as ReturnType<typeof useTeamStore>)
     wrapper = mountComponent()
-    mockWriteContract.mutate.mockReset()
-    mockWaitReceipt.isLoading.value = false
-    mockWaitReceipt.isSuccess.value = false
   })
 
   it('passes correct props to CreateVesting', async () => {

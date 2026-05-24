@@ -3,22 +3,13 @@
     data-test="expense-account-balance"
     :title="total[currencyStore.localCurrency.code]?.formated ?? 0"
     subtitle="Total Balance"
-    color="success"
+    variant="success"
     :card-icon="bagIcon"
     :loading="isLoading"
-  >
-    <div class="flex flex-row gap-1 text-black">
-      <img :src="uptrendIcon" alt="status-icon" />
-      <div>
-        <span class="text-sm font-semibold" data-test="percentage-increase">+ 41.3% </span>
-        <span class="text-xs font-medium text-[#637381]">than last week</span>
-      </div>
-    </div>
-  </OverviewCard>
+  />
 </template>
 <script setup lang="ts">
 import bagIcon from '@/assets/bag.svg'
-import uptrendIcon from '@/assets/uptrend.svg'
 import OverviewCard from '@/components/OverviewCard.vue'
 import { useContractBalance } from '@/composables/useContractBalance'
 import { useTeamStore } from '@/stores'

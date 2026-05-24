@@ -6,9 +6,9 @@ import MintForm from '../MintForm.vue'
 import {
   mockToast,
   mockTeamStore,
-  useReadContractFn,
-  useWaitForTransactionReceiptFn,
-  useWriteContractFn
+  mockInvestorWrites,
+  resetContractMocks,
+  useReadContractFn
 } from '@/tests/mocks'
 
 const VALID_ADDRESS = '0x1234567890123456789012345678901234567890'
@@ -16,21 +16,6 @@ const VALID_ADDRESS = '0x1234567890123456789012345678901234567890'
 type MintOptions = {
   onSuccess?: (hash: `0x${string}`) => void
   onError?: (e: unknown) => void
-}
-
-const mintMock = vi.fn(async (_params: unknown, options?: MintOptions) => {
-  options?.onSuccess?.('0xDefaultHash')
-  return '0xDefaultHash'
-})
-
-const writeState = {
-  mutateAsync: mintMock,
-  isPending: ref(false)
-}
-
-const receiptState = {
-  isLoading: ref(false),
-  isSuccess: ref(false)
 }
 
 const symbolRef = ref('SHER')
@@ -63,13 +48,13 @@ const mountForm = (props: Record<string, unknown> = {}) =>
   })
 
 describe('MintForm.vue', () => {
+  const mintMutation = mockInvestorWrites.individualMint
+
   beforeEach(() => {
     vi.clearAllMocks()
+    resetContractMocks()
     vi.stubGlobal('useToast', () => mockToast)
 
-    writeState.isPending.value = false
-    receiptState.isLoading.value = false
-    receiptState.isSuccess.value = false
     symbolRef.value = 'SHER'
     totalSupplyRef.value = undefined
 
@@ -77,8 +62,10 @@ describe('MintForm.vue', () => {
       () => '0x2222222222222222222222222222222222222222'
     )
 
-    useWriteContractFn.mockReset().mockReturnValue(writeState as never)
-    useWaitForTransactionReceiptFn.mockReset().mockReturnValue(receiptState as never)
+    mintMutation.mutate.mockImplementation((_params: unknown, options?: MintOptions) => {
+      options?.onSuccess?.('0xDefaultHash')
+    })
+
     useReadContractFn
       .mockReset()
       .mockImplementation(({ functionName }: { functionName: string }) => {
@@ -172,14 +159,10 @@ describe('MintForm.vue', () => {
     expect(wrapper.emitted('close-modal')).toBeTruthy()
   })
 
-  it('disables buttons while mint pending or confirmation in progress', () => {
-    writeState.isPending.value = true
-    let wrapper = mountForm()
+  it('disables buttons while mint pending', () => {
+    mintMutation.isPending.value = true
+    const wrapper = mountForm()
     expect(wrapper.find('[data-test="submit-button"]').attributes('disabled')).toBeDefined()
-
-    writeState.isPending.value = false
-    receiptState.isLoading.value = true
-    wrapper = mountForm()
     expect(wrapper.find('[data-test="cancel-button"]').attributes('disabled')).toBeDefined()
   })
 
@@ -189,7 +172,7 @@ describe('MintForm.vue', () => {
     await wrapper.find('[data-test="amount-input"]').setValue('10')
     await wrapper.find('form').trigger('submit')
     await flushPromises()
-    expect(mintMock).toHaveBeenCalled()
+    expect(mintMutation.mutate).toHaveBeenCalled()
   })
 
   it('shows mint error message using shortMessage/message/fallback', async () => {
@@ -197,38 +180,33 @@ describe('MintForm.vue', () => {
     await wrapper.find('[data-test="emit-member-input"]').trigger('click')
     await wrapper.find('[data-test="amount-input"]').setValue('10')
 
-    mintMock.mockImplementationOnce(async (_p: unknown, opts?: MintOptions) => {
+    mintMutation.mutate.mockImplementationOnce((_p: unknown, opts?: MintOptions) => {
       opts?.onError?.({ shortMessage: 'Insufficient funds' })
-      return '0xErrHash'
     })
     await wrapper.find('form').trigger('submit')
     await flushPromises()
     expect(wrapper.text()).toContain('Insufficient funds')
 
-    mintMock.mockImplementationOnce(async (_p: unknown, opts?: MintOptions) => {
+    mintMutation.mutate.mockImplementationOnce((_p: unknown, opts?: MintOptions) => {
       opts?.onError?.(new Error('Generic error'))
-      return '0xErrHash'
     })
     await wrapper.find('form').trigger('submit')
     await flushPromises()
     expect(wrapper.text()).toContain('Generic error')
 
-    mintMock.mockImplementationOnce(async (_p: unknown, opts?: MintOptions) => {
+    mintMutation.mutate.mockImplementationOnce((_p: unknown, opts?: MintOptions) => {
       opts?.onError?.({})
-      return '0xErrHash'
     })
     await wrapper.find('form').trigger('submit')
     await flushPromises()
     expect(wrapper.text()).toContain('Transaction failed')
   })
 
-  it('closes modal after confirmation success transition', async () => {
+  it('closes modal after mint mutation resolves', async () => {
     const wrapper = mountForm()
-
-    receiptState.isLoading.value = true
-    await wrapper.vm.$nextTick()
-    receiptState.isLoading.value = false
-    receiptState.isSuccess.value = true
+    await wrapper.find('[data-test="emit-member-input"]').trigger('click')
+    await wrapper.find('[data-test="amount-input"]').setValue('10')
+    await wrapper.find('form').trigger('submit')
     await flushPromises()
 
     expect(wrapper.emitted('close-modal')).toBeTruthy()

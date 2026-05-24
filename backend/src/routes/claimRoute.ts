@@ -73,6 +73,9 @@ const claimRoutes = express.Router();
  * /claim:
  *  post:
  *   summary: Add a claim for minutes worked
+ *   tags: [Claims]
+ *   security:
+ *     - bearerAuth: []
  *   requestBody:
  *     required: true
  *     content:
@@ -116,6 +119,9 @@ claimRoutes.post('/', validateBody(addClaimBodySchema), addClaim);
  * /claim:
  *  get:
  *   summary: Retrieve claims for a specific team
+ *   tags: [Claims]
+ *   security:
+ *     - bearerAuth: []
  *   parameters:
  *     - in: query
  *       name: teamId
@@ -168,6 +174,9 @@ claimRoutes.get(
  * /claim/{claimId}:
  *  put:
  *   summary: Update claim details (minutes worked, memo, or date)
+ *   tags: [Claims]
+ *   security:
+ *     - bearerAuth: []
  *   description: Allows the claim owner to edit their own pending claim details.
  *   parameters:
  *     - in: path
@@ -240,6 +249,9 @@ claimRoutes.put(
  * /claim/{claimId}:
  *  delete:
  *   summary: Delete a pending claim
+ *   tags: [Claims]
+ *   security:
+ *     - bearerAuth: []
  *   description: Allows the claim owner to delete their own pending claim.
  *   parameters:
  *     - in: path
