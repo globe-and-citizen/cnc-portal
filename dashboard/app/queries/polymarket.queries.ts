@@ -2,31 +2,55 @@ import { useQuery } from '@tanstack/vue-query'
 import type { MaybeRefOrGetter } from 'vue'
 import { computed, toValue } from 'vue'
 import { isAddress } from 'viem'
-import { fetchPolymarketActivity, type FetchPolymarketActivityParams } from '~/api/polymarket'
+import { fetchAllPolymarketActivity, fetchAllPolymarketPositions } from '~/api/polymarket'
+import { fetchPolygonTokenTransfers } from '~/api/polygonscan'
 
-export function usePolymarketActivityQuery(
-  params: MaybeRefOrGetter<Pick<FetchPolymarketActivityParams, 'user' | 'limit' | 'offset' | 'type' | 'sortBy' | 'sortDirection' | 'side'>>
-) {
+/** Normalizes and validates an address ref shared by the accounting queries. */
+function useValidAddress(address: MaybeRefOrGetter<string>) {
+  return computed(() => {
+    const value = toValue(address)?.trim() ?? ''
+    return { value, valid: !!value && isAddress(value as `0x${string}`) }
+  })
+}
+
+/** Full Polymarket activity history (all pages) for accounting. */
+export function useAllPolymarketActivityQuery(address: MaybeRefOrGetter<string>) {
+  const addr = useValidAddress(address)
   return useQuery(
-    computed(() => {
-      const p = toValue(params)
-      const user = p.user?.trim() ?? ''
-      return {
-        queryKey: ['polymarket', 'activity', { ...p, user }] as const,
-        queryFn: async () =>
-          await fetchPolymarketActivity({
-            user,
-            limit: p.limit,
-            offset: p.offset,
-            type: p.type,
-            sortBy: p.sortBy,
-            sortDirection: p.sortDirection,
-            side: p.side
-          }),
-        enabled: !!user && isAddress(user as `0x${string}`),
-        refetchOnWindowFocus: false,
-        staleTime: 1000 * 60 * 2
-      }
-    })
+    computed(() => ({
+      queryKey: ['polymarket', 'activity-all', addr.value.value] as const,
+      queryFn: async () => await fetchAllPolymarketActivity(addr.value.value),
+      enabled: addr.value.valid,
+      refetchOnWindowFocus: false,
+      staleTime: 1000 * 60 * 5
+    }))
+  )
+}
+
+/** Polymarket positions (cost basis + P&L) for accounting. */
+export function usePolymarketPositionsQuery(address: MaybeRefOrGetter<string>) {
+  const addr = useValidAddress(address)
+  return useQuery(
+    computed(() => ({
+      queryKey: ['polymarket', 'positions', addr.value.value] as const,
+      queryFn: async () => await fetchAllPolymarketPositions(addr.value.value),
+      enabled: addr.value.valid,
+      refetchOnWindowFocus: false,
+      staleTime: 1000 * 60 * 5
+    }))
+  )
+}
+
+/** On-chain USDC transfers (deposits/withdrawals) via the Etherscan proxy route. */
+export function usePolygonscanTransfersQuery(address: MaybeRefOrGetter<string>) {
+  const addr = useValidAddress(address)
+  return useQuery(
+    computed(() => ({
+      queryKey: ['polygonscan', 'transfers', addr.value.value] as const,
+      queryFn: async () => await fetchPolygonTokenTransfers(addr.value.value),
+      enabled: addr.value.valid,
+      refetchOnWindowFocus: false,
+      staleTime: 1000 * 60 * 5
+    }))
   )
 }

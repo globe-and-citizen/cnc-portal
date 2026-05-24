@@ -33,7 +33,7 @@ const pageTitle = computed(() => {
     'features': 'Submit Restriction',
     'feature': 'Feature',
     'micropayments': 'Micropayments',
-    'polymarket': 'Polymarket',
+    'accounting': 'Polymarket Accounting',
     'contracts': 'Contracts',
     'settings': 'Settings',
     'settings-members': 'Members',
@@ -89,9 +89,9 @@ const links = [
       }
     },
     {
-      label: 'Polymarket',
-      icon: 'i-lucide-activity',
-      to: '/polymarket',
+      label: 'Polymarket Accounting',
+      icon: 'i-lucide-calculator',
+      to: '/accounting',
       onSelect: () => {
         open.value = false
       }
