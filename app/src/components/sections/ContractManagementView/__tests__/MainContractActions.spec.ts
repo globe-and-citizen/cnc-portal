@@ -113,9 +113,9 @@ describe('MainContractActions.vue', () => {
 
     useQueryClientFn.mockReturnValue({
       invalidateQueries: mockInvalidateQueries,
-      getQueryData: vi.fn(() => undefined),
-      setQueryData: vi.fn(() => undefined),
-      removeQueries: vi.fn(() => undefined)
+      getQueryData: vi.fn(),
+      setQueryData: vi.fn(),
+      removeQueries: vi.fn()
     })
 
     mockUserStore.address = '0x0000000000000000000000000000000000000001'
