@@ -187,6 +187,26 @@ export const getSafeTransactionMethod = (
   return 'unknown'
 }
 
+export const getExecutedErc20TransferTokenAddress = (
+  transaction: Pick<SafeTransaction, 'to' | 'value' | 'dataDecoded'>
+): Address | null => {
+  const normalizedMethod = transaction.dataDecoded?.method?.trim().toLowerCase()
+
+  if (normalizedMethod !== 'transfer') {
+    return null
+  }
+
+  if (!isAddress(transaction.to)) {
+    return null
+  }
+
+  try {
+    return BigInt(transaction.value) === 0n ? transaction.to : null
+  } catch {
+    return null
+  }
+}
+
 export const formatSafeTransferAmount = (transfer: SafeIncomingTransfer): string => {
   if (transfer.type === 'ERC721_TRANSFER') {
     return 'NFT'

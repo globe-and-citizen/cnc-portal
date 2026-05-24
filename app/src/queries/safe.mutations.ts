@@ -1,16 +1,15 @@
 import { useMutation, useQueryClient } from '@tanstack/vue-query'
 import { useChainId, useConnection } from '@wagmi/vue'
 import { isAddress, type Address } from 'viem'
-import { SAFE_VERSION, TX_SERVICE_BY_CHAIN, type ProposeTransactionParams } from '@/types/safe'
+import { SAFE_VERSION } from '@/types/safe'
 import externalApiClient from '@/lib/external.axios.ts'
-import { safeKeys } from './safe.queries'
 import type {
   SafeDeploymentParams,
-  ProposeTransactionBody,
   ExecuteTransactionParams,
   ApproveTransactionParams,
   UpdateSafeOwnersParams,
-  TransferFromSafeParams
+  TransferFromSafeParams,
+  SafeExecutionResult
 } from '@/types/safe.mutation'
 import { deploySafeSchema, transferFromSafeSchema } from '@/types/safe.schemas'
 import { useSafeSDK } from '@/composables/safe/useSafeSdk'
@@ -23,8 +22,14 @@ import {
   proposeSafeTransaction,
   waitForTransaction
 } from '@/utils/safe.mutations'
-import { randomSaltNonce, transformToSafeMultisigResponse } from '@/utils/safe'
+import {
+  getExecutedErc20TransferTokenAddress,
+  getTxServiceUrl,
+  randomSaltNonce,
+  transformToSafeMultisigResponse
+} from '@/utils/safe'
 import { getConnectedSigner } from '@/utils/walletUtil'
+import { safeKeys } from './safe.queries'
 
 // ============================================================================
 // Deploy Safe - Mutation
@@ -106,8 +111,7 @@ export function useApproveTransactionMutation() {
         throw new Error('Missing Safe transaction hash')
       }
 
-      const txService = TX_SERVICE_BY_CHAIN[queryParams.chainId]
-      if (!txService) throw new Error(`Unsupported chainId: ${queryParams.chainId}`)
+      const txServiceUrl = getTxServiceUrl(queryParams.chainId)
 
       // Load Safe SDK and sign the transaction hash
       const safeSdk = await loadSafe(safeAddress)
@@ -115,60 +119,13 @@ export function useApproveTransactionMutation() {
 
       // Post signature to transaction service
       await externalApiClient.post(
-        `${txService.url}/api/v1/multisig-transactions/${safeTxHash}/confirmations/`,
+        `${txServiceUrl}/api/v1/multisig-transactions/${safeTxHash}/confirmations/`,
         { signature: signature.data }
       )
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
         queryKey: safeKeys.transactions(variables.pathParams.safeAddress)
-      })
-    }
-  })
-}
-
-// ============================================================================
-// POST /api/v1/safes/{safeAddress}/multisig-transactions/ - Propose
-// ============================================================================
-
-/**
- * Mutation: Propose a Safe transaction
- *
- * @endpoint POST {txService.url}/api/v1/safes/{safeAddress}/multisig-transactions/
- * @pathParams { safeAddress: string }
- * @queryParams none
- * @body ProposeTransactionBody - full transaction data
- */
-export function useProposeTransactionMutation() {
-  const queryClient = useQueryClient()
-
-  return useMutation<void, Error, ProposeTransactionParams>({
-    mutationFn: async (params) => {
-      const { chainId, safeAddress, safeTxHash, transactionData, sender, signature, origin } =
-        params
-      const txServiceUrl = TX_SERVICE_BY_CHAIN[chainId]?.url
-
-      if (!txServiceUrl) {
-        throw new Error(`Transaction service not configured for chain ${chainId}`)
-      }
-
-      // Body: transaction data to propose
-      const body: ProposeTransactionBody = {
-        ...transactionData,
-        contractTransactionHash: safeTxHash,
-        sender,
-        signature,
-        origin: origin || null
-      }
-
-      await externalApiClient.post(
-        `${txServiceUrl}/api/v1/safes/${safeAddress}/multisig-transactions/`,
-        body
-      )
-    },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: safeKeys.transactions(variables.safeAddress)
       })
     }
   })
@@ -214,11 +171,29 @@ export function useExecuteTransactionMutation() {
       await waitForTransaction(txResponse)
       return txHash
     },
-    onSuccess: (txHash, variables) => {
-      queryClient.invalidateQueries({ queryKey: safeKeys.info(variables.pathParams.safeAddress) })
-      queryClient.invalidateQueries({
-        queryKey: safeKeys.transactions(variables.pathParams.safeAddress)
-      })
+    onSuccess: async (_, variables) => {
+      const safeAddress = variables.pathParams.safeAddress as Address
+      const chainId = variables.queryParams.chainId
+      const tokenAddress = getExecutedErc20TransferTokenAddress(variables.body.transactionData)
+
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: safeKeys.info(variables.pathParams.safeAddress)
+        }),
+        queryClient.invalidateQueries({
+          queryKey: safeKeys.transactions(variables.pathParams.safeAddress)
+        }),
+        queryClient.invalidateQueries({
+          queryKey: safeKeys.balance(variables.pathParams.safeAddress, chainId)
+        }),
+        ...(tokenAddress
+          ? [
+              queryClient.invalidateQueries({
+                queryKey: safeKeys.tokenBalance(tokenAddress, safeAddress, chainId)
+              })
+            ]
+          : [])
+      ])
     }
   })
 }
@@ -316,7 +291,7 @@ export function useTransferFromSafeMutation() {
   const queryClient = useQueryClient()
   const { loadSafe } = useSafeSDK()
 
-  return useMutation<string, Error, TransferFromSafeParams>({
+  return useMutation<SafeExecutionResult, Error, TransferFromSafeParams>({
     mutationFn: async (payload) => {
       const parsedPayload = transferFromSafeSchema.parse(payload)
       const { safeAddress: parsedSafeAddress } = parsedPayload.pathParams
@@ -335,21 +310,23 @@ export function useTransferFromSafeMutation() {
       })
 
       if (threshold >= 2) {
-        return proposeSafeTransaction({
+        const hash = await proposeSafeTransaction({
           safeSdk,
           transactionData: [transactionData],
           chainId: chainId.value,
           safeAddress: parsedSafeAddress,
           signer: getConnectedSigner(connection)
         })
+        return { hash, executed: false }
       }
 
-      return executeSafeTransaction({
+      const hash = await executeSafeTransaction({
         safeSdk,
         transactionData: [transactionData]
       })
+      return { hash, executed: true }
     },
-    onSuccess: async (_, variables) => {
+    onSuccess: async (result, variables) => {
       const safeAddress = variables.pathParams.safeAddress as Address
       const tokenId = variables.body.options.tokenId ?? 'native'
       const tokenAddress = getTokenAddress(tokenId)
@@ -358,7 +335,11 @@ export function useTransferFromSafeMutation() {
       await queryClient.invalidateQueries({
         queryKey: safeKeys.transactions(variables.pathParams.safeAddress)
       })
-      // Safe balance (always changes after transfer)
+
+      if (!result.executed) {
+        return
+      }
+
       await queryClient.invalidateQueries({
         queryKey: safeKeys.balance(variables.pathParams.safeAddress, chainId.value)
       })

@@ -7,6 +7,7 @@ import {
   getSafeSettingsUrl,
   openSafeAppUrl,
   formatSafeTransactionValue,
+  getExecutedErc20TransferTokenAddress,
   getSafeTransactionMethod,
   formatSafeTransferAmount,
   formatSafeTransferType,
@@ -111,6 +112,36 @@ describe('safe utils', () => {
       expect(getSafeTransactionMethod({ value: '1', dataDecoded: undefined })).toBe('transfer')
       expect(getSafeTransactionMethod({ value: '0', dataDecoded: undefined })).toBe('unknown')
       expect(getSafeTransactionMethod({ value: 'bad', dataDecoded: undefined })).toBe('unknown')
+    })
+  })
+
+  describe('getExecutedErc20TransferTokenAddress', () => {
+    it('returns the token contract address for executed ERC20 transfers', () => {
+      expect(
+        getExecutedErc20TransferTokenAddress({
+          to: USDC_ADDRESS,
+          value: '0',
+          dataDecoded: { method: 'transfer', parameters: [] } as never
+        })
+      ).toBe(USDC_ADDRESS)
+    })
+
+    it('returns null for native transfers or invalid token targets', () => {
+      expect(
+        getExecutedErc20TransferTokenAddress({
+          to: '0xRecipient',
+          value: String(1_000_000_000_000_000_000n),
+          dataDecoded: undefined
+        } as never)
+      ).toBeNull()
+
+      expect(
+        getExecutedErc20TransferTokenAddress({
+          to: 'not-an-address',
+          value: '0',
+          dataDecoded: { method: 'transfer', parameters: [] } as never
+        } as never)
+      ).toBeNull()
     })
   })
 

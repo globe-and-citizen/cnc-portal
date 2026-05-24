@@ -232,7 +232,6 @@ vi.mock('@/queries/safe.mutations', () => ({
   useGetSafeInfoQuery: vi.fn(queryMocks.useGetSafeInfoQuery),
   useSafePendingTransactionsQuery: vi.fn(queryMocks.useSafePendingTransactionsQuery),
   useDeploySafeMutation: vi.fn(queryMocks.useDeploySafeMutation),
-  useProposeTransactionMutation: vi.fn(queryMocks.useProposeTransactionMutation),
   useApproveTransactionMutation: vi.fn(queryMocks.useApproveTransactionMutation),
   useExecuteTransactionMutation: vi.fn(queryMocks.useExecuteTransactionMutation),
 

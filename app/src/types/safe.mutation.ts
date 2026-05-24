@@ -115,6 +115,11 @@ export interface TransferFromSafeParams {
   }
 }
 
+export interface SafeExecutionResult {
+  hash: string
+  executed: boolean
+}
+
 export type SafeSdkInstance = Awaited<ReturnType<typeof Safe.init>>
 
 export interface SafeTransactionInput {
