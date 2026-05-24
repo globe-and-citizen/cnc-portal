@@ -14,7 +14,6 @@ export * from './fileUtil'
 // SafeDepositRouter utilities
 export * from './safeDepositRouterUtil'
 export * from './rawTransactionsUtil'
-export * from './transactionHistoryUtil'
 export * from './investorsTransactionUtil'
 export * from './bankTransactionUtil'
 export * from './cashRemunerationTransactionUtil'
