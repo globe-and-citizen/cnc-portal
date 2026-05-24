@@ -72,8 +72,8 @@ const toast = useToast()
 const teamStore = useTeamStore()
 const userDataStore = useUserDataStore()
 
-const { mutateAsync: deploySafe, isPending: isDeploying } = useDeploySafeMutation()
-const { mutateAsync: createContract } = useCreateContractMutation()
+const { mutate: deploySafe, isPending: isDeploying } = useDeploySafeMutation()
+const { mutate: createContract } = useCreateContractMutation()
 
 const canDeploy = computed(
   () =>
@@ -84,51 +84,7 @@ const canDeploy = computed(
 
 const networkName = computed(() => NETWORK || 'Polygon')
 
-/**
- * Deploy Safe wallet for the team
- */
-const handleDeploySafe = async () => {
-  if (!canDeploy.value) {
-    toast.add({ title: 'Error', description: 'connect your wallet', color: 'error' })
-    return
-  }
-
-  let safeAddress: string
-  try {
-    safeAddress = await deploySafe({
-      owners: [userDataStore.address!],
-      threshold: 1
-    })
-  } catch (err) {
-    const message = err instanceof Error ? err.message : 'Failed to deploy Safe'
-    toast.add({
-      title: 'Error',
-      description: message.includes('User rejected') ? 'Transaction approval rejected' : message,
-      color: 'error'
-    })
-    return
-  }
-
-  // Save Safe contract to database
-  try {
-    await createContract({
-      body: {
-        teamId: String(props.teamId),
-        contractAddress: safeAddress,
-        contractType: 'Safe',
-        deployer: userDataStore.address!
-      }
-    })
-  } catch (err) {
-    const message = err instanceof Error ? err.message : 'Failed to register Safe contract'
-    toast.add({
-      title: 'Warning',
-      description: `Safe deployed on-chain, but registration failed: ${message}`,
-      color: 'warning'
-    })
-    log.error('Safe registration failed:', err)
-  }
-
+const showDeploySuccess = (safeAddress: string) => {
   toast.add({
     title: 'Success',
     description: 'Safe wallet deployed successfully',
@@ -136,8 +92,59 @@ const handleDeploySafe = async () => {
   })
 
   log.info('Safe deployed:', safeAddress)
-
-  // Notify parent component
   emits('safeDeployed', safeAddress)
+}
+
+/**
+ * Deploy Safe wallet for the team
+ */
+const handleDeploySafe = () => {
+  if (!canDeploy.value) {
+    toast.add({ title: 'Error', description: 'connect your wallet', color: 'error' })
+    return
+  }
+
+  deploySafe(
+    {
+      owners: [userDataStore.address!],
+      threshold: 1
+    },
+    {
+      onSuccess: (safeAddress) => {
+        createContract(
+          {
+            body: {
+              teamId: String(props.teamId),
+              contractAddress: safeAddress,
+              contractType: 'Safe',
+              deployer: userDataStore.address!
+            }
+          },
+          {
+            onSuccess: () => showDeploySuccess(safeAddress),
+            onError: (err) => {
+              const message =
+                err instanceof Error ? err.message : 'Failed to register Safe contract'
+              toast.add({
+                title: 'Warning',
+                description: `Safe deployed on-chain, but registration failed: ${message}`,
+                color: 'warning'
+              })
+              log.error('Safe registration failed:', err)
+              showDeploySuccess(safeAddress)
+            }
+          }
+        )
+      },
+      onError: (err) => {
+        const message = err instanceof Error ? err.message : 'Failed to deploy Safe'
+        toast.add({
+          title: 'Error',
+          description: message.includes('User rejected') ? 'Transaction approval rejected' : message,
+          color: 'error'
+        })
+      }
+    }
+  )
 }
 </script>

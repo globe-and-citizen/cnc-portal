@@ -128,20 +128,21 @@ const { mutate: updateOwners, isPending: isLoading } = useUpdateSafeOwnersMutati
 const isOpen = defineModel<boolean>({ default: false })
 
 const newSigners = ref<User[]>([])
+const requiresProposal = computed(() => props.currentThreshold >= 2)
 
 // Transform newSigners to match form schema expectations
 const formState = computed(() => ({
   newSigners: newSigners.value.map((signer) => ({
     address: signer.address || ''
-  }))
+  })),
+  newThreshold: props.currentThreshold,
+  shouldPropose: requiresProposal.value
 }))
 
 // Computed values
 const totalSignersAfterUpdate = computed(() => {
   return props.currentOwners.length + validNewSigners.value.length
 })
-
-const requiresProposal = computed(() => props.currentThreshold >= 2)
 
 // Filter out invalid signers and existing owners (additional safety check)
 const validNewSigners = computed(() => {
@@ -165,16 +166,23 @@ const canSubmit = computed(() => {
 })
 
 const formSchema = computed(() =>
-  z.object({
-    newSigners: z
-      .array(
-        z.object({
-          address: z.string().refine((address) => isAddress(address), 'Invalid signer address')
-        })
-      )
-      .min(1, 'Please add at least one signer')
-      .refine(() => validNewSigners.value.length > 0, 'Please add at least one valid signer')
-  })
+  z
+    .object({
+      newSigners: z
+        .array(
+          z.object({
+            address: z.string().refine((address) => isAddress(address), 'Invalid signer address')
+          })
+        )
+        .min(1, 'Please add at least one signer')
+        .refine(() => validNewSigners.value.length > 0, 'Please add at least one valid signer'),
+      newThreshold: z.number().optional(),
+      shouldPropose: z.boolean()
+    })
+    .refine(({ newSigners, newThreshold }) => !newSigners.length || newThreshold !== undefined, {
+      message: 'newThreshold required when adding owners',
+      path: ['newThreshold']
+    })
 )
 
 // Watch for validation issues (simplified since prevention is handled by hiddenMembers)
@@ -221,6 +229,7 @@ const handleAddSigners = async () => {
       },
       body: {
         ownersToAdd,
+        newThreshold: props.currentThreshold,
         shouldPropose: requiresProposal.value
       }
     },

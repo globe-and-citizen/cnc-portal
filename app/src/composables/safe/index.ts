@@ -14,3 +14,4 @@ export { useSafeSDK } from './useSafeSdk'
 
 // Mutations (actions)
 export { useSafeTransactionConflicts } from './useSafeTransactionConflicts'
+export { useSafeTransactionActions } from './useSafeTransactionActions'

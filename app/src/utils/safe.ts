@@ -13,8 +13,6 @@ import { formatEtherUtil, tokenSymbol } from '@/utils/constantUtil'
 import { type DecodedCall } from '@/types'
 import type { SafeIncomingTransfer } from '@/types'
 
-export const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
-
 /**
  * Get Safe transaction service URL for a given chain ID
  */

@@ -3,6 +3,7 @@ import type { SafeVersion } from '@safe-global/types-kit'
 import { useConnection } from '@wagmi/vue'
 import { isAddress } from 'viem'
 import { getInjectedProvider } from '@/utils/safe'
+import { getConnectedSigner } from '@/utils/walletUtil'
 
 const safeInstanceCache = new Map<string, Promise<Safe>>()
 
@@ -21,11 +22,9 @@ export function useSafeSDK() {
       throw new Error('Invalid Safe address')
     }
 
-    if (!connection.isConnected.value || !connection.address.value) {
-      throw new Error('Wallet not connected')
-    }
+    const signer = getConnectedSigner(connection)
 
-    const cacheKey = `${safeAddress}-${connection.address.value}`
+    const cacheKey = `${safeAddress}-${signer}`
 
     if (safeInstanceCache.has(cacheKey)) {
       return safeInstanceCache.get(cacheKey)!
@@ -33,7 +32,7 @@ export function useSafeSDK() {
 
     const safePromise = Safe.init({
       provider: getInjectedProvider(),
-      signer: connection.address.value,
+      signer,
       safeAddress
     })
 
@@ -63,23 +62,21 @@ export function useSafeSDK() {
   }
 
   /**
-   * Deploy a new Safe
-   * Initializes a Safe SDK instance with predicted safe configuration
+   * Create a predicted Safe SDK instance.
+   * This does not broadcast any transaction on-chain.
    *
    * @param safeAccountConfig - Safe configuration (owners, threshold)
    * @param deploymentConfig - Deployment configuration (saltNonce, safeVersion)
-   * @returns Safe SDK instance ready for deployment
+   * @returns Safe SDK instance configured with predicted safe data
    */
-  const deploySafe = async (
+  const createPredictedSafeSdk = async (
     safeAccountConfig: SafeAccountConfig,
     deploymentConfig: {
       saltNonce: string
       safeVersion: SafeVersion
     }
   ): Promise<Safe> => {
-    if (!connection.isConnected.value || !connection.address.value) {
-      throw new Error('Wallet not connected')
-    }
+    const signer = getConnectedSigner(connection)
 
     // Validate owners
     const { owners, threshold } = safeAccountConfig
@@ -110,7 +107,7 @@ export function useSafeSDK() {
     // Initialize Protocol Kit with predicted Safe
     return Safe.init({
       provider,
-      signer: connection.address.value,
+      signer,
       predictedSafe
     })
   }
@@ -119,6 +116,6 @@ export function useSafeSDK() {
     loadSafe,
     clearCache,
     clearSafeCache,
-    deploySafe
+    createPredictedSafeSdk
   }
 }

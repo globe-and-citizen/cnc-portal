@@ -317,10 +317,10 @@ export function resetDeployState() {
  * Use these in tests that need per-test configuration via mockReturnValue/mockReturnValueOnce.
  */
 export const useQueryClientFn = vi.fn(() => ({
-  invalidateQueries: vi.fn(),
-  getQueryData: vi.fn(),
-  setQueryData: vi.fn(),
-  removeQueries: vi.fn()
+  invalidateQueries: vi.fn(async () => undefined),
+  getQueryData: vi.fn(() => undefined),
+  setQueryData: vi.fn(() => undefined),
+  removeQueries: vi.fn(() => undefined)
 }))
 
 export const useQueryFn = vi.fn(() => ({

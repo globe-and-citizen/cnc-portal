@@ -106,16 +106,6 @@ export interface SafeConfirmation {
   signatureType: SignatureType | string
 }
 
-export interface SafeSignature {
-  data: string
-  signer: string
-}
-
-export interface SafeDeploymentParams {
-  owners: string[]
-  threshold: number
-}
-
 export interface SafeChainConfig {
   chain: string
   url: string

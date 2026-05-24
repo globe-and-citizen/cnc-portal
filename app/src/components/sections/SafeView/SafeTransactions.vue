@@ -98,7 +98,7 @@
       v-if="showConflictWarning"
       v-model="showConflictWarning"
       :is-executing="isExecuting || isApproving"
-      :action="isExecuting ? 'Execute' : 'Approve'"
+      :action="conflictActionLabel"
       @confirm="handleConfirmAction"
       @cancel="handleCancelAction"
       data-test="conflict-warning-modal"
@@ -112,9 +112,7 @@
 </template>
 
 <script setup lang="ts">
-/* eslint-disable max-lines */
 import { watch, computed, ref } from 'vue'
-import { useChainId } from '@wagmi/vue'
 import type { SafeTransaction } from '@/types/safe'
 
 // Components
@@ -124,17 +122,14 @@ import SafeTransactionDetailsModal from './SafeTransactionDetailsModal.vue'
 
 // Stores and composables
 import { useGetSafeTransactionsQuery, useGetSafeInfoQuery } from '@/queries/safe.queries'
-import {
-  useApproveTransactionMutation,
-  useExecuteTransactionMutation
-} from '@/queries/safe.mutations'
 import { useSafeTransactionConflicts } from '@/composables/safe/useSafeTransactionConflicts'
+import { useSafeTransactionActions } from '@/composables/safe/useSafeTransactionActions'
 import SafeTransactionStatusFilter, {
   type SafeTransactionStatus
 } from '@/components/sections/SafeView/SafeTransactionStatusFilter.vue'
 import { type Address } from 'viem'
 
-import { formatSafeTransactionValue, getSafeTransactionMethod } from '@/utils'
+import { formatSafeTransactionValue, getSafeTransactionMethod, log } from '@/utils'
 import { useUserDataStore } from '@/stores'
 
 const userDataStore = useUserDataStore()
@@ -144,20 +139,10 @@ interface Props {
 }
 
 const props = defineProps<Props>()
-const toast = useToast()
 
 // Status filtering
 const selectedStatus = ref<SafeTransactionStatus>('all')
 
-// Pagination state
-const currentPage = ref(1)
-const itemsPerPage = ref(5)
-
-// Conflict warning state
-const showConflictWarning = ref(false)
-const pendingExecutionTransaction = ref<SafeTransaction | null>(null)
-const pendingApprovalTransaction = ref<SafeTransaction | null>(null)
-const conflictActionType = ref<'approve' | 'execute'>('execute')
 const showDetailsModal = ref(false)
 const selectedTransactionForDetails = ref<SafeTransaction | null>(null)
 
@@ -172,14 +157,25 @@ const { data: safeInfo } = useGetSafeInfoQuery({
   pathParams: { safeAddress: computed(() => props.address) }
 })
 
-// Safe operations
-const chainId = useChainId()
-const { mutateAsync: approve, isPending: isApproving } = useApproveTransactionMutation()
-const { mutateAsync: execute, isPending: isExecuting } = useExecuteTransactionMutation()
-
 // Transaction conflict detection - now only needs safeAddress!
 const { isTransactionNonceValid, hasConflictingTransactions, willApprovalCauseConflict } =
   useSafeTransactionConflicts(computed(() => props.address))
+
+const {
+  isApproving,
+  isExecuting,
+  showConflictWarning,
+  conflictActionLabel,
+  isTransactionLoading,
+  handleApproveClick,
+  handleExecuteClick,
+  handleConfirmAction,
+  handleCancelAction
+} = useSafeTransactionActions({
+  safeAddress: computed(() => props.address),
+  hasConflictingTransactions,
+  willApprovalCauseConflict
+})
 
 // Computed values
 const isConnectedUserOwner = computed(() => {
@@ -204,26 +200,6 @@ const filteredTransactions = computed(() => {
   }
 })
 
-// Reset pagination when filter changes
-watch(selectedStatus, () => {
-  currentPage.value = 1
-})
-
-// Reset pagination when filtered data changes significantly
-watch(
-  filteredTransactions,
-  (newTransactions, oldTransactions) => {
-    // Reset to page 1 if current page would be empty
-    if (newTransactions && oldTransactions) {
-      const totalPages = Math.ceil(newTransactions.length / itemsPerPage.value)
-      if (currentPage.value > totalPages && totalPages > 0) {
-        currentPage.value = 1
-      }
-    }
-  },
-  { deep: false }
-)
-
 // Helper functions
 const getTransactionStatus = (transaction: SafeTransaction): string => {
   if (transaction.isExecuted) return 'Executed'
@@ -238,17 +214,6 @@ const getTransactionStatus = (transaction: SafeTransaction): string => {
 
   if (confirmations >= required) return 'Ready to Execute'
   return 'Pending'
-}
-
-const approvingTransactions = ref<Set<string>>(new Set())
-const executingTransactions = ref<Set<string>>(new Set())
-
-const isTransactionLoading = (safeTxHash: string, operation: 'approve' | 'execute'): boolean => {
-  if (operation === 'approve') {
-    return approvingTransactions.value.has(safeTxHash) && isApproving.value
-  } else {
-    return executingTransactions.value.has(safeTxHash) && isExecuting.value
-  }
 }
 
 /**
@@ -294,116 +259,6 @@ const canExecute = (transaction: SafeTransaction): boolean => {
   return confirmations >= required
 }
 
-// Event handlers
-const handleApproveClick = (transaction: SafeTransaction) => {
-  // Check if this approval would cause conflicts
-  // (i.e., if it would make the transaction ready to execute and there are other pending transactions)
-  if (willApprovalCauseConflict(transaction)) {
-    pendingApprovalTransaction.value = transaction
-    conflictActionType.value = 'approve'
-    showConflictWarning.value = true
-  } else {
-    // No conflicts, approve directly
-    handleApproveTransaction(transaction)
-  }
-}
-
-const handleApproveTransaction = async (transaction: SafeTransaction) => {
-  const safeAddress = props.address
-  if (!safeAddress) return
-  approvingTransactions.value.add(transaction.safeTxHash)
-  try {
-    await approve({
-      pathParams: {
-        safeAddress,
-        safeTxHash: transaction.safeTxHash
-      },
-      queryParams: {
-        chainId: chainId.value
-      }
-    })
-    toast.add({
-      title: 'Success',
-      description: 'Transaction approved successfully',
-      color: 'success'
-    })
-  } catch (err) {
-    console.error('Failed to approve transaction:', err)
-    const message = err instanceof Error ? err.message : 'Failed to approve transaction'
-    toast.add({
-      title: 'Error',
-      description: message.includes('User rejected') ? 'Transaction rejected' : message,
-      color: 'error'
-    })
-  } finally {
-    approvingTransactions.value.delete(transaction.safeTxHash)
-  }
-}
-
-const handleExecuteClick = (transaction: SafeTransaction) => {
-  // Check for conflicting transactions
-  if (hasConflictingTransactions(transaction)) {
-    pendingExecutionTransaction.value = transaction
-    conflictActionType.value = 'execute'
-    showConflictWarning.value = true
-  } else {
-    // No conflicts, execute directly
-    handleExecuteTransaction(transaction)
-  }
-}
-
-const handleConfirmAction = async () => {
-  if (conflictActionType.value === 'approve' && pendingApprovalTransaction.value) {
-    await handleApproveTransaction(pendingApprovalTransaction.value)
-    pendingApprovalTransaction.value = null
-  } else if (conflictActionType.value === 'execute' && pendingExecutionTransaction.value) {
-    await handleExecuteTransaction(pendingExecutionTransaction.value)
-    pendingExecutionTransaction.value = null
-  }
-  showConflictWarning.value = false
-}
-
-const handleCancelAction = () => {
-  pendingExecutionTransaction.value = null
-  pendingApprovalTransaction.value = null
-  showConflictWarning.value = false
-}
-
-const handleExecuteTransaction = async (transaction: SafeTransaction) => {
-  const safeAddress = props.address
-  if (!safeAddress) return
-  executingTransactions.value.add(transaction.safeTxHash)
-  try {
-    await execute({
-      pathParams: {
-        safeAddress,
-        safeTxHash: transaction.safeTxHash
-      },
-      queryParams: {
-        chainId: chainId.value
-      },
-      body: {
-        transactionData: transaction
-      }
-    })
-    toast.add({
-      title: 'Success',
-      description: 'Transaction executed successfully',
-      color: 'success'
-    })
-  } catch (err) {
-    console.error('Failed to execute transaction:', err)
-    const message = err instanceof Error ? err.message : 'Failed to execute transaction'
-    toast.add({
-      title: 'Error',
-      description: message.includes('User rejected') ? 'Transaction rejected' : message,
-      color: 'error'
-    })
-  } finally {
-    executingTransactions.value.delete(transaction.safeTxHash)
-  }
-}
-
 const handleStatusChange = (status: SafeTransactionStatus) => {
   selectedStatus.value = status
 }
@@ -420,7 +275,7 @@ watch(showDetailsModal, (isOpen) => {
 // Error watching
 watch(error, (newError) => {
   if (newError) {
-    console.error('Error loading safe transactions:', newError)
+    log.error('Error loading safe transactions:', newError)
   }
 })
 </script>

@@ -45,7 +45,7 @@ const createConnection = (isConnected: boolean, address: string | null) => ({
   address: { value: address }
 })
 
-describe('useSafeSDK deploySafe', () => {
+describe('useSafeSDK createPredictedSafeSdk', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockUseConnection.mockReturnValue(
@@ -60,10 +60,10 @@ describe('useSafeSDK deploySafe', () => {
 
   it('throws when wallet is not connected', async () => {
     mockUseConnection.mockReturnValue(createConnection(false, null))
-    const { deploySafe } = useSafeSDK()
+    const { createPredictedSafeSdk } = useSafeSDK()
 
     await expect(
-      deploySafe(
+      createPredictedSafeSdk(
         {
           owners: ['0x1111111111111111111111111111111111111111'],
           threshold: 1
@@ -77,10 +77,10 @@ describe('useSafeSDK deploySafe', () => {
   })
 
   it('throws when owners list is empty', async () => {
-    const { deploySafe } = useSafeSDK()
+    const { createPredictedSafeSdk } = useSafeSDK()
 
     await expect(
-      deploySafe(
+      createPredictedSafeSdk(
         {
           owners: [],
           threshold: 1
@@ -94,10 +94,10 @@ describe('useSafeSDK deploySafe', () => {
   })
 
   it('throws when threshold is out of bounds', async () => {
-    const { deploySafe } = useSafeSDK()
+    const { createPredictedSafeSdk } = useSafeSDK()
 
     await expect(
-      deploySafe(
+      createPredictedSafeSdk(
         {
           owners: ['0x1111111111111111111111111111111111111111'],
           threshold: 2
@@ -111,10 +111,10 @@ describe('useSafeSDK deploySafe', () => {
   })
 
   it('throws when owner address is invalid', async () => {
-    const { deploySafe } = useSafeSDK()
+    const { createPredictedSafeSdk } = useSafeSDK()
 
     await expect(
-      deploySafe(
+      createPredictedSafeSdk(
         {
           owners: ['invalid-owner'],
           threshold: 1
@@ -128,8 +128,8 @@ describe('useSafeSDK deploySafe', () => {
   })
 
   it('initializes safe sdk with predicted safe config for valid inputs', async () => {
-    const { deploySafe } = useSafeSDK()
-    await deploySafe(
+    const { createPredictedSafeSdk } = useSafeSDK()
+    await createPredictedSafeSdk(
       {
         owners: [
           '0x1111111111111111111111111111111111111111',

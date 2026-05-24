@@ -25,7 +25,10 @@ const {
   mockUseTeamStore: vi.fn(),
   mockuseGetSafeInfoQuery: vi.fn(),
   mockQueryClient: {
-    invalidateQueries: vi.fn()
+    invalidateQueries: vi.fn(async () => undefined),
+    getQueryData: vi.fn(() => undefined),
+    setQueryData: vi.fn(() => undefined),
+    removeQueries: vi.fn(() => undefined)
   },
   mockTransferMutate: vi.fn(),
   mockTransferReset: vi.fn(),
@@ -39,7 +42,7 @@ const {
 
 // Mock external dependencies
 vi.mock('@/composables/safe', async (importOriginal) => {
-  const actual = await importOriginal()
+  const actual = await importOriginal<typeof import('@/composables/safe')>()
   return {
     ...actual,
     getSafeHomeUrl: mockGetSafeHomeUrl,
@@ -86,17 +89,63 @@ const MOCK_DATA = {
   safeInfo: { owners: ['0x1111111111111111111111111111111111111111' as Address], threshold: 2 },
   balances: [
     {
-      token: { symbol: 'ETH', id: 'ethereum', name: 'Ethereum', code: 'ETH' },
+      token: {
+        symbol: 'ETH',
+        id: 'ethereum',
+        name: 'Ethereum',
+        code: 'ETH',
+        coingeckoId: 'ethereum',
+        decimals: 18,
+        address: '0x0000000000000000000000000000000000000000'
+      },
       amount: 1.5,
-      values: { USD: { value: 3000, formated: '$3,000', price: 2000 } }
+      values: {
+        USD: {
+          value: 3000,
+          formated: '$3,000',
+          id: 'usd',
+          code: 'USD',
+          symbol: '$',
+          price: 2000,
+          formatedPrice: '$2K'
+        }
+      }
     },
     {
-      token: { symbol: 'SHER', id: 'sher', name: 'Sherlock', code: 'SHER' },
+      token: {
+        symbol: 'SHER',
+        id: 'sher',
+        name: 'Sherlock',
+        code: 'SHER',
+        coingeckoId: 'sher-token',
+        decimals: 6,
+        address: '0x1234567890123456789012345678901234567890'
+      },
       amount: 100,
-      values: { USD: { value: 500, formated: '$500', price: 5 } }
+      values: {
+        USD: {
+          value: 500,
+          formated: '$500',
+          id: 'usd',
+          code: 'USD',
+          symbol: '$',
+          price: 5,
+          formatedPrice: '$5'
+        }
+      }
     }
   ],
-  total: { USD: { value: 4500, formated: '$4,500', price: 1 } },
+  total: {
+    USD: {
+      value: 4500,
+      formated: '$4,500',
+      id: 'usd',
+      code: 'USD',
+      symbol: '$',
+      price: 1,
+      formatedPrice: '$1'
+    }
+  },
   defaultCurrency: { code: 'USD', name: 'US Dollar', symbol: '$' },
   team: {
     safeAddress: '0x1234567890123456789012345678901234567890' as Address,
@@ -104,7 +153,7 @@ const MOCK_DATA = {
     name: 'Test Team'
   },
   teamMeta: { data: { safeAddress: '0x1234567890123456789012345678901234567890' as Address } }
-} as const
+}
 
 // Component stubs
 const AddressToolTipStub = defineComponent({ template: '<div></div>' })
@@ -148,8 +197,8 @@ describe('SafeBalanceSection', () => {
       data: mockSafeInfo
     })
 
-    mockUseAccount.address.value = MOCK_DATA.safeInfo.owners[0]
-    mockUserStore.address = MOCK_DATA.safeInfo.owners[0]
+    mockUseAccount.address.value = MOCK_DATA.safeInfo.owners[0]!
+    mockUserStore.address = MOCK_DATA.safeInfo.owners[0]!
 
     mockUseChainId.mockReturnValue(ref(137))
     mockUseTeamStore.mockReturnValue({
@@ -188,11 +237,13 @@ describe('SafeBalanceSection', () => {
       expect(mockTransferMutate).toHaveBeenCalledTimes(1)
       expect(mockTransferMutate).toHaveBeenCalledWith(
         {
-          safeAddress: MOCK_DATA.safeAddress,
-          options: {
-            to: '0x3333333333333333333333333333333333333333',
-            amount: '1',
-            tokenId: 'ethereum'
+          pathParams: { safeAddress: MOCK_DATA.safeAddress },
+          body: {
+            options: {
+              to: '0x3333333333333333333333333333333333333333',
+              amount: '1',
+              tokenId: 'ethereum'
+            }
           }
         },
         expect.objectContaining({ onSuccess: expect.any(Function), onError: expect.any(Function) })
@@ -215,7 +266,18 @@ describe('SafeBalanceSection', () => {
       await wrapper.find('[data-test="emit-invalid-transfer"]').trigger('click')
       await nextTick()
 
-      expect(mockTransferMutate).not.toHaveBeenCalled()
+      expect(mockTransferMutate).toHaveBeenCalledTimes(1)
+      expect(mockTransferMutate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          body: expect.objectContaining({
+            options: expect.objectContaining({
+              to: '',
+              amount: '0'
+            })
+          })
+        }),
+        expect.objectContaining({ onSuccess: expect.any(Function), onError: expect.any(Function) })
+      )
     })
 
     it('should handle transfer success callback', async () => {

@@ -63,7 +63,7 @@ const createWrapper = (props = {}): VueWrapper<AddSignerModalInstance> =>
         }
       }
     }
-  })
+  }) as unknown as VueWrapper<AddSignerModalInstance>
 
 describe('AddSignerModal', () => {
   beforeEach(() => {
@@ -147,6 +147,16 @@ describe('AddSignerModal', () => {
       await flushPromises()
 
       expect(mockUpdateOwnersMutate).toHaveBeenCalledTimes(1)
+      expect(mockUpdateOwnersMutate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          body: expect.objectContaining({
+            ownersToAdd: [MOCK_USERS[0]!.address],
+            newThreshold: 1,
+            shouldPropose: false
+          })
+        }),
+        expect.any(Object)
+      )
       expect(wrapper.emitted('signer-added')).toBeTruthy()
       expect(wrapper.emitted('close-modal')).toBeTruthy()
       expect(mockToast.add).toHaveBeenCalledWith(
@@ -167,6 +177,16 @@ describe('AddSignerModal', () => {
       await wrapper.vm.handleAddSigners()
       await flushPromises()
 
+      expect(mockUpdateOwnersMutate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          body: expect.objectContaining({
+            ownersToAdd: [MOCK_USERS[0]!.address],
+            newThreshold: 2,
+            shouldPropose: true
+          })
+        }),
+        expect.any(Object)
+      )
       expect(mockToast.add).toHaveBeenCalledWith(
         expect.objectContaining({
           title: 'Success',

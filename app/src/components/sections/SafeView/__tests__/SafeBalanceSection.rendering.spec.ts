@@ -34,7 +34,10 @@ const {
   mockUseCurrencyStore: vi.fn(),
   mockuseGetSafeInfoQuery: vi.fn(),
   mockQueryClient: {
-    invalidateQueries: vi.fn()
+    invalidateQueries: vi.fn(async () => undefined),
+    getQueryData: vi.fn(() => undefined),
+    setQueryData: vi.fn(() => undefined),
+    removeQueries: vi.fn(() => undefined)
   },
   mockUseTransferFromSafeMutation: vi.fn(() => ({
     mutate: vi.fn(),
@@ -45,7 +48,7 @@ const {
 
 // Mock external dependencies
 vi.mock('@/composables/safe', async (importOriginal) => {
-  const actual = await importOriginal()
+  const actual = await importOriginal<typeof import('@/composables/safe')>()
   return {
     ...actual,
     getSafeHomeUrl: mockGetSafeHomeUrl,
@@ -89,14 +92,21 @@ const MOCK_DATA = {
         symbol: 'ETH',
         id: 'ethereum',
         name: 'Ethereum',
-        code: 'ETH'
+        code: 'ETH',
+        coingeckoId: 'ethereum',
+        decimals: 18,
+        address: '0x0000000000000000000000000000000000000000'
       },
       amount: 1.5,
       values: {
         USD: {
           value: 3000,
           formated: '$3,000',
-          price: 2000
+          id: 'usd',
+          code: 'USD',
+          symbol: '$',
+          price: 2000,
+          formatedPrice: '$2K'
         }
       }
     },
@@ -105,14 +115,21 @@ const MOCK_DATA = {
         symbol: 'SHER',
         id: 'sher',
         name: 'Sherlock',
-        code: 'SHER'
+        code: 'SHER',
+        coingeckoId: 'sher-token',
+        decimals: 6,
+        address: '0x1234567890123456789012345678901234567890'
       },
       amount: 100,
       values: {
         USD: {
           value: 500,
           formated: '$500',
-          price: 5
+          id: 'usd',
+          code: 'USD',
+          symbol: '$',
+          price: 5,
+          formatedPrice: '$5'
         }
       }
     }
@@ -121,7 +138,11 @@ const MOCK_DATA = {
     USD: {
       value: 4500,
       formated: '$4,500',
-      price: 1
+      id: 'usd',
+      code: 'USD',
+      symbol: '$',
+      price: 1,
+      formatedPrice: '$1'
     }
   },
   defaultCurrency: {
@@ -139,7 +160,7 @@ const MOCK_DATA = {
       safeAddress: '0x1234567890123456789012345678901234567890' as Address
     }
   }
-} as const
+}
 
 const AddressToolTipStub = defineComponent({
   template: '<div data-test="address-tooltip"></div>'
@@ -189,7 +210,7 @@ describe('SafeBalanceSection', () => {
       data: mockSafeInfo
     })
 
-    mockUseAccount.address.value = MOCK_DATA.safeInfo.owners[0]
+    mockUseAccount.address.value = MOCK_DATA.safeInfo.owners[0]!
 
     mockUseChainId.mockReturnValue(ref(137))
     mockUseTeamStore.mockReturnValue({
@@ -201,7 +222,7 @@ describe('SafeBalanceSection', () => {
       currency: mockCurrency
     })
 
-    mockUserStore.address = MOCK_DATA.safeInfo.owners[0]
+    mockUserStore.address = MOCK_DATA.safeInfo.owners[0]!
 
     vi.mocked(useStorage).mockReturnValue(mockCurrency as never)
 

@@ -1,4 +1,10 @@
-import type { SafeSignature, SafeTransferOptions, SafeTransaction } from './safe'
+import type { SafeTransferOptions, SafeTransaction } from './safe'
+import type Safe from '@safe-global/protocol-kit'
+
+export interface SafeDeploymentParams {
+  owners: string[]
+  threshold: number
+}
 
 /**
  * Request body for proposing a transaction
@@ -91,10 +97,6 @@ export interface UpdateSafeOwnersParams {
     newThreshold?: number
     /** Whether to propose the transaction */
     shouldPropose?: boolean
-    /** Safe transaction hash */
-    safeTxHash?: string
-    /** Signature data */
-    signature?: SafeSignature | string
   }
 }
 
@@ -102,6 +104,30 @@ export interface UpdateSafeOwnersParams {
  * Combined parameters for useTransferFromSafeMutation
  */
 export interface TransferFromSafeParams {
-  safeAddress: string
-  options: SafeTransferOptions
+  pathParams: {
+    /** Safe address */
+    safeAddress: string
+  }
+  queryParams?: Record<string, never>
+  body: {
+    /** Transfer options */
+    options: SafeTransferOptions
+  }
+}
+
+export type SafeSdkInstance = Awaited<ReturnType<typeof Safe.init>>
+
+export interface SafeTransactionInput {
+  to: string
+  value: string
+  data: string
+  operation: number
+}
+
+export interface BuildOwnerManagementTransactionsParams {
+  safeSdk: SafeSdkInstance
+  ownersToAdd: string[]
+  ownersToRemove: string[]
+  newThreshold?: number
+  currentThreshold: number
 }

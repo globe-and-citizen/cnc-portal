@@ -81,12 +81,12 @@ describe('TransferModal', () => {
   }
 
   const createQueryClient = () => {
-    const invalidateQueries = vi.fn()
+    const invalidateQueries = vi.fn(async () => undefined)
     useQueryClientFn.mockReturnValue({
       invalidateQueries,
-      getQueryData: vi.fn(),
-      setQueryData: vi.fn(),
-      removeQueries: vi.fn()
+      getQueryData: vi.fn(() => undefined),
+      setQueryData: vi.fn(() => undefined),
+      removeQueries: vi.fn(() => undefined)
     })
     return { invalidateQueries }
   }

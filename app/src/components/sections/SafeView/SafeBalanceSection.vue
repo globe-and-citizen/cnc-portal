@@ -125,7 +125,6 @@ import { useGetSafeInfoQuery } from '@/queries/safe.queries'
 import TransferForm, { type TransferModel } from '@/components/forms/TransferForm.vue'
 import type { TokenOption } from '@/types'
 import { useTransferFromSafeMutation } from '@/queries/safe.mutations'
-import { validateSafeTransfer } from '@/utils/safe'
 import DepositSafeForm from '@/components/forms/DepositSafeForm.vue'
 
 const chainId = useChainId()
@@ -230,14 +229,11 @@ const handleTransfer = (transferData: TransferModel) => {
     tokenId: transferData.token.tokenId
   }
 
-  const validation = validateSafeTransfer(options)
-  if (!validation.isValid) {
-    toast.add({ title: 'Error', description: validation.error, color: 'error' })
-    return
-  }
-
   transferFromSafe(
-    { safeAddress, options },
+    {
+      pathParams: { safeAddress },
+      body: { options }
+    },
     {
       onSuccess: () => {
         toast.add({
