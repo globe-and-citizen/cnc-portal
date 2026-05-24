@@ -10,6 +10,17 @@ interface AddSignerModalInstance extends ComponentPublicInstance {
   errorMessage: string
   newSigners: User[]
   validNewSigners: User[]
+  formState: {
+    newSigners: Array<{ address: string }>
+    newThreshold: number
+    shouldPropose: boolean
+  }
+  formSchema: {
+    safeParse: (input: unknown) => {
+      success: boolean
+      error?: { issues: Array<{ message: string }> }
+    }
+  }
   handleAddSigners(): Promise<void>
 }
 
@@ -101,6 +112,36 @@ describe('AddSignerModal', () => {
   })
 
   describe('Validation', () => {
+    it('should reject invalid signer addresses in form schema', async () => {
+      wrapper = createWrapper()
+
+      const result = wrapper.vm.formSchema.safeParse({
+        ...wrapper.vm.formState,
+        newSigners: [{ address: 'invalid-address' }]
+      })
+
+      expect(result.success).toBe(false)
+      expect(result.error?.issues.some((issue) => issue.message === 'Invalid signer address')).toBe(
+        true
+      )
+    })
+
+    it('should reject schema payloads without any valid new signer', async () => {
+      wrapper = createWrapper()
+
+      const result = wrapper.vm.formSchema.safeParse({
+        ...wrapper.vm.formState,
+        newSigners: [{ address: MOCK_CURRENT_OWNERS[0]! }]
+      })
+
+      expect(result.success).toBe(false)
+      expect(
+        result.error?.issues.some(
+          (issue) => issue.message === 'Please add at least one valid signer'
+        )
+      ).toBe(true)
+    })
+
     it('should filter out signers with invalid addresses', async () => {
       wrapper = createWrapper()
       wrapper.vm.newSigners = [

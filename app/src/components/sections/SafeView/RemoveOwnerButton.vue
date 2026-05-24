@@ -21,6 +21,7 @@ import { type Address } from 'viem'
 
 import { useUpdateSafeOwnersMutation } from '@/queries/safe.mutations'
 import { useUserDataStore } from '@/stores'
+import { log } from '@/utils'
 
 interface Props {
   ownerAddress: string
@@ -79,7 +80,7 @@ const handleRemove = async () => {
         toast.add({ title: 'Success', description: message, color: 'success' })
       },
       onError: (error) => {
-        console.error('Failed to remove owner:', error)
+        log.error('Failed to remove owner:', error)
         const message =
           error instanceof Error && error.message.includes('User rejected')
             ? 'Transaction approval rejected'

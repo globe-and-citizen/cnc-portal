@@ -3,19 +3,14 @@ import { defineComponent, nextTick } from 'vue'
 import { mount } from '@vue/test-utils'
 import RemoveOwnerButton from '../RemoveOwnerButton.vue'
 
-const {
-  mockChainId,
-  mockIsPending,
-  mockUserStore,
-  mockUpdateOwnersMutate,
-  mockUseUpdateSafeOwnersMutation
-} = vi.hoisted(() => ({
-  mockChainId: { value: 137 },
-  mockIsPending: { value: false },
-  mockUserStore: { address: '0x1111111111111111111111111111111111111111' },
-  mockUpdateOwnersMutate: vi.fn(),
-  mockUseUpdateSafeOwnersMutation: vi.fn()
-}))
+const { mockChainId, mockIsPending, mockLogError, mockUserStore, mockUpdateOwnersMutate } =
+  vi.hoisted(() => ({
+    mockChainId: { value: 137 },
+    mockIsPending: { value: false },
+    mockLogError: vi.fn(),
+    mockUserStore: { address: '0x1111111111111111111111111111111111111111' },
+    mockUpdateOwnersMutate: vi.fn()
+  }))
 
 vi.mock('@wagmi/vue', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@wagmi/vue')>()
@@ -34,6 +29,12 @@ vi.mock('@/queries/safe.mutations', () => ({
 
 vi.mock('@/stores', () => ({
   useUserDataStore: () => mockUserStore
+}))
+
+vi.mock('@/utils', () => ({
+  log: {
+    error: mockLogError
+  }
 }))
 
 vi.mock('@iconify/vue', () => ({
@@ -75,11 +76,6 @@ describe('RemoveOwnerButton', () => {
     mockIsPending.value = false
     mockUserStore.address = '0x1111111111111111111111111111111111111111'
     mockUpdateOwnersMutate.mockImplementation(() => undefined)
-    mockUseUpdateSafeOwnersMutation.mockReturnValue({
-      mutate: mockUpdateOwnersMutate,
-      isPending: mockIsPending
-    })
-    vi.spyOn(console, 'error').mockImplementation(() => undefined)
   })
 
   it('calls owner update mutation with expected payload', async () => {
@@ -120,6 +116,18 @@ describe('RemoveOwnerButton', () => {
     )
   })
 
+  it('shows direct success toast when threshold is below proposal requirement', async () => {
+    const wrapper = mountComponent({ threshold: 1 })
+    await wrapper.find('[data-test="remove-owner-button"]').trigger('click')
+    await nextTick()
+
+    const callbacks = mockUpdateOwnersMutate.mock.calls[0]?.[1]
+    callbacks?.onSuccess?.()
+    await nextTick()
+
+    expect(mockLogError).not.toHaveBeenCalled()
+  })
+
   it('shows loading state from mutation pending ref', async () => {
     mockIsPending.value = true
     const wrapper = mountComponent()
@@ -152,7 +160,7 @@ describe('RemoveOwnerButton', () => {
     callbacks?.onError?.(new Error('RPC failed'))
     await nextTick()
 
-    expect(console.error).toHaveBeenCalled()
+    expect(mockLogError).toHaveBeenCalledWith('Failed to remove owner:', expect.any(Error))
     expect(wrapper.find('[data-test="remove-owner-button"]').attributes('data-loading')).toBe(
       'false'
     )

@@ -4,7 +4,7 @@ import { nextTick, ref, defineComponent } from 'vue'
 import { useStorage } from '@vueuse/core'
 import type { Address } from 'viem'
 import SafeBalanceSection from '../SafeBalanceSection.vue'
-import { mockUseContractBalance, mockUseAccount } from '@/tests/mocks'
+import { mockUseContractBalance } from '@/tests/mocks'
 import { mockUserStore } from '@/tests/mocks/store.mock'
 
 const {
@@ -197,7 +197,6 @@ describe('SafeBalanceSection', () => {
       data: mockSafeInfo
     })
 
-    mockUseAccount.address.value = MOCK_DATA.safeInfo.owners[0]!
     mockUserStore.address = MOCK_DATA.safeInfo.owners[0]!
 
     mockUseChainId.mockReturnValue(ref(137))
