@@ -4,7 +4,7 @@
     color="error"
     variant="outline"
     :disabled="isDisabled"
-    :loading="isRemoving"
+    :loading="isUpdating"
     @click="handleRemove"
     data-test="remove-owner-button"
     class="flex items-center gap-1"
@@ -14,12 +14,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { useAccount } from '@wagmi/vue'
+import { computed } from 'vue'
+import { useChainId } from '@wagmi/vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import { type Address } from 'viem'
 
-import { useSafeOwnerManagement } from '@/composables/safe'
+import { useUpdateSafeOwnersMutation } from '@/queries/safe.mutations'
+import { useUserDataStore } from '@/stores'
 import { log } from '@/utils'
 
 interface Props {
@@ -32,20 +33,18 @@ interface Props {
 
 const props = defineProps<Props>()
 
-const { address: connectedAddress } = useAccount()
-const { updateOwners, isUpdating } = useSafeOwnerManagement()
+const toast = useToast()
+const chainId = useChainId()
+const userDataStore = useUserDataStore()
+const { mutate: updateOwners, isPending: isUpdating } = useUpdateSafeOwnersMutation()
 
-const isRemoving = ref(false)
-
-// Computed properties
 const isCurrentUserAddress = computed(() => {
-  return connectedAddress.value?.toLowerCase() === props.ownerAddress.toLowerCase()
+  return userDataStore.address?.toLowerCase() === props.ownerAddress.toLowerCase()
 })
 
 const isDisabled = computed(() => {
   return (
     props.totalOwners <= 1 ||
-    isRemoving.value ||
     isUpdating.value ||
     !props.isConnectedUserOwner ||
     isCurrentUserAddress.value ||
@@ -56,34 +55,39 @@ const isDisabled = computed(() => {
 // Methods
 const handleRemove = async () => {
   if (props.totalOwners <= 1) {
-    log.warn('Cannot remove the last owner', { ownerAddress: props.ownerAddress })
     return
   }
 
   if (isCurrentUserAddress.value) {
-    log.warn('Cannot remove self as owner', { ownerAddress: props.ownerAddress })
     return
   }
 
-  isRemoving.value = true
-
-  try {
-    log.info('Attempting to remove owner:', { ownerAddress: props.ownerAddress })
-    const txHash = await updateOwners(props.safeAddress, {
-      ownersToRemove: [props.ownerAddress],
-      shouldPropose: props.threshold >= 2
-    })
-    if (txHash) {
-      log.info('Owner removal transaction submitted:', {
-        txHash,
-        ownerAddress: props.ownerAddress
-      })
+  updateOwners(
+    {
+      pathParams: { safeAddress: props.safeAddress },
+      queryParams: { chainId: chainId.value },
+      body: {
+        ownersToRemove: [props.ownerAddress],
+        shouldPropose: props.threshold >= 2
+      }
+    },
+    {
+      onSuccess: () => {
+        const message =
+          props.threshold >= 2
+            ? 'Owner removal proposal submitted successfully'
+            : 'Owner removed successfully'
+        toast.add({ title: 'Success', description: message, color: 'success' })
+      },
+      onError: (error) => {
+        log.error('Failed to remove owner:', error)
+        const message =
+          error instanceof Error && error.message.includes('User rejected')
+            ? 'Transaction approval rejected'
+            : 'Failed to remove owner'
+        toast.add({ title: 'Error', description: message, color: 'error' })
+      }
     }
-  } catch (error) {
-    const err = error instanceof Error ? error : new Error('Failed to remove owner')
-    log.error('Failed to remove owner:', err, { ownerAddress: props.ownerAddress })
-  } finally {
-    isRemoving.value = false
-  }
+  )
 }
 </script>

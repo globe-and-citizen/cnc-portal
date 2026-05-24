@@ -8,6 +8,7 @@ export * from './wageUtil'
 export * from './contractManagementUtil'
 export * from './contractDeploymentUtil'
 export * from './web3Util'
+export * from './walletUtil'
 export * from './safe'
 export * from './fileUtil'
 // SafeDepositRouter utilities

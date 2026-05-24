@@ -106,46 +106,10 @@ export interface SafeConfirmation {
   signatureType: SignatureType | string
 }
 
-export interface SafeSignature {
-  data: string
-  signer: string
-}
-
-export interface SafeDeploymentParams {
-  chainId: number
-  owners: string[]
-  threshold: number
-}
-
 export interface SafeChainConfig {
   chain: string
   url: string
   nativeSymbol: string
-}
-
-export interface SafeAppUrls {
-  home: string
-  settings: string
-}
-
-export interface SafeBalanceItem {
-  tokenAddress: string | null
-  token: {
-    name: string
-    symbol: string
-    decimals: number
-    logoUri?: string
-  } | null
-  balance: string
-  fiatBalance: string
-  fiatConversion: string
-}
-
-export interface SafeDetails {
-  owners: string[]
-  threshold: number
-  nonce: number
-  version: string
 }
 
 export const TX_SERVICE_BY_CHAIN: Record<number, SafeChainConfig> = {
@@ -180,17 +144,6 @@ export const CHAIN_NAMES: Record<number, string> = {
   11155111: 'sepolia',
   80002: 'amoy',
   42161: 'arbitrum'
-}
-
-export type SafeTransactionConfirmation = SafeConfirmation
-
-export type SafeTransactionConfirmations = SafeTransactionConfirmation[]
-
-export interface SafeWallet {
-  address: string
-  name: string
-  balance: string
-  userName?: string
 }
 
 //new types

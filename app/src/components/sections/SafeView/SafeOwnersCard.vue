@@ -95,7 +95,6 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { useAccount } from '@wagmi/vue'
 
 import { Icon as IconifyIcon } from '@iconify/vue'
 
@@ -109,7 +108,7 @@ import { type Address } from 'viem'
 // Composables and utilities
 
 import { useGetSafeInfoQuery } from '@/queries/safe.queries'
-import { useTeamStore } from '@/stores'
+import { useTeamStore, useUserDataStore } from '@/stores'
 
 interface Props {
   address?: string
@@ -119,8 +118,8 @@ const props = withDefaults(defineProps<Props>(), {
   address: ''
 })
 
-const { address: connectedAddress } = useAccount()
 const teamStore = useTeamStore()
+const userDataStore = useUserDataStore()
 
 const {
   data: safeInfo,
@@ -133,15 +132,15 @@ const {
 
 // Computed properties
 const isConnectedUserOwner = computed(() => {
-  if (!connectedAddress.value || !safeInfo.value?.owners?.length) return false
+  if (!userDataStore.address || !safeInfo.value?.owners?.length) return false
 
   return safeInfo.value.owners.some(
-    (owner) => owner.toLowerCase() === connectedAddress.value!.toLowerCase()
+    (owner) => owner.toLowerCase() === userDataStore.address.toLowerCase()
   )
 })
 
 const isCurrentUserAddress = (ownerAddress: string): boolean => {
-  return connectedAddress.value?.toLowerCase() === ownerAddress.toLowerCase()
+  return userDataStore.address?.toLowerCase() === ownerAddress.toLowerCase()
 }
 
 const getOwnerDisplayName = (ownerAddress: string): string => {

@@ -110,9 +110,10 @@
 import { computed, reactive, ref, watch } from 'vue'
 import { z } from 'zod'
 import { type Address } from 'viem'
+import { useChainId } from '@wagmi/vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
 
-import { useSafeOwnerManagement } from '@/composables/safe'
+import { useUpdateSafeOwnersMutation } from '@/queries/safe.mutations'
 
 const props = defineProps<{
   open: boolean
@@ -127,8 +128,9 @@ const emit = defineEmits<{
 }>()
 
 const toast = useToast()
+const chainId = useChainId()
 
-const { isUpdating, updateOwners } = useSafeOwnerManagement()
+const { mutate: updateOwners, isPending: isLoading } = useUpdateSafeOwnersMutation()
 const errorMessage = ref('')
 
 // Computed values
@@ -172,7 +174,6 @@ const isOpen = computed({
   set: (value) => emit('update:open', value)
 })
 
-const isLoading = computed(() => isUpdating.value)
 const hasChanges = computed(() => formState.threshold !== props.currentThreshold)
 
 // Methods
@@ -183,27 +184,37 @@ const handleUpdateThreshold = async () => {
   }
 
   errorMessage.value = ''
-  try {
-    const txHash = await updateOwners(props.safeAddress, {
-      newThreshold: formState.threshold,
-      shouldPropose: props.currentThreshold >= 2
-    })
-
-    if (txHash) {
-      toast.add({
-        title:
-          props.currentThreshold >= 2
-            ? 'Threshold update proposal submitted successfully'
-            : 'Threshold updated successfully',
-        color: 'success'
-      })
-      emit('threshold-updated')
-      handleClose()
+  updateOwners(
+    {
+      pathParams: {
+        safeAddress: props.safeAddress
+      },
+      queryParams: {
+        chainId: chainId.value
+      },
+      body: {
+        newThreshold: formState.threshold,
+        shouldPropose: props.currentThreshold >= 2
+      }
+    },
+    {
+      onSuccess: () => {
+        toast.add({
+          title:
+            props.currentThreshold >= 2
+              ? 'Threshold update proposal submitted successfully'
+              : 'Threshold updated successfully',
+          color: 'success'
+        })
+        emit('threshold-updated')
+        handleClose()
+      },
+      onError: (error) => {
+        console.error('Failed to update threshold:', error)
+        errorMessage.value = 'Failed to update threshold'
+      }
     }
-  } catch (error) {
-    console.error('Failed to update threshold:', error)
-    errorMessage.value = 'Failed to update threshold'
-  }
+  )
 }
 
 const handleClose = () => {
