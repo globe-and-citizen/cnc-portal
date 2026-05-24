@@ -140,7 +140,9 @@ const handleDeploySafe = () => {
         const message = err instanceof Error ? err.message : 'Failed to deploy Safe'
         toast.add({
           title: 'Error',
-          description: message.includes('User rejected') ? 'Transaction approval rejected' : message,
+          description: message.includes('User rejected')
+            ? 'Transaction approval rejected'
+            : message,
           color: 'error'
         })
       }

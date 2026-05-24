@@ -167,7 +167,7 @@ const TransferFormStub = defineComponent({
 describe('SafeBalanceSection', () => {
   let wrapper: VueWrapper
   const mockCurrency = ref(MOCK_DATA.defaultCurrency)
-  const mockSafeInfo = ref(MOCK_DATA.safeInfo)
+  const mockSafeInfo = ref<typeof MOCK_DATA.safeInfo | null>(MOCK_DATA.safeInfo)
 
   const createWrapper = (props = {}) =>
     mount(SafeBalanceSection, {

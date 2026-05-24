@@ -180,7 +180,7 @@ interface SafeBalanceSectionInstance {
 describe('SafeBalanceSection', () => {
   let wrapper: VueWrapper
   const mockCurrency = ref(MOCK_DATA.defaultCurrency)
-  const mockSafeInfo = ref(MOCK_DATA.safeInfo)
+  const mockSafeInfo = ref<typeof MOCK_DATA.safeInfo | null>(MOCK_DATA.safeInfo)
 
   const createWrapper = (props = {}) =>
     mount(SafeBalanceSection, {
@@ -258,24 +258,18 @@ describe('SafeBalanceSection', () => {
 
   describe('Tokens Computation', () => {
     it('should handle missing USD price gracefully', () => {
-      mockUseContractBalance.balances.value = [
-        {
-          token: {
-            symbol: 'TEST',
-            id: 'test',
-            name: 'Test Token',
-            code: 'TEST'
-          },
-          amount: 100,
-          values: {
-            USD: undefined
-          }
-        }
-      ] as typeof mockUseContractBalance.balances.value
+      const sourceBalance = mockUseContractBalance.balances.value[0]!
+      const balanceWithoutUsd = {
+        ...sourceBalance,
+        token: { ...sourceBalance.token },
+        values: { ...sourceBalance.values }
+      }
+      delete (balanceWithoutUsd.values as Record<string, unknown>).USD
+      mockUseContractBalance.balances.value = [balanceWithoutUsd]
       wrapper = createWrapper()
 
-      const tokens = (wrapper.vm as SafeBalanceSectionInstance).tokens
-      expect(tokens[0].price).toBe(0)
+      const tokens = (wrapper.vm as unknown as SafeBalanceSectionInstance).tokens
+      expect(tokens[0]?.price).toBe(0)
     })
   })
 

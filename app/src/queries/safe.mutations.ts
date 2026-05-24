@@ -1,22 +1,31 @@
 import { useMutation, useQueryClient } from '@tanstack/vue-query'
-import { useChainId } from '@wagmi/vue'
+import { useChainId, useConnection } from '@wagmi/vue'
 import { isAddress, type Address } from 'viem'
-import { useUserDataStore } from '@/stores'
-import type { SafeDeploymentParams } from '@/types/safe'
+import { SUPPORTED_TOKENS } from '@/constant'
 import { SAFE_VERSION, TX_SERVICE_BY_CHAIN, type ProposeTransactionParams } from '@/types/safe'
 import externalApiClient from '@/lib/external.axios.ts'
 import { safeKeys } from './safe.queries'
 import type {
+  SafeDeploymentParams,
   ProposeTransactionBody,
   ExecuteTransactionParams,
   ApproveTransactionParams,
   UpdateSafeOwnersParams,
   TransferFromSafeParams
 } from '@/types/safe.mutation'
+import { deploySafeSchema, transferFromSafeSchema } from '@/types/safe.schemas'
 import { useSafeSDK } from '@/composables/safe/useSafeSdk'
 import { getTokenAddress } from '@/utils'
-import { buildTokenTransferData, proposeOrExecuteSafeTransaction } from '@/utils/safe.mutations'
+import {
+  buildOwnerManagementTransactions,
+  buildTokenTransferData,
+  executeSafeTransaction,
+  extractTransactionHash,
+  proposeSafeTransaction,
+  waitForTransaction
+} from '@/utils/safe.mutations'
 import { randomSaltNonce, transformToSafeMultisigResponse } from '@/utils/safe'
+import { getConnectedSigner } from '@/utils/walletUtil'
 
 // ============================================================================
 // Deploy Safe - Mutation
@@ -32,11 +41,12 @@ import { randomSaltNonce, transformToSafeMultisigResponse } from '@/utils/safe'
  */
 export function useDeploySafeMutation() {
   const queryClient = useQueryClient()
-  const { deploySafe } = useSafeSDK()
+  const { createPredictedSafeSdk } = useSafeSDK()
 
   return useMutation<string, Error, SafeDeploymentParams>({
-    mutationFn: async ({ owners, threshold }: SafeDeploymentParams) => {
-      const safeSdk = await deploySafe(
+    mutationFn: async (payload: SafeDeploymentParams) => {
+      const { owners, threshold } = deploySafeSchema.parse(payload)
+      const safeSdk = await createPredictedSafeSdk(
         { owners, threshold },
         {
           saltNonce: randomSaltNonce(),
@@ -201,20 +211,8 @@ export function useExecuteTransactionMutation() {
       // Transform and execute transaction
       const sdkTransactionData = transformToSafeMultisigResponse(transactionData)
       const txResponse = await safeSdk.executeTransaction(sdkTransactionData)
-
-      // Extract transaction hash
-      const txHash =
-        (txResponse.transactionResponse as { hash?: string } | undefined)?.hash || txResponse.hash
-
-      // Wait for confirmation if available
-      const waitFn = (
-        txResponse.transactionResponse as { wait?: () => Promise<unknown> } | undefined
-      )?.wait
-
-      if (typeof waitFn === 'function') {
-        await waitFn()
-      }
-
+      const txHash = extractTransactionHash(txResponse)
+      await waitForTransaction(txResponse)
       return txHash
     },
     onSuccess: (txHash, variables) => {
@@ -240,7 +238,7 @@ export function useExecuteTransactionMutation() {
  */
 export function useUpdateSafeOwnersMutation() {
   const chainId = useChainId()
-  const userStore = useUserDataStore()
+  const connection = useConnection()
   const queryClient = useQueryClient()
   const { loadSafe } = useSafeSDK()
 
@@ -265,65 +263,31 @@ export function useUpdateSafeOwnersMutation() {
       const safeSdk = await loadSafe(safeAddress)
       const currentThreshold = await safeSdk.getThreshold()
 
-      // Build the batch transaction data
-      const transactionData: Array<{
-        to: string
-        value: string
-        data: string
-        operation: number
-      }> = []
-
-      // Add owners
-      for (const owner of ownersToAdd) {
-        const safeTx = await safeSdk.createAddOwnerTx({
-          ownerAddress: owner as Address,
-          threshold: newThreshold
-        })
-        transactionData.push({
-          to: safeTx.data.to,
-          value: safeTx.data.value,
-          data: safeTx.data.data,
-          operation: safeTx.data.operation || 0
-        })
-      }
-
-      // Remove owners
-      for (const owner of ownersToRemove) {
-        const safeTx = await safeSdk.createRemoveOwnerTx({
-          ownerAddress: owner as Address,
-          threshold: newThreshold || currentThreshold
-        })
-        transactionData.push({
-          to: safeTx.data.to,
-          value: safeTx.data.value,
-          data: safeTx.data.data,
-          operation: safeTx.data.operation || 0
-        })
-      }
-
-      // Update threshold when no owner operations provided
-      if (ownersToAdd.length === 0 && ownersToRemove.length === 0 && newThreshold !== undefined) {
-        const safeTx = await safeSdk.createChangeThresholdTx(newThreshold)
-        transactionData.push({
-          to: safeTx.data.to,
-          value: safeTx.data.value,
-          data: safeTx.data.data,
-          operation: safeTx.data.operation || 0
-        })
-      }
+      const transactionData = await buildOwnerManagementTransactions({
+        safeSdk,
+        ownersToAdd,
+        ownersToRemove,
+        newThreshold,
+        currentThreshold
+      })
 
       if (transactionData.length === 0) {
         throw new Error('No owner management operations specified')
       }
 
-      // Use proposeOrExecuteSafeTransaction utility
-      return proposeOrExecuteSafeTransaction({
+      if (shouldPropose) {
+        return proposeSafeTransaction({
+          safeSdk,
+          transactionData,
+          chainId: chainId.value,
+          safeAddress,
+          signer: getConnectedSigner(connection)
+        })
+      }
+
+      return executeSafeTransaction({
         safeSdk,
-        transactionData,
-        shouldPropose,
-        chainId: chainId.value,
-        safeAddress,
-        signer: userStore.address!
+        transactionData
       })
     },
     onSuccess: (txHash, variables) => {
@@ -349,15 +313,18 @@ export function useUpdateSafeOwnersMutation() {
  */
 export function useTransferFromSafeMutation() {
   const chainId = useChainId()
-  const userStore = useUserDataStore()
+  const connection = useConnection()
   const queryClient = useQueryClient()
   const { loadSafe } = useSafeSDK()
 
   return useMutation<string, Error, TransferFromSafeParams>({
-    mutationFn: async ({ safeAddress, options }) => {
-      const { to, amount, tokenId = 'native' } = options
+    mutationFn: async (payload) => {
+      const parsedPayload = transferFromSafeSchema.parse(payload)
+      const { safeAddress: parsedSafeAddress } = parsedPayload.pathParams
+      const { options: parsedOptions } = parsedPayload.body
+      const { to, amount, tokenId = 'native' } = parsedOptions
       const tokenAddress = getTokenAddress(tokenId) ?? null
-      const safeSdk = await loadSafe(safeAddress)
+      const safeSdk = await loadSafe(parsedSafeAddress)
       const threshold = await safeSdk.getThreshold()
 
       // Use existing builder utility
@@ -368,23 +335,42 @@ export function useTransferFromSafeMutation() {
         tokenId
       })
 
-      // Use existing propose-or-execute helper
-      return proposeOrExecuteSafeTransaction({
+      if (threshold >= 2) {
+        return proposeSafeTransaction({
+          safeSdk,
+          transactionData: [transactionData],
+          chainId: chainId.value,
+          safeAddress: parsedSafeAddress,
+          signer: getConnectedSigner(connection)
+        })
+      }
+
+      return executeSafeTransaction({
         safeSdk,
-        transactionData: [transactionData],
-        shouldPropose: threshold >= 2,
-        chainId: chainId.value,
-        safeAddress,
-        signer: userStore.address!
+        transactionData: [transactionData]
       })
     },
-    onSuccess: (_, variables) => {
+    onSuccess: async (_, variables) => {
+      const safeAddress = variables.pathParams.safeAddress as Address
+      const tokenAddresses = SUPPORTED_TOKENS.map((token) => getTokenAddress(token.id)).filter(
+        (tokenAddress): tokenAddress is Address => Boolean(tokenAddress)
+      )
+
       // Pending transactions (needed for proposals when threshold >= 2)
-      queryClient.invalidateQueries({ queryKey: safeKeys.transactions(variables.safeAddress) })
-      // Safe balance (always changes after transfer)
-      queryClient.invalidateQueries({
-        queryKey: ['balance', { address: variables.safeAddress, chainId: chainId.value }]
+      await queryClient.invalidateQueries({
+        queryKey: safeKeys.transactions(variables.pathParams.safeAddress)
       })
+      // Safe balance (always changes after transfer)
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: safeKeys.balance(variables.pathParams.safeAddress, chainId.value)
+        }),
+        ...tokenAddresses.map((tokenAddress) =>
+          queryClient.invalidateQueries({
+            queryKey: safeKeys.tokenBalance(tokenAddress, safeAddress, chainId.value)
+          })
+        )
+      ])
     }
   })
 }
