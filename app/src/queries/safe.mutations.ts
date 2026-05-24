@@ -1,7 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/vue-query'
 import { useChainId, useConnection } from '@wagmi/vue'
 import { isAddress, type Address } from 'viem'
-import { SUPPORTED_TOKENS } from '@/constant'
 import { SAFE_VERSION, TX_SERVICE_BY_CHAIN, type ProposeTransactionParams } from '@/types/safe'
 import externalApiClient from '@/lib/external.axios.ts'
 import { safeKeys } from './safe.queries'
@@ -352,25 +351,23 @@ export function useTransferFromSafeMutation() {
     },
     onSuccess: async (_, variables) => {
       const safeAddress = variables.pathParams.safeAddress as Address
-      const tokenAddresses = SUPPORTED_TOKENS.map((token) => getTokenAddress(token.id)).filter(
-        (tokenAddress): tokenAddress is Address => Boolean(tokenAddress)
-      )
+      const tokenId = variables.body.options.tokenId ?? 'native'
+      const tokenAddress = getTokenAddress(tokenId)
 
       // Pending transactions (needed for proposals when threshold >= 2)
       await queryClient.invalidateQueries({
         queryKey: safeKeys.transactions(variables.pathParams.safeAddress)
       })
       // Safe balance (always changes after transfer)
-      await Promise.all([
-        queryClient.invalidateQueries({
-          queryKey: safeKeys.balance(variables.pathParams.safeAddress, chainId.value)
-        }),
-        ...tokenAddresses.map((tokenAddress) =>
-          queryClient.invalidateQueries({
-            queryKey: safeKeys.tokenBalance(tokenAddress, safeAddress, chainId.value)
-          })
-        )
-      ])
+      await queryClient.invalidateQueries({
+        queryKey: safeKeys.balance(variables.pathParams.safeAddress, chainId.value)
+      })
+
+      if (tokenAddress) {
+        await queryClient.invalidateQueries({
+          queryKey: safeKeys.tokenBalance(tokenAddress, safeAddress, chainId.value)
+        })
+      }
     }
   })
 }
