@@ -30,12 +30,12 @@ const defaultProps = {
 }
 
 const createQueryClient = () => {
-  const invalidateQueries = vi.fn(async () => undefined)
+  const invalidateQueries = vi.fn()
   useQueryClientFn.mockReturnValue({
     invalidateQueries,
-    getQueryData: vi.fn(() => undefined),
-    setQueryData: vi.fn(() => undefined),
-    removeQueries: vi.fn(() => undefined)
+    getQueryData: vi.fn(),
+    setQueryData: vi.fn(),
+    removeQueries: vi.fn()
   })
   return { invalidateQueries }
 }
