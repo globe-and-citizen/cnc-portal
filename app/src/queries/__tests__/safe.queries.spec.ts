@@ -17,7 +17,10 @@ describe('safeKeys', () => {
   })
 
   it('builds native balance and token balance keys', () => {
-    expect(safeKeys.balance('0xSafe', 137)).toEqual(['balance', { address: '0xSafe', chainId: 137 }])
+    expect(safeKeys.balance('0xSafe', 137)).toEqual([
+      'balance',
+      { address: '0xSafe', chainId: 137 }
+    ])
 
     expect(safeKeys.tokenBalance('0xToken', '0xSafe', 137)).toEqual([
       'readContract',
