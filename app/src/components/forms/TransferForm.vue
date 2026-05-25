@@ -109,6 +109,7 @@ import SelectMemberContractsInput from '../utils/SelectMemberContractsInput.vue'
 import BodAlert from '@/components/BodAlert.vue'
 import TokenAmount from './TokenAmount.vue'
 import { formatAmountWithPrecision } from '@/utils/currencyUtil'
+import { isValidPositiveTokenAmount } from '@/utils/constantUtil'
 import type { TokenOption } from '@/types'
 import type { TokenId } from '@/constant'
 
@@ -197,7 +198,10 @@ const validationSchema = computed(() =>
       .string()
       .min(1, 'Amount is required')
       .refine((value) => /^\d*\.?\d+$/.test(value), 'Enter a valid amount')
-      .refine((value) => parseFloat(value) > 0, 'Amount must be greater than 0')
+      .refine(
+        (value) => isValidPositiveTokenAmount(value, selectedTokenId.value),
+        'Amount must be greater than 0'
+      )
       .refine((value) => {
         const amount = parseFloat(value)
         const bps = props.feeBps ?? 0

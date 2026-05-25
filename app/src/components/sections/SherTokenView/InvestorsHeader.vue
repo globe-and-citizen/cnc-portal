@@ -3,7 +3,7 @@
     <OverviewCard
       :title="`${shareholdersCount} Investors`"
       subtitle="Investors"
-      color="info"
+      variant="info"
       :card-icon="personIcon"
       :loading="!teamStore.currentTeam"
     >
@@ -15,7 +15,7 @@
           : '...'
       "
       subtitle="Your Balance"
-      color="success"
+      variant="success"
       :card-icon="bagIcon"
       :loading="!teamStore.currentTeam"
     >
@@ -27,7 +27,7 @@
           : '...'
       "
       subtitle="Total Supply"
-      color="warning"
+      variant="warning"
       :card-icon="cartIcon"
       :loading="!teamStore.currentTeam"
     >

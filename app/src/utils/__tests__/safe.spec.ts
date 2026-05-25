@@ -2,12 +2,12 @@ import { describe, it, expect, vi, afterEach } from 'vitest'
 import { zeroAddress } from 'viem'
 import { NETWORK, USDC_ADDRESS } from '@/constant'
 import {
-  getInjectedProvider,
   randomSaltNonce,
   getSafeHomeUrl,
   getSafeSettingsUrl,
   openSafeAppUrl,
   formatSafeTransactionValue,
+  getExecutedErc20TransferTokenAddress,
   getSafeTransactionMethod,
   formatSafeTransferAmount,
   formatSafeTransferType,
@@ -24,36 +24,6 @@ describe('safe utils', () => {
       value: originalWindow,
       writable: true,
       configurable: true
-    })
-  })
-
-  describe('getInjectedProvider', () => {
-    it('returns provider when EIP-1193 request exists', () => {
-      const provider = { request: vi.fn() }
-      Object.defineProperty(globalThis, 'window', {
-        value: { ethereum: provider },
-        writable: true,
-        configurable: true
-      })
-      expect(getInjectedProvider()).toBe(provider)
-    })
-
-    it('throws for missing provider or invalid shape', () => {
-      Object.defineProperty(globalThis, 'window', {
-        value: {},
-        writable: true,
-        configurable: true
-      })
-      expect(() => getInjectedProvider()).toThrow('No injected Ethereum provider found')
-
-      Object.defineProperty(globalThis, 'window', {
-        value: { ethereum: { invalid: true } },
-        writable: true,
-        configurable: true
-      })
-      expect(() => getInjectedProvider()).toThrow(
-        'Injected provider does not implement EIP-1193 request method'
-      )
     })
   })
 
@@ -142,6 +112,36 @@ describe('safe utils', () => {
       expect(getSafeTransactionMethod({ value: '1', dataDecoded: undefined })).toBe('transfer')
       expect(getSafeTransactionMethod({ value: '0', dataDecoded: undefined })).toBe('unknown')
       expect(getSafeTransactionMethod({ value: 'bad', dataDecoded: undefined })).toBe('unknown')
+    })
+  })
+
+  describe('getExecutedErc20TransferTokenAddress', () => {
+    it('returns the token contract address for executed ERC20 transfers', () => {
+      expect(
+        getExecutedErc20TransferTokenAddress({
+          to: USDC_ADDRESS,
+          value: '0',
+          dataDecoded: { method: 'transfer', parameters: [] } as never
+        })
+      ).toBe(USDC_ADDRESS)
+    })
+
+    it('returns null for native transfers or invalid token targets', () => {
+      expect(
+        getExecutedErc20TransferTokenAddress({
+          to: '0xRecipient',
+          value: String(1_000_000_000_000_000_000n),
+          dataDecoded: undefined
+        } as never)
+      ).toBeNull()
+
+      expect(
+        getExecutedErc20TransferTokenAddress({
+          to: 'not-an-address',
+          value: '0',
+          dataDecoded: { method: 'transfer', parameters: [] } as never
+        } as never)
+      ).toBeNull()
     })
   })
 

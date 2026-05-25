@@ -6,6 +6,7 @@ import ui from '@nuxt/ui/vite'
 import vueDevTools from 'vite-plugin-vue-devtools'
 import { nodePolyfills } from 'vite-plugin-node-polyfills'
 import tailwindcss from '@tailwindcss/vite'
+import { sentryVitePlugin } from '@sentry/vite-plugin'
 
 export const ENV_LIST = ['VITE_APP_BACKEND_URL', 'VITE_APP_NETWORK_ALIAS']
 const SUPPORTED_NETWORKS = ['sepolia', 'hardhat', 'amoy', 'polygon']
@@ -42,6 +43,28 @@ export default defineConfig(({ mode }) => {
 
   if (!process.env.CI) {
     plugins.push(vueDevTools())
+  }
+
+  const isProd = mode === 'production'
+
+  // Upload source maps to Sentry in production and delete them from dist/
+  // so they are never served to end-users (hidden sourcemap).
+  if (isProd && process.env.SENTRY_AUTH_TOKEN) {
+    plugins.push(
+      sentryVitePlugin({
+        org: process.env.SENTRY_ORG,
+        project: process.env.SENTRY_PROJECT ?? 'cnc-portal-app',
+        authToken: process.env.SENTRY_AUTH_TOKEN,
+        sourcemaps: {
+          // Remove .map files from the dist folder after upload so they
+          // are never accessible to end-users.
+          deleteAfterUpload: true
+        },
+        release: {
+          name: process.env.VITE_APP_RELEASE ?? undefined
+        }
+      })
+    )
   }
 
   return {
@@ -92,7 +115,10 @@ export default defineConfig(({ mode }) => {
       port: 5173
     },
     build: {
-      sourcemap: true
+      // 'hidden' generates source maps but does NOT reference them in the
+      // output files, so browsers cannot load them. The Sentry plugin above
+      // uploads them to Sentry (prod only) and then deletes them from dist/.
+      sourcemap: isProd ? 'hidden' : true
     },
     css: {
       devSourcemap: true
