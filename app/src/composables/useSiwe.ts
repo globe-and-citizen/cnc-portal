@@ -47,26 +47,6 @@ export class SignatureRejectedError extends Error {
   }
 }
 
-const NONCE_RETRIES = 3
-const NONCE_RETRY_DELAY_MS = 3000
-
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
-
-/** Retry `fn` up to `retries` times, waiting `delayMs` between attempts. */
-async function withRetry<T>(fn: () => Promise<T>, retries: number, delayMs: number): Promise<T> {
-  let lastError: unknown
-  for (let attempt = 1; attempt <= retries; attempt++) {
-    try {
-      return await fn()
-    } catch (err) {
-      lastError = err
-      log.info(`retry attempt ${attempt}/${retries} failed`, err)
-      if (attempt < retries) await sleep(delayMs)
-    }
-  }
-  throw lastError
-}
-
 /**
  * Re-tag a `UserRejectedRequestError` from a specific wallet op with a
  * dedicated subclass so `onError` can show a context-aware toast. Any other
@@ -131,11 +111,10 @@ export function useSiweMutation() {
         throw new WalletConnectRejectedError(new Error('No active connection after switch'))
       }
 
-      const { nonce } = await withRetry(
-        () => getUserNonce(address),
-        NONCE_RETRIES,
-        NONCE_RETRY_DELAY_MS
-      )
+      // Retry on transient failures (serverless cold starts, brief upstream
+      // blips) is handled centrally by the axios response interceptor in
+      // `app/src/lib/axios.ts` — no need to wrap call sites.
+      const { nonce } = await getUserNonce(address)
 
       const message = new SiweMessage({
         address,

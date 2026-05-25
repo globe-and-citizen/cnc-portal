@@ -158,14 +158,14 @@ describe('useSiweMutation', () => {
     )
   })
 
-  it('toasts "Failed to fetch nonce" when the nonce request fails (after retries)', async () => {
+  it('toasts "Failed to fetch nonce" when the nonce request fails', async () => {
     vi.mocked(userApi.getUserNonce).mockRejectedValue(makeAxiosError('/api/user/nonce'))
     const { mutateAsync } = useSiweMutation()
     await expect(mutateAsync()).rejects.toBeInstanceOf(AxiosError)
     expect(mockToast.add).toHaveBeenCalledWith(
       expect.objectContaining({ title: 'Failed to fetch nonce' })
     )
-  }, 15000)
+  })
 
   it('throws SignatureRejectedError when user rejects the wallet signature prompt', async () => {
     vi.mocked(wagmiCore.signMessage).mockRejectedValueOnce(
