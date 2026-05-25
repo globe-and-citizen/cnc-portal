@@ -3,6 +3,14 @@ coverage:
     project:
       default:
         threshold: 0.5%  # allow up to 0.5% drop to absorb carryforward noise
+    patch:
+      default:
+        # The app-e2e-tests flag only exercises the happy-path login flow,
+        # so patch coverage from e2e alone drags the patch % down. We keep
+        # the patch check informational with a 50% floor until the e2e
+        # suite grows to cover more flows.
+        target: 50%
+        threshold: 10%
 
 github_checks:
   annotations: true
@@ -27,4 +35,5 @@ flags:
 ignore:
   - "app/*.ts"
   - "app/src/main.ts"
-  - "app/src/e2e/**"  # exercised by Playwright e2e, not by Vitest unit tests
+  - "app/src/e2e"  # mock connector is test infra, not product code
+  - "app/src/e2e/**"
