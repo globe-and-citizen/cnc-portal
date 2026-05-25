@@ -227,9 +227,6 @@ class Server {
       res.end((res as { sentry?: string }).sentry + '\n');
     });
 
-    this.app.get('/debug-sentry', function mainHandler() {
-      throw new Error('My first Sentry error!');
-    });
   }
 
   public listen() {
