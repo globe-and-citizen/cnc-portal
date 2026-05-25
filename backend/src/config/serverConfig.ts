@@ -25,6 +25,7 @@ import devRoutes from '../routes/devRoutes';
 import statsRoutes from '../routes/statsRoute';
 import healthRoutes from '../routes/healthRoutes';
 import featureRoutes from '../routes/featureRoutes';
+import sentryTunnelRoute from '../routes/sentryTunnelRoute';
 
 //#endregion routing modules
 
@@ -118,6 +119,7 @@ class Server {
       dev: '/api/dev/',
       health: '/api/health/',
       features: '/api/admin/features/',
+      sentryTunnel: '/api/sentry-tunnel',
     };
     const limiter = rateLimit({
       windowMs: 15 * 60 * 1000, // 15 minutes
@@ -186,6 +188,9 @@ class Server {
     // Public health check endpoint (no auth required)
     this.app.use(this.paths.health, healthRoutes);
 
+    // Sentry tunnel — public, proxies browser events to Sentry bypassing ad-blockers
+    this.app.use(this.paths.sentryTunnel, sentryTunnelRoute);
+
     this.app.use(this.paths.teams, authorizeUser, teamRoutes);
     this.app.use(this.paths.wage, authorizeUser, wageRoutes);
     this.app.use(this.paths.user, userRoutes);
@@ -225,10 +230,6 @@ class Server {
       console.error('Error:', err);
       res.statusCode = 500;
       res.end((res as { sentry?: string }).sentry + '\n');
-    });
-
-    this.app.get('/debug-sentry', function mainHandler() {
-      throw new Error('My first Sentry error!');
     });
   }
 

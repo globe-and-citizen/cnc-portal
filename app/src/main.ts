@@ -48,6 +48,10 @@ export function setupApp() {
   Sentry.init({
     app,
     dsn: import.meta.env.VITE_SENTRY_DSN,
+    // Route Sentry events through our own backend to bypass ad-blockers
+    // (Brave Shields, uBlock Origin, etc. block direct requests to ingest.sentry.io).
+    // Reference: https://docs.sentry.io/platforms/javascript/troubleshooting/#dealing-with-ad-blockers
+    tunnel: `${import.meta.env.VITE_APP_BACKEND_URL}/api/sentry-tunnel`,
     // Setting this option to true will send default PII data to Sentry.
     // For example, automatic IP address collection on events
     sendDefaultPii: true,
@@ -70,10 +74,19 @@ export function setupApp() {
     // Enable logs to be sent to Sentry
     enableLogs: true,
     tracesSampleRate: 0.1,
-    tracePropagationTargets: ['localhost', /^https:\/\/cncportal\.io/],
+    // Propagate trace headers to our own services only.
+    // Each env var is injected per environment by Railway, so this covers
+    // local dev, PR preview branches, and production without extra config.
+    tracePropagationTargets: [
+      'localhost',
+      import.meta.env.VITE_APP_BACKEND_URL, // Node.js API
+      import.meta.env.VITE_APP_SUBGRAPH_ENDPOINT, // GraphQL subgraph
+      /^https:\/\/[\w-]+\.cncportal\.io/ // all prod subdomains
+    ],
     // Session Replay
-    replaysSessionSampleRate: 0.1, // This sets the sample rate at 10%. You may want to change it to 100% while in development and then sample at a lower rate in production.
-    replaysOnErrorSampleRate: 0.1 // If you're not already sampling the entire session, change the sample rate to 100% when sampling sessions where errors occur.
+    replaysSessionSampleRate: 0.1,
+    // Capture 100% of sessions where an error occurs so no crash replay is lost.
+    replaysOnErrorSampleRate: 1.0
   })
 
   return app
