@@ -27,3 +27,4 @@ flags:
 ignore:
   - "app/*.ts"
   - "app/src/main.ts"
+  - "app/src/e2e/**"  # exercised by Playwright e2e, not by Vitest unit tests
