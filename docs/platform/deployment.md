@@ -787,29 +787,52 @@ gcloud logging read "resource.type=cloudsql_database" --limit=50
 
 ### Error Tracking
 
-Configure Sentry for error monitoring:
+Sentry is configured at two levels — frontend (Vue) and backend (Node.js) — with
+separate Sentry projects sharing the same organisation.
+
+**Required environment variables:**
+
+| Variable | Where | Purpose |
+|---|---|---|
+| `VITE_APP_SENTRY_DSN` | frontend (browser) | Frontend Sentry project DSN |
+| `SENTRY_DSN` | backend (Node.js) | Backend Sentry project DSN |
+| `SENTRY_FRONTEND_DSN` | backend (Node.js) | Frontend DSN used by the tunnel route |
+| `SENTRY_FRONTEND_PROJECT_ID` | backend (Node.js) | Project ID extracted from the frontend DSN |
+| `SENTRY_AUTH_TOKEN` | build-time only | Upload source maps to Sentry |
+| `SENTRY_ORG` | build-time only | Sentry organisation slug |
+| `SENTRY_PROJECT` | build-time only | Frontend project slug (default: `cnc-portal-app`) |
+
+**Backend** (`backend/src/instrument.ts`) — must be the first import in the server:
 
 ```typescript
-// Backend: src/instrument.ts
 import * as Sentry from '@sentry/node';
 
 Sentry.init({
   dsn: process.env.SENTRY_DSN,
-  environment: process.env.NODE_ENV,
+  environment: process.env.NODE_ENV ?? 'development',
   tracesSampleRate: 0.1,
+  sendDefaultPii: true,
 });
 ```
 
+**Frontend** (`app/src/main.ts`) — events are routed through the backend tunnel
+to bypass ad-blockers (Brave Shields, uBlock Origin, etc.):
+
 ```typescript
-// Frontend: src/main.ts
 import * as Sentry from '@sentry/vue';
 
 Sentry.init({
   app,
   dsn: import.meta.env.VITE_APP_SENTRY_DSN,
-  environment: import.meta.env.MODE,
+  tunnel: `${import.meta.env.VITE_APP_BACKEND_URL}/api/sentry-tunnel`,
+  tracesSampleRate: 0.1,
+  replaysOnErrorSampleRate: 1.0,
 });
 ```
+
+**Source maps** are generated as `hidden` in production builds (not served to browsers)
+and uploaded to Sentry automatically by `@sentry/vite-plugin` during `npm run build`
+(frontend) and by `sentry-cli sourcemaps` during `npm run build` (backend).
 
 ### Backup Procedures
 
