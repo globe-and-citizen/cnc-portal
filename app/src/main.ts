@@ -75,9 +75,9 @@ export function setupApp() {
     // local dev, PR preview branches, and production without extra config.
     tracePropagationTargets: [
       'localhost',
-      import.meta.env.VITE_APP_BACKEND_URL,      // Node.js API
+      import.meta.env.VITE_APP_BACKEND_URL, // Node.js API
       import.meta.env.VITE_APP_SUBGRAPH_ENDPOINT, // GraphQL subgraph
-      /^https:\/\/[\w-]+\.cncportal\.io/          // all prod subdomains
+      /^https:\/\/[\w-]+\.cncportal\.io/ // all prod subdomains
     ],
     // Session Replay
     replaysSessionSampleRate: 0.1,
