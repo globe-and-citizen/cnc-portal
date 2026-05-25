@@ -53,6 +53,7 @@ jobs:
 
       - name: ✅ Upload coverage to Codecov
         if: always()
+        continue-on-error: true # codecov-action@v4 occasionally EPIPEs on GPG verify
         uses: codecov/codecov-action@v4.0.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
