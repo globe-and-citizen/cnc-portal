@@ -39,7 +39,9 @@ describe('ElectionUserComponent', () => {
   })
 
   it('shows detailed view with role visible when isDetailedView=true', () => {
-    const wrapper = mount(ElectionUserComponent, { props: { user: baseUser, isDetailedView: true } })
+    const wrapper = mount(ElectionUserComponent, {
+      props: { user: baseUser, isDetailedView: true }
+    })
 
     const role = wrapper.find('[data-test="user-role"]')
     expect(role.exists()).toBe(true)
