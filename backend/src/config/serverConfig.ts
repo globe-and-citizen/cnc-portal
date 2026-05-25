@@ -226,7 +226,6 @@ class Server {
       res.statusCode = 500;
       res.end((res as { sentry?: string }).sentry + '\n');
     });
-
   }
 
   public listen() {
