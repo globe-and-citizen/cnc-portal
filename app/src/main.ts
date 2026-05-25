@@ -47,7 +47,7 @@ export function setupApp() {
   // Initialize Sentry for error tracking
   Sentry.init({
     app,
-    dsn: import.meta.env.VITE_SENTRY_DSN,
+    dsn: import.meta.env.VITE_APP_SENTRY_DSN,
     // Route Sentry events through our own backend to bypass ad-blockers
     // (Brave Shields, uBlock Origin, etc. block direct requests to ingest.sentry.io).
     // Reference: https://docs.sentry.io/platforms/javascript/troubleshooting/#dealing-with-ad-blockers
