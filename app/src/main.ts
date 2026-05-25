@@ -70,8 +70,15 @@ export function setupApp() {
     // Enable logs to be sent to Sentry
     enableLogs: true,
     tracesSampleRate: 0.1,
-    // Propagate trace headers to our own origin and all subdomains (api.*, app.*, …)
-    tracePropagationTargets: ['localhost', /^https:\/\/[\w-]+\.cncportal\.io/],
+    // Propagate trace headers to:
+    // - localhost (local dev)
+    // - VITE_APP_BACKEND_URL (covers feature-branch Railway preview URLs automatically)
+    // - all *.cncportal.io subdomains (production)
+    tracePropagationTargets: [
+      'localhost',
+      import.meta.env.VITE_APP_BACKEND_URL,
+      /^https:\/\/[\w-]+\.cncportal\.io/
+    ],
     // Session Replay
     replaysSessionSampleRate: 0.1,
     // Capture 100% of sessions where an error occurs so no crash replay is lost.
