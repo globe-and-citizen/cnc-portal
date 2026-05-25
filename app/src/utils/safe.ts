@@ -1,7 +1,7 @@
-import type { Eip1193Provider } from '@safe-global/protocol-kit'
-import { type Address, zeroAddress, formatUnits } from 'viem'
+import { type Address, zeroAddress, formatUnits, isAddress } from 'viem'
 import type { SafeMultisigConfirmationResponse, SignatureType } from '@safe-global/types-kit'
-import { CHAIN_NAMES } from '@/types/safe'
+import type { Eip1193Provider } from '@safe-global/protocol-kit'
+import { CHAIN_NAMES, TX_SERVICE_BY_CHAIN } from '@/types/safe'
 import {
   type SafeConfirmation,
   type SafeMultisigTransactionResponse,
@@ -12,6 +12,18 @@ import { NETWORK } from '@/constant'
 import { formatEtherUtil, tokenSymbol } from '@/utils/constantUtil'
 import { type DecodedCall } from '@/types'
 import type { SafeIncomingTransfer } from '@/types'
+
+/**
+ * Get Safe transaction service URL for a given chain ID
+ */
+export function getTxServiceUrl(chainId: number): string {
+  const txService = TX_SERVICE_BY_CHAIN[chainId]
+  if (!txService) {
+    throw new Error(`Transaction service not configured for chain ${chainId}`)
+  }
+
+  return txService.url
+}
 
 /**
  * Get injected EIP-1193 provider with proper type checking
@@ -175,6 +187,26 @@ export const getSafeTransactionMethod = (
   return 'unknown'
 }
 
+export const getExecutedErc20TransferTokenAddress = (
+  transaction: Pick<SafeTransaction, 'to' | 'value' | 'dataDecoded'>
+): Address | null => {
+  const normalizedMethod = transaction.dataDecoded?.method?.trim().toLowerCase()
+
+  if (normalizedMethod !== 'transfer') {
+    return null
+  }
+
+  if (!isAddress(transaction.to)) {
+    return null
+  }
+
+  try {
+    return BigInt(transaction.value) === 0n ? transaction.to : null
+  } catch {
+    return null
+  }
+}
+
 export const formatSafeTransferAmount = (transfer: SafeIncomingTransfer): string => {
   if (transfer.type === 'ERC721_TRANSFER') {
     return 'NFT'
@@ -199,4 +231,34 @@ export const formatSafeTransferType = (type: string): string => {
     default:
       return type
   }
+}
+
+/**
+ * Safe transfer validation
+ */
+export interface SafeTransferOptions {
+  to: string
+  amount: string
+  tokenId?: string
+  tokenAddress?: string
+}
+
+export interface ValidationResult {
+  isValid: boolean
+  error?: string
+}
+
+/**
+ * Validate Safe transfer parameters
+ */
+export function validateSafeTransfer(options: SafeTransferOptions): ValidationResult {
+  if (!isAddress(options.to)) {
+    return { isValid: false, error: 'Invalid recipient address' }
+  }
+
+  if (!options.amount || parseFloat(options.amount) <= 0) {
+    return { isValid: false, error: 'Invalid transfer amount' }
+  }
+
+  return { isValid: true }
 }

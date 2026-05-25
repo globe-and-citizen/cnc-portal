@@ -1,61 +1,65 @@
 import AddSignerModal from '@/components/sections/SafeView/forms/AddSignerModal.vue'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { mount, flushPromises, VueWrapper } from '@vue/test-utils'
-import { nextTick, ref, type ComponentPublicInstance } from 'vue'
+import { mount, flushPromises, type VueWrapper } from '@vue/test-utils'
+import { nextTick, type ComponentPublicInstance } from 'vue'
 import type { User } from '@/types'
+import { mockToast } from '@/tests/mocks/store.mock'
 
 interface AddSignerModalInstance extends ComponentPublicInstance {
   isOpen: boolean
+  errorMessage: string
   newSigners: User[]
   validNewSigners: User[]
+  formState: {
+    newSigners: Array<{ address: string }>
+    newThreshold: number
+    shouldPropose: boolean
+  }
+  formSchema: {
+    safeParse: (input: unknown) => {
+      success: boolean
+      error?: { issues: Array<{ message: string }> }
+    }
+  }
   handleAddSigners(): Promise<void>
 }
+
+const { mockChainId, mockUpdateOwnersMutate, mockUpdateOwnersPending } = vi.hoisted(() => ({
+  mockChainId: { value: 137 },
+  mockUpdateOwnersMutate: vi.fn(),
+  mockUpdateOwnersPending: { value: false }
+}))
+
+vi.mock('@wagmi/vue', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@wagmi/vue')>()
+  return {
+    ...actual,
+    useChainId: vi.fn(() => mockChainId)
+  }
+})
+
+vi.mock('@/queries/safe.mutations', () => ({
+  useUpdateSafeOwnersMutation: () => ({
+    mutate: mockUpdateOwnersMutate,
+    isPending: mockUpdateOwnersPending
+  })
+}))
 
 // Mock data
 const MOCK_USERS: User[] = [
   { id: '1', address: '0x1234567890123456789012345678901234567890', name: 'Alice' },
-  { id: '2', address: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd', name: 'Bob' },
-  { id: '3', address: '0x9876543210987654321098765432109876543210', name: 'Charlie' }
+  { id: '2', address: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd', name: 'Bob' }
 ]
 
 const MOCK_CURRENT_OWNERS = ['0x1111111111111111111111111111111111111111']
-const MOCK_SAFE_ADDRESS = '0xSafeAddress123456789012345678901234567890' as `0x${string}`
+const MOCK_SAFE_ADDRESS = '0x1111111111111111111111111111111111111111' as const
 
 let wrapper: VueWrapper<AddSignerModalInstance>
 
-const getMockUseSafeOwnerManagement = () =>
-  (
-    globalThis as {
-      __mockUseSafeOwnerManagement?: {
-        isUpdating: { value: boolean }
-        updateOwners: ReturnType<typeof vi.fn>
-      }
-    }
-  ).__mockUseSafeOwnerManagement
-
-const getSafeOwnerManagementOrThrow = () => {
-  const mock = getMockUseSafeOwnerManagement()
-  if (!mock) {
-    throw new Error('Mock useSafeOwnerManagement not available')
-  }
-  return mock
-}
-
-const createWrapper = (
-  props = {},
-  mockComposableOverrides = {}
-): VueWrapper<AddSignerModalInstance> => {
-  const mockUpdateOwners = vi.fn()
-  const mockIsUpdating = ref(false)
-  const safeOwnerManagement = getSafeOwnerManagementOrThrow()
-  safeOwnerManagement.isUpdating =
-    (mockComposableOverrides as { isUpdating?: { value: boolean } }).isUpdating ?? mockIsUpdating
-  safeOwnerManagement.updateOwners =
-    (mockComposableOverrides as { updateOwners?: ReturnType<typeof vi.fn> }).updateOwners ??
-    mockUpdateOwners
-
-  return mount(AddSignerModal, {
+const createWrapper = (props = {}): VueWrapper<AddSignerModalInstance> =>
+  mount(AddSignerModal, {
     props: {
+      modelValue: true,
       safeAddress: MOCK_SAFE_ADDRESS,
       currentOwners: MOCK_CURRENT_OWNERS,
       currentThreshold: 1,
@@ -70,12 +74,14 @@ const createWrapper = (
         }
       }
     }
-  })
-}
+  }) as unknown as VueWrapper<AddSignerModalInstance>
 
 describe('AddSignerModal', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockUpdateOwnersPending.value = false
+    mockUpdateOwnersMutate.mockImplementation(() => undefined)
+    mockToast.add.mockReset()
   })
 
   afterEach(() => {
@@ -106,10 +112,40 @@ describe('AddSignerModal', () => {
   })
 
   describe('Validation', () => {
+    it('should reject invalid signer addresses in form schema', async () => {
+      wrapper = createWrapper()
+
+      const result = wrapper.vm.formSchema.safeParse({
+        ...wrapper.vm.formState,
+        newSigners: [{ address: 'invalid-address' }]
+      })
+
+      expect(result.success).toBe(false)
+      expect(result.error?.issues.some((issue) => issue.message === 'Invalid signer address')).toBe(
+        true
+      )
+    })
+
+    it('should reject schema payloads without any valid new signer', async () => {
+      wrapper = createWrapper()
+
+      const result = wrapper.vm.formSchema.safeParse({
+        ...wrapper.vm.formState,
+        newSigners: [{ address: MOCK_CURRENT_OWNERS[0]! }]
+      })
+
+      expect(result.success).toBe(false)
+      expect(
+        result.error?.issues.some(
+          (issue) => issue.message === 'Please add at least one valid signer'
+        )
+      ).toBe(true)
+    })
+
     it('should filter out signers with invalid addresses', async () => {
       wrapper = createWrapper()
       wrapper.vm.newSigners = [
-        { id: '1', address: 'invalid', name: 'Invalid' } as User,
+        { id: 'x', address: 'invalid', name: 'Invalid' } as User,
         MOCK_USERS[0]!
       ]
       await nextTick()
@@ -121,7 +157,7 @@ describe('AddSignerModal', () => {
     it('should filter out existing owners from valid signers', async () => {
       wrapper = createWrapper()
       wrapper.vm.newSigners = [
-        { id: '1', address: MOCK_CURRENT_OWNERS[0], name: 'Existing' } as User,
+        { id: 'x', address: MOCK_CURRENT_OWNERS[0], name: 'Existing' } as User,
         MOCK_USERS[0]!
       ]
       await nextTick()
@@ -134,56 +170,104 @@ describe('AddSignerModal', () => {
   describe('Actions', () => {
     it('should show error when submitting without valid signers', async () => {
       wrapper = createWrapper()
+
       await wrapper.vm.handleAddSigners()
       await flushPromises()
+
+      expect(wrapper.vm.errorMessage).toBe('Please add at least one valid signer')
+      expect(mockUpdateOwnersMutate).not.toHaveBeenCalled()
     })
 
     it('should show success toast and emit event after successful execution', async () => {
-      const mockUpdateOwners = vi.fn().mockResolvedValue('0xtxhash')
-      wrapper = createWrapper({ currentThreshold: 1 }, { updateOwners: mockUpdateOwners })
+      mockUpdateOwnersMutate.mockImplementation((_params, callbacks) => callbacks?.onSuccess?.())
+      wrapper = createWrapper({ currentThreshold: 1 })
       wrapper.vm.newSigners = [MOCK_USERS[0]!]
       await nextTick()
 
       await wrapper.vm.handleAddSigners()
       await flushPromises()
 
+      expect(mockUpdateOwnersMutate).toHaveBeenCalledTimes(1)
+      expect(mockUpdateOwnersMutate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          body: expect.objectContaining({
+            ownersToAdd: [MOCK_USERS[0]!.address],
+            newThreshold: 1,
+            shouldPropose: false
+          })
+        }),
+        expect.any(Object)
+      )
       expect(wrapper.emitted('signer-added')).toBeTruthy()
       expect(wrapper.emitted('close-modal')).toBeTruthy()
+      expect(mockToast.add).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: 'Success',
+          description: 'Signers added successfully',
+          color: 'success'
+        })
+      )
     })
 
     it('should show success toast for proposal when threshold >= 2', async () => {
-      const mockUpdateOwners = vi.fn().mockResolvedValue('0xtxhash')
-      wrapper = createWrapper({ currentThreshold: 2 }, { updateOwners: mockUpdateOwners })
+      mockUpdateOwnersMutate.mockImplementation((_params, callbacks) => callbacks?.onSuccess?.())
+      wrapper = createWrapper({ currentThreshold: 2 })
       wrapper.vm.newSigners = [MOCK_USERS[0]!]
       await nextTick()
 
       await wrapper.vm.handleAddSigners()
       await flushPromises()
+
+      expect(mockUpdateOwnersMutate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          body: expect.objectContaining({
+            ownersToAdd: [MOCK_USERS[0]!.address],
+            newThreshold: 2,
+            shouldPropose: true
+          })
+        }),
+        expect.any(Object)
+      )
+      expect(mockToast.add).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: 'Success',
+          description: 'Signer addition proposal submitted successfully',
+          color: 'success'
+        })
+      )
     })
 
     it('should handle updateOwners error with generic message', async () => {
-      const mockUpdateOwners = vi.fn().mockRejectedValue(new Error())
-      wrapper = createWrapper({}, { updateOwners: mockUpdateOwners })
+      mockUpdateOwnersMutate.mockImplementation((_params, callbacks) =>
+        callbacks?.onError?.(new Error())
+      )
+      wrapper = createWrapper()
       wrapper.vm.newSigners = [MOCK_USERS[0]!]
       await nextTick()
 
       await wrapper.vm.handleAddSigners()
       await flushPromises()
+
+      expect(wrapper.vm.errorMessage).toBe('Failed to add signers')
     })
 
     it('should handle updateOwners error with specific message', async () => {
-      const mockUpdateOwners = vi.fn().mockRejectedValue(new Error('Network error'))
-      wrapper = createWrapper({}, { updateOwners: mockUpdateOwners })
+      mockUpdateOwnersMutate.mockImplementation((_params, callbacks) =>
+        callbacks?.onError?.(new Error('Network error'))
+      )
+      wrapper = createWrapper()
       wrapper.vm.newSigners = [MOCK_USERS[0]!]
       await nextTick()
 
       await wrapper.vm.handleAddSigners()
       await flushPromises()
+
+      expect(wrapper.vm.errorMessage).toBe('Failed to add signers: Network error')
     })
 
-    it('should not close modal or emit when updateOwners returns null', async () => {
-      const mockUpdateOwners = vi.fn().mockResolvedValue(null)
-      wrapper = createWrapper({}, { updateOwners: mockUpdateOwners })
+    it('should not close modal or emit when mutation callbacks are not invoked', async () => {
+      mockUpdateOwnersMutate.mockImplementation(() => undefined)
+      wrapper = createWrapper()
       wrapper.vm.newSigners = [MOCK_USERS[0]!]
       await nextTick()
 

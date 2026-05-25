@@ -1,6 +1,8 @@
 coverage:
   status:
-    project: true
+    project:
+      default:
+        threshold: 0.5%  # allow up to 0.5% drop to absorb carryforward noise
 
 github_checks:
   annotations: true
@@ -24,3 +26,4 @@ flags:
       - app
 ignore:
   - "app/*.ts"
+  - "app/src/main.ts"

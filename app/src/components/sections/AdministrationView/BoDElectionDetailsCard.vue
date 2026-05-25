@@ -11,9 +11,9 @@
       <span class=""> Winner </span>
     </UBadge>
     <!-- User Component -->
-    <UserComponent layout="alternate" :user="election.user" />
+    <ElectionUserComponent layout="alternate" :user="election.user" />
 
-    <!-- Votes Stat - Right-aligned below UserComponent -->
+    <!-- Votes Stat - Right-aligned below ElectionUserComponent -->
     <div class="mt-2 flex justify-end">
       <span class="text-lg font-bold text-gray-700">
         {{ election.currentVotes }}/{{ election.totalVotes }}
@@ -55,7 +55,7 @@
 </template>
 
 <script setup lang="ts">
-import UserComponent from './UserComponent.vue'
+import ElectionUserComponent from './ElectionUserComponent.vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import { computed, watch, type PropType, ref } from 'vue'
 import type { User } from '@/types'
