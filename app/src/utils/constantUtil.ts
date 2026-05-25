@@ -1,7 +1,16 @@
 import { NETWORK, USDC_ADDRESS, USDT_ADDRESS, USDC_E_ADDRESS } from '@/constant'
 import { zeroAddress, formatEther, parseUnits } from 'viem'
 import type { TokenId } from '@/constant'
+import USDCIcon from '@/assets/usdc.png'
+import MaticIcon from '@/assets/matic-logo.png'
+import EthereumIcon from '@/assets/Ethereum.png'
 
+export const TOKEN_ICONS: Record<string, string> = {
+  USDC: USDCIcon,
+  USDCe: USDCIcon,
+  POL: MaticIcon,
+  ETH: EthereumIcon
+}
 const tokenDecimals: Record<TokenId, number> = {
   native: 18,
   usdc: 6,
