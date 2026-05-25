@@ -33,7 +33,7 @@
     "seed:test": "NODE_ENV=test ts-node prisma/seed.ts",
     "seed:staging": "NODE_ENV=staging ts-node prisma/seed.ts",
     "seed:reset": "npx prisma migrate reset --force && npm run seed",
-    "sentry:sourcemaps": "sentry-cli sourcemaps inject --org global-citizen-g6 --project cnc-portal-api ./dist && sentry-cli sourcemaps upload --org global-citizen-g6 --project cnc-portal-api ./dist"
+    "sentry:sourcemaps": "sentry-cli sourcemaps inject --org $SENTRY_ORG --project $SENTRY_PROJECT ./dist && sentry-cli sourcemaps upload --org $SENTRY_ORG --project $SENTRY_PROJECT ./dist"
   },
   "keywords": [],
   "author": "",
