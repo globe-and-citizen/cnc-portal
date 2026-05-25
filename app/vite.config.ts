@@ -7,13 +7,12 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 import { nodePolyfills } from 'vite-plugin-node-polyfills'
 import tailwindcss from '@tailwindcss/vite'
 import { sentryVitePlugin } from '@sentry/vite-plugin'
-import istanbul from 'vite-plugin-istanbul'
 
 export const ENV_LIST = ['VITE_APP_BACKEND_URL', 'VITE_APP_NETWORK_ALIAS']
 const SUPPORTED_NETWORKS = ['sepolia', 'hardhat', 'amoy', 'polygon']
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }) => {
+export default defineConfig(async ({ mode }) => {
   // Validate .env file
   const env = loadEnv(mode, process.cwd(), '')
 
@@ -47,9 +46,11 @@ export default defineConfig(({ mode }) => {
   }
 
   // In E2E mode, instrument source files so Playwright can collect coverage
-  // via `window.__coverage__`. Only activated under VITE_E2E=true so prod and
-  // regular dev builds stay un-instrumented.
+  // via `window.__coverage__`. Imported dynamically so the devDep isn't
+  // required for prod/dev builds — Railway and other prod-only installs
+  // (`npm ci --omit=dev`) would fail otherwise.
   if (process.env.VITE_E2E === 'true') {
+    const { default: istanbul } = await import('vite-plugin-istanbul')
     plugins.push(
       istanbul({
         include: 'src/**/*',
