@@ -24,3 +24,4 @@ flags:
       - app
 ignore:
   - "app/*.ts"
+  - "app/src/main.ts"
