@@ -5,8 +5,8 @@
     "prepare": "husky"
   },
   "lint-staged": {
-    "app/**/*.{ts,vue}": "app/node_modules/.bin/prettier --write",
-    "backend/**/*.ts": "backend/node_modules/.bin/prettier --write"
+    "app/**/*.{ts,vue}": "npm run --prefix app format:files --",
+    "backend/**/*.ts": "npm run --prefix backend format:files --"
   },
   "devDependencies": {
     "conventional-changelog-angular": "^8.1.0",

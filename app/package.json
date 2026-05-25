@@ -28,6 +28,7 @@
     "lint:no-daisy": "node scripts/check-no-daisy.mjs",
     "format": "prettier --write .",
     "format-check": "prettier . --check",
+    "format:files": "prettier --write",
     "git:ignore-locally": "git -C .. update-index --assume-unchanged app/src/artifacts/deployed_addresses/chain-31337.json dashboard/app/artifacts/deployed_addresses/chain-31337.json"
   },
   "dependencies": {
