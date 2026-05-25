@@ -22,8 +22,10 @@ export default defineConfig({
   // Reporter to use
   reporter: [['html'], ['list']],
 
-  // Timeout for each test (5 minutes)
-  timeout: 300000,
+  // Timeout for each test. 60s gives Vite's first dev compile (~10s in CI)
+  // and the SIWE round-trip plenty of headroom without letting a broken
+  // assertion hang the whole pipeline.
+  timeout: 60_000,
 
   use: {
     baseURL: process.env.BASE_URL || 'http://localhost:5173',

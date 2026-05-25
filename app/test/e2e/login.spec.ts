@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './fixtures'
 
 /**
  * SIWE login flow, driven by the in-browser e2e mock connector.
@@ -21,7 +21,13 @@ const json = (body: unknown) => ({
 
 test.describe('Sign in', () => {
   test('signs in with the mock wallet and redirects to the teams page', async ({ page }) => {
-    // Stub the backend before navigating.
+    // Catch-all: any backend call we don't explicitly stub returns an empty
+    // 200. This prevents the global axios 401 interceptor (which logs the
+    // user out and redirects to /login) from kicking in on background calls
+    // the post-login screens make (e.g. /api/notification). Scoped to the
+    // backend origin via regex so Vite source imports under
+    // `/src/api/index.ts` aren't intercepted.
+    await page.route(/\/\/[^/]+:4000\/api\//, (route) => route.fulfill(json({})))
     await page.route('**/api/user/nonce/**', (route) => route.fulfill(json({ nonce: NONCE })))
     await page.route('**/api/auth/siwe', (route) =>
       route.fulfill(json({ accessToken: 'e2e.test.token' }))
@@ -38,8 +44,10 @@ test.describe('Sign in', () => {
     // One click: connect (mock wallet) -> sign SIWE message -> authenticate.
     await page.getByTestId('sign-in').click()
 
-    // Successful login pushes the router to the teams page.
-    await page.waitForURL('**/teams')
-    await expect(page).toHaveURL(/\/teams$/)
+    // Successful login pushes the router to the teams page. We poll the URL
+    // with `toHaveURL` rather than `waitForURL` because Vue Router's SPA
+    // navigation uses pushState and never fires a `load` event, which would
+    // otherwise hang `waitForURL`'s default `waitUntil: 'load'`.
+    await expect(page).toHaveURL(/\/teams$/, { timeout: 15000 })
   })
 })
