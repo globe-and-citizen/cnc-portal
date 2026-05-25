@@ -124,4 +124,16 @@ describe('sentryTunnelRoute', () => {
     // Fetch must always target the server-side configured URL, never the client's host
     expect(mockFetch).toHaveBeenCalledWith(EXPECTED_INGEST_URL, expect.anything());
   });
+
+  it('returns 200 silently when SENTRY_FRONTEND_DSN host is not a sentry.io domain', async () => {
+    const app = await buildApp(`https://pubkey@evil.example.com/${PROJECT_ID}`, PROJECT_ID);
+    const res = await request(app)
+      .post('/api/sentry-tunnel')
+      .set('Content-Type', 'application/x-sentry-envelope')
+      .send(makeEnvelope(VALID_DSN));
+
+    // Non-sentry.io host → SENTRY_INGEST_URL is null → silent 200, no forwarding
+    expect(res.status).toBe(200);
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
 });
