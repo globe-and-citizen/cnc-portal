@@ -70,14 +70,14 @@ export function setupApp() {
     // Enable logs to be sent to Sentry
     enableLogs: true,
     tracesSampleRate: 0.1,
-    // Propagate trace headers to:
-    // - localhost (local dev)
-    // - VITE_APP_BACKEND_URL (covers feature-branch Railway preview URLs automatically)
-    // - all *.cncportal.io subdomains (production)
+    // Propagate trace headers to our own services only.
+    // Each env var is injected per environment by Railway, so this covers
+    // local dev, PR preview branches, and production without extra config.
     tracePropagationTargets: [
       'localhost',
-      import.meta.env.VITE_APP_BACKEND_URL,
-      /^https:\/\/[\w-]+\.cncportal\.io/
+      import.meta.env.VITE_APP_BACKEND_URL,      // Node.js API
+      import.meta.env.VITE_APP_SUBGRAPH_ENDPOINT, // GraphQL subgraph
+      /^https:\/\/[\w-]+\.cncportal\.io/          // all prod subdomains
     ],
     // Session Replay
     replaysSessionSampleRate: 0.1,
