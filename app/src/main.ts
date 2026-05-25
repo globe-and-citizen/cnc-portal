@@ -70,10 +70,12 @@ export function setupApp() {
     // Enable logs to be sent to Sentry
     enableLogs: true,
     tracesSampleRate: 0.1,
-    tracePropagationTargets: ['localhost', /^https:\/\/cncportal\.io/],
+    // Propagate trace headers to our own origin and all subdomains (api.*, app.*, …)
+    tracePropagationTargets: ['localhost', /^https:\/\/[\w-]+\.cncportal\.io/],
     // Session Replay
-    replaysSessionSampleRate: 0.1, // This sets the sample rate at 10%. You may want to change it to 100% while in development and then sample at a lower rate in production.
-    replaysOnErrorSampleRate: 0.1 // If you're not already sampling the entire session, change the sample rate to 100% when sampling sessions where errors occur.
+    replaysSessionSampleRate: 0.1,
+    // Capture 100% of sessions where an error occurs so no crash replay is lost.
+    replaysOnErrorSampleRate: 1.0
   })
 
   return app
