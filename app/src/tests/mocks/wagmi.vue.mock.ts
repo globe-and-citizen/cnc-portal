@@ -79,6 +79,7 @@ export const mockUseChainId = ref(1)
 // Mock useSwitchChain composable
 export const mockUseSwitchChain = {
   mutate: vi.fn(),
+  mutateAsync: vi.fn().mockResolvedValue(undefined),
   isPending: ref(false),
   error: ref(null),
   switchChain: vi.fn()

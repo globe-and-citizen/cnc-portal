@@ -6,7 +6,7 @@ import { e2eMockConnector } from './e2e/mockConnector'
  * In e2e mode the real injected wallet is replaced by an in-browser mock
  * connector, so Playwright can drive login/signing without the MetaMask
  * extension. Dev and production builds register no connector here and keep
- * relying on `injected()` (see `useWalletChecks`).
+ * relying on `injected()` (registered by `useSiweMutation` at connect time).
  */
 const isE2E = import.meta.env.VITE_E2E === 'true'
 

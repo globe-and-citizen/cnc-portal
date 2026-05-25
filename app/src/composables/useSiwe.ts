@@ -13,44 +13,42 @@ import {
 import { SiweMessage } from 'siwe'
 import { useMutation } from '@tanstack/vue-query'
 import { useToast } from '@nuxt/ui/composables'
+import { UserRejectedRequestError, SwitchChainError } from 'viem'
+import { AxiosError } from 'axios'
 import { getUser, getUserNonce } from '@/api/user.api'
 import { siweAuth } from '@/api/auth.api'
 import { NETWORK } from '@/constant'
 import { config } from '@/wagmi.config'
 import type { Address } from 'viem'
 
-/** Discriminated error so `onError` can pick the right toast. */
-export type SiweErrorStep =
-  | 'connect-wallet'
-  | 'switch-chain'
-  | 'fetch-nonce'
-  | 'sign-message'
-  | 'sign-rejected'
-  | 'auth'
-  | 'fetch-user'
-
-export class SiweError extends Error {
+/**
+ * Distinct subclasses for the three places where the user can reject a wallet
+ * prompt. Everything else (network failures, axios errors, viem errors) is
+ * left untouched and bubbles natively — `onError` discriminates via `instanceof`.
+ */
+export class WalletConnectRejectedError extends Error {
   declare cause?: unknown
-  constructor(
-    public readonly step: SiweErrorStep,
-    cause?: unknown
-  ) {
-    super(`SIWE failed at step: ${step}`)
-    this.name = 'SiweError'
+  constructor(cause?: unknown) {
+    super('User rejected wallet connection')
+    this.name = 'WalletConnectRejectedError'
     if (cause !== undefined) this.cause = cause
   }
 }
-
-const TOAST_BY_STEP: Record<SiweErrorStep, string> = {
-  'connect-wallet':
-    'Wallet connection rejected: You need to connect your wallet to use the CNC Portal.',
-  'switch-chain':
-    'Network switch rejected: You need to switch to the correct network to use the CNC Portal',
-  'fetch-nonce': 'Failed to fetch nonce',
-  'sign-message': 'Something went wrong: Unable to sign SIWE message',
-  'sign-rejected': 'Message sign rejected: You need to sign the message to Sign in the CNC Portal',
-  auth: 'Failed to get authentication token',
-  'fetch-user': 'Failed to fetch user data'
+export class ChainSwitchRejectedError extends Error {
+  declare cause?: unknown
+  constructor(cause?: unknown) {
+    super('User rejected chain switch')
+    this.name = 'ChainSwitchRejectedError'
+    if (cause !== undefined) this.cause = cause
+  }
+}
+export class SignatureRejectedError extends Error {
+  declare cause?: unknown
+  constructor(cause?: unknown) {
+    super('User rejected SIWE signature')
+    this.name = 'SignatureRejectedError'
+    if (cause !== undefined) this.cause = cause
+  }
 }
 
 const NONCE_RETRIES = 3
@@ -74,11 +72,34 @@ async function withRetry<T>(fn: () => Promise<T>, retries: number, delayMs: numb
 }
 
 /**
+ * Re-tag a `UserRejectedRequestError` from a specific wallet op with a
+ * dedicated subclass so `onError` can show a context-aware toast. Any other
+ * error class is passed through unchanged.
+ */
+async function tagRejection<T>(
+  p: Promise<T>,
+  RejectionClass: new (cause: unknown) => Error
+): Promise<T> {
+  try {
+    return await p
+  } catch (err) {
+    if (
+      err instanceof UserRejectedRequestError ||
+      (err as Error)?.name === 'UserRejectedRequestError'
+    ) {
+      throw new RejectionClass(err)
+    }
+    throw err
+  }
+}
+
+/**
  * SIWE login as a TanStack mutation.
  *
- * Single orchestrating `mutationFn` that drives the whole flow:
- * wallet connect → switch chain → fetch nonce (retried) → sign → auth → fetch user.
- * Each step rethrows a typed `SiweError`; `onError` maps the step to a toast.
+ * `mutationFn` is a linear sequence of awaits with no per-step error tagging:
+ * each error type already carries enough information to be routed by `onError`
+ * (viem error classes for wallet failures, `AxiosError.config.url` for API
+ * failures, and our 3 rejection subclasses for user-cancelled prompts).
  */
 export function useSiweMutation() {
   const toast = useToast()
@@ -94,31 +115,25 @@ export function useSiweMutation() {
   const connector = config.connectors[0] ?? injected()
   const networkChainId = parseInt(NETWORK.chainId)
 
-  const wrap = <T>(step: SiweErrorStep, p: Promise<T>): Promise<T> =>
-    p.catch((err) => {
-      log.error(`siwe ${step} error`, err)
-      throw new SiweError(step, err)
-    })
-
   return useMutation({
     mutationFn: async () => {
-      // 1. Connect wallet if needed
       if (!connection.isConnected.value) {
-        await wrap('connect-wallet', connectAsync({ connector, chainId: networkChainId }))
+        await tagRejection(
+          connectAsync({ connector, chainId: networkChainId }),
+          WalletConnectRejectedError
+        )
       }
 
-      // 2. Ensure correct chain
-      await wrap('switch-chain', switchChainAsync({ chainId: networkChainId }))
+      await tagRejection(switchChainAsync({ chainId: networkChainId }), ChainSwitchRejectedError)
 
       const address = connection.address.value as Address
 
-      // 3. Fetch nonce (retried 3× with 3s delay)
-      const { nonce } = await wrap(
-        'fetch-nonce',
-        withRetry(() => getUserNonce(address), NONCE_RETRIES, NONCE_RETRY_DELAY_MS)
+      const { nonce } = await withRetry(
+        () => getUserNonce(address),
+        NONCE_RETRIES,
+        NONCE_RETRY_DELAY_MS
       )
 
-      // 4. Sign SIWE message
       const message = new SiweMessage({
         address,
         statement: 'Sign in with Ethereum to the app.',
@@ -129,19 +144,12 @@ export function useSiweMutation() {
         version: '1'
       }).prepareMessage()
 
-      const signature = await signMessageAsync({ message }).catch((err) => {
-        const rejected = (err as Error)?.name === 'UserRejectedRequestError'
-        log.error('signMessage error', err)
-        throw new SiweError(rejected ? 'sign-rejected' : 'sign-message', err)
-      })
+      const signature = await tagRejection(signMessageAsync({ message }), SignatureRejectedError)
 
-      // 5. Exchange for access token
-      const { accessToken } = await wrap('auth', siweAuth({ message, signature }))
+      const { accessToken } = await siweAuth({ message, signature })
       storageToken.value = accessToken
 
-      // 6. Fetch user (token now in storage → axios interceptor picks it up)
-      const user = await wrap('fetch-user', getUser(address))
-
+      const user = await getUser(address)
       return { user }
     },
     onSuccess: ({ user }) => {
@@ -155,22 +163,58 @@ export function useSiweMutation() {
       router.push('/teams')
     },
     onError: (err) => {
-      const step = err instanceof SiweError ? err.step : 'auth'
-      // Connect/switch user-rejection is a common case → keep the toast specific.
-      if (step === 'connect-wallet' || step === 'switch-chain') {
-        const cause = (err as SiweError).cause as Error | undefined
-        if (cause?.name && cause.name !== 'UserRejectedRequestError') {
-          toast.add({
-            title:
-              step === 'connect-wallet'
-                ? 'Something went wrong: Failed to connect wallet'
-                : 'Something went wrong: Failed switch network',
-            color: 'error'
-          })
-          return
+      log.error('siwe error', err)
+
+      // 1. User-rejected prompts — each step has its own subclass.
+      if (err instanceof WalletConnectRejectedError) {
+        return toast.add({
+          title:
+            'Wallet connection rejected: You need to connect your wallet to use the CNC Portal.',
+          color: 'error'
+        })
+      }
+      if (err instanceof ChainSwitchRejectedError) {
+        return toast.add({
+          title:
+            'Network switch rejected: You need to switch to the correct network to use the CNC Portal',
+          color: 'error'
+        })
+      }
+      if (err instanceof SignatureRejectedError) {
+        return toast.add({
+          title: 'Message sign rejected: You need to sign the message to Sign in the CNC Portal',
+          color: 'error'
+        })
+      }
+
+      // 2. Technical wallet failures.
+      if (err instanceof SwitchChainError) {
+        return toast.add({ title: 'Something went wrong: Failed switch network', color: 'error' })
+      }
+      if ((err as Error)?.name === 'ProviderNotFoundError') {
+        return toast.add({
+          title:
+            'No wallet detected: You need to install a wallet like metamask to use the CNC Portal',
+          color: 'error'
+        })
+      }
+
+      // 3. API failures — routed by endpoint.
+      if (err instanceof AxiosError) {
+        const url = err.config?.url ?? ''
+        if (url.includes('nonce')) {
+          return toast.add({ title: 'Failed to fetch nonce', color: 'error' })
+        }
+        if (url.includes('siwe') || url.includes('auth')) {
+          return toast.add({ title: 'Failed to get authentication token', color: 'error' })
+        }
+        if (url.includes('user')) {
+          return toast.add({ title: 'Failed to fetch user data', color: 'error' })
         }
       }
-      toast.add({ title: TOAST_BY_STEP[step], color: 'error' })
+
+      // 4. Fallback.
+      toast.add({ title: 'Something went wrong: Failed to sign in', color: 'error' })
     }
   })
 }
