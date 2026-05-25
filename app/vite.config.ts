@@ -61,7 +61,7 @@ export default defineConfig(({ mode }) => {
           deleteAfterUpload: true
         },
         release: {
-          name: process.env.VITE_RELEASE ?? undefined
+          name: process.env.VITE_APP_RELEASE ?? undefined
         }
       })
     )
