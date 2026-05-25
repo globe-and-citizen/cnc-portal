@@ -30,6 +30,14 @@ jobs:
         run: npm run compile
         working-directory: ./contract
 
+      - name: </> Reject hardhat console imports
+        run: |
+          if grep -R --line-number --include='*.sol' "hardhat/console\.sol" contracts --exclude-dir=test --exclude-dir=mocks; then
+            echo "::error::Remove hardhat/console.sol imports from production contracts"
+            exit 1
+          fi
+        working-directory: ./contract
+
       - name: </> Run Format Check
         run: npm run format-check
         working-directory: ./contract
