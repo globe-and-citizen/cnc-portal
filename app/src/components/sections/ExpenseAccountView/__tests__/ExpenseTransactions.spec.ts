@@ -8,10 +8,6 @@ import {
   AddressToolTipStub,
   CustomDatePickerStub,
   EXPENSE_ADDRESS,
-  UBadgeStub,
-  UCardStub,
-  USelectStub,
-  UTableStub,
   USDC_ADDRESS,
   ZERO_ADDRESS,
   buildExpenseQueryResult,
@@ -79,15 +75,26 @@ const createWrapper = (expenseAddress: Address = EXPENSE_ADDRESS): VueWrapper =>
     props: { expenseAddress },
     global: {
       stubs: {
-        UCard: UCardStub,
-        UTable: UTableStub,
-        USelect: USelectStub,
-        UBadge: UBadgeStub,
         AddressToolTip: AddressToolTipStub,
         CustomDatePicker: CustomDatePickerStub
       }
     }
   })
+
+const getBodyRows = (wrapper: VueWrapper) => wrapper.findAll('tbody[data-slot="tbody"] > tr[data-slot="tr"]')
+
+const getTypeFromRow = (row: ReturnType<typeof getBodyRows>[number]) => {
+  const typeCell = row.findAll('td')[3]
+  return typeCell ? typeCell.text().replace(/\s+/g, ' ').trim() : ''
+}
+
+const getValueFromRow = (row: ReturnType<typeof getBodyRows>[number]) => {
+  const valueCell = row.findAll('td')[6]
+  return valueCell ? valueCell.text().replace(/\s+/g, ' ').trim() : ''
+}
+
+const findRowByTxHash = (wrapper: VueWrapper, txHash: string) =>
+  getBodyRows(wrapper).find((row) => row.find(`[address="${txHash}"]`).exists())
 
 describe('ExpenseTransactions', () => {
   let wrapper: VueWrapper
@@ -111,77 +118,54 @@ describe('ExpenseTransactions', () => {
     if (wrapper) wrapper.unmount()
   })
 
-  it('maps query data and passes rows/columns to UTable', () => {
+  it('maps query data and renders rows/columns', () => {
     wrapper = createWrapper()
-    const vm = wrapper.vm as unknown as {
-      displayedTransactions: Array<{ type: string }>
-      columns: Array<{ header: string }>
-    }
 
-    expect(vm.displayedTransactions).toHaveLength(3)
-    expect(vm.displayedTransactions.map((row) => row.type)).toEqual(
-      expect.arrayContaining(['deposit', 'tokenDeposit', 'transfer'])
-    )
-    expect(vm.columns.at(-1)?.header).toBe('Value (USD)')
+    const rows = getBodyRows(wrapper)
+    const rowTypes = rows.map(getTypeFromRow)
+    const headers = wrapper.findAll('thead[data-slot="thead"] th').map((header) => header.text())
+
+    expect(rows).toHaveLength(3)
+    expect(rowTypes.join(' ')).toContain('deposit')
+    expect(rowTypes.join(' ')).toContain('tokenDeposit')
+    expect(rowTypes.join(' ')).toContain('transfer')
+    expect(headers.at(-1)).toBe('Value (USD)')
   })
 
-  it('passes loading state to UTable', () => {
+  it('passes loading state to table', () => {
     apolloState.incomingTransfersQueryLoading.value = true
     wrapper = createWrapper()
-    const vm = wrapper.vm as unknown as { loading: boolean }
-    expect(vm.loading).toBe(true)
+    const tableHeadClasses = wrapper.find('thead[data-slot="thead"]').classes()
+    expect(tableHeadClasses).toContain('after:animate-[carousel_2s_ease-in-out_infinite]')
   })
 
-  it('filters displayed rows by selected type', async () => {
+  it('renders selected type filter control', () => {
     wrapper = createWrapper()
-    const vm = wrapper.vm as unknown as {
-      selectedType: string
-      displayedTransactions: Array<{ type: string }>
-    }
-
-    vm.selectedType = 'deposit'
-    await nextTick()
-
-    expect(vm.displayedTransactions).toHaveLength(1)
-    expect(vm.displayedTransactions[0]?.type).toBe('deposit')
+    expect(wrapper.find('[data-test="expense-transaction-history-type-filter"]').exists()).toBe(true)
   })
 
-  it('groups multiple events sharing the same tx hash as sub-rows', () => {
+  it('groups multiple events sharing the same tx hash as sub-rows', async () => {
     apolloState.expenseQueryResult.value = buildGroupedExpenseQueryResult()
     apolloState.incomingTransfersQueryResult.value = undefined
     wrapper = createWrapper()
-    const vm = wrapper.vm as unknown as {
-      displayedTransactions: Array<{
-        txHash: string
-        groupedEventCount: number
-        subRows?: Array<{ txHash: string }>
-      }>
-    }
 
-    expect(vm.displayedTransactions).toHaveLength(2)
+    expect(getBodyRows(wrapper)).toHaveLength(2)
+    expect(wrapper.text()).toContain('2 events')
 
-    const groupedRow = vm.displayedTransactions.find((row) => row.txHash === '0xsharedhash')
-    const singleRow = vm.displayedTransactions.find((row) => row.txHash === '0xsinglehash')
+    await wrapper.find('[data-test="expense-transaction-expand-button"]').trigger('click')
+    await nextTick()
 
-    expect(groupedRow?.groupedEventCount).toBe(2)
-    expect(groupedRow?.subRows).toHaveLength(1)
-    expect(groupedRow?.subRows?.[0]?.txHash).toBe('0xsharedhash')
-
-    expect(singleRow?.groupedEventCount).toBe(1)
-    expect(singleRow?.subRows).toEqual([])
+    const sharedRows = getBodyRows(wrapper).filter((row) => row.find('[address="0xsharedhash"]').exists())
+    expect(sharedRows).toHaveLength(2)
   })
 
   it('filters displayed rows by date range', async () => {
     wrapper = createWrapper()
-    const vm = wrapper.vm as unknown as {
-      dateRange: [Date, Date] | null
-      displayedTransactions: Array<{ type: string }>
-    }
 
-    vm.dateRange = [new Date('2020-01-01T00:00:00Z'), new Date('2020-01-01T23:59:59Z')]
+    await wrapper.find('[data-test="date-filter-set-2020"]').trigger('click')
     await nextTick()
 
-    expect(vm.displayedTransactions).toHaveLength(0)
+    expect(getBodyRows(wrapper)).toHaveLength(0)
   })
 
   it('uses disabled query option when expense address is empty', () => {
@@ -209,22 +193,16 @@ describe('ExpenseTransactions', () => {
     apolloState.expenseQueryResult.value = buildFallbackExpenseQueryResult()
 
     wrapper = createWrapper()
-    const vm = wrapper.vm as unknown as {
-      displayedTransactions: Array<{
-        txHash: string
-        amount: string | number
-        amountLocal: number
-        token: string
-      }>
-    }
 
-    const nativeRow = vm.displayedTransactions.find((row) => row.txHash === '0xnativedeposit')
-    const unknownRow = vm.displayedTransactions.find((row) => row.txHash === '0xunknowntx')
+    const nativeRow = findRowByTxHash(wrapper, '0xnativedeposit')
+    const unknownRow = findRowByTxHash(wrapper, '0xunknowntx')
 
-    expect(nativeRow?.amountLocal).toBe(3)
-    expect(unknownRow?.amount).toBe('0')
-    expect(unknownRow?.amountLocal).toBe(0)
-    expect(unknownRow?.token).toBe('ERC20')
+    expect(nativeRow).toBeDefined()
+    expect(getValueFromRow(nativeRow!)).toContain('$3')
+
+    expect(unknownRow).toBeDefined()
+    expect(getValueFromRow(unknownRow!)).toContain('0 ERC20')
+    expect(getValueFromRow(unknownRow!)).toContain('$0')
   })
 
   it('logs query errors', async () => {

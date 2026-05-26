@@ -35,6 +35,7 @@
           size="sm"
           color="primary"
           variant="soft"
+          data-test="bank-transaction-expand-button"
           :aria-label="row.getIsExpanded() ? 'Collapse transaction events' : 'Expand transaction events'"
           @click="row.toggleExpanded()"
         />
@@ -107,6 +108,7 @@ import {
   formatCurrencyShort,
   formatEtherUtil,
   log,
+  parseBigIntOrZero,
   resolveUser,
   resolveTokenIdByAddress,
   tokenSymbol
@@ -135,14 +137,6 @@ const { result, error, loading } = useQuery<BankEventsQuery>(
   }
 )
 
-const parseAmount = (value: string): bigint => {
-  try {
-    return BigInt(value)
-  } catch {
-    return 0n
-  }
-}
-
 const rawTransactions = computed(() => buildRawBankTransactions(result.value))
 
 const transactions = computed<BankTransaction[]>(() =>
@@ -151,7 +145,7 @@ const transactions = computed<BankTransaction[]>(() =>
     date: formatBankTransactionDate(Number(row.timestamp)),
     from: row.from,
     to: row.to,
-    amount: formatEtherUtil(parseAmount(row.amount), row.tokenAddress),
+    amount: formatEtherUtil(parseBigIntOrZero(row.amount), row.tokenAddress),
     amountUSD: 0,
     tokenAddress: row.tokenAddress,
     token: tokenSymbol(row.tokenAddress) || 'ERC20',

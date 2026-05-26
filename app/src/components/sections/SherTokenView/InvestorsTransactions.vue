@@ -35,6 +35,7 @@
           size="sm"
           color="primary"
           variant="soft"
+          data-test="investor-transaction-expand-button"
           :aria-label="row.getIsExpanded() ? 'Collapse transaction events' : 'Expand transaction events'"
           @click="row.toggleExpanded()"
         />
@@ -104,6 +105,7 @@ import {
   formatEtherUtil,
   formatInvestorTransactionDate,
   getInvestorTransactionTypeColor,
+  parseBigIntOrZero,
   resolveUser,
   log,
   resolveTokenIdByAddress,
@@ -138,14 +140,6 @@ const safeDepositRouterAddress = computed(() => {
   const address = teamStore.getContractAddressByType('SafeDepositRouter')
   return address ? address.toLowerCase() : ''
 })
-
-const parseAmount = (value: string): bigint => {
-  try {
-    return BigInt(value)
-  } catch {
-    return 0n
-  }
-}
 
 const getUsdPrice = (tokenId: TokenId | null): number => {
   if (!tokenId) return 0
@@ -210,8 +204,8 @@ const transactionData = computed<InvestorsTransaction[]>(() =>
     const amount = isConfigEvent
       ? '0'
       : isMultiplierEvent
-        ? formatSafeDepositRouterMultiplier(parseAmount(tx.amount), 6)
-        : formatEtherUtil(parseAmount(tx.amount), tx.tokenAddress)
+        ? formatSafeDepositRouterMultiplier(parseBigIntOrZero(tx.amount), 6)
+        : formatEtherUtil(parseBigIntOrZero(tx.amount), tx.tokenAddress)
     const numericAmount = Number(amount)
     const tokenId =
       isConfigEvent || isMultiplierEvent

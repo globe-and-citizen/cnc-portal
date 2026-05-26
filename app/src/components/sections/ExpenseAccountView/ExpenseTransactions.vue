@@ -35,6 +35,7 @@
           size="sm"
           color="primary"
           variant="soft"
+          data-test="expense-transaction-expand-button"
           :aria-label="row.getIsExpanded() ? 'Collapse transaction events' : 'Expand transaction events'"
           @click="row.toggleExpanded()"
         />
@@ -125,6 +126,7 @@ import {
   formatEtherUtil,
   resolveUser,
   log,
+  parseBigIntOrZero,
   resolveTokenIdByAddress,
   tokenSymbol
 } from '@/utils'
@@ -178,14 +180,6 @@ const {
 const loading = computed(() => expenseLoading.value || incomingTokenTransfersLoading.value)
 const hasError = computed(() => Boolean(error.value || incomingTokenTransfersError.value))
 
-const parseAmount = (value: string): bigint => {
-  try {
-    return BigInt(value)
-  } catch {
-    return 0n
-  }
-}
-
 const rawTransactions = computed(() =>
   buildRawExpenseTransactions(result.value, incomingTokenTransfersResult.value)
 )
@@ -196,7 +190,7 @@ const transactions = computed<ExpenseTransaction[]>(() =>
     date: formatExpenseTransactionDate(Number(row.timestamp)),
     from: row.from,
     to: row.to,
-    amount: formatEtherUtil(parseAmount(row.amount), row.tokenAddress),
+    amount: formatEtherUtil(parseBigIntOrZero(row.amount), row.tokenAddress),
     amountUSD: 0,
     tokenAddress: row.tokenAddress,
     token: tokenSymbol(row.tokenAddress) || 'ERC20',

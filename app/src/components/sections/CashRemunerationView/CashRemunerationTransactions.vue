@@ -35,6 +35,7 @@
           size="sm"
           color="primary"
           variant="soft"
+          data-test="cash-remuneration-transaction-expand-button"
           :aria-label="row.getIsExpanded() ? 'Collapse transaction events' : 'Expand transaction events'"
           @click="row.toggleExpanded()"
         />
@@ -105,6 +106,7 @@ import {
   formatCryptoAmount,
   formatCurrencyShort,
   formatEtherUtil,
+  parseBigIntOrZero,
   resolveUser,
   log,
   resolveTokenIdByAddress,
@@ -159,14 +161,6 @@ const {
 
 const loading = computed(() => cashRemunerationLoading.value || incomingTokenTransfersLoading.value)
 
-const parseAmount = (value: string): bigint => {
-  try {
-    return BigInt(value)
-  } catch {
-    return 0n
-  }
-}
-
 const rawTransactions = computed(() =>
   buildRawCashRemunerationTransactions(result.value, incomingTokenTransfersResult.value)
 )
@@ -177,7 +171,7 @@ const transactions = computed<CashRemunerationTransaction[]>(() =>
     date: formatCashRemunerationTransactionDate(Number(row.timestamp)),
     from: row.from,
     to: row.to,
-    amount: formatEtherUtil(parseAmount(row.amount), row.tokenAddress),
+    amount: formatEtherUtil(parseBigIntOrZero(row.amount), row.tokenAddress),
     amountUSD: 0,
     tokenAddress: row.tokenAddress,
     token: tokenSymbol(row.tokenAddress) || 'ERC20',

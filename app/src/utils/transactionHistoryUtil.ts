@@ -2,6 +2,14 @@ import type { GroupedTransactionRow } from '@/types/transaction-history'
 import { useTeamStore, useCurrencyStore } from '@/stores'
 import { TOKEN_ICONS } from '@/utils/constantUtil'
 
+export const parseBigIntOrZero = (value: string): bigint => {
+  try {
+    return BigInt(value)
+  } catch {
+    return 0n
+  }
+}
+
 export const resolveUser = (address: string) => {
   const teamStore = useTeamStore()
   const currencyStore = useCurrencyStore()

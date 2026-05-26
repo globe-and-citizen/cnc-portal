@@ -13,8 +13,25 @@ export const UTableStub = defineComponent({
     columns: { type: Array, required: false },
     loading: { type: Boolean, required: false }
   },
-  template:
-    '<div data-test="expense-table"><slot name="empty" v-if="!data || data.length === 0" /></div>'
+  template: `
+    <div data-test="expense-table" :data-loading="String(Boolean(loading))">
+      <div v-for="(column, index) in columns || []" :key="index" data-test="table-header">
+        {{ column.header }}
+      </div>
+      <template v-if="data && data.length > 0">
+        <div v-for="(row, index) in data" :key="index" data-test="table-row">
+          <span data-test="row-tx-hash">{{ row.txHash }}</span>
+          <span data-test="row-type">{{ row.type }}</span>
+          <span data-test="row-grouped-event-count">{{ row.groupedEventCount ?? 0 }}</span>
+          <span data-test="row-sub-row-count">{{ row.subRows?.length ?? 0 }}</span>
+          <span data-test="row-amount">{{ row.amount }}</span>
+          <span data-test="row-amount-local">{{ row.amountLocal }}</span>
+          <span data-test="row-token">{{ row.token }}</span>
+        </div>
+      </template>
+      <slot v-else name="empty" />
+    </div>
+  `
 })
 
 export const USelectStub = defineComponent({
@@ -24,14 +41,38 @@ export const USelectStub = defineComponent({
     items: { type: Array, required: false }
   },
   emits: ['update:modelValue'],
-  template: '<div data-test="type-filter"></div>'
+  template: `
+    <select
+      data-test="type-filter"
+      :value="modelValue"
+      @change="$emit('update:modelValue', $event.target.value)"
+    >
+      <option
+        v-for="item in items || []"
+        :key="typeof item === 'string' ? item : item.value"
+        :value="typeof item === 'string' ? item : item.value"
+      >
+        {{ typeof item === 'string' ? item : item.label }}
+      </option>
+    </select>
+  `
 })
 
 export const CustomDatePickerStub = defineComponent({
   name: 'CustomDatePicker',
   props: { modelValue: { type: Array, required: false } },
   emits: ['update:modelValue'],
-  template: '<div data-test="date-filter"></div>'
+  template: `
+    <div data-test="date-filter">
+      <button
+        data-test="date-filter-set-2020"
+        @click="$emit('update:modelValue', [new Date('2020-01-01T00:00:00Z'), new Date('2020-01-01T23:59:59Z')])"
+      >
+        set-range
+      </button>
+      <button data-test="date-filter-clear" @click="$emit('update:modelValue', null)">clear-range</button>
+    </div>
+  `
 })
 
 export const AddressToolTipStub = defineComponent({
