@@ -346,44 +346,60 @@ export const getTeamWeeklyClaims = async (req: Request, res: Response) => {
     }
   }
 
+  // Pagination is opt-in: when neither `page` nor `limit` is provided the
+  // controller returns the full set so callers that need every row (e.g. the
+  // claim-history week navigator and the overview cards that aggregate
+  // totals) keep working without change. The Company Payroll table passes
+  // page+limit and gets back a paginated slice. The response shape is
+  // identical in both cases — { data, total } — so clients never have to
+  // discriminate on the response.
+  const hasPaginationParams =
+    req.query.page !== undefined || req.query.limit !== undefined;
+  const page = Math.max(1, Number(req.query.page ?? 1));
+  const limit = Math.min(100, Math.max(1, Number(req.query.limit ?? 10)));
+
   try {
     // authz enforced by requireTeamMember middleware
-    console.log({ teamId, ...memberAddressFilter, ...statusFilter });
+    const where: Prisma.WeeklyClaimWhereInput = {
+      teamId,
+      ...memberAddressFilter,
+      ...statusFilter,
+    };
 
     // Filter directly on WeeklyClaim team/member to avoid leaking other members' records.
-    const weeklyClaims = await prisma.weeklyClaim.findMany({
-      where: {
-        teamId,
-        ...memberAddressFilter,
-        ...statusFilter,
-      },
-      include: {
-        wage: true,
-        claims: {
-          where: {
-            wage: {
-              teamId,
-              ...(filterAddress
-                ? {
-                    userAddress: {
-                      equals: filterAddress,
-                      mode: 'insensitive',
-                    },
-                  }
-                : {}),
+    const [weeklyClaims, total] = await Promise.all([
+      prisma.weeklyClaim.findMany({
+        where,
+        include: {
+          wage: true,
+          claims: {
+            where: {
+              wage: {
+                teamId,
+                ...(filterAddress
+                  ? {
+                      userAddress: {
+                        equals: filterAddress,
+                        mode: 'insensitive',
+                      },
+                    }
+                  : {}),
+              },
+            },
+          },
+          member: {
+            select: {
+              address: true,
+              name: true,
+              imageUrl: true,
             },
           },
         },
-        member: {
-          select: {
-            address: true,
-            name: true,
-            imageUrl: true,
-          },
-        },
-      },
-      orderBy: { weekStart: 'asc' },
-    });
+        orderBy: { weekStart: 'desc' },
+        ...(hasPaginationParams ? { skip: (page - 1) * limit, take: limit } : {}),
+      }),
+      prisma.weeklyClaim.count({ where }),
+    ]);
 
     const weeklyClaimsWithFreshAttachmentUrls = await Promise.all(
       weeklyClaims.map(async (wc) => ({
@@ -415,7 +431,7 @@ export const getTeamWeeklyClaims = async (req: Request, res: Response) => {
       };
     });
 
-    return res.status(200).json(weeklyClaimsWithMinutes);
+    return res.status(200).json({ data: weeklyClaimsWithMinutes, total });
   } catch (error) {
     console.error(error);
     return errorResponse(500, 'Internal Server Error', res);

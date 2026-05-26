@@ -97,6 +97,7 @@ vi.mock('../../utils', async () => {
         findMany: vi.fn(),
         update: vi.fn(),
         findUnique: vi.fn(),
+        count: vi.fn().mockResolvedValue(0),
       },
       teamContract: {
         findFirst: vi.fn(),
@@ -553,6 +554,7 @@ describe('Weekly Claim Controller', () => {
       ];
 
       vi.spyOn(prisma.weeklyClaim, 'findMany').mockResolvedValue(weeklyClaims as any);
+      vi.spyOn(prisma.weeklyClaim, 'count').mockResolvedValue(weeklyClaims.length);
 
       const response = await request(app).get(
         `/?teamId=1&status=pending&memberAddress=${memberAddress}`
@@ -568,11 +570,12 @@ describe('Weekly Claim Controller', () => {
         })
       );
 
-      expect(response.body[0].minutesWorked).toBe(10);
-      expect(response.body[0].claims[0].fileAttachments[0].fileUrl).toBe(
+      expect(response.body.total).toBe(weeklyClaims.length);
+      expect(response.body.data[0].minutesWorked).toBe(10);
+      expect(response.body.data[0].claims[0].fileAttachments[0].fileUrl).toBe(
         'https://fresh-1.example.com'
       );
-      expect(response.body[0].claims[3].fileAttachments[0].fileUrl).toBe(
+      expect(response.body.data[0].claims[3].fileAttachments[0].fileUrl).toBe(
         'https://old2.example.com'
       );
     });
@@ -613,8 +616,8 @@ describe('Weekly Claim Controller', () => {
       const response = await request(app).get(`/?teamId=1&memberAddress=${memberAddress}`);
 
       expect(response.status).toBe(200);
-      expect(response.body[0].member.imageUrl).toBe('https://fresh-member.example.com');
-      expect(response.body[0].claims[0].fileAttachments[0].fileUrl).toBe(
+      expect(response.body.data[0].member.imageUrl).toBe('https://fresh-member.example.com');
+      expect(response.body.data[0].claims[0].fileAttachments[0].fileUrl).toBe(
         'https://fresh-attachment.example.com'
       );
       expect(mockGetPresignedDownloadUrl).toHaveBeenNthCalledWith(
@@ -627,9 +630,50 @@ describe('Weekly Claim Controller', () => {
 
     it('should return 200 for empty claims list', async () => {
       vi.spyOn(prisma.weeklyClaim, 'findMany').mockResolvedValue([] as any);
+      vi.spyOn(prisma.weeklyClaim, 'count').mockResolvedValue(0);
       const response = await request(app).get('/?teamId=1&status=pending');
       expect(response.status).toBe(200);
-      expect(response.body).toEqual([]);
+      expect(response.body).toEqual({ data: [], total: 0 });
+    });
+
+    it('should paginate when page and limit are provided', async () => {
+      vi.spyOn(prisma.weeklyClaim, 'findMany').mockResolvedValue([
+        { ...weeklyClaimFactory({ id: 11 }), claims: [], member: null },
+      ] as any);
+      vi.spyOn(prisma.weeklyClaim, 'count').mockResolvedValue(42);
+
+      const response = await request(app).get('/?teamId=1&page=3&limit=10');
+
+      expect(response.status).toBe(200);
+      expect(response.body.total).toBe(42);
+      expect(response.body.data).toHaveLength(1);
+      expect(prisma.weeklyClaim.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          skip: 20,
+          take: 10,
+          orderBy: { weekStart: 'desc' },
+        })
+      );
+    });
+
+    it('should skip pagination when neither page nor limit is provided', async () => {
+      vi.spyOn(prisma.weeklyClaim, 'findMany').mockResolvedValue([
+        { ...weeklyClaimFactory({ id: 12 }), claims: [], member: null },
+      ] as any);
+      vi.spyOn(prisma.weeklyClaim, 'count').mockResolvedValue(5);
+
+      const response = await request(app).get('/?teamId=1');
+
+      expect(response.status).toBe(200);
+      const findManyCall = vi.mocked(prisma.weeklyClaim.findMany).mock.calls.at(-1)?.[0];
+      expect(findManyCall).not.toHaveProperty('skip');
+      expect(findManyCall).not.toHaveProperty('take');
+    });
+
+    it('should reject invalid pagination params', async () => {
+      const response = await request(app).get('/?teamId=1&page=0');
+      expect(response.status).toBe(400);
+      expect(response.body.message).toContain('Page');
     });
 
     it('should return 500 when list query fails', async () => {
