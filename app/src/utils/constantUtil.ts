@@ -1,4 +1,4 @@
-import { NETWORK, currentChainId, USDC_ADDRESS, USDT_ADDRESS, USDC_E_ADDRESS } from '@/constant'
+import { NETWORK, USDC_ADDRESS, USDT_ADDRESS, USDC_E_ADDRESS } from '@/constant'
 import { zeroAddress, formatEther, parseUnits } from 'viem'
 import type { TokenId } from '@/constant'
 import USDCIcon from '@/assets/usdc.png'
@@ -6,12 +6,17 @@ import MaticIcon from '@/assets/matic-logo.png'
 import EthereumIcon from '@/assets/Ethereum.png'
 
 const TOKEN_ICONS: Partial<Record<TokenId, string>> = {
-  native: currentChainId === 137 || currentChainId === 80002 ? MaticIcon : EthereumIcon,
   usdc: USDCIcon,
   'usdc.e': USDCIcon
 }
 
-export const getTokenIcon = (tokenId: TokenId): string | undefined => TOKEN_ICONS[tokenId]
+export const getTokenIcon = (tokenId: TokenId): string | undefined => {
+  if (tokenId === 'native') {
+    const chainId = parseInt(NETWORK?.chainId ?? '0x0', 16)
+    return chainId === 137 || chainId === 80002 ? MaticIcon : EthereumIcon
+  }
+  return TOKEN_ICONS[tokenId]
+}
 
 const tokenDecimals: Record<TokenId, number> = {
   native: 18,
