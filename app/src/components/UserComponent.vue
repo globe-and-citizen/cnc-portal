@@ -13,7 +13,13 @@
           'h-11 w-11 ring-2 ring-white/50': !isDetailedView
         }"
       >
+        <UIcon
+          v-if="user.icon"
+          :name="user.icon"
+          class="h-full w-full p-1.5 text-primary"
+        />
         <img
+          v-else
           data-test="avatar-image"
           :alt="`${user.name ?? 'Unknown'}'s avatar`"
           :src="
@@ -57,7 +63,7 @@ import { computed } from 'vue'
 import { formatAddress } from '@/utils/formatAddress'
 
 const props = defineProps<{
-  user: Pick<User, 'address' | 'name' | 'imageUrl'> & { role?: string }
+  user: Pick<User, 'address' | 'name' | 'imageUrl'> & { role?: string; icon?: string }
   isCollapsed?: boolean
   isDetailedView?: boolean
 }>()

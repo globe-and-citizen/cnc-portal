@@ -26,17 +26,18 @@
       :loading="loading"
       :get-sub-rows="getSubRows"
       :ui="{ td: 'empty:p-0 group-has-[td:not(:empty)]:border-b border-default' }"
+      :meta="{ class: { tr: (row) => row.depth > 0 ? 'bg-elevated' : '' } }"
     >
       <template #expand-cell="{ row }">
-        <button
+        <UButton
           v-if="row.getCanExpand()"
-          type="button"
-          class="text-muted hover:text-default inline-flex h-6 w-6 items-center justify-center rounded transition"
+          :icon="row.getIsExpanded() ? 'heroicons:chevron-down' : 'heroicons:chevron-right'"
+          size="sm"
+          color="primary"
+          variant="soft"
           :aria-label="row.getIsExpanded() ? 'Collapse transaction events' : 'Expand transaction events'"
           @click="row.toggleExpanded()"
-        >
-          {{ row.getIsExpanded() ? '−' : '+' }}
-        </button>
+        />
       </template>
 
       <template #txHash-cell="{ row: { original: row } }">
@@ -62,19 +63,16 @@
       </template>
 
       <template #from-cell="{ row: { original: row } }">
-        <AddressToolTip :address="row.from" :slice="true" type="address" />
+        <UserComponent :user="resolveUser(row.from)" />
       </template>
 
       <template #to-cell="{ row: { original: row } }">
-        <AddressToolTip :address="row.to" :slice="true" type="address" />
+        <UserComponent :user="resolveUser(row.to)" />
       </template>
 
-      <template #amount-cell="{ row: { original: row } }">
-        {{ formatCryptoAmount(row.amount) }} {{ row.token }}
-      </template>
-
-      <template #valueLocal-cell="{ row: { original: row } }">
-        {{ formatCurrencyShort(row.amountLocal, currencyStore.localCurrency.code) }}
+      <template #value-cell="{ row: { original: row } }">
+        <div>{{ formatCryptoAmount(row.amount) }} {{ row.token }}</div>
+        <div class="text-muted text-xs">{{ formatCurrencyShort(row.amountLocal, currencyStore.localCurrency.code) }}</div>
       </template>
 
       <template #empty>
@@ -94,21 +92,29 @@
         </div>
       </template>
     </UTable>
+    <template #footer>
+      <TransactionTableFooter
+        v-model:page="page"
+        v-model:page-size="pageSize"
+        :total="total"
+        data-test-prefix="expense-transaction"
+      />
+    </template>
   </UCard>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, watch } from 'vue'
 import { type Address } from 'viem'
 import { GRAPHQL_POLL_INTERVAL, NETWORK } from '@/constant'
 import { useQuery } from '@vue/apollo-composable'
 import AddressToolTip from '@/components/AddressToolTip.vue'
+import UserComponent from '@/components/UserComponent.vue'
 import CustomDatePicker from '@/components/CustomDatePicker.vue'
+import TransactionTableFooter from '@/components/TransactionTableFooter.vue'
 import { useCurrencyStore } from '@/stores/currencyStore'
-import type {
-  ExpenseTransactionRow,
-  TransactionHistoryItemRow
-} from '@/types/transaction-history'
+import { useTransactionTable } from '@/composables/transactions/useTransactionTable'
+import type { TransactionHistoryItemRow } from '@/types/transaction-history'
 import type { ExpenseTransaction } from '@/types/transactions'
 import {
   buildRawExpenseTransactions,
@@ -117,7 +123,7 @@ import {
   formatCryptoAmount,
   formatCurrencyShort,
   formatEtherUtil,
-  groupTransactionsByTxHash,
+  resolveUser,
   log,
   resolveTokenIdByAddress,
   tokenSymbol
@@ -198,9 +204,6 @@ const transactions = computed<ExpenseTransaction[]>(() =>
   }))
 )
 
-const dateRange = ref<[Date, Date] | null>(null)
-const selectedType = ref('all')
-
 const enrichedTransactions = computed<TransactionHistoryItemRow[]>(() => {
   return transactions.value.map((tx) => {
     const tokenAddress = String(tx.tokenAddress ?? '').toLowerCase()
@@ -226,40 +229,8 @@ const enrichedTransactions = computed<TransactionHistoryItemRow[]>(() => {
   })
 })
 
-const uniqueTypes = computed(() => {
-  const types = new Set(enrichedTransactions.value.map((tx) => tx.type))
-  return Array.from(types).sort()
-})
-
-const typeOptions = computed(() => [
-  { label: 'All Types', value: 'all' },
-  ...uniqueTypes.value.map((type) => ({ label: type, value: type }))
-])
-
-const filteredTransactions = computed(() => {
-  let filtered = enrichedTransactions.value
-
-  if (dateRange.value) {
-    const [startDate, endDate] = dateRange.value
-    filtered = filtered.filter((tx) => {
-      const txDate = new Date(tx.date)
-      return txDate >= startDate && txDate <= endDate
-    })
-  }
-
-  if (selectedType.value !== 'all') {
-    filtered = filtered.filter((tx) => tx.type === selectedType.value)
-  }
-
-  return filtered
-})
-
-const displayedTransactions = computed<ExpenseTransactionRow[]>(() => {
-  return groupTransactionsByTxHash(filteredTransactions.value)
-})
-
-const expandedRows = ref<Record<string, boolean>>({})
-const getSubRows = (row: ExpenseTransactionRow): ExpenseTransactionRow[] => row.subRows ?? []
+const { dateRange, selectedType, typeOptions, page, pageSize, total, displayedTransactions, expandedRows, getSubRows } =
+  useTransactionTable(enrichedTransactions)
 
 const columns = computed(() => [
   { accessorKey: 'expand', header: '' },
@@ -268,8 +239,7 @@ const columns = computed(() => [
   { accessorKey: 'type', header: 'Type' },
   { accessorKey: 'from', header: 'From' },
   { accessorKey: 'to', header: 'To' },
-  { accessorKey: 'amount', header: 'Amount' },
-  { accessorKey: 'valueLocal', header: `Value (${currencyStore.localCurrency.code})` }
+  { accessorKey: 'value', header: `Value (${currencyStore.localCurrency.code})` }
 ])
 
 watch([error, incomingTokenTransfersError], ([newError, newIncomingTransfersError]) => {
@@ -278,7 +248,4 @@ watch([error, incomingTokenTransfersError], ([newError, newIncomingTransfersErro
   }
 })
 
-watch(filteredTransactions, () => {
-  expandedRows.value = {}
-})
 </script>
