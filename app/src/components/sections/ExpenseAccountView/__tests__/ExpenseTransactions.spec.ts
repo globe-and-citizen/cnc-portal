@@ -81,7 +81,8 @@ const createWrapper = (expenseAddress: Address = EXPENSE_ADDRESS): VueWrapper =>
     }
   })
 
-const getBodyRows = (wrapper: VueWrapper) => wrapper.findAll('tbody[data-slot="tbody"] > tr[data-slot="tr"]')
+const getBodyRows = (wrapper: VueWrapper) =>
+  wrapper.findAll('tbody[data-slot="tbody"] > tr[data-slot="tr"]')
 
 const getTypeFromRow = (row: ReturnType<typeof getBodyRows>[number]) => {
   const typeCell = row.findAll('td')[3]
@@ -141,7 +142,9 @@ describe('ExpenseTransactions', () => {
 
   it('renders selected type filter control', () => {
     wrapper = createWrapper()
-    expect(wrapper.find('[data-test="expense-transaction-history-type-filter"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="expense-transaction-history-type-filter"]').exists()).toBe(
+      true
+    )
   })
 
   it('groups multiple events sharing the same tx hash as sub-rows', async () => {
@@ -155,7 +158,9 @@ describe('ExpenseTransactions', () => {
     await wrapper.find('[data-test="expense-transaction-expand-button"]').trigger('click')
     await nextTick()
 
-    const sharedRows = getBodyRows(wrapper).filter((row) => row.find('[address="0xsharedhash"]').exists())
+    const sharedRows = getBodyRows(wrapper).filter((row) =>
+      row.find('[address="0xsharedhash"]').exists()
+    )
     expect(sharedRows).toHaveLength(2)
   })
 

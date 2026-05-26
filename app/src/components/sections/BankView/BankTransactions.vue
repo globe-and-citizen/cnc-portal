@@ -26,7 +26,7 @@
       :loading="loading"
       :get-sub-rows="getSubRows"
       :ui="{ td: 'empty:p-0 group-has-[td:not(:empty)]:border-b border-default' }"
-      :meta="{ class: { tr: (row) => row.depth > 0 ? 'bg-elevated' : '' } }"
+      :meta="{ class: { tr: (row) => (row.depth > 0 ? 'bg-elevated' : '') } }"
     >
       <template #expand-cell="{ row }">
         <UButton
@@ -36,7 +36,9 @@
           color="primary"
           variant="soft"
           data-test="bank-transaction-expand-button"
-          :aria-label="row.getIsExpanded() ? 'Collapse transaction events' : 'Expand transaction events'"
+          :aria-label="
+            row.getIsExpanded() ? 'Collapse transaction events' : 'Expand transaction events'
+          "
           @click="row.toggleExpanded()"
         />
       </template>
@@ -73,7 +75,9 @@
 
       <template #value-cell="{ row: { original: row } }">
         <div>{{ formatCryptoAmount(row.amount) }} {{ row.token }}</div>
-        <div class="text-muted text-xs">{{ formatCurrencyShort(row.amountLocal, currencyStore.localCurrency.code) }}</div>
+        <div class="text-muted text-xs">
+          {{ formatCurrencyShort(row.amountLocal, currencyStore.localCurrency.code) }}
+        </div>
       </template>
     </UTable>
 
@@ -185,8 +189,17 @@ const enrichedTransactions = computed<BankTransactionRow[]>(() => {
   })
 })
 
-const { dateRange, selectedType, typeOptions, page, pageSize, total, displayedTransactions, expandedRows, getSubRows } =
-  useTransactionTable(enrichedTransactions)
+const {
+  dateRange,
+  selectedType,
+  typeOptions,
+  page,
+  pageSize,
+  total,
+  displayedTransactions,
+  expandedRows,
+  getSubRows
+} = useTransactionTable(enrichedTransactions)
 
 const columns = computed(() => [
   { accessorKey: 'expand', header: '' },

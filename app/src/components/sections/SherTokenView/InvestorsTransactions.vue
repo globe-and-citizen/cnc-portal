@@ -26,7 +26,7 @@
       :loading="loading"
       :get-sub-rows="getSubRows"
       :ui="{ td: 'empty:p-0 group-has-[td:not(:empty)]:border-b border-default' }"
-      :meta="{ class: { tr: (row) => row.depth > 0 ? 'bg-elevated' : '' } }"
+      :meta="{ class: { tr: (row) => (row.depth > 0 ? 'bg-elevated' : '') } }"
     >
       <template #expand-cell="{ row }">
         <UButton
@@ -36,7 +36,9 @@
           color="primary"
           variant="soft"
           data-test="investor-transaction-expand-button"
-          :aria-label="row.getIsExpanded() ? 'Collapse transaction events' : 'Expand transaction events'"
+          :aria-label="
+            row.getIsExpanded() ? 'Collapse transaction events' : 'Expand transaction events'
+          "
           @click="row.toggleExpanded()"
         />
       </template>
@@ -229,8 +231,17 @@ const transactionData = computed<InvestorsTransaction[]>(() =>
   })
 )
 
-const { dateRange, selectedType, typeOptions, page, pageSize, total, displayedTransactions, expandedRows, getSubRows } =
-  useTransactionTable(transactionData)
+const {
+  dateRange,
+  selectedType,
+  typeOptions,
+  page,
+  pageSize,
+  total,
+  displayedTransactions,
+  expandedRows,
+  getSubRows
+} = useTransactionTable(transactionData)
 
 const columns = computed(() => [
   { accessorKey: 'expand', header: '' },
@@ -263,5 +274,4 @@ watch(
     }
   }
 )
-
 </script>

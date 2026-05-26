@@ -13,11 +13,7 @@
           'h-11 w-11 ring-2 ring-white/50': !isDetailedView
         }"
       >
-        <UIcon
-          v-if="user.icon"
-          :name="user.icon"
-          class="h-full w-full p-1.5 text-primary"
-        />
+        <UIcon v-if="user.icon" :name="user.icon" class="text-primary h-full w-full p-1.5" />
         <img
           v-else
           data-test="avatar-image"

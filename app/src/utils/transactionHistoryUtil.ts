@@ -15,7 +15,9 @@ export const resolveUser = (address: string) => {
   const currencyStore = useCurrencyStore()
   const lower = address?.toLowerCase() ?? ''
 
-  const contract = teamStore.currentTeam?.teamContracts?.find((c) => c.address.toLowerCase() === lower)
+  const contract = teamStore.currentTeam?.teamContracts?.find(
+    (c) => c.address.toLowerCase() === lower
+  )
   if (contract) return { name: contract.type, address, icon: 'heroicons:document-text' }
 
   const member = teamStore.currentTeam?.members.find((m) => m.address.toLowerCase() === lower)

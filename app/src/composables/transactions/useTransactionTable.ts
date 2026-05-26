@@ -12,9 +12,7 @@ export const PAGE_SIZE_OPTIONS = [
   { label: '100', value: 100 }
 ]
 
-export const useTransactionTable = <T extends TransactionBase>(
-  transactions: ComputedRef<T[]>
-) => {
+export const useTransactionTable = <T extends TransactionBase>(transactions: ComputedRef<T[]>) => {
   const dateRange = ref<[Date, Date] | null>(null)
   const selectedType = ref('all')
   const page = ref(1)

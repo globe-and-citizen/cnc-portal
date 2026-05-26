@@ -26,7 +26,7 @@
       :loading="loading"
       :get-sub-rows="getSubRows"
       :ui="{ td: 'empty:p-0 group-has-[td:not(:empty)]:border-b border-default' }"
-      :meta="{ class: { tr: (row) => row.depth > 0 ? 'bg-elevated' : '' } }"
+      :meta="{ class: { tr: (row) => (row.depth > 0 ? 'bg-elevated' : '') } }"
     >
       <template #expand-cell="{ row }">
         <UButton
@@ -36,7 +36,9 @@
           color="primary"
           variant="soft"
           data-test="cash-remuneration-transaction-expand-button"
-          :aria-label="row.getIsExpanded() ? 'Collapse transaction events' : 'Expand transaction events'"
+          :aria-label="
+            row.getIsExpanded() ? 'Collapse transaction events' : 'Expand transaction events'
+          "
           @click="row.toggleExpanded()"
         />
       </template>
@@ -51,7 +53,10 @@
 
       <template #type-cell="{ row }">
         <div class="flex items-center gap-2" :class="{ 'pl-4': row.depth > 0 }">
-          <UBadge :color="getCashRemunerationTransactionTypeColor(row.original.type)" variant="soft">
+          <UBadge
+            :color="getCashRemunerationTransactionTypeColor(row.original.type)"
+            variant="soft"
+          >
             {{ row.original.type }}
           </UBadge>
           <span
@@ -73,7 +78,9 @@
 
       <template #value-cell="{ row: { original: row } }">
         <div>{{ formatCryptoAmount(row.amount) }} {{ row.token }}</div>
-        <div class="text-muted text-xs">{{ formatCurrencyShort(row.amountLocal, currencyStore.localCurrency.code) }}</div>
+        <div class="text-muted text-xs">
+          {{ formatCurrencyShort(row.amountLocal, currencyStore.localCurrency.code) }}
+        </div>
       </template>
     </UTable>
     <template #footer>
@@ -211,8 +218,17 @@ const enrichedTransactions = computed<CashRemunerationTransactionRow[]>(() => {
   })
 })
 
-const { dateRange, selectedType, typeOptions, page, pageSize, total, displayedTransactions, expandedRows, getSubRows } =
-  useTransactionTable(enrichedTransactions)
+const {
+  dateRange,
+  selectedType,
+  typeOptions,
+  page,
+  pageSize,
+  total,
+  displayedTransactions,
+  expandedRows,
+  getSubRows
+} = useTransactionTable(enrichedTransactions)
 
 const columns = computed(() => [
   { accessorKey: 'expand', header: '' },
