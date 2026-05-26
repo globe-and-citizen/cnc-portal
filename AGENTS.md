@@ -40,7 +40,7 @@ After cloning: `npm install` in each subproject you'll touch (`app/`, `backend/`
 - `npm run lint` — `eslint . --fix`
 - `npm run format` / `format-check`
 - `npm run test:unit` — Vitest. Single file: `npx vitest run path/to/file.spec.ts`. Single test: append `-t "name"`.
-- `npm run test:e2e` (`:headed`, `:ui`, `:debug`) — Playwright + Synpress. `npm run test:build:cache` prebuilds the MetaMask cache.
+- `npm run test:e2e` (`:headed`, `:ui`, `:debug`) — Playwright. Web3 flows use an in-browser wagmi mock connector (`VITE_E2E=true`); see `app/test/README.md`.
 
 ### Backend (`backend/`)
 

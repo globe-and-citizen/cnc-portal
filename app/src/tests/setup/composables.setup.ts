@@ -12,7 +12,6 @@ import {
   useQueryFn,
   useMutationFn,
   mockUseFetch,
-  mockUseWalletChecks,
   mockUseSubmitRestriction,
   mockUseDeployContract
 } from '@/tests/mocks/composables.mock'
@@ -271,13 +270,12 @@ vi.mock('@/composables/useContractFunctions', async (importOriginal) => {
 })
 
 /**
- * Mock useWalletChecks composable
+ * Mock useSubmitRestriction composable
  */
 vi.mock('@/composables', async (importOriginal) => {
   const actual: object = await importOriginal()
   return {
     ...actual,
-    useWalletChecks: vi.fn(() => mockUseWalletChecks),
     useSubmitRestriction: vi.fn(() => mockUseSubmitRestriction)
   }
 })
