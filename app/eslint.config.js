@@ -136,7 +136,8 @@ export default [
       'src/components/sections/VestingView/forms/CreateVesting.vue',
       'src/components/TableComponent.vue',
       'src/components/sections/DashboardView/forms/ApproveUsersEIP712Form.vue',
-      'src/components/forms/SafeDepositRouterForm.vue'
+      'src/components/forms/SafeDepositRouterForm.vue',
+      'src/queries/__tests__/weeklyClaim.queries.spec.ts'
     ],
     rules: {
       'max-lines': 'off'

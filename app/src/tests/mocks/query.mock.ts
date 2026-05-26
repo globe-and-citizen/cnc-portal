@@ -351,7 +351,8 @@ export const queryMocks: Record<string, () => Record<string, unknown>> = {
   }),
 
   // Weekly Claim queries - weeklyClaim.queries.ts
-  useGetTeamWeeklyClaimsQuery: () => createMockQueryResponse(mockWeeklyClaimData),
+  useGetTeamWeeklyClaimsQuery: () =>
+    createMockQueryResponse({ data: mockWeeklyClaimData, total: mockWeeklyClaimData.length }),
   useGetWeeklyClaimByIdQuery: () => createMockQueryResponse(mockWeeklyClaimData[0]),
   useUpdateWeeklyClaimMutation: () => createMockMutationResponse(),
   useEditClaimMutation: () => createMockMutationResponse(),
