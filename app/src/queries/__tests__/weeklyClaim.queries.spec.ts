@@ -92,12 +92,15 @@ describe('weeklyClaim.queries', () => {
   describe('query hooks', () => {
     it('configures the team weekly claims query and transforms the response', async () => {
       vi.mocked(apiClient.get).mockResolvedValue({
-        data: [
-          createWeeklyClaimResponse({
-            minutesWorked: null,
-            claims: [createClaimResponse({ hoursWorked: 120, minutesWorked: null })]
-          })
-        ]
+        data: {
+          data: [
+            createWeeklyClaimResponse({
+              minutesWorked: null,
+              claims: [createClaimResponse({ hoursWorked: 120, minutesWorked: null })]
+            })
+          ],
+          total: 1
+        }
       })
 
       weeklyClaimQueries.useGetTeamWeeklyClaimsQuery({
@@ -111,9 +114,9 @@ describe('weeklyClaim.queries', () => {
       const options = useQueryFn.mock.calls.at(-1)?.[0] as {
         queryKey: { value: unknown }
         enabled?: () => boolean
-        queryFn: () => Promise<WeeklyClaim[]>
+        queryFn: () => Promise<{ data: WeeklyClaim[]; total: number }>
       }
-      const data = await options.queryFn()
+      const result = await options.queryFn()
 
       expect(options.queryKey.value).toEqual(
         weeklyClaimQueries.weeklyClaimKeys.team(
@@ -130,8 +133,27 @@ describe('weeklyClaim.queries', () => {
           status: 'pending'
         }
       })
-      expect(data[0]?.hoursWorked).toBe(0)
-      expect(data[0]?.minutesWorked).toBe(0)
+      expect(result.total).toBe(1)
+      expect(result.data[0]?.hoursWorked).toBe(0)
+      expect(result.data[0]?.minutesWorked).toBe(0)
+    })
+
+    it('forwards pagination params and exposes them in the query key', async () => {
+      vi.mocked(apiClient.get).mockResolvedValue({ data: { data: [], total: 0 } })
+      weeklyClaimQueries.useGetTeamWeeklyClaimsQuery({
+        queryParams: { teamId: 'team-9', page: 2, limit: 25 }
+      })
+      const options = useQueryFn.mock.calls.at(-1)?.[0] as {
+        queryKey: { value: unknown }
+        queryFn: () => Promise<unknown>
+      }
+      await options.queryFn()
+      expect(options.queryKey.value).toEqual(
+        weeklyClaimQueries.weeklyClaimKeys.team('team-9', undefined, undefined, 2, 25)
+      )
+      expect(apiClient.get).toHaveBeenCalledWith('weeklyClaim/', {
+        params: { teamId: 'team-9', page: 2, limit: 25 }
+      })
     })
 
     it('configures the weekly claim detail query and supports disabled state', async () => {
