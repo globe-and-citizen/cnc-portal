@@ -12,7 +12,7 @@ export const ENV_LIST = ['VITE_APP_BACKEND_URL', 'VITE_APP_NETWORK_ALIAS']
 const SUPPORTED_NETWORKS = ['sepolia', 'hardhat', 'amoy', 'polygon']
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }) => {
+export default defineConfig(async ({ mode }) => {
   // Validate .env file
   const env = loadEnv(mode, process.cwd(), '')
 
@@ -43,6 +43,23 @@ export default defineConfig(({ mode }) => {
 
   if (!process.env.CI) {
     plugins.push(vueDevTools())
+  }
+
+  // In E2E mode, instrument source files so Playwright can collect coverage
+  // via `window.__coverage__`. Imported dynamically so the devDep isn't
+  // required for prod/dev builds — Railway and other prod-only installs
+  // (`npm ci --omit=dev`) would fail otherwise.
+  if (process.env.VITE_E2E === 'true') {
+    const { default: istanbul } = await import('vite-plugin-istanbul')
+    plugins.push(
+      istanbul({
+        include: 'src/**/*',
+        exclude: ['node_modules', 'test/', 'src/e2e/**'],
+        extension: ['.js', '.ts', '.vue'],
+        requireEnv: false,
+        cypress: false
+      })
+    )
   }
 
   const isProd = mode === 'production'
@@ -113,6 +130,13 @@ export default defineConfig(({ mode }) => {
     server: {
       host: true,
       port: 5173
+    },
+    optimizeDeps: {
+      // Pre-bundle in the initial pass so Vite never re-optimizes mid-session.
+      // `viem/accounts` is pulled in only by the e2e mock connector and would
+      // otherwise be discovered late, triggering an "Outdated Optimize Dep"
+      // reload that breaks Playwright runs against a cold dev server.
+      include: ['viem/accounts']
     },
     build: {
       // 'hidden' generates source maps but does NOT reference them in the
