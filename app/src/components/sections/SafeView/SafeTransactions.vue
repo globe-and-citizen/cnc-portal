@@ -10,7 +10,7 @@
     </template>
 
     <UTable
-      :data="filteredTransactions"
+      :data="displayedTransactions"
       :columns="[
         { accessorKey: 'method', header: 'Method' },
         { accessorKey: 'to', header: 'To' },
@@ -23,7 +23,7 @@
       data-test="safe-transactions-table"
     >
       <template #to-cell="{ row: { original: row } }">
-        <AddressToolTip :address="row.to" slice />
+        <UserComponent :user="resolveUser(row.to)" />
       </template>
 
       <template #value-cell="{ row: { original: row } }">
@@ -94,6 +94,15 @@
     </UTable>
 
     <!-- Conflicting Transaction Warning Modal -->
+    <template #footer>
+      <TransactionTableFooter
+        v-model:page="page"
+        v-model:page-size="pageSize"
+        :total="total"
+        data-test-prefix="safe-transaction"
+      />
+    </template>
+
     <SafeTransactionsWarning
       v-if="showConflictWarning"
       v-model="showConflictWarning"
@@ -113,10 +122,12 @@
 
 <script setup lang="ts">
 import { watch, computed, ref } from 'vue'
+import TransactionTableFooter from '@/components/TransactionTableFooter.vue'
 import type { SafeTransaction } from '@/types/safe'
 
 // Components
 import AddressToolTip from '@/components/AddressToolTip.vue'
+import UserComponent from '@/components/UserComponent.vue'
 import SafeTransactionsWarning from './SafeTransactionsWarning.vue'
 import SafeTransactionDetailsModal from './SafeTransactionDetailsModal.vue'
 
@@ -129,7 +140,7 @@ import SafeTransactionStatusFilter, {
 } from '@/components/sections/SafeView/SafeTransactionStatusFilter.vue'
 import { type Address } from 'viem'
 
-import { formatSafeTransactionValue, getSafeTransactionMethod, log } from '@/utils'
+import { formatSafeTransactionValue, getSafeTransactionMethod, resolveUser, log } from '@/utils'
 import { useUserDataStore } from '@/stores'
 
 const userDataStore = useUserDataStore()
@@ -142,6 +153,9 @@ const props = defineProps<Props>()
 
 // Status filtering
 const selectedStatus = ref<SafeTransactionStatus>('all')
+
+const page = ref(1)
+const pageSize = ref(20)
 
 const showDetailsModal = ref(false)
 const selectedTransactionForDetails = ref<SafeTransaction | null>(null)
@@ -259,8 +273,26 @@ const canExecute = (transaction: SafeTransaction): boolean => {
   return confirmations >= required
 }
 
+const total = computed(() => filteredTransactions.value.length)
+const displayedTransactions = computed(() => {
+  const start = (page.value - 1) * pageSize.value
+  return filteredTransactions.value.slice(start, start + pageSize.value)
+})
+
+watch(pageSize, () => {
+  page.value = 1
+})
+
+watch(filteredTransactions, (transactionsList) => {
+  const maxPage = Math.max(1, Math.ceil(transactionsList.length / pageSize.value))
+  if (page.value > maxPage) {
+    page.value = maxPage
+  }
+})
+
 const handleStatusChange = (status: SafeTransactionStatus) => {
   selectedStatus.value = status
+  page.value = 1
 }
 
 const handleViewDetailsClick = (transaction: SafeTransaction) => {
