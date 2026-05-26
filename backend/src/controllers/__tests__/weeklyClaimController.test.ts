@@ -577,6 +577,54 @@ describe('Weekly Claim Controller', () => {
       );
     });
 
+    it('should refresh embedded member profile images alongside attachment URLs', async () => {
+      const memberAddress = '0x000000000000000000000000000000000000dEaD';
+
+      mockGetPresignedDownloadUrl
+        .mockResolvedValueOnce('https://fresh-member.example.com')
+        .mockResolvedValueOnce('https://fresh-attachment.example.com');
+
+      vi.spyOn(prisma.weeklyClaim, 'findMany').mockResolvedValue([
+        {
+          ...weeklyClaimFactory({ id: 2, memberAddress, status: 'pending' }),
+          member: {
+            address: memberAddress,
+            name: 'Achille',
+            imageUrl: 'https://storage.example.com/profiles/member-avatar.png?signature=expired',
+          },
+          claims: [
+            {
+              id: 201,
+              hoursWorked: 0,
+              minutesWorked: 60,
+              fileAttachments: [
+                {
+                  fileKey: 'attachments/claim-proof.png',
+                  fileUrl: 'https://old-attachment.example.com',
+                  fileType: 'image/png',
+                  fileSize: 42,
+                },
+              ],
+            },
+          ],
+        },
+      ] as any);
+
+      const response = await request(app).get(`/?teamId=1&memberAddress=${memberAddress}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body[0].member.imageUrl).toBe('https://fresh-member.example.com');
+      expect(response.body[0].claims[0].fileAttachments[0].fileUrl).toBe(
+        'https://fresh-attachment.example.com'
+      );
+      expect(mockGetPresignedDownloadUrl).toHaveBeenNthCalledWith(
+        1,
+        'profiles/member-avatar.png',
+        604800
+      );
+      expect(mockGetPresignedDownloadUrl).toHaveBeenNthCalledWith(2, 'attachments/claim-proof.png');
+    });
+
     it('should return 200 for empty claims list', async () => {
       vi.spyOn(prisma.weeklyClaim, 'findMany').mockResolvedValue([] as any);
       const response = await request(app).get('/?teamId=1&status=pending');

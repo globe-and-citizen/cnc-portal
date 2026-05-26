@@ -9,6 +9,7 @@ import {
 } from '../utils/cashRemunerationUtil';
 import publicClient from '../utils/viem.config';
 import { refreshAttachmentUrls } from '../services/attachmentService';
+import { resolveStorageImageUrl } from '../utils/profileImage.util';
 
 // EIP-712 typed-data envelope for the WageClaim signature, mirroring the
 // frontend definition in app/src/components/sections/CashRemunerationView/
@@ -387,6 +388,12 @@ export const getTeamWeeklyClaims = async (req: Request, res: Response) => {
     const weeklyClaimsWithFreshAttachmentUrls = await Promise.all(
       weeklyClaims.map(async (wc) => ({
         ...wc,
+        member: wc.member
+          ? {
+              ...wc.member,
+              imageUrl: await resolveStorageImageUrl(wc.member.imageUrl),
+            }
+          : wc.member,
         claims: await Promise.all(
           wc.claims.map(async (claim) => ({
             ...claim,
