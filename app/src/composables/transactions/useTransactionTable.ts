@@ -66,6 +66,10 @@ export const useTransactionTable = <T extends TransactionBase>(transactions: Com
     expandedRows.value = {}
   })
 
+  watch(page, () => {
+    expandedRows.value = {}
+  })
+
   watch(pageSize, () => {
     page.value = 1
   })

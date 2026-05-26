@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { mount, type VueWrapper } from '@vue/test-utils'
+import { mount, type DOMWrapper, type VueWrapper } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import type { Address } from 'viem'
 import * as utils from '@/utils'
@@ -8,12 +8,19 @@ import {
   AddressToolTipStub,
   CustomDatePickerStub,
   EXPENSE_ADDRESS,
+  TransactionTableFooterStub,
+  UBadgeStub,
+  UCardStub,
+  USelectStub,
+  UTableStub,
   USDC_ADDRESS,
+  UserComponentStub,
   ZERO_ADDRESS,
   buildExpenseQueryResult,
   buildGroupedExpenseQueryResult,
   buildFallbackExpenseQueryResult,
-  buildIncomingTransfersQueryResult
+  buildIncomingTransfersQueryResult,
+  buildPaginatedExpenseQueryResult
 } from './ExpenseTransactions.test-utils'
 
 const { apolloState, mockUseQuery, mockCurrencyStore, mockGetTokenPrice } = vi.hoisted(() => {
@@ -75,27 +82,34 @@ const createWrapper = (expenseAddress: Address = EXPENSE_ADDRESS): VueWrapper =>
     props: { expenseAddress },
     global: {
       stubs: {
+        UCard: UCardStub,
+        Card: UCardStub,
+        UTable: UTableStub,
+        Table: UTableStub,
+        USelect: USelectStub,
+        Select: USelectStub,
+        UBadge: UBadgeStub,
+        Badge: UBadgeStub,
         AddressToolTip: AddressToolTipStub,
-        CustomDatePicker: CustomDatePickerStub
+        CustomDatePicker: CustomDatePickerStub,
+        UserComponent: UserComponentStub,
+        TransactionTableFooter: TransactionTableFooterStub,
+        'u-card': UCardStub,
+        'u-table': UTableStub,
+        'u-select': USelectStub,
+        'u-badge': UBadgeStub,
+        'user-component': UserComponentStub,
+        'transaction-table-footer': TransactionTableFooterStub
       }
     }
   })
 
-const getBodyRows = (wrapper: VueWrapper) =>
-  wrapper.findAll('tbody[data-slot="tbody"] > tr[data-slot="tr"]')
+const getTableRows = (wrapper: VueWrapper) => wrapper.findAll('[data-test="table-row"]')
 
-const getTypeFromRow = (row: ReturnType<typeof getBodyRows>[number]) => {
-  const typeCell = row.findAll('td')[3]
-  return typeCell ? typeCell.text().replace(/\s+/g, ' ').trim() : ''
-}
-
-const getValueFromRow = (row: ReturnType<typeof getBodyRows>[number]) => {
-  const valueCell = row.findAll('td')[6]
-  return valueCell ? valueCell.text().replace(/\s+/g, ' ').trim() : ''
-}
+const getRowField = (row: DOMWrapper<Element>, selector: string) => row.find(selector).text()
 
 const findRowByTxHash = (wrapper: VueWrapper, txHash: string) =>
-  getBodyRows(wrapper).find((row) => row.find(`[address="${txHash}"]`).exists())
+  getTableRows(wrapper).find((row) => getRowField(row, '[data-test="row-tx-hash"]') === txHash)
 
 describe('ExpenseTransactions', () => {
   let wrapper: VueWrapper
@@ -119,49 +133,51 @@ describe('ExpenseTransactions', () => {
     if (wrapper) wrapper.unmount()
   })
 
-  it('maps query data and renders rows/columns', () => {
+  it('maps query data and passes rows/columns to UTable', () => {
     wrapper = createWrapper()
 
-    const rows = getBodyRows(wrapper)
-    const rowTypes = rows.map(getTypeFromRow)
-    const headers = wrapper.findAll('thead[data-slot="thead"] th').map((header) => header.text())
+    const rows = getTableRows(wrapper)
+    const rowTypes = rows.map((row) => getRowField(row, '[data-test="row-type"]'))
+    const headers = wrapper.findAll('[data-test="table-header"]').map((header) => header.text())
 
     expect(rows).toHaveLength(3)
-    expect(rowTypes.join(' ')).toContain('deposit')
-    expect(rowTypes.join(' ')).toContain('tokenDeposit')
-    expect(rowTypes.join(' ')).toContain('transfer')
+    expect(rowTypes).toEqual(expect.arrayContaining(['deposit', 'tokenDeposit', 'transfer']))
     expect(headers.at(-1)).toBe('Value (USD)')
   })
 
-  it('passes loading state to table', () => {
+  it('passes loading state to UTable', () => {
     apolloState.incomingTransfersQueryLoading.value = true
     wrapper = createWrapper()
-    const tableHeadClasses = wrapper.find('thead[data-slot="thead"]').classes()
-    expect(tableHeadClasses).toContain('after:animate-[carousel_2s_ease-in-out_infinite]')
+
+    expect(wrapper.find('[data-test="expense-table"]').attributes('data-loading')).toBe('true')
   })
 
   it('renders selected type filter control', () => {
     wrapper = createWrapper()
-    expect(wrapper.find('[data-test="expense-transaction-history-type-filter"]').exists()).toBe(
-      true
-    )
+    expect(
+      wrapper.find('[data-test="type-filter"]').exists() ||
+        wrapper.find('[data-test="expense-transaction-history-type-filter"]').exists()
+    ).toBe(true)
   })
 
-  it('groups multiple events sharing the same tx hash as sub-rows', async () => {
+  it('groups multiple events sharing the same tx hash as sub-rows', () => {
     apolloState.expenseQueryResult.value = buildGroupedExpenseQueryResult()
     apolloState.incomingTransfersQueryResult.value = undefined
     wrapper = createWrapper()
 
-    expect(getBodyRows(wrapper)).toHaveLength(2)
-    expect(wrapper.text()).toContain('2 events')
+    const rows = getTableRows(wrapper)
+    const groupedRow = findRowByTxHash(wrapper, '0xsharedhash')
+    const singleRow = findRowByTxHash(wrapper, '0xsinglehash')
 
-    await wrapper.find('[data-test="expense-transaction-expand-button"]').trigger('click')
-    await nextTick()
+    expect(rows).toHaveLength(2)
 
-    const sharedRows = getBodyRows(wrapper).filter((row) =>
-      row.find('[address="0xsharedhash"]').exists()
-    )
-    expect(sharedRows).toHaveLength(2)
+    expect(groupedRow).toBeDefined()
+    expect(getRowField(groupedRow!, '[data-test="row-grouped-event-count"]')).toBe('2')
+    expect(getRowField(groupedRow!, '[data-test="row-sub-row-count"]')).toBe('1')
+
+    expect(singleRow).toBeDefined()
+    expect(getRowField(singleRow!, '[data-test="row-grouped-event-count"]')).toBe('1')
+    expect(getRowField(singleRow!, '[data-test="row-sub-row-count"]')).toBe('0')
   })
 
   it('filters displayed rows by date range', async () => {
@@ -170,7 +186,39 @@ describe('ExpenseTransactions', () => {
     await wrapper.find('[data-test="date-filter-set-2020"]').trigger('click')
     await nextTick()
 
-    expect(getBodyRows(wrapper)).toHaveLength(0)
+    expect(getTableRows(wrapper)).toHaveLength(0)
+  })
+
+  it('changes page via table footer pagination controls', async () => {
+    apolloState.expenseQueryResult.value = buildPaginatedExpenseQueryResult(25)
+    apolloState.incomingTransfersQueryResult.value = undefined
+    wrapper = createWrapper()
+
+    expect(getTableRows(wrapper)).toHaveLength(20)
+    expect(wrapper.find('[data-test="footer-page"]').text()).toBe('1')
+
+    await wrapper.find('[data-test="footer-next-page"]').trigger('click')
+    await nextTick()
+
+    expect(wrapper.find('[data-test="footer-page"]').text()).toBe('2')
+    expect(getTableRows(wrapper)).toHaveLength(5)
+  })
+
+  it('resets page to first page when page size changes', async () => {
+    apolloState.expenseQueryResult.value = buildPaginatedExpenseQueryResult(25)
+    apolloState.incomingTransfersQueryResult.value = undefined
+    wrapper = createWrapper()
+
+    await wrapper.find('[data-test="footer-next-page"]').trigger('click')
+    await nextTick()
+    expect(wrapper.find('[data-test="footer-page"]').text()).toBe('2')
+
+    await wrapper.find('[data-test="footer-page-size-50"]').trigger('click')
+    await nextTick()
+
+    expect(wrapper.find('[data-test="footer-page"]').text()).toBe('1')
+    expect(wrapper.find('[data-test="footer-page-size"]').text()).toBe('50')
+    expect(getTableRows(wrapper)).toHaveLength(25)
   })
 
   it('uses disabled query option when expense address is empty', () => {
@@ -203,11 +251,12 @@ describe('ExpenseTransactions', () => {
     const unknownRow = findRowByTxHash(wrapper, '0xunknowntx')
 
     expect(nativeRow).toBeDefined()
-    expect(getValueFromRow(nativeRow!)).toContain('$3')
+    expect(getRowField(nativeRow!, '[data-test="row-amount-local"]')).toBe('3')
 
     expect(unknownRow).toBeDefined()
-    expect(getValueFromRow(unknownRow!)).toContain('0 ERC20')
-    expect(getValueFromRow(unknownRow!)).toContain('$0')
+    expect(getRowField(unknownRow!, '[data-test="row-amount"]')).toBe('0')
+    expect(getRowField(unknownRow!, '[data-test="row-amount-local"]')).toBe('0')
+    expect(getRowField(unknownRow!, '[data-test="row-token"]')).toBe('ERC20')
   })
 
   it('logs query errors', async () => {

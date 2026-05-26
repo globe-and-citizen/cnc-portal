@@ -3,7 +3,7 @@ import type { Address } from 'viem'
 
 export const UCardStub = defineComponent({
   name: 'UCard',
-  template: '<div><slot name="header" /><slot /></div>'
+  template: '<div><slot name="header" /><slot /><slot name="footer" /></div>'
 })
 
 export const UTableStub = defineComponent({
@@ -83,6 +83,34 @@ export const AddressToolTipStub = defineComponent({
 export const UBadgeStub = defineComponent({
   name: 'UBadge',
   template: '<span><slot /></span>'
+})
+
+export const UserComponentStub = defineComponent({
+  name: 'UserComponent',
+  props: {
+    user: { type: Object, required: false }
+  },
+  template: '<div data-test="user-component-stub">{{ user?.name }}</div>'
+})
+
+export const TransactionTableFooterStub = defineComponent({
+  name: 'TransactionTableFooter',
+  props: {
+    page: { type: Number, required: false },
+    pageSize: { type: Number, required: false },
+    total: { type: Number, required: false },
+    dataTestPrefix: { type: String, required: false }
+  },
+  emits: ['update:page', 'update:pageSize'],
+  template: `
+    <div data-test="transaction-table-footer">
+      <span data-test="footer-page">{{ page }}</span>
+      <span data-test="footer-page-size">{{ pageSize }}</span>
+      <span data-test="footer-total">{{ total }}</span>
+      <button data-test="footer-next-page" @click="$emit('update:page', (page ?? 1) + 1)">next-page</button>
+      <button data-test="footer-page-size-50" @click="$emit('update:pageSize', 50)">page-size-50</button>
+    </div>
+  `
 })
 
 export const EXPENSE_ADDRESS = '0x1111111111111111111111111111111111111111' as Address
@@ -210,6 +238,27 @@ export const buildGroupedExpenseQueryResult = () => ({
       }
     ]
   },
+  expenseTokenTransfers: { items: [] },
+  expenseApprovals: { items: [] },
+  expenseOwnerTreasuryWithdrawNatives: { items: [] },
+  expenseOwnerTreasuryWithdrawTokens: { items: [] },
+  expenseTokenSupportAddeds: { items: [] },
+  expenseTokenSupportRemoveds: { items: [] },
+  expenseTokenAddressChangeds: { items: [] }
+})
+
+export const buildPaginatedExpenseQueryResult = (count: number) => ({
+  expenseDeposits: {
+    items: Array.from({ length: count }, (_, index) => ({
+      id: `0xpaginated${index}-0`,
+      contractAddress: EXPENSE_ADDRESS,
+      depositor: '0x2222222222222222222222222222222222222222',
+      amount: '1000000000000000000',
+      timestamp: 1_700_000_000 + index
+    }))
+  },
+  expenseTokenDeposits: { items: [] },
+  expenseTransfers: { items: [] },
   expenseTokenTransfers: { items: [] },
   expenseApprovals: { items: [] },
   expenseOwnerTreasuryWithdrawNatives: { items: [] },

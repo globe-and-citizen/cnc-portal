@@ -279,6 +279,17 @@ const displayedTransactions = computed(() => {
   return filteredTransactions.value.slice(start, start + pageSize.value)
 })
 
+watch(pageSize, () => {
+  page.value = 1
+})
+
+watch(filteredTransactions, (transactionsList) => {
+  const maxPage = Math.max(1, Math.ceil(transactionsList.length / pageSize.value))
+  if (page.value > maxPage) {
+    page.value = maxPage
+  }
+})
+
 const handleStatusChange = (status: SafeTransactionStatus) => {
   selectedStatus.value = status
   page.value = 1

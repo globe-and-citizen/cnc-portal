@@ -4,7 +4,8 @@ import {
   getTokenAddress,
   isSupportedTokenId,
   isValidPositiveTokenAmount,
-  resolveTokenIdByAddress
+  resolveTokenIdByAddress,
+  tokenSymbol
 } from '../constantUtil'
 
 describe('constantUtil', () => {
@@ -28,5 +29,18 @@ describe('constantUtil', () => {
     if (!usdtAddress) return
 
     expect(resolveTokenIdByAddress(usdtAddress.toUpperCase())).toBe('usdt')
+  })
+
+  it('resolves token symbol using supported tokens as source of truth', () => {
+    const usdcAddress = getTokenAddress('usdc')
+    const usdceAddress = getTokenAddress('usdc.e')
+    expect(usdcAddress).toBeDefined()
+    expect(usdceAddress).toBeDefined()
+    if (!usdcAddress || !usdceAddress) return
+
+    expect(tokenSymbol(usdcAddress)).toBe('USDC')
+    expect(tokenSymbol(usdceAddress)).toBe('USDC.e')
+    expect(tokenSymbol(zeroAddress)).not.toBe('')
+    expect(tokenSymbol('0x1111111111111111111111111111111111111111')).toBe('')
   })
 })

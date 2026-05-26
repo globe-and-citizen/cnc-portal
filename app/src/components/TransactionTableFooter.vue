@@ -12,6 +12,7 @@
       :page="page"
       :total="total"
       :items-per-page="pageSize"
+      :data-test="dataTestPrefix ? `${dataTestPrefix}-pagination` : undefined"
       @update:page="$emit('update:page', $event)"
     />
   </div>

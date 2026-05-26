@@ -1,6 +1,6 @@
 import type { GroupedTransactionRow } from '@/types/transaction-history'
 import { useTeamStore, useCurrencyStore } from '@/stores'
-import { TOKEN_ICONS } from '@/utils/constantUtil'
+import { getTokenIcon } from '@/utils/constantUtil'
 
 export const parseBigIntOrZero = (value: string): bigint => {
   try {
@@ -24,7 +24,13 @@ export const resolveUser = (address: string) => {
   if (member) return member
 
   const token = currencyStore.supportedTokens.find((t) => t.address.toLowerCase() === lower)
-  if (token) return { name: token.symbol, address, imageUrl: TOKEN_ICONS[token.symbol] }
+  if (token) {
+    return {
+      name: token.symbol,
+      address,
+      imageUrl: getTokenIcon(token.id)
+    }
+  }
 
   return { name: 'User', address }
 }
