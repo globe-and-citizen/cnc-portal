@@ -353,10 +353,13 @@ export const getTeamWeeklyClaims = async (req: Request, res: Response) => {
   // page+limit and gets back a paginated slice. The response shape is
   // identical in both cases — { data, total } — so clients never have to
   // discriminate on the response.
-  const hasPaginationParams =
-    req.query.page !== undefined || req.query.limit !== undefined;
-  const page = Math.max(1, Number(req.query.page ?? 1));
-  const limit = Math.min(100, Math.max(1, Number(req.query.limit ?? 10)));
+  // Zod (validateQuery) has already coerced and bounded these:
+  // page is undefined or an integer >= 1; limit is undefined or in [1, 100].
+  const queryPage = req.query.page as number | undefined;
+  const queryLimit = req.query.limit as number | undefined;
+  const hasPaginationParams = queryPage !== undefined || queryLimit !== undefined;
+  const page = queryPage ?? 1;
+  const limit = queryLimit ?? 10;
 
   try {
     // authz enforced by requireTeamMember middleware
@@ -401,13 +404,26 @@ export const getTeamWeeklyClaims = async (req: Request, res: Response) => {
       prisma.weeklyClaim.count({ where }),
     ]);
 
+    // Dedupe presigned-URL lookups: the same member often appears on many
+    // rows (e.g. a single user's claim history), so cache the resolved URL
+    // per address to avoid re-signing the same avatar N times per response.
+    const memberImageUrlCache = new Map<string, Promise<string | null | undefined>>();
+    const resolveMemberImageUrl = (address: string, imageUrl: string | null | undefined) => {
+      let cached = memberImageUrlCache.get(address);
+      if (!cached) {
+        cached = resolveStorageImageUrl(imageUrl);
+        memberImageUrlCache.set(address, cached);
+      }
+      return cached;
+    };
+
     const weeklyClaimsWithFreshAttachmentUrls = await Promise.all(
       weeklyClaims.map(async (wc) => ({
         ...wc,
         member: wc.member
           ? {
               ...wc.member,
-              imageUrl: await resolveStorageImageUrl(wc.member.imageUrl),
+              imageUrl: await resolveMemberImageUrl(wc.member.address, wc.member.imageUrl),
             }
           : wc.member,
         claims: await Promise.all(
