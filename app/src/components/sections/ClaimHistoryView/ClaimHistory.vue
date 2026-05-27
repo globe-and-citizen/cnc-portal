@@ -77,7 +77,7 @@ const { data: teamWageData } = useGetTeamWagesQuery({
 })
 
 const selectWeekWeelyClaim = computed(() => {
-  return memberWeeklyClaims.value?.data.find(
+  return memberWeeklyClaims.value?.data?.find(
     (weeklyClaim) => weeklyClaim.weekStart === selectedMonthObject.value.isoString
   )
 })

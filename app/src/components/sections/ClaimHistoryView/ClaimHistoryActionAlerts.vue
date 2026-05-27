@@ -159,7 +159,7 @@ const claimSubmitMessage = computed(() => {
 const signedWeekStarts = computed(() => {
   return (
     memberWeeklyClaims.value?.data
-      .filter((weeklyClaim) => weeklyClaim.status === 'signed' || weeklyClaim.signature)
+      ?.filter((weeklyClaim) => weeklyClaim.status === 'signed' || weeklyClaim.signature)
       .map((weeklyClaim) => weeklyClaim.weekStart) ?? []
   )
 })
