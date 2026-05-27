@@ -2,15 +2,30 @@
   <div class="space-y-4">
     <UPageCard variant="subtle">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-        <h3 class="font-semibold text-black dark:text-white">
-          Income Statement
-        </h3>
-        <USelect
-          v-model="period"
-          :items="periodOptions"
-          class="w-44"
-          size="sm"
-        />
+        <div>
+          <h3 class="font-semibold text-black dark:text-white">
+            Income Statement
+          </h3>
+          <p class="text-sm text-muted mt-0.5">
+            {{ accountingPeriod.label }}
+          </p>
+        </div>
+        <div class="flex items-center gap-2 flex-wrap">
+          <USelect
+            v-model="periodPreset"
+            :items="periodPresetOptions"
+            class="w-32"
+            size="sm"
+          />
+          <UInput
+            v-if="showAnchorPicker"
+            v-model="periodAnchor"
+            type="date"
+            :max="todayStr"
+            class="w-36"
+            size="sm"
+          />
+        </div>
       </div>
 
       <div v-if="!hasAddress" class="text-muted text-center py-8">
@@ -109,11 +124,11 @@
 
     <UPageCard v-if="hasAddress" variant="subtle">
       <h3 class="font-semibold text-black dark:text-white mb-4">
-        Realized trades · {{ statement.realizedTrades.length }}
+        Realized trades · {{ totalTrades }}
       </h3>
 
       <UTable
-        :data="statement.realizedTrades"
+        :data="pagedTrades"
         :columns="columns"
         :loading="isLoading"
         :ui="{
@@ -167,13 +182,30 @@
           </span>
         </template>
       </UTable>
+
+      <div
+        v-if="totalTrades > pageSize"
+        class="mt-4 flex justify-end border-t border-default pt-4"
+      >
+        <UPagination
+          v-model:page="currentPage"
+          :items-per-page="pageSize"
+          :total="totalTrades"
+          :sibling-count="1"
+          show-edges
+          color="neutral"
+          variant="outline"
+        />
+      </div>
     </UPageCard>
   </div>
 </template>
 
 <script setup lang="ts">
 import { format } from 'date-fns'
+import { computed, ref, watch } from 'vue'
 import type { PolymarketActivity, PolymarketPosition } from '~/types/polymarket'
+import { useAccountingPeriod } from '~/composables/useAccountingPeriod'
 import { formatSignedUsd, formatUsd, type LedgerCategoryColor, signClass } from '~/utils/accounting'
 import { buildIncomeStatement, type RealizedTradeKind } from '~/utils/incomeStatement'
 
@@ -182,45 +214,43 @@ const props = defineProps<{
   positions: PolymarketPosition[]
   isLoading: boolean
   hasAddress: boolean
+  walletAddress: string
 }>()
 
-type Period = 'ALL' | 'YTD' | 'MONTH' | 'M30'
+const pageSize = 20
+const currentPage = ref(1)
 
-const period = ref<Period>('ALL')
+const {
+  todayStr,
+  preset: periodPreset,
+  anchorDateStr: periodAnchor,
+  range: accountingPeriod,
+  showAnchorPicker,
+  presetOptions: periodPresetOptions
+} = useAccountingPeriod()
 
-const periodOptions = [
-  { label: 'All time', value: 'ALL' as const },
-  { label: 'Year to date', value: 'YTD' as const },
-  { label: 'This month', value: 'MONTH' as const },
-  { label: 'Last 30 days', value: 'M30' as const }
-]
-
-const range = computed<{ start?: number, end?: number }>(() => {
-  const now = Math.floor(Date.now() / 1000)
-  const nowDate = new Date()
-  switch (period.value) {
-    case 'YTD':
-      return { start: Math.floor(new Date(nowDate.getFullYear(), 0, 1).getTime() / 1000), end: now }
-    case 'MONTH':
-      return { start: Math.floor(new Date(nowDate.getFullYear(), nowDate.getMonth(), 1).getTime() / 1000), end: now }
-    case 'M30':
-      return { start: now - 30 * 24 * 60 * 60, end: now }
-    default:
-      return { start: undefined, end: undefined }
-  }
+watch([() => props.walletAddress, accountingPeriod], () => {
+  currentPage.value = 1
 })
 
 const statement = computed(() =>
   buildIncomeStatement({
     activities: props.activities,
     positions: props.positions,
-    periodStart: range.value.start,
-    periodEnd: range.value.end
+    periodStart: accountingPeriod.value.start,
+    periodEnd: accountingPeriod.value.end
   })
 )
 
 /** Reconciled when the lot accounting matches Polymarket's reported figure. */
 const isReconciled = computed(() => Math.abs(statement.value.reconciliationGap) < 1)
+
+const totalTrades = computed(() => statement.value.realizedTrades.length)
+
+const pagedTrades = computed(() => {
+  const start = (currentPage.value - 1) * pageSize
+  return statement.value.realizedTrades.slice(start, start + pageSize)
+})
 
 const columns = [
   { accessorKey: 'date', header: 'Date' },
