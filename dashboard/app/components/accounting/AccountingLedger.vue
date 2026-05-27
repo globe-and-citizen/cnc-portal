@@ -202,6 +202,7 @@
 </template>
 
 <script setup lang="ts">
+import { useSessionStorage } from '@vueuse/core'
 import { format } from 'date-fns'
 import { computed, ref, watch } from 'vue'
 import {
@@ -332,8 +333,8 @@ const ALL_COLUMNS: ColumnOption<MergedColumnKey>[] = [
   { label: 'Tx', value: 'tx' }
 ]
 
-// Default: everything visible.
-const visibleColumns = useLocalStorage<MergedColumnKey[]>(
+// sessionStorage: per browser tab (localStorage syncs across tabs via storage events).
+const visibleColumns = useSessionStorage<MergedColumnKey[]>(
   'dashboard-accounting-ledger-visible-columns',
   ALL_COLUMNS.map(c => c.value)
 )
