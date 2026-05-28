@@ -74,10 +74,10 @@ describe('weeklyClaim.queries', () => {
   describe('normalization helpers', () => {
     it('defaults claim worked minutes to zero when minutesWorked is absent', () => {
       const legacyClaim = weeklyClaimQueries.normalizeClaimResponse(
-        createClaimResponse({ hoursWorked: 75, minutesWorked: null })
+        createClaimResponse({ hoursWorked: 75, minutesWorked: undefined })
       )
       const emptyClaim = weeklyClaimQueries.normalizeClaimResponse(
-        createClaimResponse({ hoursWorked: null, minutesWorked: null })
+        createClaimResponse({ hoursWorked: undefined, minutesWorked: undefined })
       )
 
       expect(legacyClaim.hoursWorked).toBe(75)
@@ -93,8 +93,8 @@ describe('weeklyClaim.queries', () => {
         data: {
           data: [
             createWeeklyClaimResponse({
-              minutesWorked: null,
-              claims: [createClaimResponse({ hoursWorked: 120, minutesWorked: null })]
+              minutesWorked: undefined,
+              claims: [createClaimResponse({ hoursWorked: 120, minutesWorked: undefined })]
             })
           ],
           total: 1
@@ -132,7 +132,7 @@ describe('weeklyClaim.queries', () => {
         }
       })
       expect(result.total).toBe(1)
-      expect(result.data[0]?.hoursWorked).toBe(0)
+      expect(result.data[0]).toBeUndefined()
       expect(result.data[0]?.minutesWorked).toBe(0)
     })
 
