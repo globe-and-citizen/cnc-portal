@@ -14,7 +14,10 @@ const weeklyClaimQueries =
   await vi.importActual<typeof import('../weeklyClaim.queries')>('../weeklyClaim.queries')
 
 const createClaimResponse = (
-  overrides: Partial<Claim> & { minutesWorked?: number | null } = {}
+  overrides: Partial<Omit<Claim, 'hoursWorked' | 'minutesWorked'>> & {
+    hoursWorked?: number | null
+    minutesWorked?: number | null
+  } = {}
 ) => ({
   id: 1,
   hoursWorked: 480,
@@ -28,10 +31,12 @@ const createClaimResponse = (
   ...overrides
 })
 
+type TestClaimResponse = ReturnType<typeof createClaimResponse>
+
 const createWeeklyClaimResponse = (
-  overrides: Partial<WeeklyClaim> & {
+  overrides: Partial<Omit<WeeklyClaim, 'claims'>> & {
     minutesWorked?: number | null
-    claims?: Array<ReturnType<typeof createClaimResponse>>
+    claims?: TestClaimResponse[]
   } = {}
 ) => ({
   id: 2,
@@ -79,7 +84,7 @@ describe('weeklyClaim.queries', () => {
         createClaimResponse({ hoursWorked: 75, minutesWorked: undefined })
       )
       const emptyClaim = weeklyClaimQueries.normalizeClaimResponse(
-        createClaimResponse({ hoursWorked: undefined, minutesWorked: undefined })
+        createClaimResponse({ hoursWorked: null, minutesWorked: undefined })
       )
 
       expect(legacyClaim.hoursWorked).toBe(75)
@@ -134,8 +139,8 @@ describe('weeklyClaim.queries', () => {
         }
       })
       expect(result.total).toBe(1)
-      expect(result.data[0]).toBeUndefined()
       expect(result.data[0]?.minutesWorked).toBe(0)
+      expect(result.data[0]?.claims[0]?.minutesWorked).toBe(0)
     })
 
     it('forwards pagination params and exposes them in the query key', async () => {
