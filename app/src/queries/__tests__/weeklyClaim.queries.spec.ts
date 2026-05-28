@@ -13,7 +13,9 @@ import apiClient from '@/lib/axios'
 const weeklyClaimQueries =
   await vi.importActual<typeof import('../weeklyClaim.queries')>('../weeklyClaim.queries')
 
-const createClaimResponse = (overrides: Partial<Claim> & { minutesWorked?: number | null } = {}) => ({
+const createClaimResponse = (
+  overrides: Partial<Claim> & { minutesWorked?: number | null } = {}
+) => ({
   id: 1,
   hoursWorked: 480,
   minutesWorked: 480,
