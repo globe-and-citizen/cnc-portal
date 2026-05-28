@@ -13,7 +13,7 @@ export type TransactionHistoryItemRow = {
   tokenAddress: string
   token: string
   type: string
-  amountLocal: number
+  amountLocal?: number
 }
 
 export type ExpenseTransactionRow = GroupedTransactionRow<TransactionHistoryItemRow>

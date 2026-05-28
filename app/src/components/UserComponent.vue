@@ -1,5 +1,30 @@
 <template>
+  <div v-if="compact" class="flex flex-row items-center gap-1.5">
+    <div
+      data-test="avatar-container"
+      :data-size="'xs'"
+      class="relative h-5 w-5 shrink-0 overflow-hidden rounded-full"
+    >
+      <UIcon v-if="user.icon" :name="user.icon" class="text-primary h-full w-full p-0.5" />
+      <img
+        v-else
+        data-test="avatar-image"
+        :alt="`${user.name ?? 'Unknown'}'s avatar`"
+        :src="
+          user.imageUrl ||
+          'https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp'
+        "
+        class="h-full w-full object-cover"
+      />
+    </div>
+    <span class="text-xs font-medium">
+      {{ user.name && user.name.length > 16 ? `${user.name.slice(0, 16)}…` : user.name || 'User' }}
+    </span>
+    <span class="text-muted text-xs">{{ formatedUserAddress }}</span>
+  </div>
+
   <div
+    v-else
     class="flex flex-row justify-start gap-4 transition-all duration-300"
     :class="{ 'flex-col items-center justify-center': isCollapsed || isDetailedView }"
   >
@@ -62,6 +87,7 @@ const props = defineProps<{
   user: Pick<User, 'address' | 'name' | 'imageUrl'> & { role?: string; icon?: string }
   isCollapsed?: boolean
   isDetailedView?: boolean
+  compact?: boolean
 }>()
 
 const formatedUserAddress = computed(() => formatAddress(props.user.address))

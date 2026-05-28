@@ -3,10 +3,16 @@ import type {
   RawInvestorTransaction,
   SafeDepositRouterEventsQuery
 } from '@/types/ponder/investor'
+import type { InvestorsTransaction } from '@/types/transactions'
+import type { TokenId } from '@/constant'
+import type { UBadgeColor } from '@/types/ui'
+import { NETWORK } from '@/constant'
 import { zeroAddress } from 'viem'
 import { buildRawTransactions, extractTxHashFromId } from './rawTransactionsUtil'
-
-type UBadgeColor = 'error' | 'primary' | 'secondary' | 'success' | 'info' | 'warning' | 'neutral'
+import { tokenSymbol, formatEtherUtil, resolveTokenIdByAddress } from './constantUtil'
+import { parseBigIntOrZero } from './transactionHistoryUtil'
+import { formatSafeDepositRouterMultiplier } from './safeDepositRouterUtil'
+import { useCurrencyStore } from '@/stores/currencyStore'
 
 export const buildRawInvestorTransactions = (
   investorResult?: InvestorEventsQuery | null,
@@ -112,6 +118,56 @@ export const buildRawInvestorTransactions = (
 
 export const formatInvestorTransactionDate = (timestamp: number): string =>
   new Date(timestamp * 1000).toLocaleString('en-US')
+
+export const mapRawInvestorTransaction = (
+  tx: RawInvestorTransaction,
+  investorTokenSymbol: string,
+  getUsdPrice: (tokenId: TokenId | null) => number
+): InvestorsTransaction => {
+  const currencyStore = useCurrencyStore()
+  const isConfigEvent =
+    tx.transactionType === 'safeDepositsEnabled' ||
+    tx.transactionType === 'safeDepositsDisabled' ||
+    tx.transactionType === 'safeAddressUpdated'
+  const isMultiplierEvent = tx.transactionType === 'safeMultiplierUpdated'
+  const tokenAddress = String(tx.tokenAddress ?? '').toLowerCase()
+  const matchedToken = currencyStore.supportedTokens.find(
+    (t) => t.address.toLowerCase() === tokenAddress
+  )
+  const token = isConfigEvent
+    ? '-'
+    : isMultiplierEvent
+      ? 'x'
+      : tx.transactionType === 'mint'
+        ? investorTokenSymbol
+        : matchedToken?.symbol ||
+          tokenSymbol(tokenAddress) ||
+          investorTokenSymbol ||
+          NETWORK.currencySymbol
+  const amount = isConfigEvent
+    ? '0'
+    : isMultiplierEvent
+      ? formatSafeDepositRouterMultiplier(parseBigIntOrZero(tx.amount), 6)
+      : formatEtherUtil(parseBigIntOrZero(tx.amount), tx.tokenAddress)
+  const tokenId =
+    isConfigEvent || isMultiplierEvent
+      ? null
+      : (matchedToken?.id ?? resolveTokenIdByAddress(tokenAddress))
+  const numericAmount = Number(amount)
+  const amountUSD = Number.isFinite(numericAmount) ? numericAmount * getUsdPrice(tokenId) : 0
+  return {
+    txHash: tx.txHash,
+    date: formatInvestorTransactionDate(tx.timestamp),
+    from: tx.from,
+    to: tx.to,
+    amount,
+    amountUSD: amountUSD || 0,
+    token,
+    tokenAddress,
+    type: tx.transactionType,
+    reason: tx.reason
+  }
+}
 
 export const getInvestorTransactionTypeColor = (type: string): UBadgeColor => {
   const normalizedType = type.toLowerCase()

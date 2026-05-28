@@ -150,7 +150,7 @@ describe('InvestorsTransactions', () => {
     expect(
       vm.displayedTransactions.find((row) => row.type === 'safeMultiplierUpdated')?.token
     ).toBe('x')
-    expect(vm.columns.at(-1)?.header).toBe('Value (USD)')
+    expect(vm.columns[vm.columns.length - 1]?.header).toBe('Value (USD)')
   })
 
   it('passes loading from investor query to table', () => {
