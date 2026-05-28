@@ -15,7 +15,7 @@
         :model-value="pageSize"
         :items="pageSizeOptions"
         size="sm"
-        class="w-28"
+        class="w-auto"
         @update:model-value="onPageSizeChange"
       />
     </div>
@@ -57,10 +57,10 @@ const emit = defineEmits<{
 }>()
 
 const pageSizeOptions = [
-  { label: '10 / page', value: 10 },
-  { label: '20 / page', value: 20 },
-  { label: '50 / page', value: 50 },
-  { label: '100 / page', value: 100 }
+  { label: '10', value: 10 },
+  { label: '20', value: 20 },
+  { label: '50', value: 50 },
+  { label: '100', value: 100 }
 ]
 
 const rangeStart = computed(() => (props.total === 0 ? 0 : (props.page - 1) * props.pageSize + 1))
