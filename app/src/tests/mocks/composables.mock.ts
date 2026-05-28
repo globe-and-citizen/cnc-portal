@@ -156,19 +156,6 @@ export const mockUseFetch = {
 }
 
 /**
- * Mock useWalletChecks composable
- */
-export const mockUseWalletChecks = {
-  isProcessing: ref(false),
-  isSuccess: ref(false),
-  performChecks: vi.fn(),
-  resetRefs: vi.fn(() => {
-    mockUseWalletChecks.isProcessing.value = false
-    mockUseWalletChecks.isSuccess.value = false
-  })
-}
-
-/**
  * Mock useBodAddAction composable
  */
 export const mockUseBodAddAction = {
@@ -239,12 +226,6 @@ export const resetComposableMocks = () => {
   // Reset backend wake mock
   if (vi.isMockFunction(mockUseBackendWake)) {
     mockUseBackendWake.mockClear()
-  }
-
-  mockUseWalletChecks.isProcessing.value = false
-  mockUseWalletChecks.isSuccess.value = false
-  if (vi.isMockFunction(mockUseWalletChecks.performChecks)) {
-    mockUseWalletChecks.performChecks.mockClear()
   }
 
   mockUseFetch.post.data.value = { accessToken: null }

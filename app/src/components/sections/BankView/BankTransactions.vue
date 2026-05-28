@@ -19,7 +19,30 @@
       </div>
     </template>
 
-    <UTable :data="displayedTransactions" :columns="columns" :loading="loading">
+    <UTable
+      v-model:expanded="expandedRows"
+      :data="displayedTransactions"
+      :columns="columns"
+      :loading="loading"
+      :get-sub-rows="getSubRows"
+      :ui="{ td: 'empty:p-0 group-has-[td:not(:empty)]:border-b border-default' }"
+      :meta="{ class: { tr: (row) => (row.depth > 0 ? 'bg-elevated' : '') } }"
+    >
+      <template #expand-cell="{ row }">
+        <UButton
+          v-if="row.getCanExpand()"
+          :icon="row.getIsExpanded() ? 'heroicons:chevron-down' : 'heroicons:chevron-right'"
+          size="sm"
+          color="primary"
+          variant="soft"
+          data-test="bank-transaction-expand-button"
+          :aria-label="
+            row.getIsExpanded() ? 'Collapse transaction events' : 'Expand transaction events'
+          "
+          @click="row.toggleExpanded()"
+        />
+      </template>
+
       <template #txHash-cell="{ row: { original: row } }">
         <AddressToolTip :address="row.txHash" :slice="true" type="transaction" />
       </template>
@@ -28,40 +51,58 @@
         {{ formatDateShort(String(row.date)) }}
       </template>
 
-      <template #type-cell="{ row: { original: row } }">
-        <UBadge :color="getBankTransactionTypeColor(row.type)" variant="soft">
-          {{ row.type }}
-        </UBadge>
+      <template #type-cell="{ row }">
+        <div class="flex items-center gap-2" :class="{ 'pl-4': row.depth > 0 }">
+          <UBadge :color="getBankTransactionTypeColor(row.original.type)" variant="soft">
+            {{ row.original.type }}
+          </UBadge>
+          <span
+            v-if="row.depth === 0 && row.original.groupedEventCount > 1"
+            class="text-muted text-xs"
+          >
+            {{ row.original.groupedEventCount }} events
+          </span>
+        </div>
       </template>
 
       <template #from-cell="{ row: { original: row } }">
-        <AddressToolTip :address="row.from" :slice="true" type="address" />
+        <UserComponent :user="resolveUser(row.from)" />
       </template>
 
       <template #to-cell="{ row: { original: row } }">
-        <AddressToolTip :address="row.to" :slice="true" type="address" />
+        <UserComponent :user="resolveUser(row.to)" />
       </template>
 
-      <template #amount-cell="{ row: { original: row } }">
-        {{ formatCryptoAmount(row.amount) }} {{ row.token }}
-      </template>
-
-      <template #valueLocal-cell="{ row: { original: row } }">
-        {{ formatCurrencyShort(row.amountLocal, currencyStore.localCurrency.code) }}
+      <template #value-cell="{ row: { original: row } }">
+        <div>{{ formatCryptoAmount(row.amount) }} {{ row.token }}</div>
+        <div class="text-muted text-xs">
+          {{ formatCurrencyShort(row.amountLocal, currencyStore.localCurrency.code) }}
+        </div>
       </template>
     </UTable>
+
+    <template #footer>
+      <TransactionTableFooter
+        v-model:page="page"
+        v-model:page-size="pageSize"
+        :total="total"
+        data-test-prefix="bank-transaction"
+      />
+    </template>
   </UCard>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-import { zeroAddress, type Address } from 'viem'
-import type { TokenId } from '@/constant'
+import { computed, watch } from 'vue'
+import { type Address } from 'viem'
 import { GRAPHQL_POLL_INTERVAL, NETWORK } from '@/constant'
 import { useQuery } from '@vue/apollo-composable'
 import AddressToolTip from '@/components/AddressToolTip.vue'
+import UserComponent from '@/components/UserComponent.vue'
 import CustomDatePicker from '@/components/CustomDatePicker.vue'
+import TransactionTableFooter from '@/components/TransactionTableFooter.vue'
 import { useCurrencyStore } from '@/stores/currencyStore'
+import { useTransactionTable } from '@/composables/transactions/useTransactionTable'
 import type { BankTransaction } from '@/types/transactions'
 import {
   buildRawBankTransactions,
@@ -70,8 +111,10 @@ import {
   formatCryptoAmount,
   formatCurrencyShort,
   formatEtherUtil,
-  getTokenAddress,
   log,
+  parseBigIntOrZero,
+  resolveUser,
+  resolveTokenIdByAddress,
   tokenSymbol
 } from '@/utils'
 import { formatDateShort } from '@/utils/dayUtils'
@@ -98,14 +141,6 @@ const { result, error, loading } = useQuery<BankEventsQuery>(
   }
 )
 
-const parseAmount = (value: string): bigint => {
-  try {
-    return BigInt(value)
-  } catch {
-    return 0n
-  }
-}
-
 const rawTransactions = computed(() => buildRawBankTransactions(result.value))
 
 const transactions = computed<BankTransaction[]>(() =>
@@ -114,7 +149,7 @@ const transactions = computed<BankTransaction[]>(() =>
     date: formatBankTransactionDate(Number(row.timestamp)),
     from: row.from,
     to: row.to,
-    amount: formatEtherUtil(parseAmount(row.amount), row.tokenAddress),
+    amount: formatEtherUtil(parseBigIntOrZero(row.amount), row.tokenAddress),
     amountUSD: 0,
     tokenAddress: row.tokenAddress,
     token: tokenSymbol(row.tokenAddress) || 'ERC20',
@@ -122,26 +157,11 @@ const transactions = computed<BankTransaction[]>(() =>
   }))
 )
 
-const dateRange = ref<[Date, Date] | null>(null)
-const selectedType = ref('all')
-
 type BankTransactionRow = BankTransaction & {
   amount: string | number
   token: string
   tokenAddress: string
   amountLocal: number
-}
-
-const KNOWN_TOKEN_IDS: TokenId[] = ['native', 'usdc', 'usdc.e', 'usdt', 'sher']
-
-const resolveTokenIdByAddress = (tokenAddress: string): TokenId | null => {
-  const normalizedAddress = tokenAddress.toLowerCase()
-  const knownId = KNOWN_TOKEN_IDS.find((tokenId) => {
-    const knownAddress = (getTokenAddress(tokenId) ?? zeroAddress).toLowerCase()
-    return knownAddress === normalizedAddress
-  })
-
-  return knownId ?? null
 }
 
 const enrichedTransactions = computed<BankTransactionRow[]>(() => {
@@ -169,42 +189,26 @@ const enrichedTransactions = computed<BankTransactionRow[]>(() => {
   })
 })
 
-const uniqueTypes = computed(() => {
-  const types = new Set(enrichedTransactions.value.map((tx) => tx.type))
-  return Array.from(types).sort()
-})
-
-const typeOptions = computed(() => [
-  { label: 'All Types', value: 'all' },
-  ...uniqueTypes.value.map((type) => ({ label: type, value: type }))
-])
-
-const displayedTransactions = computed(() => {
-  let filtered = enrichedTransactions.value
-
-  if (dateRange.value) {
-    const [startDate, endDate] = dateRange.value
-    filtered = filtered.filter((tx) => {
-      const txDate = new Date(tx.date)
-      return txDate >= startDate && txDate <= endDate
-    })
-  }
-
-  if (selectedType.value !== 'all') {
-    filtered = filtered.filter((tx) => tx.type === selectedType.value)
-  }
-
-  return filtered
-})
+const {
+  dateRange,
+  selectedType,
+  typeOptions,
+  page,
+  pageSize,
+  total,
+  displayedTransactions,
+  expandedRows,
+  getSubRows
+} = useTransactionTable(enrichedTransactions)
 
 const columns = computed(() => [
+  { accessorKey: 'expand', header: '' },
   { accessorKey: 'txHash', header: 'Tx Hash' },
   { accessorKey: 'date', header: 'Date' },
   { accessorKey: 'type', header: 'Type' },
   { accessorKey: 'from', header: 'From' },
   { accessorKey: 'to', header: 'To' },
-  { accessorKey: 'amount', header: 'Amount' },
-  { accessorKey: 'valueLocal', header: `Value (${currencyStore.localCurrency.code})` }
+  { accessorKey: 'value', header: `Value (${currencyStore.localCurrency.code})` }
 ])
 
 watch(error, (newError) => {

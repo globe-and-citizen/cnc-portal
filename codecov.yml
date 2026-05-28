@@ -2,7 +2,25 @@ coverage:
   status:
     project:
       default:
-        threshold: 0.5%  # allow up to 0.5% drop to absorb carryforward noise
+        # Scope the project status to unit-test flags only. The
+        # app-e2e-tests flag exercises end-to-end flows through the dev
+        # server which loads every file on the route the user navigates
+        # (router, lazy views, stores, …) — many of these aren't covered
+        # by unit tests, so adding e2e to project status would surface
+        # them as a coverage drop even though no test was removed.
+        flags:
+          - app-unit-tests
+          - api-unit-tests
+          - contract-unit-tests
+        threshold: 0.5%
+    patch:
+      default:
+        # The app-e2e-tests flag only exercises the happy-path login flow,
+        # so patch coverage from e2e alone drags the patch % down. We keep
+        # the patch check informational with a 50% floor until the e2e
+        # suite grows to cover more flows.
+        target: 50%
+        threshold: 10%
 
 github_checks:
   annotations: true
@@ -27,3 +45,5 @@ flags:
 ignore:
   - "app/*.ts"
   - "app/src/main.ts"
+  - "app/src/e2e"  # mock connector is test infra, not product code
+  - "app/src/e2e/**"

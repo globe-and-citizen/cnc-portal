@@ -2,115 +2,136 @@ import router from '@/router'
 import { useUserDataStore } from '@/stores'
 import { log } from '@/utils'
 import { useStorage } from '@vueuse/core'
-import { useSignMessage, useChainId, useConnection } from '@wagmi/vue'
+import { connect, switchChain, signMessage, getConnection } from '@wagmi/core'
 import { SiweMessage } from 'siwe'
 import { useMutation } from '@tanstack/vue-query'
 import { useToast } from '@nuxt/ui/composables'
-import { useWalletChecks } from '@/composables'
+import { UserRejectedRequestError, SwitchChainError } from 'viem'
+import { AxiosError } from 'axios'
 import { getUser, getUserNonce } from '@/api/user.api'
 import { siweAuth } from '@/api/auth.api'
+import { NETWORK } from '@/constant'
+import { config } from '@/wagmi.config'
 import type { Address } from 'viem'
 
-/** Discriminated error so `onError` can pick the right toast. */
-export type SiweErrorStep =
-  | 'wallet-check'
-  | 'fetch-nonce'
-  | 'sign-message'
-  | 'sign-rejected'
-  | 'auth'
-  | 'fetch-user'
+// The wagmi config narrows chainId to a union of its configured chain ids.
+type AppChainId = (typeof config)['chains'][number]['id']
 
-export class SiweError extends Error {
-  constructor(
-    public readonly step: SiweErrorStep,
-    cause?: unknown
-  ) {
-    super(`SIWE failed at step: ${step}`)
-    this.name = 'SiweError'
-    if (cause !== undefined) (this as { cause?: unknown }).cause = cause
+/**
+ * Distinct subclasses for the three places where the user can reject a wallet
+ * prompt. Everything else (network failures, axios errors, viem errors) is
+ * left untouched and bubbles natively — `onError` discriminates via `instanceof`.
+ */
+export class WalletConnectRejectedError extends Error {
+  declare cause?: unknown
+  constructor(cause?: unknown) {
+    super('User rejected wallet connection')
+    this.name = 'WalletConnectRejectedError'
+    if (cause !== undefined) this.cause = cause
+  }
+}
+export class ChainSwitchRejectedError extends Error {
+  declare cause?: unknown
+  constructor(cause?: unknown) {
+    super('User rejected chain switch')
+    this.name = 'ChainSwitchRejectedError'
+    if (cause !== undefined) this.cause = cause
+  }
+}
+export class SignatureRejectedError extends Error {
+  declare cause?: unknown
+  constructor(cause?: unknown) {
+    super('User rejected SIWE signature')
+    this.name = 'SignatureRejectedError'
+    if (cause !== undefined) this.cause = cause
   }
 }
 
-const TOAST_BY_STEP: Record<SiweErrorStep, string> = {
-  'wallet-check': 'Wallet checks failed',
-  'fetch-nonce': 'Failed to fetch nonce',
-  'sign-message': 'Something went wrong: Unable to sign SIWE message',
-  'sign-rejected': 'Message sign rejected: You need to sign the message to Sign in the CNC Portal',
-  auth: 'Failed to get authentication token',
-  'fetch-user': 'Failed to fetch user data'
+/**
+ * Re-tag a `UserRejectedRequestError` from a specific wallet op with a
+ * dedicated subclass so `onError` can show a context-aware toast. Any other
+ * error class is passed through unchanged.
+ */
+async function tagRejection<T>(
+  p: Promise<T>,
+  RejectionClass: new (cause: unknown) => Error
+): Promise<T> {
+  try {
+    return await p
+  } catch (err) {
+    if (
+      err instanceof UserRejectedRequestError ||
+      (err as Error)?.name === 'UserRejectedRequestError'
+    ) {
+      throw new RejectionClass(err)
+    }
+    throw err
+  }
 }
 
 /**
  * SIWE login as a TanStack mutation.
  *
- * `mutationFn` is a single orchestrating async function that calls plain
- * api wrappers (`getUserNonce`, `siweAuth`, `getUser`) and the wagmi
- * `signMessage` action — no nested composables. Errors are surfaced as a
- * typed `SiweError`; `onError` maps the step to a toast.
+ * `mutationFn` is a linear sequence of awaits with no per-step error tagging:
+ * each error type already carries enough information to be routed by `onError`
+ * (viem error classes for wallet failures, `AxiosError.config.url` for API
+ * failures, and our 3 rejection subclasses for user-cancelled prompts).
+ *
+ * Wagmi is consumed via `@wagmi/core` (imperative) rather than `@wagmi/vue`
+ * composables: SIWE is a one-shot orchestrated flow with no reactive UI need,
+ * which keeps the function decoupled from the Vue lifecycle and makes mocking
+ * trivial (a single `vi.mock('@wagmi/core', ...)` covers all wallet calls).
+ * This mirrors the V3 pattern (`useContractWritesV3`) used for on-chain writes.
  */
 export function useSiweMutation() {
   const toast = useToast()
   const userDataStore = useUserDataStore()
-  const connection = useConnection()
-  const chainId = useChainId()
-  const { mutateAsync: signMessageAsync } = useSignMessage()
-  const { performChecks, isSuccess: isWalletCheckSuccess } = useWalletChecks()
   const storageToken = useStorage('authToken', '')
+
+  // Connector is owned by `wagmi.config.ts` (e2e mock in tests, `injected()`
+  // for browser-installed wallets in dev/prod).
+  const connector = config.connectors[0]
+  const networkChainId = parseInt(NETWORK.chainId) as AppChainId
 
   return useMutation({
     mutationFn: async () => {
-      await performChecks()
-      if (!isWalletCheckSuccess.value) throw new SiweError('wallet-check')
-
-      const address = connection.address.value as Address
-
-      let nonce: string
-      try {
-        nonce = (await getUserNonce(address)).nonce
-      } catch (err) {
-        log.info('fetchUserNonce error', err)
-        throw new SiweError('fetch-nonce', err)
+      if (!getConnection(config).isConnected) {
+        await tagRejection(
+          connect(config, { connector, chainId: networkChainId }),
+          WalletConnectRejectedError
+        )
       }
+
+      await tagRejection(switchChain(config, { chainId: networkChainId }), ChainSwitchRejectedError)
+
+      // Post-switch the connection is guaranteed `status: 'connected'` →
+      // `address` and `chainId` are non-nullable.
+      const { address, chainId } = getConnection(config)
+      if (!address || chainId === undefined) {
+        throw new WalletConnectRejectedError(new Error('No active connection after switch'))
+      }
+
+      // Retry on transient failures (serverless cold starts, brief upstream
+      // blips) is handled centrally by the axios response interceptor in
+      // `app/src/lib/axios.ts` — no need to wrap call sites.
+      const { nonce } = await getUserNonce(address)
 
       const message = new SiweMessage({
         address,
         statement: 'Sign in with Ethereum to the app.',
         nonce,
-        chainId: chainId.value,
+        chainId,
         uri: window.location.origin,
         domain: window.location.origin,
         version: '1'
       }).prepareMessage()
 
-      let signature: string
-      try {
-        signature = await signMessageAsync({ message })
-      } catch (err) {
-        const rejected = (err as Error)?.name === 'UserRejectedRequestError'
-        log.error('signMessage error', err)
-        throw new SiweError(rejected ? 'sign-rejected' : 'sign-message', err)
-      }
+      const signature = await tagRejection(signMessage(config, { message }), SignatureRejectedError)
 
-      let accessToken: string
-      try {
-        accessToken = (await siweAuth({ message, signature })).accessToken
-      } catch (err) {
-        log.info('siweAuth error', err)
-        throw new SiweError('auth', err)
-      }
-
-      // Persist the token before fetching the user so the auth header is set.
+      const { accessToken } = await siweAuth({ message, signature })
       storageToken.value = accessToken
-      await new Promise((resolve) => setTimeout(resolve, 100))
 
-      let user: Awaited<ReturnType<typeof getUser>>
-      try {
-        user = await getUser(address)
-      } catch (err) {
-        log.info('getUser error', err)
-        throw new SiweError('fetch-user', err)
-      }
-
+      const user = await getUser(address)
       return { user }
     },
     onSuccess: ({ user }) => {
@@ -124,8 +145,58 @@ export function useSiweMutation() {
       router.push('/teams')
     },
     onError: (err) => {
-      const step = err instanceof SiweError ? err.step : 'auth'
-      toast.add({ title: TOAST_BY_STEP[step], color: 'error' })
+      log.error('siwe error', err)
+
+      // 1. User-rejected prompts — each step has its own subclass.
+      if (err instanceof WalletConnectRejectedError) {
+        return toast.add({
+          title:
+            'Wallet connection rejected: You need to connect your wallet to use the CNC Portal.',
+          color: 'error'
+        })
+      }
+      if (err instanceof ChainSwitchRejectedError) {
+        return toast.add({
+          title:
+            'Network switch rejected: You need to switch to the correct network to use the CNC Portal',
+          color: 'error'
+        })
+      }
+      if (err instanceof SignatureRejectedError) {
+        return toast.add({
+          title: 'Message sign rejected: You need to sign the message to Sign in the CNC Portal',
+          color: 'error'
+        })
+      }
+
+      // 2. Technical wallet failures.
+      if (err instanceof SwitchChainError) {
+        return toast.add({ title: 'Something went wrong: Failed switch network', color: 'error' })
+      }
+      if ((err as Error)?.name === 'ProviderNotFoundError') {
+        return toast.add({
+          title:
+            'No wallet detected: You need to install a wallet like metamask to use the CNC Portal',
+          color: 'error'
+        })
+      }
+
+      // 3. API failures — routed by endpoint.
+      if (err instanceof AxiosError) {
+        const url = err.config?.url ?? ''
+        if (url.includes('nonce')) {
+          return toast.add({ title: 'Failed to fetch nonce', color: 'error' })
+        }
+        if (url.includes('siwe') || url.includes('auth')) {
+          return toast.add({ title: 'Failed to get authentication token', color: 'error' })
+        }
+        if (url.includes('user')) {
+          return toast.add({ title: 'Failed to fetch user data', color: 'error' })
+        }
+      }
+
+      // 4. Fallback.
+      toast.add({ title: 'Something went wrong: Failed to sign in', color: 'error' })
     }
   })
 }
