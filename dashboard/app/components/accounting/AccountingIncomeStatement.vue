@@ -389,14 +389,14 @@ const groupingOptions = ref<GroupingOptions>({
 })
 
 // Zebra striping by position block (gray / white), so each market reads as one
-// band. The group-header row is bold with no bottom border to sit flush with
-// its trades; both share the block's shade.
+// band. Every row keeps its bottom border, which draws the separator line
+// between positions and — once expanded — the bar under the group header.
 const tableMeta = {
   class: {
     tr: (row: Row<PositionTrade>) => {
       const even = (row.getIsGrouped() ? row.getLeafRows()[0]?.original.groupEven : row.original.groupEven) ?? true
-      const zebra = even ? '' : 'bg-muted/40'
-      return row.getIsGrouped() ? `${zebra} font-medium [&>td]:border-b-0` : zebra
+      const zebra = even ? 'bg-default' : 'bg-elevated/60'
+      return row.getIsGrouped() ? `${zebra} font-semibold` : zebra
     }
   }
 }
