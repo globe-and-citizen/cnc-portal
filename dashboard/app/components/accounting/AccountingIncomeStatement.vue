@@ -123,13 +123,20 @@
     </UPageCard>
 
     <UPageCard v-if="hasAddress" variant="subtle">
-      <h3 class="font-semibold text-black dark:text-white mb-4">
-        Realized trades · {{ totalTrades }}
+      <h3 class="font-semibold text-black dark:text-white mb-1">
+        Trades by position · {{ totalPositions }} positions
       </h3>
+      <p class="text-sm text-muted mb-4">
+        Each position groups its buys and sells. <strong>Net = returned − invested</strong> is your
+        profit on the position (cash basis — a still-open position doesn't yet credit the unsold shares).
+        Click a position to expand its trades.
+      </p>
 
       <UTable
         :data="pagedTrades"
         :columns="columns"
+        :grouping="grouping"
+        :grouping-options="groupingOptions"
         :loading="isLoading"
         :ui="{
           base: 'table-fixed border-separate border-spacing-0',
@@ -143,42 +150,69 @@
         <template #empty>
           <div class="flex flex-col items-center justify-center py-8 text-muted">
             <UIcon name="i-lucide-trending-up" class="w-12 h-12 mb-3 opacity-60" />
-            <p>No realized trades in this period.</p>
+            <p>No trades in this period.</p>
           </div>
         </template>
 
+        <!-- First column: position group header (when grouped) or trade date (leaf). -->
         <template #date-cell="{ row }">
-          <span class="tabular-nums whitespace-nowrap">{{ formatDate(row.original.timestamp) }}</span>
-        </template>
-
-        <template #market-cell="{ row }">
-          <span class="block max-w-xs truncate">{{ row.original.market }}</span>
-        </template>
-
-        <template #outcome-cell="{ row }">
-          <span v-if="row.original.outcome" class="font-semibold" :class="outcomeClass(row.original.outcome)">
-            {{ row.original.outcome }}
+          <div v-if="row.getIsGrouped()" class="space-y-0.5">
+            <button
+              type="button"
+              class="flex items-center gap-2 text-left font-medium cursor-pointer"
+              @click="row.toggleExpanded()"
+            >
+              <UIcon
+                :name="row.getIsExpanded() ? 'i-lucide-chevron-down' : 'i-lucide-chevron-right'"
+                class="w-4 h-4 shrink-0 text-muted"
+              />
+              <span class="truncate max-w-xs">{{ groupLabel(row) }}</span>
+              <span class="text-muted text-xs">({{ row.getLeafRows().length }})</span>
+            </button>
+            <p class="pl-6 text-xs text-muted">
+              Invested {{ formatUsd(groupInvested(row)) }} · Returned {{ formatUsd(groupReturned(row)) }}
+            </p>
+          </div>
+          <span v-else class="tabular-nums whitespace-nowrap pl-6">
+            {{ formatDate(row.original.timestamp) }}
           </span>
-          <span v-else class="text-muted">—</span>
         </template>
 
-        <template #kind-cell="{ row }">
-          <UBadge :color="KIND_META[row.original.kind].color" variant="subtle">
-            {{ KIND_META[row.original.kind].label }}
+        <template #action-cell="{ row }">
+          <UBadge
+            v-if="!row.getIsGrouped()"
+            :color="ACTION_META[row.original.action].color"
+            variant="subtle"
+          >
+            {{ ACTION_META[row.original.action].label }}
           </UBadge>
         </template>
 
-        <template #proceeds-cell="{ row }">
-          <span class="tabular-nums">{{ formatUsd(row.original.proceeds) }}</span>
+        <template #outcome-cell="{ row }">
+          <span
+            v-if="!row.getIsGrouped() && row.original.outcome"
+            class="font-semibold"
+            :class="outcomeClass(row.original.outcome)"
+          >
+            {{ row.original.outcome }}
+          </span>
+          <span v-else-if="!row.getIsGrouped()" class="text-muted">—</span>
         </template>
 
-        <template #costBasis-cell="{ row }">
-          <span class="tabular-nums">{{ formatUsd(row.original.costBasis) }}</span>
+        <template #shares-cell="{ row }">
+          <span v-if="!row.getIsGrouped()" class="tabular-nums">{{ formatShares(row.original.shares) }}</span>
         </template>
 
-        <template #realizedPnl-cell="{ row }">
-          <span class="tabular-nums font-medium" :class="signClass(row.original.realizedPnl)">
-            {{ formatSignedUsd(row.original.realizedPnl) }}
+        <template #amount-cell="{ row }">
+          <span v-if="!row.getIsGrouped()" class="tabular-nums">{{ formatUsd(row.original.amount) }}</span>
+        </template>
+
+        <template #cashFlow-cell="{ row }">
+          <span
+            class="tabular-nums font-medium"
+            :class="signClass(row.getIsGrouped() ? groupNet(row) : row.original.cashFlow)"
+          >
+            {{ formatSignedUsd(row.getIsGrouped() ? groupNet(row) : row.original.cashFlow) }}
           </span>
         </template>
       </UTable>
@@ -186,20 +220,22 @@
       <AccountingPagination
         v-model:page="currentPage"
         v-model:page-size="pageSize"
-        :total="totalTrades"
-        noun="trades"
+        :total="totalPositions"
+        noun="positions"
       />
     </UPageCard>
   </div>
 </template>
 
 <script setup lang="ts">
+import { getGroupedRowModel } from '@tanstack/vue-table'
+import type { GroupingOptions, Row } from '@tanstack/vue-table'
 import { format } from 'date-fns'
 import { computed, ref, watch } from 'vue'
 import type { PolymarketActivity, PolymarketPosition } from '~/types/polymarket'
 import { useAccountingPeriod } from '~/composables/useAccountingPeriod'
 import { formatSignedUsd, formatUsd, type LedgerCategoryColor, signClass } from '~/utils/accounting'
-import { buildIncomeStatement, type RealizedTradeKind } from '~/utils/incomeStatement'
+import { buildIncomeStatement } from '~/utils/incomeStatement'
 import AccountingPagination from './AccountingPagination.vue'
 
 const props = defineProps<{
@@ -238,32 +274,151 @@ const statement = computed(() =>
 /** Reconciled when the lot accounting matches Polymarket's reported figure. */
 const isReconciled = computed(() => Math.abs(statement.value.reconciliationGap) < 1)
 
-const totalTrades = computed(() => statement.value.realizedTrades.length)
+type PositionAction = 'BUY' | 'SELL' | 'SPLIT' | 'MERGE' | 'REDEEM'
 
-const pagedTrades = computed(() => {
-  const start = (currentPage.value - 1) * pageSize.value
-  return statement.value.realizedTrades.slice(start, start + pageSize.value)
+interface PositionTrade {
+  /** Market grouping key — conditionId when present, robust across buys & redeems. */
+  marketKey: string
+  market: string
+  outcome?: string
+  timestamp: number
+  action: PositionAction
+  shares: number
+  unitPrice?: number
+  /** Gross USDC of the activity. */
+  amount: number
+  /** Signed cash impact: buys/splits negative, sells/merges/redeems positive. */
+  cashFlow: number
+}
+
+/** True when an activity timestamp falls inside the selected reporting period. */
+function inPeriod(ts: number): boolean {
+  const { start, end } = accountingPeriod.value
+  if (start != null && ts < start) {
+    return false
+  }
+  return ts <= end
+}
+
+/** Maps a Polymarket contract activity to a position trade row (null = skip). */
+function toPositionTrade(activity: PolymarketActivity): PositionTrade | null {
+  const amount = activity.usdcSize ?? 0
+  let action: PositionAction
+  let cashFlow: number
+  if (activity.type === 'TRADE') {
+    action = activity.side === 'SELL' ? 'SELL' : 'BUY'
+    cashFlow = action === 'SELL' ? amount : -amount
+  } else if (activity.type === 'SPLIT') {
+    action = 'SPLIT'
+    cashFlow = -amount
+  } else if (activity.type === 'MERGE') {
+    action = 'MERGE'
+    cashFlow = amount
+  } else if (activity.type === 'REDEEM') {
+    action = 'REDEEM'
+    cashFlow = amount
+  } else {
+    return null // rewards / conversions carry no buy/sell on a position
+  }
+  return {
+    marketKey: activity.conditionId ?? activity.asset ?? activity.title ?? 'unknown',
+    market: activity.title ?? '—',
+    outcome: activity.outcome,
+    timestamp: activity.timestamp ?? 0,
+    action,
+    shares: activity.size ?? 0,
+    unitPrice: activity.price,
+    amount,
+    cashFlow
+  }
+}
+
+/** Buys + sells grouped per position (market), most recently active first. */
+const positionGroups = computed<PositionTrade[][]>(() => {
+  const byMarket = new Map<string, PositionTrade[]>()
+  for (const activity of props.activities) {
+    if (!inPeriod(activity.timestamp ?? 0)) {
+      continue
+    }
+    const trade = toPositionTrade(activity)
+    if (!trade) {
+      continue
+    }
+    const list = byMarket.get(trade.marketKey)
+    if (list) {
+      list.push(trade)
+    } else {
+      byMarket.set(trade.marketKey, [trade])
+    }
+  }
+  const lastTs = (trades: PositionTrade[]): number => Math.max(...trades.map(t => t.timestamp))
+  for (const trades of byMarket.values()) {
+    trades.sort((a, b) => a.timestamp - b.timestamp) // chronological: buys before sells
+  }
+  return [...byMarket.values()].sort((a, b) => lastTs(b) - lastTs(a))
 })
 
+const totalPositions = computed(() => positionGroups.value.length)
+
+// Paginate by position, then hand the table a flat list of that page's trades —
+// UTable regroups them via the `position` grouping column.
+const pagedTrades = computed<PositionTrade[]>(() =>
+  positionGroups.value
+    .slice((currentPage.value - 1) * pageSize.value, currentPage.value * pageSize.value)
+    .flat()
+)
+
 const columns = [
-  { accessorKey: 'date', header: 'Date' },
-  { accessorKey: 'market', header: 'Market' },
+  // Grouped (and hidden) — the human label is rendered from the leaf rows.
+  { id: 'position', header: 'Position', accessorFn: (row: PositionTrade) => row.marketKey },
+  { id: 'date', header: 'Position / Date' },
+  { accessorKey: 'action', header: 'Action' },
   { accessorKey: 'outcome', header: 'Outcome' },
-  { accessorKey: 'kind', header: 'Type' },
-  { accessorKey: 'proceeds', header: 'Proceeds' },
-  { accessorKey: 'costBasis', header: 'Cost basis' },
-  { accessorKey: 'realizedPnl', header: 'Realized P&L' }
+  { accessorKey: 'shares', header: 'Shares' },
+  { accessorKey: 'amount', header: 'Amount' },
+  { accessorKey: 'cashFlow', header: 'Cash flow' }
 ]
 
-const KIND_META: Record<RealizedTradeKind, { label: string, color: LedgerCategoryColor }> = {
-  SELL: { label: 'Sell', color: 'info' },
-  REDEEM: { label: 'Redeem', color: 'primary' },
+const grouping = ['position']
+const groupingOptions = ref<GroupingOptions>({
+  groupedColumnMode: 'remove',
+  getGroupedRowModel: getGroupedRowModel()
+})
+
+const ACTION_META: Record<PositionAction, { label: string, color: LedgerCategoryColor }> = {
+  BUY: { label: 'Buy', color: 'info' },
+  SELL: { label: 'Sell', color: 'warning' },
+  SPLIT: { label: 'Split', color: 'neutral' },
   MERGE: { label: 'Merge', color: 'neutral' },
-  RESOLUTION_LOSS: { label: 'Lost at resolution', color: 'error' }
+  REDEEM: { label: 'Redeem', color: 'primary' }
+}
+
+/** Market title for a group header row (read off its first child trade). */
+function groupLabel(row: Row<PositionTrade>): string {
+  return row.getLeafRows()[0]?.original.market ?? '—'
+}
+
+/** Σ invested (buy/split cost) under a group header. */
+function groupInvested(row: Row<PositionTrade>): number {
+  return row.getLeafRows().reduce((sum, leaf) => sum + (leaf.original.cashFlow < 0 ? -leaf.original.cashFlow : 0), 0)
+}
+
+/** Σ returned (sell/merge/redeem proceeds) under a group header. */
+function groupReturned(row: Row<PositionTrade>): number {
+  return row.getLeafRows().reduce((sum, leaf) => sum + (leaf.original.cashFlow > 0 ? leaf.original.cashFlow : 0), 0)
+}
+
+/** Net cash result on the position = returned − invested. */
+function groupNet(row: Row<PositionTrade>): number {
+  return row.getLeafRows().reduce((sum, leaf) => sum + leaf.original.cashFlow, 0)
 }
 
 function formatDate(ts: number): string {
   return ts ? format(new Date(ts * 1000), 'MMM d, yyyy') : '—'
+}
+
+function formatShares(value: number | undefined): string {
+  return value ? value.toLocaleString(undefined, { maximumFractionDigits: 2 }) : '—'
 }
 
 function outcomeClass(outcome: string | undefined): string {
