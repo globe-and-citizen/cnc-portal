@@ -137,13 +137,14 @@
         :columns="columns"
         :grouping="grouping"
         :grouping-options="groupingOptions"
+        :meta="tableMeta"
         :loading="isLoading"
         :ui="{
           base: 'table-fixed border-separate border-spacing-0',
           thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
           tbody: '[&>tr]:last:[&>td]:border-b-0',
           th: 'py-2 first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
-          td: 'border-b border-default align-top',
+          td: 'border-b border-default align-top empty:hidden',
           separator: 'h-0'
         }"
       >
@@ -186,6 +187,7 @@
           >
             {{ ACTION_META[row.original.action].label }}
           </UBadge>
+          <span v-else />
         </template>
 
         <template #outcome-cell="{ row }">
@@ -197,14 +199,13 @@
             {{ row.original.outcome }}
           </span>
           <span v-else-if="!row.getIsGrouped()" class="text-muted">—</span>
+          <span v-else />
         </template>
 
+        <!-- Leaf: this trade's shares. Group: bought / sold totals (redeem = sell). -->
         <template #shares-cell="{ row }">
-          <span v-if="!row.getIsGrouped()" class="tabular-nums">{{ formatShares(row.original.shares) }}</span>
-        </template>
-
-        <template #amount-cell="{ row }">
-          <span v-if="!row.getIsGrouped()" class="tabular-nums">{{ formatUsd(row.original.amount) }}</span>
+          <span v-if="row.getIsGrouped()" class="tabular-nums">{{ groupSharesLabel(row) }}</span>
+          <span v-else class="tabular-nums">{{ formatShares(row.original.shares) }}</span>
         </template>
 
         <template #cashFlow-cell="{ row }">
@@ -289,6 +290,8 @@ interface PositionTrade {
   amount: number
   /** Signed cash impact: buys/splits negative, sells/merges/redeems positive. */
   cashFlow: number
+  /** Zebra parity of the owning position block on the current page (set at paging). */
+  groupEven?: boolean
 }
 
 /** True when an activity timestamp falls inside the selected reporting period. */
@@ -361,11 +364,12 @@ const positionGroups = computed<PositionTrade[][]>(() => {
 const totalPositions = computed(() => positionGroups.value.length)
 
 // Paginate by position, then hand the table a flat list of that page's trades —
-// UTable regroups them via the `position` grouping column.
+// UTable regroups them via the `position` grouping column. Each trade carries
+// its block's zebra parity so the whole position (header + leaves) shares a shade.
 const pagedTrades = computed<PositionTrade[]>(() =>
   positionGroups.value
     .slice((currentPage.value - 1) * pageSize.value, currentPage.value * pageSize.value)
-    .flat()
+    .flatMap((group, index) => group.map(trade => ({ ...trade, groupEven: index % 2 === 0 })))
 )
 
 const columns = [
@@ -375,8 +379,7 @@ const columns = [
   { accessorKey: 'action', header: 'Action' },
   { accessorKey: 'outcome', header: 'Outcome' },
   { accessorKey: 'shares', header: 'Shares' },
-  { accessorKey: 'amount', header: 'Amount' },
-  { accessorKey: 'cashFlow', header: 'Cash flow' }
+  { accessorKey: 'cashFlow', header: 'Amount' }
 ]
 
 const grouping = ['position']
@@ -384,6 +387,19 @@ const groupingOptions = ref<GroupingOptions>({
   groupedColumnMode: 'remove',
   getGroupedRowModel: getGroupedRowModel()
 })
+
+// Zebra striping by position block (gray / white), so each market reads as one
+// band. The group-header row is bold with no bottom border to sit flush with
+// its trades; both share the block's shade.
+const tableMeta = {
+  class: {
+    tr: (row: Row<PositionTrade>) => {
+      const even = (row.getIsGrouped() ? row.getLeafRows()[0]?.original.groupEven : row.original.groupEven) ?? true
+      const zebra = even ? '' : 'bg-muted/40'
+      return row.getIsGrouped() ? `${zebra} font-medium [&>td]:border-b-0` : zebra
+    }
+  }
+}
 
 const ACTION_META: Record<PositionAction, { label: string, color: LedgerCategoryColor }> = {
   BUY: { label: 'Buy', color: 'info' },
@@ -413,12 +429,52 @@ function groupNet(row: Row<PositionTrade>): number {
   return row.getLeafRows().reduce((sum, leaf) => sum + leaf.original.cashFlow, 0)
 }
 
+/** Σ shares acquired (BUY + SPLIT) under a group header. */
+function groupBoughtShares(row: Row<PositionTrade>): number {
+  return row.getLeafRows().reduce(
+    (sum, leaf) => sum + (leaf.original.action === 'BUY' || leaf.original.action === 'SPLIT' ? leaf.original.shares : 0),
+    0
+  )
+}
+
+/** Σ shares disposed (SELL + MERGE + REDEEM — a redeem counts as a sell). */
+function groupSoldShares(row: Row<PositionTrade>): number {
+  return row.getLeafRows().reduce(
+    (sum, leaf) => sum + (leaf.original.action === 'SELL' || leaf.original.action === 'MERGE' || leaf.original.action === 'REDEEM' ? leaf.original.shares : 0),
+    0
+  )
+}
+
 function formatDate(ts: number): string {
   return ts ? format(new Date(ts * 1000), 'MMM d, yyyy') : '—'
 }
 
 function formatShares(value: number | undefined): string {
   return value ? value.toLocaleString(undefined, { maximumFractionDigits: 2 }) : '—'
+}
+
+/** Like formatShares but renders 0 as "0" (used for the bought / sold pair). */
+function formatShareCount(value: number): string {
+  return value.toLocaleString(undefined, { maximumFractionDigits: 2 })
+}
+
+/**
+ * Group-header shares label: "bought / sold" only when both sides exist;
+ * otherwise just the side that's present (no trailing "/0").
+ */
+function groupSharesLabel(row: Row<PositionTrade>): string {
+  const bought = groupBoughtShares(row)
+  const sold = groupSoldShares(row)
+  if (bought > 0 && sold > 0) {
+    return `${formatShareCount(bought)} / ${formatShareCount(sold)}`
+  }
+  if (bought > 0) {
+    return formatShareCount(bought)
+  }
+  if (sold > 0) {
+    return formatShareCount(sold)
+  }
+  return '—'
 }
 
 function outcomeClass(outcome: string | undefined): string {
