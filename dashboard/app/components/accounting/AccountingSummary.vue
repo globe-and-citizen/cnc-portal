@@ -2,9 +2,17 @@
   <div class="space-y-4">
     <!-- Bottom line -->
     <UPageCard variant="subtle" :ui="{ container: 'gap-1' }">
-      <p class="text-xs uppercase tracking-wide text-muted">
-        Total return (portfolio value − net deposits)
-      </p>
+      <div class="flex items-center gap-2">
+        <p class="text-xs uppercase tracking-wide text-muted">
+          Total return (portfolio value − net deposits)
+        </p>
+        <AccountingMetricExplainer
+          title="Total return"
+          description="The bottom-line answer to 'did I make or lose money on Polymarket?'. It compares what your wallet is worth right now to what you originally put in."
+          formula="Portfolio value − Net deposits"
+          example="If you deposited $1,000 and your wallet (cash + open bets) is now worth $1,150, total return is +$150."
+        />
+      </div>
       <p class="text-3xl font-bold tabular-nums" :class="signClass(summary.totalReturn)">
         {{ formatSignedUsd(summary.totalReturn) }}
       </p>
@@ -13,9 +21,17 @@
     <!-- Balance sheet: net deposits → cash + positions → portfolio value -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
       <UPageCard variant="subtle" :ui="{ container: 'gap-1' }">
-        <p class="text-xs uppercase tracking-wide text-muted">
-          Net deposits
-        </p>
+        <div class="flex items-center gap-2">
+          <p class="text-xs uppercase tracking-wide text-muted">
+            Net deposits
+          </p>
+          <AccountingMetricExplainer
+            title="Net deposits"
+            description="The capital you've actually committed to Polymarket: every USDC you sent to your Polymarket wallet, minus every USDC you withdrew."
+            formula="Total deposits − Total withdrawals"
+            example="Deposit $500, then later withdraw $100, your net deposits are $400."
+          />
+        </div>
         <p class="text-xl font-semibold tabular-nums">
           {{ formatUsd(summary.netDeposits) }}
         </p>
@@ -24,9 +40,16 @@
         </p>
       </UPageCard>
       <UPageCard variant="subtle" :ui="{ container: 'gap-1' }">
-        <p class="text-xs uppercase tracking-wide text-muted">
-          Free cash balance
-        </p>
+        <div class="flex items-center gap-2">
+          <p class="text-xs uppercase tracking-wide text-muted">
+            Free cash balance
+          </p>
+          <AccountingMetricExplainer
+            title="Free cash balance"
+            description="USDC currently sitting idle in your wallet — what you could withdraw or use to place a new bet without selling anything. Read directly from on-chain transfers, so it always matches Polygon."
+            formula="Σ USDC received − Σ USDC sent (Etherscan)"
+          />
+        </div>
         <p class="text-xl font-semibold tabular-nums">
           {{ formatUsd(summary.currentCashBalance) }}
         </p>
@@ -35,9 +58,16 @@
         </p>
       </UPageCard>
       <UPageCard variant="subtle" :ui="{ container: 'gap-1' }">
-        <p class="text-xs uppercase tracking-wide text-muted">
-          Open positions value
-        </p>
+        <div class="flex items-center gap-2">
+          <p class="text-xs uppercase tracking-wide text-muted">
+            Open positions value
+          </p>
+          <AccountingMetricExplainer
+            title="Open positions value"
+            description="What your still-open bets would be worth if you sold them right now, at current market prices. A bet on a question that hasn't resolved yet is worth somewhere between $0 and $1 per share — this is the live market quote."
+            formula="Σ (open shares × current price) per market"
+          />
+        </div>
         <p class="text-xl font-semibold tabular-nums">
           {{ formatUsd(summary.openPositionsValue) }}
         </p>
@@ -46,9 +76,16 @@
         </p>
       </UPageCard>
       <UPageCard variant="subtle" :ui="{ container: 'gap-1' }">
-        <p class="text-xs uppercase tracking-wide text-muted">
-          Portfolio value
-        </p>
+        <div class="flex items-center gap-2">
+          <p class="text-xs uppercase tracking-wide text-muted">
+            Portfolio value
+          </p>
+          <AccountingMetricExplainer
+            title="Portfolio value"
+            description="Everything your Polymarket wallet is worth right now: idle cash plus the current market value of every open bet."
+            formula="Free cash balance + Open positions value"
+          />
+        </div>
         <p class="text-xl font-semibold tabular-nums">
           {{ formatUsd(summary.totalPortfolioValue) }}
         </p>
@@ -66,9 +103,17 @@
         variant="subtle"
         :ui="{ container: 'gap-1' }"
       >
-        <p class="text-xs uppercase tracking-wide text-muted">
-          {{ stat.label }}
-        </p>
+        <div class="flex items-center gap-2">
+          <p class="text-xs uppercase tracking-wide text-muted">
+            {{ stat.label }}
+          </p>
+          <AccountingMetricExplainer
+            :title="stat.label"
+            :description="stat.explainer.description"
+            :formula="stat.explainer.formula"
+            :example="stat.explainer.example"
+          />
+        </div>
         <p class="text-xl font-semibold tabular-nums" :class="stat.valueClass">
           {{ stat.value }}
         </p>
@@ -82,26 +127,119 @@
 
 <script setup lang="ts">
 import { type AccountingSummary, formatSignedUsd, formatUsd, signClass } from '~/utils/accounting'
+import AccountingMetricExplainer from './AccountingMetricExplainer.vue'
 
 const props = defineProps<{ summary: AccountingSummary }>()
+
+interface Explainer {
+  description: string
+  formula?: string
+  example?: string
+}
 
 interface Stat {
   label: string
   value: string
   hint?: string
   valueClass?: string
+  explainer: Explainer
 }
 
 const stats = computed<Stat[]>(() => {
   const s = props.summary
   return [
-    { label: 'Total deposits', value: formatUsd(s.totalDeposits), valueClass: 'text-emerald-600 dark:text-emerald-400' },
-    { label: 'Total withdrawals', value: formatUsd(s.totalWithdrawals), valueClass: 'text-rose-600 dark:text-rose-400' },
-    { label: 'Realized P&L', value: formatSignedUsd(s.realizedPnl), valueClass: signClass(s.realizedPnl), hint: 'Lot accounting — same as Income Statement' },
-    { label: 'Polymarket realized', value: formatSignedUsd(s.positionsRealizedPnl), valueClass: signClass(s.positionsRealizedPnl), hint: 'Reported by /positions (audit only)' },
-    { label: 'Unrealized P&L', value: formatSignedUsd(s.unrealizedPnl), valueClass: signClass(s.unrealizedPnl), hint: 'Open positions' },
-    { label: 'Rewards earned', value: formatUsd(s.totalRewards), valueClass: 'text-emerald-600 dark:text-emerald-400' },
-    { label: 'Trading volume', value: formatUsd(s.tradingVolume), hint: `${s.tradeCount} trades` }
+    {
+      label: 'Total deposits',
+      value: formatUsd(s.totalDeposits),
+      valueClass: 'text-emerald-600 dark:text-emerald-400',
+      explainer: {
+        description: 'Every USDC you ever sent to your Polymarket wallet from an outside address. We get this from Polygon (Etherscan) directly — it never relies on Polymarket reporting.',
+        formula: 'Σ incoming USDC transfers (Etherscan)'
+      }
+    },
+    {
+      label: 'Total withdrawals',
+      value: formatUsd(s.totalWithdrawals),
+      valueClass: 'text-rose-600 dark:text-rose-400',
+      explainer: {
+        description: 'Every USDC you ever sent out of your Polymarket wallet to an outside address.',
+        formula: 'Σ outgoing USDC transfers (Etherscan)'
+      }
+    },
+    {
+      label: 'Realized P&L',
+      value: formatSignedUsd(s.realizedPnl),
+      valueClass: signClass(s.realizedPnl),
+      hint: 'Lot accounting — same as Income Statement',
+      explainer: {
+        description: 'Money you actually locked in: when you sold shares, when a market resolved and you redeemed, when you merged shares back to cash, or when a losing bet resolved without redemption. Computed with weighted-average-cost lot accounting on every trade.',
+        formula: 'Σ (proceeds − cost basis) per disposed lot',
+        example: 'You bought 100 "Yes" shares for $40 ($0.40 each) and sold them later for $60 ($0.60 each). Realized P&L on this trade = +$20.'
+      }
+    },
+    {
+      label: 'Polymarket realized',
+      value: formatSignedUsd(s.positionsRealizedPnl),
+      valueClass: signClass(s.positionsRealizedPnl),
+      hint: 'Reported by /positions (audit only)',
+      explainer: {
+        description: 'The same realized P&L, but as Polymarket itself reports it via their /positions API. Shown for audit only — drift between this and our own Realized P&L points to losing markets Polymarket purged from their data before you redeemed.',
+        formula: 'Σ position.realizedPnl from /positions'
+      }
+    },
+    {
+      label: 'Unrealized P&L',
+      value: formatSignedUsd(s.unrealizedPnl),
+      valueClass: signClass(s.unrealizedPnl),
+      hint: 'Open positions',
+      explainer: {
+        description: 'Paper profit or loss on bets still in play, i.e. how much the current market price differs from what you originally paid. It can swing either way until the market resolves.',
+        formula: 'Σ (current value − initial cost) per open position',
+        example: 'You paid $0.40 per share for 100 "Yes" shares. The market now trades at $0.55. Unrealized P&L = +$15.'
+      }
+    },
+    {
+      label: 'Rewards earned',
+      value: formatUsd(s.totalRewards),
+      valueClass: 'text-emerald-600 dark:text-emerald-400',
+      explainer: {
+        description: 'Free USDC Polymarket has paid you: liquidity-provider rewards, maker rebates, and referral payouts. Not the result of any trade — it just lands in your wallet.',
+        formula: 'Σ REWARD + MAKER_REBATE + REFERRAL_REWARD activity rows'
+      }
+    },
+    {
+      label: 'Trading volume',
+      value: formatUsd(s.tradingVolume),
+      hint: `${s.tradeCount} trades`,
+      explainer: {
+        description: 'Gross USD value you have traded — buys + sells combined. This is a turnover number, not a profit number: a $1,000 round trip (buy and resell) counts as $2,000 of volume.',
+        formula: 'Σ BUY usdcSize + Σ SELL usdcSize'
+      }
+    },
+    {
+      label: 'Settlement adjustments',
+      value: formatSignedUsd(s.settlementAdjustments),
+      valueClass: signClass(s.settlementAdjustments),
+      hint: s.settlementAdjustmentCount === 0
+        ? 'None — feeds agree'
+        : `${s.settlementAdjustmentCount} tx reconciled`,
+      explainer: {
+        description: 'Reconciliation entry for tx hashes where the on-chain USDC actually moved is a few cents different from what Polymarket\'s activity feed says. Almost always a fee or slippage. Without it, the Cash on-chain identity would gap by exactly this amount.',
+        formula: 'Σ (on-chain net − activity net) per shared tx hash',
+        example: 'A trade is reported as $50 in the activity feed, but $49.97 actually moved on-chain. Settlement adjustment = −$0.03 (a tiny fee).'
+      }
+    },
+    {
+      label: 'Position basis drift',
+      value: formatSignedUsd(s.positionBasisDrift),
+      valueClass: signClass(s.positionBasisDrift),
+      hint: 'Polymarket basis vs ours',
+      explainer: {
+        description: 'Reconciliation entry for the gap between Polymarket\'s own reported cost basis on open positions (their cashPnl) and what our weighted-average-cost lot accounting derives from /activity. Without it, the Total return identity would gap by exactly this amount.',
+        formula: 'openPositionsValue − openContractsAtCost − unrealizedPnl',
+        example: 'Polymarket says you have $100 of open positions with $20 of unrealized profit (basis $80). Our /activity lot accounting computes a basis of $75. Drift = $100 − $75 − $20 = +$5.'
+      }
+    }
   ]
 })
 </script>
