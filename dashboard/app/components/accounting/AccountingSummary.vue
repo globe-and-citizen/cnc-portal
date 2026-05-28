@@ -19,7 +19,7 @@
     </UPageCard>
 
     <!-- Balance sheet: net deposits → cash + positions → portfolio value -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="grid grid-cols-2 lg:grid-cols-5 gap-4">
       <UPageCard variant="subtle" :ui="{ container: 'gap-1' }">
         <div class="flex items-center gap-2">
           <p class="text-xs uppercase tracking-wide text-muted">
@@ -73,6 +73,25 @@
         </p>
         <p class="text-xs text-muted">
           Mark-to-market
+        </p>
+      </UPageCard>
+      <UPageCard variant="subtle" :ui="{ container: 'gap-1' }">
+        <div class="flex items-center gap-2">
+          <p class="text-xs uppercase tracking-wide text-muted">
+            Open contracts at cost
+          </p>
+          <AccountingMetricExplainer
+            title="Open contracts at cost"
+            description="What you originally paid for the bets you still hold — their cost basis, not their current market price. Compare it to 'Open positions value' to see your paper gain or loss: paying more than they're now worth means you're sitting on an unrealized loss. This is also the value the balance sheet books open contracts at."
+            formula="Σ acquisitions − Σ disposals (cost basis)"
+            example="You paid $3.86 for bets now quoted at $0.71 → you're holding a ~$3.15 unrealized loss."
+          />
+        </div>
+        <p class="text-xl font-semibold tabular-nums">
+          {{ formatUsd(summary.openContractsAtCost) }}
+        </p>
+        <p class="text-xs text-muted">
+          Cost basis
         </p>
       </UPageCard>
       <UPageCard variant="subtle" :ui="{ container: 'gap-1' }">
