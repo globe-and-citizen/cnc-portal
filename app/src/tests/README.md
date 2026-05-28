@@ -1,5 +1,28 @@
 # Test Utilities Guide
 
+## Global mocks are mandatory
+
+The Vitest setup files under [`setup/`](./setup) call `vi.mock(...)` once for every commonly used dependency: wagmi (`@wagmi/vue`, `@wagmi/core`, `@/wagmi.config`), `viem`, TanStack Query, Apollo, Pinia stores (`@/stores/*`), the canned `@/queries/*.queries` hooks, the ERC20-style `@/composables/<domain>/{reads,writes}` modules, the stubbed Nuxt UI primitives (`Modal`, `Tooltip`, `SelectMenu`, `Icon`, `Button`, `Calendar`, `Popover`, `DropdownMenu`), `@/lib/axios`, `@/utils`, and more. Per-test override hooks (`mockTeamStore`, `mockERC20Reads`, `resetERC20Mocks`, …) are re-exported from [`@/tests/mocks`](./mocks).
+
+**Specs must reuse the global mocks**, not re-declare them locally:
+
+```typescript
+// ❌ Don't — already mocked in src/tests/setup/wagmi.vue.setup.ts
+vi.mock('@wagmi/vue', () => ({
+  /* … */
+}))
+
+// ✅ Do — override the per-test value on the shared mock
+import { mockERC20Reads, resetERC20Mocks } from '@/tests/mocks'
+
+beforeEach(() => resetERC20Mocks())
+mockERC20Reads.balanceOf.data.value = 1000n
+```
+
+ESLint enforces this via `no-restricted-syntax`: any `vi.mock('<globally-mocked-path>')` call in a spec file is an error. The list of banned paths and the legacy-offender allow-list live in [`app/eslint.config.js`](../../eslint.config.js) under `bannedGlobalMockPaths` / `globalMockLegacyFiles`. The full mock system is documented in [`docs/testing/MOCK_SYSTEM.md`](../../../docs/testing/MOCK_SYSTEM.md).
+
+If you need to mock a module that **isn't** yet globally mocked but you're reaching for it across several specs, add it to `src/tests/setup/` and re-export the override hook from `src/tests/mocks/index.ts` rather than re-mocking it in each spec.
+
 ## Testing Components that Use Nuxt UI
 
 ### TL;DR
