@@ -10,22 +10,10 @@ import {
 } from '@/tests/mocks/composables.mock'
 import apiClient from '@/lib/axios'
 
-vi.mock('@/lib/axios', () => ({
-  default: {
-    get: vi.fn(),
-    post: vi.fn(),
-    put: vi.fn(),
-    patch: vi.fn(),
-    delete: vi.fn()
-  }
-}))
-
 const weeklyClaimQueries =
   await vi.importActual<typeof import('../weeklyClaim.queries')>('../weeklyClaim.queries')
 
-const createClaimResponse = (
-  overrides: Partial<Claim> & { minutesWorked?: number | null } = {}
-) => ({
+const createClaimResponse = (overrides: Partial<Claim> & { minutesWorked?: number | null } = {}) => ({
   id: 1,
   hoursWorked: 480,
   minutesWorked: 480,
@@ -61,16 +49,26 @@ const createWeeklyClaimResponse = (
   ...overrides
 })
 
+const mockQueryClient = (invalidateQueries = vi.fn().mockResolvedValue(undefined)) => {
+  useQueryClientFn.mockReturnValue({
+    invalidateQueries,
+    getQueryData: vi.fn(),
+    setQueryData: vi.fn(),
+    removeQueries: vi.fn()
+  })
+  return invalidateQueries
+}
+
+const mockUploadedFile = (fileKey: string, fileUrl: string, fileType: string, fileSize: number) =>
+  mockUploadFileApi.mockResolvedValue({
+    files: [{ fileKey, fileUrl, metadata: { fileType, fileSize } }]
+  })
+
 describe('weeklyClaim.queries', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     useMutationFn.mockImplementation(smartUseMutation)
-    useQueryClientFn.mockReturnValue({
-      invalidateQueries: vi.fn().mockResolvedValue(undefined),
-      getQueryData: vi.fn(),
-      setQueryData: vi.fn(),
-      removeQueries: vi.fn()
-    })
+    mockQueryClient()
   })
 
   describe('normalization helpers', () => {
@@ -191,25 +189,8 @@ describe('weeklyClaim.queries', () => {
 
   describe('custom mutations with file handling', () => {
     it('submits a claim with uploaded files and invalidates team queries', async () => {
-      const invalidateQueries = vi.fn().mockResolvedValue(undefined)
-      useQueryClientFn.mockReturnValue({
-        invalidateQueries,
-        getQueryData: vi.fn(),
-        setQueryData: vi.fn(),
-        removeQueries: vi.fn()
-      })
-      mockUploadFileApi.mockResolvedValue({
-        files: [
-          {
-            fileKey: 'proof-1',
-            fileUrl: 'https://example.com/proof-1',
-            metadata: {
-              fileType: 'image/png',
-              fileSize: 512
-            }
-          }
-        ]
-      })
+      const invalidateQueries = mockQueryClient()
+      mockUploadedFile('proof-1', 'https://example.com/proof-1', 'image/png', 512)
       vi.mocked(apiClient.post).mockResolvedValue({ data: undefined })
 
       const mutation = weeklyClaimQueries.useSubmitClaimMutation()
@@ -263,25 +244,13 @@ describe('weeklyClaim.queries', () => {
     })
 
     it('edits a claim with uploaded files, optional deletions and invalidation', async () => {
-      const invalidateQueries = vi.fn().mockResolvedValue(undefined)
-      useQueryClientFn.mockReturnValue({
-        invalidateQueries,
-        getQueryData: vi.fn(),
-        setQueryData: vi.fn(),
-        removeQueries: vi.fn()
-      })
-      mockUploadFileApi.mockResolvedValue({
-        files: [
-          {
-            fileKey: 'updated-proof',
-            fileUrl: 'https://example.com/updated-proof',
-            metadata: {
-              fileType: 'application/pdf',
-              fileSize: 2048
-            }
-          }
-        ]
-      })
+      const invalidateQueries = mockQueryClient()
+      mockUploadedFile(
+        'updated-proof',
+        'https://example.com/updated-proof',
+        'application/pdf',
+        2048
+      )
       vi.mocked(apiClient.put).mockResolvedValue({ data: undefined })
 
       const mutation = weeklyClaimQueries.useEditClaimWithFilesMutation()
