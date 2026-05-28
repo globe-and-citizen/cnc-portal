@@ -183,20 +183,12 @@
         </template>
       </UTable>
 
-      <div
-        v-if="totalTrades > pageSize"
-        class="mt-4 flex justify-end border-t border-default pt-4"
-      >
-        <UPagination
-          v-model:page="currentPage"
-          :items-per-page="pageSize"
-          :total="totalTrades"
-          :sibling-count="1"
-          show-edges
-          color="neutral"
-          variant="outline"
-        />
-      </div>
+      <AccountingPagination
+        v-model:page="currentPage"
+        v-model:page-size="pageSize"
+        :total="totalTrades"
+        noun="trades"
+      />
     </UPageCard>
   </div>
 </template>
@@ -208,6 +200,7 @@ import type { PolymarketActivity, PolymarketPosition } from '~/types/polymarket'
 import { useAccountingPeriod } from '~/composables/useAccountingPeriod'
 import { formatSignedUsd, formatUsd, type LedgerCategoryColor, signClass } from '~/utils/accounting'
 import { buildIncomeStatement, type RealizedTradeKind } from '~/utils/incomeStatement'
+import AccountingPagination from './AccountingPagination.vue'
 
 const props = defineProps<{
   activities: PolymarketActivity[]
@@ -217,7 +210,7 @@ const props = defineProps<{
   walletAddress: string
 }>()
 
-const pageSize = 20
+const pageSize = ref(20)
 const currentPage = ref(1)
 
 const {
@@ -248,8 +241,8 @@ const isReconciled = computed(() => Math.abs(statement.value.reconciliationGap) 
 const totalTrades = computed(() => statement.value.realizedTrades.length)
 
 const pagedTrades = computed(() => {
-  const start = (currentPage.value - 1) * pageSize
-  return statement.value.realizedTrades.slice(start, start + pageSize)
+  const start = (currentPage.value - 1) * pageSize.value
+  return statement.value.realizedTrades.slice(start, start + pageSize.value)
 })
 
 const columns = [
