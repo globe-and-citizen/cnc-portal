@@ -49,10 +49,8 @@ const vmCastLegacyFiles = [
   'src/components/forms/__tests__/TransferModal.spec.ts',
   'src/components/sections/AdministrationView/__tests__/CurrentBoDElectionSection.spec.ts',
   'src/components/sections/AdministrationView/__tests__/CurrentBoDSection.spec.ts',
-  'src/components/sections/BankView/__tests__/BankTransactions.spec.ts',
   'src/components/sections/CashRemunerationView/Form/__tests__/ClaimForm.spec.ts',
   'src/components/sections/CashRemunerationView/Form/__tests__/ExpandableFileGallery.spec.ts',
-  'src/components/sections/CashRemunerationView/__tests__/CashRemunerationTransactions.spec.ts',
   'src/components/sections/CashRemunerationView/__tests__/SubmitClaims.spec.ts',
   'src/components/sections/ClaimHistoryView/__tests__/ClaimHistoryActionAlerts.spec.ts',
   'src/components/sections/ClaimHistoryView/__tests__/ClaimHistoryDailyBreakdown.spec.ts',
@@ -65,8 +63,6 @@ const vmCastLegacyFiles = [
   'src/components/sections/SherTokenView/InvestorActions/__tests__/PayDividendsAction.spec.ts',
   'src/components/sections/SherTokenView/InvestorActions/__tests__/SetCompensationMultiplierAction.spec.ts',
   'src/components/sections/SherTokenView/InvestorActions/__tests__/ToggleSherCompensationAction.spec.ts',
-  'src/components/sections/SherTokenView/__tests__/InvestorsTransaction.advanced.spec.ts',
-  'src/components/sections/SherTokenView/__tests__/InvestorsTransaction.spec.ts',
   'src/components/sections/SherTokenView/__tests__/ShareholderList.spec.ts',
   'src/components/sections/VestingView/__tests__/VestingStats.spec.ts',
   'src/components/sections/VestingView/forms/__tests__/CreateVestingErrors.spec.ts',
@@ -275,7 +271,8 @@ export default [
       'src/components/sections/VestingView/forms/CreateVesting.vue',
       'src/components/TableComponent.vue',
       'src/components/sections/DashboardView/forms/ApproveUsersEIP712Form.vue',
-      'src/components/forms/SafeDepositRouterForm.vue'
+      'src/components/forms/SafeDepositRouterForm.vue',
+      'src/components/sections/CashRemunerationView/__tests__/CashRemunerationTransactions.spec.ts'
     ],
     rules: {
       'max-lines': 'off'
