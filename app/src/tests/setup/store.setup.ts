@@ -7,6 +7,7 @@ import * as mocks from '@/tests/mocks/store.mock'
 // mutation made before mounting is reliably visible to the component.
 beforeEach(() => {
   mocks.resetUserStoreMock()
+  mocks.resetTeamStoreMock()
 })
 
 // Convention: mock individual store submodules, not the `@/stores` barrel.
@@ -27,7 +28,7 @@ vi.mock('@/stores/teamStore', async (importOriginal) => {
   const actual: object = await importOriginal()
   return {
     ...actual,
-    useTeamStore: vi.fn(() => ({ ...mocks.mockTeamStore }))
+    useTeamStore: vi.fn(() => mocks.mockTeamStore)
   }
 })
 

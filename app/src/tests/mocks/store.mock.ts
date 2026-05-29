@@ -2,38 +2,68 @@ import { mockTeamData } from '@/tests/mocks/index'
 import type { ContractType } from '@/types/teamContract'
 import { vi } from 'vitest'
 import { ref } from 'vue'
-export const mockTeamStore = {
+const teamStoreDataDefaults = () => ({
   currentTeam: mockTeamData,
   currentTeamId: mockTeamData.id,
   currentTeamMeta: {
     isPending: false,
     data: mockTeamData
-  },
-  teamsMeta: {
-    reloadTeams: vi.fn()
-  },
+  }
+})
 
-  setCurrentTeamId: vi.fn((id: string) => {
-    mockTeamStore.currentTeamId = id
-  }),
-  getContractAddressByType: vi.fn((type: ContractType) => {
-    const contractAddresses = {
-      Bank: '0x1111111111111111111111111111111111111111',
-      InvestorV1: '0x2222222222222222222222222222222222222222',
-      Voting: '0x3333333333333333333333333333333333333333',
-      BoardOfDirectors: '0x4444444444444444444444444444444444444444',
-      ExpenseAccountEIP712: '0x5555555555555555555555555555555555555555',
-      CashRemunerationEIP712: '0x6666666666666666666666666666666666666666',
-      Campaign: '0x7777777777777777777777777777777777777777',
-      Elections: '0x8888888888888888888888888888888888888888',
-      Proposals: '0x9999999999999999999999999999999999999999',
-      VestingV1: '0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-      SafeDepositRouter: '0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB',
-      Safe: '0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'
-    }
-    return contractAddresses[type] || '0x1234567890123456789012345678901234567890'
-  }),
-  fetchTeam: vi.fn()
+const defaultGetContractAddressByType = (type: ContractType) => {
+  const contractAddresses = {
+    Bank: '0x1111111111111111111111111111111111111111',
+    InvestorV1: '0x2222222222222222222222222222222222222222',
+    Voting: '0x3333333333333333333333333333333333333333',
+    BoardOfDirectors: '0x4444444444444444444444444444444444444444',
+    ExpenseAccountEIP712: '0x5555555555555555555555555555555555555555',
+    CashRemunerationEIP712: '0x6666666666666666666666666666666666666666',
+    Campaign: '0x7777777777777777777777777777777777777777',
+    Elections: '0x8888888888888888888888888888888888888888',
+    Proposals: '0x9999999999999999999999999999999999999999',
+    VestingV1: '0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+    SafeDepositRouter: '0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB',
+    Safe: '0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'
+  }
+  return contractAddresses[type] || '0x1234567890123456789012345678901234567890'
+}
+
+/**
+ * Build a fully independent team-store mock (fresh data + fresh spies).
+ * Use when a spec needs its own isolated store instance.
+ */
+export const makeTeamStore = (overrides: Record<string, unknown> = {}) => {
+  const store = {
+    ...teamStoreDataDefaults(),
+    teamsMeta: {
+      reloadTeams: vi.fn()
+    },
+    setCurrentTeamId: vi.fn((id: string) => {
+      store.currentTeamId = id
+    }),
+    getContractAddressByType: vi.fn(defaultGetContractAddressByType),
+    fetchTeam: vi.fn(),
+    ...overrides
+  }
+  return store
+}
+
+/**
+ * Shared instance returned by the globally-mocked `useTeamStore`.
+ * Specs set up state by mutating it directly (e.g. `mockTeamStore.currentTeamId = '1'`);
+ * `resetTeamStoreMock()` (called in a global `beforeEach`) restores defaults — including
+ * the default `getContractAddressByType`, which several specs replace with their own spy —
+ * so mutations never leak across tests.
+ */
+export const mockTeamStore = makeTeamStore()
+
+export const resetTeamStoreMock = () => {
+  Object.assign(mockTeamStore, teamStoreDataDefaults())
+  mockTeamStore.getContractAddressByType = vi.fn(defaultGetContractAddressByType)
+  mockTeamStore.setCurrentTeamId.mockClear()
+  mockTeamStore.fetchTeam.mockClear()
+  mockTeamStore.teamsMeta.reloadTeams.mockClear()
 }
 
 export const mockToast = {
