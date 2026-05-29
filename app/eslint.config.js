@@ -59,10 +59,6 @@ const vmCastLegacyFiles = [
   'src/components/sections/DashboardView/__tests__/SetMemberWageModal.spec.ts',
   'src/components/sections/DashboardView/forms/__tests__/AddMemberForm.spec.ts',
   'src/components/sections/SafeView/__tests__/SafeBalanceSection.rendering.spec.ts',
-  'src/components/sections/SherTokenView/InvestorActions/__tests__/InvestInSafeAction.spec.ts',
-  'src/components/sections/SherTokenView/InvestorActions/__tests__/PayDividendsAction.spec.ts',
-  'src/components/sections/SherTokenView/InvestorActions/__tests__/SetCompensationMultiplierAction.spec.ts',
-  'src/components/sections/SherTokenView/InvestorActions/__tests__/ToggleSherCompensationAction.spec.ts',
   'src/components/sections/SherTokenView/__tests__/ShareholderList.spec.ts',
   'src/components/sections/VestingView/__tests__/VestingStats.spec.ts',
   'src/components/sections/VestingView/forms/__tests__/CreateVestingErrors.spec.ts',
@@ -74,9 +70,7 @@ const vmCastLegacyFiles = [
 // These three were originally Tailwind+vm offenders. The Tailwind half is
 // refactored; the vm casts remain pending refactor.
 const vmCastLegacyExtraFiles = [
-  'src/components/sections/CashRemunerationView/Form/__tests__/UploadFileDB.spec.ts',
-  'src/components/sections/SherTokenView/InvestorActions/__tests__/DistributeMintAction.spec.ts',
-  'src/components/sections/SherTokenView/InvestorActions/__tests__/MintTokenAction.spec.ts'
+  'src/components/sections/CashRemunerationView/Form/__tests__/UploadFileDB.spec.ts'
 ]
 
 // Global-mock enforcement (issue #2014).
