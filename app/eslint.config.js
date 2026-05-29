@@ -54,6 +54,35 @@ const vmCastLegacyExtraFiles = [
   'src/components/sections/CashRemunerationView/Form/__tests__/UploadFileDB.spec.ts'
 ]
 
+// Ratchet — both lists were drained in PR #2024 (closes #1850). They MUST
+// NOT grow. If you're about to add a new entry:
+//   1. First try to refactor — see app/src/tests/README.md
+//      "Migrating Legacy Specs Off `wrapper.vm as X`".
+//   2. If the cast is genuinely unavoidable, use a scoped
+//      `// eslint-disable-next-line no-restricted-syntax -- <reason>`
+//      on the cast line itself, not a file-level opt-out here.
+//   3. The remaining MIXTE files are tracked as a follow-up to #1850 —
+//      drain them there, not by growing this list.
+// This guard fires at config load time, so `npm run lint` fails fast
+// with the message below if either ceiling is breached. To lower a
+// ceiling after a refactor, drop the entry AND decrement the constant.
+const VM_CAST_LEGACY_MAX = 7
+const VM_CAST_LEGACY_EXTRA_MAX = 1
+if (vmCastLegacyFiles.length > VM_CAST_LEGACY_MAX) {
+  throw new Error(
+    `vmCastLegacyFiles has ${vmCastLegacyFiles.length} entries (ceiling ${VM_CAST_LEGACY_MAX}). ` +
+      'Refactor the new entry instead of whitelisting it — see app/src/tests/README.md ' +
+      '"Migrating Legacy Specs Off `wrapper.vm as X`".'
+  )
+}
+if (vmCastLegacyExtraFiles.length > VM_CAST_LEGACY_EXTRA_MAX) {
+  throw new Error(
+    `vmCastLegacyExtraFiles has ${vmCastLegacyExtraFiles.length} entries (ceiling ${VM_CAST_LEGACY_EXTRA_MAX}). ` +
+      'Refactor the new entry instead of whitelisting it — see app/src/tests/README.md ' +
+      '"Migrating Legacy Specs Off `wrapper.vm as X`".'
+  )
+}
+
 // Global-mock enforcement (issue #2014).
 //
 // `app/vitest.config.ts` loads a set of setup files from `src/tests/setup/`
