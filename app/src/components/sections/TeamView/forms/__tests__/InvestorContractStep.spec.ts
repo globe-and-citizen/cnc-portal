@@ -175,7 +175,7 @@ describe('InvestorContractStep', () => {
     })
 
     expect(mockRegisterMutation.mutate).toHaveBeenCalledTimes(1)
-    expect(mockInvalidateOfficerQueries).toHaveBeenCalledWith(mockTeamData.id)
+    expect(mockInvalidateOfficerQueries).toHaveBeenCalledWith()
     expect(wrapper.emitted('contractDeployed')).toBeTruthy()
   })
 

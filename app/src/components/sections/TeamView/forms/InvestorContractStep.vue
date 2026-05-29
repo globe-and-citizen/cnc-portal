@@ -156,7 +156,7 @@ const onSubmit = () => {
           },
           {
             onSuccess: async () => {
-              await invalidateQueries(teamId)
+              await invalidateQueries()
               toast.add({
                 title: 'Officer contracts deployed and synced successfully',
                 color: 'success'
