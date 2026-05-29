@@ -106,6 +106,113 @@ Use:
 
 `app/src/components/forms/__tests__/TokenAmount.spec.ts` is the reference example for the pattern.
 
+## Migrating Legacy Specs Off `wrapper.vm as X`
+
+When you touch an existing spec that's whitelisted in `vmCastLegacyFiles` / `vmCastLegacyExtraFiles` (in [`app/eslint.config.js`](../../eslint.config.js)), drain the casts as part of your change — don't leave them. Here's the recipe per cast type.
+
+### Cast type 1 — state mutation
+
+`(wrapper.vm as X).formData.name = 'foo'` / `vm.totalAmount = '100'`
+
+Find the input bound to that field (`v-model="..."`) and drive it through its real surface:
+
+- **Native input** — `wrapper.find('input[data-test="..."]').setValue('foo')`
+- **Nuxt UI auto-imported component not in the global stub list** (`UInput`, `USelect`, `UTable`, …) — register a local mock to expose the stub under a queryable `name`, then emit `update:modelValue`:
+  ```ts
+  vi.mock('@nuxt/ui/components/Input.vue', () => ({
+    default: defineComponent({
+      name: 'UInput',
+      props: ['modelValue'],
+      emits: ['update:modelValue'],
+      template: '<input />'
+    })
+  }))
+  // …
+  await wrapper.findComponent({ name: 'UInput' }).vm.$emit('update:modelValue', 'foo')
+  ```
+  Auto-imports bypass `global.stubs`; `vi.mock` is the reliable hook. See "Adding a New Global Stub" above for the canonical recipe.
+- **Local child form component** — `wrapper.findComponent({ name: 'SelectMember' }).vm.$emit('update:modelValue', { address: '0x...' })`
+
+### Cast type 2 — handler call
+
+`(wrapper.vm as X).handleSubmit(payload)` / `vm.openModal()`
+
+The parent listens to a child's emit (e.g. `@submit="handleSubmit"`). Drive the emit, or the user-action that triggers it:
+
+```ts
+// Drive the child form's submit emit
+await wrapper.findComponent({ name: 'PayDividendsForm' }).vm.$emit('submit', payload)
+
+// Or click the button that calls handleSubmit / openModal in the template
+await wrapper.find('[data-test="pay-dividends-button"]').trigger('click')
+```
+
+If a button carries `:disabled` (e.g. a `coming soon` feature flag) and a DOM click is suppressed, emit the click on the component to bypass the HTML disabled while preserving the `@click` binding:
+
+```ts
+await wrapper.findComponent({ name: 'ActionButton' }).vm.$emit('click')
+```
+
+### Cast type 3 — state read
+
+`(wrapper.vm as X).displayedTransactions` / `vm.errorMessage` / `vm.modal.show`
+
+Read from the observable surface the parent passes downstream:
+
+- **Computed passed to a child** — `wrapper.findComponent({ name: 'UTable' }).props('data')`
+- **Error message rendered in UAlert** — `wrapper.text()` or `wrapper.findComponent({ name: 'UAlert' }).text()`
+- **Modal open state** — `wrapper.findComponent({ name: 'UModal' }).props('open')`, or assert that the modal's slot content is rendered (`findComponent(InnerForm).exists()`)
+
+### Cast type 4 — `defineExpose`'d public API
+
+If a component does `defineExpose({ reset, openModalForDay })`, those methods are part of its contract — but `wrapper.vm.reset()` still trips the lint rule, and rightly so: the test should consume the API the way a real parent does.
+
+**Preferred — `ParentHarness` pattern.** Mount through a tiny harness that holds a template ref:
+
+```ts
+const ParentHarness = defineComponent({
+  components: { CreateAddCampaign },
+  setup() {
+    const child = ref<InstanceType<typeof CreateAddCampaign>>()
+    return { child, callReset: () => child.value?.reset() }
+  },
+  template: '<CreateAddCampaign ref="child" />'
+})
+
+const wrapper = mount(ParentHarness)
+wrapper.vm.callReset() // accesses the harness's own surface — not a cast
+```
+
+`app/src/components/sections/ContractManagementView/forms/__tests__/CreateAddCampaign.spec.ts` is the reference example.
+
+**Fallback — scoped `eslint-disable` with a reason.** If a harness is overkill (the API has no real consumer yet), document inline:
+
+```ts
+// eslint-disable-next-line no-restricted-syntax -- defineExpose'd public API, no UI event triggers it
+const vm = wrapper.vm as unknown as { openModalForDay: (day: Date) => void }
+```
+
+### When `eslint-disable` is acceptable
+
+Sparingly, and always with a `-- <reason>` after the rule name:
+
+- **Unreachable defensive branch.** A guard like `if (amount === 0)` in `submit()` that an upstream Zod schema already rejects. Either delete the dead guard, or keep the cast as proof the guard exists for defense-in-depth.
+- **Pure computed without UI surface.** Values like `activeMembers`, `tokenBalance` consumed only by other internals; nothing observable renders them.
+- **`defineExpose`'d API not yet wired to a parent.** See above.
+
+Code review will quote the `--` reason, so make it specific.
+
+### Reference examples by pattern
+
+| Pattern                                      | Reference spec                                                                                     |
+| -------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| Canonical (DOM + emit + props)               | `app/src/components/forms/__tests__/TokenAmount.spec.ts`                                           |
+| UTable / USelect / CustomDatePicker drive    | `app/src/components/sections/SherTokenView/__tests__/InvestorsTransaction.spec.ts`                 |
+| Child form `$emit('submit', ...)`            | `app/src/components/sections/SherTokenView/InvestorActions/__tests__/PayDividendsAction.spec.ts`   |
+| Heavy state mutation → DOM-driven helper     | `app/src/components/sections/VestingView/forms/__tests__/CreateVestingInitial.spec.ts`             |
+| `defineExpose` via `ParentHarness`           | `app/src/components/sections/ContractManagementView/forms/__tests__/CreateAddCampaign.spec.ts`     |
+| Bypass `:disabled` button via component emit | `app/src/components/sections/SherTokenView/InvestorActions/__tests__/DistributeMintAction.spec.ts` |
+
 ## Common Testing Patterns
 
 ### Finding stubbed buttons and icons
