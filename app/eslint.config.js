@@ -39,7 +39,6 @@ const vmCast = {
 // and the helper lists below.
 
 const vmCastLegacyFiles = [
-  'src/components/__tests__/MonthSelector.spec.ts',
   'src/components/forms/__tests__/AddTeamForm.spec.ts',
   'src/components/forms/__tests__/ApproveUsersEIP712Form.spec.ts',
   'src/components/forms/__tests__/DepositBankForm.spec.ts',
@@ -60,12 +59,8 @@ const vmCastLegacyFiles = [
   'src/components/sections/ClaimHistoryView/__tests__/ClaimHistoryWeekNavigator.spec.ts',
   'src/components/sections/ContractManagementView/forms/__tests__/CreateAddCampaign.spec.ts',
   'src/components/sections/DashboardView/__tests__/SetMemberWageModal.spec.ts',
-  'src/components/sections/DashboardView/__tests__/TeamMetaActions.spec.ts',
-  'src/components/sections/DashboardView/__tests__/TeamMetaSection.spec.ts',
   'src/components/sections/DashboardView/forms/__tests__/AddMemberForm.spec.ts',
-  'src/components/sections/ExpenseAccountView/__tests__/ExpenseTransactions.spec.ts',
   'src/components/sections/SafeView/__tests__/SafeBalanceSection.rendering.spec.ts',
-  'src/components/sections/SafeView/__tests__/SafeBalanceSection.transfer.spec.ts',
   'src/components/sections/SherTokenView/InvestorActions/__tests__/InvestInSafeAction.spec.ts',
   'src/components/sections/SherTokenView/InvestorActions/__tests__/PayDividendsAction.spec.ts',
   'src/components/sections/SherTokenView/InvestorActions/__tests__/SetCompensationMultiplierAction.spec.ts',
