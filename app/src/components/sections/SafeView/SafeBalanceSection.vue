@@ -131,7 +131,6 @@ import { useTransferFromSafeMutation } from '@/queries/safe.mutations'
 import DepositSafeForm from '@/components/forms/DepositSafeForm.vue'
 import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
-import { getTokenAddress } from '@/utils'
 
 const chainId = useChainId()
 const userDataStore = useUserDataStore()
