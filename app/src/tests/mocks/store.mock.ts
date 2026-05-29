@@ -40,15 +40,47 @@ export const mockToast = {
   add: vi.fn()
 }
 
-export const mockUserStore = {
+interface UserStoreData {
+  address: string
+  name: string
+  nonce: string
+  imageUrl: string
+  isAuth: boolean
+}
+
+const userStoreDataDefaults = (): UserStoreData => ({
   address: '0x0000000000000000000000000000000000000001',
   name: 'Test User',
   nonce: '',
   imageUrl: 'https://example.com/avatar.jpg',
-  isAuth: true,
+  isAuth: true
+})
+
+/**
+ * Build a fully independent user-store mock (fresh data + fresh spies).
+ * Use when a spec needs its own isolated store instance.
+ */
+export const makeUserStore = (overrides: Partial<UserStoreData> = {}) => ({
+  ...userStoreDataDefaults(),
+  ...overrides,
   setUserData: vi.fn(),
   clearUserData: vi.fn(),
   setAuthStatus: vi.fn()
+})
+
+/**
+ * Shared instance returned by the globally-mocked `useUserDataStore`.
+ * Specs set up state by mutating it directly (e.g. `mockUserStore.address = '0x…'`);
+ * `resetUserStoreMock()` (called in a global `beforeEach`) restores defaults so
+ * mutations never leak across tests.
+ */
+export const mockUserStore = makeUserStore()
+
+export const resetUserStoreMock = () => {
+  Object.assign(mockUserStore, userStoreDataDefaults())
+  mockUserStore.setUserData.mockClear()
+  mockUserStore.clearUserData.mockClear()
+  mockUserStore.setAuthStatus.mockClear()
 }
 
 export const mockUseCurrencyStore = () => ({
