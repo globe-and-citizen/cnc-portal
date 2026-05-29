@@ -39,54 +39,49 @@ const vmCast = {
 // and the helper lists below.
 
 const vmCastLegacyFiles = [
-  'src/components/__tests__/MonthSelector.spec.ts',
-  'src/components/forms/__tests__/AddTeamForm.spec.ts',
   'src/components/forms/__tests__/ApproveUsersEIP712Form.spec.ts',
-  'src/components/forms/__tests__/DepositBankForm.spec.ts',
-  'src/components/forms/__tests__/DepositSafeForm.spec.ts',
   'src/components/forms/__tests__/EditUserForm.spec.ts',
   'src/components/forms/__tests__/SafeDepositRouterForm.spec.ts',
   'src/components/forms/__tests__/TransferForm.spec.ts',
-  'src/components/forms/__tests__/TransferModal.spec.ts',
-  'src/components/sections/AdministrationView/__tests__/CurrentBoDElectionSection.spec.ts',
-  'src/components/sections/AdministrationView/__tests__/CurrentBoDSection.spec.ts',
-  'src/components/sections/BankView/__tests__/BankTransactions.spec.ts',
   'src/components/sections/CashRemunerationView/Form/__tests__/ClaimForm.spec.ts',
-  'src/components/sections/CashRemunerationView/Form/__tests__/ExpandableFileGallery.spec.ts',
-  'src/components/sections/CashRemunerationView/__tests__/CashRemunerationTransactions.spec.ts',
-  'src/components/sections/CashRemunerationView/__tests__/SubmitClaims.spec.ts',
   'src/components/sections/ClaimHistoryView/__tests__/ClaimHistoryActionAlerts.spec.ts',
-  'src/components/sections/ClaimHistoryView/__tests__/ClaimHistoryDailyBreakdown.spec.ts',
-  'src/components/sections/ClaimHistoryView/__tests__/ClaimHistoryWeekNavigator.spec.ts',
-  'src/components/sections/ContractManagementView/forms/__tests__/CreateAddCampaign.spec.ts',
-  'src/components/sections/DashboardView/__tests__/SetMemberWageModal.spec.ts',
-  'src/components/sections/DashboardView/__tests__/TeamMetaActions.spec.ts',
-  'src/components/sections/DashboardView/__tests__/TeamMetaSection.spec.ts',
-  'src/components/sections/DashboardView/forms/__tests__/AddMemberForm.spec.ts',
-  'src/components/sections/ExpenseAccountView/__tests__/ExpenseTransactions.spec.ts',
-  'src/components/sections/SafeView/__tests__/SafeBalanceSection.rendering.spec.ts',
-  'src/components/sections/SafeView/__tests__/SafeBalanceSection.transfer.spec.ts',
-  'src/components/sections/SherTokenView/InvestorActions/__tests__/InvestInSafeAction.spec.ts',
-  'src/components/sections/SherTokenView/InvestorActions/__tests__/PayDividendsAction.spec.ts',
-  'src/components/sections/SherTokenView/InvestorActions/__tests__/SetCompensationMultiplierAction.spec.ts',
-  'src/components/sections/SherTokenView/InvestorActions/__tests__/ToggleSherCompensationAction.spec.ts',
-  'src/components/sections/SherTokenView/__tests__/InvestorsTransaction.advanced.spec.ts',
-  'src/components/sections/SherTokenView/__tests__/InvestorsTransaction.spec.ts',
-  'src/components/sections/SherTokenView/__tests__/ShareholderList.spec.ts',
-  'src/components/sections/VestingView/__tests__/VestingStats.spec.ts',
-  'src/components/sections/VestingView/forms/__tests__/CreateVestingErrors.spec.ts',
-  'src/components/sections/VestingView/forms/__tests__/CreateVestingInitial.spec.ts',
-  'src/components/sections/VestingView/forms/__tests__/CreateVestingSubmission.spec.ts',
-  'src/components/ui/__tests__/SidebarLayout.spec.ts'
+  'src/components/sections/ClaimHistoryView/__tests__/ClaimHistoryWeekNavigator.spec.ts'
 ]
 
 // These three were originally Tailwind+vm offenders. The Tailwind half is
 // refactored; the vm casts remain pending refactor.
 const vmCastLegacyExtraFiles = [
-  'src/components/sections/CashRemunerationView/Form/__tests__/UploadFileDB.spec.ts',
-  'src/components/sections/SherTokenView/InvestorActions/__tests__/DistributeMintAction.spec.ts',
-  'src/components/sections/SherTokenView/InvestorActions/__tests__/MintTokenAction.spec.ts'
+  'src/components/sections/CashRemunerationView/Form/__tests__/UploadFileDB.spec.ts'
 ]
+
+// Ratchet — both lists were drained in PR #2024 (closes #1850). They MUST
+// NOT grow. If you're about to add a new entry:
+//   1. First try to refactor — see app/src/tests/README.md
+//      "Migrating Legacy Specs Off `wrapper.vm as X`".
+//   2. If the cast is genuinely unavoidable, use a scoped
+//      `// eslint-disable-next-line no-restricted-syntax -- <reason>`
+//      on the cast line itself, not a file-level opt-out here.
+//   3. The remaining MIXTE files are tracked as a follow-up to #1850 —
+//      drain them there, not by growing this list.
+// This guard fires at config load time, so `npm run lint` fails fast
+// with the message below if either ceiling is breached. To lower a
+// ceiling after a refactor, drop the entry AND decrement the constant.
+const VM_CAST_LEGACY_MAX = 7
+const VM_CAST_LEGACY_EXTRA_MAX = 1
+if (vmCastLegacyFiles.length > VM_CAST_LEGACY_MAX) {
+  throw new Error(
+    `vmCastLegacyFiles has ${vmCastLegacyFiles.length} entries (ceiling ${VM_CAST_LEGACY_MAX}). ` +
+      'Refactor the new entry instead of whitelisting it — see app/src/tests/README.md ' +
+      '"Migrating Legacy Specs Off `wrapper.vm as X`".'
+  )
+}
+if (vmCastLegacyExtraFiles.length > VM_CAST_LEGACY_EXTRA_MAX) {
+  throw new Error(
+    `vmCastLegacyExtraFiles has ${vmCastLegacyExtraFiles.length} entries (ceiling ${VM_CAST_LEGACY_EXTRA_MAX}). ` +
+      'Refactor the new entry instead of whitelisting it — see app/src/tests/README.md ' +
+      '"Migrating Legacy Specs Off `wrapper.vm as X`".'
+  )
+}
 
 // Global-mock enforcement (issue #2014).
 //
@@ -280,7 +275,8 @@ export default [
       'src/components/sections/VestingView/forms/CreateVesting.vue',
       'src/components/TableComponent.vue',
       'src/components/sections/DashboardView/forms/ApproveUsersEIP712Form.vue',
-      'src/components/forms/SafeDepositRouterForm.vue'
+      'src/components/forms/SafeDepositRouterForm.vue',
+      'src/components/sections/CashRemunerationView/__tests__/CashRemunerationTransactions.spec.ts'
     ],
     rules: {
       'max-lines': 'off'
@@ -367,23 +363,32 @@ export default [
       ]
     }
   },
-  {
-    name: 'app/test-fragility-bans-both-legacy',
-    files: [
-      // Files in BOTH legacy lists: relax the vm-cast and global-mock checks,
-      // keep Tailwind class assertions banned.
+  // Files in BOTH legacy lists: relax the vm-cast and global-mock checks,
+  // keep Tailwind class assertions banned. Spread conditionally — ESLint
+  // rejects empty `files` arrays, and the intersection drains as the
+  // vm-cast list shrinks.
+  ...(() => {
+    const both = [
       ...vmCastLegacyFiles.filter((f) => globalMockLegacyFiles.includes(f)),
       ...vmCastLegacyExtraFiles.filter((f) => globalMockLegacyFiles.includes(f))
-    ],
-    rules: {
-      'no-restricted-syntax': [
-        'error',
-        tailwindClassAssertion,
-        tailwindClassAssertionOptional,
-        tailwindClassIncludes
-      ]
-    }
-  },
+    ]
+    return both.length === 0
+      ? []
+      : [
+          {
+            name: 'app/test-fragility-bans-both-legacy',
+            files: both,
+            rules: {
+              'no-restricted-syntax': [
+                'error',
+                tailwindClassAssertion,
+                tailwindClassAssertionOptional,
+                tailwindClassIncludes
+              ]
+            }
+          }
+        ]
+  })(),
   {
     name: 'app/contract-writes-v3-only',
     files: ['src/**/*.{ts,tsx,vue}'],

@@ -173,8 +173,9 @@ describe('CurrentBoDSection', () => {
       }
     })
 
-    const board = (wrapper.vm as unknown as { _boardOfDirectors: unknown })._boardOfDirectors
-    expect(board).toEqual([])
+    // No members rendered; 404 fallback is shown instead
+    expect(wrapper.findAll('[data-test="user-col"]')).toHaveLength(0)
+    expect(wrapper.find('[data-test="not-found"]').exists()).toBe(true)
   })
 
   it('logs when election winners request fails', async () => {

@@ -143,31 +143,41 @@ describe('useDeployOfficer (TanStack wrapper)', () => {
     })
   })
 
-  it('invalidates team + teams + contracts when teamId is provided', async () => {
+  it('invalidates teamKeys.all + contractKeys.all on success', async () => {
     const m = useDeployOfficer()
     await m.mutateAsync({ investorInput: { name: 'Shares', symbol: 'SH' }, teamId: 7 })
 
     const keys = mockInvalidateQueries.mock.calls.map((c) => c[0]?.queryKey)
-    expect(keys).toContainEqual(['team', 7])
     expect(keys).toContainEqual(['teams'])
     expect(keys).toContainEqual(['contracts'])
+    // The legacy singular `['team', id]` key matched no registered query and
+    // was removed in favor of the `teamKeys.all` prefix (which covers detail).
+    expect(keys).not.toContainEqual(['team', 7])
   })
 
-  it('parses string teamId to a number before invalidating', async () => {
+  it('invalidates the same keys regardless of teamId shape (string or number)', async () => {
     const m = useDeployOfficer()
     await m.mutateAsync({ investorInput: { name: 'Shares', symbol: 'SH' }, teamId: '13' })
 
     const keys = mockInvalidateQueries.mock.calls.map((c) => c[0]?.queryKey)
-    expect(keys).toContainEqual(['team', 13])
+    expect(keys).toContainEqual(['teams'])
+    expect(keys).toContainEqual(['contracts'])
   })
 
-  it('only invalidates contracts when teamId is omitted', async () => {
+  it('still invalidates when teamId is omitted', async () => {
     const m = useDeployOfficer()
     await m.mutateAsync({ investorInput: { name: 'Shares', symbol: 'SH' } })
 
     const keys = mockInvalidateQueries.mock.calls.map((c) => c[0]?.queryKey)
+    expect(keys).toContainEqual(['teams'])
     expect(keys).toContainEqual(['contracts'])
-    expect(keys).not.toContainEqual(['teams'])
+  })
+
+  it('skips invalidation entirely when composed with { skipInvalidation: true }', async () => {
+    const m = useDeployOfficer({ skipInvalidation: true })
+    await m.mutateAsync({ investorInput: { name: 'Shares', symbol: 'SH' }, teamId: 7 })
+
+    expect(mockInvalidateQueries).not.toHaveBeenCalled()
   })
 })
 
@@ -182,30 +192,23 @@ describe('useInvalidateOfficerQueries', () => {
     })
   })
 
-  it('invalidates team + teams + contracts for a numeric teamId', async () => {
+  it('invalidates teamKeys.all + contractKeys.all (covers team detail transitively)', async () => {
     const invalidate = useInvalidateOfficerQueries()
     await invalidate(5)
 
     const keys = mockInvalidateQueries.mock.calls.map((c) => c[0]?.queryKey)
-    expect(keys).toContainEqual(['team', 5])
     expect(keys).toContainEqual(['teams'])
     expect(keys).toContainEqual(['contracts'])
+    expect(keys).not.toContainEqual(['team', 5])
   })
 
-  it('coerces string teamId to number', async () => {
-    const invalidate = useInvalidateOfficerQueries()
-    await invalidate('21')
-
-    const keys = mockInvalidateQueries.mock.calls.map((c) => c[0]?.queryKey)
-    expect(keys).toContainEqual(['team', 21])
-  })
-
-  it('only invalidates contracts when teamId is omitted', async () => {
+  it('invalidates the same keys when called without a teamId', async () => {
     const invalidate = useInvalidateOfficerQueries()
     await invalidate()
 
     const keys = mockInvalidateQueries.mock.calls.map((c) => c[0]?.queryKey)
-    expect(keys).toEqual([['contracts']])
+    expect(keys).toContainEqual(['teams'])
+    expect(keys).toContainEqual(['contracts'])
   })
 })
 

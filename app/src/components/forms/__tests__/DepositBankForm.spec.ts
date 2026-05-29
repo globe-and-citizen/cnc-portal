@@ -15,16 +15,6 @@ import {
   useQueryClientFn
 } from '@/tests/mocks'
 
-type DepositBankVm = {
-  amount: string
-  selectedTokenId: string
-  currentStep: number
-  isAmountValid: boolean
-  submitting: boolean
-  reset: () => void
-  submitForm: () => Promise<void>
-}
-
 const defaultProps = {
   bankAddress: zeroAddress as Address
 }
@@ -48,8 +38,6 @@ const createWrapper = (overrides = {}) =>
     }
   })
 
-const getVm = (wrapper: ReturnType<typeof createWrapper>) => wrapper.vm as unknown as DepositBankVm
-
 const setTokenAmount = async (
   wrapper: ReturnType<typeof createWrapper>,
   value: string,
@@ -62,6 +50,16 @@ const setTokenAmount = async (
   await nextTick()
 }
 
+const submitForm = async (wrapper: ReturnType<typeof createWrapper>) => {
+  await wrapper.find('form').trigger('submit.prevent')
+  await flushPromises()
+}
+
+const getDepositButton = (wrapper: ReturnType<typeof createWrapper>) =>
+  wrapper
+    .findAllComponents({ name: 'UButton' })
+    .find((b) => b.attributes('data-test') === 'deposit-button')
+
 describe('DepositBankForm.vue', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -72,40 +70,40 @@ describe('DepositBankForm.vue', () => {
   })
 
   it('resets and emits closeModal when cancelled', async () => {
+    mockERC20Reads.allowance.data.value = 1000000n
     const wrapper = createWrapper()
-    const vm = getVm(wrapper)
 
+    // Drive a valid token amount, then advance currentStep via mutation flow
     await setTokenAmount(wrapper, '1', 'usdc', true)
-    vm.currentStep = 2
+    await submitForm(wrapper)
+    await flushPromises()
+
+    // Cancel and assert TokenAmount returns to native + empty
     await wrapper.find('[data-test="cancel-button"]').trigger('click')
 
-    expect(vm.amount).toBe('')
-    expect(vm.selectedTokenId).toBe('native')
-    expect(vm.currentStep).toBe(0)
+    const tokenAmount = wrapper.findComponent({ name: 'TokenAmount' })
+    expect(tokenAmount.props('modelValue')).toEqual({ amount: '', tokenId: 'native' })
     expect(wrapper.emitted('closeModal')).toBeTruthy()
   })
 
   it('prevents submission when invalid or already pending', async () => {
     const wrapper = createWrapper()
 
-    await setTokenAmount(wrapper, '1', 'native', false)
-    await getVm(wrapper).submitForm()
+    await setTokenAmount(wrapper, '0.1', 'native', false)
+    await submitForm(wrapper)
     expect(mockTransactionFunctions.mockMutateAsync).not.toHaveBeenCalled()
 
     mockUseSafeSendTransaction.isPending.value = true
-    await setTokenAmount(wrapper, '1', 'native', true)
-    await getVm(wrapper).submitForm()
+    await setTokenAmount(wrapper, '0.1', 'native', true)
+    await submitForm(wrapper)
     expect(mockTransactionFunctions.mockMutateAsync).not.toHaveBeenCalled()
   })
 
   it('handles native token deposits successfully and on failure', async () => {
     const wrapper = createWrapper({ title: 'Deposit Bank Form' })
 
-    const vm = getVm(wrapper)
-    vm.amount = '1'
-    vm.selectedTokenId = 'native'
-    vm.isAmountValid = true
-    await getVm(wrapper).submitForm()
+    await setTokenAmount(wrapper, '0.1', 'native', true)
+    await submitForm(wrapper)
     await flushPromises()
 
     expect(mockTransactionFunctions.mockMutateAsync).toHaveBeenCalled()
@@ -113,11 +111,8 @@ describe('DepositBankForm.vue', () => {
 
     mockTransactionFunctions.mockMutateAsync.mockRejectedValueOnce(new Error('Transaction failed'))
     const failedWrapper = createWrapper()
-    const failedVm = getVm(failedWrapper)
-    failedVm.amount = '2'
-    failedVm.selectedTokenId = 'native'
-    failedVm.isAmountValid = true
-    await failedVm.submitForm()
+    await setTokenAmount(failedWrapper, '0.2', 'native', true)
+    await submitForm(failedWrapper)
     await flushPromises()
 
     expect(mockTransactionFunctions.mockMutateAsync).toHaveBeenCalledTimes(2)
@@ -126,17 +121,14 @@ describe('DepositBankForm.vue', () => {
 
   it('shows native and erc20 stepper states correctly', async () => {
     const wrapper = createWrapper()
-    const vm = getVm(wrapper)
 
-    vm.selectedTokenId = 'native'
-    await wrapper.vm.$nextTick()
-
-    vm.selectedTokenId = 'usdc'
-    await wrapper.vm.$nextTick()
-
+    // Default: native selected → no Approval/Deposit stepper labels rendered
+    expect(wrapper.text()).not.toContain('Approval')
     expect(wrapper.findComponent({ name: 'TokenAmount' }).exists()).toBe(true)
 
-    expect(() => getVm(wrapper).reset()).not.toThrow()
+    // Switch to usdc → stepper appears (renders Approval/Deposit labels)
+    await setTokenAmount(wrapper, '0', 'usdc', false)
+    expect(wrapper.text()).toContain('Approval')
   })
 
   it('runs approval first when allowance is insufficient and then deposits token', async () => {
@@ -145,7 +137,7 @@ describe('DepositBankForm.vue', () => {
     const wrapper = createWrapper()
 
     await setTokenAmount(wrapper, '1', 'usdc', true)
-    await getVm(wrapper).submitForm()
+    await submitForm(wrapper)
     await flushPromises()
 
     expect(mockERC20Writes.approve.mutateAsync).toHaveBeenCalledWith({
@@ -163,12 +155,13 @@ describe('DepositBankForm.vue', () => {
     const wrapper = createWrapper()
 
     await setTokenAmount(wrapper, '1', 'usdc', true)
-    await getVm(wrapper).submitForm()
+    await submitForm(wrapper)
     await flushPromises()
 
     expect(mockERC20Writes.approve.mutateAsync).not.toHaveBeenCalled()
     expect(mockBankWrites.deposit.mutateAsync).toHaveBeenCalledOnce()
-    expect(getVm(wrapper).currentStep).toBe(2)
+    // Stepper reflected Deposit step (closes on success; assert deposit was the last call)
+    expect(wrapper.emitted('closeModal')).toBeTruthy()
   })
 
   it('surfaces approval failures and resets submitting state', async () => {
@@ -177,10 +170,11 @@ describe('DepositBankForm.vue', () => {
     const wrapper = createWrapper()
 
     await setTokenAmount(wrapper, '1', 'usdc', true)
-    await getVm(wrapper).submitForm()
+    await submitForm(wrapper)
     await flushPromises()
 
     expect(mockBankWrites.deposit.mutateAsync).not.toHaveBeenCalled()
-    expect(getVm(wrapper).submitting).toBe(false)
+    // Submit button is no longer loading once submitting reset to false
+    expect(getDepositButton(wrapper)?.props('loading')).toBe(false)
   })
 })

@@ -1,3 +1,17 @@
+/**
+ * Side-effect contract (see app/src/composables/CONVENTIONS.md):
+ *   - onSuccess: toasts "Officer contract deployed successfully" and
+ *                invalidates `teamKeys.all` + `contractKeys.all`.
+ *   - onError:   no toast — `mutation.error` is left for callers to render
+ *                inline via UAlert / classifyError.
+ *   - Invalidation: only the keys this deploy actually mutates (team list
+ *                and contracts list). Team detail is covered transitively
+ *                via `teamKeys.all`. Do NOT add narrower per-team keys here
+ *                — they belong to whatever step actually changes team data.
+ *   - Options:   pass `skipInvalidation` / `silent` when composing inside
+ *                an orchestrator that owns the flow-level toast + final
+ *                cache flush (see `useOfficerRedeploy`).
+ */
 import { useMutation, useQueryClient } from '@tanstack/vue-query'
 import { getConnections } from '@wagmi/core'
 import { encodeFunctionData, type Address, type Hex } from 'viem'
@@ -5,6 +19,8 @@ import { getLogs } from 'viem/actions'
 import { config } from '@/wagmi.config'
 import { log, parseError } from '@/utils'
 import { executeContractWrite } from '@/composables/contracts/useContractWritesV3'
+import { teamKeys } from '@/queries/team.queries'
+import { contractKeys } from '@/queries/contract.queries'
 import {
   validateBeaconAddresses,
   getBeaconConfigs,
@@ -115,6 +131,21 @@ export async function deployOfficer(args: DeployOfficerArgs): Promise<OfficerDep
   }
 }
 
+export interface UseDeployOfficerOptions {
+  /**
+   * When true, suppress the default "Officer contract deployed successfully"
+   * toast. Set this when composing inside an orchestrator that emits its own
+   * flow-level success toast.
+   */
+  silent?: boolean
+  /**
+   * When true, skip the default `teamKeys.all` + `contractKeys.all`
+   * invalidation. Set this when an orchestrator owns the final cache flush
+   * for the whole workflow.
+   */
+  skipInvalidation?: boolean
+}
+
 /**
  * TanStack-wrapped variant of {@link deployOfficer}. Exposes `mutateAsync`,
  * `isPending`, `error`, `data`. On success shows a toast and invalidates the
@@ -122,24 +153,23 @@ export async function deployOfficer(args: DeployOfficerArgs): Promise<OfficerDep
  * the consumer can render them inline (e.g. via UAlert) — no default error
  * toast, since reactive error display is preferred for in-flow feedback.
  */
-export function useDeployOfficer() {
+export function useDeployOfficer(options: UseDeployOfficerOptions = {}) {
   const toast = useToast()
   const queryClient = useQueryClient()
 
   return useMutation<OfficerDeploymentResult, Error, DeployOfficerArgs>({
     mutationKey: ['deployOfficer'],
     mutationFn: deployOfficer,
-    onSuccess: async (_data, variables) => {
-      toast.add({ title: 'Officer contract deployed successfully', color: 'success' })
+    onSuccess: async () => {
+      if (!options.silent) {
+        toast.add({ title: 'Officer contract deployed successfully', color: 'success' })
+      }
       log.info('Officer contract deployment successful')
 
-      if (variables.teamId !== undefined) {
-        const numericTeamId =
-          typeof variables.teamId === 'string' ? parseInt(variables.teamId, 10) : variables.teamId
-        await queryClient.invalidateQueries({ queryKey: ['team', numericTeamId] })
-        await queryClient.invalidateQueries({ queryKey: ['teams'] })
+      if (!options.skipInvalidation) {
+        await queryClient.invalidateQueries({ queryKey: teamKeys.all })
+        await queryClient.invalidateQueries({ queryKey: contractKeys.all })
       }
-      await queryClient.invalidateQueries({ queryKey: ['contracts'] })
     },
     onError: (error) => {
       log.error('Officer deployment error:', error)
@@ -157,18 +187,18 @@ export function formatDeployError(error: unknown): string {
 }
 
 /**
- * Invalidates team / teams / contracts queries. Exposed so orchestration
- * composables can flush caches after a multi-step flow finishes (e.g. after
- * a post-deploy shareholder migration succeeds).
+ * Invalidates teams + contracts queries. Exposed so orchestration composables
+ * can flush caches after a multi-step flow finishes (e.g. after a post-deploy
+ * shareholder migration succeeds).
+ *
+ * Uses key-factory prefixes (`teamKeys.all`, `contractKeys.all`) so every
+ * registered query under those namespaces refetches — including team detail
+ * via the `teamKeys.detail(...)` prefix relationship.
  */
 export function useInvalidateOfficerQueries() {
   const queryClient = useQueryClient()
-  return async (teamId?: string | number) => {
-    if (teamId !== undefined) {
-      const numericTeamId = typeof teamId === 'string' ? parseInt(teamId, 10) : teamId
-      await queryClient.invalidateQueries({ queryKey: ['team', numericTeamId] })
-      await queryClient.invalidateQueries({ queryKey: ['teams'] })
-    }
-    await queryClient.invalidateQueries({ queryKey: ['contracts'] })
+  return async () => {
+    await queryClient.invalidateQueries({ queryKey: teamKeys.all })
+    await queryClient.invalidateQueries({ queryKey: contractKeys.all })
   }
 }

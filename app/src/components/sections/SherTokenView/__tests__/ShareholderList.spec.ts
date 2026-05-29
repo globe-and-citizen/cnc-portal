@@ -1,14 +1,9 @@
 import { mount } from '@vue/test-utils'
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import ShareholderList from '../../SherTokenView/ShareholderList.vue'
-import { parseEther, parseUnits, type Address } from 'viem'
+import { parseEther, parseUnits } from 'viem'
 import { createTestingPinia } from '@pinia/testing'
 import { mockInvestorReads, mockTeamStore, mockUserStore, resetContractMocks } from '@/tests/mocks'
-
-interface ComponentData {
-  mintIndividualModal: { mount: boolean; show: boolean }
-  selectedShareholder: Address | null
-}
 
 const TableComponentStub = {
   props: ['rows', 'columns', 'loading'],
@@ -21,7 +16,10 @@ const TableComponentStub = {
 }
 
 const MintFormStub = {
-  template: '<div data-test="mint-form" />'
+  name: 'MintForm',
+  props: ['memberInput', 'disabled', 'modelValue'],
+  emits: ['close-modal', 'update:modelValue'],
+  template: '<div data-test="mint-form" :data-address="memberInput?.address" />'
 }
 
 describe('ShareholderList', () => {
@@ -71,11 +69,15 @@ describe('ShareholderList', () => {
   it('opens mint modal when clicking mint individual', async () => {
     const wrapper = createComponent()
 
+    // No MintForm before the click — modal body is not mounted
+    expect(wrapper.find('[data-test="mint-form"]').exists()).toBe(false)
+
     await wrapper.find('[data-test="mint-individual"]').trigger('click')
     await wrapper.vm.$nextTick()
 
-    expect((wrapper.vm as unknown as ComponentData).mintIndividualModal.show).toBe(true)
-    expect((wrapper.vm as unknown as ComponentData).selectedShareholder).toBe('0x123')
-    // expect(wrapper.find('[data-test="u-modal"]').exists()).toBe(true)
+    const mintForm = wrapper.find('[data-test="mint-form"]')
+    expect(mintForm.exists()).toBe(true)
+    // Selected shareholder propagated to MintForm via memberInput.address
+    expect(mintForm.attributes('data-address')).toBe('0x123')
   })
 })

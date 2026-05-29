@@ -1,5 +1,6 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { defineComponent, ref } from 'vue'
 import CreateAddCampaign from '@/components/sections/ContractManagementView/forms/CreateAddCampaign.vue'
 import { mockDeployState, resetDeployState } from '@/tests/mocks/composables.mock'
 import { useCreateContractMutation } from '@/queries/contract.queries'
@@ -190,11 +191,27 @@ describe('CreateAddCampaign.vue', () => {
 
   describe('reset()', () => {
     it('clears costPerClick, costPerImpression and form fields', async () => {
-      const wrapper = mountComponent()
+      // `reset()` is a public API exposed via defineExpose for parent components
+      // to call by ref. Mount inside a parent harness and drive the child
+      // through its exposed instance — no vm cast required.
+      const ParentHarness = defineComponent({
+        components: { CreateAddCampaign },
+        setup() {
+          const child = ref<{ reset: () => void } | null>(null)
+          const callReset = () => child.value?.reset()
+          return { child, callReset }
+        },
+        template: `<CreateAddCampaign ref="child" />`
+      })
+      const wrapper = mount(ParentHarness)
+
       await wrapper.find('input[placeholder="cost per click in matic"]').setValue('1')
       await wrapper.find('input[placeholder="cost per in matic"]').setValue('2')
-      ;(wrapper.vm as unknown as { reset: () => void }).reset()
+
+      // `callReset` is provided by the harness and triggers the exposed reset()
+      ;(wrapper.vm.callReset as () => void)()
       await wrapper.vm.$nextTick()
+
       expect(
         (wrapper.find('input[placeholder="cost per click in matic"]').element as HTMLInputElement)
           .value

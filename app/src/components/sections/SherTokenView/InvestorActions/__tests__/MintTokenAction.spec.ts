@@ -21,6 +21,7 @@ describe('MintTokenAction.vue', () => {
               '<button data-test="mint-button" :disabled="disabled" @click="$emit(\'click\')">Mint</button>'
           },
           MintForm: {
+            name: 'MintForm',
             props: ['modelValue'],
             emits: ['update:modelValue', 'close-modal'],
             template:
@@ -68,24 +69,22 @@ describe('MintTokenAction.vue', () => {
     expect(wrapper.find('[data-test="mint-form"]').exists()).toBe(false)
   })
 
-  it('closeModal hides the mint form', async () => {
+  it('close-modal emitted by MintForm hides the mint form', async () => {
     const wrapper = createWrapper()
-    const vm = wrapper.vm as unknown as { openModal: () => void; closeModal: () => void }
 
-    await vm.openModal()
+    await wrapper.find('[data-test="mint-button"]').trigger('click')
     await nextTick()
     expect(wrapper.find('[data-test="mint-form"]').exists()).toBe(true)
 
-    vm.closeModal()
+    await wrapper.findComponent({ name: 'MintForm' }).vm.$emit('close-modal')
     await nextTick()
     expect(wrapper.find('[data-test="mint-form"]').exists()).toBe(false)
   })
 
   it('v-model update:open false closes modal', async () => {
     const wrapper = createWrapper()
-    const vm = wrapper.vm as unknown as { openModal: () => void }
 
-    await vm.openModal()
+    await wrapper.find('[data-test="mint-button"]').trigger('click')
     await nextTick()
 
     const modal = wrapper.findComponent({ name: 'UModal' })
