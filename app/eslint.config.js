@@ -43,18 +43,9 @@ const vmCastLegacyFiles = [
   'src/components/forms/__tests__/EditUserForm.spec.ts',
   'src/components/forms/__tests__/SafeDepositRouterForm.spec.ts',
   'src/components/forms/__tests__/TransferForm.spec.ts',
-  'src/components/sections/AdministrationView/__tests__/CurrentBoDElectionSection.spec.ts',
-  'src/components/sections/AdministrationView/__tests__/CurrentBoDSection.spec.ts',
   'src/components/sections/CashRemunerationView/Form/__tests__/ClaimForm.spec.ts',
-  'src/components/sections/CashRemunerationView/Form/__tests__/ExpandableFileGallery.spec.ts',
   'src/components/sections/ClaimHistoryView/__tests__/ClaimHistoryActionAlerts.spec.ts',
-  'src/components/sections/ClaimHistoryView/__tests__/ClaimHistoryDailyBreakdown.spec.ts',
-  'src/components/sections/ClaimHistoryView/__tests__/ClaimHistoryWeekNavigator.spec.ts',
-  'src/components/sections/ContractManagementView/forms/__tests__/CreateAddCampaign.spec.ts',
-  'src/components/sections/SafeView/__tests__/SafeBalanceSection.rendering.spec.ts',
-  'src/components/sections/SherTokenView/__tests__/ShareholderList.spec.ts',
-  'src/components/sections/VestingView/__tests__/VestingStats.spec.ts',
-  'src/components/ui/__tests__/SidebarLayout.spec.ts'
+  'src/components/sections/ClaimHistoryView/__tests__/ClaimHistoryWeekNavigator.spec.ts'
 ]
 
 // These three were originally Tailwind+vm offenders. The Tailwind half is
@@ -343,23 +334,32 @@ export default [
       ]
     }
   },
-  {
-    name: 'app/test-fragility-bans-both-legacy',
-    files: [
-      // Files in BOTH legacy lists: relax the vm-cast and global-mock checks,
-      // keep Tailwind class assertions banned.
+  // Files in BOTH legacy lists: relax the vm-cast and global-mock checks,
+  // keep Tailwind class assertions banned. Spread conditionally — ESLint
+  // rejects empty `files` arrays, and the intersection drains as the
+  // vm-cast list shrinks.
+  ...(() => {
+    const both = [
       ...vmCastLegacyFiles.filter((f) => globalMockLegacyFiles.includes(f)),
       ...vmCastLegacyExtraFiles.filter((f) => globalMockLegacyFiles.includes(f))
-    ],
-    rules: {
-      'no-restricted-syntax': [
-        'error',
-        tailwindClassAssertion,
-        tailwindClassAssertionOptional,
-        tailwindClassIncludes
-      ]
-    }
-  },
+    ]
+    return both.length === 0
+      ? []
+      : [
+          {
+            name: 'app/test-fragility-bans-both-legacy',
+            files: both,
+            rules: {
+              'no-restricted-syntax': [
+                'error',
+                tailwindClassAssertion,
+                tailwindClassAssertionOptional,
+                tailwindClassIncludes
+              ]
+            }
+          }
+        ]
+  })(),
   {
     name: 'app/contract-writes-v3-only',
     files: ['src/**/*.{ts,tsx,vue}'],

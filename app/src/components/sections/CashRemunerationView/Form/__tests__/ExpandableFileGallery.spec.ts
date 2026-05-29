@@ -255,6 +255,13 @@ describe('ExpandableFileGallery', () => {
     expect(buttons.length).toBeGreaterThan(0)
     await buttons[0]!.trigger('click')
 
+    // Defensive branch: `current` is computed from `modal.value.index`. There is
+    // no UI path that opens the modal at an out-of-bounds index (clicking item i
+    // always yields current = previews[i]), and shrinking previews unmounts the
+    // entire gallery root (v-if="resolvedPreviews.length") which kills the
+    // teleported lightbox. The only way to assert this defensive branch is to
+    // poke the internal `modal` ref directly.
+    // eslint-disable-next-line no-restricted-syntax -- defense-in-depth branch unreachable via UI; root v-if hides lightbox when previews are empty
     const modalState = wrapper.vm as unknown as {
       modal: { value?: { isOpen: boolean; index: number }; isOpen?: boolean; index?: number }
     }
