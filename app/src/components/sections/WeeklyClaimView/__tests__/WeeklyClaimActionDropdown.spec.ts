@@ -244,7 +244,8 @@ describe('WeeklyClaimActionDropdown', () => {
     )
     expect(mutateAsync).toHaveBeenCalledWith({ queryParams: { teamId: '1' } })
 
-    const queryClient = useQueryClientFn.mock.results.at(-1)?.value
+    const queryClient =
+      useQueryClientFn.mock.results[useQueryClientFn.mock.results.length - 1]?.value
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith({
       queryKey: ['weekly-claims', '1']
     })

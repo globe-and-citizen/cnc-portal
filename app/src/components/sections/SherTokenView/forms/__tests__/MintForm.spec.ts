@@ -289,7 +289,7 @@ describe('MintForm.vue', () => {
     await wrapper.find('form').trigger('submit')
     await flushPromises()
     expect(mintMutation.mutate).toHaveBeenCalled()
-    const latestCall = mintMutation.mutate.mock.calls.at(-1)
+    const latestCall = mintMutation.mutate.mock.calls[mintMutation.mutate.mock.calls.length - 1]
     expect(latestCall?.[0]).toMatchObject({
       args: [VALID_ADDRESS, parseUnits('10', 6)]
     })

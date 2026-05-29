@@ -115,7 +115,8 @@ describe('WeeklyClaimActionEnable', () => {
     )
     expect(mutateAsync).toHaveBeenCalledWith({ queryParams: { teamId: '1' } })
 
-    const queryClient = useQueryClientFn.mock.results.at(-1)?.value
+    const queryClient =
+      useQueryClientFn.mock.results[useQueryClientFn.mock.results.length - 1]?.value
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith({
       queryKey: ['weekly-claims', '1']
     })
@@ -129,7 +130,8 @@ describe('WeeklyClaimActionEnable', () => {
     const wrapper = createWrapper(true)
     await wrapper.find('[data-test="enable-action"]').trigger('click')
     await flushPromises()
-    const queryClient = useQueryClientFn.mock.results.at(-1)?.value
+    const queryClient =
+      useQueryClientFn.mock.results[useQueryClientFn.mock.results.length - 1]?.value
 
     expect(mutateAsync).toHaveBeenCalled()
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith({

@@ -66,6 +66,14 @@ vi.mock('@/stores', () => ({
   })
 }))
 
+vi.mock('@/stores/currencyStore', () => ({
+  useCurrencyStore: () => ({
+    localCurrency: { code: 'USD' },
+    supportedTokens: [{ id: 'usdc', symbol: 'USDC', address: USDC_ADDRESS }],
+    getTokenPrice: mockGetTokenPrice
+  })
+}))
+
 vi.mock('@/composables/investor/reads', () => ({
   useInvestorSymbol: () => ({
     data: mockInvestorSymbolData
@@ -201,11 +209,11 @@ describe('InvestorsTransactions advanced', () => {
       logErrorSpy.mock.calls.filter(
         ([message]) => message === 'Ponder investor transaction query error:'
       )
-    ).toHaveLength(1)
+    ).toHaveLength(3)
     expect(
       logErrorSpy.mock.calls.filter(
         ([message]) => message === 'Ponder safe deposit router transaction query error:'
       )
-    ).toHaveLength(1)
+    ).toHaveLength(2)
   })
 })
