@@ -101,7 +101,7 @@ const selectWeek = (week: Week) => {
 const getColor = getClaimStatusColor
 
 const weeklyClaimsByStart = computed(() => {
-  const claims = memberWeeklyClaims.value ?? []
+  const claims = memberWeeklyClaims.value?.data ?? []
   return new Map(claims.map((claim) => [claim.weekStart, claim] as const))
 })
 

@@ -293,51 +293,6 @@ export function computeRealizedTrades(
     }
   }
 
-  // Phantom lots: shares acquired but never disposed of, with no live
-  // /positions row to anchor them. Most common cause: Polymarket purges a
-  // resolved-worthless position before the user redeems (or the user never
-  // bothers because proceeds were zero). After 90 days of no activity on the
-  // asset, treat the residual cost as a realized loss dated at the last
-  // activity timestamp.
-  const PHANTOM_LOT_MAX_AGE_SECONDS = 90 * 24 * 60 * 60
-  const latestActivityByAsset = new Map<string, number>()
-  for (const activity of sorted) {
-    if (!activity.asset) {
-      continue
-    }
-    const ts = activity.timestamp ?? 0
-    const prev = latestActivityByAsset.get(activity.asset) ?? 0
-    if (ts > prev) {
-      latestActivityByAsset.set(activity.asset, ts)
-    }
-  }
-  for (const [asset, lot] of lots) {
-    if (lot.shares <= DUST || lot.cost <= 0) {
-      continue
-    }
-    if (positionByAsset.has(asset)) {
-      continue
-    }
-    const lastActivity = latestActivityByAsset.get(asset) ?? 0
-    if (lastActivity === 0) {
-      continue
-    }
-    if (lastActivity > nowSeconds - PHANTOM_LOT_MAX_AGE_SECONDS) {
-      continue
-    }
-    realized.push({
-      timestamp: lastActivity,
-      market: lot.title ?? '—',
-      outcome: lot.outcome,
-      asset,
-      conditionId: lot.conditionId,
-      proceeds: 0,
-      costBasis: lot.cost,
-      realizedPnl: -lot.cost,
-      kind: 'RESOLUTION_LOSS'
-    })
-  }
-
   return realized.sort((a, b) => b.timestamp - a.timestamp)
 }
 

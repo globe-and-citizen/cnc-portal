@@ -109,10 +109,13 @@ describe('ClaimHistory.vue', () => {
     ;(
       useGetTeamWeeklyClaimsQuery as unknown as { mockReturnValueOnce: (value: unknown) => void }
     ).mockReturnValueOnce({
-      data: ref([
-        { weekStart: '2024-01-01T00:00:00.000Z' },
-        { weekStart: currentWeekIso, status: 'pending', wage: { userAddress: memberAddress } }
-      ])
+      data: ref({
+        data: [
+          { weekStart: '2024-01-01T00:00:00.000Z' },
+          { weekStart: currentWeekIso, status: 'pending', wage: { userAddress: memberAddress } }
+        ],
+        total: 2
+      })
     })
     ;(
       useGetTeamWagesQuery as unknown as { mockReturnValueOnce: (value: unknown) => void }
@@ -147,7 +150,10 @@ describe('ClaimHistory.vue', () => {
     ;(
       useGetTeamWeeklyClaimsQuery as unknown as { mockReturnValueOnce: (value: unknown) => void }
     ).mockReturnValueOnce({
-      data: ref([{ weekStart: firstWeekIso }, { weekStart: secondWeekIso }])
+      data: ref({
+        data: [{ weekStart: firstWeekIso }, { weekStart: secondWeekIso }],
+        total: 2
+      })
     })
 
     const wrapper = createWrapper()

@@ -10,8 +10,8 @@ import {
  */
 export function useAccountingPeriod() {
   const todayStr = new Date().toISOString().slice(0, 10)
-  const preset = useState<AccountingPeriodPreset>('accounting-period-preset', () => 'ALL')
-  const anchorDateStr = useState<string>('accounting-period-anchor', () => todayStr)
+  const preset = ref<AccountingPeriodPreset>('ALL')
+  const anchorDateStr = ref(todayStr)
 
   const range = computed<AccountingPeriodRange>(() =>
     resolveAccountingPeriod(preset.value, anchorDateStr.value)
