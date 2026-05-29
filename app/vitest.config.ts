@@ -9,6 +9,7 @@ process.env.TZ = 'UTC'
 const mockFiles = [
   'axios',
   'store',
+  'tanstack',
   'composables',
   'wagmi.vue',
   'viem',

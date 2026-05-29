@@ -8,9 +8,6 @@ import {
   mockUseApolloQuery,
   mockUseSafeSendTransaction,
   mockUseClipboard,
-  useQueryClientFn,
-  useQueryFn,
-  useMutationFn,
   mockUseFetch,
   mockUseSubmitRestriction,
   mockUseDeployContract
@@ -28,19 +25,7 @@ if (!globalThis.__mockFetch) {
   globalThis.__mockFetch = vi.fn()
 }
 
-/**
- * Mock TanStack Vue Query
- * Provides a mock queryClient with mocked invalidateQueries method
- */
-vi.mock('@tanstack/vue-query', async () => {
-  const actual: object = await vi.importActual('@tanstack/vue-query')
-  return {
-    ...actual,
-    useQueryClient: useQueryClientFn,
-    useQuery: useQueryFn,
-    useMutation: useMutationFn
-  }
-})
+// The TanStack Vue Query mock now lives in `tanstack.setup.ts` (#1845).
 
 vi.mock('@vue/apollo-composable', async (importOriginal) => {
   const actual: object = await importOriginal()

@@ -23,6 +23,27 @@ ESLint enforces this via `no-restricted-syntax`: any `vi.mock('<globally-mocked-
 
 If you need to mock a module that **isn't** yet globally mocked but you're reaching for it across several specs, add it to `src/tests/setup/` and re-export the override hook from `src/tests/mocks/index.ts` rather than re-mocking it in each spec.
 
+## Opt-in: exercising real TanStack Query flows
+
+The TanStack Vue Query mock lives in its own setup file, [`setup/tanstack.setup.ts`](./setup/tanstack.setup.ts). It globally replaces `useQuery`, `useMutation` and `useQueryClient` so most specs don't need a `QueryClient` in context.
+
+When a spec needs to test the **real** library (loading/error states, cache invalidation, refetch), opt out locally and provide a real client via [`@/tests/helpers/queryClient`](./helpers/queryClient.ts):
+
+```typescript
+import { mount } from '@vue/test-utils'
+import { withQueryClient } from '@/tests/helpers/queryClient'
+
+vi.unmock('@tanstack/vue-query')
+
+const wrapper = mount(MyComponent, {
+  global: { plugins: [...withQueryClient()] }
+})
+```
+
+`withQueryClient()` installs a fresh `QueryClient` per call with retries disabled, so failing queries surface immediately.
+
+> Migration note (#1845): the long-term goal is to remove the global mock entirely and make query mocking opt-in. ~23 spec files currently rely on the global `useQueryClient` mock and will need this helper (or `renderWithProviders`, #1843) before the global mock can be deleted.
+
 ## Testing Components that Use Nuxt UI
 
 ### TL;DR
