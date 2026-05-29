@@ -28,9 +28,14 @@ apiClient.interceptors.request.use((config) => {
 
 // Retry transient failures (serverless cold starts, brief upstream blips).
 // Retriable on network errors and on these status codes.
+//
+// Budget: up to 3 retries × 1000ms = ~3s of tolerance, enough to absorb a
+// typical Railway cold start without hand-rolled retry wrappers at call
+// sites. Bumped from 3 in conjunction with dropping `withRetry` from
+// `useSiweMutation`.
 const RETRY_STATUSES = new Set([408, 425, 429, 500, 502, 503, 504])
 const MAX_RETRIES = 3
-const RETRY_DELAY_MS = 500
+const RETRY_DELAY_MS = 1000
 
 type RetryableConfig = InternalAxiosRequestConfig & { __retryCount?: number }
 

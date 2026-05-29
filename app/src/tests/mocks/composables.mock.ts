@@ -113,13 +113,6 @@ export const mockUseSafeSendTransaction = {
 }
 
 /**
- * Mock useSafeOwnerManagement composable
- */
-export const mockUseSafeOwnerManagement = {
-  isUpdating: ref(false),
-  updateOwners: vi.fn()
-}
-/**
  * Mock useBackendWake composable
  * Returns a function that does nothing - individual tests can override if needed
  */
@@ -160,28 +153,6 @@ export const mockUseFetch = {
     error: ref<Error | null>(null),
     execute: vi.fn()
   }
-}
-
-/**
- * Mock useWalletChecks composable
- */
-export const mockUseWalletChecks = {
-  isProcessing: ref(false),
-  isSuccess: ref(false),
-  performChecks: vi.fn(),
-  resetRefs: vi.fn(() => {
-    mockUseWalletChecks.isProcessing.value = false
-    mockUseWalletChecks.isSuccess.value = false
-  })
-}
-
-/**
- * Mock useSafeDeployment composable
- */
-export const mockUseSafeDeployment = {
-  deploySafe: vi.fn(),
-  isDeploying: ref(false),
-  error: ref<Error | null>(null)
 }
 
 /**
@@ -257,12 +228,6 @@ export const resetComposableMocks = () => {
     mockUseBackendWake.mockClear()
   }
 
-  mockUseWalletChecks.isProcessing.value = false
-  mockUseWalletChecks.isSuccess.value = false
-  if (vi.isMockFunction(mockUseWalletChecks.performChecks)) {
-    mockUseWalletChecks.performChecks.mockClear()
-  }
-
   mockUseFetch.post.data.value = { accessToken: null }
   mockUseFetch.post.error.value = null
   if (vi.isMockFunction(mockUseFetch.post.execute)) {
@@ -274,22 +239,10 @@ export const resetComposableMocks = () => {
     mockUseFetch.get.execute.mockClear()
   }
 
-  mockUseSafeOwnerManagement.isUpdating.value = false
-  if (vi.isMockFunction(mockUseSafeOwnerManagement.updateOwners)) {
-    mockUseSafeOwnerManagement.updateOwners.mockClear()
-  }
-
   // Reset clipboard mock
   mockUseClipboard.copied.value = false
   if (vi.isMockFunction(mockUseClipboard.copy)) {
     mockUseClipboard.copy.mockClear()
-  }
-
-  // Reset Safe deployment mock
-  mockUseSafeDeployment.isDeploying.value = false
-  mockUseSafeDeployment.error.value = null
-  if (vi.isMockFunction(mockUseSafeDeployment.deploySafe)) {
-    mockUseSafeDeployment.deploySafe.mockClear()
   }
 
   mockUseBodAddAction.isLoading.value = false
@@ -345,10 +298,10 @@ export function resetDeployState() {
  * Use these in tests that need per-test configuration via mockReturnValue/mockReturnValueOnce.
  */
 export const useQueryClientFn = vi.fn(() => ({
-  invalidateQueries: vi.fn(),
-  getQueryData: vi.fn(),
-  setQueryData: vi.fn(),
-  removeQueries: vi.fn()
+  invalidateQueries: vi.fn(async () => undefined),
+  getQueryData: vi.fn(() => undefined),
+  setQueryData: vi.fn(() => undefined),
+  removeQueries: vi.fn(() => undefined)
 }))
 
 export const useQueryFn = vi.fn(() => ({

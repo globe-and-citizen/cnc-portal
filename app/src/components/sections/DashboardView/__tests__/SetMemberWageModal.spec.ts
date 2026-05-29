@@ -42,7 +42,6 @@ describe('SetMemberWageModal', () => {
     ratePerHour: WageRate[]
     overtimeRatePerHour: WageRate[]
   }
-  type WageModalVm = { wageData: WageDataVm }
 
   const StandardStepStub = defineComponent({
     name: 'SetMemberWageStandardStep',
@@ -125,14 +124,29 @@ describe('SetMemberWageModal', () => {
     await wrapper.vm.$nextTick()
   }
 
-  const getVm = (wrapper: ReturnType<typeof createWrapper>): WageModalVm =>
-    wrapper.vm as unknown as WageModalVm
+  const currentWageData = (wrapper: ReturnType<typeof createWrapper>): WageDataVm => {
+    const step = wrapper.findComponent(StandardStepStub).exists()
+      ? wrapper.findComponent(StandardStepStub)
+      : wrapper.findComponent(OvertimeStepStub)
+    return step.props('wageData') as WageDataVm
+  }
+
+  const updateWageData = async (
+    wrapper: ReturnType<typeof createWrapper>,
+    patch: Partial<WageDataVm>
+  ) => {
+    const step = wrapper.findComponent(StandardStepStub).exists()
+      ? wrapper.findComponent(StandardStepStub)
+      : wrapper.findComponent(OvertimeStepStub)
+    const current = step.props('wageData') as WageDataVm
+    await step.vm.$emit('update:wageData', { ...current, ...patch })
+    await wrapper.vm.$nextTick()
+  }
 
   it('returns to standard step when Back is clicked on the overtime step', async () => {
     const wrapper = createWrapper()
     await openModal(wrapper)
-    getVm(wrapper).wageData.enableOvertimeRules = true
-    await wrapper.vm.$nextTick()
+    await updateWageData(wrapper, { enableOvertimeRules: true })
     await wrapper.find('[data-test="add-wage-button"]').trigger('click')
     await wrapper.vm.$nextTick()
 
@@ -147,8 +161,7 @@ describe('SetMemberWageModal', () => {
     const wrapper = createWrapper()
     await openModal(wrapper)
 
-    getVm(wrapper).wageData.enableOvertimeRules = true
-    await wrapper.vm.$nextTick()
+    await updateWageData(wrapper, { enableOvertimeRules: true })
     await wrapper.find('[data-test="add-wage-button"]').trigger('click')
     await wrapper.vm.$nextTick()
     expect(wrapper.find('[data-test="overtime-step"]').exists()).toBe(true)
@@ -165,27 +178,27 @@ describe('SetMemberWageModal', () => {
     const wrapper = createWrapper()
     await openModal(wrapper)
 
-    getVm(wrapper).wageData.maximumHoursPerWeek = 99
-    await wrapper.vm.$nextTick()
+    await updateWageData(wrapper, { maximumHoursPerWeek: 99 })
+    expect(currentWageData(wrapper).maximumHoursPerWeek).toBe(99)
 
     await wrapper.findComponent(StandardStepStub).vm.$emit('reset')
     await wrapper.vm.$nextTick()
 
-    expect(getVm(wrapper).wageData.maximumHoursPerWeek).toBe(mockWage.maximumHoursPerWeek)
+    expect(currentWageData(wrapper).maximumHoursPerWeek).toBe(mockWage.maximumHoursPerWeek)
   })
 
   it('calls mutation with overtime payload when overtime step is submitted', async () => {
     const wrapper = createWrapper()
     await openModal(wrapper)
 
-    const vm = getVm(wrapper)
-    vm.wageData.enableOvertimeRules = true
-    const usdcOvertimeRate = vm.wageData.overtimeRatePerHour.find((rate) => rate.type === 'usdc')
-    expect(usdcOvertimeRate).toBeDefined()
-    if (!usdcOvertimeRate) throw new Error('Missing usdc overtime rate in test setup')
-    usdcOvertimeRate.enabled = true
-    usdcOvertimeRate.amount = 20
-    await wrapper.vm.$nextTick()
+    const current = currentWageData(wrapper)
+    const updatedOvertime = current.overtimeRatePerHour.map((rate) =>
+      rate.type === 'usdc' ? { ...rate, enabled: true, amount: 20 } : rate
+    )
+    await updateWageData(wrapper, {
+      enableOvertimeRules: true,
+      overtimeRatePerHour: updatedOvertime
+    })
 
     await wrapper.find('[data-test="add-wage-button"]').trigger('click')
     await wrapper.vm.$nextTick()

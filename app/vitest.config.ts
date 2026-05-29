@@ -24,8 +24,8 @@ const mockFiles = [
   'utils'
 ].map((name) => `./src/tests/setup/${name}.setup.ts`)
 
-export default defineConfig((env) =>
-  mergeConfig(viteConfig(env), {
+export default defineConfig(async (env) =>
+  mergeConfig(await viteConfig(env), {
     test: {
       setupFiles: mockFiles,
       environment: 'jsdom',

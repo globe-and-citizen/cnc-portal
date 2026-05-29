@@ -1,3 +1,16 @@
+/**
+ * Side-effect contract (see app/src/composables/CONVENTIONS.md):
+ *   - onSuccess: outcome toast describing which branch fired
+ *                ('done' / 'noop-already-migrated' / 'noop-empty').
+ *   - onError:   no toast — `mutation.error` is left for callers to render
+ *                inline (UAlert) or interpret with `instanceof
+ *                InconsistentSupplyError` to drive a banner / retry UI.
+ *   - Invalidation: none — the read-side queries this migration affects live
+ *                outside the wrapper's scope. Callers refetch the specific
+ *                bits they need after a successful migration.
+ *   - Options:   pass `silent: true` when composing inside an orchestrator
+ *                that emits its own flow-level outcome toast.
+ */
 import { useMutation } from '@tanstack/vue-query'
 import { readContract } from '@wagmi/core'
 import type { Address } from 'viem'
@@ -100,6 +113,15 @@ export async function migrateShareholders(
   return { kind: 'done', migratedCount: shareholders.length, shareholders }
 }
 
+export interface UseMigrateShareholdersOptions {
+  /**
+   * When true, suppress the default outcome toast. Set this when composing
+   * inside an orchestrator that emits its own flow-level toast covering the
+   * full redeploy/migration sequence.
+   */
+  silent?: boolean
+}
+
 /**
  * TanStack-wrapped variant of {@link migrateShareholders}. Prefer this in
  * components: it exposes `mutateAsync`, `isPending`, `error`, `data` without
@@ -111,12 +133,13 @@ export async function migrateShareholders(
  * standalone banner, orchestrated redeploy). Callers typically surface the
  * error via `mutation.error` on their own UI instead.
  */
-export function useMigrateShareholders() {
+export function useMigrateShareholders(options: UseMigrateShareholdersOptions = {}) {
   const toast = useToast()
   return useMutation<MigrateShareholdersResult, Error, MigrateShareholdersArgs>({
     mutationKey: ['migrateShareholders'],
     mutationFn: migrateShareholders,
     onSuccess: (result) => {
+      if (options.silent) return
       if (result.kind === 'done') {
         toast.add({
           title: `Migrated ${result.migratedCount} shareholder${result.migratedCount === 1 ? '' : 's'}`,

@@ -136,7 +136,7 @@ describe('useOfficerRedeploy', () => {
 
     // Shareholder migration should be skipped entirely on first deploy.
     expect(migrateMutationRefs.mutateAsync).not.toHaveBeenCalled()
-    expect(invalidateMock).toHaveBeenCalledWith(42)
+    expect(invalidateMock).toHaveBeenCalledWith()
   })
 
   it('forwards deploy metadata to register in the right shape', async () => {
@@ -194,7 +194,7 @@ describe('useOfficerRedeploy', () => {
       newInvestorAddress: NEW_INVESTOR
     })
     expect(migrationFailed.value).toBe(false)
-    expect(invalidateMock).toHaveBeenCalledWith(42)
+    expect(invalidateMock).toHaveBeenCalledWith()
   })
 
   it('surfaces workflowError when the new InvestorV1 is missing from getTeam()', async () => {
@@ -291,7 +291,7 @@ describe('useOfficerRedeploy', () => {
     await composable.retryMigration()
 
     expect(composable.migrationFailed.value).toBe(false)
-    expect(invalidateMock).toHaveBeenCalledWith(42)
+    expect(invalidateMock).toHaveBeenCalledWith()
   })
 
   it('skipMigration clears pending state and invalidates', async () => {
@@ -322,7 +322,7 @@ describe('useOfficerRedeploy', () => {
 
     expect(migrateMutationRefs.reset).toHaveBeenCalled()
     expect(composable.migrationFailed.value).toBe(false)
-    expect(invalidateMock).toHaveBeenCalledWith(42)
+    expect(invalidateMock).toHaveBeenCalledWith()
   })
 
   it('reset clears workflow state and resets all child mutations', () => {

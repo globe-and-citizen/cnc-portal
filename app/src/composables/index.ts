@@ -1,5 +1,4 @@
 export * from './useSiwe'
-export * from './useWalletChecks'
 export * from './useContractBalance'
 export * from './elections'
 export * from './useSubmitRestriction'

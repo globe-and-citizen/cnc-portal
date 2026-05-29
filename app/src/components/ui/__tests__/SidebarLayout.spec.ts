@@ -150,12 +150,13 @@ describe('SidebarLayout.vue', () => {
 
     const userCard = wrapper.find('[data-test="edit-user-card"]')
     expect(userCard.exists()).toBe(true)
-    expect((wrapper.vm as { open: boolean }).open).toBe(false)
+    // Modal body hidden until `open` becomes true (UModal stub respects `open` prop)
+    expect(wrapper.find('[data-test="modal-body"]').exists()).toBe(false)
 
     await userCard.trigger('click')
     await nextTick()
 
-    expect((wrapper.vm as { open: boolean }).open).toBe(true)
+    expect(wrapper.find('[data-test="modal-body"]').exists()).toBe(true)
   })
 
   it('falls back to default avatar and name when user store is empty', async () => {

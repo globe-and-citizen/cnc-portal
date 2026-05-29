@@ -1,6 +1,33 @@
 import { NETWORK, USDC_ADDRESS, USDT_ADDRESS, USDC_E_ADDRESS } from '@/constant'
-import { zeroAddress, formatEther } from 'viem'
+import { zeroAddress, formatEther, parseUnits } from 'viem'
 import type { TokenId } from '@/constant'
+import USDCIcon from '@/assets/usdc.png'
+import MaticIcon from '@/assets/matic-logo.png'
+import EthereumIcon from '@/assets/Ethereum.png'
+
+const TOKEN_ICONS: Partial<Record<TokenId, string>> = {
+  usdc: USDCIcon,
+  'usdc.e': USDCIcon
+}
+
+export const getTokenIcon = (tokenId: TokenId): string | undefined => {
+  if (tokenId === 'native') {
+    const chainId = parseInt(NETWORK?.chainId ?? '0x0', 16)
+    return chainId === 137 || chainId === 80002 ? MaticIcon : EthereumIcon
+  }
+  return TOKEN_ICONS[tokenId]
+}
+
+const tokenDecimals: Record<TokenId, number> = {
+  native: 18,
+  usdc: 6,
+  'usdc.e': 6,
+  usdt: 6,
+  sher: 6
+}
+
+const tokenIdSet = new Set<TokenId>(Object.keys(tokenDecimals) as TokenId[])
+
 export const tokenSymbol = (tokenAddress: string) => {
   const symbols = {
     [USDC_ADDRESS.toLocaleLowerCase()]: 'USDC',
@@ -25,4 +52,35 @@ export const tokenSymbolAddresses: Record<Exclude<TokenId, 'native'>, `0x${strin
 export const getTokenAddress = (tokenId: TokenId): string | undefined => {
   if (tokenId === 'native') return undefined
   return tokenSymbolAddresses[tokenId as Exclude<TokenId, 'native'>]
+}
+
+export const getTokenDecimals = (tokenId: TokenId): number => tokenDecimals[tokenId]
+
+export const isSupportedTokenId = (value: string): value is TokenId =>
+  tokenIdSet.has(value as TokenId)
+
+export const isValidPositiveTokenAmount = (
+  amount: string,
+  tokenId: TokenId = 'native'
+): boolean => {
+  const normalizedAmount = amount.trim()
+  if (!normalizedAmount) return false
+
+  try {
+    return parseUnits(normalizedAmount, getTokenDecimals(tokenId)) > 0n
+  } catch {
+    return false
+  }
+}
+
+const KNOWN_TOKEN_IDS: TokenId[] = ['native', 'usdc', 'usdc.e', 'usdt', 'sher']
+
+export const resolveTokenIdByAddress = (tokenAddress: string): TokenId | null => {
+  const normalizedAddress = tokenAddress.toLowerCase()
+  const knownId = KNOWN_TOKEN_IDS.find((tokenId) => {
+    const knownAddress = (getTokenAddress(tokenId) ?? zeroAddress).toLowerCase()
+    return knownAddress === normalizedAddress
+  })
+
+  return knownId ?? null
 }

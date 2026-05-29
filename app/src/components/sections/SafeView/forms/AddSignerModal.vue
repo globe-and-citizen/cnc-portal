@@ -98,10 +98,11 @@
 import { computed, ref, watch } from 'vue'
 import { z } from 'zod'
 import { type Address, isAddress } from 'viem'
+import { useChainId } from '@wagmi/vue'
 import MultiSelectMemberInput from '@/components/utils/MultiSelectMemberInput.vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
 
-import { useSafeOwnerManagement } from '@/composables/safe'
+import { useUpdateSafeOwnersMutation } from '@/queries/safe.mutations'
 import type { User } from '@/types'
 import { useToast } from '@nuxt/ui/composables'
 import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
@@ -120,29 +121,31 @@ const emit = defineEmits<{
 }>()
 
 const toast = useToast()
+const chainId = useChainId()
 const errorMessage = ref('')
 
 // Stores and composables
-const { isUpdating: isLoading, updateOwners } = useSafeOwnerManagement()
+const { mutate: updateOwners, isPending: isLoading } = useUpdateSafeOwnersMutation()
 
 // Modal state
 const isOpen = defineModel<boolean>({ default: false })
 
 const newSigners = ref<User[]>([])
+const requiresProposal = computed(() => props.currentThreshold >= 2)
 
 // Transform newSigners to match form schema expectations
 const formState = computed(() => ({
   newSigners: newSigners.value.map((signer) => ({
     address: signer.address || ''
-  }))
+  })),
+  newThreshold: props.currentThreshold,
+  shouldPropose: requiresProposal.value
 }))
 
 // Computed values
 const totalSignersAfterUpdate = computed(() => {
   return props.currentOwners.length + validNewSigners.value.length
 })
-
-const requiresProposal = computed(() => props.currentThreshold >= 2)
 
 // Filter out invalid signers and existing owners (additional safety check)
 const validNewSigners = computed(() => {
@@ -166,16 +169,23 @@ const canSubmit = computed(() => {
 })
 
 const formSchema = computed(() =>
-  z.object({
-    newSigners: z
-      .array(
-        z.object({
-          address: z.string().refine((address) => isAddress(address), 'Invalid signer address')
-        })
-      )
-      .min(1, 'Please add at least one signer')
-      .refine(() => validNewSigners.value.length > 0, 'Please add at least one valid signer')
-  })
+  z
+    .object({
+      newSigners: z
+        .array(
+          z.object({
+            address: z.string().refine((address) => isAddress(address), 'Invalid signer address')
+          })
+        )
+        .min(1, 'Please add at least one signer')
+        .refine(() => validNewSigners.value.length > 0, 'Please add at least one valid signer'),
+      newThreshold: z.number().optional(),
+      shouldPropose: z.boolean()
+    })
+    .refine(({ newSigners, newThreshold }) => !newSigners.length || newThreshold !== undefined, {
+      message: 'newThreshold required when adding owners',
+      path: ['newThreshold']
+    })
 )
 
 // Watch for validation issues (simplified since prevention is handled by hiddenMembers)
@@ -210,30 +220,41 @@ const handleAddSigners = async () => {
   }
 
   errorMessage.value = ''
-  try {
-    const ownersToAdd = validNewSigners.value.map((signer) => signer.address as string)
+  const ownersToAdd = validNewSigners.value.map((signer) => signer.address as string)
 
-    const txHash = await updateOwners(props.safeAddress, {
-      ownersToAdd,
-      shouldPropose: requiresProposal.value
-    })
+  updateOwners(
+    {
+      pathParams: {
+        safeAddress: props.safeAddress
+      },
+      queryParams: {
+        chainId: chainId.value
+      },
+      body: {
+        ownersToAdd,
+        newThreshold: props.currentThreshold,
+        shouldPropose: requiresProposal.value
+      }
+    },
+    {
+      onSuccess: () => {
+        const message = requiresProposal.value
+          ? 'Signer addition proposal submitted successfully'
+          : 'Signers added successfully'
+        toast.add({ title: 'Success', description: message, color: 'success' })
 
-    if (txHash) {
-      const message = requiresProposal.value
-        ? 'Signer addition proposal submitted successfully'
-        : 'Signers added successfully'
-      toast.add({ title: 'Success', description: message, color: 'success' })
-
-      emit('signer-added')
-      handleClose()
+        emit('signer-added')
+        handleClose()
+      },
+      onError: (error) => {
+        console.error('Failed to add signers:', error)
+        errorMessage.value =
+          error instanceof Error && error.message
+            ? `Failed to add signers: ${error.message}`
+            : 'Failed to add signers'
+      }
     }
-  } catch (error) {
-    console.error('Failed to add signers:', error)
-    errorMessage.value =
-      error instanceof Error && error.message
-        ? `Failed to add signers: ${error.message}`
-        : 'Failed to add signers'
-  }
+  )
 }
 
 const handleClose = () => {

@@ -1,3 +1,15 @@
+/**
+ * Side-effect contract (see app/src/composables/CONVENTIONS.md):
+ *   - This is an ORCHESTRATOR composable. It owns the flow-level success
+ *     toast ("Officer redeployed and contracts synced") and the final
+ *     cache flush. The wrappers it composes are configured to stay silent
+ *     and skip their own invalidation so the user sees exactly one toast
+ *     and one refetch wave for the whole redeploy.
+ *   - Errors: NEVER toast from here. Each mutation's `error` ref plus
+ *     `workflowError` are exposed for reactive rendering (UAlert).
+ *   - Workflow state: `pendingMigration` and `workflowError` are the only
+ *     manual refs — everything else is derived from the three mutations.
+ */
 import { computed, ref } from 'vue'
 import { readContract } from '@wagmi/core'
 import type { Address } from 'viem'
@@ -36,9 +48,12 @@ export function useOfficerRedeploy() {
   const teamStore = useTeamStore()
   const toast = useToast()
 
-  const deployMutation = useDeployOfficer()
+  // Silence the wrappers' own success toasts and cache flushes so the
+  // orchestrator owns a single flow-level toast and a single end-of-flow
+  // invalidation pass — see CONVENTIONS.md §1 / §2.
+  const deployMutation = useDeployOfficer({ silent: true, skipInvalidation: true })
   const registerMutation = useCreateOfficerMutation()
-  const migrateMutation = useMigrateShareholders()
+  const migrateMutation = useMigrateShareholders({ silent: true })
   const invalidateQueries = useInvalidateOfficerQueries()
 
   // Workflow-level state that spans multiple mutations.
@@ -76,7 +91,7 @@ export function useOfficerRedeploy() {
     previousOfficerAddress: Address
     newInvestorAddress: Address
   }) => {
-    // Outcome toasts come from useMigrateShareholders default onSuccess.
+    // Wrapper is silent (orchestrator owns flow-level toasts).
     // Errors remain on migrateMutation.error for the caller's retry UI.
     await migrateMutation.mutateAsync(ctx)
     if (migrateMutation.isSuccess.value) {
@@ -88,17 +103,16 @@ export function useOfficerRedeploy() {
     if (pendingMigration.value) {
       await tryMigration(pendingMigration.value)
       if (!pendingMigration.value) {
-        const teamId = teamStore.currentTeamId
-        if (teamId) await invalidateQueries(teamId)
+        await invalidateQueries()
+        toast.add({ title: 'Shareholders migrated successfully', color: 'success' })
       }
     }
   }
 
   const skipMigration = async () => {
-    const teamId = teamStore.currentTeamId
     pendingMigration.value = null
     migrateMutation.reset()
-    if (teamId) await invalidateQueries(teamId)
+    await invalidateQueries()
     toast.add({
       title:
         'Migration skipped. You can retry it later from the Share Token page (Migrate from previous Officer).',
@@ -155,7 +169,7 @@ export function useOfficerRedeploy() {
       if (pendingMigration.value) return
     }
 
-    await invalidateQueries(teamId)
+    await invalidateQueries()
     toast.add({ title: 'Officer redeployed and contracts synced', color: 'success' })
   }
 

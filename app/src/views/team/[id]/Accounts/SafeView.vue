@@ -18,8 +18,14 @@
   </div>
 
   <!-- Safe not deployed state -->
-  <div v-else-if="teamId && !isLoadingSafe" class="flex items-center justify-center p-8">
-    <SafeDeploymentCard :team-id="teamId" @safe-deployed="handleSafeDeployed" />
+  <div
+    v-else-if="teamStore.currentTeamId && !isLoadingSafe"
+    class="flex items-center justify-center p-8"
+  >
+    <SafeDeploymentCard
+      :team-id="Number(teamStore.currentTeamId)"
+      @safe-deployed="handleSafeDeployed"
+    />
   </div>
 
   <!-- Loading state -->
@@ -32,34 +38,49 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { useRoute } from 'vue-router'
+import { computed, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import SafeBalanceSection from '@/components/sections/SafeView/SafeBalanceSection.vue'
 import SafeOwnersCard from '@/components/sections/SafeView/SafeOwnersCard.vue'
 import GenericTokenHoldingsSection from '@/components/GenericTokenHoldingsSection.vue'
 import SafeTransactions from '@/components/sections/SafeView/SafeTransactions.vue'
 import SafeIncomingTransactions from '@/components/sections/SafeView/SafeIncomingTransactions.vue'
 import SafeDeploymentCard from '@/components/sections/SafeView/SafeDeploymentCard.vue'
-import { type Address, isAddress } from 'viem'
+import { type Address } from 'viem'
+import { useTeamStore } from '@/stores/teamStore'
 
 const route = useRoute()
+const router = useRouter()
+const teamStore = useTeamStore()
 
 const isLoadingSafe = ref(false)
+const deployedSafeAddress = ref<Address>()
 
-const teamId = computed(() => {
-  const id = route.params.id as string
-  return id ? parseInt(id, 10) : null
-})
+const safeAddress = computed(
+  () => teamStore.getContractAddressByType('Safe') || deployedSafeAddress.value
+)
 
-const safeAddress = computed(() => {
-  const address = route.params.address as string | undefined
-  return address && isAddress(address) ? (address as Address) : undefined
+watch(safeAddress, (address) => {
+  if (address) {
+    isLoadingSafe.value = false
+  }
 })
 
 /**
  * Handle successful Safe deployment
  */
-const handleSafeDeployed = async () => {
+const handleSafeDeployed = async (address: Address) => {
+  deployedSafeAddress.value = address
   isLoadingSafe.value = true
+
+  if (route.params.id && route.params.address !== address) {
+    await router.replace({
+      name: 'safe-account',
+      params: {
+        id: route.params.id as string,
+        address
+      }
+    })
+  }
 }
 </script>

@@ -162,12 +162,11 @@ describe('ClaimHistoryDailyBreakdown', () => {
 
   it('handles missing weeklyClaim safely', () => {
     const wrapper = createWrapper({ weeklyClaim: undefined })
-    const vm = wrapper.vm as unknown as { canModifyClaims: boolean }
 
     expect(wrapper.findAll('.bg-gray-100.text-gray-400').length).toBe(7)
     expect(wrapper.text()).toContain('0h')
+    // No claim-actions rendered confirms canModifyClaims === false
     expect(wrapper.find('[data-test="claim-actions"]').exists()).toBe(false)
-    expect(vm.canModifyClaims).toBe(false)
   })
 
   it('renders quick submit button on empty days for own member and emits quick-submit on row click', async () => {

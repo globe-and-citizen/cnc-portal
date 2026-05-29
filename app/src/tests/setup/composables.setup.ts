@@ -7,14 +7,11 @@ import {
   mockUseContractBalance,
   mockUseApolloQuery,
   mockUseSafeSendTransaction,
-  mockUseSafeOwnerManagement,
-  mockUseSafeDeployment,
   mockUseClipboard,
   useQueryClientFn,
   useQueryFn,
   useMutationFn,
   mockUseFetch,
-  mockUseWalletChecks,
   mockUseSubmitRestriction,
   mockUseDeployContract
 } from '@/tests/mocks/composables.mock'
@@ -124,15 +121,32 @@ vi.mock('@vueuse/core', async (importOriginal) => {
 
 /**
  * Mock Team Queries (team.queries.ts)
+ * Mirrors the real `teamKeys` factory so composables that invalidate queries
+ * via `teamKeys.all` keep working under mock. Kept duplicated rather than
+ * re-imported to avoid pulling the real module (which touches `@/constant`
+ * and breaks specs that mock it partially).
  */
-vi.mock('@/queries/team.queries', () => ({
-  useGetTeamsQuery: vi.fn(queryMocks.useGetTeamsQuery),
-  useGetTeamQuery: vi.fn(queryMocks.useGetTeamQuery),
-  useCreateTeamMutation: vi.fn(queryMocks.useCreateTeamMutation),
-  useUpdateTeamMutation: vi.fn(queryMocks.useUpdateTeamMutation),
-  useDeleteTeamMutation: vi.fn(queryMocks.useDeleteTeamMutation),
-  useGetSubmitRestrictionQuery: vi.fn(queryMocks.useGetSubmitRestrictionQuery)
-}))
+vi.mock('@/queries/team.queries', () => {
+  const teamKeys = {
+    all: ['teams'] as const,
+    lists: () => ['teams', 'list'] as const,
+    list: (
+      userAddress?: string | null,
+      filters?: { showHidden?: boolean; showArchived?: boolean }
+    ) => ['teams', 'list', { userAddress, ...filters }] as const,
+    details: () => ['teams', 'detail'] as const,
+    detail: (teamId: string | null) => ['teams', 'detail', { teamId }] as const
+  }
+  return {
+    teamKeys,
+    useGetTeamsQuery: vi.fn(queryMocks.useGetTeamsQuery),
+    useGetTeamQuery: vi.fn(queryMocks.useGetTeamQuery),
+    useCreateTeamMutation: vi.fn(queryMocks.useCreateTeamMutation),
+    useUpdateTeamMutation: vi.fn(queryMocks.useUpdateTeamMutation),
+    useDeleteTeamMutation: vi.fn(queryMocks.useDeleteTeamMutation),
+    useGetSubmitRestrictionQuery: vi.fn(queryMocks.useGetSubmitRestrictionQuery)
+  }
+})
 
 /**
  * Mock Member Queries (member.queries.ts)
@@ -198,8 +212,12 @@ vi.mock('@/queries/auth.queries', () => ({
 
 /**
  * Mock Contract Queries (contract.queries.ts)
+ * Mirrors the real `contractKeys` factory so composables that invalidate
+ * queries via `contractKeys.all` keep working under mock. Kept duplicated
+ * rather than re-imported to avoid pulling the real module.
  */
 vi.mock('@/queries/contract.queries', () => ({
+  contractKeys: { all: ['contracts'] as const },
   useCreateContractMutation: vi.fn(queryMocks.useCreateContractMutation),
   useSyncContractsMutation: vi.fn(queryMocks.useSyncContractsMutation),
   useCreateOfficerMutation: vi.fn(queryMocks.useCreateOfficerMutation)
@@ -234,10 +252,9 @@ vi.mock('@/queries/safe.mutations', () => ({
   useGetSafeInfoQuery: vi.fn(queryMocks.useGetSafeInfoQuery),
   useSafePendingTransactionsQuery: vi.fn(queryMocks.useSafePendingTransactionsQuery),
   useDeploySafeMutation: vi.fn(queryMocks.useDeploySafeMutation),
-  useProposeTransactionMutation: vi.fn(queryMocks.useProposeTransactionMutation),
   useApproveTransactionMutation: vi.fn(queryMocks.useApproveTransactionMutation),
   useExecuteTransactionMutation: vi.fn(queryMocks.useExecuteTransactionMutation),
-  useUpdateSafeOwnersMutation: vi.fn(queryMocks.useUpdateSafeOwnersMutation),
+
   useGetSafeTransactionQuery: vi.fn(queryMocks.useGetSafeTransactionQuery)
 }))
 
@@ -274,13 +291,12 @@ vi.mock('@/composables/useContractFunctions', async (importOriginal) => {
 })
 
 /**
- * Mock useWalletChecks composable
+ * Mock useSubmitRestriction composable
  */
 vi.mock('@/composables', async (importOriginal) => {
   const actual: object = await importOriginal()
   return {
     ...actual,
-    useWalletChecks: vi.fn(() => mockUseWalletChecks),
     useSubmitRestriction: vi.fn(() => mockUseSubmitRestriction)
   }
 })
@@ -291,21 +307,6 @@ vi.mock('@/composables', async (importOriginal) => {
 vi.mock('@/composables/transactions/useSafeSendTransaction', () => ({
   useSafeSendTransaction: vi.fn(() => mockUseSafeSendTransaction)
 }))
-
-/**
- * Mock useSafeOwnerManagement and useSafeDeployment composables
- */
-vi.mock('@/composables/safe', async (importOriginal) => {
-  const actual: object = await importOriginal()
-  return {
-    ...actual,
-    useSafeOwnerManagement: vi.fn(() => mockUseSafeOwnerManagement),
-    useSafeDeployment: vi.fn(() => mockUseSafeDeployment)
-  }
-})
-;(
-  globalThis as { __mockUseSafeOwnerManagement?: typeof mockUseSafeOwnerManagement }
-).__mockUseSafeOwnerManagement = mockUseSafeOwnerManagement
 
 /**
  * Mock viem/actions getBalance
