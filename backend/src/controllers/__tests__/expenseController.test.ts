@@ -294,7 +294,11 @@ describe('Expense Controller', () => {
     });
 
     it('should return 403 if caller is not the owner of the team and the status is disable', async () => {
-      vi.spyOn(prisma.expense, 'findUnique').mockResolvedValue(null);
+      // First call resolves the teamId for the rejectIfArchived middleware,
+      // second call is the controller owner check which fails (not owner).
+      vi.spyOn(prisma.expense, 'findUnique')
+        .mockResolvedValueOnce(mockExpense)
+        .mockResolvedValueOnce(null);
 
       const response = await request(app).patch('/1').send({ status: 'disable' });
 
@@ -303,6 +307,8 @@ describe('Expense Controller', () => {
     });
 
     it('should update the expense status', async () => {
+      // rejectIfArchived middleware resolves the teamId from the expense.
+      vi.spyOn(prisma.expense, 'findUnique').mockResolvedValue(mockExpense);
       vi.spyOn(prisma.expense, 'update').mockResolvedValue({
         ...mockExpense,
         status: 'expired',
@@ -315,6 +321,8 @@ describe('Expense Controller', () => {
     });
 
     it('should return 500 if there is a server error', async () => {
+      // rejectIfArchived middleware resolves the teamId from the expense.
+      vi.spyOn(prisma.expense, 'findUnique').mockResolvedValue(mockExpense);
       vi.spyOn(prisma.expense, 'update').mockRejectedValue('Server error');
 
       const response = await request(app).patch('/1').send({ status: 'expired' });

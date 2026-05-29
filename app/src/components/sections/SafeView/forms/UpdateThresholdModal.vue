@@ -115,7 +115,6 @@ import { type Address } from 'viem'
 import { useChainId } from '@wagmi/vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
 
-import { useSafeOwnerManagement } from '@/composables/safe'
 import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
 import { useUpdateSafeOwnersMutation } from '@/queries/safe.mutations'
 

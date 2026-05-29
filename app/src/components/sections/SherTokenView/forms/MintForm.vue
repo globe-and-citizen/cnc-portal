@@ -50,7 +50,7 @@
           <UButton
             type="submit"
             :loading="isMintPending"
-            :disabled="isMintPending || archivedDisabled"
+            :disabled="isSubmitDisabled || archivedDisabled"
             color="primary"
             class="text-center"
             data-test="submit-button"
@@ -67,8 +67,7 @@ import { z } from 'zod'
 import { isAddress, parseUnits } from 'viem'
 import { reactive, ref, computed, watch } from 'vue'
 import SelectMemberContractsInput from '@/components/utils/SelectMemberContractsInput.vue'
-import { INVESTOR_ABI } from '@/artifacts/abi/investors'
-import { useTeamStore } from '@/stores'
+import MintStakeSection from './MintStakeSection.vue'
 import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
 import { useIndividualMint } from '@/composables/investor/writes'
 import { log } from '@/utils'

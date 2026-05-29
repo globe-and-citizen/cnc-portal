@@ -2,7 +2,7 @@ import { mount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
-import { useTeamStore } from '@/stores'
+import { useTeamStore, useUserDataStore } from '@/stores'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 import TeamMetaUpdateModal from '../TeamMetaUpdateModal.vue'
 import AddMemberForm from '../forms/AddMemberForm.vue'
@@ -27,23 +27,10 @@ const activeTeamMeta = {
   data: { ...archivedTeamMeta.data, isArchived: false }
 }
 
-vi.mock('@/queries/team.queries', () => ({
-  useUpdateTeamMutation: vi.fn(() => ({
-    mutate: vi.fn(),
-    reset: vi.fn(),
-    isPending: ref(false),
-    error: ref(null)
-  }))
-}))
-
-vi.mock('@/queries/member.queries', () => ({
-  useAddMembersMutation: vi.fn(() => ({
-    mutate: vi.fn(),
-    isPending: ref(false),
-    error: ref(null)
-  }))
-}))
-
+// `@/composables/elections` is not part of the global mock layer, so a local
+// mock is allowed here. The query/store/safeDepositRouter modules are already
+// globally mocked (see app/src/tests/setup/*.setup.ts), so we override their
+// return values per-test via `vi.mocked(...)` rather than re-declaring vi.mock.
 vi.mock('@/composables/elections', () => ({
   useBoDElections: vi.fn(() => ({
     formattedElection: ref(null),
@@ -52,19 +39,12 @@ vi.mock('@/composables/elections', () => ({
   }))
 }))
 
-vi.mock('@/composables/safeDepositRouter/reads', () => ({
-  useSafeDepositRouterDepositsEnabled: vi.fn(() => ({ data: ref(true), isLoading: ref(false) })),
-  useSafeDepositRouterPaused: vi.fn(() => ({ data: ref(false), isLoading: ref(false) }))
-}))
-
-vi.mock('@/stores', () => ({
-  useTeamStore: vi.fn(),
-  useUserDataStore: vi.fn(() => ({ address: '0xOWNER' }))
-}))
-
 describe('archived team write guard (TeamMetaActions)', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    // Caller is the team owner so the archive guard is the only thing that can
+    // disable owner-gated write actions (e.g. ElectionActions create button).
+    vi.mocked(useUserDataStore).mockReturnValue({ address: '0xOWNER' } as never)
   })
 
   describe('TeamMetaUpdateModal', () => {

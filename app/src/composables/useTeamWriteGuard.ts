@@ -10,7 +10,7 @@ export const TEAM_ARCHIVED_TOOLTIP = 'This team is archived'
 export function useTeamWriteGuard(teamRef?: MaybeRefOrGetter<Team | null | undefined>) {
   const teamStore = useTeamStore()
 
-  const team = computed(() => toValue(teamRef) ?? toValue(teamStore.currentTeamMeta.data))
+  const team = computed(() => toValue(teamRef) ?? toValue(teamStore.currentTeamMeta?.data))
 
   const isTeamArchived = computed(() => team.value?.isArchived === true)
 
