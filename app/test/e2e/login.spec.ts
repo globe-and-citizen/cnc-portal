@@ -1,78 +1,53 @@
-import { testWithSynpress } from '@synthetixio/synpress'
-import { metaMaskFixtures } from '@synthetixio/synpress/playwright'
-import connectedSetup from '../wallet-setup/connected.setup'
+import { test, expect } from './fixtures'
 
-const test = testWithSynpress(metaMaskFixtures(connectedSetup))
+/**
+ * SIWE login flow, driven by the in-browser e2e mock connector.
+ *
+ * No MetaMask extension and no running chain are involved: the mock
+ * connector (registered when `VITE_E2E=true`) signs the SIWE message
+ * locally with Hardhat test account #0, and the backend is stubbed so the
+ * test stays hermetic and fast.
+ */
 
-// const { expect } = test
+// Hardhat account #0 — the address the mock connector signs with.
+const TEST_ADDRESS = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'
+const NONCE = '41vj7bz5Ow8oT5xaE'
+
+const json = (body: unknown) => ({
+  status: 200,
+  contentType: 'application/json',
+  body: JSON.stringify(body)
+})
 
 test.describe('Sign in', () => {
-  test('should be able to sign in and redirect to the teams page', async ({ page, metamask }) => {
-    // Get wallet address
-    const address = await metamask.getAccountAddress()
+  test('signs in with the mock wallet and redirects to the teams page', async ({ page }) => {
+    // Catch-all: any backend call we don't explicitly stub returns an empty
+    // 200. This prevents the global axios 401 interceptor (which logs the
+    // user out and redirects to /login) from kicking in on background calls
+    // the post-login screens make (e.g. /api/notification). Scoped to the
+    // backend origin via regex so Vite source imports under
+    // `/src/api/index.ts` aren't intercepted.
+    await page.route(/\/\/[^/]+:4000\/api\//, (route) => route.fulfill(json({})))
+    await page.route('**/api/user/nonce/**', (route) => route.fulfill(json({ nonce: NONCE })))
+    await page.route('**/api/auth/siwe', (route) =>
+      route.fulfill(json({ accessToken: 'e2e.test.token' }))
+    )
+    await page.route('**/api/user/0x*', (route) =>
+      route.fulfill(
+        json({ address: TEST_ADDRESS, name: 'E2E Tester', nonce: NONCE, imageUrl: null })
+      )
+    )
+    await page.route('**/api/teams**', (route) => route.fulfill(json({ teams: [] })))
 
-    // Set up API mocks before navigation
-    await page.route('**/api/user/nonce/*', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({ success: true, nonce: '41vj7bz5Ow8oT5xaE' })
-      })
-    })
-    await page.route('**/api/auth/siwe', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({ success: true, accessToken: 'token' })
-      })
-    })
-    await page.route(`**/api/user/${address}`, async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          address: await metamask.getAccountAddress(),
-          name: null,
-          nonce: '41vj7bz5Ow8oT5xaE'
-        })
-      })
-    })
-
-    await page.route('**/api/teams', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({ teams: [] })
-      })
-    })
-
-    // Navigate to the app
     await page.goto('/')
 
-    // Wait for the page to load
-    await page.waitForLoadState('domcontentloaded')
-
-    // Click sign-in button
+    // One click: connect (mock wallet) -> sign SIWE message -> authenticate.
     await page.getByTestId('sign-in').click()
 
-    // Wait for wallet connection request to be triggered
-    await page.waitForTimeout(2000)
-
-    // Connect to dapp (this will handle the MetaMask popup)
-    await metamask.connectToDapp()
-
-    // Switch network
-    await metamask.approveNewNetwork()
-    await metamask.approveSwitchNetwork()
-
-    // Confirm signature
-    await page.waitForTimeout(3000)
-    await metamask.confirmSignature()
-
-    // Wait for redirection
-    await page.waitForURL('http://localhost:5173/teams')
-
-    // Check redirection
-    // expect(page.url()).toBe('http://localhost:5173/teams')
+    // Successful login pushes the router to the teams page. We poll the URL
+    // with `toHaveURL` rather than `waitForURL` because Vue Router's SPA
+    // navigation uses pushState and never fires a `load` event, which would
+    // otherwise hang `waitForURL`'s default `waitUntil: 'load'`.
+    await expect(page).toHaveURL(/\/teams$/, { timeout: 15000 })
   })
 })

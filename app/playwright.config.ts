@@ -22,8 +22,10 @@ export default defineConfig({
   // Reporter to use
   reporter: [['html'], ['list']],
 
-  // Timeout for each test (5 minutes)
-  timeout: 300000,
+  // Timeout for each test. 60s gives Vite's first dev compile (~10s in CI)
+  // and the SIWE round-trip plenty of headroom without letting a broken
+  // assertion hang the whole pipeline.
+  timeout: 60_000,
 
   use: {
     baseURL: process.env.BASE_URL || 'http://localhost:5173',
@@ -34,7 +36,7 @@ export default defineConfig({
     headless: process.env.HEADLESS !== 'false'
   },
 
-  // Synpress currently only supports Chromium
+  // Web3 e2e runs on Chromium.
   projects: [
     {
       name: 'chromium',
@@ -46,7 +48,7 @@ export default defineConfig({
   webServer: process.env.SKIP_SERVER
     ? undefined
     : {
-        command: 'VITE_APP_NETWORK_ALIAS=hardhat npm run dev',
+        command: 'VITE_E2E=true VITE_APP_NETWORK_ALIAS=hardhat npm run dev',
         port: 5173,
         reuseExistingServer: true,
         timeout: 120000,

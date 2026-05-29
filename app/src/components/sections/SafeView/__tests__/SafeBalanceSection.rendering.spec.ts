@@ -167,15 +167,11 @@ const AddressToolTipStub = defineComponent({
 })
 
 const TransferFormStub = defineComponent({
+  name: 'TransferForm',
+  props: ['modelValue', 'tokens', 'loading'],
+  emits: ['update:modelValue', 'transfer', 'closeModal'],
   template: '<div data-test="transfer-form"><slot name="header" /></div>'
 })
-
-interface SafeBalanceSectionInstance {
-  closeDepositModal: () => Promise<void>
-  resetTransferValues: () => Promise<void>
-  tokens: Array<{ symbol: string; price: number; tokenId: string }>
-  transferData: { token: { symbol: string; tokenId: string } }
-}
 
 describe('SafeBalanceSection', () => {
   let wrapper: VueWrapper
@@ -257,7 +253,7 @@ describe('SafeBalanceSection', () => {
   })
 
   describe('Tokens Computation', () => {
-    it('should handle missing USD price gracefully', () => {
+    it('should handle missing USD price gracefully', async () => {
       const sourceBalance = mockUseContractBalance.balances.value[0]!
       const balanceWithoutUsd = {
         ...sourceBalance,
@@ -268,7 +264,13 @@ describe('SafeBalanceSection', () => {
       mockUseContractBalance.balances.value = [balanceWithoutUsd]
       wrapper = createWrapper()
 
-      const tokens = (wrapper.vm as unknown as SafeBalanceSectionInstance).tokens
+      // Open transfer modal so TransferForm receives `tokens` as a prop
+      await wrapper.find('[data-test="transfer-button"]').trigger('click')
+      await nextTick()
+
+      const tokens = wrapper.findComponent(TransferFormStub).props('tokens') as Array<{
+        price: number
+      }>
       expect(tokens[0]?.price).toBe(0)
     })
   })
@@ -294,7 +296,9 @@ describe('SafeBalanceSection', () => {
       await wrapper.find('[data-test="transfer-button"]').trigger('click')
       await nextTick()
 
-      const transferData = (wrapper.vm as unknown as SafeBalanceSectionInstance).transferData
+      const transferData = wrapper.findComponent(TransferFormStub).props('modelValue') as {
+        token: { symbol: string }
+      }
       expect(transferData.token.symbol).toBe('')
     })
   })

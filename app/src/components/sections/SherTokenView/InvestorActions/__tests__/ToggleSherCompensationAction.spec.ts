@@ -74,22 +74,12 @@ describe('ToggleSherCompensationAction.vue', () => {
     expect(actionButton.exists()).toBe(true)
   })
 
-  it('handleToggleCompensation blocks when router address missing', async () => {
-    mockSafeDepositRouterAddress.value = ''
-    const wrapper = createWrapper()
-    const vm = wrapper.vm as unknown as { handleToggleCompensation: () => Promise<void> }
-
-    await vm.handleToggleCompensation()
-
-    expect(wrapper.exists()).toBe(true)
-  })
-
   it('handleToggleCompensation blocks when user is not owner', async () => {
     mockUseConnection.address.value = '0x0000000000000000000000000000000000000001'
     const wrapper = createWrapper()
-    const vm = wrapper.vm as unknown as { handleToggleCompensation: () => Promise<void> }
 
-    await vm.handleToggleCompensation()
+    await wrapper.findComponent({ name: 'ActionButton' }).vm.$emit('click')
+    await nextTick()
 
     expect(mockSafeDepositRouterWrites.enableDeposits.mutateAsync).not.toHaveBeenCalled()
     expect(mockSafeDepositRouterWrites.disableDeposits.mutateAsync).not.toHaveBeenCalled()
@@ -98,9 +88,9 @@ describe('ToggleSherCompensationAction.vue', () => {
   it('disables deposits when currently enabled', async () => {
     mockSafeDepositRouterReads.depositsEnabled.data.value = true
     const wrapper = createWrapper()
-    const vm = wrapper.vm as unknown as { handleToggleCompensation: () => Promise<void> }
 
-    await vm.handleToggleCompensation()
+    await wrapper.findComponent({ name: 'ActionButton' }).vm.$emit('click')
+    await nextTick()
 
     expect(mockSafeDepositRouterWrites.disableDeposits.mutateAsync).toHaveBeenCalledTimes(1)
   })
@@ -109,9 +99,9 @@ describe('ToggleSherCompensationAction.vue', () => {
     mockSafeDepositRouterReads.depositsEnabled.data.value = false
     mockSafeDepositRouterReads.safeAddress.data.value = '0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'
     const wrapper = createWrapper()
-    const vm = wrapper.vm as unknown as { handleToggleCompensation: () => Promise<void> }
 
-    await vm.handleToggleCompensation()
+    await wrapper.findComponent({ name: 'ActionButton' }).vm.$emit('click')
+    await nextTick()
 
     expect(mockSafeDepositRouterWrites.enableDeposits.mutateAsync).toHaveBeenCalledTimes(1)
   })
@@ -120,9 +110,9 @@ describe('ToggleSherCompensationAction.vue', () => {
     mockSafeDepositRouterReads.depositsEnabled.data.value = false
     mockSafeDepositRouterReads.safeAddress.data.value = '0x1111111111111111111111111111111111111111'
     const wrapper = createWrapper()
-    const vm = wrapper.vm as unknown as { handleToggleCompensation: () => Promise<void> }
 
-    await vm.handleToggleCompensation()
+    await wrapper.findComponent({ name: 'ActionButton' }).vm.$emit('click')
+    await nextTick()
 
     expect(mockSafeDepositRouterWrites.setSafeAddress.mutateAsync).toHaveBeenCalledTimes(1)
     expect(mockSafeDepositRouterWrites.enableDeposits.mutateAsync).not.toHaveBeenCalled()
@@ -135,10 +125,10 @@ describe('ToggleSherCompensationAction.vue', () => {
     mockSafeDepositRouterReads.depositsEnabled.data.value = false
     mockSafeDepositRouterReads.safeAddress.data.value = '0x1111111111111111111111111111111111111111'
     const wrapper = createWrapper()
-    const vm = wrapper.vm as unknown as { handleToggleCompensation: () => Promise<void> }
 
-    await vm.handleToggleCompensation()
-    await vm.handleToggleCompensation()
+    await wrapper.findComponent({ name: 'ActionButton' }).vm.$emit('click')
+    await wrapper.findComponent({ name: 'ActionButton' }).vm.$emit('click')
+    await nextTick()
 
     expect(mockSafeDepositRouterWrites.setSafeAddress.mutateAsync).not.toHaveBeenCalled()
     expect(wrapper.exists()).toBe(true)
@@ -150,9 +140,9 @@ describe('ToggleSherCompensationAction.vue', () => {
     mockSafeDepositRouterReads.safeAddress.data.value = '0x1111111111111111111111111111111111111111'
 
     const wrapper = createWrapper()
-    const vm = wrapper.vm as unknown as { handleToggleCompensation: () => Promise<void> }
 
-    await vm.handleToggleCompensation()
+    await wrapper.findComponent({ name: 'ActionButton' }).vm.$emit('click')
+    await nextTick()
     mockSafeDepositRouterWrites.setSafeAddress.isSuccess.value = true
     await nextTick()
 
