@@ -1,9 +1,15 @@
-import { vi } from 'vitest'
+import { beforeEach, vi } from 'vitest'
 import {
   mockSafeDepositRouterAddress,
   mockSafeDepositRouterReads,
-  mockSafeDepositRouterWrites
+  mockSafeDepositRouterWrites,
+  resetSafeDepositRouterMocks
 } from '../mocks/safeDepositRouter.mock'
+
+// Restore SafeDepositRouter read/write mocks to defaults before every test.
+beforeEach(() => {
+  resetSafeDepositRouterMocks()
+})
 
 /**
  * Mock SafeDepositRouter read composables that are actually consumed. Unused
