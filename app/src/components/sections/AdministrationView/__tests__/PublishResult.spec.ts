@@ -2,12 +2,7 @@ import { mount } from '@vue/test-utils'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { nextTick } from 'vue'
 import PublishResult from '../PublishResult.vue'
-import {
-  mockElectionsWrites,
-  resetContractMocks,
-  useQueryClientFn,
-  mockWagmiCore
-} from '@/tests/mocks'
+import { mockElectionsWrites, useQueryClientFn, mockWagmiCore } from '@/tests/mocks'
 import { useTeamStore } from '@/stores'
 
 vi.mock('@/constant', () => ({
@@ -37,7 +32,6 @@ describe('PublishResult.vue', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    resetContractMocks()
 
     vi.mocked(useTeamStore).mockImplementation(
       () =>
