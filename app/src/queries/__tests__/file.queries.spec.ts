@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { uploadSingleFile } from '../file.queries'
 import { mockUploadFileApi } from '@/tests/mocks/api.mock'
+import { useMutationFn, smartUseMutation } from '@/tests/mocks/composables.mock'
 
 describe('uploadSingleFile', () => {
   const file = new File([new Uint8Array(8)], 'avatar.png', { type: 'image/png' })
@@ -34,5 +35,27 @@ describe('uploadSingleFile', () => {
     mockUploadFileApi.mockRejectedValue(new Error('Network error'))
 
     await expect(uploadSingleFile(file)).rejects.toThrow('Network error')
+  })
+})
+
+describe('useUploadFileMutation', () => {
+  const file = new File([new Uint8Array(8)], 'avatar.png', { type: 'image/png' })
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockUploadFileApi.mockReset()
+  })
+
+  it('runs uploadSingleFile through the mutation and resolves the URL', async () => {
+    // Reach past the global hook mock for the real wrapper; deps stay mocked.
+    const { useUploadFileMutation } =
+      await vi.importActual<typeof import('../file.queries')>('../file.queries')
+    useMutationFn.mockImplementationOnce(smartUseMutation)
+    const url = 'https://storage.railway.app/avatar.png'
+    mockUploadFileApi.mockResolvedValue({ files: [{ fileUrl: url }], count: 1 })
+
+    const mutation = useUploadFileMutation()
+    await expect(mutation.mutateAsync(file)).resolves.toBe(url)
+    expect(mockUploadFileApi).toHaveBeenCalledWith([file])
   })
 })

@@ -3,6 +3,7 @@ import { deployContract, getContractData } from '../useContractFunctions'
 import { parseUnits, formatUnits } from 'viem/utils'
 import type { Abi, Address } from 'viem'
 import { mockWagmiCore } from '@/tests/mocks'
+import { useMutationFn, smartUseMutation } from '@/tests/mocks/composables.mock'
 
 //  Declare only the composable-specific mock (wallet client) with vi.hoisted
 const { mockDeployContract, mockWalletClient } = vi.hoisted(() => {
@@ -87,6 +88,32 @@ describe('deployContract', () => {
         costPerImpression: '1'
       })
     ).rejects.toThrow('no contract address')
+  })
+})
+
+describe('useDeployContract', () => {
+  const mockAbi: Abi = [{ type: 'constructor', stateMutability: 'nonpayable', inputs: [] }]
+  const mockBytecode = '0x123456' as const
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockWagmiCore.getWalletClient.mockResolvedValue(mockWalletClient)
+    mockWagmiCore.waitForTransactionReceipt.mockResolvedValue({
+      contractAddress: '0xDEADBEEF'
+    } as never)
+    mockDeployContract.mockResolvedValue('0xHASH')
+  })
+
+  it('runs deployContract through the mutation and resolves the address', async () => {
+    // Reach past the global hook mock for the real wrapper; deps stay mocked.
+    const { useDeployContract } =
+      await vi.importActual<typeof import('../useContractFunctions')>('../useContractFunctions')
+    useMutationFn.mockImplementationOnce(smartUseMutation)
+
+    const mutation = useDeployContract(mockAbi, mockBytecode)
+    await expect(
+      mutation.mutateAsync({ bankAddress: '0xBANK', costPerClick: '1', costPerImpression: '1' })
+    ).resolves.toBe('0xDEADBEEF')
   })
 })
 
