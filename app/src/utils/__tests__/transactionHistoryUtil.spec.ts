@@ -5,7 +5,7 @@ import {
   isValidPositiveTokenAmount,
   resolveTokenIdByAddress
 } from '../constantUtil'
-import { groupTransactionsByTxHash } from '../transactionHistoryUtil'
+import { getTransactionSummary, groupTransactionsByTxHash } from '../transactionHistoryUtil'
 
 type TransactionFixture = {
   txHash: string
@@ -72,5 +72,185 @@ describe('transactionHistoryUtil', () => {
     expect(isValidPositiveTokenAmount('1e3', 'native')).toBe(false)
     expect(isValidPositiveTokenAmount('abc', 'native')).toBe(false)
     expect(isValidPositiveTokenAmount('0.0000001', 'usdc')).toBe(false)
+  })
+
+  it('returns summaries for value-transfer families', () => {
+    expect(
+      getTransactionSummary(
+        { type: 'deposit', amount: '10', token: 'ETH' },
+        { fromName: 'Alice', toName: 'Bob' }
+      )
+    ).toBe('From Alice')
+    expect(getTransactionSummary({ type: 'tokenDeposit', amount: '10', token: 'USDC' })).toBe(
+      'Token deposit · 10 USDC'
+    )
+    expect(
+      getTransactionSummary(
+        { type: 'transfer', amount: '10', token: 'ETH' },
+        { toName: 'Bob' }
+      )
+    ).toBe('Native — to Bob')
+    expect(
+      getTransactionSummary(
+        { type: 'tokenTransfer', amount: '10', token: 'USDC' },
+        { toName: 'Bob' }
+      )
+    ).toBe('USDC — to Bob')
+    expect(getTransactionSummary({ type: 'withdraw', amount: '10', token: 'ETH' })).toBe(
+      'Withdrawal · 10 ETH'
+    )
+    expect(
+      getTransactionSummary(
+        { type: 'withdrawToken', amount: '10', token: 'USDC' },
+        { toName: 'Bob' }
+      )
+    ).toBe('Token withdrawal to Bob')
+    expect(
+      getTransactionSummary(
+        { type: 'ownerTreasuryWithdrawNative', amount: '10', token: 'ETH' },
+        { toName: 'Bob' }
+      )
+    ).toBe('Treasury withdrawal to Bob')
+    expect(
+      getTransactionSummary(
+        { type: 'ownerTreasuryWithdrawToken', amount: '10', token: 'USDC' },
+        { toName: 'Bob' }
+      )
+    ).toBe('Treasury token withdrawal to Bob')
+    expect(
+      getTransactionSummary(
+        { type: 'feePaid', amount: '10', token: 'USDC' },
+        { toName: 'Collector' }
+      )
+    ).toBe('Fee to Collector')
+    expect(getTransactionSummary({ type: 'mint', amount: '10', token: 'SHER' })).toBe(
+      'Minted 10 SHER'
+    )
+    expect(getTransactionSummary({ type: 'safeDeposit', amount: '10', token: 'USDC' })).toBe(
+      'Safe deposit · 10 USDC'
+    )
+  })
+
+  it('returns summaries for dividend, raw-token, and status/config events', () => {
+    expect(
+      getTransactionSummary({ type: 'dividendDistribution', amount: '10', token: 'USDC' })
+    ).toBe('Dividend triggered · 10 USDC')
+    expect(getTransactionSummary({ type: 'dividendDistributed', amount: '10', token: 'USDC' })).toBe(
+      'Distributed 10 USDC'
+    )
+    expect(getTransactionSummary({ type: 'dividendPaid', amount: '10', token: 'USDC' })).toBe(
+      'Paid 10 USDC'
+    )
+    expect(
+      getTransactionSummary({ type: 'dividendPaymentFailed', amount: '10', token: 'USDC' })
+    ).toBe('Payment failed · 10 USDC')
+    expect(
+      getTransactionSummary(
+        { type: 'rawTokenIn', amount: '10', token: 'USDC' },
+        { fromName: 'Treasury' }
+      )
+    ).toBe('From Treasury')
+    expect(
+      getTransactionSummary(
+        { type: 'rawTokenOut', amount: '10', token: 'USDC' },
+        { toName: 'Vendor' }
+      )
+    ).toBe('Sent to Vendor')
+    expect(getTransactionSummary({ type: 'rawTokenInternal', amount: '10', token: 'USDC' })).toBe(
+      'Internal · 10 USDC'
+    )
+
+    expect(getTransactionSummary({ type: 'approvalActivated', amount: '0', token: '-' })).toBe(
+      'Approval activated'
+    )
+    expect(getTransactionSummary({ type: 'approvalDeactivated', amount: '0', token: '-' })).toBe(
+      'Approval deactivated'
+    )
+    expect(getTransactionSummary({ type: 'wageClaimEnabled', amount: '0', token: '-' })).toBe(
+      'Wage claim enabled'
+    )
+    expect(getTransactionSummary({ type: 'wageClaimDisabled', amount: '0', token: '-' })).toBe(
+      'Wage claim disabled'
+    )
+    expect(getTransactionSummary({ type: 'tokenSupportAdded', amount: '0', token: '-' })).toBe(
+      'Token support added'
+    )
+    expect(getTransactionSummary({ type: 'tokenSupportRemoved', amount: '0', token: '-' })).toBe(
+      'Token support removed'
+    )
+    expect(getTransactionSummary({ type: 'tokenAddressChanged', amount: '0', token: '-' })).toBe(
+      'Token address updated'
+    )
+    expect(getTransactionSummary({ type: 'safeDepositsEnabled', amount: '0', token: '-' })).toBe(
+      'Safe deposits enabled'
+    )
+    expect(
+      getTransactionSummary({ type: 'safeDepositsDisabled', amount: '0', token: '-' })
+    ).toBe('Safe deposits disabled')
+    expect(getTransactionSummary({ type: 'safeAddressUpdated', amount: '0', token: '-' })).toBe(
+      'Safe address updated'
+    )
+    expect(getTransactionSummary({ type: 'safeMultiplierUpdated', amount: '2', token: 'x' })).toBe(
+      'Multiplier → 2x'
+    )
+    expect(
+      getTransactionSummary({ type: 'safeMultiplierUpdated', amount: '0', token: 'x' })
+    ).toBe('Multiplier → 0x')
+    expect(getTransactionSummary({ type: 'officerAddressUpdated', amount: '0', token: '-' })).toBe(
+      'Officer address updated'
+    )
+  })
+
+  it('falls back to neutral labels when value is absent and to empty for unknown types', () => {
+    expect(getTransactionSummary({ type: 'deposit', amount: '0', token: '-' })).toBe('Deposit')
+    expect(getTransactionSummary({ type: 'tokenDeposit', amount: '0', token: '-' })).toBe(
+      'Token deposit'
+    )
+    expect(getTransactionSummary({ type: 'transfer', amount: '0', token: '-' })).toBe('Transfer')
+    expect(getTransactionSummary({ type: 'tokenTransfer', amount: '0', token: '-' })).toBe(
+      'Token transfer'
+    )
+    expect(getTransactionSummary({ type: 'withdraw', amount: '0', token: '-' })).toBe(
+      'Withdrawal'
+    )
+    expect(getTransactionSummary({ type: 'withdrawToken', amount: '0', token: '-' })).toBe(
+      'Token withdrawal'
+    )
+    expect(
+      getTransactionSummary({ type: 'ownerTreasuryWithdrawNative', amount: '0', token: '-' })
+    ).toBe('Treasury withdrawal')
+    expect(
+      getTransactionSummary({ type: 'ownerTreasuryWithdrawToken', amount: '0', token: '-' })
+    ).toBe('Treasury token withdrawal')
+    expect(getTransactionSummary({ type: 'feePaid', amount: '0', token: '-' })).toBe('Fee paid')
+    expect(getTransactionSummary({ type: 'mint', amount: '0', token: '-' })).toBe('Shares minted')
+    expect(getTransactionSummary({ type: 'safeDeposit', amount: '0', token: '-' })).toBe(
+      'Safe deposit'
+    )
+    expect(getTransactionSummary({ type: 'dividendDistribution', amount: '0', token: '-' })).toBe(
+      'Dividend triggered'
+    )
+    expect(getTransactionSummary({ type: 'dividendDistributed', amount: '0', token: '-' })).toBe(
+      'Dividend distributed'
+    )
+    expect(getTransactionSummary({ type: 'dividendPaid', amount: '0', token: '-' })).toBe(
+      'Dividend paid'
+    )
+    expect(
+      getTransactionSummary({ type: 'dividendPaymentFailed', amount: '0', token: '-' })
+    ).toBe('Payment failed')
+    expect(getTransactionSummary({ type: 'rawTokenIn', amount: '0', token: '-' })).toBe(
+      'Token received'
+    )
+    expect(getTransactionSummary({ type: 'rawTokenOut', amount: '0', token: '-' })).toBe(
+      'Token sent'
+    )
+    expect(getTransactionSummary({ type: 'rawTokenInternal', amount: '0', token: '-' })).toBe(
+      'Internal transfer'
+    )
+    expect(getTransactionSummary({ type: 'safeMultiplierUpdated', amount: '', token: 'x' })).toBe(
+      'Multiplier updated'
+    )
+    expect(getTransactionSummary({ type: 'unknownType', amount: '1', token: 'USDC' })).toBe('')
   })
 })
