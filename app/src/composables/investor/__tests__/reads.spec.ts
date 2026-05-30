@@ -8,7 +8,7 @@ import {
   useInvestorBalanceOf,
   useInvestorShareholders
 } from '../reads'
-import { mockInvestorReads, resetContractMocks } from '@/tests/mocks'
+import { mockInvestorReads } from '@/tests/mocks'
 import type { Address } from 'viem'
 
 const MOCK_DATA = {
@@ -21,7 +21,6 @@ const MOCK_DATA = {
 describe('Investor Contract Reads', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    resetContractMocks()
   })
 
   it('useInvestorAddress returns a ref-like value', () => {

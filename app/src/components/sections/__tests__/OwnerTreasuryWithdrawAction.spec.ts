@@ -14,8 +14,6 @@ import {
   mockUseChainId,
   mockUseContractBalance,
   mockUserStore,
-  resetComposableMocks,
-  resetContractMocks,
   useQueryClientFn
 } from '@/tests/mocks'
 
@@ -83,8 +81,6 @@ describe('OwnerTreasuryWithdrawAction', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     vi.clearAllMocks()
-    resetContractMocks()
-    resetComposableMocks()
     vi.mocked(useQueryClientFn).mockReturnValue({
       invalidateQueries,
       getQueryData: vi.fn(),

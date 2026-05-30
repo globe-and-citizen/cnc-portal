@@ -10,8 +10,6 @@ import {
   mockERC20Reads,
   mockERC20Writes,
   mockBankWrites,
-  resetComposableMocks,
-  resetERC20Mocks,
   useQueryClientFn
 } from '@/tests/mocks'
 
@@ -65,8 +63,6 @@ const setTokenAmount = async (
 describe('DepositBankForm.vue', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    resetComposableMocks()
-    resetERC20Mocks()
     createQueryClient()
     mockBankWrites.deposit.mutateAsync.mockResolvedValue(undefined)
   })

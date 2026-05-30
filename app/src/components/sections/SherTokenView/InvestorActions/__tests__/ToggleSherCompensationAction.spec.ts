@@ -9,8 +9,7 @@ import {
   mockSafeDepositRouterReads,
   mockSafeDepositRouterWrites,
   mockTeamStore,
-  mockUseConnection,
-  resetSafeDepositRouterMocks
+  mockUseConnection
 } from '@/tests/mocks'
 
 describe('ToggleSherCompensationAction.vue', () => {
@@ -24,7 +23,6 @@ describe('ToggleSherCompensationAction.vue', () => {
   beforeEach(() => {
     vi.useRealTimers()
     vi.clearAllMocks()
-    resetSafeDepositRouterMocks()
     mockParseError.mockReturnValue('Parsed error message')
 
     mockSafeDepositRouterAddress.value = '0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'

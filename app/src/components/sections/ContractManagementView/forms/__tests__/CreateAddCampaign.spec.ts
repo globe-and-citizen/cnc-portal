@@ -1,7 +1,7 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import CreateAddCampaign from '@/components/sections/ContractManagementView/forms/CreateAddCampaign.vue'
-import { mockDeployState, resetDeployState } from '@/tests/mocks/composables.mock'
+import { mockDeployState } from '@/tests/mocks/composables.mock'
 import { useCreateContractMutation } from '@/queries/contract.queries'
 import { useTeamStore } from '@/stores'
 import { mockTeamStore } from '@/tests/mocks/store.mock'
@@ -12,7 +12,6 @@ const mountComponent = () => mount(CreateAddCampaign)
 describe('CreateAddCampaign.vue', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    resetDeployState()
   })
 
   describe('rendering', () => {

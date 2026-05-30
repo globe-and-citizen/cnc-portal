@@ -4,12 +4,11 @@ import {
   useVestingStopVestingWrite,
   useVestingReleaseWrite
 } from '../writes'
-import { mockVestingWrites, resetContractMocks } from '@/tests/mocks'
+import { mockVestingWrites } from '@/tests/mocks'
 
 describe('Vesting Contract Writes', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    resetContractMocks()
   })
 
   it('useVestingAddVestingWrite returns the addVesting V3 mutation', () => {
