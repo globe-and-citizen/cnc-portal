@@ -1,6 +1,6 @@
 import { beforeEach, vi } from 'vitest'
 import { defineComponent, ref } from 'vue'
-import { queryMocks } from '@/tests/mocks/query.mock'
+import { queryMocks, resetNotificationsMock } from '@/tests/mocks/query.mock'
 import {
   mockUseBackendWake,
   mockUseAuth,
@@ -27,6 +27,7 @@ import { mockRouter } from '@/tests/mocks/router.mock'
 beforeEach(() => {
   resetComposableMocks()
   resetDeployState()
+  resetNotificationsMock()
 })
 
 declare global {
