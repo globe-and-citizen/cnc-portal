@@ -134,3 +134,28 @@ export const useChainIdFn = vi.fn(() => mockUseChainId)
 export const useReadContractFn = vi.fn(() => ({ ...mockUseReadContract }))
 export const useSignTypedDataFn = vi.fn(() => ({ ...mockUseSignTypedData }))
 export const useAccountFn = vi.fn(() => ({ ...mockUseAccount }))
+
+/**
+ * Reset the stateful wagmi mocks to their defaults. `transferHash` is a
+ * module-level ref shared via `mockUseWriteContract.data`, so without this it
+ * leaks a tx hash from one test into the next. Read-contract data and the
+ * @wagmi/core action spies are reset too.
+ */
+export const resetWagmiVueMocks = () => {
+  transferHash.value = undefined
+  mockUseWriteContract.isPending.value = false
+  mockUseWriteContract.error.value = null
+  mockUseWriteContract.isError.value = false
+  mockUseWriteContract.status.value = 'idle'
+  mockUseWriteContract.variables.value = undefined
+  mockUseWriteContract.mutate.mockClear()
+  mockUseWriteContract.mutateAsync.mockClear()
+  mockUseWriteContract.reset.mockClear()
+
+  mockUseReadContract.data.value = '0xData'
+  mockUseReadContract.error.value = null
+
+  Object.values(mockWagmiCore).forEach((fn) => {
+    if (vi.isMockFunction(fn)) fn.mockClear()
+  })
+}

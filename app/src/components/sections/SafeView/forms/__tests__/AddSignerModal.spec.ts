@@ -81,7 +81,6 @@ describe('AddSignerModal', () => {
     vi.clearAllMocks()
     mockUpdateOwnersPending.value = false
     mockUpdateOwnersMutate.mockImplementation(() => undefined)
-    mockToast.add.mockReset()
   })
 
   afterEach(() => {

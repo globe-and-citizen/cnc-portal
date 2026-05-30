@@ -10,10 +10,7 @@ import {
   mockSafeDepositRouterReads,
   mockSafeDepositRouterWrites,
   mockInvestorReads,
-  mockParseError,
-  resetComposableMocks,
-  resetERC20Mocks,
-  resetSafeDepositRouterMocks
+  mockParseError
 } from '@/tests/mocks'
 
 type MutateOptions = {
@@ -76,9 +73,6 @@ const rejectOnError = (mutateAsync: ReturnType<typeof vi.fn>, err: Error) =>
 describe('SafeDepositRouterForm.vue', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    resetComposableMocks()
-    resetERC20Mocks()
-    resetSafeDepositRouterMocks()
     mockInvestorReads.symbol.data.value = 'SHER'
     mockUseContractBalance.balances.value = [
       {

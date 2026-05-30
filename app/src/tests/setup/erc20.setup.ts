@@ -1,5 +1,10 @@
-import { vi } from 'vitest'
-import { mockERC20Reads, mockERC20Writes } from '../mocks/erc20.mock'
+import { beforeEach, vi } from 'vitest'
+import { mockERC20Reads, mockERC20Writes, resetERC20Mocks } from '../mocks/erc20.mock'
+
+// Restore ERC20 read/write mocks to defaults before every test.
+beforeEach(() => {
+  resetERC20Mocks()
+})
 
 /**
  * Mock ERC20 read composables that are actually consumed. Unused reads

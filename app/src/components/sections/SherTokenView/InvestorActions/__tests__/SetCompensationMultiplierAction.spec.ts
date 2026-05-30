@@ -8,8 +8,7 @@ import {
   mockSafeDepositRouterAddress,
   mockSafeDepositRouterReads,
   mockSafeDepositRouterWrites,
-  mockUseConnection,
-  resetSafeDepositRouterMocks
+  mockUseConnection
 } from '@/tests/mocks'
 
 describe('SetCompensationMultiplierAction.vue', () => {
@@ -23,7 +22,6 @@ describe('SetCompensationMultiplierAction.vue', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    resetSafeDepositRouterMocks()
     mockParseError.mockReturnValue('Parsed error message')
 
     mockSafeDepositRouterAddress.value = '0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'

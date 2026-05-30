@@ -1,5 +1,14 @@
-import { vi } from 'vitest'
+import { beforeEach, vi } from 'vitest'
 import * as mocks from '@/tests/mocks/wagmi.vue.mock'
+import { resetContractMocks } from '@/tests/mocks/contract.mock'
+
+// Global web3 reset: restore wagmi state (incl. the shared `transferHash` ref)
+// and all V3 contract read/write mocks to defaults before every test. Setup
+// `beforeEach` hooks run before spec-level ones, so per-test setup still wins.
+beforeEach(() => {
+  mocks.resetWagmiVueMocks()
+  resetContractMocks()
+})
 
 vi.mock('@wagmi/vue', async (importOriginal) => {
   const actual: object = await importOriginal()

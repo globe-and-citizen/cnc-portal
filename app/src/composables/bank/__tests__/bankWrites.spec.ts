@@ -4,12 +4,11 @@ import {
   useDistributeNativeDividends,
   useDistributeTokenDividends
 } from '../writes'
-import { mockBankWrites, resetContractMocks } from '@/tests/mocks'
+import { mockBankWrites } from '@/tests/mocks'
 
 describe('Bank Contract Writes', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    resetContractMocks()
   })
 
   it('useDepositToken returns the deposit mutation', () => {

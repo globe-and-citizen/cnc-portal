@@ -9,8 +9,6 @@ import {
   mockUseSafeSendTransaction,
   mockERC20Reads,
   mockERC20Writes,
-  resetTransactionMocks,
-  resetERC20Mocks,
   useQueryClientFn
 } from '@/tests/mocks'
 
@@ -61,8 +59,6 @@ describe('DepositSafeForm.vue', () => {
       .find((b) => b.attributes('data-test') === 'deposit-button')
 
   beforeEach(() => {
-    resetTransactionMocks()
-    resetERC20Mocks()
     createQueryClient()
   })
 

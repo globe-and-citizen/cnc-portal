@@ -3,7 +3,7 @@ import { mount } from '@vue/test-utils'
 import PayDividendsForm from '../PayDividendsForm.vue'
 import { createTestingPinia } from '@pinia/testing'
 import type { Team } from '@/types'
-import { mockUseContractBalance, resetComposableMocks } from '@/tests/mocks'
+import { mockUseContractBalance } from '@/tests/mocks'
 
 type BalanceEntry = {
   amount: number
@@ -181,7 +181,6 @@ describe('PayDividendsForm.vue', () => {
     })
 
   afterEach(() => {
-    resetComposableMocks()
     vi.clearAllMocks()
     mockUseContractBalance.balances.value = []
   })

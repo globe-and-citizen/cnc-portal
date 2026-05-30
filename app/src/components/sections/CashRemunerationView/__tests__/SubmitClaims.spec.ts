@@ -45,7 +45,6 @@ describe('SubmitClaims', () => {
     vi.clearAllMocks()
 
     mockTeamStore.currentTeamId = '1'
-    mockToast.add.mockClear()
   })
 
   afterEach(() => {

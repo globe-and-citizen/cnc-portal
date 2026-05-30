@@ -4,7 +4,7 @@ import { createTestingPinia } from '@pinia/testing'
 import { nextTick } from 'vue'
 import type { Address } from 'viem'
 import DistributeMintAction from '@/components/sections/SherTokenView/InvestorActions/DistributeMintAction.vue'
-import { mockInvestorWrites, resetContractMocks, mockLog } from '@/tests/mocks'
+import { mockInvestorWrites, mockLog } from '@/tests/mocks'
 
 type DistributeOptions = {
   onSuccess?: () => void
@@ -36,7 +36,6 @@ describe('DistributeMintAction.vue', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    resetContractMocks()
   })
 
   it('renders with coming soon tooltip', () => {
