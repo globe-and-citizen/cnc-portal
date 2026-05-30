@@ -1,4 +1,4 @@
-import { vi } from 'vitest'
+import { beforeEach, vi } from 'vitest'
 import { defineComponent, ref } from 'vue'
 import { queryMocks } from '@/tests/mocks/query.mock'
 import {
@@ -13,11 +13,21 @@ import {
   useMutationFn,
   mockUseFetch,
   mockUseSubmitRestriction,
-  mockUseDeployContract
+  mockUseDeployContract,
+  resetComposableMocks,
+  resetDeployState
 } from '@/tests/mocks/composables.mock'
 import { mockUploadFileApi } from '@/tests/mocks/api.mock'
 import { mockGetBalance, mockGetLogs } from '@/tests/mocks/viem.actions.mock'
 import { mockRouter } from '@/tests/mocks/router.mock'
+
+// Restore all shared composable mocks to their defaults before every test so
+// that in-place mutations (refs, spies) never leak across tests. Setup-file
+// `beforeEach` hooks run BEFORE spec-level ones, so per-test setup still wins.
+beforeEach(() => {
+  resetComposableMocks()
+  resetDeployState()
+})
 
 declare global {
   var __mockFetch: ReturnType<typeof vi.fn> | undefined
