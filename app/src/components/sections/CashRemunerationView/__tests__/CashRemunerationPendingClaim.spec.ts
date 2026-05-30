@@ -8,34 +8,28 @@ import OverviewCard from '@/components/OverviewCard.vue'
 import * as queries from '@/queries'
 import { mockLog } from '@/tests/mocks/utils.mock'
 
-const mockClaims = ref([
-  {
-    id: 1,
-    hoursWorked: 600,
-    minutesWorked: 600,
-    wage: {
-      cashRatePerHour: 1,
-      ratePerHour: [{ type: 'native', amount: 1 }]
+const buildMockClaimsValue = () => ({
+  data: [
+    {
+      id: 1,
+      hoursWorked: 600,
+      minutesWorked: 600,
+      wage: {
+        cashRatePerHour: 1,
+        ratePerHour: [{ type: 'native', amount: 1 }]
+      }
     }
-  }
-])
+  ],
+  total: 1
+})
+const mockClaims = ref<ReturnType<typeof buildMockClaimsValue> | null>(buildMockClaimsValue())
 const mockError = ref<unknown>(null)
 
 describe('CashRemunerationPendingClaim', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockTeamStore.currentTeamId = '1'
-    mockClaims.value = [
-      {
-        id: 1,
-        hoursWorked: 600,
-        minutesWorked: 600,
-        wage: {
-          cashRatePerHour: 1,
-          ratePerHour: [{ type: 'native', amount: 1 }]
-        }
-      }
-    ]
+    mockClaims.value = buildMockClaimsValue()
     mockError.value = null
 
     vi.spyOn(queries, 'useGetTeamWeeklyClaimsQuery').mockImplementation(
@@ -70,7 +64,7 @@ describe('CashRemunerationPendingClaim', () => {
   })
 
   it('returns an empty title when weekly claims are missing', () => {
-    mockClaims.value = null as unknown as typeof mockClaims.value
+    mockClaims.value = null
 
     const wrapper = createComponent()
     const card = wrapper.findComponent(OverviewCard)

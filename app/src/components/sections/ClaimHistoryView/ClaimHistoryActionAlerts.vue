@@ -158,7 +158,7 @@ const claimSubmitMessage = computed(() => {
 // Current signed weeks for disabling dates in claim form
 const signedWeekStarts = computed(() => {
   return (
-    memberWeeklyClaims.value
+    memberWeeklyClaims.value?.data
       ?.filter((weeklyClaim) => weeklyClaim.status === 'signed' || weeklyClaim.signature)
       .map((weeklyClaim) => weeklyClaim.weekStart) ?? []
   )

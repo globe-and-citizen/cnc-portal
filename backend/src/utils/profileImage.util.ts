@@ -1,6 +1,10 @@
 import { getPresignedDownloadUrl } from '../services/storageService';
 // import { faker } from '@faker-js/faker';
 
+// Profile avatars sit behind presigned URLs; we use a 7-day TTL so most
+// page loads hit the same signed URL and benefit from CDN/browser caching.
+const PROFILE_IMAGE_URL_TTL_SECONDS = 7 * 24 * 60 * 60;
+
 type AvatarMode = 'faker' | 'none';
 
 const resolveAvatarMode = (): AvatarMode => {
@@ -57,7 +61,7 @@ export const resolveStorageImageUrl = async (
   }
 
   try {
-    return await getPresignedDownloadUrl(key, 86400 * 7);
+    return await getPresignedDownloadUrl(key, PROFILE_IMAGE_URL_TTL_SECONDS);
   } catch {
     return imageUrl;
   }
