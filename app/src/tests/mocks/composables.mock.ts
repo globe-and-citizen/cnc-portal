@@ -319,6 +319,35 @@ export function resetDeployState() {
 }
 
 /**
+ * Mock useUploadFileMutation hook (file.queries.ts).
+ * A TanStack mutation: `mutate(file, { onSuccess })` drives the image upload.
+ * Specs trigger the success path by replaying the `onSuccess` callback captured
+ * on `mutate.mock.calls`, and the error path by setting `error.value`.
+ */
+export const mockUploadFileState = {
+  mutate: vi.fn(),
+  mutateAsync: vi.fn(() => Promise.resolve(null)),
+  isPending: ref(false),
+  isError: ref(false),
+  error: ref<Error | null>(null),
+  data: ref<string | null>(null),
+  reset: vi.fn()
+}
+
+export const mockUseUploadFileMutation = vi.fn(() => mockUploadFileState)
+
+export function resetUploadFileState() {
+  mockUploadFileState.isPending.value = false
+  mockUploadFileState.isError.value = false
+  mockUploadFileState.error.value = null
+  mockUploadFileState.data.value = null
+  mockUploadFileState.mutate.mockReset()
+  mockUploadFileState.mutateAsync.mockReset()
+  mockUploadFileState.mutateAsync.mockResolvedValue(null)
+  mockUploadFileState.reset.mockClear()
+}
+
+/**
  * Exported vi.fn() factory functions for TanStack Vue Query.
  * Use these in tests that need per-test configuration via mockReturnValue/mockReturnValueOnce.
  */
