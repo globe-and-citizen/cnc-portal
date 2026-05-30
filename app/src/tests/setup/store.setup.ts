@@ -8,6 +8,7 @@ import * as mocks from '@/tests/mocks/store.mock'
 beforeEach(() => {
   mocks.resetUserStoreMock()
   mocks.resetTeamStoreMock()
+  mocks.mockToast.add.mockClear()
 })
 
 // Convention: mock individual store submodules, not the `@/stores` barrel.

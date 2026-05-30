@@ -3,7 +3,6 @@ import UpdateThresholdModal from '@/components/sections/SafeView/forms/UpdateThr
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { defineComponent, nextTick, type ComponentPublicInstance } from 'vue'
 import { mount } from '@vue/test-utils'
-import { mockToast } from '@/tests/mocks/store.mock'
 
 interface UpdateThresholdModalVm extends ComponentPublicInstance {
   formState: {
@@ -107,7 +106,6 @@ describe('UpdateThresholdModal', () => {
     mockChainId.value = 137
     mockUpdateOwnersPending.value = false
     mockUpdateOwnersMutate.mockImplementation(() => undefined)
-    mockToast.add.mockReset()
     vi.spyOn(console, 'error').mockImplementation(() => undefined)
   })
 
