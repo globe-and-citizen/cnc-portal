@@ -43,17 +43,6 @@ export const mockWagmiCore = {
   getPublicClient: vi.fn()
 }
 
-// Mock useWaitForTransactionReceipt composable
-export const mockUseWaitForTransactionReceipt = {
-  data: ref(null),
-  error: ref(null),
-  isLoading: ref(false),
-  isSuccess: ref(false),
-  isError: ref(false),
-  isPending: ref(false),
-  status: ref('idle' as const)
-}
-
 // Mock useConnection composable
 export const mockUseConnection = {
   address: ref('0x1234567890123456789012345678901234567890'),
@@ -97,14 +86,6 @@ export const mockUseBalance = {
   isLoading: ref(false),
   error: ref(null),
   refetch: vi.fn()
-}
-
-// Mock useSendTransaction composable
-export const mockUseSendTransaction = {
-  isPending: ref(false),
-  error: ref(null),
-  data: ref<string>(''),
-  sendTransaction: vi.fn()
 }
 
 // Mock wagmi config and transport functions
