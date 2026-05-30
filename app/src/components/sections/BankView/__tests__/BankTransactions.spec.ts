@@ -3,7 +3,45 @@ import { mount, type VueWrapper } from '@vue/test-utils'
 import { defineComponent, nextTick } from 'vue'
 import type { Address } from 'viem'
 import * as utils from '@/utils'
+
+// Auto-imported @nuxt/ui components bypass `config.global.stubs` because the
+// Nuxt UI Vite plugin resolves them through their file path. Mocking the
+// modules ensures our stubs are actually rendered so we can drive them by
+// emitting `update:modelValue` and read props instead of reaching into
+// `wrapper.vm`.
+vi.mock('@nuxt/ui/components/Table.vue', () => ({
+  default: {
+    name: 'UTable',
+    props: ['data', 'columns', 'loading'],
+    template: '<div data-test="bank-table"></div>'
+  }
+}))
+vi.mock('@nuxt/ui/components/Select.vue', () => ({
+  default: {
+    name: 'USelect',
+    props: ['modelValue', 'items'],
+    emits: ['update:modelValue'],
+    template: '<div data-test="bank-type-filter"></div>'
+  }
+}))
+
 import BankTransactions from '../BankTransactions.vue'
+
+type BankRow = {
+  type: string
+  txHash: string
+  amount: string | number
+  amountLocal: number
+  token: string
+}
+type Column = { header: string }
+
+const tableData = (wrapper: VueWrapper) =>
+  wrapper.findComponent({ name: 'UTable' }).props('data') as BankRow[]
+const tableColumns = (wrapper: VueWrapper) =>
+  wrapper.findComponent({ name: 'UTable' }).props('columns') as Column[]
+const tableLoading = (wrapper: VueWrapper) =>
+  wrapper.findComponent({ name: 'UTable' }).props('loading') as boolean
 
 const { apolloState, mockUseQuery, mockCurrencyStore, mockGetTokenPrice } = vi.hoisted(() => {
   const apolloState = {
@@ -178,51 +216,44 @@ describe('BankTransactions', () => {
   it('maps query data and passes rows/columns to UTable', () => {
     wrapper = createWrapper()
 
-    const vm = wrapper.vm as unknown as {
-      displayedTransactions: Array<{ type: string }>
-      columns: Array<{ header: string }>
-    }
+    const data = tableData(wrapper)
+    const columns = tableColumns(wrapper)
 
-    expect(vm.displayedTransactions).toHaveLength(2)
-    expect(vm.displayedTransactions.map((row) => row.type)).toEqual(
-      expect.arrayContaining(['deposit', 'transfer'])
-    )
-    expect(vm.columns[vm.columns.length - 2]?.header).toBe('Value (USD)')
+    expect(data).toHaveLength(2)
+    expect(data.map((row) => row.type)).toEqual(expect.arrayContaining(['deposit', 'transfer']))
+    expect(columns.some((column) => column.header === 'Value (USD)')).toBe(true)
   })
 
   it('passes loading state to UTable', () => {
     apolloState.queryLoading.value = true
 
     wrapper = createWrapper()
-    const vm = wrapper.vm as unknown as { loading: boolean }
-    expect(vm.loading).toBe(true)
+    expect(tableLoading(wrapper)).toBe(true)
   })
 
   it('filters displayed rows by selected type', async () => {
     wrapper = createWrapper()
-    const vm = wrapper.vm as unknown as {
-      selectedType: string
-      displayedTransactions: Array<{ type: string }>
-    }
 
-    vm.selectedType = 'deposit'
+    wrapper.getComponent({ name: 'USelect' }).vm.$emit('update:modelValue', 'deposit')
     await nextTick()
 
-    expect(vm.displayedTransactions).toHaveLength(1)
-    expect(vm.displayedTransactions[0]?.type).toBe('deposit')
+    const data = tableData(wrapper)
+    expect(data).toHaveLength(1)
+    expect(data[0]?.type).toBe('deposit')
   })
 
   it('filters displayed rows by date range', async () => {
     wrapper = createWrapper()
-    const vm = wrapper.vm as unknown as {
-      dateRange: [Date, Date] | null
-      displayedTransactions: Array<{ type: string }>
-    }
 
-    vm.dateRange = [new Date('2020-01-01T00:00:00Z'), new Date('2020-01-01T23:59:59Z')]
+    wrapper
+      .getComponent({ name: 'CustomDatePicker' })
+      .vm.$emit('update:modelValue', [
+        new Date('2020-01-01T00:00:00Z'),
+        new Date('2020-01-01T23:59:59Z')
+      ])
     await nextTick()
 
-    expect(vm.displayedTransactions).toHaveLength(0)
+    expect(tableData(wrapper)).toHaveLength(0)
   })
 
   it('uses disabled query option when bank address is empty', () => {
@@ -273,17 +304,10 @@ describe('BankTransactions', () => {
     }
 
     wrapper = createWrapper()
-    const vm = wrapper.vm as unknown as {
-      displayedTransactions: Array<{
-        txHash: string
-        amount: string | number
-        amountLocal: number
-        token: string
-      }>
-    }
+    const data = tableData(wrapper)
 
-    const nativeRow = vm.displayedTransactions.find((row) => row.txHash === '0xnativedeposit')
-    const unknownRow = vm.displayedTransactions.find((row) => row.txHash === '0xunknowntx')
+    const nativeRow = data.find((row) => row.txHash === '0xnativedeposit')
+    const unknownRow = data.find((row) => row.txHash === '0xunknowntx')
 
     expect(nativeRow?.amountLocal).toBe(3)
     expect(unknownRow?.amount).toBe('0')

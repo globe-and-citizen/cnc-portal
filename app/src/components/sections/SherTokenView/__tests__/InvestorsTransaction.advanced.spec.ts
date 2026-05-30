@@ -2,6 +2,19 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { type VueWrapper } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import * as utils from '@/utils'
+
+// Auto-imported @nuxt/ui components bypass `config.global.stubs` because the
+// Nuxt UI Vite plugin resolves them through their file path. Mocking the
+// module ensures our stub is actually rendered so we can inspect props
+// instead of reaching into `wrapper.vm`.
+vi.mock('@nuxt/ui/components/Table.vue', () => ({
+  default: {
+    name: 'UTable',
+    props: ['data', 'columns', 'loading'],
+    template: '<div data-test="investor-table"></div>'
+  }
+}))
+
 import {
   buildInvestorResult,
   buildSafeResult,
@@ -11,6 +24,17 @@ import {
   USDC_ADDRESS,
   ZERO_ADDRESS
 } from './InvestorsTransaction.fixture'
+
+type AdvancedRow = {
+  txHash: string
+  amount: string
+  amountUSD: number
+  type: string
+  token: string
+}
+
+const tableData = (wrapper: VueWrapper) =>
+  wrapper.findComponent({ name: 'UTable' }).props('data') as AdvancedRow[]
 
 const {
   apolloState,
@@ -161,11 +185,9 @@ describe('InvestorsTransactions advanced', () => {
       safeMultiplierUpdateds: { items: [] }
     }
     wrapper = createWrapper()
-    const vm = wrapper.vm as unknown as {
-      displayedTransactions: Array<{ txHash: string; amount: string; amountUSD: number }>
-    }
-    const usdcRow = vm.displayedTransactions.find((row) => row.txHash === '0xusdcdeposit')
-    const nativeRow = vm.displayedTransactions.find((row) => row.txHash === '0xnativedeposit')
+    const data = tableData(wrapper)
+    const usdcRow = data.find((row) => row.txHash === '0xusdcdeposit')
+    const nativeRow = data.find((row) => row.txHash === '0xnativedeposit')
     expect(usdcRow?.amountUSD).toBe(5)
     expect(nativeRow?.amount).toBe('0')
     expect(nativeRow?.amountUSD).toBe(0)
@@ -174,10 +196,7 @@ describe('InvestorsTransactions advanced', () => {
   it('falls back to SHER symbol when investor symbol is not a string', () => {
     mockInvestorSymbolData.value = { unexpected: true } as unknown as string
     wrapper = createWrapper()
-    const vm = wrapper.vm as unknown as {
-      displayedTransactions: Array<{ type: string; token: string }>
-    }
-    expect(vm.displayedTransactions.find((row) => row.type === 'mint')?.token).toBe('SHER')
+    expect(tableData(wrapper).find((row) => row.type === 'mint')?.token).toBe('SHER')
   })
 
   it('logs investor and safe router query errors once per unique message', async () => {

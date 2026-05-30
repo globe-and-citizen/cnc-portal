@@ -12,7 +12,6 @@ const MOCK_DATA = {
 describe('ERC20 Contract Reads', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    resetERC20Mocks()
   })
 
   it('useErc20BalanceOf returns the balance mock', () => {

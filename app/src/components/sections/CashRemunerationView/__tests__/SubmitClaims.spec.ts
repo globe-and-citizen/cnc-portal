@@ -1,6 +1,6 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { defineComponent } from 'vue'
+import { defineComponent, ref } from 'vue'
 import { createTestingPinia } from '@pinia/testing'
 import { VueQueryPlugin, QueryClient } from '@tanstack/vue-query'
 import SubmitClaims from '../SubmitClaims.vue'
@@ -45,7 +45,6 @@ describe('SubmitClaims', () => {
     vi.clearAllMocks()
 
     mockTeamStore.currentTeamId = '1'
-    mockToast.add.mockClear()
   })
 
   afterEach(() => {
@@ -151,7 +150,7 @@ describe('SubmitClaims', () => {
           }
         }
       }),
-      isPending: { value: false }
+      isPending: ref(false)
     } as unknown as ReturnType<typeof useSubmitClaimMutation>)
 
     const wrapper = createComponent()
@@ -159,11 +158,8 @@ describe('SubmitClaims', () => {
     await wrapper.find('[data-test="modal-submit-hours-button"]').trigger('click')
     await flushPromises()
 
-    const vm = wrapper.vm as unknown as {
-      handleSubmit: (payload: Record<string, unknown>) => Promise<void>
-      errorMessage: { message: string } | null
-    }
-    await vm.handleSubmit({
+    const claimForm = wrapper.findComponent({ name: 'ClaimForm' })
+    claimForm.vm.$emit('submit', {
       minutesWorked: 480,
       memo: 'Test work',
       dayWorked: '2024-01-10T00:00:00.000Z',
@@ -171,25 +167,23 @@ describe('SubmitClaims', () => {
     })
     await flushPromises()
 
-    expect(vm.errorMessage?.message).toBe(backendMessage)
+    // Error surfaces as the ClaimForm's error-message prop
+    expect(wrapper.findComponent({ name: 'ClaimForm' }).props('errorMessage')).toBe(backendMessage)
     expect(mockToast.add).not.toHaveBeenCalledWith({ title: backendMessage, color: 'error' })
   })
 
   it('uses Error.message fallback when backend message is absent', async () => {
     vi.mocked(useSubmitClaimMutation).mockReturnValueOnce({
       mutateAsync: vi.fn().mockRejectedValue(new Error('Plain failure message')),
-      isPending: { value: false }
+      isPending: ref(false)
     } as unknown as ReturnType<typeof useSubmitClaimMutation>)
 
     const wrapper = createComponent()
     await wrapper.find('[data-test="modal-submit-hours-button"]').trigger('click')
     await flushPromises()
 
-    const vm = wrapper.vm as unknown as {
-      handleSubmit: (payload: Record<string, unknown>) => Promise<void>
-      errorMessage: { message: string } | null
-    }
-    await vm.handleSubmit({
+    const claimForm = wrapper.findComponent({ name: 'ClaimForm' })
+    claimForm.vm.$emit('submit', {
       minutesWorked: 480,
       memo: 'Test work',
       dayWorked: '2024-01-10T00:00:00.000Z',
@@ -197,22 +191,25 @@ describe('SubmitClaims', () => {
     })
     await flushPromises()
 
-    expect(vm.errorMessage?.message).toBe('Plain failure message')
+    expect(wrapper.findComponent({ name: 'ClaimForm' }).props('errorMessage')).toBe(
+      'Plain failure message'
+    )
   })
 
   it('opens modal with clicked day when using openModalForDay', async () => {
     const wrapper = createComponent({ selectedWeekStart: '2024-01-08T00:00:00.000Z' })
-    const vm = wrapper.vm as unknown as {
-      openModalForDay: (dayIso: string) => void
-      modal: { show: boolean }
-      formInitialData: { dayWorked: string }
-    }
     const dayIso = '2024-01-10T00:00:00.000Z'
 
-    vm.openModalForDay(dayIso)
+    // openModalForDay is an exposed (defineExpose) public API consumed by parent
+    // components through a template ref — there is no UI surface that drives it.
+    // eslint-disable-next-line no-restricted-syntax -- exposed method has no UI trigger; consumed by parents via template ref
+    const exposed = wrapper.vm as unknown as { openModalForDay: (iso: string) => void }
+    exposed.openModalForDay(dayIso)
     await flushPromises()
 
-    expect(vm.modal.show).toBe(true)
-    expect(vm.formInitialData.dayWorked).toBe(dayIso)
+    // Assert effect via DOM: ClaimForm renders with formInitialData.dayWorked set to dayIso
+    const claimForm = wrapper.findComponent({ name: 'ClaimForm' })
+    expect(claimForm.exists()).toBe(true)
+    expect((claimForm.props('initialData') as { dayWorked: string }).dayWorked).toBe(dayIso)
   })
 })

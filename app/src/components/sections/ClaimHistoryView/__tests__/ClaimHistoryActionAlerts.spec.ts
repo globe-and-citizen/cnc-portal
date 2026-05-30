@@ -115,23 +115,26 @@ describe('ClaimHistoryActionAlerts', () => {
     ;(
       useGetTeamWeeklyClaimsQuery as unknown as { mockReturnValueOnce: (value: unknown) => void }
     ).mockReturnValueOnce({
-      data: ref([
-        { ...createWeeklyClaim({ status: 'signed', weekStart: '2024-01-08T00:00:00.000Z' }) },
-        {
-          ...createWeeklyClaim({
-            status: 'pending',
-            signature: '0xabc',
-            weekStart: '2024-01-15T00:00:00.000Z'
-          })
-        },
-        {
-          ...createWeeklyClaim({
-            status: 'pending',
-            signature: null,
-            weekStart: '2024-01-22T00:00:00.000Z'
-          })
-        }
-      ])
+      data: ref({
+        data: [
+          { ...createWeeklyClaim({ status: 'signed', weekStart: '2024-01-08T00:00:00.000Z' }) },
+          {
+            ...createWeeklyClaim({
+              status: 'pending',
+              signature: '0xabc',
+              weekStart: '2024-01-15T00:00:00.000Z'
+            })
+          },
+          {
+            ...createWeeklyClaim({
+              status: 'pending',
+              signature: null,
+              weekStart: '2024-01-22T00:00:00.000Z'
+            })
+          }
+        ],
+        total: 3
+      })
     })
 
     const wrapper = createWrapper({ weeklyClaim: createWeeklyClaim() })

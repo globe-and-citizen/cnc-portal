@@ -4,7 +4,7 @@ import { createTestingPinia } from '@pinia/testing'
 import { nextTick } from 'vue'
 import type { Address } from 'viem'
 import DistributeMintAction from '@/components/sections/SherTokenView/InvestorActions/DistributeMintAction.vue'
-import { mockInvestorWrites, resetContractMocks, mockLog } from '@/tests/mocks'
+import { mockInvestorWrites, mockLog } from '@/tests/mocks'
 
 type DistributeOptions = {
   onSuccess?: () => void
@@ -36,7 +36,6 @@ describe('DistributeMintAction.vue', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    resetContractMocks()
   })
 
   it('renders with coming soon tooltip', () => {
@@ -58,25 +57,23 @@ describe('DistributeMintAction.vue', () => {
 
   it('openModal mounts and shows the modal', async () => {
     const wrapper = createWrapper()
-    await (wrapper.vm as unknown as { openModal: () => void }).openModal()
+    await wrapper.findComponent({ name: 'ActionButton' }).vm.$emit('click')
     await nextTick()
     expect(wrapper.find('[data-test="distribute-mint-form"]').exists()).toBe(true)
   })
 
-  it('closeModal unmounts the modal', async () => {
+  it('closeModal unmounts the modal via UModal update:open', async () => {
     const wrapper = createWrapper()
-    const vm = wrapper.vm as unknown as { openModal: () => void; closeModal: () => void }
-    await vm.openModal()
+    await wrapper.findComponent({ name: 'ActionButton' }).vm.$emit('click')
     await nextTick()
-    await vm.closeModal()
+    await wrapper.findComponent({ name: 'UModal' }).vm.$emit('update:open', false)
     await nextTick()
     expect(wrapper.find('[data-test="distribute-mint-form"]').exists()).toBe(false)
   })
 
   it('handleSubmit calls distributeMint when form submits', async () => {
     const wrapper = createWrapper()
-    const vm = wrapper.vm as unknown as { openModal: () => void }
-    await vm.openModal()
+    await wrapper.findComponent({ name: 'ActionButton' }).vm.$emit('click')
     await nextTick()
     await wrapper.find('[data-test="distribute-mint-form"]').trigger('click')
     expect(distribute.mutate).toHaveBeenCalled()
@@ -84,10 +81,12 @@ describe('DistributeMintAction.vue', () => {
 
   it('handleSubmit returns early when investorsAddress is empty', async () => {
     const wrapper = createWrapper({ investorsAddress: '' as Address })
-    const vm = wrapper.vm as unknown as {
-      handleSubmit: (shareholders: ReadonlyArray<{ shareholder: Address; amount: bigint }>) => void
-    }
-    vm.handleSubmit([{ shareholder: '0xabc' as Address, amount: 100n }])
+    await wrapper.findComponent({ name: 'ActionButton' }).vm.$emit('click')
+    await nextTick()
+    await wrapper
+      .findComponent({ name: 'DistributeMintForm' })
+      .vm.$emit('submit', [{ shareholder: '0xabc' as Address, amount: 100n }])
+    await nextTick()
     expect(distribute.mutate).not.toHaveBeenCalled()
   })
 
@@ -96,8 +95,7 @@ describe('DistributeMintAction.vue', () => {
       opts?.onError?.(new Error('distribute failed'))
     })
     const wrapper = createWrapper()
-    const vm = wrapper.vm as unknown as { openModal: () => void }
-    await vm.openModal()
+    await wrapper.findComponent({ name: 'ActionButton' }).vm.$emit('click')
     await nextTick()
     await wrapper.find('[data-test="distribute-mint-form"]').trigger('click')
     expect(mockLog.error).toHaveBeenCalled()
@@ -108,8 +106,7 @@ describe('DistributeMintAction.vue', () => {
       opts?.onSuccess?.()
     })
     const wrapper = createWrapper()
-    const vm = wrapper.vm as unknown as { openModal: () => void }
-    await vm.openModal()
+    await wrapper.findComponent({ name: 'ActionButton' }).vm.$emit('click')
     await nextTick()
     await wrapper.find('[data-test="distribute-mint-form"]').trigger('click')
     await nextTick()
@@ -117,23 +114,19 @@ describe('DistributeMintAction.vue', () => {
     expect(wrapper.find('[data-test="distribute-mint-form"]').exists()).toBe(false)
   })
 
-  it('watch modalState.show=false triggers closeModal', async () => {
+  it('watch modalState.show=false triggers closeModal via UModal update:open', async () => {
     const wrapper = createWrapper()
-    const vm = wrapper.vm as unknown as {
-      openModal: () => void
-      modalState: { mount: boolean; show: boolean }
-    }
-    await vm.openModal()
+    await wrapper.findComponent({ name: 'ActionButton' }).vm.$emit('click')
     await nextTick()
-    vm.modalState.show = false
+    expect(wrapper.find('[data-test="distribute-mint-form"]').exists()).toBe(true)
+    await wrapper.findComponent({ name: 'UModal' }).vm.$emit('update:open', false)
     await nextTick()
-    expect(vm.modalState.mount).toBe(false)
+    expect(wrapper.find('[data-test="distribute-mint-form"]').exists()).toBe(false)
   })
 
   it('v-model update:open handler resets modal state', async () => {
     const wrapper = createWrapper()
-    const vm = wrapper.vm as unknown as { openModal: () => void }
-    await vm.openModal()
+    await wrapper.findComponent({ name: 'ActionButton' }).vm.$emit('click')
     await nextTick()
     const modal = wrapper.findComponent({ name: 'UModal' })
     await modal.vm.$emit('update:open', false)
@@ -144,8 +137,7 @@ describe('DistributeMintAction.vue', () => {
   it('form loading prop reflects mutation isPending state', async () => {
     distribute.isPending.value = true
     const wrapper = createWrapper()
-    const vm = wrapper.vm as unknown as { openModal: () => void }
-    await vm.openModal()
+    await wrapper.findComponent({ name: 'ActionButton' }).vm.$emit('click')
     await nextTick()
     expect(wrapper.findComponent({ name: 'DistributeMintForm' }).props('loading')).toBe(true)
   })

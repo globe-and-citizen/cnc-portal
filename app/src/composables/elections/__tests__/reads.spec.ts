@@ -24,7 +24,6 @@ const MOCK_DATA = {
 describe('Elections Contract Reads', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    resetContractMocks()
   })
 
   describe('useElectionsAddress', () => {

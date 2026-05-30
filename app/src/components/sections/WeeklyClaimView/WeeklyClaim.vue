@@ -2,8 +2,8 @@
   <UCard class="w-full pb-7">
     <template #header>{{ singleUser ? 'Weekly Claim (User)' : 'Weekly Claim' }}</template>
     <UTable
-      v-if="data"
-      :data="data"
+      v-if="rows"
+      :data="rows"
       :columns="columns"
       :loading="isTeamClaimDataFetching"
       overflow="overflow-visible"
@@ -115,6 +115,14 @@
         </template>
       </template>
     </UTable>
+    <template #footer>
+      <TransactionTableFooter
+        v-model:page="page"
+        v-model:page-size="pageSize"
+        :total="total"
+        data-test-prefix="weekly-claim"
+      />
+    </template>
   </UCard>
 </template>
 
@@ -132,12 +140,13 @@ import dayjs from 'dayjs'
 import isoWeek from 'dayjs/plugin/isoWeek'
 import utc from 'dayjs/plugin/utc'
 import weekday from 'dayjs/plugin/weekday'
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 // import CRSigne from '../CashRemunerationView/CRSigne.vue'
 // import CRWithdrawClaim from '../CashRemunerationView/CRWithdrawClaim.vue'
 import { useGetTeamWeeklyClaimsQuery } from '@/queries'
 import WeeklyClaimActionDropdown from './WeeklyClaimActionDropdown.vue'
+import TransactionTableFooter from '@/components/TransactionTableFooter.vue'
 import type { Address } from 'viem'
 import { formatMinutesAsDuration } from '@/utils/wageUtil'
 
@@ -175,25 +184,22 @@ function isStaleSignature(row: WeeklyClaim): boolean {
   return signedAgainst.toLowerCase() !== current.toLowerCase()
 }
 
+// Pagination state — `pageSize` maps to the backend's `limit` query param.
+// The backend sorts by weekStart desc when paginated, so no client-side sort.
+const page = ref(1)
+const pageSize = ref(10)
+
 const { data: fetchedData, error } = useGetTeamWeeklyClaimsQuery({
   queryParams: {
     teamId: computed(() => teamStore.currentTeamId),
-    userAddress: computed(() => props.memberAddress)
+    userAddress: computed(() => props.memberAddress),
+    page,
+    limit: pageSize
   }
 })
 
-// const { data: fetchedData, error } = useCustomFetch(weeklyClaimUrl.value).get().json()
-
-// I think this sorting should be done in the backend
-const data = computed(() => {
-  if (!fetchedData.value) return null
-  //return the most recent first date
-  return [...fetchedData.value].sort((a, b) => {
-    const dateA = new Date(a.weekStart).getTime()
-    const dateB = new Date(b.weekStart).getTime()
-    return dateB - dateA
-  })
-})
+const rows = computed(() => fetchedData.value?.data ?? null)
+const total = computed(() => fetchedData.value?.total ?? 0)
 
 const isTeamClaimDataFetching = computed(() => !fetchedData.value && !error.value)
 
