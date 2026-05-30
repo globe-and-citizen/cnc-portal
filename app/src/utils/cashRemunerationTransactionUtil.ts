@@ -3,14 +3,13 @@ import type {
   RawCashRemunerationTransaction
 } from '@/types/ponder/cash-remuneration'
 import type { IncomingBankTokenTransfersQuery } from '@/types/ponder/bank'
+import type { UBadgeColor } from '@/types/ui'
 import { zeroAddress } from 'viem'
 import {
   buildRawTransactions,
   extractTxHashFromId,
   mapIncomingTransfersToTokenDeposits
 } from './rawTransactionsUtil'
-
-type UBadgeColor = 'error' | 'primary' | 'secondary' | 'success' | 'info' | 'warning' | 'neutral'
 
 export const buildRawCashRemunerationTransactions = (
   cashRemunerationResult?: CashRemunerationEventsQuery | null,

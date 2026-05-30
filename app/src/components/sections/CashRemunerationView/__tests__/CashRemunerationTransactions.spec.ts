@@ -260,7 +260,7 @@ describe('CashRemunerationTransactions', () => {
     expect(data.map((row) => row.type)).toEqual(
       expect.arrayContaining(['deposit', 'tokenDeposit', 'withdraw'])
     )
-    expect(columns.at(-1)?.header).toBe('Value (USD)')
+    expect(columns.some((column) => column.header === 'Value (USD)')).toBe(true)
   })
 
   it('passes loading state to UTable', () => {

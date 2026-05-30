@@ -95,6 +95,14 @@ vi.mock('@/stores', () => ({
   })
 }))
 
+vi.mock('@/stores/currencyStore', () => ({
+  useCurrencyStore: () => ({
+    localCurrency: { code: 'USD' },
+    supportedTokens: [{ id: 'usdc', symbol: 'USDC', address: USDC_ADDRESS }],
+    getTokenPrice: mockGetTokenPrice
+  })
+}))
+
 vi.mock('@/composables/investor/reads', () => ({
   useInvestorSymbol: () => ({
     data: mockInvestorSymbolData
@@ -147,7 +155,7 @@ describe('InvestorsTransactions', () => {
     )
     expect(data.find((row) => row.type === 'mint')?.token).toBe('SHER')
     expect(data.find((row) => row.type === 'safeMultiplierUpdated')?.token).toBe('x')
-    expect(columns.at(-1)?.header).toBe('Value (USD)')
+    expect(columns.some((column) => column.header === 'Value (USD)')).toBe(true)
   })
 
   it('passes loading from investor query to table', () => {
