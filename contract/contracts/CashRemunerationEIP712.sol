@@ -13,7 +13,6 @@ import './base/TokenSupport.sol';
 import {IMintableERC20} from './interfaces/IMintableERC20.sol';
 import {IInvestorV1} from './interfaces/IInvestorV1.sol';
 import {IOfficer} from './interfaces/IOfficer.sol';
-import 'hardhat/console.sol';
 
 /**
  * @title CashRemunerationEIP712
