@@ -47,7 +47,7 @@ describe('CreateAddCampaign.vue', () => {
     })
 
     it('disables the confirm button while deploying', async () => {
-      mockDeployState.isDeploying.value = true
+      mockDeployState.isPending.value = true
       const wrapper = mountComponent()
       await wrapper.vm.$nextTick()
       expect(wrapper.find('[data-test="confirm-button"]').attributes('disabled')).toBeDefined()
@@ -115,10 +115,13 @@ describe('CreateAddCampaign.vue', () => {
       await wrapper.vm.$nextTick()
       await wrapper.find('form').trigger('submit')
       await flushPromises()
-      expect(mockDeployState.deploy).toHaveBeenCalledWith(
-        mockTeamStore.getContractAddressByType('Bank'),
-        '0.5',
-        '0.2'
+      expect(mockDeployState.mutate).toHaveBeenCalledWith(
+        {
+          bankAddress: mockTeamStore.getContractAddressByType('Bank'),
+          costPerClick: '0.5',
+          costPerImpression: '0.2'
+        },
+        { onSuccess: expect.any(Function) }
       )
     })
 
@@ -136,22 +139,42 @@ describe('CreateAddCampaign.vue', () => {
       await wrapper.vm.$nextTick()
       await wrapper.find('form').trigger('submit')
       await flushPromises()
-      expect(mockDeployState.deploy).not.toHaveBeenCalled()
+      expect(mockDeployState.mutate).not.toHaveBeenCalled()
     })
 
     it('does not call deploy when costPerClick is invalid (empty)', async () => {
       const wrapper = mountComponent()
       await wrapper.find('[data-test="confirm-button"]').trigger('click')
       await flushPromises()
-      expect(mockDeployState.deploy).not.toHaveBeenCalled()
+      expect(mockDeployState.mutate).not.toHaveBeenCalled()
     })
   })
 
-  describe('contractAddress watcher', () => {
+  describe('deploy onSuccess (register contract)', () => {
+    // Submit a valid form, then replay the onSuccess callback the component
+    // passed to `deploy(args, { onSuccess })` with a freshly deployed address.
+    const replayDeploySuccess = async (
+      wrapper: ReturnType<typeof mountComponent>,
+      address = '0xDeployedContract'
+    ) => {
+      const setupState = wrapper.getCurrentComponent().setupState as Record<string, unknown>
+      const formState = setupState.formState as { costPerClick: string; costPerImpression: string }
+      formState.costPerClick = '0.5'
+      formState.costPerImpression = '0.2'
+      await wrapper.vm.$nextTick()
+      await wrapper.find('form').trigger('submit')
+      await flushPromises()
+
+      const lastCall = mockDeployState.mutate.mock.calls.at(-1)
+      const onSuccess = (lastCall?.[1] as { onSuccess?: (addr: string) => unknown } | undefined)
+        ?.onSuccess
+      await onSuccess?.(address)
+      await flushPromises()
+    }
+
     it('emits closeAddCampaignModal and shows toast on successful contract creation', async () => {
       const wrapper = mountComponent()
-      mockDeployState.contractAddress.value = '0xDeployedContract'
-      await flushPromises()
+      await replayDeploySuccess(wrapper)
       expect(wrapper.emitted('closeAddCampaignModal')).toBeTruthy()
     })
 
@@ -162,28 +185,18 @@ describe('CreateAddCampaign.vue', () => {
       } as unknown as ReturnType<typeof useCreateContractMutation>)
 
       const wrapper = mountComponent()
-      mockDeployState.contractAddress.value = '0xDeployedContract'
-      await flushPromises()
+      await replayDeploySuccess(wrapper)
       expect(wrapper.emitted('closeAddCampaignModal')).toBeFalsy()
     })
 
-    it('does nothing when newAddress is set but currentTeam is null', async () => {
+    it('does nothing when the deployed address arrives but currentTeam is null', async () => {
       vi.mocked(useTeamStore).mockReturnValueOnce({
         ...mockTeamStore,
         currentTeam: null
       } as unknown as ReturnType<typeof useTeamStore>)
 
       const wrapper = mountComponent()
-      mockDeployState.contractAddress.value = '0xDeployedContract'
-      await flushPromises()
-      expect(wrapper.emitted('closeAddCampaignModal')).toBeFalsy()
-    })
-
-    it('does nothing when newAddress is null (watcher fires with null)', async () => {
-      const wrapper = mountComponent()
-
-      mockDeployState.contractAddress.value = null
-      await flushPromises()
+      await replayDeploySuccess(wrapper)
       expect(wrapper.emitted('closeAddCampaignModal')).toBeFalsy()
     })
   })

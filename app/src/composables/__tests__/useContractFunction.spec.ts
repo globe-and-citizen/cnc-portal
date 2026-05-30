@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { getContractData } from '../useContractFunctions'
+import { deployContract, getContractData } from '../useContractFunctions'
 import { parseUnits, formatUnits } from 'viem/utils'
 import type { Abi, Address } from 'viem'
 import { mockWagmiCore } from '@/tests/mocks'
@@ -20,7 +20,7 @@ const { mockDeployContract, mockWalletClient } = vi.hoisted(() => {
 // @wagmi/vue and @wagmi/core are mocked globally - no need to re-declare them here
 // Just configure specific behaviors in beforeEach
 
-describe('useDeployContract', () => {
+describe('deployContract', () => {
   const mockAbi: Abi = [
     {
       type: 'constructor',
@@ -43,19 +43,14 @@ describe('useDeployContract', () => {
     } as never)
   })
 
-  const getActualUseDeployContract = async () => {
-    const actual =
-      await vi.importActual<typeof import('../useContractFunctions')>('../useContractFunctions')
-
-    return actual.useDeployContract
-  }
-
-  it('should deploy contract with correct args', async () => {
+  it('deploys with the correct args and returns the new contract address', async () => {
     mockDeployContract.mockResolvedValue('0xHASH')
 
-    const useDeployContract = await getActualUseDeployContract()
-    const { deploy, contractAddress, error, isDeploying } = useDeployContract(mockAbi, mockBytecode)
-    await deploy('0xBANK', '1.5', '2.5')
+    const address = await deployContract(mockAbi, mockBytecode, {
+      bankAddress: '0xBANK',
+      costPerClick: '1.5',
+      costPerImpression: '2.5'
+    })
 
     expect(mockDeployContract).toHaveBeenCalledWith({
       abi: mockAbi,
@@ -64,22 +59,34 @@ describe('useDeployContract', () => {
       account: '0xabc'
     })
 
-    expect(contractAddress.value).toBe('0xDEADBEEF')
-    expect(error.value).toBeNull()
-    expect(isDeploying.value).toBe(false)
+    expect(address).toBe('0xDEADBEEF')
   })
 
-  it('should handle wallet not connected error', async () => {
+  it('throws when the wallet is not connected', async () => {
     mockWagmiCore.getWalletClient.mockResolvedValueOnce(null)
 
-    const useDeployContract = await getActualUseDeployContract()
-    const { deploy, error, contractAddress, isDeploying } = useDeployContract(mockAbi, mockBytecode)
-    await deploy('0xBANK', '1', '1')
+    await expect(
+      deployContract(mockAbi, mockBytecode, {
+        bankAddress: '0xBANK',
+        costPerClick: '1',
+        costPerImpression: '1'
+      })
+    ).rejects.toThrow('Wallet not connected')
+  })
 
-    expect(error.value).toBeInstanceOf(Error)
-    expect(error.value?.message).toBe('Wallet not connected')
-    expect(contractAddress.value).toBeNull()
-    expect(isDeploying.value).toBe(false)
+  it('throws when the receipt has no contract address', async () => {
+    mockDeployContract.mockResolvedValue('0xHASH')
+    mockWagmiCore.waitForTransactionReceipt.mockResolvedValueOnce({
+      contractAddress: null
+    } as never)
+
+    await expect(
+      deployContract(mockAbi, mockBytecode, {
+        bankAddress: '0xBANK',
+        costPerClick: '1',
+        costPerImpression: '1'
+      })
+    ).rejects.toThrow('no contract address')
   })
 })
 

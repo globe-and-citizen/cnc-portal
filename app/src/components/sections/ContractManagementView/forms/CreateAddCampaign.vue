@@ -67,7 +67,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { z } from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
 
@@ -76,7 +76,7 @@ import { useUserDataStore } from '@/stores/user'
 import { useTeamStore } from '@/stores'
 import { AD_CAMPAIGN_MANAGER_ABI } from '@/artifacts/abi/ad-campaign-manager'
 import { CAMPAIGN_BYTECODE } from '@/artifacts/bytecode/adCampaignManager.ts'
-import type { Hex } from 'viem'
+import type { Address, Hex } from 'viem'
 import { useCreateContractMutation } from '@/queries/contract.queries'
 import { useQueryClient } from '@tanstack/vue-query'
 
@@ -127,9 +127,8 @@ const submissionError = ref<string | null>(
 )
 
 const {
-  deploy,
-  isDeploying: loading,
-  contractAddress,
+  mutate: deploy,
+  isPending: loading,
   error: deployError
 } = useDeployContract(AD_CAMPAIGN_MANAGER_ABI, campaignBytecode)
 
@@ -144,35 +143,34 @@ const errorMessage = computed(() => {
   return message ?? 'Deployment failed, please retry'
 })
 
-watch(contractAddress, async (newAddress) => {
-  if (newAddress && teamStore.currentTeam) {
-    try {
-      await createContract({
-        body: {
-          teamId: teamStore.currentTeam.id,
-          contractAddress: newAddress,
-          contractType: 'Campaign',
-          deployer: userDataStore.address
-        }
-      })
+const registerDeployedContract = async (contractAddress: Address) => {
+  const team = teamStore.currentTeam
+  if (!team) return
 
-      queryClient.invalidateQueries({
-        queryKey: ['team', { teamId: String(teamStore.currentTeam.id) }]
-      })
+  try {
+    await createContract({
+      body: {
+        teamId: team.id,
+        contractAddress,
+        contractType: 'Campaign',
+        deployer: userDataStore.address
+      }
+    })
 
-      toast.add({ title: `Contract deployed and added to team successfully`, color: 'success' })
-      emit('closeAddCampaignModal')
-    } catch (error) {
-      console.error('Failed to add contract to team:', error)
-      toast.add({
-        title: 'Contract deployed but failed to add to team. Please try again.',
-        color: 'error'
-      })
-    }
+    queryClient.invalidateQueries({ queryKey: ['team', { teamId: String(team.id) }] })
+
+    toast.add({ title: `Contract deployed and added to team successfully`, color: 'success' })
+    emit('closeAddCampaignModal')
+  } catch (error) {
+    console.error('Failed to add contract to team:', error)
+    toast.add({
+      title: 'Contract deployed but failed to add to team. Please try again.',
+      color: 'error'
+    })
   }
-})
+}
 
-const deployAdCampaign = async (event: FormSubmitEvent<CampaignFormSchema>) => {
+const deployAdCampaign = (event: FormSubmitEvent<CampaignFormSchema>) => {
   costPerClick.value = event.data.costPerClick
   costPerImpression.value = event.data.costPerImpression
 
@@ -182,7 +180,14 @@ const deployAdCampaign = async (event: FormSubmitEvent<CampaignFormSchema>) => {
   }
 
   submissionError.value = null
-  await deploy(event.data.bankAddress, event.data.costPerClick, event.data.costPerImpression)
+  deploy(
+    {
+      bankAddress: event.data.bankAddress as Address,
+      costPerClick: event.data.costPerClick,
+      costPerImpression: event.data.costPerImpression
+    },
+    { onSuccess: registerDeployedContract }
+  )
 }
 
 const viewContractCode = () => {

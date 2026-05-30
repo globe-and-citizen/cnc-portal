@@ -290,23 +290,32 @@ export const resetComposableMocks = () => {
 export const resetTransactionMocks = resetComposableMocks
 
 /**
- * Mock useDeployContract composable (useContractFunctions.ts)
- * Shared refs allow tests to trigger watchers and inspect state.
+ * Mock useDeployContract composable (useContractFunctions.ts).
+ * Now a TanStack mutation: `mutate(args, { onSuccess })` drives the deploy +
+ * register flow. Specs trigger the success path by replaying the `onSuccess`
+ * callback captured on `mutate.mock.calls`.
  */
 export const mockDeployState = {
-  isDeploying: ref(false),
-  contractAddress: ref<string | null>(null),
+  mutate: vi.fn(),
+  mutateAsync: vi.fn(() => Promise.resolve(null)),
+  isPending: ref(false),
+  isError: ref(false),
   error: ref<Error | null>(null),
-  deploy: vi.fn()
+  data: ref<string | null>(null),
+  reset: vi.fn()
 }
 
 export const mockUseDeployContract = vi.fn(() => mockDeployState)
 
 export function resetDeployState() {
-  mockDeployState.isDeploying.value = false
-  mockDeployState.contractAddress.value = null
+  mockDeployState.isPending.value = false
+  mockDeployState.isError.value = false
   mockDeployState.error.value = null
-  mockDeployState.deploy.mockClear()
+  mockDeployState.data.value = null
+  mockDeployState.mutate.mockReset()
+  mockDeployState.mutateAsync.mockReset()
+  mockDeployState.mutateAsync.mockResolvedValue(null)
+  mockDeployState.reset.mockClear()
 }
 
 /**
