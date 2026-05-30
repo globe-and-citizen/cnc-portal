@@ -3,7 +3,7 @@ import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 import { createTestingPinia } from '@pinia/testing'
 import InvestorsHeader from '../InvestorsHeader.vue'
 import { parseUnits } from 'viem'
-import { mockInvestorReads, mockTeamStore, mockUserStore, resetContractMocks } from '@/tests/mocks'
+import { mockInvestorReads, mockTeamStore, mockUserStore } from '@/tests/mocks'
 
 describe('InvestorsHeader', () => {
   let wrapper: ReturnType<typeof mount>
@@ -25,7 +25,6 @@ describe('InvestorsHeader', () => {
   } as const
 
   beforeEach(() => {
-    resetContractMocks()
     vi.clearAllMocks()
 
     // Initialize store state

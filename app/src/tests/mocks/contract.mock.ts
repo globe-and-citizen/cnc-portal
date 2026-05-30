@@ -60,17 +60,6 @@ export const mockBODReads = {
   memberCount: createContractReadMock(0n)
 }
 
-export const mockBODWrites = {
-  addMember: createContractWriteV3Mock(),
-  removeMember: createContractWriteV3Mock(),
-  updateMember: createContractWriteV3Mock(),
-  pause: createContractWriteV3Mock(),
-  unpause: createContractWriteV3Mock(),
-  setBoard: createContractWriteV3Mock(),
-  addAction: createContractWriteV3Mock(),
-  approve: createContractWriteV3Mock()
-}
-
 /**
  * BOD Composable-level mocks (higher-level interfaces returned by BOD composables)
  */
@@ -171,7 +160,6 @@ export const resetContractMocks = () => {
 
   const allWriteV3Mocks = [
     mockBankWrites,
-    mockBODWrites,
     mockCashRemunerationWrites,
     mockExpenseAccountWrites,
     mockElectionsWrites,

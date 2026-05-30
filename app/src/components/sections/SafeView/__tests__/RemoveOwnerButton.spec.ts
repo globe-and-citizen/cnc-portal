@@ -2,15 +2,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { defineComponent, nextTick } from 'vue'
 import { mount } from '@vue/test-utils'
 import RemoveOwnerButton from '../RemoveOwnerButton.vue'
+import { mockUserStore } from '@/tests/mocks/store.mock'
 
-const { mockChainId, mockIsPending, mockLogError, mockUserStore, mockUpdateOwnersMutate } =
-  vi.hoisted(() => ({
-    mockChainId: { value: 137 },
-    mockIsPending: { value: false },
-    mockLogError: vi.fn(),
-    mockUserStore: { address: '0x1111111111111111111111111111111111111111' },
-    mockUpdateOwnersMutate: vi.fn()
-  }))
+const { mockChainId, mockIsPending, mockLogError, mockUpdateOwnersMutate } = vi.hoisted(() => ({
+  mockChainId: { value: 137 },
+  mockIsPending: { value: false },
+  mockLogError: vi.fn(),
+  mockUpdateOwnersMutate: vi.fn()
+}))
 
 vi.mock('@wagmi/vue', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@wagmi/vue')>()
@@ -25,10 +24,6 @@ vi.mock('@/queries/safe.mutations', () => ({
     mutate: mockUpdateOwnersMutate,
     isPending: mockIsPending
   })
-}))
-
-vi.mock('@/stores', () => ({
-  useUserDataStore: () => mockUserStore
 }))
 
 vi.mock('@/utils', () => ({

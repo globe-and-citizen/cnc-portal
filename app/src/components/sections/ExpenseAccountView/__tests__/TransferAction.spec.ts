@@ -4,12 +4,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import { ref } from 'vue'
 import { readContract, estimateGas } from '@wagmi/core'
 import TransferAction from '../TransferAction.vue'
-import {
-  mockExpenseAccountWrites,
-  mockERC20Writes,
-  resetContractMocks,
-  resetERC20Mocks
-} from '@/tests/mocks'
+import { mockExpenseAccountWrites, mockERC20Writes } from '@/tests/mocks'
 
 vi.mock('@/utils', () => ({
   log: { error: vi.fn() },
@@ -86,8 +81,6 @@ describe('TransferAction.vue', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     vi.clearAllMocks()
-    resetContractMocks()
-    resetERC20Mocks()
     vi.mocked(estimateGas).mockResolvedValue(21000n)
   })
 

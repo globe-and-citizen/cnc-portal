@@ -221,3 +221,21 @@ export const formatDateShort = (dateString: string): string => {
     minute: '2-digit'
   }).format(date)
 }
+
+export function formatDateRelative(dateString: string): string {
+  const diffMs = Date.now() - new Date(dateString).getTime()
+  const diffSec = Math.floor(diffMs / 1000)
+  const diffMin = Math.floor(diffSec / 60)
+  const diffH = Math.floor(diffMin / 60)
+  const diffD = Math.floor(diffH / 24)
+
+  if (diffSec < 60) return 'just now'
+  if (diffMin < 60) return `${diffMin} min ago`
+  if (diffH < 24) return `${diffH} h ago`
+  if (diffD < 7) return `${diffD} d ago`
+  return dayjs.utc(new Date(dateString)).format('MMM D, YYYY')
+}
+
+export function formatDateUTC(dateString: string): string {
+  return dayjs.utc(new Date(dateString)).format('YYYY-MM-DD HH:mm [UTC]')
+}

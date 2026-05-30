@@ -12,8 +12,7 @@ import {
   mockLog,
   mockTeamStore,
   mockToast,
-  mockUserStore,
-  resetContractMocks
+  mockUserStore
 } from '@/tests/mocks'
 
 describe('PayDividendsAction.vue', () => {
@@ -52,7 +51,6 @@ describe('PayDividendsAction.vue', () => {
     })
 
   beforeEach(() => {
-    resetContractMocks()
     vi.clearAllMocks()
     vi.stubGlobal('useToast', () => mockToast)
 

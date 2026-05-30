@@ -4,13 +4,7 @@ import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
 import { parseUnits } from 'viem'
 import MintForm from '../MintForm.vue'
-import {
-  mockToast,
-  mockTeamStore,
-  mockInvestorWrites,
-  resetContractMocks,
-  useReadContractFn
-} from '@/tests/mocks'
+import { mockToast, mockTeamStore, mockInvestorWrites, useReadContractFn } from '@/tests/mocks'
 
 const VALID_ADDRESS = '0x1234567890123456789012345678901234567890'
 
@@ -73,7 +67,6 @@ describe('MintForm.vue', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    resetContractMocks()
     vi.stubGlobal('useToast', () => mockToast)
 
     symbolRef.value = 'SHER'
@@ -289,7 +282,7 @@ describe('MintForm.vue', () => {
     await wrapper.find('form').trigger('submit')
     await flushPromises()
     expect(mintMutation.mutate).toHaveBeenCalled()
-    const latestCall = mintMutation.mutate.mock.calls.at(-1)
+    const latestCall = mintMutation.mutate.mock.calls[mintMutation.mutate.mock.calls.length - 1]
     expect(latestCall?.[0]).toMatchObject({
       args: [VALID_ADDRESS, parseUnits('10', 6)]
     })
