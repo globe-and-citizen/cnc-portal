@@ -85,10 +85,7 @@ describe('transactionHistoryUtil', () => {
       'Token deposit · 10 USDC'
     )
     expect(
-      getTransactionSummary(
-        { type: 'transfer', amount: '10', token: 'ETH' },
-        { toName: 'Bob' }
-      )
+      getTransactionSummary({ type: 'transfer', amount: '10', token: 'ETH' }, { toName: 'Bob' })
     ).toBe('Native — to Bob')
     expect(
       getTransactionSummary(
@@ -135,9 +132,9 @@ describe('transactionHistoryUtil', () => {
     expect(
       getTransactionSummary({ type: 'dividendDistribution', amount: '10', token: 'USDC' })
     ).toBe('Dividend triggered · 10 USDC')
-    expect(getTransactionSummary({ type: 'dividendDistributed', amount: '10', token: 'USDC' })).toBe(
-      'Distributed 10 USDC'
-    )
+    expect(
+      getTransactionSummary({ type: 'dividendDistributed', amount: '10', token: 'USDC' })
+    ).toBe('Distributed 10 USDC')
     expect(getTransactionSummary({ type: 'dividendPaid', amount: '10', token: 'USDC' })).toBe(
       'Paid 10 USDC'
     )
@@ -184,18 +181,18 @@ describe('transactionHistoryUtil', () => {
     expect(getTransactionSummary({ type: 'safeDepositsEnabled', amount: '0', token: '-' })).toBe(
       'Safe deposits enabled'
     )
-    expect(
-      getTransactionSummary({ type: 'safeDepositsDisabled', amount: '0', token: '-' })
-    ).toBe('Safe deposits disabled')
+    expect(getTransactionSummary({ type: 'safeDepositsDisabled', amount: '0', token: '-' })).toBe(
+      'Safe deposits disabled'
+    )
     expect(getTransactionSummary({ type: 'safeAddressUpdated', amount: '0', token: '-' })).toBe(
       'Safe address updated'
     )
     expect(getTransactionSummary({ type: 'safeMultiplierUpdated', amount: '2', token: 'x' })).toBe(
       'Multiplier → 2x'
     )
-    expect(
-      getTransactionSummary({ type: 'safeMultiplierUpdated', amount: '0', token: 'x' })
-    ).toBe('Multiplier → 0x')
+    expect(getTransactionSummary({ type: 'safeMultiplierUpdated', amount: '0', token: 'x' })).toBe(
+      'Multiplier → 0x'
+    )
     expect(getTransactionSummary({ type: 'officerAddressUpdated', amount: '0', token: '-' })).toBe(
       'Officer address updated'
     )
@@ -210,9 +207,7 @@ describe('transactionHistoryUtil', () => {
     expect(getTransactionSummary({ type: 'tokenTransfer', amount: '0', token: '-' })).toBe(
       'Token transfer'
     )
-    expect(getTransactionSummary({ type: 'withdraw', amount: '0', token: '-' })).toBe(
-      'Withdrawal'
-    )
+    expect(getTransactionSummary({ type: 'withdraw', amount: '0', token: '-' })).toBe('Withdrawal')
     expect(getTransactionSummary({ type: 'withdrawToken', amount: '0', token: '-' })).toBe(
       'Token withdrawal'
     )
@@ -236,9 +231,9 @@ describe('transactionHistoryUtil', () => {
     expect(getTransactionSummary({ type: 'dividendPaid', amount: '0', token: '-' })).toBe(
       'Dividend paid'
     )
-    expect(
-      getTransactionSummary({ type: 'dividendPaymentFailed', amount: '0', token: '-' })
-    ).toBe('Payment failed')
+    expect(getTransactionSummary({ type: 'dividendPaymentFailed', amount: '0', token: '-' })).toBe(
+      'Payment failed'
+    )
     expect(getTransactionSummary({ type: 'rawTokenIn', amount: '0', token: '-' })).toBe(
       'Token received'
     )
