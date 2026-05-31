@@ -24,6 +24,20 @@ interface CreateVestingProps {
 
 type CreateVestingEmit = (event: 'reload' | 'closeAddVestingModal') => void
 
+// ⚠️ KNOWN ANTI-PATTERN — do not copy this shape.
+//
+// This is a "god composable": it bundles form state, validation, several
+// reads (balance/allowance/team vestings) AND two on-chain writes
+// (ERC20 approve + addVesting) plus the approve→submit orchestration, and
+// returns ~20 bindings. It violates our single-purpose rule for composables.
+//
+// It is intentionally left as-is for now because the vesting contract is
+// about to change: once vesting is integrated into the Officer contract the
+// ERC20 approve + allowance step disappears entirely, which removes the
+// bulk of this orchestration. Refactor THEN — split into a pure
+// `vestingSchema` util, keep `useVestingDateRange`, and move the (much
+// smaller) on-chain flow into a focused `useVestingCreation(payload)` — so
+// we don't invest in decomposing logic we're about to delete.
 export function useCreateVesting(props: CreateVestingProps, emit: CreateVestingEmit) {
   const toast = useToast()
 
