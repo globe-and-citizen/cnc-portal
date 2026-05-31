@@ -1,8 +1,8 @@
-import { mount, flushPromises } from '@vue/test-utils'
+import { flushPromises } from '@vue/test-utils'
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { createTestingPinia } from '@pinia/testing'
 import SafeDepositRouterForm from '../SafeDepositRouterForm.vue'
 import {
+  renderWithProviders,
   mockUseContractBalance,
   mockERC20Reads,
   mockERC20Writes,
@@ -28,12 +28,7 @@ type SafeDepositRouterVm = {
   submitForm: () => Promise<void>
 }
 
-const createWrapper = () =>
-  mount(SafeDepositRouterForm, {
-    global: {
-      plugins: [createTestingPinia({ createSpy: vi.fn })]
-    }
-  })
+const createWrapper = () => renderWithProviders(SafeDepositRouterForm)
 
 const getVm = (wrapper: ReturnType<typeof createWrapper>) =>
   // eslint-disable-next-line no-restricted-syntax -- wrapper.vm exposes orchestration and reactive internals with no stable DOM surface: submitForm() is the async approve→deposit entrypoint; currentStep has no findable control (UStepper is auto-imported and unresolvable by name, and the deposit button label is identical for steps 0 and 2); isUpdatingFromSher/isAmountValid/selectedTokenId are internal guard flags; the amount value in the bidirectional-sync test must be read synchronously before the amount-watcher flushes (a prop read needs nextTick, which mutates isUpdatingFromSher); and bigIntAmount is a pure computed. All are inherently white-box.

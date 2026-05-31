@@ -1,7 +1,7 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { defineComponent, ref } from 'vue'
-import { createTestingPinia } from '@pinia/testing'
+import { renderWithProviders } from '@/tests/mocks'
 import ClaimForm from '@/components/sections/CashRemunerationView/Form/ClaimForm.vue'
 
 type DateDisabledFn = (d: { year: number; month: number; day: number }) => boolean
@@ -29,10 +29,9 @@ const FilePreviewGalleryStub = defineComponent({
 const defaultProps = { isEdit: false, isLoading: false }
 
 const createWrapper = (props = {}) =>
-  mount(ClaimForm, {
+  renderWithProviders(ClaimForm, {
     props: { ...defaultProps, ...props },
     global: {
-      plugins: [createTestingPinia({ createSpy: vi.fn })],
       stubs: {
         UploadFileDB: UploadFileDBStub,
         FilePreviewGallery: FilePreviewGalleryStub
@@ -52,9 +51,10 @@ const createHarness = (props = {}) => {
     },
     template: '<ClaimForm ref="child" v-bind="merged" />'
   })
+  // Harness mount keeps `mount` so the typed `vm.child` ref survives — see
+  // CreateAddCampaign.spec.ts. renderWithProviders erases the component generic.
   return mount(Harness, {
     global: {
-      plugins: [createTestingPinia({ createSpy: vi.fn })],
       stubs: {
         UploadFileDB: UploadFileDBStub,
         FilePreviewGallery: FilePreviewGalleryStub

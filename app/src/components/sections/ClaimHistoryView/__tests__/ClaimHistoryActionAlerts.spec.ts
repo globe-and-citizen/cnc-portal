@@ -1,12 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
-import { createTestingPinia } from '@pinia/testing'
 import { defineComponent, nextTick, ref } from 'vue'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import isoWeek from 'dayjs/plugin/isoWeek'
 import ClaimHistoryActionAlerts from '@/components/sections/ClaimHistoryView/ClaimHistoryActionAlerts.vue'
-import { mockUserStore, mockWageData, mockWeeklyClaimData, queryMocks } from '@/tests/mocks'
+import {
+  renderWithProviders,
+  mockUserStore,
+  mockWageData,
+  mockWeeklyClaimData,
+  queryMocks
+} from '@/tests/mocks'
 import { useGetTeamWagesQuery, useGetTeamWeeklyClaimsQuery } from '@/queries'
 
 dayjs.extend(utc)
@@ -32,7 +37,6 @@ describe('ClaimHistoryActionAlerts', () => {
   }
 
   const makeGlobal = () => ({
-    plugins: [createTestingPinia({ createSpy: vi.fn })],
     stubs: {
       SubmitClaims: defineComponent({
         name: 'SubmitClaims',
@@ -63,7 +67,7 @@ describe('ClaimHistoryActionAlerts', () => {
   })
 
   const createWrapper = (props: Record<string, unknown> = {}) =>
-    mount(ClaimHistoryActionAlerts, {
+    renderWithProviders(ClaimHistoryActionAlerts, {
       props: {
         memberAddress: baseAddress,
         ...props
@@ -302,6 +306,8 @@ describe('ClaimHistoryActionAlerts', () => {
         '<ClaimHistoryActionAlerts ref="child" :member-address="baseAddress" :weekly-claim="weeklyClaim" />'
     })
 
+    // Harness mount keeps `mount` so the typed `vm.child` ref survives — see
+    // CreateAddCampaign.spec.ts. renderWithProviders erases the component generic.
     const wrapper = mount(ParentHarness, { global: makeGlobal() })
     wrapper.vm.child?.openSubmitClaimForDay(dayIso)
 

@@ -2,7 +2,7 @@ import { flushPromises, mount } from '@vue/test-utils'
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 import { defineComponent } from 'vue'
 import UploadFileDB from '@/components/sections/CashRemunerationView/Form/UploadFileDB.vue'
-import { createTestingPinia } from '@pinia/testing'
+import { renderWithProviders } from '@/tests/mocks'
 import { MAX_FILES } from '@/types/upload'
 
 const UFileUploadStub = defineComponent({
@@ -34,14 +34,13 @@ describe('UploadFileDB', () => {
   } as const
 
   const createWrapper = (props = {}) => {
-    return mount(UploadFileDB, {
+    return renderWithProviders(UploadFileDB, {
       props: {
         disabled: false,
         existingFileCount: 0,
         ...props
       },
       global: {
-        plugins: [createTestingPinia({ createSpy: vi.fn })],
         stubs: {
           UFileUpload: UFileUploadStub,
           FilePreviewGallery: true

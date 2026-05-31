@@ -1,23 +1,13 @@
-import { flushPromises, mount } from '@vue/test-utils'
+import { flushPromises } from '@vue/test-utils'
 import { describe, expect, it, vi } from 'vitest'
 import { getLocalTimeZone, parseDate, today, type CalendarDate } from '@internationalized/date'
+import { renderWithProviders } from '@/tests/mocks'
 
-// USelect is auto-imported by @nuxt/ui/vite, so config.global.stubs / local mount
-// stubs cannot catch it — vi.mock on the resolved module is the reliable hook.
-vi.mock('@nuxt/ui/components/Select.vue', () => ({
-  default: {
-    name: 'USelect',
-    props: ['modelValue', 'items', 'valueKey'],
-    emits: ['update:modelValue'],
-    methods: {
-      onSelectChange(event: Event) {
-        this.$emit('update:modelValue', Number((event.target as HTMLSelectElement).value))
-      }
-    },
-    // data-test="frequency-select" falls through from the component template.
-    template:
-      '<select @change="onSelectChange"><option v-for="item in items" :key="item.value" :value="item.value">{{ item.label }}</option></select>'
-  }
+// USelect is auto-imported by @nuxt/ui/vite, so config.global.stubs cannot catch it —
+// vi.mock on the resolved module is the reliable hook. Reuse the shared <select> stub,
+// which emits the matched item's original value (numeric here, via value-key).
+vi.mock('@nuxt/ui/components/Select.vue', async () => ({
+  default: (await import('@/tests/stubs/nuxt-ui.stubs')).USelectStub
 }))
 
 import ApproveUsersForm from '../ApproveUsersEIP712Form.vue'
@@ -64,20 +54,12 @@ const makeValidState = () => ({
 })
 
 const createWrapper = (props = {}) =>
-  mount(ApproveUsersForm, {
+  renderWithProviders(ApproveUsersForm, {
     props: { ...defaultProps, ...props },
     global: {
       stubs: {
-        UPopover: {
-          name: 'UPopover',
-          template: '<div><slot /><slot name="content" /></div>'
-        },
-        UCalendar: {
-          name: 'UCalendar',
-          props: ['modelValue', 'minValue'],
-          emits: ['update:modelValue'],
-          template: '<div data-test="calendar-stub" />'
-        },
+        // UPopover and UCalendar are stubbed globally (nuxt-ui.setup.ts); only the
+        // app-level member input needs a local stub.
         SelectMemberWithTokenInput: {
           name: 'SelectMemberWithTokenInput',
           props: ['modelValue'],
@@ -303,6 +285,6 @@ describe('ApproveUsersEIP712Form.vue', () => {
     expect(vm.state.input.address).toBe('0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266')
     expect(wrapper.find('[data-test="start-date-picker"]').exists()).toBe(true)
     expect(wrapper.find('[data-test="end-date-picker"]').exists()).toBe(true)
-    expect(wrapper.findAll('[data-test="calendar-stub"]').length).toBeGreaterThanOrEqual(0)
+    expect(wrapper.findAllComponents({ name: 'UCalendar' }).length).toBe(2)
   })
 })
