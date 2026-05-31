@@ -172,20 +172,41 @@ describe('CreateAddCampaign.vue', () => {
       await flushPromises()
     }
 
+    // Capture the createContract `mutate` so we can replay the onSuccess/onError
+    // callbacks the component registers (the mock `mutate` is otherwise inert).
+    const stubCreateContract = () => {
+      const mutate = vi.fn()
+      vi.mocked(useCreateContractMutation).mockReturnValueOnce({
+        ...createMockMutationResponse(),
+        mutate
+      } as unknown as ReturnType<typeof useCreateContractMutation>)
+      return mutate
+    }
+
+    const lastCreateContractCallbacks = (mutate: ReturnType<typeof vi.fn>) =>
+      mutate.mock.calls.at(-1)?.[1] as
+        | { onSuccess?: () => unknown; onError?: (e: Error) => unknown }
+        | undefined
+
     it('emits closeAddCampaignModal and shows toast on successful contract creation', async () => {
+      const createContract = stubCreateContract()
       const wrapper = mountComponent()
       await replayDeploySuccess(wrapper)
+
+      await lastCreateContractCallbacks(createContract)?.onSuccess?.()
+      await flushPromises()
+
       expect(wrapper.emitted('closeAddCampaignModal')).toBeTruthy()
     })
 
     it('stays open and shows error toast when createContract mutation fails', async () => {
-      vi.mocked(useCreateContractMutation).mockReturnValueOnce({
-        ...createMockMutationResponse(),
-        mutateAsync: vi.fn().mockRejectedValue(new Error('backend down'))
-      } as unknown as ReturnType<typeof useCreateContractMutation>)
-
+      const createContract = stubCreateContract()
       const wrapper = mountComponent()
       await replayDeploySuccess(wrapper)
+
+      lastCreateContractCallbacks(createContract)?.onError?.(new Error('backend down'))
+      await flushPromises()
+
       expect(wrapper.emitted('closeAddCampaignModal')).toBeFalsy()
     })
 

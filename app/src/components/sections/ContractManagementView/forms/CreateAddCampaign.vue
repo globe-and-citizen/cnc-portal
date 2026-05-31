@@ -78,7 +78,6 @@ import { AD_CAMPAIGN_MANAGER_ABI } from '@/artifacts/abi/ad-campaign-manager'
 import { CAMPAIGN_BYTECODE } from '@/artifacts/bytecode/adCampaignManager.ts'
 import type { Address, Hex } from 'viem'
 import { useCreateContractMutation } from '@/queries/contract.queries'
-import { useQueryClient } from '@tanstack/vue-query'
 
 const emit = defineEmits(['closeAddCampaignModal'])
 const toast = useToast()
@@ -87,7 +86,6 @@ const campaignBytecode = CAMPAIGN_BYTECODE as Hex
 const teamStore = useTeamStore()
 const userDataStore = useUserDataStore()
 const bankAddress = teamStore.getContractAddressByType('Bank')
-const queryClient = useQueryClient()
 
 const costPerClick = ref<string | null>(null)
 const costPerImpression = ref<string | null>(null)
@@ -132,7 +130,7 @@ const {
   error: deployError
 } = useDeployContract(AD_CAMPAIGN_MANAGER_ABI, campaignBytecode)
 
-const { mutateAsync: createContract } = useCreateContractMutation()
+const { mutate: createContract } = useCreateContractMutation()
 
 const errorMessage = computed(() => {
   if (submissionError.value) return submissionError.value
@@ -143,31 +141,35 @@ const errorMessage = computed(() => {
   return message ?? 'Deployment failed, please retry'
 })
 
-const registerDeployedContract = async (contractAddress: Address) => {
+const registerDeployedContract = (contractAddress: Address) => {
   const team = teamStore.currentTeam
   if (!team) return
 
-  try {
-    await createContract({
+  // The mutation hook already invalidates the team queries on success;
+  // here we own the business-flow callbacks (toast + close / error toast).
+  createContract(
+    {
       body: {
         teamId: team.id,
         contractAddress,
         contractType: 'Campaign',
         deployer: userDataStore.address
       }
-    })
-
-    queryClient.invalidateQueries({ queryKey: ['team', { teamId: String(team.id) }] })
-
-    toast.add({ title: `Contract deployed and added to team successfully`, color: 'success' })
-    emit('closeAddCampaignModal')
-  } catch (error) {
-    console.error('Failed to add contract to team:', error)
-    toast.add({
-      title: 'Contract deployed but failed to add to team. Please try again.',
-      color: 'error'
-    })
-  }
+    },
+    {
+      onSuccess: () => {
+        toast.add({ title: 'Contract deployed and added to team successfully', color: 'success' })
+        emit('closeAddCampaignModal')
+      },
+      onError: (error) => {
+        console.error('Failed to add contract to team:', error)
+        toast.add({
+          title: 'Contract deployed but failed to add to team. Please try again.',
+          color: 'error'
+        })
+      }
+    }
+  )
 }
 
 const deployAdCampaign = (event: FormSubmitEvent<CampaignFormSchema>) => {
