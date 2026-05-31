@@ -84,6 +84,10 @@ const polygonRpc =
         ])
       : rateLimitedPool(primaryRpcUrls);
 
+// Optional WebSocket endpoint for real-time block subscriptions (newHeads).
+// Cuts realtime RPC usage vs polling; Ponder reverts to polling if it drops.
+const polygonWs = process.env.PONDER_WS_URL_137 || undefined;
+
 // ─── Shared factory helper ────────────────────────────────────────────────────
 const subContractFactory = factory({
   event: CONTRACT_DEPLOYED_EVENT,
@@ -94,6 +98,7 @@ export default createConfig({
     polygon: {
       id: 137,
       rpc: polygonRpc,
+      ws: polygonWs,
     },
     ...(isHardhat
       ? {
