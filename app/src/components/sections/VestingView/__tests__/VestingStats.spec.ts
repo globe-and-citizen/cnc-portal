@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { mount, type VueWrapper } from '@vue/test-utils'
-import { createTestingPinia } from '@pinia/testing'
+import { type VueWrapper } from '@vue/test-utils'
+import { renderWithProviders } from '@/tests/mocks'
 
 // Auto-imported @nuxt/ui components bypass `config.global.stubs` because the
 // Nuxt UI Vite plugin resolves them through their file path. Mock the module
@@ -92,12 +92,9 @@ describe('VestingStats.vue', () => {
   let wrapper: VueWrapper
 
   const mountComponent = () => {
-    return mount(VestingStats, {
+    return renderWithProviders(VestingStats, {
       props: {
         reloadKey: mockReloadKey.value
-      },
-      global: {
-        plugins: [createTestingPinia({ createSpy: vi.fn })]
       }
     })
   }

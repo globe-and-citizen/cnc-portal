@@ -1,4 +1,4 @@
-import { config, mount as originalMount, VueWrapper } from '@vue/test-utils'
+import { config } from '@vue/test-utils'
 import { defineComponent, h } from 'vue'
 import type { Component } from 'vue'
 import { TooltipProvider } from 'reka-ui'
@@ -131,23 +131,6 @@ const GlobalTestWrapper = defineComponent({
     return () => h(TooltipProvider, {}, () => h(props.component, {}, slots.default))
   }
 })
-
-/**
- * Custom mount helper that automatically wraps components with necessary providers
- */
-export function mountWithProviders<T extends Component>(
-  component: T,
-  options: Record<string, unknown> = {}
-): VueWrapper<T> {
-  return originalMount(
-    {
-      setup() {
-        return () => h(TooltipProvider, {}, () => h(component))
-      }
-    },
-    options
-  ) as VueWrapper<T>
-}
 
 export { GlobalTestWrapper }
 

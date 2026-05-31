@@ -1,10 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { mount, flushPromises } from '@vue/test-utils'
-import { createTestingPinia } from '@pinia/testing'
+import { flushPromises } from '@vue/test-utils'
 import { ref } from 'vue'
 import type { TableRow } from '@/types/table'
 import BodApprovalModal from '@/components/sections/ContractManagementView/BodApprovalModal.vue'
-import { useReadContractFn, mockTeamStore, mockUserStore, mockWagmiCore } from '@/tests/mocks'
+import {
+  useReadContractFn,
+  mockTeamStore,
+  mockUserStore,
+  mockWagmiCore,
+  renderWithProviders
+} from '@/tests/mocks'
 import { useTeamStore, useUserDataStore } from '@/stores'
 
 const CURRENT_ADDR = '0x0000000000000000000000000000000000000001'
@@ -31,12 +36,11 @@ function mountComponent(overrides?: { alreadyApproved?: boolean }) {
   }
   const row = baseRow as unknown as TableRow
 
-  return mount(BodApprovalModal, {
+  return renderWithProviders(BodApprovalModal, {
     props: {
       loading: false,
       row
-    },
-    global: { plugins: [createTestingPinia({ createSpy: vi.fn })] }
+    }
   })
 }
 
