@@ -303,7 +303,31 @@ const failGuard = (msg: string) => {
   toast.add({ title: msg, color: 'error' })
 }
 
-const submitForm = async () => {
+// Step 2 of the flow: deposit. Called directly when no approval is needed, or
+// chained from the approval's onSuccess. The callbacks own the side effects.
+const runDeposit = () => {
+  currentStep.value = 2
+  depositWrite.mutate(
+    { args: [selectedTokenAddress.value, bigIntAmount.value] },
+    {
+      onSuccess: () => {
+        toast.add({
+          title: `Successfully deposited ${amount.value} ${selectedToken.value?.token.symbol} and minted ${sherAmount.value} ${tokenSymbol.value || 'SHER'} tokens`,
+          color: 'success'
+        })
+        reset()
+        emits('closeModal')
+      },
+      onError: (err) => {
+        console.error('Error depositing tokens:', err)
+        toastFailure(err, 'Failed to deposit')
+        currentStep.value = 0
+      }
+    }
+  )
+}
+
+const submitForm = () => {
   if (!isAmountValid.value) return
   if (!safeDepositRouterAddress.value) return failGuard('SafeDepositRouter address not found')
   if (!selectedToken.value) return failGuard('No token selected')
@@ -312,47 +336,29 @@ const submitForm = async () => {
   guardError.value = null
   const currentAllowance = (allowance.value as bigint | undefined) ?? 0n
 
-  // Sequential: approve (if needed) → deposit. mutateAsync throws on failure;
-  // we handle the toast in onError per-call and stop the chain via try/catch
-  // at the top of the flow. UAlert keeps showing the reactive error.
-  try {
-    if (currentAllowance < bigIntAmount.value) {
-      currentStep.value = 1
-      await approveWrite.mutateAsync(
-        { args: [safeDepositRouterAddress.value, bigIntAmount.value] },
-        {
-          onSuccess: () => toast.add({ title: 'Token approval successful', color: 'success' }),
-          onError: (err) => {
-            console.error('Error approving tokens:', err)
-            toastFailure(err, 'Failed to approve tokens')
-            currentStep.value = 0
-          }
-        }
-      )
-    }
-
-    currentStep.value = 2
-    await depositWrite.mutateAsync(
-      { args: [selectedTokenAddress.value, bigIntAmount.value] },
-      {
-        onSuccess: () => {
-          toast.add({
-            title: `Successfully deposited ${amount.value} ${selectedToken.value?.token.symbol} and minted ${sherAmount.value} ${tokenSymbol.value || 'SHER'} tokens`,
-            color: 'success'
-          })
-          reset()
-          emits('closeModal')
-        },
-        onError: (err) => {
-          console.error('Error depositing tokens:', err)
-          toastFailure(err, 'Failed to deposit')
-          currentStep.value = 0
-        }
-      }
-    )
-  } catch {
-    // Per-call onError already surfaced the toast and reset the step. The
-    // error stays reactive on the mutation for UAlert. Nothing to do here.
+  // Enough allowance already — go straight to the deposit step.
+  if (currentAllowance >= bigIntAmount.value) {
+    runDeposit()
+    return
   }
+
+  // Approve first, then chain the deposit from its onSuccess. A failed approval
+  // stops the flow on its own because runDeposit only runs on success, so no
+  // wrapping try/catch is needed; the reactive error still surfaces via UAlert.
+  currentStep.value = 1
+  approveWrite.mutate(
+    { args: [safeDepositRouterAddress.value, bigIntAmount.value] },
+    {
+      onSuccess: () => {
+        toast.add({ title: 'Token approval successful', color: 'success' })
+        runDeposit()
+      },
+      onError: (err) => {
+        console.error('Error approving tokens:', err)
+        toastFailure(err, 'Failed to approve tokens')
+        currentStep.value = 0
+      }
+    }
+  )
 }
 </script>
