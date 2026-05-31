@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { flushPromises, mount } from '@vue/test-utils'
-import { createTestingPinia } from '@pinia/testing'
+import { flushPromises } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import SetCompensationMultiplierAction from '../SetCompensationMultiplierAction.vue'
 import {
@@ -8,14 +7,14 @@ import {
   mockSafeDepositRouterAddress,
   mockSafeDepositRouterReads,
   mockSafeDepositRouterWrites,
-  mockUseConnection
+  mockUseConnection,
+  renderWithProviders
 } from '@/tests/mocks'
 
 describe('SetCompensationMultiplierAction.vue', () => {
   const createWrapper = () =>
-    mount(SetCompensationMultiplierAction, {
+    renderWithProviders(SetCompensationMultiplierAction, {
       global: {
-        plugins: [createTestingPinia({ createSpy: vi.fn })],
         stubs: { teleport: true }
       }
     })

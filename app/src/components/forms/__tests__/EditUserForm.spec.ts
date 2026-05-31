@@ -1,9 +1,8 @@
 import { flushPromises } from '@vue/test-utils'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import EditUserForm from '@/components/forms/EditUserForm.vue'
-import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
-import { mockUserData, mockUserStore, mockUseClipboard, mountWithProviders } from '@/tests/mocks'
+import { mockUserData, mockUserStore, mockUseClipboard, renderWithProviders } from '@/tests/mocks'
 import { useUpdateUserMutation } from '@/queries/user.queries'
 
 // Type for the mutation mock
@@ -28,9 +27,9 @@ const createMockMutation = (): Partial<MockMutation> & {
 global.window.open = vi.fn()
 
 const createWrapper = () =>
-  mountWithProviders(EditUserForm, {
+  renderWithProviders(EditUserForm, {
+    tooltipProvider: true,
     global: {
-      plugins: [createTestingPinia({ createSpy: vi.fn })],
       stubs: {
         ProfileImageUpload: {
           name: 'ProfileImageUpload',
