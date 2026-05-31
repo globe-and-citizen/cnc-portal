@@ -54,10 +54,9 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { z } from 'zod'
 import { useUploadFileMutation } from '@/queries/file.queries'
+import { createFileSchema } from '@/types/upload'
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10 MB
 const ALLOWED_IMAGE_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.webp', '.gif', '.bmp', '.svg']
 const ACCEPTED_FILE_TYPES = ALLOWED_IMAGE_EXTENSIONS.join(',')
 
@@ -88,17 +87,14 @@ const errorMessage = computed(() => {
   return err instanceof Error ? err.message : 'Failed to upload image'
 })
 
-// Zod schema: the selected file must be an allowed image within the size limit.
-// MIME check with an extension fallback (handles missing/incorrect MIME types).
-const imageFileSchema = z
-  .instanceof(File)
-  .refine(
-    (file) =>
-      ALLOWED_IMAGE_MIMETYPES.includes(file.type) ||
-      ALLOWED_IMAGE_EXTENSIONS.some((ext) => file.name.toLowerCase().endsWith(ext)),
-    { message: 'Only images (png, jpg, jpeg, webp, gif, bmp, svg) are allowed' }
-  )
-  .refine((file) => file.size <= MAX_FILE_SIZE, { message: 'Image must be 10 MB or smaller' })
+// Image-only schema from the shared factory (single source of the
+// instanceof + type/size refinement shape).
+const imageFileSchema = createFileSchema({
+  allowedExtensions: ALLOWED_IMAGE_EXTENSIONS,
+  allowedMimeTypes: ALLOWED_IMAGE_MIMETYPES,
+  typeErrorMessage: 'Only images (png, jpg, jpeg, webp, gif, bmp, svg) are allowed',
+  sizeErrorMessage: 'Image must be 10 MB or smaller'
+})
 
 // Computed style for upload box - reactive, no DOM manipulation needed
 const uploadBoxStyle = computed(() => ({
