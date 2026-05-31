@@ -54,6 +54,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { z } from 'zod'
 import { useUploadFileMutation } from '@/queries/file.queries'
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10 MB
@@ -87,18 +88,17 @@ const errorMessage = computed(() => {
   return err instanceof Error ? err.message : 'Failed to upload image'
 })
 
-// Helper: Detect if file is image (MIME type + extension fallback)
-const isImageFile = (file: File): boolean => {
-  // First check MIME type
-  if (ALLOWED_IMAGE_MIMETYPES.includes(file.type)) {
-    return true
-  }
-
-  // Fallback: check file extension (handles cases where MIME type is missing or wrong)
-  const fileName = file.name.toLowerCase()
-  const extension = '.' + fileName.split('.').pop()
-  return ALLOWED_IMAGE_EXTENSIONS.includes(extension)
-}
+// Zod schema: the selected file must be an allowed image within the size limit.
+// MIME check with an extension fallback (handles missing/incorrect MIME types).
+const imageFileSchema = z
+  .instanceof(File)
+  .refine(
+    (file) =>
+      ALLOWED_IMAGE_MIMETYPES.includes(file.type) ||
+      ALLOWED_IMAGE_EXTENSIONS.some((ext) => file.name.toLowerCase().endsWith(ext)),
+    { message: 'Only images (png, jpg, jpeg, webp, gif, bmp, svg) are allowed' }
+  )
+  .refine((file) => file.size <= MAX_FILE_SIZE, { message: 'Image must be 10 MB or smaller' })
 
 // Computed style for upload box - reactive, no DOM manipulation needed
 const uploadBoxStyle = computed(() => ({
@@ -114,21 +114,15 @@ const onFileChange = (event: Event) => {
 
   validationError.value = ''
 
-  if (!isImageFile(file)) {
-    validationError.value = 'Only images (png, jpg, jpeg, webp, gif, bmp, svg) are allowed'
+  const result = imageFileSchema.safeParse(file)
+  if (!result.success) {
+    validationError.value = result.error.issues[0]?.message ?? 'Invalid image'
     toast.add({ title: validationError.value, color: 'error' })
     input.value = ''
     return
   }
 
-  if (file.size > MAX_FILE_SIZE) {
-    validationError.value = 'Image must be 10 MB or smaller'
-    toast.add({ title: validationError.value, color: 'error' })
-    input.value = ''
-    return
-  }
-
-  uploadFile(file, {
+  uploadFile(result.data, {
     onSuccess: (uploadedFileUrl) => {
       imageUrl.value = uploadedFileUrl
       toast.add({ title: 'Image uploaded', color: 'success' })
