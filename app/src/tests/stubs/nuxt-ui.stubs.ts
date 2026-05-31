@@ -124,7 +124,7 @@ export const USelectMenuStub = defineComponent({
 
 export const UCalendarStub = defineComponent({
   name: 'UCalendar',
-  props: ['modelValue', 'range', 'numberOfMonths'],
+  props: ['modelValue', 'range', 'numberOfMonths', 'isDateDisabled'],
   emits: ['update:modelValue'],
   setup() {
     return () => h('div', { 'data-test': 'u-calendar' })
