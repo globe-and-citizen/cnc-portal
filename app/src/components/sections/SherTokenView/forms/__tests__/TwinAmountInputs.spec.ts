@@ -48,8 +48,10 @@ describe('TwinAmountInputs.vue', () => {
     await wrapper.find('[data-test="percentage-input"]').setValue('33')
     await wrapper.find('[data-test="amount-input"]').setValue('12')
 
-    expect(wrapper.emitted('update:percentage')?.at(-1)).toEqual([33])
-    expect(wrapper.emitted('update:amount')?.at(-1)).toEqual([12])
+    const percentageEvents = wrapper.emitted('update:percentage') ?? []
+    const amountEvents = wrapper.emitted('update:amount') ?? []
+    expect(percentageEvents[percentageEvents.length - 1]).toEqual([33])
+    expect(amountEvents[amountEvents.length - 1]).toEqual([12])
   })
 
   it('disables percentage input when total supply is zero', () => {

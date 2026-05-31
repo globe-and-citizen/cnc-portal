@@ -39,45 +39,25 @@ const vmCast = {
 // and the helper lists below.
 
 const vmCastLegacyFiles = [
-  'src/components/forms/__tests__/ApproveUsersEIP712Form.spec.ts',
   'src/components/forms/__tests__/EditUserForm.spec.ts',
-  'src/components/forms/__tests__/SafeDepositRouterForm.spec.ts',
   'src/components/forms/__tests__/TransferForm.spec.ts',
-  'src/components/sections/CashRemunerationView/Form/__tests__/ClaimForm.spec.ts',
-  'src/components/sections/ClaimHistoryView/__tests__/ClaimHistoryActionAlerts.spec.ts',
   'src/components/sections/ClaimHistoryView/__tests__/ClaimHistoryWeekNavigator.spec.ts'
 ]
 
-// These three were originally Tailwind+vm offenders. The Tailwind half is
-// refactored; the vm casts remain pending refactor.
-const vmCastLegacyExtraFiles = [
-  'src/components/sections/CashRemunerationView/Form/__tests__/UploadFileDB.spec.ts'
-]
-
-// Ratchet — both lists were drained in PR #2024 (closes #1850). They MUST
-// NOT grow. If you're about to add a new entry:
+// Ratchet — this list was drained in PR #2024 (closes #1850) and further in
+// #2031. It MUST NOT grow. If you're about to add a new entry:
 //   1. First try to refactor — see app/src/tests/README.md
 //      "Migrating Legacy Specs Off `wrapper.vm as X`".
 //   2. If the cast is genuinely unavoidable, use a scoped
 //      `// eslint-disable-next-line no-restricted-syntax -- <reason>`
 //      on the cast line itself, not a file-level opt-out here.
-//   3. The remaining MIXTE files are tracked as a follow-up to #1850 —
-//      drain them there, not by growing this list.
 // This guard fires at config load time, so `npm run lint` fails fast
-// with the message below if either ceiling is breached. To lower a
+// with the message below if the ceiling is breached. To lower the
 // ceiling after a refactor, drop the entry AND decrement the constant.
-const VM_CAST_LEGACY_MAX = 7
-const VM_CAST_LEGACY_EXTRA_MAX = 1
+const VM_CAST_LEGACY_MAX = 3
 if (vmCastLegacyFiles.length > VM_CAST_LEGACY_MAX) {
   throw new Error(
     `vmCastLegacyFiles has ${vmCastLegacyFiles.length} entries (ceiling ${VM_CAST_LEGACY_MAX}). ` +
-      'Refactor the new entry instead of whitelisting it — see app/src/tests/README.md ' +
-      '"Migrating Legacy Specs Off `wrapper.vm as X`".'
-  )
-}
-if (vmCastLegacyExtraFiles.length > VM_CAST_LEGACY_EXTRA_MAX) {
-  throw new Error(
-    `vmCastLegacyExtraFiles has ${vmCastLegacyExtraFiles.length} entries (ceiling ${VM_CAST_LEGACY_EXTRA_MAX}). ` +
       'Refactor the new entry instead of whitelisting it — see app/src/tests/README.md ' +
       '"Migrating Legacy Specs Off `wrapper.vm as X`".'
   )
@@ -269,15 +249,8 @@ export default [
     }
   },
   {
-    files: [
-      'src/artifacts/**/*.{ts,mts,tsx,vue}',
-      'src/components/GenericTransactionHistory.vue',
-      'src/components/sections/VestingView/forms/CreateVesting.vue',
-      'src/components/TableComponent.vue',
-      'src/components/sections/DashboardView/forms/ApproveUsersEIP712Form.vue',
-      'src/components/forms/SafeDepositRouterForm.vue',
-      'src/components/sections/CashRemunerationView/__tests__/CashRemunerationTransactions.spec.ts'
-    ],
+    // Generated contract artifacts are exempt from max-lines.
+    files: ['src/artifacts/**/*.{ts,mts,tsx,vue}'],
     rules: {
       'max-lines': 'off'
     }
@@ -334,7 +307,7 @@ export default [
   },
   {
     name: 'app/test-fragility-bans-vm-legacy',
-    files: [...vmCastLegacyFiles, ...vmCastLegacyExtraFiles],
+    files: vmCastLegacyFiles,
     rules: {
       // Allow wrapper.vm casts in these files only; Tailwind class assertions
       // and global-mock re-mock checks still apply.
@@ -368,10 +341,7 @@ export default [
   // rejects empty `files` arrays, and the intersection drains as the
   // vm-cast list shrinks.
   ...(() => {
-    const both = [
-      ...vmCastLegacyFiles.filter((f) => globalMockLegacyFiles.includes(f)),
-      ...vmCastLegacyExtraFiles.filter((f) => globalMockLegacyFiles.includes(f))
-    ]
+    const both = vmCastLegacyFiles.filter((f) => globalMockLegacyFiles.includes(f))
     return both.length === 0
       ? []
       : [

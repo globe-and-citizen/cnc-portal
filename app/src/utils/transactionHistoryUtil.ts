@@ -1,6 +1,7 @@
 import type { GroupedTransactionRow } from '@/types/transaction-history'
 import { useTeamStore, useCurrencyStore } from '@/stores'
-import { getTokenIcon } from '@/utils/constantUtil'
+import { getTokenIcon, resolveTokenIdByAddress, tokenSymbol } from '@/utils/constantUtil'
+import { NETWORK } from '@/constant'
 
 export const parseBigIntOrZero = (value: string): bigint => {
   try {
@@ -33,6 +34,93 @@ export const resolveUser = (address: string) => {
   }
 
   return { name: 'User', address }
+}
+
+export const getTransactionSummary = (
+  tx: { type: string; amount: string | number; token: string },
+  opts?: { fromName?: string; toName?: string }
+): string => {
+  const hasValue = Number(tx.amount) > 0 && tx.token !== '-'
+  const amt = hasValue ? `${tx.amount} ${tx.token}` : ''
+  const from = opts?.fromName
+  const to = opts?.toName
+
+  switch (tx.type) {
+    case 'deposit':
+      return from ? `From ${from}` : amt ? `Deposited ${amt}` : 'Deposit'
+    case 'tokenDeposit':
+      return from ? `From ${from}` : amt ? `Token deposit · ${amt}` : 'Token deposit'
+    case 'transfer':
+      return to ? `Native — to ${to}` : amt ? `Transfer · ${amt}` : 'Transfer'
+    case 'tokenTransfer':
+      return to ? `${tx.token} — to ${to}` : amt ? `Token transfer · ${amt}` : 'Token transfer'
+    case 'withdraw':
+      return to ? `Withdrawal to ${to}` : amt ? `Withdrawal · ${amt}` : 'Withdrawal'
+    case 'withdrawToken':
+      return to
+        ? `Token withdrawal to ${to}`
+        : amt
+          ? `Token withdrawal · ${amt}`
+          : 'Token withdrawal'
+    case 'ownerTreasuryWithdrawNative':
+      return to
+        ? `Treasury withdrawal to ${to}`
+        : amt
+          ? `Treasury withdrawal · ${amt}`
+          : 'Treasury withdrawal'
+    case 'ownerTreasuryWithdrawToken':
+      return to
+        ? `Treasury token withdrawal to ${to}`
+        : amt
+          ? `Treasury token withdrawal · ${amt}`
+          : 'Treasury token withdrawal'
+    case 'feePaid':
+      return to ? `Fee to ${to}` : amt ? `Fee · ${amt}` : 'Fee paid'
+    case 'mint':
+      return amt ? `Minted ${amt}` : 'Shares minted'
+    case 'safeDeposit':
+      return amt ? `Safe deposit · ${amt}` : 'Safe deposit'
+    case 'dividendDistribution':
+      return amt ? `Dividend triggered · ${amt}` : 'Dividend triggered'
+    case 'dividendDistributed':
+      return amt ? `Distributed ${amt}` : 'Dividend distributed'
+    case 'dividendPaid':
+      return amt ? `Paid ${amt}` : 'Dividend paid'
+    case 'dividendPaymentFailed':
+      return amt ? `Payment failed · ${amt}` : 'Payment failed'
+    case 'rawTokenIn':
+      return from ? `From ${from}` : amt ? `Received ${amt}` : 'Token received'
+    case 'rawTokenOut':
+      return to ? `Sent to ${to}` : amt ? `Sent ${amt}` : 'Token sent'
+    case 'rawTokenInternal':
+      return amt ? `Internal · ${amt}` : 'Internal transfer'
+    case 'approvalActivated':
+      return 'Approval activated'
+    case 'approvalDeactivated':
+      return 'Approval deactivated'
+    case 'wageClaimEnabled':
+      return 'Wage claim enabled'
+    case 'wageClaimDisabled':
+      return 'Wage claim disabled'
+    case 'tokenSupportAdded':
+      return 'Token support added'
+    case 'tokenSupportRemoved':
+      return 'Token support removed'
+    case 'tokenAddressChanged':
+      return 'Token address updated'
+    case 'safeDepositsEnabled':
+      return 'Safe deposits enabled'
+    case 'safeDepositsDisabled':
+      return 'Safe deposits disabled'
+    case 'safeAddressUpdated':
+      return 'Safe address updated'
+    case 'safeMultiplierUpdated':
+      return tx.amount ? `Multiplier → ${tx.amount}${tx.token}` : 'Multiplier updated'
+    case 'officerAddressUpdated':
+      return 'Officer address updated'
+    default:
+      return ''
+  }
 }
 
 const toGroupedLeafRow = <T extends { txHash: string }>(row: T): GroupedTransactionRow<T> => ({
@@ -71,4 +159,24 @@ export const groupTransactionsByTxHash = <T extends { txHash: string }>(
   })
 
   return groupedRows
+}
+
+export const enrichTransaction = (tx: {
+  amount: string | number
+  tokenAddress?: string
+  token: string
+}) => {
+  const currencyStore = useCurrencyStore()
+  const tokenAddress = String(tx.tokenAddress ?? '').toLowerCase()
+  const matchedToken = currencyStore.supportedTokens.find(
+    (t) => t.address.toLowerCase() === tokenAddress
+  )
+  const token =
+    matchedToken?.symbol || tokenSymbol(tokenAddress) || tx.token || NETWORK.currencySymbol
+  const tokenId = matchedToken?.id ?? resolveTokenIdByAddress(tokenAddress)
+  const amount = tx.amount ?? 0
+  const numericAmount = Number(amount)
+  const priceInLocal = tokenId ? currencyStore.getTokenPrice(tokenId, true) : 0
+  const amountLocal = Number.isFinite(numericAmount) ? numericAmount * priceInLocal : 0
+  return { tokenAddress, token, amount, amountLocal }
 }

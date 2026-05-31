@@ -23,6 +23,58 @@ ESLint enforces this via `no-restricted-syntax`: any `vi.mock('<globally-mocked-
 
 If you need to mock a module that **isn't** yet globally mocked but you're reaching for it across several specs, add it to `src/tests/setup/` and re-export the override hook from `src/tests/mocks/index.ts` rather than re-mocking it in each spec.
 
+## Mounting components: `renderWithProviders`
+
+`renderWithProviders` (from [`@/tests/mocks`](./mocks)) is the **default mounting path** for component specs. It is a drop-in for `mount` that installs the providers nearly every spec needs — `createTestingPinia` and the route stub — so you stop copy-pasting `global.plugins` into every file.
+
+```typescript
+// ❌ Before — every spec hand-rolls the same plugins block
+import { mount } from '@vue/test-utils'
+import { createTestingPinia } from '@pinia/testing'
+
+const wrapper = mount(MyComponent, {
+  props: { loading: false },
+  global: {
+    plugins: [createTestingPinia({ createSpy: vi.fn })]
+  }
+})
+
+// ✅ After — providers are installed for you
+import { renderWithProviders } from '@/tests/mocks'
+
+const wrapper = renderWithProviders(MyComponent, {
+  props: { loading: false }
+})
+```
+
+The returned wrapper targets the component itself, so `props`, `emitted()`, `setProps`, `find`, `findComponent`, etc. all behave exactly as with `mount`. Any `mount` option you pass through (`props`, `attrs`, `slots`, `global.stubs`, …) is forwarded — the helper only **adds** to `global.plugins`, it never clobbers your `global` block:
+
+```typescript
+// Compose with local stubs — the helper merges them with the global ones
+renderWithProviders(RedeployOfficerModal, {
+  props: { open: true },
+  global: { stubs: { UForm, UFormField, UInput } }
+})
+```
+
+### Options
+
+All [`mount` options](https://test-utils.vuejs.org/api/#mount) are accepted, plus:
+
+| Option            | Default                              | Purpose                                                                                                                                                           |
+| ----------------- | ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pinia`           | `createTestingPinia({ createSpy })`  | `false` to install no Pinia (rely on the global `vi.mock('@/stores/*')`); a `TestingOptions` object to tweak it; a `TestingPinia` instance to read `pinia.state`. |
+| `route`           | `{ params: { id: '1' } }`            | Override the globally-mocked `useRoute()`. Reset before every test, so it never leaks.                                                                            |
+| `queryClient`     | _none_ (TanStack is mocked globally) | `true` for a fresh `QueryClient` (retries off) or pass your own. Only matters in specs that `vi.unmock('@tanstack/vue-query')`.                                   |
+| `tooltipProvider` | `false`                              | Wrap in reka-ui's `<TooltipProvider>` for components that render tooltip primitives directly (see below). `UTooltip` is stubbed, so rarely needed.                |
+
+```typescript
+// Opt out of Pinia and point the route at a different team
+renderWithProviders(MyView, { pinia: false, route: { params: { id: '42' } } })
+```
+
+> **Pinia note:** `createTestingPinia` is installed by default, but the global `vi.mock('@/stores/*')` still wins for the stores it mocks (see [`docs/testing/MOCK_SYSTEM.md`](../../../docs/testing/MOCK_SYSTEM.md)). Pass `pinia: false` when a spec relies entirely on the mocked stores and you want to make that explicit.
+
 ## Testing Components that Use Nuxt UI
 
 ### TL;DR
@@ -282,17 +334,15 @@ Both steps are required: `vi.unmock()` restores the real module, and `stubs: { X
 
 ## Provider Contexts (TooltipProvider)
 
-Some reka-ui primitives require a `TooltipProvider` ancestor. `UTooltip` is already globally mocked, so you normally don't need this. But if you test a component that uses reka-ui primitives directly, use `mountWithProviders`:
+Some reka-ui primitives require a `TooltipProvider` ancestor. `UTooltip` is already globally mocked, so you normally don't need this. But if you test a component that uses reka-ui primitives directly, pass `tooltipProvider: true` to `renderWithProviders`:
 
 ```typescript
-import { mountWithProviders } from '@/tests/setup/nuxt-ui.setup'
+import { renderWithProviders } from '@/tests/mocks'
 
-const wrapper = mountWithProviders(MyComponent, {
-  global: {
-    plugins: [createTestingPinia({ createSpy: vi.fn })]
-  }
-})
+const wrapper = renderWithProviders(MyComponent, { tooltipProvider: true })
 ```
+
+When `tooltipProvider` is enabled the returned wrapper targets the inner component, so `setProps` is unavailable — drive props through the DOM or the initial `props` option instead.
 
 ## Adding a New Global Stub
 

@@ -37,9 +37,7 @@
         />
       </template>
       <template #member-cell="{ row: { original: row } }">
-        <UserComponent
-          :user="{ name: row.userAddress, address: row.userAddress, imageUrl: '' }"
-        ></UserComponent>
+        <UserComponent :user="resolveUser(row.userAddress)"></UserComponent>
       </template>
       <template #startDate-cell="{ row: { original: row } }">
         <span>{{ new Date(Number(row.startDate) * 1000).toLocaleString('en-US') }}</span>
@@ -90,7 +88,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { log, parseError, tokenSymbol } from '@/utils'
+import { log, parseError, tokenSymbol, resolveUser } from '@/utils'
 import { useUserDataStore, useTeamStore } from '@/stores'
 import { keccak256 } from 'viem'
 import { useReadContract } from '@wagmi/vue'

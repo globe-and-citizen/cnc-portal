@@ -116,7 +116,7 @@ describe('weeklyClaim.queries', () => {
         }
       })
 
-      const options = useQueryFn.mock.calls.at(-1)?.[0] as {
+      const options = useQueryFn.mock.calls[useQueryFn.mock.calls.length - 1]?.[0] as {
         queryKey: { value: unknown }
         enabled?: () => boolean
         queryFn: () => Promise<{ data: WeeklyClaim[]; total: number }>
@@ -174,7 +174,7 @@ describe('weeklyClaim.queries', () => {
         pathParams: { claimId: '77' }
       })
 
-      let options = useQueryFn.mock.calls.at(-1)?.[0] as {
+      let options = useQueryFn.mock.calls[useQueryFn.mock.calls.length - 1]?.[0] as {
         queryKey: { value: unknown }
         enabled?: () => boolean
         queryFn: () => Promise<WeeklyClaim>
@@ -189,7 +189,9 @@ describe('weeklyClaim.queries', () => {
         pathParams: { claimId: null }
       })
 
-      options = useQueryFn.mock.calls.at(-1)?.[0] as { enabled?: () => boolean }
+      options = useQueryFn.mock.calls[useQueryFn.mock.calls.length - 1]?.[0] as {
+        enabled?: () => boolean
+      }
       expect(options.enabled?.()).toBe(false)
     })
   })

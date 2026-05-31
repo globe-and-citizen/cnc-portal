@@ -3,7 +3,25 @@ import type { ComputedRef } from 'vue'
 import { groupTransactionsByTxHash } from '@/utils'
 import type { GroupedTransactionRow } from '@/types/transaction-history'
 
-type TransactionBase = { txHash: string; type: string; date: string | number }
+type TransactionBase = {
+  txHash: string
+  type: string
+  date: string | number
+  from: string
+  to: string
+  amount: string | number
+  amountUSD: number
+  tokenAddress: string
+  token: string
+  amountLocal?: number
+}
+
+export const childColspan = (cell: {
+  row: { depth: number; getAllCells: () => unknown[] }
+}): string => String(cell.row.depth > 0 ? cell.row.getAllCells().length : 1)
+
+export const childHidden = (cell: { row: { depth: number } }) =>
+  cell.row.depth > 0 ? 'hidden' : ''
 
 export const PAGE_SIZE_OPTIONS = [
   { label: '10', value: 10 },
@@ -61,6 +79,13 @@ export const useTransactionTable = <T extends TransactionBase>(transactions: Com
   const getSubRows = (row: GroupedTransactionRow<T>): GroupedTransactionRow<T>[] =>
     row.subRows ?? []
 
+  const selectedTx = ref<T | null>(null)
+  const showDetail = ref(false)
+  const openDetail = (row: T) => {
+    selectedTx.value = row
+    showDetail.value = true
+  }
+
   watch(filteredTransactions, () => {
     page.value = 1
     expandedRows.value = {}
@@ -83,6 +108,9 @@ export const useTransactionTable = <T extends TransactionBase>(transactions: Com
     total,
     displayedTransactions,
     expandedRows,
-    getSubRows
+    getSubRows,
+    selectedTx,
+    showDetail,
+    openDetail
   }
 }

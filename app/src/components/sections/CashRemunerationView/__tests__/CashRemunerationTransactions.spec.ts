@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { mount, type VueWrapper } from '@vue/test-utils'
-import { defineComponent, nextTick } from 'vue'
+import { nextTick } from 'vue'
+import { type VueWrapper } from '@vue/test-utils'
 import type { Address } from 'viem'
 
 // Auto-imported @nuxt/ui components bypass `config.global.stubs` because the
@@ -24,24 +24,6 @@ vi.mock('@nuxt/ui/components/Select.vue', () => ({
   }
 }))
 
-import CashRemunerationTransactions from '../CashRemunerationTransactions.vue'
-
-type CRRow = {
-  type: string
-  txHash: string
-  amount: string | number
-  amountLocal: number
-  token: string
-}
-type Column = { header: string }
-
-const tableData = (wrapper: VueWrapper) =>
-  wrapper.findComponent({ name: 'UTable' }).props('data') as CRRow[]
-const tableColumns = (wrapper: VueWrapper) =>
-  wrapper.findComponent({ name: 'UTable' }).props('columns') as Column[]
-const tableLoading = (wrapper: VueWrapper) =>
-  wrapper.findComponent({ name: 'UTable' }).props('loading') as boolean
-
 const { apolloState, mockUseQuery, mockCurrencyStore, mockGetTokenPrice } = vi.hoisted(() => {
   const apolloState = {
     cashRemunerationQueryResult: null as unknown as { value: unknown },
@@ -63,12 +45,7 @@ const { apolloState, mockUseQuery, mockCurrencyStore, mockGetTokenPrice } = vi.h
     getTokenPrice: mockGetTokenPrice
   }
 
-  return {
-    apolloState,
-    mockUseQuery,
-    mockCurrencyStore,
-    mockGetTokenPrice
-  }
+  return { apolloState, mockUseQuery, mockCurrencyStore, mockGetTokenPrice }
 })
 
 vi.mock('@vue/apollo-composable', async () => {
@@ -101,132 +78,17 @@ vi.mock('@/stores/currencyStore', () => ({
   useCurrencyStore: () => mockCurrencyStore
 }))
 
-const UCardStub = defineComponent({
-  name: 'UCard',
-  template: '<div><slot name="header" /><slot /></div>'
-})
-
-const UTableStub = defineComponent({
-  name: 'UTable',
-  props: {
-    data: { type: Array, required: false },
-    columns: { type: Array, required: false },
-    loading: { type: Boolean, required: false }
-  },
-  template: '<div data-test="cash-remuneration-table"></div>'
-})
-
-const USelectStub = defineComponent({
-  name: 'USelect',
-  props: {
-    modelValue: { type: String, required: false },
-    items: { type: Array, required: false }
-  },
-  emits: ['update:modelValue'],
-  template: '<div data-test="type-filter"></div>'
-})
-
-const CustomDatePickerStub = defineComponent({
-  name: 'CustomDatePicker',
-  props: {
-    modelValue: { type: Array, required: false }
-  },
-  emits: ['update:modelValue'],
-  template: '<div data-test="date-filter"></div>'
-})
-
-const AddressToolTipStub = defineComponent({
-  name: 'AddressToolTip',
-  template: '<div />'
-})
-
-const UBadgeStub = defineComponent({
-  name: 'UBadge',
-  template: '<span><slot /></span>'
-})
-
-const CONTRACT_ADDRESS = '0x1111111111111111111111111111111111111111' as Address
-const USDC_ADDRESS = '0xa3492d046095affe351cfac15de9b86425e235db'
-const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
-
-const buildCashRemunerationQueryResult = () => ({
-  cashRemunerationDeposits: {
-    items: [
-      {
-        id: '0xdeposithash-0',
-        contractAddress: CONTRACT_ADDRESS,
-        depositor: '0x2222222222222222222222222222222222222222',
-        amount: '1000000000000000000',
-        timestamp: 1_700_000_000
-      }
-    ]
-  },
-  cashRemunerationWithdraws: {
-    items: [
-      {
-        id: '0xwithdrawhash-0',
-        contractAddress: CONTRACT_ADDRESS,
-        withdrawer: '0x3333333333333333333333333333333333333333',
-        amount: '2000000000000000000',
-        timestamp: 1_700_000_100
-      }
-    ]
-  },
-  cashRemunerationWithdrawTokens: {
-    items: []
-  },
-  cashRemunerationWageClaims: {
-    items: []
-  },
-  cashRemunerationOwnerTreasuryWithdrawNatives: {
-    items: []
-  },
-  cashRemunerationOwnerTreasuryWithdrawTokens: {
-    items: []
-  },
-  cashRemunerationOfficerUpdateds: {
-    items: []
-  },
-  cashRemunerationTokenSupportAddeds: {
-    items: []
-  },
-  cashRemunerationTokenSupportRemoveds: {
-    items: []
-  }
-})
-
-const buildIncomingTransfersQueryResult = () => ({
-  bankTokenTransfers: {
-    items: [
-      {
-        id: '0xbankfundinghash-0',
-        contractAddress: '0x9999999999999999999999999999999999999999',
-        sender: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
-        to: CONTRACT_ADDRESS,
-        token: USDC_ADDRESS,
-        amount: '1000000',
-        timestamp: 1_700_000_050
-      }
-    ]
-  }
-})
-
-const createWrapper = (cashRemunerationAddress: Address = CONTRACT_ADDRESS): VueWrapper =>
-  mount(CashRemunerationTransactions, {
-    props: {
-      cashRemunerationAddress
-    },
-    global: {
-      stubs: {
-        UCard: UCardStub,
-        UTable: UTableStub,
-        USelect: USelectStub,
-        UBadge: UBadgeStub,
-        AddressToolTip: AddressToolTipStub,
-        CustomDatePicker: CustomDatePickerStub
-      }
-    }
-  })
+import {
+  CONTRACT_ADDRESS,
+  USDC_ADDRESS,
+  ZERO_ADDRESS,
+  tableData,
+  tableColumns,
+  tableLoading,
+  buildCashRemunerationQueryResult,
+  buildIncomingTransfersQueryResult,
+  createWrapper
+} from './CashRemunerationTransactions.fixture'
 
 describe('CashRemunerationTransactions', () => {
   let wrapper: VueWrapper
@@ -260,7 +122,7 @@ describe('CashRemunerationTransactions', () => {
     expect(data.map((row) => row.type)).toEqual(
       expect.arrayContaining(['deposit', 'tokenDeposit', 'withdraw'])
     )
-    expect(columns.at(-1)?.header).toBe('Value (USD)')
+    expect(columns.some((column) => column.header === 'Value (USD)')).toBe(true)
   })
 
   it('passes loading state to UTable', () => {

@@ -11,4 +11,5 @@ export * from './safeDepositRouter.mock'
 export * from './utils.mock'
 
 // Export test utilities
-export { mountWithProviders } from '../setup/nuxt-ui.setup'
+export { renderWithProviders } from '../helpers/renderWithProviders'
+export type { RenderOptions, PiniaOption } from '../helpers/renderWithProviders'

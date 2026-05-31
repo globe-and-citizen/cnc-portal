@@ -68,7 +68,6 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { z } from 'zod'
 import { parseUnits, zeroAddress, type Address } from 'viem'
 
 import { useContractBalance } from '@/composables/useContractBalance'
@@ -80,7 +79,8 @@ import { parseError } from '@/utils'
 import {
   formatSafeDepositRouterMultiplier,
   calculateSherCompensation,
-  calculateDepositFromSher
+  calculateDepositFromSher,
+  buildDepositAmountSchema
 } from '@/utils/safeDepositRouterUtil'
 import TokenAmount from './TokenAmount.vue'
 import CompensationAmount from './CompensationAmount.vue'
@@ -168,38 +168,11 @@ const bigIntAmount = computed<bigint>(() => {
   }
 })
 
-const isValidDecimals = (value: string) => {
-  const [, fractionalPart = ''] = value.split('.')
-  if (fractionalPart.length > TOKEN_DECIMALS) return false
-  try {
-    return parseUnits(value, TOKEN_DECIMALS) > 0n
-  } catch {
-    return false
-  }
-}
-
 const formSchema = computed(() =>
-  z.object({
-    amount: z
-      .string()
-      .trim()
-      .min(1, 'Amount is required.')
-      .refine(
-        (value) =>
-          /^(?:\d+\.?\d*|\.\d+)$/.test(value) &&
-          Number.isFinite(Number(value)) &&
-          Number(value) > 0,
-        'Enter a valid amount greater than 0.'
-      )
-      .refine(
-        (value) => !selectedToken.value || Number(value) <= (selectedToken.value.amount ?? 0),
-        'Amount exceeds available balance.'
-      )
-      .refine(
-        isValidDecimals,
-        `Enter a valid token amount with up to ${TOKEN_DECIMALS} decimal places.`
-      )
-  })
+  buildDepositAmountSchema(
+    selectedToken.value ? (selectedToken.value.amount ?? 0) : undefined,
+    TOKEN_DECIMALS
+  )
 )
 
 const handleSherAmountChange = (value: string) => {

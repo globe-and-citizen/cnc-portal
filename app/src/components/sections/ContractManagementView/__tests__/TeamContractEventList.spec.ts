@@ -106,30 +106,30 @@ describe('TeamContractEventList.vue', () => {
 
     // Verify PaymentReleased details
     const detailItems = wrapper.findAll('ul li')
-    expect(detailItems.at(0)?.text()).toContain('Payment Released: 500 POL')
+    expect(detailItems[0]?.text()).toContain('Payment Released: 500 POL')
   })
 
   it('displays correct event details for BudgetWithdrawn', async () => {
     // Expand the second campaign
     const toggleButtons = wrapper.findAll('button[role="switch"]')
-    await toggleButtons.at(1)?.trigger('click')
+    await toggleButtons[1]?.trigger('click')
 
     // Verify BudgetWithdrawn details
     const detailItems = wrapper.findAll('ul li')
-    expect(detailItems.at(0)?.text()).toContain('Budget Withdrawn: 300 POL by 0xAdvertiser1')
+    expect(detailItems[0]?.text()).toContain('Budget Withdrawn: 300 POL by 0xAdvertiser1')
   })
 
   it('displays correct event details for PaymentReleasedOnWithdrawApproval', async () => {
     const toggleButtons = wrapper.findAll('button[role="switch"]')
-    await toggleButtons.at(2)?.trigger('click')
+    await toggleButtons[2]?.trigger('click')
 
     const detailItem = wrapper.findAll('ul li')
-    expect(detailItem.at(0)?.text()).toContain('Payment Released on Approval: 1500 POL')
+    expect(detailItem[0]?.text()).toContain('Payment Released on Approval: 1500 POL')
   })
 
   it('returns N/A when AdCampaignCreated event is missing', async () => {
     const toggleButtons = wrapper.findAll('button[role="switch"]')
-    await toggleButtons.at(3)?.trigger('click')
+    await toggleButtons[3]?.trigger('click')
 
     const budgetCell = wrapper.findAll('.campaign-budget')[3]
     expect(budgetCell.text()).toBe('N/A POL')

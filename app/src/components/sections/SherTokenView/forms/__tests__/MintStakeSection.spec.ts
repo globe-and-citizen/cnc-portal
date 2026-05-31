@@ -85,11 +85,11 @@ describe('MintStakeSection.vue', () => {
 
     const issuedEvents = wrapper.emitted('update:issuedAmount') ?? []
     const payloadEvents = wrapper.emitted('update:stakePayload') ?? []
-    const latestPayload = payloadEvents.at(-1)?.[0] as
+    const latestPayload = payloadEvents[payloadEvents.length - 1]?.[0] as
       | { amount: number; percentage: number; stakeMode: string }
       | undefined
 
-    expect(issuedEvents.at(-1)).toEqual([10])
+    expect(issuedEvents[issuedEvents.length - 1]).toEqual([10])
     expect(latestPayload?.amount).toBe(30)
     expect(latestPayload?.stakeMode).toBe('ending')
     expect(latestPayload?.percentage).toBeCloseTo(27.27272727272727, 10)
@@ -118,7 +118,7 @@ describe('MintStakeSection.vue', () => {
 
     expect(wrapper.findComponent({ name: 'TwinAmountInputs' }).props('amount')).toBeCloseTo(4950, 6)
     const payloadEvents = wrapper.emitted('update:stakePayload') ?? []
-    expect(payloadEvents.at(-1)?.[0]).toMatchObject({
+    expect(payloadEvents[payloadEvents.length - 1]?.[0]).toMatchObject({
       addMax: 100,
       stakeMode: 'add'
     })
