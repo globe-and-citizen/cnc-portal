@@ -20,16 +20,12 @@ type MutateOptions = {
 
 type SafeDepositRouterVm = {
   amount: string
-  sherAmount: string
   selectedTokenId: string
   isAmountValid: boolean
   isUpdatingFromSher: boolean
   currentStep: number
   bigIntAmount: bigint
-  handleSherAmountChange: (value: string) => void
   submitForm: () => Promise<void>
-  handleCancel: () => void
-  reset: () => void
 }
 
 const createWrapper = () =>
@@ -40,6 +36,7 @@ const createWrapper = () =>
   })
 
 const getVm = (wrapper: ReturnType<typeof createWrapper>) =>
+  // eslint-disable-next-line no-restricted-syntax -- wrapper.vm exposes orchestration and reactive internals with no stable DOM surface: submitForm() is the async approve→deposit entrypoint; currentStep has no findable control (UStepper is auto-imported and unresolvable by name, and the deposit button label is identical for steps 0 and 2); isUpdatingFromSher/isAmountValid/selectedTokenId are internal guard flags; the amount value in the bidirectional-sync test must be read synchronously before the amount-watcher flushes (a prop read needs nextTick, which mutates isUpdatingFromSher); and bigIntAmount is a pure computed. All are inherently white-box.
   wrapper.vm as unknown as SafeDepositRouterVm
 
 const setTokenAmount = async (
@@ -105,25 +102,29 @@ describe('SafeDepositRouterForm.vue', () => {
   it('handles bidirectional amount calculations and cancel/reset paths', async () => {
     const wrapper = createWrapper()
     const vm = getVm(wrapper)
+    const compensation = () => wrapper.findComponent({ name: 'CompensationAmount' })
+    const tokenAmount = () => wrapper.findComponent({ name: 'TokenAmount' })
 
-    vm.handleSherAmountChange('')
+    // CompensationAmount is bound `v-model:modelValue="sherAmount" @update:modelValue="handleSherAmountChange"`,
+    // so emitting its model drives the SHER→amount calculation exactly as user typing does.
+    compensation().vm.$emit('update:modelValue', '')
     expect(vm.amount).toBe('0')
     expect(vm.isUpdatingFromSher).toBe(true)
 
     vm.isUpdatingFromSher = false
-    vm.handleSherAmountChange('-1')
+    compensation().vm.$emit('update:modelValue', '-1')
     expect(vm.amount).toBe('0')
 
-    vm.handleSherAmountChange('10')
+    compensation().vm.$emit('update:modelValue', '10')
     expect(Number(vm.amount)).toBeGreaterThan(0)
 
     vm.currentStep = 2
-    vm.handleCancel()
+    await wrapper.find('[data-test="cancel-button"]').trigger('click')
     await wrapper.vm.$nextTick()
 
-    expect(vm.amount).toBe('')
-    expect(vm.sherAmount).toBe('0')
-    expect(vm.selectedTokenId).toBe('usdc')
+    expect(tokenAmount().props('modelValue').amount).toBe('')
+    expect(tokenAmount().props('modelValue').tokenId).toBe('usdc')
+    expect(compensation().props('modelValue')).toBe('0')
     expect(wrapper.emitted('closeModal')).toBeTruthy()
   })
 
@@ -187,8 +188,8 @@ describe('SafeDepositRouterForm.vue', () => {
       { args: ['0xA3492D046095AFFE351cFac15de9b86425E235dB', 1000000n] },
       expect.objectContaining({ onSuccess: expect.any(Function), onError: expect.any(Function) })
     )
-    expect(vm.amount).toBe('')
-    expect(vm.sherAmount).toBe('0')
+    expect(wrapper.findComponent({ name: 'TokenAmount' }).props('modelValue').amount).toBe('')
+    expect(wrapper.findComponent({ name: 'CompensationAmount' }).props('modelValue')).toBe('0')
     expect(wrapper.emitted('closeModal')).toBeTruthy()
   })
 
