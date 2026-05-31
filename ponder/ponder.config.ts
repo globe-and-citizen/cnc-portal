@@ -1,5 +1,5 @@
-import { createConfig, factory } from "ponder";
-import { parseAbiItem } from "viem";
+import { createConfig, factory, loadBalance, rateLimit } from "ponder";
+import { http, fallback, parseAbiItem } from "viem";
 import { FACTORY_BEACON_ABI } from "./abis/factory-beacon";
 import { OFFICER_ABI } from "./abis/officer";
 import { BANK_ABI } from "./abis/bank";
@@ -44,6 +44,46 @@ const feeCollectorAddress = process.env.FEE_COLLECTOR_ADDRESS as `0x${string}`;
 // On Hardhat start from block 0; on Polygon skip pre-deployment blocks.
 const startBlock = isHardhat ? 0 : Number(process.env.START_BLOCK);
 
+// ─── Polygon RPC transport ──────────────────────────────────────────────────
+// Two pools of comma-separated URLs: a primary pool that is load-balanced
+// (round-robin), and an optional backup pool used only when the whole primary
+// pool fails. Each endpoint is independently rate-limited to stay under the
+// provider's per-key limit and avoid 429s.
+const POLYGON_RPS = Number(process.env.PONDER_RPC_MAX_RPS ?? 25);
+
+const parseRpcUrls = (value: string | undefined): string[] =>
+  (value ?? "")
+    .split(",")
+    .map((url) => url.trim())
+    .filter(Boolean);
+
+// Falls back to the legacy single-URL var so existing deployments keep working.
+const primaryRpcUrls = parseRpcUrls(
+  process.env.PONDER_RPC_URLS_137 ?? process.env.PONDER_RPC_URL_137,
+);
+const backupRpcUrls = parseRpcUrls(process.env.PONDER_RPC_URLS_137_BACKUP);
+
+if (!isHardhat && primaryRpcUrls.length === 0) {
+  throw new Error(
+    "Set PONDER_RPC_URLS_137 (comma-separated) or PONDER_RPC_URL_137 for Polygon.",
+  );
+}
+
+const rateLimitedPool = (urls: string[]) =>
+  loadBalance(
+    urls.map((url) => rateLimit(http(url), { requestsPerSecond: POLYGON_RPS })),
+  );
+
+const polygonRpc =
+  primaryRpcUrls.length === 0
+    ? undefined
+    : backupRpcUrls.length > 0
+      ? fallback([
+          rateLimitedPool(primaryRpcUrls),
+          rateLimitedPool(backupRpcUrls),
+        ])
+      : rateLimitedPool(primaryRpcUrls);
+
 // ─── Shared factory helper ────────────────────────────────────────────────────
 const subContractFactory = factory({
   event: CONTRACT_DEPLOYED_EVENT,
@@ -53,7 +93,7 @@ export default createConfig({
   chains: {
     polygon: {
       id: 137,
-      rpc: process.env.PONDER_RPC_URL_137,
+      rpc: polygonRpc,
     },
     ...(isHardhat
       ? {
