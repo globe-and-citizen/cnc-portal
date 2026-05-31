@@ -249,15 +249,8 @@ export default [
     }
   },
   {
-    files: [
-      'src/artifacts/**/*.{ts,mts,tsx,vue}',
-      'src/components/GenericTransactionHistory.vue',
-      'src/components/sections/VestingView/forms/CreateVesting.vue',
-      'src/components/TableComponent.vue',
-      'src/components/sections/DashboardView/forms/ApproveUsersEIP712Form.vue',
-      'src/components/forms/SafeDepositRouterForm.vue',
-      'src/components/sections/CashRemunerationView/__tests__/CashRemunerationTransactions.spec.ts'
-    ],
+    // Generated contract artifacts are exempt from max-lines.
+    files: ['src/artifacts/**/*.{ts,mts,tsx,vue}'],
     rules: {
       'max-lines': 'off'
     }

@@ -36,7 +36,7 @@ export type TokenBalanceValue = {
  * @param token - The token configuration object, including ID, name, symbol, etc.
  * @param values - An object mapping currency codes to TokenBalanceValue objects,
  */
-interface TokenBalance {
+export interface TokenBalance {
   amount: number
   token: (typeof SUPPORTED_TOKENS)[number]
   values: Record<string, TokenBalanceValue>

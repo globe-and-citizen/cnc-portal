@@ -1,13 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { mount, flushPromises } from '@vue/test-utils'
-import { createTestingPinia } from '@pinia/testing'
+import { flushPromises } from '@vue/test-utils'
 import { computed, ref } from 'vue'
 import type { Address } from 'viem'
 import ShareholderMigrationBanner from '@/components/sections/SherTokenView/ShareholderMigrationBanner.vue'
 import { useInvestorAddress, useInvestorTotalSupply } from '@/composables/investor/reads'
 import { InconsistentSupplyError } from '@/composables/investor/useShareholderMigration'
 import { useTeamStore } from '@/stores'
-import { mockInvestorReads, mockTeamStore } from '@/tests/mocks'
+import { mockInvestorReads, mockTeamStore, renderWithProviders } from '@/tests/mocks'
 
 // ---------------------------------------------------------------------------
 // Mock the migration composable. Investor reads + team store come from the
@@ -94,11 +93,8 @@ function setupMocks(
 }
 
 function mountBanner() {
-  return mount(ShareholderMigrationBanner, {
-    global: {
-      plugins: [createTestingPinia({ createSpy: vi.fn })],
-      stubs
-    }
+  return renderWithProviders(ShareholderMigrationBanner, {
+    global: { stubs }
   })
 }
 

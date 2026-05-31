@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { mount, flushPromises } from '@vue/test-utils'
-import { createTestingPinia } from '@pinia/testing'
+import { flushPromises } from '@vue/test-utils'
 import { ref } from 'vue'
 import RedeployOfficerModal from '@/components/sections/ContractManagementView/RedeployOfficerModal.vue'
+import { renderWithProviders } from '@/tests/mocks'
 
 // ---------------------------------------------------------------------------
 // Mocks for the composables used by RedeployOfficerModal. The investor reads
@@ -63,15 +63,12 @@ const stubs = {
 }
 
 function mountModal(props: { open?: boolean } = {}) {
-  return mount(RedeployOfficerModal, {
+  return renderWithProviders(RedeployOfficerModal, {
     props: {
       open: true,
       ...props
     },
-    global: {
-      plugins: [createTestingPinia({ createSpy: vi.fn })],
-      stubs
-    }
+    global: { stubs }
   })
 }
 
