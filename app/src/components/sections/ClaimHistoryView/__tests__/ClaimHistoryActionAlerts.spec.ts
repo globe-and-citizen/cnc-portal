@@ -31,42 +31,44 @@ describe('ClaimHistoryActionAlerts', () => {
     }
   }
 
+  const makeGlobal = () => ({
+    plugins: [createTestingPinia({ createSpy: vi.fn })],
+    stubs: {
+      SubmitClaims: defineComponent({
+        name: 'SubmitClaims',
+        props: {
+          signedWeekStarts: { type: Array, required: true }
+        },
+        setup(_, { expose }) {
+          expose({ openModalForDay: openModalForDayMock })
+          return {}
+        },
+        template: '<div data-test="submit-claims">{{ signedWeekStarts.length }}</div>'
+      }),
+      CRSigne: {
+        name: 'CRSigne',
+        props: ['disabled'],
+        template: '<div data-test="cr-signe">{{ disabled }}</div>'
+      },
+      CRWithdrawClaim: {
+        name: 'CRWithdrawClaim',
+        props: ['disabled'],
+        template: '<div data-test="cr-withdraw">{{ disabled }}</div>'
+      },
+      IconifyIcon: {
+        name: 'IconifyIcon',
+        template: '<span data-test="icon" />'
+      }
+    }
+  })
+
   const createWrapper = (props: Record<string, unknown> = {}) =>
     mount(ClaimHistoryActionAlerts, {
       props: {
         memberAddress: baseAddress,
         ...props
       },
-      global: {
-        plugins: [createTestingPinia({ createSpy: vi.fn })],
-        stubs: {
-          SubmitClaims: defineComponent({
-            name: 'SubmitClaims',
-            props: {
-              signedWeekStarts: { type: Array, required: true }
-            },
-            setup(_, { expose }) {
-              expose({ openModalForDay: openModalForDayMock })
-              return {}
-            },
-            template: '<div data-test="submit-claims">{{ signedWeekStarts.length }}</div>'
-          }),
-          CRSigne: {
-            name: 'CRSigne',
-            props: ['disabled'],
-            template: '<div data-test="cr-signe">{{ disabled }}</div>'
-          },
-          CRWithdrawClaim: {
-            name: 'CRWithdrawClaim',
-            props: ['disabled'],
-            template: '<div data-test="cr-withdraw">{{ disabled }}</div>'
-          },
-          IconifyIcon: {
-            name: 'IconifyIcon',
-            template: '<span data-test="icon" />'
-          }
-        }
-      }
+      global: makeGlobal()
     })
 
   beforeEach(() => {
@@ -138,10 +140,12 @@ describe('ClaimHistoryActionAlerts', () => {
     })
 
     const wrapper = createWrapper({ weeklyClaim: createWeeklyClaim() })
-    const vm = wrapper.vm as unknown as { signedWeekStarts: string[] }
 
     expect(wrapper.find('[data-test="submit-claims"]').text()).toBe('2')
-    expect(vm.signedWeekStarts).toEqual(['2024-01-08T00:00:00.000Z', '2024-01-15T00:00:00.000Z'])
+    expect(wrapper.findComponent({ name: 'SubmitClaims' }).props('signedWeekStarts')).toEqual([
+      '2024-01-08T00:00:00.000Z',
+      '2024-01-15T00:00:00.000Z'
+    ])
   })
 
   it('falls back to empty signedWeekStarts when weekly claims data is undefined', () => {
@@ -285,11 +289,21 @@ describe('ClaimHistoryActionAlerts', () => {
   })
 
   it('bridges openSubmitClaimForDay to SubmitClaims exposed method', () => {
-    const wrapper = createWrapper({ weeklyClaim: createWeeklyClaim() })
-    const vm = wrapper.vm as unknown as { openSubmitClaimForDay: (dayIso: string) => void }
     const dayIso = '2024-01-10T00:00:00.000Z'
+    const weeklyClaim = createWeeklyClaim()
 
-    vm.openSubmitClaimForDay(dayIso)
+    const ParentHarness = defineComponent({
+      components: { ClaimHistoryActionAlerts },
+      setup() {
+        const child = ref<InstanceType<typeof ClaimHistoryActionAlerts> | null>(null)
+        return { child, weeklyClaim, baseAddress }
+      },
+      template:
+        '<ClaimHistoryActionAlerts ref="child" :member-address="baseAddress" :weekly-claim="weeklyClaim" />'
+    })
+
+    const wrapper = mount(ParentHarness, { global: makeGlobal() })
+    wrapper.vm.child?.openSubmitClaimForDay(dayIso)
 
     expect(openModalForDayMock).toHaveBeenCalledWith(dayIso)
   })
