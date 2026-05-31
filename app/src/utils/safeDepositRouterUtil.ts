@@ -1,4 +1,5 @@
 import { formatUnits, parseUnits } from 'viem'
+import { z } from 'zod'
 
 /**
  * Format multiplier from contract (bigint) to human-readable decimal string
@@ -107,6 +108,53 @@ export function validateSherCompensationInputs(
   }
 
   return { valid: true }
+}
+
+/**
+ * Validate a token amount string: positive and within the token's decimal
+ * precision.
+ * @param value - User input amount
+ * @param decimals - Maximum decimal places (default: 6)
+ * @returns true when the amount parses to a positive value within precision
+ */
+export function isValidTokenDecimals(value: string, decimals = 6): boolean {
+  const [, fractionalPart = ''] = value.split('.')
+  if (fractionalPart.length > decimals) return false
+  try {
+    return parseUnits(value, decimals) > 0n
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Build the deposit-amount form schema: required, numeric, positive, within
+ * the available balance, and within the token's decimal precision.
+ * @param maxBalance - Available balance, or undefined when no token is selected
+ * @param decimals - Token decimals (default: 6)
+ */
+export function buildDepositAmountSchema(maxBalance: number | undefined, decimals = 6) {
+  return z.object({
+    amount: z
+      .string()
+      .trim()
+      .min(1, 'Amount is required.')
+      .refine(
+        (value) =>
+          /^(?:\d+\.?\d*|\.\d+)$/.test(value) &&
+          Number.isFinite(Number(value)) &&
+          Number(value) > 0,
+        'Enter a valid amount greater than 0.'
+      )
+      .refine(
+        (value) => maxBalance === undefined || Number(value) <= maxBalance,
+        'Amount exceeds available balance.'
+      )
+      .refine(
+        (value) => isValidTokenDecimals(value, decimals),
+        `Enter a valid token amount with up to ${decimals} decimal places.`
+      )
+  })
 }
 
 /**
