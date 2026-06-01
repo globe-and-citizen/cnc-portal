@@ -178,20 +178,12 @@
         </template>
       </UTable>
 
-      <div
-        v-if="totalActivities > pageSize"
-        class="mt-4 flex justify-end border-t border-default pt-4"
-      >
-        <UPagination
-          v-model:page="currentPage"
-          :items-per-page="pageSize"
-          :total="totalActivities"
-          :sibling-count="1"
-          show-edges
-          color="neutral"
-          variant="outline"
-        />
-      </div>
+      <AccountingPagination
+        v-model:page="currentPage"
+        v-model:page-size="pageSize"
+        :total="totalActivities"
+        noun="transactions"
+      />
     </UPageCard>
 
     <!-- Trial Balance under the table (no longer behind a separate tab). -->
@@ -202,6 +194,7 @@
 </template>
 
 <script setup lang="ts">
+import { useSessionStorage } from '@vueuse/core'
 import { format } from 'date-fns'
 import { computed, ref, watch } from 'vue'
 import {
@@ -224,6 +217,7 @@ import {
 import AccountingColumnVisibility, {
   type ColumnOption
 } from './AccountingColumnVisibility.vue'
+import AccountingPagination from './AccountingPagination.vue'
 import AccountingTrialBalance from './AccountingTrialBalance.vue'
 
 const props = defineProps<{
@@ -252,7 +246,7 @@ const generalLedger = computed(() =>
   })
 )
 
-const pageSize = 20
+const pageSize = ref(20)
 const currentPage = ref(1)
 const categoryFilter = ref<'ALL' | LedgerCategory>('ALL')
 
@@ -304,8 +298,8 @@ const activityStarts = computed(() => {
 const totalActivities = computed(() => activityStarts.value.length)
 
 const pagedRows = computed<MergedLedgerRow[]>(() => {
-  const startActivityIdx = (currentPage.value - 1) * pageSize
-  const endActivityIdx = startActivityIdx + pageSize
+  const startActivityIdx = (currentPage.value - 1) * pageSize.value
+  const endActivityIdx = startActivityIdx + pageSize.value
   const start = activityStarts.value[startActivityIdx]
   const end = activityStarts.value[endActivityIdx] ?? filteredRows.value.length
   if (start === undefined) {
@@ -332,8 +326,8 @@ const ALL_COLUMNS: ColumnOption<MergedColumnKey>[] = [
   { label: 'Tx', value: 'tx' }
 ]
 
-// Default: everything visible.
-const visibleColumns = useLocalStorage<MergedColumnKey[]>(
+// sessionStorage: per browser tab (localStorage syncs across tabs via storage events).
+const visibleColumns = useSessionStorage<MergedColumnKey[]>(
   'dashboard-accounting-ledger-visible-columns',
   ALL_COLUMNS.map(c => c.value)
 )
