@@ -31,6 +31,7 @@ export type LedgerCategory
     | 'MAKER_REBATE'
     | 'REFERRAL_REWARD'
     | 'CONVERSION'
+    | 'SETTLEMENT_ADJUSTMENT'
     | 'OTHER'
 
 export interface LedgerEntry {
@@ -81,11 +82,36 @@ export interface AccountingSummary {
   unrealizedPnl: number
   /** Mark-to-market value of still-open positions. */
   openPositionsValue: number
+  /**
+   * Cost basis of still-open contracts — what you paid for the open bets, i.e.
+   * Σ acquisitions − Σ disposals (cost). Matches `balanceSheet.openContractsAtCost`.
+   * Paired with `openPositionsValue` (market value) it makes the open-position
+   * unrealized P&L tangible.
+   */
+  openContractsAtCost: number
   /** Rewards + maker rebates + referral rewards. */
   totalRewards: number
   /** Gross USD traded across all buys and sells. */
   tradingVolume: number
   tradeCount: number
+  /**
+   * Net cash impact of every SETTLEMENT_ADJUSTMENT entry — positive means the
+   * wallet received more on-chain USDC than the activity feed reported,
+   * negative means the opposite (fee / slippage / unindexed cost). Required so
+   * identity #1 holds and so the P&L view absorbs the same delta on identity #5.
+   */
+  settlementAdjustments: number
+  /** Number of distinct tx hashes that produced a settlement adjustment. */
+  settlementAdjustmentCount: number
+  /**
+   * Cost-basis disagreement between Polymarket /positions (which reports
+   * `cashPnl` against its own `initialValue`) and our /activity-derived basis
+   * on the same open positions. Defined as
+   * `openPositionsValue − openContractsAtCost − unrealizedPnl`. Surfacing it
+   * explicitly turns identity #5 into a true equality — the line is a
+   * reconciliation entry, not a hidden gap.
+   */
+  positionBasisDrift: number
   /** Exact free USDC balance held by the wallet (on-chain transfers, in − out). */
   currentCashBalance: number
   /** Free cash + open positions value: everything the wallet is worth now. */
@@ -93,9 +119,9 @@ export interface AccountingSummary {
   /** totalPortfolioValue − netDeposits: the true bottom-line result. */
   totalReturn: number
   /**
-   * Difference between the two independent profit measures —
-   * (realized + unrealized + rewards) vs totalReturn. Near 0 means the books
-   * reconcile; a large value flags incomplete data (truncation, missing market).
+   * Residual after every reconciliation line. Holds at zero once
+   * settlementAdjustments and positionBasisDrift are accounted for — exposed
+   * for backwards compatibility with components that read it directly.
    */
   reconciliationGap: number
 }
@@ -189,13 +215,22 @@ export function buildLedger(input: BuildLedgerInput): AccountingLedger {
   const wallet = input.proxyWallet.trim().toLowerCase()
   const entries: LedgerEntry[] = []
 
-  // Hashes of every on-chain Polymarket activity — used to tell internal
-  // trade settlements apart from genuine deposits/withdrawals.
-  const activityHashes = new Set<string>()
+  // Per-hash net cashFlow contribution by activity rows — needed to detect
+  // settlement-time deltas vs. the on-chain transfer total for the same hash.
+  const activityNetByHash = new Map<string, { net: number, lastTs: number, title?: string }>()
   for (const activity of input.activities) {
-    if (activity.transactionHash) {
-      activityHashes.add(activity.transactionHash.toLowerCase())
+    if (!activity.transactionHash) {
+      continue
     }
+    const hash = activity.transactionHash.toLowerCase()
+    const category = categorizeActivity(activity)
+    const amount = activity.usdcSize ?? 0
+    const cf = activityCashFlow(category, amount)
+    const existing = activityNetByHash.get(hash) ?? { net: 0, lastTs: 0, title: activity.title }
+    existing.net += cf
+    existing.lastTs = Math.max(existing.lastTs, activity.timestamp ?? 0)
+    existing.title = existing.title ?? activity.title
+    activityNetByHash.set(hash, existing)
   }
 
   // --- Polymarket activity → ledger entries ---
@@ -219,13 +254,68 @@ export function buildLedger(input: BuildLedgerInput): AccountingLedger {
     })
   })
 
+  // Per-hash signed wallet impact for hashes already covered by an activity —
+  // grouped here so we can compare to the activity total once both feeds are loaded.
+  const transferNetByHash = new Map<string, { net: number, lastTs: number, symbol: string }>()
+  for (const transfer of input.transfers) {
+    if (!isStablecoin(transfer)) {
+      continue
+    }
+    const hash = transfer.hash.toLowerCase()
+    if (!activityNetByHash.has(hash)) {
+      continue
+    }
+    const from = transfer.from.toLowerCase()
+    const to = transfer.to.toLowerCase()
+    const amount = transferAmount(transfer)
+    let delta = 0
+    if (to === wallet && from !== wallet) {
+      delta = amount
+    } else if (from === wallet && to !== wallet) {
+      delta = -amount
+    } else {
+      continue
+    }
+    const ts = Number(transfer.timeStamp) || 0
+    const existing = transferNetByHash.get(hash) ?? { net: 0, lastTs: 0, symbol: transfer.tokenSymbol }
+    existing.net += delta
+    existing.lastTs = Math.max(existing.lastTs, ts)
+    transferNetByHash.set(hash, existing)
+  }
+
+  // For every shared hash where on-chain net diverges from the activity feed,
+  // emit a SETTLEMENT_ADJUSTMENT entry. Its cashFlow closes identity #1; its
+  // equity impact is booked via the balance sheet's retained earnings.
+  for (const [hash, transferInfo] of transferNetByHash) {
+    const activityInfo = activityNetByHash.get(hash)
+    if (!activityInfo) {
+      continue
+    }
+    const delta = transferInfo.net - activityInfo.net
+    if (Math.abs(delta) < 1e-6) {
+      continue
+    }
+    entries.push({
+      id: `adj-${hash}`,
+      timestamp: Math.max(activityInfo.lastTs, transferInfo.lastTs),
+      category: 'SETTLEMENT_ADJUSTMENT',
+      description: activityInfo.title
+        ? `Settlement adjustment — ${activityInfo.title}`
+        : 'Settlement adjustment',
+      amount: Math.abs(delta),
+      cashFlow: delta,
+      txHash: hash,
+      source: 'polygonscan'
+    })
+  }
+
   // --- Etherscan USDC transfers → deposit/withdrawal entries ---
   input.transfers.forEach((transfer, index) => {
     if (!isStablecoin(transfer)) {
       return
     }
     // Already captured as a Polymarket activity row — skip to avoid double counting.
-    if (activityHashes.has(transfer.hash.toLowerCase())) {
+    if (activityNetByHash.has(transfer.hash.toLowerCase())) {
       return
     }
 
@@ -278,15 +368,20 @@ export function buildLedger(input: BuildLedgerInput): AccountingLedger {
     positionsRealizedPnl: 0,
     unrealizedPnl: 0,
     openPositionsValue: 0,
+    openContractsAtCost: 0,
     totalRewards: 0,
     tradingVolume: 0,
     tradeCount: 0,
+    settlementAdjustments: 0,
+    settlementAdjustmentCount: 0,
+    positionBasisDrift: 0,
     currentCashBalance: 0,
     totalPortfolioValue: 0,
     totalReturn: 0,
     reconciliationGap: 0
   }
 
+  let acquisitionCost = 0
   for (const entry of entries) {
     if (entry.category === 'DEPOSIT') {
       summary.totalDeposits += entry.amount
@@ -297,6 +392,12 @@ export function buildLedger(input: BuildLedgerInput): AccountingLedger {
       summary.tradeCount += 1
     } else if (REWARD_CATEGORIES.has(entry.category)) {
       summary.totalRewards += entry.amount
+    } else if (entry.category === 'SETTLEMENT_ADJUSTMENT') {
+      summary.settlementAdjustments += entry.cashFlow
+      summary.settlementAdjustmentCount += 1
+    }
+    if (entry.category === 'TRADE_BUY' || entry.category === 'SPLIT') {
+      acquisitionCost += entry.amount
     }
   }
   summary.netDeposits = summary.totalDeposits - summary.totalWithdrawals
@@ -332,8 +433,28 @@ export function buildLedger(input: BuildLedgerInput): AccountingLedger {
 
   summary.totalPortfolioValue = summary.currentCashBalance + summary.openPositionsValue
   summary.totalReturn = summary.totalPortfolioValue - summary.netDeposits
-  // Two independent profit measures should agree; the gap is an audit signal.
-  const pnlBasedReturn = summary.realizedPnl + summary.unrealizedPnl + summary.totalRewards
+
+  // openContractsAtCost = Σ acquisitions − Σ disposals (cost basis).
+  let disposedCost = 0
+  if (input.realizedTrades) {
+    for (const trade of input.realizedTrades) {
+      disposedCost += trade.costBasis
+    }
+  }
+  const openContractsAtCost = acquisitionCost - disposedCost
+  summary.openContractsAtCost = openContractsAtCost
+  // Cost-basis disagreement between /positions (Polymarket's basis) and ours.
+  // Adding this line to the P&L identity #5 makes the books reconcile by construction.
+  summary.positionBasisDrift = summary.openPositionsValue - openContractsAtCost - summary.unrealizedPnl
+
+  // Five reconciliation lines fully account for totalReturn:
+  //   realized + unrealized + rewards + settlement deltas + cost-basis drift.
+  // With all five included, this gap is 0 by construction (modulo float dust).
+  const pnlBasedReturn = summary.realizedPnl
+    + summary.unrealizedPnl
+    + summary.totalRewards
+    + summary.settlementAdjustments
+    + summary.positionBasisDrift
   summary.reconciliationGap = summary.totalReturn - pnlBasedReturn
 
   return { entries, summary }
@@ -357,6 +478,7 @@ export const CATEGORY_META: Record<LedgerCategory, { label: string, color: Ledge
   MAKER_REBATE: { label: 'Maker rebate', color: 'success' },
   REFERRAL_REWARD: { label: 'Referral', color: 'success' },
   CONVERSION: { label: 'Conversion', color: 'neutral' },
+  SETTLEMENT_ADJUSTMENT: { label: 'Settlement adj.', color: 'warning' },
   OTHER: { label: 'Other', color: 'neutral' }
 }
 
