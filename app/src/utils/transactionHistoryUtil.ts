@@ -123,6 +123,80 @@ export const getTransactionSummary = (
   }
 }
 
+import type { UBadgeColor } from '@/types/ui'
+
+const TYPE_COLORS: Record<string, UBadgeColor> = {
+  deposit: 'success',
+  tokenDeposit: 'success',
+  mint: 'success',
+  safeDeposit: 'success',
+  dividendPaid: 'success',
+  transfer: 'info',
+  tokenTransfer: 'info',
+  rawTokenIn: 'info',
+  rawTokenOut: 'info',
+  rawTokenInternal: 'info',
+  wageClaimEnabled: 'info',
+  wageClaimDisabled: 'info',
+  officerAddressUpdated: 'info',
+  withdraw: 'warning',
+  withdrawToken: 'warning',
+  ownerTreasuryWithdrawNative: 'warning',
+  ownerTreasuryWithdrawToken: 'warning',
+  dividendDistribution: 'warning',
+  dividendDistributed: 'warning',
+  approvalActivated: 'warning',
+  approvalDeactivated: 'warning',
+  feePaid: 'error',
+  dividendPaymentFailed: 'error',
+  tokenSupportAdded: 'primary',
+  tokenSupportRemoved: 'primary',
+  tokenAddressChanged: 'primary',
+  safeDepositsEnabled: 'primary',
+  safeDepositsDisabled: 'primary',
+  safeAddressUpdated: 'primary',
+  safeMultiplierUpdated: 'primary'
+}
+
+export const getTransactionTypeColor = (type: string): UBadgeColor => TYPE_COLORS[type] ?? 'neutral'
+
+const TYPE_LABELS: Record<string, string> = {
+  deposit: 'Deposit',
+  tokenDeposit: 'Token deposit',
+  transfer: 'Transfer',
+  tokenTransfer: 'Token transfer',
+  withdraw: 'Withdrawal',
+  withdrawToken: 'Token withdrawal',
+  ownerTreasuryWithdrawNative: 'Treasury withdrawal',
+  ownerTreasuryWithdrawToken: 'Treasury token withdrawal',
+  feePaid: 'Fee paid',
+  mint: 'Shares minted',
+  safeDeposit: 'Safe deposit',
+  dividendDistribution: 'Dividend distribution',
+  dividendDistributed: 'Dividend distributed',
+  dividendPaid: 'Dividend paid',
+  dividendPaymentFailed: 'Payment failed',
+  rawTokenIn: 'Token received',
+  rawTokenOut: 'Token sent',
+  rawTokenInternal: 'Internal transfer',
+  approvalActivated: 'Approval activated',
+  approvalDeactivated: 'Approval deactivated',
+  wageClaimEnabled: 'Wage claim enabled',
+  wageClaimDisabled: 'Wage claim disabled',
+  tokenSupportAdded: 'Token support added',
+  tokenSupportRemoved: 'Token support removed',
+  tokenAddressChanged: 'Token address updated',
+  safeDepositsEnabled: 'Safe deposits enabled',
+  safeDepositsDisabled: 'Safe deposits disabled',
+  safeAddressUpdated: 'Safe address updated',
+  safeMultiplierUpdated: 'Multiplier updated',
+  officerAddressUpdated: 'Officer address updated'
+}
+
+export const getTransactionTypeLabel = (type: string): string =>
+  TYPE_LABELS[type] ??
+  type.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^./, (c) => c.toUpperCase())
+
 const toGroupedLeafRow = <T extends { txHash: string }>(row: T): GroupedTransactionRow<T> => ({
   ...row,
   groupedEventCount: 1,

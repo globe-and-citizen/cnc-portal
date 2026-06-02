@@ -5,7 +5,12 @@ import {
   isValidPositiveTokenAmount,
   resolveTokenIdByAddress
 } from '../constantUtil'
-import { getTransactionSummary, groupTransactionsByTxHash } from '../transactionHistoryUtil'
+import {
+  getTransactionSummary,
+  getTransactionTypeLabel,
+  getTransactionTypeColor,
+  groupTransactionsByTxHash
+} from '../transactionHistoryUtil'
 
 type TransactionFixture = {
   txHash: string
@@ -196,6 +201,42 @@ describe('transactionHistoryUtil', () => {
     expect(getTransactionSummary({ type: 'officerAddressUpdated', amount: '0', token: '-' })).toBe(
       'Officer address updated'
     )
+  })
+
+  it('getTransactionTypeLabel returns friendly labels for known types', () => {
+    expect(getTransactionTypeLabel('deposit')).toBe('Deposit')
+    expect(getTransactionTypeLabel('tokenTransfer')).toBe('Token transfer')
+    expect(getTransactionTypeLabel('safeDepositsEnabled')).toBe('Safe deposits enabled')
+    expect(getTransactionTypeLabel('dividendPaid')).toBe('Dividend paid')
+    expect(getTransactionTypeLabel('officerAddressUpdated')).toBe('Officer address updated')
+  })
+
+  it('getTransactionTypeLabel humanises unknown camelCase and PascalCase types', () => {
+    expect(getTransactionTypeLabel('someNewEvent')).toBe('Some New Event')
+    expect(getTransactionTypeLabel('TokenSupportAdded')).toBe('Token Support Added')
+  })
+
+  it('getTransactionTypeLabel returns empty string for empty input', () => {
+    expect(getTransactionTypeLabel('')).toBe('')
+  })
+
+  it('getTransactionTypeColor returns correct semantic colors', () => {
+    expect(getTransactionTypeColor('deposit')).toBe('success')
+    expect(getTransactionTypeColor('tokenDeposit')).toBe('success')
+    expect(getTransactionTypeColor('mint')).toBe('success')
+    expect(getTransactionTypeColor('transfer')).toBe('info')
+    expect(getTransactionTypeColor('rawTokenIn')).toBe('info')
+    expect(getTransactionTypeColor('withdraw')).toBe('warning')
+    expect(getTransactionTypeColor('dividendDistribution')).toBe('warning')
+    expect(getTransactionTypeColor('feePaid')).toBe('error')
+    expect(getTransactionTypeColor('dividendPaymentFailed')).toBe('error')
+    expect(getTransactionTypeColor('tokenSupportAdded')).toBe('primary')
+    expect(getTransactionTypeColor('safeDepositsEnabled')).toBe('primary')
+  })
+
+  it('getTransactionTypeColor falls back to neutral for unknown types', () => {
+    expect(getTransactionTypeColor('unknownType')).toBe('neutral')
+    expect(getTransactionTypeColor('')).toBe('neutral')
   })
 
   it('falls back to neutral labels when value is absent and to empty for unknown types', () => {

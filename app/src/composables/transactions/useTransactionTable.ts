@@ -16,12 +16,18 @@ type TransactionBase = {
   amountLocal?: number
 }
 
-export const childColspan = (cell: {
-  row: { depth: number; getAllCells: () => unknown[] }
-}): string => String(cell.row.depth > 0 ? cell.row.getAllCells().length : 1)
-
 export const childHidden = (cell: { row: { depth: number } }) =>
   cell.row.depth > 0 ? 'hidden' : ''
+
+// Keeps column width in layout but hides content for child rows (use on leading spacer columns)
+export const childSpacer = (cell: { row: { depth: number } }) =>
+  cell.row.depth > 0 ? 'invisible' : ''
+
+// Colspan for the child row starting column, skipping `leading` spacer columns before it
+export const childColspanFrom =
+  (leading: number) =>
+  (cell: { row: { depth: number; getAllCells: () => unknown[] } }): string =>
+    String(cell.row.depth > 0 ? cell.row.getAllCells().length - leading : 1)
 
 export const PAGE_SIZE_OPTIONS = [
   { label: '10', value: 10 },
