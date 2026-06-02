@@ -142,7 +142,7 @@ describe('ExpenseTransactions', () => {
 
     expect(rows).toHaveLength(3)
     expect(rowTypes).toEqual(expect.arrayContaining(['deposit', 'tokenDeposit', 'transfer']))
-    expect(headers[headers.length - 2]).toBe('Value (USD)')
+    expect(headers[headers.length - 3]).toBe('Value (USD)')
   })
 
   it('passes loading state to UTable', () => {
