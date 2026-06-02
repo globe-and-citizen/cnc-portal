@@ -17,7 +17,7 @@
         <button
           type="button"
           class="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-elevated"
-          @click="selectAll"
+          @click="toggleAll"
         >
           <UIcon
             :name="allSelected ? 'i-lucide-check' : 'i-lucide-minus'"
@@ -53,9 +53,9 @@ import { computed, ref } from 'vue'
  * Multi-select category filter for the General Ledger. Mirrors the
  * `AccountingColumnVisibility` popover pattern: a single `UButton` trigger
  * summarising the selection plus a list of toggleable entries. "All categories"
- * selects every option at once and shows as active when everything is selected.
- * At least one category always stays selected (an empty filter would hide every
- * row).
+ * toggles the whole set — selecting everything, or clearing it so the user can
+ * pick a fresh subset. An empty selection is allowed (the ledger then shows no
+ * rows).
  */
 
 export interface CategoryOption<K2 extends string> {
@@ -80,6 +80,9 @@ const summary = computed(() => {
   if (allSelected.value) {
     return 'All categories'
   }
+  if (props.modelValue.length === 0) {
+    return 'No categories'
+  }
   if (props.modelValue.length === 1) {
     return props.items.find(item => item.value === props.modelValue[0])?.label ?? '1 category'
   }
@@ -90,17 +93,15 @@ function isSelected(value: K): boolean {
   return props.modelValue.includes(value)
 }
 
-function selectAll(): void {
-  emit('update:modelValue', props.items.map(item => item.value))
+function toggleAll(): void {
+  // Already all selected → clear, so the user can pick a fresh subset.
+  emit('update:modelValue', allSelected.value ? [] : props.items.map(item => item.value))
 }
 
 function toggle(value: K): void {
   const next = [...props.modelValue]
   const idx = next.indexOf(value)
   if (idx >= 0) {
-    if (next.length <= 1) {
-      return
-    }
     next.splice(idx, 1)
   } else {
     next.push(value)
