@@ -5,7 +5,7 @@
     </h3>
 
     <UTable
-      :data="sortedPositions"
+      :data="pagedPositions"
       :columns="columns"
       :loading="isLoading"
       :ui="{
@@ -88,12 +88,21 @@
         </span>
       </template>
     </UTable>
+
+    <AccountingPagination
+      v-model:page="currentPage"
+      v-model:page-size="pageSize"
+      :total="sortedPositions.length"
+      noun="positions"
+    />
   </UPageCard>
 </template>
 
 <script setup lang="ts">
+import { computed, ref, watch } from 'vue'
 import type { PolymarketPosition } from '~/types/polymarket'
 import { formatSignedUsd, formatUsd, signClass } from '~/utils/accounting'
+import AccountingPagination from './AccountingPagination.vue'
 
 const props = defineProps<{
   positions: PolymarketPosition[]
@@ -101,10 +110,22 @@ const props = defineProps<{
   hasAddress: boolean
 }>()
 
+const pageSize = ref(20)
+const currentPage = ref(1)
+
 /** Open positions first (size > 0), then by current value. */
 const sortedPositions = computed(() =>
   [...props.positions].sort((a, b) => (b.currentValue ?? 0) - (a.currentValue ?? 0))
 )
+
+const pagedPositions = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  return sortedPositions.value.slice(start, start + pageSize.value)
+})
+
+watch(() => props.positions, () => {
+  currentPage.value = 1
+})
 
 const columns = [
   { accessorKey: 'market', header: 'Market' },

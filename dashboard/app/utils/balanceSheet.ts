@@ -35,6 +35,15 @@ export interface BalanceSheet {
   totalLiabilities: number
   // Equity
   ownerCapital: number
+  /** Σ realized P&L over the reporting window — sub-component of retainedEarnings. */
+  realizedPnl: number
+  /** Σ reward income over the reporting window — sub-component of retainedEarnings. */
+  rewards: number
+  /**
+   * Σ cashFlow of SETTLEMENT_ADJUSTMENT entries — booked as an equity item so
+   * identity #3 holds when the cash identity adds an off-activity delta.
+   */
+  settlementAdjustments: number
   retainedEarnings: number
   totalEquity: number
   /** totalAssets − (totalLiabilities + totalEquity); ~0 means it balances. */
@@ -67,6 +76,7 @@ export function buildBalanceSheet(input: BuildBalanceSheetInput): BalanceSheet {
   let acquisitionCost = 0
   let ownerCapital = 0
   let rewards = 0
+  let settlementAdjustments = 0
   for (const entry of input.ledgerEntries) {
     if (entry.timestamp > asOf) {
       continue
@@ -80,6 +90,8 @@ export function buildBalanceSheet(input: BuildBalanceSheetInput): BalanceSheet {
       ownerCapital -= entry.amount
     } else if (REWARD_CATEGORIES.has(entry.category)) {
       rewards += entry.amount
+    } else if (entry.category === 'SETTLEMENT_ADJUSTMENT') {
+      settlementAdjustments += entry.cashFlow
     }
   }
 
@@ -95,7 +107,9 @@ export function buildBalanceSheet(input: BuildBalanceSheetInput): BalanceSheet {
 
   const openContractsAtCost = acquisitionCost - disposedCost
   const totalAssets = cash + openContractsAtCost
-  const retainedEarnings = realizedPnl + rewards
+  // Settlement deltas hit equity on the same line as P&L — they are realized
+  // cash impacts that the /positions feed cannot absorb on its own.
+  const retainedEarnings = realizedPnl + rewards + settlementAdjustments
   const totalEquity = ownerCapital + retainedEarnings
   const totalLiabilities = 0
 
@@ -115,6 +129,9 @@ export function buildBalanceSheet(input: BuildBalanceSheetInput): BalanceSheet {
     totalAssets,
     totalLiabilities,
     ownerCapital,
+    realizedPnl,
+    rewards,
+    settlementAdjustments,
     retainedEarnings,
     totalEquity,
     identityGap: totalAssets - (totalLiabilities + totalEquity),
