@@ -106,6 +106,7 @@ const errorMessage = computed(() => {
             :positions="positions"
             :is-loading="isLoading"
             :has-address="hasAddress"
+            :wallet-address="walletAddress"
           />
         </template>
 
