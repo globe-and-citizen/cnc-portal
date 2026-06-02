@@ -34,15 +34,17 @@
 
     <template #footer>
       <div class="flex justify-end gap-2">
-        <UButton
-          color="primary"
-          :loading="isDeploying"
-          :disabled="isDeploying || !canDeploy"
-          data-test="deploy-safe-button"
-          @click="handleDeploySafe"
-        >
-          {{ isDeploying ? 'Deploying Safe...' : 'Deploy Safe Wallet' }}
-        </UButton>
+        <TeamArchivedTooltip v-slot="{ disabled: archivedDisabled }">
+          <UButton
+            color="primary"
+            :loading="isDeploying"
+            :disabled="isDeploying || !canDeploy || archivedDisabled"
+            data-test="deploy-safe-button"
+            @click="handleDeploySafe"
+          >
+            {{ isDeploying ? 'Deploying Safe...' : 'Deploy Safe Wallet' }}
+          </UButton>
+        </TeamArchivedTooltip>
       </div>
     </template>
   </UCard>
@@ -59,6 +61,7 @@ import { useCreateContractMutation } from '@/queries/contract.queries'
 import { log } from '@/utils'
 import { NETWORK } from '@/constant'
 import { useToast } from '@nuxt/ui/composables'
+import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
 
 interface Props {
   teamId: number

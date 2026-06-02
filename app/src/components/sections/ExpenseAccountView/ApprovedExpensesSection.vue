@@ -3,16 +3,12 @@
     <template #header>
       <div class="flex items-center justify-between">
         <span>Spending Approvals</span>
-        <UTooltip
-          :text="
-            !(userDataStore.address === contractOwnerAddress || isBodAction())
-              ? 'Only the contract owner can grant approvals'
-              : undefined
-          "
-        >
+        <UTooltip :text="approveMemberTooltip">
           <UButton
             color="success"
-            :disabled="!(userDataStore.address === contractOwnerAddress || isBodAction())"
+            :disabled="
+              isWriteDisabled || !(userDataStore.address === contractOwnerAddress || isBodAction())
+            "
             @click="
               () => {
                 approveUsersModal = { mount: true, show: true }
@@ -91,9 +87,10 @@ import { useReadContract, useChainId, useSignTypedData } from '@wagmi/vue'
 import { parseEther, zeroAddress, type Address } from 'viem'
 import { EXPENSE_ACCOUNT_EIP712_ABI } from '@/artifacts/abi/expense-account-eip712'
 import type { User, BudgetLimit } from '@/types'
-import { log, parseError } from '@/utils'
+import { getAxiosErrorMessage, log, parseError } from '@/utils'
 import ApproveExpenseSummaryForm from '@/components/forms/ApproveExpenseSummaryForm.vue'
 import { useCreateExpenseMutation } from '@/queries/expense.queries'
+import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 
 const confirmationModal = ref(false)
 const approveErrorMessage = ref('')
@@ -104,6 +101,7 @@ const loadingApprove = ref(false)
 const approveData = ref<BudgetLimit>()
 
 const teamStore = useTeamStore()
+const { isWriteDisabled, archivedTooltip } = useTeamWriteGuard()
 const userDataStore = useUserDataStore()
 const toast = useToast()
 const route = useRoute()
@@ -126,6 +124,14 @@ const {
   query: {
     staleTime: Infinity
   }
+})
+
+const approveMemberTooltip = computed(() => {
+  if (archivedTooltip.value) return archivedTooltip.value
+  if (!(userDataStore.address === contractOwnerAddress.value || isBodAction())) {
+    return 'Only the contract owner can grant approvals'
+  }
+  return undefined
 })
 
 //#region Functions
@@ -208,7 +214,7 @@ const isBodAction = () => false
 //#region Watchers
 watch(errorAddExpenseData, (newVal) => {
   if (newVal) {
-    approveErrorMessage.value = errorMessage(newVal, 'Error Adding Expense Data')
+    approveErrorMessage.value = getAxiosErrorMessage(newVal, 'Error Adding Expense Data')
     log.error('errorAddExpenseData.value', parseError(newVal))
     loadingApprove.value = false
   }

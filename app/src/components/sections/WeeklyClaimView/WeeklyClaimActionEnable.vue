@@ -1,13 +1,17 @@
 <template>
   <a
     data-test="enable-action"
-    :class="['text-sm', { 'pointer-events-none opacity-50': enableTx.isPending.value }]"
-    :aria-disabled="enableTx.isPending.value"
-    :tabindex="enableTx.isPending.value ? -1 : 0"
-    :style="{ pointerEvents: enableTx.isPending.value ? 'none' : undefined }"
+    :class="[
+      'text-sm',
+      { 'pointer-events-none opacity-50': enableTx.isPending.value || isTeamArchived }
+    ]"
+    :aria-disabled="enableTx.isPending.value || isTeamArchived"
+    :tabindex="enableTx.isPending.value || isTeamArchived ? -1 : 0"
+    :style="{ pointerEvents: enableTx.isPending.value || isTeamArchived ? 'none' : undefined }"
+    :title="isTeamArchived ? archivedTooltip : undefined"
     @click="
       async () => {
-        if (enableTx.isPending.value) return
+        if (enableTx.isPending.value || isTeamArchived) return
         await enableClaim()
       }
     "
@@ -28,6 +32,7 @@ import { useQueryClient } from '@tanstack/vue-query'
 import { useTeamStore } from '@/stores'
 import type { WeeklyClaim } from '@/types'
 import { useEnableClaim } from '@/composables/cashRemuneration/writes'
+import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 
 const props = defineProps<{
   isCashRemunerationOwner: boolean
@@ -36,6 +41,7 @@ const props = defineProps<{
 const emit = defineEmits(['close'])
 
 const teamStore = useTeamStore()
+const { isWriteDisabled: isTeamArchived, archivedTooltip } = useTeamWriteGuard()
 const toast = useToast()
 const queryClient = useQueryClient()
 

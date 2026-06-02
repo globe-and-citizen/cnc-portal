@@ -37,20 +37,16 @@
     </div>
 
     <!-- View Results Button -->
-    <UButton
-      v-else
-      color="success"
-      variant="outline"
-      :disabled="isVoteDisabled"
-      :loading="isLoadingCastVoteLocal && isLoading"
-      @click="
-        () => {
-          isLoadingCastVoteLocal = true
-          emits('castVote', election.user.address)
-        }
-      "
-      label="Cast a Vote"
-    />
+    <UTooltip v-else :text="voteTooltip">
+      <UButton
+        color="success"
+        variant="outline"
+        :disabled="isVoteDisabled"
+        :loading="isLoadingCastVoteLocal && isLoading"
+        @click="onCastVote"
+        label="Cast a Vote"
+      />
+    </UTooltip>
   </UCard>
 </template>
 
@@ -65,6 +61,7 @@ import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
 import type { Address } from 'viem'
 import { log, parseError } from '@/utils'
 import { useBoDElections } from '@/composables/elections'
+import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 
 const props = defineProps({
   election: {
@@ -114,12 +111,23 @@ const { data: electionResults } = useReadContract({
   args: [props.election.id]
 })
 
+const { isWriteDisabled, archivedTooltip } = useTeamWriteGuard()
+
 const isVoteDisabled = computed(
   () =>
+    isWriteDisabled.value ||
     hasVoted.value === true ||
     electionStatus.value?.text === 'Upcoming' ||
     electionStatus.value?.text === 'Completed'
 )
+
+const voteTooltip = computed(() => archivedTooltip.value)
+
+function onCastVote() {
+  if (isVoteDisabled.value) return
+  isLoadingCastVoteLocal.value = true
+  emits('castVote', props.election.user.address)
+}
 
 const isElectionWinner = computed(
   () =>

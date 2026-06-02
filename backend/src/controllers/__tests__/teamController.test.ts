@@ -22,6 +22,7 @@ vi.mock('../../middleware/authMiddleware', () => ({
 vi.mock('../../middleware/teamAuthzMiddleware', () => ({
   requireTeamMember: vi.fn(() => (req: Request, res: Response, next: NextFunction) => next()),
   requireTeamOwner: vi.fn(() => (req: Request, res: Response, next: NextFunction) => next()),
+  rejectIfArchived: vi.fn(() => (req: Request, res: Response, next: NextFunction) => next()),
 }));
 
 // Mock prisma
@@ -625,10 +626,96 @@ describe('Team Controller', () => {
       expect(response.body.message).toBe('Unauthorized: Only team owner can update metadata');
     });
 
+    it('allows unarchive on archived team as owner', async () => {
+      const mockTeam = {
+        id: 1,
+        ownerAddress: mockOwner.address,
+        isArchived: true,
+        members: [{ address: mockOwner.address }],
+        name: 'Test Team',
+        description: 'Test Description',
+      };
+
+      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(mockTeam);
+      vi.spyOn(prisma.team, 'update').mockResolvedValue({
+        ...mockTeam,
+        isArchived: false,
+        teamOfficers: [],
+        teamContracts: [],
+        members: mockTeam.members.map((m) => ({ ...m, name: mockOwner.name })),
+      } as never);
+      vi.spyOn(prisma.memberTeamsData, 'findUnique').mockResolvedValue({
+        isHidden: false,
+      } as never);
+
+      const response = await request(app).put('/1').send({ isArchived: false });
+
+      expect(response.status).toBe(200);
+      expect(response.body.isArchived).toBe(false);
+    });
+
+    it('allows visibility toggle on archived team as member', async () => {
+      const mockTeam = {
+        id: 1,
+        ownerAddress: '0x9999999999999999999999999999999999999999',
+        isArchived: true,
+        members: [{ address: mockOwner.address }],
+        name: 'Test Team',
+        description: 'Test Description',
+      };
+
+      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(mockTeam);
+      vi.spyOn(prisma.team, 'update').mockResolvedValue({
+        ...mockTeam,
+        teamOfficers: [],
+        teamContracts: [],
+        members: [{ address: mockOwner.address, name: mockOwner.name }],
+      } as never);
+      vi.spyOn(prisma.memberTeamsData, 'findUnique').mockResolvedValue({ isHidden: true } as never);
+
+      const response = await request(app).put('/1').send({ isHidden: true });
+
+      expect(response.status).toBe(200);
+      expect(response.body.isHidden).toBe(true);
+    });
+
+    it('returns 409 when renaming archived team', async () => {
+      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue({
+        id: 1,
+        ownerAddress: mockOwner.address,
+        isArchived: true,
+        members: [{ address: mockOwner.address }],
+        name: 'Test Team',
+        description: 'Test Description',
+      });
+
+      const response = await request(app).put('/1').send({ name: 'new name' });
+
+      expect(response.status).toBe(409);
+      expect(response.body.message).toBe('Team is archived — unarchive to modify');
+    });
+
+    it('returns 409 when re-archiving archived team', async () => {
+      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue({
+        id: 1,
+        ownerAddress: mockOwner.address,
+        isArchived: true,
+        members: [{ address: mockOwner.address }],
+        name: 'Test Team',
+        description: 'Test Description',
+      });
+
+      const response = await request(app).put('/1').send({ isArchived: true });
+
+      expect(response.status).toBe(409);
+      expect(response.body.message).toBe('Team is archived — unarchive to modify');
+    });
+
     it('should return 200 and update the team successfully', async () => {
       const mockTeam = {
         id: 1,
         ownerAddress: mockOwner.address,
+        isArchived: false,
         members: [{ address: mockOwner.address }],
         name: 'Test Team',
         description: 'Test Description',

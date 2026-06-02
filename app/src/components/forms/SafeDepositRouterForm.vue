@@ -53,15 +53,17 @@
         label="Cancel"
         @click="handleCancel"
       />
-      <UButton
-        color="primary"
-        type="submit"
-        :loading="submitting"
-        :disabled="isLoading || !isAmountValid || !safeDepositRouterAddress"
-        data-test="deposit-button"
-      >
-        {{ currentStep === 1 ? 'Approve' : `Deposit & Earn ${tokenSymbol || 'SHER'}` }}
-      </UButton>
+      <TeamArchivedTooltip v-slot="{ disabled: archivedDisabled }">
+        <UButton
+          color="primary"
+          type="submit"
+          :loading="submitting"
+          :disabled="isLoading || !isAmountValid || !safeDepositRouterAddress || archivedDisabled"
+          data-test="deposit-button"
+        >
+          {{ currentStep === 1 ? 'Approve' : `Deposit & Earn ${tokenSymbol || 'SHER'}` }}
+        </UButton>
+      </TeamArchivedTooltip>
     </div>
   </UForm>
 </template>
@@ -89,6 +91,7 @@ import {
   useSafeDepositRouterMultiplier
 } from '@/composables/safeDepositRouter/reads'
 import { useDeposit } from '@/composables/safeDepositRouter/writes'
+import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
 import { useInvestorSymbol } from '@/composables/investor/reads'
 
 const emits = defineEmits<{

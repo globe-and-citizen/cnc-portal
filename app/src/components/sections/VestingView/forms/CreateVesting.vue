@@ -90,16 +90,18 @@
       Ensure your contract is approved to transfer these tokens.
     </h3>
     <div class="mt-6 flex justify-end gap-2">
-      <UButton
-        type="button"
-        color="primary"
-        size="sm"
-        @click="handleDisplaySummary"
-        :disabled="loading"
-        :loading="loading"
-        data-test="submit-btn"
-        label="Create Vesting"
-      />
+      <TeamArchivedTooltip v-slot="{ disabled: archivedDisabled }">
+        <UButton
+          type="button"
+          color="primary"
+          size="sm"
+          @click="handleDisplaySummary"
+          :disabled="loading || archivedDisabled"
+          :loading="loading"
+          data-test="submit-btn"
+          label="Create Vesting"
+        />
+      </TeamArchivedTooltip>
     </div>
   </UForm>
   <div v-if="showSummary" class="flex flex-col gap-3">
@@ -124,6 +126,7 @@
 import SelectMemberInput from '@/components/utils/SelectMemberInput.vue'
 import UserComponent from '@/components/UserComponent.vue'
 import VestingSummary from '@/components/sections/VestingView/VestingSummary.vue'
+import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
 import { useCreateVesting } from '@/composables/vesting/useCreateVesting'
 
 const props = defineProps<{

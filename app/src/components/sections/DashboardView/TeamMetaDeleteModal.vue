@@ -16,7 +16,7 @@
         v-if="deleteTeamError"
         color="error"
         variant="soft"
-        :description="deleteTeamError.message"
+        :description="getAxiosErrorMessage(deleteTeamError, 'Failed to delete company')"
         class="mb-4"
       />
       <p>
@@ -50,6 +50,7 @@ import type { Team } from '@/types/team'
 import { useRouter } from 'vue-router'
 import { useTeamStore } from '@/stores'
 import { useDeleteTeamMutation } from '@/queries/team.queries'
+import { getAxiosErrorMessage } from '@/utils/errorUtil'
 
 defineProps<{
   currentTeam: Team | null | undefined

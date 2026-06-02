@@ -1,38 +1,44 @@
 <template>
   <div class="flex items-center gap-2">
-    <UButton
-      :color="row.paused ? 'info' : 'error'"
-      size="sm"
-      @click="changeContractStatus(row.paused)"
-      :loading="isLoadingPauseContract || isLoadingUnpauseContract"
-      :disabled="row.owner !== userDataStore.address && !isBodAction"
-    >
-      <IconifyIcon
-        v-if="!isLoadingPauseContract && !isLoadingUnpauseContract"
-        :icon="`heroicons:${row.paused ? 'play' : 'pause-circle'}-solid`"
+    <UTooltip :text="archivedTooltip">
+      <UButton
+        :color="row.paused ? 'info' : 'error'"
+        size="sm"
+        @click="changeContractStatus(row.paused)"
+        :loading="isLoadingPauseContract || isLoadingUnpauseContract"
+        :disabled="isWriteDisabled || (row.owner !== userDataStore.address && !isBodAction)"
+      >
+        <IconifyIcon
+          v-if="!isLoadingPauseContract && !isLoadingUnpauseContract"
+          :icon="`heroicons:${row.paused ? 'play' : 'pause-circle'}-solid`"
+        />
+      </UButton>
+    </UTooltip>
+    <UTooltip :text="archivedTooltip">
+      <UButton
+        color="success"
+        variant="outline"
+        size="sm"
+        @click="showModal = true"
+        :disabled="isWriteDisabled || (row.owner !== userDataStore.address && !isBodAction)"
+        label="Transfer Ownership"
       />
-    </UButton>
-    <UButton
-      color="success"
-      variant="outline"
-      size="sm"
-      @click="showModal = true"
-      :disabled="row.owner !== userDataStore.address && !isBodAction"
-      label="Transfer Ownership"
-    />
-    <UButton
-      :disabled="!isBodAction || formatedActions.length <= 0"
-      color="success"
-      variant="outline"
-      size="sm"
-      @click="
-        () => {
-          showApprovalModal = true
-          currentStep = 1
-        }
-      "
-      label="Pending Actions"
-    />
+    </UTooltip>
+    <UTooltip :text="archivedTooltip">
+      <UButton
+        :disabled="isWriteDisabled || !isBodAction || formatedActions.length <= 0"
+        color="success"
+        variant="outline"
+        size="sm"
+        @click="
+          () => {
+            showApprovalModal = true
+            currentStep = 1
+          }
+        "
+        label="Pending Actions"
+      />
+    </UTooltip>
 
     <UModal
       v-model:open="showModal"
@@ -98,6 +104,7 @@ import { useBodAddAction, useBodApproveAction } from '@/composables/bod/writes'
 import { useBodIsBodAction } from '@/composables/bod/reads'
 import { useContractWritesV3 } from '@/composables/contracts/useContractWritesV3'
 import { useQueryClient } from '@tanstack/vue-query'
+import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 
 const props = defineProps<{
   row: TableRow
@@ -109,6 +116,7 @@ const teamStore = useTeamStore()
 const toast = useToast()
 const userDataStore = useUserDataStore()
 const queryClient = useQueryClient()
+const { isWriteDisabled, archivedTooltip } = useTeamWriteGuard()
 
 // BOD action composables
 const addActionComposable = useBodAddAction()

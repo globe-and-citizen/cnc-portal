@@ -1,12 +1,12 @@
 <template>
-  <UTooltip :text="!canDeposit ? 'SHER compensation deposits are not available' : undefined">
+  <UTooltip :text="investTooltip">
     <ActionButton
       icon="heroicons-outline:plus"
       icon-bg="bg-teal-50 dark:bg-teal-950"
       icon-color="text-teal-700 dark:text-teal-400"
       title="Invest & Get SHER"
       tone-class="border-cyan-200 bg-cyan-50/60 hover:border-cyan-300 hover:bg-cyan-100/70 disabled:border-cyan-200 disabled:bg-cyan-50/50 dark:border-cyan-900 dark:bg-cyan-950/30 dark:hover:border-cyan-800 dark:hover:bg-cyan-900/40 dark:disabled:border-cyan-900 dark:disabled:bg-cyan-950/30"
-      :disabled="!canDeposit || !teamStore.getContractAddressByType('Safe')"
+      :disabled="isWriteDisabled || !canDeposit || !teamStore.getContractAddressByType('Safe')"
       data-test="invest-in-safe-button"
       @click="openModal"
     />
@@ -31,7 +31,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { computed, ref } from 'vue'
 import SafeDepositRouterForm from '@/components/forms/SafeDepositRouterForm.vue'
 import ActionButton from '@/components/sections/SherTokenView/ActionButton.vue'
 import {
@@ -39,26 +39,32 @@ import {
   useSafeDepositRouterPaused
 } from '@/composables/safeDepositRouter/reads'
 import { useTeamStore } from '@/stores'
+import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 
 const teamStore = useTeamStore()
-// Read individual composables
+const { isWriteDisabled, archivedTooltip } = useTeamWriteGuard()
+
 const { data: depositsEnabled, isLoading: isDepositsEnabledLoading } =
   useSafeDepositRouterDepositsEnabled()
 const { data: isPaused, isLoading: isPausedLoading } = useSafeDepositRouterPaused()
-// Computed property to determine if deposits are allowed
+
 const canDeposit = computed(() => {
-  // While loading, disable deposits
   if (isDepositsEnabledLoading.value || isPausedLoading.value) {
     return false
   }
-
-  // Can deposit if: deposits are enabled AND contract is not paused
   return depositsEnabled.value === true && isPaused.value === false
+})
+
+const investTooltip = computed(() => {
+  if (archivedTooltip.value) return archivedTooltip.value
+  if (!canDeposit.value) return 'SHER compensation deposits are not available'
+  return undefined
 })
 
 const modal = ref({ mount: false, show: false })
 
 function openModal() {
+  if (isWriteDisabled.value) return
   modal.value = { mount: true, show: true }
 }
 

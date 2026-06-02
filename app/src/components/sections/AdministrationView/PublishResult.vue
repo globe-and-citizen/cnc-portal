@@ -1,12 +1,15 @@
 <template>
-  <UButton
-    color="primary"
-    size="md"
-    @click="handlePublishResults(electionId)"
-    :loading="isPending"
-    data-test="create-election-button"
-    label="Publish Results"
-  />
+  <UTooltip :text="archivedTooltip">
+    <UButton
+      color="primary"
+      size="md"
+      @click="handlePublishResults(electionId)"
+      :loading="isPending"
+      :disabled="isWriteDisabled"
+      data-test="create-election-button"
+      label="Publish Results"
+    />
+  </UTooltip>
 </template>
 <script lang="ts" setup>
 import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
@@ -18,6 +21,9 @@ import { estimateGas } from '@wagmi/core'
 import { type Address, encodeFunctionData } from 'viem'
 import { computed } from 'vue'
 import { config } from '@/wagmi.config'
+import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
+
+const { isWriteDisabled, archivedTooltip } = useTeamWriteGuard()
 
 const toast = useToast()
 const queryClient = useQueryClient()
@@ -32,6 +38,8 @@ const { electionId } = defineProps<{
 }>()
 
 const handlePublishResults = async (electionId: number) => {
+  if (isWriteDisabled.value) return
+
   try {
     const data = encodeFunctionData({
       abi: ELECTIONS_ABI,

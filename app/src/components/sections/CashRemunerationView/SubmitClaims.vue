@@ -1,14 +1,16 @@
 <template>
-  <UButton
-    :loading="isWageClaimAdding"
-    color="success"
-    size="sm"
-    data-test="modal-submit-hours-button"
-    :disabled="!canSubmitClaim"
-    @click="openModal()"
-  >
-    Submit Claim
-  </UButton>
+  <TeamArchivedTooltip v-slot="{ disabled: archivedDisabled }">
+    <UButton
+      :loading="isWageClaimAdding"
+      color="success"
+      size="sm"
+      data-test="modal-submit-hours-button"
+      :disabled="!canSubmitClaim || archivedDisabled"
+      @click="openModal()"
+    >
+      Submit Claim
+    </UButton>
+  </TeamArchivedTooltip>
 
   <UModal
     v-if="modal.mount"
@@ -43,6 +45,8 @@ import { useTeamStore } from '@/stores'
 import type { ClaimFormData, ClaimSubmitPayload } from '@/types'
 import { useSubmitClaimMutation } from '@/queries/weeklyClaim.queries'
 import { startOfWeek } from '@/utils/dayUtils'
+import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
+import { getAxiosErrorMessage } from '@/utils/errorUtil'
 
 dayjs.extend(utc)
 
@@ -174,11 +178,9 @@ const handleSubmit = async (data: ClaimSubmitPayload & { files?: File[] }) => {
     formInitialData.value = createDefaultFormData(props.selectedWeekStart)
   } catch (error) {
     console.error('Error submitting claim:', error)
-    const backendMessage = (error as { response?: { data?: { message?: string } } })?.response?.data
-      ?.message
-    const message =
-      backendMessage ?? (error instanceof Error ? error.message : 'Failed to add claim')
-    errorMessage.value = { message }
+    errorMessage.value = {
+      message: getAxiosErrorMessage(error, 'Failed to add claim')
+    }
     addWageClaimError.value = true
   }
 }

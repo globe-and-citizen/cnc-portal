@@ -52,31 +52,36 @@
         <div class="flex flex-wrap gap-2">
           <!-- Stop Button -->
 
-          <UButton
-            v-if="row.status === 'Active' && team?.ownerAddress == userAddress"
-            data-test="stop-btn"
-            color="error"
-            size="xs"
-            @click.stop="stopVesting(row.member)"
-            icon="mdi:stop-circle-outline"
-            label="Stop"
-          />
+          <UTooltip :text="archivedTooltip">
+            <UButton
+              v-if="row.status === 'Active' && team?.ownerAddress == userAddress"
+              data-test="stop-btn"
+              color="error"
+              size="xs"
+              :disabled="isWriteDisabled"
+              @click.stop="stopVesting(row.member)"
+              icon="mdi:stop-circle-outline"
+              label="Stop"
+            />
+          </UTooltip>
 
           <!-- Withdraw Button -->
 
           <!-- Release Button -->
 
-          <UButton
-            data-test="release-btn"
-            v-if="row.status === 'Active' && row.member === userAddress"
-            color="success"
-            size="xs"
-            :disabled="!row.isStarted"
-            :title="!row.isStarted ? 'Vesting has not started yet' : ''"
-            @click.stop="releaseVesting()"
-            icon="mdi:lock-open"
-            label="Release"
-          />
+          <UTooltip :text="archivedTooltip">
+            <UButton
+              data-test="release-btn"
+              v-if="row.status === 'Active' && row.member === userAddress"
+              color="success"
+              size="xs"
+              :disabled="isWriteDisabled || !row.isStarted"
+              :title="!row.isStarted ? 'Vesting has not started yet' : undefined"
+              @click.stop="releaseVesting()"
+              icon="mdi:lock-open"
+              label="Release"
+            />
+          </UTooltip>
         </div>
       </template>
     </UTable>
@@ -98,7 +103,10 @@ import {
   useVestingGetTeamVestingsWithMembers
 } from '@/composables/vesting/reads'
 import { useVestingReleaseWrite, useVestingStopVestingWrite } from '@/composables/vesting/writes'
+import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
+
 const toast = useToast()
+const { isWriteDisabled, archivedTooltip } = useTeamWriteGuard()
 
 const teamStore = useTeamStore()
 const team = computed(() => teamStore.currentTeam)
