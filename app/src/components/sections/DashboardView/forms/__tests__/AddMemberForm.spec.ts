@@ -76,7 +76,7 @@ describe('AddMemberForm.vue', () => {
     vi.mocked(useAddMembersMutation).mockReturnValueOnce({
       mutate: mockMutate,
       isPending: ref(false),
-      error: ref({ status: 401 }),
+      error: ref({ response: { status: 401 } }),
       status: ref('error')
     } as unknown as ReturnType<typeof useAddMembersMutation>)
 

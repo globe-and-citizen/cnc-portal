@@ -89,14 +89,16 @@
 
     <div class="mt-6 flex justify-end gap-2">
       <UButton color="error" variant="outline" @click="emit('closeModal')" label="Cancel" />
-      <UButton
-        type="submit"
-        color="primary"
-        :loading="isCreatingProposal"
-        :disabled="isCreatingProposal"
-        data-test="create-proposal-button"
-        label="Create Proposal"
-      />
+      <UTooltip :text="archivedTooltip">
+        <UButton
+          type="submit"
+          color="primary"
+          :loading="isCreatingProposal"
+          :disabled="isCreatingProposal || isWriteDisabled"
+          data-test="create-proposal-button"
+          label="Create Proposal"
+        />
+      </UTooltip>
     </div>
   </UForm>
 </template>
@@ -106,6 +108,7 @@ import { CalendarDate, getLocalTimeZone, today } from '@internationalized/date'
 import { reactive, ref, computed } from 'vue'
 import { z } from 'zod'
 import { useProposalsCreateProposal } from '@/composables/proposals/writes'
+import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 import { formatDateMMDDYYYY, dateToCalendarDate, ensureFutureDate } from '@/utils/dayUtils'
 
 // 2 minutes buffer to ensure startDate is in the future when tx hits the chain
@@ -159,6 +162,7 @@ const schema = computed(() =>
   })
 )
 
+const { isWriteDisabled, archivedTooltip } = useTeamWriteGuard()
 const { mutate: createProposal, isPending: isCreatingProposal } = useProposalsCreateProposal()
 
 const dateToTimestamp = (date: Date): number => Math.floor(date.getTime() / 1000)

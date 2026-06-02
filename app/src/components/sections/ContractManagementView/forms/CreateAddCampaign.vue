@@ -53,15 +53,17 @@
     />
 
     <div class="mt-6 flex justify-end gap-2">
-      <UButton
-        color="primary"
-        size="sm"
-        type="submit"
-        :loading="loading"
-        :disabled="loading || bankMissing"
-        data-test="confirm-button"
-        label="confirm"
-      />
+      <TeamArchivedTooltip v-slot="{ disabled: archivedDisabled }">
+        <UButton
+          color="primary"
+          size="sm"
+          type="submit"
+          :loading="loading"
+          :disabled="loading || bankMissing || archivedDisabled"
+          data-test="confirm-button"
+          label="confirm"
+        />
+      </TeamArchivedTooltip>
     </div>
   </UForm>
 </template>
@@ -78,6 +80,7 @@ import { AD_CAMPAIGN_MANAGER_ABI } from '@/artifacts/abi/ad-campaign-manager'
 import { CAMPAIGN_BYTECODE } from '@/artifacts/bytecode/adCampaignManager.ts'
 import type { Address, Hex } from 'viem'
 import { useCreateContractMutation } from '@/queries/contract.queries'
+import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
 
 const emit = defineEmits(['closeAddCampaignModal'])
 const toast = useToast()

@@ -1,12 +1,12 @@
 <template>
-  <UTooltip text="Coming soon">
+  <UTooltip :text="distributeMintTooltip">
     <ActionButton
       icon="heroicons:banknotes"
       icon-bg="bg-green-50 dark:bg-green-950"
       icon-color="text-green-700 dark:text-green-400"
       title="Distribute Mint"
       tone-class="border-green-200 bg-green-50/60 hover:border-green-300 hover:bg-green-100/70 disabled:border-green-200 disabled:bg-green-50/50 dark:border-green-900 dark:bg-green-950/30 dark:hover:border-green-800 dark:hover:bg-green-900/40 dark:disabled:border-green-900 dark:disabled:bg-green-950/30"
-      :disabled="true"
+      :disabled="isWriteDisabled || true"
       data-test="distribute-mint-button"
       @click="openModal"
     />
@@ -37,7 +37,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
+import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 import type { Address } from 'viem'
 import DistributeMintForm from '@/components/sections/SherTokenView/forms/DistributeMintForm.vue'
 import ActionButton from '@/components/sections/SherTokenView/ActionButton.vue'
@@ -50,6 +51,12 @@ interface Props {
 }
 
 const props = defineProps<Props>()
+const { isWriteDisabled, archivedTooltip } = useTeamWriteGuard()
+
+const distributeMintTooltip = computed(() => {
+  if (archivedTooltip.value) return archivedTooltip.value
+  return 'Coming soon'
+})
 const emit = defineEmits<{
   refetchShareholders: []
 }>()
@@ -68,6 +75,7 @@ const {
 } = useDistributeMint()
 
 const openModal = () => {
+  if (isWriteDisabled.value) return
   modalState.value = { mount: true, show: true }
 }
 

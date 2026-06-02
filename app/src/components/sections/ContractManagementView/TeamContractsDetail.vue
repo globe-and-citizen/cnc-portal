@@ -43,9 +43,16 @@
       </template>
     </UTable>
     <div class="mt-4">
-      <UButton @click="submit" color="primary" :loading="isLoading" :disabled="isLoading">
-        save changes
-      </UButton>
+      <TeamArchivedTooltip v-slot="{ disabled: archivedDisabled }">
+        <UButton
+          @click="submit"
+          color="primary"
+          :loading="isLoading"
+          :disabled="isLoading || archivedDisabled"
+        >
+          save changes
+        </UButton>
+      </TeamArchivedTooltip>
     </div>
   </div>
 </template>
@@ -53,6 +60,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
+import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
 
 import { parseUnits } from 'viem/utils'
 import type { Address } from 'viem'

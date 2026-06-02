@@ -1,26 +1,28 @@
 <template>
   <div v-if="safeDepositRouterAddress">
-    <ActionButton
-      :icon="depositsEnabled ? 'heroicons:lock-open' : 'heroicons:lock-closed'"
-      :icon-bg="
-        depositsEnabled ? 'bg-amber-50 dark:bg-amber-950' : 'bg-purple-50 dark:bg-purple-950'
-      "
-      :icon-color="
-        depositsEnabled
-          ? 'text-amber-700 dark:text-amber-400'
-          : 'text-purple-700 dark:text-purple-400'
-      "
-      :title="depositsEnabled ? 'Disable SHER Compensation' : 'Enable SHER Compensation'"
-      :tone-class="
-        depositsEnabled
-          ? 'border-amber-200 bg-amber-50/60 hover:border-amber-300 hover:bg-amber-100/70 disabled:border-amber-200 disabled:bg-amber-50/50 dark:border-amber-900 dark:bg-amber-950/30 dark:hover:border-amber-800 dark:hover:bg-amber-900/40 dark:disabled:border-amber-900 dark:disabled:bg-amber-950/30'
-          : 'border-violet-200 bg-violet-50/60 hover:border-violet-300 hover:bg-violet-100/70 disabled:border-violet-200 disabled:bg-violet-50/50 dark:border-violet-900 dark:bg-violet-950/30 dark:hover:border-violet-800 dark:hover:bg-violet-900/40 dark:disabled:border-violet-900 dark:disabled:bg-violet-950/30'
-      "
-      :loading="isLoading"
-      :disabled="!canManageDeposits || isLoading"
-      data-test="toggle-sher-compensation-button"
-      @click="handleToggleCompensation"
-    />
+    <UTooltip :text="toggleCompensationTooltip">
+      <ActionButton
+        :icon="depositsEnabled ? 'heroicons:lock-open' : 'heroicons:lock-closed'"
+        :icon-bg="
+          depositsEnabled ? 'bg-amber-50 dark:bg-amber-950' : 'bg-purple-50 dark:bg-purple-950'
+        "
+        :icon-color="
+          depositsEnabled
+            ? 'text-amber-700 dark:text-amber-400'
+            : 'text-purple-700 dark:text-purple-400'
+        "
+        :title="depositsEnabled ? 'Disable SHER Compensation' : 'Enable SHER Compensation'"
+        :tone-class="
+          depositsEnabled
+            ? 'border-amber-200 bg-amber-50/60 hover:border-amber-300 hover:bg-amber-100/70 disabled:border-amber-200 disabled:bg-amber-50/50 dark:border-amber-900 dark:bg-amber-950/30 dark:hover:border-amber-800 dark:hover:bg-amber-900/40 dark:disabled:border-amber-900 dark:disabled:bg-amber-950/30'
+            : 'border-violet-200 bg-violet-50/60 hover:border-violet-300 hover:bg-violet-100/70 disabled:border-violet-200 disabled:bg-violet-50/50 dark:border-violet-900 dark:bg-violet-950/30 dark:hover:border-violet-800 dark:hover:bg-violet-900/40 dark:disabled:border-violet-900 dark:disabled:bg-violet-950/30'
+        "
+        :loading="isLoading"
+        :disabled="isWriteDisabled || !canManageDeposits || isLoading"
+        data-test="toggle-sher-compensation-button"
+        @click="handleToggleCompensation"
+      />
+    </UTooltip>
   </div>
 </template>
 
@@ -41,9 +43,13 @@ import {
 } from '@/composables/safeDepositRouter/reads'
 import { useTeamStore } from '@/stores'
 import { parseError } from '@/utils'
+import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 
 const teamStore = useTeamStore()
+const { isWriteDisabled, archivedTooltip } = useTeamWriteGuard()
 const toast = useToast()
+
+const toggleCompensationTooltip = computed(() => archivedTooltip.value)
 const connection = useConnection()
 
 // Track if we're in the process of setting safe address before enabling
@@ -227,6 +233,8 @@ async function handleDisableDeposits() {
  * If enabling and Safe address is not set, automatically set it first
  */
 async function handleToggleCompensation() {
+  if (isWriteDisabled.value) return
+
   if (!safeDepositRouterAddress.value) {
     toast.add({ title: 'SafeDepositRouter address not found', color: 'error' })
     return

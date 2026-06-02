@@ -155,7 +155,7 @@ describe('MemberSection.vue', () => {
 
     await wrapper.find('[data-test="add-member-button"]').trigger('click')
     expect(wrapper.find('[data-test="emit-member-added"]').exists()).toBe(true)
-    await wrapper.find('[data-test="close-wage-modal-button"]').trigger('click')
+    await wrapper.findComponent({ name: 'UModal' }).vm.$emit('update:open', false)
     await wrapper.vm.$nextTick()
     expect(wrapper.find('[data-test="emit-member-added"]').exists()).toBe(false)
   })

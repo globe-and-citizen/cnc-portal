@@ -97,11 +97,13 @@ describe('DeleteClaimModal', () => {
   })
 
   describe('Error State', () => {
-    it('shows error alert when mutation has an error', () => {
+    it('shows error alert surfacing the mutation error message', () => {
       const wrapper = createWrapper({}, { error: ref(new Error('delete failed')) })
 
       expect(wrapper.find('[data-test="delete-claim-error"]').exists()).toBe(true)
-      expect(wrapper.text()).toContain('Failed to delete claim')
+      // The alert now surfaces the backend/mutation message (e.g. the archived 409)
+      // instead of a hardcoded string, falling back to "Failed to delete claim".
+      expect(wrapper.text()).toContain('delete failed')
     })
   })
 

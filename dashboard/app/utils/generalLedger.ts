@@ -27,6 +27,7 @@ export type AccountName
     | 'Trading Gains'
     | 'Trading Losses'
     | 'Rewards Income'
+    | 'Settlement Adjustments'
 
 export type AccountClass = 'ASSET' | 'EQUITY' | 'INCOME' | 'EXPENSE'
 
@@ -37,7 +38,8 @@ export const ACCOUNT_CLASS: Record<AccountName, AccountClass> = {
   'Owner Capital': 'EQUITY',
   'Trading Gains': 'INCOME',
   'Trading Losses': 'EXPENSE',
-  'Rewards Income': 'INCOME'
+  'Rewards Income': 'INCOME',
+  'Settlement Adjustments': 'EXPENSE'
 }
 
 /** ASSET and EXPENSE accounts are debit-normal; EQUITY and INCOME are credit-normal. */
@@ -148,6 +150,14 @@ export function buildJournalEntries(input: BuildGeneralLedgerInput): JournalEntr
       case 'MAKER_REBATE':
       case 'REFERRAL_REWARD':
         lines = [debit('Cash', e.amount), credit('Rewards Income', e.amount)]
+        break
+      case 'SETTLEMENT_ADJUSTMENT':
+        // cashFlow < 0 → wallet lost USDC the activity feed never accounted for
+        //   (fee/slippage): Dr Settlement Adjustments  Cr Cash.
+        // cashFlow > 0 → wallet received more USDC than billed: Dr Cash  Cr Settlement Adjustments.
+        lines = e.cashFlow < 0
+          ? [debit('Settlement Adjustments', e.amount), credit('Cash', e.amount)]
+          : [debit('Cash', e.amount), credit('Settlement Adjustments', e.amount)]
         break
       default:
         // SELL / REDEEM / MERGE are booked from realizedTrades; CONVERSION/OTHER skipped.

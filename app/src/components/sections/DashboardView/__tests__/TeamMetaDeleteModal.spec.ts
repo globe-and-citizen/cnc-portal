@@ -121,6 +121,22 @@ describe('TeamMetaDeleteModal.vue', () => {
     expect(wrapper.find('[data-test="team-meta-delete-open"]').exists()).toBe(true)
   })
 
+  it('allows delete when team is archived', async () => {
+    vi.mocked(useTeamStore).mockReturnValue({
+      currentTeamId: '99',
+      currentTeamMeta: { data: teamProps({ isArchived: true }) }
+    } as never)
+
+    const wrapper = mountModal({ currentTeam: teamProps({ isArchived: true }) })
+    await openModal(wrapper)
+
+    const openBtn = wrapper.find('[data-test="team-meta-delete-open"]')
+    expect(openBtn.attributes('disabled')).toBeUndefined()
+
+    const deleteBtn = wrapper.find('[data-test="delete-team-button"]')
+    expect(deleteBtn.attributes('disabled')).toBeUndefined()
+  })
+
   it('shows pending state on delete button', async () => {
     vi.mocked(useDeleteTeamMutation).mockReturnValueOnce({
       mutate: mutateSpy,

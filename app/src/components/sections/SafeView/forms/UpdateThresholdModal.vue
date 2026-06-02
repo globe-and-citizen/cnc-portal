@@ -91,15 +91,17 @@
           >
             Cancel
           </UButton>
-          <UButton
-            type="submit"
-            color="primary"
-            :loading="isLoading"
-            :disabled="!hasChanges || isLoading"
-            data-test="update-threshold-button"
-            leading-icon="heroicons:shield-check"
-            label="Update Threshold"
-          />
+          <TeamArchivedTooltip v-slot="{ disabled: archivedDisabled }">
+            <UButton
+              type="submit"
+              color="primary"
+              :loading="isLoading"
+              :disabled="!hasChanges || isLoading || archivedDisabled"
+              data-test="update-threshold-button"
+              leading-icon="heroicons:shield-check"
+              label="Update Threshold"
+            />
+          </TeamArchivedTooltip>
         </div>
       </UForm>
     </template>
@@ -113,6 +115,7 @@ import { type Address } from 'viem'
 import { useChainId } from '@wagmi/vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
 
+import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
 import { useUpdateSafeOwnersMutation } from '@/queries/safe.mutations'
 
 const props = defineProps<{

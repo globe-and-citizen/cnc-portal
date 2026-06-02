@@ -5,22 +5,27 @@
   </h3>
 
   <!-- Inline form to add new admin -->
-  <form
-    @submit.prevent="handleAdminAction(newAdminAddress as `0x${string}`, 'addAdmin')"
-    class="mb-4 flex items-center space-x-2"
-  >
-    <UInput
-      v-model="newAdminAddress"
-      type="text"
-      size="sm"
-      placeholder="Enter new admin address"
-      class="w-full max-w-xs"
-      :required="true"
-    />
-    <div>
-      <UButton type="submit" color="primary" size="sm"> Add Admin</UButton>
-    </div>
-  </form>
+  <TeamArchivedTooltip v-slot="{ disabled: archivedDisabled }">
+    <form
+      @submit.prevent="handleAdminAction(newAdminAddress as `0x${string}`, 'addAdmin')"
+      class="mb-4 flex items-center space-x-2"
+    >
+      <UInput
+        v-model="newAdminAddress"
+        type="text"
+        size="sm"
+        placeholder="Enter new admin address"
+        class="w-full max-w-xs"
+        :required="true"
+        :disabled="archivedDisabled"
+      />
+      <div>
+        <UButton type="submit" color="primary" size="sm" :disabled="archivedDisabled">
+          Add Admin
+        </UButton>
+      </div>
+    </form>
+  </TeamArchivedTooltip>
 
   <!-- Admin Table -->
   <div id="admins-table" class="overflow-x-auto">
@@ -43,12 +48,15 @@
       </template>
 
       <template #action-cell="{ row: { original: row } }">
-        <UButton
-          @click="handleAdminAction(row.admin, 'removeAdmin')"
-          size="xs"
-          color="error"
-          label="Remove"
-        />
+        <TeamArchivedTooltip v-slot="{ disabled: archivedDisabled }">
+          <UButton
+            @click="handleAdminAction(row.admin, 'removeAdmin')"
+            size="xs"
+            color="error"
+            label="Remove"
+            :disabled="archivedDisabled"
+          />
+        </TeamArchivedTooltip>
       </template>
     </UTable>
   </div>
@@ -65,6 +73,7 @@ import { useReadContract } from '@wagmi/vue'
 import { useContractWritesV3 } from '@/composables/contracts/useContractWritesV3'
 import type { TeamContract } from '@/types'
 import AddressToolTip from '@/components/AddressToolTip.vue'
+import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
 import { AD_CAMPAIGN_MANAGER_ABI } from '@/artifacts/abi/ad-campaign-manager'
 import type { Address } from 'viem'
 const toast = useToast()

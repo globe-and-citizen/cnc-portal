@@ -1,21 +1,23 @@
 <template>
   <div v-if="safeDepositRouterAddress">
-    <ActionButton
-      icon="heroicons:calculator"
-      icon-bg="bg-amber-50 dark:bg-amber-950"
-      icon-color="text-amber-700 dark:text-amber-400"
-      title="Set Multiplier"
-      tone-class="border-orange-200 bg-orange-50/60 hover:border-orange-300 hover:bg-orange-100/70 disabled:border-orange-200 disabled:bg-orange-50/50 dark:border-orange-900 dark:bg-orange-950/30 dark:hover:border-orange-800 dark:hover:bg-orange-900/40 dark:disabled:border-orange-900 dark:disabled:bg-orange-950/30"
-      :loading="isLoading"
-      :disabled="!canManageMultiplier || isLoading"
-      :badge="
-        !isMultiplierLoading && formattedCurrentMultiplier !== '0'
-          ? `${formattedCurrentMultiplier}x`
-          : undefined
-      "
-      data-test="set-compensation-multiplier-button"
-      @click="openModal"
-    />
+    <UTooltip :text="multiplierTooltip">
+      <ActionButton
+        icon="heroicons:calculator"
+        icon-bg="bg-amber-50 dark:bg-amber-950"
+        icon-color="text-amber-700 dark:text-amber-400"
+        title="Set Multiplier"
+        tone-class="border-orange-200 bg-orange-50/60 hover:border-orange-300 hover:bg-orange-100/70 disabled:border-orange-200 disabled:bg-orange-50/50 dark:border-orange-900 dark:bg-orange-950/30 dark:hover:border-orange-800 dark:hover:bg-orange-900/40 dark:disabled:border-orange-900 dark:disabled:bg-orange-950/30"
+        :loading="isLoading"
+        :disabled="isWriteDisabled || !canManageMultiplier || isLoading"
+        :badge="
+          !isMultiplierLoading && formattedCurrentMultiplier !== '0'
+            ? `${formattedCurrentMultiplier}x`
+            : undefined
+        "
+        data-test="set-compensation-multiplier-button"
+        @click="openModal"
+      />
+    </UTooltip>
 
     <UModal
       v-model:open="isModalOpen"
@@ -79,14 +81,16 @@
               @click="closeModal"
               label="Cancel"
             />
-            <UButton
-              color="primary"
-              type="submit"
-              :loading="isLoading"
-              :disabled="!isMultiplierValid || isLoading"
-              data-test="confirm-button"
-              label="Update Multiplier"
-            />
+            <TeamArchivedTooltip v-slot="{ disabled: archivedDisabled }">
+              <UButton
+                color="primary"
+                type="submit"
+                :loading="isLoading"
+                :disabled="!isMultiplierValid || isLoading || archivedDisabled"
+                data-test="confirm-button"
+                label="Update Multiplier"
+              />
+            </TeamArchivedTooltip>
           </div>
         </UForm>
       </template>
@@ -100,6 +104,8 @@ import { z } from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
 import { useConnection } from '@wagmi/vue'
 import ActionButton from '@/components/sections/SherTokenView/ActionButton.vue'
+import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
+import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 import { useSetMultiplier } from '@/composables/safeDepositRouter/writes'
 import {
   useSafeDepositRouterAddress,
@@ -115,6 +121,9 @@ import {
 
 const toast = useToast()
 const connection = useConnection()
+const { isWriteDisabled, archivedTooltip } = useTeamWriteGuard()
+
+const multiplierTooltip = computed(() => archivedTooltip.value)
 
 const isModalOpen = ref(false)
 const submissionError = ref<string | null>(null)
@@ -224,6 +233,8 @@ watch(
 )
 
 function openModal() {
+  if (isWriteDisabled.value) return
+
   if (!canManageMultiplier.value) {
     toast.add({ title: 'Only the owner can set the multiplier', color: 'error' })
     return

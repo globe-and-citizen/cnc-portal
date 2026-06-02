@@ -9,7 +9,11 @@ import {
 
 import { deleteMember, addMembers } from '../controllers/memberController';
 import { checkSubmitRestriction } from '../controllers/featureController';
-import { requireTeamMember, requireTeamOwner } from '../middleware/teamAuthzMiddleware';
+import {
+  rejectIfArchived,
+  requireTeamMember,
+  requireTeamOwner,
+} from '../middleware/teamAuthzMiddleware';
 import {
   validateBody,
   validateQuery,
@@ -337,6 +341,7 @@ teamRoutes.post(
   '/:id/member',
   validateBodyAndParams(addMembersBodySchema, teamIdParamsSchema),
   requireTeamOwner('params.id'),
+  rejectIfArchived('params.id'),
   addMembers
 );
 
@@ -395,6 +400,7 @@ teamRoutes.delete(
   '/:id/member/:memberAddress',
   validateParams(deleteMemberParamsSchema),
   requireTeamOwner('params.id'),
+  rejectIfArchived('params.id'),
   deleteMember
 );
 

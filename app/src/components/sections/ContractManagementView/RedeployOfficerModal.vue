@@ -142,26 +142,28 @@
         >
           {{ migrationFailed ? 'Skip & close' : 'Cancel' }}
         </UButton>
-        <UButton
-          v-if="migrationFailed"
-          color="primary"
-          :loading="isRunning"
-          :disabled="isRunning || isInconsistent"
-          @click="retryMigration()"
-          data-test="retry-migration"
-        >
-          Retry shareholder migration
-        </UButton>
-        <UButton
-          v-else
-          color="primary"
-          :loading="isRunning"
-          :disabled="!canRedeploy || isRunning"
-          @click="onRedeploy"
-          data-test="confirm-redeploy-contracts"
-        >
-          Redeploy Officer
-        </UButton>
+        <TeamArchivedTooltip v-slot="{ disabled: archivedDisabled }">
+          <UButton
+            v-if="migrationFailed"
+            color="primary"
+            :loading="isRunning"
+            :disabled="isRunning || isInconsistent || archivedDisabled"
+            @click="retryMigration()"
+            data-test="retry-migration"
+          >
+            Retry shareholder migration
+          </UButton>
+          <UButton
+            v-else
+            color="primary"
+            :loading="isRunning"
+            :disabled="!canRedeploy || isRunning || archivedDisabled"
+            @click="onRedeploy"
+            data-test="confirm-redeploy-contracts"
+          >
+            Redeploy Officer
+          </UButton>
+        </TeamArchivedTooltip>
       </div>
     </template>
   </UModal>
@@ -177,6 +179,7 @@ import {
 } from '@/composables/investor/reads'
 import { useOfficerRedeploy } from '@/composables/contracts/useOfficerRedeploy'
 import { formatDeployError } from '@/composables/contracts/useOfficerDeployment'
+import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
 
 const isOpen = defineModel<boolean>('open', { default: false })
 

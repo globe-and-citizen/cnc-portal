@@ -45,21 +45,24 @@
       >
         Cancel
       </UButton>
-      <UButton
-        color="primary"
-        type="submit"
-        :loading="submitting"
-        :disabled="isLoading || submitting || nativeDeposit.isPending.value"
-        data-test="deposit-button"
-      >
-        {{ submitLabel }}
-      </UButton>
+      <TeamArchivedTooltip v-slot="{ disabled: archivedDisabled }">
+        <UButton
+          color="primary"
+          type="submit"
+          :loading="submitting"
+          :disabled="isLoading || submitting || nativeDeposit.isPending.value || archivedDisabled"
+          data-test="deposit-button"
+        >
+          {{ submitLabel }}
+        </UButton>
+      </TeamArchivedTooltip>
     </div>
   </UForm>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
 import { z } from 'zod'
 import { parseEther, zeroAddress, type Address } from 'viem'
 import { useContractBalance } from '@/composables/useContractBalance'
