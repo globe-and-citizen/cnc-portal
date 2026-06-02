@@ -126,24 +126,7 @@
 import SelectMemberInput from '@/components/utils/SelectMemberInput.vue'
 import UserComponent from '@/components/UserComponent.vue'
 import VestingSummary from '@/components/sections/VestingView/VestingSummary.vue'
-import { useTeamStore } from '@/stores'
 import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
-import {
-  useVestingAddress,
-  useVestingGetTeamVestingsWithMembers
-} from '@/composables/vesting/reads'
-import { useVestingAddVestingWrite } from '@/composables/vesting/writes'
-import { type VestingCreation } from '@/types/vesting'
-import type { User } from '@/types'
-import { useContractBalance } from '@/composables/useContractBalance'
-import { useErc20Allowance, useErc20BalanceOf } from '@/composables/erc20/reads'
-import { useERC20Approve } from '@/composables/erc20/writes'
-import { useUserDataStore } from '@/stores'
-import { isAddress } from 'viem'
-import { z } from 'zod'
-import type { DateRange } from 'reka-ui'
-
-const toast = useToast()
 import { useCreateVesting } from '@/composables/vesting/useCreateVesting'
 
 const props = defineProps<{
