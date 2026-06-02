@@ -1,6 +1,6 @@
 import { computed, ref, watch } from 'vue'
 import type { ComputedRef } from 'vue'
-import { groupTransactionsByTxHash } from '@/utils'
+import { groupTransactionsByTxHash, getTransactionTypeLabel } from '@/utils'
 import type { GroupedTransactionRow } from '@/types/transaction-history'
 
 type TransactionBase = {
@@ -49,7 +49,9 @@ export const useTransactionTable = <T extends TransactionBase>(transactions: Com
 
   const typeOptions = computed(() => [
     { label: 'All Types', value: 'all' },
-    ...uniqueTypes.value.map((type) => ({ label: type, value: type }))
+    ...uniqueTypes.value
+      .map((type) => ({ label: getTransactionTypeLabel(type), value: type }))
+      .sort((a, b) => a.label.localeCompare(b.label))
   ])
 
   const filteredTransactions = computed(() => {

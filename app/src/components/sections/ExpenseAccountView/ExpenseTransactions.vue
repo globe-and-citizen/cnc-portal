@@ -96,16 +96,17 @@
       </template>
 
       <template #details-cell="{ row }">
-        <UButton
-          v-if="row.depth === 0"
-          icon="heroicons:eye"
-          size="xs"
-          color="neutral"
-          variant="ghost"
-          data-test="expense-transaction-detail-button"
-          aria-label="View transaction details"
-          @click="openDetail(row.original)"
-        />
+        <UTooltip v-if="row.depth === 0" text="View transaction details">
+          <UButton
+            icon="heroicons:document-magnifying-glass"
+            size="xs"
+            color="neutral"
+            variant="ghost"
+            data-test="expense-transaction-detail-button"
+            aria-label="View transaction details"
+            @click="openDetail(row.original)"
+          />
+        </UTooltip>
         <span v-else />
       </template>
 
@@ -167,7 +168,6 @@ import { useCurrencyStore } from '@/stores/currencyStore'
 import {
   useTransactionTable,
   childHidden,
-  childSpacer,
   childColspanFrom
 } from '@/composables/transactions/useTransactionTable'
 import { useTransactionInline } from '@/composables/transactions/useTransactionInline'
@@ -277,8 +277,8 @@ const {
 const { getInlineUser, getValuePrefix, getValueClass } = useTransactionInline(contractAddress)
 
 const columns = computed(() => [
-  { accessorKey: 'date', header: 'Date', meta: { class: { td: childSpacer } } },
-  { accessorKey: 'type', header: 'Type', meta: { colspan: { td: childColspanFrom(1) } } },
+  { accessorKey: 'date', header: 'Date', meta: { class: { td: childHidden } } },
+  { accessorKey: 'type', header: 'Type', meta: { colspan: { td: childColspanFrom(0) } } },
   {
     accessorKey: 'value',
     header: `Value (${currencyStore.localCurrency.code})`,

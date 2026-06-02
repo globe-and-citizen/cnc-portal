@@ -126,6 +126,23 @@ describe('TransactionDetailModal', () => {
     expect(wrapper.text()).toContain('Token deposit')
   })
 
+  it('does not show To row for tokenSupportAdded when to equals tokenAddress', () => {
+    const tokenAddr = '0x3333333333333333333333333333333333333333'
+    const wrapper = mountComponent({
+      type: 'tokenSupportAdded',
+      token: 'USDC',
+      tokenAddress: tokenAddr,
+      to: tokenAddr,
+      amount: '0'
+    })
+
+    expect(wrapper.text()).toContain('Token')
+    // address should appear only once (in Token row), not twice (which would indicate a To row)
+    const addressOccurrences = (wrapper.text().match(new RegExp(tokenAddr.slice(0, 10), 'g')) ?? [])
+      .length
+    expect(addressOccurrences).toBe(1)
+  })
+
   it('shows friendly label for config events like safeDepositsEnabled', () => {
     const wrapper = mountComponent({ type: 'safeDepositsEnabled', token: '-', amount: '0' })
 

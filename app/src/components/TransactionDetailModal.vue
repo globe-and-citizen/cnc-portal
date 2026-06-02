@@ -121,6 +121,13 @@
                     />
                   </div>
                 </div>
+                <div
+                  v-if="event.to && event.to !== event.tokenAddress"
+                  class="flex items-center justify-between text-sm"
+                >
+                  <span class="text-muted text-xs">To</span>
+                  <UserComponent :user="resolveUser(event.to)" />
+                </div>
               </template>
               <div v-if="Number(event.amount) > 0" class="flex items-center justify-between">
                 <span class="text-muted text-xs">Amount</span>
@@ -171,7 +178,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { decodeFunctionData } from 'viem'
-import type { TransactionReceipt, Abi, AbiFunction } from 'viem'
+import type { TransactionReceipt, AbiFunction } from 'viem'
 import type { GroupedTransactionRow, TransactionHistoryItemRow } from '@/types/transaction-history'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import UserComponent from '@/components/UserComponent.vue'
@@ -180,41 +187,16 @@ import {
   formatCryptoAmount,
   formatCurrencyShort,
   getTransactionSummary,
-  getTransactionTypeLabel
+  getTransactionTypeLabel,
+  formatDecodedValue,
+  CONTRACT_ABI_MAP,
+  type DecodedParam,
+  type DecodedInputData
 } from '@/utils'
 import { formatDateRelative, formatDateUTC } from '@/utils/dayUtils'
 import { useCurrencyStore, useTeamStore } from '@/stores'
 import { getPublicClient } from '@/utils/web3Util'
 import { NETWORK } from '@/constant'
-import { BANK_ABI } from '@/artifacts/abi/bank'
-import { INVESTOR_ABI } from '@/artifacts/abi/investors'
-import { EXPENSE_ACCOUNT_EIP712_ABI } from '@/artifacts/abi/expense-account-eip712'
-import { CASH_REMUNERATION_EIP712_ABI } from '@/artifacts/abi/cash-remuneration-eip712'
-import { SAFE_DEPOSIT_ROUTER_ABI } from '@/artifacts/abi/safe-deposit-router'
-import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
-import { PROPOSALS_ABI } from '@/artifacts/abi/proposals'
-
-const CONTRACT_ABI_MAP: Record<string, Abi> = {
-  Bank: BANK_ABI,
-  InvestorV1: INVESTOR_ABI,
-  ExpenseAccountEIP712: EXPENSE_ACCOUNT_EIP712_ABI,
-  CashRemunerationEIP712: CASH_REMUNERATION_EIP712_ABI,
-  SafeDepositRouter: SAFE_DEPOSIT_ROUTER_ABI,
-  Elections: ELECTIONS_ABI,
-  Proposals: PROPOSALS_ABI
-}
-
-interface DecodedParam {
-  name: string
-  type: string
-  display: string
-  isAddress: boolean
-}
-
-interface DecodedInputData {
-  functionName: string
-  params: DecodedParam[]
-}
 
 const props = defineProps<{
   transaction: TransactionHistoryItemRow
@@ -239,21 +221,6 @@ const copyCalldata = async () => {
   setTimeout(() => (copied.value = false), 2000)
 }
 
-const formatDecodedValue = (
-  type: string,
-  value: unknown
-): { display: string; isAddress: boolean } => {
-  if (value === null || value === undefined) return { display: '-', isAddress: false }
-  if (type === 'address') return { display: String(value), isAddress: true }
-  if (typeof value === 'bigint') return { display: value.toLocaleString(), isAddress: false }
-  if (Array.isArray(value)) {
-    const innerType = type.replace(/\[\d*\]$/, '')
-    const items = value.map((v) => formatDecodedValue(innerType, v).display)
-    return { display: `[${items.join(', ')}]`, isAddress: false }
-  }
-  return { display: String(value), isAddress: false }
-}
-
 watch(
   () => props.transaction.txHash,
   async (hash) => {
@@ -273,7 +240,7 @@ watch(
       txSender.value = txData.from ?? null
 
       const toAddr = txData.to?.toLowerCase() ?? ''
-      const contract = teamStore.currentTeam?.teamContracts?.find(
+      const contract = teamStore.currentTeamMeta.data?.teamContracts?.find(
         (c) => c.address.toLowerCase() === toAddr
       )
       const abi = contract ? CONTRACT_ABI_MAP[contract.type] : undefined

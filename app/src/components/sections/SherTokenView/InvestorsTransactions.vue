@@ -94,16 +94,17 @@
       </template>
 
       <template #details-cell="{ row }">
-        <UButton
-          v-if="row.depth === 0"
-          icon="heroicons:eye"
-          size="xs"
-          color="neutral"
-          variant="ghost"
-          data-test="investor-transaction-detail-button"
-          aria-label="View transaction details"
-          @click="openDetail(row.original)"
-        />
+        <UTooltip v-if="row.depth === 0" text="View transaction details">
+          <UButton
+            icon="heroicons:document-magnifying-glass"
+            size="xs"
+            color="neutral"
+            variant="ghost"
+            data-test="investor-transaction-detail-button"
+            aria-label="View transaction details"
+            @click="openDetail(row.original)"
+          />
+        </UTooltip>
         <span v-else />
       </template>
 

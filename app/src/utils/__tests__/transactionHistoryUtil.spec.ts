@@ -9,7 +9,8 @@ import {
   getTransactionSummary,
   getTransactionTypeLabel,
   getTransactionTypeColor,
-  groupTransactionsByTxHash
+  groupTransactionsByTxHash,
+  formatDecodedValue
 } from '../transactionHistoryUtil'
 
 type TransactionFixture = {
@@ -288,5 +289,31 @@ describe('transactionHistoryUtil', () => {
       'Multiplier updated'
     )
     expect(getTransactionSummary({ type: 'unknownType', amount: '1', token: 'USDC' })).toBe('')
+  })
+
+  it('formatDecodedValue handles primitives, arrays, and addresses', () => {
+    expect(formatDecodedValue('address', '0x1234')).toEqual({ display: '0x1234', isAddress: true })
+    expect(formatDecodedValue('uint256', 1000n)).toEqual({ display: '1,000', isAddress: false })
+    expect(formatDecodedValue('bool', true)).toEqual({ display: 'true', isAddress: false })
+    expect(formatDecodedValue('uint256', null)).toEqual({ display: '-', isAddress: false })
+    const arr = formatDecodedValue('uint256[]', [100n, 200n])
+    expect(arr.display).toBe('[100, 200]')
+    expect(arr.isAddress).toBe(false)
+  })
+
+  it('formatDecodedValue strips numeric-index viem tuple keys', () => {
+    const tupleValue = { '0': '0xabc', addr: '0xabc', '1': '500', amount: '500' }
+    const result = formatDecodedValue('tuple', tupleValue)
+    expect(result.display).toContain('addr')
+    expect(result.display).toContain('amount')
+    expect(result.display).not.toContain('"0"')
+    expect(result.display).not.toContain('"1"')
+  })
+
+  it('formatDecodedValue returns dash on circular reference without throwing', () => {
+    const circular: Record<string, unknown> = {}
+    circular.self = circular
+    expect(() => formatDecodedValue('tuple', circular)).not.toThrow()
+    expect(formatDecodedValue('tuple', circular).display).toBe('-')
   })
 })
