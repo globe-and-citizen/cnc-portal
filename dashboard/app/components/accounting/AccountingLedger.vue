@@ -25,11 +25,9 @@
             class="w-36"
             size="sm"
           />
-          <USelect
-            v-model="categoryFilter"
+          <AccountingCategoryFilter
+            v-model="selectedCategories"
             :items="categoryOptions"
-            class="w-44"
-            size="sm"
           />
           <AccountingColumnVisibility
             v-model="visibleColumns"
@@ -214,6 +212,9 @@ import {
   type MergedColumnKey,
   type MergedLedgerRow
 } from '~/utils/mergedLedger'
+import AccountingCategoryFilter, {
+  type CategoryOption
+} from './AccountingCategoryFilter.vue'
 import AccountingColumnVisibility, {
   type ColumnOption
 } from './AccountingColumnVisibility.vue'
@@ -248,19 +249,21 @@ const generalLedger = computed(() =>
 
 const pageSize = ref(20)
 const currentPage = ref(1)
-const categoryFilter = ref<'ALL' | LedgerCategory>('ALL')
 
-watch([() => props.walletAddress, categoryFilter, accountingPeriod], () => {
-  currentPage.value = 1
-})
-
-const categoryOptions = [
-  { label: 'All categories', value: 'ALL' as const },
-  ...Object.entries(CATEGORY_META).map(([value, meta]) => ({
+const categoryOptions: CategoryOption<LedgerCategory>[] = Object.entries(CATEGORY_META).map(
+  ([value, meta]) => ({
     label: meta.label,
     value: value as LedgerCategory
-  }))
-]
+  })
+)
+const allCategoryValues = categoryOptions.map(option => option.value)
+
+// Multi-select: every category selected == "All categories".
+const selectedCategories = ref<LedgerCategory[]>([...allCategoryValues])
+
+watch([() => props.walletAddress, selectedCategories, accountingPeriod], () => {
+  currentPage.value = 1
+})
 
 // --- Build the merged row list (one row per journal line) ---
 const allRows = computed(() =>
@@ -275,12 +278,14 @@ function inSelectedPeriod(timestamp: number): boolean {
   return timestamp <= end
 }
 
+const selectedCategorySet = computed(() => new Set(selectedCategories.value))
+
 const filteredRows = computed(() => {
   const rows = allRows.value.filter(row => inSelectedPeriod(row.entry.timestamp))
-  if (categoryFilter.value === 'ALL') {
+  if (selectedCategories.value.length === allCategoryValues.length) {
     return rows
   }
-  return rows.filter(row => row.entry.category === categoryFilter.value)
+  return rows.filter(row => selectedCategorySet.value.has(row.entry.category))
 })
 
 // Pagination counts ACTIVITIES (isFirst rows), not journal lines — a page of
