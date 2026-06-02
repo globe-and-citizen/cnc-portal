@@ -122,9 +122,45 @@ export const USelectMenuStub = defineComponent({
   }
 })
 
+type USelectItem = { value?: unknown; label?: unknown } | string | number
+
+const selectItemValue = (item: USelectItem, valueKey?: string): unknown => {
+  if (item !== null && typeof item === 'object') {
+    return valueKey ? (item as Record<string, unknown>)[valueKey] : item.value
+  }
+  return item
+}
+
+// Generic <select> stub. Renders `items` as <option>s and, on change, emits
+// `update:modelValue` with the matched item's original value (preserving its
+// type, e.g. numeric value-keys), mirroring real USelect emit behavior.
+export const USelectStub = defineComponent({
+  name: 'USelect',
+  props: ['modelValue', 'items', 'valueKey', 'placeholder'],
+  emits: ['update:modelValue'],
+  setup(props, { attrs, emit }) {
+    const onChange = (event: Event) => {
+      const raw = (event.target as HTMLSelectElement).value
+      const items = (props.items ?? []) as USelectItem[]
+      const match = items.find((item) => String(selectItemValue(item, props.valueKey)) === raw)
+      emit('update:modelValue', match === undefined ? raw : selectItemValue(match, props.valueKey))
+    }
+    return () =>
+      h(
+        'select',
+        { ...attrs, onChange },
+        (props.items ?? []).map((item: USelectItem) => {
+          const value = selectItemValue(item, props.valueKey)
+          const label = item !== null && typeof item === 'object' ? item.label : item
+          return h('option', { key: String(value), value: value as string }, label as string)
+        })
+      )
+  }
+})
+
 export const UCalendarStub = defineComponent({
   name: 'UCalendar',
-  props: ['modelValue', 'range', 'numberOfMonths'],
+  props: ['modelValue', 'range', 'numberOfMonths', 'isDateDisabled'],
   emits: ['update:modelValue'],
   setup() {
     return () => h('div', { 'data-test': 'u-calendar' })

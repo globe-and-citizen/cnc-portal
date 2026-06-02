@@ -1,6 +1,6 @@
 import express from 'express';
 import { addClaim, getClaims, updateClaim, deleteClaim } from '../controllers/claimController';
-import { requireTeamMember } from '../middleware/teamAuthzMiddleware';
+import { rejectIfArchived, requireTeamMember } from '../middleware/teamAuthzMiddleware';
 import {
   validateBody,
   validateQuery,
@@ -112,7 +112,7 @@ const claimRoutes = express.Router();
  *             $ref: '#/components/schemas/ErrorResponse'
  */
 // Updated to accept JSON with pre-uploaded file attachments
-claimRoutes.post('/', validateBody(addClaimBodySchema), addClaim);
+claimRoutes.post('/', validateBody(addClaimBodySchema), rejectIfArchived('body.teamId'), addClaim);
 
 /**
  * @openapi
@@ -241,6 +241,7 @@ claimRoutes.get(
 claimRoutes.put(
   '/:claimId',
   validateBodyAndParams(updateClaimBodySchema, claimIdParamsSchema),
+  rejectIfArchived('params.claimId'),
   updateClaim
 );
 
@@ -297,6 +298,11 @@ claimRoutes.put(
  *           schema:
  *             $ref: '#/components/schemas/ErrorResponse'
  */
-claimRoutes.delete('/:claimId', validateParams(claimIdParamsSchema), deleteClaim);
+claimRoutes.delete(
+  '/:claimId',
+  validateParams(claimIdParamsSchema),
+  rejectIfArchived('params.claimId'),
+  deleteClaim
+);
 
 export default claimRoutes;

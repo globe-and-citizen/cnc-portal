@@ -2,13 +2,14 @@
   <a
     v-if="isDropDown"
     data-test="withdraw-action"
-    :class="['text-sm', { disabled: withdrawTx.isPending.value }]"
-    :aria-disabled="withdrawTx.isPending.value"
-    :tabindex="withdrawTx.isPending.value ? -1 : 0"
-    :style="{ pointerEvents: withdrawTx.isPending.value ? 'none' : undefined }"
+    :class="['text-sm', { disabled: withdrawTx.isPending.value || isTeamArchived }]"
+    :aria-disabled="withdrawTx.isPending.value || isTeamArchived"
+    :tabindex="withdrawTx.isPending.value || isTeamArchived ? -1 : 0"
+    :style="{ pointerEvents: withdrawTx.isPending.value || isTeamArchived ? 'none' : undefined }"
+    :title="isTeamArchived ? archivedTooltip : undefined"
     @click="
       async () => {
-        if (withdrawTx.isPending.value) return
+        if (withdrawTx.isPending.value || isTeamArchived) return
         if (!isClaimOwner) {
           emit('claim-withdrawn')
           return
@@ -25,16 +26,17 @@
     />
     Withdraw
   </a>
-  <UButton
-    v-else
-    :disabled="disabled"
-    :loading="withdrawTx.isPending.value"
-    color="warning"
-    data-test="withdraw-button"
-    size="sm"
-    @click="async () => await withdrawClaim()"
-    label="Withdraw"
-  />
+  <UTooltip v-else :text="archivedTooltip">
+    <UButton
+      :disabled="disabled || isTeamArchived"
+      :loading="withdrawTx.isPending.value"
+      color="warning"
+      data-test="withdraw-button"
+      size="sm"
+      @click="async () => await withdrawClaim()"
+      label="Withdraw"
+    />
+  </UTooltip>
 </template>
 
 <script setup lang="ts">
@@ -45,6 +47,7 @@ import { USDC_ADDRESS } from '@/constant'
 import type { WeeklyClaim } from '@/types'
 import { useSyncWeeklyClaimsMutation } from '@/queries'
 import { useWithdraw } from '@/composables/cashRemuneration/writes'
+import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 
 const props = defineProps<{
   weeklyClaim: WeeklyClaim
@@ -57,6 +60,7 @@ const emit = defineEmits(['claim-withdrawn'])
 
 const teamStore = useTeamStore()
 const toast = useToast()
+const { isWriteDisabled: isTeamArchived, archivedTooltip } = useTeamWriteGuard()
 
 const withdrawTx = useWithdraw()
 
@@ -69,7 +73,7 @@ const getTokenAddress = (type: string): Address => {
 }
 
 const withdrawClaim = async () => {
-  if (withdrawTx.isPending.value) return
+  if (withdrawTx.isPending.value || isTeamArchived.value) return
 
   if (!teamStore.getContractAddressByType('CashRemunerationEIP712')) {
     toast.add({ title: 'Cash Remuneration EIP712 contract address not found', color: 'error' })

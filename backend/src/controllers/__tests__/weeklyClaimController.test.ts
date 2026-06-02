@@ -92,6 +92,7 @@ vi.mock('../../utils', async () => {
     prisma: {
       team: {
         findFirst: vi.fn().mockResolvedValue({ id: 1 }),
+        findUnique: vi.fn().mockResolvedValue({ isArchived: false }),
       },
       weeklyClaim: {
         findMany: vi.fn(),
@@ -141,6 +142,8 @@ const putAction = (
 describe('Weekly Claim Controller', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(prisma.team.findUnique).mockResolvedValue({ isArchived: false } as never);
+    vi.mocked(prisma.weeklyClaim.findUnique).mockResolvedValue({ teamId: 1 } as never);
     vi.mocked(isCashRemunerationOwner).mockResolvedValue(true);
     // Default: the team's current CashRemunerationEIP712 matches what the
     // sign body declares it signed against. Individual tests can override
@@ -381,7 +384,9 @@ describe('Weekly Claim Controller', () => {
     });
 
     it('should return 404 if weekly claim is not found', async () => {
-      vi.spyOn(prisma.weeklyClaim, 'findUnique').mockResolvedValue(null);
+      vi.spyOn(prisma.weeklyClaim, 'findUnique')
+        .mockResolvedValueOnce({ teamId: 1 } as never)
+        .mockResolvedValueOnce(null);
       const response = await putAction('sign');
       expect(response.status).toBe(404);
       expect(response.body).toEqual({ message: 'WeeklyClaim not found' });
@@ -455,7 +460,9 @@ describe('Weekly Claim Controller', () => {
     });
 
     it('should return 500 when update throws', async () => {
-      vi.spyOn(prisma.weeklyClaim, 'findUnique').mockRejectedValue(new Error('Database error'));
+      vi.spyOn(prisma.weeklyClaim, 'findUnique')
+        .mockResolvedValueOnce({ teamId: 1 } as never)
+        .mockRejectedValueOnce(new Error('Database error'));
       const response = await putAction('withdraw');
       expect(response.status).toBe(500);
       expect(response.body).toEqual({

@@ -40,13 +40,16 @@
 
       <div class="flex flex-col items-end gap-4">
         <div class="flex gap-2">
-          <UButton
-            color="secondary"
-            data-test="deposit-button"
-            leading-icon="heroicons-outline:plus"
-            label="Deposit"
-            @click="openDepositModal"
-          />
+          <TeamArchivedTooltip v-slot="{ disabled: archivedDisabled }">
+            <UButton
+              color="secondary"
+              data-test="deposit-button"
+              leading-icon="heroicons-outline:plus"
+              label="Deposit"
+              :disabled="archivedDisabled"
+              @click="openDepositModal"
+            />
+          </TeamArchivedTooltip>
 
           <UButton
             color="secondary"
@@ -126,6 +129,8 @@ import TransferForm, { type TransferModel } from '@/components/forms/TransferFor
 import type { TokenOption } from '@/types'
 import { useTransferFromSafeMutation } from '@/queries/safe.mutations'
 import DepositSafeForm from '@/components/forms/DepositSafeForm.vue'
+import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
+import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 
 const chainId = useChainId()
 const userDataStore = useUserDataStore()
@@ -140,6 +145,7 @@ interface Props {
 }
 
 const props = defineProps<Props>()
+const { isWriteDisabled } = useTeamWriteGuard()
 
 const { total, balances, isLoading } = useContractBalance(props.address)
 
@@ -204,6 +210,7 @@ const openInSafeApp = () => {
 }
 
 const openDepositModal = () => {
+  if (isWriteDisabled.value) return
   depositModal.value = { mount: true, show: true }
 }
 

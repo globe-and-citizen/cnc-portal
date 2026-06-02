@@ -11,14 +11,18 @@
         <template #header>
           <div class="flex items-center justify-between">
             <span>Main contract</span>
-            <UButton
-              color="primary"
-              :disabled="teamStore.currentTeam?.ownerAddress !== userStore.address"
-              @click="showModal = true"
-              data-test="createAddCampaign"
-            >
-              Redeploy Contracts
-            </UButton>
+            <TeamArchivedTooltip v-slot="{ disabled: archivedDisabled }">
+              <UButton
+                color="primary"
+                :disabled="
+                  teamStore.currentTeam?.ownerAddress !== userStore.address || archivedDisabled
+                "
+                @click="openRedeployModal"
+                data-test="createAddCampaign"
+              >
+                Redeploy Contracts
+              </UButton>
+            </TeamArchivedTooltip>
           </div>
         </template>
         <MainContractTable />
@@ -34,9 +38,17 @@ import { useUserDataStore } from '@/stores/user'
 import { useTeamStore } from '@/stores'
 import MainContractTable from './MainContractTable.vue'
 import RedeployOfficerModal from './RedeployOfficerModal.vue'
+import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
+import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 
 const teamStore = useTeamStore()
 const userStore = useUserDataStore()
+const { isWriteDisabled } = useTeamWriteGuard()
 
 const showModal = ref(false)
+
+function openRedeployModal() {
+  if (isWriteDisabled.value) return
+  showModal.value = true
+}
 </script>

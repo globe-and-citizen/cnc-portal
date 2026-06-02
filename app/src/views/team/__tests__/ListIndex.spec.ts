@@ -52,9 +52,16 @@ describe('ListIndex - Team List View', () => {
   }
 
   describe('Component Rendering', () => {
-    it('should render the component with heading', () => {
+    it('should render the page heading when teams are visible', () => {
       const wrapper = createWrapper()
       expect(wrapper.find('h2').text()).toContain('Team List View')
+    })
+
+    it('should hide the page heading when no teams are visible', async () => {
+      const wrapper = createWrapper([])
+      await wrapper.vm.$nextTick()
+
+      expect(wrapper.find('h2').exists()).toBe(false)
     })
 
     it('should render component structure correctly', () => {
@@ -84,6 +91,13 @@ describe('ListIndex - Team List View', () => {
       await wrapper.vm.$nextTick()
 
       expect(wrapper.find('[data-test="add-team-button"]').exists()).toBe(false)
+    })
+
+    it('should hide the page heading during loading', async () => {
+      const wrapper = createWrapper([], true)
+      await wrapper.vm.$nextTick()
+
+      expect(wrapper.find('h2').exists()).toBe(false)
     })
   })
 
@@ -161,6 +175,14 @@ describe('ListIndex - Team List View', () => {
       await wrapper.vm.$nextTick()
 
       expect(wrapper.find('[data-test="add-team-button"]').exists()).toBe(false)
+    })
+
+    it('should hide the page heading on error', async () => {
+      const error = new Error('Failed to fetch')
+      const wrapper = createWrapper([], false, error)
+      await wrapper.vm.$nextTick()
+
+      expect(wrapper.find('h2').exists()).toBe(false)
     })
   })
 

@@ -416,6 +416,22 @@ const updateTeam = async (req: Request, res: Response) => {
       return errorResponse(403, 'Unauthorized: Caller is not a member of the team', res);
     }
 
+    if (existingTeam.isArchived) {
+      const allowedUnarchive =
+        isArchived === false &&
+        name === undefined &&
+        description === undefined &&
+        isHidden === undefined;
+      const allowedVisibility =
+        isHidden !== undefined &&
+        name === undefined &&
+        description === undefined &&
+        isArchived === undefined;
+      if (!allowedUnarchive && !allowedVisibility) {
+        return errorResponse(409, 'Team is archived — unarchive to modify', res);
+      }
+    }
+
     if ((name !== undefined || description !== undefined) && !isOwner) {
       return errorResponse(403, 'Unauthorized: Only team owner can update metadata', res);
     }

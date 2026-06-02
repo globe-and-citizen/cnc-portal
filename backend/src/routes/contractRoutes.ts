@@ -7,7 +7,7 @@ import {
   getTeamOfficers,
   createOfficer,
 } from '../controllers/contractController';
-import { requireTeamOwner } from '../middleware/teamAuthzMiddleware';
+import { rejectIfArchived, requireTeamOwner } from '../middleware/teamAuthzMiddleware';
 import {
   validateBody,
   validateQuery,
@@ -112,6 +112,7 @@ contractRoutes.post(
   '/',
   validateBody(addContractBodySchema),
   requireTeamOwner('body.teamId'),
+  rejectIfArchived('body.teamId'),
   addContract
 );
 
@@ -214,6 +215,7 @@ contractRoutes.put(
   '/sync',
   validateBody(syncContractsBodySchema),
   requireTeamOwner('body.teamId'),
+  rejectIfArchived('body.teamId'),
   syncContracts
 );
 
@@ -276,7 +278,13 @@ contractRoutes.put(
  *     500:
  *       description: Internal server error
  */
-contractRoutes.post('/officer', validateBody(createOfficerBodySchema), createOfficer);
+contractRoutes.post(
+  '/officer',
+  validateBody(createOfficerBodySchema),
+  requireTeamOwner('body.teamId'),
+  rejectIfArchived('body.teamId'),
+  createOfficer
+);
 
 /**
  * @openapi

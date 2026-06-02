@@ -1,6 +1,10 @@
 import express from 'express';
 import { getWages, setWage, toggleWageStatus } from '../controllers/wageController';
-import { requireTeamMember, requireTeamOwner } from '../middleware/teamAuthzMiddleware';
+import {
+  rejectIfArchived,
+  requireTeamMember,
+  requireTeamOwner,
+} from '../middleware/teamAuthzMiddleware';
 import {
   validateBody,
   validateQuery,
@@ -193,6 +197,7 @@ wageRoutes.put(
   '/setWage',
   validateBody(setWageBodySchema),
   requireTeamOwner('body.teamId'),
+  rejectIfArchived('body.teamId'),
   setWage
 );
 
@@ -307,6 +312,7 @@ wageRoutes.get(
 wageRoutes.put(
   '/:wageId',
   validateParamsAndQuery(toggleWageStatusParamsSchema, toggleWageStatusQuerySchema),
+  rejectIfArchived('params.wageId'),
   toggleWageStatus
 );
 

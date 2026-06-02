@@ -19,7 +19,7 @@ import {
 } from '@/tests/mocks/composables.mock'
 import { mockUploadFileApi } from '@/tests/mocks/api.mock'
 import { mockGetBalance, mockGetLogs } from '@/tests/mocks/viem.actions.mock'
-import { mockRouter } from '@/tests/mocks/router.mock'
+import { mockRouter, mockRoute, resetMockRoute } from '@/tests/mocks/router.mock'
 
 // Restore all shared composable mocks to their defaults before every test so
 // that in-place mutations (refs, spies) never leak across tests. Setup-file
@@ -28,6 +28,7 @@ beforeEach(() => {
   resetComposableMocks()
   resetDeployState()
   resetNotificationsMock()
+  resetMockRoute()
 })
 
 declare global {
@@ -75,11 +76,9 @@ vi.mock('vue-router', async (importOriginal) => {
     ...actual,
     useRouter: vi.fn(() => mockRouter),
     RouterView: { name: 'RouterView', template: '<div data-test="router-view">Router View</div>' },
-    useRoute: vi.fn(() => ({
-      params: { id: '1' },
-      path: '/teams/1',
-      meta: { name: 'Team View' }
-    }))
+    // Returns the shared, mutable `mockRoute`. Override per-test via
+    // `renderWithProviders(..., { route })` or `setMockRoute(...)`.
+    useRoute: vi.fn(() => mockRoute)
   }
 })
 

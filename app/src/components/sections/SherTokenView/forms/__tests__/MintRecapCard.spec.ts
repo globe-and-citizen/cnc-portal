@@ -1,8 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { mount } from '@vue/test-utils'
-import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
 import MintRecapCard from '../MintRecapCard.vue'
+import { renderWithProviders } from '@/tests/mocks'
 
 const VALID_ADDRESS = '0x1234567890123456789012345678901234567890'
 
@@ -17,15 +16,12 @@ vi.mock('@/composables/investor/reads', () => ({
 }))
 
 const mountRecap = (props: Record<string, unknown> = {}) =>
-  mount(MintRecapCard, {
+  renderWithProviders(MintRecapCard, {
     props: {
       recipientAddress: VALID_ADDRESS,
       issuedAmount: 10,
       hasValidationError: false,
       ...props
-    },
-    global: {
-      plugins: [createTestingPinia({ createSpy: vi.fn })]
     }
   })
 

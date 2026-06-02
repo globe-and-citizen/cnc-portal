@@ -1,9 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { mount } from '@vue/test-utils'
-import { createTestingPinia } from '@pinia/testing'
 import AdvertiseContractSection from '@/components/sections/ContractManagementView/AdvertiseContractSection.vue'
 import { useTeamStore } from '@/stores'
-import { mockTeamStore } from '@/tests/mocks'
+import { mockTeamStore, renderWithProviders } from '@/tests/mocks'
 
 vi.mock('@/components/sections/ContractManagementView/TeamContracts.vue', () => ({
   default: { template: '<div data-test="team-contracts-stub" />' }
@@ -13,10 +11,7 @@ vi.mock('@/components/sections/ContractManagementView/forms/CreateAddCampaign.vu
   default: { template: '<div data-test="create-add-campaign-stub" />' }
 }))
 
-const mountSection = () =>
-  mount(AdvertiseContractSection, {
-    global: { plugins: [createTestingPinia({ createSpy: vi.fn })] }
-  })
+const mountSection = () => renderWithProviders(AdvertiseContractSection)
 
 describe('AdvertiseContractSection.vue', () => {
   beforeEach(() => {

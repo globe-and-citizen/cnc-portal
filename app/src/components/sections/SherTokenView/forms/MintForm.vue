@@ -46,15 +46,17 @@
           @click="emit('close-modal')"
           label="Cancel"
         />
-        <UButton
-          type="submit"
-          :loading="isMintPending"
-          :disabled="isSubmitDisabled"
-          color="primary"
-          class="text-center"
-          data-test="submit-button"
-          label="Issue tokens"
-        />
+        <TeamArchivedTooltip v-slot="{ disabled: archivedDisabled }">
+          <UButton
+            type="submit"
+            :loading="isMintPending"
+            :disabled="isSubmitDisabled || archivedDisabled"
+            color="primary"
+            class="text-center"
+            data-test="submit-button"
+            label="Issue tokens"
+          />
+        </TeamArchivedTooltip>
       </div>
     </div>
   </UForm>
@@ -66,6 +68,7 @@ import { isAddress, parseUnits } from 'viem'
 import { reactive, ref, computed, watch } from 'vue'
 import SelectMemberContractsInput from '@/components/utils/SelectMemberContractsInput.vue'
 import MintStakeSection from './MintStakeSection.vue'
+import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
 import { useIndividualMint } from '@/composables/investor/writes'
 import { log } from '@/utils'
 import { useQueryClient } from '@tanstack/vue-query'

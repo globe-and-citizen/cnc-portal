@@ -13,6 +13,7 @@ vi.mock('../../utils', async () => {
     prisma: {
       team: {
         findFirst: vi.fn().mockResolvedValue({ id: 1 }),
+        findUnique: vi.fn().mockResolvedValue({ isArchived: false }),
       },
       wage: {
         findFirst: vi.fn(),
@@ -29,6 +30,7 @@ vi.mock('../../utils', async () => {
       },
       claim: {
         findFirst: vi.fn(),
+        findUnique: vi.fn(),
         findMany: vi.fn(),
         create: vi.fn(),
         update: vi.fn(),
@@ -213,6 +215,8 @@ const invalidBodyScenarios = [
 describe('Claim Controller', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(prisma.team.findUnique).mockResolvedValue({ isArchived: false } as never);
+    vi.mocked(prisma.claim.findUnique).mockResolvedValue({ wage: { teamId: 1 } } as never);
   });
 
   describe('POST: /', () => {

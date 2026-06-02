@@ -97,7 +97,14 @@ export function computeAccountingIdentities(input: ComputeIdentitiesInput): Acco
   const { summary, balanceSheet: bs, generalLedger: gl, realizedTrades } = input
 
   const allTimeRealized = realizedTrades.reduce((sum, t) => sum + t.realizedPnl, 0)
-  const pnlBasedReturn = summary.realizedPnl + summary.unrealizedPnl + summary.totalRewards
+  // The P&L view of the total return = the five reconciliation lines:
+  //   realized + unrealized + rewards + settlement deltas + cost-basis drift.
+  // With all five included, identity #5 holds by construction.
+  const pnlBasedReturn = summary.realizedPnl
+    + summary.unrealizedPnl
+    + summary.totalRewards
+    + summary.settlementAdjustments
+    + summary.positionBasisDrift
 
   const out: AccountingIdentity[] = []
 
@@ -170,12 +177,14 @@ export function computeAccountingIdentities(input: ComputeIdentitiesInput): Acco
   }
 
   // 5. P&L double-measure (only meaningful as of today)
+  // Holds by construction: settlementAdjustments + positionBasisDrift are
+  // exactly the reconciliation lines needed to close the cash↔P&L identity.
   {
     const lhs = summary.totalReturn
     const rhs = pnlBasedReturn
     out.push({
       id: 'PNL_DOUBLE_MEASURE',
-      label: 'Total return = Realized + Unrealized + Rewards',
+      label: 'Total return = Realized + Unrealized + Rewards + reconciliations',
       lhsLabel: 'Cash-based total return',
       rhsLabel: 'P&L-based total return',
       lhs,

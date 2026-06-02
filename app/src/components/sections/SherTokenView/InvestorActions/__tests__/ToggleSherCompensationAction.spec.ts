@@ -1,7 +1,5 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
-import { mount } from '@vue/test-utils'
 import { nextTick } from 'vue'
-import { createTestingPinia } from '@pinia/testing'
 import ToggleSherCompensationAction from '../ToggleSherCompensationAction.vue'
 import {
   mockParseError,
@@ -9,16 +7,12 @@ import {
   mockSafeDepositRouterReads,
   mockSafeDepositRouterWrites,
   mockTeamStore,
-  mockUseConnection
+  mockUseConnection,
+  renderWithProviders
 } from '@/tests/mocks'
 
 describe('ToggleSherCompensationAction.vue', () => {
-  const createWrapper = () =>
-    mount(ToggleSherCompensationAction, {
-      global: {
-        plugins: [createTestingPinia({ createSpy: vi.fn })]
-      }
-    })
+  const createWrapper = () => renderWithProviders(ToggleSherCompensationAction)
 
   beforeEach(() => {
     vi.useRealTimers()

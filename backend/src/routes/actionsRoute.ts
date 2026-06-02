@@ -1,5 +1,6 @@
 import express from 'express';
 import { authorizeUser } from '../middleware/authMiddleware';
+import { rejectIfArchived } from '../middleware/teamAuthzMiddleware';
 import { addAction, executeAction, getActions } from '../controllers/actionController';
 import {
   validateBody,
@@ -268,7 +269,13 @@ actionRoute.get('/', authorizeUser, validateQuery(getActionsQuerySchema), getAct
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-actionRoute.post('/', authorizeUser, validateBody(addActionBodySchema), addAction);
+actionRoute.post(
+  '/',
+  authorizeUser,
+  validateBody(addActionBodySchema),
+  rejectIfArchived('body.teamId'),
+  addAction
+);
 
 /**
  * @openapi
@@ -335,6 +342,12 @@ actionRoute.post('/', authorizeUser, validateBody(addActionBodySchema), addActio
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-actionRoute.patch('/:id', authorizeUser, validateParams(actionIdParamsSchema), executeAction);
+actionRoute.patch(
+  '/:id',
+  authorizeUser,
+  validateParams(actionIdParamsSchema),
+  rejectIfArchived('params.actionId'),
+  executeAction
+);
 
 export default actionRoute;
