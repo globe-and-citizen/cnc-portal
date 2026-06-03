@@ -123,14 +123,22 @@
     </UPageCard>
 
     <UPageCard v-if="hasAddress" variant="subtle">
-      <h3 class="font-semibold text-black dark:text-white mb-1">
-        Trades by position · {{ totalPositions }} positions
-      </h3>
-      <p class="text-sm text-muted mb-4">
-        Each position groups its buys and sells. <strong>Net = returned − invested</strong> is your
-        profit on the position (cash basis — a still-open position doesn't yet credit the unsold shares).
-        Click a position to expand its trades.
-      </p>
+      <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-4">
+        <div>
+          <h3 class="font-semibold text-black dark:text-white mb-1">
+            Trades by position · {{ totalPositions }} positions
+          </h3>
+          <p class="text-sm text-muted">
+            Each position groups its buys and sells. <strong>Net = returned − invested</strong> is your
+            profit on the position (cash basis — a still-open position doesn't yet credit the unsold shares).
+            Click a position to expand its trades.
+          </p>
+        </div>
+        <AccountingTableSearch
+          v-model="tradesSearchQuery"
+          placeholder="Search position, outcome…"
+        />
+      </div>
 
       <UTable
         :data="pagedTrades"
@@ -237,7 +245,9 @@ import type { PolymarketActivity, PolymarketPosition } from '~/types/polymarket'
 import { useAccountingPeriod } from '~/composables/useAccountingPeriod'
 import { formatSignedUsd, formatUsd, type LedgerCategoryColor, signClass } from '~/utils/accounting'
 import { buildIncomeStatement } from '~/utils/incomeStatement'
+import { matchesAccountingSearch, normalizeAccountingSearchQuery } from '~/utils/accountingSearch'
 import AccountingPagination from './AccountingPagination.vue'
+import AccountingTableSearch from './AccountingTableSearch.vue'
 
 const props = defineProps<{
   activities: PolymarketActivity[]
@@ -249,6 +259,7 @@ const props = defineProps<{
 
 const pageSize = ref(20)
 const currentPage = ref(1)
+const tradesSearchQuery = ref('')
 
 const {
   todayStr,
@@ -259,7 +270,7 @@ const {
   presetOptions: periodPresetOptions
 } = useAccountingPeriod()
 
-watch([() => props.walletAddress, accountingPeriod], () => {
+watch([() => props.walletAddress, accountingPeriod, tradesSearchQuery], () => {
   currentPage.value = 1
 })
 
@@ -276,6 +287,14 @@ const statement = computed(() =>
 const isReconciled = computed(() => Math.abs(statement.value.reconciliationGap) < 1)
 
 type PositionAction = 'BUY' | 'SELL' | 'SPLIT' | 'MERGE' | 'REDEEM'
+
+const ACTION_META: Record<PositionAction, { label: string, color: LedgerCategoryColor }> = {
+  BUY: { label: 'Buy', color: 'info' },
+  SELL: { label: 'Sell', color: 'warning' },
+  SPLIT: { label: 'Split', color: 'neutral' },
+  MERGE: { label: 'Merge', color: 'neutral' },
+  REDEEM: { label: 'Redeem', color: 'primary' }
+}
 
 interface PositionTrade {
   /** Market grouping key — conditionId when present, robust across buys & redeems. */
@@ -361,13 +380,40 @@ const positionGroups = computed<PositionTrade[][]>(() => {
   return [...byMarket.values()].sort((a, b) => lastTs(b) - lastTs(a))
 })
 
-const totalPositions = computed(() => positionGroups.value.length)
+function positionGroupMatchesSearch(group: PositionTrade[], query: string): boolean {
+  const sample = group[0]
+  if (!sample) {
+    return false
+  }
+  if (matchesAccountingSearch(query, sample.market, sample.outcome)) {
+    return true
+  }
+  return group.some(trade =>
+    matchesAccountingSearch(
+      query,
+      trade.market,
+      trade.outcome,
+      ACTION_META[trade.action].label
+    )
+  )
+}
+
+const filteredPositionGroups = computed(() => {
+  if (!normalizeAccountingSearchQuery(tradesSearchQuery.value)) {
+    return positionGroups.value
+  }
+  return positionGroups.value.filter(group =>
+    positionGroupMatchesSearch(group, tradesSearchQuery.value)
+  )
+})
+
+const totalPositions = computed(() => filteredPositionGroups.value.length)
 
 // Paginate by position, then hand the table a flat list of that page's trades —
 // UTable regroups them via the `position` grouping column. Each trade carries
 // its block's zebra parity so the whole position (header + leaves) shares a shade.
 const pagedTrades = computed<PositionTrade[]>(() =>
-  positionGroups.value
+  filteredPositionGroups.value
     .slice((currentPage.value - 1) * pageSize.value, currentPage.value * pageSize.value)
     .flatMap((group, index) => group.map(trade => ({ ...trade, groupEven: index % 2 === 0 })))
 )
@@ -399,14 +445,6 @@ const tableMeta = {
       return row.getIsGrouped() ? `${zebra} font-semibold` : zebra
     }
   }
-}
-
-const ACTION_META: Record<PositionAction, { label: string, color: LedgerCategoryColor }> = {
-  BUY: { label: 'Buy', color: 'info' },
-  SELL: { label: 'Sell', color: 'warning' },
-  SPLIT: { label: 'Split', color: 'neutral' },
-  MERGE: { label: 'Merge', color: 'neutral' },
-  REDEEM: { label: 'Redeem', color: 'primary' }
 }
 
 /** Market title for a group header row (read off its first child trade). */
