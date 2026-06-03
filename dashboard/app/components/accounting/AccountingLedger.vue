@@ -11,6 +11,10 @@
           </p>
         </div>
         <div class="flex items-center gap-2 flex-wrap">
+          <AccountingTableSearch
+            v-model="searchQuery"
+            placeholder="Search market, account, tx…"
+          />
           <USelect
             v-model="periodPreset"
             :items="periodPresetOptions"
@@ -50,7 +54,7 @@
         :columns="columns"
         :loading="isLoading"
         :ui="{
-          base: 'table-fixed border-separate border-spacing-0',
+          base: 'table-auto border-separate border-spacing-0',
           thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
           tbody: '[&>tr]:last:[&>td]:border-b-0',
           th: 'py-2 first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
@@ -83,7 +87,7 @@
         </template>
 
         <template #market-cell="{ row }">
-          <div v-if="row.original.isFirst" class="flex items-center gap-2 max-w-xs">
+          <div v-if="row.original.isFirst" class="flex items-start gap-2 min-w-48">
             <img
               v-if="row.original.entry.icon"
               :src="row.original.entry.icon"
@@ -95,11 +99,11 @@
               :href="marketUrl(row.original.entry)!"
               target="_blank"
               rel="noopener noreferrer"
-              class="truncate hover:underline text-black dark:text-white"
+              class="wrap-break-word hover:underline text-black dark:text-white"
             >
               {{ row.original.entry.description }}
             </a>
-            <span v-else class="truncate">{{ row.original.entry.description }}</span>
+            <span v-else class="wrap-break-word">{{ row.original.entry.description }}</span>
           </div>
         </template>
 
@@ -213,9 +217,11 @@ import {
   type MergedColumnKey,
   type MergedLedgerRow
 } from '~/utils/mergedLedger'
+import { matchesAccountingSearch, normalizeAccountingSearchQuery } from '~/utils/accountingSearch'
 import AccountingCategoryFilter, {
   type CategoryOption
 } from './AccountingCategoryFilter.vue'
+import AccountingTableSearch from './AccountingTableSearch.vue'
 import AccountingColumnVisibility, {
   type ColumnOption
 } from './AccountingColumnVisibility.vue'
@@ -248,6 +254,8 @@ const generalLedger = computed(() =>
   })
 )
 
+const searchQuery = ref('')
+
 const { page, pageSize, reset } = usePagination(() => totalActivities.value, { key: 'ledger' })
 
 const categoryOptions: CategoryOption<LedgerCategory>[] = Object.entries(CATEGORY_META).map(
@@ -261,7 +269,7 @@ const allCategoryValues = categoryOptions.map(option => option.value)
 // Multi-select: every category selected == "All categories".
 const selectedCategories = ref<LedgerCategory[]>([...allCategoryValues])
 
-watch([() => props.walletAddress, selectedCategories, accountingPeriod], reset)
+watch([() => props.walletAddress, selectedCategories, accountingPeriod, searchQuery], reset)
 
 // --- Build the merged row list (one row per journal line) ---
 const allRows = computed(() =>
@@ -278,12 +286,35 @@ function inSelectedPeriod(timestamp: number): boolean {
 
 const selectedCategorySet = computed(() => new Set(selectedCategories.value))
 
+function ledgerRowMatchesSearch(row: MergedLedgerRow, query: string): boolean {
+  const meta = CATEGORY_META[row.entry.category]
+  return matchesAccountingSearch(
+    query,
+    row.entry.description,
+    row.entry.outcome,
+    meta.label,
+    row.entry.txHash,
+    row.entry.counterparty,
+    row.entry.marketSlug,
+    row.account
+  )
+}
+
 const filteredRows = computed(() => {
-  const rows = allRows.value.filter(row => inSelectedPeriod(row.entry.timestamp))
-  if (selectedCategories.value.length === allCategoryValues.length) {
+  let rows = allRows.value.filter(row => inSelectedPeriod(row.entry.timestamp))
+  if (selectedCategories.value.length !== allCategoryValues.length) {
+    rows = rows.filter(row => selectedCategorySet.value.has(row.entry.category))
+  }
+  if (!normalizeAccountingSearchQuery(searchQuery.value)) {
     return rows
   }
-  return rows.filter(row => selectedCategorySet.value.has(row.entry.category))
+  const matchingEntryIds = new Set<string>()
+  for (const row of rows) {
+    if (ledgerRowMatchesSearch(row, searchQuery.value)) {
+      matchingEntryIds.add(row.entry.id)
+    }
+  }
+  return rows.filter(row => matchingEntryIds.has(row.entry.id))
 })
 
 // Pagination counts ACTIVITIES (isFirst rows), not journal lines — a page of

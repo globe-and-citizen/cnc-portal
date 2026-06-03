@@ -6,13 +6,27 @@
       size="sm"
       icon="i-lucide-columns-3"
       trailing-icon="i-lucide-chevron-down"
-      :ui="{ trailingIcon: open ? 'rotate-180 transition-transform' : 'transition-transform' }"
+      class="w-44 justify-start"
+      :ui="{ trailingIcon: open ? 'ms-auto rotate-180 transition-transform' : 'ms-auto transition-transform' }"
     >
-      Columns<span v-if="hiddenCount > 0" class="text-muted">· {{ hiddenCount }} hidden</span>
+      <span class="truncate">{{ summary }}</span>
     </UButton>
 
     <template #content>
       <div class="p-1 min-w-44 max-h-80 overflow-y-auto">
+        <button
+          type="button"
+          class="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-elevated"
+          @click="toggleAll"
+        >
+          <UIcon
+            :name="allSelected ? 'i-lucide-check' : 'i-lucide-minus'"
+            class="w-4 h-4 shrink-0"
+            :class="allSelected ? 'text-primary' : 'text-transparent'"
+          />
+          All columns
+        </button>
+        <USeparator class="my-1" />
         <button
           v-for="item in items"
           :key="item.value"
@@ -36,9 +50,11 @@
 import { computed, ref } from 'vue'
 
 /**
- * Column-visibility picker for the General Ledger. Uses a single `UPopover`
- * trigger (no nested select/button chrome) and toggles visible keys via
- * `v-model`.
+ * Column-visibility picker for the General Ledger. Mirrors
+ * `AccountingCategoryFilter`: a single `UButton` trigger summarising the
+ * selection plus toggleable entries. "All columns" selects the whole set, or
+ * clears it so the user can pick a fresh subset. An empty selection is allowed
+ * (the table then shows no columns).
  */
 
 export interface ColumnOption<K2 extends string> {
@@ -57,19 +73,34 @@ const emit = defineEmits<{
 
 const open = ref(false)
 
-const hiddenCount = computed(() => props.items.length - props.modelValue.length)
+const allSelected = computed(() => props.modelValue.length === props.items.length)
+
+const summary = computed(() => {
+  if (allSelected.value) {
+    return 'All columns'
+  }
+  if (props.modelValue.length === 0) {
+    return 'No columns'
+  }
+  if (props.modelValue.length === 1) {
+    return props.items.find(item => item.value === props.modelValue[0])?.label ?? '1 column'
+  }
+  return `${props.modelValue.length} columns`
+})
 
 function isSelected(value: K): boolean {
   return props.modelValue.includes(value)
+}
+
+function toggleAll(): void {
+  // Already all selected → clear, so the user can pick a fresh subset.
+  emit('update:modelValue', allSelected.value ? [] : props.items.map(item => item.value))
 }
 
 function toggle(value: K): void {
   const next = [...props.modelValue]
   const idx = next.indexOf(value)
   if (idx >= 0) {
-    if (next.length <= 1) {
-      return
-    }
     next.splice(idx, 1)
   } else {
     next.push(value)
