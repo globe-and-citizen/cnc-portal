@@ -61,11 +61,17 @@ export function usePagination(
    * a clean, shareable URL.
    */
   function writeQuery(patch: Array<{ param: string, value: number, default: number }>): void {
-    const next: Record<string, unknown> = { ...route.query }
+    const patched = new Set(patch.map(entry => entry.param))
+    // Rebuild the query: keep params we're not touching, then re-add the patched
+    // ones unless they sit at their default (those are dropped for a clean URL).
+    const next: Record<string, unknown> = {}
+    for (const [param, value] of Object.entries(route.query)) {
+      if (!patched.has(param)) {
+        next[param] = value
+      }
+    }
     for (const { param, value, default: fallback } of patch) {
-      if (value === fallback) {
-        delete next[param]
-      } else {
+      if (value !== fallback) {
         next[param] = String(value)
       }
     }
