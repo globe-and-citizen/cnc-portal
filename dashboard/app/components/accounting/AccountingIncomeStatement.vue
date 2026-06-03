@@ -356,7 +356,7 @@ const positionGroups = computed<PositionTrade[][]>(() => {
   }
   const lastTs = (trades: PositionTrade[]): number => Math.max(...trades.map(t => t.timestamp))
   for (const trades of byMarket.values()) {
-    trades.sort((a, b) => a.timestamp - b.timestamp) // chronological: buys before sells
+    trades.sort((a, b) => b.timestamp - a.timestamp) // most recent first when expanded
   }
   return [...byMarket.values()].sort((a, b) => lastTs(b) - lastTs(a))
 })
