@@ -140,7 +140,7 @@
         :meta="tableMeta"
         :loading="isLoading"
         :ui="{
-          base: 'table-fixed border-separate border-spacing-0',
+          base: 'table-auto border-separate border-spacing-0',
           thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
           tbody: '[&>tr]:last:[&>td]:border-b-0',
           th: 'py-2 first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
@@ -160,15 +160,15 @@
           <div v-if="row.getIsGrouped()" class="space-y-0.5">
             <button
               type="button"
-              class="flex items-center gap-2 text-left font-medium cursor-pointer"
+              class="flex items-start gap-2 text-left font-medium cursor-pointer"
               @click="row.toggleExpanded()"
             >
               <UIcon
                 :name="row.getIsExpanded() ? 'i-lucide-chevron-down' : 'i-lucide-chevron-right'"
-                class="w-4 h-4 shrink-0 text-muted"
+                class="w-4 h-4 shrink-0 text-muted mt-0.5"
               />
-              <span class="truncate max-w-xs">{{ groupLabel(row) }}</span>
-              <span class="text-muted text-xs">({{ row.getLeafRows().length }})</span>
+              <span class="wrap-break-word min-w-48">{{ groupLabel(row) }}</span>
+              <span class="text-muted text-xs shrink-0">({{ row.getLeafRows().length }})</span>
             </button>
             <p class="pl-6 text-xs text-muted">
               Invested {{ formatUsd(groupInvested(row)) }} · Returned {{ formatUsd(groupReturned(row)) }}
@@ -446,7 +446,7 @@ function groupSoldShares(row: Row<PositionTrade>): number {
 }
 
 function formatDate(ts: number): string {
-  return ts ? format(new Date(ts * 1000), 'MMM d, yyyy') : '—'
+  return ts ? format(new Date(ts * 1000), 'MMM d, yyyy HH:mm') : '—'
 }
 
 function formatShares(value: number | undefined): string {
