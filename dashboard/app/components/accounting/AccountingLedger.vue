@@ -50,7 +50,7 @@
         :columns="columns"
         :loading="isLoading"
         :ui="{
-          base: 'table-fixed border-separate border-spacing-0',
+          base: 'table-auto border-separate border-spacing-0',
           thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
           tbody: '[&>tr]:last:[&>td]:border-b-0',
           th: 'py-2 first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
@@ -83,7 +83,7 @@
         </template>
 
         <template #market-cell="{ row }">
-          <div v-if="row.original.isFirst" class="flex items-center gap-2 max-w-xs">
+          <div v-if="row.original.isFirst" class="flex items-start gap-2 min-w-48">
             <img
               v-if="row.original.entry.icon"
               :src="row.original.entry.icon"
@@ -95,11 +95,11 @@
               :href="marketUrl(row.original.entry)!"
               target="_blank"
               rel="noopener noreferrer"
-              class="truncate hover:underline text-black dark:text-white"
+              class="wrap-break-word hover:underline text-black dark:text-white"
             >
               {{ row.original.entry.description }}
             </a>
-            <span v-else class="truncate">{{ row.original.entry.description }}</span>
+            <span v-else class="wrap-break-word">{{ row.original.entry.description }}</span>
           </div>
         </template>
 
