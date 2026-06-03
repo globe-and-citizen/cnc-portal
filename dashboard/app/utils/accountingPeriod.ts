@@ -44,8 +44,57 @@ function toUnixSeconds(date: Date): number {
   return Math.floor(date.getTime() / 1000)
 }
 
-function capEndAtNow(end: Date, now: Date): Date {
+export function capEndAtNow(end: Date, now: Date): Date {
   return end > now ? now : end
+}
+
+/** Inclusive Mon–Sun week containing `date` (ISO week, Monday start). */
+export function snapDateRangeToWeek(date: Date, now: Date = new Date()): { start: Date, end: Date } {
+  const start = startOfWeek(date, { weekStartsOn: 1 })
+  const end = capEndAtNow(endOfWeek(date, { weekStartsOn: 1 }), now)
+  return { start, end }
+}
+
+export interface BalanceSheetAsOf {
+  /** Omit for all-time (include every ledger entry). */
+  asOf?: number
+  label: string
+  isCurrent: boolean
+}
+
+/**
+ * Resolves a calendar range into the balance-sheet "as of" instant (end of the
+ * selected day, capped at now). When no range is given, returns all-time.
+ */
+export function resolveBalanceSheetAsOf(
+  range: { start: Date | null, end: Date | null } | null,
+  now: Date = new Date()
+): BalanceSheetAsOf {
+  const nowEnd = toUnixSeconds(now)
+
+  if (!range?.start && !range?.end) {
+    return {
+      asOf: undefined,
+      label: PRESET_LABELS.ALL,
+      isCurrent: true
+    }
+  }
+
+  const anchorStart = range.start ?? range.end!
+  const anchorEnd = range.end ?? range.start!
+  const end = capEndAtNow(endOfDay(anchorEnd), now)
+  const asOf = toUnixSeconds(end)
+
+  const sameDay = startOfDay(anchorStart).getTime() === startOfDay(anchorEnd).getTime()
+  const label = sameDay
+    ? format(end, 'MMMM d, yyyy')
+    : `${format(startOfDay(anchorStart), 'MMM d')} – ${format(end, 'MMM d, yyyy')}`
+
+  return {
+    asOf,
+    label,
+    isCurrent: asOf >= nowEnd - 24 * 60 * 60
+  }
 }
 
 function formatRangeLabel(start: Date, end: Date, preset: AccountingPeriodPreset): string {
