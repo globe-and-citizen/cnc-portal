@@ -1,10 +1,13 @@
 <script setup lang="ts">
-import { format } from 'date-fns'
+import { getLocalTimeZone, today } from '@internationalized/date'
 import type { LedgerEntry } from '~/utils/accounting'
 import { formatSignedUsd, formatUsd, signClass } from '~/utils/accounting'
 import type { RealizedTrade } from '~/utils/incomeStatement'
 import type { PolymarketPosition } from '~/types/polymarket'
+import type { Range } from '~/types'
 import { buildBalanceSheet } from '~/utils/balanceSheet'
+import { resolveBalanceSheetAsOf } from '~/utils/accountingPeriod'
+import AccountingAsOfDatePicker from './AccountingAsOfDatePicker.vue'
 
 const props = defineProps<{
   ledgerEntries: LedgerEntry[]
@@ -13,15 +16,22 @@ const props = defineProps<{
   hasAddress: boolean
 }>()
 
+const tz = getLocalTimeZone()
+const todayDate = today(tz).toDate(tz)
+
+/** Selected calendar range; `null` = all-time. Defaults to today. */
+const selectedRange = ref<Range | null>({ start: todayDate, end: todayDate })
+
+const asOfContext = computed(() => resolveBalanceSheetAsOf(selectedRange.value))
+
 const sheet = computed(() =>
   buildBalanceSheet({
     ledgerEntries: props.ledgerEntries,
     realizedTrades: props.realizedTrades,
-    positions: props.positions
+    positions: props.positions,
+    asOf: asOfContext.value.asOf
   })
 )
-
-const asOfLabel = computed(() => format(new Date(sheet.value.asOf * 1000), 'MMMM d, yyyy'))
 
 /** The cost-basis identity holds to the cent for any date. */
 const balances = computed(() => Math.abs(sheet.value.identityGap) < 0.01)
@@ -29,11 +39,16 @@ const balances = computed(() => Math.abs(sheet.value.identityGap) < 0.01)
 
 <template>
   <UPageCard variant="subtle">
-    <div class="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1 mb-4">
-      <h3 class="font-semibold text-black dark:text-white">
-        Balance Sheet
-      </h3>
-      <span class="text-sm text-muted">as of {{ asOfLabel }}</span>
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+      <div>
+        <h3 class="font-semibold text-black dark:text-white">
+          Balance Sheet
+        </h3>
+        <p class="text-sm text-muted mt-0.5">
+          As of {{ asOfContext.label }}
+        </p>
+      </div>
+      <AccountingAsOfDatePicker v-model="selectedRange" />
     </div>
 
     <div v-if="!hasAddress" class="text-muted text-center py-8">
@@ -101,11 +116,15 @@ const balances = computed(() => Math.abs(sheet.value.identityGap) < 0.01)
       </div>
 
       <!-- Mark-to-market memo (only meaningful as of today) -->
-      <p class="text-xs text-muted pt-2">
+      <p v-if="asOfContext.isCurrent" class="text-xs text-muted pt-2">
         Memo — open contracts at current market value:
         {{ formatUsd(sheet.openContractsMarketValue) }}
         (unrealized P&L {{ formatSignedUsd(sheet.unrealizedPnl) }}).
         Contracts are carried at cost above so the statement balances for any date.
+      </p>
+      <p v-else class="text-xs text-muted pt-2">
+        Mark-to-market memo is only available for the current date.
+        Contracts are carried at cost above so the statement balances for any selected date.
       </p>
     </div>
   </UPageCard>
