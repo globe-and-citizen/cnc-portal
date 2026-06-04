@@ -125,12 +125,3 @@ export function startOfToday(): Date {
 export function startOfMonth(date: Date): Date {
   return dayjs(date).startOf('month').toDate()
 }
-
-/** `<input type="date">` value (`YYYY-MM-DD`) ↔ `Date` at the start of that day. */
-export function toDateInputValue(date: Date): string {
-  return dayjs(date).format('YYYY-MM-DD')
-}
-
-export function fromDateInputValue(value: string): Date {
-  return dayjs(value).startOf('day').toDate()
-}

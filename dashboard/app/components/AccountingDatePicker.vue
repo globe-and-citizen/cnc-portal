@@ -9,8 +9,9 @@ import type { DatePickerMode, DatePickerValue } from '~/utils/datePicker'
  * - `mode="date"` selects a single "as of" date (Balance Sheet, Positions, …); `v-model` is a `Date`.
  * - `mode="range"` selects a from/to period (Income Statement, Ledger, …); `v-model` is a `Range`.
  *
- * Presets come first with ◀ / ▶ steppers; the free calendar / date inputs are the fallback.
- * All date logic lives in `~/utils/datePicker`, all reactive state in `~/composables/useDatePicker`.
+ * Presets come first with ◀ / ▶ steppers; a UCalendar is the fallback (single in `date` mode,
+ * range in `range` mode). All date logic lives in `~/utils/datePicker`, all reactive state in
+ * `~/composables/useDatePicker`.
  */
 const props = withDefaults(defineProps<{ mode?: DatePickerMode }>(), { mode: 'date' })
 
@@ -20,26 +21,40 @@ const {
   presets,
   activePreset,
   triggerLabel,
-  isCustomRangeValid,
   customDate,
-  customStartInput,
-  customEndInput,
+  customStart,
+  customEnd,
   select,
   step,
   anchorLabel,
   isActive
 } = useDatePicker(props.mode, model)
 
-// @internationalized/date interop for the single Specific-date UCalendar.
+// @internationalized/date interop for UCalendar.
+const toCalendarDate = (date: Date) =>
+  new CalendarDate(date.getFullYear(), date.getMonth() + 1, date.getDate())
+const fromCalendarDate = (date: CalendarDate) => date.toDate(getLocalTimeZone())
+
 const calendarDate = computed({
-  get: () => {
-    const d = customDate.value
-    return new CalendarDate(d.getFullYear(), d.getMonth() + 1, d.getDate())
-  },
+  get: () => toCalendarDate(customDate.value),
   set: (value: CalendarDate | null) => {
     if (!value) return
-    customDate.value = value.toDate(getLocalTimeZone())
+    customDate.value = fromCalendarDate(value)
     select('specific')
+  }
+})
+
+// Mirror the range selection exactly — feed `undefined` (not a stale date) for the half the
+// user hasn't picked yet, so reka-ui's range state machine stays coherent across clicks.
+const calendarRange = computed({
+  get: () => ({
+    start: customStart.value ? toCalendarDate(customStart.value) : undefined,
+    end: customEnd.value ? toCalendarDate(customEnd.value) : undefined
+  }),
+  set: (value: { start: CalendarDate | null, end: CalendarDate | null }) => {
+    customStart.value = value.start ? fromCalendarDate(value.start) : null
+    customEnd.value = value.end ? fromCalendarDate(value.end) : null
+    select('custom')
   }
 })
 </script>
@@ -104,20 +119,12 @@ const calendarDate = computed({
           </div>
         </div>
 
-        <!-- Presets first, free inputs last. -->
+        <!-- Presets first, calendar last. -->
         <div v-if="activePreset.id === 'specific'" class="mt-1 border-t border-default pt-2">
           <UCalendar v-model="calendarDate" :prevent-deselect="true" />
         </div>
-        <div v-else-if="activePreset.id === 'custom'" class="mt-1 space-y-2 border-t border-default px-2 pt-2">
-          <UFormField label="From" size="sm">
-            <UInput v-model="customStartInput" type="date" class="w-full" />
-          </UFormField>
-          <UFormField label="To" size="sm">
-            <UInput v-model="customEndInput" type="date" class="w-full" />
-          </UFormField>
-          <p v-if="!isCustomRangeValid" class="text-sm text-error">
-            The start date must be on or before the end date.
-          </p>
+        <div v-else-if="activePreset.id === 'custom'" class="mt-1 border-t border-default pt-2">
+          <UCalendar v-model="calendarRange" range :number-of-months="2" />
         </div>
       </div>
     </template>
