@@ -29,10 +29,10 @@ export type AccountName
     | 'Rewards Income'
     | 'Settlement Adjustments'
 
-export type AccountClass = 'ASSET' | 'EQUITY' | 'INCOME' | 'EXPENSE'
+type AccountClass = 'ASSET' | 'EQUITY' | 'INCOME' | 'EXPENSE'
 
 /** Accounting class of each account — drives the natural (normal) balance side. */
-export const ACCOUNT_CLASS: Record<AccountName, AccountClass> = {
+const ACCOUNT_CLASS: Record<AccountName, AccountClass> = {
   'Cash': 'ASSET',
   'Open Contracts': 'ASSET',
   'Owner Capital': 'EQUITY',
@@ -54,7 +54,7 @@ export interface JournalLine {
   credit: number
 }
 
-export interface JournalEntry {
+interface JournalEntry {
   id: string
   /** Unix seconds. */
   timestamp: number
@@ -66,7 +66,7 @@ export interface JournalEntry {
   lines: JournalLine[]
 }
 
-export interface TrialBalanceRow {
+interface TrialBalanceRow {
   account: AccountName
   accountClass: AccountClass
   totalDebit: number
@@ -84,7 +84,7 @@ export interface GeneralLedger {
   balanced: boolean
 }
 
-export interface BuildGeneralLedgerInput {
+interface BuildGeneralLedgerInput {
   ledgerEntries: LedgerEntry[]
   realizedTrades: RealizedTrade[]
   /** Inclusive lower bound (unix seconds); omit for all-time. */
@@ -126,7 +126,7 @@ function inPeriod(timestamp: number, periodStart?: number, asOf?: number): boole
   return timestamp <= end
 }
 
-export function buildJournalEntries(input: BuildGeneralLedgerInput): JournalEntry[] {
+function buildJournalEntries(input: BuildGeneralLedgerInput): JournalEntry[] {
   const entries: JournalEntry[] = []
 
   // Cash movements, acquisitions and rewards — from the classified ledger feed.

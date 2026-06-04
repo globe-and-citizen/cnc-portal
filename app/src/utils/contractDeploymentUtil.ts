@@ -25,7 +25,7 @@ import { log } from '@/utils'
 /**
  * Beacon configuration type
  */
-export interface BeaconConfig {
+interface BeaconConfig {
   beaconType: string
   beaconAddress: Address
 }
@@ -33,7 +33,7 @@ export interface BeaconConfig {
 /**
  * Deployment configuration type
  */
-export interface DeploymentConfig {
+interface DeploymentConfig {
   contractType: string
   initializerData: `0x${string}`
 }
