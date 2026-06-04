@@ -191,11 +191,9 @@ function isStaleSignature(row: WeeklyClaim): boolean {
 // Page + size are mirrored to the route query (shareable, reload-safe) and the
 // size selector re-anchors the page so the current first row stays in view.
 // `weeklyClaim` key namespaces the query params — WeeklyClaimView renders this
-// table alongside CashRemunerationTransactions on the same route.
-const { page, pageSize, reset } = usePagination(() => total.value, {
-  key: 'weeklyClaim',
-  defaultPageSize: 10
-})
+// table alongside CashRemunerationTransactions on the same route. Default page
+// size is 20, matching every other paginated section.
+const { page, pageSize, reset } = usePagination(() => total.value, { key: 'weeklyClaim' })
 
 const { data: fetchedData, error } = useGetTeamWeeklyClaimsQuery({
   queryParams: {
