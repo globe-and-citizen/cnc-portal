@@ -1,13 +1,23 @@
 <template>
-  <label class="form-control mt-6 w-full" data-test="compensation-amount">
-    <div class="label">
+  <UFormField
+    name="compensation"
+    class="mt-6 w-full"
+    :ui="{ container: 'mt-0' }"
+    data-test="compensation-amount"
+  >
+    <template #label>
       <slot name="label">
-        <span class="label-text">{{ safeTokenSymbol }} to Receive</span>
-        <span class="label-text-alt">
-          Rate: 1 {{ depositTokenSymbol }} = {{ formattedRate }} {{ safeTokenSymbol }}
-        </span>
+        <div class="flex w-full items-center justify-between text-sm font-medium">
+          <span data-test="compensation-label-text">{{ safeTokenSymbol }} to Receive</span>
+          <span
+            class="text-xs text-gray-500 dark:text-gray-400"
+            data-test="compensation-label-text-alt"
+          >
+            Rate: 1 {{ depositTokenSymbol }} = {{ formattedRate }} {{ safeTokenSymbol }}
+          </span>
+        </div>
       </slot>
-    </div>
+    </template>
     <UInput
       :model-value="displayValue"
       placeholder="0"
@@ -30,7 +40,7 @@
         </UBadge>
       </template>
     </UInput>
-  </label>
+  </UFormField>
 </template>
 
 <script setup lang="ts">

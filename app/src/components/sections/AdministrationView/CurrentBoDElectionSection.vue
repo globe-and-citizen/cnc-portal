@@ -29,15 +29,9 @@
             description="Create a new Board of Directors election to manage your team's leadership."
           >
             <template #body>
-              <UAlert
-                v-if="createElectionError"
-                color="error"
-                variant="soft"
-                :description="createElectionError"
-                class="mb-4"
-              />
               <CreateElectionForm
                 :is-loading="isLoadingCreateElection /*|| isConfirmingCreateElection*/"
+                :error-message="createElectionError"
                 @create-proposal="createElection"
                 @close-modal="() => (showCreateElectionModal = { mount: false, show: false })"
               />
@@ -78,15 +72,13 @@ import { computed, ref, watch } from 'vue'
 import CreateElectionForm from './forms/CreateElectionForm.vue'
 import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
 import { useTeamStore } from '@/stores'
-import { simulateContract, writeContract, waitForTransactionReceipt } from '@wagmi/core'
 import type { OldProposal } from '@/types'
 import { log, parseError } from '@/utils'
-import { config } from '@/wagmi.config'
 import ElectionStatus from '@/components/sections/AdministrationView/ElectionStatus.vue'
 import ElectionStats from '@/components/sections/AdministrationView/ElectionStats.vue'
 import ElectionActions from './ElectionActions.vue'
 import CurrentBoDElection404 from './CurrentBoDElection404.vue'
-import { useBoDElections } from '@/composables/elections'
+import { useBoDElections, useElectionsCreateElection } from '@/composables/elections'
 import { useCreateElectionNotificationsMutation } from '@/queries/action.queries'
 
 const props = defineProps<{ electionId: bigint; isDetails?: boolean }>()
@@ -100,16 +92,17 @@ const showCreateElectionModal = ref({
   mount: false,
   show: false
 })
-const isLoadingCreateElection = ref(false)
 const createElectionError = ref('')
 
 const { mutateAsync: addElectionNotifications, error: electionNotificationError } =
   useCreateElectionNotificationsMutation()
 
+const { mutateAsync: writeCreateElection, isPending: isLoadingCreateElection } =
+  useElectionsCreateElection()
+
 const createElection = async (electionData: OldProposal) => {
   try {
     createElectionError.value = ''
-    isLoadingCreateElection.value = true
     if (!electionsAddress.value) {
       createElectionError.value = 'Elections contract address not found'
       return
@@ -130,25 +123,9 @@ const createElection = async (electionData: OldProposal) => {
       electionData.winnerCount,
       electionData.candidates?.map((c) => c.candidateAddress) || [],
       teamStore.currentTeam?.members.map((m) => m.address) || []
-    ]
+    ] as readonly unknown[]
 
-    await simulateContract(config, {
-      address: electionsAddress.value,
-      abi: ELECTIONS_ABI,
-      functionName: 'createElection',
-      args
-    })
-
-    const hash = await writeContract(config, {
-      address: electionsAddress.value,
-      abi: ELECTIONS_ABI,
-      functionName: 'createElection',
-      args
-    })
-
-    await waitForTransactionReceipt(config, {
-      hash
-    })
+    await writeCreateElection({ args })
 
     await addElectionNotifications({ pathParams: { teamId: teamStore.currentTeamId! } })
     toast.add({ title: 'Election created successfully!', color: 'success' })
@@ -157,8 +134,6 @@ const createElection = async (electionData: OldProposal) => {
   } catch (error) {
     createElectionError.value = parseError(error, ELECTIONS_ABI)
     log.error('creatingElection error:', error)
-  } finally {
-    isLoadingCreateElection.value = false
   }
 }
 

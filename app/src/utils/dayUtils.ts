@@ -64,7 +64,7 @@ export function getMonthWeeks(year: number, month: number): Week[] {
         year: weekYear,
         month: current.month(),
         isoWeek: week,
-        isoString: current.toISOString(),
+        isoString: current.startOf('isoWeek').toISOString(),
         formatted: formatIsoWeekRange(current)
       })
     }
@@ -99,6 +99,13 @@ export function formatIsoWeekRange(base: dayjs.Dayjs): string {
     console.error('Error formatting ISO week range:', error)
     return `${base.format('YYYY-MM-DD')} - ${base.add(6, 'day').format('YYYY-MM-DD')}`
   }
+}
+
+/**
+ * Return the UTC Monday (ISO week start) for the provided date-like value.
+ */
+export function startOfWeek(date: string | Date | dayjs.Dayjs): dayjs.Dayjs {
+  return dayjs.utc(date).startOf('isoWeek')
 }
 
 /* Calculates the number of calendar days between two dates.
@@ -213,4 +220,22 @@ export const formatDateShort = (dateString: string): string => {
     hour: '2-digit',
     minute: '2-digit'
   }).format(date)
+}
+
+export function formatDateRelative(dateString: string): string {
+  const diffMs = Date.now() - new Date(dateString).getTime()
+  const diffSec = Math.floor(diffMs / 1000)
+  const diffMin = Math.floor(diffSec / 60)
+  const diffH = Math.floor(diffMin / 60)
+  const diffD = Math.floor(diffH / 24)
+
+  if (diffSec < 60) return 'just now'
+  if (diffMin < 60) return `${diffMin} min ago`
+  if (diffH < 24) return `${diffH} h ago`
+  if (diffD < 7) return `${diffD} d ago`
+  return dayjs.utc(new Date(dateString)).format('MMM D, YYYY')
+}
+
+export function formatDateUTC(dateString: string): string {
+  return dayjs.utc(new Date(dateString)).format('YYYY-MM-DD HH:mm [UTC]')
 }

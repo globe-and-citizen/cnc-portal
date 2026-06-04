@@ -13,14 +13,17 @@
         <WeeklyRecap :weekly-claim="selectWeekWeelyClaim" :wage="selectedMemberWage" />
 
         <ClaimHistoryActionAlerts
+          ref="actionAlertsRef"
           :weekly-claim="selectWeekWeelyClaim"
           :member-address="selectedMemberAddress"
+          :selected-week-start="selectedMonthObject.isoString"
         />
 
         <ClaimHistoryDailyBreakdown
           :weekly-claim="selectWeekWeelyClaim"
           :selected-week="selectedMonthObject"
           :member-address="selectedMemberAddress"
+          @quick-submit="handleQuickSubmit"
         />
       </div>
     </div>
@@ -32,7 +35,7 @@ import { ref, computed } from 'vue'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import isoWeek from 'dayjs/plugin/isoWeek'
-import { formatIsoWeekRange, type Week } from '@/utils/dayUtils'
+import { formatIsoWeekRange, startOfWeek, type Week } from '@/utils/dayUtils'
 import { useTeamStore } from '@/stores'
 import { useRoute } from 'vue-router'
 import { useGetTeamWeeklyClaimsQuery, useGetTeamWagesQuery } from '@/queries'
@@ -52,12 +55,14 @@ const teamStore = useTeamStore()
 
 const selectedMemberAddress = computed(() => route.params.memberAddress as Address | undefined)
 
+const currentWeekStart = startOfWeek(dayjs.utc())
+
 const selectedMonthObject = ref<Week>({
-  year: dayjs().utc().year(),
-  month: dayjs().utc().month(),
-  isoWeek: dayjs().utc().isoWeek(),
-  isoString: dayjs().utc().startOf('isoWeek').toISOString(),
-  formatted: formatIsoWeekRange(dayjs().utc().startOf('isoWeek'))
+  year: currentWeekStart.year(),
+  month: currentWeekStart.month(),
+  isoWeek: currentWeekStart.isoWeek(),
+  isoString: currentWeekStart.toISOString(),
+  formatted: formatIsoWeekRange(currentWeekStart)
 })
 
 const { data: memberWeeklyClaims } = useGetTeamWeeklyClaimsQuery({
@@ -72,7 +77,7 @@ const { data: teamWageData } = useGetTeamWagesQuery({
 })
 
 const selectWeekWeelyClaim = computed(() => {
-  return memberWeeklyClaims.value?.find(
+  return memberWeeklyClaims.value?.data?.find(
     (weeklyClaim) => weeklyClaim.weekStart === selectedMonthObject.value.isoString
   )
 })
@@ -80,6 +85,16 @@ const selectWeekWeelyClaim = computed(() => {
 const selectedMemberWage = computed(() => {
   return teamWageData.value?.find((wage) => wage.userAddress === selectedMemberAddress.value)
 })
+
+type ActionAlertsExposed = {
+  openSubmitClaimForDay: (dayIso: string) => void
+}
+
+const actionAlertsRef = ref<ActionAlertsExposed | null>(null)
+
+const handleQuickSubmit = (dayIso: string) => {
+  actionAlertsRef.value?.openSubmitClaimForDay(dayIso)
+}
 
 defineExpose({
   selectedMemberAddress,

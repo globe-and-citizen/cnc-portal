@@ -3,15 +3,24 @@
     <!-- Dropdown menu positioned to the left -->
     <ul
       v-if="isOpen"
-      class="menu bg-base-100 rounded-box border-base-300 absolute top-1/2 right-full z-99999 mr-2 w-52 -translate-y-1/2 transform border p-2 shadow-lg"
+      class="bg-default border-default absolute top-1/2 right-full z-99999 mr-2 flex w-52 -translate-y-1/2 transform flex-col gap-1 rounded-lg border p-2 shadow-lg"
     >
       <!-- Pending status: Sign -->
       <template v-if="status === 'pending'">
-        <li class="disabled" data-test="pending-withdraw">
+        <li
+          class="pointer-events-none rounded-md px-3 py-1.5 opacity-50"
+          data-test="pending-withdraw"
+        >
           <a class="text-sm"> Withdraw </a>
         </li>
         <li
-          :class="{ disabled: !isCashRemunerationOwner || isCurrentWeek(weeklyClaim) }"
+          :class="[
+            'hover:bg-muted rounded-md px-3 py-1.5',
+            {
+              'pointer-events-none opacity-50':
+                !isCashRemunerationOwner || isCurrentWeek(weeklyClaim) || isWriteDisabled
+            }
+          ]"
           data-test="pending-sign"
         >
           <CRSigne
@@ -31,7 +40,10 @@
         <li
           v-if="isStaleSignature"
           data-test="signed-resign"
-          :class="{ disabled: !isCashRemunerationOwner }"
+          :class="[
+            'hover:bg-muted rounded-md px-3 py-1.5',
+            { 'pointer-events-none opacity-50': !isCashRemunerationOwner }
+          ]"
         >
           <CRSigne
             :weekly-claim="weeklyClaim"
@@ -40,7 +52,14 @@
             @close="isOpen = false"
           />
         </li>
-        <li v-else data-test="signed-withdraw" :class="{ disabled: !isClaimOwner }">
+        <li
+          v-else
+          data-test="signed-withdraw"
+          :class="[
+            'hover:bg-muted rounded-md px-3 py-1.5',
+            { 'pointer-events-none opacity-50': !isClaimOwner || isWriteDisabled }
+          ]"
+        >
           <CRWithdrawClaim
             :weekly-claim="weeklyClaim"
             :is-drop-down="true"
@@ -48,23 +67,34 @@
             @claim-withdrawn="isOpen = false"
           />
         </li>
-        <li data-test="signed-disable" :class="{ disabled: !isCashRemunerationOwner }">
+        <li
+          data-test="signed-disable"
+          :class="[
+            'hover:bg-muted rounded-md px-3 py-1.5',
+            { 'pointer-events-none opacity-50': !isCashRemunerationOwner || isWriteDisabled }
+          ]"
+        >
           <a
-            :class="['text-sm', { disabled: disableTx.isPending.value }]"
+            :class="[
+              'text-sm',
+              { 'pointer-events-none opacity-50': disableTx.isPending.value || isWriteDisabled }
+            ]"
+            :title="isWriteDisabled ? archivedTooltip : undefined"
             :aria-disabled="disableTx.isPending.value"
             :tabindex="disableTx.isPending.value ? -1 : 0"
             :style="{ pointerEvents: disableTx.isPending.value ? 'none' : undefined }"
             @click="
               async () => {
-                if (disableTx.isPending.value) return
+                if (disableTx.isPending.value || isWriteDisabled) return
                 await disableClaim()
               }
             "
           >
-            <span
+            <UIcon
               v-if="disableTx.isPending.value"
-              class="loading loading-spinner loading-xs mr-2"
-            ></span>
+              name="i-lucide-loader-circle"
+              class="mr-2 h-3 w-3 animate-spin"
+            />
             Disable
           </a>
         </li>
@@ -72,17 +102,32 @@
 
       <!-- Disabled status: Enable and Resign -->
       <template v-else-if="status === 'disabled'">
-        <li data-test="disabled-withdraw" class="disabled">
+        <li
+          data-test="disabled-withdraw"
+          class="pointer-events-none rounded-md px-3 py-1.5 opacity-50"
+        >
           <a class="text-sm"> Withdraw </a>
         </li>
-        <li data-test="disabled-enable" :class="{ disabled: !isCashRemunerationOwner }">
+        <li
+          data-test="disabled-enable"
+          :class="[
+            'hover:bg-muted rounded-md px-3 py-1.5',
+            { 'pointer-events-none opacity-50': !isCashRemunerationOwner }
+          ]"
+        >
           <WeeklyClaimActionEnable
             :weekly-claim="weeklyClaim"
             :is-cash-remuneration-owner="isCashRemunerationOwner"
             @close="isOpen = false"
           />
         </li>
-        <li data-test="disabled-resign" :class="{ disabled: !isCashRemunerationOwner }">
+        <li
+          data-test="disabled-resign"
+          :class="[
+            'hover:bg-muted rounded-md px-3 py-1.5',
+            { 'pointer-events-none opacity-50': !isCashRemunerationOwner }
+          ]"
+        >
           <CRSigne
             :weekly-claim="weeklyClaim"
             :is-drop-down="true"
@@ -120,6 +165,7 @@ import { classifyError, log } from '@/utils'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useDisableClaim } from '@/composables/cashRemuneration/writes'
 import WeeklyClaimActionEnable from './WeeklyClaimActionEnable.vue'
+import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 
@@ -141,6 +187,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const userStore = useUserDataStore()
 const teamStore = useTeamStore()
+const { isWriteDisabled, archivedTooltip } = useTeamWriteGuard()
 const toast = useToast()
 const queryClient = useQueryClient()
 

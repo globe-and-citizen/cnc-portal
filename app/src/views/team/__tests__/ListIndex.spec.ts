@@ -52,9 +52,16 @@ describe('ListIndex - Team List View', () => {
   }
 
   describe('Component Rendering', () => {
-    it('should render the component with heading', () => {
+    it('should render the page heading when teams are visible', () => {
       const wrapper = createWrapper()
       expect(wrapper.find('h2').text()).toContain('Team List View')
+    })
+
+    it('should hide the page heading when no teams are visible', async () => {
+      const wrapper = createWrapper([])
+      await wrapper.vm.$nextTick()
+
+      expect(wrapper.find('h2').exists()).toBe(false)
     })
 
     it('should render component structure correctly', () => {
@@ -69,7 +76,7 @@ describe('ListIndex - Team List View', () => {
       await wrapper.vm.$nextTick()
 
       expect(wrapper.find('[data-test="loader"]').exists()).toBe(true)
-      expect(wrapper.findAll('[data-test="loader"] .skeleton')).toHaveLength(16) // 4 skeletons × 4 items
+      expect(wrapper.findAll('[data-test="loader"] [aria-busy="true"]')).toHaveLength(16) // 4 skeletons × 4 items
     })
 
     it('should hide team list during loading', async () => {
@@ -84,6 +91,13 @@ describe('ListIndex - Team List View', () => {
       await wrapper.vm.$nextTick()
 
       expect(wrapper.find('[data-test="add-team-button"]').exists()).toBe(false)
+    })
+
+    it('should hide the page heading during loading', async () => {
+      const wrapper = createWrapper([], true)
+      await wrapper.vm.$nextTick()
+
+      expect(wrapper.find('h2').exists()).toBe(false)
     })
   })
 
@@ -143,8 +157,7 @@ describe('ListIndex - Team List View', () => {
       await wrapper.vm.$nextTick()
 
       const errorAlert = wrapper.find('[data-test="error-state"]')
-      expect(errorAlert.classes()).toContain('alert')
-      expect(errorAlert.classes()).toContain('alert-warning')
+      expect(errorAlert.exists()).toBe(true)
       expect(errorAlert.text()).toContain('We are unable to retrieve your teams')
     })
 
@@ -162,6 +175,14 @@ describe('ListIndex - Team List View', () => {
       await wrapper.vm.$nextTick()
 
       expect(wrapper.find('[data-test="add-team-button"]').exists()).toBe(false)
+    })
+
+    it('should hide the page heading on error', async () => {
+      const error = new Error('Failed to fetch')
+      const wrapper = createWrapper([], false, error)
+      await wrapper.vm.$nextTick()
+
+      expect(wrapper.find('h2').exists()).toBe(false)
     })
   })
 
@@ -190,39 +211,12 @@ describe('ListIndex - Team List View', () => {
       expect(teamCard.text()).toContain(mockTeamData.name)
     })
 
-    it('should apply correct CSS classes to team list', async () => {
-      const wrapper = createWrapper(mockTeamsData)
-      await wrapper.vm.$nextTick()
-
-      const teamList = wrapper.find('[data-test="team-list"]')
-      expect(teamList.classes()).toContain('grid')
-      expect(teamList.classes()).toContain('grid-cols-1')
-      expect(teamList.classes()).toContain('md:grid-cols-2')
-      expect(teamList.classes()).toContain('lg:grid-cols-3')
-    })
-
     it('should display add team button even when teams exist and not loading', async () => {
       const wrapper = createWrapper(mockTeamsData, false)
       await wrapper.vm.$nextTick()
 
       // The button shows when there's no error and not loading, regardless of team count
       expect(wrapper.find('[data-test="add-team-button"]').exists()).toBe(true)
-    })
-
-    it('should apply hover and animation classes to team cards', async () => {
-      const wrapper = createWrapper(mockTeamsData)
-      await wrapper.vm.$nextTick()
-
-      const teamCardContainer = wrapper.find('.grid.grid-cols-1')
-      const teamCardChildren = teamCardContainer.findAll('.cursor-pointer')
-
-      expect(teamCardChildren.length).toBeGreaterThan(0)
-      teamCardChildren.forEach((element) => {
-        expect(element.classes()).toContain('cursor-pointer')
-        expect(element.classes()).toContain('transition')
-        expect(element.classes()).toContain('duration-300')
-        expect(element.classes()).toContain('hover:scale-105')
-      })
     })
   })
 
@@ -285,23 +279,6 @@ describe('ListIndex - Team List View', () => {
       await wrapper.vm.$nextTick()
 
       expect(wrapper.find('[data-test="add-team-button"]').exists()).toBe(true)
-    })
-
-    it('should apply correct styling to add team button container', async () => {
-      const wrapper = createWrapper([], false)
-      await wrapper.vm.$nextTick()
-
-      const buttonContainer = wrapper.find('[data-test="add-team-button"]')
-      expect(buttonContainer.classes()).toContain('flex')
-      expect(buttonContainer.classes()).toContain('justify-center')
-    })
-
-    it('should apply animation class to add team card', async () => {
-      const wrapper = createWrapper([], false)
-      await wrapper.vm.$nextTick()
-
-      const addTeamCard = wrapper.find('[data-test="add-team-card"]')
-      expect(addTeamCard.classes()).toContain('animate-fade-in')
     })
   })
 

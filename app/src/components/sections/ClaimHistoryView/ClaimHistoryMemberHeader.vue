@@ -16,7 +16,7 @@
             />
           </div>
           <div class="flex flex-col gap-8">
-            <div class="card-title mt-4" data-test="claim-user-name">
+            <div class="mt-4 text-xl font-semibold" data-test="claim-user-name">
               {{ displayedMember?.name }}
             </div>
 

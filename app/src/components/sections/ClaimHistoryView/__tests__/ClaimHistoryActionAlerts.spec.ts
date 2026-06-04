@@ -1,12 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
-import { createTestingPinia } from '@pinia/testing'
-import { nextTick, ref } from 'vue'
+import { defineComponent, nextTick, ref } from 'vue'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import isoWeek from 'dayjs/plugin/isoWeek'
 import ClaimHistoryActionAlerts from '@/components/sections/ClaimHistoryView/ClaimHistoryActionAlerts.vue'
-import { mockUserStore, mockWageData, mockWeeklyClaimData, queryMocks } from '@/tests/mocks'
+import {
+  renderWithProviders,
+  mockUserStore,
+  mockWageData,
+  mockWeeklyClaimData,
+  queryMocks
+} from '@/tests/mocks'
 import { useGetTeamWagesQuery, useGetTeamWeeklyClaimsQuery } from '@/queries'
 
 dayjs.extend(utc)
@@ -14,6 +19,7 @@ dayjs.extend(isoWeek)
 
 describe('ClaimHistoryActionAlerts', () => {
   const baseAddress = '0x1234567890123456789012345678901234567890'
+  const openModalForDayMock = vi.fn()
 
   const createWeeklyClaim = (overrides: Record<string, unknown> = {}) => {
     return {
@@ -30,41 +36,49 @@ describe('ClaimHistoryActionAlerts', () => {
     }
   }
 
+  const makeGlobal = () => ({
+    stubs: {
+      SubmitClaims: defineComponent({
+        name: 'SubmitClaims',
+        props: {
+          signedWeekStarts: { type: Array, required: true }
+        },
+        setup(_, { expose }) {
+          expose({ openModalForDay: openModalForDayMock })
+          return {}
+        },
+        template: '<div data-test="submit-claims">{{ signedWeekStarts.length }}</div>'
+      }),
+      CRSigne: {
+        name: 'CRSigne',
+        props: ['disabled'],
+        template: '<div data-test="cr-signe">{{ disabled }}</div>'
+      },
+      CRWithdrawClaim: {
+        name: 'CRWithdrawClaim',
+        props: ['disabled'],
+        template: '<div data-test="cr-withdraw">{{ disabled }}</div>'
+      },
+      IconifyIcon: {
+        name: 'IconifyIcon',
+        template: '<span data-test="icon" />'
+      }
+    }
+  })
+
   const createWrapper = (props: Record<string, unknown> = {}) =>
-    mount(ClaimHistoryActionAlerts, {
+    renderWithProviders(ClaimHistoryActionAlerts, {
       props: {
         memberAddress: baseAddress,
         ...props
       },
-      global: {
-        plugins: [createTestingPinia({ createSpy: vi.fn })],
-        stubs: {
-          SubmitClaims: {
-            name: 'SubmitClaims',
-            props: ['signedWeekStarts'],
-            template: '<div data-test="submit-claims">{{ signedWeekStarts.length }}</div>'
-          },
-          CRSigne: {
-            name: 'CRSigne',
-            props: ['disabled'],
-            template: '<div data-test="cr-signe">{{ disabled }}</div>'
-          },
-          CRWithdrawClaim: {
-            name: 'CRWithdrawClaim',
-            props: ['disabled'],
-            template: '<div data-test="cr-withdraw">{{ disabled }}</div>'
-          },
-          IconifyIcon: {
-            name: 'IconifyIcon',
-            template: '<span data-test="icon" />'
-          }
-        }
-      }
+      global: makeGlobal()
     })
 
   beforeEach(() => {
     vi.clearAllMocks()
     mockUserStore.address = baseAddress
+    openModalForDayMock.mockReset()
   })
 
   it('renders submit claim alert with SubmitClaims when user has wage', () => {
@@ -107,30 +121,35 @@ describe('ClaimHistoryActionAlerts', () => {
     ;(
       useGetTeamWeeklyClaimsQuery as unknown as { mockReturnValueOnce: (value: unknown) => void }
     ).mockReturnValueOnce({
-      data: ref([
-        { ...createWeeklyClaim({ status: 'signed', weekStart: '2024-01-08T00:00:00.000Z' }) },
-        {
-          ...createWeeklyClaim({
-            status: 'pending',
-            signature: '0xabc',
-            weekStart: '2024-01-15T00:00:00.000Z'
-          })
-        },
-        {
-          ...createWeeklyClaim({
-            status: 'pending',
-            signature: null,
-            weekStart: '2024-01-22T00:00:00.000Z'
-          })
-        }
-      ])
+      data: ref({
+        data: [
+          { ...createWeeklyClaim({ status: 'signed', weekStart: '2024-01-08T00:00:00.000Z' }) },
+          {
+            ...createWeeklyClaim({
+              status: 'pending',
+              signature: '0xabc',
+              weekStart: '2024-01-15T00:00:00.000Z'
+            })
+          },
+          {
+            ...createWeeklyClaim({
+              status: 'pending',
+              signature: null,
+              weekStart: '2024-01-22T00:00:00.000Z'
+            })
+          }
+        ],
+        total: 3
+      })
     })
 
     const wrapper = createWrapper({ weeklyClaim: createWeeklyClaim() })
-    const vm = wrapper.vm as unknown as { signedWeekStarts: string[] }
 
     expect(wrapper.find('[data-test="submit-claims"]').text()).toBe('2')
-    expect(vm.signedWeekStarts).toEqual(['2024-01-08T00:00:00.000Z', '2024-01-15T00:00:00.000Z'])
+    expect(wrapper.findComponent({ name: 'SubmitClaims' }).props('signedWeekStarts')).toEqual([
+      '2024-01-08T00:00:00.000Z',
+      '2024-01-15T00:00:00.000Z'
+    ])
   })
 
   it('falls back to empty signedWeekStarts when weekly claims data is undefined', () => {
@@ -271,5 +290,27 @@ describe('ClaimHistoryActionAlerts', () => {
 
     expect(wrapper.findAll('[role="alert"]').length).toBe(0)
     expect(wrapper.text()).not.toContain('Submit Claim')
+  })
+
+  it('bridges openSubmitClaimForDay to SubmitClaims exposed method', () => {
+    const dayIso = '2024-01-10T00:00:00.000Z'
+    const weeklyClaim = createWeeklyClaim()
+
+    const ParentHarness = defineComponent({
+      components: { ClaimHistoryActionAlerts },
+      setup() {
+        const child = ref<InstanceType<typeof ClaimHistoryActionAlerts> | null>(null)
+        return { child, weeklyClaim, baseAddress }
+      },
+      template:
+        '<ClaimHistoryActionAlerts ref="child" :member-address="baseAddress" :weekly-claim="weeklyClaim" />'
+    })
+
+    // Harness mount keeps `mount` so the typed `vm.child` ref survives — see
+    // CreateAddCampaign.spec.ts. renderWithProviders erases the component generic.
+    const wrapper = mount(ParentHarness, { global: makeGlobal() })
+    wrapper.vm.child?.openSubmitClaimForDay(dayIso)
+
+    expect(openModalForDayMock).toHaveBeenCalledWith(dayIso)
   })
 })

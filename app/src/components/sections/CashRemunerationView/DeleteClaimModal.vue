@@ -7,18 +7,24 @@
       <span class="font-semibold">{{ formattedDate }}</span>
       ?
     </p>
-    <div v-if="deleteClaimError" class="alert alert-error" data-test="delete-claim-error">
-      Failed to delete claim
-    </div>
+    <UAlert
+      v-if="deleteClaimError"
+      color="error"
+      variant="soft"
+      :description="deleteClaimErrorMessage"
+      data-test="delete-claim-error"
+    />
     <div class="flex justify-end gap-2">
-      <UButton
-        color="error"
-        :loading="isDeleting"
-        :disabled="isDeleting"
-        @click="handleDelete"
-        data-test="confirm-delete-claim-button"
-        label="Delete"
-      />
+      <TeamArchivedTooltip v-slot="{ disabled: archivedDisabled }">
+        <UButton
+          color="error"
+          :loading="isDeleting"
+          :disabled="isDeleting || archivedDisabled"
+          @click="handleDelete"
+          data-test="confirm-delete-claim-button"
+          label="Delete"
+        />
+      </TeamArchivedTooltip>
       <UButton
         color="primary"
         variant="outline"
@@ -36,7 +42,8 @@ import { computed } from 'vue'
 import dayjs from 'dayjs'
 import type { Claim } from '@/types'
 import { formatMinutesAsDuration } from '@/utils/wageUtil'
-
+import { getAxiosErrorMessage } from '@/utils/errorUtil'
+import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
 import { useDeleteClaimMutation } from '@/queries/weeklyClaim.queries'
 
 const props = defineProps<{
@@ -58,6 +65,12 @@ const {
   isPending: isDeleting,
   error: deleteClaimError
 } = useDeleteClaimMutation()
+
+const deleteClaimErrorMessage = computed(() =>
+  deleteClaimError.value
+    ? getAxiosErrorMessage(deleteClaimError.value, 'Failed to delete claim')
+    : 'Failed to delete claim'
+)
 
 const handleDelete = async () => {
   await deleteClaim({ pathParams: { claimId: props.claim.id } })

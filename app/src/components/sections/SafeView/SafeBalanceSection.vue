@@ -15,11 +15,12 @@
         <div class="flex items-baseline gap-2">
           <span class="text-4xl font-bold">
             <span class="inline-block h-10 min-w-16">
-              <span
+              <UIcon
                 v-if="isLoading"
-                class="loading loading-spinner loading-lg"
+                name="i-lucide-loader-circle"
+                class="text-primary h-10 w-10 animate-spin"
                 data-test="safe-balance-loading"
-              ></span>
+              />
               <span v-else>{{ total['USD']?.formated ?? 0 }}</span>
             </span>
           </span>
@@ -39,13 +40,16 @@
 
       <div class="flex flex-col items-end gap-4">
         <div class="flex gap-2">
-          <UButton
-            color="secondary"
-            data-test="deposit-button"
-            leading-icon="heroicons-outline:plus"
-            label="Deposit"
-            @click="openDepositModal"
-          />
+          <TeamArchivedTooltip v-slot="{ disabled: archivedDisabled }">
+            <UButton
+              color="secondary"
+              data-test="deposit-button"
+              leading-icon="heroicons-outline:plus"
+              label="Deposit"
+              :disabled="archivedDisabled"
+              @click="openDepositModal"
+            />
+          </TeamArchivedTooltip>
 
           <UButton
             color="secondary"
@@ -123,14 +127,13 @@ import { useContractBalance } from '@/composables/useContractBalance'
 import { useGetSafeInfoQuery } from '@/queries/safe.queries'
 import TransferForm, { type TransferModel } from '@/components/forms/TransferForm.vue'
 import type { TokenOption } from '@/types'
-import { useSafeTransfer } from '@/composables/safe'
-import { useQueryClient } from '@tanstack/vue-query'
+import { useTransferFromSafeMutation } from '@/queries/safe.mutations'
 import DepositSafeForm from '@/components/forms/DepositSafeForm.vue'
-import { getTokenAddress } from '@/utils'
+import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
+import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 
 const chainId = useChainId()
 const userDataStore = useUserDataStore()
-const queryClient = useQueryClient()
 const currency = useStorage('currency', {
   code: 'USD',
   name: 'US Dollar',
@@ -142,6 +145,7 @@ interface Props {
 }
 
 const props = defineProps<Props>()
+const { isWriteDisabled } = useTeamWriteGuard()
 
 const { total, balances, isLoading } = useContractBalance(props.address)
 
@@ -170,7 +174,8 @@ const transferModal = ref({
   show: false
 })
 
-const { transferFromSafe, isTransferring } = useSafeTransfer()
+const toast = useToast()
+const { mutate: transferFromSafe, isPending: isTransferring, reset } = useTransferFromSafeMutation()
 
 const { data: safeInfo } = useGetSafeInfoQuery({ pathParams: { safeAddress: props.address } })
 
@@ -205,6 +210,7 @@ const openInSafeApp = () => {
 }
 
 const openDepositModal = () => {
+  if (isWriteDisabled.value) return
   depositModal.value = { mount: true, show: true }
 }
 
@@ -220,45 +226,39 @@ const resetTransferValues = () => {
   transferData.value = initialTransferDataValue()
 }
 
-const invalidateSafeBalances = async (safeAddress: Address) => {
-  await queryClient.invalidateQueries({
-    queryKey: ['balance', { address: safeAddress, chainId: chainId.value }]
-  })
-
-  const tokenAddresses = tokens.value
-    .map((token) => getTokenAddress(token.tokenId))
-    .filter((address): address is string => !!address)
-
-  await Promise.all(
-    tokenAddresses.map((tokenAddress) =>
-      queryClient.invalidateQueries({
-        queryKey: [
-          'readContract',
-          { address: tokenAddress as Address, args: [safeAddress], chainId: chainId.value }
-        ]
-      })
-    )
-  )
-}
-
-const handleTransfer = async (transferData: TransferModel) => {
+const handleTransfer = (transferData: TransferModel) => {
   const safeAddress = props.address
   if (!safeAddress) return
+
   const options = {
     to: transferData.address.address,
     amount: transferData.amount,
     tokenId: transferData.token.tokenId
   }
 
-  const result = await transferFromSafe(safeAddress, options)
-
-  if (result) {
-    resetTransferValues()
-    await invalidateSafeBalances(safeAddress as Address)
-    await queryClient.invalidateQueries({
-      queryKey: ['safe', 'info', { safeAddress }]
-    })
-  }
+  transferFromSafe(
+    {
+      pathParams: { safeAddress },
+      body: { options }
+    },
+    {
+      onSuccess: () => {
+        toast.add({
+          title: 'Success',
+          description: 'Transfer submitted successfully',
+          color: 'success'
+        })
+        resetTransferValues()
+        reset()
+      },
+      onError: (error) => {
+        const message = error.message.includes('User rejected')
+          ? 'Transaction approval rejected'
+          : error.message
+        toast.add({ title: 'Error', description: message, color: 'error' })
+      }
+    }
+  )
 }
 
 const closeDepositModal = () => {

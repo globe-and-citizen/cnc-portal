@@ -1,12 +1,10 @@
-import { mount } from '@vue/test-utils'
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
-import { createTestingPinia } from '@pinia/testing'
 import InvestorsHeader from '../InvestorsHeader.vue'
 import { parseUnits } from 'viem'
-import { mockInvestorReads, mockTeamStore, mockUserStore, resetContractMocks } from '@/tests/mocks'
+import { mockInvestorReads, mockTeamStore, mockUserStore, renderWithProviders } from '@/tests/mocks'
 
 describe('InvestorsHeader', () => {
-  let wrapper: ReturnType<typeof mount>
+  let wrapper: ReturnType<typeof createComponent>
 
   // Test data constants
   const mockTokenData = {
@@ -25,7 +23,6 @@ describe('InvestorsHeader', () => {
   } as const
 
   beforeEach(() => {
-    resetContractMocks()
     vi.clearAllMocks()
 
     // Initialize store state
@@ -47,9 +44,8 @@ describe('InvestorsHeader', () => {
   })
 
   const createComponent = () => {
-    return mount(InvestorsHeader, {
+    return renderWithProviders(InvestorsHeader, {
       global: {
-        plugins: [createTestingPinia({ createSpy: vi.fn })],
         stubs: {
           OverviewCard: {
             template: `

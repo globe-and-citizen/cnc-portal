@@ -6,6 +6,7 @@ import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
 import { parseUnits } from 'viem'
 import { mockUseContractBalance } from '@/tests/mocks/composables.mock'
+import { mockVestingWrites } from '@/tests/mocks/contract.mock'
 import { CalendarDate } from '@internationalized/date'
 
 // vi.mock('@/artifacts/abi/InvestorV1', () => MOCK_INVESTOR_ABI)
@@ -15,16 +16,6 @@ const memberAddress = '0x000000000000000000000000000000000000dead'
 const mockSymbol = ref<string>('shr')
 const mockReloadKey = ref<number>(0)
 const mockResolvedVestingAddress = ref('0x1000000000000000000000000000000000000001' as const)
-// const mockCurrentTeam = ref({
-//   id: 1,
-//   ownerAddress: memberAddress,
-//   teamContracts: [
-//     {
-//       type: 'InvestorV1',
-//       address: '0x000000000000000000000000000000000000beef'
-//     }
-//   ]
-// })
 
 const mockWriteContract = {
   mutate: vi.fn(),
@@ -55,15 +46,6 @@ const mockVestingInfos = ref([
 
 const refetchVestingInfos = vi.fn()
 
-const mockWaitForReceipt = {
-  isLoading: ref(false),
-  isSuccess: ref(false),
-  error: ref<null | Error>(null),
-  isPending: ref(false),
-  isError: ref(false),
-  data: ref(null),
-  status: ref('idle' as const)
-}
 const mockBalance = ref<bigint | undefined>(parseUnits('10', 6)) // default 10 tokens
 const mockAllowance = ref(parseUnits('10', 6)) // default 10 tokens
 const mockApproval = ref(parseUnits('10', 6)) // default 10 tokens
@@ -114,7 +96,7 @@ vi.mock('@/composables/erc20/writes', () => ({
     ),
     mutateAsync: vi.fn(),
     isPending: mockWriteContract.isPending,
-    isSuccess: mockWaitForReceipt.isSuccess,
+    isSuccess: ref(false),
     isError: mockWriteContract.isError,
     error: mockWriteContract.error,
     data: mockWriteContract.data,
@@ -128,8 +110,6 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
   return {
     ...actual,
     useChainId: vi.fn(() => ref(137)),
-    useWriteContract: vi.fn(() => mockWriteContract),
-    useWaitForTransactionReceipt: vi.fn(() => mockWaitForReceipt),
     useReadContract: vi.fn(({ functionName }) => {
       if (functionName === 'balanceOf') {
         return {
@@ -198,26 +178,27 @@ describe('CreateVesting.vue', () => {
       }
     })
 
+  /**
+   * Drive the form via real DOM/component events instead of mutating vm state:
+   * - SelectMemberInput emits `selectMember`
+   * - UCalendar emits `update:modelValue` with CalendarDate range
+   * - amount and cliff are native inputs reached via `data-test` selectors
+   */
   const fillFormWithValidData = async (
     wrapper: VueWrapper,
     memberAddr = '0x120000000000000000000000000000000000dead'
   ) => {
-    const selectMemberInput = wrapper.findComponent(SelectMemberInput)
-    selectMemberInput.vm.$emit('selectMember', {
+    await wrapper.findComponent(SelectMemberInput).vm.$emit('selectMember', {
       name: 'Test User',
       address: memberAddr
     })
-    ;(
-      wrapper.vm as unknown as {
-        onDateRangeChange: (value: { start: CalendarDate; end: CalendarDate }) => void
-      }
-    ).onDateRangeChange({
+    await wrapper.findComponent({ name: 'UCalendar' }).vm.$emit('update:modelValue', {
       start: new CalendarDate(2025, 6, 13),
       end: new CalendarDate(2025, 7, 13)
     })
     await wrapper.vm.$nextTick()
-    ;(wrapper.vm as unknown as { cliff: number }).cliff = 5
-    ;(wrapper.vm as unknown as { totalAmount: number }).totalAmount = 5
+    await wrapper.find('[data-test="cliff"]').setValue('5')
+    await wrapper.find('[data-test="total-amount"]').setValue('5')
     await wrapper.vm.$nextTick()
   }
 
@@ -229,8 +210,16 @@ describe('CreateVesting.vue', () => {
     mockBalanceError.value = null
     mockApprovalError.value = null
     mockWriteContract.error.value = null
-    mockWaitForReceipt.isLoading.value = false
-    mockWaitForReceipt.isSuccess.value = false
+    mockVestingWrites.addVesting.isSuccess.value = false
+    mockVestingWrites.addVesting.error.value = null
+    // Default: mutate invokes onSuccess to simulate a confirmed write.
+    mockVestingWrites.addVesting.mutate
+      .mockReset()
+      .mockImplementation(
+        (_vars: unknown, opts?: { onSuccess?: () => void; onError?: (e: Error) => void }) => {
+          opts?.onSuccess?.()
+        }
+      )
     wrapper = mountComponent()
   })
 
@@ -278,27 +267,22 @@ describe('CreateVesting.vue', () => {
         })
       )
 
-      mockWaitForReceipt.isLoading.value = true
       await wrapper.vm.$nextTick()
-      mockWaitForReceipt.isSuccess.value = true
-      mockWaitForReceipt.isLoading.value = false
-      await wrapper.vm.$nextTick()
-
       expect(mockWriteContract.mutateAsync).toHaveBeenCalled()
-
-      mockWaitForReceipt.isLoading.value = true
-      await wrapper.vm.$nextTick()
-      mockWaitForReceipt.isSuccess.value = true
-      mockWaitForReceipt.isLoading.value = false
+      // mutate's onSuccess (configured in beforeEach) resets the form, so the
+      // form view re-mounts with the default amount/cliff inputs at 0.
       await wrapper.vm.$nextTick()
 
-      expect((wrapper.vm as unknown as { totalAmount: number }).totalAmount).toBe(0)
-      expect((wrapper.vm as unknown as { cliff: number }).cliff).toBe(0)
+      expect((wrapper.find('[data-test="total-amount"]').element as HTMLInputElement).value).toBe(
+        '0'
+      )
+      expect((wrapper.find('[data-test="cliff"]').element as HTMLInputElement).value).toBe('0')
+      expect(mockVestingWrites.addVesting.mutate).toHaveBeenCalled()
     })
-    it('prevents submission when form is invalid', async () => {
-      ;(wrapper.vm as unknown as { totalAmount: number }).totalAmount = 0
-      await wrapper.vm.$nextTick()
 
+    it('prevents submission when form is invalid', async () => {
+      // Empty form (no member, no date, default totalAmount=0) fails schema
+      // validation; submit() never runs and the summary never renders.
       await submitForm()
 
       const summary = wrapper.findComponent({ name: 'VestingSummary' })

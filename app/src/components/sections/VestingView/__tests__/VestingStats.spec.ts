@@ -1,6 +1,26 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { mount, type VueWrapper } from '@vue/test-utils'
-import { createTestingPinia } from '@pinia/testing'
+import { type VueWrapper } from '@vue/test-utils'
+import { renderWithProviders } from '@/tests/mocks'
+
+// Auto-imported @nuxt/ui components bypass `config.global.stubs` because the
+// Nuxt UI Vite plugin resolves them through their file path. Mock the module
+// so our stub renders and we can inspect props instead of reaching into vm.
+vi.mock('@nuxt/ui/components/Table.vue', () => ({
+  default: {
+    name: 'UTable',
+    props: ['data', 'columns', 'sticky', 'showPagination'],
+    template: `
+      <div data-test="vesting-stats-table">
+        <div v-for="(row, i) in data" :key="i" data-test="vesting-stats-row">
+          <slot name="totalVested-cell" :row="{ original: row }" />
+          <slot name="totalReleased-cell" :row="{ original: row }" />
+          <slot name="totalWithdrawn-cell" :row="{ original: row }" />
+        </div>
+      </div>
+    `
+  }
+}))
+
 import VestingStats from '@/components/sections/VestingView/VestingStats.vue'
 
 import { ref } from 'vue'
@@ -24,18 +44,6 @@ const refetchVestingInfos = vi.fn()
 
 const mockArchivedInfos = ref([[], []])
 
-// Wagmi mocks
-const mockWriteContract = {
-  mutate: vi.fn(),
-  error: ref<Error | null>(null),
-  isPending: ref(false),
-  data: ref(null)
-}
-const mockWaitReceipt = {
-  isLoading: ref(false),
-  isSuccess: ref(false)
-}
-
 vi.mock('@/composables/investor/reads', () => ({
   useInvestorSymbol: vi.fn(() => ({
     data: mockSymbol,
@@ -48,8 +56,6 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
   const actual: object = await importOriginal()
   return {
     ...actual,
-    useWriteContract: vi.fn(() => mockWriteContract),
-    useWaitForTransactionReceipt: vi.fn(() => mockWaitReceipt),
     useReadContract: vi.fn(({ functionName }: { functionName: string }) => {
       if (functionName === 'getTeamVestingsWithMembers') {
         return {
@@ -86,12 +92,9 @@ describe('VestingStats.vue', () => {
   let wrapper: VueWrapper
 
   const mountComponent = () => {
-    return mount(VestingStats, {
+    return renderWithProviders(VestingStats, {
       props: {
         reloadKey: mockReloadKey.value
-      },
-      global: {
-        plugins: [createTestingPinia({ createSpy: vi.fn })]
       }
     })
   }
@@ -99,13 +102,6 @@ describe('VestingStats.vue', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     wrapper = mountComponent()
-    mockWriteContract.mutate.mockReset()
-    mockWaitReceipt.isLoading.value = false
-    mockWaitReceipt.isSuccess.value = false
-  })
-
-  it.skip('renders vesting stats component', () => {
-    expect(wrapper.find('[data-test="vesting-stats"]').exists()).toBe(true)
   })
 
   it('calculates token summary correctly from vestings data', async () => {
@@ -127,9 +123,13 @@ describe('VestingStats.vue', () => {
     wrapper = mountComponent()
     await wrapper.vm.$nextTick()
 
-    const summaryRows = (wrapper.vm as (typeof VestingStats)['prototype']).tokenSummaryRows
-    expect(summaryRows).toHaveLength(1) // Should have one row per token symbol
-    expect(summaryRows[0]).toMatchObject({
+    const tableData = wrapper.findComponent({ name: 'UTable' }).props('data') as Array<{
+      symbol: string
+      totalVested: number
+      totalReleased: number
+    }>
+    expect(tableData).toHaveLength(1) // Should have one row per token symbol
+    expect(tableData[0]).toMatchObject({
       symbol: mockSymbol.value,
       totalVested: 150,
       totalReleased: 30
@@ -140,8 +140,8 @@ describe('VestingStats.vue', () => {
     mockVestingInfos.value = [[], []]
     wrapper = mountComponent()
 
-    const summaryRows = (wrapper.vm as (typeof VestingStats)['prototype']).tokenSummaryRows
-    expect(summaryRows).toHaveLength(1)
+    const tableData = wrapper.findComponent({ name: 'UTable' }).props('data') as Array<unknown>
+    expect(tableData).toHaveLength(1)
   })
 
   it('displays formatted token amounts with symbols', async () => {

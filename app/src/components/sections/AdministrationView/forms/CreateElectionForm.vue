@@ -82,17 +82,29 @@
         </UFormField>
       </div>
 
+      <UAlert
+        v-if="errorMessage"
+        color="error"
+        variant="soft"
+        :description="errorMessage"
+        icon="i-lucide-circle-alert"
+        class="mt-2"
+        data-test="error-alert"
+      />
+
       <div class="flex justify-center">
-        <UButton
-          type="submit"
-          :loading="isLoading"
-          :disabled="isLoading"
-          color="primary"
-          size="md"
-          class="justify-center"
-          data-test="submitButton"
-          label="Create Election"
-        />
+        <TeamArchivedTooltip v-slot="{ disabled: archivedDisabled }">
+          <UButton
+            type="submit"
+            :loading="isLoading"
+            :disabled="isLoading || archivedDisabled"
+            color="primary"
+            size="md"
+            class="justify-center"
+            data-test="submitButton"
+            label="Create Election"
+          />
+        </TeamArchivedTooltip>
       </div>
     </UForm>
   </div>
@@ -105,6 +117,7 @@ import { z } from 'zod'
 import MultiSelectMemberInput from '@/components/utils/MultiSelectMemberInput.vue'
 import { CalendarDate, getLocalTimeZone, today } from '@internationalized/date'
 import { formatDateMMDDYYYY, dateToCalendarDate, ensureFutureDate } from '@/utils/dayUtils'
+import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
 
 // Dev = 2 minutes, Prod = 1 hour
 const delay = 2 * 60 * 1000
@@ -114,7 +127,9 @@ const startDateOpen = ref(false)
 const endDateOpen = ref(false)
 
 const emits = defineEmits(['createProposal'])
-defineProps<{ isLoading: boolean }>()
+withDefaults(defineProps<{ isLoading: boolean; errorMessage?: string }>(), {
+  errorMessage: ''
+})
 
 const formData = ref<Array<Pick<User, 'address' | 'name'>>>([])
 const errors = reactive({ startDate: '', endDate: '', candidates: '' })

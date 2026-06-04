@@ -60,7 +60,9 @@ export const mockTeamData: Team = {
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   },
-  isMigrated: true
+  isMigrated: true,
+  isHidden: false,
+  isArchived: false
 }
 
 export const mockTeamsData: Team[] = [mockTeamData]
@@ -101,6 +103,19 @@ export const mockNotificationData: Notification[] = [
     resource: 'test-resource'
   }
 ]
+
+export const mockNotificationsRef = ref<Notification[]>([...mockNotificationData])
+export const mockUpdateNotificationMutateAsync = vi.fn().mockResolvedValue(undefined)
+
+/**
+ * Restore the shared notifications query mock to its default. `mockNotificationsRef`
+ * is returned by the globally-mocked `useGetNotificationsQuery`, so specs that mutate
+ * `.value` would otherwise leak that list into the next test.
+ */
+export const resetNotificationsMock = () => {
+  mockNotificationsRef.value = [...mockNotificationData]
+  mockUpdateNotificationMutateAsync.mockClear()
+}
 
 /**
  * User Query Mocks
@@ -301,9 +316,20 @@ export const queryMocks: Record<string, () => Record<string, unknown>> = {
   useToggleWageStatusMutation: () => createMockMutationResponse(),
 
   // Notification queries - notification.queries.ts
-  useGetNotificationsQuery: () => createMockQueryResponse(mockNotificationData),
+  useGetNotificationsQuery: () => ({
+    data: mockNotificationsRef,
+    isLoading: ref(false),
+    error: ref(null),
+    refetch: vi.fn(),
+    isFetched: ref(true),
+    isPending: ref(false),
+    isSuccess: ref(true)
+  }),
   useCreateBulkNotificationsMutation: () => createMockMutationResponse(),
-  useUpdateNotificationMutation: () => createMockMutationResponse(),
+  useUpdateNotificationMutation: () => ({
+    ...createMockMutationResponse(),
+    mutateAsync: mockUpdateNotificationMutateAsync
+  }),
 
   // Expense queries - expense.queries.ts
   useGetExpensesQuery: () => createMockQueryResponse([]),
@@ -335,7 +361,8 @@ export const queryMocks: Record<string, () => Record<string, unknown>> = {
   }),
 
   // Weekly Claim queries - weeklyClaim.queries.ts
-  useGetTeamWeeklyClaimsQuery: () => createMockQueryResponse(mockWeeklyClaimData),
+  useGetTeamWeeklyClaimsQuery: () =>
+    createMockQueryResponse({ data: mockWeeklyClaimData, total: mockWeeklyClaimData.length }),
   useGetWeeklyClaimByIdQuery: () => createMockQueryResponse(mockWeeklyClaimData[0]),
   useUpdateWeeklyClaimMutation: () => createMockMutationResponse(),
   useEditClaimMutation: () => createMockMutationResponse(),
@@ -348,9 +375,8 @@ export const queryMocks: Record<string, () => Record<string, unknown>> = {
   useGetSafeInfoQuery: () => createMockQueryResponse(mockSafeInfoData),
   useSafePendingTransactionsQuery: () => createMockQueryResponse([]),
   useDeploySafeMutation: () => createMockMutationResponse(),
-  useProposeTransactionMutation: () => createMockMutationResponse(),
   useApproveTransactionMutation: () => createMockMutationResponse(),
   useExecuteTransactionMutation: () => createMockMutationResponse(),
-  useUpdateSafeOwnersMutation: () => createMockMutationResponse(),
+
   useGetSafeTransactionQuery: () => createMockQueryResponse(mockSafeTransactionData)
 }

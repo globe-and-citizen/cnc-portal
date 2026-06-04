@@ -1,6 +1,6 @@
 import express from 'express';
 import { addClaim, getClaims, updateClaim, deleteClaim } from '../controllers/claimController';
-import { requireTeamMember } from '../middleware/teamAuthzMiddleware';
+import { rejectIfArchived, requireTeamMember } from '../middleware/teamAuthzMiddleware';
 import {
   validateBody,
   validateQuery,
@@ -73,6 +73,9 @@ const claimRoutes = express.Router();
  * /claim:
  *  post:
  *   summary: Add a claim for minutes worked
+ *   tags: [Claims]
+ *   security:
+ *     - bearerAuth: []
  *   requestBody:
  *     required: true
  *     content:
@@ -109,13 +112,16 @@ const claimRoutes = express.Router();
  *             $ref: '#/components/schemas/ErrorResponse'
  */
 // Updated to accept JSON with pre-uploaded file attachments
-claimRoutes.post('/', validateBody(addClaimBodySchema), addClaim);
+claimRoutes.post('/', validateBody(addClaimBodySchema), rejectIfArchived('body.teamId'), addClaim);
 
 /**
  * @openapi
  * /claim:
  *  get:
  *   summary: Retrieve claims for a specific team
+ *   tags: [Claims]
+ *   security:
+ *     - bearerAuth: []
  *   parameters:
  *     - in: query
  *       name: teamId
@@ -168,6 +174,9 @@ claimRoutes.get(
  * /claim/{claimId}:
  *  put:
  *   summary: Update claim details (minutes worked, memo, or date)
+ *   tags: [Claims]
+ *   security:
+ *     - bearerAuth: []
  *   description: Allows the claim owner to edit their own pending claim details.
  *   parameters:
  *     - in: path
@@ -232,6 +241,7 @@ claimRoutes.get(
 claimRoutes.put(
   '/:claimId',
   validateBodyAndParams(updateClaimBodySchema, claimIdParamsSchema),
+  rejectIfArchived('params.claimId'),
   updateClaim
 );
 
@@ -240,6 +250,9 @@ claimRoutes.put(
  * /claim/{claimId}:
  *  delete:
  *   summary: Delete a pending claim
+ *   tags: [Claims]
+ *   security:
+ *     - bearerAuth: []
  *   description: Allows the claim owner to delete their own pending claim.
  *   parameters:
  *     - in: path
@@ -285,6 +298,11 @@ claimRoutes.put(
  *           schema:
  *             $ref: '#/components/schemas/ErrorResponse'
  */
-claimRoutes.delete('/:claimId', validateParams(claimIdParamsSchema), deleteClaim);
+claimRoutes.delete(
+  '/:claimId',
+  validateParams(claimIdParamsSchema),
+  rejectIfArchived('params.claimId'),
+  deleteClaim
+);
 
 export default claimRoutes;

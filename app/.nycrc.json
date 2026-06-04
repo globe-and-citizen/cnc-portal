@@ -1,0 +1,9 @@
+{
+  "all": false,
+  "include": ["src/**/*"],
+  "exclude": ["src/e2e/**", "node_modules", "test/"],
+  "extension": [".js", ".ts", ".vue"],
+  "reporter": ["lcov", "text-summary"],
+  "report-dir": "coverage/e2e",
+  "temp-dir": "coverage/e2e/.tmp"
+}

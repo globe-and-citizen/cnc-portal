@@ -1,0 +1,111 @@
+import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { ref } from 'vue'
+import MintRecapCard from '../MintRecapCard.vue'
+import { renderWithProviders } from '@/tests/mocks'
+
+const VALID_ADDRESS = '0x1234567890123456789012345678901234567890'
+
+const symbolRef = ref<string | undefined>('SHER')
+const totalSupplyRef = ref<bigint | undefined>(100_000_000n)
+const recipientBalanceRef = ref<bigint | undefined>(20_000_000n)
+
+vi.mock('@/composables/investor/reads', () => ({
+  useInvestorSymbol: vi.fn(() => ({ data: symbolRef })),
+  useInvestorTotalSupply: vi.fn(() => ({ data: totalSupplyRef })),
+  useInvestorBalanceOf: vi.fn(() => ({ data: recipientBalanceRef }))
+}))
+
+const mountRecap = (props: Record<string, unknown> = {}) =>
+  renderWithProviders(MintRecapCard, {
+    props: {
+      recipientAddress: VALID_ADDRESS,
+      issuedAmount: 10,
+      hasValidationError: false,
+      ...props
+    }
+  })
+
+describe('MintRecapCard.vue', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    symbolRef.value = 'SHER'
+    totalSupplyRef.value = 100_000_000n
+    recipientBalanceRef.value = 20_000_000n
+  })
+
+  it('renders recap lines for valid recipient context', () => {
+    const wrapper = mountRecap()
+    expect(wrapper.find('[data-test="recap-card"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="recap-stake-line"]').text()).toContain('Recipient stake')
+    expect(wrapper.find('[data-test="recap-stake-line"]').text()).toContain('issuing')
+    expect(wrapper.find('[data-test="recap-token-stake-line"]').text()).toContain('issuing')
+    expect(wrapper.find('[data-test="new-total-supply-recap"]').text()).toContain(
+      'New total supply'
+    )
+  })
+
+  it('keeps same recap structure when recipient address is invalid', () => {
+    const wrapper = mountRecap({ recipientAddress: '0x123' })
+    expect(wrapper.find('[data-test="recap-stake-line"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="recap-token-stake-line"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="new-total-supply-recap"]').text()).toContain(
+      'New total supply'
+    )
+  })
+
+  it('formats recap stake and supply lines with expected precision for decimal issuance', () => {
+    totalSupplyRef.value = 50_000_000n
+    recipientBalanceRef.value = 28_000_000n
+    symbolRef.value = 'shr'
+
+    const wrapper = mountRecap({ issuedAmount: 1.162791 })
+
+    expect(wrapper.find('[data-test="recap-stake-line"]').text()).toContain('issuing')
+    expect(wrapper.find('[data-test="recap-token-stake-line"]').text()).toBe(
+      'Recipient shr stake → 29.162791 shr (was 28 shr; issuing 1.162791 shr)'
+    )
+    expect(wrapper.find('[data-test="new-total-supply-recap"]').text()).toBe(
+      'New total supply → 51.162791 shr (current supply 50 shr)'
+    )
+  })
+
+  it('truncates a near-100% recap stake instead of rounding it up', () => {
+    totalSupplyRef.value = 50_000_000n
+    recipientBalanceRef.value = 28_000_000n
+    symbolRef.value = 'shr'
+
+    const wrapper = mountRecap({ issuedAmount: 219_999_949.871549 })
+
+    // bigint truncation, matching ShareholderList — never rounds up to a misleading 100%
+    expect(wrapper.find('[data-test="recap-stake-line"]').text()).toContain(
+      'Recipient stake → 99.99%'
+    )
+  })
+
+  it('shows status-only recap lines when amount is unsolvable', () => {
+    totalSupplyRef.value = 50_000_000n
+    recipientBalanceRef.value = 28_000_000n
+    symbolRef.value = 'shr'
+
+    const wrapper = mountRecap({
+      issuedAmount: null,
+      hasValidationError: true
+    })
+
+    expect(wrapper.find('[data-test="recap-stake-line"]').text()).toContain(
+      'Recipient stake → 56.00% (was 56.00%; issuing 0.00%)'
+    )
+    expect(wrapper.find('[data-test="recap-token-stake-line"]').text()).toBe(
+      'Recipient shr stake → 28 shr (was 28 shr; issuing 0 shr)'
+    )
+    expect(wrapper.find('[data-test="new-total-supply-recap"]').text()).toBe(
+      'New total supply → 50 shr (current supply 50 shr)'
+    )
+  })
+
+  it('does not render recap card when token symbol is unavailable', () => {
+    symbolRef.value = undefined
+    const wrapper = mountRecap()
+    expect(wrapper.find('[data-test="recap-card"]').exists()).toBe(false)
+  })
+})

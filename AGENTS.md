@@ -40,7 +40,7 @@ After cloning: `npm install` in each subproject you'll touch (`app/`, `backend/`
 - `npm run lint` — `eslint . --fix`
 - `npm run format` / `format-check`
 - `npm run test:unit` — Vitest. Single file: `npx vitest run path/to/file.spec.ts`. Single test: append `-t "name"`.
-- `npm run test:e2e` (`:headed`, `:ui`, `:debug`) — Playwright + Synpress. `npm run test:build:cache` prebuilds the MetaMask cache.
+- `npm run test:e2e` (`:headed`, `:ui`, `:debug`) — Playwright. Web3 flows use an in-browser wagmi mock connector (`VITE_E2E=true`); see `app/test/README.md`.
 
 ### Backend (`backend/`)
 
@@ -69,6 +69,19 @@ After cloning: `npm install` in each subproject you'll touch (`app/`, `backend/`
 
 **Frontend mutation pattern.** Mutations are a pure async function plus a `useXxxMutation` composable wrapping `@tanstack/vue-query`. Use `onSuccess` / `onError` callbacks rather than awaiting + try/catch in components. Surface errors reactively via `UAlert`. Issue #1776 documents the canonical pattern.
 
+**One hook per endpoint, not per action.** In `app/src/queries/**`, do not create multiple mutation or query hooks that share the same `method` + `endpoint` and differ only by request body or query params. Reuse the single existing hook and vary the input at the call site; on the read side, add a query param instead of forking the hook. Example: archive / unarchive / hide / show all reuse `useUpdateTeamMutation` — they do not need their own hooks. Reason: forking creates near-duplicate code, multiplies the query-key surface, and forces components to import N hooks where one would do. See issue #1903.
+
+```ts
+const { mutate: updateTeam, reset } = useUpdateTeamMutation();
+
+function archive() {
+  updateTeam(
+    { pathParams: { id: teamId }, body: { isArchived: true } },
+    { onSuccess: () => reset() },
+  );
+}
+```
+
 **Single source of truth.** Prefer deriving values (computed / selectors) over denormalizing or duplicating state. Don't mirror server data into Pinia stores when a query already owns it — even if the refactor is non-trivial.
 
 **Chain config.** Deployed contract addresses are per-chain JSON files committed under `app/src/artifacts/deployed_addresses/`. After local deploys, `app/package.json` exposes `git:ignore-locally` to keep local-only `chain-31337.json` edits out of commits.
@@ -77,9 +90,13 @@ After cloning: `npm install` in each subproject you'll touch (`app/`, `backend/`
 
 **Web3 stack.** wagmi + viem for chain reads/writes, Apollo Client for subgraph queries, Safe SDK (`@safe-global/*`) for multisig flows.
 
+**Contract writes — always V3.** All on-chain writes go through `useContractWritesV3` from `@/composables/contracts`. Do **not** import `useWriteContract` / `useWaitForTransactionReceipt` from `@wagmi/vue`, and do **not** import `writeContract` / `waitForTransactionReceipt` from `@wagmi/core` in feature code (components, services, feature composables). Read paths — `readContract`, `estimateGas`, `simulateContract` — stay as-is. The V3 composable owns simulation, send, receipt-wait, error classification, and lifecycle callbacks; reaching past it splinters error handling and breaks the migration tracked in #1798. The rule is enforced by ESLint (`no-restricted-imports` in `app/eslint.config.js`); a legacy allow-list there names the files still pending migration, and each migration PR removes its file from that list.
+
+**Frontend tests — reuse the global mocks.** `app/vitest.config.ts` auto-loads setup files from `app/src/tests/setup/` that `vi.mock(...)` every commonly used dependency (wagmi, viem, TanStack Query, Apollo, Pinia stores, the `@/composables/<domain>/{reads,writes}` modules, the stubbed Nuxt UI primitives, `@/lib/axios`, `@/utils`, `@/queries/*.queries`, …). Per-test override hooks (`mockTeamStore`, `mockERC20Reads`, `resetERC20Mocks`, …) are re-exported from `@/tests/mocks`. New specs must override the shared mocks; they must not re-declare `vi.mock('<same-path>', …)`. ESLint enforces this (`bannedGlobalMockPaths` in `app/eslint.config.js`, issue #2014). If a module isn't globally mocked but you need it across multiple specs, add it to `src/tests/setup/` and export the override hook from `src/tests/mocks/index.ts` rather than per-spec `vi.mock` calls. See `app/src/tests/README.md` and `.github/copilot-instructions/testing-anti-patterns.md`.
+
 **Frontend authoring — keep components small and readable (DX-first).** A component should fit on a screen and read like a description of the UI, not like a script. Whenever you edit a Vue file, take it as an opportunity to make it leaner.
 
-- **Extract logic, not just markup.** Push pure data shaping into `app/src/utils/` (utility functions) and stateful/reactive logic into `app/src/composables/` (`useXxx`). The component is left declaring *what* it shows — the *how* lives outside.
+- **Extract logic, not just markup.** Push pure data shaping into `app/src/utils/` (utility functions) and stateful/reactive logic into `app/src/composables/` (`useXxx`). The component is left declaring _what_ it shows — the _how_ lives outside.
 - **Search before you create.** Before adding a new utility, grep `app/src/utils/` for one that already does the job (or can be generalized). Same rule for composables in `app/src/composables/` — reuse `useXxxMutation`, `useSiwe`, formatters, address/amount helpers, etc. rather than reinventing them. Prefer extending an existing helper to introducing a near-duplicate.
 - **Split when a component grows.** Signs that it's time to refactor: the `<script setup>` block is longer than the `<template>`, multiple unrelated `ref`s/`watch`es, more than one `try/catch`, repeated bits of logic that could be a composable, or formatting/derivation work inline that belongs in a util.
 - **One responsibility per composable / util.** Name it for what it returns (`useTeamRoster`, `formatTokenAmount`) — if you can't name it cleanly, it's doing too much.
@@ -91,7 +108,7 @@ After cloning: `npm install` in each subproject you'll touch (`app/`, `backend/`
 2. Why fixing it now is worth it (concrete DX/reviewability/maintenance benefit, not generic platitudes).
 3. That these are exactly the items reviewers check during PR review per `.github/copilot-instructions/review-checklist.md` — fixing in the same PR avoids a follow-up round.
 
-Then ask whether to do it now (scoped to this PR), defer (open a tracking issue), or skip. Default to *proposing*, not *imposing* — but always raise it.
+Then ask whether to do it now (scoped to this PR), defer (open a tracking issue), or skip. Default to _proposing_, not _imposing_ — but always raise it.
 
 ## Conventions
 
@@ -100,6 +117,15 @@ Then ask whether to do it now (scoped to this PR), defer (open a tracking issue)
 - Issues, PRs, commit messages, and user-facing UI strings/toasts are **English**.
 - Vue components: `<script setup lang="ts">` Composition API. Pinia for global state, TanStack Query for server state.
 - TypeScript strict mode across frontend and backend.
+
+## Public-repo hygiene
+
+This repository is **public on GitHub** (`globe-and-citizen/cnc-portal`). Default-treat everything that lands in the repo as world-readable.
+
+- **Never include infrastructure identifiers** — hostnames, ports, bucket names, or cloud provider names — in issues, PR descriptions, commit messages, committed docs, or review comments. Use abstract placeholders: `postgresql://<user>:<password>@<host>:<port>/<db>`. The hostname alone is a credential-stuffing target, even with the password redacted.
+- Refer to providers generically in public text ("our managed provider", "the secrets manager"). Internal docs that need to name them should live outside the repo (e.g. a private wiki).
+- When documenting an ops procedure that needs real credentials, the doc tells the reader _where_ to find them (internal dashboard, CLI tool) but never embeds them.
+- Add an explicit safety note to any ops procedure: _"Don't paste the prod connection string anywhere public — issues, PR descriptions, Slack, commit messages."_
 
 ## Code quality gate (mandatory before pushing)
 

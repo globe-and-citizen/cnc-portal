@@ -1,9 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { useDeployContract, getContractData } from '../useContractFunctions'
-import { nextTick } from 'vue'
+import { getContractData } from '../useContractFunctions'
 import { parseUnits, formatUnits } from 'viem/utils'
 import type { Abi, Address } from 'viem'
-import { mockUseWaitForTransactionReceipt, mockWagmiCore } from '@/tests/mocks'
+import { mockWagmiCore } from '@/tests/mocks'
 
 //  Declare only the composable-specific mock (wallet client) with vi.hoisted
 const { mockDeployContract, mockWalletClient } = vi.hoisted(() => {
@@ -39,25 +38,24 @@ describe('useDeployContract', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockWagmiCore.getWalletClient.mockResolvedValue(mockWalletClient)
-    mockUseWaitForTransactionReceipt.data.value = { contractAddress: '0xDEADBEEF' } as never
-    mockUseWaitForTransactionReceipt.isSuccess.value = true
-    mockUseWaitForTransactionReceipt.isLoading.value = false
+    mockWagmiCore.waitForTransactionReceipt.mockResolvedValue({
+      contractAddress: '0xDEADBEEF'
+    } as never)
   })
+
+  const getActualUseDeployContract = async () => {
+    const actual =
+      await vi.importActual<typeof import('../useContractFunctions')>('../useContractFunctions')
+
+    return actual.useDeployContract
+  }
 
   it('should deploy contract with correct args', async () => {
     mockDeployContract.mockResolvedValue('0xHASH')
 
-    // Initially loading
-    mockUseWaitForTransactionReceipt.isLoading.value = true
-    mockUseWaitForTransactionReceipt.isSuccess.value = true
-    mockUseWaitForTransactionReceipt.data.value = { contractAddress: '0xDEADBEEF' } as never
-
+    const useDeployContract = await getActualUseDeployContract()
     const { deploy, contractAddress, error, isDeploying } = useDeployContract(mockAbi, mockBytecode)
     await deploy('0xBANK', '1.5', '2.5')
-
-    // Simulate confirmation step
-    mockUseWaitForTransactionReceipt.isLoading.value = false
-    await nextTick()
 
     expect(mockDeployContract).toHaveBeenCalledWith({
       abi: mockAbi,
@@ -74,6 +72,7 @@ describe('useDeployContract', () => {
   it('should handle wallet not connected error', async () => {
     mockWagmiCore.getWalletClient.mockResolvedValueOnce(null)
 
+    const useDeployContract = await getActualUseDeployContract()
     const { deploy, error, contractAddress, isDeploying } = useDeployContract(mockAbi, mockBytecode)
     await deploy('0xBANK', '1', '1')
 

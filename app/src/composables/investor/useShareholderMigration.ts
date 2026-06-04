@@ -1,9 +1,23 @@
+/**
+ * Side-effect contract (see app/src/composables/CONVENTIONS.md):
+ *   - onSuccess: outcome toast describing which branch fired
+ *                ('done' / 'noop-already-migrated' / 'noop-empty').
+ *   - onError:   no toast — `mutation.error` is left for callers to render
+ *                inline (UAlert) or interpret with `instanceof
+ *                InconsistentSupplyError` to drive a banner / retry UI.
+ *   - Invalidation: none — the read-side queries this migration affects live
+ *                outside the wrapper's scope. Callers refetch the specific
+ *                bits they need after a successful migration.
+ *   - Options:   pass `silent: true` when composing inside an orchestrator
+ *                that emits its own flow-level outcome toast.
+ */
 import { useMutation } from '@tanstack/vue-query'
-import { readContract, writeContract, waitForTransactionReceipt } from '@wagmi/core'
+import { readContract } from '@wagmi/core'
 import type { Address } from 'viem'
 import { config } from '@/wagmi.config'
 import { INVESTOR_ABI } from '@/artifacts/abi/investors'
 import { OFFICER_ABI } from '@/artifacts/abi/officer'
+import { executeContractWrite } from '@/composables/contracts/useContractWritesV3'
 
 export interface Shareholder {
   shareholder: Address
@@ -89,15 +103,23 @@ export async function migrateShareholders(
     throw new InconsistentSupplyError(newSupply, expected)
   }
 
-  const hash = await writeContract(config, {
+  await executeContractWrite({
     address: args.newInvestorAddress,
     abi: INVESTOR_ABI,
     functionName: 'distributeMint',
     args: [shareholders.map((s) => ({ shareholder: s.shareholder, amount: s.amount }))]
   })
-  await waitForTransactionReceipt(config, { hash })
 
   return { kind: 'done', migratedCount: shareholders.length, shareholders }
+}
+
+export interface UseMigrateShareholdersOptions {
+  /**
+   * When true, suppress the default outcome toast. Set this when composing
+   * inside an orchestrator that emits its own flow-level toast covering the
+   * full redeploy/migration sequence.
+   */
+  silent?: boolean
 }
 
 /**
@@ -111,12 +133,13 @@ export async function migrateShareholders(
  * standalone banner, orchestrated redeploy). Callers typically surface the
  * error via `mutation.error` on their own UI instead.
  */
-export function useMigrateShareholders() {
+export function useMigrateShareholders(options: UseMigrateShareholdersOptions = {}) {
   const toast = useToast()
   return useMutation<MigrateShareholdersResult, Error, MigrateShareholdersArgs>({
     mutationKey: ['migrateShareholders'],
     mutationFn: migrateShareholders,
     onSuccess: (result) => {
+      if (options.silent) return
       if (result.kind === 'done') {
         toast.add({
           title: `Migrated ${result.migratedCount} shareholder${result.migratedCount === 1 ? '' : 's'}`,

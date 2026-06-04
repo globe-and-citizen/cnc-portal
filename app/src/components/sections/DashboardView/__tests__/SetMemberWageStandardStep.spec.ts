@@ -75,12 +75,12 @@ describe('SetMemberWageStandardStep.vue', () => {
     const disabledWrapper = createWrapper(createWageData({ enableOvertimeRules: false }))
     const enabledWrapper = createWrapper(createWageData({ enableOvertimeRules: true }))
 
-    expect(disabledWrapper.find('[data-test="enable-overtime-card"]').classes()).toContain(
-      'border-base-200'
-    )
-    expect(enabledWrapper.find('[data-test="enable-overtime-card"]').classes()).toContain(
-      'border-emerald-400'
-    )
+    expect(
+      disabledWrapper.find('[data-test="enable-overtime-card"]').attributes('data-active')
+    ).toBe('false')
+    expect(
+      enabledWrapper.find('[data-test="enable-overtime-card"]').attributes('data-active')
+    ).toBe('true')
     expect(disabledWrapper.get('[data-test="add-wage-button"]').text()).toContain('Save wage')
     expect(enabledWrapper.get('[data-test="add-wage-button"]').text()).toContain('Continue')
   })
@@ -150,14 +150,6 @@ describe('SetMemberWageStandardStep.vue', () => {
     await invalidNoRate.get('[data-test="standard-wage-step"]').trigger('submit')
     expect(invalidNoRate.find('[data-test="add-wage-button"]').exists()).toBe(true)
 
-    const invalidAmount = createWrapper(
-      createWageData({
-        ratePerHour: [{ type: 'native', amount: 0, enabled: true }] as WageWithForm['ratePerHour']
-      })
-    )
-    await invalidAmount.get('[data-test="standard-wage-step"]').trigger('submit')
-    expect(invalidAmount.find('[data-test="add-wage-button"]').exists()).toBe(true)
-
     const validWrapper = createWrapper(
       createWageData({
         ratePerHour: [{ type: 'native', amount: 12, enabled: true }] as WageWithForm['ratePerHour']
@@ -165,5 +157,38 @@ describe('SetMemberWageStandardStep.vue', () => {
     )
     await validWrapper.get('[data-test="standard-wage-step"]').trigger('submit')
     expect(validWrapper.find('[data-test="add-wage-button"]').exists()).toBe(true)
+  })
+
+  it('auto-disables the toggle when the rate amount is cleared to 0', async () => {
+    const wageData = createWageData({
+      ratePerHour: [
+        { type: 'native', amount: 10, enabled: true },
+        { type: 'usdc', amount: 0, enabled: false },
+        { type: 'sher', amount: 0, enabled: false }
+      ]
+    })
+    const wrapper = createWrapper(wageData)
+    const firstAmountInput = wrapper.findAll('input[type="number"]')[1]
+
+    await firstAmountInput?.setValue('0')
+
+    expect(wageData.ratePerHour[0]?.enabled).toBe(false)
+    expect(Number(wageData.ratePerHour[0]?.amount)).toBe(0)
+  })
+
+  it('auto-zeroes the rate amount when the toggle is turned off', async () => {
+    const wageData = createWageData({
+      ratePerHour: [
+        { type: 'native', amount: 10, enabled: true },
+        { type: 'usdc', amount: 0, enabled: false },
+        { type: 'sher', amount: 0, enabled: false }
+      ]
+    })
+    const wrapper = createWrapper(wageData)
+
+    await wrapper.findAll('button[role="switch"]')?.[0]?.trigger('click')
+
+    expect(wageData.ratePerHour[0]?.enabled).toBe(false)
+    expect(Number(wageData.ratePerHour[0]?.amount)).toBe(0)
   })
 })

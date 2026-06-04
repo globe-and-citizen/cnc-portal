@@ -69,8 +69,7 @@ describe('UserComponent.vue', () => {
       })
 
       const avatarContainer = wrapper.find('[data-test="avatar-container"]')
-      expect(avatarContainer.classes()).toContain('w-24')
-      expect(avatarContainer.classes()).toContain('h-24')
+      expect(avatarContainer.attributes('data-size')).toBe('lg')
 
       const userRole = wrapper.find('[data-test="user-role"]')
       expect(userRole.exists()).toBe(true)
@@ -83,8 +82,7 @@ describe('UserComponent.vue', () => {
       })
 
       const avatarContainer = wrapper.find('[data-test="avatar-container"]')
-      expect(avatarContainer.classes()).toContain('w-11')
-      expect(avatarContainer.classes()).toContain('h-11')
+      expect(avatarContainer.attributes('data-size')).toBe('sm')
 
       const userRole = wrapper.find('[data-test="user-role"]')
       expect(userRole.exists()).toBe(false)

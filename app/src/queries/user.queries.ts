@@ -80,7 +80,7 @@ export const useGetUserQuery = createQueryHook<Partial<User>, GetUserParams>({
   queryKey: (params) => userKeys.detail(toValue(params.pathParams.address)),
   enabled: (params) => !!toValue(params.pathParams.address),
   options: {
-    ...queryPresets.stable,
+    ...queryPresets.once,
     refetchOnWindowFocus: false
   }
 })

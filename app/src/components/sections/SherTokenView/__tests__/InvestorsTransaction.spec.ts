@@ -1,6 +1,27 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { type VueWrapper } from '@vue/test-utils'
 import { nextTick } from 'vue'
+
+// Auto-imported @nuxt/ui components bypass `config.global.stubs` because the
+// Nuxt UI Vite plugin resolves them through their file path. Mocking the
+// modules ensures our stubs are actually rendered so we can inspect props
+// instead of reaching into `wrapper.vm`.
+vi.mock('@nuxt/ui/components/Table.vue', () => ({
+  default: {
+    name: 'UTable',
+    props: ['data', 'columns', 'loading'],
+    template: '<div data-test="investor-table"></div>'
+  }
+}))
+vi.mock('@nuxt/ui/components/Select.vue', () => ({
+  default: {
+    name: 'USelect',
+    props: ['modelValue', 'items'],
+    emits: ['update:modelValue'],
+    template: '<div data-test="investor-type-filter"></div>'
+  }
+}))
+
 import {
   buildInvestorResult,
   buildSafeResult,
@@ -9,6 +30,16 @@ import {
   SAFE_ROUTER_ADDRESS,
   USDC_ADDRESS
 } from './InvestorsTransaction.fixture'
+
+type DisplayedRow = { type: string; token: string }
+type Column = { header: string }
+
+const tableData = (wrapper: VueWrapper) =>
+  wrapper.findComponent({ name: 'UTable' }).props('data') as DisplayedRow[]
+const tableColumns = (wrapper: VueWrapper) =>
+  wrapper.findComponent({ name: 'UTable' }).props('columns') as Column[]
+const tableLoading = (wrapper: VueWrapper) =>
+  wrapper.findComponent({ name: 'UTable' }).props('loading') as boolean
 
 const {
   apolloState,
@@ -64,41 +95,19 @@ vi.mock('@/stores', () => ({
   })
 }))
 
+vi.mock('@/stores/currencyStore', () => ({
+  useCurrencyStore: () => ({
+    localCurrency: { code: 'USD' },
+    supportedTokens: [{ id: 'usdc', symbol: 'USDC', address: USDC_ADDRESS }],
+    getTokenPrice: mockGetTokenPrice
+  })
+}))
+
 vi.mock('@/composables/investor/reads', () => ({
   useInvestorSymbol: () => ({
     data: mockInvestorSymbolData
   })
 }))
-
-const emitModelUpdateThroughVNode = (
-  wrapper: VueWrapper,
-  selector: string,
-  value: unknown
-): boolean => {
-  const element = wrapper.get(selector).element as HTMLElement & {
-    __vueParentComponent?: {
-      vnode?: { props?: Record<string, unknown> }
-      parent?: unknown
-    }
-  }
-  let component = element.__vueParentComponent as
-    | {
-        vnode?: { props?: Record<string, unknown> }
-        parent?: unknown
-      }
-    | undefined
-
-  while (component) {
-    const handler = component.vnode?.props?.['onUpdate:modelValue']
-    if (typeof handler === 'function') {
-      ;(handler as (payload: unknown) => void)(value)
-      return true
-    }
-    component = component.parent as typeof component
-  }
-
-  return false
-}
 
 describe('InvestorsTransactions', () => {
   let wrapper: VueWrapper
@@ -138,46 +147,34 @@ describe('InvestorsTransactions', () => {
 
   it('maps investor and safe router events into table rows', () => {
     wrapper = createWrapper()
-    const vm = wrapper.vm as unknown as {
-      displayedTransactions: Array<{ type: string; token: string }>
-      columns: Array<{ header: string }>
-    }
-    expect(vm.displayedTransactions).toHaveLength(3)
-    expect(vm.displayedTransactions.map((row) => row.type)).toEqual(
+    const data = tableData(wrapper)
+    const columns = tableColumns(wrapper)
+    expect(data).toHaveLength(3)
+    expect(data.map((row) => row.type)).toEqual(
       expect.arrayContaining(['mint', 'safeDeposit', 'safeMultiplierUpdated'])
     )
-    expect(vm.displayedTransactions.find((row) => row.type === 'mint')?.token).toBe('SHER')
-    expect(
-      vm.displayedTransactions.find((row) => row.type === 'safeMultiplierUpdated')?.token
-    ).toBe('x')
-    expect(vm.columns.at(-1)?.header).toBe('Value (USD)')
+    expect(data.find((row) => row.type === 'mint')?.token).toBe('SHER')
+    expect(data.find((row) => row.type === 'safeMultiplierUpdated')?.token).toBe('x')
+    expect(columns.some((column) => column.header === 'Value (USD)')).toBe(true)
   })
 
   it('passes loading from investor query to table', () => {
     apolloState.investorLoading.value = true
     wrapper = createWrapper()
-    const vm = wrapper.vm as unknown as { loading: boolean }
-    expect(vm.loading).toBe(true)
+    expect(tableLoading(wrapper)).toBe(true)
   })
 
   it('filters displayed rows by selected type', async () => {
     wrapper = createWrapper()
-    const vm = wrapper.vm as unknown as {
-      displayedTransactions: Array<{ type: string }>
-    }
-    expect(emitModelUpdateThroughVNode(wrapper, 'select[aria-hidden="true"]', 'safeDeposit')).toBe(
-      true
-    )
+    wrapper.getComponent({ name: 'USelect' }).vm.$emit('update:modelValue', 'safeDeposit')
     await nextTick()
-    expect(vm.displayedTransactions).toHaveLength(1)
-    expect(vm.displayedTransactions[0]?.type).toBe('safeDeposit')
+    const data = tableData(wrapper)
+    expect(data).toHaveLength(1)
+    expect(data[0]?.type).toBe('safeDeposit')
   })
 
   it('filters rows by date range', async () => {
     wrapper = createWrapper()
-    const vm = wrapper.vm as unknown as {
-      displayedTransactions: Array<{ type: string }>
-    }
     wrapper
       .getComponent('[data-test="investor-date-filter"]')
       .vm.$emit('update:modelValue', [
@@ -185,6 +182,6 @@ describe('InvestorsTransactions', () => {
         new Date('2020-01-01T23:59:59Z')
       ])
     await nextTick()
-    expect(vm.displayedTransactions).toHaveLength(0)
+    expect(tableData(wrapper)).toHaveLength(0)
   })
 })

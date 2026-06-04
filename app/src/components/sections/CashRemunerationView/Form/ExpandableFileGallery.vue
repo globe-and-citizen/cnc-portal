@@ -6,25 +6,30 @@
     @mouseleave="isExpanded = false"
   >
     <!-- Vue réduite -->
-    <div v-show="!isExpanded" class="avatar-group -space-x-6 rtl:space-x-reverse">
-      <div v-for="(preview, i) in displayedPreviews" :key="preview.key || i" class="avatar">
-        <div class="w-12 overflow-hidden rounded-full">
-          <img
-            v-if="preview.isImage && preview.previewUrl"
-            :src="preview.previewUrl"
-            :alt="preview.fileName"
-            class="object-cover"
-          />
-          <div v-else class="flex h-full w-full items-center justify-center bg-emerald-100">
-            <Icon :icon="getFileIcon(preview.fileName)" class="h-4 w-4 text-gray-500" />
-          </div>
+    <div v-show="!isExpanded" class="flex -space-x-6 rtl:space-x-reverse" data-test="avatar-stack">
+      <div
+        v-for="(preview, i) in displayedPreviews"
+        :key="preview.key || i"
+        class="relative inline-flex h-12 w-12 overflow-hidden rounded-full ring-2 ring-white dark:ring-gray-900"
+        data-test="avatar-item"
+      >
+        <img
+          v-if="preview.isImage && preview.previewUrl"
+          :src="preview.previewUrl"
+          :alt="preview.fileName"
+          class="h-full w-full object-cover"
+        />
+        <div v-else class="flex h-full w-full items-center justify-center bg-emerald-100">
+          <Icon :icon="getFileIcon(preview.fileName)" class="h-4 w-4 text-gray-500" />
         </div>
       </div>
 
-      <div v-if="remainingCount" class="avatar placeholder">
-        <div class="bg-neutral text-neutral-content w-12 rounded-full">
-          <span>+{{ remainingCount }}</span>
-        </div>
+      <div
+        v-if="remainingCount"
+        class="relative inline-flex h-12 w-12 items-center justify-center rounded-full bg-gray-700 text-white ring-2 ring-white dark:ring-gray-900"
+        data-test="avatar-remaining"
+      >
+        <span>+{{ remainingCount }}</span>
       </div>
     </div>
 
@@ -77,18 +82,22 @@
         >
           <!-- Contrôles -->
           <div class="absolute top-4 right-4 z-20 flex gap-2">
-            <button
-              class="btn btn-sm btn-ghost bg-opacity-60 hover:bg-opacity-80 bg-black text-white"
+            <UButton
+              variant="ghost"
+              color="neutral"
+              size="sm"
+              class="bg-opacity-60 hover:bg-opacity-80 bg-black text-white"
+              icon="heroicons:x-mark"
               @click="closeModal"
-            >
-              <Icon icon="heroicons:x-mark" class="h-6 w-6" />
-            </button>
-            <button
-              class="btn btn-sm btn-ghost bg-opacity-60 hover:bg-opacity-80 bg-black text-white"
+            />
+            <UButton
+              variant="ghost"
+              color="neutral"
+              size="sm"
+              class="bg-opacity-60 hover:bg-opacity-80 bg-black text-white"
+              icon="heroicons:arrow-down-tray"
               @click="downloadFile"
-            >
-              <Icon icon="heroicons:arrow-down-tray" class="h-5 w-5" />
-            </button>
+            />
           </div>
 
           <!-- Contenu -->

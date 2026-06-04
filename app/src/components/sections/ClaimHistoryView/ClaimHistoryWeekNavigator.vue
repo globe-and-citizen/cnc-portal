@@ -8,31 +8,27 @@
       <div class="z-0 space-y-4">
         <div
           v-for="weekItem in monthWeeksWithClaims"
-          :key="weekItem.week.isoWeek"
-          @click="internalSelectedWeek = weekItem.week"
+          :key="weekItem.week.isoString"
+          @click="selectWeek(weekItem.week)"
           :class="[
             'cursor-pointer rounded-lg border p-3',
-            weekItem.week.isoWeek === internalSelectedWeek.isoWeek
+            weekItem.week.isoString === internalSelectedWeek.isoString
               ? 'border-emerald-500 bg-emerald-50 text-gray-800'
               : 'hover:bg-gray-50'
           ]"
         >
           <div class="flex items-center justify-between text-base font-medium">
             Week
-            <div
-              class="badge badge-outline gap-3"
-              v-if="weekItem.claim"
-              :class="`badge-${weekItem.color}`"
-            >
+            <UBadge v-if="weekItem.claim" variant="outline" :color="weekItem.color" class="gap-3">
               {{ weekItem.claim.status }}
               <span class="h-3 w-3 rounded-full" :class="`bg-${weekItem.color}`" />
-            </div>
+            </UBadge>
           </div>
 
           <div
             class="text-sm"
             :class="
-              weekItem.week.isoWeek === internalSelectedWeek.isoWeek
+              weekItem.week.isoString === internalSelectedWeek.isoString
                 ? 'text-emerald-900'
                 : 'text-gray-800'
             "
@@ -98,10 +94,14 @@ const generatedMonthWeek = computed(() =>
   getMonthWeeks(internalSelectedWeek.value.year, internalSelectedWeek.value.month)
 )
 
+const selectWeek = (week: Week) => {
+  internalSelectedWeek.value = week
+}
+
 const getColor = getClaimStatusColor
 
 const weeklyClaimsByStart = computed(() => {
-  const claims = memberWeeklyClaims.value ?? []
+  const claims = memberWeeklyClaims.value?.data ?? []
   return new Map(claims.map((claim) => [claim.weekStart, claim] as const))
 })
 

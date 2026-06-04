@@ -1,62 +1,57 @@
 <template>
-  <div
-    class="bg-base-100 card relative flex flex-col border border-gray-300"
-    :class="{ 'border-warning': isElectionWinner }"
-  >
+  <UCard class="relative flex flex-col" :class="{ 'border-warning': isElectionWinner }">
     <!-- Winner Badge (aligned to straddle border) -->
-    <div
+    <UBadge
       v-if="isElectionWinner"
-      class="badge badge-warning badge-lg border-base-100 absolute top-0 right-0 z-10 -translate-x-1/4 -translate-y-1/2 gap-2 border-2 shadow-lg"
+      color="warning"
+      variant="solid"
+      size="lg"
+      class="absolute top-0 right-0 z-10 -translate-x-1/4 -translate-y-1/2 gap-2 border-2 border-white shadow-lg"
     >
       <span class=""> Winner </span>
+    </UBadge>
+    <!-- User Component -->
+    <ElectionUserComponent layout="alternate" :user="election.user" />
+
+    <!-- Votes Stat - Right-aligned below ElectionUserComponent -->
+    <div class="mt-2 flex justify-end">
+      <span class="text-lg font-bold text-gray-700">
+        {{ election.currentVotes }}/{{ election.totalVotes }}
+      </span>
     </div>
-    <div class="card-body">
-      <!-- User Component -->
-      <UserComponent layout="alternate" :user="election.user" />
 
-      <!-- Votes Stat - Right-aligned below UserComponent -->
-      <div class="mt-2 flex justify-end">
-        <span class="text-lg font-bold text-gray-700">
-          {{ election.currentVotes }}/{{ election.totalVotes }}
-        </span>
-      </div>
+    <UProgress
+      class="my-4"
+      color="success"
+      :value="election.currentVotes"
+      :max="election.totalVotes"
+    />
 
-      <progress
-        class="progress progress-success my-4"
-        :value="election.currentVotes"
-        :max="election.totalVotes"
-      ></progress>
+    <!-- Conditional Button/Indicator -->
+    <div
+      v-if="hasVoted && voterChoice === election.user.address"
+      class="border-warning text-warning inline-flex h-12 items-center justify-center gap-2 rounded-full border-2 px-6 py-3 text-base font-bold"
+    >
+      <IconifyIcon icon="heroicons-solid:check" class="h-5 w-5" />
+      <span>Your Vote</span>
+    </div>
 
-      <!-- Conditional Button/Indicator -->
-      <div
-        v-if="hasVoted && voterChoice === election.user.address"
-        class="border-warning text-warning inline-flex h-12 items-center justify-center gap-2 rounded-full border-2 px-6 py-3 text-base font-bold"
-      >
-        <IconifyIcon icon="heroicons-solid:check" class="h-5 w-5" />
-        <span>Your Vote</span>
-      </div>
-
-      <!-- View Results Button -->
+    <!-- View Results Button -->
+    <UTooltip v-else :text="voteTooltip">
       <UButton
-        v-else
         color="success"
         variant="outline"
         :disabled="isVoteDisabled"
         :loading="isLoadingCastVoteLocal && isLoading"
-        @click="
-          () => {
-            isLoadingCastVoteLocal = true
-            emits('castVote', election.user.address)
-          }
-        "
+        @click="onCastVote"
         label="Cast a Vote"
       />
-    </div>
-  </div>
+    </UTooltip>
+  </UCard>
 </template>
 
 <script setup lang="ts">
-import UserComponent from './UserComponent.vue'
+import ElectionUserComponent from './ElectionUserComponent.vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
 import { computed, watch, type PropType, ref } from 'vue'
 import type { User } from '@/types'
@@ -66,6 +61,7 @@ import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
 import type { Address } from 'viem'
 import { log, parseError } from '@/utils'
 import { useBoDElections } from '@/composables/elections'
+import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 
 const props = defineProps({
   election: {
@@ -115,12 +111,23 @@ const { data: electionResults } = useReadContract({
   args: [props.election.id]
 })
 
+const { isWriteDisabled, archivedTooltip } = useTeamWriteGuard()
+
 const isVoteDisabled = computed(
   () =>
+    isWriteDisabled.value ||
     hasVoted.value === true ||
     electionStatus.value?.text === 'Upcoming' ||
     electionStatus.value?.text === 'Completed'
 )
+
+const voteTooltip = computed(() => archivedTooltip.value)
+
+function onCastVote() {
+  if (isVoteDisabled.value) return
+  isLoadingCastVoteLocal.value = true
+  emits('castVote', props.election.user.address)
+}
 
 const isElectionWinner = computed(
   () =>

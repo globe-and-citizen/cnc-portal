@@ -1,7 +1,7 @@
 <template>
   <div class="flex flex-col">
     <span v-for="(rate, index) in ratePerHour" :key="rate.type">
-      {{ formatCryptoAmount(Number(rate.amount) * Number(totalHours))
+      {{ formatAmountWithPrecision(Number(rate.amount) * Number(totalHours), 2, 2)
       }}{{ rate.type == 'native' ? currencySymbol : rate.type.toUpperCase()
       }}<span v-if="index < ratePerHour.length - 1">, </span>
     </span>
@@ -9,7 +9,7 @@
 </template>
 
 <script setup lang="ts">
-import { formatCryptoAmount } from '@/utils/currencyUtil'
+import { formatAmountWithPrecision } from '@/utils/currencyUtil'
 
 defineProps<{
   ratePerHour: Array<{ type: string; amount: number }>

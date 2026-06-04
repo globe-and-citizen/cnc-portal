@@ -2,13 +2,17 @@
   <div class="flex flex-col gap-4">
     <div class="flex flex-col gap-6">
       <div v-for="(shareholder, index) in shareholderWithAmounts" :key="index">
-        <h4 class="badge badge-primary">Shareholder {{ index + 1 }}</h4>
-        <label class="input input-bordered input-md mt-2 flex w-full items-center gap-2">
-          <p>Address</p>
-          |
+        <UBadge color="primary" variant="solid">Shareholder {{ index + 1 }}</UBadge>
+        <UFormField
+          :name="`shareholders.${index}.shareholder`"
+          label="Address"
+          :error="rowErrors[index]?.shareholder"
+          :ui="{ error: 'pl-4', root: 'mt-2' }"
+          data-test="error-message-shareholder"
+        >
           <UInput
             type="text"
-            class="grow"
+            class="w-full"
             data-test="address-input"
             v-model="shareholder.shareholder"
             @keyup.stop="
@@ -18,20 +22,20 @@
               }
             "
           />
-        </label>
+        </UFormField>
 
-        <div
-          class="dropdown"
-          :class="{
-            'dropdown-open':
-              !!usersData?.users && usersData?.users.length > 0 && showDropdown[index]
-          }"
-          :key="index"
-          v-if="showDropdown[index]"
-        >
-          <ul class="menu dropdown-content bg-base-100 rounded-box z-1 w-96 p-2 shadow-sm">
-            <li v-for="user in usersData?.users" :key="user.address">
+        <div class="relative" :key="index" v-if="showDropdown[index]">
+          <ul
+            class="bg-default z-1 mt-1 flex w-96 flex-col gap-1 rounded-lg p-2 shadow-sm"
+            v-if="!!usersData?.users && usersData?.users.length > 0"
+          >
+            <li
+              v-for="user in usersData?.users"
+              :key="user.address"
+              class="hover:bg-muted rounded-md"
+            >
               <a
+                class="block cursor-pointer px-3 py-2"
                 data-test="found-user"
                 @click="
                   () => {
@@ -47,33 +51,26 @@
             </li>
           </ul>
         </div>
-        <span
-          v-if="rowErrors[index]?.shareholder"
-          class="block w-full pl-4 text-left text-sm text-red-500"
-          data-test="error-message-shareholder"
-        >
-          {{ rowErrors[index].shareholder }}
-        </span>
 
-        <label class="input input-bordered input-md mt-2 flex w-full items-center gap-2">
-          <p>Amount</p>
-          |
+        <UFormField
+          :name="`shareholders.${index}.amount`"
+          label="Amount"
+          :error="rowErrors[index]?.amount"
+          :ui="{ error: 'pl-4', root: 'mt-2' }"
+          data-test="error-message-amount"
+        >
           <UInput
             type="number"
-            class="grow"
+            class="w-full"
             data-test="amount-input"
             :model-value="shareholder.amount"
             @update:model-value="(v: string | number) => (shareholder.amount = Number(v))"
-          />
-          {{ tokenSymbol }}
-        </label>
-        <span
-          v-if="rowErrors[index]?.amount"
-          class="block w-full pl-4 text-left text-sm text-red-500"
-          data-test="error-message-amount"
-        >
-          {{ rowErrors[index].amount }}
-        </span>
+          >
+            <template #trailing>
+              <span class="text-sm font-semibold text-gray-500 select-none">{{ tokenSymbol }}</span>
+            </template>
+          </UInput>
+        </UFormField>
       </div>
     </div>
 

@@ -27,6 +27,11 @@ const wageClaimMessageSchema = z.object({
  */
 
 // Get weekly claims query parameters
+//
+// page/limit are optional — when neither is provided, the controller returns
+// the full unpaginated set (preserves the existing contract for callers that
+// need the whole list, e.g. the claim-history week navigator). When either
+// is provided, pagination kicks in and the response is { data, total }.
 export const getWeeklyClaimsQuerySchema = z.object({
   teamId: teamIdSchema,
   status: z
@@ -37,6 +42,21 @@ export const getWeeklyClaimsQuerySchema = z.object({
   userAddress: addressSchema.optional(),
   memberAddress: addressSchema.optional(),
   address: addressSchema.optional(),
+  // Bare optional (no .default) so when the caller omits these, the parsed
+  // value stays undefined and the controller can short-circuit pagination.
+  // Reusing paginationSchema.shape.page would inject .default(1), which
+  // turns "no params" into "page=1" and breaks the opt-in contract.
+  page: z.coerce
+    .number({ message: 'Page must be a number' })
+    .int('Page must be an integer')
+    .min(1, 'Page must be at least 1')
+    .optional(),
+  limit: z.coerce
+    .number({ message: 'Limit must be a number' })
+    .int('Limit must be an integer')
+    .min(1, 'Limit must be at least 1')
+    .max(100, 'Limit cannot exceed 100')
+    .optional(),
 });
 
 // Sync weekly claims query parameters

@@ -100,7 +100,7 @@ const router = createRouter({
           path: '/teams/:id/administration/bod-proposals/:proposalId',
           name: 'proposal-detail',
           meta: { name: 'Proposals' },
-          component: () => import('@/components/sections/ProposalsView/ProposalDetail.vue')
+          component: () => import('@/views/team/[id]/ProposalsView.vue')
         },
         {
           path: '/teams/:id/administration/bod-elections-details',

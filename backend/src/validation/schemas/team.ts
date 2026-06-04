@@ -22,11 +22,25 @@ export const addTeamBodySchema = z.object({
 export const updateTeamBodySchema = z.object({
   name: nonEmptyStringSchema.optional(),
   description: z.string().optional(),
+  isArchived: z.boolean().optional(),
+  isHidden: z.boolean().optional(),
 });
+
+const booleanQueryParamSchema = z.preprocess((value) => {
+  if (value === undefined) return undefined;
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'string') {
+    if (value === 'true') return true;
+    if (value === 'false') return false;
+  }
+  return value;
+}, z.boolean().optional());
 
 // Get all teams query parameters
 export const getAllTeamsQuerySchema = z.object({
   userAddress: addressSchema.optional(),
+  showHidden: booleanQueryParamSchema,
+  showArchived: booleanQueryParamSchema,
 });
 
 // Add members request body

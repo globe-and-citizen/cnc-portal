@@ -10,7 +10,7 @@
     </template>
 
     <UTable
-      :data="filteredTransactions"
+      :data="displayedTransactions"
       :columns="[
         { accessorKey: 'method', header: 'Method' },
         { accessorKey: 'to', header: 'To' },
@@ -23,7 +23,7 @@
       data-test="safe-transactions-table"
     >
       <template #to-cell="{ row: { original: row } }">
-        <AddressToolTip :address="row.to" slice />
+        <UserComponent :user="resolveUser(row.to)" />
       </template>
 
       <template #value-cell="{ row: { original: row } }">
@@ -36,9 +36,9 @@
 
       <template #status-cell="{ row: { original: row } }">
         <span>{{ getTransactionStatus(row as SafeTransaction) }}</span>
-        <span class="badge badge-sm badge-neutral badge-outline flex items-center gap-1">
+        <UBadge color="neutral" variant="outline" size="sm" class="flex items-center gap-1">
           {{ row.confirmations?.length || 0 }} / {{ row.confirmationsRequired }}
-        </span>
+        </UBadge>
       </template>
 
       <template #txHash-cell="{ row: { original: row } }">
@@ -94,11 +94,20 @@
     </UTable>
 
     <!-- Conflicting Transaction Warning Modal -->
+    <template #footer>
+      <TransactionTableFooter
+        v-model:page="page"
+        v-model:page-size="pageSize"
+        :total="total"
+        data-test-prefix="safe-transaction"
+      />
+    </template>
+
     <SafeTransactionsWarning
       v-if="showConflictWarning"
       v-model="showConflictWarning"
       :is-executing="isExecuting || isApproving"
-      :action="isExecuting ? 'Execute' : 'Approve'"
+      :action="conflictActionLabel"
       @confirm="handleConfirmAction"
       @cancel="handleCancelAction"
       data-test="conflict-warning-modal"
@@ -113,26 +122,28 @@
 
 <script setup lang="ts">
 import { watch, computed, ref } from 'vue'
-import { useAccount } from '@wagmi/vue'
+import TransactionTableFooter from '@/components/TransactionTableFooter.vue'
 import type { SafeTransaction } from '@/types/safe'
 
 // Components
 import AddressToolTip from '@/components/AddressToolTip.vue'
+import UserComponent from '@/components/UserComponent.vue'
 import SafeTransactionsWarning from './SafeTransactionsWarning.vue'
 import SafeTransactionDetailsModal from './SafeTransactionDetailsModal.vue'
 
 // Stores and composables
 import { useGetSafeTransactionsQuery, useGetSafeInfoQuery } from '@/queries/safe.queries'
-import { useSafeApproval, useSafeExecution } from '@/composables/safe'
 import { useSafeTransactionConflicts } from '@/composables/safe/useSafeTransactionConflicts'
+import { useSafeTransactionActions } from '@/composables/safe/useSafeTransactionActions'
 import SafeTransactionStatusFilter, {
   type SafeTransactionStatus
 } from '@/components/sections/SafeView/SafeTransactionStatusFilter.vue'
 import { type Address } from 'viem'
 
-import { formatSafeTransactionValue, getSafeTransactionMethod } from '@/utils'
+import { formatSafeTransactionValue, getSafeTransactionMethod, resolveUser, log } from '@/utils'
+import { useUserDataStore } from '@/stores'
 
-const { address: connectedAddress } = useAccount()
+const userDataStore = useUserDataStore()
 
 interface Props {
   address: Address
@@ -143,15 +154,9 @@ const props = defineProps<Props>()
 // Status filtering
 const selectedStatus = ref<SafeTransactionStatus>('all')
 
-// Pagination state
-const currentPage = ref(1)
-const itemsPerPage = ref(5)
+const page = ref(1)
+const pageSize = ref(20)
 
-// Conflict warning state
-const showConflictWarning = ref(false)
-const pendingExecutionTransaction = ref<SafeTransaction | null>(null)
-const pendingApprovalTransaction = ref<SafeTransaction | null>(null)
-const conflictActionType = ref<'approve' | 'execute'>('execute')
 const showDetailsModal = ref(false)
 const selectedTransactionForDetails = ref<SafeTransaction | null>(null)
 
@@ -166,20 +171,32 @@ const { data: safeInfo } = useGetSafeInfoQuery({
   pathParams: { safeAddress: computed(() => props.address) }
 })
 
-// Safe operations
-const { approveTransaction, isApproving } = useSafeApproval()
-const { executeTransaction, isExecuting } = useSafeExecution()
-
 // Transaction conflict detection - now only needs safeAddress!
 const { isTransactionNonceValid, hasConflictingTransactions, willApprovalCauseConflict } =
   useSafeTransactionConflicts(computed(() => props.address))
 
+const {
+  isApproving,
+  isExecuting,
+  showConflictWarning,
+  conflictActionLabel,
+  isTransactionLoading,
+  handleApproveClick,
+  handleExecuteClick,
+  handleConfirmAction,
+  handleCancelAction
+} = useSafeTransactionActions({
+  safeAddress: computed(() => props.address),
+  hasConflictingTransactions,
+  willApprovalCauseConflict
+})
+
 // Computed values
 const isConnectedUserOwner = computed(() => {
-  if (!connectedAddress.value || !safeInfo.value?.owners?.length) return false
+  if (!userDataStore.address || !safeInfo.value?.owners?.length) return false
 
   return safeInfo.value.owners.some(
-    (owner) => owner.toLowerCase() === connectedAddress.value!.toLowerCase()
+    (owner) => owner.toLowerCase() === userDataStore.address.toLowerCase()
   )
 })
 
@@ -197,26 +214,6 @@ const filteredTransactions = computed(() => {
   }
 })
 
-// Reset pagination when filter changes
-watch(selectedStatus, () => {
-  currentPage.value = 1
-})
-
-// Reset pagination when filtered data changes significantly
-watch(
-  filteredTransactions,
-  (newTransactions, oldTransactions) => {
-    // Reset to page 1 if current page would be empty
-    if (newTransactions && oldTransactions) {
-      const totalPages = Math.ceil(newTransactions.length / itemsPerPage.value)
-      if (currentPage.value > totalPages && totalPages > 0) {
-        currentPage.value = 1
-      }
-    }
-  },
-  { deep: false }
-)
-
 // Helper functions
 const getTransactionStatus = (transaction: SafeTransaction): string => {
   if (transaction.isExecuted) return 'Executed'
@@ -231,17 +228,6 @@ const getTransactionStatus = (transaction: SafeTransaction): string => {
 
   if (confirmations >= required) return 'Ready to Execute'
   return 'Pending'
-}
-
-const approvingTransactions = ref<Set<string>>(new Set())
-const executingTransactions = ref<Set<string>>(new Set())
-
-const isTransactionLoading = (safeTxHash: string, operation: 'approve' | 'execute'): boolean => {
-  if (operation === 'approve') {
-    return approvingTransactions.value.has(safeTxHash) && isApproving.value
-  } else {
-    return executingTransactions.value.has(safeTxHash) && isExecuting.value
-  }
 }
 
 /**
@@ -261,7 +247,7 @@ const canApprove = (transaction: SafeTransaction): boolean => {
   if (!isTransactionNonceValid(transaction)) return false
 
   const userAlreadyConfirmed = transaction.confirmations?.some(
-    (confirmation) => confirmation.owner.toLowerCase() === connectedAddress.value?.toLowerCase()
+    (confirmation) => confirmation.owner.toLowerCase() === userDataStore.address?.toLowerCase()
   )
 
   return !userAlreadyConfirmed
@@ -287,67 +273,26 @@ const canExecute = (transaction: SafeTransaction): boolean => {
   return confirmations >= required
 }
 
-// Event handlers
-const handleApproveClick = (transaction: SafeTransaction) => {
-  // Check if this approval would cause conflicts
-  // (i.e., if it would make the transaction ready to execute and there are other pending transactions)
-  if (willApprovalCauseConflict(transaction)) {
-    pendingApprovalTransaction.value = transaction
-    conflictActionType.value = 'approve'
-    showConflictWarning.value = true
-  } else {
-    // No conflicts, approve directly
-    handleApproveTransaction(transaction)
+const total = computed(() => filteredTransactions.value.length)
+const displayedTransactions = computed(() => {
+  const start = (page.value - 1) * pageSize.value
+  return filteredTransactions.value.slice(start, start + pageSize.value)
+})
+
+watch(pageSize, () => {
+  page.value = 1
+})
+
+watch(filteredTransactions, (transactionsList) => {
+  const maxPage = Math.max(1, Math.ceil(transactionsList.length / pageSize.value))
+  if (page.value > maxPage) {
+    page.value = maxPage
   }
-}
-
-const handleApproveTransaction = async (transaction: SafeTransaction) => {
-  const safeAddress = props.address
-  if (!safeAddress) return
-  approvingTransactions.value.add(transaction.safeTxHash)
-  await approveTransaction(safeAddress, transaction.safeTxHash)
-  approvingTransactions.value.delete(transaction.safeTxHash)
-}
-
-const handleExecuteClick = (transaction: SafeTransaction) => {
-  // Check for conflicting transactions
-  if (hasConflictingTransactions(transaction)) {
-    pendingExecutionTransaction.value = transaction
-    conflictActionType.value = 'execute'
-    showConflictWarning.value = true
-  } else {
-    // No conflicts, execute directly
-    handleExecuteTransaction(transaction)
-  }
-}
-
-const handleConfirmAction = async () => {
-  if (conflictActionType.value === 'approve' && pendingApprovalTransaction.value) {
-    await handleApproveTransaction(pendingApprovalTransaction.value)
-    pendingApprovalTransaction.value = null
-  } else if (conflictActionType.value === 'execute' && pendingExecutionTransaction.value) {
-    await handleExecuteTransaction(pendingExecutionTransaction.value)
-    pendingExecutionTransaction.value = null
-  }
-  showConflictWarning.value = false
-}
-
-const handleCancelAction = () => {
-  pendingExecutionTransaction.value = null
-  pendingApprovalTransaction.value = null
-  showConflictWarning.value = false
-}
-
-const handleExecuteTransaction = async (transaction: SafeTransaction) => {
-  const safeAddress = props.address
-  if (!safeAddress) return
-  executingTransactions.value.add(transaction.safeTxHash)
-  await executeTransaction(safeAddress, transaction.safeTxHash, transaction)
-  executingTransactions.value.delete(transaction.safeTxHash)
-}
+})
 
 const handleStatusChange = (status: SafeTransactionStatus) => {
   selectedStatus.value = status
+  page.value = 1
 }
 
 const handleViewDetailsClick = (transaction: SafeTransaction) => {
@@ -362,7 +307,7 @@ watch(showDetailsModal, (isOpen) => {
 // Error watching
 watch(error, (newError) => {
   if (newError) {
-    console.error('Error loading safe transactions:', newError)
+    log.error('Error loading safe transactions:', newError)
   }
 })
 </script>

@@ -7,7 +7,7 @@ import {
   getTeamOfficers,
   createOfficer,
 } from '../controllers/contractController';
-import { requireTeamOwner } from '../middleware/teamAuthzMiddleware';
+import { rejectIfArchived, requireTeamOwner } from '../middleware/teamAuthzMiddleware';
 import {
   validateBody,
   validateQuery,
@@ -62,6 +62,9 @@ const contractRoutes = express.Router();
  * /contract:
  *  post:
  *   summary: Add a new contract to a team
+ *   tags: [Contracts]
+ *   security:
+ *     - bearerAuth: []
  *   requestBody:
  *     required: true
  *     content:
@@ -109,6 +112,7 @@ contractRoutes.post(
   '/',
   validateBody(addContractBodySchema),
   requireTeamOwner('body.teamId'),
+  rejectIfArchived('body.teamId'),
   addContract
 );
 
@@ -117,6 +121,9 @@ contractRoutes.post(
  * /contract:
  *  get:
  *   summary: Retrieve contracts for a specific team
+ *   tags: [Contracts]
+ *   security:
+ *     - bearerAuth: []
  *   parameters:
  *     - in: query
  *       name: teamId
@@ -160,6 +167,9 @@ contractRoutes.get('/', validateQuery(getContractsQuerySchema), getContracts);
  * /contract/sync:
  *  put:
  *   summary: Sync contracts for a specific team
+ *   tags: [Contracts]
+ *   security:
+ *     - bearerAuth: []
  *   requestBody:
  *     required: true
  *     content:
@@ -205,6 +215,7 @@ contractRoutes.put(
   '/sync',
   validateBody(syncContractsBodySchema),
   requireTeamOwner('body.teamId'),
+  rejectIfArchived('body.teamId'),
   syncContracts
 );
 
@@ -213,6 +224,9 @@ contractRoutes.put(
  * /contract/officer:
  *  post:
  *   summary: Register a freshly deployed Officer contract on a team
+ *   tags: [Contracts]
+ *   security:
+ *     - bearerAuth: []
  *   description: Inserts a new TeamOfficer row at the head of the team's
  *     Officer linked list (linking it to the previous head if any) and syncs
  *     the contracts the new Officer governs in a single call. Intended to be
@@ -264,13 +278,22 @@ contractRoutes.put(
  *     500:
  *       description: Internal server error
  */
-contractRoutes.post('/officer', validateBody(createOfficerBodySchema), createOfficer);
+contractRoutes.post(
+  '/officer',
+  validateBody(createOfficerBodySchema),
+  requireTeamOwner('body.teamId'),
+  rejectIfArchived('body.teamId'),
+  createOfficer
+);
 
 /**
  * @openapi
  * /contract/officers:
  *  get:
  *   summary: List Officer contract history for a team
+ *   tags: [Contracts]
+ *   security:
+ *     - bearerAuth: []
  *   parameters:
  *     - in: query
  *       name: teamId

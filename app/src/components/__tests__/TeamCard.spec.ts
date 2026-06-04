@@ -13,7 +13,9 @@ describe('TeamCard', () => {
       id: '1',
       members: [],
       ownerAddress: '0x4b6Bf5cD91446408290725879F5666dcd9785F62',
-      teamContracts: []
+      teamContracts: [],
+      isHidden: false,
+      isArchived: false
     } as Team
   }
 
@@ -34,6 +36,26 @@ describe('TeamCard', () => {
       userStore.setUserData('Alice', '0x4b6Bf5cD91446408290725879F5666dcd9785F62', '123', '')
       expect(wrapper.text()).toContain(props.team.name)
       expect(wrapper.text()).toContain(props.team.description)
+    })
+
+    it('Should display Owner badge when current user owns the team', () => {
+      const ownerTeam = {
+        ...props.team,
+        ownerAddress: '0x0000000000000000000000000000000000000001'
+      } as Team
+      const ownerWrapper = mount(TeamCard, {
+        props: { team: ownerTeam },
+        global: { plugins: [createTestingPinia({ createSpy: vi.fn })] }
+      })
+      expect(ownerWrapper.text()).toContain('Owner')
+    })
+
+    it('Should display Employee badge when current user is not the owner', () => {
+      const employeeWrapper = mount(TeamCard, {
+        props,
+        global: { plugins: [createTestingPinia({ createSpy: vi.fn })] }
+      })
+      expect(employeeWrapper.text()).toContain('Employee')
     })
   })
 })

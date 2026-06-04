@@ -49,14 +49,16 @@
         Skip for now
       </UButton>
 
-      <UButton
-        type="submit"
-        color="primary"
-        :loading="isBusy"
-        :disabled="!canDeploy || isBusy"
-        data-test="deploy-contracts-button"
-        :label="deployButtonText"
-      />
+      <TeamArchivedTooltip v-slot="{ disabled: archivedDisabled }">
+        <UButton
+          type="submit"
+          color="primary"
+          :loading="isBusy"
+          :disabled="!canDeploy || isBusy || archivedDisabled"
+          data-test="deploy-contracts-button"
+          :label="deployButtonText"
+        />
+      </TeamArchivedTooltip>
     </div>
     <div>
       <UAlert
@@ -93,6 +95,7 @@ import {
   formatDeployError
 } from '@/composables/contracts'
 import { useCreateOfficerMutation } from '@/queries/contract.queries'
+import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
 
 const props = withDefaults(
   defineProps<{
@@ -156,7 +159,7 @@ const onSubmit = () => {
           },
           {
             onSuccess: async () => {
-              await invalidateQueries(teamId)
+              await invalidateQueries()
               toast.add({
                 title: 'Officer contracts deployed and synced successfully',
                 color: 'success'

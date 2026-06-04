@@ -1,176 +1,104 @@
-import { flushPromises, shallowMount } from '@vue/test-utils'
-import { describe, expect, it, vi, beforeEach } from 'vitest'
-import DistributeMintForm from '../../../SherTokenView/forms/DistributeMintForm.vue'
+import { describe, it, vi, expect, beforeEach } from 'vitest'
+import { mount, flushPromises } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
-import { useGetSearchUsersQuery } from '@/queries/user.queries'
+import DistributeMintForm from '../DistributeMintForm.vue'
+import * as userQueries from '@/queries/user.queries'
 
-interface ComponentData {
-  shareholderWithAmounts: { shareholder: string; amount: string }[]
-  usersData: {
-    users: { address: string; name: string }[]
-  } | null
-  showDropdown: boolean[]
-  errorSearchUser: unknown
-}
+const mountForm = () =>
+  mount(DistributeMintForm, {
+    props: { tokenSymbol: 'SHER', loading: false },
+    global: {
+      plugins: [createTestingPinia({ createSpy: vi.fn })]
+    }
+  })
 
-const mockUsers = [
-  { address: '0x123', name: 'John Doe' },
-  { address: '0x456', name: 'Jane Doe' }
-]
-
-describe.skip('DistributeMintForm', () => {
+describe('DistributeMintForm.vue', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
-  const createComponent = (loading?: boolean, queryOverrides = {}) => {
-    // Mock the search users query
-    vi.mocked(useGetSearchUsersQuery).mockReturnValue({
-      data: ref({ users: mockUsers }),
-      isFetching: ref(false),
-      error: ref(null),
-      refetch: vi.fn(),
-      isLoading: ref(false),
-      isPending: ref(false),
-      isSuccess: ref(true),
-      isFetched: ref(true),
-      ...queryOverrides
-    } as unknown as ReturnType<typeof useGetSearchUsersQuery>)
+  it('renders one shareholder row by default with address + amount inputs', () => {
+    const wrapper = mountForm()
 
-    return shallowMount(DistributeMintForm, {
-      props: {
-        tokenSymbol: 'TEST',
-        loading: loading || false
-      },
-      global: {
-        plugins: [createTestingPinia({ createSpy: vi.fn })]
-      }
-    })
-  }
-
-  it('should set shareholder ref when input address', async () => {
-    const wrapper = createComponent()
-    const input = wrapper.find('input[data-test="address-input"]')
-    await input.setValue('0x123')
-    expect((wrapper.vm as unknown as ComponentData).shareholderWithAmounts[0].shareholder).toBe(
-      '0x123'
-    )
+    expect(wrapper.findAll('[data-test="address-input"]')).toHaveLength(1)
+    expect(wrapper.findAll('[data-test="amount-input"]')).toHaveLength(1)
+    expect(wrapper.find('[data-test="submit-button"]').exists()).toBe(true)
   })
 
-  it('should set shareholder ref when input address', async () => {
-    const wrapper = createComponent()
-    const input = wrapper.find('input[data-test="amount-input"]')
-    await input.setValue('1')
-    expect((wrapper.vm as unknown as ComponentData).shareholderWithAmounts[0].amount).toBe(1)
+  it('adds and removes shareholder rows', async () => {
+    const wrapper = mountForm()
+
+    await wrapper.find('[data-test="plus-icon"]').trigger('click')
+    await wrapper.find('[data-test="plus-icon"]').trigger('click')
+    expect(wrapper.findAll('[data-test="address-input"]')).toHaveLength(3)
+
+    await wrapper.find('[data-test="minus-icon"]').trigger('click')
+    expect(wrapper.findAll('[data-test="address-input"]')).toHaveLength(2)
   })
 
-  it('should add and subtract the shareholder when click icon button', async () => {
-    const wrapper = createComponent()
-
-    // Add a new shareholder
-    const addButton = wrapper.find('div[data-test="plus-icon"]')
-    await addButton.trigger('click')
-    expect((wrapper.vm as unknown as ComponentData).shareholderWithAmounts.length).toBe(2)
-
-    // Subtract the shareholder
-    const minusButton = wrapper.find('div[data-test="minus-icon"]')
-    await minusButton.trigger('click')
-
-    expect((wrapper.vm as unknown as ComponentData).shareholderWithAmounts.length).toBe(1)
-  })
-
-  it('should render loading button if loading is true', async () => {
-    const wrapper = createComponent(true)
-
-    expect(wrapper.findComponent({ name: 'UButton' }).props().loading).toBe(true)
-  })
-
-  it('should emit submit event when button submit clicked', async () => {
-    const wrapper = createComponent()
-
-    const input = wrapper.find('input[data-test="address-input"]')
-    await input.setValue('0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266')
-
-    const amountInput = wrapper.find('[data-test="amount-input"]')
-    await amountInput.setValue('1')
-
-    await wrapper.findComponent({ name: 'UButton' }).trigger('click')
-    expect(wrapper.emitted('submit')).toBeTruthy()
-  })
-
-  it('should render list of user suggestions when dropdown is shown', async () => {
-    const wrapper = createComponent()
-
-    // Manually set the dropdown to visible
-    ;(wrapper.vm as unknown as ComponentData).showDropdown[0] = true
-    await wrapper.vm.$nextTick()
-
-    const foundUsers = wrapper.findAll('[data-test="found-user"]')
-    expect(foundUsers.length).toBe(2)
-  })
-
-  it('should render error message when address is invalid', async () => {
-    const wrapper = createComponent()
-
-    const input = wrapper.find('[data-test="address-input"]')
-    await input.setValue('0x123')
-
-    const amountInput = wrapper.find('[data-test="amount-input"]')
-    await amountInput.setValue('1')
-
-    await wrapper.findComponent({ name: 'UButton' }).trigger('click')
-    await flushPromises()
-
-    const errorMessage = wrapper.find('[data-test="error-message-shareholder"]')
-    expect(errorMessage.exists()).toBeTruthy()
-    expect(errorMessage.text()).toBe('Invalid address')
-  })
-
-  it('should render error message when amount is invalid', async () => {
-    const wrapper = createComponent()
-
-    const input = wrapper.find('[data-test="address-input"]')
-    await input.setValue('0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266')
-
-    const amountInput = wrapper.find('[data-test="amount-input"]')
-    await amountInput.setValue(null)
+  it('renders field errors via UFormField when address and amount are invalid', async () => {
+    const wrapper = mountForm()
 
     await wrapper.find('[data-test="submit-button"]').trigger('click')
     await flushPromises()
 
-    const errorMessage = wrapper.find('[data-test="error-message-amount"]')
-    expect(errorMessage.exists()).toBeTruthy()
-    expect(errorMessage.text()).toBe('Amount is required')
+    const addressError = wrapper.find('[data-test="error-message-shareholder"]')
+    const amountError = wrapper.find('[data-test="error-message-amount"]')
+
+    expect(addressError.exists()).toBe(true)
+    expect(addressError.text()).toContain('Address is required')
+
+    expect(amountError.exists()).toBe(true)
+    expect(amountError.text()).toContain('Amount must be greater than 0')
+
+    expect(wrapper.emitted('submit')).toBeUndefined()
   })
 
-  it('should add error toast if there is an error when searching users', async () => {
-    const mockError = ref<Error | null>(null)
-    vi.mocked(useGetSearchUsersQuery).mockReturnValue({
-      data: ref({ users: mockUsers }),
-      isFetching: ref(false),
-      error: mockError,
-      refetch: vi.fn(),
-      isLoading: ref(false),
-      isPending: ref(false),
-      isSuccess: ref(true),
-      isFetched: ref(true)
-    } as unknown as ReturnType<typeof useGetSearchUsersQuery>)
+  it('fills shareholder address when a user is picked from the search dropdown', async () => {
+    vi.mocked(userQueries.useGetSearchUsersQuery).mockReturnValue({
+      data: ref({
+        users: [{ name: 'Alice', address: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' }]
+      }),
+      error: ref(null)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any)
 
-    const wrapper = shallowMount(DistributeMintForm, {
-      props: {
-        tokenSymbol: 'TEST',
-        loading: false
-      },
-      global: {
-        plugins: [createTestingPinia({ createSpy: vi.fn })]
-      }
-    })
+    const wrapper = mountForm()
 
-    await wrapper.vm.$nextTick()
+    const addressInput = wrapper.find('input[data-test="address-input"]')
+    await addressInput.setValue('Ali')
+    await addressInput.trigger('keyup')
+    await flushPromises()
 
-    // Now trigger the error by updating the ref
-    mockError.value = new Error('Search failed')
-    await wrapper.vm.$nextTick()
+    const foundUser = wrapper.find('[data-test="found-user"]')
+    expect(foundUser.exists()).toBe(true)
+    expect(foundUser.text()).toContain('Alice')
+
+    await foundUser.trigger('click')
+    await flushPromises()
+
+    expect((addressInput.element as HTMLInputElement).value).toBe(
+      '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+    )
+    expect(wrapper.find('[data-test="found-user"]').exists()).toBe(false)
+  })
+
+  it('emits submit with parsed shareholder amounts when all rows are valid', async () => {
+    const wrapper = mountForm()
+
+    const validAddress = '0x1234567890123456789012345678901234567890'
+    await wrapper.find('input[data-test="address-input"]').setValue(validAddress)
+    await wrapper.find('input[data-test="amount-input"]').setValue(5)
+
+    await wrapper.find('[data-test="submit-button"]').trigger('click')
+    await flushPromises()
+
+    const submitted = wrapper.emitted('submit')
+    expect(submitted).toBeTruthy()
+    const payload = submitted?.[0]?.[0] as Array<{ shareholder: string; amount: bigint }>
+    expect(payload).toHaveLength(1)
+    expect(payload[0]!.shareholder).toBe(validAddress)
+    expect(typeof payload[0]!.amount).toBe('bigint')
   })
 })

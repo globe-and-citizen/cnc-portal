@@ -1,8 +1,10 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { defineComponent } from 'vue'
-import { createTestingPinia } from '@pinia/testing'
+import { defineComponent, ref } from 'vue'
+import { renderWithProviders } from '@/tests/mocks'
 import ClaimForm from '@/components/sections/CashRemunerationView/Form/ClaimForm.vue'
+
+type DateDisabledFn = (d: { year: number; month: number; day: number }) => boolean
 
 const resetUploadMock = vi.fn()
 const UploadFileDBStub = defineComponent({
@@ -27,16 +29,39 @@ const FilePreviewGalleryStub = defineComponent({
 const defaultProps = { isEdit: false, isLoading: false }
 
 const createWrapper = (props = {}) =>
-  mount(ClaimForm, {
+  renderWithProviders(ClaimForm, {
     props: { ...defaultProps, ...props },
     global: {
-      plugins: [createTestingPinia({ createSpy: vi.fn })],
       stubs: {
         UploadFileDB: UploadFileDBStub,
         FilePreviewGallery: FilePreviewGalleryStub
       }
     }
   })
+
+// Harness mount: exposes the ClaimForm instance via a typed ref so defineExpose'd
+// methods (formatUTC, resetForm) can be called without a `wrapper.vm as X` cast.
+const createHarness = (props = {}) => {
+  const merged = { ...defaultProps, ...props }
+  const Harness = defineComponent({
+    components: { ClaimForm },
+    setup() {
+      const child = ref<InstanceType<typeof ClaimForm> | null>(null)
+      return { child, merged }
+    },
+    template: '<ClaimForm ref="child" v-bind="merged" />'
+  })
+  // Harness mount keeps `mount` so the typed `vm.child` ref survives — see
+  // CreateAddCampaign.spec.ts. renderWithProviders erases the component generic.
+  return mount(Harness, {
+    global: {
+      stubs: {
+        UploadFileDB: UploadFileDBStub,
+        FilePreviewGallery: FilePreviewGalleryStub
+      }
+    }
+  })
+}
 
 const makeExistingFile = (i: number) => ({
   fileName: `file${i}.png`,
@@ -58,6 +83,21 @@ describe('ClaimForm.vue', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     resetUploadMock.mockClear()
+  })
+
+  it('renders error alert when errorMessage prop is set', async () => {
+    const wrapper = createWrapper({
+      errorMessage: 'Server unavailable',
+      errorTitle: 'Failed to submit claim'
+    })
+
+    const alert = wrapper.find('[data-test="claim-error-alert"]')
+    expect(alert.exists()).toBe(true)
+    expect(alert.text()).toContain('Server unavailable')
+    expect(alert.text()).toContain('Failed to submit claim')
+
+    await wrapper.setProps({ errorMessage: '' })
+    expect(wrapper.find('[data-test="claim-error-alert"]').exists()).toBe(false)
   })
 
   it('handles edit actions and prop updates', async () => {
@@ -90,47 +130,43 @@ describe('ClaimForm.vue', () => {
     expect(
       (wrapper.find('textarea[data-test="memo-input"]').element as HTMLTextAreaElement).value
     ).toBe('Updated memo')
-    expect((wrapper.vm as { formData: { minutesWorked: string } }).formData.minutesWorked).toBe(
-      '40'
-    )
+    expect(wrapper.findComponent({ name: 'USelectMenu' }).props('modelValue')).toBe('40')
     expect(wrapper.find('[data-test="date-input"]').text()).toBe('2024-01-15 UTC')
   })
 
   it('covers date selection + guards + format helper branches', async () => {
-    const wrapper = createWrapper({
+    const wrapper = createHarness({
       initialData: { hoursWorked: '2', memo: 'memo', dayWorked: '' }
     })
-    const vm = wrapper.vm as unknown as {
-      datePickerOpen: boolean
-      onDateSelect: (value: unknown) => void
-      calendarValue: unknown
-      formatUTC: (value: Date | string | null | undefined) => string
-    }
+    const calendar = () => wrapper.findComponent({ name: 'UCalendar' })
+    const popover = () => wrapper.findComponent({ name: 'UPopover' })
 
     expect(wrapper.find('[data-test="date-input"]').text()).toBe('Select a date')
-    expect(vm.calendarValue).toBeUndefined()
-    expect(vm.formatUTC(null)).toBe('')
-    expect(vm.formatUTC(undefined)).toBe('')
-    expect(vm.formatUTC(new Date(Date.UTC(2024, 0, 20, 5, 30, 0)))).toBe('2024-01-20 UTC')
-    expect(vm.formatUTC('2024-02-15T12:00:00.000Z')).toBe('2024-02-15 UTC')
+    expect(calendar().props('modelValue')).toBeUndefined()
+    expect(wrapper.vm.child?.formatUTC(null)).toBe('')
+    expect(wrapper.vm.child?.formatUTC(undefined)).toBe('')
+    expect(wrapper.vm.child?.formatUTC(new Date(Date.UTC(2024, 0, 20, 5, 30, 0)))).toBe(
+      '2024-01-20 UTC'
+    )
+    expect(wrapper.vm.child?.formatUTC('2024-02-15T12:00:00.000Z')).toBe('2024-02-15 UTC')
 
     await wrapper.find('[data-test="date-input"]').trigger('click')
-    expect(vm.datePickerOpen).toBe(true)
+    expect(popover().props('open')).toBe(true)
 
     for (const invalidValue of [
       null,
       [{ year: 2024, month: 1, day: 9 }],
       { start: undefined, end: undefined }
     ]) {
-      vm.onDateSelect(invalidValue)
+      calendar().vm.$emit('update:modelValue', invalidValue)
       await flushPromises()
       expect(wrapper.find('[data-test="date-input"]').text()).toBe('Select a date')
     }
 
-    vm.onDateSelect({ year: 2024, month: 1, day: 10 })
+    calendar().vm.$emit('update:modelValue', { year: 2024, month: 1, day: 10 })
     await flushPromises()
     expect(wrapper.find('[data-test="date-input"]').text()).toBe('2024-01-10 UTC')
-    expect(vm.datePickerOpen).toBe(false)
+    expect(popover().props('open')).toBe(false)
 
     const invalidDateWrapper = createWrapper({
       initialData: { hoursWorked: '1', memo: 'memo', dayWorked: 'not-a-date' }
@@ -138,8 +174,12 @@ describe('ClaimForm.vue', () => {
     const malformedDateWrapper = createWrapper({
       initialData: { hoursWorked: '1', memo: 'memo', dayWorked: 'T00:00:00.000Z' }
     })
-    expect((invalidDateWrapper.vm as { calendarValue: unknown }).calendarValue).toBeUndefined()
-    expect((malformedDateWrapper.vm as { calendarValue: unknown }).calendarValue).toBeUndefined()
+    expect(
+      invalidDateWrapper.findComponent({ name: 'UCalendar' }).props('modelValue')
+    ).toBeUndefined()
+    expect(
+      malformedDateWrapper.findComponent({ name: 'UCalendar' }).props('modelValue')
+    ).toBeUndefined()
   })
 
   it('covers disabled-date logic for approved weeks and restrictions', () => {
@@ -153,21 +193,15 @@ describe('ClaimForm.vue', () => {
     const restricted = createWrapper({ restrictSubmit: true })
     const unrestricted = createWrapper({ restrictSubmit: false })
 
-    const fn1 = (
-      withApprovedWeek.vm as {
-        isDateDisabledFn: (d: { year: number; month: number; day: number }) => boolean
-      }
-    ).isDateDisabledFn
-    const fn2 = (
-      restricted.vm as {
-        isDateDisabledFn: (d: { year: number; month: number; day: number }) => boolean
-      }
-    ).isDateDisabledFn
-    const fn3 = (
-      unrestricted.vm as {
-        isDateDisabledFn: (d: { year: number; month: number; day: number }) => boolean
-      }
-    ).isDateDisabledFn
+    const fn1 = withApprovedWeek
+      .findComponent({ name: 'UCalendar' })
+      .props('isDateDisabled') as DateDisabledFn
+    const fn2 = restricted
+      .findComponent({ name: 'UCalendar' })
+      .props('isDateDisabled') as DateDisabledFn
+    const fn3 = unrestricted
+      .findComponent({ name: 'UCalendar' })
+      .props('isDateDisabled') as DateDisabledFn
 
     expect(fn1({ year: 2024, month: 1, day: 8 })).toBe(true)
     expect(fn2({ year: 2024, month: 1, day: 7 })).toBe(true)
@@ -240,35 +274,38 @@ describe('ClaimForm.vue', () => {
     expect(wrapper.emitted('delete-file')?.[0]).toEqual([1])
 
     const nullishWrapper = createWrapper({
+      isEdit: true,
       existingFiles: null,
       disabledWeekStarts: null,
       initialData: { hoursWorked: '2', memo: 'null-props', dayWorked: '2024-01-12T00:00:00.000Z' }
     })
-    const vm = nullishWrapper.vm as {
-      existingFilePreviews: unknown[]
-      isDateDisabledFn: (d: { year: number; month: number; day: number }) => boolean
-    }
 
-    expect(vm.existingFilePreviews).toEqual([])
-    expect(typeof vm.isDateDisabledFn({ year: 2024, month: 1, day: 12 })).toBe('boolean')
+    // null existingFiles → empty previews → attachment gallery is not rendered
+    expect(nullishWrapper.find('[data-test="attached-files-section"]').exists()).toBe(false)
+    const isDateDisabled = nullishWrapper
+      .findComponent({ name: 'UCalendar' })
+      .props('isDateDisabled') as DateDisabledFn
+    expect(typeof isDateDisabled({ year: 2024, month: 1, day: 12 })).toBe('boolean')
   })
 
   it('resetForm clears uploaded files and calls UploadFileDB.resetUpload', async () => {
-    const wrapper = createWrapper({
+    const wrapper = createHarness({
       initialData: { hoursWorked: '4', memo: 'Reset flow', dayWorked: '2024-01-15T00:00:00.000Z' }
     })
+    const form = wrapper.findComponent(ClaimForm)
     const upload = wrapper.findComponent({ name: 'UploadFileDB' })
     upload.vm.$emit('update:files', [new File(['content'], 'receipt.png')])
 
     await flushPromises()
     await wrapper.find('form').trigger('submit')
     await flushPromises()
-    expect(wrapper.emitted('submit')?.[0]?.[0]?.files).toHaveLength(1)
-    ;(wrapper.vm as { resetForm: () => void }).resetForm()
+    expect(form.emitted('submit')?.[0]?.[0]?.files).toHaveLength(1)
+
+    wrapper.vm.child?.resetForm()
     expect(resetUploadMock).toHaveBeenCalledTimes(1)
 
     await wrapper.find('form').trigger('submit')
     await flushPromises()
-    expect(wrapper.emitted('submit')?.[1]?.[0]?.files).toBeUndefined()
+    expect(form.emitted('submit')?.[1]?.[0]?.files).toBeUndefined()
   })
 })

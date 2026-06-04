@@ -20,57 +20,14 @@ export function useOwnerWithdrawAllToBank() {
   return useExpenseAccountContractWrite('ownerWithdrawAllToBank')
 }
 
-// UNUSED — no consumers outside this file. See the commented-out block for
-// useTransfer, useDepositToken, useActivateApproval, useDeactivateApproval,
-// useAddTokenSupport, useRemoveTokenSupport, useInitialize,
-// useSetOfficerAddress, useTransferOwnership, useRenounceOwnership, usePause,
-// useUnpause.
-/*
-export function useTransfer() {
+export function useExpenseAccountTransfer() {
   return useExpenseAccountContractWrite('transfer')
 }
 
-export function useDepositToken() {
-  return useExpenseAccountContractWrite('depositToken')
-}
-
-export function useActivateApproval() {
+export function useExpenseAccountActivateApproval() {
   return useExpenseAccountContractWrite('activateApproval')
 }
 
-export function useDeactivateApproval() {
+export function useExpenseAccountDeactivateApproval() {
   return useExpenseAccountContractWrite('deactivateApproval')
 }
-
-export function useAddTokenSupport() {
-  return useExpenseAccountContractWrite('addTokenSupport')
-}
-
-export function useRemoveTokenSupport() {
-  return useExpenseAccountContractWrite('removeTokenSupport')
-}
-
-export function useInitialize() {
-  return useExpenseAccountContractWrite('initialize')
-}
-
-export function useSetOfficerAddress() {
-  return useExpenseAccountContractWrite('setOfficerAddress')
-}
-
-export function useTransferOwnership() {
-  return useExpenseAccountContractWrite('transferOwnership')
-}
-
-export function useRenounceOwnership() {
-  return useExpenseAccountContractWrite('renounceOwnership')
-}
-
-export function usePause() {
-  return useExpenseAccountContractWrite('pause')
-}
-
-export function useUnpause() {
-  return useExpenseAccountContractWrite('unpause')
-}
-*/

@@ -2,7 +2,7 @@
   <UDashboardSidebar
     collapsible
     resizable
-    class="bg-white"
+    class="bg-default"
     :ui="{ root: 'min-w-24', footer: 'border-t border-default' }"
   >
     <template #header="{ collapsed }">
@@ -61,7 +61,7 @@
         description="Edit your profile information used across the application."
       >
         <div
-          class="bg-base-200 flex w-full cursor-pointer flex-row justify-start gap-4 rounded-xl p-4 shadow-xs transition-all duration-300"
+          class="bg-muted flex w-full cursor-pointer flex-row justify-start gap-4 rounded-xl p-4 shadow-xs transition-all duration-300"
           data-test="edit-user-card"
           :class="{ 'justify-center': collapsed }"
           @click="open = true"

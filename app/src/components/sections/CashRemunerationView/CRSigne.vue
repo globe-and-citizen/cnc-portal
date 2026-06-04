@@ -28,7 +28,7 @@
       :style="{ pointerEvents: isLoad ? 'none' : undefined }"
       @click="handleDropdownClick"
     >
-      <span v-if="isLoad" class="loading loading-spinner loading-xs mr-2"></span>
+      <UIcon v-if="isLoad" name="i-lucide-loader-circle" class="mr-2 h-3 w-3 animate-spin" />
       {{ isResign ? 'Resign' : 'Sign' }}
     </div>
   </UTooltip>
@@ -48,6 +48,8 @@ import { computed, ref, watch } from 'vue'
 import { config } from '@/wagmi.config'
 import { useUpdateWeeklyClaimMutation } from '@/queries'
 import { useEnableClaim } from '@/composables/cashRemuneration/writes'
+import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
+import { TEAM_ARCHIVED_TOOLTIP } from '@/composables/useTeamWriteGuard'
 
 const props = defineProps<{
   weeklyClaim: WeeklyClaim
@@ -91,10 +93,16 @@ const isCashRemunerationOwner = computed(() => cashRemunerationOwner.value === u
 // while the team is still using the old contract on-chain — pointless and
 // confusing. Resigning a stale signature against the *current* contract is
 // the explicit follow-up flow once the redeploy lands.
+const { isWriteDisabled: isTeamArchived } = useTeamWriteGuard()
 const isTeamMigrated = computed(() => teamStore.currentTeamMeta.data?.isMigrated !== false)
-const isSignFrozen = computed(() => !isTeamMigrated.value)
-const frozenTooltip =
-  'Signing is disabled until your team migrates to the new CashRemuneration contract.'
+const isSignFrozen = computed(() => !isTeamMigrated.value || isTeamArchived.value)
+const frozenTooltip = computed(() => {
+  if (isTeamArchived.value) return TEAM_ARCHIVED_TOOLTIP
+  if (!isTeamMigrated.value) {
+    return 'Signing is disabled until your team migrates to the new CashRemuneration contract.'
+  }
+  return undefined
+})
 
 const { error: claimError, mutateAsync: executeUpdateClaim } = useUpdateWeeklyClaimMutation()
 

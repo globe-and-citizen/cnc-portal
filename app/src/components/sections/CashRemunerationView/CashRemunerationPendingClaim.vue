@@ -2,7 +2,7 @@
   <OverviewCard
     :title="totalPendingAmount"
     subtitle="Pending Claim"
-    color="info"
+    variant="info"
     :card-icon="personIcon"
     :loading="isFetching"
   >
@@ -61,8 +61,9 @@ function getHoulyRateInUserCurrency(
 }
 
 const totalPendingAmount = computed(() => {
-  if (!weeklyClaims.value || !Array.isArray(weeklyClaims.value)) return ''
-  const total = weeklyClaims.value.reduce((sum: number, weeklyClaim: WeeklyClaim) => {
+  const rows = weeklyClaims.value?.data
+  if (!rows) return ''
+  const total = rows.reduce((sum: number, weeklyClaim: WeeklyClaim) => {
     const rate = getHoulyRateInUserCurrency(weeklyClaim.wage.ratePerHour)
     return sum + (weeklyClaim.minutesWorked / 60) * rate
   }, 0)

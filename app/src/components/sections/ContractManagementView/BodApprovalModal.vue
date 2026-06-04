@@ -20,15 +20,11 @@
   <!-- Approval Progress -->
   <div class="mt-5 flex justify-between py-2">
     <span>Approval progress</span>
-    <span class="badge badge-warning badge-outline font-semibold">
+    <UBadge color="warning" variant="outline" class="font-semibold">
       {{ approvalCount.approved }}/{{ approvalCount.total }} Approvals
-    </span>
+    </UBadge>
   </div>
-  <progress
-    class="progress progress-info mb-1"
-    :value="approvalCount.approved"
-    :max="approvalCount.total"
-  ></progress>
+  <UProgress class="mb-1" color="info" :value="approvalCount.approved" :max="approvalCount.total" />
   <span class="text-sm text-gray-500"
     >{{ Math.floor(approvalCount.total / 2) + 1 - approvalCount.approved }} Approval(s) left</span
   >
@@ -42,16 +38,18 @@
       class="flex items-center justify-between gap-2 rounded-lg border border-gray-200 p-2"
     >
       <UserComponent :user="{ name: approval.name, address: approval.address }" />
-      <p
-        class="badge"
-        :class="{
-          'badge-warning': approval.status === 'pending',
-          'badge-success': approval.status === 'approved',
-          'badge-error': approval.status === 'rejected'
-        }"
+      <UBadge
+        :color="
+          approval.status === 'approved'
+            ? 'success'
+            : approval.status === 'rejected'
+              ? 'error'
+              : 'warning'
+        "
+        variant="subtle"
       >
         {{ approval.status }}
-      </p>
+      </UBadge>
     </div>
   </div>
   <div class="mt-6 flex justify-end gap-2">
@@ -63,7 +61,7 @@
       leading-icon="heroicons:arrow-left"
       label="Close"
     />
-    <ToolTip :content="hasApproved ? 'You have already approved' : 'Click to approve this action'">
+    <UTooltip :text="hasApproved ? 'You have already approved' : 'Click to approve this action'">
       <UButton
         color="primary"
         data-test="transfer-ownership-button"
@@ -72,7 +70,7 @@
         :disabled="hasApproved || loading"
         label="Approve Action"
       />
-    </ToolTip>
+    </UTooltip>
   </div>
 </template>
 <script setup lang="ts">
@@ -87,7 +85,6 @@ import { log, parseError } from '@/utils'
 import { readContract } from '@wagmi/core'
 import { config } from '@/wagmi.config'
 import type { Address } from 'viem'
-import ToolTip from '@/components/ToolTip.vue'
 import BodApprovalDetails from './BodApprovalDetails.vue'
 
 const props = defineProps<{ row: TableRow; loading: boolean }>()

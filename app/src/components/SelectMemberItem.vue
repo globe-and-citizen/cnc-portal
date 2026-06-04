@@ -5,7 +5,7 @@
       <span class="text-xl font-bold">Select a User</span>
     </div>
     <div
-      class="input input-bordered input-lg flex cursor-pointer items-center gap-2"
+      class="border-default flex h-12 cursor-pointer items-center gap-2 rounded-md border bg-white px-3 dark:bg-gray-900"
       data-test="select-member-item-trigger"
       @click="toggleOpen"
     >
@@ -28,15 +28,15 @@
     <div
       v-if="isOpen.mount"
       v-show="isOpen.show"
-      class="rounded-box bg-base-100 absolute left-0 z-[9999] mt-2 max-h-72 w-full overflow-y-auto shadow-lg"
+      class="bg-default absolute left-0 z-[9999] mt-2 max-h-72 w-full overflow-y-auto rounded-lg shadow-lg"
       data-test="select-member-item-dropdown"
     >
       <!-- Search input -->
-      <div class="border-base-300 border-b p-2">
-        <input
+      <div class="border-default border-b p-2">
+        <UInput
           v-model="search"
           type="text"
-          class="input input-bordered input-md w-full"
+          class="w-full"
           placeholder="Search…"
           data-test="select-member-item-search"
         />
@@ -53,7 +53,7 @@
           @click="select(member)"
         >
           <UserComponent
-            class="hover:bg-base-200 flex w-full items-center gap-2 p-3"
+            class="hover:bg-muted flex w-full items-center gap-2 p-3"
             :user="member"
             data-test="select-member-item-option-user"
           />

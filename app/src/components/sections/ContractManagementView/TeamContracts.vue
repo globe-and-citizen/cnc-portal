@@ -44,19 +44,24 @@
       </template>
 
       <template #details-cell="{ row: { original: row } }">
-        <button
+        <UButton
           :disabled="row.type !== 'Campaign'"
           @click="openContractDataModal(row.address)"
-          class="btn btn-ghost btn-xs"
-        >
-          View Details
-        </button>
+          variant="ghost"
+          color="neutral"
+          size="xs"
+          label="View Details"
+        />
       </template>
 
       <template #events-cell="{ row: { original: row } }">
-        <button @click="openEventsModal(row.address)" class="btn btn-ghost btn-xs">
-          View Events
-        </button>
+        <UButton
+          @click="openEventsModal(row.address)"
+          variant="ghost"
+          color="neutral"
+          size="xs"
+          label="View Events"
+        />
       </template>
     </UTable>
 
@@ -101,9 +106,7 @@
     >
       <template #body>
         <div class="max-w-lg">
-          <TeamContractEventList
-            :eventsByCampaignCode="groupEventsByCampaignCode(contractEventsDialog.events)"
-          />
+          <TeamContractEventList :eventsByCampaignCode="campaignEvents ?? {}" />
         </div>
       </template>
     </UModal>
@@ -111,18 +114,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import TeamContractAdmins from './TeamContractAdmins.vue'
 import TeamContractsDetail from './TeamContractsDetail.vue'
-import { AddCampaignService } from '@/services/AddCampaignService'
 import { getContractData } from '@/composables/useContractFunctions'
+import { useCampaignEventsByCode } from '@/composables/campaign/reads'
 
 import { AD_CAMPAIGN_MANAGER_ABI } from '@/artifacts/abi/ad-campaign-manager'
 
-import type {
-  GetEventsGroupedByCampaignCodeResult,
-  ExtendedEvent
-} from '@/services/AddCampaignService'
 const toast = useToast()
 import { useTeamStore } from '@/stores/'
 import type { Address } from 'viem'
@@ -130,9 +129,6 @@ import TeamContractEventList from './TeamContractEventList.vue'
 import { type TeamContract } from '@/types'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 const teamStore = useTeamStore()
-
-// Initialize AddCampaignService instance
-const addCamapaignService = new AddCampaignService()
 
 // Modal for showing contract admins
 const contractAdminDialog = ref({
@@ -162,22 +158,21 @@ watch(
 
 const contractEventsDialog = ref({
   show: false,
-  events: [] as ExtendedEvent[]
+  address: undefined as Address | undefined
 })
 
-// Function to group events by campaign code
-const groupEventsByCampaignCode = (events: ExtendedEvent[]) => {
-  return events.reduce(
-    (acc, event) => {
-      if (!acc[event.campaignCode]) {
-        acc[event.campaignCode] = []
-      }
-      acc[event.campaignCode]!.push(event)
-      return acc
-    },
-    {} as Record<string, ExtendedEvent[]>
-  )
-}
+const selectedEventsAddress = computed(() => contractEventsDialog.value.address)
+const {
+  data: campaignEvents,
+  isError: campaignEventsError,
+  refetch: refetchCampaignEvents
+} = useCampaignEventsByCode(selectedEventsAddress, {
+  enabled: computed(() => contractEventsDialog.value.show)
+})
+
+watch(campaignEventsError, (hasError) => {
+  if (hasError) toast.add({ title: 'Failed to fetch events', color: 'error' })
+})
 
 // Open Admins Modal
 const openAdminsModal = (contract: TeamContract, range: number) => {
@@ -188,20 +183,9 @@ const openAdminsModal = (contract: TeamContract, range: number) => {
 
 // Open Events Modal
 const openEventsModal = async (contractAddress: Address) => {
-  const result = (await addCamapaignService.getEventsGroupedByCampaignCode(
-    contractAddress
-  )) as GetEventsGroupedByCampaignCodeResult
-
-  if (result.status === 'success') {
-    if (result.events && Object.keys(result.events).length > 0) {
-      contractEventsDialog.value.events = Object.values(result.events).flat()
-      contractEventsDialog.value.show = true
-    } else {
-      contractEventsDialog.value.show = true
-    }
-  } else {
-    toast.add({ title: 'Failed to fetch events', color: 'error' })
-  }
+  contractEventsDialog.value.address = contractAddress
+  contractEventsDialog.value.show = true
+  await refetchCampaignEvents()
 }
 
 // Open Contract Data Modal

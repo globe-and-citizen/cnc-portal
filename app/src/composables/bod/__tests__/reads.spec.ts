@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { useBodOwner, useBodIsActionExecuted, useBodIsMember } from '../reads'
-import { mockBODReads, resetContractMocks } from '@/tests/mocks'
+import { mockBODReads } from '@/tests/mocks'
 import type { Address } from 'viem'
 
 const MOCK_DATA = {
@@ -12,7 +12,6 @@ const MOCK_DATA = {
 describe('BOD Contract Reads', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    resetContractMocks()
   })
 
   it('useBodOwner returns the owner mock', () => {

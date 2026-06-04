@@ -31,7 +31,14 @@ export const safeKeys = {
     [...safeKeys.transactionDetails(), { safeTxHash }] as const,
   incomingTransferLists: () => [...safeKeys.all, 'incoming-transfers'] as const,
   incomingTransfers: (safeAddress: string | undefined, limit?: number) =>
-    [...safeKeys.incomingTransferLists(), { safeAddress, limit }] as const
+    [...safeKeys.incomingTransferLists(), { safeAddress, limit }] as const,
+  balance: (address: string | undefined, chainId: number | undefined) =>
+    ['balance', { address, chainId }] as const,
+  tokenBalance: (
+    tokenAddress: string | undefined,
+    safeAddress: string | undefined,
+    chainId: number | undefined
+  ) => ['readContract', { address: tokenAddress, args: [safeAddress], chainId }] as const
 }
 
 // ============================================================================

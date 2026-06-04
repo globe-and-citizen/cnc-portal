@@ -1,12 +1,14 @@
 import type { WeeklyClaim } from '@/types'
 import { formatMinutesAsDuration } from '@/utils/wageUtil'
 
-export const getClaimStatusColor = (weeklyClaim?: WeeklyClaim) => {
-  if (!weeklyClaim) return 'accent'
+export type ClaimStatusColor = 'neutral' | 'primary' | 'warning' | 'info'
+
+export const getClaimStatusColor = (weeklyClaim?: WeeklyClaim): ClaimStatusColor => {
+  if (!weeklyClaim) return 'neutral'
   if (weeklyClaim.status === 'pending') return 'primary'
   if (weeklyClaim.status === 'signed') return 'warning'
   if (weeklyClaim.status === 'withdrawn') return 'info'
-  return 'accent'
+  return 'neutral'
 }
 
 export const formatWeekTooltipText = (

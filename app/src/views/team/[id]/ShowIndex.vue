@@ -22,6 +22,7 @@
         description="We couldn't load this company. Please try again later."
       />
     </div>
+    <TeamArchivedBanner v-if="teamStore.currentTeamMeta?.data" />
     <div
       v-if="route.name == 'show-team' && teamStore.currentTeamMeta?.data"
       class="flex flex-col gap-6"
@@ -33,7 +34,7 @@
       <TeamMeta />
       <CompanyOverview />
     </div>
-    <RouterView v-if="teamStore.currentTeam" />
+    <RouterView v-if="teamStore.currentTeamId" :key="teamOutletKey" />
   </div>
 </template>
 <script setup lang="ts">
@@ -42,6 +43,7 @@ import { computed, onUnmounted, watch } from 'vue'
 import { onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useSyncWeeklyClaimsMutation } from '@/queries/weeklyClaim.queries'
+import TeamArchivedBanner from '@/components/sections/DashboardView/TeamArchivedBanner.vue'
 import TeamMeta from '@/components/sections/DashboardView/TeamMetaSection.vue'
 import CompanyOverview from '@/components/sections/DashboardView/CompanyOverview.vue'
 import ContinueAddTeamForm from '@/components/sections/TeamView/forms/ContinueAddTeamForm.vue'
@@ -50,6 +52,16 @@ import { useSyncContractsMutation } from '@/queries'
 const teamStore = useTeamStore()
 
 const route = useRoute()
+
+/** Same component for list + detail — key by full path so the view always updates. */
+const teamOutletKey = computed(() => {
+  const name = route.name
+  if (name === 'bod-proposals' || name === 'proposal-detail') {
+    return route.fullPath
+  }
+  return String(name ?? route.fullPath)
+})
+
 const { mutate: syncWeeklyClaims } = useSyncWeeklyClaimsMutation()
 const { mutateAsync: syncContracts } = useSyncContractsMutation()
 

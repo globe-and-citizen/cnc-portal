@@ -76,7 +76,7 @@ describe('ExpandableFileGallery', () => {
   it('renders nothing when there are no previews', () => {
     const wrapper = mountComponent([])
 
-    expect(wrapper.find('.avatar-group').exists()).toBe(false)
+    expect(wrapper.find('[data-test="avatar-stack"]').exists()).toBe(false)
     expect(wrapper.find('.grid').exists()).toBe(false)
     expect(wrapper.find('.fixed').exists()).toBe(false)
   })
@@ -88,7 +88,7 @@ describe('ExpandableFileGallery', () => {
 
     const wrapper = mountComponent(previews)
 
-    expect(wrapper.findAll('.avatar').length).toBe(1)
+    expect(wrapper.findAll('[data-test="avatar-item"]').length).toBe(1)
 
     await wrapper.trigger('mouseenter')
     expect(wrapper.findAll('.grid button').length).toBe(1)
@@ -111,7 +111,8 @@ describe('ExpandableFileGallery', () => {
 
     const wrapper = mountComponent(previews)
 
-    expect(wrapper.findAll('.avatar-group .avatar').length).toBe(5)
+    expect(wrapper.findAll('[data-test="avatar-stack"] [data-test="avatar-item"]').length).toBe(4)
+    expect(wrapper.findAll('[data-test="avatar-remaining"]').length).toBe(1)
     expect(wrapper.text()).toContain('+2')
     expect(wrapper.find('.grid').isVisible()).toBe(false)
   })
@@ -254,6 +255,13 @@ describe('ExpandableFileGallery', () => {
     expect(buttons.length).toBeGreaterThan(0)
     await buttons[0]!.trigger('click')
 
+    // Defensive branch: `current` is computed from `modal.value.index`. There is
+    // no UI path that opens the modal at an out-of-bounds index (clicking item i
+    // always yields current = previews[i]), and shrinking previews unmounts the
+    // entire gallery root (v-if="resolvedPreviews.length") which kills the
+    // teleported lightbox. The only way to assert this defensive branch is to
+    // poke the internal `modal` ref directly.
+    // eslint-disable-next-line no-restricted-syntax -- defense-in-depth branch unreachable via UI; root v-if hides lightbox when previews are empty
     const modalState = wrapper.vm as unknown as {
       modal: { value?: { isOpen: boolean; index: number }; isOpen?: boolean; index?: number }
     }

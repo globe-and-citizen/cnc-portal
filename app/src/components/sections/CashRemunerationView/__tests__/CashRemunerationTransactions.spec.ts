@@ -1,8 +1,28 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { mount, type VueWrapper } from '@vue/test-utils'
-import { defineComponent, nextTick } from 'vue'
+import { nextTick } from 'vue'
+import { type VueWrapper } from '@vue/test-utils'
 import type { Address } from 'viem'
-import CashRemunerationTransactions from '../CashRemunerationTransactions.vue'
+
+// Auto-imported @nuxt/ui components bypass `config.global.stubs` because the
+// Nuxt UI Vite plugin resolves them through their file path. Mocking the
+// modules ensures our stubs are actually rendered so we can drive them by
+// emitting `update:modelValue` and read props instead of reaching into
+// `wrapper.vm`.
+vi.mock('@nuxt/ui/components/Table.vue', () => ({
+  default: {
+    name: 'UTable',
+    props: ['data', 'columns', 'loading'],
+    template: '<div data-test="cash-remuneration-table"></div>'
+  }
+}))
+vi.mock('@nuxt/ui/components/Select.vue', () => ({
+  default: {
+    name: 'USelect',
+    props: ['modelValue', 'items'],
+    emits: ['update:modelValue'],
+    template: '<div data-test="cash-remuneration-type-filter"></div>'
+  }
+}))
 
 const { apolloState, mockUseQuery, mockCurrencyStore, mockGetTokenPrice } = vi.hoisted(() => {
   const apolloState = {
@@ -25,12 +45,7 @@ const { apolloState, mockUseQuery, mockCurrencyStore, mockGetTokenPrice } = vi.h
     getTokenPrice: mockGetTokenPrice
   }
 
-  return {
-    apolloState,
-    mockUseQuery,
-    mockCurrencyStore,
-    mockGetTokenPrice
-  }
+  return { apolloState, mockUseQuery, mockCurrencyStore, mockGetTokenPrice }
 })
 
 vi.mock('@vue/apollo-composable', async () => {
@@ -63,132 +78,17 @@ vi.mock('@/stores/currencyStore', () => ({
   useCurrencyStore: () => mockCurrencyStore
 }))
 
-const UCardStub = defineComponent({
-  name: 'UCard',
-  template: '<div><slot name="header" /><slot /></div>'
-})
-
-const UTableStub = defineComponent({
-  name: 'UTable',
-  props: {
-    data: { type: Array, required: false },
-    columns: { type: Array, required: false },
-    loading: { type: Boolean, required: false }
-  },
-  template: '<div data-test="cash-remuneration-table"></div>'
-})
-
-const USelectStub = defineComponent({
-  name: 'USelect',
-  props: {
-    modelValue: { type: String, required: false },
-    items: { type: Array, required: false }
-  },
-  emits: ['update:modelValue'],
-  template: '<div data-test="type-filter"></div>'
-})
-
-const CustomDatePickerStub = defineComponent({
-  name: 'CustomDatePicker',
-  props: {
-    modelValue: { type: Array, required: false }
-  },
-  emits: ['update:modelValue'],
-  template: '<div data-test="date-filter"></div>'
-})
-
-const AddressToolTipStub = defineComponent({
-  name: 'AddressToolTip',
-  template: '<div />'
-})
-
-const UBadgeStub = defineComponent({
-  name: 'UBadge',
-  template: '<span><slot /></span>'
-})
-
-const CONTRACT_ADDRESS = '0x1111111111111111111111111111111111111111' as Address
-const USDC_ADDRESS = '0xa3492d046095affe351cfac15de9b86425e235db'
-const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
-
-const buildCashRemunerationQueryResult = () => ({
-  cashRemunerationDeposits: {
-    items: [
-      {
-        id: '0xdeposithash-0',
-        contractAddress: CONTRACT_ADDRESS,
-        depositor: '0x2222222222222222222222222222222222222222',
-        amount: '1000000000000000000',
-        timestamp: 1_700_000_000
-      }
-    ]
-  },
-  cashRemunerationWithdraws: {
-    items: [
-      {
-        id: '0xwithdrawhash-0',
-        contractAddress: CONTRACT_ADDRESS,
-        withdrawer: '0x3333333333333333333333333333333333333333',
-        amount: '2000000000000000000',
-        timestamp: 1_700_000_100
-      }
-    ]
-  },
-  cashRemunerationWithdrawTokens: {
-    items: []
-  },
-  cashRemunerationWageClaims: {
-    items: []
-  },
-  cashRemunerationOwnerTreasuryWithdrawNatives: {
-    items: []
-  },
-  cashRemunerationOwnerTreasuryWithdrawTokens: {
-    items: []
-  },
-  cashRemunerationOfficerUpdateds: {
-    items: []
-  },
-  cashRemunerationTokenSupportAddeds: {
-    items: []
-  },
-  cashRemunerationTokenSupportRemoveds: {
-    items: []
-  }
-})
-
-const buildIncomingTransfersQueryResult = () => ({
-  bankTokenTransfers: {
-    items: [
-      {
-        id: '0xbankfundinghash-0',
-        contractAddress: '0x9999999999999999999999999999999999999999',
-        sender: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
-        to: CONTRACT_ADDRESS,
-        token: USDC_ADDRESS,
-        amount: '1000000',
-        timestamp: 1_700_000_050
-      }
-    ]
-  }
-})
-
-const createWrapper = (cashRemunerationAddress: Address = CONTRACT_ADDRESS): VueWrapper =>
-  mount(CashRemunerationTransactions, {
-    props: {
-      cashRemunerationAddress
-    },
-    global: {
-      stubs: {
-        UCard: UCardStub,
-        UTable: UTableStub,
-        USelect: USelectStub,
-        UBadge: UBadgeStub,
-        AddressToolTip: AddressToolTipStub,
-        CustomDatePicker: CustomDatePickerStub
-      }
-    }
-  })
+import {
+  CONTRACT_ADDRESS,
+  USDC_ADDRESS,
+  ZERO_ADDRESS,
+  tableData,
+  tableColumns,
+  tableLoading,
+  buildCashRemunerationQueryResult,
+  buildIncomingTransfersQueryResult,
+  createWrapper
+} from './CashRemunerationTransactions.fixture'
 
 describe('CashRemunerationTransactions', () => {
   let wrapper: VueWrapper
@@ -215,51 +115,46 @@ describe('CashRemunerationTransactions', () => {
   it('maps query data and passes rows/columns to UTable', () => {
     wrapper = createWrapper()
 
-    const vm = wrapper.vm as unknown as {
-      displayedTransactions: Array<{ type: string }>
-      columns: Array<{ header: string }>
-    }
+    const data = tableData(wrapper)
+    const columns = tableColumns(wrapper)
 
-    expect(vm.displayedTransactions).toHaveLength(3)
-    expect(vm.displayedTransactions.map((row) => row.type)).toEqual(
+    expect(data).toHaveLength(3)
+    expect(data.map((row) => row.type)).toEqual(
       expect.arrayContaining(['deposit', 'tokenDeposit', 'withdraw'])
     )
-    expect(vm.columns.at(-1)?.header).toBe('Value (USD)')
+    expect(columns.some((column) => column.header === 'Value (USD)')).toBe(true)
   })
 
   it('passes loading state to UTable', () => {
     apolloState.incomingTransfersQueryLoading.value = true
 
     wrapper = createWrapper()
-    const vm = wrapper.vm as unknown as { loading: boolean }
-    expect(vm.loading).toBe(true)
+    expect(tableLoading(wrapper)).toBe(true)
   })
 
   it('filters displayed rows by selected type', async () => {
     wrapper = createWrapper()
-    const vm = wrapper.vm as unknown as {
-      selectedType: string
-      displayedTransactions: Array<{ type: string }>
-    }
 
-    vm.selectedType = 'deposit'
+    wrapper.getComponent({ name: 'USelect' }).vm.$emit('update:modelValue', 'deposit')
     await nextTick()
 
-    expect(vm.displayedTransactions).toHaveLength(1)
-    expect(vm.displayedTransactions[0]?.type).toBe('deposit')
+    const data = tableData(wrapper)
+    expect(data).toHaveLength(1)
+    expect(data[0]?.type).toBe('deposit')
   })
 
   it('filters displayed rows by date range', async () => {
     wrapper = createWrapper()
-    const vm = wrapper.vm as unknown as {
-      dateRange: [Date, Date] | null
-      displayedTransactions: Array<{ type: string }>
-    }
 
-    vm.dateRange = [new Date('2020-01-01T00:00:00Z'), new Date('2020-01-01T23:59:59Z')]
+    wrapper
+      .getComponent({ name: 'CustomDatePicker' })
+      .vm.$emit('update:modelValue', [
+        new Date('2020-01-01T00:00:00Z'),
+        new Date('2020-01-01T23:59:59Z')
+      ])
     await nextTick()
 
-    expect(vm.displayedTransactions).toHaveLength(0)
+    expect(tableData(wrapper)).toHaveLength(0)
   })
 
   it('uses disabled query option when contract address is empty', () => {
@@ -317,16 +212,9 @@ describe('CashRemunerationTransactions', () => {
     }
 
     wrapper = createWrapper()
-    const vm = wrapper.vm as unknown as {
-      displayedTransactions: Array<{
-        txHash: string
-        amount: string | number
-        amountLocal: number
-        token: string
-      }>
-    }
-    const nativeRow = vm.displayedTransactions.find((row) => row.txHash === '0xnativedeposit')
-    const unknownRow = vm.displayedTransactions.find((row) => row.txHash === '0xunknowntx')
+    const data = tableData(wrapper)
+    const nativeRow = data.find((row) => row.txHash === '0xnativedeposit')
+    const unknownRow = data.find((row) => row.txHash === '0xunknowntx')
 
     expect(nativeRow?.amountLocal).toBe(3)
     expect(unknownRow?.amount).toBe('0')

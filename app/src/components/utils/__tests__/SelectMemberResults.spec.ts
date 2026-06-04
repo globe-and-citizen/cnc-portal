@@ -131,27 +131,4 @@ describe('SelectMemberResults', () => {
     expect(wrapper.find(SELECTORS.userSearchResults).exists()).toBe(true)
     expect(wrapper.findAll(SELECTORS.userRow).length).toBe(3)
   })
-
-  it('should apply correct CSS classes to member rows', async () => {
-    wrapper = createWrapper({ members: MOCK_MEMBERS })
-    await nextTick()
-
-    const rows = wrapper.findAll(SELECTORS.userRow)
-    rows.forEach((row) => {
-      expect(row.classes()).toContain('cursor-pointer')
-      expect(row.classes()).toContain('group')
-    })
-  })
-
-  it('should apply correct CSS classes to UserComponent', async () => {
-    wrapper = createWrapper({ members: MOCK_MEMBERS })
-    await nextTick()
-
-    MOCK_MEMBERS.forEach((member) => {
-      const userComp = wrapper.find(SELECTORS.userComponent(member.address))
-      expect(userComp.classes()).toContain('rounded-lg')
-      expect(userComp.classes()).toContain('bg-white')
-      expect(userComp.classes()).toContain('hover:bg-base-300')
-    })
-  })
 })
