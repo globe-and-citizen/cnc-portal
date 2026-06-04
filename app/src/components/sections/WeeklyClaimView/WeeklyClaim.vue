@@ -116,10 +116,11 @@
       </template>
     </UTable>
     <template #footer>
-      <TransactionTableFooter
+      <TablePagination
         v-model:page="page"
         v-model:page-size="pageSize"
         :total="total"
+        noun="claims"
         data-test-prefix="weekly-claim"
       />
     </template>
@@ -140,13 +141,14 @@ import dayjs from 'dayjs'
 import isoWeek from 'dayjs/plugin/isoWeek'
 import utc from 'dayjs/plugin/utc'
 import weekday from 'dayjs/plugin/weekday'
-import { computed, ref } from 'vue'
+import { computed, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 // import CRSigne from '../CashRemunerationView/CRSigne.vue'
 // import CRWithdrawClaim from '../CashRemunerationView/CRWithdrawClaim.vue'
 import { useGetTeamWeeklyClaimsQuery } from '@/queries'
 import WeeklyClaimActionDropdown from './WeeklyClaimActionDropdown.vue'
-import TransactionTableFooter from '@/components/TransactionTableFooter.vue'
+import TablePagination from '@/components/TablePagination.vue'
+import { usePagination } from '@/composables/usePagination'
 import type { Address } from 'viem'
 import { formatMinutesAsDuration } from '@/utils/wageUtil'
 
@@ -186,8 +188,9 @@ function isStaleSignature(row: WeeklyClaim): boolean {
 
 // Pagination state — `pageSize` maps to the backend's `limit` query param.
 // The backend sorts by weekStart desc when paginated, so no client-side sort.
-const page = ref(1)
-const pageSize = ref(10)
+// Page + size are mirrored to the route query (shareable, reload-safe) and the
+// size selector re-anchors the page so the current first row stays in view.
+const { page, pageSize, reset } = usePagination(() => total.value, { defaultPageSize: 10 })
 
 const { data: fetchedData, error } = useGetTeamWeeklyClaimsQuery({
   queryParams: {
@@ -200,6 +203,10 @@ const { data: fetchedData, error } = useGetTeamWeeklyClaimsQuery({
 
 const rows = computed(() => fetchedData.value?.data ?? null)
 const total = computed(() => fetchedData.value?.total ?? 0)
+
+// Switching between the team-wide table and a single member's view changes the
+// underlying result set — go back to page 1 so we never land out of range.
+watch(() => props.memberAddress, reset)
 
 const isTeamClaimDataFetching = computed(() => !fetchedData.value && !error.value)
 
