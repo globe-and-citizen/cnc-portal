@@ -190,7 +190,12 @@ function isStaleSignature(row: WeeklyClaim): boolean {
 // The backend sorts by weekStart desc when paginated, so no client-side sort.
 // Page + size are mirrored to the route query (shareable, reload-safe) and the
 // size selector re-anchors the page so the current first row stays in view.
-const { page, pageSize, reset } = usePagination(() => total.value, { defaultPageSize: 10 })
+// `weeklyClaim` key namespaces the query params — WeeklyClaimView renders this
+// table alongside CashRemunerationTransactions on the same route.
+const { page, pageSize, reset } = usePagination(() => total.value, {
+  key: 'weeklyClaim',
+  defaultPageSize: 10
+})
 
 const { data: fetchedData, error } = useGetTeamWeeklyClaimsQuery({
   queryParams: {

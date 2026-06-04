@@ -125,10 +125,11 @@
       </template>
     </UTable>
     <template #footer>
-      <TransactionTableFooter
+      <TablePagination
         v-model:page="page"
         v-model:page-size="pageSize"
         :total="total"
+        noun="transactions"
         data-test-prefix="investor-transaction"
       />
     </template>
@@ -141,7 +142,7 @@
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import UserComponent from '@/components/UserComponent.vue'
 import CustomDatePicker from '@/components/CustomDatePicker.vue'
-import TransactionTableFooter from '@/components/TransactionTableFooter.vue'
+import TablePagination from '@/components/TablePagination.vue'
 import TransactionDetailModal from '@/components/TransactionDetailModal.vue'
 import type { TokenId } from '@/constant'
 import {
@@ -245,7 +246,7 @@ const {
   selectedTx,
   showDetail,
   openDetail
-} = useTransactionTable(enrichedTransactions)
+} = useTransactionTable(enrichedTransactions, { key: 'investorTx' })
 
 const { getInlineUser, getValuePrefix, getValueClass } = useTransactionInline(
   computed(() => [investorAddress.value, safeDepositRouterAddress.value].filter(Boolean))
