@@ -43,17 +43,6 @@ export const mockWagmiCore = {
   getPublicClient: vi.fn()
 }
 
-// Mock useWaitForTransactionReceipt composable
-export const mockUseWaitForTransactionReceipt = {
-  data: ref(null),
-  error: ref(null),
-  isLoading: ref(false),
-  isSuccess: ref(false),
-  isError: ref(false),
-  isPending: ref(false),
-  status: ref('idle' as const)
-}
-
 // Mock useConnection composable
 export const mockUseConnection = {
   address: ref('0x1234567890123456789012345678901234567890'),
@@ -99,14 +88,6 @@ export const mockUseBalance = {
   refetch: vi.fn()
 }
 
-// Mock useSendTransaction composable
-export const mockUseSendTransaction = {
-  isPending: ref(false),
-  error: ref(null),
-  data: ref<string>(''),
-  sendTransaction: vi.fn()
-}
-
 // Mock wagmi config and transport functions
 export const mockHttp = vi.fn().mockReturnValue('mocked-http-transport')
 export const mockCreateConfig = vi.fn((config) => ({
@@ -134,3 +115,28 @@ export const useChainIdFn = vi.fn(() => mockUseChainId)
 export const useReadContractFn = vi.fn(() => ({ ...mockUseReadContract }))
 export const useSignTypedDataFn = vi.fn(() => ({ ...mockUseSignTypedData }))
 export const useAccountFn = vi.fn(() => ({ ...mockUseAccount }))
+
+/**
+ * Reset the stateful wagmi mocks to their defaults. `transferHash` is a
+ * module-level ref shared via `mockUseWriteContract.data`, so without this it
+ * leaks a tx hash from one test into the next. Read-contract data and the
+ * @wagmi/core action spies are reset too.
+ */
+export const resetWagmiVueMocks = () => {
+  transferHash.value = undefined
+  mockUseWriteContract.isPending.value = false
+  mockUseWriteContract.error.value = null
+  mockUseWriteContract.isError.value = false
+  mockUseWriteContract.status.value = 'idle'
+  mockUseWriteContract.variables.value = undefined
+  mockUseWriteContract.mutate.mockClear()
+  mockUseWriteContract.mutateAsync.mockClear()
+  mockUseWriteContract.reset.mockClear()
+
+  mockUseReadContract.data.value = '0xData'
+  mockUseReadContract.error.value = null
+
+  Object.values(mockWagmiCore).forEach((fn) => {
+    if (vi.isMockFunction(fn)) fn.mockClear()
+  })
+}

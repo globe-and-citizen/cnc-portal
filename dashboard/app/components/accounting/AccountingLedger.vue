@@ -11,6 +11,10 @@
           </p>
         </div>
         <div class="flex items-center gap-2 flex-wrap">
+          <AccountingTableSearch
+            v-model="searchQuery"
+            placeholder="Search market, account, tx…"
+          />
           <USelect
             v-model="periodPreset"
             :items="periodPresetOptions"
@@ -25,11 +29,9 @@
             class="w-36"
             size="sm"
           />
-          <USelect
-            v-model="categoryFilter"
+          <AccountingCategoryFilter
+            v-model="selectedCategories"
             :items="categoryOptions"
-            class="w-44"
-            size="sm"
           />
           <AccountingColumnVisibility
             v-model="visibleColumns"
@@ -52,7 +54,7 @@
         :columns="columns"
         :loading="isLoading"
         :ui="{
-          base: 'table-fixed border-separate border-spacing-0',
+          base: 'table-auto border-separate border-spacing-0',
           thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
           tbody: '[&>tr]:last:[&>td]:border-b-0',
           th: 'py-2 first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
@@ -85,7 +87,7 @@
         </template>
 
         <template #market-cell="{ row }">
-          <div v-if="row.original.isFirst" class="flex items-center gap-2 max-w-xs">
+          <div v-if="row.original.isFirst" class="flex items-start gap-2 min-w-48">
             <img
               v-if="row.original.entry.icon"
               :src="row.original.entry.icon"
@@ -97,11 +99,11 @@
               :href="marketUrl(row.original.entry)!"
               target="_blank"
               rel="noopener noreferrer"
-              class="truncate hover:underline text-black dark:text-white"
+              class="wrap-break-word hover:underline text-black dark:text-white"
             >
               {{ row.original.entry.description }}
             </a>
-            <span v-else class="truncate">{{ row.original.entry.description }}</span>
+            <span v-else class="wrap-break-word">{{ row.original.entry.description }}</span>
           </div>
         </template>
 
@@ -178,20 +180,12 @@
         </template>
       </UTable>
 
-      <div
-        v-if="totalActivities > pageSize"
-        class="mt-4 flex justify-end border-t border-default pt-4"
-      >
-        <UPagination
-          v-model:page="currentPage"
-          :items-per-page="pageSize"
-          :total="totalActivities"
-          :sibling-count="1"
-          show-edges
-          color="neutral"
-          variant="outline"
-        />
-      </div>
+      <AccountingPagination
+        v-model:page="page"
+        v-model:page-size="pageSize"
+        :total="totalActivities"
+        noun="transactions"
+      />
     </UPageCard>
 
     <!-- Trial Balance under the table (no longer behind a separate tab). -->
@@ -202,6 +196,7 @@
 </template>
 
 <script setup lang="ts">
+import { useSessionStorage } from '@vueuse/core'
 import { format } from 'date-fns'
 import { computed, ref, watch } from 'vue'
 import {
@@ -213,6 +208,7 @@ import {
   signClass
 } from '~/utils/accounting'
 import { useAccountingPeriod } from '~/composables/useAccountingPeriod'
+import { usePagination } from '~/composables/usePagination'
 import { buildGeneralLedger } from '~/utils/generalLedger'
 import type { RealizedTrade } from '~/utils/incomeStatement'
 import {
@@ -221,9 +217,15 @@ import {
   type MergedColumnKey,
   type MergedLedgerRow
 } from '~/utils/mergedLedger'
+import { matchesAccountingSearch, normalizeAccountingSearchQuery } from '~/utils/accountingSearch'
+import AccountingCategoryFilter, {
+  type CategoryOption
+} from './AccountingCategoryFilter.vue'
+import AccountingTableSearch from './AccountingTableSearch.vue'
 import AccountingColumnVisibility, {
   type ColumnOption
 } from './AccountingColumnVisibility.vue'
+import AccountingPagination from './AccountingPagination.vue'
 import AccountingTrialBalance from './AccountingTrialBalance.vue'
 
 const props = defineProps<{
@@ -252,21 +254,22 @@ const generalLedger = computed(() =>
   })
 )
 
-const pageSize = 20
-const currentPage = ref(1)
-const categoryFilter = ref<'ALL' | LedgerCategory>('ALL')
+const searchQuery = ref('')
 
-watch([() => props.walletAddress, categoryFilter, accountingPeriod], () => {
-  currentPage.value = 1
-})
+const { page, pageSize, reset } = usePagination(() => totalActivities.value, { key: 'ledger' })
 
-const categoryOptions = [
-  { label: 'All categories', value: 'ALL' as const },
-  ...Object.entries(CATEGORY_META).map(([value, meta]) => ({
+const categoryOptions: CategoryOption<LedgerCategory>[] = Object.entries(CATEGORY_META).map(
+  ([value, meta]) => ({
     label: meta.label,
     value: value as LedgerCategory
-  }))
-]
+  })
+)
+const allCategoryValues = categoryOptions.map(option => option.value)
+
+// Multi-select: every category selected == "All categories".
+const selectedCategories = ref<LedgerCategory[]>([...allCategoryValues])
+
+watch([() => props.walletAddress, selectedCategories, accountingPeriod, searchQuery], reset)
 
 // --- Build the merged row list (one row per journal line) ---
 const allRows = computed(() =>
@@ -281,12 +284,37 @@ function inSelectedPeriod(timestamp: number): boolean {
   return timestamp <= end
 }
 
+const selectedCategorySet = computed(() => new Set(selectedCategories.value))
+
+function ledgerRowMatchesSearch(row: MergedLedgerRow, query: string): boolean {
+  const meta = CATEGORY_META[row.entry.category]
+  return matchesAccountingSearch(
+    query,
+    row.entry.description,
+    row.entry.outcome,
+    meta.label,
+    row.entry.txHash,
+    row.entry.counterparty,
+    row.entry.marketSlug,
+    row.account
+  )
+}
+
 const filteredRows = computed(() => {
-  const rows = allRows.value.filter(row => inSelectedPeriod(row.entry.timestamp))
-  if (categoryFilter.value === 'ALL') {
+  let rows = allRows.value.filter(row => inSelectedPeriod(row.entry.timestamp))
+  if (selectedCategories.value.length !== allCategoryValues.length) {
+    rows = rows.filter(row => selectedCategorySet.value.has(row.entry.category))
+  }
+  if (!normalizeAccountingSearchQuery(searchQuery.value)) {
     return rows
   }
-  return rows.filter(row => row.entry.category === categoryFilter.value)
+  const matchingEntryIds = new Set<string>()
+  for (const row of rows) {
+    if (ledgerRowMatchesSearch(row, searchQuery.value)) {
+      matchingEntryIds.add(row.entry.id)
+    }
+  }
+  return rows.filter(row => matchingEntryIds.has(row.entry.id))
 })
 
 // Pagination counts ACTIVITIES (isFirst rows), not journal lines — a page of
@@ -304,8 +332,8 @@ const activityStarts = computed(() => {
 const totalActivities = computed(() => activityStarts.value.length)
 
 const pagedRows = computed<MergedLedgerRow[]>(() => {
-  const startActivityIdx = (currentPage.value - 1) * pageSize
-  const endActivityIdx = startActivityIdx + pageSize
+  const startActivityIdx = (page.value - 1) * pageSize.value
+  const endActivityIdx = startActivityIdx + pageSize.value
   const start = activityStarts.value[startActivityIdx]
   const end = activityStarts.value[endActivityIdx] ?? filteredRows.value.length
   if (start === undefined) {
@@ -332,8 +360,8 @@ const ALL_COLUMNS: ColumnOption<MergedColumnKey>[] = [
   { label: 'Tx', value: 'tx' }
 ]
 
-// Default: everything visible.
-const visibleColumns = useLocalStorage<MergedColumnKey[]>(
+// sessionStorage: per browser tab (localStorage syncs across tabs via storage events).
+const visibleColumns = useSessionStorage<MergedColumnKey[]>(
   'dashboard-accounting-ledger-visible-columns',
   ALL_COLUMNS.map(c => c.value)
 )

@@ -4,7 +4,7 @@ import {
   syncWeeklyClaims,
   updateWeeklyClaims,
 } from '../controllers/weeklyClaimController';
-import { requireTeamMember } from '../middleware/teamAuthzMiddleware';
+import { rejectIfArchived, requireTeamMember } from '../middleware/teamAuthzMiddleware';
 import {
   validate,
   validateQuery,
@@ -228,6 +228,7 @@ weeklyClaimRoutes.post(
   '/sync',
   validateQuery(syncWeeklyClaimsQuerySchema),
   requireTeamMember('query.teamId'),
+  rejectIfArchived('query.teamId'),
   syncWeeklyClaims
 );
 
@@ -342,6 +343,7 @@ weeklyClaimRoutes.put(
     query: updateWeeklyClaimQuerySchema,
     body: updateWeeklyClaimBodySchema,
   }),
+  rejectIfArchived('params.weeklyClaimId'),
   updateWeeklyClaims
 );
 

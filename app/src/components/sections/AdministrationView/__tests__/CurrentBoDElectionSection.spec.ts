@@ -34,10 +34,21 @@ describe('ElectionComponent', () => {
       },
       global: {
         stubs: {
-          CreateElectionForm: true,
+          CreateElectionForm: {
+            name: 'CreateElectionForm',
+            props: ['isLoading', 'errorMessage'],
+            emits: ['createProposal', 'closeModal'],
+            template: '<div data-test="create-election-form"></div>'
+          },
           ElectionStatus: true,
           ElectionStats: true,
-          ElectionActions: true,
+          ElectionActions: {
+            name: 'ElectionActions',
+            props: ['electionId'],
+            emits: ['showResultsModal', 'showCreateElectionModal'],
+            template:
+              '<button data-test="open-create-election" @click="$emit(\'showCreateElectionModal\')"></button>'
+          },
           CurrentBoDElection404: true
         }
       }
@@ -68,6 +79,9 @@ describe('ElectionComponent', () => {
     it('handles past start date by adjusting to future', async () => {
       wrapper = createWrapper()
 
+      // Open the modal via ElectionActions to mount CreateElectionForm
+      await wrapper.find('[data-test="open-create-election"]').trigger('click')
+
       const pastDate = new Date(Date.now() - 86400000) // Yesterday
       const mockPastElectionData = {
         ...mockElectionData,
@@ -75,11 +89,9 @@ describe('ElectionComponent', () => {
         endDate: new Date(Date.now() - 43200000) // 12 hours ago
       }
 
-      const vm = wrapper.vm as unknown as {
-        createElection: (data: typeof mockPastElectionData) => Promise<void>
-      }
-
-      await vm.createElection(mockPastElectionData)
+      const form = wrapper.findComponent({ name: 'CreateElectionForm' })
+      await form.vm.$emit('createProposal', mockPastElectionData)
+      await new Promise((resolve) => setTimeout(resolve, 0))
 
       const [{ args }] = mockElectionsWrites.createElection.mutateAsync.mock.calls[0]! as [
         { args: readonly unknown[] }

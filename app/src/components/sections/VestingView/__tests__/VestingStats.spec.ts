@@ -1,6 +1,26 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { mount, type VueWrapper } from '@vue/test-utils'
-import { createTestingPinia } from '@pinia/testing'
+import { type VueWrapper } from '@vue/test-utils'
+import { renderWithProviders } from '@/tests/mocks'
+
+// Auto-imported @nuxt/ui components bypass `config.global.stubs` because the
+// Nuxt UI Vite plugin resolves them through their file path. Mock the module
+// so our stub renders and we can inspect props instead of reaching into vm.
+vi.mock('@nuxt/ui/components/Table.vue', () => ({
+  default: {
+    name: 'UTable',
+    props: ['data', 'columns', 'sticky', 'showPagination'],
+    template: `
+      <div data-test="vesting-stats-table">
+        <div v-for="(row, i) in data" :key="i" data-test="vesting-stats-row">
+          <slot name="totalVested-cell" :row="{ original: row }" />
+          <slot name="totalReleased-cell" :row="{ original: row }" />
+          <slot name="totalWithdrawn-cell" :row="{ original: row }" />
+        </div>
+      </div>
+    `
+  }
+}))
+
 import VestingStats from '@/components/sections/VestingView/VestingStats.vue'
 
 import { ref } from 'vue'
@@ -72,12 +92,9 @@ describe('VestingStats.vue', () => {
   let wrapper: VueWrapper
 
   const mountComponent = () => {
-    return mount(VestingStats, {
+    return renderWithProviders(VestingStats, {
       props: {
         reloadKey: mockReloadKey.value
-      },
-      global: {
-        plugins: [createTestingPinia({ createSpy: vi.fn })]
       }
     })
   }
@@ -106,9 +123,13 @@ describe('VestingStats.vue', () => {
     wrapper = mountComponent()
     await wrapper.vm.$nextTick()
 
-    const summaryRows = (wrapper.vm as (typeof VestingStats)['prototype']).tokenSummaryRows
-    expect(summaryRows).toHaveLength(1) // Should have one row per token symbol
-    expect(summaryRows[0]).toMatchObject({
+    const tableData = wrapper.findComponent({ name: 'UTable' }).props('data') as Array<{
+      symbol: string
+      totalVested: number
+      totalReleased: number
+    }>
+    expect(tableData).toHaveLength(1) // Should have one row per token symbol
+    expect(tableData[0]).toMatchObject({
       symbol: mockSymbol.value,
       totalVested: 150,
       totalReleased: 30
@@ -119,8 +140,8 @@ describe('VestingStats.vue', () => {
     mockVestingInfos.value = [[], []]
     wrapper = mountComponent()
 
-    const summaryRows = (wrapper.vm as (typeof VestingStats)['prototype']).tokenSummaryRows
-    expect(summaryRows).toHaveLength(1)
+    const tableData = wrapper.findComponent({ name: 'UTable' }).props('data') as Array<unknown>
+    expect(tableData).toHaveLength(1)
   })
 
   it('displays formatted token amounts with symbols', async () => {

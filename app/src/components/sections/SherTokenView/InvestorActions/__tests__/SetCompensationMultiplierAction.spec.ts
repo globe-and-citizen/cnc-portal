@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { flushPromises, mount } from '@vue/test-utils'
-import { createTestingPinia } from '@pinia/testing'
+import { flushPromises } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import SetCompensationMultiplierAction from '../SetCompensationMultiplierAction.vue'
 import {
@@ -9,21 +8,19 @@ import {
   mockSafeDepositRouterReads,
   mockSafeDepositRouterWrites,
   mockUseConnection,
-  resetSafeDepositRouterMocks
+  renderWithProviders
 } from '@/tests/mocks'
 
 describe('SetCompensationMultiplierAction.vue', () => {
   const createWrapper = () =>
-    mount(SetCompensationMultiplierAction, {
+    renderWithProviders(SetCompensationMultiplierAction, {
       global: {
-        plugins: [createTestingPinia({ createSpy: vi.fn })],
         stubs: { teleport: true }
       }
     })
 
   beforeEach(() => {
     vi.clearAllMocks()
-    resetSafeDepositRouterMocks()
     mockParseError.mockReturnValue('Parsed error message')
 
     mockSafeDepositRouterAddress.value = '0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'
@@ -72,32 +69,36 @@ describe('SetCompensationMultiplierAction.vue', () => {
   })
 
   it('handleSetMultiplier shows error when address is missing', async () => {
-    mockSafeDepositRouterAddress.value = ''
     const wrapper = createWrapper()
-    const vm = wrapper.vm as unknown as { handleSetMultiplier: () => Promise<void> }
 
-    await vm.handleSetMultiplier()
+    await wrapper.find('[data-test="set-compensation-multiplier-button"]').trigger('click')
+    await wrapper.find('[data-test="multiplier-input"]').setValue('3')
+    mockSafeDepositRouterAddress.value = ''
+    await wrapper.find('form').trigger('submit')
+    await flushPromises()
 
-    expect(wrapper.exists()).toBe(true)
+    expect(mockSafeDepositRouterWrites.setMultiplier.mutateAsync).not.toHaveBeenCalled()
   })
 
   it('handleSetMultiplier blocks non-owner', async () => {
-    mockUseConnection.address.value = '0x0000000000000000000000000000000000000001'
     const wrapper = createWrapper()
-    const vm = wrapper.vm as unknown as { handleSetMultiplier: () => Promise<void> }
 
-    await vm.handleSetMultiplier()
+    await wrapper.find('[data-test="set-compensation-multiplier-button"]').trigger('click')
+    await wrapper.find('[data-test="multiplier-input"]').setValue('3')
+    mockUseConnection.address.value = '0x0000000000000000000000000000000000000001'
+    await wrapper.find('form').trigger('submit')
+    await flushPromises()
 
-    expect(wrapper.exists()).toBe(true)
+    expect(mockSafeDepositRouterWrites.setMultiplier.mutateAsync).not.toHaveBeenCalled()
   })
 
   it('handleSetMultiplier blocks invalid multiplier', async () => {
     const wrapper = createWrapper()
-    const vm = wrapper.vm as unknown as { handleSetMultiplier: () => Promise<void> }
 
     await wrapper.find('[data-test="set-compensation-multiplier-button"]').trigger('click')
     await wrapper.find('[data-test="multiplier-input"]').setValue('abc')
-    await vm.handleSetMultiplier()
+    await wrapper.find('form').trigger('submit')
+    await flushPromises()
 
     expect(mockSafeDepositRouterWrites.setMultiplier.mutateAsync).not.toHaveBeenCalled()
   })
@@ -154,11 +155,11 @@ describe('SetCompensationMultiplierAction.vue', () => {
 
   it('handleSetMultiplier executes write for valid changed value', async () => {
     const wrapper = createWrapper()
-    const vm = wrapper.vm as unknown as { handleSetMultiplier: () => Promise<void> }
 
     await wrapper.find('[data-test="set-compensation-multiplier-button"]').trigger('click')
     await wrapper.find('[data-test="multiplier-input"]').setValue('3')
-    await vm.handleSetMultiplier()
+    await wrapper.find('form').trigger('submit')
+    await flushPromises()
 
     expect(mockSafeDepositRouterWrites.setMultiplier.mutateAsync).toHaveBeenCalledTimes(1)
   })
@@ -166,11 +167,11 @@ describe('SetCompensationMultiplierAction.vue', () => {
   it('handleSetMultiplier blocks submission when parse returns 0n', async () => {
     mockSafeDepositRouterReads.multiplier.data.value = 5000000n
     const wrapper = createWrapper()
-    const vm = wrapper.vm as unknown as { handleSetMultiplier: () => Promise<void> }
 
     await wrapper.find('[data-test="set-compensation-multiplier-button"]').trigger('click')
     await wrapper.find('[data-test="multiplier-input"]').setValue('+3')
-    await vm.handleSetMultiplier()
+    await wrapper.find('form').trigger('submit')
+    await flushPromises()
 
     expect(mockSafeDepositRouterWrites.setMultiplier.mutateAsync).not.toHaveBeenCalled()
   })

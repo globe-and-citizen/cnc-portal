@@ -1,12 +1,12 @@
 <template>
-  <UTooltip :text="!canMint ? cannotMintReason : undefined">
+  <UTooltip :text="mintTooltip">
     <ActionButton
       icon="heroicons:plus-circle"
       icon-bg="bg-teal-50 dark:bg-teal-950"
       icon-color="text-teal-700 dark:text-teal-400"
       title="Mint"
       tone-class="border-teal-200 bg-teal-50/60 hover:border-teal-300 hover:bg-teal-100/70 disabled:border-teal-200 disabled:bg-teal-50/50 dark:border-teal-900 dark:bg-teal-950/30 dark:hover:border-teal-800 dark:hover:bg-teal-900/40 dark:disabled:border-teal-900 dark:disabled:bg-teal-950/30"
-      :disabled="!canMint"
+      :disabled="isWriteDisabled || !canMint"
       data-test="mint-button"
       @click="openModal"
     />
@@ -31,6 +31,7 @@ import type { Address } from 'viem'
 import MintForm from '@/components/sections/SherTokenView/forms/MintForm.vue'
 import ActionButton from '@/components/sections/SherTokenView/ActionButton.vue'
 import { useUserDataStore } from '@/stores'
+import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 
 interface Props {
   tokenSymbol: string
@@ -40,6 +41,7 @@ interface Props {
 const props = defineProps<Props>()
 
 const { address: currentAddress } = useUserDataStore()
+const { isWriteDisabled, archivedTooltip } = useTeamWriteGuard()
 
 const modalState = ref({
   mount: false,
@@ -55,7 +57,14 @@ const cannotMintReason = computed(() => {
   return ''
 })
 
+const mintTooltip = computed(() => {
+  if (archivedTooltip.value) return archivedTooltip.value
+  if (!canMint.value) return cannotMintReason.value
+  return undefined
+})
+
 const openModal = () => {
+  if (isWriteDisabled.value) return
   modalState.value = { mount: true, show: true }
 }
 

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { useERC20Approve } from '../writes'
-import { mockERC20Writes, resetERC20Mocks } from '@/tests/mocks'
+import { mockERC20Writes } from '@/tests/mocks'
 import type { Address } from 'viem'
 
 const MOCK_DATA = {
@@ -12,7 +12,6 @@ const MOCK_DATA = {
 describe('ERC20 Contract Writes', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    resetERC20Mocks()
   })
 
   it('useERC20Approve returns the approve V3 mutation', () => {

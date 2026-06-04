@@ -108,6 +108,16 @@ export const mockNotificationsRef = ref<Notification[]>([...mockNotificationData
 export const mockUpdateNotificationMutateAsync = vi.fn().mockResolvedValue(undefined)
 
 /**
+ * Restore the shared notifications query mock to its default. `mockNotificationsRef`
+ * is returned by the globally-mocked `useGetNotificationsQuery`, so specs that mutate
+ * `.value` would otherwise leak that list into the next test.
+ */
+export const resetNotificationsMock = () => {
+  mockNotificationsRef.value = [...mockNotificationData]
+  mockUpdateNotificationMutateAsync.mockClear()
+}
+
+/**
  * User Query Mocks
  */
 export const mockUserData: User = {
@@ -351,7 +361,8 @@ export const queryMocks: Record<string, () => Record<string, unknown>> = {
   }),
 
   // Weekly Claim queries - weeklyClaim.queries.ts
-  useGetTeamWeeklyClaimsQuery: () => createMockQueryResponse(mockWeeklyClaimData),
+  useGetTeamWeeklyClaimsQuery: () =>
+    createMockQueryResponse({ data: mockWeeklyClaimData, total: mockWeeklyClaimData.length }),
   useGetWeeklyClaimByIdQuery: () => createMockQueryResponse(mockWeeklyClaimData[0]),
   useUpdateWeeklyClaimMutation: () => createMockMutationResponse(),
   useEditClaimMutation: () => createMockMutationResponse(),

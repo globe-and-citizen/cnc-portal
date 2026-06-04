@@ -3,7 +3,7 @@ import { mount } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
 import InvestorsActions from '@/components/sections/SherTokenView/InvestorsActions.vue'
 import type { Address } from 'viem'
-import { mockInvestorReads, mockTeamStore, resetContractMocks } from '@/tests/mocks'
+import { mockInvestorReads, mockTeamStore } from '@/tests/mocks'
 
 const DistributeMintActionStub = {
   props: ['tokenSymbol', 'investorsAddress'],
@@ -34,7 +34,6 @@ const SetCompensationMultiplierButtonStub = {
 
 describe('InvestorsActions.vue', () => {
   beforeEach(() => {
-    resetContractMocks()
     vi.clearAllMocks()
 
     mockTeamStore.getContractAddressByType = vi.fn((type: string) => {

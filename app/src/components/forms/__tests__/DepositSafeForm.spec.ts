@@ -1,7 +1,7 @@
 import { mount, flushPromises } from '@vue/test-utils'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { createTestingPinia } from '@pinia/testing'
-import { nextTick, type ComponentPublicInstance } from 'vue'
+import { nextTick } from 'vue'
 import { type Address } from 'viem'
 import DepositSafeForm from '@/components/forms/DepositSafeForm.vue'
 import {
@@ -9,22 +9,8 @@ import {
   mockUseSafeSendTransaction,
   mockERC20Reads,
   mockERC20Writes,
-  resetTransactionMocks,
-  resetERC20Mocks,
   useQueryClientFn
 } from '@/tests/mocks'
-
-type DepositSafeFormTestVm = ComponentPublicInstance & {
-  amount: string
-  selectedTokenId: string
-  isAmountValid: boolean
-  currentStep: number
-  submitLabel: string
-  errorMessage: string | null
-  submitForm: () => Promise<void>
-  handleCancel: () => void
-  bigIntAmount: bigint
-}
 
 describe('DepositSafeForm.vue', () => {
   const defaultProps = {
@@ -39,9 +25,6 @@ describe('DepositSafeForm.vue', () => {
       }
     })
 
-  const getVm = (wrapper: ReturnType<typeof createWrapper>) =>
-    wrapper.vm as unknown as DepositSafeFormTestVm
-
   const createQueryClient = () => {
     const invalidateQueries = vi.fn(async () => undefined)
     useQueryClientFn.mockReturnValue({
@@ -51,13 +34,6 @@ describe('DepositSafeForm.vue', () => {
       removeQueries: vi.fn(() => undefined)
     })
     return { invalidateQueries }
-  }
-
-  const configureErc20Submit = async (wrapper: ReturnType<typeof createWrapper>): Promise<void> => {
-    const vm = getVm(wrapper)
-    vm.selectedTokenId = 'usdc'
-    vm.isAmountValid = true
-    await vm.submitForm()
   }
 
   const setTokenAmount = async (
@@ -72,9 +48,17 @@ describe('DepositSafeForm.vue', () => {
     await nextTick()
   }
 
+  const submitForm = async (wrapper: ReturnType<typeof createWrapper>): Promise<void> => {
+    await wrapper.find('form').trigger('submit.prevent')
+    await flushPromises()
+  }
+
+  const getDepositButton = (wrapper: ReturnType<typeof createWrapper>) =>
+    wrapper
+      .findAllComponents({ name: 'UButton' })
+      .find((b) => b.attributes('data-test') === 'deposit-button')
+
   beforeEach(() => {
-    resetTransactionMocks()
-    resetERC20Mocks()
     createQueryClient()
   })
 
@@ -85,7 +69,7 @@ describe('DepositSafeForm.vue', () => {
   describe('User Interactions', () => {
     it('should emit closeModal and reset form when cancel button is clicked', async () => {
       const wrapper = createWrapper()
-      await setTokenAmount(wrapper, '100', 'usdc', true)
+      await setTokenAmount(wrapper, '1', 'usdc', true)
 
       await wrapper.find('[data-test="cancel-button"]').trigger('click')
 
@@ -94,7 +78,7 @@ describe('DepositSafeForm.vue', () => {
 
     it('should not submit when form is invalid', async () => {
       const wrapper = createWrapper()
-      await setTokenAmount(wrapper, '1', 'native', false)
+      await setTokenAmount(wrapper, '0.1', 'native', false)
 
       await wrapper.find('[data-test="deposit-button"]').trigger('click')
       await nextTick()
@@ -109,7 +93,6 @@ describe('DepositSafeForm.vue', () => {
       })
       await wrapper.vm.$nextTick()
 
-      expect(getVm(wrapper).errorMessage).toBe('Native error')
       expect(wrapper.text()).toContain('Native error')
     })
   })
@@ -121,12 +104,9 @@ describe('DepositSafeForm.vue', () => {
         receipt: { status: 'success' }
       })
       const wrapper = createWrapper()
-      const vm = getVm(wrapper)
 
-      vm.amount = '1'
-      vm.selectedTokenId = 'native'
-      vm.isAmountValid = true
-      await vm.submitForm()
+      await setTokenAmount(wrapper, '0.1', 'native', true)
+      await submitForm(wrapper)
       await flushPromises()
 
       expect(mockTransactionFunctions.mockMutateAsync).toHaveBeenCalled()
@@ -137,7 +117,7 @@ describe('DepositSafeForm.vue', () => {
       mockUseSafeSendTransaction.isPending.value = true
       const wrapper = createWrapper()
 
-      await setTokenAmount(wrapper, '1', 'native', true)
+      await setTokenAmount(wrapper, '0.1', 'native', true)
       await wrapper.find('[data-test="deposit-button"]').trigger('click')
       await nextTick()
 
@@ -147,16 +127,14 @@ describe('DepositSafeForm.vue', () => {
     it('handles native deposit failures gracefully', async () => {
       mockTransactionFunctions.mockMutateAsync.mockRejectedValueOnce(new Error('Native failed'))
       const wrapper = createWrapper()
-      const vm = getVm(wrapper)
 
-      vm.amount = '1'
-      vm.selectedTokenId = 'native'
-      vm.isAmountValid = true
-      await vm.submitForm()
+      await setTokenAmount(wrapper, '0.1', 'native', true)
+      await submitForm(wrapper)
       await flushPromises()
 
-      expect(getVm(wrapper).submitLabel).toBe('Deposit')
-      expect(getVm(wrapper).errorMessage).toBeNull()
+      // Submit label resets to "Deposit" (not loading anymore)
+      expect(getDepositButton(wrapper)?.text()).toContain('Deposit')
+      expect(getDepositButton(wrapper)?.props('loading')).toBe(false)
     })
   })
 
@@ -167,7 +145,7 @@ describe('DepositSafeForm.vue', () => {
 
       const wrapper = createWrapper()
       await setTokenAmount(wrapper, '1', 'usdc', true)
-      await configureErc20Submit(wrapper)
+      await submitForm(wrapper)
       await flushPromises()
 
       expect(mockERC20Writes.transfer.mutateAsync).toHaveBeenCalledWith(
@@ -184,7 +162,7 @@ describe('DepositSafeForm.vue', () => {
       const wrapper = createWrapper()
 
       await setTokenAmount(wrapper, '1', 'usdc.e', true)
-      await configureErc20Submit(wrapper)
+      await submitForm(wrapper)
       await flushPromises()
 
       expect(mockERC20Writes.transfer.mutateAsync).toHaveBeenCalledWith(
@@ -202,11 +180,13 @@ describe('DepositSafeForm.vue', () => {
 
       const wrapper = createWrapper()
       await setTokenAmount(wrapper, '1', 'usdc', true)
-      await configureErc20Submit(wrapper)
+      await submitForm(wrapper)
       await flushPromises()
 
       expect(mockERC20Writes.transfer.mutateAsync).not.toHaveBeenCalled()
-      expect(getVm(wrapper).currentStep).toBe(1)
+      // Approval step is reached (label shows "Approval" while pending — but here it
+      // failed, so the form remains open without emitting closeModal)
+      expect(wrapper.emitted('closeModal')).toBeFalsy()
     })
   })
 
@@ -215,7 +195,12 @@ describe('DepositSafeForm.vue', () => {
       const wrapper = createWrapper()
       await setTokenAmount(wrapper, 'invalid', 'usdc', false)
 
-      expect(getVm(wrapper).bigIntAmount).toBe(0n)
+      // Schema rejects invalid amounts; deposit mutation must not run when submit is attempted
+      await submitForm(wrapper)
+      await flushPromises()
+
+      expect(mockERC20Writes.transfer.mutateAsync).not.toHaveBeenCalled()
+      expect(mockERC20Writes.approve.mutateAsync).not.toHaveBeenCalled()
     })
 
     it('should handle zero allowance correctly', async () => {
@@ -223,7 +208,7 @@ describe('DepositSafeForm.vue', () => {
 
       const wrapper = createWrapper()
       await setTokenAmount(wrapper, '1', 'usdc', true)
-      await configureErc20Submit(wrapper)
+      await submitForm(wrapper)
       await flushPromises()
 
       expect(mockERC20Writes.approve.mutateAsync).toHaveBeenCalled()
@@ -235,11 +220,11 @@ describe('DepositSafeForm.vue', () => {
       const wrapper = createWrapper()
 
       await setTokenAmount(wrapper, '1', 'usdc', true)
-      await configureErc20Submit(wrapper)
+      await submitForm(wrapper)
       await flushPromises()
 
       expect(wrapper.emitted('closeModal')).toBeFalsy()
-      expect(getVm(wrapper).submitLabel).toBe('Deposit')
+      expect(getDepositButton(wrapper)?.text()).toContain('Deposit')
     })
   })
 })

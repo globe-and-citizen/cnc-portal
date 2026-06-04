@@ -12,8 +12,7 @@ import {
   mockLog,
   mockTeamStore,
   mockToast,
-  mockUserStore,
-  resetContractMocks
+  mockUserStore
 } from '@/tests/mocks'
 
 describe('PayDividendsAction.vue', () => {
@@ -52,7 +51,6 @@ describe('PayDividendsAction.vue', () => {
     })
 
   beforeEach(() => {
-    resetContractMocks()
     vi.clearAllMocks()
     vi.stubGlobal('useToast', () => mockToast)
 
@@ -148,11 +146,11 @@ describe('PayDividendsAction.vue', () => {
 
   it('handleSubmit exits early when value is zero', async () => {
     const wrapper = createWrapper()
-    const vm = wrapper.vm as unknown as {
-      handleSubmit: (value: bigint, tokenId: 'native' | 'usdc') => Promise<void>
-    }
 
-    await vm.handleSubmit(0n, 'native')
+    await wrapper.find('[data-test="pay-dividends-button"]').trigger('click')
+    await nextTick()
+    await wrapper.findComponent({ name: 'PayDividendsForm' }).vm.$emit('submit', 0n, 'native')
+    await nextTick()
 
     expect(mockBankWrites.distributeNativeDividends.mutateAsync).not.toHaveBeenCalled()
     expect(mockBodAddAction.executeAddAction).not.toHaveBeenCalled()
@@ -161,11 +159,11 @@ describe('PayDividendsAction.vue', () => {
   it('in BOD mode exits early when bankAddress is missing', async () => {
     mockBodIsBodAction.isBodAction.value = true
     const wrapper = createWrapper({ bankAddress: undefined })
-    const vm = wrapper.vm as unknown as {
-      handleSubmit: (value: bigint, tokenId: 'native' | 'usdc') => Promise<void>
-    }
 
-    await vm.handleSubmit(1n, 'native')
+    await wrapper.find('[data-test="pay-dividends-button"]').trigger('click')
+    await nextTick()
+    await wrapper.findComponent({ name: 'PayDividendsForm' }).vm.$emit('submit', 1n, 'native')
+    await nextTick()
 
     expect(mockBodAddAction.executeAddAction).not.toHaveBeenCalled()
   })
@@ -173,11 +171,11 @@ describe('PayDividendsAction.vue', () => {
   it('in BOD mode creates native dividends action', async () => {
     mockBodIsBodAction.isBodAction.value = true
     const wrapper = createWrapper()
-    const vm = wrapper.vm as unknown as {
-      handleSubmit: (value: bigint, tokenId: 'native' | 'usdc') => Promise<void>
-    }
 
-    await vm.handleSubmit(2n, 'native')
+    await wrapper.find('[data-test="pay-dividends-button"]').trigger('click')
+    await nextTick()
+    await wrapper.findComponent({ name: 'PayDividendsForm' }).vm.$emit('submit', 2n, 'native')
+    await nextTick()
 
     expect(mockBodAddAction.executeAddAction).toHaveBeenCalledTimes(1)
     expect(mockBodAddAction.executeAddAction).toHaveBeenCalledWith(
@@ -188,11 +186,11 @@ describe('PayDividendsAction.vue', () => {
   it('in BOD mode creates token dividends action', async () => {
     mockBodIsBodAction.isBodAction.value = true
     const wrapper = createWrapper()
-    const vm = wrapper.vm as unknown as {
-      handleSubmit: (value: bigint, tokenId: 'native' | 'usdc') => Promise<void>
-    }
 
-    await vm.handleSubmit(3n, 'usdc')
+    await wrapper.find('[data-test="pay-dividends-button"]').trigger('click')
+    await nextTick()
+    await wrapper.findComponent({ name: 'PayDividendsForm' }).vm.$emit('submit', 3n, 'usdc')
+    await nextTick()
 
     expect(mockBodAddAction.executeAddAction).toHaveBeenCalledTimes(1)
     expect(mockBodAddAction.executeAddAction).toHaveBeenCalledWith(
@@ -205,16 +203,12 @@ describe('PayDividendsAction.vue', () => {
 
   it('in non-BOD mode executes native write and closes modal', async () => {
     const wrapper = createWrapper()
-    const vm = wrapper.vm as unknown as {
-      handleSubmit: (value: bigint, tokenId: 'native' | 'usdc') => Promise<void>
-      openModal: () => void
-    }
 
-    vm.openModal()
+    await wrapper.find('[data-test="pay-dividends-button"]').trigger('click')
     await nextTick()
     expect(wrapper.find('[data-test="pay-dividends-form"]').exists()).toBe(true)
 
-    await vm.handleSubmit(5n, 'native')
+    await wrapper.findComponent({ name: 'PayDividendsForm' }).vm.$emit('submit', 5n, 'native')
     await nextTick()
 
     expect(mockBankWrites.distributeNativeDividends.mutateAsync).toHaveBeenCalledWith({
@@ -225,11 +219,11 @@ describe('PayDividendsAction.vue', () => {
 
   it('in non-BOD mode executes token write', async () => {
     const wrapper = createWrapper()
-    const vm = wrapper.vm as unknown as {
-      handleSubmit: (value: bigint, tokenId: 'native' | 'usdc') => Promise<void>
-    }
 
-    await vm.handleSubmit(6n, 'usdc')
+    await wrapper.find('[data-test="pay-dividends-button"]').trigger('click')
+    await nextTick()
+    await wrapper.findComponent({ name: 'PayDividendsForm' }).vm.$emit('submit', 6n, 'usdc')
+    await nextTick()
 
     expect(mockBankWrites.distributeTokenDividends.mutateAsync).toHaveBeenCalledTimes(1)
   })

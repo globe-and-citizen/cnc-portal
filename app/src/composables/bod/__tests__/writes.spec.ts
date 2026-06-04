@@ -1,11 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { useBodAddAction, useBodApproveAction } from '../writes'
-import { mockBodAddAction, mockBodApproveAction, resetContractMocks } from '@/tests/mocks'
+import { mockBodAddAction, mockBodApproveAction } from '@/tests/mocks'
 
 describe('BOD Contract Writes', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    resetContractMocks()
   })
 
   describe('useBodAddAction', () => {

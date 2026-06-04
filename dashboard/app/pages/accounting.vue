@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { TabsItem } from '@nuxt/ui'
+import { isAddress } from 'viem'
 import { useAccounting } from '~/composables/useAccounting'
 import { useWalletAddress } from '~/composables/useWalletAddress'
 
@@ -7,6 +8,18 @@ import { useWalletAddress } from '~/composables/useWalletAddress'
 // Each browser tab keeps its own wallet — two tabs analyze two wallets at once.
 const { address: walletAddress, set: setWalletAddress } = useWalletAddress()
 const hasAddress = computed(() => walletAddress.value.trim().length > 0)
+
+const isValidWalletAddress = computed(
+  () => hasAddress.value && isAddress(walletAddress.value.trim() as `0x${string}`)
+)
+
+const polymarketProfileUrl = computed(() => {
+  const addr = walletAddress.value.trim()
+  if (!isAddress(addr as `0x${string}`)) {
+    return undefined
+  }
+  return `https://polymarket.com/profile/${addr}`
+})
 
 const {
   entries, summary, positions, activities, realizedTrades,
@@ -57,13 +70,25 @@ const errorMessage = computed(() => {
           description="Synced with the page URL — open a second tab with a different ?address= to analyze two wallets at once."
           :ui="{ container: 'w-full max-w-xl' }"
         >
-          <UInput
-            :model-value="walletAddress"
-            class="w-full font-mono text-sm"
-            placeholder="0x..."
-            autocomplete="off"
-            @update:model-value="setWalletAddress"
-          />
+          <div class="flex w-full items-center gap-6 justify-between">
+            <UInput
+              :model-value="walletAddress"
+              class="w-full font-mono text-sm"
+              placeholder="0x..."
+              autocomplete="off"
+              @update:model-value="setWalletAddress"
+            />
+            <UButton
+              label="View on Polymarket"
+              icon="i-lucide-external-link"
+              color="secondary"
+              variant="outline"
+              class="shrink-0"
+              :disabled="!isValidWalletAddress"
+              :to="polymarketProfileUrl"
+              target="_blank"
+            />
+          </div>
         </UFormField>
       </UPageCard>
 
@@ -106,6 +131,7 @@ const errorMessage = computed(() => {
             :positions="positions"
             :is-loading="isLoading"
             :has-address="hasAddress"
+            :wallet-address="walletAddress"
           />
         </template>
 

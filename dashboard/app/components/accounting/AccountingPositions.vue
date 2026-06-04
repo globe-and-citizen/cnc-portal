@@ -1,15 +1,21 @@
 <template>
   <UPageCard variant="subtle">
-    <h3 class="font-semibold text-black dark:text-white mb-4">
-      Positions · {{ positions.length }}
-    </h3>
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+      <h3 class="font-semibold text-black dark:text-white">
+        Positions · {{ filteredPositions.length }}
+      </h3>
+      <AccountingTableSearch
+        v-model="searchQuery"
+        placeholder="Search market, outcome…"
+      />
+    </div>
 
     <UTable
-      :data="sortedPositions"
+      :data="pagedPositions"
       :columns="columns"
       :loading="isLoading"
       :ui="{
-        base: 'table-fixed border-separate border-spacing-0',
+        base: 'table-auto border-separate border-spacing-0',
         thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
         tbody: '[&>tr]:last:[&>td]:border-b-0',
         th: 'py-2 first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
@@ -30,7 +36,7 @@
       </template>
 
       <template #market-cell="{ row }">
-        <div class="flex items-center gap-2 max-w-xs">
+        <div class="flex items-start gap-2 min-w-48">
           <img
             v-if="row.original.icon"
             :src="row.original.icon"
@@ -42,11 +48,11 @@
             :href="marketUrl(row.original)!"
             target="_blank"
             rel="noopener noreferrer"
-            class="truncate hover:underline text-black dark:text-white"
+            class="wrap-break-word hover:underline text-black dark:text-white"
           >
             {{ row.original.title ?? "—" }}
           </a>
-          <span v-else class="truncate">{{ row.original.title ?? "—" }}</span>
+          <span v-else class="wrap-break-word">{{ row.original.title ?? "—" }}</span>
         </div>
       </template>
 
@@ -88,12 +94,24 @@
         </span>
       </template>
     </UTable>
+
+    <AccountingPagination
+      v-model:page="page"
+      v-model:page-size="pageSize"
+      :total="filteredPositions.length"
+      noun="positions"
+    />
   </UPageCard>
 </template>
 
 <script setup lang="ts">
+import { computed, ref, watch } from 'vue'
 import type { PolymarketPosition } from '~/types/polymarket'
+import { usePagination } from '~/composables/usePagination'
 import { formatSignedUsd, formatUsd, signClass } from '~/utils/accounting'
+import { matchesAccountingSearch, normalizeAccountingSearchQuery } from '~/utils/accountingSearch'
+import AccountingPagination from './AccountingPagination.vue'
+import AccountingTableSearch from './AccountingTableSearch.vue'
 
 const props = defineProps<{
   positions: PolymarketPosition[]
@@ -101,10 +119,44 @@ const props = defineProps<{
   hasAddress: boolean
 }>()
 
+const searchQuery = ref('')
+
 /** Open positions first (size > 0), then by current value. */
 const sortedPositions = computed(() =>
   [...props.positions].sort((a, b) => (b.currentValue ?? 0) - (a.currentValue ?? 0))
 )
+
+function positionMatchesSearch(position: PolymarketPosition, query: string): boolean {
+  return matchesAccountingSearch(
+    query,
+    position.title,
+    position.outcome,
+    position.slug,
+    position.eventSlug,
+    position.conditionId,
+    position.asset
+  )
+}
+
+const filteredPositions = computed(() => {
+  if (!normalizeAccountingSearchQuery(searchQuery.value)) {
+    return sortedPositions.value
+  }
+  return sortedPositions.value.filter(position =>
+    positionMatchesSearch(position, searchQuery.value)
+  )
+})
+
+const { page, pageSize, reset } = usePagination(() => filteredPositions.value.length, {
+  key: 'positions'
+})
+
+const pagedPositions = computed(() => {
+  const start = (page.value - 1) * pageSize.value
+  return filteredPositions.value.slice(start, start + pageSize.value)
+})
+
+watch([() => props.positions, searchQuery], reset)
 
 const columns = [
   { accessorKey: 'market', header: 'Market' },

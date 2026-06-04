@@ -18,7 +18,7 @@
             'hover:bg-muted rounded-md px-3 py-1.5',
             {
               'pointer-events-none opacity-50':
-                !isCashRemunerationOwner || isCurrentWeek(weeklyClaim)
+                !isCashRemunerationOwner || isCurrentWeek(weeklyClaim) || isWriteDisabled
             }
           ]"
           data-test="pending-sign"
@@ -57,7 +57,7 @@
           data-test="signed-withdraw"
           :class="[
             'hover:bg-muted rounded-md px-3 py-1.5',
-            { 'pointer-events-none opacity-50': !isClaimOwner }
+            { 'pointer-events-none opacity-50': !isClaimOwner || isWriteDisabled }
           ]"
         >
           <CRWithdrawClaim
@@ -71,17 +71,21 @@
           data-test="signed-disable"
           :class="[
             'hover:bg-muted rounded-md px-3 py-1.5',
-            { 'pointer-events-none opacity-50': !isCashRemunerationOwner }
+            { 'pointer-events-none opacity-50': !isCashRemunerationOwner || isWriteDisabled }
           ]"
         >
           <a
-            :class="['text-sm', { 'pointer-events-none opacity-50': disableTx.isPending.value }]"
+            :class="[
+              'text-sm',
+              { 'pointer-events-none opacity-50': disableTx.isPending.value || isWriteDisabled }
+            ]"
+            :title="isWriteDisabled ? archivedTooltip : undefined"
             :aria-disabled="disableTx.isPending.value"
             :tabindex="disableTx.isPending.value ? -1 : 0"
             :style="{ pointerEvents: disableTx.isPending.value ? 'none' : undefined }"
             @click="
               async () => {
-                if (disableTx.isPending.value) return
+                if (disableTx.isPending.value || isWriteDisabled) return
                 await disableClaim()
               }
             "
@@ -161,6 +165,7 @@ import { classifyError, log } from '@/utils'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useDisableClaim } from '@/composables/cashRemuneration/writes'
 import WeeklyClaimActionEnable from './WeeklyClaimActionEnable.vue'
+import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 
@@ -182,6 +187,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const userStore = useUserDataStore()
 const teamStore = useTeamStore()
+const { isWriteDisabled, archivedTooltip } = useTeamWriteGuard()
 const toast = useToast()
 const queryClient = useQueryClient()
 

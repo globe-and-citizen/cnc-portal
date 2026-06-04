@@ -1,5 +1,80 @@
 # Test Utilities Guide
 
+## Global mocks are mandatory
+
+The Vitest setup files under [`setup/`](./setup) call `vi.mock(...)` once for every commonly used dependency: wagmi (`@wagmi/vue`, `@wagmi/core`, `@/wagmi.config`), `viem`, TanStack Query, Apollo, Pinia stores (`@/stores/*`), the canned `@/queries/*.queries` hooks, the ERC20-style `@/composables/<domain>/{reads,writes}` modules, the stubbed Nuxt UI primitives (`Modal`, `Tooltip`, `SelectMenu`, `Icon`, `Button`, `Calendar`, `Popover`, `DropdownMenu`), `@/lib/axios`, `@/utils`, and more. Per-test override hooks (`mockTeamStore`, `mockERC20Reads`, `resetERC20Mocks`, …) are re-exported from [`@/tests/mocks`](./mocks).
+
+**Specs must reuse the global mocks**, not re-declare them locally:
+
+```typescript
+// ❌ Don't — already mocked in src/tests/setup/wagmi.vue.setup.ts
+vi.mock('@wagmi/vue', () => ({
+  /* … */
+}))
+
+// ✅ Do — override the per-test value on the shared mock
+import { mockERC20Reads, resetERC20Mocks } from '@/tests/mocks'
+
+beforeEach(() => resetERC20Mocks())
+mockERC20Reads.balanceOf.data.value = 1000n
+```
+
+ESLint enforces this via `no-restricted-syntax`: any `vi.mock('<globally-mocked-path>')` call in a spec file is an error. The list of banned paths and the legacy-offender allow-list live in [`app/eslint.config.js`](../../eslint.config.js) under `bannedGlobalMockPaths` / `globalMockLegacyFiles`. The full mock system is documented in [`docs/testing/MOCK_SYSTEM.md`](../../../docs/testing/MOCK_SYSTEM.md).
+
+If you need to mock a module that **isn't** yet globally mocked but you're reaching for it across several specs, add it to `src/tests/setup/` and re-export the override hook from `src/tests/mocks/index.ts` rather than re-mocking it in each spec.
+
+## Mounting components: `renderWithProviders`
+
+`renderWithProviders` (from [`@/tests/mocks`](./mocks)) is the **default mounting path** for component specs. It is a drop-in for `mount` that installs the providers nearly every spec needs — `createTestingPinia` and the route stub — so you stop copy-pasting `global.plugins` into every file.
+
+```typescript
+// ❌ Before — every spec hand-rolls the same plugins block
+import { mount } from '@vue/test-utils'
+import { createTestingPinia } from '@pinia/testing'
+
+const wrapper = mount(MyComponent, {
+  props: { loading: false },
+  global: {
+    plugins: [createTestingPinia({ createSpy: vi.fn })]
+  }
+})
+
+// ✅ After — providers are installed for you
+import { renderWithProviders } from '@/tests/mocks'
+
+const wrapper = renderWithProviders(MyComponent, {
+  props: { loading: false }
+})
+```
+
+The returned wrapper targets the component itself, so `props`, `emitted()`, `setProps`, `find`, `findComponent`, etc. all behave exactly as with `mount`. Any `mount` option you pass through (`props`, `attrs`, `slots`, `global.stubs`, …) is forwarded — the helper only **adds** to `global.plugins`, it never clobbers your `global` block:
+
+```typescript
+// Compose with local stubs — the helper merges them with the global ones
+renderWithProviders(RedeployOfficerModal, {
+  props: { open: true },
+  global: { stubs: { UForm, UFormField, UInput } }
+})
+```
+
+### Options
+
+All [`mount` options](https://test-utils.vuejs.org/api/#mount) are accepted, plus:
+
+| Option            | Default                              | Purpose                                                                                                                                                           |
+| ----------------- | ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pinia`           | `createTestingPinia({ createSpy })`  | `false` to install no Pinia (rely on the global `vi.mock('@/stores/*')`); a `TestingOptions` object to tweak it; a `TestingPinia` instance to read `pinia.state`. |
+| `route`           | `{ params: { id: '1' } }`            | Override the globally-mocked `useRoute()`. Reset before every test, so it never leaks.                                                                            |
+| `queryClient`     | _none_ (TanStack is mocked globally) | `true` for a fresh `QueryClient` (retries off) or pass your own. Only matters in specs that `vi.unmock('@tanstack/vue-query')`.                                   |
+| `tooltipProvider` | `false`                              | Wrap in reka-ui's `<TooltipProvider>` for components that render tooltip primitives directly (see below). `UTooltip` is stubbed, so rarely needed.                |
+
+```typescript
+// Opt out of Pinia and point the route at a different team
+renderWithProviders(MyView, { pinia: false, route: { params: { id: '42' } } })
+```
+
+> **Pinia note:** `createTestingPinia` is installed by default, but the global `vi.mock('@/stores/*')` still wins for the stores it mocks (see [`docs/testing/MOCK_SYSTEM.md`](../../../docs/testing/MOCK_SYSTEM.md)). Pass `pinia: false` when a spec relies entirely on the mocked stores and you want to make that explicit.
+
 ## Testing Components that Use Nuxt UI
 
 ### TL;DR
@@ -83,6 +158,113 @@ Use:
 
 `app/src/components/forms/__tests__/TokenAmount.spec.ts` is the reference example for the pattern.
 
+## Migrating Legacy Specs Off `wrapper.vm as X`
+
+When you touch an existing spec that's whitelisted in `vmCastLegacyFiles` / `vmCastLegacyExtraFiles` (in [`app/eslint.config.js`](../../eslint.config.js)), drain the casts as part of your change — don't leave them. Here's the recipe per cast type.
+
+### Cast type 1 — state mutation
+
+`(wrapper.vm as X).formData.name = 'foo'` / `vm.totalAmount = '100'`
+
+Find the input bound to that field (`v-model="..."`) and drive it through its real surface:
+
+- **Native input** — `wrapper.find('input[data-test="..."]').setValue('foo')`
+- **Nuxt UI auto-imported component not in the global stub list** (`UInput`, `USelect`, `UTable`, …) — register a local mock to expose the stub under a queryable `name`, then emit `update:modelValue`:
+  ```ts
+  vi.mock('@nuxt/ui/components/Input.vue', () => ({
+    default: defineComponent({
+      name: 'UInput',
+      props: ['modelValue'],
+      emits: ['update:modelValue'],
+      template: '<input />'
+    })
+  }))
+  // …
+  await wrapper.findComponent({ name: 'UInput' }).vm.$emit('update:modelValue', 'foo')
+  ```
+  Auto-imports bypass `global.stubs`; `vi.mock` is the reliable hook. See "Adding a New Global Stub" above for the canonical recipe.
+- **Local child form component** — `wrapper.findComponent({ name: 'SelectMember' }).vm.$emit('update:modelValue', { address: '0x...' })`
+
+### Cast type 2 — handler call
+
+`(wrapper.vm as X).handleSubmit(payload)` / `vm.openModal()`
+
+The parent listens to a child's emit (e.g. `@submit="handleSubmit"`). Drive the emit, or the user-action that triggers it:
+
+```ts
+// Drive the child form's submit emit
+await wrapper.findComponent({ name: 'PayDividendsForm' }).vm.$emit('submit', payload)
+
+// Or click the button that calls handleSubmit / openModal in the template
+await wrapper.find('[data-test="pay-dividends-button"]').trigger('click')
+```
+
+If a button carries `:disabled` (e.g. a `coming soon` feature flag) and a DOM click is suppressed, emit the click on the component to bypass the HTML disabled while preserving the `@click` binding:
+
+```ts
+await wrapper.findComponent({ name: 'ActionButton' }).vm.$emit('click')
+```
+
+### Cast type 3 — state read
+
+`(wrapper.vm as X).displayedTransactions` / `vm.errorMessage` / `vm.modal.show`
+
+Read from the observable surface the parent passes downstream:
+
+- **Computed passed to a child** — `wrapper.findComponent({ name: 'UTable' }).props('data')`
+- **Error message rendered in UAlert** — `wrapper.text()` or `wrapper.findComponent({ name: 'UAlert' }).text()`
+- **Modal open state** — `wrapper.findComponent({ name: 'UModal' }).props('open')`, or assert that the modal's slot content is rendered (`findComponent(InnerForm).exists()`)
+
+### Cast type 4 — `defineExpose`'d public API
+
+If a component does `defineExpose({ reset, openModalForDay })`, those methods are part of its contract — but `wrapper.vm.reset()` still trips the lint rule, and rightly so: the test should consume the API the way a real parent does.
+
+**Preferred — `ParentHarness` pattern.** Mount through a tiny harness that holds a template ref:
+
+```ts
+const ParentHarness = defineComponent({
+  components: { CreateAddCampaign },
+  setup() {
+    const child = ref<InstanceType<typeof CreateAddCampaign>>()
+    return { child, callReset: () => child.value?.reset() }
+  },
+  template: '<CreateAddCampaign ref="child" />'
+})
+
+const wrapper = mount(ParentHarness)
+wrapper.vm.callReset() // accesses the harness's own surface — not a cast
+```
+
+`app/src/components/sections/ContractManagementView/forms/__tests__/CreateAddCampaign.spec.ts` is the reference example.
+
+**Fallback — scoped `eslint-disable` with a reason.** If a harness is overkill (the API has no real consumer yet), document inline:
+
+```ts
+// eslint-disable-next-line no-restricted-syntax -- defineExpose'd public API, no UI event triggers it
+const vm = wrapper.vm as unknown as { openModalForDay: (day: Date) => void }
+```
+
+### When `eslint-disable` is acceptable
+
+Sparingly, and always with a `-- <reason>` after the rule name:
+
+- **Unreachable defensive branch.** A guard like `if (amount === 0)` in `submit()` that an upstream Zod schema already rejects. Either delete the dead guard, or keep the cast as proof the guard exists for defense-in-depth.
+- **Pure computed without UI surface.** Values like `activeMembers`, `tokenBalance` consumed only by other internals; nothing observable renders them.
+- **`defineExpose`'d API not yet wired to a parent.** See above.
+
+Code review will quote the `--` reason, so make it specific.
+
+### Reference examples by pattern
+
+| Pattern                                      | Reference spec                                                                                     |
+| -------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| Canonical (DOM + emit + props)               | `app/src/components/forms/__tests__/TokenAmount.spec.ts`                                           |
+| UTable / USelect / CustomDatePicker drive    | `app/src/components/sections/SherTokenView/__tests__/InvestorsTransaction.spec.ts`                 |
+| Child form `$emit('submit', ...)`            | `app/src/components/sections/SherTokenView/InvestorActions/__tests__/PayDividendsAction.spec.ts`   |
+| Heavy state mutation → DOM-driven helper     | `app/src/components/sections/VestingView/forms/__tests__/CreateVestingInitial.spec.ts`             |
+| `defineExpose` via `ParentHarness`           | `app/src/components/sections/ContractManagementView/forms/__tests__/CreateAddCampaign.spec.ts`     |
+| Bypass `:disabled` button via component emit | `app/src/components/sections/SherTokenView/InvestorActions/__tests__/DistributeMintAction.spec.ts` |
+
 ## Common Testing Patterns
 
 ### Finding stubbed buttons and icons
@@ -152,17 +334,15 @@ Both steps are required: `vi.unmock()` restores the real module, and `stubs: { X
 
 ## Provider Contexts (TooltipProvider)
 
-Some reka-ui primitives require a `TooltipProvider` ancestor. `UTooltip` is already globally mocked, so you normally don't need this. But if you test a component that uses reka-ui primitives directly, use `mountWithProviders`:
+Some reka-ui primitives require a `TooltipProvider` ancestor. `UTooltip` is already globally mocked, so you normally don't need this. But if you test a component that uses reka-ui primitives directly, pass `tooltipProvider: true` to `renderWithProviders`:
 
 ```typescript
-import { mountWithProviders } from '@/tests/setup/nuxt-ui.setup'
+import { renderWithProviders } from '@/tests/mocks'
 
-const wrapper = mountWithProviders(MyComponent, {
-  global: {
-    plugins: [createTestingPinia({ createSpy: vi.fn })]
-  }
-})
+const wrapper = renderWithProviders(MyComponent, { tooltipProvider: true })
 ```
+
+When `tooltipProvider` is enabled the returned wrapper targets the inner component, so `setProps` is unavailable — drive props through the DOM or the initial `props` option instead.
 
 ## Adding a New Global Stub
 

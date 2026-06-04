@@ -28,56 +28,93 @@
       :ui="{ td: 'empty:p-0 group-has-[td:not(:empty)]:border-b border-default' }"
       :meta="{ class: { tr: (row) => (row.depth > 0 ? 'bg-elevated' : '') } }"
     >
-      <template #expand-cell="{ row }">
-        <UButton
-          v-if="row.getCanExpand()"
-          :icon="row.getIsExpanded() ? 'heroicons:chevron-down' : 'heroicons:chevron-right'"
-          size="sm"
-          color="primary"
-          variant="soft"
-          data-test="expense-transaction-expand-button"
-          :aria-label="
-            row.getIsExpanded() ? 'Collapse transaction events' : 'Expand transaction events'
-          "
-          @click="row.toggleExpanded()"
+      <template #txHash-cell="{ row }">
+        <template v-if="row.depth === 0">
+          <div class="flex items-center gap-1.5">
+            <UButton
+              v-if="row.getCanExpand()"
+              :icon="row.getIsExpanded() ? 'heroicons:chevron-down' : 'heroicons:chevron-right'"
+              size="sm"
+              color="primary"
+              variant="soft"
+              data-test="expense-transaction-expand-button"
+              :aria-label="
+                row.getIsExpanded() ? 'Collapse transaction events' : 'Expand transaction events'
+              "
+              @click="row.toggleExpanded()"
+            />
+            <AddressToolTip :address="row.original.txHash" :slice="true" type="transaction" />
+          </div>
+        </template>
+        <TransactionChildRow
+          v-else
+          :type="row.original.type"
+          :other-address="getInlineUser(row.original)?.address ?? row.original.from"
+          :amount="row.original.amount"
+          :token="row.original.token"
         />
       </template>
 
-      <template #txHash-cell="{ row: { original: row } }">
-        <AddressToolTip :address="row.txHash" :slice="true" type="transaction" />
-      </template>
-
-      <template #date-cell="{ row: { original: row } }">
-        {{ formatDateShort(String(row.date)) }}
+      <template #date-cell="{ row }">
+        <template v-if="row.depth === 0">
+          <div class="font-medium">{{ formatDateRelative(String(row.original.date)) }}</div>
+          <div class="text-muted text-xs">{{ formatDateUTC(String(row.original.date)) }}</div>
+        </template>
+        <span v-else />
       </template>
 
       <template #type-cell="{ row }">
-        <div class="flex items-center gap-2" :class="{ 'pl-4': row.depth > 0 }">
-          <UBadge :color="getExpenseTransactionTypeColor(row.original.type)" variant="soft">
-            {{ row.original.type }}
-          </UBadge>
-          <span
-            v-if="row.depth === 0 && row.original.groupedEventCount > 1"
-            class="text-muted text-xs"
-          >
-            {{ row.original.groupedEventCount }} events
-          </span>
+        <div>
+          <div class="flex items-center gap-2">
+            <UBadge :color="getExpenseTransactionTypeColor(row.original.type)" variant="soft">
+              {{ row.original.type }}
+            </UBadge>
+            <span v-if="row.original.groupedEventCount > 1" class="text-muted text-xs">
+              {{ row.original.groupedEventCount }} events
+            </span>
+          </div>
+          <p v-if="getTransactionSummary(row.original)" class="text-muted mt-0.5 text-xs">
+            {{ getTransactionSummary(row.original) }}
+          </p>
+          <template v-if="getInlineUser(row.original)">
+            <div class="mt-1 flex items-center gap-1 text-xs">
+              <span v-if="getInlineUser(row.original)!.label" class="text-muted">
+                {{ getInlineUser(row.original)!.label }}
+              </span>
+              <UserComponent
+                :user="resolveUser(getInlineUser(row.original)!.address)"
+                :compact="true"
+              />
+            </div>
+          </template>
         </div>
       </template>
 
-      <template #from-cell="{ row: { original: row } }">
-        <UserComponent :user="resolveUser(row.from)" />
+      <template #details-cell="{ row }">
+        <UButton
+          v-if="row.depth === 0"
+          icon="heroicons:eye"
+          size="xs"
+          color="neutral"
+          variant="ghost"
+          data-test="expense-transaction-detail-button"
+          aria-label="View transaction details"
+          @click="openDetail(row.original)"
+        />
+        <span v-else />
       </template>
 
-      <template #to-cell="{ row: { original: row } }">
-        <UserComponent :user="resolveUser(row.to)" />
-      </template>
-
-      <template #value-cell="{ row: { original: row } }">
-        <div>{{ formatCryptoAmount(row.amount) }} {{ row.token }}</div>
-        <div class="text-muted text-xs">
-          {{ formatCurrencyShort(row.amountLocal, currencyStore.localCurrency.code) }}
-        </div>
+      <template #value-cell="{ row }">
+        <template v-if="row.depth === 0">
+          <div :class="getValueClass(row.original)">
+            {{ getValuePrefix(row.original) }}{{ formatCryptoAmount(row.original.amount) }}
+            {{ row.original.token }}
+          </div>
+          <div class="text-muted text-xs">
+            {{ formatCurrencyShort(row.original.amountLocal, currencyStore.localCurrency.code) }}
+          </div>
+        </template>
+        <span v-else />
       </template>
 
       <template #empty>
@@ -106,20 +143,28 @@
       />
     </template>
   </UCard>
+
+  <TransactionDetailModal v-if="selectedTx" v-model:open="showDetail" :transaction="selectedTx" />
 </template>
 
 <script setup lang="ts">
 import { computed, watch } from 'vue'
 import { type Address } from 'viem'
-import { GRAPHQL_POLL_INTERVAL, NETWORK } from '@/constant'
+import { GRAPHQL_POLL_INTERVAL } from '@/constant'
 import { useQuery } from '@vue/apollo-composable'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import UserComponent from '@/components/UserComponent.vue'
 import CustomDatePicker from '@/components/CustomDatePicker.vue'
 import TransactionTableFooter from '@/components/TransactionTableFooter.vue'
+import TransactionDetailModal from '@/components/TransactionDetailModal.vue'
+import TransactionChildRow from '@/components/TransactionChildRow.vue'
 import { useCurrencyStore } from '@/stores/currencyStore'
-import { useTransactionTable } from '@/composables/transactions/useTransactionTable'
-import type { TransactionHistoryItemRow } from '@/types/transaction-history'
+import {
+  useTransactionTable,
+  childColspan,
+  childHidden
+} from '@/composables/transactions/useTransactionTable'
+import { useTransactionInline } from '@/composables/transactions/useTransactionInline'
 import type { ExpenseTransaction } from '@/types/transactions'
 import {
   buildRawExpenseTransactions,
@@ -129,12 +174,13 @@ import {
   formatCurrencyShort,
   formatEtherUtil,
   resolveUser,
+  getTransactionSummary,
   log,
   parseBigIntOrZero,
-  resolveTokenIdByAddress,
-  tokenSymbol
+  tokenSymbol,
+  enrichTransaction
 } from '@/utils'
-import { formatDateShort } from '@/utils/dayUtils'
+import { formatDateRelative, formatDateUTC } from '@/utils/dayUtils'
 import { GET_EXPENSE_EVENTS } from '@/queries/ponder/expense.queries'
 import { GET_INCOMING_BANK_TOKEN_TRANSFERS } from '@/queries/ponder/bank.queries'
 import type { IncomingBankTokenTransfersQuery } from '@/types/ponder/bank'
@@ -202,30 +248,9 @@ const transactions = computed<ExpenseTransaction[]>(() =>
   }))
 )
 
-const enrichedTransactions = computed<TransactionHistoryItemRow[]>(() => {
-  return transactions.value.map((tx) => {
-    const tokenAddress = String(tx.tokenAddress ?? '').toLowerCase()
-    const matchedToken = currencyStore.supportedTokens.find(
-      (token) => token.address.toLowerCase() === tokenAddress
-    )
-
-    const token =
-      matchedToken?.symbol || tokenSymbol(tokenAddress) || tx.token || NETWORK.currencySymbol
-    const tokenId = matchedToken?.id ?? resolveTokenIdByAddress(tokenAddress)
-    const amount = tx.amount ?? 0
-    const numericAmount = Number(amount)
-    const priceInLocal = tokenId ? currencyStore.getTokenPrice(tokenId, true) : 0
-    const amountLocal = Number.isFinite(numericAmount) ? numericAmount * priceInLocal : 0
-
-    return {
-      ...tx,
-      amount,
-      tokenAddress,
-      token,
-      amountLocal
-    }
-  })
-})
+const enrichedTransactions = computed(() =>
+  transactions.value.map((tx) => ({ ...tx, ...enrichTransaction(tx) }))
+)
 
 const {
   dateRange,
@@ -236,17 +261,28 @@ const {
   total,
   displayedTransactions,
   expandedRows,
-  getSubRows
+  getSubRows,
+  selectedTx,
+  showDetail,
+  openDetail
 } = useTransactionTable(enrichedTransactions)
 
+const { getInlineUser, getValuePrefix, getValueClass } = useTransactionInline(contractAddress)
+
 const columns = computed(() => [
-  { accessorKey: 'expand', header: '' },
-  { accessorKey: 'txHash', header: 'Tx Hash' },
-  { accessorKey: 'date', header: 'Date' },
-  { accessorKey: 'type', header: 'Type' },
-  { accessorKey: 'from', header: 'From' },
-  { accessorKey: 'to', header: 'To' },
-  { accessorKey: 'value', header: `Value (${currencyStore.localCurrency.code})` }
+  {
+    accessorKey: 'txHash',
+    header: 'Tx Hash',
+    meta: { colspan: { td: childColspan } }
+  },
+  { accessorKey: 'date', header: 'Date', meta: { class: { td: childHidden } } },
+  { accessorKey: 'type', header: 'Type', meta: { class: { td: childHidden } } },
+  {
+    accessorKey: 'value',
+    header: `Value (${currencyStore.localCurrency.code})`,
+    meta: { class: { td: childHidden } }
+  },
+  { accessorKey: 'details', header: '', meta: { class: { td: childHidden } } }
 ])
 
 watch([error, incomingTokenTransfersError], ([newError, newIncomingTransfersError]) => {

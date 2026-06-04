@@ -92,11 +92,13 @@ vi.mock('../../utils', async () => {
     prisma: {
       team: {
         findFirst: vi.fn().mockResolvedValue({ id: 1 }),
+        findUnique: vi.fn().mockResolvedValue({ isArchived: false }),
       },
       weeklyClaim: {
         findMany: vi.fn(),
         update: vi.fn(),
         findUnique: vi.fn(),
+        count: vi.fn().mockResolvedValue(0),
       },
       teamContract: {
         findFirst: vi.fn(),
@@ -140,6 +142,8 @@ const putAction = (
 describe('Weekly Claim Controller', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(prisma.team.findUnique).mockResolvedValue({ isArchived: false } as never);
+    vi.mocked(prisma.weeklyClaim.findUnique).mockResolvedValue({ teamId: 1 } as never);
     vi.mocked(isCashRemunerationOwner).mockResolvedValue(true);
     // Default: the team's current CashRemunerationEIP712 matches what the
     // sign body declares it signed against. Individual tests can override
@@ -380,7 +384,9 @@ describe('Weekly Claim Controller', () => {
     });
 
     it('should return 404 if weekly claim is not found', async () => {
-      vi.spyOn(prisma.weeklyClaim, 'findUnique').mockResolvedValue(null);
+      vi.spyOn(prisma.weeklyClaim, 'findUnique')
+        .mockResolvedValueOnce({ teamId: 1 } as never)
+        .mockResolvedValueOnce(null);
       const response = await putAction('sign');
       expect(response.status).toBe(404);
       expect(response.body).toEqual({ message: 'WeeklyClaim not found' });
@@ -454,7 +460,9 @@ describe('Weekly Claim Controller', () => {
     });
 
     it('should return 500 when update throws', async () => {
-      vi.spyOn(prisma.weeklyClaim, 'findUnique').mockRejectedValue(new Error('Database error'));
+      vi.spyOn(prisma.weeklyClaim, 'findUnique')
+        .mockResolvedValueOnce({ teamId: 1 } as never)
+        .mockRejectedValueOnce(new Error('Database error'));
       const response = await putAction('withdraw');
       expect(response.status).toBe(500);
       expect(response.body).toEqual({
@@ -553,6 +561,7 @@ describe('Weekly Claim Controller', () => {
       ];
 
       vi.spyOn(prisma.weeklyClaim, 'findMany').mockResolvedValue(weeklyClaims as any);
+      vi.spyOn(prisma.weeklyClaim, 'count').mockResolvedValue(weeklyClaims.length);
 
       const response = await request(app).get(
         `/?teamId=1&status=pending&memberAddress=${memberAddress}`
@@ -568,20 +577,110 @@ describe('Weekly Claim Controller', () => {
         })
       );
 
-      expect(response.body[0].minutesWorked).toBe(10);
-      expect(response.body[0].claims[0].fileAttachments[0].fileUrl).toBe(
+      expect(response.body.total).toBe(weeklyClaims.length);
+      expect(response.body.data[0].minutesWorked).toBe(10);
+      expect(response.body.data[0].claims[0].fileAttachments[0].fileUrl).toBe(
         'https://fresh-1.example.com'
       );
-      expect(response.body[0].claims[3].fileAttachments[0].fileUrl).toBe(
+      expect(response.body.data[0].claims[3].fileAttachments[0].fileUrl).toBe(
         'https://old2.example.com'
       );
     });
 
+    it('should refresh embedded member profile images alongside attachment URLs', async () => {
+      const memberAddress = '0x000000000000000000000000000000000000dEaD';
+
+      mockGetPresignedDownloadUrl
+        .mockResolvedValueOnce('https://fresh-member.example.com')
+        .mockResolvedValueOnce('https://fresh-attachment.example.com');
+
+      vi.spyOn(prisma.weeklyClaim, 'findMany').mockResolvedValue([
+        {
+          ...weeklyClaimFactory({ id: 2, memberAddress, status: 'pending' }),
+          member: {
+            address: memberAddress,
+            name: 'Achille',
+            imageUrl: 'https://storage.example.com/profiles/member-avatar.png?signature=expired',
+          },
+          claims: [
+            {
+              id: 201,
+              hoursWorked: 0,
+              minutesWorked: 60,
+              fileAttachments: [
+                {
+                  fileKey: 'attachments/claim-proof.png',
+                  fileUrl: 'https://old-attachment.example.com',
+                  fileType: 'image/png',
+                  fileSize: 42,
+                },
+              ],
+            },
+          ],
+        },
+      ] as any);
+
+      const response = await request(app).get(`/?teamId=1&memberAddress=${memberAddress}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.data[0].member.imageUrl).toBe('https://fresh-member.example.com');
+      expect(response.body.data[0].claims[0].fileAttachments[0].fileUrl).toBe(
+        'https://fresh-attachment.example.com'
+      );
+      expect(mockGetPresignedDownloadUrl).toHaveBeenNthCalledWith(
+        1,
+        'profiles/member-avatar.png',
+        604800
+      );
+      expect(mockGetPresignedDownloadUrl).toHaveBeenNthCalledWith(2, 'attachments/claim-proof.png');
+    });
+
     it('should return 200 for empty claims list', async () => {
       vi.spyOn(prisma.weeklyClaim, 'findMany').mockResolvedValue([] as any);
+      vi.spyOn(prisma.weeklyClaim, 'count').mockResolvedValue(0);
       const response = await request(app).get('/?teamId=1&status=pending');
       expect(response.status).toBe(200);
-      expect(response.body).toEqual([]);
+      expect(response.body).toEqual({ data: [], total: 0 });
+    });
+
+    it('should paginate when page and limit are provided', async () => {
+      vi.spyOn(prisma.weeklyClaim, 'findMany').mockResolvedValue([
+        { ...weeklyClaimFactory({ id: 11 }), claims: [], member: null },
+      ] as any);
+      vi.spyOn(prisma.weeklyClaim, 'count').mockResolvedValue(42);
+
+      const response = await request(app).get('/?teamId=1&page=3&limit=10');
+
+      expect(response.status).toBe(200);
+      expect(response.body.total).toBe(42);
+      expect(response.body.data).toHaveLength(1);
+      expect(prisma.weeklyClaim.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          skip: 20,
+          take: 10,
+          orderBy: { weekStart: 'desc' },
+        })
+      );
+    });
+
+    it('should skip pagination when neither page nor limit is provided', async () => {
+      vi.spyOn(prisma.weeklyClaim, 'findMany').mockResolvedValue([
+        { ...weeklyClaimFactory({ id: 12 }), claims: [], member: null },
+      ] as any);
+      vi.spyOn(prisma.weeklyClaim, 'count').mockResolvedValue(5);
+
+      const response = await request(app).get('/?teamId=1');
+
+      expect(response.status).toBe(200);
+      const findManyCall = vi.mocked(prisma.weeklyClaim.findMany).mock.calls.at(-1)?.[0];
+      expect(findManyCall).not.toHaveProperty('skip');
+      expect(findManyCall).not.toHaveProperty('take');
+    });
+
+    it('should reject invalid pagination params', async () => {
+      const response = await request(app).get('/?teamId=1&page=0');
+      expect(response.status).toBe(400);
+      expect(response.body.message).toContain('Page');
     });
 
     it('should return 500 when list query fails', async () => {

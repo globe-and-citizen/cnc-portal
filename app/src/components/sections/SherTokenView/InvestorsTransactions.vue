@@ -28,59 +28,100 @@
       :ui="{ td: 'empty:p-0 group-has-[td:not(:empty)]:border-b border-default' }"
       :meta="{ class: { tr: (row) => (row.depth > 0 ? 'bg-elevated' : '') } }"
     >
-      <template #expand-cell="{ row }">
-        <UButton
-          v-if="row.getCanExpand()"
-          :icon="row.getIsExpanded() ? 'heroicons:chevron-down' : 'heroicons:chevron-right'"
-          size="sm"
-          color="primary"
-          variant="soft"
-          data-test="investor-transaction-expand-button"
-          :aria-label="
-            row.getIsExpanded() ? 'Collapse transaction events' : 'Expand transaction events'
-          "
-          @click="row.toggleExpanded()"
+      <template #txHash-cell="{ row }">
+        <template v-if="row.depth === 0">
+          <div class="flex items-center gap-1.5">
+            <UButton
+              v-if="row.getCanExpand()"
+              :icon="row.getIsExpanded() ? 'heroicons:chevron-down' : 'heroicons:chevron-right'"
+              size="sm"
+              color="primary"
+              variant="soft"
+              data-test="investor-transaction-expand-button"
+              :aria-label="
+                row.getIsExpanded() ? 'Collapse transaction events' : 'Expand transaction events'
+              "
+              @click="row.toggleExpanded()"
+            />
+            <AddressToolTip :address="row.original.txHash" :slice="true" type="transaction" />
+          </div>
+        </template>
+        <InvestorChildRow
+          v-else
+          :type="row.original.type"
+          :to="row.original.to"
+          :amount="row.original.amount"
+          :token="row.original.token"
+          :reason="row.original.reason"
+          :parent-amount="row.getParentRow()?.original.amount"
         />
       </template>
 
-      <template #txHash-cell="{ row: { original: row } }">
-        <AddressToolTip :address="row.txHash" :slice="true" type="transaction" />
-      </template>
-
-      <template #date-cell="{ row: { original: row } }">
-        {{ formatDateShort(String(row.date)) }}
+      <template #date-cell="{ row }">
+        <template v-if="row.depth === 0">
+          <div class="font-medium">{{ formatDateRelative(String(row.original.date)) }}</div>
+          <div class="text-muted text-xs">{{ formatDateUTC(String(row.original.date)) }}</div>
+        </template>
+        <span v-else />
       </template>
 
       <template #type-cell="{ row }">
-        <div class="flex items-center gap-2" :class="{ 'pl-4': row.depth > 0 }">
-          <UBadge :color="getInvestorTransactionTypeColor(row.original.type)" variant="soft">
-            {{ row.original.type }}
-          </UBadge>
-          <span
-            v-if="row.depth === 0 && row.original.groupedEventCount > 1"
-            class="text-muted text-xs"
-          >
-            {{ row.original.groupedEventCount }} events
-          </span>
+        <div>
+          <div class="flex items-center gap-2">
+            <UBadge :color="getInvestorTransactionTypeColor(row.original.type)" variant="soft">
+              {{ row.original.type }}
+            </UBadge>
+            <span v-if="row.original.groupedEventCount > 1" class="text-muted text-xs">
+              {{ row.original.groupedEventCount }} events
+            </span>
+          </div>
+          <p v-if="getTransactionSummary(row.original)" class="text-muted mt-0.5 text-xs">
+            {{ getTransactionSummary(row.original) }}
+          </p>
+          <template v-if="getInlineUser(row.original)">
+            <div class="mt-1 flex items-center gap-1 text-xs">
+              <span v-if="getInlineUser(row.original)!.label" class="text-muted">
+                {{ getInlineUser(row.original)!.label }}
+              </span>
+              <UserComponent
+                :user="resolveUser(getInlineUser(row.original)!.address)"
+                :compact="true"
+              />
+            </div>
+          </template>
         </div>
       </template>
 
-      <template #from-cell="{ row: { original: row } }">
-        <UserComponent :user="resolveUser(row.from)" />
+      <template #details-cell="{ row }">
+        <UButton
+          v-if="row.depth === 0"
+          icon="heroicons:eye"
+          size="xs"
+          color="neutral"
+          variant="ghost"
+          data-test="investor-transaction-detail-button"
+          aria-label="View transaction details"
+          @click="openDetail(row.original)"
+        />
+        <span v-else />
       </template>
 
-      <template #to-cell="{ row: { original: row } }">
-        <UserComponent :user="resolveUser(row.to)" />
-      </template>
-
-      <template #value-cell="{ row: { original: row } }">
-        <template v-if="row.token === '-'">
-          <span class="text-muted">—</span>
+      <template #value-cell="{ row }">
+        <template v-if="row.depth === 0">
+          <template v-if="row.original.token === '-'">
+            <span class="text-muted">—</span>
+          </template>
+          <template v-else>
+            <div :class="getValueClass(row.original)">
+              {{ getValuePrefix(row.original) }}{{ formatCryptoAmount(row.original.amount) }}
+              {{ row.original.token }}
+            </div>
+            <div class="text-muted text-xs">
+              {{ formatCurrencyShort(row.original.amountUSD, 'USD') }}
+            </div>
+          </template>
         </template>
-        <template v-else>
-          <div>{{ formatCryptoAmount(row.amount) }} {{ row.token }}</div>
-          <div class="text-muted text-xs">{{ formatCurrencyShort(row.amountUSD, 'USD') }}</div>
-        </template>
+        <span v-else />
       </template>
     </UTable>
     <template #footer>
@@ -92,6 +133,8 @@
       />
     </template>
   </UCard>
+
+  <TransactionDetailModal v-if="selectedTx" v-model:open="showDetail" :transaction="selectedTx" />
 </template>
 
 <script setup lang="ts">
@@ -99,32 +142,34 @@ import AddressToolTip from '@/components/AddressToolTip.vue'
 import UserComponent from '@/components/UserComponent.vue'
 import CustomDatePicker from '@/components/CustomDatePicker.vue'
 import TransactionTableFooter from '@/components/TransactionTableFooter.vue'
-import type { InvestorsTransaction } from '@/types/transactions'
+import TransactionDetailModal from '@/components/TransactionDetailModal.vue'
+import type { TokenId } from '@/constant'
 import {
   buildRawInvestorTransactions,
+  mapRawInvestorTransaction,
   formatCryptoAmount,
   formatCurrencyShort,
-  formatEtherUtil,
-  formatInvestorTransactionDate,
   getInvestorTransactionTypeColor,
-  parseBigIntOrZero,
   resolveUser,
-  log,
-  resolveTokenIdByAddress,
-  tokenSymbol
+  getTransactionSummary,
+  log
 } from '@/utils'
 import { useQuery } from '@vue/apollo-composable'
-import { computed, watch, ref } from 'vue'
-import { useTransactionTable } from '@/composables/transactions/useTransactionTable'
-import { GRAPHQL_POLL_INTERVAL, NETWORK } from '@/constant'
+import { computed, watch } from 'vue'
+import {
+  useTransactionTable,
+  childColspan,
+  childHidden
+} from '@/composables/transactions/useTransactionTable'
+import { useTransactionInline } from '@/composables/transactions/useTransactionInline'
+import InvestorChildRow from './InvestorChildRow.vue'
+import { GRAPHQL_POLL_INTERVAL } from '@/constant'
 import { useCurrencyStore, useTeamStore } from '@/stores'
-import type { TokenId } from '@/constant'
 import { useInvestorSymbol } from '@/composables/investor/reads'
 import { GET_INVESTOR_EVENTS } from '@/queries/ponder/investor.queries'
 import { GET_SAFE_DEPOSIT_ROUTER_EVENTS } from '@/queries/ponder/safe-deposit-router.queries'
 import type { InvestorEventsQuery, SafeDepositRouterEventsQuery } from '@/types/ponder/investor'
-import { formatSafeDepositRouterMultiplier } from '@/utils/safeDepositRouterUtil'
-import { formatDateShort } from '@/utils/dayUtils'
+import { formatDateRelative, formatDateUTC } from '@/utils/dayUtils'
 
 const teamStore = useTeamStore()
 const currencyStore = useCurrencyStore()
@@ -151,12 +196,13 @@ const getUsdPrice = (tokenId: TokenId | null): number => {
   return 0
 }
 
-const { result, error, loading } = useQuery<InvestorEventsQuery>(
+const {
+  result,
+  error,
+  loading: investorLoading
+} = useQuery<InvestorEventsQuery>(
   GET_INVESTOR_EVENTS,
-  {
-    contractAddress: investorAddress,
-    limit: 500
-  },
+  { contractAddress: investorAddress, limit: 500 },
   {
     pollInterval: GRAPHQL_POLL_INTERVAL,
     fetchPolicy: 'cache-and-network',
@@ -164,12 +210,13 @@ const { result, error, loading } = useQuery<InvestorEventsQuery>(
   }
 )
 
-const { result: safeResult, error: safeError } = useQuery<SafeDepositRouterEventsQuery>(
+const {
+  result: safeResult,
+  error: safeError,
+  loading: safeLoading
+} = useQuery<SafeDepositRouterEventsQuery>(
   GET_SAFE_DEPOSIT_ROUTER_EVENTS,
-  {
-    contractAddress: safeDepositRouterAddress,
-    limit: 500
-  },
+  { contractAddress: safeDepositRouterAddress, limit: 500 },
   {
     pollInterval: GRAPHQL_POLL_INTERVAL,
     fetchPolicy: 'cache-and-network',
@@ -177,58 +224,12 @@ const { result: safeResult, error: safeError } = useQuery<SafeDepositRouterEvent
   }
 )
 
-const rawTransactions = computed(() => buildRawInvestorTransactions(result.value, safeResult.value))
+const loading = computed(() => investorLoading.value || safeLoading.value)
 
-const transactionData = computed<InvestorsTransaction[]>(() =>
-  rawTransactions.value.map((tx) => {
-    const isConfigEvent =
-      tx.transactionType === 'safeDepositsEnabled' ||
-      tx.transactionType === 'safeDepositsDisabled' ||
-      tx.transactionType === 'safeAddressUpdated'
-
-    const isMultiplierEvent = tx.transactionType === 'safeMultiplierUpdated'
-    const tokenAddress = String(tx.tokenAddress ?? '').toLowerCase()
-    const matchedToken = currencyStore.supportedTokens.find(
-      (token) => token.address.toLowerCase() === tokenAddress
-    )
-
-    const token = isConfigEvent
-      ? '-'
-      : isMultiplierEvent
-        ? 'x'
-        : tx.transactionType === 'mint'
-          ? investorTokenSymbol.value
-          : matchedToken?.symbol ||
-            tokenSymbol(tokenAddress) ||
-            investorTokenSymbol.value ||
-            NETWORK.currencySymbol
-
-    const amount = isConfigEvent
-      ? '0'
-      : isMultiplierEvent
-        ? formatSafeDepositRouterMultiplier(parseBigIntOrZero(tx.amount), 6)
-        : formatEtherUtil(parseBigIntOrZero(tx.amount), tx.tokenAddress)
-    const numericAmount = Number(amount)
-    const tokenId =
-      isConfigEvent || isMultiplierEvent
-        ? null
-        : (matchedToken?.id ?? resolveTokenIdByAddress(tokenAddress))
-    const usdPrice = getUsdPrice(tokenId)
-    const amountUSD = Number.isFinite(numericAmount) ? numericAmount * usdPrice : 0
-
-    return {
-      txHash: tx.txHash,
-      date: formatInvestorTransactionDate(tx.timestamp),
-      from: tx.from,
-      to: tx.to,
-      amount,
-      amountUSD: amountUSD || 0,
-      token,
-      tokenAddress,
-      type: tx.transactionType,
-      reason: tx.reason
-    }
-  })
+const enrichedTransactions = computed(() =>
+  buildRawInvestorTransactions(result.value, safeResult.value).map((tx) =>
+    mapRawInvestorTransaction(tx, investorTokenSymbol.value, getUsdPrice)
+  )
 )
 
 const {
@@ -240,38 +241,26 @@ const {
   total,
   displayedTransactions,
   expandedRows,
-  getSubRows
-} = useTransactionTable(transactionData)
+  getSubRows,
+  selectedTx,
+  showDetail,
+  openDetail
+} = useTransactionTable(enrichedTransactions)
+
+const { getInlineUser, getValuePrefix, getValueClass } = useTransactionInline(
+  computed(() => [investorAddress.value, safeDepositRouterAddress.value].filter(Boolean))
+)
 
 const columns = computed(() => [
-  { accessorKey: 'expand', header: '' },
-  { accessorKey: 'txHash', header: 'Tx Hash' },
-  { accessorKey: 'date', header: 'Date' },
-  { accessorKey: 'type', header: 'Type' },
-  { accessorKey: 'from', header: 'From' },
-  { accessorKey: 'to', header: 'To' },
-  { accessorKey: 'value', header: 'Value (USD)' }
+  { accessorKey: 'txHash', header: 'Tx Hash', meta: { colspan: { td: childColspan } } },
+  { accessorKey: 'date', header: 'Date', meta: { class: { td: childHidden } } },
+  { accessorKey: 'type', header: 'Type', meta: { class: { td: childHidden } } },
+  { accessorKey: 'value', header: 'Value (USD)', meta: { class: { td: childHidden } } },
+  { accessorKey: 'details', header: '', meta: { class: { td: childHidden } } }
 ])
 
-const lastError = ref<string | null>(null)
-watch(
-  () => error.value?.message,
-  (newMessage) => {
-    if (newMessage && newMessage !== lastError.value) {
-      log.error('Ponder investor transaction query error:', error.value)
-      lastError.value = newMessage
-    }
-  }
-)
-
-const safeLastError = ref<string | null>(null)
-watch(
-  () => safeError.value?.message,
-  (newMessage) => {
-    if (newMessage && newMessage !== safeLastError.value) {
-      log.error('Ponder safe deposit router transaction query error:', safeError.value)
-      safeLastError.value = newMessage
-    }
-  }
-)
+watch([error, safeError], ([newError, newSafeError]) => {
+  if (newError) log.error('Ponder investor transaction query error:', newError)
+  if (newSafeError) log.error('Ponder safe deposit router transaction query error:', newSafeError)
+})
 </script>

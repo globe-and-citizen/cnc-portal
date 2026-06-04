@@ -9,6 +9,7 @@ import {
 } from '../utils/cashRemunerationUtil';
 import publicClient from '../utils/viem.config';
 import { refreshAttachmentUrls } from '../services/attachmentService';
+import { resolveStorageImageUrl } from '../utils/profileImage.util';
 
 // EIP-712 typed-data envelope for the WageClaim signature, mirroring the
 // frontend definition in app/src/components/sections/CashRemunerationView/
@@ -345,48 +346,86 @@ export const getTeamWeeklyClaims = async (req: Request, res: Response) => {
     }
   }
 
+  // Pagination is opt-in: when neither `page` nor `limit` is provided the
+  // controller returns the full set so callers that need every row (e.g. the
+  // claim-history week navigator and the overview cards that aggregate
+  // totals) keep working without change. The Company Payroll table passes
+  // page+limit and gets back a paginated slice. The response shape is
+  // identical in both cases — { data, total } — so clients never have to
+  // discriminate on the response.
+  // Zod (validateQuery) has already coerced and bounded these:
+  // page is undefined or an integer >= 1; limit is undefined or in [1, 100].
+  const queryPage = req.query.page as number | undefined;
+  const queryLimit = req.query.limit as number | undefined;
+  const hasPaginationParams = queryPage !== undefined || queryLimit !== undefined;
+  const page = queryPage ?? 1;
+  const limit = queryLimit ?? 10;
+
   try {
     // authz enforced by requireTeamMember middleware
-    console.log({ teamId, ...memberAddressFilter, ...statusFilter });
+    const where: Prisma.WeeklyClaimWhereInput = {
+      teamId,
+      ...memberAddressFilter,
+      ...statusFilter,
+    };
 
     // Filter directly on WeeklyClaim team/member to avoid leaking other members' records.
-    const weeklyClaims = await prisma.weeklyClaim.findMany({
-      where: {
-        teamId,
-        ...memberAddressFilter,
-        ...statusFilter,
-      },
-      include: {
-        wage: true,
-        claims: {
-          where: {
-            wage: {
-              teamId,
-              ...(filterAddress
-                ? {
-                    userAddress: {
-                      equals: filterAddress,
-                      mode: 'insensitive',
-                    },
-                  }
-                : {}),
+    const [weeklyClaims, total] = await Promise.all([
+      prisma.weeklyClaim.findMany({
+        where,
+        include: {
+          wage: true,
+          claims: {
+            where: {
+              wage: {
+                teamId,
+                ...(filterAddress
+                  ? {
+                      userAddress: {
+                        equals: filterAddress,
+                        mode: 'insensitive',
+                      },
+                    }
+                  : {}),
+              },
+            },
+          },
+          member: {
+            select: {
+              address: true,
+              name: true,
+              imageUrl: true,
             },
           },
         },
-        member: {
-          select: {
-            address: true,
-            name: true,
-            imageUrl: true,
-          },
-        },
-      },
-      orderBy: { weekStart: 'asc' },
-    });
+        orderBy: { weekStart: 'desc' },
+        ...(hasPaginationParams ? { skip: (page - 1) * limit, take: limit } : {}),
+      }),
+      prisma.weeklyClaim.count({ where }),
+    ]);
+
+    // Dedupe presigned-URL lookups: the same member often appears on many
+    // rows (e.g. a single user's claim history), so cache the resolved URL
+    // per address to avoid re-signing the same avatar N times per response.
+    const memberImageUrlCache = new Map<string, Promise<string | null | undefined>>();
+    const resolveMemberImageUrl = (address: string, imageUrl: string | null | undefined) => {
+      let cached = memberImageUrlCache.get(address);
+      if (!cached) {
+        cached = resolveStorageImageUrl(imageUrl);
+        memberImageUrlCache.set(address, cached);
+      }
+      return cached;
+    };
 
     const weeklyClaimsWithFreshAttachmentUrls = await Promise.all(
       weeklyClaims.map(async (wc) => ({
         ...wc,
+        member: wc.member
+          ? {
+              ...wc.member,
+              imageUrl: await resolveMemberImageUrl(wc.member.address, wc.member.imageUrl),
+            }
+          : wc.member,
         claims: await Promise.all(
           wc.claims.map(async (claim) => ({
             ...claim,
@@ -408,7 +447,7 @@ export const getTeamWeeklyClaims = async (req: Request, res: Response) => {
       };
     });
 
-    return res.status(200).json(weeklyClaimsWithMinutes);
+    return res.status(200).json({ data: weeklyClaimsWithMinutes, total });
   } catch (error) {
     console.error(error);
     return errorResponse(500, 'Internal Server Error', res);

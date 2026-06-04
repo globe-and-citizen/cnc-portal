@@ -3,7 +3,11 @@
     <p class="text-sm">
       You have created your team, but the necessary smart contracts for its management haven't been
       deployed yet.
-      <UButton size="sm" variant="outline" @click="open = true">Click here</UButton>
+      <TeamArchivedTooltip v-slot="{ disabled: archivedDisabled }">
+        <UButton size="sm" variant="outline" :disabled="archivedDisabled" @click="open = true">
+          Click here
+        </UButton>
+      </TeamArchivedTooltip>
       to proceed with the deployment.
     </p>
     <UModal
@@ -30,6 +34,7 @@
 import { ref, computed } from 'vue'
 import type { Team } from '@/types'
 import InvestorContractStep from './InvestorContractStep.vue'
+import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
 
 const props = defineProps<{
   team: Team

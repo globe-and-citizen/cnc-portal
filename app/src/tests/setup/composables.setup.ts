@@ -1,6 +1,6 @@
-import { vi } from 'vitest'
+import { beforeEach, vi } from 'vitest'
 import { defineComponent, ref } from 'vue'
-import { queryMocks } from '@/tests/mocks/query.mock'
+import { queryMocks, resetNotificationsMock } from '@/tests/mocks/query.mock'
 import {
   mockUseBackendWake,
   mockUseAuth,
@@ -13,11 +13,23 @@ import {
   useMutationFn,
   mockUseFetch,
   mockUseSubmitRestriction,
-  mockUseDeployContract
+  mockUseDeployContract,
+  resetComposableMocks,
+  resetDeployState
 } from '@/tests/mocks/composables.mock'
 import { mockUploadFileApi } from '@/tests/mocks/api.mock'
 import { mockGetBalance, mockGetLogs } from '@/tests/mocks/viem.actions.mock'
-import { mockRouter } from '@/tests/mocks/router.mock'
+import { mockRouter, mockRoute, resetMockRoute } from '@/tests/mocks/router.mock'
+
+// Restore all shared composable mocks to their defaults before every test so
+// that in-place mutations (refs, spies) never leak across tests. Setup-file
+// `beforeEach` hooks run BEFORE spec-level ones, so per-test setup still wins.
+beforeEach(() => {
+  resetComposableMocks()
+  resetDeployState()
+  resetNotificationsMock()
+  resetMockRoute()
+})
 
 declare global {
   var __mockFetch: ReturnType<typeof vi.fn> | undefined
@@ -64,11 +76,9 @@ vi.mock('vue-router', async (importOriginal) => {
     ...actual,
     useRouter: vi.fn(() => mockRouter),
     RouterView: { name: 'RouterView', template: '<div data-test="router-view">Router View</div>' },
-    useRoute: vi.fn(() => ({
-      params: { id: '1' },
-      path: '/teams/1',
-      meta: { name: 'Team View' }
-    }))
+    // Returns the shared, mutable `mockRoute`. Override per-test via
+    // `renderWithProviders(..., { route })` or `setMockRoute(...)`.
+    useRoute: vi.fn(() => mockRoute)
   }
 })
 
@@ -121,15 +131,32 @@ vi.mock('@vueuse/core', async (importOriginal) => {
 
 /**
  * Mock Team Queries (team.queries.ts)
+ * Mirrors the real `teamKeys` factory so composables that invalidate queries
+ * via `teamKeys.all` keep working under mock. Kept duplicated rather than
+ * re-imported to avoid pulling the real module (which touches `@/constant`
+ * and breaks specs that mock it partially).
  */
-vi.mock('@/queries/team.queries', () => ({
-  useGetTeamsQuery: vi.fn(queryMocks.useGetTeamsQuery),
-  useGetTeamQuery: vi.fn(queryMocks.useGetTeamQuery),
-  useCreateTeamMutation: vi.fn(queryMocks.useCreateTeamMutation),
-  useUpdateTeamMutation: vi.fn(queryMocks.useUpdateTeamMutation),
-  useDeleteTeamMutation: vi.fn(queryMocks.useDeleteTeamMutation),
-  useGetSubmitRestrictionQuery: vi.fn(queryMocks.useGetSubmitRestrictionQuery)
-}))
+vi.mock('@/queries/team.queries', () => {
+  const teamKeys = {
+    all: ['teams'] as const,
+    lists: () => ['teams', 'list'] as const,
+    list: (
+      userAddress?: string | null,
+      filters?: { showHidden?: boolean; showArchived?: boolean }
+    ) => ['teams', 'list', { userAddress, ...filters }] as const,
+    details: () => ['teams', 'detail'] as const,
+    detail: (teamId: string | null) => ['teams', 'detail', { teamId }] as const
+  }
+  return {
+    teamKeys,
+    useGetTeamsQuery: vi.fn(queryMocks.useGetTeamsQuery),
+    useGetTeamQuery: vi.fn(queryMocks.useGetTeamQuery),
+    useCreateTeamMutation: vi.fn(queryMocks.useCreateTeamMutation),
+    useUpdateTeamMutation: vi.fn(queryMocks.useUpdateTeamMutation),
+    useDeleteTeamMutation: vi.fn(queryMocks.useDeleteTeamMutation),
+    useGetSubmitRestrictionQuery: vi.fn(queryMocks.useGetSubmitRestrictionQuery)
+  }
+})
 
 /**
  * Mock Member Queries (member.queries.ts)
@@ -195,8 +222,12 @@ vi.mock('@/queries/auth.queries', () => ({
 
 /**
  * Mock Contract Queries (contract.queries.ts)
+ * Mirrors the real `contractKeys` factory so composables that invalidate
+ * queries via `contractKeys.all` keep working under mock. Kept duplicated
+ * rather than re-imported to avoid pulling the real module.
  */
 vi.mock('@/queries/contract.queries', () => ({
+  contractKeys: { all: ['contracts'] as const },
   useCreateContractMutation: vi.fn(queryMocks.useCreateContractMutation),
   useSyncContractsMutation: vi.fn(queryMocks.useSyncContractsMutation),
   useCreateOfficerMutation: vi.fn(queryMocks.useCreateOfficerMutation)

@@ -3,43 +3,45 @@
   <div class="bg-default w-full">
     <UTable :data="filteredApprovals" :columns="columns" :loading="isFetchingExpenseData">
       <template #action-cell="{ row: { original: row } }">
-        <UButton
-          v-if="row.status == 'enabled'"
-          color="error"
-          data-test="disable-button"
-          size="sm"
-          :loading="isLoadingSetStatus && signatureToUpdate === row.signature"
-          :disabled="!(contractOwnerAddress === userDataStore.address)"
-          @click="
-            () => {
-              isLoadingSetStatus = true
-              signatureToUpdate = row.signature
-              deactivateApproval(row.signature as `0x{string}`)
-            }
-          "
-          label="Disable"
-        />
-        <UButton
-          v-if="row.status == 'disabled'"
-          color="info"
-          data-test="enable-button"
-          size="sm"
-          :loading="isLoadingSetStatus && signatureToUpdate === row.signature"
-          :disabled="!(contractOwnerAddress === userDataStore.address)"
-          @click="
-            () => {
-              isLoadingSetStatus = true
-              signatureToUpdate = row.signature
-              activateApproval(row.signature as `0x{string}`)
-            }
-          "
-          label="Enable"
-        />
+        <UTooltip :text="archivedTooltip">
+          <UButton
+            v-if="row.status == 'enabled'"
+            color="error"
+            data-test="disable-button"
+            size="sm"
+            :loading="isLoadingSetStatus && signatureToUpdate === row.signature"
+            :disabled="isWriteDisabled || !(contractOwnerAddress === userDataStore.address)"
+            @click="
+              () => {
+                isLoadingSetStatus = true
+                signatureToUpdate = row.signature
+                deactivateApproval(row.signature as `0x{string}`)
+              }
+            "
+            label="Disable"
+          />
+        </UTooltip>
+        <UTooltip :text="archivedTooltip">
+          <UButton
+            v-if="row.status == 'disabled'"
+            color="info"
+            data-test="enable-button"
+            size="sm"
+            :loading="isLoadingSetStatus && signatureToUpdate === row.signature"
+            :disabled="isWriteDisabled || !(contractOwnerAddress === userDataStore.address)"
+            @click="
+              () => {
+                isLoadingSetStatus = true
+                signatureToUpdate = row.signature
+                activateApproval(row.signature as `0x{string}`)
+              }
+            "
+            label="Enable"
+          />
+        </UTooltip>
       </template>
       <template #member-cell="{ row: { original: row } }">
-        <UserComponent
-          :user="{ name: row.userAddress, address: row.userAddress, imageUrl: '' }"
-        ></UserComponent>
+        <UserComponent :user="resolveUser(row.userAddress)"></UserComponent>
       </template>
       <template #startDate-cell="{ row: { original: row } }">
         <span>{{ new Date(Number(row.startDate) * 1000).toLocaleString('en-US') }}</span>
@@ -90,7 +92,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { log, parseError, tokenSymbol } from '@/utils'
+import { log, parseError, tokenSymbol, resolveUser } from '@/utils'
 import { useUserDataStore, useTeamStore } from '@/stores'
 import { keccak256 } from 'viem'
 import { useReadContract } from '@wagmi/vue'
@@ -103,8 +105,10 @@ import UserComponent from '@/components/UserComponent.vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useGetExpensesQuery, expenseKeys } from '@/queries'
 import { getFrequencyType, getCustomFrequency } from '@/utils'
+import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 
 const teamStore = useTeamStore()
+const { isWriteDisabled, archivedTooltip } = useTeamWriteGuard()
 const toast = useToast()
 const userDataStore = useUserDataStore()
 const queryClient = useQueryClient()

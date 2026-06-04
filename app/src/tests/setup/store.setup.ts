@@ -1,5 +1,15 @@
-import { vi } from 'vitest'
+import { beforeEach, vi } from 'vitest'
 import * as mocks from '@/tests/mocks/store.mock'
+
+// Restore the shared user-store mock to its defaults before every test so that
+// per-spec mutations (e.g. `mockUserStore.address = '0x…'`) never leak across
+// tests. The mock below returns the SAME object reference on every call, so a
+// mutation made before mounting is reliably visible to the component.
+beforeEach(() => {
+  mocks.resetUserStoreMock()
+  mocks.resetTeamStoreMock()
+  mocks.mockToast.add.mockClear()
+})
 
 // Convention: mock individual store submodules, not the `@/stores` barrel.
 // `@/stores/index.ts` re-exports each submodule via `export *`, so a mock on
@@ -11,7 +21,7 @@ vi.mock('@/stores/user', async (importOriginal) => {
   const actual: object = await importOriginal()
   return {
     ...actual,
-    useUserDataStore: vi.fn(() => ({ ...mocks.mockUserStore }))
+    useUserDataStore: vi.fn(() => mocks.mockUserStore)
   }
 })
 
@@ -19,7 +29,7 @@ vi.mock('@/stores/teamStore', async (importOriginal) => {
   const actual: object = await importOriginal()
   return {
     ...actual,
-    useTeamStore: vi.fn(() => ({ ...mocks.mockTeamStore }))
+    useTeamStore: vi.fn(() => mocks.mockTeamStore)
   }
 })
 

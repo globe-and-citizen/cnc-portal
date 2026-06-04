@@ -1,8 +1,7 @@
 import type { BankEventsQuery, RawBankTransaction } from '@/types/ponder/bank'
+import type { UBadgeColor } from '@/types/ui'
 import { zeroAddress } from 'viem'
 import { buildRawTransactions, extractTxHashFromId } from './rawTransactionsUtil'
-
-type UBadgeColor = 'error' | 'primary' | 'secondary' | 'success' | 'info' | 'warning' | 'neutral'
 
 export const buildRawBankTransactions = (
   bankResult?: BankEventsQuery | null

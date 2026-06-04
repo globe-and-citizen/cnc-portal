@@ -1,6 +1,15 @@
-import { mount } from '@vue/test-utils'
-import { describe, expect, it } from 'vitest'
+import { flushPromises } from '@vue/test-utils'
+import { describe, expect, it, vi } from 'vitest'
 import { getLocalTimeZone, parseDate, today, type CalendarDate } from '@internationalized/date'
+import { renderWithProviders } from '@/tests/mocks'
+
+// USelect is auto-imported by @nuxt/ui/vite, so config.global.stubs cannot catch it —
+// vi.mock on the resolved module is the reliable hook. Reuse the shared <select> stub,
+// which emits the matched item's original value (numeric here, via value-key).
+vi.mock('@nuxt/ui/components/Select.vue', async () => ({
+  default: (await import('@/tests/stubs/nuxt-ui.stubs')).USelectStub
+}))
+
 import ApproveUsersForm from '../ApproveUsersEIP712Form.vue'
 
 type ApproveUsersVm = {
@@ -12,16 +21,12 @@ type ApproveUsersVm = {
     customFrequencyDays: number
   }
   startDate: CalendarDate | null
-  endDate: CalendarDate | null
   schema: {
     safeParse: (value: unknown) => {
       success: boolean
       error?: { issues: Array<{ message: string }> }
     }
   }
-  customFrequencyInSeconds: number
-  clear: () => void
-  handleSubmit: () => void
 }
 
 const defaultProps = {
@@ -49,27 +54,12 @@ const makeValidState = () => ({
 })
 
 const createWrapper = (props = {}) =>
-  mount(ApproveUsersForm, {
+  renderWithProviders(ApproveUsersForm, {
     props: { ...defaultProps, ...props },
     global: {
       stubs: {
-        UPopover: {
-          name: 'UPopover',
-          template: '<div><slot /><slot name="content" /></div>'
-        },
-        UCalendar: {
-          name: 'UCalendar',
-          props: ['modelValue', 'minValue'],
-          emits: ['update:modelValue'],
-          template: '<div data-test="calendar-stub" />'
-        },
-        USelect: {
-          name: 'USelect',
-          props: ['modelValue', 'items'],
-          emits: ['update:modelValue'],
-          template:
-            '<select data-test="frequency-select-stub" @change="$emit(\'update:modelValue\', Number(($event.target as HTMLSelectElement).value))"><option v-for="item in items" :key="item.value" :value="item.value">{{ item.label }}</option></select>'
-        },
+        // UPopover and UCalendar are stubbed globally (nuxt-ui.setup.ts); only the
+        // app-level member input needs a local stub.
         SelectMemberWithTokenInput: {
           name: 'SelectMemberWithTokenInput',
           props: ['modelValue'],
@@ -80,19 +70,18 @@ const createWrapper = (props = {}) =>
     }
   })
 
+// eslint-disable-next-line no-restricted-syntax -- `schema` is a computed closure over startDate.value/state.frequencyType exercised through safeParse, and the v-model reactive state it validates has no stable DOM surface; both are inherently white-box and unreachable via rendered output
 const getVm = (wrapper: ReturnType<typeof createWrapper>) => wrapper.vm as unknown as ApproveUsersVm
 
 describe('ApproveUsersEIP712Form.vue', () => {
   it('renders default fields and toggles bod and custom frequency sections', async () => {
     const wrapper = createWrapper()
-    const vm = getVm(wrapper)
 
     expect(wrapper.find('[data-test="member-input"]').exists()).toBe(true)
     expect(wrapper.find('[data-test="bod-notification"]').exists()).toBe(false)
     expect(wrapper.find('[data-test="custom-frequency-input"]').exists()).toBe(false)
 
-    vm.state.frequencyType = 4
-    await wrapper.vm.$nextTick()
+    await wrapper.find('[data-test="frequency-select"]').setValue('4')
 
     expect(wrapper.find('[data-test="custom-frequency-input"]').exists()).toBe(true)
 
@@ -104,37 +93,49 @@ describe('ApproveUsersEIP712Form.vue', () => {
 
   it('clears the form state and emits closeModal', async () => {
     const wrapper = createWrapper({ isBodAction: true })
-    const vm = getVm(wrapper)
     const { startDate, endDate } = makeValidDates()
+    const calendars = wrapper.findAllComponents({ name: 'UCalendar' })
 
-    Object.assign(vm.state, makeValidState())
-    vm.startDate = startDate
-    vm.endDate = endDate
-
-    vm.clear()
+    await wrapper.find('[data-test="description-input"]').setValue('Budget for monthly expenses')
+    await wrapper.find('[data-test="amount-input"]').setValue('1500')
+    await wrapper.find('[data-test="frequency-select"]').setValue('4')
+    await wrapper.find('[data-test="custom-frequency-input"]').setValue('14')
+    calendars[0].vm.$emit('update:modelValue', startDate)
+    calendars[1].vm.$emit('update:modelValue', endDate)
     await wrapper.vm.$nextTick()
 
-    expect(vm.state).toEqual({
-      input: { name: '', address: '', token: '' },
-      description: '',
-      amount: 0,
-      frequencyType: 0,
-      customFrequencyDays: 7
-    })
-    expect(vm.startDate).toBeNull()
-    expect(vm.endDate).toBeNull()
+    await wrapper.find('[data-test="cancel-button"]').trigger('click')
+    await wrapper.vm.$nextTick()
+
     expect(wrapper.emitted('closeModal')).toBeTruthy()
+    expect(
+      (wrapper.find('[data-test="description-input"]').element as HTMLInputElement).value
+    ).toBe('')
+    expect((wrapper.find('[data-test="amount-input"]').element as HTMLInputElement).value).toBe('0')
+    expect(wrapper.find('[data-test="custom-frequency-input"]').exists()).toBe(false)
+    expect(wrapper.find('[data-test="start-date-picker"]').text()).toContain('Pick start date')
+    expect(wrapper.find('[data-test="end-date-picker"]').text()).toContain('Pick end date')
   })
 
-  it('emits approveUser payload for one-time and custom frequencies', () => {
+  it('emits approveUser payload for one-time and custom frequencies', async () => {
     const wrapper = createWrapper()
-    const vm = getVm(wrapper)
     const { startDate, endDate } = makeValidDates()
+    const calendars = wrapper.findAllComponents({ name: 'UCalendar' })
 
-    Object.assign(vm.state, makeValidState())
-    vm.startDate = startDate
-    vm.endDate = endDate
-    vm.handleSubmit()
+    await wrapper
+      .findComponent({ name: 'SelectMemberWithTokenInput' })
+      .vm.$emit('update:modelValue', {
+        name: 'Alice',
+        address: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
+        token: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92267'
+      })
+    await wrapper.find('[data-test="amount-input"]').setValue('1500')
+    calendars[0].vm.$emit('update:modelValue', startDate)
+    calendars[1].vm.$emit('update:modelValue', endDate)
+    await wrapper.vm.$nextTick()
+
+    await wrapper.find('form').trigger('submit')
+    await flushPromises()
 
     expect(wrapper.emitted('approveUser')?.[0]?.[0]).toEqual({
       approvedAddress: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
@@ -146,11 +147,11 @@ describe('ApproveUsersEIP712Form.vue', () => {
       tokenAddress: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92267'
     })
 
-    vm.state.frequencyType = 4
-    vm.state.customFrequencyDays = 14
-    vm.handleSubmit()
+    await wrapper.find('[data-test="frequency-select"]').setValue('4')
+    await wrapper.find('[data-test="custom-frequency-input"]').setValue('14')
+    await wrapper.find('form').trigger('submit')
+    await flushPromises()
 
-    expect(vm.customFrequencyInSeconds).toBe(14 * 24 * 60 * 60)
     expect(wrapper.emitted('approveUser')?.[1]?.[0].customFrequency).toBe(14 * 24 * 60 * 60)
   })
 
@@ -284,6 +285,6 @@ describe('ApproveUsersEIP712Form.vue', () => {
     expect(vm.state.input.address).toBe('0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266')
     expect(wrapper.find('[data-test="start-date-picker"]').exists()).toBe(true)
     expect(wrapper.find('[data-test="end-date-picker"]').exists()).toBe(true)
-    expect(wrapper.findAll('[data-test="calendar-stub"]').length).toBeGreaterThanOrEqual(0)
+    expect(wrapper.findAllComponents({ name: 'UCalendar' }).length).toBe(2)
   })
 })

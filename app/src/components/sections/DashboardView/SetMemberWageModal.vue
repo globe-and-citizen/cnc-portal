@@ -10,7 +10,7 @@
       }"
     >
       <UTooltip
-        :text="wage?.disabled ? 'Resume this wage before making changes' : undefined"
+        :text="setWageTooltip"
         :content="{
           side: 'top'
         }"
@@ -19,7 +19,7 @@
           size="lg"
           color="success"
           data-test="set-wage-button"
-          :disabled="wage?.disabled"
+          :disabled="isWriteDisabled || wage?.disabled"
           @click="showModal = true"
           label="Set Wage"
         />
@@ -62,6 +62,8 @@ import { useSetMemberWageMutation } from '@/queries/wage.queries'
 import type { Member, Wage, WageWithForm } from '@/types'
 import type { AxiosError } from 'axios'
 import { normalizeRatePerHour, buildRatePayload } from '@/utils'
+import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
+import { getAxiosErrorMessage } from '@/utils/errorUtil'
 import type { StepperItem } from '@nuxt/ui'
 
 const currentStep = ref(0)
@@ -108,6 +110,13 @@ const items = computed<StepperItem[]>(() =>
 )
 
 const toast = useToast()
+const { isWriteDisabled, archivedTooltip } = useTeamWriteGuard()
+
+const setWageTooltip = computed(() => {
+  if (archivedTooltip.value) return archivedTooltip.value
+  if (props.wage?.disabled) return 'Resume this wage before making changes'
+  return undefined
+})
 
 const {
   mutate: executeSetWage,
@@ -118,10 +127,7 @@ const {
 
 const errorMessage = computed(() => {
   if (!setWageError.value) return undefined
-  return (
-    (setWageError.value as AxiosError<{ message?: string }>).response?.data?.message ||
-    'Error setting wage'
-  )
+  return getAxiosErrorMessage(setWageError.value, 'Error setting wage')
 })
 
 const handleCancel = () => {

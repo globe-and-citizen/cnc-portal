@@ -2,79 +2,90 @@ import { vi } from 'vitest'
 import { ref } from 'vue'
 
 /**
+ * Default builders for the contract-balance mock state. Exposed as functions so
+ * that `resetComposableMocks()` can restore a FRESH copy on every test, even
+ * after a spec has mutated `balances.value` / `total.value` in place.
+ */
+const defaultContractBalances = () => [
+  {
+    amount: 0.5,
+    token: {
+      id: 'native',
+      name: 'SepoliaETH',
+      symbol: 'SepoliaETH',
+      code: 'SepoliaETH',
+      coingeckoId: 'ethereum',
+      decimals: 18,
+      address: '0x0000000000000000000000000000000000000000'
+    },
+    values: {
+      USD: {
+        value: 500,
+        formated: '$500',
+        id: 'usd',
+        code: 'USD',
+        symbol: '$',
+        price: 1000,
+        formatedPrice: '$1K'
+      }
+    }
+  },
+  {
+    amount: 50,
+    token: {
+      id: 'usdc',
+      name: 'USD Coin',
+      symbol: 'USDC',
+      code: 'USDC',
+      coingeckoId: 'usd-coin',
+      decimals: 6,
+      address: '0xA3492D046095AFFE351cFac15de9b86425E235dB'
+    },
+    values: {
+      USD: {
+        value: 50000,
+        formated: '$50K',
+        id: 'usd',
+        code: 'USD',
+        symbol: '$',
+        price: 1000,
+        formatedPrice: '$1K'
+      }
+    }
+  }
+]
+
+const defaultContractTotal = () => ({
+  USD: {
+    value: 50500,
+    formated: '$50.5K',
+    id: 'usd',
+    code: 'USD',
+    symbol: '$',
+    price: 1000,
+    formatedPrice: '$1K'
+  }
+})
+
+const defaultDividendsTotal = () => ({
+  USD: {
+    value: 100,
+    formated: '$100',
+    id: 'usd',
+    code: 'USD',
+    symbol: '$',
+    price: 1000,
+    formatedPrice: '$1K'
+  }
+})
+
+/**
  * Mock useContractBalance composable
  */
 export const mockUseContractBalance = {
-  balances: ref([
-    {
-      amount: 0.5,
-      token: {
-        id: 'native',
-        name: 'SepoliaETH',
-        symbol: 'SepoliaETH',
-        code: 'SepoliaETH',
-        coingeckoId: 'ethereum',
-        decimals: 18,
-        address: '0x0000000000000000000000000000000000000000'
-      },
-      values: {
-        USD: {
-          value: 500,
-          formated: '$500',
-          id: 'usd',
-          code: 'USD',
-          symbol: '$',
-          price: 1000,
-          formatedPrice: '$1K'
-        }
-      }
-    },
-    {
-      amount: 50,
-      token: {
-        id: 'usdc',
-        name: 'USD Coin',
-        symbol: 'USDC',
-        code: 'USDC',
-        coingeckoId: 'usd-coin',
-        decimals: 6,
-        address: '0xA3492D046095AFFE351cFac15de9b86425E235dB'
-      },
-      values: {
-        USD: {
-          value: 50000,
-          formated: '$50K',
-          id: 'usd',
-          code: 'USD',
-          symbol: '$',
-          price: 1000,
-          formatedPrice: '$1K'
-        }
-      }
-    }
-  ]),
-  total: ref({
-    USD: {
-      value: 50500,
-      formated: '$50.5K',
-      id: 'usd',
-      code: 'USD',
-      symbol: '$',
-      price: 1000,
-      formatedPrice: '$1K'
-    }
-  }),
-  dividendsTotal: ref({
-    USD: {
-      value: 100,
-      formated: '$100',
-      id: 'usd',
-      code: 'USD',
-      symbol: '$',
-      price: 1000,
-      formatedPrice: '$1K'
-    }
-  }),
+  balances: ref(defaultContractBalances()),
+  total: ref(defaultContractTotal()),
+  dividendsTotal: ref(defaultDividendsTotal()),
   dividends: ref([]),
   isLoading: ref(false),
   error: ref(null)
@@ -188,7 +199,10 @@ export const mockUseSubmitRestriction = {
  * Reset function for composable mocks
  */
 export const resetComposableMocks = () => {
-  // Reset contract balance loading state
+  // Reset contract balance state (fresh copies so in-place mutations don't leak)
+  mockUseContractBalance.balances.value = defaultContractBalances()
+  mockUseContractBalance.total.value = defaultContractTotal()
+  mockUseContractBalance.dividendsTotal.value = defaultDividendsTotal()
   mockUseContractBalance.isLoading.value = false
   mockUseContractBalance.error.value = null
   mockUseContractBalance.dividends.value = []
@@ -233,6 +247,7 @@ export const resetComposableMocks = () => {
   if (vi.isMockFunction(mockUseFetch.post.execute)) {
     mockUseFetch.post.execute.mockClear()
   }
+  mockUseFetch.get.url.value = ''
   mockUseFetch.get.data.value = null
   mockUseFetch.get.error.value = null
   if (vi.isMockFunction(mockUseFetch.get.execute)) {
@@ -241,6 +256,7 @@ export const resetComposableMocks = () => {
 
   // Reset clipboard mock
   mockUseClipboard.copied.value = false
+  mockUseClipboard.isSupported.value = true
   if (vi.isMockFunction(mockUseClipboard.copy)) {
     mockUseClipboard.copy.mockClear()
   }

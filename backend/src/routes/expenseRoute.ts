@@ -1,6 +1,6 @@
 import express from 'express';
 import { addExpense, getExpenses, updateExpense } from '../controllers/expenseController';
-import { requireTeamMember } from '../middleware/teamAuthzMiddleware';
+import { rejectIfArchived, requireTeamMember } from '../middleware/teamAuthzMiddleware';
 import {
   addExpenseBodySchema,
   getExpensesQuerySchema,
@@ -45,7 +45,12 @@ const expenseRoutes = express.Router();
  *     500:
  *       description: Internal server error
  */
-expenseRoutes.post('/', validateBody(addExpenseBodySchema), addExpense);
+expenseRoutes.post(
+  '/',
+  validateBody(addExpenseBodySchema),
+  rejectIfArchived('body.teamId'),
+  addExpense
+);
 
 /**
  * @openapi
@@ -118,6 +123,7 @@ expenseRoutes.get(
 expenseRoutes.patch(
   '/:id',
   validateBodyAndParams(updateExpenseBodySchema, updateExpenseParamsSchema),
+  rejectIfArchived('params.expenseId'),
   updateExpense
 );
 

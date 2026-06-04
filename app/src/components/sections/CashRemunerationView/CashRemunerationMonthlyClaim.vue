@@ -65,8 +65,9 @@ function getHourlyRateInUserCurrency(
 }
 
 const totalMonthlyClaim = computed(() => {
-  if (!weeklyClaims.value || !Array.isArray(weeklyClaims.value)) return ''
-  const total = weeklyClaims.value.reduce((sum: number, weeklyClaim: WeeklyClaim) => {
+  const rows = weeklyClaims.value?.data
+  if (!rows) return ''
+  const total = rows.reduce((sum: number, weeklyClaim: WeeklyClaim) => {
     const timeWorked = getTotalTimeWorked(weeklyClaim.claims)
     const rate = getHourlyRateInUserCurrency(weeklyClaim.wage.ratePerHour)
     return sum + (timeWorked / 60) * rate

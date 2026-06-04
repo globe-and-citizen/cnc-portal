@@ -34,23 +34,14 @@
 
       <template #actions-cell="{ row: { original: row } }">
         <div class="flex w-full">
-          <UTooltip
-            :text="
-              userStore.address != teamStore.currentTeam?.ownerAddress
-                ? 'Only the team owner can mint tokens for shareholders'
-                : undefined
-            "
-          >
+          <UTooltip :text="mintIndividualTooltip">
             <UButton
               color="primary"
-              :disabled="userStore.address != teamStore.currentTeam?.ownerAddress"
-              data-test="mint-individual"
-              @click="
-                () => {
-                  selectedShareholder = row.shareholder
-                  mintIndividualModal = { mount: true, show: true }
-                }
+              :disabled="
+                isWriteDisabled || userStore.address != teamStore.currentTeam?.ownerAddress
               "
+              data-test="mint-individual"
+              @click="openMintIndividualModal(row.shareholder)"
             >
               Mint Individual
             </UButton>
@@ -96,6 +87,7 @@ import { log } from '@/utils'
 import { formatStakePercentageFromSupply } from '@/utils/investorMintAllocation'
 import { formatUnits, type Address } from 'viem'
 import { computed, ref, watch } from 'vue'
+import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 
 type ShareholderInfo = {
   shareholder: Address
@@ -110,6 +102,21 @@ const selectedShareholder = ref<Address | null>(null)
 
 const teamStore = useTeamStore()
 const userStore = useUserDataStore()
+const { isWriteDisabled, archivedTooltip } = useTeamWriteGuard()
+
+const mintIndividualTooltip = computed(() => {
+  if (archivedTooltip.value) return archivedTooltip.value
+  if (userStore.address != teamStore.currentTeam?.ownerAddress) {
+    return 'Only the team owner can mint tokens for shareholders'
+  }
+  return undefined
+})
+
+function openMintIndividualModal(shareholder: Address) {
+  if (isWriteDisabled.value) return
+  selectedShareholder.value = shareholder
+  mintIndividualModal.value = { mount: true, show: true }
+}
 
 const { data: tokenSymbol, error: tokenSymbolError } = useInvestorSymbol()
 
