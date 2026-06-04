@@ -8,7 +8,7 @@ import {
   AddressToolTipStub,
   CustomDatePickerStub,
   EXPENSE_ADDRESS,
-  TransactionTableFooterStub,
+  TablePaginationStub,
   UBadgeStub,
   UCardStub,
   USelectStub,
@@ -93,13 +93,13 @@ const createWrapper = (expenseAddress: Address = EXPENSE_ADDRESS): VueWrapper =>
         AddressToolTip: AddressToolTipStub,
         CustomDatePicker: CustomDatePickerStub,
         UserComponent: UserComponentStub,
-        TransactionTableFooter: TransactionTableFooterStub,
+        TablePagination: TablePaginationStub,
         'u-card': UCardStub,
         'u-table': UTableStub,
         'u-select': USelectStub,
         'u-badge': UBadgeStub,
         'user-component': UserComponentStub,
-        'transaction-table-footer': TransactionTableFooterStub
+        'table-pagination': TablePaginationStub
       }
     }
   })
@@ -204,7 +204,7 @@ describe('ExpenseTransactions', () => {
     expect(getTableRows(wrapper)).toHaveLength(5)
   })
 
-  it('resets page to first page when page size changes', async () => {
+  it('anchors the current first row when page size changes', async () => {
     apolloState.expenseQueryResult.value = buildPaginatedExpenseQueryResult(25)
     apolloState.incomingTransfersQueryResult.value = undefined
     wrapper = createWrapper()

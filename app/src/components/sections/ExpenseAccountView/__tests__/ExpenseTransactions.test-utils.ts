@@ -93,17 +93,18 @@ export const UserComponentStub = defineComponent({
   template: '<div data-test="user-component-stub">{{ user?.name }}</div>'
 })
 
-export const TransactionTableFooterStub = defineComponent({
-  name: 'TransactionTableFooter',
+export const TablePaginationStub = defineComponent({
+  name: 'TablePagination',
   props: {
     page: { type: Number, required: false },
     pageSize: { type: Number, required: false },
     total: { type: Number, required: false },
+    noun: { type: String, required: false },
     dataTestPrefix: { type: String, required: false }
   },
   emits: ['update:page', 'update:pageSize'],
   template: `
-    <div data-test="transaction-table-footer">
+    <div data-test="table-pagination">
       <span data-test="footer-page">{{ page }}</span>
       <span data-test="footer-page-size">{{ pageSize }}</span>
       <span data-test="footer-total">{{ total }}</span>
