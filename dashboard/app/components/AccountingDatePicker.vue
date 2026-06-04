@@ -36,7 +36,8 @@ const calendarDate = computed({
     const d = customDate.value
     return new CalendarDate(d.getFullYear(), d.getMonth() + 1, d.getDate())
   },
-  set: (value: CalendarDate) => {
+  set: (value: CalendarDate | null) => {
+    if (!value) return
     customDate.value = value.toDate(getLocalTimeZone())
     select('specific')
   }
@@ -105,7 +106,7 @@ const calendarDate = computed({
 
         <!-- Presets first, free inputs last. -->
         <div v-if="activePreset.id === 'specific'" class="mt-1 border-t border-default pt-2">
-          <UCalendar v-model="calendarDate" />
+          <UCalendar v-model="calendarDate" :prevent-deselect="true" />
         </div>
         <div v-else-if="activePreset.id === 'custom'" class="mt-1 space-y-2 border-t border-default px-2 pt-2">
           <UFormField label="From" size="sm">
