@@ -86,7 +86,12 @@ const polygonRpc =
 
 // Optional WebSocket endpoint for real-time block subscriptions (newHeads).
 // Cuts realtime RPC usage vs polling; Ponder reverts to polling if it drops.
-const polygonWs = process.env.PONDER_WS_URL_137 || undefined;
+// Ponder's `ws` field takes a single URL, so we accept a comma-separated list
+// and use the first entry; the rest are documented alternates (reorder to swap).
+const wsUrls = parseRpcUrls(
+  process.env.PONDER_WS_URLS_137 ?? process.env.PONDER_WS_URL_137,
+);
+const polygonWs = wsUrls[0] || undefined;
 
 // ─── Shared factory helper ────────────────────────────────────────────────────
 const subContractFactory = factory({
