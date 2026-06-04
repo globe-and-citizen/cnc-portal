@@ -1,18 +1,10 @@
-import {
-  addMonths,
-  addQuarters,
-  addYears,
-  endOfDay,
-  endOfMonth,
-  endOfQuarter,
-  endOfYear,
-  format,
-  startOfDay,
-  startOfMonth,
-  startOfQuarter,
-  startOfYear
-} from 'date-fns'
+import dayjs from 'dayjs'
+import quarterOfYear from 'dayjs/plugin/quarterOfYear'
 import type { Range } from '~/types'
+
+// `quarterOfYear` enables startOf/endOf/add with the 'quarter' unit (matches the dayjs
+// convention used in app/ — see app/src/utils/dayUtils.ts).
+dayjs.extend(quarterOfYear)
 
 /**
  * Pure date logic shared by the dual-mode {@link AccountingDatePicker}.
@@ -20,13 +12,13 @@ import type { Range } from '~/types'
  * - `date` mode resolves a single inclusive "as of" {@link Date}.
  * - `range` mode resolves an inclusive `{ start, end }` {@link Range}.
  *
- * Everything here is framework-agnostic (date-fns only) so it can be unit-tested
- * in isolation; the composable owns the reactive state and the component owns the markup.
+ * Everything here is framework-agnostic (dayjs only) so it can be unit-tested in
+ * isolation; the composable owns the reactive state and the component owns the markup.
  */
 
 export type DatePickerMode = 'date' | 'range'
 
-/** Calendar unit a steppable preset walks over with the ◀ / ▶ controls. */
+/** Calendar unit a steppable preset walks over with the ◀ / ▶ controls; also a dayjs unit. */
 export type AnchorUnit = 'month' | 'quarter' | 'year'
 
 export type DatePresetId = 'today' | 'endOfMonth' | 'endOfQuarter' | 'endOfYear' | 'specific'
@@ -52,7 +44,7 @@ export const DATE_PRESETS: DatePickerPreset[] = [
   { id: 'specific', label: 'Specific date' }
 ]
 
-/** `range`-mode options, presets first and the free calendar last. */
+/** `range`-mode options, presets first and the free inputs last. */
 export const RANGE_PRESETS: DatePickerPreset[] = [
   { id: 'month', label: 'Month', unit: 'month' },
   { id: 'quarter', label: 'Quarter', unit: 'quarter' },
@@ -69,29 +61,21 @@ export function defaultPresetId(mode: DatePickerMode): DatePickerPresetId {
   return mode === 'date' ? 'today' : 'month'
 }
 
-const UNIT_OPS: Record<
-  AnchorUnit,
-  { start: (d: Date) => Date, end: (d: Date) => Date, step: (d: Date, amount: number) => Date }
-> = {
-  month: { start: startOfMonth, end: endOfMonth, step: addMonths },
-  quarter: { start: startOfQuarter, end: endOfQuarter, step: addQuarters },
-  year: { start: startOfYear, end: endOfYear, step: addYears }
-}
-
 /** Move an anchor one unit backward (`-1`) or forward (`1`), in place of calendar navigation. */
 export function stepAnchor(anchor: Date, unit: AnchorUnit, direction: -1 | 1): Date {
-  return UNIT_OPS[unit].step(anchor, direction)
+  return dayjs(anchor).add(direction, unit).toDate()
 }
 
 /** Label shown between the ◀ / ▶ controls, e.g. `February 2026`, `Jul – Sep 2025`, `2022`. */
 export function formatAnchorLabel(anchor: Date, unit: AnchorUnit): string {
+  const d = dayjs(anchor)
   switch (unit) {
     case 'month':
-      return format(anchor, 'MMMM yyyy')
+      return d.format('MMMM YYYY')
     case 'year':
-      return format(anchor, 'yyyy')
+      return d.format('YYYY')
     case 'quarter':
-      return `${format(startOfQuarter(anchor), 'MMM')} – ${format(endOfQuarter(anchor), 'MMM')} ${format(anchor, 'yyyy')}`
+      return `${d.startOf('quarter').format('MMM')} – ${d.endOf('quarter').format('MMM')} ${d.format('YYYY')}`
   }
 }
 
@@ -102,16 +86,17 @@ export function resolveAsOfDate(
   customDate: Date,
   now: Date = new Date()
 ): Date {
-  if (preset.id === 'today') return endOfDay(now)
-  if (preset.id === 'specific') return endOfDay(customDate)
-  return UNIT_OPS[preset.unit!].end(anchor)
+  if (preset.id === 'today') return dayjs(now).endOf('day').toDate()
+  if (preset.id === 'specific') return dayjs(customDate).endOf('day').toDate()
+  return dayjs(anchor).endOf(preset.unit!).toDate()
 }
 
 /** Resolve a `range`-mode preset to an inclusive `{ start, end }` range (first → last day). */
 export function resolveRange(preset: DatePickerPreset, anchor: Date, custom: Range): Range {
-  if (preset.id === 'custom') return { start: startOfDay(custom.start), end: endOfDay(custom.end) }
-  const ops = UNIT_OPS[preset.unit!]
-  return { start: ops.start(anchor), end: ops.end(anchor) }
+  if (preset.id === 'custom') {
+    return { start: dayjs(custom.start).startOf('day').toDate(), end: dayjs(custom.end).endOf('day').toDate() }
+  }
+  return { start: dayjs(anchor).startOf(preset.unit!).toDate(), end: dayjs(anchor).endOf(preset.unit!).toDate() }
 }
 
 /** A range is valid only when it does not run backwards. */
@@ -119,14 +104,33 @@ export function isValidRange(range: Range): boolean {
   return range.start.getTime() <= range.end.getTime()
 }
 
-const DAY_FORMAT = 'MMM d, yyyy'
+const DAY_FORMAT = 'MMM D, YYYY'
 
 /** Trigger-button label for `date` mode, e.g. `As of Jun 3, 2026`. */
 export function formatAsOfLabel(date: Date): string {
-  return `As of ${format(date, DAY_FORMAT)}`
+  return `As of ${dayjs(date).format(DAY_FORMAT)}`
 }
 
 /** Trigger-button label for `range` mode, e.g. `From Jan 12, 2026 to Dec 25, 2026`. */
 export function formatRangeLabel(range: Range): string {
-  return `From ${format(range.start, DAY_FORMAT)} to ${format(range.end, DAY_FORMAT)}`
+  return `From ${dayjs(range.start).format(DAY_FORMAT)} to ${dayjs(range.end).format(DAY_FORMAT)}`
+}
+
+/** Start of the current day (default anchor for every preset). */
+export function startOfToday(): Date {
+  return dayjs().startOf('day').toDate()
+}
+
+/** Start of the month containing `date` (default lower bound for Custom dates). */
+export function startOfMonth(date: Date): Date {
+  return dayjs(date).startOf('month').toDate()
+}
+
+/** `<input type="date">` value (`YYYY-MM-DD`) ↔ `Date` at the start of that day. */
+export function toDateInputValue(date: Date): string {
+  return dayjs(date).format('YYYY-MM-DD')
+}
+
+export function fromDateInputValue(value: string): Date {
+  return dayjs(value).startOf('day').toDate()
 }

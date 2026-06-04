@@ -1,4 +1,3 @@
-import { format, parseISO, startOfDay, startOfMonth, startOfToday } from 'date-fns'
 import type { Ref } from 'vue'
 import type { Range } from '~/types'
 import {
@@ -6,19 +5,21 @@ import {
   formatAnchorLabel,
   formatAsOfLabel,
   formatRangeLabel,
+  fromDateInputValue,
   isValidRange,
   presetsForMode,
   resolveAsOfDate,
   resolveRange,
+  startOfMonth,
+  startOfToday,
   stepAnchor,
+  toDateInputValue,
   type AnchorUnit,
   type DatePickerMode,
   type DatePickerPreset,
   type DatePickerPresetId,
   type DatePickerValue
 } from '~/utils/datePicker'
-
-const ISO_DAY = 'yyyy-MM-dd'
 
 /**
  * Reactive state for the dual-mode {@link AccountingDatePicker}.
@@ -81,13 +82,13 @@ export function useDatePicker(mode: DatePickerMode, model: Ref<DatePickerValue |
       : formatRangeLabel(resolved.value as Range)
   )
 
-  // `<input type="date">` proxies — string (yyyy-MM-dd) in, Date out; selecting the input activates it.
+  // `<input type="date">` proxies — string (YYYY-MM-DD) in, Date out; selecting the input activates it.
   const dateInput = (source: Ref<Date>, presetId: DatePickerPresetId) =>
     computed<string>({
-      get: () => format(source.value, ISO_DAY),
+      get: () => toDateInputValue(source.value),
       set: (value: string) => {
         if (!value) return
-        source.value = startOfDay(parseISO(value))
+        source.value = fromDateInputValue(value)
         activeId.value = presetId
       }
     })
