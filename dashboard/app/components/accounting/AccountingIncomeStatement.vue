@@ -227,7 +227,7 @@
       </UTable>
 
       <AccountingPagination
-        v-model:page="currentPage"
+        v-model:page="page"
         v-model:page-size="pageSize"
         :total="totalPositions"
         noun="positions"
@@ -243,6 +243,7 @@ import { format } from 'date-fns'
 import { computed, ref, watch } from 'vue'
 import type { PolymarketActivity, PolymarketPosition } from '~/types/polymarket'
 import { useAccountingPeriod } from '~/composables/useAccountingPeriod'
+import { usePagination } from '~/composables/usePagination'
 import { formatSignedUsd, formatUsd, type LedgerCategoryColor, signClass } from '~/utils/accounting'
 import { buildIncomeStatement } from '~/utils/incomeStatement'
 import { matchesAccountingSearch, normalizeAccountingSearchQuery } from '~/utils/accountingSearch'
@@ -257,8 +258,6 @@ const props = defineProps<{
   walletAddress: string
 }>()
 
-const pageSize = ref(20)
-const currentPage = ref(1)
 const tradesSearchQuery = ref('')
 
 const {
@@ -270,9 +269,9 @@ const {
   presetOptions: periodPresetOptions
 } = useAccountingPeriod()
 
-watch([() => props.walletAddress, accountingPeriod, tradesSearchQuery], () => {
-  currentPage.value = 1
-})
+const { page, pageSize, reset } = usePagination(() => totalPositions.value, { key: 'income' })
+
+watch([() => props.walletAddress, accountingPeriod, tradesSearchQuery], reset)
 
 const statement = computed(() =>
   buildIncomeStatement({
@@ -414,7 +413,7 @@ const totalPositions = computed(() => filteredPositionGroups.value.length)
 // its block's zebra parity so the whole position (header + leaves) shares a shade.
 const pagedTrades = computed<PositionTrade[]>(() =>
   filteredPositionGroups.value
-    .slice((currentPage.value - 1) * pageSize.value, currentPage.value * pageSize.value)
+    .slice((page.value - 1) * pageSize.value, page.value * pageSize.value)
     .flatMap((group, index) => group.map(trade => ({ ...trade, groupEven: index % 2 === 0 })))
 )
 

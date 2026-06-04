@@ -96,7 +96,7 @@
     </UTable>
 
     <AccountingPagination
-      v-model:page="currentPage"
+      v-model:page="page"
       v-model:page-size="pageSize"
       :total="filteredPositions.length"
       noun="positions"
@@ -107,6 +107,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import type { PolymarketPosition } from '~/types/polymarket'
+import { usePagination } from '~/composables/usePagination'
 import { formatSignedUsd, formatUsd, signClass } from '~/utils/accounting'
 import { matchesAccountingSearch, normalizeAccountingSearchQuery } from '~/utils/accountingSearch'
 import AccountingPagination from './AccountingPagination.vue'
@@ -118,8 +119,6 @@ const props = defineProps<{
   hasAddress: boolean
 }>()
 
-const pageSize = ref(20)
-const currentPage = ref(1)
 const searchQuery = ref('')
 
 /** Open positions first (size > 0), then by current value. */
@@ -148,14 +147,16 @@ const filteredPositions = computed(() => {
   )
 })
 
+const { page, pageSize, reset } = usePagination(() => filteredPositions.value.length, {
+  key: 'positions'
+})
+
 const pagedPositions = computed(() => {
-  const start = (currentPage.value - 1) * pageSize.value
+  const start = (page.value - 1) * pageSize.value
   return filteredPositions.value.slice(start, start + pageSize.value)
 })
 
-watch([() => props.positions, searchQuery], () => {
-  currentPage.value = 1
-})
+watch([() => props.positions, searchQuery], reset)
 
 const columns = [
   { accessorKey: 'market', header: 'Market' },

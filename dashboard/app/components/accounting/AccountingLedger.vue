@@ -181,7 +181,7 @@
       </UTable>
 
       <AccountingPagination
-        v-model:page="currentPage"
+        v-model:page="page"
         v-model:page-size="pageSize"
         :total="totalActivities"
         noun="transactions"
@@ -208,6 +208,7 @@ import {
   signClass
 } from '~/utils/accounting'
 import { useAccountingPeriod } from '~/composables/useAccountingPeriod'
+import { usePagination } from '~/composables/usePagination'
 import { buildGeneralLedger } from '~/utils/generalLedger'
 import type { RealizedTrade } from '~/utils/incomeStatement'
 import {
@@ -253,9 +254,9 @@ const generalLedger = computed(() =>
   })
 )
 
-const pageSize = ref(20)
-const currentPage = ref(1)
 const searchQuery = ref('')
+
+const { page, pageSize, reset } = usePagination(() => totalActivities.value, { key: 'ledger' })
 
 const categoryOptions: CategoryOption<LedgerCategory>[] = Object.entries(CATEGORY_META).map(
   ([value, meta]) => ({
@@ -268,9 +269,7 @@ const allCategoryValues = categoryOptions.map(option => option.value)
 // Multi-select: every category selected == "All categories".
 const selectedCategories = ref<LedgerCategory[]>([...allCategoryValues])
 
-watch([() => props.walletAddress, selectedCategories, accountingPeriod, searchQuery], () => {
-  currentPage.value = 1
-})
+watch([() => props.walletAddress, selectedCategories, accountingPeriod, searchQuery], reset)
 
 // --- Build the merged row list (one row per journal line) ---
 const allRows = computed(() =>
@@ -333,7 +332,7 @@ const activityStarts = computed(() => {
 const totalActivities = computed(() => activityStarts.value.length)
 
 const pagedRows = computed<MergedLedgerRow[]>(() => {
-  const startActivityIdx = (currentPage.value - 1) * pageSize.value
+  const startActivityIdx = (page.value - 1) * pageSize.value
   const endActivityIdx = startActivityIdx + pageSize.value
   const start = activityStarts.value[startActivityIdx]
   const end = activityStarts.value[endActivityIdx] ?? filteredRows.value.length
