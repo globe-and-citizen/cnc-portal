@@ -46,5 +46,3 @@ export const createLocalStorageWithExpiration = (baseStorage = localStorage) => 
     }
   }
 }
-
-export const dailyLocalStorage = createLocalStorageWithExpiration()

@@ -7,10 +7,3 @@ export function formatUSD(amount: number): string {
     maximumFractionDigits: amount % 1 === 0 ? 2 : 4
   }).format(amount)
 }
-
-export function formatAmount(amount: string): string {
-  const num = parseFloat(amount)
-  if (isNaN(num)) return '0'
-  const decimals = num % 1 === 0 ? 2 : 4
-  return num.toFixed(decimals)
-}
