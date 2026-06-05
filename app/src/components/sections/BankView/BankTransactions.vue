@@ -26,9 +26,7 @@
       :loading="loading"
       :get-sub-rows="getSubRows"
       :ui="{ td: 'empty:p-0 group-has-[td:not(:empty)]:border-b border-default' }"
-      :meta="{
-        class: { tr: (row: TableRow<BankTransaction>) => (row.depth > 0 ? 'bg-elevated' : '') }
-      }"
+      :meta="{ class: { tr: (row: { depth: number }) => (row.depth > 0 ? 'bg-elevated' : '') } }"
     >
       <template #txHash-cell="{ row }">
         <template v-if="row.depth === 0">
@@ -150,7 +148,6 @@
 
 <script setup lang="ts">
 import { computed, watch } from 'vue'
-import type { TableRow } from '@nuxt/ui'
 import { type Address } from 'viem'
 import { GRAPHQL_POLL_INTERVAL } from '@/constant'
 import { useQuery } from '@vue/apollo-composable'

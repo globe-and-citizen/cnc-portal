@@ -38,7 +38,7 @@
               :model-value="state.startDate ? dateToCalendarDate(state.startDate) : undefined"
               :min-value="today(getLocalTimeZone())"
               @update:model-value="
-                (val: DateValue | undefined) => {
+                (val: DateValue | DateValue[] | DateRange | null | undefined) => {
                   const minStart = new Date(Date.now() + MIN_START_DELAY_MS)
                   state.startDate = ensureFutureDate(
                     (val as CalendarDate).toDate(getLocalTimeZone()),
@@ -66,7 +66,7 @@
                 state.startDate ? dateToCalendarDate(state.startDate) : today(getLocalTimeZone())
               "
               @update:model-value="
-                (val: DateValue | undefined) => {
+                (val: DateValue | DateValue[] | DateRange | null | undefined) => {
                   state.endDate = (val as CalendarDate).toDate(getLocalTimeZone())
                   endDateOpen = false
                 }
@@ -105,6 +105,7 @@
 
 <script setup lang="ts">
 import { CalendarDate, getLocalTimeZone, today, type DateValue } from '@internationalized/date'
+import type { DateRange } from 'reka-ui'
 import { reactive, ref, computed } from 'vue'
 import { z } from 'zod'
 import { useProposalsCreateProposal } from '@/composables/proposals/writes'
