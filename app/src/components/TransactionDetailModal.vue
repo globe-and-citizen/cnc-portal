@@ -195,7 +195,8 @@ import {
 } from '@/utils'
 import { formatDateRelative, formatDateUTC } from '@/utils/dayUtils'
 import { useCurrencyStore, useTeamStore } from '@/stores'
-import { getPublicClient } from '@/utils/web3Util'
+import { getPublicClient } from '@wagmi/core'
+import { config } from '@/wagmi.config'
 import { NETWORK } from '@/constant'
 
 const props = defineProps<{
@@ -230,7 +231,7 @@ watch(
     rawCalldata.value = null
     loading.value = true
     try {
-      const client = getPublicClient()
+      const client = getPublicClient(config)
       const [receiptData, txData] = await Promise.all([
         client.getTransactionReceipt({ hash: hash as `0x${string}` }),
         client.getTransaction({ hash: hash as `0x${string}` })

@@ -300,3 +300,12 @@ export const enrichTransaction = (tx: {
   const amountLocal = Number.isFinite(numericAmount) ? numericAmount * priceInLocal : 0
   return { tokenAddress, token, amount, amountLocal }
 }
+
+export const getUniqueSummary = (row: {
+  type: string
+  amount: string | number
+  token: string
+}): string | null => {
+  const summary = getTransactionSummary(row)
+  return summary && summary !== getTransactionTypeLabel(row.type) ? summary : null
+}

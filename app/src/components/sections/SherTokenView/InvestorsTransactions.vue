@@ -193,9 +193,10 @@ import {
   formatCryptoAmount,
   formatCurrencyShort,
   resolveUser,
-  getTransactionSummary,
   getTransactionTypeLabel,
   getTransactionCounterparty,
+  getUniqueSummary,
+  getMintTotal,
   formatTxHash,
   DIVIDEND_TYPES,
   log
@@ -288,11 +289,6 @@ const {
   openDetail
 } = useTransactionTable(enrichedTransactions, { key: 'investorTx' })
 
-const getUniqueSummary = (row: { type: string; amount: string | number; token: string }) => {
-  const summary = getTransactionSummary(row)
-  return summary && summary !== getTransactionTypeLabel(row.type) ? summary : null
-}
-
 type InvestorRow = (typeof enrichedTransactions.value)[number] & { subRows?: unknown[] }
 
 const getSubRows = (row: InvestorRow) => {
@@ -303,16 +299,6 @@ const getSubRows = (row: InvestorRow) => {
     return [{ ...parentData, subRows: [], groupedEventCount: 1 }, ...base] as typeof base
   }
   return base
-}
-
-const getMintTotal = (tx: {
-  type: string
-  amount: string | number
-  subRows?: Array<{ amount: string | number }>
-}): string => {
-  if (tx.type !== 'mint' || !tx.subRows?.length) return String(tx.amount)
-  const total = Number(tx.amount) + tx.subRows.reduce((sum, r) => sum + Number(r.amount), 0)
-  return String(total)
 }
 
 const { getInlineUser, getValuePrefix, getValueClass } = useTransactionInline(
