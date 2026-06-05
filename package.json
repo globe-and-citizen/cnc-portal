@@ -11,6 +11,7 @@
   "devDependencies": {
     "conventional-changelog-angular": "^8.1.0",
     "conventional-changelog-cli": "^5.0.0",
+    "danger": "^13.0.7",
     "husky": "^9.1.7",
     "lint-staged": "^17.0.5"
   }
