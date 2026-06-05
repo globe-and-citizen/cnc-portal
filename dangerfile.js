@@ -2,13 +2,16 @@
 /**
  * Danger configuration — PR size cap.
  *
- * Large PRs erase the reviewer's bandwidth. This rule caps a PR at
- * MAX_CHANGED_LINES *meaningful* changed lines and, when exceeded, posts a
- * comment suggesting how to split the work.
+ * Large PRs erase the reviewer's bandwidth. This rule budgets *meaningful*
+ * changed lines and, when a budget is exceeded, posts a comment suggesting how
+ * to split the work.
  *
- * What counts:
- *   - Added + deleted lines across the PR, EXCLUDING generated files,
- *     lockfiles, and test snapshots (see IGNORED_PATTERNS).
+ * What counts (separate budgets so a test-heavy PR doesn't trip the prod cap):
+ *   - Production code: added + deleted lines, EXCLUDING generated files,
+ *     lockfiles, and snapshots (see IGNORED_PATTERNS) and test files
+ *     (see TEST_PATTERNS). Budget: MAX_PROD_LINES.
+ *   - Test code: added + deleted lines in files matching TEST_PATTERNS.
+ *     Budget: MAX_TEST_LINES (more generous — test code is more skimmable).
  *
  * Override:
  *   - Add the `large-pr-justified` label to the PR.
@@ -22,14 +25,17 @@
 
 const { danger, warn, message, markdown, fail } = require("danger");
 
-/** Maximum number of meaningful changed lines before we warn. */
-const MAX_CHANGED_LINES = 400;
+/** Maximum meaningful changed lines of PRODUCTION code before we warn. */
+const MAX_PROD_LINES = 400;
+
+/** Maximum meaningful changed lines of TEST code before we warn. */
+const MAX_TEST_LINES = 800;
 
 /** Label that opts a PR out of the size cap. */
 const OVERRIDE_LABEL = "large-pr-justified";
 
 /**
- * Glob-ish patterns for files that should NOT count toward the size budget:
+ * Glob-ish patterns for files that should NOT count toward any budget:
  * lockfiles, generated artifacts, test snapshots, vendored code, etc.
  * Matched against the repo-relative file path.
  */
@@ -60,10 +66,26 @@ const IGNORED_PATTERNS = [
   /(^|\/)generated\//,
 ];
 
-/** True when the file path matches any ignore pattern. */
-function isIgnored(filePath) {
-  return IGNORED_PATTERNS.some((pattern) => pattern.test(filePath));
+/**
+ * Glob-ish patterns for TEST files, counted against MAX_TEST_LINES instead of
+ * MAX_PROD_LINES. Covers colocated *.spec/*.test files, jest-style __tests__
+ * dirs, e2e specs, and contract/backend `test/` directories.
+ */
+const TEST_PATTERNS = [
+  /\.(spec|test)\.[cm]?[jt]sx?$/,
+  /\.e2e\.[cm]?[jt]sx?$/,
+  /(^|\/)__tests__\//,
+  /(^|\/)e2e\//,
+  /(^|\/)tests?\//,
+];
+
+/** True when the file path matches any pattern in the given list. */
+function matchesAny(filePath, patterns) {
+  return patterns.some((pattern) => pattern.test(filePath));
 }
+
+const isIgnored = (filePath) => matchesAny(filePath, IGNORED_PATTERNS);
+const isTest = (filePath) => matchesAny(filePath, TEST_PATTERNS);
 
 /**
  * Sum added + deleted lines for the given files using Danger's per-file
@@ -103,30 +125,37 @@ async function checkPrSize() {
     ...danger.git.modified_files,
     ...danger.git.created_files,
   ];
-  const counted = allChanged.filter((f) => !isIgnored(f));
+  const considered = allChanged.filter((f) => !isIgnored(f));
   const ignored = allChanged.filter((f) => isIgnored(f));
+  const testFiles = considered.filter(isTest);
+  const prodFiles = considered.filter((f) => !isTest(f));
 
-  const changedLines = await countChangedLines(counted);
+  const prodLines = await countChangedLines(prodFiles);
+  const testLines = await countChangedLines(testFiles);
 
-  if (changedLines <= MAX_CHANGED_LINES) {
-    message(
-      `✅ PR size: ${changedLines} meaningful changed lines (limit ${MAX_CHANGED_LINES}).` +
-        (ignored.length
-          ? ` ${ignored.length} generated/lockfile/snapshot file(s) excluded.`
-          : ""),
-    );
+  const prodOver = prodLines > MAX_PROD_LINES;
+  const testOver = testLines > MAX_TEST_LINES;
+
+  const summary =
+    `production **${prodLines}**/${MAX_PROD_LINES} · tests **${testLines}**/${MAX_TEST_LINES}` +
+    (ignored.length
+      ? ` · ${ignored.length} generated/lockfile/snapshot file(s) excluded`
+      : "");
+
+  if (!prodOver && !testOver) {
+    message(`✅ PR size — ${summary}.`);
     return;
   }
 
-  // Over the cap — check for a justified override.
+  // Over at least one budget — check for a justified override.
   const labels = (danger.github.issue.labels || []).map((l) => l.name);
   const hasOverrideLabel = labels.includes(OVERRIDE_LABEL);
   const justification = getJustification(pr.body);
 
   if (hasOverrideLabel && justification) {
     message(
-      `🟡 PR exceeds the ${MAX_CHANGED_LINES}-line cap (${changedLines} lines) but is ` +
-        `justified via the \`${OVERRIDE_LABEL}\` label.\n\n> ${justification}`,
+      `🟡 PR over budget (${summary}) but justified via the \`${OVERRIDE_LABEL}\` ` +
+        `label.\n\n> ${justification}`,
     );
     return;
   }
@@ -139,17 +168,25 @@ async function checkPrSize() {
     );
   }
 
+  const exceeded = [];
+  if (prodOver)
+    exceeded.push(`**${prodLines}** production lines (cap ${MAX_PROD_LINES})`);
+  if (testOver)
+    exceeded.push(`**${testLines}** test lines (cap ${MAX_TEST_LINES})`);
+
   warn(
-    `🚨 This PR changes **${changedLines}** meaningful lines, over the **${MAX_CHANGED_LINES}**-line cap ` +
-      `(generated files, lockfiles, and snapshots are already excluded). Large PRs are hard to review well.`,
+    `🚨 This PR changes ${exceeded.join(" and ")} — over budget ` +
+      "(generated files, lockfiles, and snapshots are already excluded). " +
+      "Large PRs are hard to review well.",
   );
 
   markdown(
     [
       "### 📦 This PR is large — consider splitting it",
       "",
-      `Reviewer attention is the scarce resource. A PR over **${MAX_CHANGED_LINES}** changed lines ` +
-        "is hard to review thoroughly. Some ways to decompose it:",
+      `Reviewer attention is the scarce resource. Production changes are budgeted at ` +
+        `**${MAX_PROD_LINES}** lines and test changes at **${MAX_TEST_LINES}**. Some ways ` +
+        "to decompose it:",
       "",
       "- **Separate refactors from behavior changes** — land mechanical moves/renames in their own PR.",
       "- **Split by layer** — backend, frontend, and contract changes can usually ship independently.",
