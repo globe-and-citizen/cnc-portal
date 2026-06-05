@@ -57,10 +57,16 @@ jobs:
 
       - name: ✅ Upload coverage to Codecov
         if: always()
-        continue-on-error: true # codecov-action@v4 occasionally EPIPEs on GPG verify
-        uses: codecov/codecov-action@v4.0.1
+        # Coverage upload must never gate the e2e job, but it must still work.
+        # v4.0.1 (a Node 20 action) sends `service: None` from inside the
+        # Playwright container and the upload silently fails; v5 fixes container
+        # detection and runs on Node 24. `slug` is passed explicitly so it never
+        # falls back to fragile git introspection inside the container.
+        continue-on-error: true
+        uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+          slug: ${{ github.repository }}
           files: ./app/coverage/e2e/lcov.info
           flags: app-e2e-tests
 
