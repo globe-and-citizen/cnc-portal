@@ -26,7 +26,11 @@
       :loading="loading"
       :get-sub-rows="getSubRows"
       :ui="{ td: 'empty:p-0 group-has-[td:not(:empty)]:border-b border-default' }"
-      :meta="{ class: { tr: (row) => (row.depth > 0 ? 'bg-elevated' : '') } }"
+      :meta="{
+        class: {
+          tr: (row: TableRow<CashRemunerationTransaction>) => (row.depth > 0 ? 'bg-elevated' : '')
+        }
+      }"
     >
       <template #txHash-cell="{ row }">
         <template v-if="row.depth === 0">
@@ -136,6 +140,7 @@
 
 <script setup lang="ts">
 import { computed, watch } from 'vue'
+import type { TableRow } from '@nuxt/ui'
 import {
   useTransactionTable,
   childColspan,
