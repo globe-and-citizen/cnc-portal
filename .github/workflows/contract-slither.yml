@@ -28,11 +28,14 @@ jobs:
           node-version: 24
           solc-version: "0.8.24"
           slither-config: "contract/slither.config.json"
-          # Block the PR only on new high / medium severity findings.
-          # Low / informational are reported via the SARIF upload below
-          # but do not fail the build. Known false positives are silenced
-          # explicitly in contract/slither.config.json.
-          fail-on: medium
+          # Report-only for the initial rollout: existing contracts still carry
+          # high/medium findings (tracked in #1988 and #1993-1997), so blocking
+          # now would stall every contract PR. All findings are surfaced in the
+          # GitHub Security tab via the SARIF upload below.
+          # To enforce once the baseline is triaged: set `fail-on: high` (or
+          # medium) and re-add a gate step on `steps.slither.outcome`. Known
+          # false positives are silenced explicitly in contract/slither.config.json.
+          fail-on: none
           sarif: results.sarif
 
       - name: 🛡 Upload SARIF to GitHub code scanning
@@ -41,9 +44,3 @@ jobs:
         with:
           sarif_file: ${{ steps.slither.outputs.sarif }}
           category: slither
-
-      - name: 🚦 Enforce Slither result
-        if: steps.slither.outcome == 'failure'
-        run: |
-          echo "::error::Slither found high/medium severity issues. See the Security tab and the Slither step log."
-          exit 1

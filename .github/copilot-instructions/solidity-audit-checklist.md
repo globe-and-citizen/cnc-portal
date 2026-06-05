@@ -6,14 +6,16 @@ description and tick each item. It complements the upgrade-safety rules in
 [`../../contract/UPGRADE_STRATEGY.md`](../../contract/UPGRADE_STRATEGY.md) and the
 general [`review-checklist.md`](./review-checklist.md).
 
-## Automated gate (CI)
+## Automated analysis (CI)
 
 [`.github/workflows/contract-slither.yml`](../workflows/contract-slither.yml) runs
 [Slither](https://github.com/crytic/slither) on every PR touching `contract/`.
 
-- [ ] **Slither passes.** The job blocks the PR on **new high / medium severity**
-      findings. Low / informational findings are uploaded to the GitHub Security
-      tab (code scanning) but do not fail the build.
+- [ ] **Review Slither output.** The job uploads all findings to the GitHub
+      Security tab (code scanning). It is **report-only** for now (does not fail
+      the build) because existing contracts carry a high/medium baseline tracked
+      in #1988 / #1993-1997; once that baseline is cleared the job switches to
+      block on new high/medium findings.
 - [ ] **No silent suppressions.** Any false positive is excluded **explicitly** in
       [`../../contract/slither.config.json`](../../contract/slither.config.json)
       (or with an inline `// slither-disable-next-line <detector>` plus a one-line
