@@ -143,6 +143,7 @@ export function useCashOutAll() {
     try {
       while (currentIndex.value < steps.value.length) {
         const step = steps.value[currentIndex.value]
+        if (!step) break
         step.status = 'active'
         step.error = ''
         try {
