@@ -18,7 +18,15 @@ jobs:
   app-e2e-test:
     if: github.event.action != 'labeled' || github.event.label.name == 'run'
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    # Run inside the official Playwright image: Chromium and its system deps are
+    # preinstalled, so there is no browser download in the critical path.
+    # `playwright install` pulls Chromium from the azureedge.net CDN, which
+    # stalled for >20 min and timed the job out. Caching could not rescue it:
+    # actions/cache only writes in a post-step that is skipped when the job is
+    # cancelled, so a timed-out run never seeds the cache for the next one.
+    # Keep this tag in sync with @playwright/test in app/package.json.
+    container: mcr.microsoft.com/playwright:v1.48.2-noble
+    timeout-minutes: 15
 
     steps:
       - name: 🛫 Checkout
@@ -33,17 +41,6 @@ jobs:
 
       - name: 📦 Install dependencies
         run: npm ci
-        working-directory: ./app
-
-      - name: 🎭 Cache Playwright browsers
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright-${{ hashFiles('app/package-lock.json') }}
-          restore-keys: ${{ runner.os }}-playwright-
-
-      - name: 🎭 Install Playwright browsers
-        run: npx playwright install chromium --with-deps
         working-directory: ./app
 
       - name: 🧪 Run E2E tests with coverage instrumentation
