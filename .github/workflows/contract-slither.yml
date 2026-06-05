@@ -1,0 +1,49 @@
+name: Contract Slither Analysis
+permissions:
+  contents: read
+  security-events: write
+
+on:
+  pull_request:
+    branches: "**"
+    paths:
+      - "contract/**"
+  workflow_dispatch:
+
+jobs:
+  slither:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🛫 Checkout code
+        uses: actions/checkout@v6
+
+      - name: 🐍 Run Slither
+        id: slither
+        uses: crytic/slither-action@v0.4.2
+        continue-on-error: true
+        with:
+          # crytic-compile sets up Node and installs the Hardhat project deps
+          # in `target` itself, so no separate `npm ci` step is needed.
+          target: "contract/"
+          node-version: 24
+          solc-version: "0.8.24"
+          slither-config: "contract/slither.config.json"
+          # Block the PR only on new high / medium severity findings.
+          # Low / informational are reported via the SARIF upload below
+          # but do not fail the build. Known false positives are silenced
+          # explicitly in contract/slither.config.json.
+          fail-on: medium
+          sarif: results.sarif
+
+      - name: 🛡 Upload SARIF to GitHub code scanning
+        uses: github/codeql-action/upload-sarif@v3
+        if: always() && steps.slither.outputs.sarif != ''
+        with:
+          sarif_file: ${{ steps.slither.outputs.sarif }}
+          category: slither
+
+      - name: 🚦 Enforce Slither result
+        if: steps.slither.outcome == 'failure'
+        run: |
+          echo "::error::Slither found high/medium severity issues. See the Security tab and the Slither step log."
+          exit 1
