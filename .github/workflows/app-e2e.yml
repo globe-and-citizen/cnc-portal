@@ -18,7 +18,7 @@ jobs:
   app-e2e-test:
     if: github.event.action != 'labeled' || github.event.label.name == 'run'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
 
     steps:
       - name: 🛫 Checkout
@@ -34,6 +34,13 @@ jobs:
       - name: 📦 Install dependencies
         run: npm ci
         working-directory: ./app
+
+      - name: 🎭 Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('app/package-lock.json') }}
+          restore-keys: ${{ runner.os }}-playwright-
 
       - name: 🎭 Install Playwright browsers
         run: npx playwright install chromium --with-deps
