@@ -96,10 +96,6 @@ vi.mock('@/views/team/[id]/ProposalsView.vue', () => ({
   default: { name: 'ProposalsView', template: '<div>Proposals</div>' }
 }))
 
-vi.mock('@/components/sections/ProposalsView/ProposalDetail.vue', () => ({
-  default: { name: 'ProposalDetail', template: '<div>Proposal Detail</div>' }
-}))
-
 vi.mock('@/views/team/[id]/BodElectionDetailsView.vue', () => ({
   default: { name: 'BodElectionDetailsView', template: '<div>BoD Election Details</div>' }
 }))

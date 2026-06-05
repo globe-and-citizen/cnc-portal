@@ -17,7 +17,7 @@ import type { PolymarketActivity, PolymarketPosition } from '~/types/polymarket'
  * filterable by period and reusable by the General Ledger sub-task.
  */
 
-export type RealizedTradeKind = 'SELL' | 'REDEEM' | 'MERGE' | 'RESOLUTION_LOSS'
+type RealizedTradeKind = 'SELL' | 'REDEEM' | 'MERGE' | 'RESOLUTION_LOSS'
 
 export interface RealizedTrade {
   /** Unix seconds of the disposal. */
@@ -35,7 +35,7 @@ export interface RealizedTrade {
   kind: RealizedTradeKind
 }
 
-export interface IncomeStatement {
+interface IncomeStatement {
   /** Period bounds (unix seconds); undefined = open-ended. */
   periodStart?: number
   periodEnd?: number
@@ -85,7 +85,7 @@ export interface IncomeStatement {
   reconciliationGap: number
 }
 
-export interface BuildIncomeStatementInput {
+interface BuildIncomeStatementInput {
   activities: PolymarketActivity[]
   positions: PolymarketPosition[]
   /** Inclusive period bounds, unix seconds. Omit for all-time. */

@@ -71,7 +71,7 @@ const findToken = (tokenId: TokenId, balances: TokenBalance[]) => {
  * @param expense The expense row data
  * @returns The remaining balance that can be spent, or null if no budget data found
  */
-export const getRemainingExpenseBalance = (expense: TableRow, contractBalance: number): number => {
+const getRemainingExpenseBalance = (expense: TableRow, contractBalance: number): number => {
   const maxAmountData = expense.data.amount // budgetData.find((item) => item.budgetType === 1)?.value
   const amountTransferred = expense.balances[1]
 
