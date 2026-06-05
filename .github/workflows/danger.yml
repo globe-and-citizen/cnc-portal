@@ -1,0 +1,42 @@
+name: Danger PR size check
+
+# Caps PR size at 400 meaningful changed lines (lockfiles, generated files,
+# and snapshots excluded) and comments a split suggestion when exceeded.
+# Override: add the `large-pr-justified` label AND a justification note under a
+# `## Large PR justification` heading in the PR body. See ./dangerfile.js.
+
+permissions:
+  contents: read
+  pull-requests: write
+
+on:
+  pull_request:
+    branches: ["**"]
+    types: [opened, synchronize, reopened, labeled, unlabeled, edited]
+  workflow_dispatch:
+
+jobs:
+  danger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🛫 Checkout code
+        uses: actions/checkout@v6
+        with:
+          # Danger diffs against the base branch, so fetch full history.
+          fetch-depth: 0
+
+      - name: 🏗 Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24.x
+          cache: "npm"
+          cache-dependency-path: ./package-lock.json
+
+      - name: ⚙️ NPM install
+        run: npm ci
+
+      - name: 🚨 Run Danger
+        run: npx danger ci --failOnErrors
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DANGER_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
