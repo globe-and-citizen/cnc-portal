@@ -21,8 +21,8 @@ export type DatePickerMode = 'date' | 'range'
 /** Calendar unit a steppable preset walks over with the ◀ / ▶ controls; also a dayjs unit. */
 export type AnchorUnit = 'month' | 'quarter' | 'year'
 
-export type DatePresetId = 'today' | 'endOfMonth' | 'endOfQuarter' | 'endOfYear' | 'specific'
-export type RangePresetId = 'month' | 'quarter' | 'year' | 'custom'
+type DatePresetId = 'today' | 'endOfMonth' | 'endOfQuarter' | 'endOfYear' | 'specific'
+type RangePresetId = 'month' | 'quarter' | 'year' | 'custom'
 export type DatePickerPresetId = DatePresetId | RangePresetId
 
 /** The value emitted through `v-model`: a single `Date` in `date` mode, a `Range` in `range` mode. */
@@ -36,7 +36,7 @@ export interface DatePickerPreset {
 }
 
 /** `date`-mode options, presets first and the free calendar last. */
-export const DATE_PRESETS: DatePickerPreset[] = [
+const DATE_PRESETS: DatePickerPreset[] = [
   { id: 'today', label: 'Today' },
   { id: 'endOfMonth', label: 'End of month', unit: 'month' },
   { id: 'endOfQuarter', label: 'End of quarter', unit: 'quarter' },
@@ -45,7 +45,7 @@ export const DATE_PRESETS: DatePickerPreset[] = [
 ]
 
 /** `range`-mode options, presets first and the free inputs last. */
-export const RANGE_PRESETS: DatePickerPreset[] = [
+const RANGE_PRESETS: DatePickerPreset[] = [
   { id: 'month', label: 'Month', unit: 'month' },
   { id: 'quarter', label: 'Quarter', unit: 'quarter' },
   { id: 'year', label: 'Year', unit: 'year' },

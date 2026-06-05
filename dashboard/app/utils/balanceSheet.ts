@@ -53,7 +53,7 @@ export interface BalanceSheet {
   unrealizedPnl: number
 }
 
-export interface BuildBalanceSheetInput {
+interface BuildBalanceSheetInput {
   ledgerEntries: LedgerEntry[]
   realizedTrades: RealizedTrade[]
   positions: PolymarketPosition[]

@@ -26,7 +26,7 @@ import {
  * - `tx_dropped`: tx was replaced or not found after submission
  * - `unknown`: anything we couldn't classify — inspect `raw` to investigate
  */
-export type ErrorCategory =
+type ErrorCategory =
   | 'user_rejected'
   | 'insufficient_gas'
   | 'chain_mismatch'
@@ -36,7 +36,7 @@ export type ErrorCategory =
   | 'tx_dropped'
   | 'unknown'
 
-export interface ClassifiedError {
+interface ClassifiedError {
   category: ErrorCategory
   /** ABI-level custom error name when `category === 'contract_revert'` (e.g. "InsufficientTokenBalance") */
   revertName?: string
@@ -48,7 +48,7 @@ export interface ClassifiedError {
   raw: unknown
 }
 
-export interface ClassifyOptions {
+interface ClassifyOptions {
   /** Identifies which contract emitted the revert so per-contract overrides apply. */
   contract?: ContractKey
 }
