@@ -24,6 +24,11 @@ export const childColspan = (cell: {
 export const childHidden = (cell: { row: { depth: number } }) =>
   cell.row.depth > 0 ? 'hidden' : ''
 
+// `meta.class.tr` (a UTable `Row`) — elevate grouped child rows so they read as
+// a nested band under their parent transaction.
+export const childRowClass = (row: { depth: number }): string =>
+  row.depth > 0 ? 'bg-elevated' : ''
+
 export interface UseTransactionTableOptions {
   /**
    * Query-param prefix passed through to `usePagination` so several paginated

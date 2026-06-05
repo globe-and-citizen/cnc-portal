@@ -26,7 +26,7 @@
       :loading="loading"
       :get-sub-rows="getSubRows"
       :ui="{ td: 'empty:p-0 group-has-[td:not(:empty)]:border-b border-default' }"
-      :meta="{ class: { tr: (row: { depth: number }) => (row.depth > 0 ? 'bg-elevated' : '') } }"
+      :meta="{ class: { tr: childRowClass } }"
     >
       <template #txHash-cell="{ row }">
         <template v-if="row.depth === 0">
@@ -160,7 +160,8 @@ import { computed, watch } from 'vue'
 import {
   useTransactionTable,
   childColspan,
-  childHidden
+  childHidden,
+  childRowClass
 } from '@/composables/transactions/useTransactionTable'
 import { useTransactionInline } from '@/composables/transactions/useTransactionInline'
 import InvestorChildRow from './InvestorChildRow.vue'
