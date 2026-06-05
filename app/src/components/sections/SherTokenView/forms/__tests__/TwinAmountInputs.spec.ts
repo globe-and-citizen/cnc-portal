@@ -62,4 +62,12 @@ describe('TwinAmountInputs.vue', () => {
     expect(percentageInput.attributes('disabled')).toBeDefined()
     expect((percentageInput.element as HTMLInputElement).value).toBe('100')
   })
+
+  it('disables percentage input when percentage editing is unavailable', () => {
+    const wrapper = mountInputs({ disablePercentage: true, percentage: 40 })
+
+    const percentageInput = wrapper.find('input[data-test="percentage-input"]')
+    expect(percentageInput.attributes('disabled')).toBeDefined()
+    expect((percentageInput.element as HTMLInputElement).value).toBe('100')
+  })
 })

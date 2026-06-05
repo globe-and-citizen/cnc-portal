@@ -21,9 +21,11 @@
         class="flex-1"
         data-test="percentage-input"
         :color="inputColor"
-        :modelValue="hasTotalSupply && totalSupplyBigInt === 0n ? 100 : percentage"
+        :modelValue="
+          (hasTotalSupply && totalSupplyBigInt === 0n) || props.disablePercentage ? 100 : percentage
+        "
         placeholder="0"
-        :disabled="hasTotalSupply && totalSupplyBigInt === 0n"
+        :disabled="(hasTotalSupply && totalSupplyBigInt === 0n) || props.disablePercentage"
         @update:modelValue="handlePercentageUpdate"
       >
         <template #trailing>
@@ -61,6 +63,7 @@ const props = defineProps<{
   minPercentage: number
   maxPercentage: number
   inputColor?: 'primary' | 'neutral'
+  disablePercentage?: boolean
 }>()
 
 const emit = defineEmits<{
