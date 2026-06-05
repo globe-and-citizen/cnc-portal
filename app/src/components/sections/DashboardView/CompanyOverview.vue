@@ -2,7 +2,10 @@
   <div class="flex flex-col gap-6">
     <!-- Treasury Overview -->
     <div class="flex flex-col gap-4">
-      <h3 class="text-lg font-semibold">Treasury Overview</h3>
+      <div class="flex items-center justify-between gap-2">
+        <h3 class="text-lg font-semibold">Treasury Overview</h3>
+        <CashOutAllAction />
+      </div>
 
       <!-- Total Balance Card -->
       <UCard>
@@ -124,6 +127,7 @@ import { useTeamStore } from '@/stores/teamStore'
 import { useCurrencyStore } from '@/stores'
 import { computed } from 'vue'
 import { useContractBalance } from '@/composables/useContractBalance'
+import CashOutAllAction from '@/components/sections/DashboardView/CashOutAllAction.vue'
 import type { Address } from 'viem'
 
 const teamStore = useTeamStore()
