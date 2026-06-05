@@ -95,10 +95,11 @@
 
     <!-- Conflicting Transaction Warning Modal -->
     <template #footer>
-      <TransactionTableFooter
+      <TablePagination
         v-model:page="page"
         v-model:page-size="pageSize"
         :total="total"
+        noun="transactions"
         data-test-prefix="safe-transaction"
       />
     </template>
@@ -122,7 +123,8 @@
 
 <script setup lang="ts">
 import { watch, computed, ref } from 'vue'
-import TransactionTableFooter from '@/components/TransactionTableFooter.vue'
+import TablePagination from '@/components/TablePagination.vue'
+import { usePagination } from '@/composables/usePagination'
 import type { SafeTransaction } from '@/types/safe'
 
 // Components
@@ -154,8 +156,8 @@ const props = defineProps<Props>()
 // Status filtering
 const selectedStatus = ref<SafeTransactionStatus>('all')
 
-const page = ref(1)
-const pageSize = ref(20)
+// Route-bound page + size (shareable, reload-safe) with resize anchoring.
+const { page, pageSize, reset } = usePagination(() => total.value, { key: 'safeTx' })
 
 const showDetailsModal = ref(false)
 const selectedTransactionForDetails = ref<SafeTransaction | null>(null)
@@ -279,10 +281,9 @@ const displayedTransactions = computed(() => {
   return filteredTransactions.value.slice(start, start + pageSize.value)
 })
 
-watch(pageSize, () => {
-  page.value = 1
-})
-
+// Page-size changes are handled by usePagination's resize anchoring, so no
+// pageSize watcher here. Still clamp the page when a status filter shrinks the
+// list below the current page.
 watch(filteredTransactions, (transactionsList) => {
   const maxPage = Math.max(1, Math.ceil(transactionsList.length / pageSize.value))
   if (page.value > maxPage) {
@@ -292,7 +293,7 @@ watch(filteredTransactions, (transactionsList) => {
 
 const handleStatusChange = (status: SafeTransactionStatus) => {
   selectedStatus.value = status
-  page.value = 1
+  reset()
 }
 
 const handleViewDetailsClick = (transaction: SafeTransaction) => {

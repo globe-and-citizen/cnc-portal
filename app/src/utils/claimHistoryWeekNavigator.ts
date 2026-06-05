@@ -1,7 +1,7 @@
 import type { WeeklyClaim } from '@/types'
 import { formatMinutesAsDuration } from '@/utils/wageUtil'
 
-export type ClaimStatusColor = 'neutral' | 'primary' | 'warning' | 'info'
+type ClaimStatusColor = 'neutral' | 'primary' | 'warning' | 'info'
 
 export const getClaimStatusColor = (weeklyClaim?: WeeklyClaim): ClaimStatusColor => {
   if (!weeklyClaim) return 'neutral'

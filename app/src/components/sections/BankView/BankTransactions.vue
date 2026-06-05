@@ -142,10 +142,11 @@
     </UTable>
 
     <template #footer>
-      <TransactionTableFooter
+      <TablePagination
         v-model:page="page"
         v-model:page-size="pageSize"
         :total="total"
+        noun="transactions"
         data-test-prefix="bank-transaction"
       />
     </template>
@@ -161,7 +162,7 @@ import { GRAPHQL_POLL_INTERVAL } from '@/constant'
 import { useQuery } from '@vue/apollo-composable'
 import UserComponent from '@/components/UserComponent.vue'
 import CustomDatePicker from '@/components/CustomDatePicker.vue'
-import TransactionTableFooter from '@/components/TransactionTableFooter.vue'
+import TablePagination from '@/components/TablePagination.vue'
 import TransactionDetailModal from '@/components/TransactionDetailModal.vue'
 import { useCurrencyStore } from '@/stores/currencyStore'
 import { useTransactionTable } from '@/composables/transactions/useTransactionTable'
@@ -241,7 +242,7 @@ const {
   selectedTx,
   showDetail,
   openDetail
-} = useTransactionTable(enrichedTransactions)
+} = useTransactionTable(enrichedTransactions, { key: 'bankTx' })
 
 const { getInlineUser, getValuePrefix, getValueClass } = useTransactionInline(contractAddress)
 

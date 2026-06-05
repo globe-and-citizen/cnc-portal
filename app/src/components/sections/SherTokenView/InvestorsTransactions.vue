@@ -168,10 +168,11 @@
       </template>
     </UTable>
     <template #footer>
-      <TransactionTableFooter
+      <TablePagination
         v-model:page="page"
         v-model:page-size="pageSize"
         :total="total"
+        noun="transactions"
         data-test-prefix="investor-transaction"
       />
     </template>
@@ -183,7 +184,7 @@
 <script setup lang="ts">
 import UserComponent from '@/components/UserComponent.vue'
 import CustomDatePicker from '@/components/CustomDatePicker.vue'
-import TransactionTableFooter from '@/components/TransactionTableFooter.vue'
+import TablePagination from '@/components/TablePagination.vue'
 import TransactionDetailModal from '@/components/TransactionDetailModal.vue'
 import type { TokenId } from '@/constant'
 import {
@@ -285,7 +286,7 @@ const {
   selectedTx,
   showDetail,
   openDetail
-} = useTransactionTable(enrichedTransactions)
+} = useTransactionTable(enrichedTransactions, { key: 'investorTx' })
 
 const getUniqueSummary = (row: { type: string; amount: string | number; token: string }) => {
   const summary = getTransactionSummary(row)

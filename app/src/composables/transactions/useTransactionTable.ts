@@ -2,6 +2,7 @@ import { computed, ref, watch } from 'vue'
 import type { ComputedRef } from 'vue'
 import { groupTransactionsByTxHash, getTransactionTypeLabel } from '@/utils'
 import type { GroupedTransactionRow } from '@/types/transaction-history'
+import { usePagination } from '@/composables/usePagination'
 
 type TransactionBase = {
   txHash: string
@@ -19,28 +20,22 @@ type TransactionBase = {
 export const childHidden = (cell: { row: { depth: number } }) =>
   cell.row.depth > 0 ? 'hidden' : ''
 
-// Keeps column width in layout but hides content for child rows (use on leading spacer columns)
-export const childSpacer = (cell: { row: { depth: number } }) =>
-  cell.row.depth > 0 ? 'invisible' : ''
+export interface UseTransactionTableOptions {
+  /**
+   * Query-param prefix passed through to `usePagination` so several paginated
+   * tables can share one route without colliding (e.g. the Company Payroll view
+   * renders both WeeklyClaim and CashRemuneration transactions). Omit on
+   * single-table routes for the bare `page` / `pageSize` params.
+   */
+  key?: string
+}
 
-// Colspan for the child row starting column, skipping `leading` spacer columns before it
-export const childColspanFrom =
-  (leading: number) =>
-  (cell: { row: { depth: number; getAllCells: () => unknown[] } }): string =>
-    String(cell.row.depth > 0 ? cell.row.getAllCells().length - leading : 1)
-
-export const PAGE_SIZE_OPTIONS = [
-  { label: '10', value: 10 },
-  { label: '20', value: 20 },
-  { label: '50', value: 50 },
-  { label: '100', value: 100 }
-]
-
-export const useTransactionTable = <T extends TransactionBase>(transactions: ComputedRef<T[]>) => {
+export const useTransactionTable = <T extends TransactionBase>(
+  transactions: ComputedRef<T[]>,
+  options: UseTransactionTableOptions = {}
+) => {
   const dateRange = ref<[Date, Date] | null>(null)
   const selectedType = ref('all')
-  const page = ref(1)
-  const pageSize = ref(20)
 
   const uniqueTypes = computed(() => {
     const types = new Set(transactions.value.map((tx) => tx.type))
@@ -78,6 +73,10 @@ export const useTransactionTable = <T extends TransactionBase>(transactions: Com
 
   const total = computed(() => groupedTransactions.value.length)
 
+  // Route-bound page + size (shareable, reload-safe) with resize anchoring —
+  // see usePagination. Default page size stays 20 to match the previous client.
+  const { page, pageSize, reset } = usePagination(() => total.value, { key: options.key })
+
   const displayedTransactions = computed(() => {
     const start = (page.value - 1) * pageSize.value
     return groupedTransactions.value.slice(start, start + pageSize.value)
@@ -94,17 +93,16 @@ export const useTransactionTable = <T extends TransactionBase>(transactions: Com
     showDetail.value = true
   }
 
+  // A filter change can shrink the list under the current page — go back to
+  // page 1. Page-size changes are handled by usePagination's resize anchoring
+  // (no reset), so there's no pageSize watcher here anymore.
   watch(filteredTransactions, () => {
-    page.value = 1
+    reset()
     expandedRows.value = {}
   })
 
   watch(page, () => {
     expandedRows.value = {}
-  })
-
-  watch(pageSize, () => {
-    page.value = 1
   })
 
   return {

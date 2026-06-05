@@ -17,30 +17,6 @@ export interface Week {
   formatted: string // Formatted string like "Jan 01 - Jan 07"
 }
 
-export function getMondayStart(date: Date): Date {
-  const d = new Date(date)
-  const day = d.getDay() // 0 = dimanche, 1 = lundi, ..., 6 = samedi
-  const diff = day === 0 ? -6 : 1 - day // Si dimanche, recule de 6 jours, sinon ajuste
-  d.setDate(d.getDate() + diff)
-  d.setHours(0, 0, 0, 0) // Met à 00:00:00.000
-  return d
-}
-
-export function getSundayEnd(date: Date): Date {
-  const d = new Date(date)
-  const day = d.getDay() // 0 = dimanche, 1 = lundi, ..., 6 = samedi
-  const diff = day === 0 ? 0 : 7 - day // Si dimanche, reste le même jour, sinon ajuste
-  d.setDate(d.getDate() + diff)
-  d.setHours(23, 59, 59, 999) // Met à 23:59:59.999
-  return d
-}
-
-export function todayMidnight(date: Date): Date {
-  const d = new Date(date)
-  d.setHours(0, 0, 0, 0) // Met à 00:00:00.000
-  return d
-}
-
 /**
  * Get all ISO weeks of a month as Week objects
  * @param year - e.g. 2025
@@ -195,12 +171,6 @@ export function formatDateMMDDYYYY(date: Date): string {
  */
 export function ensureFutureDate(selectedDate: Date, minDate: Date): Date {
   return selectedDate < minDate ? new Date(minDate) : selectedDate
-}
-
-export function addDays(date: Date, days: number): Date {
-  const newDate = new Date(date)
-  newDate.setDate(date.getDate() + days)
-  return newDate
 }
 
 export function format(date: Date, formatStr: string): string {
