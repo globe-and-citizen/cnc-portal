@@ -13,7 +13,14 @@ import type { DatePickerMode, DatePickerValue } from '~/utils/datePicker'
  * range in `range` mode). All date logic lives in `~/utils/datePicker`, all reactive state in
  * `~/composables/useDatePicker`.
  */
-const props = withDefaults(defineProps<{ mode?: DatePickerMode }>(), { mode: 'date' })
+const props = withDefaults(
+  defineProps<{
+    mode?: DatePickerMode
+    /** Persist the selection to localStorage under this key (survives tab switch / reload). */
+    storageKey?: string
+  }>(),
+  { mode: 'date' }
+)
 
 const model = defineModel<DatePickerValue>()
 
@@ -28,7 +35,7 @@ const {
   step,
   anchorLabel,
   isActive
-} = useDatePicker(props.mode, model)
+} = useDatePicker(props.mode, model, props.storageKey)
 
 // @internationalized/date interop for UCalendar.
 const toCalendarDate = (date: Date) =>
