@@ -1,0 +1,9 @@
+{
+  "detectors_to_exclude": "naming-convention,solc-version,pragma",
+  "exclude_dependencies": true,
+  "exclude_informational": false,
+  "exclude_low": false,
+  "exclude_medium": false,
+  "exclude_high": false,
+  "filter_paths": "contracts/mocks,contracts/test,node_modules"
+}

@@ -49,7 +49,7 @@ export interface MergedLedgerRow {
   credit: number
 }
 
-export interface BuildMergedLedgerInput {
+interface BuildMergedLedgerInput {
   entries: LedgerEntry[]
   realizedTrades: RealizedTrade[]
 }

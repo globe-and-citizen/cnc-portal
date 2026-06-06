@@ -2,7 +2,7 @@
 
 Guidance for AI coding agents (GitHub Copilot, Cursor, Codex, Claude Code, etc.) working in this repository. Human contributors should read `README.md` and `CONTRIBUTION.md`.
 
-> Detailed area guides live in `.github/copilot-instructions/` (Vue standards, testing patterns, Web3 testing anti-patterns, review checklist, commit conventions). Consult them for specifics; this file is the orientation layer.
+> Detailed area guides live in `.github/copilot-instructions/` (Vue standards, testing patterns, Web3 testing anti-patterns, review checklist, Solidity audit checklist, commit conventions). Consult them for specifics; this file is the orientation layer.
 >
 > **Working todolist**: a gitignored `todolist.md` at the repo root is the shared working list between the dev and any AI agent. Read it at the start of a session, keep it accurate as you work (mark items in_progress / done, add discoveries, remove stale items). Don't commit it. If it doesn't exist, create one with the same convention. **Respect dependencies**: tasks marked `(blocked by: …)` must not be started until their blocker is `[x]`; do not fan blocked tasks out in parallel with their blockers.
 
@@ -178,6 +178,6 @@ Greps for known-stale terms, broken intra-doc links, and missing canonical refer
 ## Before opening a PR
 
 1. The code quality gate above passed in every touched subproject.
-2. Reviewed against `.github/copilot-instructions/review-checklist.md`.
+2. Reviewed against `.github/copilot-instructions/review-checklist.md`. **For any PR touching `contract/`, also work through `.github/copilot-instructions/solidity-audit-checklist.md`** — Slither runs in CI (`.github/workflows/contract-slither.yml`) and blocks on new high/medium findings.
 3. PR title follows Conventional Commits + gitmoji. Use the template in `.github/pull_request_template.md`.
 4. **Every PR must be linked to a GitHub issue.** Search existing open issues first; if none fits, open one before (or alongside) the PR and reference it in the PR body with a closing keyword (`Closes #N`, `Fixes #N`). Trivial chores (typo fix, doc drift, dependency bump) follow the same rule — open a small tracking issue rather than skipping it. The issue is the "why"; the PR is the "how".

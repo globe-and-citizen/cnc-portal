@@ -1,7 +1,7 @@
 import type { RatePerHour, RatePerHourWithEnabled, WeeklyClaim } from '@/types'
 import { parseEther, parseUnits, type Address } from 'viem'
 
-export const requiredRateTypes: RatePerHour['type'][] = ['native', 'usdc', 'sher']
+const requiredRateTypes: RatePerHour['type'][] = ['native', 'usdc', 'sher']
 
 export const formatMinutesAsDuration = (totalMinutes: number): string => {
   const h = Math.floor(totalMinutes / 60)
@@ -29,13 +29,13 @@ export const buildRatePayload = (rates: RatePerHourWithEnabled[]): RatePerHour[]
     .map((rate) => ({ type: rate.type, amount: Number(rate.amount) }))
 }
 
-export interface ClaimRateWithTotals {
+interface ClaimRateWithTotals {
   type: RatePerHour['type']
   hourlyRate: bigint
   totalAmount: bigint
 }
 
-export interface WageClaimPayload {
+interface WageClaimPayload {
   minutesWorked: number
   employeeAddress: Address
   date: bigint
@@ -49,7 +49,7 @@ const parseRateAmount = (amount: number, type: RatePerHour['type']) => {
   return type === 'native' ? parseEther(`${amount}`) : parseUnits(`${amount}`, 6)
 }
 
-export const getRegularAndOvertimeHours = (
+const getRegularAndOvertimeHours = (
   totalMinutesWorked: number,
   maximumHoursPerWeek?: number | null
 ) => {
@@ -73,7 +73,7 @@ export const getRegularAndOvertimeHours = (
   }
 }
 
-export const buildClaimRatesWithOvertime = ({
+const buildClaimRatesWithOvertime = ({
   totalMinutesWorked,
   maximumHoursPerWeek,
   ratePerHour,

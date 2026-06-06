@@ -121,10 +121,11 @@
       </template>
     </UTable>
     <template #footer>
-      <TransactionTableFooter
+      <TablePagination
         v-model:page="page"
         v-model:page-size="pageSize"
         :total="total"
+        noun="transactions"
         data-test-prefix="cash-remuneration-transaction"
       />
     </template>
@@ -147,7 +148,7 @@ import { useQuery } from '@vue/apollo-composable'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import UserComponent from '@/components/UserComponent.vue'
 import CustomDatePicker from '@/components/CustomDatePicker.vue'
-import TransactionTableFooter from '@/components/TransactionTableFooter.vue'
+import TablePagination from '@/components/TablePagination.vue'
 import TransactionDetailModal from '@/components/TransactionDetailModal.vue'
 import TransactionChildRow from '@/components/TransactionChildRow.vue'
 import { useCurrencyStore } from '@/stores/currencyStore'
@@ -250,7 +251,7 @@ const {
   selectedTx,
   showDetail,
   openDetail
-} = useTransactionTable(enrichedTransactions)
+} = useTransactionTable(enrichedTransactions, { key: 'cashTx' })
 
 const { getInlineUser, getValuePrefix, getValueClass } = useTransactionInline(contractAddress)
 

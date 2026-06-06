@@ -8,8 +8,10 @@ export default defineNuxtRouteMiddleware(async (to) => {
     return
   }
 
-  // Public routes that don't require authentication
-  const publicRoutes = ['/login']
+  // Public routes that don't require authentication.
+  // `/date-picker-demo` is a dev playground for the AccountingDatePicker (issue #2051),
+  // left public so it can be tested without signing in.
+  const publicRoutes = ['/login', '/date-picker-demo']
   const isPublicRoute = publicRoutes.includes(to.path)
 
   // If navigating to a public route, allow access

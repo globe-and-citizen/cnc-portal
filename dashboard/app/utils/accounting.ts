@@ -131,7 +131,7 @@ export interface AccountingLedger {
   summary: AccountingSummary
 }
 
-export interface BuildLedgerInput {
+interface BuildLedgerInput {
   proxyWallet: string
   activities: PolymarketActivity[]
   positions: PolymarketPosition[]

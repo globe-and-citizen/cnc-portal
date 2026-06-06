@@ -1,9 +1,9 @@
 import type { AxiosError } from 'axios'
 import { type Abi, BaseError, ContractFunctionRevertedError } from 'viem'
 
-export const ARCHIVED_TEAM_CONFLICT_MESSAGE = 'Team is archived and cannot be modified'
+const ARCHIVED_TEAM_CONFLICT_MESSAGE = 'Team is archived and cannot be modified'
 
-export function isAxiosConflict(error: unknown): boolean {
+function isAxiosConflict(error: unknown): boolean {
   return (error as AxiosError)?.response?.status === 409
 }
 

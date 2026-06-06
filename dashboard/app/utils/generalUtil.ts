@@ -1,7 +1,7 @@
 const isDevelopment = import.meta.env.MODE === 'development'
 // const isVerbose = true
 
-export const getTimestamp = (): string => {
+const getTimestamp = (): string => {
   const now = new Date()
   return `${now.toLocaleString()}`
 }

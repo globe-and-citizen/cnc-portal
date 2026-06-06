@@ -94,6 +94,7 @@ Make all interfaces accessible for everyone, including users with disabilities
 ### Project Specific
 
 - [`review-checklist.md`](./review-checklist.md) - Code review checklist
+- [`solidity-audit-checklist.md`](./solidity-audit-checklist.md) - Pre-merge Solidity audit checklist for `contract/` PRs (Slither + manual review)
 - [`commit-conventions.md`](./commit-conventions.md) - Commit message format and conventions
 
 ## Usage
