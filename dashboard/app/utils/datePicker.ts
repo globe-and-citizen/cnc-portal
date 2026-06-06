@@ -22,7 +22,7 @@ export type DatePickerMode = 'date' | 'range'
 export type AnchorUnit = 'month' | 'quarter' | 'year'
 
 type DatePresetId = 'today' | 'endOfMonth' | 'endOfQuarter' | 'endOfYear' | 'specific'
-type RangePresetId = 'month' | 'quarter' | 'year' | 'custom'
+type RangePresetId = 'allTime' | 'month' | 'quarter' | 'year' | 'custom'
 export type DatePickerPresetId = DatePresetId | RangePresetId
 
 /** The value emitted through `v-model`: a single `Date` in `date` mode, a `Range` in `range` mode. */
@@ -44,8 +44,9 @@ const DATE_PRESETS: DatePickerPreset[] = [
   { id: 'specific', label: 'Specific date' }
 ]
 
-/** `range`-mode options, presets first and the free inputs last. */
+/** `range`-mode options: all-time default first, steppable presets, then the free inputs. */
 const RANGE_PRESETS: DatePickerPreset[] = [
+  { id: 'allTime', label: 'All time' },
   { id: 'month', label: 'Month', unit: 'month' },
   { id: 'quarter', label: 'Quarter', unit: 'quarter' },
   { id: 'year', label: 'Year', unit: 'year' },
@@ -56,9 +57,9 @@ export function presetsForMode(mode: DatePickerMode): DatePickerPreset[] {
   return mode === 'date' ? DATE_PRESETS : RANGE_PRESETS
 }
 
-/** Sensible default: *Today* for `date` mode, the current *Month* for `range` mode. */
+/** Sensible default: *Today* for `date` mode, *All time* for `range` mode. */
 export function defaultPresetId(mode: DatePickerMode): DatePickerPresetId {
-  return mode === 'date' ? 'today' : 'month'
+  return mode === 'date' ? 'today' : 'allTime'
 }
 
 /** Move an anchor one unit backward (`-1`) or forward (`1`), in place of calendar navigation. */
@@ -92,7 +93,16 @@ export function resolveAsOfDate(
 }
 
 /** Resolve a `range`-mode preset to an inclusive `{ start, end }` range (first → last day). */
-export function resolveRange(preset: DatePickerPreset, anchor: Date, custom: Range): Range {
+export function resolveRange(
+  preset: DatePickerPreset,
+  anchor: Date,
+  custom: Range,
+  now: Date = new Date()
+): Range {
+  // All-time: from the epoch through the end of today (no lower bound in practice).
+  if (preset.id === 'allTime') {
+    return { start: new Date(0), end: dayjs(now).endOf('day').toDate() }
+  }
   if (preset.id === 'custom') {
     return { start: dayjs(custom.start).startOf('day').toDate(), end: dayjs(custom.end).endOf('day').toDate() }
   }
@@ -124,4 +134,23 @@ export function startOfToday(): Date {
 /** Start of the month containing `date` (default lower bound for Custom dates). */
 export function startOfMonth(date: Date): Date {
   return dayjs(date).startOf('month').toDate()
+}
+
+/** Inclusive unix-seconds bound — the shape the accounting builders (`asOf` / `periodStart` / `periodEnd`) expect. */
+export function toUnixSeconds(date: Date): number {
+  return Math.floor(date.getTime() / 1000)
+}
+
+/**
+ * The value the picker emits on mount for a given mode (Today / current Month).
+ * Parents initialise their `v-model` with this so there is never an `undefined`
+ * window before the picker's first emit — derived from the same pure resolvers,
+ * so the seed always matches what the picker would produce.
+ */
+export function defaultValueForMode(mode: DatePickerMode): DatePickerValue {
+  const anchor = startOfToday()
+  const preset = presetsForMode(mode).find(p => p.id === defaultPresetId(mode))!
+  return mode === 'date'
+    ? resolveAsOfDate(preset, anchor, anchor)
+    : resolveRange(preset, anchor, { start: startOfMonth(anchor), end: anchor })
 }
