@@ -1,33 +1,21 @@
 <template>
   <div class="space-y-4">
     <UPageCard variant="subtle">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-        <div>
-          <h3 class="font-semibold text-black dark:text-white">
-            General Ledger · {{ totalActivities }} activities · {{ filteredRows.length }} journal lines
-          </h3>
-          <p class="text-sm text-muted mt-0.5">
-            {{ accountingPeriod.label }}
-          </p>
-        </div>
-        <div class="flex items-center gap-2 flex-wrap">
+      <div class="flex flex-col gap-3 mb-4">
+        <h3 class="font-semibold text-black dark:text-white">
+          General Ledger · {{ totalActivities }} activities · {{ filteredRows.length }} journal lines
+        </h3>
+        <!-- Single row: all filters/buttons stay on one line, scrolling horizontally on
+             narrow screens rather than wrapping. -->
+        <div class="flex items-center gap-2 overflow-x-auto pb-1 justify-end">
+          <AccountingDatePicker
+            v-model="period"
+            mode="range"
+            storage-key="dashboard-accounting-ledger-period"
+          />
           <AccountingTableSearch
             v-model="searchQuery"
             placeholder="Search market, account, tx…"
-          />
-          <USelect
-            v-model="periodPreset"
-            :items="periodPresetOptions"
-            class="w-32"
-            size="sm"
-          />
-          <UInput
-            v-if="showAnchorPicker"
-            v-model="periodAnchor"
-            type="date"
-            :max="todayStr"
-            class="w-36"
-            size="sm"
           />
           <AccountingCategoryFilter
             v-model="selectedCategories"
@@ -207,8 +195,9 @@ import {
   type LedgerEntry,
   signClass
 } from '~/utils/accounting'
-import { useAccountingPeriod } from '~/composables/useAccountingPeriod'
+import type { Range } from '~/types'
 import { usePagination } from '~/composables/usePagination'
+import { defaultValueForMode, toUnixSeconds } from '~/utils/datePicker'
 import { buildGeneralLedger } from '~/utils/generalLedger'
 import type { RealizedTrade } from '~/utils/incomeStatement'
 import {
@@ -236,21 +225,17 @@ const props = defineProps<{
   walletAddress: string
 }>()
 
-const {
-  todayStr,
-  preset: periodPreset,
-  anchorDateStr: periodAnchor,
-  range: accountingPeriod,
-  showAnchorPicker,
-  presetOptions: periodPresetOptions
-} = useAccountingPeriod()
+// Reporting period (range mode) — defaults to the current month.
+const period = ref<Range>(defaultValueForMode('range') as Range)
+const periodStart = computed(() => toUnixSeconds(period.value.start))
+const periodEnd = computed(() => toUnixSeconds(period.value.end))
 
 const generalLedger = computed(() =>
   buildGeneralLedger({
     ledgerEntries: props.entries,
     realizedTrades: props.realizedTrades,
-    periodStart: accountingPeriod.value.start,
-    asOf: accountingPeriod.value.end
+    periodStart: periodStart.value,
+    asOf: periodEnd.value
   })
 )
 
@@ -269,7 +254,7 @@ const allCategoryValues = categoryOptions.map(option => option.value)
 // Multi-select: every category selected == "All categories".
 const selectedCategories = ref<LedgerCategory[]>([...allCategoryValues])
 
-watch([() => props.walletAddress, selectedCategories, accountingPeriod, searchQuery], reset)
+watch([() => props.walletAddress, selectedCategories, period, searchQuery], reset)
 
 // --- Build the merged row list (one row per journal line) ---
 const allRows = computed(() =>
@@ -277,11 +262,7 @@ const allRows = computed(() =>
 )
 
 function inSelectedPeriod(timestamp: number): boolean {
-  const { start, end } = accountingPeriod.value
-  if (start != null && timestamp < start) {
-    return false
-  }
-  return timestamp <= end
+  return timestamp >= periodStart.value && timestamp <= periodEnd.value
 }
 
 const selectedCategorySet = computed(() => new Set(selectedCategories.value))
