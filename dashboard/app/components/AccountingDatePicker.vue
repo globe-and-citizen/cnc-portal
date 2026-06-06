@@ -70,7 +70,7 @@ const calendarRange = computed({
   <UPopover :content="{ align: 'start' }">
     <UButton
       color="neutral"
-      variant="ghost"
+      variant="outline"
       icon="i-lucide-calendar"
       class="data-[state=open]:bg-elevated group"
     >
