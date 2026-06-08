@@ -1,3 +1,4 @@
+import { useLocalStorage } from '@vueuse/core'
 import type { Ref } from 'vue'
 import type { Range } from '~/types'
 import {
@@ -26,8 +27,25 @@ import {
  * `End of month → February 2026` next to `End of quarter → Jul – Sep 2025`. The active
  * preset + its anchor (or the free Specific-date / Custom-dates calendars) resolve to the
  * value pushed through `v-model`. Pure resolution / formatting lives in `~/utils/datePicker`.
+ *
+ * Pass `storageKey` to persist the full selection (preset + anchors + custom range) to
+ * localStorage so it survives tab switches and reloads. When a key is given the stored
+ * state — not the incoming model — is the source of truth on init, so the picker restores
+ * the actual preset (e.g. "Quarter Apr – Jun 2026") instead of reverse-mapping to "Custom".
  */
-export function useDatePicker(mode: DatePickerMode, model: Ref<DatePickerValue | undefined>) {
+interface DatePickerSnapshot {
+  activeId: DatePickerPresetId
+  anchors: Record<AnchorUnit, number>
+  customDate: number
+  customStart: number | null
+  customEnd: number | null
+}
+
+export function useDatePicker(
+  mode: DatePickerMode,
+  model: Ref<DatePickerValue | undefined>,
+  storageKey?: string
+) {
   const presets = presetsForMode(mode)
   const activeId = ref<DatePickerPresetId>(defaultPresetId(mode))
 
@@ -49,15 +67,79 @@ export function useDatePicker(mode: DatePickerMode, model: Ref<DatePickerValue |
   const customEnd = ref<Date | null>(startOfToday())
   const committedCustom = ref<Range>({ start: startOfMonth(startOfToday()), end: startOfToday() })
 
-  // Reflect an externally provided value rather than reverse-matching it to a preset.
-  if (model.value instanceof Date && mode === 'date') {
-    activeId.value = 'specific'
-    customDate.value = model.value
-  } else if (model.value && !(model.value instanceof Date) && mode === 'range') {
-    activeId.value = 'custom'
-    customStart.value = model.value.start
-    customEnd.value = model.value.end
-    committedCustom.value = { start: model.value.start, end: model.value.end }
+  function isValidSnapshot(s: unknown): s is DatePickerSnapshot {
+    if (!s || typeof s !== 'object') {
+      return false
+    }
+    const snap = s as Partial<DatePickerSnapshot>
+    return !!snap.anchors && typeof snap.anchors.month === 'number'
+  }
+
+  function applySnapshot(s: DatePickerSnapshot) {
+    activeId.value = s.activeId
+    anchors.month = new Date(s.anchors.month)
+    anchors.quarter = new Date(s.anchors.quarter)
+    anchors.year = new Date(s.anchors.year)
+    customDate.value = new Date(s.customDate)
+    customStart.value = s.customStart == null ? null : new Date(s.customStart)
+    customEnd.value = s.customEnd == null ? null : new Date(s.customEnd)
+    if (s.customStart != null && s.customEnd != null) {
+      committedCustom.value = { start: new Date(s.customStart), end: new Date(s.customEnd) }
+    }
+  }
+
+  function takeSnapshot(): DatePickerSnapshot {
+    return {
+      activeId: activeId.value,
+      anchors: {
+        month: anchors.month.getTime(),
+        quarter: anchors.quarter.getTime(),
+        year: anchors.year.getTime()
+      },
+      customDate: customDate.value.getTime(),
+      customStart: customStart.value?.getTime() ?? null,
+      customEnd: customEnd.value?.getTime() ?? null
+    }
+  }
+
+  // Persisted selection. An explicit JSON serializer is required: with a `null` default
+  // vueuse would otherwise coerce the object via `String()` and write "[object Object]",
+  // which then throws on read. `read` tolerates any pre-existing corrupt value.
+  const stored = storageKey
+    ? useLocalStorage<DatePickerSnapshot | null>(storageKey, null, {
+        serializer: {
+          read: (raw): DatePickerSnapshot | null => {
+            try {
+              return JSON.parse(raw) as DatePickerSnapshot
+            } catch {
+              return null
+            }
+          },
+          write: value => JSON.stringify(value)
+        }
+      })
+    : null
+
+  if (stored?.value && isValidSnapshot(stored.value)) {
+    applySnapshot(stored.value)
+  } else if (!storageKey) {
+    // Uncontrolled (e.g. the demo): reflect an externally provided value instead.
+    if (model.value instanceof Date && mode === 'date') {
+      activeId.value = 'specific'
+      customDate.value = model.value
+    } else if (model.value && !(model.value instanceof Date) && mode === 'range') {
+      activeId.value = 'custom'
+      customStart.value = model.value.start
+      customEnd.value = model.value.end
+      committedCustom.value = { start: model.value.start, end: model.value.end }
+    }
+  }
+
+  if (stored) {
+    watch(
+      [activeId, customDate, customStart, customEnd, () => anchors.month, () => anchors.quarter, () => anchors.year],
+      () => { stored.value = takeSnapshot() }
+    )
   }
 
   // Commit a custom selection only once both ends are present and ordered.
@@ -81,11 +163,14 @@ export function useDatePicker(mode: DatePickerMode, model: Ref<DatePickerValue |
       : resolveRange(activePreset.value, activeAnchor.value, committedCustom.value)
   )
 
-  const triggerLabel = computed(() =>
-    mode === 'date'
+  const triggerLabel = computed(() => {
+    if (activePreset.value.id === 'allTime') {
+      return 'All time'
+    }
+    return mode === 'date'
       ? formatAsOfLabel(resolved.value as Date)
       : formatRangeLabel(resolved.value as Range)
-  )
+  })
 
   function select(id: DatePickerPresetId) {
     activeId.value = id

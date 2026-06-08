@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { format } from 'date-fns'
 import type { LedgerEntry } from '~/utils/accounting'
 import { formatSignedUsd, formatUsd, signClass } from '~/utils/accounting'
 import type { RealizedTrade } from '~/utils/incomeStatement'
 import type { PolymarketPosition } from '~/types/polymarket'
 import { buildBalanceSheet } from '~/utils/balanceSheet'
+import { defaultValueForMode, toUnixSeconds } from '~/utils/datePicker'
 
 const props = defineProps<{
   ledgerEntries: LedgerEntry[]
@@ -13,15 +13,17 @@ const props = defineProps<{
   hasAddress: boolean
 }>()
 
+// Point-in-time "as of" date (date mode) — defaults to end of today (current snapshot).
+const asOf = ref<Date>(defaultValueForMode('date') as Date)
+
 const sheet = computed(() =>
   buildBalanceSheet({
     ledgerEntries: props.ledgerEntries,
     realizedTrades: props.realizedTrades,
-    positions: props.positions
+    positions: props.positions,
+    asOf: toUnixSeconds(asOf.value)
   })
 )
-
-const asOfLabel = computed(() => format(new Date(sheet.value.asOf * 1000), 'MMMM d, yyyy'))
 
 /** The cost-basis identity holds to the cent for any date. */
 const balances = computed(() => Math.abs(sheet.value.identityGap) < 0.01)
@@ -29,11 +31,15 @@ const balances = computed(() => Math.abs(sheet.value.identityGap) < 0.01)
 
 <template>
   <UPageCard variant="subtle">
-    <div class="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1 mb-4">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
       <h3 class="font-semibold text-black dark:text-white">
         Balance Sheet
       </h3>
-      <span class="text-sm text-muted">as of {{ asOfLabel }}</span>
+      <AccountingDatePicker
+        v-model="asOf"
+        mode="date"
+        storage-key="dashboard-accounting-balance-asof"
+      />
     </div>
 
     <div v-if="!hasAddress" class="text-muted text-center py-8">
