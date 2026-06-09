@@ -1,14 +1,16 @@
 import { hardhat, mainnet, polygon, polygonAmoy, sepolia } from 'viem/chains';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-// Mock the createPublicClient and http functions
+// Mock the createPublicClient, http and fallback functions
 vi.mock('viem', () => ({
   createPublicClient: vi.fn(),
   http: vi.fn(),
+  fallback: vi.fn(),
 }));
 
 // Import the module after mocking
-import { getChain } from '../viem.config';
+import { http, fallback } from 'viem';
+import { getChain, getTransport } from '../viem.config';
 
 describe('viem.config', () => {
   beforeEach(() => {
@@ -50,6 +52,27 @@ describe('viem.config', () => {
     it('should handle hex chain IDs', () => {
       expect(getChain('0x1')).toBe(mainnet); // mainnet hex ID
       expect(getChain('0x89')).toBe(polygon); // polygon hex ID
+    });
+  });
+
+  describe('getTransport', () => {
+    it('keeps a single transport for chains without public peers (hardhat)', () => {
+      getTransport(hardhat);
+      expect(fallback).not.toHaveBeenCalled();
+    });
+
+    it('wraps polygon reads in a fallback across public endpoints', () => {
+      getTransport(polygon);
+      expect(fallback).toHaveBeenCalledTimes(1);
+      expect(http).toHaveBeenCalledWith('https://polygon.drpc.org');
+      expect(http).toHaveBeenCalledWith('https://polygon-bor-rpc.publicnode.com');
+    });
+
+    it('wraps mainnet reads in a fallback across public endpoints', () => {
+      getTransport(mainnet);
+      expect(fallback).toHaveBeenCalledTimes(1);
+      expect(http).toHaveBeenCalledWith('https://eth.drpc.org');
+      expect(http).toHaveBeenCalledWith('https://ethereum-rpc.publicnode.com');
     });
   });
 });

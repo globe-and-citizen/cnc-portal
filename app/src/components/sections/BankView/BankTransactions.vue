@@ -28,94 +28,96 @@
       :ui="{ td: 'empty:p-0 group-has-[td:not(:empty)]:border-b border-default' }"
       :meta="{ class: { tr: childRowClass } }"
     >
-      <template #txHash-cell="{ row }">
-        <template v-if="row.depth === 0">
-          <div class="flex items-center gap-1.5">
-            <UButton
-              v-if="row.getCanExpand()"
-              :icon="row.getIsExpanded() ? 'heroicons:chevron-down' : 'heroicons:chevron-right'"
-              size="sm"
-              color="primary"
-              variant="soft"
-              data-test="bank-transaction-expand-button"
-              :aria-label="
-                row.getIsExpanded() ? 'Collapse transaction events' : 'Expand transaction events'
-              "
-              @click="row.toggleExpanded()"
-            />
-            <AddressToolTip :address="row.original.txHash" :slice="true" type="transaction" />
-          </div>
-        </template>
-        <div v-else class="pl-4">
-          <div class="flex items-center gap-2">
-            <UBadge :color="getBankTransactionTypeColor(row.original.type)" variant="soft">
-              {{ row.original.type }}
-            </UBadge>
-          </div>
-          <p v-if="getTransactionSummary(row.original)" class="text-muted mt-0.5 text-xs">
-            {{ getTransactionSummary(row.original) }}
-          </p>
-          <template v-if="getInlineUser(row.original)">
-            <div class="mt-1 flex items-center gap-1 text-xs">
-              <span v-if="getInlineUser(row.original)!.label" class="text-muted">
-                {{ getInlineUser(row.original)!.label }}
-              </span>
-              <UserComponent
-                :user="resolveUser(getInlineUser(row.original)!.address)"
-                :compact="true"
-              />
-            </div>
-          </template>
-        </div>
-      </template>
-
       <template #date-cell="{ row }">
         <template v-if="row.depth === 0">
           <div class="font-medium">{{ formatDateRelative(String(row.original.date)) }}</div>
           <div class="text-muted text-xs">{{ formatDateUTC(String(row.original.date)) }}</div>
         </template>
+        <div v-else class="text-muted text-xs">{{ formatDateUTC(String(row.original.date)) }}</div>
+      </template>
+
+      <template #tx-cell="{ row }">
+        <UTooltip v-if="row.depth === 0" text="View transaction details">
+          <UButton
+            :label="formatTxHash(row.original.txHash)"
+            trailing-icon="heroicons:arrow-top-right-on-square"
+            color="primary"
+            variant="outline"
+            size="sm"
+            data-test="bank-transaction-detail-button"
+            @click="openDetail(row.original)"
+          />
+        </UTooltip>
+        <span v-else />
+      </template>
+
+      <template #expand-cell="{ row }">
+        <UButton
+          v-if="row.depth === 0 && row.getCanExpand()"
+          :icon="row.getIsExpanded() ? 'heroicons:chevron-down' : 'heroicons:chevron-right'"
+          size="sm"
+          color="primary"
+          variant="soft"
+          data-test="bank-transaction-expand-button"
+          :aria-label="
+            row.getIsExpanded() ? 'Collapse transaction events' : 'Expand transaction events'
+          "
+          @click="row.toggleExpanded()"
+        />
         <span v-else />
       </template>
 
       <template #type-cell="{ row }">
-        <div>
+        <template v-if="row.depth === 0">
+          <div>
+            <div class="flex items-center gap-2">
+              <UBadge :color="getTransactionTypeColor(row.original.type)" variant="soft">
+                {{ getTransactionTypeLabel(row.original.type) }}
+              </UBadge>
+              <span v-if="row.original.groupedEventCount > 1" class="text-muted text-xs">
+                {{ row.original.groupedEventCount }} events
+              </span>
+            </div>
+            <p v-if="getTransactionSummary(row.original)" class="text-muted mt-0.5 text-xs">
+              {{ getTransactionSummary(row.original) }}
+            </p>
+            <template v-if="getInlineUser(row.original)">
+              <div class="mt-1 flex items-center gap-1 text-xs">
+                <UserComponent :user="resolveUser(row.original.from)" />
+                <span class="text-muted text-lg font-bold">→</span>
+                <UserComponent :user="resolveUser(row.original.to)" />
+              </div>
+            </template>
+          </div>
+        </template>
+        <div v-else class="pl-4">
           <div class="flex items-center gap-2">
-            <UBadge :color="getBankTransactionTypeColor(row.original.type)" variant="soft">
-              {{ row.original.type }}
+            <UBadge :color="getTransactionTypeColor(row.original.type)" variant="soft">
+              {{ getTransactionTypeLabel(row.original.type) }}
             </UBadge>
-            <span v-if="row.original.groupedEventCount > 1" class="text-muted text-xs">
-              {{ row.original.groupedEventCount }} events
-            </span>
           </div>
           <p v-if="getTransactionSummary(row.original)" class="text-muted mt-0.5 text-xs">
             {{ getTransactionSummary(row.original) }}
           </p>
           <template v-if="getInlineUser(row.original)">
             <div class="mt-1 flex items-center gap-1 text-xs">
-              <span v-if="getInlineUser(row.original)!.label" class="text-muted">
-                {{ getInlineUser(row.original)!.label }}
-              </span>
-              <UserComponent
-                :user="resolveUser(getInlineUser(row.original)!.address)"
-                :compact="true"
-              />
+              <UserComponent :user="resolveUser(row.original.from)" />
+              <span class="text-muted text-lg font-bold">→</span>
+              <UserComponent :user="resolveUser(row.original.to)" />
             </div>
           </template>
         </div>
       </template>
 
-      <template #details-cell="{ row }">
-        <UButton
-          v-if="row.depth === 0"
-          icon="heroicons:eye"
-          size="xs"
-          color="neutral"
-          variant="ghost"
-          data-test="bank-transaction-detail-button"
-          aria-label="View transaction details"
-          @click="openDetail(row.original)"
-        />
-        <span v-else />
+      <template #counterparty-cell="{ row }">
+        <template v-if="row.depth === 0">
+          <UserComponent
+            v-if="getTransactionCounterparty(row.original).address"
+            :user="resolveUser(getTransactionCounterparty(row.original).address!)"
+          />
+          <span v-else class="text-muted">—</span>
+        </template>
+        <span v-else class="text-muted">—</span>
       </template>
 
       <template #value-cell="{ row }">
@@ -128,7 +130,14 @@
             {{ formatCurrencyShort(row.original.amountLocal, currencyStore.localCurrency.code) }}
           </div>
         </template>
-        <span v-else />
+        <template v-else>
+          <div v-if="Number(row.original.amount) > 0" class="text-sm font-medium">
+            {{ formatCryptoAmount(String(row.original.amount)) }} {{ row.original.token }}
+          </div>
+          <div v-if="row.original.amountLocal" class="text-muted text-xs">
+            {{ formatCurrencyShort(row.original.amountLocal, currencyStore.localCurrency.code) }}
+          </div>
+        </template>
       </template>
     </UTable>
 
@@ -151,24 +160,18 @@ import { computed, watch } from 'vue'
 import { type Address } from 'viem'
 import { GRAPHQL_POLL_INTERVAL } from '@/constant'
 import { useQuery } from '@vue/apollo-composable'
-import AddressToolTip from '@/components/AddressToolTip.vue'
 import UserComponent from '@/components/UserComponent.vue'
 import CustomDatePicker from '@/components/CustomDatePicker.vue'
 import TablePagination from '@/components/TablePagination.vue'
 import TransactionDetailModal from '@/components/TransactionDetailModal.vue'
 import { useCurrencyStore } from '@/stores/currencyStore'
-import {
-  useTransactionTable,
-  childColspan,
-  childHidden,
-  childRowClass
-} from '@/composables/transactions/useTransactionTable'
+import { useTransactionTable, childRowClass } from '@/composables/transactions/useTransactionTable'
 import { useTransactionInline } from '@/composables/transactions/useTransactionInline'
 import type { BankTransaction } from '@/types/transactions'
 import {
   buildRawBankTransactions,
   formatBankTransactionDate,
-  getBankTransactionTypeColor,
+  getTransactionTypeColor,
   formatCryptoAmount,
   formatCurrencyShort,
   formatEtherUtil,
@@ -176,6 +179,9 @@ import {
   parseBigIntOrZero,
   resolveUser,
   getTransactionSummary,
+  getTransactionTypeLabel,
+  getTransactionCounterparty,
+  formatTxHash,
   tokenSymbol,
   enrichTransaction
 } from '@/utils'
@@ -241,19 +247,15 @@ const {
 const { getInlineUser, getValuePrefix, getValueClass } = useTransactionInline(contractAddress)
 
 const columns = computed(() => [
-  {
-    accessorKey: 'txHash',
-    header: 'Tx Hash',
-    meta: { colspan: { td: childColspan } }
-  },
-  { accessorKey: 'date', header: 'Date', meta: { class: { td: childHidden } } },
-  { accessorKey: 'type', header: 'Type', meta: { class: { td: childHidden } } },
+  { accessorKey: 'expand', header: '' },
+  { accessorKey: 'date', header: 'Date' },
+  { accessorKey: 'type', header: 'Type' },
+  { accessorKey: 'counterparty', header: 'Counterparty' },
   {
     accessorKey: 'value',
-    header: `Value (${currencyStore.localCurrency.code})`,
-    meta: { class: { td: childHidden } }
+    header: `Value (${currencyStore.localCurrency.code})`
   },
-  { accessorKey: 'details', header: '', meta: { class: { td: childHidden } } }
+  { accessorKey: 'tx', header: 'Tx Hash' }
 ])
 
 watch(error, (newError) => {

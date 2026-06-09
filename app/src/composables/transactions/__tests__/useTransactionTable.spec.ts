@@ -1,11 +1,6 @@
 import { computed, nextTick, ref } from 'vue'
 import { describe, expect, it } from 'vitest'
-import {
-  useTransactionTable,
-  childColspan,
-  childHidden,
-  childRowClass
-} from '../useTransactionTable'
+import { useTransactionTable, childHidden, childRowClass } from '../useTransactionTable'
 
 type TransactionFixture = {
   txHash: string
@@ -117,11 +112,5 @@ describe('transaction table row meta helpers', () => {
   it('childHidden hides cells on child rows only', () => {
     expect(childHidden({ row: { depth: 0 } })).toBe('')
     expect(childHidden({ row: { depth: 1 } })).toBe('hidden')
-  })
-
-  it('childColspan spans a child row across all of its cells', () => {
-    const getAllCells = () => [0, 1, 2, 3]
-    expect(childColspan({ row: { depth: 0, getAllCells } })).toBe('1')
-    expect(childColspan({ row: { depth: 1, getAllCells } })).toBe('4')
   })
 })

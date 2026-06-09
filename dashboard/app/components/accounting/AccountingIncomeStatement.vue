@@ -2,30 +2,14 @@
   <div class="space-y-4">
     <UPageCard variant="subtle">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-        <div>
-          <h3 class="font-semibold text-black dark:text-white">
-            Income Statement
-          </h3>
-          <p class="text-sm text-muted mt-0.5">
-            {{ accountingPeriod.label }}
-          </p>
-        </div>
-        <div class="flex items-center gap-2 flex-wrap">
-          <USelect
-            v-model="periodPreset"
-            :items="periodPresetOptions"
-            class="w-32"
-            size="sm"
-          />
-          <UInput
-            v-if="showAnchorPicker"
-            v-model="periodAnchor"
-            type="date"
-            :max="todayStr"
-            class="w-36"
-            size="sm"
-          />
-        </div>
+        <h3 class="font-semibold text-black dark:text-white">
+          Income Statement
+        </h3>
+        <AccountingDatePicker
+          v-model="period"
+          mode="range"
+          storage-key="dashboard-accounting-income-period"
+        />
       </div>
 
       <div v-if="!hasAddress" class="text-muted text-center py-8">
@@ -242,9 +226,10 @@ import type { GroupingOptions, Row } from '@tanstack/vue-table'
 import { format } from 'date-fns'
 import { computed, ref, watch } from 'vue'
 import type { PolymarketActivity, PolymarketPosition } from '~/types/polymarket'
-import { useAccountingPeriod } from '~/composables/useAccountingPeriod'
+import type { Range } from '~/types'
 import { usePagination } from '~/composables/usePagination'
 import { formatSignedUsd, formatUsd, type LedgerCategoryColor, signClass } from '~/utils/accounting'
+import { defaultValueForMode, toUnixSeconds } from '~/utils/datePicker'
 import { buildIncomeStatement } from '~/utils/incomeStatement'
 import { matchesAccountingSearch, normalizeAccountingSearchQuery } from '~/utils/accountingSearch'
 import AccountingPagination from './AccountingPagination.vue'
@@ -260,25 +245,21 @@ const props = defineProps<{
 
 const tradesSearchQuery = ref('')
 
-const {
-  todayStr,
-  preset: periodPreset,
-  anchorDateStr: periodAnchor,
-  range: accountingPeriod,
-  showAnchorPicker,
-  presetOptions: periodPresetOptions
-} = useAccountingPeriod()
+// Reporting period (range mode) — defaults to the current month.
+const period = ref<Range>(defaultValueForMode('range') as Range)
+const periodStart = computed(() => toUnixSeconds(period.value.start))
+const periodEnd = computed(() => toUnixSeconds(period.value.end))
 
 const { page, pageSize, reset } = usePagination(() => totalPositions.value, { key: 'income' })
 
-watch([() => props.walletAddress, accountingPeriod, tradesSearchQuery], reset)
+watch([() => props.walletAddress, period, tradesSearchQuery], reset)
 
 const statement = computed(() =>
   buildIncomeStatement({
     activities: props.activities,
     positions: props.positions,
-    periodStart: accountingPeriod.value.start,
-    periodEnd: accountingPeriod.value.end
+    periodStart: periodStart.value,
+    periodEnd: periodEnd.value
   })
 )
 
@@ -314,11 +295,7 @@ interface PositionTrade {
 
 /** True when an activity timestamp falls inside the selected reporting period. */
 function inPeriod(ts: number): boolean {
-  const { start, end } = accountingPeriod.value
-  if (start != null && ts < start) {
-    return false
-  }
-  return ts <= end
+  return ts >= periodStart.value && ts <= periodEnd.value
 }
 
 /** Maps a Polymarket contract activity to a position trade row (null = skip). */

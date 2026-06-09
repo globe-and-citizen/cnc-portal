@@ -28,82 +28,100 @@
       :ui="{ td: 'empty:p-0 group-has-[td:not(:empty)]:border-b border-default' }"
       :meta="{ class: { tr: childRowClass } }"
     >
-      <template #txHash-cell="{ row }">
-        <template v-if="row.depth === 0">
-          <div class="flex items-center gap-1.5">
-            <UButton
-              v-if="row.getCanExpand()"
-              :icon="row.getIsExpanded() ? 'heroicons:chevron-down' : 'heroicons:chevron-right'"
-              size="sm"
-              color="primary"
-              variant="soft"
-              data-test="investor-transaction-expand-button"
-              :aria-label="
-                row.getIsExpanded() ? 'Collapse transaction events' : 'Expand transaction events'
-              "
-              @click="row.toggleExpanded()"
-            />
-            <AddressToolTip :address="row.original.txHash" :slice="true" type="transaction" />
-          </div>
-        </template>
-        <InvestorChildRow
-          v-else
-          :type="row.original.type"
-          :to="row.original.to"
-          :amount="row.original.amount"
-          :token="row.original.token"
-          :reason="row.original.reason"
-          :parent-amount="row.getParentRow()?.original.amount"
-        />
-      </template>
-
       <template #date-cell="{ row }">
         <template v-if="row.depth === 0">
           <div class="font-medium">{{ formatDateRelative(String(row.original.date)) }}</div>
           <div class="text-muted text-xs">{{ formatDateUTC(String(row.original.date)) }}</div>
         </template>
+        <div v-else class="text-muted text-xs">{{ formatDateUTC(String(row.original.date)) }}</div>
+      </template>
+
+      <template #tx-cell="{ row }">
+        <UTooltip v-if="row.depth === 0" text="View transaction details">
+          <UButton
+            :label="formatTxHash(row.original.txHash)"
+            trailing-icon="heroicons:arrow-top-right-on-square"
+            color="primary"
+            variant="outline"
+            size="sm"
+            data-test="investor-transaction-detail-button"
+            @click="openDetail(row.original)"
+          />
+        </UTooltip>
+        <span v-else />
+      </template>
+
+      <template #expand-cell="{ row }">
+        <UButton
+          v-if="row.depth === 0 && row.getCanExpand()"
+          :icon="row.getIsExpanded() ? 'heroicons:chevron-down' : 'heroicons:chevron-right'"
+          size="sm"
+          color="primary"
+          variant="soft"
+          data-test="investor-transaction-expand-button"
+          :aria-label="
+            row.getIsExpanded() ? 'Collapse transaction events' : 'Expand transaction events'
+          "
+          @click="row.toggleExpanded()"
+        />
         <span v-else />
       </template>
 
       <template #type-cell="{ row }">
-        <div>
-          <div class="flex items-center gap-2">
-            <UBadge :color="getInvestorTransactionTypeColor(row.original.type)" variant="soft">
-              {{ row.original.type }}
-            </UBadge>
-            <span v-if="row.original.groupedEventCount > 1" class="text-muted text-xs">
-              {{ row.original.groupedEventCount }} events
-            </span>
-          </div>
-          <p v-if="getTransactionSummary(row.original)" class="text-muted mt-0.5 text-xs">
-            {{ getTransactionSummary(row.original) }}
-          </p>
-          <template v-if="getInlineUser(row.original)">
-            <div class="mt-1 flex items-center gap-1 text-xs">
-              <span v-if="getInlineUser(row.original)!.label" class="text-muted">
-                {{ getInlineUser(row.original)!.label }}
+        <template v-if="row.depth === 0">
+          <div>
+            <div class="flex items-center gap-2">
+              <UBadge color="primary" variant="soft">
+                {{ getTransactionTypeLabel(row.original.type) }}
+              </UBadge>
+              <span v-if="row.original.groupedEventCount > 1" class="text-muted text-xs">
+                {{ row.original.groupedEventCount }} events
               </span>
-              <UserComponent
-                :user="resolveUser(getInlineUser(row.original)!.address)"
-                :compact="true"
-              />
             </div>
-          </template>
+            <p class="text-muted mt-0.5 text-xs">
+              <template v-if="row.original.type === 'mint' && row.original.groupedEventCount > 1">
+                Minted {{ formatCryptoAmount(getMintTotal(row.original)) }} {{ row.original.token }}
+              </template>
+              <template v-else-if="getUniqueSummary(row.original)">{{
+                getUniqueSummary(row.original)
+              }}</template>
+            </p>
+            <template
+              v-if="
+                (getInlineUser(row.original) || row.original.type === 'safeAddressUpdated') &&
+                !(row.original.type === 'mint' && row.original.groupedEventCount > 1)
+              "
+            >
+              <div class="mt-1 flex items-center gap-1 text-xs">
+                <UserComponent :user="resolveUser(row.original.from)" />
+                <span class="text-muted text-lg font-bold">→</span>
+                <UserComponent :user="resolveUser(row.original.to)" />
+              </div>
+            </template>
+          </div>
+        </template>
+        <div v-else class="flex items-center gap-2 py-0.5 pl-4">
+          <UBadge color="primary" variant="soft">{{
+            getTransactionTypeLabel(row.original.type)
+          }}</UBadge>
+          <span v-if="row.original.reason" class="text-muted text-xs"
+            >({{ row.original.reason }})</span
+          >
         </div>
       </template>
 
-      <template #details-cell="{ row }">
-        <UButton
-          v-if="row.depth === 0"
-          icon="heroicons:eye"
-          size="xs"
-          color="neutral"
-          variant="ghost"
-          data-test="investor-transaction-detail-button"
-          aria-label="View transaction details"
-          @click="openDetail(row.original)"
-        />
-        <span v-else />
+      <template #counterparty-cell="{ row }">
+        <template v-if="row.depth === 0">
+          <UserComponent
+            v-if="getTransactionCounterparty(row.original).address"
+            :user="resolveUser(getTransactionCounterparty(row.original).address!)"
+          />
+          <span v-else class="text-muted">—</span>
+        </template>
+        <template v-else>
+          <UserComponent v-if="row.original.to" :user="resolveUser(row.original.to)" />
+          <span v-else class="text-muted">—</span>
+        </template>
       </template>
 
       <template #value-cell="{ row }">
@@ -112,16 +130,41 @@
             <span class="text-muted">—</span>
           </template>
           <template v-else>
-            <div :class="getValueClass(row.original)">
-              {{ getValuePrefix(row.original) }}{{ formatCryptoAmount(row.original.amount) }}
+            <div
+              :class="
+                row.original.type === 'mint'
+                  ? 'text-success font-medium'
+                  : getValueClass(row.original)
+              "
+            >
+              {{ row.original.type === 'mint' ? '+' : getValuePrefix(row.original)
+              }}{{ formatCryptoAmount(String(getMintTotal(row.original))) }}
               {{ row.original.token }}
             </div>
-            <div class="text-muted text-xs">
+            <div v-if="row.original.token !== investorTokenSymbol" class="text-muted text-xs">
               {{ formatCurrencyShort(row.original.amountUSD, 'USD') }}
             </div>
           </template>
         </template>
-        <span v-else />
+        <template v-else>
+          <div class="text-sm font-medium">
+            {{ formatCryptoAmount(String(row.original.amount)) }} {{ row.original.token }}
+          </div>
+          <div
+            v-if="
+              DIVIDEND_TYPES.has(row.getParentRow()?.original.type ?? '') &&
+              Number(row.getParentRow()?.original.amount) > 0
+            "
+            class="text-muted text-xs"
+          >
+            {{
+              (
+                (Number(row.original.amount) / Number(row.getParentRow()!.original.amount)) *
+                100
+              ).toFixed(2)
+            }}%
+          </div>
+        </template>
       </template>
     </UTable>
     <template #footer>
@@ -139,7 +182,6 @@
 </template>
 
 <script setup lang="ts">
-import AddressToolTip from '@/components/AddressToolTip.vue'
 import UserComponent from '@/components/UserComponent.vue'
 import CustomDatePicker from '@/components/CustomDatePicker.vue'
 import TablePagination from '@/components/TablePagination.vue'
@@ -150,21 +192,19 @@ import {
   mapRawInvestorTransaction,
   formatCryptoAmount,
   formatCurrencyShort,
-  getInvestorTransactionTypeColor,
   resolveUser,
-  getTransactionSummary,
+  getTransactionTypeLabel,
+  getTransactionCounterparty,
+  getUniqueSummary,
+  getMintTotal,
+  formatTxHash,
+  DIVIDEND_TYPES,
   log
 } from '@/utils'
 import { useQuery } from '@vue/apollo-composable'
 import { computed, watch } from 'vue'
-import {
-  useTransactionTable,
-  childColspan,
-  childHidden,
-  childRowClass
-} from '@/composables/transactions/useTransactionTable'
+import { useTransactionTable, childRowClass } from '@/composables/transactions/useTransactionTable'
 import { useTransactionInline } from '@/composables/transactions/useTransactionInline'
-import InvestorChildRow from './InvestorChildRow.vue'
 import { GRAPHQL_POLL_INTERVAL } from '@/constant'
 import { useCurrencyStore, useTeamStore } from '@/stores'
 import { useInvestorSymbol } from '@/composables/investor/reads'
@@ -243,22 +283,35 @@ const {
   total,
   displayedTransactions,
   expandedRows,
-  getSubRows,
+  getSubRows: defaultGetSubRows,
   selectedTx,
   showDetail,
   openDetail
 } = useTransactionTable(enrichedTransactions, { key: 'investorTx' })
+
+type InvestorRow = (typeof enrichedTransactions.value)[number] & { subRows?: unknown[] }
+
+const getSubRows = (row: InvestorRow) => {
+  const base = defaultGetSubRows(row as Parameters<typeof defaultGetSubRows>[0])
+  if ((row as { type: string }).type === 'mint' && base.length) {
+    const { subRows: _sub, ...parentData } = row as Record<string, unknown>
+    void _sub
+    return [{ ...parentData, subRows: [], groupedEventCount: 1 }, ...base] as typeof base
+  }
+  return base
+}
 
 const { getInlineUser, getValuePrefix, getValueClass } = useTransactionInline(
   computed(() => [investorAddress.value, safeDepositRouterAddress.value].filter(Boolean))
 )
 
 const columns = computed(() => [
-  { accessorKey: 'txHash', header: 'Tx Hash', meta: { colspan: { td: childColspan } } },
-  { accessorKey: 'date', header: 'Date', meta: { class: { td: childHidden } } },
-  { accessorKey: 'type', header: 'Type', meta: { class: { td: childHidden } } },
-  { accessorKey: 'value', header: 'Value (USD)', meta: { class: { td: childHidden } } },
-  { accessorKey: 'details', header: '', meta: { class: { td: childHidden } } }
+  { accessorKey: 'expand', header: '' },
+  { accessorKey: 'date', header: 'Date' },
+  { accessorKey: 'type', header: 'Type' },
+  { accessorKey: 'counterparty', header: 'Counterparty' },
+  { accessorKey: 'value', header: 'Value (USD)' },
+  { accessorKey: 'tx', header: 'Tx Hash' }
 ])
 
 watch([error, safeError], ([newError, newSafeError]) => {

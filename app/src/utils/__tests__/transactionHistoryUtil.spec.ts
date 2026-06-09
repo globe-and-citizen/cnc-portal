@@ -5,7 +5,13 @@ import {
   isValidPositiveTokenAmount,
   resolveTokenIdByAddress
 } from '../constantUtil'
-import { getTransactionSummary, groupTransactionsByTxHash } from '../transactionHistoryUtil'
+import {
+  getTransactionSummary,
+  getTransactionTypeLabel,
+  getTransactionTypeColor,
+  groupTransactionsByTxHash,
+  formatDecodedValue
+} from '../transactionHistoryUtil'
 
 type TransactionFixture = {
   txHash: string
@@ -198,6 +204,42 @@ describe('transactionHistoryUtil', () => {
     )
   })
 
+  it('getTransactionTypeLabel returns friendly labels for known types', () => {
+    expect(getTransactionTypeLabel('deposit')).toBe('Deposit')
+    expect(getTransactionTypeLabel('tokenTransfer')).toBe('Token transfer')
+    expect(getTransactionTypeLabel('safeDepositsEnabled')).toBe('Safe deposits enabled')
+    expect(getTransactionTypeLabel('dividendPaid')).toBe('Dividend paid')
+    expect(getTransactionTypeLabel('officerAddressUpdated')).toBe('Officer address updated')
+  })
+
+  it('getTransactionTypeLabel humanises unknown camelCase and PascalCase types', () => {
+    expect(getTransactionTypeLabel('someNewEvent')).toBe('Some New Event')
+    expect(getTransactionTypeLabel('TokenSupportAdded')).toBe('Token Support Added')
+  })
+
+  it('getTransactionTypeLabel returns empty string for empty input', () => {
+    expect(getTransactionTypeLabel('')).toBe('')
+  })
+
+  it('getTransactionTypeColor returns correct semantic colors', () => {
+    expect(getTransactionTypeColor('deposit')).toBe('success')
+    expect(getTransactionTypeColor('tokenDeposit')).toBe('success')
+    expect(getTransactionTypeColor('mint')).toBe('success')
+    expect(getTransactionTypeColor('transfer')).toBe('info')
+    expect(getTransactionTypeColor('rawTokenIn')).toBe('info')
+    expect(getTransactionTypeColor('withdraw')).toBe('warning')
+    expect(getTransactionTypeColor('dividendDistribution')).toBe('warning')
+    expect(getTransactionTypeColor('feePaid')).toBe('error')
+    expect(getTransactionTypeColor('dividendPaymentFailed')).toBe('error')
+    expect(getTransactionTypeColor('tokenSupportAdded')).toBe('primary')
+    expect(getTransactionTypeColor('safeDepositsEnabled')).toBe('primary')
+  })
+
+  it('getTransactionTypeColor falls back to neutral for unknown types', () => {
+    expect(getTransactionTypeColor('unknownType')).toBe('neutral')
+    expect(getTransactionTypeColor('')).toBe('neutral')
+  })
+
   it('falls back to neutral labels when value is absent and to empty for unknown types', () => {
     expect(getTransactionSummary({ type: 'deposit', amount: '0', token: '-' })).toBe('Deposit')
     expect(getTransactionSummary({ type: 'tokenDeposit', amount: '0', token: '-' })).toBe(
@@ -247,5 +289,31 @@ describe('transactionHistoryUtil', () => {
       'Multiplier updated'
     )
     expect(getTransactionSummary({ type: 'unknownType', amount: '1', token: 'USDC' })).toBe('')
+  })
+
+  it('formatDecodedValue handles primitives, arrays, and addresses', () => {
+    expect(formatDecodedValue('address', '0x1234')).toEqual({ display: '0x1234', isAddress: true })
+    expect(formatDecodedValue('uint256', 1000n)).toEqual({ display: '1,000', isAddress: false })
+    expect(formatDecodedValue('bool', true)).toEqual({ display: 'true', isAddress: false })
+    expect(formatDecodedValue('uint256', null)).toEqual({ display: '-', isAddress: false })
+    const arr = formatDecodedValue('uint256[]', [100n, 200n])
+    expect(arr.display).toBe('[100, 200]')
+    expect(arr.isAddress).toBe(false)
+  })
+
+  it('formatDecodedValue strips numeric-index viem tuple keys', () => {
+    const tupleValue = { '0': '0xabc', addr: '0xabc', '1': '500', amount: '500' }
+    const result = formatDecodedValue('tuple', tupleValue)
+    expect(result.display).toContain('addr')
+    expect(result.display).toContain('amount')
+    expect(result.display).not.toContain('"0"')
+    expect(result.display).not.toContain('"1"')
+  })
+
+  it('formatDecodedValue returns dash on circular reference without throwing', () => {
+    const circular: Record<string, unknown> = {}
+    circular.self = circular
+    expect(() => formatDecodedValue('tuple', circular)).not.toThrow()
+    expect(formatDecodedValue('tuple', circular).display).toBe('-')
   })
 })

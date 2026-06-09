@@ -158,7 +158,7 @@ export const useCurrencyStore = defineStore('currency', () => {
 
   return {
     localCurrency: currency,
-    supportedTokens: supportedToken.value,
+    supportedTokens: supportedToken,
     tokenStates,
     getTokenPrice,
     // getTokenPriceUSD,
