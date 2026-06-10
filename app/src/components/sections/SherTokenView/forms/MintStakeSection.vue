@@ -31,6 +31,7 @@
         :inputColor="state.stakeMode === 'add' ? 'primary' : 'neutral'"
         :minPercentage="state.stakeMode === 'add' ? 0 : stakeConstraints.endingMin"
         :maxPercentage="state.stakeMode === 'add' ? stakeConstraints.addMax : 100"
+        :disablePercentage="stakeConstraints.addMax === 0 && totalSupplyNumber > 0"
         @update:percentage="onPercentageChange"
         @update:amount="onAmountChange"
       />

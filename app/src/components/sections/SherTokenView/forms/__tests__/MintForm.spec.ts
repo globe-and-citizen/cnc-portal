@@ -50,10 +50,13 @@ const mountForm = (props: Record<string, unknown> = {}) =>
         SelectMemberContractsInput: {
           name: 'SelectMemberContractsInput',
           props: ['modelValue', 'disabled'],
-          emits: ['update:modelValue'],
+          emits: ['update:modelValue', 'selectItem'],
           template: `<div data-test="address-input">
             <button data-test="emit-member-input"
-              @click="$emit('update:modelValue', { name: 'Alice', address: '${VALID_ADDRESS}' })">
+              @click="
+                $emit('update:modelValue', { name: 'Alice', address: '${VALID_ADDRESS}' });
+                $emit('selectItem', { name: 'Alice', address: '${VALID_ADDRESS}', type: 'member' })
+              ">
               select
             </button>
           </div>`
