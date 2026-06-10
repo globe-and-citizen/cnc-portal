@@ -2,20 +2,20 @@ import { mount, type VueWrapper } from '@vue/test-utils'
 import { defineComponent } from 'vue'
 import type { Address } from 'viem'
 
-import CashRemunerationTransactions from '../CashRemunerationTransactions.vue'
+import BankTransactions from '../BankTransactions.vue'
 
-export type CRRow = {
+export type BankRow = {
   type: string
   txHash: string
   amount: string | number
   amountLocal: number
   token: string
-  subRows?: CRRow[]
+  subRows?: BankRow[]
 }
 type Column = { header: string }
 
 export const tableData = (wrapper: VueWrapper) =>
-  wrapper.findComponent({ name: 'UTable' }).props('data') as CRRow[]
+  wrapper.findComponent({ name: 'UTable' }).props('data') as BankRow[]
 export const tableColumns = (wrapper: VueWrapper) =>
   wrapper.findComponent({ name: 'UTable' }).props('columns') as Column[]
 export const tableLoading = (wrapper: VueWrapper) =>
@@ -35,7 +35,7 @@ const UTableStub = defineComponent({
     getSubRows: { type: Function, required: false }
   },
   methods: {
-    rowContext(original: CRRow, depth: number) {
+    rowContext(original: BankRow, depth: number) {
       return {
         original,
         depth
@@ -43,19 +43,17 @@ const UTableStub = defineComponent({
     }
   },
   template: `
-    <div data-test="cash-remuneration-table">
+    <div data-test="bank-table">
       <template v-for="(row, index) in data || []" :key="index">
-        <div data-test="cash-remuneration-rendered-row">
-          <slot name="type-cell" :row="rowContext(row, 0)" />
+        <div data-test="bank-rendered-row">
           <slot name="counterparty-cell" :row="rowContext(row, 0)" />
           <slot name="value-cell" :row="rowContext(row, 0)" />
         </div>
         <div
           v-for="(child, childIndex) in (typeof getSubRows === 'function' ? getSubRows(row) : row.subRows || [])"
           :key="String(index) + '-' + String(childIndex)"
-          data-test="cash-remuneration-rendered-child-row"
+          data-test="bank-rendered-child-row"
         >
-          <slot name="type-cell" :row="rowContext(child, 1)" />
           <slot name="counterparty-cell" :row="rowContext(child, 1)" />
           <slot name="value-cell" :row="rowContext(child, 1)" />
         </div>
@@ -98,65 +96,59 @@ const UserComponentStub = defineComponent({
   props: {
     user: { type: Object, required: false }
   },
-  template: '<span data-test="cash-remuneration-user">{{ user?.name }}</span>'
+  template: '<span data-test="bank-user">{{ user?.name }}</span>'
 })
 
-export const CONTRACT_ADDRESS = '0x1111111111111111111111111111111111111111' as Address
+export const BANK_ADDRESS = '0x1111111111111111111111111111111111111111' as Address
 export const USDC_ADDRESS = '0xa3492d046095affe351cfac15de9b86425e235db'
 export const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 
-export const buildCashRemunerationQueryResult = () => ({
-  cashRemunerationDeposits: {
+export const buildBankQueryResult = () => ({
+  bankDeposits: {
     items: [
       {
         id: '0xdeposithash-0',
-        contractAddress: CONTRACT_ADDRESS,
+        contractAddress: BANK_ADDRESS,
         depositor: '0x2222222222222222222222222222222222222222',
         amount: '1000000000000000000',
         timestamp: 1_700_000_000
       }
     ]
   },
-  cashRemunerationWithdraws: {
+  bankTokenDeposits: {
     items: [
       {
-        id: '0xwithdrawhash-0',
-        contractAddress: CONTRACT_ADDRESS,
-        withdrawer: '0x3333333333333333333333333333333333333333',
-        amount: '2000000000000000000',
+        id: '0xdeposithash-1',
+        depositor: '0x2222222222222222222222222222222222222222',
+        contractAddress: BANK_ADDRESS,
+        token: USDC_ADDRESS,
+        amount: '1000000',
+        timestamp: 1_699_999_999
+      }
+    ]
+  },
+  bankTransfers: {
+    items: [
+      {
+        id: '0xtransferhash-0',
+        sender: '0x3333333333333333333333333333333333333333',
+        to: '0x4444444444444444444444444444444444444444',
+        amount: '5000000',
         timestamp: 1_700_000_100
       }
     ]
   },
-  cashRemunerationWithdrawTokens: { items: [] },
-  cashRemunerationWageClaims: { items: [] },
-  cashRemunerationOwnerTreasuryWithdrawNatives: { items: [] },
-  cashRemunerationOwnerTreasuryWithdrawTokens: { items: [] },
-  cashRemunerationOfficerUpdateds: { items: [] },
-  cashRemunerationTokenSupportAddeds: { items: [] },
-  cashRemunerationTokenSupportRemoveds: { items: [] }
+  bankTokenTransfers: { items: [] },
+  bankDividendDistributionTriggereds: { items: [] },
+  bankFeePaids: { items: [] },
+  bankOwnershipTransferreds: { items: [] },
+  rawContractTokenTransfers: { items: [] }
 })
 
-export const buildIncomingTransfersQueryResult = () => ({
-  bankTokenTransfers: {
-    items: [
-      {
-        id: '0xbankfundinghash-0',
-        contractAddress: '0x9999999999999999999999999999999999999999',
-        sender: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
-        to: CONTRACT_ADDRESS,
-        token: USDC_ADDRESS,
-        amount: '1000000',
-        timestamp: 1_700_000_050
-      }
-    ]
-  }
-})
-
-export const createWrapper = (cashRemunerationAddress: Address = CONTRACT_ADDRESS): VueWrapper =>
-  mount(CashRemunerationTransactions, {
+export const createWrapper = (bankAddress: Address = BANK_ADDRESS): VueWrapper =>
+  mount(BankTransactions, {
     props: {
-      cashRemunerationAddress
+      bankAddress
     },
     global: {
       stubs: {
