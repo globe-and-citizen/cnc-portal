@@ -22,12 +22,20 @@ const mountSection = (recipientAddress = VALID_ADDRESS) =>
       stubs: {
         TwinAmountInputs: {
           name: 'TwinAmountInputs',
-          props: ['percentage', 'amount', 'inputColor', 'minPercentage', 'maxPercentage'],
+          props: [
+            'percentage',
+            'amount',
+            'inputColor',
+            'minPercentage',
+            'maxPercentage',
+            'disablePercentage'
+          ],
           emits: ['update:percentage', 'update:amount'],
           template: `<div data-test="twin-inputs-stub">
             <div data-test="stub-input-color">{{ inputColor }}</div>
             <div data-test="stub-min">{{ minPercentage }}</div>
             <div data-test="stub-max">{{ maxPercentage }}</div>
+            <div data-test="stub-disable-percentage">{{ disablePercentage }}</div>
             <button data-test="emit-percentage" @click="$emit('update:percentage', 20)">percentage</button>
             <button data-test="emit-amount" @click="$emit('update:amount', 30)">amount</button>
           </div>`
@@ -134,5 +142,15 @@ describe('MintStakeSection.vue', () => {
     expect(wrapper.find('[data-test="stub-min"]').text()).toBe('0')
     expect(wrapper.find('[data-test="stub-max"]').text()).toBe('100')
     expect(wrapper.find('[data-test="stub-input-color"]').text()).toBe('primary')
+  })
+
+  it('disables percentage editing when recipient already owns full supply', () => {
+    totalSupplyRef.value = 100_000_000n
+    recipientBalanceRef.value = 100_000_000n
+    const wrapper = mountSection()
+
+    expect(wrapper.find('[data-test="stub-disable-percentage"]').text()).toBe('true')
+    expect(wrapper.find('[data-test="stub-min"]').text()).toBe('100')
+    expect(wrapper.find('[data-test="stub-max"]').text()).toBe('100')
   })
 })

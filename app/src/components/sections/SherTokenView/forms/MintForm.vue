@@ -10,15 +10,10 @@
     <div class="flex flex-col gap-6">
       <UFormField name="address" label="Recipient">
         <SelectMemberContractsInput
-          :modelValue="memberInputInternal"
-          @update:modelValue="
-            (v) => {
-              memberInputInternal = v
-              state.address = v.address
-            }
-          "
+          v-model="state.addressInput"
           data-test="address-input"
           :disabled="props.disabled"
+          @selectItem="handleSelectItem"
         />
       </UFormField>
 
@@ -76,8 +71,8 @@ import { TOKEN_DECIMALS } from '@/utils/investorMintAllocation'
 import { formatAmountWithPrecision } from '@/utils/currencyUtil'
 import { type StakeMode, type StakePayload } from '@/types/investor'
 
-const memberInputInternal = ref<{ name: string; address: string }>({ name: '', address: '' })
 const state = reactive({
+  addressInput: { name: '', address: '' },
   address: '',
   stake: {
     amount: 0,
@@ -100,12 +95,21 @@ const props = defineProps<{
 }>()
 
 if (props.memberInput) {
-  memberInputInternal.value = props.memberInput
+  state.addressInput = props.memberInput
   state.address = props.memberInput.address
 }
 
 const queryClient = useQueryClient()
 const toast = useToast()
+
+const handleSelectItem = (item: {
+  name: string
+  address: string
+  type: 'member' | 'trader-safe' | 'contract'
+}) => {
+  state.addressInput = { name: item.name, address: item.address }
+  state.address = item.address
+}
 
 // Every stake rule lives here and reports on `amount`, so `UForm`/`UFormField` render the
 // message natively under the Ownership stake field — no manual message wiring.
@@ -119,8 +123,21 @@ const stakeSchema = z
     const fail = (message: string) =>
       ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['amount'], message })
 
-    // Untouched form: stay silent — the empty case is guarded by the submit button.
-    if (stake.amount === 0 && stake.percentage === 0) return
+    // Require user to enter a stake amount
+    if (stake.amount === 0 && stake.percentage === 0) {
+      fail('Amount must be greater than 0')
+      return
+    }
+
+    // Sole-holder edge case: recipient already owns 100% of supply. Their ownership
+    // stays at 100% regardless of how many tokens are minted, so the % field always
+    // computes to 0 and is meaningless — only the issued amount matters.
+    if (stakeContext.addMax === 0 && stakeContext.totalSupply > 0) {
+      if (!(stake.amount > 0)) fail('Amount must be greater than 0')
+      else if (stake.stakeMode === 'ending' && stake.amount <= stakeContext.totalSupply)
+        fail('Ending balance must exceed the current balance')
+      return
+    }
 
     if (stake.stakeMode === 'ending' && stakeContext.totalSupply <= 0) {
       fail('Ending % is unavailable while supply is 0. Switch to Add mode.')
