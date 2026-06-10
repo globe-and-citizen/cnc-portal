@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/vue-query'
 import type { MaybeRefOrGetter } from 'vue'
 import { computed, toValue } from 'vue'
 import { isAddress } from 'viem'
-import { fetchAllPolymarketActivity, fetchAllPolymarketPositions } from '~/api/polymarket'
+import { fetchAllPolymarketActivity, fetchAllPolymarketPositions, fetchPolymarketLatestPnl } from '~/api/polymarket'
 import { fetchPolygonTokenTransfers } from '~/api/polygonscan'
 
 /** Normalizes and validates an address ref shared by the accounting queries. */
@@ -20,6 +20,20 @@ export function useAllPolymarketActivityQuery(address: MaybeRefOrGetter<string>)
     computed(() => ({
       queryKey: ['polymarket', 'activity-all', addr.value.value] as const,
       queryFn: async () => await fetchAllPolymarketActivity(addr.value.value),
+      enabled: addr.value.valid,
+      refetchOnWindowFocus: false,
+      staleTime: 1000 * 60 * 5
+    }))
+  )
+}
+
+/** All-time Profit/Loss — same source as the Polymarket profile chart. */
+export function usePolymarketUserPnlQuery(address: MaybeRefOrGetter<string>) {
+  const addr = useValidAddress(address)
+  return useQuery(
+    computed(() => ({
+      queryKey: ['polymarket', 'user-pnl', addr.value.value] as const,
+      queryFn: async () => await fetchPolymarketLatestPnl(addr.value.value),
       enabled: addr.value.valid,
       refetchOnWindowFocus: false,
       staleTime: 1000 * 60 * 5

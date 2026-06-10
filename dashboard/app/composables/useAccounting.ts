@@ -3,7 +3,8 @@ import { computed, toValue } from 'vue'
 import {
   useAllPolymarketActivityQuery,
   usePolygonscanTransfersQuery,
-  usePolymarketPositionsQuery
+  usePolymarketPositionsQuery,
+  usePolymarketUserPnlQuery
 } from '~/queries/polymarket.queries'
 import { buildLedger } from '~/utils/accounting'
 import { buildBalanceSheet } from '~/utils/balanceSheet'
@@ -21,6 +22,7 @@ import { computeRealizedTrades } from '~/utils/incomeStatement'
 export function useAccounting(address: MaybeRefOrGetter<string>) {
   const activityQuery = useAllPolymarketActivityQuery(address)
   const positionsQuery = usePolymarketPositionsQuery(address)
+  const userPnlQuery = usePolymarketUserPnlQuery(address)
   const transfersQuery = usePolygonscanTransfersQuery(address)
 
   // Dated realized disposals (lot accounting) — shared by every statement.
@@ -61,14 +63,33 @@ export function useAccounting(address: MaybeRefOrGetter<string>) {
     isAsOfToday: isAsOfToday.value
   }))
 
+  // The profile P&L feed is best-effort: when it is missing or errors, `summary`
+  // falls back to the buildLedger seed (positionsRealizedPnl + unrealizedPnl), so
+  // it is deliberately kept out of the loading/error gates below — a flaky or
+  // geo-blocked user-pnl endpoint must not take down the whole accounting page.
+  const summary = computed(() => {
+    const base = ledger.value.summary
+    const profilePnl = userPnlQuery.data.value
+    if (profilePnl == null) {
+      return base
+    }
+    return { ...base, polymarketPnl: profilePnl }
+  })
+
   const isLoading = computed(() =>
-    activityQuery.isLoading.value || positionsQuery.isLoading.value || transfersQuery.isLoading.value
+    activityQuery.isLoading.value
+    || positionsQuery.isLoading.value
+    || transfersQuery.isLoading.value
   )
   const isFetching = computed(() =>
-    activityQuery.isFetching.value || positionsQuery.isFetching.value || transfersQuery.isFetching.value
+    activityQuery.isFetching.value
+    || positionsQuery.isFetching.value
+    || transfersQuery.isFetching.value
   )
   const error = computed(() =>
-    activityQuery.error.value ?? positionsQuery.error.value ?? transfersQuery.error.value
+    activityQuery.error.value
+    ?? positionsQuery.error.value
+    ?? transfersQuery.error.value
   )
   /** True when the Etherscan history was too long to fetch in full. */
   const transfersTruncated = computed(() => transfersQuery.data.value?.truncated ?? false)
@@ -76,12 +97,13 @@ export function useAccounting(address: MaybeRefOrGetter<string>) {
   function refetch(): void {
     void activityQuery.refetch()
     void positionsQuery.refetch()
+    void userPnlQuery.refetch()
     void transfersQuery.refetch()
   }
 
   return {
     entries: computed(() => ledger.value.entries),
-    summary: computed(() => ledger.value.summary),
+    summary,
     positions: computed(() => positionsQuery.data.value ?? []),
     activities: computed(() => activityQuery.data.value ?? []),
     realizedTrades,
