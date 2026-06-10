@@ -71,3 +71,11 @@ export interface PolymarketPosition {
   redeemable?: boolean
   mergeable?: boolean
 }
+
+/** One point from Polymarket user-pnl-api — powers the profile Profit/Loss chart. */
+export interface PolymarketUserPnlPoint {
+  /** Unix seconds. */
+  t: number
+  /** Cumulative portfolio P&L (USD) at `t`. */
+  p: number
+}
