@@ -1,5 +1,46 @@
 <template>
   <div class="space-y-4">
+    <!-- Polymarket profile comparison -->
+    <div class="grid grid-cols-2 gap-4">
+      <UPageCard variant="subtle" :ui="{ container: 'gap-1' }">
+        <div class="flex items-center gap-2">
+          <p class="text-xs uppercase tracking-wide text-muted">
+            Profit / loss
+          </p>
+          <AccountingMetricExplainer
+            title="Profit / loss"
+            description="All-time profit or loss — the same figure Polymarket shows on your profile page Profit/Loss chart. Pulled from Polymarket's user-pnl API (not reconstructed from /positions), so it stays in sync with polymarket.com/profile even when individual position rows are purged or carry stale per-market P&L."
+            formula="Latest point from user-pnl-api.polymarket.com"
+          />
+        </div>
+        <p class="text-3xl font-bold tabular-nums" :class="signClass(summary.polymarketPnl)">
+          {{ formatSignedUsd(summary.polymarketPnl) }}
+        </p>
+        <p class="text-xs text-muted">
+          All-time (Polymarket)
+        </p>
+      </UPageCard>
+      <UPageCard variant="subtle" :ui="{ container: 'gap-1' }">
+        <div class="flex items-center gap-2">
+          <p class="text-xs uppercase tracking-wide text-muted">
+            Fees
+          </p>
+          <AccountingMetricExplainer
+            title="Fees"
+            description="Trading and settlement costs detected when on-chain USDC moved less than Polymarket's activity feed reported for the same transaction — almost always a fee or slippage."
+            formula="Σ |cashFlow| over SETTLEMENT_ADJUSTMENT where cashFlow < 0"
+            example="A trade is reported as $50 in the activity feed, but $49.97 actually moved on-chain. Fee = $0.03."
+          />
+        </div>
+        <p class="text-3xl font-bold tabular-nums">
+          {{ formatUsd(summary.totalFees) }}
+        </p>
+        <p class="text-xs text-muted">
+          {{ summary.feeTransactionCount === 1 ? '1 transaction' : `${summary.feeTransactionCount} transactions` }}
+        </p>
+      </UPageCard>
+    </div>
+
     <!-- Bottom line -->
     <UPageCard variant="subtle" :ui="{ container: 'gap-1' }">
       <div class="flex items-center gap-2">
@@ -197,16 +238,6 @@ const stats = computed<Stat[]>(() => {
       }
     },
     {
-      label: 'Polymarket realized',
-      value: formatSignedUsd(s.positionsRealizedPnl),
-      valueClass: signClass(s.positionsRealizedPnl),
-      hint: 'Reported by /positions (audit only)',
-      explainer: {
-        description: 'The same realized P&L, but as Polymarket itself reports it via their /positions API. Shown for audit only — drift between this and our own Realized P&L points to losing markets Polymarket purged from their data before you redeemed.',
-        formula: 'Σ position.realizedPnl from /positions'
-      }
-    },
-    {
       label: 'Unrealized P&L',
       value: formatSignedUsd(s.unrealizedPnl),
       valueClass: signClass(s.unrealizedPnl),
@@ -233,19 +264,6 @@ const stats = computed<Stat[]>(() => {
       explainer: {
         description: 'Gross USD value you have traded — buys + sells combined. This is a turnover number, not a profit number: a $1,000 round trip (buy and resell) counts as $2,000 of volume.',
         formula: 'Σ BUY usdcSize + Σ SELL usdcSize'
-      }
-    },
-    {
-      label: 'Settlement adjustments',
-      value: formatSignedUsd(s.settlementAdjustments),
-      valueClass: signClass(s.settlementAdjustments),
-      hint: s.settlementAdjustmentCount === 0
-        ? 'None — feeds agree'
-        : `${s.settlementAdjustmentCount} tx reconciled`,
-      explainer: {
-        description: 'Reconciliation entry for tx hashes where the on-chain USDC actually moved is a few cents different from what Polymarket\'s activity feed says. Almost always a fee or slippage. Without it, the Cash on-chain identity would gap by exactly this amount.',
-        formula: 'Σ (on-chain net − activity net) per shared tx hash',
-        example: 'A trade is reported as $50 in the activity feed, but $49.97 actually moved on-chain. Settlement adjustment = −$0.03 (a tiny fee).'
       }
     },
     {
