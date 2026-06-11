@@ -25,10 +25,10 @@
       <UPageCard variant="subtle" :ui="{ container: 'gap-1' }">
         <div class="flex items-center gap-2">
           <p class="text-xs uppercase tracking-wide text-muted">
-            Profit / loss
+            Polymarket displayed profit/loss
           </p>
           <AccountingMetricExplainer
-            title="Profit / loss"
+            title="Polymarket displayed profit/loss"
             description="All-time profit or loss — the same figure Polymarket shows on your profile page Profit/Loss chart. Pulled from Polymarket's user-pnl API (not reconstructed from /positions), so it stays in sync with polymarket.com/profile even when individual position rows are purged or carry stale per-market P&L."
             formula="Latest point from user-pnl-api.polymarket.com"
           />
