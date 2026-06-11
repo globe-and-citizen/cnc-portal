@@ -80,6 +80,13 @@ export interface AccountingSummary {
   positionsRealizedPnl: number
   /** Unrealized P&L on open positions (from /positions). */
   unrealizedPnl: number
+  /**
+   * All-time P&L as Polymarket's profile page reports it — sourced from
+   * `user-pnl-api.polymarket.com` in {@link useAccounting} (latest chart point).
+   * `buildLedger()` seeds this as `positionsRealizedPnl + unrealizedPnl` until
+   * that feed loads; the two diverge once `/positions` rows go stale.
+   */
+  polymarketPnl: number
   /** Mark-to-market value of still-open positions. */
   openPositionsValue: number
   /**
@@ -103,6 +110,13 @@ export interface AccountingSummary {
   settlementAdjustments: number
   /** Number of distinct tx hashes that produced a settlement adjustment. */
   settlementAdjustmentCount: number
+  /**
+   * Trading/settlement costs: sum of |cashFlow| over SETTLEMENT_ADJUSTMENT
+   * entries where cashFlow < 0 (on-chain USDC was less than activity reported).
+   */
+  totalFees: number
+  /** Number of SETTLEMENT_ADJUSTMENT entries with negative cashFlow. */
+  feeTransactionCount: number
   /**
    * Cost-basis disagreement between Polymarket /positions (which reports
    * `cashPnl` against its own `initialValue`) and our /activity-derived basis
@@ -367,6 +381,7 @@ export function buildLedger(input: BuildLedgerInput): AccountingLedger {
     realizedPnl: 0,
     positionsRealizedPnl: 0,
     unrealizedPnl: 0,
+    polymarketPnl: 0,
     openPositionsValue: 0,
     openContractsAtCost: 0,
     totalRewards: 0,
@@ -374,6 +389,8 @@ export function buildLedger(input: BuildLedgerInput): AccountingLedger {
     tradeCount: 0,
     settlementAdjustments: 0,
     settlementAdjustmentCount: 0,
+    totalFees: 0,
+    feeTransactionCount: 0,
     positionBasisDrift: 0,
     currentCashBalance: 0,
     totalPortfolioValue: 0,
@@ -395,6 +412,10 @@ export function buildLedger(input: BuildLedgerInput): AccountingLedger {
     } else if (entry.category === 'SETTLEMENT_ADJUSTMENT') {
       summary.settlementAdjustments += entry.cashFlow
       summary.settlementAdjustmentCount += 1
+      if (entry.cashFlow < 0) {
+        summary.totalFees += Math.abs(entry.cashFlow)
+        summary.feeTransactionCount += 1
+      }
     }
     if (entry.category === 'TRADE_BUY' || entry.category === 'SPLIT') {
       acquisitionCost += entry.amount
@@ -407,6 +428,7 @@ export function buildLedger(input: BuildLedgerInput): AccountingLedger {
     summary.unrealizedPnl += position.cashPnl ?? 0
     summary.openPositionsValue += position.currentValue ?? 0
   }
+  summary.polymarketPnl = summary.positionsRealizedPnl + summary.unrealizedPnl
   // Canonical realizedPnl comes from lot accounting (Income Statement source);
   // falls back to Polymarket's reported figure when no realizedTrades supplied.
   if (input.realizedTrades) {
