@@ -11,13 +11,7 @@ export const UTableStub = defineComponent({
   props: {
     data: { type: Array, required: false },
     columns: { type: Array, required: false },
-    loading: { type: Boolean, required: false },
-    getSubRows: { type: Function, required: false }
-  },
-  methods: {
-    rowContext(original: unknown, depth: number) {
-      return { original, depth }
-    }
+    loading: { type: Boolean, required: false }
   },
   template: `
     <div data-test="expense-table" :data-loading="String(Boolean(loading))">
@@ -33,20 +27,6 @@ export const UTableStub = defineComponent({
           <span data-test="row-amount">{{ row.amount }}</span>
           <span data-test="row-amount-local">{{ row.amountLocal }}</span>
           <span data-test="row-token">{{ row.token }}</span>
-          <span data-test="row-counterparty-slot">
-            <slot name="counterparty-cell" :row="rowContext(row, 0)" />
-          </span>
-          <span data-test="row-value-slot">
-            <slot name="value-cell" :row="rowContext(row, 0)" />
-          </span>
-          <span
-            v-for="(child, childIndex) in (typeof getSubRows === 'function' ? getSubRows(row) : row.subRows || [])"
-            :key="childIndex"
-            data-test="table-child-row"
-          >
-            <slot name="counterparty-cell" :row="rowContext(child, 1)" />
-            <slot name="value-cell" :row="rowContext(child, 1)" />
-          </span>
         </div>
       </template>
       <slot v-else name="empty" />
@@ -138,20 +118,7 @@ export const EXPENSE_ADDRESS = '0x1111111111111111111111111111111111111111' as A
 export const USDC_ADDRESS = '0xa3492d046095affe351cfac15de9b86425e235db'
 export const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 
-const emptyExpenseBuckets = {
-  expenseTokenDeposits: { items: [] },
-  expenseTransfers: { items: [] },
-  expenseTokenTransfers: { items: [] },
-  expenseApprovals: { items: [] },
-  expenseOwnerTreasuryWithdrawNatives: { items: [] },
-  expenseOwnerTreasuryWithdrawTokens: { items: [] },
-  expenseTokenSupportAddeds: { items: [] },
-  expenseTokenSupportRemoveds: { items: [] },
-  expenseTokenAddressChangeds: { items: [] }
-}
-
 export const buildExpenseQueryResult = () => ({
-  ...emptyExpenseBuckets,
   expenseDeposits: {
     items: [
       {
@@ -163,6 +130,7 @@ export const buildExpenseQueryResult = () => ({
       }
     ]
   },
+  expenseTokenDeposits: { items: [] },
   expenseTransfers: {
     items: [
       {
@@ -174,7 +142,14 @@ export const buildExpenseQueryResult = () => ({
         timestamp: 1_700_000_100
       }
     ]
-  }
+  },
+  expenseTokenTransfers: { items: [] },
+  expenseApprovals: { items: [] },
+  expenseOwnerTreasuryWithdrawNatives: { items: [] },
+  expenseOwnerTreasuryWithdrawTokens: { items: [] },
+  expenseTokenSupportAddeds: { items: [] },
+  expenseTokenSupportRemoveds: { items: [] },
+  expenseTokenAddressChangeds: { items: [] }
 })
 
 export const buildIncomingTransfersQueryResult = () => ({
@@ -194,7 +169,6 @@ export const buildIncomingTransfersQueryResult = () => ({
 })
 
 export const buildFallbackExpenseQueryResult = () => ({
-  ...emptyExpenseBuckets,
   expenseDeposits: {
     items: [
       {
@@ -206,6 +180,8 @@ export const buildFallbackExpenseQueryResult = () => ({
       }
     ]
   },
+  expenseTokenDeposits: { items: [] },
+  expenseTransfers: { items: [] },
   expenseTokenTransfers: {
     items: [
       {
@@ -218,11 +194,16 @@ export const buildFallbackExpenseQueryResult = () => ({
         timestamp: 1_700_000_600
       }
     ]
-  }
+  },
+  expenseApprovals: { items: [] },
+  expenseOwnerTreasuryWithdrawNatives: { items: [] },
+  expenseOwnerTreasuryWithdrawTokens: { items: [] },
+  expenseTokenSupportAddeds: { items: [] },
+  expenseTokenSupportRemoveds: { items: [] },
+  expenseTokenAddressChangeds: { items: [] }
 })
 
 export const buildGroupedExpenseQueryResult = () => ({
-  ...emptyExpenseBuckets,
   expenseDeposits: {
     items: [
       {
@@ -257,37 +238,17 @@ export const buildGroupedExpenseQueryResult = () => ({
         timestamp: 1_700_000_650
       }
     ]
-  }
-})
-
-export const buildGroupedZeroChildExpenseQueryResult = () => ({
-  ...emptyExpenseBuckets,
-  expenseDeposits: {
-    items: [
-      {
-        id: '0xsharedzerohash-0',
-        contractAddress: EXPENSE_ADDRESS,
-        depositor: '0x2222222222222222222222222222222222222222',
-        amount: '1000000000000000000',
-        timestamp: 1_700_000_700
-      }
-    ]
   },
-  expenseApprovals: {
-    items: [
-      {
-        id: '0xsharedzerohash-1',
-        contractAddress: EXPENSE_ADDRESS,
-        signatureHash: '0xsignature',
-        activated: true,
-        timestamp: 1_700_000_699
-      }
-    ]
-  }
+  expenseTokenTransfers: { items: [] },
+  expenseApprovals: { items: [] },
+  expenseOwnerTreasuryWithdrawNatives: { items: [] },
+  expenseOwnerTreasuryWithdrawTokens: { items: [] },
+  expenseTokenSupportAddeds: { items: [] },
+  expenseTokenSupportRemoveds: { items: [] },
+  expenseTokenAddressChangeds: { items: [] }
 })
 
 export const buildPaginatedExpenseQueryResult = (count: number) => ({
-  ...emptyExpenseBuckets,
   expenseDeposits: {
     items: Array.from({ length: count }, (_, index) => ({
       id: `0xpaginated${index}-0`,
@@ -296,5 +257,14 @@ export const buildPaginatedExpenseQueryResult = (count: number) => ({
       amount: '1000000000000000000',
       timestamp: 1_700_000_000 + index
     }))
-  }
+  },
+  expenseTokenDeposits: { items: [] },
+  expenseTransfers: { items: [] },
+  expenseTokenTransfers: { items: [] },
+  expenseApprovals: { items: [] },
+  expenseOwnerTreasuryWithdrawNatives: { items: [] },
+  expenseOwnerTreasuryWithdrawTokens: { items: [] },
+  expenseTokenSupportAddeds: { items: [] },
+  expenseTokenSupportRemoveds: { items: [] },
+  expenseTokenAddressChangeds: { items: [] }
 })

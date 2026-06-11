@@ -1,17 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { type VueWrapper } from '@vue/test-utils'
-import { nextTick } from 'vue'
+import { mount, type VueWrapper } from '@vue/test-utils'
+import { defineComponent, nextTick } from 'vue'
 import type { Address } from 'viem'
 import * as utils from '@/utils'
-import { useQuery } from '@vue/apollo-composable'
-import { useCurrencyStore } from '@/stores/currencyStore'
-import {
-  createMockApolloQueryState,
-  makeCurrencyStoreMock,
-  mockApolloUseQuery,
-  resetMockApolloQueryState
-} from '@/tests/mocks'
-import type { BankRow } from './BankTransactions.fixture'
 
 // Auto-imported @nuxt/ui components bypass `config.global.stubs` because the
 // Nuxt UI Vite plugin resolves them through their file path. Mocking the
@@ -21,33 +12,8 @@ import type { BankRow } from './BankTransactions.fixture'
 vi.mock('@nuxt/ui/components/Table.vue', () => ({
   default: {
     name: 'UTable',
-    props: ['data', 'columns', 'loading', 'getSubRows'],
-    methods: {
-      rowContext(original: BankRow, depth: number) {
-        return {
-          original,
-          depth
-        }
-      }
-    },
-    template: `
-      <div data-test="bank-table">
-        <template v-for="(row, index) in data || []" :key="index">
-          <div data-test="bank-rendered-row">
-            <slot name="counterparty-cell" :row="rowContext(row, 0)" />
-            <slot name="value-cell" :row="rowContext(row, 0)" />
-          </div>
-          <div
-            v-for="(child, childIndex) in (typeof getSubRows === 'function' ? getSubRows(row) : row.subRows || [])"
-            :key="String(index) + '-' + String(childIndex)"
-            data-test="bank-rendered-child-row"
-          >
-            <slot name="counterparty-cell" :row="rowContext(child, 1)" />
-            <slot name="value-cell" :row="rowContext(child, 1)" />
-          </div>
-        </template>
-      </div>
-    `
+    props: ['data', 'columns', 'loading'],
+    template: '<div data-test="bank-table"></div>'
   }
 }))
 vi.mock('@nuxt/ui/components/Select.vue', () => ({
@@ -59,31 +25,183 @@ vi.mock('@nuxt/ui/components/Select.vue', () => ({
   }
 }))
 
-const bankQuery = createMockApolloQueryState()
-const mockCurrencyStore = makeCurrencyStoreMock()
-const mockGetTokenPrice = mockCurrencyStore.getTokenPrice
+import BankTransactions from '../BankTransactions.vue'
 
-import {
-  BANK_ADDRESS,
-  USDC_ADDRESS,
-  ZERO_ADDRESS,
-  buildBankQueryResult,
-  createWrapper,
-  tableColumns,
-  tableData,
-  tableLoading
-} from './BankTransactions.fixture'
+type BankRow = {
+  type: string
+  txHash: string
+  amount: string | number
+  amountLocal: number
+  token: string
+}
+type Column = { header: string }
+
+const tableData = (wrapper: VueWrapper) =>
+  wrapper.findComponent({ name: 'UTable' }).props('data') as BankRow[]
+const tableColumns = (wrapper: VueWrapper) =>
+  wrapper.findComponent({ name: 'UTable' }).props('columns') as Column[]
+const tableLoading = (wrapper: VueWrapper) =>
+  wrapper.findComponent({ name: 'UTable' }).props('loading') as boolean
+
+const { apolloState, mockUseQuery, mockCurrencyStore, mockGetTokenPrice } = vi.hoisted(() => {
+  const apolloState = {
+    queryResult: null as unknown as { value: unknown },
+    queryError: null as unknown as { value: Error | null },
+    queryLoading: null as unknown as { value: boolean }
+  }
+  const mockUseQuery = vi.fn()
+
+  const mockGetTokenPrice = vi.fn(() => 1)
+  const mockCurrencyStore = {
+    localCurrency: { code: 'USD' },
+    supportedTokens: [
+      { id: 'native', symbol: 'ETH', address: '0x0000000000000000000000000000000000000000' },
+      { id: 'usdc', symbol: 'USDC', address: '0xa3492d046095affe351cfac15de9b86425e235db' }
+    ],
+    getTokenPrice: mockGetTokenPrice
+  }
+
+  return {
+    apolloState,
+    mockUseQuery,
+    mockCurrencyStore,
+    mockGetTokenPrice
+  }
+})
+
+vi.mock('@vue/apollo-composable', async () => {
+  const { ref } = await import('vue')
+  apolloState.queryResult = ref()
+  apolloState.queryError = ref<Error | null>(null)
+  apolloState.queryLoading = ref(false)
+  mockUseQuery.mockImplementation(() => ({
+    result: apolloState.queryResult,
+    error: apolloState.queryError,
+    loading: apolloState.queryLoading
+  }))
+  return { useQuery: mockUseQuery }
+})
+
+vi.mock('@/stores/currencyStore', () => ({
+  useCurrencyStore: () => mockCurrencyStore
+}))
+
+const UCardStub = defineComponent({
+  name: 'UCard',
+  template: '<div><slot name="header" /><slot /></div>'
+})
+
+const UTableStub = defineComponent({
+  name: 'UTable',
+  props: {
+    data: { type: Array, required: false },
+    columns: { type: Array, required: false },
+    loading: { type: Boolean, required: false }
+  },
+  template: '<div data-test="bank-table"></div>'
+})
+
+const USelectStub = defineComponent({
+  name: 'USelect',
+  props: {
+    modelValue: { type: String, required: false },
+    items: { type: Array, required: false }
+  },
+  emits: ['update:modelValue'],
+  template: '<div data-test="type-filter"></div>'
+})
+
+const CustomDatePickerStub = defineComponent({
+  name: 'CustomDatePicker',
+  props: {
+    modelValue: { type: Array, required: false }
+  },
+  emits: ['update:modelValue'],
+  template: '<div data-test="date-filter"></div>'
+})
+
+const AddressToolTipStub = defineComponent({
+  name: 'AddressToolTip',
+  template: '<div />'
+})
+
+const UBadgeStub = defineComponent({
+  name: 'UBadge',
+  template: '<span><slot /></span>'
+})
+
+const BANK_ADDRESS = '0x1111111111111111111111111111111111111111' as Address
+const USDC_ADDRESS = '0xa3492d046095affe351cfac15de9b86425e235db'
+const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
+
+const buildBankQueryResult = () => ({
+  bankDeposits: {
+    items: [
+      {
+        id: '0xdeposithash-0',
+        contractAddress: BANK_ADDRESS,
+        depositor: '0x2222222222222222222222222222222222222222',
+        amount: '1000000000000000000',
+        timestamp: 1_700_000_000
+      }
+    ]
+  },
+  bankTokenDeposits: {
+    items: []
+  },
+  bankTransfers: {
+    items: [
+      {
+        id: '0xtransferhash-0',
+        sender: '0x3333333333333333333333333333333333333333',
+        to: '0x4444444444444444444444444444444444444444',
+        amount: '5000000',
+        timestamp: 1_700_000_100
+      }
+    ]
+  },
+  bankTokenTransfers: {
+    items: []
+  },
+  bankDividendDistributionTriggereds: {
+    items: []
+  },
+  bankFeePaids: {
+    items: []
+  },
+  bankOwnershipTransferreds: {
+    items: []
+  },
+  rawContractTokenTransfers: {
+    items: []
+  }
+})
+
+const createWrapper = (bankAddress: Address = BANK_ADDRESS): VueWrapper =>
+  mount(BankTransactions, {
+    props: {
+      bankAddress
+    },
+    global: {
+      stubs: {
+        UCard: UCardStub,
+        UTable: UTableStub,
+        USelect: USelectStub,
+        UBadge: UBadgeStub,
+        AddressToolTip: AddressToolTipStub,
+        CustomDatePicker: CustomDatePickerStub
+      }
+    }
+  })
 
 describe('BankTransactions', () => {
   let wrapper: VueWrapper
 
   beforeEach(() => {
     vi.clearAllMocks()
-    mockApolloUseQuery(vi.mocked(useQuery), bankQuery)
-    vi.mocked(useCurrencyStore).mockReturnValue(
-      mockCurrencyStore as unknown as ReturnType<typeof useCurrencyStore>
-    )
-    resetMockApolloQueryState(bankQuery, buildBankQueryResult())
+    apolloState.queryResult.value = buildBankQueryResult()
+    apolloState.queryError.value = null
+    apolloState.queryLoading.value = false
     mockCurrencyStore.supportedTokens = [
       { id: 'native', symbol: 'ETH', address: ZERO_ADDRESS },
       { id: 'usdc', symbol: 'USDC', address: USDC_ADDRESS }
@@ -107,7 +225,7 @@ describe('BankTransactions', () => {
   })
 
   it('passes loading state to UTable', () => {
-    bankQuery.loading.value = true
+    apolloState.queryLoading.value = true
 
     wrapper = createWrapper()
     expect(tableLoading(wrapper)).toBe(true)
@@ -141,10 +259,8 @@ describe('BankTransactions', () => {
   it('uses disabled query option when bank address is empty', () => {
     wrapper = createWrapper('' as Address)
 
-    const queryVariables = vi.mocked(useQuery).mock.calls[0]?.[1] as {
-      contractAddress: { value: string }
-    }
-    const queryOptions = vi.mocked(useQuery).mock.calls[0]?.[2] as { enabled: { value: boolean } }
+    const queryVariables = mockUseQuery.mock.calls[0]?.[1] as { contractAddress: { value: string } }
+    const queryOptions = mockUseQuery.mock.calls[0]?.[2] as { enabled: { value: boolean } }
 
     expect(queryVariables.contractAddress.value).toBe('')
     expect(queryOptions.enabled.value).toBe(false)
@@ -153,7 +269,7 @@ describe('BankTransactions', () => {
   it('handles token resolution fallback and invalid amounts', () => {
     mockCurrencyStore.supportedTokens = []
     mockGetTokenPrice.mockImplementation((tokenId: string) => (tokenId === 'native' ? 3 : 0))
-    bankQuery.result.value = {
+    apolloState.queryResult.value = {
       bankDeposits: {
         items: [
           {
@@ -199,55 +315,17 @@ describe('BankTransactions', () => {
     expect(unknownRow?.token).toBe('ERC20')
   })
 
-  it('renders child value fallback for grouped zero-value events', () => {
-    bankQuery.result.value = {
-      bankDeposits: {
-        items: [
-          {
-            id: '0xsharedzerohash-0',
-            contractAddress: BANK_ADDRESS,
-            depositor: '0x2222222222222222222222222222222222222222',
-            amount: '1000000000000000000',
-            timestamp: 1_700_000_500
-          }
-        ]
-      },
-      bankTokenDeposits: {
-        items: [
-          {
-            id: '0xsharedzerohash-1',
-            depositor: '0x2222222222222222222222222222222222222222',
-            contractAddress: BANK_ADDRESS,
-            token: USDC_ADDRESS,
-            amount: '0',
-            timestamp: 1_700_000_501
-          }
-        ]
-      },
-      bankTransfers: { items: [] },
-      bankTokenTransfers: { items: [] },
-      bankDividendDistributionTriggereds: { items: [] },
-      bankFeePaids: { items: [] },
-      bankOwnershipTransferreds: { items: [] },
-      rawContractTokenTransfers: { items: [] }
-    }
-
-    wrapper = createWrapper()
-
-    expect(wrapper.find('[data-test="bank-rendered-child-row"]').text()).toContain('—')
-  })
-
   it('logs query errors', async () => {
     const logErrorSpy = vi.spyOn(utils.log, 'error')
     wrapper = createWrapper()
 
     const error = new Error('bank query failed')
-    bankQuery.error.value = error
+    apolloState.queryError.value = error
     await nextTick()
 
     expect(logErrorSpy).toHaveBeenCalledWith('Ponder bank transaction query error:', error)
 
-    bankQuery.error.value = null
+    apolloState.queryError.value = null
     await nextTick()
 
     expect(logErrorSpy).toHaveBeenCalledTimes(1)

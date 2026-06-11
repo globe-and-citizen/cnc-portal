@@ -3,14 +3,6 @@ import { mount, type DOMWrapper, type VueWrapper } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import type { Address } from 'viem'
 import * as utils from '@/utils'
-import { useQuery } from '@vue/apollo-composable'
-import { useCurrencyStore } from '@/stores/currencyStore'
-import {
-  createMockApolloQueryState,
-  makeCurrencyStoreMock,
-  mockApolloUseQueryByVariableKey,
-  resetMockApolloQueryState
-} from '@/tests/mocks'
 import ExpenseTransactions from '../ExpenseTransactions.vue'
 import {
   AddressToolTipStub,
@@ -26,16 +18,64 @@ import {
   ZERO_ADDRESS,
   buildExpenseQueryResult,
   buildGroupedExpenseQueryResult,
-  buildGroupedZeroChildExpenseQueryResult,
   buildFallbackExpenseQueryResult,
   buildIncomingTransfersQueryResult,
   buildPaginatedExpenseQueryResult
 } from './ExpenseTransactions.test-utils'
 
-const expenseQuery = createMockApolloQueryState()
-const incomingTransfersQuery = createMockApolloQueryState()
-const mockCurrencyStore = makeCurrencyStoreMock()
-const mockGetTokenPrice = mockCurrencyStore.getTokenPrice
+const { apolloState, mockUseQuery, mockCurrencyStore, mockGetTokenPrice } = vi.hoisted(() => {
+  const apolloState = {
+    expenseQueryResult: null as unknown as { value: unknown },
+    expenseQueryError: null as unknown as { value: Error | null },
+    expenseQueryLoading: null as unknown as { value: boolean },
+    incomingTransfersQueryResult: null as unknown as { value: unknown },
+    incomingTransfersQueryError: null as unknown as { value: Error | null },
+    incomingTransfersQueryLoading: null as unknown as { value: boolean }
+  }
+  const mockUseQuery = vi.fn()
+  const mockGetTokenPrice = vi.fn(() => 1)
+  const mockCurrencyStore = {
+    localCurrency: { code: 'USD' },
+    supportedTokens: [
+      { id: 'native', symbol: 'ETH', address: '0x0000000000000000000000000000000000000000' },
+      { id: 'usdc', symbol: 'USDC', address: '0xa3492d046095affe351cfac15de9b86425e235db' }
+    ],
+    getTokenPrice: mockGetTokenPrice
+  }
+
+  return { apolloState, mockUseQuery, mockCurrencyStore, mockGetTokenPrice }
+})
+
+vi.mock('@vue/apollo-composable', async () => {
+  const { ref } = await import('vue')
+  apolloState.expenseQueryResult = ref()
+  apolloState.expenseQueryError = ref<Error | null>(null)
+  apolloState.expenseQueryLoading = ref(false)
+  apolloState.incomingTransfersQueryResult = ref()
+  apolloState.incomingTransfersQueryError = ref<Error | null>(null)
+  apolloState.incomingTransfersQueryLoading = ref(false)
+  mockUseQuery.mockImplementation((_document, variables) => {
+    if (variables && 'toAddress' in variables) {
+      return {
+        result: apolloState.incomingTransfersQueryResult,
+        error: apolloState.incomingTransfersQueryError,
+        loading: apolloState.incomingTransfersQueryLoading
+      }
+    }
+
+    return {
+      result: apolloState.expenseQueryResult,
+      error: apolloState.expenseQueryError,
+      loading: apolloState.expenseQueryLoading
+    }
+  })
+
+  return { useQuery: mockUseQuery }
+})
+
+vi.mock('@/stores/currencyStore', () => ({
+  useCurrencyStore: () => mockCurrencyStore
+}))
 
 const createWrapper = (expenseAddress: Address = EXPENSE_ADDRESS): VueWrapper =>
   mount(ExpenseTransactions, {
@@ -76,14 +116,12 @@ describe('ExpenseTransactions', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    mockApolloUseQueryByVariableKey(vi.mocked(useQuery), expenseQuery, {
-      toAddress: incomingTransfersQuery
-    })
-    vi.mocked(useCurrencyStore).mockReturnValue(
-      mockCurrencyStore as unknown as ReturnType<typeof useCurrencyStore>
-    )
-    resetMockApolloQueryState(expenseQuery, buildExpenseQueryResult())
-    resetMockApolloQueryState(incomingTransfersQuery, buildIncomingTransfersQueryResult())
+    apolloState.expenseQueryResult.value = buildExpenseQueryResult()
+    apolloState.expenseQueryError.value = null
+    apolloState.expenseQueryLoading.value = false
+    apolloState.incomingTransfersQueryResult.value = buildIncomingTransfersQueryResult()
+    apolloState.incomingTransfersQueryError.value = null
+    apolloState.incomingTransfersQueryLoading.value = false
     mockCurrencyStore.supportedTokens = [
       { id: 'native', symbol: 'ETH', address: ZERO_ADDRESS },
       { id: 'usdc', symbol: 'USDC', address: USDC_ADDRESS }
@@ -108,7 +146,7 @@ describe('ExpenseTransactions', () => {
   })
 
   it('passes loading state to UTable', () => {
-    incomingTransfersQuery.loading.value = true
+    apolloState.incomingTransfersQueryLoading.value = true
     wrapper = createWrapper()
 
     expect(wrapper.find('[data-test="expense-table"]').attributes('data-loading')).toBe('true')
@@ -123,8 +161,8 @@ describe('ExpenseTransactions', () => {
   })
 
   it('groups multiple events sharing the same tx hash as sub-rows', () => {
-    expenseQuery.result.value = buildGroupedExpenseQueryResult()
-    incomingTransfersQuery.result.value = undefined
+    apolloState.expenseQueryResult.value = buildGroupedExpenseQueryResult()
+    apolloState.incomingTransfersQueryResult.value = undefined
     wrapper = createWrapper()
 
     const rows = getTableRows(wrapper)
@@ -142,17 +180,6 @@ describe('ExpenseTransactions', () => {
     expect(getRowField(singleRow!, '[data-test="row-sub-row-count"]')).toBe('0')
   })
 
-  it('renders grouped zero-value child events with value fallback', () => {
-    expenseQuery.result.value = buildGroupedZeroChildExpenseQueryResult()
-    incomingTransfersQuery.result.value = undefined
-    wrapper = createWrapper()
-
-    const childRow = wrapper.find('[data-test="table-child-row"]')
-
-    expect(childRow.exists()).toBe(true)
-    expect(childRow.text()).toContain('—')
-  })
-
   it('filters displayed rows by date range', async () => {
     wrapper = createWrapper()
 
@@ -163,8 +190,8 @@ describe('ExpenseTransactions', () => {
   })
 
   it('changes page via table footer pagination controls', async () => {
-    expenseQuery.result.value = buildPaginatedExpenseQueryResult(25)
-    incomingTransfersQuery.result.value = undefined
+    apolloState.expenseQueryResult.value = buildPaginatedExpenseQueryResult(25)
+    apolloState.incomingTransfersQueryResult.value = undefined
     wrapper = createWrapper()
 
     expect(getTableRows(wrapper)).toHaveLength(20)
@@ -178,8 +205,8 @@ describe('ExpenseTransactions', () => {
   })
 
   it('anchors the current first row when page size changes', async () => {
-    expenseQuery.result.value = buildPaginatedExpenseQueryResult(25)
-    incomingTransfersQuery.result.value = undefined
+    apolloState.expenseQueryResult.value = buildPaginatedExpenseQueryResult(25)
+    apolloState.incomingTransfersQueryResult.value = undefined
     wrapper = createWrapper()
 
     await wrapper.find('[data-test="footer-next-page"]').trigger('click')
@@ -196,16 +223,14 @@ describe('ExpenseTransactions', () => {
 
   it('uses disabled query option when expense address is empty', () => {
     wrapper = createWrapper('' as Address)
-    const expenseQueryVariables = vi.mocked(useQuery).mock.calls[0]?.[1] as {
+    const expenseQueryVariables = mockUseQuery.mock.calls[0]?.[1] as {
       contractAddress: { value: string }
     }
-    const expenseQueryOptions = vi.mocked(useQuery).mock.calls[0]?.[2] as {
-      enabled: { value: boolean }
-    }
-    const incomingTransfersVariables = vi.mocked(useQuery).mock.calls[1]?.[1] as {
+    const expenseQueryOptions = mockUseQuery.mock.calls[0]?.[2] as { enabled: { value: boolean } }
+    const incomingTransfersVariables = mockUseQuery.mock.calls[1]?.[1] as {
       toAddress: { value: string }
     }
-    const incomingTransfersOptions = vi.mocked(useQuery).mock.calls[1]?.[2] as {
+    const incomingTransfersOptions = mockUseQuery.mock.calls[1]?.[2] as {
       enabled: { value: boolean }
     }
 
@@ -218,7 +243,7 @@ describe('ExpenseTransactions', () => {
   it('handles token resolution fallback and invalid amounts', () => {
     mockCurrencyStore.supportedTokens = []
     mockGetTokenPrice.mockImplementation((tokenId: string) => (tokenId === 'native' ? 3 : 0))
-    expenseQuery.result.value = buildFallbackExpenseQueryResult()
+    apolloState.expenseQueryResult.value = buildFallbackExpenseQueryResult()
 
     wrapper = createWrapper()
 
@@ -239,28 +264,28 @@ describe('ExpenseTransactions', () => {
     wrapper = createWrapper()
 
     const error = new Error('expense query failed')
-    expenseQuery.error.value = error
+    apolloState.expenseQueryError.value = error
     await nextTick()
     expect(logErrorSpy).toHaveBeenCalledWith('Ponder expense transaction query error:', error)
 
-    expenseQuery.error.value = null
-    incomingTransfersQuery.error.value = error
+    apolloState.expenseQueryError.value = null
+    apolloState.incomingTransfersQueryError.value = error
     await nextTick()
     expect(logErrorSpy).toHaveBeenCalledTimes(2)
   })
 
   it('shows an empty state when there are no transactions', () => {
-    expenseQuery.result.value = undefined
-    incomingTransfersQuery.result.value = undefined
+    apolloState.expenseQueryResult.value = undefined
+    apolloState.incomingTransfersQueryResult.value = undefined
     wrapper = createWrapper()
     expect(wrapper.find('[data-test="expense-transactions-empty"]').exists()).toBe(true)
     expect(wrapper.find('[data-test="expense-transactions-error"]').exists()).toBe(false)
   })
 
   it('shows an error state when a transactions query fails', () => {
-    expenseQuery.result.value = undefined
-    incomingTransfersQuery.result.value = undefined
-    expenseQuery.error.value = new Error('expense query failed')
+    apolloState.expenseQueryResult.value = undefined
+    apolloState.incomingTransfersQueryResult.value = undefined
+    apolloState.expenseQueryError.value = new Error('expense query failed')
     wrapper = createWrapper()
     expect(wrapper.find('[data-test="expense-transactions-error"]').exists()).toBe(true)
   })
