@@ -101,33 +101,36 @@
       </template>
 
       <template #counterparty-cell="{ row }">
-        <template v-if="row.depth === 0">
-          <UserComponent
-            v-if="getTransactionCounterparty(row.original).address"
-            :user="resolveUser(getTransactionCounterparty(row.original).address!)"
-          />
-          <span v-else class="text-muted">—</span>
-        </template>
+        <UserComponent
+          v-if="row.depth === 0 && getTransactionCounterparty(row.original).address"
+          :user="resolveUser(getTransactionCounterparty(row.original).address!)"
+        />
         <span v-else class="text-muted">—</span>
       </template>
 
       <template #value-cell="{ row }">
         <template v-if="row.depth === 0">
-          <div :class="getValueClass(row.original)">
-            {{ getValuePrefix(row.original) }}{{ formatCryptoAmount(row.original.amount) }}
-            {{ row.original.token }}
-          </div>
-          <div class="text-muted text-xs">
-            {{ formatCurrencyShort(row.original.amountLocal, currencyStore.localCurrency.code) }}
-          </div>
+          <template v-if="Number(row.original.amount) > 0">
+            <div :class="getValueClass(row.original)">
+              {{ getValuePrefix(row.original) }}{{ formatCryptoAmount(row.original.amount) }}
+              {{ row.original.token }}
+            </div>
+            <div class="text-muted text-xs">
+              {{ formatCurrencyShort(row.original.amountLocal, currencyStore.localCurrency.code) }}
+            </div>
+          </template>
+          <span v-else class="text-muted">—</span>
         </template>
         <template v-else>
-          <div v-if="Number(row.original.amount) > 0" class="text-sm font-medium">
-            {{ formatCryptoAmount(String(row.original.amount)) }} {{ row.original.token }}
-          </div>
-          <div v-if="row.original.amountLocal" class="text-muted text-xs">
-            {{ formatCurrencyShort(row.original.amountLocal, currencyStore.localCurrency.code) }}
-          </div>
+          <template v-if="Number(row.original.amount) > 0">
+            <div class="text-sm font-medium">
+              {{ formatCryptoAmount(String(row.original.amount)) }} {{ row.original.token }}
+            </div>
+            <div v-if="row.original.amountLocal" class="text-muted text-xs">
+              {{ formatCurrencyShort(row.original.amountLocal, currencyStore.localCurrency.code) }}
+            </div>
+          </template>
+          <span v-else class="text-muted">—</span>
         </template>
       </template>
 
