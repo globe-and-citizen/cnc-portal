@@ -10,6 +10,7 @@ export type CRRow = {
   amount: string | number
   amountLocal: number
   token: string
+  subRows?: CRRow[]
 }
 type Column = { header: string }
 
@@ -30,9 +31,37 @@ const UTableStub = defineComponent({
   props: {
     data: { type: Array, required: false },
     columns: { type: Array, required: false },
-    loading: { type: Boolean, required: false }
+    loading: { type: Boolean, required: false },
+    getSubRows: { type: Function, required: false }
   },
-  template: '<div data-test="cash-remuneration-table"></div>'
+  methods: {
+    rowContext(original: CRRow, depth: number) {
+      return {
+        original,
+        depth
+      }
+    }
+  },
+  template: `
+    <div data-test="cash-remuneration-table">
+      <template v-for="(row, index) in data || []" :key="index">
+        <div data-test="cash-remuneration-rendered-row">
+          <slot name="type-cell" :row="rowContext(row, 0)" />
+          <slot name="counterparty-cell" :row="rowContext(row, 0)" />
+          <slot name="value-cell" :row="rowContext(row, 0)" />
+        </div>
+        <div
+          v-for="(child, childIndex) in (typeof getSubRows === 'function' ? getSubRows(row) : row.subRows || [])"
+          :key="String(index) + '-' + String(childIndex)"
+          data-test="cash-remuneration-rendered-child-row"
+        >
+          <slot name="type-cell" :row="rowContext(child, 1)" />
+          <slot name="counterparty-cell" :row="rowContext(child, 1)" />
+          <slot name="value-cell" :row="rowContext(child, 1)" />
+        </div>
+      </template>
+    </div>
+  `
 })
 
 const USelectStub = defineComponent({
@@ -62,6 +91,14 @@ const AddressToolTipStub = defineComponent({
 const UBadgeStub = defineComponent({
   name: 'UBadge',
   template: '<span><slot /></span>'
+})
+
+const UserComponentStub = defineComponent({
+  name: 'UserComponent',
+  props: {
+    user: { type: Object, required: false }
+  },
+  template: '<span data-test="cash-remuneration-user">{{ user?.name }}</span>'
 })
 
 export const CONTRACT_ADDRESS = '0x1111111111111111111111111111111111111111' as Address
@@ -128,7 +165,8 @@ export const createWrapper = (cashRemunerationAddress: Address = CONTRACT_ADDRES
         USelect: USelectStub,
         UBadge: UBadgeStub,
         AddressToolTip: AddressToolTipStub,
-        CustomDatePicker: CustomDatePickerStub
+        CustomDatePicker: CustomDatePickerStub,
+        UserComponent: UserComponentStub
       }
     }
   })

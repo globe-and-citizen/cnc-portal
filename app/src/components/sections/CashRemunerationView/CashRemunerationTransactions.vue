@@ -90,44 +90,47 @@
             </template>
           </div>
         </template>
-        <TransactionChildRow
-          v-else
-          :type="row.original.type"
-          :other-address="getInlineUser(row.original)?.address ?? row.original.from"
-          :amount="row.original.amount"
-          :token="row.original.token"
-          :color="getTransactionTypeColor(row.original.type)"
-        />
+        <template v-else>
+          <div class="flex items-center gap-2 py-0.5 pl-4">
+            <UBadge :color="getTransactionTypeColor(row.original.type)" variant="soft">
+              {{ getTransactionTypeLabel(row.original.type) }}
+            </UBadge>
+          </div>
+        </template>
       </template>
 
       <template #counterparty-cell="{ row }">
-        <template v-if="row.depth === 0">
-          <UserComponent
-            v-if="getTransactionCounterparty(row.original).address"
-            :user="resolveUser(getTransactionCounterparty(row.original).address!)"
-          />
-          <span v-else class="text-muted">—</span>
-        </template>
+        <UserComponent
+          v-if="getTransactionCounterparty(row.original).address"
+          :user="resolveUser(getTransactionCounterparty(row.original).address!)"
+        />
         <span v-else class="text-muted">—</span>
       </template>
 
       <template #value-cell="{ row }">
         <template v-if="row.depth === 0">
-          <div :class="getValueClass(row.original)">
-            {{ getValuePrefix(row.original) }}{{ formatCryptoAmount(row.original.amount) }}
-            {{ row.original.token }}
+          <div
+            v-for="evt in allEvents(row.original)"
+            :key="`${evt.type}-${evt.token}`"
+            :class="[getValueClass(evt), 'leading-snug']"
+          >
+            {{ getValuePrefix(evt) }}{{ formatCryptoAmount(String(evt.amount)) }} {{ evt.token }}
           </div>
-          <div class="text-muted text-xs">
-            {{ formatCurrencyShort(row.original.amountLocal, currencyStore.localCurrency.code) }}
+          <div v-if="allEvents(row.original).length" class="text-muted text-xs">
+            {{ formatCurrencyShort(totalLocal(row.original), currencyStore.localCurrency.code) }}
           </div>
+          <span v-else class="text-muted">—</span>
         </template>
         <template v-else>
-          <div v-if="Number(row.original.amount) > 0" class="text-sm font-medium">
-            {{ formatCryptoAmount(String(row.original.amount)) }} {{ row.original.token }}
-          </div>
-          <div v-if="row.original.amountLocal" class="text-muted text-xs">
-            {{ formatCurrencyShort(row.original.amountLocal, currencyStore.localCurrency.code) }}
-          </div>
+          <template v-if="Number(row.original.amount) > 0">
+            <div class="text-sm font-medium">
+              {{ formatCryptoAmount(String(row.original.amount)) }} {{ row.original.token }}
+            </div>
+            <div v-if="row.original.amountLocal" class="text-muted text-xs">
+              {{ formatCurrencyShort(row.original.amountLocal, currencyStore.localCurrency.code) }}
+            </div>
+          </template>
+          <span v-else class="text-muted">—</span>
         </template>
       </template>
     </UTable>
@@ -156,9 +159,9 @@ import UserComponent from '@/components/UserComponent.vue'
 import CustomDatePicker from '@/components/CustomDatePicker.vue'
 import TablePagination from '@/components/TablePagination.vue'
 import TransactionDetailModal from '@/components/TransactionDetailModal.vue'
-import TransactionChildRow from '@/components/TransactionChildRow.vue'
 import { useCurrencyStore } from '@/stores/currencyStore'
 import type { CashRemunerationTransaction } from '@/types/transactions'
+import type { TransactionEventValue } from '@/types/transaction-history'
 import {
   buildRawCashRemunerationTransactions,
   formatCashRemunerationTransactionDate,
@@ -256,13 +259,26 @@ const {
   total,
   displayedTransactions,
   expandedRows,
-  getSubRows,
+  getSubRows: _getSubRows,
   selectedTx,
   showDetail,
   openDetail
 } = useTransactionTable(enrichedTransactions, { key: 'cashTx' })
 
+const getSubRows = (row: Parameters<typeof _getSubRows>[0]) => {
+  const subs = _getSubRows(row)
+  if (subs.length > 0) {
+    return [{ ...row, groupedEventCount: 1, subRows: [] as typeof subs }, ...subs]
+  }
+  return subs
+}
+
 const { getInlineUser, getValuePrefix, getValueClass } = useTransactionInline(contractAddress)
+
+const allEvents = (row: TransactionEventValue & { subRows?: TransactionEventValue[] }) =>
+  [row, ...(row.subRows ?? [])].filter((e) => Number(e.amount) > 0)
+const totalLocal = (row: TransactionEventValue & { subRows?: TransactionEventValue[] }) =>
+  [row, ...(row.subRows ?? [])].reduce((s, e) => s + (e.amountLocal ?? 0), 0)
 
 const columns = computed(() => [
   { accessorKey: 'expand', header: '' },

@@ -94,9 +94,12 @@ export const useTransactionTable = <T extends TransactionBase>(
   }
 
   // A filter change can shrink the list under the current page — go back to
-  // page 1. Page-size changes are handled by usePagination's resize anchoring
-  // (no reset), so there's no pageSize watcher here anymore.
-  watch(filteredTransactions, () => {
+  // page 1. Watching the filter inputs directly (rather than
+  // filteredTransactions) avoids collapsing expanded rows on every poll-driven
+  // data refresh, since that recomputes filteredTransactions without the
+  // filters changing. Page-size changes are handled by usePagination's resize
+  // anchoring (no reset), so there's no pageSize watcher here anymore.
+  watch([dateRange, selectedType], () => {
     reset()
     expandedRows.value = {}
   })
