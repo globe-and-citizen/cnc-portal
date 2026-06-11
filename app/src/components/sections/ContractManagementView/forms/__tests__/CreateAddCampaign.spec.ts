@@ -47,7 +47,7 @@ describe('CreateAddCampaign.vue', () => {
     })
 
     it('disables the confirm button while deploying', async () => {
-      mockDeployState.isDeploying.value = true
+      mockDeployState.isPending.value = true
       const wrapper = mountComponent()
       await wrapper.vm.$nextTick()
       expect(wrapper.find('[data-test="confirm-button"]').attributes('disabled')).toBeDefined()
@@ -115,10 +115,13 @@ describe('CreateAddCampaign.vue', () => {
       await wrapper.vm.$nextTick()
       await wrapper.find('form').trigger('submit')
       await flushPromises()
-      expect(mockDeployState.deploy).toHaveBeenCalledWith(
-        mockTeamStore.getContractAddressByType('Bank'),
-        '0.5',
-        '0.2'
+      expect(mockDeployState.mutate).toHaveBeenCalledWith(
+        {
+          bankAddress: mockTeamStore.getContractAddressByType('Bank'),
+          costPerClick: '0.5',
+          costPerImpression: '0.2'
+        },
+        { onSuccess: expect.any(Function) }
       )
     })
 
@@ -136,54 +139,85 @@ describe('CreateAddCampaign.vue', () => {
       await wrapper.vm.$nextTick()
       await wrapper.find('form').trigger('submit')
       await flushPromises()
-      expect(mockDeployState.deploy).not.toHaveBeenCalled()
+      expect(mockDeployState.mutate).not.toHaveBeenCalled()
     })
 
     it('does not call deploy when costPerClick is invalid (empty)', async () => {
       const wrapper = mountComponent()
       await wrapper.find('[data-test="confirm-button"]').trigger('click')
       await flushPromises()
-      expect(mockDeployState.deploy).not.toHaveBeenCalled()
+      expect(mockDeployState.mutate).not.toHaveBeenCalled()
     })
   })
 
-  describe('contractAddress watcher', () => {
-    it('emits closeAddCampaignModal and shows toast on successful contract creation', async () => {
-      const wrapper = mountComponent()
-      mockDeployState.contractAddress.value = '0xDeployedContract'
+  describe('deploy onSuccess (register contract)', () => {
+    // Submit a valid form, then replay the onSuccess callback the component
+    // passed to `deploy(args, { onSuccess })` with a freshly deployed address.
+    const replayDeploySuccess = async (
+      wrapper: ReturnType<typeof mountComponent>,
+      address = '0xDeployedContract'
+    ) => {
+      const setupState = wrapper.getCurrentComponent().setupState as Record<string, unknown>
+      const formState = setupState.formState as { costPerClick: string; costPerImpression: string }
+      formState.costPerClick = '0.5'
+      formState.costPerImpression = '0.2'
+      await wrapper.vm.$nextTick()
+      await wrapper.find('form').trigger('submit')
       await flushPromises()
+
+      const lastCall = mockDeployState.mutate.mock.calls.at(-1)
+      const onSuccess = (lastCall?.[1] as { onSuccess?: (addr: string) => unknown } | undefined)
+        ?.onSuccess
+      await onSuccess?.(address)
+      await flushPromises()
+    }
+
+    // Capture the createContract `mutate` so we can replay the onSuccess/onError
+    // callbacks the component registers (the mock `mutate` is otherwise inert).
+    const stubCreateContract = () => {
+      const mutate = vi.fn()
+      vi.mocked(useCreateContractMutation).mockReturnValueOnce({
+        ...createMockMutationResponse(),
+        mutate
+      } as unknown as ReturnType<typeof useCreateContractMutation>)
+      return mutate
+    }
+
+    const lastCreateContractCallbacks = (mutate: ReturnType<typeof vi.fn>) =>
+      mutate.mock.calls.at(-1)?.[1] as
+        | { onSuccess?: () => unknown; onError?: (e: Error) => unknown }
+        | undefined
+
+    it('emits closeAddCampaignModal and shows toast on successful contract creation', async () => {
+      const createContract = stubCreateContract()
+      const wrapper = mountComponent()
+      await replayDeploySuccess(wrapper)
+
+      await lastCreateContractCallbacks(createContract)?.onSuccess?.()
+      await flushPromises()
+
       expect(wrapper.emitted('closeAddCampaignModal')).toBeTruthy()
     })
 
     it('stays open and shows error toast when createContract mutation fails', async () => {
-      vi.mocked(useCreateContractMutation).mockReturnValueOnce({
-        ...createMockMutationResponse(),
-        mutateAsync: vi.fn().mockRejectedValue(new Error('backend down'))
-      } as unknown as ReturnType<typeof useCreateContractMutation>)
-
+      const createContract = stubCreateContract()
       const wrapper = mountComponent()
-      mockDeployState.contractAddress.value = '0xDeployedContract'
+      await replayDeploySuccess(wrapper)
+
+      lastCreateContractCallbacks(createContract)?.onError?.(new Error('backend down'))
       await flushPromises()
+
       expect(wrapper.emitted('closeAddCampaignModal')).toBeFalsy()
     })
 
-    it('does nothing when newAddress is set but currentTeam is null', async () => {
+    it('does nothing when the deployed address arrives but currentTeam is null', async () => {
       vi.mocked(useTeamStore).mockReturnValueOnce({
         ...mockTeamStore,
         currentTeam: null
       } as unknown as ReturnType<typeof useTeamStore>)
 
       const wrapper = mountComponent()
-      mockDeployState.contractAddress.value = '0xDeployedContract'
-      await flushPromises()
-      expect(wrapper.emitted('closeAddCampaignModal')).toBeFalsy()
-    })
-
-    it('does nothing when newAddress is null (watcher fires with null)', async () => {
-      const wrapper = mountComponent()
-
-      mockDeployState.contractAddress.value = null
-      await flushPromises()
+      await replayDeploySuccess(wrapper)
       expect(wrapper.emitted('closeAddCampaignModal')).toBeFalsy()
     })
   })

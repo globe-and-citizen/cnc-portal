@@ -52,8 +52,8 @@ import {
   ALLOWED_IMAGE_EXTENSIONS,
   ALLOWED_IMAGE_MIMETYPES,
   ALLOWED_MIMETYPES,
-  MAX_FILE_SIZE,
   MAX_FILES,
+  createFileSchema,
   type PreviewFile
 } from '@/types/upload'
 
@@ -86,24 +86,12 @@ const errorMessage = ref<string>('')
 const fileCount = computed(() => previews.value.length + props.existingFileCount)
 
 /** Zod schema **/
-const fileSchema = z
-  .instanceof(File)
-  .refine(
-    (file) => {
-      const lowerName = file.name.toLowerCase()
-      const byMime = ALLOWED_MIMETYPES.includes(file.type)
-      const byExt =
-        ALLOWED_IMAGE_EXTENSIONS.some((ext) => lowerName.endsWith(ext)) ||
-        ALLOWED_DOCUMENT_EXTENSIONS.some((ext) => lowerName.endsWith(ext))
-      return byMime || byExt
-    },
-    {
-      message: 'Only images (png, jpg, jpeg, webp) and documents (pdf, txt, zip, docx) are allowed'
-    }
-  )
-  .refine((file) => file.size <= MAX_FILE_SIZE, {
-    message: `File exceeds the ${MAX_FILE_SIZE / (1024 * 1024)} MB limit`
-  })
+const fileSchema = createFileSchema({
+  allowedExtensions: [...ALLOWED_IMAGE_EXTENSIONS, ...ALLOWED_DOCUMENT_EXTENSIONS],
+  allowedMimeTypes: ALLOWED_MIMETYPES,
+  typeErrorMessage:
+    'Only images (png, jpg, jpeg, webp) and documents (pdf, txt, zip, docx) are allowed'
+})
 
 const filesSchema = z
   .array(fileSchema)

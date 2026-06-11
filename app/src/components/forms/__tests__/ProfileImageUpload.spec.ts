@@ -1,8 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount, VueWrapper, flushPromises } from '@vue/test-utils'
-import { createTestingPinia } from '@pinia/testing'
 import ProfileImageUpload from '../ProfileImageUpload.vue'
-import { mockUploadFileApi } from '@/tests/mocks/api.mock'
+import { mockUploadFileState } from '@/tests/mocks/composables.mock'
 
 describe('ProfileImageUpload.vue', () => {
   let wrapper: VueWrapper
@@ -17,13 +16,7 @@ describe('ProfileImageUpload.vue', () => {
     return new File([new Uint8Array(size)], name, { type })
   }
 
-  const mountComponent = (props = {}) =>
-    mount(ProfileImageUpload, {
-      props,
-      global: {
-        plugins: [createTestingPinia({ createSpy: vi.fn })]
-      }
-    })
+  const mountComponent = (props = {}) => mount(ProfileImageUpload, { props })
 
   const triggerFileSelection = async (file: File) => {
     const input = wrapper.find(SELECTORS.fileInput)
@@ -35,14 +28,18 @@ describe('ProfileImageUpload.vue', () => {
     await flushPromises()
   }
 
+  // Replay the `onSuccess` callback the component passed to
+  // `uploadFile(file, { onSuccess })` with a freshly uploaded URL.
+  const replayUploadSuccess = async (url: string) => {
+    const lastCall = mockUploadFileState.mutate.mock.calls.at(-1)
+    const onSuccess = (lastCall?.[1] as { onSuccess?: (u: string) => unknown } | undefined)
+      ?.onSuccess
+    await onSuccess?.(url)
+    await flushPromises()
+  }
+
   beforeEach(() => {
     vi.clearAllMocks()
-
-    mockUploadFileApi.mockReset()
-    mockUploadFileApi.mockResolvedValue({
-      files: [{ fileUrl: 'https://storage.railway.app/test-image.jpg' }],
-      count: 1
-    })
   })
 
   afterEach(() => {
@@ -50,107 +47,68 @@ describe('ProfileImageUpload.vue', () => {
   })
 
   describe('Validation', () => {
-    it('rejects non-image files', async () => {
+    it('rejects non-image files without calling the mutation', async () => {
       wrapper = mountComponent()
       await triggerFileSelection(createMockFile('document.pdf', 'application/pdf'))
 
       expect(wrapper.find(SELECTORS.errorMessage).exists()).toBe(true)
-      expect(mockUploadFileApi).not.toHaveBeenCalled()
+      expect(mockUploadFileState.mutate).not.toHaveBeenCalled()
     })
 
-    it('rejects files larger than 10MB', async () => {
+    it('rejects files larger than 10MB without calling the mutation', async () => {
       wrapper = mountComponent()
       await triggerFileSelection(createMockFile('large.png', 'image/png', 11 * 1024 * 1024))
 
       expect(wrapper.find(SELECTORS.errorMessage).exists()).toBe(true)
-      expect(mockUploadFileApi).not.toHaveBeenCalled()
+      expect(mockUploadFileState.mutate).not.toHaveBeenCalled()
     })
 
     it('accepts image by extension fallback when MIME type is empty', async () => {
       wrapper = mountComponent()
       await triggerFileSelection(createMockFile('avatar.png', ''))
 
-      expect(mockUploadFileApi).toHaveBeenCalledOnce()
+      expect(mockUploadFileState.mutate).toHaveBeenCalledOnce()
+      expect(mockUploadFileState.mutate).toHaveBeenCalledWith(
+        expect.any(File),
+        expect.objectContaining({ onSuccess: expect.any(Function) })
+      )
     })
   })
 
   describe('Upload', () => {
-    it('uploads successfully and emits new model value', async () => {
+    it('uploads and emits the new model value on success', async () => {
       const expectedUrl = 'https://storage.railway.app/uploaded-image.png'
-      mockUploadFileApi.mockResolvedValue({
-        files: [{ fileUrl: expectedUrl }],
-        count: 1
-      })
 
       wrapper = mountComponent({ modelValue: '' })
       await triggerFileSelection(createMockFile('avatar.png', 'image/png'))
 
-      expect(mockUploadFileApi).toHaveBeenCalledOnce()
-      expect(mockUploadFileApi).toHaveBeenCalledWith([expect.any(File)])
+      expect(mockUploadFileState.mutate).toHaveBeenCalledOnce()
+      await replayUploadSuccess(expectedUrl)
 
       const emitted = wrapper.emitted('update:modelValue')
       expect(emitted).toBeTruthy()
       expect(emitted?.[emitted.length - 1]).toEqual([expectedUrl])
     })
 
-    it('handles API error response', async () => {
-      mockUploadFileApi.mockRejectedValue(new Error('Upload failed'))
-
+    it('surfaces the mutation error reactively', async () => {
       wrapper = mountComponent()
-      await triggerFileSelection(createMockFile('avatar.png', 'image/png'))
+      mockUploadFileState.error.value = new Error('Upload failed')
+      await wrapper.vm.$nextTick()
 
-      expect(wrapper.find(SELECTORS.errorMessage).exists()).toBe(true)
-    })
-
-    it('handles network Error objects', async () => {
-      mockUploadFileApi.mockRejectedValue(new Error('Network error'))
-
-      wrapper = mountComponent()
-      await triggerFileSelection(createMockFile('avatar.png', 'image/png'))
-    })
-
-    it('handles non-Error thrown values', async () => {
-      mockUploadFileApi.mockRejectedValue('network exploded')
-
-      wrapper = mountComponent()
-      await triggerFileSelection(createMockFile('avatar.png', 'image/png'))
-    })
-
-    it('handles missing fileUrl in backend response', async () => {
-      mockUploadFileApi.mockResolvedValue({
-        files: [],
-        count: 0
-      })
-
-      wrapper = mountComponent()
-      await triggerFileSelection(createMockFile('avatar.png', 'image/png'))
+      const alert = wrapper.find(SELECTORS.errorMessage)
+      expect(alert.exists()).toBe(true)
+      expect(alert.text()).toContain('Upload failed')
     })
   })
 
   describe('UI states', () => {
-    it('shows uploading state while request is pending', async () => {
-      let resolveUpload: (value: unknown) => void = () => undefined
-      const pendingPromise = new Promise((resolve) => {
-        resolveUpload = resolve
-      })
-      mockUploadFileApi.mockReturnValue(pendingPromise)
+    it('shows uploading state while the mutation is pending', async () => {
+      mockUploadFileState.isPending.value = true
 
-      wrapper = mountComponent()
-      const input = wrapper.find(SELECTORS.fileInput)
-      Object.defineProperty(input.element, 'files', {
-        value: [createMockFile('avatar.png', 'image/png')],
-        writable: false
-      })
-      input.trigger('change')
-      await flushPromises()
+      wrapper = mountComponent({ modelValue: '' })
+      await wrapper.vm.$nextTick()
 
       expect(wrapper.text()).toContain('Uploading...')
-
-      resolveUpload({
-        files: [{ fileUrl: 'https://test.com/image.png' }],
-        count: 1
-      })
-      await flushPromises()
     })
 
     it('does not upload when no file is selected', async () => {
@@ -164,7 +122,7 @@ describe('ProfileImageUpload.vue', () => {
       await input.trigger('change')
       await flushPromises()
 
-      expect(mockUploadFileApi).not.toHaveBeenCalled()
+      expect(mockUploadFileState.mutate).not.toHaveBeenCalled()
     })
 
     it('reflects existing image state when model value is provided', () => {
