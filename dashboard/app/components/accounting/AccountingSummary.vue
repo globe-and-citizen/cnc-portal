@@ -47,9 +47,9 @@
           </p>
           <AccountingMetricExplainer
             title="Fees"
-            description="Trading and settlement costs detected when on-chain USDC moved less than Polymarket's activity feed reported for the same transaction — almost always a fee or slippage."
-            formula="Σ |cashFlow| over SETTLEMENT_ADJUSTMENT where cashFlow < 0"
-            example="A trade is reported as $50 in the activity feed, but $49.97 actually moved on-chain. Fee = $0.03."
+            description="Trading fees and spread you actually paid. Polymarket bakes its fee into the fill price rather than charging it separately — you pay above the quoted price on buys and receive below it on sells — so the fee is the gap between the quoted price and what really moved. The effect peaks near a 50¢ price. Includes market-order slippage as well as the protocol fee."
+            formula="Σ |size × price − usdcSize| over all trades"
+            example="You buy 100 shares quoted at $0.50 ($50), but $50.88 actually leaves your wallet. Fee = $0.88."
           />
         </div>
         <p class="text-3xl font-bold tabular-nums">
