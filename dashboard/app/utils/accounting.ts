@@ -111,11 +111,14 @@ export interface AccountingSummary {
   /** Number of distinct tx hashes that produced a settlement adjustment. */
   settlementAdjustmentCount: number
   /**
-   * Trading/settlement costs: sum of |cashFlow| over SETTLEMENT_ADJUSTMENT
-   * entries where cashFlow < 0 (on-chain USDC was less than activity reported).
+   * Trading fees/spread the user actually paid: sum over every trade of
+   * |quoted value − real fill| = |size × price − usdcSize|. Polymarket bakes its
+   * per-fill fee into the price (you pay above the quote on buys, receive below
+   * on sells), so it never appears as an on-chain delta — it must be read from
+   * the price gap. Mixes protocol fee and market-order slippage.
    */
   totalFees: number
-  /** Number of SETTLEMENT_ADJUSTMENT entries with negative cashFlow. */
+  /** Number of trades that carried a non-zero fee (maker / 0-fee fills excluded). */
   feeTransactionCount: number
   /**
    * Cost-basis disagreement between Polymarket /positions (which reports
@@ -407,15 +410,22 @@ export function buildLedger(input: BuildLedgerInput): AccountingLedger {
     } else if (entry.category === 'TRADE_BUY' || entry.category === 'TRADE_SELL') {
       summary.tradingVolume += entry.amount
       summary.tradeCount += 1
+      // Polymarket fees are baked into the fill price, not surfaced on-chain: the
+      // quoted price (unitPrice) differs from the real fill (amount / quantity).
+      // The gap is the fee/spread the user actually paid on this fill.
+      if (entry.unitPrice != null && entry.quantity != null) {
+        const quotedValue = entry.quantity * entry.unitPrice
+        const fee = Math.abs(quotedValue - entry.amount)
+        summary.totalFees += fee
+        if (fee > 1e-4) {
+          summary.feeTransactionCount += 1
+        }
+      }
     } else if (REWARD_CATEGORIES.has(entry.category)) {
       summary.totalRewards += entry.amount
     } else if (entry.category === 'SETTLEMENT_ADJUSTMENT') {
       summary.settlementAdjustments += entry.cashFlow
       summary.settlementAdjustmentCount += 1
-      if (entry.cashFlow < 0) {
-        summary.totalFees += Math.abs(entry.cashFlow)
-        summary.feeTransactionCount += 1
-      }
     }
     if (entry.category === 'TRADE_BUY' || entry.category === 'SPLIT') {
       acquisitionCost += entry.amount
