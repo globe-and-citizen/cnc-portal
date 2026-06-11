@@ -168,7 +168,6 @@ const globalMockLegacyFiles = [
   'src/components/sections/CashRemunerationView/__tests__/CRSigne.migration.spec.ts',
   'src/components/sections/CashRemunerationView/__tests__/CRSigne.spec.ts',
   'src/components/sections/CashRemunerationView/__tests__/CRWithdrawClaim.spec.ts',
-  'src/components/sections/CashRemunerationView/__tests__/CashRemunerationTransactions.spec.ts',
   'src/components/sections/DashboardView/__tests__/MemberSection.spec.ts',
   'src/components/sections/ExpenseAccountView/__tests__/ExpenseMonthSpent.spec.ts',
   'src/components/sections/ExpenseAccountView/__tests__/TransferAction.spec.ts',
