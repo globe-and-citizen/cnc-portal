@@ -142,6 +142,8 @@ export const buildBankQueryResult = () => ({
   bankDividendDistributionTriggereds: { items: [] },
   bankFeePaids: { items: [] },
   bankOwnershipTransferreds: { items: [] },
+  bankTokenSupportAddeds: { items: [] },
+  bankTokenSupportRemoveds: { items: [] },
   rawContractTokenTransfers: { items: [] }
 })
 

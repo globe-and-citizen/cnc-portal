@@ -237,6 +237,55 @@ describe('BankTransactions', () => {
     expect(wrapper.find('[data-test="bank-rendered-child-row"]').text()).toContain('—')
   })
 
+  it('maps token support and ownership transfer events with a — value', () => {
+    bankQuery.result.value = {
+      ...buildBankQueryResult(),
+      bankDeposits: { items: [] },
+      bankTransfers: { items: [] },
+      bankOwnershipTransferreds: {
+        items: [
+          {
+            id: '0xownershiphash-0',
+            contractAddress: BANK_ADDRESS,
+            previousOwner: '0x5555555555555555555555555555555555555555',
+            newOwner: '0x6666666666666666666666666666666666666666',
+            timestamp: 1_700_000_200
+          }
+        ]
+      },
+      bankTokenSupportAddeds: {
+        items: [
+          {
+            id: '0xtokensupportaddedhash-0',
+            contractAddress: BANK_ADDRESS,
+            tokenAddress: USDC_ADDRESS,
+            timestamp: 1_700_000_300
+          }
+        ]
+      },
+      bankTokenSupportRemoveds: {
+        items: [
+          {
+            id: '0xtokensupportremovedhash-0',
+            contractAddress: BANK_ADDRESS,
+            tokenAddress: USDC_ADDRESS,
+            timestamp: 1_700_000_400
+          }
+        ]
+      }
+    }
+
+    wrapper = createWrapper()
+    const data = tableData(wrapper)
+
+    const newEventTypes = ['ownershipTransferred', 'tokenSupportAdded', 'tokenSupportRemoved']
+    expect(data.map((row) => row.type)).toEqual(expect.arrayContaining(newEventTypes))
+    data
+      .filter((row) => newEventTypes.includes(row.type))
+      .forEach((row) => expect(row.amount).toBe('0'))
+    expect(wrapper.findAll('[data-test="bank-rendered-row"]')[0]?.text()).toContain('—')
+  })
+
   it('logs query errors', async () => {
     const logErrorSpy = vi.spyOn(utils.log, 'error')
     wrapper = createWrapper()

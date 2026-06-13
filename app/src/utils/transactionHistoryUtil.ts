@@ -109,6 +109,8 @@ export const getTransactionSummary = (
       return 'Token support added'
     case 'tokenSupportRemoved':
       return 'Token support removed'
+    case 'ownershipTransferred':
+      return 'Ownership transferred'
     case 'tokenAddressChanged':
       return 'Token address updated'
     case 'safeDepositsEnabled':
@@ -158,7 +160,8 @@ const TYPE_COLORS: Record<string, UBadgeColor> = {
   safeDepositsEnabled: 'primary',
   safeDepositsDisabled: 'primary',
   safeAddressUpdated: 'primary',
-  safeMultiplierUpdated: 'primary'
+  safeMultiplierUpdated: 'primary',
+  ownershipTransferred: 'primary'
 }
 
 export const getTransactionTypeColor = (type: string): UBadgeColor => TYPE_COLORS[type] ?? 'neutral'
@@ -193,7 +196,8 @@ const TYPE_LABELS: Record<string, string> = {
   safeDepositsDisabled: 'Safe deposits disabled',
   safeAddressUpdated: 'Safe address updated',
   safeMultiplierUpdated: 'Multiplier updated',
-  officerAddressUpdated: 'Officer address updated'
+  officerAddressUpdated: 'Officer address updated',
+  ownershipTransferred: 'Ownership transferred'
 }
 
 export const DIVIDEND_TYPES = new Set([
@@ -227,7 +231,8 @@ const COUNTERPARTY_TO = new Set([
   'ownerTreasuryWithdrawToken',
   'feePaid',
   'rawTokenOut',
-  'dividendPaid'
+  'dividendPaid',
+  'ownershipTransferred'
   // wageClaimEnabled/wageClaimDisabled excluded: their `to` is a bytes32 signature hash, not an address
 ])
 
