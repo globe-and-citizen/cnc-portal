@@ -147,7 +147,8 @@ const emptyExpenseBuckets = {
   expenseOwnerTreasuryWithdrawTokens: { items: [] },
   expenseTokenSupportAddeds: { items: [] },
   expenseTokenSupportRemoveds: { items: [] },
-  expenseTokenAddressChangeds: { items: [] }
+  expenseTokenAddressChangeds: { items: [] },
+  expenseOwnershipTransferreds: { items: [] }
 }
 
 export const buildExpenseQueryResult = () => ({

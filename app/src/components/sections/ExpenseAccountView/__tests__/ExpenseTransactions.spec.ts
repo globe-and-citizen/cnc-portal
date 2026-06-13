@@ -215,6 +215,32 @@ describe('ExpenseTransactions', () => {
     expect(incomingTransfersOptions.enabled.value).toBe(false)
   })
 
+  it('maps ownership transfer events with a — value', () => {
+    expenseQuery.result.value = {
+      ...buildExpenseQueryResult(),
+      expenseOwnershipTransferreds: {
+        items: [
+          {
+            id: '0xownershiphash-0',
+            contractAddress: EXPENSE_ADDRESS,
+            previousOwner: '0x5555555555555555555555555555555555555555',
+            newOwner: '0x6666666666666666666666666666666666666666',
+            timestamp: 1_700_000_200
+          }
+        ]
+      }
+    }
+    incomingTransfersQuery.result.value = undefined
+    wrapper = createWrapper()
+
+    const row = findRowByTxHash(wrapper, '0xownershiphash')
+
+    expect(row).toBeDefined()
+    expect(getRowField(row!, '[data-test="row-type"]')).toBe('ownershipTransferred')
+    expect(getRowField(row!, '[data-test="row-amount"]')).toBe('0')
+    expect(getRowField(row!, '[data-test="row-value-slot"]')).toContain('—')
+  })
+
   it('handles token resolution fallback and invalid amounts', () => {
     mockCurrencyStore.supportedTokens = []
     mockGetTokenPrice.mockImplementation((tokenId: string) => (tokenId === 'native' ? 3 : 0))

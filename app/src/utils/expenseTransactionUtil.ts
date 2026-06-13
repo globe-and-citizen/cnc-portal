@@ -23,6 +23,7 @@ export const buildRawExpenseTransactions = (
   const tokenSupportAddeds = expenseResult?.expenseTokenSupportAddeds?.items ?? []
   const tokenSupportRemoveds = expenseResult?.expenseTokenSupportRemoveds?.items ?? []
   const tokenAddressChangeds = expenseResult?.expenseTokenAddressChangeds?.items ?? []
+  const ownershipTransfers = expenseResult?.expenseOwnershipTransferreds?.items ?? []
   const incomingTokenTransfers = incomingTokenTransfersResult?.bankTokenTransfers?.items ?? []
 
   const sections: RawExpenseTransaction[][] = [
@@ -116,6 +117,15 @@ export const buildRawExpenseTransactions = (
       amount: '0',
       tokenAddress: row.newAddress,
       type: 'tokenAddressChanged'
+    })),
+    ownershipTransfers.map((row) => ({
+      txHash: extractTxHashFromId(row.id),
+      timestamp: row.timestamp,
+      from: row.previousOwner,
+      to: row.newOwner,
+      amount: '0',
+      tokenAddress: zeroAddress,
+      type: 'ownershipTransferred'
     }))
   ]
 

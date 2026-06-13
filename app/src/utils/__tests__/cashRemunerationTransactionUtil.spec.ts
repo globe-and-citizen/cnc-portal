@@ -119,6 +119,17 @@ const buildCashRemunerationEvents = (): CashRemunerationEventsQuery => ({
         timestamp: 90
       }
     ]
+  },
+  cashRemunerationOwnershipTransferreds: {
+    items: [
+      {
+        id: '0xownershiptransferredhash-0',
+        contractAddress: CONTRACT_ADDRESS,
+        previousOwner: USER_A,
+        newOwner: USER_B,
+        timestamp: 100
+      }
+    ]
   }
 })
 
@@ -147,7 +158,7 @@ describe('cashRemunerationTransactionUtil', () => {
     const byType = new Map(transactions.map((row) => [row.type, row]))
     const tokenDeposits = transactions.filter((row) => row.type === 'tokenDeposit')
 
-    expect(transactions[0]?.txHash).toBe('0xtokensupportremovedhash')
+    expect(transactions[0]?.txHash).toBe('0xownershiptransferredhash')
     expect(transactions.map((row) => row.type)).toEqual(
       expect.arrayContaining([
         'deposit',
@@ -160,7 +171,8 @@ describe('cashRemunerationTransactionUtil', () => {
         'ownerTreasuryWithdrawToken',
         'officerAddressUpdated',
         'tokenSupportAdded',
-        'tokenSupportRemoved'
+        'tokenSupportRemoved',
+        'ownershipTransferred'
       ])
     )
     expect(byType.get('deposit')?.tokenAddress).toBe(zeroAddress)
@@ -174,6 +186,12 @@ describe('cashRemunerationTransactionUtil', () => {
     expect(byType.get('withdrawToken')?.tokenAddress).toBe(TOKEN_ADDRESS)
     expect(byType.get('wageClaimEnabled')).toMatchObject({
       to: SIGNATURE_HASH,
+      amount: '0',
+      tokenAddress: zeroAddress
+    })
+    expect(byType.get('ownershipTransferred')).toMatchObject({
+      from: USER_A,
+      to: USER_B,
       amount: '0',
       tokenAddress: zeroAddress
     })
