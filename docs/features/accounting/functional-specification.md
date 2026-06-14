@@ -276,7 +276,7 @@ Phase 1 COA for CNC company books. Amounts booked in **native token units**; USD
 
 ## 6. Source → Ledger → Statement Mapping
 
-**Money-flow map (Phase 1, in-scope events).** Arrow goes from the **credited** account (source of value) to the **debited** account (use of value). Cash sits in the centre: credits flow in from the left (equity / revenue), debits flow out to the right (expenses / equity distributions). Colour = account class → 🟦 Asset · 🟪 Equity · 🟩 Income · 🟥 Expense. This is the **booked Phase-1 subset**; the exhaustive map including gaps (Tips, Vesting, AdCampaign) lives in `catalogue-flux-monetaires.md` (#2126).
+**Money-flow map (Phase 1, in-scope events).** Arrow goes from the **credited** account (source of value) to the **debited** account (use of value). Cash sits in the centre: credits flow in from the left (equity / revenue), debits flow out to the right (expenses / equity distributions). Colour = account class → 🟦 Asset · 🟪 Equity · 🟩 Income · 🟥 Expense. This is the **booked Phase-1 subset**; the exhaustive map including gaps (Tips, Vesting, AdCampaign) lives in [`money-flow-catalogue.md`](./money-flow-catalogue.md) (#2126).
 
 ```mermaid
 flowchart LR
