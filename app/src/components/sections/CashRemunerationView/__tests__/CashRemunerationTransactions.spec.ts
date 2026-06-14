@@ -166,7 +166,7 @@ describe('CashRemunerationTransactions', () => {
   })
 
   it('maps ownership transfer events with a zero amount', () => {
-    apolloState.cashRemunerationQueryResult.value = {
+    cashRemunerationQuery.result.value = {
       ...buildCashRemunerationQueryResult(),
       cashRemunerationOwnershipTransferreds: {
         items: [
