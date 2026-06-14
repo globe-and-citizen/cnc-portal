@@ -141,50 +141,88 @@ Direction : **IN** (entrée), **OUT** (sortie), **INT** (transfert interne entre
 
 ### 3.1 Zone 1 & 2 — Entrées (financement de la trésorerie / actif)
 
-| UC | Interaction | Variante | Écriture | Compte de résultat / Bilan |
-|----|-------------|----------|----------|----------------------------|
-| **UC-BANK-01** | `Bank.receive()` | apport fondateur natif | Dr Cash — ETH · Cr Owner Capital | Bilan (Actif↑, Équité↑) |
-| **UC-BANK-02** | `Bank.depositToken()` | apport fondateur ERC-20 | Dr Cash — {token} · Cr Owner Capital | Bilan |
-| **UC-CASH-01** | `CashRemuneration.receive()` | financement paie | Dr Cash — ETH · Cr Owner Capital | Bilan |
-| **UC-EXP-01** | `ExpenseAccount.receive()` | financement budget natif | Dr Cash — ETH · Cr Owner Capital | Bilan |
-| **UC-EXP-02** | `ExpenseAccount.depositToken()` | financement budget ERC-20 | Dr Cash — {token} · Cr Owner Capital | Bilan |
-| **UC-FEE-01** | `FeeCollector.payFee()` | frais protocole natif | Dr Cash — ETH · Cr Protocol Fee Revenue | **Résultat** (produit) |
-| **UC-FEE-02** | `FeeCollector.payFeeToken()` | frais protocole ERC-20 | Dr Cash — {token} · Cr Protocol Fee Revenue | **Résultat** (produit) |
-| **UC-SDR-01** | `SafeDepositRouter.deposit()` | investissement → mint SHER | Dr Cash — {token} (Safe) · Cr Investor Equity | Bilan (Actif↑, Équité↑) ⚠️ hors scope |
-| **UC-SDR-02** | `SafeDepositRouter.depositWithSlippage()` | idem + garde-fou `minSherOut` | idem UC-SDR-01 | Bilan ⚠️ hors scope |
-| **UC-INV-02** | `InvestorV1.distributeMint()` | mint direct batch (hors payroll/router) | **défaut D** : mémo parts, aucune écriture monétaire — voir §3.3 | Bilan (parts↑, valeur inchangée) |
-| **UC-INV-03** | `InvestorV1.individualMint()` | mint direct unitaire (hors payroll/router) | **défaut D** : mémo parts, aucune écriture monétaire — voir §3.3 | Bilan (parts↑, valeur inchangée) |
-| **UC-TIP-02** | `Tips.sendTip()` | pourboire crédité (en attente) | Dr Cash — ETH · Cr **Tips Payable** ⚠️ | Bilan (Passif↑) ⚠️ compte manquant |
-| **UC-AD-01** | `AdCampaignManager.createAdCampaign()` | budget pub déposé | Dr Cash — ETH · Cr **Deferred Ad Revenue** ⚠️ | Bilan (Passif↑) ⚠️ compte manquant |
-| **UC-VEST-01** | `Vesting.addVesting()` | mise sous séquestre | Dr **Vesting Escrow (actif)** ⚠️ · Cr Cash — {token} | Bilan ⚠️ compte manquant |
+> **Lecture du graphe :** la flèche va du compte **crédité** (origine de la valeur) vers le compte **débité** (emploi de la valeur) — c'est le sens du flux. Couleurs = classe de compte : 🟦 Actif · 🟪 Équité · 🟩 Produit · 🟥 Charge · 🟨 Passif (Actif/Passif/Équité → **Bilan** ; Charge/Produit → **Résultat**). `⚠️` = compte à créer (§4.2). Label d'arête = `UC · interaction`.
+
+```mermaid
+flowchart LR
+  ownerCap[Owner Capital]:::equite
+  feeRev[Protocol Fee Revenue]:::produit
+  invEq[Investor Equity]:::equite
+  tipsPay["Tips Payable ⚠️"]:::passif
+  defAd["Deferred Ad Revenue ⚠️"]:::passif
+
+  bank[("Cash — Bank")]:::actif
+  cashRem[("Cash — CashRemun")]:::actif
+  expAcc[("Cash — ExpenseAccount")]:::actif
+  feeCol[("Cash — FeeCollector")]:::actif
+  safe[("Cash — Safe")]:::actif
+  escrow["Vesting Escrow ⚠️"]:::actif
+
+  ownerCap -->|"UC-BANK-01/02 · apport fondateur"| bank
+  ownerCap -->|"UC-CASH-01 · financement paie"| cashRem
+  ownerCap -->|"UC-EXP-01/02 · financement budget"| expAcc
+  feeRev -->|"UC-FEE-01/02 · frais protocole"| feeCol
+  invEq -->|"UC-SDR-01/02 · investissement (+ mint SHER)"| safe
+  tipsPay -->|"UC-TIP-02 · tip crédité"| bank
+  defAd -->|"UC-AD-01 · budget pub"| bank
+  bank -->|"UC-VEST-01 · mise sous séquestre"| escrow
+
+  classDef actif fill:#dbeafe,stroke:#3b82f6,color:#1e3a8a;
+  classDef equite fill:#ede9fe,stroke:#8b5cf6,color:#4c1d95;
+  classDef produit fill:#dcfce7,stroke:#22c55e,color:#14532d;
+  classDef charge fill:#fee2e2,stroke:#ef4444,color:#7f1d1d;
+  classDef passif fill:#fef3c7,stroke:#f59e0b,color:#78350f;
+```
+
+> `UC-INV-02/03` (mint direct) n'apparaît pas ci-dessus : **défaut D**, aucun flux monétaire (suivi des parts uniquement) — voir §3.3.
 
 ### 3.2 Zone 3 — Sorties (charges, distributions, dividendes, retraits)
 
-| UC | Interaction | Variante | Écriture | Compte de résultat / Bilan |
-|----|-------------|----------|----------|----------------------------|
-| **UC-BANK-03** | `Bank.transfer()` | sortie natif (net de frais) | Dr Operating Expense / contrepartie · Cr Cash — ETH | Résultat/Bilan selon objet |
-| **UC-BANK-04** | `Bank.transfer()` — part frais | frais prélevé | Dr Protocol Fee Expense · Cr Cash — ETH | **Résultat** (élim. en conso, cf. §4) |
-| **UC-BANK-05** | `Bank.transferToken()` | sortie ERC-20 | Dr Operating Expense / contrepartie · Cr Cash — {token} | Résultat/Bilan |
-| **UC-BANK-06** | `Bank.transferToken()` — part frais | frais (USDC/USDT) | Dr Protocol Fee Expense · Cr Cash — {token} | **Résultat** (élim. en conso) |
-| **UC-CASH-02** | `CashRemuneration.withdraw()` | salaire natif | Dr Payroll Expense · Cr Cash — ETH | **Résultat** (charge) |
-| **UC-CASH-03** | `CashRemuneration.withdraw()` | salaire ERC-20 | Dr Payroll Expense · Cr Cash — {token} | **Résultat** |
-| **UC-CASH-04** | `CashRemuneration.withdraw()` | salaire payé en **mint InvestorV1** (pas de cash) — *paiement fondé sur des actions* | Dr Payroll Expense · Cr Investor Equity *(non-cash, au taux fixe)* | **Résultat** + Bilan (Équité↑) — voir §3.3 |
-| **UC-EXP-03** | `ExpenseAccount.transfer()` | dépense natif signée | Dr Operating Expense · Cr Cash — ETH | **Résultat** (charge) |
-| **UC-EXP-04** | `ExpenseAccount.transfer()` | dépense ERC-20 signée | Dr Operating Expense · Cr Cash — {token} | **Résultat** |
-| **UC-INV-04** | `InvestorV1.distributeNativeDividends()` | dividende natif au prorata | Dr Dividend Expense · Cr Cash — ETH | **Résultat**/Équité (distribution) |
-| **UC-INV-05** | `InvestorV1.distributeTokenDividends()` | dividende ERC-20 au prorata | Dr Dividend Expense · Cr Cash — {token} | idem |
-| **UC-INV-06** | `DividendPaymentFailed` | échec de paiement (variante revert) | aucune écriture — **mémo** | — (à journaliser comme note) |
-| **UC-FEE-04** | `FeeCollector.withdraw()` | balayage frais → bénéficiaire | Dr Owner Capital · Cr Cash — {token} | Bilan (distribution d'équité, **pas** une charge) |
-| **UC-CASH-05** | `CashRemuneration.ownerWithdrawAllToBank()` | surplus paie → Bank | Dr Cash (Bank) · Cr Cash (CashRemun) — transfert **INT** | Bilan (réallocation, élim. en conso) |
-| **UC-CASH-06** | `CashRemuneration.withdraw()` | **claim multi-actifs** (ex. POL + USDC + SHER en un appel) | écriture composée : Dr Payroll Expense · Cr Cash — POL · Cr Cash — USDC · Cr Investor Equity (jambe SHER, non-cash) | **Résultat** + Bilan — voir §3.3 |
-| **UC-EXP-05** | `ExpenseAccount.ownerWithdrawAllToBank()` | surplus budget → Bank | Dr Cash (Bank) · Cr Cash (Expense) — **INT** | Bilan (élim. en conso) |
-| **UC-VEST-02** | `Vesting.release()` | acquisition versée au membre | Dr Payroll/Comp Expense · Cr Vesting Escrow ⚠️ | **Résultat** ⚠️ non indexé |
-| **UC-VEST-03** | `Vesting.stopVesting()` | versement acquis + retour non-acquis (2 jambes) | Jambe 1 : Dr Comp Expense · Cr Escrow · Jambe 2 : Dr Cash — {token} · Cr Vesting Escrow | **Résultat** + Bilan ⚠️ non indexé |
-| **UC-TIP-01** | `Tips.pushTip()` | pourboire poussé direct | Dr Tips Expense ⚠️ · Cr Cash — ETH (pass-through) | **Résultat** ⚠️ non indexé |
-| **UC-TIP-03** | `Tips.withdraw()` | retrait pourboire crédité | Dr Tips Payable ⚠️ · Cr Cash — ETH | Bilan (Passif↓) ⚠️ non indexé |
-| **UC-AD-02** | `AdCampaignManager.claimPayment()` | dépense pub reconnue → Bank | Dr Deferred Ad Revenue ⚠️ · Cr Ad Revenue ⚠️ (puis Cash → Bank) | **Résultat** (produit) ⚠️ non indexé |
-| **UC-AD-03** | `AdCampaignManager.requestAndApproveWithdrawal()` | remboursement non-dépensé + reste vers Bank (2 jambes) | Jambe 1 (refund) : Dr Deferred Ad Revenue · Cr Cash — ETH · Jambe 2 : Dr Deferred · Cr Ad Revenue | Bilan + Résultat ⚠️ non indexé |
-| **UC-SDR-03** | `SafeDepositRouter.recoverERC20()` | récupération de tokens bloqués | Dr (contrepartie) · Cr Cash — {token} | Bilan ⚠️ hors scope |
+> Même convention (crédité → débité). Arête **pointillée** = transfert interne entre comptes CNC (à éliminer en consolidation).
+
+```mermaid
+flowchart LR
+  bank[("Cash — Bank")]:::actif
+  cashRem[("Cash — CashRemun")]:::actif
+  expAcc[("Cash — ExpenseAccount")]:::actif
+  invEq[Investor Equity]:::equite
+  escrow["Vesting Escrow ⚠️"]:::actif
+  tipsPay["Tips Payable ⚠️"]:::passif
+  defAd["Deferred Ad Revenue ⚠️"]:::passif
+
+  payroll[Payroll Expense]:::charge
+  opex[Operating Expense]:::charge
+  feeExp[Protocol Fee Expense]:::charge
+  divExp[Dividend Expense]:::charge
+  compExp["Comp Expense ⚠️"]:::charge
+  tipsExp["Tips Expense ⚠️"]:::charge
+  adRev["Ad Revenue ⚠️"]:::produit
+  ownerCap[Owner Capital]:::equite
+
+  cashRem -->|"UC-CASH-02/03 · salaire"| payroll
+  invEq -->|"UC-CASH-04/06 · paie en parts (non-cash)"| payroll
+  expAcc -->|"UC-EXP-03/04 · dépense signée"| opex
+  bank -->|"UC-BANK-03/05 · sortie (selon objet)"| opex
+  bank -->|"UC-BANK-04/06 · part frais"| feeExp
+  bank -->|"UC-INV-04/05 · dividende au prorata"| divExp
+  bank -->|"UC-FEE-04 · balayage frais owner (distrib. équité)"| ownerCap
+  escrow -->|"UC-VEST-02 · acquisition"| compExp
+  escrow -->|"UC-VEST-03 · non-acquis → owner"| bank
+  bank -->|"UC-TIP-01 · tip poussé ⚠️"| tipsExp
+  tipsPay -->|"UC-TIP-03 · retrait tip ⚠️"| bank
+  defAd -->|"UC-AD-02/03 · revenu pub reconnu ⚠️"| adRev
+
+  cashRem -.->|"UC-CASH-05 · surplus → Bank (INT)"| bank
+  expAcc -.->|"UC-EXP-05 · surplus → Bank (INT)"| bank
+
+  classDef actif fill:#dbeafe,stroke:#3b82f6,color:#1e3a8a;
+  classDef equite fill:#ede9fe,stroke:#8b5cf6,color:#4c1d95;
+  classDef produit fill:#dcfce7,stroke:#22c55e,color:#14532d;
+  classDef charge fill:#fee2e2,stroke:#ef4444,color:#7f1d1d;
+  classDef passif fill:#fef3c7,stroke:#f59e0b,color:#78350f;
+```
+
+> Sans flux dans le graphe : `UC-INV-06` (échec de dividende → **mémo**) et `UC-SDR-03` (`recoverERC20` → ⚪ hors scope Phase 1).
 
 **Variantes systématiques à tester** (chaque ligne ci-dessus se décline) :
 - **Asset** : natif vs chaque ERC-20 whitelisté (USDC, USDT, USDCe, token d'équipe).
@@ -198,32 +236,39 @@ Direction : **IN** (entrée), **OUT** (sortie), **INT** (transfert interne entre
 
 Tout mint crédite **toujours `Investor Equity` en parts** ; ce qui change, c'est le **débit** — la contrepartie de ce que l'entité reçoit. Quatre chemins produisent le même event `Minted(shareholder, amount)` ; l'indexeur les distingue par **corrélation dans la même transaction** :
 
-| Chemin | Déclencheur | Cash réel ? | Discriminant (même tx) | Écriture |
-|--------|-------------|:-----------:|------------------------|----------|
-| **Apport (capital)** | `SafeDepositRouter.deposit` — UC-SDR-01/02 | ✅ entre | `Minted` + `Deposited` | Dr Cash — {token} (Safe) · Cr Investor Equity |
-| **Paie en parts** | `CashRemuneration.withdraw`, `tokenAddress == InvestorV1` — UC-CASH-04/06 | ❌ | `Minted` + `WithdrawToken`(token=InvestorV1) | Dr Payroll Expense · Cr Investor Equity *(non-cash)* |
-| **Mint direct** | `InvestorV1.distributeMint` / `individualMint` — UC-INV-02/03 | ❌ | `Minted` **seul** | **défaut D** (voir ci-dessous) |
+```mermaid
+flowchart TD
+  minted{{"Minted(shareholder, amount)"}}:::evt
+  minted -->|"+ Deposited (SafeDepositRouter)"| cap["Apport capital — UC-SDR-01/02<br/>Dr Cash (Safe) · Cr Investor Equity"]:::ok
+  minted -->|"+ WithdrawToken, token = InvestorV1"| pay["Paie en parts — UC-CASH-04/06<br/>Dr Payroll · Cr Investor Equity (non-cash)"]:::ok
+  minted -->|"Minted seul → mint direct"| direct{"Motif du mint direct ?"}:::dec
+  direct -->|"A · services hors payroll"| a["Dr Comp/Operating Expense<br/>(traité comme la paie en parts)"]:::ok
+  direct -->|"B · apport constaté off-chain"| b["Dr Subscription Receivable<br/>⚠️ différé — hors Phase 1"]:::warn
+  direct -->|"C · capitalisation de réserves"| c["Dr Retained Earnings / Owner Capital<br/>reclass. intra-équité · journal manuel"]:::ok
+  direct ==>|"D · DÉFAUT"| d["Mémo : +N parts, valeur 0<br/>aucune écriture monétaire"]:::def
+
+  classDef evt fill:#e0e7ff,stroke:#6366f1,color:#312e81;
+  classDef dec fill:#fef9c3,stroke:#eab308,color:#713f12;
+  classDef ok fill:#dcfce7,stroke:#22c55e,color:#14532d;
+  classDef warn fill:#fee2e2,stroke:#ef4444,color:#7f1d1d;
+  classDef def fill:#dbeafe,stroke:#3b82f6,color:#1e3a8a,stroke-width:3px;
+```
 
 **Valorisation (apport & paie).** Taux fixe du `SafeDepositRouter` (`multiplier`) : `SHER mintés = normalized(montant) × multiplier ÷ 10^sherDec`. Juste valeur d'un SHER (inverse) = `sherAmount × 10^sherDec ÷ multiplier`. La jambe paie est **taguée non-cash / equity-settled** et **exclue de l'identité PAYROLL_CASH** (aucun décaissement on-chain).
-
-**Mint direct — arbre de décision (défaut D).**
-
-| Cas | Motif | Débit | Effet |
-|-----|-------|-------|-------|
-| **A** | services hors payroll | Dr Comp/Operating Expense | Résultat ↓ (= paie en parts) |
-| **B** | apport constaté off-chain | Dr Subscription Receivable | Bilan — *différé, hors Phase 1* |
-| **C** | capitalisation de réserves (bonus actionnaires) | Dr Retained Earnings / Owner Capital | reclassement intra-équité, total équité inchangé — **journal manuel** |
-| **D** ✅ **défaut** | airdrop / sans contrepartie | *aucune écriture* | **mémo : +N parts, valeur 0** |
 
 > **Règle Phase 1 :** tout `individualMint` / `distributeMint` direct → **défaut D** (suivi des parts, aucune écriture monétaire automatique). Le cas **C** est un journal manuel ponctuel, le jour où le board capitalise réellement des réserves. **Jamais d'auto-crédit d'équité sans débit économique réel.**
 
 **UC-CASH-06 — claim multi-actifs (écriture composée).** Un seul `withdraw` boucle sur `Wage[]` et peut régler POL + USDC + SHER en **une transaction atomique** (tout réussit ou tout revert). Piège indexeur : USDC et SHER émettent **le même event `WithdrawToken`** — seul `tokenAddress == InvestorV1` distingue le **mint** (équité) du **cash out** (ERC-20).
 
-```
-Dr  Payroll Expense              (total)
-    Cr  Cash — POL                    (jambe native)   [cash]
-    Cr  Cash — USDC                   (jambe ERC-20)   [cash]
-    Cr  Investor Equity               (jambe SHER)     [non-cash, equity-settled]
+```mermaid
+flowchart LR
+  cashPOL[("Cash — POL")]:::actif -->|"jambe native [cash]"| payroll[Payroll Expense]:::charge
+  cashUSDC[("Cash — USDC")]:::actif -->|"jambe ERC-20 [cash]"| payroll
+  invEq[Investor Equity]:::equite -->|"jambe SHER [non-cash]"| payroll
+
+  classDef actif fill:#dbeafe,stroke:#3b82f6,color:#1e3a8a;
+  classDef equite fill:#ede9fe,stroke:#8b5cf6,color:#4c1d95;
+  classDef charge fill:#fee2e2,stroke:#ef4444,color:#7f1d1d;
 ```
 
 Réconciliation **éclatée par jambe** : POL + USDC → **PAYROLL_CASH** ; SHER → **MINT_SHARES** (§5.2). Une même transaction alimente donc deux identités différentes.
@@ -234,11 +279,21 @@ Réconciliation **éclatée par jambe** : POL + USDC → **PAYROLL_CASH** ; SHER
 
 **Régime 1 — token CASH (USDC…) : rémunération différée en cash.**
 
-| UC | Interaction | Écriture |
-|----|-------------|----------|
-| UC-VEST-01 | `addVesting` (séquestre) | Dr **Vesting Escrow** (actif) · Cr Cash — {token} *(ou Owner Capital si apport en nature de l'owner)* |
-| UC-VEST-02 | `release` (acquis → membre) | Dr Comp/Payroll Expense · Cr Vesting Escrow |
-| UC-VEST-03 | `stopVesting` (2 jambes) | acquis : Dr Comp Expense · Cr Escrow — non-acquis : Dr Cash — {token} · Cr Escrow |
+```mermaid
+flowchart LR
+  funder([Financeur / Owner]):::ext
+  escrow["Vesting Escrow (actif)"]:::actif
+  member([Membre]):::ext
+
+  funder -->|"UC-VEST-01 · séquestre — Dr Escrow · Cr Cash — token"| escrow
+  escrow -->|"UC-VEST-02 · acquis → membre — Dr Comp Expense"| member
+  escrow -->|"UC-VEST-03 · non-acquis → owner — Dr Cash — token"| funder
+
+  classDef actif fill:#dbeafe,stroke:#3b82f6,color:#1e3a8a;
+  classDef ext fill:#f1f5f9,stroke:#64748b,color:#1e293b;
+```
+
+*(Cr Cash au grant = sortie de trésorerie ; ou Owner Capital si apport en nature de l'owner.)*
 
 **Régime 2 — token SHER : paiement en actions différé (equity-settled).** Le SHER est minté en amont (défaut D, parts trésorerie sans valeur) puis bloqué.
 - **UC-VEST-01** : déplacement parts trésorerie → escrow = **mémo, pas d'écriture**.
