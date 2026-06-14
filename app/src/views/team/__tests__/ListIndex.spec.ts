@@ -258,21 +258,25 @@ describe('ListIndex - Team List View', () => {
     it('renders the cards grid by default', () => {
       const wrapper = createWrapper(mockTeamsData)
       expect(wrapper.find('[data-test="team-list"]').exists()).toBe(true)
-      expect(wrapper.find('[data-test="table-placeholder"]').exists()).toBe(false)
+      expect(wrapper.find('[data-test="table-view"]').exists()).toBe(false)
     })
 
-    it('switches to the table placeholder and back', async () => {
+    it('switches to the table view and back', async () => {
       const wrapper = createWrapper(mockTeamsData)
 
       await wrapper.find('[data-test="view-toggle-table"]').trigger('click')
       expect(wrapper.find('[data-test="team-list"]').exists()).toBe(false)
-      const placeholder = wrapper.find('[data-test="table-placeholder"]')
-      expect(placeholder.exists()).toBe(true)
-      expect(placeholder.text()).toContain('coming soon')
+      expect(wrapper.find('[data-test="table-view"]').exists()).toBe(true)
+      expect(wrapper.find('[data-test="companies-table"]').exists()).toBe(true)
 
       await wrapper.find('[data-test="view-toggle-cards"]').trigger('click')
       expect(wrapper.find('[data-test="team-list"]').exists()).toBe(true)
-      expect(wrapper.find('[data-test="table-placeholder"]').exists()).toBe(false)
+      expect(wrapper.find('[data-test="table-view"]').exists()).toBe(false)
+    })
+
+    it('renders the treasury recap when teams are loaded', () => {
+      const wrapper = createWrapper(mockTeamsData)
+      expect(wrapper.find('[data-test="companies-recap"]').exists()).toBe(true)
     })
   })
 
