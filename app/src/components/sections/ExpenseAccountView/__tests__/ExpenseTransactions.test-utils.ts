@@ -33,6 +33,9 @@ export const UTableStub = defineComponent({
           <span data-test="row-amount">{{ row.amount }}</span>
           <span data-test="row-amount-local">{{ row.amountLocal }}</span>
           <span data-test="row-token">{{ row.token }}</span>
+          <span data-test="row-type-slot">
+            <slot name="type-cell" :row="rowContext(row, 0)" />
+          </span>
           <span data-test="row-counterparty-slot">
             <slot name="counterparty-cell" :row="rowContext(row, 0)" />
           </span>

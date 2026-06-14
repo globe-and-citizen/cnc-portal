@@ -284,6 +284,10 @@ describe('BankTransactions', () => {
       .filter((row) => newEventTypes.includes(row.type))
       .forEach((row) => expect(row.amount).toBe('0'))
     expect(wrapper.findAll('[data-test="bank-rendered-row"]')[0]?.text()).toContain('—')
+
+    const ownershipRowIndex = data.findIndex((row) => row.type === 'ownershipTransferred')
+    const ownershipRow = wrapper.findAll('[data-test="bank-rendered-row"]')[ownershipRowIndex]
+    expect(ownershipRow?.text()).toContain('→')
   })
 
   it('logs query errors', async () => {

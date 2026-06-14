@@ -193,10 +193,14 @@ describe('CashRemunerationTransactions', () => {
 
     wrapper = createWrapper()
     const data = tableData(wrapper)
-    const ownershipRow = data.find((row) => row.type === 'ownershipTransferred')
+    const ownershipRowIndex = data.findIndex((row) => row.type === 'ownershipTransferred')
+    const ownershipRow = data[ownershipRowIndex]
 
     expect(ownershipRow).toBeDefined()
     expect(ownershipRow?.amount).toBe('0')
+    expect(
+      wrapper.findAll('[data-test="cash-remuneration-rendered-row"]')[ownershipRowIndex]?.text()
+    ).toContain('→')
   })
 
   it('handles token resolution fallback and invalid amounts', () => {

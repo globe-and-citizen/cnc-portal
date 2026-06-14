@@ -239,6 +239,7 @@ describe('ExpenseTransactions', () => {
     expect(getRowField(row!, '[data-test="row-type"]')).toBe('ownershipTransferred')
     expect(getRowField(row!, '[data-test="row-amount"]')).toBe('0')
     expect(getRowField(row!, '[data-test="row-value-slot"]')).toContain('—')
+    expect(getRowField(row!, '[data-test="row-type-slot"]')).toContain('→')
   })
 
   it('handles token resolution fallback and invalid amounts', () => {
