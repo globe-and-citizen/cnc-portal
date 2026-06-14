@@ -10,6 +10,7 @@ export type CRRow = {
   amount: string | number
   amountLocal: number
   token: string
+  subRows?: CRRow[]
 }
 type Column = { header: string }
 
@@ -43,11 +44,22 @@ const UTableStub = defineComponent({
   },
   template: `
     <div data-test="cash-remuneration-table">
-      <div v-for="(row, index) in data || []" :key="index" data-test="cash-remuneration-rendered-row">
-        <slot name="type-cell" :row="rowContext(row, 0)" />
-        <slot name="counterparty-cell" :row="rowContext(row, 0)" />
-        <slot name="value-cell" :row="rowContext(row, 0)" />
-      </div>
+      <template v-for="(row, index) in data || []" :key="index">
+        <div data-test="cash-remuneration-rendered-row">
+          <slot name="type-cell" :row="rowContext(row, 0)" />
+          <slot name="counterparty-cell" :row="rowContext(row, 0)" />
+          <slot name="value-cell" :row="rowContext(row, 0)" />
+        </div>
+        <div
+          v-for="(child, childIndex) in (typeof getSubRows === 'function' ? getSubRows(row) : row.subRows || [])"
+          :key="String(index) + '-' + String(childIndex)"
+          data-test="cash-remuneration-rendered-child-row"
+        >
+          <slot name="type-cell" :row="rowContext(child, 1)" />
+          <slot name="counterparty-cell" :row="rowContext(child, 1)" />
+          <slot name="value-cell" :row="rowContext(child, 1)" />
+        </div>
+      </template>
     </div>
   `
 })
