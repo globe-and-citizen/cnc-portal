@@ -2,6 +2,7 @@ import type { GroupedTransactionRow } from '@/types/transaction-history'
 import { useTeamStore, useCurrencyStore } from '@/stores'
 import { getTokenIcon, resolveTokenIdByAddress, tokenSymbol } from '@/utils/constantUtil'
 import { NETWORK } from '@/constant'
+import { zeroAddress } from 'viem'
 export { formatDecodedValue } from '@/utils/abiDecodeUtil'
 
 export const parseBigIntOrZero = (value: string): bigint => {
@@ -126,6 +127,22 @@ export const getTransactionSummary = (
     default:
       return ''
   }
+}
+
+// Bank's initialize() emits OwnershipTransferred(0x0 -> owner) together with
+// TokenSupportAdded for each initially-supported token in the same tx. Grouping
+// puts those under this row's subRows — surface the count alongside the arrow.
+export const getInitialTokenSupportSummary = (row: {
+  type: string
+  from: string
+  subRows?: ReadonlyArray<{ type: string }>
+}): string => {
+  if (row.type !== 'ownershipTransferred' || row.from?.toLowerCase() !== zeroAddress) return ''
+
+  const tokenCount = (row.subRows ?? []).filter((sub) => sub.type === 'tokenSupportAdded').length
+  if (tokenCount === 0) return ''
+
+  return `${tokenCount} token${tokenCount === 1 ? '' : 's'} supported`
 }
 
 import type { UBadgeColor } from '@/types/ui'

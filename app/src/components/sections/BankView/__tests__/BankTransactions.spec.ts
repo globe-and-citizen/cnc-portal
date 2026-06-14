@@ -11,7 +11,6 @@ import {
   mockApolloUseQuery,
   resetMockApolloQueryState
 } from '@/tests/mocks'
-import type { BankRow } from './BankTransactions.fixture'
 
 // Auto-imported @nuxt/ui components bypass `config.global.stubs` because the
 // Nuxt UI Vite plugin resolves them through their file path. Mocking the
@@ -22,32 +21,7 @@ vi.mock('@nuxt/ui/components/Table.vue', () => ({
   default: {
     name: 'UTable',
     props: ['data', 'columns', 'loading', 'getSubRows'],
-    methods: {
-      rowContext(original: BankRow, depth: number) {
-        return {
-          original,
-          depth
-        }
-      }
-    },
-    template: `
-      <div data-test="bank-table">
-        <template v-for="(row, index) in data || []" :key="index">
-          <div data-test="bank-rendered-row">
-            <slot name="counterparty-cell" :row="rowContext(row, 0)" />
-            <slot name="value-cell" :row="rowContext(row, 0)" />
-          </div>
-          <div
-            v-for="(child, childIndex) in (typeof getSubRows === 'function' ? getSubRows(row) : row.subRows || [])"
-            :key="String(index) + '-' + String(childIndex)"
-            data-test="bank-rendered-child-row"
-          >
-            <slot name="counterparty-cell" :row="rowContext(child, 1)" />
-            <slot name="value-cell" :row="rowContext(child, 1)" />
-          </div>
-        </template>
-      </div>
-    `
+    template: '<div data-test="bank-table"></div>'
   }
 }))
 vi.mock('@nuxt/ui/components/Select.vue', () => ({
@@ -288,6 +262,49 @@ describe('BankTransactions', () => {
     const ownershipRowIndex = data.findIndex((row) => row.type === 'ownershipTransferred')
     const ownershipRow = wrapper.findAll('[data-test="bank-rendered-row"]')[ownershipRowIndex]
     expect(ownershipRow?.text()).toContain('→')
+  })
+
+  it('shows the initial token support count for the deployment ownership transfer', () => {
+    bankQuery.result.value = {
+      ...buildBankQueryResult(),
+      bankDeposits: { items: [] },
+      bankTransfers: { items: [] },
+      bankOwnershipTransferreds: {
+        items: [
+          {
+            id: '0xinithash-0',
+            contractAddress: BANK_ADDRESS,
+            previousOwner: ZERO_ADDRESS,
+            newOwner: '0x6666666666666666666666666666666666666666',
+            timestamp: 1_700_000_900
+          }
+        ]
+      },
+      bankTokenSupportAddeds: {
+        items: [
+          {
+            id: '0xinithash-1',
+            contractAddress: BANK_ADDRESS,
+            tokenAddress: USDC_ADDRESS,
+            timestamp: 1_700_000_900
+          },
+          {
+            id: '0xinithash-2',
+            contractAddress: BANK_ADDRESS,
+            tokenAddress: ZERO_ADDRESS,
+            timestamp: 1_700_000_900
+          }
+        ]
+      }
+    }
+
+    wrapper = createWrapper()
+    const data = tableData(wrapper)
+
+    const ownershipRowIndex = data.findIndex((row) => row.type === 'ownershipTransferred')
+    const ownershipRow = wrapper.findAll('[data-test="bank-rendered-row"]')[ownershipRowIndex]
+
+    expect(ownershipRow?.text()).toContain('2 tokens supported')
   })
 
   it('logs query errors', async () => {
