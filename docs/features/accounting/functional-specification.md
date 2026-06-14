@@ -1,7 +1,7 @@
 # CNC Accounting — Functional Specification
 
-**Version:** 1.0.0  
-**Date:** 2026-06-12  
+**Version:** 1.1.0  
+**Date:** 2026-06-14  
 **Status:** Draft (scoping)  
 **Tracking:** Closes [#1890](https://github.com/globe-and-citizen/cnc-portal/issues/1890) · Goal [#1887](https://github.com/globe-and-citizen/cnc-portal/issues/1887) · Sprint plan [#2078](https://github.com/globe-and-citizen/cnc-portal/issues/2078)
 
@@ -107,6 +107,31 @@ flowchart LR
 ## 3. Entity Boundary
 
 The CNC "company" is the **protocol legal/financial entity**, not the union of all team treasuries.
+
+```mermaid
+flowchart TB
+  officer{{"Officer · resolves CNC team contracts"}}:::res
+
+  subgraph inb ["🟢 CNC entity — Phase 1 books"]
+    fee["FeeCollector · protocol fees"]:::in
+    bank["CNC Bank · operating treasury"]:::in
+    pay["CashRemuneration · payroll"]:::in
+    exp["ExpenseAccount · budget"]:::in
+    inv["InvestorV1 · equity / dividends"]:::in
+  end
+
+  subgraph outb ["⚪ Excluded / deferred"]
+    teams["Other teams' Bank / CashRemun / Expense"]:::out
+    poly["Polymarket / GC:Trader wallets"]:::out
+    gaps["Vesting · Tips · AdCampaign — not indexed"]:::out
+  end
+
+  officer --> fee & bank & pay & exp & inv
+
+  classDef in fill:#dcfce7,stroke:#22c55e,color:#14532d;
+  classDef out fill:#f1f5f9,stroke:#94a3b8,color:#475569;
+  classDef res fill:#e0e7ff,stroke:#6366f1,color:#312e81;
+```
 
 ### 3.1 Included contracts / wallets
 
@@ -251,6 +276,32 @@ Phase 1 COA for CNC company books. Amounts booked in **native token units**; USD
 
 ## 6. Source → Ledger → Statement Mapping
 
+**Money-flow map (Phase 1, in-scope events).** Arrow goes from the **credited** account (source of value) to the **debited** account (use of value). Cash sits in the centre: credits flow in from the left (equity / revenue), debits flow out to the right (expenses / equity distributions). Colour = account class → 🟦 Asset · 🟪 Equity · 🟩 Income · 🟥 Expense. This is the **booked Phase-1 subset**; the exhaustive map including gaps (Tips, Vesting, AdCampaign) lives in `catalogue-flux-monetaires.md` (#2126).
+
+```mermaid
+flowchart LR
+  ownerCap[Owner Capital]:::equity
+  feeRev[Protocol Fee Revenue]:::income
+  invEq[Investor Equity]:::equity
+  cash[("Cash — token")]:::asset
+  payroll[Payroll Expense]:::expense
+  opex[Operating Expense]:::expense
+  divExp[Dividend Expense]:::expense
+
+  ownerCap -->|"founder capital (bank deposit)"| cash
+  feeRev -->|"fee_collector_fee_paid"| cash
+  invEq -->|"investor_mint (capital raise)"| cash
+  cash -->|"cash_remuneration_withdraw*"| payroll
+  cash -->|"expense_transfer*"| opex
+  cash -->|"investor_dividend_paid"| divExp
+  cash -->|"owner / fee withdraw (equity distribution)"| ownerCap
+
+  classDef asset fill:#dbeafe,stroke:#3b82f6,color:#1e3a8a;
+  classDef equity fill:#ede9fe,stroke:#8b5cf6,color:#4c1d95;
+  classDef income fill:#dcfce7,stroke:#22c55e,color:#14532d;
+  classDef expense fill:#fee2e2,stroke:#ef4444,color:#7f1d1d;
+```
+
 ### 6.1 General ledger journal rules
 
 | Event | Debit | Credit | Description |
@@ -303,6 +354,18 @@ Proposed enum for `buildCncLedger()` classifier:
 ---
 
 ## 7. Fees and Expenses — Booking Policy
+
+**Recognition timeline.** Off-chain workflow stages are **memo only**; the **on-chain event is the single booking trigger** (cash basis). The pattern below is payroll; fees are instant (one step), expenses add a submit → approve memo chain before the paying event.
+
+```mermaid
+flowchart LR
+  a["Member logs hours<br/>Backend Claim"]:::memo --> b["Weekly claim signed<br/>Backend WeeklyClaim"]:::memo --> c{{"Wage withdrawn on-chain<br/>cash_remuneration_withdraw*"}}:::book
+  c -->|"Dr Payroll Expense · Cr Cash"| d["Booked — cash basis"]:::stmt
+
+  classDef memo fill:#f1f5f9,stroke:#94a3b8,color:#475569;
+  classDef book fill:#dcfce7,stroke:#22c55e,color:#14532d;
+  classDef stmt fill:#dbeafe,stroke:#3b82f6,color:#1e3a8a;
+```
 
 ### 7.1 Protocol fees (on-chain — fully automatable)
 
@@ -465,6 +528,11 @@ Not in scope for #1890 but sequenced for #1887:
 ---
 
 ## 13. Version History
+
+### Version 1.1.0 — 2026-06-14
+
+- Add flow diagrams (Mermaid): entity boundary (§3), money-flow / journal map (§6), recognition timeline (§7)
+- Align the value-flow convention (credited → debited) with the companion catalogue `catalogue-flux-monetaires.md` (#2126)
 
 ### Version 1.0.1 — 2026-06-12
 
