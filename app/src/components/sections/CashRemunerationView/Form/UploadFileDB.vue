@@ -98,7 +98,8 @@ const fileSchema = z
       return byMime || byExt
     },
     {
-      message: 'Only images (png, jpg, jpeg, webp) and documents (pdf, txt, zip, docx) are allowed'
+      message:
+        'Only images (png, jpg, jpeg, webp) and documents (pdf, txt, zip, docx, xls, xlsx) are allowed'
     }
   )
   .refine((file) => file.size <= MAX_FILE_SIZE, {
