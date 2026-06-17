@@ -1,13 +1,17 @@
 # CNC Accounting
 
-Functional specification and scoping for **CNC-as-a-company** financial statements (general ledger, income statement, balance sheet).
+Treat the CNC as a **company** and keep its books: general ledger, income statement, and balance sheet.
 
-| Document | Description |
-|----------|-------------|
-| [functional-specification.md](./functional-specification.md) | Scope, data inventory, chart of accounts, booking rules, and phase-2 gaps |
+This folder catalogues **every way money moves** across the CNC contracts, maps each one to a journal entry, and runs a **full worked example** end to end so the numbers can be trusted.
 
-**Tracking issues:** [#1887](https://github.com/globe-and-citizen/cnc-portal/issues/1887) (goal) · [#1890](https://github.com/globe-and-citizen/cnc-portal/issues/1890) (this spec)
+| Document | What's inside |
+|----------|---------------|
+| [money-flow-catalogue.md](./money-flow-catalogue.md) | Glossary · the CNC entity · contracts that move money · every monetary interaction · use-case → journal-entry mapping · chart of accounts · a full worked example (general ledger → T-accounts → trial balance → income statement → balance sheet) |
 
-**Implementation target:** `app/` — the main Vue 3 SPA ([#1887](https://github.com/globe-and-citizen/cnc-portal/issues/1887)).
+**Tracking:** [#1887](https://github.com/globe-and-citizen/cnc-portal/issues/1887) (goal) · [#2126](https://github.com/globe-and-citizen/cnc-portal/issues/2126) (this catalogue).
 
-**Architectural reference:** Polymarket wallet accounting in `dashboard/app/` (Sprint 15 — issues #1882–#1884) established the layered pipeline pattern; CNC accounting ports that pattern into `app/` with CNC-native data feeds.
+### At a glance
+
+- **Contracts in scope:** Bank, FeeCollector, CashRemunerationEIP712, ExpenseAccountEIP712, InvestorV1, SafeDepositRouter — the contracts the CNC actually uses.
+- **Key rules:** payroll is **accrual** (via a `Wage Payable` liability); expenses are **cash basis**; investing returns **SHER shares** booked to `Investor Equity`; a direct mint with nothing behind it is **memo only** (tracked in shares, not value); fees between Bank and FeeCollector are **internal** moves.
+- **The books balance at every level:** journal, trial balance, and `Assets = Liabilities + Equity`.
