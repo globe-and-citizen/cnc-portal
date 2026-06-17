@@ -32,6 +32,8 @@ export const ALLOWED_DOCUMENT_MIMETYPES = [
   'application/zip',
   'application/x-zip-compressed',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
 ] as const;
 export const ALLOWED_MIMETYPES = [
   ...ALLOWED_IMAGE_MIMETYPES,
