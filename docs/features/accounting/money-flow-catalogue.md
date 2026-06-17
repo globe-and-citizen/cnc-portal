@@ -117,6 +117,7 @@ The accounts used across the use cases and the worked example.
 | **Cash — Bank / Safe / Payroll / Expense / FeeCollector** | Asset     | Debit          | One pocket per on-chain account; rolls up into total Cash |
 | **Trading account**                                       | Asset     | Debit          | Capital deployed to an external trader, carried at cost   |
 | **Wage Payable**                                          | Liability | Credit         | Payroll earned but not yet paid (accrual)                 |
+| **Shares to be issued**                                   | Liability | Credit         | SHER promised in a wage claim, minted to equity at withdraw |
 | **Owner Capital**                                         | Equity    | Credit         | Founder deposits with no shares in return                 |
 | **Investor Equity**                                       | Equity    | Credit         | SHER share capital (mints with real value behind them)    |
 | **Retained Earnings**                                     | Equity    | Credit         | Cumulative net income                                     |
@@ -179,15 +180,17 @@ flowchart LR
   trading[Trading account]:::asset
   invEq[Investor Equity]:::equity
   wagePay[Wage Payable]:::liability
+  sharesIssue[Shares to be issued]:::liability
 
   payroll[Payroll Expense]:::expense
   opex[Operating Expense]:::expense
   divExp[Dividend Expense]:::expense
   tradeLoss[Trading Loss]:::expense
 
-  payroll -->|"UC-CASH-02 · payroll earned"| wagePay
+  payroll -->|"UC-CASH-02 · cash wage earned"| wagePay
+  payroll -->|"UC-CASH-02 · SHER wage promised"| sharesIssue
   wagePay -->|"UC-CASH-03 · paid in cash"| payCash
-  invEq -->|"UC-CASH-03 · paid in SHER (non-cash)"| payroll
+  sharesIssue -->|"UC-CASH-03 · minted to equity at withdraw"| invEq
   expCash -->|"UC-EXP-01 · approved expense"| opex
   bank -->|"UC-INV-01 · pro-rata dividend"| divExp
   bank -->|"UC-TRD-01 · deploy to trader"| trading
@@ -204,8 +207,8 @@ flowchart LR
 
 | UC             | Interaction                            | Journal entry                                                                     |
 | -------------- | -------------------------------------- | --------------------------------------------------------------------------------- |
-| **UC-CASH-02** | wage earned (accrual, at claim)        | Dr Payroll Expense · Cr Wage Payable (cash part) · Cr Investor Equity (SHER part) |
-| **UC-CASH-03** | wage paid (at withdraw)                | Dr Wage Payable · Cr Cash — Payroll                                               |
+| **UC-CASH-02** | wage earned (accrual, at claim)        | Dr Payroll Expense · Cr Wage Payable (cash part) · Cr Shares to be issued (SHER part) |
+| **UC-CASH-03** | wage paid (at withdraw)                | Dr Wage Payable · Cr Cash — Payroll · Dr Shares to be issued · Cr Investor Equity (SHER minted) |
 | **UC-EXP-01**  | approved expense paid (cash basis)     | Dr Operating Expense · Cr Cash — Expense                                          |
 | **UC-INV-01**  | dividend paid pro-rata                 | Dr Dividend Expense · Cr Cash — Bank                                              |
 | **UC-BANK-03** | fund payroll/expense from Bank (+ fee) | Dr Cash — Payroll/Expense · Dr Cash — FeeCollector (fee) · Cr Cash — Bank         |
@@ -214,14 +217,16 @@ flowchart LR
 
 ### 5.3 Payroll is accrual; expense is cash basis
 
-Payroll is recognised **when earned** (the claim), against a `Wage Payable` liability, then settled at the withdraw. Expense is recognised **only when paid**. The SHER part of a wage is **equity-settled**: it goes straight to `Investor Equity`, never to `Wage Payable`.
+Payroll is recognised **when earned** (the claim), against a `Wage Payable` liability, then settled at the withdraw. Expense is recognised **only when paid**. The SHER part of a wage is **not** booked to equity at the claim: the contract only mints (`individualMint`) when the employee calls `withdraw()`. So the SHER promised sits in a `Shares to be issued` liability from claim to withdraw, and becomes `Investor Equity` **only at withdraw** — matching the on-chain `WithdrawToken` / `Minted` events. It never touches `Wage Payable`.
 
 ```
-CLAIM    Dr Payroll Expense   X
-            Cr Wage Payable        (cash + POL part)
-            Cr Investor Equity     (SHER part)
-WITHDRAW Dr Wage Payable      (cash + POL part)
+CLAIM    Dr Payroll Expense        X
+            Cr Wage Payable             (cash + POL part)
+            Cr Shares to be issued      (SHER part)
+WITHDRAW Dr Wage Payable             (cash + POL part)
             Cr Cash — Payroll
+         Dr Shares to be issued      (SHER part)
+            Cr Investor Equity          (minted at withdraw)
 ```
 
 ### 5.4 SHER mints — three paths, one `Minted` event
@@ -232,7 +237,7 @@ Every mint **credits `Investor Equity` in shares**; what changes is the **debit*
 flowchart TD
   minted{{"Minted(shareholder, amount)"}}:::evt
   minted -->|"+ Deposited (SafeDepositRouter)"| cap["Capital raise — UC-SDR-01<br/>Dr Cash (Safe) · Cr Investor Equity"]:::ok
-  minted -->|"+ WithdrawToken (CashRemuneration)"| pay["Pay in shares — UC-CASH-02<br/>Dr Payroll · Cr Investor Equity (non-cash)"]:::ok
+  minted -->|"+ WithdrawToken (CashRemuneration)"| pay["Pay in shares — UC-CASH-03 (at withdraw)<br/>Dr Shares to be issued · Cr Investor Equity"]:::ok
   minted ==>|"Minted alone (direct mint) · DEFAULT D"| d["Memo: +N shares, value 0<br/>no monetary entry"]:::def
 
   classDef evt fill:#e0e7ff,stroke:#6366f1,color:#312e81;
@@ -250,89 +255,162 @@ This is the scenario in the companion spreadsheet, booked end to end. Amounts in
 
 ### 6.1 The events
 
-1. Ravi invests $100 & gets SHER · 2. Geor invests $10 & gets SHER · 3. Client pays $100 (service) · 4. Deploy $30 to trader · 5. Trader returns $30 + $15 profit · 6. Transfer $71.75 Safe → Bank (fund operations) · 7. Ravi funds payroll $50.02 (fee $0.02) · 8. Ravi funds payroll 22 POL (fee $0.01) · 9. Geor claims $40 + 10 POL + 10 SHER · 10. Geor withdraws the same · 11. Ravi funds expense $50 (fee $0.20) · 12. Geor withdraws $20 expense · 13. Redeploy $30 to trader · 14. Trader returns $10 & loses $20 · 15. HR invests $10 & gets SHER · 16. GRG invests $8 & gets SHER · 17. Ravi mints 30 SHER for himself (Default D) · 18. Ravi pays $20 dividend.
+The period runs **1 – 28 March 2026**. Each transaction is dated below, and the same dates drive the general-ledger journal in §6.2.
+
+| #   | Date       | Event                                         |
+| --- | ---------- | --------------------------------------------- |
+| 1   | 2026-03-01 | Ravi invests $100 & gets SHER                 |
+| 2   | 2026-03-01 | Geor invests $10 & gets SHER                  |
+| 3   | 2026-03-03 | Client pays $100 (service)                    |
+| 4   | 2026-03-04 | Deploy $30 to trader                          |
+| 5   | 2026-03-10 | Trader returns $30 + $15 profit               |
+| 6   | 2026-03-11 | Transfer $71.75 Safe → Bank (fund operations) |
+| 7   | 2026-03-12 | Ravi funds payroll $50.02 (fee $0.02)         |
+| 8   | 2026-03-12 | Ravi funds payroll 22 POL (fee $0.01)         |
+| 9   | 2026-03-13 | Geor claims $40 + 10 POL + 10 SHER            |
+| 10  | 2026-03-15 | Geor withdraws the same                       |
+| 11  | 2026-03-16 | Ravi funds expense $50 (fee $0.20)            |
+| 12  | 2026-03-17 | Geor withdraws $20 expense                    |
+| 13  | 2026-03-18 | Redeploy $30 to trader                        |
+| 14  | 2026-03-24 | Trader returns $10 & loses $20                |
+| 15  | 2026-03-25 | HR invests $10 & gets SHER                    |
+| 16  | 2026-03-25 | GRG invests $8 & gets SHER                    |
+| 17  | 2026-03-26 | Ravi mints 30 SHER for himself (Default D)    |
+| 18  | 2026-03-28 | Ravi pays $20 dividend                        |
+
+> **Claim vs withdraw timing.** Geor's wage claim (#9, 13 Mar) and withdrawal (#10, 15 Mar) are two days apart. The cash + POL owed sits in `Wage Payable` and the SHER promised sits in `Shares to be issued` until the withdrawal settles both — see §5.3.
 
 ### 6.2 General ledger (journal)
 
-| Flux                                   | Account                     |      Debit |     Credit |
-| -------------------------------------- | --------------------------- | ---------: | ---------: |
-| Ravi invests $100 & gets SHER          | Cash — Safe                 |        100 |            |
-|                                        | Investor Equity             |            |        100 |
-| Geor invests $10 & gets SHER           | Cash — Safe                 |         10 |            |
-|                                        | Investor Equity             |            |         10 |
-| Client pays $100 (service)             | Cash — Bank                 |        100 |            |
-|                                        | Service Revenue             |            |        100 |
-| Deploy $30 to trader                   | Trading account             |         30 |            |
-|                                        | Cash — Bank                 |            |         30 |
-| Trader returns $30 + $15 profit        | Cash — Safe                 |         45 |            |
-|                                        | Trading account             |            |         30 |
-|                                        | Trading Gain                |            |         15 |
-| Transfer Safe → Bank (fund operations) | Cash — Bank                 |      71.75 |            |
-|                                        | Cash — Safe                 |            |      71.75 |
-| Ravi funds payroll $50.02              | Cash — Payroll              |         50 |            |
-|                                        | Cash — FeeCollector         |       0.02 |            |
-|                                        | Cash — Bank                 |            |      50.02 |
-| Ravi funds payroll 22 POL              | Cash — Payroll              |       1.72 |            |
-|                                        | Cash — FeeCollector         |       0.01 |            |
-|                                        | Cash — Bank                 |            |       1.73 |
-| Geor claims $40 + 10 POL + 10 SHER     | Payroll Expense             |       50.8 |            |
-|                                        | Wage Payable                |            |       40.8 |
-|                                        | Investor Equity (10 SHER)   |            |         10 |
-| Geor withdraws $40 + 10 POL + 10 SHER  | Wage Payable                |       40.8 |            |
-|                                        | Cash — Payroll              |            |       40.8 |
-| Ravi funds expense $50                 | Cash — Expense              |       49.8 |            |
-|                                        | Cash — FeeCollector         |        0.2 |            |
-|                                        | Cash — Bank                 |            |         50 |
-| Geor withdraws $20 expense             | Operating Expense           |         20 |            |
-|                                        | Cash — Expense              |            |         20 |
-| Redeploy $30 to trader                 | Trading account             |         30 |            |
-|                                        | Cash — Bank                 |            |         30 |
-| Trader returns $10 & loses $20         | Cash — Bank                 |         10 |            |
-|                                        | Trading Loss                |         20 |            |
-|                                        | Trading account             |            |         30 |
-| HR invests $10 & gets SHER             | Cash — Safe                 |         10 |            |
-|                                        | Investor Equity             |            |         10 |
-| GRG invests $8 & gets SHER             | Cash — Safe                 |          8 |            |
-|                                        | Investor Equity             |            |          8 |
-| Ravi mints 30 SHER (Default D)         | — no entry (memo: +30 SHER) |            |            |
-| Ravi pays $20 dividend                 | Dividend Expense            |         20 |            |
-|                                        | Cash — Bank                 |            |         20 |
-| **TOTAL**                              |                             | **668.10** | **668.10** |
+| Date       | Flux                                   | Account                          |      Debit |     Credit |
+| ---------- | -------------------------------------- | -------------------------------- | ---------: | ---------: |
+| 2026-03-01 | Ravi invests $100 & gets SHER          | Cash — Safe                      |        100 |            |
+|            |                                        | Investor Equity                  |            |        100 |
+| 2026-03-01 | Geor invests $10 & gets SHER           | Cash — Safe                      |         10 |            |
+|            |                                        | Investor Equity                  |            |         10 |
+| 2026-03-03 | Client pays $100 (service)             | Cash — Bank                      |        100 |            |
+|            |                                        | Service Revenue                  |            |        100 |
+| 2026-03-04 | Deploy $30 to trader                   | Trading account                  |         30 |            |
+|            |                                        | Cash — Bank                      |            |         30 |
+| 2026-03-10 | Trader returns $30 + $15 profit        | Cash — Safe                      |         45 |            |
+|            |                                        | Trading account                  |            |         30 |
+|            |                                        | Trading Gain                     |            |         15 |
+| 2026-03-11 | Transfer Safe → Bank (fund operations) | Cash — Bank                      |      71.75 |            |
+|            |                                        | Cash — Safe                      |            |      71.75 |
+| 2026-03-12 | Ravi funds payroll $50.02              | Cash — Payroll                   |         50 |            |
+|            |                                        | Cash — FeeCollector              |       0.02 |            |
+|            |                                        | Cash — Bank                      |            |      50.02 |
+| 2026-03-12 | Ravi funds payroll 22 POL              | Cash — Payroll                   |       1.72 |            |
+|            |                                        | Cash — FeeCollector              |       0.01 |            |
+|            |                                        | Cash — Bank                      |            |       1.73 |
+| 2026-03-13 | Geor claims $40 + 10 POL + 10 SHER     | Payroll Expense                  |       50.8 |            |
+|            |                                        | Wage Payable                     |            |       40.8 |
+|            |                                        | Shares to be issued (10 SHER)    |            |         10 |
+| 2026-03-15 | Geor withdraws $40 + 10 POL + 10 SHER  | Wage Payable                     |       40.8 |            |
+|            |                                        | Cash — Payroll                   |            |       40.8 |
+|            |                                        | Shares to be issued              |         10 |            |
+|            |                                        | Investor Equity (10 SHER minted) |            |         10 |
+| 2026-03-16 | Ravi funds expense $50                 | Cash — Expense                   |       49.8 |            |
+|            |                                        | Cash — FeeCollector              |        0.2 |            |
+|            |                                        | Cash — Bank                      |            |         50 |
+| 2026-03-17 | Geor withdraws $20 expense             | Operating Expense                |         20 |            |
+|            |                                        | Cash — Expense                   |            |         20 |
+| 2026-03-18 | Redeploy $30 to trader                 | Trading account                  |         30 |            |
+|            |                                        | Cash — Bank                      |            |         30 |
+| 2026-03-24 | Trader returns $10 & loses $20         | Cash — Bank                      |         10 |            |
+|            |                                        | Trading Loss                     |         20 |            |
+|            |                                        | Trading account                  |            |         30 |
+| 2026-03-25 | HR invests $10 & gets SHER             | Cash — Safe                      |         10 |            |
+|            |                                        | Investor Equity                  |            |         10 |
+| 2026-03-25 | GRG invests $8 & gets SHER             | Cash — Safe                      |          8 |            |
+|            |                                        | Investor Equity                  |            |          8 |
+| 2026-03-26 | Ravi mints 30 SHER (Default D)         | — no entry (memo: +30 SHER)      |            |            |
+| 2026-03-28 | Ravi pays $20 dividend                 | Dividend Expense                 |         20 |            |
+|            |                                        | Cash — Bank                      |            |         20 |
+| **TOTAL**  |                                        |                                  | **678.10** | **678.10** |
 
 ### 6.3 T-accounts (per account)
 
+Each posting is tagged with the transaction number `#N` from §6.1 / §6.2, so every line traces back to a journal entry (Dr = left, Cr = right).
+
 ```
-Cash — Safe                              Cash — Bank
-Dr                | Cr                    Dr                  | Cr
-Ravi invest  100  | → Bank      71.75     client paie    100  | → trader        30
-geor invest   10  |                       trader return   10  | → payroll    50.02
-trader ret    45  |                       from Safe    71.75  | → payroll POL 1.73
-hr invest     10  |                                           | → expense       50
-grg invest     8  |                                           | → trader rede.  30
-                  |                                           | dividend        20
-Solde (Dr) 101.25 |                       Solde            0  |
+Cash — Safe (Asset)
+Dr                       | Cr
+#1  Ravi invest      100 | #6  → Bank          71.75
+#2  Geor invest       10 |
+#5  Trader return     45 |
+#15 HR invest         10 |
+#16 GRG invest         8 |
+Solde (Dr)        101.25 |
 
-Cash — Payroll              Cash — FeeCollector       Cash — Expense
-Dr           | Cr           Dr             | Cr        Dr          | Cr
-from Bank 50 | geor w. 40.8 fee payroll 0.02|          from Bank 49.8| geor exp 20
-from POL 1.72|              fee POL    0.01 |          Solde 29.8   |
-Solde 10.92  |              fee expense 0.2 |
-                            Solde (Dr) 0.23 |
+Cash — Bank (Asset)
+Dr                       | Cr
+#3  Client (service) 100 | #4  → trader           30
+#6  from Safe      71.75 | #7  → payroll       50.02
+#14 Trader return     10 | #8  → payroll POL    1.73
+                         | #11 → expense          50
+                         | #13 → trader (rede.)   30
+                         | #18 dividend           20
+Solde                  0 |
 
-Trading account                 Investor Equity         Service Revenue
-Dr           | Cr              Dr | Cr                  Dr | Cr
-→ trader  30 | return    30        | Ravi      100          | client   100
-redeploy  30 | loss ret. 30        | geor       10      Solde (Cr) 100
-Solde      0 |                      | geor wage  10
-                                   | hr         10      Trading Gain
-Wage Payable                       | grg         8      Dr | Cr
-Dr        | Cr                  Solde (Cr) 138              | trader  15
-geor w.40.8| geor claim 40.8                            Solde (Cr) 15
-Solde    0 |
+Cash — Payroll (Asset)
+Dr                       | Cr
+#7  from Bank         50 | #10 Geor withdraw   40.8
+#8  from Bank POL   1.72 |
+Solde              10.92 |
 
-Payroll Expense (Dr) 50.8   Operating Expense (Dr) 20
-Trading Loss   (Dr)   20    Dividend Expense  (Dr) 20
-Owner Capital        0 (empty — everyone got shares or it was revenue)
+Cash — FeeCollector (Asset)
+Dr                       | Cr
+#7  fee payroll     0.02 |
+#8  fee POL         0.01 |
+#11 fee expense      0.2 |
+Solde (Dr)          0.23 |
+
+Cash — Expense (Asset)
+Dr                       | Cr
+#11 from Bank       49.8 | #12 Geor expense       20
+Solde               29.8 |
+
+Trading account (Asset)
+Dr                       | Cr
+#4  deploy            30 | #5  return capital     30
+#13 redeploy          30 | #14 loss writeoff      30
+Solde                  0 |
+
+Investor Equity (Equity)
+Dr | Cr
+   | #1  Ravi              100
+   | #2  Geor               10
+   | #10 Geor wage mint     10
+   | #15 HR                 10
+   | #16 GRG                 8
+   | Solde (Cr)            138
+
+Service Revenue (Income)
+Dr | Cr
+   | #3  Client            100
+   | Solde (Cr)            100
+
+Trading Gain (Income)
+Dr | Cr
+   | #5  Trader profit      15
+   | Solde (Cr)             15
+
+Wage Payable (Liability)
+Dr                       | Cr
+#10 Geor withdraw   40.8 | #9  Geor claim       40.8
+Solde                  0 |
+
+Shares to be issued (Liability)
+Dr                       | Cr
+#10 Geor withdraw     10 | #9  Geor claim (SHER)  10
+Solde                  0 |
+
+Payroll Expense   (Dr) 50.8  — #9
+Operating Expense (Dr) 20    — #12
+Trading Loss      (Dr) 20    — #14
+Dividend Expense  (Dr) 20    — #18
+Owner Capital          0     (empty — everyone got shares or it was revenue)
 ```
 
 ### 6.4 Trial balance
@@ -346,6 +424,7 @@ Owner Capital        0 (empty — everyone got shares or it was revenue)
 | Service Revenue   | Income    |            |        100 |
 | Trading Gain      | Income    |            |         15 |
 | Wage Payable      | Liability |          0 |          0 |
+| Shares to be issued | Liability |        0 |          0 |
 | Payroll Expense   | Expense   |      50.80 |            |
 | Operating Expense | Expense   |         20 |            |
 | Trading Loss      | Expense   |         20 |            |
@@ -375,7 +454,7 @@ Owner Capital        0 (empty — everyone got shares or it was revenue)
 | Trading account (at cost)         |                   0.00 |
 | **Total assets**                  |             **142.20** |
 | **LIABILITIES**                   |                        |
-| None (Wage Payable settled)       |                   0.00 |
+| None (Wage Payable & Shares to be issued settled) |   0.00 |
 | **Total liabilities**             |               **0.00** |
 | **EQUITY**                        |                        |
 | Owner capital                     |                   0.00 |
@@ -388,10 +467,11 @@ Owner Capital        0 (empty — everyone got shares or it was revenue)
 
 ## 7. Reconciliation & notes
 
-- **It balances at every level:** journal 668.10 = 668.10 · trial balance 253 = 253 · assets 142.20 = equity 142.20.
+- **It balances at every level:** journal 678.10 = 678.10 · trial balance 253 = 253 · assets 142.20 = equity 142.20.
 - **Internal transfers don't touch the statements.** Funding payroll/expense from Bank, and the Safe → Bank transfer, only move cash between pockets — no effect on the income statement, balance-sheet totals, or net trial balance. The Safe → Bank transfer of 71.75 exists only because operating payments (payroll, expense, dividend, trader) leave from Bank while the funding (investments) lands in Safe.
 - **Fees stay inside Cash.** The $0.23 of fees moved from Bank to FeeCollector — both CNC pockets — so no revenue is recognised here.
 - **Shares vs value.** `Investor Equity` ($138) only counts mints with real value behind them (investments + the SHER paid as wages). Ravi's 30-SHER direct mint is **Default D** — tracked as +30 shares at **$0**, so it never inflates equity value.
+- **SHER wages are recognised at withdraw, not at claim.** From the claim until the withdrawal, the SHER part of a wage sits in the `Shares to be issued` liability; only at `withdraw()` does `individualMint` fire and the $10 move into `Investor Equity`. This matches the on-chain `WithdrawToken` / `Minted` events. The withdraw nets the liability to $0, so it never appears on the balance sheet at period end — but in a period where a claim is open without a matching withdrawal, `Shares to be issued` carries the promised SHER as a liability.
 - **Owner Capital is $0** in this period: everyone who put money in either received shares (Investor Equity) or it was a client payment (Service Revenue) — nobody made a pure founder deposit.
 
 ### Coverage scorecard
