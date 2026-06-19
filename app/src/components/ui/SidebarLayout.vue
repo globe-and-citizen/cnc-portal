@@ -209,7 +209,7 @@ const items = computed<NavigationMenuItem[]>(() => [
       name: 'accounting',
       params: { id: teamStore.currentTeamId || '1' }
     },
-    defaultOpen: true,
+    defaultOpen: false,
     children: [
       {
         label: 'Summary',
