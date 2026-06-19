@@ -79,6 +79,36 @@ describe('SidebarLayout.vue', () => {
           path: '/teams/:id/vesting',
           name: 'vesting',
           component: { template: '<div>Vesting</div>' }
+        },
+        {
+          path: '/teams/:id/accounting',
+          name: 'accounting',
+          component: { template: '<div>Accounting</div>' }
+        },
+        {
+          path: '/teams/:id/accounting/summary',
+          name: 'accounting-summary',
+          component: { template: '<div>Summary</div>' }
+        },
+        {
+          path: '/teams/:id/accounting/income',
+          name: 'accounting-income',
+          component: { template: '<div>Income Statement</div>' }
+        },
+        {
+          path: '/teams/:id/accounting/balance',
+          name: 'accounting-balance',
+          component: { template: '<div>Balance Sheet</div>' }
+        },
+        {
+          path: '/teams/:id/accounting/trial',
+          name: 'accounting-trial',
+          component: { template: '<div>Trial Balance</div>' }
+        },
+        {
+          path: '/teams/:id/accounting/ledger',
+          name: 'accounting-ledger',
+          component: { template: '<div>General Ledger</div>' }
         }
       ]
     })
