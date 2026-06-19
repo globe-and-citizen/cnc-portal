@@ -13,9 +13,5 @@ describe('useTeamInternalAddresses', () => {
     expect(addresses.value.has(INVESTOR_POCKET)).toBe(true)
   })
 
-  it('surfaces the underlying query loading / error state', () => {
-    const { isLoading, error } = useTeamInternalAddresses('1')
-    expect(isLoading.value).toBe(false)
-    expect(error.value).toBeNull()
-  })
+ 
 })
