@@ -136,7 +136,10 @@ export default defineConfig(async ({ mode }) => {
       // `viem/accounts` is pulled in only by the e2e mock connector and would
       // otherwise be discovered late, triggering an "Outdated Optimize Dep"
       // reload that breaks Playwright runs against a cold dev server.
-      include: ['viem/accounts']
+      // `xlsx` is only reached via the lazy `import('xlsx')` in the accounting
+      // export — without this, the first Export click re-optimizes and reloads
+      // the page, silently aborting the download.
+      include: ['viem/accounts', 'xlsx']
     },
     build: {
       // 'hidden' generates source maps but does NOT reference them in the

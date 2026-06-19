@@ -1,0 +1,76 @@
+<template>
+  <div class="border-default bg-default flex flex-col rounded-2xl border shadow-sm">
+    <div class="border-default flex items-center justify-between border-b px-5 py-4">
+      <div class="flex items-center gap-2.5">
+        <span class="bg-info/10 text-info flex size-7 items-center justify-center rounded-lg">
+          <UIcon name="i-heroicons-scale" class="size-4.5" />
+        </span>
+        <span class="text-[15px] font-semibold">Balance sheet</span>
+      </div>
+      <AccountingDatePicker v-model="asOf" mode="date" storage-key="cnc-accounting-balance-asof" />
+    </div>
+
+    <div class="px-5 pt-3 pb-5">
+      <p class="text-dimmed pt-2 pb-1 text-[11px] font-bold tracking-wider uppercase">Assets</p>
+      <div
+        v-for="a in assetLines"
+        :key="a.label"
+        class="border-default/60 flex items-center justify-between border-b py-2"
+      >
+        <span class="text-sm">{{ a.label }}</span>
+        <span class="text-sm font-semibold tabular-nums">{{ a.value }}</span>
+      </div>
+      <div class="flex items-center justify-between py-2.5">
+        <span class="text-sm font-bold">Total assets</span>
+        <span class="text-sm font-bold tabular-nums">{{ totalAssets }}</span>
+      </div>
+
+      <p class="text-dimmed pt-3 pb-1 text-[11px] font-bold tracking-wider uppercase">
+        Liabilities
+      </p>
+      <div
+        v-for="l in liabLines"
+        :key="l.label"
+        class="border-default/60 flex items-center justify-between border-b py-2"
+      >
+        <span class="text-muted text-sm">{{ l.label }}</span>
+        <span class="text-muted text-sm font-semibold tabular-nums">{{ l.value }}</span>
+      </div>
+
+      <p class="text-dimmed pt-3 pb-1 text-[11px] font-bold tracking-wider uppercase">Equity</p>
+      <div
+        v-for="q in equityLines"
+        :key="q.label"
+        class="border-default/60 flex items-center justify-between border-b py-2"
+      >
+        <span class="text-sm">{{ q.label }}</span>
+        <span class="text-sm font-semibold tabular-nums">{{ q.value }}</span>
+      </div>
+      <div class="flex items-center justify-between py-2.5">
+        <span class="text-sm font-bold">Total equity</span>
+        <span class="text-sm font-bold tabular-nums">{{ totalEquity }}</span>
+      </div>
+
+      <div class="bg-info/10 mt-3 flex items-center justify-between rounded-xl px-4 py-3.5">
+        <span class="text-info text-sm font-bold">Liabilities + Equity</span>
+        <span class="text-info text-lg font-extrabold tabular-nums">{{ totalAssets }}</span>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref } from 'vue'
+import AccountingDatePicker from '@/components/AccountingDatePicker.vue'
+import { defaultValueForMode } from '@/utils/datePicker'
+import {
+  assetLines,
+  liabLines,
+  equityLines,
+  totalAssets,
+  totalEquity
+} from '@/utils/accountingDemo'
+
+// Point-in-time "as of" date (date mode) — defaults to end of today.
+const asOf = ref<Date>(defaultValueForMode('date') as Date)
+</script>
