@@ -33,7 +33,9 @@
               </template>
 
               <template #body>
-                <RouterView />
+                <UContainer :ui="{ base: 'px-0 sm:px-0 lg:px-0' }">
+                  <RouterView />
+                </UContainer>
               </template>
             </UDashboardPanel>
           </UDashboardGroup>
