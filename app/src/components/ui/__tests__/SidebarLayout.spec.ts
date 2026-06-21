@@ -109,6 +109,11 @@ describe('SidebarLayout.vue', () => {
           path: '/teams/:id/accounting/ledger',
           name: 'accounting-ledger',
           component: { template: '<div>General Ledger</div>' }
+        },
+        {
+          path: '/teams/:id/debt-financing/fixed-return',
+          name: 'fixed-return',
+          component: { template: '<div>Fixed Return</div>' }
         }
       ]
     })

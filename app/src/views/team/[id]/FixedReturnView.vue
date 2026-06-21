@@ -2,8 +2,18 @@
   <div class="flex flex-col gap-6">
     <div class="flex items-center justify-end">
       <div class="flex gap-1 rounded-xl border border-[#d8e6df] bg-[#eef4f1] p-1.5">
-        <button :class="tabClass(showCreateForm)" @click="showCreateForm = true">Issue Note</button>
-        <button :class="tabClass(!showCreateForm)" @click="showCreateForm = false">
+        <button
+          :class="tabClass(showCreateForm)"
+          data-test="issue-note-tab"
+          @click="showCreateForm = true"
+        >
+          Issue Note
+        </button>
+        <button
+          :class="tabClass(!showCreateForm)"
+          data-test="my-offerings-tab"
+          @click="showCreateForm = false"
+        >
           My Offerings
         </button>
       </div>
