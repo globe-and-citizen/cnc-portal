@@ -162,12 +162,6 @@ const router = createRouter({
           name: 'fixed-return',
           meta: { name: 'Fixed Return' },
           component: () => import('@/views/team/[id]/FixedReturnView.vue')
-        },
-        {
-          path: '/teams/:id/debt-financing/lender-marketplace',
-          name: 'lender-marketplace',
-          meta: { name: 'Lender Marketplace' },
-          component: () => import('@/views/team/[id]/LenderMarketplaceView.vue')
         }
       ]
     }
