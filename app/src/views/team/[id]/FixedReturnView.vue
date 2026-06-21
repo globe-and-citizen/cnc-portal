@@ -20,16 +20,13 @@
     </div>
 
     <CreateOfferingForm v-if="showCreateForm" @close="showCreateForm = false" />
-    <div v-else class="flex flex-col items-center justify-center gap-2 py-16 text-center">
-      <div class="text-sm font-semibold text-[#7d8e84]">
-        My Offerings management is coming soon.
-      </div>
-    </div>
+    <AdminDashboard v-else />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import AdminDashboard from '@/components/sections/FixedReturnView/AdminDashboard.vue'
 import CreateOfferingForm from '@/components/sections/FixedReturnView/CreateOfferingForm.vue'
 
 const showCreateForm = ref(true)
