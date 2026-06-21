@@ -1,25 +1,27 @@
 <template>
-  <div class="flex flex-col gap-4 sticky top-6">
+  <div class="sticky top-6 flex flex-col gap-4">
     <!-- Dark return card -->
-    <div class="bg-[#0f3d2e] rounded-2xl p-6 text-white shadow-lg">
-      <div class="text-xs font-bold tracking-widest text-[#7fd9b6] uppercase mb-1">Repayment at maturity</div>
-      <div class="text-sm font-semibold text-[#a9c9bd] truncate mb-2">{{ title }}</div>
-      <div class="text-4xl font-extrabold tracking-tight my-1">{{ moneyShort(totalReturn) }}</div>
+    <div class="rounded-2xl bg-[#0f3d2e] p-6 text-white shadow-lg">
+      <div class="mb-1 text-xs font-bold tracking-widest text-[#7fd9b6] uppercase">
+        Repayment at maturity
+      </div>
+      <div class="mb-2 truncate text-sm font-semibold text-[#a9c9bd]">{{ title }}</div>
+      <div class="my-1 text-4xl font-extrabold tracking-tight">{{ moneyShort(totalReturn) }}</div>
       <div class="text-sm text-[#a9c9bd]">
         Principal {{ moneyShort(principal) }} + interest {{ moneyShort(totalInterest) }}
       </div>
-      <div class="grid grid-cols-3 gap-px mt-4 bg-white/20 rounded-xl overflow-hidden">
+      <div class="mt-4 grid grid-cols-3 gap-px overflow-hidden rounded-xl bg-white/20">
         <div class="bg-[#154937] px-3 py-3">
           <div class="text-xs text-[#8fc3ad]">Rate</div>
-          <div class="text-base font-bold mt-0.5">{{ rate.toFixed(1) }}%</div>
+          <div class="mt-0.5 text-base font-bold">{{ rate.toFixed(1) }}%</div>
         </div>
         <div class="bg-[#154937] px-3 py-3">
           <div class="text-xs text-[#8fc3ad]">Per year</div>
-          <div class="text-base font-bold mt-0.5">{{ moneyShort(annualInterest) }}</div>
+          <div class="mt-0.5 text-base font-bold">{{ moneyShort(annualInterest) }}</div>
         </div>
         <div class="bg-[#154937] px-3 py-3">
           <div class="text-xs text-[#8fc3ad]">Repayment</div>
-          <div class="text-base font-bold mt-0.5">Bullet</div>
+          <div class="mt-0.5 text-base font-bold">Bullet</div>
         </div>
       </div>
     </div>

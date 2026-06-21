@@ -1,25 +1,25 @@
 <template>
   <div ref="clickOutside" class="relative w-full">
     <div class="flex items-center gap-3">
-      <span class="text-sm font-bold whitespace-nowrap shrink-0">Select a User</span>
+      <span class="shrink-0 text-sm font-bold whitespace-nowrap">Select a User</span>
       <div
         class="border-default flex h-12 flex-1 cursor-pointer items-center gap-2 rounded-md border bg-white px-3 dark:bg-gray-900"
         data-test="select-member-item-trigger"
         @click="toggleOpen"
       >
-      <div v-if="selectedUser" class="flex items-center gap-2">
-        <UserComponent
-          class="flex items-center gap-2"
-          :user="selectedUser"
-          data-test="select-member-item-selected-user"
-        />
-      </div>
+        <div v-if="selectedUser" class="flex items-center gap-2">
+          <UserComponent
+            class="flex items-center gap-2"
+            :user="selectedUser"
+            data-test="select-member-item-selected-user"
+          />
+        </div>
 
-      <IconifyIcon
-        :icon="isOpen.show ? 'heroicons:chevron-up' : 'heroicons:chevron-down'"
-        class="ml-auto h-4 w-4 text-gray-500 transition-transform duration-400"
-        :class="isOpen.show ? 'rotate-180' : 'rotate-0'"
-      />
+        <IconifyIcon
+          :icon="isOpen.show ? 'heroicons:chevron-up' : 'heroicons:chevron-down'"
+          class="ml-auto h-4 w-4 text-gray-500 transition-transform duration-400"
+          :class="isOpen.show ? 'rotate-180' : 'rotate-0'"
+        />
       </div>
     </div>
 

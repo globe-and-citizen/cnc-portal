@@ -38,7 +38,9 @@ export function money(n: number): string {
 export function pickerClass(active: boolean) {
   return [
     'flex flex-col gap-0.5 items-start text-left px-3 py-2 rounded-lg cursor-pointer border-2 transition-all',
-    active ? 'border-[#00bf7a] bg-[#f0fbf6] text-[#0a7a52]' : 'border-[#e0eae5] bg-white text-[#46584f]'
+    active
+      ? 'border-[#00bf7a] bg-[#f0fbf6] text-[#0a7a52]'
+      : 'border-[#e0eae5] bg-white text-[#46584f]'
   ]
 }
 

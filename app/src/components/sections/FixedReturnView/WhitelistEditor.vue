@@ -1,18 +1,25 @@
 <template>
-  <div class="border border-[#e6efe9] rounded-xl p-4 bg-[#fafdfb] flex flex-col gap-3">
-    <div class="text-xs text-[#5b6e64] leading-relaxed bg-[#eef4f1] rounded-lg px-3 py-2">
-      Per-lender limit: <strong class="text-[#0f3d2e]">{{ defaultAmountLabel }}</strong>.
-      Set an explicit amount on each row — required before publishing.
+  <div class="flex flex-col gap-3 rounded-xl border border-[#e6efe9] bg-[#fafdfb] p-4">
+    <div class="rounded-lg bg-[#eef4f1] px-3 py-2 text-xs leading-relaxed text-[#5b6e64]">
+      Per-lender limit: <strong class="text-[#0f3d2e]">{{ defaultAmountLabel }}</strong
+      >. Set an explicit amount on each row — required before publishing.
     </div>
 
     <div
-      class="text-xs font-bold rounded-lg px-3 py-2"
+      class="rounded-lg px-3 py-2 text-xs font-bold"
       :class="targetStatusClass"
       data-test="whitelist-target-total"
     >
-      Lenders allocated: {{ committedTotal.toLocaleString('en-US') }} / {{ Math.round(principalTarget).toLocaleString('en-US') }} {{ token }}
-      <span v-if="overTarget">— exceeds target by {{ (committedTotal - principalTarget).toLocaleString('en-US') }} {{ token }}</span>
-      <span v-else-if="underTarget">— {{ (principalTarget - committedTotal).toLocaleString('en-US') }} {{ token }} short of target; this offering can't reach its target through whitelisted lenders alone</span>
+      Lenders allocated: {{ committedTotal.toLocaleString('en-US') }} /
+      {{ Math.round(principalTarget).toLocaleString('en-US') }} {{ token }}
+      <span v-if="overTarget"
+        >— exceeds target by {{ (committedTotal - principalTarget).toLocaleString('en-US') }}
+        {{ token }}</span
+      >
+      <span v-else-if="underTarget"
+        >— {{ (principalTarget - committedTotal).toLocaleString('en-US') }} {{ token }} short of
+        target; this offering can't reach its target through whitelisted lenders alone</span
+      >
     </div>
 
     <!-- Existing whitelist entries -->
@@ -21,13 +28,10 @@
         v-for="(w, i) in whitelist"
         :key="i"
         data-test="whitelist-entry"
-        class="flex items-center gap-3 bg-white border border-[#e6efe9] rounded-xl px-3 py-2"
+        class="flex items-center gap-3 rounded-xl border border-[#e6efe9] bg-white px-3 py-2"
       >
-        <UserComponent
-          :user="resolveUser(w.address)"
-          class="flex-1 min-w-0"
-        />
-        <div class="flex flex-col items-end gap-0.5 flex-none">
+        <UserComponent :user="resolveUser(w.address)" class="min-w-0 flex-1" />
+        <div class="flex flex-none flex-col items-end gap-0.5">
           <UInput
             type="number"
             :model-value="w.amount != null ? String(w.amount) : undefined"
@@ -35,9 +39,9 @@
             :color="isOverCap(w.amount) ? 'error' : undefined"
             class="w-28"
             data-test="whitelist-amount-input"
-            @update:model-value="v => $emit('update-amount', i, v)"
+            @update:model-value="(v) => $emit('update-amount', i, v)"
           >
-            <template #leading><span class="text-xs font-semibold text-muted">$</span></template>
+            <template #leading><span class="text-muted text-xs font-semibold">$</span></template>
           </UInput>
           <span
             v-if="isOverCap(w.amount)"
@@ -47,13 +51,16 @@
             Exceeds cap ({{ defaultAmountLabel }})
           </span>
           <span v-else class="flex items-center gap-1">
-            <span :style="{ color: w.amount != null ? '#0a7a52' : '#b45309' }" class="text-[10px] font-bold">
+            <span
+              :style="{ color: w.amount != null ? '#0a7a52' : '#b45309' }"
+              class="text-[10px] font-bold"
+            >
               {{ w.amount != null ? 'custom' : 'not set' }}
             </span>
             <button
               v-if="w.amount == null && defaultAmount != null"
               type="button"
-              class="text-[10px] font-bold underline text-[#0a7a52] cursor-pointer"
+              class="cursor-pointer text-[10px] font-bold text-[#0a7a52] underline"
               data-test="whitelist-use-default-button"
               @click="$emit('update-amount', i, defaultAmount)"
             >
@@ -74,13 +81,27 @@
     </div>
 
     <!-- Add lender -->
-    <div class="border-t border-[#eef4f1] pt-3 flex flex-col gap-1 relative">
+    <div class="relative flex flex-col gap-1 border-t border-[#eef4f1] pt-3">
       <span class="text-xs font-semibold text-[#9aaba2]">Add lender</span>
       <UFieldGroup data-test="whitelist-add-lender" class="w-full">
-        <UInput v-model="search.name" placeholder="Name" data-test="whitelist-search-name" class="w-28" />
-        <UInput v-model="search.address" placeholder="Address" data-test="whitelist-search-address" class="flex-1" />
+        <UInput
+          v-model="search.name"
+          placeholder="Name"
+          data-test="whitelist-search-name"
+          class="w-28"
+        />
+        <UInput
+          v-model="search.address"
+          placeholder="Address"
+          data-test="whitelist-search-address"
+          class="flex-1"
+        />
       </UFieldGroup>
-      <div v-if="showResults && filteredMembers.length > 0" class="top-full left-0 mt-1 w-full" data-test="whitelist-search-results">
+      <div
+        v-if="showResults && filteredMembers.length > 0"
+        class="top-full left-0 mt-1 w-full"
+        data-test="whitelist-search-results"
+      >
         <SelectMemberResults :members="filteredMembers" @select="handleAdd" />
       </div>
     </div>
@@ -128,10 +149,11 @@ const showResults = ref(false)
 
 const members = computed<Member[]>(() => teamStore.currentTeamMeta.data?.members ?? [])
 
-const filteredMembers = computed<Member[]>(() =>
-  filter(members.value, search.value).filter(
-    (m) => !props.whitelist.some((w) => w.address === m.address)
-  ) as Member[]
+const filteredMembers = computed<Member[]>(
+  () =>
+    filter(members.value, search.value).filter(
+      (m) => !props.whitelist.some((w) => w.address === m.address)
+    ) as Member[]
 )
 
 watchDebounced(

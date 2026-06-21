@@ -1,9 +1,15 @@
 <template>
   <UForm ref="formRef" :schema="schema" :state="form" class="flex flex-col gap-5">
     <section class="flex flex-col gap-2">
-      <div class="text-xs font-bold tracking-widest text-[#9aaba2] uppercase">Repayment timeline</div>
-      <div class="flex items-center gap-3 rounded-xl border border-[#d6f1e6] bg-[#f0fbf6] px-3 py-2">
-        <div class="bg-primary flex h-8 w-8 flex-none items-center justify-center rounded-lg text-white">
+      <div class="text-xs font-bold tracking-widest text-[#9aaba2] uppercase">
+        Repayment timeline
+      </div>
+      <div
+        class="flex items-center gap-3 rounded-xl border border-[#d6f1e6] bg-[#f0fbf6] px-3 py-2"
+      >
+        <div
+          class="bg-primary flex h-8 w-8 flex-none items-center justify-center rounded-lg text-white"
+        >
           <UIcon name="heroicons:chart-bar" class="size-4" />
         </div>
         <div class="flex-1">
@@ -11,7 +17,9 @@
             Bullet — lump sum at maturity
             <UBadge color="success" variant="soft" size="xs">MVP</UBadge>
           </div>
-          <div class="text-xs text-[#5b6e64]">Principal + all accrued interest repaid as one payment at end of term.</div>
+          <div class="text-xs text-[#5b6e64]">
+            Principal + all accrued interest repaid as one payment at end of term.
+          </div>
         </div>
       </div>
 
@@ -19,10 +27,20 @@
 
       <div class="grid grid-cols-2 gap-3">
         <UFormField label="Start date" name="startDate">
-          <UInput v-model="form.startDate" type="date" class="w-full" data-test="offering-start-date-input" />
+          <UInput
+            v-model="form.startDate"
+            type="date"
+            class="w-full"
+            data-test="offering-start-date-input"
+          />
         </UFormField>
         <UFormField label="Subscription deadline" name="deadline">
-          <UInput v-model="form.deadline" type="date" class="w-full" data-test="offering-deadline-input" />
+          <UInput
+            v-model="form.deadline"
+            type="date"
+            class="w-full"
+            data-test="offering-deadline-input"
+          />
         </UFormField>
       </div>
 
@@ -67,7 +85,9 @@
               </template>
             </UInput>
           </UFormField>
-          <span v-if="isCustomTerm" class="text-[10px] text-[#9aaba2]">max {{ maxByUnit[form.termUnit] }}</span>
+          <span v-if="isCustomTerm" class="text-[10px] text-[#9aaba2]"
+            >max {{ maxByUnit[form.termUnit] }}</span
+          >
         </div>
       </UFormField>
     </section>
@@ -75,10 +95,14 @@
     <hr class="border-t border-[#eef3f0]" />
 
     <section class="flex flex-col gap-2">
-      <div class="flex items-center justify-between gap-3 rounded-xl border border-[#eef3f0] px-3 py-3">
+      <div
+        class="flex items-center justify-between gap-3 rounded-xl border border-[#eef3f0] px-3 py-3"
+      >
         <div>
           <div class="text-sm font-bold text-[#0f3d2e]">Cap the amount per lender</div>
-          <div class="text-xs text-[#9aaba2]">Optional — keeps any single lender from dominating the round.</div>
+          <div class="text-xs text-[#9aaba2]">
+            Optional — keeps any single lender from dominating the round.
+          </div>
         </div>
         <USwitch v-model="form.capOn" data-test="cap-toggle" />
       </div>
@@ -90,7 +114,9 @@
           data-test="offering-cap-input"
           @update:model-value="(v) => (form.cap = Number(v))"
         >
-          <template #trailing><span class="text-muted text-xs font-semibold">{{ form.token }}</span></template>
+          <template #trailing
+            ><span class="text-muted text-xs font-semibold">{{ form.token }}</span></template
+          >
         </UInput>
       </UFormField>
     </section>
@@ -165,10 +191,14 @@ const schema = computed(() =>
       message: 'Enter a maximum amount per lender',
       path: ['cap']
     })
-    .refine((data) => !form.value.capOn || typeof data.cap !== 'number' || data.cap <= form.value.principal, {
-      message: 'Cap cannot exceed the principal target',
-      path: ['cap']
-    })
+    .refine(
+      (data) =>
+        !form.value.capOn || typeof data.cap !== 'number' || data.cap <= form.value.principal,
+      {
+        message: 'Cap cannot exceed the principal target',
+        path: ['cap']
+      }
+    )
 )
 
 const formRef = ref<{ validate: () => Promise<unknown> } | null>(null)

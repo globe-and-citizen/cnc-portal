@@ -44,7 +44,9 @@
           data-test="offering-rate-input"
           @update:model-value="(v) => (form.rate = Number(v))"
         >
-          <template #trailing><span class="text-muted text-sm font-semibold">% / yr</span></template>
+          <template #trailing
+            ><span class="text-muted text-sm font-semibold">% / yr</span></template
+          >
         </UInput>
       </UFormField>
     </div>

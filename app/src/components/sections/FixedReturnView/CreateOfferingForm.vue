@@ -126,7 +126,9 @@ const whitelist = ref([
 ])
 
 const annualInterest = computed(() => form.principal * (form.rate / 100))
-const totalInterest = computed(() => annualInterest.value * termToYears(form.termValue, form.termUnit))
+const totalInterest = computed(
+  () => annualInterest.value * termToYears(form.termValue, form.termUnit)
+)
 const totalReturn = computed(() => form.principal + totalInterest.value)
 
 const defaultAmountLabel = computed(() =>
@@ -138,9 +140,7 @@ const limitsLabel = computed(() =>
 )
 
 const accessLabel = computed(() =>
-  form.access === 'whitelist'
-    ? `Whitelist · ${whitelist.value.length} lenders`
-    : 'General · anyone'
+  form.access === 'whitelist' ? `Whitelist · ${whitelist.value.length} lenders` : 'General · anyone'
 )
 const accessDot = computed(() => (form.access === 'whitelist' ? '#3366ff' : '#00bf7a'))
 
