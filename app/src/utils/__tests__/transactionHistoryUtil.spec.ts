@@ -293,6 +293,7 @@ describe('transactionHistoryUtil', () => {
 
   it('formatDecodedValue handles primitives, arrays, and addresses', () => {
     expect(formatDecodedValue('address', '0x1234')).toEqual({ display: '0x1234', isAddress: true })
+    expect(formatDecodedValue('uint256', 1000n)).toEqual({ display: '1,000', isAddress: false })
     expect(formatDecodedValue('bool', true)).toEqual({ display: 'true', isAddress: false })
     expect(formatDecodedValue('uint256', null)).toEqual({ display: '-', isAddress: false })
     const arr = formatDecodedValue('uint256[]', [100n, 200n])
