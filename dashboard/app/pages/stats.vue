@@ -16,6 +16,7 @@ const {
   getContractsStats,
   getActionsStats,
   getRecentActivity,
+  getTvlStats,
   isLoading,
   error
 } = useStats()
@@ -40,7 +41,8 @@ const tabs = [
   { label: 'Expenses', icon: 'i-lucide-receipt' },
   { label: 'Contracts', icon: 'i-lucide-file-signature' },
   { label: 'Actions', icon: 'i-lucide-zap' },
-  { label: 'Activity', icon: 'i-lucide-activity' }
+  { label: 'Activity', icon: 'i-lucide-activity' },
+  { label: 'TVL', icon: 'i-lucide-lock' }
 ]
 
 // Fetch stats data
@@ -98,6 +100,9 @@ const { data: activityData, refresh: refreshActivity } = await useAsyncData(
   { watch: [selectedPeriod] }
 )
 
+// TVL is a live on-chain snapshot — independent of the selected period.
+const { data: tvlData, refresh: refreshTvl } = await useAsyncData('stats-tvl', () => getTvlStats())
+
 // Refresh all stats
 const refreshAll = async () => {
   await Promise.all([
@@ -109,7 +114,8 @@ const refreshAll = async () => {
     refreshExpenses(),
     refreshContracts(),
     refreshActions(),
-    refreshActivity()
+    refreshActivity(),
+    refreshTvl()
   ])
 }
 </script>
@@ -205,6 +211,11 @@ const refreshAll = async () => {
         <!-- Activity Tab -->
         <div v-else-if="selectedTab === 8" class="space-y-6">
           <StatsActivitySection :data="activityData" :is-loading="isLoading" />
+        </div>
+
+        <!-- TVL Tab -->
+        <div v-else-if="selectedTab === 9" class="space-y-6">
+          <StatsTvlSection :data="tvlData" :is-loading="isLoading" />
         </div>
       </div>
     </div>

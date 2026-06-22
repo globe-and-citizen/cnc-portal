@@ -242,6 +242,36 @@ export interface RecentActivity {
   total: number
 }
 
+// Total Value Locked statistics. Amounts are RAW on-chain integers (strings)
+// keyed by token.key; the dashboard values them in USD via the token-price store.
+export interface TvlToken {
+  key: string
+  symbol: string
+  decimals: number
+  address: string | null // null => native coin
+}
+
+export interface TvlTeam {
+  teamId: number
+  name: string
+  bankAddresses: string[]
+  tvlRaw: Record<string, string>
+  transferredRaw: Record<string, string>
+}
+
+export interface TvlStats {
+  chainId: number
+  tokens: TvlToken[]
+  totals: {
+    tvlRaw: Record<string, string>
+    transferredRaw: Record<string, string>
+  }
+  // false when ponder is unreachable — show "—" for transfer volume, not $0.
+  transferredAvailable: boolean
+  teams: TvlTeam[]
+  generatedAt: string
+}
+
 /**
  * User type for API user endpoints
  * Represents a user in the CNC Portal system
