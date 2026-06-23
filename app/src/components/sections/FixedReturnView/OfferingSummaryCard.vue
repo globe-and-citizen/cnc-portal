@@ -76,7 +76,7 @@
 </template>
 
 <script setup lang="ts">
-import { moneyShort } from './offeringForm'
+import { moneyShort } from '@/utils'
 
 defineProps<{
   title: string

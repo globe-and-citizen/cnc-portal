@@ -70,13 +70,13 @@
 import { ref, computed } from 'vue'
 import { z } from 'zod'
 import WhitelistEditor from './WhitelistEditor.vue'
-import type { OfferingForm } from './offeringForm'
-import { pickerClass, sumWhitelistAmount } from './offeringForm'
+import type { OfferingForm, WhitelistEntry } from '@/types'
+import { pickerClass, sumWhitelistAmount } from '@/utils'
 
 const form = defineModel<OfferingForm>('form', { required: true })
 
 const props = defineProps<{
-  whitelist: { username: string; address: string; amount: number | null }[]
+  whitelist: WhitelistEntry[]
   defaultAmountLabel: string
 }>()
 

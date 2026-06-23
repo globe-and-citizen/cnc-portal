@@ -126,8 +126,8 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { z } from 'zod'
-import type { OfferingForm, TermUnit } from './offeringForm'
-import { pickerClass } from './offeringForm'
+import type { OfferingForm, TermUnit } from '@/types'
+import { pickerClass } from '@/utils'
 
 const form = defineModel<OfferingForm>('form', { required: true })
 
