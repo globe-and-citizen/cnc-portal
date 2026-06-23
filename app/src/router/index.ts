@@ -156,6 +156,12 @@ const router = createRouter({
               component: () => import('@/components/sections/AccountingView/GeneralLedger.vue')
             }
           ]
+        },
+        {
+          path: '/teams/:id/debt-financing/fixed-return',
+          name: 'fixed-return',
+          meta: { name: 'Fixed Return' },
+          component: () => import('@/views/team/[id]/FixedReturnView.vue')
         }
       ]
     }
