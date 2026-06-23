@@ -33,12 +33,12 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import dayjs from 'dayjs'
 import SegmentedPills, { type PillItem } from './SegmentedPills.vue'
 import LedgerTable from './LedgerTable.vue'
 import AccountingDatePicker from '@/components/AccountingDatePicker.vue'
 import { defaultValueForMode, type Range } from '@/utils/datePicker'
-import { buildLedger, ledgerCategories } from '@/utils/accountingDemo'
+import { useAccountingContext } from '@/composables/accounting/useAccountingContext'
+import { presentLedger, ledgerCategories } from '@/utils/accounting/ledgerPresenter'
 
 const filter = ref('All')
 // Reporting period (range mode) — defaults to "All time" (whole book).
@@ -46,9 +46,8 @@ const period = ref<Range>(defaultValueForMode('range') as Range)
 
 const categoryItems: PillItem[] = ledgerCategories.map((c) => ({ value: c, label: c }))
 
-// The demo journal is keyed by ISO `YYYY-MM-DD`; map the picker's Date range onto that shape.
-const fromIso = computed(() => dayjs(period.value.start).format('YYYY-MM-DD'))
-const toIso = computed(() => dayjs(period.value.end).format('YYYY-MM-DD'))
-
-const ledger = computed(() => buildLedger(filter.value, fromIso.value, toIso.value))
+const acc = useAccountingContext()
+const ledger = computed(() =>
+  presentLedger(acc.entries.value, filter.value, period.value.start, period.value.end)
+)
 </script>
