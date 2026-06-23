@@ -29,7 +29,8 @@ describe('buildBalanceSheet — catalogue §6.6', () => {
     const claimOnly = catalogueLedger.filter((e) => e.useCase === 'UC-CASH-02')
     const bs = buildBalanceSheet(claimOnly)
     const wagePayable = bs.liabilities.find((l) => l.account === 'Wage Payable')?.amount ?? 0
-    const sharesToIssue = bs.liabilities.find((l) => l.account === 'Shares to be issued')?.amount ?? 0
+    const sharesToIssue =
+      bs.liabilities.find((l) => l.account === 'Shares to be issued')?.amount ?? 0
     expect(wagePayable).toBeCloseTo(40.8, 2)
     expect(sharesToIssue).toBeCloseTo(10, 2)
     // The accrual books Payroll Expense against the liabilities — still balances.

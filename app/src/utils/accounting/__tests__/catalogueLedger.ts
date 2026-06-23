@@ -62,31 +62,125 @@ export const catalogueLedger: LedgerEntry[] = [
   // 2 — Geor invests $10 & gets SHER
   post({ day: 1, useCase: 'UC-SDR-01', debit: 'Cash — Safe', credit: 'Investor Equity', usd: 10 }),
   // 3 — Client pays $100 (service)
-  post({ day: 3, useCase: 'UC-BANK-02', debit: 'Cash — Bank', credit: 'Service Revenue', usd: 100 }),
+  post({
+    day: 3,
+    useCase: 'UC-BANK-02',
+    debit: 'Cash — Bank',
+    credit: 'Service Revenue',
+    usd: 100
+  }),
   // 4 — Deploy $30 to trader
   post({ day: 4, useCase: 'CASH-OUT', debit: 'Trading account', credit: 'Cash — Bank', usd: 30 }),
   // 5 — Trader returns $30 capital + $15 profit
   post({ day: 10, useCase: 'CASH-IN', debit: 'Cash — Safe', credit: 'Trading account', usd: 30 }),
   post({ day: 10, useCase: 'CASH-IN', debit: 'Cash — Safe', credit: 'Trading Gain', usd: 15 }),
   // 6 — Transfer $71.75 Safe → Bank (fund operations) — internal
-  post({ day: 11, useCase: 'INTERNAL', debit: 'Cash — Bank', credit: 'Cash — Safe', usd: 71.75, internal: true }),
+  post({
+    day: 11,
+    useCase: 'INTERNAL',
+    debit: 'Cash — Bank',
+    credit: 'Cash — Safe',
+    usd: 71.75,
+    internal: true
+  }),
   // 7 — Ravi funds payroll $50.02 (fee $0.02) — internal
-  post({ day: 12, useCase: 'UC-BANK-03', debit: 'Cash — Payroll', credit: 'Cash — Bank', usd: 50, internal: true }),
-  post({ day: 12, useCase: 'FEE', debit: 'Cash — FeeCollector', credit: 'Cash — Bank', usd: 0.02, internal: true }),
+  post({
+    day: 12,
+    useCase: 'UC-BANK-03',
+    debit: 'Cash — Payroll',
+    credit: 'Cash — Bank',
+    usd: 50,
+    internal: true
+  }),
+  post({
+    day: 12,
+    useCase: 'FEE',
+    debit: 'Cash — FeeCollector',
+    credit: 'Cash — Bank',
+    usd: 0.02,
+    internal: true
+  }),
   // 8 — Ravi funds payroll 22 POL ($1.73, fee $0.01) — internal
-  post({ day: 12, useCase: 'UC-BANK-03', debit: 'Cash — Payroll', credit: 'Cash — Bank', usd: 1.72, internal: true, token: 'native' }),
-  post({ day: 12, useCase: 'FEE', debit: 'Cash — FeeCollector', credit: 'Cash — Bank', usd: 0.01, internal: true, token: 'native' }),
+  post({
+    day: 12,
+    useCase: 'UC-BANK-03',
+    debit: 'Cash — Payroll',
+    credit: 'Cash — Bank',
+    usd: 1.72,
+    internal: true,
+    token: 'native'
+  }),
+  post({
+    day: 12,
+    useCase: 'FEE',
+    debit: 'Cash — FeeCollector',
+    credit: 'Cash — Bank',
+    usd: 0.01,
+    internal: true,
+    token: 'native'
+  }),
   // 9 — Geor claims $40 + 10 POL + 10 SHER (accrual)
-  post({ day: 13, useCase: 'UC-CASH-02', debit: 'Payroll Expense', credit: 'Wage Payable', usd: 40.8, category: 'Payroll' }),
-  post({ day: 13, useCase: 'UC-CASH-02', debit: 'Payroll Expense', credit: 'Shares to be issued', usd: 10, token: 'sher', category: 'Payroll' }),
+  post({
+    day: 13,
+    useCase: 'UC-CASH-02',
+    debit: 'Payroll Expense',
+    credit: 'Wage Payable',
+    usd: 40.8,
+    category: 'Payroll'
+  }),
+  post({
+    day: 13,
+    useCase: 'UC-CASH-02',
+    debit: 'Payroll Expense',
+    credit: 'Shares to be issued',
+    usd: 10,
+    token: 'sher',
+    category: 'Payroll'
+  }),
   // 10 — Geor withdraws the same (settles cash leg + mints SHER)
-  post({ day: 15, useCase: 'UC-CASH-03', debit: 'Wage Payable', credit: 'Cash — Payroll', usd: 40.8, category: 'Payroll' }),
-  post({ day: 15, useCase: 'UC-CASH-03', debit: 'Shares to be issued', credit: 'Investor Equity', usd: 10, token: 'sher', category: 'Payroll' }),
+  post({
+    day: 15,
+    useCase: 'UC-CASH-03',
+    debit: 'Wage Payable',
+    credit: 'Cash — Payroll',
+    usd: 40.8,
+    category: 'Payroll'
+  }),
+  post({
+    day: 15,
+    useCase: 'UC-CASH-03',
+    debit: 'Shares to be issued',
+    credit: 'Investor Equity',
+    usd: 10,
+    token: 'sher',
+    category: 'Payroll'
+  }),
   // 11 — Ravi funds expense $50 (fee $0.20) — internal
-  post({ day: 16, useCase: 'UC-BANK-03', debit: 'Cash — Expense', credit: 'Cash — Bank', usd: 49.8, internal: true }),
-  post({ day: 16, useCase: 'FEE', debit: 'Cash — FeeCollector', credit: 'Cash — Bank', usd: 0.2, internal: true }),
+  post({
+    day: 16,
+    useCase: 'UC-BANK-03',
+    debit: 'Cash — Expense',
+    credit: 'Cash — Bank',
+    usd: 49.8,
+    internal: true
+  }),
+  post({
+    day: 16,
+    useCase: 'FEE',
+    debit: 'Cash — FeeCollector',
+    credit: 'Cash — Bank',
+    usd: 0.2,
+    internal: true
+  }),
   // 12 — Geor withdraws $20 expense
-  post({ day: 17, useCase: 'UC-EXP-01', debit: 'Operating Expense', credit: 'Cash — Expense', usd: 20, category: 'Operating' }),
+  post({
+    day: 17,
+    useCase: 'UC-EXP-01',
+    debit: 'Operating Expense',
+    credit: 'Cash — Expense',
+    usd: 20,
+    category: 'Operating'
+  }),
   // 13 — Redeploy $30 to trader
   post({ day: 18, useCase: 'CASH-OUT', debit: 'Trading account', credit: 'Cash — Bank', usd: 30 }),
   // 14 — Trader returns $10 & loses $20
@@ -97,7 +191,16 @@ export const catalogueLedger: LedgerEntry[] = [
   // 16 — GRG invests $8 & gets SHER
   post({ day: 25, useCase: 'UC-SDR-01', debit: 'Cash — Safe', credit: 'Investor Equity', usd: 8 }),
   // 17 — Ravi mints 30 SHER for himself (Default D) — memo only, value 0
-  post({ day: 26, useCase: 'DEFAULT-D', debit: null, credit: null, usd: 0, token: 'sher', shares: 30, memo: 'Direct mint +30 SHER' }),
+  post({
+    day: 26,
+    useCase: 'DEFAULT-D',
+    debit: null,
+    credit: null,
+    usd: 0,
+    token: 'sher',
+    shares: 30,
+    memo: 'Direct mint +30 SHER'
+  }),
   // 18 — Ravi pays $20 dividend
   post({ day: 28, useCase: 'UC-INV-01', debit: 'Dividend Expense', credit: 'Cash — Bank', usd: 20 })
 ]

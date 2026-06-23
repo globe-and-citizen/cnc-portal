@@ -92,7 +92,8 @@ export function netBalanceByAccount(entries: readonly LedgerEntry[]): Map<Accoun
     net.set(account, (net.get(account) ?? 0) + signed)
   }
   for (const entry of entries) {
-    if (entry.debit) add(entry.debit, isDebitNormal(entry.debit) ? entry.amountUsd : -entry.amountUsd)
+    if (entry.debit)
+      add(entry.debit, isDebitNormal(entry.debit) ? entry.amountUsd : -entry.amountUsd)
     if (entry.credit) {
       add(entry.credit, isDebitNormal(entry.credit) ? -entry.amountUsd : entry.amountUsd)
     }
