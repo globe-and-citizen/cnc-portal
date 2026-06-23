@@ -65,7 +65,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
-import type { LedgerRow } from '@/utils/accountingDemo'
+import type { LedgerRow } from '@/utils/accounting/ledgerPresenter'
 
 const props = defineProps<{ rows: LedgerRow[]; total: string }>()
 

@@ -6,10 +6,10 @@
       </span>
       <span class="text-[15px] font-semibold">Trial balance</span>
       <UBadge
-        color="success"
+        :color="trial.balanced ? 'success' : 'warning'"
         variant="soft"
-        icon="i-heroicons-check"
-        label="In balance"
+        :icon="trial.balanced ? 'i-heroicons-check' : 'i-heroicons-exclamation-triangle'"
+        :label="trial.balanced ? 'In balance' : 'Out of balance'"
         class="ml-auto rounded-full"
       />
     </div>
@@ -60,8 +60,10 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
-import { trialRows, trialTotal } from '@/utils/accountingDemo'
+import { useAccountingContext } from '@/composables/accounting/useAccountingContext'
+import { presentTrial } from '@/utils/accounting/presenter'
 
 interface TrialTableRow {
   account: string
@@ -74,19 +76,22 @@ interface TrialTableRow {
   isTotal: boolean
 }
 
-const tableRows: TrialTableRow[] = [
-  ...trialRows.map((r) => ({ ...r, isTotal: false })),
+const acc = useAccountingContext()
+const trial = computed(() => presentTrial(acc.generalLedger.value))
+
+const tableRows = computed<TrialTableRow[]>(() => [
+  ...trial.value.rows.map((r) => ({ ...r, isTotal: false })),
   {
     account: 'Total',
     nature: '',
     natureClass: '',
-    dr: trialTotal,
-    cr: trialTotal,
+    dr: trial.value.total,
+    cr: trial.value.total,
     drMuted: false,
     crMuted: false,
     isTotal: true
   }
-]
+])
 
 const columns: TableColumn<TrialTableRow>[] = [
   { accessorKey: 'account', header: 'Account' },
