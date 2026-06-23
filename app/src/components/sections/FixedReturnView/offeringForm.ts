@@ -55,12 +55,6 @@ export function fmtDate(str: string): string {
   return `${String(d.getDate()).padStart(2, '0')} ${m[d.getMonth()]} ${d.getFullYear()}`
 }
 
-export function termToYears(value: number, unit: TermUnit): number {
-  if (unit === 'days') return value / 365
-  if (unit === 'months') return value / 12
-  return value
-}
-
 export function addTerm(date: Date, value: number, unit: TermUnit): Date {
   const d = new Date(date)
   if (unit === 'days') d.setDate(d.getDate() + value)

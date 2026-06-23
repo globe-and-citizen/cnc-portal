@@ -16,8 +16,8 @@
           <div class="mt-0.5 text-base font-bold">{{ rate.toFixed(1) }}%</div>
         </div>
         <div class="bg-[#154937] px-3 py-3">
-          <div class="text-xs text-[#8fc3ad]">Per year</div>
-          <div class="mt-0.5 text-base font-bold">{{ moneyShort(annualInterest) }}</div>
+          <div class="text-xs text-[#8fc3ad]">Interest</div>
+          <div class="mt-0.5 text-base font-bold">{{ moneyShort(totalInterest) }}</div>
         </div>
         <div class="bg-[#154937] px-3 py-3">
           <div class="text-xs text-[#8fc3ad]">Repayment</div>
@@ -83,7 +83,6 @@ defineProps<{
   principal: number
   rate: number
   termLabel: string
-  annualInterest: number
   totalInterest: number
   totalReturn: number
   startFmt: string
