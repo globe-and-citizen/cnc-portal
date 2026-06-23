@@ -183,7 +183,7 @@ import StatusBadge from './StatusBadge.vue'
 import UserComponent from '@/components/UserComponent.vue'
 import ProgressGauge from './ProgressGauge.vue'
 import { expectedReturn, maturityLabel, percentOf } from '@/utils'
-import { money as moneyFmt } from '@/utils/accountingDemo'
+import { money as moneyFmt } from '@/utils/accounting/presenter'
 import type { OfferingSummary } from '@/types'
 
 const props = defineProps<{ offering: OfferingSummary }>()
