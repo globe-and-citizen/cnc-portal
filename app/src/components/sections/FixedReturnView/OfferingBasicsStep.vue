@@ -55,7 +55,7 @@
 import { ref, computed } from 'vue'
 import { z } from 'zod'
 import { SUPPORTED_TOKENS } from '@/constant'
-import type { OfferingForm } from './offeringForm'
+import type { OfferingForm } from '@/types'
 
 const form = defineModel<OfferingForm>('form', { required: true })
 
