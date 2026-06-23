@@ -1,5 +1,9 @@
 <template>
-  <OfferingDetail v-if="selectedOffering" :offering="selectedOffering" @back="selectedOffering = null" />
+  <OfferingDetail
+    v-if="selectedOffering"
+    :offering="selectedOffering"
+    @back="selectedOffering = null"
+  />
   <OfferingsList v-else @manage="selectedOffering = $event" />
 </template>
 
