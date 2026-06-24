@@ -36,6 +36,7 @@ import { buildIncomeStatement, type IncomeStatement } from '@/utils/accounting/i
 import { buildBalanceSheet, type BalanceSheet } from '@/utils/accounting/balanceSheet'
 import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
 import type { UsdRateOfRecord } from '@/utils/accounting/toUsd'
+import { buildSherMultiplierTimeline, makeSherUsdRate } from '@/utils/accounting/sherRate'
 import type { SafeTransferRow } from '@/utils/accounting/mappers/safe'
 
 /** The raw feeds for one team, as fetched by {@link useCNCAccounting}. */
@@ -241,13 +242,28 @@ export function assembleCncAccounting(input: CncAccountingInput): CncAccounting 
     input.feeCollectorAddress ? [input.feeCollectorAddress] : []
   )
 
+  // SHER has no market price; value it from the router's compensation multiplier
+  // (1 SHER ≈ 1/multiplier USD, historised over the multiplier changes) so
+  // wage-in-SHER increases Investor Equity. With no multiplier data we leave SHER
+  // to the base resolver (the Phase-1 $0 gap).
+  const baseRate = input.rateOfRecord ?? phase1RateOfRecord
+  const sherRate = makeSherUsdRate(
+    buildSherMultiplierTimeline(
+      input.safeDepositRouterEvents?.safeMultiplierUpdateds?.items,
+      input.safeDepositRouterEvents?.safeDeposits?.items
+    )
+  )
+  const rateOfRecord: UsdRateOfRecord = sherRate
+    ? (tokenId, at) => (tokenId === 'sher' ? sherRate(at) : baseRate(tokenId, at))
+    : baseRate
+
   const ctx = buildMapperContext({
     contracts: input.contracts,
     internalAddresses,
     founderAddresses: input.founderAddresses,
     feeCollectorAddress: input.feeCollectorAddress,
     sherTokenAddress: input.sherTokenAddress,
-    rateOfRecord: input.rateOfRecord ?? phase1RateOfRecord
+    rateOfRecord
   })
 
   const rawEntries = buildCncLedgerEntries(toLedgerSources(input), ctx, {
