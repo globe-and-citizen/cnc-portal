@@ -86,6 +86,17 @@ export function entryLabel(entry: LedgerEntry): string {
   return ENTRY_LABEL[entry.useCase] ?? entry.memo
 }
 
+/**
+ * Badge classes for a ledger entry's "Action" pill. Normally one colour per
+ * category, but the two payroll use cases are split so the journal shows at a
+ * glance whether a wage was merely **accrued** (submitted, still owed — amber)
+ * or **settled** (withdrawn, actually paid out — green).
+ */
+export function badgeClassOf(entry: LedgerEntry): string {
+  if (entry.useCase === 'UC-CASH-03') return 'bg-success/10 text-success'
+  return CATEGORY_BADGE[categoryOf(entry)]
+}
+
 /** The display category a ledger entry falls under, from its use case. */
 export function categoryOf(entry: LedgerEntry): LedgerCategory {
   const byUseCase: Partial<Record<UseCase, LedgerCategory>> = {
@@ -114,7 +125,7 @@ function rowsOf(entry: LedgerEntry): LedgerRow[] {
     date: fmtDateTime(entry.timestamp),
     label: entryLabel(entry),
     cat,
-    catClass: CATEGORY_BADGE[cat]
+    catClass: badgeClassOf(entry)
   }
   // Memo-only posting (Default-D): a single dimmed share-count line, no money.
   if (!entry.debit && !entry.credit) {
