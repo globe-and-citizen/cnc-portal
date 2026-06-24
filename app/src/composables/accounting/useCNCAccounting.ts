@@ -18,6 +18,7 @@
  */
 import { computed, toValue, type ComputedRef, type MaybeRefOrGetter } from 'vue'
 import { useQuery as useApolloQuery } from '@vue/apollo-composable'
+import type { DocumentNode } from 'graphql'
 import { type Address } from 'viem'
 import { FEE_COLLECTOR_ADDRESS, GRAPHQL_POLL_INTERVAL } from '@/constant'
 import type { ContractType } from '@/types/teamContract'
@@ -96,37 +97,31 @@ export function useCNCAccounting(
     () => team.data.value?.safeAddress ?? contracts.value.find((c) => c.type === 'Safe')?.address
   )
 
-  // ── Ponder: one event query per deployed contract, enabled only when present ──
-  const ponderOptions = (address: ComputedRef<string>) => () => ({
-    enabled: Boolean(address.value),
-    pollInterval: GRAPHQL_POLL_INTERVAL,
-    fetchPolicy: 'cache-and-network' as const
-  })
+  // ── Ponder: one event query per deployed contract, enabled only when present.
+  // Variables/options follow the app's established Apollo pattern (reactive refs
+  // inside the objects, as in BankTransactions.vue) so the query fires once the
+  // contract address resolves from the team. ──
+  const ponderQuery = <T>(document: DocumentNode, address: ComputedRef<string>) =>
+    useApolloQuery<T>(
+      document,
+      { contractAddress: address, limit: EVENT_LIMIT },
+      {
+        enabled: computed(() => Boolean(address.value)),
+        pollInterval: GRAPHQL_POLL_INTERVAL,
+        fetchPolicy: 'cache-and-network'
+      }
+    )
 
-  const bank = useApolloQuery<BankEventsQuery>(
-    GET_BANK_EVENTS,
-    () => ({ contractAddress: bankAddress.value, limit: EVENT_LIMIT }),
-    ponderOptions(bankAddress)
-  )
-  const cashRem = useApolloQuery<CashRemunerationEventsQuery>(
+  const bank = ponderQuery<BankEventsQuery>(GET_BANK_EVENTS, bankAddress)
+  const cashRem = ponderQuery<CashRemunerationEventsQuery>(
     GET_CASH_REMUNERATION_EVENTS,
-    () => ({ contractAddress: cashRemAddress.value, limit: EVENT_LIMIT }),
-    ponderOptions(cashRemAddress)
+    cashRemAddress
   )
-  const expense = useApolloQuery<ExpenseEventsQuery>(
-    GET_EXPENSE_EVENTS,
-    () => ({ contractAddress: expenseAddress.value, limit: EVENT_LIMIT }),
-    ponderOptions(expenseAddress)
-  )
-  const investor = useApolloQuery<InvestorEventsQuery>(
-    GET_INVESTOR_EVENTS,
-    () => ({ contractAddress: investorAddress.value, limit: EVENT_LIMIT }),
-    ponderOptions(investorAddress)
-  )
-  const router = useApolloQuery<SafeDepositRouterEventsQuery>(
+  const expense = ponderQuery<ExpenseEventsQuery>(GET_EXPENSE_EVENTS, expenseAddress)
+  const investor = ponderQuery<InvestorEventsQuery>(GET_INVESTOR_EVENTS, investorAddress)
+  const router = ponderQuery<SafeDepositRouterEventsQuery>(
     GET_SAFE_DEPOSIT_ROUTER_EVENTS,
-    () => ({ contractAddress: routerAddress.value, limit: EVENT_LIMIT }),
-    ponderOptions(routerAddress)
+    routerAddress
   )
 
   // ── Backend DB: weekly claims + approved expenses (off-chain enrichment) ──

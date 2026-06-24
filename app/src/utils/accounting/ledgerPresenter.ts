@@ -162,7 +162,7 @@ export function filterLedgerEntries(
   return filterByPeriod(entries, from, to)
     .filter((e) => filter === 'All' || categoryOf(e) === filter)
     .slice()
-    .sort((a, b) => a.timestamp - b.timestamp)
+    .sort((a, b) => b.timestamp - a.timestamp) // most recent first
 }
 
 /** Flatten postings into the table's two-rows-per-entry shape. */
