@@ -297,6 +297,13 @@ const items = computed<NavigationMenuItem[]>(() => [
           name: 'fixed-return',
           params: { id: teamStore.currentTeamId || '1' }
         }
+      },
+      {
+        label: 'Browse & Lend',
+        to: {
+          name: 'lender-marketplace',
+          params: { id: teamStore.currentTeamId || '1' }
+        }
       }
     ]
   }
