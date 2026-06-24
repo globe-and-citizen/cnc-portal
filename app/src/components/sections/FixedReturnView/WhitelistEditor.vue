@@ -111,15 +111,14 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { watchDebounced } from '@vueuse/core'
-import type { Member } from '@/types'
+import type { Member, WhitelistEntry } from '@/types'
 import UserComponent from '@/components/UserComponent.vue'
 import SelectMemberResults from '@/components/utils/SelectMemberResults.vue'
 import { useTeamStore } from '@/stores/teamStore'
-import { resolveUser, filter } from '@/utils'
-import { sumWhitelistAmount } from './offeringForm'
+import { resolveUser, filter, sumWhitelistAmount } from '@/utils'
 
 const props = defineProps<{
-  whitelist: { username: string; address: string; amount: number | null }[]
+  whitelist: WhitelistEntry[]
   defaultAmountLabel: string
   defaultAmount: number | null
   principalTarget: number

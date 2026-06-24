@@ -182,7 +182,9 @@ import { computed } from 'vue'
 import StatusBadge from './StatusBadge.vue'
 import UserComponent from '@/components/UserComponent.vue'
 import ProgressGauge from './ProgressGauge.vue'
-import { addTerm, fmtDate, money as moneyFmt, type OfferingSummary } from './offeringForm'
+import { expectedReturn, maturityLabel, percentOf } from '@/utils'
+import { money as moneyFmt } from '@/utils/accountingDemo'
+import type { OfferingSummary } from '@/types'
 
 const props = defineProps<{ offering: OfferingSummary }>()
 defineEmits<{ back: [] }>()
@@ -191,10 +193,9 @@ type Status = 'overdue' | 'partial' | 'completed'
 
 // Bullet repayment: principal + interest repaid as one combined payment per lender,
 // due at the offering's maturity (start date + term) — no interim schedule.
-const maturityFmt = computed(() => {
-  const start = new Date(props.offering.startDate + 'T00:00:00')
-  return fmtDate(addTerm(start, props.offering.term, 'months').toISOString().slice(0, 10))
-})
+const maturityFmt = computed(() =>
+  maturityLabel(props.offering.startDate, props.offering.term, 'months')
+)
 
 // paidRatio: 0–1 share of the bullet repayment settled so far. The admin can repay a
 // lender gradually rather than all at once, so this isn't just paid-or-not.
@@ -215,10 +216,10 @@ function statusFor(paidRatio: number): Status {
 
 const partners = computed(() =>
   partnersRaw.map((p) => {
-    const expected = p.principal * (1 + props.offering.rate / 100)
+    const expected = expectedReturn(p.principal, props.offering.rate)
     const paid = expected * p.paidRatio
     const status = statusFor(p.paidRatio)
-    const pct = expected ? Math.min(100, Math.round((paid / expected) * 100)) : 0
+    const pct = percentOf(paid, expected)
     const barColor = status === 'overdue' ? '#ff5630' : status === 'partial' ? '#ffab00' : '#00bf7a'
     return {
       name: p.name,
@@ -238,18 +239,17 @@ const partners = computed(() =>
 
 const totalPrincipal = computed(() => partnersRaw.reduce((a, p) => a + p.principal, 0))
 const totalExpected = computed(() =>
-  partnersRaw.reduce((a, p) => a + p.principal * (1 + props.offering.rate / 100), 0)
+  partnersRaw.reduce((a, p) => a + expectedReturn(p.principal, props.offering.rate), 0)
 )
 const totalPaid = computed(() =>
-  partnersRaw.reduce((a, p) => a + p.principal * (1 + props.offering.rate / 100) * p.paidRatio, 0)
+  partnersRaw.reduce(
+    (a, p) => a + expectedReturn(p.principal, props.offering.rate) * p.paidRatio,
+    0
+  )
 )
 
-const fundingPct = computed(() =>
-  props.offering.target ? (props.offering.raised / props.offering.target) * 100 : 0
-)
-const repaymentPct = computed(() =>
-  totalExpected.value ? (totalPaid.value / totalExpected.value) * 100 : 0
-)
+const fundingPct = computed(() => percentOf(props.offering.raised, props.offering.target))
+const repaymentPct = computed(() => percentOf(totalPaid.value, totalExpected.value))
 
 const statCards = computed(() => [
   {

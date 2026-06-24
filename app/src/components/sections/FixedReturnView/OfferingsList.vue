@@ -100,7 +100,8 @@
 
 <script setup lang="ts">
 import StatusBadge from './StatusBadge.vue'
-import { moneyShort, type OfferingSummary } from './offeringForm'
+import { moneyShort, percentOf } from '@/utils'
+import type { OfferingSummary } from '@/types'
 
 defineEmits<{ manage: [offering: OfferingSummary] }>()
 
@@ -141,6 +142,6 @@ const offerings: OfferingSummary[] = [
 ]
 
 function pct(o: OfferingSummary): number {
-  return Math.min(100, Math.round((o.raised / o.target) * 100))
+  return percentOf(o.raised, o.target)
 }
 </script>

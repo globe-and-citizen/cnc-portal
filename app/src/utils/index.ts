@@ -1,3 +1,4 @@
+export * from './offeringUtil'
 export * from './errorUtil'
 export * from './classifyError'
 export * from './generalUtil'

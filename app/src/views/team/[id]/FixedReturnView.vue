@@ -20,13 +20,13 @@
     </div>
 
     <CreateOfferingForm v-if="showCreateForm" @close="showCreateForm = false" />
-    <AdminDashboard v-else />
+    <OfferingsDashboard v-else />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import AdminDashboard from '@/components/sections/FixedReturnView/AdminDashboard.vue'
+import OfferingsDashboard from '@/components/sections/FixedReturnView/OfferingsDashboard.vue'
 import CreateOfferingForm from '@/components/sections/FixedReturnView/CreateOfferingForm.vue'
 
 const showCreateForm = ref(true)

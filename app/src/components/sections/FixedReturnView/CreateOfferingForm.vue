@@ -71,7 +71,8 @@ import StepIndicator from './StepIndicator.vue'
 import OfferingBasicsStep from './OfferingBasicsStep.vue'
 import OfferingTermsStep from './OfferingTermsStep.vue'
 import OfferingAccessStep from './OfferingAccessStep.vue'
-import { fmtDate, addTerm, termLabel, type OfferingForm } from './offeringForm'
+import { expectedReturn, formatOfferingDate, maturityLabel, termLabel } from '@/utils'
+import type { OfferingForm, WhitelistEntry } from '@/types'
 import { SUPPORTED_TOKENS } from '@/constant'
 
 const emit = defineEmits<{ close: [] }>()
@@ -120,13 +121,13 @@ const form = reactive<OfferingForm>({
   token: SUPPORTED_TOKENS[0]?.symbol
 })
 
-const whitelist = ref([
-  { username: '@liangw', address: '0x4D21…A8e1', amount: 30000 as number | null },
-  { username: '@priyan', address: '0xB1f7…3D92', amount: null as number | null }
+const whitelist = ref<WhitelistEntry[]>([
+  { username: '@liangw', address: '0x4D21…A8e1', amount: 30000 },
+  { username: '@priyan', address: '0xB1f7…3D92', amount: null }
 ])
 
-const totalInterest = computed(() => form.principal * (form.rate / 100))
-const totalReturn = computed(() => form.principal + totalInterest.value)
+const totalReturn = computed(() => expectedReturn(form.principal, form.rate))
+const totalInterest = computed(() => totalReturn.value - form.principal)
 
 const defaultAmountLabel = computed(() =>
   form.capOn ? `${Math.round(form.cap).toLocaleString('en-US')} ${form.token}` : 'No cap'
@@ -141,12 +142,8 @@ const accessLabel = computed(() =>
 )
 const accessDot = computed(() => (form.access === 'whitelist' ? '#3366ff' : '#00bf7a'))
 
-const startFmt = computed(() => fmtDate(form.startDate))
-const maturityFmt = computed(() => {
-  const d = new Date(form.startDate + 'T00:00:00')
-  if (isNaN(d.getTime())) return '—'
-  return fmtDate(addTerm(d, form.termValue, form.termUnit).toISOString().slice(0, 10))
-})
+const startFmt = computed(() => formatOfferingDate(form.startDate))
+const maturityFmt = computed(() => maturityLabel(form.startDate, form.termValue, form.termUnit))
 
 function addWhitelist(username: string, address: string, amount: number | null) {
   whitelist.value.push({ username, address, amount })
