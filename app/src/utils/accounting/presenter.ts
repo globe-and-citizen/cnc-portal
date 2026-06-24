@@ -39,6 +39,15 @@ export function fmtDate(timestamp: number): string {
   return dayjs(timestamp * 1000).format('MMM D, YYYY')
 }
 
+/**
+ * Unix-seconds → `Jan 8, 2026, 14:05:32` — date **with time of day**, so the
+ * ledger keeps Ponder's per-second precision (events in the same day stay
+ * distinguishable and read in true chronological order).
+ */
+export function fmtDateTime(timestamp: number): string {
+  return dayjs(timestamp * 1000).format('MMM D, YYYY, HH:mm:ss')
+}
+
 // ── Display shapes ──────────────────────────────────────────────────────────
 
 export interface StatementLineView {

@@ -4,7 +4,7 @@
  * category/date filter. Split from {@link ./presenter} (which handles the
  * statement-level views) to keep each module focused. Pure and unit-testable.
  */
-import { money, fmtDate, filterByPeriod } from './presenter'
+import { money, fmtDateTime, filterByPeriod } from './presenter'
 import type { LedgerEntry, UseCase } from './ledgerEntry'
 
 export type LedgerCategory =
@@ -109,7 +109,7 @@ function rowsOf(entry: LedgerEntry): LedgerRow[] {
   const cat = categoryOf(entry)
   const head = {
     isFirst: true,
-    date: fmtDate(entry.timestamp),
+    date: fmtDateTime(entry.timestamp),
     label: entryLabel(entry),
     cat,
     catClass: CATEGORY_BADGE[cat]

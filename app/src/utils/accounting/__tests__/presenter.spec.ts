@@ -4,6 +4,7 @@ import { assembleCncAccounting, type CncAccounting } from '@/utils/accounting/as
 import {
   money,
   fmtDate,
+  fmtDateTime,
   presentSummaryCards,
   presentBanner,
   presentIncome,
@@ -83,6 +84,12 @@ describe('formatters', () => {
 
   it('fmtDate renders a unix-seconds timestamp', () => {
     expect(fmtDate(Math.floor(Date.parse('2026-03-01T00:00:00Z') / 1000))).toContain('2026')
+  })
+
+  it('fmtDateTime keeps the time of day (per-second precision)', () => {
+    const out = fmtDateTime(Math.floor(Date.parse('2026-03-01T14:05:32Z') / 1000))
+    expect(out).toContain('2026')
+    expect(out).toMatch(/\d{2}:\d{2}:\d{2}/) // HH:mm:ss present
   })
 })
 
