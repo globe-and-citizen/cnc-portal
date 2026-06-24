@@ -58,4 +58,37 @@ describe('toSafeTransferRows', () => {
   it('tolerates a null transfer list', () => {
     expect(toSafeTransferRows(null, ROUTER)).toEqual([])
   })
+
+  it('excludes an inflow that matches a router deposit by (depositor, amount)', () => {
+    // The router forwards an investment to the Safe with `from = the depositor`,
+    // so it is not caught by the router-address check — it must be matched and
+    // dropped by (depositor, amount), since UC-SDR-01 books it as Investor Equity.
+    const investorDeposit: SafeIncomingTransfer = {
+      type: 'ERC20_TRANSFER',
+      executionDate: '2026-03-05T00:00:00Z',
+      blockNumber: 5,
+      transactionHash: '0xhash5',
+      to: ADDR.safe,
+      from: ADDR.client,
+      value: '7000000',
+      tokenAddress: ADDR.usdcToken
+    }
+    const deposits = [
+      {
+        id: 'd1',
+        contractAddress: ROUTER,
+        depositor: ADDR.client,
+        token: ADDR.usdcToken,
+        tokenAmount: '7000000',
+        sherAmount: '14000000',
+        timestamp: 5
+      }
+    ]
+
+    const withoutDeposits = toSafeTransferRows([investorDeposit], ROUTER)
+    expect(withoutDeposits).toHaveLength(1) // no router data → kept (would be misread as a client payment)
+
+    const withDeposits = toSafeTransferRows([investorDeposit], ROUTER, deposits)
+    expect(withDeposits).toHaveLength(0) // matched the router deposit → excluded
+  })
 })

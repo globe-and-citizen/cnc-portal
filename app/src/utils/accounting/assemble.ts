@@ -22,7 +22,11 @@ import type { SafeIncomingTransfer } from '@/types/safe'
 import type { BankEventsQuery } from '@/types/ponder/bank'
 import type { CashRemunerationEventsQuery } from '@/types/ponder/cash-remuneration'
 import type { ExpenseEventsQuery } from '@/types/ponder/expense'
-import type { InvestorEventsQuery, SafeDepositRouterEventsQuery } from '@/types/ponder/investor'
+import type {
+  InvestorEventsQuery,
+  SafeDepositRouterEventsQuery,
+  SafeDepositRow
+} from '@/types/ponder/investor'
 import { collectInternalAddresses } from '@/utils/accounting/internalAddresses'
 import { buildMapperContext } from '@/utils/accounting/mappers/context'
 import { buildCncLedgerEntries, type LedgerSources } from '@/utils/accounting/mappers'
@@ -98,21 +102,53 @@ function sameAddress(a: string | null | undefined, b: string | null | undefined)
   return !!a && !!b && isAddress(a) && isAddress(b) && getAddress(a) === getAddress(b)
 }
 
+/** `${depositor}|${amount}` — keys a Safe inflow to the router deposit that backs it. */
+function routedKey(depositor: string, amount: string): string {
+  return `${depositor.toLowerCase()}|${amount}`
+}
+
+/**
+ * A consumable multiset of the (depositor, deposited-amount) pairs that arrived
+ * through the SafeDepositRouter, so the matching Safe inflows can be excluded.
+ */
+function buildRoutedDeposits(
+  deposits: readonly SafeDepositRow[] | null | undefined
+): Map<string, number> {
+  const counts = new Map<string, number>()
+  for (const d of deposits ?? []) {
+    const key = routedKey(d.depositor, d.tokenAmount)
+    counts.set(key, (counts.get(key) ?? 0) + 1)
+  }
+  return counts
+}
+
 /**
  * Adapt the Safe Transaction Service incoming transfers into the mapper's
  * {@link SafeTransferRow} shape. ERC-721 moves are dropped (no cash); the ISO
- * `executionDate` becomes Unix seconds. Transfers originating from the
- * SafeDepositRouter are excluded — their cash is booked from the router event
- * (UC-SDR-01) and re-booking the Safe leg would double-count it.
+ * `executionDate` becomes Unix seconds.
+ *
+ * Investments routed through the SafeDepositRouter also land in the Safe and are
+ * booked from the router event (UC-SDR-01 → Investor Equity), so the matching
+ * Safe inflow is excluded to avoid double-counting it **and** misreading it as a
+ * client payment (Service Revenue). The router forwards funds with `from = the
+ * depositor` (not the router address), so excluding only `from === router` is not
+ * enough: we also drop inflows that match a router deposit by (depositor, amount).
  */
 export function toSafeTransferRows(
   transfers: readonly SafeIncomingTransfer[] | null | undefined,
-  routerAddress?: Address | string | null
+  routerAddress?: Address | string | null,
+  routerDeposits?: readonly SafeDepositRow[] | null
 ): SafeTransferRow[] {
+  const routed = buildRoutedDeposits(routerDeposits)
   const rows: SafeTransferRow[] = []
   transfers?.forEach((t, index) => {
     if (!isMonetaryTransfer(t)) return
     if (routerAddress && sameAddress(t.from, routerAddress)) return
+    const remaining = routed.get(routedKey(t.from, t.value)) ?? 0
+    if (remaining > 0) {
+      routed.set(routedKey(t.from, t.value), remaining - 1) // routed investment — booked by UC-SDR-01
+      return
+    }
     rows.push({
       id: `${t.transactionHash}-${index}`,
       from: t.from,
@@ -184,7 +220,11 @@ function toLedgerSources(input: CncAccountingInput): LedgerSources {
   if (input.safeAddress) {
     sources.safe = {
       safeAddress: input.safeAddress,
-      transfers: toSafeTransferRows(input.safeTransfers, input.safeDepositRouterAddress)
+      transfers: toSafeTransferRows(
+        input.safeTransfers,
+        input.safeDepositRouterAddress,
+        input.safeDepositRouterEvents?.safeDeposits?.items
+      )
     }
   }
 
