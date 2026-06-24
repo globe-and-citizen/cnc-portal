@@ -98,9 +98,7 @@ export function netBalanceByAccount(entries: readonly LedgerEntry[]): Map<Accoun
  * full precision (rounding each account then summing can drift a cent and flag a
  * balanced book "out of balance").
  */
-export function netBalanceByAccountRaw(
-  entries: readonly LedgerEntry[]
-): Map<AccountName, number> {
+export function netBalanceByAccountRaw(entries: readonly LedgerEntry[]): Map<AccountName, number> {
   const net = new Map<AccountName, number>()
   const add = (account: AccountName, signed: number): void => {
     net.set(account, (net.get(account) ?? 0) + signed)
