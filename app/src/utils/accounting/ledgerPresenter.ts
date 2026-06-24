@@ -60,6 +60,31 @@ export interface LedgerView {
   entryCount: number
 }
 
+/**
+ * Normalized accounting-entry label per use case — shown in the ledger's
+ * "Transaction" column instead of the raw event memo, so each row reads as the
+ * journal entry it realises (catalogue §5 / spec §4).
+ */
+const ENTRY_LABEL: Record<UseCase, string> = {
+  'UC-BANK-01': 'Owner capital contribution',
+  'UC-BANK-02': 'Service revenue',
+  'UC-BANK-03': 'Treasury funding',
+  'UC-SDR-01': 'Investor contribution',
+  'UC-CASH-03': 'Wage settlement',
+  'UC-EXP-01': 'Operating expense',
+  'UC-INV-01': 'Dividend paid',
+  'DEFAULT-D': 'Share issuance',
+  FEE: 'Protocol fee',
+  INTERNAL: 'Internal transfer',
+  'CASH-IN': 'Cash receipt',
+  'CASH-OUT': 'Cash payment'
+}
+
+/** The accounting-entry label a ledger row shows (falls back to the memo). */
+export function entryLabel(entry: LedgerEntry): string {
+  return ENTRY_LABEL[entry.useCase] ?? entry.memo
+}
+
 /** The display category a ledger entry falls under, from its use case. */
 export function categoryOf(entry: LedgerEntry): LedgerCategory {
   const byUseCase: Partial<Record<UseCase, LedgerCategory>> = {
@@ -85,7 +110,7 @@ function rowsOf(entry: LedgerEntry): LedgerRow[] {
   const head = {
     isFirst: true,
     date: fmtDate(entry.timestamp),
-    label: entry.memo,
+    label: entryLabel(entry),
     cat,
     catClass: CATEGORY_BADGE[cat]
   }
@@ -123,6 +148,33 @@ function rowsOf(entry: LedgerEntry): LedgerRow[] {
   return rows
 }
 
+/**
+ * The ledger entries narrowed by category + inclusive date window, sorted
+ * chronologically. Split out so a paginated view can slice by **entry** (not by
+ * row — a posting spans two rows) before flattening into table rows.
+ */
+export function filterLedgerEntries(
+  entries: readonly LedgerEntry[],
+  filter: string,
+  from?: Date | null,
+  to?: Date | null
+): LedgerEntry[] {
+  return filterByPeriod(entries, from, to)
+    .filter((e) => filter === 'All' || categoryOf(e) === filter)
+    .slice()
+    .sort((a, b) => a.timestamp - b.timestamp)
+}
+
+/** Flatten postings into the table's two-rows-per-entry shape. */
+export function ledgerRows(entries: readonly LedgerEntry[]): LedgerRow[] {
+  return entries.flatMap(rowsOf)
+}
+
+/** Σ of the debit legs — the "Total movements" figure, formatted as USD. */
+export function ledgerTotal(entries: readonly LedgerEntry[]): string {
+  return money(entries.reduce((sum, e) => sum + (e.debit ? e.amountUsd : 0), 0))
+}
+
 /** General-ledger rows narrowed by category + inclusive date window. */
 export function presentLedger(
   entries: readonly LedgerEntry[],
@@ -130,11 +182,6 @@ export function presentLedger(
   from?: Date | null,
   to?: Date | null
 ): LedgerView {
-  const shown = filterByPeriod(entries, from, to)
-    .filter((e) => filter === 'All' || categoryOf(e) === filter)
-    .slice()
-    .sort((a, b) => a.timestamp - b.timestamp)
-  const rows = shown.flatMap(rowsOf)
-  const total = shown.reduce((sum, e) => sum + (e.debit ? e.amountUsd : 0), 0)
-  return { rows, total: money(total), entryCount: shown.length }
+  const shown = filterLedgerEntries(entries, filter, from, to)
+  return { rows: ledgerRows(shown), total: ledgerTotal(shown), entryCount: shown.length }
 }

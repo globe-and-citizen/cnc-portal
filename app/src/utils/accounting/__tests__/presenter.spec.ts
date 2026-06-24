@@ -165,6 +165,11 @@ describe('presentLedger', () => {
     expect(ledger.entryCount).toBe(1)
     expect(ledger.rows[0].cat).toBe('Revenue')
   })
+
+  it('labels the transaction by its accounting entry, not the raw memo', () => {
+    const ledger = presentLedger(books().entries, 'Revenue')
+    expect(ledger.rows[0].label).toBe('Service revenue') // normalized UC-BANK-02 label
+  })
 })
 
 describe('filterByPeriod', () => {

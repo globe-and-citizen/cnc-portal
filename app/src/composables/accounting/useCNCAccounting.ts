@@ -34,6 +34,7 @@ import { useGetTeamQuery } from '@/queries/team.queries'
 import { useGetTeamWeeklyClaimsQuery } from '@/queries/weeklyClaim.queries'
 import { useGetExpensesQuery } from '@/queries/expense.queries'
 import { useGetSafeIncomingTransfersQuery } from '@/queries/safe.queries'
+import { useCurrencyStore } from '@/stores/currencyStore'
 import {
   assembleCncAccounting,
   type CncAccounting,
@@ -145,6 +146,14 @@ export function useCNCAccounting(
     return owner ? [owner] : []
   })
 
+  // USD price-of-record: the caller's resolver, else the app's live prices from
+  // the currency store (CoinGecko). USDC is pegged $1 by `toUsd`, so this only
+  // runs for the non-pegged tokens (native POL/ETH, SHER) — which otherwise show
+  // as $0 under the Phase-1 default.
+  const currencyStore = useCurrencyStore()
+  const rateOfRecord: UsdRateOfRecord =
+    options.rateOfRecord ?? ((tokenId) => currencyStore.getTokenPrice(tokenId, false, 'usd'))
+
   const accounting = computed<CncAccounting>(() => {
     const input: CncAccountingInput = {
       contracts: contracts.value,
@@ -153,7 +162,7 @@ export function useCNCAccounting(
       feeCollectorAddress: FEE_COLLECTOR_ADDRESS,
       sherTokenAddress: options.sherTokenAddress ?? null,
       safeDepositRouterAddress: routerAddress.value || null,
-      rateOfRecord: options.rateOfRecord,
+      rateOfRecord,
       bankEvents: bank.result.value,
       cashRemunerationEvents: cashRem.result.value,
       expenseEvents: expense.result.value,
