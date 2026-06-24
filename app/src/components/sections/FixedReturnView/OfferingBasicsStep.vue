@@ -44,7 +44,7 @@
           data-test="offering-rate-input"
           @update:model-value="(v) => (form.rate = Number(v))"
         >
-          <template #trailing><span class="text-muted text-sm font-semibold">% / yr</span></template>
+          <template #trailing><span class="text-muted text-sm font-semibold">%</span></template>
         </UInput>
       </UFormField>
     </div>
@@ -55,7 +55,7 @@
 import { ref, computed } from 'vue'
 import { z } from 'zod'
 import { SUPPORTED_TOKENS } from '@/constant'
-import type { OfferingForm } from './offeringForm'
+import type { OfferingForm } from '@/types'
 
 const form = defineModel<OfferingForm>('form', { required: true })
 

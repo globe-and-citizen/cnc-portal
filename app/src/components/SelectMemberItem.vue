@@ -1,12 +1,14 @@
 <template>
   <div ref="clickOutside" class="relative w-full">
-    <div class="flex items-center gap-3">
-      <span class="text-sm font-bold whitespace-nowrap shrink-0">Select a User</span>
-      <div
-        class="border-default flex h-12 flex-1 cursor-pointer items-center gap-2 rounded-md border bg-white px-3 dark:bg-gray-900"
-        data-test="select-member-item-trigger"
-        @click="toggleOpen"
-      >
+    <!-- Trigger with selected user avatar + name -->
+    <div class="flex justify-end">
+      <span class="text-xl font-bold">Select a User</span>
+    </div>
+    <div
+      class="border-default flex h-12 cursor-pointer items-center gap-2 rounded-md border bg-white px-3 dark:bg-gray-900"
+      data-test="select-member-item-trigger"
+      @click="toggleOpen"
+    >
       <div v-if="selectedUser" class="flex items-center gap-2">
         <UserComponent
           class="flex items-center gap-2"
@@ -20,7 +22,6 @@
         class="ml-auto h-4 w-4 text-gray-500 transition-transform duration-400"
         :class="isOpen.show ? 'rotate-180' : 'rotate-0'"
       />
-      </div>
     </div>
 
     <!-- Dropdown -->
@@ -77,11 +78,9 @@ import type { Address } from 'viem'
 
 interface Props {
   address: Address
-  navigateOnSelect?: boolean
 }
 
 const props = defineProps<Props>()
-const emit = defineEmits<{ select: [member: User] }>()
 
 const teamStore = useTeamStore()
 const router = useRouter()
@@ -126,18 +125,20 @@ const toggleOpen = () => {
 }
 
 const select = (member: User) => {
+  //   const memberAddress = member.address ?? ''
   search.value = ''
   close()
-  emit('select', member)
 
-  if (props.navigateOnSelect !== false) {
-    const teamId = teamStore.currentTeamId
-    if (teamId) {
-      router.push({
-        name: 'payroll-history',
-        params: { id: teamId, memberAddress: member.address }
-      })
-    }
+  // Navigate to the selected member's claim history
+  const teamId = teamStore.currentTeamId
+  if (teamId) {
+    router.push({
+      name: 'payroll-history',
+      params: {
+        id: teamId,
+        memberAddress: member.address
+      }
+    })
   }
 }
 

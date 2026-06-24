@@ -2,7 +2,8 @@
   <UForm ref="formRef" :schema="schema" :state="state" class="flex flex-col gap-5">
     <section class="flex flex-col gap-2">
       <div class="text-xs font-bold tracking-widest text-[#9aaba2] uppercase">
-        Who can lend <span class="font-semibold tracking-normal text-[#bcc9c2] normal-case">· optional</span>
+        Who can lend
+        <span class="font-semibold tracking-normal text-[#bcc9c2] normal-case">· optional</span>
       </div>
       <div class="grid grid-cols-2 gap-3">
         <button
@@ -39,9 +40,15 @@
     </section>
 
     <section class="flex flex-col gap-2">
-      <div class="text-xs font-bold tracking-widest text-[#9aaba2] uppercase">Collateral / fallback</div>
-      <div class="flex items-center gap-3 rounded-xl border border-[#d6f1e6] bg-[#f0fbf6] px-3 py-2">
-        <div class="bg-primary flex h-8 w-8 flex-none items-center justify-center rounded-lg text-white">
+      <div class="text-xs font-bold tracking-widest text-[#9aaba2] uppercase">
+        Collateral / fallback
+      </div>
+      <div
+        class="flex items-center gap-3 rounded-xl border border-[#d6f1e6] bg-[#f0fbf6] px-3 py-2"
+      >
+        <div
+          class="bg-primary flex h-8 w-8 flex-none items-center justify-center rounded-lg text-white"
+        >
           <UIcon name="heroicons:shield-check" class="size-4" />
         </div>
         <div class="flex-1">
@@ -49,7 +56,10 @@
             None — unsecured
             <UBadge color="success" variant="soft" size="xs">MVP</UBadge>
           </div>
-          <div class="text-xs text-[#5b6e64]">Backed by the signed agreement only. Project assets &amp; revenue rights arrive post-MVP.</div>
+          <div class="text-xs text-[#5b6e64]">
+            Backed by the signed agreement only. Project assets &amp; revenue rights arrive
+            post-MVP.
+          </div>
         </div>
       </div>
     </section>
@@ -60,13 +70,13 @@
 import { ref, computed } from 'vue'
 import { z } from 'zod'
 import WhitelistEditor from './WhitelistEditor.vue'
-import type { OfferingForm } from './offeringForm'
-import { pickerClass, sumWhitelistAmount } from './offeringForm'
+import type { OfferingForm, WhitelistEntry } from '@/types'
+import { pickerClass, sumWhitelistAmount } from '@/utils'
 
 const form = defineModel<OfferingForm>('form', { required: true })
 
 const props = defineProps<{
-  whitelist: { username: string; address: string; amount: number | null }[]
+  whitelist: WhitelistEntry[]
   defaultAmountLabel: string
 }>()
 
@@ -95,10 +105,13 @@ const schema = computed(() =>
         })
       )
     })
-    .refine((data) => data.access !== 'whitelist' || data.whitelist.every((w) => w.amount != null), {
-      message: 'Set an amount for every whitelisted lender before publishing',
-      path: ['whitelist']
-    })
+    .refine(
+      (data) => data.access !== 'whitelist' || data.whitelist.every((w) => w.amount != null),
+      {
+        message: 'Set an amount for every whitelisted lender before publishing',
+        path: ['whitelist']
+      }
+    )
     .refine(
       (data) => {
         const cap = capAmount.value
@@ -110,7 +123,8 @@ const schema = computed(() =>
       }
     )
     .refine(
-      (data) => data.access !== 'whitelist' || sumWhitelistAmount(data.whitelist) <= form.value.principal,
+      (data) =>
+        data.access !== 'whitelist' || sumWhitelistAmount(data.whitelist) <= form.value.principal,
       {
         message: 'Whitelisted allocations exceed the principal target',
         path: ['whitelist']

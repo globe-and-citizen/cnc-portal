@@ -1,13 +1,15 @@
 <template>
-  <div class="flex items-center gap-1 px-6 py-4 border-b border-[#eef3f0]">
+  <div class="flex items-center gap-1 border-b border-[#eef3f0] px-6 py-4">
     <template v-for="(label, i) in steps" :key="label">
-      <div class="flex items-center flex-1 last:flex-none" data-test="step-indicator">
+      <div class="flex flex-1 items-center last:flex-none" data-test="step-indicator">
         <span :class="dotClass(i)">
           <UIcon v-if="i < current" name="heroicons:check" class="size-3.5" />
           <span v-else>{{ i + 1 }}</span>
         </span>
-        <span class="text-xs font-semibold ml-2 whitespace-nowrap" :class="labelClass(i)">{{ label }}</span>
-        <span v-if="i < steps.length - 1" class="flex-1 h-px bg-[#e6efe9] mx-3" />
+        <span class="ml-2 text-xs font-semibold whitespace-nowrap" :class="labelClass(i)">{{
+          label
+        }}</span>
+        <span v-if="i < steps.length - 1" class="mx-3 h-px flex-1 bg-[#e6efe9]" />
       </div>
     </template>
   </div>

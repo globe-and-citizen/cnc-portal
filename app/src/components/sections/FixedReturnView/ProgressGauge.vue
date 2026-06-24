@@ -1,8 +1,13 @@
 <template>
   <div :style="ringStyle">
-    <div class="bg-white flex flex-col items-center justify-center" :style="holeStyle">
-      <div class="font-extrabold tracking-tight text-[#0a7a52] leading-none" :style="{ fontSize: `${pctFontSize}px` }">{{ Math.round(clampedPercent) }}%</div>
-      <div class="text-[11px] text-[#9aaba2] mt-1">{{ label }}</div>
+    <div class="flex flex-col items-center justify-center bg-white" :style="holeStyle">
+      <div
+        class="leading-none font-extrabold tracking-tight text-[#0a7a52]"
+        :style="{ fontSize: `${pctFontSize}px` }"
+      >
+        {{ Math.round(clampedPercent) }}%
+      </div>
+      <div class="mt-1 text-[11px] text-[#9aaba2]">{{ label }}</div>
     </div>
   </div>
 </template>
