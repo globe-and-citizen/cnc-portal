@@ -17,16 +17,20 @@ export type LedgerCategory =
   | 'Dividend'
   | 'Memo'
 
-/** Soft badge classes per ledger category (static strings so Tailwind keeps them). */
+/**
+ * Soft badge classes per ledger category — one distinct theme colour each, so
+ * the "Action" column reads at a glance (static strings so Tailwind keeps them).
+ * Colours come from the project palette (see `assets/main.css`).
+ */
 export const CATEGORY_BADGE: Record<LedgerCategory, string> = {
-  Investment: 'bg-primary/10 text-primary',
-  Revenue: 'bg-success/10 text-success',
-  Trading: 'bg-info/10 text-info',
-  Transfer: 'bg-muted text-muted',
-  Payroll: 'bg-warning/10 text-warning',
-  Expense: 'bg-error/10 text-error',
-  Dividend: 'bg-warning/10 text-warning',
-  Memo: 'bg-muted text-dimmed'
+  Investment: 'bg-secondary/10 text-secondary', // capital in — blue
+  Revenue: 'bg-success/10 text-success', // income earned — green
+  Trading: 'bg-info/10 text-info', // market activity — cyan
+  Transfer: 'bg-neutral/10 text-neutral', // internal move — neutral
+  Payroll: 'bg-warning/10 text-warning', // wage accrued / owed — amber
+  Expense: 'bg-error/10 text-error', // cost out — red
+  Dividend: 'bg-primary/10 text-primary', // profit distribution — green
+  Memo: 'bg-muted text-dimmed' // share-count note — grey
 }
 
 /** Ledger filter categories shown as pills (in design order). */
@@ -93,7 +97,10 @@ export function entryLabel(entry: LedgerEntry): string {
  * or **settled** (withdrawn, actually paid out — green).
  */
 export function badgeClassOf(entry: LedgerEntry): string {
-  if (entry.useCase === 'UC-CASH-03') return 'bg-success/10 text-success'
+  // A settled wage (UC-CASH-03 — withdrawn / actually paid out) reads as cyan,
+  // distinct from a wage merely accrued (UC-CASH-02 — submitted, still owed),
+  // which keeps the category's amber. Every other entry takes its category colour.
+  if (entry.useCase === 'UC-CASH-03') return 'bg-accent/10 text-accent'
   return CATEGORY_BADGE[categoryOf(entry)]
 }
 

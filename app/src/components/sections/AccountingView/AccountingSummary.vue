@@ -38,7 +38,7 @@
         v-for="card in summaryCards"
         :key="card.label"
         class="border-default bg-default rounded-2xl border p-4.5 shadow-sm"
-        :class="{ 'border-t-primary border-t-[3px]': card.accent }"
+        :class="card.accent ? [card.accentClass, 'border-t-[3px]'] : ''"
         :data-test="`summary-${card.label}`"
       >
         <div class="flex items-center justify-between">
