@@ -51,7 +51,6 @@
       :title="form.title"
       :principal="form.principal"
       :rate="form.rate"
-      :annual-interest="annualInterest"
       :term-label="termLabel(form.termValue, form.termUnit)"
       :total-interest="totalInterest"
       :total-return="totalReturn"
@@ -72,7 +71,7 @@ import StepIndicator from './StepIndicator.vue'
 import OfferingBasicsStep from './OfferingBasicsStep.vue'
 import OfferingTermsStep from './OfferingTermsStep.vue'
 import OfferingAccessStep from './OfferingAccessStep.vue'
-import { fmtDate, addTerm, termToYears, termLabel, type OfferingForm } from './offeringForm'
+import { fmtDate, addTerm, termLabel, type OfferingForm } from './offeringForm'
 import { SUPPORTED_TOKENS } from '@/constant'
 
 const emit = defineEmits<{ close: [] }>()
@@ -126,10 +125,7 @@ const whitelist = ref([
   { username: '@priyan', address: '0xB1f7…3D92', amount: null as number | null }
 ])
 
-const annualInterest = computed(() => form.principal * (form.rate / 100))
-const totalInterest = computed(
-  () => annualInterest.value * termToYears(form.termValue, form.termUnit)
-)
+const totalInterest = computed(() => form.principal * (form.rate / 100))
 const totalReturn = computed(() => form.principal + totalInterest.value)
 
 const defaultAmountLabel = computed(() =>
