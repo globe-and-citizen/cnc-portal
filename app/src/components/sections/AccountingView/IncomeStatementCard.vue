@@ -45,9 +45,18 @@
         <span class="text-sm font-bold tabular-nums">{{ income.totalExpenses }}</span>
       </div>
 
-      <div class="bg-primary/5 mt-3 flex items-center justify-between rounded-xl px-4 py-3.5">
-        <span class="text-primary text-sm font-bold">Net income (profit)</span>
-        <span class="text-primary text-lg font-extrabold tabular-nums">{{ income.netIncome }}</span>
+      <div
+        class="mt-3 flex items-center justify-between rounded-xl px-4 py-3.5"
+        :class="income.netNegative ? 'bg-error/5' : 'bg-primary/5'"
+      >
+        <span class="text-sm font-bold" :class="income.netNegative ? 'text-error' : 'text-primary'">
+          Net income ({{ income.netNegative ? 'loss' : 'profit' }})
+        </span>
+        <span
+          class="text-lg font-extrabold tabular-nums"
+          :class="income.netNegative ? 'text-error' : 'text-primary'"
+          >{{ income.netIncome }}</span
+        >
       </div>
     </div>
   </div>

@@ -63,6 +63,8 @@ export interface SummaryCard {
   icon: string
   chipClass: string
   accent: boolean
+  /** Top-border accent colour, when `accent` is set. */
+  accentClass?: string
   trend?: string
 }
 
@@ -88,6 +90,8 @@ export interface IncomeView {
   totalRevenue: string
   totalExpenses: string
   netIncome: string
+  /** True when net income is a loss (< 0) — drives the red deficit styling. */
+  netNegative: boolean
 }
 
 export interface BalanceView {
@@ -141,16 +145,19 @@ export function presentSummaryCards(
   income: IncomeStatement,
   balance: BalanceSheet
 ): SummaryCard[] {
+  // Profit reads green (a gain); a loss reads red (a deficit) — never green.
+  const profitable = summary.netIncome >= 0
   return [
     {
       label: 'Net income',
       value: money(summary.netIncome),
-      valueClass: 'text-primary',
+      valueClass: profitable ? 'text-primary' : 'text-error',
       sub: 'Profit · revenue − expenses',
       icon: 'i-heroicons-sparkles',
-      chipClass: 'bg-primary/10 text-primary',
+      chipClass: profitable ? 'bg-primary/10 text-primary' : 'bg-error/10 text-error',
       accent: true,
-      ...(summary.netIncome >= 0 ? { trend: 'Profit' } : {})
+      accentClass: profitable ? 'border-t-primary' : 'border-t-error',
+      ...(profitable ? { trend: 'Profit' } : {})
     },
     metric(
       'Total revenue',
@@ -204,7 +211,8 @@ export function presentIncome(
     expLines: is.expenses.map((l) => ({ label: l.account, value: money(l.amount) })),
     totalRevenue: money(is.totalRevenue),
     totalExpenses: money(is.totalExpenses),
-    netIncome: money(is.netIncome)
+    netIncome: money(is.netIncome),
+    netNegative: is.netIncome < 0
   }
 }
 
