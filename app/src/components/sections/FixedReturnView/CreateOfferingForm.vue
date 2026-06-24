@@ -75,7 +75,7 @@ import OfferingAccessStep from './OfferingAccessStep.vue'
 import { fmtDate, addTerm, termToYears, termLabel, type OfferingForm } from './offeringForm'
 import { SUPPORTED_TOKENS } from '@/constant'
 
-defineEmits<{ close: [] }>()
+const emit = defineEmits<{ close: [] }>()
 
 const stepLabels = ['Basics', 'Terms', 'Access']
 const step = ref(0)
@@ -103,6 +103,7 @@ async function next() {
     return
   }
   toast.add({ title: 'Offering published successfully!', color: 'success' })
+  emit('close')
 }
 
 const form = reactive<OfferingForm>({
