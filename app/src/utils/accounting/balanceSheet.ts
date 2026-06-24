@@ -15,7 +15,7 @@
  * 142.20 (Investor Equity 138 + Retained Earnings 4.20), liabilities 0.
  */
 import { ACCOUNT_NAMES, classOf, type AccountName } from './chartOfAccounts'
-import { netBalanceByAccount } from './generalLedger'
+import { netBalanceByAccount, netBalanceByAccountRaw } from './generalLedger'
 import { buildIncomeStatement } from './incomeStatement'
 import type { LedgerEntry } from './ledgerEntry'
 import type { StatementLine } from './incomeStatement'
@@ -57,6 +57,36 @@ function round2(value: number): number {
   return Math.round(value * 100) / 100
 }
 
+/**
+ * Assets − (Liabilities + Equity + net income) at full precision — ≈ 0 for a
+ * balanced book. Net income closes into equity, so income accounts add and
+ * expense accounts subtract. Computed from the unrounded net balances so the
+ * identity isn't tripped by per-account cent rounding.
+ */
+function rawIdentityGap(entries: readonly LedgerEntry[]): number {
+  let assets = 0
+  let liabilities = 0
+  let equityAndResult = 0
+  for (const [account, value] of netBalanceByAccountRaw(entries)) {
+    switch (classOf(account)) {
+      case 'ASSET':
+        assets += value
+        break
+      case 'LIABILITY':
+        liabilities += value
+        break
+      case 'EQUITY':
+      case 'INCOME':
+        equityAndResult += value
+        break
+      case 'EXPENSE':
+        equityAndResult -= value
+        break
+    }
+  }
+  return assets - (liabilities + equityAndResult)
+}
+
 /** Build the balance sheet as of the end of the supplied feed. */
 export function buildBalanceSheet(entries: readonly LedgerEntry[]): BalanceSheet {
   const net = netBalanceByAccount(entries)
@@ -87,7 +117,12 @@ export function buildBalanceSheet(entries: readonly LedgerEntry[]): BalanceSheet
 
   const totalAssets = round2(cash + otherAssets.reduce((sum, a) => sum + a.amount, 0))
   const totalEquity = round2(ownerCapital + investorEquity + retainedEarnings)
-  const identityGap = round2(totalAssets - (totalLiabilities + totalEquity))
+
+  // The Assets = Liabilities + Equity identity is checked on **raw** precision:
+  // summing per-account cent-rounded balances can drift a cent (most visibly with
+  // SHER's non-terminating values) and falsely flag a balanced book "out of
+  // balance". Equity includes net income (raw Σincome − Σexpense).
+  const identityGap = round2(rawIdentityGap(entries))
 
   return {
     cash,
