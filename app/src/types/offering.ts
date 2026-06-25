@@ -32,3 +32,25 @@ export interface OfferingSummary {
   target: number
   status: 'open' | 'funded' | 'closed'
 }
+
+export interface LenderOffering {
+  title: string
+  rate: number
+  term: number
+  access: 'general' | 'whitelist'
+  whitelisted?: boolean
+  myAllocation?: number
+  mode: 'range' | 'fixed'
+  min?: number
+  max?: number
+  fixed?: number
+  raised: number
+  target: number
+  allowed: boolean
+  accessLabel: string
+  accessBg: string
+  accessColor: string
+  accessDot: string
+  limitsLabel: string
+  pct: number
+}
