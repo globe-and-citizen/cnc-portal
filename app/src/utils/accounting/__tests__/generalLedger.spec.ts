@@ -28,7 +28,8 @@ describe('buildGeneralLedger — catalogue worked example', () => {
     expect(balanceOf('Cash — Expense')).toBeCloseTo(29.8, 2)
     expect(balanceOf('Trading account')).toBeCloseTo(0, 2)
     expect(balanceOf('Investor Equity')).toBeCloseTo(138, 2)
-    expect(balanceOf('Payroll Expense')).toBeCloseTo(50.8, 2)
+    expect(balanceOf('Payroll Expense')).toBeCloseTo(40.8, 2)
+    expect(balanceOf('Share-based Compensation')).toBeCloseTo(10, 2)
     expect(balanceOf('Wage Payable')).toBeCloseTo(0, 2)
   })
 

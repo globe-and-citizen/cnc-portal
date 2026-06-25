@@ -32,11 +32,12 @@ describe('mapPayrollAccruals', () => {
     expect(entry.amountUsd).toBe(50) // 2h × 25 USDC × $1
   })
 
-  it('books the SHER rate against Shares to be issued', () => {
+  it('books the SHER rate as Share-based Compensation against Shares to be issued', () => {
     const [entry] = mapPayrollAccruals(
       [claim({ wage: { ratePerHour: [{ type: 'sher', amount: 10 }] } } as Partial<WeeklyClaim>)],
       ctx
     )
+    expect(entry.debit).toBe('Share-based Compensation')
     expect(entry.credit).toBe('Shares to be issued')
     expect(entry.amountUsd).toBe(10) // 2h × 10 SHER × $0.50
   })
@@ -56,7 +57,26 @@ describe('mapPayrollAccruals', () => {
       ctx
     )
     expect(entries).toHaveLength(2)
+    expect(entries.map((e) => e.debit)).toEqual(['Payroll Expense', 'Share-based Compensation'])
     expect(entries.map((e) => e.credit)).toEqual(['Wage Payable', 'Shares to be issued'])
+  })
+
+  it('values overtime minutes at the overtime rate (reuses the canonical wage calc)', () => {
+    const [entry] = mapPayrollAccruals(
+      [
+        claim({
+          minutesWorked: 180, // 3h
+          wage: {
+            maximumHoursPerWeek: 2, // 2h regular, 1h overtime
+            ratePerHour: [{ type: 'usdc', amount: 10 }],
+            overtimeRatePerHour: [{ type: 'usdc', amount: 20 }]
+          }
+        } as Partial<WeeklyClaim>)
+      ],
+      ctx
+    )
+    // 2h × $10 + 1h × $20 = $40 — the old flat calc would wrongly book 3h × $10 = $30.
+    expect(entry.amountUsd).toBe(40)
   })
 
   it('does not accrue a disabled (cancelled) claim', () => {
