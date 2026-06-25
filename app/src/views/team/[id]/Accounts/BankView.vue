@@ -12,8 +12,8 @@
 import { computed, ref } from 'vue'
 import BankBalanceSection from '@/components/sections/BankView/BankBalanceSection.vue'
 import BankTransactions from '@/components/sections/BankView/BankTransactions.vue'
-import GenericTokenHoldingsSection from '@/components/GenericTokenHoldingsSection.vue'
-import ContractOwnerCard from '@/components/ContractOwnerCard.vue'
+import GenericTokenHoldingsSection from '@/components/ui/GenericTokenHoldingsSection.vue'
+import ContractOwnerCard from '@/components/ui/ContractOwnerCard.vue'
 import { useTeamStore } from '@/stores'
 
 const teamStore = useTeamStore()

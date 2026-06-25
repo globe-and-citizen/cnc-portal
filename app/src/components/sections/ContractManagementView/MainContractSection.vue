@@ -38,7 +38,7 @@ import { useUserDataStore } from '@/stores/user'
 import { useTeamStore } from '@/stores'
 import MainContractTable from './MainContractTable.vue'
 import RedeployOfficerModal from './RedeployOfficerModal.vue'
-import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
+import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 
 const teamStore = useTeamStore()

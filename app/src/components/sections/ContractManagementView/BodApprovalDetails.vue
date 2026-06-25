@@ -46,7 +46,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import UserComponent from '@/components/UserComponent.vue'
+import UserComponent from '@/components/ui/UserComponent.vue'
 import { useTeamStore } from '@/stores'
 import type { TableRow } from '@/types/table'
 import { getUser, formatCryptoAmount } from '@/utils'

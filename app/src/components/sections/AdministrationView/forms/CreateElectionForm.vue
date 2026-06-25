@@ -117,7 +117,7 @@ import { z } from 'zod'
 import MultiSelectMemberInput from '@/components/utils/MultiSelectMemberInput.vue'
 import { CalendarDate, getLocalTimeZone, today } from '@internationalized/date'
 import { formatDateMMDDYYYY, dateToCalendarDate, ensureFutureDate } from '@/utils/dayUtils'
-import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
+import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
 
 // Dev = 2 minutes, Prod = 1 hour
 const delay = 2 * 60 * 1000

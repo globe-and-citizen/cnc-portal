@@ -9,7 +9,7 @@
 </template>
 <script setup lang="ts">
 import personIcon from '@/assets/person.svg'
-import OverviewCard from '@/components/OverviewCard.vue'
+import OverviewCard from '@/components/ui/OverviewCard.vue'
 import { computed } from 'vue'
 import { useTeamStore } from '@/stores'
 import { useGetExpensesQuery } from '@/queries'

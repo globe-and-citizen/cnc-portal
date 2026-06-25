@@ -1,5 +1,5 @@
 import { mount } from '@vue/test-utils'
-import GenericSelect from '@/components/SelectComponent.vue'
+import GenericSelect from '@/components/ui/SelectComponent.vue'
 import { describe, it, expect, vi } from 'vitest'
 import { nextTick } from 'vue'
 

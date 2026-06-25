@@ -124,9 +124,9 @@
 
 <script setup lang="ts">
 import SelectMemberInput from '@/components/utils/SelectMemberInput.vue'
-import UserComponent from '@/components/UserComponent.vue'
+import UserComponent from '@/components/ui/UserComponent.vue'
 import VestingSummary from '@/components/sections/VestingView/VestingSummary.vue'
-import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
+import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
 import { useCreateVesting } from '@/composables/vesting/useCreateVesting'
 
 const props = defineProps<{

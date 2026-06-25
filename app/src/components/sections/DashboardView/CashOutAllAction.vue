@@ -149,7 +149,7 @@ import { buildCashOutPlan, useCashOutAll } from '@/composables/cashOut'
 import type { CashOutStepStatus } from '@/composables/cashOut'
 import { useCurrencyStore, useTeamStore, useUserDataStore } from '@/stores'
 import { formatCurrencyShort } from '@/utils/currencyUtil'
-import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
+import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
 
 const teamStore = useTeamStore()
 const userStore = useUserDataStore()

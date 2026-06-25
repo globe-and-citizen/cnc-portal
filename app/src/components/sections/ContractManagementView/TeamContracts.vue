@@ -127,7 +127,7 @@ import { useTeamStore } from '@/stores/'
 import type { Address } from 'viem'
 import TeamContractEventList from './TeamContractEventList.vue'
 import { type TeamContract } from '@/types'
-import AddressToolTip from '@/components/AddressToolTip.vue'
+import AddressToolTip from '@/components/ui/AddressToolTip.vue'
 const teamStore = useTeamStore()
 
 // Modal for showing contract admins

@@ -21,7 +21,7 @@
 
 <script lang="ts" setup>
 import { toRef } from 'vue'
-import UserComponent from '@/components/UserComponent.vue'
+import UserComponent from '@/components/ui/UserComponent.vue'
 import type { TeamContract } from '@/types'
 
 const props = defineProps<{

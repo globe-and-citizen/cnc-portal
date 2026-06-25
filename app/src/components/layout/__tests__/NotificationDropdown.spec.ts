@@ -1,7 +1,7 @@
 import { mount } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import { describe, it, expect, beforeEach } from 'vitest'
-import NotificationDropdown from '@/components/NotificationDropdown.vue'
+import NotificationDropdown from '@/components/layout/NotificationDropdown.vue'
 import type { Notification } from '@/types/notification'
 import { mockNotificationsRef, mockUpdateNotificationMutateAsync } from '@/tests/mocks/query.mock'
 import { mockRouterPush } from '@/tests/mocks/router.mock'

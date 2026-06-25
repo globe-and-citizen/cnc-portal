@@ -95,7 +95,7 @@ import {
   formatDeployError
 } from '@/composables/contracts'
 import { useCreateOfficerMutation } from '@/queries/contract.queries'
-import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
+import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
 
 const props = withDefaults(
   defineProps<{

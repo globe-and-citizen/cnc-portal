@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
-import GenericTokenHoldingsSection from '@/components/GenericTokenHoldingsSection.vue'
+import GenericTokenHoldingsSection from '@/components/ui/GenericTokenHoldingsSection.vue'
 
 describe('GenericTokenHoldingsSection', () => {
   it('renders table with a USDC row and correct values', () => {

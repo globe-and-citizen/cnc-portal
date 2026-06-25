@@ -105,7 +105,7 @@ import { Icon as IconifyIcon } from '@iconify/vue'
 import { useUpdateSafeOwnersMutation } from '@/queries/safe.mutations'
 import type { User } from '@/types'
 import { useToast } from '@nuxt/ui/composables'
-import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
+import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
 
 interface Props {
   safeAddress: Address

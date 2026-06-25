@@ -19,7 +19,7 @@
 <script setup lang="ts">
 import personIcon from '@/assets/person.svg'
 import uptrendIcon from '@/assets/uptrend.svg'
-import OverviewCard from '@/components/OverviewCard.vue'
+import OverviewCard from '@/components/ui/OverviewCard.vue'
 import { useCurrencyStore, useTeamStore } from '@/stores'
 import { formatCurrencyShort, log } from '@/utils'
 import { watch, computed } from 'vue'

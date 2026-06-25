@@ -76,7 +76,7 @@
 </template>
 <script setup lang="ts">
 import MintForm from '@/components/sections/SherTokenView/forms/MintForm.vue'
-import UserComponent from '@/components/UserComponent.vue'
+import UserComponent from '@/components/ui/UserComponent.vue'
 import {
   useInvestorShareholders,
   useInvestorSymbol,

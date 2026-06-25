@@ -18,7 +18,7 @@
 <script lang="ts" setup>
 import bagIcon from '@/assets/bag.svg'
 import uptrendIcon from '@/assets/uptrend.svg'
-import OverviewCard from '@/components/OverviewCard.vue'
+import OverviewCard from '@/components/ui/OverviewCard.vue'
 import { useContractBalance } from '@/composables/useContractBalance'
 import { useTeamStore } from '@/stores'
 import { useStorage } from '@vueuse/core'

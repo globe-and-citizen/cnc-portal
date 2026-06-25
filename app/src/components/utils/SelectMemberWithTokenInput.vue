@@ -73,10 +73,10 @@
 import { computed, ref } from 'vue'
 import { NETWORK, USDC_ADDRESS } from '@/constant'
 import { zeroAddress } from 'viem'
-import SelectComponent from '@/components/SelectComponent.vue'
+import SelectComponent from '@/components/ui/SelectComponent.vue'
 import { useTeamStore } from '@/stores'
 import { useFocus, watchDebounced } from '@vueuse/core'
-import UserComponent from '../UserComponent.vue'
+import UserComponent from '../ui/UserComponent.vue'
 
 const emit = defineEmits(['selectMember'])
 const input = defineModel({

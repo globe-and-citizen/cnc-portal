@@ -6,7 +6,7 @@ import BodElectionView from '@/views/team/[id]/BodElectionView.vue'
 import CurrentBoDSection from '@/components/sections/AdministrationView/CurrentBoDSection.vue'
 import CurrentBoDElectionSection from '@/components/sections/AdministrationView/CurrentBoDElectionSection.vue'
 import PastBoDElectionsSection from '@/components/sections/AdministrationView/PastBoDElectionsSection.vue'
-import ContractOwnerCard from '@/components/ContractOwnerCard.vue'
+import ContractOwnerCard from '@/components/ui/ContractOwnerCard.vue'
 import { useReadContractFn, mockTeamStore } from '@/tests/mocks'
 import { useTeamStore } from '@/stores'
 

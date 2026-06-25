@@ -179,7 +179,7 @@ import {
 } from '@/composables/investor/reads'
 import { useOfficerRedeploy } from '@/composables/contracts/useOfficerRedeploy'
 import { formatDeployError } from '@/composables/contracts/useOfficerDeployment'
-import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
+import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
 
 const isOpen = defineModel<boolean>('open', { default: false })
 

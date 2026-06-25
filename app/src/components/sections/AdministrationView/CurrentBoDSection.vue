@@ -30,7 +30,7 @@
 </template>
 <script setup lang="ts">
 import { BOD_ABI } from '@/artifacts/abi/bod'
-import UserComponentCol from '@/components/UserComponent.vue'
+import UserComponentCol from '@/components/ui/UserComponent.vue'
 import CurrentBoDSection404 from './CurrentBoDSection404.vue'
 import { useTeamStore } from '@/stores'
 import type { User } from '@/types'

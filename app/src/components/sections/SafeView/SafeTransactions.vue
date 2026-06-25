@@ -123,13 +123,13 @@
 
 <script setup lang="ts">
 import { watch, computed, ref } from 'vue'
-import TablePagination from '@/components/TablePagination.vue'
+import TablePagination from '@/components/ui/TablePagination.vue'
 import { usePagination } from '@/composables/usePagination'
 import type { SafeTransaction } from '@/types/safe'
 
 // Components
-import AddressToolTip from '@/components/AddressToolTip.vue'
-import UserComponent from '@/components/UserComponent.vue'
+import AddressToolTip from '@/components/ui/AddressToolTip.vue'
+import UserComponent from '@/components/ui/UserComponent.vue'
 import SafeTransactionsWarning from './SafeTransactionsWarning.vue'
 import SafeTransactionDetailsModal from './SafeTransactionDetailsModal.vue'
 

@@ -39,10 +39,10 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useTeamStore } from '@/stores'
-import AddressToolTip from '@/components/AddressToolTip.vue'
-import ContractOwnerCard from '@/components/ContractOwnerCard.vue'
+import AddressToolTip from '@/components/ui/AddressToolTip.vue'
+import ContractOwnerCard from '@/components/ui/ContractOwnerCard.vue'
 
-import GenericTokenHoldingsSection from '@/components/GenericTokenHoldingsSection.vue'
+import GenericTokenHoldingsSection from '@/components/ui/GenericTokenHoldingsSection.vue'
 import CashRemunerationOverview from '@/components/sections/CashRemunerationView/CashRemunerationOverview.vue'
 import OwnerTreasuryWithdrawAction from '@/components/sections/OwnerTreasuryWithdrawAction.vue'
 
