@@ -93,7 +93,35 @@ const buildBankEvents = (): BankEventsQuery => ({
     ]
   },
   bankOwnershipTransferreds: {
-    items: []
+    items: [
+      {
+        id: '0xownershiphash-0',
+        contractAddress: BANK_ADDRESS,
+        previousOwner: USER_A,
+        newOwner: USER_B,
+        timestamp: 80
+      }
+    ]
+  },
+  bankTokenSupportAddeds: {
+    items: [
+      {
+        id: '0xtokensupportaddedhash-0',
+        contractAddress: BANK_ADDRESS,
+        tokenAddress: USDC_ADDRESS,
+        timestamp: 81
+      }
+    ]
+  },
+  bankTokenSupportRemoveds: {
+    items: [
+      {
+        id: '0xtokensupportremovedhash-0',
+        contractAddress: BANK_ADDRESS,
+        tokenAddress: USDT_ADDRESS,
+        timestamp: 82
+      }
+    ]
   },
   rawContractTokenTransfers: {
     items: [
@@ -136,7 +164,7 @@ describe('bankTransactionUtil', () => {
     const transactions = buildRawBankTransactions(buildBankEvents())
     const byType = new Map(transactions.map((row) => [row.type, row]))
 
-    expect(transactions[0]?.txHash).toBe('0xrawinternal')
+    expect(transactions[0]?.txHash).toBe('0xtokensupportremovedhash')
     expect(transactions.map((row) => row.type)).toEqual(
       expect.arrayContaining([
         'deposit',
@@ -147,7 +175,10 @@ describe('bankTransactionUtil', () => {
         'feePaid',
         'rawTokenIn',
         'rawTokenOut',
-        'rawTokenInternal'
+        'rawTokenInternal',
+        'ownershipTransferred',
+        'tokenSupportAdded',
+        'tokenSupportRemoved'
       ])
     )
     expect(byType.get('deposit')?.tokenAddress).toBe(zeroAddress)
@@ -157,6 +188,21 @@ describe('bankTransactionUtil', () => {
     expect(
       transactions.filter((row) => row.type === 'feePaid').map((row) => row.tokenAddress)
     ).toEqual(expect.arrayContaining([USDC_ADDRESS, zeroAddress]))
+    expect(byType.get('ownershipTransferred')).toMatchObject({
+      from: USER_A,
+      to: USER_B,
+      amount: '0'
+    })
+    expect(byType.get('tokenSupportAdded')).toMatchObject({
+      to: USDC_ADDRESS,
+      tokenAddress: USDC_ADDRESS,
+      amount: '0'
+    })
+    expect(byType.get('tokenSupportRemoved')).toMatchObject({
+      to: USDT_ADDRESS,
+      tokenAddress: USDT_ADDRESS,
+      amount: '0'
+    })
   })
 
   it('returns an empty array when query data is undefined', () => {

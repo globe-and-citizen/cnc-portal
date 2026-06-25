@@ -1,4 +1,5 @@
 import { ref, type Ref } from 'vue'
+import type { Mock } from 'vitest'
 
 export type MockApolloQueryState<T = unknown> = {
   result: Ref<T | undefined>
@@ -6,10 +7,7 @@ export type MockApolloQueryState<T = unknown> = {
   loading: Ref<boolean>
 }
 
-type UseQueryMock = {
-  mockImplementation: (implementation: (...args: unknown[]) => unknown) => unknown
-  mockReturnValue: (value: unknown) => unknown
-}
+type UseQueryMock = Mock
 
 export const createMockApolloQueryState = <T = unknown>(
   initialResult?: T
