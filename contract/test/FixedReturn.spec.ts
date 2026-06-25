@@ -185,6 +185,20 @@ describe('FixedReturn', () => {
       const { fixedReturn } = await loadFixture(deployFixture)
       expect(await fixedReturn.version()).to.equal('1.0.0')
     })
+
+    it('rejects a zero-address owner', async () => {
+      const FixedReturnFactory = await ethers.getContractFactory('FixedReturn')
+      await expect(
+        upgrades.deployProxy(FixedReturnFactory, [ethers.ZeroAddress], {
+          initializer: 'initialize'
+        })
+      ).to.be.revertedWithCustomError(FixedReturnFactory, ERRORS.ZERO_ADDRESS)
+    })
+
+    it('rejects being initialized a second time', async () => {
+      const { fixedReturn, owner } = await loadFixture(deployFixture)
+      await expect(fixedReturn.initialize(owner.address)).to.be.reverted
+    })
   })
 
   describe('token allowlist', () => {
@@ -200,6 +214,15 @@ describe('FixedReturn', () => {
       await expect(
         fixedReturn.connect(stranger).removeTokenSupport(await token.getAddress())
       ).to.be.revertedWithCustomError(fixedReturn, ERRORS.OWNABLE_UNAUTHORIZED)
+    })
+
+    it('allows the owner to remove a previously supported token', async () => {
+      const { fixedReturn, owner, token } = await loadFixture(deployFixture)
+      expect(await fixedReturn.isTokenSupported(await token.getAddress())).to.be.true
+
+      await fixedReturn.connect(owner).removeTokenSupport(await token.getAddress())
+
+      expect(await fixedReturn.isTokenSupported(await token.getAddress())).to.be.false
     })
   })
 
@@ -292,6 +315,34 @@ describe('FixedReturn', () => {
       ).to.be.revertedWithCustomError(fixedReturn, ERRORS.INVALID_TERM_DURATION)
     })
 
+    it('rejects a zero termDuration in Days', async () => {
+      const { fixedReturn, owner, token, startDate, subscriptionDeadline } =
+        await loadFixture(deployFixture)
+
+      await expect(
+        fixedReturn.connect(owner).createLendingOffer(
+          baseParams(await token.getAddress(), startDate, subscriptionDeadline, {
+            termUnit: TermUnit.Days,
+            termDuration: 0
+          })
+        )
+      ).to.be.revertedWithCustomError(fixedReturn, ERRORS.INVALID_TERM_DURATION)
+    })
+
+    it('rejects a zero termDuration in Years', async () => {
+      const { fixedReturn, owner, token, startDate, subscriptionDeadline } =
+        await loadFixture(deployFixture)
+
+      await expect(
+        fixedReturn.connect(owner).createLendingOffer(
+          baseParams(await token.getAddress(), startDate, subscriptionDeadline, {
+            termUnit: TermUnit.Years,
+            termDuration: 0
+          })
+        )
+      ).to.be.revertedWithCustomError(fixedReturn, ERRORS.INVALID_TERM_DURATION)
+    })
+
     it('rejects a termDuration beyond the max for its unit', async () => {
       const { fixedReturn, owner, token, startDate, subscriptionDeadline } =
         await loadFixture(deployFixture)
@@ -301,6 +352,34 @@ describe('FixedReturn', () => {
           baseParams(await token.getAddress(), startDate, subscriptionDeadline, {
             termUnit: TermUnit.Months,
             termDuration: 121 // max for Months is 120
+          })
+        )
+      ).to.be.revertedWithCustomError(fixedReturn, ERRORS.INVALID_TERM_DURATION)
+    })
+
+    it('rejects a Days termDuration beyond its max', async () => {
+      const { fixedReturn, owner, token, startDate, subscriptionDeadline } =
+        await loadFixture(deployFixture)
+
+      await expect(
+        fixedReturn.connect(owner).createLendingOffer(
+          baseParams(await token.getAddress(), startDate, subscriptionDeadline, {
+            termUnit: TermUnit.Days,
+            termDuration: 366 // max for Days is 365
+          })
+        )
+      ).to.be.revertedWithCustomError(fixedReturn, ERRORS.INVALID_TERM_DURATION)
+    })
+
+    it('rejects a Years termDuration beyond its max', async () => {
+      const { fixedReturn, owner, token, startDate, subscriptionDeadline } =
+        await loadFixture(deployFixture)
+
+      await expect(
+        fixedReturn.connect(owner).createLendingOffer(
+          baseParams(await token.getAddress(), startDate, subscriptionDeadline, {
+            termUnit: TermUnit.Years,
+            termDuration: 31 // max for Years is 30
           })
         )
       ).to.be.revertedWithCustomError(fixedReturn, ERRORS.INVALID_TERM_DURATION)
@@ -487,6 +566,23 @@ describe('FixedReturn', () => {
       await expect(
         fixedReturn.connect(lenderA).lendFunds(offerId, ethers.parseUnits('60000', 6))
       ).to.be.revertedWithCustomError(fixedReturn, ERRORS.DEPOSIT_EXCEEDS_LENDER_CAP)
+    })
+
+    it('accepts a deposit within an enabled per-lender cap', async () => {
+      const { fixedReturn, owner, lenderA, token, startDate, subscriptionDeadline } =
+        await loadFixture(deployFixture)
+      const offerId = await createGeneralOffer(
+        fixedReturn,
+        owner,
+        await token.getAddress(),
+        startDate,
+        subscriptionDeadline,
+        { isCapEnabled: true, lenderCap: ethers.parseUnits('50000', 6) }
+      )
+
+      const amount = ethers.parseUnits('50000', 6)
+      await expect(fixedReturn.connect(lenderA).lendFunds(offerId, amount)).to.not.be.reverted
+      expect(await fixedReturn.lenderDeposits(offerId, lenderA.address)).to.equal(amount)
     })
 
     it('transitions to Funded and emits LendingOfferFunded once the target is reached', async () => {
@@ -852,6 +948,35 @@ describe('FixedReturn', () => {
       await expect(
         fixedReturn.connect(stranger).repayLenders(offerId, ethers.parseUnits('1000', 6))
       ).to.be.revertedWithCustomError(fixedReturn, ERRORS.OWNABLE_UNAUTHORIZED)
+    })
+
+    it('skips a lender whose proportional share rounds down to zero', async () => {
+      // fundingTarget is tiny and split so lenderB's share of a half-size repayment
+      // floors to 0, while lenderA (holding almost all of the principal) still gets paid.
+      const { fixedReturn, owner, lenderA, lenderB, token, startDate, subscriptionDeadline } =
+        await loadFixture(deployFixture)
+      const fundingTarget = 1_000_000n // 1.0 token at 6 decimals
+      const offerId = await createGeneralOffer(
+        fixedReturn,
+        owner,
+        await token.getAddress(),
+        startDate,
+        subscriptionDeadline,
+        { fundingTarget }
+      )
+
+      await fixedReturn.connect(lenderA).lendFunds(offerId, 999_999n)
+      await fixedReturn.connect(lenderB).lendFunds(offerId, 1n)
+
+      const lenderABalanceBefore = await token.balanceOf(lenderA.address)
+      const lenderBBalanceBefore = await token.balanceOf(lenderB.address)
+
+      await fixedReturn.connect(owner).repayLenders(offerId, 500_000n)
+
+      // lenderB's share: floor(500_000 * 1 / 1_000_000) = 0 — receives nothing.
+      expect(await token.balanceOf(lenderB.address)).to.equal(lenderBBalanceBefore)
+      // lenderA's share: floor(500_000 * 999_999 / 1_000_000) = 499_999 — receives it.
+      expect(await token.balanceOf(lenderA.address)).to.equal(lenderABalanceBefore + 499_999n)
     })
   })
 
