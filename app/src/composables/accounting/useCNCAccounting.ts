@@ -18,8 +18,11 @@
  */
 import { computed, toValue, type ComputedRef, type MaybeRefOrGetter } from 'vue'
 import { useQuery as useApolloQuery } from '@vue/apollo-composable'
+import { useReadContract } from '@wagmi/vue'
 import type { DocumentNode } from 'graphql'
 import { type Address } from 'viem'
+import { SAFE_DEPOSIT_ROUTER_ABI } from '@/artifacts/abi/safe-deposit-router'
+import { formatSafeDepositRouterMultiplier } from '@/utils/safeDepositRouterUtil'
 import { FEE_COLLECTOR_ADDRESS, GRAPHQL_POLL_INTERVAL } from '@/constant'
 import type { ContractType } from '@/types/teamContract'
 import type { BankEventsQuery } from '@/types/ponder/bank'
@@ -124,6 +127,25 @@ export function useCNCAccounting(
     routerAddress
   )
 
+  // ── Contract read: the router's live SHER multiplier. The `MultiplierUpdated`
+  // events historise *changes*, but the initial multiplier is set in the
+  // constructor and emits no event — so we read `multiplier` straight from the
+  // contract to value SHER even before the first change (spec §1 "Currency").
+  // Stored fixed-point at SHER's 6 decimals; format to whole units (1e6 → 1x). ──
+  const routerMultiplier = useReadContract({
+    address: computed(() => (routerAddress.value ? (routerAddress.value as Address) : undefined)),
+    abi: SAFE_DEPOSIT_ROUTER_ABI,
+    functionName: 'multiplier',
+    query: { enabled: computed(() => Boolean(routerAddress.value)) }
+  })
+
+  const currentSherMultiplier = computed<number | null>(() => {
+    const raw = routerMultiplier.data.value
+    if (typeof raw !== 'bigint') return null
+    const whole = Number(formatSafeDepositRouterMultiplier(raw, 6))
+    return Number.isFinite(whole) && whole > 0 ? whole : null
+  })
+
   // ── Backend DB: weekly claims + approved expenses (off-chain enrichment) ──
   const weeklyClaims = useGetTeamWeeklyClaimsQuery({ queryParams: { teamId } })
   const expenses = useGetExpensesQuery({ queryParams: { teamId } })
@@ -157,6 +179,7 @@ export function useCNCAccounting(
       feeCollectorAddress: FEE_COLLECTOR_ADDRESS,
       sherTokenAddress: options.sherTokenAddress ?? null,
       safeDepositRouterAddress: routerAddress.value || null,
+      currentSherMultiplier: currentSherMultiplier.value,
       rateOfRecord,
       bankEvents: bank.result.value,
       cashRemunerationEvents: cashRem.result.value,
@@ -190,9 +213,18 @@ export function useCNCAccounting(
   const refetch = (): Promise<unknown> => {
     const run = (q: { refetch?: () => unknown }): unknown => q.refetch?.()
     return Promise.allSettled(
-      [team, bank, cashRem, expense, investor, router, weeklyClaims, expenses, safeTransfers].map(
-        run
-      )
+      [
+        team,
+        bank,
+        cashRem,
+        expense,
+        investor,
+        router,
+        routerMultiplier,
+        weeklyClaims,
+        expenses,
+        safeTransfers
+      ].map(run)
     )
   }
 

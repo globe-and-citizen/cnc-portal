@@ -54,6 +54,10 @@ export interface CncAccountingInput {
   /** SafeDepositRouter address — its inflows to the Safe are booked from its own
    *  event (UC-SDR-01), so the matching Safe transfer is excluded here. */
   safeDepositRouterAddress?: Address | string | null
+  /** Live SHER-per-token multiplier (whole units) read straight from the router,
+   *  used to value SHER when there are no `MultiplierUpdated` events (the
+   *  constructor's initial multiplier emits none). Defaults to 1x (1 SHER = $1). */
+  currentSherMultiplier?: number | null
   /** FX resolver for non-pegged tokens (native, SHER) — see toUsd. */
   rateOfRecord?: UsdRateOfRecord
   // ── raw query results (any may be null: source absent, disabled or failed) ──
@@ -243,14 +247,16 @@ export function assembleCncAccounting(input: CncAccountingInput): CncAccounting 
   )
 
   // SHER has no market price; value it from the router's compensation multiplier
-  // (1 SHER ≈ 1/multiplier USD, historised over the multiplier changes) so
-  // wage-in-SHER increases Investor Equity. With no multiplier data we leave SHER
-  // to the base resolver (the Phase-1 $0 gap).
+  // (1 SHER = 1/multiplier USD, historised over the multiplier changes) so
+  // wage-in-SHER increases Investor Equity. With no change events we use the
+  // router's live multiplier (read from the contract) or, failing that, the
+  // contract's 1x default (1 SHER = $1) — no longer the Phase-1 $0.
   const baseRate = input.rateOfRecord ?? phase1RateOfRecord
   const sherRate = makeSherUsdRate(
     buildSherMultiplierTimeline(
       input.safeDepositRouterEvents?.safeMultiplierUpdateds?.items,
-      input.safeDepositRouterEvents?.safeDeposits?.items
+      input.safeDepositRouterEvents?.safeDeposits?.items,
+      input.currentSherMultiplier
     )
   )
   const rateOfRecord: UsdRateOfRecord = sherRate
