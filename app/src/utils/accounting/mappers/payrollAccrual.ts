@@ -5,9 +5,12 @@
  *
  * For each rate in the member's wage it books one balanced posting:
  *
- *     Dr Payroll Expense
- *        Cr Wage Payable          (cash rates: native / USDC)
- *        Cr Shares to be issued   (the SHER rate)
+ *     Dr Payroll Expense            Cr Wage Payable          (cash rates: native / USDC)
+ *     Dr Share-based Compensation   Cr Shares to be issued   (the SHER rate)
+ *
+ * The SHER leg is a **non-cash** cost (shares, not treasury), so it is booked to
+ * its own `Share-based Compensation` expense account rather than mixed into the
+ * cash `Payroll Expense` line.
  *
  * The accrual lands only once the week has **ended**: while a week is still in
  * progress the member may keep submitting daily claims, so booking mid-week would
@@ -16,13 +19,15 @@
  *
  * Signing the claim adds **no** entry; the later on-chain `Withdraw` /
  * `WithdrawToken` (UC-CASH-03) settles these liabilities. A `disabled` claim is
- * never accrued. Amounts come from the wage rate × hours worked (so payroll cost
- * is recognised at the declared rate, independent of the settlement token).
+ * never accrued. Amounts come from the **same canonical wage calculation the
+ * claim is signed and paid with** ({@link buildClaimRatesWithOvertime} — regular
+ * minutes at the base rate, overtime minutes at the overtime rate), so the cost
+ * recognised here matches the on-chain payout and is independent of the
+ * settlement token.
  */
-import { parseUnits } from 'viem'
 import type { WeeklyClaim } from '@/types/cash-remuneration'
 import type { TokenId } from '@/constant'
-import { getTokenDecimals } from '@/utils/constantUtil'
+import { buildClaimRatesWithOvertime } from '@/utils/wageUtil'
 import { makeEntry, type LedgerEntry } from '@/utils/accounting/ledgerEntry'
 import { atDate, type MapperContext } from './context'
 
@@ -51,13 +56,6 @@ function accrualSeconds(claim: WeeklyClaim): number {
   return Number.isFinite(ms) ? Math.floor(ms / 1000) : 0
 }
 
-/** Base units of `hours × ratePerHour` for a token, for USD valuation. */
-function accruedBaseUnits(minutesWorked: number, ratePerHour: number, decimals: number): bigint {
-  const whole = (minutesWorked * ratePerHour) / 60
-  if (whole <= 0) return 0n
-  return parseUnits(whole.toFixed(decimals), decimals)
-}
-
 /**
  * Map every submitted weekly claim whose week has **ended** to its UC-CASH-02
  * accrual postings. Claims for the week still in progress (relative to `now`) are
@@ -72,18 +70,27 @@ export function mapPayrollAccruals(
   for (const claim of weeklyClaims ?? []) {
     if (!isAccruable(claim.status)) continue
     if (!isWeekEnded(claim, now)) continue
+    if (!claim.wage) continue
     const at = accrualSeconds(claim)
-    for (const rate of claim.wage?.ratePerHour ?? []) {
+    // Reuse the canonical wage calc (the one the claim is signed/paid with) so the
+    // accrued cost matches the on-chain payout, overtime included.
+    const rates = buildClaimRatesWithOvertime({
+      totalMinutesWorked: claim.minutesWorked,
+      maximumHoursPerWeek: claim.wage.maximumHoursPerWeek,
+      ratePerHour: claim.wage.ratePerHour ?? [],
+      overtimeRatePerHour: claim.wage.overtimeRatePerHour
+    })
+    for (const rate of rates) {
       const tokenId = rate.type as TokenId
-      const base = accruedBaseUnits(claim.minutesWorked, rate.amount, getTokenDecimals(tokenId))
-      if (base === 0n) continue
+      const base = rate.totalAmount
+      if (base <= 0n) continue
       const isShare = tokenId === 'sher'
       entries.push(
         makeEntry({
           id: `accrual-${claim.id}-${tokenId}`,
           timestamp: at,
           useCase: 'UC-CASH-02',
-          debit: 'Payroll Expense',
+          debit: isShare ? 'Share-based Compensation' : 'Payroll Expense',
           credit: isShare ? 'Shares to be issued' : 'Wage Payable',
           amountUsd: ctx.toUsd(base, tokenId, atDate(at)),
           token: tokenId,
