@@ -203,6 +203,37 @@ const items = computed<NavigationMenuItem[]>(() => [
     ]
   },
   {
+    label: 'Accounting',
+    icon: 'heroicons:book-open',
+    to: {
+      name: 'accounting',
+      params: { id: teamStore.currentTeamId || '1' }
+    },
+    defaultOpen: false,
+    children: [
+      {
+        label: 'Summary',
+        to: { name: 'accounting-summary', params: { id: teamStore.currentTeamId || '1' } }
+      },
+      {
+        label: 'Income Statement',
+        to: { name: 'accounting-income', params: { id: teamStore.currentTeamId || '1' } }
+      },
+      {
+        label: 'Balance Sheet',
+        to: { name: 'accounting-balance', params: { id: teamStore.currentTeamId || '1' } }
+      },
+      {
+        label: 'Trial Balance',
+        to: { name: 'accounting-trial', params: { id: teamStore.currentTeamId || '1' } }
+      },
+      {
+        label: 'General Ledger',
+        to: { name: 'accounting-ledger', params: { id: teamStore.currentTeamId || '1' } }
+      }
+    ]
+  },
+  {
     label: 'Contract Management',
     icon: 'heroicons:wrench',
     to: {
@@ -250,6 +281,31 @@ const items = computed<NavigationMenuItem[]>(() => [
       name: 'vesting',
       params: { id: teamStore.currentTeamId || '1' }
     }
+  },
+  {
+    label: 'Debt Financing',
+    icon: 'heroicons:banknotes',
+    to: {
+      name: 'fixed-return',
+      params: { id: teamStore.currentTeamId || '1' }
+    },
+    defaultOpen: true,
+    children: [
+      {
+        label: 'Fixed Return',
+        to: {
+          name: 'fixed-return',
+          params: { id: teamStore.currentTeamId || '1' }
+        }
+      },
+      {
+        label: 'Browse & Lend',
+        to: {
+          name: 'lender-marketplace',
+          params: { id: teamStore.currentTeamId || '1' }
+        }
+      }
+    ]
   }
 ])
 
