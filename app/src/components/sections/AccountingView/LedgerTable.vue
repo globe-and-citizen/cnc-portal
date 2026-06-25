@@ -3,7 +3,7 @@
     <template #date-cell="{ row: { original: row } }">
       <span
         v-if="row.isFirst && !row.isTotal"
-        class="text-muted text-xs whitespace-nowrap tabular-nums"
+        class="text-muted text-sm whitespace-nowrap tabular-nums"
       >
         {{ row.date }}
       </span>
@@ -21,13 +21,13 @@
 
     <template #transaction-cell="{ row: { original: row } }">
       <span v-if="row.isTotal" class="font-extrabold">Total movements</span>
-      <span v-else-if="row.isFirst" class="text-[13px] font-semibold">{{ row.label }}</span>
+      <span v-else-if="row.isFirst" class="text-sm font-semibold">{{ row.label }}</span>
     </template>
 
     <template #account-cell="{ row: { original: row } }">
       <span
         v-if="!row.isTotal"
-        class="text-xs tabular-nums"
+        class="text-sm tabular-nums"
         :class="
           row.accountDimmed ? 'text-dimmed' : row.accountMuted ? 'text-muted' : 'text-default'
         "
@@ -41,7 +41,7 @@
     </template>
     <template #dr-cell="{ row: { original: row } }">
       <div
-        class="text-right text-xs tabular-nums"
+        class="text-right text-sm tabular-nums"
         :class="row.isTotal ? 'font-extrabold' : 'font-semibold'"
       >
         {{ row.dr }}
@@ -53,7 +53,7 @@
     </template>
     <template #cr-cell="{ row: { original: row } }">
       <div
-        class="text-right text-xs tabular-nums"
+        class="text-right text-sm tabular-nums"
         :class="row.isTotal ? 'font-extrabold' : 'font-semibold'"
       >
         {{ row.cr }}

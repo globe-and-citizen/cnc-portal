@@ -1,35 +1,37 @@
 <template>
-  <div class="border-default bg-default overflow-hidden rounded-2xl border shadow-sm">
-    <div class="border-default flex flex-col gap-3 border-b px-5 py-4">
-      <!-- Title + category filter -->
-      <div class="flex flex-wrap items-center justify-between gap-3">
-        <div class="flex items-center gap-2.5">
-          <span class="bg-muted text-muted flex size-7 items-center justify-center rounded-lg">
-            <UIcon name="i-heroicons-book-open" class="size-4.5" />
-          </span>
-          <span class="text-[15px] font-semibold">General ledger</span>
-          <UBadge color="primary" variant="subtle" :label="`${total} entries`" />
+  <UCard class="w-full">
+    <template #header>
+      <div class="flex flex-col gap-3">
+        <!-- Title + category filter -->
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-2.5">
+            <span class="bg-muted text-muted flex size-7 items-center justify-center rounded-lg">
+              <UIcon name="i-heroicons-book-open" class="size-4.5" />
+            </span>
+            <span class="text-[15px] font-semibold">General ledger</span>
+            <UBadge color="primary" variant="subtle" :label="`${total} entries`" />
+          </div>
+          <SegmentedPills
+            :items="categoryItems"
+            :model-value="filter"
+            @update:model-value="filter = $event"
+          />
         </div>
-        <SegmentedPills
-          :items="categoryItems"
-          :model-value="filter"
-          @update:model-value="filter = $event"
-        />
-      </div>
 
-      <!-- Reporting period — shared AccountingDatePicker (range mode) -->
-      <div class="flex flex-wrap items-center gap-2.5">
-        <AccountingDatePicker
-          v-model="period"
-          mode="range"
-          storage-key="cnc-accounting-ledger-period"
-        />
+        <!-- Reporting period — shared AccountingDatePicker (range mode) -->
+        <div class="flex flex-wrap items-center gap-2.5">
+          <AccountingDatePicker
+            v-model="period"
+            mode="range"
+            storage-key="cnc-accounting-ledger-period"
+          />
+        </div>
       </div>
-    </div>
+    </template>
 
     <LedgerTable :rows="pageRows" :total="grandTotal" />
 
-    <div class="px-5 pb-4">
+    <template #footer>
       <TablePagination
         v-model:page="page"
         v-model:page-size="pageSize"
@@ -37,8 +39,8 @@
         noun="entries"
         data-test-prefix="ledger"
       />
-    </div>
-  </div>
+    </template>
+  </UCard>
 </template>
 
 <script setup lang="ts">

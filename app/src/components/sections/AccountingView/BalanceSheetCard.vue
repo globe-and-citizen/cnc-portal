@@ -1,16 +1,22 @@
 <template>
-  <div class="border-default bg-default flex flex-col rounded-2xl border shadow-sm">
-    <div class="border-default flex items-center justify-between border-b px-5 py-4">
-      <div class="flex items-center gap-2.5">
-        <span class="bg-info/10 text-info flex size-7 items-center justify-center rounded-lg">
-          <UIcon name="i-heroicons-scale" class="size-4.5" />
-        </span>
-        <span class="text-[15px] font-semibold">Balance sheet</span>
+  <UCard class="w-full">
+    <template #header>
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <span class="bg-info/10 text-info flex size-7 items-center justify-center rounded-lg">
+            <UIcon name="i-heroicons-scale" class="size-4.5" />
+          </span>
+          <span class="text-[15px] font-semibold">Balance sheet</span>
+        </div>
+        <AccountingDatePicker
+          v-model="asOf"
+          mode="date"
+          storage-key="cnc-accounting-balance-asof"
+        />
       </div>
-      <AccountingDatePicker v-model="asOf" mode="date" storage-key="cnc-accounting-balance-asof" />
-    </div>
+    </template>
 
-    <div class="px-5 pt-3 pb-5">
+    <div>
       <p class="text-dimmed pt-2 pb-1 text-[11px] font-bold tracking-wider uppercase">Assets</p>
       <div
         v-for="a in balance.assetLines"
@@ -58,7 +64,7 @@
         }}</span>
       </div>
     </div>
-  </div>
+  </UCard>
 </template>
 
 <script setup lang="ts">

@@ -1,18 +1,20 @@
 <template>
-  <div class="border-default bg-default overflow-hidden rounded-2xl border shadow-sm">
-    <div class="border-default flex items-center gap-2.5 border-b px-5 py-4">
-      <span class="bg-primary/10 text-primary flex size-7 items-center justify-center rounded-lg">
-        <UIcon name="i-heroicons-calculator" class="size-4.5" />
-      </span>
-      <span class="text-[15px] font-semibold">Trial balance</span>
-      <UBadge
-        :color="trial.balanced ? 'success' : 'warning'"
-        variant="soft"
-        :icon="trial.balanced ? 'i-heroicons-check' : 'i-heroicons-exclamation-triangle'"
-        :label="trial.balanced ? 'In balance' : 'Out of balance'"
-        class="ml-auto rounded-full"
-      />
-    </div>
+  <UCard class="w-full">
+    <template #header>
+      <div class="flex items-center gap-2.5">
+        <span class="bg-primary/10 text-primary flex size-7 items-center justify-center rounded-lg">
+          <UIcon name="i-heroicons-calculator" class="size-4.5" />
+        </span>
+        <span class="text-[15px] font-semibold">Trial balance</span>
+        <UBadge
+          :color="trial.balanced ? 'success' : 'warning'"
+          variant="soft"
+          :icon="trial.balanced ? 'i-heroicons-check' : 'i-heroicons-exclamation-triangle'"
+          :label="trial.balanced ? 'In balance' : 'Out of balance'"
+          class="ml-auto rounded-full"
+        />
+      </div>
+    </template>
 
     <UTable :data="tableRows" :columns="columns">
       <template #account-cell="{ row: { original: row } }">
@@ -56,7 +58,7 @@
         </div>
       </template>
     </UTable>
-  </div>
+  </UCard>
 </template>
 
 <script setup lang="ts">
