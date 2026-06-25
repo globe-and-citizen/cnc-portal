@@ -104,6 +104,32 @@ export const GET_BANK_EVENTS = gql`
         timestamp
       }
     }
+    bankTokenSupportAddeds(
+      where: { contractAddress: $contractAddress }
+      orderBy: "timestamp"
+      orderDirection: "desc"
+      limit: $limit
+    ) {
+      items {
+        id
+        contractAddress
+        tokenAddress
+        timestamp
+      }
+    }
+    bankTokenSupportRemoveds(
+      where: { contractAddress: $contractAddress }
+      orderBy: "timestamp"
+      orderDirection: "desc"
+      limit: $limit
+    ) {
+      items {
+        id
+        contractAddress
+        tokenAddress
+        timestamp
+      }
+    }
   }
 `
 
