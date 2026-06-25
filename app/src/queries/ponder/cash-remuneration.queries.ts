@@ -127,5 +127,19 @@ export const GET_CASH_REMUNERATION_EVENTS = gql`
         timestamp
       }
     }
+    cashRemunerationOwnershipTransferreds(
+      where: { contractAddress: $contractAddress }
+      orderBy: "timestamp"
+      orderDirection: "desc"
+      limit: $limit
+    ) {
+      items {
+        id
+        contractAddress
+        previousOwner
+        newOwner
+        timestamp
+      }
+    }
   }
 `

@@ -81,12 +81,20 @@
             <p v-if="getTransactionSummary(row.original)" class="text-muted mt-0.5 text-xs">
               {{ getTransactionSummary(row.original) }}
             </p>
-            <template v-if="getInlineUser(row.original)">
+            <template
+              v-if="getInlineUser(row.original) || row.original.type === 'ownershipTransferred'"
+            >
               <div class="mt-1 flex items-center gap-1 text-xs">
                 <UserComponent :user="resolveUser(row.original.from)" />
                 <span class="text-muted text-lg font-bold">→</span>
                 <UserComponent :user="resolveUser(row.original.to)" />
               </div>
+              <p
+                v-if="getInitialTokenSupportSummary(row.original)"
+                class="text-muted mt-0.5 text-xs"
+              >
+                {{ getInitialTokenSupportSummary(row.original) }}
+              </p>
             </template>
           </div>
         </template>
@@ -99,7 +107,9 @@
           <p v-if="getTransactionSummary(row.original)" class="text-muted mt-0.5 text-xs">
             {{ getTransactionSummary(row.original) }}
           </p>
-          <template v-if="getInlineUser(row.original)">
+          <template
+            v-if="getInlineUser(row.original) || row.original.type === 'ownershipTransferred'"
+          >
             <div class="mt-1 flex items-center gap-1 text-xs">
               <UserComponent :user="resolveUser(row.original.from)" />
               <span class="text-muted text-lg font-bold">→</span>
@@ -185,6 +195,7 @@ import {
   parseBigIntOrZero,
   resolveUser,
   getTransactionSummary,
+  getInitialTokenSupportSummary,
   getTransactionTypeLabel,
   getTransactionCounterparty,
   formatTxHash,
