@@ -125,6 +125,9 @@ interface IFixedReturn is IOwnable, ITokenSupport {
   /// @notice All lender addresses that have deposited into a given offer
   function getOfferLenders(uint256 offerId) external view returns (address[] memory);
 
+  /// @notice Full configuration and funding/repayment state for a given offer
+  function getLendingOffer(uint256 offerId) external view returns (LendingOffer memory);
+
   /// @notice Current contract version, per semver
   function version() external pure returns (string memory);
 }

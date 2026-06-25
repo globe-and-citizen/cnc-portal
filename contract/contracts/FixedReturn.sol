@@ -108,7 +108,15 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
   uint256 public totalOfferings;
 
   /// @dev offerId => the offer's full configuration and funding/repayment state.
-  mapping(uint256 => LendingOffer) public lendingOffers;
+  ///      Private — LendingOffer has 13 fields, and the auto-generated public getter
+  ///      for a mapping to a large struct flattens all of them into one return tuple,
+  ///      which needs every field on the stack at once. Combined with the extra
+  ///      bookkeeping solidity-coverage's instrumentation adds throughout the rest of
+  ///      the contract, that auto-getter alone was enough to exceed the EVM's 16-slot
+  ///      stack limit during coverage runs (compiled fine otherwise). getLendingOffer
+  ///      below returns the same data via a `memory` struct instead, which the
+  ///      compiler represents as a single pointer rather than 13 separate locals.
+  mapping(uint256 => LendingOffer) private lendingOffers;
 
   /// @dev offerId => lender => cumulative amount that lender has deposited so far.
   ///      This is principal only; it is never decremented on repayment (repayment
@@ -506,6 +514,11 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
   /// @notice All lender addresses that have deposited into a given offer.
   function getOfferLenders(uint256 offerId) external view returns (address[] memory) {
     return _offerLenders[offerId];
+  }
+
+  /// @notice Full configuration and funding/repayment state for a given offer.
+  function getLendingOffer(uint256 offerId) external view returns (LendingOffer memory) {
+    return lendingOffers[offerId];
   }
 
   /*//////////////////////////////////////////////////////////////

@@ -501,6 +501,92 @@
         "type": "uint256"
       }
     ],
+    "name": "getLendingOffer",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "address",
+            "name": "token",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "fundingTarget",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "interestRateBps",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint16",
+            "name": "termDuration",
+            "type": "uint16"
+          },
+          {
+            "internalType": "enum FixedReturn.TermUnit",
+            "name": "termUnit",
+            "type": "uint8"
+          },
+          {
+            "internalType": "uint256",
+            "name": "startDate",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "subscriptionDeadline",
+            "type": "uint256"
+          },
+          {
+            "internalType": "enum FixedReturn.FundingAccess",
+            "name": "fundingAccess",
+            "type": "uint8"
+          },
+          {
+            "internalType": "bool",
+            "name": "isCapEnabled",
+            "type": "bool"
+          },
+          {
+            "internalType": "uint256",
+            "name": "lenderCap",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "totalFunded",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "totalRepaidByIssuer",
+            "type": "uint256"
+          },
+          {
+            "internalType": "enum FixedReturn.OfferState",
+            "name": "state",
+            "type": "uint8"
+          }
+        ],
+        "internalType": "struct FixedReturn.LendingOffer",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "offerId",
+        "type": "uint256"
+      }
+    ],
     "name": "getOfferLenders",
     "outputs": [
       {
@@ -655,85 +741,6 @@
         "internalType": "uint256",
         "name": "",
         "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "name": "lendingOffers",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "token",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "fundingTarget",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "interestRateBps",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint16",
-        "name": "termDuration",
-        "type": "uint16"
-      },
-      {
-        "internalType": "enum FixedReturn.TermUnit",
-        "name": "termUnit",
-        "type": "uint8"
-      },
-      {
-        "internalType": "uint256",
-        "name": "startDate",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "subscriptionDeadline",
-        "type": "uint256"
-      },
-      {
-        "internalType": "enum FixedReturn.FundingAccess",
-        "name": "fundingAccess",
-        "type": "uint8"
-      },
-      {
-        "internalType": "bool",
-        "name": "isCapEnabled",
-        "type": "bool"
-      },
-      {
-        "internalType": "uint256",
-        "name": "lenderCap",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "totalFunded",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "totalRepaidByIssuer",
-        "type": "uint256"
-      },
-      {
-        "internalType": "enum FixedReturn.OfferState",
-        "name": "state",
-        "type": "uint8"
       }
     ],
     "stateMutability": "view",

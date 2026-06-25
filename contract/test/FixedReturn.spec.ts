@@ -217,7 +217,7 @@ describe('FixedReturn', () => {
       )
       expect(offerId).to.equal(1n)
 
-      const offer = await fixedReturn.lendingOffers(offerId)
+      const offer = await fixedReturn.getLendingOffer(offerId)
       expect(offer.token).to.equal(await token.getAddress())
       expect(offer.fundingTarget).to.equal(FUNDING_TARGET)
       expect(offer.interestRateBps).to.equal(INTEREST_RATE_BPS)
@@ -467,7 +467,7 @@ describe('FixedReturn', () => {
       await expect(fixedReturn.connect(lenderB).lendFunds(offerId, ethers.parseUnits('40000', 6)))
         .to.not.be.reverted
 
-      const offer = await fixedReturn.lendingOffers(offerId)
+      const offer = await fixedReturn.getLendingOffer(offerId)
       expect(offer.totalFunded).to.equal(FUNDING_TARGET)
       expect(offer.state).to.equal(OfferState.Funded)
     })
@@ -505,7 +505,7 @@ describe('FixedReturn', () => {
         fixedReturn.connect(lenderB).lendFunds(offerId, ethers.parseUnits('40000', 6))
       ).to.emit(fixedReturn, 'LendingOfferFunded')
 
-      const offer = await fixedReturn.lendingOffers(offerId)
+      const offer = await fixedReturn.getLendingOffer(offerId)
       expect(offer.state).to.equal(OfferState.Funded)
     })
   })
@@ -615,7 +615,7 @@ describe('FixedReturn', () => {
         .to.emit(fixedReturn, 'LendingOfferRefundable')
         .withArgs(offerId)
 
-      const offer = await fixedReturn.lendingOffers(offerId)
+      const offer = await fixedReturn.getLendingOffer(offerId)
       expect(offer.state).to.equal(OfferState.Refundable)
     })
 
@@ -791,7 +791,7 @@ describe('FixedReturn', () => {
         balanceABefore + ethers.parseUnits('64800', 6)
       )
 
-      const offer = await fixedReturn.lendingOffers(offerId)
+      const offer = await fixedReturn.getLendingOffer(offerId)
       expect(offer.state).to.equal(OfferState.Repaying)
       expect(offer.totalRepaidByIssuer).to.equal(ethers.parseUnits('108000', 6))
     })
