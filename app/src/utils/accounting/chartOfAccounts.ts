@@ -37,6 +37,7 @@ export const ACCOUNT_NAMES = [
   'Service Revenue',
   'Trading Gain',
   'Payroll Expense',
+  'Share-based Compensation',
   'Operating Expense',
   'Dividend Expense',
   'Trading Loss'
@@ -65,6 +66,7 @@ export const CHART_OF_ACCOUNTS: Readonly<Record<AccountName, AccountClass>> = {
   'Service Revenue': 'INCOME',
   'Trading Gain': 'INCOME',
   'Payroll Expense': 'EXPENSE',
+  'Share-based Compensation': 'EXPENSE',
   'Operating Expense': 'EXPENSE',
   'Dividend Expense': 'EXPENSE',
   'Trading Loss': 'EXPENSE'
