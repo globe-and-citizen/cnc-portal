@@ -40,6 +40,7 @@ interface AddressMapping {
   'ElectionsBeaconModule#Beacon'?: string
   'SafeDepositRouterBeaconModule#SafeDepositRouter'?: string
   'SafeDepositRouterBeaconModule#Beacon'?: string
+  'FeeCollectorModule#FeeCollector'?: string
 }
 
 const addressesMap: Record<number, AddressMapping> = {
@@ -212,6 +213,8 @@ export const SAFE_DEPOSIT_ROUTER_BEACON_ADDRESS = safeResolveAddress(
 export const OFFICER_ADDRESS = safeResolveAddress('Officer#Officer')
 export const OFFICER_BEACON = safeResolveAddress('Officer#FactoryBeacon')
 export const INVESTOR_V1_BEACON_ADDRESS = safeResolveAddress('InvestorsV1BeaconModule#Beacon')
+
+export const FEE_COLLECTOR_ADDRESS = safeResolveAddress('FeeCollectorModule#FeeCollector')
 
 export const BACKEND_URL = import.meta.env.VITE_APP_BACKEND_URL
 

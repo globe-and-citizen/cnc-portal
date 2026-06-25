@@ -226,6 +226,12 @@ const quickAccessSections = computed(() => {
       to: { name: 'payroll-account', params: { id } }
     },
     {
+      label: 'Accounting',
+      icon: 'heroicons:book-open',
+      description: 'Financial statements',
+      to: { name: 'accounting', params: { id } }
+    },
+    {
       label: 'Contract Management',
       icon: 'heroicons:wrench',
       description: 'Deploy and manage contracts',
