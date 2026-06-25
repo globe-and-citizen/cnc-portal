@@ -32,9 +32,24 @@ function deposit(timestamp: number, usdc: number, sher: number): SafeDepositRow 
 }
 
 describe('makeSherUsdRate', () => {
-  it('returns null (defer to base resolver) when no multiplier is known', () => {
+  it('returns null only for a truly empty timeline (defensive)', () => {
     expect(makeSherUsdRate([])).toBeNull()
-    expect(makeSherUsdRate(buildSherMultiplierTimeline(undefined, undefined))).toBeNull()
+  })
+
+  it('defaults to the 1x multiplier (1 SHER = $1) when nothing is known', () => {
+    const rate = makeSherUsdRate(buildSherMultiplierTimeline(undefined, undefined))!
+    expect(rate(new Date(1_000 * 1000))).toBeCloseTo(1)
+  })
+
+  it('uses the live contract multiplier when there are no change events', () => {
+    // currentMultiplier = 4x read straight from the router → 1 SHER = $0.25.
+    const rate = makeSherUsdRate(buildSherMultiplierTimeline(undefined, undefined, 4))!
+    expect(rate(new Date(1_000 * 1000))).toBeCloseTo(0.25)
+  })
+
+  it('prefers the live contract multiplier over the deposit-implied fallback', () => {
+    const rate = makeSherUsdRate(buildSherMultiplierTimeline([], [deposit(10, 100, 200)], 5))!
+    expect(rate(new Date(20 * 1000))).toBeCloseTo(0.2) // 5x live, not 2x deposit-implied
   })
 
   it('values 1 SHER as 1 / multiplier', () => {
