@@ -99,7 +99,7 @@ interface IFixedReturn is IOwnable, ITokenSupport {
   /// @notice Create a new fixed-rate lending offer
   /// @dev title/description are intentionally not part of this signature — they are
   ///      persisted off-chain by the calling application, linked by the returned offerId
-  function createLendingOffer(CreateOfferParams calldata p) external returns (uint256 offerId);
+  function createLendingOffer(CreateOfferParams calldata params) external returns (uint256 offerId);
 
   /// @notice Flip an offer to Refundable once its subscription deadline has passed
   ///         without reaching its funding target

@@ -478,7 +478,7 @@
           }
         ],
         "internalType": "struct FixedReturn.CreateOfferParams",
-        "name": "p",
+        "name": "params",
         "type": "tuple"
       }
     ],
