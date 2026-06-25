@@ -1,7 +1,7 @@
 <template>
   <UCard class="w-full">
     <template #header>
-      <div class="flex items-center gap-2.5">
+      <div class="flex flex-wrap items-center gap-2.5">
         <span class="bg-primary/10 text-primary flex size-7 items-center justify-center rounded-lg">
           <UIcon name="i-heroicons-calculator" class="size-4.5" />
         </span>
@@ -11,7 +11,13 @@
           variant="soft"
           :icon="trial.balanced ? 'i-heroicons-check' : 'i-heroicons-exclamation-triangle'"
           :label="trial.balanced ? 'In balance' : 'Out of balance'"
-          class="ml-auto rounded-full"
+          class="rounded-full"
+        />
+        <AccountingDatePicker
+          v-model="asOf"
+          mode="date"
+          storage-key="cnc-accounting-trial-asof"
+          class="ml-auto"
         />
       </div>
     </template>
@@ -62,10 +68,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
+import AccountingDatePicker from '@/components/AccountingDatePicker.vue'
+import { defaultValueForMode } from '@/utils/datePicker'
 import { useAccountingContext } from '@/composables/accounting/useAccountingContext'
-import { presentTrial } from '@/utils/accounting/presenter'
+import { buildGeneralLedger } from '@/utils/accounting/generalLedger'
+import { filterByPeriod, presentTrial } from '@/utils/accounting/presenter'
 
 interface TrialTableRow {
   account: string
@@ -78,8 +87,14 @@ interface TrialTableRow {
   isTotal: boolean
 }
 
+// Point-in-time "as of" date (date mode) — defaults to end of today. The trial
+// balance is rebuilt from the slice of entries up to this date.
+const asOf = ref<Date>(defaultValueForMode('date') as Date)
+
 const acc = useAccountingContext()
-const trial = computed(() => presentTrial(acc.generalLedger.value))
+const trial = computed(() =>
+  presentTrial(buildGeneralLedger(filterByPeriod(acc.entries.value, null, asOf.value)))
+)
 
 const tableRows = computed<TrialTableRow[]>(() => [
   ...trial.value.rows.map((r) => ({ ...r, isTotal: false })),
