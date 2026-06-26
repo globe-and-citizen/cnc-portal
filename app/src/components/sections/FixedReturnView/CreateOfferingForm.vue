@@ -105,7 +105,6 @@ const termsRef = ref<StepHandle>(null)
 const accessRef = ref<StepHandle>(null)
 
 const toast = useToast()
-
 const createOfferResult = useFixedReturnCreateLendingOffer()
 const isPublishing = computed(() => createOfferResult.isPending.value)
 const submitError = ref<string | null>(null)

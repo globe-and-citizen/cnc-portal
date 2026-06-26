@@ -2,6 +2,8 @@ import { formatUnits, parseUnits, type Address } from 'viem'
 import { SUPPORTED_TOKENS } from '@/constant'
 import type {
   FixedReturnOfferParams,
+  LenderOffering,
+  LendingOfferStruct,
   OfferingForm,
   OfferingSummary,
   TermUnit,
@@ -116,15 +118,14 @@ export function toFixedReturnOfferParams(
 }
 
 /**
- * Resolves a token address to its SUPPORTED_TOKENS decimals. Falls back to 6
- * (USDC/USDCe/USDT are the only realistic FixedReturn tokens today) for a token added
- * via addTokenSupport that isn't in the static list.
+ * Resolves a token address to its SUPPORTED_TOKENS decimals, or undefined if it
+ * isn't in the static list (e.g. a token added via addTokenSupport that isn't one of
+ * the usual USDC/USDCe/USDT). Callers fall back to 6 (the only decimals every
+ * FixedReturn-supported token uses today) rather than failing outright.
  */
-export function decimalsForOfferingToken(tokenAddress: Address): number {
-  return (
-    SUPPORTED_TOKENS.find((t) => t.address.toLowerCase() === tokenAddress.toLowerCase())
-      ?.decimals ?? 6
-  )
+export function decimalsForOfferingToken(tokenAddress: Address): number | undefined {
+  return SUPPORTED_TOKENS.find((t) => t.address.toLowerCase() === tokenAddress.toLowerCase())
+    ?.decimals
 }
 
 /** FixedReturn.sol's OfferState enum: Open, Funded, Refundable, Repaying. */
@@ -134,36 +135,19 @@ function offerStateToStatus(state: 0 | 1 | 2 | 3): OfferingSummary['status'] {
   return 'funded' // Funded or Repaying
 }
 
-/** Raw shape decoded from FixedReturn.sol's getLendingOffer (named-tuple struct). */
-export interface LendingOfferStruct {
-  token: Address
-  fundingTarget: bigint
-  interestRateBps: bigint
-  termDuration: number
-  termUnit: 0 | 1 | 2
-  startDate: bigint
-  subscriptionDeadline: bigint
-  fundingAccess: 0 | 1
-  isCapEnabled: boolean
-  lenderCap: bigint
-  totalFunded: bigint
-  totalRepaidByIssuer: bigint
-  state: 0 | 1 | 2 | 3
-}
-
 /**
  * Maps a single on-chain LendingOffer struct to the UI's OfferingSummary, scaling
- * amounts by the offer's token decimals. Title comes from the off-chain metadata
+ * amounts by the offer's token decimals (resolved by the caller, since this function
+ * stays pure — see decimalsForOfferingToken). Title comes from the off-chain metadata
  * endpoint (FixedReturn.sol has no title param) — falls back to a generic label when
  * that hasn't loaded yet or was never recorded.
  */
 export function fromLendingOfferStruct(
   offerId: number,
   offer: LendingOfferStruct,
+  decimals: number,
   title?: string
 ): OfferingSummary {
-  const decimals = decimalsForOfferingToken(offer.token)
-
   return {
     id: String(offerId),
     title: title ?? `Offering #${offerId}`,
@@ -177,5 +161,68 @@ export function fromLendingOfferStruct(
     totalRepaid: Number(formatUnits(offer.totalRepaidByIssuer, decimals)),
     status: offerStateToStatus(offer.state),
     token: offer.token
+  }
+}
+
+const ACCESS_META: Record<
+  OfferingForm['access'],
+  { accessLabel: string; accessBg: string; accessColor: string; accessDot: string }
+> = {
+  general: {
+    accessLabel: 'Open to all',
+    accessBg: '#e6f8f1',
+    accessColor: '#0a7a52',
+    accessDot: '#00bf7a'
+  },
+  whitelist: {
+    accessLabel: 'Whitelist',
+    accessBg: '#ebf0ff',
+    accessColor: '#2b50c8',
+    accessDot: '#3366ff'
+  }
+}
+
+/**
+ * Maps a single on-chain LendingOffer struct, plus the connected lender's personal
+ * Whitelist-mode allocation (0n if not whitelisted or the offer is General), into the
+ * lender-facing LenderOffering. There's no on-chain "minimum deposit" or "fixed
+ * amount" — the only real per-lender limit is either the General-mode lenderCap or
+ * the Whitelist-mode personal allocation, or no cap at all.
+ */
+export function toLenderOffering(
+  offerId: number,
+  offer: LendingOfferStruct,
+  decimals: number,
+  whitelistAllocation: bigint,
+  title?: string
+): LenderOffering {
+  const access = FUNDING_ACCESS_LABEL[offer.fundingAccess]
+  const isWhitelist = access === 'whitelist'
+
+  const allowed = isWhitelist ? whitelistAllocation > 0n : true
+  const cap = isWhitelist
+    ? Number(formatUnits(whitelistAllocation, decimals))
+    : offer.isCapEnabled
+      ? Number(formatUnits(offer.lenderCap, decimals))
+      : null
+
+  const raised = Number(formatUnits(offer.totalFunded, decimals))
+  const target = Number(formatUnits(offer.fundingTarget, decimals))
+
+  return {
+    id: String(offerId),
+    title: title ?? `Offering #${offerId}`,
+    rate: Number(offer.interestRateBps) / 100,
+    term: offer.termDuration,
+    termUnit: TERM_UNIT_LABEL[offer.termUnit],
+    access,
+    allowed,
+    cap,
+    raised,
+    target,
+    token: offer.token,
+    pct: percentOf(raised, target),
+    limitsLabel: cap != null ? moneyShort(cap) + (isWhitelist ? ' allocation' : ' cap') : 'No cap',
+    ...ACCESS_META[access]
   }
 }

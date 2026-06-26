@@ -53,20 +53,25 @@ export interface FixedReturnOfferingResponse {
   updatedAt: string
 }
 
+/**
+ * A FixedReturn offer from the lender's point of view — eligibility and the deposit
+ * cap depend on the connected wallet, unlike OfferingSummary (issuer's view, the same
+ * for everyone). There's no on-chain "minimum deposit" or "fixed amount" concept —
+ * `cap` is either the General-mode per-lender lenderCap, the Whitelist-mode personal
+ * allocation, or null (no cap, General mode with isCapEnabled false).
+ */
 export interface LenderOffering {
+  id: string
   title: string
   rate: number
   term: number
+  termUnit: TermUnit
   access: 'general' | 'whitelist'
-  whitelisted?: boolean
-  myAllocation?: number
-  mode: 'range' | 'fixed'
-  min?: number
-  max?: number
-  fixed?: number
+  allowed: boolean
+  cap: number | null
   raised: number
   target: number
-  allowed: boolean
+  token: Address
   accessLabel: string
   accessBg: string
   accessColor: string
@@ -93,4 +98,21 @@ export interface FixedReturnOfferParams {
   lenderCap: bigint
   whitelistAddrs: Address[]
   allocations: bigint[]
+}
+
+/** Raw shape decoded from FixedReturn.sol's getLendingOffer (named-tuple struct). */
+export interface LendingOfferStruct {
+  token: Address
+  fundingTarget: bigint
+  interestRateBps: bigint
+  termDuration: number
+  termUnit: 0 | 1 | 2
+  startDate: bigint
+  subscriptionDeadline: bigint
+  fundingAccess: 0 | 1
+  isCapEnabled: boolean
+  lenderCap: bigint
+  totalFunded: bigint
+  totalRepaidByIssuer: bigint
+  state: 0 | 1 | 2 | 3
 }

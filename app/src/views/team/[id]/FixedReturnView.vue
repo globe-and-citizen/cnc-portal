@@ -5,11 +5,13 @@
         <div class="text-sm text-gray-600">Contract Address:</div>
         <AddressToolTip :address="fixedReturnAddress" />
       </div>
-      <div class="flex gap-1 rounded-xl border border-[#d8e6df] bg-[#eef4f1] p-1.5">
+      <div class="flex gap-1 rounded-xl border border-[#d8e6df] bg-[#eef4f1] p-1.5" role="tablist">
         <UTooltip :text="!isFixedReturnOwner ? 'Only the team owner can issue a note' : undefined">
           <button
             :class="tabClass(showCreateForm)"
             :disabled="!isFixedReturnOwner"
+            role="tab"
+            :aria-selected="showCreateForm"
             data-test="issue-note-tab"
             @click="showCreateForm = true"
           >
@@ -18,6 +20,8 @@
         </UTooltip>
         <button
           :class="tabClass(!showCreateForm)"
+          role="tab"
+          :aria-selected="!showCreateForm"
           data-test="my-offerings-tab"
           @click="showCreateForm = false"
         >
