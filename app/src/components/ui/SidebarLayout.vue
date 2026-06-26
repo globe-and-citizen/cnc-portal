@@ -281,6 +281,31 @@ const items = computed<NavigationMenuItem[]>(() => [
       name: 'vesting',
       params: { id: teamStore.currentTeamId || '1' }
     }
+  },
+  {
+    label: 'Debt Financing',
+    icon: 'heroicons:banknotes',
+    to: {
+      name: 'fixed-return',
+      params: { id: teamStore.currentTeamId || '1' }
+    },
+    defaultOpen: true,
+    children: [
+      {
+        label: 'Fixed Return',
+        to: {
+          name: 'fixed-return',
+          params: { id: teamStore.currentTeamId || '1' }
+        }
+      },
+      {
+        label: 'Browse & Lend',
+        to: {
+          name: 'lender-marketplace',
+          params: { id: teamStore.currentTeamId || '1' }
+        }
+      }
+    ]
   }
 ])
 
