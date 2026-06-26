@@ -16,6 +16,7 @@ const {
   getContractsStats,
   getActionsStats,
   getRecentActivity,
+  getTvlStats,
   isLoading,
   error
 } = useStats()
@@ -39,7 +40,8 @@ const tabs = [
   { label: 'Expenses', icon: 'i-lucide-receipt', slot: 'expenses' },
   { label: 'Contracts', icon: 'i-lucide-file-signature', slot: 'contracts' },
   { label: 'Actions', icon: 'i-lucide-zap', slot: 'actions' },
-  { label: 'Activity', icon: 'i-lucide-activity', slot: 'activity' }
+  { label: 'Activity', icon: 'i-lucide-activity', slot: 'activity' },
+  { label: 'TVL', icon: 'i-lucide-lock', slot: 'tvl' }
 ]
 
 // Fetch stats data
@@ -97,6 +99,9 @@ const { data: activityData, refresh: refreshActivity } = await useAsyncData(
   { watch: [selectedPeriod] }
 )
 
+// TVL is a live on-chain snapshot — independent of the selected period.
+const { data: tvlData, refresh: refreshTvl } = await useAsyncData('stats-tvl', () => getTvlStats())
+
 // Refresh all stats
 const refreshAll = async () => {
   await Promise.all([
@@ -108,7 +113,8 @@ const refreshAll = async () => {
     refreshExpenses(),
     refreshContracts(),
     refreshActions(),
-    refreshActivity()
+    refreshActivity(),
+    refreshTvl()
   ])
 }
 </script>
@@ -191,6 +197,10 @@ const refreshAll = async () => {
 
         <template #activity>
           <StatsActivitySection :data="activityData" :is-loading="isLoading" />
+        </template>
+
+        <template #tvl>
+          <StatsTvlSection :data="tvlData" :is-loading="isLoading" />
         </template>
       </UTabs>
     </div>
