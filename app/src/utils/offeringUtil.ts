@@ -1,4 +1,20 @@
-import type { TermUnit } from '@/types'
+import { formatUnits, parseUnits, type Address } from 'viem'
+import { SUPPORTED_TOKENS } from '@/constant'
+import type {
+  FixedReturnOfferParams,
+  OfferingForm,
+  OfferingSummary,
+  TermUnit,
+  WhitelistEntry
+} from '@/types'
+
+const TERM_UNIT_INDEX: Record<TermUnit, 0 | 1 | 2> = { days: 0, months: 1, years: 2 }
+const TERM_UNIT_LABEL: Record<0 | 1 | 2, TermUnit> = { 0: 'days', 1: 'months', 2: 'years' }
+const FUNDING_ACCESS_INDEX: Record<OfferingForm['access'], 0 | 1> = { general: 0, whitelist: 1 }
+const FUNDING_ACCESS_LABEL: Record<0 | 1, OfferingForm['access']> = {
+  0: 'general',
+  1: 'whitelist'
+}
 
 export function moneyShort(n: number): string {
   return '$' + Math.round(n).toLocaleString('en-US')
@@ -49,4 +65,117 @@ export function percentOf(numerator: number, denominator: number): number {
 
 export function expectedReturn(principal: number, rate: number): number {
   return principal * (1 + rate / 100)
+}
+
+/**
+ * Resolves an OfferingForm token symbol to its SUPPORTED_TOKENS entry.
+ * Excludes 'native' unconditionally — FixedReturn.sol is ERC20-only (SafeERC20
+ * transfers, no payable receive). The real "is this token actually accepted by this
+ * team's contract" gate is the live getSupportedTokens() read driving the form's token
+ * dropdown (see OfferingBasicsStep.vue) and the contract's own TokenSupportNotFound
+ * revert — this is just a display/encoding lookup, not an access-control check.
+ */
+export function findOfferingToken(symbol: string | undefined) {
+  return SUPPORTED_TOKENS.find((t) => t.symbol === symbol && t.id !== 'native')
+}
+
+function toUnixSeconds(dateStr: string): bigint {
+  return BigInt(Math.floor(new Date(`${dateStr}T00:00:00Z`).getTime() / 1000))
+}
+
+/**
+ * Maps the UI's OfferingForm + whitelist state to FixedReturn.sol's CreateOfferParams
+ * shape: scales amounts by the token's decimals, converts dates to unix seconds, and
+ * maps the form's string unions to the contract's enum indices.
+ */
+export function toFixedReturnOfferParams(
+  form: OfferingForm,
+  whitelist: WhitelistEntry[]
+): FixedReturnOfferParams {
+  const token = findOfferingToken(form.token)
+  if (!token) throw new Error(`Unsupported token: ${form.token}`)
+
+  const isWhitelist = form.access === 'whitelist'
+
+  return {
+    token: token.address as Address,
+    fundingTarget: parseUnits(String(form.principal), token.decimals),
+    interestRateBps: BigInt(Math.round(form.rate * 100)),
+    termDuration: form.termValue,
+    termUnit: TERM_UNIT_INDEX[form.termUnit],
+    startDate: toUnixSeconds(form.startDate),
+    subscriptionDeadline: toUnixSeconds(form.deadline),
+    fundingAccess: FUNDING_ACCESS_INDEX[form.access],
+    isCapEnabled: form.capOn,
+    lenderCap: form.capOn ? parseUnits(String(form.cap), token.decimals) : 0n,
+    whitelistAddrs: isWhitelist ? whitelist.map((w) => w.address as Address) : [],
+    allocations: isWhitelist
+      ? whitelist.map((w) => parseUnits(String(w.amount ?? 0), token.decimals))
+      : []
+  }
+}
+
+/**
+ * Resolves a token address to its SUPPORTED_TOKENS decimals. Falls back to 6
+ * (USDC/USDCe/USDT are the only realistic FixedReturn tokens today) for a token added
+ * via addTokenSupport that isn't in the static list.
+ */
+export function decimalsForOfferingToken(tokenAddress: Address): number {
+  return (
+    SUPPORTED_TOKENS.find((t) => t.address.toLowerCase() === tokenAddress.toLowerCase())
+      ?.decimals ?? 6
+  )
+}
+
+/** FixedReturn.sol's OfferState enum: Open, Funded, Refundable, Repaying. */
+function offerStateToStatus(state: 0 | 1 | 2 | 3): OfferingSummary['status'] {
+  if (state === 0) return 'open'
+  if (state === 2) return 'closed' // Refundable — deadline missed, lenders can claim back
+  return 'funded' // Funded or Repaying
+}
+
+/** Raw shape decoded from FixedReturn.sol's getLendingOffer (named-tuple struct). */
+export interface LendingOfferStruct {
+  token: Address
+  fundingTarget: bigint
+  interestRateBps: bigint
+  termDuration: number
+  termUnit: 0 | 1 | 2
+  startDate: bigint
+  subscriptionDeadline: bigint
+  fundingAccess: 0 | 1
+  isCapEnabled: boolean
+  lenderCap: bigint
+  totalFunded: bigint
+  totalRepaidByIssuer: bigint
+  state: 0 | 1 | 2 | 3
+}
+
+/**
+ * Maps a single on-chain LendingOffer struct to the UI's OfferingSummary, scaling
+ * amounts by the offer's token decimals. Title comes from the off-chain metadata
+ * endpoint (FixedReturn.sol has no title param) — falls back to a generic label when
+ * that hasn't loaded yet or was never recorded.
+ */
+export function fromLendingOfferStruct(
+  offerId: number,
+  offer: LendingOfferStruct,
+  title?: string
+): OfferingSummary {
+  const decimals = decimalsForOfferingToken(offer.token)
+
+  return {
+    id: String(offerId),
+    title: title ?? `Offering #${offerId}`,
+    rate: Number(offer.interestRateBps) / 100,
+    term: offer.termDuration,
+    termUnit: TERM_UNIT_LABEL[offer.termUnit],
+    startDate: new Date(Number(offer.startDate) * 1000).toISOString().slice(0, 10),
+    access: FUNDING_ACCESS_LABEL[offer.fundingAccess],
+    raised: Number(formatUnits(offer.totalFunded, decimals)),
+    target: Number(formatUnits(offer.fundingTarget, decimals)),
+    totalRepaid: Number(formatUnits(offer.totalRepaidByIssuer, decimals)),
+    status: offerStateToStatus(offer.state),
+    token: offer.token
+  }
 }

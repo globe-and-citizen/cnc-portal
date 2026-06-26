@@ -8,8 +8,29 @@ import {
   termLabel,
   maturityLabel,
   percentOf,
-  expectedReturn
+  expectedReturn,
+  findOfferingToken,
+  toFixedReturnOfferParams
 } from '../offeringUtil'
+import type { OfferingForm, WhitelistEntry } from '@/types'
+
+function baseForm(overrides: Partial<OfferingForm> = {}): OfferingForm {
+  return {
+    title: 'Test Note',
+    purpose: '',
+    principal: 100000,
+    rate: 8,
+    termValue: 12,
+    termUnit: 'months',
+    startDate: '2026-07-01',
+    deadline: '2026-06-30',
+    access: 'general',
+    capOn: false,
+    cap: 0,
+    token: 'USDC',
+    ...overrides
+  }
+}
 
 describe('moneyShort', () => {
   it('formats a positive amount with a dollar sign and rounds to the nearest whole number', () => {
@@ -116,5 +137,90 @@ describe('expectedReturn', () => {
 
   it('returns the principal unchanged at a zero rate', () => {
     expect(expectedReturn(1000, 0)).toBe(1000)
+  })
+})
+
+describe('findOfferingToken', () => {
+  it('resolves a supported ERC20 token by symbol', () => {
+    expect(findOfferingToken('USDC')?.id).toBe('usdc')
+  })
+
+  it('excludes the native token even if its symbol matches', () => {
+    expect(findOfferingToken('native')).toBeUndefined()
+  })
+
+  it('returns undefined for an unknown symbol', () => {
+    expect(findOfferingToken('NOPE')).toBeUndefined()
+  })
+
+  it('returns undefined for an undefined symbol', () => {
+    expect(findOfferingToken(undefined)).toBeUndefined()
+  })
+})
+
+describe('toFixedReturnOfferParams', () => {
+  it('scales amounts by the token decimals and maps enum indices for a General offer', () => {
+    const params = toFixedReturnOfferParams(
+      baseForm({ principal: 100000, rate: 8.5, termUnit: 'days', access: 'general' }),
+      []
+    )
+
+    expect(params.fundingTarget).toBe(100000_000000n)
+    expect(params.interestRateBps).toBe(850n)
+    expect(params.termUnit).toBe(0)
+    expect(params.fundingAccess).toBe(0)
+    expect(params.whitelistAddrs).toEqual([])
+    expect(params.allocations).toEqual([])
+  })
+
+  it('converts ISO dates to unix seconds at UTC midnight', () => {
+    const params = toFixedReturnOfferParams(
+      baseForm({ startDate: '2026-07-01', deadline: '2026-06-30' }),
+      []
+    )
+
+    expect(params.startDate).toBe(BigInt(Date.UTC(2026, 6, 1) / 1000))
+    expect(params.subscriptionDeadline).toBe(BigInt(Date.UTC(2026, 5, 30) / 1000))
+  })
+
+  it('sets lenderCap to zero when isCapEnabled is false, regardless of the cap field', () => {
+    const params = toFixedReturnOfferParams(baseForm({ capOn: false, cap: 5000 }), [])
+    expect(params.isCapEnabled).toBe(false)
+    expect(params.lenderCap).toBe(0n)
+  })
+
+  it('scales lenderCap by token decimals when isCapEnabled is true', () => {
+    const params = toFixedReturnOfferParams(baseForm({ capOn: true, cap: 5000 }), [])
+    expect(params.isCapEnabled).toBe(true)
+    expect(params.lenderCap).toBe(5000_000000n)
+  })
+
+  it('encodes whitelist addresses and allocations for a Whitelist offer', () => {
+    const whitelist: WhitelistEntry[] = [
+      { username: '@a', address: '0x1111111111111111111111111111111111111111', amount: 30000 },
+      { username: '@b', address: '0x2222222222222222222222222222222222222222', amount: 20000 }
+    ]
+    const params = toFixedReturnOfferParams(baseForm({ access: 'whitelist' }), whitelist)
+
+    expect(params.fundingAccess).toBe(1)
+    expect(params.whitelistAddrs).toEqual([
+      '0x1111111111111111111111111111111111111111',
+      '0x2222222222222222222222222222222222222222'
+    ])
+    expect(params.allocations).toEqual([30000_000000n, 20000_000000n])
+  })
+
+  it('treats a null whitelist amount as zero', () => {
+    const whitelist: WhitelistEntry[] = [
+      { username: '@a', address: '0x1111111111111111111111111111111111111111', amount: null }
+    ]
+    const params = toFixedReturnOfferParams(baseForm({ access: 'whitelist' }), whitelist)
+    expect(params.allocations).toEqual([0n])
+  })
+
+  it('throws for a token that is not in SUPPORTED_TOKENS (excluding native)', () => {
+    expect(() => toFixedReturnOfferParams(baseForm({ token: 'native' }), [])).toThrow(
+      /Unsupported token/
+    )
   })
 })

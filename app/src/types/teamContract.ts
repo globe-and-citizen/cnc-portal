@@ -12,6 +12,7 @@ export type ContractType =
   | 'VestingV1'
   | 'SafeDepositRouter'
   | 'Safe'
+  | 'FixedReturn'
 export interface TeamContract {
   address: Address
   type: ContractType

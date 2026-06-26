@@ -52,14 +52,40 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { z } from 'zod'
+import type { Address } from 'viem'
 import { SUPPORTED_TOKENS } from '@/constant'
+import { useFixedReturnGetSupportedTokens } from '@/composables/fixedReturn/reads'
 import type { OfferingForm } from '@/types'
 
 const form = defineModel<OfferingForm>('form', { required: true })
 
-const tokenOptions = SUPPORTED_TOKENS.map((t) => ({ label: t.symbol, value: t.symbol }))
+const { data: supportedTokenAddresses } = useFixedReturnGetSupportedTokens()
+
+// Driven by the contract's own getSupportedTokens() rather than a hardcoded list —
+// which tokens an offer can use depends on what this team's owner has actually
+// registered via addTokenSupport (set at deploy time, see contractDeploymentUtil.ts).
+const tokenOptions = computed(() => {
+  const addresses = supportedTokenAddresses.value as Address[] | undefined
+  if (!addresses) return []
+  return SUPPORTED_TOKENS.filter((t) =>
+    addresses.some((addr) => addr.toLowerCase() === t.address.toLowerCase())
+  ).map((t) => ({ label: t.symbol, value: t.symbol }))
+})
+
+// Fall back to the first actually-supported token if the form's current selection
+// (e.g. a stale default) isn't one of them.
+watch(
+  tokenOptions,
+  (options) => {
+    const firstOption = options[0]
+    if (firstOption && !options.some((o) => o.value === form.value.token)) {
+      form.value.token = firstOption.value
+    }
+  },
+  { immediate: true }
+)
 
 const schema = computed(() =>
   z.object({

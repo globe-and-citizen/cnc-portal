@@ -26,20 +26,24 @@
       <hr class="border-t border-[#eef3f0]" />
 
       <div class="grid grid-cols-2 gap-3">
-        <UFormField label="Start date" name="startDate">
-          <UInput
-            v-model="form.startDate"
-            type="date"
-            class="w-full"
-            data-test="offering-start-date-input"
-          />
-        </UFormField>
-        <UFormField label="Subscription deadline" name="deadline">
+        <UFormField
+          label="Subscription deadline"
+          name="deadline"
+          description="Last day lenders can commit funds."
+        >
           <UInput
             v-model="form.deadline"
             type="date"
             class="w-full"
             data-test="offering-deadline-input"
+          />
+        </UFormField>
+        <UFormField label="Start date" name="startDate" description="Loan term starts">
+          <UInput
+            v-model="form.startDate"
+            type="date"
+            class="w-full"
+            data-test="offering-start-date-input"
           />
         </UFormField>
       </div>
@@ -124,7 +128,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { z } from 'zod'
 import type { OfferingForm, TermUnit } from '@/types'
 import { pickerClass } from '@/utils'
@@ -201,6 +205,22 @@ const schema = computed(() =>
     )
 )
 
-const formRef = ref<{ validate: () => Promise<unknown> } | null>(null)
+const formRef = ref<{
+  validate: (opts?: { name?: string | string[]; silent?: boolean }) => Promise<unknown>
+} | null>(null)
 defineExpose({ validate: () => formRef.value!.validate() })
+
+// UForm only refreshes errors for the field name(s) passed to validate(), and its
+// own per-field input/blur handling only passes the name of whichever field was
+// actually touched. The deadline<=startDate rule is a cross-field check attached to
+// a single path (deadline) — so fixing the mismatch by editing startDate wouldn't
+// otherwise clear the stale error still shown under deadline. Re-validating both
+// names together whenever either one changes keeps both sides in sync no matter
+// which field the user actually edited.
+watch(
+  () => [form.value.startDate, form.value.deadline],
+  () => {
+    formRef.value?.validate({ name: ['startDate', 'deadline'], silent: true })
+  }
+)
 </script>
