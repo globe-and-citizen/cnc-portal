@@ -32,17 +32,34 @@ const periodOptions = [
 
 // Tab management
 const tabs = [
-  { label: 'Overview', icon: 'i-lucide-layout-dashboard', slot: 'overview' },
-  { label: 'Teams', icon: 'i-lucide-users', slot: 'teams' },
-  { label: 'Users', icon: 'i-lucide-user', slot: 'users' },
-  { label: 'Claims', icon: 'i-lucide-file-text', slot: 'claims' },
-  { label: 'Wages', icon: 'i-lucide-dollar-sign', slot: 'wages' },
-  { label: 'Expenses', icon: 'i-lucide-receipt', slot: 'expenses' },
-  { label: 'Contracts', icon: 'i-lucide-file-signature', slot: 'contracts' },
-  { label: 'Actions', icon: 'i-lucide-zap', slot: 'actions' },
-  { label: 'Activity', icon: 'i-lucide-activity', slot: 'activity' },
-  { label: 'TVL', icon: 'i-lucide-lock', slot: 'tvl' }
+  { label: 'Overview', icon: 'i-lucide-layout-dashboard', value: 'overview', slot: 'overview' },
+  { label: 'Teams', icon: 'i-lucide-users', value: 'teams', slot: 'teams' },
+  { label: 'Users', icon: 'i-lucide-user', value: 'users', slot: 'users' },
+  { label: 'Claims', icon: 'i-lucide-file-text', value: 'claims', slot: 'claims' },
+  { label: 'Wages', icon: 'i-lucide-dollar-sign', value: 'wages', slot: 'wages' },
+  { label: 'Expenses', icon: 'i-lucide-receipt', value: 'expenses', slot: 'expenses' },
+  { label: 'Contracts', icon: 'i-lucide-file-signature', value: 'contracts', slot: 'contracts' },
+  { label: 'Actions', icon: 'i-lucide-zap', value: 'actions', slot: 'actions' },
+  { label: 'Activity', icon: 'i-lucide-activity', value: 'activity', slot: 'activity' },
+  { label: 'TVL', icon: 'i-lucide-lock', value: 'tvl', slot: 'tvl' }
 ]
+
+// Persist the active tab in the URL (?tab=) so a reload — or a shared link —
+// restores the same tab. `replace` keeps it out of the history stack; an
+// unknown value falls back to the first tab.
+const route = useRoute()
+const router = useRouter()
+const tabValues = tabs.map(tab => tab.value)
+
+const activeTab = computed({
+  get: () => {
+    const tab = route.query.tab
+    return typeof tab === 'string' && tabValues.includes(tab) ? tab : 'overview'
+  },
+  set: (tab) => {
+    router.replace({ query: { ...route.query, tab } })
+  }
+})
 
 // Fetch stats data
 const { data: overviewData, refresh: refreshOverview } = await useAsyncData(
@@ -162,7 +179,7 @@ const refreshAll = async () => {
 
     <!-- Tabs Navigation -->
     <div class="space-y-6">
-      <UTabs :items="tabs" class="w-full">
+      <UTabs v-model="activeTab" :items="tabs" class="w-full">
         <template #overview>
           <StatsOverviewSection :data="overviewData" :is-loading="isLoading" />
         </template>
