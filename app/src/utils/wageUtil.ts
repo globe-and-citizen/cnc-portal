@@ -1,4 +1,10 @@
-import type { RatePerHour, RatePerHourWithEnabled, SupportedTokens, Wage, WeeklyClaim } from '@/types'
+import type {
+  RatePerHour,
+  RatePerHourWithEnabled,
+  SupportedTokens,
+  Wage,
+  WeeklyClaim
+} from '@/types'
 import { parseEther, parseUnits, type Address } from 'viem'
 
 const requiredRateTypes: RatePerHour['type'][] = ['native', 'usdc', 'sher']

@@ -112,7 +112,11 @@ import { computed } from 'vue'
 import { useCurrencyStore } from '@/stores'
 import type { RatePerHour, Wage, WeeklyClaim } from '@/types/cash-remuneration'
 import RateDotList from '@/components/RateDotList.vue'
-import { computeClaimTokenAmounts, formatMinutesAsDuration, splitClaimMinutes } from '@/utils/wageUtil'
+import {
+  computeClaimTokenAmounts,
+  formatMinutesAsDuration,
+  splitClaimMinutes
+} from '@/utils/wageUtil'
 
 const props = defineProps<{
   weeklyClaim?: WeeklyClaim
