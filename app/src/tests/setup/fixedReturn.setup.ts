@@ -17,7 +17,9 @@ vi.mock('@/composables/fixedReturn/reads', () => ({
   useFixedReturnLenderAllocation: vi.fn(() => mockFixedReturnReads.lenderAllocation),
   useFixedReturnHasDeposited: vi.fn(() => mockFixedReturnReads.hasDeposited),
   useFixedReturnIsTokenSupported: vi.fn(() => mockFixedReturnReads.isTokenSupported),
-  useFixedReturnGetSupportedTokens: vi.fn(() => mockFixedReturnReads.getSupportedTokens)
+  useFixedReturnGetSupportedTokens: vi.fn(() => mockFixedReturnReads.getSupportedTokens),
+  useFixedReturnAllOffers: vi.fn(() => mockFixedReturnReads.allOffers),
+  useFixedReturnOfferLenders: vi.fn(() => mockFixedReturnReads.offerLenders)
 }))
 
 vi.mock('@/composables/fixedReturn/writes', () => ({

@@ -14,11 +14,33 @@
       </div>
     </div>
 
+    <!-- Loading state -->
+    <div
+      v-if="isLoading"
+      data-test="marketplace-loading"
+      class="rounded-2xl border border-[#e6efe9] bg-white px-5 py-10 text-center text-sm text-[#9aaba2]"
+    >
+      Loading offerings…
+    </div>
+
+    <!-- Empty state -->
+    <div
+      v-else-if="offerings.length === 0"
+      data-test="marketplace-empty"
+      class="rounded-2xl border border-[#e6efe9] bg-white px-5 py-10 text-center text-sm text-[#9aaba2]"
+    >
+      No offerings available yet.
+    </div>
+
     <!-- Offering cards -->
-    <div class="grid gap-4" style="grid-template-columns: repeat(auto-fill, minmax(340px, 1fr))">
+    <div
+      v-else
+      class="grid gap-4"
+      style="grid-template-columns: repeat(auto-fill, minmax(340px, 1fr))"
+    >
       <div
         v-for="o in offerings"
-        :key="o.title"
+        :key="o.id"
         class="flex flex-col gap-4 rounded-2xl border border-[#e6efe9] bg-white p-5 shadow-sm transition-all hover:border-[#bfe3d2] hover:shadow-md"
       >
         <!-- Title + rate -->
@@ -45,7 +67,9 @@
         <div class="grid grid-cols-2 gap-2.5">
           <div class="rounded-xl bg-[#f7faf8] px-3 py-2.5">
             <div class="text-xs font-semibold text-[#9aaba2]">Term</div>
-            <div class="mt-0.5 text-sm font-bold text-[#0f3d2e]">{{ o.term }} mo</div>
+            <div class="mt-0.5 text-sm font-bold text-[#0f3d2e]">
+              {{ termLabel(o.term, o.termUnit) }}
+            </div>
           </div>
           <div class="rounded-xl bg-[#f7faf8] px-3 py-2.5">
             <div class="text-xs font-semibold text-[#9aaba2]">Repayment</div>
@@ -97,7 +121,7 @@
       :amount="applyAmount"
       :interest="applyInterest"
       :total="applyTotal"
-      :amount-locked="amountLocked"
+      :amount-locked="false"
       :limits-hint="limitsHint"
       :error="amountError"
       @close="closeApply"
@@ -109,99 +133,90 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { useQuery } from '@tanstack/vue-query'
+import { readContract } from '@wagmi/core'
+import type { Address } from 'viem'
 import { useToast } from '@nuxt/ui/composables'
 import ApplyOfferingModal from './ApplyOfferingModal.vue'
-import { expectedReturn, moneyShort, percentOf } from '@/utils'
+import { config } from '@/wagmi.config'
+import { useTeamStore, useUserDataStore } from '@/stores'
+import { useFixedReturnAddress, useFixedReturnAllOffers } from '@/composables/fixedReturn/reads'
+import { useGetFixedReturnOfferingsQuery } from '@/queries'
+import { FIXED_RETURN_ABI } from '@/artifacts/abi/fixed-return'
+import { expectedReturn, log, moneyShort, parseError, termLabel, toLenderOffering } from '@/utils'
 import type { LenderOffering } from '@/types'
 
-const rawOfferings = [
-  {
-    title: 'Riverside Expansion Note',
-    rate: 9,
-    term: 12,
-    access: 'general' as const,
-    mode: 'range' as const,
-    min: 5000,
-    max: 50000,
-    raised: 320000,
-    target: 500000
-  },
-  {
-    title: 'Mill Street Solar Array',
-    rate: 8.5,
-    term: 18,
-    access: 'whitelist' as const,
-    whitelisted: true,
-    myAllocation: 30000,
-    mode: 'fixed' as const,
-    fixed: 25000,
-    raised: 150000,
-    target: 300000
-  },
-  {
-    title: 'Harbor Logistics Facility',
-    rate: 10,
-    term: 24,
-    access: 'general' as const,
-    mode: 'range' as const,
-    min: 10000,
-    max: 100000,
-    raised: 80000,
-    target: 750000
-  },
-  {
-    title: 'Downtown Retail Refit',
-    rate: 8,
-    term: 9,
-    access: 'whitelist' as const,
-    whitelisted: false,
-    mode: 'fixed' as const,
-    fixed: 15000,
-    raised: 90000,
-    target: 120000
-  }
-]
+const teamStore = useTeamStore()
+const userStore = useUserDataStore()
+const fixedReturnAddress = useFixedReturnAddress()
 
-const offerings = computed<LenderOffering[]>(() =>
-  rawOfferings.map((o) => {
-    const allowed = o.access === 'general' || !!o.whitelisted
-    const pct = percentOf(o.raised, o.target)
-    const limitsLabel =
-      'myAllocation' in o && o.myAllocation != null
-        ? moneyShort(o.myAllocation) + ' allocation'
-        : o.mode === 'fixed' && o.fixed != null
-          ? moneyShort(o.fixed) + ' fixed'
-          : moneyShort(o.min ?? 0) + ' – ' + moneyShort(o.max ?? 0)
-    const access =
-      o.access === 'whitelist'
-        ? {
-            accessLabel: 'Whitelist',
-            accessBg: '#ebf0ff',
-            accessColor: '#2b50c8',
-            accessDot: '#3366ff'
-          }
-        : {
-            accessLabel: 'Open to all',
-            accessBg: '#e6f8f1',
-            accessColor: '#0a7a52',
-            accessDot: '#00bf7a'
-          }
-    return { ...o, allowed, pct, limitsLabel, ...access }
-  })
+const { data: rawOfferings, isLoading } = useFixedReturnAllOffers()
+const { data: offeringMetadata } = useGetFixedReturnOfferingsQuery({
+  queryParams: { teamId: teamStore.currentTeamId }
+})
+
+// Only Open offers can actually accept new lenders — lendFunds itself rejects any
+// other state, so there's no point showing Funded/Refundable/Repaying offers here.
+const openOffers = computed(() =>
+  (rawOfferings.value ?? []).filter(({ offer }) => offer.state === 0)
 )
+
+// Whitelist eligibility/cap is per-connected-lender, so it's fetched separately from
+// the shared all-offers query rather than baked into it.
+async function fetchWhitelistAllocations(): Promise<Map<number, bigint>> {
+  const address = fixedReturnAddress.value
+  const lender = userStore.address as Address | undefined
+  if (!address || !lender) return new Map()
+
+  const whitelistOffers = openOffers.value.filter(({ offer }) => offer.fundingAccess === 1)
+  const entries = await Promise.all(
+    whitelistOffers.map(async ({ offerId }) => {
+      try {
+        const allocation = (await readContract(config, {
+          address,
+          abi: FIXED_RETURN_ABI,
+          functionName: 'lenderAllocation',
+          args: [BigInt(offerId), lender]
+        })) as bigint
+        return [offerId, allocation] as const
+      } catch (error) {
+        log.error(`Failed to fetch lenderAllocation for offer #${offerId}:`, parseError(error))
+        return [offerId, 0n] as const
+      }
+    })
+  )
+  return new Map(entries)
+}
+
+// Plain offerIds, not `openOffers` itself — the raw offer structs carry bigint
+// fields, and TanStack Query hashes the query key with JSON.stringify, which can't
+// serialize BigInt.
+const openOfferIds = computed(() => openOffers.value.map(({ offerId }) => offerId))
+
+const { data: whitelistAllocations } = useQuery({
+  queryKey: ['fixedReturnLenderAllocations', fixedReturnAddress, userStore.address, openOfferIds],
+  queryFn: fetchWhitelistAllocations,
+  enabled: computed(() => !!fixedReturnAddress.value && openOffers.value.length > 0)
+})
+
+const offerings = computed<LenderOffering[]>(() => {
+  const metadataByOfferId = new Map(offeringMetadata.value?.map((m) => [m.offerId, m.title]))
+  const allocations = whitelistAllocations.value ?? new Map()
+  return openOffers.value.map(({ offerId, offer, decimals }) =>
+    toLenderOffering(
+      offerId,
+      offer,
+      decimals,
+      allocations.get(offerId) ?? 0n,
+      metadataByOfferId.get(offerId)
+    )
+  )
+})
 
 const toast = useToast()
 
 const selected = ref<LenderOffering | null>(null)
 const applyAmount = ref(0)
-
-const amountLocked = computed(() => {
-  if (!selected.value) return false
-  return (
-    ('myAllocation' in selected.value && selected.value.myAllocation != null) ||
-    selected.value.mode === 'fixed'
-  )
-})
 
 const applyTotal = computed(() => {
   if (!selected.value) return 0
@@ -210,40 +225,33 @@ const applyTotal = computed(() => {
 const applyInterest = computed(() => applyTotal.value - applyAmount.value)
 
 const amountError = computed(() => {
-  if (!selected.value || amountLocked.value) return ''
-  const o = selected.value
-  if (o.mode === 'range' && o.min != null && applyAmount.value < o.min)
-    return 'Minimum loan amount is ' + moneyShort(o.min) + '.'
-  if (o.mode === 'range' && o.max != null && applyAmount.value > o.max)
-    return 'Maximum loan amount is ' + moneyShort(o.max) + '.'
+  if (!selected.value) return ''
+  const cap = selected.value.cap
+  if (cap != null && applyAmount.value > cap)
+    return 'Maximum loan amount is ' + moneyShort(cap) + '.'
   return ''
 })
 
 const limitsHint = computed(() => {
   if (!selected.value) return ''
-  const o = selected.value
-  if ('myAllocation' in o && o.myAllocation != null)
-    return 'Your allocation of ' + moneyShort(o.myAllocation) + ' was set by the project admin.'
-  if (o.mode === 'fixed' && o.fixed != null)
-    return 'Fixed loan amount of ' + moneyShort(o.fixed) + ' for this offering.'
-  return 'Allowed range: ' + moneyShort(o.min ?? 0) + ' – ' + moneyShort(o.max ?? 0) + '.'
+  const { access, cap } = selected.value
+  if (access === 'whitelist')
+    return 'Your allocation of ' + moneyShort(cap ?? 0) + ' was set by the project admin.'
+  if (cap != null) return 'Maximum per lender: ' + moneyShort(cap) + '.'
+  return 'No per-lender cap for this offering.'
 })
 
 function openApply(o: LenderOffering) {
-  const start =
-    'myAllocation' in o && o.myAllocation != null
-      ? o.myAllocation
-      : o.mode === 'fixed' && o.fixed != null
-        ? o.fixed
-        : (o.min ?? 0)
   selected.value = o
-  applyAmount.value = start
+  applyAmount.value = 0
 }
 
 function closeApply() {
   selected.value = null
 }
 
+// TODO: still a mock submission — wiring this to useFixedReturnLendFunds is the
+// follow-up write-integration step (kept GET-only here, same as My Offerings).
 function submitApplication() {
   if (!selected.value) return
   toast.add({
