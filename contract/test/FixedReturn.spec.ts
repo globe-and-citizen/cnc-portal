@@ -43,7 +43,7 @@ describe('FixedReturn', () => {
   // actually created in production: as a beacon proxy whose `initialize` is called
   // BY Officer (impersonated here), not by an arbitrary signer. Mirrors the
   // deployContracts() phase in Bank.spec.ts.
-  async function deployContracts(owner: SignerWithAddress) {
+  async function deployContracts(owner: SignerWithAddress, initialTokens: string[] = []) {
     const FeeCollectorFactory = await ethers.getContractFactory('FeeCollector')
     const OfficerFactory = await ethers.getContractFactory('Officer')
     const FixedReturnFactory = await ethers.getContractFactory('FixedReturn')
@@ -68,7 +68,7 @@ describe('FixedReturn', () => {
 
     const fixedReturn = (await upgrades.deployProxy(
       FixedReturnFactory.connect(officerSigner),
-      [owner.address],
+      [initialTokens, owner.address],
       { initializer: 'initialize', unsafeSkipProxyAdminCheck: true }
     )) as unknown as FixedReturn
 
@@ -189,7 +189,7 @@ describe('FixedReturn', () => {
     it('rejects a zero-address owner', async () => {
       const FixedReturnFactory = await ethers.getContractFactory('FixedReturn')
       await expect(
-        upgrades.deployProxy(FixedReturnFactory, [ethers.ZeroAddress], {
+        upgrades.deployProxy(FixedReturnFactory, [[], ethers.ZeroAddress], {
           initializer: 'initialize'
         })
       ).to.be.revertedWithCustomError(FixedReturnFactory, ERRORS.ZERO_ADDRESS)
@@ -197,7 +197,24 @@ describe('FixedReturn', () => {
 
     it('rejects being initialized a second time', async () => {
       const { fixedReturn, owner } = await loadFixture(deployFixture)
-      await expect(fixedReturn.initialize(owner.address)).to.be.reverted
+      await expect(fixedReturn.initialize([], owner.address)).to.be.reverted
+    })
+
+    it('pre-registers an initial set of supported tokens, mirroring Bank', async () => {
+      const [owner] = await ethers.getSigners()
+      const MockToken = await ethers.getContractFactory('MockERC20')
+      const tokenA = (await MockToken.deploy('Mock USDC', 'mUSDC')) as unknown as MockERC20
+      const tokenB = (await MockToken.deploy('Mock DAI', 'mDAI')) as unknown as MockERC20
+
+      const FixedReturnFactory = await ethers.getContractFactory('FixedReturn')
+      const fixedReturn = (await upgrades.deployProxy(
+        FixedReturnFactory,
+        [[await tokenA.getAddress(), await tokenB.getAddress()], owner.address],
+        { initializer: 'initialize' }
+      )) as unknown as FixedReturn
+
+      expect(await fixedReturn.isTokenSupported(await tokenA.getAddress())).to.be.true
+      expect(await fixedReturn.isTokenSupported(await tokenB.getAddress())).to.be.true
     })
   })
 

@@ -14,22 +14,22 @@ describe('FixedReturnBeacon', () => {
 
     const encodedInitializeAdmin = fixedReturnImplementation.interface.encodeFunctionData(
       'initialize',
-      [await superAdmin.getAddress()]
+      [[], await superAdmin.getAddress()]
     )
 
     const encodedInitializeUser1 = fixedReturnImplementation.interface.encodeFunctionData(
       'initialize',
-      [await user1.getAddress()]
+      [[], await user1.getAddress()]
     )
 
     const encodedInitializeUser2 = fixedReturnImplementation.interface.encodeFunctionData(
       'initialize',
-      [await user2.getAddress()]
+      [[], await user2.getAddress()]
     )
 
     const encodedInitializeUser3 = fixedReturnImplementation.interface.encodeFunctionData(
       'initialize',
-      [await user3.getAddress()]
+      [[], await user3.getAddress()]
     )
 
     // deploy admin beacon as superadmin

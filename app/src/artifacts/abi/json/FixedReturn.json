@@ -651,6 +651,11 @@
   {
     "inputs": [
       {
+        "internalType": "address[]",
+        "name": "_tokenAddresses",
+        "type": "address[]"
+      },
+      {
         "internalType": "address",
         "name": "_owner",
         "type": "address"

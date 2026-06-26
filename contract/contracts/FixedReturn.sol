@@ -215,18 +215,26 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
   }
 
   /**
-   * @notice Initializes the FixedReturn contract with its owner.
+   * @notice Initializes the FixedReturn contract with its owner and initial supported tokens.
    * @dev This function replaces the constructor for upgradeable contracts. Called by
    *      Officer at proxy-creation time (see FixedReturnBeaconModule); `_owner` is the
    *      team's issuer address, deliberately independent of msg.sender (which is
    *      Officer, not the team owner, when deployed the normal way).
+   *      Mirrors Bank's initializer shape — pre-registering tokens here means an issuer
+   *      can create their first offer without a separate addTokenSupport call.
+   * @param _tokenAddresses Initial set of ERC20 tokens lenders may fund offers with.
    * @param _owner Address that will become the owner (the team's issuer) of this contract.
    * @custom:security Only callable once due to the initializer modifier.
    */
-  function initialize(address _owner) external initializer {
+  function initialize(address[] calldata _tokenAddresses, address _owner) external initializer {
     if (_owner == address(0)) revert ZeroAddress();
     __Ownable_init(_owner);
     __ReentrancyGuard_init();
+
+    uint256 length = _tokenAddresses.length;
+    for (uint256 i = 0; i < length; ++i) {
+      _addTokenSupport(_tokenAddresses[i]);
+    }
   }
 
   /// @notice Current contract version, per semver.
