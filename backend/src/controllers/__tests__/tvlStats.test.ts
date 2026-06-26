@@ -1,5 +1,6 @@
 import express, { NextFunction, Request, Response } from 'express';
 import request from 'supertest';
+import rateLimit from 'express-rate-limit';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { authorizeUser } from '../../middleware/authMiddleware';
 import statsRoutes from '../../routes/statsRoute';
@@ -39,7 +40,15 @@ vi.mock('../../utils/viem.config', () => ({
 
 const app = express();
 app.use(express.json());
-app.use('/stats', authorizeUser, statsRoutes);
+// Mirror production: stats routes sit behind a rate limiter (satisfies the
+// CodeQL "missing rate limiting" check on authorized route handlers).
+const statsRateLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 1000,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use('/stats', statsRateLimiter, authorizeUser, statsRoutes);
 
 // Polygon USDC address (lowercased) the controller values.
 const USDC = '0x3c499c542cef5e3811e1192ce70d8cc03d5c3359';
