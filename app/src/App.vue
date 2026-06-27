@@ -14,7 +14,7 @@
               }"
             >
               <template #header>
-                <UDashboardNavbar :title="pageTitle" :ui="{ right: 'gap-3' }" class="bg-default">
+                <UDashboardNavbar :ui="{ right: 'gap-3' }" class="bg-default">
                   <template #leading>
                     <UDashboardSidebarCollapse
                       icon="heroicons:arrow-left-start-on-rectangle"
@@ -22,6 +22,9 @@
                       trailing-icon="heroicons:arrow-right-start-on-rectangle"
                       v-if="route.name && route.name !== 'teams'"
                     />
+                  </template>
+                  <template #title>
+                    <NavBreadcrumb />
                   </template>
                   <template #trailing>
                     <TeamSelectMenu />
@@ -55,6 +58,7 @@ import { RouterView, useRoute } from 'vue-router'
 
 import LockScreen from '@/components/LockScreen.vue'
 import NavBar from '@/components/NavBar.vue'
+import NavBreadcrumb from '@/components/NavBreadcrumb.vue'
 import TeamSelectMenu from '@/components/TeamSelectMenu.vue'
 import SidebarLayout from '@/components/ui/SidebarLayout.vue'
 
@@ -65,8 +69,6 @@ import { NETWORK } from '@/constant/index'
 import { useUserDataStore } from '@/stores/index'
 
 const route = useRoute()
-
-const pageTitle = computed<string>(() => (route.meta.name as string) || 'CNC-Portal')
 
 const connection = useConnection()
 const switchChain = useSwitchChain()
