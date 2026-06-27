@@ -81,16 +81,17 @@
           </div>
 
           <button
-            :disabled="!!error"
+            :disabled="!!error || loading"
+            data-test="apply-offering-submit-button"
             class="h-12 w-full rounded-xl border-none text-sm font-bold transition-all"
             :style="
-              !error
+              !error && !loading
                 ? 'background:#00bf7a;color:#fff;cursor:pointer;box-shadow:0 4px 11px rgba(0,191,122,.28)'
                 : 'background:#bfe3d2;color:#fff;cursor:not-allowed'
             "
             @click="$emit('submit')"
           >
-            Submit application
+            {{ loading ? 'Submitting…' : 'Submit application' }}
           </button>
         </div>
       </div>
@@ -102,17 +103,21 @@
 import { onMounted, ref } from 'vue'
 import { money as moneyFmt } from '@/utils/accountingDemo'
 
-defineProps<{
-  title: string
-  rate: number
-  term: number
-  amount: number
-  interest: number
-  total: number
-  amountLocked: boolean
-  limitsHint: string
-  error: string
-}>()
+withDefaults(
+  defineProps<{
+    title: string
+    rate: number
+    term: number
+    amount: number
+    interest: number
+    total: number
+    amountLocked: boolean
+    limitsHint: string
+    error: string
+    loading?: boolean
+  }>(),
+  { loading: false }
+)
 
 defineEmits<{
   close: []
