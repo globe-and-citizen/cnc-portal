@@ -63,15 +63,19 @@
         </span>
         <span class="text-muted ml-2.5 text-[11px]">{{ round.lenders.length }} lenders</span>
       </div>
-      <UButton
-        :color="cta.color"
-        :variant="cta.variant"
-        size="sm"
-        :icon="cta.icon"
-        :label="cta.label"
-        :data-test="`round-cta-${cta.event}`"
-        @click="onCta"
-      />
+      <div class="flex flex-shrink-0 gap-1.5">
+        <UButton
+          v-for="action in ctas"
+          :key="action.event"
+          :color="action.color"
+          :variant="action.variant"
+          size="sm"
+          :icon="action.icon"
+          :label="action.label"
+          :data-test="`round-cta-${action.event}`"
+          @click="onCta(action.event)"
+        />
+      </div>
     </div>
   </div>
 </template>
@@ -111,48 +115,62 @@ const terms = computed(() => [
   }
 ])
 
+type CardCtaEvent = 'open' | 'lend' | 'repay'
 type Cta = {
   label: string
   icon: string
-  event: 'open' | 'lend' | 'repay'
+  event: CardCtaEvent
   color: 'primary' | 'neutral'
   variant: 'solid' | 'soft'
 }
 
-const cta = computed<Cta>(() => {
+const MANAGE: Cta = {
+  label: 'Manage',
+  icon: 'heroicons:cog-6-tooth',
+  event: 'open',
+  color: 'neutral',
+  variant: 'soft'
+}
+const LEND: Cta = {
+  label: 'Lend',
+  icon: 'heroicons:hand-raised',
+  event: 'lend',
+  color: 'primary',
+  variant: 'solid'
+}
+
+const ctas = computed<Cta[]>(() => {
   const { status: s } = props.round
-  // Anyone can lend to an open round — the owner is a member too. Management
-  // (edit terms, etc.) stays one click away by opening the round.
+  // Open rounds are lendable by anyone. The owner is a member too, so they keep
+  // a Manage action alongside the Lend action.
   if (s === 'open') {
-    return {
-      label: 'Lend',
-      icon: 'heroicons:hand-raised',
-      event: 'lend',
-      color: 'primary',
-      variant: 'solid'
-    }
+    return store.isOwner ? [MANAGE, LEND] : [LEND]
   }
   // Funded / in repayment: the owner repays, everyone else just views.
   if (store.isOwner) {
-    return {
-      label: 'Repay',
-      icon: 'heroicons:arrow-uturn-left',
-      event: 'repay',
+    return [
+      {
+        label: 'Repay',
+        icon: 'heroicons:arrow-uturn-left',
+        event: 'repay',
+        color: 'neutral',
+        variant: 'soft'
+      }
+    ]
+  }
+  return [
+    {
+      label: 'View',
+      icon: 'heroicons:arrow-right',
+      event: 'open',
       color: 'neutral',
       variant: 'soft'
     }
-  }
-  return {
-    label: 'View',
-    icon: 'heroicons:arrow-right',
-    event: 'open',
-    color: 'neutral',
-    variant: 'soft'
-  }
+  ]
 })
 
-function onCta() {
-  switch (cta.value.event) {
+function onCta(event: CardCtaEvent) {
+  switch (event) {
     case 'lend':
       return emit('lend')
     case 'repay':

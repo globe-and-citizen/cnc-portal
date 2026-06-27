@@ -96,13 +96,18 @@ describe('Community Credit views', () => {
       const wrapper = mountView(IndexView)
       const store = useCommunityCreditStore()
       expect(wrapper.find('[data-test="new-credit-call"]').exists()).toBe(true)
-      // Owner is a member: the open round still offers a Lend action.
-      expect(wrapper.find('[data-test="round-cta-lend"]').exists()).toBe(true)
+      // Owner is a member: the open round card offers BOTH Manage and Lend.
+      const ownerCard = wrapper.findAllComponents(CreditRoundCard)[0]!
+      expect(ownerCard.find('[data-test="round-cta-open"]').exists()).toBe(true) // Manage
+      expect(ownerCard.find('[data-test="round-cta-lend"]').exists()).toBe(true) // Lend
 
       await wrapper.find('[data-test="role-lender"]').trigger('click')
       expect(store.isLender).toBe(true)
       expect(wrapper.find('[data-test="new-credit-call"]').exists()).toBe(false)
-      expect(wrapper.find('[data-test="round-cta-lend"]').exists()).toBe(true)
+      // A plain lender only gets the Lend action — no Manage.
+      const lenderCard = wrapper.findAllComponents(CreditRoundCard)[0]!
+      expect(lenderCard.find('[data-test="round-cta-open"]').exists()).toBe(false)
+      expect(lenderCard.find('[data-test="round-cta-lend"]').exists()).toBe(true)
     })
   })
 
