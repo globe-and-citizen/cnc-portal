@@ -83,14 +83,7 @@
             class="flex h-9 w-56 items-center gap-2 rounded-xl border border-[#e0eae5] px-3 text-sm text-[#7d8e84]"
           >
             <UIcon name="heroicons:magnifying-glass" class="size-4 flex-none" />
-            <input
-              v-model="lenderSearch"
-              type="text"
-              placeholder="Search lenders…"
-              aria-label="Search lenders"
-              data-test="lender-search-input"
-              class="w-full border-none bg-transparent outline-none placeholder:text-[#9aaba2]"
-            />
+            <span>Search lenders…</span>
           </div>
         </div>
       </template>
@@ -136,23 +129,8 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-if="isLoading" data-test="lenders-loading">
-              <td colspan="7" class="px-5 py-8 text-center text-sm text-[#9aaba2]">
-                Loading lenders…
-              </td>
-            </tr>
-            <tr v-else-if="partners.length === 0" data-test="lenders-empty">
-              <td colspan="7" class="px-5 py-8 text-center text-sm text-[#9aaba2]">
-                No lenders yet.
-              </td>
-            </tr>
-            <tr v-else-if="filteredPartners.length === 0" data-test="lenders-no-match">
-              <td colspan="7" class="px-5 py-8 text-center text-sm text-[#9aaba2]">
-                No lenders match "{{ lenderSearch }}".
-              </td>
-            </tr>
             <tr
-              v-for="p in filteredPartners"
+              v-for="p in partners"
               :key="p.address"
               class="border-t border-[#f0f4f1] transition-colors hover:bg-[#f7fbf9]"
             >
@@ -200,12 +178,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import StatusBadge from './StatusBadge.vue'
 import UserComponent from '@/components/UserComponent.vue'
 import ProgressGauge from './ProgressGauge.vue'
-import { useFixedReturnOfferLenders } from '@/composables/fixedReturn/reads'
-import { maturityLabel, percentOf, resolveUser } from '@/utils'
+import { expectedReturn, maturityLabel, percentOf } from '@/utils'
 import { money as moneyFmt } from '@/utils/accountingDemo'
 import type { OfferingSummary } from '@/types'
 
@@ -217,13 +194,19 @@ type Status = 'overdue' | 'partial' | 'completed'
 // Bullet repayment: principal + interest repaid as one combined payment per lender,
 // due at the offering's maturity (start date + term) — no interim schedule.
 const maturityFmt = computed(() =>
-  maturityLabel(props.offering.startDate, props.offering.term, props.offering.termUnit)
+  maturityLabel(props.offering.startDate, props.offering.term, 'months')
 )
 
-const { data: lenders, isLoading } = useFixedReturnOfferLenders(
-  computed(() => props.offering.id),
-  computed(() => props.offering.token)
-)
+// paidRatio: 0–1 share of the bullet repayment settled so far. The admin can repay a
+// lender gradually rather than all at once, so this isn't just paid-or-not.
+const partnersRaw = [
+  { address: '0x7F3a…2B9c', name: 'Amara Okonkwo', principal: 50000, paidRatio: 1 },
+  { address: '0x4D21…A8e1', name: 'Liang Wei', principal: 120000, paidRatio: 1 },
+  { address: '0x9C56…11Fa', name: 'Sofia Marchetti', principal: 75000, paidRatio: 0 },
+  { address: '0x2E8b…7C40', name: 'Daniel Krause', principal: 30000, paidRatio: 1 },
+  { address: '0xB1f7…3D92', name: 'Priya Nair', principal: 200000, paidRatio: 0.45 },
+  { address: '0x6a09…E5Dd', name: 'Marcus Bell', principal: 45000, paidRatio: 0.7 }
+]
 
 function statusFor(paidRatio: number): Status {
   if (paidRatio >= 1) return 'completed'
@@ -231,26 +214,19 @@ function statusFor(paidRatio: number): Status {
   return 'partial'
 }
 
-// repayLenders distributes proportionally to each lender's deposit share, so a
-// lender's cumulative paid-to-date is their deposit's share of totalRepaid so far —
-// there's no separate "amount paid to this lender" getter on-chain to read directly.
 const partners = computed(() =>
-  (lenders.value ?? []).map((p) => {
-    const paid =
-      props.offering.raised > 0
-        ? (props.offering.totalRepaid * p.principal) / props.offering.raised
-        : 0
-    const paidRatio = p.expected > 0 ? paid / p.expected : 0
-    const status = statusFor(paidRatio)
-    const pct = percentOf(paid, p.expected)
+  partnersRaw.map((p) => {
+    const expected = expectedReturn(p.principal, props.offering.rate)
+    const paid = expected * p.paidRatio
+    const status = statusFor(p.paidRatio)
+    const pct = percentOf(paid, expected)
     const barColor = status === 'overdue' ? '#ff5630' : status === 'partial' ? '#ffab00' : '#00bf7a'
-    const user = resolveUser(p.address)
     return {
-      name: user.name,
+      name: p.name,
       address: p.address,
       principalFmt: moneyFmt(p.principal),
       rateFmt: props.offering.rate.toFixed(1) + '%',
-      expectedFmt: moneyFmt(p.expected),
+      expectedFmt: moneyFmt(expected),
       paidFmt: moneyFmt(paid),
       pctLabel: pct + '%',
       pctWidth: pct + '%',
@@ -261,21 +237,16 @@ const partners = computed(() =>
   })
 )
 
-const lenderSearch = ref('')
-
-const filteredPartners = computed(() => {
-  const query = lenderSearch.value.trim().toLowerCase()
-  if (!query) return partners.value
-  return partners.value.filter(
-    (p) => p.name.toLowerCase().includes(query) || p.address.toLowerCase().includes(query)
+const totalPrincipal = computed(() => partnersRaw.reduce((a, p) => a + p.principal, 0))
+const totalExpected = computed(() =>
+  partnersRaw.reduce((a, p) => a + expectedReturn(p.principal, props.offering.rate), 0)
+)
+const totalPaid = computed(() =>
+  partnersRaw.reduce(
+    (a, p) => a + expectedReturn(p.principal, props.offering.rate) * p.paidRatio,
+    0
   )
-})
-
-const totalPrincipal = computed(() => (lenders.value ?? []).reduce((a, p) => a + p.principal, 0))
-const totalExpected = computed(() => (lenders.value ?? []).reduce((a, p) => a + p.expected, 0))
-// totalRepaidByIssuer already IS the sum of every amount actually distributed to
-// lenders so far — no need to re-sum (and re-accumulate rounding from) per-lender shares.
-const totalPaid = computed(() => props.offering.totalRepaid)
+)
 
 const fundingPct = computed(() => percentOf(props.offering.raised, props.offering.target))
 const repaymentPct = computed(() => percentOf(totalPaid.value, totalExpected.value))
@@ -304,7 +275,7 @@ const statCards = computed(() => [
   },
   {
     label: 'Overdue lenders',
-    value: String(partners.value.filter((p) => p.status === 'overdue').length),
+    value: String(partnersRaw.filter((p) => p.paidRatio <= 0).length),
     icon: 'heroicons:exclamation-triangle',
     iconBg: '#ffe9e3',
     iconColor: '#d6431f'

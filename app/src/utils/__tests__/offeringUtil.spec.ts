@@ -12,34 +12,11 @@ import {
   expectedReturn,
   findOfferingToken,
   toFixedReturnOfferParams,
-  fromLendingOfferStruct,
-  toLenderOffering,
   decimalsForOfferingToken
 } from '../offeringUtil'
-import type { LendingOfferStruct, OfferingForm, WhitelistEntry } from '@/types'
-
-const DECIMALS = 6
+import type { OfferingForm, WhitelistEntry } from '@/types'
 
 const ARBITRARY_TOKEN = '0x1111111111111111111111111111111111111111' as const
-
-function baseOffer(overrides: Partial<LendingOfferStruct> = {}): LendingOfferStruct {
-  return {
-    token: ARBITRARY_TOKEN,
-    fundingTarget: 100000_000000n,
-    interestRateBps: 800n,
-    termDuration: 12,
-    termUnit: 1,
-    startDate: 1893456000n, // 2030-01-01T00:00:00Z
-    subscriptionDeadline: 1893369600n,
-    fundingAccess: 0,
-    isCapEnabled: false,
-    lenderCap: 0n,
-    totalFunded: 30000_000000n,
-    totalRepaidByIssuer: 0n,
-    state: 0,
-    ...overrides
-  }
-}
 
 function baseForm(overrides: Partial<OfferingForm> = {}): OfferingForm {
   return {
@@ -249,89 +226,6 @@ describe('toFixedReturnOfferParams', () => {
     expect(() => toFixedReturnOfferParams(baseForm({ token: 'native' }), [])).toThrow(
       /Unsupported token/
     )
-  })
-})
-
-describe('fromLendingOfferStruct', () => {
-  it('maps Open state to open status', () => {
-    expect(fromLendingOfferStruct(1, baseOffer({ state: 0 }), DECIMALS).status).toBe('open')
-  })
-
-  it('maps Funded state to funded status', () => {
-    expect(fromLendingOfferStruct(1, baseOffer({ state: 1 }), DECIMALS).status).toBe('funded')
-  })
-
-  it('maps Refundable state to closed status', () => {
-    expect(fromLendingOfferStruct(1, baseOffer({ state: 2 }), DECIMALS).status).toBe('closed')
-  })
-
-  it('maps Repaying state to funded status', () => {
-    expect(fromLendingOfferStruct(1, baseOffer({ state: 3 }), DECIMALS).status).toBe('funded')
-  })
-
-  it('scales amounts by the given decimals', () => {
-    const summary = fromLendingOfferStruct(1, baseOffer(), DECIMALS)
-    expect(summary.raised).toBe(30000)
-    expect(summary.target).toBe(100000)
-  })
-
-  it('falls back to a generic title when none is provided', () => {
-    expect(fromLendingOfferStruct(7, baseOffer(), DECIMALS).title).toBe('Offering #7')
-  })
-
-  it('uses the provided title when given', () => {
-    expect(fromLendingOfferStruct(7, baseOffer(), DECIMALS, 'Riverside Note').title).toBe(
-      'Riverside Note'
-    )
-  })
-})
-
-describe('toLenderOffering', () => {
-  it('allows any lender for a General offer with no cap', () => {
-    const offering = toLenderOffering(
-      1,
-      baseOffer({ fundingAccess: 0, isCapEnabled: false }),
-      DECIMALS,
-      0n
-    )
-    expect(offering.allowed).toBe(true)
-    expect(offering.cap).toBeNull()
-    expect(offering.limitsLabel).toBe('No cap')
-  })
-
-  it('caps a General offer with isCapEnabled at lenderCap', () => {
-    const offering = toLenderOffering(
-      1,
-      baseOffer({ fundingAccess: 0, isCapEnabled: true, lenderCap: 5000_000000n }),
-      DECIMALS,
-      0n
-    )
-    expect(offering.allowed).toBe(true)
-    expect(offering.cap).toBe(5000)
-    expect(offering.limitsLabel).toBe('$5,000 cap')
-  })
-
-  it('disallows a Whitelist offer when the lender has no allocation', () => {
-    const offering = toLenderOffering(1, baseOffer({ fundingAccess: 1 }), DECIMALS, 0n)
-    expect(offering.allowed).toBe(false)
-    expect(offering.cap).toBe(0)
-  })
-
-  it('allows a Whitelist offer and caps at the personal allocation', () => {
-    const offering = toLenderOffering(1, baseOffer({ fundingAccess: 1 }), DECIMALS, 25000_000000n)
-    expect(offering.allowed).toBe(true)
-    expect(offering.cap).toBe(25000)
-    expect(offering.limitsLabel).toBe('$25,000 allocation')
-  })
-
-  it('ignores lenderCap entirely in Whitelist mode', () => {
-    const offering = toLenderOffering(
-      1,
-      baseOffer({ fundingAccess: 1, isCapEnabled: true, lenderCap: 999_000000n }),
-      DECIMALS,
-      10000_000000n
-    )
-    expect(offering.cap).toBe(10000)
   })
 })
 

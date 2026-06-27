@@ -28,50 +28,27 @@ export interface OfferingSummary {
   title: string
   rate: number
   term: number
-  termUnit: TermUnit
   startDate: string
   access: 'general' | 'whitelist'
   raised: number
   target: number
-  totalRepaid: number
   status: 'open' | 'funded' | 'closed'
-  token: Address
 }
 
-/**
- * Off-chain title/purpose metadata for a FixedReturn offer, as returned by
- * GET /api/fixed-return-offering — see backend/prisma/schema.prisma's
- * FixedReturnOffering model.
- */
-export interface FixedReturnOfferingResponse {
-  id: number
-  teamId: number
-  offerId: number
-  title: string
-  purpose: string | null
-  createdAt: string
-  updatedAt: string
-}
-
-/**
- * A FixedReturn offer from the lender's point of view — eligibility and the deposit
- * cap depend on the connected wallet, unlike OfferingSummary (issuer's view, the same
- * for everyone). There's no on-chain "minimum deposit" or "fixed amount" concept —
- * `cap` is either the General-mode per-lender lenderCap, the Whitelist-mode personal
- * allocation, or null (no cap, General mode with isCapEnabled false).
- */
 export interface LenderOffering {
-  id: string
   title: string
   rate: number
   term: number
-  termUnit: TermUnit
   access: 'general' | 'whitelist'
-  allowed: boolean
-  cap: number | null
+  whitelisted?: boolean
+  myAllocation?: number
+  mode: 'range' | 'fixed'
+  min?: number
+  max?: number
+  fixed?: number
   raised: number
   target: number
-  token: Address
+  allowed: boolean
   accessLabel: string
   accessBg: string
   accessColor: string
