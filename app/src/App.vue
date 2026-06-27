@@ -27,7 +27,8 @@
                     <NavBreadcrumb />
                   </template>
                   <template #trailing>
-                    <TeamSelectMenu />
+                    <!-- Team picker only makes sense inside a team — hidden on the Companies list -->
+                    <TeamSelectMenu v-if="route.name && route.name !== 'teams'" />
                   </template>
                   <template #right>
                     <NavBar />

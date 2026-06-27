@@ -106,13 +106,19 @@ describe('TeamSelectMenu', () => {
       })
     })
 
-    it('renders the initial letter avatar for each team item', async () => {
+    it('renders an initials avatar (up to two letters) for each team item', async () => {
+      const initialsOf = (name: string) => {
+        const words = name.trim().split(/\s+/).filter(Boolean)
+        if (words.length === 1) return words[0]!.slice(0, 2).toUpperCase()
+        return (words[0]![0]! + words[1]![0]!).toUpperCase()
+      }
+
       const wrapper = createWrapper()
       await wrapper.find('button').trigger('click')
       await wrapper.vm.$nextTick()
 
       mockTeamsData.forEach((team) => {
-        expect(wrapper.html()).toContain(team.name.charAt(0).toUpperCase())
+        expect(wrapper.html()).toContain(initialsOf(team.name)) // e.g. 'Test Team' → 'TT'
       })
     })
   })
