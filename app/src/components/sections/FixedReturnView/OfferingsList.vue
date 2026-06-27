@@ -46,6 +46,16 @@
           </tr>
         </thead>
         <tbody>
+          <tr v-if="isLoading" data-test="offerings-loading">
+            <td colspan="7" class="px-5 py-8 text-center text-sm text-[#9aaba2]">
+              Loading offerings…
+            </td>
+          </tr>
+          <tr v-else-if="offerings.length === 0" data-test="offerings-empty">
+            <td colspan="7" class="px-5 py-8 text-center text-sm text-[#9aaba2]">
+              No offerings yet.
+            </td>
+          </tr>
           <tr
             v-for="o in offerings"
             :key="o.id"
@@ -57,14 +67,10 @@
               {{ o.rate }}%
             </td>
             <td class="px-4 py-4 text-right text-sm font-semibold whitespace-nowrap text-[#0f3d2e]">
-              {{ o.term }} mo
+              {{ termLabel(o.term, o.termUnit) }}
             </td>
             <td class="px-4 py-4">
-              <UBadge
-                :color="o.access === 'whitelist' ? 'info' : 'success'"
-                variant="soft"
-                size="xs"
-              >
+              <UBadge :color="o.access === 'whitelist' ? 'info' : 'success'" variant="soft">
                 {{ o.access === 'whitelist' ? 'Whitelist' : 'Open to all' }}
               </UBadge>
             </td>
@@ -99,47 +105,33 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import StatusBadge from './StatusBadge.vue'
-import { moneyShort, percentOf } from '@/utils'
+import { useTeamStore } from '@/stores'
+import { useFixedReturnAllOffers } from '@/composables/fixedReturn/reads'
+import { useGetFixedReturnOfferingsQuery } from '@/queries'
+import { fromLendingOfferStruct, moneyShort, percentOf, termLabel } from '@/utils'
 import type { OfferingSummary } from '@/types'
 
 defineEmits<{ manage: [offering: OfferingSummary] }>()
 
-const offerings: OfferingSummary[] = [
-  {
-    id: 'riverside',
-    title: 'Riverside Expansion Note',
-    rate: 9,
-    term: 12,
-    startDate: '2025-06-15',
-    access: 'general',
-    raised: 520000,
-    target: 500000,
-    status: 'closed'
-  },
-  {
-    id: 'mill-street',
-    title: 'Mill Street Solar Array',
-    rate: 8.5,
-    term: 18,
-    startDate: '2026-01-01',
-    access: 'whitelist',
-    raised: 150000,
-    target: 300000,
-    status: 'open'
-  },
-  {
-    id: 'harbor-logistics',
-    title: 'Harbor Logistics Facility',
-    rate: 10,
-    term: 24,
-    startDate: '2026-03-01',
-    access: 'general',
-    raised: 80000,
-    target: 750000,
-    status: 'open'
-  }
-]
+const teamStore = useTeamStore()
+
+const { data: offeringMetadata } = useGetFixedReturnOfferingsQuery({
+  queryParams: { teamId: teamStore.currentTeamId }
+})
+
+const { data: rawOfferings, isLoading } = useFixedReturnAllOffers()
+
+// Title comes from the off-chain metadata endpoint (FixedReturn.sol has no title
+// param) — merged here so the on-chain query doesn't need to know about it, and so a
+// later-arriving metadata response still updates the title reactively.
+const offerings = computed<OfferingSummary[]>(() => {
+  const metadataByOfferId = new Map(offeringMetadata.value?.map((m) => [m.offerId, m.title]))
+  return (rawOfferings.value ?? []).map(({ offerId, offer, decimals }) =>
+    fromLendingOfferStruct(offerId, offer, decimals, metadataByOfferId.get(offerId))
+  )
+})
 
 function pct(o: OfferingSummary): number {
   return percentOf(o.raised, o.target)
