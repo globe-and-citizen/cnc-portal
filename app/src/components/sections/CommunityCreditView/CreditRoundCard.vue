@@ -121,24 +121,8 @@ type Cta = {
 
 const cta = computed<Cta>(() => {
   const { status: s } = props.round
-  if (store.isOwner) {
-    if (s === 'active' || s === 'funded') {
-      return {
-        label: 'Repay',
-        icon: 'heroicons:arrow-uturn-left',
-        event: 'repay',
-        color: 'neutral',
-        variant: 'soft'
-      }
-    }
-    return {
-      label: 'Manage',
-      icon: 'heroicons:cog-6-tooth',
-      event: 'open',
-      color: 'neutral',
-      variant: 'soft'
-    }
-  }
+  // Anyone can lend to an open round — the owner is a member too. Management
+  // (edit terms, etc.) stays one click away by opening the round.
   if (s === 'open') {
     return {
       label: 'Lend',
@@ -146,6 +130,16 @@ const cta = computed<Cta>(() => {
       event: 'lend',
       color: 'primary',
       variant: 'solid'
+    }
+  }
+  // Funded / in repayment: the owner repays, everyone else just views.
+  if (store.isOwner) {
+    return {
+      label: 'Repay',
+      icon: 'heroicons:arrow-uturn-left',
+      event: 'repay',
+      color: 'neutral',
+      variant: 'soft'
     }
   }
   return {

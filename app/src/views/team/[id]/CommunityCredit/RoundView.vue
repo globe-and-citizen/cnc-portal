@@ -32,13 +32,14 @@
       <div class="flex items-center gap-2.5">
         <CreditRoleSwitcher />
         <UButton
-          v-if="cta"
-          :color="cta.color"
-          :variant="cta.variant"
-          :icon="cta.icon"
-          :label="cta.label"
-          data-test="round-detail-cta"
-          @click="cta.run"
+          v-for="action in ctas"
+          :key="action.test"
+          :color="action.color"
+          :variant="action.variant"
+          :icon="action.icon"
+          :label="action.label"
+          :data-test="action.test"
+          @click="action.run"
         />
       </div>
     </div>
@@ -93,6 +94,7 @@ watch(
 )
 
 type Cta = {
+  test: string
   label: string
   icon: string
   color: 'primary' | 'neutral'
@@ -100,47 +102,61 @@ type Cta = {
   run: () => void
 }
 
-const cta = computed<Cta | null>(() => {
+const ctas = computed<Cta[]>(() => {
   const r = round.value
-  if (!r) return null
-  if (store.isOwner && (r.status === 'active' || r.status === 'funded')) {
-    return {
-      label: 'Repay round',
-      icon: 'heroicons:arrow-uturn-left',
-      color: 'primary',
-      variant: 'solid',
-      run: () =>
-        router.push({ name: 'community-credit-repay', params: { id: teamId.value, roundId: r.id } })
-    }
-  }
-  if (store.isOwner && r.status === 'open') {
-    return {
-      label: 'Edit terms',
-      icon: 'heroicons:pencil-square',
-      color: 'primary',
-      variant: 'soft',
-      run: () => toast.add({ title: 'Edit terms — opens while the round is open' })
-    }
-  }
-  if (!store.isOwner && r.status === 'open') {
-    return {
+  if (!r) return []
+  const list: Cta[] = []
+
+  // Anyone can lend to an open round — the owner is a member too.
+  if (r.status === 'open') {
+    list.push({
+      test: 'round-cta-lend',
       label: 'Lend now',
       icon: 'heroicons:hand-raised',
       color: 'primary',
       variant: 'solid',
       run: () => (lendRound.value = r)
-    }
+    })
   }
-  if (!store.isOwner && r.status !== 'draft') {
-    return {
+
+  if (store.isOwner) {
+    // Owner management actions, alongside the lend action above.
+    if (r.status === 'active' || r.status === 'funded') {
+      list.push({
+        test: 'round-cta-repay',
+        label: 'Repay round',
+        icon: 'heroicons:arrow-uturn-left',
+        color: 'primary',
+        variant: 'solid',
+        run: () =>
+          router.push({
+            name: 'community-credit-repay',
+            params: { id: teamId.value, roundId: r.id }
+          })
+      })
+    } else if (r.status === 'open') {
+      list.push({
+        test: 'round-cta-edit',
+        label: 'Edit terms',
+        icon: 'heroicons:pencil-square',
+        color: 'primary',
+        variant: 'soft',
+        run: () => toast.add({ title: 'Edit terms — opens while the round is open' })
+      })
+    }
+  } else if (r.status !== 'draft' && r.status !== 'open') {
+    // A plain lender can review their receipt on a closed round.
+    list.push({
+      test: 'round-cta-receipt',
       label: 'View receipt',
       icon: 'heroicons:document-text',
       color: 'primary',
       variant: 'soft',
       run: () => toast.add({ title: 'Your signed lending receipt' })
-    }
+    })
   }
-  return null
+
+  return list
 })
 
 function confirmLend(amount: number) {

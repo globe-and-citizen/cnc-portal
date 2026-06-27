@@ -92,14 +92,17 @@ describe('Community Credit views', () => {
       expect(store.getRound('q3')!.raised).toBe(before + 1500)
     })
 
-    it('switches owner/lender actions', async () => {
+    it('switches owner/lender actions but lets the owner lend too', async () => {
       const wrapper = mountView(IndexView)
       const store = useCommunityCreditStore()
       expect(wrapper.find('[data-test="new-credit-call"]').exists()).toBe(true)
+      // Owner is a member: the open round still offers a Lend action.
+      expect(wrapper.find('[data-test="round-cta-lend"]').exists()).toBe(true)
 
       await wrapper.find('[data-test="role-lender"]').trigger('click')
       expect(store.isLender).toBe(true)
       expect(wrapper.find('[data-test="new-credit-call"]').exists()).toBe(false)
+      expect(wrapper.find('[data-test="round-cta-lend"]').exists()).toBe(true)
     })
   })
 
@@ -125,25 +128,28 @@ describe('Community Credit views', () => {
       useCommunityCreditStore().setRole('owner')
       setRoute({ id: '1', roundId: 'hw' })
       const wrapper = mountView(RoundView)
-      await wrapper.find('[data-test="round-detail-cta"]').trigger('click')
+      await wrapper.find('[data-test="round-cta-repay"]').trigger('click')
       expect(mockPush).toHaveBeenCalledWith(
         expect.objectContaining({ name: 'community-credit-repay' })
       )
     })
 
-    it('owner edit-terms CTA on an open round shows a toast', async () => {
+    it('lets the owner both lend to and edit an open round', async () => {
       useCommunityCreditStore().setRole('owner')
       setRoute({ id: '1', roundId: 'q3' })
       const wrapper = mountView(RoundView)
-      await wrapper.find('[data-test="round-detail-cta"]').trigger('click')
-      expect(wrapper.find('[data-test="round-detail-cta"]').exists()).toBe(true)
+      // Owner is a member too: an open round offers both actions.
+      expect(wrapper.find('[data-test="round-cta-edit"]').exists()).toBe(true)
+      await wrapper.find('[data-test="round-cta-lend"]').trigger('click')
+      expect(wrapper.findComponent(CreditLendModal).props('round')).not.toBeNull()
     })
 
     it('lender lend-now CTA opens the modal; view-receipt toasts', async () => {
       useCommunityCreditStore().setRole('lender')
       setRoute({ id: '1', roundId: 'q3' })
       const lendWrapper = mountView(RoundView)
-      await lendWrapper.find('[data-test="round-detail-cta"]').trigger('click')
+      expect(lendWrapper.find('[data-test="round-cta-edit"]').exists()).toBe(false)
+      await lendWrapper.find('[data-test="round-cta-lend"]').trigger('click')
       expect(lendWrapper.findComponent(CreditLendModal).props('round')).not.toBeNull()
       lendWrapper.findComponent(CreditLendModal).vm.$emit('lend', 500)
       await nextTick()
@@ -152,7 +158,7 @@ describe('Community Credit views', () => {
       useCommunityCreditStore().setRole('lender')
       setRoute({ id: '1', roundId: 'spring' })
       const receiptWrapper = mountView(RoundView)
-      await receiptWrapper.find('[data-test="round-detail-cta"]').trigger('click')
+      await receiptWrapper.find('[data-test="round-cta-receipt"]').trigger('click')
       expect(receiptWrapper.text()).toContain('Spring infra round')
     })
   })
