@@ -1,26 +1,18 @@
 <template>
-  <div class="flex flex-col gap-3 rounded-xl border border-[#e6efe9] bg-[#fafdfb] p-4">
-    <div class="rounded-lg bg-[#eef4f1] px-3 py-2 text-xs leading-relaxed text-[#5b6e64]">
-      Per-lender limit: <strong class="text-[#0f3d2e]">{{ defaultAmountLabel }}</strong
-      >. Set an explicit amount on each row — required before publishing.
-    </div>
+  <UCard variant="subtle" :ui="{ body: 'flex flex-col gap-3 p-4' }">
+    <UAlert color="neutral" variant="soft">
+      <template #description>
+        Per-lender limit: <strong>{{ defaultAmountLabel }}</strong
+        >. Set an explicit amount on each row — required before publishing.
+      </template>
+    </UAlert>
 
-    <div
-      class="rounded-lg px-3 py-2 text-xs font-bold"
-      :class="targetStatusClass"
+    <UAlert
+      :color="targetStatusColor"
+      variant="soft"
+      :description="targetStatusDescription"
       data-test="whitelist-target-total"
-    >
-      Lenders allocated: {{ committedTotal.toLocaleString('en-US') }} /
-      {{ Math.round(principalTarget).toLocaleString('en-US') }} {{ token }}
-      <span v-if="overTarget"
-        >— exceeds target by {{ (committedTotal - principalTarget).toLocaleString('en-US') }}
-        {{ token }}</span
-      >
-      <span v-else-if="underTarget"
-        >— {{ (principalTarget - committedTotal).toLocaleString('en-US') }} {{ token }} short of
-        target; this offering can't reach its target through whitelisted lenders alone</span
-      >
-    </div>
+    />
 
     <!-- Existing whitelist entries -->
     <div class="flex flex-col gap-2">
@@ -57,15 +49,17 @@
             >
               {{ w.amount != null ? 'custom' : 'not set' }}
             </span>
-            <button
+            <UButton
               v-if="w.amount == null && defaultAmount != null"
               type="button"
-              class="cursor-pointer text-[10px] font-bold text-[#0a7a52] underline"
+              size="xs"
+              color="success"
+              variant="link"
+              label="Use default"
+              class="p-0 text-[10px]"
               data-test="whitelist-use-default-button"
               @click="$emit('update-amount', i, defaultAmount)"
-            >
-              Use default
-            </button>
+            />
           </span>
         </div>
         <UButton
@@ -105,7 +99,7 @@
         <SelectMemberResults :members="filteredMembers" @select="handleAdd" />
       </div>
     </div>
-  </div>
+  </UCard>
 </template>
 
 <script setup lang="ts">
@@ -115,7 +109,12 @@ import type { Member, WhitelistEntry } from '@/types'
 import UserComponent from '@/components/UserComponent.vue'
 import SelectMemberResults from '@/components/utils/SelectMemberResults.vue'
 import { useTeamStore } from '@/stores/teamStore'
-import { resolveUser, filter, sumWhitelistAmount } from '@/utils'
+import {
+  filter,
+  getWhitelistAllocationSummary,
+  isWhitelistAmountOverCap,
+  resolveUser
+} from '@/utils'
 
 const props = defineProps<{
   whitelist: WhitelistEntry[]
@@ -125,16 +124,16 @@ const props = defineProps<{
   token: string | undefined
 }>()
 
-const committedTotal = computed(() => sumWhitelistAmount(props.whitelist))
-const overTarget = computed(() => committedTotal.value > props.principalTarget)
-const underTarget = computed(
-  () => props.whitelist.length > 0 && committedTotal.value < props.principalTarget
+const allocationSummary = computed(() =>
+  getWhitelistAllocationSummary(props.whitelist, props.principalTarget, props.token)
 )
-const targetStatusClass = computed(() => {
-  if (overTarget.value) return 'bg-red-50 text-red-600'
-  if (underTarget.value) return 'bg-amber-50 text-amber-700'
-  return 'bg-[#eef4f1] text-[#5b6e64]'
+const targetStatusColor = computed<'error' | 'warning' | 'neutral'>(() => {
+  if (allocationSummary.value.status === 'over') return 'error'
+  if (allocationSummary.value.status === 'under') return 'warning'
+  return 'neutral'
 })
+
+const targetStatusDescription = computed(() => allocationSummary.value.description)
 
 const emit = defineEmits<{
   remove: [i: number]
@@ -164,7 +163,7 @@ watchDebounced(
 )
 
 function isOverCap(amount: number | null): boolean {
-  return props.defaultAmount != null && amount != null && amount > props.defaultAmount
+  return isWhitelistAmountOverCap(amount, props.defaultAmount)
 }
 
 function handleAdd(member: Member) {
