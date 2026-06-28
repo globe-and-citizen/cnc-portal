@@ -11,6 +11,9 @@ export type RoundDetailVariant = 'ledger' | 'gauge' | 'timeline'
 
 export type CreditAccess = 'everyone' | 'restricted'
 
+/** Units offered for a custom term length. The term is always stored in days. */
+export type CreditTermUnit = 'days' | 'weeks' | 'months' | 'years'
+
 /** A member position inside a credit round. */
 export interface CreditLender {
   name: string
@@ -63,7 +66,13 @@ export interface CreditCallForm {
   target: string
   token: string
   rate: string
+  /** Term length resolved to whole days — the canonical value used downstream. */
   period: number
+  /** Whether the term came from a preset chip or a custom value + unit. */
+  periodMode: 'preset' | 'custom'
+  /** Raw custom value (in `periodUnit`) before conversion to days. */
+  periodVal: string
+  periodUnit: CreditTermUnit
   deadline: string
   access: CreditAccess
   whitelist: Record<string, boolean>

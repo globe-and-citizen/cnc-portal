@@ -83,61 +83,7 @@
           </div>
 
           <!-- Step 2 — Terms -->
-          <div v-else-if="step === 1" class="flex flex-col gap-4.5">
-            <div class="grid grid-cols-2 gap-4">
-              <div>
-                <label class="mb-1.5 block text-sm font-medium" for="cc-rate">
-                  Interest rate (fixed, over the term)
-                </label>
-                <div class="relative">
-                  <input
-                    id="cc-rate"
-                    v-model="form.rate"
-                    type="number"
-                    min="0"
-                    :class="[CREDIT_FIELD_CLASS, 'pr-8']"
-                    placeholder="6"
-                  />
-                  <span
-                    class="text-muted absolute top-1/2 right-3 -translate-y-1/2 text-sm font-bold"
-                    >%</span
-                  >
-                </div>
-              </div>
-              <div>
-                <label class="mb-1.5 block text-sm font-medium" for="cc-deadline">
-                  Subscription deadline
-                </label>
-                <input
-                  id="cc-deadline"
-                  v-model="form.deadline"
-                  type="date"
-                  :class="CREDIT_FIELD_CLASS"
-                />
-              </div>
-            </div>
-            <div>
-              <label class="mb-1.5 block text-sm font-medium">Term length</label>
-              <div class="flex flex-wrap gap-2">
-                <button
-                  v-for="p in periods"
-                  :key="p"
-                  type="button"
-                  :class="creditChipClass(form.period === p)"
-                  @click="form.period = p"
-                >
-                  {{ p }} days
-                </button>
-              </div>
-            </div>
-            <UAlert
-              color="info"
-              variant="soft"
-              icon="heroicons:information-circle"
-              :title="termsPreview.title"
-              :description="termsPreview.body"
-            />
-          </div>
+          <CreditCallTermsStep v-else-if="step === 1" v-model:form="form" />
 
           <!-- Step 3 — Access -->
           <CreditCallAccessStep v-else v-model:form="form" />
@@ -175,10 +121,11 @@ import { computed, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useToast } from '@nuxt/ui/composables'
 import { useCommunityCreditStore } from '@/stores'
-import { CREDIT_FIELD_CLASS, creditChipClass, formatAmount } from '@/utils'
+import { CREDIT_FIELD_CLASS, creditChipClass } from '@/utils'
 import type { CreditCallForm } from '@/types'
 import StepIndicator from '@/components/sections/FixedReturnView/StepIndicator.vue'
 import CreditCallAccessStep from '@/components/sections/CommunityCreditView/CreditCallAccessStep.vue'
+import CreditCallTermsStep from '@/components/sections/CommunityCreditView/CreditCallTermsStep.vue'
 import CreditCallSummaryCard from '@/components/sections/CommunityCreditView/CreditCallSummaryCard.vue'
 
 const route = useRoute()
@@ -193,7 +140,6 @@ const step = ref(0)
 const isLastStep = computed(() => step.value === stepLabels.length - 1)
 
 const tokens = ['USDC', 'POL', 'SHER']
-const periods = [30, 60, 90, 120]
 
 const form = reactive<CreditCallForm>({
   name: '',
@@ -202,6 +148,9 @@ const form = reactive<CreditCallForm>({
   token: 'USDC',
   rate: '6',
   period: 90,
+  periodMode: 'preset',
+  periodVal: '90',
+  periodUnit: 'days',
   deadline: '2026-07-31',
   access: 'everyone',
   whitelist: {},
@@ -210,19 +159,6 @@ const form = reactive<CreditCallForm>({
 })
 
 const whitelistCount = computed(() => Object.values(form.whitelist).filter(Boolean).length)
-
-const termsPreview = computed(() => {
-  const target = Number(form.target) || 0
-  const rate = Number(form.rate) || 0
-  const repay = target * (1 + rate / 100)
-  return {
-    title: `Repay ${formatAmount(repay, form.token)} at maturity`,
-    body: `On a ${formatAmount(target, form.token)} target at ${rate}%, you return ${formatAmount(
-      (target * rate) / 100,
-      form.token
-    )} in interest, ${form.period} days after funding.`
-  }
-})
 
 function back() {
   if (step.value > 0) step.value--
