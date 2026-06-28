@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { DOMWrapper, mount } from '@vue/test-utils'
 import FixedReturnView from '../FixedReturnView.vue'
 import { mockFixedReturnReads, mockUserStore, resetUserStoreMock } from '@/tests/mocks'
 
@@ -9,6 +9,14 @@ function mountView() {
   return mount(FixedReturnView, {
     global: { stubs: { CreateOfferingForm: true, OfferingsDashboard: true } }
   })
+}
+
+function getTab(wrapper: ReturnType<typeof mountView>, selector: string): HTMLElement {
+  return wrapper.find(selector).element.closest('[role="tab"]') as HTMLElement
+}
+
+function getTabWrapper(wrapper: ReturnType<typeof mountView>, selector: string) {
+  return new DOMWrapper(getTab(wrapper, selector))
 }
 
 describe('FixedReturnView.vue', () => {
@@ -27,25 +35,27 @@ describe('FixedReturnView.vue', () => {
     mockUserStore.address = '0x0000000000000000000000000000000000000002'
     const wrapper = mountView()
 
-    const tab = wrapper.find('[data-test="issue-note-tab"]')
-    expect(tab.attributes('disabled')).toBeDefined()
+    expect(getTab(wrapper, '[data-test="issue-note-tab"]').hasAttribute('disabled')).toBe(true)
   })
 
   it('enables the Issue Note tab for the on-chain owner and switches to it on click', async () => {
     mockUserStore.address = OWNER_ADDRESS
     const wrapper = mountView()
 
-    const tab = wrapper.find('[data-test="issue-note-tab"]')
-    expect(tab.attributes('disabled')).toBeUndefined()
+    const tab = getTabWrapper(wrapper, '[data-test="issue-note-tab"]')
+    expect(getTab(wrapper, '[data-test="issue-note-tab"]').hasAttribute('disabled')).toBe(false)
 
-    await tab.trigger('click')
+    await tab.trigger('mousedown', { button: 0, ctrlKey: false })
     expect(wrapper.findComponent({ name: 'CreateOfferingForm' }).exists()).toBe(true)
   })
 
   it('switches back to My Offerings when the create form emits close', async () => {
     mockUserStore.address = OWNER_ADDRESS
     const wrapper = mountView()
-    await wrapper.find('[data-test="issue-note-tab"]').trigger('click')
+    await getTabWrapper(wrapper, '[data-test="issue-note-tab"]').trigger('mousedown', {
+      button: 0,
+      ctrlKey: false
+    })
 
     await wrapper.findComponent({ name: 'CreateOfferingForm' }).vm.$emit('close')
 
@@ -56,13 +66,24 @@ describe('FixedReturnView.vue', () => {
     mockUserStore.address = OWNER_ADDRESS
     const wrapper = mountView()
 
-    expect(wrapper.find('[data-test="my-offerings-tab"]').attributes('aria-selected')).toBe('true')
-    expect(wrapper.find('[data-test="issue-note-tab"]').attributes('aria-selected')).toBe('false')
+    expect(getTab(wrapper, '[data-test="my-offerings-tab"]').getAttribute('aria-selected')).toBe(
+      'true'
+    )
+    expect(getTab(wrapper, '[data-test="issue-note-tab"]').getAttribute('aria-selected')).toBe(
+      'false'
+    )
 
-    await wrapper.find('[data-test="issue-note-tab"]').trigger('click')
+    await getTabWrapper(wrapper, '[data-test="issue-note-tab"]').trigger('mousedown', {
+      button: 0,
+      ctrlKey: false
+    })
 
-    expect(wrapper.find('[data-test="my-offerings-tab"]').attributes('aria-selected')).toBe('false')
-    expect(wrapper.find('[data-test="issue-note-tab"]').attributes('aria-selected')).toBe('true')
+    expect(getTab(wrapper, '[data-test="my-offerings-tab"]').getAttribute('aria-selected')).toBe(
+      'false'
+    )
+    expect(getTab(wrapper, '[data-test="issue-note-tab"]').getAttribute('aria-selected')).toBe(
+      'true'
+    )
   })
 
   it('marks the tab group with role="tablist" and each tab with role="tab"', () => {

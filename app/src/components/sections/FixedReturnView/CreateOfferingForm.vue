@@ -6,15 +6,15 @@
         <div class="text-base font-extrabold text-[#0f3d2e]">New Fixed-Return Offering</div>
       </template>
 
-      <StepIndicator :steps="stepLabels" :current="step" />
+      <UStepper :items="stepperItems" v-model="step" disabled class="px-6 py-4" />
 
       <div class="flex flex-col gap-5 px-6 py-5">
-        <OfferingBasicsStep v-if="step === 0" ref="basicsRef" v-model:form="form" />
-        <OfferingTermsStep v-if="step === 1" ref="termsRef" v-model:form="form" />
+        <OfferingBasicsStep v-if="step === 0" ref="basicsRef" :form="form" />
+        <OfferingTermsStep v-if="step === 1" ref="termsRef" :form="form" />
         <OfferingAccessStep
           v-if="step === 2"
           ref="accessRef"
-          v-model:form="form"
+          :form="form"
           :whitelist="whitelist"
           :default-amount-label="defaultAmountLabel"
           @remove="removeWhitelist"
@@ -65,11 +65,11 @@
       :term-label="termLabel(form.termValue, form.termUnit)"
       :total-interest="totalInterest"
       :total-return="totalReturn"
-      :start-fmt="startFmt"
-      :maturity-fmt="maturityFmt"
-      :access-label="accessLabel"
-      :access-dot="accessDot"
-      :limits-label="limitsLabel"
+      :start-fmt="summary.startFmt"
+      :maturity-fmt="summary.maturityFmt"
+      :access-label="summary.accessLabel"
+      :access-dot="summary.accessDot"
+      :limits-label="summary.limitsLabel"
     />
   </div>
 </template>
@@ -78,14 +78,12 @@
 import { ref, reactive, computed } from 'vue'
 import { useToast } from '@nuxt/ui/composables'
 import OfferingSummaryCard from './OfferingSummaryCard.vue'
-import StepIndicator from './StepIndicator.vue'
 import OfferingBasicsStep from './OfferingBasicsStep.vue'
 import OfferingTermsStep from './OfferingTermsStep.vue'
 import OfferingAccessStep from './OfferingAccessStep.vue'
 import {
   expectedReturn,
-  formatOfferingDate,
-  maturityLabel,
+  getOfferingFormSummary,
   termLabel,
   toFixedReturnOfferParams
 } from '@/utils'
@@ -95,9 +93,9 @@ import { useFixedReturnCreateLendingOffer } from '@/composables/fixedReturn/writ
 
 const emit = defineEmits<{ close: [] }>()
 
-const stepLabels = ['Basics', 'Terms', 'Access']
+const stepperItems = [{ title: 'Basics' }, { title: 'Terms' }, { title: 'Access' }]
 const step = ref(0)
-const isLastStep = computed(() => step.value === stepLabels.length - 1)
+const isLastStep = computed(() => step.value === stepperItems.length - 1)
 
 type StepHandle = { validate?: () => Promise<unknown> } | null
 const basicsRef = ref<StepHandle>(null)
@@ -158,21 +156,8 @@ const whitelist = ref<WhitelistEntry[]>([])
 const totalReturn = computed(() => expectedReturn(form.principal, form.rate))
 const totalInterest = computed(() => totalReturn.value - form.principal)
 
-const defaultAmountLabel = computed(() =>
-  form.capOn ? `${Math.round(form.cap).toLocaleString('en-US')} ${form.token}` : 'No cap'
-)
-
-const limitsLabel = computed(() =>
-  form.capOn ? `Capped at ${Math.round(form.cap).toLocaleString('en-US')} ${form.token}` : 'No cap'
-)
-
-const accessLabel = computed(() =>
-  form.access === 'whitelist' ? `Whitelist · ${whitelist.value.length} lenders` : 'General · anyone'
-)
-const accessDot = computed(() => (form.access === 'whitelist' ? '#3366ff' : '#00bf7a'))
-
-const startFmt = computed(() => formatOfferingDate(form.startDate))
-const maturityFmt = computed(() => maturityLabel(form.startDate, form.termValue, form.termUnit))
+const summary = computed(() => getOfferingFormSummary(form, whitelist.value.length))
+const defaultAmountLabel = computed(() => summary.value.defaultAmountLabel)
 
 function addWhitelist(username: string, address: string, amount: number | null) {
   whitelist.value.push({ username, address, amount })

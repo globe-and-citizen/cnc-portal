@@ -39,6 +39,16 @@ describe('CreateOfferingForm.vue', () => {
     await goToLastStep(wrapper)
 
     expect(wrapper.find('[data-test="offering-next-button"]').text()).toBe('Publish offering')
+    expect(wrapper.find('[data-test="offering-collateral-alert"]').exists()).toBe(true)
+  })
+
+  it('shows the whitelist editor when specific-lender access is selected', async () => {
+    const wrapper = mountForm()
+    await goToLastStep(wrapper)
+
+    await wrapper.find('[data-test="access-whitelist-button"]').trigger('click')
+
+    expect(wrapper.find('[data-test="whitelist-add-lender"]').exists()).toBe(true)
   })
 
   it('does not advance past a step with invalid data', async () => {
