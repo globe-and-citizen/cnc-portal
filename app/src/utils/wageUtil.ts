@@ -35,7 +35,7 @@ export const buildRatePayload = (rates: RatePerHourWithEnabled[]): RatePerHour[]
     .map((rate) => ({ type: rate.type, amount: Number(rate.amount) }))
 }
 
-interface ClaimRateWithTotals {
+export interface ClaimRateWithTotals {
   type: RatePerHour['type']
   hourlyRate: bigint
   totalAmount: bigint
@@ -79,7 +79,7 @@ const getRegularAndOvertimeHours = (
   }
 }
 
-const buildClaimRatesWithOvertime = ({
+export const buildClaimRatesWithOvertime = ({
   totalMinutesWorked,
   maximumHoursPerWeek,
   ratePerHour,

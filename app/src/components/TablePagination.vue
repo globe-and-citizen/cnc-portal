@@ -22,7 +22,6 @@
     </div>
 
     <UPagination
-      v-if="pageCount > 1"
       :page="page"
       :items-per-page="pageSize"
       :total="total"
@@ -46,8 +45,9 @@ import { computed } from 'vue'
  * disabled boundary states handled by `UPagination`). Both `page` and `pageSize`
  * are v-model bindings; this component is purely presentational and emits the raw
  * user intent — resize anchoring (which page to land on when the size changes) is
- * decided by the owner (see `usePagination`). Renders nothing when `total` is 0,
- * and the page control is hidden when everything fits on a single page.
+ * decided by the owner (see `usePagination`). Renders nothing when `total` is 0;
+ * the page control stays visible even on a single page (it just shows page 1 with
+ * the prev/next/edge buttons disabled) so the footer is consistent across tables.
  */
 const props = withDefaults(
   defineProps<{
@@ -74,7 +74,6 @@ const PAGE_SIZE_OPTIONS = [10, 20, 50, 100]
 
 const rangeStart = computed(() => (props.total === 0 ? 0 : (props.page - 1) * props.pageSize + 1))
 const rangeEnd = computed(() => Math.min(props.page * props.pageSize, props.total))
-const pageCount = computed(() => Math.ceil(props.total / props.pageSize))
 
 function onPageSizeChange(value: number): void {
   emit('update:pageSize', value)
