@@ -15,9 +15,11 @@ import { mapExpenseAccountEvents, type ExpenseMapperInput } from './expenseAccou
 import { mapInvestorEvents, type InvestorMapperInput } from './investor'
 import { mapSafeTransfers, type SafeMapperInput } from './safe'
 import { mapSafeDepositRouterEvents, type SafeDepositRouterMapperInput } from './safeDepositRouter'
+import { mapPayrollAccruals } from './payrollAccrual'
 import type { MapperContext } from './context'
 
 export * from './context'
+export * from './payrollAccrual'
 export * from './bank'
 export * from './fees'
 export * from './cashRemuneration'
@@ -55,14 +57,18 @@ export function mapAllSources(sources: LedgerSources, ctx: MapperContext): Ledge
 }
 
 /**
- * Build the CNC general ledger end to end: map every source, sort by time, then
- * enrich payroll/expense entries with their off-chain category.
+ * Build the CNC general ledger end to end: map every on-chain source, add the
+ * off-chain payroll accruals (UC-CASH-02, booked at claim submission), sort by
+ * time, then enrich payroll/expense entries with their off-chain category.
  */
 export function buildCncLedgerEntries(
   sources: LedgerSources,
   ctx: MapperContext,
   offChain: EnrichmentSources = {}
 ): LedgerEntry[] {
-  const mapped = mapAllSources(sources, ctx).sort((a, b) => a.timestamp - b.timestamp)
+  const mapped = [
+    ...mapAllSources(sources, ctx),
+    ...mapPayrollAccruals(offChain.weeklyClaims, ctx)
+  ].sort((a, b) => a.timestamp - b.timestamp)
   return enrichEntries(mapped, offChain)
 }

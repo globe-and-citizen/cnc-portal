@@ -28,6 +28,7 @@ describe('chart of accounts', () => {
       'Service Revenue': 'INCOME',
       'Trading Gain': 'INCOME',
       'Payroll Expense': 'EXPENSE',
+      'Share-based Compensation': 'EXPENSE',
       'Operating Expense': 'EXPENSE',
       'Dividend Expense': 'EXPENSE',
       'Trading Loss': 'EXPENSE'
