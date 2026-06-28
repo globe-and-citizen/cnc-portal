@@ -4,7 +4,7 @@ export const MAX_FILES = 10
 
 // Allowed file types
 export const ALLOWED_IMAGE_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.webp']
-export const ALLOWED_DOCUMENT_EXTENSIONS = ['.pdf', '.txt', '.zip', '.docx']
+export const ALLOWED_DOCUMENT_EXTENSIONS = ['.pdf', '.txt', '.zip', '.docx', '.xls', '.xlsx']
 export const ACCEPTED_FILE_TYPES = [
   ...ALLOWED_IMAGE_EXTENSIONS,
   ...ALLOWED_DOCUMENT_EXTENSIONS
@@ -16,7 +16,9 @@ export const ALLOWED_DOCUMENT_MIMETYPES = [
   'text/plain',
   'application/zip',
   'application/x-zip-compressed',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 ]
 export const ALLOWED_MIMETYPES = [...ALLOWED_IMAGE_MIMETYPES, ...ALLOWED_DOCUMENT_MIMETYPES]
 

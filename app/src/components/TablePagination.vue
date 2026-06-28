@@ -45,7 +45,9 @@ import { computed } from 'vue'
  * disabled boundary states handled by `UPagination`). Both `page` and `pageSize`
  * are v-model bindings; this component is purely presentational and emits the raw
  * user intent — resize anchoring (which page to land on when the size changes) is
- * decided by the owner (see `usePagination`). Renders nothing when `total` is 0.
+ * decided by the owner (see `usePagination`). Renders nothing when `total` is 0;
+ * the page control stays visible even on a single page (it just shows page 1 with
+ * the prev/next/edge buttons disabled) so the footer is consistent across tables.
  */
 const props = withDefaults(
   defineProps<{

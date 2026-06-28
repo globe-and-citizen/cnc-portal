@@ -12,6 +12,9 @@ export const buildRawBankTransactions = (
   const tokenTransfers = bankResult?.bankTokenTransfers?.items ?? []
   const dividends = bankResult?.bankDividendDistributionTriggereds?.items ?? []
   const fees = bankResult?.bankFeePaids?.items ?? []
+  const ownershipTransfers = bankResult?.bankOwnershipTransferreds?.items ?? []
+  const tokenSupportAddeds = bankResult?.bankTokenSupportAddeds?.items ?? []
+  const tokenSupportRemoveds = bankResult?.bankTokenSupportRemoveds?.items ?? []
   const rawTokenTransfers = bankResult?.rawContractTokenTransfers?.items ?? []
 
   const sections: RawBankTransaction[][] = [
@@ -68,6 +71,33 @@ export const buildRawBankTransactions = (
       amount: row.amount,
       tokenAddress: row.token ?? zeroAddress,
       type: 'feePaid'
+    })),
+    ownershipTransfers.map((row) => ({
+      txHash: extractTxHashFromId(row.id),
+      timestamp: row.timestamp,
+      from: row.previousOwner,
+      to: row.newOwner,
+      amount: '0',
+      tokenAddress: zeroAddress,
+      type: 'ownershipTransferred'
+    })),
+    tokenSupportAddeds.map((row) => ({
+      txHash: extractTxHashFromId(row.id),
+      timestamp: row.timestamp,
+      from: row.contractAddress,
+      to: row.tokenAddress,
+      amount: '0',
+      tokenAddress: row.tokenAddress,
+      type: 'tokenSupportAdded'
+    })),
+    tokenSupportRemoveds.map((row) => ({
+      txHash: extractTxHashFromId(row.id),
+      timestamp: row.timestamp,
+      from: row.contractAddress,
+      to: row.tokenAddress,
+      amount: '0',
+      tokenAddress: row.tokenAddress,
+      type: 'tokenSupportRemoved'
     })),
     rawTokenTransfers.map((row) => ({
       txHash: extractTxHashFromId(row.id),

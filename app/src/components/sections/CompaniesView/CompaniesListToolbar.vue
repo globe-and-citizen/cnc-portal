@@ -162,7 +162,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import AddTeamForm from '@/components/forms/AddTeamForm.vue'
 import type { CompanyRoleFilter } from '@/composables/useCompaniesFilter'
 
@@ -178,6 +179,22 @@ const showArchived = defineModel<boolean>('showArchived', { required: true })
 const view = defineModel<'cards' | 'table'>('view', { required: true })
 
 const openModal = ref(false)
+
+const route = useRoute()
+const router = useRouter()
+
+// Opened from the navbar team picker's "Create company" action (/teams?create=1):
+// auto-open the create modal, then strip the query so a refresh won't re-open it.
+watch(
+  () => route.query?.create,
+  (create) => {
+    if (create) {
+      openModal.value = true
+      router.replace({ query: {} })
+    }
+  },
+  { immediate: true }
+)
 
 /** How many visibility filters are currently active (drives the badge). */
 const activeVisibilityCount = computed(

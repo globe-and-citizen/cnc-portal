@@ -665,6 +665,29 @@ export const cashRemunerationTokenSupportRemoved = onchainTable(
   }),
 );
 
+export const cashRemunerationOwnershipTransferred = onchainTable(
+  "cash_remuneration_ownership_transferred",
+  (t) => ({
+    id: t.text().primaryKey(),
+    contractAddress: t.hex().notNull(),
+    previousOwner: t.hex().notNull(),
+    newOwner: t.hex().notNull(),
+    blockNumber: t.bigint().notNull(),
+    timestamp: t.integer().notNull(),
+  }),
+  (table) => ({
+    contractAddressIdx: index(
+      "cash_rem_ownership_transferred_contract_index",
+    ).on(table.contractAddress),
+    previousOwnerIdx: index(
+      "cash_rem_ownership_transferred_previous_owner_index",
+    ).on(table.previousOwner),
+    newOwnerIdx: index("cash_rem_ownership_transferred_new_owner_index").on(
+      table.newOwner,
+    ),
+  }),
+);
+
 // SafeDepositRouter events
 export const safeDeposit = onchainTable(
   "safe_deposit",
@@ -1012,6 +1035,29 @@ export const expenseTokenAddressChanged = onchainTable(
     ).on(table.contractAddress),
     tokenSymbolIdx: index("expense_token_address_changed_symbol_index").on(
       table.tokenSymbol,
+    ),
+  }),
+);
+
+export const expenseOwnershipTransferred = onchainTable(
+  "expense_ownership_transferred",
+  (t) => ({
+    id: t.text().primaryKey(),
+    contractAddress: t.hex().notNull(),
+    previousOwner: t.hex().notNull(),
+    newOwner: t.hex().notNull(),
+    blockNumber: t.bigint().notNull(),
+    timestamp: t.integer().notNull(),
+  }),
+  (table) => ({
+    contractAddressIdx: index(
+      "expense_ownership_transferred_contract_index",
+    ).on(table.contractAddress),
+    previousOwnerIdx: index(
+      "expense_ownership_transferred_previous_owner_index",
+    ).on(table.previousOwner),
+    newOwnerIdx: index("expense_ownership_transferred_new_owner_index").on(
+      table.newOwner,
     ),
   }),
 );

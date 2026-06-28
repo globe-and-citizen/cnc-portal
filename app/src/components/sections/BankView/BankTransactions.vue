@@ -81,12 +81,20 @@
             <p v-if="getTransactionSummary(row.original)" class="text-muted mt-0.5 text-xs">
               {{ getTransactionSummary(row.original) }}
             </p>
-            <template v-if="getInlineUser(row.original)">
+            <template
+              v-if="getInlineUser(row.original) || row.original.type === 'ownershipTransferred'"
+            >
               <div class="mt-1 flex items-center gap-1 text-xs">
                 <UserComponent :user="resolveUser(row.original.from)" />
                 <span class="text-muted text-lg font-bold">→</span>
                 <UserComponent :user="resolveUser(row.original.to)" />
               </div>
+              <p
+                v-if="getInitialTokenSupportSummary(row.original)"
+                class="text-muted mt-0.5 text-xs"
+              >
+                {{ getInitialTokenSupportSummary(row.original) }}
+              </p>
             </template>
           </div>
         </template>
@@ -99,7 +107,9 @@
           <p v-if="getTransactionSummary(row.original)" class="text-muted mt-0.5 text-xs">
             {{ getTransactionSummary(row.original) }}
           </p>
-          <template v-if="getInlineUser(row.original)">
+          <template
+            v-if="getInlineUser(row.original) || row.original.type === 'ownershipTransferred'"
+          >
             <div class="mt-1 flex items-center gap-1 text-xs">
               <UserComponent :user="resolveUser(row.original.from)" />
               <span class="text-muted text-lg font-bold">→</span>
@@ -122,21 +132,27 @@
 
       <template #value-cell="{ row }">
         <template v-if="row.depth === 0">
-          <div :class="getValueClass(row.original)">
-            {{ getValuePrefix(row.original) }}{{ formatCryptoAmount(row.original.amount) }}
-            {{ row.original.token }}
-          </div>
-          <div class="text-muted text-xs">
-            {{ formatCurrencyShort(row.original.amountLocal, currencyStore.localCurrency.code) }}
-          </div>
+          <template v-if="Number(row.original.amount) > 0">
+            <div :class="getValueClass(row.original)">
+              {{ getValuePrefix(row.original) }}{{ formatCryptoAmount(row.original.amount) }}
+              {{ row.original.token }}
+            </div>
+            <div class="text-muted text-xs">
+              {{ formatCurrencyShort(row.original.amountLocal, currencyStore.localCurrency.code) }}
+            </div>
+          </template>
+          <span v-else class="text-muted">—</span>
         </template>
         <template v-else>
-          <div v-if="Number(row.original.amount) > 0" class="text-sm font-medium">
-            {{ formatCryptoAmount(String(row.original.amount)) }} {{ row.original.token }}
-          </div>
-          <div v-if="row.original.amountLocal" class="text-muted text-xs">
-            {{ formatCurrencyShort(row.original.amountLocal, currencyStore.localCurrency.code) }}
-          </div>
+          <template v-if="Number(row.original.amount) > 0">
+            <div class="text-sm font-medium">
+              {{ formatCryptoAmount(String(row.original.amount)) }} {{ row.original.token }}
+            </div>
+            <div v-if="row.original.amountLocal" class="text-muted text-xs">
+              {{ formatCurrencyShort(row.original.amountLocal, currencyStore.localCurrency.code) }}
+            </div>
+          </template>
+          <span v-else class="text-muted">—</span>
         </template>
       </template>
     </UTable>
@@ -179,6 +195,7 @@ import {
   parseBigIntOrZero,
   resolveUser,
   getTransactionSummary,
+  getInitialTokenSupportSummary,
   getTransactionTypeLabel,
   getTransactionCounterparty,
   formatTxHash,

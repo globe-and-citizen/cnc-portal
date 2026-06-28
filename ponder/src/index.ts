@@ -34,6 +34,7 @@ import {
   cashRemunerationOfficerUpdated,
   cashRemunerationTokenSupportAdded,
   cashRemunerationTokenSupportRemoved,
+  cashRemunerationOwnershipTransferred,
   safeDeposit,
   safeDepositsEnabled,
   safeDepositsDisabled,
@@ -52,6 +53,7 @@ import {
   expenseTokenSupportAdded,
   expenseTokenSupportRemoved,
   expenseTokenAddressChanged,
+  expenseOwnershipTransferred,
   feeCollectorFeePaid,
   feeCollectorWithdrawn,
   feeCollectorTokenWithdrawn,
@@ -624,6 +626,20 @@ ponder.on(
   },
 );
 
+ponder.on(
+  "CashRemunerationEIP712:OwnershipTransferred",
+  async ({ event, context }) => {
+    await context.db.insert(cashRemunerationOwnershipTransferred).values({
+      id: `${event.transaction.hash}-${event.log.logIndex}`,
+      contractAddress: event.log.address,
+      previousOwner: event.args.previousOwner,
+      newOwner: event.args.newOwner,
+      blockNumber: event.block.number,
+      timestamp: Number(event.block.timestamp),
+    });
+  },
+);
+
 // ─── SafeDepositRouter ────────────────────────────────────────────────────────
 
 ponder.on("SafeDepositRouter:Deposited", async ({ event, context }) => {
@@ -881,6 +897,20 @@ ponder.on(
       tokenSymbol: event.args.tokenSymbol,
       oldAddress: event.args.oldAddress,
       newAddress: event.args.newAddress,
+      blockNumber: event.block.number,
+      timestamp: Number(event.block.timestamp),
+    });
+  },
+);
+
+ponder.on(
+  "ExpenseAccountEIP712:OwnershipTransferred",
+  async ({ event, context }) => {
+    await context.db.insert(expenseOwnershipTransferred).values({
+      id: `${event.transaction.hash}-${event.log.logIndex}`,
+      contractAddress: event.log.address,
+      previousOwner: event.args.previousOwner,
+      newOwner: event.args.newOwner,
       blockNumber: event.block.number,
       timestamp: Number(event.block.timestamp),
     });
