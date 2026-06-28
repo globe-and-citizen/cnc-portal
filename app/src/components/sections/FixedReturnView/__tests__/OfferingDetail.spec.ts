@@ -59,7 +59,7 @@ describe('OfferingDetail.vue', () => {
 
     const rows = wrapper.findAll('tbody tr')
     expect(rows).toHaveLength(1)
-    expect(rows[0].text()).toContain('$50,000')
+    expect(rows[0].text()).toContain('50,000 Token')
   })
 
   it('marks a lender on-track (not overdue) when nothing has been repaid yet but maturity has not passed', () => {
@@ -105,7 +105,7 @@ describe('OfferingDetail.vue', () => {
 
     const rows = wrapper.findAll('tbody tr')
     expect(rows).toHaveLength(1)
-    expect(rows[0].text()).toContain('$1,000')
+    expect(rows[0].text()).toContain('1,000 Token')
   })
 
   it('shows a no-match state when the search query matches no lender', async () => {
