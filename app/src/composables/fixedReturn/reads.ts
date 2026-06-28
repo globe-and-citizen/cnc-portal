@@ -3,11 +3,19 @@ import { useQuery } from '@tanstack/vue-query'
 import { useReadContract } from '@wagmi/vue'
 import { readContract } from '@wagmi/core'
 import { formatUnits, isAddress, type Address } from 'viem'
-import { useTeamStore } from '@/stores'
+import type { ExtractAbiFunctionNames } from 'abitype'
+import { useTeamStore, useUserDataStore } from '@/stores'
 import { config } from '@/wagmi.config'
 import { FIXED_RETURN_ABI } from '@/artifacts/abi/fixed-return'
 import { decimalsForOfferingToken, log, parseError } from '@/utils'
-import type { LendingOfferStruct } from '@/types'
+import type {
+  FixedReturnLenderPosition,
+  FixedReturnOfferLender,
+  FixedReturnRawOffer,
+  LendingOfferStruct
+} from '@/types'
+
+type FixedReturnFunctionNames = ExtractAbiFunctionNames<typeof FIXED_RETURN_ABI>
 
 /**
  * FixedReturn contract address helper
@@ -17,148 +25,104 @@ export function useFixedReturnAddress() {
   return computed(() => teamStore.getContractAddressByType('FixedReturn'))
 }
 
-export function useFixedReturnOwner() {
+/** Reads with no args beyond the contract's own address. */
+function useFixedReturnRead(functionName: FixedReturnFunctionNames) {
   const fixedReturnAddress = useFixedReturnAddress()
   return useReadContract({
     address: fixedReturnAddress,
     abi: FIXED_RETURN_ABI,
-    functionName: 'owner',
+    functionName,
     query: { enabled: !!fixedReturnAddress.value && isAddress(fixedReturnAddress.value) }
   })
+}
+
+/** Reads taking a single offerId — no extra address to validate beyond the contract's own. */
+function useFixedReturnOfferRead(
+  functionName: FixedReturnFunctionNames,
+  offerId: MaybeRef<bigint>
+) {
+  const fixedReturnAddress = useFixedReturnAddress()
+  const offerIdValue = computed(() => unref(offerId))
+  return useReadContract({
+    address: fixedReturnAddress,
+    abi: FIXED_RETURN_ABI,
+    functionName,
+    args: [offerIdValue],
+    query: {
+      enabled: computed(() => !!fixedReturnAddress.value && isAddress(fixedReturnAddress.value))
+    }
+  })
+}
+
+/** Reads taking (offerId, lender) — gated on both the contract address and lender. */
+function useFixedReturnOfferLenderRead(
+  functionName: FixedReturnFunctionNames,
+  offerId: MaybeRef<bigint>,
+  lender: MaybeRef<Address>
+) {
+  const fixedReturnAddress = useFixedReturnAddress()
+  const offerIdValue = computed(() => unref(offerId))
+  const lenderValue = computed(() => unref(lender))
+  return useReadContract({
+    address: fixedReturnAddress,
+    abi: FIXED_RETURN_ABI,
+    functionName,
+    args: [offerIdValue, lenderValue],
+    query: {
+      enabled: computed(
+        () =>
+          !!fixedReturnAddress.value &&
+          isAddress(fixedReturnAddress.value) &&
+          isAddress(lenderValue.value)
+      )
+    }
+  })
+}
+
+export function useFixedReturnOwner() {
+  return useFixedReturnRead('owner')
 }
 
 export function useFixedReturnVersion() {
-  const fixedReturnAddress = useFixedReturnAddress()
-  return useReadContract({
-    address: fixedReturnAddress,
-    abi: FIXED_RETURN_ABI,
-    functionName: 'version',
-    query: { enabled: !!fixedReturnAddress.value && isAddress(fixedReturnAddress.value) }
-  })
+  return useFixedReturnRead('version')
 }
 
 export function useFixedReturnTotalOfferings() {
-  const fixedReturnAddress = useFixedReturnAddress()
-  return useReadContract({
-    address: fixedReturnAddress,
-    abi: FIXED_RETURN_ABI,
-    functionName: 'totalOfferings',
-    query: { enabled: !!fixedReturnAddress.value && isAddress(fixedReturnAddress.value) }
-  })
+  return useFixedReturnRead('totalOfferings')
+}
+
+export function useFixedReturnGetSupportedTokens() {
+  return useFixedReturnRead('getSupportedTokens')
 }
 
 export function useFixedReturnGetLendingOffer(offerId: MaybeRef<bigint>) {
-  const fixedReturnAddress = useFixedReturnAddress()
-  const offerIdValue = computed(() => unref(offerId))
-  return useReadContract({
-    address: fixedReturnAddress,
-    abi: FIXED_RETURN_ABI,
-    functionName: 'getLendingOffer',
-    args: [offerIdValue],
-    query: {
-      enabled: computed(() => !!fixedReturnAddress.value && isAddress(fixedReturnAddress.value))
-    }
-  })
+  return useFixedReturnOfferRead('getLendingOffer', offerId)
 }
 
 export function useFixedReturnGetOfferLenders(offerId: MaybeRef<bigint>) {
-  const fixedReturnAddress = useFixedReturnAddress()
-  const offerIdValue = computed(() => unref(offerId))
-  return useReadContract({
-    address: fixedReturnAddress,
-    abi: FIXED_RETURN_ABI,
-    functionName: 'getOfferLenders',
-    args: [offerIdValue],
-    query: {
-      enabled: computed(() => !!fixedReturnAddress.value && isAddress(fixedReturnAddress.value))
-    }
-  })
+  return useFixedReturnOfferRead('getOfferLenders', offerId)
 }
 
 export function useFixedReturnTotalEntitlementOf(
   offerId: MaybeRef<bigint>,
   lender: MaybeRef<Address>
 ) {
-  const fixedReturnAddress = useFixedReturnAddress()
-  const offerIdValue = computed(() => unref(offerId))
-  const lenderValue = computed(() => unref(lender))
-  return useReadContract({
-    address: fixedReturnAddress,
-    abi: FIXED_RETURN_ABI,
-    functionName: 'totalEntitlementOf',
-    args: [offerIdValue, lenderValue],
-    query: {
-      enabled: computed(
-        () =>
-          !!fixedReturnAddress.value &&
-          isAddress(fixedReturnAddress.value) &&
-          isAddress(lenderValue.value)
-      )
-    }
-  })
+  return useFixedReturnOfferLenderRead('totalEntitlementOf', offerId, lender)
 }
 
 export function useFixedReturnLenderDeposits(offerId: MaybeRef<bigint>, lender: MaybeRef<Address>) {
-  const fixedReturnAddress = useFixedReturnAddress()
-  const offerIdValue = computed(() => unref(offerId))
-  const lenderValue = computed(() => unref(lender))
-  return useReadContract({
-    address: fixedReturnAddress,
-    abi: FIXED_RETURN_ABI,
-    functionName: 'lenderDeposits',
-    args: [offerIdValue, lenderValue],
-    query: {
-      enabled: computed(
-        () =>
-          !!fixedReturnAddress.value &&
-          isAddress(fixedReturnAddress.value) &&
-          isAddress(lenderValue.value)
-      )
-    }
-  })
+  return useFixedReturnOfferLenderRead('lenderDeposits', offerId, lender)
 }
 
 export function useFixedReturnLenderAllocation(
   offerId: MaybeRef<bigint>,
   lender: MaybeRef<Address>
 ) {
-  const fixedReturnAddress = useFixedReturnAddress()
-  const offerIdValue = computed(() => unref(offerId))
-  const lenderValue = computed(() => unref(lender))
-  return useReadContract({
-    address: fixedReturnAddress,
-    abi: FIXED_RETURN_ABI,
-    functionName: 'lenderAllocation',
-    args: [offerIdValue, lenderValue],
-    query: {
-      enabled: computed(
-        () =>
-          !!fixedReturnAddress.value &&
-          isAddress(fixedReturnAddress.value) &&
-          isAddress(lenderValue.value)
-      )
-    }
-  })
+  return useFixedReturnOfferLenderRead('lenderAllocation', offerId, lender)
 }
 
 export function useFixedReturnHasDeposited(offerId: MaybeRef<bigint>, lender: MaybeRef<Address>) {
-  const fixedReturnAddress = useFixedReturnAddress()
-  const offerIdValue = computed(() => unref(offerId))
-  const lenderValue = computed(() => unref(lender))
-  return useReadContract({
-    address: fixedReturnAddress,
-    abi: FIXED_RETURN_ABI,
-    functionName: 'hasDeposited',
-    args: [offerIdValue, lenderValue],
-    query: {
-      enabled: computed(
-        () =>
-          !!fixedReturnAddress.value &&
-          isAddress(fixedReturnAddress.value) &&
-          isAddress(lenderValue.value)
-      )
-    }
-  })
+  return useFixedReturnOfferLenderRead('hasDeposited', offerId, lender)
 }
 
 export function useFixedReturnIsTokenSupported(token: MaybeRef<Address>) {
@@ -178,22 +142,6 @@ export function useFixedReturnIsTokenSupported(token: MaybeRef<Address>) {
       )
     }
   })
-}
-
-export function useFixedReturnGetSupportedTokens() {
-  const fixedReturnAddress = useFixedReturnAddress()
-  return useReadContract({
-    address: fixedReturnAddress,
-    abi: FIXED_RETURN_ABI,
-    functionName: 'getSupportedTokens',
-    query: { enabled: !!fixedReturnAddress.value && isAddress(fixedReturnAddress.value) }
-  })
-}
-
-export interface FixedReturnRawOffer {
-  offerId: number
-  offer: LendingOfferStruct
-  decimals: number
 }
 
 /**
@@ -245,12 +193,6 @@ export function useFixedReturnAllOffers() {
     queryFn: fetchAllOffers,
     enabled: computed(() => !!fixedReturnAddress.value)
   })
-}
-
-export interface FixedReturnOfferLender {
-  address: Address
-  principal: number
-  expected: number
 }
 
 /**
@@ -313,5 +255,62 @@ export function useFixedReturnOfferLenders(
     queryKey: ['fixedReturnOfferLenders', fixedReturnAddress, offerId],
     queryFn: fetchLenders,
     enabled: computed(() => !!fixedReturnAddress.value)
+  })
+}
+
+/**
+ * Per-connected-lender position (Whitelist allocation + cumulative deposits) for
+ * every FixedReturn offer. Needed for every offer, not just Whitelist ones, since
+ * lendFunds enforces the cumulative deposit total on-chain either way.
+ * lenderAllocation is harmless to read for a General offer too — it's just an unset
+ * (zero) mapping entry there. Self-contained like useFixedReturnAllOffers — it reads
+ * the connected user and reuses that same query's cache rather than taking the offer
+ * list or lender as params.
+ */
+export function useFixedReturnMyLenderPositions() {
+  const fixedReturnAddress = useFixedReturnAddress()
+  const userStore = useUserDataStore()
+  const { data: allOffers } = useFixedReturnAllOffers()
+
+  async function fetchMyLenderPositions(): Promise<Map<number, FixedReturnLenderPosition>> {
+    const address = fixedReturnAddress.value
+    const lender = userStore.address as Address | undefined
+    if (!address || !lender) return new Map()
+
+    const entries = await Promise.all(
+      (allOffers.value ?? []).map(async ({ offerId }) => {
+        try {
+          const [allocation, deposited] = await Promise.all([
+            readContract(config, {
+              address,
+              abi: FIXED_RETURN_ABI,
+              functionName: 'lenderAllocation',
+              args: [BigInt(offerId), lender]
+            }) as Promise<bigint>,
+            readContract(config, {
+              address,
+              abi: FIXED_RETURN_ABI,
+              functionName: 'lenderDeposits',
+              args: [BigInt(offerId), lender]
+            }) as Promise<bigint>
+          ])
+          return [offerId, { allocation, deposited }] as const
+        } catch (error) {
+          log.error(`Failed to fetch lender position for offer #${offerId}:`, parseError(error))
+          return [offerId, { allocation: 0n, deposited: 0n }] as const
+        }
+      })
+    )
+    return new Map(entries)
+  }
+
+  // Plain offerIds, not `allOffers` itself — TanStack Query hashes the query key with
+  // JSON.stringify, which can't serialize the bigint fields on a raw offer struct.
+  const offerIds = computed(() => (allOffers.value ?? []).map(({ offerId }) => offerId))
+
+  return useQuery({
+    queryKey: ['fixedReturnMyLenderPositions', fixedReturnAddress, userStore.address, offerIds],
+    queryFn: fetchMyLenderPositions,
+    enabled: computed(() => !!fixedReturnAddress.value && offerIds.value.length > 0)
   })
 }

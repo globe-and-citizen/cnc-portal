@@ -161,9 +161,11 @@ export const mockFixedReturnReads = {
   isTokenSupported: createContractReadMock(false),
   getSupportedTokens: createContractReadMock<string[]>([]),
   // useQuery-shaped (not a direct ABI read) — see useFixedReturnAllOffers/
-  // useFixedReturnOfferLenders in composables/fixedReturn/reads.ts.
+  // useFixedReturnOfferLenders/useFixedReturnMyLenderPositions in
+  // composables/fixedReturn/reads.ts.
   allOffers: createContractReadMock<unknown[]>([]),
-  offerLenders: createContractReadMock<unknown[]>([])
+  offerLenders: createContractReadMock<unknown[]>([]),
+  myLenderPositions: createContractReadMock<Map<number, unknown>>(new Map())
 }
 
 export const mockFixedReturnWrites = {
