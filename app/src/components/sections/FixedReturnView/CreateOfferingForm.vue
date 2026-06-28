@@ -6,20 +6,29 @@
         <div class="text-base font-extrabold text-[#0f3d2e]">New Fixed-Return Offering</div>
       </template>
 
-      <StepIndicator :steps="stepLabels" :current="step" />
+      <UStepper :items="stepperItems" v-model="step" disabled class="px-6 py-4" />
 
       <div class="flex flex-col gap-5 px-6 py-5">
-        <OfferingBasicsStep v-if="step === 0" ref="basicsRef" v-model:form="form" />
-        <OfferingTermsStep v-if="step === 1" ref="termsRef" v-model:form="form" />
+        <OfferingBasicsStep v-if="step === 0" ref="basicsRef" :form="form" />
+        <OfferingTermsStep v-if="step === 1" ref="termsRef" :form="form" />
         <OfferingAccessStep
           v-if="step === 2"
           ref="accessRef"
-          v-model:form="form"
+          :form="form"
           :whitelist="whitelist"
           :default-amount-label="defaultAmountLabel"
           @remove="removeWhitelist"
           @update-amount="updateWhitelistAmount"
           @add="addWhitelist"
+        />
+
+        <UAlert
+          v-if="submitError"
+          color="error"
+          variant="soft"
+          icon="i-lucide-circle-alert"
+          :description="submitError"
+          data-test="offering-error-alert"
         />
       </div>
 
@@ -39,6 +48,8 @@
             color="primary"
             :label="isLastStep ? 'Publish offering' : 'Continue'"
             :trailing-icon="isLastStep ? 'heroicons:rocket-launch' : 'heroicons:arrow-right'"
+            :loading="isPublishing"
+            :disabled="isPublishing"
             data-test="offering-next-button"
             @click="next"
           />
@@ -54,11 +65,11 @@
       :term-label="termLabel(form.termValue, form.termUnit)"
       :total-interest="totalInterest"
       :total-return="totalReturn"
-      :start-fmt="startFmt"
-      :maturity-fmt="maturityFmt"
-      :access-label="accessLabel"
-      :access-dot="accessDot"
-      :limits-label="limitsLabel"
+      :start-fmt="summary.startFmt"
+      :maturity-fmt="summary.maturityFmt"
+      :access-label="summary.accessLabel"
+      :access-dot="summary.accessDot"
+      :limits-label="summary.limitsLabel"
     />
   </div>
 </template>
@@ -67,19 +78,24 @@
 import { ref, reactive, computed } from 'vue'
 import { useToast } from '@nuxt/ui/composables'
 import OfferingSummaryCard from './OfferingSummaryCard.vue'
-import StepIndicator from './StepIndicator.vue'
 import OfferingBasicsStep from './OfferingBasicsStep.vue'
 import OfferingTermsStep from './OfferingTermsStep.vue'
 import OfferingAccessStep from './OfferingAccessStep.vue'
-import { expectedReturn, formatOfferingDate, maturityLabel, termLabel } from '@/utils'
+import {
+  expectedReturn,
+  getOfferingFormSummary,
+  termLabel,
+  toFixedReturnOfferParams
+} from '@/utils'
 import type { OfferingForm, WhitelistEntry } from '@/types'
 import { SUPPORTED_TOKENS } from '@/constant'
+import { useFixedReturnCreateLendingOffer } from '@/composables/fixedReturn/writes'
 
 const emit = defineEmits<{ close: [] }>()
 
-const stepLabels = ['Basics', 'Terms', 'Access']
+const stepperItems = [{ title: 'Basics' }, { title: 'Terms' }, { title: 'Access' }]
 const step = ref(0)
-const isLastStep = computed(() => step.value === stepLabels.length - 1)
+const isLastStep = computed(() => step.value === stepperItems.length - 1)
 
 type StepHandle = { validate?: () => Promise<unknown> } | null
 const basicsRef = ref<StepHandle>(null)
@@ -87,6 +103,9 @@ const termsRef = ref<StepHandle>(null)
 const accessRef = ref<StepHandle>(null)
 
 const toast = useToast()
+const createOfferResult = useFixedReturnCreateLendingOffer()
+const isPublishing = computed(() => createOfferResult.isPending.value)
+const submitError = ref<string | null>(null)
 
 function back() {
   if (step.value > 0) step.value--
@@ -102,48 +121,43 @@ async function next() {
     step.value++
     return
   }
-  toast.add({ title: 'Offering published successfully!', color: 'success' })
-  emit('close')
+
+  submitError.value = null
+  try {
+    const params = toFixedReturnOfferParams(form, whitelist.value)
+    await createOfferResult.mutateAsync({ args: [params] })
+    toast.add({ title: 'Offering published successfully!', color: 'success' })
+    emit('close')
+  } catch (error) {
+    submitError.value =
+      (error as { shortMessage?: string; message?: string })?.shortMessage ??
+      (error as Error)?.message ??
+      'Failed to publish offering'
+  }
 }
 
 const form = reactive<OfferingForm>({
-  title: 'Riverside Expansion Note',
+  title: '',
   purpose: '',
-  principal: 500000,
-  rate: 9,
+  principal: 0,
+  rate: 0,
   termValue: 12,
   termUnit: 'months',
-  startDate: '2026-07-01',
-  deadline: '2026-06-30',
+  startDate: '',
+  deadline: '',
   access: 'general',
   capOn: false,
-  cap: 50000,
+  cap: 0,
   token: SUPPORTED_TOKENS[0]?.symbol
 })
 
-const whitelist = ref<WhitelistEntry[]>([
-  { username: '@liangw', address: '0x4D21…A8e1', amount: 30000 },
-  { username: '@priyan', address: '0xB1f7…3D92', amount: null }
-])
+const whitelist = ref<WhitelistEntry[]>([])
 
 const totalReturn = computed(() => expectedReturn(form.principal, form.rate))
 const totalInterest = computed(() => totalReturn.value - form.principal)
 
-const defaultAmountLabel = computed(() =>
-  form.capOn ? `${Math.round(form.cap).toLocaleString('en-US')} ${form.token}` : 'No cap'
-)
-
-const limitsLabel = computed(() =>
-  form.capOn ? `Capped at ${Math.round(form.cap).toLocaleString('en-US')} ${form.token}` : 'No cap'
-)
-
-const accessLabel = computed(() =>
-  form.access === 'whitelist' ? `Whitelist · ${whitelist.value.length} lenders` : 'General · anyone'
-)
-const accessDot = computed(() => (form.access === 'whitelist' ? '#3366ff' : '#00bf7a'))
-
-const startFmt = computed(() => formatOfferingDate(form.startDate))
-const maturityFmt = computed(() => maturityLabel(form.startDate, form.termValue, form.termUnit))
+const summary = computed(() => getOfferingFormSummary(form, whitelist.value.length))
+const defaultAmountLabel = computed(() => summary.value.defaultAmountLabel)
 
 function addWhitelist(username: string, address: string, amount: number | null) {
   whitelist.value.push({ username, address, amount })
