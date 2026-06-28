@@ -4,6 +4,7 @@ import type {
   RevertMessageResolver
 } from './errorCatalogs.types'
 import { resolveFromCatalog } from './errorCatalogs.types'
+import { FIXED_RETURN_ERRORS } from './fixedReturnErrorCatalog'
 
 export type {
   ContractErrorCatalog,
@@ -279,7 +280,8 @@ export const CONTRACT_ERRORS: ContractErrorCatalog = {
         return `Missing initializer data for ${contractType ?? 'contract'}`
       },
       NotOwnerOrInitializing: 'Caller is not an owner and contract is not initializing'
-    }
+    },
+    FixedReturn: FIXED_RETURN_ERRORS
   },
   fallbacks: {
     CashRemuneration: 'Withdraw failed',
@@ -297,6 +299,7 @@ export const CONTRACT_ERRORS: ContractErrorCatalog = {
     Voting: 'Voting action failed',
     BoardOfDirectors: 'Board of directors action failed',
     Officer: 'Officer action failed',
+    FixedReturn: 'Fixed return action failed',
     default: 'Transaction failed'
   }
 }

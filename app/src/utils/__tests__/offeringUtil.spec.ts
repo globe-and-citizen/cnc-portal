@@ -1,8 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import type { Address } from 'viem'
 import {
   moneyShort,
-  pickerClass,
   sumWhitelistAmount,
   formatOfferingDate,
   addTerm,
@@ -11,12 +9,9 @@ import {
   percentOf,
   expectedReturn,
   findOfferingToken,
-  toFixedReturnOfferParams,
-  decimalsForOfferingToken
+  toFixedReturnOfferParams
 } from '../offeringUtil'
 import type { OfferingForm, WhitelistEntry } from '@/types'
-
-const ARBITRARY_TOKEN = '0x1111111111111111111111111111111111111111' as const
 
 function baseForm(overrides: Partial<OfferingForm> = {}): OfferingForm {
   return {
@@ -43,16 +38,6 @@ describe('moneyShort', () => {
 
   it('formats zero', () => {
     expect(moneyShort(0)).toBe('$0')
-  })
-})
-
-describe('pickerClass', () => {
-  it('returns the active styling when active is true', () => {
-    expect(pickerClass(true).join(' ')).toContain('border-[#00bf7a]')
-  })
-
-  it('returns the inactive styling when active is false', () => {
-    expect(pickerClass(false).join(' ')).toContain('border-[#e0eae5]')
   })
 })
 
@@ -177,14 +162,14 @@ describe('toFixedReturnOfferParams', () => {
     expect(params.allocations).toEqual([])
   })
 
-  it('converts ISO dates to unix seconds at UTC midnight', () => {
+  it('converts date-only values to the end of the selected UTC day', () => {
     const params = toFixedReturnOfferParams(
       baseForm({ startDate: '2026-07-01', deadline: '2026-06-30' }),
       []
     )
 
-    expect(params.startDate).toBe(BigInt(Date.UTC(2026, 6, 1) / 1000))
-    expect(params.subscriptionDeadline).toBe(BigInt(Date.UTC(2026, 5, 30) / 1000))
+    expect(params.startDate).toBe(BigInt(Date.UTC(2026, 6, 1, 23, 59, 59) / 1000))
+    expect(params.subscriptionDeadline).toBe(BigInt(Date.UTC(2026, 5, 30, 23, 59, 59) / 1000))
   })
 
   it('sets lenderCap to zero when isCapEnabled is false, regardless of the cap field', () => {
@@ -226,16 +211,5 @@ describe('toFixedReturnOfferParams', () => {
     expect(() => toFixedReturnOfferParams(baseForm({ token: 'native' }), [])).toThrow(
       /Unsupported token/
     )
-  })
-})
-
-describe('decimalsForOfferingToken', () => {
-  it('resolves a known token from SUPPORTED_TOKENS', () => {
-    // USDC is always present and 6-decimal — see SUPPORTED_TOKENS in @/constant.
-    expect(decimalsForOfferingToken(findOfferingToken('USDC')!.address as Address)).toBe(6)
-  })
-
-  it('returns undefined for a token outside SUPPORTED_TOKENS', () => {
-    expect(decimalsForOfferingToken(ARBITRARY_TOKEN)).toBeUndefined()
   })
 })
