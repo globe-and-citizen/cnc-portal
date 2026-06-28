@@ -58,4 +58,12 @@ describe('classifyError', () => {
     const c = classifyError(makeRevert('ReallyUnknownError'))
     expect(c.userMessage).toBe('Transaction failed')
   })
+
+  it('resolves FixedReturn lending reverts to actionable messages', () => {
+    const c = classifyError(makeRevert('FundingTargetReached'), {
+      contract: 'FixedReturn'
+    })
+
+    expect(c.userMessage).toBe('This amount exceeds the funding still available')
+  })
 })

@@ -9,6 +9,7 @@ import {
   PROPOSALS_BEACON_ADDRESS,
   ELECTIONS_BEACON_ADDRESS,
   SAFE_DEPOSIT_ROUTER_BEACON_ADDRESS,
+  FIXED_RETURN_BEACON_ADDRESS,
   USDC_ADDRESS,
   USDT_ADDRESS,
   USDC_E_ADDRESS
@@ -20,6 +21,7 @@ import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
 import { INVESTOR_ABI } from '@/artifacts/abi/investors'
 import { SAFE_DEPOSIT_ROUTER_ABI } from '@/artifacts/abi/safe-deposit-router'
 import { PROPOSALS_ABI } from '@/artifacts/abi/proposals'
+import { FIXED_RETURN_ABI } from '@/artifacts/abi/fixed-return'
 import { log } from '@/utils'
 
 /**
@@ -60,7 +62,8 @@ export const validateBeaconAddresses = (): void => {
     {
       name: 'SAFE_DEPOSIT_ROUTER_BEACON_ADDRESS',
       value: SAFE_DEPOSIT_ROUTER_BEACON_ADDRESS
-    }
+    },
+    { name: 'FIXED_RETURN_BEACON_ADDRESS', value: FIXED_RETURN_BEACON_ADDRESS }
   ]
 
   const missingBeacons = requiredBeacons.filter((beacon) => !beacon.value)
@@ -108,6 +111,10 @@ export const getBeaconConfigs = (): BeaconConfig[] => {
     {
       beaconType: 'SafeDepositRouter',
       beaconAddress: SAFE_DEPOSIT_ROUTER_BEACON_ADDRESS!
+    },
+    {
+      beaconType: 'FixedReturn',
+      beaconAddress: FIXED_RETURN_BEACON_ADDRESS!
     }
   ]
 }
@@ -195,6 +202,16 @@ export const getDeploymentConfigs = (
         [USDC_ADDRESS, USDC_E_ADDRESS, USDT_ADDRESS], // supportedTokens
         parseUnits('1', 6) // multiplier - default 1:1 ratio
       ]
+    })
+  })
+
+  // FixedReturn contract
+  deployments.push({
+    contractType: 'FixedReturn',
+    initializerData: encodeFunctionData({
+      abi: FIXED_RETURN_ABI,
+      functionName: 'initialize',
+      args: [[USDT_ADDRESS, USDC_ADDRESS, USDC_E_ADDRESS], currentUserAddress]
     })
   })
 

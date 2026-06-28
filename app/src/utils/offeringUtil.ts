@@ -1,5 +1,7 @@
 import { formatUnits, parseUnits, type Address } from 'viem'
 import { SUPPORTED_TOKENS } from '@/constant'
+import { tokenSymbol } from './constantUtil'
+import { formatAmountWithPrecision } from './currencyUtil'
 import type {
   FixedReturnOfferParams,
   LenderOffering,
@@ -22,13 +24,12 @@ export function moneyShort(n: number): string {
   return '$' + Math.round(n).toLocaleString('en-US')
 }
 
-export function pickerClass(active: boolean) {
-  return [
-    'flex flex-col gap-0.5 items-start text-left px-3 py-2 rounded-lg cursor-pointer border-2 transition-all',
-    active
-      ? 'border-[#00bf7a] bg-[#f0fbf6] text-[#0a7a52]'
-      : 'border-[#e0eae5] bg-white text-[#46584f]'
-  ]
+export function getOfferingTokenSymbol(tokenAddress: Address): string {
+  return tokenSymbol(tokenAddress) || 'Token'
+}
+
+export function formatOfferingTokenAmount(amount: number, tokenAddress: Address): string {
+  return `${formatAmountWithPrecision(amount, 0, 4)} ${getOfferingTokenSymbol(tokenAddress)}`
 }
 
 export function sumWhitelistAmount(whitelist: { amount: number | null }[]): number {
@@ -81,8 +82,8 @@ export function findOfferingToken(symbol: string | undefined) {
   return SUPPORTED_TOKENS.find((t) => t.symbol === symbol && t.id !== 'native')
 }
 
-function toUnixSeconds(dateStr: string): bigint {
-  return BigInt(Math.floor(new Date(`${dateStr}T00:00:00Z`).getTime() / 1000))
+function toUnixEndOfDaySeconds(dateStr: string): bigint {
+  return BigInt(Math.floor(new Date(`${dateStr}T23:59:59Z`).getTime() / 1000))
 }
 
 /**
@@ -105,8 +106,11 @@ export function toFixedReturnOfferParams(
     interestRateBps: BigInt(Math.round(form.rate * 100)),
     termDuration: form.termValue,
     termUnit: TERM_UNIT_INDEX[form.termUnit],
-    startDate: toUnixSeconds(form.startDate),
-    subscriptionDeadline: toUnixSeconds(form.deadline),
+    // These are date-only fields in the UI. Encoding the end of the selected UTC
+    // day keeps the whole displayed date usable and preserves deadline <= startDate
+    // when both dates are the same.
+    startDate: toUnixEndOfDaySeconds(form.startDate),
+    subscriptionDeadline: toUnixEndOfDaySeconds(form.deadline),
     fundingAccess: FUNDING_ACCESS_INDEX[form.access],
     isCapEnabled: form.capOn,
     lenderCap: form.capOn ? parseUnits(String(form.cap), token.decimals) : 0n,
@@ -164,7 +168,7 @@ export function fromLendingOfferStruct(
   }
 }
 
-const ACCESS_META: Record<
+export const ACCESS_META: Record<
   OfferingForm['access'],
   { accessLabel: string; accessBg: string; accessColor: string; accessDot: string }
 > = {
@@ -184,30 +188,54 @@ const ACCESS_META: Record<
 
 /**
  * Maps a single on-chain LendingOffer struct, plus the connected lender's personal
- * Whitelist-mode allocation (0n if not whitelisted or the offer is General), into the
- * lender-facing LenderOffering. There's no on-chain "minimum deposit" or "fixed
- * amount" — the only real per-lender limit is either the General-mode lenderCap or
- * the Whitelist-mode personal allocation, or no cap at all.
+ * Whitelist-mode allocation (0n if not whitelisted or the offer is General) and
+ * their cumulative deposits so far, into the lender-facing LenderOffering.
+ * lendFunds enforces the cumulative total on-chain (Whitelist allocation or
+ * General-mode lenderCap), so `allowed`/`remaining` subtract what's already been
+ * deposited rather than just checking the original limit.
  */
 export function toLenderOffering(
   offerId: number,
   offer: LendingOfferStruct,
   decimals: number,
   whitelistAllocation: bigint,
+  myDeposited: bigint,
   title?: string
 ): LenderOffering {
   const access = FUNDING_ACCESS_LABEL[offer.fundingAccess]
   const isWhitelist = access === 'whitelist'
 
-  const allowed = isWhitelist ? whitelistAllocation > 0n : true
-  const cap = isWhitelist
-    ? Number(formatUnits(whitelistAllocation, decimals))
+  const personalLimitUnits = isWhitelist
+    ? whitelistAllocation
     : offer.isCapEnabled
-      ? Number(formatUnits(offer.lenderCap, decimals))
+      ? offer.lenderCap
       : null
+  const personalRemainingUnits =
+    personalLimitUnits != null && personalLimitUnits > myDeposited
+      ? personalLimitUnits - myDeposited
+      : personalLimitUnits == null
+        ? null
+        : 0n
+  const fundingRemainingUnits =
+    offer.fundingTarget > offer.totalFunded ? offer.fundingTarget - offer.totalFunded : 0n
+  const remainingUnits =
+    personalRemainingUnits == null
+      ? fundingRemainingUnits
+      : personalRemainingUnits < fundingRemainingUnits
+        ? personalRemainingUnits
+        : fundingRemainingUnits
+  const allowed = remainingUnits > 0n
+
+  const cap = personalLimitUnits != null ? Number(formatUnits(personalLimitUnits, decimals)) : null
+  const remaining = Number(formatUnits(remainingUnits, decimals))
+  const myDepositedAmount = Number(formatUnits(myDeposited, decimals))
 
   const raised = Number(formatUnits(offer.totalFunded, decimals))
   const target = Number(formatUnits(offer.fundingTarget, decimals))
+
+  const capNoun = isWhitelist ? 'allocation' : 'cap'
+  const limitsLabel =
+    cap == null ? 'No cap' : `${formatOfferingTokenAmount(cap, offer.token)} ${capNoun}`
 
   return {
     id: String(offerId),
@@ -218,11 +246,31 @@ export function toLenderOffering(
     access,
     allowed,
     cap,
+    remaining,
+    myDeposited: myDepositedAmount,
     raised,
     target,
     token: offer.token,
     pct: percentOf(raised, target),
-    limitsLabel: cap != null ? moneyShort(cap) + (isWhitelist ? ' allocation' : ' cap') : 'No cap',
+    limitsLabel,
     ...ACCESS_META[access]
   }
+}
+
+/**
+ * Label for a LenderOffering's apply button. "Whitelist only" (never allocated at
+ * all, cap is 0) is distinct from "Cap reached" (had room, now used up) so a
+ * whitelisted lender who's maxed out isn't told they were never eligible.
+ */
+export function lenderCtaLabel(o: LenderOffering): string {
+  if (o.allowed) return 'Apply to lend'
+  if (o.raised >= o.target) return 'Offering filled'
+  if (o.access === 'whitelist' && o.cap === 0) return 'Whitelist only'
+  return 'Cap reached'
+}
+
+/** Mirrors the two time/state guards at the start of FixedReturn.lendFunds. */
+export function isLendingOfferAcceptingFunds(offer: LendingOfferStruct, now = new Date()): boolean {
+  const nowSeconds = BigInt(Math.floor(now.getTime() / 1000))
+  return offer.state === 0 && nowSeconds <= offer.subscriptionDeadline
 }
