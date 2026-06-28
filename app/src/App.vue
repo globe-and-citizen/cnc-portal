@@ -7,7 +7,7 @@
         <div v-if="userStore.isAuth">
           <!-- Responsive Drawer and Content -->
           <UDashboardGroup v-if="route.name">
-            <SidebarLayout v-if="route.name && route.name !== 'teams'"></SidebarLayout>
+            <SidebarLayout v-if="route.name"></SidebarLayout>
             <UDashboardPanel
               :ui="{
                 body: 'overflow-x-hidden'
@@ -20,7 +20,7 @@
                       icon="heroicons:arrow-left-start-on-rectangle"
                       trailing
                       trailing-icon="heroicons:arrow-right-start-on-rectangle"
-                      v-if="route.name && route.name !== 'teams'"
+                      v-if="route.name"
                     />
                   </template>
                   <template #title>
