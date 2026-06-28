@@ -206,7 +206,7 @@ import UserComponent from '@/components/UserComponent.vue'
 import ProgressGauge from './ProgressGauge.vue'
 import { useFixedReturnOfferLenders } from '@/composables/fixedReturn/reads'
 import { maturityLabel, percentOf, resolveUser } from '@/utils'
-import { money as moneyFmt } from '@/utils/accountingDemo'
+import { money as moneyFmt } from '@/utils/accounting/presenter'
 import type { OfferingSummary } from '@/types'
 
 const props = defineProps<{ offering: OfferingSummary }>()

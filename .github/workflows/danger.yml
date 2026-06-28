@@ -28,7 +28,10 @@ jobs:
       - name: 🏗 Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: 24.x
+          # Pinned to 24.16.0: Node 24.17.0 breaks node-fetch@2's gzip handling
+          # (used by danger), causing ERR_STREAM_PREMATURE_CLOSE when reading the
+          # GitHub API's gzipped responses. Unpin once danger drops node-fetch@2.
+          node-version: 24.16.0
           cache: "npm"
           cache-dependency-path: ./package-lock.json
 
