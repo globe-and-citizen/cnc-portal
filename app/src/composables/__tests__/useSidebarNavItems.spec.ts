@@ -1,8 +1,8 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { NavigationMenuItem } from '@nuxt/ui'
 import { useSidebarNavItems } from '@/composables/useSidebarNavItems'
 import { mockRoute } from '@/tests/mocks/router.mock'
-import { mockTeamStore } from '@/tests/mocks/store.mock'
+import { mockTeamStore, mockUserStore } from '@/tests/mocks/store.mock'
 
 /** Flatten the grouped nav into a single list for easier lookups. */
 const flatten = (groups: NavigationMenuItem[][]) => groups.flat()
@@ -99,6 +99,57 @@ describe('useSidebarNavItems', () => {
 
       const items = useSidebarNavItems()
       expect(findByLabel(items.value, 'Accounts')?.disabled).toBe(false)
+    })
+
+    it('falls back to "Company workspace" when the company has no name yet', () => {
+      mockRoute.params = { id: '42' }
+      mockTeamStore.currentTeam = undefined as never
+
+      const items = useSidebarNavItems()
+      expect(items.value[1][0].label).toBe('Company workspace')
+    })
+  })
+
+  describe('route-derived item details', () => {
+    beforeEach(() => {
+      mockRoute.params = { id: '42' }
+    })
+
+    const payrollHistoryChild = () => {
+      const payroll = findByLabel(useSidebarNavItems().value, 'Payroll')
+      return payroll?.children?.find((c) => c.active !== undefined)
+    }
+
+    it('labels the payroll-history entry "Member" for another member', () => {
+      mockRoute.name = 'payroll-history'
+      mockRoute.params = { id: '42', memberAddress: '0xSomeoneElse' }
+
+      const child = payrollHistoryChild()
+      expect(child?.label).toBe('Member Payroll History')
+      expect(child?.active).toBe(true)
+    })
+
+    it('labels the payroll-history entry "My" for the current user', () => {
+      mockRoute.name = 'payroll-history'
+      mockRoute.params = { id: '42', memberAddress: mockUserStore.address }
+
+      const child = payrollHistoryChild()
+      expect(child?.label).toBe('My Payroll History')
+      expect(child?.active).toBe(true)
+    })
+
+    it('marks Community Credit active on community-credit routes', () => {
+      mockRoute.name = 'community-credit-detail'
+
+      expect(findByLabel(useSidebarNavItems().value, 'Community Credit')?.active).toBe(true)
+    })
+
+    it('falls back to 0x for the Safe address when none is configured', () => {
+      mockTeamStore.getContractAddressByType = vi.fn(() => undefined)
+
+      const accounts = findByLabel(useSidebarNavItems().value, 'Accounts')
+      const safe = accounts?.children?.find((c) => c.label === 'Safe Account')
+      expect((safe?.to as { params: { address: string } }).params.address).toBe('0x')
     })
   })
 })
