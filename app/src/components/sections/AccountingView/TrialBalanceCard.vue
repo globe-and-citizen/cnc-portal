@@ -1,18 +1,26 @@
 <template>
-  <div class="border-default bg-default overflow-hidden rounded-2xl border shadow-sm">
-    <div class="border-default flex items-center gap-2.5 border-b px-5 py-4">
-      <span class="bg-primary/10 text-primary flex size-7 items-center justify-center rounded-lg">
-        <UIcon name="i-heroicons-calculator" class="size-4.5" />
-      </span>
-      <span class="text-[15px] font-semibold">Trial balance</span>
-      <UBadge
-        color="success"
-        variant="soft"
-        icon="i-heroicons-check"
-        label="In balance"
-        class="ml-auto rounded-full"
-      />
-    </div>
+  <UCard class="w-full">
+    <template #header>
+      <div class="flex flex-wrap items-center gap-2.5">
+        <span class="bg-primary/10 text-primary flex size-7 items-center justify-center rounded-lg">
+          <UIcon name="i-heroicons-calculator" class="size-4.5" />
+        </span>
+        <span class="text-[15px] font-semibold">Trial balance</span>
+        <UBadge
+          :color="trial.balanced ? 'success' : 'warning'"
+          variant="soft"
+          :icon="trial.balanced ? 'i-heroicons-check' : 'i-heroicons-exclamation-triangle'"
+          :label="trial.balanced ? 'In balance' : 'Out of balance'"
+          class="rounded-full"
+        />
+        <AccountingDatePicker
+          v-model="asOf"
+          mode="date"
+          storage-key="cnc-accounting-trial-asof"
+          class="ml-auto"
+        />
+      </div>
+    </template>
 
     <UTable :data="tableRows" :columns="columns">
       <template #account-cell="{ row: { original: row } }">
@@ -56,12 +64,17 @@
         </div>
       </template>
     </UTable>
-  </div>
+  </UCard>
 </template>
 
 <script setup lang="ts">
+import { computed, ref } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
-import { trialRows, trialTotal } from '@/utils/accountingDemo'
+import AccountingDatePicker from '@/components/AccountingDatePicker.vue'
+import { defaultValueForMode } from '@/utils/datePicker'
+import { useAccountingContext } from '@/composables/accounting/useAccountingContext'
+import { buildGeneralLedger } from '@/utils/accounting/generalLedger'
+import { filterByPeriod, presentTrial } from '@/utils/accounting/presenter'
 
 interface TrialTableRow {
   account: string
@@ -74,19 +87,28 @@ interface TrialTableRow {
   isTotal: boolean
 }
 
-const tableRows: TrialTableRow[] = [
-  ...trialRows.map((r) => ({ ...r, isTotal: false })),
+// Point-in-time "as of" date (date mode) — defaults to end of today. The trial
+// balance is rebuilt from the slice of entries up to this date.
+const asOf = ref<Date>(defaultValueForMode('date') as Date)
+
+const acc = useAccountingContext()
+const trial = computed(() =>
+  presentTrial(buildGeneralLedger(filterByPeriod(acc.entries.value, null, asOf.value)))
+)
+
+const tableRows = computed<TrialTableRow[]>(() => [
+  ...trial.value.rows.map((r) => ({ ...r, isTotal: false })),
   {
     account: 'Total',
     nature: '',
     natureClass: '',
-    dr: trialTotal,
-    cr: trialTotal,
+    dr: trial.value.total,
+    cr: trial.value.total,
     drMuted: false,
     crMuted: false,
     isTotal: true
   }
-]
+])
 
 const columns: TableColumn<TrialTableRow>[] = [
   { accessorKey: 'account', header: 'Account' },

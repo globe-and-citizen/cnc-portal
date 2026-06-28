@@ -2,17 +2,33 @@
   <div class="flex flex-col gap-5">
     <!-- Balance-check banner -->
     <div
-      class="bg-success/10 flex flex-wrap items-center gap-3 rounded-xl px-4 py-3"
+      class="flex flex-wrap items-center gap-3 rounded-xl px-4 py-3"
+      :class="banner.balanced ? 'bg-success/10' : 'bg-warning/10'"
       data-test="balance-banner"
     >
-      <UIcon name="i-heroicons-check-badge" class="text-success size-5 shrink-0" />
+      <UIcon
+        :name="banner.balanced ? 'i-heroicons-check-badge' : 'i-heroicons-exclamation-triangle'"
+        class="size-5 shrink-0"
+        :class="banner.balanced ? 'text-success' : 'text-warning'"
+      />
       <div class="min-w-0 flex-1 text-sm">
-        <span class="text-success font-semibold">Books are balanced</span>
-        <span class="text-success/90"> — Assets = Liabilities + Equity · </span>
-        <span class="text-success font-bold tabular-nums">$142.20 = $0.00 + $142.20</span>
+        <span class="font-semibold" :class="banner.balanced ? 'text-success' : 'text-warning'">
+          {{ banner.balanced ? 'Books are balanced' : 'Books are not balanced' }}
+        </span>
+        <span :class="banner.balanced ? 'text-success/90' : 'text-warning/90'">
+          — Assets = Liabilities + Equity ·
+        </span>
+        <span
+          class="font-bold tabular-nums"
+          :class="banner.balanced ? 'text-success' : 'text-warning'"
+        >
+          {{ banner.identity }}
+        </span>
       </div>
-      <span class="text-success/80 text-xs tabular-nums"
-        >Trial balance Dr $253.00 = Cr $253.00</span
+      <span
+        class="text-xs tabular-nums"
+        :class="banner.balanced ? 'text-success/80' : 'text-warning/80'"
+        >{{ banner.trial }}</span
       >
     </div>
 
@@ -22,7 +38,7 @@
         v-for="card in summaryCards"
         :key="card.label"
         class="border-default bg-default rounded-2xl border p-4.5 shadow-sm"
-        :class="{ 'border-t-primary border-t-[3px]': card.accent }"
+        :class="card.accent ? [card.accentClass, 'border-t-[3px]'] : ''"
         :data-test="`summary-${card.label}`"
       >
         <div class="flex items-center justify-between">
@@ -47,5 +63,14 @@
 </template>
 
 <script setup lang="ts">
-import { summaryCards } from '@/utils/accountingDemo'
+import { computed } from 'vue'
+import { useAccountingContext } from '@/composables/accounting/useAccountingContext'
+import { presentSummaryCards, presentBanner } from '@/utils/accounting/presenter'
+
+const acc = useAccountingContext()
+
+const summaryCards = computed(() =>
+  presentSummaryCards(acc.summary.value, acc.incomeStatement.value, acc.balanceSheet.value)
+)
+const banner = computed(() => presentBanner(acc.balanceSheet.value, acc.generalLedger.value))
 </script>
