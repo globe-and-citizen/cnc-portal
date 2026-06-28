@@ -26,10 +26,9 @@
                   <template #title>
                     <NavBreadcrumb />
                   </template>
-                  <template #trailing>
-                    <TeamSelectMenu />
-                  </template>
                   <template #right>
+                    <!-- Team picker sits on the right, before the theme/notifications/avatar cluster -->
+                    <TeamSelectMenu />
                     <NavBar />
                   </template>
                 </UDashboardNavbar>
