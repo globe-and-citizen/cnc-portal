@@ -3,26 +3,13 @@
  *
  * One sheet per tab — Income Statement, Balance Sheet, Trial Balance, General Ledger —
  * i.e. every tab except the Summary. Sheet construction ({@link buildAccountingSheets})
- * is pure and unit-tested; {@link exportAccountingExcel} lazy-loads SheetJS and writes
- * the file on click.
+ * is pure and unit-tested; it reads the live engine output ({@link CncAccounting})
+ * through the same presenter the view uses. {@link exportAccountingExcel} lazy-loads
+ * SheetJS and writes the file on click.
  */
-import {
-  revLines,
-  expLines,
-  totalRevenue,
-  totalExpenses,
-  netIncome,
-  assetLines,
-  liabLines,
-  equityLines,
-  totalAssets,
-  totalEquity,
-  trialRows,
-  trialTotal,
-  buildLedger,
-  dateMin,
-  dateMax
-} from './accountingDemo'
+import type { CncAccounting } from '@/utils/accounting/assemble'
+import { presentIncome, presentBalance, presentTrial } from '@/utils/accounting/presenter'
+import { presentLedger } from '@/utils/accounting/ledgerPresenter'
 
 type Cell = string | number
 type SheetRows = Cell[][]
@@ -39,53 +26,56 @@ function usd(value: string): number | '' {
   return Number.isNaN(n) ? '' : n
 }
 
-function incomeSheet(): SheetRows {
+function incomeSheet(acc: CncAccounting): SheetRows {
+  const income = presentIncome(acc.entries)
   return [
     ['Income Statement'],
     [],
     ['Revenue'],
-    ...revLines.map((r) => [r.label, usd(r.value)]),
-    ['Total revenue', usd(totalRevenue)],
+    ...income.revLines.map((r) => [r.label, usd(r.value)]),
+    ['Total revenue', usd(income.totalRevenue)],
     [],
     ['Expenses'],
-    ...expLines.map((e) => [e.label, usd(e.value)]),
-    ['Total expenses', usd(totalExpenses)],
+    ...income.expLines.map((e) => [e.label, usd(e.value)]),
+    ['Total expenses', usd(income.totalExpenses)],
     [],
-    ['Net income (profit)', usd(netIncome)]
+    ['Net income (profit)', usd(income.netIncome)]
   ]
 }
 
-function balanceSheet(): SheetRows {
+function balanceSheet(acc: CncAccounting): SheetRows {
+  const balance = presentBalance(acc.entries)
   return [
     ['Balance Sheet'],
     [],
     ['Assets'],
-    ...assetLines.map((a) => [a.label, usd(a.value)]),
-    ['Total assets', usd(totalAssets)],
+    ...balance.assetLines.map((a) => [a.label, usd(a.value)]),
+    ['Total assets', usd(balance.totalAssets)],
     [],
     ['Liabilities'],
-    ...liabLines.map((l) => [l.label, usd(l.value)]),
+    ...balance.liabLines.map((l) => [l.label, usd(l.value)]),
     [],
     ['Equity'],
-    ...equityLines.map((q) => [q.label, usd(q.value)]),
-    ['Total equity', usd(totalEquity)],
+    ...balance.equityLines.map((q) => [q.label, usd(q.value)]),
+    ['Total equity', usd(balance.totalEquity)],
     [],
-    ['Liabilities + Equity', usd(totalAssets)]
+    ['Liabilities + Equity', usd(balance.liabilitiesPlusEquity)]
   ]
 }
 
-function trialSheet(): SheetRows {
+function trialSheet(acc: CncAccounting): SheetRows {
+  const trial = presentTrial(acc.generalLedger)
   return [
     ['Trial Balance'],
     [],
     ['Account', 'Nature', 'Debit', 'Credit'],
-    ...trialRows.map((t) => [t.account, t.nature, usd(t.dr), usd(t.cr)]),
-    ['Total', '', usd(trialTotal), usd(trialTotal)]
+    ...trial.rows.map((t) => [t.account, t.nature, usd(t.dr), usd(t.cr)]),
+    ['Total', '', usd(trial.total), usd(trial.total)]
   ]
 }
 
-function ledgerSheet(): SheetRows {
-  const { rows } = buildLedger('All', dateMin, dateMax)
+function ledgerSheet(acc: CncAccounting): SheetRows {
+  const { rows } = presentLedger(acc.entries, 'All')
   return [
     ['General Ledger'],
     [],
@@ -95,12 +85,12 @@ function ledgerSheet(): SheetRows {
 }
 
 /** The four exported tabs (everything except the Summary), in display order. */
-export function buildAccountingSheets(): AccountingSheet[] {
+export function buildAccountingSheets(acc: CncAccounting): AccountingSheet[] {
   return [
-    { name: 'Income Statement', rows: incomeSheet() },
-    { name: 'Balance Sheet', rows: balanceSheet() },
-    { name: 'Trial Balance', rows: trialSheet() },
-    { name: 'General Ledger', rows: ledgerSheet() }
+    { name: 'Income Statement', rows: incomeSheet(acc) },
+    { name: 'Balance Sheet', rows: balanceSheet(acc) },
+    { name: 'Trial Balance', rows: trialSheet(acc) },
+    { name: 'General Ledger', rows: ledgerSheet(acc) }
   ]
 }
 
@@ -115,12 +105,12 @@ function downloadBlob(blob: Blob, filename: string): void {
   URL.revokeObjectURL(url)
 }
 
-export async function exportAccountingExcel(): Promise<void> {
+export async function exportAccountingExcel(acc: CncAccounting): Promise<void> {
   const mod = await import('xlsx')
   // Vite's CJS→ESM interop may expose SheetJS under `default`; fall back to the namespace.
   const XLSX = (mod as unknown as { default?: typeof import('xlsx') }).default ?? mod
   const workbook = XLSX.utils.book_new()
-  for (const sheet of buildAccountingSheets()) {
+  for (const sheet of buildAccountingSheets(acc)) {
     XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(sheet.rows), sheet.name)
   }
   // Build the file in-memory and download via a Blob — `XLSX.writeFile` relies on

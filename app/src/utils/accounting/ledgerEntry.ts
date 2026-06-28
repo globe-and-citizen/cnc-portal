@@ -30,6 +30,8 @@ export type UseCase =
   | 'UC-BANK-03'
   /** Invest via SafeDepositRouter → SHER mint (cash lands in Safe). */
   | 'UC-SDR-01'
+  /** Wage earned — accrual booked when the weekly claim is submitted. */
+  | 'UC-CASH-02'
   /** Wage withdrawal settlement (cash leg and/or share leg). */
   | 'UC-CASH-03'
   /** Approved member expense payout. */
