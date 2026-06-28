@@ -16,7 +16,8 @@ describe('buildIncomeStatement — catalogue §6.5', () => {
   it('breaks revenue and expenses into their account lines', () => {
     expect(lineFor('Service Revenue')).toBeCloseTo(100, 2)
     expect(lineFor('Trading Gain')).toBeCloseTo(15, 2)
-    expect(lineFor('Payroll Expense')).toBeCloseTo(50.8, 2)
+    expect(lineFor('Payroll Expense')).toBeCloseTo(40.8, 2) // cash legs only
+    expect(lineFor('Share-based Compensation')).toBeCloseTo(10, 2) // the SHER leg
     expect(lineFor('Operating Expense')).toBeCloseTo(20, 2)
     expect(lineFor('Trading Loss')).toBeCloseTo(20, 2)
     expect(lineFor('Dividend Expense')).toBeCloseTo(20, 2)
