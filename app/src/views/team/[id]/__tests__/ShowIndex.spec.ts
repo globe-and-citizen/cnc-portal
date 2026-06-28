@@ -1,48 +1,42 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import ShowIndex from '@/views/team/[id]/ShowIndex.vue'
 import { mount } from '@vue/test-utils'
-import { createTestingPinia } from '@pinia/testing'
-import { createRouter, createWebHistory } from 'vue-router'
-import { mockTeamData } from '@/tests/mocks/index'
+import { setMockRoute } from '@/tests/mocks/router.mock'
 
 describe('ShowIndex', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
-  const router = createRouter({
-    history: createWebHistory(),
-    routes: [
-      {
-        path: '/team/:id',
-        name: 'show-team',
-        meta: { name: 'Team View' },
-        component: { template: '<div>Home</div>' }
-      } // Basic route
-    ] // Define your routes here if needed
-  })
-  // TODO test navigation
-
-  it('should render the team Breadcrumb', async () => {
-    const wrapper = mount(ShowIndex, {
+  const mountShowIndex = () =>
+    mount(ShowIndex, {
       global: {
-        plugins: [router, createTestingPinia({ createSpy: vi.fn })],
         stubs: {
           ContinueAddTeamForm: true,
-          TeamMeta: true
+          TeamMeta: true,
+          CompanyOverview: true,
+          TeamArchivedBanner: true,
+          RouterView: true
         }
       }
     })
-    await router.push({ name: 'show-team', params: { id: '1' } })
-    await wrapper.vm.$nextTick()
-    expect(wrapper.html()).toContain('Team View')
 
-    // Test that team name is rendered
-    expect(wrapper.html()).toContain(mockTeamData.name)
+  it('renders the team overview sections on the show-team route', () => {
+    // The global teamStore mock exposes currentTeamMeta.data = mockTeamData.
+    setMockRoute({ name: 'show-team', params: { id: '1' }, meta: { name: 'Overview' } })
+
+    const wrapper = mountShowIndex()
+
+    expect(wrapper.html()).toContain('team-meta-stub')
+    expect(wrapper.html()).toContain('company-overview-stub')
   })
 
-  // Display the component whit the officer address
+  it('no longer renders an in-page breadcrumb (it now lives in the navbar)', () => {
+    setMockRoute({ name: 'show-team', params: { id: '1' }, meta: { name: 'Overview' } })
 
-  // TODO: change route
-  // TODO: Click the modal
+    const wrapper = mountShowIndex()
+
+    // The breadcrumb skeleton/loader used to render here; it belongs to NavBreadcrumb now.
+    expect(wrapper.find('[data-test="loader"]').exists()).toBe(false)
+  })
 })
