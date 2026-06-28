@@ -107,7 +107,7 @@
           "
           @click="o.allowed && openApply(o)"
         >
-          {{ o.allowed ? 'Apply to lend' : 'Whitelist only' }}
+          {{ lenderCtaLabel(o) }}
         </button>
       </div>
     </div>
@@ -150,6 +150,7 @@ import { FIXED_RETURN_ABI } from '@/artifacts/abi/fixed-return'
 import {
   decimalsForOfferingToken,
   expectedReturn,
+  lenderCtaLabel,
   log,
   moneyShort,
   parseError,
@@ -173,27 +174,44 @@ const openOffers = computed(() =>
   (rawOfferings.value ?? []).filter(({ offer }) => offer.state === 0)
 )
 
-// Whitelist eligibility/cap is per-connected-lender, so it's fetched separately from
-// the shared all-offers query rather than baked into it.
-async function fetchWhitelistAllocations(): Promise<Map<number, bigint>> {
+interface LenderPosition {
+  allocation: bigint
+  deposited: bigint
+}
+
+// Whitelist allocation and cumulative deposits are both per-connected-lender, so
+// they're fetched separately from the shared all-offers query rather than baked into
+// it. lendFunds enforces the cumulative total on-chain (allocation or lenderCap), so
+// the UI needs `deposited` for every open offer, not just Whitelist ones, to know how
+// much room a lender actually has left.
+async function fetchMyLenderPositions(): Promise<Map<number, LenderPosition>> {
   const address = fixedReturnAddress.value
   const lender = userStore.address as Address | undefined
   if (!address || !lender) return new Map()
 
-  const whitelistOffers = openOffers.value.filter(({ offer }) => offer.fundingAccess === 1)
   const entries = await Promise.all(
-    whitelistOffers.map(async ({ offerId }) => {
+    openOffers.value.map(async ({ offerId, offer }) => {
       try {
-        const allocation = (await readContract(config, {
-          address,
-          abi: FIXED_RETURN_ABI,
-          functionName: 'lenderAllocation',
-          args: [BigInt(offerId), lender]
-        })) as bigint
-        return [offerId, allocation] as const
+        const [allocation, deposited] = await Promise.all([
+          offer.fundingAccess === 1
+            ? (readContract(config, {
+                address,
+                abi: FIXED_RETURN_ABI,
+                functionName: 'lenderAllocation',
+                args: [BigInt(offerId), lender]
+              }) as Promise<bigint>)
+            : Promise.resolve(0n),
+          readContract(config, {
+            address,
+            abi: FIXED_RETURN_ABI,
+            functionName: 'lenderDeposits',
+            args: [BigInt(offerId), lender]
+          }) as Promise<bigint>
+        ])
+        return [offerId, { allocation, deposited }] as const
       } catch (error) {
-        log.error(`Failed to fetch lenderAllocation for offer #${offerId}:`, parseError(error))
-        return [offerId, 0n] as const
+        log.error(`Failed to fetch lender position for offer #${offerId}:`, parseError(error))
+        return [offerId, { allocation: 0n, deposited: 0n }] as const
       }
     })
   )
@@ -205,24 +223,26 @@ async function fetchWhitelistAllocations(): Promise<Map<number, bigint>> {
 // serialize BigInt.
 const openOfferIds = computed(() => openOffers.value.map(({ offerId }) => offerId))
 
-const { data: whitelistAllocations } = useQuery({
-  queryKey: ['fixedReturnLenderAllocations', fixedReturnAddress, userStore.address, openOfferIds],
-  queryFn: fetchWhitelistAllocations,
+const { data: myLenderPositions } = useQuery({
+  queryKey: ['fixedReturnMyLenderPositions', fixedReturnAddress, userStore.address, openOfferIds],
+  queryFn: fetchMyLenderPositions,
   enabled: computed(() => !!fixedReturnAddress.value && openOffers.value.length > 0)
 })
 
 const offerings = computed<LenderOffering[]>(() => {
   const metadataByOfferId = new Map(offeringMetadata.value?.map((m) => [m.offerId, m.title]))
-  const allocations = whitelistAllocations.value ?? new Map()
-  return openOffers.value.map(({ offerId, offer, decimals }) =>
-    toLenderOffering(
+  const positions = myLenderPositions.value ?? new Map()
+  return openOffers.value.map(({ offerId, offer, decimals }) => {
+    const position = positions.get(offerId) ?? { allocation: 0n, deposited: 0n }
+    return toLenderOffering(
       offerId,
       offer,
       decimals,
-      allocations.get(offerId) ?? 0n,
+      position.allocation,
+      position.deposited,
       metadataByOfferId.get(offerId)
     )
-  )
+  })
 })
 
 const toast = useToast()
@@ -240,9 +260,9 @@ const applyInterest = computed(() => applyTotal.value - applyAmount.value)
 
 const amountError = computed(() => {
   if (!selected.value) return ''
-  const cap = selected.value.cap
-  if (cap != null && applyAmount.value > cap)
-    return 'Maximum loan amount is ' + moneyShort(cap) + '.'
+  const remaining = selected.value.remaining
+  if (remaining != null && applyAmount.value > remaining)
+    return 'Maximum loan amount is ' + moneyShort(remaining) + '.'
   return ''
 })
 
@@ -250,11 +270,15 @@ const modalError = computed(() => amountError.value || submitError.value || '')
 
 const limitsHint = computed(() => {
   if (!selected.value) return ''
-  const { access, cap } = selected.value
+  const { access, cap, remaining, myDeposited } = selected.value
+  if (cap == null) return 'No per-lender cap for this offering.'
+  const noun = access === 'whitelist' ? 'allocation' : 'cap'
+  if (myDeposited > 0) {
+    return `You've already lent ${moneyShort(myDeposited)} of your ${moneyShort(cap)} ${noun} — ${moneyShort(remaining ?? 0)} remaining.`
+  }
   if (access === 'whitelist')
-    return 'Your allocation of ' + moneyShort(cap ?? 0) + ' was set by the project admin.'
-  if (cap != null) return 'Maximum per lender: ' + moneyShort(cap) + '.'
-  return 'No per-lender cap for this offering.'
+    return 'Your allocation of ' + moneyShort(cap) + ' was set by the project admin.'
+  return 'Maximum per lender: ' + moneyShort(cap) + '.'
 })
 
 const selectedToken = computed(() => selected.value?.token ?? zeroAddress)

@@ -104,6 +104,67 @@ describe('LenderMarketplace.vue', () => {
     expect(wrapper.findComponent({ name: 'ApplyOfferingModal' }).exists()).toBe(true)
   })
 
+  it('disables the button and shows Cap reached for a General offer already at the cap', () => {
+    mockFixedReturnReads.allOffers.data.value = [
+      generalOffer(1, { fundingAccess: 0, isCapEnabled: true, lenderCap: 5000_000000n })
+    ]
+    useQueryFn.mockReturnValue({
+      data: ref(new Map([[1, { allocation: 0n, deposited: 5000_000000n }]])),
+      isLoading: ref(false),
+      error: ref(null)
+    })
+    const wrapper = mount(LenderMarketplace)
+
+    const button = wrapper.find('button')
+    expect(button.attributes('disabled')).toBeDefined()
+    expect(button.text()).toBe('Cap reached')
+  })
+
+  it('shows Cap reached (not Whitelist only) once a whitelisted lender uses their full allocation', () => {
+    mockFixedReturnReads.allOffers.data.value = [generalOffer(1, { fundingAccess: 1 })]
+    useQueryFn.mockReturnValue({
+      data: ref(new Map([[1, { allocation: 3000_000000n, deposited: 3000_000000n }]])),
+      isLoading: ref(false),
+      error: ref(null)
+    })
+    const wrapper = mount(LenderMarketplace)
+
+    const button = wrapper.find('button')
+    expect(button.attributes('disabled')).toBeDefined()
+    expect(button.text()).toBe('Cap reached')
+  })
+
+  it("shows the lender's already-deposited amount in the Loan amount tile", () => {
+    mockFixedReturnReads.allOffers.data.value = [
+      generalOffer(1, { fundingAccess: 0, isCapEnabled: true, lenderCap: 5000_000000n })
+    ]
+    useQueryFn.mockReturnValue({
+      data: ref(new Map([[1, { allocation: 0n, deposited: 2000_000000n }]])),
+      isLoading: ref(false),
+      error: ref(null)
+    })
+    const wrapper = mount(LenderMarketplace)
+
+    expect(wrapper.text()).toContain('$2,000 of $5,000 cap')
+  })
+
+  it('limits the apply amount validation to the remaining room, not the total cap', async () => {
+    mockFixedReturnReads.allOffers.data.value = [
+      generalOffer(1, { fundingAccess: 0, isCapEnabled: true, lenderCap: 5000_000000n })
+    ]
+    useQueryFn.mockReturnValue({
+      data: ref(new Map([[1, { allocation: 0n, deposited: 3000_000000n }]])),
+      isLoading: ref(false),
+      error: ref(null)
+    })
+    const wrapper = mount(LenderMarketplace, { attachTo: document.body })
+    await wrapper.find('button').trigger('click')
+    const modal = new DOMWrapper(document.body)
+    await modal.find('input[type="number"]').setValue(3000)
+
+    expect(modal.text()).toContain('Maximum loan amount is $2,000')
+  })
+
   describe('submitApplication', () => {
     // ApplyOfferingModal teleports to document.body, outside wrapper.element's
     // subtree — attachTo puts the wrapper in the real DOM, and a DOMWrapper around
