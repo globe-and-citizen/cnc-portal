@@ -143,7 +143,7 @@ import { useUserDataStore } from '@/stores'
 import AddTeamCard from '@/components/sections/TeamView/AddTeamCard.vue'
 import TeamCard from '@/components/sections/TeamView/TeamCard.vue'
 import { useGetTeamsQuery } from '@/queries/team.queries'
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 const openModal = ref(false)
 const showHidden = ref(false)
@@ -173,6 +173,19 @@ const hasVisibleTeams = computed(
 )
 
 const router = useRouter()
+
+// Opened from the navbar team picker's "Create company" action (/teams?create=1):
+// auto-open the create modal, then strip the query so a refresh won't re-open it.
+watch(
+  () => route.query?.create,
+  (create) => {
+    if (create) {
+      openModal.value = true
+      router.replace({ query: {} })
+    }
+  },
+  { immediate: true }
+)
 
 const navigateToTeam = (id: number | string) => {
   router.push(`/teams/${id}`)
