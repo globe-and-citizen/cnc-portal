@@ -1,5 +1,6 @@
 import request from 'supertest';
 import express, { Request, Response, NextFunction } from 'express';
+import rateLimit from 'express-rate-limit';
 import { prisma } from '../../utils';
 import { describe, it, beforeEach, expect, vi } from 'vitest';
 import { FixedReturnOffering } from '@prisma/client';
@@ -48,7 +49,11 @@ vi.mock('../../utils/viem.config', () => ({
 
 const app = express();
 app.use(express.json());
-app.use('/', authorizeUser, fixedReturnOfferingRoutes);
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 1000,
+});
+app.use('/', limiter, authorizeUser, fixedReturnOfferingRoutes);
 
 const mockTeamContract = {
   id: 1,
