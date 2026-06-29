@@ -1,18 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { parseEventLogs, type Address } from 'viem'
+import { getConnections } from '@wagmi/core'
 
-// Local getConnections mock — not covered by the shared wagmi setup.
-const { mockGetConnections } = vi.hoisted(() => ({ mockGetConnections: vi.fn() }))
-vi.mock('@wagmi/core', async (importOriginal) => {
-  const actual = (await importOriginal()) as object
-  return {
-    ...actual,
-    getConnections: mockGetConnections
-  }
-})
-
-// `parseEventLogs` is globally stubbed in tests/setup/viem.setup.ts (keccak256
-// is mocked there, so real event decoding can't run). We just drive its return.
+// Both `@wagmi/core` (incl. getConnections) and `parseEventLogs` are globally
+// stubbed in tests/setup (wagmi.vue.setup.ts / viem.setup.ts). keccak256 is
+// mocked there too, so real event decoding can't run — we just drive returns.
+const mockGetConnections = vi.mocked(getConnections)
 const mockParseEventLogs = vi.mocked(parseEventLogs)
 import {
   deployOfficer,
@@ -65,7 +58,7 @@ vi.mock('@/utils/contractDeploymentUtil', async (importOriginal) => {
 })
 
 const setConnectedUser = (address: Address | null) => {
-  mockGetConnections.mockReturnValue(address ? [{ accounts: [address] }] : [])
+  mockGetConnections.mockReturnValue(address ? ([{ accounts: [address] }] as never) : [])
 }
 
 describe('deployOfficer (pure)', () => {
