@@ -168,6 +168,30 @@ const router = createRouter({
           name: 'lender-marketplace',
           meta: { name: 'Lender Marketplace' },
           component: () => import('@/views/team/[id]/LenderMarketplaceView.vue')
+        },
+        {
+          path: '/teams/:id/community-credit',
+          name: 'community-credit',
+          meta: { name: 'Community Credit' },
+          component: () => import('@/views/team/[id]/CommunityCredit/IndexView.vue')
+        },
+        {
+          path: '/teams/:id/community-credit/new',
+          name: 'community-credit-new',
+          meta: { name: 'New Credit Call' },
+          component: () => import('@/views/team/[id]/CommunityCredit/NewView.vue')
+        },
+        {
+          path: '/teams/:id/community-credit/:roundId/repay',
+          name: 'community-credit-repay',
+          meta: { name: 'Repay Round' },
+          component: () => import('@/views/team/[id]/CommunityCredit/RepayView.vue')
+        },
+        {
+          path: '/teams/:id/community-credit/:roundId',
+          name: 'community-credit-round',
+          meta: { name: 'Credit Round' },
+          component: () => import('@/views/team/[id]/CommunityCredit/RoundView.vue')
         }
       ]
     }

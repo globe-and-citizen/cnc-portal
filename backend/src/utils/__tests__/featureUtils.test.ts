@@ -13,6 +13,8 @@ import {
   patchOverride,
   removeOverrideRecord,
   getEffectiveStatus,
+  isSubmitRestricted,
+  isDayWithinSubmitWindow,
 } from '../featureUtils';
 import type { FeatureStatus } from '../../validation/featureValidation';
 
@@ -507,6 +509,46 @@ describe('featureUtils', () => {
       expect(result).toBe('DISABLED');
       // Global setting should not even be queried when override exists
       expect(prisma.globalSetting.findUnique).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('isSubmitRestricted', () => {
+    it('treats enabled and null (unconfigured) as restricted', () => {
+      expect(isSubmitRestricted('enabled' as FeatureStatus)).toBe(true);
+      expect(isSubmitRestricted(null)).toBe(true);
+    });
+
+    it('treats disabled and beta as not restricted', () => {
+      expect(isSubmitRestricted('disabled' as FeatureStatus)).toBe(false);
+      expect(isSubmitRestricted('beta' as FeatureStatus)).toBe(false);
+    });
+  });
+
+  describe('isDayWithinSubmitWindow', () => {
+    // Reference "now": Friday 2026-06-26 (ISO week Mon 22 → Sun 28)
+    const now = new Date('2026-06-26T10:00:00Z');
+    const day = (iso: string) => new Date(`${iso}T00:00:00Z`);
+
+    it('allows days of the current ISO week up to 4 days back (Mon→today)', () => {
+      expect(isDayWithinSubmitWindow(day('2026-06-22'), now)).toBe(true); // Mon, 4 days back
+      expect(isDayWithinSubmitWindow(day('2026-06-26'), now)).toBe(true); // today
+    });
+
+    it('blocks future days, even within the current week', () => {
+      expect(isDayWithinSubmitWindow(day('2026-06-27'), now)).toBe(false); // Sat
+      expect(isDayWithinSubmitWindow(day('2026-06-28'), now)).toBe(false); // Sun
+    });
+
+    it('blocks days outside the current ISO week', () => {
+      expect(isDayWithinSubmitWindow(day('2026-06-21'), now)).toBe(false); // prev Sun
+      expect(isDayWithinSubmitWindow(day('2026-06-14'), now)).toBe(false); // 2 weeks back
+    });
+
+    it('blocks a day >4 days back even when it falls in the current week (Monday "now")', () => {
+      // When today is Monday, only Monday itself is within 4 days AND the current week
+      const monday = new Date('2026-06-22T10:00:00Z');
+      expect(isDayWithinSubmitWindow(day('2026-06-22'), monday)).toBe(true);
+      expect(isDayWithinSubmitWindow(day('2026-06-23'), monday)).toBe(false); // future
     });
   });
 });
