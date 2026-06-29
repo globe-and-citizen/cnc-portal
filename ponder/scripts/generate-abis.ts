@@ -60,7 +60,6 @@ const SKIP_LIST = new Set([
   "ReentrancyGuardUpgradeable",
   "Tips",
   "Voting",
-  "Vesting",
 ]);
 
 function toKebabCase(name: string): string {

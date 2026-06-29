@@ -43,6 +43,9 @@ import {
   safeTokenSupportAdded,
   safeTokenSupportRemoved,
   safeTokensRecovered,
+  vestingCreated,
+  vestingTokensReleased,
+  vestingStopped,
   expenseDeposit,
   expenseTokenDeposit,
   expenseTransfer,
@@ -749,6 +752,40 @@ ponder.on("SafeDepositRouter:TokensRecovered", async ({ event, context }) => {
     token: event.args.token,
     to: event.args.to,
     amount: event.args.amount,
+    blockNumber: event.block.number,
+    timestamp: Number(event.block.timestamp),
+  });
+});
+
+// ─── Vesting ──────────────────────────────────────────────────────────────────
+
+ponder.on("Vesting:VestingCreated", async ({ event, context }) => {
+  await context.db.insert(vestingCreated).values({
+    id: `${event.transaction.hash}-${event.log.logIndex}`,
+    contractAddress: event.log.address,
+    member: event.args.member,
+    amount: event.args.amount,
+    blockNumber: event.block.number,
+    timestamp: Number(event.block.timestamp),
+  });
+});
+
+ponder.on("Vesting:TokensReleased", async ({ event, context }) => {
+  await context.db.insert(vestingTokensReleased).values({
+    id: `${event.transaction.hash}-${event.log.logIndex}`,
+    contractAddress: event.log.address,
+    member: event.args.member,
+    amount: event.args.amount,
+    blockNumber: event.block.number,
+    timestamp: Number(event.block.timestamp),
+  });
+});
+
+ponder.on("Vesting:VestingStopped", async ({ event, context }) => {
+  await context.db.insert(vestingStopped).values({
+    id: `${event.transaction.hash}-${event.log.logIndex}`,
+    contractAddress: event.log.address,
+    member: event.args.member,
     blockNumber: event.block.number,
     timestamp: Number(event.block.timestamp),
   });
