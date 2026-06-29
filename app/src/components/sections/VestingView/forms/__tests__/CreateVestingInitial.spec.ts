@@ -4,19 +4,14 @@ import CreateVesting from '@/components/sections/VestingView/forms/CreateVesting
 import SelectMemberInput from '@/components/utils/SelectMemberInput.vue'
 import { createTestingPinia } from '@pinia/testing'
 import { ref } from 'vue'
-import { mockUseContractBalance } from '@/tests/mocks/composables.mock'
+import { parseUnits } from 'viem'
+import { mockVestingWrites } from '@/tests/mocks/contract.mock'
 import { CalendarDate } from '@internationalized/date'
 
 const memberAddress = '0x000000000000000000000000000000000000dead'
 const mockReloadKey = ref<number>(0)
 const mockResolvedVestingAddress = ref('0x1000000000000000000000000000000000000001' as const)
 
-const mockWriteContract = {
-  mutate: vi.fn(),
-  error: ref<null | Error>(null),
-  isPending: ref(false),
-  data: ref(null)
-}
 type VestingInfosType = [string[], object[]] | [string[]] | [] | null | undefined
 
 // Mockeds
@@ -37,7 +32,7 @@ const refetchVestingInfos = vi.fn()
 
 vi.mock('@/composables/vesting/reads', () => ({
   useVestingAddress: vi.fn(() => mockResolvedVestingAddress),
-  useVestingGetTeamVestingsWithMembers: vi.fn(() => ({
+  useVestingGetVestingsWithMembers: vi.fn(() => ({
     data: mockVestingInfos,
     error: ref(null),
     refetch: refetchVestingInfos
@@ -53,16 +48,10 @@ describe('CreateVesting.vue', () => {
   const mountComponent = () =>
     mount(CreateVesting, {
       props: {
-        reloadKey: mockReloadKey.value,
-        tokenAddress: '0x000000000000000000000000000000000000beef'
+        reloadKey: mockReloadKey.value
       },
       global: {
         plugins: [createTestingPinia({ createSpy: vi.fn })]
-      },
-      data() {
-        return {
-          tokenApproved: false
-        }
       }
     })
 
@@ -89,6 +78,27 @@ describe('CreateVesting.vue', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    mockVestingInfos.value = [
+      [memberAddress],
+      [
+        {
+          start: `${Math.floor(Date.now() / 1000) - 3600}`,
+          duration: `${30 * 86400}`,
+          cliff: '0',
+          totalAmount: BigInt(10e18),
+          released: BigInt(2e18),
+          active: true
+        }
+      ]
+    ]
+    // Default: addVesting.mutate invokes onSuccess to simulate a confirmed write.
+    mockVestingWrites.addVesting.mutate
+      .mockReset()
+      .mockImplementation(
+        (_vars: unknown, opts?: { onSuccess?: () => void; onError?: (e: Error) => void }) => {
+          opts?.onSuccess?.()
+        }
+      )
     wrapper = mountComponent()
   })
 
@@ -120,8 +130,8 @@ describe('CreateVesting.vue', () => {
     })
   })
 
-  describe('Allowance Approval', () => {
-    it('calls approveAllowance when submitting with valid amount', async () => {
+  describe('Submission', () => {
+    it('calls addVesting when confirming the summary with a valid amount', async () => {
       await fillValidForm()
 
       const submitBtn = wrapper.find('[data-test="submit-btn"]')
@@ -131,19 +141,18 @@ describe('CreateVesting.vue', () => {
       // Now in summary view, confirm vesting creation
       const confirmBtn = wrapper.find('[data-test="confirm-btn"]')
       await confirmBtn.trigger('click')
+
+      expect(mockVestingWrites.addVesting.mutate).toHaveBeenCalled()
     })
 
-    it('shows error when attempting to approve with zero amount', async () => {
-      // Clear any previous calls from component mounting
-      vi.clearAllMocks()
-
+    it('does not submit with a zero amount', async () => {
       await fillValidForm(0)
 
       await submitForm()
 
-      // The form validation should prevent submission with zero amount
-      // So no approval-related error toast should be called
-      expect(mockWriteContract.mutate).not.toHaveBeenCalled()
+      // The form validation prevents reaching the summary / addVesting write.
+      expect(wrapper.findComponent({ name: 'VestingSummary' }).exists()).toBe(false)
+      expect(mockVestingWrites.addVesting.mutate).not.toHaveBeenCalled()
     })
 
     it('shows error on invalid cliff value', async () => {
@@ -154,7 +163,7 @@ describe('CreateVesting.vue', () => {
       expect(wrapper.findComponent({ name: 'VestingSummary' }).exists()).toBe(false)
     })
 
-    it('passes the correct totalAmountInUnits to writeContract', async () => {
+    it('passes the totalAmount as share-token units (6 decimals) to addVesting', async () => {
       await fillValidForm(7)
 
       await submitForm()
@@ -162,13 +171,16 @@ describe('CreateVesting.vue', () => {
       const confirmBtn = wrapper.find('[data-test="confirm-btn"]')
       await confirmBtn.trigger('click')
       await wrapper.vm.$nextTick()
+
+      expect(mockVestingWrites.addVesting.mutate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          args: expect.arrayContaining([parseUnits('7', 6)])
+        }),
+        expect.any(Object)
+      )
     })
 
     it('returns an empty array from activeMembers if vestingInfos is not an array of length 2', () => {
-      interface IWrapper {
-        activeMembers: string[]
-      }
-
       const testCases = [
         { value: undefined },
         { value: [[memberAddress]] as unknown as [string[]] },
@@ -177,88 +189,20 @@ describe('CreateVesting.vue', () => {
 
       testCases.forEach(({ value }) => {
         mockVestingInfos.value = value
-        const wrapper = mountComponent()
-        /* eslint-disable-next-line no-restricted-syntax -- unit test of a pure
-           computed (`activeMembers`) that derives the internal duplicate-vesting
-           set from vesting infos; the computed has no rendered surface to
-           inspect for these degenerate shapes. */
-        expect((wrapper.vm as unknown as IWrapper).activeMembers).toEqual([])
+        const w = mountComponent()
+        expect(w.findComponent(CreateVesting).vm.activeMembers).toEqual([])
       })
-    })
-
-    it('returns the correct token balance for the given tokenAddress', () => {
-      interface IWrapper {
-        tokenBalance: (typeof mockUseContractBalance.balances.value)[0] | undefined
-      }
-
-      mockUseContractBalance.balances.value = [
-        {
-          token: {
-            id: '2',
-            name: 'BeefToken',
-            symbol: 'BEEF',
-            code: 'BEEF',
-            coingeckoId: 'beeftoken',
-            decimals: 18,
-            address: '0x000000000000000000000000000000000000beef'
-          },
-          amount: 42,
-          values: {
-            USD: {
-              value: 500,
-              formated: '$500',
-              id: 'usd',
-              code: 'USD',
-              symbol: '$',
-              price: 1000,
-              formatedPrice: '$1K'
-            }
-          }
-        }
-      ]
-      /* eslint-disable-next-line no-restricted-syntax -- unit test of a pure
-         computed (`tokenBalance`) that picks the right entry from
-         useContractBalance balances; no rendered surface exposes the raw
-         match for this assertion. */
-      const tokenBalance = (wrapper.vm as unknown as IWrapper).tokenBalance
-
-      expect(tokenBalance).toBeDefined()
-      if (tokenBalance) {
-        expect(tokenBalance.amount).toBe(42)
-        expect(tokenBalance.token.address).toBe('0x000000000000000000000000000000000000beef')
-      }
     })
   })
 
   describe('In-form UAlert error feedback', () => {
-    // Restore the duplicate-bearing state at the top of this block; an earlier
-    // test in this file mutates mockVestingInfos.value to null, which would
-    // otherwise empty activeMembers and skip the duplicate guard.
-    beforeEach(() => {
-      mockVestingInfos.value = [
-        [memberAddress],
-        [
-          {
-            start: `${Math.floor(Date.now() / 1000) - 3600}`,
-            duration: `${30 * 86400}`,
-            cliff: '0',
-            totalAmount: BigInt(10e18),
-            released: BigInt(2e18),
-            active: true
-          }
-        ]
-      ]
-      wrapper = mountComponent()
-    })
-
     it('renders the in-form UAlert when errorMessage is set via duplicate-member guard', async () => {
       // No alert yet on initial render.
       expect(wrapper.find('[data-test="error-alert"]').exists()).toBe(false)
 
-      // Selecting an already-active member then submitting the summary
-      // triggers checkDuplicateVesting() which sets errorMessage and renders
-      // the in-form UAlert in the form view (no summary view shown because
-      // the duplicate check runs through approveAllowance after summary).
+      // Selecting an already-active member then confirming triggers
+      // checkDuplicateVesting() inside submit(), which sets errorMessage and
+      // renders the in-form UAlert.
       await wrapper.findComponent(SelectMemberInput).vm.$emit('selectMember', {
         name: 'Bob',
         address: memberAddress
@@ -277,54 +221,9 @@ describe('CreateVesting.vue', () => {
       const alert = wrapper.find('[data-test="summary-error-alert"]')
       expect(alert.exists()).toBe(true)
       expect(alert.text()).toContain('The member address already has an active vesting.')
-    })
 
-    it('sets errorMessage when approveAllowance hits a duplicate-member guard', async () => {
-      // Drive: select duplicate member, submit form, confirm summary; the
-      // duplicate guard in approveAllowance() fires and renders the alert.
-      await wrapper.findComponent(SelectMemberInput).vm.$emit('selectMember', {
-        name: 'Bob',
-        address: memberAddress
-      })
-      await wrapper.findComponent({ name: 'UCalendar' }).vm.$emit('update:modelValue', {
-        start: new CalendarDate(2025, 6, 1),
-        end: new CalendarDate(2025, 6, 30)
-      })
-      await wrapper.find('[data-test="total-amount"]').setValue('5')
-      await wrapper.vm.$nextTick()
-      await wrapper.find('[data-test="submit-btn"]').trigger('click')
-      await wrapper.vm.$nextTick()
-      await wrapper.find('[data-test="confirm-btn"]').trigger('click')
-      await wrapper.vm.$nextTick()
-
-      expect(wrapper.find('[data-test="summary-error-alert"]').text()).toContain(
-        'The member address already has an active vesting.'
-      )
-    })
-
-    it('sets errorMessage when approveAllowance is called with zero totalAmount', async () => {
-      // Bypass schema (which already rejects totalAmount=0) and exercise the
-      // defensive guard inside approveAllowance() directly. The branch is
-      // unreachable via real form input because the Zod refine catches it first.
-      /* eslint-disable-next-line no-restricted-syntax -- defense-in-depth branch
-         unreachable via UI; the Zod schema already rejects totalAmount < 1. */
-      const vm = wrapper.vm as unknown as {
-        member: { name: string; address: string }
-        totalAmount: number
-        errorMessage: string
-        approveAllowance: () => Promise<void>
-      }
-      vm.member = {
-        name: 'Carol',
-        address: '0x9999999999999999999999999999999999999999'
-      }
-      vm.totalAmount = 0
-      await wrapper.vm.$nextTick()
-
-      await vm.approveAllowance()
-      await wrapper.vm.$nextTick()
-
-      expect(vm.errorMessage).toBe('total amount value should be greater than zero')
+      // The duplicate guard short-circuits before the write.
+      expect(mockVestingWrites.addVesting.mutate).not.toHaveBeenCalled()
     })
   })
 })

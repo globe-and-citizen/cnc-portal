@@ -41,14 +41,6 @@ const insufficientContractBalance: RevertMessageResolver = (args) => {
   const [required, available] = args ?? []
   return `Insufficient contract balance — needs ${required}, only ${available}`
 }
-const insufficientAllowance: RevertMessageResolver = (args) => {
-  const [required, actual] = args ?? []
-  return `Not enough token allowance — needs ${required}, only ${actual}`
-}
-const insufficientBalanceRequiredActual: RevertMessageResolver = (args) => {
-  const [required, actual] = args ?? []
-  return `Insufficient token balance — needs ${required}, only ${actual}`
-}
 const insufficientFundedTokenBalance: RevertMessageResolver = (args) => {
   const [, required, available] = args ?? []
   return `Insufficient funded token balance — needs ${required}, only ${available}`
@@ -162,14 +154,14 @@ export const CONTRACT_ERRORS: ContractErrorCatalog = {
       NotAnAdmin: 'Address is not an admin'
     },
     Vesting: {
-      NotTeamOwner: 'Only the team owner can perform this action',
-      TeamAlreadyExists: 'Team already exists',
+      ZeroAddress: 'A required address was the zero address',
       CliffExceedsDuration: 'Cliff period exceeds the vesting duration',
-      VestingAlreadyExists: 'A vesting already exists for this member in this team',
-      InsufficientAllowance: insufficientAllowance,
-      InsufficientBalance: insufficientBalanceRequiredActual,
+      VestingAlreadyExists: 'A vesting already exists for this member',
       VestingNotActive: 'Vesting is not active',
-      NothingToRelease: 'Nothing to release'
+      NothingToRelease: 'Nothing to release',
+      OfficerAddressNotSet: 'Officer contract is not configured',
+      InvestorContractNotFound: 'Investor contract could not be located',
+      InsufficientMinterRole: 'Vesting is missing minter role on the investor token'
     },
     InvestorV1: {
       NotBank: 'Only the Bank contract can call this function',

@@ -9,7 +9,7 @@ export type ContractType =
   | 'Campaign'
   | 'Elections'
   | 'Proposals'
-  | 'VestingV1'
+  | 'Vesting'
   | 'SafeDepositRouter'
   | 'Safe'
   | 'FixedReturn'

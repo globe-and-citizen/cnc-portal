@@ -38,13 +38,6 @@
           <span class="text-xs">{{ row.tokenSymbol }}</span>
         </UBadge>
       </template>
-      <template #withdrawn-cell="{ row: { original: row } }">
-        <UBadge color="info" variant="subtle" class="flex items-center gap-1">
-          {{ row.status === 'Inactive' ? (row.totalAmount - row.released).toFixed(2) : 0 }}
-          <span class="text-xs">{{ row.tokenSymbol }}</span>
-        </UBadge>
-      </template>
-
       <template #member-cell="{ row: { original: row } }">
         <span>{{ row.member }}</span>
       </template>
@@ -99,8 +92,8 @@ import VestingActions from '@/components/sections/VestingView/VestingActions.vue
 import VestingStatusFilter from './VestingStatusFilter.vue'
 import { useInvestorSymbol } from '@/composables/investor/reads'
 import {
-  useVestingGetTeamAllArchivedVestingsFlat,
-  useVestingGetTeamVestingsWithMembers
+  useVestingGetAllArchivedVestingsFlat,
+  useVestingGetVestingsWithMembers
 } from '@/composables/vesting/reads'
 import { useVestingReleaseWrite, useVestingStopVestingWrite } from '@/composables/vesting/writes'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
@@ -147,7 +140,7 @@ const {
   //isLoading: isLoadingArchivedVestingInfos,
   error: errorGetArchivedVestingInfo,
   refetch: getArchivedVestingInfos
-} = useVestingGetTeamAllArchivedVestingsFlat(computed(() => BigInt(team?.value?.id ?? 0)))
+} = useVestingGetAllArchivedVestingsFlat()
 
 watch(errorGetArchivedVestingInfo, () => {
   if (errorGetArchivedVestingInfo.value) {
@@ -161,10 +154,10 @@ const {
   //isLoading: isLoadingVestingInfos,
   error: errorGetVestingInfo,
   refetch: getVestingInfos
-} = useVestingGetTeamVestingsWithMembers(computed(() => BigInt(team?.value?.id ?? 0)))
+} = useVestingGetVestingsWithMembers()
 watch(errorGetVestingInfo, () => {
   if (errorGetVestingInfo.value) {
-    toast.add({ title: 'Add admin failed', color: 'error' })
+    toast.add({ title: 'Failed to load vestings', color: 'error' })
   }
 })
 
@@ -198,7 +191,6 @@ const vestings = computed<VestingRow[]>(() => {
       if (!v) {
         return {
           member,
-          teamId: Number(team.value?.id),
           startDate: '',
           isStarted: false,
           durationDays: 0,
@@ -217,7 +209,6 @@ const vestings = computed<VestingRow[]>(() => {
 
       return {
         member,
-        teamId: Number(team.value?.id),
         startDate: (() => {
           const date = new Date(Number(v.start) * 1000)
           const day = String(date.getDate()).padStart(2, '0')
@@ -252,20 +243,18 @@ const handleReload = () => {
   emit('reload')
 }
 
-const teamId = computed(() => BigInt(team?.value?.id ?? 0))
-
 const stopVestingWrite = useVestingStopVestingWrite()
 
 const stopVesting = (member: string) => {
   stopVestingWrite.mutate(
-    { args: [member, teamId.value] },
+    { args: [member] },
     {
       onSuccess: () => {
-        toast.add({ title: 'vesting stoped successfully', color: 'success' })
+        toast.add({ title: 'Vesting stopped successfully', color: 'success' })
         emit('reload')
       },
       onError: (err) => {
-        toast.add({ title: 'stop vesting failed', color: 'error' })
+        toast.add({ title: 'Stop vesting failed', color: 'error' })
         console.error('stop vesting error', err)
       }
     }
@@ -276,10 +265,10 @@ const releaseVestingWrite = useVestingReleaseWrite()
 
 const releaseVesting = () => {
   releaseVestingWrite.mutate(
-    { args: [teamId.value] },
+    { args: [] },
     {
       onSuccess: () => {
-        toast.add({ title: 'vesting Releaseed successfully', color: 'success' })
+        toast.add({ title: 'Vested shares minted to you', color: 'success' })
         emit('reload')
       },
       onError: (err) => {
@@ -304,7 +293,6 @@ const columns = [
   { accessorKey: 'totalAmount', header: 'Total Amount', enableSorting: true },
   { accessorKey: 'released', header: 'Released', enableSorting: true },
   { accessorKey: 'status', header: 'Status', enableSorting: true },
-  { accessorKey: 'withdrawn', header: 'Withdrawn', enableSorting: false },
   { accessorKey: 'actions', header: 'Actions' }
 ]
 </script>

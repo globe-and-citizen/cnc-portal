@@ -86,8 +86,8 @@
     </div>
 
     <h3 class="pt-6 text-sm text-gray-600">
-      By clicking "Create Vesting", you agree to lock this token amount under a vesting schedule.
-      Ensure your contract is approved to transfer these tokens.
+      By clicking "Create Vesting", you promise this amount to the member under a vesting schedule.
+      No tokens move now — shares are minted to the member as they vest.
     </h3>
     <div class="mt-6 flex justify-end gap-2">
       <TeamArchivedTooltip v-slot="{ disabled: archivedDisabled }">
@@ -117,7 +117,7 @@
       :vesting="vestingData"
       :loading="loading"
       @back="showSummary = false"
-      @confirm="approveAllowance"
+      @confirm="submit"
     />
   </div>
 </template>
@@ -130,7 +130,6 @@ import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
 import { useCreateVesting } from '@/composables/vesting/useCreateVesting'
 
 const props = defineProps<{
-  tokenAddress: string
   reloadKey: number
 }>()
 
@@ -145,7 +144,6 @@ const {
   showSummary,
   errorMessage,
   vestingData,
-  tokenBalance,
   activeMembers,
   formState,
   schema,
@@ -154,11 +152,10 @@ const {
   handleSelectMember,
   onDateRangeChange,
   handleDisplaySummary,
-  approveAllowance,
   submit
 } = useCreateVesting(props, emit)
 
-// tokenBalance / activeMembers / submit are internal to the form flow but
-// asserted on by the component's unit tests, so keep them on the instance.
-defineExpose({ tokenBalance, activeMembers, submit })
+// activeMembers / submit are internal to the form flow but asserted on by the
+// component's unit tests, so keep them on the instance.
+defineExpose({ activeMembers, submit })
 </script>

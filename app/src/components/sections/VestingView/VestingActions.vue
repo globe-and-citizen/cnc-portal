@@ -25,7 +25,6 @@
       <template #body>
         <CreateVesting
           v-if="teamStore.currentTeamId"
-          :tokenAddress="(teamStore.getContractAddressByType('InvestorV1') as Address) ?? ''"
           @closeAddVestingModal="handleClose"
           @reload="handleReload"
           :reloadKey="reloadKey"
@@ -39,7 +38,6 @@
 import { ref } from 'vue'
 import CreateVesting from '@/components/sections/VestingView/forms/CreateVesting.vue'
 import { useTeamStore, useUserDataStore } from '@/stores'
-import type { Address } from 'viem'
 
 defineProps<{
   reloadKey: number

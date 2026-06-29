@@ -1,6 +1,10 @@
+/**
+ * A single vesting schedule flattened for table display.
+ * `released` is the amount already minted to the member (shares only exist once
+ * released — vesting mints on demand rather than locking pre-funded tokens).
+ */
 export interface VestingRow {
   member: string
-  teamId: number
   startDate: string
   durationDays: number
   cliffDays: number
@@ -11,13 +15,18 @@ export interface VestingRow {
   isStarted?: boolean
 }
 
+/**
+ * Per-token aggregate shown in the stats card.
+ * `totalPromised` sums the agreed amounts; `totalReleased` sums what has been
+ * minted. There is no "withdrawn" total — unvested amounts are never minted.
+ */
 export interface TokenSummary {
   symbol: string
-  totalVested: number
+  totalPromised: number
   totalReleased: number
-  totalWithdrawn: number
 }
 
+/** On-chain `VestingInfo` struct as returned by the Vesting contract. */
 export interface VestingInfo {
   start: number
   duration: number
