@@ -1,0 +1,3 @@
+# Local Hardhat addresses are generated per-machine by `npm run mc` in contract/
+# after deploying to a local node — they differ per deployment and aren't shared.
+chain-31337.json
