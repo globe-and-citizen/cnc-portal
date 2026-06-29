@@ -42,6 +42,16 @@ vi.mock('../../utils', async () => {
 });
 vi.mock('../../utils/viem.config');
 
+// Keep the pure submit-window helpers real; only stub the DB-backed status lookup
+// so addClaim's SUBMIT_RESTRICTION check resolves without a database.
+vi.mock('../../utils/featureUtils', async () => {
+  const actual = await vi.importActual('../../utils/featureUtils');
+  return {
+    ...actual,
+    getEffectiveStatus: vi.fn().mockResolvedValue(null),
+  };
+});
+
 // Mock the cash remuneration utility
 vi.mock('../../utils/cashRemunerationUtil', () => ({
   isCashRemunerationOwner: vi.fn(),
@@ -99,6 +109,7 @@ vi.mock('../../middleware/authMiddleware', () => ({
 
 // Import the mocked functions after mocking
 import { isCashRemunerationOwner } from '../../utils/cashRemunerationUtil';
+import { getEffectiveStatus } from '../../utils/featureUtils';
 
 // Test constants
 
@@ -259,6 +270,34 @@ describe('Claim Controller', () => {
       expect(response.body.message).toBe(
         'Submission failed: the total number of hours for this day would exceed 24 hours (1440 minutes).'
       );
+    });
+
+    it('should return 400 when SUBMIT_RESTRICTION is active and dayWorked is outside the allowed window', async () => {
+      vi.mocked(getEffectiveStatus).mockResolvedValueOnce('enabled');
+      vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(createMockWage());
+
+      const outOfWindow = dayjs.utc().subtract(10, 'day').startOf('day').toISOString();
+      const response = await request(app)
+        .post('/')
+        .send({ teamId: 1, minutesWorked: 300, memo: 'memo', dayWorked: outOfWindow });
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toContain('current week');
+    });
+
+    it('should allow submission outside the window when SUBMIT_RESTRICTION is disabled', async () => {
+      vi.mocked(getEffectiveStatus).mockResolvedValueOnce('disabled');
+      vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(createMockWage());
+      vi.spyOn(prisma.weeklyClaim, 'findFirst').mockResolvedValue(null);
+      vi.spyOn(prisma.weeklyClaim, 'create').mockResolvedValue(createMockWeeklyClaim());
+      vi.spyOn(prisma.claim, 'create').mockResolvedValue(createMockClaim());
+
+      const outOfWindow = dayjs.utc().subtract(10, 'day').startOf('day').toISOString();
+      const response = await request(app)
+        .post('/')
+        .send({ teamId: 1, minutesWorked: 300, memo: 'memo', dayWorked: outOfWindow });
+
+      expect(response.status).toBe(201);
     });
 
     it('should return 201 when creating a new weekly claim', async () => {
