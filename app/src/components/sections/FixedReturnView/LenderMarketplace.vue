@@ -15,22 +15,32 @@
     </div>
 
     <!-- Loading state -->
-    <div
-      v-if="isLoading"
-      data-test="marketplace-loading"
-      class="rounded-2xl border border-[#e6efe9] bg-white px-5 py-10 text-center text-sm text-[#9aaba2]"
-    >
-      Loading offerings…
-    </div>
+    <UCard v-if="isLoading" data-test="marketplace-loading">
+      <span class="sr-only">Loading offerings…</span>
+      <div class="flex flex-col gap-4">
+        <div class="flex items-start justify-between gap-3">
+          <div class="flex flex-1 flex-col gap-2">
+            <USkeleton class="h-5 w-2/3" />
+            <USkeleton class="h-6 w-28 rounded-full" />
+          </div>
+          <USkeleton class="h-8 w-20" />
+        </div>
+        <div class="grid grid-cols-2 gap-2.5">
+          <USkeleton v-for="index in 4" :key="index" class="h-16 rounded-xl" />
+        </div>
+        <USkeleton class="h-2 w-full rounded-full" />
+        <USkeleton class="h-11 w-full rounded-xl" />
+      </div>
+    </UCard>
 
     <!-- Empty state -->
-    <div
+    <UEmpty
       v-else-if="offerings.length === 0"
       data-test="marketplace-empty"
-      class="rounded-2xl border border-[#e6efe9] bg-white px-5 py-10 text-center text-sm text-[#9aaba2]"
-    >
-      No offerings available yet.
-    </div>
+      icon="heroicons:banknotes"
+      title="No offerings available yet."
+      description="Open fixed-return offerings will appear here."
+    />
 
     <!-- Offering cards -->
     <div
@@ -38,10 +48,12 @@
       class="grid gap-4"
       style="grid-template-columns: repeat(auto-fill, minmax(340px, 1fr))"
     >
-      <div
+      <UCard
         v-for="o in offerings"
         :key="o.id"
-        class="flex flex-col gap-4 rounded-2xl border border-[#e6efe9] bg-white p-5 shadow-sm transition-all hover:border-[#bfe3d2] hover:shadow-md"
+        data-test="marketplace-offering-card"
+        class="transition-all hover:border-[#bfe3d2] hover:shadow-md"
+        :ui="{ body: 'flex flex-col gap-4 p-5' }"
       >
         <!-- Title + rate -->
         <div class="flex items-start justify-between gap-3">
@@ -78,6 +90,9 @@
           <div class="rounded-xl bg-[#f7faf8] px-3 py-2.5">
             <div class="text-xs font-semibold text-[#9aaba2]">Loan amount</div>
             <div class="mt-0.5 text-sm font-bold text-[#0f3d2e]">{{ o.limitsLabel }}</div>
+            <div v-if="o.myDeposited > 0" class="mt-0.5 text-xs font-semibold text-[#0a7a52]">
+              Lent {{ formatOfferingTokenAmount(o.myDeposited, o.token) }}
+            </div>
           </div>
           <div class="rounded-xl bg-[#f7faf8] px-3 py-2.5">
             <div class="text-xs font-semibold text-[#9aaba2]">Collateral</div>
@@ -88,176 +103,99 @@
         <!-- Progress bar -->
         <div>
           <div class="mb-1.5 flex justify-between text-xs font-semibold">
-            <span class="text-[#7d8e84]">Raised {{ moneyShort(o.raised) }}</span>
-            <span class="text-[#9aaba2]">of {{ moneyShort(o.target) }} · {{ o.pct }}%</span>
+            <span class="text-[#7d8e84]">
+              Raised {{ formatOfferingTokenAmount(o.raised, o.token) }}
+            </span>
+            <span class="text-[#9aaba2]">
+              of {{ formatOfferingTokenAmount(o.target, o.token) }} · {{ o.pct }}%
+            </span>
           </div>
-          <div class="h-2 overflow-hidden rounded-full bg-[#eef3f0]">
-            <div class="bg-primary h-full rounded-full" :style="{ width: o.pct + '%' }"></div>
-          </div>
+          <UProgress
+            :model-value="o.pct"
+            :max="100"
+            size="sm"
+            data-test="marketplace-funding-progress"
+          />
         </div>
 
         <!-- Button -->
-        <button
+        <UButton
+          block
+          size="lg"
+          color="primary"
+          :variant="o.allowed ? 'solid' : 'soft'"
           :disabled="!o.allowed"
-          class="h-11 rounded-xl border-none text-sm font-bold transition-all"
-          :style="
-            o.allowed
-              ? 'background:#00bf7a;color:#fff;cursor:pointer;box-shadow:0 4px 11px rgba(0,191,122,.26)'
-              : 'background:#f4f8f6;color:#9aaba2;cursor:not-allowed;border:1px solid #e0eae5'
-          "
+          :label="lenderCtaLabel(o)"
+          data-test="marketplace-apply-button"
           @click="o.allowed && openApply(o)"
-        >
-          {{ o.allowed ? 'Apply to lend' : 'Whitelist only' }}
-        </button>
-      </div>
+        />
+      </UCard>
     </div>
 
     <!-- Apply modal -->
     <ApplyOfferingModal
       v-if="selected"
-      :title="selected.title"
-      :rate="selected.rate"
-      :term="selected.term"
-      :amount="applyAmount"
-      :interest="applyInterest"
-      :total="applyTotal"
-      :amount-locked="false"
-      :limits-hint="limitsHint"
-      :error="amountError"
-      @close="closeApply"
-      @submit="submitApplication"
-      @update:amount="applyAmount = $event"
+      v-model:open="applyModalOpen"
+      :offer="selected"
+      @after:leave="selected = null"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { useQuery } from '@tanstack/vue-query'
-import { readContract } from '@wagmi/core'
-import type { Address } from 'viem'
-import { useToast } from '@nuxt/ui/composables'
+import { computed, ref } from 'vue'
 import ApplyOfferingModal from './ApplyOfferingModal.vue'
-import { config } from '@/wagmi.config'
-import { useTeamStore, useUserDataStore } from '@/stores'
-import { useFixedReturnAddress, useFixedReturnAllOffers } from '@/composables/fixedReturn/reads'
+import { useTeamStore } from '@/stores'
+import {
+  useFixedReturnAllOffers,
+  useFixedReturnMyLenderPositions
+} from '@/composables/fixedReturn/reads'
 import { useGetFixedReturnOfferingsQuery } from '@/queries'
-import { FIXED_RETURN_ABI } from '@/artifacts/abi/fixed-return'
-import { expectedReturn, log, moneyShort, parseError, termLabel, toLenderOffering } from '@/utils'
+import {
+  formatOfferingTokenAmount,
+  isLendingOfferAcceptingFunds,
+  lenderCtaLabel,
+  termLabel,
+  toLenderOffering
+} from '@/utils'
 import type { LenderOffering } from '@/types'
 
 const teamStore = useTeamStore()
-const userStore = useUserDataStore()
-const fixedReturnAddress = useFixedReturnAddress()
 
 const { data: rawOfferings, isLoading } = useFixedReturnAllOffers()
 const { data: offeringMetadata } = useGetFixedReturnOfferingsQuery({
   queryParams: { teamId: teamStore.currentTeamId }
 })
 
-// Only Open offers can actually accept new lenders — lendFunds itself rejects any
-// other state, so there's no point showing Funded/Refundable/Repaying offers here.
+// Match lendFunds' state and deadline guards so an expired offer cannot remain
+// actionable while it is still on-chain Open and waiting to be marked Refundable.
 const openOffers = computed(() =>
-  (rawOfferings.value ?? []).filter(({ offer }) => offer.state === 0)
+  (rawOfferings.value ?? []).filter(({ offer }) => isLendingOfferAcceptingFunds(offer))
 )
 
-// Whitelist eligibility/cap is per-connected-lender, so it's fetched separately from
-// the shared all-offers query rather than baked into it.
-async function fetchWhitelistAllocations(): Promise<Map<number, bigint>> {
-  const address = fixedReturnAddress.value
-  const lender = userStore.address as Address | undefined
-  if (!address || !lender) return new Map()
-
-  const whitelistOffers = openOffers.value.filter(({ offer }) => offer.fundingAccess === 1)
-  const entries = await Promise.all(
-    whitelistOffers.map(async ({ offerId }) => {
-      try {
-        const allocation = (await readContract(config, {
-          address,
-          abi: FIXED_RETURN_ABI,
-          functionName: 'lenderAllocation',
-          args: [BigInt(offerId), lender]
-        })) as bigint
-        return [offerId, allocation] as const
-      } catch (error) {
-        log.error(`Failed to fetch lenderAllocation for offer #${offerId}:`, parseError(error))
-        return [offerId, 0n] as const
-      }
-    })
-  )
-  return new Map(entries)
-}
-
-// Plain offerIds, not `openOffers` itself — the raw offer structs carry bigint
-// fields, and TanStack Query hashes the query key with JSON.stringify, which can't
-// serialize BigInt.
-const openOfferIds = computed(() => openOffers.value.map(({ offerId }) => offerId))
-
-const { data: whitelistAllocations } = useQuery({
-  queryKey: ['fixedReturnLenderAllocations', fixedReturnAddress, userStore.address, openOfferIds],
-  queryFn: fetchWhitelistAllocations,
-  enabled: computed(() => !!fixedReturnAddress.value && openOffers.value.length > 0)
-})
+const { data: myLenderPositions } = useFixedReturnMyLenderPositions()
 
 const offerings = computed<LenderOffering[]>(() => {
   const metadataByOfferId = new Map(offeringMetadata.value?.map((m) => [m.offerId, m.title]))
-  const allocations = whitelistAllocations.value ?? new Map()
-  return openOffers.value.map(({ offerId, offer, decimals }) =>
-    toLenderOffering(
+  const positions = myLenderPositions.value ?? new Map()
+  return openOffers.value.map(({ offerId, offer, decimals }) => {
+    const position = positions.get(offerId) ?? { allocation: 0n, deposited: 0n }
+    return toLenderOffering(
       offerId,
       offer,
       decimals,
-      allocations.get(offerId) ?? 0n,
+      position.allocation,
+      position.deposited,
       metadataByOfferId.get(offerId)
     )
-  )
+  })
 })
-
-const toast = useToast()
 
 const selected = ref<LenderOffering | null>(null)
-const applyAmount = ref(0)
-
-const applyTotal = computed(() => {
-  if (!selected.value) return 0
-  return expectedReturn(applyAmount.value, selected.value.rate)
-})
-const applyInterest = computed(() => applyTotal.value - applyAmount.value)
-
-const amountError = computed(() => {
-  if (!selected.value) return ''
-  const cap = selected.value.cap
-  if (cap != null && applyAmount.value > cap)
-    return 'Maximum loan amount is ' + moneyShort(cap) + '.'
-  return ''
-})
-
-const limitsHint = computed(() => {
-  if (!selected.value) return ''
-  const { access, cap } = selected.value
-  if (access === 'whitelist')
-    return 'Your allocation of ' + moneyShort(cap ?? 0) + ' was set by the project admin.'
-  if (cap != null) return 'Maximum per lender: ' + moneyShort(cap) + '.'
-  return 'No per-lender cap for this offering.'
-})
+const applyModalOpen = ref(false)
 
 function openApply(o: LenderOffering) {
   selected.value = o
-  applyAmount.value = 0
-}
-
-function closeApply() {
-  selected.value = null
-}
-
-// TODO: still a mock submission — wiring this to useFixedReturnLendFunds is the
-// follow-up write-integration step (kept GET-only here, same as My Offerings).
-function submitApplication() {
-  if (!selected.value) return
-  toast.add({
-    title: `You applied to lend ${moneyShort(applyAmount.value)} to ${selected.value.title}`,
-    color: 'success'
-  })
-  closeApply()
+  applyModalOpen.value = true
 }
 </script>

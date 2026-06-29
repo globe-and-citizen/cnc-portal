@@ -59,14 +59,37 @@ describe('OfferingDetail.vue', () => {
 
     const rows = wrapper.findAll('tbody tr')
     expect(rows).toHaveLength(1)
-    expect(rows[0].text()).toContain('$50,000')
+    expect(rows[0].text()).toContain('50,000 Token')
   })
 
-  it('marks a lender overdue when nothing has been repaid yet', () => {
+  it('marks a lender on-track (not overdue) when nothing has been repaid yet but maturity has not passed', () => {
     mockFixedReturnReads.offerLenders.data.value = [
       { address: '0x2222222222222222222222222222222222222222', principal: 50000, expected: 54000 }
     ]
-    const wrapper = mountDetail(baseOffering({ totalRepaid: 0, raised: 100000 }))
+    // repayLenders has no on-chain maturity check, so an unpaid loan that hasn't
+    // reached its due date yet is just on-track - not late.
+    const wrapper = mountDetail(
+      baseOffering({ totalRepaid: 0, raised: 100000, startDate: '2030-01-01' })
+    )
+
+    const row = wrapper.find('tbody tr')
+    expect(row.text()).toContain('On track')
+    expect(row.text()).not.toContain('Overdue')
+  })
+
+  it('marks a lender overdue once maturity has passed with nothing repaid', () => {
+    mockFixedReturnReads.offerLenders.data.value = [
+      { address: '0x2222222222222222222222222222222222222222', principal: 50000, expected: 54000 }
+    ]
+    const wrapper = mountDetail(
+      baseOffering({
+        totalRepaid: 0,
+        raised: 100000,
+        startDate: '2020-01-01',
+        term: 1,
+        termUnit: 'months'
+      })
+    )
 
     expect(wrapper.text()).toContain('Overdue')
   })
@@ -82,7 +105,7 @@ describe('OfferingDetail.vue', () => {
 
     const rows = wrapper.findAll('tbody tr')
     expect(rows).toHaveLength(1)
-    expect(rows[0].text()).toContain('$1,000')
+    expect(rows[0].text()).toContain('1,000 Token')
   })
 
   it('shows a no-match state when the search query matches no lender', async () => {
