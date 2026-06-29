@@ -1,8 +1,42 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
+import type { Address } from 'viem'
 import { buildAccountingSheets, exportAccountingExcel } from '../accountingExport'
+import { assembleCncAccounting, type CncAccounting } from '@/utils/accounting/assemble'
+import { USDC_ADDRESS } from '@/constant'
+
+const BANK = '0x1111111111111111111111111111111111111111'
+const CLIENT = '0x7777777777777777777777777777777777777777'
+
+/** A tiny live book: one $100 client deposit into the Bank → Service Revenue 100. */
+function sampleBooks(): CncAccounting {
+  return assembleCncAccounting({
+    contracts: [{ type: 'Bank', address: BANK as Address, deployer: BANK as Address, admins: [] }],
+    bankEvents: {
+      bankDeposits: { items: [] },
+      bankTokenDeposits: {
+        items: [
+          {
+            id: 'bd1',
+            contractAddress: BANK,
+            depositor: CLIENT,
+            token: USDC_ADDRESS,
+            amount: '100000000',
+            timestamp: 100
+          }
+        ]
+      },
+      bankTransfers: { items: [] },
+      bankTokenTransfers: { items: [] },
+      bankDividendDistributionTriggereds: { items: [] },
+      bankFeePaids: { items: [] },
+      bankOwnershipTransferreds: { items: [] },
+      rawContractTokenTransfers: { items: [] }
+    }
+  })
+}
 
 describe('buildAccountingSheets', () => {
-  const sheets = buildAccountingSheets()
+  const sheets = buildAccountingSheets(sampleBooks())
   const byName = (name: string) => sheets.find((s) => s.name === name)!
 
   it('produces one sheet per tab except the Summary', () => {
@@ -16,25 +50,24 @@ describe('buildAccountingSheets', () => {
 
   it('writes numeric cells (not formatted strings) so Excel can compute', () => {
     const income = byName('Income Statement').rows
-    const netIncomeRow = income.find((r) => r[0] === 'Net income (profit)')!
-    expect(netIncomeRow[1]).toBe(4.2)
+    const revenueRow = income.find((r) => r[0] === 'Total revenue')!
+    expect(revenueRow[1]).toBe(100)
 
     const balance = byName('Balance Sheet').rows
     const totalAssetsRow = balance.find((r) => r[0] === 'Total assets')!
-    expect(totalAssetsRow[1]).toBe(142.2)
+    expect(totalAssetsRow[1]).toBe(100)
   })
 
-  it('trial balance totals debit = credit = 253', () => {
+  it('trial balance totals debit = credit', () => {
     const total = byName('Trial Balance').rows.find((r) => r[0] === 'Total')!
-    expect(total[2]).toBe(253)
-    expect(total[3]).toBe(253)
+    expect(total[2]).toBe(total[3])
   })
 
-  it('general ledger lists every journal line of the full book', () => {
+  it('general ledger has a header row and one row per journal line', () => {
     const rows = byName('General Ledger').rows
-    // title + blank + header + one row per journal line (well over 18 entries)
     expect(rows[2]).toEqual(['Date', 'Action', 'Transaction', 'Account', 'Debit', 'Credit'])
-    expect(rows.length).toBeGreaterThan(20)
+    // title + blank + header + the deposit's two legs
+    expect(rows.length).toBe(5)
   })
 })
 
@@ -58,7 +91,7 @@ describe('exportAccountingExcel', () => {
     vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {})
     vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
 
-    await exportAccountingExcel()
+    await exportAccountingExcel(sampleBooks())
 
     expect(captured).not.toBeNull()
     expect(captured!.type).toContain('spreadsheetml')

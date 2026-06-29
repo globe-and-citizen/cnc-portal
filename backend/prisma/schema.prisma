@@ -56,6 +56,7 @@ model Team {
   createdAt              DateTime                 @default(now())
   updatedAt              DateTime                 @updatedAt
   teamFunctionOverrides  TeamFunctionOverride[]
+  fixedReturnOfferings   FixedReturnOffering[]
 }
 
 model MemberTeamsData {
@@ -242,5 +243,25 @@ model TeamFunctionOverride {
   updatedAt     DateTime      @updatedAt
 
   @@unique([teamId, functionName], name: "unique_team_function")
+  @@index([teamId])
+}
+
+// Off-chain metadata for a FixedReturn lending offer. FixedReturn.sol's
+// createLendingOffer intentionally has no title/description params — the contract's
+// NatSpec says the calling application persists them linked by the returned offerId.
+// The on-chain contract address is resolved via TeamContract (teamId + type
+// 'FixedReturn'), same as Expense resolves ExpenseAccountEIP712's address, rather than
+// duplicating it here.
+model FixedReturnOffering {
+  id        Int      @id @default(autoincrement())
+  teamId    Int
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  offerId   Int
+  title     String
+  purpose   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([teamId, offerId])
   @@index([teamId])
 }

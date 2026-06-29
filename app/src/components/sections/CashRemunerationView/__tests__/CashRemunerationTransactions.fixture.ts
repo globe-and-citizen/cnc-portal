@@ -134,7 +134,8 @@ export const buildCashRemunerationQueryResult = () => ({
   cashRemunerationOwnerTreasuryWithdrawTokens: { items: [] },
   cashRemunerationOfficerUpdateds: { items: [] },
   cashRemunerationTokenSupportAddeds: { items: [] },
-  cashRemunerationTokenSupportRemoveds: { items: [] }
+  cashRemunerationTokenSupportRemoveds: { items: [] },
+  cashRemunerationOwnershipTransferreds: { items: [] }
 })
 
 export const buildIncomingTransfersQueryResult = () => ({

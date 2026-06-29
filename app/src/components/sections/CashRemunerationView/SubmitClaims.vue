@@ -1,15 +1,19 @@
 <template>
   <TeamArchivedTooltip v-slot="{ disabled: archivedDisabled }">
-    <UButton
-      :loading="isWageClaimAdding"
-      color="success"
-      size="sm"
-      data-test="modal-submit-hours-button"
-      :disabled="!canSubmitClaim || archivedDisabled"
-      @click="openModal()"
-    >
-      Submit Claim
-    </UButton>
+    <UTooltip :text="restrictedTooltip" :delay-duration="0">
+      <span class="inline-flex max-w-full">
+        <UButton
+          :loading="isWageClaimAdding"
+          color="success"
+          size="sm"
+          data-test="modal-submit-hours-button"
+          :disabled="!canSubmitClaim || archivedDisabled"
+          @click="openModal()"
+        >
+          Submit Claim
+        </UButton>
+      </span>
+    </UTooltip>
   </TeamArchivedTooltip>
 
   <UModal
@@ -149,11 +153,30 @@ watch(
 // generation (issue #1825): submitting only creates a `pending` row that
 // the approver can sign once the team migrates. Only the sign action is
 // frozen — see CRSigne.vue.
+// When the restriction is active, only the current ISO week can accept a
+// submission, so the "Submit Claim" button is disabled on every other week
+// (mirrors the calendar guard and the backend enforcement). Reuses the existing
+// startOfWeek helper and the same week comparison used in ClaimHistoryActionAlerts.
+const isSelectedWeekSubmittable = computed(() => {
+  if (!isRestricted.value) return true
+  const selected = startOfWeek(props.selectedWeekStart ?? dayjs.utc())
+  return selected.isSame(startOfWeek(dayjs.utc()), 'day')
+})
+
 const canSubmitClaim = computed(() => {
+  if (!isSelectedWeekSubmittable.value) return false
   if (!props.weeklyClaim) return true
 
   return props.weeklyClaim.status === 'pending'
 })
+
+// Tooltip shown on hover when the button is disabled specifically because the
+// selected week is outside the submit window (undefined otherwise → no tooltip).
+const restrictedTooltip = computed(() =>
+  !isSelectedWeekSubmittable.value
+    ? 'You can only submit claims for the current week, up to 4 days in the past.'
+    : undefined
+)
 
 const { mutateAsync: submitClaim, isPending: isWageClaimAdding } = useSubmitClaimMutation()
 
@@ -167,6 +190,10 @@ const handleSubmit = async (data: ClaimSubmitPayload & { files?: File[] }) => {
   errorMessage.value = null
 
   try {
+    // Refresh the restriction status right before submitting so a dashboard
+    // change is reflected immediately (backend addClaim is the real guard).
+    await checkRestriction(teamId.value)
+
     await submitClaim({
       ...data,
       teamId: teamId.value

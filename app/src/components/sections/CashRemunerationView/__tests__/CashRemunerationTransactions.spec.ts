@@ -165,6 +165,34 @@ describe('CashRemunerationTransactions', () => {
     expect(incomingQueryOptions.enabled.value).toBe(false)
   })
 
+  it('maps ownership transfer events with a zero amount', () => {
+    cashRemunerationQuery.result.value = {
+      ...buildCashRemunerationQueryResult(),
+      cashRemunerationOwnershipTransferreds: {
+        items: [
+          {
+            id: '0xownershiphash-0',
+            contractAddress: CONTRACT_ADDRESS,
+            previousOwner: '0x5555555555555555555555555555555555555555',
+            newOwner: '0x6666666666666666666666666666666666666666',
+            timestamp: 1_700_000_200
+          }
+        ]
+      }
+    }
+
+    wrapper = createWrapper()
+    const data = tableData(wrapper)
+    const ownershipRowIndex = data.findIndex((row) => row.type === 'ownershipTransferred')
+    const ownershipRow = data[ownershipRowIndex]
+
+    expect(ownershipRow).toBeDefined()
+    expect(ownershipRow?.amount).toBe('0')
+    expect(
+      wrapper.findAll('[data-test="cash-remuneration-rendered-row"]')[ownershipRowIndex]?.text()
+    ).toContain('→')
+  })
+
   it('handles token resolution fallback and invalid amounts', () => {
     mockCurrencyStore.supportedTokens = []
     mockGetTokenPrice.mockImplementation((tokenId: string) => (tokenId === 'native' ? 3 : 0))
