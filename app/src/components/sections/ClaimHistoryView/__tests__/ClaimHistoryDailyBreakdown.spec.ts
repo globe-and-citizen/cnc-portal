@@ -208,6 +208,39 @@ describe('ClaimHistoryDailyBreakdown', () => {
     expect(emitted[1]?.[0]).toBe(day1)
   })
 
+  it('hides quick-submit on out-of-window days when restriction is active', () => {
+    // selectedWeek is in 2024 → every day is outside the current submit window
+    const wrapper = createWrapper({
+      weeklyClaim: { ...createWeeklyClaim(), claims: [] },
+      isRestricted: true
+    })
+
+    expect(wrapper.findAll('[data-test="quick-submit-day-button"]').length).toBe(0)
+    expect(wrapper.findAll('[role="button"]').length).toBe(0)
+  })
+
+  it('keeps quick-submit available in the current week when restriction is active', () => {
+    const currentWeekStart = dayjs.utc().startOf('isoWeek')
+    const currentWeek = {
+      year: currentWeekStart.year(),
+      month: currentWeekStart.month(),
+      isoWeek: currentWeekStart.isoWeek(),
+      isoString: currentWeekStart.toISOString(),
+      formatted: 'Current week'
+    }
+
+    const wrapper = createWrapper({
+      weeklyClaim: { ...createWeeklyClaim(), claims: [] },
+      selectedWeek: currentWeek,
+      isRestricted: true
+    })
+
+    // At least "today" is always submittable; future days remain hidden
+    const buttons = wrapper.findAll('[data-test="quick-submit-day-button"]').length
+    expect(buttons).toBeGreaterThanOrEqual(1)
+    expect(buttons).toBeLessThanOrEqual(7)
+  })
+
   it('does not emit quick-submit on filled days and hides quick button for non-owner', async () => {
     const wrapper = createWrapper({ weeklyClaim: createWeeklyClaim() })
     expect(wrapper.findAll('[data-test="quick-submit-day-button"]').length).toBe(5)
