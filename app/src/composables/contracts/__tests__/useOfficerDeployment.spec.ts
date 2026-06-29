@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import type { Address } from 'viem'
+import { parseEventLogs, type Address } from 'viem'
 
 // Local getConnections mock — not covered by the shared wagmi setup.
 const { mockGetConnections } = vi.hoisted(() => ({ mockGetConnections: vi.fn() }))
@@ -11,17 +11,9 @@ vi.mock('@wagmi/core', async (importOriginal) => {
   }
 })
 
-// parseEventLogs decodes the BeaconProxyCreated event straight from the
-// receipt; stub it since keccak256 is globally mocked (real decoding can't run).
-const { mockParseEventLogs } = vi.hoisted(() => ({ mockParseEventLogs: vi.fn() }))
-vi.mock('viem', async (importOriginal) => {
-  const actual = (await importOriginal()) as object
-  return {
-    ...actual,
-    encodeFunctionData: vi.fn(() => '0xEncodedData'),
-    parseEventLogs: mockParseEventLogs
-  }
-})
+// `parseEventLogs` is globally stubbed in tests/setup/viem.setup.ts (keccak256
+// is mocked there, so real event decoding can't run). We just drive its return.
+const mockParseEventLogs = vi.mocked(parseEventLogs)
 import {
   deployOfficer,
   useDeployOfficer,
@@ -85,7 +77,9 @@ describe('deployOfficer (pure)', () => {
       receipt: { blockNumber: 42n, logs: [] } as never,
       simulation: {} as never
     })
-    mockParseEventLogs.mockReturnValue([{ args: { proxy: OFFICER_PROXY, deployer: USER } }])
+    mockParseEventLogs.mockReturnValue([
+      { args: { proxy: OFFICER_PROXY, deployer: USER } }
+    ] as never)
   })
 
   it('throws when no wallet is connected', async () => {
@@ -132,7 +126,9 @@ describe('useDeployOfficer (TanStack wrapper)', () => {
       receipt: { blockNumber: 42n, logs: [] } as never,
       simulation: {} as never
     })
-    mockParseEventLogs.mockReturnValue([{ args: { proxy: OFFICER_PROXY, deployer: USER } }])
+    mockParseEventLogs.mockReturnValue([
+      { args: { proxy: OFFICER_PROXY, deployer: USER } }
+    ] as never)
 
     useMutationFn.mockImplementation(smartUseMutation)
     useQueryClientFn.mockReturnValue({
