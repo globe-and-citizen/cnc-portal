@@ -10,6 +10,18 @@ vi.mock('@wagmi/core', async (importOriginal) => {
     getConnections: mockGetConnections
   }
 })
+
+// parseEventLogs decodes the BeaconProxyCreated event straight from the
+// receipt; stub it since keccak256 is globally mocked (real decoding can't run).
+const { mockParseEventLogs } = vi.hoisted(() => ({ mockParseEventLogs: vi.fn() }))
+vi.mock('viem', async (importOriginal) => {
+  const actual = (await importOriginal()) as object
+  return {
+    ...actual,
+    encodeFunctionData: vi.fn(() => '0xEncodedData'),
+    parseEventLogs: mockParseEventLogs
+  }
+})
 import {
   deployOfficer,
   useDeployOfficer,
@@ -23,7 +35,6 @@ import {
   useQueryClientFn,
   mockInvalidateQueries
 } from '@/tests/mocks/composables.mock'
-import { mockGetLogs } from '@/tests/mocks/viem.actions.mock'
 import { mockParseError } from '@/tests/mocks/utils.mock'
 
 const USER = '0x1234567890123456789012345678901234567890' as Address
@@ -57,8 +68,7 @@ vi.mock('@/utils/contractDeploymentUtil', async (importOriginal) => {
     ...actual,
     validateBeaconAddresses: vi.fn(),
     getBeaconConfigs: vi.fn(() => []),
-    getDeploymentConfigs: vi.fn(() => []),
-    handleBeaconProxyCreatedLogs: vi.fn()
+    getDeploymentConfigs: vi.fn(() => [])
   }
 })
 
@@ -72,14 +82,10 @@ describe('deployOfficer (pure)', () => {
     setConnectedUser(USER)
     vi.mocked(executeContractWrite).mockResolvedValue({
       hash: TX_HASH,
-      receipt: { blockNumber: 42n } as never,
+      receipt: { blockNumber: 42n, logs: [] } as never,
       simulation: {} as never
     })
-    mockGetLogs.mockResolvedValue([
-      { args: { deployer: USER, proxy: OFFICER_PROXY }, transactionHash: TX_HASH }
-    ] as never)
-    const utils = await import('@/utils/contractDeploymentUtil')
-    vi.mocked(utils.handleBeaconProxyCreatedLogs).mockReturnValue(OFFICER_PROXY)
+    mockParseEventLogs.mockReturnValue([{ args: { proxy: OFFICER_PROXY, deployer: USER } }])
   })
 
   it('throws when no wallet is connected', async () => {
@@ -100,22 +106,20 @@ describe('deployOfficer (pure)', () => {
     expect(res.deployedAt.getTime()).toBeGreaterThanOrEqual(before)
   })
 
-  it('throws when the proxy address cannot be extracted from event logs', async () => {
-    const utils = await import('@/utils/contractDeploymentUtil')
-    vi.mocked(utils.handleBeaconProxyCreatedLogs).mockReturnValue(null)
+  it('throws when no BeaconProxyCreated event is found in the receipt', async () => {
+    mockParseEventLogs.mockReturnValue([])
 
     await expect(
       deployOfficer({ investorInput: { name: 'Shares', symbol: 'SH' } })
     ).rejects.toThrow(/extract Officer proxy address/)
   })
 
-  it('queries logs for the exact deployment block', async () => {
+  it('decodes the proxy address from the receipt logs (no extra RPC)', async () => {
     await deployOfficer({ investorInput: { name: 'Shares', symbol: 'SH' } })
 
-    const call = mockGetLogs.mock.calls[0]
-    expect(call).toBeDefined()
-    const params = call![1]
-    expect(params).toMatchObject({ fromBlock: 42n, toBlock: 42n })
+    expect(mockParseEventLogs).toHaveBeenCalledWith(
+      expect.objectContaining({ eventName: 'BeaconProxyCreated', logs: [] })
+    )
   })
 })
 
@@ -125,14 +129,10 @@ describe('useDeployOfficer (TanStack wrapper)', () => {
     setConnectedUser(USER)
     vi.mocked(executeContractWrite).mockResolvedValue({
       hash: TX_HASH,
-      receipt: { blockNumber: 42n } as never,
+      receipt: { blockNumber: 42n, logs: [] } as never,
       simulation: {} as never
     })
-    mockGetLogs.mockResolvedValue([
-      { args: { deployer: USER, proxy: OFFICER_PROXY }, transactionHash: TX_HASH }
-    ] as never)
-    const utils = await import('@/utils/contractDeploymentUtil')
-    vi.mocked(utils.handleBeaconProxyCreatedLogs).mockReturnValue(OFFICER_PROXY)
+    mockParseEventLogs.mockReturnValue([{ args: { proxy: OFFICER_PROXY, deployer: USER } }])
 
     useMutationFn.mockImplementation(smartUseMutation)
     useQueryClientFn.mockReturnValue({

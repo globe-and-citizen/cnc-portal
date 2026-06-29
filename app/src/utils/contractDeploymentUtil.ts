@@ -22,7 +22,6 @@ import { INVESTOR_ABI } from '@/artifacts/abi/investors'
 import { SAFE_DEPOSIT_ROUTER_ABI } from '@/artifacts/abi/safe-deposit-router'
 import { PROPOSALS_ABI } from '@/artifacts/abi/proposals'
 import { FIXED_RETURN_ABI } from '@/artifacts/abi/fixed-return'
-import { log } from '@/utils'
 
 /**
  * Beacon configuration type
@@ -216,46 +215,4 @@ export const getDeploymentConfigs = (
   })
 
   return deployments
-}
-
-/**
- * Handles the BeaconProxyCreated event logs
- * @param logs - Event logs from the contract
- * @param expectedHash - Expected transaction hash
- * @param currentUserAddress - Current user's wallet address
- * @returns The proxy address if validation succeeds, null otherwise
- */
-export const handleBeaconProxyCreatedLogs = (
-  logs: unknown[],
-  expectedHash: `0x${string}` | undefined,
-  currentUserAddress: Address
-): Address | null => {
-  if (!logs.length) {
-    log.error('No logs found')
-    return null
-  }
-
-  interface BeaconProxyLog {
-    args: {
-      deployer: Address
-      proxy: Address
-    }
-    transactionHash: `0x${string}`
-  }
-
-  const firstLog = logs[0] as BeaconProxyLog
-
-  if (!firstLog || firstLog.transactionHash !== expectedHash) {
-    log.error('Transaction hash does not match')
-    return null
-  }
-
-  const { deployer, proxy: proxyAddress } = firstLog.args
-
-  if (currentUserAddress !== deployer) {
-    log.error('Deployer address does not match with the current user address')
-    return null
-  }
-
-  return proxyAddress
 }
