@@ -1,5 +1,41 @@
+import dayjs from 'dayjs';
+import isoWeek from 'dayjs/plugin/isoWeek';
+import utc from 'dayjs/plugin/utc';
 import { prisma } from './dependenciesUtil';
 import type { FeatureStatus } from '../validation/featureValidation';
+
+dayjs.extend(utc);
+dayjs.extend(isoWeek);
+
+/** Maximum number of days in the past a claim can be submitted for when restricted. */
+export const SUBMIT_RESTRICTION_MAX_DAYS_BACK = 4;
+
+/**
+ * The SUBMIT_RESTRICTION feature is active (restriction enforced) when the
+ * effective status is `enabled` or when nothing is configured (`null`).
+ * `disabled` and `beta` leave submission free.
+ */
+export function isSubmitRestricted(status: FeatureStatus | null): boolean {
+  return status === null || status === 'enabled';
+}
+
+/**
+ * When the restriction is active, a claim's `dayWorked` is only allowed within
+ * the current ISO week and at most SUBMIT_RESTRICTION_MAX_DAYS_BACK days in the
+ * past (no future days). Mirrors the calendar guard in the app
+ * (`useClaimForm.ts` `isDateDisabledFn`).
+ */
+export function isDayWithinSubmitWindow(dayWorked: Date, now: Date = new Date()): boolean {
+  const d = dayjs.utc(dayWorked).startOf('day');
+  const today = dayjs.utc(now).startOf('day');
+
+  const currentWeekStart = today.startOf('isoWeek');
+  const currentWeekEnd = today.endOf('isoWeek');
+  if (d.isBefore(currentWeekStart, 'day') || d.isAfter(currentWeekEnd, 'day')) return false;
+
+  const daysDiff = today.diff(d, 'day');
+  return daysDiff >= 0 && daysDiff <= SUBMIT_RESTRICTION_MAX_DAYS_BACK;
+}
 
 export async function findAllFeatures() {
   return await prisma.globalSetting.findMany({
