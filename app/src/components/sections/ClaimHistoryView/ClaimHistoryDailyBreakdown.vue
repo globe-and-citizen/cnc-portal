@@ -101,9 +101,18 @@ interface Props {
   weeklyClaim?: WeeklyClaim
   selectedWeek: Week
   memberAddress: Address
+  /**
+   * When true, quick-submit is only offered for days the backend would accept
+   * (current ISO week, up to SUBMIT_RESTRICTION_MAX_DAYS_BACK days in the past).
+   * Mirrors the calendar guard in useClaimForm and the server-side enforcement
+   * in addClaim, so old/out-of-window days don't expose a "+" that 400s.
+   */
+  isRestricted?: boolean
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  isRestricted: false
+})
 const emit = defineEmits<{
   'quick-submit': [dayIso: string]
 }>()
@@ -169,8 +178,22 @@ type DayEntry = {
   totalMinutes: number
 }
 
+const SUBMIT_RESTRICTION_MAX_DAYS_BACK = 4
+
+const isDayWithinSubmitWindow = (date: dayjs.Dayjs): boolean => {
+  const d = date.utc().startOf('day')
+  const today = dayjs.utc().startOf('day')
+  const currentWeekStart = today.startOf('isoWeek')
+  const currentWeekEnd = today.endOf('isoWeek')
+  if (d.isBefore(currentWeekStart, 'day') || d.isAfter(currentWeekEnd, 'day')) return false
+  const daysDiff = today.diff(d, 'day')
+  return daysDiff >= 0 && daysDiff <= SUBMIT_RESTRICTION_MAX_DAYS_BACK
+}
+
 const canQuickSubmitDay = (entry: DayEntry): boolean => {
-  return entry.totalMinutes === 0 && props.memberAddress === userStore.address
+  if (entry.totalMinutes !== 0 || props.memberAddress !== userStore.address) return false
+  if (props.isRestricted && !isDayWithinSubmitWindow(entry.date)) return false
+  return true
 }
 
 const onQuickSubmitClick = (entry: DayEntry) => {
