@@ -5,8 +5,14 @@ import { createTestingPinia } from '@pinia/testing'
 import { VueQueryPlugin, QueryClient } from '@tanstack/vue-query'
 import SubmitClaims from '../SubmitClaims.vue'
 import { useSubmitClaimMutation } from '@/queries/weeklyClaim.queries'
-import { mockTeamStore, mockToast } from '@/tests/mocks'
+import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
+import isoWeek from 'dayjs/plugin/isoWeek'
+import { mockTeamStore, mockToast, mockUseSubmitRestriction } from '@/tests/mocks'
 import { createMockMutationResponse } from '@/tests/mocks/query.mock'
+
+dayjs.extend(utc)
+dayjs.extend(isoWeek)
 
 const claimFormResetMock = vi.fn()
 
@@ -64,6 +70,67 @@ describe('SubmitClaims', () => {
 
     const submitButton = wrapper.find('[data-test="modal-submit-hours-button"]')
     expect(submitButton.attributes('disabled')).toBeDefined()
+  })
+
+  it('disables submit button on a non-current week when restriction is active', () => {
+    mockUseSubmitRestriction.isRestricted.value = true
+    try {
+      const wrapper = createComponent({
+        weeklyClaim: { status: 'pending' },
+        // a Monday two weeks before the current ISO week
+        selectedWeekStart: dayjs.utc().startOf('isoWeek').subtract(2, 'week').toISOString()
+      })
+      const submitButton = wrapper.find('[data-test="modal-submit-hours-button"]')
+      expect(submitButton.attributes('disabled')).toBeDefined()
+    } finally {
+      mockUseSubmitRestriction.isRestricted.value = false
+    }
+  })
+
+  it('keeps submit enabled on the current week when restriction is active', () => {
+    mockUseSubmitRestriction.isRestricted.value = true
+    try {
+      const wrapper = createComponent({
+        weeklyClaim: { status: 'pending' },
+        selectedWeekStart: dayjs.utc().startOf('isoWeek').toISOString()
+      })
+      const submitButton = wrapper.find('[data-test="modal-submit-hours-button"]')
+      expect(submitButton.attributes('disabled')).toBeUndefined()
+    } finally {
+      mockUseSubmitRestriction.isRestricted.value = false
+    }
+  })
+
+  it('wires a restriction tooltip on the submit button for a non-current week', () => {
+    mockUseSubmitRestriction.isRestricted.value = true
+    try {
+      const wrapper = createComponent({
+        weeklyClaim: { status: 'pending' },
+        selectedWeekStart: dayjs.utc().startOf('isoWeek').subtract(2, 'week').toISOString()
+      })
+      const texts = wrapper.findAllComponents({ name: 'UTooltip' }).map((t) => t.props('text'))
+      expect(texts).toContain(
+        'You can only submit claims for the current week, up to 4 days in the past.'
+      )
+    } finally {
+      mockUseSubmitRestriction.isRestricted.value = false
+    }
+  })
+
+  it('shows no restriction tooltip on the current week', () => {
+    mockUseSubmitRestriction.isRestricted.value = true
+    try {
+      const wrapper = createComponent({
+        weeklyClaim: { status: 'pending' },
+        selectedWeekStart: dayjs.utc().startOf('isoWeek').toISOString()
+      })
+      const texts = wrapper.findAllComponents({ name: 'UTooltip' }).map((t) => t.props('text'))
+      expect(texts).not.toContain(
+        'You can only submit claims for the current week, up to 4 days in the past.'
+      )
+    } finally {
+      mockUseSubmitRestriction.isRestricted.value = false
+    }
   })
 
   it('keeps submit enabled on un-migrated teams (issue #1825 — submission is not frozen, only signing)', () => {

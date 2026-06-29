@@ -3,7 +3,7 @@ import ListIndex from '@/views/team/ListIndex.vue'
 import { mount } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
 import { createMockQueryResponse } from '@/tests/mocks/query.mock'
-import { mockTeamsData, mockTeamData, mockRouterPush } from '@/tests/mocks'
+import { mockTeamsData, mockTeamData, mockRouterPush, mockRouterReplace } from '@/tests/mocks'
 import type { Team } from '@/types'
 import { useRoute } from 'vue-router'
 
@@ -333,6 +333,29 @@ describe('ListIndex - Team List View', () => {
 
       const teamCards = wrapper.findAll('[data-test^="team-card-"]')
       expect(teamCards).toHaveLength(1)
+    })
+  })
+
+  describe('Create company deep link', () => {
+    it('auto-opens the create modal and clears the query when navigated with ?create=1', async () => {
+      vi.mocked(useRoute).mockReturnValue({
+        params: {},
+        meta: { name: 'Team List View' },
+        query: { create: '1' }
+      } as unknown as ReturnType<typeof useRoute>)
+      vi.mocked(useGetTeamsQuery).mockReturnValueOnce(createMockQueryResponse(mockTeamsData))
+
+      const wrapper = mount(ListIndex, {
+        global: {
+          plugins: [createTestingPinia({ createSpy: vi.fn })],
+          stubs: { AddTeamCard: true, TeamCard: true, AddTeamForm: true }
+        }
+      })
+      await wrapper.vm.$nextTick()
+
+      // The mocked UModal only renders its body (with the close button) when open.
+      expect(wrapper.find('[data-test="close-wage-modal-button"]').exists()).toBe(true)
+      expect(mockRouterReplace).toHaveBeenCalledWith({ query: {} })
     })
   })
 })
