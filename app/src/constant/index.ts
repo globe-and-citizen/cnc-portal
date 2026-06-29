@@ -41,6 +41,8 @@ interface AddressMapping {
   'SafeDepositRouterBeaconModule#SafeDepositRouter'?: string
   'SafeDepositRouterBeaconModule#Beacon'?: string
   'FeeCollectorModule#FeeCollector'?: string
+  'FixedReturnBeaconModule#FixedReturn'?: string
+  'FixedReturnBeaconModule#Beacon'?: string
 }
 
 const addressesMap: Record<number, AddressMapping> = {
@@ -162,7 +164,9 @@ export function validateAddresses() {
     'CashRemunerationEIP712Module#FactoryBeacon',
     'CashRemunerationEIP712Module#CashRemunerationEIP712',
     'SafeDepositRouterBeaconModule#SafeDepositRouter',
-    'SafeDepositRouterBeaconModule#Beacon'
+    'SafeDepositRouterBeaconModule#Beacon',
+    'FixedReturnBeaconModule#Beacon',
+    'FixedReturnBeaconModule#FixedReturn'
   ]
 
   requiredKeys.forEach(resolveAddress)
@@ -215,6 +219,9 @@ export const OFFICER_BEACON = safeResolveAddress('Officer#FactoryBeacon')
 export const INVESTOR_V1_BEACON_ADDRESS = safeResolveAddress('InvestorsV1BeaconModule#Beacon')
 
 export const FEE_COLLECTOR_ADDRESS = safeResolveAddress('FeeCollectorModule#FeeCollector')
+
+export const FIXED_RETURN_IMPL_ADDRESS = safeResolveAddress('FixedReturnBeaconModule#FixedReturn')
+export const FIXED_RETURN_BEACON_ADDRESS = safeResolveAddress('FixedReturnBeaconModule#Beacon')
 
 export const BACKEND_URL = import.meta.env.VITE_APP_BACKEND_URL
 
