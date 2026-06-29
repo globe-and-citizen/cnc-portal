@@ -9,6 +9,7 @@ import SafeDepositRouterBeaconModule from './SafeDepositRouterBeaconModule'
 import proposalBeaconModule from './ProposalModule'
 import electionsBeaconModule from './ElectionsModule'
 import FeeCollectorModule from './FeeCollectorModule'
+import fixedReturnBeaconModule from './FixedReturnBeaconModule'
 
 export default buildModule('Officer', (m) => {
   const beaconAdmin = m.getAccount(0)
@@ -28,6 +29,7 @@ export default buildModule('Officer', (m) => {
   m.useModule(ExpenseAccountEIP712Module)
   m.useModule(CashRemunerationEIP712Module)
   m.useModule(SafeDepositRouterBeaconModule)
+  m.useModule(fixedReturnBeaconModule)
 
   // NOTE: We intentionally do NOT call `initialize` on the Officer implementation.
   // The impl is only used as a delegatecall target for per-team Officer proxies
