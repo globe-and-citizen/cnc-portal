@@ -19,6 +19,9 @@ export interface MapperContext {
   internalAddresses: ReadonlySet<Address>
   /** Addresses treated as founders/owners — their treasury inflows are capital. */
   founderAddresses: ReadonlySet<Address>
+  /** Team member addresses — a member funding the Safe is a capital contribution
+   *  (invest & get SHER → Investor Equity), not a client paying for services. */
+  memberAddresses: ReadonlySet<Address>
   /** Convert a raw base-unit amount to USD at the given time. */
   toUsd: (amount: bigint, token: TokenId, at: Date) => number
   /** Resolve a token contract address (nullish / zero = native) to a {@link TokenId}. */
@@ -59,6 +62,8 @@ export interface BuildMapperContextInput {
   internalAddresses: ReadonlySet<Address>
   /** Founder / owner addresses whose treasury inflows are Owner Capital. */
   founderAddresses?: Iterable<Address | string>
+  /** Team member addresses — a member's Safe inflow is a capital contribution. */
+  memberAddresses?: Iterable<Address | string>
   /** The protocol-wide FeeCollector address (its pocket is `Cash — FeeCollector`). */
   feeCollectorAddress?: Address | string | null
   /** The on-chain SHER token address, so it resolves to the `sher` {@link TokenId}. */
@@ -105,6 +110,7 @@ export function buildMapperContext(input: BuildMapperContextInput): MapperContex
   return {
     internalAddresses: input.internalAddresses,
     founderAddresses: toAddressSet(input.founderAddresses),
+    memberAddresses: toAddressSet(input.memberAddresses),
     toUsd: (amount, token, at) => toUsdUtil(amount, token, at, input.rateOfRecord),
     tokenIdOf,
     pocketOf
