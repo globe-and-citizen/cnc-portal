@@ -48,6 +48,8 @@ export function makeCtx(overrides: Partial<MapperContext> = {}): MapperContext {
     founderAddresses: new Set([ADDR.founder as Address]),
     memberAddresses: new Set([ADDR.member as Address]),
     toUsd: (amount, token) => Number(formatUnits(amount, DECIMALS[token])) * RATE[token],
+    // SHER minted for a USD amount: usd / (USD-per-SHER). RATE.sher = $0.50 → ×2.
+    sherForUsd: (usd) => (RATE.sher > 0 ? usd / RATE.sher : 0),
     tokenIdOf,
     pocketOf: (address) => (address ? (POCKETS[address.toLowerCase()] ?? null) : null),
     ...overrides

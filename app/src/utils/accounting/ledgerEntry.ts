@@ -95,6 +95,11 @@ export interface LedgerEntry {
    * for non-payroll entries.
    */
   minutesWorked?: number
+  /**
+   * End of the work week a wage accrual covers (Unix seconds), carried from the
+   * weekly claim so the label can read "week ending Jun 14". Accrual-only.
+   */
+  periodEnd?: number
   /** Accounting category attached during off-chain enrichment (e.g. "Payroll"). */
   category?: string
   /** Off-chain enrichment status. */

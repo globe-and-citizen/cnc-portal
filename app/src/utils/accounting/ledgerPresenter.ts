@@ -5,8 +5,11 @@
  * statement-level views) to keep each module focused. Pure and unit-testable.
  */
 import { money, fmtDateTime, filterByPeriod } from './presenter'
-import { describeEntry, entryLabel, type NameResolver } from './describeEntry'
+import { activityOf, entryLabel, type ActivityCell } from './describeEntry'
 import type { LedgerEntry, UseCase } from './ledgerEntry'
+
+/** The empty activity carried by a posting's continuation (credit) and total rows. */
+const NO_ACTIVITY: ActivityCell = { kind: 'plain', text: '' }
 
 export type LedgerCategory =
   | 'Investment'
@@ -51,8 +54,8 @@ export interface LedgerRow {
   date: string
   /** The generic accounting-entry label (the "Transaction" column), e.g. "Wage accrual". */
   label: string
-  /** The human-readable narration (the "Activity" column), e.g. "Georges submitted 16h". */
-  activity: string
+  /** The structured narration (the "Activity" column) — avatar(s) + predicate. */
+  activity: ActivityCell
   cat: LedgerCategory | ''
   catClass: string
   account: string
@@ -104,13 +107,13 @@ export function categoryOf(entry: LedgerEntry): LedgerCategory {
 }
 
 /** The two journal-line rows (debit then credit) a posting renders as. */
-function rowsOf(entry: LedgerEntry, nameOf?: NameResolver): LedgerRow[] {
+function rowsOf(entry: LedgerEntry): LedgerRow[] {
   const cat = categoryOf(entry)
   const head = {
     isFirst: true,
     date: fmtDateTime(entry.timestamp),
     label: entryLabel(entry),
-    activity: nameOf ? describeEntry(entry, nameOf) : '',
+    activity: activityOf(entry),
     cat,
     catClass: badgeClassOf(entry)
   }
@@ -136,7 +139,7 @@ function rowsOf(entry: LedgerEntry, nameOf?: NameResolver): LedgerRow[] {
       isFirst: lead,
       date: lead ? head.date : '',
       label: lead ? head.label : '',
-      activity: lead ? head.activity : '',
+      activity: lead ? head.activity : NO_ACTIVITY,
       cat: lead ? cat : '',
       catClass: lead ? head.catClass : '',
       account: entry.credit,
@@ -167,8 +170,8 @@ export function filterLedgerEntries(
 }
 
 /** Flatten postings into the table's two-rows-per-entry shape. */
-export function ledgerRows(entries: readonly LedgerEntry[], nameOf?: NameResolver): LedgerRow[] {
-  return entries.flatMap((entry) => rowsOf(entry, nameOf))
+export function ledgerRows(entries: readonly LedgerEntry[]): LedgerRow[] {
+  return entries.flatMap((entry) => rowsOf(entry))
 }
 
 /** Σ of the debit legs — the "Total movements" figure, formatted as USD. */
@@ -181,9 +184,8 @@ export function presentLedger(
   entries: readonly LedgerEntry[],
   filter: string,
   from?: Date | null,
-  to?: Date | null,
-  nameOf?: NameResolver
+  to?: Date | null
 ): LedgerView {
   const shown = filterLedgerEntries(entries, filter, from, to)
-  return { rows: ledgerRows(shown, nameOf), total: ledgerTotal(shown), entryCount: shown.length }
+  return { rows: ledgerRows(shown), total: ledgerTotal(shown), entryCount: shown.length }
 }
