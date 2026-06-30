@@ -181,14 +181,14 @@ contract Vesting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     VestingInfo storage v = vestings[member][index];
     if (!v.active) revert VestingNotActive();
 
+    // Effects before interactions: deactivate and book the release before minting.
     uint256 releasableAmount = releasable(member, index);
+    v.active = false;
     if (releasableAmount > 0) {
       v.released += releasableAmount;
       _mintShares(member, releasableAmount);
       emit TokensReleased(member, index, releasableAmount);
     }
-
-    v.active = false;
 
     emit VestingStopped(member, index);
   }
@@ -316,10 +316,12 @@ contract Vesting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
       VestingInfo[] memory outInfos
     )
   {
+    uint256 membersLength = members.length;
     uint256 count = 0;
-    for (uint256 i = 0; i < members.length; i++) {
+    for (uint256 i = 0; i < membersLength; i++) {
       VestingInfo[] storage schedules = vestings[members[i]];
-      for (uint256 j = 0; j < schedules.length; j++) {
+      uint256 schedulesLength = schedules.length;
+      for (uint256 j = 0; j < schedulesLength; j++) {
         if (schedules[j].active == wantActive) {
           count++;
         }
@@ -331,9 +333,10 @@ contract Vesting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     outInfos = new VestingInfo[](count);
 
     uint256 k = 0;
-    for (uint256 i = 0; i < members.length; i++) {
+    for (uint256 i = 0; i < membersLength; i++) {
       VestingInfo[] storage schedules = vestings[members[i]];
-      for (uint256 j = 0; j < schedules.length; j++) {
+      uint256 schedulesLength = schedules.length;
+      for (uint256 j = 0; j < schedulesLength; j++) {
         if (schedules[j].active == wantActive) {
           outMembers[k] = members[i];
           outIndices[k] = j;
