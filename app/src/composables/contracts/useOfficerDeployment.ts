@@ -14,8 +14,7 @@
  */
 import { useMutation, useQueryClient } from '@tanstack/vue-query'
 import { getConnections } from '@wagmi/core'
-import { encodeFunctionData, type Address, type Hex } from 'viem'
-import { getLogs } from 'viem/actions'
+import { encodeFunctionData, parseEventLogs, type Address, type Hex } from 'viem'
 import { config } from '@/wagmi.config'
 import { log, parseError } from '@/utils'
 import { executeContractWrite } from '@/composables/contracts/useContractWritesV3'
@@ -24,8 +23,7 @@ import { contractKeys } from '@/queries/contract.queries'
 import {
   validateBeaconAddresses,
   getBeaconConfigs,
-  getDeploymentConfigs,
-  handleBeaconProxyCreatedLogs
+  getDeploymentConfigs
 } from '@/utils/contractDeploymentUtil'
 import { OFFICER_BEACON, validateAddresses } from '@/constant'
 import { OFFICER_ABI } from '@/artifacts/abi/officer'
@@ -97,28 +95,30 @@ export async function deployOfficer(args: DeployOfficerArgs): Promise<OfficerDep
 
   log.info('Officer contract deployment confirmed:', { hash, receipt })
 
-  const publicClient = config.getClient()
-  const blockNumber = receipt.blockNumber
-
-  const logs = await getLogs(publicClient, {
-    address: OFFICER_BEACON as Address,
-    event: {
-      type: 'event',
-      name: 'BeaconProxyCreated',
-      inputs: [
-        { type: 'address', name: 'proxy', indexed: true },
-        { type: 'address', name: 'deployer', indexed: true }
-      ]
-    },
-    fromBlock: blockNumber,
-    toBlock: blockNumber
+  // The deployment receipt already carries every log emitted by this exact
+  // transaction, so we decode the BeaconProxyCreated event straight from it
+  // instead of issuing a second `getLogs` RPC over the whole block (which
+  // could also surface proxies created by other txs in the same block).
+  const [event] = parseEventLogs({
+    abi: [
+      {
+        type: 'event',
+        name: 'BeaconProxyCreated',
+        inputs: [
+          { type: 'address', name: 'proxy', indexed: true },
+          { type: 'address', name: 'deployer', indexed: true }
+        ]
+      }
+    ] as const,
+    eventName: 'BeaconProxyCreated',
+    logs: receipt.logs
   })
 
-  const proxyAddress = handleBeaconProxyCreatedLogs(logs, hash, address)
-
-  if (!proxyAddress) {
+  if (!event) {
     throw new Error('Failed to extract Officer proxy address from deployment event')
   }
+
+  const proxyAddress = event.args.proxy
 
   log.info('Officer proxy address extracted:', proxyAddress)
 
@@ -126,7 +126,7 @@ export async function deployOfficer(args: DeployOfficerArgs): Promise<OfficerDep
     hash,
     receipt,
     officerAddress: proxyAddress,
-    deployBlockNumber: Number(blockNumber),
+    deployBlockNumber: Number(receipt.blockNumber),
     deployedAt: new Date()
   }
 }

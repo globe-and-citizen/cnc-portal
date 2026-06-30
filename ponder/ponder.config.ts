@@ -1,3 +1,5 @@
+import fs from "node:fs";
+import { fileURLToPath } from "node:url";
 import { createConfig, factory, loadBalance, rateLimit } from "ponder";
 import { http, fallback, parseAbiItem } from "viem";
 import { FACTORY_BEACON_ABI } from "./abis/factory-beacon";
@@ -21,25 +23,54 @@ const CONTRACT_DEPLOYED_EVENT = parseAbiItem(
 // Default: polygon
 const isHardhat = process.env.NETWORK === "hardhat";
 const chainName = isHardhat ? "hardhat" : "polygon";
+const chainId = isHardhat ? 31337 : 137;
 
-// Factory contract address differs per network.
-// On Hardhat this changes every redeployment — set FACTORY_ADDRESS in .env.local.
-if (isHardhat && !process.env.FACTORY_ADDRESS) {
-  throw new Error(
-    "FACTORY_ADDRESS must be set in .env.local when NETWORK=hardhat. " +
-      "Deploy contracts and copy the OfficerFactoryBeacon address.",
+// ─── Address resolution ───────────────────────────────────────────────────────
+// Addresses come from the per-network deployment artifact synced by `npm run mc`
+// in contract/ — the same chain-<id>.json the frontend consumes. So a local
+// redeploy + `npm run mc` keeps Ponder in sync with zero manual copy.
+// Env vars (FACTORY_ADDRESS / FEE_COLLECTOR_ADDRESS) override the artifact.
+const deployedAddresses = ((): Record<string, string> => {
+  const file = fileURLToPath(
+    new URL(
+      `./artifacts/deployed_addresses/chain-${chainId}.json`,
+      import.meta.url,
+    ),
   );
-}
-const factoryAddress = (
-  isHardhat
-    ? process.env.FACTORY_ADDRESS!
-    : "0x0205fd32175241aA6f7398073b64bC03f910a6A0"
-) as `0x${string}`;
+  try {
+    return JSON.parse(fs.readFileSync(file, "utf8"));
+  } catch {
+    // chain-31337.json is gitignored — absent until the dev deploys + runs `mc`.
+    return {};
+  }
+})();
 
-if (!process.env.FEE_COLLECTOR_ADDRESS) {
-  throw new Error("FEE_COLLECTOR_ADDRESS must be set in .env.local.");
-}
-const feeCollectorAddress = process.env.FEE_COLLECTOR_ADDRESS as `0x${string}`;
+// Polygon's production indexer has historically pointed at this factory, which
+// currently differs from the artifact's Officer#FactoryBeacon. Keep it pinned
+// until the canonical mainnet factory is verified on-chain, then delete this map
+// to fall back to the artifact like every other network.
+const FACTORY_PIN: Record<number, `0x${string}`> = {
+  137: "0x0205fd32175241aA6f7398073b64bC03f910a6A0",
+};
+
+const missing = (label: string, envVar: string) =>
+  `No ${label} address for chain ${chainId}. ` +
+  (isHardhat
+    ? `Deploy contracts to your local node and run \`npm run mc\` in contract/, or set ${envVar} in .env.local.`
+    : `Set ${envVar} in .env.local or sync chain-137.json.`);
+
+const factoryAddress = (process.env.FACTORY_ADDRESS ??
+  FACTORY_PIN[chainId] ??
+  deployedAddresses["Officer#FactoryBeacon"]) as `0x${string}` | undefined;
+if (!factoryAddress)
+  throw new Error(missing("OfficerFactoryBeacon", "FACTORY_ADDRESS"));
+
+const feeCollectorAddress = (process.env.FEE_COLLECTOR_ADDRESS ??
+  deployedAddresses["FeeCollectorModule#FeeCollector"]) as
+  | `0x${string}`
+  | undefined;
+if (!feeCollectorAddress)
+  throw new Error(missing("FeeCollector", "FEE_COLLECTOR_ADDRESS"));
 
 // On Hardhat start from block 0; on Polygon skip pre-deployment blocks.
 const startBlock = isHardhat ? 0 : Number(process.env.START_BLOCK);
