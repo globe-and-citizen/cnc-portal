@@ -1,25 +1,23 @@
 /**
- * Human-readable labelling of ledger entries — the "labélisation" layer.
+ * Activity narration for ledger entries — the "labélisation" layer.
  *
- * The general ledger should read like a story ("Georges submitted 16h", "Ravi
- * contributed $500 in capital"), not like a row of use-case codes and raw
- * addresses. {@link describeEntry} narrates each {@link LedgerEntry} from the data
- * the pipeline already carries — the counterparty (resolved to a member name via
- * {@link makeNameResolver}), the use case, the amount, and the minutes worked —
- * with no extra fetch and no persistence.
+ * The general ledger's "Activity" column reads like a story: an avatar of the
+ * actor (or the two contract pockets, for a transfer) plus a short predicate
+ * ("submitted 35h · week ending Jun 14", "invested $105.00 in capital"). This
+ * module turns a {@link LedgerEntry} into a structured {@link ActivityCell} the
+ * table renders; identity (member name + avatar, contract icon) is resolved at
+ * render time via `resolveUser`, so this layer stays pure and unit-testable.
  *
- * Entries with no human actor (internal moves, protocol fees, unclassified cash)
- * fall back to the generic per-use-case {@link entryLabel}. Pure and unit-testable.
+ * Entries with no human actor and no pocket-to-pocket move (memo mints,
+ * unclassified cash) fall back to the generic per-use-case {@link entryLabel}.
  */
-import { money } from './presenter'
+import { money, fmtDate } from './presenter'
 import type { LedgerEntry, UseCase } from './ledgerEntry'
-
-/** Resolve an address to a display name (member name, else a shortened address). */
-export type NameResolver = (address?: string | null) => string
+import type { AccountName } from './chartOfAccounts'
 
 /**
- * Normalized accounting-entry label per use case — the generic fallback shown
- * when an entry has no human actor to name (catalogue §5 / spec §4).
+ * Normalized accounting-entry label per use case — the generic fallback shown in
+ * the "Transaction" column and for entries with no actor (catalogue §5 / spec §4).
  */
 const ENTRY_LABEL: Record<UseCase, string> = {
   'UC-BANK-01': 'Owner capital contribution',
@@ -43,29 +41,32 @@ export function entryLabel(entry: LedgerEntry): string {
   return ENTRY_LABEL[entry.useCase] ?? entry.memo
 }
 
-/** Shorten a 0x address for display, e.g. `0x1234…cdef`. */
-export function shortenAddress(address: string): string {
-  return address.length > 10 ? `${address.slice(0, 6)}…${address.slice(-4)}` : address
-}
-
 /**
- * Build a name resolver from a team's members: maps each member address (case
- * insensitive) to its name, and falls back to a shortened address for anyone not
- * on the team (e.g. an external client paying for services).
+ * The structured "Activity" cell the ledger table renders:
+ * - `actor`    — one party's address; show its avatar + the predicate text.
+ * - `transfer` — a pocket-to-pocket move; show `from → to` contract avatars.
+ * - `plain`    — no actor (memo / unclassified); just the text.
  */
-export function makeNameResolver(
-  members: ReadonlyArray<{ address?: string | null; name?: string | null }> | undefined
-): NameResolver {
-  const byAddress = new Map<string, string>()
-  for (const member of members ?? []) {
-    const key = member.address?.toLowerCase()
-    if (key && member.name) byAddress.set(key, member.name)
-  }
-  return (address) => {
-    if (!address) return ''
-    return byAddress.get(address.toLowerCase()) ?? shortenAddress(address)
-  }
-}
+export type ActivityCell =
+  | { kind: 'actor'; actor: string; text: string }
+  | { kind: 'transfer'; from: AccountName; to: AccountName }
+  | { kind: 'plain'; text: string }
+
+/** Internal pocket-to-pocket moves — rendered as two contract avatars (from → to). */
+const TRANSFER_USE_CASES: ReadonlySet<UseCase> = new Set<UseCase>(['INTERNAL', 'UC-BANK-03', 'FEE'])
+
+/** Use cases that name a single party (member / investor / client) — avatar + predicate. */
+const ACTOR_USE_CASES: ReadonlySet<UseCase> = new Set<UseCase>([
+  'UC-CASH-02',
+  'UC-CASH-03',
+  'UC-BANK-01',
+  'UC-BANK-02',
+  'UC-SDR-01',
+  'UC-MEMBER-01',
+  'UC-EXP-01',
+  'UC-INV-01',
+  'DEFAULT-D'
+])
 
 /** Whole hours when the minutes divide evenly, else one decimal — e.g. "16h", "1.5h". */
 function formatHours(minutes: number | undefined): string | null {
@@ -75,42 +76,53 @@ function formatHours(minutes: number | undefined): string | null {
 }
 
 /**
- * Narrate a ledger entry as a human-readable label. Names the counterparty
- * (member name, else shortened address) and reads the action from the use case;
- * the date lives in its own ledger column, so the label omits it. Entries with no
- * human actor fall back to {@link entryLabel}.
+ * The name-less predicate shown after the actor's avatar (the avatar carries the
+ * name). The "· N SHER" tail appears once the entry carries the share count.
  */
-export function describeEntry(entry: LedgerEntry, nameOf: NameResolver): string {
-  const who = entry.counterparty ? nameOf(entry.counterparty) : ''
-  if (!who) return entryLabel(entry)
+function predicate(entry: LedgerEntry): string {
   const amount = money(entry.amountUsd)
   const hours = formatHours(entry.minutesWorked)
+  const sher = entry.shares ? ` · ${entry.shares} SHER` : ''
 
   switch (entry.useCase) {
-    case 'UC-CASH-02':
-      return hours ? `${who} submitted ${hours}` : `${who} accrued wages`
+    case 'UC-CASH-02': {
+      if (!hours) return 'accrued wages'
+      const week = entry.periodEnd ? ` · week ending ${fmtDate(entry.periodEnd)}` : ''
+      return `submitted ${hours}${week}`
+    }
     case 'UC-CASH-03':
-      return hours ? `${who} was paid for ${hours}` : `${who} was paid wages`
+      return hours ? `was paid for ${hours}` : 'was paid wages'
     case 'UC-BANK-01':
-      return `${who} contributed ${amount} in capital`
+      return `contributed ${amount} in capital`
     case 'UC-BANK-02':
-      return `${who} paid ${amount} for services`
+      return `paid ${amount} for services`
     case 'UC-SDR-01':
-      return `${who} invested ${amount}`
+      return `invested ${amount}${sher}`
     case 'UC-MEMBER-01':
-      // "got N SHER" appears once the SafeDepositRouter feed carries the share
-      // count (entry.shares); until then the cash leg alone is narrated.
-      return entry.shares
-        ? `${who} invested ${amount} in capital and got ${entry.shares} SHER`
-        : `${who} invested ${amount} in capital`
+      return `invested ${amount} in capital${sher}`
     case 'UC-EXP-01':
-      return `${who}'s expense reimbursed — ${amount}`
+      return `expense reimbursed · ${amount}`
     case 'UC-INV-01':
-      return `Dividend of ${amount} paid to ${who}`
+      return `received a ${amount} dividend`
     case 'DEFAULT-D':
-      return entry.shares ? `${entry.shares} SHER issued to ${who}` : entryLabel(entry)
+      return entry.shares ? `was issued ${entry.shares} SHER` : entryLabel(entry)
     default:
-      // FEE, INTERNAL, UC-BANK-03, CASH-IN, CASH-OUT — no personal narration.
       return entryLabel(entry)
   }
+}
+
+/**
+ * Describe a ledger entry's activity as a structured {@link ActivityCell}. A
+ * pocket-to-pocket move becomes a `transfer` (cash flows from the credited pocket
+ * to the debited one); an entry that names a party becomes an `actor`; anything
+ * else is `plain` text.
+ */
+export function activityOf(entry: LedgerEntry): ActivityCell {
+  if (TRANSFER_USE_CASES.has(entry.useCase) && entry.debit && entry.credit) {
+    return { kind: 'transfer', from: entry.credit, to: entry.debit }
+  }
+  if (entry.counterparty && ACTOR_USE_CASES.has(entry.useCase)) {
+    return { kind: 'actor', actor: entry.counterparty, text: predicate(entry) }
+  }
+  return { kind: 'plain', text: entryLabel(entry) }
 }
