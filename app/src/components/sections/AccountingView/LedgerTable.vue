@@ -24,6 +24,12 @@
       <span v-else-if="row.isFirst" class="text-sm font-semibold">{{ row.label }}</span>
     </template>
 
+    <template #activity-cell="{ row: { original: row } }">
+      <span v-if="!row.isTotal && row.isFirst && row.activity" class="text-muted text-sm">
+        {{ row.activity }}
+      </span>
+    </template>
+
     <template #account-cell="{ row: { original: row } }">
       <span
         v-if="!row.isTotal"
@@ -77,6 +83,7 @@ const tableRows = computed<LedgerTableRow[]>(() => [
     isFirst: false,
     date: '',
     label: '',
+    activity: '',
     cat: '',
     catClass: '',
     account: '',
@@ -92,6 +99,7 @@ const columns: TableColumn<LedgerTableRow>[] = [
   { accessorKey: 'date', header: 'Date' },
   { id: 'action', header: 'Action' },
   { id: 'transaction', header: 'Transaction' },
+  { id: 'activity', header: 'Activity' },
   { accessorKey: 'account', header: 'Account' },
   { accessorKey: 'dr', header: 'Debit' },
   { accessorKey: 'cr', header: 'Credit' }

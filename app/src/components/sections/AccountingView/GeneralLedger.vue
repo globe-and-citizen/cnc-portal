@@ -81,6 +81,6 @@ watch([filter, period], reset, { deep: true })
 
 const pageRows = computed(() => {
   const start = (page.value - 1) * pageSize.value
-  return ledgerRows(filtered.value.slice(start, start + pageSize.value))
+  return ledgerRows(filtered.value.slice(start, start + pageSize.value), acc.nameOf.value)
 })
 </script>
