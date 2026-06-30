@@ -27,13 +27,22 @@
     <template #activity-cell="{ row: { original: row } }">
       <div v-if="!row.isTotal && row.isFirst" class="flex items-center gap-1.5 text-sm">
         <template v-if="row.activity.kind === 'actor'">
-          <UserComponent compact hide-address :user="resolveUser(row.activity.actor)" />
+          <UserComponent compact size="sm" hide-address :user="resolveUser(row.activity.actor)" />
           <span class="text-muted">{{ row.activity.text }}</span>
         </template>
         <template v-else-if="row.activity.kind === 'transfer'">
-          <UserComponent compact hide-address :user="pocketUser(row.activity.from)" />
-          <span class="text-muted">→</span>
-          <UserComponent compact hide-address :user="pocketUser(row.activity.to)" />
+          <template v-if="row.activity.actor">
+            <UserComponent compact size="sm" hide-address :user="resolveUser(row.activity.actor)" />
+            <span class="text-muted">transferred money from</span>
+            <UserComponent compact size="sm" hide-address :user="pocketUser(row.activity.from)" />
+            <span class="text-muted">to</span>
+            <UserComponent compact size="sm" hide-address :user="pocketUser(row.activity.to)" />
+          </template>
+          <template v-else>
+            <UserComponent compact size="sm" hide-address :user="pocketUser(row.activity.from)" />
+            <span class="text-muted">transferred money to</span>
+            <UserComponent compact size="sm" hide-address :user="pocketUser(row.activity.to)" />
+          </template>
         </template>
         <span v-else-if="row.activity.text" class="text-muted">{{ row.activity.text }}</span>
       </div>
