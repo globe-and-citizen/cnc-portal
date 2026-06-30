@@ -32,6 +32,21 @@ describe('mapSafeTransfers', () => {
     expect(entry).toMatchObject({ useCase: 'UC-BANK-02', credit: 'Service Revenue' })
   })
 
+  it('books a member inflow as UC-MEMBER-01 (Investor Equity — invest & get SHER)', () => {
+    const [entry] = mapSafeTransfers(
+      {
+        safeAddress: ADDR.safe,
+        transfers: [{ ...base, id: 'i2b', from: ADDR.member, to: ADDR.safe }]
+      },
+      ctx
+    )
+    expect(entry).toMatchObject({
+      useCase: 'UC-MEMBER-01',
+      debit: 'Cash — Safe',
+      credit: 'Investor Equity'
+    })
+  })
+
   it('books an inflow from an internal pocket as an internal move', () => {
     const [entry] = mapSafeTransfers(
       {
