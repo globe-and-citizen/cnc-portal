@@ -43,7 +43,8 @@ describe('mapSafeTransfers', () => {
     expect(entry).toMatchObject({
       useCase: 'UC-MEMBER-01',
       debit: 'Cash — Safe',
-      credit: 'Investor Equity'
+      credit: 'Investor Equity',
+      shares: 4 // $2 invested ÷ $0.50 per SHER (multiplier 2x)
     })
   })
 
