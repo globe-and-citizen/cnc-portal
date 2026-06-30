@@ -39,6 +39,7 @@ import { useGetTeamWeeklyClaimsQuery } from '@/queries/weeklyClaim.queries'
 import { useGetExpensesQuery } from '@/queries/expense.queries'
 import { useGetSafeIncomingTransfersQuery } from '@/queries/safe.queries'
 import { useCurrencyStore } from '@/stores/currencyStore'
+import { useTransferInitiators } from './useTransferInitiators'
 import {
   assembleCncAccounting,
   type CncAccounting,
@@ -200,6 +201,28 @@ export function useCNCAccounting(
     return assembleCncAccounting(input)
   })
 
+  // Resolve the human who signed each internal transfer (the tx feed carries only
+  // a hash), then attach it so the ledger reads "Stravid87 transferred money from
+  // Bank to Safe". Optional: an unresolved hash keeps the source-pocket fallback.
+  const transferHashes = computed<string[]>(() => {
+    const hashes = new Set<string>()
+    for (const entry of accounting.value.entries) {
+      if (entry.internal && entry.txHash) hashes.add(entry.txHash)
+    }
+    return [...hashes]
+  })
+  const transferInitiators = useTransferInitiators(transferHashes)
+
+  const entries = computed<LedgerEntry[]>(() => {
+    const initiators = transferInitiators.value
+    if (!initiators.size) return accounting.value.entries
+    return accounting.value.entries.map((entry) =>
+      entry.internal && entry.txHash && initiators.has(entry.txHash)
+        ? { ...entry, initiator: initiators.get(entry.txHash) }
+        : entry
+    )
+  })
+
   // The team query is the only fatal one — without contracts there are no books.
   // Loading reflects the team + on-chain + enrichment feeds; the Safe service is
   // optional, so it is excluded to keep a slow/flaky transfer feed from blocking.
@@ -236,7 +259,7 @@ export function useCNCAccounting(
   }
 
   return {
-    entries: computed(() => accounting.value.entries),
+    entries,
     summary: computed(() => accounting.value.summary),
     generalLedger: computed(() => accounting.value.generalLedger),
     incomeStatement: computed(() => accounting.value.incomeStatement),
