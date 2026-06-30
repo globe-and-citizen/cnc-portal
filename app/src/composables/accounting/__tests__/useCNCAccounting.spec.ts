@@ -15,7 +15,6 @@ describe('useCNCAccounting', () => {
     // of whether the mocked feeds produce any entries (e.g. payroll accruals).
     expect(Array.isArray(acc.entries.value)).toBe(true)
     expect(acc.summary.value).toHaveProperty('cash')
-    expect(typeof acc.nameOf.value).toBe('function')
     expect(acc.generalLedger.value.balanced).toBe(true)
     expect(typeof acc.incomeStatement.value.netIncome).toBe('number')
     expect(acc.balanceSheet.value.balanced).toBe(true)

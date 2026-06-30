@@ -1,18 +1,8 @@
 import { describe, it, expect } from 'vitest'
-import { describeEntry, entryLabel, makeNameResolver, shortenAddress } from '../describeEntry'
+import { activityOf, entryLabel } from '../describeEntry'
 import type { LedgerEntry } from '../ledgerEntry'
 
-const GEORGES = '0x1111111111111111111111111111111111111111'
-const RAVI = '0x2222222222222222222222222222222222222222'
-const STRANGER = '0x3333333333333333333333333333333333333333'
-
-// Ravi is stored upper-cased on purpose, to prove the resolver is case-insensitive.
-const nameOf = makeNameResolver([
-  { address: GEORGES, name: 'Georges' },
-  { address: RAVI.toUpperCase(), name: 'Ravi' },
-  { address: '', name: 'No address' }, // skipped (no address)
-  { address: STRANGER, name: null } // skipped (no name) → resolves as short address
-])
+const ALI = '0x1111111111111111111111111111111111111111'
 
 /** A minimal balanced entry; override only what each case needs. */
 function entry(partial: Partial<LedgerEntry>): LedgerEntry {
@@ -32,131 +22,97 @@ function entry(partial: Partial<LedgerEntry>): LedgerEntry {
   }
 }
 
-describe('shortenAddress', () => {
-  it('truncates a full address to head…tail', () => {
-    expect(shortenAddress(GEORGES)).toBe('0x1111…1111')
+describe('activityOf — actor rows', () => {
+  it('narrates a wage accrual with the hours and the week-ending date', () => {
+    const a = activityOf(
+      entry({
+        useCase: 'UC-CASH-02',
+        counterparty: ALI,
+        minutesWorked: 960,
+        periodEnd: 1_700_000_000
+      })
+    )
+    expect(a).toMatchObject({ kind: 'actor', actor: ALI })
+    expect(a).toHaveProperty('text', expect.stringContaining('submitted 16h'))
+    expect(a).toHaveProperty('text', expect.stringContaining('week ending'))
   })
 
-  it('returns short input unchanged', () => {
-    expect(shortenAddress('0xabc')).toBe('0xabc')
+  it('omits the week when there are no hours', () => {
+    expect(activityOf(entry({ useCase: 'UC-CASH-02', counterparty: ALI }))).toEqual({
+      kind: 'actor',
+      actor: ALI,
+      text: 'accrued wages'
+    })
+  })
+
+  it('renders fractional hours and a wage settlement', () => {
+    expect(
+      activityOf(entry({ useCase: 'UC-CASH-02', counterparty: ALI, minutesWorked: 90 }))
+    ).toEqual({ kind: 'actor', actor: ALI, text: 'submitted 1.5h' })
+    expect(
+      activityOf(entry({ useCase: 'UC-CASH-03', counterparty: ALI, minutesWorked: 960 }))
+    ).toEqual({ kind: 'actor', actor: ALI, text: 'was paid for 16h' })
+    expect(activityOf(entry({ useCase: 'UC-CASH-03', counterparty: ALI }))).toEqual({
+      kind: 'actor',
+      actor: ALI,
+      text: 'was paid wages'
+    })
+  })
+
+  it('narrates capital, revenue and an investment with the SHER tail', () => {
+    expect(activityOf(entry({ useCase: 'UC-BANK-01', counterparty: ALI })).text).toBe(
+      'contributed $500.00 in capital'
+    )
+    expect(activityOf(entry({ useCase: 'UC-BANK-02', counterparty: ALI })).text).toBe(
+      'paid $500.00 for services'
+    )
+    expect(activityOf(entry({ useCase: 'UC-SDR-01', counterparty: ALI })).text).toBe(
+      'invested $500.00'
+    )
+    expect(
+      activityOf(entry({ useCase: 'UC-MEMBER-01', counterparty: ALI, shares: 120 })).text
+    ).toBe('invested $500.00 in capital · 120 SHER')
+  })
+
+  it('narrates an expense reimbursement, a dividend and a share issuance', () => {
+    expect(activityOf(entry({ useCase: 'UC-EXP-01', counterparty: ALI, amountUsd: 80 })).text).toBe(
+      'expense reimbursed · $80.00'
+    )
+    expect(activityOf(entry({ useCase: 'UC-INV-01', counterparty: ALI })).text).toBe(
+      'received a $500.00 dividend'
+    )
+    expect(activityOf(entry({ useCase: 'DEFAULT-D', counterparty: ALI, shares: 120 })).text).toBe(
+      'was issued 120 SHER'
+    )
   })
 })
 
-describe('makeNameResolver', () => {
-  it('resolves a member name case-insensitively', () => {
-    expect(nameOf(GEORGES)).toBe('Georges')
-    expect(nameOf(RAVI.toLowerCase())).toBe('Ravi')
-  })
-
-  it('falls back to a shortened address for a non-member', () => {
-    expect(nameOf(STRANGER)).toBe('0x3333…3333')
-  })
-
-  it('returns an empty string for a missing address', () => {
-    expect(nameOf(null)).toBe('')
-    expect(nameOf(undefined)).toBe('')
-  })
-
-  it('tolerates an undefined member list', () => {
-    expect(makeNameResolver(undefined)(GEORGES)).toBe('0x1111…1111')
+describe('activityOf — transfer rows', () => {
+  it('reads an internal move as from (credit) → to (debit) pockets', () => {
+    expect(
+      activityOf(entry({ useCase: 'INTERNAL', debit: 'Cash — Safe', credit: 'Cash — Bank' }))
+    ).toEqual({ kind: 'transfer', from: 'Cash — Bank', to: 'Cash — Safe' })
+    expect(
+      activityOf(entry({ useCase: 'FEE', debit: 'Cash — FeeCollector', credit: 'Cash — Bank' }))
+    ).toEqual({ kind: 'transfer', from: 'Cash — Bank', to: 'Cash — FeeCollector' })
   })
 })
 
-describe('describeEntry', () => {
-  it('narrates a wage accrual with the hours worked', () => {
+describe('activityOf — plain rows', () => {
+  it('falls back to the generic label with no actor and no transfer', () => {
+    expect(activityOf(entry({ useCase: 'CASH-IN' }))).toEqual({
+      kind: 'plain',
+      text: 'Cash receipt'
+    })
+    // an actor use case without a counterparty has no one to name
+    expect(activityOf(entry({ useCase: 'UC-BANK-01' }))).toEqual({
+      kind: 'plain',
+      text: 'Owner capital contribution'
+    })
+    // a memo-only mint with no shares
     expect(
-      describeEntry(
-        entry({ useCase: 'UC-CASH-02', counterparty: GEORGES, minutesWorked: 960 }),
-        nameOf
-      )
-    ).toBe('Georges submitted 16h')
-  })
-
-  it('renders fractional hours with one decimal', () => {
-    expect(
-      describeEntry(
-        entry({ useCase: 'UC-CASH-02', counterparty: GEORGES, minutesWorked: 90 }),
-        nameOf
-      )
-    ).toBe('Georges submitted 1.5h')
-  })
-
-  it('falls back to "accrued wages" when no minutes are known', () => {
-    expect(describeEntry(entry({ useCase: 'UC-CASH-02', counterparty: GEORGES }), nameOf)).toBe(
-      'Georges accrued wages'
-    )
-  })
-
-  it('narrates a wage settlement', () => {
-    expect(
-      describeEntry(
-        entry({ useCase: 'UC-CASH-03', counterparty: GEORGES, minutesWorked: 960 }),
-        nameOf
-      )
-    ).toBe('Georges was paid for 16h')
-    expect(describeEntry(entry({ useCase: 'UC-CASH-03', counterparty: GEORGES }), nameOf)).toBe(
-      'Georges was paid wages'
-    )
-  })
-
-  it('narrates capital, revenue and investment', () => {
-    expect(describeEntry(entry({ useCase: 'UC-BANK-01', counterparty: RAVI }), nameOf)).toBe(
-      'Ravi contributed $500.00 in capital'
-    )
-    expect(describeEntry(entry({ useCase: 'UC-BANK-02', counterparty: RAVI }), nameOf)).toBe(
-      'Ravi paid $500.00 for services'
-    )
-    expect(describeEntry(entry({ useCase: 'UC-SDR-01', counterparty: RAVI }), nameOf)).toBe(
-      'Ravi invested $500.00'
-    )
-  })
-
-  it('narrates a member capital contribution, adding the SHER count when known', () => {
-    expect(describeEntry(entry({ useCase: 'UC-MEMBER-01', counterparty: GEORGES }), nameOf)).toBe(
-      'Georges invested $500.00 in capital'
-    )
-    expect(
-      describeEntry(entry({ useCase: 'UC-MEMBER-01', counterparty: GEORGES, shares: 120 }), nameOf)
-    ).toBe('Georges invested $500.00 in capital and got 120 SHER')
-  })
-
-  it('narrates an expense reimbursement and a dividend', () => {
-    expect(
-      describeEntry(entry({ useCase: 'UC-EXP-01', counterparty: GEORGES, amountUsd: 80 }), nameOf)
-    ).toBe("Georges's expense reimbursed — $80.00")
-    expect(describeEntry(entry({ useCase: 'UC-INV-01', counterparty: RAVI }), nameOf)).toBe(
-      'Dividend of $500.00 paid to Ravi'
-    )
-  })
-
-  it('narrates a share issuance, falling back when no shares are set', () => {
-    expect(
-      describeEntry(entry({ useCase: 'DEFAULT-D', counterparty: RAVI, shares: 120 }), nameOf)
-    ).toBe('120 SHER issued to Ravi')
-    expect(describeEntry(entry({ useCase: 'DEFAULT-D', counterparty: RAVI }), nameOf)).toBe(
-      'Share issuance'
-    )
-  })
-
-  it('uses the shortened address when the counterparty is not a member', () => {
-    expect(describeEntry(entry({ useCase: 'UC-SDR-01', counterparty: STRANGER }), nameOf)).toBe(
-      '0x3333…3333 invested $500.00'
-    )
-  })
-
-  it('keeps the generic label for entries with no human actor', () => {
-    expect(describeEntry(entry({ useCase: 'FEE', counterparty: RAVI }), nameOf)).toBe(
-      'Protocol fee'
-    )
-    expect(describeEntry(entry({ useCase: 'INTERNAL', counterparty: RAVI }), nameOf)).toBe(
-      'Internal transfer'
-    )
-  })
-
-  it('falls back to the generic label when there is no counterparty', () => {
-    expect(describeEntry(entry({ useCase: 'UC-BANK-01' }), nameOf)).toBe(
-      'Owner capital contribution'
-    )
+      activityOf(entry({ useCase: 'DEFAULT-D', counterparty: ALI, debit: null, credit: null }))
+    ).toEqual({ kind: 'actor', actor: ALI, text: 'Share issuance' })
   })
 })
 
@@ -164,5 +120,6 @@ describe('entryLabel', () => {
   it('maps each use case to its generic label', () => {
     expect(entryLabel(entry({ useCase: 'CASH-OUT' }))).toBe('Cash payment')
     expect(entryLabel(entry({ useCase: 'UC-BANK-03' }))).toBe('Treasury funding')
+    expect(entryLabel(entry({ useCase: 'UC-MEMBER-01' }))).toBe('Member capital contribution')
   })
 })

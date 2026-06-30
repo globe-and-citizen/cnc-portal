@@ -13,7 +13,6 @@ import {
   filterByPeriod
 } from '@/utils/accounting/presenter'
 import { presentLedger } from '@/utils/accounting/ledgerPresenter'
-import { makeNameResolver } from '@/utils/accounting/describeEntry'
 import { USDC_ADDRESS } from '@/constant'
 import { ADDR } from './fixtures'
 
@@ -179,17 +178,14 @@ describe('presentLedger', () => {
     expect(ledger.rows[0].label).toBe('Service revenue') // normalized UC-BANK-02 label
   })
 
-  it('leaves the human-readable activity empty without a name resolver', () => {
+  it('attaches a structured activity (actor + predicate) without touching the accounting label', () => {
     const ledger = presentLedger(books().entries, 'Revenue')
-    expect(ledger.rows[0].activity).toBe('')
-  })
-
-  it('adds a human-readable activity without touching the accounting label', () => {
-    const nameOf = makeNameResolver([{ address: ADDR.client, name: 'Acme' }])
-    const ledger = presentLedger(books().entries, 'Revenue', null, null, nameOf)
     expect(ledger.rows[0].label).toBe('Service revenue') // accounting label unchanged
-    expect(ledger.rows[0].activity).toBe('Acme paid $100.00 for services')
-    expect(ledger.rows[1].activity).toBe('') // credit leg stays blank
+    expect(ledger.rows[0].activity).toMatchObject({
+      kind: 'actor',
+      text: 'paid $100.00 for services'
+    })
+    expect(ledger.rows[1].activity).toEqual({ kind: 'plain', text: '' }) // credit leg stays blank
   })
 })
 
