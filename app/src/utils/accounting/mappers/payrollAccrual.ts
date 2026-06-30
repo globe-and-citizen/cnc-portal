@@ -56,6 +56,13 @@ function accrualSeconds(claim: WeeklyClaim): number {
   return Number.isFinite(ms) ? Math.floor(ms / 1000) : 0
 }
 
+/** Unix seconds for the last day of the claim's week (weekStart + 6 days). */
+function weekEndSeconds(claim: WeeklyClaim): number | undefined {
+  const start = new Date(claim.weekStart).getTime()
+  if (!Number.isFinite(start)) return undefined
+  return Math.floor((start + WEEK_MS - 24 * 60 * 60 * 1000) / 1000)
+}
+
 /**
  * Map every submitted weekly claim whose week has **ended** to its UC-CASH-02
  * accrual postings. Claims for the week still in progress (relative to `now`) are
@@ -97,6 +104,7 @@ export function mapPayrollAccruals(
           rawAmount: base.toString(),
           counterparty: claim.memberAddress,
           minutesWorked: claim.minutesWorked,
+          periodEnd: weekEndSeconds(claim),
           category: 'Payroll',
           enrichment: 'enriched',
           memo: 'Wage earned — weekly claim submitted'

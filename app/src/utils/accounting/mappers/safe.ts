@@ -83,6 +83,8 @@ function mapInflow(row: SafeTransferRow, ctx: MapperContext): LedgerEntry {
       ...base,
       useCase: 'UC-MEMBER-01',
       credit: 'Investor Equity',
+      // SHER received = USD invested × router multiplier (no router event here).
+      shares: ctx.sherForUsd(base.amountUsd, atDate(row.timestamp)),
       memo: 'Member capital contribution into Safe'
     })
   }
