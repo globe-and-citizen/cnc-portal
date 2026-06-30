@@ -96,6 +96,7 @@ export function mapPayrollAccruals(
           token: tokenId,
           rawAmount: base.toString(),
           counterparty: claim.memberAddress,
+          minutesWorked: claim.minutesWorked,
           category: 'Payroll',
           enrichment: 'enriched',
           memo: 'Wage earned — weekly claim submitted'

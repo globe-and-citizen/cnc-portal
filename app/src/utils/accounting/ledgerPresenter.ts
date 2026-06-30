@@ -5,6 +5,7 @@
  * statement-level views) to keep each module focused. Pure and unit-testable.
  */
 import { money, fmtDateTime, filterByPeriod } from './presenter'
+import { describeEntry, entryLabel, type NameResolver } from './describeEntry'
 import type { LedgerEntry, UseCase } from './ledgerEntry'
 
 export type LedgerCategory =
@@ -48,7 +49,10 @@ export const ledgerCategories: Array<LedgerCategory | 'All'> = [
 export interface LedgerRow {
   isFirst: boolean
   date: string
+  /** The generic accounting-entry label (the "Transaction" column), e.g. "Wage accrual". */
   label: string
+  /** The human-readable narration (the "Activity" column), e.g. "Georges submitted 16h". */
+  activity: string
   cat: LedgerCategory | ''
   catClass: string
   account: string
@@ -62,32 +66,6 @@ export interface LedgerView {
   rows: LedgerRow[]
   total: string
   entryCount: number
-}
-
-/**
- * Normalized accounting-entry label per use case — shown in the ledger's
- * "Transaction" column instead of the raw event memo, so each row reads as the
- * journal entry it realises (catalogue §5 / spec §4).
- */
-const ENTRY_LABEL: Record<UseCase, string> = {
-  'UC-BANK-01': 'Owner capital contribution',
-  'UC-BANK-02': 'Service revenue',
-  'UC-BANK-03': 'Treasury funding',
-  'UC-SDR-01': 'Investor contribution',
-  'UC-CASH-02': 'Wage accrual',
-  'UC-CASH-03': 'Wage settlement',
-  'UC-EXP-01': 'Operating expense',
-  'UC-INV-01': 'Dividend paid',
-  'DEFAULT-D': 'Share issuance',
-  FEE: 'Protocol fee',
-  INTERNAL: 'Internal transfer',
-  'CASH-IN': 'Cash receipt',
-  'CASH-OUT': 'Cash payment'
-}
-
-/** The accounting-entry label a ledger row shows (falls back to the memo). */
-export function entryLabel(entry: LedgerEntry): string {
-  return ENTRY_LABEL[entry.useCase] ?? entry.memo
 }
 
 /**
@@ -109,6 +87,7 @@ export function categoryOf(entry: LedgerEntry): LedgerCategory {
   const byUseCase: Partial<Record<UseCase, LedgerCategory>> = {
     'UC-BANK-01': 'Investment',
     'UC-SDR-01': 'Investment',
+    'UC-MEMBER-01': 'Investment',
     'UC-BANK-02': 'Revenue',
     'CASH-IN': 'Revenue',
     'UC-CASH-02': 'Payroll',
@@ -125,12 +104,13 @@ export function categoryOf(entry: LedgerEntry): LedgerCategory {
 }
 
 /** The two journal-line rows (debit then credit) a posting renders as. */
-function rowsOf(entry: LedgerEntry): LedgerRow[] {
+function rowsOf(entry: LedgerEntry, nameOf?: NameResolver): LedgerRow[] {
   const cat = categoryOf(entry)
   const head = {
     isFirst: true,
     date: fmtDateTime(entry.timestamp),
     label: entryLabel(entry),
+    activity: nameOf ? describeEntry(entry, nameOf) : '',
     cat,
     catClass: badgeClassOf(entry)
   }
@@ -156,6 +136,7 @@ function rowsOf(entry: LedgerEntry): LedgerRow[] {
       isFirst: lead,
       date: lead ? head.date : '',
       label: lead ? head.label : '',
+      activity: lead ? head.activity : '',
       cat: lead ? cat : '',
       catClass: lead ? head.catClass : '',
       account: entry.credit,
@@ -186,8 +167,8 @@ export function filterLedgerEntries(
 }
 
 /** Flatten postings into the table's two-rows-per-entry shape. */
-export function ledgerRows(entries: readonly LedgerEntry[]): LedgerRow[] {
-  return entries.flatMap(rowsOf)
+export function ledgerRows(entries: readonly LedgerEntry[], nameOf?: NameResolver): LedgerRow[] {
+  return entries.flatMap((entry) => rowsOf(entry, nameOf))
 }
 
 /** Σ of the debit legs — the "Total movements" figure, formatted as USD. */
@@ -200,8 +181,9 @@ export function presentLedger(
   entries: readonly LedgerEntry[],
   filter: string,
   from?: Date | null,
-  to?: Date | null
+  to?: Date | null,
+  nameOf?: NameResolver
 ): LedgerView {
   const shown = filterLedgerEntries(entries, filter, from, to)
-  return { rows: ledgerRows(shown), total: ledgerTotal(shown), entryCount: shown.length }
+  return { rows: ledgerRows(shown, nameOf), total: ledgerTotal(shown), entryCount: shown.length }
 }

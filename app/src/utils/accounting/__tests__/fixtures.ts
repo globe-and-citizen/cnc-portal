@@ -46,6 +46,7 @@ export function makeCtx(overrides: Partial<MapperContext> = {}): MapperContext {
   return {
     internalAddresses: new Set(Object.keys(POCKETS) as Address[]),
     founderAddresses: new Set([ADDR.founder as Address]),
+    memberAddresses: new Set([ADDR.member as Address]),
     toUsd: (amount, token) => Number(formatUnits(amount, DECIMALS[token])) * RATE[token],
     tokenIdOf,
     pocketOf: (address) => (address ? (POCKETS[address.toLowerCase()] ?? null) : null),
