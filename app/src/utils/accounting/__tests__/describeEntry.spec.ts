@@ -37,25 +37,25 @@ describe('activityOf — actor rows', () => {
     expect(a).toHaveProperty('text', expect.stringContaining('week ending'))
   })
 
-  it('omits the week when there are no hours', () => {
+  it('falls back to a wage-claim phrase when there are no hours', () => {
     expect(activityOf(entry({ useCase: 'UC-CASH-02', counterparty: ALI }))).toEqual({
       kind: 'actor',
       actor: ALI,
-      text: 'accrued wages'
+      text: 'submitted a wage claim'
     })
   })
 
   it('renders fractional hours and a wage settlement', () => {
     expect(
       activityOf(entry({ useCase: 'UC-CASH-02', counterparty: ALI, minutesWorked: 90 }))
-    ).toEqual({ kind: 'actor', actor: ALI, text: 'submitted 1.5h' })
+    ).toEqual({ kind: 'actor', actor: ALI, text: 'submitted 1.5h of work' })
     expect(
       activityOf(entry({ useCase: 'UC-CASH-03', counterparty: ALI, minutesWorked: 960 }))
-    ).toEqual({ kind: 'actor', actor: ALI, text: 'was paid for 16h' })
+    ).toEqual({ kind: 'actor', actor: ALI, text: 'was paid for 16h of work' })
     expect(activityOf(entry({ useCase: 'UC-CASH-03', counterparty: ALI }))).toEqual({
       kind: 'actor',
       actor: ALI,
-      text: 'was paid wages'
+      text: 'was paid their wages'
     })
   })
 
@@ -67,16 +67,16 @@ describe('activityOf — actor rows', () => {
       'paid $500.00 for services'
     )
     expect(activityOf(entry({ useCase: 'UC-SDR-01', counterparty: ALI })).text).toBe(
-      'invested $500.00'
+      'invested $500.00 in capital'
     )
     expect(
       activityOf(entry({ useCase: 'UC-MEMBER-01', counterparty: ALI, shares: 120 })).text
-    ).toBe('invested $500.00 in capital · 120 SHER')
+    ).toBe('invested $500.00 in capital and got 120 SHER')
   })
 
   it('narrates an expense reimbursement, a dividend and a share issuance', () => {
     expect(activityOf(entry({ useCase: 'UC-EXP-01', counterparty: ALI, amountUsd: 80 })).text).toBe(
-      'expense reimbursed · $80.00'
+      'was reimbursed $80.00 for an expense'
     )
     expect(activityOf(entry({ useCase: 'UC-INV-01', counterparty: ALI })).text).toBe(
       'received a $500.00 dividend'
@@ -95,6 +95,14 @@ describe('activityOf — transfer rows', () => {
     expect(
       activityOf(entry({ useCase: 'FEE', debit: 'Cash — FeeCollector', credit: 'Cash — Bank' }))
     ).toEqual({ kind: 'transfer', from: 'Cash — Bank', to: 'Cash — FeeCollector' })
+  })
+
+  it('names the initiator (the signer) when it is resolved', () => {
+    expect(
+      activityOf(
+        entry({ useCase: 'INTERNAL', debit: 'Cash — Safe', credit: 'Cash — Bank', initiator: ALI })
+      )
+    ).toEqual({ kind: 'transfer', from: 'Cash — Bank', to: 'Cash — Safe', actor: ALI })
   })
 })
 
