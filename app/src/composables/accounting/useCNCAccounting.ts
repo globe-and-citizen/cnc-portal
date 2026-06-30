@@ -50,6 +50,7 @@ import type { GeneralLedger } from '@/utils/accounting/generalLedger'
 import type { IncomeStatement } from '@/utils/accounting/incomeStatement'
 import type { BalanceSheet } from '@/utils/accounting/balanceSheet'
 import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
+import { makeNameResolver, type NameResolver } from '@/utils/accounting/describeEntry'
 
 /** How many of each event type to pull per contract (newest first). */
 const EVENT_LIMIT = 500
@@ -66,6 +67,8 @@ export interface UseCNCAccountingOptions {
 export interface UseCNCAccountingReturn {
   /** Consolidated, deduped ledger postings. */
   entries: ComputedRef<LedgerEntry[]>
+  /** Resolve a counterparty address to a member name (for human-readable labels). */
+  nameOf: ComputedRef<NameResolver>
   /** Roll-up totals for the summary cards. */
   summary: ComputedRef<AccountingSummary>
   /** Double-entry journal + trial balance. */
@@ -163,6 +166,12 @@ export function useCNCAccounting(
     return owner ? [owner] : []
   })
 
+  // Team members — a member funding the Safe is investing in the company (invest
+  // & get SHER → Investor Equity), not a client paying for services.
+  const memberAddresses = computed<Iterable<Address | string>>(
+    () => team.data.value?.members?.map((m) => m.address) ?? []
+  )
+
   // USD price-of-record: the caller's resolver, else the app's live prices from
   // the currency store (CoinGecko). USDC is pegged $1 by `toUsd`, so this only
   // runs for the non-pegged tokens (native POL/ETH, SHER) — which otherwise show
@@ -176,6 +185,7 @@ export function useCNCAccounting(
       contracts: contracts.value,
       safeAddress: safeAddress.value,
       founderAddresses: founderAddresses.value,
+      memberAddresses: memberAddresses.value,
       feeCollectorAddress: FEE_COLLECTOR_ADDRESS,
       sherTokenAddress: options.sherTokenAddress ?? null,
       safeDepositRouterAddress: routerAddress.value || null,
@@ -228,8 +238,11 @@ export function useCNCAccounting(
     )
   }
 
+  const nameOf = computed<NameResolver>(() => makeNameResolver(team.data.value?.members))
+
   return {
     entries: computed(() => accounting.value.entries),
+    nameOf,
     summary: computed(() => accounting.value.summary),
     generalLedger: computed(() => accounting.value.generalLedger),
     incomeStatement: computed(() => accounting.value.incomeStatement),
