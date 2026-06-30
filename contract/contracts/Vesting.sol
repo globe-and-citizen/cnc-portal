@@ -16,16 +16,21 @@ import {IOfficer} from './interfaces/IOfficer.sol';
  *      at the moment the member calls {release} (or when the owner {stopVesting}s).
  *      The Investor address is resolved through the Officer, so this contract holds
  *      no `tokenAddress` and requires no pre-funding or ERC20 approvals.
+ *
+ *      A member can hold **several** schedules at once (initial grant, refreshers,
+ *      …): each is appended to the member's `vestings` array and addressed by its
+ *      index. Schedules are never removed — a stopped one keeps its slot with
+ *      `active = false`, a fully released one stays `active = true`.
  */
 contract Vesting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgradeable {
   /**
-   * @dev Vesting schedule parameters for a single member.
+   * @dev Vesting schedule parameters for a single grant.
    * @param start Vesting start timestamp.
    * @param duration Total vesting duration in seconds.
    * @param cliff Cliff period in seconds (counted from start).
    * @param totalAmount Total tokens promised to vest.
    * @param released Amount of tokens already minted to the member.
-   * @param active Whether the vesting is active.
+   * @param active Whether the schedule is live (false once stopped).
    */
   struct VestingInfo {
     uint64 start; // Vesting start time
@@ -33,13 +38,11 @@ contract Vesting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     uint64 cliff; // Cliff period
     uint256 totalAmount; // Total tokens promised to vest
     uint256 released; // Already minted
-    bool active; // Whether the vesting is active
+    bool active; // Whether the schedule is live
   }
 
-  /// @notice Active vesting schedule for each member.
-  mapping(address => VestingInfo) public vestings;
-  /// @notice Stopped/replaced schedules kept for history, per member.
-  mapping(address => VestingInfo[]) public archivedVestings;
+  /// @notice All vesting schedules per member, addressed by index (append-only).
+  mapping(address => VestingInfo[]) public vestings;
   /// @notice Every member that has ever had a schedule.
   address[] public members;
   /// @notice Whether an address is tracked in {members}.
@@ -50,20 +53,23 @@ contract Vesting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
   /**
    * @notice Emitted when a new vesting schedule is created for a member.
    * @param member The member receiving the vesting.
+   * @param index The schedule's index in the member's `vestings` array.
    * @param amount Total amount promised to vest.
    */
-  event VestingCreated(address indexed member, uint256 amount);
+  event VestingCreated(address indexed member, uint256 index, uint256 amount);
   /**
    * @notice Emitted when vested share tokens are minted to a member.
    * @param member The member receiving the tokens.
+   * @param index The schedule's index in the member's `vestings` array.
    * @param amount Amount minted.
    */
-  event TokensReleased(address indexed member, uint256 amount);
+  event TokensReleased(address indexed member, uint256 index, uint256 amount);
   /**
    * @notice Emitted when a vesting schedule is stopped.
    * @param member The member whose vesting was stopped.
+   * @param index The schedule's index in the member's `vestings` array.
    */
-  event VestingStopped(address indexed member);
+  event VestingStopped(address indexed member, uint256 index);
 
   /// @dev A required address argument was the zero address.
   error ZeroAddress();
@@ -71,10 +77,9 @@ contract Vesting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
   error ZeroSender();
   /// @dev The cliff duration exceeds the vesting duration.
   error CliffExceedsDuration();
-  /// @dev A vesting already exists for this member.
-  /// @param member The member address.
-  error VestingAlreadyExists(address member);
-  /// @dev There is no active vesting for this member.
+  /// @dev No schedule exists at the given index for this member.
+  error IndexOutOfBounds();
+  /// @dev The targeted schedule is not active.
   error VestingNotActive();
   /// @dev The releasable amount is zero.
   error NothingToRelease();
@@ -105,7 +110,8 @@ contract Vesting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
   }
 
   /**
-   * @notice Create a vesting schedule for a member. Agreement only — no tokens move.
+   * @notice Append a vesting schedule for a member. Agreement only — no tokens move.
+   * @dev Members may hold multiple concurrent schedules; no uniqueness check.
    * @param member Address receiving the vesting.
    * @param start Vesting start timestamp.
    * @param duration Total vesting duration in seconds.
@@ -121,63 +127,70 @@ contract Vesting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
   ) external onlyOwner whenNotPaused {
     if (member == address(0)) revert ZeroAddress();
     if (duration < cliff) revert CliffExceedsDuration();
-    if (vestings[member].active) revert VestingAlreadyExists(member);
 
-    vestings[member] = VestingInfo({
-      start: start,
-      duration: duration,
-      cliff: cliff,
-      totalAmount: totalAmount,
-      released: 0,
-      active: true
-    });
+    uint256 index = vestings[member].length;
+    vestings[member].push(
+      VestingInfo({
+        start: start,
+        duration: duration,
+        cliff: cliff,
+        totalAmount: totalAmount,
+        released: 0,
+        active: true
+      })
+    );
 
     if (!isMember[member]) {
       members.push(member);
       isMember[member] = true;
     }
 
-    emit VestingCreated(member, totalAmount);
+    emit VestingCreated(member, index, totalAmount);
   }
 
   /**
-   * @notice Mint the caller's releasable share tokens on demand.
+   * @notice Mint the caller's releasable share tokens for one of their schedules.
    * @dev Updates `released` before minting (checks-effects-interactions).
+   * @param index The schedule's index in the caller's `vestings` array.
    */
-  function release() external nonReentrant whenNotPaused {
-    VestingInfo storage v = vestings[msg.sender];
+  function release(uint256 index) external nonReentrant whenNotPaused {
+    if (index >= vestings[msg.sender].length) revert IndexOutOfBounds();
+    VestingInfo storage v = vestings[msg.sender][index];
     if (!v.active) revert VestingNotActive();
 
-    uint256 amount = releasable(msg.sender);
+    uint256 amount = releasable(msg.sender, index);
     if (amount == 0) revert NothingToRelease();
 
     v.released += amount;
     _mintShares(msg.sender, amount);
 
-    emit TokensReleased(msg.sender, amount);
+    emit TokensReleased(msg.sender, index, amount);
   }
 
   /**
-   * @notice Stop a member's vesting. Mints whatever is already releasable to the member,
-   *         archives the schedule, and drops the rest. No "return unvested" path is needed.
-   * @param member Address whose vesting is stopped.
+   * @notice Stop one of a member's schedules. Mints whatever is already releasable to
+   *         the member and drops the rest. The schedule is kept (active = false).
+   * @param member Address whose schedule is stopped.
+   * @param index The schedule's index in the member's `vestings` array.
    */
-  function stopVesting(address member) external onlyOwner nonReentrant whenNotPaused {
-    VestingInfo storage v = vestings[member];
+  function stopVesting(
+    address member,
+    uint256 index
+  ) external onlyOwner nonReentrant whenNotPaused {
+    if (index >= vestings[member].length) revert IndexOutOfBounds();
+    VestingInfo storage v = vestings[member][index];
     if (!v.active) revert VestingNotActive();
 
-    uint256 releasableAmount = releasable(member);
+    uint256 releasableAmount = releasable(member, index);
     if (releasableAmount > 0) {
       v.released += releasableAmount;
       _mintShares(member, releasableAmount);
-      emit TokensReleased(member, releasableAmount);
+      emit TokensReleased(member, index, releasableAmount);
     }
 
     v.active = false;
-    archivedVestings[member].push(v);
-    delete vestings[member];
 
-    emit VestingStopped(member);
+    emit VestingStopped(member, index);
   }
 
   /**
@@ -232,18 +245,24 @@ contract Vesting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     }
   }
 
-  /// @notice Get the amount vested for a member at the current time.
-  function vestedAmount(address member) public view returns (uint256) {
-    VestingInfo memory v = vestings[member];
+  /// @notice Number of schedules a member holds (active + stopped).
+  function getVestingCount(address member) external view returns (uint256) {
+    return vestings[member].length;
+  }
+
+  /// @notice Get the amount vested for one of a member's schedules at the current time.
+  function vestedAmount(address member, uint256 index) public view returns (uint256) {
+    if (index >= vestings[member].length) revert IndexOutOfBounds();
+    VestingInfo memory v = vestings[member][index];
     if (!v.active) return 0;
 
     return _vestingSchedule(v.totalAmount, v.start, v.cliff, v.duration, uint64(block.timestamp));
   }
 
-  /// @notice Get the releasable (vested minus already minted) amount for a member.
-  function releasable(address member) public view returns (uint256) {
-    uint256 vested = vestedAmount(member);
-    return vested - vestings[member].released;
+  /// @notice Get the releasable (vested minus already minted) amount for one schedule.
+  function releasable(address member, uint256 index) public view returns (uint256) {
+    uint256 vested = vestedAmount(member, index);
+    return vested - vestings[member][index].released;
   }
 
   /// @notice Get every member that has ever had a schedule.
@@ -252,68 +271,77 @@ contract Vesting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
   }
 
   /**
-   * @notice Returns members with an active vesting and their schedules.
-   * @return activeMembers Array of member addresses with an active vesting.
-   * @return infos Array of VestingInfo structs, parallel to `activeMembers`.
+   * @notice Returns every active schedule with its member and array index.
+   * @dev The three arrays are parallel; `indices[i]` is the schedule's position in
+   *      `vestings[activeMembers[i]]`, so a member appears once per active schedule.
+   * @return activeMembers Member address for each active schedule.
+   * @return indices Schedule index for each active schedule.
+   * @return infos VestingInfo for each active schedule.
    */
   function getVestingsWithMembers()
     external
     view
-    returns (address[] memory activeMembers, VestingInfo[] memory infos)
+    returns (address[] memory activeMembers, uint256[] memory indices, VestingInfo[] memory infos)
   {
-    uint256 count = 0;
-    for (uint256 i = 0; i < members.length; i++) {
-      if (vestings[members[i]].active) {
-        count++;
-      }
-    }
-
-    activeMembers = new address[](count);
-    infos = new VestingInfo[](count);
-
-    uint256 j = 0;
-    for (uint256 i = 0; i < members.length; i++) {
-      VestingInfo memory v = vestings[members[i]];
-      if (v.active) {
-        activeMembers[j] = members[i];
-        infos[j] = v;
-        j++;
-      }
-    }
-
-    return (activeMembers, infos);
+    return _flatten(true);
   }
 
   /**
-   * @notice Returns all archived vestings, flattened. The two arrays are parallel:
-   *         each index is one archived vesting, even if a member appears multiple times.
-   * @return archivedMembers Array of member addresses, one per archived vesting.
-   * @return archivedInfos Array of VestingInfo structs, one per archived vesting.
+   * @notice Returns every stopped schedule with its member and array index.
+   * @return archivedMembers Member address for each stopped schedule.
+   * @return indices Schedule index for each stopped schedule.
+   * @return archivedInfos VestingInfo for each stopped schedule.
    */
   function getAllArchivedVestingsFlat()
     external
     view
-    returns (address[] memory archivedMembers, VestingInfo[] memory archivedInfos)
+    returns (
+      address[] memory archivedMembers,
+      uint256[] memory indices,
+      VestingInfo[] memory archivedInfos
+    )
   {
-    uint256 totalArchived = 0;
-    for (uint256 i = 0; i < members.length; i++) {
-      totalArchived += archivedVestings[members[i]].length;
-    }
+    return _flatten(false);
+  }
 
-    archivedMembers = new address[](totalArchived);
-    archivedInfos = new VestingInfo[](totalArchived);
-
-    uint256 idx = 0;
+  /// @dev Flatten every member's schedules whose `active` flag equals `wantActive`.
+  function _flatten(
+    bool wantActive
+  )
+    internal
+    view
+    returns (
+      address[] memory outMembers,
+      uint256[] memory outIndices,
+      VestingInfo[] memory outInfos
+    )
+  {
+    uint256 count = 0;
     for (uint256 i = 0; i < members.length; i++) {
-      VestingInfo[] storage archived = archivedVestings[members[i]];
-      for (uint256 j = 0; j < archived.length; j++) {
-        archivedMembers[idx] = members[i];
-        archivedInfos[idx] = archived[j];
-        idx++;
+      VestingInfo[] storage schedules = vestings[members[i]];
+      for (uint256 j = 0; j < schedules.length; j++) {
+        if (schedules[j].active == wantActive) {
+          count++;
+        }
       }
     }
 
-    return (archivedMembers, archivedInfos);
+    outMembers = new address[](count);
+    outIndices = new uint256[](count);
+    outInfos = new VestingInfo[](count);
+
+    uint256 k = 0;
+    for (uint256 i = 0; i < members.length; i++) {
+      VestingInfo[] storage schedules = vestings[members[i]];
+      for (uint256 j = 0; j < schedules.length; j++) {
+        if (schedules[j].active == wantActive) {
+          outMembers[k] = members[i];
+          outIndices[k] = j;
+          outInfos[k] = schedules[j];
+          k++;
+        }
+      }
+    }
   }
 
   /// @notice Returns the current block timestamp.

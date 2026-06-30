@@ -21,6 +21,11 @@
   },
   {
     "inputs": [],
+    "name": "IndexOutOfBounds",
+    "type": "error"
+  },
+  {
+    "inputs": [],
     "name": "InsufficientMinterRole",
     "type": "error"
   },
@@ -74,17 +79,6 @@
   {
     "inputs": [],
     "name": "ReentrancyGuardReentrantCall",
-    "type": "error"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "member",
-        "type": "address"
-      }
-    ],
-    "name": "VestingAlreadyExists",
     "type": "error"
   },
   {
@@ -159,6 +153,12 @@
       {
         "indexed": false,
         "internalType": "uint256",
+        "name": "index",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
         "name": "amount",
         "type": "uint256"
       }
@@ -191,6 +191,12 @@
       {
         "indexed": false,
         "internalType": "uint256",
+        "name": "index",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
         "name": "amount",
         "type": "uint256"
       }
@@ -206,6 +212,12 @@
         "internalType": "address",
         "name": "member",
         "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "index",
+        "type": "uint256"
       }
     ],
     "name": "VestingStopped",
@@ -245,55 +257,6 @@
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "name": "archivedVestings",
-    "outputs": [
-      {
-        "internalType": "uint64",
-        "name": "start",
-        "type": "uint64"
-      },
-      {
-        "internalType": "uint64",
-        "name": "duration",
-        "type": "uint64"
-      },
-      {
-        "internalType": "uint64",
-        "name": "cliff",
-        "type": "uint64"
-      },
-      {
-        "internalType": "uint256",
-        "name": "totalAmount",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "released",
-        "type": "uint256"
-      },
-      {
-        "internalType": "bool",
-        "name": "active",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [],
     "name": "getAllArchivedVestingsFlat",
     "outputs": [
@@ -301,6 +264,11 @@
         "internalType": "address[]",
         "name": "archivedMembers",
         "type": "address[]"
+      },
+      {
+        "internalType": "uint256[]",
+        "name": "indices",
+        "type": "uint256[]"
       },
       {
         "components": [
@@ -370,6 +338,25 @@
     "type": "function"
   },
   {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "member",
+        "type": "address"
+      }
+    ],
+    "name": "getVestingCount",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [],
     "name": "getVestingsWithMembers",
     "outputs": [
@@ -377,6 +364,11 @@
         "internalType": "address[]",
         "name": "activeMembers",
         "type": "address[]"
+      },
+      {
+        "internalType": "uint256[]",
+        "name": "indices",
+        "type": "uint256[]"
       },
       {
         "components": [
@@ -516,6 +508,11 @@
         "internalType": "address",
         "name": "member",
         "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "index",
+        "type": "uint256"
       }
     ],
     "name": "releasable",
@@ -530,7 +527,13 @@
     "type": "function"
   },
   {
-    "inputs": [],
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "index",
+        "type": "uint256"
+      }
+    ],
     "name": "release",
     "outputs": [],
     "stateMutability": "nonpayable",
@@ -549,6 +552,11 @@
         "internalType": "address",
         "name": "member",
         "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "index",
+        "type": "uint256"
       }
     ],
     "name": "stopVesting",
@@ -582,6 +590,11 @@
         "internalType": "address",
         "name": "member",
         "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "index",
+        "type": "uint256"
       }
     ],
     "name": "vestedAmount",
@@ -601,6 +614,11 @@
         "internalType": "address",
         "name": "",
         "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
       }
     ],
     "name": "vestings",

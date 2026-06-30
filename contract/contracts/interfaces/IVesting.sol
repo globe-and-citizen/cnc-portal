@@ -26,10 +26,12 @@ interface IVesting is IPausable, IOwnable {
     uint256 totalAmount
   ) external;
 
-  /// @notice Mint the releasable amount of the caller's vesting on demand
-  function release() external;
+  /// @notice Mint the releasable amount of one of the caller's schedules on demand
+  /// @param index The schedule's index in the caller's vestings array
+  function release(uint256 index) external;
 
-  /// @notice Stop a member's vesting, minting whatever is already releasable
-  /// @param member Address whose vesting is stopped
-  function stopVesting(address member) external;
+  /// @notice Stop one of a member's schedules, minting whatever is already releasable
+  /// @param member Address whose schedule is stopped
+  /// @param index The schedule's index in the member's vestings array
+  function stopVesting(address member, uint256 index) external;
 }
