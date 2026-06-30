@@ -9,9 +9,12 @@ import { mockVestingWrites, mockTeamStore, mockUserStore } from '@/tests/mocks'
 const mockReloadKey = ref(0)
 const MEMBER = mockUserStore.address
 
-// Active vesting tuple shaped like the on-chain return.
+// Active vesting tuple shaped like the on-chain return: [members, indices, infos].
+// The single schedule lives at on-chain array index 3 for this member.
+const SCHEDULE_INDEX = 3n
 const activeVestings = ref([
   [MEMBER],
+  [SCHEDULE_INDEX],
   [
     {
       start: BigInt(Math.floor(Date.now() / 1000) - 3600),
@@ -88,14 +91,14 @@ describe('VestingFlow.vue', () => {
   })
 
   describe('Stop vesting', () => {
-    it('calls stopVesting mutate with member when the row stop button is clicked', async () => {
+    it('calls stopVesting mutate with member and schedule index when the row stop button is clicked', async () => {
       await flushPromises()
       const stopBtn = wrapper.find('[data-test="stop-btn"]')
       expect(stopBtn.exists()).toBe(true)
       await stopBtn.trigger('click')
 
       expect(mockVestingWrites.stopVesting.mutate).toHaveBeenCalledWith(
-        { args: [MEMBER] },
+        { args: [MEMBER, SCHEDULE_INDEX] },
         expect.objectContaining({
           onSuccess: expect.any(Function),
           onError: expect.any(Function)
@@ -126,14 +129,14 @@ describe('VestingFlow.vue', () => {
   })
 
   describe('Release vesting', () => {
-    it('calls release mutate with no args when the row release button is clicked', async () => {
+    it('calls release mutate with the schedule index when the row release button is clicked', async () => {
       await flushPromises()
       const releaseBtn = wrapper.find('[data-test="release-btn"]')
       expect(releaseBtn.exists()).toBe(true)
       await releaseBtn.trigger('click')
 
       expect(mockVestingWrites.release.mutate).toHaveBeenCalledWith(
-        { args: [] },
+        { args: [SCHEDULE_INDEX] },
         expect.objectContaining({
           onSuccess: expect.any(Function),
           onError: expect.any(Function)

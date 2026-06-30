@@ -54,8 +54,8 @@ watch(
 const totals = computed<{ totalAmount: number; totalReleased: number }>(() => {
   const result = { totalAmount: 0, totalReleased: 0 }
   // Process active vestings
-  if (vestingInfos.value && Array.isArray(vestingInfos.value) && vestingInfos.value.length === 2) {
-    const [, activeVestingsRaw] = vestingInfos.value
+  if (vestingInfos.value && Array.isArray(vestingInfos.value) && vestingInfos.value.length === 3) {
+    const [, , activeVestingsRaw] = vestingInfos.value
     if (Array.isArray(activeVestingsRaw)) {
       activeVestingsRaw.forEach((v) => {
         result.totalAmount += Number(formatUnits(v.totalAmount, 6))
@@ -67,9 +67,9 @@ const totals = computed<{ totalAmount: number; totalReleased: number }>(() => {
   if (
     archivedVestingInfos.value &&
     Array.isArray(archivedVestingInfos.value) &&
-    archivedVestingInfos.value.length === 2
+    archivedVestingInfos.value.length === 3
   ) {
-    const [, archivedVestingsRaw] = archivedVestingInfos.value
+    const [, , archivedVestingsRaw] = archivedVestingInfos.value
     if (Array.isArray(archivedVestingsRaw)) {
       archivedVestingsRaw.forEach((v) => {
         result.totalAmount += Number(formatUnits(v.totalAmount, 6))

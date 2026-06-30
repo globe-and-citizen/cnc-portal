@@ -1,10 +1,13 @@
 /**
  * A single vesting schedule flattened for table display.
+ * `index` is the schedule's position in the member's on-chain `vestings` array —
+ * a member can hold several — and is what `release` / `stopVesting` target.
  * `released` is the amount already minted to the member (shares only exist once
  * released — vesting mints on demand rather than locking pre-funded tokens).
  */
 export interface VestingRow {
   member: string
+  index: number
   startDate: string
   durationDays: number
   cliffDays: number
@@ -52,6 +55,8 @@ export interface VestingCreation {
   cliff: number
 }
 
-export type VestingTuple = [string[], VestingInfo[]]
+// Contract reads return three parallel arrays: members, their schedule indices,
+// and the schedules themselves (a member appears once per schedule).
+export type VestingTuple = [string[], bigint[], VestingInfo[]]
 
 export type VestingStatus = 'all' | 'active' | 'completed' | 'cancelled'

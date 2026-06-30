@@ -27,7 +27,6 @@
           v-if="teamStore.currentTeamId"
           @closeAddVestingModal="handleClose"
           @reload="handleReload"
-          :reloadKey="reloadKey"
         />
       </template>
     </UModal>

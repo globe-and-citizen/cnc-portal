@@ -6,9 +6,10 @@ import { useReadContractFn, mockTeamStore, mockUserStore } from '@/tests/mocks'
 
 // Constants
 const memberAddress = '0x000000000000000000000000000000000000dead'
-// Mocks
+// Mocks — reads return a 3-tuple [members, indices, infos].
 const mockVestingInfos = ref([
   [memberAddress],
+  [0n],
   [
     {
       start: `${Math.floor(Date.now() / 1000) - 3600}`,
@@ -22,7 +23,7 @@ const mockVestingInfos = ref([
 ])
 const refetchVestingInfos = vi.fn()
 
-const mockArchivedInfos = ref([[], []])
+const mockArchivedInfos = ref([[], [], []])
 
 // Test suite
 describe('VestingView.vue', () => {

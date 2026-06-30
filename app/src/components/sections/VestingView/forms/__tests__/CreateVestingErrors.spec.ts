@@ -1,32 +1,13 @@
 import { describe, it, vi, expect, beforeEach } from 'vitest'
 import { mount, type VueWrapper } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
-import { ref } from 'vue'
 import { CalendarDate } from '@internationalized/date'
 import CreateVesting from '@/components/sections/VestingView/forms/CreateVesting.vue'
 import SelectMemberInput from '@/components/utils/SelectMemberInput.vue'
 import { mockVestingWrites } from '@/tests/mocks/contract.mock'
 
-const mockReloadKey = ref<number>(0)
-const mockResolvedVestingAddress = ref('0x1000000000000000000000000000000000000001' as const)
-
-type VestingInfosType = [string[], object[]] | [string[]] | [] | null | undefined
-const mockVestingInfos = ref<VestingInfosType>([[], []])
-
-vi.mock('@/composables/vesting/reads', () => ({
-  useVestingAddress: vi.fn(() => mockResolvedVestingAddress),
-  useVestingGetVestingsWithMembers: vi.fn(() => ({
-    data: mockVestingInfos,
-    error: ref(null),
-    refetch: vi.fn()
-  }))
-}))
-
 const mountComponent = () =>
   mount(CreateVesting, {
-    props: {
-      reloadKey: mockReloadKey.value
-    },
     global: {
       plugins: [createTestingPinia({ createSpy: vi.fn })]
     }
@@ -39,8 +20,6 @@ describe('CreateVesting.vue — submission error branches', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    mockVestingInfos.value = [[], []]
-    mockResolvedVestingAddress.value = '0x1000000000000000000000000000000000000001'
     // Default: addVesting.mutate succeeds so post-submit code paths run.
     mockVestingWrites.addVesting.mutate.mockImplementation((_args: unknown, options?: MutateOpts) =>
       options?.onSuccess?.()
@@ -95,29 +74,5 @@ describe('CreateVesting.vue — submission error branches', () => {
       totalAmount: 5
     })
     expect(message).toContain('Add vesting failed')
-  })
-
-  it('renders the duplicate-member alert and skips the write for an active member', async () => {
-    mockVestingInfos.value = [
-      ['0x6666666666666666666666666666666666666666'],
-      [
-        {
-          start: `${Math.floor(Date.now() / 1000) - 3600}`,
-          duration: `${30 * 86400}`,
-          cliff: '0',
-          totalAmount: BigInt(10e18),
-          released: BigInt(2e18),
-          active: true
-        }
-      ]
-    ]
-
-    const message = await driveUi({
-      member: { name: 'Iris', address: '0x6666666666666666666666666666666666666666' },
-      totalAmount: 5
-    })
-
-    expect(message).toContain('The member address already has an active vesting.')
-    expect(mockVestingWrites.addVesting.mutate).not.toHaveBeenCalled()
   })
 })

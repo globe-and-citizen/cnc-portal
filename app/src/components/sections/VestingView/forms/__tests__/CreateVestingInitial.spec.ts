@@ -3,41 +3,9 @@ import { mount, type VueWrapper } from '@vue/test-utils'
 import CreateVesting from '@/components/sections/VestingView/forms/CreateVesting.vue'
 import SelectMemberInput from '@/components/utils/SelectMemberInput.vue'
 import { createTestingPinia } from '@pinia/testing'
-import { ref } from 'vue'
 import { parseUnits } from 'viem'
 import { mockVestingWrites } from '@/tests/mocks/contract.mock'
 import { CalendarDate } from '@internationalized/date'
-
-const memberAddress = '0x000000000000000000000000000000000000dead'
-const mockReloadKey = ref<number>(0)
-const mockResolvedVestingAddress = ref('0x1000000000000000000000000000000000000001' as const)
-
-type VestingInfosType = [string[], object[]] | [string[]] | [] | null | undefined
-
-// Mockeds
-const mockVestingInfos = ref<VestingInfosType>([
-  [memberAddress],
-  [
-    {
-      start: `${Math.floor(Date.now() / 1000) - 3600}`,
-      duration: `${30 * 86400}`,
-      cliff: '0',
-      totalAmount: BigInt(10e18),
-      released: BigInt(2e18),
-      active: true
-    }
-  ]
-])
-const refetchVestingInfos = vi.fn()
-
-vi.mock('@/composables/vesting/reads', () => ({
-  useVestingAddress: vi.fn(() => mockResolvedVestingAddress),
-  useVestingGetVestingsWithMembers: vi.fn(() => ({
-    data: mockVestingInfos,
-    error: ref(null),
-    refetch: refetchVestingInfos
-  }))
-}))
 
 describe('CreateVesting.vue', () => {
   let wrapper: VueWrapper
@@ -47,9 +15,6 @@ describe('CreateVesting.vue', () => {
   }
   const mountComponent = () =>
     mount(CreateVesting, {
-      props: {
-        reloadKey: mockReloadKey.value
-      },
       global: {
         plugins: [createTestingPinia({ createSpy: vi.fn })]
       }
@@ -78,19 +43,6 @@ describe('CreateVesting.vue', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    mockVestingInfos.value = [
-      [memberAddress],
-      [
-        {
-          start: `${Math.floor(Date.now() / 1000) - 3600}`,
-          duration: `${30 * 86400}`,
-          cliff: '0',
-          totalAmount: BigInt(10e18),
-          released: BigInt(2e18),
-          active: true
-        }
-      ]
-    ]
     // Default: addVesting.mutate invokes onSuccess to simulate a confirmed write.
     mockVestingWrites.addVesting.mutate
       .mockReset()
@@ -178,52 +130,6 @@ describe('CreateVesting.vue', () => {
         }),
         expect.any(Object)
       )
-    })
-
-    it('returns an empty array from activeMembers if vestingInfos is not an array of length 2', () => {
-      const testCases = [
-        { value: undefined },
-        { value: [[memberAddress]] as unknown as [string[]] },
-        { value: null }
-      ]
-
-      testCases.forEach(({ value }) => {
-        mockVestingInfos.value = value
-        const w = mountComponent()
-        expect(w.findComponent(CreateVesting).vm.activeMembers).toEqual([])
-      })
-    })
-  })
-
-  describe('In-form UAlert error feedback', () => {
-    it('renders the in-form UAlert when errorMessage is set via duplicate-member guard', async () => {
-      // No alert yet on initial render.
-      expect(wrapper.find('[data-test="error-alert"]').exists()).toBe(false)
-
-      // Selecting an already-active member then confirming triggers
-      // checkDuplicateVesting() inside submit(), which sets errorMessage and
-      // renders the in-form UAlert.
-      await wrapper.findComponent(SelectMemberInput).vm.$emit('selectMember', {
-        name: 'Bob',
-        address: memberAddress
-      })
-      await wrapper.findComponent({ name: 'UCalendar' }).vm.$emit('update:modelValue', {
-        start: new CalendarDate(2025, 6, 1),
-        end: new CalendarDate(2025, 6, 30)
-      })
-      await wrapper.find('[data-test="total-amount"]').setValue('5')
-      await wrapper.vm.$nextTick()
-      await wrapper.find('[data-test="submit-btn"]').trigger('click')
-      await wrapper.vm.$nextTick()
-      await wrapper.find('[data-test="confirm-btn"]').trigger('click')
-      await wrapper.vm.$nextTick()
-
-      const alert = wrapper.find('[data-test="summary-error-alert"]')
-      expect(alert.exists()).toBe(true)
-      expect(alert.text()).toContain('The member address already has an active vesting.')
-
-      // The duplicate guard short-circuits before the write.
-      expect(mockVestingWrites.addVesting.mutate).not.toHaveBeenCalled()
     })
   })
 })

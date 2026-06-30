@@ -28,9 +28,11 @@ import { ref } from 'vue'
 const memberAddress = '0x000000000000000000000000000000000000dead'
 const mockSymbol = ref<string>('shr')
 const mockReloadKey = ref<number>(0)
-// Mocks
-const mockVestingInfos = ref<[string[], { totalAmount: number; released: number }[]]>([
+// Mocks — reads return a 3-tuple [members, indices, infos]; a member appears
+// once per schedule.
+const mockVestingInfos = ref<[string[], bigint[], { totalAmount: number; released: number }[]]>([
   [memberAddress],
+  [0n],
   [
     {
       totalAmount: 0,
@@ -41,7 +43,7 @@ const mockVestingInfos = ref<[string[], { totalAmount: number; released: number 
 
 const refetchVestingInfos = vi.fn()
 
-const mockArchivedInfos = ref([[], []])
+const mockArchivedInfos = ref([[], [], []])
 
 vi.mock('@/composables/investor/reads', () => ({
   useInvestorSymbol: vi.fn(() => ({
@@ -104,9 +106,10 @@ describe('VestingStats.vue', () => {
   })
 
   it('calculates token summary correctly from vestings data', async () => {
-    // Setup mock data with multiple vestings
+    // Setup mock data with two schedules for the same member (one per index).
     mockVestingInfos.value = [
-      [memberAddress],
+      [memberAddress, memberAddress],
+      [0n, 1n],
       [
         {
           totalAmount: Number(BigInt(100000000)), // 100 tokens with 6 decimals
@@ -136,7 +139,7 @@ describe('VestingStats.vue', () => {
   })
 
   it('handles empty vestings array', () => {
-    mockVestingInfos.value = [[], []]
+    mockVestingInfos.value = [[], [], []]
     wrapper = mountComponent()
 
     const tableData = wrapper.findComponent({ name: 'UTable' }).props('data') as Array<unknown>
@@ -147,6 +150,7 @@ describe('VestingStats.vue', () => {
     mockSymbol.value = 'TEST'
     mockVestingInfos.value = [
       [memberAddress],
+      [0n],
       [
         {
           totalAmount: Number(BigInt(100000000)),

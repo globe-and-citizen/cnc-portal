@@ -129,10 +129,6 @@ import VestingSummary from '@/components/sections/VestingView/VestingSummary.vue
 import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
 import { useCreateVesting } from '@/composables/vesting/useCreateVesting'
 
-const props = defineProps<{
-  reloadKey: number
-}>()
-
 const emit = defineEmits(['reload', 'closeAddVestingModal'])
 
 const {
@@ -144,7 +140,6 @@ const {
   showSummary,
   errorMessage,
   vestingData,
-  activeMembers,
   formState,
   schema,
   dateRangeLabel,
@@ -153,9 +148,9 @@ const {
   onDateRangeChange,
   handleDisplaySummary,
   submit
-} = useCreateVesting(props, emit)
+} = useCreateVesting(emit)
 
-// activeMembers / submit are internal to the form flow but asserted on by the
-// component's unit tests, so keep them on the instance.
-defineExpose({ activeMembers, submit })
+// submit is internal to the form flow but asserted on by the component's unit
+// tests, so keep it on the instance.
+defineExpose({ submit })
 </script>
