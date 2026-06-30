@@ -68,11 +68,14 @@ const ACTOR_USE_CASES: ReadonlySet<UseCase> = new Set<UseCase>([
   'DEFAULT-D'
 ])
 
-/** Whole hours when the minutes divide evenly, else one decimal — e.g. "16h", "1.5h". */
-function formatHours(minutes: number | undefined): string | null {
+/** Hours and minutes worked — e.g. "16h", "1h 30min", "50min" — never a decimal. */
+function formatDuration(minutes: number | undefined): string | null {
   if (!minutes || minutes <= 0) return null
-  const hours = minutes / 60
-  return `${Number.isInteger(hours) ? hours : hours.toFixed(1)}h`
+  const hours = Math.floor(minutes / 60)
+  const mins = Math.round(minutes - hours * 60)
+  if (hours === 0) return `${mins}min`
+  if (mins === 0) return `${hours}h`
+  return `${hours}h ${mins}min`
 }
 
 /**
@@ -81,7 +84,7 @@ function formatHours(minutes: number | undefined): string | null {
  */
 function predicate(entry: LedgerEntry): string {
   const amount = money(entry.amountUsd)
-  const hours = formatHours(entry.minutesWorked)
+  const hours = formatDuration(entry.minutesWorked)
   const sher = entry.shares ? ` and got ${entry.shares} SHER` : ''
 
   switch (entry.useCase) {

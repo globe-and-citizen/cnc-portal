@@ -45,10 +45,18 @@ describe('activityOf — actor rows', () => {
     })
   })
 
-  it('renders fractional hours and a wage settlement', () => {
+  it('renders hours and minutes (never a decimal) and a wage settlement', () => {
     expect(
       activityOf(entry({ useCase: 'UC-CASH-02', counterparty: ALI, minutesWorked: 90 }))
-    ).toEqual({ kind: 'actor', actor: ALI, text: 'submitted 1.5h of work' })
+    ).toEqual({ kind: 'actor', actor: ALI, text: 'submitted 1h 30min of work' })
+    // 20h 50min = 1250 min — must read "20h 50min", not "20.8h".
+    expect(
+      activityOf(entry({ useCase: 'UC-CASH-02', counterparty: ALI, minutesWorked: 1250 })).text
+    ).toBe('submitted 20h 50min of work')
+    // Under an hour shows minutes only; a whole hour drops the minutes.
+    expect(
+      activityOf(entry({ useCase: 'UC-CASH-02', counterparty: ALI, minutesWorked: 50 })).text
+    ).toBe('submitted 50min of work')
     expect(
       activityOf(entry({ useCase: 'UC-CASH-03', counterparty: ALI, minutesWorked: 960 }))
     ).toEqual({ kind: 'actor', actor: ALI, text: 'was paid for 16h of work' })
