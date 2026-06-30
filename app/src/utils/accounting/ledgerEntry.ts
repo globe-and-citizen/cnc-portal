@@ -85,6 +85,11 @@ export interface LedgerEntry {
   contract?: Address
   /** Transaction hash, when known. */
   txHash?: string
+  /**
+   * The EOA that signed the transaction behind an internal transfer (resolved
+   * from {@link txHash}), i.e. the person who performed the move. Transfer-only.
+   */
+  initiator?: Address
   /** Human-readable memo. */
   memo: string
   /** Share count for equity / Default-D entries (whole SHER, not base units). */

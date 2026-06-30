@@ -49,7 +49,7 @@ export function entryLabel(entry: LedgerEntry): string {
  */
 export type ActivityCell =
   | { kind: 'actor'; actor: string; text: string }
-  | { kind: 'transfer'; from: AccountName; to: AccountName }
+  | { kind: 'transfer'; from: AccountName; to: AccountName; actor?: string }
   | { kind: 'plain'; text: string }
 
 /** Internal pocket-to-pocket moves — rendered as two contract avatars (from → to). */
@@ -82,26 +82,26 @@ function formatHours(minutes: number | undefined): string | null {
 function predicate(entry: LedgerEntry): string {
   const amount = money(entry.amountUsd)
   const hours = formatHours(entry.minutesWorked)
-  const sher = entry.shares ? ` · ${entry.shares} SHER` : ''
+  const sher = entry.shares ? ` and got ${entry.shares} SHER` : ''
 
   switch (entry.useCase) {
     case 'UC-CASH-02': {
-      if (!hours) return 'accrued wages'
-      const week = entry.periodEnd ? ` · week ending ${fmtDate(entry.periodEnd)}` : ''
-      return `submitted ${hours}${week}`
+      if (!hours) return 'submitted a wage claim'
+      const week = entry.periodEnd ? ` for the week ending ${fmtDate(entry.periodEnd)}` : ''
+      return `submitted ${hours} of work${week}`
     }
     case 'UC-CASH-03':
-      return hours ? `was paid for ${hours}` : 'was paid wages'
+      return hours ? `was paid for ${hours} of work` : 'was paid their wages'
     case 'UC-BANK-01':
       return `contributed ${amount} in capital`
     case 'UC-BANK-02':
       return `paid ${amount} for services`
     case 'UC-SDR-01':
-      return `invested ${amount}${sher}`
+      return `invested ${amount} in capital${sher}`
     case 'UC-MEMBER-01':
       return `invested ${amount} in capital${sher}`
     case 'UC-EXP-01':
-      return `expense reimbursed · ${amount}`
+      return `was reimbursed ${amount} for an expense`
     case 'UC-INV-01':
       return `received a ${amount} dividend`
     case 'DEFAULT-D':
@@ -119,7 +119,14 @@ function predicate(entry: LedgerEntry): string {
  */
 export function activityOf(entry: LedgerEntry): ActivityCell {
   if (TRANSFER_USE_CASES.has(entry.useCase) && entry.debit && entry.credit) {
-    return { kind: 'transfer', from: entry.credit, to: entry.debit }
+    // `actor` (the signer who performed the move) is shown when resolved from the
+    // transaction; otherwise the table reads the source pocket as the doer.
+    return {
+      kind: 'transfer',
+      from: entry.credit,
+      to: entry.debit,
+      ...(entry.initiator ? { actor: entry.initiator } : {})
+    }
   }
   if (entry.counterparty && ACTOR_USE_CASES.has(entry.useCase)) {
     return { kind: 'actor', actor: entry.counterparty, text: predicate(entry) }
