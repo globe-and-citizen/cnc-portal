@@ -25,9 +25,18 @@
     </template>
 
     <template #activity-cell="{ row: { original: row } }">
-      <span v-if="!row.isTotal && row.isFirst && row.activity" class="text-muted text-sm">
-        {{ row.activity }}
-      </span>
+      <div v-if="!row.isTotal && row.isFirst" class="flex items-center gap-1.5 text-sm">
+        <template v-if="row.activity.kind === 'actor'">
+          <UserComponent compact hide-address :user="resolveUser(row.activity.actor)" />
+          <span class="text-muted">{{ row.activity.text }}</span>
+        </template>
+        <template v-else-if="row.activity.kind === 'transfer'">
+          <UserComponent compact hide-address :user="pocketUser(row.activity.from)" />
+          <span class="text-muted">→</span>
+          <UserComponent compact hide-address :user="pocketUser(row.activity.to)" />
+        </template>
+        <span v-else-if="row.activity.text" class="text-muted">{{ row.activity.text }}</span>
+      </div>
     </template>
 
     <template #account-cell="{ row: { original: row } }">
@@ -71,11 +80,18 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
+import UserComponent from '@/components/UserComponent.vue'
+import { resolveUser } from '@/utils/transactionHistoryUtil'
 import type { LedgerRow } from '@/utils/accounting/ledgerPresenter'
 
 const props = defineProps<{ rows: LedgerRow[]; total: string }>()
 
 type LedgerTableRow = LedgerRow & { isTotal: boolean }
+
+/** A cash pocket account rendered as a contract avatar (document icon + short name). */
+function pocketUser(account: string) {
+  return { name: account.replace('Cash — ', ''), address: '', icon: 'heroicons:document-text' }
+}
 
 const tableRows = computed<LedgerTableRow[]>(() => [
   ...props.rows.map((r) => ({ ...r, isTotal: false })),
@@ -83,7 +99,7 @@ const tableRows = computed<LedgerTableRow[]>(() => [
     isFirst: false,
     date: '',
     label: '',
-    activity: '',
+    activity: { kind: 'plain', text: '' } as const,
     cat: '',
     catClass: '',
     account: '',

@@ -20,7 +20,7 @@
     <span class="text-xs font-medium">
       {{ user.name && user.name.length > 16 ? `${user.name.slice(0, 16)}…` : user.name || 'User' }}
     </span>
-    <span class="text-muted text-xs">{{ formatedUserAddress }}</span>
+    <span v-if="!hideAddress" class="text-muted text-xs">{{ formatedUserAddress }}</span>
   </div>
 
   <div
@@ -88,6 +88,8 @@ const props = defineProps<{
   isCollapsed?: boolean
   isDetailedView?: boolean
   compact?: boolean
+  /** Hide the truncated address in compact mode (avatar + name only). */
+  hideAddress?: boolean
 }>()
 
 const formatedUserAddress = computed(() => formatAddress(props.user.address))
