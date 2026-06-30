@@ -283,24 +283,28 @@ demand, never pre-funded.
   has vested from the team's `InvestorV1` via `individualMint`
 - Investor resolved through the Officer (`findDeployedContract('InvestorV1')`);
   no configurable token address
+- Multiple schedules per member: each grant is appended to the member's
+  `vestings` array and addressed by its index (initial grant, refreshers, …)
 - Cliff period: no tokens releasable until cliff elapses
 - Linear vesting: tokens unlock proportionally after cliff
-- Team owner can stop vesting: releasable amount is minted to the member, the
+- Team owner can stop a schedule: releasable amount is minted to the member, the
   unvested remainder is simply never minted (no refund path)
-- Archived history of stopped vestings per member
+- Schedules are append-only: a stopped one is kept with `active = false`, a
+  fully-released one stays `active = true`
 - Requires `MINTER_ROLE` on `InvestorV1` (granted by Officer at deployment)
 - Upgradeable, Pausable, ReentrancyGuard
 
 **Key Functions**:
 
 ```
-addVesting(member, start, duration, cliff, totalAmount)   // Owner; agreement only
-release()                                                 // Member mints vested shares
-stopVesting(member)                                       // Owner stops & settles
-vestedAmount(member) → uint256
-releasable(member) → uint256
-getVestingsWithMembers()
-getAllArchivedVestingsFlat()
+addVesting(member, start, duration, cliff, totalAmount)   // Owner; appends a schedule
+release(index)                                            // Member mints one schedule's vested shares
+stopVesting(member, index)                                // Owner stops & settles one schedule
+vestedAmount(member, index) → uint256
+releasable(member, index) → uint256
+getVestingCount(member) → uint256
+getVestingsWithMembers()        // active schedules: (members[], indices[], infos[])
+getAllArchivedVestingsFlat()    // stopped schedules: (members[], indices[], infos[])
 ```
 
 ---
