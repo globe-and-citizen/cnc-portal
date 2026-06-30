@@ -39,6 +39,7 @@ interface AddressMapping {
   'ElectionsBeaconModule#Beacon'?: string
   'SafeDepositRouterBeaconModule#SafeDepositRouter'?: string
   'SafeDepositRouterBeaconModule#Beacon'?: string
+  'VestingBeaconModule#Beacon'?: string
   'FeeCollectorModule#FeeCollector'?: string
   'FixedReturnBeaconModule#FixedReturn'?: string
   'FixedReturnBeaconModule#Beacon'?: string
@@ -211,6 +212,7 @@ export const SAFE_DEPOSIT_ROUTER_IMPL_ADDRESS = safeResolveAddress(
 export const SAFE_DEPOSIT_ROUTER_BEACON_ADDRESS = safeResolveAddress(
   'SafeDepositRouterBeaconModule#Beacon'
 )
+export const VESTING_BEACON_ADDRESS = safeResolveAddress('VestingBeaconModule#Beacon')
 export const OFFICER_ADDRESS = safeResolveAddress('Officer#Officer')
 export const OFFICER_BEACON = safeResolveAddress('Officer#FactoryBeacon')
 export const INVESTOR_V1_BEACON_ADDRESS = safeResolveAddress('InvestorsV1BeaconModule#Beacon')
