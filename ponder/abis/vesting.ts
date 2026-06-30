@@ -56,6 +56,12 @@ export const VESTING_ABI = [
       {
         indexed: false,
         internalType: "uint256",
+        name: "index",
+        type: "uint256",
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
         name: "amount",
         type: "uint256",
       },
@@ -88,6 +94,12 @@ export const VESTING_ABI = [
       {
         indexed: false,
         internalType: "uint256",
+        name: "index",
+        type: "uint256",
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
         name: "amount",
         type: "uint256",
       },
@@ -103,6 +115,12 @@ export const VESTING_ABI = [
         internalType: "address",
         name: "member",
         type: "address",
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "index",
+        type: "uint256",
       },
     ],
     name: "VestingStopped",

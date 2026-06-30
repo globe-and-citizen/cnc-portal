@@ -764,6 +764,7 @@ ponder.on("Vesting:VestingCreated", async ({ event, context }) => {
     id: `${event.transaction.hash}-${event.log.logIndex}`,
     contractAddress: event.log.address,
     member: event.args.member,
+    scheduleIndex: event.args.index,
     amount: event.args.amount,
     blockNumber: event.block.number,
     timestamp: Number(event.block.timestamp),
@@ -775,6 +776,7 @@ ponder.on("Vesting:TokensReleased", async ({ event, context }) => {
     id: `${event.transaction.hash}-${event.log.logIndex}`,
     contractAddress: event.log.address,
     member: event.args.member,
+    scheduleIndex: event.args.index,
     amount: event.args.amount,
     blockNumber: event.block.number,
     timestamp: Number(event.block.timestamp),
@@ -786,6 +788,7 @@ ponder.on("Vesting:VestingStopped", async ({ event, context }) => {
     id: `${event.transaction.hash}-${event.log.logIndex}`,
     contractAddress: event.log.address,
     member: event.args.member,
+    scheduleIndex: event.args.index,
     blockNumber: event.block.number,
     timestamp: Number(event.block.timestamp),
   });
