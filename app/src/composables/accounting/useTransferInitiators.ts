@@ -9,13 +9,21 @@
  *
  * A mined transaction's sender never changes, so the lookup is cached
  * indefinitely; every hash must resolve, and if any fail we surface them all
- * together as an `AggregateError` rather than silently dropping initiators.
+ * together as a `TransferInitiatorsError` rather than silently dropping initiators.
  */
 import { computed, type ComputedRef } from 'vue'
 import { useQuery } from '@tanstack/vue-query'
 import { getPublicClient } from '@wagmi/core'
 import type { Address } from 'viem'
 import { config } from '@/wagmi.config'
+
+/** Raised when one or more transfer hashes fail to resolve; carries every underlying error. */
+export class TransferInitiatorsError extends Error {
+  constructor(readonly errors: unknown[]) {
+    super(`Failed to resolve ${errors.length} transfer initiator(s)`)
+    this.name = 'TransferInitiatorsError'
+  }
+}
 
 /** Map each transaction hash to the EOA that signed it (the transfer's initiator). */
 export function useTransferInitiators(
@@ -38,7 +46,7 @@ export function useTransferInitiators(
         .filter((r): r is PromiseRejectedResult => r.status === 'rejected')
         .map((r) => r.reason)
       if (errors.length > 0) {
-        throw new AggregateError(errors, `Failed to resolve ${errors.length} transfer initiator(s)`)
+        throw new TransferInitiatorsError(errors)
       }
       return new Map(
         settled

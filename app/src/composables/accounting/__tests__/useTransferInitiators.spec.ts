@@ -3,7 +3,7 @@ import { computed, ref } from 'vue'
 import { useQueryFn } from '@/tests/mocks/composables.mock'
 import { mockWagmiCore } from '@/tests/mocks/wagmi.vue.mock'
 import type { Address } from 'viem'
-import { useTransferInitiators } from '../useTransferInitiators'
+import { useTransferInitiators, TransferInitiatorsError } from '../useTransferInitiators'
 
 const HASH_A = '0xaaaa'
 const HASH_B = '0xbbbb'
@@ -44,7 +44,7 @@ describe('useTransferInitiators', () => {
     expect(map.get(HASH_B)).toBe(BOB)
   })
 
-  it('throws an AggregateError when any hash fails to resolve', async () => {
+  it('throws a TransferInitiatorsError carrying every failure when any hash fails to resolve', async () => {
     const getTransaction = vi.fn(async ({ hash }: { hash: string }) => {
       if (hash === HASH_A) return { from: ALICE }
       throw new Error('not found')
@@ -53,7 +53,12 @@ describe('useTransferInitiators', () => {
 
     useTransferInitiators(computed(() => [HASH_A, HASH_B]))
 
-    await expect(captured!.queryFn()).rejects.toBeInstanceOf(AggregateError)
+    const error = await captured!.queryFn().then(
+      () => null,
+      (e) => e
+    )
+    expect(error).toBeInstanceOf(TransferInitiatorsError)
+    expect((error as TransferInitiatorsError).errors).toHaveLength(1)
   })
 
   it('returns an empty map when no public client is available', async () => {
