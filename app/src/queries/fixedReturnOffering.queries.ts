@@ -1,7 +1,7 @@
 import type { FixedReturnOfferingResponse } from '@/types'
 import type { MaybeRefOrGetter } from 'vue'
 import { toValue } from 'vue'
-import { createQueryHook, queryPresets } from './queryFactory'
+import { createMutationHook, createQueryHook, queryPresets } from './queryFactory'
 
 /**
  * Query key factory for FixedReturn offering off-chain metadata
@@ -43,4 +43,37 @@ export const useGetFixedReturnOfferingsQuery = createQueryHook<
   queryKey: (params) => fixedReturnOfferingKeys.list(toValue(params.queryParams.teamId)),
   enabled: (params) => !!toValue(params.queryParams.teamId),
   options: queryPresets.moderate
+})
+
+// ============================================================================
+// POST /fixed-return-offering - Persist title/purpose for a new lending offer
+// ============================================================================
+
+export interface CreateFixedReturnOfferingParams {
+  body: {
+    /** Team the offering belongs to. */
+    teamId: number
+    /** On-chain offerId returned by createLendingOffer. */
+    offerId: number
+    title: string
+    purpose?: string
+  }
+}
+
+/**
+ * Persist off-chain title/purpose for a FixedReturn lending offer after it has been
+ * created on-chain. FixedReturn.sol has no title/description params, so the calling
+ * application records them here keyed by (teamId, on-chain offerId) — see the GET
+ * query above and backend/prisma/schema.prisma's FixedReturnOffering model.
+ *
+ * @endpoint POST /fixed-return-offering
+ * @body { teamId, offerId, title, purpose? }
+ */
+export const useCreateFixedReturnOfferingMutation = createMutationHook<
+  FixedReturnOfferingResponse,
+  CreateFixedReturnOfferingParams
+>({
+  method: 'POST',
+  endpoint: 'fixed-return-offering',
+  invalidateKeys: (params) => [fixedReturnOfferingKeys.list(params.body.teamId)]
 })
