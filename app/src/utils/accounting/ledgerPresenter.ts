@@ -49,6 +49,27 @@ export const ledgerCategories: Array<LedgerCategory | 'All'> = [
   'Dividend'
 ]
 
+/** The toggleable ledger table columns (keys match the table's cell slots). */
+export type LedgerColumnKey =
+  | 'date'
+  | 'action'
+  | 'transaction'
+  | 'activity'
+  | 'account'
+  | 'dr'
+  | 'cr'
+
+/** Ledger columns as `{ value, label }`, for the show/hide-columns selector. */
+export const LEDGER_COLUMNS: ReadonlyArray<{ value: LedgerColumnKey; label: string }> = [
+  { value: 'date', label: 'Date' },
+  { value: 'action', label: 'Action' },
+  { value: 'transaction', label: 'Transaction' },
+  { value: 'activity', label: 'Activity' },
+  { value: 'account', label: 'Account' },
+  { value: 'dr', label: 'Debit' },
+  { value: 'cr', label: 'Credit' }
+]
+
 export interface LedgerRow {
   isFirst: boolean
   date: string

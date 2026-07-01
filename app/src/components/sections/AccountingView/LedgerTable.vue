@@ -91,9 +91,18 @@ import { computed } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
 import UserComponent from '@/components/UserComponent.vue'
 import { resolveUser } from '@/utils/transactionHistoryUtil'
-import type { LedgerRow } from '@/utils/accounting/ledgerPresenter'
+import {
+  LEDGER_COLUMNS,
+  type LedgerRow,
+  type LedgerColumnKey
+} from '@/utils/accounting/ledgerPresenter'
 
-const props = defineProps<{ rows: LedgerRow[]; total: string }>()
+const props = defineProps<{
+  rows: LedgerRow[]
+  total: string
+  /** Column keys to show; omit to show them all. */
+  visibleColumns?: LedgerColumnKey[]
+}>()
 
 type LedgerTableRow = LedgerRow & { isTotal: boolean }
 
@@ -120,13 +129,20 @@ const tableRows = computed<LedgerTableRow[]>(() => [
   }
 ])
 
-const columns: TableColumn<LedgerTableRow>[] = [
-  { accessorKey: 'date', header: 'Date' },
-  { id: 'action', header: 'Action' },
-  { id: 'transaction', header: 'Transaction' },
-  { id: 'activity', header: 'Activity' },
-  { accessorKey: 'account', header: 'Account' },
-  { accessorKey: 'dr', header: 'Debit' },
-  { accessorKey: 'cr', header: 'Credit' }
-]
+// Data columns bind to a row field (accessorKey); slot-only columns use an id.
+// Every column also has a `<key>-cell` template, so the key drives both.
+const COLUMN_DEFS: Record<LedgerColumnKey, TableColumn<LedgerTableRow>> = {
+  date: { accessorKey: 'date', header: 'Date' },
+  action: { id: 'action', header: 'Action' },
+  transaction: { id: 'transaction', header: 'Transaction' },
+  activity: { id: 'activity', header: 'Activity' },
+  account: { accessorKey: 'account', header: 'Account' },
+  dr: { accessorKey: 'dr', header: 'Debit' },
+  cr: { accessorKey: 'cr', header: 'Credit' }
+}
+
+const columns = computed<TableColumn<LedgerTableRow>[]>(() => {
+  const visible = props.visibleColumns ?? LEDGER_COLUMNS.map((c) => c.value)
+  return LEDGER_COLUMNS.filter((c) => visible.includes(c.value)).map((c) => COLUMN_DEFS[c.value])
+})
 </script>
