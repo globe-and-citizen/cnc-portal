@@ -8,6 +8,7 @@ import { useTransferInitiators } from '../useTransferInitiators'
 const HASH_A = '0xaaaa'
 const HASH_B = '0xbbbb'
 const ALICE = '0x1111111111111111111111111111111111111111' as Address
+const BOB = '0x2222222222222222222222222222222222222222' as Address
 
 type CapturedConfig = { enabled: { value: boolean }; queryFn: () => Promise<unknown> }
 
@@ -28,10 +29,10 @@ describe('useTransferInitiators', () => {
     expect(captured?.enabled.value).toBe(false)
   })
 
-  it('resolves each hash to its transaction signer, skipping failures', async () => {
+  it('resolves each hash to its transaction signer', async () => {
     const getTransaction = vi.fn(async ({ hash }: { hash: string }) => {
       if (hash === HASH_A) return { from: ALICE }
-      throw new Error('not found')
+      return { from: BOB }
     })
     mockWagmiCore.getPublicClient.mockReturnValue({ getTransaction })
 
@@ -40,7 +41,19 @@ describe('useTransferInitiators', () => {
 
     const map = (await captured!.queryFn()) as Map<string, Address>
     expect(map.get(HASH_A)).toBe(ALICE)
-    expect(map.has(HASH_B)).toBe(false) // the failed lookup is omitted
+    expect(map.get(HASH_B)).toBe(BOB)
+  })
+
+  it('throws an AggregateError when any hash fails to resolve', async () => {
+    const getTransaction = vi.fn(async ({ hash }: { hash: string }) => {
+      if (hash === HASH_A) return { from: ALICE }
+      throw new Error('not found')
+    })
+    mockWagmiCore.getPublicClient.mockReturnValue({ getTransaction })
+
+    useTransferInitiators(computed(() => [HASH_A, HASH_B]))
+
+    await expect(captured!.queryFn()).rejects.toBeInstanceOf(AggregateError)
   })
 
   it('returns an empty map when no public client is available', async () => {

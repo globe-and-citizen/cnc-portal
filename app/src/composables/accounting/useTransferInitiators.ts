@@ -8,8 +8,8 @@
  * ledger read "Stravid87 transferred money from Bank to Safe".
  *
  * A mined transaction's sender never changes, so the lookup is cached
- * indefinitely; a hash that fails to resolve is simply omitted (the ledger falls
- * back to showing the source pocket as the actor).
+ * indefinitely; every hash must resolve, and if any fail we surface them all
+ * together as an `AggregateError` rather than silently dropping initiators.
  */
 import { computed, type ComputedRef } from 'vue'
 import { useQuery } from '@tanstack/vue-query'
@@ -28,17 +28,25 @@ export function useTransferInitiators(
     queryFn: async (): Promise<Map<string, Address>> => {
       const client = getPublicClient(config)
       if (!client) return new Map()
-      const resolved = await Promise.all(
+      const settled = await Promise.allSettled(
         hashes.value.map(async (hash) => {
-          try {
-            const tx = await client.getTransaction({ hash: hash as `0x${string}` })
-            return [hash, tx.from] as const
-          } catch {
-            return null
-          }
+          const tx = await client.getTransaction({ hash: hash as `0x${string}` })
+          return [hash, tx.from] as const
         })
       )
-      return new Map(resolved.filter((r): r is readonly [string, Address] => r !== null))
+      const errors = settled
+        .filter((r): r is PromiseRejectedResult => r.status === 'rejected')
+        .map((r) => r.reason)
+      if (errors.length > 0) {
+        throw new AggregateError(errors, `Failed to resolve ${errors.length} transfer initiator(s)`)
+      }
+      return new Map(
+        settled
+          .filter(
+            (r): r is PromiseFulfilledResult<readonly [string, Address]> => r.status === 'fulfilled'
+          )
+          .map((r) => r.value)
+      )
     }
   })
 
