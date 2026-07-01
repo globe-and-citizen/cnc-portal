@@ -38,6 +38,7 @@ describe('getBeaconConfigs', () => {
       'InvestorV1',
       'Elections',
       'SafeDepositRouter',
+      'Vesting',
       'FixedReturn'
     ])
   })
@@ -61,6 +62,7 @@ describe('getDeploymentConfigs', () => {
       'CashRemunerationEIP712',
       'Elections',
       'SafeDepositRouter',
+      'Vesting',
       'FixedReturn'
     ])
   })

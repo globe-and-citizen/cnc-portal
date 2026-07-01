@@ -6,6 +6,7 @@ import ExpenseAccountEIP712Module from './ExpenseAccountEIP712Module'
 import investorsV1BeaconModule from './InvestorsV1BeaconModule'
 import CashRemunerationEIP712Module from './CashRemunerationEIP712Module'
 import SafeDepositRouterBeaconModule from './SafeDepositRouterBeaconModule'
+import vestingBeaconModule from './VestingBeaconModule'
 import proposalBeaconModule from './ProposalModule'
 import electionsBeaconModule from './ElectionsModule'
 import FeeCollectorModule from './FeeCollectorModule'
@@ -29,6 +30,7 @@ export default buildModule('Officer', (m) => {
   m.useModule(ExpenseAccountEIP712Module)
   m.useModule(CashRemunerationEIP712Module)
   m.useModule(SafeDepositRouterBeaconModule)
+  m.useModule(vestingBeaconModule)
   m.useModule(fixedReturnBeaconModule)
 
   // NOTE: We intentionally do NOT call `initialize` on the Officer implementation.

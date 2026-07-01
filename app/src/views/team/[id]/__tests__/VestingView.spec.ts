@@ -1,16 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, type VueWrapper } from '@vue/test-utils'
-import { createTestingPinia } from '@pinia/testing'
 import VestingView from '../VestingView.vue'
 import { ref } from 'vue'
 import { useReadContractFn, mockTeamStore, mockUserStore } from '@/tests/mocks'
-import { useTeamStore, useUserDataStore } from '@/stores'
 
 // Constants
 const memberAddress = '0x000000000000000000000000000000000000dead'
-// Mocks
+// Mocks — reads return a 3-tuple [members, indices, infos].
 const mockVestingInfos = ref([
   [memberAddress],
+  [0n],
   [
     {
       start: `${Math.floor(Date.now() / 1000) - 3600}`,
@@ -24,60 +23,52 @@ const mockVestingInfos = ref([
 ])
 const refetchVestingInfos = vi.fn()
 
-const mockArchivedInfos = ref([[], []])
-
-const mockCurrentTeam = ref({
-  id: 1,
-  ownerAddress: memberAddress,
-  teamContracts: [
-    {
-      type: 'InvestorV1',
-      address: '0x000000000000000000000000000000000000beef'
-    }
-  ]
-})
+const mockArchivedInfos = ref([[], [], []])
 
 // Test suite
 describe('VestingView.vue', () => {
   let wrapper: VueWrapper
 
-  const mountComponent = () => {
-    return mount(VestingView, {
-      global: {
-        plugins: [createTestingPinia({ createSpy: vi.fn })]
-      }
-    })
-  }
+  const mountComponent = () => mount(VestingView)
 
   beforeEach(() => {
     vi.clearAllMocks()
     useReadContractFn.mockImplementation(({ functionName }: { functionName: string }) => {
-      if (functionName === 'getTeamVestingsWithMembers') {
+      if (functionName === 'getVestingsWithMembers') {
         return { data: mockVestingInfos, error: ref(null), refetch: refetchVestingInfos }
       }
-      if (functionName === 'getTeamAllArchivedVestingsFlat') {
+      if (functionName === 'getAllArchivedVestingsFlat') {
         return { data: mockArchivedInfos, error: ref(null), refetch: vi.fn() }
       }
       return { data: ref('TST'), error: ref(null), refetch: vi.fn() }
     })
-    // Configure store mocks
-    vi.mocked(useUserDataStore).mockReturnValue({ ...mockUserStore, address: memberAddress })
-    vi.mocked(useTeamStore).mockReturnValue({
-      ...mockTeamStore,
-      currentTeam: mockCurrentTeam.value as ReturnType<typeof useTeamStore>['currentTeam'],
-      currentTeamId: mockCurrentTeam.value.id,
-      getContractAddressByType: vi.fn((type) =>
-        type ? '0x000000000000000000000000000000000000beef' : undefined
-      )
-    } as ReturnType<typeof useTeamStore>)
+    // Configure store mocks via the shared, globally-mocked instances.
+    mockUserStore.address = memberAddress
+    mockTeamStore.currentTeam = {
+      ...mockTeamStore.currentTeam,
+      id: 1,
+      ownerAddress: memberAddress
+    }
+    mockTeamStore.currentTeamId = '1'
+    mockTeamStore.getContractAddressByType = vi.fn((type) =>
+      type ? '0x000000000000000000000000000000000000beef' : undefined
+    )
     wrapper = mountComponent()
   })
 
-  it('passes correct props to CreateVesting', async () => {
-    const btn = wrapper.find('[data-test="createAddVesting"]')
-    await btn.trigger('click')
+  it('renders the vesting stats and flow sections', () => {
+    expect(wrapper.findComponent({ name: 'VestingStats' }).exists()).toBe(true)
+    expect(wrapper.findComponent({ name: 'VestingFlow' }).exists()).toBe(true)
+  })
 
-    const component = wrapper.findComponent({ name: 'CreateVesting' })
-    expect(component.props('tokenAddress')).toBe('0x000000000000000000000000000000000000beef')
+  it('bumps the reload key when VestingFlow emits reload', async () => {
+    const flow = wrapper.findComponent({ name: 'VestingFlow' })
+    expect(flow.props('reloadKey')).toBe(0)
+
+    flow.vm.$emit('reload')
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.findComponent({ name: 'VestingFlow' }).props('reloadKey')).toBe(1)
+    expect(wrapper.findComponent({ name: 'VestingStats' }).props('reloadKey')).toBe(1)
   })
 })

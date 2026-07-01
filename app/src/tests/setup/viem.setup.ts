@@ -13,6 +13,7 @@ vi.mock('viem', async (importOriginal) => {
     //   return !!address && typeof address === 'string'
     // }), // No need to mock this function because we will allway use a real address in tests, and the real function will work fine with that. If we need to test invalid addresses, we can do that on a case by case basis in individual tests.
     encodeFunctionData: vi.fn(() => '0xEncodedData'),
+    parseEventLogs: vi.fn(() => []),
     parseSignature: vi.fn(),
     hashTypedData: vi.fn(),
     keccak256: vi.fn()

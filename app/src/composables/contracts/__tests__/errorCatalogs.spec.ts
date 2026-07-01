@@ -77,15 +77,9 @@ describe('resolveRevertMessage', () => {
       )
     })
 
-    it('formats Vesting.InsufficientAllowance', () => {
-      expect(resolveRevertMessage('InsufficientAllowance', [100n, 10n], 'Vesting')).toBe(
-        'Not enough token allowance — needs 100, only 10'
-      )
-    })
-
-    it('formats Vesting.InsufficientBalance (required/actual)', () => {
-      expect(resolveRevertMessage('InsufficientBalance', [5n, 3n], 'Vesting')).toBe(
-        'Insufficient token balance — needs 5, only 3'
+    it('resolves Vesting.InsufficientMinterRole', () => {
+      expect(resolveRevertMessage('InsufficientMinterRole', undefined, 'Vesting')).toBe(
+        'Vesting is missing minter role on the investor token'
       )
     })
 
@@ -255,16 +249,6 @@ describe('resolveRevertMessage', () => {
         name: 'InsufficientContractBalance',
         contract: 'AdCampaignManager',
         expected: 'Insufficient contract balance — needs undefined, only undefined'
-      },
-      {
-        name: 'InsufficientAllowance',
-        contract: 'Vesting',
-        expected: 'Not enough token allowance — needs undefined, only undefined'
-      },
-      {
-        name: 'InsufficientBalance',
-        contract: 'Vesting',
-        expected: 'Insufficient token balance — needs undefined, only undefined'
       },
       {
         name: 'InvalidNativeFunding',
