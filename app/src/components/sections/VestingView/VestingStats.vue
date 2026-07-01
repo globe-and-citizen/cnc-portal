@@ -13,15 +13,9 @@
           <span class="text-xs">{{ tokenSymbolText }}</span>
         </span>
       </template>
-      <template #totalVested-cell="{ row: { original: row } }">
+      <template #totalPromised-cell="{ row: { original: row } }">
         <span class="flex items-center gap-1 text-sm text-gray-700">
-          {{ row.totalVested }}
-          <span class="text-xs">{{ tokenSymbolText }}</span>
-        </span>
-      </template>
-      <template #totalWithdrawn-cell="{ row: { original: row } }">
-        <span class="flex items-center gap-1 text-sm text-gray-700">
-          {{ row.totalWithdrawn }}
+          {{ row.totalPromised }}
           <span class="text-xs">{{ tokenSymbolText }}</span>
         </span>
       </template>
@@ -31,17 +25,13 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { useTeamStore } from '@/stores'
 import { type TokenSummary } from '@/types/vesting'
 import { formatUnits } from 'viem'
 import { useInvestorSymbol } from '@/composables/investor/reads'
 import {
-  useVestingGetTeamAllArchivedVestingsFlat,
-  useVestingGetTeamVestingsWithMembers
+  useVestingGetAllArchivedVestingsFlat,
+  useVestingGetVestingsWithMembers
 } from '@/composables/vesting/reads'
-
-const teamStore = useTeamStore()
-const team = computed(() => teamStore.currentTeam)
 
 const props = defineProps<{
   reloadKey: number
@@ -61,42 +51,34 @@ watch(
   }
 )
 
-const totals = computed<{ totalAmount: number; totalReleased: number; totalWithdrawn: number }>(
-  () => {
-    const result = { totalAmount: 0, totalReleased: 0, totalWithdrawn: 0 }
-    // Process active vestings
-    if (
-      vestingInfos.value &&
-      Array.isArray(vestingInfos.value) &&
-      vestingInfos.value.length === 2
-    ) {
-      const [, activeVestingsRaw] = vestingInfos.value
-      if (Array.isArray(activeVestingsRaw)) {
-        activeVestingsRaw.forEach((v) => {
-          result.totalAmount += Number(formatUnits(v.totalAmount, 6))
-          result.totalReleased += Number(formatUnits(v.released, 6))
-        })
-      }
+const totals = computed<{ totalAmount: number; totalReleased: number }>(() => {
+  const result = { totalAmount: 0, totalReleased: 0 }
+  // Process active vestings
+  if (vestingInfos.value && Array.isArray(vestingInfos.value) && vestingInfos.value.length === 3) {
+    const [, , activeVestingsRaw] = vestingInfos.value
+    if (Array.isArray(activeVestingsRaw)) {
+      activeVestingsRaw.forEach((v) => {
+        result.totalAmount += Number(formatUnits(v.totalAmount, 6))
+        result.totalReleased += Number(formatUnits(v.released, 6))
+      })
     }
-    // Process archived vestings
-    if (
-      archivedVestingInfos.value &&
-      Array.isArray(archivedVestingInfos.value) &&
-      archivedVestingInfos.value.length === 2
-    ) {
-      const [, archivedVestingsRaw] = archivedVestingInfos.value
-      if (Array.isArray(archivedVestingsRaw)) {
-        archivedVestingsRaw.forEach((v) => {
-          result.totalAmount += Number(formatUnits(v.totalAmount, 6))
-          result.totalReleased += Number(formatUnits(v.released, 6))
-          result.totalWithdrawn +=
-            Number(formatUnits(v.totalAmount, 6)) - Number(formatUnits(v.released, 6))
-        })
-      }
-    }
-    return result
   }
-)
+  // Process archived vestings
+  if (
+    archivedVestingInfos.value &&
+    Array.isArray(archivedVestingInfos.value) &&
+    archivedVestingInfos.value.length === 3
+  ) {
+    const [, , archivedVestingsRaw] = archivedVestingInfos.value
+    if (Array.isArray(archivedVestingsRaw)) {
+      archivedVestingsRaw.forEach((v) => {
+        result.totalAmount += Number(formatUnits(v.totalAmount, 6))
+        result.totalReleased += Number(formatUnits(v.released, 6))
+      })
+    }
+  }
+  return result
+})
 
 // Define columns including the new "Actions" column
 const toast = useToast()
@@ -106,7 +88,7 @@ const {
   //isLoading: isLoadingArchivedVestingInfos,
   error: errorGetArchivedVestingInfo,
   refetch: getArchivedVestingInfos
-} = useVestingGetTeamAllArchivedVestingsFlat(computed(() => BigInt(team?.value?.id ?? 0)))
+} = useVestingGetAllArchivedVestingsFlat()
 
 watch(errorGetArchivedVestingInfo, () => {
   if (errorGetArchivedVestingInfo.value) {
@@ -130,27 +112,25 @@ const {
   //isLoading: isLoadingVestingInfos,
   error: errorGetVestingInfo,
   refetch: getVestingInfos
-} = useVestingGetTeamVestingsWithMembers(computed(() => BigInt(team?.value?.id ?? 0)))
+} = useVestingGetVestingsWithMembers()
 watch(errorGetVestingInfo, () => {
   if (errorGetVestingInfo.value) {
-    toast.add({ title: 'Add admin failed', color: 'error' })
+    toast.add({ title: 'Failed to load vestings', color: 'error' })
   }
 })
 
 const tokenSummaryColumns = [
   { accessorKey: 'symbol', header: 'Token Symbol', enableSorting: false },
-  { accessorKey: 'totalVested', header: 'Total Vested', enableSorting: false },
-  { accessorKey: 'totalReleased', header: 'Total Released', enableSorting: false },
-  { accessorKey: 'totalWithdrawn', header: 'Total Withdrawn', enableSorting: false }
+  { accessorKey: 'totalPromised', header: 'Promised', enableSorting: false },
+  { accessorKey: 'totalReleased', header: 'Total Released', enableSorting: false }
 ]
 const tokenSummaryRows = computed(() => {
   const defaultToken = tokenSymbolText.value
   const summaryMap: Record<string, TokenSummary> = {}
   summaryMap[defaultToken] = {
     symbol: defaultToken,
-    totalVested: totals.value.totalAmount,
-    totalReleased: totals.value.totalReleased,
-    totalWithdrawn: totals.value.totalWithdrawn
+    totalPromised: totals.value.totalAmount,
+    totalReleased: totals.value.totalReleased
   }
   return Object.values(summaryMap)
 })

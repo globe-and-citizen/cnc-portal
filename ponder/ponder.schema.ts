@@ -1208,6 +1208,63 @@ export const feeCollectorTokenSupportRemoved = onchainTable(
   }),
 );
 
+// Vesting (per-team, Officer-scoped via contractAddress)
+export const vestingCreated = onchainTable(
+  "vesting_created",
+  (t) => ({
+    id: t.text().primaryKey(),
+    contractAddress: t.hex().notNull(),
+    member: t.hex().notNull(),
+    scheduleIndex: t.bigint().notNull(),
+    amount: t.bigint().notNull(),
+    blockNumber: t.bigint().notNull(),
+    timestamp: t.integer().notNull(),
+  }),
+  (table) => ({
+    contractAddressIdx: index("vesting_created_contract_index").on(
+      table.contractAddress,
+    ),
+    memberIdx: index("vesting_created_member_index").on(table.member),
+  }),
+);
+
+export const vestingTokensReleased = onchainTable(
+  "vesting_tokens_released",
+  (t) => ({
+    id: t.text().primaryKey(),
+    contractAddress: t.hex().notNull(),
+    member: t.hex().notNull(),
+    scheduleIndex: t.bigint().notNull(),
+    amount: t.bigint().notNull(),
+    blockNumber: t.bigint().notNull(),
+    timestamp: t.integer().notNull(),
+  }),
+  (table) => ({
+    contractAddressIdx: index("vesting_tokens_released_contract_index").on(
+      table.contractAddress,
+    ),
+    memberIdx: index("vesting_tokens_released_member_index").on(table.member),
+  }),
+);
+
+export const vestingStopped = onchainTable(
+  "vesting_stopped",
+  (t) => ({
+    id: t.text().primaryKey(),
+    contractAddress: t.hex().notNull(),
+    member: t.hex().notNull(),
+    scheduleIndex: t.bigint().notNull(),
+    blockNumber: t.bigint().notNull(),
+    timestamp: t.integer().notNull(),
+  }),
+  (table) => ({
+    contractAddressIdx: index("vesting_stopped_contract_index").on(
+      table.contractAddress,
+    ),
+    memberIdx: index("vesting_stopped_member_index").on(table.member),
+  }),
+);
+
 // Relations
 export const teamRelations = relations(team, ({ many }) => ({
   contracts: many(teamContract),

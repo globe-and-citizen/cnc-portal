@@ -10,6 +10,7 @@ import {IBoardOfDirectors} from './interfaces/IBoardOfDirectors.sol';
 import {ICashRemuneration} from './interfaces/ICashRemuneration.sol';
 import {IInvestorV1} from './interfaces/IInvestorV1.sol';
 import {ISafeDepositRouter} from './interfaces/ISafeDepositRouter.sol';
+import {IVesting} from './interfaces/IVesting.sol';
 import {IFeeCollector} from './interfaces/IFeeCollector.sol';
 
 /**
@@ -161,6 +162,7 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     // Find deployed contracts
     address cashRemunerationAddress = findDeployedContract('CashRemunerationEIP712');
     address depositRouterAddress = findDeployedContract('SafeDepositRouter');
+    address vestingAddress = findDeployedContract('Vesting');
     address investorV1Address = findDeployedContract('InvestorV1');
 
     // Only proceed if InvestorV1 was deployed
@@ -190,6 +192,15 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
       // Transfer ownership to final owner
       ISafeDepositRouter depositRouter = ISafeDepositRouter(depositRouterAddress);
       depositRouter.transferOwnership(_owner);
+    }
+
+    // Setup Vesting permissions if deployed
+    if (vestingAddress != address(0)) {
+      // Grant MINTER_ROLE so release()/stopVesting() can mint vested shares on demand
+      investorV1.grantRole(minterRole, vestingAddress);
+
+      // Transfer ownership to final owner so the team owner manages schedules
+      IVesting(vestingAddress).transferOwnership(_owner);
     }
 
     // Setup owner permissions on InvestorV1

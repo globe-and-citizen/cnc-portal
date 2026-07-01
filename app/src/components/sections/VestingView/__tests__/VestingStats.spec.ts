@@ -12,9 +12,8 @@ vi.mock('@nuxt/ui/components/Table.vue', () => ({
     template: `
       <div data-test="vesting-stats-table">
         <div v-for="(row, i) in data" :key="i" data-test="vesting-stats-row">
-          <slot name="totalVested-cell" :row="{ original: row }" />
+          <slot name="totalPromised-cell" :row="{ original: row }" />
           <slot name="totalReleased-cell" :row="{ original: row }" />
-          <slot name="totalWithdrawn-cell" :row="{ original: row }" />
         </div>
       </div>
     `
@@ -29,9 +28,11 @@ import { ref } from 'vue'
 const memberAddress = '0x000000000000000000000000000000000000dead'
 const mockSymbol = ref<string>('shr')
 const mockReloadKey = ref<number>(0)
-// Mocks
-const mockVestingInfos = ref<[string[], { totalAmount: number; released: number }[]]>([
+// Mocks — reads return a 3-tuple [members, indices, infos]; a member appears
+// once per schedule.
+const mockVestingInfos = ref<[string[], bigint[], { totalAmount: number; released: number }[]]>([
   [memberAddress],
+  [0n],
   [
     {
       totalAmount: 0,
@@ -42,7 +43,7 @@ const mockVestingInfos = ref<[string[], { totalAmount: number; released: number 
 
 const refetchVestingInfos = vi.fn()
 
-const mockArchivedInfos = ref([[], []])
+const mockArchivedInfos = ref([[], [], []])
 
 vi.mock('@/composables/investor/reads', () => ({
   useInvestorSymbol: vi.fn(() => ({
@@ -57,14 +58,14 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
   return {
     ...actual,
     useReadContract: vi.fn(({ functionName }: { functionName: string }) => {
-      if (functionName === 'getTeamVestingsWithMembers') {
+      if (functionName === 'getVestingsWithMembers') {
         return {
           data: mockVestingInfos,
           error: ref(null),
           refetch: refetchVestingInfos
         }
       }
-      if (functionName === 'getTeamAllArchivedVestingsFlat') {
+      if (functionName === 'getAllArchivedVestingsFlat') {
         return {
           data: mockArchivedInfos,
           error: ref(null),
@@ -105,9 +106,10 @@ describe('VestingStats.vue', () => {
   })
 
   it('calculates token summary correctly from vestings data', async () => {
-    // Setup mock data with multiple vestings
+    // Setup mock data with two schedules for the same member (one per index).
     mockVestingInfos.value = [
-      [memberAddress],
+      [memberAddress, memberAddress],
+      [0n, 1n],
       [
         {
           totalAmount: Number(BigInt(100000000)), // 100 tokens with 6 decimals
@@ -125,19 +127,19 @@ describe('VestingStats.vue', () => {
 
     const tableData = wrapper.findComponent({ name: 'UTable' }).props('data') as Array<{
       symbol: string
-      totalVested: number
+      totalPromised: number
       totalReleased: number
     }>
     expect(tableData).toHaveLength(1) // Should have one row per token symbol
     expect(tableData[0]).toMatchObject({
       symbol: mockSymbol.value,
-      totalVested: 150,
+      totalPromised: 150,
       totalReleased: 30
     })
   })
 
   it('handles empty vestings array', () => {
-    mockVestingInfos.value = [[], []]
+    mockVestingInfos.value = [[], [], []]
     wrapper = mountComponent()
 
     const tableData = wrapper.findComponent({ name: 'UTable' }).props('data') as Array<unknown>
@@ -148,6 +150,7 @@ describe('VestingStats.vue', () => {
     mockSymbol.value = 'TEST'
     mockVestingInfos.value = [
       [memberAddress],
+      [0n],
       [
         {
           totalAmount: Number(BigInt(100000000)),
@@ -159,9 +162,9 @@ describe('VestingStats.vue', () => {
     wrapper = mountComponent()
     await wrapper.vm.$nextTick()
 
-    const totalVestedText = wrapper.text()
-    expect(totalVestedText).toContain('100')
-    expect(totalVestedText).toContain('TEST')
+    const totalPromisedText = wrapper.text()
+    expect(totalPromisedText).toContain('100')
+    expect(totalPromisedText).toContain('TEST')
 
     const totalReleasedText = wrapper.text()
     expect(totalReleasedText).toContain('20')
