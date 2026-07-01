@@ -133,7 +133,6 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import dayjs from 'dayjs'
 import { readContract } from '@wagmi/core'
 import type { Address } from 'viem'
 import { useToast } from '@nuxt/ui/composables'
@@ -239,8 +238,10 @@ async function publish() {
   }
 
   try {
-    // CreditCallForm keeps the term in canonical days, so map it straight to the
-    // contract's Days unit — no weeks/months conversion needed here.
+    // A Community Credit round has a single date: lending closes and the loan starts on
+    // the subscription deadline, so startDate == deadline. FixedReturn.sol requires
+    // subscriptionDeadline <= startDate (reverts InvalidDeadline otherwise). The term is
+    // already in canonical days, so it maps straight to the contract's Days unit.
     const offeringForm: OfferingForm = {
       title: form.name.trim(),
       purpose: form.desc.trim(),
@@ -248,7 +249,7 @@ async function publish() {
       rate: Number(form.rate) || 0,
       termValue: form.period,
       termUnit: 'days',
-      startDate: dayjs().format('YYYY-MM-DD'),
+      startDate: form.deadline,
       deadline: form.deadline,
       access: form.access === 'restricted' ? 'whitelist' : 'general',
       capOn: form.capOn,
