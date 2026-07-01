@@ -1,15 +1,9 @@
 import type { Action, ActionResponse, TeamContract, User } from '@/types'
+import type { Address } from 'viem'
 import { config } from '@/wagmi.config'
 import { readContract } from '@wagmi/core'
 import { log, parseError } from '@/utils'
-import { EXPENSE_ACCOUNT_EIP712_ABI as ExpenseAccountAbi } from '@/artifacts/abi/expense-account-eip712'
-import { BANK_ABI as BankAbi } from '@/artifacts/abi/bank'
-
-import { CASH_REMUNERATION_EIP712_ABI as CashRemunerationAbi } from '@/artifacts/abi/cash-remuneration-eip712'
-import { ELECTIONS_ABI as ElectionsAbi } from '@/artifacts/abi/elections'
-import { INVESTOR_ABI as InvestorsAbi } from '@/artifacts/abi/investors'
-import { PROPOSALS_ABI as ProposalsAbi } from '@/artifacts/abi/proposals'
-import { VOTING_ABI as VotingAbi } from '@/artifacts/abi/voting'
+import { OWNABLE_PAUSABLE_ABI } from '@/artifacts/abi/ownable-pausable'
 
 export type FormattedAction = (Action & {
   requestedBy: User
@@ -53,59 +47,35 @@ export const filterAndFormatActions = (
     }))
 }
 
+// Reads a single Ownable/Pausable view, tolerating contracts that don't
+// implement it (e.g. a Safe has no `owner`/`paused`) so one non-conforming
+// contract never blanks the whole table.
+const readContractField = async (address: Address, functionName: 'owner' | 'paused') => {
+  try {
+    return await readContract(config, { address, abi: OWNABLE_PAUSABLE_ABI, functionName })
+  } catch {
+    return null
+  }
+}
+
 export const getTeamContracts = async (contracts: TeamContract[]) => {
   try {
     return Promise.all(
-      contractsWithAbis(contracts)
-        .filter((contract) => contract != null)
-        .map(async (contract) => {
-          if (!contract || !contract.abi) {
-            log.info('Skipping contract with undefined or null ABI: ', contract)
-            throw new Error('Contract is undefined or null')
-          }
-          const owner = await readContract(config, {
-            address: contract.address,
-            abi: contract.abi,
-            functionName: 'owner'
-          })
+      contracts.map(async (contract) => {
+        const [owner, paused] = await Promise.all([
+          readContractField(contract.address, 'owner'),
+          readContractField(contract.address, 'paused')
+        ])
 
-          const paused = await readContract(config, {
-            address: contract.address,
-            abi: contract.abi,
-            functionName: 'paused'
-          })
-
-          return {
-            ...contract,
-            owner,
-            paused
-          }
-        })
+        return {
+          ...contract,
+          abi: OWNABLE_PAUSABLE_ABI,
+          owner,
+          paused
+        }
+      })
     )
   } catch (error) {
     log.error('Error fetching contract owners: ', parseError(error))
   }
-}
-
-const contractsWithAbis = (contracts: TeamContract[]) => {
-  return contracts.map((contract) => {
-    switch (contract.type) {
-      case 'Bank':
-        return { ...contract, abi: BankAbi }
-      case 'CashRemunerationEIP712':
-        return { ...contract, abi: CashRemunerationAbi }
-      case 'Elections':
-        return { ...contract, abi: ElectionsAbi }
-      case 'ExpenseAccountEIP712':
-        return { ...contract, abi: ExpenseAccountAbi }
-      case 'InvestorV1':
-        return { ...contract, abi: InvestorsAbi }
-      case 'Proposals':
-        return { ...contract, abi: ProposalsAbi }
-      case 'Voting':
-        return { ...contract, abi: VotingAbi }
-      default:
-        return null // Default ABI if none matches
-    }
-  })
 }
