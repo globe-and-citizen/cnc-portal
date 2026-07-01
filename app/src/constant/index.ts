@@ -32,7 +32,6 @@ interface AddressMapping {
   'CashRemunerationEIP712Module#CashRemunerationEIP712': string
   'InvestorsV1BeaconModule#Beacon'?: string
   'InvestorsV1BeaconModule#InvestorV1'?: string
-  'VestingModule#Vesting'?: string
   'MockTokens#USDT'?: string
   'MockTokens#USDC'?: string
   'MockTokens#USDCe'?: string
@@ -40,6 +39,7 @@ interface AddressMapping {
   'ElectionsBeaconModule#Beacon'?: string
   'SafeDepositRouterBeaconModule#SafeDepositRouter'?: string
   'SafeDepositRouterBeaconModule#Beacon'?: string
+  'VestingBeaconModule#Beacon'?: string
   'FeeCollectorModule#FeeCollector'?: string
   'FixedReturnBeaconModule#FixedReturn'?: string
   'FixedReturnBeaconModule#Beacon'?: string
@@ -146,7 +146,6 @@ export const USDT_ADDRESS = getUSDTAddress()
 
 export function validateAddresses() {
   const requiredKeys: (keyof AddressMapping)[] = [
-    'VestingModule#Vesting',
     'BankBeaconModule#Beacon',
     'BankBeaconModule#Bank',
     'ElectionsBeaconModule#Beacon',
@@ -186,7 +185,6 @@ try {
   console.error(error)
 }
 
-export const VESTING_ADDRESS = safeResolveAddress('VestingModule#Vesting')
 export const BANK_BEACON_ADDRESS = safeResolveAddress('BankBeaconModule#Beacon')
 export const BANK_IMPL_ADDRESS = safeResolveAddress('BankBeaconModule#Bank')
 
@@ -214,6 +212,7 @@ export const SAFE_DEPOSIT_ROUTER_IMPL_ADDRESS = safeResolveAddress(
 export const SAFE_DEPOSIT_ROUTER_BEACON_ADDRESS = safeResolveAddress(
   'SafeDepositRouterBeaconModule#Beacon'
 )
+export const VESTING_BEACON_ADDRESS = safeResolveAddress('VestingBeaconModule#Beacon')
 export const OFFICER_ADDRESS = safeResolveAddress('Officer#Officer')
 export const OFFICER_BEACON = safeResolveAddress('Officer#FactoryBeacon')
 export const INVESTOR_V1_BEACON_ADDRESS = safeResolveAddress('InvestorsV1BeaconModule#Beacon')

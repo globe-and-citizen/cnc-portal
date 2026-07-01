@@ -13,7 +13,7 @@
 | [ExpenseAccountEIP712](#expenseaccounteip712)     | `contracts/expense-account/ExpenseAccountEIP712.sol` | Yes (Beacon)      | Expense reimbursement                |
 | [CashRemunerationEIP712](#cashremunerationeip712) | `contracts/CashRemunerationEIP712.sol`               | Yes (Beacon)      | Wage payment with equity             |
 | [Tips](#tips)                                     | `contracts/Tips.sol`                                 | Yes (Transparent) | ETH tip distribution                 |
-| [Vesting](#vesting)                               | `contracts/Vesting.sol`                              | Yes (Beacon)      | ERC20 token vesting                  |
+| [Vesting](#vesting)                               | `contracts/Vesting.sol`                              | Yes (Beacon)      | Per-team share vesting (mint-on-release) |
 | [AdCampaignManager](#adcampaignmanager)           | `contracts/AdCampaignManager.sol`                    | No                | Ad campaign & payment                |
 | [SafeDepositRouter](#safedepositrouter)           | `contracts/SafeDepositRouter.sol`                    | Yes               | Token deposit → SHER minting         |
 | [FeeCollector](#feecollector)                     | `contracts/FeeCollector.sol`                         | Yes               | Global fee vault                     |
@@ -272,28 +272,39 @@ updatePushLimit(value)                            // Owner only
 
 **Path**: `contracts/Vesting.sol`
 
-Linear ERC20 token vesting with cliff periods, organized by teams.
+Per-team linear vesting with cliff periods. Deployed per team via the Officer
+beacon registry; schedules are **agreements only** — share tokens are minted on
+demand, never pre-funded.
 
 **Features**:
 
-- Team-based: each team has an owner, token, and member list
+- Per-team: deployed per Officer, owned by the team owner (no `teamId` keys)
+- Agreement-then-mint: `addVesting` moves no tokens; `release` mints only what
+  has vested from the team's `InvestorV1` via `individualMint`
+- Investor resolved through the Officer (`findDeployedContract('InvestorV1')`);
+  no configurable token address
+- Multiple schedules per member: each grant is appended to the member's
+  `vestings` array and addressed by its index (initial grant, refreshers, …)
 - Cliff period: no tokens releasable until cliff elapses
 - Linear vesting: tokens unlock proportionally after cliff
-- Team owner can stop vesting: releasable tokens go to member, unvested tokens return to owner
-- Archived history of stopped vestings per member/team
+- Team owner can stop a schedule: releasable amount is minted to the member, the
+  unvested remainder is simply never minted (no refund path)
+- Schedules are append-only: a stopped one is kept with `active = false`, a
+  fully-released one stays `active = true`
+- Requires `MINTER_ROLE` on `InvestorV1` (granted by Officer at deployment)
 - Upgradeable, Pausable, ReentrancyGuard
 
 **Key Functions**:
 
 ```
-createTeam(teamId, teamOwner, tokenAddress)
-addVesting(teamId, member, start, duration, cliff, totalAmount, token)
-release(teamId)                                   // Member claims vested tokens
-stopVesting(member, teamId)                       // Owner stops & settles
-vestedAmount(member, teamId) → uint256
-releasable(member, teamId) → uint256
-getTeamVestingsWithMembers(teamId)
-getTeamAllArchivedVestingsFlat(teamId)
+addVesting(member, start, duration, cliff, totalAmount)   // Owner; appends a schedule
+release(index)                                            // Member mints one schedule's vested shares
+stopVesting(member, index)                                // Owner stops & settles one schedule
+vestedAmount(member, index) → uint256
+releasable(member, index) → uint256
+getVestingCount(member) → uint256
+getVestingsWithMembers()        // active schedules: (members[], indices[], infos[])
+getAllArchivedVestingsFlat()    // stopped schedules: (members[], indices[], infos[])
 ```
 
 ---

@@ -86,6 +86,9 @@ describe('Officer Contract', function () {
       cashRemunerationEip712
     )) as unknown as UpgradeableBeacon
 
+    const vesting = await ethers.getContractFactory('Vesting')
+    const vestingBeacon = (await upgrades.deployBeacon(vesting)) as unknown as UpgradeableBeacon
+
     const beaconConfigs: Array<{ beaconType: string; beaconAddress: string }> = [
       {
         beaconType: 'Bank',
@@ -114,6 +117,10 @@ describe('Officer Contract', function () {
       {
         beaconType: 'Elections',
         beaconAddress: await electionsBeacon.getAddress()
+      },
+      {
+        beaconType: 'Vesting',
+        beaconAddress: await vestingBeacon.getAddress()
       }
     ]
 
@@ -160,6 +167,11 @@ describe('Officer Contract', function () {
     deployments.push({
       contractType: 'Elections',
       initializerData: elections.interface.encodeFunctionData('initialize', [owner.address])
+    })
+
+    deployments.push({
+      contractType: 'Vesting',
+      initializerData: vesting.interface.encodeFunctionData('initialize', [])
     })
 
     // Deploy Officer through a proxy; the implementation's constructor now calls
@@ -222,6 +234,22 @@ describe('Officer Contract', function () {
     ).to.be.equal(true)
     expect(
       await investorV1Proxy.hasRole(await investorV1Proxy.DEFAULT_ADMIN_ROLE(), owner.address)
+    ).to.be.equal(true)
+
+    // Vesting is deployed per-team via the same beacon flow: bound to the Officer,
+    // owned by the team owner, and granted MINTER_ROLE on InvestorV1.
+    const vestingProxy = await ethers.getContractAt('Vesting', contractAddresses.get('Vesting')!)
+    expect((await vestingProxy.officerAddress()).toLocaleLowerCase()).to.be.equal(
+      (await officer.getAddress()).toLocaleLowerCase()
+    )
+    expect((await vestingProxy.owner()).toLocaleLowerCase()).to.be.equal(
+      owner.address.toLocaleLowerCase()
+    )
+    expect(
+      await investorV1Proxy.hasRole(
+        await investorV1Proxy.MINTER_ROLE(),
+        await vestingProxy.getAddress()
+      )
     ).to.be.equal(true)
 
     // Test Officer's FeeCollector integration (these are valid since Officer needs to query FeeCollector)

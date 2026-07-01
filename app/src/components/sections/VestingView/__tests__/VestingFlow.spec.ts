@@ -7,12 +7,14 @@ import VestingActions from '@/components/sections/VestingView/VestingActions.vue
 import { mockVestingWrites, mockTeamStore, mockUserStore } from '@/tests/mocks'
 
 const mockReloadKey = ref(0)
-const TEAM_ID = 1n
 const MEMBER = mockUserStore.address
 
-// Active vesting tuple shaped like the on-chain return.
+// Active vesting tuple shaped like the on-chain return: [members, indices, infos].
+// The single schedule lives at on-chain array index 3 for this member.
+const SCHEDULE_INDEX = 3n
 const activeVestings = ref([
   [MEMBER],
+  [SCHEDULE_INDEX],
   [
     {
       start: BigInt(Math.floor(Date.now() / 1000) - 3600),
@@ -27,12 +29,12 @@ const activeVestings = ref([
 
 vi.mock('@/composables/vesting/reads', () => ({
   useVestingAddress: vi.fn(() => ref('0x1000000000000000000000000000000000000001')),
-  useVestingGetTeamVestingsWithMembers: vi.fn(() => ({
+  useVestingGetVestingsWithMembers: vi.fn(() => ({
     data: activeVestings,
     error: ref(null),
     refetch: vi.fn()
   })),
-  useVestingGetTeamAllArchivedVestingsFlat: vi.fn(() => ({
+  useVestingGetAllArchivedVestingsFlat: vi.fn(() => ({
     data: ref(null),
     error: ref(null),
     refetch: vi.fn()
@@ -67,7 +69,7 @@ describe('VestingFlow.vue', () => {
     mockVestingWrites.release.mutate.mockReset()
     mockTeamStore.currentTeam = {
       ...mockTeamStore.currentTeam,
-      id: Number(TEAM_ID),
+      id: 1,
       ownerAddress: MEMBER
     }
     wrapper = mountComponent()
@@ -89,14 +91,14 @@ describe('VestingFlow.vue', () => {
   })
 
   describe('Stop vesting', () => {
-    it('calls stopVesting mutate with member + teamId when the row stop button is clicked', async () => {
+    it('calls stopVesting mutate with member and schedule index when the row stop button is clicked', async () => {
       await flushPromises()
       const stopBtn = wrapper.find('[data-test="stop-btn"]')
       expect(stopBtn.exists()).toBe(true)
       await stopBtn.trigger('click')
 
       expect(mockVestingWrites.stopVesting.mutate).toHaveBeenCalledWith(
-        { args: [MEMBER, TEAM_ID] },
+        { args: [MEMBER, SCHEDULE_INDEX] },
         expect.objectContaining({
           onSuccess: expect.any(Function),
           onError: expect.any(Function)
@@ -127,14 +129,14 @@ describe('VestingFlow.vue', () => {
   })
 
   describe('Release vesting', () => {
-    it('calls release mutate with teamId when the row release button is clicked', async () => {
+    it('calls release mutate with the schedule index when the row release button is clicked', async () => {
       await flushPromises()
       const releaseBtn = wrapper.find('[data-test="release-btn"]')
       expect(releaseBtn.exists()).toBe(true)
       await releaseBtn.trigger('click')
 
       expect(mockVestingWrites.release.mutate).toHaveBeenCalledWith(
-        { args: [TEAM_ID] },
+        { args: [SCHEDULE_INDEX] },
         expect.objectContaining({
           onSuccess: expect.any(Function),
           onError: expect.any(Function)

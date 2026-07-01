@@ -38,13 +38,6 @@
           <span class="text-xs">{{ row.tokenSymbol }}</span>
         </UBadge>
       </template>
-      <template #withdrawn-cell="{ row: { original: row } }">
-        <UBadge color="info" variant="subtle" class="flex items-center gap-1">
-          {{ row.status === 'Inactive' ? (row.totalAmount - row.released).toFixed(2) : 0 }}
-          <span class="text-xs">{{ row.tokenSymbol }}</span>
-        </UBadge>
-      </template>
-
       <template #member-cell="{ row: { original: row } }">
         <span>{{ row.member }}</span>
       </template>
@@ -59,7 +52,7 @@
               color="error"
               size="xs"
               :disabled="isWriteDisabled"
-              @click.stop="stopVesting(row.member)"
+              @click.stop="stopVesting(row.member, row.index)"
               icon="mdi:stop-circle-outline"
               label="Stop"
             />
@@ -77,7 +70,7 @@
               size="xs"
               :disabled="isWriteDisabled || !row.isStarted"
               :title="!row.isStarted ? 'Vesting has not started yet' : undefined"
-              @click.stop="releaseVesting()"
+              @click.stop="releaseVesting(row.index)"
               icon="mdi:lock-open"
               label="Release"
             />
@@ -99,8 +92,8 @@ import VestingActions from '@/components/sections/VestingView/VestingActions.vue
 import VestingStatusFilter from './VestingStatusFilter.vue'
 import { useInvestorSymbol } from '@/composables/investor/reads'
 import {
-  useVestingGetTeamAllArchivedVestingsFlat,
-  useVestingGetTeamVestingsWithMembers
+  useVestingGetAllArchivedVestingsFlat,
+  useVestingGetVestingsWithMembers
 } from '@/composables/vesting/reads'
 import { useVestingReleaseWrite, useVestingStopVestingWrite } from '@/composables/vesting/writes'
 import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
@@ -147,7 +140,7 @@ const {
   //isLoading: isLoadingArchivedVestingInfos,
   error: errorGetArchivedVestingInfo,
   refetch: getArchivedVestingInfos
-} = useVestingGetTeamAllArchivedVestingsFlat(computed(() => BigInt(team?.value?.id ?? 0)))
+} = useVestingGetAllArchivedVestingsFlat()
 
 watch(errorGetArchivedVestingInfo, () => {
   if (errorGetArchivedVestingInfo.value) {
@@ -161,10 +154,10 @@ const {
   //isLoading: isLoadingVestingInfos,
   error: errorGetVestingInfo,
   refetch: getVestingInfos
-} = useVestingGetTeamVestingsWithMembers(computed(() => BigInt(team?.value?.id ?? 0)))
+} = useVestingGetVestingsWithMembers()
 watch(errorGetVestingInfo, () => {
   if (errorGetVestingInfo.value) {
-    toast.add({ title: 'Add admin failed', color: 'error' })
+    toast.add({ title: 'Failed to load vestings', color: 'error' })
   }
 })
 
@@ -177,12 +170,12 @@ watch(
 )
 
 const isVestingTuple = (value: unknown): value is VestingTuple => {
-  if (!Array.isArray(value) || value.length !== 2) {
+  if (!Array.isArray(value) || value.length !== 3) {
     return false
   }
 
-  const [members, vestingsRaw] = value
-  return Array.isArray(members) && Array.isArray(vestingsRaw)
+  const [members, indices, vestingsRaw] = value
+  return Array.isArray(members) && Array.isArray(indices) && Array.isArray(vestingsRaw)
 }
 
 const vestings = computed<VestingRow[]>(() => {
@@ -192,13 +185,14 @@ const vestings = computed<VestingRow[]>(() => {
     isVestingTuple
   )
 
-  const allRows = allVestingsRaw.flatMap(([members, vestingsRaw]) =>
+  const allRows = allVestingsRaw.flatMap(([members, indices, vestingsRaw]) =>
     members.map((member, idx): VestingRow => {
+      const index = Number(indices[idx] ?? idx)
       const v = vestingsRaw[idx]
       if (!v) {
         return {
           member,
-          teamId: Number(team.value?.id),
+          index,
           startDate: '',
           isStarted: false,
           durationDays: 0,
@@ -217,7 +211,7 @@ const vestings = computed<VestingRow[]>(() => {
 
       return {
         member,
-        teamId: Number(team.value?.id),
+        index,
         startDate: (() => {
           const date = new Date(Number(v.start) * 1000)
           const day = String(date.getDate()).padStart(2, '0')
@@ -252,20 +246,18 @@ const handleReload = () => {
   emit('reload')
 }
 
-const teamId = computed(() => BigInt(team?.value?.id ?? 0))
-
 const stopVestingWrite = useVestingStopVestingWrite()
 
-const stopVesting = (member: string) => {
+const stopVesting = (member: string, index: number) => {
   stopVestingWrite.mutate(
-    { args: [member, teamId.value] },
+    { args: [member, BigInt(index)] },
     {
       onSuccess: () => {
-        toast.add({ title: 'vesting stoped successfully', color: 'success' })
+        toast.add({ title: 'Vesting stopped successfully', color: 'success' })
         emit('reload')
       },
       onError: (err) => {
-        toast.add({ title: 'stop vesting failed', color: 'error' })
+        toast.add({ title: 'Stop vesting failed', color: 'error' })
         console.error('stop vesting error', err)
       }
     }
@@ -274,12 +266,12 @@ const stopVesting = (member: string) => {
 
 const releaseVestingWrite = useVestingReleaseWrite()
 
-const releaseVesting = () => {
+const releaseVesting = (index: number) => {
   releaseVestingWrite.mutate(
-    { args: [teamId.value] },
+    { args: [BigInt(index)] },
     {
       onSuccess: () => {
-        toast.add({ title: 'vesting Releaseed successfully', color: 'success' })
+        toast.add({ title: 'Vested shares minted to you', color: 'success' })
         emit('reload')
       },
       onError: (err) => {
@@ -304,7 +296,6 @@ const columns = [
   { accessorKey: 'totalAmount', header: 'Total Amount', enableSorting: true },
   { accessorKey: 'released', header: 'Released', enableSorting: true },
   { accessorKey: 'status', header: 'Status', enableSorting: true },
-  { accessorKey: 'withdrawn', header: 'Withdrawn', enableSorting: false },
   { accessorKey: 'actions', header: 'Actions' }
 ]
 </script>

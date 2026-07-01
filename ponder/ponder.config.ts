@@ -11,6 +11,7 @@ import { BOARD_OF_DIRECTORS_ABI } from "./abis/board-of-directors";
 import { INVESTOR_V1_ABI } from "./abis/investor-v1";
 import { CASH_REMUNERATION_EIP712_ABI } from "./abis/cash-remuneration-eip712";
 import { SAFE_DEPOSIT_ROUTER_ABI } from "./abis/safe-deposit-router";
+import { VESTING_ABI } from "./abis/vesting";
 import { EXPENSE_ACCOUNT_EIP712_ABI } from "./abis/expense-account-eip712";
 import { FEE_COLLECTOR_ABI } from "./abis/fee-collector";
 
@@ -203,6 +204,12 @@ export default createConfig({
     SafeDepositRouter: {
       chain: chainName,
       abi: SAFE_DEPOSIT_ROUTER_ABI,
+      address: subContractFactory,
+      startBlock,
+    },
+    Vesting: {
+      chain: chainName,
+      abi: VESTING_ABI,
       address: subContractFactory,
       startBlock,
     },
