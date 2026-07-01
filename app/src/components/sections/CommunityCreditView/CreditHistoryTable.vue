@@ -43,11 +43,11 @@
           <td class="text-muted px-4 py-3.5 text-right">{{ row.outcome }}</td>
           <td class="px-4 py-3.5 text-right">
             <UButton
-              :variant="row.draft ? 'soft' : 'ghost'"
-              :color="row.draft ? 'primary' : 'neutral'"
+              variant="ghost"
+              color="neutral"
               size="sm"
-              :label="row.cta"
-              @click.stop="onCtaClick(row.round, row.draft)"
+              label="View"
+              @click.stop="emit('select', row.round)"
             />
           </td>
         </tr>
@@ -62,28 +62,22 @@ import { useCommunityCreditStore } from '@/stores'
 import { formatAmount, statusMeta } from '@/utils'
 import type { CreditRound } from '@/types'
 
-const emit = defineEmits<{ select: [round: CreditRound]; continue: [round: CreditRound] }>()
+const emit = defineEmits<{ select: [round: CreditRound] }>()
 
 const store = useCommunityCreditStore()
 
+// History = settled rounds: fully repaid, or refundable after a missed deadline.
 const rows = computed(() =>
   store.historyRounds.map((round) => {
-    const draft = round.status === 'draft'
+    const refundable = round.status === 'refundable'
     return {
       round,
-      draft,
       status: statusMeta(round.status),
-      raised: draft ? '—' : formatAmount(round.raised),
-      outcome: draft ? 'Not launched' : `Repaid ${round.repaidOn}`,
-      icon: draft ? 'heroicons:pencil-square' : 'heroicons:check-badge',
-      iconClass: draft ? 'bg-muted text-muted' : 'bg-success/10 text-success',
-      cta: draft && store.isOwner ? 'Continue' : 'View'
+      raised: formatAmount(round.raised, round.token),
+      outcome: refundable ? 'Refund available' : `Repaid ${round.repaidOn ?? round.maturity}`,
+      icon: refundable ? 'heroicons:arrow-uturn-left' : 'heroicons:check-badge',
+      iconClass: refundable ? 'bg-warning/10 text-warning' : 'bg-success/10 text-success'
     }
   })
 )
-
-function onCtaClick(round: CreditRound, draft: boolean) {
-  if (draft) emit('continue', round)
-  else emit('select', round)
-}
 </script>
