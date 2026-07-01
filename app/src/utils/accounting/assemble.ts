@@ -47,6 +47,9 @@ export interface CncAccountingInput {
   safeAddress?: Address | string | null
   /** Founder / owner addresses whose treasury inflows are Owner Capital. */
   founderAddresses?: Iterable<Address | string>
+  /** Team member addresses — a member's Safe inflow is a capital contribution
+   *  (invest & get SHER → Investor Equity), not client revenue. */
+  memberAddresses?: Iterable<Address | string>
   /** Protocol-wide FeeCollector address (its pocket is `Cash — FeeCollector`). */
   feeCollectorAddress?: Address | string | null
   /** On-chain SHER token address, so it resolves to the `sher` token id. */
@@ -267,6 +270,7 @@ export function assembleCncAccounting(input: CncAccountingInput): CncAccounting 
     contracts: input.contracts,
     internalAddresses,
     founderAddresses: input.founderAddresses,
+    memberAddresses: input.memberAddresses,
     feeCollectorAddress: input.feeCollectorAddress,
     sherTokenAddress: input.sherTokenAddress,
     rateOfRecord

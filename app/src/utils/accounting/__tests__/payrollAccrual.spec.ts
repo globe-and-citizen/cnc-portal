@@ -99,9 +99,15 @@ describe('mapPayrollAccruals', () => {
     ).toHaveLength(1)
   })
 
-  it('dates the accrual at submission (createdAt)', () => {
-    const created = new Date('2026-03-10T00:00:00Z')
-    const [entry] = mapPayrollAccruals([claim({ createdAt: created.toISOString() })], ctx)
-    expect(entry.timestamp).toBe(Math.floor(created.getTime() / 1000))
+  it('dates the accrual at the end of the work week (noon Sunday), not submission', () => {
+    const weekStart = new Date('2026-06-22T00:00:00Z') // Monday
+    const created = new Date('2026-06-30T00:00:00Z') // submitted the following week
+    const [entry] = mapPayrollAccruals(
+      [claim({ weekStart: weekStart.toISOString(), createdAt: created.toISOString() })],
+      ctx
+    )
+    const weekEnd = new Date('2026-06-28T12:00:00Z') // Sunday noon UTC
+    expect(entry.timestamp).toBe(Math.floor(weekEnd.getTime() / 1000))
+    expect(entry.periodEnd).toBe(Math.floor(weekEnd.getTime() / 1000))
   })
 })

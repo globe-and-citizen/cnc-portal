@@ -74,6 +74,7 @@ function enrichPayroll(entry: LedgerEntry, claim: WeeklyClaim | undefined): Ledg
   return {
     ...entry,
     category: 'Payroll',
+    minutesWorked: claim.minutesWorked,
     enrichment: 'enriched',
     memo: parts.length ? `${entry.memo} — ${parts.join('; ')}` : entry.memo
   }

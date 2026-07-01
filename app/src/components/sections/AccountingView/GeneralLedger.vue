@@ -18,18 +18,19 @@
           />
         </div>
 
-        <!-- Reporting period — shared AccountingDatePicker (range mode) -->
-        <div class="flex flex-wrap items-center gap-2.5">
+        <!-- Reporting period + show/hide columns -->
+        <div class="flex flex-wrap items-center justify-end gap-2.5">
           <AccountingDatePicker
             v-model="period"
             mode="range"
             storage-key="cnc-accounting-ledger-period"
           />
+          <ColumnVisibilitySelect v-model="visibleColumns" :items="columnItems" />
         </div>
       </div>
     </template>
 
-    <LedgerTable :rows="pageRows" :total="grandTotal" />
+    <LedgerTable :rows="pageRows" :total="grandTotal" :visible-columns="visibleColumns" />
 
     <template #footer>
       <TablePagination
@@ -45,10 +46,12 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { useLocalStorage } from '@vueuse/core'
 import SegmentedPills, { type PillItem } from './SegmentedPills.vue'
 import LedgerTable from './LedgerTable.vue'
 import TablePagination from '@/components/TablePagination.vue'
 import AccountingDatePicker from '@/components/AccountingDatePicker.vue'
+import ColumnVisibilitySelect from '@/components/ColumnVisibilitySelect.vue'
 import { usePagination } from '@/composables/usePagination'
 import { defaultValueForMode, type Range } from '@/utils/datePicker'
 import { useAccountingContext } from '@/composables/accounting/useAccountingContext'
@@ -56,10 +59,20 @@ import {
   filterLedgerEntries,
   ledgerRows,
   ledgerTotal,
-  ledgerCategories
+  ledgerCategories,
+  LEDGER_COLUMNS,
+  type LedgerColumnKey
 } from '@/utils/accounting/ledgerPresenter'
 
+// Show/hide table columns — persisted across sessions so the choice sticks.
+const columnItems = [...LEDGER_COLUMNS]
+const visibleColumns = useLocalStorage<LedgerColumnKey[]>(
+  'cnc-accounting-ledger-columns',
+  columnItems.map((c) => c.value)
+)
+
 const filter = ref('All')
+
 // Reporting period (range mode) — defaults to "All time" (whole book).
 const period = ref<Range>(defaultValueForMode('range') as Range)
 
