@@ -19,13 +19,13 @@
         </div>
 
         <!-- Reporting period + show/hide columns -->
-        <div class="flex flex-wrap items-center gap-2.5">
+        <div class="flex flex-wrap items-center justify-end gap-2.5">
           <AccountingDatePicker
             v-model="period"
             mode="range"
             storage-key="cnc-accounting-ledger-period"
           />
-          <ColumnVisibilitySelect v-model="visibleColumns" :items="columnItems" class="ms-auto" />
+          <ColumnVisibilitySelect v-model="visibleColumns" :items="columnItems" />
         </div>
       </div>
     </template>
