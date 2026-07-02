@@ -39,6 +39,7 @@ import { useGetTeamWeeklyClaimsQuery } from '@/queries/weeklyClaim.queries'
 import { useGetExpensesQuery } from '@/queries/expense.queries'
 import { useGetSafeIncomingTransfersQuery } from '@/queries/safe.queries'
 import { useCurrencyStore } from '@/stores/currencyStore'
+import { useTransferInitiators } from './useTransferInitiators'
 import {
   assembleCncAccounting,
   type CncAccounting,
@@ -163,6 +164,12 @@ export function useCNCAccounting(
     return owner ? [owner] : []
   })
 
+  // Team members — a member funding the Safe is investing in the company (invest
+  // & get SHER → Investor Equity), not a client paying for services.
+  const memberAddresses = computed<Iterable<Address | string>>(
+    () => team.data.value?.members?.map((m) => m.address) ?? []
+  )
+
   // USD price-of-record: the caller's resolver, else the app's live prices from
   // the currency store (CoinGecko). USDC is pegged $1 by `toUsd`, so this only
   // runs for the non-pegged tokens (native POL/ETH, SHER) — which otherwise show
@@ -176,6 +183,7 @@ export function useCNCAccounting(
       contracts: contracts.value,
       safeAddress: safeAddress.value,
       founderAddresses: founderAddresses.value,
+      memberAddresses: memberAddresses.value,
       feeCollectorAddress: FEE_COLLECTOR_ADDRESS,
       sherTokenAddress: options.sherTokenAddress ?? null,
       safeDepositRouterAddress: routerAddress.value || null,
@@ -191,6 +199,28 @@ export function useCNCAccounting(
       expenses: expenses.data.value
     }
     return assembleCncAccounting(input)
+  })
+
+  // Resolve the human who signed each internal transfer (the tx feed carries only
+  // a hash), then attach it so the ledger reads "Stravid87 transferred money from
+  // Bank to Safe". Optional: an unresolved hash keeps the source-pocket fallback.
+  const transferHashes = computed<string[]>(() => {
+    const hashes = new Set<string>()
+    for (const entry of accounting.value.entries) {
+      if (entry.internal && entry.txHash) hashes.add(entry.txHash)
+    }
+    return [...hashes]
+  })
+  const transferInitiators = useTransferInitiators(transferHashes)
+
+  const entries = computed<LedgerEntry[]>(() => {
+    const initiators = transferInitiators.value
+    if (!initiators.size) return accounting.value.entries
+    return accounting.value.entries.map((entry) =>
+      entry.internal && entry.txHash && initiators.has(entry.txHash)
+        ? { ...entry, initiator: initiators.get(entry.txHash) }
+        : entry
+    )
   })
 
   // The team query is the only fatal one — without contracts there are no books.
@@ -229,7 +259,7 @@ export function useCNCAccounting(
   }
 
   return {
-    entries: computed(() => accounting.value.entries),
+    entries,
     summary: computed(() => accounting.value.summary),
     generalLedger: computed(() => accounting.value.generalLedger),
     incomeStatement: computed(() => accounting.value.incomeStatement),

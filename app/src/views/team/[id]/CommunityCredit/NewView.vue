@@ -13,7 +13,7 @@
     <div>
       <h1 class="text-2xl font-bold tracking-tight">New credit call</h1>
       <p class="text-muted mt-1.5 text-sm">
-        Set the amount, terms and who can lend. You can edit anything while it's still a draft.
+        Set the amount, terms and who can lend, then publish it on-chain from the Credit Account.
       </p>
     </div>
 
@@ -89,6 +89,17 @@
           <CreditCallAccessStep v-else v-model:form="form" />
         </div>
 
+        <!-- Error -->
+        <div v-if="submitError" class="px-6 pb-4">
+          <UAlert
+            color="error"
+            variant="soft"
+            icon="i-lucide-circle-alert"
+            :description="submitError"
+            data-test="cc-error"
+          />
+        </div>
+
         <!-- Footer nav -->
         <div class="border-default flex items-center justify-between border-t px-6 py-4">
           <UButton
@@ -97,13 +108,16 @@
             icon="heroicons:arrow-left"
             label="Back"
             :class="{ invisible: step === 0 }"
+            :disabled="isPublishing"
             data-test="cc-back"
             @click="back"
           />
           <UButton
             color="primary"
-            :label="isLastStep ? 'Publish credit call' : 'Continue'"
+            :label="publishLabel"
             :trailing-icon="isLastStep ? 'heroicons:rocket-launch' : 'heroicons:arrow-right'"
+            :loading="isPublishing"
+            :disabled="isPublishing"
             data-test="cc-next"
             @click="next"
           />
@@ -117,12 +131,29 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { readContract } from '@wagmi/core'
+import type { Address } from 'viem'
 import { useToast } from '@nuxt/ui/composables'
+import { useQueryClient } from '@tanstack/vue-query'
+import { config } from '@/wagmi.config'
+import { FIXED_RETURN_ABI } from '@/artifacts/abi/fixed-return'
 import { useCommunityCreditStore } from '@/stores'
-import { CREDIT_FIELD_CLASS, creditChipClass } from '@/utils'
-import type { CreditCallForm } from '@/types'
+import {
+  useFixedReturnAddress,
+  useFixedReturnGetSupportedTokens
+} from '@/composables/fixedReturn/reads'
+import { useFixedReturnCreateLendingOffer } from '@/composables/fixedReturn/writes'
+import { useCreateFixedReturnOfferingMutation } from '@/queries/fixedReturnOffering.queries'
+import {
+  CREDIT_FIELD_CLASS,
+  classifyError,
+  creditChipClass,
+  getSupportedOfferingTokenOptions,
+  toFixedReturnOfferParams
+} from '@/utils'
+import type { CreditCallForm, OfferingForm, WhitelistEntry } from '@/types'
 import StepIndicator from '@/components/sections/FixedReturnView/StepIndicator.vue'
 import CreditCallAccessStep from '@/components/sections/CommunityCreditView/CreditCallAccessStep.vue'
 import CreditCallTermsStep from '@/components/sections/CommunityCreditView/CreditCallTermsStep.vue'
@@ -131,7 +162,9 @@ import CreditCallSummaryCard from '@/components/sections/CommunityCreditView/Cre
 const route = useRoute()
 const router = useRouter()
 const toast = useToast()
+const queryClient = useQueryClient()
 const store = useCommunityCreditStore()
+const fixedReturnAddress = useFixedReturnAddress()
 
 const teamId = computed(() => String(route.params.id))
 
@@ -139,7 +172,13 @@ const stepLabels = ['Basics', 'Terms', 'Access']
 const step = ref(0)
 const isLastStep = computed(() => step.value === stepLabels.length - 1)
 
-const tokens = ['USDC', 'POL', 'SHER']
+// Only tokens this team's FixedReturn contract actually accepts (ERC20-only).
+const { data: supportedTokens } = useFixedReturnGetSupportedTokens()
+const tokens = computed(() =>
+  getSupportedOfferingTokenOptions((supportedTokens.value as Address[] | undefined) ?? []).map(
+    (option) => option.value
+  )
+)
 
 const form = reactive<CreditCallForm>({
   name: '',
@@ -158,7 +197,27 @@ const form = reactive<CreditCallForm>({
   cap: '10000'
 })
 
+// Keep the selected token valid against what the contract supports.
+watch(
+  tokens,
+  (list) => {
+    const [first] = list
+    if (first && !list.includes(form.token)) form.token = first
+  },
+  { immediate: true }
+)
+
 const whitelistCount = computed(() => Object.values(form.whitelist).filter(Boolean).length)
+
+const createOfferResult = useFixedReturnCreateLendingOffer()
+const createMetadataResult = useCreateFixedReturnOfferingMutation()
+const isPublishing = computed(
+  () => createOfferResult.isPending.value || createMetadataResult.isPending.value
+)
+const submitError = ref<string | null>(null)
+const publishLabel = computed(() =>
+  isLastStep.value ? (isPublishing.value ? 'Publishing…' : 'Publish credit call') : 'Continue'
+)
 
 function back() {
   if (step.value > 0) step.value--
@@ -168,10 +227,78 @@ function next() {
     step.value++
     return
   }
-  store.createRound(form)
-  toast.add({ title: 'Credit call published — now Open', color: 'success' })
-  goList()
+  publish()
 }
+
+async function publish() {
+  submitError.value = null
+  if (!fixedReturnAddress.value) {
+    submitError.value = 'No Credit Account is deployed for this team.'
+    return
+  }
+
+  try {
+    // A Community Credit round has a single date: lending closes and the loan starts on
+    // the subscription deadline, so startDate == deadline. FixedReturn.sol requires
+    // subscriptionDeadline <= startDate (reverts InvalidDeadline otherwise). The term is
+    // already in canonical days, so it maps straight to the contract's Days unit.
+    const offeringForm: OfferingForm = {
+      title: form.name.trim(),
+      purpose: form.desc.trim(),
+      principal: Number(form.target) || 0,
+      rate: Number(form.rate) || 0,
+      termValue: form.period,
+      termUnit: 'days',
+      startDate: form.deadline,
+      deadline: form.deadline,
+      access: form.access === 'restricted' ? 'whitelist' : 'general',
+      capOn: form.capOn,
+      cap: Number(form.cap) || 0,
+      token: form.token
+    }
+
+    // The boolean picker only captures who's in — split the target evenly as each
+    // whitelisted lender's on-chain allocation.
+    const selected = Object.entries(form.whitelist)
+      .filter(([, checked]) => checked)
+      .map(([address]) => address)
+    const perLender = selected.length ? (Number(form.target) || 0) / selected.length : 0
+    const whitelist: WhitelistEntry[] = selected.map((address) => ({
+      username: store.members.find((member) => member.id === address)?.name ?? address,
+      address,
+      amount: perLender
+    }))
+
+    const params = toFixedReturnOfferParams(offeringForm, whitelist)
+    await createOfferResult.mutateAsync({ args: [params] })
+
+    // Offers are 1-indexed and sequential, so the new offer's id is the post-write count.
+    const total = (await readContract(config, {
+      address: fixedReturnAddress.value,
+      abi: FIXED_RETURN_ABI,
+      functionName: 'totalOfferings'
+    })) as bigint
+    const offerId = Number(total)
+
+    if (offeringForm.title) {
+      await createMetadataResult.mutateAsync({
+        body: {
+          teamId: Number(teamId.value),
+          offerId,
+          title: offeringForm.title,
+          purpose: offeringForm.purpose || undefined
+        }
+      })
+    }
+
+    await queryClient.invalidateQueries({ queryKey: ['fixedReturnAllOffers'] })
+    toast.add({ title: 'Credit call published — now Open', color: 'success' })
+    goList()
+  } catch (error) {
+    submitError.value = classifyError(error, { contract: 'FixedReturn' }).userMessage
+  }
+}
+
 function goList() {
   router.push({ name: 'community-credit', params: { id: teamId.value } })
 }
