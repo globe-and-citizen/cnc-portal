@@ -13,6 +13,7 @@ import {
   mockInvalidateQueries,
   mockFixedReturnReads,
   mockFixedReturnWrites,
+  mockERC20Reads,
   mockERC20Writes,
   mockWagmiCore
 } from '@/tests/mocks'
@@ -264,6 +265,24 @@ describe('Community Credit views', () => {
         args: [1n, 5250_000000n]
       })
     })
+
+    it('approves when allowance is short and surfaces a repay error', async () => {
+      mockERC20Reads.allowance.data.value = 0n
+      mockFixedReturnWrites.repayLenders.mutateAsync.mockRejectedValueOnce(new Error('boom'))
+      store.rounds = [sampleRound({ id: '1', status: 'active' })]
+      mockFixedReturnReads.getLendingOffer.data.value = offerStruct()
+      mockFixedReturnReads.offerLenders.data.value = [
+        { address: '0x00000000000000000000000000000000000000a1', principal: 5000, expected: 5250 }
+      ]
+      setMockRoute({ params: { id: '1', roundId: '1' } })
+      const wrapper = mount(RepayView)
+      await flushPromises()
+      await wrapper.find('[data-test="confirm-repay"]').trigger('click')
+      await flushPromises()
+
+      expect(mockERC20Writes.approve.mutateAsync).toHaveBeenCalled()
+      expect(wrapper.find('[data-test="repay-error"]').exists()).toBe(true)
+    })
   })
 
   describe('NewView', () => {
@@ -287,6 +306,19 @@ describe('Community Credit views', () => {
       expect(mockRouterPush).toHaveBeenLastCalledWith(
         expect.objectContaining({ name: 'community-credit' })
       )
+    })
+
+    it('surfaces an error and stays on the wizard when publishing fails', async () => {
+      mockWagmiCore.readContract.mockResolvedValue(1n)
+      mockFixedReturnWrites.createLendingOffer.mutateAsync.mockRejectedValueOnce(new Error('boom'))
+      const wrapper = mount(NewView)
+
+      await wrapper.find('[data-test="cc-next"]').trigger('click')
+      await wrapper.find('[data-test="cc-next"]').trigger('click')
+      await wrapper.find('[data-test="cc-next"]').trigger('click')
+      await flushPromises()
+
+      expect(wrapper.find('[data-test="cc-error"]').exists()).toBe(true)
     })
   })
 })
