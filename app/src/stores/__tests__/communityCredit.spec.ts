@@ -104,4 +104,15 @@ describe('Community Credit store (contract-backed)', () => {
     mockFixedReturnReads.allOffers.isLoading.value = true
     expect(store.isLoading).toBe(true)
   })
+
+  it('maps the team members eligible to lend', () => {
+    const store = useCommunityCreditStore()
+    expect(store.members.length).toBeGreaterThan(0)
+    expect(store.members[0]).toMatchObject({
+      id: expect.any(String),
+      name: expect.any(String),
+      addr: expect.any(String),
+      gradient: expect.stringContaining('#')
+    })
+  })
 })

@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { nextTick } from 'vue'
-import type { CreditRound } from '@/types'
+import type { CreditRound, LendingOfferStruct } from '@/types'
+import { USDC_ADDRESS } from '@/constant'
 
 // vue-router is globally mocked (composables.setup.ts); useRouter().push is
 // mockRouterPush and useRoute() reads the shared reactive mockRoute.
@@ -9,7 +10,11 @@ import {
   mockRouterPush,
   setMockRoute,
   useQueryClientFn,
-  mockInvalidateQueries
+  mockInvalidateQueries,
+  mockFixedReturnReads,
+  mockFixedReturnWrites,
+  mockERC20Writes,
+  mockWagmiCore
 } from '@/tests/mocks'
 
 // The Community Credit store is the contract-backed read hub. We mock it so the views
@@ -81,6 +86,27 @@ function sampleRound(over: Partial<CreditRound> = {}): CreditRound {
   }
 }
 
+/** A raw on-chain offer, as useFixedReturnGetLendingOffer returns it. Defaults are USDC,
+ * Open, with a subscription deadline in the past (so canMarkRefundable holds). */
+function offerStruct(over: Partial<LendingOfferStruct> = {}): LendingOfferStruct {
+  return {
+    token: USDC_ADDRESS,
+    fundingTarget: 40_000_000000n,
+    interestRateBps: 500n,
+    termDuration: 90,
+    termUnit: 0,
+    startDate: 1_700_000_000n,
+    subscriptionDeadline: 1_700_000_000n,
+    fundingAccess: 0,
+    isCapEnabled: false,
+    lenderCap: 0n,
+    totalFunded: 23_400_000000n,
+    totalRepaidByIssuer: 0n,
+    state: 0,
+    ...over
+  }
+}
+
 function resetStore() {
   Object.assign(store, {
     hasContract: true,
@@ -102,6 +128,10 @@ describe('Community Credit views', () => {
     resetStore()
     mockRouterPush.mockClear()
     mockInvalidateQueries.mockClear()
+    mockFixedReturnReads.getLendingOffer.data.value = null
+    mockFixedReturnReads.offerLenders.data.value = []
+    mockFixedReturnReads.allOffers.data.value = []
+    mockWagmiCore.readContract.mockReset()
     useQueryClientFn.mockReturnValue({
       invalidateQueries: mockInvalidateQueries,
       getQueryData: vi.fn(),
@@ -149,9 +179,23 @@ describe('Community Credit views', () => {
       await nextTick()
       expect(wrapper.findComponent(CreditLendModal).props('round')).not.toBeNull()
     })
+
+    it('renders the history table for settled rounds', () => {
+      store.historyRounds = [sampleRound({ id: '9', status: 'repaid', repaidOn: 'Apr 10' })]
+      const wrapper = mount(IndexView)
+      expect(wrapper.find('[data-test="credit-history-table"]').exists()).toBe(true)
+      expect(wrapper.text()).toContain('History')
+    })
   })
 
   describe('RoundView', () => {
+    function mountRound(round: CreditRound, offer: LendingOfferStruct = offerStruct()) {
+      store.rounds = [round]
+      mockFixedReturnReads.getLendingOffer.data.value = offer
+      setMockRoute({ params: { id: '1', roundId: round.id } })
+      return mount(RoundView)
+    }
+
     it('redirects to the list when the round is unknown', async () => {
       setMockRoute({ params: { id: '1', roundId: '99' } })
       mount(RoundView)
@@ -159,6 +203,36 @@ describe('Community Credit views', () => {
       expect(mockRouterPush).toHaveBeenCalledWith(
         expect.objectContaining({ name: 'community-credit' })
       )
+    })
+
+    it('routes the owner to the repay screen for a round in repayment', async () => {
+      store.isOwner = true
+      const wrapper = mountRound(sampleRound({ status: 'active' }))
+      await flushPromises()
+      await wrapper.find('[data-test="round-cta-repay"]').trigger('click')
+      expect(mockRouterPush).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'community-credit-repay' })
+      )
+    })
+
+    it('lets the owner mark an expired open round refundable', async () => {
+      store.isOwner = true
+      const wrapper = mountRound(sampleRound({ status: 'open' }), offerStruct({ state: 0 }))
+      await flushPromises()
+      await wrapper.find('[data-test="round-cta-refundable"]').trigger('click')
+      await flushPromises()
+      expect(mockFixedReturnWrites.markAsRefundable.mutateAsync).toHaveBeenCalledWith({
+        args: [1n]
+      })
+    })
+
+    it('lets a lender claim a refund on a refundable round', async () => {
+      store.isOwner = false
+      const wrapper = mountRound(sampleRound({ status: 'refundable' }), offerStruct({ state: 2 }))
+      await flushPromises()
+      await wrapper.find('[data-test="round-cta-claim"]').trigger('click')
+      await flushPromises()
+      expect(mockFixedReturnWrites.claimRefund.mutateAsync).toHaveBeenCalledWith({ args: [1n] })
     })
   })
 
@@ -171,6 +245,25 @@ describe('Community Credit views', () => {
         expect.objectContaining({ name: 'community-credit' })
       )
     })
+
+    it('repays every lender their principal + interest on confirm', async () => {
+      store.rounds = [sampleRound({ id: '1', status: 'active' })]
+      mockFixedReturnReads.getLendingOffer.data.value = offerStruct()
+      mockFixedReturnReads.offerLenders.data.value = [
+        { address: '0x00000000000000000000000000000000000000a1', principal: 5000, expected: 5250 }
+      ]
+      setMockRoute({ params: { id: '1', roundId: '1' } })
+      const wrapper = mount(RepayView)
+      await flushPromises()
+
+      expect(wrapper.text()).toContain('Repayment breakdown')
+      await wrapper.find('[data-test="confirm-repay"]').trigger('click')
+      await flushPromises()
+
+      expect(mockFixedReturnWrites.repayLenders.mutateAsync).toHaveBeenCalledWith({
+        args: [1n, 5250_000000n]
+      })
+    })
   })
 
   describe('NewView', () => {
@@ -178,6 +271,22 @@ describe('Community Credit views', () => {
       const wrapper = mount(NewView)
       expect(wrapper.text()).toContain('New credit call')
       expect(wrapper.find('[data-test="cc-name"]').exists()).toBe(true)
+    })
+
+    it('creates the offer on-chain and returns to the list on publish', async () => {
+      mockWagmiCore.readContract.mockResolvedValue(1n) // totalOfferings after create
+      const wrapper = mount(NewView)
+
+      // Basics → Terms → Access → Publish
+      await wrapper.find('[data-test="cc-next"]').trigger('click')
+      await wrapper.find('[data-test="cc-next"]').trigger('click')
+      await wrapper.find('[data-test="cc-next"]').trigger('click')
+      await flushPromises()
+
+      expect(mockFixedReturnWrites.createLendingOffer.mutateAsync).toHaveBeenCalled()
+      expect(mockRouterPush).toHaveBeenLastCalledWith(
+        expect.objectContaining({ name: 'community-credit' })
+      )
     })
   })
 })

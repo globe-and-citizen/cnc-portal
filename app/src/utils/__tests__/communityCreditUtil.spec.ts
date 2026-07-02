@@ -161,6 +161,27 @@ describe('communityCreditUtil', () => {
         expect(round.cap).toBeNull()
         expect(round.restricted).toBe(false)
       })
+
+      it('renders unset dates as — and stamps repaidOn only when repaid', () => {
+        const noDeadline = lendingOfferToCreditRound({
+          ...raw,
+          offer: makeOffer({ subscriptionDeadline: 0n })
+        })
+        expect(noDeadline.deadline).toBe('—')
+        expect(noDeadline.repaidOn).toBeUndefined()
+
+        const repaid = lendingOfferToCreditRound({
+          ...raw,
+          offer: makeOffer({
+            state: 3,
+            totalFunded: 1_000_000n,
+            interestRateBps: 1000n,
+            totalRepaidByIssuer: 1_100_000n
+          })
+        })
+        expect(repaid.status).toBe('repaid')
+        expect(repaid.repaidOn).toBe(repaid.maturity)
+      })
     })
 
     describe('offerLenderToCreditLender', () => {
