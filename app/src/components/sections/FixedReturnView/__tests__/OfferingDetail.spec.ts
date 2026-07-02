@@ -21,6 +21,7 @@ function baseOffering(overrides: Partial<OfferingSummary> = {}): OfferingSummary
     term: 12,
     termUnit: 'months',
     startDate: '2030-01-01',
+    deadlineTimestamp: 1_000_000_000,
     access: 'general',
     raised: 100000,
     target: 100000,
@@ -157,12 +158,12 @@ describe('OfferingDetail.vue', () => {
     })
   })
 
-  it('does not show the lender claim action to the team owner', () => {
+  it('shows the lender claim action to the owner when they also have a position on a closed offering', () => {
     mockFixedReturnReads.offerLenders.data.value = [
       { address: OWNER_ADDRESS, principal: 0.5, expected: 0.54 }
     ]
     const wrapper = mountDetail(baseOffering({ status: 'closed' }), true)
 
-    expect(wrapper.find('[data-test="lender-claim-refund-button"]').exists()).toBe(false)
+    expect(wrapper.find('[data-test="lender-claim-refund-button"]').exists()).toBe(true)
   })
 })

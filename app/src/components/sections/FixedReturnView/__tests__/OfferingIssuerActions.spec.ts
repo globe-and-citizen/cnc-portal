@@ -1,9 +1,14 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { ref } from 'vue'
 import { mount } from '@vue/test-utils'
 import OfferingIssuerActions from '../OfferingIssuerActions.vue'
 import { USDC_ADDRESS } from '@/constant'
 import { mockFixedReturnWrites, mockToast } from '@/tests/mocks'
 import type { OfferingSummary } from '@/types'
+
+vi.mock('@/composables/useBlockTimestamp', () => ({
+  useBlockTimestamp: vi.fn(() => ref(9_999_999_999n))
+}))
 
 const RepayLendersModalStub = {
   name: 'RepayLendersModal',
@@ -20,6 +25,7 @@ function offering(overrides: Partial<OfferingSummary> = {}): OfferingSummary {
     term: 1,
     termUnit: 'months',
     startDate: '2030-01-01',
+    deadlineTimestamp: 1_000_000_000,
     access: 'general',
     raised: 10,
     target: 10,
