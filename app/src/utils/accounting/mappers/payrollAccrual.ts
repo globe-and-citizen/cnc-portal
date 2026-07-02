@@ -50,10 +50,22 @@ function isWeekEnded(claim: WeeklyClaim, now: number): boolean {
   return now >= start + WEEK_MS
 }
 
-/** Unix seconds for the accrual — the submission time, falling back to weekStart. */
-function accrualSeconds(claim: WeeklyClaim): number {
+/** Unix seconds for the submission time — the fallback when the week is unparseable. */
+function submissionSeconds(claim: WeeklyClaim): number {
   const ms = new Date(claim.createdAt || claim.weekStart).getTime()
   return Number.isFinite(ms) ? Math.floor(ms / 1000) : 0
+}
+
+/**
+ * Unix seconds for the **end of the work week** the accrual belongs to — noon on
+ * the Sunday (weekStart + 7 days − 12h). The wage is dated (and analysed by
+ * period) in the week it was earned, not when the claim was submitted; noon keeps
+ * the displayed date on the right day in every timezone.
+ */
+function weekEndSeconds(claim: WeeklyClaim): number | undefined {
+  const start = new Date(claim.weekStart).getTime()
+  if (!Number.isFinite(start)) return undefined
+  return Math.floor((start + WEEK_MS - 12 * 60 * 60 * 1000) / 1000)
 }
 
 /**
@@ -71,7 +83,10 @@ export function mapPayrollAccruals(
     if (!isAccruable(claim.status)) continue
     if (!isWeekEnded(claim, now)) continue
     if (!claim.wage) continue
-    const at = accrualSeconds(claim)
+    // Date the accrual at the end of the work week (it is the period the wage was
+    // earned), falling back to the submission time only if the week is unparseable.
+    const weekEnd = weekEndSeconds(claim)
+    const at = weekEnd ?? submissionSeconds(claim)
     // Reuse the canonical wage calc (the one the claim is signed/paid with) so the
     // accrued cost matches the on-chain payout, overtime included.
     const rates = buildClaimRatesWithOvertime({
@@ -96,6 +111,8 @@ export function mapPayrollAccruals(
           token: tokenId,
           rawAmount: base.toString(),
           counterparty: claim.memberAddress,
+          minutesWorked: claim.minutesWorked,
+          periodEnd: weekEnd,
           category: 'Payroll',
           enrichment: 'enriched',
           memo: 'Wage earned — weekly claim submitted'
