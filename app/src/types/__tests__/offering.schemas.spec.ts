@@ -3,6 +3,7 @@ import {
   createApplyOfferingAmountSchema,
   createOfferingAccessSchema,
   createOfferingTermsSchema,
+  createRepayAmountSchema,
   offeringBasicsSchema
 } from '../offering.schemas'
 
@@ -23,7 +24,6 @@ describe('offering schemas', () => {
     })
 
     const result = schema.safeParse({
-      startDate: '2030-02-01',
       deadline: '2030-02-02',
       termValue: 121,
       cap: 1001
@@ -55,5 +55,18 @@ describe('offering schemas', () => {
       expect(overLimit.error.issues[0]?.message).toBe('Maximum loan amount is 100 USDC.')
     }
     expect(schema.safeParse({ amount: 100 }).success).toBe(true)
+  })
+
+  it('validates repayment amounts against the outstanding balance', () => {
+    const schema = createRepayAmountSchema(50.5, 'USDC')
+
+    expect(schema.safeParse({ amount: 0 }).success).toBe(false)
+    expect(schema.safeParse({ amount: 50.5 }).success).toBe(true)
+
+    const overLimit = schema.safeParse({ amount: 51 })
+    expect(overLimit.success).toBe(false)
+    if (!overLimit.success) {
+      expect(overLimit.error.issues[0]?.message).toContain('50.5 USDC')
+    }
   })
 })

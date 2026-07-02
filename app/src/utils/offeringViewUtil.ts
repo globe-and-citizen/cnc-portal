@@ -64,8 +64,8 @@ export function getOfferingFormSummary(
     accessLabel:
       form.access === 'whitelist' ? `Whitelist · ${whitelistCount} lenders` : 'General · anyone',
     accessDot: ACCESS_META[form.access].accessDot,
-    startFmt: formatOfferingDate(form.startDate),
-    maturityFmt: maturityLabel(form.startDate, form.termValue, form.termUnit)
+    deadlineFmt: formatOfferingDate(form.deadline),
+    maturityFmt: maturityLabel(form.deadline, form.termValue, form.termUnit)
   }
 }
 
@@ -178,6 +178,7 @@ export function buildFixedReturnLenderRows({
     return {
       name: resolveName(lender.address),
       address: lender.address,
+      principal: lender.principal,
       principalFmt: formatOfferingTokenAmount(lender.principal, offering.token),
       rateFmt: offering.rate.toFixed(1) + '%',
       expectedFmt: formatOfferingTokenAmount(lender.expected, offering.token),

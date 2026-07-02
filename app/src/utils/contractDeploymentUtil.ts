@@ -24,7 +24,6 @@ import { SAFE_DEPOSIT_ROUTER_ABI } from '@/artifacts/abi/safe-deposit-router'
 import { PROPOSALS_ABI } from '@/artifacts/abi/proposals'
 import { FIXED_RETURN_ABI } from '@/artifacts/abi/fixed-return'
 import { VESTING_ABI } from '@/artifacts/abi/vesting'
-import { log } from '@/utils'
 
 /**
  * Beacon configuration type

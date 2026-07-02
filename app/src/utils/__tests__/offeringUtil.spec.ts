@@ -21,7 +21,6 @@ function baseForm(overrides: Partial<OfferingForm> = {}): OfferingForm {
     rate: 8,
     termValue: 12,
     termUnit: 'months',
-    startDate: '2026-07-01',
     deadline: '2026-06-30',
     access: 'general',
     capOn: false,
@@ -162,13 +161,10 @@ describe('toFixedReturnOfferParams', () => {
     expect(params.allocations).toEqual([])
   })
 
-  it('converts date-only values to the end of the selected UTC day', () => {
-    const params = toFixedReturnOfferParams(
-      baseForm({ startDate: '2026-07-01', deadline: '2026-06-30' }),
-      []
-    )
+  it('uses the subscription deadline as the term start at the end of the selected UTC day', () => {
+    const params = toFixedReturnOfferParams(baseForm({ deadline: '2026-06-30' }), [])
 
-    expect(params.startDate).toBe(BigInt(Date.UTC(2026, 6, 1, 23, 59, 59) / 1000))
+    expect(params.startDate).toBe(BigInt(Date.UTC(2026, 5, 30, 23, 59, 59) / 1000))
     expect(params.subscriptionDeadline).toBe(BigInt(Date.UTC(2026, 5, 30, 23, 59, 59) / 1000))
   })
 

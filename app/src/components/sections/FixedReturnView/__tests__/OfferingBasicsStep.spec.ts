@@ -17,7 +17,6 @@ function baseForm(overrides: Partial<OfferingForm> = {}): OfferingForm {
     rate: 0,
     termValue: 12,
     termUnit: 'months',
-    startDate: '',
     deadline: '',
     access: 'general',
     capOn: false,

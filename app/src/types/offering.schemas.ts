@@ -24,7 +24,6 @@ interface OfferingTermsSchemaContext {
 export function createOfferingTermsSchema(context: OfferingTermsSchemaContext) {
   return z
     .object({
-      startDate: z.string().min(1, 'Start date is required'),
       deadline: z.string().min(1, 'Subscription deadline is required'),
       termValue: z
         .number({ error: 'Term is required' })
@@ -32,16 +31,8 @@ export function createOfferingTermsSchema(context: OfferingTermsSchemaContext) {
         .positive('Term must be greater than 0'),
       cap: z.number().optional()
     })
-    .refine((data) => data.startDate >= context.today, {
-      message: 'Start date cannot be in the past',
-      path: ['startDate']
-    })
     .refine((data) => data.deadline >= context.today, {
       message: 'Subscription deadline cannot be in the past',
-      path: ['deadline']
-    })
-    .refine((data) => new Date(data.deadline) <= new Date(data.startDate), {
-      message: 'Deadline must be on or before the start date',
       path: ['deadline']
     })
     .refine((data) => data.termValue <= context.maxTerm, {
@@ -112,6 +103,17 @@ export function createApplyOfferingAmountSchema(remaining: number, tokenSymbol =
       .positive('Amount must be greater than 0.')
       .refine((value) => value <= remaining, {
         message: `Maximum loan amount is ${formatAmountWithPrecision(remaining, 0, 4)} ${tokenSymbol}.`
+      })
+  })
+}
+
+export function createRepayAmountSchema(outstanding: number, tokenSymbol = 'Token') {
+  return z.object({
+    amount: z
+      .number()
+      .positive('Amount must be greater than 0.')
+      .refine((value) => value <= outstanding, {
+        message: `Cannot exceed outstanding balance of ${formatAmountWithPrecision(outstanding, 0, 4)} ${tokenSymbol}.`
       })
   })
 }

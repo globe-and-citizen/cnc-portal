@@ -71,7 +71,6 @@ describe('offeringViewUtil', () => {
       rate: 8,
       termValue: 12,
       termUnit: 'months',
-      startDate: '2030-01-01',
       deadline: '2029-12-01',
       access: 'whitelist',
       capOn: true,
@@ -80,7 +79,9 @@ describe('offeringViewUtil', () => {
     }
     expect(getOfferingFormSummary(form, 2)).toMatchObject({
       defaultAmountLabel: '500 USDC',
-      accessLabel: 'Whitelist · 2 lenders'
+      accessLabel: 'Whitelist · 2 lenders',
+      deadlineFmt: '01 Dec 2029',
+      maturityFmt: '01 Dec 2030'
     })
 
     const offer = {

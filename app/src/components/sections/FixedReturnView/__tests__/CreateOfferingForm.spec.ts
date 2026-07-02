@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import CreateOfferingForm from '../CreateOfferingForm.vue'
-import { mockFixedReturnWrites, mockToast } from '@/tests/mocks'
+import { mockFixedReturnReads, mockFixedReturnWrites, mockToast } from '@/tests/mocks'
+import { SUPPORTED_TOKENS } from '@/constant'
 
 function mountForm() {
   return mount(CreateOfferingForm)
@@ -16,7 +17,6 @@ async function fillBasicsAndContinue(wrapper: ReturnType<typeof mountForm>) {
 }
 
 async function fillTermsAndContinue(wrapper: ReturnType<typeof mountForm>) {
-  await wrapper.find('[data-test="offering-start-date-input"]').setValue('2030-01-02')
   await wrapper.find('[data-test="offering-deadline-input"]').setValue('2030-01-01')
   await wrapper.find('[data-test="offering-next-button"]').trigger('click')
   await flushPromises()
@@ -30,6 +30,7 @@ async function goToLastStep(wrapper: ReturnType<typeof mountForm>) {
 
 describe('CreateOfferingForm.vue', () => {
   beforeEach(() => {
+    mockFixedReturnReads.getSupportedTokens.data.value = [SUPPORTED_TOKENS[0]!.address]
     mockFixedReturnWrites.createLendingOffer.mutateAsync.mockClear()
     mockToast.add.mockClear()
   })

@@ -106,10 +106,9 @@ export function toFixedReturnOfferParams(
     interestRateBps: BigInt(Math.round(form.rate * 100)),
     termDuration: form.termValue,
     termUnit: TERM_UNIT_INDEX[form.termUnit],
-    // These are date-only fields in the UI. Encoding the end of the selected UTC
-    // day keeps the whole displayed date usable and preserves deadline <= startDate
-    // when both dates are the same.
-    startDate: toUnixEndOfDaySeconds(form.startDate),
+    // Deadline and start are the same date — the loan term begins the day
+    // fundraising closes. End-of-day encoding keeps the full displayed date usable.
+    startDate: toUnixEndOfDaySeconds(form.deadline),
     subscriptionDeadline: toUnixEndOfDaySeconds(form.deadline),
     fundingAccess: FUNDING_ACCESS_INDEX[form.access],
     isCapEnabled: form.capOn,
@@ -159,6 +158,7 @@ export function fromLendingOfferStruct(
     term: offer.termDuration,
     termUnit: TERM_UNIT_LABEL[offer.termUnit],
     startDate: new Date(Number(offer.startDate) * 1000).toISOString().slice(0, 10),
+    deadlineTimestamp: Number(offer.subscriptionDeadline),
     access: FUNDING_ACCESS_LABEL[offer.fundingAccess],
     raised: Number(formatUnits(offer.totalFunded, decimals)),
     target: Number(formatUnits(offer.fundingTarget, decimals)),
