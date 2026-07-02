@@ -2,24 +2,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { ref } from 'vue'
 import type { Address } from 'viem'
-import { mockFixedReturnReads, mockUserStore } from '@/tests/mocks'
+import { mockFixedReturnReads, mockUserStore, useQueryFn } from '@/tests/mocks'
 import type { FixedReturnRawOffer, LendingOfferStruct } from '@/types'
 
-// The store reads the offer list through useFixedReturnAllOffers (globally mocked), but
-// also opens an owner useQuery and the off-chain metadata query. Stub both so the store
+// The store reads the offer list through useFixedReturnAllOffers (globally mocked) and
+// opens an owner useQuery (globally mocked as useQueryFn) plus the off-chain metadata
+// query. Drive the owner ref through useQueryFn and stub the metadata query so the store
 // instantiates without a live query client; the owner ref is what drives isOwner.
 const ownerData = ref<string | undefined>(undefined)
-vi.mock('@tanstack/vue-query', async (importOriginal) => ({
-  ...(await importOriginal<object>()),
-  useQuery: vi.fn(() => ({
-    data: ownerData,
-    isLoading: ref(false),
-    isError: ref(false),
-    isSuccess: ref(true),
-    error: ref(null),
-    refetch: vi.fn()
-  }))
-}))
 vi.mock('@/queries/fixedReturnOffering.queries', async (importOriginal) => ({
   ...(await importOriginal<object>()),
   useGetFixedReturnOfferingsQuery: vi.fn(() => ({ data: ref([]) }))
@@ -67,6 +57,11 @@ describe('Community Credit store (contract-backed)', () => {
     mockFixedReturnReads.allOffers.isLoading.value = false
     mockFixedReturnReads.allOffers.isError.value = false
     ownerData.value = undefined
+    useQueryFn.mockReturnValue({
+      data: ownerData,
+      isLoading: ref(false),
+      error: ref(null)
+    } as unknown as ReturnType<typeof useQueryFn>)
   })
 
   it('maps each on-chain offer to a CreditRound and splits active vs history', () => {
