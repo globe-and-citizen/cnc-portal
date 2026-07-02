@@ -43,12 +43,7 @@
             <span>{{ lender.paidFmt }}</span>
             <span class="text-[#9aaba2]">{{ lender.pctLabel }}</span>
           </div>
-          <UProgress
-            :model-value="lender.pct"
-            :max="100"
-            :color="lender.progressColor"
-            size="xs"
-          />
+          <UProgress :model-value="lender.pct" :max="100" :color="lender.progressColor" size="xs" />
         </div>
       </template>
       <template #maturity-cell="{ row: { original: lender } }">

@@ -65,7 +65,8 @@ const props = defineProps<{ offering: OfferingSummary }>()
 
 const blockTimestamp = useBlockTimestamp()
 const isDeadlinePassed = computed(
-  () => blockTimestamp.value !== null && blockTimestamp.value > BigInt(props.offering.deadlineTimestamp)
+  () =>
+    blockTimestamp.value !== null && blockTimestamp.value > BigInt(props.offering.deadlineTimestamp)
 )
 
 const repayModalOpen = ref(false)

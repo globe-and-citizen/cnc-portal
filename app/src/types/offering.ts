@@ -3,7 +3,7 @@ import type { Address } from 'viem'
 export type TermUnit = 'days' | 'months' | 'years'
 export type OfferingAccess = 'general' | 'whitelist'
 export type OfferingStateStatus = 'open' | 'funded' | 'closed'
-export type OfferingRepaymentStatus = 'on-track' | 'overdue' | 'partial' | 'completed'
+export type OfferingRepaymentStatus = 'on-track' | 'overdue' | 'partial' | 'completed' | 'refunded'
 export type OfferingDisplayStatus = OfferingStateStatus | OfferingRepaymentStatus
 export type OfferingProgressColor = 'error' | 'warning' | 'success'
 

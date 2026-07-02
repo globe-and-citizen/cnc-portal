@@ -137,7 +137,7 @@ const isOwner = computed(() => {
     isAddressEqual(ownerAddress, userStore.address)
   )
 })
-const canClaimRefund = computed(() => !isOwner.value && props.offering.status === 'closed')
+const canClaimRefund = computed(() => props.offering.status === 'closed')
 
 // Bullet repayment: principal + interest repaid as one combined payment per lender,
 // due at the offering's maturity (start date + term) — no interim schedule.
