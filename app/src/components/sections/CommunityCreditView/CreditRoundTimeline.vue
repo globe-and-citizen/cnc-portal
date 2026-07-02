@@ -124,7 +124,7 @@ import CreditAvatar from './CreditAvatar.vue'
 
 const props = defineProps<{ round: CreditRound }>()
 
-const LIFE_ORDER: RoundStatus[] = ['draft', 'open', 'funded', 'active', 'repaid']
+const LIFE_ORDER: RoundStatus[] = ['open', 'funded', 'active', 'repaid']
 const currentIndex = computed(() => LIFE_ORDER.indexOf(props.round.status))
 
 const pct = computed(() => percentOf(props.round.raised, props.round.target))

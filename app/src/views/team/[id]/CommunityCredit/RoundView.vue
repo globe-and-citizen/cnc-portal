@@ -30,7 +30,6 @@
         <p class="text-muted mt-1.5 max-w-2xl text-sm leading-relaxed">{{ round.desc }}</p>
       </div>
       <div class="flex items-center gap-2.5">
-        <CreditRoleSwitcher />
         <UButton
           v-for="action in ctas"
           :key="action.test"
@@ -38,6 +37,7 @@
           :variant="action.variant"
           :icon="action.icon"
           :label="action.label"
+          :loading="action.loading"
           :data-test="action.test"
           @click="action.run"
         />
@@ -52,7 +52,13 @@
     <CreditRoundGauge v-else-if="store.variant === 'gauge'" :round="round" />
     <CreditRoundTimeline v-else :round="round" />
 
-    <CreditLendModal :round="lendRound" @close="lendRound = null" @lend="confirmLend" />
+    <CreditLendModal :round="lendRound" @close="lendRound = null" @lent="onLent" />
+  </div>
+
+  <!-- Loading -->
+  <div v-else-if="store.isLoading" class="flex flex-col gap-4" data-test="round-loading">
+    <USkeleton class="h-8 w-64" />
+    <USkeleton class="h-64 rounded-2xl" />
   </div>
 </template>
 
@@ -60,12 +66,27 @@
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useToast } from '@nuxt/ui/composables'
-import { useCommunityCreditStore } from '@/stores'
-import { formatAmount, statusMeta } from '@/utils'
-import type { CreditRound } from '@/types'
+import { useQueryClient } from '@tanstack/vue-query'
+import { zeroAddress } from 'viem'
+import { useCommunityCreditStore, useUserDataStore } from '@/stores'
+import {
+  useFixedReturnGetLendingOffer,
+  useFixedReturnOfferLenders
+} from '@/composables/fixedReturn/reads'
+import {
+  useFixedReturnClaimRefund,
+  useFixedReturnMarkAsRefundable
+} from '@/composables/fixedReturn/writes'
+import {
+  classifyError,
+  isLendingOfferAcceptingFunds,
+  offerLenderToCreditLender,
+  resolveUser,
+  statusMeta
+} from '@/utils'
+import type { CreditRound, LendingOfferStruct } from '@/types'
 import CreditLayoutSwitcher from '@/components/sections/CommunityCreditView/CreditLayoutSwitcher.vue'
 import CreditLendModal from '@/components/sections/CommunityCreditView/CreditLendModal.vue'
-import CreditRoleSwitcher from '@/components/sections/CommunityCreditView/CreditRoleSwitcher.vue'
 import CreditRoundGauge from '@/components/sections/CommunityCreditView/CreditRoundGauge.vue'
 import CreditRoundLedger from '@/components/sections/CommunityCreditView/CreditRoundLedger.vue'
 import CreditRoundTimeline from '@/components/sections/CommunityCreditView/CreditRoundTimeline.vue'
@@ -73,25 +94,97 @@ import CreditRoundTimeline from '@/components/sections/CommunityCreditView/Credi
 const route = useRoute()
 const router = useRouter()
 const toast = useToast()
+const queryClient = useQueryClient()
 const store = useCommunityCreditStore()
+const userStore = useUserDataStore()
 
 const teamId = computed(() => String(route.params.id))
-const round = computed(() => store.getRound(String(route.params.roundId)))
+const roundId = computed(() => String(route.params.roundId))
+const offerId = computed(() => BigInt(roundId.value || '0'))
+
+const baseRound = computed(() => store.getRound(roundId.value))
+const { data: rawOffer } = useFixedReturnGetLendingOffer(offerId)
+const offer = computed(() => rawOffer.value as LendingOfferStruct | undefined)
+const tokenAddress = computed(() => offer.value?.token ?? zeroAddress)
+const { data: lenderData } = useFixedReturnOfferLenders(roundId, tokenAddress)
+
+/** The list-level round (name/desc/status/amounts) enriched with its on-chain lenders. */
+const round = computed<CreditRound | undefined>(() => {
+  const base = baseRound.value
+  if (!base) return undefined
+  return {
+    ...base,
+    lenders: (lenderData.value ?? []).map((lender) =>
+      offerLenderToCreditLender(lender, (address) => resolveUser(address).name, userStore.address)
+    )
+  }
+})
+
 const status = computed(() => statusMeta(round.value?.status ?? 'open'))
 const lendRound = ref<CreditRound | null>(null)
+
+/** Open, but the subscription window has closed without reaching target → owner can refund. */
+const canMarkRefundable = computed(() => {
+  const current = offer.value
+  return !!current && current.state === 0 && !isLendingOfferAcceptingFunds(current)
+})
 
 function goList() {
   router.push({ name: 'community-credit', params: { id: teamId.value } })
 }
 
-// Redirect away if the round id is unknown (e.g. a draft that has no detail page).
+// Redirect away only once the offer list has settled and the round genuinely doesn't exist.
 watch(
-  round,
-  (value) => {
-    if (!value) goList()
+  [round, () => store.isLoading],
+  ([value, loading]) => {
+    if (!loading && !value) goList()
   },
   { immediate: true }
 )
+
+const markRefundableResult = useFixedReturnMarkAsRefundable()
+const claimRefundResult = useFixedReturnClaimRefund()
+
+async function invalidateRound() {
+  await Promise.all([
+    queryClient.invalidateQueries({ queryKey: ['fixedReturnAllOffers'] }),
+    queryClient.invalidateQueries({ queryKey: ['fixedReturnOfferLenders'] }),
+    queryClient.invalidateQueries({ queryKey: ['fixedReturnMyLenderPositions'] })
+  ])
+}
+
+async function markRefundable() {
+  try {
+    await markRefundableResult.mutateAsync({ args: [offerId.value] })
+    toast.add({
+      title: 'Round marked refundable — lenders can reclaim their principal',
+      color: 'success'
+    })
+    await invalidateRound()
+  } catch (error) {
+    toast.add({
+      title: classifyError(error, { contract: 'FixedReturn' }).userMessage,
+      color: 'error'
+    })
+  }
+}
+
+async function claimRefund() {
+  try {
+    await claimRefundResult.mutateAsync({ args: [offerId.value] })
+    toast.add({ title: 'Refund claimed — your principal was returned', color: 'success' })
+    await invalidateRound()
+  } catch (error) {
+    toast.add({
+      title: classifyError(error, { contract: 'FixedReturn' }).userMessage,
+      color: 'error'
+    })
+  }
+}
+
+function onLent() {
+  lendRound.value = null
+}
 
 type Cta = {
   test: string
@@ -99,6 +192,7 @@ type Cta = {
   icon: string
   color: 'primary' | 'neutral'
   variant: 'solid' | 'soft'
+  loading?: boolean
   run: () => void
 }
 
@@ -120,7 +214,6 @@ const ctas = computed<Cta[]>(() => {
   }
 
   if (store.isOwner) {
-    // Owner management actions, alongside the lend action above.
     if (r.status === 'active' || r.status === 'funded') {
       list.push({
         test: 'round-cta-repay',
@@ -134,38 +227,29 @@ const ctas = computed<Cta[]>(() => {
             params: { id: teamId.value, roundId: r.id }
           })
       })
-    } else if (r.status === 'open') {
+    } else if (r.status === 'open' && canMarkRefundable.value) {
       list.push({
-        test: 'round-cta-edit',
-        label: 'Edit terms',
-        icon: 'heroicons:pencil-square',
+        test: 'round-cta-refundable',
+        label: 'Mark refundable',
+        icon: 'heroicons:exclamation-triangle',
         color: 'primary',
         variant: 'soft',
-        run: () => toast.add({ title: 'Edit terms — opens while the round is open' })
+        loading: markRefundableResult.isPending.value,
+        run: markRefundable
       })
     }
-  } else if (r.status !== 'draft' && r.status !== 'open') {
-    // A plain lender can review their receipt on a closed round.
+  } else if (r.status === 'refundable') {
     list.push({
-      test: 'round-cta-receipt',
-      label: 'View receipt',
-      icon: 'heroicons:document-text',
+      test: 'round-cta-claim',
+      label: 'Claim refund',
+      icon: 'heroicons:arrow-uturn-left',
       color: 'primary',
-      variant: 'soft',
-      run: () => toast.add({ title: 'Your signed lending receipt' })
+      variant: 'solid',
+      loading: claimRefundResult.isPending.value,
+      run: claimRefund
     })
   }
 
   return list
 })
-
-function confirmLend(amount: number) {
-  const r = round.value
-  if (!r) return
-  const added = store.lend(r.id, amount)
-  lendRound.value = null
-  if (added > 0) {
-    toast.add({ title: `Credit signed — ${formatAmount(added, r.token)} sent`, color: 'success' })
-  }
-}
 </script>

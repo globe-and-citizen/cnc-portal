@@ -5,7 +5,10 @@
 
 export type CreditRole = 'owner' | 'lender'
 
-export type RoundStatus = 'draft' | 'open' | 'funded' | 'active' | 'repaid'
+// Mirrors FixedReturn.sol's OfferState (Open, Funded, Refundable, Repaying) resolved
+// against the offer's deadline and repayment progress. 'active' = Repaying but not yet
+// fully repaid; 'refundable' = deadline missed, lenders can claim their principal back.
+export type RoundStatus = 'open' | 'funded' | 'active' | 'repaid' | 'refundable'
 
 export type RoundDetailVariant = 'ledger' | 'gauge' | 'timeline'
 
