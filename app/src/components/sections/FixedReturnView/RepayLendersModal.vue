@@ -97,7 +97,7 @@ import { formatUnits, isAddress, parseUnits, zeroAddress } from 'viem'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useToast } from '@nuxt/ui/composables'
 import { useBankAddress } from '@/composables/bank/reads'
-import { useFixedReturnRepayLenders } from '@/composables/fixedReturn/writes'
+import { useFundFixedReturnRepayment } from '@/composables/bank/writes'
 import { useErc20BalanceOf } from '@/composables/erc20/reads'
 import {
   classifyError,
@@ -155,7 +155,7 @@ const repaySchema = computed(() =>
   })
 )
 
-const repayResult = useFixedReturnRepayLenders()
+const repayResult = useFundFixedReturnRepayment()
 const isSubmitting = computed(() => repayResult.isPending.value)
 
 function closeModal() {
@@ -182,7 +182,7 @@ function onRepay() {
         open.value = false
       },
       onError: (error) => {
-        submitError.value = classifyError(error, { contract: 'FixedReturn' }).userMessage
+        submitError.value = classifyError(error, { contract: 'Bank' }).userMessage
       }
     }
   )

@@ -2,9 +2,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import RepayLendersModal from '../RepayLendersModal.vue'
 import {
+  mockBankWrites,
   mockERC20Reads,
   mockERC20Writes,
-  mockFixedReturnWrites,
   mockInvalidateQueries,
   useQueryClientFn
 } from '@/tests/mocks'
@@ -70,7 +70,7 @@ describe('RepayLendersModal.vue', () => {
   })
 
   it('submits a repayment via mutate, then refetches treasury balance and closes the modal', async () => {
-    mockFixedReturnWrites.repayLenders.mutate.mockImplementation(
+    mockBankWrites.fundFixedReturnRepayment.mutate.mockImplementation(
       (_vars: unknown, options: { onSuccess?: () => void }) => {
         options?.onSuccess?.()
       }
@@ -82,7 +82,7 @@ describe('RepayLendersModal.vue', () => {
     await wrapper.find('[data-test="repay-confirm-button"]').trigger('click')
     await flushPromises()
 
-    expect(mockFixedReturnWrites.repayLenders.mutate).toHaveBeenCalledWith(
+    expect(mockBankWrites.fundFixedReturnRepayment.mutate).toHaveBeenCalledWith(
       { args: [1n, 10_000000n] },
       expect.objectContaining({ onSuccess: expect.any(Function) })
     )
@@ -121,7 +121,7 @@ describe('RepayLendersModal.vue', () => {
     await wrapper.find('[data-test="repay-confirm-button"]').trigger('click')
     await flushPromises()
 
-    expect(mockFixedReturnWrites.repayLenders.mutate).not.toHaveBeenCalled()
+    expect(mockBankWrites.fundFixedReturnRepayment.mutate).not.toHaveBeenCalled()
   })
 
   it('never invokes approve regardless of the amount entered', async () => {

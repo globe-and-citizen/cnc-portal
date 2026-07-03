@@ -169,6 +169,12 @@ describe('resolveRevertMessage', () => {
       )
     })
 
+    it('resolves Bank.FixedReturnContractNotFound', () => {
+      expect(resolveRevertMessage('FixedReturnContractNotFound', undefined, 'Bank')).toBe(
+        'FixedReturn contract could not be located'
+      )
+    })
+
     it('returns the expected message for Elections.AlreadyVoted', () => {
       expect(resolveRevertMessage('AlreadyVoted', undefined, 'Elections')).toBe(
         'You have already voted in this election'

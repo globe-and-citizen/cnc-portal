@@ -45,11 +45,10 @@ interface IBank is IPausable, IOwnable, ITokenSupport {
   /// @param _amount Total amount to distribute
   function distributeTokenDividends(address _token, uint256 _amount) external;
 
-  /// @notice Send a lender's repayment share; called by FixedReturn during repayLenders
-  /// @param _token Token address
-  /// @param _to Lender receiving the share
-  /// @param _amount Share amount to transfer
-  function releaseLenderRepayment(address _token, address _to, uint256 _amount) external;
+  /// @notice Fund a FixedReturn repayment installment and trigger its distribution
+  /// @param offerId The lending offer being repaid
+  /// @param amount The installment amount to fund and distribute
+  function fundFixedReturnRepayment(uint256 offerId, uint256 amount) external;
 
   // ============ Balance Queries ============
   /// @notice Get current ETH balance

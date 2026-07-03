@@ -44,7 +44,8 @@ export const mockBankWrites = {
   transferOwnership: createContractWriteV3Mock(),
   renounceOwnership: createContractWriteV3Mock(),
   pause: createContractWriteV3Mock(),
-  unpause: createContractWriteV3Mock()
+  unpause: createContractWriteV3Mock(),
+  fundFixedReturnRepayment: createContractWriteV3Mock()
 }
 
 /**
@@ -173,7 +174,6 @@ export const mockFixedReturnWrites = {
   lendFunds: createContractWriteV3Mock(),
   markAsRefundable: createContractWriteV3Mock(),
   claimRefund: createContractWriteV3Mock(),
-  repayLenders: createContractWriteV3Mock(),
   addTokenSupport: createContractWriteV3Mock(),
   removeTokenSupport: createContractWriteV3Mock()
 }

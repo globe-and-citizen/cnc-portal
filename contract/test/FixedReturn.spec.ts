@@ -45,7 +45,8 @@ describe('FixedReturn', () => {
     TOKEN_NOT_SUPPORTED: 'TokenSupportNotFound',
     TOKEN_NOT_SUPPORTED_BY_BANK: 'TokenNotSupportedByBank',
     EXCEEDS_REPAYMENT_OBLIGATION: 'ExceedsRepaymentObligation',
-    OWNABLE_UNAUTHORIZED: 'OwnableUnauthorizedAccount'
+    OWNABLE_UNAUTHORIZED: 'OwnableUnauthorizedAccount',
+    NOT_BANK: 'NotBank'
   } as const
 
   // Deploys MockOfficer, then deploys Bank and FixedReturn with MockOfficer impersonated
@@ -73,6 +74,15 @@ describe('FixedReturn', () => {
 
     await mockOfficer.setDeployedContract('Bank', await bank.getAddress())
 
+    // repayLenders is onlyBank — impersonate the real Bank address so FixedReturn's
+    // own repayment logic (ceiling, cumulative distribution, rounding) can be unit
+    // tested directly, mirroring how InvestorV1.spec.ts tests distributeTokenDividends
+    // via an impersonated bankSigner rather than the full Bank call chain.
+    const bankAddress = await bank.getAddress()
+    await impersonateAccount(bankAddress)
+    const bankSigner = await ethers.getSigner(bankAddress)
+    await setBalance(bankAddress, ethers.parseEther('1000'))
+
     const fixedReturn = (await upgrades.deployProxy(
       FixedReturnFactory.connect(officerSigner),
       [initialTokens, owner.address],
@@ -81,7 +91,7 @@ describe('FixedReturn', () => {
 
     await mockOfficer.setDeployedContract('FixedReturn', await fixedReturn.getAddress())
 
-    return { mockOfficer, bank, fixedReturn: fixedReturn.connect(owner) }
+    return { mockOfficer, bank, bankSigner, fixedReturn: fixedReturn.connect(owner) }
   }
 
   async function deployFixture() {
@@ -91,7 +101,7 @@ describe('FixedReturn', () => {
     const token = (await MockToken.deploy('Mock USDC', 'mUSDC')) as unknown as MockERC20
     const otherToken = (await MockToken.deploy('Mock DAI', 'mDAI')) as unknown as MockERC20
 
-    const { bank, fixedReturn } = await deployContracts(owner)
+    const { bank, bankSigner, fixedReturn } = await deployContracts(owner)
 
     // Both FixedReturn and Bank must support the token:
     // FixedReturn — for offer creation and lender deposits
@@ -111,6 +121,7 @@ describe('FixedReturn', () => {
 
     return {
       bank,
+      bankSigner,
       fixedReturn,
       token,
       otherToken,
@@ -904,8 +915,16 @@ describe('FixedReturn', () => {
 
   describe('repayLenders', () => {
     it('distributes a repayment proportionally to each lender principal', async () => {
-      const { bank, fixedReturn, owner, lenderA, lenderB, token, startDate, subscriptionDeadline } =
-        await loadFixture(deployFixture)
+      const {
+        fixedReturn,
+        bankSigner,
+        owner,
+        lenderA,
+        lenderB,
+        token,
+        startDate,
+        subscriptionDeadline
+      } = await loadFixture(deployFixture)
       const offerId = await createGeneralOffer(
         fixedReturn,
         owner,
@@ -914,14 +933,14 @@ describe('FixedReturn', () => {
         subscriptionDeadline
       )
       await fundOffer(fixedReturn, offerId, lenderA, lenderB)
-      // Bank holds 100k from the funding sweep; top up the 8k interest portion
-      await token.mint(await bank.getAddress(), ethers.parseUnits('8000', 6))
 
       const balanceABefore = await token.balanceOf(lenderA.address)
       const balanceBBefore = await token.balanceOf(lenderB.address)
       const repayAmount = ethers.parseUnits('108000', 6) // 100k principal + 8% interest
+      // Bank would transfer this installment in before calling repayLenders.
+      await token.mint(await fixedReturn.getAddress(), repayAmount)
 
-      await expect(fixedReturn.connect(owner).repayLenders(offerId, repayAmount))
+      await expect(fixedReturn.connect(bankSigner).repayLenders(offerId, repayAmount))
         .to.emit(fixedReturn, 'RepaymentDistributed')
         .withArgs(offerId, repayAmount)
 
@@ -935,8 +954,16 @@ describe('FixedReturn', () => {
     })
 
     it('accumulates correctly across multiple installments', async () => {
-      const { bank, fixedReturn, owner, lenderA, lenderB, token, startDate, subscriptionDeadline } =
-        await loadFixture(deployFixture)
+      const {
+        fixedReturn,
+        bankSigner,
+        owner,
+        lenderA,
+        lenderB,
+        token,
+        startDate,
+        subscriptionDeadline
+      } = await loadFixture(deployFixture)
       const offerId = await createGeneralOffer(
         fixedReturn,
         owner,
@@ -945,13 +972,15 @@ describe('FixedReturn', () => {
         subscriptionDeadline
       )
       await fundOffer(fixedReturn, offerId, lenderA, lenderB)
-      // Bank holds 100k from the funding sweep; top up the 8k interest portion
-      await token.mint(await bank.getAddress(), ethers.parseUnits('8000', 6))
 
       const balanceABefore = await token.balanceOf(lenderA.address)
+      const installment = ethers.parseUnits('54000', 6)
 
-      await fixedReturn.connect(owner).repayLenders(offerId, ethers.parseUnits('54000', 6))
-      await fixedReturn.connect(owner).repayLenders(offerId, ethers.parseUnits('54000', 6))
+      // Bank funds each installment individually, right before each call.
+      await token.mint(await fixedReturn.getAddress(), installment)
+      await fixedReturn.connect(bankSigner).repayLenders(offerId, installment)
+      await token.mint(await fixedReturn.getAddress(), installment)
+      await fixedReturn.connect(bankSigner).repayLenders(offerId, installment)
 
       expect(await token.balanceOf(lenderA.address)).to.equal(
         balanceABefore + ethers.parseUnits('64800', 6)
@@ -963,7 +992,7 @@ describe('FixedReturn', () => {
     })
 
     it('rejects repaying an offer that is still Open', async () => {
-      const { fixedReturn, owner, token, startDate, subscriptionDeadline } =
+      const { fixedReturn, bankSigner, owner, token, startDate, subscriptionDeadline } =
         await loadFixture(deployFixture)
       const offerId = await createGeneralOffer(
         fixedReturn,
@@ -974,13 +1003,21 @@ describe('FixedReturn', () => {
       )
 
       await expect(
-        fixedReturn.connect(owner).repayLenders(offerId, ethers.parseUnits('1000', 6))
+        fixedReturn.connect(bankSigner).repayLenders(offerId, ethers.parseUnits('1000', 6))
       ).to.be.revertedWithCustomError(fixedReturn, ERRORS.OFFER_NOT_FUNDED)
     })
 
     it('rejects a zero amount', async () => {
-      const { fixedReturn, owner, lenderA, lenderB, token, startDate, subscriptionDeadline } =
-        await loadFixture(deployFixture)
+      const {
+        fixedReturn,
+        bankSigner,
+        owner,
+        lenderA,
+        lenderB,
+        token,
+        startDate,
+        subscriptionDeadline
+      } = await loadFixture(deployFixture)
       const offerId = await createGeneralOffer(
         fixedReturn,
         owner,
@@ -991,11 +1028,11 @@ describe('FixedReturn', () => {
       await fundOffer(fixedReturn, offerId, lenderA, lenderB)
 
       await expect(
-        fixedReturn.connect(owner).repayLenders(offerId, 0)
+        fixedReturn.connect(bankSigner).repayLenders(offerId, 0)
       ).to.be.revertedWithCustomError(fixedReturn, ERRORS.ZERO_AMOUNT)
     })
 
-    it('rejects a non-owner caller', async () => {
+    it('rejects a stranger calling repayLenders directly', async () => {
       const {
         fixedReturn,
         stranger,
@@ -1017,11 +1054,11 @@ describe('FixedReturn', () => {
 
       await expect(
         fixedReturn.connect(stranger).repayLenders(offerId, ethers.parseUnits('1000', 6))
-      ).to.be.revertedWithCustomError(fixedReturn, ERRORS.OWNABLE_UNAUTHORIZED)
+      ).to.be.revertedWithCustomError(fixedReturn, ERRORS.NOT_BANK)
     })
 
-    it('rejects a repayment that would exceed the total lender obligation', async () => {
-      const { bank, fixedReturn, owner, lenderA, lenderB, token, startDate, subscriptionDeadline } =
+    it('rejects the owner calling repayLenders directly — must go through Bank', async () => {
+      const { fixedReturn, lenderA, lenderB, owner, token, startDate, subscriptionDeadline } =
         await loadFixture(deployFixture)
       const offerId = await createGeneralOffer(
         fixedReturn,
@@ -1031,16 +1068,41 @@ describe('FixedReturn', () => {
         subscriptionDeadline
       )
       await fundOffer(fixedReturn, offerId, lenderA, lenderB)
-      // Bank holds 100k from the funding sweep; top up the 8k interest portion
-      await token.mint(await bank.getAddress(), ethers.parseUnits('8000', 6))
+
+      await expect(
+        fixedReturn.connect(owner).repayLenders(offerId, ethers.parseUnits('1000', 6))
+      ).to.be.revertedWithCustomError(fixedReturn, ERRORS.NOT_BANK)
+    })
+
+    it('rejects a repayment that would exceed the total lender obligation', async () => {
+      const {
+        fixedReturn,
+        bankSigner,
+        owner,
+        lenderA,
+        lenderB,
+        token,
+        startDate,
+        subscriptionDeadline
+      } = await loadFixture(deployFixture)
+      const offerId = await createGeneralOffer(
+        fixedReturn,
+        owner,
+        await token.getAddress(),
+        startDate,
+        subscriptionDeadline
+      )
+      await fundOffer(fixedReturn, offerId, lenderA, lenderB)
 
       // Total obligation: 100k principal + 8% = 108k
       const totalObligation = ethers.parseUnits('108000', 6)
-      await fixedReturn.connect(owner).repayLenders(offerId, totalObligation)
+      await token.mint(await fixedReturn.getAddress(), totalObligation)
+      await fixedReturn.connect(bankSigner).repayLenders(offerId, totalObligation)
 
-      // A second call — even for 1 wei — must revert
+      // A second call — even for 1 wei — must revert (ceiling check runs before
+      // any transfer, so FixedReturn doesn't need to hold that extra wei).
       await expect(
-        fixedReturn.connect(owner).repayLenders(offerId, 1n)
+        fixedReturn.connect(bankSigner).repayLenders(offerId, 1n)
       ).to.be.revertedWithCustomError(fixedReturn, ERRORS.EXCEEDS_REPAYMENT_OBLIGATION)
     })
 
@@ -1050,8 +1112,16 @@ describe('FixedReturn', () => {
       // (every installment's per-call remainder going to them).
       // With cumulative tracking each lender receives exactly their proportional share
       // across any installment partitioning.
-      const { fixedReturn, owner, lenderA, lenderB, token, startDate, subscriptionDeadline } =
-        await loadFixture(deployFixture)
+      const {
+        fixedReturn,
+        bankSigner,
+        owner,
+        lenderA,
+        lenderB,
+        token,
+        startDate,
+        subscriptionDeadline
+      } = await loadFixture(deployFixture)
       const fundingTarget = 1_000_000n
       const offerId = await createGeneralOffer(
         fixedReturn,
@@ -1073,19 +1143,30 @@ describe('FixedReturn', () => {
       // 3 installments of 2 wei each.
       // Per-installment naive: floor(2*999_999/1_000_000)=1 for A, remainder=1 for B each time → B gets 3, wrong.
       // Cumulative: after 6 total, A cumEnt=floor(6*999_999/1_000_000)=5, B cumEnt=1.
-      await fixedReturn.connect(owner).repayLenders(offerId, 2n)
-      await fixedReturn.connect(owner).repayLenders(offerId, 2n)
-      await fixedReturn.connect(owner).repayLenders(offerId, 2n)
+      await token.mint(await fixedReturn.getAddress(), 2n)
+      await fixedReturn.connect(bankSigner).repayLenders(offerId, 2n)
+      await token.mint(await fixedReturn.getAddress(), 2n)
+      await fixedReturn.connect(bankSigner).repayLenders(offerId, 2n)
+      await token.mint(await fixedReturn.getAddress(), 2n)
+      await fixedReturn.connect(bankSigner).repayLenders(offerId, 2n)
 
       expect((await token.balanceOf(lenderA.address)) - lenderABefore).to.equal(5n)
       expect((await token.balanceOf(lenderB.address)) - lenderBBefore).to.equal(1n)
     })
 
-    it('gives the rounding remainder to the final lender so no dust stays in Bank', async () => {
+    it('gives the rounding remainder to the final lender so no dust stays behind', async () => {
       // fundingTarget is tiny — integer division floors lenderA's share,
       // the remainder goes to lenderB (the final lender) instead of being lost.
-      const { fixedReturn, owner, lenderA, lenderB, token, startDate, subscriptionDeadline } =
-        await loadFixture(deployFixture)
+      const {
+        fixedReturn,
+        bankSigner,
+        owner,
+        lenderA,
+        lenderB,
+        token,
+        startDate,
+        subscriptionDeadline
+      } = await loadFixture(deployFixture)
       const fundingTarget = 1_000_000n // 1.0 token at 6 decimals
       const offerId = await createGeneralOffer(
         fixedReturn,
@@ -1102,12 +1183,45 @@ describe('FixedReturn', () => {
       const lenderABalanceBefore = await token.balanceOf(lenderA.address)
       const lenderBBalanceBefore = await token.balanceOf(lenderB.address)
 
-      await fixedReturn.connect(owner).repayLenders(offerId, 500_000n)
+      await token.mint(await fixedReturn.getAddress(), 500_000n)
+      await fixedReturn.connect(bankSigner).repayLenders(offerId, 500_000n)
 
       // lenderA (index 0): floor(500_000 * 999_999 / 1_000_000) = 499_999
       expect(await token.balanceOf(lenderA.address)).to.equal(lenderABalanceBefore + 499_999n)
       // lenderB (last): receives the remainder 500_000 - 499_999 = 1
       expect(await token.balanceOf(lenderB.address)).to.equal(lenderBBalanceBefore + 1n)
+    })
+
+    it('integrates end-to-end through the real Bank.fundFixedReturnRepayment entry point', async () => {
+      const { bank, fixedReturn, owner, lenderA, lenderB, token, startDate, subscriptionDeadline } =
+        await loadFixture(deployFixture)
+      const offerId = await createGeneralOffer(
+        fixedReturn,
+        owner,
+        await token.getAddress(),
+        startDate,
+        subscriptionDeadline
+      )
+      await fundOffer(fixedReturn, offerId, lenderA, lenderB)
+      // Bank holds 100k from the funding sweep; top up the 8k interest portion
+      await token.mint(await bank.getAddress(), ethers.parseUnits('8000', 6))
+
+      const balanceABefore = await token.balanceOf(lenderA.address)
+      const balanceBBefore = await token.balanceOf(lenderB.address)
+      const repayAmount = ethers.parseUnits('108000', 6)
+
+      await expect(bank.connect(owner).fundFixedReturnRepayment(offerId, repayAmount))
+        .to.emit(bank, 'FixedReturnRepaymentFunded')
+        .withArgs(await fixedReturn.getAddress(), offerId, await token.getAddress(), repayAmount)
+
+      expect(await token.balanceOf(lenderA.address)).to.equal(
+        balanceABefore + ethers.parseUnits('64800', 6)
+      )
+      expect(await token.balanceOf(lenderB.address)).to.equal(
+        balanceBBefore + ethers.parseUnits('43200', 6)
+      )
+      // Funds only pass through FixedReturn transiently — nothing left stranded.
+      expect(await token.balanceOf(await fixedReturn.getAddress())).to.equal(0n)
     })
   })
 
@@ -1144,7 +1258,7 @@ describe('FixedReturn', () => {
       const MockToken = await ethers.getContractFactory('MockERC20')
       const token = (await MockToken.deploy('Mock USDC', 'mUSDC')) as unknown as MockERC20
 
-      const { bank, fixedReturn } = await deployContracts(owner)
+      const { bank, fixedReturn, bankSigner } = await deployContracts(owner)
       await fixedReturn.connect(owner).addTokenSupport(await token.getAddress())
       await bank.connect(owner).addTokenSupport(await token.getAddress())
 
@@ -1164,15 +1278,16 @@ describe('FixedReturn', () => {
       )
 
       await fixedReturn.connect(lenderA).lendFunds(offerId, 2n) // index 0 (non-last)
-      await fixedReturn.connect(lenderB).lendFunds(offerId, 1n) // index 1 (last, triggers sweep: Bank gets 3n)
-      // Obligation = 3 + floor(3*5000/10_000) = 4; Bank holds 3n from sweep, top up 1n interest
-      await token.mint(await bank.getAddress(), 1n)
+      await fixedReturn.connect(lenderB).lendFunds(offerId, 1n) // index 1 (last, triggers sweep: FixedReturn -> Bank gets 3n)
 
       // totalEntitlementOf for the non-last lender matches their actual receipt
       expect(await fixedReturn.totalEntitlementOf(offerId, lenderA.address)).to.equal(2n)
 
+      // Obligation = 3 + floor(3*5000/10_000) = 4; Bank would fund this installment
+      // into FixedReturn before calling repayLenders.
       const aBalanceBefore = await token.balanceOf(lenderA.address)
-      await fixedReturn.connect(owner).repayLenders(offerId, 4n) // full obligation
+      await token.mint(await fixedReturn.getAddress(), 4n)
+      await fixedReturn.connect(bankSigner).repayLenders(offerId, 4n) // full obligation
       expect(await token.balanceOf(lenderA.address)).to.equal(aBalanceBefore + 2n)
     })
 

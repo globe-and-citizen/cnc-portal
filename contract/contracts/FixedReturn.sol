@@ -28,18 +28,19 @@ import {IBank} from './interfaces/IBank.sol';
  *  Funded      — on the final deposit that hits the target, the full accumulated principal
  *                is swept to Bank in the same transaction. From that point this contract
  *                holds no lender funds.
- *  Repaying    — Bank already holds the repayment funds (swept there on funding, plus any
- *                deposits the team has since made to their treasury). This contract
- *                instructs Bank to push each lender's proportional share on each call.
+ *  Repaying    — issuer calls Bank.fundFixedReturnRepayment(offerId, amount); Bank transfers
+ *                that amount here (drawn from the treasury built up via the funding sweep
+ *                and ongoing deposits) and calls repayLenders, which fans it out. Funds
+ *                only ever pass through this contract transiently, in the same transaction.
  *  Refundable  — lenders claim their principal directly from this contract (funds never
  *                left since the offer did not reach its target).
  *
  *  Repayment model
  *  ───────────────
- *  Funded/Repaying — issuer calls repayLenders(amount); amount must not exceed total
- *                    lender obligation (principal + flat interest). Distributed
- *                    proportionally via Bank. Remainder of integer-division rounding
- *                    goes to the final lender so no dust accumulates in Bank.
+ *  Funded/Repaying — Bank calls repayLenders(offerId, amount); amount must not exceed total
+ *                    lender obligation (principal + flat interest). Distributed proportionally
+ *                    from the balance Bank just transferred in. Remainder of integer-division
+ *                    rounding goes to the final lender so no dust accumulates.
  *
  *  Deposit rules by access mode
  *  ─────────────────────────────
@@ -154,7 +155,7 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
   mapping(uint256 => mapping(address => bool)) public hasDeposited;
 
   /// @dev offerId => lender => cumulative tokens already forwarded to that lender
-  ///      via releaseLenderRepayment across all repayLenders installments.
+  ///      across all repayLenders installments.
   ///      Used by the cumulative-entitlement algorithm in repayLenders to ensure
   ///      proportional distribution is independent of installment partitioning.
   mapping(uint256 => mapping(address => uint256)) public totalPaidToLender;
@@ -241,6 +242,9 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
   error BankContractNotFound();
   /// @dev The offer token is not supported by Bank.
   error TokenNotSupportedByBank(address token);
+  /// @dev The caller is not the Bank contract.
+  /// @param caller The caller address.
+  error NotBank(address caller);
 
   // ────────────────────────────────────────────────────
   // Peer-contract resolution
@@ -251,6 +255,11 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
     address bankAddress = IOfficer(officerAddress).findDeployedContract('Bank');
     if (bankAddress == address(0)) revert BankContractNotFound();
     return bankAddress;
+  }
+
+  modifier onlyBank() {
+    if (msg.sender != _getBankAddress()) revert NotBank(msg.sender);
+    _;
   }
 
   /// @custom:oz-upgrades-unsafe-allow constructor
@@ -510,9 +519,9 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
   // ────────────────────────────────────────────────────
 
   /**
-   * @notice Instructs Bank to distribute a repayment installment to lenders.
-   *         Bank already holds the funds (swept from lenders on funding completion,
-   *         plus any subsequent deposits the team has made to their treasury).
+   * @notice Distributes a repayment installment to lenders. Called by Bank, which
+   *         has already transferred `amount` of the offer's token to this contract
+   *         in the same transaction (mirrors InvestorV1.distributeTokenDividends).
    *         Can be called multiple times as installments.
    * @dev Repayment ceiling: totalRepaidByIssuer + amount must not exceed the total
    *      lender obligation (sum of principal + flat interest across all lenders).
@@ -524,7 +533,7 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
    * @dev Unbounded loop over _offerLenders[offerId] — a lender whose token receipt
    *      reverts blocks everyone else in the same offer. Acceptable at current scale.
    */
-  function repayLenders(uint256 offerId, uint256 amount) external onlyOwner nonReentrant {
+  function repayLenders(uint256 offerId, uint256 amount) external onlyBank nonReentrant {
     if (amount == 0) revert ZeroAmount();
 
     LendingOffer storage offer = lendingOffers[offerId];
@@ -540,9 +549,6 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
 
     offer.state = OfferState.Repaying;
     offer.totalRepaidByIssuer += amount;
-
-    // Bank already has the funds — no pull from issuer wallet.
-    address bankAddress = _getBankAddress();
 
     // Cumulative distribution: each lender's share = their cumulative entitlement
     // (based on totalRepaidByIssuer) minus what they have already received.
@@ -565,7 +571,7 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
       uint256 share = cumulativeEntitlement > alreadyPaid ? cumulativeEntitlement - alreadyPaid : 0;
       totalPaidToLender[offerId][lender] = cumulativeEntitlement;
       if (share > 0) {
-        IBank(bankAddress).releaseLenderRepayment(offer.token, lender, share);
+        IERC20(offer.token).safeTransfer(lender, share);
         emit LenderRepaid(offerId, lender, share);
       }
     }
