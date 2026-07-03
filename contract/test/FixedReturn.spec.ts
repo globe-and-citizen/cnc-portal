@@ -7,7 +7,14 @@ import {
   setBalance
 } from '@nomicfoundation/hardhat-network-helpers'
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers'
-import { Bank, FeeCollector, FixedReturn, MockERC20, MockOfficer, Officer } from '../typechain-types'
+import {
+  Bank,
+  FeeCollector,
+  FixedReturn,
+  MockERC20,
+  MockOfficer,
+  Officer
+} from '../typechain-types'
 
 describe('FixedReturn', () => {
   const TermUnit = { Days: 0, Months: 1, Years: 2 }
@@ -317,7 +324,10 @@ describe('FixedReturn', () => {
       const { fixedReturn, owner, startDate, subscriptionDeadline } =
         await loadFixture(deployFixture)
       const MockToken = await ethers.getContractFactory('MockERC20')
-      const unsupportedByBank = (await MockToken.deploy('Unsupported', 'UNS')) as unknown as MockERC20
+      const unsupportedByBank = (await MockToken.deploy(
+        'Unsupported',
+        'UNS'
+      )) as unknown as MockERC20
       // Add to FixedReturn but NOT to Bank
       await fixedReturn.connect(owner).addTokenSupport(await unsupportedByBank.getAddress())
       await expect(
@@ -1223,15 +1233,11 @@ describe('FixedReturn', () => {
         { initializer: 'initialize' }
       )) as unknown as FeeCollector
 
-      const officer = (await upgrades.deployProxy(
-        OfficerFactory,
-        [owner.address, [], [], false],
-        {
-          initializer: 'initialize',
-          constructorArgs: [await feeCollector.getAddress()],
-          unsafeAllow: ['constructor', 'state-variable-immutable']
-        }
-      )) as unknown as Officer
+      const officer = (await upgrades.deployProxy(OfficerFactory, [owner.address, [], [], false], {
+        initializer: 'initialize',
+        constructorArgs: [await feeCollector.getAddress()],
+        unsafeAllow: ['constructor', 'state-variable-immutable']
+      })) as unknown as Officer
       await officer.waitForDeployment()
 
       const officerAddress = await officer.getAddress()

@@ -427,7 +427,12 @@ describe('Bank', () => {
           .releaseLenderRepayment(await token.getAddress(), lenderAccount.address, amount)
       )
         .to.emit(localBank, 'TokenTransfer')
-        .withArgs(fixedReturnAccount.address, lenderAccount.address, await token.getAddress(), amount)
+        .withArgs(
+          fixedReturnAccount.address,
+          lenderAccount.address,
+          await token.getAddress(),
+          amount
+        )
 
       expect(await token.balanceOf(lenderAccount.address)).to.equal(lenderBefore + amount)
     })
