@@ -141,6 +141,11 @@ model WeeklyClaim {
   // for re-signing) when the team's CashRemunerationEIP712 contract is later
   // redeployed. Nullable for legacy rows signed before this column existed.
   signedAgainstContractAddress String?
+  // Free-form Markdown memo of the member's goals for the week. One per weekly
+  // claim (the [wageId, weekStart] pair). Upserted independently of daily
+  // claims — a goals-only week creates a claim-less WeeklyClaim row. Nullable
+  // for weeks with no goals set.
+  weeklyGoals                  String?
   claims                       Claim[]  @relation("WeeklyClaimToClaims")
   wageId                       Int
   wage                         Wage     @relation(fields: [wageId], references: [id], onDelete: Cascade)
