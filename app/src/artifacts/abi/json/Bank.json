@@ -20,6 +20,11 @@
     "type": "error"
   },
   {
+    "inputs": [],
+    "name": "FixedReturnContractNotFound",
+    "type": "error"
+  },
+  {
     "inputs": [
       {
         "internalType": "uint256",
@@ -54,6 +59,17 @@
   {
     "inputs": [],
     "name": "InvestorContractNotFound",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "caller",
+        "type": "address"
+      }
+    ],
+    "name": "NotFixedReturn",
     "type": "error"
   },
   {
@@ -567,6 +583,29 @@
       }
     ],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_token",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_to",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "releaseLenderRepayment",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
