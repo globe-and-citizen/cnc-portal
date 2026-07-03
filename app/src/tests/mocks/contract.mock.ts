@@ -1,6 +1,7 @@
 import { vi } from 'vitest'
 import { ref } from 'vue'
 import { createContractReadMock, createContractWriteV3Mock } from './erc20.mock'
+import type { LendingOfferStruct } from '@/types'
 
 /**
  * Elections Contract Mocks
@@ -153,7 +154,7 @@ export const mockFixedReturnReads = {
   owner: createContractReadMock('0x742d35Cc6bF8C55C6C2e013e5492D2b6637e0886'),
   version: createContractReadMock('1.0.0'),
   totalOfferings: createContractReadMock(0n),
-  getLendingOffer: createContractReadMock<Record<string, unknown> | null>(null),
+  getLendingOffer: createContractReadMock<Partial<LendingOfferStruct> | null>(null),
   getOfferLenders: createContractReadMock<string[]>([]),
   totalEntitlementOf: createContractReadMock(0n),
   lenderDeposits: createContractReadMock(0n),

@@ -249,7 +249,6 @@ async function publish() {
       rate: Number(form.rate) || 0,
       termValue: form.period,
       termUnit: 'days',
-      startDate: form.deadline,
       deadline: form.deadline,
       access: form.access === 'restricted' ? 'whitelist' : 'general',
       capOn: form.capOn,
