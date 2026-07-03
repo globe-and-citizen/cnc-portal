@@ -71,7 +71,7 @@
             <div class="text-2xl leading-none font-extrabold tracking-tight text-[#00a86c]">
               {{ o.rate }}%
             </div>
-            <div class="mt-0.5 text-xs font-semibold text-[#9aaba2]">fixed / yr</div>
+            <div class="mt-0.5 text-xs font-semibold text-[#9aaba2]">fixed</div>
           </div>
         </div>
 
@@ -127,7 +127,11 @@
           :disabled="!o.allowed"
           :label="lenderCtaLabel(o)"
           data-test="marketplace-apply-button"
-          @click="o.allowed && openApply(o)"
+          @click="
+            () => {
+              if (o.allowed) openApply(o)
+            }
+          "
         />
       </UCard>
     </div>

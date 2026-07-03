@@ -37,8 +37,8 @@
           <span class="font-bold">{{ termLabel }}</span>
         </div>
         <div class="flex justify-between text-sm">
-          <span class="text-muted">Start</span>
-          <span class="font-bold">{{ startFmt }}</span>
+          <span class="text-muted">Deadline</span>
+          <span class="font-bold">{{ deadlineFmt }}</span>
         </div>
         <div class="flex justify-between text-sm">
           <span class="text-muted">Maturity</span>
@@ -85,7 +85,7 @@ defineProps<{
   termLabel: string
   totalInterest: number
   totalReturn: number
-  startFmt: string
+  deadlineFmt: string
   maturityFmt: string
   accessLabel: string
   accessDot: string

@@ -3,7 +3,7 @@ import type { Address } from 'viem'
 export type TermUnit = 'days' | 'months' | 'years'
 export type OfferingAccess = 'general' | 'whitelist'
 export type OfferingStateStatus = 'open' | 'funded' | 'closed'
-export type OfferingRepaymentStatus = 'on-track' | 'overdue' | 'partial' | 'completed'
+export type OfferingRepaymentStatus = 'on-track' | 'overdue' | 'partial' | 'completed' | 'refunded'
 export type OfferingDisplayStatus = OfferingStateStatus | OfferingRepaymentStatus
 export type OfferingProgressColor = 'error' | 'warning' | 'success'
 
@@ -14,7 +14,6 @@ export interface OfferingForm {
   rate: number
   termValue: number
   termUnit: TermUnit
-  startDate: string
   deadline: string
   access: OfferingAccess
   capOn: boolean
@@ -35,6 +34,7 @@ export interface OfferingSummary {
   term: number
   termUnit: TermUnit
   startDate: string
+  deadlineTimestamp: number
   access: OfferingAccess
   raised: number
   target: number
@@ -152,6 +152,7 @@ export interface FixedReturnLenderPosition {
 export interface FixedReturnLenderRow {
   name: string
   address: Address
+  principal: number
   principalFmt: string
   rateFmt: string
   expectedFmt: string
@@ -174,6 +175,6 @@ export interface OfferingFormSummary {
   limitsLabel: string
   accessLabel: string
   accessDot: string
-  startFmt: string
+  deadlineFmt: string
   maturityFmt: string
 }

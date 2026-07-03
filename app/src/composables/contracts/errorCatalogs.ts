@@ -139,7 +139,8 @@ export const CONTRACT_ERRORS: ContractErrorCatalog = {
       InvalidFeeBps: 'Fee configuration is invalid',
       FeeCollectorNotConfigured: 'Fee collector is not configured',
       FeeTransferFailed: 'Fee transfer failed',
-      TransferFailed: 'Transfer failed'
+      TransferFailed: 'Transfer failed',
+      FixedReturnContractNotFound: 'FixedReturn contract could not be located'
     },
     AdCampaignManager: {
       NotAdminOrOwner: 'Caller is not an admin or the owner',

@@ -65,7 +65,7 @@
       :term-label="termLabel(form.termValue, form.termUnit)"
       :total-interest="totalInterest"
       :total-return="totalReturn"
-      :start-fmt="summary.startFmt"
+      :deadline-fmt="summary.deadlineFmt"
       :maturity-fmt="summary.maturityFmt"
       :access-label="summary.accessLabel"
       :access-dot="summary.accessDot"
@@ -143,7 +143,6 @@ const form = reactive<OfferingForm>({
   rate: 0,
   termValue: 12,
   termUnit: 'months',
-  startDate: '',
   deadline: '',
   access: 'general',
   capOn: false,

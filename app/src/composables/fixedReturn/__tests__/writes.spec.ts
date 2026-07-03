@@ -4,7 +4,6 @@ import {
   useFixedReturnLendFunds,
   useFixedReturnMarkAsRefundable,
   useFixedReturnClaimRefund,
-  useFixedReturnRepayLenders,
   useFixedReturnAddTokenSupport,
   useFixedReturnRemoveTokenSupport
 } from '../writes'
@@ -31,10 +30,6 @@ describe('FixedReturn Contract Writes', () => {
 
   it('useFixedReturnClaimRefund returns its mutation', () => {
     expect(useFixedReturnClaimRefund()).toBe(mockFixedReturnWrites.claimRefund)
-  })
-
-  it('useFixedReturnRepayLenders returns its mutation', () => {
-    expect(useFixedReturnRepayLenders()).toBe(mockFixedReturnWrites.repayLenders)
   })
 
   it('useFixedReturnAddTokenSupport returns its mutation', () => {

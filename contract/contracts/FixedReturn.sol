@@ -6,6 +6,8 @@ import '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import './base/TokenSupport.sol';
+import {IOfficer} from './interfaces/IOfficer.sol';
+import {IBank} from './interfaces/IBank.sol';
 
 /**
  * @title FixedReturn
@@ -18,14 +20,27 @@ import './base/TokenSupport.sol';
  *  Open → (funding target reached)        → Funded → (issuer repays) → Repaying
  *  Open → (deadline missed, issuer flips) → Refundable
  *
+ *  Money flow
+ *  ──────────
+ *  Open        — lender deposits sit in this contract. No owner-callable drain function
+ *                exists, so deposits are protected structurally: only claimRefund (lender)
+ *                or the funded-sweep (to Bank) can move them out.
+ *  Funded      — on the final deposit that hits the target, the full accumulated principal
+ *                is swept to Bank in the same transaction. From that point this contract
+ *                holds no lender funds.
+ *  Repaying    — issuer calls Bank.fundFixedReturnRepayment(offerId, amount); Bank transfers
+ *                that amount here (drawn from the treasury built up via the funding sweep
+ *                and ongoing deposits) and calls repayLenders, which fans it out. Funds
+ *                only ever pass through this contract transiently, in the same transaction.
+ *  Refundable  — lenders claim their principal directly from this contract (funds never
+ *                left since the offer did not reach its target).
+ *
  *  Repayment model
  *  ───────────────
- *  Funded/Repaying — issuer calls repayLenders(amount); the amount is immediately
- *                    pushed proportionally to every lender, in the same transaction.
- *                    Can be called multiple times as installments.
- *  Refundable      — each lender individually calls claimRefund() to pull their
- *                    principal back. Only reachable when the funding target was
- *                    not met by the subscription deadline.
+ *  Funded/Repaying — Bank calls repayLenders(offerId, amount); amount must not exceed total
+ *                    lender obligation (principal + flat interest). Distributed proportionally
+ *                    from the balance Bank just transferred in. Remainder of integer-division
+ *                    rounding goes to the final lender so no dust accumulates.
  *
  *  Deposit rules by access mode
  *  ─────────────────────────────
@@ -78,7 +93,7 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
     bool isCapEnabled; // only relevant in General mode
     uint256 lenderCap; // max deposit per lender — General mode only
     uint256 totalFunded; // cumulative lender deposits
-    uint256 totalRepaidByIssuer; // cumulative issuer repayments
+    uint256 totalRepaidByIssuer; // cumulative issuer repayments (capped at total obligation)
     OfferState state;
   }
 
@@ -139,6 +154,19 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
   ///      so a lender's second/third deposit doesn't push a duplicate entry.
   mapping(uint256 => mapping(address => bool)) public hasDeposited;
 
+  /// @dev offerId => lender => cumulative tokens already forwarded to that lender
+  ///      across all repayLenders installments.
+  ///      Used by the cumulative-entitlement algorithm in repayLenders to ensure
+  ///      proportional distribution is independent of installment partitioning.
+  mapping(uint256 => mapping(address => uint256)) public totalPaidToLender;
+
+  /// @notice Address of the Officer contract — set once at initialization from msg.sender.
+  ///         Officer is the proxy deployer, so msg.sender IS Officer at init time,
+  ///         matching the pattern used by Bank (Bank.sol line 163) and InvestorV1.
+  ///         MUST be appended after all v1.0.0 storage variables (totalOfferings through
+  ///         hasDeposited) so that upgrading an existing proxy does not shift their slots.
+  address public officerAddress;
+
   // ────────────────────────────────────────────────────
   // Events
   // ────────────────────────────────────────────────────
@@ -157,7 +185,7 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
   /// @notice Emitted when a lender deposits funds into an offer.
   event FundsLent(uint256 indexed offerId, address indexed lender, uint256 amount);
 
-  /// @notice Emitted when an offer's funding target is reached.
+  /// @notice Emitted when an offer's funding target is reached and principal swept to Bank.
   event LendingOfferFunded(uint256 indexed offerId);
 
   /// @notice Emitted when an offer is flipped to refundable after a missed deadline.
@@ -208,6 +236,31 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
   error NothingToRefund();
   /// @dev amount must be greater than zero.
   error ZeroAmount();
+  /// @dev The repayment would exceed the total lender obligation (principal + interest).
+  error ExceedsRepaymentObligation();
+  /// @dev The Bank contract could not be located via the Officer.
+  error BankContractNotFound();
+  /// @dev The offer token is not supported by Bank.
+  error TokenNotSupportedByBank(address token);
+  /// @dev The caller is not the Bank contract.
+  /// @param caller The caller address.
+  error NotBank(address caller);
+
+  // ────────────────────────────────────────────────────
+  // Peer-contract resolution
+  // ────────────────────────────────────────────────────
+
+  /// @dev Resolves Bank via Officer. Reverts if not found.
+  function _getBankAddress() internal view returns (address) {
+    address bankAddress = IOfficer(officerAddress).findDeployedContract('Bank');
+    if (bankAddress == address(0)) revert BankContractNotFound();
+    return bankAddress;
+  }
+
+  modifier onlyBank() {
+    if (msg.sender != _getBankAddress()) revert NotBank(msg.sender);
+    _;
+  }
 
   /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() {
@@ -216,20 +269,19 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
 
   /**
    * @notice Initializes the FixedReturn contract with its owner and initial supported tokens.
-   * @dev This function replaces the constructor for upgradeable contracts. Called by
-   *      Officer at proxy-creation time (see FixedReturnBeaconModule); `_owner` is the
-   *      team's issuer address, deliberately independent of msg.sender (which is
-   *      Officer, not the team owner, when deployed the normal way).
-   *      Mirrors Bank's initializer shape — pre-registering tokens here means an issuer
-   *      can create their first offer without a separate addTokenSupport call.
+   * @dev Called by Officer at proxy-creation time. officerAddress is captured from
+   *      msg.sender because Officer is always the proxy deployer — matching the pattern
+   *      used by Bank (Bank.sol line 143) and InvestorV1 (InvestorV1.sol line 148).
    * @param _tokenAddresses Initial set of ERC20 tokens lenders may fund offers with.
-   * @param _owner Address that will become the owner (the team's issuer) of this contract.
+   * @param _owner Address that will become the owner of this contract.
    * @custom:security Only callable once due to the initializer modifier.
    */
   function initialize(address[] calldata _tokenAddresses, address _owner) external initializer {
     if (_owner == address(0)) revert ZeroAddress();
     __Ownable_init(_owner);
     __ReentrancyGuard_init();
+
+    officerAddress = msg.sender;
 
     uint256 length = _tokenAddresses.length;
     for (uint256 i = 0; i < length; ++i) {
@@ -239,12 +291,16 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
 
   /// @notice Current contract version, per semver.
   function version() external pure returns (string memory) {
-    return '1.0.0';
+    return '1.1.0';
   }
 
   // ────────────────────────────────────────────────────
   // Token allowlist (TokenSupport overrides — owner-gated)
   // ────────────────────────────────────────────────────
+
+  // NOTE: These functions manage the token allowlist only — they do not transfer
+  // any tokens. No owner-callable function in this contract moves token balances
+  // out to the owner; that restriction is structural and intentional.
 
   /// @inheritdoc TokenSupport
   function addTokenSupport(address _tokenAddress) external override onlyOwner {
@@ -269,17 +325,20 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
   function createLendingOffer(
     CreateOfferParams calldata params
   ) external onlyOwner returns (uint256 offerId) {
-    // The deposit token must already be on this team's allowlist (added via
-    // addTokenSupport) — an offer can't be created in a token the team hasn't
-    // explicitly opted into accepting.
+    // The deposit token must already be on this team's allowlist.
     if (!_isTokenSupported(params.token)) revert TokenSupportNotFound(params.token);
 
-    // The subscription window must close on or before the loan's start date — lenders
-    // can't still be joining after the loan has nominally started.
+    // Bank must also support the token — lend deposits are swept there on funding
+    // and repayments are routed through Bank. Validating here prevents offers that
+    // would fail at fund or repay time due to Bank token mismatch.
+    address bankAddress = _getBankAddress();
+    if (!IBank(bankAddress).isTokenSupported(params.token)) {
+      revert TokenNotSupportedByBank(params.token);
+    }
+
+    // The subscription window must close on or before the loan's start date.
     if (params.subscriptionDeadline > params.startDate) revert InvalidDeadline();
 
-    // termDuration is purely informational (see LendingOffer.termDuration) but is
-    // still sanity-bounded per unit so the UI can't be fed a nonsensical term length.
     if (
       params.termUnit == TermUnit.Days && (params.termDuration == 0 || params.termDuration > 365)
     ) {
@@ -296,9 +355,6 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
       revert InvalidTermDuration();
     }
 
-    // The per-lender cap only makes sense in General mode (in Whitelist mode each
-    // lender's own allocation already acts as their personal cap) — and a cap larger
-    // than the whole funding target is meaningless, so reject it outright.
     if (
       params.fundingAccess == FundingAccess.General &&
       params.isCapEnabled &&
@@ -307,7 +363,6 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
       revert LenderCapExceedsFundingTarget();
     }
 
-    // Offer ids are 1-based and sequential; totalOfferings doubles as the id counter.
     offerId = ++totalOfferings;
 
     lendingOffers[offerId] = LendingOffer({
@@ -326,10 +381,6 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
       state: OfferState.Open
     });
 
-    // Whitelist mode: record each lender's personal allocation up front. The sum of
-    // all allocations is only required to stay within the funding target — it's fine
-    // for it to fall short (the offer just won't be fully fundable by the whitelist
-    // alone), but it can never promise more than the offer is actually raising.
     if (params.fundingAccess == FundingAccess.Whitelist) {
       if (params.whitelistAddrs.length != params.allocations.length) {
         revert WhitelistLengthMismatch();
@@ -359,12 +410,15 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
 
   /**
    * @notice Deposit funds into an open offer.
-   * @dev Checks → effects → interaction ordering throughout: every revert condition is
-   *      evaluated, then all state is updated, and only then is the token actually
-   *      pulled from the caller — so a malicious token's transferFrom callback can
-   *      never observe a half-updated offer (the shared nonReentrant lock blocks
-   *      cross-function reentry too, but this ordering is the belt-and-suspenders
-   *      default regardless).
+   * @dev Strict CEI ordering throughout:
+   *      1. checks  — all reverts evaluated first
+   *      2. effects — state updated before any external call
+   *      3. interactions — lender transfer, then Bank sweep if now funded
+   *
+   *      Deposits accumulate in this contract while the offer is Open.
+   *      On the deposit that hits the funding target the full principal is swept
+   *      to Bank in the same transaction. From that point this contract holds no
+   *      lender funds for this offer.
    */
   function lendFunds(uint256 offerId, uint256 amount) external nonReentrant {
     if (amount == 0) revert ZeroAmount();
@@ -375,41 +429,40 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
     if (block.timestamp > offer.subscriptionDeadline) revert OfferNotOpen();
 
     if (offer.fundingAccess == FundingAccess.Whitelist) {
-      // Allocation is this lender's personal cap in Whitelist mode — the offer-level
-      // lenderCap field is not consulted at all here.
       if (lenderAllocation[offerId][msg.sender] == 0) revert NotWhitelisted();
       uint256 remainingAllocation = lenderAllocation[offerId][msg.sender] -
         lenderDeposits[offerId][msg.sender];
       if (amount > remainingAllocation) revert DepositExceedsAllocation();
     } else if (offer.isCapEnabled) {
-      // General mode with a cap enabled — limit this lender's cumulative deposit.
       if (lenderDeposits[offerId][msg.sender] + amount > offer.lenderCap) {
         revert DepositExceedsLenderCap();
       }
     }
 
-    // Hard cap at the funding target: a single deposit that would overshoot the
-    // remaining room is rejected outright rather than partially accepted — simpler
-    // to reason about than silently truncating the lender's intended amount.
     if (amount > offer.fundingTarget - offer.totalFunded) revert FundingTargetReached();
 
+    // Effects
     lenderDeposits[offerId][msg.sender] += amount;
     offer.totalFunded += amount;
 
-    // Only add this lender to the payout list once — repeated deposits must not
-    // create duplicate entries, since every entry gets paid in repayLenders.
     if (!hasDeposited[offerId][msg.sender]) {
       hasDeposited[offerId][msg.sender] = true;
       _offerLenders[offerId].push(msg.sender);
     }
 
-    // Auto-close to new deposits the instant the target is hit — no overfunding.
     bool nowFunded = offer.totalFunded >= offer.fundingTarget;
     if (nowFunded) {
       offer.state = OfferState.Funded;
     }
 
+    // Interactions — lender transfer must complete before the Bank sweep
     IERC20(offer.token).safeTransferFrom(msg.sender, address(this), amount);
+
+    if (nowFunded) {
+      // Sweep the full accumulated principal to Bank so no lender funds remain here.
+      address bankAddress = _getBankAddress();
+      IERC20(offer.token).safeTransfer(bankAddress, offer.totalFunded);
+    }
 
     emit FundsLent(offerId, msg.sender, amount);
     if (nowFunded) {
@@ -443,10 +496,10 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
 
   /**
    * @notice Claim back principal from a Refundable offer.
-   * @dev Principal only, no interest — the loan never actually started, so there's
-   *      nothing to compensate beyond returning what was deposited. Deposit is zeroed
-   *      before the transfer (effects before interaction) so a second call from the
-   *      same lender has nothing left to claim.
+   * @dev Funds for a refundable offer never left this contract (the offer never
+   *      reached its funding target, so the Bank sweep in lendFunds never ran).
+   *      Principal only, no interest — the loan never actually started.
+   *      Deposit is zeroed before the transfer (effects before interaction).
    */
   function claimRefund(uint256 offerId) external nonReentrant {
     LendingOffer storage offer = lendingOffers[offerId];
@@ -462,23 +515,25 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
   }
 
   // ────────────────────────────────────────────────────
-  // Issuer — repay lenders (push, can be installments)
+  // Issuer — repay lenders (push via Bank, can be installments)
   // ────────────────────────────────────────────────────
 
   /**
-   * @notice Issuer deposits an amount which is immediately pushed proportionally to
-   *         all lenders in the same transaction. Can be called multiple times as
-   *         installments.
-   * @dev Proportional, not selective: there is no per-lender repayment. Each
-   *      installment splits `amount` across every lender by their share of
-   *      totalFunded, so every lender's repaid ratio moves together — a lender can
-   *      never be repaid out of proportion to (ahead of or behind) the others.
-   * @dev Unbounded loop over _offerLenders[offerId] — a lender whose token transfer
-   *      reverts (e.g. a non-receiving contract address) blocks repayment to everyone
-   *      else in the same offer. Acceptable for the current lender-count scale; revisit
-   *      with a pull-based claim if offers can attract a large/unbounded lender count.
+   * @notice Distributes a repayment installment to lenders. Called by Bank, which
+   *         has already transferred `amount` of the offer's token to this contract
+   *         in the same transaction (mirrors InvestorV1.distributeTokenDividends).
+   *         Can be called multiple times as installments.
+   * @dev Repayment ceiling: totalRepaidByIssuer + amount must not exceed the total
+   *      lender obligation (sum of principal + flat interest across all lenders).
+   *      Rounding: distribution is cumulative — each lender's installment share equals
+   *      their cumulative entitlement (based on totalRepaidByIssuer after this call)
+   *      minus what they have already received (totalPaidToLender). The final lender
+   *      absorbs any remainder at the cumulative level, so proportions are exact and
+   *      independent of how the issuer partitions installments.
+   * @dev Unbounded loop over _offerLenders[offerId] — a lender whose token receipt
+   *      reverts blocks everyone else in the same offer. Acceptable at current scale.
    */
-  function repayLenders(uint256 offerId, uint256 amount) external onlyOwner nonReentrant {
+  function repayLenders(uint256 offerId, uint256 amount) external onlyBank nonReentrant {
     if (amount == 0) revert ZeroAmount();
 
     LendingOffer storage offer = lendingOffers[offerId];
@@ -486,19 +541,35 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
       revert OfferNotFunded();
     }
 
-    // First repayment moves the offer into Repaying; subsequent installments just
-    // accumulate against it.
+    // Repayment ceiling — prevent overpayment beyond total lender entitlement.
+    uint256 totalObligation = offer.totalFunded +
+      (offer.totalFunded * offer.interestRateBps) /
+      10_000;
+    if (offer.totalRepaidByIssuer + amount > totalObligation) revert ExceedsRepaymentObligation();
+
     offer.state = OfferState.Repaying;
     offer.totalRepaidByIssuer += amount;
 
-    IERC20(offer.token).safeTransferFrom(msg.sender, address(this), amount);
-
-    // Split this installment across every lender by their share of total principal
-    // raised — e.g. a lender who funded 60% of the offer receives 60% of `amount`.
+    // Cumulative distribution: each lender's share = their cumulative entitlement
+    // (based on totalRepaidByIssuer) minus what they have already received.
+    // The final lender absorbs any rounding remainder at the cumulative level,
+    // so proportions hold regardless of how the issuer partitions installments.
     address[] storage lenders = _offerLenders[offerId];
+    uint256 cumulativeForNonLast = 0;
     for (uint256 i = 0; i < lenders.length; ++i) {
       address lender = lenders[i];
-      uint256 share = (amount * lenderDeposits[offerId][lender]) / offer.totalFunded;
+      uint256 cumulativeEntitlement;
+      if (i == lenders.length - 1) {
+        cumulativeEntitlement = offer.totalRepaidByIssuer - cumulativeForNonLast;
+      } else {
+        cumulativeEntitlement =
+          (offer.totalRepaidByIssuer * lenderDeposits[offerId][lender]) /
+          offer.totalFunded;
+        cumulativeForNonLast += cumulativeEntitlement;
+      }
+      uint256 alreadyPaid = totalPaidToLender[offerId][lender];
+      uint256 share = cumulativeEntitlement > alreadyPaid ? cumulativeEntitlement - alreadyPaid : 0;
+      totalPaidToLender[offerId][lender] = cumulativeEntitlement;
       if (share > 0) {
         IERC20(offer.token).safeTransfer(lender, share);
         emit LenderRepaid(offerId, lender, share);
@@ -512,11 +583,21 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
   // Views
   // ────────────────────────────────────────────────────
 
-  /// @notice Total amount a lender is entitled to receive (their deposit + flat interest).
-  /// @dev Flat rate over the whole term, not annualized — see LendingOffer.interestRateBps.
+  /// @notice Lender's proportional share of the global repayment obligation.
+  /// @dev Uses the same formula as the cumulative distribution in repayLenders:
+  ///      floor(totalObligation * deposit / totalFunded). This is exact for every
+  ///      lender except the last in deposit order, who absorbs the rounding remainder
+  ///      and may receive slightly more. Returns 0 if the lender has no deposit or
+  ///      the offer has no funded amount yet.
   function totalEntitlementOf(uint256 offerId, address lender) external view returns (uint256) {
     uint256 lenderDeposit = lenderDeposits[offerId][lender];
-    return lenderDeposit + (lenderDeposit * lendingOffers[offerId].interestRateBps) / 10_000;
+    if (lenderDeposit == 0) return 0;
+    LendingOffer storage offer = lendingOffers[offerId];
+    if (offer.totalFunded == 0) return 0;
+    uint256 totalObligation = offer.totalFunded +
+      (offer.totalFunded * offer.interestRateBps) /
+      10_000;
+    return (totalObligation * lenderDeposit) / offer.totalFunded;
   }
 
   /// @notice All lender addresses that have deposited into a given offer.
@@ -533,5 +614,6 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
                           UPGRADE STORAGE GAP
     //////////////////////////////////////////////////////////////*/
 
-  uint256[50] private __gap;
+  // Gap reduced from 50 to 48: two new slots added above (totalPaidToLender, officerAddress).
+  uint256[48] private __gap;
 }

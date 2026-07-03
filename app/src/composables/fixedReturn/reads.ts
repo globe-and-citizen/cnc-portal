@@ -270,11 +270,12 @@ export function useFixedReturnOfferLenders(
 export function useFixedReturnMyLenderPositions() {
   const fixedReturnAddress = useFixedReturnAddress()
   const userStore = useUserDataStore()
+  const lenderAddress = computed(() => userStore.address as Address | undefined)
   const { data: allOffers } = useFixedReturnAllOffers()
 
   async function fetchMyLenderPositions(): Promise<Map<number, FixedReturnLenderPosition>> {
     const address = fixedReturnAddress.value
-    const lender = userStore.address as Address | undefined
+    const lender = lenderAddress.value
     if (!address || !lender) return new Map()
 
     const entries = await Promise.all(
@@ -309,7 +310,7 @@ export function useFixedReturnMyLenderPositions() {
   const offerIds = computed(() => (allOffers.value ?? []).map(({ offerId }) => offerId))
 
   return useQuery({
-    queryKey: ['fixedReturnMyLenderPositions', fixedReturnAddress, userStore.address, offerIds],
+    queryKey: ['fixedReturnMyLenderPositions', fixedReturnAddress, lenderAddress, offerIds],
     queryFn: fetchMyLenderPositions,
     enabled: computed(() => !!fixedReturnAddress.value && offerIds.value.length > 0)
   })

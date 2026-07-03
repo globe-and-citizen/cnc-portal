@@ -10,6 +10,7 @@ import './base/TokenSupport.sol';
 import {IOfficer} from './interfaces/IOfficer.sol';
 import {IInvestorV1} from './interfaces/IInvestorV1.sol';
 import {IFeeCollector} from './interfaces/IFeeCollector.sol';
+import {IFixedReturn} from './interfaces/IFixedReturn.sol';
 
 /**
  * @title Bank
@@ -73,6 +74,20 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
     uint256 amount
   );
 
+  /**
+   * @notice Emitted when Bank funds a FixedReturn repayment installment.
+   * @param fixedReturn The FixedReturn contract address that received/forwarded funds.
+   * @param offerId The lending offer being repaid.
+   * @param token The ERC20 token transferred.
+   * @param amount The amount sent to FixedReturn for distribution.
+   */
+  event FixedReturnRepaymentFunded(
+    address indexed fixedReturn,
+    uint256 indexed offerId,
+    address indexed token,
+    uint256 amount
+  );
+
   /// @dev A required address argument was the zero address.
   error ZeroAddress();
   /// @dev The officer contract address has not been configured on this bank.
@@ -95,6 +110,18 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
   error FeeCollectorNotConfigured();
   /// @dev A low-level native token transfer failed.
   error TransferFailed();
+  /// @dev The FixedReturn contract could not be located via the Officer.
+  error FixedReturnContractNotFound();
+
+  /**
+   * @dev Resolves the deployed FixedReturn contract from Officer.
+   */
+  function _getFixedReturnAddress() internal view returns (address) {
+    if (officerAddress == address(0)) revert OfficerAddressNotSet();
+    address fixedReturnAddress = IOfficer(officerAddress).findDeployedContract('FixedReturn');
+    if (fixedReturnAddress == address(0)) revert FixedReturnContractNotFound();
+    return fixedReturnAddress;
+  }
 
   /**
    * @dev Resolves the deployed Investor contract from Officer.
@@ -346,6 +373,35 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
    */
   function _isSupportedFeeToken(address _token) internal view returns (bool) {
     return IOfficer(officerAddress).isFeeCollectorToken(_token);
+  }
+
+  /**
+   * @notice Funds a FixedReturn repayment installment and triggers its distribution.
+   * @dev Mirrors distributeTokenDividends: Bank transfers the amount to FixedReturn,
+   *      then calls into it to fan the payment out to lenders. The token is resolved
+   *      from the offer itself (not caller-supplied) so a mismatched token can never
+   *      be sent — FixedReturn has no owner-callable drain, so a wrong-token transfer
+   *      would otherwise be stranded there permanently.
+   * @param offerId The lending offer being repaid.
+   * @param amount The installment amount to fund and distribute.
+   */
+  function fundFixedReturnRepayment(
+    uint256 offerId,
+    uint256 amount
+  ) external onlyOwner nonReentrant whenNotPaused {
+    if (amount == 0) revert ZeroAmount();
+
+    address fixedReturnAddress = _getFixedReturnAddress();
+    address token = IFixedReturn(fixedReturnAddress).getLendingOffer(offerId).token;
+    if (!_isTokenSupported(token)) revert UnsupportedToken(token);
+
+    uint256 tokenBal = getTokenBalance(token);
+    if (amount > tokenBal) revert InsufficientBalance(amount, tokenBal);
+
+    IERC20(token).safeTransfer(fixedReturnAddress, amount);
+    IFixedReturn(fixedReturnAddress).repayLenders(offerId, amount);
+
+    emit FixedReturnRepaymentFunded(fixedReturnAddress, offerId, token, amount);
   }
 
   /**
