@@ -27,6 +27,7 @@ import {
   investorDividendPaymentFailed,
   fixedReturnOffer,
   fixedReturnFundsLent,
+  fixedReturnFundsSwept,
   fixedReturnPrincipalRefunded,
   fixedReturnRepaymentDistributed,
   fixedReturnLenderRepaid,
@@ -525,6 +526,19 @@ ponder.on("FixedReturn:FundsLent", async ({ event, context }) => {
     contractAddress: event.log.address,
     offerId: event.args.offerId,
     lender: event.args.lender,
+    amount: event.args.amount,
+    blockNumber: event.block.number,
+    timestamp: Number(event.block.timestamp),
+  });
+});
+
+ponder.on("FixedReturn:FundsSweptToBank", async ({ event, context }) => {
+  await context.db.insert(fixedReturnFundsSwept).values({
+    id: `${event.transaction.hash}-${event.log.logIndex}`,
+    contractAddress: event.log.address,
+    offerId: event.args.offerId,
+    bank: event.args.bank,
+    token: event.args.token,
     amount: event.args.amount,
     blockNumber: event.block.number,
     timestamp: Number(event.block.timestamp),

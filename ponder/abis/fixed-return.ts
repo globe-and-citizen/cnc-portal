@@ -9,6 +9,31 @@ export const FIXED_RETURN_ABI = [
         type: "uint256",
       },
       {
+        indexed: false,
+        internalType: "uint256",
+        name: "totalFunded",
+        type: "uint256",
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "fundingTarget",
+        type: "uint256",
+      },
+    ],
+    name: "FundingProgressed",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "uint256",
+        name: "offerId",
+        type: "uint256",
+      },
+      {
         indexed: true,
         internalType: "address",
         name: "lender",
@@ -22,6 +47,37 @@ export const FIXED_RETURN_ABI = [
       },
     ],
     name: "FundsLent",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "uint256",
+        name: "offerId",
+        type: "uint256",
+      },
+      {
+        indexed: true,
+        internalType: "address",
+        name: "bank",
+        type: "address",
+      },
+      {
+        indexed: true,
+        internalType: "address",
+        name: "token",
+        type: "address",
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "amount",
+        type: "uint256",
+      },
+    ],
+    name: "FundsSweptToBank",
     type: "event",
   },
   {

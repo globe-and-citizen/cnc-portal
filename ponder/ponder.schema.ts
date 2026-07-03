@@ -534,6 +534,28 @@ export const fixedReturnFundsLent = onchainTable(
   }),
 );
 
+// The sweep to Bank is otherwise a raw ERC20 transfer with no on-chain receipt;
+// this row is the only indexed proof that an offer's principal reached Bank.
+export const fixedReturnFundsSwept = onchainTable(
+  "fixed_return_funds_swept",
+  (t) => ({
+    id: t.text().primaryKey(), // `${txHash}-${logIndex}`
+    contractAddress: t.hex().notNull(),
+    offerId: t.bigint().notNull(),
+    bank: t.hex().notNull(),
+    token: t.hex().notNull(),
+    amount: t.bigint().notNull(),
+    blockNumber: t.bigint().notNull(),
+    timestamp: t.integer().notNull(),
+  }),
+  (table) => ({
+    contractAddressIdx: index("fixed_return_funds_swept_contract_index").on(
+      table.contractAddress,
+    ),
+    bankIdx: index("fixed_return_funds_swept_bank_index").on(table.bank),
+  }),
+);
+
 export const fixedReturnPrincipalRefunded = onchainTable(
   "fixed_return_principal_refunded",
   (t) => ({
