@@ -484,6 +484,115 @@ export const investorDividendPaymentFailed = onchainTable(
   }),
 );
 
+// FixedReturn events
+//
+// The offer is a stateful entity: created Open, then flipped by the lifecycle
+// events (Funded / Refundable / Repaying) via the mutable `state` column — the
+// same insert-then-update pattern as boardAction.executed. Cumulative amounts
+// (totalFunded, totalRepaid) are intentionally NOT stored: they derive by
+// summing the append-only fundsLent / repaymentDistributed rows below.
+export const fixedReturnOffer = onchainTable(
+  "fixed_return_offer",
+  (t) => ({
+    id: t.text().primaryKey(), // `${contractAddress}-${offerId}`
+    contractAddress: t.hex().notNull(),
+    offerId: t.bigint().notNull(),
+    token: t.hex().notNull(),
+    fundingTarget: t.bigint().notNull(),
+    interestRateBps: t.bigint().notNull(),
+    startDate: t.bigint().notNull(),
+    subscriptionDeadline: t.bigint().notNull(),
+    fundingAccess: t.integer().notNull(), // FundingAccess enum: 0 General, 1 Whitelist
+    state: t.integer().notNull().default(0), // OfferState: 0 Open, 1 Funded, 2 Refundable, 3 Repaying
+    blockNumber: t.bigint().notNull(),
+    timestamp: t.integer().notNull(),
+  }),
+  (table) => ({
+    contractAddressIdx: index("fixed_return_offer_contract_index").on(
+      table.contractAddress,
+    ),
+    tokenIdx: index("fixed_return_offer_token_index").on(table.token),
+  }),
+);
+
+export const fixedReturnFundsLent = onchainTable(
+  "fixed_return_funds_lent",
+  (t) => ({
+    id: t.text().primaryKey(), // `${txHash}-${logIndex}`
+    contractAddress: t.hex().notNull(),
+    offerId: t.bigint().notNull(),
+    lender: t.hex().notNull(),
+    amount: t.bigint().notNull(),
+    blockNumber: t.bigint().notNull(),
+    timestamp: t.integer().notNull(),
+  }),
+  (table) => ({
+    contractAddressIdx: index("fixed_return_funds_lent_contract_index").on(
+      table.contractAddress,
+    ),
+    lenderIdx: index("fixed_return_funds_lent_lender_index").on(table.lender),
+  }),
+);
+
+export const fixedReturnPrincipalRefunded = onchainTable(
+  "fixed_return_principal_refunded",
+  (t) => ({
+    id: t.text().primaryKey(),
+    contractAddress: t.hex().notNull(),
+    offerId: t.bigint().notNull(),
+    lender: t.hex().notNull(),
+    amount: t.bigint().notNull(),
+    blockNumber: t.bigint().notNull(),
+    timestamp: t.integer().notNull(),
+  }),
+  (table) => ({
+    contractAddressIdx: index(
+      "fixed_return_principal_refunded_contract_index",
+    ).on(table.contractAddress),
+    lenderIdx: index("fixed_return_principal_refunded_lender_index").on(
+      table.lender,
+    ),
+  }),
+);
+
+export const fixedReturnRepaymentDistributed = onchainTable(
+  "fixed_return_repayment_distributed",
+  (t) => ({
+    id: t.text().primaryKey(),
+    contractAddress: t.hex().notNull(),
+    offerId: t.bigint().notNull(),
+    totalAmount: t.bigint().notNull(),
+    blockNumber: t.bigint().notNull(),
+    timestamp: t.integer().notNull(),
+  }),
+  (table) => ({
+    contractAddressIdx: index(
+      "fixed_return_repayment_distributed_contract_index",
+    ).on(table.contractAddress),
+  }),
+);
+
+export const fixedReturnLenderRepaid = onchainTable(
+  "fixed_return_lender_repaid",
+  (t) => ({
+    id: t.text().primaryKey(),
+    contractAddress: t.hex().notNull(),
+    offerId: t.bigint().notNull(),
+    lender: t.hex().notNull(),
+    amount: t.bigint().notNull(),
+    blockNumber: t.bigint().notNull(),
+    timestamp: t.integer().notNull(),
+  }),
+  (table) => ({
+    contractAddressIdx: index("fixed_return_lender_repaid_contract_index").on(
+      table.contractAddress,
+    ),
+    lenderIdx: index("fixed_return_lender_repaid_lender_index").on(
+      table.lender,
+    ),
+  }),
+);
+
 // CashRemunerationEIP712 events
 export const cashRemunerationDeposit = onchainTable(
   "cash_remuneration_deposit",

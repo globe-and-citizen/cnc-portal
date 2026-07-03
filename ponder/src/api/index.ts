@@ -19,6 +19,11 @@ import schema, {
   investorDividendDistributed,
   investorDividendPaid,
   investorDividendPaymentFailed,
+  fixedReturnOffer,
+  fixedReturnFundsLent,
+  fixedReturnPrincipalRefunded,
+  fixedReturnRepaymentDistributed,
+  fixedReturnLenderRepaid,
   cashRemunerationDeposit,
   cashRemunerationWithdraw,
   cashRemunerationWithdrawToken,
@@ -169,6 +174,33 @@ async function fetchContractEvents(
         .where(eq(investorDividendPaymentFailed.contractAddress, address)),
     ]);
     return { mints, distributed, paid, failed };
+  }
+
+  if (contractType === "FixedReturn") {
+    const [offers, fundsLent, principalRefunded, repayments, lenderRepaid] =
+      await Promise.all([
+        db
+          .select()
+          .from(fixedReturnOffer)
+          .where(eq(fixedReturnOffer.contractAddress, address)),
+        db
+          .select()
+          .from(fixedReturnFundsLent)
+          .where(eq(fixedReturnFundsLent.contractAddress, address)),
+        db
+          .select()
+          .from(fixedReturnPrincipalRefunded)
+          .where(eq(fixedReturnPrincipalRefunded.contractAddress, address)),
+        db
+          .select()
+          .from(fixedReturnRepaymentDistributed)
+          .where(eq(fixedReturnRepaymentDistributed.contractAddress, address)),
+        db
+          .select()
+          .from(fixedReturnLenderRepaid)
+          .where(eq(fixedReturnLenderRepaid.contractAddress, address)),
+      ]);
+    return { offers, fundsLent, principalRefunded, repayments, lenderRepaid };
   }
 
   if (contractType === "CashRemunerationEIP712") {
