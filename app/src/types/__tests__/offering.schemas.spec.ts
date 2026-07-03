@@ -58,7 +58,11 @@ describe('offering schemas', () => {
   })
 
   it('validates repayment amounts against the outstanding balance', () => {
-    const schema = createRepayAmountSchema({ outstanding: 50.5, treasuryBalance: Infinity, tokenSymbol: 'USDC' })
+    const schema = createRepayAmountSchema({
+      outstanding: 50.5,
+      treasuryBalance: Infinity,
+      tokenSymbol: 'USDC'
+    })
 
     expect(schema.safeParse({ amount: 0 }).success).toBe(false)
     expect(schema.safeParse({ amount: 50.5 }).success).toBe(true)
@@ -72,7 +76,11 @@ describe('offering schemas', () => {
 
   it('rejects an amount that exceeds the treasury balance with a treasury-cap message', () => {
     // outstanding=100, treasuryBalance=30 → entering 50 hits treasury cap only
-    const schema = createRepayAmountSchema({ outstanding: 100, treasuryBalance: 30, tokenSymbol: 'USDC' })
+    const schema = createRepayAmountSchema({
+      outstanding: 100,
+      treasuryBalance: 30,
+      tokenSymbol: 'USDC'
+    })
 
     const result = schema.safeParse({ amount: 50 })
     expect(result.success).toBe(false)
@@ -84,7 +92,11 @@ describe('offering schemas', () => {
 
   it('rejects an amount that exceeds the outstanding balance with an outstanding message', () => {
     // outstanding=20, treasuryBalance=100 → entering 30 hits outstanding cap only
-    const schema = createRepayAmountSchema({ outstanding: 20, treasuryBalance: 100, tokenSymbol: 'USDC' })
+    const schema = createRepayAmountSchema({
+      outstanding: 20,
+      treasuryBalance: 100,
+      tokenSymbol: 'USDC'
+    })
 
     const result = schema.safeParse({ amount: 30 })
     expect(result.success).toBe(false)
@@ -95,7 +107,11 @@ describe('offering schemas', () => {
   })
 
   it('accepts an amount within both outstanding and treasury limits', () => {
-    const schema = createRepayAmountSchema({ outstanding: 100, treasuryBalance: 80, tokenSymbol: 'USDC' })
+    const schema = createRepayAmountSchema({
+      outstanding: 100,
+      treasuryBalance: 80,
+      tokenSymbol: 'USDC'
+    })
     expect(schema.safeParse({ amount: 50 }).success).toBe(true)
   })
 })

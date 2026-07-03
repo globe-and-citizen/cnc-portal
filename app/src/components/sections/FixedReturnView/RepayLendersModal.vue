@@ -75,12 +75,7 @@
 
         <template #footer>
           <div class="flex justify-end gap-2">
-            <UButton
-              variant="ghost"
-              label="Cancel"
-              :disabled="isSubmitting"
-              @click="closeModal"
-            />
+            <UButton variant="ghost" label="Cancel" :disabled="isSubmitting" @click="closeModal" />
             <UButton
               color="primary"
               :label="isSubmitting ? 'Submitting…' : 'Repay'"
