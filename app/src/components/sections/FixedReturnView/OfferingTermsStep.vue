@@ -20,30 +20,19 @@
 
       <USeparator />
 
-      <div class="grid grid-cols-2 gap-3">
-        <UFormField
-          label="Subscription deadline"
-          name="deadline"
-          description="Last day lenders can commit funds."
-        >
-          <UInput
-            :model-value="form.deadline"
-            type="date"
-            class="w-full"
-            data-test="offering-deadline-input"
-            @update:model-value="(value) => updateStringField('deadline', value)"
-          />
-        </UFormField>
-        <UFormField label="Start date" name="startDate" description="Loan term starts">
-          <UInput
-            :model-value="form.startDate"
-            type="date"
-            class="w-full"
-            data-test="offering-start-date-input"
-            @update:model-value="(value) => updateStringField('startDate', value)"
-          />
-        </UFormField>
-      </div>
+      <UFormField
+        label="Subscription deadline"
+        name="deadline"
+        description="Last day lenders can commit funds. The loan term starts on this date."
+      >
+        <UInput
+          :model-value="form.deadline"
+          type="date"
+          class="w-full"
+          data-test="offering-deadline-input"
+          @update:model-value="(value) => updateStringField(value)"
+        />
+      </UFormField>
 
       <UFormField label="Term length" name="termValue" :ui="{ label: 'text-base font-bold' }">
         <div class="mb-2 flex items-center gap-2">
@@ -128,7 +117,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed } from 'vue'
 import { createOfferingTermsSchema, type OfferingForm, type TermUnit } from '@/types'
 import { OFFERING_TERM_DEFAULTS, OFFERING_TERM_MAXIMUMS, OFFERING_TERM_PRESETS } from '@/utils'
 
@@ -154,8 +143,8 @@ function selectTermPreset(value: number) {
   isCustomTerm.value = false
 }
 
-function updateStringField(field: 'deadline' | 'startDate', value: unknown) {
-  form.value[field] = String(value ?? '')
+function updateStringField(value: unknown) {
+  form.value.deadline = String(value ?? '')
 }
 
 function updateCapEnabled(value: boolean) {
@@ -176,18 +165,4 @@ const formRef = ref<{
   validate: (opts?: { name?: string | string[]; silent?: boolean }) => Promise<unknown>
 } | null>(null)
 defineExpose({ validate: () => formRef.value!.validate() })
-
-// UForm only refreshes errors for the field name(s) passed to validate(), and its
-// own per-field input/blur handling only passes the name of whichever field was
-// actually touched. The deadline<=startDate rule is a cross-field check attached to
-// a single path (deadline) — so fixing the mismatch by editing startDate wouldn't
-// otherwise clear the stale error still shown under deadline. Re-validating both
-// names together whenever either one changes keeps both sides in sync no matter
-// which field the user actually edited.
-watch(
-  () => [form.value.startDate, form.value.deadline],
-  () => {
-    formRef.value?.validate({ name: ['startDate', 'deadline'], silent: true })
-  }
-)
 </script>

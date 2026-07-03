@@ -30,6 +30,9 @@ export type UseCase =
   | 'UC-BANK-03'
   /** Invest via SafeDepositRouter → SHER mint (cash lands in Safe). */
   | 'UC-SDR-01'
+  /** A team member funds the Safe to invest & get SHER — booked as a capital
+   *  contribution (Cr Investor Equity) when no SafeDepositRouter event is present. */
+  | 'UC-MEMBER-01'
   /** Wage earned — accrual booked when the weekly claim is submitted. */
   | 'UC-CASH-02'
   /** Wage withdrawal settlement (cash leg and/or share leg). */
@@ -82,10 +85,26 @@ export interface LedgerEntry {
   contract?: Address
   /** Transaction hash, when known. */
   txHash?: string
+  /**
+   * The EOA that signed the transaction behind an internal transfer (resolved
+   * from {@link txHash}), i.e. the person who performed the move. Transfer-only.
+   */
+  initiator?: Address
   /** Human-readable memo. */
   memo: string
   /** Share count for equity / Default-D entries (whole SHER, not base units). */
   shares?: number
+  /**
+   * Minutes worked behind a payroll entry (UC-CASH-02 / UC-CASH-03), carried from
+   * the weekly claim so the human-readable label can read "submitted 16h". Absent
+   * for non-payroll entries.
+   */
+  minutesWorked?: number
+  /**
+   * End of the work week a wage accrual covers (Unix seconds), carried from the
+   * weekly claim so the label can read "week ending Jun 14". Accrual-only.
+   */
+  periodEnd?: number
   /** Accounting category attached during off-chain enrichment (e.g. "Payroll"). */
   category?: string
   /** Off-chain enrichment status. */

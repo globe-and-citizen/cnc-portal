@@ -9,8 +9,7 @@ import './ITokenSupport.sol';
  * @notice Complete interface for the FixedReturn contract
  * @dev Single source of truth for FixedReturn contract interactions
  * @dev Derived from: contracts/FixedReturn.sol
- * @dev Note: not directly imported by production contracts; available for
- *      external consumers (e.g. frontend, off-chain tooling, future contracts).
+ * Used by: Bank (to resolve the offer's token and trigger repayment distribution)
  */
 interface IFixedReturn is IOwnable, ITokenSupport {
   enum TermUnit {
@@ -43,7 +42,7 @@ interface IFixedReturn is IOwnable, ITokenSupport {
     bool isCapEnabled; // only relevant in General mode
     uint256 lenderCap; // max deposit per lender — General mode only
     uint256 totalFunded; // cumulative lender deposits
-    uint256 totalRepaidByIssuer; // cumulative issuer repayments
+    uint256 totalRepaidByIssuer; // cumulative issuer repayments (capped at total obligation)
     OfferState state;
   }
 
@@ -105,8 +104,9 @@ interface IFixedReturn is IOwnable, ITokenSupport {
   ///         without reaching its funding target
   function markAsRefundable(uint256 offerId) external;
 
-  /// @notice Deposit an amount that is immediately distributed proportionally to all
-  ///         lenders of the offer; callable multiple times as repayment installments
+  /// @notice Distributes a repayment installment proportionally to all lenders of the
+  ///         offer. Callable only by Bank, which transfers `amount` in immediately
+  ///         before calling this; callable multiple times as repayment installments.
   function repayLenders(uint256 offerId, uint256 amount) external;
 
   // ============ Lender ============

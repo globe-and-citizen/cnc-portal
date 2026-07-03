@@ -157,6 +157,24 @@ describe('resolveRevertMessage', () => {
   })
 
   describe('static per-contract messages', () => {
+    it('resolves FixedReturn.ExceedsRepaymentObligation', () => {
+      expect(resolveRevertMessage('ExceedsRepaymentObligation', undefined, 'FixedReturn')).toBe(
+        'Repayment amount exceeds the total lender obligation (principal + interest)'
+      )
+    })
+
+    it('resolves FixedReturn.TokenNotSupportedByBank', () => {
+      expect(resolveRevertMessage('TokenNotSupportedByBank', undefined, 'FixedReturn')).toBe(
+        'This token is not supported by the team treasury'
+      )
+    })
+
+    it('resolves Bank.FixedReturnContractNotFound', () => {
+      expect(resolveRevertMessage('FixedReturnContractNotFound', undefined, 'Bank')).toBe(
+        'FixedReturn contract could not be located'
+      )
+    })
+
     it('returns the expected message for Elections.AlreadyVoted', () => {
       expect(resolveRevertMessage('AlreadyVoted', undefined, 'Elections')).toBe(
         'You have already voted in this election'

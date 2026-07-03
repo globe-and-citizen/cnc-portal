@@ -104,7 +104,15 @@ export function useSidebarNavItems(): ComputedRef<NavigationMenuItem[][]> {
           icon: 'heroicons:hand-raised',
           active: String(route.name ?? '').startsWith('community-credit'),
           disabled,
-          to: { name: 'community-credit', params: teamParams() }
+          to: { name: 'community-credit', params: teamParams() },
+          defaultOpen: false,
+          children: [
+            { label: 'Rounds', to: { name: 'community-credit', params: teamParams() } },
+            {
+              label: 'New credit call',
+              to: { name: 'community-credit-new', params: teamParams() }
+            }
+          ]
         },
         {
           label: 'Accounting',

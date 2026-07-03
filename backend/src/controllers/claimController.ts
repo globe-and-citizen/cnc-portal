@@ -416,7 +416,9 @@ export const deleteClaim = async (req: Request, res: Response) => {
 
     if (weeklyClaim) {
       const remainingClaims = (weeklyClaim.claims ?? []).filter((c) => c.id !== claimId);
-      if (remainingClaims.length === 0) {
+      // Keep a claim-less weekly claim alive when it still carries a goals memo —
+      // deleting it here would silently wipe the member's weekly goals.
+      if (remainingClaims.length === 0 && !weeklyClaim.weeklyGoals) {
         await prisma.weeklyClaim.delete({
           where: { id: weeklyClaim.id },
         });

@@ -99,14 +99,32 @@
           </div>
         </div>
 
+        <!-- Error -->
+        <div v-if="submitError" class="px-6">
+          <UAlert
+            color="error"
+            variant="soft"
+            icon="i-lucide-circle-alert"
+            :description="submitError"
+            data-test="lend-error"
+          />
+        </div>
+
         <!-- Footer -->
         <div class="border-default flex justify-end gap-2 border-t px-6 py-3.5">
-          <UButton variant="ghost" color="neutral" label="Cancel" @click="emit('close')" />
+          <UButton
+            variant="ghost"
+            color="neutral"
+            label="Cancel"
+            :disabled="isSubmitting"
+            @click="emit('close')"
+          />
           <UButton
             color="primary"
             icon="heroicons:hand-raised"
-            :label="confirmLabel"
-            :disabled="numericAmount <= 0"
+            :label="isSubmitting ? 'Signing…' : confirmLabel"
+            :loading="isSubmitting"
+            :disabled="numericAmount <= 0 || isSubmitting"
             data-test="lend-confirm"
             @click="confirm"
           />
@@ -118,17 +136,48 @@
 
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue'
-import { formatAmount } from '@/utils'
+import { useQueryClient } from '@tanstack/vue-query'
+import { parseUnits, zeroAddress, type Address } from 'viem'
+import { useToast } from '@nuxt/ui/composables'
+import { useUserDataStore } from '@/stores'
+import { useFixedReturnAddress } from '@/composables/fixedReturn/reads'
+import { useFixedReturnLendFunds } from '@/composables/fixedReturn/writes'
+import { useErc20Allowance } from '@/composables/erc20/reads'
+import { useERC20Approve } from '@/composables/erc20/writes'
+import { classifyError, findOfferingToken, formatAmount } from '@/utils'
 import type { CreditRound } from '@/types'
 
 const props = defineProps<{ round: CreditRound | null }>()
-const emit = defineEmits<{ close: []; lend: [amount: number] }>()
+const emit = defineEmits<{ close: []; lent: [] }>()
+
+const userStore = useUserDataStore()
+const fixedReturnAddress = useFixedReturnAddress()
+const toast = useToast()
+const queryClient = useQueryClient()
 
 const amount = ref('')
+const submitError = ref<string | null>(null)
 const panelRef = ref<HTMLElement | null>(null)
 
 const numericAmount = computed(() => Math.max(0, Number(amount.value) || 0))
 const remaining = computed(() => (props.round ? props.round.target - props.round.raised : 0))
+
+// CreditRound.token is a symbol; resolve it to the on-chain token to scale amounts and
+// approve/lend against. FixedReturn is ERC20-only, so an unknown symbol means we can't lend.
+const token = computed(() => (props.round ? findOfferingToken(props.round.token) : undefined))
+const decimals = computed(() => token.value?.decimals ?? 6)
+const amountUnits = computed(() => parseUnits(String(numericAmount.value || 0), decimals.value))
+
+const { data: allowance, refetch: refetchAllowance } = useErc20Allowance(
+  computed(() => (token.value?.address as Address) ?? zeroAddress),
+  computed(() => (userStore.address as Address) ?? zeroAddress),
+  computed(() => fixedReturnAddress.value ?? zeroAddress)
+)
+const allowanceValue = computed(() => (typeof allowance.value === 'bigint' ? allowance.value : 0n))
+
+const approveResult = useERC20Approve(computed(() => token.value?.address as Address | undefined))
+const lendResult = useFixedReturnLendFunds()
+const isSubmitting = computed(() => approveResult.isPending.value || lendResult.isPending.value)
 
 /** Amount the current user has already lent to this round. */
 const myPosition = computed(() => props.round?.lenders.find((l) => l.you)?.amount ?? 0)
@@ -170,9 +219,39 @@ const confirmLabel = computed(() =>
     : 'Sign & lend'
 )
 
-function confirm() {
-  if (numericAmount.value <= 0) return
-  emit('lend', numericAmount.value)
+async function confirm() {
+  const round = props.round
+  if (!round || numericAmount.value <= 0) return
+  submitError.value = null
+
+  if (!fixedReturnAddress.value) {
+    submitError.value = 'No Credit Account is deployed for this team.'
+    return
+  }
+  if (!token.value) {
+    submitError.value = `Unsupported token: ${round.token}`
+    return
+  }
+
+  try {
+    await refetchAllowance()
+    if (allowanceValue.value < amountUnits.value) {
+      await approveResult.mutateAsync({ args: [fixedReturnAddress.value, amountUnits.value] })
+    }
+    await lendResult.mutateAsync({ args: [BigInt(round.id), amountUnits.value] })
+    toast.add({
+      title: `Credit signed — ${formatAmount(numericAmount.value, round.token)} sent`,
+      color: 'success'
+    })
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['fixedReturnAllOffers'] }),
+      queryClient.invalidateQueries({ queryKey: ['fixedReturnMyLenderPositions'] }),
+      queryClient.invalidateQueries({ queryKey: ['fixedReturnOfferLenders'] })
+    ])
+    emit('lent')
+  } catch (error) {
+    submitError.value = classifyError(error, { contract: 'FixedReturn' }).userMessage
+  }
 }
 
 // Reset the field and focus the panel each time a different round opens.
@@ -181,6 +260,7 @@ watch(
   (id) => {
     if (!id) return
     amount.value = ''
+    submitError.value = null
     nextTick(() => panelRef.value?.focus())
   },
   { immediate: true }

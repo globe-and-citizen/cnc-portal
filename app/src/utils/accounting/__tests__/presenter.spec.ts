@@ -177,6 +177,16 @@ describe('presentLedger', () => {
     const ledger = presentLedger(books().entries, 'Revenue')
     expect(ledger.rows[0].label).toBe('Service revenue') // normalized UC-BANK-02 label
   })
+
+  it('attaches a structured activity (actor + predicate) without touching the accounting label', () => {
+    const ledger = presentLedger(books().entries, 'Revenue')
+    expect(ledger.rows[0].label).toBe('Service revenue') // accounting label unchanged
+    expect(ledger.rows[0].activity).toMatchObject({
+      kind: 'actor',
+      text: 'paid $100.00 for services'
+    })
+    expect(ledger.rows[1].activity).toEqual({ kind: 'plain', text: '' }) // credit leg stays blank
+  })
 })
 
 describe('filterByPeriod', () => {

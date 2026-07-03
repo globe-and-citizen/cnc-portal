@@ -64,6 +64,19 @@ export const syncWeeklyClaimsQuerySchema = z.object({
   teamId: teamIdSchema,
 });
 
+// Submit / update weekly goals request body
+//
+// The weekly goals memo is free-form Markdown, upserted per ISO week. weekStart
+// is any ISO datetime within the target week — the controller normalizes it to
+// the Monday isoWeek start. An empty string is allowed so the member can clear
+// a previously saved memo. Capped to keep the payload (and the TEXT column)
+// bounded.
+export const submitWeeklyGoalsBodySchema = z.object({
+  teamId: teamIdSchema,
+  weekStart: z.string().datetime({ message: 'weekStart must be an ISO datetime string' }),
+  weeklyGoals: z.string().max(10_000, 'Weekly goals cannot exceed 10000 characters'),
+});
+
 // Update weekly claim path parameters
 export const weeklyClaimIdParamsSchema = z.object({
   id: positiveIntegerSchema,
