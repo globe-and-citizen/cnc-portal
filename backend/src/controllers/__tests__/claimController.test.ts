@@ -900,6 +900,29 @@ describe('Claim Controller', () => {
       expect(mockWeeklyClaimDelete).toHaveBeenCalledWith({ where: { id: 1 } });
     });
 
+    it('should keep the weekly claim when it is the last claim but goals are set', async () => {
+      // A goals-only week: deleting the last daily claim must not wipe the memo.
+      vi.spyOn(prisma.claim, 'findFirst').mockResolvedValue({
+        id: 1,
+        wage: { userAddress: TEST_ADDRESS },
+        weeklyClaim: {
+          id: 1,
+          status: 'pending',
+          weeklyGoals: '# Ship the editor',
+          claims: [{ id: 1 }],
+        },
+      } as any);
+      const mockClaimDelete = vi.spyOn(prisma.claim, 'delete').mockResolvedValue({} as any);
+      const mockWeeklyClaimDelete = vi.spyOn(prisma.weeklyClaim, 'delete');
+
+      const response = await request(app).delete('/1');
+
+      expect(response.status).toBe(200);
+      expect(response.body.message).toBe('Claim deleted successfully');
+      expect(mockClaimDelete).toHaveBeenCalledWith({ where: { id: 1 } });
+      expect(mockWeeklyClaimDelete).not.toHaveBeenCalled();
+    });
+
     it('should only delete claim when other claims exist in weekly claim', async () => {
       setupMockClaim('pending', TEST_ADDRESS, true);
       const mockClaimDelete = vi.spyOn(prisma.claim, 'delete').mockResolvedValue({} as any);
