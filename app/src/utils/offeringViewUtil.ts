@@ -64,8 +64,8 @@ export function getOfferingFormSummary(
     accessLabel:
       form.access === 'whitelist' ? `Whitelist · ${whitelistCount} lenders` : 'General · anyone',
     accessDot: ACCESS_META[form.access].accessDot,
-    startFmt: formatOfferingDate(form.startDate),
-    maturityFmt: maturityLabel(form.startDate, form.termValue, form.termUnit)
+    deadlineFmt: formatOfferingDate(form.deadline),
+    maturityFmt: maturityLabel(form.deadline, form.termValue, form.termUnit)
   }
 }
 
@@ -172,12 +172,16 @@ export function buildFixedReturnLenderRows({
     const paid =
       offering.raised > 0 ? (offering.totalRepaid * lender.principal) / offering.raised : 0
     const paidRatio = lender.expected > 0 ? paid / lender.expected : 0
-    const status = getOfferingRepaymentStatus(paidRatio, pastMaturity)
+    const status =
+      lender.principal === 0 && offering.status === 'closed'
+        ? 'refunded'
+        : getOfferingRepaymentStatus(paidRatio, pastMaturity)
     const pct = percentOf(paid, lender.expected)
 
     return {
       name: resolveName(lender.address),
       address: lender.address,
+      principal: lender.principal,
       principalFmt: formatOfferingTokenAmount(lender.principal, offering.token),
       rateFmt: offering.rate.toFixed(1) + '%',
       expectedFmt: formatOfferingTokenAmount(lender.expected, offering.token),
@@ -213,7 +217,8 @@ export function getFixedReturnStatusMeta(status: OfferingDisplayStatus): {
     open: { label: 'Open', color: 'success' },
     funded: { label: 'Funded', color: 'info' },
     closed: { label: 'Closed', color: 'neutral' },
-    partial: { label: 'In progress', color: 'warning' }
+    partial: { label: 'In progress', color: 'warning' },
+    refunded: { label: 'Refunded', color: 'neutral' }
   }
   return meta[status]
 }

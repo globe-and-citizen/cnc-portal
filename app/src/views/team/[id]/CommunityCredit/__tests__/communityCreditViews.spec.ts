@@ -13,8 +13,7 @@ import {
   mockInvalidateQueries,
   mockFixedReturnReads,
   mockFixedReturnWrites,
-  mockERC20Reads,
-  mockERC20Writes,
+  mockBankWrites,
   mockWagmiCore
 } from '@/tests/mocks'
 
@@ -261,14 +260,13 @@ describe('Community Credit views', () => {
       await wrapper.find('[data-test="confirm-repay"]').trigger('click')
       await flushPromises()
 
-      expect(mockFixedReturnWrites.repayLenders.mutateAsync).toHaveBeenCalledWith({
+      expect(mockBankWrites.fundFixedReturnRepayment.mutateAsync).toHaveBeenCalledWith({
         args: [1n, 5250_000000n]
       })
     })
 
-    it('approves when allowance is short and surfaces a repay error', async () => {
-      mockERC20Reads.allowance.data.value = 0n
-      mockFixedReturnWrites.repayLenders.mutateAsync.mockRejectedValueOnce(new Error('boom'))
+    it('surfaces a repay error when the treasury transaction fails', async () => {
+      mockBankWrites.fundFixedReturnRepayment.mutateAsync.mockRejectedValueOnce(new Error('boom'))
       store.rounds = [sampleRound({ id: '1', status: 'active' })]
       mockFixedReturnReads.getLendingOffer.data.value = offerStruct()
       mockFixedReturnReads.offerLenders.data.value = [
@@ -280,7 +278,6 @@ describe('Community Credit views', () => {
       await wrapper.find('[data-test="confirm-repay"]').trigger('click')
       await flushPromises()
 
-      expect(mockERC20Writes.approve.mutateAsync).toHaveBeenCalled()
       expect(wrapper.find('[data-test="repay-error"]').exists()).toBe(true)
     })
   })

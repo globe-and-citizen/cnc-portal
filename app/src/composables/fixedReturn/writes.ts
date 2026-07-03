@@ -31,9 +31,10 @@ export function useFixedReturnClaimRefund() {
   return useFixedReturnContractWrite('claimRefund')
 }
 
-export function useFixedReturnRepayLenders() {
-  return useFixedReturnContractWrite('repayLenders')
-}
+// repayLenders is intentionally not exposed here — it's onlyBank on-chain now, so
+// the frontend triggers it indirectly via Bank.fundFixedReturnRepayment (see
+// composables/bank/writes.ts's useFundFixedReturnRepayment). A direct call from a
+// connected wallet would always revert with NotBank.
 
 export function useFixedReturnAddTokenSupport() {
   return useFixedReturnContractWrite('addTokenSupport')

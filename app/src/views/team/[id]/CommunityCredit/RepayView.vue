@@ -18,7 +18,7 @@
       </div>
       <p class="text-muted mt-1.5 text-sm">
         Returns each lender's principal plus {{ round.rate }}% interest, distributed on-chain in one
-        transaction from your connected wallet.
+        transaction from the team treasury.
       </p>
     </div>
 
@@ -97,7 +97,7 @@
           variant="soft"
           icon="heroicons:shield-check"
           title="On-chain repayment"
-          description="Signing approves the token, then distributes principal + interest to every lender in one transaction."
+          description="Distributes principal + interest to every lender in one transaction from the team treasury."
         />
 
         <UAlert
@@ -143,16 +143,14 @@ import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useToast } from '@nuxt/ui/composables'
 import { useQueryClient } from '@tanstack/vue-query'
-import { parseUnits, zeroAddress, type Address } from 'viem'
+import { parseUnits, zeroAddress } from 'viem'
 import { useCommunityCreditStore, useUserDataStore } from '@/stores'
 import {
-  useFixedReturnAddress,
   useFixedReturnGetLendingOffer,
   useFixedReturnOfferLenders
 } from '@/composables/fixedReturn/reads'
-import { useFixedReturnRepayLenders } from '@/composables/fixedReturn/writes'
-import { useErc20Allowance } from '@/composables/erc20/reads'
-import { useERC20Approve } from '@/composables/erc20/writes'
+import { useBankAddress } from '@/composables/bank/reads'
+import { useFundFixedReturnRepayment } from '@/composables/bank/writes'
 import {
   classifyError,
   decimalsForOfferingToken,
@@ -170,7 +168,7 @@ const toast = useToast()
 const queryClient = useQueryClient()
 const store = useCommunityCreditStore()
 const userStore = useUserDataStore()
-const fixedReturnAddress = useFixedReturnAddress()
+const bankAddress = useBankAddress()
 
 const teamId = computed(() => String(route.params.id))
 const roundId = computed(() => String(route.params.roundId))
@@ -209,16 +207,8 @@ const amountUnits = computed(() =>
   parseUnits(grandTotal.value.toFixed(decimals.value), decimals.value)
 )
 
-const { data: allowance, refetch: refetchAllowance } = useErc20Allowance(
-  tokenAddress,
-  computed(() => (userStore.address as Address) ?? zeroAddress),
-  computed(() => fixedReturnAddress.value ?? zeroAddress)
-)
-const allowanceValue = computed(() => (typeof allowance.value === 'bigint' ? allowance.value : 0n))
-
-const approveResult = useERC20Approve(computed(() => tokenAddress.value))
-const repayResult = useFixedReturnRepayLenders()
-const isSubmitting = computed(() => approveResult.isPending.value || repayResult.isPending.value)
+const repayResult = useFundFixedReturnRepayment()
+const isSubmitting = computed(() => repayResult.isPending.value)
 const submitError = ref<string | null>(null)
 
 function goList() {
@@ -241,14 +231,10 @@ watch(
 )
 
 async function confirmRepay() {
-  if (!fixedReturnAddress.value || grandTotal.value <= 0) return
+  if (!bankAddress.value || grandTotal.value <= 0) return
   submitError.value = null
 
   try {
-    await refetchAllowance()
-    if (allowanceValue.value < amountUnits.value) {
-      await approveResult.mutateAsync({ args: [fixedReturnAddress.value, amountUnits.value] })
-    }
     await repayResult.mutateAsync({ args: [offerId.value, amountUnits.value] })
     toast.add({ title: 'Round repaid — principal + interest returned', color: 'success' })
     await Promise.all([
@@ -258,7 +244,7 @@ async function confirmRepay() {
     ])
     goRound()
   } catch (error) {
-    submitError.value = classifyError(error, { contract: 'FixedReturn' }).userMessage
+    submitError.value = classifyError(error, { contract: 'Bank' }).userMessage
   }
 }
 </script>

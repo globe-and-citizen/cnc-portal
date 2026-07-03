@@ -78,96 +78,36 @@
       </UCard>
     </div>
 
+    <!-- Issuer Actions -->
+    <OfferingIssuerActions
+      v-if="isOwner && (offering.status === 'funded' || offering.status === 'open')"
+      :offering="offering"
+    />
+
     <!-- Lenders -->
-    <UCard :ui="{ body: 'p-0' }">
-      <template #header>
-        <div class="flex items-center justify-between">
-          <div class="text-base font-extrabold text-[#0f3d2e]">
-            Lenders
-            <span class="text-sm font-semibold text-[#9aaba2]">· {{ partners.length }}</span>
-          </div>
-          <UInput
-            v-model="lenderSearch"
-            icon="heroicons:magnifying-glass"
-            placeholder="Search lenders…"
-            aria-label="Search lenders"
-            data-test="lender-search-input"
-            class="w-56"
-          />
-        </div>
-      </template>
-      <UTable
-        :data="filteredPartners"
-        :columns="lenderColumns"
-        :loading="isLoading"
-        class="min-w-[820px]"
-      >
-        <template #lender-cell="{ row: { original: lender } }">
-          <UserComponent
-            :user="{ address: lender.address, name: lender.name }"
-            class="min-w-0 flex-1"
-          />
-        </template>
-        <template #principal-cell="{ row: { original: lender } }">
-          <span class="font-bold">{{ lender.principalFmt }}</span>
-        </template>
-        <template #rate-cell="{ row: { original: lender } }">
-          {{ lender.rateFmt }}
-        </template>
-        <template #expected-cell="{ row: { original: lender } }">
-          <span class="font-bold">{{ lender.expectedFmt }}</span>
-        </template>
-        <template #paid-cell="{ row: { original: lender } }">
-          <div class="min-w-36">
-            <div class="mb-1.5 flex justify-between text-sm font-semibold">
-              <span>{{ lender.paidFmt }}</span>
-              <span class="text-[#9aaba2]">{{ lender.pctLabel }}</span>
-            </div>
-            <UProgress
-              :model-value="lender.pct"
-              :max="100"
-              :color="lender.progressColor"
-              size="xs"
-            />
-          </div>
-        </template>
-        <template #maturity-cell="{ row: { original: lender } }">
-          {{ lender.maturityFmt }}
-        </template>
-        <template #status-cell="{ row: { original: lender } }">
-          <StatusBadge :status="lender.status" />
-        </template>
-        <template #loading>
-          <div data-test="lenders-loading" class="flex flex-col gap-2 p-5">
-            <USkeleton v-for="index in 3" :key="index" class="h-10 w-full" />
-          </div>
-        </template>
-        <template #empty>
-          <UEmpty
-            v-if="partners.length === 0"
-            data-test="lenders-empty"
-            icon="heroicons:user-group"
-            title="No lenders yet."
-          />
-          <UEmpty
-            v-else
-            data-test="lenders-no-match"
-            icon="heroicons:magnifying-glass"
-            title="No matching lenders"
-            :description="`No lenders match &quot;${lenderSearch}&quot;.`"
-          />
-        </template>
-      </UTable>
-    </UCard>
+    <OfferingLendersSection
+      :partners="partners"
+      :is-loading="isLoading"
+      :can-claim-refund="canClaimRefund"
+      :claim-refund-is-pending="claimRefundResult.isPending.value"
+      :claiming-lender-address="claimingLenderAddress"
+      @claim-refund="claimRefund"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { isAddress, isAddressEqual } from 'viem'
+import { useToast } from '@nuxt/ui/composables'
+import { useQueryClient } from '@tanstack/vue-query'
 import StatusBadge from './StatusBadge.vue'
-import UserComponent from '@/components/UserComponent.vue'
 import ProgressGauge from './ProgressGauge.vue'
-import { useFixedReturnOfferLenders } from '@/composables/fixedReturn/reads'
+import OfferingIssuerActions from './OfferingIssuerActions.vue'
+import OfferingLendersSection from './OfferingLendersSection.vue'
+import { useFixedReturnOfferLenders, useFixedReturnOwner } from '@/composables/fixedReturn/reads'
+import { useFixedReturnClaimRefund } from '@/composables/fixedReturn/writes'
+import { useUserDataStore } from '@/stores'
 import {
   buildFixedReturnLenderRows,
   formatOfferingTokenAmount,
@@ -181,6 +121,23 @@ import type { OfferingSummary } from '@/types'
 
 const props = defineProps<{ offering: OfferingSummary }>()
 defineEmits<{ back: [] }>()
+
+const userStore = useUserDataStore()
+const toast = useToast()
+const queryClient = useQueryClient()
+const { data: fixedReturnOwnerAddress } = useFixedReturnOwner()
+const claimRefundResult = useFixedReturnClaimRefund()
+const claimingLenderAddress = ref<string | null>(null)
+const isOwner = computed(() => {
+  const ownerAddress = fixedReturnOwnerAddress.value
+  return (
+    typeof ownerAddress === 'string' &&
+    isAddress(ownerAddress, { strict: false }) &&
+    isAddress(userStore.address, { strict: false }) &&
+    isAddressEqual(ownerAddress, userStore.address)
+  )
+})
+const canClaimRefund = computed(() => props.offering.status === 'closed')
 
 // Bullet repayment: principal + interest repaid as one combined payment per lender,
 // due at the offering's maturity (start date + term) — no interim schedule.
@@ -204,16 +161,6 @@ const { data: lenders, isLoading } = useFixedReturnOfferLenders(
   computed(() => props.offering.token)
 )
 
-const lenderColumns = [
-  { accessorKey: 'lender', header: 'Lender' },
-  { accessorKey: 'principal', header: 'Principal' },
-  { accessorKey: 'rate', header: 'Rate' },
-  { accessorKey: 'expected', header: 'Expected return' },
-  { accessorKey: 'paid', header: 'Paid to date' },
-  { accessorKey: 'maturity', header: 'Maturity' },
-  { accessorKey: 'status', header: 'Status' }
-]
-
 // repayLenders distributes proportionally to each lender's deposit share, so a
 // lender's cumulative paid-to-date is their deposit's share of totalRepaid so far —
 // there's no separate "amount paid to this lender" getter on-chain to read directly.
@@ -227,16 +174,6 @@ const partners = computed(() =>
   })
 )
 
-const lenderSearch = ref('')
-
-const filteredPartners = computed(() => {
-  const query = lenderSearch.value.trim().toLowerCase()
-  if (!query) return partners.value
-  return partners.value.filter(
-    (p) => p.name.toLowerCase().includes(query) || p.address.toLowerCase().includes(query)
-  )
-})
-
 const totals = computed(() =>
   getOfferingDetailTotals(lenders.value ?? [], props.offering.totalRepaid)
 )
@@ -246,6 +183,30 @@ const totalPaid = computed(() => totals.value.totalPaid)
 
 const fundingPct = computed(() => percentOf(props.offering.raised, props.offering.target))
 const repaymentPct = computed(() => percentOf(totalPaid.value, totalExpected.value))
+
+function claimRefund(lenderAddress: string) {
+  if (claimRefundResult.isPending.value) return
+  claimingLenderAddress.value = lenderAddress
+  claimRefundResult.mutate(
+    { args: [BigInt(props.offering.id)] },
+    {
+      onSuccess: () => {
+        void Promise.all([
+          queryClient.invalidateQueries({ queryKey: ['fixedReturnMyLenderPositions'] }),
+          queryClient.invalidateQueries({ queryKey: ['fixedReturnOfferLenders'] })
+        ])
+        toast.add({
+          title: 'Refund claimed successfully',
+          description: 'Your principal has been returned.',
+          color: 'success'
+        })
+      },
+      onSettled: () => {
+        claimingLenderAddress.value = null
+      }
+    }
+  )
+}
 
 const statCards = computed(() => [
   {

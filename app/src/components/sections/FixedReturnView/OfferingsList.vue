@@ -24,7 +24,7 @@
       </template>
       <template #raised-cell="{ row: { original: offering } }">
         <div class="min-w-44">
-          <div class="mb-1.5 flex justify-between text-xs font-semibold">
+          <div class="mb-1.5 flex justify-between font-semibold">
             <span class="text-[#7d8e84]">{{ moneyShort(offering.raised) }}</span>
             <span class="text-[#9aaba2]">
               of {{ moneyShort(offering.target) }} ·
@@ -43,7 +43,7 @@
       </template>
       <template #actions-cell="{ row: { original: offering } }">
         <UButton
-          size="sm"
+          size="xs"
           color="primary"
           variant="soft"
           label="Manage"
@@ -58,7 +58,11 @@
         </div>
       </template>
       <template #empty>
-        <UEmpty data-test="offerings-empty" icon="heroicons:banknotes" title="No offerings yet." />
+        <UEmpty
+          data-test="offerings-empty"
+          icon="heroicons:banknotes"
+          :title="isOwner ? 'No offerings yet.' : 'You haven\'t participated in any offerings yet.'"
+        />
       </template>
     </UTable>
   </UCard>
@@ -66,9 +70,14 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { isAddress, isAddressEqual } from 'viem'
+import { useTeamStore, useUserDataStore } from '@/stores'
 import StatusBadge from './StatusBadge.vue'
-import { useTeamStore } from '@/stores'
-import { useFixedReturnAllOffers } from '@/composables/fixedReturn/reads'
+import {
+  useFixedReturnAllOffers,
+  useFixedReturnMyLenderPositions,
+  useFixedReturnOwner
+} from '@/composables/fixedReturn/reads'
 import { useGetFixedReturnOfferingsQuery } from '@/queries'
 import { fromLendingOfferStruct, moneyShort, percentOf, termLabel } from '@/utils'
 import type { OfferingSummary } from '@/types'
@@ -76,12 +85,24 @@ import type { OfferingSummary } from '@/types'
 defineEmits<{ manage: [offering: OfferingSummary] }>()
 
 const teamStore = useTeamStore()
+const userStore = useUserDataStore()
+const { data: fixedReturnOwnerAddress } = useFixedReturnOwner()
+const isOwner = computed(() => {
+  const ownerAddress = fixedReturnOwnerAddress.value
+  return (
+    typeof ownerAddress === 'string' &&
+    isAddress(ownerAddress, { strict: false }) &&
+    isAddress(userStore.address, { strict: false }) &&
+    isAddressEqual(ownerAddress, userStore.address)
+  )
+})
 
 const { data: offeringMetadata } = useGetFixedReturnOfferingsQuery({
   queryParams: { teamId: teamStore.currentTeamId }
 })
 
 const { data: rawOfferings, isLoading } = useFixedReturnAllOffers()
+const { data: myLenderPositions } = useFixedReturnMyLenderPositions()
 
 const columns = [
   { accessorKey: 'offering', header: 'Offering' },
@@ -98,8 +119,11 @@ const columns = [
 // later-arriving metadata response still updates the title reactively.
 const offerings = computed<OfferingSummary[]>(() => {
   const metadataByOfferId = new Map(offeringMetadata.value?.map((m) => [m.offerId, m.title]))
-  return (rawOfferings.value ?? []).map(({ offerId, offer, decimals }) =>
-    fromLendingOfferStruct(offerId, offer, decimals, metadataByOfferId.get(offerId))
-  )
+  const positions = myLenderPositions.value ?? new Map()
+  return (rawOfferings.value ?? [])
+    .filter(({ offerId }) => isOwner.value || (positions.get(offerId)?.deposited ?? 0n) > 0n)
+    .map(({ offerId, offer, decimals }) =>
+      fromLendingOfferStruct(offerId, offer, decimals, metadataByOfferId.get(offerId))
+    )
 })
 </script>

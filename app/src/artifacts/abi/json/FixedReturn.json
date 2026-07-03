@@ -11,6 +11,11 @@
   },
   {
     "inputs": [],
+    "name": "BankContractNotFound",
+    "type": "error"
+  },
+  {
+    "inputs": [],
     "name": "DeadlineNotPassed",
     "type": "error"
   },
@@ -22,6 +27,11 @@
   {
     "inputs": [],
     "name": "DepositExceedsLenderCap",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "ExceedsRepaymentObligation",
     "type": "error"
   },
   {
@@ -47,6 +57,17 @@
   {
     "inputs": [],
     "name": "LenderCapExceedsFundingTarget",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "caller",
+        "type": "address"
+      }
+    ],
+    "name": "NotBank",
     "type": "error"
   },
   {
@@ -115,6 +136,17 @@
       }
     ],
     "name": "SafeERC20FailedOperation",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      }
+    ],
+    "name": "TokenNotSupportedByBank",
     "type": "error"
   },
   {
@@ -766,6 +798,19 @@
   },
   {
     "inputs": [],
+    "name": "officerAddress",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "owner",
     "outputs": [
       {
@@ -842,6 +887,30 @@
   {
     "inputs": [],
     "name": "totalOfferings",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "totalPaidToLender",
     "outputs": [
       {
         "internalType": "uint256",

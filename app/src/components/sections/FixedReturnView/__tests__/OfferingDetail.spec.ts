@@ -1,10 +1,17 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import OfferingDetail from '../OfferingDetail.vue'
-import { mockFixedReturnReads } from '@/tests/mocks'
+import {
+  mockFixedReturnReads,
+  mockFixedReturnWrites,
+  mockToast,
+  mockUserStore
+} from '@/tests/mocks'
 import type { OfferingSummary } from '@/types'
 
 const TOKEN = '0x1111111111111111111111111111111111111111' as const
+const OWNER_ADDRESS = '0x742d35Cc6bF8C55C6C2e013e5492D2b6637e0886'
+const NON_OWNER_ADDRESS = '0x0000000000000000000000000000000000000001'
 
 function baseOffering(overrides: Partial<OfferingSummary> = {}): OfferingSummary {
   return {
@@ -14,6 +21,7 @@ function baseOffering(overrides: Partial<OfferingSummary> = {}): OfferingSummary
     term: 12,
     termUnit: 'months',
     startDate: '2030-01-01',
+    deadlineTimestamp: 1_000_000_000,
     access: 'general',
     raised: 100000,
     target: 100000,
@@ -24,7 +32,8 @@ function baseOffering(overrides: Partial<OfferingSummary> = {}): OfferingSummary
   }
 }
 
-function mountDetail(offering: OfferingSummary = baseOffering()) {
+function mountDetail(offering: OfferingSummary = baseOffering(), isOwner = false) {
+  mockUserStore.address = isOwner ? OWNER_ADDRESS : NON_OWNER_ADDRESS
   return mount(OfferingDetail, { props: { offering } })
 }
 
@@ -32,6 +41,10 @@ describe('OfferingDetail.vue', () => {
   beforeEach(() => {
     mockFixedReturnReads.offerLenders.data.value = []
     mockFixedReturnReads.offerLenders.isLoading.value = false
+    mockFixedReturnReads.myLenderPositions.data.value = new Map()
+    mockFixedReturnReads.owner.data.value = OWNER_ADDRESS
+    mockFixedReturnWrites.claimRefund.isPending.value = false
+    mockToast.add.mockClear()
   })
 
   it('emits back when the back button is clicked', async () => {
@@ -117,5 +130,40 @@ describe('OfferingDetail.vue', () => {
     await wrapper.find('[data-test="lender-search-input"]').setValue('nonexistent')
 
     expect(wrapper.find('[data-test="lenders-no-match"]').exists()).toBe(true)
+  })
+
+  it('lets the connected lender claim directly from their refundable lender row', async () => {
+    mockFixedReturnReads.offerLenders.data.value = [
+      { address: NON_OWNER_ADDRESS, principal: 0.5, expected: 0.54 }
+    ]
+    const wrapper = mountDetail(baseOffering({ status: 'closed' }))
+
+    await wrapper.find('[data-test="lender-claim-refund-button"]').trigger('click')
+
+    expect(mockFixedReturnWrites.claimRefund.mutate).toHaveBeenCalledWith(
+      { args: [1n] },
+      expect.objectContaining({
+        onSuccess: expect.any(Function),
+        onSettled: expect.any(Function)
+      })
+    )
+
+    const mutationOptions = mockFixedReturnWrites.claimRefund.mutate.mock.calls.at(-1)?.[1]
+    mutationOptions!.onSuccess!()
+
+    expect(mockToast.add).toHaveBeenCalledWith({
+      title: 'Refund claimed successfully',
+      description: 'Your principal has been returned.',
+      color: 'success'
+    })
+  })
+
+  it('shows the lender claim action to the owner when they also have a position on a closed offering', () => {
+    mockFixedReturnReads.offerLenders.data.value = [
+      { address: OWNER_ADDRESS, principal: 0.5, expected: 0.54 }
+    ]
+    const wrapper = mountDetail(baseOffering({ status: 'closed' }), true)
+
+    expect(wrapper.find('[data-test="lender-claim-refund-button"]').exists()).toBe(true)
   })
 })

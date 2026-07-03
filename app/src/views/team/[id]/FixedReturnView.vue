@@ -1,7 +1,7 @@
 <template>
   <div class="flex flex-col gap-6">
     <div class="flex items-center justify-between">
-      <div class="flex items-center gap-2" v-if="fixedReturnAddress">
+      <div v-if="fixedReturnAddress" class="flex items-center gap-2">
         <div class="text-sm text-gray-600">Contract Address:</div>
         <AddressToolTip :address="fixedReturnAddress" />
       </div>
@@ -28,6 +28,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { isAddress, isAddressEqual } from 'viem'
 import OfferingsDashboard from '@/components/sections/FixedReturnView/OfferingsDashboard.vue'
 import CreateOfferingForm from '@/components/sections/FixedReturnView/CreateOfferingForm.vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
@@ -38,7 +39,15 @@ const teamStore = useTeamStore()
 const userStore = useUserDataStore()
 const fixedReturnAddress = computed(() => teamStore.getContractAddressByType('FixedReturn'))
 const { data: fixedReturnOwnerAddress } = useFixedReturnOwner()
-const isFixedReturnOwner = computed(() => fixedReturnOwnerAddress.value === userStore.address)
+const isFixedReturnOwner = computed(() => {
+  const ownerAddress = fixedReturnOwnerAddress.value
+  return (
+    typeof ownerAddress === 'string' &&
+    isAddress(ownerAddress, { strict: false }) &&
+    isAddress(userStore.address, { strict: false }) &&
+    isAddressEqual(ownerAddress, userStore.address)
+  )
+})
 
 // Default to "My Offerings" — issuing a note is the less common action, and it's
 // onlyOwner on-chain anyway (disabled below for non-owners).
