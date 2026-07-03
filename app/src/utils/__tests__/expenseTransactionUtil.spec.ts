@@ -136,6 +136,17 @@ const buildExpenseEvents = (): ExpenseEventsQuery => ({
         timestamp: 100
       }
     ]
+  },
+  expenseOwnershipTransferreds: {
+    items: [
+      {
+        id: '0xownershiptransferredhash-0',
+        contractAddress: EXPENSE_ADDRESS,
+        previousOwner: USER_A,
+        newOwner: USER_B,
+        timestamp: 110
+      }
+    ]
   }
 })
 
@@ -164,7 +175,7 @@ describe('expenseTransactionUtil', () => {
     const byType = new Map(transactions.map((row) => [row.type, row]))
     const tokenDeposits = transactions.filter((row) => row.type === 'tokenDeposit')
 
-    expect(transactions[0]?.txHash).toBe('0xtokenaddresschangedhash')
+    expect(transactions[0]?.txHash).toBe('0xownershiptransferredhash')
     expect(transactions.map((row) => row.type)).toEqual(
       expect.arrayContaining([
         'deposit',
@@ -177,7 +188,8 @@ describe('expenseTransactionUtil', () => {
         'ownerTreasuryWithdrawToken',
         'tokenSupportAdded',
         'tokenSupportRemoved',
-        'tokenAddressChanged'
+        'tokenAddressChanged',
+        'ownershipTransferred'
       ])
     )
 
@@ -203,6 +215,12 @@ describe('expenseTransactionUtil', () => {
       from: EXPENSE_ADDRESS,
       to: SIGNATURE_HASH,
       amount: '0'
+    })
+    expect(byType.get('ownershipTransferred')).toMatchObject({
+      from: USER_A,
+      to: USER_B,
+      amount: '0',
+      tokenAddress: zeroAddress
     })
   })
 

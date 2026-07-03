@@ -18,6 +18,21 @@ vi.mock('@nuxt/ui/components/Divider.vue', () => ({
   }
 }))
 
+vi.mock('@nuxt/ui/components/Slideover.vue', () => ({
+  default: {
+    name: 'USlideover',
+    props: ['open', 'title'],
+    template: '<div data-test="u-slideover"><slot name="body" /><slot name="footer" /></div>'
+  }
+}))
+
+vi.mock('@nuxt/ui/components/Card.vue', () => ({
+  default: {
+    name: 'UCard',
+    template: '<div data-test="u-card"><slot /></div>'
+  }
+}))
+
 import TransactionDetailModal from '../TransactionDetailModal.vue'
 
 const AddressToolTipStub = defineComponent({
@@ -66,123 +81,85 @@ const mountComponent = (overrides: Partial<TransactionHistoryItemRow> = {}, open
   })
 
 describe('TransactionDetailModal', () => {
-  it('renders transfer details with from/to and amount sections', () => {
-    const wrapper = mountComponent({ type: 'tokenTransfer', amount: '25', token: 'USDC' })
+  it('displays the friendly type label in the event badge', () => {
+    const wrapper = mountComponent({ type: 'tokenTransfer' })
 
-    expect(wrapper.text()).toContain('tokenTransfer')
-    expect(wrapper.text()).toContain('Tx Hash')
-    expect(wrapper.text()).toContain('From')
-    expect(wrapper.text()).toContain('To')
-    expect(wrapper.text()).toContain('Amount')
-    expect(wrapper.text()).toContain('USDC')
-    expect(wrapper.findAll('.text-right > div')).toHaveLength(2)
+    expect(wrapper.text()).toContain('Token transfer')
+    expect(wrapper.text()).not.toContain('tokenTransfer')
   })
 
-  it('renders hash-status transactions with status badge content', () => {
-    const wrapper = mountComponent({ type: 'approvalActivated' })
-
-    expect(wrapper.text()).toContain('Contract')
-    expect(wrapper.text()).toContain('Signature Hash')
-    expect(wrapper.text()).toContain('Status')
-    expect(wrapper.text()).toContain('Activated')
-  })
-
-  it('maps all hash-status labels', async () => {
-    const wrapper = mountComponent({ type: 'approvalDeactivated' })
-    expect(wrapper.text()).toContain('Deactivated')
-
-    await wrapper.setProps({
-      transaction: {
-        ...BASE_TRANSACTION,
-        type: 'wageClaimEnabled'
-      }
-    })
-    expect(wrapper.text()).toContain('Enabled')
-
-    await wrapper.setProps({
-      transaction: {
-        ...BASE_TRANSACTION,
-        type: 'wageClaimDisabled'
-      }
-    })
-    expect(wrapper.text()).toContain('Disabled')
-  })
-
-  it('renders token support details for add and remove actions', async () => {
-    const wrapper = mountComponent({ type: 'tokenSupportAdded' })
+  it('shows Token row and Amount row when event has a token', () => {
+    const wrapper = mountComponent({ type: 'tokenTransfer', token: 'USDC', amount: '25' })
 
     expect(wrapper.text()).toContain('Token')
-    expect(wrapper.text()).toContain('Action')
-    expect(wrapper.text()).toContain('Added')
+    expect(wrapper.text()).toContain('USDC')
+    expect(wrapper.text()).toContain('Amount')
+  })
 
-    await wrapper.setProps({
-      transaction: {
-        ...BASE_TRANSACTION,
-        type: 'tokenSupportRemoved'
-      }
+  it('shows From/To user components when event has no token', () => {
+    const wrapper = mountComponent({
+      type: 'approvalActivated',
+      token: '-',
+      amount: '0'
     })
 
-    expect(wrapper.text()).toContain('Removed')
+    const userStubs = wrapper.findAll('[data-test="user-component-stub"]')
+    expect(userStubs.length).toBeGreaterThanOrEqual(1)
   })
 
-  it('renders safe deposit enabled/disabled details', async () => {
-    const wrapper = mountComponent({ type: 'safeDepositsEnabled' })
+  it('hides Amount row when amount is zero', () => {
+    const wrapper = mountComponent({ type: 'safeDepositsEnabled', token: '-', amount: '0' })
 
-    expect(wrapper.text()).toContain('Action')
-    expect(wrapper.text()).toContain('Enabled')
-    expect(wrapper.text()).toContain('By')
-    expect(wrapper.text()).toContain('Contract')
+    expect(wrapper.text()).not.toContain('Amount')
+  })
 
-    await wrapper.setProps({
-      transaction: {
-        ...BASE_TRANSACTION,
-        type: 'safeDepositsDisabled'
-      }
+  it('shows Amount row when token is dash but amount is positive', () => {
+    const wrapper = mountComponent({ type: 'safeMultiplierUpdated', token: '-', amount: '2.5' })
+
+    expect(wrapper.text()).toContain('Amount')
+  })
+
+  it('shows summary section when transaction has a summary', () => {
+    const wrapper = mountComponent({ type: 'tokenDeposit', amount: '10', token: 'USDC' })
+
+    expect(wrapper.text()).toContain('Summary')
+    expect(wrapper.text()).toContain('Token deposit')
+  })
+
+  it('does not show To row for tokenSupportAdded when to equals tokenAddress', () => {
+    const tokenAddr = '0x3333333333333333333333333333333333333333'
+    const wrapper = mountComponent({
+      type: 'tokenSupportAdded',
+      token: 'USDC',
+      tokenAddress: tokenAddr,
+      to: tokenAddr,
+      amount: '0'
     })
 
-    expect(wrapper.text()).toContain('Disabled')
+    expect(wrapper.text()).toContain('Token')
+    // address should appear only once (in Token row), not twice (which would indicate a To row)
+    const addressOccurrences = (wrapper.text().match(new RegExp(tokenAddr.slice(0, 10), 'g')) ?? [])
+      .length
+    expect(addressOccurrences).toBe(1)
   })
 
-  it('renders safe address update details', () => {
-    const wrapper = mountComponent({ type: 'safeAddressUpdated' })
+  it('shows friendly label for config events like safeDepositsEnabled', () => {
+    const wrapper = mountComponent({ type: 'safeDepositsEnabled', token: '-', amount: '0' })
 
-    expect(wrapper.text()).toContain('Old Safe')
-    expect(wrapper.text()).toContain('New Safe')
+    expect(wrapper.text()).toContain('Safe deposits enabled')
+    expect(wrapper.text()).not.toContain('safeDepositsEnabled')
   })
 
-  it('renders safe multiplier update details', () => {
-    const wrapper = mountComponent({ type: 'safeMultiplierUpdated', amount: '2.5', token: 'x' })
+  it('shows the tx hash in the transaction section', () => {
+    const wrapper = mountComponent()
 
-    expect(wrapper.text()).toContain('New Multiplier')
-    expect(wrapper.text()).toContain('2.5x')
-    expect(wrapper.text()).toContain('Contract')
+    expect(wrapper.text()).toContain('Tx hash')
+    expect(wrapper.text()).toContain(BASE_TRANSACTION.txHash)
   })
 
-  it('renders officer address update details via config fallback branch', () => {
-    const wrapper = mountComponent({ type: 'officerAddressUpdated' })
+  it('shows the timestamp in the transaction section', () => {
+    const wrapper = mountComponent()
 
-    expect(wrapper.text()).toContain('New Address')
-  })
-
-  it('renders token address change details', () => {
-    const wrapper = mountComponent({ type: 'tokenAddressChanged' })
-
-    expect(wrapper.text()).toContain('Old Address')
-    expect(wrapper.text()).toContain('New Address')
-  })
-
-  it('renders generic fallback from/to for unknown types', () => {
-    const wrapper = mountComponent({ type: 'unknownType' })
-
-    expect(wrapper.text()).toContain('From')
-    expect(wrapper.text()).toContain('To')
-  })
-
-  it('emits update:open when modal close is triggered', async () => {
-    const wrapper = mountComponent({ type: 'transfer' }, true)
-
-    await wrapper.get('[data-test="close-wage-modal-button"]').trigger('click')
-
-    expect(wrapper.emitted('update:open')).toEqual([[false]])
+    expect(wrapper.text()).toContain('Timestamp')
   })
 })

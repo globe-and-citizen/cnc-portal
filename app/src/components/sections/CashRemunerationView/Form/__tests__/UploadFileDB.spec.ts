@@ -67,7 +67,7 @@ describe('UploadFileDB', () => {
   })
 
   describe('File Type Validation', () => {
-    it('should accept document files (pdf, txt, zip, docx)', async () => {
+    it('should accept document files (pdf, txt, zip, docx, xls, xlsx)', async () => {
       wrapper = createWrapper()
 
       const validDocs = [
@@ -76,12 +76,29 @@ describe('UploadFileDB', () => {
         new File([''], 'test.zip', { type: 'application/zip' }),
         new File([''], 'test.docx', {
           type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        }),
+        new File([''], 'test.xls', { type: 'application/vnd.ms-excel' }),
+        new File([''], 'test.xlsx', {
+          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         })
       ]
 
       await emitFilesUpdate(validDocs)
 
-      expect(wrapper.emitted('update:files')?.[0]?.[0]).toHaveLength(4)
+      expect(wrapper.emitted('update:files')?.[0]?.[0]).toHaveLength(6)
+    })
+
+    it('should accept excel files by extension when MIME type is missing', async () => {
+      wrapper = createWrapper()
+
+      const validDocs = [
+        new File([''], 'report.xlsx', { type: '' }),
+        new File([''], 'legacy.xls', { type: 'application/octet-stream' })
+      ]
+
+      await emitFilesUpdate(validDocs)
+
+      expect(wrapper.emitted('update:files')?.[0]?.[0]).toHaveLength(2)
     })
 
     it('should reject invalid file types', async () => {

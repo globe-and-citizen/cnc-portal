@@ -178,3 +178,13 @@ export const getInvestorTransactionTypeColor = (type: string): UBadgeColor => {
   if (normalizedType.includes('transfer')) return 'info'
   return 'neutral'
 }
+
+export const getMintTotal = (tx: {
+  type: string
+  amount: string | number
+  subRows?: Array<{ amount: string | number }>
+}): string => {
+  if (tx.type !== 'mint' || !tx.subRows?.length) return String(tx.amount)
+  const total = Number(tx.amount) + tx.subRows.reduce((sum, r) => sum + Number(r.amount), 0)
+  return String(total)
+}

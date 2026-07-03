@@ -94,8 +94,13 @@ vi.mock('../../utils', async () => {
         findFirst: vi.fn().mockResolvedValue({ id: 1 }),
         findUnique: vi.fn().mockResolvedValue({ isArchived: false }),
       },
+      wage: {
+        findFirst: vi.fn(),
+      },
       weeklyClaim: {
+        findFirst: vi.fn(),
         findMany: vi.fn(),
+        create: vi.fn(),
         update: vi.fn(),
         findUnique: vi.fn(),
         count: vi.fn().mockResolvedValue(0),
@@ -919,6 +924,88 @@ describe('Weekly Claim Controller', () => {
         message: 'Internal server error has occured',
         error: 'Database failure',
       });
+    });
+  });
+
+  describe('PUT /goals', () => {
+    const GOALS_BODY = {
+      teamId: 1,
+      weekStart: '2024-07-22T00:00:00.000Z',
+      weeklyGoals: '# Week goals\n\n- Ship the editor',
+    };
+    const currentWage = { id: 7, teamId: 1, userAddress: CALLER, nextWageId: null };
+
+    it('creates a claim-less weekly claim when none exists yet', async () => {
+      vi.mocked(prisma.wage.findFirst).mockResolvedValue(currentWage as never);
+      vi.mocked(prisma.weeklyClaim.findFirst).mockResolvedValue(null as never);
+      vi.mocked(prisma.weeklyClaim.create).mockResolvedValue(
+        weeklyClaimFactory({ id: 42, weeklyGoals: GOALS_BODY.weeklyGoals }) as never
+      );
+
+      const response = await request(app).put('/goals').send(GOALS_BODY);
+
+      expect(response.status).toBe(200);
+      expect(prisma.weeklyClaim.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            wageId: currentWage.id,
+            memberAddress: CALLER,
+            teamId: 1,
+            status: 'pending',
+            weeklyGoals: GOALS_BODY.weeklyGoals,
+          }),
+        })
+      );
+      expect(prisma.weeklyClaim.update).not.toHaveBeenCalled();
+    });
+
+    it('updates the memo on an existing pending weekly claim', async () => {
+      vi.mocked(prisma.wage.findFirst).mockResolvedValue(currentWage as never);
+      vi.mocked(prisma.weeklyClaim.findFirst).mockResolvedValue(
+        weeklyClaimFactory({ id: 5, status: 'pending', signature: null }) as never
+      );
+      vi.mocked(prisma.weeklyClaim.update).mockResolvedValue(
+        weeklyClaimFactory({ id: 5, weeklyGoals: GOALS_BODY.weeklyGoals }) as never
+      );
+
+      const response = await request(app).put('/goals').send(GOALS_BODY);
+
+      expect(response.status).toBe(200);
+      expect(prisma.weeklyClaim.update).toHaveBeenCalledWith({
+        where: { id: 5 },
+        data: { weeklyGoals: GOALS_BODY.weeklyGoals },
+      });
+      expect(prisma.weeklyClaim.create).not.toHaveBeenCalled();
+    });
+
+    it('rejects with 409 when the week is already signed', async () => {
+      vi.mocked(prisma.wage.findFirst).mockResolvedValue(currentWage as never);
+      vi.mocked(prisma.weeklyClaim.findFirst).mockResolvedValue(
+        weeklyClaimFactory({ id: 5, status: 'signed', signature: '0xabc' }) as never
+      );
+
+      const response = await request(app).put('/goals').send(GOALS_BODY);
+
+      expect(response.status).toBe(409);
+      expect(prisma.weeklyClaim.update).not.toHaveBeenCalled();
+      expect(prisma.weeklyClaim.create).not.toHaveBeenCalled();
+    });
+
+    it('returns 400 when the caller has no current wage', async () => {
+      vi.mocked(prisma.wage.findFirst).mockResolvedValue(null as never);
+
+      const response = await request(app).put('/goals').send(GOALS_BODY);
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toBe('No wage found for the user');
+    });
+
+    it('returns 400 when the body fails validation', async () => {
+      const response = await request(app)
+        .put('/goals')
+        .send({ teamId: 1, weekStart: 'not-a-date', weeklyGoals: 'x' });
+
+      expect(response.status).toBe(400);
     });
   });
 });

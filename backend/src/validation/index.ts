@@ -12,6 +12,7 @@ export * from './schemas/user';
 export * from './schemas/claim';
 export * from './schemas/contract';
 export * from './schemas/expense';
+export * from './schemas/fixedReturnOffering';
 export * from './schemas/wage';
 export * from './schemas/auth';
 export * from './schemas/stats';

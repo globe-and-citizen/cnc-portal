@@ -22,9 +22,10 @@ const defaultGetContractAddressByType = (type: ContractType) => {
     Campaign: '0x7777777777777777777777777777777777777777',
     Elections: '0x8888888888888888888888888888888888888888',
     Proposals: '0x9999999999999999999999999999999999999999',
-    VestingV1: '0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+    Vesting: '0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
     SafeDepositRouter: '0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB',
-    Safe: '0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'
+    Safe: '0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB',
+    FixedReturn: '0xCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC'
   }
   return contractAddresses[type] || '0x1234567890123456789012345678901234567890'
 }
@@ -184,4 +185,28 @@ export const mockUseCurrencyStore = () => ({
   ),
   isTokenLoading: vi.fn(() => false),
   setCurrency: vi.fn()
+})
+
+export const makeCurrencyStoreMock = (
+  overrides: Partial<{
+    localCurrency: { code: string; name?: string; symbol?: string }
+    supportedTokens: Array<{
+      id: string
+      symbol: string
+      address: string
+      name?: string
+      code?: string
+      coingeckoId?: string
+      decimals?: number
+    }>
+    getTokenPrice: ReturnType<typeof vi.fn>
+  }> = {}
+) => ({
+  localCurrency: { code: 'USD', name: 'US Dollar', symbol: '$' },
+  supportedTokens: [
+    { id: 'native', symbol: 'ETH', address: '0x0000000000000000000000000000000000000000' },
+    { id: 'usdc', symbol: 'USDC', address: '0xa3492d046095affe351cfac15de9b86425e235db' }
+  ],
+  getTokenPrice: vi.fn(() => 1),
+  ...overrides
 })

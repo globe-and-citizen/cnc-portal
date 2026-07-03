@@ -80,6 +80,13 @@ export interface AccountingSummary {
   positionsRealizedPnl: number
   /** Unrealized P&L on open positions (from /positions). */
   unrealizedPnl: number
+  /**
+   * All-time P&L as Polymarket's profile page reports it — sourced from
+   * `user-pnl-api.polymarket.com` in {@link useAccounting} (latest chart point).
+   * `buildLedger()` seeds this as `positionsRealizedPnl + unrealizedPnl` until
+   * that feed loads; the two diverge once `/positions` rows go stale.
+   */
+  polymarketPnl: number
   /** Mark-to-market value of still-open positions. */
   openPositionsValue: number
   /**
@@ -103,6 +110,16 @@ export interface AccountingSummary {
   settlementAdjustments: number
   /** Number of distinct tx hashes that produced a settlement adjustment. */
   settlementAdjustmentCount: number
+  /**
+   * Trading fees/spread the user actually paid: sum over every trade of
+   * |quoted value − real fill| = |size × price − usdcSize|. Polymarket bakes its
+   * per-fill fee into the price (you pay above the quote on buys, receive below
+   * on sells), so it never appears as an on-chain delta — it must be read from
+   * the price gap. Mixes protocol fee and market-order slippage.
+   */
+  totalFees: number
+  /** Number of trades that carried a non-zero fee (maker / 0-fee fills excluded). */
+  feeTransactionCount: number
   /**
    * Cost-basis disagreement between Polymarket /positions (which reports
    * `cashPnl` against its own `initialValue`) and our /activity-derived basis
@@ -367,6 +384,7 @@ export function buildLedger(input: BuildLedgerInput): AccountingLedger {
     realizedPnl: 0,
     positionsRealizedPnl: 0,
     unrealizedPnl: 0,
+    polymarketPnl: 0,
     openPositionsValue: 0,
     openContractsAtCost: 0,
     totalRewards: 0,
@@ -374,6 +392,8 @@ export function buildLedger(input: BuildLedgerInput): AccountingLedger {
     tradeCount: 0,
     settlementAdjustments: 0,
     settlementAdjustmentCount: 0,
+    totalFees: 0,
+    feeTransactionCount: 0,
     positionBasisDrift: 0,
     currentCashBalance: 0,
     totalPortfolioValue: 0,
@@ -390,6 +410,17 @@ export function buildLedger(input: BuildLedgerInput): AccountingLedger {
     } else if (entry.category === 'TRADE_BUY' || entry.category === 'TRADE_SELL') {
       summary.tradingVolume += entry.amount
       summary.tradeCount += 1
+      // Polymarket fees are baked into the fill price, not surfaced on-chain: the
+      // quoted price (unitPrice) differs from the real fill (amount / quantity).
+      // The gap is the fee/spread the user actually paid on this fill.
+      if (entry.unitPrice != null && entry.quantity != null) {
+        const quotedValue = entry.quantity * entry.unitPrice
+        const fee = Math.abs(quotedValue - entry.amount)
+        summary.totalFees += fee
+        if (fee > 1e-4) {
+          summary.feeTransactionCount += 1
+        }
+      }
     } else if (REWARD_CATEGORIES.has(entry.category)) {
       summary.totalRewards += entry.amount
     } else if (entry.category === 'SETTLEMENT_ADJUSTMENT') {
@@ -407,6 +438,7 @@ export function buildLedger(input: BuildLedgerInput): AccountingLedger {
     summary.unrealizedPnl += position.cashPnl ?? 0
     summary.openPositionsValue += position.currentValue ?? 0
   }
+  summary.polymarketPnl = summary.positionsRealizedPnl + summary.unrealizedPnl
   // Canonical realizedPnl comes from lot accounting (Income Statement source);
   // falls back to Polymarket's reported figure when no realizedTrades supplied.
   if (input.realizedTrades) {

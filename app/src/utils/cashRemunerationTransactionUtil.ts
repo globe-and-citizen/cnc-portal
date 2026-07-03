@@ -27,6 +27,8 @@ export const buildRawCashRemunerationTransactions = (
   const tokenSupportAddeds = cashRemunerationResult?.cashRemunerationTokenSupportAddeds?.items ?? []
   const tokenSupportRemoveds =
     cashRemunerationResult?.cashRemunerationTokenSupportRemoveds?.items ?? []
+  const ownershipTransfers =
+    cashRemunerationResult?.cashRemunerationOwnershipTransferreds?.items ?? []
   const incomingTokenTransfers = incomingTokenTransfersResult?.bankTokenTransfers?.items ?? []
 
   const sections: RawCashRemunerationTransaction[][] = [
@@ -111,6 +113,15 @@ export const buildRawCashRemunerationTransactions = (
       amount: '0',
       tokenAddress: row.tokenAddress,
       type: 'tokenSupportRemoved'
+    })),
+    ownershipTransfers.map((row) => ({
+      txHash: extractTxHashFromId(row.id),
+      timestamp: row.timestamp,
+      from: row.previousOwner,
+      to: row.newOwner,
+      amount: '0',
+      tokenAddress: zeroAddress,
+      type: 'ownershipTransferred'
     }))
   ]
 

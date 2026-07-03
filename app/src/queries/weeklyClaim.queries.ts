@@ -222,6 +222,42 @@ export const useUpdateWeeklyClaimMutation = createMutationHook<void, UpdateWeekl
 })
 
 // ============================================================================
+// PUT /weeklyClaim/goals - Submit / update the weekly goals memo
+// ============================================================================
+
+/**
+ * Combined parameters for useSubmitWeeklyGoalsMutation
+ */
+export interface SubmitWeeklyGoalsParams {
+  body: {
+    /** Team ID */
+    teamId: number | string
+    /** Any ISO datetime within the target week (normalized to isoWeek start server-side) */
+    weekStart: string
+    /** Markdown memo; an empty string clears the saved memo */
+    weeklyGoals: string
+  }
+}
+
+/**
+ * Submit or update the caller's weekly goals memo for a given week. Upserts the
+ * WeeklyClaim row (creating a claim-less one for weeks with no hours logged yet).
+ *
+ * @endpoint PUT /weeklyClaim/goals
+ * @pathParams none
+ * @queryParams none
+ * @body { teamId, weekStart, weeklyGoals }
+ */
+export const useSubmitWeeklyGoalsMutation = createMutationHook<
+  WeeklyClaim,
+  SubmitWeeklyGoalsParams
+>({
+  method: 'PUT',
+  endpoint: 'weeklyClaim/goals',
+  invalidateKeys: () => [weeklyClaimKeys.teams()]
+})
+
+// ============================================================================
 // POST /weeklyClaim/sync - Sync weekly claims
 // ============================================================================
 

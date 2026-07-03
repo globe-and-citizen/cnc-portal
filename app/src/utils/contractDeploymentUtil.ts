@@ -9,6 +9,8 @@ import {
   PROPOSALS_BEACON_ADDRESS,
   ELECTIONS_BEACON_ADDRESS,
   SAFE_DEPOSIT_ROUTER_BEACON_ADDRESS,
+  VESTING_BEACON_ADDRESS,
+  FIXED_RETURN_BEACON_ADDRESS,
   USDC_ADDRESS,
   USDT_ADDRESS,
   USDC_E_ADDRESS
@@ -20,7 +22,8 @@ import { ELECTIONS_ABI } from '@/artifacts/abi/elections'
 import { INVESTOR_ABI } from '@/artifacts/abi/investors'
 import { SAFE_DEPOSIT_ROUTER_ABI } from '@/artifacts/abi/safe-deposit-router'
 import { PROPOSALS_ABI } from '@/artifacts/abi/proposals'
-import { log } from '@/utils'
+import { FIXED_RETURN_ABI } from '@/artifacts/abi/fixed-return'
+import { VESTING_ABI } from '@/artifacts/abi/vesting'
 
 /**
  * Beacon configuration type
@@ -60,7 +63,9 @@ export const validateBeaconAddresses = (): void => {
     {
       name: 'SAFE_DEPOSIT_ROUTER_BEACON_ADDRESS',
       value: SAFE_DEPOSIT_ROUTER_BEACON_ADDRESS
-    }
+    },
+    { name: 'VESTING_BEACON_ADDRESS', value: VESTING_BEACON_ADDRESS },
+    { name: 'FIXED_RETURN_BEACON_ADDRESS', value: FIXED_RETURN_BEACON_ADDRESS }
   ]
 
   const missingBeacons = requiredBeacons.filter((beacon) => !beacon.value)
@@ -108,6 +113,14 @@ export const getBeaconConfigs = (): BeaconConfig[] => {
     {
       beaconType: 'SafeDepositRouter',
       beaconAddress: SAFE_DEPOSIT_ROUTER_BEACON_ADDRESS!
+    },
+    {
+      beaconType: 'Vesting',
+      beaconAddress: VESTING_BEACON_ADDRESS!
+    },
+    {
+      beaconType: 'FixedReturn',
+      beaconAddress: FIXED_RETURN_BEACON_ADDRESS!
     }
   ]
 }
@@ -198,47 +211,25 @@ export const getDeploymentConfigs = (
     })
   })
 
+  // Vesting contract — agreement-only; mints the team's InvestorV1 on release.
+  deployments.push({
+    contractType: 'Vesting',
+    initializerData: encodeFunctionData({
+      abi: VESTING_ABI,
+      functionName: 'initialize',
+      args: []
+    })
+  })
+
+  // FixedReturn contract
+  deployments.push({
+    contractType: 'FixedReturn',
+    initializerData: encodeFunctionData({
+      abi: FIXED_RETURN_ABI,
+      functionName: 'initialize',
+      args: [[USDT_ADDRESS, USDC_ADDRESS, USDC_E_ADDRESS], currentUserAddress]
+    })
+  })
+
   return deployments
-}
-
-/**
- * Handles the BeaconProxyCreated event logs
- * @param logs - Event logs from the contract
- * @param expectedHash - Expected transaction hash
- * @param currentUserAddress - Current user's wallet address
- * @returns The proxy address if validation succeeds, null otherwise
- */
-export const handleBeaconProxyCreatedLogs = (
-  logs: unknown[],
-  expectedHash: `0x${string}` | undefined,
-  currentUserAddress: Address
-): Address | null => {
-  if (!logs.length) {
-    log.error('No logs found')
-    return null
-  }
-
-  interface BeaconProxyLog {
-    args: {
-      deployer: Address
-      proxy: Address
-    }
-    transactionHash: `0x${string}`
-  }
-
-  const firstLog = logs[0] as BeaconProxyLog
-
-  if (!firstLog || firstLog.transactionHash !== expectedHash) {
-    log.error('Transaction hash does not match')
-    return null
-  }
-
-  const { deployer, proxy: proxyAddress } = firstLog.args
-
-  if (currentUserAddress !== deployer) {
-    log.error('Deployer address does not match with the current user address')
-    return null
-  }
-
-  return proxyAddress
 }

@@ -1,6 +1,6 @@
 import { computed, ref, watch } from 'vue'
 import type { ComputedRef } from 'vue'
-import { groupTransactionsByTxHash } from '@/utils'
+import { groupTransactionsByTxHash, getTransactionTypeLabel } from '@/utils'
 import type { GroupedTransactionRow } from '@/types/transaction-history'
 import { usePagination } from '@/composables/usePagination'
 
@@ -16,10 +16,6 @@ type TransactionBase = {
   token: string
   amountLocal?: number
 }
-
-export const childColspan = (cell: {
-  row: { depth: number; getAllCells: () => unknown[] }
-}): string => String(cell.row.depth > 0 ? cell.row.getAllCells().length : 1)
 
 export const childHidden = (cell: { row: { depth: number } }) =>
   cell.row.depth > 0 ? 'hidden' : ''
@@ -48,7 +44,9 @@ export const useTransactionTable = <T extends TransactionBase>(
 
   const typeOptions = computed(() => [
     { label: 'All Types', value: 'all' },
-    ...uniqueTypes.value.map((type) => ({ label: type, value: type }))
+    ...uniqueTypes.value
+      .map((type) => ({ label: getTransactionTypeLabel(type), value: type }))
+      .sort((a, b) => a.label.localeCompare(b.label))
   ])
 
   const filteredTransactions = computed(() => {
@@ -96,9 +94,12 @@ export const useTransactionTable = <T extends TransactionBase>(
   }
 
   // A filter change can shrink the list under the current page — go back to
-  // page 1. Page-size changes are handled by usePagination's resize anchoring
-  // (no reset), so there's no pageSize watcher here anymore.
-  watch(filteredTransactions, () => {
+  // page 1. Watching the filter inputs directly (rather than
+  // filteredTransactions) avoids collapsing expanded rows on every poll-driven
+  // data refresh, since that recomputes filteredTransactions without the
+  // filters changing. Page-size changes are handled by usePagination's resize
+  // anchoring (no reset), so there's no pageSize watcher here anymore.
+  watch([dateRange, selectedType], () => {
     reset()
     expandedRows.value = {}
   })
