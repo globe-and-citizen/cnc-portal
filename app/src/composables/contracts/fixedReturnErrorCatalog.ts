@@ -14,5 +14,8 @@ export const FIXED_RETURN_ERRORS: Record<string, string | RevertMessageResolver>
   DepositExceedsAllocation: 'This amount exceeds your remaining allocation',
   DepositExceedsLenderCap: 'This amount exceeds your remaining lender cap',
   FundingTargetReached: 'This amount exceeds the funding still available',
-  NothingToRefund: 'There are no deposited funds to refund'
+  NothingToRefund: 'There are no deposited funds to refund',
+  ExceedsRepaymentObligation:
+    'Repayment amount exceeds the total lender obligation (principal + interest)',
+  TokenNotSupportedByBank: 'This token is not supported by the team treasury'
 }

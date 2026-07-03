@@ -11,11 +11,11 @@
           <div class="flex flex-col gap-4">
             <div class="flex flex-col gap-1.5 rounded-xl bg-[#f7faf8] px-4 py-3 text-sm">
               <div class="flex justify-between">
-                <span class="text-[#7d8e84]">Contract balance</span>
+                <span class="text-[#7d8e84]">Treasury balance</span>
                 <span class="font-bold text-[#0f3d2e]">
-                  <USkeleton v-if="contractBalance === null" class="inline-block h-4 w-20" />
+                  <USkeleton v-if="treasuryBalance === null" class="inline-block h-4 w-20" />
                   <span v-else>{{
-                    formatOfferingTokenAmount(contractBalance, offering.token)
+                    formatOfferingTokenAmount(treasuryBalance, offering.token)
                   }}</span>
                 </span>
               </div>
@@ -47,6 +47,7 @@
                   v-model.number="formState.amount"
                   type="number"
                   :min="0"
+                  :max="Math.min(outstanding, treasuryBalance ?? 0)"
                   placeholder="0"
                   class="w-full"
                   :disabled="isSubmitting"
@@ -78,13 +79,13 @@
               variant="ghost"
               label="Cancel"
               :disabled="isSubmitting"
-              @click="open = false"
+              @click="closeModal"
             />
             <UButton
               color="primary"
               :label="isSubmitting ? 'Submitting…' : 'Repay'"
               :loading="isSubmitting"
-              :disabled="isSubmitting"
+              :disabled="isSubmitting || !isReady"
               data-test="repay-confirm-button"
               @click="formRef?.submit()"
             />
@@ -97,14 +98,12 @@
 
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue'
-import { formatUnits, parseUnits, zeroAddress, type Address } from 'viem'
+import { formatUnits, isAddress, parseUnits, zeroAddress } from 'viem'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useToast } from '@nuxt/ui/composables'
-import { useUserDataStore } from '@/stores'
-import { useFixedReturnAddress } from '@/composables/fixedReturn/reads'
+import { useBankAddress } from '@/composables/bank/reads'
 import { useFixedReturnRepayLenders } from '@/composables/fixedReturn/writes'
-import { useErc20Allowance, useErc20BalanceOf } from '@/composables/erc20/reads'
-import { useERC20Approve } from '@/composables/erc20/writes'
+import { useErc20BalanceOf } from '@/composables/erc20/reads'
 import {
   classifyError,
   decimalsForOfferingToken,
@@ -116,8 +115,7 @@ import { createRepayAmountSchema, type OfferingSummary } from '@/types'
 const open = defineModel<boolean>('open', { required: true })
 const props = defineProps<{ offering: OfferingSummary }>()
 
-const userStore = useUserDataStore()
-const fixedReturnAddress = useFixedReturnAddress()
+const bankAddress = useBankAddress()
 const toast = useToast()
 const queryClient = useQueryClient()
 
@@ -132,52 +130,66 @@ const totalDue = computed(
   () => props.offering.raised + props.offering.raised * (props.offering.rate / 100)
 )
 const outstanding = computed(() => Math.max(0, totalDue.value - props.offering.totalRepaid))
-const repaySchema = computed(() => createRepayAmountSchema(outstanding.value, tokenSymbol.value))
 const amountUnits = computed(() => parseUnits(String(formState.amount || 0), decimals.value))
 
-const { data: contractBalanceRaw } = useErc20BalanceOf(
+const {
+  data: treasuryBalanceRaw,
+  error: treasuryBalanceError,
+  refetch: refetchTreasuryBalance
+} = useErc20BalanceOf(
   computed(() => props.offering.token),
-  computed(() => fixedReturnAddress.value ?? zeroAddress)
+  computed(() => bankAddress.value ?? zeroAddress)
 )
-const contractBalance = computed(() => {
-  if (typeof contractBalanceRaw.value !== 'bigint') return null
-  return Number(formatUnits(contractBalanceRaw.value, decimals.value))
+const treasuryBalance = computed(() => {
+  if (typeof treasuryBalanceRaw.value !== 'bigint') return null
+  return Number(formatUnits(treasuryBalanceRaw.value, decimals.value))
 })
 
-const { data: allowance, refetch: refetchAllowance } = useErc20Allowance(
-  computed(() => props.offering.token),
-  computed(() => (userStore.address as Address) ?? zeroAddress),
-  computed(() => fixedReturnAddress.value ?? zeroAddress)
+const isReady = computed(
+  () =>
+    isAddress(bankAddress.value ?? '') &&
+    treasuryBalanceRaw.value !== undefined &&
+    !treasuryBalanceError.value
 )
-const allowanceValue = computed(() => (typeof allowance.value === 'bigint' ? allowance.value : 0n))
 
-const approveResult = useERC20Approve(computed(() => props.offering.token))
+const repaySchema = computed(() =>
+  createRepayAmountSchema({
+    outstanding: outstanding.value,
+    treasuryBalance: treasuryBalance.value ?? Infinity,
+    tokenSymbol: tokenSymbol.value
+  })
+)
+
 const repayResult = useFixedReturnRepayLenders()
+const isSubmitting = computed(() => repayResult.isPending.value)
 
-const isSubmitting = computed(() => approveResult.isPending.value || repayResult.isPending.value)
+function closeModal() {
+  open.value = false
+}
 
-async function onRepay() {
-  if (!fixedReturnAddress.value) return
+function onRepay() {
+  if (!isReady.value) return
   submitError.value = null
 
-  try {
-    await refetchAllowance()
-    if (allowanceValue.value < amountUnits.value) {
-      await approveResult.mutateAsync({ args: [fixedReturnAddress.value, amountUnits.value] })
+  repayResult.mutate(
+    { args: [BigInt(props.offering.id), amountUnits.value] },
+    {
+      onSuccess: async () => {
+        toast.add({
+          title: `Repaid ${formatOfferingTokenAmount(formState.amount, props.offering.token)} to lenders`,
+          color: 'success'
+        })
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ['fixedReturnAllOffers'] }),
+          queryClient.invalidateQueries({ queryKey: ['fixedReturnOfferLenders'] })
+        ])
+        refetchTreasuryBalance()
+        open.value = false
+      },
+      onError: (error) => {
+        submitError.value = classifyError(error, { contract: 'FixedReturn' }).userMessage
+      }
     }
-    await repayResult.mutateAsync({ args: [BigInt(props.offering.id), amountUnits.value] })
-
-    toast.add({
-      title: `Repaid ${formatOfferingTokenAmount(formState.amount, props.offering.token)} to lenders`,
-      color: 'success'
-    })
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ['fixedReturnAllOffers'] }),
-      queryClient.invalidateQueries({ queryKey: ['fixedReturnOfferLenders'] })
-    ])
-    open.value = false
-  } catch (error) {
-    submitError.value = classifyError(error, { contract: 'FixedReturn' }).userMessage
-  }
+  )
 }
 </script>

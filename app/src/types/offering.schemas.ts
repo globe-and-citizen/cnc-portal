@@ -107,13 +107,26 @@ export function createApplyOfferingAmountSchema(remaining: number, tokenSymbol =
   })
 }
 
-export function createRepayAmountSchema(outstanding: number, tokenSymbol = 'Token') {
+interface RepayAmountSchemaContext {
+  outstanding: number
+  treasuryBalance: number
+  tokenSymbol?: string
+}
+
+export function createRepayAmountSchema({
+  outstanding,
+  treasuryBalance,
+  tokenSymbol = 'Token'
+}: RepayAmountSchemaContext) {
   return z.object({
     amount: z
       .number()
       .positive('Amount must be greater than 0.')
       .refine((value) => value <= outstanding, {
         message: `Cannot exceed outstanding balance of ${formatAmountWithPrecision(outstanding, 0, 4)} ${tokenSymbol}.`
+      })
+      .refine((value) => value <= treasuryBalance, {
+        message: `Cannot exceed treasury balance of ${formatAmountWithPrecision(treasuryBalance, 0, 4)} ${tokenSymbol}.`
       })
   })
 }

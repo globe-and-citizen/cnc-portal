@@ -7,7 +7,7 @@ import {
   setBalance
 } from '@nomicfoundation/hardhat-network-helpers'
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers'
-import { FeeCollector, FixedReturn, MockERC20, Officer } from '../typechain-types'
+import { Bank, FeeCollector, FixedReturn, MockERC20, MockOfficer, Officer } from '../typechain-types'
 
 describe('FixedReturn', () => {
   const TermUnit = { Days: 0, Months: 1, Years: 2 }
@@ -36,35 +36,35 @@ describe('FixedReturn', () => {
     NOTHING_TO_REFUND: 'NothingToRefund',
     ZERO_AMOUNT: 'ZeroAmount',
     TOKEN_NOT_SUPPORTED: 'TokenSupportNotFound',
+    TOKEN_NOT_SUPPORTED_BY_BANK: 'TokenNotSupportedByBank',
+    EXCEEDS_REPAYMENT_OBLIGATION: 'ExceedsRepaymentObligation',
     OWNABLE_UNAUTHORIZED: 'OwnableUnauthorizedAccount'
   } as const
 
-  // Deploys FeeCollector + Officer, then deploys FixedReturn the same way it's
-  // actually created in production: as a beacon proxy whose `initialize` is called
-  // BY Officer (impersonated here), not by an arbitrary signer. Mirrors the
-  // deployContracts() phase in Bank.spec.ts.
+  // Deploys MockOfficer, then deploys Bank and FixedReturn with MockOfficer impersonated
+  // as the caller so each contract's officerAddress points at MockOfficer. Both are
+  // registered in MockOfficer so peer-contract lookups (onlyBank, onlyFixedReturn) resolve
+  // correctly. Mirrors the deployContracts() phase in Bank.spec.ts.
   async function deployContracts(owner: SignerWithAddress, initialTokens: string[] = []) {
-    const FeeCollectorFactory = await ethers.getContractFactory('FeeCollector')
-    const OfficerFactory = await ethers.getContractFactory('Officer')
+    const MockOfficerFactory = await ethers.getContractFactory('MockOfficer')
+    const BankFactory = await ethers.getContractFactory('Bank')
     const FixedReturnFactory = await ethers.getContractFactory('FixedReturn')
 
-    const feeCollector = (await upgrades.deployProxy(FeeCollectorFactory, [owner.address, [], []], {
-      initializer: 'initialize'
-    })) as unknown as FeeCollector
+    const mockOfficer = (await MockOfficerFactory.deploy()) as unknown as MockOfficer
+    await mockOfficer.waitForDeployment()
+    const mockOfficerAddress = await mockOfficer.getAddress()
 
-    // Officer's constructor calls `_disableInitializers()`, so `initialize` can only
-    // be invoked on a proxy.
-    const officer = (await upgrades.deployProxy(OfficerFactory, [owner.address, [], [], false], {
-      initializer: 'initialize',
-      constructorArgs: [await feeCollector.getAddress()],
-      unsafeAllow: ['constructor', 'state-variable-immutable']
-    })) as unknown as Officer
-    await officer.waitForDeployment()
+    await impersonateAccount(mockOfficerAddress)
+    const officerSigner = await ethers.getSigner(mockOfficerAddress)
+    await setBalance(mockOfficerAddress, ethers.parseEther('1000'))
 
-    const officerAddress = await officer.getAddress()
-    await impersonateAccount(officerAddress)
-    const officerSigner = await ethers.getSigner(officerAddress)
-    await setBalance(officerAddress, ethers.parseEther('1000'))
+    const bank = (await upgrades.deployProxy(
+      BankFactory.connect(officerSigner),
+      [[], owner.address],
+      { initializer: 'initialize', unsafeSkipProxyAdminCheck: true }
+    )) as unknown as Bank
+
+    await mockOfficer.setDeployedContract('Bank', await bank.getAddress())
 
     const fixedReturn = (await upgrades.deployProxy(
       FixedReturnFactory.connect(officerSigner),
@@ -72,7 +72,9 @@ describe('FixedReturn', () => {
       { initializer: 'initialize', unsafeSkipProxyAdminCheck: true }
     )) as unknown as FixedReturn
 
-    return { officer, feeCollector, fixedReturn: fixedReturn.connect(owner) }
+    await mockOfficer.setDeployedContract('FixedReturn', await fixedReturn.getAddress())
+
+    return { mockOfficer, bank, fixedReturn: fixedReturn.connect(owner) }
   }
 
   async function deployFixture() {
@@ -82,22 +84,26 @@ describe('FixedReturn', () => {
     const token = (await MockToken.deploy('Mock USDC', 'mUSDC')) as unknown as MockERC20
     const otherToken = (await MockToken.deploy('Mock DAI', 'mDAI')) as unknown as MockERC20
 
-    const { fixedReturn } = await deployContracts(owner)
+    const { bank, fixedReturn } = await deployContracts(owner)
 
+    // Both FixedReturn and Bank must support the token:
+    // FixedReturn — for offer creation and lender deposits
+    // Bank        — checked during createLendingOffer; required so Bank can send repayments out
     await fixedReturn.connect(owner).addTokenSupport(await token.getAddress())
+    await bank.connect(owner).addTokenSupport(await token.getAddress())
 
     for (const lender of [lenderA, lenderB, lenderC]) {
       await token.mint(lender.address, ethers.parseUnits('100000', 6))
       await token.connect(lender).approve(await fixedReturn.getAddress(), ethers.MaxUint256)
     }
     await token.mint(owner.address, ethers.parseUnits('200000', 6))
-    await token.connect(owner).approve(await fixedReturn.getAddress(), ethers.MaxUint256)
 
     const now = await time.latest()
     const startDate = now + 1000
     const subscriptionDeadline = now + 500 // on/before startDate — valid
 
     return {
+      bank,
       fixedReturn,
       token,
       otherToken,
@@ -183,7 +189,7 @@ describe('FixedReturn', () => {
 
     it('reports its version', async () => {
       const { fixedReturn } = await loadFixture(deployFixture)
-      expect(await fixedReturn.version()).to.equal('1.0.0')
+      expect(await fixedReturn.version()).to.equal('1.1.0')
     })
 
     it('rejects a zero-address owner', async () => {
@@ -206,12 +212,10 @@ describe('FixedReturn', () => {
       const tokenA = (await MockToken.deploy('Mock USDC', 'mUSDC')) as unknown as MockERC20
       const tokenB = (await MockToken.deploy('Mock DAI', 'mDAI')) as unknown as MockERC20
 
-      const FixedReturnFactory = await ethers.getContractFactory('FixedReturn')
-      const fixedReturn = (await upgrades.deployProxy(
-        FixedReturnFactory,
-        [[await tokenA.getAddress(), await tokenB.getAddress()], owner.address],
-        { initializer: 'initialize' }
-      )) as unknown as FixedReturn
+      const { fixedReturn } = await deployContracts(owner, [
+        await tokenA.getAddress(),
+        await tokenB.getAddress()
+      ])
 
       expect(await fixedReturn.isTokenSupported(await tokenA.getAddress())).to.be.true
       expect(await fixedReturn.isTokenSupported(await tokenB.getAddress())).to.be.true
@@ -307,6 +311,22 @@ describe('FixedReturn', () => {
             baseParams(await otherToken.getAddress(), startDate, subscriptionDeadline)
           )
       ).to.be.revertedWithCustomError(fixedReturn, ERRORS.TOKEN_NOT_SUPPORTED)
+    })
+
+    it('rejects a token not supported by Bank', async () => {
+      const { fixedReturn, owner, startDate, subscriptionDeadline } =
+        await loadFixture(deployFixture)
+      const MockToken = await ethers.getContractFactory('MockERC20')
+      const unsupportedByBank = (await MockToken.deploy('Unsupported', 'UNS')) as unknown as MockERC20
+      // Add to FixedReturn but NOT to Bank
+      await fixedReturn.connect(owner).addTokenSupport(await unsupportedByBank.getAddress())
+      await expect(
+        fixedReturn
+          .connect(owner)
+          .createLendingOffer(
+            baseParams(await unsupportedByBank.getAddress(), startDate, subscriptionDeadline)
+          )
+      ).to.be.revertedWithCustomError(fixedReturn, ERRORS.TOKEN_NOT_SUPPORTED_BY_BANK)
     })
 
     it('rejects a subscriptionDeadline after startDate', async () => {
@@ -621,6 +641,25 @@ describe('FixedReturn', () => {
       const offer = await fixedReturn.getLendingOffer(offerId)
       expect(offer.state).to.equal(OfferState.Funded)
     })
+
+    it('sweeps the full principal to Bank on the funding deposit', async () => {
+      const { fixedReturn, bank, owner, lenderA, lenderB, token, startDate, subscriptionDeadline } =
+        await loadFixture(deployFixture)
+      const offerId = await createGeneralOffer(
+        fixedReturn,
+        owner,
+        await token.getAddress(),
+        startDate,
+        subscriptionDeadline
+      )
+
+      await fixedReturn.connect(lenderA).lendFunds(offerId, ethers.parseUnits('60000', 6))
+      await fixedReturn.connect(lenderB).lendFunds(offerId, ethers.parseUnits('40000', 6))
+
+      // All principal now sits in Bank, nothing in FixedReturn
+      expect(await token.balanceOf(await bank.getAddress())).to.equal(FUNDING_TARGET)
+      expect(await token.balanceOf(await fixedReturn.getAddress())).to.equal(0)
+    })
   })
 
   describe('lendFunds — Whitelist access', () => {
@@ -855,7 +894,7 @@ describe('FixedReturn', () => {
 
   describe('repayLenders', () => {
     it('distributes a repayment proportionally to each lender principal', async () => {
-      const { fixedReturn, owner, lenderA, lenderB, token, startDate, subscriptionDeadline } =
+      const { bank, fixedReturn, owner, lenderA, lenderB, token, startDate, subscriptionDeadline } =
         await loadFixture(deployFixture)
       const offerId = await createGeneralOffer(
         fixedReturn,
@@ -865,6 +904,8 @@ describe('FixedReturn', () => {
         subscriptionDeadline
       )
       await fundOffer(fixedReturn, offerId, lenderA, lenderB)
+      // Bank holds 100k from the funding sweep; top up the 8k interest portion
+      await token.mint(await bank.getAddress(), ethers.parseUnits('8000', 6))
 
       const balanceABefore = await token.balanceOf(lenderA.address)
       const balanceBBefore = await token.balanceOf(lenderB.address)
@@ -884,7 +925,7 @@ describe('FixedReturn', () => {
     })
 
     it('accumulates correctly across multiple installments', async () => {
-      const { fixedReturn, owner, lenderA, lenderB, token, startDate, subscriptionDeadline } =
+      const { bank, fixedReturn, owner, lenderA, lenderB, token, startDate, subscriptionDeadline } =
         await loadFixture(deployFixture)
       const offerId = await createGeneralOffer(
         fixedReturn,
@@ -894,6 +935,8 @@ describe('FixedReturn', () => {
         subscriptionDeadline
       )
       await fundOffer(fixedReturn, offerId, lenderA, lenderB)
+      // Bank holds 100k from the funding sweep; top up the 8k interest portion
+      await token.mint(await bank.getAddress(), ethers.parseUnits('8000', 6))
 
       const balanceABefore = await token.balanceOf(lenderA.address)
 
@@ -967,9 +1010,70 @@ describe('FixedReturn', () => {
       ).to.be.revertedWithCustomError(fixedReturn, ERRORS.OWNABLE_UNAUTHORIZED)
     })
 
-    it('skips a lender whose proportional share rounds down to zero', async () => {
-      // fundingTarget is tiny and split so lenderB's share of a half-size repayment
-      // floors to 0, while lenderA (holding almost all of the principal) still gets paid.
+    it('rejects a repayment that would exceed the total lender obligation', async () => {
+      const { bank, fixedReturn, owner, lenderA, lenderB, token, startDate, subscriptionDeadline } =
+        await loadFixture(deployFixture)
+      const offerId = await createGeneralOffer(
+        fixedReturn,
+        owner,
+        await token.getAddress(),
+        startDate,
+        subscriptionDeadline
+      )
+      await fundOffer(fixedReturn, offerId, lenderA, lenderB)
+      // Bank holds 100k from the funding sweep; top up the 8k interest portion
+      await token.mint(await bank.getAddress(), ethers.parseUnits('8000', 6))
+
+      // Total obligation: 100k principal + 8% = 108k
+      const totalObligation = ethers.parseUnits('108000', 6)
+      await fixedReturn.connect(owner).repayLenders(offerId, totalObligation)
+
+      // A second call — even for 1 wei — must revert
+      await expect(
+        fixedReturn.connect(owner).repayLenders(offerId, 1n)
+      ).to.be.revertedWithCustomError(fixedReturn, ERRORS.EXCEEDS_REPAYMENT_OBLIGATION)
+    })
+
+    it('maintains proportional totals across multiple tiny installments (exploit regression)', async () => {
+      // Security regression: without cumulative tracking, an issuer repaying with
+      // many small installments could redirect all principal to the final lender
+      // (every installment's per-call remainder going to them).
+      // With cumulative tracking each lender receives exactly their proportional share
+      // across any installment partitioning.
+      const { fixedReturn, owner, lenderA, lenderB, token, startDate, subscriptionDeadline } =
+        await loadFixture(deployFixture)
+      const fundingTarget = 1_000_000n
+      const offerId = await createGeneralOffer(
+        fixedReturn,
+        owner,
+        await token.getAddress(),
+        startDate,
+        subscriptionDeadline,
+        { fundingTarget, interestRateBps: 0n }
+      )
+
+      // lenderA: 999_999 stake (~100%), lenderB: 1 stake (~0%).
+      // Any per-installment remainder always going to lenderB would inflate their share.
+      await fixedReturn.connect(lenderA).lendFunds(offerId, 999_999n)
+      await fixedReturn.connect(lenderB).lendFunds(offerId, 1n)
+
+      const lenderABefore = await token.balanceOf(lenderA.address)
+      const lenderBBefore = await token.balanceOf(lenderB.address)
+
+      // 3 installments of 2 wei each.
+      // Per-installment naive: floor(2*999_999/1_000_000)=1 for A, remainder=1 for B each time → B gets 3, wrong.
+      // Cumulative: after 6 total, A cumEnt=floor(6*999_999/1_000_000)=5, B cumEnt=1.
+      await fixedReturn.connect(owner).repayLenders(offerId, 2n)
+      await fixedReturn.connect(owner).repayLenders(offerId, 2n)
+      await fixedReturn.connect(owner).repayLenders(offerId, 2n)
+
+      expect((await token.balanceOf(lenderA.address)) - lenderABefore).to.equal(5n)
+      expect((await token.balanceOf(lenderB.address)) - lenderBBefore).to.equal(1n)
+    })
+
+    it('gives the rounding remainder to the final lender so no dust stays in Bank', async () => {
+      // fundingTarget is tiny — integer division floors lenderA's share,
+      // the remainder goes to lenderB (the final lender) instead of being lost.
       const { fixedReturn, owner, lenderA, lenderB, token, startDate, subscriptionDeadline } =
         await loadFixture(deployFixture)
       const fundingTarget = 1_000_000n // 1.0 token at 6 decimals
@@ -990,15 +1094,15 @@ describe('FixedReturn', () => {
 
       await fixedReturn.connect(owner).repayLenders(offerId, 500_000n)
 
-      // lenderB's share: floor(500_000 * 1 / 1_000_000) = 0 — receives nothing.
-      expect(await token.balanceOf(lenderB.address)).to.equal(lenderBBalanceBefore)
-      // lenderA's share: floor(500_000 * 999_999 / 1_000_000) = 499_999 — receives it.
+      // lenderA (index 0): floor(500_000 * 999_999 / 1_000_000) = 499_999
       expect(await token.balanceOf(lenderA.address)).to.equal(lenderABalanceBefore + 499_999n)
+      // lenderB (last): receives the remainder 500_000 - 499_999 = 1
+      expect(await token.balanceOf(lenderB.address)).to.equal(lenderBBalanceBefore + 1n)
     })
   })
 
   describe('views', () => {
-    it('totalEntitlementOf returns principal plus flat interest', async () => {
+    it('totalEntitlementOf returns the proportional share of the global obligation', async () => {
       const { fixedReturn, owner, lenderA, token, startDate, subscriptionDeadline } =
         await loadFixture(deployFixture)
       const offerId = await createGeneralOffer(
@@ -1010,9 +1114,56 @@ describe('FixedReturn', () => {
       )
       await fixedReturn.connect(lenderA).lendFunds(offerId, ethers.parseUnits('60000', 6))
 
+      // Only one depositor — proportional share == total obligation == 60k * 1.08
       expect(await fixedReturn.totalEntitlementOf(offerId, lenderA.address)).to.equal(
-        ethers.parseUnits('64800', 6) // 60k * 1.08
+        ethers.parseUnits('64800', 6)
       )
+    })
+
+    it('totalEntitlementOf matches what repayLenders actually sends to a non-last lender', async () => {
+      // Regression: per-lender interest (deposit * rateBps / 10_000) can round
+      // differently than the global obligation (totalFunded * rateBps / 10_000),
+      // causing the getter to overstate what a non-last lender actually receives.
+      // With the global-proportion formula both are consistent.
+      //
+      // Setup: A deposits 2 units, B deposits 1 unit, 50% interest.
+      //   Global obligation: 3 + floor(3 * 5000 / 10_000) = 3 + 1 = 4
+      //   Old per-lender formula: A = 2 + floor(2*5000/10_000) = 2+1 = 3  ← would overstate
+      //   New global formula: A = floor(4*2/3) = 2  ← matches what A receives
+      const [owner, lenderA, lenderB] = await ethers.getSigners()
+      const MockToken = await ethers.getContractFactory('MockERC20')
+      const token = (await MockToken.deploy('Mock USDC', 'mUSDC')) as unknown as MockERC20
+
+      const { bank, fixedReturn } = await deployContracts(owner)
+      await fixedReturn.connect(owner).addTokenSupport(await token.getAddress())
+      await bank.connect(owner).addTokenSupport(await token.getAddress())
+
+      for (const lender of [lenderA, lenderB]) {
+        await token.mint(lender.address, 100n)
+        await token.connect(lender).approve(await fixedReturn.getAddress(), ethers.MaxUint256)
+      }
+
+      const now = await time.latest()
+      const offerId = await createGeneralOffer(
+        fixedReturn,
+        owner,
+        await token.getAddress(),
+        now + 1000,
+        now + 500,
+        { fundingTarget: 3n, interestRateBps: 5000n }
+      )
+
+      await fixedReturn.connect(lenderA).lendFunds(offerId, 2n) // index 0 (non-last)
+      await fixedReturn.connect(lenderB).lendFunds(offerId, 1n) // index 1 (last, triggers sweep: Bank gets 3n)
+      // Obligation = 3 + floor(3*5000/10_000) = 4; Bank holds 3n from sweep, top up 1n interest
+      await token.mint(await bank.getAddress(), 1n)
+
+      // totalEntitlementOf for the non-last lender matches their actual receipt
+      expect(await fixedReturn.totalEntitlementOf(offerId, lenderA.address)).to.equal(2n)
+
+      const aBalanceBefore = await token.balanceOf(lenderA.address)
+      await fixedReturn.connect(owner).repayLenders(offerId, 4n) // full obligation
+      expect(await token.balanceOf(lenderA.address)).to.equal(aBalanceBefore + 2n)
     })
 
     it('getOfferLenders lists every depositor once, in deposit order', async () => {
@@ -1051,6 +1202,50 @@ describe('FixedReturn', () => {
       expect(await fixedReturn.lenderDeposits(offerId, lenderA.address)).to.equal(
         ethers.parseUnits('60000', 6)
       )
+    })
+  })
+
+  // Integration test: verifies that when FixedReturn is deployed by a real Officer
+  // (not MockOfficer), officerAddress is correctly captured from msg.sender.
+  // This is the core invariant that peer-contract resolution (_getBankAddress, etc.)
+  // depends on — MockOfficer tests do not exercise the real Officer initialisation path.
+  describe('integration — real Officer captured as officerAddress', () => {
+    it('records the deploying Officer contract address as officerAddress', async () => {
+      const [owner] = await ethers.getSigners()
+
+      const FeeCollectorFactory = await ethers.getContractFactory('FeeCollector')
+      const OfficerFactory = await ethers.getContractFactory('Officer')
+      const FixedReturnFactory = await ethers.getContractFactory('FixedReturn')
+
+      const feeCollector = (await upgrades.deployProxy(
+        FeeCollectorFactory,
+        [owner.address, [], []],
+        { initializer: 'initialize' }
+      )) as unknown as FeeCollector
+
+      const officer = (await upgrades.deployProxy(
+        OfficerFactory,
+        [owner.address, [], [], false],
+        {
+          initializer: 'initialize',
+          constructorArgs: [await feeCollector.getAddress()],
+          unsafeAllow: ['constructor', 'state-variable-immutable']
+        }
+      )) as unknown as Officer
+      await officer.waitForDeployment()
+
+      const officerAddress = await officer.getAddress()
+      await impersonateAccount(officerAddress)
+      const officerSigner = await ethers.getSigner(officerAddress)
+      await setBalance(officerAddress, ethers.parseEther('1'))
+
+      const fixedReturn = (await upgrades.deployProxy(
+        FixedReturnFactory.connect(officerSigner),
+        [[], owner.address],
+        { initializer: 'initialize', unsafeSkipProxyAdminCheck: true }
+      )) as unknown as FixedReturn
+
+      expect(await fixedReturn.officerAddress()).to.equal(officerAddress)
     })
   })
 })

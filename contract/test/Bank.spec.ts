@@ -1,6 +1,6 @@
 import { ethers, upgrades } from 'hardhat'
 import { expect } from 'chai'
-import { Bank, FeeCollector, MockERC20, Officer } from '../typechain-types'
+import { Bank, FeeCollector, MockERC20, MockOfficer, Officer } from '../typechain-types'
 import { HardhatEthersSigner, SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers'
 import { impersonateAccount, setBalance } from '@nomicfoundation/hardhat-network-helpers'
 
@@ -377,6 +377,121 @@ describe('Bank', () => {
       await expect(bankProxy.getTokenBalance(await unsupportedToken.getAddress()))
         .to.be.revertedWithCustomError(bankProxy, ERRORS.UNSUPPORTED_TOKEN)
         .withArgs(await unsupportedToken.getAddress())
+    })
+  })
+
+  // releaseLenderRepayment is guarded by onlyFixedReturn which resolves the registered
+  // FixedReturn via Officer. The outer beforeEach uses a real Officer whose deployedContracts
+  // array is empty (Bank was deployed by impersonation, not via deployBeaconProxy), so
+  // onlyFixedReturn always reverts with FixedReturnContractNotFound there. These tests
+  // use MockOfficer so a FixedReturn address can be registered without beacon infrastructure.
+  describe('releaseLenderRepayment', () => {
+    async function deployWithMock() {
+      const [owner, fixedReturnAccount, lenderAccount] = await ethers.getSigners()
+      const MockOfficerFactory = await ethers.getContractFactory('MockOfficer')
+      const BankFactory = await ethers.getContractFactory('Bank')
+      const MockToken = await ethers.getContractFactory('MockERC20')
+
+      const mockOfficer = (await MockOfficerFactory.deploy()) as unknown as MockOfficer
+      const mockOfficerAddress = await mockOfficer.getAddress()
+
+      await impersonateAccount(mockOfficerAddress)
+      const officerSigner = await ethers.getSigner(mockOfficerAddress)
+      await setBalance(mockOfficerAddress, ethers.parseEther('10'))
+
+      const localBank = (await upgrades.deployProxy(
+        BankFactory.connect(officerSigner),
+        [[], owner.address],
+        { initializer: 'initialize', unsafeSkipProxyAdminCheck: true }
+      )) as unknown as Bank
+
+      const token = (await MockToken.deploy('Mock USDC', 'mUSDC')) as unknown as MockERC20
+      await localBank.connect(owner).addTokenSupport(await token.getAddress())
+      // Pre-fund Bank so releaseLenderRepayment has tokens to transfer
+      await token.mint(await localBank.getAddress(), ethers.parseUnits('1000', 6))
+
+      return { localBank, mockOfficer, owner, fixedReturnAccount, lenderAccount, token }
+    }
+
+    it('transfers tokens to the recipient when called by the registered FixedReturn', async () => {
+      const { localBank, mockOfficer, fixedReturnAccount, lenderAccount, token } =
+        await deployWithMock()
+      await mockOfficer.setDeployedContract('FixedReturn', fixedReturnAccount.address)
+
+      const amount = ethers.parseUnits('100', 6)
+      const lenderBefore = await token.balanceOf(lenderAccount.address)
+
+      await expect(
+        localBank
+          .connect(fixedReturnAccount)
+          .releaseLenderRepayment(await token.getAddress(), lenderAccount.address, amount)
+      )
+        .to.emit(localBank, 'TokenTransfer')
+        .withArgs(fixedReturnAccount.address, lenderAccount.address, await token.getAddress(), amount)
+
+      expect(await token.balanceOf(lenderAccount.address)).to.equal(lenderBefore + amount)
+    })
+
+    it('rejects a call from a wrong caller when a different address is registered as FixedReturn', async () => {
+      const { localBank, mockOfficer, fixedReturnAccount, lenderAccount, token } =
+        await deployWithMock()
+      // Register a different address — fixedReturnAccount is NOT the registered FixedReturn
+      await mockOfficer.setDeployedContract('FixedReturn', lenderAccount.address)
+
+      await expect(
+        localBank
+          .connect(fixedReturnAccount)
+          .releaseLenderRepayment(await token.getAddress(), lenderAccount.address, 1n)
+      )
+        .to.be.revertedWithCustomError(localBank, 'NotFixedReturn')
+        .withArgs(fixedReturnAccount.address)
+    })
+
+    it('rejects when no FixedReturn is registered in Officer', async () => {
+      const { localBank, fixedReturnAccount, lenderAccount, token } = await deployWithMock()
+      // No setDeployedContract call — findDeployedContract returns address(0)
+
+      await expect(
+        localBank
+          .connect(fixedReturnAccount)
+          .releaseLenderRepayment(await token.getAddress(), lenderAccount.address, 1n)
+      ).to.be.revertedWithCustomError(localBank, 'FixedReturnContractNotFound')
+    })
+
+    it('rejects when the contract is paused', async () => {
+      const { localBank, mockOfficer, owner, fixedReturnAccount, lenderAccount, token } =
+        await deployWithMock()
+      await mockOfficer.setDeployedContract('FixedReturn', fixedReturnAccount.address)
+      await localBank.connect(owner).pause()
+
+      await expect(
+        localBank
+          .connect(fixedReturnAccount)
+          .releaseLenderRepayment(await token.getAddress(), lenderAccount.address, 1n)
+      ).to.be.revertedWithCustomError(localBank, 'EnforcedPause')
+    })
+
+    it('rejects a zero amount', async () => {
+      const { localBank, mockOfficer, fixedReturnAccount, lenderAccount, token } =
+        await deployWithMock()
+      await mockOfficer.setDeployedContract('FixedReturn', fixedReturnAccount.address)
+
+      await expect(
+        localBank
+          .connect(fixedReturnAccount)
+          .releaseLenderRepayment(await token.getAddress(), lenderAccount.address, 0n)
+      ).to.be.revertedWithCustomError(localBank, 'ZeroAmount')
+    })
+
+    it('rejects a zero-address recipient', async () => {
+      const { localBank, mockOfficer, fixedReturnAccount, token } = await deployWithMock()
+      await mockOfficer.setDeployedContract('FixedReturn', fixedReturnAccount.address)
+
+      await expect(
+        localBank
+          .connect(fixedReturnAccount)
+          .releaseLenderRepayment(await token.getAddress(), ethers.ZeroAddress, 1n)
+      ).to.be.revertedWithCustomError(localBank, 'ZeroAddress')
     })
   })
 })

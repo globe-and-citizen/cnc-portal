@@ -95,6 +95,26 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
   error FeeCollectorNotConfigured();
   /// @dev A low-level native token transfer failed.
   error TransferFailed();
+  /// @dev The FixedReturn contract could not be located via the Officer.
+  error FixedReturnContractNotFound();
+  /// @dev The caller is not the FixedReturn contract.
+  /// @param caller The caller address.
+  error NotFixedReturn(address caller);
+
+  /**
+   * @dev Resolves the deployed FixedReturn contract from Officer.
+   */
+  function _getFixedReturnAddress() internal view returns (address) {
+    if (officerAddress == address(0)) revert OfficerAddressNotSet();
+    address fixedReturnAddress = IOfficer(officerAddress).findDeployedContract('FixedReturn');
+    if (fixedReturnAddress == address(0)) revert FixedReturnContractNotFound();
+    return fixedReturnAddress;
+  }
+
+  modifier onlyFixedReturn() {
+    if (msg.sender != _getFixedReturnAddress()) revert NotFixedReturn(msg.sender);
+    _;
+  }
 
   /**
    * @dev Resolves the deployed Investor contract from Officer.
@@ -346,6 +366,26 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
    */
   function _isSupportedFeeToken(address _token) internal view returns (bool) {
     return IOfficer(officerAddress).isFeeCollectorToken(_token);
+  }
+
+  /**
+   * @notice Sends a lender's repayment share on behalf of FixedReturn.
+   * @dev Only callable by the FixedReturn contract. Draws from the existing
+   *      treasury balance — funds arrive via the funding sweep and ongoing
+   *      team deposits, not from the issuer's wallet at repay time.
+   * @param _token The ERC20 token address.
+   * @param _to The lender receiving the share.
+   * @param _amount The share amount to transfer.
+   */
+  function releaseLenderRepayment(
+    address _token,
+    address _to,
+    uint256 _amount
+  ) external onlyFixedReturn nonReentrant whenNotPaused {
+    if (_to == address(0)) revert ZeroAddress();
+    if (_amount == 0) revert ZeroAmount();
+    IERC20(_token).safeTransfer(_to, _amount);
+    emit TokenTransfer(msg.sender, _to, _token, _amount);
   }
 
   /**
