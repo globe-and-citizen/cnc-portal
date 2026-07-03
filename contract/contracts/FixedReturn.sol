@@ -188,6 +188,22 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
   /// @notice Emitted when an offer's funding target is reached and principal swept to Bank.
   event LendingOfferFunded(uint256 indexed offerId);
 
+  /// @notice Emitted on the deposit that reaches the target, when the accumulated
+  ///         principal is swept to Bank. Carries the amount moved and its destination
+  ///         so the transfer is observable (the sweep itself is a raw ERC20 transfer,
+  ///         which emits no receipt on this contract).
+  event FundsSweptToBank(
+    uint256 indexed offerId,
+    address indexed bank,
+    address indexed token,
+    uint256 amount
+  );
+
+  /// @notice Emitted on a deposit that does NOT reach the target: the offer keeps
+  ///         accumulating and no sweep occurs. Carries running progress toward the
+  ///         target so the "not funded yet" path is observable during testing.
+  event FundingProgressed(uint256 indexed offerId, uint256 totalFunded, uint256 fundingTarget);
+
   /// @notice Emitted when an offer is flipped to refundable after a missed deadline.
   event LendingOfferRefundable(uint256 indexed offerId);
 
@@ -291,7 +307,7 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
 
   /// @notice Current contract version, per semver.
   function version() external pure returns (string memory) {
-    return '1.1.0';
+    return '1.2.0';
   }
 
   // ────────────────────────────────────────────────────
@@ -458,15 +474,20 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
     // Interactions — lender transfer must complete before the Bank sweep
     IERC20(offer.token).safeTransferFrom(msg.sender, address(this), amount);
 
+    address bankAddress;
     if (nowFunded) {
       // Sweep the full accumulated principal to Bank so no lender funds remain here.
-      address bankAddress = _getBankAddress();
+      bankAddress = _getBankAddress();
       IERC20(offer.token).safeTransfer(bankAddress, offer.totalFunded);
     }
 
     emit FundsLent(offerId, msg.sender, amount);
     if (nowFunded) {
+      emit FundsSweptToBank(offerId, bankAddress, offer.token, offer.totalFunded);
       emit LendingOfferFunded(offerId);
+    } else {
+      // No sweep this deposit — the offer is still accumulating toward its target.
+      emit FundingProgressed(offerId, offer.totalFunded, offer.fundingTarget);
     }
   }
 

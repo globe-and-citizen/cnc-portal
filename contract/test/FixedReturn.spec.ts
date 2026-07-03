@@ -207,7 +207,7 @@ describe('FixedReturn', () => {
 
     it('reports its version', async () => {
       const { fixedReturn } = await loadFixture(deployFixture)
-      expect(await fixedReturn.version()).to.equal('1.1.0')
+      expect(await fixedReturn.version()).to.equal('1.2.0')
     })
 
     it('rejects a zero-address owner', async () => {
@@ -675,11 +675,37 @@ describe('FixedReturn', () => {
       )
 
       await fixedReturn.connect(lenderA).lendFunds(offerId, ethers.parseUnits('60000', 6))
-      await fixedReturn.connect(lenderB).lendFunds(offerId, ethers.parseUnits('40000', 6))
+      // The funding deposit emits FundsSweptToBank with the amount and destination.
+      await expect(fixedReturn.connect(lenderB).lendFunds(offerId, ethers.parseUnits('40000', 6)))
+        .to.emit(fixedReturn, 'FundsSweptToBank')
+        .withArgs(offerId, await bank.getAddress(), await token.getAddress(), FUNDING_TARGET)
 
       // All principal now sits in Bank, nothing in FixedReturn
       expect(await token.balanceOf(await bank.getAddress())).to.equal(FUNDING_TARGET)
       expect(await token.balanceOf(await fixedReturn.getAddress())).to.equal(0)
+    })
+
+    it('emits FundingProgressed and does not sweep on a partial deposit', async () => {
+      const { fixedReturn, bank, owner, lenderA, token, startDate, subscriptionDeadline } =
+        await loadFixture(deployFixture)
+      const offerId = await createGeneralOffer(
+        fixedReturn,
+        owner,
+        await token.getAddress(),
+        startDate,
+        subscriptionDeadline
+      )
+
+      const partial = ethers.parseUnits('60000', 6)
+      await expect(fixedReturn.connect(lenderA).lendFunds(offerId, partial))
+        .to.emit(fixedReturn, 'FundingProgressed')
+        .withArgs(offerId, partial, FUNDING_TARGET)
+
+      // Not funded yet: offer stays Open, no sweep — funds held in FixedReturn.
+      const offer = await fixedReturn.getLendingOffer(offerId)
+      expect(offer.state).to.equal(OfferState.Open)
+      expect(await token.balanceOf(await bank.getAddress())).to.equal(0)
+      expect(await token.balanceOf(await fixedReturn.getAddress())).to.equal(partial)
     })
   })
 
