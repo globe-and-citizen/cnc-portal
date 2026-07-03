@@ -33,6 +33,12 @@ export function useSidebarNavItems(): ComputedRef<NavigationMenuItem[][]> {
   return computed<NavigationMenuItem[][]>(() => {
     const disabled = !hasCompany.value
 
+    // Pages that demo the new contracts (Community Credit, Vesting, Debt
+    // Financing) are hidden from the sidebar by default so we don't showcase
+    // them in the production release. Set VITE_APP_ENABLE_EXPERIMENTAL_FEATURES
+    // to 'true' (e.g. in staging) to surface them for testing.
+    const showExperimental = import.meta.env.VITE_APP_ENABLE_EXPERIMENTAL_FEATURES === 'true'
+
     return [
       [
         {
@@ -99,21 +105,25 @@ export function useSidebarNavItems(): ComputedRef<NavigationMenuItem[][]> {
             { label: 'Company Payroll', to: { name: 'team-payroll', params: teamParams() } }
           ]
         },
-        {
-          label: 'Community Credit',
-          icon: 'heroicons:hand-raised',
-          active: String(route.name ?? '').startsWith('community-credit'),
-          disabled,
-          to: { name: 'community-credit', params: teamParams() },
-          defaultOpen: false,
-          children: [
-            { label: 'Rounds', to: { name: 'community-credit', params: teamParams() } },
-            {
-              label: 'New credit call',
-              to: { name: 'community-credit-new', params: teamParams() }
-            }
-          ]
-        },
+        ...(showExperimental
+          ? [
+              {
+                label: 'Community Credit',
+                icon: 'heroicons:hand-raised',
+                active: String(route.name ?? '').startsWith('community-credit'),
+                disabled,
+                to: { name: 'community-credit', params: teamParams() },
+                defaultOpen: false,
+                children: [
+                  { label: 'Rounds', to: { name: 'community-credit', params: teamParams() } },
+                  {
+                    label: 'New credit call',
+                    to: { name: 'community-credit-new', params: teamParams() }
+                  }
+                ]
+              }
+            ]
+          : []),
         {
           label: 'Accounting',
           icon: 'heroicons:book-open',
@@ -150,23 +160,30 @@ export function useSidebarNavItems(): ComputedRef<NavigationMenuItem[][]> {
             { label: 'Proposals', to: { name: 'bod-proposals', params: teamParams() } }
           ]
         },
-        {
-          label: 'Vesting',
-          icon: 'heroicons:lock-closed',
-          disabled,
-          to: { name: 'vesting', params: teamParams() }
-        },
-        {
-          label: 'Debt Financing',
-          icon: 'heroicons:banknotes',
-          disabled,
-          to: { name: 'fixed-return', params: teamParams() },
-          defaultOpen: hasCompany.value,
-          children: [
-            { label: 'Fixed Return', to: { name: 'fixed-return', params: teamParams() } },
-            { label: 'Browse & Lend', to: { name: 'lender-marketplace', params: teamParams() } }
-          ]
-        }
+        ...(showExperimental
+          ? [
+              {
+                label: 'Vesting',
+                icon: 'heroicons:lock-closed',
+                disabled,
+                to: { name: 'vesting', params: teamParams() }
+              },
+              {
+                label: 'Debt Financing',
+                icon: 'heroicons:banknotes',
+                disabled,
+                to: { name: 'fixed-return', params: teamParams() },
+                defaultOpen: hasCompany.value,
+                children: [
+                  { label: 'Fixed Return', to: { name: 'fixed-return', params: teamParams() } },
+                  {
+                    label: 'Browse & Lend',
+                    to: { name: 'lender-marketplace', params: teamParams() }
+                  }
+                ]
+              }
+            ]
+          : [])
       ]
     ]
   })

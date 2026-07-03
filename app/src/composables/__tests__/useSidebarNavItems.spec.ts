@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { NavigationMenuItem } from '@nuxt/ui'
 import { useSidebarNavItems } from '@/composables/useSidebarNavItems'
 import { mockRoute } from '@/tests/mocks/router.mock'
@@ -15,20 +15,30 @@ const WORKSPACE_LABELS = [
   'Company',
   'Accounts',
   'Payroll',
-  'Community Credit',
   'Accounting',
   'Contract Management',
   'SHER Token',
-  'Administration',
-  'Vesting',
-  'Debt Financing'
+  'Administration'
 ]
+
+/**
+ * Pages that demo the new contracts. Hidden unless
+ * VITE_APP_ENABLE_EXPERIMENTAL_FEATURES is 'true'.
+ */
+const EXPERIMENTAL_LABELS = ['Community Credit', 'Vesting', 'Debt Financing']
 
 describe('useSidebarNavItems', () => {
   beforeEach(() => {
     mockRoute.name = undefined
     mockRoute.params = {}
     mockTeamStore.currentTeamId = null as unknown as string
+    // The experimental pages are opt-in; default the flag on so the
+    // workspace-gate assertions cover them too. Individual tests override it.
+    vi.stubEnv('VITE_APP_ENABLE_EXPERIMENTAL_FEATURES', 'true')
+  })
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
   })
 
   it('exposes Companies as a standalone first group with the building icon', () => {
@@ -60,7 +70,7 @@ describe('useSidebarNavItems', () => {
     it('disables every workspace surface', () => {
       const items = useSidebarNavItems()
 
-      for (const label of WORKSPACE_LABELS) {
+      for (const label of [...WORKSPACE_LABELS, ...EXPERIMENTAL_LABELS]) {
         expect(findByLabel(items.value, label)?.disabled, label).toBe(true)
       }
     })
@@ -87,7 +97,7 @@ describe('useSidebarNavItems', () => {
     it('enables every workspace surface', () => {
       const items = useSidebarNavItems()
 
-      for (const label of WORKSPACE_LABELS) {
+      for (const label of [...WORKSPACE_LABELS, ...EXPERIMENTAL_LABELS]) {
         expect(findByLabel(items.value, label)?.disabled, label).toBe(false)
       }
     })
@@ -150,6 +160,39 @@ describe('useSidebarNavItems', () => {
       const accounts = findByLabel(useSidebarNavItems().value, 'Accounts')
       const safe = accounts?.children?.find((c) => c.label === 'Safe Account')
       expect((safe?.to as { params: { address: string } }).params.address).toBe('0x')
+    })
+  })
+
+  describe('experimental new-contract pages', () => {
+    beforeEach(() => {
+      mockRoute.params = { id: '42' }
+    })
+
+    it('hides Community Credit, Vesting and Debt Financing by default', () => {
+      vi.stubEnv('VITE_APP_ENABLE_EXPERIMENTAL_FEATURES', '')
+
+      const items = useSidebarNavItems()
+      for (const label of EXPERIMENTAL_LABELS) {
+        expect(findByLabel(items.value, label), label).toBeUndefined()
+      }
+    })
+
+    it('surfaces them when the flag is enabled', () => {
+      vi.stubEnv('VITE_APP_ENABLE_EXPERIMENTAL_FEATURES', 'true')
+
+      const items = useSidebarNavItems()
+      for (const label of EXPERIMENTAL_LABELS) {
+        expect(findByLabel(items.value, label), label).toBeDefined()
+      }
+    })
+
+    it('keeps the workspace surfaces regardless of the flag', () => {
+      vi.stubEnv('VITE_APP_ENABLE_EXPERIMENTAL_FEATURES', '')
+
+      const items = useSidebarNavItems()
+      for (const label of WORKSPACE_LABELS) {
+        expect(findByLabel(items.value, label), label).toBeDefined()
+      }
     })
   })
 })
