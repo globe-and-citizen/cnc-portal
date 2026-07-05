@@ -91,7 +91,7 @@ import {
   useSafeDepositRouterMultiplier
 } from '@/composables/safeDepositRouter/reads'
 import { useDeposit } from '@/composables/safeDepositRouter/writes'
-import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
+import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
 import { useInvestorSymbol } from '@/composables/investor/reads'
 
 const emits = defineEmits<{

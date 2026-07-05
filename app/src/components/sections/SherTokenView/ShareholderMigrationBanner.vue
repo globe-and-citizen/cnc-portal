@@ -55,7 +55,7 @@ import { computed } from 'vue'
 import type { Address } from 'viem'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useTeamStore } from '@/stores'
-import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
+import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
 import { useInvestorAddress, useInvestorTotalSupply } from '@/composables/investor/reads'
 import {
   useMigrateShareholders,

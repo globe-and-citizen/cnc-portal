@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import MultiSelectMemberInput from '../MultiSelectMemberInput.vue'
-import UserComponent from '@/components/UserComponent.vue'
+import UserComponent from '@/components/ui/UserComponent.vue'
 import { createTestingPinia } from '@pinia/testing'
 
 interface Member {

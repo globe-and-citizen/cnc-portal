@@ -3,7 +3,7 @@
     <div class="flex justify-between">
       <div class="flex items-center space-x-2 sm:space-x-4">
         <UButton color="neutral" variant="ghost">
-          <img src="../assets/Ethereum.png" class="h-4 w-4 sm:h-5 sm:w-5" alt="Ethereum Icon" />
+          <img src="../../assets/Ethereum.png" class="h-4 w-4 sm:h-5 sm:w-5" alt="Ethereum Icon" />
           <span
             class="hidden font-mono text-xs sm:inline-block sm:text-sm"
             data-test="balance-with-symbol"
@@ -45,7 +45,7 @@
 <script setup lang="ts">
 import { NETWORK } from '@/constant/index'
 import { useAuth } from '@/composables/useAuth'
-import NotificationDropdown from '@/components/NotificationDropdown.vue'
+import NotificationDropdown from '@/components/layout/NotificationDropdown.vue'
 import { useUserDataStore } from '@/stores'
 import { storeToRefs } from 'pinia'
 import type { DropdownMenuItem } from '@nuxt/ui'

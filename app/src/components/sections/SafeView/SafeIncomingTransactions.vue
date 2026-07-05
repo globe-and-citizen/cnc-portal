@@ -64,7 +64,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { Address } from 'viem'
-import AddressToolTip from '@/components/AddressToolTip.vue'
+import AddressToolTip from '@/components/ui/AddressToolTip.vue'
 import TransferSenderCell from './TransferSenderCell.vue'
 import type { TableColumn } from '@nuxt/ui'
 import { useGetSafeIncomingTransfersQuery } from '@/queries/safe.queries'

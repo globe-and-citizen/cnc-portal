@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
-import TeamSelectMenu from '@/components/TeamSelectMenu.vue'
+import TeamSelectMenu from '@/components/layout/TeamSelectMenu.vue'
 import { useGetTeamsQuery } from '@/queries/team.queries'
 import { mockTeamStore, mockUserStore } from '@/tests/mocks/store.mock'
 import { mockTeamData } from '@/tests/mocks/index'

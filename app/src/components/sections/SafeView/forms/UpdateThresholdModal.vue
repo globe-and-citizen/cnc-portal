@@ -115,7 +115,7 @@ import { type Address } from 'viem'
 import { useChainId } from '@wagmi/vue'
 import { Icon as IconifyIcon } from '@iconify/vue'
 
-import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
+import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
 import { useUpdateSafeOwnersMutation } from '@/queries/safe.mutations'
 
 const props = defineProps<{

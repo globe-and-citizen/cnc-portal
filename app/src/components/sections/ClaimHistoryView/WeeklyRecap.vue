@@ -111,7 +111,7 @@
 import { computed } from 'vue'
 import { useCurrencyStore } from '@/stores'
 import type { RatePerHour, Wage, WeeklyClaim } from '@/types/cash-remuneration'
-import RateDotList from '@/components/RateDotList.vue'
+import RateDotList from '@/components/ui/RateDotList.vue'
 import {
   computeClaimTokenAmounts,
   formatMinutesAsDuration,

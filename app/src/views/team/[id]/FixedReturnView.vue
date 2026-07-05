@@ -31,7 +31,7 @@ import { computed, ref } from 'vue'
 import { isAddress, isAddressEqual } from 'viem'
 import OfferingsDashboard from '@/components/sections/FixedReturnView/OfferingsDashboard.vue'
 import CreateOfferingForm from '@/components/sections/FixedReturnView/CreateOfferingForm.vue'
-import AddressToolTip from '@/components/AddressToolTip.vue'
+import AddressToolTip from '@/components/ui/AddressToolTip.vue'
 import { useFixedReturnOwner } from '@/composables/fixedReturn/reads'
 import { useTeamStore, useUserDataStore } from '@/stores'
 

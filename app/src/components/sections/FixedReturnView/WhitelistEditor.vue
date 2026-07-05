@@ -106,7 +106,7 @@
 import { computed, ref } from 'vue'
 import { watchDebounced } from '@vueuse/core'
 import type { Member, WhitelistEntry } from '@/types'
-import UserComponent from '@/components/UserComponent.vue'
+import UserComponent from '@/components/ui/UserComponent.vue'
 import SelectMemberResults from '@/components/utils/SelectMemberResults.vue'
 import { useTeamStore } from '@/stores/teamStore'
 import {

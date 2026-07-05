@@ -35,7 +35,7 @@
 </template>
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
+import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
 import { useArchivedTeamMutationError } from '@/composables/useArchivedTeamMutationError'
 import { getAxiosErrorMessage } from '@/utils/errorUtil'
 import MultiSelectMemberInput from '@/components/utils/MultiSelectMemberInput.vue'

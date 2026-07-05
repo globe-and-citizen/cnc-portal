@@ -1,9 +1,9 @@
 import { mount } from '@vue/test-utils'
 import { describe, it, expect } from 'vitest'
-import UserComponent from '@/components/UserComponent.vue'
+import UserAvatarComponent from '@/components/ui/UserAvatarComponent.vue'
 import type { User } from '@/types'
 
-describe('UserComponent.vue', () => {
+describe('UserAvatarComponent.vue', () => {
   const mockUser: Pick<User, 'address' | 'name' | 'imageUrl'> & { role?: string } = {
     address: '0x1234567890123456789012345678901234567890',
     name: 'John Doe',
@@ -13,26 +13,25 @@ describe('UserComponent.vue', () => {
 
   describe('Component Rendering', () => {
     it('should render with user data', () => {
-      const wrapper = mount(UserComponent, {
+      const wrapper = mount(UserAvatarComponent, {
         props: { user: mockUser }
       })
 
-      const avatarImg = wrapper.find('[data-test="avatar-image"]')
+      const avatarImg = wrapper.find('img[alt="User Avatar"]')
       expect(avatarImg.attributes('src')).toBe(mockUser.imageUrl)
-      expect(avatarImg.attributes('alt')).toBe("John Doe's avatar")
 
       const userName = wrapper.find('[data-test="user-name"]')
-      expect(userName.text()).toBe(mockUser.name || 'User')
+      expect(userName.text()).toBe('John Doe')
     })
 
     it('should display defaults when user data is missing', () => {
-      const wrapper = mount(UserComponent, {
+      const wrapper = mount(UserAvatarComponent, {
         props: {
           user: { address: undefined, name: undefined, imageUrl: undefined }
         }
       })
 
-      const avatarImg = wrapper.find('[data-test="avatar-image"]')
+      const avatarImg = wrapper.find('img[alt="User Avatar"]')
       expect(avatarImg.attributes('src')).toBe(
         'https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp'
       )
@@ -44,7 +43,7 @@ describe('UserComponent.vue', () => {
 
   describe('isCollapsed prop', () => {
     it('should hide user info when collapsed', () => {
-      const wrapper = mount(UserComponent, {
+      const wrapper = mount(UserAvatarComponent, {
         props: { user: mockUser, isCollapsed: true }
       })
 
@@ -53,7 +52,7 @@ describe('UserComponent.vue', () => {
     })
 
     it('should show user info when not collapsed', () => {
-      const wrapper = mount(UserComponent, {
+      const wrapper = mount(UserAvatarComponent, {
         props: { user: mockUser, isCollapsed: false }
       })
 
@@ -64,7 +63,7 @@ describe('UserComponent.vue', () => {
 
   describe('isDetailedView prop', () => {
     it('should show larger avatar and role in detailed view', () => {
-      const wrapper = mount(UserComponent, {
+      const wrapper = mount(UserAvatarComponent, {
         props: { user: mockUser, isDetailedView: true }
       })
 
@@ -77,7 +76,7 @@ describe('UserComponent.vue', () => {
     })
 
     it('should show smaller avatar and no role when not in detailed view', () => {
-      const wrapper = mount(UserComponent, {
+      const wrapper = mount(UserAvatarComponent, {
         props: { user: mockUser, isDetailedView: false }
       })
 
@@ -91,7 +90,7 @@ describe('UserComponent.vue', () => {
 
   describe('Accessibility', () => {
     it('should have proper aria attributes', () => {
-      const wrapper = mount(UserComponent, {
+      const wrapper = mount(UserAvatarComponent, {
         props: { user: mockUser }
       })
 
@@ -99,7 +98,7 @@ describe('UserComponent.vue', () => {
       expect(roleButton.exists()).toBe(true)
 
       const avatarImg = wrapper.find('[data-test="avatar-image"]')
-      expect(avatarImg.attributes('alt')).toBe("John Doe's avatar")
+      expect(avatarImg.attributes('alt')).toBe('User Avatar')
     })
   })
 })

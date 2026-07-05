@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
-import ContractOwnerCard from '@/components/ContractOwnerCard.vue'
+import ContractOwnerCard from '@/components/ui/ContractOwnerCard.vue'
 import { useTeamStore } from '@/stores'
 import { mockWagmiCore } from '@/tests/mocks'
 

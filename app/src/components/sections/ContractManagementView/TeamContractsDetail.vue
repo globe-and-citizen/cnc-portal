@@ -59,8 +59,8 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import AddressToolTip from '@/components/AddressToolTip.vue'
-import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
+import AddressToolTip from '@/components/ui/AddressToolTip.vue'
+import TeamArchivedTooltip from '@/components/ui/TeamArchivedTooltip.vue'
 
 import { parseUnits } from 'viem/utils'
 import type { Address } from 'viem'

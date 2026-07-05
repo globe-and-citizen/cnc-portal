@@ -37,7 +37,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { SafeTransaction } from '@/types/safe'
-import AddressToolTip from '@/components/AddressToolTip.vue'
+import AddressToolTip from '@/components/ui/AddressToolTip.vue'
 import { formatSafeTransactionValue, getSafeTransactionMethod } from '@/utils'
 import { formatDateShort } from '@/utils/dayUtils'
 

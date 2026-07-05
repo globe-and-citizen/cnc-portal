@@ -89,7 +89,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
-import UserComponent from '@/components/UserComponent.vue'
+import UserComponent from '@/components/ui/UserComponent.vue'
 import { resolveUser } from '@/utils/transactionHistoryUtil'
 import {
   LEDGER_COLUMNS,

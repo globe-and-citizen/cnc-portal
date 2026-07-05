@@ -69,7 +69,7 @@ import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 import { getAxiosErrorMessage } from '@/utils/errorUtil'
 import type { Member } from '@/types'
 import { useDeleteMemberMutation } from '@/queries/member.queries'
-import UserComponent from '@/components/UserComponent.vue'
+import UserComponent from '@/components/ui/UserComponent.vue'
 const props = defineProps<{
   member: Partial<Member>
   teamId: number | string

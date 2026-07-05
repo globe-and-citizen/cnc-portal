@@ -94,7 +94,7 @@ import { computed, ref } from 'vue'
 import { isAddress, isAddressEqual } from 'viem'
 import { useUserDataStore } from '@/stores'
 import StatusBadge from './StatusBadge.vue'
-import UserComponent from '@/components/UserComponent.vue'
+import UserComponent from '@/components/ui/UserComponent.vue'
 import type { FixedReturnLenderRow } from '@/types'
 
 const props = defineProps<{

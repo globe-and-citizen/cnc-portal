@@ -101,7 +101,7 @@ import {
   useExpenseAccountActivateApproval,
   useExpenseAccountDeactivateApproval
 } from '@/composables/expenseAccount/writes'
-import UserComponent from '@/components/UserComponent.vue'
+import UserComponent from '@/components/ui/UserComponent.vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useGetExpensesQuery, expenseKeys } from '@/queries'
 import { getFrequencyType, getCustomFrequency } from '@/utils'

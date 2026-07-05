@@ -180,8 +180,8 @@ import { computed, ref, watch } from 'vue'
 import { decodeFunctionData } from 'viem'
 import type { TransactionReceipt, AbiFunction } from 'viem'
 import type { GroupedTransactionRow, TransactionHistoryItemRow } from '@/types/transaction-history'
-import AddressToolTip from '@/components/AddressToolTip.vue'
-import UserComponent from '@/components/UserComponent.vue'
+import AddressToolTip from '@/components/ui/AddressToolTip.vue'
+import UserComponent from '@/components/ui/UserComponent.vue'
 import {
   resolveUser,
   formatCryptoAmount,

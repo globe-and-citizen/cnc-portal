@@ -44,10 +44,10 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import UserComponent from '@/components/UserComponent.vue'
+import UserComponent from '@/components/ui/UserComponent.vue'
 import { useTeamStore } from '@/stores/'
 import { type User } from '@/types'
-import AddressToolTip from '@/components/AddressToolTip.vue'
+import AddressToolTip from '@/components/ui/AddressToolTip.vue'
 import MainContractActions from './MainContractActions.vue'
 import { getTeamContracts } from '@/utils'
 

@@ -76,7 +76,7 @@
 <script lang="ts" setup>
 import { ref, computed, watch } from 'vue'
 import { useFocus, watchDebounced } from '@vueuse/core'
-import UserComponent from '@/components/UserComponent.vue'
+import UserComponent from '@/components/ui/UserComponent.vue'
 import type { User } from '@/types'
 import { useTeamStore } from '@/stores/teamStore'
 import { useGetSearchUsersQuery } from '@/queries'

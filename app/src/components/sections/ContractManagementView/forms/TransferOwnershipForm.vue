@@ -98,10 +98,10 @@ import { Icon as IconifyIcon } from '@iconify/vue'
 import TransferOptionCard from '../TransferOptionCard.vue'
 import { useTeamStore } from '@/stores'
 import { isAddress, type Address } from 'viem'
-import BodAlert from '@/components/BodAlert.vue'
+import BodAlert from '@/components/ui/BodAlert.vue'
 import { z } from 'zod'
 import type { User } from '@/types'
-import UserComponent from '@/components/UserComponent.vue'
+import UserComponent from '@/components/ui/UserComponent.vue'
 
 const props = defineProps<{ loading: boolean; isBodAction: boolean }>()
 const emits = defineEmits(['transfer-ownership'])

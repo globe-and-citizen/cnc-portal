@@ -52,7 +52,7 @@ import type { Team } from '@/types'
 import { parseUnits } from 'viem'
 import { computed, ref } from 'vue'
 import { useTeamStore } from '@/stores'
-import BodAlert from '@/components/BodAlert.vue'
+import BodAlert from '@/components/ui/BodAlert.vue'
 
 import type { TokenId } from '@/constant'
 import type { TokenOption } from '@/types'

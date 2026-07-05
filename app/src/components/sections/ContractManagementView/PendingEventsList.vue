@@ -23,7 +23,7 @@
 </template>
 <script setup lang="ts">
 import type { FormattedAction } from '@/utils'
-import UserComponent from '@/components/UserComponent.vue'
+import UserComponent from '@/components/ui/UserComponent.vue'
 import { useBodIsActionExecuted } from '@/composables/bod/reads'
 import { computed } from 'vue'
 

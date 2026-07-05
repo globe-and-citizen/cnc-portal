@@ -106,7 +106,7 @@
 import { computed, onMounted, watch } from 'vue'
 import { z } from 'zod'
 import SelectMemberContractsInput from '../utils/SelectMemberContractsInput.vue'
-import BodAlert from '@/components/BodAlert.vue'
+import BodAlert from '@/components/ui/BodAlert.vue'
 import TokenAmount from './TokenAmount.vue'
 import { formatAmountWithPrecision } from '@/utils/currencyUtil'
 import { isValidPositiveTokenAmount } from '@/utils/constantUtil'
