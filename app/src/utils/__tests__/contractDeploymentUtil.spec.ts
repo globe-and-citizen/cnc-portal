@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { encodeFunctionData, zeroAddress, type Address } from 'viem'
 import {
   validateBeaconAddresses,
@@ -83,5 +83,50 @@ describe('getDeploymentConfigs', () => {
       functionName: 'initialize',
       args: ['Acme', 'ACM', zeroAddress]
     })
+  })
+})
+
+describe('when the FixedReturn beacon is not deployed on the current network', () => {
+  // FixedReturn is only live on hardhat today (Polygon prod hasn't deployed
+  // it yet). Simulate that by nulling the resolved address and re-importing
+  // the module fresh, since the beacon configs/deployment configs are built
+  // from module-level constants.
+  beforeEach(() => {
+    vi.resetModules()
+    vi.doMock('@/constant', async (importOriginal) => ({
+      ...(await importOriginal<typeof import('@/constant')>()),
+      FIXED_RETURN_BEACON_ADDRESS: null
+    }))
+  })
+
+  afterEach(() => {
+    vi.doUnmock('@/constant')
+    vi.resetModules()
+  })
+
+  it('does not throw even though FixedReturn has no beacon address', async () => {
+    const { validateBeaconAddresses: validateWithoutFixedReturn } =
+      await import('../contractDeploymentUtil')
+
+    expect(() => validateWithoutFixedReturn()).not.toThrow()
+  })
+
+  it('omits FixedReturn from the beacon configs', async () => {
+    const { getBeaconConfigs: getBeaconConfigsWithoutFixedReturn } =
+      await import('../contractDeploymentUtil')
+
+    const configs = getBeaconConfigsWithoutFixedReturn()
+    expect(configs.map((c) => c.beaconType)).not.toContain('FixedReturn')
+  })
+
+  it('omits FixedReturn from the deployment configs', async () => {
+    const { getDeploymentConfigs: getDeploymentConfigsWithoutFixedReturn } =
+      await import('../contractDeploymentUtil')
+
+    const configs = getDeploymentConfigsWithoutFixedReturn(CURRENT_USER, {
+      name: 'Acme',
+      symbol: 'ACM'
+    })
+    expect(configs.map((c) => c.contractType)).not.toContain('FixedReturn')
   })
 })
