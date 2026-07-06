@@ -163,9 +163,10 @@ export function validateAddresses() {
     'CashRemunerationEIP712Module#FactoryBeacon',
     'CashRemunerationEIP712Module#CashRemunerationEIP712',
     'SafeDepositRouterBeaconModule#SafeDepositRouter',
-    'SafeDepositRouterBeaconModule#Beacon',
-    'FixedReturnBeaconModule#Beacon',
-    'FixedReturnBeaconModule#FixedReturn'
+    'SafeDepositRouterBeaconModule#Beacon'
+    // FixedReturn is intentionally excluded: not yet deployed on all networks
+    // (e.g. Polygon prod). It's wired in as an optional beacon — see
+    // getBeaconConfigs()/getDeploymentConfigs() in contractDeploymentUtil.ts.
   ]
 
   requiredKeys.forEach(resolveAddress)

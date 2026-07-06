@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { encodeFunctionData, zeroAddress, type Address } from 'viem'
 import {
   validateBeaconAddresses,
@@ -7,7 +7,13 @@ import {
 } from '../contractDeploymentUtil'
 import { FIXED_RETURN_ABI } from '@/artifacts/abi/fixed-return'
 import { INVESTOR_ABI } from '@/artifacts/abi/investors'
-import { FIXED_RETURN_BEACON_ADDRESS, USDC_ADDRESS, USDC_E_ADDRESS, USDT_ADDRESS } from '@/constant'
+import {
+  FIXED_RETURN_BEACON_ADDRESS,
+  VESTING_BEACON_ADDRESS,
+  USDC_ADDRESS,
+  USDC_E_ADDRESS,
+  USDT_ADDRESS
+} from '@/constant'
 
 const CURRENT_USER = '0x000000000000000000000000000000000000A1' as Address
 
@@ -23,6 +29,13 @@ describe('getBeaconConfigs', () => {
     const fixedReturn = configs.find((c) => c.beaconType === 'FixedReturn')
 
     expect(fixedReturn?.beaconAddress).toBe(FIXED_RETURN_BEACON_ADDRESS)
+  })
+
+  it('includes a Vesting entry pointing at VESTING_BEACON_ADDRESS', () => {
+    const configs = getBeaconConfigs()
+    const vesting = configs.find((c) => c.beaconType === 'Vesting')
+
+    expect(vesting?.beaconAddress).toBe(VESTING_BEACON_ADDRESS)
   })
 
   it('returns one entry per known beacon type', () => {
@@ -83,5 +96,93 @@ describe('getDeploymentConfigs', () => {
       functionName: 'initialize',
       args: ['Acme', 'ACM', zeroAddress]
     })
+  })
+})
+
+describe('when the FixedReturn beacon is not deployed on the current network', () => {
+  // FixedReturn is only live on hardhat today (Polygon prod hasn't deployed
+  // it yet). Simulate that by nulling the resolved address and re-importing
+  // the module fresh, since the beacon configs/deployment configs are built
+  // from module-level constants.
+  beforeEach(() => {
+    vi.resetModules()
+    vi.doMock('@/constant', async (importOriginal) => ({
+      ...(await importOriginal<typeof import('@/constant')>()),
+      FIXED_RETURN_BEACON_ADDRESS: null
+    }))
+  })
+
+  afterEach(() => {
+    vi.doUnmock('@/constant')
+    vi.resetModules()
+  })
+
+  it('does not throw even though FixedReturn has no beacon address', async () => {
+    const { validateBeaconAddresses: validateWithoutFixedReturn } =
+      await import('../contractDeploymentUtil')
+
+    expect(() => validateWithoutFixedReturn()).not.toThrow()
+  })
+
+  it('omits FixedReturn from the beacon configs', async () => {
+    const { getBeaconConfigs: getBeaconConfigsWithoutFixedReturn } =
+      await import('../contractDeploymentUtil')
+
+    const configs = getBeaconConfigsWithoutFixedReturn()
+    expect(configs.map((c) => c.beaconType)).not.toContain('FixedReturn')
+  })
+
+  it('omits FixedReturn from the deployment configs', async () => {
+    const { getDeploymentConfigs: getDeploymentConfigsWithoutFixedReturn } =
+      await import('../contractDeploymentUtil')
+
+    const configs = getDeploymentConfigsWithoutFixedReturn(CURRENT_USER, {
+      name: 'Acme',
+      symbol: 'ACM'
+    })
+    expect(configs.map((c) => c.contractType)).not.toContain('FixedReturn')
+  })
+})
+
+describe('when the Vesting beacon is not deployed on the current network', () => {
+  // Same story as FixedReturn: Vesting is only live on hardhat today
+  // (Polygon prod hasn't deployed it yet).
+  beforeEach(() => {
+    vi.resetModules()
+    vi.doMock('@/constant', async (importOriginal) => ({
+      ...(await importOriginal<typeof import('@/constant')>()),
+      VESTING_BEACON_ADDRESS: null
+    }))
+  })
+
+  afterEach(() => {
+    vi.doUnmock('@/constant')
+    vi.resetModules()
+  })
+
+  it('does not throw even though Vesting has no beacon address', async () => {
+    const { validateBeaconAddresses: validateWithoutVesting } =
+      await import('../contractDeploymentUtil')
+
+    expect(() => validateWithoutVesting()).not.toThrow()
+  })
+
+  it('omits Vesting from the beacon configs', async () => {
+    const { getBeaconConfigs: getBeaconConfigsWithoutVesting } =
+      await import('../contractDeploymentUtil')
+
+    const configs = getBeaconConfigsWithoutVesting()
+    expect(configs.map((c) => c.beaconType)).not.toContain('Vesting')
+  })
+
+  it('omits Vesting from the deployment configs', async () => {
+    const { getDeploymentConfigs: getDeploymentConfigsWithoutVesting } =
+      await import('../contractDeploymentUtil')
+
+    const configs = getDeploymentConfigsWithoutVesting(CURRENT_USER, {
+      name: 'Acme',
+      symbol: 'ACM'
+    })
+    expect(configs.map((c) => c.contractType)).not.toContain('Vesting')
   })
 })
