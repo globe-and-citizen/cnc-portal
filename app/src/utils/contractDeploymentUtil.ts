@@ -63,10 +63,10 @@ export const validateBeaconAddresses = (): void => {
     {
       name: 'SAFE_DEPOSIT_ROUTER_BEACON_ADDRESS',
       value: SAFE_DEPOSIT_ROUTER_BEACON_ADDRESS
-    },
-    { name: 'VESTING_BEACON_ADDRESS', value: VESTING_BEACON_ADDRESS }
-    // FixedReturn is optional — not yet deployed on all networks (e.g.
-    // Polygon prod). See getBeaconConfigs()/getDeploymentConfigs() below.
+    }
+    // Vesting and FixedReturn are optional — not yet deployed on all
+    // networks (e.g. Polygon prod). See getBeaconConfigs()/
+    // getDeploymentConfigs() below.
   ]
 
   const missingBeacons = requiredBeacons.filter((beacon) => !beacon.value)
@@ -114,16 +114,19 @@ export const getBeaconConfigs = (): BeaconConfig[] => {
     {
       beaconType: 'SafeDepositRouter',
       beaconAddress: SAFE_DEPOSIT_ROUTER_BEACON_ADDRESS!
-    },
-    {
-      beaconType: 'Vesting',
-      beaconAddress: VESTING_BEACON_ADDRESS!
     }
   ]
 
-  // FixedReturn is only live on networks where its beacon has been deployed
-  // (currently hardhat for testing). Skip it elsewhere instead of failing
-  // the whole Officer deployment.
+  // Vesting and FixedReturn are only live on networks where their beacon has
+  // been deployed (currently hardhat for testing). Skip them elsewhere
+  // instead of failing the whole Officer deployment.
+  if (VESTING_BEACON_ADDRESS) {
+    configs.push({
+      beaconType: 'Vesting',
+      beaconAddress: VESTING_BEACON_ADDRESS
+    })
+  }
+
   if (FIXED_RETURN_BEACON_ADDRESS) {
     configs.push({
       beaconType: 'FixedReturn',
@@ -221,14 +224,17 @@ export const getDeploymentConfigs = (
   })
 
   // Vesting contract — agreement-only; mints the team's InvestorV1 on release.
-  deployments.push({
-    contractType: 'Vesting',
-    initializerData: encodeFunctionData({
-      abi: VESTING_ABI,
-      functionName: 'initialize',
-      args: []
+  // Only when its beacon is deployed on this network.
+  if (VESTING_BEACON_ADDRESS) {
+    deployments.push({
+      contractType: 'Vesting',
+      initializerData: encodeFunctionData({
+        abi: VESTING_ABI,
+        functionName: 'initialize',
+        args: []
+      })
     })
-  })
+  }
 
   // FixedReturn contract — only when its beacon is deployed on this network
   if (FIXED_RETURN_BEACON_ADDRESS) {
