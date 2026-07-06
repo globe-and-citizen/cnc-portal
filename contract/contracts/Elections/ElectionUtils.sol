@@ -16,6 +16,8 @@ library ElectionUtils {
     uint256 voteCount;
   }
 
+  uint256 private constant MAX_CANDIDATES = 20;
+
   /**
    * @dev Error thrown when seat count is not odd
    */
@@ -56,18 +58,6 @@ library ElectionUtils {
    */
   error DuplicateVoters();
 
-  uint256 private constant MAX_CANDIDATES = 20;
-
-  /**
-   * @dev Validates that seat count is odd
-   * @param seatCount Number of seats to validate
-   */
-  function validateSeatCount(uint256 seatCount) internal pure {
-    if (seatCount == 0 || seatCount % 2 == 0) {
-      revert InvalidSeatCount();
-    }
-  }
-
   /**
    * @dev Validates election dates
    * @param startDate Election start timestamp
@@ -76,37 +66,6 @@ library ElectionUtils {
   function validateDates(uint256 startDate, uint256 endDate) internal view {
     if (startDate <= block.timestamp || endDate <= startDate) {
       revert InvalidDates();
-    }
-  }
-
-  /**
-   * @dev Validates candidate list
-   * @param candidates Array of candidates
-   * @param seatCount Number of seats
-   */
-  function validateCandidates(address[] memory candidates, uint256 seatCount) internal pure {
-    if (candidates.length < seatCount) {
-      revert InsufficientCandidates();
-    }
-
-    // Check for duplicate candidate addresses
-    if (isDuplicate(candidates)) {
-      revert DuplicateCandidates();
-    }
-  }
-
-  /**
-   * @dev Validates eligible voters list
-   * @param eligibleVoters Array of voter addresses
-   */
-  function validateVoters(address[] memory eligibleVoters) internal pure {
-    if (eligibleVoters.length == 0) {
-      revert NoEligibleVoters();
-    }
-
-    // Check for duplicate voter addresses
-    if (isDuplicate(eligibleVoters)) {
-      revert DuplicateVoters();
     }
   }
 
@@ -149,6 +108,47 @@ library ElectionUtils {
    */
   function hasElectionEnded(uint256 endDate) internal view returns (bool) {
     return block.timestamp > endDate;
+  }
+
+  /**
+   * @dev Validates that seat count is odd
+   * @param seatCount Number of seats to validate
+   */
+  function validateSeatCount(uint256 seatCount) internal pure {
+    if (seatCount == 0 || seatCount % 2 == 0) {
+      revert InvalidSeatCount();
+    }
+  }
+
+  /**
+   * @dev Validates candidate list
+   * @param candidates Array of candidates
+   * @param seatCount Number of seats
+   */
+  function validateCandidates(address[] memory candidates, uint256 seatCount) internal pure {
+    if (candidates.length < seatCount) {
+      revert InsufficientCandidates();
+    }
+
+    // Check for duplicate candidate addresses
+    if (isDuplicate(candidates)) {
+      revert DuplicateCandidates();
+    }
+  }
+
+  /**
+   * @dev Validates eligible voters list
+   * @param eligibleVoters Array of voter addresses
+   */
+  function validateVoters(address[] memory eligibleVoters) internal pure {
+    if (eligibleVoters.length == 0) {
+      revert NoEligibleVoters();
+    }
+
+    // Check for duplicate voter addresses
+    if (isDuplicate(eligibleVoters)) {
+      revert DuplicateVoters();
+    }
   }
 
   /**

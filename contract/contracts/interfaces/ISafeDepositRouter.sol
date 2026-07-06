@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "./IPausable.sol";
 import "./IOwnable.sol";
+import "./IPausable.sol";
 import "./ITokenSupport.sol";
 
 /**

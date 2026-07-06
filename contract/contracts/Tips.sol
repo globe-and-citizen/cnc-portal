@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 
 /**
  * @title Tips
@@ -12,14 +12,14 @@ import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
  * @dev Upgradeable; includes push limit, reentrancy protection, and pause support.
  */
 contract Tips is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgradeable {
-  /// @dev Credited tip balances per recipient, withdrawable via {withdraw}.
-  mapping(address => uint256) private balance;
-  /// @notice Maximum team members allowed in a single pushTip call.
-  uint8 public pushLimit;
   /// @notice Hard cap on the configurable push limit.
   uint8 public constant MAX_PUSH_LIMIT = 100;
+  /// @dev Credited tip balances per recipient, withdrawable via {withdraw}.
+  mapping(address account => uint256 amount) private _balance;
+  /// @notice Maximum team members allowed in a single pushTip call.
+  uint8 public pushLimit;
   /// @dev Leftover wei from previous tip splits, carried into the next distribution.
-  uint256 remainder;
+  uint256 _remainder;
 
   /**
    * @notice Emitted when tips are pushed directly to team members.
@@ -71,20 +71,14 @@ contract Tips is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
   /// @param maximum The max push limit allowed.
   error LimitTooHigh(uint8 requested, uint8 maximum);
 
+  modifier positiveAmountRequired() {
+    if (msg.value == 0) revert ZeroValue();
+    _;
+  }
+
   /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() {
     _disableInitializers();
-  }
-
-  /**
-   * @notice Initializes the contract owner, reentrancy guard, pause state and default push limit.
-   * @dev Proxy initializer; sets the caller as owner and pushLimit to 10.
-   */
-  function initialize() public initializer {
-    __Ownable_init(msg.sender);
-    __ReentrancyGuard_init();
-    __Pausable_init();
-    pushLimit = 10;
   }
 
   /**
@@ -98,11 +92,11 @@ contract Tips is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
     if (pushLimit < _teamMembersAddresses.length) {
       revert TooManyTeamMembers(_teamMembersAddresses.length, pushLimit);
     }
-    uint totalAmount = msg.value + remainder;
+    uint256 totalAmount = msg.value + _remainder;
     uint256 amountPerAddress = totalAmount / _teamMembersAddresses.length;
 
     // Update the remainder
-    remainder = totalAmount % _teamMembersAddresses.length;
+    _remainder = totalAmount % _teamMembersAddresses.length;
 
     // Should fail if the contract balance is insufficient
     for (uint256 i = 0; i < _teamMembersAddresses.length; i++) {
@@ -127,16 +121,16 @@ contract Tips is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
     address[] calldata _teamMembersAddresses
   ) external payable positiveAmountRequired whenNotPaused {
     if (_teamMembersAddresses.length == 0) revert NoTeamMembers();
-    uint totalAmount = msg.value + remainder;
+    uint256 totalAmount = msg.value + _remainder;
     uint256 amountPerAddress = totalAmount / _teamMembersAddresses.length;
 
     // Update the remainder
-    remainder = totalAmount % _teamMembersAddresses.length;
+    _remainder = totalAmount % _teamMembersAddresses.length;
 
     for (uint256 i = 0; i < _teamMembersAddresses.length; i++) {
       // Check for zero addresses
       if (_teamMembersAddresses[i] == address(0)) revert ZeroAddress();
-      balance[_teamMembersAddresses[i]] += amountPerAddress;
+      _balance[_teamMembersAddresses[i]] += amountPerAddress;
     }
 
     emit SendTip(msg.sender, _teamMembersAddresses, msg.value, amountPerAddress);
@@ -147,25 +141,16 @@ contract Tips is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
    * @notice Withdraws the caller's accumulated tip balance.
    */
   function withdraw() external nonReentrant whenNotPaused {
-    uint256 senderBalance = balance[msg.sender];
+    uint256 senderBalance = _balance[msg.sender];
     if (senderBalance == 0) revert NothingToWithdraw();
 
     (bool sent, ) = msg.sender.call{value: senderBalance}("");
     if (!sent) revert SendFailed();
 
-    balance[msg.sender] = 0;
-    if (balance[msg.sender] != 0) revert BalanceNotCleared();
+    _balance[msg.sender] = 0;
+    if (_balance[msg.sender] != 0) revert BalanceNotCleared();
 
     emit TipWithdrawal(msg.sender, senderBalance);
-  }
-
-  /**
-   * @notice Returns the tip balance credited to an address (awaiting withdrawal).
-   * @param _address The account to query.
-   * @return The credited tip balance in wei.
-   */
-  function getBalance(address _address) external view returns (uint256) {
-    return balance[_address];
   }
 
   /**
@@ -176,11 +161,6 @@ contract Tips is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
     if (value == pushLimit) revert SameLimit();
     if (value > MAX_PUSH_LIMIT) revert LimitTooHigh(value, MAX_PUSH_LIMIT);
     pushLimit = value;
-  }
-
-  modifier positiveAmountRequired() {
-    if (msg.value == 0) revert ZeroValue();
-    _;
   }
 
   /// @notice Pauses the contract, blocking tipping and withdrawals.
@@ -194,10 +174,30 @@ contract Tips is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
   }
 
   /**
+   * @notice Returns the tip balance credited to an address (awaiting withdrawal).
+   * @param _address The account to query.
+   * @return The credited tip balance in wei.
+   */
+  function getBalance(address _address) external view returns (uint256) {
+    return _balance[_address];
+  }
+
+  /**
    * @notice Returns the total native balance held by the contract (owner only).
    * @return Current contract balance in wei.
    */
   function getContractBalance() external view onlyOwner returns (uint256) {
     return address(this).balance;
+  }
+
+  /**
+   * @notice Initializes the contract owner, reentrancy guard, pause state and default push limit.
+   * @dev Proxy initializer; sets the caller as owner and pushLimit to 10.
+   */
+  function initialize() public initializer {
+    __Ownable_init(msg.sender);
+    __ReentrancyGuard_init();
+    __Pausable_init();
+    pushLimit = 10;
   }
 }

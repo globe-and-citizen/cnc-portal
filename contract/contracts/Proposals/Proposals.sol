@@ -5,8 +5,8 @@ import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Own
 import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import {IBoardOfDirectors} from "../interfaces/IBoardOfDirectors.sol";
-import {ProposalUtils} from "./ProposalUtils.sol";
 import {IOfficer} from "../interfaces/IOfficer.sol";
+import {ProposalUtils} from "./ProposalUtils.sol";
 
 /**
  * @title Proposals
@@ -15,14 +15,6 @@ import {IOfficer} from "../interfaces/IOfficer.sol";
  * @dev Upgradeable, pausable, reentrancy-guarded. BoardOfDirectors is resolved via Officer.
  */
 contract Proposals is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUpgradeable {
-  // --- State Variables ---
-  /// @dev Proposal records by id.
-  mapping(uint256 => Proposal) private proposals;
-  /// @dev Id assigned to the next proposal.
-  uint256 private _nextProposalId;
-  /// @notice Address of the Officer contract used to locate BoardOfDirectors.
-  address public officerAddress;
-
   // --- Enums and Structs ---
   /// @dev Directive vote options.
   enum VoteOption {
@@ -105,31 +97,13 @@ contract Proposals is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUp
     ProposalState state;
   }
 
-  // Custom errors
-  /// @dev The proposal id does not exist.
-  error ProposalNotFound();
-  /// @dev Voting has not yet started for this proposal.
-  error ProposalVotingNotStarted();
-  /// @dev Voting has ended for this proposal.
-  error ProposalVotingEnded();
-  /// @dev The caller has already voted on this proposal.
-  error ProposalAlreadyVoted();
-  /// @dev The vote value is invalid.
-  error InvalidVote();
-  /// @dev The caller is not a member of the board of directors.
-  error OnlyBoardMember();
-  /// @dev The board of directors is empty.
-  error NoBoardMembers();
-  /// @dev The BoardOfDirectors address has not been configured.
-  error BoardOfDirectorAddressNotSet();
-  /// @dev The caller is not allowed to perform this action.
-  error NotAllowed();
-  /// @dev The caller (msg.sender) was the zero address when initializing.
-  error ZeroSender();
-  /// @dev The officer contract address has not been configured.
-  error OfficerAddressNotSet();
-  /// @dev The BoardOfDirectors contract could not be located via the Officer.
-  error BoardOfDirectorsNotFound();
+  // --- State Variables ---
+  /// @dev Proposal records by id.
+  mapping(uint256 proposalId => Proposal proposal) private _proposals;
+  /// @dev Id assigned to the next proposal.
+  uint256 private _nextProposalId;
+  /// @notice Address of the Officer contract used to locate BoardOfDirectors.
+  address public officerAddress;
 
   // --- Events ---
   /**
@@ -176,23 +150,48 @@ contract Proposals is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUp
     uint256 abstainCount
   );
 
+  // Custom errors
+  /// @dev The proposal id does not exist.
+  error ProposalNotFound();
+  /// @dev Voting has not yet started for this proposal.
+  error ProposalVotingNotStarted();
+  /// @dev Voting has ended for this proposal.
+  error ProposalVotingEnded();
+  /// @dev The caller has already voted on this proposal.
+  error ProposalAlreadyVoted();
+  /// @dev The vote value is invalid.
+  error InvalidVote();
+  /// @dev The caller is not a member of the board of directors.
+  error OnlyBoardMember();
+  /// @dev The board of directors is empty.
+  error NoBoardMembers();
+  /// @dev The BoardOfDirectors address has not been configured.
+  error BoardOfDirectorAddressNotSet();
+  /// @dev The caller is not allowed to perform this action.
+  error NotAllowed();
+  /// @dev The caller (msg.sender) was the zero address when initializing.
+  error ZeroSender();
+  /// @dev The officer contract address has not been configured.
+  error OfficerAddressNotSet();
+  /// @dev The BoardOfDirectors contract could not be located via the Officer.
+  error BoardOfDirectorsNotFound();
+
+  modifier onlyMember() {
+    address bodAddress = _getBoardOfDirectorsAddress();
+    if (!IBoardOfDirectors(bodAddress).isMember(msg.sender)) {
+      revert OnlyBoardMember();
+    }
+    _;
+  }
+
+  modifier boardOfDirectorsContractExists() {
+    _getBoardOfDirectorsAddress(); // Will revert if not found
+    _;
+  }
+
   /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() {
     _disableInitializers();
-  }
-
-  /**
-   * @notice Initializes the Proposals contract.
-   * @param _owner Address that will own the contract.
-   */
-  function initialize(address _owner) public initializer {
-    __Ownable_init(_owner);
-    __Pausable_init();
-    __ReentrancyGuard_init();
-    _nextProposalId = 1; // Start proposal IDs from 1
-
-    if (msg.sender == address(0)) revert ZeroSender();
-    officerAddress = msg.sender;
   }
 
   /**
@@ -220,7 +219,7 @@ contract Proposals is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUp
       revert OnlyBoardMember();
     }
 
-    Proposal storage newProposal = proposals[_nextProposalId];
+    Proposal storage newProposal = _proposals[_nextProposalId];
     newProposal.id = _nextProposalId;
     newProposal.title = title;
     newProposal.description = description;
@@ -246,7 +245,7 @@ contract Proposals is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUp
     uint256 proposalId,
     VoteOption vote
   ) external boardOfDirectorsContractExists onlyMember nonReentrant {
-    Proposal storage proposal = proposals[proposalId];
+    Proposal storage proposal = _proposals[proposalId];
     if (proposal.id == 0) revert ProposalNotFound();
     if (block.timestamp < proposal.startDate) revert ProposalVotingNotStarted();
     if (block.timestamp > proposal.endDate) revert ProposalVotingEnded();
@@ -276,7 +275,7 @@ contract Proposals is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUp
    * @return ProposalView containing the proposal details.
    */
   function getProposal(uint256 proposalId) external view returns (ProposalView memory) {
-    Proposal storage proposal = proposals[proposalId];
+    Proposal storage proposal = _proposals[proposalId];
     if (proposal.id == 0) {
       revert ProposalNotFound();
     }
@@ -300,12 +299,53 @@ contract Proposals is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUp
   }
 
   /**
+   * @notice Returns the current Board of Directors members.
+   * @return Array of BOD member addresses.
+   */
+  function getBoardOfDirectors()
+    external
+    view
+    boardOfDirectorsContractExists
+    returns (address[] memory)
+  {
+    address bodAddress = _getBoardOfDirectorsAddress();
+    IBoardOfDirectors boardOfDirectors = IBoardOfDirectors(bodAddress);
+    return boardOfDirectors.getBoardOfDirectors();
+  }
+
+  /**
+   * @notice Returns whether a voter has already voted on a proposal.
+   * @param proposalId Id of the proposal.
+   * @param voter Voter address to check.
+   * @return True if the voter has voted.
+   */
+  function hasVoted(uint256 proposalId, address voter) external view returns (bool) {
+    Proposal storage proposal = _proposals[proposalId];
+    if (proposal.id == 0) revert ProposalNotFound();
+    return proposal.hasVoted[voter];
+  }
+
+  /**
+   * @notice Initializes the Proposals contract.
+   * @param _owner Address that will own the contract.
+   */
+  function initialize(address _owner) public initializer {
+    __Ownable_init(_owner);
+    __Pausable_init();
+    __ReentrancyGuard_init();
+    _nextProposalId = 1; // Start proposal IDs from 1
+
+    if (msg.sender == address(0)) revert ZeroSender();
+    officerAddress = msg.sender;
+  }
+
+  /**
    * @dev Tally the results of a proposal after voting has ended.
    * @param proposalId The ID of the proposal to tally.
    * @notice This function is called automatically when all board members have voted.
    */
   function tallyResults(uint256 proposalId) public onlyMember {
-    Proposal storage proposal = proposals[proposalId];
+    Proposal storage proposal = _proposals[proposalId];
     if (proposal.id == 0) revert ProposalNotFound();
     if (block.timestamp < proposal.startDate) revert ProposalVotingNotStarted();
 
@@ -335,45 +375,5 @@ contract Proposals is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUp
     address bodAddress = IOfficer(officerAddress).findDeployedContract("BoardOfDirectors");
     if (bodAddress == address(0)) revert BoardOfDirectorsNotFound();
     return bodAddress;
-  }
-
-  /**
-   * @notice Returns the current Board of Directors members.
-   * @return Array of BOD member addresses.
-   */
-  function getBoardOfDirectors()
-    external
-    view
-    boardOfDirectorsContractExists
-    returns (address[] memory)
-  {
-    address bodAddress = _getBoardOfDirectorsAddress();
-    IBoardOfDirectors boardOfDirectors = IBoardOfDirectors(bodAddress);
-    return boardOfDirectors.getBoardOfDirectors();
-  }
-
-  /**
-   * @notice Returns whether a voter has already voted on a proposal.
-   * @param proposalId Id of the proposal.
-   * @param voter Voter address to check.
-   * @return True if the voter has voted.
-   */
-  function hasVoted(uint256 proposalId, address voter) external view returns (bool) {
-    Proposal storage proposal = proposals[proposalId];
-    if (proposal.id == 0) revert ProposalNotFound();
-    return proposal.hasVoted[voter];
-  }
-
-  modifier onlyMember() {
-    address bodAddress = _getBoardOfDirectorsAddress();
-    if (!IBoardOfDirectors(bodAddress).isMember(msg.sender)) {
-      revert OnlyBoardMember();
-    }
-    _;
-  }
-
-  modifier boardOfDirectorsContractExists() {
-    _getBoardOfDirectorsAddress(); // Will revert if not found
-    _;
   }
 }

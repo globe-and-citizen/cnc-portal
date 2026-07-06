@@ -12,16 +12,6 @@ import {IBoardOfDirectors} from "./interfaces/IBoardOfDirectors.sol";
 contract BoardOfDirectors is ReentrancyGuardUpgradeable, IBoardOfDirectors {
   using EnumerableSet for EnumerableSet.AddressSet;
 
-  /// @dev Set of owner addresses allowed to manage board membership.
-  EnumerableSet.AddressSet private owners;
-  /// @dev Set of current board-of-directors members.
-  EnumerableSet.AddressSet private boardOfDirectors;
-  /// @notice Total number of actions that have been added.
-  uint256 public actionCount;
-
-  /// @notice Maps an action id to its action record.
-  mapping(uint256 => Action) public actions;
-
   /**
    * @dev An action submitted for board approval and execution.
    * @param id Action identifier.
@@ -41,8 +31,18 @@ contract BoardOfDirectors is ReentrancyGuardUpgradeable, IBoardOfDirectors {
     bool isExecuted;
     bytes data;
     address createdBy;
-    mapping(address => bool) approvals;
+    mapping(address approver => bool approved) approvals;
   }
+
+  /// @dev Set of owner addresses allowed to manage board membership.
+  EnumerableSet.AddressSet private _ownersSet;
+  /// @dev Set of current board-of-directors members.
+  EnumerableSet.AddressSet private _boardOfDirectorsSet;
+  /// @notice Total number of actions that have been added.
+  uint256 public actionCount;
+
+  /// @notice Maps an action id to its action record.
+  mapping(uint256 actionId => Action action) public actions;
 
   /// @notice Emitted when the board-of-directors set is replaced.
   event BoardOfDirectorsChanged(address[] boardOfDirectors);
@@ -106,22 +106,24 @@ contract BoardOfDirectors is ReentrancyGuardUpgradeable, IBoardOfDirectors {
   /// @dev The function can only be called by the contract itself.
   error NotSelf();
 
+  modifier onlyOwner() {
+    if (!_ownersSet.contains(msg.sender)) revert NotOwner(msg.sender);
+    _;
+  }
+
+  modifier onlyBoardOfDirectors() {
+    if (!_boardOfDirectorsSet.contains(msg.sender)) revert NotBoardMember(msg.sender);
+    _;
+  }
+
+  modifier onlySelf() {
+    if (msg.sender != address(this)) revert NotSelf();
+    _;
+  }
+
   /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() {
     _disableInitializers();
-  }
-
-  /**
-   * @dev Initializes the contract with the initial set of owners.
-   * @param _owners The initial set of owners.
-   */
-  function initialize(address[] memory _owners) public initializer {
-    uint256 length = _owners.length;
-    for (uint256 i = 0; i < length; i++) {
-      if (_owners[i] == address(0)) revert ZeroAddress();
-      owners.add(_owners[i]);
-    }
-    __ReentrancyGuard_init();
   }
 
   /**
@@ -164,8 +166,8 @@ contract BoardOfDirectors is ReentrancyGuardUpgradeable, IBoardOfDirectors {
     actions[_actionId].approvalCount++;
     emit Approval(_actionId, msg.sender);
 
-    if (actions[_actionId].approvalCount >= (boardOfDirectors.length() / 2) + 1) {
-      call(_actionId);
+    if (actions[_actionId].approvalCount >= (_boardOfDirectorsSet.length() / 2) + 1) {
+      _call(_actionId);
     }
   }
 
@@ -191,19 +193,68 @@ contract BoardOfDirectors is ReentrancyGuardUpgradeable, IBoardOfDirectors {
     if (_boardOfDirectors.length == 0) revert EmptyList();
 
     // Remove all existing board of directors
-    while (boardOfDirectors.length() > 0) {
-      address lastBoardOfDirector = boardOfDirectors.at(boardOfDirectors.length() - 1);
-      boardOfDirectors.remove(lastBoardOfDirector);
+    while (_boardOfDirectorsSet.length() > 0) {
+      address lastBoardOfDirector = _boardOfDirectorsSet.at(_boardOfDirectorsSet.length() - 1);
+      _boardOfDirectorsSet.remove(lastBoardOfDirector);
     }
 
     // Set the new board of directors
     uint256 length = _boardOfDirectors.length;
     for (uint256 i = 0; i < length; i++) {
       if (_boardOfDirectors[i] == address(0)) revert ZeroAddress();
-      boardOfDirectors.add(_boardOfDirectors[i]);
+      _boardOfDirectorsSet.add(_boardOfDirectors[i]);
     }
 
     emit BoardOfDirectorsChanged(_boardOfDirectors);
+  }
+
+  /**
+   * @dev Sets the owners of the contract.
+   * @param _owners The new owners.
+   */
+  function setOwners(address[] memory _owners) external onlySelf {
+    if (_owners.length == 0) revert EmptyList();
+
+    // Remove all existing owners
+    while (_ownersSet.length() > 0) {
+      address lastOwner = _ownersSet.at(_ownersSet.length() - 1);
+      _ownersSet.remove(lastOwner);
+    }
+
+    // Set the new owners
+    uint256 length = _owners.length;
+    for (uint256 i = 0; i < length; i++) {
+      if (_owners[i] == address(0)) revert ZeroAddress();
+      _ownersSet.add(_owners[i]);
+    }
+
+    emit OwnersChanged(_owners);
+  }
+
+  /**
+   * @dev Adds a new owner to the contract.
+   * @param _owner The new owner.
+   */
+  function addOwner(address _owner) external onlySelf {
+    if (_owner == address(0)) revert ZeroAddress();
+
+    if (_ownersSet.contains(_owner)) {
+      revert OwnerAlreadyExists(_owner);
+    }
+    _ownersSet.add(_owner);
+
+    emit OwnersChanged(_ownersSet.values());
+  }
+
+  /**
+   * @dev Removes an owner from the contract.
+   * @param _owner The owner to remove.
+   */
+  function removeOwner(address _owner) external onlySelf {
+    if (!_ownersSet.contains(_owner)) revert OwnerNotFound(_owner);
+
+    _ownersSet.remove(_owner);
+    emit OwnersChanged(_ownersSet.values());
   }
 
   /**
@@ -239,7 +290,7 @@ contract BoardOfDirectors is ReentrancyGuardUpgradeable, IBoardOfDirectors {
    * @return An array of owners.
    */
   function getOwners() external view returns (address[] memory) {
-    return owners.values();
+    return _ownersSet.values();
   }
 
   /**
@@ -247,7 +298,7 @@ contract BoardOfDirectors is ReentrancyGuardUpgradeable, IBoardOfDirectors {
    * @return An array of board of directors.
    */
   function getBoardOfDirectors() external view returns (address[] memory) {
-    return boardOfDirectors.values();
+    return _boardOfDirectorsSet.values();
   }
 
   /**
@@ -256,7 +307,20 @@ contract BoardOfDirectors is ReentrancyGuardUpgradeable, IBoardOfDirectors {
    * @return A boolean indicating if the address is a member.
    */
   function isMember(address _address) external view returns (bool) {
-    return boardOfDirectors.contains(_address);
+    return _boardOfDirectorsSet.contains(_address);
+  }
+
+  /**
+   * @dev Initializes the contract with the initial set of owners.
+   * @param _owners The initial set of owners.
+   */
+  function initialize(address[] memory _owners) public initializer {
+    uint256 length = _owners.length;
+    for (uint256 i = 0; i < length; i++) {
+      if (_owners[i] == address(0)) revert ZeroAddress();
+      _ownersSet.add(_owners[i]);
+    }
+    __ReentrancyGuard_init();
   }
 
   // Private functions
@@ -265,7 +329,7 @@ contract BoardOfDirectors is ReentrancyGuardUpgradeable, IBoardOfDirectors {
    * @dev Executes an action.
    * @param _actionId The id of the action to execute.
    */
-  function call(uint256 _actionId) private nonReentrant {
+  function _call(uint256 _actionId) private nonReentrant {
     Action storage _action = actions[_actionId];
 
     (bool success, ) = _action.target.call(_action.data);
@@ -274,69 +338,5 @@ contract BoardOfDirectors is ReentrancyGuardUpgradeable, IBoardOfDirectors {
     _action.isExecuted = true;
 
     emit ActionExecuted(_actionId, _action.target, _action.description, _action.data);
-  }
-
-  /**
-   * @dev Sets the owners of the contract.
-   * @param _owners The new owners.
-   */
-  function setOwners(address[] memory _owners) external onlySelf {
-    if (_owners.length == 0) revert EmptyList();
-
-    // Remove all existing owners
-    while (owners.length() > 0) {
-      address lastOwner = owners.at(owners.length() - 1);
-      owners.remove(lastOwner);
-    }
-
-    // Set the new owners
-    uint256 length = _owners.length;
-    for (uint256 i = 0; i < length; i++) {
-      if (_owners[i] == address(0)) revert ZeroAddress();
-      owners.add(_owners[i]);
-    }
-
-    emit OwnersChanged(_owners);
-  }
-
-  /**
-   * @dev Adds a new owner to the contract.
-   * @param _owner The new owner.
-   */
-  function addOwner(address _owner) external onlySelf {
-    if (_owner == address(0)) revert ZeroAddress();
-
-    if (owners.contains(_owner)) {
-      revert OwnerAlreadyExists(_owner);
-    }
-    owners.add(_owner);
-
-    emit OwnersChanged(owners.values());
-  }
-
-  /**
-   * @dev Removes an owner from the contract.
-   * @param _owner The owner to remove.
-   */
-  function removeOwner(address _owner) external onlySelf {
-    if (!owners.contains(_owner)) revert OwnerNotFound(_owner);
-
-    owners.remove(_owner);
-    emit OwnersChanged(owners.values());
-  }
-
-  modifier onlyOwner() {
-    if (!owners.contains(msg.sender)) revert NotOwner(msg.sender);
-    _;
-  }
-
-  modifier onlyBoardOfDirectors() {
-    if (!boardOfDirectors.contains(msg.sender)) revert NotBoardMember(msg.sender);
-    _;
-  }
-
-  modifier onlySelf() {
-    if (msg.sender != address(this)) revert NotSelf();
-    _;
   }
 }

@@ -22,14 +22,14 @@ contract MockFixedReturn {
     shouldRevertOnRepay = _shouldRevert;
   }
 
-  function getLendingOffer(uint256) external view returns (IFixedReturn.LendingOffer memory offer) {
-    offer.token = token;
-  }
-
   function repayLenders(uint256 offerId, uint256 amount) external {
     if (shouldRevertOnRepay) revert("MockFixedReturn: forced revert");
     lastOfferId = offerId;
     lastAmount = amount;
     repayLendersCallCount++;
+  }
+
+  function getLendingOffer(uint256) external view returns (IFixedReturn.LendingOffer memory offer) {
+    offer.token = token;
   }
 }

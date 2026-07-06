@@ -2,15 +2,14 @@
 pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@quant-finance/solidity-datetime/contracts/DateTime.sol";
 import "./base/TokenSupport.sol";
-import {IMintableERC20} from "./interfaces/IMintableERC20.sol";
 import {IInvestorV1} from "./interfaces/IInvestorV1.sol";
 import {IOfficer} from "./interfaces/IOfficer.sol";
 
@@ -59,24 +58,24 @@ contract CashRemunerationEIP712 is
   }
 
   /// @dev String representations of the Wage and WageClaim structs, used in EIP-712 encoding.
-  string private constant WAGE_TYPE = "Wage(uint256 hourlyRate,address tokenAddress)";
-  string private constant WAGE_CLAIM_TYPE =
+  string private constant _WAGE_TYPE = "Wage(uint256 hourlyRate,address tokenAddress)";
+  string private constant _WAGE_CLAIM_TYPE =
     "WageClaim(address employeeAddress,uint16 minutesWorked,Wage[] wages,uint256 date)";
 
   /// @dev Typehash for the Wage struct, used in EIP-712 encoding.
-  bytes32 constant WAGE_TYPEHASH = keccak256(abi.encodePacked(WAGE_TYPE));
+  bytes32 constant _WAGE_TYPEHASH = keccak256(abi.encodePacked(_WAGE_TYPE));
 
   /// @dev Typehash for the WageClaim struct, used in EIP-712 encoding.
-  bytes32 constant WAGE_CLAIM_TYPEHASH = keccak256(abi.encodePacked(WAGE_CLAIM_TYPE, WAGE_TYPE));
+  bytes32 constant _WAGE_CLAIM_TYPEHASH = keccak256(abi.encodePacked(_WAGE_CLAIM_TYPE, _WAGE_TYPE));
 
   /// @dev Mapping to track wage claims that have already been paid.
-  mapping(bytes32 => bool) public paidWageClaims;
+  mapping(bytes32 signatureHash => bool paid) public paidWageClaims;
 
   // Add new state variable - MUST be added after existing ones
   address public officerAddress;
 
   // @dev Mapping to track enabled wage claims by their signature hash.
-  mapping(bytes32 => bool) public disabledWageClaims;
+  mapping(bytes32 signatureHash => bool disabled) public disabledWageClaims;
 
   // Storage gap for future upgrades
   uint256[49] private __gap;
@@ -189,69 +188,11 @@ contract CashRemunerationEIP712 is
   }
 
   /**
-   * @dev Initializes the contract with the specified owner.
-   * @param _owner The address of the contract owner.
+   * @notice Allows the contract to receive Ether.
+   * @dev Emits a {Deposited} event.
    */
-  function initialize(address _owner, address[] calldata _tokenAddresses) public initializer {
-    address owner = _owner == address(0) ? msg.sender : _owner;
-    __Ownable_init(owner);
-    __ReentrancyGuard_init();
-    __EIP712_init("CashRemuneration", "1");
-    __Pausable_init();
-
-    if (msg.sender == address(0)) revert ZeroAddress();
-    officerAddress = msg.sender;
-
-    // Set the initial supported tokens
-    for (uint256 i = 0; i < _tokenAddresses.length; i++) {
-      if (_tokenAddresses[i] == address(0)) revert ZeroAddress();
-      _addTokenSupport(_tokenAddresses[i]);
-    }
-    // Emit events after they're already added to avoid duplicate events
-    for (uint256 i = 0; i < _tokenAddresses.length; i++) {
-      emit TokenSupportAdded(_tokenAddresses[i]);
-    }
-  }
-
-  /**
-   * @dev Computes the hash of a given Wage struct.
-   * @param wage A single wage struct to hash.
-   * @return The hash of the Wage struct.
-   * The hash is used for signature verification in EIP-712.
-   */
-  function wageHash(Wage calldata wage) private pure returns (bytes32) {
-    return keccak256(abi.encode(WAGE_TYPEHASH, wage.hourlyRate, wage.tokenAddress));
-  }
-
-  /**
-   * @dev Computes the hash of a given collection of Wage structs.
-   * @param wages The Wage structs to hash.
-   * @return The hash of the Wage structs.
-   */
-  function wageHashes(Wage[] calldata wages) private pure returns (bytes32) {
-    bytes32[] memory hashes = new bytes32[](wages.length);
-    for (uint256 i = 0; i < wages.length; i++) {
-      hashes[i] = wageHash(wages[i]);
-    }
-    return keccak256(abi.encodePacked(hashes));
-  }
-
-  /**
-   * @dev Computes the hash of a given WageClaim.
-   * @param wageClaim The WageClaim struct to hash.
-   * @return The hash of the WageClaim.
-   */
-  function wageClaimHash(WageClaim calldata wageClaim) private pure returns (bytes32) {
-    return
-      keccak256(
-        abi.encode(
-          WAGE_CLAIM_TYPEHASH,
-          wageClaim.employeeAddress,
-          wageClaim.minutesWorked,
-          wageHashes(wageClaim.wages),
-          wageClaim.date
-        )
-      );
+  receive() external payable {
+    emit Deposited(msg.sender, msg.value);
   }
 
   /**
@@ -296,7 +237,7 @@ contract CashRemunerationEIP712 is
       abi.encodePacked(
         "\x19\x01", // EIP-712 prefix
         _domainSeparatorV4(), // Contract-specific domain separator
-        wageClaimHash(wageClaim) // Hash of the wage claim data
+        _wageClaimHash(wageClaim) // Hash of the wage claim data
       )
     );
 
@@ -479,10 +420,68 @@ contract CashRemunerationEIP712 is
   }
 
   /**
-   * @notice Allows the contract to receive Ether.
-   * @dev Emits a {Deposited} event.
+   * @dev Initializes the contract with the specified owner.
+   * @param _owner The address of the contract owner.
    */
-  receive() external payable {
-    emit Deposited(msg.sender, msg.value);
+  function initialize(address _owner, address[] calldata _tokenAddresses) public initializer {
+    address owner = _owner == address(0) ? msg.sender : _owner;
+    __Ownable_init(owner);
+    __ReentrancyGuard_init();
+    __EIP712_init("CashRemuneration", "1");
+    __Pausable_init();
+
+    if (msg.sender == address(0)) revert ZeroAddress();
+    officerAddress = msg.sender;
+
+    // Set the initial supported tokens
+    for (uint256 i = 0; i < _tokenAddresses.length; i++) {
+      if (_tokenAddresses[i] == address(0)) revert ZeroAddress();
+      _addTokenSupport(_tokenAddresses[i]);
+    }
+    // Emit events after they're already added to avoid duplicate events
+    for (uint256 i = 0; i < _tokenAddresses.length; i++) {
+      emit TokenSupportAdded(_tokenAddresses[i]);
+    }
+  }
+
+  /**
+   * @dev Computes the hash of a given Wage struct.
+   * @param wage A single wage struct to hash.
+   * @return The hash of the Wage struct.
+   * The hash is used for signature verification in EIP-712.
+   */
+  function _wageHash(Wage calldata wage) private pure returns (bytes32) {
+    return keccak256(abi.encode(_WAGE_TYPEHASH, wage.hourlyRate, wage.tokenAddress));
+  }
+
+  /**
+   * @dev Computes the hash of a given collection of Wage structs.
+   * @param wages The Wage structs to hash.
+   * @return The hash of the Wage structs.
+   */
+  function _wageHashes(Wage[] calldata wages) private pure returns (bytes32) {
+    bytes32[] memory hashes = new bytes32[](wages.length);
+    for (uint256 i = 0; i < wages.length; i++) {
+      hashes[i] = _wageHash(wages[i]);
+    }
+    return keccak256(abi.encodePacked(hashes));
+  }
+
+  /**
+   * @dev Computes the hash of a given WageClaim.
+   * @param wageClaim The WageClaim struct to hash.
+   * @return The hash of the WageClaim.
+   */
+  function _wageClaimHash(WageClaim calldata wageClaim) private pure returns (bytes32) {
+    return
+      keccak256(
+        abi.encode(
+          _WAGE_CLAIM_TYPEHASH,
+          wageClaim.employeeAddress,
+          wageClaim.minutesWorked,
+          _wageHashes(wageClaim.wages),
+          wageClaim.date
+        )
+      );
   }
 }

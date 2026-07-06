@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
-import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {IOfficer} from "../interfaces/IOfficer.sol";
 
 /**
@@ -27,12 +27,6 @@ contract InvestorV1 is
   using EnumerableSet for EnumerableSet.AddressSet;
   using SafeERC20 for IERC20;
 
-  // Add MINTER_ROLE constant - this doesn't affect storage
-  /// @notice Access control role allowed to mint new tokens.
-  bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
-
-  /// @dev Set of addresses currently holding a non-zero balance.
-  EnumerableSet.AddressSet private shareholders;
   /**
    * @dev Snapshot of a shareholder and their balance.
    * @param shareholder Address of the shareholder.
@@ -42,6 +36,13 @@ contract InvestorV1 is
     address shareholder;
     uint256 amount;
   }
+
+  // Add MINTER_ROLE constant - this doesn't affect storage
+  /// @notice Access control role allowed to mint new tokens.
+  bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
+
+  /// @dev Set of addresses currently holding a non-zero balance.
+  EnumerableSet.AddressSet private _shareholderSet;
 
   /// @notice Address of the Officer contract (set immutably at initialization)
   address public officerAddress;
@@ -118,9 +119,19 @@ contract InvestorV1 is
   /// @param available The current contract balance.
   error InsufficientFundedTokenBalance(address token, uint256 required, uint256 available);
 
+  modifier onlyBank() {
+    if (msg.sender != _getBankAddress()) revert NotBank(msg.sender);
+    _;
+  }
+
   /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() {
     _disableInitializers();
+  }
+
+  /// @notice Allows the contract to receive native ETH (e.g. from Bank dividend funding).
+  receive() external payable {
+    // Contract can receive ETH
   }
 
   /**
@@ -146,16 +157,6 @@ contract InvestorV1 is
 
     if (msg.sender == address(0)) revert ZeroAddress();
     officerAddress = msg.sender;
-  }
-
-  /// @notice Allows the contract to receive native ETH (e.g. from Bank dividend funding).
-  receive() external payable {
-    // Contract can receive ETH
-  }
-
-  /// @notice Returns the token's decimal count.
-  function decimals() public view virtual override returns (uint8) {
-    return 6; // Standard for many tokens, can be adjusted as needed
   }
 
   /**
@@ -184,47 +185,6 @@ contract InvestorV1 is
   ) external onlyRole(MINTER_ROLE) whenNotPaused nonReentrant {
     _mint(shareholder, amount);
     emit Minted(shareholder, amount);
-  }
-
-  function _update(address from, address to, uint256 value) internal override {
-    super._update(from, to, value);
-
-    if (balanceOf(from) == 0) {
-      shareholders.remove(from);
-    }
-
-    if (balanceOf(to) > 0 && !shareholders.contains(to)) {
-      shareholders.add(to);
-    }
-  }
-
-  /**
-   * @notice Returns a snapshot of all current shareholders with their balances.
-   * @return Array of Shareholder structs.
-   */
-  function getShareholders() external view returns (Shareholder[] memory) {
-    Shareholder[] memory _shareholders = new Shareholder[](shareholders.length());
-    for (uint256 i = 0; i < shareholders.length(); i++) {
-      address shareholder = shareholders.at(i);
-      _shareholders[i] = Shareholder(shareholder, balanceOf(shareholder));
-    }
-    return _shareholders;
-  }
-
-  /**
-   * @notice Internal helper to get Bank contract address from Officer
-   * @return Address of the Bank contract
-   */
-  function _getBankAddress() internal view returns (address) {
-    if (officerAddress == address(0)) revert OfficerAddressNotSet();
-    address bankAddress = IOfficer(officerAddress).findDeployedContract("Bank");
-    if (bankAddress == address(0)) revert BankContractNotFound();
-    return bankAddress;
-  }
-
-  modifier onlyBank() {
-    if (msg.sender != _getBankAddress()) revert NotBank(msg.sender);
-    _;
   }
 
   /**
@@ -316,19 +276,6 @@ contract InvestorV1 is
     emit DividendDistributed(msg.sender, _token, _amount, currentShareholders.length);
   }
 
-  /**
-   * @notice Internal helper to get current shareholders snapshot
-   * @return Array of shareholder addresses and their balances
-   */
-  function _getShareholders() internal view returns (Shareholder[] memory) {
-    Shareholder[] memory _shareholders = new Shareholder[](shareholders.length());
-    for (uint256 i = 0; i < shareholders.length(); i++) {
-      address shareholder = shareholders.at(i);
-      _shareholders[i] = Shareholder(shareholder, balanceOf(shareholder));
-    }
-    return _shareholders;
-  }
-
   /// @notice Pauses token operations.
   function pause() external onlyOwner {
     _pause();
@@ -337,5 +284,59 @@ contract InvestorV1 is
   /// @notice Unpauses token operations.
   function unpause() external onlyOwner {
     _unpause();
+  }
+
+  /**
+   * @notice Returns a snapshot of all current shareholders with their balances.
+   * @return Array of Shareholder structs.
+   */
+  function getShareholders() external view returns (Shareholder[] memory) {
+    Shareholder[] memory _shareholders = new Shareholder[](_shareholderSet.length());
+    for (uint256 i = 0; i < _shareholderSet.length(); i++) {
+      address shareholder = _shareholderSet.at(i);
+      _shareholders[i] = Shareholder(shareholder, balanceOf(shareholder));
+    }
+    return _shareholders;
+  }
+
+  /// @notice Returns the token's decimal count.
+  function decimals() public view virtual override returns (uint8) {
+    return 6; // Standard for many tokens, can be adjusted as needed
+  }
+
+  function _update(address from, address to, uint256 value) internal override {
+    super._update(from, to, value);
+
+    if (balanceOf(from) == 0) {
+      _shareholderSet.remove(from);
+    }
+
+    if (balanceOf(to) > 0 && !_shareholderSet.contains(to)) {
+      _shareholderSet.add(to);
+    }
+  }
+
+  /**
+   * @notice Internal helper to get Bank contract address from Officer
+   * @return Address of the Bank contract
+   */
+  function _getBankAddress() internal view returns (address) {
+    if (officerAddress == address(0)) revert OfficerAddressNotSet();
+    address bankAddress = IOfficer(officerAddress).findDeployedContract("Bank");
+    if (bankAddress == address(0)) revert BankContractNotFound();
+    return bankAddress;
+  }
+
+  /**
+   * @notice Internal helper to get current shareholders snapshot
+   * @return Array of shareholder addresses and their balances
+   */
+  function _getShareholders() internal view returns (Shareholder[] memory) {
+    Shareholder[] memory _shareholders = new Shareholder[](_shareholderSet.length());
+    for (uint256 i = 0; i < _shareholderSet.length(); i++) {
+      address shareholder = _shareholderSet.at(i);
+      _shareholders[i] = Shareholder(shareholder, balanceOf(shareholder));
+    }
+    return _shareholders;
   }
 }

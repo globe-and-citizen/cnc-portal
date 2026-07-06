@@ -17,19 +17,10 @@ interface IFeeCollector is ITokenSupport {
     uint16 feeBps; // Fee in basis points (100 = 1%)
   }
 
-  /// @notice Get fee in basis points for a contract type
-  /// @param contractType Name of the contract type
-  /// @return Fee in basis points
-  function getFeeFor(string memory contractType) external view returns (uint16);
-
   /// @notice Set fee for a contract type
   /// @param contractType Name of the contract type
   /// @param feeBps Fee in basis points
   function setFee(string memory contractType, uint16 feeBps) external;
-
-  /// @notice Get all configured fees
-  /// @return Array of FeeConfig structs
-  function getAllFeeConfigs() external view returns (FeeConfig[] memory);
 
   // ============ Fee Payment ============
   /// @notice Pay a native fee into the collector and emit a FeePaid event
@@ -42,11 +33,6 @@ interface IFeeCollector is ITokenSupport {
   /// @param amount Amount to pull from the caller via transferFrom
   function payFeeToken(string calldata contractType, address token, uint256 amount) external;
 
-  // ============ Fee Beneficiary ============
-  /// @notice Address that receives funds on withdraw / withdrawToken
-  /// @return Current beneficiary; address(0) means withdrawals fall back to owner()
-  function feeBeneficiary() external view returns (address);
-
   /// @notice Set the address that will receive swept fees
   /// @param _beneficiary New beneficiary address, or address(0) to clear (fall back to owner)
   function setFeeBeneficiary(address _beneficiary) external;
@@ -54,6 +40,20 @@ interface IFeeCollector is ITokenSupport {
   // ============ Withdrawals ============
   /// @notice Sweep the full native balance and every supported ERC20 balance to the fee beneficiary (or owner if unset)
   function withdraw() external;
+
+  /// @notice Get fee in basis points for a contract type
+  /// @param contractType Name of the contract type
+  /// @return Fee in basis points
+  function getFeeFor(string memory contractType) external view returns (uint16);
+
+  /// @notice Get all configured fees
+  /// @return Array of FeeConfig structs
+  function getAllFeeConfigs() external view returns (FeeConfig[] memory);
+
+  // ============ Fee Beneficiary ============
+  /// @notice Address that receives funds on withdraw / withdrawToken
+  /// @return Current beneficiary; address(0) means withdrawals fall back to owner()
+  function feeBeneficiary() external view returns (address);
 
   // ============ Balance Queries ============
   /// @notice Get native ETH balance

@@ -2,12 +2,12 @@
 pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@quant-finance/solidity-datetime/contracts/DateTime.sol";
 import "../base/TokenSupport.sol";
 import {IOfficer} from "../interfaces/IOfficer.sol";
@@ -38,6 +38,13 @@ contract ExpenseAccountEIP712 is
     Custom
   }
 
+  /// @dev State of an approval (budget signature) tracked per signature hash.
+  enum ApprovalState {
+    Uninitialized,
+    Active,
+    Inactive
+  }
+
   /**
    * @dev A signed budget authorization.
    * @param amount Per-period (or per-transaction for one-time) spending cap.
@@ -58,13 +65,6 @@ contract ExpenseAccountEIP712 is
     address approvedAddress;
   }
 
-  /// @dev State of an approval (budget signature) tracked per signature hash.
-  enum ApprovalState {
-    Uninitialized,
-    Active,
-    Inactive
-  }
-
   /**
    * @dev Running balance/state recorded per budget signature.
    * @param lastWithdrawnDate Timestamp of the most recent withdrawal.
@@ -79,19 +79,19 @@ contract ExpenseAccountEIP712 is
     ApprovalState state;
   }
 
+  string private constant _BUDGET_LIMIT_TYPE =
+    "BudgetLimit(uint256 amount,uint8 frequencyType,uint256 customFrequency,uint256 startDate,uint256 endDate,address tokenAddress,address approvedAddress)";
+
+  bytes32 private constant _BUDGET_LIMIT_TYPEHASH = keccak256(abi.encodePacked(_BUDGET_LIMIT_TYPE));
+
   /// @notice Tracks expense balances per signature hash.
-  mapping(bytes32 => ExpenseBalance) public expenseBalances;
+  mapping(bytes32 signatureHash => ExpenseBalance balance) public expenseBalances;
 
   // Add new state variable - MUST be added after existing ones
   address public officerAddress;
 
   // Storage gap for future upgrades
   uint256[49] private __gap;
-
-  string private constant BUDGET_LIMIT_TYPE =
-    "BudgetLimit(uint256 amount,uint8 frequencyType,uint256 customFrequency,uint256 startDate,uint256 endDate,address tokenAddress,address approvedAddress)";
-
-  bytes32 constant BUDGET_LIMIT_TYPEHASH = keccak256(abi.encodePacked(BUDGET_LIMIT_TYPE));
 
   /**
    * @notice Emitted when native token is deposited into the contract.
@@ -241,31 +241,9 @@ contract ExpenseAccountEIP712 is
     _disableInitializers();
   }
 
-  /**
-   * @notice Initializes the expense account contract.
-   * @param owner The contract owner that will sign budget approvals.
-   * @param _tokenAddresses Initial set of supported ERC20 tokens.
-   */
-  function initialize(address owner, address[] calldata _tokenAddresses) public initializer {
-    if (owner == address(0)) revert ZeroAddress();
-    __Ownable_init(owner);
-    __ReentrancyGuard_init();
-    __EIP712_init("CNCExpenseAccount", "1");
-    __Pausable_init();
-
-    if (msg.sender == address(0)) revert ZeroAddress();
-    officerAddress = msg.sender;
-
-    // Set the initial supported tokens
-    uint256 length = _tokenAddresses.length;
-    for (uint256 i = 0; i < length; ++i) {
-      if (_tokenAddresses[i] == address(0)) revert ZeroAddress();
-      _addTokenSupport(_tokenAddresses[i]);
-    }
-    // Emit events after they're already added to avoid duplicate events
-    for (uint256 i = 0; i < length; ++i) {
-      emit TokenSupportAdded(_tokenAddresses[i]);
-    }
+  /// @notice Accepts native token deposits and emits {Deposited}.
+  receive() external payable {
+    emit Deposited(msg.sender, msg.value);
   }
 
   /**
@@ -301,7 +279,7 @@ contract ExpenseAccountEIP712 is
     if (!validateTransfer(budgetLimit, amount, signatureHash)) revert TransferNotAllowed();
 
     // Update expense balance
-    updateExpenseBalance(budgetLimit, amount, signatureHash);
+    _updateExpenseBalance(budgetLimit, amount, signatureHash);
 
     // Perform transfer
     if (budgetLimit.tokenAddress == address(0)) {
@@ -320,265 +298,6 @@ contract ExpenseAccountEIP712 is
       }
       emit TokenTransfer(budgetLimit.approvedAddress, to, budgetLimit.tokenAddress, amount);
     }
-  }
-
-  /**
-   * @notice Validates that a proposed transfer respects the budget limits.
-   * @param budgetLimit The signed budget authorization.
-   * @param amount The requested transfer amount.
-   * @param signatureHash The keccak256 hash of the approval signature.
-   * @return True if the transfer is allowed.
-   */
-  function validateTransfer(
-    BudgetLimit calldata budgetLimit,
-    uint256 amount,
-    bytes32 signatureHash
-  ) public view returns (bool) {
-    if (block.timestamp < budgetLimit.startDate) {
-      revert ApprovalNotActive(block.timestamp, budgetLimit.startDate);
-    }
-    if (block.timestamp > budgetLimit.endDate) {
-      revert ApprovalExpired(block.timestamp, budgetLimit.endDate);
-    }
-
-    // Check amount doesn't exceed single withdrawal limit
-    if (amount > budgetLimit.amount) revert AmountExceedsBudgetLimit();
-
-    ExpenseBalance storage balance = expenseBalances[signatureHash];
-
-    // For one-time withdrawals
-    if (budgetLimit.frequencyType == FrequencyType.OneTime) {
-      if (balance.totalWithdrawn != 0) revert OneTimeBudgetAlreadyUsed();
-      return true;
-    }
-
-    // For periodic withdrawals
-    uint256 currentPeriod = getCurrentPeriod(budgetLimit);
-
-    if (currentPeriod > balance.lastWithdrawnPeriod || balance.lastWithdrawnDate == 0) {
-      // New period - check single withdrawal limit
-      if (amount > budgetLimit.amount) revert AmountExceedsPeriodBudget();
-    } else {
-      // Same period - check cumulative amount
-      if (balance.totalWithdrawn + amount > budgetLimit.amount) {
-        revert AmountExceedsPeriodBudget();
-      }
-    }
-
-    // Check token is supported (allows native token)
-    if (budgetLimit.tokenAddress != address(0) && !isTokenSupported(budgetLimit.tokenAddress)) {
-      revert TokenNotSupported(budgetLimit.tokenAddress);
-    }
-
-    return true;
-  }
-
-  /**
-   * @dev Updates the expense balance record after a successful withdrawal.
-   * @param budgetLimit The signed budget authorization.
-   * @param amount Amount that was withdrawn.
-   * @param signatureHash The keccak256 hash of the approval signature.
-   */
-  function updateExpenseBalance(
-    BudgetLimit calldata budgetLimit,
-    uint256 amount,
-    bytes32 signatureHash
-  ) internal {
-    ExpenseBalance storage balance = expenseBalances[signatureHash];
-    uint256 currentPeriod = getCurrentPeriod(budgetLimit);
-
-    if (budgetLimit.frequencyType == FrequencyType.OneTime) {
-      // One-time withdrawal - just add to total
-      balance.totalWithdrawn += amount;
-    } else if (currentPeriod > balance.lastWithdrawnPeriod || balance.lastWithdrawnDate == 0) {
-      // New period - reset total and update period
-      balance.totalWithdrawn = amount;
-      balance.lastWithdrawnPeriod = currentPeriod;
-      balance.lastWithdrawnDate = block.timestamp;
-    } else {
-      // Same period - add to existing total
-      balance.totalWithdrawn += amount;
-    }
-  }
-
-  /**
-   * @notice Returns the current calendar period index for a budget.
-   * @param budgetLimit The signed budget authorization.
-   * @return The current period index.
-   */
-  function getCurrentPeriod(BudgetLimit calldata budgetLimit) public view returns (uint256) {
-    return getPeriod(budgetLimit, block.timestamp);
-  }
-
-  /**
-   * @notice Returns the period index for a specific timestamp under a budget's frequency.
-   * @param budgetLimit The signed budget authorization.
-   * @param timestamp Timestamp to evaluate.
-   * @return The period index at `timestamp`.
-   */
-  function getPeriod(
-    BudgetLimit calldata budgetLimit,
-    uint256 timestamp
-  ) public pure returns (uint256) {
-    if (timestamp < budgetLimit.startDate) return 0;
-
-    if (budgetLimit.frequencyType == FrequencyType.OneTime) {
-      return 0;
-    } else if (budgetLimit.frequencyType == FrequencyType.Daily) {
-      // Daily periods reset at midnight UTC
-      return (timestamp - budgetLimit.startDate) / 1 days;
-    } else if (budgetLimit.frequencyType == FrequencyType.Weekly) {
-      // Weekly periods: Sunday to Saturday
-      return getWeeksSinceStart(budgetLimit.startDate, timestamp);
-    } else if (budgetLimit.frequencyType == FrequencyType.Monthly) {
-      // Monthly periods: 1st to last day of each month
-      return getMonthsSinceStart(budgetLimit.startDate, timestamp);
-    } else if (budgetLimit.frequencyType == FrequencyType.Custom) {
-      if (budgetLimit.customFrequency == 0) revert InvalidCustomFrequency();
-      return (timestamp - budgetLimit.startDate) / budgetLimit.customFrequency;
-    }
-
-    revert InvalidFrequencyType();
-  }
-
-  /**
-   * @dev Calculate weeks since start date (Monday to Sunday weeks).
-   * @param startDate The reference start timestamp.
-   * @param timestamp The timestamp to compare.
-   * @return Number of full weeks between the Mondays of `startDate` and `timestamp`.
-   */
-  function getWeeksSinceStart(
-    uint256 startDate,
-    uint256 timestamp
-  ) internal pure returns (uint256) {
-    // Get the Monday of the start date week
-    uint256 startMonday = getStartOfWeek(startDate);
-    // Get the Monday of the current timestamp week
-    uint256 currentMonday = getStartOfWeek(timestamp);
-
-    // Ensure we don't underflow and calculate weeks between the two Mondays
-    if (currentMonday < startMonday) {
-      return 0;
-    }
-
-    // Calculate weeks between the two Mondays
-    return (currentMonday - startMonday) / 1 weeks;
-  }
-
-  /**
-   * @dev Returns the timestamp of the previous Monday at 00:00:00 UTC for a given timestamp.
-   * @param timestamp The reference timestamp.
-   * @return The start-of-week timestamp.
-   */
-  function getStartOfWeek(uint256 timestamp) internal pure returns (uint256) {
-    // DateTime.getDayOfWeek returns 1 for Monday, 2 for Tuesday, ..., 7 for Sunday
-    uint256 dayOfWeek = DateTime.getDayOfWeek(timestamp);
-
-    // Get the date at 00:00:00 of the current day
-    uint256 currentDayStart = DateTime.timestampFromDate(
-      DateTime.getYear(timestamp),
-      DateTime.getMonth(timestamp),
-      DateTime.getDay(timestamp)
-    );
-
-    // If it's Monday, return the same day at 00:00:00
-    if (dayOfWeek == 1) {
-      return currentDayStart;
-    } else {
-      // Go back to previous Monday
-      // Subtract (dayOfWeek - 1) days to get to Monday
-      uint256 daysToSubtract = (dayOfWeek - 1) * 1 days;
-      if (currentDayStart >= daysToSubtract) {
-        return currentDayStart - daysToSubtract;
-      } else {
-        // If we would go before timestamp 0, just return 0
-        return 0;
-      }
-    }
-  }
-
-  /**
-   * @dev Calculates months elapsed between two timestamps based on calendar months.
-   * @param startDate The reference start timestamp.
-   * @param timestamp The timestamp to compare.
-   * @return Number of calendar months between `startDate` and `timestamp`.
-   */
-  function getMonthsSinceStart(
-    uint256 startDate,
-    uint256 timestamp
-  ) internal pure returns (uint256) {
-    uint256 startYear = DateTime.getYear(startDate);
-    uint256 startMonth = DateTime.getMonth(startDate);
-
-    uint256 currentYear = DateTime.getYear(timestamp);
-    uint256 currentMonth = DateTime.getMonth(timestamp);
-
-    // Handle the case where current date is before start date
-    if (timestamp < startDate) {
-      return 0;
-    }
-
-    // Calculate the difference safely
-    if (currentYear == startYear) {
-      // Same year
-      if (currentMonth >= startMonth) {
-        return currentMonth - startMonth;
-      }
-    } else if (currentYear > startYear) {
-      // Different years
-      uint256 fullYears = currentYear - startYear - 1;
-      uint256 monthsFromFirstYear = 12 - startMonth;
-      uint256 monthsFromCurrentYear = currentMonth;
-
-      return fullYears * 12 + monthsFromFirstYear + monthsFromCurrentYear;
-    }
-
-    // Should not reach here if timestamp >= startDate
-    return 0;
-  }
-
-  /**
-   * @notice Returns whether the current time starts a new period relative to the last withdrawal.
-   * @param budgetLimit The signed budget authorization.
-   * @param signatureHash The keccak256 hash of the approval signature.
-   * @return True if this timestamp begins a new period (or there has never been a withdrawal).
-   */
-  function isNewPeriod(
-    BudgetLimit calldata budgetLimit,
-    bytes32 signatureHash
-  ) public view returns (bool) {
-    if (budgetLimit.frequencyType == FrequencyType.OneTime) {
-      return false;
-    }
-
-    ExpenseBalance storage balance = expenseBalances[signatureHash];
-    if (balance.lastWithdrawnDate == 0) {
-      return true; // Never withdrawn
-    }
-
-    uint256 currentPeriod = getCurrentPeriod(budgetLimit);
-    return currentPeriod > balance.lastWithdrawnPeriod;
-  }
-
-  /**
-   * @notice Computes the EIP-712 hash of a BudgetLimit struct.
-   * @param budgetLimit The budget limit to hash.
-   * @return The struct hash usable for EIP-712 signing.
-   */
-  function budgetLimitHash(BudgetLimit calldata budgetLimit) public pure returns (bytes32) {
-    return
-      keccak256(
-        abi.encode(
-          BUDGET_LIMIT_TYPEHASH,
-          budgetLimit.amount,
-          budgetLimit.frequencyType,
-          budgetLimit.customFrequency,
-          budgetLimit.startDate,
-          budgetLimit.endDate,
-          budgetLimit.tokenAddress,
-          budgetLimit.approvedAddress
-        )
-      );
   }
 
   /**
@@ -648,16 +367,6 @@ contract ExpenseAccountEIP712 is
     }
   }
 
-  /// @notice Returns the contract's native token balance.
-  function getBalance() external view returns (uint256) {
-    return address(this).balance;
-  }
-
-  /// @notice Accepts native token deposits and emits {Deposited}.
-  receive() external payable {
-    emit Deposited(msg.sender, msg.value);
-  }
-
   /**
    * @notice Deposits ERC20 tokens from the caller to the contract.
    * @param token The address of the token to deposit.
@@ -697,6 +406,11 @@ contract ExpenseAccountEIP712 is
     _removeTokenSupport(_tokenAddress);
   }
 
+  /// @notice Returns the contract's native token balance.
+  function getBalance() external view returns (uint256) {
+    return address(this).balance;
+  }
+
   /**
    * @notice Returns the contract's balance of a supported token.
    * @param token The token address (use address(0) for native token).
@@ -705,5 +419,291 @@ contract ExpenseAccountEIP712 is
   function getTokenBalance(address token) external view returns (uint256) {
     if (token != address(0) && !isTokenSupported(token)) revert TokenNotSupported(token);
     return IERC20(token).balanceOf(address(this));
+  }
+
+  /**
+   * @notice Initializes the expense account contract.
+   * @param owner The contract owner that will sign budget approvals.
+   * @param _tokenAddresses Initial set of supported ERC20 tokens.
+   */
+  function initialize(address owner, address[] calldata _tokenAddresses) public initializer {
+    if (owner == address(0)) revert ZeroAddress();
+    __Ownable_init(owner);
+    __ReentrancyGuard_init();
+    __EIP712_init("CNCExpenseAccount", "1");
+    __Pausable_init();
+
+    if (msg.sender == address(0)) revert ZeroAddress();
+    officerAddress = msg.sender;
+
+    // Set the initial supported tokens
+    uint256 length = _tokenAddresses.length;
+    for (uint256 i = 0; i < length; ++i) {
+      if (_tokenAddresses[i] == address(0)) revert ZeroAddress();
+      _addTokenSupport(_tokenAddresses[i]);
+    }
+    // Emit events after they're already added to avoid duplicate events
+    for (uint256 i = 0; i < length; ++i) {
+      emit TokenSupportAdded(_tokenAddresses[i]);
+    }
+  }
+
+  /**
+   * @notice Validates that a proposed transfer respects the budget limits.
+   * @param budgetLimit The signed budget authorization.
+   * @param amount The requested transfer amount.
+   * @param signatureHash The keccak256 hash of the approval signature.
+   * @return True if the transfer is allowed.
+   */
+  function validateTransfer(
+    BudgetLimit calldata budgetLimit,
+    uint256 amount,
+    bytes32 signatureHash
+  ) public view returns (bool) {
+    if (block.timestamp < budgetLimit.startDate) {
+      revert ApprovalNotActive(block.timestamp, budgetLimit.startDate);
+    }
+    if (block.timestamp > budgetLimit.endDate) {
+      revert ApprovalExpired(block.timestamp, budgetLimit.endDate);
+    }
+
+    // Check amount doesn't exceed single withdrawal limit
+    if (amount > budgetLimit.amount) revert AmountExceedsBudgetLimit();
+
+    ExpenseBalance storage balance = expenseBalances[signatureHash];
+
+    // For one-time withdrawals
+    if (budgetLimit.frequencyType == FrequencyType.OneTime) {
+      if (balance.totalWithdrawn != 0) revert OneTimeBudgetAlreadyUsed();
+      return true;
+    }
+
+    // For periodic withdrawals
+    uint256 currentPeriod = getCurrentPeriod(budgetLimit);
+
+    if (currentPeriod > balance.lastWithdrawnPeriod || balance.lastWithdrawnDate == 0) {
+      // New period - check single withdrawal limit
+      if (amount > budgetLimit.amount) revert AmountExceedsPeriodBudget();
+    } else {
+      // Same period - check cumulative amount
+      if (balance.totalWithdrawn + amount > budgetLimit.amount) {
+        revert AmountExceedsPeriodBudget();
+      }
+    }
+
+    // Check token is supported (allows native token)
+    if (budgetLimit.tokenAddress != address(0) && !isTokenSupported(budgetLimit.tokenAddress)) {
+      revert TokenNotSupported(budgetLimit.tokenAddress);
+    }
+
+    return true;
+  }
+
+  /**
+   * @notice Returns the current calendar period index for a budget.
+   * @param budgetLimit The signed budget authorization.
+   * @return The current period index.
+   */
+  function getCurrentPeriod(BudgetLimit calldata budgetLimit) public view returns (uint256) {
+    return getPeriod(budgetLimit, block.timestamp);
+  }
+
+  /**
+   * @notice Returns whether the current time starts a new period relative to the last withdrawal.
+   * @param budgetLimit The signed budget authorization.
+   * @param signatureHash The keccak256 hash of the approval signature.
+   * @return True if this timestamp begins a new period (or there has never been a withdrawal).
+   */
+  function isNewPeriod(
+    BudgetLimit calldata budgetLimit,
+    bytes32 signatureHash
+  ) public view returns (bool) {
+    if (budgetLimit.frequencyType == FrequencyType.OneTime) {
+      return false;
+    }
+
+    ExpenseBalance storage balance = expenseBalances[signatureHash];
+    if (balance.lastWithdrawnDate == 0) {
+      return true; // Never withdrawn
+    }
+
+    uint256 currentPeriod = getCurrentPeriod(budgetLimit);
+    return currentPeriod > balance.lastWithdrawnPeriod;
+  }
+
+  /**
+   * @notice Returns the period index for a specific timestamp under a budget's frequency.
+   * @param budgetLimit The signed budget authorization.
+   * @param timestamp Timestamp to evaluate.
+   * @return The period index at `timestamp`.
+   */
+  function getPeriod(
+    BudgetLimit calldata budgetLimit,
+    uint256 timestamp
+  ) public pure returns (uint256) {
+    if (timestamp < budgetLimit.startDate) return 0;
+
+    if (budgetLimit.frequencyType == FrequencyType.OneTime) {
+      return 0;
+    } else if (budgetLimit.frequencyType == FrequencyType.Daily) {
+      // Daily periods reset at midnight UTC
+      return (timestamp - budgetLimit.startDate) / 1 days;
+    } else if (budgetLimit.frequencyType == FrequencyType.Weekly) {
+      // Weekly periods: Sunday to Saturday
+      return _getWeeksSinceStart(budgetLimit.startDate, timestamp);
+    } else if (budgetLimit.frequencyType == FrequencyType.Monthly) {
+      // Monthly periods: 1st to last day of each month
+      return _getMonthsSinceStart(budgetLimit.startDate, timestamp);
+    } else if (budgetLimit.frequencyType == FrequencyType.Custom) {
+      if (budgetLimit.customFrequency == 0) revert InvalidCustomFrequency();
+      return (timestamp - budgetLimit.startDate) / budgetLimit.customFrequency;
+    }
+
+    revert InvalidFrequencyType();
+  }
+
+  /**
+   * @notice Computes the EIP-712 hash of a BudgetLimit struct.
+   * @param budgetLimit The budget limit to hash.
+   * @return The struct hash usable for EIP-712 signing.
+   */
+  function budgetLimitHash(BudgetLimit calldata budgetLimit) public pure returns (bytes32) {
+    return
+      keccak256(
+        abi.encode(
+          _BUDGET_LIMIT_TYPEHASH,
+          budgetLimit.amount,
+          budgetLimit.frequencyType,
+          budgetLimit.customFrequency,
+          budgetLimit.startDate,
+          budgetLimit.endDate,
+          budgetLimit.tokenAddress,
+          budgetLimit.approvedAddress
+        )
+      );
+  }
+
+  /**
+   * @dev Updates the expense balance record after a successful withdrawal.
+   * @param budgetLimit The signed budget authorization.
+   * @param amount Amount that was withdrawn.
+   * @param signatureHash The keccak256 hash of the approval signature.
+   */
+  function _updateExpenseBalance(
+    BudgetLimit calldata budgetLimit,
+    uint256 amount,
+    bytes32 signatureHash
+  ) internal {
+    ExpenseBalance storage balance = expenseBalances[signatureHash];
+    uint256 currentPeriod = getCurrentPeriod(budgetLimit);
+
+    if (budgetLimit.frequencyType == FrequencyType.OneTime) {
+      // One-time withdrawal - just add to total
+      balance.totalWithdrawn += amount;
+    } else if (currentPeriod > balance.lastWithdrawnPeriod || balance.lastWithdrawnDate == 0) {
+      // New period - reset total and update period
+      balance.totalWithdrawn = amount;
+      balance.lastWithdrawnPeriod = currentPeriod;
+      balance.lastWithdrawnDate = block.timestamp;
+    } else {
+      // Same period - add to existing total
+      balance.totalWithdrawn += amount;
+    }
+  }
+
+  /**
+   * @dev Calculate weeks since start date (Monday to Sunday weeks).
+   * @param startDate The reference start timestamp.
+   * @param timestamp The timestamp to compare.
+   * @return Number of full weeks between the Mondays of `startDate` and `timestamp`.
+   */
+  function _getWeeksSinceStart(
+    uint256 startDate,
+    uint256 timestamp
+  ) internal pure returns (uint256) {
+    // Get the Monday of the start date week
+    uint256 startMonday = _getStartOfWeek(startDate);
+    // Get the Monday of the current timestamp week
+    uint256 currentMonday = _getStartOfWeek(timestamp);
+
+    // Ensure we don't underflow and calculate weeks between the two Mondays
+    if (currentMonday < startMonday) {
+      return 0;
+    }
+
+    // Calculate weeks between the two Mondays
+    return (currentMonday - startMonday) / 1 weeks;
+  }
+
+  /**
+   * @dev Returns the timestamp of the previous Monday at 00:00:00 UTC for a given timestamp.
+   * @param timestamp The reference timestamp.
+   * @return The start-of-week timestamp.
+   */
+  function _getStartOfWeek(uint256 timestamp) internal pure returns (uint256) {
+    // DateTime.getDayOfWeek returns 1 for Monday, 2 for Tuesday, ..., 7 for Sunday
+    uint256 dayOfWeek = DateTime.getDayOfWeek(timestamp);
+
+    // Get the date at 00:00:00 of the current day
+    uint256 currentDayStart = DateTime.timestampFromDate(
+      DateTime.getYear(timestamp),
+      DateTime.getMonth(timestamp),
+      DateTime.getDay(timestamp)
+    );
+
+    // If it's Monday, return the same day at 00:00:00
+    if (dayOfWeek == 1) {
+      return currentDayStart;
+    } else {
+      // Go back to previous Monday
+      // Subtract (dayOfWeek - 1) days to get to Monday
+      uint256 daysToSubtract = (dayOfWeek - 1) * 1 days;
+      if (currentDayStart >= daysToSubtract) {
+        return currentDayStart - daysToSubtract;
+      } else {
+        // If we would go before timestamp 0, just return 0
+        return 0;
+      }
+    }
+  }
+
+  /**
+   * @dev Calculates months elapsed between two timestamps based on calendar months.
+   * @param startDate The reference start timestamp.
+   * @param timestamp The timestamp to compare.
+   * @return Number of calendar months between `startDate` and `timestamp`.
+   */
+  function _getMonthsSinceStart(
+    uint256 startDate,
+    uint256 timestamp
+  ) internal pure returns (uint256) {
+    uint256 startYear = DateTime.getYear(startDate);
+    uint256 startMonth = DateTime.getMonth(startDate);
+
+    uint256 currentYear = DateTime.getYear(timestamp);
+    uint256 currentMonth = DateTime.getMonth(timestamp);
+
+    // Handle the case where current date is before start date
+    if (timestamp < startDate) {
+      return 0;
+    }
+
+    // Calculate the difference safely
+    if (currentYear == startYear) {
+      // Same year
+      if (currentMonth >= startMonth) {
+        return currentMonth - startMonth;
+      }
+    } else if (currentYear > startYear) {
+      // Different years
+      uint256 fullYears = currentYear - startYear - 1;
+      uint256 monthsFromFirstYear = 12 - startMonth;
+      uint256 monthsFromCurrentYear = currentMonth;
+
+      return fullYears * 12 + monthsFromFirstYear + monthsFromCurrentYear;
+    }
+
+    // Should not reach here if timestamp >= startDate
+    return 0;
   }
 }

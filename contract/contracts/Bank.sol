@@ -7,10 +7,10 @@ import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./base/TokenSupport.sol";
-import {IOfficer} from "./interfaces/IOfficer.sol";
-import {IInvestorV1} from "./interfaces/IInvestorV1.sol";
 import {IFeeCollector} from "./interfaces/IFeeCollector.sol";
 import {IFixedReturn} from "./interfaces/IFixedReturn.sol";
+import {IInvestorV1} from "./interfaces/IInvestorV1.sol";
+import {IOfficer} from "./interfaces/IOfficer.sol";
 
 /**
  * @title Bank
@@ -113,61 +113,17 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
   /// @dev The FixedReturn contract could not be located via the Officer.
   error FixedReturnContractNotFound();
 
-  /**
-   * @dev Resolves the deployed FixedReturn contract from Officer.
-   */
-  function _getFixedReturnAddress() internal view returns (address) {
-    if (officerAddress == address(0)) revert OfficerAddressNotSet();
-    address fixedReturnAddress = IOfficer(officerAddress).findDeployedContract("FixedReturn");
-    if (fixedReturnAddress == address(0)) revert FixedReturnContractNotFound();
-    return fixedReturnAddress;
-  }
-
-  /**
-   * @dev Resolves the deployed Investor contract from Officer.
-   * Tries "InvestorV1" first and falls back to "Investor" for compatibility.
-   */
-  function _getInvestorAddress() internal view returns (address) {
-    if (officerAddress == address(0)) revert OfficerAddressNotSet();
-
-    address investorAddress = IOfficer(officerAddress).findDeployedContract("InvestorV1");
-    if (investorAddress == address(0)) {
-      investorAddress = IOfficer(officerAddress).findDeployedContract("Investor");
-    }
-
-    if (investorAddress == address(0)) revert InvestorContractNotFound();
-    return investorAddress;
-  }
-
   /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() {
     _disableInitializers();
   }
 
   /**
-   * @notice Initializes the Bank contract with supported tokens and owner
-   * @dev This function replaces the constructor for upgradeable contracts
-   * @param _tokenAddresses Array of ERC20 token addresses to be supported initially
-   * @param _sender Address that will become the owner of the contract
-   * @custom:security Only callable once due to initializer modifier
+   * @notice Fallback function to receive ETH deposits
+   * @dev Automatically emits Deposited event when ETH is sent to the contract
    */
-  function initialize(address[] calldata _tokenAddresses, address _sender) public initializer {
-    if (_sender == address(0)) revert ZeroAddress();
-    __Ownable_init(_sender);
-    __ReentrancyGuard_init();
-    __Pausable_init();
-    // Set the initial supported tokens
-    uint256 length = _tokenAddresses.length;
-    for (uint256 i = 0; i < length; ++i) {
-      if (_tokenAddresses[i] == address(0)) revert ZeroAddress();
-      _addTokenSupport(_tokenAddresses[i]);
-    }
-    // Emit events after they're already added to avoid duplicate events
-    for (uint256 i = 0; i < length; ++i) {
-      emit TokenSupportAdded(_tokenAddresses[i]);
-    }
-    if (msg.sender == address(0)) revert ZeroAddress();
-    officerAddress = msg.sender;
+  receive() external payable {
+    emit Deposited(msg.sender, msg.value);
   }
 
   /**
@@ -186,32 +142,6 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
    */
   function removeTokenSupport(address _tokenAddress) external override onlyOwner {
     _removeTokenSupport(_tokenAddress);
-  }
-
-  /**
-   * @notice Returns the current ETH/native token balance held by the contract.
-   * @return Current balance in wei.
-   */
-  function getBalance() public view returns (uint256) {
-    return address(this).balance;
-  }
-
-  /**
-   * @notice Returns the current ERC20 token balance held by the contract.
-   * @param _token The address of the ERC20 token contract.
-   * @return Current token balance.
-   */
-  function getTokenBalance(address _token) public view returns (uint256) {
-    if (!_isTokenSupported(_token)) revert UnsupportedToken(_token);
-    return IERC20(_token).balanceOf(address(this));
-  }
-
-  /**
-   * @notice Fallback function to receive ETH deposits
-   * @dev Automatically emits Deposited event when ETH is sent to the contract
-   */
-  receive() external payable {
-    emit Deposited(msg.sender, msg.value);
   }
 
   /**
@@ -359,23 +289,6 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
   }
 
   /**
-   * @dev Internal function to get the fee basis points from Officer contract
-   * @return The fee in basis points (e.g., 50 = 0.5%)
-   */
-  function _getFeeBps() internal view returns (uint16) {
-    return IOfficer(officerAddress).getFeeFor("BANK");
-  }
-
-  /**
-   * @dev Internal function to check if a token is supported by the FeeCollector
-   * @param _token The token address to check
-   * @return bool True if the token is supported by the FeeCollector
-   */
-  function _isSupportedFeeToken(address _token) internal view returns (bool) {
-    return IOfficer(officerAddress).isFeeCollectorToken(_token);
-  }
-
-  /**
    * @notice Funds a FixedReturn repayment installment and triggers its distribution.
    * @dev Mirrors distributeTokenDividends: Bank transfers the amount to FixedReturn,
    *      then calls into it to fan the payment out to lenders. The token is resolved
@@ -420,5 +333,92 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
    */
   function unpause() external onlyOwner {
     _unpause();
+  }
+
+  /**
+   * @notice Initializes the Bank contract with supported tokens and owner
+   * @dev This function replaces the constructor for upgradeable contracts
+   * @param _tokenAddresses Array of ERC20 token addresses to be supported initially
+   * @param _sender Address that will become the owner of the contract
+   * @custom:security Only callable once due to initializer modifier
+   */
+  function initialize(address[] calldata _tokenAddresses, address _sender) public initializer {
+    if (_sender == address(0)) revert ZeroAddress();
+    __Ownable_init(_sender);
+    __ReentrancyGuard_init();
+    __Pausable_init();
+    // Set the initial supported tokens
+    uint256 length = _tokenAddresses.length;
+    for (uint256 i = 0; i < length; ++i) {
+      if (_tokenAddresses[i] == address(0)) revert ZeroAddress();
+      _addTokenSupport(_tokenAddresses[i]);
+    }
+    // Emit events after they're already added to avoid duplicate events
+    for (uint256 i = 0; i < length; ++i) {
+      emit TokenSupportAdded(_tokenAddresses[i]);
+    }
+    if (msg.sender == address(0)) revert ZeroAddress();
+    officerAddress = msg.sender;
+  }
+
+  /**
+   * @notice Returns the current ETH/native token balance held by the contract.
+   * @return Current balance in wei.
+   */
+  function getBalance() public view returns (uint256) {
+    return address(this).balance;
+  }
+
+  /**
+   * @notice Returns the current ERC20 token balance held by the contract.
+   * @param _token The address of the ERC20 token contract.
+   * @return Current token balance.
+   */
+  function getTokenBalance(address _token) public view returns (uint256) {
+    if (!_isTokenSupported(_token)) revert UnsupportedToken(_token);
+    return IERC20(_token).balanceOf(address(this));
+  }
+
+  /**
+   * @dev Resolves the deployed FixedReturn contract from Officer.
+   */
+  function _getFixedReturnAddress() internal view returns (address) {
+    if (officerAddress == address(0)) revert OfficerAddressNotSet();
+    address fixedReturnAddress = IOfficer(officerAddress).findDeployedContract("FixedReturn");
+    if (fixedReturnAddress == address(0)) revert FixedReturnContractNotFound();
+    return fixedReturnAddress;
+  }
+
+  /**
+   * @dev Resolves the deployed Investor contract from Officer.
+   * Tries "InvestorV1" first and falls back to "Investor" for compatibility.
+   */
+  function _getInvestorAddress() internal view returns (address) {
+    if (officerAddress == address(0)) revert OfficerAddressNotSet();
+
+    address investorAddress = IOfficer(officerAddress).findDeployedContract("InvestorV1");
+    if (investorAddress == address(0)) {
+      investorAddress = IOfficer(officerAddress).findDeployedContract("Investor");
+    }
+
+    if (investorAddress == address(0)) revert InvestorContractNotFound();
+    return investorAddress;
+  }
+
+  /**
+   * @dev Internal function to get the fee basis points from Officer contract
+   * @return The fee in basis points (e.g., 50 = 0.5%)
+   */
+  function _getFeeBps() internal view returns (uint16) {
+    return IOfficer(officerAddress).getFeeFor("BANK");
+  }
+
+  /**
+   * @dev Internal function to check if a token is supported by the FeeCollector
+   * @param _token The token address to check
+   * @return bool True if the token is supported by the FeeCollector
+   */
+  function _isSupportedFeeToken(address _token) internal view returns (bool) {
+    return IOfficer(officerAddress).isFeeCollectorToken(_token);
   }
 }
