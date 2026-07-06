@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import {ElectionTypes} from './ElectionTypes.sol';
+import {ElectionTypes} from "./ElectionTypes.sol";
 
 /**
  * @title ElectionUtils

@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
-import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
-import '@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol';
+import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 
 /**
  * @title Tips
@@ -112,7 +112,7 @@ contract Tips is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
         revert InsufficientBalance(amountPerAddress, address(this).balance);
       }
 
-      (bool sent, ) = _teamMembersAddresses[i].call{value: amountPerAddress}('');
+      (bool sent, ) = _teamMembersAddresses[i].call{value: amountPerAddress}("");
       if (!sent) revert SendFailed();
     }
 
@@ -150,7 +150,7 @@ contract Tips is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
     uint256 senderBalance = balance[msg.sender];
     if (senderBalance == 0) revert NothingToWithdraw();
 
-    (bool sent, ) = msg.sender.call{value: senderBalance}('');
+    (bool sent, ) = msg.sender.call{value: senderBalance}("");
     if (!sent) revert SendFailed();
 
     balance[msg.sender] = 0;

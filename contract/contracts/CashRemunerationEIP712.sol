@@ -1,18 +1,18 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
-import '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
-import '@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol';
-import '@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol';
-import '@openzeppelin/contracts/utils/Address.sol';
-import '@openzeppelin/contracts/utils/cryptography/ECDSA.sol';
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import '@quant-finance/solidity-datetime/contracts/DateTime.sol';
-import './base/TokenSupport.sol';
-import {IMintableERC20} from './interfaces/IMintableERC20.sol';
-import {IInvestorV1} from './interfaces/IInvestorV1.sol';
-import {IOfficer} from './interfaces/IOfficer.sol';
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
+import "@openzeppelin/contracts/utils/Address.sol";
+import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@quant-finance/solidity-datetime/contracts/DateTime.sol";
+import "./base/TokenSupport.sol";
+import {IMintableERC20} from "./interfaces/IMintableERC20.sol";
+import {IInvestorV1} from "./interfaces/IInvestorV1.sol";
+import {IOfficer} from "./interfaces/IOfficer.sol";
 
 /**
  * @title CashRemunerationEIP712
@@ -59,9 +59,9 @@ contract CashRemunerationEIP712 is
   }
 
   /// @dev String representations of the Wage and WageClaim structs, used in EIP-712 encoding.
-  string private constant WAGE_TYPE = 'Wage(uint256 hourlyRate,address tokenAddress)';
+  string private constant WAGE_TYPE = "Wage(uint256 hourlyRate,address tokenAddress)";
   string private constant WAGE_CLAIM_TYPE =
-    'WageClaim(address employeeAddress,uint16 minutesWorked,Wage[] wages,uint256 date)';
+    "WageClaim(address employeeAddress,uint16 minutesWorked,Wage[] wages,uint256 date)";
 
   /// @dev Typehash for the Wage struct, used in EIP-712 encoding.
   bytes32 constant WAGE_TYPEHASH = keccak256(abi.encodePacked(WAGE_TYPE));
@@ -196,7 +196,7 @@ contract CashRemunerationEIP712 is
     address owner = _owner == address(0) ? msg.sender : _owner;
     __Ownable_init(owner);
     __ReentrancyGuard_init();
-    __EIP712_init('CashRemuneration', '1');
+    __EIP712_init("CashRemuneration", "1");
     __Pausable_init();
 
     if (msg.sender == address(0)) revert ZeroAddress();
@@ -294,7 +294,7 @@ contract CashRemunerationEIP712 is
     // Create the EIP-712 compliant digest for signature recovery
     bytes32 digest = keccak256(
       abi.encodePacked(
-        '\x19\x01', // EIP-712 prefix
+        "\x19\x01", // EIP-712 prefix
         _domainSeparatorV4(), // Contract-specific domain separator
         wageClaimHash(wageClaim) // Hash of the wage claim data
       )
@@ -321,7 +321,7 @@ contract CashRemunerationEIP712 is
 
     address investorV1Token = address(0);
     if (officerAddress != address(0) && officerAddress.code.length > 0) {
-      try IOfficer(officerAddress).findDeployedContract('InvestorV1') returns (
+      try IOfficer(officerAddress).findDeployedContract("InvestorV1") returns (
         address deployedInvestorV1
       ) {
         investorV1Token = deployedInvestorV1;
@@ -453,7 +453,7 @@ contract CashRemunerationEIP712 is
    */
   function ownerWithdrawAllToBank() external onlyOwner nonReentrant whenNotPaused {
     if (officerAddress == address(0)) revert OfficerAddressNotSet();
-    address bankAddress = IOfficer(officerAddress).findDeployedContract('Bank');
+    address bankAddress = IOfficer(officerAddress).findDeployedContract("Bank");
     if (bankAddress == address(0)) revert BankContractNotFound();
 
     uint256 nativeBalance = address(this).balance;

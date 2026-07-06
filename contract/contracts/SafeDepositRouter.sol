@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
-import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
-import '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
-import '@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol';
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
-import {IInvestorV1} from './interfaces/IInvestorV1.sol';
-import {IOfficer} from './interfaces/IOfficer.sol';
-import {IERC20Metadata} from '@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol';
-import './base/TokenSupport.sol';
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {IInvestorV1} from "./interfaces/IInvestorV1.sol";
+import {IOfficer} from "./interfaces/IOfficer.sol";
+import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import "./base/TokenSupport.sol";
 
 /**
  * @title SafeDepositRouter
@@ -243,7 +243,7 @@ contract SafeDepositRouter is
    */
   function _getInvestorAddress() internal view returns (address) {
     if (officerAddress == address(0)) revert OfficerAddressNotSet();
-    address investorAddress = IOfficer(officerAddress).findDeployedContract('InvestorV1');
+    address investorAddress = IOfficer(officerAddress).findDeployedContract("InvestorV1");
     if (investorAddress == address(0)) revert InvestorContractNotFound();
     return investorAddress;
   }

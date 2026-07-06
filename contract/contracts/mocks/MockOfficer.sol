@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import '../beacons/UserBeaconProxy.sol';
+import "../beacons/UserBeaconProxy.sol";
 
 interface IInitializableByOwner {
   function initialize(address _owner) external;

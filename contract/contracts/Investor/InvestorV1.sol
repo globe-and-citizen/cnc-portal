@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import {ERC20Upgradeable} from '@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol';
-import {OwnableUpgradeable} from '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
-import {PausableUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol';
-import {ReentrancyGuardUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
-import {EnumerableSet} from '@openzeppelin/contracts/utils/structs/EnumerableSet.sol';
-import '@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol';
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
-import {IOfficer} from '../interfaces/IOfficer.sol';
+import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {IOfficer} from "../interfaces/IOfficer.sol";
 
 /**
  * @title InvestorV1
@@ -29,7 +29,7 @@ contract InvestorV1 is
 
   // Add MINTER_ROLE constant - this doesn't affect storage
   /// @notice Access control role allowed to mint new tokens.
-  bytes32 public constant MINTER_ROLE = keccak256('MINTER_ROLE');
+  bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
   /// @dev Set of addresses currently holding a non-zero balance.
   EnumerableSet.AddressSet private shareholders;
@@ -217,7 +217,7 @@ contract InvestorV1 is
    */
   function _getBankAddress() internal view returns (address) {
     if (officerAddress == address(0)) revert OfficerAddressNotSet();
-    address bankAddress = IOfficer(officerAddress).findDeployedContract('Bank');
+    address bankAddress = IOfficer(officerAddress).findDeployedContract("Bank");
     if (bankAddress == address(0)) revert BankContractNotFound();
     return bankAddress;
   }
@@ -261,7 +261,7 @@ contract InvestorV1 is
       }
 
       if (share > 0) {
-        (bool sent, ) = payable(shareholder).call{value: share}('');
+        (bool sent, ) = payable(shareholder).call{value: share}("");
         if (!sent) revert NativeTransferFailed(shareholder);
         emit DividendPaid(shareholder, address(0), share);
         remaining -= share;

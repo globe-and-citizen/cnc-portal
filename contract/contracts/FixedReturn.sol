@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
-import '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
-import './base/TokenSupport.sol';
-import {IOfficer} from './interfaces/IOfficer.sol';
-import {IBank} from './interfaces/IBank.sol';
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "./base/TokenSupport.sol";
+import {IOfficer} from "./interfaces/IOfficer.sol";
+import {IBank} from "./interfaces/IBank.sol";
 
 /**
  * @title FixedReturn
@@ -252,7 +252,7 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
 
   /// @dev Resolves Bank via Officer. Reverts if not found.
   function _getBankAddress() internal view returns (address) {
-    address bankAddress = IOfficer(officerAddress).findDeployedContract('Bank');
+    address bankAddress = IOfficer(officerAddress).findDeployedContract("Bank");
     if (bankAddress == address(0)) revert BankContractNotFound();
     return bankAddress;
   }
@@ -291,7 +291,7 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
 
   /// @notice Current contract version, per semver.
   function version() external pure returns (string memory) {
-    return '1.1.0';
+    return "1.1.0";
   }
 
   // ────────────────────────────────────────────────────

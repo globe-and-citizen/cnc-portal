@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import './Types.sol';
+import "./Types.sol";
 
-import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
-import '@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol';
-import '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
-import {IOfficer} from '../interfaces/IOfficer.sol';
-import {IBoardOfDirectors} from '../interfaces/IBoardOfDirectors.sol';
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import {IOfficer} from "../interfaces/IOfficer.sol";
+import {IBoardOfDirectors} from "../interfaces/IBoardOfDirectors.sol";
 
 /// @title Voting Contract for Decentralized Governance
 /// @notice This contract manages proposals, elections, and voting processes
@@ -300,7 +300,7 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
       return;
     } else if (option == Types.TieBreakOption.RUNOFF_ELECTION) {
       // Create a new election with only the tied candidates
-      string memory newTitle = string(abi.encodePacked('Runoff: ', proposal.title));
+      string memory newTitle = string(abi.encodePacked("Runoff: ", proposal.title));
       addProposal(
         newTitle,
         proposal.description,
@@ -418,7 +418,7 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
    */
   function _getBoardOfDirectorsAddress() internal view returns (address) {
     if (officerAddress == address(0)) revert OfficerAddressNotSet();
-    address bodAddress = IOfficer(officerAddress).findDeployedContract('BoardOfDirectors');
+    address bodAddress = IOfficer(officerAddress).findDeployedContract("BoardOfDirectors");
     if (bodAddress == address(0)) revert BoardOfDirectorsNotFound();
     return bodAddress;
   }

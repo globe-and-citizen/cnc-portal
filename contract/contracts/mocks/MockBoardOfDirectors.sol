@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import '../interfaces/IBoardOfDirectors.sol';
+import "../interfaces/IBoardOfDirectors.sol";
 
 contract MockBoardOfDirectors is IBoardOfDirectors {
   address[] public boardMembers;
@@ -30,7 +30,7 @@ contract MockBoardOfDirectors is IBoardOfDirectors {
   function addMember(address _member) external {
     for (uint256 i = 0; i < boardMembers.length; i++) {
       if (boardMembers[i] == _member) {
-        revert('Member already exists');
+        revert("Member already exists");
       }
     }
     boardMembers.push(_member);
@@ -44,6 +44,6 @@ contract MockBoardOfDirectors is IBoardOfDirectors {
         return;
       }
     }
-    revert('Member not found');
+    revert("Member not found");
   }
 }

@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import '@openzeppelin/contracts/access/Ownable.sol';
-import '@openzeppelin/contracts/utils/Pausable.sol';
-import '@openzeppelin/contracts/utils/ReentrancyGuard.sol';
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/Pausable.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-import '@openzeppelin/contracts/utils/Strings.sol';
+import "@openzeppelin/contracts/utils/Strings.sol";
 
 /**
  * @title AdCampaignManager
@@ -196,7 +196,7 @@ contract AdCampaignManager is Ownable(msg.sender), Pausable, ReentrancyGuard {
     }
 
     // Transfer funds to the bank contract address
-    (bool success, ) = payable(bankContractAddress).call{value: paymentAmount}('');
+    (bool success, ) = payable(bankContractAddress).call{value: paymentAmount}("");
     if (!success) revert BankTransferFailed();
 
     emit PaymentReleased(campaignCode, paymentAmount);
@@ -228,13 +228,13 @@ contract AdCampaignManager is Ownable(msg.sender), Pausable, ReentrancyGuard {
 
     // Transfer the remaining budget to the advertiser if any
     if (remainingBudget > 0) {
-      (bool success, ) = payable(campaign.advertiser).call{value: remainingBudget}('');
+      (bool success, ) = payable(campaign.advertiser).call{value: remainingBudget}("");
       if (!success) revert AdvertiserTransferFailed();
     }
     uint256 possibleClaimedAmount = currentAmountSpent - campaign.amountSpent;
     // Transfer the spent amount to the banckContract address
     if (possibleClaimedAmount > 0) {
-      (bool success, ) = payable(bankContractAddress).call{value: possibleClaimedAmount}('');
+      (bool success, ) = payable(bankContractAddress).call{value: possibleClaimedAmount}("");
       if (!success) revert BankTransferFailed();
     }
 
@@ -327,7 +327,7 @@ contract AdCampaignManager is Ownable(msg.sender), Pausable, ReentrancyGuard {
     ) % 1000000;
     return
       string(
-        abi.encodePacked('CAMPAIGN-', block.timestamp.toString(), '-', randomNumber.toString())
+        abi.encodePacked("CAMPAIGN-", block.timestamp.toString(), "-", randomNumber.toString())
       );
   }
 

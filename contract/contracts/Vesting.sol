@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
-import '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
-import '@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol';
-import {IInvestorV1} from './interfaces/IInvestorV1.sol';
-import {IOfficer} from './interfaces/IOfficer.sol';
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import {IInvestorV1} from "./interfaces/IInvestorV1.sol";
+import {IOfficer} from "./interfaces/IOfficer.sol";
 
 /**
  * @title Vesting
@@ -212,7 +212,7 @@ contract Vesting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
    */
   function _getInvestor() internal view returns (address) {
     if (officerAddress == address(0)) revert OfficerAddressNotSet();
-    address investorAddress = IOfficer(officerAddress).findDeployedContract('InvestorV1');
+    address investorAddress = IOfficer(officerAddress).findDeployedContract("InvestorV1");
     if (investorAddress == address(0)) revert InvestorContractNotFound();
     return investorAddress;
   }

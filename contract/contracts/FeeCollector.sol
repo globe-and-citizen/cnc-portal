@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
-import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
-import '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
-import '@openzeppelin/contracts/utils/structs/EnumerableSet.sol';
-import './base/TokenSupport.sol';
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import "./base/TokenSupport.sol";
 
 /**
  * @title FeeCollector
@@ -230,7 +230,7 @@ contract FeeCollector is
 
     uint256 nativeBalance = address(this).balance;
     if (nativeBalance > 0) {
-      (bool sent, ) = recipient.call{value: nativeBalance}('');
+      (bool sent, ) = recipient.call{value: nativeBalance}("");
       if (!sent) revert WithdrawalFailed();
       emit Withdrawn(recipient, nativeBalance);
     }

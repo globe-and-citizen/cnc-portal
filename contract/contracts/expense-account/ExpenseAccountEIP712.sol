@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
-import '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
-import '@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol';
-import '@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol';
-import '@openzeppelin/contracts/utils/Address.sol';
-import '@openzeppelin/contracts/utils/cryptography/ECDSA.sol';
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import '@quant-finance/solidity-datetime/contracts/DateTime.sol';
-import '../base/TokenSupport.sol';
-import {IOfficer} from '../interfaces/IOfficer.sol';
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
+import "@openzeppelin/contracts/utils/Address.sol";
+import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@quant-finance/solidity-datetime/contracts/DateTime.sol";
+import "../base/TokenSupport.sol";
+import {IOfficer} from "../interfaces/IOfficer.sol";
 
 /**
  * @title ExpenseAccountEIP712
@@ -89,7 +89,7 @@ contract ExpenseAccountEIP712 is
   uint256[49] private __gap;
 
   string private constant BUDGET_LIMIT_TYPE =
-    'BudgetLimit(uint256 amount,uint8 frequencyType,uint256 customFrequency,uint256 startDate,uint256 endDate,address tokenAddress,address approvedAddress)';
+    "BudgetLimit(uint256 amount,uint8 frequencyType,uint256 customFrequency,uint256 startDate,uint256 endDate,address tokenAddress,address approvedAddress)";
 
   bytes32 constant BUDGET_LIMIT_TYPEHASH = keccak256(abi.encodePacked(BUDGET_LIMIT_TYPE));
 
@@ -250,7 +250,7 @@ contract ExpenseAccountEIP712 is
     if (owner == address(0)) revert ZeroAddress();
     __Ownable_init(owner);
     __ReentrancyGuard_init();
-    __EIP712_init('CNCExpenseAccount', '1');
+    __EIP712_init("CNCExpenseAccount", "1");
     __Pausable_init();
 
     if (msg.sender == address(0)) revert ZeroAddress();
@@ -627,7 +627,7 @@ contract ExpenseAccountEIP712 is
    */
   function ownerWithdrawAllToBank() external onlyOwner nonReentrant whenNotPaused {
     if (officerAddress == address(0)) revert OfficerAddressNotSet();
-    address bankAddress = IOfficer(officerAddress).findDeployedContract('Bank');
+    address bankAddress = IOfficer(officerAddress).findDeployedContract("Bank");
     if (bankAddress == address(0)) revert BankContractNotFound();
 
     uint256 nativeBalance = address(this).balance;

@@ -1,17 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import '@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol';
-import '@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol';
-import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
-import '@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol';
-import '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
-import {IBoardOfDirectors} from './interfaces/IBoardOfDirectors.sol';
-import {ICashRemuneration} from './interfaces/ICashRemuneration.sol';
-import {IInvestorV1} from './interfaces/IInvestorV1.sol';
-import {ISafeDepositRouter} from './interfaces/ISafeDepositRouter.sol';
-import {IVesting} from './interfaces/IVesting.sol';
-import {IFeeCollector} from './interfaces/IFeeCollector.sol';
+import "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
+import "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import {IBoardOfDirectors} from "./interfaces/IBoardOfDirectors.sol";
+import {ICashRemuneration} from "./interfaces/ICashRemuneration.sol";
+import {IInvestorV1} from "./interfaces/IInvestorV1.sol";
+import {ISafeDepositRouter} from "./interfaces/ISafeDepositRouter.sol";
+import {IVesting} from "./interfaces/IVesting.sol";
+import {IFeeCollector} from "./interfaces/IFeeCollector.sol";
 
 /**
  * @notice Struct for contract deployment data
@@ -160,10 +160,10 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
 
   function _setupContractPermissions(address _owner) internal {
     // Find deployed contracts
-    address cashRemunerationAddress = findDeployedContract('CashRemunerationEIP712');
-    address depositRouterAddress = findDeployedContract('SafeDepositRouter');
-    address vestingAddress = findDeployedContract('Vesting');
-    address investorV1Address = findDeployedContract('InvestorV1');
+    address cashRemunerationAddress = findDeployedContract("CashRemunerationEIP712");
+    address depositRouterAddress = findDeployedContract("SafeDepositRouter");
+    address vestingAddress = findDeployedContract("Vesting");
+    address investorV1Address = findDeployedContract("InvestorV1");
 
     // Only proceed if InvestorV1 was deployed
     if (investorV1Address == address(0)) {
@@ -237,7 +237,7 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
   ) public whenNotPaused onlyInitializingOrOwners returns (address) {
     // Validate inputs
     if (contractBeacons[contractType] == address(0)) revert BeaconNotConfigured(contractType);
-    if (keccak256(bytes(contractType)) == keccak256(bytes('BoardOfDirectors'))) {
+    if (keccak256(bytes(contractType)) == keccak256(bytes("BoardOfDirectors"))) {
       revert BodMustBeDeployedViaElections();
     }
     BeaconProxy proxy = new BeaconProxy(contractBeacons[contractType], initializerData);
@@ -246,8 +246,8 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     deployedContracts.push(DeployedContract(contractType, proxyAddress));
     emit ContractDeployed(contractType, proxyAddress);
 
-    if (keccak256(bytes(contractType)) == keccak256(bytes('Elections'))) {
-      address bodContractBeacon = contractBeacons['BoardOfDirectors'];
+    if (keccak256(bytes(contractType)) == keccak256(bytes("Elections"))) {
+      address bodContractBeacon = contractBeacons["BoardOfDirectors"];
       address[] memory args = new address[](1);
       args[0] = proxyAddress;
       bodContract = address(
@@ -256,8 +256,8 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
           abi.encodeWithSelector(IBoardOfDirectors.initialize.selector, args)
         )
       );
-      deployedContracts.push(DeployedContract('BoardOfDirectors', bodContract));
-      emit ContractDeployed('BoardOfDirectors', bodContract);
+      deployedContracts.push(DeployedContract("BoardOfDirectors", bodContract));
+      emit ContractDeployed("BoardOfDirectors", bodContract);
     }
 
     return proxyAddress;
@@ -336,7 +336,7 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
       if (contractBeacons[deployments[i].contractType] == address(0)) {
         revert BeaconNotConfigured(deployments[i].contractType);
       }
-      if (keccak256(bytes(deployments[i].contractType)) == keccak256(bytes('BoardOfDirectors'))) {
+      if (keccak256(bytes(deployments[i].contractType)) == keccak256(bytes("BoardOfDirectors"))) {
         revert BodMustBeDeployedViaElections();
       }
       deployedAddresses[i] = deployBeaconProxy(

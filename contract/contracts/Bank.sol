@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
-import '@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol';
-import '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
-import './base/TokenSupport.sol';
-import {IOfficer} from './interfaces/IOfficer.sol';
-import {IInvestorV1} from './interfaces/IInvestorV1.sol';
-import {IFeeCollector} from './interfaces/IFeeCollector.sol';
-import {IFixedReturn} from './interfaces/IFixedReturn.sol';
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "./base/TokenSupport.sol";
+import {IOfficer} from "./interfaces/IOfficer.sol";
+import {IInvestorV1} from "./interfaces/IInvestorV1.sol";
+import {IFeeCollector} from "./interfaces/IFeeCollector.sol";
+import {IFixedReturn} from "./interfaces/IFixedReturn.sol";
 
 /**
  * @title Bank
@@ -118,7 +118,7 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
    */
   function _getFixedReturnAddress() internal view returns (address) {
     if (officerAddress == address(0)) revert OfficerAddressNotSet();
-    address fixedReturnAddress = IOfficer(officerAddress).findDeployedContract('FixedReturn');
+    address fixedReturnAddress = IOfficer(officerAddress).findDeployedContract("FixedReturn");
     if (fixedReturnAddress == address(0)) revert FixedReturnContractNotFound();
     return fixedReturnAddress;
   }
@@ -130,9 +130,9 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
   function _getInvestorAddress() internal view returns (address) {
     if (officerAddress == address(0)) revert OfficerAddressNotSet();
 
-    address investorAddress = IOfficer(officerAddress).findDeployedContract('InvestorV1');
+    address investorAddress = IOfficer(officerAddress).findDeployedContract("InvestorV1");
     if (investorAddress == address(0)) {
-      investorAddress = IOfficer(officerAddress).findDeployedContract('Investor');
+      investorAddress = IOfficer(officerAddress).findDeployedContract("Investor");
     }
 
     if (investorAddress == address(0)) revert InvestorContractNotFound();
@@ -258,11 +258,11 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
       if (feeCollector == address(0)) revert FeeCollectorNotConfigured();
 
       // Pay fee via FeeCollector (emits FeePaid on the collector)
-      IFeeCollector(feeCollector).payFee{value: fee}('BANK');
+      IFeeCollector(feeCollector).payFee{value: fee}("BANK");
     }
 
     // --- Step 3: Send net amount to recipient ---
-    (bool sentNet, ) = _to.call{value: net}('');
+    (bool sentNet, ) = _to.call{value: net}("");
     if (!sentNet) revert TransferFailed();
 
     emit Transfer(msg.sender, _to, net);
@@ -310,7 +310,7 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
 
         // Pay fee via FeeCollector (pulled via transferFrom; emits FeePaid on the collector)
         IERC20(_token).forceApprove(feeCollector, fee);
-        IFeeCollector(feeCollector).payFeeToken('BANK', _token, fee);
+        IFeeCollector(feeCollector).payFeeToken("BANK", _token, fee);
       }
     }
 
@@ -363,7 +363,7 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
    * @return The fee in basis points (e.g., 50 = 0.5%)
    */
   function _getFeeBps() internal view returns (uint16) {
-    return IOfficer(officerAddress).getFeeFor('BANK');
+    return IOfficer(officerAddress).getFeeFor("BANK");
   }
 
   /**

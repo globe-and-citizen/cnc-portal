@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import {OwnableUpgradeable} from '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
-import {PausableUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol';
-import {Initializable} from '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
-import {ElectionTypes} from './ElectionTypes.sol';
-import {ElectionUtils} from './ElectionUtils.sol';
-import {IBoardOfDirectors} from '../interfaces/IBoardOfDirectors.sol';
-import {IOfficer} from '../interfaces/IOfficer.sol';
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {ElectionTypes} from "./ElectionTypes.sol";
+import {ElectionUtils} from "./ElectionUtils.sol";
+import {IBoardOfDirectors} from "../interfaces/IBoardOfDirectors.sol";
+import {IOfficer} from "../interfaces/IOfficer.sol";
 
 /**
  * @title Elections
@@ -413,7 +413,7 @@ contract Elections is Initializable, OwnableUpgradeable, PausableUpgradeable {
    */
   function _getBoardOfDirectorsAddress() internal view returns (address) {
     if (officerAddress == address(0)) revert OfficerAddressNotSet();
-    address bodAddress = IOfficer(officerAddress).findDeployedContract('BoardOfDirectors');
+    address bodAddress = IOfficer(officerAddress).findDeployedContract("BoardOfDirectors");
     if (bodAddress == address(0)) revert BoardOfDirectorsNotFound();
     return bodAddress;
   }
