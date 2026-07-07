@@ -14,5 +14,8 @@
     "danger": "^13.0.7",
     "husky": "^9.1.7",
     "lint-staged": "^17.0.5"
+  },
+  "dependencies": {
+    "xlsx-js-style": "^1.2.0"
   }
 }
