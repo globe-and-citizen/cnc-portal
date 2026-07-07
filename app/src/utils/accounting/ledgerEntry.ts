@@ -107,6 +107,22 @@ export interface LedgerEntry {
   periodEnd?: number
   /** Accounting category attached during off-chain enrichment (e.g. "Payroll"). */
   category?: string
+  /**
+   * The expense approval's frequency behind a UC-EXP-01 payout — 0 One-Time,
+   * 1 Daily, 2 Weekly, 3 Monthly, 4 Custom. Set only when the payout was matched
+   * to an approved budget, so the Activity narration can adapt: a one-time
+   * approval reads the approved amount, a recurring one the remaining balance.
+   */
+  expenseFrequencyType?: number
+  /** Approved budget cap in USD behind a UC-EXP-01 payout, when matched to a budget. */
+  expenseApprovedUsd?: number
+  /**
+   * Budget remaining in USD within the approval's current period **after** this
+   * withdrawal — recurring approvals only (a one-time approval is single-use, so
+   * no remaining is reported). Reconstructed from the approval and its prior draws,
+   * never from the Expense pocket balance, so historical entries stay accurate.
+   */
+  expenseRemainingUsd?: number
   /** Off-chain enrichment status. */
   enrichment: EnrichmentStatus
 }
