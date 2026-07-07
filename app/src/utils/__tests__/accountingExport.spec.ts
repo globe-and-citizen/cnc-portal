@@ -65,9 +65,25 @@ describe('buildAccountingSheets', () => {
 
   it('general ledger has a header row and one row per journal line', () => {
     const rows = byName('General Ledger').rows
-    expect(rows[2]).toEqual(['Date', 'Action', 'Transaction', 'Account', 'Debit', 'Credit'])
+    expect(rows[2]).toEqual([
+      'Date',
+      'Action',
+      'Transaction',
+      'Activity',
+      'Account',
+      'Debit',
+      'Credit'
+    ])
     // title + blank + header + the deposit's two legs
     expect(rows.length).toBe(5)
+  })
+
+  it('fills the Activity column via the supplied name resolver', () => {
+    const rows = buildAccountingSheets(sampleBooks(), () => 'Acme Client').find(
+      (s) => s.name === 'General Ledger'
+    )!.rows
+    // header + first journal line; Activity is the 4th column (index 3)
+    expect(String(rows[3][3])).toContain('Acme Client')
   })
 })
 
