@@ -2,12 +2,16 @@
  * ExpenseAccount source mapper — operating expense payouts (spec §4, UC-EXP-01).
  *
  * Expenses are **cash basis**: the cost is recognised when the money actually
- * leaves the pocket, not when the budget is approved. A member may draw an
- * approved budget over **several partial withdrawals**, so every on-chain
+ * leaves the pocket, not when the budget is approved. Every payout originates
+ * from an **Expense Approval** — either **one-time** (a single withdrawal) or
+ * **recurring** (Daily / Weekly / Monthly / Custom, a fresh cap each period). A
+ * recurring approval can produce many payouts over time, so every on-chain
  * `Transfer` / `TokenTransfer` is booked on its own — Dr Operating Expense ·
- * Cr Cash — Expense — and its memo states how much of the budget is left after
- * that draw (or that the budget is now fully drawn), computed from the portal
- * `Expense` record's cap and the running total of prior draws.
+ * Cr Cash — Expense — carrying the structured fields the Activity column reads to
+ * adapt its narration: a one-time payout reports its approved cap, a recurring
+ * one the balance left in *that* withdrawal's period. Those figures are
+ * reconstructed here from the approval and the running total of prior draws
+ * (never the Expense pocket balance), so historical entries stay accurate.
  *
  * - `Transfer` / `TokenTransfer` to an external address: an approved expense
  *   payout, flagged `needs-off-chain-data` so enrichment can attach the
@@ -35,6 +39,7 @@ import { getTokenAddress, getTokenDecimals, tokenSymbol } from '@/utils/constant
 import { makeEntry, type LedgerEntry } from '@/utils/accounting/ledgerEntry'
 import type { AccountName } from '@/utils/accounting/chartOfAccounts'
 import { atDate, type MapperContext } from './context'
+import { periodIndex } from './expensePeriods'
 
 export interface ExpenseMapperInput {
   deposits?: readonly ExpenseDepositRow[]
@@ -71,15 +76,31 @@ function internalMove(
   })
 }
 
-/** An approved budget cap, normalized for remaining-balance tracking. */
+/** An approved budget, normalized for per-period remaining-balance tracking. */
 interface BudgetCap {
   tokenId: TokenId
-  /** Budget cap in base units. */
+  /** Budget cap in base units — the single-withdrawal limit and the per-period cap. */
   capBase: bigint
-  /** Approval time (record creation), Unix seconds. */
+  /** Approval time (record creation), Unix seconds — used to attribute a draw. */
   approvedAt: number
-  /** Running total already drawn against this budget, in base units. */
-  drawnBase: bigint
+  /** Period-anchor time, Unix seconds — the budget's `startDate` (recurring windows). */
+  startDate: number
+  /** Reset behaviour: 0 One-Time, 1 Daily, 2 Weekly, 3 Monthly, 4 Custom. */
+  frequencyType: number
+  /** Custom period length in seconds, when `frequencyType === 4`. */
+  customFrequency: number
+  /** Running total drawn against this budget, per period index, in base units. */
+  drawnByPeriod: Map<number, bigint>
+}
+
+/** Everything the ledger entry needs to narrate a matched expense payout. */
+export interface ExpenseDrawInfo {
+  frequencyType: number
+  tokenId: TokenId
+  /** Approved cap in base units. */
+  capBase: bigint
+  /** Remaining in the withdrawal's period after this draw (base units, ≥ 0). */
+  remainingBase: bigint
 }
 
 /** Whole-token units → base units, or `null` when the value can't be parsed. */
@@ -98,21 +119,13 @@ function toSeconds(value: Date | string | undefined): number {
   return Number.isFinite(ms) ? Math.floor(ms / 1000) : 0
 }
 
-/** Memo suffix stating a budget's remaining balance after a draw (or that it's used up). */
-function remainingMemo(remainingBase: bigint, tokenId: TokenId): string {
-  if (remainingBase <= 0n) return ' — budget fully drawn'
-  const address = getTokenAddress(tokenId) ?? zeroAddress
-  return ` — ${formatUnits(remainingBase, getTokenDecimals(tokenId))} ${tokenSymbol(address)} left`
-}
-
 /**
- * Tracks how much of each approved budget is left as its partial draws are
- * booked. A budget is keyed by `member:tokenId`; when several budgets exist for
- * the same key, a draw is attributed to the most recent one approved before it.
- *
- * Only **one-time** budgets (`frequencyType === 0`) are tracked: a recurring
- * budget's cap resets each window, so a running all-time total against a fixed
- * cap would report a bogus remainder — those payouts get no remaining note.
+ * Tracks how much of each approved budget is left as its draws are booked. A
+ * budget is keyed by `member:tokenId`; when several exist for the same key a draw
+ * is attributed to the most recent one approved before it. Draws are accumulated
+ * **per period** (mirroring the contract's per-window reset), so a recurring
+ * budget's remaining balance is reported for the withdrawal's own period — a
+ * daily 1-USDC budget drawn 0.4 then 0.3 the same day reports 0.6 then 0.3 left.
  */
 class RemainingBudgetTracker {
   private readonly byMember = new Map<string, BudgetCap[]>()
@@ -120,14 +133,23 @@ class RemainingBudgetTracker {
   constructor(expenses: readonly ExpenseResponse[] | undefined, ctx: MapperContext) {
     for (const expense of expenses ?? []) {
       const data = expense.data
-      if (!data || Number(data.frequencyType) !== 0) continue
+      if (!data) continue
       const member = String(data.approvedAddress ?? expense.userAddress ?? '').toLowerCase()
       if (!member) continue
       const tokenId = ctx.tokenIdOf(data.tokenAddress)
       const capBase = toBaseUnits(Number(data.amount), getTokenDecimals(tokenId))
       if (capBase === null || capBase <= 0n) continue
+      const approvedAt = toSeconds(expense.createdAt)
       const list = this.byMember.get(member) ?? []
-      list.push({ tokenId, capBase, approvedAt: toSeconds(expense.createdAt), drawnBase: 0n })
+      list.push({
+        tokenId,
+        capBase,
+        approvedAt,
+        startDate: Number(data.startDate) > 0 ? Number(data.startDate) : approvedAt,
+        frequencyType: Number(data.frequencyType) || 0,
+        customFrequency: Number(data.customFrequency) || 0,
+        drawnByPeriod: new Map()
+      })
       this.byMember.set(member, list)
     }
     // Newest-first so a draw picks the most recent budget approved before it.
@@ -135,17 +157,67 @@ class RemainingBudgetTracker {
   }
 
   /**
-   * Book `amountBase` against the withdrawer's budget for `tokenId` and return
-   * the memo suffix describing the remaining balance, or `''` when no matching
-   * budget is on file (nothing to report against).
+   * Book `amountBase` against the withdrawer's budget for `tokenId` and return the
+   * approval + remaining-in-period info, or `null` when no matching budget is on
+   * file (nothing to narrate against).
    */
-  draw(withdrawer: string, tokenId: TokenId, timestamp: number, amountBase: bigint): string {
+  draw(
+    withdrawer: string,
+    tokenId: TokenId,
+    timestamp: number,
+    amountBase: bigint
+  ): ExpenseDrawInfo | null {
     const candidates = this.byMember.get(withdrawer.toLowerCase())
     const budget = candidates?.find((b) => b.tokenId === tokenId && b.approvedAt <= timestamp)
-    if (!budget) return ''
-    budget.drawnBase += amountBase
-    return remainingMemo(budget.capBase - budget.drawnBase, tokenId)
+    if (!budget) return null
+    const period = periodIndex(budget, timestamp)
+    const total = (budget.drawnByPeriod.get(period) ?? 0n) + amountBase
+    budget.drawnByPeriod.set(period, total)
+    const remainingBase = budget.capBase - total
+    return {
+      frequencyType: budget.frequencyType,
+      tokenId,
+      capBase: budget.capBase,
+      remainingBase: remainingBase > 0n ? remainingBase : 0n
+    }
   }
+}
+
+/** The structured approval fields carried on a matched UC-EXP-01 entry. */
+type ApprovalFields = Pick<LedgerEntry, 'expenseFrequencyType' | 'expenseApprovedUsd'> &
+  Partial<Pick<LedgerEntry, 'expenseRemainingUsd'>>
+
+/** A token amount formatted with its symbol, e.g. `1.5 USDC`. */
+function tokenAmount(amountBase: bigint, tokenId: TokenId): string {
+  const address = getTokenAddress(tokenId) ?? zeroAddress
+  return `${formatUnits(amountBase, getTokenDecimals(tokenId))} ${tokenSymbol(address)}`
+}
+
+/**
+ * Structured Activity fields + audit memo suffix for a matched expense payout.
+ * A one-time approval carries only its approved cap (it is single-use, so no
+ * remaining is meaningful); a recurring one also carries the USD remaining in the
+ * withdrawal's period, so the ledger can read "$0.70 remaining".
+ */
+function presentApproval(
+  info: ExpenseDrawInfo,
+  ctx: MapperContext,
+  at: Date
+): { fields: ApprovalFields; memo: string } {
+  const oneTime = info.frequencyType === 0
+  const fields: ApprovalFields = {
+    expenseFrequencyType: info.frequencyType,
+    expenseApprovedUsd: ctx.toUsd(info.capBase, info.tokenId, at)
+  }
+  if (oneTime) {
+    return { fields, memo: ` — one-time approval of ${tokenAmount(info.capBase, info.tokenId)}` }
+  }
+  fields.expenseRemainingUsd = ctx.toUsd(info.remainingBase, info.tokenId, at)
+  const memo =
+    info.remainingBase <= 0n
+      ? ' — period budget fully drawn'
+      : ` — ${tokenAmount(info.remainingBase, info.tokenId)} left this period`
+  return { fields, memo }
 }
 
 /** Map an approved payout (or an internal move when the recipient is a pocket). */
@@ -167,8 +239,10 @@ function mapTransfer(
 
   const tokenId = ctx.tokenIdOf(token)
   const amountBase = BigInt(row.amount)
+  const at = atDate(row.timestamp)
   const paidElsewhere = row.to.toLowerCase() !== row.withdrawer.toLowerCase()
-  const remaining = tracker.draw(row.withdrawer, tokenId, row.timestamp, amountBase)
+  const info = tracker.draw(row.withdrawer, tokenId, row.timestamp, amountBase)
+  const approval = info ? presentApproval(info, ctx, at) : null
   const base = paidElsewhere ? `Approved expense payout to ${row.to}` : 'Approved expense payout'
   return makeEntry({
     id: row.id,
@@ -176,12 +250,13 @@ function mapTransfer(
     useCase: 'UC-EXP-01',
     debit: 'Operating Expense',
     credit: EXPENSE,
-    amountUsd: ctx.toUsd(amountBase, tokenId, atDate(row.timestamp)),
+    amountUsd: ctx.toUsd(amountBase, tokenId, at),
     token: tokenId,
     rawAmount: row.amount,
     counterparty: row.withdrawer,
-    memo: `${base}${remaining}`,
-    enrichment: 'needs-off-chain-data'
+    memo: `${base}${approval?.memo ?? ''}`,
+    enrichment: 'needs-off-chain-data',
+    ...(approval?.fields ?? {})
   })
 }
 
@@ -287,7 +362,21 @@ export function mapExpenseDrawsFromPortal(
     const member = String(data.approvedAddress ?? expense.userAddress ?? '').toLowerCase()
     if (!member) continue
     const timestamp = toSeconds(expense.updatedAt) || toSeconds(expense.createdAt)
+    const at = atDate(timestamp)
     const capBase = toBaseUnits(Number(data.amount), decimals) ?? 0n
+    // `balances[1]` is the contract's `totalWithdrawn`, which resets each period
+    // for a recurring budget — so `cap − drawn` is the current-period remaining.
+    const remainingBase = capBase - drawnBase
+    const approval = presentApproval(
+      {
+        frequencyType: Number(data.frequencyType) || 0,
+        tokenId,
+        capBase,
+        remainingBase: remainingBase > 0n ? remainingBase : 0n
+      },
+      ctx,
+      at
+    )
     entries.push(
       makeEntry({
         id: `expense-drawn-${expense.id}`,
@@ -295,13 +384,14 @@ export function mapExpenseDrawsFromPortal(
         useCase: 'UC-EXP-01',
         debit: 'Operating Expense',
         credit: EXPENSE,
-        amountUsd: ctx.toUsd(drawnBase, tokenId, atDate(timestamp)),
+        amountUsd: ctx.toUsd(drawnBase, tokenId, at),
         token: tokenId,
         rawAmount: drawnBase.toString(),
         counterparty: member,
         category: 'Operating',
         enrichment: 'enriched',
-        memo: `Expense drawn — expense #${expense.id}${remainingMemo(capBase - drawnBase, tokenId)}`
+        memo: `Expense drawn — expense #${expense.id}${approval.memo}`,
+        ...approval.fields
       })
     )
   }
