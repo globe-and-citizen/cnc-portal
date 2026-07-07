@@ -82,6 +82,7 @@
     "vue-router": "^4.2.5",
     "vue-sonner": "^2.0.9",
     "xlsx": "^0.18.5",
+    "xlsx-js-style": "^1.2.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
