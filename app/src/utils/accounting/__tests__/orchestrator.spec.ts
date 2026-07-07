@@ -140,8 +140,9 @@ describe('buildCncLedgerEntries', () => {
       enrichment: 'enriched',
       category: 'Operating'
     })
-    // 300 cap − 120 drawn = 180 left.
-    expect(payout?.memo).toContain('180 USDC left')
+    // One-time approval — the payout carries the approved cap, no remaining.
+    expect(payout).toMatchObject({ expenseFrequencyType: 0, expenseApprovedUsd: 300 })
+    expect(payout?.memo).toContain('one-time approval of 300 USDC')
     // The indexed payout wins — the portal fallback must not double-count it.
     expect(withExpenses.filter((e) => e.useCase === 'UC-EXP-01')).toHaveLength(1)
   })
@@ -176,6 +177,6 @@ describe('buildCncLedgerEntries', () => {
       amountUsd: 120,
       category: 'Operating'
     })
-    expect(drawn?.memo).toContain('180 USDC left')
+    expect(drawn?.memo).toContain('one-time approval of 300 USDC')
   })
 })
