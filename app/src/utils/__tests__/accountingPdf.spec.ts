@@ -153,6 +153,33 @@ describe('buildTables (section selection)', () => {
     const [ledger] = buildTables(sampleBooks(), [{ key: 'ledger' }])
     expect(ledger.title).toBe('General Ledger')
   })
+
+  it('stamps the reporting period / "as of" date on the statement headings', () => {
+    const [income] = buildTables(sampleBooks(), [
+      { key: 'income', from: new Date('2026-01-01'), to: new Date('2026-02-01') }
+    ])
+    expect(income.title).toContain('Income Statement')
+    expect(income.title).toContain('Jan 1, 2026')
+
+    const [balance] = buildTables(sampleBooks(), [{ key: 'balance', asOf: new Date('2026-07-08') }])
+    expect(balance.title).toBe('Balance Sheet — As of Jul 8, 2026')
+
+    const [trial] = buildTables(sampleBooks(), [{ key: 'trial', asOf: new Date('2026-07-08') }])
+    expect(trial.title).toBe('Trial Balance — As of Jul 8, 2026')
+  })
+
+  it('keeps plain statement headings for the whole book (no dates)', () => {
+    const tables = buildTables(sampleBooks(), [
+      { key: 'income' },
+      { key: 'balance' },
+      { key: 'trial' }
+    ])
+    expect(tables.map((t) => t.title)).toEqual([
+      'Income Statement',
+      'Balance Sheet',
+      'Trial Balance'
+    ])
+  })
 })
 
 describe('periodLabel', () => {
