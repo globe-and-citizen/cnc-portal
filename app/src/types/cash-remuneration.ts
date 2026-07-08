@@ -83,6 +83,11 @@ export interface WeeklyClaim {
    * rows signed before this column existed.
    */
   signedAgainstContractAddress: Address | null
+  /**
+   * Free-form Markdown memo of the member's goals for the week. One per weekly
+   * claim; null when no goals have been set. Upserted via PUT /weeklyclaim/goals.
+   */
+  weeklyGoals: string | null
   wageId: number
   createdAt: string // ISO date string
   updatedAt: string // ISO date string

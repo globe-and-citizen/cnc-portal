@@ -1,3 +1,6 @@
+import dayjs from 'dayjs';
+import isoWeek from 'dayjs/plugin/isoWeek';
+import utc from 'dayjs/plugin/utc';
 import { Request, Response } from 'express';
 import { errorResponse, getMondayStart, prisma } from '../utils';
 import { Prisma } from '@prisma/client';
@@ -27,6 +30,9 @@ const WAGE_CLAIM_TYPES = {
     { name: 'date', type: 'uint256' },
   ],
 } as const;
+
+dayjs.extend(utc);
+dayjs.extend(isoWeek);
 
 export type WeeklyClaimAction = 'sign' | 'withdraw' | 'disable' | 'enable';
 type statusType = 'pending' | 'signed' | 'withdrawn' | 'disabled';
@@ -571,6 +577,88 @@ export const syncWeeklyClaims = async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('Error syncing weekly claims:', error);
+    return errorResponse(500, error, res);
+  }
+};
+
+/**
+ * Upsert the member's weekly goals memo (free-form Markdown) for a given ISO
+ * week. Exactly one memo exists per weekly claim ([wageId, weekStart]). The
+ * caller can only set their own goals — `req.address` is the member address.
+ *
+ * The memo is decoupled from daily claims: submitting goals for a week that has
+ * no claims yet creates a claim-less WeeklyClaim row (status `pending`), so a
+ * member can plan the week before logging any hours. Once the week is signed /
+ * withdrawn / disabled the memo is locked, mirroring the addClaim guards.
+ */
+export const submitWeeklyGoals = async (req: Request, res: Response) => {
+  const callerAddress = req.address;
+  const {
+    teamId,
+    weekStart: weekStartInput,
+    weeklyGoals,
+  } = req.body as {
+    teamId: number;
+    weekStart: string;
+    weeklyGoals: string;
+  };
+
+  // Normalize to Monday 00:00 UTC the same way addClaim does, so the row lines
+  // up with the [wageId, weekStart] uniqueness used by daily claims.
+  const weekStart = dayjs.utc(weekStartInput).startOf('isoWeek').toDate();
+
+  try {
+    // A WeeklyClaim requires a wageId, so the member needs a current wage
+    // before any goals can be recorded (mirrors addClaim).
+    const wage = await prisma.wage.findFirst({
+      where: { userAddress: callerAddress, nextWageId: null, teamId },
+    });
+
+    if (!wage) {
+      return errorResponse(400, 'No wage found for the user', res);
+    }
+
+    const existing = await prisma.weeklyClaim.findFirst({
+      where: {
+        wage: { teamId, nextWageId: null },
+        weekStart,
+        memberAddress: callerAddress,
+        teamId,
+      },
+    });
+
+    if (existing) {
+      if (existing.status === 'disabled') {
+        return errorResponse(409, 'Week is disabled. Submission not allowed.', res);
+      }
+      if (existing.status === 'withdrawn') {
+        return errorResponse(409, 'Week already withdrawn. Submission not allowed.', res);
+      }
+      if (existing.status === 'signed' || !!existing.signature) {
+        return errorResponse(409, 'Week already signed. Submission not allowed.', res);
+      }
+
+      const updated = await prisma.weeklyClaim.update({
+        where: { id: existing.id },
+        data: { weeklyGoals },
+      });
+      return res.status(200).json(updated);
+    }
+
+    const created = await prisma.weeklyClaim.create({
+      data: {
+        wageId: wage.id,
+        weekStart,
+        memberAddress: callerAddress,
+        teamId,
+        data: {},
+        status: 'pending',
+        weeklyGoals,
+      },
+    });
+
+    return res.status(200).json(created);
+  } catch (error) {
     return errorResponse(500, error, res);
   }
 };

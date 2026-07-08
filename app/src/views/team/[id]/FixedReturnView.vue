@@ -1,22 +1,24 @@
 <template>
   <div class="flex flex-col gap-6">
-    <div class="flex items-center justify-end">
-      <div class="flex gap-1 rounded-xl border border-[#d8e6df] bg-[#eef4f1] p-1.5">
-        <button
-          :class="tabClass(showCreateForm)"
-          data-test="issue-note-tab"
-          @click="showCreateForm = true"
-        >
-          Issue Note
-        </button>
-        <button
-          :class="tabClass(!showCreateForm)"
-          data-test="my-offerings-tab"
-          @click="showCreateForm = false"
-        >
-          My Offerings
-        </button>
+    <div class="flex items-center justify-between">
+      <div v-if="fixedReturnAddress" class="flex items-center gap-2">
+        <div class="text-sm text-gray-600">Contract Address:</div>
+        <AddressToolTip :address="fixedReturnAddress" />
       </div>
+      <UTooltip :text="!isFixedReturnOwner ? 'Only the team owner can issue a note' : undefined">
+        <UTabs
+          :model-value="activeTab"
+          :items="tabItems"
+          :content="false"
+          color="success"
+          variant="pill"
+          @update:model-value="selectTab"
+        >
+          <template #default="{ item }">
+            <span :data-test="item.dataTest">{{ item.label }}</span>
+          </template>
+        </UTabs>
+      </UTooltip>
     </div>
 
     <CreateOfferingForm v-if="showCreateForm" @close="showCreateForm = false" />
@@ -25,18 +27,44 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
+import { isAddress, isAddressEqual } from 'viem'
 import OfferingsDashboard from '@/components/sections/FixedReturnView/OfferingsDashboard.vue'
 import CreateOfferingForm from '@/components/sections/FixedReturnView/CreateOfferingForm.vue'
+import AddressToolTip from '@/components/AddressToolTip.vue'
+import { useFixedReturnOwner } from '@/composables/fixedReturn/reads'
+import { useTeamStore, useUserDataStore } from '@/stores'
 
-const showCreateForm = ref(true)
+const teamStore = useTeamStore()
+const userStore = useUserDataStore()
+const fixedReturnAddress = computed(() => teamStore.getContractAddressByType('FixedReturn'))
+const { data: fixedReturnOwnerAddress } = useFixedReturnOwner()
+const isFixedReturnOwner = computed(() => {
+  const ownerAddress = fixedReturnOwnerAddress.value
+  return (
+    typeof ownerAddress === 'string' &&
+    isAddress(ownerAddress, { strict: false }) &&
+    isAddress(userStore.address, { strict: false }) &&
+    isAddressEqual(ownerAddress, userStore.address)
+  )
+})
 
-function tabClass(active: boolean) {
-  return [
-    'px-5 h-9 rounded-lg text-sm font-bold border-none cursor-pointer transition-all',
-    active
-      ? 'bg-[#0a7a52] text-white shadow-sm'
-      : 'bg-transparent text-[#4d6358] hover:text-[#0a7a52]'
-  ]
+// Default to "My Offerings" — issuing a note is the less common action, and it's
+// onlyOwner on-chain anyway (disabled below for non-owners).
+const showCreateForm = ref(false)
+
+const activeTab = computed(() => (showCreateForm.value ? 'issue' : 'offerings'))
+const tabItems = computed(() => [
+  {
+    label: 'Issue Note',
+    value: 'issue',
+    disabled: !isFixedReturnOwner.value,
+    dataTest: 'issue-note-tab'
+  },
+  { label: 'My Offerings', value: 'offerings', dataTest: 'my-offerings-tab' }
+])
+
+function selectTab(value: string | number) {
+  showCreateForm.value = value === 'issue'
 }
 </script>

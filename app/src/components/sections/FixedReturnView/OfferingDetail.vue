@@ -26,14 +26,17 @@
         <div class="flex flex-col items-center gap-0.5 text-center">
           <ProgressGauge :percent="fundingPct" label="funded" :size="100" />
           <div class="mt-2 text-base font-extrabold text-[#0f3d2e]">
-            {{ moneyFmt(offering.raised) }}
+            {{ formatOfferingTokenAmount(offering.raised, offering.token) }}
           </div>
-          <div class="text-xs text-[#9aaba2]">raised of {{ moneyFmt(offering.target) }}</div>
+          <div class="text-xs text-[#9aaba2]">
+            raised of {{ formatOfferingTokenAmount(offering.target, offering.token) }}
+          </div>
           <div
             v-if="offering.target > offering.raised"
             class="mt-0.5 text-xs font-semibold text-[#0a7a52]"
           >
-            {{ moneyFmt(offering.target - offering.raised) }} remaining
+            {{ formatOfferingTokenAmount(offering.target - offering.raised, offering.token) }}
+            remaining
           </div>
         </div>
       </UCard>
@@ -46,10 +49,14 @@
         </template>
         <div class="flex flex-col items-center gap-0.5 text-center">
           <ProgressGauge :percent="repaymentPct" label="repaid" :size="100" />
-          <div class="mt-2 text-base font-extrabold text-[#0f3d2e]">{{ moneyFmt(totalPaid) }}</div>
-          <div class="text-xs text-[#9aaba2]">repaid of {{ moneyFmt(totalExpected) }}</div>
+          <div class="mt-2 text-base font-extrabold text-[#0f3d2e]">
+            {{ formatOfferingTokenAmount(totalPaid, offering.token) }}
+          </div>
+          <div class="text-xs text-[#9aaba2]">
+            repaid of {{ formatOfferingTokenAmount(totalExpected, offering.token) }}
+          </div>
           <div v-if="totalExpected > totalPaid" class="mt-0.5 text-xs font-semibold text-[#0a7a52]">
-            {{ moneyFmt(totalExpected - totalPaid) }} remaining
+            {{ formatOfferingTokenAmount(totalExpected - totalPaid, offering.token) }} remaining
           </div>
         </div>
       </UCard>
@@ -71,211 +78,161 @@
       </UCard>
     </div>
 
+    <!-- Issuer Actions -->
+    <OfferingIssuerActions
+      v-if="isOwner && (offering.status === 'funded' || offering.status === 'open')"
+      :offering="offering"
+    />
+
     <!-- Lenders -->
-    <UCard :ui="{ body: 'p-0' }">
-      <template #header>
-        <div class="flex items-center justify-between">
-          <div class="text-base font-extrabold text-[#0f3d2e]">
-            Lenders
-            <span class="text-sm font-semibold text-[#9aaba2]">· {{ partners.length }}</span>
-          </div>
-          <div
-            class="flex h-9 w-56 items-center gap-2 rounded-xl border border-[#e0eae5] px-3 text-sm text-[#7d8e84]"
-          >
-            <UIcon name="heroicons:magnifying-glass" class="size-4 flex-none" />
-            <span>Search lenders…</span>
-          </div>
-        </div>
-      </template>
-      <div class="overflow-x-auto">
-        <table class="w-full border-collapse" style="min-width: 820px">
-          <thead>
-            <tr class="bg-[#f7faf8]">
-              <th
-                class="px-5 py-3 text-left text-xs font-bold tracking-wide text-[#81948a] uppercase"
-              >
-                Lender
-              </th>
-              <th
-                class="px-4 py-3 text-right text-xs font-bold tracking-wide text-[#81948a] uppercase"
-              >
-                Principal
-              </th>
-              <th
-                class="px-4 py-3 text-right text-xs font-bold tracking-wide text-[#81948a] uppercase"
-              >
-                Rate
-              </th>
-              <th
-                class="px-4 py-3 text-right text-xs font-bold tracking-wide text-[#81948a] uppercase"
-              >
-                Expected return
-              </th>
-              <th
-                class="px-4 py-3 text-left text-xs font-bold tracking-wide text-[#81948a] uppercase"
-              >
-                Paid to date
-              </th>
-              <th
-                class="px-4 py-3 text-left text-xs font-bold tracking-wide text-[#81948a] uppercase"
-              >
-                Maturity
-              </th>
-              <th
-                class="px-5 py-3 text-left text-xs font-bold tracking-wide text-[#81948a] uppercase"
-              >
-                Status
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="p in partners"
-              :key="p.address"
-              class="border-t border-[#f0f4f1] transition-colors hover:bg-[#f7fbf9]"
-            >
-              <td class="px-5 py-4">
-                <UserComponent
-                  :user="{ address: p.address, name: p.name }"
-                  class="min-w-0 flex-1"
-                />
-              </td>
-              <td class="px-4 py-4 text-right text-sm font-bold whitespace-nowrap text-[#0f3d2e]">
-                {{ p.principalFmt }}
-              </td>
-              <td
-                class="px-4 py-4 text-right text-sm font-semibold whitespace-nowrap text-[#0f3d2e]"
-              >
-                {{ p.rateFmt }}
-              </td>
-              <td class="px-4 py-4 text-right text-sm font-bold whitespace-nowrap text-[#0f3d2e]">
-                {{ p.expectedFmt }}
-              </td>
-              <td class="px-4 py-4" style="min-width: 150px">
-                <div class="mb-1.5 flex justify-between text-sm font-semibold">
-                  <span>{{ p.paidFmt }}</span>
-                  <span class="text-[#9aaba2]">{{ p.pctLabel }}</span>
-                </div>
-                <div class="h-1.5 overflow-hidden rounded-full bg-[#eef3f0]">
-                  <div
-                    class="h-full rounded-full"
-                    :style="{ width: p.pctWidth, background: p.barColor }"
-                  ></div>
-                </div>
-              </td>
-              <td class="px-4 py-4 text-sm font-semibold whitespace-nowrap text-[#0f3d2e]">
-                {{ p.maturityFmt }}
-              </td>
-              <td class="px-5 py-4">
-                <StatusBadge :status="p.status" />
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </UCard>
+    <OfferingLendersSection
+      :partners="partners"
+      :is-loading="isLoading"
+      :can-claim-refund="canClaimRefund"
+      :claim-refund-is-pending="claimRefundResult.isPending.value"
+      :claiming-lender-address="claimingLenderAddress"
+      @claim-refund="claimRefund"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
+import { isAddress, isAddressEqual } from 'viem'
+import { useToast } from '@nuxt/ui/composables'
+import { useQueryClient } from '@tanstack/vue-query'
 import StatusBadge from './StatusBadge.vue'
-import UserComponent from '@/components/UserComponent.vue'
 import ProgressGauge from './ProgressGauge.vue'
-import { expectedReturn, maturityLabel, percentOf } from '@/utils'
-import { money as moneyFmt } from '@/utils/accountingDemo'
+import OfferingIssuerActions from './OfferingIssuerActions.vue'
+import OfferingLendersSection from './OfferingLendersSection.vue'
+import { useFixedReturnOfferLenders, useFixedReturnOwner } from '@/composables/fixedReturn/reads'
+import { useFixedReturnClaimRefund } from '@/composables/fixedReturn/writes'
+import { useUserDataStore } from '@/stores'
+import {
+  buildFixedReturnLenderRows,
+  formatOfferingTokenAmount,
+  getOfferingDetailTotals,
+  isOfferingPastMaturity,
+  maturityLabel,
+  percentOf,
+  resolveUser
+} from '@/utils'
 import type { OfferingSummary } from '@/types'
 
 const props = defineProps<{ offering: OfferingSummary }>()
 defineEmits<{ back: [] }>()
 
-type Status = 'overdue' | 'partial' | 'completed'
+const userStore = useUserDataStore()
+const toast = useToast()
+const queryClient = useQueryClient()
+const { data: fixedReturnOwnerAddress } = useFixedReturnOwner()
+const claimRefundResult = useFixedReturnClaimRefund()
+const claimingLenderAddress = ref<string | null>(null)
+const isOwner = computed(() => {
+  const ownerAddress = fixedReturnOwnerAddress.value
+  return (
+    typeof ownerAddress === 'string' &&
+    isAddress(ownerAddress, { strict: false }) &&
+    isAddress(userStore.address, { strict: false }) &&
+    isAddressEqual(ownerAddress, userStore.address)
+  )
+})
+const canClaimRefund = computed(() => props.offering.status === 'closed')
 
 // Bullet repayment: principal + interest repaid as one combined payment per lender,
 // due at the offering's maturity (start date + term) — no interim schedule.
 const maturityFmt = computed(() =>
-  maturityLabel(props.offering.startDate, props.offering.term, 'months')
+  maturityLabel(props.offering.startDate, props.offering.term, props.offering.termUnit)
 )
 
-// paidRatio: 0–1 share of the bullet repayment settled so far. The admin can repay a
-// lender gradually rather than all at once, so this isn't just paid-or-not.
-const partnersRaw = [
-  { address: '0x7F3a…2B9c', name: 'Amara Okonkwo', principal: 50000, paidRatio: 1 },
-  { address: '0x4D21…A8e1', name: 'Liang Wei', principal: 120000, paidRatio: 1 },
-  { address: '0x9C56…11Fa', name: 'Sofia Marchetti', principal: 75000, paidRatio: 0 },
-  { address: '0x2E8b…7C40', name: 'Daniel Krause', principal: 30000, paidRatio: 1 },
-  { address: '0xB1f7…3D92', name: 'Priya Nair', principal: 200000, paidRatio: 0.45 },
-  { address: '0x6a09…E5Dd', name: 'Marcus Bell', principal: 45000, paidRatio: 0.7 }
-]
+// repayLenders has no on-chain maturity check — the issuer can repay early or in
+// installments — so "nothing repaid yet" only means overdue once maturity has
+// actually passed. Before that, an unpaid loan is just on-track, not late.
+const isPastMaturity = computed(() => {
+  return isOfferingPastMaturity(
+    props.offering.startDate,
+    props.offering.term,
+    props.offering.termUnit
+  )
+})
 
-function statusFor(paidRatio: number): Status {
-  if (paidRatio >= 1) return 'completed'
-  if (paidRatio <= 0) return 'overdue'
-  return 'partial'
-}
+const { data: lenders, isLoading } = useFixedReturnOfferLenders(
+  computed(() => props.offering.id),
+  computed(() => props.offering.token)
+)
 
+// repayLenders distributes proportionally to each lender's deposit share, so a
+// lender's cumulative paid-to-date is their deposit's share of totalRepaid so far —
+// there's no separate "amount paid to this lender" getter on-chain to read directly.
 const partners = computed(() =>
-  partnersRaw.map((p) => {
-    const expected = expectedReturn(p.principal, props.offering.rate)
-    const paid = expected * p.paidRatio
-    const status = statusFor(p.paidRatio)
-    const pct = percentOf(paid, expected)
-    const barColor = status === 'overdue' ? '#ff5630' : status === 'partial' ? '#ffab00' : '#00bf7a'
-    return {
-      name: p.name,
-      address: p.address,
-      principalFmt: moneyFmt(p.principal),
-      rateFmt: props.offering.rate.toFixed(1) + '%',
-      expectedFmt: moneyFmt(expected),
-      paidFmt: moneyFmt(paid),
-      pctLabel: pct + '%',
-      pctWidth: pct + '%',
-      barColor,
-      maturityFmt: maturityFmt.value,
-      status
-    }
+  buildFixedReturnLenderRows({
+    lenders: lenders.value ?? [],
+    offering: props.offering,
+    pastMaturity: isPastMaturity.value,
+    maturity: maturityFmt.value,
+    resolveName: (address) => resolveUser(address).name ?? 'User'
   })
 )
 
-const totalPrincipal = computed(() => partnersRaw.reduce((a, p) => a + p.principal, 0))
-const totalExpected = computed(() =>
-  partnersRaw.reduce((a, p) => a + expectedReturn(p.principal, props.offering.rate), 0)
+const totals = computed(() =>
+  getOfferingDetailTotals(lenders.value ?? [], props.offering.totalRepaid)
 )
-const totalPaid = computed(() =>
-  partnersRaw.reduce(
-    (a, p) => a + expectedReturn(p.principal, props.offering.rate) * p.paidRatio,
-    0
-  )
-)
+const totalPrincipal = computed(() => totals.value.totalPrincipal)
+const totalExpected = computed(() => totals.value.totalExpected)
+const totalPaid = computed(() => totals.value.totalPaid)
 
 const fundingPct = computed(() => percentOf(props.offering.raised, props.offering.target))
 const repaymentPct = computed(() => percentOf(totalPaid.value, totalExpected.value))
 
+function claimRefund(lenderAddress: string) {
+  if (claimRefundResult.isPending.value) return
+  claimingLenderAddress.value = lenderAddress
+  claimRefundResult.mutate(
+    { args: [BigInt(props.offering.id)] },
+    {
+      onSuccess: () => {
+        void Promise.all([
+          queryClient.invalidateQueries({ queryKey: ['fixedReturnMyLenderPositions'] }),
+          queryClient.invalidateQueries({ queryKey: ['fixedReturnOfferLenders'] })
+        ])
+        toast.add({
+          title: 'Refund claimed successfully',
+          description: 'Your principal has been returned.',
+          color: 'success'
+        })
+      },
+      onSettled: () => {
+        claimingLenderAddress.value = null
+      }
+    }
+  )
+}
+
 const statCards = computed(() => [
   {
     label: 'Total principal lent',
-    value: moneyFmt(totalPrincipal.value),
+    value: formatOfferingTokenAmount(totalPrincipal.value, props.offering.token),
     icon: 'heroicons:credit-card',
     iconBg: '#ebf0ff',
     iconColor: '#3366ff'
   },
   {
     label: 'Total expected return',
-    value: moneyFmt(totalExpected.value),
+    value: formatOfferingTokenAmount(totalExpected.value, props.offering.token),
     icon: 'heroicons:arrow-trending-up',
     iconBg: '#e6f8f1',
     iconColor: '#00a86c'
   },
   {
     label: 'Outstanding balance',
-    value: moneyFmt(totalExpected.value - totalPaid.value),
+    value: formatOfferingTokenAmount(totalExpected.value - totalPaid.value, props.offering.token),
     icon: 'heroicons:clock',
     iconBg: '#fff6e0',
     iconColor: '#cc8a00'
   },
   {
     label: 'Overdue lenders',
-    value: String(partnersRaw.filter((p) => p.paidRatio <= 0).length),
+    value: String(partners.value.filter((p) => p.status === 'overdue').length),
     icon: 'heroicons:exclamation-triangle',
     iconBg: '#ffe9e3',
     iconColor: '#d6431f'

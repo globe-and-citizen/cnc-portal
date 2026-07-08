@@ -74,6 +74,20 @@ function mapInflow(row: SafeTransferRow, ctx: MapperContext): LedgerEntry {
       memo: 'Founder deposit into Safe'
     })
   }
+  // A team member funding the Safe is investing in the company (invest & get
+  // SHER) → a capital contribution to Investor Equity, not client revenue. The
+  // SHER count lives on the SafeDepositRouter event (UC-SDR-01); when that feed is
+  // present the matching Safe inflow is excluded upstream and this branch is moot.
+  if (ctx.memberAddresses.has(row.from as `0x${string}`)) {
+    return makeEntry({
+      ...base,
+      useCase: 'UC-MEMBER-01',
+      credit: 'Investor Equity',
+      // SHER received = USD invested × router multiplier (no router event here).
+      shares: ctx.sherForUsd(base.amountUsd, atDate(row.timestamp)),
+      memo: 'Member capital contribution into Safe'
+    })
+  }
   return makeEntry({
     ...base,
     useCase: 'UC-BANK-02',

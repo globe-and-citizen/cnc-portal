@@ -5,143 +5,125 @@
         Offerings <span class="text-sm font-semibold text-[#9aaba2]">· {{ offerings.length }}</span>
       </div>
     </template>
-    <div class="overflow-x-auto">
-      <table class="w-full border-collapse" style="min-width: 820px">
-        <thead>
-          <tr class="bg-[#f7faf8]">
-            <th
-              class="px-5 py-3 text-left text-xs font-bold tracking-wide text-[#81948a] uppercase"
-            >
-              Offering
-            </th>
-            <th
-              class="px-4 py-3 text-right text-xs font-bold tracking-wide text-[#81948a] uppercase"
-            >
-              Rate
-            </th>
-            <th
-              class="px-4 py-3 text-right text-xs font-bold tracking-wide text-[#81948a] uppercase"
-            >
-              Term
-            </th>
-            <th
-              class="px-4 py-3 text-left text-xs font-bold tracking-wide text-[#81948a] uppercase"
-            >
-              Access
-            </th>
-            <th
-              class="px-4 py-3 text-left text-xs font-bold tracking-wide text-[#81948a] uppercase"
-              style="min-width: 180px"
-            >
-              Raised
-            </th>
-            <th
-              class="px-4 py-3 text-left text-xs font-bold tracking-wide text-[#81948a] uppercase"
-            >
-              Status
-            </th>
-            <th
-              class="px-5 py-3 text-right text-xs font-bold tracking-wide text-[#81948a] uppercase"
-            ></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            v-for="o in offerings"
-            :key="o.id"
-            data-test="offering-row"
-            class="border-t border-[#f0f4f1] transition-colors hover:bg-[#f7fbf9]"
-          >
-            <td class="px-5 py-4 text-sm font-bold text-[#0f3d2e]">{{ o.title }}</td>
-            <td class="px-4 py-4 text-right text-sm font-bold whitespace-nowrap text-[#0f3d2e]">
-              {{ o.rate }}%
-            </td>
-            <td class="px-4 py-4 text-right text-sm font-semibold whitespace-nowrap text-[#0f3d2e]">
-              {{ o.term }} mo
-            </td>
-            <td class="px-4 py-4">
-              <UBadge
-                :color="o.access === 'whitelist' ? 'info' : 'success'"
-                variant="soft"
-                size="xs"
-              >
-                {{ o.access === 'whitelist' ? 'Whitelist' : 'Open to all' }}
-              </UBadge>
-            </td>
-            <td class="px-4 py-4">
-              <div class="mb-1.5 flex justify-between text-xs font-semibold">
-                <span class="text-[#7d8e84]">{{ moneyShort(o.raised) }}</span>
-                <span class="text-[#9aaba2]">of {{ moneyShort(o.target) }} · {{ pct(o) }}%</span>
-              </div>
-              <div class="h-1.5 overflow-hidden rounded-full bg-[#eef3f0]">
-                <div class="bg-primary h-full rounded-full" :style="{ width: pct(o) + '%' }"></div>
-              </div>
-            </td>
-            <td class="px-4 py-4">
-              <StatusBadge :status="o.status" />
-            </td>
-            <td class="px-5 py-4 text-right">
-              <UButton
-                size="sm"
-                color="primary"
-                variant="soft"
-                label="Manage"
-                trailing-icon="heroicons:arrow-right"
-                data-test="offering-manage-button"
-                @click="$emit('manage', o)"
-              />
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    <UTable :data="offerings" :columns="columns" :loading="isLoading" class="min-w-[820px]">
+      <template #offering-cell="{ row: { original: offering } }">
+        <span data-test="offering-row" class="font-bold text-[#0f3d2e]">
+          {{ offering.title }}
+        </span>
+      </template>
+      <template #rate-cell="{ row: { original: offering } }">
+        <span class="font-bold">{{ offering.rate }}%</span>
+      </template>
+      <template #term-cell="{ row: { original: offering } }">
+        {{ termLabel(offering.term, offering.termUnit) }}
+      </template>
+      <template #access-cell="{ row: { original: offering } }">
+        <UBadge :color="offering.access === 'whitelist' ? 'info' : 'success'" variant="soft">
+          {{ offering.access === 'whitelist' ? 'Whitelist' : 'Open to all' }}
+        </UBadge>
+      </template>
+      <template #raised-cell="{ row: { original: offering } }">
+        <div class="min-w-44">
+          <div class="mb-1.5 flex justify-between font-semibold">
+            <span class="text-[#7d8e84]">{{ moneyShort(offering.raised) }}</span>
+            <span class="text-[#9aaba2]">
+              of {{ moneyShort(offering.target) }} ·
+              {{ percentOf(offering.raised, offering.target) }}%
+            </span>
+          </div>
+          <UProgress
+            :model-value="percentOf(offering.raised, offering.target)"
+            :max="100"
+            size="xs"
+          />
+        </div>
+      </template>
+      <template #status-cell="{ row: { original: offering } }">
+        <StatusBadge :status="offering.status" />
+      </template>
+      <template #actions-cell="{ row: { original: offering } }">
+        <UButton
+          size="xs"
+          color="primary"
+          variant="soft"
+          label="Manage"
+          trailing-icon="heroicons:arrow-right"
+          data-test="offering-manage-button"
+          @click="$emit('manage', offering)"
+        />
+      </template>
+      <template #loading>
+        <div data-test="offerings-loading" class="flex flex-col gap-2 p-5">
+          <USkeleton v-for="index in 3" :key="index" class="h-10 w-full" />
+        </div>
+      </template>
+      <template #empty>
+        <UEmpty
+          data-test="offerings-empty"
+          icon="heroicons:banknotes"
+          :title="isOwner ? 'No offerings yet.' : 'You haven\'t participated in any offerings yet.'"
+        />
+      </template>
+    </UTable>
   </UCard>
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
+import { isAddress, isAddressEqual } from 'viem'
+import { useTeamStore, useUserDataStore } from '@/stores'
 import StatusBadge from './StatusBadge.vue'
-import { moneyShort, percentOf } from '@/utils'
+import {
+  useFixedReturnAllOffers,
+  useFixedReturnMyLenderPositions,
+  useFixedReturnOwner
+} from '@/composables/fixedReturn/reads'
+import { useGetFixedReturnOfferingsQuery } from '@/queries'
+import { fromLendingOfferStruct, moneyShort, percentOf, termLabel } from '@/utils'
 import type { OfferingSummary } from '@/types'
 
 defineEmits<{ manage: [offering: OfferingSummary] }>()
 
-const offerings: OfferingSummary[] = [
-  {
-    id: 'riverside',
-    title: 'Riverside Expansion Note',
-    rate: 9,
-    term: 12,
-    startDate: '2025-06-15',
-    access: 'general',
-    raised: 520000,
-    target: 500000,
-    status: 'closed'
-  },
-  {
-    id: 'mill-street',
-    title: 'Mill Street Solar Array',
-    rate: 8.5,
-    term: 18,
-    startDate: '2026-01-01',
-    access: 'whitelist',
-    raised: 150000,
-    target: 300000,
-    status: 'open'
-  },
-  {
-    id: 'harbor-logistics',
-    title: 'Harbor Logistics Facility',
-    rate: 10,
-    term: 24,
-    startDate: '2026-03-01',
-    access: 'general',
-    raised: 80000,
-    target: 750000,
-    status: 'open'
-  }
+const teamStore = useTeamStore()
+const userStore = useUserDataStore()
+const { data: fixedReturnOwnerAddress } = useFixedReturnOwner()
+const isOwner = computed(() => {
+  const ownerAddress = fixedReturnOwnerAddress.value
+  return (
+    typeof ownerAddress === 'string' &&
+    isAddress(ownerAddress, { strict: false }) &&
+    isAddress(userStore.address, { strict: false }) &&
+    isAddressEqual(ownerAddress, userStore.address)
+  )
+})
+
+const { data: offeringMetadata } = useGetFixedReturnOfferingsQuery({
+  queryParams: { teamId: teamStore.currentTeamId }
+})
+
+const { data: rawOfferings, isLoading } = useFixedReturnAllOffers()
+const { data: myLenderPositions } = useFixedReturnMyLenderPositions()
+
+const columns = [
+  { accessorKey: 'offering', header: 'Offering' },
+  { accessorKey: 'rate', header: 'Rate' },
+  { accessorKey: 'term', header: 'Term' },
+  { accessorKey: 'access', header: 'Access' },
+  { accessorKey: 'raised', header: 'Raised' },
+  { accessorKey: 'status', header: 'Status' },
+  { accessorKey: 'actions', header: '' }
 ]
 
-function pct(o: OfferingSummary): number {
-  return percentOf(o.raised, o.target)
-}
+// Title comes from the off-chain metadata endpoint (FixedReturn.sol has no title
+// param) — merged here so the on-chain query doesn't need to know about it, and so a
+// later-arriving metadata response still updates the title reactively.
+const offerings = computed<OfferingSummary[]>(() => {
+  const metadataByOfferId = new Map(offeringMetadata.value?.map((m) => [m.offerId, m.title]))
+  const positions = myLenderPositions.value ?? new Map()
+  return (rawOfferings.value ?? [])
+    .filter(({ offerId }) => isOwner.value || (positions.get(offerId)?.deposited ?? 0n) > 0n)
+    .map(({ offerId, offer, decimals }) =>
+      fromLendingOfferStruct(offerId, offer, decimals, metadataByOfferId.get(offerId))
+    )
+})
 </script>

@@ -87,6 +87,18 @@ function round2(value: number): number {
  * sheet so all three statements roll up the exact same numbers.
  */
 export function netBalanceByAccount(entries: readonly LedgerEntry[]): Map<AccountName, number> {
+  const net = netBalanceByAccountRaw(entries)
+  for (const [account, value] of net) net.set(account, round2(value))
+  return net
+}
+
+/**
+ * Same roll-up as {@link netBalanceByAccount} but **without** the per-account
+ * cent rounding — used for the balance-sheet identity check, which must run on
+ * full precision (rounding each account then summing can drift a cent and flag a
+ * balanced book "out of balance").
+ */
+export function netBalanceByAccountRaw(entries: readonly LedgerEntry[]): Map<AccountName, number> {
   const net = new Map<AccountName, number>()
   const add = (account: AccountName, signed: number): void => {
     net.set(account, (net.get(account) ?? 0) + signed)
@@ -98,7 +110,6 @@ export function netBalanceByAccount(entries: readonly LedgerEntry[]): Map<Accoun
       add(entry.credit, isDebitNormal(entry.credit) ? -entry.amountUsd : entry.amountUsd)
     }
   }
-  for (const [account, value] of net) net.set(account, round2(value))
   return net
 }
 
@@ -142,49 +153,52 @@ export function buildGeneralLedger(entries: readonly LedgerEntry[]): GeneralLedg
     }
   }
 
-  let totalDebit = 0
-  let totalCredit = 0
-  let debitBalanceTotal = 0
-  let creditBalanceTotal = 0
+  // Totals + the balanced check run on the **raw** (full-precision) sums: every
+  // posting is internally balanced, so the raw debit/credit totals are exactly
+  // equal. Rounding each account to the cent first and *then* summing lets those
+  // per-account roundings drift a cent apart (e.g. SHER values like 7.165 / 7.465
+  // each rounding up), which would otherwise flag a balanced book "out of balance".
+  // We round only for display.
+  let rawTotalDebit = 0
+  let rawTotalCredit = 0
+  let rawDebitBalance = 0
+  let rawCreditBalance = 0
   const trialBalance: TrialBalanceRow[] = []
 
   // Iterate the chart in declared order so the trial balance reads top-down.
   for (const account of ACCOUNT_NAMES) {
-    const grossDebit = round2(debits.get(account) ?? 0)
-    const grossCredit = round2(credits.get(account) ?? 0)
-    if (grossDebit === 0 && grossCredit === 0) continue
+    const rawDebit = debits.get(account) ?? 0
+    const rawCredit = credits.get(account) ?? 0
+    if (rawDebit === 0 && rawCredit === 0) continue
 
-    totalDebit += grossDebit
-    totalCredit += grossCredit
-    const balance = round2(
-      isDebitNormal(account) ? grossDebit - grossCredit : grossCredit - grossDebit
-    )
-    if (isDebitNormal(account)) debitBalanceTotal += balance
-    else creditBalanceTotal += balance
+    rawTotalDebit += rawDebit
+    rawTotalCredit += rawCredit
+    const rawBalance = isDebitNormal(account) ? rawDebit - rawCredit : rawCredit - rawDebit
+    if (isDebitNormal(account)) rawDebitBalance += rawBalance
+    else rawCreditBalance += rawBalance
+
+    const grossDebit = round2(rawDebit)
+    const grossCredit = round2(rawCredit)
+    if (grossDebit === 0 && grossCredit === 0) continue // sub-cent residual: not shown
 
     trialBalance.push({
       account,
       accountClass: classOf(account),
       totalDebit: grossDebit,
       totalCredit: grossCredit,
-      balance
+      balance: round2(rawBalance)
     })
   }
-
-  totalDebit = round2(totalDebit)
-  totalCredit = round2(totalCredit)
-  debitBalanceTotal = round2(debitBalanceTotal)
-  creditBalanceTotal = round2(creditBalanceTotal)
 
   return {
     entries: journal,
     trialBalance,
-    totalDebit,
-    totalCredit,
-    debitBalanceTotal,
-    creditBalanceTotal,
+    totalDebit: round2(rawTotalDebit),
+    totalCredit: round2(rawTotalCredit),
+    debitBalanceTotal: round2(rawDebitBalance),
+    creditBalanceTotal: round2(rawCreditBalance),
     balanced:
-      Math.abs(totalDebit - totalCredit) < CENT &&
-      Math.abs(debitBalanceTotal - creditBalanceTotal) < CENT
+      Math.abs(rawTotalDebit - rawTotalCredit) < CENT &&
+      Math.abs(rawDebitBalance - rawCreditBalance) < CENT
   }
 }

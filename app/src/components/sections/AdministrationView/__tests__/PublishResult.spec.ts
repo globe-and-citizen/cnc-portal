@@ -5,7 +5,8 @@ import PublishResult from '../PublishResult.vue'
 import { mockElectionsWrites, useQueryClientFn, mockWagmiCore } from '@/tests/mocks'
 import { useTeamStore } from '@/stores'
 
-vi.mock('@/constant', () => ({
+vi.mock('@/constant', async (importOriginal) => ({
+  ...(await importOriginal<object>()),
   USDC_ADDRESS: '0x0000000000000000000000000000000000000001',
   USDT_ADDRESS: '0x0000000000000000000000000000000000000002',
   USDC_E_ADDRESS: '0x0000000000000000000000000000000000000003',

@@ -1,7 +1,7 @@
 <template>
   <div class="sticky top-6 flex flex-col gap-4">
     <!-- Dark return card -->
-    <div class="rounded-2xl bg-[#0f3d2e] p-6 text-white shadow-lg">
+    <UCard class="bg-[#0f3d2e] text-white shadow-lg" :ui="{ body: 'p-6' }">
       <div class="mb-1 text-xs font-bold tracking-widest text-[#7fd9b6] uppercase">
         Repayment at maturity
       </div>
@@ -24,7 +24,7 @@
           <div class="mt-0.5 text-base font-bold">Bullet</div>
         </div>
       </div>
-    </div>
+    </UCard>
 
     <!-- Terms at a glance -->
     <UCard>
@@ -37,8 +37,8 @@
           <span class="font-bold">{{ termLabel }}</span>
         </div>
         <div class="flex justify-between text-sm">
-          <span class="text-muted">Start</span>
-          <span class="font-bold">{{ startFmt }}</span>
+          <span class="text-muted">Deadline</span>
+          <span class="font-bold">{{ deadlineFmt }}</span>
         </div>
         <div class="flex justify-between text-sm">
           <span class="text-muted">Maturity</span>
@@ -85,7 +85,7 @@ defineProps<{
   termLabel: string
   totalInterest: number
   totalReturn: number
-  startFmt: string
+  deadlineFmt: string
   maturityFmt: string
   accessLabel: string
   accessDot: string

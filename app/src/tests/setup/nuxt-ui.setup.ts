@@ -25,14 +25,20 @@ vi.mock('@nuxt/ui/components/Modal.vue', () => ({
       open: { type: Boolean, default: false },
       ui: Object,
       title: String,
-      description: String
+      description: String,
+      close: { type: [Boolean, Object], default: true }
     },
-    emits: ['update:open'],
+    emits: ['update:open', 'after:leave'],
     template: `
       <div>
         <slot />
         <div v-if="open">
-          <button data-test="close-wage-modal-button" @click="$emit('update:open', false)" />
+          <button
+            v-if="close"
+            data-test="close-wage-modal-button"
+            v-bind="typeof close === 'object' ? close : {}"
+            @click="$emit('update:open', false); $emit('after:leave')"
+          />
           <slot name="header" />
           <slot name="body" />
         </div>

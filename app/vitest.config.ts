@@ -20,6 +20,7 @@ const mockFiles = [
   'investor',
   'safeDepositRouter',
   'vesting',
+  'fixedReturn',
   'nuxt-ui',
   'utils'
 ].map((name) => `./src/tests/setup/${name}.setup.ts`)

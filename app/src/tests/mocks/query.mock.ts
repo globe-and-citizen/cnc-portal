@@ -156,6 +156,7 @@ export const mockWeeklyClaimData: WeeklyClaim[] = [
     data: {},
     signature: null,
     signedAgainstContractAddress: null,
+    weeklyGoals: null,
     wageId: 1,
     wage: mockWageData[0] as Wage,
     claims: [
