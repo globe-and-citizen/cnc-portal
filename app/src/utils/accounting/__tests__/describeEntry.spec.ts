@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { activityOf, entryLabel } from '../describeEntry'
+import { activityOf, activityText, entryLabel } from '../describeEntry'
 import type { LedgerEntry } from '../ledgerEntry'
 
 const ALI = '0x1111111111111111111111111111111111111111'
@@ -186,6 +186,29 @@ describe('activityOf — plain rows', () => {
     expect(
       activityOf(entry({ useCase: 'DEFAULT-D', counterparty: ALI, debit: null, credit: null }))
     ).toEqual({ kind: 'actor', actor: ALI, text: 'Share issuance' })
+  })
+})
+
+describe('activityText — export rendering', () => {
+  const resolve = (address: string) => (address === ALI ? 'Ali' : 'User')
+
+  it('phrases a pocket-to-pocket transfer like the ledger, without a "Cash — " prefix', () => {
+    const cell = activityOf(
+      entry({ useCase: 'INTERNAL', debit: 'Cash — Safe', credit: 'Cash — Bank' })
+    )
+    expect(activityText(cell)).toBe('Bank transferred money to Safe')
+  })
+
+  it('names the initiator on a transfer when one is resolved', () => {
+    const cell = activityOf(
+      entry({ useCase: 'INTERNAL', debit: 'Cash — Safe', credit: 'Cash — Bank', initiator: ALI })
+    )
+    expect(activityText(cell, resolve)).toBe('Ali transferred money from Bank to Safe')
+  })
+
+  it('renders an actor row as name + predicate', () => {
+    const cell = activityOf(entry({ useCase: 'UC-BANK-02', counterparty: ALI }))
+    expect(activityText(cell, resolve)).toBe('Ali paid $500.00 for services')
   })
 })
 

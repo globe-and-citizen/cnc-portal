@@ -1,5 +1,10 @@
 <template>
   <div class="flex flex-col gap-5">
+    <!-- Report export: pick the sections, then generate PDF or Excel from the modal. -->
+    <div class="flex items-center justify-end">
+      <ExportReportModal :ledger-entry-count="ledgerEntryCount" @generate="onGenerate" />
+    </div>
+
     <!-- Balance-check banner -->
     <div
       class="flex flex-wrap items-center gap-3 rounded-xl px-4 py-3"
@@ -64,8 +69,12 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import ExportReportModal, { type ExportFormat } from './ExportReportModal.vue'
 import { useAccountingContext } from '@/composables/accounting/useAccountingContext'
+import { useAccountingExport } from '@/composables/accounting/useAccountingExport'
 import { presentSummaryCards, presentBanner } from '@/utils/accounting/presenter'
+import { presentLedger } from '@/utils/accounting/ledgerPresenter'
+import type { SectionKey, SectionSpec } from '@/utils/accounting/exportSpec'
 
 const acc = useAccountingContext()
 
@@ -73,4 +82,26 @@ const summaryCards = computed(() =>
   presentSummaryCards(acc.summary.value, acc.incomeStatement.value, acc.balanceSheet.value)
 )
 const banner = computed(() => presentBanner(acc.balanceSheet.value, acc.generalLedger.value))
+
+// Whole-book ledger size — surfaced in the modal so the user knows a full ledger
+// export may be long.
+const ledgerEntryCount = computed(() => presentLedger(acc.entries.value, 'All').entryCount)
+
+// The Summary report exports the whole book (no per-page filters) for the
+// sections picked in the modal — as a PDF (one section per page) or an Excel
+// workbook (one section per sheet), whichever button the user hits.
+const { exportPdf, exportExcel } = useAccountingExport()
+
+function onGenerate({ format, keys }: { format: ExportFormat; keys: SectionKey[] }): void {
+  const specs = keys.map((key): SectionSpec => ({ key }))
+  if (format === 'pdf') {
+    exportPdf(
+      specs,
+      { filename: 'cnc-accounting.pdf', pageBreak: true },
+      'Accounting report exported to PDF'
+    )
+  } else {
+    exportExcel(specs, 'cnc-accounting.xlsx', 'Accounting report exported to Excel')
+  }
+}
 </script>

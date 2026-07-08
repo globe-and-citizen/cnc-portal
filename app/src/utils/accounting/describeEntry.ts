@@ -160,3 +160,39 @@ export function activityOf(entry: LedgerEntry): ActivityCell {
   }
   return { kind: 'plain', text: entryLabel(entry) }
 }
+
+/** `"0x1234…cdef"` — an address shortened for a text cell; other strings pass through. */
+function shortAddress(value: string): string {
+  return /^0x[0-9a-fA-F]{40}$/.test(value) ? `${value.slice(0, 6)}…${value.slice(-4)}` : value
+}
+
+/** A pocket account name without its `"Cash — "` prefix, matching the on-screen avatar label. */
+function pocketName(account: string): string {
+  return account.replace(/^Cash — /, '')
+}
+
+/**
+ * Flatten an {@link ActivityCell} to a single line of text for the Excel/PDF exports —
+ * the tabular counterpart of the avatar + predicate the ledger renders on screen.
+ * `resolveName` turns a party's address into its display name (member/contract); it
+ * defaults to a shortened address so the helper stays pure and usable without a store.
+ */
+export function activityText(
+  cell: ActivityCell,
+  resolveName: (address: string) => string = shortAddress
+): string {
+  switch (cell.kind) {
+    case 'actor':
+      return `${resolveName(cell.actor)} ${cell.text}`
+    case 'transfer': {
+      const from = pocketName(cell.from)
+      const to = pocketName(cell.to)
+      // Mirror the on-screen ledger phrasing exactly (see LedgerTable.vue).
+      return cell.actor
+        ? `${resolveName(cell.actor)} transferred money from ${from} to ${to}`
+        : `${from} transferred money to ${to}`
+    }
+    case 'plain':
+      return cell.text
+  }
+}
