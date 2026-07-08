@@ -15,7 +15,10 @@ import {
   presentTrial,
   presentSummaryCards,
   presentBanner,
-  filterByPeriod
+  filterByPeriod,
+  incomeExportTitle,
+  balanceExportTitle,
+  trialExportTitle
 } from '@/utils/accounting/presenter'
 import { buildGeneralLedger } from '@/utils/accounting/generalLedger'
 import {
@@ -63,7 +66,7 @@ function summarySheet(acc: CncAccounting): SheetRows {
 function incomeSheet(acc: CncAccounting, from?: Date | null, to?: Date | null): SheetRows {
   const income = presentIncome(acc.entries, from, to)
   return [
-    ['Income Statement'],
+    [incomeExportTitle(from, to)],
     [],
     ['Revenue'],
     ...income.revLines.map((r) => [r.label, usd(r.value)]),
@@ -80,7 +83,7 @@ function incomeSheet(acc: CncAccounting, from?: Date | null, to?: Date | null): 
 function balanceSheetRows(acc: CncAccounting, asOf?: Date | null): SheetRows {
   const balance = presentBalance(acc.entries, asOf)
   return [
-    ['Balance Sheet'],
+    [balanceExportTitle(asOf)],
     [],
     ['Assets'],
     ...balance.assetLines.map((a) => [a.label, usd(a.value)]),
@@ -103,7 +106,7 @@ function trialSheet(acc: CncAccounting, asOf?: Date | null): SheetRows {
     : acc.generalLedger
   const trial = presentTrial(ledger)
   return [
-    ['Trial Balance'],
+    [trialExportTitle(asOf)],
     [],
     ['Account', 'Nature', 'Debit', 'Credit'],
     ...trial.rows.map((t) => [t.account, t.nature, usd(t.dr), usd(t.cr)]),

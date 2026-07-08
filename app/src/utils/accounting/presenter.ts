@@ -127,6 +127,29 @@ export function periodLabel(from?: Date | null, to?: Date | null): string {
   return 'All time'
 }
 
+/** A single calendar day at day granularity, e.g. `"Jul 8, 2026"`. */
+export function dayLabel(date: Date): string {
+  return dayjs(date).format('MMM D, YYYY')
+}
+
+/**
+ * The headings the statement exports (PDF page / Excel title row) print, spelling
+ * out the active reporting scope so a printed page is self-describing — mirroring
+ * {@link ledgerExportTitle}. The plain base name alone for the whole book, with
+ * the selected period / "as of" date appended when the page has one set.
+ */
+export function incomeExportTitle(from?: Date | null, to?: Date | null): string {
+  return from || to ? `Income Statement — ${periodLabel(from, to)}` : 'Income Statement'
+}
+
+export function balanceExportTitle(asOf?: Date | null): string {
+  return asOf ? `Balance Sheet — As of ${dayLabel(asOf)}` : 'Balance Sheet'
+}
+
+export function trialExportTitle(asOf?: Date | null): string {
+  return asOf ? `Trial Balance — As of ${dayLabel(asOf)}` : 'Trial Balance'
+}
+
 /** Keep entries inside an inclusive `[from, to]` window (nullish bound = open). */
 export function filterByPeriod(
   entries: readonly LedgerEntry[],

@@ -18,7 +18,10 @@ import {
   presentTrial,
   presentSummaryCards,
   presentBanner,
-  filterByPeriod
+  filterByPeriod,
+  incomeExportTitle,
+  balanceExportTitle,
+  trialExportTitle
 } from '@/utils/accounting/presenter'
 import { buildGeneralLedger } from '@/utils/accounting/generalLedger'
 import {
@@ -71,7 +74,7 @@ function summaryTable(acc: CncAccounting): AccountingPdfTable {
 function incomeTable(acc: CncAccounting, from?: Date | null, to?: Date | null): AccountingPdfTable {
   const income = presentIncome(acc.entries, from, to)
   return {
-    title: 'Income Statement',
+    title: incomeExportTitle(from, to),
     head: ['Item', 'Amount'],
     align: ['left', 'right'],
     body: [
@@ -91,7 +94,7 @@ function incomeTable(acc: CncAccounting, from?: Date | null, to?: Date | null): 
 function balanceTable(acc: CncAccounting, asOf?: Date | null): AccountingPdfTable {
   const balance = presentBalance(acc.entries, asOf)
   return {
-    title: 'Balance Sheet',
+    title: balanceExportTitle(asOf),
     head: ['Item', 'Amount'],
     align: ['left', 'right'],
     body: [
@@ -119,7 +122,7 @@ function trialTable(acc: CncAccounting, asOf?: Date | null): AccountingPdfTable 
     : acc.generalLedger
   const trial = presentTrial(ledger)
   return {
-    title: 'Trial Balance',
+    title: trialExportTitle(asOf),
     head: ['Account', 'Nature', 'Debit', 'Credit'],
     align: ['left', 'left', 'right', 'right'],
     body: [
