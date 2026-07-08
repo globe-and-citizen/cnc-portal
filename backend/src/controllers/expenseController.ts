@@ -1,13 +1,25 @@
 import { Request, Response } from 'express';
 import { errorResponse } from '../utils/utils';
 
-import { Address, formatEther, keccak256, parseEther, parseUnits, zeroAddress } from 'viem';
+import {
+  Address,
+  Hex,
+  formatEther,
+  isAddress,
+  isHex,
+  keccak256,
+  parseEther,
+  parseUnits,
+  recoverTypedDataAddress,
+  zeroAddress,
+} from 'viem';
 import { prisma } from '../utils';
 import publicClient from '../utils/viem.config';
 
 import { Expense } from '@prisma/client';
 import ABI from '../artifacts/expense-account-eip712.json';
 import { BudgetLimit } from '../types';
+import { getCurrentExpenseAccountContract } from '../utils/expenseAccountUtil';
 import {
   addExpenseBodySchema,
   getExpensesQuerySchema,
@@ -21,13 +33,48 @@ type GetExpensesQuery = z.infer<typeof getExpensesQuerySchema>;
 type UpdateExpenseBody = z.infer<typeof updateExpenseBodySchema>;
 type UpdateExpenseParams = z.infer<typeof updateExpenseParamsSchema>;
 
+const BUDGET_LIMIT_TYPES = {
+  BudgetLimit: [
+    { name: 'amount', type: 'uint256' },
+    { name: 'frequencyType', type: 'uint8' },
+    { name: 'customFrequency', type: 'uint256' },
+    { name: 'startDate', type: 'uint256' },
+    { name: 'endDate', type: 'uint256' },
+    { name: 'tokenAddress', type: 'address' },
+    { name: 'approvedAddress', type: 'address' },
+  ],
+} as const;
+
+const buildContractBudgetLimit = (data: BudgetLimit) => ({
+  amount:
+    data.tokenAddress === zeroAddress
+      ? parseEther(`${data.amount}`)
+      : parseUnits(`${data.amount}`, 6),
+  frequencyType: Number(data.frequencyType),
+  customFrequency: BigInt(Number(data.customFrequency)),
+  startDate: BigInt(Number(data.startDate)),
+  endDate: BigInt(Number(data.endDate)),
+  tokenAddress: data.tokenAddress as Address,
+  approvedAddress: data.approvedAddress as Address,
+});
+
 export const addExpense = async (req: Request, res: Response) => {
   const callerAddress = req.address;
-  const { teamId, signature, data } = req.body as AddExpenseBody;
+  const { teamId, signature, data, signedAgainstContractAddress, chainId } =
+    req.body as AddExpenseBody;
 
-  const expenseAccountEip712Address = await prisma.teamContract.findFirst({
-    where: { teamId, type: 'ExpenseAccountEIP712' },
-  });
+  const expenseAccountEip712Address = await getCurrentExpenseAccountContract(teamId);
+
+  if (
+    !expenseAccountEip712Address ||
+    expenseAccountEip712Address.address.toLowerCase() !== signedAgainstContractAddress.toLowerCase()
+  ) {
+    return errorResponse(
+      400,
+      'signedAgainstContractAddress does not match the team current ExpenseAccountEIP712',
+      res
+    );
+  }
 
   const owner = (await publicClient.readContract({
     address: expenseAccountEip712Address?.address as Address,
@@ -41,12 +88,39 @@ export const addExpense = async (req: Request, res: Response) => {
       return errorResponse(403, 'Caller is not the owner of the team', res);
     }
 
+    if (!isHex(signature) || !isAddress(callerAddress)) {
+      return errorResponse(400, 'Missing or invalid signature', res);
+    }
+
+    let recovered: Address;
+    try {
+      recovered = await recoverTypedDataAddress({
+        domain: {
+          name: 'CNCExpenseAccount',
+          version: '1',
+          chainId,
+          verifyingContract: signedAgainstContractAddress as Address,
+        },
+        types: BUDGET_LIMIT_TYPES,
+        primaryType: 'BudgetLimit',
+        message: buildContractBudgetLimit(data as BudgetLimit),
+        signature: signature as Hex,
+      });
+    } catch (error) {
+      console.error('Failed to recover signer for expense approval:', error);
+      return errorResponse(400, 'Failed to verify signature', res);
+    }
+
+    if (recovered.toLowerCase() !== callerAddress.toLowerCase()) {
+      return errorResponse(400, 'Recovered signer does not match the caller', res);
+    }
+
     // TODO: should be only one expense active for the user
     const expense = await prisma.expense.create({
       data: {
         teamId,
         signature,
-        data,
+        data: { ...data, signedAgainstContractAddress, chainId },
         userAddress: data.approvedAddress,
         status: 'signed',
       },
@@ -107,12 +181,7 @@ const syncExpenseStatus = async (expense: Expense) => {
     };
   }
 
-  const expenseAccountEip712Address = await prisma.teamContract.findFirst({
-    where: {
-      teamId: expense.teamId,
-      type: 'ExpenseAccountEIP712',
-    },
-  });
+  const expenseAccountEip712Address = await getCurrentExpenseAccountContract(expense.teamId);
 
   const data = expense.data as BudgetLimit;
 
@@ -127,16 +196,7 @@ const syncExpenseStatus = async (expense: Expense) => {
     address: expenseAccountEip712Address?.address as Address,
     abi: ABI,
     functionName: 'isNewPeriod',
-    args: [
-      {
-        ...data,
-        amount:
-          data.tokenAddress === zeroAddress
-            ? parseEther(`${data.amount}`)
-            : parseUnits(`${data.amount}`, 6),
-      },
-      keccak256(expense.signature as Address),
-    ],
+    args: [buildContractBudgetLimit(data), keccak256(expense.signature as Address)],
   });
 
   // 2. Fetch the latest block

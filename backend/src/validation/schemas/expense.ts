@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { teamIdSchema, positiveIntegerSchema } from './common';
+import { addressSchema, teamIdSchema, positiveIntegerSchema } from './common';
 
 /**
  * Expense-related validation schemas
@@ -9,6 +9,8 @@ import { teamIdSchema, positiveIntegerSchema } from './common';
 export const addExpenseBodySchema = z.object({
   teamId: teamIdSchema,
   signature: z.string().min(1, 'Signature cannot be empty'),
+  signedAgainstContractAddress: addressSchema,
+  chainId: z.number().int().positive(),
   data: z.object({
     approvedAddress: z.string().min(1, 'approvedAddress is required'),
     amount: z.number().nonnegative(), //.min(1, 'approvedAddress is required'),
