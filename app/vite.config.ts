@@ -139,7 +139,18 @@ export default defineConfig(async ({ mode }) => {
       // `xlsx` is only reached via the lazy `import('xlsx')` in the accounting
       // export — without this, the first Export click re-optimizes and reloads
       // the page, silently aborting the download.
-      include: ['viem/accounts', 'xlsx']
+      // The ProseMirror packages back the Nuxt UI `UEditor` (weekly goals memo).
+      // Pre-bundling them as a single copy avoids the "Adding different instances
+      // of a keyed plugin" TipTap error and mid-session re-optimize reloads.
+      include: [
+        'viem/accounts',
+        'xlsx',
+        '@nuxt/ui > prosemirror-state',
+        '@nuxt/ui > prosemirror-transform',
+        '@nuxt/ui > prosemirror-model',
+        '@nuxt/ui > prosemirror-view',
+        '@nuxt/ui > prosemirror-gapcursor'
+      ]
     },
     build: {
       // 'hidden' generates source maps but does NOT reference them in the

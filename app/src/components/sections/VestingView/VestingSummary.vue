@@ -9,7 +9,7 @@
           props.vesting.member.name || props.vesting.member.address
         }}</span>
 
-        <span class="text-xs text-gray-500">Total Amount</span>
+        <span class="text-xs text-gray-500">Promised to vest</span>
         <span class="font-medium">{{ props.vesting.totalAmount }} Tokens</span>
       </div>
 

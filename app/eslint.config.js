@@ -132,6 +132,8 @@ const bannedGlobalMockPaths = [
   '@/composables/safeDepositRouter/reads',
   '@/composables/safeDepositRouter/writes',
   '@/composables/vesting/writes',
+  '@/composables/fixedReturn/reads',
+  '@/composables/fixedReturn/writes',
   // nuxt-ui.setup.ts (component-level stubs)
   '@nuxt/ui/components/Modal.vue',
   '@nuxt/ui/components/Tooltip.vue',

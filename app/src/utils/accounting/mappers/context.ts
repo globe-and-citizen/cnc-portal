@@ -19,8 +19,17 @@ export interface MapperContext {
   internalAddresses: ReadonlySet<Address>
   /** Addresses treated as founders/owners — their treasury inflows are capital. */
   founderAddresses: ReadonlySet<Address>
+  /** Team member addresses — a member funding the Safe is a capital contribution
+   *  (invest & get SHER → Investor Equity), not a client paying for services. */
+  memberAddresses: ReadonlySet<Address>
   /** Convert a raw base-unit amount to USD at the given time. */
   toUsd: (amount: bigint, token: TokenId, at: Date) => number
+  /**
+   * Whole SHER minted for a USD amount invested at the given time, from the
+   * router's compensation multiplier (`sher = usd × multiplier`). Exact for the
+   * USD-pegged deposits the router supports; `0` when no multiplier is known.
+   */
+  sherForUsd: (usd: number, at: Date) => number
   /** Resolve a token contract address (nullish / zero = native) to a {@link TokenId}. */
   tokenIdOf: (tokenAddress: string | null | undefined) => TokenId
   /** The Cash pocket account of a CNC-owned address, or `null` if external. */
@@ -59,6 +68,8 @@ export interface BuildMapperContextInput {
   internalAddresses: ReadonlySet<Address>
   /** Founder / owner addresses whose treasury inflows are Owner Capital. */
   founderAddresses?: Iterable<Address | string>
+  /** Team member addresses — a member's Safe inflow is a capital contribution. */
+  memberAddresses?: Iterable<Address | string>
   /** The protocol-wide FeeCollector address (its pocket is `Cash — FeeCollector`). */
   feeCollectorAddress?: Address | string | null
   /** The on-chain SHER token address, so it resolves to the `sher` {@link TokenId}. */
@@ -102,10 +113,20 @@ export function buildMapperContext(input: BuildMapperContextInput): MapperContex
     return pocketIndex.get(getAddress(address)) ?? null
   }
 
+  const sherForUsd = (usd: number, at: Date): number => {
+    // The SHER price-of-record is USD-per-SHER (1 / multiplier); inverting it
+    // gives the SHER minted for a USD deposit (usd × multiplier). See sherRate.ts.
+    const usdPerSher = input.rateOfRecord ? input.rateOfRecord('sher', at) : 0
+    if (!(usdPerSher > 0) || !(usd > 0)) return 0
+    return Math.round((usd / usdPerSher) * 1e6) / 1e6
+  }
+
   return {
     internalAddresses: input.internalAddresses,
     founderAddresses: toAddressSet(input.founderAddresses),
+    memberAddresses: toAddressSet(input.memberAddresses),
     toUsd: (amount, token, at) => toUsdUtil(amount, token, at, input.rateOfRecord),
+    sherForUsd,
     tokenIdOf,
     pocketOf
   }
