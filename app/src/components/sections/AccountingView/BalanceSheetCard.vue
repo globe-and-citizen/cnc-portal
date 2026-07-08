@@ -81,6 +81,7 @@ import { defaultValueForMode } from '@/utils/datePicker'
 import { useAccountingContext } from '@/composables/accounting/useAccountingContext'
 import { useAccountingExport } from '@/composables/accounting/useAccountingExport'
 import { presentBalance } from '@/utils/accounting/presenter'
+import { exportFilename } from '@/utils/accounting/exportNaming'
 import type { SectionSpec } from '@/utils/accounting/exportSpec'
 
 // Point-in-time "as of" date (date mode) — defaults to end of today.
@@ -89,11 +90,16 @@ const asOf = ref<Date>(defaultValueForMode('date') as Date)
 const acc = useAccountingContext()
 const balance = computed(() => presentBalance(acc.entries.value, asOf.value))
 
-// Export the current, as-of-filtered balance sheet.
+// Export the current, as-of-filtered balance sheet. The filename carries the
+// "as of" date so a stack of exports stays distinguishable.
 const { exportPdf, exportExcel } = useAccountingExport()
 const spec = (): SectionSpec => ({ key: 'balance', asOf: asOf.value })
-const onExport = () =>
-  exportExcel([spec()], 'balance-sheet.xlsx', 'Balance sheet exported to Excel')
-const onPrint = () =>
-  exportPdf([spec()], { filename: 'balance-sheet.pdf' }, 'Balance sheet exported to PDF')
+const onExport = () => {
+  const s = spec()
+  exportExcel([s], exportFilename(s, 'xlsx'), 'Balance sheet exported to Excel')
+}
+const onPrint = () => {
+  const s = spec()
+  exportPdf([s], { filename: exportFilename(s, 'pdf') }, 'Balance sheet exported to PDF')
+}
 </script>

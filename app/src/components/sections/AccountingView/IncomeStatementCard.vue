@@ -83,10 +83,11 @@
 import { computed, ref } from 'vue'
 import AccountingDatePicker from '@/components/AccountingDatePicker.vue'
 import AccountingExportBar from './AccountingExportBar.vue'
-import { defaultValueForMode, type Range } from '@/utils/datePicker'
+import { defaultValueForMode, isAllTimeRange, type Range } from '@/utils/datePicker'
 import { useAccountingContext } from '@/composables/accounting/useAccountingContext'
 import { useAccountingExport } from '@/composables/accounting/useAccountingExport'
 import { presentIncome } from '@/utils/accounting/presenter'
+import { exportFilename } from '@/utils/accounting/exportNaming'
 import type { SectionSpec } from '@/utils/accounting/exportSpec'
 
 // Reporting period (range mode) — defaults to "All time".
@@ -97,11 +98,22 @@ const income = computed(() =>
   presentIncome(acc.entries.value, period.value.start, period.value.end)
 )
 
-// Export the current, period-filtered statement.
+// Export the current, period-filtered statement. Pass null bounds for "All time"
+// (whose range is epoch → today, not a user choice) so the heading and filename
+// read "All time" rather than a spurious "Jan 1, 1970 – …" window.
 const { exportPdf, exportExcel } = useAccountingExport()
-const spec = (): SectionSpec => ({ key: 'income', from: period.value.start, to: period.value.end })
-const onExport = () =>
-  exportExcel([spec()], 'income-statement.xlsx', 'Income statement exported to Excel')
-const onPrint = () =>
-  exportPdf([spec()], { filename: 'income-statement.pdf' }, 'Income statement exported to PDF')
+const dateSelected = computed(() => !isAllTimeRange(period.value))
+const spec = (): SectionSpec => ({
+  key: 'income',
+  from: dateSelected.value ? period.value.start : null,
+  to: dateSelected.value ? period.value.end : null
+})
+const onExport = () => {
+  const s = spec()
+  exportExcel([s], exportFilename(s, 'xlsx'), 'Income statement exported to Excel')
+}
+const onPrint = () => {
+  const s = spec()
+  exportPdf([s], { filename: exportFilename(s, 'pdf') }, 'Income statement exported to PDF')
+}
 </script>

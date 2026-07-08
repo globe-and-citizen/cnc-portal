@@ -85,6 +85,7 @@ import { useAccountingContext } from '@/composables/accounting/useAccountingCont
 import { useAccountingExport } from '@/composables/accounting/useAccountingExport'
 import { buildGeneralLedger } from '@/utils/accounting/generalLedger'
 import { filterByPeriod, presentTrial } from '@/utils/accounting/presenter'
+import { exportFilename } from '@/utils/accounting/exportNaming'
 import type { SectionSpec } from '@/utils/accounting/exportSpec'
 
 interface TrialTableRow {
@@ -128,11 +129,16 @@ const columns: TableColumn<TrialTableRow>[] = [
   { accessorKey: 'cr', header: 'Credit' }
 ]
 
-// Export the current, as-of-filtered trial balance.
+// Export the current, as-of-filtered trial balance. The filename carries the
+// "as of" date so a stack of exports stays distinguishable.
 const { exportPdf, exportExcel } = useAccountingExport()
 const spec = (): SectionSpec => ({ key: 'trial', asOf: asOf.value })
-const onExport = () =>
-  exportExcel([spec()], 'trial-balance.xlsx', 'Trial balance exported to Excel')
-const onPrint = () =>
-  exportPdf([spec()], { filename: 'trial-balance.pdf' }, 'Trial balance exported to PDF')
+const onExport = () => {
+  const s = spec()
+  exportExcel([s], exportFilename(s, 'xlsx'), 'Trial balance exported to Excel')
+}
+const onPrint = () => {
+  const s = spec()
+  exportPdf([s], { filename: exportFilename(s, 'pdf') }, 'Trial balance exported to PDF')
+}
 </script>

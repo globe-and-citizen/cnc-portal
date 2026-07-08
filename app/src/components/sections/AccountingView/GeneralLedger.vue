@@ -64,6 +64,7 @@ import { defaultValueForMode, isAllTimeRange, type Range } from '@/utils/datePic
 import { useAccountingContext } from '@/composables/accounting/useAccountingContext'
 import { useAccountingExport } from '@/composables/accounting/useAccountingExport'
 import { periodLabel } from '@/utils/accounting/presenter'
+import { exportFilename } from '@/utils/accounting/exportNaming'
 import type { SectionSpec } from '@/utils/accounting/exportSpec'
 import {
   filterLedgerEntries,
@@ -133,8 +134,14 @@ const spec = (): SectionSpec => ({
   to: dateSelected.value ? period.value.end : null,
   columns: visibleColumns.value
 })
-const onExport = () =>
-  exportExcel([spec()], 'general-ledger.xlsx', 'General ledger exported to Excel')
-const onPrint = () =>
-  exportPdf([spec()], { filename: 'general-ledger.pdf' }, 'General ledger exported to PDF')
+// The filename mirrors the export scope: the active category, plus the period
+// when a real range is set (all-time needs no date suffix).
+const onExport = () => {
+  const s = spec()
+  exportExcel([s], exportFilename(s, 'xlsx'), 'General ledger exported to Excel')
+}
+const onPrint = () => {
+  const s = spec()
+  exportPdf([s], { filename: exportFilename(s, 'pdf') }, 'General ledger exported to PDF')
+}
 </script>
