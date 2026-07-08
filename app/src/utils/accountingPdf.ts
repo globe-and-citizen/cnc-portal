@@ -1,18 +1,36 @@
 /**
  * Print the accounting books to a downloadable PDF.
  *
- * One table per tab — Income Statement, Balance Sheet, Trial Balance, General Ledger —
- * i.e. every tab except the Summary, mirroring the Excel export. Table construction
- * ({@link buildAccountingTables}) is pure and unit-tested; it reads the live engine
- * output ({@link CncAccounting}) through the same presenters the view and the Excel
- * export use. {@link exportAccountingPdf} lazy-loads jsPDF + autotable, renders each
- * table with a sober header colour and zebra-striped rows, stamps a diagonal
- * "CNC Portal" watermark on every page, and downloads the file on click.
+ * Section tables — Summary, Income Statement, Balance Sheet, Trial Balance,
+ * General Ledger — are built by pure, unit-tested functions that read the live
+ * engine output ({@link CncAccounting}) through the same presenters the view and
+ * the Excel export use. {@link buildAccountingTables} yields the classic four
+ * printed tabs (everything except the Summary); {@link buildTables} builds an
+ * arbitrary selection (used by the Summary "Export report" modal and the
+ * per-page exports). {@link exportTablesPdf} lazy-loads jsPDF + autotable,
+ * renders each table with a sober header colour and zebra-striped rows, stamps a
+ * diagonal "CNC Portal" watermark on every page, and downloads the file.
  */
 import type { CncAccounting } from '@/utils/accounting/assemble'
-import { presentIncome, presentBalance, presentTrial } from '@/utils/accounting/presenter'
-import { presentLedger } from '@/utils/accounting/ledgerPresenter'
+import {
+  presentIncome,
+  presentBalance,
+  presentTrial,
+  presentSummaryCards,
+  presentBanner,
+  filterByPeriod
+} from '@/utils/accounting/presenter'
+import { buildGeneralLedger } from '@/utils/accounting/generalLedger'
+import {
+  presentLedger,
+  ledgerExportTitle,
+  resolveLedgerColumns,
+  ledgerTotalRow,
+  type LedgerColumnKey
+} from '@/utils/accounting/ledgerPresenter'
 import { activityText } from '@/utils/accounting/describeEntry'
+import type { LedgerRow } from '@/utils/accounting/ledgerPresenter'
+import type { SectionSpec } from '@/utils/accounting/exportSpec'
 
 type Cell = string | number
 type Align = 'left' | 'right'
@@ -33,8 +51,25 @@ export interface AccountingPdfTable {
 /** A blank spacer row, used to separate sub-sections inside a statement. */
 const GAP: Cell[] = ['', '']
 
-function incomeTable(acc: CncAccounting): AccountingPdfTable {
-  const income = presentIncome(acc.entries)
+function summaryTable(acc: CncAccounting): AccountingPdfTable {
+  const cards = presentSummaryCards(acc.summary, acc.incomeStatement, acc.balanceSheet)
+  const banner = presentBanner(acc.balanceSheet, acc.generalLedger)
+  return {
+    title: 'Summary',
+    head: ['Metric', 'Value'],
+    align: ['left', 'right'],
+    body: [
+      ...cards.map((c) => [c.label, c.value]),
+      GAP,
+      ['Books balanced', banner.balanced ? 'Yes' : 'No'],
+      ['Accounting identity', banner.identity],
+      ['Trial balance', banner.trial]
+    ]
+  }
+}
+
+function incomeTable(acc: CncAccounting, from?: Date | null, to?: Date | null): AccountingPdfTable {
+  const income = presentIncome(acc.entries, from, to)
   return {
     title: 'Income Statement',
     head: ['Item', 'Amount'],
@@ -53,8 +88,8 @@ function incomeTable(acc: CncAccounting): AccountingPdfTable {
   }
 }
 
-function balanceTable(acc: CncAccounting): AccountingPdfTable {
-  const balance = presentBalance(acc.entries)
+function balanceTable(acc: CncAccounting, asOf?: Date | null): AccountingPdfTable {
+  const balance = presentBalance(acc.entries, asOf)
   return {
     title: 'Balance Sheet',
     head: ['Item', 'Amount'],
@@ -76,8 +111,13 @@ function balanceTable(acc: CncAccounting): AccountingPdfTable {
   }
 }
 
-function trialTable(acc: CncAccounting): AccountingPdfTable {
-  const trial = presentTrial(acc.generalLedger)
+function trialTable(acc: CncAccounting, asOf?: Date | null): AccountingPdfTable {
+  // Rebuild the ledger over the "as of" slice when a date is set, mirroring the
+  // Trial Balance card; otherwise use the pre-built whole-book ledger.
+  const ledger = asOf
+    ? buildGeneralLedger(filterByPeriod(acc.entries, null, asOf))
+    : acc.generalLedger
+  const trial = presentTrial(ledger)
   return {
     title: 'Trial Balance',
     head: ['Account', 'Nature', 'Debit', 'Credit'],
@@ -89,22 +129,78 @@ function trialTable(acc: CncAccounting): AccountingPdfTable {
   }
 }
 
-function ledgerTable(acc: CncAccounting, resolveName?: ResolveName): AccountingPdfTable {
-  const { rows } = presentLedger(acc.entries, 'All')
+/** How each ledger column renders in the export: alignment + cell value. */
+const LEDGER_PDF_CELL: Record<
+  LedgerColumnKey,
+  { align: Align; pick: (r: LedgerRow, resolveName?: ResolveName) => Cell }
+> = {
+  date: { align: 'left', pick: (r) => r.date },
+  action: { align: 'left', pick: (r) => r.cat },
+  transaction: { align: 'left', pick: (r) => r.label },
+  activity: { align: 'left', pick: (r, resolveName) => activityText(r.activity, resolveName) },
+  account: { align: 'left', pick: (r) => r.account },
+  dr: { align: 'right', pick: (r) => r.dr },
+  cr: { align: 'right', pick: (r) => r.cr }
+}
+
+interface LedgerTableOptions {
+  filter?: string
+  from?: Date | null
+  to?: Date | null
+  columns?: LedgerColumnKey[]
+}
+
+function ledgerTable(
+  acc: CncAccounting,
+  resolveName?: ResolveName,
+  opts: LedgerTableOptions = {}
+): AccountingPdfTable {
+  const { rows, total } = presentLedger(acc.entries, opts.filter ?? 'All', opts.from, opts.to)
+  const cols = resolveLedgerColumns(opts.columns)
+  const body = rows.map((r) => cols.map((c) => LEDGER_PDF_CELL[c.value].pick(r, resolveName)))
+  // Carry the same movement total the table footer shows, so a filtered export
+  // still totals its rows.
+  body.push(ledgerTotalRow(cols, total))
   return {
-    title: 'General Ledger',
-    head: ['Date', 'Action', 'Transaction', 'Activity', 'Account', 'Debit', 'Credit'],
-    align: ['left', 'left', 'left', 'left', 'left', 'right', 'right'],
-    body: rows.map((r) => [
-      r.date,
-      r.cat,
-      r.label,
-      activityText(r.activity, resolveName),
-      r.account,
-      r.dr,
-      r.cr
-    ])
+    title: ledgerExportTitle(opts.filter, opts.from, opts.to),
+    head: cols.map((c) => c.label),
+    align: cols.map((c) => LEDGER_PDF_CELL[c.value].align),
+    body
   }
+}
+
+/** Build a single section's table from its spec. */
+function sectionTable(
+  acc: CncAccounting,
+  spec: SectionSpec,
+  resolveName?: ResolveName
+): AccountingPdfTable {
+  switch (spec.key) {
+    case 'summary':
+      return summaryTable(acc)
+    case 'income':
+      return incomeTable(acc, spec.from, spec.to)
+    case 'balance':
+      return balanceTable(acc, spec.asOf)
+    case 'trial':
+      return trialTable(acc, spec.asOf)
+    case 'ledger':
+      return ledgerTable(acc, resolveName, {
+        filter: spec.filter,
+        from: spec.from,
+        to: spec.to,
+        columns: spec.columns
+      })
+  }
+}
+
+/** Build tables for an arbitrary section selection, in the order given. */
+export function buildTables(
+  acc: CncAccounting,
+  specs: readonly SectionSpec[],
+  resolveName?: ResolveName
+): AccountingPdfTable[] {
+  return specs.map((spec) => sectionTable(acc, spec, resolveName))
 }
 
 /** The four printed tabs (everything except the Summary), in display order. */
@@ -142,16 +238,23 @@ function drawWatermark(doc: import('jspdf').jsPDF): void {
   doc.restoreGraphicsState()
 }
 
-export async function exportAccountingPdf(
-  acc: CncAccounting,
-  resolveName?: ResolveName
+export interface ExportPdfOptions {
+  /** Download filename (with `.pdf`). */
+  filename: string
+  /** Start each section (after the first) on a fresh page. */
+  pageBreak?: boolean
+}
+
+/** Render the given section tables to a PDF and download it. */
+export async function exportTablesPdf(
+  tables: AccountingPdfTable[],
+  opts: ExportPdfOptions
 ): Promise<void> {
   const { jsPDF } = await import('jspdf')
   const autoTable = (await import('jspdf-autotable')).default
 
   const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' })
   const marginX = 40
-  const tables = buildAccountingTables(acc, resolveName)
 
   // Document title on the first page.
   doc.setFont('helvetica', 'bold')
@@ -166,7 +269,13 @@ export async function exportAccountingPdf(
   let cursorY = 84
   tables.forEach((table, index) => {
     if (index > 0) {
-      cursorY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 32
+      if (opts.pageBreak) {
+        doc.addPage()
+        cursorY = 56
+      } else {
+        cursorY =
+          (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 32
+      }
     }
 
     doc.setFont('helvetica', 'bold')
@@ -198,5 +307,12 @@ export async function exportAccountingPdf(
     })
   })
 
-  doc.save('cnc-accounting.pdf')
+  doc.save(opts.filename)
+}
+
+export async function exportAccountingPdf(
+  acc: CncAccounting,
+  resolveName?: ResolveName
+): Promise<void> {
+  await exportTablesPdf(buildAccountingTables(acc, resolveName), { filename: 'cnc-accounting.pdf' })
 }
