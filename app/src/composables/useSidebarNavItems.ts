@@ -1,8 +1,12 @@
 import { computed, type ComputedRef } from 'vue'
 import { useRoute } from 'vue-router'
+import { useLocalStorage } from '@vueuse/core'
 import type { NavigationMenuItem } from '@nuxt/ui'
 import { useTeamStore } from '@/stores/teamStore'
 import { useUserDataStore } from '@/stores/user'
+
+/** localStorage key for the Accounting sidebar menu's expanded state. */
+export const ACCOUNTING_MENU_KEY = 'sidebar_accounting_expanded'
 
 /**
  * Builds the sidebar navigation as two groups:
@@ -19,6 +23,10 @@ export function useSidebarNavItems(): ComputedRef<NavigationMenuItem[][]> {
   const route = useRoute()
   const userStore = useUserDataStore()
   const teamStore = useTeamStore()
+
+  // Persisted expanded state of the Accounting menu — read to seed `defaultOpen`
+  // so a reload restores it; written from {@link SidebarLayout} on toggle.
+  const accountingExpanded = useLocalStorage(ACCOUNTING_MENU_KEY, false)
 
   /**
    * A company is selected when the route is scoped to one (`/teams/:id/…`) or
@@ -116,10 +124,15 @@ export function useSidebarNavItems(): ComputedRef<NavigationMenuItem[][]> {
         },
         {
           label: 'Accounting',
+          // Stable accordion value so its open state can be tracked/persisted
+          // independently of its position in the list.
+          value: 'accounting',
           icon: 'heroicons:book-open',
           disabled,
           to: { name: 'accounting', params: teamParams() },
-          defaultOpen: false,
+          // Closed by default; the persisted "open" is only honoured inside a
+          // company, so on the companies list it collapses like the others.
+          defaultOpen: hasCompany.value && accountingExpanded.value,
           children: [
             { label: 'Summary', to: { name: 'accounting-summary', params: teamParams() } },
             { label: 'Income Statement', to: { name: 'accounting-income', params: teamParams() } },

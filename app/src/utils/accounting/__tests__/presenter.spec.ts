@@ -10,7 +10,10 @@ import {
   presentIncome,
   presentBalance,
   presentTrial,
-  filterByPeriod
+  filterByPeriod,
+  incomeExportTitle,
+  balanceExportTitle,
+  trialExportTitle
 } from '@/utils/accounting/presenter'
 import { presentLedger } from '@/utils/accounting/ledgerPresenter'
 import { USDC_ADDRESS } from '@/constant'
@@ -195,5 +198,23 @@ describe('filterByPeriod', () => {
     expect(filterByPeriod(entries, new Date(150_000), null)).toHaveLength(1) // only ts=200
     expect(filterByPeriod(entries, null, new Date(150_000))).toHaveLength(1) // only ts=100
     expect(filterByPeriod(entries)).toHaveLength(2) // open both ends
+  })
+})
+
+describe('statement export titles', () => {
+  it('names the reporting period on the income statement only when one is set', () => {
+    expect(incomeExportTitle()).toBe('Income Statement')
+    expect(incomeExportTitle(null, null)).toBe('Income Statement')
+    const ranged = incomeExportTitle(new Date('2026-01-01'), new Date('2026-02-01'))
+    expect(ranged).toContain('Income Statement')
+    expect(ranged).toContain('Jan 1, 2026')
+    expect(ranged).toContain('Feb 1, 2026')
+  })
+
+  it('stamps the "as of" date on the balance sheet / trial balance when set', () => {
+    expect(balanceExportTitle()).toBe('Balance Sheet')
+    expect(balanceExportTitle(new Date('2026-07-08'))).toBe('Balance Sheet — As of Jul 8, 2026')
+    expect(trialExportTitle()).toBe('Trial Balance')
+    expect(trialExportTitle(new Date('2026-07-08'))).toBe('Trial Balance — As of Jul 8, 2026')
   })
 })
