@@ -4,7 +4,7 @@
  * category/date filter. Split from {@link ./presenter} (which handles the
  * statement-level views) to keep each module focused. Pure and unit-testable.
  */
-import { money, fmtDateTime, filterByPeriod } from './presenter'
+import { money, fmtDateTime, filterByPeriod, periodLabel } from './presenter'
 import { activityOf, entryLabel, type ActivityCell } from './describeEntry'
 import type { LedgerEntry, UseCase } from './ledgerEntry'
 
@@ -59,8 +59,11 @@ export type LedgerColumnKey =
   | 'dr'
   | 'cr'
 
+/** A ledger column as rendered in the selector and the exports. */
+export type LedgerColumn = { value: LedgerColumnKey; label: string }
+
 /** Ledger columns as `{ value, label }`, for the show/hide-columns selector. */
-export const LEDGER_COLUMNS: ReadonlyArray<{ value: LedgerColumnKey; label: string }> = [
+export const LEDGER_COLUMNS: ReadonlyArray<LedgerColumn> = [
   { value: 'date', label: 'Date' },
   { value: 'action', label: 'Action' },
   { value: 'transaction', label: 'Transaction' },
@@ -69,6 +72,37 @@ export const LEDGER_COLUMNS: ReadonlyArray<{ value: LedgerColumnKey; label: stri
   { value: 'dr', label: 'Debit' },
   { value: 'cr', label: 'Credit' }
 ]
+
+/**
+ * The visible ledger columns for an export, in canonical order — an empty or
+ * absent selection means "all columns". Shared by the PDF and Excel exporters so
+ * both honour the same order regardless of the order columns were toggled.
+ */
+export function resolveLedgerColumns(columns?: readonly LedgerColumnKey[]): LedgerColumn[] {
+  const visible = columns && columns.length ? columns : LEDGER_COLUMNS.map((c) => c.value)
+  return LEDGER_COLUMNS.filter((c) => visible.includes(c.value))
+}
+
+/**
+ * The trailing "Total movements" row for an exported ledger, mirroring the
+ * on-screen footer: the grand total in the Debit and Credit columns — as the
+ * caller's already-rendered `amount` (a `$`-string for the PDF, a number for
+ * Excel) — with the label in the Transaction column, or the first non-amount
+ * column when Transaction is hidden.
+ */
+export function ledgerTotalRow(
+  cols: readonly LedgerColumn[],
+  amount: string | number
+): (string | number)[] {
+  const labelKey = cols.some((c) => c.value === 'transaction')
+    ? 'transaction'
+    : cols.find((c) => c.value !== 'dr' && c.value !== 'cr')?.value
+  return cols.map((c) => {
+    if (c.value === 'dr' || c.value === 'cr') return amount
+    if (c.value === labelKey) return 'Total movements'
+    return ''
+  })
+}
 
 export interface LedgerRow {
   isFirst: boolean
@@ -209,4 +243,16 @@ export function presentLedger(
 ): LedgerView {
   const shown = filterLedgerEntries(entries, filter, from, to)
   return { rows: ledgerRows(shown), total: ledgerTotal(shown), entryCount: shown.length }
+}
+
+/**
+ * The heading a ledger export prints, spelling out the active scope so the file
+ * is self-describing: the category (when narrowed from "All") and the reporting
+ * period (when a date range is set). Plain `"General Ledger"` for the whole book.
+ */
+export function ledgerExportTitle(filter?: string, from?: Date | null, to?: Date | null): string {
+  const parts = ['General Ledger']
+  if (filter && filter !== 'All') parts.push(filter)
+  if (from || to) parts.push(periodLabel(from, to))
+  return parts.join(' — ')
 }

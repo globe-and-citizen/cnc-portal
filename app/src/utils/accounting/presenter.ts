@@ -115,6 +115,18 @@ function natureOf(account: AccountName): TrialNature {
   return byClass[classOf(account)]
 }
 
+/**
+ * Human label for a reporting period, e.g. `"All time"`, `"Jan 1, 2026 – Feb 1,
+ * 2026"`, `"From Jan 1, 2026"`. Used in the ledger export context line.
+ */
+export function periodLabel(from?: Date | null, to?: Date | null): string {
+  const fmt = (d: Date) => dayjs(d).format('MMM D, YYYY')
+  if (from && to) return `${fmt(from)} – ${fmt(to)}`
+  if (from) return `From ${fmt(from)}`
+  if (to) return `Until ${fmt(to)}`
+  return 'All time'
+}
+
 /** Keep entries inside an inclusive `[from, to]` window (nullish bound = open). */
 export function filterByPeriod(
   entries: readonly LedgerEntry[],
