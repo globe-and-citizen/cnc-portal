@@ -30,7 +30,7 @@
           type="date"
           class="w-full"
           data-test="offering-deadline-input"
-          @update:model-value="(value) => updateStringField(value)"
+          @update:model-value="(value: unknown) => updateStringField(value)"
         />
       </UFormField>
 
@@ -69,7 +69,7 @@
               :max="OFFERING_TERM_MAXIMUMS[form.termUnit]"
               class="w-full"
               data-test="offering-term-input"
-              @update:model-value="(v) => (form.termValue = Number(v))"
+              @update:model-value="(v: unknown) => (form.termValue = Number(v))"
             >
               <template #trailing>
                 <span class="text-muted text-xs font-semibold">{{ form.termUnit }}</span>
@@ -105,7 +105,7 @@
           :model-value="form.cap"
           class="w-full"
           data-test="offering-cap-input"
-          @update:model-value="(v) => (form.cap = Number(v))"
+          @update:model-value="(v: unknown) => (form.cap = Number(v))"
         >
           <template #trailing
             ><span class="text-muted text-xs font-semibold">{{ form.token }}</span></template

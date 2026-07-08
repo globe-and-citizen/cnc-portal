@@ -6,7 +6,7 @@
         placeholder="e.g. Riverside Expansion Note"
         class="w-full"
         data-test="offering-title-input"
-        @update:model-value="(value) => updateTextField('title', value)"
+        @update:model-value="(value: unknown) => updateTextField('title', value)"
       />
     </UFormField>
     <UFormField label="Purpose" name="purpose">
@@ -15,7 +15,7 @@
         placeholder="What is this credit for? Lenders see this before lending."
         class="w-full"
         data-test="offering-purpose-input"
-        @update:model-value="(value) => updateTextField('purpose', value)"
+        @update:model-value="(value: unknown) => updateTextField('purpose', value)"
       />
     </UFormField>
     <div class="grid grid-cols-2 gap-3">
@@ -26,7 +26,7 @@
             :model-value="form.principal"
             class="w-full"
             data-test="offering-principal-input"
-            @update:model-value="(v) => (form.principal = Number(v))"
+            @update:model-value="(v: unknown) => (form.principal = Number(v))"
           />
           <USelect
             :model-value="form.token"
@@ -45,7 +45,7 @@
           :model-value="form.rate"
           class="w-full"
           data-test="offering-rate-input"
-          @update:model-value="(v) => (form.rate = Number(v))"
+          @update:model-value="(v: unknown) => (form.rate = Number(v))"
         >
           <template #trailing><span class="text-muted text-sm font-semibold">%</span></template>
         </UInput>

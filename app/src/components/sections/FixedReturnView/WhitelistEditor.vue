@@ -31,7 +31,7 @@
             :color="isOverCap(w.amount) ? 'error' : undefined"
             class="w-28"
             data-test="whitelist-amount-input"
-            @update:model-value="(v) => $emit('update-amount', i, v)"
+            @update:model-value="(v: unknown) => $emit('update-amount', i, String(v ?? ''))"
           >
             <template #leading><span class="text-muted text-xs font-semibold">$</span></template>
           </UInput>
