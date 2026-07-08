@@ -33,12 +33,12 @@ const pageTitle = computed(() => {
     'features': 'Submit Restriction',
     'feature': 'Feature',
     'micropayments': 'Micropayments',
+    'accounting': 'Polymarket Accounting',
     'contracts': 'Contracts',
     'settings': 'Settings',
     'settings-members': 'Members',
     'settings-notifications': 'Notifications',
-    'settings-security': 'Security',
-    'safe': 'Safe'
+    'settings-security': 'Security'
   }
 
   // Return mapped title or capitalize first segment of path
@@ -89,9 +89,9 @@ const links = [
       }
     },
     {
-      label: 'Safe',
-      icon: 'i-lucide-wallet',
-      to: '/safe',
+      label: 'Polymarket Accounting',
+      icon: 'i-lucide-calculator',
+      to: '/accounting',
       onSelect: () => {
         open.value = false
       }

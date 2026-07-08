@@ -117,6 +117,16 @@ See [`UPGRADE_STRATEGY.md`](./UPGRADE_STRATEGY.md) for:
 
 Track every deployed change in [`CHANGELOG.md`](./CHANGELOG.md).
 
+## Security review
+
+Every PR touching `contract/` runs [Slither](https://github.com/crytic/slither)
+in CI (`.github/workflows/contract-slither.yml`), which reports findings to the
+GitHub Security tab (report-only until the existing high/medium baseline is
+triaged). Before merging, also work through the
+[Solidity audit checklist](../.github/copilot-instructions/solidity-audit-checklist.md)
+(no `console.sol`, `SafeERC20`, `__gap`, no `blockhash` randomness, `nonReentrant`
+on token paths, access control, upgrade safety).
+
 ## Resources
 
 - [Hardhat verifying contracts](https://hardhat.org/hardhat-runner/docs/guides/verifying)

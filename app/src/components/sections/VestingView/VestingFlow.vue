@@ -11,7 +11,7 @@
       </div>
     </template>
 
-    <span class="loading loading-spinner" v-if="loading"></span>
+    <UIcon v-if="loading" name="i-lucide-loader-circle" class="h-5 w-5 animate-spin" />
 
     <UTable
       :data="vestings"
@@ -33,18 +33,11 @@
         </span>
       </template>
       <template #released-cell="{ row: { original: row } }">
-        <span class="badge badge-info flex items-center gap-1">
+        <UBadge color="info" variant="subtle" class="flex items-center gap-1">
           {{ row.released.toFixed(2) }}
           <span class="text-xs">{{ row.tokenSymbol }}</span>
-        </span>
+        </UBadge>
       </template>
-      <template #withdrawn-cell="{ row: { original: row } }">
-        <span class="badge badge-info flex items-center gap-1">
-          {{ row.status === 'Inactive' ? (row.totalAmount - row.released).toFixed(2) : 0 }}
-          <span class="text-xs">{{ row.tokenSymbol }}</span>
-        </span>
-      </template>
-
       <template #member-cell="{ row: { original: row } }">
         <span>{{ row.member }}</span>
       </template>
@@ -52,31 +45,36 @@
         <div class="flex flex-wrap gap-2">
           <!-- Stop Button -->
 
-          <UButton
-            v-if="row.status === 'Active' && team?.ownerAddress == userAddress"
-            data-test="stop-btn"
-            color="error"
-            size="xs"
-            @click.stop="stopVesting(row.member)"
-            icon="mdi:stop-circle-outline"
-            label="Stop"
-          />
+          <UTooltip :text="archivedTooltip">
+            <UButton
+              v-if="row.status === 'Active' && team?.ownerAddress == userAddress"
+              data-test="stop-btn"
+              color="error"
+              size="xs"
+              :disabled="isWriteDisabled"
+              @click.stop="stopVesting(row.member, row.index)"
+              icon="mdi:stop-circle-outline"
+              label="Stop"
+            />
+          </UTooltip>
 
           <!-- Withdraw Button -->
 
           <!-- Release Button -->
 
-          <UButton
-            data-test="release-btn"
-            v-if="row.status === 'Active' && row.member === userAddress"
-            color="success"
-            size="xs"
-            :disabled="!row.isStarted"
-            :title="!row.isStarted ? 'Vesting has not started yet' : ''"
-            @click.stop="releaseVesting()"
-            icon="mdi:lock-open"
-            label="Release"
-          />
+          <UTooltip :text="archivedTooltip">
+            <UButton
+              data-test="release-btn"
+              v-if="row.status === 'Active' && row.member === userAddress"
+              color="success"
+              size="xs"
+              :disabled="isWriteDisabled || !row.isStarted"
+              :title="!row.isStarted ? 'Vesting has not started yet' : undefined"
+              @click.stop="releaseVesting(row.index)"
+              icon="mdi:lock-open"
+              label="Release"
+            />
+          </UTooltip>
         </div>
       </template>
     </UTable>
@@ -94,11 +92,14 @@ import VestingActions from '@/components/sections/VestingView/VestingActions.vue
 import VestingStatusFilter from './VestingStatusFilter.vue'
 import { useInvestorSymbol } from '@/composables/investor/reads'
 import {
-  useVestingGetTeamAllArchivedVestingsFlat,
-  useVestingGetTeamVestingsWithMembers
+  useVestingGetAllArchivedVestingsFlat,
+  useVestingGetVestingsWithMembers
 } from '@/composables/vesting/reads'
 import { useVestingReleaseWrite, useVestingStopVestingWrite } from '@/composables/vesting/writes'
+import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
+
 const toast = useToast()
+const { isWriteDisabled, archivedTooltip } = useTeamWriteGuard()
 
 const teamStore = useTeamStore()
 const team = computed(() => teamStore.currentTeam)
@@ -139,7 +140,7 @@ const {
   //isLoading: isLoadingArchivedVestingInfos,
   error: errorGetArchivedVestingInfo,
   refetch: getArchivedVestingInfos
-} = useVestingGetTeamAllArchivedVestingsFlat(computed(() => BigInt(team?.value?.id ?? 0)))
+} = useVestingGetAllArchivedVestingsFlat()
 
 watch(errorGetArchivedVestingInfo, () => {
   if (errorGetArchivedVestingInfo.value) {
@@ -153,10 +154,10 @@ const {
   //isLoading: isLoadingVestingInfos,
   error: errorGetVestingInfo,
   refetch: getVestingInfos
-} = useVestingGetTeamVestingsWithMembers(computed(() => BigInt(team?.value?.id ?? 0)))
+} = useVestingGetVestingsWithMembers()
 watch(errorGetVestingInfo, () => {
   if (errorGetVestingInfo.value) {
-    toast.add({ title: 'Add admin failed', color: 'error' })
+    toast.add({ title: 'Failed to load vestings', color: 'error' })
   }
 })
 
@@ -169,12 +170,12 @@ watch(
 )
 
 const isVestingTuple = (value: unknown): value is VestingTuple => {
-  if (!Array.isArray(value) || value.length !== 2) {
+  if (!Array.isArray(value) || value.length !== 3) {
     return false
   }
 
-  const [members, vestingsRaw] = value
-  return Array.isArray(members) && Array.isArray(vestingsRaw)
+  const [members, indices, vestingsRaw] = value
+  return Array.isArray(members) && Array.isArray(indices) && Array.isArray(vestingsRaw)
 }
 
 const vestings = computed<VestingRow[]>(() => {
@@ -184,13 +185,14 @@ const vestings = computed<VestingRow[]>(() => {
     isVestingTuple
   )
 
-  const allRows = allVestingsRaw.flatMap(([members, vestingsRaw]) =>
+  const allRows = allVestingsRaw.flatMap(([members, indices, vestingsRaw]) =>
     members.map((member, idx): VestingRow => {
+      const index = Number(indices[idx] ?? idx)
       const v = vestingsRaw[idx]
       if (!v) {
         return {
           member,
-          teamId: Number(team.value?.id),
+          index,
           startDate: '',
           isStarted: false,
           durationDays: 0,
@@ -209,7 +211,7 @@ const vestings = computed<VestingRow[]>(() => {
 
       return {
         member,
-        teamId: Number(team.value?.id),
+        index,
         startDate: (() => {
           const date = new Date(Number(v.start) * 1000)
           const day = String(date.getDate()).padStart(2, '0')
@@ -244,67 +246,44 @@ const handleReload = () => {
   emit('reload')
 }
 
-const teamId = computed(() => BigInt(team?.value?.id ?? 0))
-
 const stopVestingWrite = useVestingStopVestingWrite()
-const loadingStopVesting = computed(() => stopVestingWrite.writeResult.isPending.value)
-const isConfirmingStopVesting = computed(() => stopVestingWrite.receiptResult.isLoading.value)
-const isConfirmedStopVesting = computed(() => stopVestingWrite.receiptResult.isSuccess.value)
-const errorStopVesting = computed(
-  () => stopVestingWrite.writeResult.error.value || stopVestingWrite.receiptResult.error.value
-)
 
-const stopVesting = async (member: string) => {
-  await stopVestingWrite.executeWrite([member, teamId.value], undefined, {
-    skipGasEstimation: true
-  })
+const stopVesting = (member: string, index: number) => {
+  stopVestingWrite.mutate(
+    { args: [member, BigInt(index)] },
+    {
+      onSuccess: () => {
+        toast.add({ title: 'Vesting stopped successfully', color: 'success' })
+        emit('reload')
+      },
+      onError: (err) => {
+        toast.add({ title: 'Stop vesting failed', color: 'error' })
+        console.error('stop vesting error', err)
+      }
+    }
+  )
 }
-
-watch(isConfirmingStopVesting, async (isConfirming, wasConfirming) => {
-  if (wasConfirming && !isConfirming && isConfirmedStopVesting.value) {
-    toast.add({ title: 'vesting stoped successfully', color: 'success' })
-    emit('reload')
-  }
-})
-watch(errorStopVesting, () => {
-  if (errorStopVesting.value) {
-    toast.add({ title: 'stop vesting failed', color: 'error' })
-    console.error('add vesting error', errorStopVesting.value)
-  }
-})
 
 const releaseVestingWrite = useVestingReleaseWrite()
-const loadingReleaseVesting = computed(() => releaseVestingWrite.writeResult.isPending.value)
-const isConfirmingReleaseVesting = computed(() => releaseVestingWrite.receiptResult.isLoading.value)
-const isConfirmedReleaseVesting = computed(() => releaseVestingWrite.receiptResult.isSuccess.value)
-const errorReleaseVesting = computed(
-  () => releaseVestingWrite.writeResult.error.value || releaseVestingWrite.receiptResult.error.value
-)
 
-const releaseVesting = async () => {
-  await releaseVestingWrite.executeWrite([teamId.value], undefined, { skipGasEstimation: true })
+const releaseVesting = (index: number) => {
+  releaseVestingWrite.mutate(
+    { args: [BigInt(index)] },
+    {
+      onSuccess: () => {
+        toast.add({ title: 'Vested shares minted to you', color: 'success' })
+        emit('reload')
+      },
+      onError: (err) => {
+        toast.add({ title: 'Release vesting failed', color: 'error' })
+        console.error('release vesting error', err)
+      }
+    }
+  )
 }
 
-watch(isConfirmingReleaseVesting, async (isConfirming, wasConfirming) => {
-  if (wasConfirming && !isConfirming && isConfirmedReleaseVesting.value) {
-    toast.add({ title: 'vesting Releaseed successfully', color: 'success' })
-    emit('reload')
-  }
-})
-
-watch(errorReleaseVesting, () => {
-  if (errorReleaseVesting.value) {
-    toast.add({ title: 'Release vesting failed', color: 'error' })
-    console.error('add vesting error', errorReleaseVesting.value)
-  }
-})
-
 const loading = computed(
-  () =>
-    loadingReleaseVesting.value ||
-    (isConfirmingReleaseVesting.value && !isConfirmedReleaseVesting.value) ||
-    loadingStopVesting.value ||
-    (isConfirmingStopVesting.value && !isConfirmedStopVesting.value)
+  () => releaseVestingWrite.isPending.value || stopVestingWrite.isPending.value
 )
 
 // Define columns including the new "Actions" column
@@ -317,7 +296,6 @@ const columns = [
   { accessorKey: 'totalAmount', header: 'Total Amount', enableSorting: true },
   { accessorKey: 'released', header: 'Released', enableSorting: true },
   { accessorKey: 'status', header: 'Status', enableSorting: true },
-  { accessorKey: 'withdrawn', header: 'Withdrawn', enableSorting: false },
   { accessorKey: 'actions', header: 'Actions' }
 ]
 </script>

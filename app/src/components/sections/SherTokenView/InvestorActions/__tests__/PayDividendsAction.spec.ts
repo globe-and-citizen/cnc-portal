@@ -12,8 +12,7 @@ import {
   mockLog,
   mockTeamStore,
   mockToast,
-  mockUserStore,
-  resetContractMocks
+  mockUserStore
 } from '@/tests/mocks'
 
 describe('PayDividendsAction.vue', () => {
@@ -52,7 +51,6 @@ describe('PayDividendsAction.vue', () => {
     })
 
   beforeEach(() => {
-    resetContractMocks()
     vi.clearAllMocks()
     vi.stubGlobal('useToast', () => mockToast)
 
@@ -60,7 +58,7 @@ describe('PayDividendsAction.vue', () => {
     mockBankReads.owner.data.value = ownerAddress
 
     mockBodIsBodAction.isBodAction.value = false
-    mockBodAddAction.isActionAdded.value = false
+    mockBodAddAction.isSuccess.value = false
     mockBodAddAction.executeAddAction.mockResolvedValue(undefined)
 
     mockBankWrites.distributeNativeDividends.mutateAsync.mockResolvedValue(undefined)
@@ -79,8 +77,7 @@ describe('PayDividendsAction.vue', () => {
   it('enables action for bank owner', () => {
     const wrapper = createWrapper()
 
-    expect(wrapper.classes()).not.toContain('tooltip')
-    expect(wrapper.attributes('data-tip')).toBe('')
+    expect(wrapper.findComponent({ name: 'UTooltip' }).props('text')).toBeUndefined()
     expect(
       wrapper.find('[data-test="pay-dividends-button"]').attributes('disabled')
     ).toBeUndefined()
@@ -89,21 +86,27 @@ describe('PayDividendsAction.vue', () => {
   it('shows token missing reason', () => {
     const wrapper = createWrapper({ tokenSymbol: undefined })
 
-    expect(wrapper.attributes('data-tip')).toBe('Token symbol not available')
+    expect(wrapper.findComponent({ name: 'UTooltip' }).props('text')).toBe(
+      'Token symbol not available'
+    )
     expect(wrapper.find('[data-test="pay-dividends-button"]').attributes('disabled')).toBeDefined()
   })
 
   it('shows shareholders missing reason when zero', () => {
     const wrapper = createWrapper({ shareholdersCount: 0 })
 
-    expect(wrapper.attributes('data-tip')).toBe('No shareholders available to pay dividends')
+    expect(wrapper.findComponent({ name: 'UTooltip' }).props('text')).toBe(
+      'No shareholders available to pay dividends'
+    )
     expect(wrapper.find('[data-test="pay-dividends-button"]').attributes('disabled')).toBeDefined()
   })
 
   it('treats undefined shareholders as missing', () => {
     const wrapper = createWrapper({ shareholdersCount: undefined })
 
-    expect(wrapper.attributes('data-tip')).toBe('No shareholders available to pay dividends')
+    expect(wrapper.findComponent({ name: 'UTooltip' }).props('text')).toBe(
+      'No shareholders available to pay dividends'
+    )
     expect(wrapper.find('[data-test="pay-dividends-button"]').attributes('disabled')).toBeDefined()
   })
 
@@ -111,7 +114,9 @@ describe('PayDividendsAction.vue', () => {
     mockUserStore.address = memberAddress
     const wrapper = createWrapper()
 
-    expect(wrapper.attributes('data-tip')).toContain('Only the bank owner can pay dividends')
+    expect(wrapper.findComponent({ name: 'UTooltip' }).props('text')).toContain(
+      'Only the bank owner can pay dividends'
+    )
     expect(wrapper.find('[data-test="pay-dividends-button"]').attributes('disabled')).toBeDefined()
   })
 
@@ -141,11 +146,11 @@ describe('PayDividendsAction.vue', () => {
 
   it('handleSubmit exits early when value is zero', async () => {
     const wrapper = createWrapper()
-    const vm = wrapper.vm as unknown as {
-      handleSubmit: (value: bigint, tokenId: 'native' | 'usdc') => Promise<void>
-    }
 
-    await vm.handleSubmit(0n, 'native')
+    await wrapper.find('[data-test="pay-dividends-button"]').trigger('click')
+    await nextTick()
+    await wrapper.findComponent({ name: 'PayDividendsForm' }).vm.$emit('submit', 0n, 'native')
+    await nextTick()
 
     expect(mockBankWrites.distributeNativeDividends.mutateAsync).not.toHaveBeenCalled()
     expect(mockBodAddAction.executeAddAction).not.toHaveBeenCalled()
@@ -154,11 +159,11 @@ describe('PayDividendsAction.vue', () => {
   it('in BOD mode exits early when bankAddress is missing', async () => {
     mockBodIsBodAction.isBodAction.value = true
     const wrapper = createWrapper({ bankAddress: undefined })
-    const vm = wrapper.vm as unknown as {
-      handleSubmit: (value: bigint, tokenId: 'native' | 'usdc') => Promise<void>
-    }
 
-    await vm.handleSubmit(1n, 'native')
+    await wrapper.find('[data-test="pay-dividends-button"]').trigger('click')
+    await nextTick()
+    await wrapper.findComponent({ name: 'PayDividendsForm' }).vm.$emit('submit', 1n, 'native')
+    await nextTick()
 
     expect(mockBodAddAction.executeAddAction).not.toHaveBeenCalled()
   })
@@ -166,11 +171,11 @@ describe('PayDividendsAction.vue', () => {
   it('in BOD mode creates native dividends action', async () => {
     mockBodIsBodAction.isBodAction.value = true
     const wrapper = createWrapper()
-    const vm = wrapper.vm as unknown as {
-      handleSubmit: (value: bigint, tokenId: 'native' | 'usdc') => Promise<void>
-    }
 
-    await vm.handleSubmit(2n, 'native')
+    await wrapper.find('[data-test="pay-dividends-button"]').trigger('click')
+    await nextTick()
+    await wrapper.findComponent({ name: 'PayDividendsForm' }).vm.$emit('submit', 2n, 'native')
+    await nextTick()
 
     expect(mockBodAddAction.executeAddAction).toHaveBeenCalledTimes(1)
     expect(mockBodAddAction.executeAddAction).toHaveBeenCalledWith(
@@ -181,11 +186,11 @@ describe('PayDividendsAction.vue', () => {
   it('in BOD mode creates token dividends action', async () => {
     mockBodIsBodAction.isBodAction.value = true
     const wrapper = createWrapper()
-    const vm = wrapper.vm as unknown as {
-      handleSubmit: (value: bigint, tokenId: 'native' | 'usdc') => Promise<void>
-    }
 
-    await vm.handleSubmit(3n, 'usdc')
+    await wrapper.find('[data-test="pay-dividends-button"]').trigger('click')
+    await nextTick()
+    await wrapper.findComponent({ name: 'PayDividendsForm' }).vm.$emit('submit', 3n, 'usdc')
+    await nextTick()
 
     expect(mockBodAddAction.executeAddAction).toHaveBeenCalledTimes(1)
     expect(mockBodAddAction.executeAddAction).toHaveBeenCalledWith(
@@ -198,16 +203,12 @@ describe('PayDividendsAction.vue', () => {
 
   it('in non-BOD mode executes native write and closes modal', async () => {
     const wrapper = createWrapper()
-    const vm = wrapper.vm as unknown as {
-      handleSubmit: (value: bigint, tokenId: 'native' | 'usdc') => Promise<void>
-      openModal: () => void
-    }
 
-    vm.openModal()
+    await wrapper.find('[data-test="pay-dividends-button"]').trigger('click')
     await nextTick()
     expect(wrapper.find('[data-test="pay-dividends-form"]').exists()).toBe(true)
 
-    await vm.handleSubmit(5n, 'native')
+    await wrapper.findComponent({ name: 'PayDividendsForm' }).vm.$emit('submit', 5n, 'native')
     await nextTick()
 
     expect(mockBankWrites.distributeNativeDividends.mutateAsync).toHaveBeenCalledWith({
@@ -218,11 +219,11 @@ describe('PayDividendsAction.vue', () => {
 
   it('in non-BOD mode executes token write', async () => {
     const wrapper = createWrapper()
-    const vm = wrapper.vm as unknown as {
-      handleSubmit: (value: bigint, tokenId: 'native' | 'usdc') => Promise<void>
-    }
 
-    await vm.handleSubmit(6n, 'usdc')
+    await wrapper.find('[data-test="pay-dividends-button"]').trigger('click')
+    await nextTick()
+    await wrapper.findComponent({ name: 'PayDividendsForm' }).vm.$emit('submit', 6n, 'usdc')
+    await nextTick()
 
     expect(mockBankWrites.distributeTokenDividends.mutateAsync).toHaveBeenCalledTimes(1)
   })
@@ -244,7 +245,7 @@ describe('PayDividendsAction.vue', () => {
     await nextTick()
     expect(wrapper.find('[data-test="pay-dividends-form"]').exists()).toBe(true)
 
-    mockBodAddAction.isActionAdded.value = true
+    mockBodAddAction.isSuccess.value = true
     await nextTick()
 
     expect(wrapper.find('[data-test="pay-dividends-form"]').exists()).toBe(false)
@@ -257,7 +258,7 @@ describe('PayDividendsAction.vue', () => {
     await nextTick()
     expect(wrapper.find('[data-test="pay-dividends-form"]').exists()).toBe(true)
 
-    mockBodAddAction.isActionAdded.value = false
+    mockBodAddAction.isSuccess.value = false
     await nextTick()
 
     expect(wrapper.find('[data-test="pay-dividends-form"]').exists()).toBe(true)

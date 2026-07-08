@@ -45,6 +45,7 @@ model Team {
   ownerAddress           String
   description            String?
   name                   String                   @unique
+  isArchived             Boolean                  @default(false)
   BoardOfDirectorActions BoardOfDirectorActions[]
   teamContracts          TeamContract[]
   teamOfficers           TeamOfficer[]
@@ -55,12 +56,14 @@ model Team {
   createdAt              DateTime                 @default(now())
   updatedAt              DateTime                 @updatedAt
   teamFunctionOverrides  TeamFunctionOverride[]
+  fixedReturnOfferings   FixedReturnOffering[]
 }
 
 model MemberTeamsData {
   id            Int      @id @default(autoincrement()) // Add an ID for easy referencing
   member        User     @relation(fields: [memberAddress], references: [address], onDelete: Cascade)
   team          Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  isHidden      Boolean  @default(false)
   memberAddress String
   teamId        Int
   createdAt     DateTime @default(now())
@@ -103,8 +106,9 @@ model Wage {
   updatedAt                   DateTime      @updatedAt
 
   // Only one "active" wage (nextWageId IS NULL) per (teamId, userAddress).
-  // Enforced by a partial unique index created in migration 20260418_wage_active_unique_and_indexes
-  // because Prisma Schema Language cannot express partial unique indexes.
+  // Enforced by a deferrable EXCLUDE constraint (Wage_active_unique) in
+  // migration 20260428_wage_active_deferrable. Deferrable so chained
+  // create-and-relink can run inside a single transaction.
 }
 
 model Claim {
@@ -123,20 +127,30 @@ model Claim {
 }
 
 model WeeklyClaim {
-  id            Int      @id @default(autoincrement())
-  status        String?
-  weekStart     DateTime
-  data          Json
-  memberAddress String
-  member        User     @relation(fields: [memberAddress], references: [address], onDelete: Cascade)
-  teamId        Int
-  team          Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  signature     String?
-  claims        Claim[]  @relation("WeeklyClaimToClaims")
-  wageId        Int
-  wage          Wage     @relation(fields: [wageId], references: [id], onDelete: Cascade)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id                           Int      @id @default(autoincrement())
+  status                       String?
+  weekStart                    DateTime
+  data                         Json
+  memberAddress                String
+  member                       User     @relation(fields: [memberAddress], references: [address], onDelete: Cascade)
+  teamId                       Int
+  team                         Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  signature                    String?
+  // EIP-712 verifying contract address the signature was bound to. Populated
+  // at sign time so `signed` rows can be classified as stale (and surfaced
+  // for re-signing) when the team's CashRemunerationEIP712 contract is later
+  // redeployed. Nullable for legacy rows signed before this column existed.
+  signedAgainstContractAddress String?
+  // Free-form Markdown memo of the member's goals for the week. One per weekly
+  // claim (the [wageId, weekStart] pair). Upserted independently of daily
+  // claims — a goals-only week creates a claim-less WeeklyClaim row. Nullable
+  // for weeks with no goals set.
+  weeklyGoals                  String?
+  claims                       Claim[]  @relation("WeeklyClaimToClaims")
+  wageId                       Int
+  wage                         Wage     @relation(fields: [wageId], references: [id], onDelete: Cascade)
+  createdAt                    DateTime @default(now())
+  updatedAt                    DateTime @updatedAt
 
   @@unique([wageId, weekStart])
   @@index([weekStart])
@@ -181,6 +195,12 @@ model TeamOfficer {
   deployer          String
   deployBlockNumber BigInt?
   deployedAt        DateTime?
+  // Officer-generation tag. New deploys land as 'v0.10' (the
+  // CashRemunerationEIP712 minutesWorked typehash); legacy rows backfilled
+  // to 'legacy'. Used to derive `isMigrated` on the Team payload so the UI
+  // can freeze new sign/submit flows on teams still on the previous
+  // contract version. Nullable to keep schema rollouts safe.
+  version           String?
   // Linked list: each row points back to its predecessor. The current Officer
   // for a team is the row with no nextOfficer (no successor exists).
   previousOfficerId Int?           @unique
@@ -228,5 +248,25 @@ model TeamFunctionOverride {
   updatedAt     DateTime      @updatedAt
 
   @@unique([teamId, functionName], name: "unique_team_function")
+  @@index([teamId])
+}
+
+// Off-chain metadata for a FixedReturn lending offer. FixedReturn.sol's
+// createLendingOffer intentionally has no title/description params — the contract's
+// NatSpec says the calling application persists them linked by the returned offerId.
+// The on-chain contract address is resolved via TeamContract (teamId + type
+// 'FixedReturn'), same as Expense resolves ExpenseAccountEIP712's address, rather than
+// duplicating it here.
+model FixedReturnOffering {
+  id        Int      @id @default(autoincrement())
+  teamId    Int
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  offerId   Int
+  title     String
+  purpose   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([teamId, offerId])
   @@index([teamId])
 }

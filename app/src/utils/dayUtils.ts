@@ -17,30 +17,6 @@ export interface Week {
   formatted: string // Formatted string like "Jan 01 - Jan 07"
 }
 
-export function getMondayStart(date: Date): Date {
-  const d = new Date(date)
-  const day = d.getDay() // 0 = dimanche, 1 = lundi, ..., 6 = samedi
-  const diff = day === 0 ? -6 : 1 - day // Si dimanche, recule de 6 jours, sinon ajuste
-  d.setDate(d.getDate() + diff)
-  d.setHours(0, 0, 0, 0) // Met à 00:00:00.000
-  return d
-}
-
-export function getSundayEnd(date: Date): Date {
-  const d = new Date(date)
-  const day = d.getDay() // 0 = dimanche, 1 = lundi, ..., 6 = samedi
-  const diff = day === 0 ? 0 : 7 - day // Si dimanche, reste le même jour, sinon ajuste
-  d.setDate(d.getDate() + diff)
-  d.setHours(23, 59, 59, 999) // Met à 23:59:59.999
-  return d
-}
-
-export function todayMidnight(date: Date): Date {
-  const d = new Date(date)
-  d.setHours(0, 0, 0, 0) // Met à 00:00:00.000
-  return d
-}
-
 /**
  * Get all ISO weeks of a month as Week objects
  * @param year - e.g. 2025
@@ -64,7 +40,7 @@ export function getMonthWeeks(year: number, month: number): Week[] {
         year: weekYear,
         month: current.month(),
         isoWeek: week,
-        isoString: current.toISOString(),
+        isoString: current.startOf('isoWeek').toISOString(),
         formatted: formatIsoWeekRange(current)
       })
     }
@@ -99,6 +75,13 @@ export function formatIsoWeekRange(base: dayjs.Dayjs): string {
     console.error('Error formatting ISO week range:', error)
     return `${base.format('YYYY-MM-DD')} - ${base.add(6, 'day').format('YYYY-MM-DD')}`
   }
+}
+
+/**
+ * Return the UTC Monday (ISO week start) for the provided date-like value.
+ */
+export function startOfWeek(date: string | Date | dayjs.Dayjs): dayjs.Dayjs {
+  return dayjs.utc(date).startOf('isoWeek')
 }
 
 /* Calculates the number of calendar days between two dates.
@@ -190,12 +173,6 @@ export function ensureFutureDate(selectedDate: Date, minDate: Date): Date {
   return selectedDate < minDate ? new Date(minDate) : selectedDate
 }
 
-export function addDays(date: Date, days: number): Date {
-  const newDate = new Date(date)
-  newDate.setDate(date.getDate() + days)
-  return newDate
-}
-
 export function format(date: Date, formatStr: string): string {
   const day = date.getDate().toString().padStart(2, '0')
   const month = (date.getMonth() + 1).toString().padStart(2, '0')
@@ -213,4 +190,22 @@ export const formatDateShort = (dateString: string): string => {
     hour: '2-digit',
     minute: '2-digit'
   }).format(date)
+}
+
+export function formatDateRelative(dateString: string): string {
+  const diffMs = Date.now() - new Date(dateString).getTime()
+  const diffSec = Math.floor(diffMs / 1000)
+  const diffMin = Math.floor(diffSec / 60)
+  const diffH = Math.floor(diffMin / 60)
+  const diffD = Math.floor(diffH / 24)
+
+  if (diffSec < 60) return 'just now'
+  if (diffMin < 60) return `${diffMin} min ago`
+  if (diffH < 24) return `${diffH} h ago`
+  if (diffD < 7) return `${diffD} d ago`
+  return dayjs.utc(new Date(dateString)).format('MMM D, YYYY')
+}
+
+export function formatDateUTC(dateString: string): string {
+  return dayjs.utc(new Date(dateString)).format('YYYY-MM-DD HH:mm [UTC]')
 }

@@ -1,39 +1,43 @@
 <template>
   <UApp>
-    <div class="bg-base-200 min-h-screen">
+    <div class="bg-muted min-h-screen">
       <LockScreen v-if="lock" :user="{ address: userStore.address }" />
       <template v-else>
         <RouterView name="login" />
         <div v-if="userStore.isAuth">
           <!-- Responsive Drawer and Content -->
           <UDashboardGroup v-if="route.name">
-            <SidebarLayout v-if="route.name && route.name !== 'teams'"></SidebarLayout>
+            <SidebarLayout v-if="route.name"></SidebarLayout>
             <UDashboardPanel
               :ui="{
                 body: 'overflow-x-hidden'
               }"
             >
               <template #header>
-                <UDashboardNavbar :title="pageTitle" :ui="{ right: 'gap-3' }" class="bg-white">
+                <UDashboardNavbar :ui="{ right: 'gap-3' }" class="bg-default">
                   <template #leading>
                     <UDashboardSidebarCollapse
                       icon="heroicons:arrow-left-start-on-rectangle"
                       trailing
                       trailing-icon="heroicons:arrow-right-start-on-rectangle"
-                      v-if="route.name && route.name !== 'teams'"
+                      v-if="route.name"
                     />
                   </template>
-                  <template #trailing>
-                    <TeamSelectMenu />
+                  <template #title>
+                    <NavBreadcrumb />
                   </template>
                   <template #right>
+                    <!-- Team picker sits on the right, before the theme/notifications/avatar cluster -->
+                    <TeamSelectMenu />
                     <NavBar />
                   </template>
                 </UDashboardNavbar>
               </template>
 
               <template #body>
-                <RouterView />
+                <UContainer :ui="{ base: 'px-0 sm:px-0 lg:px-0' }">
+                  <RouterView />
+                </UContainer>
               </template>
             </UDashboardPanel>
           </UDashboardGroup>
@@ -47,13 +51,13 @@
 
 <script setup lang="ts">
 import { VueQueryDevtools } from '@tanstack/vue-query-devtools'
-import '@vuepic/vue-datepicker/dist/main.css'
 import { useChainId, useConnection, useConnectionEffect, useSwitchChain } from '@wagmi/vue'
 import { computed, watch } from 'vue'
 import { RouterView, useRoute } from 'vue-router'
 
 import LockScreen from '@/components/LockScreen.vue'
 import NavBar from '@/components/NavBar.vue'
+import NavBreadcrumb from '@/components/NavBreadcrumb.vue'
 import TeamSelectMenu from '@/components/TeamSelectMenu.vue'
 import SidebarLayout from '@/components/ui/SidebarLayout.vue'
 
@@ -64,8 +68,6 @@ import { NETWORK } from '@/constant/index'
 import { useUserDataStore } from '@/stores/index'
 
 const route = useRoute()
-
-const pageTitle = computed<string>(() => (route.meta.name as string) || 'CNC-Portal')
 
 const connection = useConnection()
 const switchChain = useSwitchChain()

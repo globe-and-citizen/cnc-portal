@@ -2,7 +2,7 @@
   <UDashboardSidebar
     collapsible
     resizable
-    class="bg-white"
+    class="bg-default"
     :ui="{ root: 'min-w-24', footer: 'border-t border-default' }"
   >
     <template #header="{ collapsed }">
@@ -61,7 +61,7 @@
         description="Edit your profile information used across the application."
       >
         <div
-          class="bg-base-200 flex w-full cursor-pointer flex-row justify-start gap-4 rounded-xl p-4 shadow-xs transition-all duration-300"
+          class="bg-muted flex w-full cursor-pointer flex-row justify-start gap-4 rounded-xl p-4 shadow-xs transition-all duration-300"
           data-test="edit-user-card"
           :class="{ 'justify-center': collapsed }"
           @click="open = true"
@@ -97,161 +97,16 @@
 </template>
 
 <script setup lang="ts">
-import { useTeamStore } from '@/stores/teamStore'
 import { useUserDataStore } from '@/stores/user'
-import type { NavigationMenuItem } from '@nuxt/ui'
 import { computed, ref } from 'vue'
-import { useRoute } from 'vue-router'
 import { formatAddress } from '@/utils/formatAddress'
+import { useSidebarNavItems } from '@/composables/useSidebarNavItems'
 
-const route = useRoute()
 const userStore = useUserDataStore()
-const teamStore = useTeamStore()
 
 const open = ref(false)
 
-const items = computed<NavigationMenuItem[]>(() => [
-  {
-    label: 'Companies',
-    icon: 'heroicons:squares-2x2',
-    to: '/teams'
-  },
-  {
-    label: 'Company',
-    icon: 'heroicons:home',
-    active: route.name === 'show-team',
-    to: {
-      name: 'show-team',
-      params: { id: teamStore.currentTeamId || '1' }
-    }
-  },
-  {
-    label: 'Accounts',
-    icon: 'heroicons:currency-dollar',
-    to: {
-      name: 'bank-account',
-      params: { id: teamStore.currentTeamId || '1' }
-    },
-    defaultOpen: true,
-    children: [
-      {
-        label: 'Bank Account',
-        // icon: 'heroicons:banknotes',
-        to: {
-          name: 'bank-account',
-          params: { id: teamStore.currentTeamId || '1' }
-        }
-      },
-      {
-        label: 'Safe Account',
-        // icon: 'heroicons:shield-check',
-        to: {
-          name: 'safe-account',
-          params: {
-            id: teamStore.currentTeamId || '1',
-            address: teamStore.getContractAddressByType('Safe') || '0x'
-          }
-        }
-      },
-      {
-        label: 'Expense Account',
-        // icon: 'heroicons:briefcase',
-        to: {
-          name: 'expense-account',
-          params: { id: teamStore.currentTeamId || '1' }
-        }
-      }
-    ]
-  },
-  {
-    label: 'Payroll',
-    icon: 'heroicons:currency-dollar',
-    to: {
-      name: 'payroll-account',
-      params: { id: teamStore.currentTeamId || '1' }
-    },
-    defaultOpen: true,
-    children: [
-      {
-        // icon: 'heroicons:briefcase',
-        label: 'Payroll Account',
-        to: {
-          name: 'payroll-account',
-          params: { id: teamStore.currentTeamId || '1' }
-        }
-      },
-      {
-        // icon: 'heroicons:briefcase',
-        label:
-          route.name === 'payroll-history' && route.params.memberAddress !== userStore.address
-            ? 'Member Payroll History'
-            : 'My Payroll History',
-        active: route.name === 'payroll-history',
-        to: {
-          name: 'payroll-history',
-          params: { id: teamStore.currentTeamId || '1', memberAddress: userStore.address }
-        }
-      },
-      {
-        // icon: 'heroicons:briefcase',
-        label: 'Company Payroll',
-        to: {
-          name: 'team-payroll',
-          params: { id: teamStore.currentTeamId || '1' }
-        }
-      }
-    ]
-  },
-  {
-    label: 'Contract Management',
-    icon: 'heroicons:wrench',
-    to: {
-      name: 'contract-management',
-      params: { id: teamStore.currentTeamId || '1' }
-    }
-  },
-  {
-    label: 'SHER Token',
-    icon: 'heroicons:chart-pie',
-    to: {
-      name: 'sher-token',
-      params: { id: teamStore.currentTeamId || '1' }
-    }
-  },
-
-  {
-    label: 'Administration',
-    icon: 'heroicons:chart-bar',
-    to: {
-      name: 'bod-elections',
-      params: { id: teamStore.currentTeamId || '1' }
-    },
-    children: [
-      {
-        label: 'Board Election',
-        to: {
-          name: 'bod-elections',
-          params: { id: teamStore.currentTeamId || '1' }
-        }
-      },
-      {
-        label: 'Proposals',
-        to: {
-          name: 'bod-proposals',
-          params: { id: teamStore.currentTeamId || '1' }
-        }
-      }
-    ]
-  },
-  {
-    label: 'Vesting',
-    icon: 'heroicons:lock-closed',
-    to: {
-      name: 'vesting',
-      params: { id: teamStore.currentTeamId || '1' }
-    }
-  }
-])
+const items = useSidebarNavItems()
 
 const formatedUserAddress = computed(() => formatAddress(userStore.address))
 </script>

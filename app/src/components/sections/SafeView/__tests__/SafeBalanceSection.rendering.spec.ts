@@ -5,6 +5,7 @@ import { useStorage } from '@vueuse/core'
 import type { Address } from 'viem'
 import SafeBalanceSection from '../SafeBalanceSection.vue'
 import { mockUseContractBalance, mockUseAccount } from '@/tests/mocks'
+import { mockUserStore } from '@/tests/mocks/store.mock'
 
 // Mock @iconify/vue
 vi.mock('@iconify/vue', () => ({
@@ -22,40 +23,36 @@ const {
   mockUseChainId,
   mockUseTeamStore,
   mockUseCurrencyStore,
-  mockUseUserDataStore,
-
   mockuseGetSafeInfoQuery,
   mockQueryClient,
-  mockUseSafeTransfer
+  mockUseTransferFromSafeMutation
 } = vi.hoisted(() => ({
   mockGetSafeHomeUrl: vi.fn(),
   mockOpenSafeAppUrl: vi.fn(),
   mockUseChainId: vi.fn(),
   mockUseTeamStore: vi.fn(),
   mockUseCurrencyStore: vi.fn(),
-  mockUseUserDataStore: vi.fn(),
   mockuseGetSafeInfoQuery: vi.fn(),
   mockQueryClient: {
-    invalidateQueries: vi.fn()
+    invalidateQueries: vi.fn(async () => undefined),
+    getQueryData: vi.fn(() => undefined),
+    setQueryData: vi.fn(() => undefined),
+    removeQueries: vi.fn(() => undefined)
   },
-  // Add the missing useSafeTransfer mock
-  mockUseSafeTransfer: vi.fn(() => ({
-    transferFromSafe: vi.fn(),
-    transferNative: vi.fn(),
-    transferToken: vi.fn(),
-    isTransferring: ref(false),
-    error: ref(null)
+  mockUseTransferFromSafeMutation: vi.fn(() => ({
+    mutate: vi.fn(),
+    isPending: ref(false),
+    reset: vi.fn()
   }))
 }))
 
 // Mock external dependencies
 vi.mock('@/composables/safe', async (importOriginal) => {
-  const actual = await importOriginal()
+  const actual = await importOriginal<typeof import('@/composables/safe')>()
   return {
     ...actual,
     getSafeHomeUrl: mockGetSafeHomeUrl,
-    openSafeAppUrl: mockOpenSafeAppUrl,
-    useSafeTransfer: mockUseSafeTransfer
+    openSafeAppUrl: mockOpenSafeAppUrl
   }
 })
 
@@ -69,6 +66,10 @@ vi.mock('@vueuse/core', async () => {
 
 vi.mock('@/queries/safe.queries', () => ({
   useGetSafeInfoQuery: mockuseGetSafeInfoQuery
+}))
+
+vi.mock('@/queries/safe.mutations', () => ({
+  useTransferFromSafeMutation: mockUseTransferFromSafeMutation
 }))
 
 vi.mock('@tanstack/vue-query', () => ({
@@ -91,14 +92,21 @@ const MOCK_DATA = {
         symbol: 'ETH',
         id: 'ethereum',
         name: 'Ethereum',
-        code: 'ETH'
+        code: 'ETH',
+        coingeckoId: 'ethereum',
+        decimals: 18,
+        address: '0x0000000000000000000000000000000000000000'
       },
       amount: 1.5,
       values: {
         USD: {
           value: 3000,
           formated: '$3,000',
-          price: 2000
+          id: 'usd',
+          code: 'USD',
+          symbol: '$',
+          price: 2000,
+          formatedPrice: '$2K'
         }
       }
     },
@@ -107,14 +115,21 @@ const MOCK_DATA = {
         symbol: 'SHER',
         id: 'sher',
         name: 'Sherlock',
-        code: 'SHER'
+        code: 'SHER',
+        coingeckoId: 'sher-token',
+        decimals: 6,
+        address: '0x1234567890123456789012345678901234567890'
       },
       amount: 100,
       values: {
         USD: {
           value: 500,
           formated: '$500',
-          price: 5
+          id: 'usd',
+          code: 'USD',
+          symbol: '$',
+          price: 5,
+          formatedPrice: '$5'
         }
       }
     }
@@ -123,7 +138,11 @@ const MOCK_DATA = {
     USD: {
       value: 4500,
       formated: '$4,500',
-      price: 1
+      id: 'usd',
+      code: 'USD',
+      symbol: '$',
+      price: 1,
+      formatedPrice: '$1'
     }
   },
   defaultCurrency: {
@@ -141,31 +160,30 @@ const MOCK_DATA = {
       safeAddress: '0x1234567890123456789012345678901234567890' as Address
     }
   }
-} as const
+}
 
 const AddressToolTipStub = defineComponent({
   template: '<div data-test="address-tooltip"></div>'
 })
 
 const TransferFormStub = defineComponent({
+  name: 'TransferForm',
+  props: ['modelValue', 'tokens', 'loading'],
+  emits: ['update:modelValue', 'transfer', 'closeModal'],
   template: '<div data-test="transfer-form"><slot name="header" /></div>'
 })
-
-interface SafeBalanceSectionInstance {
-  closeDepositModal: () => Promise<void>
-  resetTransferValues: () => Promise<void>
-  tokens: Array<{ symbol: string; price: number; tokenId: string }>
-  transferData: { token: { symbol: string; tokenId: string } }
-}
 
 describe('SafeBalanceSection', () => {
   let wrapper: VueWrapper
   const mockCurrency = ref(MOCK_DATA.defaultCurrency)
-  const mockSafeInfo = ref(MOCK_DATA.safeInfo)
+  const mockSafeInfo = ref<typeof MOCK_DATA.safeInfo | null>(MOCK_DATA.safeInfo)
 
   const createWrapper = (props = {}) =>
     mount(SafeBalanceSection, {
-      props,
+      props: {
+        address: MOCK_DATA.safeAddress,
+        ...props
+      },
       global: {
         stubs: {
           AddressToolTip: AddressToolTipStub,
@@ -188,7 +206,7 @@ describe('SafeBalanceSection', () => {
       data: mockSafeInfo
     })
 
-    mockUseAccount.address.value = MOCK_DATA.safeInfo.owners[0]
+    mockUseAccount.address.value = MOCK_DATA.safeInfo.owners[0]!
 
     mockUseChainId.mockReturnValue(ref(137))
     mockUseTeamStore.mockReturnValue({
@@ -200,9 +218,7 @@ describe('SafeBalanceSection', () => {
       currency: mockCurrency
     })
 
-    mockUseUserDataStore.mockReturnValue({
-      address: ref('0x1234567890123456789012345678901234567890')
-    })
+    mockUserStore.address = MOCK_DATA.safeInfo.owners[0]!
 
     vi.mocked(useStorage).mockReturnValue(mockCurrency as never)
 
@@ -234,40 +250,34 @@ describe('SafeBalanceSection', () => {
       expect(wrapper.text()).toContain('-')
       expect(wrapper.text()).toContain('0')
     })
-
-    it.skip('should display "Open in Safe App" button when safeAddress exists', () => {
-      wrapper = createWrapper()
-
-      expect(wrapper.find('[data-test="open-safe-app-button"]').exists()).toBe(true)
-    })
   })
 
   describe('Tokens Computation', () => {
-    it('should handle missing USD price gracefully', () => {
-      mockUseContractBalance.balances.value = [
-        {
-          token: {
-            symbol: 'TEST',
-            id: 'test',
-            name: 'Test Token',
-            code: 'TEST'
-          },
-          amount: 100,
-          values: {
-            USD: undefined
-          }
-        }
-      ] as typeof mockUseContractBalance.balances.value
+    it('should handle missing USD price gracefully', async () => {
+      const sourceBalance = mockUseContractBalance.balances.value[0]!
+      const balanceWithoutUsd = {
+        ...sourceBalance,
+        token: { ...sourceBalance.token },
+        values: { ...sourceBalance.values }
+      }
+      delete (balanceWithoutUsd.values as Record<string, unknown>).USD
+      mockUseContractBalance.balances.value = [balanceWithoutUsd]
       wrapper = createWrapper()
 
-      const tokens = (wrapper.vm as SafeBalanceSectionInstance).tokens
-      expect(tokens[0].price).toBe(0)
+      // Open transfer modal so TransferForm receives `tokens` as a prop
+      await wrapper.find('[data-test="transfer-button"]').trigger('click')
+      await nextTick()
+
+      const tokens = wrapper.findComponent(TransferFormStub).props('tokens') as Array<{
+        price: number
+      }>
+      expect(tokens[0]?.price).toBe(0)
     })
   })
 
   describe('Transfer Modal', () => {
     it('should disable transfer button for non-owner', async () => {
-      mockUseAccount.address.value = '0x9999999999999999999999999999999999999999'
+      mockUserStore.address = '0x9999999999999999999999999999999999999999'
       wrapper = createWrapper()
 
       const transferButton = wrapper.find('[data-test="transfer-button"]')
@@ -286,7 +296,9 @@ describe('SafeBalanceSection', () => {
       await wrapper.find('[data-test="transfer-button"]').trigger('click')
       await nextTick()
 
-      const transferData = (wrapper.vm as unknown as SafeBalanceSectionInstance).transferData
+      const transferData = wrapper.findComponent(TransferFormStub).props('modelValue') as {
+        token: { symbol: string }
+      }
       expect(transferData.token.symbol).toBe('')
     })
   })

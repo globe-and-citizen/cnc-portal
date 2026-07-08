@@ -2,14 +2,14 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import {
   useDepositToken,
   useDistributeNativeDividends,
-  useDistributeTokenDividends
+  useDistributeTokenDividends,
+  useFundFixedReturnRepayment
 } from '../writes'
-import { mockBankWrites, resetContractMocks } from '@/tests/mocks'
+import { mockBankWrites } from '@/tests/mocks'
 
 describe('Bank Contract Writes', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    resetContractMocks()
   })
 
   it('useDepositToken returns the deposit mutation', () => {
@@ -24,6 +24,10 @@ describe('Bank Contract Writes', () => {
 
   it('useDistributeTokenDividends returns its mutation', () => {
     expect(useDistributeTokenDividends()).toBe(mockBankWrites.distributeTokenDividends)
+  })
+
+  it('useFundFixedReturnRepayment returns its mutation', () => {
+    expect(useFundFixedReturnRepayment()).toBe(mockBankWrites.fundFixedReturnRepayment)
   })
 
   it('forwards mutateAsync success and errors from the mock', async () => {

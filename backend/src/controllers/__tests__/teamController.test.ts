@@ -19,6 +19,12 @@ vi.mock('../../middleware/authMiddleware', () => ({
   }),
 }));
 
+vi.mock('../../middleware/teamAuthzMiddleware', () => ({
+  requireTeamMember: vi.fn(() => (req: Request, res: Response, next: NextFunction) => next()),
+  requireTeamOwner: vi.fn(() => (req: Request, res: Response, next: NextFunction) => next()),
+  rejectIfArchived: vi.fn(() => (req: Request, res: Response, next: NextFunction) => next()),
+}));
+
 // Mock prisma
 vi.mock('../../utils', async () => {
   const actual = await vi.importActual('../../utils');
@@ -45,6 +51,8 @@ vi.mock('../../utils', async () => {
         deleteMany: vi.fn(),
       },
       memberTeamsData: {
+        findUnique: vi.fn(),
+        findMany: vi.fn(),
         deleteMany: vi.fn(),
       },
       teamContract: {
@@ -276,6 +284,9 @@ describe('Team Controller', () => {
 
     it('should return 200 and team data if user is part of the team', async () => {
       vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(teamMockResolve);
+      vi.spyOn(prisma.memberTeamsData, 'findUnique').mockResolvedValue({
+        isHidden: false,
+      } as never);
 
       const response = await request(app)
         .get('/1')
@@ -284,6 +295,67 @@ describe('Team Controller', () => {
 
       expect(response.status).toBe(200);
       // expect(response.body).toEqual(teamMockResolve);
+    });
+
+    it('exposes isMigrated=true when current officer is on CURRENT_OFFICER_VERSION', async () => {
+      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue({
+        ...teamMockResolve,
+        teamOfficers: [
+          {
+            id: 7,
+            address: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+            teamId: 1,
+            deployer: mockOwner.address,
+            deployBlockNumber: null,
+            deployedAt: null,
+            previousOfficerId: null,
+            version: 'v0.10',
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            previousOfficer: null,
+            contracts: [],
+          },
+        ],
+        teamContracts: [],
+      } as never);
+      vi.spyOn(prisma.memberTeamsData, 'findUnique').mockResolvedValue({
+        isHidden: false,
+      } as never);
+
+      const response = await request(app).get('/1');
+      expect(response.status).toBe(200);
+      expect(response.body.isMigrated).toBe(true);
+      expect(response.body.currentOfficer?.version).toBe('v0.10');
+    });
+
+    it('exposes isMigrated=false when current officer is legacy', async () => {
+      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue({
+        ...teamMockResolve,
+        teamOfficers: [
+          {
+            id: 7,
+            address: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+            teamId: 1,
+            deployer: mockOwner.address,
+            deployBlockNumber: null,
+            deployedAt: null,
+            previousOfficerId: null,
+            version: 'legacy',
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            previousOfficer: null,
+            contracts: [],
+          },
+        ],
+        teamContracts: [],
+      } as never);
+      vi.spyOn(prisma.memberTeamsData, 'findUnique').mockResolvedValue({
+        isHidden: false,
+      } as never);
+
+      const response = await request(app).get('/1');
+      expect(response.status).toBe(200);
+      expect(response.body.isMigrated).toBe(false);
     });
 
     it('should return 500 if an exception is thrown', async () => {
@@ -336,9 +408,16 @@ describe('Team Controller', () => {
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual(
-        mockTeams.map(({ teamOfficers: _teamOfficers, ...t }) => ({ ...t, currentOfficer: null }))
+        mockTeams.map(({ teamOfficers: _teamOfficers, ...t }) => ({
+          ...t,
+          currentOfficer: null,
+          isMigrated: false,
+          isArchived: false,
+          isHidden: false,
+        }))
       );
       expect(prisma.team.findMany).toHaveBeenCalledWith({
+        where: { isArchived: false },
         include: {
           _count: { select: { members: true } },
           teamOfficers: {
@@ -371,15 +450,37 @@ describe('Team Controller', () => {
       ];
 
       vi.spyOn(prisma.team, 'findMany').mockResolvedValue(mockTeams);
+      vi.spyOn(prisma.memberTeamsData, 'findMany').mockResolvedValue([
+        { teamId: 1, isHidden: false },
+        { teamId: 2, isHidden: false },
+      ] as never);
 
       const response = await request(app).get('/').query({ userAddress: mockOwner.address });
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual(
-        mockTeams.map(({ teamOfficers: _teamOfficers, ...t }) => ({ ...t, currentOfficer: null }))
+        mockTeams.map(({ teamOfficers: _teamOfficers, ...t }) => ({
+          ...t,
+          currentOfficer: null,
+          isMigrated: false,
+          isArchived: false,
+          isHidden: false,
+        }))
       );
       expect(prisma.team.findMany).toHaveBeenCalledWith({
-        where: { members: { some: { address: mockOwner.address } } },
+        where: {
+          OR: [
+            {
+              isArchived: false,
+              memberTeamsData: {
+                some: {
+                  memberAddress: mockOwner.address,
+                  isHidden: false,
+                },
+              },
+            },
+          ],
+        },
         include: {
           _count: { select: { members: true } },
           teamOfficers: {
@@ -389,6 +490,64 @@ describe('Team Controller', () => {
           },
         },
       });
+    });
+
+    it('includes non-archived hidden branch when showHidden is true', async () => {
+      vi.spyOn(prisma.team, 'findMany').mockResolvedValue([]);
+      vi.spyOn(prisma.memberTeamsData, 'findMany').mockResolvedValue([] as never);
+
+      await request(app)
+        .get('/')
+        .query({ userAddress: mockOwner.address, showHidden: 'true', showArchived: 'false' });
+
+      expect(prisma.team.findMany).toHaveBeenCalled();
+      const callArg = vi.mocked(prisma.team.findMany).mock.calls[0][0] as {
+        where: { OR: Array<Record<string, unknown>> };
+      };
+      const hiddenActiveBranch = callArg.where.OR.find(
+        (clause) =>
+          'memberTeamsData' in clause &&
+          typeof clause.memberTeamsData === 'object' &&
+          clause.memberTeamsData !== null &&
+          'some' in clause.memberTeamsData &&
+          (clause.memberTeamsData.some as { isHidden?: boolean }).isHidden === true &&
+          (clause as { isArchived?: boolean }).isArchived === false
+      );
+      expect(hiddenActiveBranch).toBeDefined();
+
+      const archivedHiddenBranch = callArg.where.OR.find(
+        (clause) =>
+          (clause as { isArchived?: boolean }).isArchived === true &&
+          'memberTeamsData' in clause &&
+          (clause.memberTeamsData as { some?: { isHidden?: boolean } }).some?.isHidden === true
+      );
+      expect(archivedHiddenBranch).toBeDefined();
+    });
+
+    it('scopes archived-only filter to memberships still listed as visible when showHidden is false', async () => {
+      vi.spyOn(prisma.team, 'findMany').mockResolvedValue([]);
+      vi.spyOn(prisma.memberTeamsData, 'findMany').mockResolvedValue([] as never);
+
+      await request(app)
+        .get('/')
+        .query({ userAddress: mockOwner.address, showHidden: 'false', showArchived: 'true' });
+
+      const callArg = vi.mocked(prisma.team.findMany).mock.calls[0][0] as {
+        where: { OR: Array<Record<string, unknown>> };
+      };
+      const archivedBranch = callArg.where.OR.find(
+        (clause) =>
+          (clause as { isArchived?: boolean }).isArchived === true &&
+          'memberTeamsData' in clause &&
+          clause.memberTeamsData !== null &&
+          typeof clause.memberTeamsData === 'object' &&
+          'some' in clause.memberTeamsData
+      );
+      expect(archivedBranch).toBeDefined();
+      expect(
+        (archivedBranch as { memberTeamsData: { some: { isHidden?: boolean } } }).memberTeamsData
+          .some
+      ).toMatchObject({ isHidden: false });
     });
 
     it('should return 400 when userAddress is invalid', async () => {
@@ -450,6 +609,7 @@ describe('Team Controller', () => {
       const mockTeam = {
         id: 1,
         ownerAddress: faker.finance.ethereumAddress(),
+        members: [{ address: mockOwner.address }],
         name: 'Test Team',
         description: 'Test Description',
       };
@@ -463,13 +623,100 @@ describe('Team Controller', () => {
       });
 
       expect(response.status).toBe(403);
-      expect(response.body.message).toBe('Unauthorized: Caller is not the owner of the team');
+      expect(response.body.message).toBe('Unauthorized: Only team owner can update metadata');
+    });
+
+    it('allows unarchive on archived team as owner', async () => {
+      const mockTeam = {
+        id: 1,
+        ownerAddress: mockOwner.address,
+        isArchived: true,
+        members: [{ address: mockOwner.address }],
+        name: 'Test Team',
+        description: 'Test Description',
+      };
+
+      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(mockTeam);
+      vi.spyOn(prisma.team, 'update').mockResolvedValue({
+        ...mockTeam,
+        isArchived: false,
+        teamOfficers: [],
+        teamContracts: [],
+        members: mockTeam.members.map((m) => ({ ...m, name: mockOwner.name })),
+      } as never);
+      vi.spyOn(prisma.memberTeamsData, 'findUnique').mockResolvedValue({
+        isHidden: false,
+      } as never);
+
+      const response = await request(app).put('/1').send({ isArchived: false });
+
+      expect(response.status).toBe(200);
+      expect(response.body.isArchived).toBe(false);
+    });
+
+    it('allows visibility toggle on archived team as member', async () => {
+      const mockTeam = {
+        id: 1,
+        ownerAddress: '0x9999999999999999999999999999999999999999',
+        isArchived: true,
+        members: [{ address: mockOwner.address }],
+        name: 'Test Team',
+        description: 'Test Description',
+      };
+
+      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(mockTeam);
+      vi.spyOn(prisma.team, 'update').mockResolvedValue({
+        ...mockTeam,
+        teamOfficers: [],
+        teamContracts: [],
+        members: [{ address: mockOwner.address, name: mockOwner.name }],
+      } as never);
+      vi.spyOn(prisma.memberTeamsData, 'findUnique').mockResolvedValue({ isHidden: true } as never);
+
+      const response = await request(app).put('/1').send({ isHidden: true });
+
+      expect(response.status).toBe(200);
+      expect(response.body.isHidden).toBe(true);
+    });
+
+    it('returns 409 when renaming archived team', async () => {
+      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue({
+        id: 1,
+        ownerAddress: mockOwner.address,
+        isArchived: true,
+        members: [{ address: mockOwner.address }],
+        name: 'Test Team',
+        description: 'Test Description',
+      });
+
+      const response = await request(app).put('/1').send({ name: 'new name' });
+
+      expect(response.status).toBe(409);
+      expect(response.body.message).toBe('Team is archived — unarchive to modify');
+    });
+
+    it('returns 409 when re-archiving archived team', async () => {
+      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue({
+        id: 1,
+        ownerAddress: mockOwner.address,
+        isArchived: true,
+        members: [{ address: mockOwner.address }],
+        name: 'Test Team',
+        description: 'Test Description',
+      });
+
+      const response = await request(app).put('/1').send({ isArchived: true });
+
+      expect(response.status).toBe(409);
+      expect(response.body.message).toBe('Team is archived — unarchive to modify');
     });
 
     it('should return 200 and update the team successfully', async () => {
       const mockTeam = {
         id: 1,
         ownerAddress: mockOwner.address,
+        isArchived: false,
+        members: [{ address: mockOwner.address }],
         name: 'Test Team',
         description: 'Test Description',
         createdAt: new Date(),
@@ -482,6 +729,9 @@ describe('Team Controller', () => {
         name: 'Updated Team',
         description: 'Updated Description',
       });
+      vi.spyOn(prisma.memberTeamsData, 'findUnique').mockResolvedValue({
+        isHidden: false,
+      } as never);
 
       const response = await request(app).put('/1').send({
         id: 1,
@@ -527,31 +777,20 @@ describe('Team Controller', () => {
       vi.clearAllMocks();
     });
 
-    it('should return 404 if team not found', async () => {
-      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(null);
+    it('should return 204 when delete is called', async () => {
+      vi.spyOn(prisma.team, 'delete').mockResolvedValue(teamMockResolve);
 
       const response = await request(app).delete('/1').set('address', '0xOwnerAddress');
 
-      expect(response.status).toBe(404);
-      expect(response.body.message).toBe('Team not found');
+      expect(response.status).toBe(204);
     });
 
-    it('should return 403 if user is not the team owner', async () => {
-      const mockTeam = {
-        id: 1,
-        ownerAddress: '0xDifferentAddress',
-        name: 'Test Team',
-        description: 'Test Description',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-
-      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(mockTeam);
+    it('should still return 204 regardless of caller address when authz middleware allows request', async () => {
+      vi.spyOn(prisma.team, 'delete').mockResolvedValue(teamMockResolve);
 
       const response = await request(app).delete('/1').set('address', '0xAnotherAddress');
 
-      expect(response.status).toBe(403);
-      expect(response.body.message).toBe('Unauthorized: Caller is not the owner of the team');
+      expect(response.status).toBe(204);
     });
 
     it('should return 200 and delete the team successfully', async () => {

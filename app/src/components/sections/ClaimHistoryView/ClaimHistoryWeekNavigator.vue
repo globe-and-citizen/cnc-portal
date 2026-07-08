@@ -7,42 +7,33 @@
       <!-- Week List -->
       <div class="z-0 space-y-4">
         <div
-          v-for="week in generatedMonthWeek"
-          :key="week.isoWeek"
-          @click="internalSelectedWeek = week"
+          v-for="weekItem in monthWeeksWithClaims"
+          :key="weekItem.week.isoString"
+          @click="selectWeek(weekItem.week)"
           :class="[
             'cursor-pointer rounded-lg border p-3',
-            week.isoWeek === internalSelectedWeek.isoWeek
+            weekItem.week.isoString === internalSelectedWeek.isoString
               ? 'border-emerald-500 bg-emerald-50 text-gray-800'
               : 'hover:bg-gray-50'
           ]"
         >
           <div class="flex items-center justify-between text-base font-medium">
             Week
-            <div
-              class="badge badge-outline gap-3"
-              v-if="memberWeeklyClaims?.some((wc) => wc.weekStart === week.isoString)"
-              :class="`badge-${getColor(
-                memberWeeklyClaims?.find((wc) => wc.weekStart === week.isoString)
-              )}`"
-            >
-              {{ memberWeeklyClaims?.find((wc) => wc.weekStart === week.isoString)?.status }}
-              <span
-                class="h-3 w-3 rounded-full"
-                :class="`bg-${getColor(
-                  memberWeeklyClaims?.find((wc) => wc.weekStart === week.isoString)
-                )}`"
-              />
-            </div>
+            <UBadge v-if="weekItem.claim" variant="outline" :color="weekItem.color" class="gap-3">
+              {{ weekItem.claim.status }}
+              <span class="h-3 w-3 rounded-full" :class="`bg-${weekItem.color}`" />
+            </UBadge>
           </div>
 
           <div
             class="text-sm"
             :class="
-              week.isoWeek === internalSelectedWeek.isoWeek ? 'text-emerald-900' : 'text-gray-800'
+              weekItem.week.isoString === internalSelectedWeek.isoString
+                ? 'text-emerald-900'
+                : 'text-gray-800'
             "
           >
-            {{ week.formatted }}
+            {{ weekItem.week.formatted }}
           </div>
         </div>
       </div>
@@ -65,9 +56,9 @@ import type { Address } from 'viem'
 import { getMonthWeeks, type Week } from '@/utils/dayUtils'
 import { useTeamStore } from '@/stores'
 import { useGetTeamWeeklyClaimsQuery } from '@/queries'
-import type { WeeklyClaim } from '@/types'
 import MonthSelector from '@/components/MonthSelector.vue'
 import { formatMinutesAsDuration } from '@/utils/wageUtil'
+import { formatWeekTooltipText, getClaimStatusColor } from '@/utils/claimHistoryWeekNavigator'
 
 import { use } from 'echarts/core'
 import { BarChart } from 'echarts/charts'
@@ -103,18 +94,30 @@ const generatedMonthWeek = computed(() =>
   getMonthWeeks(internalSelectedWeek.value.year, internalSelectedWeek.value.month)
 )
 
-const getColor = (weeklyClaim?: WeeklyClaim) => {
-  if (!weeklyClaim) return 'accent'
-  if (weeklyClaim.status === 'pending') return 'primary'
-  if (weeklyClaim.status === 'signed') return 'warning'
-  if (weeklyClaim.status === 'withdrawn') return 'info'
-  return 'accent'
+const selectWeek = (week: Week) => {
+  internalSelectedWeek.value = week
 }
 
-const selectWeekWeelyClaim = computed(() =>
-  memberWeeklyClaims.value?.find(
-    (weeklyClaim) => weeklyClaim.weekStart === internalSelectedWeek.value.isoString
-  )
+const getColor = getClaimStatusColor
+
+const weeklyClaimsByStart = computed(() => {
+  const claims = memberWeeklyClaims.value?.data ?? []
+  return new Map(claims.map((claim) => [claim.weekStart, claim] as const))
+})
+
+const monthWeeksWithClaims = computed(() =>
+  generatedMonthWeek.value.map((week) => {
+    const claim = weeklyClaimsByStart.value.get(week.isoString)
+    return {
+      week,
+      claim,
+      color: getColor(claim)
+    }
+  })
+)
+
+const selectedWeekWeeklyClaim = computed(() =>
+  weeklyClaimsByStart.value.get(internalSelectedWeek.value.isoString)
 )
 
 const barChartOption = computed(() => {
@@ -124,14 +127,14 @@ const barChartOption = computed(() => {
   const overtimeMinutesData: number[] = []
   const labels: string[] = []
   const weekStart = dayjs(internalSelectedWeek.value.isoString).utc().startOf('isoWeek')
-  const maxRegularHours = selectWeekWeelyClaim.value?.wage?.maximumHoursPerWeek ?? Infinity
+  const maxRegularHours = selectedWeekWeeklyClaim.value?.wage?.maximumHoursPerWeek ?? Infinity
   let cumulativeMinutes = 0
 
   for (let i = 0; i < 7; i++) {
     const date = weekStart.add(i, 'day')
     labels.push(dayjs(date).format('dd'))
     const dailyTimes =
-      selectWeekWeelyClaim.value?.claims
+      selectedWeekWeeklyClaim.value?.claims
         .filter((claim) => dayjs(date).isSame(dayjs(claim.dayWorked).utc(), 'day'))
         .reduce((sum: number, claim) => sum + claim.minutesWorked, 0) ?? 0
 
@@ -167,17 +170,15 @@ const barChartOption = computed(() => {
     grid: { left: '3%', right: '4%', bottom: '8%', containLabel: true },
     tooltip: {
       trigger: 'axis',
+      renderMode: 'richText',
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       formatter: (params: any[]) => {
         const day = params[0]?.name ?? ''
         const idx = params[0]?.dataIndex ?? 0
-        const totalMin = totalMinutesPerDay[idx] ?? 0
-        const regularMin = regularMinutesData[idx] ?? 0
-        const overtimeMin = overtimeMinutesData[idx] ?? 0
-        if (overtimeMin > 0) {
-          return `<b>${day}</b><br/>Regular: ${formatMinutesAsDuration(regularMin)}<br/>Overtime: ${formatMinutesAsDuration(overtimeMin)}<br/>Total: ${formatMinutesAsDuration(totalMin)}`
-        }
-        return `<b>${day}</b><br/>${formatMinutesAsDuration(totalMin)}`
+        const totalMinutes = totalMinutesPerDay[idx] ?? 0
+        const regularMinutes = regularMinutesData[idx] ?? 0
+        const overtimeMinutes = overtimeMinutesData[idx] ?? 0
+        return formatWeekTooltipText(day, totalMinutes, regularMinutes, overtimeMinutes)
       }
     },
     xAxis: { type: 'category', data: labels, axisTick: { alignWithLabel: true } },
@@ -210,8 +211,8 @@ const barChartOption = computed(() => {
           color: '#374151',
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           formatter: (params: any) => {
-            const totalMin = totalMinutesPerDay[params.dataIndex] ?? 0
-            return totalMin > 0 ? formatMinutesAsDuration(totalMin) : ''
+            const totalMinutes = totalMinutesPerDay[params.dataIndex] ?? 0
+            return totalMinutes > 0 ? formatMinutesAsDuration(totalMinutes) : ''
           }
         }
       }

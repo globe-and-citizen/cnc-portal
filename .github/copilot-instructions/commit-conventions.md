@@ -1,84 +1,78 @@
 # Commit Message Conventions
 
-Follow [Conventional Commits](https://www.conventionalcommits.org/):
+> Authoritative source: [`AGENTS.md`](../../AGENTS.md). This file expands the rationale.
+
+## Format
 
 ```text
-<type>(<scope>): <description>
+<type><gitmoji>: <subject>
 
 [optional body]
 [optional footer]
 ```
 
-**Types:** feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert
+- **No scope.** Don't write `feat(api): …` — just `feat: …`.
+- **Gitmoji is required**, paired with the type.
+- **Imperative, present tense** in the subject ("add", not "added").
+- **Subject ≤ 72 chars, no trailing period.**
+- Same format applies to **issue titles and PR titles**.
 
-**Scopes:** components, stores, utils, types, api, contracts, subgraph, tests, docs, config
+## Type → gitmoji mapping
 
-**Guidelines:**
+| Type | Gitmoji | Use for |
+| --- | --- | --- |
+| `feat` | ✨ | New feature |
+| `fix` | 🐛 | Bug fix |
+| `refactor` | ♻️ | Code change without behavior change |
+| `docs` | 📝 | Documentation only |
+| `test` | ✅ | Adding/updating tests |
+| `chore` | 🔧 | Tooling, deps, housekeeping |
+| `style` | 💄 | Formatting / UI style only |
+| `perf` | ⚡️ | Performance improvement |
+| `build` | 📦 | Build system or external deps |
+| `ci` | 👷 | CI configuration |
 
-- Use imperative mood ("add", not "added")
-- Subject ≤ 72 chars, no period
-- Be specific and descriptive
-- Reference issues/PRs in footer if needed
-- For breaking changes, add `!` after type/scope and explain in body
+## Examples
 
-**Examples:**
+Good:
 
 ```text
-feat(components): add token selection dropdown
-fix(api): handle network errors gracefully
-docs: update README
-refactor(utils): extract shared validation logic
-chore(deps): update security dependencies
+feat: ✨ add token selection dropdown
+fix: 🐛 handle null team owner
+refactor: ♻️ extract shared validation logic
+docs: 📝 update README env-var section
+chore: 🔧 bump prettier to 3.6.2
 ```
 
-**Good:**
-
-```text
-feat(stores): implement user preference management
-fix(web3): validate address format before contract call
-```
-
-**Bad:**
+Bad:
 
 ```text
 fix: bug
 feat: added some stuff
 update: changes
+feat(api): ✨ add endpoint   ← no scopes
 ```
 
-**Body (optional):**
+## Atomic commits
 
-- Explain what and why, not how
-- Separate from subject with blank line
+One commit per logical change. **Do not** batch unrelated changes, and **do not** squash an entire PR into a single commit at the end. Commit as each piece lands so the history is reviewable.
 
-**Footer (optional):**
+## Body & footer (optional)
 
-- Reference issues, PRs, or breaking changes
+- **Body** — explain *why*, not *what*. Separate from subject with a blank line.
+- **Breaking changes** — append `!` after the type (e.g. `feat!: ✨ …`) and describe in the body.
+- **Issue refs** — link via the PR description rather than commit footers; the team relies on PR-level linking, not `Fixes #123` trailers.
 
-```text
-Fixes #123
-BREAKING CHANGE: API now requires JWT auth
-```
+## Never
 
-**Automation:**
+- `Co-Authored-By` trailers (per project policy).
+- "🤖 Generated with Claude Code" footers.
+- Non-English subjects.
 
-- Commit messages are checked by commitlint and pre-commit hook:
+## Release notes
 
-```bash
-npx commitlint --edit $1
-```
-
-- Use VS Code "Conventional Commits" extension for help
-
-**Release notes:**
-
-- Proper commit messages enable changelog and release note generation:
+Conventional commit messages enable changelog generation via the root-level script:
 
 ```bash
 npx conventional-changelog -p angular -i CHANGELOG.md -s
-gh release create v1.2.0 --generate-notes
 ```
-
-**Summary:**
-
-- Clear, consistent commit messages = better history, changelogs, and collaboration.

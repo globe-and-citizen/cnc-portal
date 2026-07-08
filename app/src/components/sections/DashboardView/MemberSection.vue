@@ -4,30 +4,35 @@
       <div class="flex items-center justify-between">
         <p class="text-lg font-semibold">Team Members</p>
 
-        <UModal
-          v-if="teamStore.currentTeamMeta.data?.ownerAddress == userDataStore.address"
-          v-model:open="showAddMemberForm.show"
-          title="Add Member"
-          description="Invite a new member to your team and set their team role."
-          :ui="{ content: 'rounded-2xl' }"
-          @update:open="(v: boolean) => !v && (showAddMemberForm = { mount: false, show: false })"
-        >
-          <UButton
-            icon="i-heroicons-plus-circle"
-            color="success"
-            data-test="add-member-button"
-            label="Add Member"
-            @click="showAddMemberForm = { mount: true, show: true }"
-          />
-
-          <template #body>
-            <AddMemberForm
-              v-if="teamStore.currentTeamId && showAddMemberForm.mount"
-              :teamId="teamStore.currentTeamId"
-              @memberAdded="showAddMemberForm = { mount: false, show: false }"
+        <template v-if="teamStore.currentTeamMeta.data?.ownerAddress == userDataStore.address">
+          <TeamArchivedTooltip v-slot="{ disabled: archivedDisabled }">
+            <UButton
+              icon="i-heroicons-plus-circle"
+              color="success"
+              data-test="add-member-button"
+              label="Add Member"
+              :disabled="archivedDisabled"
+              @click="openAddMemberModal"
             />
-          </template>
-        </UModal>
+          </TeamArchivedTooltip>
+
+          <UModal
+            v-if="showAddMemberForm.mount"
+            v-model:open="showAddMemberForm.show"
+            title="Add Member"
+            description="Invite a new member to your team and set their team role."
+            :ui="{ content: 'rounded-2xl' }"
+            @update:open="(v: boolean) => !v && closeAddMemberModal()"
+          >
+            <template #body>
+              <AddMemberForm
+                v-if="teamStore.currentTeamId"
+                :teamId="teamStore.currentTeamId"
+                @memberAdded="closeAddMemberModal"
+              />
+            </template>
+          </UModal>
+        </template>
       </div>
     </template>
 
@@ -47,7 +52,7 @@
           <div class="pb-1 text-center">
             <span>Hourly Rates</span>
           </div>
-          <div class="border-base-400 flex flex-row justify-between border-t">
+          <div class="border-default flex flex-row justify-between border-t">
             <span class="w-1/3 bg-[#C8FACD] p-1 text-center text-xs">{{
               NETWORK.currencySymbol
             }}</span>
@@ -87,20 +92,11 @@
             :member="{ name: row.original.name, address: row.original.address }"
             :teamId="teamId"
           />
-          <UTooltip
-            :text="
-              !row.original.currentWage
-                ? 'No wage set yet'
-                : row.original.currentWage?.disabled
-                  ? 'Resume wage'
-                  : 'Pause wage'
-            "
-            :delay-duration="0"
-          >
+          <UTooltip :text="pauseWageTooltip(row.original.currentWage)" :delay-duration="0">
             <UButton
               :color="row.original.currentWage?.disabled ? 'success' : 'warning'"
               :loading="isToggling"
-              :disabled="!row.original.currentWage || isToggling"
+              :disabled="!row.original.currentWage || isToggling || isWriteDisabled"
               :icon="row.original.currentWage?.disabled ? 'i-heroicons-play' : 'i-heroicons-pause'"
               :data-test="
                 row.original.currentWage?.disabled ? 'resume-wage-button' : 'pause-wage-button'
@@ -134,6 +130,8 @@ import DeleteMemberModal from '@/components/sections/DashboardView/DeleteMemberM
 import type { Member, Wage } from '@/types'
 import SetMemberWageModal from './SetMemberWageModal.vue'
 import RateDotList from '@/components/RateDotList.vue'
+import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
+import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 
 type MemberRow = Member & {
   index: number
@@ -142,7 +140,22 @@ type MemberRow = Member & {
 const userDataStore = useUserDataStore()
 const toast = useToast()
 const teamStore = useTeamStore()
+const { isWriteDisabled, archivedTooltip } = useTeamWriteGuard()
+
+const pauseWageTooltip = (wage: Wage | null | undefined) => {
+  if (archivedTooltip.value) return archivedTooltip.value
+  if (!wage) return 'No wage set yet'
+  return wage.disabled ? 'Resume wage' : 'Pause wage'
+}
 const showAddMemberForm = ref({ mount: false, show: false })
+
+const openAddMemberModal = () => {
+  showAddMemberForm.value = { mount: true, show: true }
+}
+
+const closeAddMemberModal = () => {
+  showAddMemberForm.value = { mount: false, show: false }
+}
 
 const teamId = computed(() => teamStore.currentTeamId)
 

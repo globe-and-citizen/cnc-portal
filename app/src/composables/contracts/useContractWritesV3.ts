@@ -27,6 +27,19 @@ export interface ContractWriteV3Config {
   config?: {
     log?: boolean
   }
+  /**
+   * Runs after the built-in read-invalidation. Awaited, so `mutateAsync`
+   * resolves only once any cross-contract invalidation the caller queues here
+   * has settled.
+   */
+  onSuccess?: (
+    result: ExecuteContractWriteResult,
+    variables: ExecuteWriteVariables
+  ) => void | Promise<void>
+  /**
+   * Runs after the built-in error log. Must not throw.
+   */
+  onError?: (error: Error, variables: ExecuteWriteVariables) => void
 }
 
 export interface ExecuteWriteVariables {
@@ -208,14 +221,18 @@ export function useContractWritesV3(cfg: ContractWriteV3Config) {
           : undefined
       })
     },
-    onError: (error) => {
+    onError: (error, variables) => {
       if (shouldLog) {
         log.error(`useContractWritesV3(${unref(cfg.functionName)}) failed:\n`, parseErrorV2(error))
       }
+      cfg.onError?.(error, variables)
     },
-    onSuccess: async () => {
+    onSuccess: async (data, variables) => {
       const address = unref(cfg.contractAddress)
-      if (!address) return
+      if (!address) {
+        await cfg.onSuccess?.(data, variables)
+        return
+      }
       const chainId = unref(cfg.chainId)
       const addressLower = address.toLowerCase()
 
@@ -245,6 +262,7 @@ export function useContractWritesV3(cfg: ContractWriteV3Config) {
           return true
         }
       })
+      await cfg.onSuccess?.(data, variables)
     }
   })
 }

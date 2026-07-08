@@ -10,21 +10,14 @@ import {
 } from '@/tests/mocks/composables.mock'
 import apiClient from '@/lib/axios'
 
-vi.mock('@/lib/axios', () => ({
-  default: {
-    get: vi.fn(),
-    post: vi.fn(),
-    put: vi.fn(),
-    patch: vi.fn(),
-    delete: vi.fn()
-  }
-}))
-
 const weeklyClaimQueries =
   await vi.importActual<typeof import('../weeklyClaim.queries')>('../weeklyClaim.queries')
 
 const createClaimResponse = (
-  overrides: Partial<Claim> & { minutesWorked?: number | null } = {}
+  overrides: Partial<Omit<Claim, 'hoursWorked' | 'minutesWorked'>> & {
+    hoursWorked?: number | null
+    minutesWorked?: number | null
+  } = {}
 ) => ({
   id: 1,
   hoursWorked: 480,
@@ -38,10 +31,12 @@ const createClaimResponse = (
   ...overrides
 })
 
+type TestClaimResponse = ReturnType<typeof createClaimResponse>
+
 const createWeeklyClaimResponse = (
-  overrides: Partial<WeeklyClaim> & {
+  overrides: Partial<Omit<WeeklyClaim, 'claims'>> & {
     minutesWorked?: number | null
-    claims?: Array<ReturnType<typeof createClaimResponse>>
+    claims?: TestClaimResponse[]
   } = {}
 ) => ({
   id: 2,
@@ -61,25 +56,35 @@ const createWeeklyClaimResponse = (
   ...overrides
 })
 
+const mockQueryClient = (invalidateQueries = vi.fn().mockResolvedValue(undefined)) => {
+  useQueryClientFn.mockReturnValue({
+    invalidateQueries,
+    getQueryData: vi.fn(),
+    setQueryData: vi.fn(),
+    removeQueries: vi.fn()
+  })
+  return invalidateQueries
+}
+
+const mockUploadedFile = (fileKey: string, fileUrl: string, fileType: string, fileSize: number) =>
+  mockUploadFileApi.mockResolvedValue({
+    files: [{ fileKey, fileUrl, metadata: { fileType, fileSize } }]
+  })
+
 describe('weeklyClaim.queries', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     useMutationFn.mockImplementation(smartUseMutation)
-    useQueryClientFn.mockReturnValue({
-      invalidateQueries: vi.fn().mockResolvedValue(undefined),
-      getQueryData: vi.fn(),
-      setQueryData: vi.fn(),
-      removeQueries: vi.fn()
-    })
+    mockQueryClient()
   })
 
   describe('normalization helpers', () => {
     it('defaults claim worked minutes to zero when minutesWorked is absent', () => {
       const legacyClaim = weeklyClaimQueries.normalizeClaimResponse(
-        createClaimResponse({ hoursWorked: 75, minutesWorked: null })
+        createClaimResponse({ hoursWorked: 75, minutesWorked: undefined })
       )
       const emptyClaim = weeklyClaimQueries.normalizeClaimResponse(
-        createClaimResponse({ hoursWorked: null, minutesWorked: null })
+        createClaimResponse({ hoursWorked: null, minutesWorked: undefined })
       )
 
       expect(legacyClaim.hoursWorked).toBe(75)
@@ -92,12 +97,15 @@ describe('weeklyClaim.queries', () => {
   describe('query hooks', () => {
     it('configures the team weekly claims query and transforms the response', async () => {
       vi.mocked(apiClient.get).mockResolvedValue({
-        data: [
-          createWeeklyClaimResponse({
-            minutesWorked: null,
-            claims: [createClaimResponse({ hoursWorked: 120, minutesWorked: null })]
-          })
-        ]
+        data: {
+          data: [
+            createWeeklyClaimResponse({
+              minutesWorked: undefined,
+              claims: [createClaimResponse({ hoursWorked: 120, minutesWorked: undefined })]
+            })
+          ],
+          total: 1
+        }
       })
 
       weeklyClaimQueries.useGetTeamWeeklyClaimsQuery({
@@ -108,12 +116,12 @@ describe('weeklyClaim.queries', () => {
         }
       })
 
-      const options = useQueryFn.mock.calls.at(-1)?.[0] as {
+      const options = useQueryFn.mock.calls[useQueryFn.mock.calls.length - 1]?.[0] as {
         queryKey: { value: unknown }
         enabled?: () => boolean
-        queryFn: () => Promise<WeeklyClaim[]>
+        queryFn: () => Promise<{ data: WeeklyClaim[]; total: number }>
       }
-      const data = await options.queryFn()
+      const result = await options.queryFn()
 
       expect(options.queryKey.value).toEqual(
         weeklyClaimQueries.weeklyClaimKeys.team(
@@ -130,8 +138,27 @@ describe('weeklyClaim.queries', () => {
           status: 'pending'
         }
       })
-      expect(data[0]?.hoursWorked).toBe(0)
-      expect(data[0]?.minutesWorked).toBe(0)
+      expect(result.total).toBe(1)
+      expect(result.data[0]?.minutesWorked).toBe(0)
+      expect(result.data[0]?.claims[0]?.minutesWorked).toBe(0)
+    })
+
+    it('forwards pagination params and exposes them in the query key', async () => {
+      vi.mocked(apiClient.get).mockResolvedValue({ data: { data: [], total: 0 } })
+      weeklyClaimQueries.useGetTeamWeeklyClaimsQuery({
+        queryParams: { teamId: 'team-9', page: 2, limit: 25 }
+      })
+      const options = useQueryFn.mock.calls.at(-1)?.[0] as {
+        queryKey: { value: unknown }
+        queryFn: () => Promise<unknown>
+      }
+      await options.queryFn()
+      expect(options.queryKey.value).toEqual(
+        weeklyClaimQueries.weeklyClaimKeys.team('team-9', undefined, undefined, 2, 25)
+      )
+      expect(apiClient.get).toHaveBeenCalledWith('weeklyClaim/', {
+        params: { teamId: 'team-9', page: 2, limit: 25 }
+      })
     })
 
     it('configures the weekly claim detail query and supports disabled state', async () => {
@@ -147,7 +174,7 @@ describe('weeklyClaim.queries', () => {
         pathParams: { claimId: '77' }
       })
 
-      let options = useQueryFn.mock.calls.at(-1)?.[0] as {
+      let options = useQueryFn.mock.calls[useQueryFn.mock.calls.length - 1]?.[0] as {
         queryKey: { value: unknown }
         enabled?: () => boolean
         queryFn: () => Promise<WeeklyClaim>
@@ -162,32 +189,17 @@ describe('weeklyClaim.queries', () => {
         pathParams: { claimId: null }
       })
 
-      options = useQueryFn.mock.calls.at(-1)?.[0] as { enabled?: () => boolean }
+      options = useQueryFn.mock.calls[useQueryFn.mock.calls.length - 1]?.[0] as {
+        enabled?: () => boolean
+      }
       expect(options.enabled?.()).toBe(false)
     })
   })
 
   describe('custom mutations with file handling', () => {
     it('submits a claim with uploaded files and invalidates team queries', async () => {
-      const invalidateQueries = vi.fn().mockResolvedValue(undefined)
-      useQueryClientFn.mockReturnValue({
-        invalidateQueries,
-        getQueryData: vi.fn(),
-        setQueryData: vi.fn(),
-        removeQueries: vi.fn()
-      })
-      mockUploadFileApi.mockResolvedValue({
-        files: [
-          {
-            fileKey: 'proof-1',
-            fileUrl: 'https://example.com/proof-1',
-            metadata: {
-              fileType: 'image/png',
-              fileSize: 512
-            }
-          }
-        ]
-      })
+      const invalidateQueries = mockQueryClient()
+      mockUploadedFile('proof-1', 'https://example.com/proof-1', 'image/png', 512)
       vi.mocked(apiClient.post).mockResolvedValue({ data: undefined })
 
       const mutation = weeklyClaimQueries.useSubmitClaimMutation()
@@ -241,25 +253,13 @@ describe('weeklyClaim.queries', () => {
     })
 
     it('edits a claim with uploaded files, optional deletions and invalidation', async () => {
-      const invalidateQueries = vi.fn().mockResolvedValue(undefined)
-      useQueryClientFn.mockReturnValue({
-        invalidateQueries,
-        getQueryData: vi.fn(),
-        setQueryData: vi.fn(),
-        removeQueries: vi.fn()
-      })
-      mockUploadFileApi.mockResolvedValue({
-        files: [
-          {
-            fileKey: 'updated-proof',
-            fileUrl: 'https://example.com/updated-proof',
-            metadata: {
-              fileType: 'application/pdf',
-              fileSize: 2048
-            }
-          }
-        ]
-      })
+      const invalidateQueries = mockQueryClient()
+      mockUploadedFile(
+        'updated-proof',
+        'https://example.com/updated-proof',
+        'application/pdf',
+        2048
+      )
       vi.mocked(apiClient.put).mockResolvedValue({ data: undefined })
 
       const mutation = weeklyClaimQueries.useEditClaimWithFilesMutation()

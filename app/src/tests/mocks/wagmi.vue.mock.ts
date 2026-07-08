@@ -38,20 +38,11 @@ export const mockWagmiCore = {
   waitForTransactionReceipt: vi.fn(),
   writeContract: vi.fn(),
   readContract: vi.fn(),
+  getBalance: vi.fn(),
   getWalletClient: vi.fn(),
   estimateGas: vi.fn(),
-  getPublicClient: vi.fn()
-}
-
-// Mock useWaitForTransactionReceipt composable
-export const mockUseWaitForTransactionReceipt = {
-  data: ref(null),
-  error: ref(null),
-  isLoading: ref(false),
-  isSuccess: ref(false),
-  isError: ref(false),
-  isPending: ref(false),
-  status: ref('idle' as const)
+  getPublicClient: vi.fn(),
+  getConnections: vi.fn(() => [])
 }
 
 // Mock useConnection composable
@@ -79,6 +70,7 @@ export const mockUseChainId = ref(1)
 // Mock useSwitchChain composable
 export const mockUseSwitchChain = {
   mutate: vi.fn(),
+  mutateAsync: vi.fn().mockResolvedValue(undefined),
   isPending: ref(false),
   error: ref(null),
   switchChain: vi.fn()
@@ -96,14 +88,6 @@ export const mockUseBalance = {
   isLoading: ref(false),
   error: ref(null),
   refetch: vi.fn()
-}
-
-// Mock useSendTransaction composable
-export const mockUseSendTransaction = {
-  isPending: ref(false),
-  error: ref(null),
-  data: ref<string>(''),
-  sendTransaction: vi.fn()
 }
 
 // Mock wagmi config and transport functions
@@ -129,9 +113,32 @@ export const mockUseAccount = {
  * Exported vi.fn() factory functions for wagmi composables.
  * Use these in tests that need per-test configuration via mockReturnValue/mockReturnValueOnce.
  */
-export const useWriteContractFn = vi.fn(() => ({ ...mockUseWriteContract }))
-export const useWaitForTransactionReceiptFn = vi.fn(() => ({ ...mockUseWaitForTransactionReceipt }))
 export const useChainIdFn = vi.fn(() => mockUseChainId)
 export const useReadContractFn = vi.fn(() => ({ ...mockUseReadContract }))
 export const useSignTypedDataFn = vi.fn(() => ({ ...mockUseSignTypedData }))
 export const useAccountFn = vi.fn(() => ({ ...mockUseAccount }))
+
+/**
+ * Reset the stateful wagmi mocks to their defaults. `transferHash` is a
+ * module-level ref shared via `mockUseWriteContract.data`, so without this it
+ * leaks a tx hash from one test into the next. Read-contract data and the
+ * @wagmi/core action spies are reset too.
+ */
+export const resetWagmiVueMocks = () => {
+  transferHash.value = undefined
+  mockUseWriteContract.isPending.value = false
+  mockUseWriteContract.error.value = null
+  mockUseWriteContract.isError.value = false
+  mockUseWriteContract.status.value = 'idle'
+  mockUseWriteContract.variables.value = undefined
+  mockUseWriteContract.mutate.mockClear()
+  mockUseWriteContract.mutateAsync.mockClear()
+  mockUseWriteContract.reset.mockClear()
+
+  mockUseReadContract.data.value = '0xData'
+  mockUseReadContract.error.value = null
+
+  Object.values(mockWagmiCore).forEach((fn) => {
+    if (vi.isMockFunction(fn)) fn.mockClear()
+  })
+}

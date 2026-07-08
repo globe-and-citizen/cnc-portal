@@ -13,12 +13,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 🛫 Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: 🏗 Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20.10.0
+          node-version: 24.x
           cache: "npm"
           cache-dependency-path: ./contract/package-lock.json
 
@@ -32,6 +32,19 @@ jobs:
 
       - name: </> Run Format Check
         run: npm run format-check
+        working-directory: ./contract
+
+      - name: 🚫 Guard against hardhat/console.sol in production contracts
+        run: |
+          matches=$(grep -rn "hardhat/console.sol" contracts \
+            --include="*.sol" \
+            --exclude-dir=mocks \
+            --exclude-dir=test || true)
+          if [ -n "$matches" ]; then
+            echo "::error::hardhat/console.sol must not be imported outside contracts/mocks and contracts/test"
+            echo "$matches"
+            exit 1
+          fi
         working-directory: ./contract
 
       - name: </> Run Solidity Linter

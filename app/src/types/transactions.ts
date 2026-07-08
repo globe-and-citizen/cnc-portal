@@ -12,15 +12,19 @@ export interface BaseTransaction {
 export interface ExpenseTransaction extends BaseTransaction {
   amount: string | number
   token: string
+  tokenAddress?: string
 }
 
 export interface CashRemunerationTransaction extends BaseTransaction {
   amount: string | number
+  token: string
+  tokenAddress?: string
 }
 
 export interface BankTransaction extends BaseTransaction {
-  amount?: string | number
-  token?: string
+  amount: string | number
+  token: string
+  tokenAddress?: string
 }
 
 export interface InvestorsTransaction extends BaseTransaction {
@@ -28,14 +32,6 @@ export interface InvestorsTransaction extends BaseTransaction {
   to: string
   amount: string
   token: string
-}
-
-export interface RawInvestorsTransaction {
-  amount: number
-  blockTimestamp: string
-  from: string
-  to: string
   tokenAddress: string
-  transactionHash: string
-  transactionType: string
+  reason?: string
 }

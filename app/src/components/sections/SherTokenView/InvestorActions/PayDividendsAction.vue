@@ -1,12 +1,12 @@
 <template>
-  <div :class="{ tooltip: !canPayDividends }" :data-tip="cannotPayDividendsReason">
+  <UTooltip :text="payDividendsTooltip">
     <ActionButton
       icon="heroicons:arrow-trending-up"
       icon-bg="bg-blue-50 dark:bg-blue-950"
       icon-color="text-blue-700 dark:text-blue-400"
       title="Pay Dividends"
       tone-class="border-blue-200 bg-blue-50/60 hover:border-blue-300 hover:bg-blue-100/70 disabled:border-blue-200 disabled:bg-blue-50/50 dark:border-blue-900 dark:bg-blue-950/30 dark:hover:border-blue-800 dark:hover:bg-blue-900/40 dark:disabled:border-blue-900 dark:disabled:bg-blue-950/30"
-      :disabled="!canPayDividends"
+      :disabled="!canPayDividends || isWriteDisabled"
       data-test="pay-dividends-button"
       @click="openModal"
     />
@@ -20,7 +20,7 @@
       <template #body>
         <PayDividendsForm
           v-if="modalState.show && currentTeam"
-          :loading="isBankWriteLoading || isLoadingAddAction || isConfirmingAddAction"
+          :loading="isBankWriteLoading || isLoadingAddAction"
           :token-symbol="tokenSymbol!"
           :team="currentTeam"
           :is-bod-action="isBodAction"
@@ -29,7 +29,7 @@
         />
       </template>
     </UModal>
-  </div>
+  </UTooltip>
 </template>
 
 <script setup lang="ts">
@@ -50,6 +50,7 @@ import {
 import { tokenSymbol as tokenSymbolUtils, tokenSymbolAddresses } from '@/utils'
 import type { TokenId } from '@/constant'
 import { log } from '@/utils'
+import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 
 interface Props {
   tokenSymbol?: string
@@ -62,6 +63,7 @@ const props = defineProps<Props>()
 
 const { address: currentAddress } = useUserDataStore()
 const teamStore = useTeamStore()
+const { isWriteDisabled, archivedTooltip } = useTeamWriteGuard()
 
 const modalState = ref({
   mount: false,
@@ -80,8 +82,7 @@ const addActionComposable = useBodAddAction()
 const {
   executeAddAction: addAction,
   isPending: isLoadingAddAction,
-  isConfirming: isConfirmingAddAction,
-  isActionAdded
+  isSuccess: isActionAdded
 } = addActionComposable
 
 const { isBodAction } = useBodIsBodAction(props.bankAddress as Address)
@@ -98,6 +99,12 @@ const canPayDividends = computed(() => {
   return hasTokenSymbol && hasShareholders && isAuthorized
 })
 
+const payDividendsTooltip = computed(() => {
+  if (archivedTooltip.value) return archivedTooltip.value
+  if (!canPayDividends.value) return cannotPayDividendsReason.value
+  return undefined
+})
+
 const cannotPayDividendsReason = computed(() => {
   if (!props.tokenSymbol) return 'Token symbol not available'
   if ((props.shareholdersCount ?? 0) === 0) return 'No shareholders available to pay dividends'
@@ -108,6 +115,7 @@ const cannotPayDividendsReason = computed(() => {
 })
 
 const openModal = () => {
+  if (isWriteDisabled.value) return
   modalState.value = { mount: true, show: true }
 }
 

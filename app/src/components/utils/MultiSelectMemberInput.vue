@@ -6,7 +6,7 @@
   <div class="grid grid-cols-2 gap-4" data-test="members-list">
     <div class="flex items-center" v-for="member of teamMembers" :key="member.address">
       <UserComponent
-        class="bg-base-200 grow rounded-lg p-4 hover:cursor-pointer"
+        class="bg-muted grow rounded-lg p-4 hover:cursor-pointer"
         :user="member"
         @click="addMember(member)"
       />

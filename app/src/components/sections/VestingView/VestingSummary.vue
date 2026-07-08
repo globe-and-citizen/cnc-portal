@@ -2,14 +2,14 @@
   <div class="flex w-full max-w-5xl flex-col gap-5">
     <h4 class="text-lg font-bold">Review Vesting Details</h4>
 
-    <div class="bg-base-200 grid grid-cols-1 gap-4 rounded-lg p-4 md:grid-cols-2">
+    <div class="bg-muted grid grid-cols-1 gap-4 rounded-lg p-4 md:grid-cols-2">
       <div class="flex flex-col gap-2">
         <span class="text-xs text-gray-500">Member</span>
         <span class="font-medium">{{
           props.vesting.member.name || props.vesting.member.address
         }}</span>
 
-        <span class="text-xs text-gray-500">Total Amount</span>
+        <span class="text-xs text-gray-500">Promised to vest</span>
         <span class="font-medium">{{ props.vesting.totalAmount }} Tokens</span>
       </div>
 

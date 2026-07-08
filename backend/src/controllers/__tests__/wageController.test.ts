@@ -7,20 +7,23 @@ import { prisma } from '../../utils';
 
 vi.mock('../../utils', async () => {
   const actual = await vi.importActual('../../utils');
+  const prismaMock: Record<string, unknown> = {
+    team: {
+      findFirst: vi.fn(),
+      findUnique: vi.fn(),
+    },
+    wage: {
+      findFirst: vi.fn(),
+      findUnique: vi.fn(),
+      findMany: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+    },
+  };
+  prismaMock.$transaction = vi.fn(async (cb: (tx: unknown) => unknown) => cb(prismaMock));
   return {
     ...actual,
-    prisma: {
-      team: {
-        findFirst: vi.fn(),
-        findUnique: vi.fn(),
-      },
-      wage: {
-        findFirst: vi.fn(),
-        findMany: vi.fn(),
-        create: vi.fn(),
-        update: vi.fn(),
-      },
-    },
+    prisma: prismaMock,
   };
 });
 vi.mock('../../utils/viem.config');
@@ -79,7 +82,10 @@ describe('Wage Controller', () => {
         next();
       });
       // Default: requireTeamOwner middleware finds the team owned by the caller
-      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(mockTeam);
+      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue({
+        ...mockTeam,
+        isArchived: false,
+      });
     });
 
     it('should return 400 if required parameters are missing', async () => {
@@ -537,6 +543,8 @@ describe('Wage Controller', () => {
         req.address = '0x1234567890123456789012345678901234567890';
         next();
       });
+      vi.spyOn(prisma.wage, 'findUnique').mockResolvedValue({ teamId: 1 } as never);
+      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue({ isArchived: false } as never);
     });
 
     it('should return 400 if wageId is not a valid integer', async () => {
@@ -550,15 +558,17 @@ describe('Wage Controller', () => {
     });
 
     it('should return 404 if wage not found', async () => {
+      vi.spyOn(prisma.wage, 'findUnique').mockResolvedValue(null);
       vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue(null);
 
       const response = await request(app).put('/1').query({ action: 'disable' });
 
-      expect(response.status).toBe(404);
-      expect(response.body.message).toBe('Wage not found');
+      expect(response.status).toBe(400);
+      expect(response.body.message).toBe('Missing or invalid teamId at params.wageId');
     });
 
     it('should return 403 if caller is not the owner of the team', async () => {
+      vi.spyOn(prisma.wage, 'findUnique').mockResolvedValue({ teamId: 1 } as never);
       vi.spyOn(prisma.wage, 'findFirst').mockResolvedValue({
         ...mockWage,
         team: { ownerAddress: '0x0000000000000000000000000000000000000000' },

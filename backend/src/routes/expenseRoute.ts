@@ -1,6 +1,6 @@
 import express from 'express';
 import { addExpense, getExpenses, updateExpense } from '../controllers/expenseController';
-import { requireTeamMember } from '../middleware/teamAuthzMiddleware';
+import { rejectIfArchived, requireTeamMember } from '../middleware/teamAuthzMiddleware';
 import {
   addExpenseBodySchema,
   getExpensesQuerySchema,
@@ -18,6 +18,9 @@ const expenseRoutes = express.Router();
  * /expense:
  *  post:
  *   summary: Add a new expense
+ *   tags: [Expenses]
+ *   security:
+ *     - bearerAuth: []
  *   requestBody:
  *     required: true
  *     content:
@@ -42,13 +45,21 @@ const expenseRoutes = express.Router();
  *     500:
  *       description: Internal server error
  */
-expenseRoutes.post('/', validateBody(addExpenseBodySchema), addExpense);
+expenseRoutes.post(
+  '/',
+  validateBody(addExpenseBodySchema),
+  rejectIfArchived('body.teamId'),
+  addExpense
+);
 
 /**
  * @openapi
  * /expense:
  *  get:
  *   summary: Get expenses for a team
+ *   tags: [Expenses]
+ *   security:
+ *     - bearerAuth: []
  *   parameters:
  *     - in: query
  *       name: teamId
@@ -78,6 +89,9 @@ expenseRoutes.get(
  * /expense/{id}:
  *  patch:
  *   summary: Update an expense
+ *   tags: [Expenses]
+ *   security:
+ *     - bearerAuth: []
  *   parameters:
  *     - in: path
  *       name: id
@@ -109,6 +123,7 @@ expenseRoutes.get(
 expenseRoutes.patch(
   '/:id',
   validateBodyAndParams(updateExpenseBodySchema, updateExpenseParamsSchema),
+  rejectIfArchived('params.expenseId'),
   updateExpense
 );
 

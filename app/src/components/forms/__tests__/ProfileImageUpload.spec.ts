@@ -167,10 +167,10 @@ describe('ProfileImageUpload.vue', () => {
       expect(mockUploadFileApi).not.toHaveBeenCalled()
     })
 
-    it('shows existing image style when model value is provided', () => {
+    it('reflects existing image state when model value is provided', () => {
       wrapper = mountComponent({ modelValue: 'https://storage.railway.app/existing.png' })
 
-      expect(wrapper.find(SELECTORS.uploadBox).classes()).toContain('border-green-500')
+      expect(wrapper.find(SELECTORS.uploadBox).attributes('data-has-image')).toBe('true')
     })
   })
 })

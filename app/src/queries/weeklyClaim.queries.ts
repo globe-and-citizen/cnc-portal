@@ -44,8 +44,13 @@ export const normalizeWeeklyClaimResponse = (weeklyClaim: WeeklyClaimResponse): 
 export const weeklyClaimKeys = {
   all: ['weeklyClaims'] as const,
   teams: () => [...weeklyClaimKeys.all, 'team'] as const,
-  team: (teamId: string | number | null | undefined, userAddress?: Address, status?: string) =>
-    [...weeklyClaimKeys.teams(), { teamId, userAddress, status }] as const,
+  team: (
+    teamId: string | number | null | undefined,
+    userAddress?: Address,
+    status?: string,
+    page?: number,
+    limit?: number
+  ) => [...weeklyClaimKeys.teams(), { teamId, userAddress, status, page, limit }] as const,
   details: () => [...weeklyClaimKeys.all, 'detail'] as const,
   detail: (claimId: string | number | null | undefined) =>
     [...weeklyClaimKeys.details(), { claimId }] as const
@@ -66,19 +71,35 @@ export interface GetTeamWeeklyClaimsParams {
     userAddress?: MaybeRefOrGetter<Address | undefined>
     /** Optional status filter */
     status?: MaybeRefOrGetter<'pending' | 'signed' | 'withdrawn' | 'disabled' | undefined>
+    /**
+     * Optional pagination — when omitted, the backend returns the full set.
+     * Pass both for paginated tables (see Company Payroll: WeeklyClaim.vue).
+     */
+    page?: MaybeRefOrGetter<number | undefined>
+    limit?: MaybeRefOrGetter<number | undefined>
   }
 }
 
 /**
- * Fetch weekly claims for a team with optional filters
+ * Paginated response shape returned by GET /weeklyClaim/. The backend always
+ * wraps the rows in { data, total } regardless of whether pagination params
+ * were provided — clients never have to discriminate on the response.
+ */
+export interface PaginatedWeeklyClaims {
+  data: WeeklyClaim[]
+  total: number
+}
+
+/**
+ * Fetch weekly claims for a team with optional filters and optional pagination
  *
  * @endpoint GET /weeklyClaim/
  * @pathParams none
- * @queryParams { teamId: string | number, memberAddress?: string, status?: string }
+ * @queryParams { teamId, memberAddress?, status?, page?, limit? }
  * @body none
  */
 export const useGetTeamWeeklyClaimsQuery = createQueryHook<
-  WeeklyClaim[],
+  PaginatedWeeklyClaims,
   GetTeamWeeklyClaimsParams
 >({
   endpoint: 'weeklyClaim/',
@@ -86,10 +107,18 @@ export const useGetTeamWeeklyClaimsQuery = createQueryHook<
     weeklyClaimKeys.team(
       toValue(params.queryParams.teamId),
       toValue(params.queryParams.userAddress),
-      toValue(params.queryParams.status)
+      toValue(params.queryParams.status),
+      toValue(params.queryParams.page),
+      toValue(params.queryParams.limit)
     ),
   enabled: (params) => !!toValue(params.queryParams.teamId),
-  transformResponse: (data) => (data as WeeklyClaimResponse[]).map(normalizeWeeklyClaimResponse),
+  transformResponse: (raw) => {
+    const response = raw as { data: WeeklyClaimResponse[]; total: number }
+    return {
+      data: response.data.map(normalizeWeeklyClaimResponse),
+      total: response.total
+    }
+  },
   options: {
     ...queryPresets.stable,
     retry: false,
@@ -157,9 +186,20 @@ export interface UpdateWeeklyClaimParams {
   body?: {
     /** Signature (required only for 'sign' action) */
     signature?: string
-    /** Address of the CashRemunerationEIP712 contract used for signing (sign action) */
-    contractAddress?: string
-    /** Chain ID used for signing (sign action) */
+    /**
+     * EIP-712 verifyingContract address that the signature was produced
+     * against. Required for 'sign' so the backend can authenticate the
+     * signature and tag the row for stale-detection (issue #1825).
+     */
+    signedAgainstContractAddress?: Address
+    /** Signed typed-data message envelope (required for 'sign'). */
+    typedDataMessage?: {
+      employeeAddress: Address
+      minutesWorked: number
+      date: string
+      wages: Array<{ hourlyRate: string; tokenAddress: Address }>
+    }
+    /** Chain ID the signature was produced on (required for 'sign'). */
     chainId?: number
   }
 }
@@ -179,6 +219,42 @@ export const useUpdateWeeklyClaimMutation = createMutationHook<void, UpdateWeekl
     weeklyClaimKeys.detail(params.pathParams.claimId),
     weeklyClaimKeys.teams()
   ]
+})
+
+// ============================================================================
+// PUT /weeklyClaim/goals - Submit / update the weekly goals memo
+// ============================================================================
+
+/**
+ * Combined parameters for useSubmitWeeklyGoalsMutation
+ */
+export interface SubmitWeeklyGoalsParams {
+  body: {
+    /** Team ID */
+    teamId: number | string
+    /** Any ISO datetime within the target week (normalized to isoWeek start server-side) */
+    weekStart: string
+    /** Markdown memo; an empty string clears the saved memo */
+    weeklyGoals: string
+  }
+}
+
+/**
+ * Submit or update the caller's weekly goals memo for a given week. Upserts the
+ * WeeklyClaim row (creating a claim-less one for weeks with no hours logged yet).
+ *
+ * @endpoint PUT /weeklyClaim/goals
+ * @pathParams none
+ * @queryParams none
+ * @body { teamId, weekStart, weeklyGoals }
+ */
+export const useSubmitWeeklyGoalsMutation = createMutationHook<
+  WeeklyClaim,
+  SubmitWeeklyGoalsParams
+>({
+  method: 'PUT',
+  endpoint: 'weeklyClaim/goals',
+  invalidateKeys: () => [weeklyClaimKeys.teams()]
 })
 
 // ============================================================================

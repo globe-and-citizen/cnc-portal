@@ -12,6 +12,8 @@
           </span>
         </UButton>
 
+        <UColorModeButton data-test="color-mode-button" />
+
         <NotificationDropdown />
 
         <UDropdownMenu :items="profileItems" data-test="profile">

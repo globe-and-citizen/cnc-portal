@@ -2,79 +2,90 @@ import { vi } from 'vitest'
 import { ref } from 'vue'
 
 /**
+ * Default builders for the contract-balance mock state. Exposed as functions so
+ * that `resetComposableMocks()` can restore a FRESH copy on every test, even
+ * after a spec has mutated `balances.value` / `total.value` in place.
+ */
+const defaultContractBalances = () => [
+  {
+    amount: 0.5,
+    token: {
+      id: 'native',
+      name: 'SepoliaETH',
+      symbol: 'SepoliaETH',
+      code: 'SepoliaETH',
+      coingeckoId: 'ethereum',
+      decimals: 18,
+      address: '0x0000000000000000000000000000000000000000'
+    },
+    values: {
+      USD: {
+        value: 500,
+        formated: '$500',
+        id: 'usd',
+        code: 'USD',
+        symbol: '$',
+        price: 1000,
+        formatedPrice: '$1K'
+      }
+    }
+  },
+  {
+    amount: 50,
+    token: {
+      id: 'usdc',
+      name: 'USD Coin',
+      symbol: 'USDC',
+      code: 'USDC',
+      coingeckoId: 'usd-coin',
+      decimals: 6,
+      address: '0xA3492D046095AFFE351cFac15de9b86425E235dB'
+    },
+    values: {
+      USD: {
+        value: 50000,
+        formated: '$50K',
+        id: 'usd',
+        code: 'USD',
+        symbol: '$',
+        price: 1000,
+        formatedPrice: '$1K'
+      }
+    }
+  }
+]
+
+const defaultContractTotal = () => ({
+  USD: {
+    value: 50500,
+    formated: '$50.5K',
+    id: 'usd',
+    code: 'USD',
+    symbol: '$',
+    price: 1000,
+    formatedPrice: '$1K'
+  }
+})
+
+const defaultDividendsTotal = () => ({
+  USD: {
+    value: 100,
+    formated: '$100',
+    id: 'usd',
+    code: 'USD',
+    symbol: '$',
+    price: 1000,
+    formatedPrice: '$1K'
+  }
+})
+
+/**
  * Mock useContractBalance composable
  */
 export const mockUseContractBalance = {
-  balances: ref([
-    {
-      amount: 0.5,
-      token: {
-        id: 'native',
-        name: 'SepoliaETH',
-        symbol: 'SepoliaETH',
-        code: 'SepoliaETH',
-        coingeckoId: 'ethereum',
-        decimals: 18,
-        address: '0x0000000000000000000000000000000000000000'
-      },
-      values: {
-        USD: {
-          value: 500,
-          formated: '$500',
-          id: 'usd',
-          code: 'USD',
-          symbol: '$',
-          price: 1000,
-          formatedPrice: '$1K'
-        }
-      }
-    },
-    {
-      amount: 50,
-      token: {
-        id: 'usdc',
-        name: 'USD Coin',
-        symbol: 'USDC',
-        code: 'USDC',
-        coingeckoId: 'usd-coin',
-        decimals: 6,
-        address: '0xA3492D046095AFFE351cFac15de9b86425E235dB'
-      },
-      values: {
-        USD: {
-          value: 50000,
-          formated: '$50K',
-          id: 'usd',
-          code: 'USD',
-          symbol: '$',
-          price: 1000,
-          formatedPrice: '$1K'
-        }
-      }
-    }
-  ]),
-  total: ref({
-    USD: {
-      value: 50500,
-      formated: '$50.5K',
-      id: 'usd',
-      code: 'USD',
-      symbol: '$',
-      price: 1000,
-      formatedPrice: '$1K'
-    }
-  }),
-  dividendsTotal: ref({
-    USD: {
-      value: 100,
-      formated: '$100',
-      id: 'usd',
-      code: 'USD',
-      symbol: '$',
-      price: 1000,
-      formatedPrice: '$1K'
-    }
-  }),
+  balances: ref(defaultContractBalances()),
+  total: ref(defaultContractTotal()),
+  dividendsTotal: ref(defaultDividendsTotal()),
   dividends: ref([]),
   isLoading: ref(false),
   error: ref(null)
@@ -112,13 +123,6 @@ export const mockUseSafeSendTransaction = {
   reset: vi.fn()
 }
 
-/**
- * Mock useSafeOwnerManagement composable
- */
-export const mockUseSafeOwnerManagement = {
-  isUpdating: ref(false),
-  updateOwners: vi.fn()
-}
 /**
  * Mock useBackendWake composable
  * Returns a function that does nothing - individual tests can override if needed
@@ -163,28 +167,6 @@ export const mockUseFetch = {
 }
 
 /**
- * Mock useWalletChecks composable
- */
-export const mockUseWalletChecks = {
-  isProcessing: ref(false),
-  isSuccess: ref(false),
-  performChecks: vi.fn(),
-  resetRefs: vi.fn(() => {
-    mockUseWalletChecks.isProcessing.value = false
-    mockUseWalletChecks.isSuccess.value = false
-  })
-}
-
-/**
- * Mock useSafeDeployment composable
- */
-export const mockUseSafeDeployment = {
-  deploySafe: vi.fn(),
-  isDeploying: ref(false),
-  error: ref<Error | null>(null)
-}
-
-/**
  * Mock useBodAddAction composable
  */
 export const mockUseBodAddAction = {
@@ -217,7 +199,10 @@ export const mockUseSubmitRestriction = {
  * Reset function for composable mocks
  */
 export const resetComposableMocks = () => {
-  // Reset contract balance loading state
+  // Reset contract balance state (fresh copies so in-place mutations don't leak)
+  mockUseContractBalance.balances.value = defaultContractBalances()
+  mockUseContractBalance.total.value = defaultContractTotal()
+  mockUseContractBalance.dividendsTotal.value = defaultDividendsTotal()
   mockUseContractBalance.isLoading.value = false
   mockUseContractBalance.error.value = null
   mockUseContractBalance.dividends.value = []
@@ -257,39 +242,23 @@ export const resetComposableMocks = () => {
     mockUseBackendWake.mockClear()
   }
 
-  mockUseWalletChecks.isProcessing.value = false
-  mockUseWalletChecks.isSuccess.value = false
-  if (vi.isMockFunction(mockUseWalletChecks.performChecks)) {
-    mockUseWalletChecks.performChecks.mockClear()
-  }
-
   mockUseFetch.post.data.value = { accessToken: null }
   mockUseFetch.post.error.value = null
   if (vi.isMockFunction(mockUseFetch.post.execute)) {
     mockUseFetch.post.execute.mockClear()
   }
+  mockUseFetch.get.url.value = ''
   mockUseFetch.get.data.value = null
   mockUseFetch.get.error.value = null
   if (vi.isMockFunction(mockUseFetch.get.execute)) {
     mockUseFetch.get.execute.mockClear()
   }
 
-  mockUseSafeOwnerManagement.isUpdating.value = false
-  if (vi.isMockFunction(mockUseSafeOwnerManagement.updateOwners)) {
-    mockUseSafeOwnerManagement.updateOwners.mockClear()
-  }
-
   // Reset clipboard mock
   mockUseClipboard.copied.value = false
+  mockUseClipboard.isSupported.value = true
   if (vi.isMockFunction(mockUseClipboard.copy)) {
     mockUseClipboard.copy.mockClear()
-  }
-
-  // Reset Safe deployment mock
-  mockUseSafeDeployment.isDeploying.value = false
-  mockUseSafeDeployment.error.value = null
-  if (vi.isMockFunction(mockUseSafeDeployment.deploySafe)) {
-    mockUseSafeDeployment.deploySafe.mockClear()
   }
 
   mockUseBodAddAction.isLoading.value = false
@@ -321,14 +290,34 @@ export const resetComposableMocks = () => {
 export const resetTransactionMocks = resetComposableMocks
 
 /**
+ * Mock useDeployContract composable (useContractFunctions.ts)
+ * Shared refs allow tests to trigger watchers and inspect state.
+ */
+export const mockDeployState = {
+  isDeploying: ref(false),
+  contractAddress: ref<string | null>(null),
+  error: ref<Error | null>(null),
+  deploy: vi.fn()
+}
+
+export const mockUseDeployContract = vi.fn(() => mockDeployState)
+
+export function resetDeployState() {
+  mockDeployState.isDeploying.value = false
+  mockDeployState.contractAddress.value = null
+  mockDeployState.error.value = null
+  mockDeployState.deploy.mockClear()
+}
+
+/**
  * Exported vi.fn() factory functions for TanStack Vue Query.
  * Use these in tests that need per-test configuration via mockReturnValue/mockReturnValueOnce.
  */
 export const useQueryClientFn = vi.fn(() => ({
-  invalidateQueries: vi.fn(),
-  getQueryData: vi.fn(),
-  setQueryData: vi.fn(),
-  removeQueries: vi.fn()
+  invalidateQueries: vi.fn(async () => undefined),
+  getQueryData: vi.fn(() => undefined),
+  setQueryData: vi.fn(() => undefined),
+  removeQueries: vi.fn(() => undefined)
 }))
 
 export const useQueryFn = vi.fn(() => ({

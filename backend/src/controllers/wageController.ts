@@ -54,14 +54,16 @@ export const setWage = async (req: Request, res: Response) => {
         return errorResponse(400, 'Cannot set wage: the current wage is disabled', res);
       }
 
-      // Create wage and chain it to the previous wage
-      const createdWage = await prisma.wage.create({
-        data: {
-          ...wagePayload,
-          previousWage: {
-            connect: { id: currentWage.id },
-          },
-        },
+      // Create wage and chain it to the previous wage. Done in a transaction
+      // so the deferrable Wage_active_unique constraint is checked at COMMIT,
+      // after the old wage's nextWageId has been set.
+      const createdWage = await prisma.$transaction(async (tx) => {
+        const newWage = await tx.wage.create({ data: wagePayload });
+        await tx.wage.update({
+          where: { id: currentWage.id },
+          data: { nextWageId: newWage.id },
+        });
+        return newWage;
       });
 
       return res.status(201).json(createdWage);

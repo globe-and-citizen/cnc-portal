@@ -2,7 +2,7 @@ import { flushPromises, mount } from '@vue/test-utils'
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 import { defineComponent } from 'vue'
 import UploadFileDB from '@/components/sections/CashRemunerationView/Form/UploadFileDB.vue'
-import { createTestingPinia } from '@pinia/testing'
+import { renderWithProviders } from '@/tests/mocks'
 import { MAX_FILES } from '@/types/upload'
 
 const UFileUploadStub = defineComponent({
@@ -34,14 +34,13 @@ describe('UploadFileDB', () => {
   } as const
 
   const createWrapper = (props = {}) => {
-    return mount(UploadFileDB, {
+    return renderWithProviders(UploadFileDB, {
       props: {
         disabled: false,
         existingFileCount: 0,
         ...props
       },
       global: {
-        plugins: [createTestingPinia({ createSpy: vi.fn })],
         stubs: {
           UFileUpload: UFileUploadStub,
           FilePreviewGallery: true
@@ -51,10 +50,10 @@ describe('UploadFileDB', () => {
   }
 
   const emitFilesUpdate = async (files: File[] | File | null | undefined) => {
+    // eslint-disable-next-line no-restricted-syntax -- onFilesUpdate is the @update:model-value handler for the auto-imported UFileUpload; auto-imported Nuxt UI components bypass test stubs, so there is no reachable child instance to emit from
     const vm = wrapper.vm as unknown as {
       onFilesUpdate: (newFiles: File[] | File | null | undefined) => void
     }
-    expect(typeof vm.onFilesUpdate).toBe('function')
     vm.onFilesUpdate(files)
     await flushPromises()
   }
@@ -68,7 +67,7 @@ describe('UploadFileDB', () => {
   })
 
   describe('File Type Validation', () => {
-    it('should accept document files (pdf, txt, zip, docx)', async () => {
+    it('should accept document files (pdf, txt, zip, docx, xls, xlsx)', async () => {
       wrapper = createWrapper()
 
       const validDocs = [
@@ -77,12 +76,29 @@ describe('UploadFileDB', () => {
         new File([''], 'test.zip', { type: 'application/zip' }),
         new File([''], 'test.docx', {
           type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        }),
+        new File([''], 'test.xls', { type: 'application/vnd.ms-excel' }),
+        new File([''], 'test.xlsx', {
+          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         })
       ]
 
       await emitFilesUpdate(validDocs)
 
-      expect(wrapper.emitted('update:files')?.[0]?.[0]).toHaveLength(4)
+      expect(wrapper.emitted('update:files')?.[0]?.[0]).toHaveLength(6)
+    })
+
+    it('should accept excel files by extension when MIME type is missing', async () => {
+      wrapper = createWrapper()
+
+      const validDocs = [
+        new File([''], 'report.xlsx', { type: '' }),
+        new File([''], 'legacy.xls', { type: 'application/octet-stream' })
+      ]
+
+      await emitFilesUpdate(validDocs)
+
+      expect(wrapper.emitted('update:files')?.[0]?.[0]).toHaveLength(2)
     })
 
     it('should reject invalid file types', async () => {
@@ -161,22 +177,22 @@ describe('UploadFileDB', () => {
   })
 
   describe('Open File Dialog', () => {
-    it('should open file dialog on zone click when enabled', async () => {
+    it('should be enabled when disabled prop is false', async () => {
       wrapper = createWrapper({ disabled: false })
       const zone = wrapper.find(SELECTORS.uploadZone)
 
       await zone.trigger('click')
 
-      expect(zone.classes()).not.toContain('pointer-events-none')
+      expect(zone.attributes('data-disabled')).toBeUndefined()
     })
 
-    it('should not open file dialog when disabled', async () => {
+    it('should be disabled when disabled prop is true', async () => {
       wrapper = createWrapper({ disabled: true })
       const zone = wrapper.find(SELECTORS.uploadZone)
 
       await zone.trigger('click')
 
-      expect(zone.classes()).toContain('pointer-events-none')
+      expect(zone.attributes('data-disabled')).toBe('true')
     })
 
     it('should ignore file input change when files is null', async () => {
@@ -257,9 +273,6 @@ describe('UploadFileDB', () => {
 
     it('should reset gracefully when file input ref is missing', async () => {
       wrapper = createWrapper()
-      ;(wrapper.vm as unknown as { fileInput: { value: HTMLInputElement | null } }).fileInput = {
-        value: null
-      }
 
       expect(() => wrapper.vm.resetUpload()).not.toThrow()
     })
@@ -282,23 +295,16 @@ describe('UploadFileDB', () => {
       expect(revokeObjectURLSpy).not.toHaveBeenCalled()
     })
 
-    it('should reset when internal fileInput ref is null', async () => {
-      wrapper = createWrapper()
-      ;(wrapper.vm as unknown as { fileInput: HTMLInputElement | null }).fileInput = null
-
-      expect(() => wrapper.vm.resetUpload()).not.toThrow()
-    })
-
     it('should apply disabled upload state when isUploading is true', async () => {
       wrapper = createWrapper()
+      // eslint-disable-next-line no-restricted-syntax -- isUploading has no public setter; the component never flips it on its own (reserved for a future async upload flow), so the disabled/loading template branch can only be exercised by setting the internal ref directly
       ;(wrapper.vm as unknown as { isUploading: boolean }).isUploading = true
       await flushPromises()
 
       const zone = wrapper.find(SELECTORS.uploadZone)
       const button = wrapper.find('button')
 
-      expect(zone.classes()).toContain('opacity-50')
-      expect(zone.classes()).toContain('pointer-events-none')
+      expect(zone.attributes('data-disabled')).toBe('true')
       expect(button.attributes('disabled')).toBeDefined()
     })
   })

@@ -1,15 +1,17 @@
 import express from 'express';
 import {
   getTeamWeeklyClaims,
+  submitWeeklyGoals,
   syncWeeklyClaims,
   updateWeeklyClaims,
 } from '../controllers/weeklyClaimController';
-import { requireTeamMember } from '../middleware/teamAuthzMiddleware';
+import { rejectIfArchived, requireTeamMember } from '../middleware/teamAuthzMiddleware';
 import {
+  validate,
+  validateBody,
   validateQuery,
-  validateParamsAndQuery,
-  validateAll,
   getWeeklyClaimsQuerySchema,
+  submitWeeklyGoalsBodySchema,
   syncWeeklyClaimsQuerySchema,
   weeklyClaimIdParamsSchema,
   updateWeeklyClaimQuerySchema,
@@ -93,6 +95,9 @@ const weeklyClaimRoutes = express.Router();
  * /weekly-claim:
  *  get:
  *   summary: Get weekly claims for a team
+ *   tags: [Weekly Claims]
+ *   security:
+ *     - bearerAuth: []
  *   description: Retrieves weekly claims for a specific team with optional filtering by status and member address.
  *   parameters:
  *     - in: query
@@ -166,6 +171,9 @@ weeklyClaimRoutes.get(
  * /weekly-claim/sync:
  *  post:
  *   summary: Sync weekly claims with smart contract state
+ *   tags: [Weekly Claims]
+ *   security:
+ *     - bearerAuth: []
  *   description: Synchronizes weekly claim statuses against the on-chain CashRemunerationEIP712 contract to detect paid or disabled claims.
  *   parameters:
  *     - in: query
@@ -223,7 +231,81 @@ weeklyClaimRoutes.post(
   '/sync',
   validateQuery(syncWeeklyClaimsQuerySchema),
   requireTeamMember('query.teamId'),
+  rejectIfArchived('query.teamId'),
   syncWeeklyClaims
+);
+
+/**
+ * @openapi
+ * /weekly-claim/goals:
+ *  put:
+ *   summary: Submit or update the caller's weekly goals memo
+ *   tags: [Weekly Claims]
+ *   security:
+ *     - bearerAuth: []
+ *   description: |
+ *     Upserts the authenticated member's free-form Markdown goals memo for a
+ *     given ISO week. Exactly one memo exists per weekly claim. Submitting goals
+ *     for a week with no claims yet creates a claim-less weekly claim (status
+ *     `pending`). The memo is locked once the week is signed, withdrawn, or
+ *     disabled.
+ *   requestBody:
+ *     required: true
+ *     content:
+ *       application/json:
+ *         schema:
+ *           type: object
+ *           required: [teamId, weekStart, weeklyGoals]
+ *           properties:
+ *             teamId:
+ *               type: integer
+ *               minimum: 1
+ *             weekStart:
+ *               type: string
+ *               format: date-time
+ *               description: Any ISO datetime within the target week (normalized to the Monday isoWeek start).
+ *             weeklyGoals:
+ *               type: string
+ *               maxLength: 10000
+ *               description: Markdown memo. An empty string clears the saved memo.
+ *   responses:
+ *     200:
+ *       description: Weekly goals saved successfully
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/WeeklyClaim'
+ *     400:
+ *       description: Bad request - invalid body or no wage for the caller
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ErrorResponse'
+ *     403:
+ *       description: Forbidden - caller is not a member of the team
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ErrorResponse'
+ *     409:
+ *       description: Conflict - the week is already signed, withdrawn, or disabled
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ErrorResponse'
+ *     500:
+ *       description: Internal server error
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ErrorResponse'
+ */
+weeklyClaimRoutes.put(
+  '/goals',
+  validateBody(submitWeeklyGoalsBodySchema),
+  requireTeamMember('body.teamId'),
+  rejectIfArchived('body.teamId'),
+  submitWeeklyGoals
 );
 
 /**
@@ -231,6 +313,9 @@ weeklyClaimRoutes.post(
  * /weekly-claim/{id}:
  *  put:
  *   summary: Update a weekly claim
+ *   tags: [Weekly Claims]
+ *   security:
+ *     - bearerAuth: []
  *   description: Performs an action on a weekly claim (sign, withdraw, enable, or disable). Requires appropriate permissions.
  *   parameters:
  *     - in: path
@@ -255,7 +340,46 @@ weeklyClaimRoutes.post(
  *           properties:
  *             signature:
  *               type: string
- *               description: The EIP-712 signature (required for sign and enable actions)
+ *               description: The EIP-712 signature. Required for `action=sign` and `action=enable`.
+ *             signedAgainstContractAddress:
+ *               type: string
+ *               description: |
+ *                 EIP-712 verifyingContract the signature was bound to. Required for
+ *                 `action=sign`. The backend validates this matches the team's current
+ *                 CashRemunerationEIP712 (scoped to the current Officer) and persists it
+ *                 on the row so post-redeploy stale-detection works without a sweep.
+ *             chainId:
+ *               type: integer
+ *               description: Chain ID the signature was produced on. Required for `action=sign`.
+ *             typedDataMessage:
+ *               type: object
+ *               description: |
+ *                 The EIP-712 WageClaim message envelope as signed. Required for
+ *                 `action=sign`. The backend rebuilds the typed data from this envelope
+ *                 plus `signedAgainstContractAddress`/`chainId` and runs
+ *                 `recoverTypedDataAddress` to confirm the signer is the caller.
+ *               required: [employeeAddress, minutesWorked, date, wages]
+ *               properties:
+ *                 employeeAddress:
+ *                   type: string
+ *                 minutesWorked:
+ *                   type: integer
+ *                   minimum: 0
+ *                   maximum: 65535
+ *                 date:
+ *                   type: string
+ *                   description: Stringified unsigned integer (Unix seconds — JSON can't carry bigint).
+ *                 wages:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     required: [hourlyRate, tokenAddress]
+ *                     properties:
+ *                       hourlyRate:
+ *                         type: string
+ *                         description: Stringified unsigned integer (wei).
+ *                       tokenAddress:
+ *                         type: string
  *   responses:
  *     200:
  *       description: Weekly claim updated successfully
@@ -290,11 +414,12 @@ weeklyClaimRoutes.post(
  */
 weeklyClaimRoutes.put(
   '/:id',
-  validateAll(
-    updateWeeklyClaimBodySchema,
-    updateWeeklyClaimQuerySchema,
-    weeklyClaimIdParamsSchema
-  ),
+  validate({
+    params: weeklyClaimIdParamsSchema,
+    query: updateWeeklyClaimQuerySchema,
+    body: updateWeeklyClaimBodySchema,
+  }),
+  rejectIfArchived('params.weeklyClaimId'),
   updateWeeklyClaims
 );
 

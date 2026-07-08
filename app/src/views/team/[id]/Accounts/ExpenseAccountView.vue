@@ -8,16 +8,15 @@
     <MyApprovedExpenseSection />
 
     <ApprovedExpensesSection />
-
-    <!-- <TransactionHistorySection /> -->
     <ContractOwnerCard v-if="expenseContractAddress" :contractAddress="expenseContractAddress" />
+    <ExpenseTransactions v-if="expenseContractAddress" :expense-address="expenseContractAddress" />
   </div>
 </template>
 
 <script setup lang="ts">
 //#region Imports
 import ExpenseStatsSection from '@/components/sections/ExpenseAccountView/ExpenseStatsSection.vue'
-// import TransactionHistorySection from '@/components/sections/ExpenseAccountView/TransactionHistorySection.vue'
+import ExpenseTransactions from '@/components/sections/ExpenseAccountView/ExpenseTransactions.vue'
 import MyApprovedExpenseSection from '@/components/sections/ExpenseAccountView/MyApprovedExpenseSection.vue'
 import ApprovedExpensesSection from '@/components/sections/ExpenseAccountView/ApprovedExpensesSection.vue'
 import { useTeamStore } from '@/stores'

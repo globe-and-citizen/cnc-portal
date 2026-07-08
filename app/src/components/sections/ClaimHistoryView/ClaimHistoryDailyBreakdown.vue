@@ -6,11 +6,19 @@
         v-for="(entry, index) in weekDayClaims"
         :key="index"
         :class="[
-          'mb-2 flex items-center justify-between rounded-lg border px-4 py-3',
+          'mb-2 flex items-center justify-between rounded-lg border px-4 py-3 transition-colors',
           entry.totalMinutes > 0
             ? 'border border-emerald-500 bg-green-50 text-emerald-700'
-            : 'bg-gray-100 text-gray-400'
+            : 'bg-gray-100 text-gray-400',
+          canQuickSubmitDay(entry)
+            ? 'cursor-pointer hover:border-emerald-300 hover:bg-emerald-50/60'
+            : 'cursor-default'
         ]"
+        :role="canQuickSubmitDay(entry) ? 'button' : undefined"
+        :tabindex="canQuickSubmitDay(entry) ? 0 : undefined"
+        @click="onDayRowClick(entry)"
+        @keydown.enter.prevent="onDayRowClick(entry)"
+        @keydown.space.prevent="onDayRowClick(entry)"
       >
         <div class="flex min-w-30 items-center gap-2">
           <span
@@ -52,6 +60,17 @@
         </div>
 
         <div class="flex min-w-22.5 items-center justify-end gap-2 text-base">
+          <UButton
+            v-if="canQuickSubmitDay(entry)"
+            variant="soft"
+            color="neutral"
+            size="xs"
+            class="h-7 w-7 justify-center rounded-md p-0 text-lg leading-none"
+            data-test="quick-submit-day-button"
+            @click.stop="onQuickSubmitClick(entry)"
+          >
+            +
+          </UButton>
           <IconifyIcon icon="heroicons:clock" class="h-4 w-4 text-gray-500" />
           {{ formatMinutesAsDuration(entry.totalMinutes) }}
         </div>
@@ -82,9 +101,21 @@ interface Props {
   weeklyClaim?: WeeklyClaim
   selectedWeek: Week
   memberAddress: Address
+  /**
+   * When true, quick-submit is only offered for days the backend would accept
+   * (current ISO week, up to SUBMIT_RESTRICTION_MAX_DAYS_BACK days in the past).
+   * Mirrors the calendar guard in useClaimForm and the server-side enforcement
+   * in addClaim, so old/out-of-window days don't expose a "+" that 400s.
+   */
+  isRestricted?: boolean
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  isRestricted: false
+})
+const emit = defineEmits<{
+  'quick-submit': [dayIso: string]
+}>()
 
 const userStore = useUserDataStore()
 
@@ -140,4 +171,37 @@ const canModifyClaims = computed(() => {
     props.weeklyClaim.wage.userAddress === userStore.address
   )
 })
+
+type DayEntry = {
+  date: dayjs.Dayjs
+  claims: Claim[]
+  totalMinutes: number
+}
+
+const SUBMIT_RESTRICTION_MAX_DAYS_BACK = 4
+
+const isDayWithinSubmitWindow = (date: dayjs.Dayjs): boolean => {
+  const d = date.utc().startOf('day')
+  const today = dayjs.utc().startOf('day')
+  const currentWeekStart = today.startOf('isoWeek')
+  const currentWeekEnd = today.endOf('isoWeek')
+  if (d.isBefore(currentWeekStart, 'day') || d.isAfter(currentWeekEnd, 'day')) return false
+  const daysDiff = today.diff(d, 'day')
+  return daysDiff >= 0 && daysDiff <= SUBMIT_RESTRICTION_MAX_DAYS_BACK
+}
+
+const canQuickSubmitDay = (entry: DayEntry): boolean => {
+  if (entry.totalMinutes !== 0 || props.memberAddress !== userStore.address) return false
+  if (props.isRestricted && !isDayWithinSubmitWindow(entry.date)) return false
+  return true
+}
+
+const onQuickSubmitClick = (entry: DayEntry) => {
+  if (!canQuickSubmitDay(entry)) return
+  emit('quick-submit', entry.date.toISOString())
+}
+
+const onDayRowClick = (entry: DayEntry) => {
+  onQuickSubmitClick(entry)
+}
 </script>

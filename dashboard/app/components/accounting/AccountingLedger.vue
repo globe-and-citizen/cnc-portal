@@ -1,0 +1,415 @@
+<template>
+  <div class="space-y-4">
+    <UPageCard variant="subtle">
+      <div class="flex flex-col gap-3 mb-4">
+        <h3 class="font-semibold text-black dark:text-white">
+          General Ledger · {{ totalActivities }} activities · {{ filteredRows.length }} journal lines
+        </h3>
+        <!-- Single row: all filters/buttons stay on one line, scrolling horizontally on
+             narrow screens rather than wrapping. -->
+        <div class="flex items-center gap-2 overflow-x-auto pb-1 justify-end">
+          <AccountingDatePicker
+            v-model="period"
+            mode="range"
+            storage-key="dashboard-accounting-ledger-period"
+          />
+          <AccountingTableSearch
+            v-model="searchQuery"
+            placeholder="Search market, account, tx…"
+          />
+          <AccountingCategoryFilter
+            v-model="selectedCategories"
+            :items="categoryOptions"
+          />
+          <AccountingColumnVisibility
+            v-model="visibleColumns"
+            :items="ALL_COLUMNS"
+          />
+          <UButton
+            label="Export CSV"
+            color="neutral"
+            variant="outline"
+            size="sm"
+            icon="i-lucide-download"
+            :disabled="filteredRows.length === 0"
+            @click="onExportClick"
+          />
+        </div>
+      </div>
+
+      <UTable
+        :data="pagedRows"
+        :columns="columns"
+        :loading="isLoading"
+        :ui="{
+          base: 'table-auto border-separate border-spacing-0',
+          thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
+          tbody: '[&>tr]:last:[&>td]:border-b-0',
+          th: 'py-2 first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
+          td: 'border-b border-default align-top py-1.5',
+          separator: 'h-0'
+        }"
+      >
+        <template #empty>
+          <div class="flex flex-col items-center justify-center py-8 text-muted">
+            <UIcon name="i-lucide-receipt-text" class="w-12 h-12 mb-3 opacity-60" />
+            <p v-if="!hasAddress">
+              Enter a wallet address to build the general ledger.
+            </p>
+            <p v-else>
+              No ledger entries for this filter.
+            </p>
+          </div>
+        </template>
+
+        <template #date-cell="{ row }">
+          <span v-if="row.original.isFirst" class="tabular-nums whitespace-nowrap">
+            {{ formatDate(row.original.entry.timestamp) }}
+          </span>
+        </template>
+
+        <template #category-cell="{ row }">
+          <UBadge v-if="row.original.isFirst" :color="CATEGORY_META[row.original.entry.category].color" variant="subtle">
+            {{ CATEGORY_META[row.original.entry.category].label }}
+          </UBadge>
+        </template>
+
+        <template #market-cell="{ row }">
+          <div v-if="row.original.isFirst" class="flex items-start gap-2 min-w-48">
+            <img
+              v-if="row.original.entry.icon"
+              :src="row.original.entry.icon"
+              :alt="row.original.entry.description"
+              class="w-7 h-7 rounded object-cover shrink-0"
+            >
+            <a
+              v-if="marketUrl(row.original.entry)"
+              :href="marketUrl(row.original.entry)!"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="wrap-break-word hover:underline text-black dark:text-white"
+            >
+              {{ row.original.entry.description }}
+            </a>
+            <span v-else class="wrap-break-word">{{ row.original.entry.description }}</span>
+          </div>
+        </template>
+
+        <template #outcome-cell="{ row }">
+          <span v-if="row.original.isFirst && row.original.entry.outcome" class="font-semibold" :class="outcomeClass(row.original.entry.outcome)">
+            {{ row.original.entry.outcome }}
+          </span>
+          <span v-else-if="row.original.isFirst" class="text-muted">—</span>
+        </template>
+
+        <template #quantity-cell="{ row }">
+          <span v-if="row.original.isFirst" class="tabular-nums">{{ formatQty(row.original.entry.quantity) }}</span>
+        </template>
+
+        <template #unitPrice-cell="{ row }">
+          <span v-if="row.original.isFirst" class="tabular-nums">{{ formatPrice(row.original.entry.unitPrice) }}</span>
+        </template>
+
+        <template #amount-cell="{ row }">
+          <span v-if="row.original.isFirst" class="tabular-nums">{{ formatUsd2(row.original.entry.amount) }}</span>
+        </template>
+
+        <template #cashFlow-cell="{ row }">
+          <span v-if="row.original.isFirst" class="tabular-nums font-medium" :class="signClass(row.original.entry.cashFlow)">
+            {{ formatSignedUsd(row.original.entry.cashFlow) }}
+          </span>
+        </template>
+
+        <template #counterparty-cell="{ row }">
+          <AccountingCounterparty
+            v-if="row.original.isFirst && row.original.entry.counterparty"
+            :address="row.original.entry.counterparty"
+            :category="row.original.entry.category"
+            :wallet-address="walletAddress"
+          />
+          <span v-else-if="row.original.isFirst" class="text-muted">—</span>
+        </template>
+
+        <template #source-cell="{ row }">
+          <UBadge
+            v-if="row.original.isFirst"
+            :color="row.original.entry.source === 'polygonscan' ? 'neutral' : 'primary'"
+            variant="subtle"
+          >
+            {{ row.original.entry.source === 'polygonscan' ? 'On-chain' : 'Polymarket' }}
+          </UBadge>
+        </template>
+
+        <template #tx-cell="{ row }">
+          <a
+            v-if="row.original.isFirst && row.original.entry.txHash"
+            :href="`https://polygonscan.com/tx/${row.original.entry.txHash}`"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="font-mono text-xs text-primary hover:underline"
+          >
+            {{ row.original.entry.txHash.slice(0, 10) }}…
+          </a>
+          <span v-else-if="row.original.isFirst" class="text-muted">—</span>
+        </template>
+
+        <template #account-cell="{ row }">
+          <span :class="row.original.credit > 0 ? 'pl-6 text-muted' : ''">
+            {{ row.original.account }}
+          </span>
+        </template>
+
+        <template #debit-cell="{ row }">
+          <span class="tabular-nums">{{ row.original.debit ? formatUsd6(row.original.debit) : '' }}</span>
+        </template>
+
+        <template #credit-cell="{ row }">
+          <span class="tabular-nums">{{ row.original.credit ? formatUsd6(row.original.credit) : '' }}</span>
+        </template>
+      </UTable>
+
+      <AccountingPagination
+        v-model:page="page"
+        v-model:page-size="pageSize"
+        :total="totalActivities"
+        noun="transactions"
+      />
+    </UPageCard>
+
+    <!-- Trial Balance under the table (no longer behind a separate tab). -->
+    <UPageCard v-if="hasAddress" variant="subtle">
+      <AccountingTrialBalance :ledger="generalLedger" />
+    </UPageCard>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { useSessionStorage } from '@vueuse/core'
+import { format } from 'date-fns'
+import { computed, ref, watch } from 'vue'
+import {
+  CATEGORY_META,
+  formatSignedUsd,
+  formatUsd6,
+  type LedgerCategory,
+  type LedgerEntry,
+  signClass
+} from '~/utils/accounting'
+import type { Range } from '~/types'
+import { usePagination } from '~/composables/usePagination'
+import { defaultValueForMode, toUnixSeconds } from '~/utils/datePicker'
+import { buildGeneralLedger } from '~/utils/generalLedger'
+import type { RealizedTrade } from '~/utils/incomeStatement'
+import {
+  buildMergedLedger,
+  mergedLedgerToCsv,
+  type MergedColumnKey,
+  type MergedLedgerRow
+} from '~/utils/mergedLedger'
+import { matchesAccountingSearch, normalizeAccountingSearchQuery } from '~/utils/accountingSearch'
+import AccountingCategoryFilter, {
+  type CategoryOption
+} from './AccountingCategoryFilter.vue'
+import AccountingTableSearch from './AccountingTableSearch.vue'
+import AccountingColumnVisibility, {
+  type ColumnOption
+} from './AccountingColumnVisibility.vue'
+import AccountingPagination from './AccountingPagination.vue'
+import AccountingTrialBalance from './AccountingTrialBalance.vue'
+
+const props = defineProps<{
+  entries: LedgerEntry[]
+  realizedTrades: RealizedTrade[]
+  isLoading: boolean
+  hasAddress: boolean
+  walletAddress: string
+}>()
+
+// Reporting period (range mode) — defaults to the current month.
+const period = ref<Range>(defaultValueForMode('range') as Range)
+const periodStart = computed(() => toUnixSeconds(period.value.start))
+const periodEnd = computed(() => toUnixSeconds(period.value.end))
+
+const generalLedger = computed(() =>
+  buildGeneralLedger({
+    ledgerEntries: props.entries,
+    realizedTrades: props.realizedTrades,
+    periodStart: periodStart.value,
+    asOf: periodEnd.value
+  })
+)
+
+const searchQuery = ref('')
+
+const { page, pageSize, reset } = usePagination(() => totalActivities.value, { key: 'ledger' })
+
+const categoryOptions: CategoryOption<LedgerCategory>[] = Object.entries(CATEGORY_META).map(
+  ([value, meta]) => ({
+    label: meta.label,
+    value: value as LedgerCategory
+  })
+)
+const allCategoryValues = categoryOptions.map(option => option.value)
+
+// Multi-select: every category selected == "All categories".
+const selectedCategories = ref<LedgerCategory[]>([...allCategoryValues])
+
+watch([() => props.walletAddress, selectedCategories, period, searchQuery], reset)
+
+// --- Build the merged row list (one row per journal line) ---
+const allRows = computed(() =>
+  buildMergedLedger({ entries: props.entries, realizedTrades: props.realizedTrades })
+)
+
+function inSelectedPeriod(timestamp: number): boolean {
+  return timestamp >= periodStart.value && timestamp <= periodEnd.value
+}
+
+const selectedCategorySet = computed(() => new Set(selectedCategories.value))
+
+function ledgerRowMatchesSearch(row: MergedLedgerRow, query: string): boolean {
+  const meta = CATEGORY_META[row.entry.category]
+  return matchesAccountingSearch(
+    query,
+    row.entry.description,
+    row.entry.outcome,
+    meta.label,
+    row.entry.txHash,
+    row.entry.counterparty,
+    row.entry.marketSlug,
+    row.account
+  )
+}
+
+const filteredRows = computed(() => {
+  let rows = allRows.value.filter(row => inSelectedPeriod(row.entry.timestamp))
+  if (selectedCategories.value.length !== allCategoryValues.length) {
+    rows = rows.filter(row => selectedCategorySet.value.has(row.entry.category))
+  }
+  if (!normalizeAccountingSearchQuery(searchQuery.value)) {
+    return rows
+  }
+  const matchingEntryIds = new Set<string>()
+  for (const row of rows) {
+    if (ledgerRowMatchesSearch(row, searchQuery.value)) {
+      matchingEntryIds.add(row.entry.id)
+    }
+  }
+  return rows.filter(row => matchingEntryIds.has(row.entry.id))
+})
+
+// Pagination counts ACTIVITIES (isFirst rows), not journal lines — a page of
+// 20 activities can be ~40-60 DOM rows, which still fits the screen.
+const activityStarts = computed(() => {
+  const starts: number[] = []
+  filteredRows.value.forEach((row, idx) => {
+    if (row.isFirst) {
+      starts.push(idx)
+    }
+  })
+  return starts
+})
+
+const totalActivities = computed(() => activityStarts.value.length)
+
+const pagedRows = computed<MergedLedgerRow[]>(() => {
+  const startActivityIdx = (page.value - 1) * pageSize.value
+  const endActivityIdx = startActivityIdx + pageSize.value
+  const start = activityStarts.value[startActivityIdx]
+  const end = activityStarts.value[endActivityIdx] ?? filteredRows.value.length
+  if (start === undefined) {
+    return []
+  }
+  return filteredRows.value.slice(start, end)
+})
+
+// --- Column-visibility selector ---
+const ALL_COLUMNS: ColumnOption<MergedColumnKey>[] = [
+  { label: 'Date', value: 'date' },
+  { label: 'Action', value: 'category' },
+  { label: 'Market', value: 'market' },
+  { label: 'Outcome', value: 'outcome' },
+  { label: 'Qty', value: 'quantity' },
+  { label: 'Unit price', value: 'unitPrice' },
+  { label: 'Amount', value: 'amount' },
+  { label: 'Cash flow', value: 'cashFlow' },
+  { label: 'Counterparty', value: 'counterparty' },
+  { label: 'Account', value: 'account' },
+  { label: 'Debit', value: 'debit' },
+  { label: 'Credit', value: 'credit' },
+  { label: 'Source', value: 'source' },
+  { label: 'Tx', value: 'tx' }
+]
+
+// sessionStorage: per browser tab (localStorage syncs across tabs via storage events).
+const visibleColumns = useSessionStorage<MergedColumnKey[]>(
+  'dashboard-accounting-ledger-visible-columns',
+  ALL_COLUMNS.map(c => c.value)
+)
+const isVisible = (key: MergedColumnKey): boolean => visibleColumns.value.includes(key)
+
+const columns = computed(() => {
+  const all = [
+    { accessorKey: 'date', header: 'Date' },
+    { accessorKey: 'category', header: 'Action' },
+    { accessorKey: 'market', header: 'Market' },
+    { accessorKey: 'outcome', header: 'Outcome' },
+    { accessorKey: 'quantity', header: 'Qty' },
+    { accessorKey: 'unitPrice', header: 'Unit price' },
+    { accessorKey: 'amount', header: 'Amount' },
+    { accessorKey: 'cashFlow', header: 'Cash flow' },
+    { accessorKey: 'counterparty', header: 'Counterparty' },
+    { accessorKey: 'account', header: 'Account' },
+    { accessorKey: 'debit', header: 'Debit' },
+    { accessorKey: 'credit', header: 'Credit' },
+    { accessorKey: 'source', header: 'Source' },
+    { id: 'tx', header: 'Tx' }
+  ]
+  return all.filter(col => isVisible((col.accessorKey ?? col.id) as MergedColumnKey))
+})
+
+function formatDate(ts: number): string {
+  return ts ? format(new Date(ts * 1000), 'MMM d, yyyy HH:mm') : '—'
+}
+
+function formatQty(qty: number | undefined): string {
+  return qty == null ? '—' : qty.toLocaleString(undefined, { maximumFractionDigits: 2 })
+}
+
+function formatPrice(price: number | undefined): string {
+  return price == null ? '—' : `$${price.toFixed(4)}`
+}
+
+function formatUsd2(value: number | undefined): string {
+  if (value == null || Number.isNaN(value)) {
+    return '—'
+  }
+  return `$${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+}
+
+function marketUrl(entry: LedgerEntry): string | null {
+  return entry.marketSlug ? `https://polymarket.com/event/${entry.marketSlug}` : null
+}
+
+function outcomeClass(outcome: string | undefined): string {
+  const normalized = outcome?.trim().toLowerCase()
+  if (normalized === 'yes') {
+    return 'text-emerald-600 dark:text-emerald-400'
+  }
+  if (normalized === 'no') {
+    return 'text-rose-600 dark:text-rose-400'
+  }
+  return 'text-amber-600 dark:text-amber-400'
+}
+
+function onExportClick(): void {
+  const csv = mergedLedgerToCsv(filteredRows.value)
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = `polymarket-ledger-${props.walletAddress.trim() || 'export'}.csv`
+  link.click()
+  URL.revokeObjectURL(url)
+}
+</script>

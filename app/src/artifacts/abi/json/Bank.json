@@ -20,6 +20,11 @@
     "type": "error"
   },
   {
+    "inputs": [],
+    "name": "FixedReturnContractNotFound",
+    "type": "error"
+  },
+  {
     "inputs": [
       {
         "internalType": "uint256",
@@ -199,6 +204,37 @@
       }
     ],
     "name": "DividendDistributionTriggered",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "fixedReturn",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "offerId",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "FixedReturnRepaymentFunded",
     "type": "event"
   },
   {
@@ -424,6 +460,24 @@
       }
     ],
     "name": "distributeTokenDividends",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "offerId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "fundFixedReturnRepayment",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

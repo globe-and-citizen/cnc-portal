@@ -1,0 +1,304 @@
+import { defineComponent } from 'vue'
+import type { Address } from 'viem'
+
+export const UCardStub = defineComponent({
+  name: 'UCard',
+  template: '<div><slot name="header" /><slot /><slot name="footer" /></div>'
+})
+
+export const UTableStub = defineComponent({
+  name: 'UTable',
+  props: {
+    data: { type: Array, required: false },
+    columns: { type: Array, required: false },
+    loading: { type: Boolean, required: false },
+    getSubRows: { type: Function, required: false }
+  },
+  methods: {
+    rowContext(original: unknown, depth: number) {
+      return { original, depth }
+    }
+  },
+  template: `
+    <div data-test="expense-table" :data-loading="String(Boolean(loading))">
+      <div v-for="(column, index) in columns || []" :key="index" data-test="table-header">
+        {{ column.header }}
+      </div>
+      <template v-if="data && data.length > 0">
+        <div v-for="(row, index) in data" :key="index" data-test="table-row">
+          <span data-test="row-tx-hash">{{ row.txHash }}</span>
+          <span data-test="row-type">{{ row.type }}</span>
+          <span data-test="row-grouped-event-count">{{ row.groupedEventCount ?? 0 }}</span>
+          <span data-test="row-sub-row-count">{{ row.subRows?.length ?? 0 }}</span>
+          <span data-test="row-amount">{{ row.amount }}</span>
+          <span data-test="row-amount-local">{{ row.amountLocal }}</span>
+          <span data-test="row-token">{{ row.token }}</span>
+          <span data-test="row-type-slot">
+            <slot name="type-cell" :row="rowContext(row, 0)" />
+          </span>
+          <span data-test="row-counterparty-slot">
+            <slot name="counterparty-cell" :row="rowContext(row, 0)" />
+          </span>
+          <span data-test="row-value-slot">
+            <slot name="value-cell" :row="rowContext(row, 0)" />
+          </span>
+          <span
+            v-for="(child, childIndex) in (typeof getSubRows === 'function' ? getSubRows(row) : row.subRows || [])"
+            :key="childIndex"
+            data-test="table-child-row"
+          >
+            <slot name="counterparty-cell" :row="rowContext(child, 1)" />
+            <slot name="value-cell" :row="rowContext(child, 1)" />
+          </span>
+        </div>
+      </template>
+      <slot v-else name="empty" />
+    </div>
+  `
+})
+
+export const USelectStub = defineComponent({
+  name: 'USelect',
+  props: {
+    modelValue: { type: String, required: false },
+    items: { type: Array, required: false }
+  },
+  emits: ['update:modelValue'],
+  template: `
+    <select
+      data-test="type-filter"
+      :value="modelValue"
+      @change="$emit('update:modelValue', $event.target.value)"
+    >
+      <option
+        v-for="item in items || []"
+        :key="typeof item === 'string' ? item : item.value"
+        :value="typeof item === 'string' ? item : item.value"
+      >
+        {{ typeof item === 'string' ? item : item.label }}
+      </option>
+    </select>
+  `
+})
+
+export const CustomDatePickerStub = defineComponent({
+  name: 'CustomDatePicker',
+  props: { modelValue: { type: Array, required: false } },
+  emits: ['update:modelValue'],
+  template: `
+    <div data-test="date-filter">
+      <button
+        data-test="date-filter-set-2020"
+        @click="$emit('update:modelValue', [new Date('2020-01-01T00:00:00Z'), new Date('2020-01-01T23:59:59Z')])"
+      >
+        set-range
+      </button>
+      <button data-test="date-filter-clear" @click="$emit('update:modelValue', null)">clear-range</button>
+    </div>
+  `
+})
+
+export const AddressToolTipStub = defineComponent({
+  name: 'AddressToolTip',
+  template: '<div />'
+})
+
+export const UBadgeStub = defineComponent({
+  name: 'UBadge',
+  template: '<span><slot /></span>'
+})
+
+export const UserComponentStub = defineComponent({
+  name: 'UserComponent',
+  props: {
+    user: { type: Object, required: false }
+  },
+  template: '<div data-test="user-component-stub">{{ user?.name }}</div>'
+})
+
+export const TablePaginationStub = defineComponent({
+  name: 'TablePagination',
+  props: {
+    page: { type: Number, required: false },
+    pageSize: { type: Number, required: false },
+    total: { type: Number, required: false },
+    noun: { type: String, required: false },
+    dataTestPrefix: { type: String, required: false }
+  },
+  emits: ['update:page', 'update:pageSize'],
+  template: `
+    <div data-test="table-pagination">
+      <span data-test="footer-page">{{ page }}</span>
+      <span data-test="footer-page-size">{{ pageSize }}</span>
+      <span data-test="footer-total">{{ total }}</span>
+      <button data-test="footer-next-page" @click="$emit('update:page', (page ?? 1) + 1)">next-page</button>
+      <button data-test="footer-page-size-50" @click="$emit('update:pageSize', 50)">page-size-50</button>
+    </div>
+  `
+})
+
+export const EXPENSE_ADDRESS = '0x1111111111111111111111111111111111111111' as Address
+export const USDC_ADDRESS = '0xa3492d046095affe351cfac15de9b86425e235db'
+export const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
+
+const emptyExpenseBuckets = {
+  expenseTokenDeposits: { items: [] },
+  expenseTransfers: { items: [] },
+  expenseTokenTransfers: { items: [] },
+  expenseApprovals: { items: [] },
+  expenseOwnerTreasuryWithdrawNatives: { items: [] },
+  expenseOwnerTreasuryWithdrawTokens: { items: [] },
+  expenseTokenSupportAddeds: { items: [] },
+  expenseTokenSupportRemoveds: { items: [] },
+  expenseTokenAddressChangeds: { items: [] },
+  expenseOwnershipTransferreds: { items: [] }
+}
+
+export const buildExpenseQueryResult = () => ({
+  ...emptyExpenseBuckets,
+  expenseDeposits: {
+    items: [
+      {
+        id: '0xdeposithash-0',
+        contractAddress: EXPENSE_ADDRESS,
+        depositor: '0x2222222222222222222222222222222222222222',
+        amount: '1000000000000000000',
+        timestamp: 1_700_000_000
+      }
+    ]
+  },
+  expenseTransfers: {
+    items: [
+      {
+        id: '0xtransferhash-0',
+        contractAddress: EXPENSE_ADDRESS,
+        withdrawer: '0x3333333333333333333333333333333333333333',
+        to: '0x4444444444444444444444444444444444444444',
+        amount: '5000000',
+        timestamp: 1_700_000_100
+      }
+    ]
+  }
+})
+
+export const buildIncomingTransfersQueryResult = () => ({
+  bankTokenTransfers: {
+    items: [
+      {
+        id: '0xbankfundinghash-0',
+        contractAddress: '0x9999999999999999999999999999999999999999',
+        sender: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+        to: EXPENSE_ADDRESS,
+        token: USDC_ADDRESS,
+        amount: '1000000',
+        timestamp: 1_700_000_050
+      }
+    ]
+  }
+})
+
+export const buildFallbackExpenseQueryResult = () => ({
+  ...emptyExpenseBuckets,
+  expenseDeposits: {
+    items: [
+      {
+        id: '0xnativedeposit-0',
+        contractAddress: EXPENSE_ADDRESS,
+        depositor: '0x2222222222222222222222222222222222222222',
+        amount: '1000000000000000000',
+        timestamp: 1_700_000_500
+      }
+    ]
+  },
+  expenseTokenTransfers: {
+    items: [
+      {
+        id: '0xunknowntx-0',
+        contractAddress: EXPENSE_ADDRESS,
+        withdrawer: '0x3333333333333333333333333333333333333333',
+        to: '0x4444444444444444444444444444444444444444',
+        token: '0x9999999999999999999999999999999999999999',
+        amount: 'not-a-number',
+        timestamp: 1_700_000_600
+      }
+    ]
+  }
+})
+
+export const buildGroupedExpenseQueryResult = () => ({
+  ...emptyExpenseBuckets,
+  expenseDeposits: {
+    items: [
+      {
+        id: '0xsharedhash-0',
+        contractAddress: EXPENSE_ADDRESS,
+        depositor: '0x2222222222222222222222222222222222222222',
+        amount: '1000000000000000000',
+        timestamp: 1_700_000_700
+      }
+    ]
+  },
+  expenseTokenDeposits: {
+    items: [
+      {
+        id: '0xsharedhash-1',
+        contractAddress: EXPENSE_ADDRESS,
+        depositor: '0x2222222222222222222222222222222222222222',
+        token: USDC_ADDRESS,
+        amount: '500000',
+        timestamp: 1_700_000_699
+      }
+    ]
+  },
+  expenseTransfers: {
+    items: [
+      {
+        id: '0xsinglehash-0',
+        contractAddress: EXPENSE_ADDRESS,
+        withdrawer: '0x3333333333333333333333333333333333333333',
+        to: '0x4444444444444444444444444444444444444444',
+        amount: '1000',
+        timestamp: 1_700_000_650
+      }
+    ]
+  }
+})
+
+export const buildGroupedZeroChildExpenseQueryResult = () => ({
+  ...emptyExpenseBuckets,
+  expenseDeposits: {
+    items: [
+      {
+        id: '0xsharedzerohash-0',
+        contractAddress: EXPENSE_ADDRESS,
+        depositor: '0x2222222222222222222222222222222222222222',
+        amount: '1000000000000000000',
+        timestamp: 1_700_000_700
+      }
+    ]
+  },
+  expenseApprovals: {
+    items: [
+      {
+        id: '0xsharedzerohash-1',
+        contractAddress: EXPENSE_ADDRESS,
+        signatureHash: '0xsignature',
+        activated: true,
+        timestamp: 1_700_000_699
+      }
+    ]
+  }
+})
+
+export const buildPaginatedExpenseQueryResult = (count: number) => ({
+  ...emptyExpenseBuckets,
+  expenseDeposits: {
+    items: Array.from({ length: count }, (_, index) => ({
+      id: `0xpaginated${index}-0`,
+      contractAddress: EXPENSE_ADDRESS,
+      depositor: '0x2222222222222222222222222222222222222222',
+      amount: '1000000000000000000',
+      timestamp: 1_700_000_000 + index
+    }))
+  }
+})

@@ -1,6 +1,6 @@
 import { vi } from 'vitest'
 import { ref } from 'vue'
-import { createContractReadMock, createContractWriteMock } from './erc20.mock'
+import { createContractReadMock, createContractWriteV3Mock } from './erc20.mock'
 
 export const mockSafeDepositRouterAddress = ref('0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB')
 
@@ -18,19 +18,19 @@ export const mockSafeDepositRouterReads = {
 }
 
 export const mockSafeDepositRouterWrites = {
-  enableDeposits: createContractWriteMock(),
-  disableDeposits: createContractWriteMock(),
-  pause: createContractWriteMock(),
-  unpause: createContractWriteMock(),
-  renounceOwnership: createContractWriteMock(),
-  transferOwnership: createContractWriteMock(),
-  setSafeAddress: createContractWriteMock(),
-  setMultiplier: createContractWriteMock(),
-  addTokenSupport: createContractWriteMock(),
-  removeTokenSupport: createContractWriteMock(),
-  deposit: createContractWriteMock(),
-  depositWithSlippage: createContractWriteMock(),
-  recoverERC20: createContractWriteMock()
+  enableDeposits: createContractWriteV3Mock(),
+  disableDeposits: createContractWriteV3Mock(),
+  pause: createContractWriteV3Mock(),
+  unpause: createContractWriteV3Mock(),
+  renounceOwnership: createContractWriteV3Mock(),
+  transferOwnership: createContractWriteV3Mock(),
+  setSafeAddress: createContractWriteV3Mock(),
+  setMultiplier: createContractWriteV3Mock(),
+  addTokenSupport: createContractWriteV3Mock(),
+  removeTokenSupport: createContractWriteV3Mock(),
+  deposit: createContractWriteV3Mock(),
+  depositWithSlippage: createContractWriteV3Mock(),
+  recoverERC20: createContractWriteV3Mock()
 }
 
 export const resetSafeDepositRouterMocks = () => {
@@ -49,26 +49,19 @@ export const resetSafeDepositRouterMocks = () => {
   })
 
   Object.values(mockSafeDepositRouterWrites).forEach((mock) => {
-    mock.writeResult.data.value = null
-    mock.writeResult.error.value = null
-    mock.writeResult.isLoading.value = false
-    mock.writeResult.isSuccess.value = false
-    mock.writeResult.isError.value = false
-    mock.writeResult.isPending.value = false
-    mock.writeResult.status.value = 'idle'
+    mock.data.value = null
+    mock.error.value = null
+    mock.isPending.value = false
+    mock.isSuccess.value = false
+    mock.isError.value = false
+    mock.status.value = 'idle'
 
-    mock.receiptResult.data.value = null
-    mock.receiptResult.error.value = null
-    mock.receiptResult.isLoading.value = false
-    mock.receiptResult.isSuccess.value = false
-    mock.receiptResult.isError.value = false
-    mock.receiptResult.isPending.value = false
-    mock.receiptResult.status.value = 'idle'
-
-    if (vi.isMockFunction(mock.executeWrite)) {
-      mock.executeWrite.mockClear()
-      mock.executeWrite.mockResolvedValue(undefined)
+    if (vi.isMockFunction(mock.mutate)) mock.mutate.mockClear()
+    if (vi.isMockFunction(mock.mutateAsync)) {
+      mock.mutateAsync.mockClear()
+      mock.mutateAsync.mockResolvedValue(undefined)
     }
+    if (vi.isMockFunction(mock.reset)) mock.reset.mockClear()
   })
 
   mockSafeDepositRouterAddress.value = '0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'

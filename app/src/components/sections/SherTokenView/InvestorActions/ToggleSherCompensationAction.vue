@@ -1,26 +1,28 @@
 <template>
   <div v-if="safeDepositRouterAddress">
-    <ActionButton
-      :icon="depositsEnabled ? 'heroicons:lock-open' : 'heroicons:lock-closed'"
-      :icon-bg="
-        depositsEnabled ? 'bg-amber-50 dark:bg-amber-950' : 'bg-purple-50 dark:bg-purple-950'
-      "
-      :icon-color="
-        depositsEnabled
-          ? 'text-amber-700 dark:text-amber-400'
-          : 'text-purple-700 dark:text-purple-400'
-      "
-      :title="depositsEnabled ? 'Disable SHER Compensation' : 'Enable SHER Compensation'"
-      :tone-class="
-        depositsEnabled
-          ? 'border-amber-200 bg-amber-50/60 hover:border-amber-300 hover:bg-amber-100/70 disabled:border-amber-200 disabled:bg-amber-50/50 dark:border-amber-900 dark:bg-amber-950/30 dark:hover:border-amber-800 dark:hover:bg-amber-900/40 dark:disabled:border-amber-900 dark:disabled:bg-amber-950/30'
-          : 'border-violet-200 bg-violet-50/60 hover:border-violet-300 hover:bg-violet-100/70 disabled:border-violet-200 disabled:bg-violet-50/50 dark:border-violet-900 dark:bg-violet-950/30 dark:hover:border-violet-800 dark:hover:bg-violet-900/40 dark:disabled:border-violet-900 dark:disabled:bg-violet-950/30'
-      "
-      :loading="isLoading"
-      :disabled="!canManageDeposits || isLoading"
-      data-test="toggle-sher-compensation-button"
-      @click="handleToggleCompensation"
-    />
+    <UTooltip :text="toggleCompensationTooltip">
+      <ActionButton
+        :icon="depositsEnabled ? 'heroicons:lock-open' : 'heroicons:lock-closed'"
+        :icon-bg="
+          depositsEnabled ? 'bg-amber-50 dark:bg-amber-950' : 'bg-purple-50 dark:bg-purple-950'
+        "
+        :icon-color="
+          depositsEnabled
+            ? 'text-amber-700 dark:text-amber-400'
+            : 'text-purple-700 dark:text-purple-400'
+        "
+        :title="depositsEnabled ? 'Disable SHER Compensation' : 'Enable SHER Compensation'"
+        :tone-class="
+          depositsEnabled
+            ? 'border-amber-200 bg-amber-50/60 hover:border-amber-300 hover:bg-amber-100/70 disabled:border-amber-200 disabled:bg-amber-50/50 dark:border-amber-900 dark:bg-amber-950/30 dark:hover:border-amber-800 dark:hover:bg-amber-900/40 dark:disabled:border-amber-900 dark:disabled:bg-amber-950/30'
+            : 'border-violet-200 bg-violet-50/60 hover:border-violet-300 hover:bg-violet-100/70 disabled:border-violet-200 disabled:bg-violet-50/50 dark:border-violet-900 dark:bg-violet-950/30 dark:hover:border-violet-800 dark:hover:bg-violet-900/40 dark:disabled:border-violet-900 dark:disabled:bg-violet-950/30'
+        "
+        :loading="isLoading"
+        :disabled="isWriteDisabled || !canManageDeposits || isLoading"
+        data-test="toggle-sher-compensation-button"
+        @click="handleToggleCompensation"
+      />
+    </UTooltip>
   </div>
 </template>
 
@@ -41,9 +43,13 @@ import {
 } from '@/composables/safeDepositRouter/reads'
 import { useTeamStore } from '@/stores'
 import { parseError } from '@/utils'
+import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 
 const teamStore = useTeamStore()
+const { isWriteDisabled, archivedTooltip } = useTeamWriteGuard()
 const toast = useToast()
+
+const toggleCompensationTooltip = computed(() => archivedTooltip.value)
 const connection = useConnection()
 
 // Track if we're in the process of setting safe address before enabling
@@ -72,9 +78,9 @@ const isReadLoading = computed(
 
 const isWriteLoading = computed(() => {
   return (
-    enableDepositsWrite.writeResult.isPending.value ||
-    disableDepositsWrite.writeResult.isPending.value ||
-    setSafeAddressWrite.writeResult.isPending.value
+    enableDepositsWrite.isPending.value ||
+    disableDepositsWrite.isPending.value ||
+    setSafeAddressWrite.isPending.value
   )
 })
 
@@ -101,7 +107,7 @@ const isSafeAddressCorrect = computed(() => {
 
 // Watch for enable deposits errors
 watch(
-  () => enableDepositsWrite.writeResult.error.value,
+  () => enableDepositsWrite.error.value,
   (error) => {
     if (error) {
       console.error('Error enabling deposits:', error)
@@ -119,7 +125,7 @@ watch(
 
 // Watch for enable deposits success
 watch(
-  () => enableDepositsWrite.receiptResult.isSuccess.value,
+  () => enableDepositsWrite.isSuccess.value,
   (success) => {
     if (success) {
       toast.add({ title: 'SHER compensation enabled successfully', color: 'success' })
@@ -130,7 +136,7 @@ watch(
 
 // Watch for disable deposits errors
 watch(
-  () => disableDepositsWrite.writeResult.error.value,
+  () => disableDepositsWrite.error.value,
   (error) => {
     if (error) {
       console.error('Error disabling deposits:', error)
@@ -147,7 +153,7 @@ watch(
 
 // Watch for disable deposits success
 watch(
-  () => disableDepositsWrite.receiptResult.isSuccess.value,
+  () => disableDepositsWrite.isSuccess.value,
   (success) => {
     if (success) {
       toast.add({ title: 'SHER compensation disabled successfully', color: 'success' })
@@ -157,7 +163,7 @@ watch(
 
 // Watch for set safe address errors
 watch(
-  () => setSafeAddressWrite.writeResult.error.value,
+  () => setSafeAddressWrite.error.value,
   (error) => {
     if (error) {
       console.error('Error setting safe address:', error)
@@ -175,7 +181,7 @@ watch(
 
 // Watch for set safe address success - automatically enable deposits after
 watch(
-  () => setSafeAddressWrite.receiptResult.isSuccess.value,
+  () => setSafeAddressWrite.isSuccess.value,
   (success) => {
     if (success && isSettingSafeAddress.value) {
       toast.add({ title: 'Safe address updated successfully', color: 'success' })
@@ -205,21 +211,21 @@ async function updateSafeAddress() {
 
   safeAddressErrorShown.value = false
   toast.add({ title: 'Updating Safe address...', color: 'info' })
-  await setSafeAddressWrite.executeWrite(safeAddress)
+  await setSafeAddressWrite.mutateAsync({ args: [safeAddress] })
 }
 
 /**
  * Enable deposits
  */
 async function handleEnableDeposits() {
-  await enableDepositsWrite.executeWrite()
+  await enableDepositsWrite.mutateAsync({})
 }
 
 /**
  * Disable deposits
  */
 async function handleDisableDeposits() {
-  await disableDepositsWrite.executeWrite()
+  await disableDepositsWrite.mutateAsync({})
 }
 
 /**
@@ -227,6 +233,8 @@ async function handleDisableDeposits() {
  * If enabling and Safe address is not set, automatically set it first
  */
 async function handleToggleCompensation() {
+  if (isWriteDisabled.value) return
+
   if (!safeDepositRouterAddress.value) {
     toast.add({ title: 'SafeDepositRouter address not found', color: 'error' })
     return

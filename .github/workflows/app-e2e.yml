@@ -1,0 +1,87 @@
+name: Frontend E2E Playwright
+
+permissions:
+  contents: read
+
+on:
+  pull_request_target:
+    types: [assigned, labeled]
+  pull_request:
+    branches: "**"
+    paths:
+      - "app/**"
+      - ".github/workflows/app-e2e.yml"
+    types: [opened, synchronize, reopened, labeled]
+  workflow_dispatch:
+
+jobs:
+  app-e2e-test:
+    if: github.event.action != 'labeled' || github.event.label.name == 'run'
+    runs-on: ubuntu-latest
+    # Run inside the official Playwright image: Chromium and its system deps are
+    # preinstalled, so there is no browser download in the critical path.
+    # `playwright install` pulls Chromium from the azureedge.net CDN, which
+    # stalled for >20 min and timed the job out. Caching could not rescue it:
+    # actions/cache only writes in a post-step that is skipped when the job is
+    # cancelled, so a timed-out run never seeds the cache for the next one.
+    # Keep this tag in sync with @playwright/test in app/package.json.
+    container: mcr.microsoft.com/playwright:v1.48.2-noble
+    timeout-minutes: 15
+
+    steps:
+      - name: 🛫 Checkout
+        uses: actions/checkout@v6
+
+      - name: 🏗 Set up Node.js 24.x
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24.x
+          cache: "npm"
+          cache-dependency-path: ./app/package-lock.json
+
+      - name: 📦 Install dependencies
+        run: npm ci
+        working-directory: ./app
+
+      - name: 🧪 Run E2E tests with coverage instrumentation
+        run: npm run test:e2e:coverage
+        working-directory: ./app
+        env:
+          CI: "true"
+          HEADLESS: "true"
+
+      - name: 📊 Generate lcov report from collected coverage
+        if: always()
+        run: npm run coverage:e2e:report
+        working-directory: ./app
+
+      - name: ✅ Upload coverage to Codecov
+        if: always()
+        # Coverage upload must never gate the e2e job, but it must still work.
+        # v4.0.1 (a Node 20 action) sends `service: None` from inside the
+        # Playwright container and the upload silently fails; v5 fixes container
+        # detection and runs on Node 24. `slug` is passed explicitly so it never
+        # falls back to fragile git introspection inside the container.
+        continue-on-error: true
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          slug: ${{ github.repository }}
+          files: ./app/coverage/e2e/lcov.info
+          flags: app-e2e-tests
+
+      - name: 📊 Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: app/playwright-report/
+          retention-days: 30
+
+      - name: 📈 Upload Playwright traces on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-traces
+          path: app/test-results/
+          retention-days: 7

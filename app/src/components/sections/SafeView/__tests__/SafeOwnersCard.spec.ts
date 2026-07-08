@@ -3,8 +3,8 @@ import { mount, type VueWrapper } from '@vue/test-utils'
 import { nextTick, ref, defineComponent } from 'vue'
 import type { Address } from 'viem'
 import SafeOwnersCard from '../SafeOwnersCard.vue'
-import { useAccountFn, useChainIdFn } from '@/tests/mocks'
-import { useTeamStore } from '@/stores'
+import { useChainIdFn } from '@/tests/mocks'
+import { useTeamStore, useUserDataStore } from '@/stores'
 
 // Mock @iconify/vue FIRST
 vi.mock('@iconify/vue', () => ({
@@ -158,17 +158,15 @@ describe('SafeOwnersCard', () => {
     })
 
     // Setup default mocks
-    useAccountFn.mockReturnValue({
-      address: ref(undefined),
-      isConnected: ref(false)
-    })
-
     useChainIdFn.mockReturnValue(ref(137))
 
     vi.mocked(useTeamStore).mockReturnValue({
       currentTeam: MOCK_DATA.team,
       currentTeamMeta: { data: { safeAddress: MOCK_DATA.safeAddress } }
     } as ReturnType<typeof useTeamStore>)
+    vi.mocked(useUserDataStore).mockReturnValue({
+      address: ''
+    } as ReturnType<typeof useUserDataStore>)
 
     mockGetSafeSettingsUrl.mockReturnValue(
       'https://app.safe.global/settings/setup?safe=polygon:0x1234567890123456789012345678901234567890'
@@ -187,13 +185,6 @@ describe('SafeOwnersCard', () => {
   })
 
   describe('Component Rendering', () => {
-    it.skip('should render the card component correctly', () => {
-      wrapper = createWrapper()
-
-      expect(wrapper.find(SELECTORS.card).exists()).toBe(true)
-      expect(wrapper.find(SELECTORS.cardBody).exists()).toBe(true)
-    })
-
     it('should render action buttons in card header', () => {
       wrapper = createWrapper()
 
@@ -248,26 +239,13 @@ describe('SafeOwnersCard', () => {
       const removeButtons = wrapper.findAll(SELECTORS.removeOwnerBtn)
       expect(removeButtons).toHaveLength(MOCK_DATA.safeInfo.owners.length)
     })
-
-    it.skip('should highlight current user as owner', async () => {
-      useAccountFn.mockReturnValue({
-        address: ref(MOCK_DATA.owners[0]),
-        isConnected: ref(true)
-      })
-      mockSafeInfoData.value = MOCK_DATA.safeInfo
-      wrapper = createWrapper()
-      await nextTick()
-
-      expect(wrapper.text()).toContain('You')
-    })
   })
 
   describe('User Permissions', () => {
     it('should disable add signer button when user is not an owner', async () => {
-      useAccountFn.mockReturnValue({
-        address: ref('0x9999999999999999999999999999999999999999' as Address),
-        isConnected: ref(true)
-      })
+      vi.mocked(useUserDataStore).mockReturnValue({
+        address: '0x9999999999999999999999999999999999999999' as Address
+      } as ReturnType<typeof useUserDataStore>)
       mockSafeInfoData.value = MOCK_DATA.safeInfo
       wrapper = createWrapper()
       await nextTick()
@@ -275,154 +253,5 @@ describe('SafeOwnersCard', () => {
       const addSignerBtn = wrapper.find(SELECTORS.addSignerBtn)
       expect(addSignerBtn.attributes('disabled')).toBeDefined()
     })
-
-    it.skip('should enable add signer button when user is an owner', async () => {
-      useAccountFn.mockReturnValue({
-        address: ref(MOCK_DATA.owners[0]),
-        isConnected: ref(true)
-      })
-      mockSafeInfoData.value = MOCK_DATA.safeInfo
-      wrapper = createWrapper()
-      await nextTick()
-
-      const addSignerBtn = wrapper.find(SELECTORS.addSignerBtn)
-      expect(addSignerBtn.attributes('disabled')).toBeUndefined()
-    })
   })
-
-  // describe('Modal Interactions', () => {
-  //   it('should open add signer modal when button is clicked', async () => {
-  //     wrapper = createWrapper()
-
-  //     const addSignerBtn = wrapper.find(SELECTORS.addSignerBtn)
-  //     await addSignerBtn.trigger('click')
-  //     await nextTick()
-
-  //     expect(wrapper.find(SELECTORS.addSignerModal).exists()).toBe(true)
-  //   })
-
-  //   it('should open update threshold modal when button is clicked', async () => {
-  //     wrapper = createWrapper()
-
-  //     const updateThresholdBtn = wrapper.find(SELECTORS.updateThresholdBtn)
-  //     await updateThresholdBtn.trigger('click')
-  //     await nextTick()
-
-  //     expect(wrapper.find(SELECTORS.updateThresholdModal).exists()).toBe(true)
-  //   })
-
-  //   it('should close modal on threshold-updated event', async () => {
-  //     wrapper = createWrapper()
-
-  //     // Open modal
-  //     const updateThresholdBtn = wrapper.find(SELECTORS.updateThresholdBtn)
-  //     await updateThresholdBtn.trigger('click')
-  //     await nextTick()
-
-  //     // Trigger threshold-updated event
-  //     const modal = wrapper.findComponent(UpdateThresholdModalStub)
-  //     await modal.vm.$emit('threshold-updated')
-  //     await nextTick()
-
-  //     // Modal should be closed (modelValue should be false)
-  //     expect(modal.props('modelValue')).toBe(false)
-  //   })
-  // })
-
-  // describe('Error Handling', () => {
-  //   it('should handle error state gracefully', async () => {
-  //     mockError.value = new Error('Failed to load Safe info')
-  //     wrapper = createWrapper()
-  //     await nextTick()
-
-  //     // Component should still render
-  //     expect(wrapper.find(SELECTORS.card).exists()).toBe(true)
-  //   })
-
-  //   it.skip('should log error when query fails', async () => {
-  //     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-  //     mockError.value = new Error('Failed to load Safe info')
-
-  //     wrapper = createWrapper()
-  //     await nextTick()
-  //     await flushPromises()
-
-  //     expect(consoleErrorSpy).toHaveBeenCalledWith('Error loading safe info:', expect.any(Error))
-
-  //     consoleErrorSpy.mockRestore()
-  //   })
-  // })
-
-  // describe('Empty State', () => {
-  //   it('should show empty state when no owners found', async () => {
-  //     mockSafeInfoData.value = { ...MOCK_DATA.safeInfo, owners: [] }
-  //     wrapper = createWrapper()
-  //     await nextTick()
-
-  //     expect(wrapper.text()).toContain('No owners found')
-  //   })
-
-  //   it('should not show owner items when empty', async () => {
-  //     mockSafeInfoData.value = { ...MOCK_DATA.safeInfo, owners: [] }
-  //     wrapper = createWrapper()
-  //     await nextTick()
-
-  //     expect(wrapper.find(SELECTORS.ownerItem).exists()).toBe(false)
-  //   })
-  // })
-
-  // describe('Safe App Integration', () => {
-  //   it('should call getSafeSettingsUrl with correct params', async () => {
-  //     mockSafeInfoData.value = MOCK_DATA.safeInfo
-  //     wrapper = createWrapper()
-  //     await nextTick()
-
-  //     const footerButton = wrapper.find(SELECTORS.openSafeAppFooter)
-  //     if (footerButton.exists()) {
-  //       await footerButton.trigger('click')
-
-  //       expect(mockGetSafeSettingsUrl).toHaveBeenCalledWith(137, MOCK_DATA.safeAddress)
-  //     }
-  //   })
-
-  //   it('should open Safe app in new window', async () => {
-  //     mockSafeInfoData.value = MOCK_DATA.safeInfo
-  //     wrapper = createWrapper()
-  //     await nextTick()
-
-  //     const footerButton = wrapper.find(SELECTORS.openSafeAppFooter)
-  //     if (footerButton.exists()) {
-  //       await footerButton.trigger('click')
-
-  //       expect(mockOpenSafeAppUrl).toHaveBeenCalledWith(
-  //         'https://app.safe.global/settings/setup?safe=polygon:0x1234567890123456789012345678901234567890'
-  //       )
-  //     }
-  //   })
-  // })
-
-  // describe('Edge Cases', () => {
-  //   it('should handle missing Safe address gracefully', () => {
-  //     mockTeamStore.currentTeam = { ...MOCK_DATA.team, safeAddress: undefined }
-  //     wrapper = createWrapper()
-
-  //     expect(wrapper.find(SELECTORS.card).exists()).toBe(true)
-  //   })
-
-  //   it('should disable buttons when no Safe address', () => {
-  //     mockTeamStore.currentTeam = { ...MOCK_DATA.team, safeAddress: undefined }
-  //     wrapper = createWrapper()
-
-  //     const addSignerBtn = wrapper.find(SELECTORS.addSignerBtn)
-  //     expect(addSignerBtn.attributes('disabled')).toBeDefined()
-  //   })
-
-  //   it('should handle null safeInfo data', async () => {
-  //     mockSafeInfoData.value = null
-  //     wrapper = createWrapper()
-  //     await nextTick()
-
-  //     expect(wrapper.find(SELECTORS.card).exists()).toBe(true)
-  //   })
-  // })
 })

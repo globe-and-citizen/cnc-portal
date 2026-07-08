@@ -17,6 +17,7 @@ import wageRoutes from '../routes/wageRoute';
 import claimRoutes from '../routes/claimRoute';
 import weeklyClaimRoutes from '../routes/weeklyClaimRoute';
 import expenseRoutes from '../routes/expenseRoute';
+import fixedReturnOfferingRoutes from '../routes/fixedReturnOfferingRoute';
 import uploadRoute from '../routes/uploadRoute';
 import storageRoute from '../routes/storageRoute';
 import contractRoutes from '../routes/contractRoutes';
@@ -25,12 +26,13 @@ import devRoutes from '../routes/devRoutes';
 import statsRoutes from '../routes/statsRoute';
 import healthRoutes from '../routes/healthRoutes';
 import featureRoutes from '../routes/featureRoutes';
+import sentryTunnelRoute from '../routes/sentryTunnelRoute';
 
 //#endregion routing modules
 
 import { authorizeUser } from '../middleware/authMiddleware';
 import { requireAdmin } from '../middleware/roleMiddleware';
-import { errorMessages } from '../utils/serverConfigUtil';
+import { errorMessages, wildcardToRegex } from '../utils/serverConfigUtil';
 
 // Swagger import
 
@@ -41,14 +43,46 @@ const options = {
   definition: {
     openapi: '3.0.0',
     info: {
-      title: 'API Documentation',
+      title: 'CNC Portal API',
       version: '1.0.0',
+      description:
+        'REST API for the CNC Portal. Most endpoints require a JWT obtained from `POST /auth/siwe`; ' +
+        'use the **Authorize** button to set the bearer token before trying protected routes.',
     },
     servers: [
       {
         url: '/api',
         description: 'API base path',
       },
+    ],
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+          description: 'JWT issued by `POST /auth/siwe`.',
+        },
+      },
+    },
+    tags: [
+      { name: 'Auth', description: 'SIWE authentication and JWT validation' },
+      { name: 'Users', description: 'User accounts and profiles' },
+      { name: 'Teams', description: 'Team creation, membership and settings' },
+      { name: 'Contracts', description: 'Team smart-contract registration and sync' },
+      { name: 'Claims', description: 'Worked-minutes claims' },
+      { name: 'Weekly Claims', description: 'Weekly aggregated claims and on-chain sync' },
+      { name: 'Wages', description: 'Team member wages' },
+      { name: 'Expenses', description: 'Team expenses' },
+      { name: 'Board Actions', description: 'Board of Directors actions' },
+      { name: 'Elections', description: 'Board elections and notifications' },
+      { name: 'Notifications', description: 'User notifications' },
+      { name: 'Files', description: 'File download access' },
+      { name: 'Upload', description: 'File and asset uploads' },
+      { name: 'Statistics', description: 'Platform statistics (admin only)' },
+      { name: 'Features', description: 'Feature flags (admin only)' },
+      { name: 'Health', description: 'Service health checks' },
+      { name: 'Development', description: 'Development-only helpers' },
     ],
   },
   apis: ['./src/routes/*.ts'], // Point to route files containing JSDoc comments
@@ -77,6 +111,7 @@ class Server {
       wage: '/api/wage/',
       weeklyClaim: '/api/weeklyclaim/',
       expense: '/api/expense/',
+      fixedReturnOffering: '/api/fixed-return-offering/',
       claim: '/api/claim/',
       upload: '/api/upload/',
       file: '/api/file/',
@@ -86,6 +121,7 @@ class Server {
       dev: '/api/dev/',
       health: '/api/health/',
       features: '/api/admin/features/',
+      sentryTunnel: '/api/sentry-tunnel',
     };
     const limiter = rateLimit({
       windowMs: 15 * 60 * 1000, // 15 minutes
@@ -118,18 +154,44 @@ class Server {
 
   private middleware() {
     this.app.use(express.json());
-    const allowedOrigins = process.env.FRONTEND_URL
-      ? process.env.FRONTEND_URL.split(',').map((origin) => origin.trim())
+    const rawOrigins = process.env.FRONTEND_URL
+      ? process.env.FRONTEND_URL.split(',')
+          .map((o) => o.trim())
+          .filter(Boolean)
       : [];
+    const exactOrigins: string[] = [];
+    const patternOrigins: RegExp[] = [];
+    for (const origin of rawOrigins) {
+      if (origin.includes('*')) {
+        patternOrigins.push(wildcardToRegex(origin));
+      } else {
+        exactOrigins.push(origin);
+      }
+    }
     console.log('FRONTEND_URL:', process.env.FRONTEND_URL);
-    console.log('Allowed Origins for CORS:', allowedOrigins);
+    console.log('Allowed exact origins for CORS:', exactOrigins);
+    console.log('Allowed origin patterns for CORS:', patternOrigins);
 
-    this.app.use(cors({ origin: allowedOrigins, credentials: true }));
+    this.app.use(
+      cors({
+        origin: (origin, callback) => {
+          if (!origin) return callback(null, true);
+          if (exactOrigins.includes(origin) || patternOrigins.some((re) => re.test(origin))) {
+            return callback(null, true);
+          }
+          return callback(new Error(`Origin ${origin} not allowed by CORS`));
+        },
+        credentials: true,
+      })
+    );
   }
 
   private routes() {
     // Public health check endpoint (no auth required)
     this.app.use(this.paths.health, healthRoutes);
+
+    // Sentry tunnel — public, proxies browser events to Sentry bypassing ad-blockers
+    this.app.use(this.paths.sentryTunnel, sentryTunnelRoute);
 
     this.app.use(this.paths.teams, authorizeUser, teamRoutes);
     this.app.use(this.paths.wage, authorizeUser, wageRoutes);
@@ -139,6 +201,7 @@ class Server {
     this.app.use(this.paths.actions, authorizeUser, actionRoutes);
     this.app.use(this.paths.claim, authorizeUser, claimRoutes);
     this.app.use(this.paths.expense, authorizeUser, expenseRoutes);
+    this.app.use(this.paths.fixedReturnOffering, authorizeUser, fixedReturnOfferingRoutes);
     this.app.use(this.paths.upload, authorizeUser, uploadRoute);
     this.app.use(this.paths.file, authorizeUser, storageRoute);
     this.app.use(this.paths.weeklyClaim, authorizeUser, weeklyClaimRoutes);
@@ -152,7 +215,6 @@ class Server {
       console.log('🔧 Dev routes enabled for development environment');
     }
 
-    this.app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
     this.app.use(this.paths.elections, authorizeUser, electionsRoute);
     this.app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
     // The error handler must be registered before any other error middleware and after all controllers
@@ -171,10 +233,6 @@ class Server {
       console.error('Error:', err);
       res.statusCode = 500;
       res.end((res as { sentry?: string }).sentry + '\n');
-    });
-
-    this.app.get('/debug-sentry', function mainHandler() {
-      throw new Error('My first Sentry error!');
     });
   }
 

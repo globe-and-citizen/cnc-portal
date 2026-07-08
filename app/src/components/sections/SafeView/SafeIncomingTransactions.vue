@@ -11,16 +11,23 @@
       <!-- Type Column -->
       <template #type-cell="{ row: { original: row } }">
         <div class="flex items-center gap-2">
-          <span
-            class="badge badge-sm"
-            :class="{
-              'badge-success': row.type === 'ETHER_TRANSFER',
-              'badge-info': row.type === 'ERC20_TRANSFER',
-              'badge-warning': row.type === 'ERC721_TRANSFER'
-            }"
+          <UBadge
+            size="sm"
+            variant="subtle"
+            :color="
+              row.type === 'ETHER_TRANSFER'
+                ? 'success'
+                : row.type === 'ERC20_TRANSFER'
+                  ? 'info'
+                  : row.type === 'ERC721_TRANSFER'
+                    ? 'warning'
+                    : 'neutral'
+            "
+            :data-transfer-type="row.type"
+            data-test="transfer-type-badge"
           >
             {{ formatSafeTransferType(row.type) }}
-          </span>
+          </UBadge>
           <span v-if="row.tokenInfo" class="text-xs text-gray-500">
             {{ row.tokenInfo.symbol }}
           </span>

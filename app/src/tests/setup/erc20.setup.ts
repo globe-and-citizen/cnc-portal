@@ -1,5 +1,10 @@
-import { vi } from 'vitest'
-import { mockERC20Reads, mockERC20Writes } from '../mocks/erc20.mock'
+import { beforeEach, vi } from 'vitest'
+import { mockERC20Reads, mockERC20Writes, resetERC20Mocks } from '../mocks/erc20.mock'
+
+// Restore ERC20 read/write mocks to defaults before every test.
+beforeEach(() => {
+  resetERC20Mocks()
+})
 
 /**
  * Mock ERC20 read composables that are actually consumed. Unused reads
@@ -12,8 +17,9 @@ vi.mock('@/composables/erc20/reads', () => ({
 }))
 
 /**
- * Mock ERC20 write composables. Only `useERC20Approve` is exposed.
+ * Mock ERC20 write composables.
  */
 vi.mock('@/composables/erc20/writes', () => ({
-  useERC20Approve: vi.fn(() => mockERC20Writes.approve)
+  useERC20Approve: vi.fn(() => mockERC20Writes.approve),
+  useERC20Transfer: vi.fn(() => mockERC20Writes.transfer)
 }))

@@ -1,15 +1,15 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import CompensationAmount from '../CompensationAmount.vue'
 import { nextTick } from 'vue'
-import { mockInvestorReads, resetContractMocks } from '@/tests/mocks'
+import { mockInvestorReads } from '@/tests/mocks'
 
 // Test constants
 const SELECTORS = {
   compensationAmount: '[data-test="compensation-amount"]',
   compensationInput: '[data-test="compensation-input"]',
-  labelTextAlt: '.label-text-alt',
-  labelText: '.label-text'
+  labelTextAlt: '[data-test="compensation-label-text-alt"]',
+  labelText: '[data-test="compensation-label-text"]'
 } as const
 
 const MOCK_DATA = {
@@ -21,12 +21,7 @@ const MOCK_DATA = {
 describe('CompensationAmount - Advanced Features', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    resetContractMocks()
     mockInvestorReads.symbol.data.value = MOCK_DATA.tokenSymbol
-  })
-
-  afterEach(() => {
-    resetContractMocks()
   })
 
   const createWrapper = (props = {}) => {

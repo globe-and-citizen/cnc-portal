@@ -1,14 +1,20 @@
 <template>
-  <UButton
-    :loading="isWageClaimAdding"
-    color="success"
-    size="sm"
-    data-test="modal-submit-hours-button"
-    :disabled="!canSubmitClaim"
-    @click="openModal()"
-  >
-    Submit Claim
-  </UButton>
+  <TeamArchivedTooltip v-slot="{ disabled: archivedDisabled }">
+    <UTooltip :text="restrictedTooltip" :delay-duration="0">
+      <span class="inline-flex max-w-full">
+        <UButton
+          :loading="isWageClaimAdding"
+          color="success"
+          size="sm"
+          data-test="modal-submit-hours-button"
+          :disabled="!canSubmitClaim || archivedDisabled"
+          @click="openModal()"
+        >
+          Submit Claim
+        </UButton>
+      </span>
+    </UTooltip>
+  </TeamArchivedTooltip>
 
   <UModal
     v-if="modal.mount"
@@ -24,17 +30,9 @@
           :is-loading="isWageClaimAdding"
           :disabled-week-starts="props.signedWeekStarts"
           :restrict-submit="isRestricted"
+          :error-message="addWageClaimError && errorMessage ? errorMessage.message : ''"
+          error-title="Failed to submit claim"
           @submit="handleSubmit"
-        />
-        <UAlert
-          v-if="addWageClaimError && errorMessage"
-          color="error"
-          variant="soft"
-          icon="i-heroicons-x-circle"
-          title="Failed to submit claim"
-          :description="errorMessage.message"
-          class="mt-4"
-          data-test="submit-claim-error"
         />
       </div>
     </template>
@@ -50,6 +48,9 @@ import { useSubmitRestriction } from '@/composables'
 import { useTeamStore } from '@/stores'
 import type { ClaimFormData, ClaimSubmitPayload } from '@/types'
 import { useSubmitClaimMutation } from '@/queries/weeklyClaim.queries'
+import { startOfWeek } from '@/utils/dayUtils'
+import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
+import { getAxiosErrorMessage } from '@/utils/errorUtil'
 
 dayjs.extend(utc)
 
@@ -64,11 +65,22 @@ const modal = ref({
 const errorMessage = ref<{ message: string } | null>(null)
 const addWageClaimError = ref(false)
 const claimFormRef = ref<InstanceType<typeof ClaimForm> | null>(null)
-const createDefaultFormData = (): ClaimFormData => ({
+const resolveInitialDayWorked = (selectedWeekStart?: string): string => {
+  const today = dayjs.utc().startOf('day')
+  if (!selectedWeekStart) return today.toISOString()
+
+  const selectedWeek = startOfWeek(selectedWeekStart)
+  const currentWeek = startOfWeek(today)
+  const dayWorked = selectedWeek.isSame(currentWeek) ? today : selectedWeek.startOf('day')
+
+  return dayWorked.toISOString()
+}
+
+const createDefaultFormData = (selectedWeekStart?: string): ClaimFormData => ({
   hoursWorked: '0',
   minutesWorked: '0',
   memo: '',
-  dayWorked: dayjs().utc().startOf('day').toISOString()
+  dayWorked: resolveInitialDayWorked(selectedWeekStart)
 })
 
 const props = defineProps<{
@@ -76,15 +88,27 @@ const props = defineProps<{
     status: 'pending' | 'signed' | 'withdrawn' | 'disabled'
   }
   signedWeekStarts?: string[]
+  selectedWeekStart?: string
 }>()
 
-const formInitialData = ref<ClaimFormData>(createDefaultFormData())
+const formInitialData = ref<ClaimFormData>(createDefaultFormData(props.selectedWeekStart))
 
-const openModal = () => {
-  formInitialData.value = createDefaultFormData()
+const openModalWithData = (initialData: ClaimFormData) => {
+  formInitialData.value = initialData
   errorMessage.value = null
   addWageClaimError.value = false
   modal.value = { mount: true, show: true }
+}
+
+const openModal = () => {
+  openModalWithData(createDefaultFormData(props.selectedWeekStart))
+}
+
+const openModalForDay = (dayIso: string) => {
+  openModalWithData({
+    ...createDefaultFormData(props.selectedWeekStart),
+    dayWorked: dayIso
+  })
 }
 
 const closeModal = () => {
@@ -105,6 +129,13 @@ watch(
   { flush: 'post' }
 )
 
+watch(
+  () => props.selectedWeekStart,
+  (selectedWeekStart) => {
+    formInitialData.value = createDefaultFormData(selectedWeekStart)
+  }
+)
+
 const teamId = computed(() => teamStore.currentTeamId)
 
 // Check restriction when team changes
@@ -118,11 +149,34 @@ watch(
   { immediate: true }
 )
 
+// Submissions stay enabled while the team is on the previous Officer
+// generation (issue #1825): submitting only creates a `pending` row that
+// the approver can sign once the team migrates. Only the sign action is
+// frozen — see CRSigne.vue.
+// When the restriction is active, only the current ISO week can accept a
+// submission, so the "Submit Claim" button is disabled on every other week
+// (mirrors the calendar guard and the backend enforcement). Reuses the existing
+// startOfWeek helper and the same week comparison used in ClaimHistoryActionAlerts.
+const isSelectedWeekSubmittable = computed(() => {
+  if (!isRestricted.value) return true
+  const selected = startOfWeek(props.selectedWeekStart ?? dayjs.utc())
+  return selected.isSame(startOfWeek(dayjs.utc()), 'day')
+})
+
 const canSubmitClaim = computed(() => {
+  if (!isSelectedWeekSubmittable.value) return false
   if (!props.weeklyClaim) return true
 
   return props.weeklyClaim.status === 'pending'
 })
+
+// Tooltip shown on hover when the button is disabled specifically because the
+// selected week is outside the submit window (undefined otherwise → no tooltip).
+const restrictedTooltip = computed(() =>
+  !isSelectedWeekSubmittable.value
+    ? 'You can only submit claims for the current week, up to 4 days in the past.'
+    : undefined
+)
 
 const { mutateAsync: submitClaim, isPending: isWageClaimAdding } = useSubmitClaimMutation()
 
@@ -136,6 +190,10 @@ const handleSubmit = async (data: ClaimSubmitPayload & { files?: File[] }) => {
   errorMessage.value = null
 
   try {
+    // Refresh the restriction status right before submitting so a dashboard
+    // change is reflected immediately (backend addClaim is the real guard).
+    await checkRestriction(teamId.value)
+
     await submitClaim({
       ...data,
       teamId: teamId.value
@@ -144,14 +202,12 @@ const handleSubmit = async (data: ClaimSubmitPayload & { files?: File[] }) => {
     toast.add({ title: 'Wage claim added successfully', color: 'success' })
 
     closeModal()
-    formInitialData.value = createDefaultFormData()
+    formInitialData.value = createDefaultFormData(props.selectedWeekStart)
   } catch (error) {
     console.error('Error submitting claim:', error)
-    const backendMessage = (error as { response?: { data?: { message?: string } } })?.response?.data
-      ?.message
-    const message =
-      backendMessage ?? (error instanceof Error ? error.message : 'Failed to add claim')
-    errorMessage.value = { message }
+    errorMessage.value = {
+      message: getAxiosErrorMessage(error, 'Failed to add claim')
+    }
     addWageClaimError.value = true
   }
 }
@@ -167,6 +223,7 @@ defineExpose({
   handleSubmit,
   modal,
   errorMessage,
-  formInitialData
+  formInitialData,
+  openModalForDay
 })
 </script>

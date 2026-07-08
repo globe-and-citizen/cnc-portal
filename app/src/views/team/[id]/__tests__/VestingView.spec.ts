@@ -1,23 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, type VueWrapper } from '@vue/test-utils'
-import { createTestingPinia } from '@pinia/testing'
 import VestingView from '../VestingView.vue'
 import { ref } from 'vue'
-import {
-  useWriteContractFn,
-  useWaitForTransactionReceiptFn,
-  useReadContractFn,
-  mockTeamStore,
-  mockUserStore
-} from '@/tests/mocks'
-import { useTeamStore, useUserDataStore } from '@/stores'
+import { useReadContractFn, mockTeamStore, mockUserStore } from '@/tests/mocks'
 
 // Constants
 const memberAddress = '0x000000000000000000000000000000000000dead'
-const mockReloadKey = ref<number>(0)
-// Mocks
+// Mocks — reads return a 3-tuple [members, indices, infos].
 const mockVestingInfos = ref([
   [memberAddress],
+  [0n],
   [
     {
       start: `${Math.floor(Date.now() / 1000) - 3600}`,
@@ -31,140 +23,52 @@ const mockVestingInfos = ref([
 ])
 const refetchVestingInfos = vi.fn()
 
-const mockArchivedInfos = ref([[], []])
-
-const mockCurrentTeam = ref({
-  id: 1,
-  ownerAddress: memberAddress,
-  teamContracts: [
-    {
-      type: 'InvestorV1',
-      address: '0x000000000000000000000000000000000000beef'
-    }
-  ]
-})
-
-// Wagmi mocks - local refs for per-test state
-const mockWriteContract = {
-  mutate: vi.fn(),
-  mutateAsync: vi.fn(),
-  error: ref<Error | null>(null),
-  isPending: ref(false),
-  data: ref(null),
-  isError: ref(false),
-  status: ref('idle' as const),
-  variables: ref(undefined),
-  reset: vi.fn()
-}
-const mockWaitReceipt = {
-  isLoading: ref(false),
-  isSuccess: ref(false),
-  error: ref<Error | null>(null),
-  isPending: ref(false),
-  isError: ref(false),
-  data: ref(null),
-  status: ref('idle' as const)
-}
+const mockArchivedInfos = ref([[], [], []])
 
 // Test suite
 describe('VestingView.vue', () => {
   let wrapper: VueWrapper
 
-  const mountComponent = () => {
-    return mount(VestingView, {
-      global: {
-        plugins: [createTestingPinia({ createSpy: vi.fn })]
-      }
-    })
-  }
+  const mountComponent = () => mount(VestingView)
 
   beforeEach(() => {
     vi.clearAllMocks()
-    // Configure wagmi composable mocks
-    useWriteContractFn.mockReturnValue(mockWriteContract)
-    useWaitForTransactionReceiptFn.mockReturnValue(mockWaitReceipt)
     useReadContractFn.mockImplementation(({ functionName }: { functionName: string }) => {
-      if (functionName === 'getTeamVestingsWithMembers') {
+      if (functionName === 'getVestingsWithMembers') {
         return { data: mockVestingInfos, error: ref(null), refetch: refetchVestingInfos }
       }
-      if (functionName === 'getTeamAllArchivedVestingsFlat') {
+      if (functionName === 'getAllArchivedVestingsFlat') {
         return { data: mockArchivedInfos, error: ref(null), refetch: vi.fn() }
       }
       return { data: ref('TST'), error: ref(null), refetch: vi.fn() }
     })
-    // Configure store mocks
-    vi.mocked(useUserDataStore).mockReturnValue({ ...mockUserStore, address: memberAddress })
-    vi.mocked(useTeamStore).mockReturnValue({
-      ...mockTeamStore,
-      currentTeam: mockCurrentTeam.value as ReturnType<typeof useTeamStore>['currentTeam'],
-      currentTeamId: mockCurrentTeam.value.id,
-      getContractAddressByType: vi.fn((type) =>
-        type ? '0x000000000000000000000000000000000000beef' : undefined
-      )
-    } as ReturnType<typeof useTeamStore>)
+    // Configure store mocks via the shared, globally-mocked instances.
+    mockUserStore.address = memberAddress
+    mockTeamStore.currentTeam = {
+      ...mockTeamStore.currentTeam,
+      id: 1,
+      ownerAddress: memberAddress
+    }
+    mockTeamStore.currentTeamId = '1'
+    mockTeamStore.getContractAddressByType = vi.fn((type) =>
+      type ? '0x000000000000000000000000000000000000beef' : undefined
+    )
     wrapper = mountComponent()
-    mockWriteContract.mutate.mockReset()
-    mockWaitReceipt.isLoading.value = false
-    mockWaitReceipt.isSuccess.value = false
   })
 
-  it.skip('renders main cards and tables', () => {
-    expect(wrapper.text()).toContain('Vesting Stats')
-    expect(wrapper.text()).toContain('Vesting Overview')
-    expect(wrapper.find('[data-test="vesting-stats"]').exists()).toBe(true)
-    expect(wrapper.find('[data-test="vesting-overview"]').exists()).toBe(true)
+  it('renders the vesting stats and flow sections', () => {
+    expect(wrapper.findComponent({ name: 'VestingStats' }).exists()).toBe(true)
+    expect(wrapper.findComponent({ name: 'VestingFlow' }).exists()).toBe(true)
   })
 
-  it.skip('shows and opens add vesting modal', async () => {
-    const btn = wrapper.find('[data-test="createAddVesting"]')
-    expect(btn.exists()).toBe(true)
-    await btn.trigger('click')
-    expect(wrapper.findComponent({ name: 'UModal' }).exists()).toBe(true)
-    expect(wrapper.findComponent({ name: 'CreateVesting' }).exists()).toBe(true)
-  })
+  it('bumps the reload key when VestingFlow emits reload', async () => {
+    const flow = wrapper.findComponent({ name: 'VestingFlow' })
+    expect(flow.props('reloadKey')).toBe(0)
 
-  it.skip('opens modal with correct props when add vesting button is clicked', async () => {
-    // Click the add vesting button
-    const addButton = wrapper.find('[data-test="createAddVesting"]')
-    await addButton.trigger('click')
-
-    // Check if modal is opened
-    expect(wrapper.findComponent({ name: 'UModal' }).exists()).toBe(true)
-
-    // Find the CreateVesting component
-    const createVesting = wrapper.findComponent({ name: 'CreateVesting' })
-    expect(createVesting.exists()).toBe(true)
-
-    // Verify props
-    expect(createVesting.props()).toMatchObject({
-      reloadKey: mockReloadKey.value,
-      tokenAddress: '0x000000000000000000000000000000000000beef' // This comes from the mocked sherToken
-    })
-  })
-
-  it.skip('handles CreateVesting component events correctly', async () => {
-    // Open modal
-    await wrapper.find('[data-test="createAddVesting"]').trigger('click')
-
-    const createVesting = wrapper.findComponent({ name: 'CreateVesting' })
-
-    await createVesting.vm.$emit('reload')
-    await wrapper.vm.$nextTick()
-    // Test closeAddVestingModal event
-    await createVesting.vm.$emit('closeAddVestingModal')
+    flow.vm.$emit('reload')
     await wrapper.vm.$nextTick()
 
-    expect(wrapper.find('[data-test="createAddVestingModal"]').exists()).toBe(false)
-
-    // Test reloadVestingInfos event
-    expect(refetchVestingInfos).toHaveBeenCalled()
-  })
-
-  it('passes correct props to CreateVesting', async () => {
-    const btn = wrapper.find('[data-test="createAddVesting"]')
-    await btn.trigger('click')
-
-    const component = wrapper.findComponent({ name: 'CreateVesting' })
-    expect(component.props('tokenAddress')).toBe('0x000000000000000000000000000000000000beef')
+    expect(wrapper.findComponent({ name: 'VestingFlow' }).props('reloadKey')).toBe(1)
+    expect(wrapper.findComponent({ name: 'VestingStats' }).props('reloadKey')).toBe(1)
   })
 })

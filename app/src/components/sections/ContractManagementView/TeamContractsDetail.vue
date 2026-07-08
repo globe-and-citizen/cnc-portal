@@ -15,18 +15,20 @@
     >
       <template #value-cell="{ row: { original: row } }">
         <template v-if="row.key.startsWith('cost')">
-          <input
+          <UInput
             type="number"
             step="any"
-            :value="row.value"
-            @input="
-              updateValue(
-                datas.findIndex((d) => d.key === row.key),
-                Math.abs(parseFloat(($event.target as HTMLInputElement).value) || 0)
-              )
+            size="sm"
+            :model-value="row.value"
+            :required="true"
+            class="w-24"
+            @update:model-value="
+              (v: string | number) =>
+                updateValue(
+                  datas.findIndex((d) => d.key === row.key),
+                  Math.abs(parseFloat(String(v)) || 0)
+                )
             "
-            class="input input-bordered w-24 text-sm"
-            required
           />
           ETH
         </template>
@@ -41,10 +43,16 @@
       </template>
     </UTable>
     <div class="mt-4">
-      <button @click="submit" class="btn btn-primary" :loading="isLoading" :disabled="isLoading">
-        <span v-if="isLoading" class="loading loading-spinner loading-xs text-green-800"></span>
-        save changes
-      </button>
+      <TeamArchivedTooltip v-slot="{ disabled: archivedDisabled }">
+        <UButton
+          @click="submit"
+          color="primary"
+          :loading="isLoading"
+          :disabled="isLoading || archivedDisabled"
+        >
+          save changes
+        </UButton>
+      </TeamArchivedTooltip>
     </div>
   </div>
 </template>
@@ -52,12 +60,13 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import AddressToolTip from '@/components/AddressToolTip.vue'
+import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
 
 import { parseUnits } from 'viem/utils'
+import type { Address } from 'viem'
 
 import { AD_CAMPAIGN_MANAGER_ABI } from '@/artifacts/abi/ad-campaign-manager'
-
-import { useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
+import { useContractWritesV3 } from '@/composables/contracts/useContractWritesV3'
 const toast = useToast()
 const props = defineProps<{
   datas: Array<{ key: string; value: string }>
@@ -70,13 +79,7 @@ const pendingTransactions = ref(0)
 const originalCostPerClick = ref<number>(0)
 const originalCostPerImpression = ref<number>(0)
 
-const isLoading = computed(
-  () =>
-    loadingSetCostPerClick.value ||
-    (isConfirmingSetCostPerClick.value && !isConfirmedSetCostPerClick.value) ||
-    loadingSetCostPerImpression.value ||
-    (isConfirmingSetCostPerImpression.value && !isConfirmedSetCostPerImpression.value)
-)
+const isLoading = computed(() => loadingSetCostPerClick.value || loadingSetCostPerImpression.value)
 
 const originalValues = ref<Record<string, number>>({})
 
@@ -84,46 +87,26 @@ const getOriginalValue = (key: string) => originalValues.value[key] ?? 0
 
 const initialized = ref<boolean>(false)
 
+const contractAddress = computed(() => props.contractAddress as Address)
+
 const {
   mutate: setCostPerClick,
   error: errorSetCostPerClick,
-  isPending: loadingSetCostPerClick,
-  data: hashSetCostPerClick
-} = useWriteContract()
-
-const { isLoading: isConfirmingSetCostPerClick, isSuccess: isConfirmedSetCostPerClick } =
-  useWaitForTransactionReceipt({
-    hash: hashSetCostPerClick
-  })
-
-watch(isConfirmingSetCostPerClick, async (isConfirming, wasConfirming) => {
-  if (wasConfirming && !isConfirming && isConfirmedSetCostPerClick.value) {
-    pendingTransactions.value--
-    toast.add({ title: 'Cost per click updated successfully', color: 'success' })
-    originalCostPerClick.value = getOriginalValue('costPerClick')
-    if (pendingTransactions.value === 0) emit('closeContractDataDialog')
-  }
+  isPending: loadingSetCostPerClick
+} = useContractWritesV3({
+  contractAddress,
+  abi: AD_CAMPAIGN_MANAGER_ABI,
+  functionName: 'setCostPerClick'
 })
 
 const {
   mutate: setCostPerImpression,
   error: errorSetCostPerImpression,
-  isPending: loadingSetCostPerImpression,
-  data: hashSetCostPerImpression
-} = useWriteContract()
-
-const { isLoading: isConfirmingSetCostPerImpression, isSuccess: isConfirmedSetCostPerImpression } =
-  useWaitForTransactionReceipt({
-    hash: hashSetCostPerImpression
-  })
-
-watch(isConfirmingSetCostPerImpression, async (isConfirming, wasConfirming) => {
-  if (wasConfirming && !isConfirming && isConfirmedSetCostPerImpression.value) {
-    pendingTransactions.value--
-    toast.add({ title: 'Cost per impression updated successfully', color: 'success' })
-    originalCostPerImpression.value = getOriginalValue('costPerImpression')
-    if (pendingTransactions.value === 0) emit('closeContractDataDialog')
-  }
+  isPending: loadingSetCostPerImpression
+} = useContractWritesV3({
+  contractAddress,
+  abi: AD_CAMPAIGN_MANAGER_ABI,
+  functionName: 'setCostPerImpression'
 })
 
 watch(errorSetCostPerClick, () => {
@@ -186,12 +169,17 @@ async function submit() {
           return
         }
         pendingTransactions.value++
-        setCostPerClick({
-          address: props.contractAddress as `0x${string}`,
-          abi: AD_CAMPAIGN_MANAGER_ABI,
-          functionName: 'setCostPerClick',
-          args: [parseUnits(String(costPerClick), 18)]
-        })
+        setCostPerClick(
+          { args: [parseUnits(String(costPerClick), 18)] },
+          {
+            onSuccess: () => {
+              pendingTransactions.value--
+              toast.add({ title: 'Cost per click updated successfully', color: 'success' })
+              originalCostPerClick.value = getOriginalValue('costPerClick')
+              if (pendingTransactions.value === 0) emit('closeContractDataDialog')
+            }
+          }
+        )
       }
       if (originalCostPerImpression.value != parseFloat(costPerImpression)) {
         if (parseFloat(costPerImpression) <= 0) {
@@ -199,12 +187,17 @@ async function submit() {
           return
         }
         pendingTransactions.value++
-        setCostPerImpression({
-          address: props.contractAddress as `0x${string}`,
-          abi: AD_CAMPAIGN_MANAGER_ABI,
-          functionName: 'setCostPerImpression',
-          args: [parseUnits(String(costPerImpression), 18)]
-        })
+        setCostPerImpression(
+          { args: [parseUnits(String(costPerImpression), 18)] },
+          {
+            onSuccess: () => {
+              pendingTransactions.value--
+              toast.add({ title: 'Cost per impression updated successfully', color: 'success' })
+              originalCostPerImpression.value = getOriginalValue('costPerImpression')
+              if (pendingTransactions.value === 0) emit('closeContractDataDialog')
+            }
+          }
+        )
       }
     }
   } catch (error) {

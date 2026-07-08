@@ -4,6 +4,7 @@ import type {
   RevertMessageResolver
 } from './errorCatalogs.types'
 import { resolveFromCatalog } from './errorCatalogs.types'
+import { FIXED_RETURN_ERRORS } from './fixedReturnErrorCatalog'
 
 export type {
   ContractErrorCatalog,
@@ -39,14 +40,6 @@ const insufficientBalanceRequiredAvailable: RevertMessageResolver = (args) => {
 const insufficientContractBalance: RevertMessageResolver = (args) => {
   const [required, available] = args ?? []
   return `Insufficient contract balance — needs ${required}, only ${available}`
-}
-const insufficientAllowance: RevertMessageResolver = (args) => {
-  const [required, actual] = args ?? []
-  return `Not enough token allowance — needs ${required}, only ${actual}`
-}
-const insufficientBalanceRequiredActual: RevertMessageResolver = (args) => {
-  const [required, actual] = args ?? []
-  return `Insufficient token balance — needs ${required}, only ${actual}`
 }
 const insufficientFundedTokenBalance: RevertMessageResolver = (args) => {
   const [, required, available] = args ?? []
@@ -146,7 +139,8 @@ export const CONTRACT_ERRORS: ContractErrorCatalog = {
       InvalidFeeBps: 'Fee configuration is invalid',
       FeeCollectorNotConfigured: 'Fee collector is not configured',
       FeeTransferFailed: 'Fee transfer failed',
-      TransferFailed: 'Transfer failed'
+      TransferFailed: 'Transfer failed',
+      FixedReturnContractNotFound: 'FixedReturn contract could not be located'
     },
     AdCampaignManager: {
       NotAdminOrOwner: 'Caller is not an admin or the owner',
@@ -161,14 +155,14 @@ export const CONTRACT_ERRORS: ContractErrorCatalog = {
       NotAnAdmin: 'Address is not an admin'
     },
     Vesting: {
-      NotTeamOwner: 'Only the team owner can perform this action',
-      TeamAlreadyExists: 'Team already exists',
+      ZeroAddress: 'A required address was the zero address',
       CliffExceedsDuration: 'Cliff period exceeds the vesting duration',
-      VestingAlreadyExists: 'A vesting already exists for this member in this team',
-      InsufficientAllowance: insufficientAllowance,
-      InsufficientBalance: insufficientBalanceRequiredActual,
+      VestingAlreadyExists: 'A vesting already exists for this member',
       VestingNotActive: 'Vesting is not active',
-      NothingToRelease: 'Nothing to release'
+      NothingToRelease: 'Nothing to release',
+      OfficerAddressNotSet: 'Officer contract is not configured',
+      InvestorContractNotFound: 'Investor contract could not be located',
+      InsufficientMinterRole: 'Vesting is missing minter role on the investor token'
     },
     InvestorV1: {
       NotBank: 'Only the Bank contract can call this function',
@@ -279,7 +273,8 @@ export const CONTRACT_ERRORS: ContractErrorCatalog = {
         return `Missing initializer data for ${contractType ?? 'contract'}`
       },
       NotOwnerOrInitializing: 'Caller is not an owner and contract is not initializing'
-    }
+    },
+    FixedReturn: FIXED_RETURN_ERRORS
   },
   fallbacks: {
     CashRemuneration: 'Withdraw failed',
@@ -297,6 +292,7 @@ export const CONTRACT_ERRORS: ContractErrorCatalog = {
     Voting: 'Voting action failed',
     BoardOfDirectors: 'Board of directors action failed',
     Officer: 'Officer action failed',
+    FixedReturn: 'Fixed return action failed',
     default: 'Transaction failed'
   }
 }

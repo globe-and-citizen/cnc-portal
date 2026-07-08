@@ -3,6 +3,7 @@ import { mount } from '@vue/test-utils'
 import { createRouter, createMemoryHistory } from 'vue-router'
 import { nextTick } from 'vue'
 import SidebarLayout from '@/components/ui/SidebarLayout.vue'
+import { useUserDataStore } from '@/stores/user'
 
 describe('SidebarLayout.vue', () => {
   let router: ReturnType<typeof createRouter>
@@ -78,6 +79,51 @@ describe('SidebarLayout.vue', () => {
           path: '/teams/:id/vesting',
           name: 'vesting',
           component: { template: '<div>Vesting</div>' }
+        },
+        {
+          path: '/teams/:id/accounting',
+          name: 'accounting',
+          component: { template: '<div>Accounting</div>' }
+        },
+        {
+          path: '/teams/:id/accounting/summary',
+          name: 'accounting-summary',
+          component: { template: '<div>Summary</div>' }
+        },
+        {
+          path: '/teams/:id/accounting/income',
+          name: 'accounting-income',
+          component: { template: '<div>Income Statement</div>' }
+        },
+        {
+          path: '/teams/:id/accounting/balance',
+          name: 'accounting-balance',
+          component: { template: '<div>Balance Sheet</div>' }
+        },
+        {
+          path: '/teams/:id/accounting/trial',
+          name: 'accounting-trial',
+          component: { template: '<div>Trial Balance</div>' }
+        },
+        {
+          path: '/teams/:id/accounting/ledger',
+          name: 'accounting-ledger',
+          component: { template: '<div>General Ledger</div>' }
+        },
+        {
+          path: '/teams/:id/debt-financing/fixed-return',
+          name: 'fixed-return',
+          component: { template: '<div>Fixed Return</div>' }
+        },
+        {
+          path: '/teams/:id/debt-financing/lender-marketplace',
+          name: 'lender-marketplace',
+          component: { template: '<div>Lender Marketplace</div>' }
+        },
+        {
+          path: '/teams/:id/community-credit',
+          name: 'community-credit',
+          component: { template: '<div>Community Credit</div>' }
         }
       ]
     })
@@ -149,11 +195,55 @@ describe('SidebarLayout.vue', () => {
 
     const userCard = wrapper.find('[data-test="edit-user-card"]')
     expect(userCard.exists()).toBe(true)
-    expect((wrapper.vm as { open: boolean }).open).toBe(false)
+    // Modal body hidden until `open` becomes true (UModal stub respects `open` prop)
+    expect(wrapper.find('[data-test="modal-body"]').exists()).toBe(false)
 
     await userCard.trigger('click')
     await nextTick()
 
-    expect((wrapper.vm as { open: boolean }).open).toBe(true)
+    expect(wrapper.find('[data-test="modal-body"]').exists()).toBe(true)
+  })
+
+  it('falls back to default avatar and name when user store is empty', async () => {
+    vi.mocked(useUserDataStore).mockReturnValueOnce({
+      address: '0xUSER',
+      name: '',
+      imageUrl: '',
+      isAuth: false
+    } as never)
+
+    await router.push('/teams/1')
+    await router.isReady()
+
+    const wrapper = mount(SidebarLayout, {
+      global: {
+        stubs: {
+          UDashboardSidebar: {
+            template: `
+              <div>
+                <slot name="header" :collapsed="false" />
+                <slot name="default" :collapsed="false" />
+                <slot name="footer" :collapsed="false" />
+              </div>
+            `,
+            props: ['collapsible', 'resizable', 'class', 'ui']
+          },
+          UNavigationMenu: true,
+          UModal: {
+            template: `<div><slot /></div>`,
+            props: ['open', 'title', 'description'],
+            emits: ['update:open']
+          },
+          EditUserForm: true
+        },
+        plugins: [router]
+      }
+    })
+
+    const avatarImg = wrapper.find('img[alt="User Avatar"]')
+    expect(avatarImg.attributes('src')).toContain('img.daisyui.com')
+
+    const userName = wrapper.find('[data-test="user-name"]')
+    expect(userName.text()).toBe('User')
   })
 })

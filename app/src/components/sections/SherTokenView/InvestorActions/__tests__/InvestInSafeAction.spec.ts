@@ -18,6 +18,8 @@ describe('InvestInSafeAction', () => {
               '<button data-test="invest-in-safe-button" :disabled="disabled" @click="$emit(\'click\')">Invest</button>'
           },
           SafeDepositRouterForm: {
+            name: 'SafeDepositRouterForm',
+            emits: ['close-modal'],
             template: '<div data-test="safe-deposit-router-form" />'
           }
         }
@@ -47,7 +49,7 @@ describe('InvestInSafeAction', () => {
     expect(
       wrapper.find('[data-test="invest-in-safe-button"]').attributes('disabled')
     ).toBeUndefined()
-    expect(wrapper.attributes('data-tip')).toBeUndefined()
+    expect(wrapper.findComponent({ name: 'UTooltip' }).props('text')).toBeUndefined()
   })
 
   it('disables button and shows tooltip when deposits are disabled', () => {
@@ -55,7 +57,9 @@ describe('InvestInSafeAction', () => {
     const wrapper = createWrapper()
 
     expect(wrapper.find('[data-test="invest-in-safe-button"]').attributes('disabled')).toBeDefined()
-    expect(wrapper.attributes('data-tip')).toBe('SHER compensation deposits are not available')
+    expect(wrapper.findComponent({ name: 'UTooltip' }).props('text')).toBe(
+      'SHER compensation deposits are not available'
+    )
   })
 
   it('disables button while loading', () => {
@@ -103,14 +107,13 @@ describe('InvestInSafeAction', () => {
     expect(wrapper.find('[data-test="safe-deposit-router-form"]').exists()).toBe(false)
   })
 
-  it('closeModal method hides modal content', async () => {
+  it('SafeDepositRouterForm close-modal event hides modal content', async () => {
     const wrapper = createWrapper()
-    const vm = wrapper.vm as unknown as { closeModal: () => void }
 
     await wrapper.find('[data-test="invest-in-safe-button"]').trigger('click')
     await nextTick()
 
-    vm.closeModal()
+    await wrapper.findComponent({ name: 'SafeDepositRouterForm' }).vm.$emit('close-modal')
     await nextTick()
 
     expect(wrapper.find('[data-test="safe-deposit-router-form"]').exists()).toBe(false)

@@ -1,28 +1,31 @@
 import { mount, flushPromises } from '@vue/test-utils'
-//import type { ComponentPublicInstance } from 'vue'
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import TeamContractsDetail from '@/components/sections/ContractManagementView/TeamContractsDetail.vue'
-import { AD_CAMPAIGN_MANAGER_ABI } from '@/artifacts/abi/ad-campaign-manager'
-
 import { ref } from 'vue'
-import { useWriteContractFn, useWaitForTransactionReceiptFn } from '@/tests/mocks'
 
-const setCostPerClickMock = vi.fn().mockResolvedValue({ status: 1 })
-const setCostPerImpressionMock = vi.fn().mockResolvedValue({ status: 1 })
+const setCostPerClickMock = vi.fn()
+const setCostPerImpressionMock = vi.fn()
 export const mockErrorSetCostPerClick = ref<Error | null>(null)
 export const mockErrorSetCostPerImpression = ref<Error | null>(null)
+const isPendingSetCostPerClick = ref(false)
+const isPendingSetCostPerImpression = ref(false)
 
-const mockUseWaitForTransactionReceipt = {
-  data: ref({ contractAddress: '0xDEADBEEF' }),
-  isSuccess: ref(true),
-  isLoading: ref(false)
-}
-
-//mock wagmi vue (handled globally via useWriteContractFn / useWaitForTransactionReceiptFn)
-
-vi.mock('@/services/AddCampaignService', () => ({
-  AddCampaignService: vi.fn().mockImplementation(() => ({}))
+vi.mock('@/composables/contracts/useContractWritesV3', () => ({
+  useContractWritesV3: vi.fn(({ functionName }: { functionName: string }) => {
+    if (functionName === 'setCostPerClick') {
+      return {
+        mutate: setCostPerClickMock,
+        error: mockErrorSetCostPerClick,
+        isPending: isPendingSetCostPerClick
+      }
+    }
+    return {
+      mutate: setCostPerImpressionMock,
+      error: mockErrorSetCostPerImpression,
+      isPending: isPendingSetCostPerImpression
+    }
+  })
 }))
 
 describe('TeamContractsDetail.vue', () => {
@@ -42,26 +45,12 @@ describe('TeamContractsDetail.vue', () => {
   }
 
   beforeEach(() => {
-    const pinia = createPinia()
-    setActivePinia(pinia)
+    setActivePinia(createPinia())
     vi.clearAllMocks()
-    mockUseWaitForTransactionReceipt.data.value = { contractAddress: '0xDEADBEEF' }
-    mockUseWaitForTransactionReceipt.isSuccess.value = true
-    mockUseWaitForTransactionReceipt.isLoading.value = false
-    useWriteContractFn
-      .mockReturnValueOnce({
-        mutate: setCostPerClickMock,
-        error: mockErrorSetCostPerClick,
-        isPending: ref(false),
-        data: ref(null)
-      })
-      .mockReturnValueOnce({
-        mutate: setCostPerImpressionMock,
-        error: mockErrorSetCostPerImpression,
-        isPending: ref(false),
-        data: ref(null)
-      })
-    useWaitForTransactionReceiptFn.mockReturnValue(mockUseWaitForTransactionReceipt)
+    mockErrorSetCostPerClick.value = null
+    mockErrorSetCostPerImpression.value = null
+    isPendingSetCostPerClick.value = false
+    isPendingSetCostPerImpression.value = false
   })
 
   it('renders table headers and  rows correctly based on key types', () => {
@@ -111,73 +100,6 @@ describe('TeamContractsDetail.vue', () => {
     expect(setCostPerImpressionMock).toHaveBeenCalled()
   })
 
-  it.skip('renders table rows based on props', async () => {
-    const wrapper = mount(TeamContractsDetail, {
-      props: {
-        datas: testData,
-        contractAddress,
-        reset: true
-      }
-    })
-
-    await flushPromises()
-
-    const rows = wrapper.findAll('[data-test$="-row"]')
-    expect(rows.length).toBe(testData.length)
-
-    const firstRow = rows[0]
-    expect(firstRow.find('td:nth-child(2)').text()).toBe('costPerClick')
-    const firstInput = firstRow.find('input')
-    expect(firstInput.element.value).toBe('0.1')
-
-    const secondRow = rows[1]
-    expect(secondRow.find('td:nth-child(2)').text()).toBe('costPerImpression')
-    const secondInput = secondRow.find('input')
-    expect(secondInput.element.value).toBe('0.5')
-  })
-
-  it.skip('renders table rows correctly for valid, empty, and null data', async () => {
-    //  Valid rows
-    const wrapperValid = mount(TeamContractsDetail, {
-      props: {
-        datas: [
-          { key: 'costPerClick', value: '0.1' },
-          { key: 'costPerImpression', value: '0.5' }
-        ],
-        contractAddress,
-        reset: true
-      }
-    })
-    await flushPromises()
-
-    const rowsValid = wrapperValid.findAll('[data-test$="-row"]')
-    expect(rowsValid.length).toBe(2)
-    expect(rowsValid[0].text()).toContain('costPerClick')
-    expect(rowsValid[1].text()).toContain('costPerImpression')
-
-    //  Empty rows
-    const wrapperEmpty = mount(TeamContractsDetail, {
-      props: {
-        datas: [],
-        contractAddress,
-        reset: true
-      }
-    })
-    await flushPromises()
-    expect(wrapperEmpty.find('[data-test="empty-state"]').exists()).toBe(true)
-
-    //  "Null" rows simulated with empty array (safe fallback)
-    const wrapperNull = mount(TeamContractsDetail, {
-      props: {
-        datas: [], // instead of null
-        contractAddress,
-        reset: true
-      }
-    })
-    await flushPromises()
-    expect(wrapperNull.find('[data-test="empty-state"]').exists()).toBe(true)
-  })
-
   it('calls setCostPerClick and setCostPerImpression when save button is clicked with changed values', async () => {
     const cloned = getClonedTestData()
 
@@ -207,18 +129,14 @@ describe('TeamContractsDetail.vue', () => {
     // Wait for Vue to process updates
     await flushPromises()
     // Check that the correct functions were called
-    expect(setCostPerClickMock).toHaveBeenCalledWith({
-      address: contractAddress,
-      abi: AD_CAMPAIGN_MANAGER_ABI,
-      functionName: 'setCostPerClick',
-      args: [200000000000000000n]
-    })
-    expect(setCostPerImpressionMock).toHaveBeenCalledWith({
-      address: contractAddress,
-      abi: AD_CAMPAIGN_MANAGER_ABI,
-      functionName: 'setCostPerImpression',
-      args: [400000000000000000n]
-    })
+    expect(setCostPerClickMock).toHaveBeenCalledWith(
+      { args: [200000000000000000n] },
+      expect.any(Object)
+    )
+    expect(setCostPerImpressionMock).toHaveBeenCalledWith(
+      { args: [400000000000000000n] },
+      expect.any(Object)
+    )
     // expect(setCostPerClickMock).toHaveBeenCalledWith(contractAddress, '0.2')
     // expect(setCostPerImpressionMock).toHaveBeenCalledWith(contractAddress, '0.4')
   })

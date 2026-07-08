@@ -1,11 +1,38 @@
+import dayjs from 'dayjs';
+import isoWeek from 'dayjs/plugin/isoWeek';
+import utc from 'dayjs/plugin/utc';
 import { Request, Response } from 'express';
 import { errorResponse, getMondayStart, prisma } from '../utils';
 import { Prisma } from '@prisma/client';
-import { Hex, isAddress, isHex, keccak256 } from 'viem';
+import { Address, Hex, isAddress, isHex, keccak256, recoverTypedDataAddress } from 'viem';
 import CASH_REMUNERATION_ABI from '../artifacts/cash_remuneration_eip712_abi.json';
-import { isCashRemunerationOwner } from '../utils/cashRemunerationUtil';
+import {
+  getCurrentCashRemunerationContract,
+  isCashRemunerationOwner,
+} from '../utils/cashRemunerationUtil';
 import publicClient from '../utils/viem.config';
 import { refreshAttachmentUrls } from '../services/attachmentService';
+import { resolveStorageImageUrl } from '../utils/profileImage.util';
+
+// EIP-712 typed-data envelope for the WageClaim signature, mirroring the
+// frontend definition in app/src/components/sections/CashRemunerationView/
+// CRSigne.vue. Mirrored (not imported) so a future tweak to the frontend
+// types triggers a backend change as well — that's the failure mode we want.
+const WAGE_CLAIM_TYPES = {
+  Wage: [
+    { name: 'hourlyRate', type: 'uint256' },
+    { name: 'tokenAddress', type: 'address' },
+  ],
+  WageClaim: [
+    { name: 'employeeAddress', type: 'address' },
+    { name: 'minutesWorked', type: 'uint16' },
+    { name: 'wages', type: 'Wage[]' },
+    { name: 'date', type: 'uint256' },
+  ],
+} as const;
+
+dayjs.extend(utc);
+dayjs.extend(isoWeek);
 
 export type WeeklyClaimAction = 'sign' | 'withdraw' | 'disable' | 'enable';
 type statusType = 'pending' | 'signed' | 'withdrawn' | 'disabled';
@@ -20,13 +47,38 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
   const callerAddress = req.address;
   const id = Number(req.params.id);
   const action = req.query.action as WeeklyClaimAction;
-  const { signature, contractAddress, chainId } = req.body;
+  const { signature, signedAgainstContractAddress, typedDataMessage, chainId } = req.body as {
+    signature?: string;
+    signedAgainstContractAddress?: string;
+    typedDataMessage?: {
+      employeeAddress: string;
+      minutesWorked: number;
+      date: string;
+      wages: { hourlyRate: string; tokenAddress: string }[];
+    };
+    chainId?: number;
+  };
 
-  // Format-level checks (action enum, id, signature hex format, contractAddress,
-  // chainId) are enforced by the route-level Zod middleware. Here we only assert
-  // the cross-field business rule that depends on the query action.
-  if (action === 'sign' && !signature) {
-    return errorResponse(400, 'Missing signature for sign action', res);
+  // Format-level checks (action enum, id, signature hex format, addresses and
+  // chainId shape) are enforced by the route-level Zod middleware. Here we
+  // assert cross-field business rules that depend on the query action.
+  const errors: string[] = [];
+  if (action == 'sign') {
+    if (!signature || !isHex(signature)) errors.push('Missing or invalid signature');
+    // signedAgainstContractAddress + typedDataMessage + chainId are required
+    // for sign so the backend can authenticate the EIP-712 signature and
+    // tag the row with the verifying contract for stale-detection.
+    if (!signedAgainstContractAddress || !isAddress(signedAgainstContractAddress))
+      errors.push('Missing or invalid signedAgainstContractAddress');
+    if (!typedDataMessage) errors.push('Missing typedDataMessage');
+    if (!chainId || !Number.isInteger(chainId) || chainId <= 0)
+      errors.push('Missing or invalid chainId');
+  }
+
+  if (!id || isNaN(id)) errors.push('Missing or invalid id');
+
+  if (errors.length > 0) {
+    return errorResponse(400, errors.join('; '), res);
   }
 
   let data: Prisma.WeeklyClaimUpdateInput = {};
@@ -146,6 +198,69 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
           }
         }
 
+        // The signed-against contract must be the team's current
+        // CashRemunerationEIP712 — the one governed by the current Officer
+        // (linked-list head). Scoping via the helper rather than an
+        // unscoped findFirst is required because after an Officer redeploy
+        // the team has multiple TeamContract rows of this type and we
+        // would otherwise non-deterministically pick an archived one.
+        // `isCashRemunerationOwner` reads from the same helper, so the
+        // owner check above and this contract-match check are guaranteed
+        // to be looking at the same generation of the contract.
+        const currentCashRemunerationContract = await getCurrentCashRemunerationContract(
+          weeklyClaim.wage.team.id
+        );
+        if (
+          !currentCashRemunerationContract ||
+          currentCashRemunerationContract.address.toLowerCase() !==
+            (signedAgainstContractAddress as string).toLowerCase()
+        ) {
+          signErrors.push(
+            'signedAgainstContractAddress does not match the team current CashRemunerationEIP712'
+          );
+        }
+
+        // Authenticate the EIP-712 signature: rebuild the typed-data envelope
+        // from the body and recover the signer. Reject if it isn't the caller.
+        // viem's recoverTypedDataAddress handles the EIP-712 hash + ECDSA
+        // recovery; the bigint-coerced fields (`date`, `hourlyRate`) come back
+        // as strings on the wire.
+        let recovered: Address | null = null;
+        if (signErrors.length === 0) {
+          try {
+            recovered = await recoverTypedDataAddress({
+              domain: {
+                name: 'CashRemuneration',
+                version: '1',
+                chainId: chainId as number,
+                verifyingContract: signedAgainstContractAddress as Address,
+              },
+              types: WAGE_CLAIM_TYPES,
+              primaryType: 'WageClaim',
+              message: {
+                employeeAddress: typedDataMessage!.employeeAddress as Address,
+                minutesWorked: typedDataMessage!.minutesWorked,
+                wages: typedDataMessage!.wages.map((w) => ({
+                  hourlyRate: BigInt(w.hourlyRate),
+                  tokenAddress: w.tokenAddress as Address,
+                })),
+                date: BigInt(typedDataMessage!.date),
+              },
+              signature: signature as Hex,
+            });
+          } catch (err) {
+            console.error('Failed to recover signer for weeklyClaim sign:', err);
+            signErrors.push('Failed to verify signature');
+          }
+        }
+
+        if (
+          signErrors.length === 0 &&
+          (!recovered || recovered.toLowerCase() !== callerAddress.toLowerCase())
+        ) {
+          signErrors.push('Recovered signer does not match the caller');
+        }
+
         if (signErrors.length > 0) return errorResponse(400, signErrors.join('; '), res);
 
         data = {
@@ -153,9 +268,10 @@ export const updateWeeklyClaims = async (req: Request, res: Response) => {
           status: 'signed',
           data: {
             ownerAddress: callerAddress,
-            ...(contractAddress ? { contractAddress } : {}),
+            contractAddress: signedAgainstContractAddress,
             ...(chainId ? { chainId } : {}),
           },
+          signedAgainstContractAddress,
         };
         // singleClaimStatus = "signed";
         break;
@@ -235,48 +351,86 @@ export const getTeamWeeklyClaims = async (req: Request, res: Response) => {
     }
   }
 
+  // Pagination is opt-in: when neither `page` nor `limit` is provided the
+  // controller returns the full set so callers that need every row (e.g. the
+  // claim-history week navigator and the overview cards that aggregate
+  // totals) keep working without change. The Company Payroll table passes
+  // page+limit and gets back a paginated slice. The response shape is
+  // identical in both cases — { data, total } — so clients never have to
+  // discriminate on the response.
+  // Zod (validateQuery) has already coerced and bounded these:
+  // page is undefined or an integer >= 1; limit is undefined or in [1, 100].
+  const queryPage = req.query.page as number | undefined;
+  const queryLimit = req.query.limit as number | undefined;
+  const hasPaginationParams = queryPage !== undefined || queryLimit !== undefined;
+  const page = queryPage ?? 1;
+  const limit = queryLimit ?? 10;
+
   try {
     // authz enforced by requireTeamMember middleware
-    console.log({ teamId, ...memberAddressFilter, ...statusFilter });
+    const where: Prisma.WeeklyClaimWhereInput = {
+      teamId,
+      ...memberAddressFilter,
+      ...statusFilter,
+    };
 
     // Filter directly on WeeklyClaim team/member to avoid leaking other members' records.
-    const weeklyClaims = await prisma.weeklyClaim.findMany({
-      where: {
-        teamId,
-        ...memberAddressFilter,
-        ...statusFilter,
-      },
-      include: {
-        wage: true,
-        claims: {
-          where: {
-            wage: {
-              teamId,
-              ...(filterAddress
-                ? {
-                    userAddress: {
-                      equals: filterAddress,
-                      mode: 'insensitive',
-                    },
-                  }
-                : {}),
+    const [weeklyClaims, total] = await Promise.all([
+      prisma.weeklyClaim.findMany({
+        where,
+        include: {
+          wage: true,
+          claims: {
+            where: {
+              wage: {
+                teamId,
+                ...(filterAddress
+                  ? {
+                      userAddress: {
+                        equals: filterAddress,
+                        mode: 'insensitive',
+                      },
+                    }
+                  : {}),
+              },
+            },
+          },
+          member: {
+            select: {
+              address: true,
+              name: true,
+              imageUrl: true,
             },
           },
         },
-        member: {
-          select: {
-            address: true,
-            name: true,
-            imageUrl: true,
-          },
-        },
-      },
-      orderBy: { weekStart: 'asc' },
-    });
+        orderBy: { weekStart: 'desc' },
+        ...(hasPaginationParams ? { skip: (page - 1) * limit, take: limit } : {}),
+      }),
+      prisma.weeklyClaim.count({ where }),
+    ]);
+
+    // Dedupe presigned-URL lookups: the same member often appears on many
+    // rows (e.g. a single user's claim history), so cache the resolved URL
+    // per address to avoid re-signing the same avatar N times per response.
+    const memberImageUrlCache = new Map<string, Promise<string | null | undefined>>();
+    const resolveMemberImageUrl = (address: string, imageUrl: string | null | undefined) => {
+      let cached = memberImageUrlCache.get(address);
+      if (!cached) {
+        cached = resolveStorageImageUrl(imageUrl);
+        memberImageUrlCache.set(address, cached);
+      }
+      return cached;
+    };
 
     const weeklyClaimsWithFreshAttachmentUrls = await Promise.all(
       weeklyClaims.map(async (wc) => ({
         ...wc,
+        member: wc.member
+          ? {
+              ...wc.member,
+              imageUrl: await resolveMemberImageUrl(wc.member.address, wc.member.imageUrl),
+            }
+          : wc.member,
         claims: await Promise.all(
           wc.claims.map(async (claim) => ({
             ...claim,
@@ -298,7 +452,7 @@ export const getTeamWeeklyClaims = async (req: Request, res: Response) => {
       };
     });
 
-    return res.status(200).json(weeklyClaimsWithMinutes);
+    return res.status(200).json({ data: weeklyClaimsWithMinutes, total });
   } catch (error) {
     console.error(error);
     return errorResponse(500, 'Internal Server Error', res);
@@ -309,13 +463,10 @@ export const syncWeeklyClaims = async (req: Request, res: Response) => {
   const teamId = Number(req.query.teamId);
 
   try {
-    // authz enforced by requireTeamMember middleware
-    const teamContract = await prisma.teamContract.findFirst({
-      where: {
-        teamId,
-        type: 'CashRemunerationEIP712',
-      },
-    });
+    // authz enforced by requireTeamMember middleware. Scope to the current
+    // Officer so a redeployed team syncs against its live contract, not an
+    // archived one (multiple rows of the same type exist post-redeploy).
+    const teamContract = await getCurrentCashRemunerationContract(teamId);
 
     if (!teamContract || !teamContract.address || !isAddress(teamContract.address)) {
       return errorResponse(404, 'Cash Remuneration contract not found for the team', res);
@@ -332,6 +483,7 @@ export const syncWeeklyClaims = async (req: Request, res: Response) => {
         id: true,
         status: true,
         signature: true,
+        signedAgainstContractAddress: true,
       },
     });
 
@@ -347,9 +499,34 @@ export const syncWeeklyClaims = async (req: Request, res: Response) => {
     const updatedClaims: Array<{ id: number; previousStatus: string; newStatus: string }> = [];
     const skippedClaims: Array<{ id: number; reason: string }> = [];
 
+    const currentContractAddress = teamContract.address.toLowerCase();
+
     for (const claim of weeklyClaims) {
       if (!claim.signature || !isHex(claim.signature)) {
         skippedClaims.push({ id: claim.id, reason: 'Missing or invalid signature' });
+        continue;
+      }
+
+      // If the claim was signed against a previous CashRemuneration contract
+      // (Officer redeploy), the live contract has no record of it. Reset to
+      // pending and clear signature artifacts so the user re-signs against
+      // the current contract.
+      const signedAgainst = claim.signedAgainstContractAddress?.toLowerCase();
+      if (!signedAgainst || signedAgainst !== currentContractAddress) {
+        await prisma.weeklyClaim.update({
+          where: { id: claim.id },
+          data: {
+            status: 'pending',
+            signature: null,
+            signedAgainstContractAddress: null,
+            data: Prisma.JsonNull,
+          },
+        });
+        updatedClaims.push({
+          id: claim.id,
+          previousStatus: claim.status ?? 'unknown',
+          newStatus: 'pending',
+        });
         continue;
       }
 
@@ -399,6 +576,88 @@ export const syncWeeklyClaims = async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('Error syncing weekly claims:', error);
+    return errorResponse(500, error, res);
+  }
+};
+
+/**
+ * Upsert the member's weekly goals memo (free-form Markdown) for a given ISO
+ * week. Exactly one memo exists per weekly claim ([wageId, weekStart]). The
+ * caller can only set their own goals — `req.address` is the member address.
+ *
+ * The memo is decoupled from daily claims: submitting goals for a week that has
+ * no claims yet creates a claim-less WeeklyClaim row (status `pending`), so a
+ * member can plan the week before logging any hours. Once the week is signed /
+ * withdrawn / disabled the memo is locked, mirroring the addClaim guards.
+ */
+export const submitWeeklyGoals = async (req: Request, res: Response) => {
+  const callerAddress = req.address;
+  const {
+    teamId,
+    weekStart: weekStartInput,
+    weeklyGoals,
+  } = req.body as {
+    teamId: number;
+    weekStart: string;
+    weeklyGoals: string;
+  };
+
+  // Normalize to Monday 00:00 UTC the same way addClaim does, so the row lines
+  // up with the [wageId, weekStart] uniqueness used by daily claims.
+  const weekStart = dayjs.utc(weekStartInput).startOf('isoWeek').toDate();
+
+  try {
+    // A WeeklyClaim requires a wageId, so the member needs a current wage
+    // before any goals can be recorded (mirrors addClaim).
+    const wage = await prisma.wage.findFirst({
+      where: { userAddress: callerAddress, nextWageId: null, teamId },
+    });
+
+    if (!wage) {
+      return errorResponse(400, 'No wage found for the user', res);
+    }
+
+    const existing = await prisma.weeklyClaim.findFirst({
+      where: {
+        wage: { teamId, nextWageId: null },
+        weekStart,
+        memberAddress: callerAddress,
+        teamId,
+      },
+    });
+
+    if (existing) {
+      if (existing.status === 'disabled') {
+        return errorResponse(409, 'Week is disabled. Submission not allowed.', res);
+      }
+      if (existing.status === 'withdrawn') {
+        return errorResponse(409, 'Week already withdrawn. Submission not allowed.', res);
+      }
+      if (existing.status === 'signed' || !!existing.signature) {
+        return errorResponse(409, 'Week already signed. Submission not allowed.', res);
+      }
+
+      const updated = await prisma.weeklyClaim.update({
+        where: { id: existing.id },
+        data: { weeklyGoals },
+      });
+      return res.status(200).json(updated);
+    }
+
+    const created = await prisma.weeklyClaim.create({
+      data: {
+        wageId: wage.id,
+        weekStart,
+        memberAddress: callerAddress,
+        teamId,
+        data: {},
+        status: 'pending',
+        weeklyGoals,
+      },
+    });
+
+    return res.status(200).json(created);
+  } catch (error) {
     return errorResponse(500, error, res);
   }
 };

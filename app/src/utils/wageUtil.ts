@@ -1,7 +1,13 @@
-import type { RatePerHour, RatePerHourWithEnabled, WeeklyClaim } from '@/types'
+import type {
+  RatePerHour,
+  RatePerHourWithEnabled,
+  SupportedTokens,
+  Wage,
+  WeeklyClaim
+} from '@/types'
 import { parseEther, parseUnits, type Address } from 'viem'
 
-export const requiredRateTypes: RatePerHour['type'][] = ['native', 'usdc', 'sher']
+const requiredRateTypes: RatePerHour['type'][] = ['native', 'usdc', 'sher']
 
 export const formatMinutesAsDuration = (totalMinutes: number): string => {
   const h = Math.floor(totalMinutes / 60)
@@ -35,7 +41,7 @@ export interface ClaimRateWithTotals {
   totalAmount: bigint
 }
 
-export interface WageClaimPayload {
+interface WageClaimPayload {
   minutesWorked: number
   employeeAddress: Address
   date: bigint
@@ -49,7 +55,7 @@ const parseRateAmount = (amount: number, type: RatePerHour['type']) => {
   return type === 'native' ? parseEther(`${amount}`) : parseUnits(`${amount}`, 6)
 }
 
-export const getRegularAndOvertimeHours = (
+const getRegularAndOvertimeHours = (
   totalMinutesWorked: number,
   maximumHoursPerWeek?: number | null
 ) => {
@@ -111,6 +117,52 @@ export const buildClaimRatesWithOvertime = ({
       totalAmount
     }
   })
+}
+
+/**
+ * Splits total minutes worked into regular vs overtime minutes for a given wage.
+ * Overtime only applies when the wage actually defines an overtime rate; otherwise
+ * every minute is treated as regular time.
+ */
+export const splitClaimMinutes = (
+  totalMinutesWorked: number,
+  wage?: Pick<Wage, 'overtimeRatePerHour' | 'maximumHoursPerWeek'> | null
+) => {
+  const hasOvertime =
+    Array.isArray(wage?.overtimeRatePerHour) && (wage?.overtimeRatePerHour.length ?? 0) > 0
+  return getRegularAndOvertimeHours(
+    totalMinutesWorked,
+    hasOvertime ? wage?.maximumHoursPerWeek : null
+  )
+}
+
+/**
+ * Computes the per-token payout for a claim, combining regular and overtime pay:
+ * regularRate * regularHours + overtimeRate * overtimeHours.
+ *
+ * Shared by the company payroll table and the member payroll recap so both views
+ * agree on the total (see issue: company payroll ignored overtime).
+ */
+export const computeClaimTokenAmounts = (
+  totalMinutesWorked: number,
+  wage?: Pick<Wage, 'ratePerHour' | 'overtimeRatePerHour' | 'maximumHoursPerWeek'> | null
+): Array<{ type: SupportedTokens; amount: number }> => {
+  if (!wage) return []
+
+  const { regularMinutes, overtimeMinutes } = splitClaimMinutes(totalMinutesWorked, wage)
+  const result = new Map<SupportedTokens, number>()
+
+  for (const rate of wage.ratePerHour ?? []) {
+    result.set(rate.type, (result.get(rate.type) ?? 0) + (rate.amount * regularMinutes) / 60)
+  }
+
+  if (Array.isArray(wage.overtimeRatePerHour) && wage.overtimeRatePerHour.length > 0) {
+    for (const rate of wage.overtimeRatePerHour) {
+      result.set(rate.type, (result.get(rate.type) ?? 0) + (rate.amount * overtimeMinutes) / 60)
+    }
+  }
+
+  return Array.from(result.entries()).map(([type, amount]) => ({ type, amount }))
 }
 
 export const buildWageClaimPayload = ({

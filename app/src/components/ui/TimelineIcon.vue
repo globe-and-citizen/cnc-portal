@@ -7,11 +7,12 @@
     >
       <Icon icon="heroicons:check" class="h-4 w-4 text-white" />
     </div>
-    <div
+    <UIcon
       v-else-if="status === 'active'"
-      class="loading loading-spinner loading-md text-primary"
+      name="i-lucide-loader-circle"
+      class="text-primary h-6 w-6 animate-spin"
       data-test="timeline-icon-active"
-    ></div>
+    />
     <div
       v-else-if="status === 'error'"
       class="bg-error flex h-6 w-6 items-center justify-center rounded-full"

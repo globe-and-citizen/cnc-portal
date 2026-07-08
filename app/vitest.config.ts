@@ -7,6 +7,7 @@ import dotenv from 'dotenv'
 dotenv.config()
 process.env.TZ = 'UTC'
 const mockFiles = [
+  'axios',
   'store',
   'composables',
   'wagmi.vue',
@@ -18,12 +19,14 @@ const mockFiles = [
   'bod',
   'investor',
   'safeDepositRouter',
+  'vesting',
+  'fixedReturn',
   'nuxt-ui',
   'utils'
 ].map((name) => `./src/tests/setup/${name}.setup.ts`)
 
-export default defineConfig((env) =>
-  mergeConfig(viteConfig(env), {
+export default defineConfig(async (env) =>
+  mergeConfig(await viteConfig(env), {
     test: {
       setupFiles: mockFiles,
       environment: 'jsdom',

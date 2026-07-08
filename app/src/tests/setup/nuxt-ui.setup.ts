@@ -1,4 +1,4 @@
-import { config, mount as originalMount, VueWrapper } from '@vue/test-utils'
+import { config } from '@vue/test-utils'
 import { defineComponent, h } from 'vue'
 import type { Component } from 'vue'
 import { TooltipProvider } from 'reka-ui'
@@ -8,6 +8,7 @@ import {
   UCalendarStub,
   UDropdownStub,
   UIconStub,
+  UPopoverStub,
   USelectMenuStub
 } from '../stubs/nuxt-ui.stubs'
 
@@ -24,14 +25,20 @@ vi.mock('@nuxt/ui/components/Modal.vue', () => ({
       open: { type: Boolean, default: false },
       ui: Object,
       title: String,
-      description: String
+      description: String,
+      close: { type: [Boolean, Object], default: true }
     },
-    emits: ['update:open'],
+    emits: ['update:open', 'after:leave'],
     template: `
       <div>
         <slot />
         <div v-if="open">
-          <button data-test="close-wage-modal-button" @click="$emit('update:open', false)" />
+          <button
+            v-if="close"
+            data-test="close-wage-modal-button"
+            v-bind="typeof close === 'object' ? close : {}"
+            @click="$emit('update:open', false); $emit('after:leave')"
+          />
           <slot name="header" />
           <slot name="body" />
         </div>
@@ -76,6 +83,12 @@ vi.mock('@nuxt/ui/components/Calendar.vue', async () => {
   return { default: UCalendarStub }
 })
 
+// Popover vi.mock so content slot is consistently available in tests.
+vi.mock('@nuxt/ui/components/Popover.vue', async () => {
+  const { UPopoverStub } = await import('../stubs/nuxt-ui.stubs')
+  return { default: UPopoverStub }
+})
+
 // DropdownMenu vi.mock.
 vi.mock('@nuxt/ui/components/DropdownMenu.vue', async () => {
   const { UDropdownStub } = await import('../stubs/nuxt-ui.stubs')
@@ -99,7 +112,9 @@ config.global.stubs = {
   USelectMenu: USelectMenuStub,
   SelectMenu: USelectMenuStub,
   UCalendar: UCalendarStub,
-  Calendar: UCalendarStub
+  Calendar: UCalendarStub,
+  UPopover: UPopoverStub,
+  Popover: UPopoverStub
 }
 
 // ---------------------------------------------------------------------------
@@ -122,23 +137,6 @@ const GlobalTestWrapper = defineComponent({
     return () => h(TooltipProvider, {}, () => h(props.component, {}, slots.default))
   }
 })
-
-/**
- * Custom mount helper that automatically wraps components with necessary providers
- */
-export function mountWithProviders<T extends Component>(
-  component: T,
-  options: Record<string, unknown> = {}
-): VueWrapper<T> {
-  return originalMount(
-    {
-      setup() {
-        return () => h(TooltipProvider, {}, () => h(component))
-      }
-    },
-    options
-  ) as VueWrapper<T>
-}
 
 export { GlobalTestWrapper }
 

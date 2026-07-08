@@ -77,28 +77,38 @@
       </UFormField>
     </div>
 
-    <div class="modal-action">
+    <UAlert
+      v-if="errorMessage"
+      color="error"
+      variant="soft"
+      icon="i-lucide-circle-alert"
+      :description="errorMessage"
+      class="mt-2"
+      data-test="error-alert"
+    />
+
+    <div class="mt-6 flex justify-end gap-2">
       <UButton color="error" variant="outline" @click="emit('closeModal')" label="Cancel" />
-      <UButton
-        type="submit"
-        color="primary"
-        :loading="isCreatingProposal || isConfirmingProposal"
-        :disabled="isCreatingProposal || isConfirmingProposal"
-        data-test="create-proposal-button"
-        label="Create Proposal"
-      />
+      <UTooltip :text="archivedTooltip">
+        <UButton
+          type="submit"
+          color="primary"
+          :loading="isCreatingProposal"
+          :disabled="isCreatingProposal || isWriteDisabled"
+          data-test="create-proposal-button"
+          label="Create Proposal"
+        />
+      </UTooltip>
     </div>
   </UForm>
 </template>
 
 <script setup lang="ts">
 import { CalendarDate, getLocalTimeZone, today } from '@internationalized/date'
-import { reactive, ref, computed, watch } from 'vue'
+import { reactive, ref, computed } from 'vue'
 import { z } from 'zod'
-import { useWriteContract, useWaitForTransactionReceipt } from '@wagmi/vue'
-import { useTeamStore } from '@/stores'
-import { PROPOSALS_ABI } from '@/artifacts/abi/proposals'
-import { type Address } from 'viem'
+import { useProposalsCreateProposal } from '@/composables/proposals/writes'
+import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 import { formatDateMMDDYYYY, dateToCalendarDate, ensureFutureDate } from '@/utils/dayUtils'
 
 // 2 minutes buffer to ensure startDate is in the future when tx hits the chain
@@ -106,11 +116,11 @@ const MIN_START_DELAY_MS = 2 * 60 * 1000
 
 const emit = defineEmits(['closeModal', 'proposal-created'])
 
-const teamStore = useTeamStore()
 const toast = useToast()
 
 const startDateOpen = ref(false)
 const endDateOpen = ref(false)
+const errorMessage = ref('')
 
 const state = reactive({
   title: '',
@@ -125,8 +135,6 @@ const types = [
   { label: 'Technical', value: 'Technical' },
   { label: 'Operational', value: 'Operational' }
 ]
-
-const proposalsAddress = computed(() => teamStore.getContractAddressByType('Proposals') as Address)
 
 const schema = computed(() =>
   z.object({
@@ -154,27 +162,15 @@ const schema = computed(() =>
   })
 )
 
-const {
-  mutate: createProposal,
-  isPending: isCreatingProposal,
-  error: createError,
-  data: txHash
-} = useWriteContract()
-
-const {
-  isLoading: isConfirmingProposal,
-  isSuccess: isProposalCreated,
-  error: errorConfirmingProposal
-} = useWaitForTransactionReceipt({ hash: txHash })
+const { isWriteDisabled, archivedTooltip } = useTeamWriteGuard()
+const { mutate: createProposal, isPending: isCreatingProposal } = useProposalsCreateProposal()
 
 const dateToTimestamp = (date: Date): number => Math.floor(date.getTime() / 1000)
 
-const handleSubmit = async () => {
-  try {
-    createProposal({
-      address: proposalsAddress.value,
-      abi: PROPOSALS_ABI,
-      functionName: 'createProposal',
+const handleSubmit = () => {
+  errorMessage.value = ''
+  createProposal(
+    {
       args: [
         state.title,
         state.description,
@@ -182,27 +178,17 @@ const handleSubmit = async () => {
         BigInt(dateToTimestamp(state.startDate!)),
         BigInt(dateToTimestamp(state.endDate!))
       ]
-    })
-  } catch (error) {
-    console.error('Error creating proposal:', error)
-    toast.add({ title: 'Failed to create proposal', color: 'error' })
-  }
+    },
+    {
+      onSuccess: () => {
+        toast.add({ title: 'Proposal created successfully!', color: 'success' })
+        emit('proposal-created')
+      },
+      onError: (error) => {
+        console.error(error)
+        errorMessage.value = error.message || 'Failed to create proposal'
+      }
+    }
+  )
 }
-
-watch(isProposalCreated, (success) => {
-  if (success) {
-    toast.add({ title: 'Proposal created successfully!', color: 'success' })
-    emit('proposal-created')
-  }
-})
-
-watch(createError, (error) => {
-  if (!error) return
-  console.error(error)
-})
-
-watch(errorConfirmingProposal, (error) => {
-  if (!error) return
-  toast.add({ title: 'Failed to confirm proposal creation', color: 'error' })
-})
 </script>

@@ -1,9 +1,10 @@
 <template>
   <div class="flex flex-col gap-6">
-    <span
+    <UIcon
       v-if="teamStore.currentTeamMeta.isPending"
-      class="loading loading-spinner loading-lg"
-    ></span>
+      name="i-lucide-loader-circle"
+      class="text-primary h-10 w-10 animate-spin"
+    />
     <div
       v-if="!teamStore.currentTeamMeta.isPending && teamStore"
       class="flex w-full flex-col items-center gap-5"
@@ -13,13 +14,17 @@
           <div class="flex items-center justify-between">
             <span>Advertise Contract</span>
             <div>
-              <UButton
-                color="primary"
-                :disabled="teamStore.currentTeam?.ownerAddress != userStore.address"
-                data-test="createAddCampaign"
-                @click="showAdCampaignModal = { mount: true, show: true }"
-                label="Deploy Advertise Contract"
-              />
+              <TeamArchivedTooltip v-slot="{ disabled: archivedDisabled }">
+                <UButton
+                  color="primary"
+                  :disabled="
+                    teamStore.currentTeam?.ownerAddress != userStore.address || archivedDisabled
+                  "
+                  data-test="createAddCampaign"
+                  @click="openAdCampaignModal"
+                  label="Deploy Advertise Contract"
+                />
+              </TeamArchivedTooltip>
             </div>
           </div>
         </template>
@@ -47,9 +52,17 @@ import { useUserDataStore } from '@/stores/user'
 import { useTeamStore } from '@/stores'
 
 import CreateAddCampaign from '@/components/sections/ContractManagementView/forms/CreateAddCampaign.vue'
+import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
+import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 
 const teamStore = useTeamStore()
 const userStore = useUserDataStore()
+const { isWriteDisabled } = useTeamWriteGuard()
 
 const showAdCampaignModal = ref({ mount: false, show: false })
+
+function openAdCampaignModal() {
+  if (isWriteDisabled.value) return
+  showAdCampaignModal.value = { mount: true, show: true }
+}
 </script>

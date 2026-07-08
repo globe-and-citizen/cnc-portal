@@ -40,23 +40,6 @@ vi.mock('@/artifacts/abi/bank', () => ({
   ]
 }))
 
-type TransferModalVm = {
-  modal: { mount: boolean; show: boolean }
-  errorMessage: string
-  transferData: {
-    address: { name: string; address: string }
-    token: { symbol: string; balance: number }
-    amount: string
-  }
-  openModal: () => void
-  resetTransferValues: () => void
-  handleTransfer: (value: {
-    address: { address: `0x${string}` }
-    token: { symbol: string }
-    amount: string
-  }) => Promise<void>
-}
-
 describe('TransferModal', () => {
   let wrapper: VueWrapper
 
@@ -81,12 +64,12 @@ describe('TransferModal', () => {
   }
 
   const createQueryClient = () => {
-    const invalidateQueries = vi.fn()
+    const invalidateQueries = vi.fn(async () => undefined)
     useQueryClientFn.mockReturnValue({
       invalidateQueries,
-      getQueryData: vi.fn(),
-      setQueryData: vi.fn(),
-      removeQueries: vi.fn()
+      getQueryData: vi.fn(() => undefined),
+      setQueryData: vi.fn(() => undefined),
+      removeQueries: vi.fn(() => undefined)
     })
     return { invalidateQueries }
   }
@@ -103,16 +86,34 @@ describe('TransferModal', () => {
         stubs: {
           TransferForm: {
             name: 'TransferForm',
-            props: ['modelValue', 'tokens', 'loading', 'feeBps', 'isBodAction'],
+            props: ['modelValue', 'tokens', 'loading', 'feeBps', 'isBodAction', 'errorMessage'],
             emits: ['transfer', 'closeModal', 'update:modelValue'],
-            template: '<div data-test="transfer-form-stub" />'
+            template: '<div data-test="transfer-form-stub">{{ errorMessage }}</div>'
           }
         }
       }
     })
   }
 
-  const getVm = (currentWrapper: VueWrapper) => currentWrapper.vm as unknown as TransferModalVm
+  const transferForm = (currentWrapper: VueWrapper) =>
+    currentWrapper.findComponent({ name: 'TransferForm' })
+
+  const openModal = async (currentWrapper: VueWrapper) => {
+    await currentWrapper.find('[data-test="transfer-button"]').trigger('click')
+    await nextTick()
+  }
+
+  const emitTransfer = async (
+    currentWrapper: VueWrapper,
+    payload: {
+      address: { address: `0x${string}` }
+      token: { symbol: string }
+      amount: string
+    }
+  ) => {
+    await transferForm(currentWrapper).vm.$emit('transfer', payload)
+    await nextTick()
+  }
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -120,8 +121,7 @@ describe('TransferModal', () => {
     mockUseReadContract.data.value = mockUserStore.address
     mockBodIsBodAction.isBodAction.value = false
     mockBodAddAction.isPending.value = false
-    mockBodAddAction.isConfirming.value = false
-    mockBodAddAction.isActionAdded.value = false
+    mockBodAddAction.isSuccess.value = false
     mockBankWrites.transfer.isPending.value = false
     mockBankWrites.transferToken.isPending.value = false
     // Default: invoke onSuccess to simulate successful mutation
@@ -179,44 +179,39 @@ describe('TransferModal', () => {
 
   it('exposes isLoading true while a transfer mutation is pending', async () => {
     wrapper = mountComponent()
-    const vm = getVm(wrapper)
     mockBankWrites.transfer.isPending.value = true
-    vm.openModal()
-    await nextTick()
+    await openModal(wrapper)
 
-    expect(wrapper.findComponent({ name: 'TransferForm' }).props('loading')).toBe(true)
+    expect(transferForm(wrapper).props('loading')).toBe(true)
   })
 
   it('opens and resets the modal state', async () => {
     wrapper = mountComponent()
-    const vm = getVm(wrapper)
 
-    await wrapper.find('[data-test="transfer-button"]').trigger('click')
-    await nextTick()
+    await openModal(wrapper)
     expect(wrapper.find('[data-test="transfer-modal"]').exists()).toBe(true)
 
-    vm.resetTransferValues()
+    // Resetting via TransferForm's @closeModal emit
+    await transferForm(wrapper).vm.$emit('closeModal')
     await nextTick()
     expect(wrapper.find('[data-test="transfer-modal"]').exists()).toBe(false)
-    expect(vm.errorMessage).toBe('')
+    expect(transferForm(wrapper).exists()).toBe(false)
   })
 
   it('renders the form stub when the modal is mounted', async () => {
     wrapper = mountComponent()
-    const vm = getVm(wrapper)
 
-    vm.openModal()
-    await nextTick()
+    await openModal(wrapper)
 
     expect(wrapper.find('[data-test="transfer-form-stub"]').exists()).toBe(true)
   })
 
   it('uses the bod action path instead of a direct transfer when bod mode is enabled', async () => {
     wrapper = mountComponent()
-    const vm = getVm(wrapper)
     mockBodIsBodAction.isBodAction.value = true
+    await openModal(wrapper)
 
-    await vm.handleTransfer({
+    await emitTransfer(wrapper, {
       address: { address: mockRecipientAddress },
       token: { symbol: 'USDC' },
       amount: '100'
@@ -230,9 +225,9 @@ describe('TransferModal', () => {
   it('handles direct token transfers and invalidates the token balance query', async () => {
     const { invalidateQueries } = createQueryClient()
     wrapper = mountComponent()
-    const vm = getVm(wrapper)
+    await openModal(wrapper)
 
-    await vm.handleTransfer({
+    await emitTransfer(wrapper, {
       address: { address: mockRecipientAddress },
       token: { symbol: 'USDC' },
       amount: '100'
@@ -246,7 +241,7 @@ describe('TransferModal', () => {
 
   it('handles direct native transfers and surfaces errors from the mutation', async () => {
     wrapper = mountComponent()
-    const vm = getVm(wrapper)
+    await openModal(wrapper)
 
     mockBankWrites.transfer.mutate = vi.fn(
       (_vars: unknown, options?: { onError?: (err: unknown) => void }) => {
@@ -254,42 +249,39 @@ describe('TransferModal', () => {
       }
     )
 
-    await vm.handleTransfer({
+    await emitTransfer(wrapper, {
       address: { address: mockRecipientAddress },
       token: { symbol: NETWORK.currencySymbol },
       amount: '1.5'
     })
 
     expect(mockBankWrites.transfer.mutate).toHaveBeenCalledOnce()
-    expect(vm.errorMessage).not.toBe('')
+    expect(transferForm(wrapper).props('errorMessage')).not.toBe('')
   })
 
   it('surfaces an error message when the bod action path throws', async () => {
     wrapper = mountComponent()
-    const vm = getVm(wrapper)
     mockBodIsBodAction.isBodAction.value = true
     mockBodAddAction.executeAddAction.mockRejectedValueOnce(new Error('bod boom'))
+    await openModal(wrapper)
 
-    await vm.handleTransfer({
+    await emitTransfer(wrapper, {
       address: { address: mockRecipientAddress },
       token: { symbol: 'USDC' },
       amount: '10'
     })
 
-    expect(vm.errorMessage).toBe('Failed to transfer USDC')
+    expect(transferForm(wrapper).props('errorMessage')).toBe('Failed to transfer USDC')
   })
 
   it('resets modal when the bod action-added watcher fires', async () => {
     wrapper = mountComponent()
-    const vm = getVm(wrapper)
 
-    vm.openModal()
-    vm.errorMessage = 'Something failed'
-    await nextTick()
+    await openModal(wrapper)
+    expect(wrapper.find('[data-test="transfer-modal"]').exists()).toBe(true)
 
-    mockBodAddAction.isActionAdded.value = true
+    mockBodAddAction.isSuccess.value = true
     await nextTick()
-    expect(vm.modal.show).toBe(false)
-    expect(vm.errorMessage).toBe('')
+    expect(wrapper.find('[data-test="transfer-modal"]').exists()).toBe(false)
   })
 })

@@ -1,15 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import type { Address } from 'viem'
+import { parseEventLogs, type Address } from 'viem'
+import { getConnections } from '@wagmi/core'
 
-// Local getConnections mock — not covered by the shared wagmi setup.
-const { mockGetConnections } = vi.hoisted(() => ({ mockGetConnections: vi.fn() }))
-vi.mock('@wagmi/core', async (importOriginal) => {
-  const actual = (await importOriginal()) as object
-  return {
-    ...actual,
-    getConnections: mockGetConnections
-  }
-})
+// Both `@wagmi/core` (incl. getConnections) and `parseEventLogs` are globally
+// stubbed in tests/setup (wagmi.vue.setup.ts / viem.setup.ts). keccak256 is
+// mocked there too, so real event decoding can't run — we just drive returns.
+const mockGetConnections = vi.mocked(getConnections)
+const mockParseEventLogs = vi.mocked(parseEventLogs)
 import {
   deployOfficer,
   useDeployOfficer,
@@ -23,7 +20,6 @@ import {
   useQueryClientFn,
   mockInvalidateQueries
 } from '@/tests/mocks/composables.mock'
-import { mockGetLogs } from '@/tests/mocks/viem.actions.mock'
 import { mockParseError } from '@/tests/mocks/utils.mock'
 
 const USER = '0x1234567890123456789012345678901234567890' as Address
@@ -57,13 +53,12 @@ vi.mock('@/utils/contractDeploymentUtil', async (importOriginal) => {
     ...actual,
     validateBeaconAddresses: vi.fn(),
     getBeaconConfigs: vi.fn(() => []),
-    getDeploymentConfigs: vi.fn(() => []),
-    handleBeaconProxyCreatedLogs: vi.fn()
+    getDeploymentConfigs: vi.fn(() => [])
   }
 })
 
 const setConnectedUser = (address: Address | null) => {
-  mockGetConnections.mockReturnValue(address ? [{ accounts: [address] }] : [])
+  mockGetConnections.mockReturnValue(address ? ([{ accounts: [address] }] as never) : [])
 }
 
 describe('deployOfficer (pure)', () => {
@@ -72,14 +67,12 @@ describe('deployOfficer (pure)', () => {
     setConnectedUser(USER)
     vi.mocked(executeContractWrite).mockResolvedValue({
       hash: TX_HASH,
-      receipt: { blockNumber: 42n } as never,
+      receipt: { blockNumber: 42n, logs: [] } as never,
       simulation: {} as never
     })
-    mockGetLogs.mockResolvedValue([
-      { args: { deployer: USER, proxy: OFFICER_PROXY }, transactionHash: TX_HASH }
+    mockParseEventLogs.mockReturnValue([
+      { args: { proxy: OFFICER_PROXY, deployer: USER } }
     ] as never)
-    const utils = await import('@/utils/contractDeploymentUtil')
-    vi.mocked(utils.handleBeaconProxyCreatedLogs).mockReturnValue(OFFICER_PROXY)
   })
 
   it('throws when no wallet is connected', async () => {
@@ -100,22 +93,20 @@ describe('deployOfficer (pure)', () => {
     expect(res.deployedAt.getTime()).toBeGreaterThanOrEqual(before)
   })
 
-  it('throws when the proxy address cannot be extracted from event logs', async () => {
-    const utils = await import('@/utils/contractDeploymentUtil')
-    vi.mocked(utils.handleBeaconProxyCreatedLogs).mockReturnValue(null)
+  it('throws when no BeaconProxyCreated event is found in the receipt', async () => {
+    mockParseEventLogs.mockReturnValue([])
 
     await expect(
       deployOfficer({ investorInput: { name: 'Shares', symbol: 'SH' } })
     ).rejects.toThrow(/extract Officer proxy address/)
   })
 
-  it('queries logs for the exact deployment block', async () => {
+  it('decodes the proxy address from the receipt logs (no extra RPC)', async () => {
     await deployOfficer({ investorInput: { name: 'Shares', symbol: 'SH' } })
 
-    const call = mockGetLogs.mock.calls[0]
-    expect(call).toBeDefined()
-    const params = call![1]
-    expect(params).toMatchObject({ fromBlock: 42n, toBlock: 42n })
+    expect(mockParseEventLogs).toHaveBeenCalledWith(
+      expect.objectContaining({ eventName: 'BeaconProxyCreated', logs: [] })
+    )
   })
 })
 
@@ -125,14 +116,12 @@ describe('useDeployOfficer (TanStack wrapper)', () => {
     setConnectedUser(USER)
     vi.mocked(executeContractWrite).mockResolvedValue({
       hash: TX_HASH,
-      receipt: { blockNumber: 42n } as never,
+      receipt: { blockNumber: 42n, logs: [] } as never,
       simulation: {} as never
     })
-    mockGetLogs.mockResolvedValue([
-      { args: { deployer: USER, proxy: OFFICER_PROXY }, transactionHash: TX_HASH }
+    mockParseEventLogs.mockReturnValue([
+      { args: { proxy: OFFICER_PROXY, deployer: USER } }
     ] as never)
-    const utils = await import('@/utils/contractDeploymentUtil')
-    vi.mocked(utils.handleBeaconProxyCreatedLogs).mockReturnValue(OFFICER_PROXY)
 
     useMutationFn.mockImplementation(smartUseMutation)
     useQueryClientFn.mockReturnValue({
@@ -143,31 +132,41 @@ describe('useDeployOfficer (TanStack wrapper)', () => {
     })
   })
 
-  it('invalidates team + teams + contracts when teamId is provided', async () => {
+  it('invalidates teamKeys.all + contractKeys.all on success', async () => {
     const m = useDeployOfficer()
     await m.mutateAsync({ investorInput: { name: 'Shares', symbol: 'SH' }, teamId: 7 })
 
     const keys = mockInvalidateQueries.mock.calls.map((c) => c[0]?.queryKey)
-    expect(keys).toContainEqual(['team', 7])
     expect(keys).toContainEqual(['teams'])
     expect(keys).toContainEqual(['contracts'])
+    // The legacy singular `['team', id]` key matched no registered query and
+    // was removed in favor of the `teamKeys.all` prefix (which covers detail).
+    expect(keys).not.toContainEqual(['team', 7])
   })
 
-  it('parses string teamId to a number before invalidating', async () => {
+  it('invalidates the same keys regardless of teamId shape (string or number)', async () => {
     const m = useDeployOfficer()
     await m.mutateAsync({ investorInput: { name: 'Shares', symbol: 'SH' }, teamId: '13' })
 
     const keys = mockInvalidateQueries.mock.calls.map((c) => c[0]?.queryKey)
-    expect(keys).toContainEqual(['team', 13])
+    expect(keys).toContainEqual(['teams'])
+    expect(keys).toContainEqual(['contracts'])
   })
 
-  it('only invalidates contracts when teamId is omitted', async () => {
+  it('still invalidates when teamId is omitted', async () => {
     const m = useDeployOfficer()
     await m.mutateAsync({ investorInput: { name: 'Shares', symbol: 'SH' } })
 
     const keys = mockInvalidateQueries.mock.calls.map((c) => c[0]?.queryKey)
+    expect(keys).toContainEqual(['teams'])
     expect(keys).toContainEqual(['contracts'])
-    expect(keys).not.toContainEqual(['teams'])
+  })
+
+  it('skips invalidation entirely when composed with { skipInvalidation: true }', async () => {
+    const m = useDeployOfficer({ skipInvalidation: true })
+    await m.mutateAsync({ investorInput: { name: 'Shares', symbol: 'SH' }, teamId: 7 })
+
+    expect(mockInvalidateQueries).not.toHaveBeenCalled()
   })
 })
 
@@ -182,30 +181,23 @@ describe('useInvalidateOfficerQueries', () => {
     })
   })
 
-  it('invalidates team + teams + contracts for a numeric teamId', async () => {
+  it('invalidates teamKeys.all + contractKeys.all (covers team detail transitively)', async () => {
     const invalidate = useInvalidateOfficerQueries()
     await invalidate(5)
 
     const keys = mockInvalidateQueries.mock.calls.map((c) => c[0]?.queryKey)
-    expect(keys).toContainEqual(['team', 5])
     expect(keys).toContainEqual(['teams'])
     expect(keys).toContainEqual(['contracts'])
+    expect(keys).not.toContainEqual(['team', 5])
   })
 
-  it('coerces string teamId to number', async () => {
-    const invalidate = useInvalidateOfficerQueries()
-    await invalidate('21')
-
-    const keys = mockInvalidateQueries.mock.calls.map((c) => c[0]?.queryKey)
-    expect(keys).toContainEqual(['team', 21])
-  })
-
-  it('only invalidates contracts when teamId is omitted', async () => {
+  it('invalidates the same keys when called without a teamId', async () => {
     const invalidate = useInvalidateOfficerQueries()
     await invalidate()
 
     const keys = mockInvalidateQueries.mock.calls.map((c) => c[0]?.queryKey)
-    expect(keys).toEqual([['contracts']])
+    expect(keys).toContainEqual(['teams'])
+    expect(keys).toContainEqual(['contracts'])
   })
 })
 

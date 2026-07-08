@@ -1,19 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { mount } from '@vue/test-utils'
-import { createTestingPinia } from '@pinia/testing'
 import ClaimHistoryMemberHeader from '@/components/sections/ClaimHistoryView/ClaimHistoryMemberHeader.vue'
-import { mockTeamData, mockTeamStore } from '@/tests/mocks'
+import { mockTeamData, mockTeamStore, renderWithProviders } from '@/tests/mocks'
 
 describe('ClaimHistoryMemberHeader', () => {
   const baseMembers = [...mockTeamData.members]
 
   const createWrapper = (memberAddress: string) =>
-    mount(ClaimHistoryMemberHeader, {
+    renderWithProviders(ClaimHistoryMemberHeader, {
       props: {
         memberAddress: memberAddress as `0x${string}`
-      },
-      global: {
-        plugins: [createTestingPinia({ createSpy: vi.fn })]
       }
     })
 
@@ -91,12 +86,9 @@ describe('ClaimHistoryMemberHeader', () => {
   })
 
   it('handles undefined memberAddress safely', () => {
-    const wrapper = mount(ClaimHistoryMemberHeader, {
+    const wrapper = renderWithProviders(ClaimHistoryMemberHeader, {
       props: {
         memberAddress: undefined as unknown as `0x${string}`
-      },
-      global: {
-        plugins: [createTestingPinia({ createSpy: vi.fn })]
       }
     })
 

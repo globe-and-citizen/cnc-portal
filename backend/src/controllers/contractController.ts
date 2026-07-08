@@ -17,6 +17,13 @@ type SyncContractsBody = z.infer<typeof syncContractsBodySchema>;
 type CreateOfficerBody = z.infer<typeof createOfficerBodySchema>;
 type GetContractsQuery = z.infer<typeof getContractsQuerySchema>;
 
+// Officer-generation tag stamped on freshly registered Officers. Bumped when
+// the CashRemunerationEIP712 (or any other Officer-governed contract) ships a
+// breaking on-chain change — currently the WageClaim.hoursWorked →
+// minutesWorked typehash from PR #1816. The frontend reads this off the team
+// payload as `isMigrated` (true iff currentOfficer.version === this value).
+export const CURRENT_OFFICER_VERSION = 'v0.10';
+
 // Look up the head of a team's Officer linked list — the row with no
 // successor pointing back to it. Returns null if the team has never had an
 // Officer deployed.
@@ -48,6 +55,11 @@ const upsertOfficerAndSyncContracts = async (
   // registered to a different team (createOfficer performs that guard and
   // returns 409 explicitly; syncContracts passes the team's own current Officer
   // address, so a mismatch is impossible there).
+  //
+  // version: stamped 'v0.10' on insert. Existing rows (`update: {}`) keep
+  // whatever generation tag they already have — pre-feature rows backfilled
+  // to 'legacy' by the migration stay 'legacy' until a fresh Officer is
+  // deployed. This is what flips `isMigrated` for the team.
   const officer = await prisma.teamOfficer.upsert({
     where: { address: officerAddress },
     create: {
@@ -57,6 +69,7 @@ const upsertOfficerAndSyncContracts = async (
       deployBlockNumber: deployBlockNumber ?? null,
       deployedAt: deployedAt ?? null,
       previousOfficerId,
+      version: CURRENT_OFFICER_VERSION,
     },
     update: {},
   });

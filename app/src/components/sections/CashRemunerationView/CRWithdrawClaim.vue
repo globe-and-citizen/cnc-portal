@@ -2,13 +2,14 @@
   <a
     v-if="isDropDown"
     data-test="withdraw-action"
-    :class="['text-sm', { disabled: withdrawTx.isPending.value }]"
-    :aria-disabled="withdrawTx.isPending.value"
-    :tabindex="withdrawTx.isPending.value ? -1 : 0"
-    :style="{ pointerEvents: withdrawTx.isPending.value ? 'none' : undefined }"
+    :class="['text-sm', { disabled: withdrawTx.isPending.value || isTeamArchived }]"
+    :aria-disabled="withdrawTx.isPending.value || isTeamArchived"
+    :tabindex="withdrawTx.isPending.value || isTeamArchived ? -1 : 0"
+    :style="{ pointerEvents: withdrawTx.isPending.value || isTeamArchived ? 'none' : undefined }"
+    :title="isTeamArchived ? archivedTooltip : undefined"
     @click="
       async () => {
-        if (withdrawTx.isPending.value) return
+        if (withdrawTx.isPending.value || isTeamArchived) return
         if (!isClaimOwner) {
           emit('claim-withdrawn')
           return
@@ -18,23 +19,29 @@
       }
     "
   >
-    <span v-if="withdrawTx.isPending.value" class="loading loading-spinner loading-xs mr-2"></span>
+    <UIcon
+      v-if="withdrawTx.isPending.value"
+      name="i-lucide-loader-circle"
+      class="mr-2 h-3 w-3 animate-spin"
+    />
     Withdraw
   </a>
-  <UButton
-    v-else
-    :disabled="disabled"
-    :loading="withdrawTx.isPending.value"
-    color="warning"
-    data-test="withdraw-button"
-    size="sm"
-    @click="async () => await withdrawClaim()"
-    label="Withdraw"
-  />
+  <UTooltip v-else :text="archivedTooltip">
+    <UButton
+      :disabled="disabled || isTeamArchived"
+      :loading="withdrawTx.isPending.value"
+      color="warning"
+      data-test="withdraw-button"
+      size="sm"
+      @click="async () => await withdrawClaim()"
+      label="Withdraw"
+    />
+  </UTooltip>
 </template>
 
 <script setup lang="ts">
 import { useTeamStore } from '@/stores'
+import { useToast } from '@nuxt/ui/composables'
 import { buildWageClaimPayload, classifyError, log } from '@/utils'
 import { recoverTypedDataAddress, zeroAddress, type Address } from 'viem'
 import { readContract } from '@wagmi/core'
@@ -49,6 +56,7 @@ import {
   CASH_REMUNERATION_EIP712_TYPES,
   buildCashRemunerationDomain
 } from './cashRemunerationEip712'
+import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
 
 const props = defineProps<{
   weeklyClaim: WeeklyClaim
@@ -61,6 +69,7 @@ const emit = defineEmits(['claim-withdrawn'])
 
 const teamStore = useTeamStore()
 const toast = useToast()
+const { isWriteDisabled: isTeamArchived, archivedTooltip } = useTeamWriteGuard()
 
 const withdrawTx = useWithdraw()
 const chainId = useChainId()
@@ -74,7 +83,7 @@ const getTokenAddress = (type: string): Address => {
 }
 
 const withdrawClaim = async () => {
-  if (withdrawTx.isPending.value) return
+  if (withdrawTx.isPending.value || isTeamArchived.value) return
 
   const currentContract = teamStore.getContractAddressByType('CashRemunerationEIP712') as
     | Address

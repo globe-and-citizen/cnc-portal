@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 🛫 Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: 🏗 Setup Node.js
         uses: actions/setup-node@v6
@@ -28,6 +28,10 @@ jobs:
 
       - name: ⚙️ Run lint
         run: npm run lint
+        working-directory: ./app
+
+      - name: 🚫 Guard against DaisyUI residual classes
+        run: npm run lint:no-daisy
         working-directory: ./app
 
       - name: 🧹Format code

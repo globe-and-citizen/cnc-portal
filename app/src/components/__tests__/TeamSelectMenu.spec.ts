@@ -1,200 +1,106 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
-import { ref } from 'vue'
-import { useRoute } from 'vue-router'
-import { useTeamStore } from '@/stores'
 import TeamSelectMenu from '@/components/TeamSelectMenu.vue'
 import { useGetTeamsQuery } from '@/queries/team.queries'
-import { mockTeamStore, mockTeamsData } from '@/tests/mocks/index'
-import { mockRouterPush } from '@/tests/mocks/router.mock'
+import { mockTeamStore, mockUserStore } from '@/tests/mocks/store.mock'
+import { mockTeamData } from '@/tests/mocks/index'
 import { createMockQueryResponse } from '@/tests/mocks/query.mock'
+import { mockRouterPush, setMockRoute } from '@/tests/mocks/router.mock'
 
-// Restore real SelectMenu for this test — it tests actual USelectMenu behavior
-vi.unmock('@nuxt/ui/components/SelectMenu.vue')
-
-// jsdom does not implement scrollIntoView — reka-ui calls it when highlighting items
-Element.prototype.scrollIntoView = vi.fn()
-
-// currentTeamId must be a Vue ref so that storeToRefs() can extract it properly
-const mockCurrentTeamId = ref<string | null>(mockTeamStore.currentTeamId)
-
-const createWrapper = () =>
-  mount(TeamSelectMenu, {
-    attachTo: document.body,
-    global: {
-      stubs: {
-        // Override global stubs — this test exercises the real USelectMenu
-        USelectMenu: false,
-        SelectMenu: false
-      }
-    }
-  })
+// UPopover is globally stubbed and renders both its trigger and content slots,
+// so the dropdown markup is always present in the DOM during these tests.
+const mountMenu = () => mount(TeamSelectMenu)
 
 describe('TeamSelectMenu', () => {
-  afterEach(() => {
-    document.body.innerHTML = ''
-  })
-
   beforeEach(() => {
     vi.clearAllMocks()
-    Element.prototype.scrollIntoView = vi.fn()
-    mockCurrentTeamId.value = mockTeamStore.currentTeamId
-
-    // Return the mock store with currentTeamId as a ref so storeToRefs works
-    vi.mocked(useTeamStore).mockImplementation(
-      () =>
-        ({
-          ...mockTeamStore,
-          currentTeamId: mockCurrentTeamId
-        }) as unknown as ReturnType<typeof useTeamStore>
-    )
   })
 
-  describe('rendering', () => {
-    it('renders the select trigger button', () => {
-      const wrapper = createWrapper()
-      expect(wrapper.find('button').exists()).toBe(true)
+  describe('trigger', () => {
+    it('shows the active team initials and name', () => {
+      // Default mock route has params.id = '1' → mockTeamData ('Test Team').
+      const trigger = mountMenu().find('[data-test="team-picker"]')
+      expect(trigger.text()).toContain('TT') // initials
+      expect(trigger.text()).toContain('Test Team')
     })
 
-    it('shows a loading icon when teams are being fetched', () => {
+    it('shows the "All companies" state when no team is in the route', () => {
+      setMockRoute({ name: 'teams', params: {}, path: '/teams', meta: { name: 'Companies' } })
+      expect(mountMenu().find('[data-test="team-picker"]').text()).toContain('All companies')
+    })
+
+    it('shows a loading spinner while teams are being fetched', () => {
       vi.mocked(useGetTeamsQuery).mockReturnValueOnce(
         createMockQueryResponse([], true) as ReturnType<typeof useGetTeamsQuery>
       )
-      const wrapper = createWrapper()
-      expect(wrapper.find('[data-test="u-icon"][data-icon*="loader"]').exists()).toBe(true)
-    })
-
-    it('shows placeholder text when no team matches', () => {
-      vi.mocked(useGetTeamsQuery).mockReturnValueOnce(
-        createMockQueryResponse([]) as ReturnType<typeof useGetTeamsQuery>
-      )
-      vi.mocked(useRoute).mockReturnValueOnce({
-        params: {},
-        path: '/teams',
-        meta: {}
-      } as ReturnType<typeof useRoute>)
-
-      const wrapper = createWrapper()
-      expect(wrapper.text()).toContain('Select Company')
+      const wrapper = mountMenu()
+      expect(wrapper.find('[data-test="team-picker"] [data-icon*="loader"]').exists()).toBe(true)
     })
   })
 
-  describe('default selection', () => {
-    it('pre-selects the company matching the current route param id', () => {
-      // useRoute is globally mocked with params.id = '1' and mockTeamsData[0].id = '1'
-      const wrapper = createWrapper()
-      expect(wrapper.text()).toContain(mockTeamsData[0]!.name)
+  describe('menu', () => {
+    it('lists each team with its role badge and member count', () => {
+      const option = mountMenu().find('[data-test="team-option-1"]')
+      expect(option.exists()).toBe(true)
+      expect(option.text()).toContain('Test Team')
+      expect(option.text()).toContain('Employee') // user is not the owner
+      expect(option.text()).toContain('3 members') // mockTeamData has 3 members
     })
 
-    it.skip('auto-selects first company and navigates when no company is active', async () => {
-      mockCurrentTeamId.value = null
-      vi.mocked(useRoute).mockReturnValueOnce({
-        params: {},
-        path: '/teams',
-        meta: {}
-      } as ReturnType<typeof useRoute>)
-
-      createWrapper()
-      await new Promise((r) => setTimeout(r, 0))
-
-      expect(mockTeamStore.setCurrentTeamId).toHaveBeenCalledWith(mockTeamsData[0]!.id)
-      expect(mockRouterPush).toHaveBeenCalledWith(`/teams/${mockTeamsData[0]!.id}`)
+    it('marks the team as Owner when the user owns it', () => {
+      mockUserStore.address = mockTeamData.ownerAddress as string
+      expect(mountMenu().find('[data-test="team-option-1"]').text()).toContain('Owner')
     })
 
-    it('does not auto-navigate when a team is already active via route param', async () => {
-      // useRoute returns params.id = '1' by default — team is already "active"
-      createWrapper()
-      await new Promise((r) => setTimeout(r, 0))
-
-      expect(mockRouterPush).not.toHaveBeenCalled()
+    it('shows All companies and Create company actions', () => {
+      const wrapper = mountMenu()
+      expect(wrapper.find('[data-test="all-companies"]').exists()).toBe(true)
+      expect(wrapper.find('[data-test="create-company"]').exists()).toBe(true)
     })
   })
 
-  describe('team items', () => {
-    it('displays all team names in the dropdown', async () => {
-      const wrapper = createWrapper()
-      await wrapper.find('button').trigger('click')
-      await wrapper.vm.$nextTick()
-
-      mockTeamsData.forEach((team) => {
-        expect(wrapper.html()).toContain(team.name)
-      })
+  describe('actions', () => {
+    it('selects a team: sets the current team and navigates to it', async () => {
+      const wrapper = mountMenu()
+      await wrapper.find('[data-test="team-option-1"]').trigger('click')
+      expect(mockTeamStore.setCurrentTeamId).toHaveBeenCalledWith('1')
+      expect(mockRouterPush).toHaveBeenCalledWith('/teams/1')
     })
 
-    it('renders the initial letter avatar for each team item', async () => {
-      const wrapper = createWrapper()
-      await wrapper.find('button').trigger('click')
-      await wrapper.vm.$nextTick()
-
-      mockTeamsData.forEach((team) => {
-        expect(wrapper.html()).toContain(team.name.charAt(0).toUpperCase())
-      })
-    })
-  })
-
-  describe('team selection', () => {
-    it('calls setCurrentTeamId with the selected team id', async () => {
-      const wrapper = createWrapper()
-      await wrapper.find('button').trigger('click')
-      await wrapper.vm.$nextTick()
-
-      const options = wrapper.findAll('[role="option"]')
-      if (options[0]) {
-        await options[0].trigger('click')
-        await wrapper.vm.$nextTick()
-        expect(mockTeamStore.setCurrentTeamId).toHaveBeenCalledWith(mockTeamsData[0]!.id)
-      }
+    it('navigates to the companies list from "All companies"', async () => {
+      const wrapper = mountMenu()
+      await wrapper.find('[data-test="all-companies"]').trigger('click')
+      expect(mockRouterPush).toHaveBeenCalledWith('/teams')
     })
 
-    it('navigates to /teams/:id when a team is selected', async () => {
-      const wrapper = createWrapper()
-      await wrapper.find('button').trigger('click')
-      await wrapper.vm.$nextTick()
-
-      const options = wrapper.findAll('[role="option"]')
-      if (options[0]) {
-        await options[0].trigger('click')
-        await wrapper.vm.$nextTick()
-        expect(mockRouterPush).toHaveBeenCalledWith(`/teams/${mockTeamsData[0]!.id}`)
-      }
+    it('opens the create flow from "Create company"', async () => {
+      const wrapper = mountMenu()
+      await wrapper.find('[data-test="create-company"]').trigger('click')
+      expect(mockRouterPush).toHaveBeenCalledWith({ path: '/teams', query: { create: '1' } })
     })
   })
 
   describe('search', () => {
-    it('renders a search input with the correct placeholder', async () => {
-      const wrapper = createWrapper()
-      await wrapper.find('button').trigger('click')
-      await wrapper.vm.$nextTick()
-
-      // USelectMenu renders its dropdown in a portal attached to document.body
-      const input = document.querySelector('input')
-      expect(input).not.toBeNull()
-      expect(input?.getAttribute('placeholder')).toBe('Search company...')
-    })
-
-    it('filters companies by name based on search input', async () => {
+    it('filters teams by name', async () => {
       vi.mocked(useGetTeamsQuery).mockReturnValueOnce(
         createMockQueryResponse([
-          { ...mockTeamsData[0]!, id: '1', name: 'Alpha Team' },
-          { ...mockTeamsData[0]!, id: '2', name: 'Beta Squad' }
+          { ...mockTeamData, id: '1', name: 'Alpha Team' },
+          { ...mockTeamData, id: '2', name: 'Beta Squad' }
         ]) as ReturnType<typeof useGetTeamsQuery>
       )
+      const wrapper = mountMenu()
+      await wrapper.find('input').setValue('Beta')
 
-      const wrapper = createWrapper()
-      await wrapper.find('button').trigger('click')
-      await wrapper.vm.$nextTick()
+      const menu = wrapper.find('[data-test="team-menu"]')
+      expect(menu.text()).toContain('Beta Squad')
+      expect(menu.text()).not.toContain('Alpha Team')
+    })
 
-      const input = document.querySelector('input') as HTMLInputElement
-      expect(input).not.toBeNull()
-
-      // Simulate typing — use nativeInputValueSetter to trigger reka-ui's input handler
-      input.value = 'Beta'
-      input.dispatchEvent(new InputEvent('input', { bubbles: true, cancelable: true }))
-      await wrapper.vm.$nextTick()
-
-      const listbox = document.querySelector('[role="listbox"]')
-      expect(listbox?.textContent).toContain('Beta Squad')
-      expect(listbox?.textContent).not.toContain('Alpha Team')
+    it('hides "All companies" and shows an empty state when nothing matches', async () => {
+      const wrapper = mountMenu()
+      await wrapper.find('input').setValue('zzz')
+      expect(wrapper.find('[data-test="all-companies"]').exists()).toBe(false)
+      expect(wrapper.find('[data-test="team-empty"]').exists()).toBe(true)
     })
   })
 })

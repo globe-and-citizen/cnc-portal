@@ -1,6 +1,25 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { mount, type VueWrapper } from '@vue/test-utils'
-import { createTestingPinia } from '@pinia/testing'
+import { type VueWrapper } from '@vue/test-utils'
+import { renderWithProviders } from '@/tests/mocks'
+
+// Auto-imported @nuxt/ui components bypass `config.global.stubs` because the
+// Nuxt UI Vite plugin resolves them through their file path. Mock the module
+// so our stub renders and we can inspect props instead of reaching into vm.
+vi.mock('@nuxt/ui/components/Table.vue', () => ({
+  default: {
+    name: 'UTable',
+    props: ['data', 'columns', 'sticky', 'showPagination'],
+    template: `
+      <div data-test="vesting-stats-table">
+        <div v-for="(row, i) in data" :key="i" data-test="vesting-stats-row">
+          <slot name="totalPromised-cell" :row="{ original: row }" />
+          <slot name="totalReleased-cell" :row="{ original: row }" />
+        </div>
+      </div>
+    `
+  }
+}))
+
 import VestingStats from '@/components/sections/VestingView/VestingStats.vue'
 
 import { ref } from 'vue'
@@ -9,9 +28,11 @@ import { ref } from 'vue'
 const memberAddress = '0x000000000000000000000000000000000000dead'
 const mockSymbol = ref<string>('shr')
 const mockReloadKey = ref<number>(0)
-// Mocks
-const mockVestingInfos = ref<[string[], { totalAmount: number; released: number }[]]>([
+// Mocks — reads return a 3-tuple [members, indices, infos]; a member appears
+// once per schedule.
+const mockVestingInfos = ref<[string[], bigint[], { totalAmount: number; released: number }[]]>([
   [memberAddress],
+  [0n],
   [
     {
       totalAmount: 0,
@@ -22,19 +43,7 @@ const mockVestingInfos = ref<[string[], { totalAmount: number; released: number 
 
 const refetchVestingInfos = vi.fn()
 
-const mockArchivedInfos = ref([[], []])
-
-// Wagmi mocks
-const mockWriteContract = {
-  mutate: vi.fn(),
-  error: ref<Error | null>(null),
-  isPending: ref(false),
-  data: ref(null)
-}
-const mockWaitReceipt = {
-  isLoading: ref(false),
-  isSuccess: ref(false)
-}
+const mockArchivedInfos = ref([[], [], []])
 
 vi.mock('@/composables/investor/reads', () => ({
   useInvestorSymbol: vi.fn(() => ({
@@ -48,17 +57,15 @@ vi.mock('@wagmi/vue', async (importOriginal) => {
   const actual: object = await importOriginal()
   return {
     ...actual,
-    useWriteContract: vi.fn(() => mockWriteContract),
-    useWaitForTransactionReceipt: vi.fn(() => mockWaitReceipt),
     useReadContract: vi.fn(({ functionName }: { functionName: string }) => {
-      if (functionName === 'getTeamVestingsWithMembers') {
+      if (functionName === 'getVestingsWithMembers') {
         return {
           data: mockVestingInfos,
           error: ref(null),
           refetch: refetchVestingInfos
         }
       }
-      if (functionName === 'getTeamAllArchivedVestingsFlat') {
+      if (functionName === 'getAllArchivedVestingsFlat') {
         return {
           data: mockArchivedInfos,
           error: ref(null),
@@ -86,12 +93,9 @@ describe('VestingStats.vue', () => {
   let wrapper: VueWrapper
 
   const mountComponent = () => {
-    return mount(VestingStats, {
+    return renderWithProviders(VestingStats, {
       props: {
         reloadKey: mockReloadKey.value
-      },
-      global: {
-        plugins: [createTestingPinia({ createSpy: vi.fn })]
       }
     })
   }
@@ -99,19 +103,13 @@ describe('VestingStats.vue', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     wrapper = mountComponent()
-    mockWriteContract.mutate.mockReset()
-    mockWaitReceipt.isLoading.value = false
-    mockWaitReceipt.isSuccess.value = false
-  })
-
-  it.skip('renders vesting stats component', () => {
-    expect(wrapper.find('[data-test="vesting-stats"]').exists()).toBe(true)
   })
 
   it('calculates token summary correctly from vestings data', async () => {
-    // Setup mock data with multiple vestings
+    // Setup mock data with two schedules for the same member (one per index).
     mockVestingInfos.value = [
-      [memberAddress],
+      [memberAddress, memberAddress],
+      [0n, 1n],
       [
         {
           totalAmount: Number(BigInt(100000000)), // 100 tokens with 6 decimals
@@ -127,27 +125,32 @@ describe('VestingStats.vue', () => {
     wrapper = mountComponent()
     await wrapper.vm.$nextTick()
 
-    const summaryRows = (wrapper.vm as (typeof VestingStats)['prototype']).tokenSummaryRows
-    expect(summaryRows).toHaveLength(1) // Should have one row per token symbol
-    expect(summaryRows[0]).toMatchObject({
+    const tableData = wrapper.findComponent({ name: 'UTable' }).props('data') as Array<{
+      symbol: string
+      totalPromised: number
+      totalReleased: number
+    }>
+    expect(tableData).toHaveLength(1) // Should have one row per token symbol
+    expect(tableData[0]).toMatchObject({
       symbol: mockSymbol.value,
-      totalVested: 150,
+      totalPromised: 150,
       totalReleased: 30
     })
   })
 
   it('handles empty vestings array', () => {
-    mockVestingInfos.value = [[], []]
+    mockVestingInfos.value = [[], [], []]
     wrapper = mountComponent()
 
-    const summaryRows = (wrapper.vm as (typeof VestingStats)['prototype']).tokenSummaryRows
-    expect(summaryRows).toHaveLength(1)
+    const tableData = wrapper.findComponent({ name: 'UTable' }).props('data') as Array<unknown>
+    expect(tableData).toHaveLength(1)
   })
 
   it('displays formatted token amounts with symbols', async () => {
     mockSymbol.value = 'TEST'
     mockVestingInfos.value = [
       [memberAddress],
+      [0n],
       [
         {
           totalAmount: Number(BigInt(100000000)),
@@ -159,9 +162,9 @@ describe('VestingStats.vue', () => {
     wrapper = mountComponent()
     await wrapper.vm.$nextTick()
 
-    const totalVestedText = wrapper.text()
-    expect(totalVestedText).toContain('100')
-    expect(totalVestedText).toContain('TEST')
+    const totalPromisedText = wrapper.text()
+    expect(totalPromisedText).toContain('100')
+    expect(totalPromisedText).toContain('TEST')
 
     const totalReleasedText = wrapper.text()
     expect(totalReleasedText).toContain('20')

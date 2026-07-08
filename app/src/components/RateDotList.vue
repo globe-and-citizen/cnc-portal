@@ -5,6 +5,8 @@
       :key="rate.type"
       class="flex items-center gap-1 font-semibold"
       :class="textClass"
+      :data-rate-type="rate.type"
+      data-test="rate-row"
     >
       <span
         class="inline-block h-2 w-2 shrink-0 rounded-full"
@@ -44,12 +46,6 @@ const props = withDefaults(
 
 const formatRateAmount = (amount: number) => {
   const tokenAmount = Number(amount)
-
-  if (tokenAmount < 0)
-    return `-${new Intl.NumberFormat('en-US', {
-      minimumFractionDigits: props.minimumFractionDigits,
-      maximumFractionDigits: props.maximumFractionDigits
-    }).format(Math.abs(tokenAmount))}`
 
   if (tokenAmount === 0) return new Intl.NumberFormat('en-US').format(0)
 

@@ -1,7 +1,7 @@
 import { mount } from '@vue/test-utils'
 import { describe, it, expect, beforeEach } from 'vitest'
 import TeamContractEventList from '@/components/sections/ContractManagementView/TeamContractEventList.vue'
-import type { EventsByCampaignCode } from '@/services/AddCampaignService'
+import type { EventsByCampaignCode } from '@/lib/campaign/events'
 
 // Mocked ExtendedEvent to align with the test data
 type MockedExtendedEvent = {
@@ -85,8 +85,8 @@ describe('TeamContractEventList.vue', () => {
     expect(wrapper.findAll('ul').length).toBe(0)
 
     // Expand the first campaign
-    const toggleButton = wrapper.find('input[type="checkbox"]')
-    await toggleButton.setValue(true)
+    const toggleButton = wrapper.find('button[role="switch"]')
+    await toggleButton.trigger('click')
 
     // Verify expanded details for the first campaign
     const expandedDetails = wrapper.find('ul')
@@ -95,53 +95,43 @@ describe('TeamContractEventList.vue', () => {
     expect(firstDetailItems.length).toBe(eventsByCampaignCode['0xCampaign1'].length - 1)
 
     // Collapse the first campaign
-    await toggleButton.setValue(false)
+    await toggleButton.trigger('click')
     expect(wrapper.find('ul').exists()).toBe(false)
   })
 
   it('displays correct event details for PaymentReleased', async () => {
     // Expand the first campaign
-    const toggleButton = wrapper.find('input[type="checkbox"]')
-    await toggleButton.setValue(true)
+    const toggleButton = wrapper.find('button[role="switch"]')
+    await toggleButton.trigger('click')
 
     // Verify PaymentReleased details
     const detailItems = wrapper.findAll('ul li')
-    expect(detailItems.at(0)?.text()).toContain('Payment Released: 500 POL')
+    expect(detailItems[0]?.text()).toContain('Payment Released: 500 POL')
   })
 
   it('displays correct event details for BudgetWithdrawn', async () => {
     // Expand the second campaign
-    const toggleButtons = wrapper.findAll('input[type="checkbox"]')
-    await toggleButtons.at(1)?.setValue(true)
+    const toggleButtons = wrapper.findAll('button[role="switch"]')
+    await toggleButtons[1]?.trigger('click')
 
     // Verify BudgetWithdrawn details
     const detailItems = wrapper.findAll('ul li')
-    expect(detailItems.at(0)?.text()).toContain('Budget Withdrawn: 300 POL by 0xAdvertiser1')
+    expect(detailItems[0]?.text()).toContain('Budget Withdrawn: 300 POL by 0xAdvertiser1')
   })
 
   it('displays correct event details for PaymentReleasedOnWithdrawApproval', async () => {
-    const toggleButtons = wrapper.findAll('input[type="checkbox"]')
-    await toggleButtons.at(2)?.setValue(true)
+    const toggleButtons = wrapper.findAll('button[role="switch"]')
+    await toggleButtons[2]?.trigger('click')
 
     const detailItem = wrapper.findAll('ul li')
-    expect(detailItem.at(0)?.text()).toContain('Payment Released on Approval: 1500 POL')
+    expect(detailItem[0]?.text()).toContain('Payment Released on Approval: 1500 POL')
   })
 
   it('returns N/A when AdCampaignCreated event is missing', async () => {
-    const toggleButtons = wrapper.findAll('input[type="checkbox"]')
-    await toggleButtons.at(3)?.setValue(true)
+    const toggleButtons = wrapper.findAll('button[role="switch"]')
+    await toggleButtons[3]?.trigger('click')
 
     const budgetCell = wrapper.findAll('.campaign-budget')[3]
     expect(budgetCell.text()).toBe('N/A POL')
-  })
-
-  it.skip('handles empty events gracefully', async () => {
-    // Mount the component with no events
-    const emptyWrapper = mount(TeamContractEventList, {
-      props: { eventsByCampaignCode: {} as EventsByCampaignCode }
-    })
-
-    // Verify no rows are rendered
-    expect(emptyWrapper.find('[data-test="empty-state"]').exists()).toBe(true)
   })
 })

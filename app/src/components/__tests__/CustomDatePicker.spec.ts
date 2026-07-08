@@ -1,245 +1,68 @@
 import { describe, it, expect } from 'vitest'
+import { defineComponent, h } from 'vue'
 import { mount } from '@vue/test-utils'
-import { nextTick } from 'vue'
-import { CalendarDate } from '@internationalized/date'
 import CustomDatePicker from '../CustomDatePicker.vue'
-import { UCalendarStub, UModalStub, USelectMenuStub } from '@/tests/stubs/nuxt-ui.stubs'
 
-describe.skip('CustomDatePicker', () => {
-  const mountComponent = (modelValue: [Date, Date] | null = null) =>
-    mount(CustomDatePicker, {
-      props: { modelValue, dataTestPrefix: 'test-date-picker' },
-      global: {
-        stubs: { USelectMenu: USelectMenuStub, UModal: UModalStub, UCalendar: UCalendarStub }
-      }
-    })
-
-  const openDropdown = async (wrapper: ReturnType<typeof mountComponent>) => {
-    await nextTick()
-    await wrapper.find('[data-test="test-date-picker-date-select"]').trigger('click')
-    await nextTick()
-    await wrapper.find('[data-test="test-date-picker-date-select"]').trigger('click')
+// Stub the shared picker: capture its props and let tests drive its `update:modelValue`.
+const AccountingDatePickerStub = defineComponent({
+  name: 'AccountingDatePicker',
+  props: ['modelValue', 'mode', 'storageKey'],
+  emits: ['update:modelValue'],
+  setup() {
+    return () => h('div', { 'data-test': 'accounting-date-picker' })
   }
+})
 
-  const openCustomRangeModal = async (wrapper: ReturnType<typeof mountComponent>) => {
-    await openDropdown(wrapper)
-    await wrapper.find('.cursor-pointer').trigger('click')
-    await nextTick()
-  }
+const PREFIX = 'expense-transaction-history'
 
-  describe('rendering', () => {
-    it('renders the select trigger with the correct data-test attribute', () => {
-      const wrapper = mountComponent()
-      expect(wrapper.find('[data-test="test-date-picker-date-select"]').exists()).toBe(true)
-    })
-
-    it('shows the current month date range as display text by default', async () => {
-      const wrapper = mountComponent()
-      await nextTick()
-
-      const today = new Date()
-      const start = new Date(today.getFullYear(), today.getMonth(), 1)
-      const end = new Date(today.getFullYear(), today.getMonth() + 1, 0)
-      const expected = `${start.toLocaleString('default', { month: 'long' })} 1 - ${end.toLocaleString('default', { month: 'long' })} ${end.getDate()}`
-
-      expect(wrapper.find('span').text()).toBe(expected)
-    })
-
-    it('shows the provided date range as display text', async () => {
-      const wrapper = mountComponent([new Date('2024-01-01'), new Date('2024-01-31')])
-      await nextTick()
-
-      expect(wrapper.find('span').text()).toBe('January 1 - January 31')
-    })
-
-    it('lists current and previous month as selectable options', async () => {
-      const wrapper = mountComponent()
-      console.log('Before opening dropdown: \n')
-      console.log(wrapper.html())
-      await openDropdown(wrapper)
-      console.log('After opening dropdown: \n')
-      console.log(wrapper.html())
-
-      const items = wrapper.findAll('li')
-      const currentMonth = new Date().toLocaleString('default', { month: 'long' })
-      const previousMonth = new Date(
-        new Date().getFullYear(),
-        new Date().getMonth() - 1
-      ).toLocaleString('default', { month: 'long' })
-
-      expect(items).toHaveLength(2)
-      expect(items[0].text()).toBe(currentMonth)
-      expect(items[1].text()).toBe(previousMonth)
-    })
+const mountComponent = (modelValue: [Date, Date] | null = null) =>
+  mount(CustomDatePicker, {
+    props: { modelValue, dataTestPrefix: PREFIX },
+    global: { stubs: { AccountingDatePicker: AccountingDatePickerStub } }
   })
 
-  describe('option selection', () => {
-    it('emits the current month range when the current month option is selected', async () => {
-      const wrapper = mountComponent()
-      await nextTick()
+const picker = (wrapper: ReturnType<typeof mountComponent>) =>
+  wrapper.findComponent(AccountingDatePickerStub)
 
-      await openDropdown(wrapper)
-      await wrapper.findAll('li')[0].trigger('click')
-      await nextTick()
-
-      const today = new Date()
-      const emitted = wrapper.emitted('update:modelValue')!
-      expect(emitted[emitted.length - 1]).toEqual([
-        [
-          new Date(today.getFullYear(), today.getMonth(), 1),
-          new Date(today.getFullYear(), today.getMonth() + 1, 0)
-        ]
-      ])
-    })
-
-    it('emits the previous month range when the previous month option is selected', async () => {
-      const wrapper = mountComponent()
-      await nextTick()
-
-      await openDropdown(wrapper)
-      await wrapper.findAll('li')[1].trigger('click')
-      await nextTick()
-
-      const today = new Date()
-      const emitted = wrapper.emitted('update:modelValue')!
-      expect(emitted[emitted.length - 1]).toEqual([
-        [
-          new Date(today.getFullYear(), today.getMonth() - 1, 1),
-          new Date(today.getFullYear(), today.getMonth(), 0)
-        ]
-      ])
-    })
-
-    it('updates the display text when an option is selected', async () => {
-      const wrapper = mountComponent()
-      await nextTick()
-
-      await openDropdown(wrapper)
-      await wrapper.findAll('li')[1].trigger('click')
-      await nextTick()
-
-      const previousMonth = new Date(
-        new Date().getFullYear(),
-        new Date().getMonth() - 1
-      ).toLocaleString('default', { month: 'long' })
-      expect(wrapper.find('span').text()).toContain(previousMonth)
-    })
+describe('CustomDatePicker', () => {
+  it('renders the shared picker inside the prefixed test wrapper', () => {
+    const wrapper = mountComponent()
+    expect(wrapper.find(`[data-test="${PREFIX}-date-select"]`).exists()).toBe(true)
+    expect(picker(wrapper).exists()).toBe(true)
   })
 
-  describe('modelValue prop change', () => {
-    it('updates the display text when the modelValue prop changes', async () => {
-      const wrapper = mountComponent()
-      await wrapper.setProps({ modelValue: [new Date('2024-02-01'), new Date('2024-02-29')] })
-      await nextTick()
-
-      expect(wrapper.find('span').text()).toBe('February 1 - February 29')
-    })
-
-    it('emits the new range when modelValue prop changes', async () => {
-      const wrapper = mountComponent()
-      await nextTick()
-      const initialEmitCount = wrapper.emitted('update:modelValue')?.length ?? 0
-
-      const newRange: [Date, Date] = [new Date('2024-02-01'), new Date('2024-02-29')]
-      await wrapper.setProps({ modelValue: newRange })
-      await nextTick()
-
-      const emitted = wrapper.emitted('update:modelValue')!
-      expect(emitted.length).toBeGreaterThan(initialEmitCount)
-      expect(emitted[emitted.length - 1]).toEqual([newRange])
-    })
+  it('drives the shared picker in range mode with a prefixed storage key', () => {
+    const wrapper = mountComponent()
+    expect(picker(wrapper).props('mode')).toBe('range')
+    expect(picker(wrapper).props('storageKey')).toBe(`transaction-history-range-${PREFIX}`)
   })
 
-  describe('custom range modal', () => {
-    it('shows the custom range option in the dropdown when open', async () => {
-      const wrapper = mountComponent()
-      await openDropdown(wrapper)
+  it('seeds the picker from an incoming tuple', () => {
+    const start = new Date('2024-04-01')
+    const end = new Date('2024-04-30')
+    const wrapper = mountComponent([start, end])
+    expect(picker(wrapper).props('modelValue')).toEqual({ start, end })
+  })
 
-      expect(wrapper.find('.cursor-pointer').text()).toBe('Custom Range')
-    })
+  it('starts with no model when no tuple is provided', () => {
+    const wrapper = mountComponent()
+    expect(picker(wrapper).props('modelValue')).toBeUndefined()
+  })
 
-    it('opens the modal when "Custom Range" is clicked', async () => {
-      const wrapper = mountComponent()
-      await openCustomRangeModal(wrapper)
+  it('re-emits a resolved range as a [start, end] tuple', async () => {
+    const wrapper = mountComponent()
+    const start = new Date('2024-03-01')
+    const end = new Date('2024-03-31')
 
-      expect(wrapper.find('[data-test="u-modal"]').exists()).toBe(true)
-    })
+    await picker(wrapper).vm.$emit('update:modelValue', { start, end })
 
-    it('closes the dropdown when "Custom Range" is clicked', async () => {
-      const wrapper = mountComponent()
-      await openCustomRangeModal(wrapper)
+    const emitted = wrapper.emitted('update:modelValue')!
+    expect(emitted[emitted.length - 1]).toEqual([[start, end]])
+  })
 
-      expect(wrapper.findAll('li')).toHaveLength(0)
-    })
-
-    it('emits the selected range when Apply is clicked', async () => {
-      const wrapper = mountComponent()
-      await openCustomRangeModal(wrapper)
-
-      await wrapper.findComponent({ name: 'UCalendar' }).vm.$emit('update:modelValue', {
-        start: new CalendarDate(2024, 3, 1),
-        end: new CalendarDate(2024, 3, 31)
-      })
-      await nextTick()
-
-      await wrapper
-        .findAll('button')
-        .find((b) => b.text() === 'Apply')!
-        .trigger('click')
-      await nextTick()
-
-      const emitted = wrapper.emitted('update:modelValue')!
-      expect(emitted[emitted.length - 1]).toEqual([[new Date(2024, 2, 1), new Date(2024, 2, 31)]])
-    })
-
-    it('closes the modal when Apply is clicked', async () => {
-      const wrapper = mountComponent()
-      await openCustomRangeModal(wrapper)
-
-      await wrapper.findComponent({ name: 'UCalendar' }).vm.$emit('update:modelValue', {
-        start: new CalendarDate(2024, 3, 1),
-        end: new CalendarDate(2024, 3, 31)
-      })
-      await nextTick()
-
-      await wrapper
-        .findAll('button')
-        .find((b) => b.text() === 'Apply')!
-        .trigger('click')
-      await nextTick()
-
-      expect(wrapper.find('[data-test="u-modal"]').exists()).toBe(false)
-    })
-
-    it('closes the modal without emitting when Cancel is clicked', async () => {
-      const wrapper = mountComponent()
-      await openCustomRangeModal(wrapper)
-      const emitCountBeforeCancel = wrapper.emitted('update:modelValue')?.length ?? 0
-
-      await wrapper
-        .findAll('button')
-        .find((b) => b.text() === 'Cancel')!
-        .trigger('click')
-      await nextTick()
-
-      expect(wrapper.find('[data-test="u-modal"]').exists()).toBe(false)
-      expect(wrapper.emitted('update:modelValue')?.length ?? 0).toBe(emitCountBeforeCancel)
-    })
-
-    it('keeps Apply disabled until a date range is selected in the calendar', async () => {
-      const wrapper = mountComponent()
-      await openCustomRangeModal(wrapper)
-
-      const applyButton = wrapper.findAll('button').find((b) => b.text() === 'Apply')!
-      expect(applyButton.attributes('disabled')).toBeDefined()
-
-      await wrapper.findComponent({ name: 'UCalendar' }).vm.$emit('update:modelValue', {
-        start: new CalendarDate(2024, 3, 1),
-        end: new CalendarDate(2024, 3, 31)
-      })
-      await nextTick()
-
-      expect(applyButton.attributes('disabled')).toBeUndefined()
-    })
+  it('ignores a single Date value (date mode is not used here)', async () => {
+    const wrapper = mountComponent()
+    await picker(wrapper).vm.$emit('update:modelValue', new Date('2024-03-01'))
+    expect(wrapper.emitted('update:modelValue')).toBeUndefined()
   })
 })

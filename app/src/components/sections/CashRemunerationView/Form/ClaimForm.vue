@@ -102,6 +102,16 @@
       />
     </div>
 
+    <UAlert
+      v-if="errorMessage"
+      color="error"
+      variant="soft"
+      icon="i-heroicons-x-circle"
+      :title="errorTitle"
+      :description="errorMessage"
+      data-test="claim-error-alert"
+    />
+
     <div class="flex justify-center gap-4">
       <UButton
         v-if="isEdit"
@@ -114,16 +124,18 @@
       >
         Cancel
       </UButton>
-      <UButton
-        type="submit"
-        color="success"
-        class="w-32 justify-center"
-        :disabled="isLoading"
-        :loading="isLoading"
-        :data-test="isEdit ? 'update-claim-button' : 'submit-claim-button'"
-      >
-        {{ isEdit ? 'Update' : 'Submit' }}
-      </UButton>
+      <UTooltip :text="archivedTooltip">
+        <UButton
+          type="submit"
+          color="success"
+          class="w-32 justify-center"
+          :disabled="isLoading || isWriteDisabled"
+          :loading="isLoading"
+          :data-test="isEdit ? 'update-claim-button' : 'submit-claim-button'"
+        >
+          {{ isEdit ? 'Update' : 'Submit' }}
+        </UButton>
+      </UTooltip>
     </div>
   </UForm>
 </template>
@@ -134,6 +146,9 @@ import type { ClaimFormData } from '@/types'
 import FilePreviewGallery from '@/components/sections/CashRemunerationView/Form/FilePreviewGallery.vue'
 import UploadFileDB from '@/components/sections/CashRemunerationView/Form/UploadFileDB.vue'
 import { useClaimForm, type ClaimFormFileData } from '@/composables/useClaimForm'
+import { useTeamWriteGuard } from '@/composables/useTeamWriteGuard'
+
+const { isWriteDisabled, archivedTooltip } = useTeamWriteGuard()
 
 interface Props {
   initialData?: Partial<ClaimFormData>
@@ -143,6 +158,8 @@ interface Props {
   restrictSubmit?: boolean
   existingFiles?: Partial<ClaimFormFileData>[]
   deletingFileIndex?: number | null
+  errorMessage?: string
+  errorTitle?: string
 }
 
 const toast = useToast()
@@ -153,7 +170,9 @@ const props = withDefaults(defineProps<Props>(), {
   disabledWeekStarts: () => [],
   restrictSubmit: true,
   existingFiles: () => [],
-  deletingFileIndex: null
+  deletingFileIndex: null,
+  errorMessage: '',
+  errorTitle: 'Failed to submit claim'
 })
 
 const emit = defineEmits<{

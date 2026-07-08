@@ -1,0 +1,46 @@
+name: Contract Slither Analysis
+permissions:
+  contents: read
+  security-events: write
+
+on:
+  pull_request:
+    branches: "**"
+    paths:
+      - "contract/**"
+  workflow_dispatch:
+
+jobs:
+  slither:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🛫 Checkout code
+        uses: actions/checkout@v6
+
+      - name: 🐍 Run Slither
+        id: slither
+        uses: crytic/slither-action@v0.4.2
+        continue-on-error: true
+        with:
+          # crytic-compile sets up Node and installs the Hardhat project deps
+          # in `target` itself, so no separate `npm ci` step is needed.
+          target: "contract/"
+          node-version: 24
+          solc-version: "0.8.24"
+          slither-config: "contract/slither.config.json"
+          # Report-only for the initial rollout: existing contracts still carry
+          # high/medium findings (tracked in #1988 and #1993-1997), so blocking
+          # now would stall every contract PR. All findings are surfaced in the
+          # GitHub Security tab via the SARIF upload below.
+          # To enforce once the baseline is triaged: set `fail-on: high` (or
+          # medium) and re-add a gate step on `steps.slither.outcome`. Known
+          # false positives are silenced explicitly in contract/slither.config.json.
+          fail-on: none
+          sarif: results.sarif
+
+      - name: 🛡 Upload SARIF to GitHub code scanning
+        uses: github/codeql-action/upload-sarif@v3
+        if: always() && steps.slither.outputs.sarif != ''
+        with:
+          sarif_file: ${{ steps.slither.outputs.sarif }}
+          category: slither

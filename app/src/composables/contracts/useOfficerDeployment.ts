@@ -1,15 +1,29 @@
+/**
+ * Side-effect contract (see app/src/composables/CONVENTIONS.md):
+ *   - onSuccess: toasts "Officer contract deployed successfully" and
+ *                invalidates `teamKeys.all` + `contractKeys.all`.
+ *   - onError:   no toast — `mutation.error` is left for callers to render
+ *                inline via UAlert / classifyError.
+ *   - Invalidation: only the keys this deploy actually mutates (team list
+ *                and contracts list). Team detail is covered transitively
+ *                via `teamKeys.all`. Do NOT add narrower per-team keys here
+ *                — they belong to whatever step actually changes team data.
+ *   - Options:   pass `skipInvalidation` / `silent` when composing inside
+ *                an orchestrator that owns the flow-level toast + final
+ *                cache flush (see `useOfficerRedeploy`).
+ */
 import { useMutation, useQueryClient } from '@tanstack/vue-query'
 import { getConnections } from '@wagmi/core'
-import { encodeFunctionData, type Address, type Hex } from 'viem'
-import { getLogs } from 'viem/actions'
+import { encodeFunctionData, parseEventLogs, type Address, type Hex } from 'viem'
 import { config } from '@/wagmi.config'
 import { log, parseError } from '@/utils'
 import { executeContractWrite } from '@/composables/contracts/useContractWritesV3'
+import { teamKeys } from '@/queries/team.queries'
+import { contractKeys } from '@/queries/contract.queries'
 import {
   validateBeaconAddresses,
   getBeaconConfigs,
-  getDeploymentConfigs,
-  handleBeaconProxyCreatedLogs
+  getDeploymentConfigs
 } from '@/utils/contractDeploymentUtil'
 import { OFFICER_BEACON, validateAddresses } from '@/constant'
 import { OFFICER_ABI } from '@/artifacts/abi/officer'
@@ -81,28 +95,30 @@ export async function deployOfficer(args: DeployOfficerArgs): Promise<OfficerDep
 
   log.info('Officer contract deployment confirmed:', { hash, receipt })
 
-  const publicClient = config.getClient()
-  const blockNumber = receipt.blockNumber
-
-  const logs = await getLogs(publicClient, {
-    address: OFFICER_BEACON as Address,
-    event: {
-      type: 'event',
-      name: 'BeaconProxyCreated',
-      inputs: [
-        { type: 'address', name: 'proxy', indexed: true },
-        { type: 'address', name: 'deployer', indexed: true }
-      ]
-    },
-    fromBlock: blockNumber,
-    toBlock: blockNumber
+  // The deployment receipt already carries every log emitted by this exact
+  // transaction, so we decode the BeaconProxyCreated event straight from it
+  // instead of issuing a second `getLogs` RPC over the whole block (which
+  // could also surface proxies created by other txs in the same block).
+  const [event] = parseEventLogs({
+    abi: [
+      {
+        type: 'event',
+        name: 'BeaconProxyCreated',
+        inputs: [
+          { type: 'address', name: 'proxy', indexed: true },
+          { type: 'address', name: 'deployer', indexed: true }
+        ]
+      }
+    ] as const,
+    eventName: 'BeaconProxyCreated',
+    logs: receipt.logs
   })
 
-  const proxyAddress = handleBeaconProxyCreatedLogs(logs, hash, address)
-
-  if (!proxyAddress) {
+  if (!event) {
     throw new Error('Failed to extract Officer proxy address from deployment event')
   }
+
+  const proxyAddress = event.args.proxy
 
   log.info('Officer proxy address extracted:', proxyAddress)
 
@@ -110,9 +126,24 @@ export async function deployOfficer(args: DeployOfficerArgs): Promise<OfficerDep
     hash,
     receipt,
     officerAddress: proxyAddress,
-    deployBlockNumber: Number(blockNumber),
+    deployBlockNumber: Number(receipt.blockNumber),
     deployedAt: new Date()
   }
+}
+
+export interface UseDeployOfficerOptions {
+  /**
+   * When true, suppress the default "Officer contract deployed successfully"
+   * toast. Set this when composing inside an orchestrator that emits its own
+   * flow-level success toast.
+   */
+  silent?: boolean
+  /**
+   * When true, skip the default `teamKeys.all` + `contractKeys.all`
+   * invalidation. Set this when an orchestrator owns the final cache flush
+   * for the whole workflow.
+   */
+  skipInvalidation?: boolean
 }
 
 /**
@@ -122,24 +153,23 @@ export async function deployOfficer(args: DeployOfficerArgs): Promise<OfficerDep
  * the consumer can render them inline (e.g. via UAlert) — no default error
  * toast, since reactive error display is preferred for in-flow feedback.
  */
-export function useDeployOfficer() {
+export function useDeployOfficer(options: UseDeployOfficerOptions = {}) {
   const toast = useToast()
   const queryClient = useQueryClient()
 
   return useMutation<OfficerDeploymentResult, Error, DeployOfficerArgs>({
     mutationKey: ['deployOfficer'],
     mutationFn: deployOfficer,
-    onSuccess: async (_data, variables) => {
-      toast.add({ title: 'Officer contract deployed successfully', color: 'success' })
+    onSuccess: async () => {
+      if (!options.silent) {
+        toast.add({ title: 'Officer contract deployed successfully', color: 'success' })
+      }
       log.info('Officer contract deployment successful')
 
-      if (variables.teamId !== undefined) {
-        const numericTeamId =
-          typeof variables.teamId === 'string' ? parseInt(variables.teamId, 10) : variables.teamId
-        await queryClient.invalidateQueries({ queryKey: ['team', numericTeamId] })
-        await queryClient.invalidateQueries({ queryKey: ['teams'] })
+      if (!options.skipInvalidation) {
+        await queryClient.invalidateQueries({ queryKey: teamKeys.all })
+        await queryClient.invalidateQueries({ queryKey: contractKeys.all })
       }
-      await queryClient.invalidateQueries({ queryKey: ['contracts'] })
     },
     onError: (error) => {
       log.error('Officer deployment error:', error)
@@ -157,18 +187,18 @@ export function formatDeployError(error: unknown): string {
 }
 
 /**
- * Invalidates team / teams / contracts queries. Exposed so orchestration
- * composables can flush caches after a multi-step flow finishes (e.g. after
- * a post-deploy shareholder migration succeeds).
+ * Invalidates teams + contracts queries. Exposed so orchestration composables
+ * can flush caches after a multi-step flow finishes (e.g. after a post-deploy
+ * shareholder migration succeeds).
+ *
+ * Uses key-factory prefixes (`teamKeys.all`, `contractKeys.all`) so every
+ * registered query under those namespaces refetches — including team detail
+ * via the `teamKeys.detail(...)` prefix relationship.
  */
 export function useInvalidateOfficerQueries() {
   const queryClient = useQueryClient()
-  return async (teamId?: string | number) => {
-    if (teamId !== undefined) {
-      const numericTeamId = typeof teamId === 'string' ? parseInt(teamId, 10) : teamId
-      await queryClient.invalidateQueries({ queryKey: ['team', numericTeamId] })
-      await queryClient.invalidateQueries({ queryKey: ['teams'] })
-    }
-    await queryClient.invalidateQueries({ queryKey: ['contracts'] })
+  return async () => {
+    await queryClient.invalidateQueries({ queryKey: teamKeys.all })
+    await queryClient.invalidateQueries({ queryKey: contractKeys.all })
   }
 }

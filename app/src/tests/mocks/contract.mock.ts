@@ -1,10 +1,7 @@
 import { vi } from 'vitest'
 import { ref } from 'vue'
-import {
-  createContractReadMock,
-  createContractWriteMock,
-  createContractWriteV3Mock
-} from './erc20.mock'
+import { createContractReadMock, createContractWriteV3Mock } from './erc20.mock'
+import type { LendingOfferStruct } from '@/types'
 
 /**
  * Elections Contract Mocks
@@ -48,7 +45,8 @@ export const mockBankWrites = {
   transferOwnership: createContractWriteV3Mock(),
   renounceOwnership: createContractWriteV3Mock(),
   pause: createContractWriteV3Mock(),
-  unpause: createContractWriteV3Mock()
+  unpause: createContractWriteV3Mock(),
+  fundFixedReturnRepayment: createContractWriteV3Mock()
 }
 
 /**
@@ -64,17 +62,6 @@ export const mockBODReads = {
   memberCount: createContractReadMock(0n)
 }
 
-export const mockBODWrites = {
-  addMember: createContractWriteMock(),
-  removeMember: createContractWriteMock(),
-  updateMember: createContractWriteMock(),
-  pause: createContractWriteMock(),
-  unpause: createContractWriteMock(),
-  setBoard: createContractWriteMock(),
-  addAction: createContractWriteMock(),
-  approve: createContractWriteMock()
-}
-
 /**
  * BOD Composable-level mocks (higher-level interfaces returned by BOD composables)
  */
@@ -83,30 +70,13 @@ export const mockBodIsBodAction = {
 }
 
 export const mockBodAddAction = {
-  executeAddAction: vi.fn(),
-  isPending: ref(false),
-  isConfirming: ref(false),
-  isActionAdded: ref(false),
-  executeWrite: vi.fn(),
-  invalidateQueries: vi.fn(),
-  writeResult: {
-    data: ref(null),
-    error: ref(null),
-    isLoading: ref(false),
-    isSuccess: ref(false),
-    isError: ref(false),
-    isPending: ref(false),
-    status: ref('idle' as const)
-  },
-  receiptResult: {
-    data: ref(null),
-    error: ref(null),
-    isLoading: ref(false),
-    isSuccess: ref(false),
-    isError: ref(false),
-    isPending: ref(false),
-    status: ref('idle' as const)
-  }
+  ...createContractWriteV3Mock(),
+  executeAddAction: vi.fn()
+}
+
+export const mockBodApproveAction = {
+  ...createContractWriteV3Mock(),
+  executeApproveAction: vi.fn()
 }
 
 /**
@@ -130,7 +100,19 @@ export const mockExpenseAccountReads = {
 }
 
 export const mockExpenseAccountWrites = {
-  ownerWithdrawAllToBank: createContractWriteV3Mock()
+  ownerWithdrawAllToBank: createContractWriteV3Mock(),
+  transfer: createContractWriteV3Mock(),
+  activateApproval: createContractWriteV3Mock(),
+  deactivateApproval: createContractWriteV3Mock()
+}
+
+/**
+ * Vesting Contract Mocks
+ */
+export const mockVestingWrites = {
+  addVesting: createContractWriteV3Mock(),
+  stopVesting: createContractWriteV3Mock(),
+  release: createContractWriteV3Mock()
 }
 
 /**
@@ -155,12 +137,46 @@ export const mockInvestorWrites = {
   claimDividend: createContractWriteV3Mock(),
   withdraw: createContractWriteV3Mock(),
   mint: createContractWriteV3Mock(),
+  individualMint: createContractWriteV3Mock(),
+  distributeMint: createContractWriteV3Mock(),
   transfer: createContractWriteV3Mock(),
   pause: createContractWriteV3Mock(),
   unpause: createContractWriteV3Mock(),
   initialize: createContractWriteV3Mock(),
   transferOwnership: createContractWriteV3Mock(),
   renounceOwnership: createContractWriteV3Mock()
+}
+
+/**
+ * FixedReturn Contract Mocks
+ */
+export const mockFixedReturnReads = {
+  owner: createContractReadMock('0x742d35Cc6bF8C55C6C2e013e5492D2b6637e0886'),
+  version: createContractReadMock('1.0.0'),
+  totalOfferings: createContractReadMock(0n),
+  getLendingOffer: createContractReadMock<Partial<LendingOfferStruct> | null>(null),
+  getOfferLenders: createContractReadMock<string[]>([]),
+  totalEntitlementOf: createContractReadMock(0n),
+  lenderDeposits: createContractReadMock(0n),
+  lenderAllocation: createContractReadMock(0n),
+  hasDeposited: createContractReadMock(false),
+  isTokenSupported: createContractReadMock(false),
+  getSupportedTokens: createContractReadMock<string[]>([]),
+  // useQuery-shaped (not a direct ABI read) — see useFixedReturnAllOffers/
+  // useFixedReturnOfferLenders/useFixedReturnMyLenderPositions in
+  // composables/fixedReturn/reads.ts.
+  allOffers: createContractReadMock<unknown[]>([]),
+  offerLenders: createContractReadMock<unknown[]>([]),
+  myLenderPositions: createContractReadMock<Map<number, unknown>>(new Map())
+}
+
+export const mockFixedReturnWrites = {
+  createLendingOffer: createContractWriteV3Mock(),
+  lendFunds: createContractWriteV3Mock(),
+  markAsRefundable: createContractWriteV3Mock(),
+  claimRefund: createContractWriteV3Mock(),
+  addTokenSupport: createContractWriteV3Mock(),
+  removeTokenSupport: createContractWriteV3Mock()
 }
 
 /**
@@ -173,18 +189,21 @@ export const resetContractMocks = () => {
     mockBODReads,
     mockInvestorReads,
     mockCashRemunerationReads,
-    mockExpenseAccountReads
+    mockExpenseAccountReads,
+    mockFixedReturnReads
   ]
-
-  const allWriteV2Mocks = [mockBODWrites]
 
   const allWriteV3Mocks = [
     mockBankWrites,
     mockCashRemunerationWrites,
     mockExpenseAccountWrites,
     mockElectionsWrites,
-    mockInvestorWrites
+    mockInvestorWrites,
+    mockVestingWrites,
+    mockFixedReturnWrites
   ]
+
+  const allComposableV3Mocks = [mockBodAddAction, mockBodApproveAction]
 
   // Reset all read mocks
   allReadMocks.forEach((mockGroup) => {
@@ -199,32 +218,6 @@ export const resetContractMocks = () => {
 
       if (vi.isMockFunction(mock.refetch)) {
         mock.refetch.mockClear()
-      }
-    })
-  })
-
-  // Reset V2 write mocks
-  allWriteV2Mocks.forEach((mockGroup) => {
-    Object.values(mockGroup).forEach((mock) => {
-      mock.writeResult.data.value = null
-      mock.writeResult.error.value = null
-      mock.writeResult.isLoading.value = false
-      mock.writeResult.isSuccess.value = false
-      mock.writeResult.isError.value = false
-      mock.writeResult.isPending.value = false
-      mock.writeResult.status.value = 'idle'
-
-      mock.receiptResult.data.value = null
-      mock.receiptResult.error.value = null
-      mock.receiptResult.isLoading.value = false
-      mock.receiptResult.isSuccess.value = false
-      mock.receiptResult.isError.value = false
-      mock.receiptResult.isPending.value = false
-      mock.receiptResult.status.value = 'idle'
-
-      if (vi.isMockFunction(mock.executeWrite)) {
-        mock.executeWrite.mockClear()
-        mock.executeWrite.mockResolvedValue(undefined)
       }
     })
   })
@@ -246,5 +239,29 @@ export const resetContractMocks = () => {
       }
       if (vi.isMockFunction(mock.reset)) mock.reset.mockClear()
     })
+  })
+
+  // Reset composable-level mocks (V3 mutation shape + wrapper fn)
+  allComposableV3Mocks.forEach((mock) => {
+    mock.isPending.value = false
+    mock.isSuccess.value = false
+    mock.isError.value = false
+    mock.error.value = null
+    mock.data.value = null
+    mock.status.value = 'idle'
+
+    if (vi.isMockFunction(mock.mutate)) mock.mutate.mockClear()
+    if (vi.isMockFunction(mock.mutateAsync)) {
+      mock.mutateAsync.mockClear()
+      mock.mutateAsync.mockResolvedValue(undefined)
+    }
+    if (vi.isMockFunction(mock.reset)) mock.reset.mockClear()
+
+    if ('executeAddAction' in mock && vi.isMockFunction(mock.executeAddAction)) {
+      mock.executeAddAction.mockClear()
+    }
+    if ('executeApproveAction' in mock && vi.isMockFunction(mock.executeApproveAction)) {
+      mock.executeApproveAction.mockClear()
+    }
   })
 }

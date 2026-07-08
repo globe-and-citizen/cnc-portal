@@ -22,7 +22,8 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "build": "tsc && npm run sentry:sourcemaps",
+    "format:files": "prettier --write",
+    "build": "tsc && ([ -z \"$SENTRY_AUTH_TOKEN\" ] || npm run sentry:sourcemaps)",
     "prod": "node  dist/index.js",
     "copy:docs": "npx shx cp src/utils/backend_specs.html dist/utils/backend_specs.html",
     "db:wake": "ts-node scripts/wake-db.ts",
@@ -33,7 +34,7 @@
     "seed:test": "NODE_ENV=test ts-node prisma/seed.ts",
     "seed:staging": "NODE_ENV=staging ts-node prisma/seed.ts",
     "seed:reset": "npx prisma migrate reset --force && npm run seed",
-    "sentry:sourcemaps": "sentry-cli sourcemaps inject --org global-citizen-g6 --project cnc-portal-api ./dist && sentry-cli sourcemaps upload --org global-citizen-g6 --project cnc-portal-api ./dist"
+    "sentry:sourcemaps": "sentry-cli sourcemaps inject --org $SENTRY_ORG --project $SENTRY_PROJECT ./dist && sentry-cli sourcemaps upload --org $SENTRY_ORG --project $SENTRY_PROJECT ./dist"
   },
   "keywords": [],
   "author": "",
@@ -81,7 +82,7 @@
     "siwe": "^3.0.0",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
-    "uuid": "^13.0.0",
+    "uuid": "^14.0.0",
     "viem": "^2.29.4",
     "yaml": "^2.8.2",
     "yamljs": "^0.3.0",

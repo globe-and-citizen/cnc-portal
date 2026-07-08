@@ -1,56 +1,28 @@
 <template>
-  <UForm :schema="schema" :state="state" @submit="onSubmit">
-    <div class="flex flex-col gap-4">
+  <UForm
+    ref="form"
+    :schema="schema"
+    :state="state"
+    :validate-on="['blur', 'change', 'input']"
+    :validate-on-input-delay="0"
+    @submit="onSubmit"
+  >
+    <div class="flex flex-col gap-6">
       <UFormField name="address" label="Recipient">
         <SelectMemberContractsInput
-          :modelValue="memberInputInternal"
-          @update:modelValue="handleMemberInput"
+          v-model="state.addressInput"
           data-test="address-input"
           :disabled="props.disabled"
+          @selectItem="handleSelectItem"
         />
       </UFormField>
 
-      <UFormField name="amount" label="Ownership stake" hint="Both fields stay in sync.">
-        <div class="flex flex-col gap-2">
-          <div class="flex items-center gap-2">
-            <UInput
-              class="flex-1"
-              data-test="percentage-input"
-              v-model="state.percentage"
-              placeholder="0"
-              @update:modelValue="onPercentageChange"
-            >
-              <template #trailing>
-                <span class="text-sm font-semibold text-gray-500 select-none">%</span>
-              </template>
-            </UInput>
-
-            <UIcon name="i-lucide-equal" class="size-4 shrink-0 text-gray-400" />
-
-            <UInput
-              class="flex-1"
-              data-test="amount-input"
-              v-model="state.amount"
-              placeholder="0"
-              @update:modelValue="onAmountChange"
-            >
-              <template #trailing>
-                <span class="text-sm font-semibold text-gray-500 select-none">{{
-                  tokenSymbol
-                }}</span>
-              </template>
-            </UInput>
-          </div>
-
-          <p v-if="totalSupplyDisplay !== null" class="text-xs text-gray-500">
-            Current supply:
-            <span class="font-semibold">{{ totalSupplyDisplay }} {{ tokenSymbol }}</span>
-            <span v-if="totalSupplyDisplay === '0'" class="ml-1 text-amber-500"
-              >— issue a fixed amount first before using percentage mode</span
-            >
-          </p>
-        </div>
-      </UFormField>
+      <MintStakeSection
+        :recipientAddress="state.address"
+        :hasValidationError="!isStakeValid"
+        @update:issuedAmount="(v) => (issuedAmount = v)"
+        @update:stakePayload="onStakePayloadUpdate"
+      />
 
       <UAlert
         v-if="mintErrorMessage"
@@ -65,19 +37,21 @@
           variant="outline"
           color="error"
           data-test="cancel-button"
-          :disabled="isConfirmingMint || isMintPending"
+          :disabled="isMintPending"
           @click="emit('close-modal')"
           label="Cancel"
         />
-        <UButton
-          type="submit"
-          :loading="isConfirmingMint || isMintPending"
-          :disabled="isConfirmingMint || isMintPending"
-          color="primary"
-          class="text-center"
-          data-test="submit-button"
-          label="Issue tokens"
-        />
+        <TeamArchivedTooltip v-slot="{ disabled: archivedDisabled }">
+          <UButton
+            type="submit"
+            :loading="isMintPending"
+            :disabled="isSubmitDisabled || archivedDisabled"
+            color="primary"
+            class="text-center"
+            data-test="submit-button"
+            label="Issue tokens"
+          />
+        </TeamArchivedTooltip>
       </div>
     </div>
   </UForm>
@@ -85,116 +59,157 @@
 
 <script setup lang="ts">
 import { z } from 'zod'
-import { isAddress, parseUnits, formatUnits, type Address } from 'viem'
-import { onMounted, reactive, ref, computed } from 'vue'
-import { useReadContract, useWaitForTransactionReceipt, useWriteContract } from '@wagmi/vue'
+import { isAddress, parseUnits } from 'viem'
+import { reactive, ref, computed, watch } from 'vue'
 import SelectMemberContractsInput from '@/components/utils/SelectMemberContractsInput.vue'
-import { INVESTOR_ABI } from '@/artifacts/abi/investors'
-import { watch } from 'vue'
-import { useTeamStore } from '@/stores'
+import MintStakeSection from './MintStakeSection.vue'
+import TeamArchivedTooltip from '@/components/TeamArchivedTooltip.vue'
+import { useIndividualMint } from '@/composables/investor/writes'
 import { log } from '@/utils'
 import { useQueryClient } from '@tanstack/vue-query'
+import { TOKEN_DECIMALS } from '@/utils/investorMintAllocation'
+import { formatAmountWithPrecision } from '@/utils/currencyUtil'
+import { type StakeMode, type StakePayload } from '@/types/investor'
 
-const TOKEN_DECIMALS = 6
-
-const memberInputInternal = ref<{ name: string; address: string }>({ name: '', address: '' })
-const state = reactive({ address: '', amount: '', percentage: '' })
+const state = reactive({
+  addressInput: { name: '', address: '' },
+  address: '',
+  stake: {
+    amount: 0,
+    percentage: 0,
+    stakeMode: 'ending' as StakeMode
+  }
+})
 const mintErrorMessage = ref<string | null>(null)
-const mintHash = ref<`0x${string}` | undefined>()
+const issuedAmount = ref<number | null>(null)
+const stakeContext = reactive({
+  addMax: 100,
+  endingMin: 0,
+  totalSupply: 0
+})
 const emit = defineEmits(['close-modal'])
-
-const mintModal = defineModel({ default: false })
 
 const props = defineProps<{
   memberInput?: { name: string; address: string }
   disabled?: boolean
 }>()
 
+if (props.memberInput) {
+  state.addressInput = props.memberInput
+  state.address = props.memberInput.address
+}
+
 const queryClient = useQueryClient()
-const teamStore = useTeamStore()
 const toast = useToast()
 
-const investorsAddress = computed(() => teamStore.getContractAddressByType('InvestorV1'))
+const handleSelectItem = (item: {
+  name: string
+  address: string
+  type: 'member' | 'trader-safe' | 'contract'
+}) => {
+  state.addressInput = { name: item.name, address: item.address }
+  state.address = item.address
+}
+
+// Every stake rule lives here and reports on `amount`, so `UForm`/`UFormField` render the
+// message natively under the Ownership stake field — no manual message wiring.
+const stakeSchema = z
+  .object({
+    amount: z.number(),
+    percentage: z.number(),
+    stakeMode: z.enum(['add', 'ending'])
+  })
+  .superRefine((stake, ctx) => {
+    const fail = (message: string) =>
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['amount'], message })
+
+    // Require user to enter a stake amount
+    if (stake.amount === 0 && stake.percentage === 0) {
+      fail('Amount must be greater than 0')
+      return
+    }
+
+    // Sole-holder edge case: recipient already owns 100% of supply. Their ownership
+    // stays at 100% regardless of how many tokens are minted, so the % field always
+    // computes to 0 and is meaningless — only the issued amount matters.
+    if (stakeContext.addMax === 0 && stakeContext.totalSupply > 0) {
+      if (!(stake.amount > 0)) fail('Amount must be greater than 0')
+      else if (stake.stakeMode === 'ending' && stake.amount <= stakeContext.totalSupply)
+        fail('Ending balance must exceed the current balance')
+      return
+    }
+
+    if (stake.stakeMode === 'ending' && stakeContext.totalSupply <= 0) {
+      fail('Ending % is unavailable while supply is 0. Switch to Add mode.')
+      return
+    }
+
+    if (!(stake.amount > 0)) fail('Amount must be greater than 0')
+
+    if (stake.stakeMode === 'add') {
+      if (!(stake.percentage > 0)) fail('Add % must be greater than 0')
+      else if (stake.percentage > stakeContext.addMax)
+        fail(`Add % must be less than ${formatAmountWithPrecision(stakeContext.addMax, 0, 2)}%`)
+    } else {
+      if (!(stake.percentage > stakeContext.endingMin))
+        fail(
+          `Ending % must be greater than ${formatAmountWithPrecision(stakeContext.endingMin, 0, 2)}%`
+        )
+      else if (stake.percentage >= 100) fail('Ending % must stay below 100%')
+    }
+  })
 
 const schema = z.object({
   address: z.string().refine((v) => isAddress(v), { message: 'Invalid address' }),
-  amount: z
-    .string()
-    .min(1, 'Enter an amount or a percentage')
-    .refine((v) => !isNaN(Number(v)) && Number(v) > 0, { message: 'Amount must be greater than 0' })
+  stake: stakeSchema
 })
 
-const { mutateAsync: mint, isPending: isMintPending } = useWriteContract()
+const { mutate: mint, isPending: isMintPending } = useIndividualMint()
 
-const { isLoading: isConfirmingMint, isSuccess: isSuccessMinting } = useWaitForTransactionReceipt({
-  hash: mintHash
-})
+const isStakeValid = computed(() => stakeSchema.safeParse(state.stake).success)
 
-const { data: tokenSymbol } = useReadContract({
-  abi: INVESTOR_ABI,
-  address: investorsAddress,
-  functionName: 'symbol'
-})
+const isSubmitDisabled = computed(
+  () => isMintPending.value || !isStakeValid.value || (issuedAmount.value ?? 0) <= 0
+)
 
-const { data: totalSupplyRaw } = useReadContract({
-  abi: INVESTOR_ABI,
-  address: investorsAddress,
-  functionName: 'totalSupply'
-})
+// The stake fields live in MintStakeSection and reach this form through an emitted
+// payload, so they land after the input event UForm validates on. Re-validate whenever
+// that payload settles to keep the natively-rendered message in sync.
+const form = ref<{ validate: (opts?: Record<string, unknown>) => Promise<unknown> } | null>(null)
+watch(
+  () => [
+    state.stake.amount,
+    state.stake.percentage,
+    state.stake.stakeMode,
+    stakeContext.addMax,
+    stakeContext.endingMin,
+    stakeContext.totalSupply
+  ],
+  () => {
+    form.value?.validate({ name: 'stake.amount', silent: true }).catch(() => {})
+  }
+)
 
-const totalSupplyDisplay = computed(() => {
-  if (totalSupplyRaw.value === undefined || totalSupplyRaw.value === null) return null
-  return formatUnits(totalSupplyRaw.value as bigint, TOKEN_DECIMALS)
-})
-
-/**
- * Ownership percentage after mint:  p = X / (S + X)  → X = (p * S) / (1 - p)
- * where S = totalSupply (in display units) and X = amount to mint (in display units)
- */
-const computeAmountFromPercentage = (percentageStr: string): string => {
-  const pct = Number(percentageStr)
-  if (isNaN(pct) || pct <= 0 || pct >= 100) return ''
-  const supply = Number(totalSupplyDisplay.value ?? '0')
-  if (supply <= 0) return ''
-  const p = pct / 100
-  const amount = (p * supply) / (1 - p)
-  return String(Math.round(amount * 10 ** TOKEN_DECIMALS) / 10 ** TOKEN_DECIMALS)
+const onStakePayloadUpdate = (payload: StakePayload) => {
+  state.stake.amount = payload.amount
+  state.stake.percentage = payload.percentage
+  state.stake.stakeMode = payload.stakeMode
+  stakeContext.addMax = payload.addMax
+  stakeContext.endingMin = payload.endingMin
+  stakeContext.totalSupply = payload.totalSupply
 }
 
-const computePercentageFromAmount = (amountStr: string): string => {
-  const amount = Number(amountStr)
-  if (isNaN(amount) || amount <= 0) return ''
-  const supply = Number(totalSupplyDisplay.value ?? '0')
-  if (supply <= 0) return ''
-  const pct = (amount / (supply + amount)) * 100
-  return String(Math.round(pct * 100) / 100)
-}
+const onSubmit = () => {
+  if (issuedAmount.value === null || issuedAmount.value <= 0 || !isAddress(state.address)) return
 
-const onPercentageChange = (v: string | number) => {
-  state.amount = computeAmountFromPercentage(String(v))
-}
-
-const onAmountChange = (v: string | number) => {
-  state.percentage = computePercentageFromAmount(String(v))
-}
-
-const handleMemberInput = (v: { name: string; address: string }) => {
-  memberInputInternal.value = v
-  state.address = v.address
-}
-
-const onSubmit = async () => {
   mintErrorMessage.value = null
-  await mint(
+  mint(
+    { args: [state.address, parseUnits(String(issuedAmount.value), TOKEN_DECIMALS)] },
     {
-      abi: INVESTOR_ABI,
-      address: investorsAddress.value as Address,
-      functionName: 'individualMint',
-      args: [state.address as Address, parseUnits(state.amount, TOKEN_DECIMALS)]
-    },
-    {
-      onSuccess: (hash) => {
-        mintHash.value = hash
+      onSuccess: async () => {
+        toast.add({ title: 'Tokens issued successfully', color: 'success' })
+        await queryClient.invalidateQueries({ queryKey: ['readContract'] })
+        emit('close-modal')
       },
       onError: (error) => {
         log.error('Failed to mint', error)
@@ -206,20 +221,4 @@ const onSubmit = async () => {
     }
   )
 }
-
-onMounted(() => {
-  if (props.memberInput) {
-    memberInputInternal.value = props.memberInput
-    state.address = props.memberInput.address
-  }
-})
-
-watch(isConfirmingMint, async (isConfirming, wasConfirming) => {
-  if (wasConfirming && !isConfirming && isSuccessMinting.value) {
-    toast.add({ title: 'Tokens issued successfully', color: 'success' })
-    await queryClient.invalidateQueries({ queryKey: ['readContract'] })
-    mintModal.value = false
-    emit('close-modal')
-  }
-})
 </script>

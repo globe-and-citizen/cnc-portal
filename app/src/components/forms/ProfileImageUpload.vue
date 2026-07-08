@@ -9,6 +9,7 @@
         { 'cursor-not-allowed opacity-60': isUploading }
       ]"
       data-test="profile-image-upload-box"
+      :data-has-image="imageUrl ? 'true' : 'false'"
     >
       <!-- Background image -->
       <div
