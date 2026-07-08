@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { NavigationMenuItem } from '@nuxt/ui'
-import { useSidebarNavItems } from '@/composables/useSidebarNavItems'
+import { useSidebarNavItems, ACCOUNTING_MENU_KEY } from '@/composables/useSidebarNavItems'
 import { mockRoute } from '@/tests/mocks/router.mock'
 import { mockTeamStore, mockUserStore } from '@/tests/mocks/store.mock'
 
@@ -107,6 +107,35 @@ describe('useSidebarNavItems', () => {
 
       const items = useSidebarNavItems()
       expect(items.value[1][0].label).toBe('Company workspace')
+    })
+  })
+
+  describe('Accounting menu persistence', () => {
+    beforeEach(() => {
+      localStorage.clear()
+      // Default to a specific team context.
+      mockRoute.params = { id: '42' }
+    })
+
+    it('gives the Accounting item a stable accordion value', () => {
+      const accounting = findByLabel(useSidebarNavItems().value, 'Accounting')
+      expect(accounting?.value).toBe('accounting')
+    })
+
+    it('stays closed by default even when persisted open on the companies list', () => {
+      localStorage.setItem(ACCOUNTING_MENU_KEY, 'true')
+      mockRoute.params = {}
+      mockTeamStore.currentTeamId = null as unknown as string
+
+      expect(findByLabel(useSidebarNavItems().value, 'Accounting')?.defaultOpen).toBe(false)
+    })
+
+    it('restores the persisted open state inside a company', () => {
+      // No persistence → collapsed, like the other menus.
+      expect(findByLabel(useSidebarNavItems().value, 'Accounting')?.defaultOpen).toBe(false)
+
+      localStorage.setItem(ACCOUNTING_MENU_KEY, 'true')
+      expect(findByLabel(useSidebarNavItems().value, 'Accounting')?.defaultOpen).toBe(true)
     })
   })
 
