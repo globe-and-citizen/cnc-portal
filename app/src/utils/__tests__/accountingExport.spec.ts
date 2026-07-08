@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import type { Address } from 'viem'
-import { buildAccountingSheets, exportAccountingExcel } from '../accountingExport'
+import { buildAccountingSheets, buildSheets, exportAccountingExcel } from '../accountingExport'
 import { assembleCncAccounting, type CncAccounting } from '@/utils/accounting/assemble'
 import { USDC_ADDRESS } from '@/constant'
 
@@ -63,7 +63,7 @@ describe('buildAccountingSheets', () => {
     expect(total[2]).toBe(total[3])
   })
 
-  it('general ledger has a header row and one row per journal line', () => {
+  it('general ledger has a header row, one row per journal line, and a total', () => {
     const rows = byName('General Ledger').rows
     expect(rows[2]).toEqual([
       'Date',
@@ -74,8 +74,11 @@ describe('buildAccountingSheets', () => {
       'Debit',
       'Credit'
     ])
-    // title + blank + header + the deposit's two legs
-    expect(rows.length).toBe(5)
+    // title + blank + header + the deposit's two legs + total row
+    expect(rows.length).toBe(6)
+    const totalRow = rows.at(-1)!
+    expect(totalRow[2]).toBe('Total movements')
+    expect(totalRow[5]).toBe(100) // numeric Debit total
   })
 
   it('fills the Activity column via the supplied name resolver', () => {
@@ -84,6 +87,39 @@ describe('buildAccountingSheets', () => {
     )!.rows
     // header + first journal line; Activity is the 4th column (index 3)
     expect(String(rows[3][3])).toContain('Acme Client')
+  })
+})
+
+describe('buildSheets (section selection)', () => {
+  it('builds only the requested sheets, in the given order', () => {
+    const sheets = buildSheets(sampleBooks(), [{ key: 'summary' }, { key: 'ledger' }])
+    expect(sheets.map((s) => s.name)).toEqual(['Summary', 'General Ledger'])
+  })
+
+  it('exposes a Summary sheet with numeric metric cells', () => {
+    const [summary] = buildSheets(sampleBooks(), [{ key: 'summary' }])
+    const netIncome = summary.rows.find((r) => r[0] === 'Net income')!
+    expect(typeof netIncome[1]).toBe('number')
+  })
+
+  it('restricts the ledger sheet to the requested columns, in canonical order', () => {
+    const [ledger] = buildSheets(sampleBooks(), [{ key: 'ledger', columns: ['cr', 'date'] }])
+    // rows: title, blank, header, then data — canonical order Date, Credit.
+    expect(ledger.rows[2]).toEqual(['Date', 'Credit'])
+    expect(ledger.rows[3]).toHaveLength(2)
+  })
+
+  it('honours the active category filter and still appends a total row', () => {
+    const [ledger] = buildSheets(sampleBooks(), [{ key: 'ledger', filter: 'Expense' }])
+    // title + blank + header + total — the deposit is Revenue, filtered out.
+    expect(ledger.rows).toHaveLength(4)
+    expect(ledger.rows.at(-1)![2]).toBe('Total movements')
+  })
+
+  it('names the category in the ledger title row but keeps a short tab name', () => {
+    const [ledger] = buildSheets(sampleBooks(), [{ key: 'ledger', filter: 'Revenue' }])
+    expect(String(ledger.rows[0][0])).toBe('General Ledger — Revenue')
+    expect(ledger.name).toBe('General Ledger')
   })
 })
 

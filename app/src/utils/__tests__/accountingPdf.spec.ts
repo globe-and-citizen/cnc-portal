@@ -1,6 +1,12 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import type { Address } from 'viem'
-import { buildAccountingTables, exportAccountingPdf } from '../accountingPdf'
+import {
+  buildAccountingTables,
+  buildTables,
+  exportAccountingPdf,
+  exportTablesPdf
+} from '../accountingPdf'
+import { periodLabel } from '@/utils/accounting/presenter'
 import { assembleCncAccounting, type CncAccounting } from '@/utils/accounting/assemble'
 import { USDC_ADDRESS } from '@/constant'
 
@@ -72,7 +78,7 @@ describe('buildAccountingTables', () => {
     expect(total[2]).toBe(total[3])
   })
 
-  it('general ledger has a column header and one row per journal line', () => {
+  it('general ledger has a column header, one row per journal line, and a total', () => {
     const ledger = byTitle('General Ledger')
     expect(ledger.head).toEqual([
       'Date',
@@ -83,8 +89,12 @@ describe('buildAccountingTables', () => {
       'Debit',
       'Credit'
     ])
-    // the deposit posts two legs (debit Bank / credit Service Revenue)
-    expect(ledger.body.length).toBe(2)
+    // the deposit posts two legs (debit Bank / credit Service Revenue) + a total row
+    expect(ledger.body.length).toBe(3)
+    const totalRow = ledger.body.at(-1)!
+    expect(totalRow[2]).toBe('Total movements')
+    expect(totalRow[5]).toBe('$100.00') // Debit total
+    expect(totalRow[6]).toBe('$100.00') // Credit total
   })
 
   it('renders the Activity column via the supplied name resolver', () => {
@@ -97,8 +107,70 @@ describe('buildAccountingTables', () => {
   })
 })
 
+describe('buildTables (section selection)', () => {
+  it('builds only the requested sections, in the given order', () => {
+    const tables = buildTables(sampleBooks(), [{ key: 'ledger' }, { key: 'summary' }])
+    expect(tables.map((t) => t.title)).toEqual(['General Ledger', 'Summary'])
+  })
+
+  it('exposes a Summary section (absent from the classic tabs)', () => {
+    const [summary] = buildTables(sampleBooks(), [{ key: 'summary' }])
+    expect(summary.title).toBe('Summary')
+    // The live roll-up cards surface as metric rows.
+    expect(summary.body.some((r) => r[0] === 'Net income')).toBe(true)
+    expect(summary.body.some((r) => r[0] === 'Books balanced')).toBe(true)
+  })
+
+  it('restricts the ledger to the requested columns, in canonical order', () => {
+    const [ledger] = buildTables(sampleBooks(), [
+      { key: 'ledger', columns: ['cr', 'date', 'account'] }
+    ])
+    // Canonical order is Date, Account, Credit — not the toggle order.
+    expect(ledger.head).toEqual(['Date', 'Account', 'Credit'])
+    expect(ledger.align).toEqual(['left', 'left', 'right'])
+    expect(ledger.body[0]).toHaveLength(3)
+  })
+
+  it('honours the active category filter and still totals the filtered rows', () => {
+    const [ledger] = buildTables(sampleBooks(), [{ key: 'ledger', filter: 'Expense' }])
+    // The deposit is Revenue, filtered out — only the (zero) total row remains.
+    expect(ledger.body).toHaveLength(1)
+    const totalRow = ledger.body[0]
+    expect(totalRow[2]).toBe('Total movements')
+    expect(totalRow[5]).toBe('$0.00')
+  })
+
+  it('names the category and period in the ledger heading when narrowed', () => {
+    const [ledger] = buildTables(sampleBooks(), [
+      { key: 'ledger', filter: 'Revenue', from: new Date('2026-01-01'), to: new Date('2026-02-01') }
+    ])
+    expect(ledger.title).toContain('General Ledger')
+    expect(ledger.title).toContain('Revenue')
+    expect(ledger.title).toContain('Jan 1, 2026')
+  })
+
+  it('keeps a plain "General Ledger" heading for the whole book', () => {
+    const [ledger] = buildTables(sampleBooks(), [{ key: 'ledger' }])
+    expect(ledger.title).toBe('General Ledger')
+  })
+})
+
+describe('periodLabel', () => {
+  it('reads "All time" with no bounds', () => {
+    expect(periodLabel(null, null)).toBe('All time')
+  })
+
+  it('formats a bounded range', () => {
+    const label = periodLabel(new Date('2026-01-01'), new Date('2026-02-01'))
+    expect(label).toContain('Jan 1, 2026')
+    expect(label).toContain('Feb 1, 2026')
+    expect(label).toContain('–')
+  })
+})
+
 const saveMock = vi.fn()
 const autoTableMock = vi.fn()
+const addPageMock = vi.fn()
 
 vi.mock('jspdf', () => {
   class FakeDoc {
@@ -106,6 +178,7 @@ vi.mock('jspdf', () => {
     internal = { pageSize: { getWidth: () => 842, getHeight: () => 595 } }
     GState = class {}
     save = saveMock
+    addPage = addPageMock
     setFont() {}
     setFontSize() {}
     setTextColor() {}
@@ -123,6 +196,7 @@ describe('exportAccountingPdf', () => {
   afterEach(() => {
     saveMock.mockClear()
     autoTableMock.mockClear()
+    addPageMock.mockClear()
   })
 
   it('renders one table per section and downloads the PDF', async () => {
@@ -131,10 +205,38 @@ describe('exportAccountingPdf', () => {
     // Income Statement, Balance Sheet, Trial Balance, General Ledger.
     expect(autoTableMock).toHaveBeenCalledTimes(4)
     expect(saveMock).toHaveBeenCalledWith('cnc-accounting.pdf')
+    // Flowing layout: no forced page breaks.
+    expect(addPageMock).not.toHaveBeenCalled()
 
     // Sober header fill and zebra stripes are wired on every table.
     const opts = autoTableMock.mock.calls[0][1]
     expect(opts.headStyles.fillColor).toEqual([71, 85, 105])
     expect(opts.alternateRowStyles.fillColor).toEqual([241, 245, 249])
+  })
+})
+
+describe('exportTablesPdf', () => {
+  afterEach(() => {
+    saveMock.mockClear()
+    autoTableMock.mockClear()
+    addPageMock.mockClear()
+  })
+
+  it('downloads under the given filename', async () => {
+    const tables = buildTables(sampleBooks(), [{ key: 'income' }])
+    await exportTablesPdf(tables, { filename: 'income-statement.pdf' })
+    expect(saveMock).toHaveBeenCalledWith('income-statement.pdf')
+  })
+
+  it('starts each section on a fresh page when pageBreak is set', async () => {
+    const tables = buildTables(sampleBooks(), [
+      { key: 'summary' },
+      { key: 'income' },
+      { key: 'ledger' }
+    ])
+    await exportTablesPdf(tables, { filename: 'report.pdf', pageBreak: true })
+    // One break before every section after the first.
+    expect(addPageMock).toHaveBeenCalledTimes(2)
+    expect(autoTableMock).toHaveBeenCalledTimes(3)
   })
 })
