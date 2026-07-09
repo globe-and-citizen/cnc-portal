@@ -51,7 +51,6 @@ contract Vesting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
   address public officerAddress;
 
   /// @dev Reserved storage slots for future upgrades.
-  // slither-disable-next-line unused-state
   uint256[50] private __gap; // solhint-disable-line chainlink-solidity/prefix-storage-variables-with-s-underscore
 
   /**

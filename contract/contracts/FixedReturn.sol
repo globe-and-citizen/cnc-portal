@@ -172,7 +172,6 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
     //////////////////////////////////////////////////////////////*/
 
   // Gap reduced from 50 to 48: two new slots added above (totalPaidToLender, officerAddress).
-  // slither-disable-next-line unused-state
   uint256[48] private __gap; // solhint-disable-line chainlink-solidity/prefix-storage-variables-with-s-underscore
 
   // ────────────────────────────────────────────────────
