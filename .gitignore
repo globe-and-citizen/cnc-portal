@@ -47,6 +47,10 @@ backend/.env.production
 app/.env.production
 .mcp.json
 
+# Codex and scripts directories
+.codex/
+scripts/
+
 # Local review / architecture notes (not for public repo)
 /reviews/
 /archi-update.md
