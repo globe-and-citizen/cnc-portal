@@ -14,7 +14,7 @@ import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
  *         payments against click/impression spend, with withdrawal of remaining budget.
  * @dev Pausable and reentrancy-guarded; admins and owner share most privileged actions.
  */
-contract AdCampaignManager is Ownable(msg.sender), Pausable, ReentrancyGuard {
+contract AdCampaignManager is Ownable, Pausable, ReentrancyGuard {
   using Strings for uint256;
 
   /// @dev Lifecycle status of an ad campaign.
@@ -131,7 +131,11 @@ contract AdCampaignManager is Ownable(msg.sender), Pausable, ReentrancyGuard {
    * @param _costPerImpression Cost per impression.
    * @param _bankContractAddress Bank contract to receive claimed payments.
    */
-  constructor(uint256 _costPerClick, uint256 _costPerImpression, address _bankContractAddress) {
+  constructor(
+    uint256 _costPerClick,
+    uint256 _costPerImpression,
+    address _bankContractAddress
+  ) Ownable(msg.sender) {
     if (_bankContractAddress == address(0)) revert ZeroAddress();
     costPerClick = _costPerClick;
     costPerImpression = _costPerImpression;
