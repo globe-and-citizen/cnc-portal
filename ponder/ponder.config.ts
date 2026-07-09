@@ -73,6 +73,12 @@ const feeCollectorAddress = (process.env.FEE_COLLECTOR_ADDRESS ??
 if (!feeCollectorAddress)
   throw new Error(missing("FeeCollector", "FEE_COLLECTOR_ADDRESS"));
 
+// The (global, singleton) FeeCollector address, re-exported so indexing
+// functions can read `getFeeFor` / `isTokenSupported` when deriving a Bank
+// transfer's fee. Every Officer is constructed with this same collector, so a
+// single address covers every team's Bank.
+export const FEE_COLLECTOR_ADDRESS: `0x${string}` = feeCollectorAddress;
+
 // On Hardhat start from block 0; on Polygon skip pre-deployment blocks.
 const startBlock = isHardhat ? 0 : Number(process.env.START_BLOCK);
 

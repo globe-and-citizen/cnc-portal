@@ -65,6 +65,81 @@ import {
   feeCollectorTokenSupportAdded,
   feeCollectorTokenSupportRemoved,
 } from "ponder:schema";
+import { FEE_COLLECTOR_ABI } from "../abis/fee-collector";
+import { FEE_COLLECTOR_ADDRESS } from "../ponder.config";
+
+// ─── Bank fee derivation ─────────────────────────────────────────────────────
+// The Bank charges a protocol fee (default 0.5%) on every outbound transfer to
+// another contract, skimmed to the FeeCollector, which emits the authoritative
+// `FeePaid` event carrying the exact fee. That event is indexed into
+// `bankFeePaid` keyed by transaction hash (one Bank transfer = one fee per tx).
+//
+// When a Bank transfer has **no** matching `FeePaid` in the same transaction —
+// e.g. the FeeCollector wasn't yet in the indexed range — we recover the fee
+// here so the ledger still sees it. This never fabricates a fee: we read the
+// fee rate (and, for tokens, whether the token is fee-charged) from the
+// FeeCollector at the transfer's block, so a zero rate or an unsupported token
+// yields no row, exactly like the contract. The exact `FeePaid` always wins:
+// it runs first (lower log index) and this helper skips when its row exists.
+async function indexDerivedBankFee(
+  context: { db: any; client: any },
+  args: {
+    txHash: `0x${string}`;
+    bank: `0x${string}`;
+    token: `0x${string}` | null;
+    net: bigint;
+    blockNumber: bigint;
+    timestamp: number;
+  },
+): Promise<void> {
+  const { txHash, bank, token, net, blockNumber, timestamp } = args;
+
+  // Authoritative on-chain fee already indexed for this tx — leave it untouched.
+  const existing = await context.db.find(bankFeePaid, { id: txHash });
+  if (existing) return;
+
+  // Fee rate in basis points at the transfer's block. 0 ⇒ no fee was charged.
+  const rawBps = await context.client.readContract({
+    abi: FEE_COLLECTOR_ABI,
+    address: FEE_COLLECTOR_ADDRESS,
+    functionName: "getFeeFor",
+    args: ["BANK"],
+    blockNumber,
+  });
+  const bps = BigInt(rawBps);
+  if (bps === 0n) return;
+
+  // ERC20 fees apply only to FeeCollector-supported tokens; native (token null)
+  // always pays when the rate is non-zero — mirrors Bank.transferToken.
+  if (token !== null) {
+    const supported = await context.client.readContract({
+      abi: FEE_COLLECTOR_ABI,
+      address: FEE_COLLECTOR_ADDRESS,
+      functionName: "isTokenSupported",
+      args: [token],
+      blockNumber,
+    });
+    if (!supported) return;
+  }
+
+  // The Bank event carries the NET (gross − fee). Recover the fee with the same
+  // basis-point math the contract used: fee = net · bps / (10000 − bps).
+  const fee = (net * bps) / (10_000n - bps);
+  if (fee === 0n) return;
+
+  await context.db
+    .insert(bankFeePaid)
+    .values({
+      id: txHash,
+      contractAddress: bank,
+      feeCollector: FEE_COLLECTOR_ADDRESS,
+      token,
+      amount: fee,
+      blockNumber,
+      timestamp,
+    })
+    .onConflictDoNothing();
+}
 
 // ─── Officer Factory ─────────────────────────────────────────────────────────
 
@@ -130,6 +205,16 @@ ponder.on("Bank:Transfer", async ({ event, context }) => {
     blockNumber: event.block.number,
     timestamp: Number(event.block.timestamp),
   });
+
+  // Native transfers pay the fee whenever the rate is non-zero (token: null).
+  await indexDerivedBankFee(context, {
+    txHash: event.transaction.hash,
+    bank: event.log.address,
+    token: null,
+    net: event.args.amount,
+    blockNumber: event.block.number,
+    timestamp: Number(event.block.timestamp),
+  });
 });
 
 ponder.on("Bank:TokenTransfer", async ({ event, context }) => {
@@ -143,20 +228,43 @@ ponder.on("Bank:TokenTransfer", async ({ event, context }) => {
     blockNumber: event.block.number,
     timestamp: Number(event.block.timestamp),
   });
+
+  await indexDerivedBankFee(context, {
+    txHash: event.transaction.hash,
+    bank: event.log.address,
+    token: event.args.token,
+    net: event.args.amount,
+    blockNumber: event.block.number,
+    timestamp: Number(event.block.timestamp),
+  });
 });
 
 ponder.on("FeeCollector:FeePaid", async ({ event, context }) => {
   const id = `${event.transaction.hash}-${event.log.logIndex}`;
 
-  await context.db.insert(bankFeePaid).values({
-    id,
-    contractAddress: event.args.payer,
-    feeCollector: event.log.address,
-    token: event.args.token,
-    amount: event.args.amount,
-    blockNumber: event.block.number,
-    timestamp: Number(event.block.timestamp),
-  });
+  // Authoritative per-transfer fee: keyed by transaction hash so it dedups with
+  // any row the derived-fee fallback may write for the same Bank transfer, and
+  // the exact on-chain amount always wins (onConflictDoUpdate). One Bank
+  // transfer charges at most one fee per tx.
+  await context.db
+    .insert(bankFeePaid)
+    .values({
+      id: event.transaction.hash,
+      contractAddress: event.args.payer,
+      feeCollector: event.log.address,
+      token: event.args.token,
+      amount: event.args.amount,
+      blockNumber: event.block.number,
+      timestamp: Number(event.block.timestamp),
+    })
+    .onConflictDoUpdate({
+      contractAddress: event.args.payer,
+      feeCollector: event.log.address,
+      token: event.args.token,
+      amount: event.args.amount,
+      blockNumber: event.block.number,
+      timestamp: Number(event.block.timestamp),
+    });
 
   await context.db.insert(feeCollectorFeePaid).values({
     id,

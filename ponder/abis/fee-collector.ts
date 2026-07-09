@@ -170,4 +170,20 @@ export const FEE_COLLECTOR_ABI = [
     name: "Withdrawn",
     type: "event",
   },
+  // View functions read by the indexer to derive the per-transfer Bank fee when
+  // no FeePaid event is present for a transfer (see src/index.ts).
+  {
+    inputs: [{ internalType: "string", name: "contractType", type: "string" }],
+    name: "getFeeFor",
+    outputs: [{ internalType: "uint16", name: "", type: "uint16" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [{ internalType: "address", name: "_token", type: "address" }],
+    name: "isTokenSupported",
+    outputs: [{ internalType: "bool", name: "", type: "bool" }],
+    stateMutability: "view",
+    type: "function",
+  },
 ] as const
