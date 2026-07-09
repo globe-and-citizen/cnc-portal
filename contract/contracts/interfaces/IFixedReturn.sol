@@ -81,6 +81,17 @@ interface IFixedReturn is IOwnable, ITokenSupport {
   /// @notice Emitted when an offer's funding target is reached
   event LendingOfferFunded(uint256 indexed offerId);
 
+  /// @notice Emitted when accumulated principal is swept to Bank on the funding deposit
+  event FundsSweptToBank(
+    uint256 indexed offerId,
+    address indexed bank,
+    address indexed token,
+    uint256 amount
+  );
+
+  /// @notice Emitted on a deposit that does not reach the target (no sweep, still accumulating)
+  event FundingProgressed(uint256 indexed offerId, uint256 totalFunded, uint256 fundingTarget);
+
   /// @notice Emitted when an offer is flipped to refundable after a missed deadline
   event LendingOfferRefundable(uint256 indexed offerId);
 

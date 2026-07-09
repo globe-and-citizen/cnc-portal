@@ -25,6 +25,12 @@ import {
   investorDividendDistributed,
   investorDividendPaid,
   investorDividendPaymentFailed,
+  fixedReturnOffer,
+  fixedReturnFundsLent,
+  fixedReturnFundsSwept,
+  fixedReturnPrincipalRefunded,
+  fixedReturnRepaymentDistributed,
+  fixedReturnLenderRepaid,
   cashRemunerationDeposit,
   cashRemunerationWithdraw,
   cashRemunerationWithdrawToken,
@@ -487,6 +493,112 @@ ponder.on("InvestorV1:DividendPaymentFailed", async ({ event, context }) => {
     token: event.args.token,
     amount: event.args.amount,
     reason: event.args.reason,
+    blockNumber: event.block.number,
+    timestamp: Number(event.block.timestamp),
+  });
+});
+
+// ─── FixedReturn ──────────────────────────────────────────────────────────────
+// The offer is created Open, then walked through its lifecycle by updating the
+// `state` column in place. Deposits, refunds and repayments are append-only —
+// cumulative totals are derived by summing them, never stored on the offer.
+
+ponder.on("FixedReturn:LendingOfferCreated", async ({ event, context }) => {
+  await context.db.insert(fixedReturnOffer).values({
+    id: `${event.log.address}-${event.args.offerId}`,
+    contractAddress: event.log.address,
+    offerId: event.args.offerId,
+    token: event.args.token,
+    fundingTarget: event.args.fundingTarget,
+    interestRateBps: event.args.interestRateBps,
+    startDate: event.args.startDate,
+    subscriptionDeadline: event.args.subscriptionDeadline,
+    fundingAccess: event.args.fundingAccess,
+    state: 0, // Open
+    blockNumber: event.block.number,
+    timestamp: Number(event.block.timestamp),
+  });
+});
+
+ponder.on("FixedReturn:FundsLent", async ({ event, context }) => {
+  await context.db.insert(fixedReturnFundsLent).values({
+    id: `${event.transaction.hash}-${event.log.logIndex}`,
+    contractAddress: event.log.address,
+    offerId: event.args.offerId,
+    lender: event.args.lender,
+    amount: event.args.amount,
+    blockNumber: event.block.number,
+    timestamp: Number(event.block.timestamp),
+  });
+});
+
+ponder.on("FixedReturn:FundsSweptToBank", async ({ event, context }) => {
+  await context.db.insert(fixedReturnFundsSwept).values({
+    id: `${event.transaction.hash}-${event.log.logIndex}`,
+    contractAddress: event.log.address,
+    offerId: event.args.offerId,
+    bank: event.args.bank,
+    token: event.args.token,
+    amount: event.args.amount,
+    blockNumber: event.block.number,
+    timestamp: Number(event.block.timestamp),
+  });
+});
+
+ponder.on("FixedReturn:LendingOfferFunded", async ({ event, context }) => {
+  await context.db
+    .update(fixedReturnOffer, {
+      id: `${event.log.address}-${event.args.offerId}`,
+    })
+    .set({ state: 1 }); // Funded
+});
+
+ponder.on("FixedReturn:LendingOfferRefundable", async ({ event, context }) => {
+  await context.db
+    .update(fixedReturnOffer, {
+      id: `${event.log.address}-${event.args.offerId}`,
+    })
+    .set({ state: 2 }); // Refundable
+});
+
+ponder.on("FixedReturn:PrincipalRefunded", async ({ event, context }) => {
+  await context.db.insert(fixedReturnPrincipalRefunded).values({
+    id: `${event.transaction.hash}-${event.log.logIndex}`,
+    contractAddress: event.log.address,
+    offerId: event.args.offerId,
+    lender: event.args.lender,
+    amount: event.args.amount,
+    blockNumber: event.block.number,
+    timestamp: Number(event.block.timestamp),
+  });
+});
+
+ponder.on("FixedReturn:RepaymentDistributed", async ({ event, context }) => {
+  await context.db.insert(fixedReturnRepaymentDistributed).values({
+    id: `${event.transaction.hash}-${event.log.logIndex}`,
+    contractAddress: event.log.address,
+    offerId: event.args.offerId,
+    totalAmount: event.args.totalAmount,
+    blockNumber: event.block.number,
+    timestamp: Number(event.block.timestamp),
+  });
+
+  // First repayment moves the offer Funded → Repaying; later installments keep
+  // it there. Idempotent, mirroring the contract's own state machine.
+  await context.db
+    .update(fixedReturnOffer, {
+      id: `${event.log.address}-${event.args.offerId}`,
+    })
+    .set({ state: 3 }); // Repaying
+});
+
+ponder.on("FixedReturn:LenderRepaid", async ({ event, context }) => {
+  await context.db.insert(fixedReturnLenderRepaid).values({
+    id: `${event.transaction.hash}-${event.log.logIndex}`,
+    contractAddress: event.log.address,
+    offerId: event.args.offerId,
+    lender: event.args.lender,
+    amount: event.args.amount,
     blockNumber: event.block.number,
     timestamp: Number(event.block.timestamp),
   });

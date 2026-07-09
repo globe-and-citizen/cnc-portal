@@ -64,6 +64,9 @@ const IGNORED_PATTERNS = [
   /(^|\/)typechain(-types)?\//,
   // The Graph / Ponder generated code
   /(^|\/)generated\//,
+  // Ponder ABI exports — mechanically emitted by scripts/generate-abis.ts
+  // from the contract build (both the .ts exports and their source JSON).
+  /(^|\/)ponder\/abis\//,
 ];
 
 /**
