@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "@openzeppelin/contracts/access/IAccessControl.sol";
-import "./IOwnable.sol";
-import "./IPausable.sol";
+import {IAccessControl} from "@openzeppelin/contracts/access/IAccessControl.sol";
+import {IOwnable} from "./IOwnable.sol";
+import {IPausable} from "./IPausable.sol";
 
 /**
  * @title IInvestorV1

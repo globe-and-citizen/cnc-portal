@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
-import "./UserBeaconProxy.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {UpgradeableBeacon} from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
+import {UserBeaconProxy} from "./UserBeaconProxy.sol";
 
 /**
  * @title FactoryBeacon
