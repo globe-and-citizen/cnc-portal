@@ -14,7 +14,14 @@ interface IFeeCollectorForAttack {
  */
 contract MaliciousReentrancy {
   address public target;
-  bool private attacking;
+  bool private _attacking;
+
+  receive() external payable {
+    if (_attacking) {
+      // Attempt a re-entrant call. Will bubble up the revert.
+      IFeeCollectorForAttack(target).withdraw();
+    }
+  }
 
   /**
    * @notice Kicks off the attack by calling withdraw on the fee collector.
@@ -24,15 +31,8 @@ contract MaliciousReentrancy {
    */
   function attack(address _target) external {
     target = _target;
-    attacking = true;
+    _attacking = true;
     IFeeCollectorForAttack(_target).withdraw();
-    attacking = false;
-  }
-
-  receive() external payable {
-    if (attacking) {
-      // Attempt a re-entrant call. Will bubble up the revert.
-      IFeeCollectorForAttack(target).withdraw();
-    }
+    _attacking = false;
   }
 }

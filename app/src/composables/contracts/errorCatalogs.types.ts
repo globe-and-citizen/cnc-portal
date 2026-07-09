@@ -8,7 +8,6 @@ export type ContractKey =
   | 'AdCampaignManager'
   | 'Vesting'
   | 'InvestorV1'
-  | 'Tips'
   | 'FeeCollector'
   | 'TokenSupport'
   | 'Elections'
