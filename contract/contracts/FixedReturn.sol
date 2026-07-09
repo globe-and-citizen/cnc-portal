@@ -131,7 +131,7 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
   ///      stack limit during coverage runs (compiled fine otherwise). getLendingOffer
   ///      below returns the same data via a `memory` struct instead, which the
   ///      compiler represents as a single pointer rather than 13 separate locals.
-  mapping(uint256 offerId => LendingOffer offer) private _lendingOffers;
+  mapping(uint256 offerId => LendingOffer offer) private s_lendingOffers;
 
   /// @dev offerId => lender => cumulative amount that lender has deposited so far.
   ///      This is principal only; it is never decremented on repayment (repayment
@@ -148,9 +148,9 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
   ///      Drives the proportional payout loop in repayLenders — every entry here
   ///      gets a share of each repayment, so this list must never contain duplicates
   ///      (guarded by hasDeposited below) or grow unboundedly large for a single offer.
-  mapping(uint256 offerId => address[] lenders) private _offerLenders;
+  mapping(uint256 offerId => address[] lenders) private s_offerLenders;
 
-  /// @dev offerId => lender => whether they're already recorded in _offerLenders,
+  /// @dev offerId => lender => whether they're already recorded in s_offerLenders,
   ///      so a lender's second/third deposit doesn't push a duplicate entry.
   mapping(uint256 offerId => mapping(address lender => bool deposited)) public hasDeposited;
 
@@ -353,7 +353,7 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
 
     offerId = ++totalOfferings;
 
-    _lendingOffers[offerId] = LendingOffer({
+    s_lendingOffers[offerId] = LendingOffer({
       token: params.token,
       fundingTarget: params.fundingTarget,
       interestRateBps: params.interestRateBps,
@@ -411,7 +411,7 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
   function lendFunds(uint256 offerId, uint256 amount) external nonReentrant {
     if (amount == 0) revert ZeroAmount();
 
-    LendingOffer storage offer = _lendingOffers[offerId];
+    LendingOffer storage offer = s_lendingOffers[offerId];
 
     if (offer.state != OfferState.Open) revert OfferNotOpen();
     if (block.timestamp > offer.subscriptionDeadline) revert OfferNotOpen();
@@ -435,7 +435,7 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
 
     if (!hasDeposited[offerId][msg.sender]) {
       hasDeposited[offerId][msg.sender] = true;
-      _offerLenders[offerId].push(msg.sender);
+      s_offerLenders[offerId].push(msg.sender);
     }
 
     bool nowFunded = offer.totalFunded >= offer.fundingTarget;
@@ -471,7 +471,7 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
    *      must explicitly choose to open the refund path for lenders to claim from.
    */
   function markAsRefundable(uint256 offerId) external onlyOwner {
-    LendingOffer storage offer = _lendingOffers[offerId];
+    LendingOffer storage offer = s_lendingOffers[offerId];
     if (offer.state != OfferState.Open) revert OfferNotOpen();
     if (block.timestamp <= offer.subscriptionDeadline) revert DeadlineNotPassed();
     offer.state = OfferState.Refundable;
@@ -490,7 +490,7 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
    *      Deposit is zeroed before the transfer (effects before interaction).
    */
   function claimRefund(uint256 offerId) external nonReentrant {
-    LendingOffer storage offer = _lendingOffers[offerId];
+    LendingOffer storage offer = s_lendingOffers[offerId];
     if (offer.state != OfferState.Refundable) revert OfferNotRefundable();
 
     uint256 amount = lenderDeposits[offerId][msg.sender];
@@ -518,13 +518,13 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
    *      minus what they have already received (totalPaidToLender). The final lender
    *      absorbs any remainder at the cumulative level, so proportions are exact and
    *      independent of how the issuer partitions installments.
-   * @dev Unbounded loop over _offerLenders[offerId] — a lender whose token receipt
+   * @dev Unbounded loop over s_offerLenders[offerId] — a lender whose token receipt
    *      reverts blocks everyone else in the same offer. Acceptable at current scale.
    */
   function repayLenders(uint256 offerId, uint256 amount) external onlyBank nonReentrant {
     if (amount == 0) revert ZeroAmount();
 
-    LendingOffer storage offer = _lendingOffers[offerId];
+    LendingOffer storage offer = s_lendingOffers[offerId];
     if (offer.state != OfferState.Funded && offer.state != OfferState.Repaying) {
       revert OfferNotFunded();
     }
@@ -542,7 +542,7 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
     // (based on totalRepaidByIssuer) minus what they have already received.
     // The final lender absorbs any rounding remainder at the cumulative level,
     // so proportions hold regardless of how the issuer partitions installments.
-    address[] storage lenders = _offerLenders[offerId];
+    address[] storage lenders = s_offerLenders[offerId];
     uint256 cumulativeForNonLast = 0;
     for (uint256 i = 0; i < lenders.length; ++i) {
       address lender = lenders[i];
@@ -580,7 +580,7 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
   function totalEntitlementOf(uint256 offerId, address lender) external view returns (uint256) {
     uint256 lenderDeposit = lenderDeposits[offerId][lender];
     if (lenderDeposit == 0) return 0;
-    LendingOffer storage offer = _lendingOffers[offerId];
+    LendingOffer storage offer = s_lendingOffers[offerId];
     if (offer.totalFunded == 0) return 0;
     uint256 totalObligation = offer.totalFunded +
       (offer.totalFunded * offer.interestRateBps) /
@@ -590,12 +590,12 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
 
   /// @notice All lender addresses that have deposited into a given offer.
   function getOfferLenders(uint256 offerId) external view returns (address[] memory) {
-    return _offerLenders[offerId];
+    return s_offerLenders[offerId];
   }
 
   /// @notice Full configuration and funding/repayment state for a given offer.
   function getLendingOffer(uint256 offerId) external view returns (LendingOffer memory) {
-    return _lendingOffers[offerId];
+    return s_lendingOffers[offerId];
   }
 
   /// @notice Current contract version, per semver.
@@ -615,5 +615,6 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
     //////////////////////////////////////////////////////////////*/
 
   // Gap reduced from 50 to 48: two new slots added above (totalPaidToLender, officerAddress).
+  // solhint-disable-next-line chainlink-solidity/prefix-storage-variables-with-s-underscore
   uint256[48] private __gap;
 }

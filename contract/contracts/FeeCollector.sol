@@ -34,7 +34,7 @@ contract FeeCollector is
   }
 
   /// @dev Stored fee configurations, one entry per contract type.
-  FeeConfig[] private _feeConfigs;
+  FeeConfig[] private s_feeConfigs;
 
   /**
    * @notice Address that receives funds when `withdraw` / `withdrawToken` is called.
@@ -180,7 +180,7 @@ contract FeeCollector is
       emit Withdrawn(recipient, nativeBalance);
     }
 
-    address[] memory tokens = _supportedTokens.values();
+    address[] memory tokens = s_supportedTokens.values();
     uint256 len = tokens.length;
     for (uint256 i = 0; i < len; ++i) {
       address token = tokens[i];
@@ -207,13 +207,13 @@ contract FeeCollector is
 
     if (exists) {
       // Update
-      _feeConfigs[idx].feeBps = feeBps;
+      s_feeConfigs[idx].feeBps = feeBps;
       emit FeeConfigUpdated(contractType, feeBps);
       return;
     }
 
     // Add new
-    _feeConfigs.push(FeeConfig(contractType, feeBps));
+    s_feeConfigs.push(FeeConfig(contractType, feeBps));
     emit FeeConfigUpdated(contractType, feeBps);
   }
 
@@ -240,7 +240,7 @@ contract FeeCollector is
    * @return Array of fee configurations
    */
   function getAllFeeConfigs() external view returns (FeeConfig[] memory) {
-    return _feeConfigs;
+    return s_feeConfigs;
   }
 
   /**
@@ -268,14 +268,14 @@ contract FeeCollector is
       // No duplicates allowed
       for (uint256 j = 0; j < i; j++) {
         if (
-          keccak256(bytes(_feeConfigs[j].contractType)) ==
+          keccak256(bytes(s_feeConfigs[j].contractType)) ==
           keccak256(bytes(_configs[i].contractType))
         ) {
           revert DuplicateContractType(_configs[i].contractType);
         }
       }
 
-      _feeConfigs.push(
+      s_feeConfigs.push(
         FeeConfig({contractType: _configs[i].contractType, feeBps: _configs[i].feeBps})
       );
     }
@@ -302,7 +302,7 @@ contract FeeCollector is
 
     if (!exists) return 0;
 
-    return _feeConfigs[idx].feeBps;
+    return s_feeConfigs[idx].feeBps;
   }
 
   /**
@@ -314,8 +314,8 @@ contract FeeCollector is
   }
 
   function _findFeeIndex(bytes32 key) private view returns (bool, uint256) {
-    for (uint256 i = 0; i < _feeConfigs.length; i++) {
-      if (keccak256(bytes(_feeConfigs[i].contractType)) == key) {
+    for (uint256 i = 0; i < s_feeConfigs.length; i++) {
+      if (keccak256(bytes(s_feeConfigs[i].contractType)) == key) {
         return (true, i);
       }
     }

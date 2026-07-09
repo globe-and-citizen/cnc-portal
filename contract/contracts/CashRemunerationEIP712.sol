@@ -78,6 +78,7 @@ contract CashRemunerationEIP712 is
   mapping(bytes32 signatureHash => bool disabled) public disabledWageClaims;
 
   // Storage gap for future upgrades
+  // solhint-disable-next-line chainlink-solidity/prefix-storage-variables-with-s-underscore
   uint256[49] private __gap;
 
   /**

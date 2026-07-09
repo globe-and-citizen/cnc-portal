@@ -475,5 +475,6 @@ contract SafeDepositRouter is
                           UPGRADE STORAGE GAP
     //////////////////////////////////////////////////////////////*/
 
+  // solhint-disable-next-line chainlink-solidity/prefix-storage-variables-with-s-underscore
   uint256[50] private __gap;
 }

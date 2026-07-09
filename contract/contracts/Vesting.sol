@@ -363,5 +363,6 @@ contract Vesting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
   }
 
   /// @dev Reserved storage slots for future upgrades.
+  // solhint-disable-next-line chainlink-solidity/prefix-storage-variables-with-s-underscore
   uint256[50] private __gap;
 }

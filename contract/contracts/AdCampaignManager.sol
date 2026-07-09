@@ -51,11 +51,11 @@ contract AdCampaignManager is Ownable(msg.sender), Pausable, ReentrancyGuard {
   /// @notice Maps a campaign id to its campaign record.
   mapping(uint256 campaignId => AdCampaign campaign) public adCampaigns;
   /// @dev Enumerable list of admins for iteration.
-  address[] private _adminList;
+  address[] private s_adminList;
   /// @notice True when the address is registered as an admin.
   mapping(address account => bool isAdmin) public admins;
-  /// @dev Index into _adminList for each admin (for O(1) removal).
-  mapping(address account => uint256 index) private _adminIndex;
+  /// @dev Index into s_adminList for each admin (for O(1) removal).
+  mapping(address account => uint256 index) private s_adminIndex;
   /// @notice Total number of campaigns ever created.
   uint256 public adCampaignCount;
 
@@ -254,8 +254,8 @@ contract AdCampaignManager is Ownable(msg.sender), Pausable, ReentrancyGuard {
   function addAdmin(address admin) external onlyOwner {
     if (admins[admin]) revert AlreadyAdmin(admin);
     admins[admin] = true;
-    _adminIndex[admin] = _adminList.length;
-    _adminList.push(admin);
+    s_adminIndex[admin] = s_adminList.length;
+    s_adminList.push(admin);
     emit AdminAdded(admin);
   }
 
@@ -267,16 +267,16 @@ contract AdCampaignManager is Ownable(msg.sender), Pausable, ReentrancyGuard {
     if (!admins[admin]) revert NotAnAdmin(admin);
     admins[admin] = false;
 
-    uint256 indexToRemove = _adminIndex[admin];
-    uint256 lastIndex = _adminList.length - 1;
+    uint256 indexToRemove = s_adminIndex[admin];
+    uint256 lastIndex = s_adminList.length - 1;
 
     if (indexToRemove != lastIndex) {
-      address lastAdmin = _adminList[lastIndex];
-      _adminList[indexToRemove] = lastAdmin;
-      _adminIndex[lastAdmin] = indexToRemove;
+      address lastAdmin = s_adminList[lastIndex];
+      s_adminList[indexToRemove] = lastAdmin;
+      s_adminIndex[lastAdmin] = indexToRemove;
     }
-    _adminList.pop();
-    delete _adminIndex[admin];
+    s_adminList.pop();
+    delete s_adminIndex[admin];
     emit AdminRemoved(admin);
   }
 
@@ -336,7 +336,7 @@ contract AdCampaignManager is Ownable(msg.sender), Pausable, ReentrancyGuard {
 
   /// @notice Returns the list of all admin addresses.
   function getAdminList() external view returns (address[] memory) {
-    return _adminList;
+    return s_adminList;
   }
 
   // Generate a unique campaign code

@@ -51,7 +51,7 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
   }
 
   // @notice Address of the Commission Collector
-  address private immutable _feeCollectorAddress;
+  address private immutable i_feeCollectorAddress;
 
   /// @notice Mapping of contract type to beacon address
   mapping(string contractType => address beacon) public contractBeacons;
@@ -60,10 +60,10 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
   string[] public contractTypes;
 
   /// @notice Array to store deployed contract information
-  DeployedContract[] private _deployedContracts;
+  DeployedContract[] private s_deployedContracts;
 
   /// @notice Address of the Board of Directors contract
-  address private _bodContract;
+  address private s_bodContract;
 
   /// @notice Emitted when a new contract is deployed via beacon proxy
   event ContractDeployed(string contractType, address deployedAddress);
@@ -118,7 +118,7 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
   /// @custom:oz-upgrades-unsafe-allow constructor
   constructor(address _feeCollector) {
     if (_feeCollector == address(0)) revert ZeroAddress();
-    _feeCollectorAddress = _feeCollector;
+    i_feeCollectorAddress = _feeCollector;
     _disableInitializers();
   }
 
@@ -157,7 +157,7 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
    * @return Array of founder addresses and array of member addresses
    */
   function getTeam() external view returns (DeployedContract[] memory) {
-    return (_deployedContracts);
+    return (s_deployedContracts);
   }
 
   /**
@@ -165,7 +165,7 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
    * @return Array of deployed contract information (type and address)
    */
   function getDeployedContracts() external view returns (DeployedContract[] memory) {
-    return _deployedContracts;
+    return s_deployedContracts;
   }
 
   /**
@@ -182,7 +182,7 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
    * @return Fee in basis points.
    */
   function getFeeFor(string memory contractType) external view returns (uint16) {
-    return IFeeCollector(_feeCollectorAddress).getFeeFor(contractType);
+    return IFeeCollector(i_feeCollectorAddress).getFeeFor(contractType);
   }
 
   /**
@@ -190,7 +190,7 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
    * @return The address of the fee collector contract
    */
   function getFeeCollector() external view returns (address) {
-    return _feeCollectorAddress;
+    return i_feeCollectorAddress;
   }
 
   /**
@@ -200,7 +200,7 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
    */
   function isFeeCollectorToken(address _tokenAddress) external view returns (bool) {
     if (_tokenAddress == address(0)) return false;
-    return IFeeCollector(_feeCollectorAddress).isTokenSupported(_tokenAddress);
+    return IFeeCollector(i_feeCollectorAddress).isTokenSupported(_tokenAddress);
   }
 
   /**
@@ -245,21 +245,21 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     BeaconProxy proxy = new BeaconProxy(contractBeacons[contractType], initializerData);
 
     address proxyAddress = address(proxy);
-    _deployedContracts.push(DeployedContract(contractType, proxyAddress));
+    s_deployedContracts.push(DeployedContract(contractType, proxyAddress));
     emit ContractDeployed(contractType, proxyAddress);
 
     if (keccak256(bytes(contractType)) == keccak256(bytes("Elections"))) {
       address bodContractBeacon = contractBeacons["BoardOfDirectors"];
       address[] memory args = new address[](1);
       args[0] = proxyAddress;
-      _bodContract = address(
+      s_bodContract = address(
         new BeaconProxy(
           bodContractBeacon,
           abi.encodeWithSelector(IBoardOfDirectors.initialize.selector, args)
         )
       );
-      _deployedContracts.push(DeployedContract("BoardOfDirectors", _bodContract));
-      emit ContractDeployed("BoardOfDirectors", _bodContract);
+      s_deployedContracts.push(DeployedContract("BoardOfDirectors", s_bodContract));
+      emit ContractDeployed("BoardOfDirectors", s_bodContract);
     }
 
     return proxyAddress;
@@ -301,9 +301,9 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
    * @return The address of the contract, or address(0) if not found
    */
   function findDeployedContract(string memory contractType) public view returns (address) {
-    for (uint256 i = 0; i < _deployedContracts.length; i++) {
-      if (keccak256(bytes(_deployedContracts[i].contractType)) == keccak256(bytes(contractType))) {
-        return _deployedContracts[i].contractAddress;
+    for (uint256 i = 0; i < s_deployedContracts.length; i++) {
+      if (keccak256(bytes(s_deployedContracts[i].contractType)) == keccak256(bytes(contractType))) {
+        return s_deployedContracts[i].contractAddress;
       }
     }
     return address(0);
