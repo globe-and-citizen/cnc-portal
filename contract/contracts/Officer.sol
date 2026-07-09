@@ -301,7 +301,8 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
    * @return The address of the contract, or address(0) if not found
    */
   function findDeployedContract(string memory contractType) public view returns (address) {
-    for (uint256 i = 0; i < s_deployedContracts.length; i++) {
+    uint256 length = s_deployedContracts.length;
+    for (uint256 i = 0; i < length; i++) {
       if (keccak256(bytes(s_deployedContracts[i].contractType)) == keccak256(bytes(contractType))) {
         return s_deployedContracts[i].contractAddress;
       }

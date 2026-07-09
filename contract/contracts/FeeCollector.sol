@@ -314,7 +314,8 @@ contract FeeCollector is
   }
 
   function _findFeeIndex(bytes32 key) private view returns (bool, uint256) {
-    for (uint256 i = 0; i < s_feeConfigs.length; i++) {
+    uint256 length = s_feeConfigs.length;
+    for (uint256 i = 0; i < length; i++) {
       if (keccak256(bytes(s_feeConfigs[i].contractType)) == key) {
         return (true, i);
       }
