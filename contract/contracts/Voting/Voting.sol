@@ -312,14 +312,14 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
     } else if (option == Types.TieBreakOption.RUNOFF_ELECTION) {
       // Create a new election with only the tied candidates
       string memory newTitle = string(abi.encodePacked("Runoff: ", proposal.title));
-      addProposal(
-        newTitle,
-        proposal.description,
-        true,
-        proposal.winnerCount,
-        _getVoterAddresses(proposal),
-        proposal.tiedCandidates
-      );
+      addProposal({
+        _title: newTitle,
+        _description: proposal.description,
+        _isElection: true,
+        _winnerCount: proposal.winnerCount,
+        _voters: _getVoterAddresses(proposal),
+        _candidates: proposal.tiedCandidates
+      });
       emit RunoffElectionStarted(proposalCount - 1, proposal.tiedCandidates);
       proposal.hasTie = false;
       proposal.isActive = !proposal.isActive;

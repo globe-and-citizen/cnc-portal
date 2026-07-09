@@ -445,7 +445,13 @@ contract SafeDepositRouter is
     // Mint SHER to depositor
     investor.individualMint(msg.sender, sherAmount);
 
-    emit Deposited(msg.sender, tokenAddress, amount, sherAmount, block.number);
+    emit Deposited({
+      depositor: msg.sender,
+      token: tokenAddress,
+      tokenAmount: amount,
+      sherAmount: sherAmount,
+      timestamp: block.number
+    });
   }
 
   /**

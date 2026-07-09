@@ -155,7 +155,14 @@ contract Elections is Initializable, OwnableUpgradeable, PausableUpgradeable {
 
     s_electionIds.push(electionId);
 
-    emit ElectionCreated(electionId, title, msg.sender, startDate, endDate, seatCount);
+    emit ElectionCreated({
+      electionId: electionId,
+      title: title,
+      createdBy: msg.sender,
+      startDate: startDate,
+      endDate: endDate,
+      seatCount: seatCount
+    });
 
     return electionId;
   }

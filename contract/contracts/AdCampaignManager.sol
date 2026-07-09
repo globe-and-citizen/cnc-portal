@@ -155,13 +155,13 @@ contract AdCampaignManager is Ownable, Pausable, ReentrancyGuard {
     if (msg.value == 0) revert ZeroAmount();
     adCampaignCount++;
     string memory campaignCode = _generateCampaignCode();
-    adCampaigns[adCampaignCount] = AdCampaign(
-      msg.value,
-      0,
-      CampaignStatus.Active,
-      campaignCode,
-      msg.sender
-    );
+    adCampaigns[adCampaignCount] = AdCampaign({
+      budget: msg.value,
+      amountSpent: 0,
+      status: CampaignStatus.Active,
+      campaignCode: campaignCode,
+      advertiser: msg.sender
+    });
     campaignCodesToId[campaignCode] = adCampaignCount;
 
     emit AdCampaignCreated(campaignCode, msg.value);

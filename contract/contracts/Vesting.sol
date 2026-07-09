@@ -261,7 +261,14 @@ contract Vesting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     VestingInfo memory v = vestings[member][index];
     if (!v.active) return 0;
 
-    return _vestingSchedule(v.totalAmount, v.start, v.cliff, v.duration, uint64(block.timestamp));
+    return
+      _vestingSchedule({
+        totalAllocation: v.totalAmount,
+        start: v.start,
+        cliff: v.cliff,
+        duration: v.duration,
+        timestamp: uint64(block.timestamp)
+      });
   }
 
   /// @notice Get the releasable (vested minus already minted) amount for one schedule.

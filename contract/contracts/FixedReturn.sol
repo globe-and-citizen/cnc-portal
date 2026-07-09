@@ -376,15 +376,15 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
       if (allocatedTotal > params.fundingTarget) revert AllocationSumExceedsFundingTarget();
     }
 
-    emit LendingOfferCreated(
-      offerId,
-      params.token,
-      params.fundingTarget,
-      params.interestRateBps,
-      params.startDate,
-      params.subscriptionDeadline,
-      params.fundingAccess
-    );
+    emit LendingOfferCreated({
+      offerId: offerId,
+      token: params.token,
+      fundingTarget: params.fundingTarget,
+      interestRateBps: params.interestRateBps,
+      startDate: params.startDate,
+      subscriptionDeadline: params.subscriptionDeadline,
+      fundingAccess: params.fundingAccess
+    });
   }
 
   // ────────────────────────────────────────────────────

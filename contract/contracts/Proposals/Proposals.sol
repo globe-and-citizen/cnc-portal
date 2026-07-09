@@ -227,7 +227,13 @@ contract Proposals is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUp
     newProposal.totalVoters = boardCount;
     newProposal.state = ProposalState.Active;
 
-    emit ProposalCreated(s_nextProposalId, title, msg.sender, startDate, endDate);
+    emit ProposalCreated({
+      proposalId: s_nextProposalId,
+      title: title,
+      creator: msg.sender,
+      startDate: startDate,
+      endDate: endDate
+    });
     s_nextProposalId++;
   }
 
@@ -351,13 +357,13 @@ contract Proposals is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUp
       proposal.state = ProposalState.Expired; // Tie or no conclusive result
     }
 
-    emit ProposalTallyResults(
-      proposalId,
-      proposal.state,
-      proposal.yesCount,
-      proposal.noCount,
-      proposal.abstainCount
-    );
+    emit ProposalTallyResults({
+      proposalId: proposalId,
+      state: proposal.state,
+      yesCount: proposal.yesCount,
+      noCount: proposal.noCount,
+      abstainCount: proposal.abstainCount
+    });
   }
 
   /**
