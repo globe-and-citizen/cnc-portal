@@ -127,6 +127,15 @@ export function isValidRange(range: Range): boolean {
   return range.start.getTime() <= range.end.getTime()
 }
 
+/**
+ * True when a range carries no real lower bound — i.e. the "All time" preset,
+ * whose start is the Unix epoch ({@link resolveRange}). Lets callers treat
+ * all-time as "no date selected" rather than printing `Jan 1, 1970 – …`.
+ */
+export function isAllTimeRange(range: { start?: Date | null }): boolean {
+  return !range.start || range.start.getTime() === 0
+}
+
 const DAY_FORMAT = 'MMM D, YYYY'
 
 /** Trigger-button label for `date` mode, e.g. `As of Jun 3, 2026`. */
