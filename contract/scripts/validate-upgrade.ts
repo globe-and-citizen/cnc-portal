@@ -23,7 +23,6 @@ const UPGRADEABLE_CONTRACTS: ContractConfig[] = [
   { name: 'Officer', constructorArgs: ['0x0000000000000000000000000000000000000000'] },
   { name: 'Proposals' },
   { name: 'SafeDepositRouter' },
-  { name: 'Tips' },
   { name: 'Vesting' },
   { name: 'Voting' }
 ]
