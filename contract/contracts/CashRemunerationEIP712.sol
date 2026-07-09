@@ -63,10 +63,11 @@ contract CashRemunerationEIP712 is
     "WageClaim(address employeeAddress,uint16 minutesWorked,Wage[] wages,uint256 date)";
 
   /// @dev Typehash for the Wage struct, used in EIP-712 encoding.
-  bytes32 constant _WAGE_TYPEHASH = keccak256(abi.encodePacked(_WAGE_TYPE));
+  bytes32 private constant _WAGE_TYPEHASH = keccak256(abi.encodePacked(_WAGE_TYPE));
 
   /// @dev Typehash for the WageClaim struct, used in EIP-712 encoding.
-  bytes32 constant _WAGE_CLAIM_TYPEHASH = keccak256(abi.encodePacked(_WAGE_CLAIM_TYPE, _WAGE_TYPE));
+  bytes32 private constant _WAGE_CLAIM_TYPEHASH =
+    keccak256(abi.encodePacked(_WAGE_CLAIM_TYPE, _WAGE_TYPE));
 
   /// @dev Mapping to track wage claims that have already been paid.
   mapping(bytes32 signatureHash => bool paid) public paidWageClaims;
