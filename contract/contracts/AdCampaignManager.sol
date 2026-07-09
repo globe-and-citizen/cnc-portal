@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.24;
 
-import '@openzeppelin/contracts/access/Ownable.sol';
-import '@openzeppelin/contracts/utils/Pausable.sol';
-import '@openzeppelin/contracts/utils/ReentrancyGuard.sol';
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/Pausable.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-import '@openzeppelin/contracts/utils/Strings.sol';
+import "@openzeppelin/contracts/utils/Strings.sol";
 
 /**
  * @title AdCampaignManager
@@ -47,15 +47,15 @@ contract AdCampaignManager is Ownable(msg.sender), Pausable, ReentrancyGuard {
   address public bankContractAddress;
 
   /// @notice Maps a campaign code to its numeric id.
-  mapping(string => uint256) public campaignCodesToId;
+  mapping(string campaignCode => uint256 campaignId) public campaignCodesToId;
   /// @notice Maps a campaign id to its campaign record.
-  mapping(uint256 => AdCampaign) public adCampaigns;
+  mapping(uint256 campaignId => AdCampaign campaign) public adCampaigns;
   /// @dev Enumerable list of admins for iteration.
-  address[] private adminList;
+  address[] private _adminList;
   /// @notice True when the address is registered as an admin.
-  mapping(address => bool) public admins;
-  /// @dev Index into adminList for each admin (for O(1) removal).
-  mapping(address => uint256) private adminIndex;
+  mapping(address account => bool isAdmin) public admins;
+  /// @dev Index into _adminList for each admin (for O(1) removal).
+  mapping(address account => uint256 index) private _adminIndex;
   /// @notice Total number of campaigns ever created.
   uint256 public adCampaignCount;
 
@@ -138,6 +138,10 @@ contract AdCampaignManager is Ownable(msg.sender), Pausable, ReentrancyGuard {
     bankContractAddress = _bankContractAddress;
   }
 
+  // Fallback function to receive MATIC payments
+  /// @notice Accepts native token transfers.
+  receive() external payable {}
+
   // Create a new ad campaign with a unique campaign code
   /**
    * @notice Creates a new ad campaign funded by msg.value.
@@ -146,7 +150,7 @@ contract AdCampaignManager is Ownable(msg.sender), Pausable, ReentrancyGuard {
   function createAdCampaign() external payable whenNotPaused nonReentrant {
     if (msg.value == 0) revert ZeroAmount();
     adCampaignCount++;
-    string memory campaignCode = generateCampaignCode();
+    string memory campaignCode = _generateCampaignCode();
     adCampaigns[adCampaignCount] = AdCampaign(
       msg.value,
       0,
@@ -196,7 +200,7 @@ contract AdCampaignManager is Ownable(msg.sender), Pausable, ReentrancyGuard {
     }
 
     // Transfer funds to the bank contract address
-    (bool success, ) = payable(bankContractAddress).call{value: paymentAmount}('');
+    (bool success, ) = payable(bankContractAddress).call{value: paymentAmount}("");
     if (!success) revert BankTransferFailed();
 
     emit PaymentReleased(campaignCode, paymentAmount);
@@ -228,13 +232,13 @@ contract AdCampaignManager is Ownable(msg.sender), Pausable, ReentrancyGuard {
 
     // Transfer the remaining budget to the advertiser if any
     if (remainingBudget > 0) {
-      (bool success, ) = payable(campaign.advertiser).call{value: remainingBudget}('');
+      (bool success, ) = payable(campaign.advertiser).call{value: remainingBudget}("");
       if (!success) revert AdvertiserTransferFailed();
     }
     uint256 possibleClaimedAmount = currentAmountSpent - campaign.amountSpent;
     // Transfer the spent amount to the banckContract address
     if (possibleClaimedAmount > 0) {
-      (bool success, ) = payable(bankContractAddress).call{value: possibleClaimedAmount}('');
+      (bool success, ) = payable(bankContractAddress).call{value: possibleClaimedAmount}("");
       if (!success) revert BankTransferFailed();
     }
 
@@ -250,8 +254,8 @@ contract AdCampaignManager is Ownable(msg.sender), Pausable, ReentrancyGuard {
   function addAdmin(address admin) external onlyOwner {
     if (admins[admin]) revert AlreadyAdmin(admin);
     admins[admin] = true;
-    adminIndex[admin] = adminList.length;
-    adminList.push(admin);
+    _adminIndex[admin] = _adminList.length;
+    _adminList.push(admin);
     emit AdminAdded(admin);
   }
 
@@ -263,16 +267,16 @@ contract AdCampaignManager is Ownable(msg.sender), Pausable, ReentrancyGuard {
     if (!admins[admin]) revert NotAnAdmin(admin);
     admins[admin] = false;
 
-    uint256 indexToRemove = adminIndex[admin];
-    uint256 lastIndex = adminList.length - 1;
+    uint256 indexToRemove = _adminIndex[admin];
+    uint256 lastIndex = _adminList.length - 1;
 
     if (indexToRemove != lastIndex) {
-      address lastAdmin = adminList[lastIndex];
-      adminList[indexToRemove] = lastAdmin;
-      adminIndex[lastAdmin] = indexToRemove;
+      address lastAdmin = _adminList[lastIndex];
+      _adminList[indexToRemove] = lastAdmin;
+      _adminIndex[lastAdmin] = indexToRemove;
     }
-    adminList.pop();
-    delete adminIndex[admin];
+    _adminList.pop();
+    delete _adminIndex[admin];
     emit AdminRemoved(admin);
   }
 
@@ -316,21 +320,6 @@ contract AdCampaignManager is Ownable(msg.sender), Pausable, ReentrancyGuard {
     _unpause();
   }
 
-  // Generate a unique campaign code
-  /**
-   * @dev Generates a pseudo-random campaign code using block data and caller.
-   * @return A newly generated unique campaign code string.
-   */
-  function generateCampaignCode() internal view returns (string memory) {
-    uint256 randomNumber = uint256(
-      keccak256(abi.encodePacked(block.timestamp, block.prevrandao, msg.sender))
-    ) % 1000000;
-    return
-      string(
-        abi.encodePacked('CAMPAIGN-', block.timestamp.toString(), '-', randomNumber.toString())
-      );
-  }
-
   // Get details of an ad campaign by campaign code
   /**
    * @notice Returns the campaign record for a given campaign code.
@@ -347,10 +336,21 @@ contract AdCampaignManager is Ownable(msg.sender), Pausable, ReentrancyGuard {
 
   /// @notice Returns the list of all admin addresses.
   function getAdminList() external view returns (address[] memory) {
-    return adminList;
+    return _adminList;
   }
 
-  // Fallback function to receive MATIC payments
-  /// @notice Accepts native token transfers.
-  receive() external payable {}
+  // Generate a unique campaign code
+  /**
+   * @dev Generates a pseudo-random campaign code using block data and caller.
+   * @return A newly generated unique campaign code string.
+   */
+  function _generateCampaignCode() internal view returns (string memory) {
+    uint256 randomNumber = uint256(
+      keccak256(abi.encodePacked(block.timestamp, block.prevrandao, msg.sender))
+    ) % 1000000;
+    return
+      string(
+        abi.encodePacked("CAMPAIGN-", block.timestamp.toString(), "-", randomNumber.toString())
+      );
+  }
 }

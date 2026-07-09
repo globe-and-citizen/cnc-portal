@@ -1,0 +1,23 @@
+{
+  "extends": "solhint:all",
+  "rules": {
+    "compiler-version": ["error", "^0.8.24"],
+    "code-complexity": ["warn", 7],
+    "function-max-lines": ["warn", 75],
+    "max-line-length": ["warn", 120],
+    "max-states-count": ["warn", 30],
+    "reason-string": ["warn", { "minLength": 10 }],
+    "comprehensive-interface": "off",
+    "foundry-test-functions": "off",
+    "gas-named-return-values": "off",
+    "gas-indexed-events": "off",
+    "gas-increment-by-one": "off",
+    "gas-calldata-parameters": "off",
+    "gas-strict-inequalities": "off",
+    "gas-length-in-loops": "off",
+    "gas-struct-packing": "off",
+    "gas-small-strings": "off",
+    "gas-multitoken1155": "off",
+    "gas-custom-errors": "off"
+  }
+}

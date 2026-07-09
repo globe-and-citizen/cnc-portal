@@ -67,7 +67,6 @@ const config: HardhatUserConfig = {
       //     'contracts/Bank.sol': ['Bank'],
       //     'contracts/Officer.sol': ['Officer'],
       //     'contracts/Vesting.sol': ['Vesting'],
-      //     'contracts/Tips.sol': ['Tips'],
       //     'contracts/FeeCollector.sol': ['FeeCollector'],
       //     'contracts/BoardOfDirectors.sol': ['BoardOfDirectors'],
       //     'contracts/CashRemunerationEIP712.sol': ['CashRemunerationEIP712'],

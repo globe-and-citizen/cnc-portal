@@ -13,7 +13,7 @@ module.exports = {
         printWidth: 100,
         tabWidth: 2,
         useTabs: false,
-        singleQuote: true,
+        singleQuote: false,
         bracketSpacing: false
       }
     }

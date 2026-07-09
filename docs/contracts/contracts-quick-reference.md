@@ -12,7 +12,6 @@
 | **Proposals**              | Proposal voting                    | `createProposal()`, `castVote()`, `tallyResults()`                                 | BoardOfDirectors           |
 | **ExpenseAccountEIP712**   | Expense payments                   | `submitExpense()`, `addTokenSupport()`                                             | None                       |
 | **CashRemunerationEIP712** | Wage payments with equity          | `withdraw()`, `enableClaim()`, `disableClaim()`                                    | InvestorV1 (via Officer)   |
-| **Tips**                   | ETH tip distribution               | `pushTip()`, `sendTip()`, `withdraw()`, `updatePushLimit()`                        | None                       |
 | **Vesting**                | Per-team share vesting (mint-on-release) | `addVesting()`, `release()`, `stopVesting()`, `vestedAmount()`, `releasable()`     | Officer, InvestorV1        |
 | **AdCampaignManager**      | Ad campaign & payment routing      | `createAdCampaign()`, `claimPayment()`, `requestAndApproveWithdrawal()`            | Bank (external address)    |
 | **SafeDepositRouter**      | Token deposit → SHER minting       | `deposit()`, `depositWithSlippage()`, `calculateCompensation()`, `setMultiplier()` | InvestorV1 (via Officer)   |

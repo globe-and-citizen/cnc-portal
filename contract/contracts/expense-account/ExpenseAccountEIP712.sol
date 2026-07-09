@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
-import '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
-import '@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol';
-import '@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol';
-import '@openzeppelin/contracts/utils/Address.sol';
-import '@openzeppelin/contracts/utils/cryptography/ECDSA.sol';
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import '@quant-finance/solidity-datetime/contracts/DateTime.sol';
-import '../base/TokenSupport.sol';
-import {IOfficer} from '../interfaces/IOfficer.sol';
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/utils/Address.sol";
+import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "@quant-finance/solidity-datetime/contracts/DateTime.sol";
+import "../base/TokenSupport.sol";
+import {IOfficer} from "../interfaces/IOfficer.sol";
 
 /**
  * @title ExpenseAccountEIP712
@@ -38,6 +38,13 @@ contract ExpenseAccountEIP712 is
     Custom
   }
 
+  /// @dev State of an approval (budget signature) tracked per signature hash.
+  enum ApprovalState {
+    Uninitialized,
+    Active,
+    Inactive
+  }
+
   /**
    * @dev A signed budget authorization.
    * @param amount Per-period (or per-transaction for one-time) spending cap.
@@ -58,13 +65,6 @@ contract ExpenseAccountEIP712 is
     address approvedAddress;
   }
 
-  /// @dev State of an approval (budget signature) tracked per signature hash.
-  enum ApprovalState {
-    Uninitialized,
-    Active,
-    Inactive
-  }
-
   /**
    * @dev Running balance/state recorded per budget signature.
    * @param lastWithdrawnDate Timestamp of the most recent withdrawal.
@@ -79,19 +79,19 @@ contract ExpenseAccountEIP712 is
     ApprovalState state;
   }
 
+  string private constant _BUDGET_LIMIT_TYPE =
+    "BudgetLimit(uint256 amount,uint8 frequencyType,uint256 customFrequency,uint256 startDate,uint256 endDate,address tokenAddress,address approvedAddress)";
+
+  bytes32 private constant _BUDGET_LIMIT_TYPEHASH = keccak256(abi.encodePacked(_BUDGET_LIMIT_TYPE));
+
   /// @notice Tracks expense balances per signature hash.
-  mapping(bytes32 => ExpenseBalance) public expenseBalances;
+  mapping(bytes32 signatureHash => ExpenseBalance balance) public expenseBalances;
 
   // Add new state variable - MUST be added after existing ones
   address public officerAddress;
 
   // Storage gap for future upgrades
   uint256[49] private __gap;
-
-  string private constant BUDGET_LIMIT_TYPE =
-    'BudgetLimit(uint256 amount,uint8 frequencyType,uint256 customFrequency,uint256 startDate,uint256 endDate,address tokenAddress,address approvedAddress)';
-
-  bytes32 constant BUDGET_LIMIT_TYPEHASH = keccak256(abi.encodePacked(BUDGET_LIMIT_TYPE));
 
   /**
    * @notice Emitted when native token is deposited into the contract.
@@ -241,31 +241,9 @@ contract ExpenseAccountEIP712 is
     _disableInitializers();
   }
 
-  /**
-   * @notice Initializes the expense account contract.
-   * @param owner The contract owner that will sign budget approvals.
-   * @param _tokenAddresses Initial set of supported ERC20 tokens.
-   */
-  function initialize(address owner, address[] calldata _tokenAddresses) public initializer {
-    if (owner == address(0)) revert ZeroAddress();
-    __Ownable_init(owner);
-    __ReentrancyGuard_init();
-    __EIP712_init('CNCExpenseAccount', '1');
-    __Pausable_init();
-
-    if (msg.sender == address(0)) revert ZeroAddress();
-    officerAddress = msg.sender;
-
-    // Set the initial supported tokens
-    uint256 length = _tokenAddresses.length;
-    for (uint256 i = 0; i < length; ++i) {
-      if (_tokenAddresses[i] == address(0)) revert ZeroAddress();
-      _addTokenSupport(_tokenAddresses[i]);
-    }
-    // Emit events after they're already added to avoid duplicate events
-    for (uint256 i = 0; i < length; ++i) {
-      emit TokenSupportAdded(_tokenAddresses[i]);
-    }
+  /// @notice Accepts native token deposits and emits {Deposited}.
+  receive() external payable {
+    emit Deposited(msg.sender, msg.value);
   }
 
   /**
@@ -301,7 +279,7 @@ contract ExpenseAccountEIP712 is
     if (!validateTransfer(budgetLimit, amount, signatureHash)) revert TransferNotAllowed();
 
     // Update expense balance
-    updateExpenseBalance(budgetLimit, amount, signatureHash);
+    _updateExpenseBalance(budgetLimit, amount, signatureHash);
 
     // Perform transfer
     if (budgetLimit.tokenAddress == address(0)) {
@@ -319,6 +297,154 @@ contract ExpenseAccountEIP712 is
         revert TokenTransferFailed(budgetLimit.tokenAddress);
       }
       emit TokenTransfer(budgetLimit.approvedAddress, to, budgetLimit.tokenAddress, amount);
+    }
+  }
+
+  /**
+   * @notice Deactivates an approval so it's no longer usable
+   * @param signatureHash - keccak256 hash of the signature of the approval
+   * Emits {ApprovalDeactivated} event
+   */
+  function deactivateApproval(bytes32 signatureHash) external onlyOwner {
+    expenseBalances[signatureHash].state = ApprovalState.Inactive;
+    emit ApprovalDeactivated(signatureHash);
+  }
+
+  /**
+   * @notice Activates an approval so it's usable
+   * @param signatureHash - keccak256 hash of the signature of the approval
+   * Emits {ApprovalActivated} event
+   */
+  function activateApproval(bytes32 signatureHash) external onlyOwner {
+    expenseBalances[signatureHash].state = ApprovalState.Active;
+    emit ApprovalActivated(signatureHash);
+  }
+
+  /// @notice Pauses the contract.
+  function pause() external onlyOwner {
+    _pause();
+  }
+
+  /// @notice Unpauses the contract.
+  function unpause() external onlyOwner {
+    _unpause();
+  }
+
+  /**
+   * @notice Sets the officer address for cross-contract discovery.
+   * @param _officerAddress The address of the officer contract.
+   * @dev Can only be called by the contract owner. Used for already-deployed proxies.
+   */
+  function setOfficerAddress(address _officerAddress) external onlyOwner {
+    if (_officerAddress == address(0)) revert ZeroAddress();
+    officerAddress = _officerAddress;
+  }
+
+  /**
+   * @notice Withdraws all funds (native + all supported tokens) to the Bank contract.
+   * @dev Discovers the Bank address via the Officer contract. Single transaction drain.
+   */
+  function ownerWithdrawAllToBank() external onlyOwner nonReentrant whenNotPaused {
+    if (officerAddress == address(0)) revert OfficerAddressNotSet();
+    address bankAddress = IOfficer(officerAddress).findDeployedContract("Bank");
+    if (bankAddress == address(0)) revert BankContractNotFound();
+
+    uint256 nativeBalance = address(this).balance;
+    if (nativeBalance > 0) {
+      payable(bankAddress).sendValue(nativeBalance);
+      emit OwnerTreasuryWithdrawNative(owner(), nativeBalance);
+    }
+
+    address[] memory tokens = this.getSupportedTokens();
+    for (uint256 i = 0; i < tokens.length; i++) {
+      uint256 tokenBalance = IERC20(tokens[i]).balanceOf(address(this));
+      if (tokenBalance > 0) {
+        if (!IERC20(tokens[i]).transfer(bankAddress, tokenBalance)) {
+          revert TokenTransferFailed(tokens[i]);
+        }
+        emit OwnerTreasuryWithdrawToken(owner(), tokens[i], tokenBalance);
+      }
+    }
+  }
+
+  /**
+   * @notice Deposits ERC20 tokens from the caller to the contract.
+   * @param token The address of the token to deposit.
+   * @param amount The amount of tokens to deposit.
+   *
+   * Requirements:
+   * - The token must be supported or is native (address(0)).
+   * - The amount must be greater than zero.
+   *
+   * Emits a {TokenDeposited} event.
+   */
+  function depositToken(address token, uint256 amount) external nonReentrant whenNotPaused {
+    if (token != address(0) && !isTokenSupported(token)) revert TokenNotSupported(token);
+    if (amount == 0) revert ZeroAmount();
+
+    if (!IERC20(token).transferFrom(msg.sender, address(this), amount)) {
+      revert TokenTransferFailed(token);
+    }
+    emit TokenDeposited(msg.sender, token, amount);
+  }
+
+  /**
+   * @notice Adds a supported token to the contract.
+   * @param _tokenAddress The address of the token contract.
+   * @dev Can only be called by the contract owner.
+   */
+  function addTokenSupport(address _tokenAddress) external override onlyOwner {
+    _addTokenSupport(_tokenAddress);
+  }
+
+  /**
+   * @notice Removes a supported token from the contract.
+   * @param _tokenAddress The address of the token contract.
+   * @dev Can only be called by the contract owner.
+   */
+  function removeTokenSupport(address _tokenAddress) external override onlyOwner {
+    _removeTokenSupport(_tokenAddress);
+  }
+
+  /// @notice Returns the contract's native token balance.
+  function getBalance() external view returns (uint256) {
+    return address(this).balance;
+  }
+
+  /**
+   * @notice Returns the contract's balance of a supported token.
+   * @param token The token address (use address(0) for native token).
+   * @return The token balance held by the contract.
+   */
+  function getTokenBalance(address token) external view returns (uint256) {
+    if (token != address(0) && !isTokenSupported(token)) revert TokenNotSupported(token);
+    return IERC20(token).balanceOf(address(this));
+  }
+
+  /**
+   * @notice Initializes the expense account contract.
+   * @param owner The contract owner that will sign budget approvals.
+   * @param _tokenAddresses Initial set of supported ERC20 tokens.
+   */
+  function initialize(address owner, address[] calldata _tokenAddresses) public initializer {
+    if (owner == address(0)) revert ZeroAddress();
+    __Ownable_init(owner);
+    __ReentrancyGuard_init();
+    __EIP712_init("CNCExpenseAccount", "1");
+    __Pausable_init();
+
+    if (msg.sender == address(0)) revert ZeroAddress();
+    officerAddress = msg.sender;
+
+    // Set the initial supported tokens
+    uint256 length = _tokenAddresses.length;
+    for (uint256 i = 0; i < length; ++i) {
+      if (_tokenAddresses[i] == address(0)) revert ZeroAddress();
+      _addTokenSupport(_tokenAddresses[i]);
+    }
+    // Emit events after they're already added to avoid duplicate events
+    for (uint256 i = 0; i < length; ++i) {
+      emit TokenSupportAdded(_tokenAddresses[i]);
     }
   }
 
@@ -374,12 +500,96 @@ contract ExpenseAccountEIP712 is
   }
 
   /**
+   * @notice Returns the current calendar period index for a budget.
+   * @param budgetLimit The signed budget authorization.
+   * @return The current period index.
+   */
+  function getCurrentPeriod(BudgetLimit calldata budgetLimit) public view returns (uint256) {
+    return getPeriod(budgetLimit, block.timestamp);
+  }
+
+  /**
+   * @notice Returns whether the current time starts a new period relative to the last withdrawal.
+   * @param budgetLimit The signed budget authorization.
+   * @param signatureHash The keccak256 hash of the approval signature.
+   * @return True if this timestamp begins a new period (or there has never been a withdrawal).
+   */
+  function isNewPeriod(
+    BudgetLimit calldata budgetLimit,
+    bytes32 signatureHash
+  ) public view returns (bool) {
+    if (budgetLimit.frequencyType == FrequencyType.OneTime) {
+      return false;
+    }
+
+    ExpenseBalance storage balance = expenseBalances[signatureHash];
+    if (balance.lastWithdrawnDate == 0) {
+      return true; // Never withdrawn
+    }
+
+    uint256 currentPeriod = getCurrentPeriod(budgetLimit);
+    return currentPeriod > balance.lastWithdrawnPeriod;
+  }
+
+  /**
+   * @notice Returns the period index for a specific timestamp under a budget's frequency.
+   * @param budgetLimit The signed budget authorization.
+   * @param timestamp Timestamp to evaluate.
+   * @return The period index at `timestamp`.
+   */
+  function getPeriod(
+    BudgetLimit calldata budgetLimit,
+    uint256 timestamp
+  ) public pure returns (uint256) {
+    if (timestamp < budgetLimit.startDate) return 0;
+
+    if (budgetLimit.frequencyType == FrequencyType.OneTime) {
+      return 0;
+    } else if (budgetLimit.frequencyType == FrequencyType.Daily) {
+      // Daily periods reset at midnight UTC
+      return (timestamp - budgetLimit.startDate) / 1 days;
+    } else if (budgetLimit.frequencyType == FrequencyType.Weekly) {
+      // Weekly periods: Sunday to Saturday
+      return _getWeeksSinceStart(budgetLimit.startDate, timestamp);
+    } else if (budgetLimit.frequencyType == FrequencyType.Monthly) {
+      // Monthly periods: 1st to last day of each month
+      return _getMonthsSinceStart(budgetLimit.startDate, timestamp);
+    } else if (budgetLimit.frequencyType == FrequencyType.Custom) {
+      if (budgetLimit.customFrequency == 0) revert InvalidCustomFrequency();
+      return (timestamp - budgetLimit.startDate) / budgetLimit.customFrequency;
+    }
+
+    revert InvalidFrequencyType();
+  }
+
+  /**
+   * @notice Computes the EIP-712 hash of a BudgetLimit struct.
+   * @param budgetLimit The budget limit to hash.
+   * @return The struct hash usable for EIP-712 signing.
+   */
+  function budgetLimitHash(BudgetLimit calldata budgetLimit) public pure returns (bytes32) {
+    return
+      keccak256(
+        abi.encode(
+          _BUDGET_LIMIT_TYPEHASH,
+          budgetLimit.amount,
+          budgetLimit.frequencyType,
+          budgetLimit.customFrequency,
+          budgetLimit.startDate,
+          budgetLimit.endDate,
+          budgetLimit.tokenAddress,
+          budgetLimit.approvedAddress
+        )
+      );
+  }
+
+  /**
    * @dev Updates the expense balance record after a successful withdrawal.
    * @param budgetLimit The signed budget authorization.
    * @param amount Amount that was withdrawn.
    * @param signatureHash The keccak256 hash of the approval signature.
    */
-  function updateExpenseBalance(
+  function _updateExpenseBalance(
     BudgetLimit calldata budgetLimit,
     uint256 amount,
     bytes32 signatureHash
@@ -402,59 +612,19 @@ contract ExpenseAccountEIP712 is
   }
 
   /**
-   * @notice Returns the current calendar period index for a budget.
-   * @param budgetLimit The signed budget authorization.
-   * @return The current period index.
-   */
-  function getCurrentPeriod(BudgetLimit calldata budgetLimit) public view returns (uint256) {
-    return getPeriod(budgetLimit, block.timestamp);
-  }
-
-  /**
-   * @notice Returns the period index for a specific timestamp under a budget's frequency.
-   * @param budgetLimit The signed budget authorization.
-   * @param timestamp Timestamp to evaluate.
-   * @return The period index at `timestamp`.
-   */
-  function getPeriod(
-    BudgetLimit calldata budgetLimit,
-    uint256 timestamp
-  ) public pure returns (uint256) {
-    if (timestamp < budgetLimit.startDate) return 0;
-
-    if (budgetLimit.frequencyType == FrequencyType.OneTime) {
-      return 0;
-    } else if (budgetLimit.frequencyType == FrequencyType.Daily) {
-      // Daily periods reset at midnight UTC
-      return (timestamp - budgetLimit.startDate) / 1 days;
-    } else if (budgetLimit.frequencyType == FrequencyType.Weekly) {
-      // Weekly periods: Sunday to Saturday
-      return getWeeksSinceStart(budgetLimit.startDate, timestamp);
-    } else if (budgetLimit.frequencyType == FrequencyType.Monthly) {
-      // Monthly periods: 1st to last day of each month
-      return getMonthsSinceStart(budgetLimit.startDate, timestamp);
-    } else if (budgetLimit.frequencyType == FrequencyType.Custom) {
-      if (budgetLimit.customFrequency == 0) revert InvalidCustomFrequency();
-      return (timestamp - budgetLimit.startDate) / budgetLimit.customFrequency;
-    }
-
-    revert InvalidFrequencyType();
-  }
-
-  /**
    * @dev Calculate weeks since start date (Monday to Sunday weeks).
    * @param startDate The reference start timestamp.
    * @param timestamp The timestamp to compare.
    * @return Number of full weeks between the Mondays of `startDate` and `timestamp`.
    */
-  function getWeeksSinceStart(
+  function _getWeeksSinceStart(
     uint256 startDate,
     uint256 timestamp
   ) internal pure returns (uint256) {
     // Get the Monday of the start date week
-    uint256 startMonday = getStartOfWeek(startDate);
+    uint256 startMonday = _getStartOfWeek(startDate);
     // Get the Monday of the current timestamp week
-    uint256 currentMonday = getStartOfWeek(timestamp);
+    uint256 currentMonday = _getStartOfWeek(timestamp);
 
     // Ensure we don't underflow and calculate weeks between the two Mondays
     if (currentMonday < startMonday) {
@@ -470,7 +640,7 @@ contract ExpenseAccountEIP712 is
    * @param timestamp The reference timestamp.
    * @return The start-of-week timestamp.
    */
-  function getStartOfWeek(uint256 timestamp) internal pure returns (uint256) {
+  function _getStartOfWeek(uint256 timestamp) internal pure returns (uint256) {
     // DateTime.getDayOfWeek returns 1 for Monday, 2 for Tuesday, ..., 7 for Sunday
     uint256 dayOfWeek = DateTime.getDayOfWeek(timestamp);
 
@@ -503,7 +673,7 @@ contract ExpenseAccountEIP712 is
    * @param timestamp The timestamp to compare.
    * @return Number of calendar months between `startDate` and `timestamp`.
    */
-  function getMonthsSinceStart(
+  function _getMonthsSinceStart(
     uint256 startDate,
     uint256 timestamp
   ) internal pure returns (uint256) {
@@ -535,175 +705,5 @@ contract ExpenseAccountEIP712 is
 
     // Should not reach here if timestamp >= startDate
     return 0;
-  }
-
-  /**
-   * @notice Returns whether the current time starts a new period relative to the last withdrawal.
-   * @param budgetLimit The signed budget authorization.
-   * @param signatureHash The keccak256 hash of the approval signature.
-   * @return True if this timestamp begins a new period (or there has never been a withdrawal).
-   */
-  function isNewPeriod(
-    BudgetLimit calldata budgetLimit,
-    bytes32 signatureHash
-  ) public view returns (bool) {
-    if (budgetLimit.frequencyType == FrequencyType.OneTime) {
-      return false;
-    }
-
-    ExpenseBalance storage balance = expenseBalances[signatureHash];
-    if (balance.lastWithdrawnDate == 0) {
-      return true; // Never withdrawn
-    }
-
-    uint256 currentPeriod = getCurrentPeriod(budgetLimit);
-    return currentPeriod > balance.lastWithdrawnPeriod;
-  }
-
-  /**
-   * @notice Computes the EIP-712 hash of a BudgetLimit struct.
-   * @param budgetLimit The budget limit to hash.
-   * @return The struct hash usable for EIP-712 signing.
-   */
-  function budgetLimitHash(BudgetLimit calldata budgetLimit) public pure returns (bytes32) {
-    return
-      keccak256(
-        abi.encode(
-          BUDGET_LIMIT_TYPEHASH,
-          budgetLimit.amount,
-          budgetLimit.frequencyType,
-          budgetLimit.customFrequency,
-          budgetLimit.startDate,
-          budgetLimit.endDate,
-          budgetLimit.tokenAddress,
-          budgetLimit.approvedAddress
-        )
-      );
-  }
-
-  /**
-   * @notice Deactivates an approval so it's no longer usable
-   * @param signatureHash - keccak256 hash of the signature of the approval
-   * Emits {ApprovalDeactivated} event
-   */
-  function deactivateApproval(bytes32 signatureHash) external onlyOwner {
-    expenseBalances[signatureHash].state = ApprovalState.Inactive;
-    emit ApprovalDeactivated(signatureHash);
-  }
-
-  /**
-   * @notice Activates an approval so it's usable
-   * @param signatureHash - keccak256 hash of the signature of the approval
-   * Emits {ApprovalActivated} event
-   */
-  function activateApproval(bytes32 signatureHash) external onlyOwner {
-    expenseBalances[signatureHash].state = ApprovalState.Active;
-    emit ApprovalActivated(signatureHash);
-  }
-
-  /// @notice Pauses the contract.
-  function pause() external onlyOwner {
-    _pause();
-  }
-
-  /// @notice Unpauses the contract.
-  function unpause() external onlyOwner {
-    _unpause();
-  }
-
-  /**
-   * @notice Sets the officer address for cross-contract discovery.
-   * @param _officerAddress The address of the officer contract.
-   * @dev Can only be called by the contract owner. Used for already-deployed proxies.
-   */
-  function setOfficerAddress(address _officerAddress) external onlyOwner {
-    if (_officerAddress == address(0)) revert ZeroAddress();
-    officerAddress = _officerAddress;
-  }
-
-  /**
-   * @notice Withdraws all funds (native + all supported tokens) to the Bank contract.
-   * @dev Discovers the Bank address via the Officer contract. Single transaction drain.
-   */
-  function ownerWithdrawAllToBank() external onlyOwner nonReentrant whenNotPaused {
-    if (officerAddress == address(0)) revert OfficerAddressNotSet();
-    address bankAddress = IOfficer(officerAddress).findDeployedContract('Bank');
-    if (bankAddress == address(0)) revert BankContractNotFound();
-
-    uint256 nativeBalance = address(this).balance;
-    if (nativeBalance > 0) {
-      payable(bankAddress).sendValue(nativeBalance);
-      emit OwnerTreasuryWithdrawNative(owner(), nativeBalance);
-    }
-
-    address[] memory tokens = this.getSupportedTokens();
-    for (uint256 i = 0; i < tokens.length; i++) {
-      uint256 tokenBalance = IERC20(tokens[i]).balanceOf(address(this));
-      if (tokenBalance > 0) {
-        if (!IERC20(tokens[i]).transfer(bankAddress, tokenBalance)) {
-          revert TokenTransferFailed(tokens[i]);
-        }
-        emit OwnerTreasuryWithdrawToken(owner(), tokens[i], tokenBalance);
-      }
-    }
-  }
-
-  /// @notice Returns the contract's native token balance.
-  function getBalance() external view returns (uint256) {
-    return address(this).balance;
-  }
-
-  /// @notice Accepts native token deposits and emits {Deposited}.
-  receive() external payable {
-    emit Deposited(msg.sender, msg.value);
-  }
-
-  /**
-   * @notice Deposits ERC20 tokens from the caller to the contract.
-   * @param token The address of the token to deposit.
-   * @param amount The amount of tokens to deposit.
-   *
-   * Requirements:
-   * - The token must be supported or is native (address(0)).
-   * - The amount must be greater than zero.
-   *
-   * Emits a {TokenDeposited} event.
-   */
-  function depositToken(address token, uint256 amount) external nonReentrant whenNotPaused {
-    if (token != address(0) && !isTokenSupported(token)) revert TokenNotSupported(token);
-    if (amount == 0) revert ZeroAmount();
-
-    if (!IERC20(token).transferFrom(msg.sender, address(this), amount)) {
-      revert TokenTransferFailed(token);
-    }
-    emit TokenDeposited(msg.sender, token, amount);
-  }
-
-  /**
-   * @notice Adds a supported token to the contract.
-   * @param _tokenAddress The address of the token contract.
-   * @dev Can only be called by the contract owner.
-   */
-  function addTokenSupport(address _tokenAddress) external override onlyOwner {
-    _addTokenSupport(_tokenAddress);
-  }
-
-  /**
-   * @notice Removes a supported token from the contract.
-   * @param _tokenAddress The address of the token contract.
-   * @dev Can only be called by the contract owner.
-   */
-  function removeTokenSupport(address _tokenAddress) external override onlyOwner {
-    _removeTokenSupport(_tokenAddress);
-  }
-
-  /**
-   * @notice Returns the contract's balance of a supported token.
-   * @param token The token address (use address(0) for native token).
-   * @return The token balance held by the contract.
-   */
-  function getTokenBalance(address token) external view returns (uint256) {
-    if (token != address(0) && !isTokenSupported(token)) revert TokenNotSupported(token);
-    return IERC20(token).balanceOf(address(this));
   }
 }
