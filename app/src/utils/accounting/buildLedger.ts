@@ -47,6 +47,8 @@ export interface AccountingSummary {
   income: number
   /** Net expense-account total over the period (payroll, operating, dividend …). */
   expense: number
+  /** Cumulative Bank protocol transaction fees skimmed to the FeeCollector (a subset of `expense`). */
+  transactionFees: number
   /** Contributed equity (Owner Capital + Investor Equity), excluding retained earnings. */
   equity: number
   /** income − expense — the period's bottom line (becomes Retained Earnings). */
@@ -96,11 +98,27 @@ function isMonetary(entry: LedgerEntry): boolean {
   return entry.debit !== null || entry.credit !== null
 }
 
+/**
+ * A posting with real accounts but $0.00 USD and no share count. In a
+ * USD-reported book it moves nothing — it only clutters the journal with a line
+ * like "Wage Payable $0.00 / Cash — Payroll $0.00". These arise from **unpriced
+ * native (POL/ETH)** legs: with no price-of-record yet (Phase 2 gap, see
+ * {@link toUsd}) a native wage withdrawal or funding move values to $0. We drop
+ * them here so the ledger shows no phantom, unlinked entries; once a native
+ * price-of-record exists the same postings carry a non-zero USD amount and are
+ * kept. Memo-only Default-D entries (no legs, but a real share count) are never
+ * dropped — {@link isMonetary} already excludes them from the roll-up.
+ */
+function isZeroValuePosting(entry: LedgerEntry): boolean {
+  return isMonetary(entry) && round2(entry.amountUsd) === 0 && !entry.shares
+}
+
 /** Aggregate the summary totals from the deduped feed. */
 function summarize(entries: readonly LedgerEntry[]): AccountingSummary {
   let cash = 0
   let income = 0
   let expense = 0
+  let transactionFees = 0
   let equity = 0
   let entryCount = 0
 
@@ -121,12 +139,18 @@ function summarize(entries: readonly LedgerEntry[]): AccountingSummary {
       else if (classOf(entry.credit) === 'EXPENSE') expense -= amount
       else if (CONTRIBUTED_EQUITY.has(entry.credit)) equity += amount
     }
+
+    // Transaction Fee Expense is also an EXPENSE, so it is already folded into
+    // `expense` above; track it separately here for the dedicated summary metric.
+    if (entry.debit === 'Transaction Fee Expense') transactionFees += amount
+    if (entry.credit === 'Transaction Fee Expense') transactionFees -= amount
   }
 
   return {
     cash: round2(cash),
     income: round2(income),
     expense: round2(expense),
+    transactionFees: round2(transactionFees),
     equity: round2(equity),
     netIncome: round2(income - expense),
     entryCount
@@ -139,6 +163,8 @@ function summarize(entries: readonly LedgerEntry[]): AccountingSummary {
  * feeds the general ledger, income statement and balance sheet.
  */
 export function buildLedger(entries: readonly LedgerEntry[]): BuiltLedger {
-  const deduped = dedupeInternalTransfers(entries).sort((a, b) => a.timestamp - b.timestamp)
+  const deduped = dedupeInternalTransfers(entries)
+    .filter((entry) => !isZeroValuePosting(entry))
+    .sort((a, b) => a.timestamp - b.timestamp)
   return { entries: deduped, summary: summarize(deduped) }
 }
