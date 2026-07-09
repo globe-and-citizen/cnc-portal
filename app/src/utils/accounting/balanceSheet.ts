@@ -150,7 +150,8 @@ function buildCashByPocketCurrency(entries: readonly LedgerEntry[]): CashCurrenc
   }
   for (const entry of entries) {
     const raw = toBigInt(entry.rawAmount)
-    if (entry.debit && CASH_ACCOUNTS.has(entry.debit)) bump(entry.debit, entry.token, entry.amountUsd, raw)
+    if (entry.debit && CASH_ACCOUNTS.has(entry.debit))
+      bump(entry.debit, entry.token, entry.amountUsd, raw)
     if (entry.credit && CASH_ACCOUNTS.has(entry.credit))
       bump(entry.credit, entry.token, -entry.amountUsd, -raw)
   }

@@ -130,7 +130,9 @@ describe('buildBalanceSheet — cash breakdown by pocket and currency', () => {
   })
 
   it('keeps an unpriced native holding visible via its token quantity', () => {
-    const bs = buildBalanceSheet([cashIn('a', 'Cash — Payroll', 'native', '3500000000000000000', 0)])
+    const bs = buildBalanceSheet([
+      cashIn('a', 'Cash — Payroll', 'native', '3500000000000000000', 0)
+    ])
     const pol = bs.cashByPocketCurrency.find((l) => l.token === 'native')
     expect(pol).toMatchObject({ account: 'Cash — Payroll', amountUsd: 0, tokenAmount: 3.5 })
   })
@@ -141,7 +143,10 @@ describe('buildBalanceSheet — cash breakdown by pocket and currency', () => {
       debit: 'Service Revenue',
       credit: 'Cash — Bank'
     })
-    const bs = buildBalanceSheet([cashIn('in', 'Cash — Bank', 'usdc', '100000000', 100), out('out')])
+    const bs = buildBalanceSheet([
+      cashIn('in', 'Cash — Bank', 'usdc', '100000000', 100),
+      out('out')
+    ])
     expect(bs.cashByPocketCurrency).toHaveLength(0)
   })
 })
