@@ -335,9 +335,8 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
     Types.Proposal storage proposal = proposalsById[proposalId];
     if (msg.sender != proposal.draftedBy) revert OnlyFounder();
     if (!proposal.hasTie) revert NoTieToResolve();
-    if (proposal.selectedTieBreakOption != Types.TieBreakOption.FOUNDER_CHOICE) {
+    if (proposal.selectedTieBreakOption != Types.TieBreakOption.FOUNDER_CHOICE)
       revert WrongTieBreakOption();
-    }
 
     bool isValidChoice = false;
     for (uint256 i = 0; i < proposal.tiedCandidates.length; i++) {

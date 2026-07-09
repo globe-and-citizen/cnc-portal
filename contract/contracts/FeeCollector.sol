@@ -270,9 +270,7 @@ contract FeeCollector is
         if (
           keccak256(bytes(s_feeConfigs[j].contractType)) ==
           keccak256(bytes(_configs[i].contractType))
-        ) {
-          revert DuplicateContractType(_configs[i].contractType);
-        }
+        ) revert DuplicateContractType(_configs[i].contractType);
       }
 
       s_feeConfigs.push(

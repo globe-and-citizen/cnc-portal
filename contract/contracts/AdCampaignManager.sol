@@ -193,9 +193,8 @@ contract AdCampaignManager is Ownable, Pausable, ReentrancyGuard {
       ? unspentBudget
       : currentClaimedAmount;
 
-    if (address(this).balance < paymentAmount) {
+    if (address(this).balance < paymentAmount)
       revert InsufficientContractBalance(paymentAmount, address(this).balance);
-    }
 
     campaign.amountSpent = campaign.amountSpent + paymentAmount;
 
@@ -225,9 +224,8 @@ contract AdCampaignManager is Ownable, Pausable, ReentrancyGuard {
     if (campaignId == 0) revert InvalidCampaignCode();
     AdCampaign storage campaign = adCampaigns[campaignId];
     if (campaign.status != CampaignStatus.Active) revert CampaignNotActive();
-    if (!(msg.sender == campaign.advertiser || admins[msg.sender] || msg.sender == owner())) {
+    if (!(msg.sender == campaign.advertiser || admins[msg.sender] || msg.sender == owner()))
       revert NotAuthorizedWithdrawer(msg.sender);
-    }
     if (campaign.amountSpent > currentAmountSpent) revert SpentLessThanClaimed();
     uint256 remainingBudget = campaign.budget - currentAmountSpent;
 

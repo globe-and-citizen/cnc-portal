@@ -228,9 +228,8 @@ contract CashRemunerationEIP712 is
   ) external whenNotPaused nonReentrant {
     // Step 1: Verify the caller is the authorized employee
     // Prevents someone else from withdrawing another employee's wages
-    if (msg.sender != wageClaim.employeeAddress) {
+    if (msg.sender != wageClaim.employeeAddress)
       revert NotClaimOwner(wageClaim.employeeAddress, msg.sender);
-    }
 
     // Step 2: EIP-712 Signature Verification
     // Create the EIP-712 compliant digest for signature recovery
@@ -248,9 +247,7 @@ contract CashRemunerationEIP712 is
 
     // Step 4: Verify the signer is the contract owner
     // Ensures only authorized owners can approve wage claims
-    if (signer != owner()) {
-      revert UnauthorizedAccess(owner(), signer);
-    }
+    if (signer != owner()) revert UnauthorizedAccess(owner(), signer);
 
     // Step 5: Prevent double-spending of the same signature & usage of disabled claims
     // Each signature can only be used once to prevent replay attacks
@@ -288,9 +285,8 @@ contract CashRemunerationEIP712 is
       // Step 7b: Handle ERC20 Token Payments
       else {
         // Ensure the requested token is supported by the contract
-        if (!_isTokenSupported(wageClaim.wages[i].tokenAddress)) {
+        if (!_isTokenSupported(wageClaim.wages[i].tokenAddress))
           revert TokenNotSupported(wageClaim.wages[i].tokenAddress);
-        }
 
         // Step 7b(i): Special Case - Mintable InvestorV1 Token
         // If we have an officer address configured and this is the InvestorV1 token,
@@ -315,13 +311,12 @@ contract CashRemunerationEIP712 is
         else {
           // Verify the contract has sufficient token balance
           uint256 tokenBalance = IERC20(wageClaim.wages[i].tokenAddress).balanceOf(address(this));
-          if (tokenBalance < amountToPay) {
+          if (tokenBalance < amountToPay)
             revert InsufficientTokenBalance(
               wageClaim.wages[i].tokenAddress,
               amountToPay,
               tokenBalance
             );
-          }
 
           // Transfer tokens from contract to employee
           IERC20(wageClaim.wages[i].tokenAddress).transfer(wageClaim.employeeAddress, amountToPay);
@@ -408,9 +403,8 @@ contract CashRemunerationEIP712 is
     for (uint256 i = 0; i < tokens.length; i++) {
       uint256 tokenBalance = IERC20(tokens[i]).balanceOf(address(this));
       if (tokenBalance > 0) {
-        if (!IERC20(tokens[i]).transfer(bankAddress, tokenBalance)) {
+        if (!IERC20(tokens[i]).transfer(bankAddress, tokenBalance))
           revert TokenTransferFailed(tokens[i]);
-        }
         emit OwnerTreasuryWithdrawToken(owner(), tokens[i], tokenBalance);
       }
     }

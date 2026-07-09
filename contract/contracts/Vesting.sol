@@ -274,9 +274,7 @@ contract Vesting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
    */
   function _mintShares(address to, uint256 amount) internal {
     IInvestorV1 investor = IInvestorV1(_getInvestor());
-    if (!investor.hasRole(investor.MINTER_ROLE(), address(this))) {
-      revert InsufficientMinterRole();
-    }
+    if (!investor.hasRole(investor.MINTER_ROLE(), address(this))) revert InsufficientMinterRole();
     investor.individualMint(to, amount);
   }
 

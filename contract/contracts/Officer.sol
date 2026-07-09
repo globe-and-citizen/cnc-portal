@@ -239,9 +239,8 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
   ) public whenNotPaused onlyInitializingOrOwners returns (address) {
     // Validate inputs
     if (contractBeacons[contractType] == address(0)) revert BeaconNotConfigured(contractType);
-    if (keccak256(bytes(contractType)) == keccak256(bytes("BoardOfDirectors"))) {
+    if (keccak256(bytes(contractType)) == keccak256(bytes("BoardOfDirectors")))
       revert BodMustBeDeployedViaElections();
-    }
     BeaconProxy proxy = new BeaconProxy(contractBeacons[contractType], initializerData);
 
     address proxyAddress = address(proxy);
@@ -277,15 +276,12 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
 
     for (uint256 i = 0; i < deployments.length; i++) {
       if (bytes(deployments[i].contractType).length == 0) revert EmptyContractType();
-      if (deployments[i].initializerData.length == 0) {
+      if (deployments[i].initializerData.length == 0)
         revert MissingInitializerData(deployments[i].contractType);
-      }
-      if (contractBeacons[deployments[i].contractType] == address(0)) {
+      if (contractBeacons[deployments[i].contractType] == address(0))
         revert BeaconNotConfigured(deployments[i].contractType);
-      }
-      if (keccak256(bytes(deployments[i].contractType)) == keccak256(bytes("BoardOfDirectors"))) {
+      if (keccak256(bytes(deployments[i].contractType)) == keccak256(bytes("BoardOfDirectors")))
         revert BodMustBeDeployedViaElections();
-      }
       deployedAddresses[i] = deployBeaconProxy(
         deployments[i].contractType,
         deployments[i].initializerData
@@ -320,9 +316,7 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
         if (
           keccak256(bytes(beaconConfigs[i].beaconType)) ==
           keccak256(bytes(beaconConfigs[j].beaconType))
-        ) {
-          revert DuplicateBeaconType(beaconConfigs[i].beaconType);
-        }
+        ) revert DuplicateBeaconType(beaconConfigs[i].beaconType);
       }
 
       contractBeacons[beaconConfigs[i].beaconType] = beaconConfigs[i].beaconAddress;

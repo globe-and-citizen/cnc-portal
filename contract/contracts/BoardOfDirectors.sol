@@ -238,9 +238,7 @@ contract BoardOfDirectors is ReentrancyGuardUpgradeable, IBoardOfDirectors {
   function addOwner(address _owner) external onlySelf {
     if (_owner == address(0)) revert ZeroAddress();
 
-    if (s_ownersSet.contains(_owner)) {
-      revert OwnerAlreadyExists(_owner);
-    }
+    if (s_ownersSet.contains(_owner)) revert OwnerAlreadyExists(_owner);
     s_ownersSet.add(_owner);
 
     emit OwnersChanged(s_ownersSet.values());

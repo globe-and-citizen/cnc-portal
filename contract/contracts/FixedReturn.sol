@@ -320,36 +320,25 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
     // and repayments are routed through Bank. Validating here prevents offers that
     // would fail at fund or repay time due to Bank token mismatch.
     address bankAddress = _getBankAddress();
-    if (!IBank(bankAddress).isTokenSupported(params.token)) {
+    if (!IBank(bankAddress).isTokenSupported(params.token))
       revert TokenNotSupportedByBank(params.token);
-    }
 
     // The subscription window must close on or before the loan's start date.
     if (params.subscriptionDeadline > params.startDate) revert InvalidDeadline();
 
-    if (
-      params.termUnit == TermUnit.Days && (params.termDuration == 0 || params.termDuration > 365)
-    ) {
+    if (params.termUnit == TermUnit.Days && (params.termDuration == 0 || params.termDuration > 365))
       revert InvalidTermDuration();
-    }
     if (
       params.termUnit == TermUnit.Months && (params.termDuration == 0 || params.termDuration > 120)
-    ) {
+    ) revert InvalidTermDuration();
+    if (params.termUnit == TermUnit.Years && (params.termDuration == 0 || params.termDuration > 30))
       revert InvalidTermDuration();
-    }
-    if (
-      params.termUnit == TermUnit.Years && (params.termDuration == 0 || params.termDuration > 30)
-    ) {
-      revert InvalidTermDuration();
-    }
 
     if (
       params.fundingAccess == FundingAccess.General &&
       params.isCapEnabled &&
       params.lenderCap > params.fundingTarget
-    ) {
-      revert LenderCapExceedsFundingTarget();
-    }
+    ) revert LenderCapExceedsFundingTarget();
 
     offerId = ++totalOfferings;
 
@@ -370,9 +359,8 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
     });
 
     if (params.fundingAccess == FundingAccess.Whitelist) {
-      if (params.whitelistAddrs.length != params.allocations.length) {
+      if (params.whitelistAddrs.length != params.allocations.length)
         revert WhitelistLengthMismatch();
-      }
       uint256 allocatedTotal;
       for (uint256 i = 0; i < params.whitelistAddrs.length; ++i) {
         lenderAllocation[offerId][params.whitelistAddrs[i]] = params.allocations[i];
@@ -422,9 +410,8 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
         lenderDeposits[offerId][msg.sender];
       if (amount > remainingAllocation) revert DepositExceedsAllocation();
     } else if (offer.isCapEnabled) {
-      if (lenderDeposits[offerId][msg.sender] + amount > offer.lenderCap) {
+      if (lenderDeposits[offerId][msg.sender] + amount > offer.lenderCap)
         revert DepositExceedsLenderCap();
-      }
     }
 
     if (amount > offer.fundingTarget - offer.totalFunded) revert FundingTargetReached();
@@ -525,9 +512,8 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
     if (amount == 0) revert ZeroAmount();
 
     LendingOffer storage offer = s_lendingOffers[offerId];
-    if (offer.state != OfferState.Funded && offer.state != OfferState.Repaying) {
+    if (offer.state != OfferState.Funded && offer.state != OfferState.Repaying)
       revert OfferNotFunded();
-    }
 
     // Repayment ceiling — prevent overpayment beyond total lender entitlement.
     uint256 totalObligation = offer.totalFunded +

@@ -178,9 +178,7 @@ contract Proposals is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUp
 
   modifier onlyMember() {
     address bodAddress = _getBoardOfDirectorsAddress();
-    if (!IBoardOfDirectors(bodAddress).isMember(msg.sender)) {
-      revert OnlyBoardMember();
-    }
+    if (!IBoardOfDirectors(bodAddress).isMember(msg.sender)) revert OnlyBoardMember();
     _;
   }
 
@@ -215,9 +213,7 @@ contract Proposals is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUp
     address bodAddress = _getBoardOfDirectorsAddress();
     uint256 boardCount = IBoardOfDirectors(bodAddress).getBoardOfDirectors().length;
     if (boardCount == 0) revert NoBoardMembers();
-    if (!IBoardOfDirectors(bodAddress).isMember(msg.sender)) {
-      revert OnlyBoardMember();
-    }
+    if (!IBoardOfDirectors(bodAddress).isMember(msg.sender)) revert OnlyBoardMember();
 
     Proposal storage newProposal = s_proposals[s_nextProposalId];
     newProposal.id = s_nextProposalId;
@@ -276,9 +272,7 @@ contract Proposals is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUp
    */
   function getProposal(uint256 proposalId) external view returns (ProposalView memory) {
     Proposal storage proposal = s_proposals[proposalId];
-    if (proposal.id == 0) {
-      revert ProposalNotFound();
-    }
+    if (proposal.id == 0) revert ProposalNotFound();
 
     return
       ProposalView({

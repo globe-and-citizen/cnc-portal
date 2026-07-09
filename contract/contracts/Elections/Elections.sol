@@ -124,9 +124,8 @@ contract Elections is Initializable, OwnableUpgradeable, PausableUpgradeable {
   ) external onlyOwner whenNotPaused returns (uint256 electionId) {
     ElectionUtils._validateSeatCount(seatCount);
 
-    if (s_nextElectionId > 1 && !s_elections[s_nextElectionId - 1].resultsPublished) {
+    if (s_nextElectionId > 1 && !s_elections[s_nextElectionId - 1].resultsPublished)
       revert ElectionIsOngoing();
-    }
     ElectionUtils._validateDates(startDate, endDate);
     ElectionUtils._validateCandidates(candidates, seatCount);
     ElectionUtils._validateVoters(eligibleVoters);
@@ -171,9 +170,8 @@ contract Elections is Initializable, OwnableUpgradeable, PausableUpgradeable {
 
     if (election.id == 0) revert ElectionNotFound();
 
-    if (!ElectionUtils._isElectionActive(election.startDate, election.endDate)) {
+    if (!ElectionUtils._isElectionActive(election.startDate, election.endDate))
       revert ElectionNotActive();
-    }
     if (!election.isEligibleVoter[msg.sender]) revert NotEligibleVoter();
     if (election.hasVoted[msg.sender]) revert AlreadyVoted();
     ElectionUtils._validateVote(election, candidate);
@@ -339,9 +337,7 @@ contract Elections is Initializable, OwnableUpgradeable, PausableUpgradeable {
     if (
       election.voteCount < election.voterList.length &&
       !ElectionUtils._hasElectionEnded(election.endDate)
-    ) {
-      revert ResultsNotReady();
-    }
+    ) revert ResultsNotReady();
     if (election.resultsPublished) revert ResultsAlreadyPublished();
 
     election.winners = getElectionResults(electionId);

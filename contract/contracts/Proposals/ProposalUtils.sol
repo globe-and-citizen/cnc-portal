@@ -11,13 +11,9 @@ library ProposalUtils {
    * @param endDate The end date of the proposal.
    */
   function _validateProposalDates(uint256 startDate, uint256 endDate) internal view {
-    if (startDate == 0 || endDate == 0 || startDate >= endDate) {
-      revert InvalidProposalDates();
-    }
+    if (startDate == 0 || endDate == 0 || startDate >= endDate) revert InvalidProposalDates();
     // Additional check to ensure dates are in the future
-    if (startDate < block.timestamp) {
-      revert InvalidProposalDates();
-    }
+    if (startDate < block.timestamp) revert InvalidProposalDates();
   }
 
   /**
@@ -26,11 +22,8 @@ library ProposalUtils {
    * @param description The description of the proposal.
    */
   function _validateProposalContent(string memory title, string memory description) internal pure {
-    if (bytes(title).length == 0 || bytes(description).length == 0) {
+    if (bytes(title).length == 0 || bytes(description).length == 0) revert InvalidProposalContent();
+    if (bytes(title).length > 100 || bytes(description).length > 500)
       revert InvalidProposalContent();
-    }
-    if (bytes(title).length > 100 || bytes(description).length > 500) {
-      revert InvalidProposalContent();
-    }
   }
 }

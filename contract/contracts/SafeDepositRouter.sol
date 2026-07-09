@@ -425,17 +425,13 @@ contract SafeDepositRouter is
 
     // Check MINTER_ROLE before attempting to mint
     IInvestorV1 investor = IInvestorV1(investorAddress);
-    if (!investor.hasRole(investor.MINTER_ROLE(), address(this))) {
-      revert InsufficientMinterRole();
-    }
+    if (!investor.hasRole(investor.MINTER_ROLE(), address(this))) revert InsufficientMinterRole();
 
     // Calculate SHER compensation
     uint256 sherAmount = calculateCompensation(tokenAddress, amount);
 
     // Check slippage if specified
-    if (minSherOut > 0 && sherAmount < minSherOut) {
-      revert SlippageExceeded(minSherOut, sherAmount);
-    }
+    if (minSherOut > 0 && sherAmount < minSherOut) revert SlippageExceeded(minSherOut, sherAmount);
 
     // Transfer tokens to Safe
     IERC20(tokenAddress).safeTransferFrom(msg.sender, safeAddress, amount);
