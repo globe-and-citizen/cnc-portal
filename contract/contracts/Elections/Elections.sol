@@ -122,14 +122,14 @@ contract Elections is Initializable, OwnableUpgradeable, PausableUpgradeable {
     address[] memory candidates,
     address[] memory eligibleVoters
   ) external onlyOwner whenNotPaused returns (uint256 electionId) {
-    ElectionUtils.validateSeatCount(seatCount);
+    ElectionUtils._validateSeatCount(seatCount);
 
     if (s_nextElectionId > 1 && !s_elections[s_nextElectionId - 1].resultsPublished) {
       revert ElectionIsOngoing();
     }
-    ElectionUtils.validateDates(startDate, endDate);
-    ElectionUtils.validateCandidates(candidates, seatCount);
-    ElectionUtils.validateVoters(eligibleVoters);
+    ElectionUtils._validateDates(startDate, endDate);
+    ElectionUtils._validateCandidates(candidates, seatCount);
+    ElectionUtils._validateVoters(eligibleVoters);
 
     electionId = s_nextElectionId++;
     ElectionTypes.Election storage election = s_elections[electionId];
@@ -171,12 +171,12 @@ contract Elections is Initializable, OwnableUpgradeable, PausableUpgradeable {
 
     if (election.id == 0) revert ElectionNotFound();
 
-    if (!ElectionUtils.isElectionActive(election.startDate, election.endDate)) {
+    if (!ElectionUtils._isElectionActive(election.startDate, election.endDate)) {
       revert ElectionNotActive();
     }
     if (!election.isEligibleVoter[msg.sender]) revert NotEligibleVoter();
     if (election.hasVoted[msg.sender]) revert AlreadyVoted();
-    ElectionUtils.validateVote(election, candidate);
+    ElectionUtils._validateVote(election, candidate);
 
     s_votes[electionId][msg.sender] = candidate;
     _voteCounts[electionId][candidate]++;
@@ -338,7 +338,7 @@ contract Elections is Initializable, OwnableUpgradeable, PausableUpgradeable {
     if (election.id == 0) revert ElectionNotFound();
     if (
       election.voteCount < election.voterList.length &&
-      !ElectionUtils.hasElectionEnded(election.endDate)
+      !ElectionUtils._hasElectionEnded(election.endDate)
     ) {
       revert ResultsNotReady();
     }

@@ -209,8 +209,8 @@ contract Proposals is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUp
     uint256 startDate,
     uint256 endDate
   ) external boardOfDirectorsContractExists {
-    ProposalUtils.validateProposalDates(startDate, endDate);
-    ProposalUtils.validateProposalContent(title, description);
+    ProposalUtils._validateProposalDates(startDate, endDate);
+    ProposalUtils._validateProposalContent(title, description);
 
     address bodAddress = _getBoardOfDirectorsAddress();
     uint256 boardCount = IBoardOfDirectors(bodAddress).getBoardOfDirectors().length;
