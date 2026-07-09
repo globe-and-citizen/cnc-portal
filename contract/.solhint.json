@@ -1,6 +1,14 @@
 {
   "extends": "solhint:all",
+  "plugins": ["chainlink-solidity"],
   "rules": {
+    "chainlink-solidity/prefix-storage-variables-with-s-underscore": "warn",
+    "chainlink-solidity/prefix-immutable-variables-with-i": "warn",
+    "chainlink-solidity/prefix-internal-functions-with-underscore": "warn",
+    "chainlink-solidity/prefix-private-functions-with-underscore": "warn",
+    "chainlink-solidity/all-caps-constant-storage-variables": "warn",
+    "chainlink-solidity/explicit-imports": "warn",
+    "chainlink-solidity/no-hardhat-imports": "warn",
     "compiler-version": ["error", "^0.8.24"],
     "code-complexity": ["warn", 7],
     "function-max-lines": ["warn", 75],

@@ -91,6 +91,7 @@ contract ExpenseAccountEIP712 is
   address public officerAddress;
 
   // Storage gap for future upgrades
+  // solhint-disable-next-line chainlink-solidity/prefix-storage-variables-with-s-underscore
   uint256[49] private __gap;
 
   /**
