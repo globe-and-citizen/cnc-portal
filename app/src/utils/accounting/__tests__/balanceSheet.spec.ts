@@ -62,4 +62,88 @@ describe('buildBalanceSheet — catalogue §6.6', () => {
     expect(bs.identityGap).toBeCloseTo(0, 2)
     expect(bs.balanced).toBe(true)
   })
+
+  it('grand totals foot to the cent even when per-pocket rounding would drift', () => {
+    // Two 0.005 asset pockets sum to a raw 0.01, but each per-pocket balance
+    // rounds up to 0.01 (reads 0.02). Summing the *rounded* pockets would inflate
+    // Total assets to 0.02 while Liabilities+Equity reads 0.01 — the reported
+    // one-cent gap. Summing raw and rounding once keeps both at 0.01.
+    const invest = (id: string, cash: AccountName): LedgerEntry => ({
+      id,
+      timestamp: 1,
+      useCase: 'UC-SDR-01',
+      debit: cash,
+      credit: 'Investor Equity',
+      amountUsd: 0.005,
+      token: 'usdc',
+      rawAmount: '5000',
+      internal: false,
+      memo: '',
+      enrichment: 'not-applicable'
+    })
+    const bs = buildBalanceSheet([invest('a', 'Cash — Bank'), invest('b', 'Cash — Safe')])
+    // The two grand totals are exactly equal, to the cent (the acceptance criterion).
+    expect(bs.totalLiabilitiesAndEquity).toBe(bs.totalAssets)
+    // And the displayed split still foots: Liabilities + Equity === Total assets.
+    expect(round2(bs.totalLiabilities + bs.totalEquity)).toBe(bs.totalAssets)
+    expect(bs.totalAssets).toBeCloseTo(0.01, 2)
+  })
+
+  it('keeps Total assets === Liabilities + Equity on the catalogue book', () => {
+    expect(bs.totalLiabilitiesAndEquity).toBe(bs.totalAssets)
+    expect(round2(bs.totalLiabilities + bs.totalEquity)).toBe(bs.totalAssets)
+  })
 })
+
+describe('buildBalanceSheet — cash breakdown by pocket and currency', () => {
+  const cashIn = (
+    id: string,
+    account: AccountName,
+    token: LedgerEntry['token'],
+    rawAmount: string,
+    amountUsd: number
+  ): LedgerEntry => ({
+    id,
+    timestamp: 1,
+    useCase: 'UC-BANK-02',
+    debit: account,
+    credit: 'Service Revenue',
+    amountUsd,
+    token,
+    rawAmount,
+    internal: false,
+    memo: '',
+    enrichment: 'not-applicable'
+  })
+
+  it('splits each pocket into its per-currency holdings', () => {
+    const bs = buildBalanceSheet([
+      cashIn('a', 'Cash — Bank', 'usdc', '100000000', 100), // 100 USDC → $100
+      cashIn('b', 'Cash — Bank', 'native', '2000000000000000000', 0), // 2 POL, unpriced
+      cashIn('c', 'Cash — Safe', 'usdc', '50000000', 50) // 50 USDC → $50
+    ])
+    expect(bs.cashByPocketCurrency).toEqual([
+      { account: 'Cash — Bank', token: 'native', amountUsd: 0, tokenAmount: 2 },
+      { account: 'Cash — Bank', token: 'usdc', amountUsd: 100, tokenAmount: 100 },
+      { account: 'Cash — Safe', token: 'usdc', amountUsd: 50, tokenAmount: 50 }
+    ])
+  })
+
+  it('keeps an unpriced native holding visible via its token quantity', () => {
+    const bs = buildBalanceSheet([cashIn('a', 'Cash — Payroll', 'native', '3500000000000000000', 0)])
+    const pol = bs.cashByPocketCurrency.find((l) => l.token === 'native')
+    expect(pol).toMatchObject({ account: 'Cash — Payroll', amountUsd: 0, tokenAmount: 3.5 })
+  })
+
+  it('drops a currency once it nets back to zero in the pocket', () => {
+    const out = (id: string): LedgerEntry => ({
+      ...cashIn(id, 'Cash — Bank', 'usdc', '100000000', 100),
+      debit: 'Service Revenue',
+      credit: 'Cash — Bank'
+    })
+    const bs = buildBalanceSheet([cashIn('in', 'Cash — Bank', 'usdc', '100000000', 100), out('out')])
+    expect(bs.cashByPocketCurrency).toHaveLength(0)
+  })
+})
+
+const round2 = (n: number): number => Math.round(n * 100) / 100

@@ -90,12 +90,17 @@ describe('assembleCncAccounting', () => {
 
     expect(a.summary.income).toBe(100)
     expect(a.incomeStatement.revenue).toContainEqual({ account: 'Service Revenue', amount: 100 })
-    // The fee is an internal Bank → FeeCollector move: it nets out of income.
+    // The protocol fee is booked as a Transaction Fee Expense leaving the Bank.
     const fee = a.entries.find((e) => e.useCase === 'FEE')
     expect(fee).toMatchObject({
-      debit: 'Cash — FeeCollector',
+      debit: 'Transaction Fee Expense',
       credit: 'Cash — Bank',
-      internal: true
+      internal: false
+    })
+    expect(a.summary.expense).toBe(1)
+    expect(a.incomeStatement.expenses).toContainEqual({
+      account: 'Transaction Fee Expense',
+      amount: 1
     })
     expect(a.generalLedger.balanced).toBe(true)
     expect(a.balanceSheet.balanced).toBe(true)

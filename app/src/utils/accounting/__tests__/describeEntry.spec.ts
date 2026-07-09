@@ -157,9 +157,12 @@ describe('activityOf — transfer rows', () => {
     expect(
       activityOf(entry({ useCase: 'INTERNAL', debit: 'Cash — Safe', credit: 'Cash — Bank' }))
     ).toEqual({ kind: 'transfer', from: 'Cash — Bank', to: 'Cash — Safe' })
+  })
+
+  it('reads a transaction fee as a plain expense row, not a pocket transfer', () => {
     expect(
-      activityOf(entry({ useCase: 'FEE', debit: 'Cash — FeeCollector', credit: 'Cash — Bank' }))
-    ).toEqual({ kind: 'transfer', from: 'Cash — Bank', to: 'Cash — FeeCollector' })
+      activityOf(entry({ useCase: 'FEE', debit: 'Transaction Fee Expense', credit: 'Cash — Bank' }))
+    ).toEqual({ kind: 'plain', text: 'Transaction fee' })
   })
 
   it('names the initiator (the signer) when it is resolved', () => {
