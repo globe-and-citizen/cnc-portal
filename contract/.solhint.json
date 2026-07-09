@@ -16,6 +16,7 @@
     "private-vars-leading-underscore": "off",
     "var-name-mixedcase": "off",
     "immutable-vars-naming": "off",
+    "func-visibility": ["warn", { "ignoreConstructors": true }],
     "code-complexity": ["warn", 7],
     "function-max-lines": ["warn", 75],
     "max-line-length": ["warn", 120],
