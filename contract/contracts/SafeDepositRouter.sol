@@ -66,6 +66,13 @@ contract SafeDepositRouter is
   mapping(address token => uint8 decimals) public tokenDecimals;
 
   /*//////////////////////////////////////////////////////////////
+                          UPGRADE STORAGE GAP
+    //////////////////////////////////////////////////////////////*/
+
+  // solhint-disable-next-line chainlink-solidity/prefix-storage-variables-with-s-underscore
+  uint256[50] private __gap;
+
+  /*//////////////////////////////////////////////////////////////
                                 EVENTS
     //////////////////////////////////////////////////////////////*/
 
@@ -466,11 +473,4 @@ contract SafeDepositRouter is
       return amount / (10 ** (fromDec - toDec));
     }
   }
-
-  /*//////////////////////////////////////////////////////////////
-                          UPGRADE STORAGE GAP
-    //////////////////////////////////////////////////////////////*/
-
-  // solhint-disable-next-line chainlink-solidity/prefix-storage-variables-with-s-underscore
-  uint256[50] private __gap;
 }

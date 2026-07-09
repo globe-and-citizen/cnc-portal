@@ -167,6 +167,14 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
   ///         hasDeposited) so that upgrading an existing proxy does not shift their slots.
   address public officerAddress;
 
+  /*//////////////////////////////////////////////////////////////
+                          UPGRADE STORAGE GAP
+    //////////////////////////////////////////////////////////////*/
+
+  // Gap reduced from 50 to 48: two new slots added above (totalPaidToLender, officerAddress).
+  // solhint-disable-next-line chainlink-solidity/prefix-storage-variables-with-s-underscore
+  uint256[48] private __gap;
+
   // ────────────────────────────────────────────────────
   // Events
   // ────────────────────────────────────────────────────
@@ -595,12 +603,4 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
     if (bankAddress == address(0)) revert BankContractNotFound();
     return bankAddress;
   }
-
-  /*//////////////////////////////////////////////////////////////
-                          UPGRADE STORAGE GAP
-    //////////////////////////////////////////////////////////////*/
-
-  // Gap reduced from 50 to 48: two new slots added above (totalPaidToLender, officerAddress).
-  // solhint-disable-next-line chainlink-solidity/prefix-storage-variables-with-s-underscore
-  uint256[48] private __gap;
 }

@@ -50,6 +50,10 @@ contract Vesting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
   /// @notice Officer contract address (set at init); source of the Investor address.
   address public officerAddress;
 
+  /// @dev Reserved storage slots for future upgrades.
+  // solhint-disable-next-line chainlink-solidity/prefix-storage-variables-with-s-underscore
+  uint256[50] private __gap;
+
   /**
    * @notice Emitted when a new vesting schedule is created for a member.
    * @param member The member receiving the vesting.
@@ -359,8 +363,4 @@ contract Vesting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
       return (totalAllocation * (timestamp - start)) / duration;
     }
   }
-
-  /// @dev Reserved storage slots for future upgrades.
-  // solhint-disable-next-line chainlink-solidity/prefix-storage-variables-with-s-underscore
-  uint256[50] private __gap;
 }
