@@ -9,6 +9,7 @@
     "chainlink-solidity/all-caps-constant-storage-variables": "warn",
     "chainlink-solidity/explicit-imports": "warn",
     "chainlink-solidity/no-hardhat-imports": "warn",
+    "chainlink-solidity/no-require-statements": "warn",
     "compiler-version": ["error", "^0.8.24"],
     "code-complexity": ["warn", 7],
     "function-max-lines": ["warn", 75],
