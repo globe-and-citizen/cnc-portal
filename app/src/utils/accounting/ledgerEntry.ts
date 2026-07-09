@@ -43,7 +43,7 @@ export type UseCase =
   | 'UC-INV-01'
   /** Direct SHER mint with no backing deposit/withdraw — memo only, value 0. */
   | 'DEFAULT-D'
-  /** Fee skim Bank → FeeCollector — internal move, not an expense (spec §5.1). */
+  /** Bank protocol fee skimmed to the FeeCollector — a Transaction Fee Expense. */
   | 'FEE'
   /** Generic internal pocket-to-pocket move (funding deposits, owner sweeps). */
   | 'INTERNAL'

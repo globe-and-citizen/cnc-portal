@@ -154,7 +154,10 @@ export function categoryOf(entry: LedgerEntry): LedgerCategory {
     'CASH-OUT': 'Expense',
     'UC-INV-01': 'Dividend',
     'DEFAULT-D': 'Memo',
-    FEE: 'Transfer',
+    // The Bank protocol fee is a real cost leaving the treasury (booked as
+    // Transaction Fee Expense), so it reads as an Expense — red badge, filterable
+    // under the Expense pill — not a neutral internal Transfer.
+    FEE: 'Expense',
     INTERNAL: 'Transfer',
     'UC-BANK-03': 'Transfer'
   }

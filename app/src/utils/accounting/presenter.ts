@@ -12,9 +12,13 @@ import dayjs from 'dayjs'
 import { classOf, type AccountClass, type AccountName } from './chartOfAccounts'
 import type { GeneralLedger } from './generalLedger'
 import { buildIncomeStatement, type IncomeStatement } from './incomeStatement'
-import { buildBalanceSheet, type BalanceSheet } from './balanceSheet'
+import { buildBalanceSheet, type BalanceSheet, type CashCurrencyLine } from './balanceSheet'
 import type { AccountingSummary } from './buildLedger'
 import type { LedgerEntry } from './ledgerEntry'
+import { NETWORK, type TokenId } from '@/constant'
+
+/** The breakdown-line fields the display helpers read (subset of {@link CashCurrencyLine}). */
+type CashLineData = Pick<CashCurrencyLine, 'token' | 'amountUsd' | 'tokenAmount'>
 
 export type TrialNature = 'Asset' | 'Equity' | 'Income' | 'Liability' | 'Expense'
 
@@ -27,11 +31,15 @@ export const NATURE_BADGE: Record<TrialNature, string> = {
   Expense: 'bg-error/10 text-error'
 }
 
-/** `142.2` → `$142.20`. */
+/**
+ * `142.2` → `$142.20`. A sub-cent residue that rounds to zero (e.g. `−0.004`, or
+ * JS negative zero) is collapsed to a clean `$0.00` — never the misleading
+ * `$-0.00` that `toLocaleString` emits for `−0`.
+ */
 export function money(n: number): string {
-  return (
-    '$' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-  )
+  const cents = Math.round(Number(n) * 100)
+  const value = cents === 0 ? 0 : cents / 100
+  return '$' + value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
 /** Unix-seconds → `Jan 8, 2026` (matches the dashboard ledger date style). */
@@ -209,6 +217,13 @@ export function presentSummaryCards(
       'bg-warning/10 text-warning'
     ),
     metric(
+      'Total transaction fees',
+      money(summary.transactionFees),
+      'Bank protocol fee skimmed on transfers',
+      'i-heroicons-receipt-percent',
+      'bg-warning/10 text-warning'
+    ),
+    metric(
       'Total assets',
       money(balance.totalAssets),
       'Cash + trading account',
@@ -227,6 +242,9 @@ export function presentSummaryCards(
 
 /** The "books are balanced" banner copy from the live statements. */
 export function presentBanner(balance: BalanceSheet, ledger: GeneralLedger): SummaryBanner {
+  // `totalEquity` is the balancing residual (Liabilities+Equity − Liabilities),
+  // so the three displayed figures foot exactly: Assets = Liabilities + Equity,
+  // with no cent-level gap from independent per-total rounding.
   return {
     balanced: balance.balanced && ledger.balanced,
     identity: `${money(balance.totalAssets)} = ${money(balance.totalLiabilities)} + ${money(balance.totalEquity)}`,
@@ -251,11 +269,46 @@ export function presentIncome(
   }
 }
 
+/** Ledger token id → display symbol (native uses the chain's currency symbol). */
+function currencySymbol(token: TokenId): string {
+  if (token === 'native') return NETWORK.currencySymbol || 'POL'
+  if (token === 'usdc.e') return 'USDC.e'
+  return token.toUpperCase() // usdc → USDC, usdt → USDT, sher → SHER
+}
+
+/** Drop the `Cash — ` chart prefix for the compact breakdown label. */
+function pocketShortName(account: AccountName): string {
+  return account.replace(/^Cash — /, '')
+}
+
+/** `12.5` → `12.5 POL`; trims to at most 6 decimals so dust reads cleanly. */
+function tokenQuantity(amount: number, token: TokenId): string {
+  return `${amount.toLocaleString('en-US', { maximumFractionDigits: 6 })} ${currencySymbol(token)}`
+}
+
+/**
+ * One breakdown line's display value. Priced currencies show their USD value;
+ * **unpriced native** (POL/ETH, USD value 0 until a price-of-record exists) shows
+ * the token quantity instead, so the holding is visible rather than a misleading
+ * `$0.00`.
+ */
+function cashCurrencyValue(line: CashLineData): string {
+  if (line.token === 'native') return tokenQuantity(line.tokenAmount, line.token)
+  return money(line.amountUsd)
+}
+
 /** Balance-sheet lines as of a point in time. */
 export function presentBalance(entries: readonly LedgerEntry[], asOf?: Date | null): BalanceView {
   const bs = buildBalanceSheet(filterByPeriod(entries, null, asOf))
   const assetLines: StatementLineView[] = [
+    // The rolled-up cash total, then its per-pocket / per-currency breakdown
+    // (bulleted so it reads as a drill-down, not extra assets). The bullet and
+    // middle-dot are WinAnsi glyphs, so they render in the PDF export's font.
     { label: 'Cash (all pockets)', value: money(bs.cash) },
+    ...bs.cashByPocketCurrency.map((l) => ({
+      label: `• ${pocketShortName(l.account)} · ${currencySymbol(l.token)}`,
+      value: cashCurrencyValue(l)
+    })),
     ...bs.otherAssets.map((a) => ({ label: a.account, value: money(a.amount) }))
   ]
   const liabLines: StatementLineView[] = bs.liabilities.length
@@ -272,7 +325,10 @@ export function presentBalance(entries: readonly LedgerEntry[], asOf?: Date | nu
     equityLines,
     totalAssets: money(bs.totalAssets),
     totalEquity: money(bs.totalEquity),
-    liabilitiesPlusEquity: money(bs.totalLiabilities + bs.totalEquity)
+    // The single raw-summed total, equal to Total assets to the cent — never
+    // `totalLiabilities + totalEquity`, which re-adds two independently-rounded
+    // figures and can drift a cent.
+    liabilitiesPlusEquity: money(bs.totalLiabilitiesAndEquity)
   }
 }
 

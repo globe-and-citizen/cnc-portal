@@ -30,7 +30,7 @@ const ENTRY_LABEL: Record<UseCase, string> = {
   'UC-EXP-01': 'Operating expense',
   'UC-INV-01': 'Dividend paid',
   'DEFAULT-D': 'Share issuance',
-  FEE: 'Protocol fee',
+  FEE: 'Transaction fee',
   INTERNAL: 'Internal transfer',
   'CASH-IN': 'Cash receipt',
   'CASH-OUT': 'Cash payment'
@@ -53,7 +53,7 @@ export type ActivityCell =
   | { kind: 'plain'; text: string }
 
 /** Internal pocket-to-pocket moves — rendered as two contract avatars (from → to). */
-const TRANSFER_USE_CASES: ReadonlySet<UseCase> = new Set<UseCase>(['INTERNAL', 'UC-BANK-03', 'FEE'])
+const TRANSFER_USE_CASES: ReadonlySet<UseCase> = new Set<UseCase>(['INTERNAL', 'UC-BANK-03'])
 
 /** Use cases that name a single party (member / investor / client) — avatar + predicate. */
 const ACTOR_USE_CASES: ReadonlySet<UseCase> = new Set<UseCase>([
