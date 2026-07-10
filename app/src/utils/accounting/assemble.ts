@@ -35,8 +35,10 @@ import { buildGeneralLedger, type GeneralLedger } from '@/utils/accounting/gener
 import { buildIncomeStatement, type IncomeStatement } from '@/utils/accounting/incomeStatement'
 import { buildBalanceSheet, type BalanceSheet } from '@/utils/accounting/balanceSheet'
 import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
-import type { UsdRateOfRecord } from '@/utils/accounting/toUsd'
+import { tokenUsdRate, type UsdRateOfRecord } from '@/utils/accounting/toUsd'
 import { buildSherMultiplierTimeline, makeSherUsdRate } from '@/utils/accounting/sherRate'
+import { atDate } from '@/utils/accounting/mappers/context'
+import { dayKey } from '@/utils/accounting/historicalRate'
 import type { SafeTransferRow } from '@/utils/accounting/mappers/safe'
 
 /** The raw feeds for one team, as fetched by {@link useCNCAccounting}. */
@@ -240,20 +242,17 @@ function toLedgerSources(input: CncAccountingInput): LedgerSources {
 }
 
 /**
- * Assemble a team's consolidated ledger and the three statements from its raw
- * feeds. Pure: no I/O, no Vue — the composable supplies the fetched data.
+ * The USD rate-of-record resolver for a team's feeds: the caller's price source
+ * for native (POL/ETH), overlaid with the SHER price derived from the router's
+ * compensation multiplier.
+ *
+ * SHER has no market price; value it from the router's compensation multiplier
+ * (1 SHER = 1/multiplier USD, historised over the multiplier changes) so
+ * wage-in-SHER increases Investor Equity. With no change events we use the
+ * router's live multiplier (read from the contract) or, failing that, the
+ * contract's 1x default (1 SHER = $1) — no longer the Phase-1 $0.
  */
-export function assembleCncAccounting(input: CncAccountingInput): CncAccounting {
-  const internalAddresses = collectInternalAddresses(
-    input.contracts,
-    input.feeCollectorAddress ? [input.feeCollectorAddress] : []
-  )
-
-  // SHER has no market price; value it from the router's compensation multiplier
-  // (1 SHER = 1/multiplier USD, historised over the multiplier changes) so
-  // wage-in-SHER increases Investor Equity. With no change events we use the
-  // router's live multiplier (read from the contract) or, failing that, the
-  // contract's 1x default (1 SHER = $1) — no longer the Phase-1 $0.
+function buildRateOfRecord(input: CncAccountingInput): UsdRateOfRecord {
   const baseRate = input.rateOfRecord ?? phase1RateOfRecord
   const sherRate = makeSherUsdRate(
     buildSherMultiplierTimeline(
@@ -262,9 +261,25 @@ export function assembleCncAccounting(input: CncAccountingInput): CncAccounting 
       input.currentSherMultiplier
     )
   )
-  const rateOfRecord: UsdRateOfRecord = sherRate
+  return sherRate
     ? (tokenId, at) => (tokenId === 'sher' ? sherRate(at) : baseRate(tokenId, at))
     : baseRate
+}
+
+/**
+ * Run the source mappers and stamp each posting with its rate of record
+ * (spec §2 "Taux"), yielding the raw, pre-consolidation feed. Every entry then
+ * carries Devise (`token`), Quantité (`rawAmount`), Taux (`rate`) and the derived
+ * Montant USD (`amountUsd`). Split out so the composable can collect the set of
+ * transaction days it must fetch a price for **before** the prices are known
+ * (the day depends only on the timestamp, not the rate).
+ */
+export function buildRawCncEntries(input: CncAccountingInput): LedgerEntry[] {
+  const internalAddresses = collectInternalAddresses(
+    input.contracts,
+    input.feeCollectorAddress ? [input.feeCollectorAddress] : []
+  )
+  const rateOfRecord = buildRateOfRecord(input)
 
   const ctx = buildMapperContext({
     contracts: input.contracts,
@@ -281,6 +296,34 @@ export function assembleCncAccounting(input: CncAccountingInput): CncAccounting 
     expenses: input.expenses
   })
 
+  // Central Taux pass: the rate is a pure function of (token, timestamp), so we
+  // resolve it once here rather than threading it through every mapper. Uses the
+  // exact rate the mappers valued `amountUsd` with, so amountUsd = Quantité × rate.
+  return rawEntries.map((entry) => ({
+    ...entry,
+    rate: tokenUsdRate(entry.token, atDate(entry.timestamp), rateOfRecord)
+  }))
+}
+
+/**
+ * The distinct UTC days (`YYYY-MM-DD`) on which the feed has native (POL/ETH)
+ * activity — the set of daily prices the caller must fetch to value POL at its
+ * rate of record. Empty when the team never transacted in the native token.
+ */
+export function collectNativeRateDays(input: CncAccountingInput): string[] {
+  const days = new Set<string>()
+  for (const entry of buildRawCncEntries(input)) {
+    if (entry.token === 'native') days.add(dayKey(atDate(entry.timestamp)))
+  }
+  return [...days]
+}
+
+/**
+ * Assemble a team's consolidated ledger and the three statements from its raw
+ * feeds. Pure: no I/O, no Vue — the composable supplies the fetched data.
+ */
+export function assembleCncAccounting(input: CncAccountingInput): CncAccounting {
+  const rawEntries = buildRawCncEntries(input)
   const { entries, summary } = buildLedger(rawEntries)
 
   return {

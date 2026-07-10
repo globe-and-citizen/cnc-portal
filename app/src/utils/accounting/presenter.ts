@@ -270,7 +270,7 @@ export function presentIncome(
 }
 
 /** Ledger token id → display symbol (native uses the chain's currency symbol). */
-function currencySymbol(token: TokenId): string {
+export function currencySymbol(token: TokenId): string {
   if (token === 'native') return NETWORK.currencySymbol || 'POL'
   if (token === 'usdc.e') return 'USDC.e'
   return token.toUpperCase() // usdc → USDC, usdt → USDT, sher → SHER
@@ -287,14 +287,17 @@ function tokenQuantity(amount: number, token: TokenId): string {
 }
 
 /**
- * One breakdown line's display value. Priced currencies show their USD value;
- * **unpriced native** (POL/ETH, USD value 0 until a price-of-record exists) shows
- * the token quantity instead, so the holding is visible rather than a misleading
- * `$0.00`.
+ * One breakdown line's display value. Stablecoins show their USD value directly.
+ * **Native (POL/ETH)** shows its quantity *and* USD equivalent at the closing
+ * rate of record — e.g. `0.023953 POL ≈ $0.00` (spec §5) — so the holding is
+ * visible in both its native unit and dollars. Until a price-of-record has
+ * resolved (USD value still 0) it shows the quantity alone rather than a
+ * misleading `$0.00`.
  */
 function cashCurrencyValue(line: CashLineData): string {
-  if (line.token === 'native') return tokenQuantity(line.tokenAmount, line.token)
-  return money(line.amountUsd)
+  if (line.token !== 'native') return money(line.amountUsd)
+  const quantity = tokenQuantity(line.tokenAmount, line.token)
+  return line.amountUsd !== 0 ? `${quantity} ≈ ${money(line.amountUsd)}` : quantity
 }
 
 /** Balance-sheet lines as of a point in time. */

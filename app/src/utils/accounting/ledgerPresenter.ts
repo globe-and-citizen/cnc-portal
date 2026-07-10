@@ -4,7 +4,8 @@
  * category/date filter. Split from {@link ./presenter} (which handles the
  * statement-level views) to keep each module focused. Pure and unit-testable.
  */
-import { money, fmtDateTime, filterByPeriod, periodLabel } from './presenter'
+import { money, fmtDateTime, filterByPeriod, periodLabel, currencySymbol } from './presenter'
+import { wholeTokenAmount } from './toUsd'
 import { activityOf, entryLabel, type ActivityCell } from './describeEntry'
 import type { LedgerEntry, UseCase } from './ledgerEntry'
 
@@ -58,11 +59,18 @@ export type LedgerColumnKey =
   | 'account'
   | 'dr'
   | 'cr'
+  | 'currency'
+  | 'quantity'
+  | 'rate'
 
 /** A ledger column as rendered in the selector and the exports. */
 export type LedgerColumn = { value: LedgerColumnKey; label: string }
 
-/** Ledger columns as `{ value, label }`, for the show/hide-columns selector. */
+/**
+ * Ledger columns as `{ value, label }`, for the show/hide-columns selector.
+ * Devise / Quantité / Taux (spec §2) trail the USD debit/credit so each posting
+ * reads "$ moved · native currency · quantity · rate of record".
+ */
 export const LEDGER_COLUMNS: ReadonlyArray<LedgerColumn> = [
   { value: 'date', label: 'Date' },
   { value: 'action', label: 'Action' },
@@ -70,7 +78,10 @@ export const LEDGER_COLUMNS: ReadonlyArray<LedgerColumn> = [
   { value: 'activity', label: 'Activity' },
   { value: 'account', label: 'Account' },
   { value: 'dr', label: 'Debit' },
-  { value: 'cr', label: 'Credit' }
+  { value: 'cr', label: 'Credit' },
+  { value: 'currency', label: 'Currency' },
+  { value: 'quantity', label: 'Quantity' },
+  { value: 'rate', label: 'Rate' }
 ]
 
 /**
@@ -118,6 +129,12 @@ export interface LedgerRow {
   accountDimmed: boolean
   dr: string
   cr: string
+  /** The posting's currency (spec §2 "Devise"), e.g. `POL` / `USDC`. */
+  currency: string
+  /** Whole-token quantity moved (spec §2 "Quantité"), 6-dp, e.g. `0.070352`. */
+  quantity: string
+  /** USD rate of record (spec §2 "Taux"), 6-dp, e.g. `$0.080000` / `$1.000000`. */
+  rate: string
 }
 
 export interface LedgerView {
@@ -164,6 +181,28 @@ export function categoryOf(entry: LedgerEntry): LedgerCategory {
   return byUseCase[entry.useCase] ?? 'Transfer'
 }
 
+/** Safe base-unit → whole-token parse (tolerates a malformed raw amount). */
+function safeWholeAmount(entry: LedgerEntry): number {
+  try {
+    return wholeTokenAmount(BigInt(entry.rawAmount), entry.token)
+  } catch {
+    return 0
+  }
+}
+
+/** The posting's Quantité — whole-token amount at 6-dp, e.g. `0.070352`. */
+function quantityLabel(entry: LedgerEntry): string {
+  return safeWholeAmount(entry).toLocaleString('en-US', { maximumFractionDigits: 6 })
+}
+
+/** The posting's Taux — USD rate of record at 6-dp, e.g. `$0.080000`; blank if unset. */
+function rateLabel(entry: LedgerEntry): string {
+  if (entry.rate == null) return ''
+  return (
+    '$' + entry.rate.toLocaleString('en-US', { minimumFractionDigits: 6, maximumFractionDigits: 6 })
+  )
+}
+
 /** The two journal-line rows (debit then credit) a posting renders as. */
 function rowsOf(entry: LedgerEntry): LedgerRow[] {
   const cat = categoryOf(entry)
@@ -173,12 +212,28 @@ function rowsOf(entry: LedgerEntry): LedgerRow[] {
     label: entryLabel(entry),
     activity: activityOf(entry),
     cat,
-    catClass: badgeClassOf(entry)
+    catClass: badgeClassOf(entry),
+    // Devise / Quantité / Taux — the same token move backs both legs of a posting,
+    // so they are shown once on the lead row (blank on the credit continuation).
+    currency: currencySymbol(entry.token),
+    quantity: quantityLabel(entry),
+    rate: rateLabel(entry)
   }
+  const blankMovement = { currency: '', quantity: '', rate: '' }
   // Memo-only posting (Default-D): a single dimmed share-count line, no money.
   if (!entry.debit && !entry.credit) {
     const account = entry.shares ? `+${entry.shares} SHER (memo)` : 'Memo'
-    return [{ ...head, account, accountMuted: false, accountDimmed: true, dr: '', cr: '' }]
+    return [
+      {
+        ...head,
+        ...blankMovement,
+        account,
+        accountMuted: false,
+        accountDimmed: true,
+        dr: '',
+        cr: ''
+      }
+    ]
   }
   const rows: LedgerRow[] = []
   if (entry.debit) {
@@ -204,7 +259,11 @@ function rowsOf(entry: LedgerEntry): LedgerRow[] {
       accountMuted: true,
       accountDimmed: false,
       dr: '',
-      cr: money(entry.amountUsd)
+      cr: money(entry.amountUsd),
+      // Movement details lead the posting; the credit continuation leaves them blank.
+      ...(lead
+        ? { currency: head.currency, quantity: head.quantity, rate: head.rate }
+        : blankMovement)
     })
   }
   return rows

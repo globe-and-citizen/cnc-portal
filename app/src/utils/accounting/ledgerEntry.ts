@@ -73,10 +73,18 @@ export interface LedgerEntry {
   credit: AccountName | null
   /** Absolute USD amount. `0` for memo-only entries. */
   amountUsd: number
-  /** Token actually moved on-chain (for audit / display). */
+  /** Token actually moved on-chain — the entry's currency (spec §2 "Devise"). */
   token: TokenId
   /** Raw on-chain amount in the token's base units (stringified bigint). */
   rawAmount: string
+  /**
+   * USD-per-whole-token rate of record at the transaction time (spec §2 "Taux"),
+   * stored at 6-dp precision: `1.000000` for USD-pegged stablecoins, the
+   * timestamped price for native (POL) / SHER. `amountUsd = Quantité × rate`.
+   * Absent on entries produced before a rate resolver has run (e.g. raw mapper
+   * output in unit tests); the consolidation layer fills it in for every entry.
+   */
+  rate?: number
   /** The other party of the move (checksum address), when there is one. */
   counterparty?: Address
   /** True when both sides are CNC-owned pockets — an internal move (no IS impact). */
