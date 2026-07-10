@@ -249,6 +249,46 @@ describe('assembleCncAccounting', () => {
     expect(a.balanceSheet.balanced).toBe(true)
   })
 
+  it('issues an unbacked direct mint into equity (Dr Shares to be issued · Cr Investor Equity)', () => {
+    const a = assembleCncAccounting({
+      ...BASE,
+      // No backing deposit/withdraw → the mint is a direct share issuance.
+      investorEvents: {
+        investorMints: {
+          items: [
+            {
+              id: 'm1',
+              contractAddress: INVESTOR,
+              shareholder: ADDR.member,
+              amount: '60000000', // 60 SHER
+              timestamp: 150
+            }
+          ]
+        },
+        investorDividendDistributeds: { items: [] },
+        investorDividendPaids: { items: [] },
+        investorDividendPaymentFaileds: { items: [] }
+      }
+    })
+
+    // A real posting now (not a value-0 memo): it clears Shares to be issued into
+    // equity at the SHER rate of record (60 SHER × $1.00 = $60) — Dr/Cr filled.
+    const issued = a.entries.find((e) => e.useCase === 'DEFAULT-D')
+    expect(issued).toMatchObject({
+      debit: 'Shares to be issued',
+      credit: 'Investor Equity',
+      token: 'sher',
+      amountUsd: 60,
+      shares: 60
+    })
+    // Equity increased and the trial balance still balances (Dr = Cr). No prior
+    // accrual in this fixture, so the liability reads −$60 alone; in production the
+    // wage accrual credits it first and the issuance nets it down.
+    expect(a.balanceSheet.investorEquity).toBe(60)
+    expect(a.generalLedger.balanced).toBe(true)
+    expect(a.balanceSheet.balanced).toBe(true)
+  })
+
   it('honours an injected rate of record and defaults native/SHER to zero', () => {
     const bankEvents = {
       bankDeposits: {
