@@ -125,7 +125,10 @@ const LEDGER_SHEET_CELL: Record<
   activity: (r, resolveName) => activityText(r.activity, resolveName),
   account: (r) => r.account,
   dr: (r) => usd(r.dr),
-  cr: (r) => usd(r.cr)
+  cr: (r) => usd(r.cr),
+  currency: (r) => r.currency,
+  quantity: (r) => r.quantity,
+  rate: (r) => r.rate
 }
 
 interface LedgerSheetOptions {

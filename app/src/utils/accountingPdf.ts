@@ -143,7 +143,10 @@ const LEDGER_PDF_CELL: Record<
   activity: { align: 'left', pick: (r, resolveName) => activityText(r.activity, resolveName) },
   account: { align: 'left', pick: (r) => r.account },
   dr: { align: 'right', pick: (r) => r.dr },
-  cr: { align: 'right', pick: (r) => r.cr }
+  cr: { align: 'right', pick: (r) => r.cr },
+  currency: { align: 'left', pick: (r) => r.currency },
+  quantity: { align: 'right', pick: (r) => r.quantity },
+  rate: { align: 'right', pick: (r) => r.rate }
 }
 
 interface LedgerTableOptions {
