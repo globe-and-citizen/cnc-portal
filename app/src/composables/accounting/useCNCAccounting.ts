@@ -23,7 +23,7 @@ import type { DocumentNode } from 'graphql'
 import { type Address } from 'viem'
 import { SAFE_DEPOSIT_ROUTER_ABI } from '@/artifacts/abi/safe-deposit-router'
 import { formatSafeDepositRouterMultiplier } from '@/utils/safeDepositRouterUtil'
-import { FEE_COLLECTOR_ADDRESS, GRAPHQL_POLL_INTERVAL } from '@/constant'
+import { FEE_COLLECTOR_ADDRESS, GRAPHQL_POLL_INTERVAL, SUPPORTED_TOKENS } from '@/constant'
 import type { ContractType } from '@/types/teamContract'
 import type { BankEventsQuery } from '@/types/ponder/bank'
 import type { CashRemunerationEventsQuery } from '@/types/ponder/cash-remuneration'
@@ -40,11 +40,14 @@ import { useGetExpensesQuery } from '@/queries/expense.queries'
 import { useGetSafeIncomingTransfersQuery } from '@/queries/safe.queries'
 import { useCurrencyStore } from '@/stores/currencyStore'
 import { useTransferInitiators } from './useTransferInitiators'
+import { useHistoricalTokenRates } from './useHistoricalTokenRates'
 import {
   assembleCncAccounting,
+  collectNativeRateDays,
   type CncAccounting,
   type CncAccountingInput
 } from '@/utils/accounting/assemble'
+import { makeHistoricalRateOfRecord } from '@/utils/accounting/historicalRate'
 import type { UsdRateOfRecord } from '@/utils/accounting/toUsd'
 import type { AccountingSummary } from '@/utils/accounting/buildLedger'
 import type { GeneralLedger } from '@/utils/accounting/generalLedger'
@@ -170,36 +173,49 @@ export function useCNCAccounting(
     () => team.data.value?.members?.map((m) => m.address) ?? []
   )
 
-  // USD price-of-record: the caller's resolver, else the app's live prices from
-  // the currency store (CoinGecko). USDC is pegged $1 by `toUsd`, so this only
-  // runs for the non-pegged tokens (native POL/ETH, SHER) — which otherwise show
-  // as $0 under the Phase-1 default.
+  // Live-price fallback: the caller's resolver, else the app's live prices from
+  // the currency store (CoinGecko). Used only while a day's historical price is
+  // in flight — the timestamped rate below is the actual rate of record.
   const currencyStore = useCurrencyStore()
-  const rateOfRecord: UsdRateOfRecord =
+  const liveRate: UsdRateOfRecord =
     options.rateOfRecord ?? ((tokenId) => currencyStore.getTokenPrice(tokenId, false, 'usd'))
 
-  const accounting = computed<CncAccounting>(() => {
-    const input: CncAccountingInput = {
-      contracts: contracts.value,
-      safeAddress: safeAddress.value,
-      founderAddresses: founderAddresses.value,
-      memberAddresses: memberAddresses.value,
-      feeCollectorAddress: FEE_COLLECTOR_ADDRESS,
-      sherTokenAddress: options.sherTokenAddress ?? null,
-      safeDepositRouterAddress: routerAddress.value || null,
-      currentSherMultiplier: currentSherMultiplier.value,
-      rateOfRecord,
-      bankEvents: bank.result.value,
-      cashRemunerationEvents: cashRem.result.value,
-      expenseEvents: expense.result.value,
-      investorEvents: investor.result.value,
-      safeDepositRouterEvents: router.result.value,
-      safeTransfers: safeTransfers.data.value,
-      weeklyClaims: weeklyClaims.data.value?.data,
-      expenses: expenses.data.value
-    }
-    return assembleCncAccounting(input)
-  })
+  // The raw feeds + the live-price fallback — everything the ledger needs except
+  // the resolved historical rate. Also drives which POL days need a price.
+  const baseInput = computed<CncAccountingInput>(() => ({
+    contracts: contracts.value,
+    safeAddress: safeAddress.value,
+    founderAddresses: founderAddresses.value,
+    memberAddresses: memberAddresses.value,
+    feeCollectorAddress: FEE_COLLECTOR_ADDRESS,
+    sherTokenAddress: options.sherTokenAddress ?? null,
+    safeDepositRouterAddress: routerAddress.value || null,
+    currentSherMultiplier: currentSherMultiplier.value,
+    rateOfRecord: liveRate,
+    bankEvents: bank.result.value,
+    cashRemunerationEvents: cashRem.result.value,
+    expenseEvents: expense.result.value,
+    investorEvents: investor.result.value,
+    safeDepositRouterEvents: router.result.value,
+    safeTransfers: safeTransfers.data.value,
+    weeklyClaims: weeklyClaims.data.value?.data,
+    expenses: expenses.data.value
+  }))
+
+  // Timestamped USD price-of-record for native (POL/ETH): fetch each transacting
+  // day's historical price (spec §2 — never a live/deferred rate). USDC is pegged
+  // $1 by `toUsd` and SHER is valued from the router multiplier, so only native
+  // is fetched here; SHER/other days fall through to the live fallback.
+  const nativeCoingeckoId = SUPPORTED_TOKENS.find((t) => t.id === 'native')?.coingeckoId ?? ''
+  const nativeRateDays = computed(() => collectNativeRateDays(baseInput.value))
+  const historicalRates = useHistoricalTokenRates('native', nativeCoingeckoId, nativeRateDays)
+  const rateOfRecord = computed<UsdRateOfRecord>(() =>
+    makeHistoricalRateOfRecord(historicalRates.value, liveRate)
+  )
+
+  const accounting = computed<CncAccounting>(() =>
+    assembleCncAccounting({ ...baseInput.value, rateOfRecord: rateOfRecord.value })
+  )
 
   // Resolve the human who signed each internal transfer (the tx feed carries only
   // a hash), then attach it so the ledger reads "Stravid87 transferred money from
