@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest'
+import { z } from 'zod'
 import {
   CREDIT_FIELD_CLASS,
+  applyZodFieldErrors,
   avatarStyle,
   creditAccessRowClass,
-  creditCheckClass,
   creditChipClass,
   creditInitials,
   creditRadioClass,
@@ -33,6 +34,37 @@ describe('communityCreditUtil', () => {
       expect(formatAmount(1000, 'POL')).toBe('1,000 POL')
       expect(formatNumber(1234567)).toBe('1,234,567')
       expect(formatNumber(0)).toBe('0')
+    })
+  })
+
+  describe('applyZodFieldErrors', () => {
+    const schema = z.object({ name: z.string().min(3, 'Too short') })
+
+    it('clears the errors record and returns true on a successful parse', () => {
+      const errors: Record<string, string> = { stale: 'leftover from a previous attempt' }
+      const result = schema.safeParse({ name: 'Alice' })
+
+      expect(applyZodFieldErrors(result, errors)).toBe(true)
+      expect(errors).toEqual({})
+    })
+
+    it('populates the errors record by field and returns false on a failed parse', () => {
+      const errors: Record<string, string> = {}
+      const result = schema.safeParse({ name: 'AB' })
+
+      expect(applyZodFieldErrors(result, errors)).toBe(false)
+      expect(errors).toEqual({ name: 'Too short' })
+    })
+
+    it('keeps only the first issue per field', () => {
+      const multiIssueSchema = z.object({
+        name: z.string().min(3, 'Too short').startsWith('Z', 'Must start with Z')
+      })
+      const errors: Record<string, string> = {}
+      const result = multiIssueSchema.safeParse({ name: 'AB' })
+
+      applyZodFieldErrors(result, errors)
+      expect(errors.name).toBe('Too short')
     })
   })
 
@@ -86,8 +118,7 @@ describe('communityCreditUtil', () => {
     it.each([
       ['chip', creditChipClass],
       ['access row', creditAccessRowClass],
-      ['radio', creditRadioClass],
-      ['check', creditCheckClass]
+      ['radio', creditRadioClass]
     ])('toggles the active branch for the %s style', (_label, fn) => {
       const active = fn(true)
       const inactive = fn(false)

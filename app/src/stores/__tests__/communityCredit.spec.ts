@@ -49,6 +49,11 @@ const REPAID_OFFER: FixedReturnRawOffer = {
     state: 3
   })
 }
+const FUNDED_OFFER: FixedReturnRawOffer = {
+  offerId: 3,
+  decimals: 6,
+  offer: offer({ totalFunded: 40_000_000000n, state: 1 }) // fully raised, not yet repaid
+}
 
 describe('Community Credit store (contract-backed)', () => {
   beforeEach(() => {
@@ -72,6 +77,18 @@ describe('Community Credit store (contract-backed)', () => {
     expect(store.historyRounds.map((r) => r.id)).toEqual(['1'])
     expect(store.getRound('2')?.raised).toBe(23400)
     expect(store.getRound('1')?.status).toBe('repaid')
+  })
+
+  it('moves a funded round to history instead of the active list, but still counts its principal as outstanding', () => {
+    mockFixedReturnReads.allOffers.data.value = [OPEN_OFFER, REPAID_OFFER, FUNDED_OFFER]
+    const store = useCommunityCreditStore()
+
+    expect(store.activeRounds.map((r) => r.id)).toEqual(['2'])
+    expect(store.historyRounds.map((r) => r.id)).toEqual(['1', '3'])
+    expect(store.getRound('3')?.status).toBe('funded')
+    // 23,400 (open) + 40,000 (funded) — funded principal is still outstanding even
+    // though the round itself moved out of the active list.
+    expect(store.outstandingPrincipal).toBe(63400)
   })
 
   it('derives the account stats from the offers', () => {

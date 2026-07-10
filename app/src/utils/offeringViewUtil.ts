@@ -102,23 +102,15 @@ export function getWhitelistAllocationSummary(
         ? 'under'
         : 'exact'
   const tokenLabel = token ?? ''
-  const prefix = `Lenders allocated: ${committedTotal.toLocaleString('en-US')} / ${Math.round(principalTarget).toLocaleString('en-US')} ${tokenLabel}`
+  const prefix = `Allocated ${committedTotal.toLocaleString('en-US')} / ${Math.round(principalTarget).toLocaleString('en-US')} ${tokenLabel}`
 
   if (status === 'over') {
     const excess = (committedTotal - principalTarget).toLocaleString('en-US')
-    return {
-      committedTotal,
-      status,
-      description: `${prefix} — exceeds target by ${excess} ${tokenLabel}`
-    }
+    return { committedTotal, status, description: `${prefix} — ${excess} ${tokenLabel} over` }
   }
   if (status === 'under') {
     const shortfall = (principalTarget - committedTotal).toLocaleString('en-US')
-    return {
-      committedTotal,
-      status,
-      description: `${prefix} — ${shortfall} ${tokenLabel} short of target; this offering can't reach its target through whitelisted lenders alone`
-    }
+    return { committedTotal, status, description: `${prefix} — ${shortfall} ${tokenLabel} short` }
   }
   return { committedTotal, status, description: prefix }
 }

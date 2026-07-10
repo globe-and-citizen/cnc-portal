@@ -13,9 +13,9 @@ import {
   mockInvalidateQueries,
   mockFixedReturnReads,
   mockFixedReturnWrites,
-  mockBankWrites,
-  mockWagmiCore
+  mockBankWrites
 } from '@/tests/mocks'
+import { mockToast } from '@/tests/mocks/store.mock'
 
 // The Community Credit store is the contract-backed read hub. We mock it so the views
 // can be driven deterministically; mocking the submodule propagates through the
@@ -48,20 +48,9 @@ vi.mock('@/stores/communityCredit', () => ({
   useCommunityCreditStore: () => store
 }))
 
-// NewView persists off-chain metadata through this mutation — stub it so mounting the
-// wizard doesn't reach the real query layer.
-vi.mock('@/queries/fixedReturnOffering.queries', async (importOriginal) => ({
-  ...(await importOriginal<object>()),
-  useCreateFixedReturnOfferingMutation: () => ({
-    mutateAsync: vi.fn(),
-    isPending: { value: false }
-  })
-}))
-
 import IndexView from '../IndexView.vue'
 import RoundView from '../RoundView.vue'
 import RepayView from '../RepayView.vue'
-import NewView from '../NewView.vue'
 import CreditRoundCard from '@/components/sections/CommunityCreditView/CreditRoundCard.vue'
 import CreditLendModal from '@/components/sections/CommunityCreditView/CreditLendModal.vue'
 
@@ -131,7 +120,6 @@ describe('Community Credit views', () => {
     mockFixedReturnReads.getLendingOffer.data.value = null
     mockFixedReturnReads.offerLenders.data.value = []
     mockFixedReturnReads.allOffers.data.value = []
-    mockWagmiCore.readContract.mockReset()
     useQueryClientFn.mockReturnValue({
       invalidateQueries: mockInvalidateQueries,
       getQueryData: vi.fn(),
@@ -180,11 +168,32 @@ describe('Community Credit views', () => {
       expect(wrapper.findComponent(CreditLendModal).props('round')).not.toBeNull()
     })
 
+    it('shows a hint toast when a non-owner clicks "Lend to a round"', async () => {
+      store.isOwner = false
+      const wrapper = mount(IndexView)
+
+      expect(wrapper.find('[data-test="new-credit-call"]').exists()).toBe(false)
+      await wrapper.find('[data-test="lend-hint-button"]').trigger('click')
+
+      expect(mockToast.add).toHaveBeenCalledWith(
+        expect.objectContaining({ title: 'Pick an open round below to lend' })
+      )
+    })
+
     it('renders the history table for settled rounds', () => {
       store.historyRounds = [sampleRound({ id: '9', status: 'repaid', repaidOn: 'Apr 10' })]
       const wrapper = mount(IndexView)
       expect(wrapper.find('[data-test="credit-history-table"]').exists()).toBe(true)
       expect(wrapper.text()).toContain('History')
+    })
+
+    it('lists a funded round in history too, labeled as awaiting repayment rather than repaid', () => {
+      store.historyRounds = [sampleRound({ id: '9', status: 'funded', maturity: 'Oct 26' })]
+      const wrapper = mount(IndexView)
+      const row = wrapper.find('[data-test="credit-history-row"]').text()
+      expect(row).toContain('Awaiting repayment')
+      expect(row).toContain('Oct 26')
+      expect(row).not.toContain('Repaid')
     })
   })
 
@@ -279,43 +288,6 @@ describe('Community Credit views', () => {
       await flushPromises()
 
       expect(wrapper.find('[data-test="repay-error"]').exists()).toBe(true)
-    })
-  })
-
-  describe('NewView', () => {
-    it('renders the credit-call wizard', () => {
-      const wrapper = mount(NewView)
-      expect(wrapper.text()).toContain('New credit call')
-      expect(wrapper.find('[data-test="cc-name"]').exists()).toBe(true)
-    })
-
-    it('creates the offer on-chain and returns to the list on publish', async () => {
-      mockWagmiCore.readContract.mockResolvedValue(1n) // totalOfferings after create
-      const wrapper = mount(NewView)
-
-      // Basics → Terms → Access → Publish
-      await wrapper.find('[data-test="cc-next"]').trigger('click')
-      await wrapper.find('[data-test="cc-next"]').trigger('click')
-      await wrapper.find('[data-test="cc-next"]').trigger('click')
-      await flushPromises()
-
-      expect(mockFixedReturnWrites.createLendingOffer.mutateAsync).toHaveBeenCalled()
-      expect(mockRouterPush).toHaveBeenLastCalledWith(
-        expect.objectContaining({ name: 'community-credit' })
-      )
-    })
-
-    it('surfaces an error and stays on the wizard when publishing fails', async () => {
-      mockWagmiCore.readContract.mockResolvedValue(1n)
-      mockFixedReturnWrites.createLendingOffer.mutateAsync.mockRejectedValueOnce(new Error('boom'))
-      const wrapper = mount(NewView)
-
-      await wrapper.find('[data-test="cc-next"]').trigger('click')
-      await wrapper.find('[data-test="cc-next"]').trigger('click')
-      await wrapper.find('[data-test="cc-next"]').trigger('click')
-      await flushPromises()
-
-      expect(wrapper.find('[data-test="cc-error"]').exists()).toBe(true)
     })
   })
 })

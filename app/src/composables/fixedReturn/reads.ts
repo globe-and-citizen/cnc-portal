@@ -32,7 +32,9 @@ function useFixedReturnRead(functionName: FixedReturnFunctionNames) {
     address: fixedReturnAddress,
     abi: FIXED_RETURN_ABI,
     functionName,
-    query: { enabled: !!fixedReturnAddress.value && isAddress(fixedReturnAddress.value) }
+    query: {
+      enabled: computed(() => !!fixedReturnAddress.value && isAddress(fixedReturnAddress.value))
+    }
   })
 }
 

@@ -1,24 +1,52 @@
 import { formatUnits } from 'viem'
 import dayjs from 'dayjs'
+import type { ZodSafeParseResult } from 'zod'
 import type {
   CreditLender,
   CreditRound,
   FixedReturnOfferLender,
   FixedReturnRawOffer,
   LendingOfferStruct,
-  RoundStatus
+  RoundStatus,
+  StatusMeta
 } from '@/types'
 import { getOfferingTokenSymbol } from './offeringUtil'
 import { shortenAddress } from './generalUtil'
 
-/** Format an integer amount with a token suffix, e.g. `23,400 USDC`. */
-export function formatAmount(n: number, token = 'USDC'): string {
-  return `${formatNumber(n)} ${token}`
+/** Clears `errors`, then repopulates it from a failed `safeParse` result (first issue
+ *  per field wins). Returns whether the parse succeeded — the shared shape behind every
+ *  hand-rolled step-validator in the Community Credit wizard (Basics/Terms/Access all
+ *  otherwise re-implemented this same "clear, loop issues, assign by field" dance). */
+export function applyZodFieldErrors(
+  result: ZodSafeParseResult<unknown>,
+  errors: Record<string, string>
+): boolean {
+  Object.keys(errors).forEach((key) => delete errors[key])
+  if (result.success) return true
+  for (const issue of result.error.issues) {
+    const field = String(issue.path[0])
+    if (!errors[field]) errors[field] = issue.message
+  }
+  return false
 }
 
-/** Format a number with thousands separators and no decimals. */
-export function formatNumber(n: number): string {
-  return Number(n).toLocaleString('en-US', { maximumFractionDigits: 0 })
+/** Format an amount with a token suffix, e.g. `23,400 USDC`. No decimals by default —
+ *  pass `maximumFractionDigits` for amounts that can be fractional (e.g. a live on-chain
+ *  remaining/cap figure), so a value like 0.5 doesn't silently round up to "1". */
+export function formatAmount(n: number, token = 'USDC', maximumFractionDigits = 0): string {
+  return `${formatNumber(n, maximumFractionDigits)} ${token}`
+}
+
+/** Format a number with thousands separators, no decimals by default. */
+export function formatNumber(n: number, maximumFractionDigits = 0): string {
+  return Number(n).toLocaleString('en-US', { maximumFractionDigits })
+}
+
+/** Rounds to 4 decimal places — enough to kill floating-point noise (e.g. 0.1 + 0.2)
+ *  without collapsing genuinely small fractional amounts (e.g. 0.2) down to 0, which
+ *  `Math.round` did for any round/offer with a sub-1 remaining or cap. */
+export function roundToDisplayPrecision(n: number): number {
+  return Math.round(n * 10000) / 10000
 }
 
 /** Two-letter initials from a member name, ignoring a trailing `(you)`. */
@@ -42,14 +70,6 @@ export function roundInterest(round: Pick<CreditRound, 'raised' | 'rate'>): numb
 /** Total due at maturity (principal + interest). */
 export function roundTotalDue(round: Pick<CreditRound, 'raised' | 'rate'>): number {
   return round.raised + roundInterest(round)
-}
-
-/** Nuxt UI badge color names, kept local to avoid importing UI internals. */
-export type BadgeColor = 'neutral' | 'primary' | 'info' | 'warning' | 'success'
-
-export interface StatusMeta {
-  label: string
-  color: BadgeColor
 }
 
 /** Display label + badge color for every round status. */
@@ -92,14 +112,6 @@ export function creditRadioClass(active: boolean) {
   return [
     'inline-flex h-5 w-5 flex-none items-center justify-center rounded-full border-2',
     active ? 'border-primary' : 'border-default'
-  ]
-}
-
-/** Checkbox box (whitelist member picker). */
-export function creditCheckClass(active: boolean) {
-  return [
-    'inline-flex h-5 w-5 flex-none items-center justify-center rounded-md text-white',
-    active ? 'bg-primary' : 'border border-default bg-default'
   ]
 }
 

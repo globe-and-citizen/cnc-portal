@@ -3,6 +3,9 @@
 // each round is repaid in full with fixed interest at maturity, signed on-chain
 // from a dedicated Credit Account. This module is fake-data only (no API yet).
 
+import type { WhitelistEntry } from './offering'
+import type { UBadgeColor } from './ui'
+
 export type CreditRole = 'owner' | 'lender'
 
 // Mirrors FixedReturn.sol's OfferState (Open, Funded, Refundable, Repaying) resolved
@@ -11,6 +14,11 @@ export type CreditRole = 'owner' | 'lender'
 export type RoundStatus = 'open' | 'funded' | 'active' | 'repaid' | 'refundable'
 
 export type RoundDetailVariant = 'ledger' | 'gauge' | 'timeline'
+
+export interface StatusMeta {
+  label: string
+  color: UBadgeColor
+}
 
 export type CreditAccess = 'everyone' | 'restricted'
 
@@ -78,7 +86,8 @@ export interface CreditCallForm {
   periodUnit: CreditTermUnit
   deadline: string
   access: CreditAccess
-  whitelist: Record<string, boolean>
+  /** Searchable, per-lender custom-amount whitelist — same shape as Issue Note's. */
+  whitelist: WhitelistEntry[]
   capOn: boolean
   cap: string
 }

@@ -83,21 +83,32 @@ export const useCommunityCreditStore = defineStore('communityCredit', () => {
   const isLender = computed(() => !isOwner.value)
 
   // ───────── derived round buckets ─────────
+  // "Open & active rounds" — still raising, or issuer partway through repaying. A fully
+  // funded round has nothing left to raise or do as a lender until the issuer repays, so
+  // it lives in History instead (alongside repaid/refundable) rather than here.
   const activeRounds = computed(() =>
+    rounds.value.filter((r) => r.status === 'open' || r.status === 'active')
+  )
+  const historyRounds = computed(() =>
+    rounds.value.filter(
+      (r) => r.status === 'repaid' || r.status === 'refundable' || r.status === 'funded'
+    )
+  )
+
+  // ───────── account stats (from raw offers so token decimals stay correct) ─────────
+  // Broader than `activeRounds`: outstanding principal/interest covers every round with
+  // money out and not yet repaid, including funded rounds sitting in History awaiting
+  // a repay action — that principal is still very much outstanding.
+  const outstandingRounds = computed(() =>
     rounds.value.filter(
       (r) => r.status === 'open' || r.status === 'funded' || r.status === 'active'
     )
   )
-  const historyRounds = computed(() =>
-    rounds.value.filter((r) => r.status === 'repaid' || r.status === 'refundable')
-  )
-
-  // ───────── account stats (from raw offers so token decimals stay correct) ─────────
   const outstandingPrincipal = computed(() =>
-    activeRounds.value.reduce((sum, r) => sum + r.raised, 0)
+    outstandingRounds.value.reduce((sum, r) => sum + r.raised, 0)
   )
   const interestDue = computed(() =>
-    activeRounds.value.reduce((sum, r) => sum + roundInterest(r), 0)
+    outstandingRounds.value.reduce((sum, r) => sum + roundInterest(r), 0)
   )
   const raisedLifetime = computed(() => rounds.value.reduce((sum, r) => sum + r.raised, 0))
   const repaidLifetime = computed(() =>

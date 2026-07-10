@@ -11,29 +11,46 @@
             v-model="form.rate"
             type="number"
             min="0"
-            :class="[CREDIT_FIELD_CLASS, 'pr-8']"
+            :class="[CREDIT_FIELD_CLASS, 'pr-8', termErrors.rate && 'border-error']"
             placeholder="6"
+            data-test="cc-rate"
           />
-          <span class="text-muted absolute top-1/2 right-3 -translate-y-1/2 text-sm font-bold">
+          <span
+            class="text-muted pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-sm font-bold"
+          >
             %
           </span>
         </div>
+        <p v-if="termErrors.rate" class="text-error mt-1 text-xs" data-test="cc-rate-error">
+          {{ termErrors.rate }}
+        </p>
       </div>
       <div>
         <label class="mb-1.5 block text-sm font-medium" for="cc-deadline">
           Subscription deadline
         </label>
-        <input id="cc-deadline" v-model="form.deadline" type="date" :class="CREDIT_FIELD_CLASS" />
+        <input
+          id="cc-deadline"
+          v-model="form.deadline"
+          type="date"
+          :class="[CREDIT_FIELD_CLASS, termErrors.deadline && 'border-error']"
+          data-test="cc-deadline"
+        />
+        <p v-if="termErrors.deadline" class="text-error mt-1 text-xs" data-test="cc-deadline-error">
+          {{ termErrors.deadline }}
+        </p>
       </div>
     </div>
 
     <div>
-      <label class="mb-1.5 block text-sm font-medium">Term length</label>
-      <div class="flex flex-wrap gap-2">
+      <label id="cc-term-label" class="mb-1.5 block text-sm font-medium">Term length</label>
+      <div class="flex flex-wrap gap-2" role="radiogroup" aria-labelledby="cc-term-label">
         <button
           v-for="p in PRESETS"
           :key="p"
           type="button"
+          role="radio"
+          :aria-checked="form.period === p && form.periodMode !== 'custom'"
           :class="creditChipClass(form.period === p && form.periodMode !== 'custom')"
           :data-test="`cc-term-${p}`"
           @click="selectPreset(p)"
@@ -42,6 +59,8 @@
         </button>
         <button
           type="button"
+          role="radio"
+          :aria-checked="form.periodMode === 'custom'"
           :class="creditChipClass(form.periodMode === 'custom')"
           data-test="cc-term-custom"
           @click="enterCustom"
@@ -62,11 +81,15 @@
         />
         <div
           class="border-default bg-muted flex max-w-[260px] flex-1 gap-0.5 rounded-lg border p-0.5"
+          role="radiogroup"
+          aria-label="Custom term unit"
         >
           <button
             v-for="u in UNITS"
             :key="u.value"
             type="button"
+            role="radio"
+            :aria-checked="form.periodUnit === u.value"
             :class="unitClass(form.periodUnit === u.value)"
             :data-test="`cc-unit-${u.value}`"
             @click="recalcPeriod(form.periodVal, u.value)"
@@ -75,6 +98,9 @@
           </button>
         </div>
       </div>
+      <p v-if="termErrors.period" class="text-error mt-1.5 text-xs" data-test="cc-term-error">
+        {{ termErrors.period }}
+      </p>
     </div>
 
     <UAlert
@@ -88,11 +114,25 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import { CREDIT_FIELD_CLASS, creditChipClass, formatAmount } from '@/utils'
-import type { CreditCallForm, CreditTermUnit } from '@/types'
+import { computed, reactive } from 'vue'
+import { applyZodFieldErrors, CREDIT_FIELD_CLASS, creditChipClass, formatAmount } from '@/utils'
+import { createCreditCallTermsSchema, type CreditCallForm, type CreditTermUnit } from '@/types'
 
 const form = defineModel<CreditCallForm>('form', { required: true })
+
+const termErrors = reactive<Record<string, string>>({})
+
+function validate(): boolean {
+  const schema = createCreditCallTermsSchema({ today: new Date().toISOString().slice(0, 10) })
+  const result = schema.safeParse({
+    rate: form.value.rate,
+    deadline: form.value.deadline,
+    period: form.value.period
+  })
+  return applyZodFieldErrors(result, termErrors)
+}
+
+defineExpose({ validate })
 
 const PRESETS = [30, 60, 90, 120]
 const UNITS: { value: CreditTermUnit; label: string }[] = [

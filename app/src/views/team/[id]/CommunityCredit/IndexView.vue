@@ -26,7 +26,8 @@
           color="primary"
           icon="heroicons:hand-raised"
           label="Lend to a round"
-          @click="toast.add({ title: 'Pick an open round below to lend' })"
+          data-test="lend-hint-button"
+          @click="showLendHint"
         />
       </div>
     </div>
@@ -146,5 +147,8 @@ function goRepay(roundId: string) {
 }
 function onHistorySelect(round: CreditRound) {
   goRound(round.id)
+}
+function showLendHint() {
+  toast.add({ title: 'Pick an open round below to lend' })
 }
 </script>

@@ -66,17 +66,35 @@ const emit = defineEmits<{ select: [round: CreditRound] }>()
 
 const store = useCommunityCreditStore()
 
-// History = settled rounds: fully repaid, or refundable after a missed deadline.
+// History = rounds no longer raising: fully funded and awaiting repayment, fully
+// repaid, or refundable after a missed deadline.
 const rows = computed(() =>
   store.historyRounds.map((round) => {
-    const refundable = round.status === 'refundable'
+    const outcome =
+      round.status === 'refundable'
+        ? 'Refund available'
+        : round.status === 'funded'
+          ? `Awaiting repayment · matures ${round.maturity}`
+          : `Repaid ${round.repaidOn ?? round.maturity}`
+    const icon =
+      round.status === 'refundable'
+        ? 'heroicons:arrow-uturn-left'
+        : round.status === 'funded'
+          ? 'heroicons:clock'
+          : 'heroicons:check-badge'
+    const iconClass =
+      round.status === 'refundable'
+        ? 'bg-warning/10 text-warning'
+        : round.status === 'funded'
+          ? 'bg-info/10 text-info'
+          : 'bg-success/10 text-success'
     return {
       round,
       status: statusMeta(round.status),
       raised: formatAmount(round.raised, round.token),
-      outcome: refundable ? 'Refund available' : `Repaid ${round.repaidOn ?? round.maturity}`,
-      icon: refundable ? 'heroicons:arrow-uturn-left' : 'heroicons:check-badge',
-      iconClass: refundable ? 'bg-warning/10 text-warning' : 'bg-success/10 text-success'
+      outcome,
+      icon,
+      iconClass
     }
   })
 )

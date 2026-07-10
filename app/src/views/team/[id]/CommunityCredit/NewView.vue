@@ -30,10 +30,13 @@
               <input
                 id="cc-name"
                 v-model="form.name"
-                :class="CREDIT_FIELD_CLASS"
+                :class="[CREDIT_FIELD_CLASS, basicsErrors.name && 'border-error']"
                 placeholder="e.g. Q3 runway bridge"
                 data-test="cc-name"
               />
+              <p v-if="basicsErrors.name" class="text-error mt-1 text-xs" data-test="cc-name-error">
+                {{ basicsErrors.name }}
+              </p>
             </div>
             <div>
               <label class="mb-1.5 block text-sm font-medium" for="cc-desc">Purpose</label>
@@ -55,24 +58,35 @@
                     v-model="form.target"
                     type="number"
                     min="0"
-                    :class="[CREDIT_FIELD_CLASS, 'pr-14']"
+                    :class="[CREDIT_FIELD_CLASS, 'pr-14', basicsErrors.target && 'border-error']"
                     placeholder="25000"
+                    data-test="cc-target"
                   />
                   <span
-                    class="text-muted absolute top-1/2 right-3 -translate-y-1/2 text-xs font-bold"
+                    class="text-muted pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-xs font-bold"
                   >
                     {{ form.token }}
                   </span>
                 </div>
+                <p
+                  v-if="basicsErrors.target"
+                  class="text-error mt-1 text-xs"
+                  data-test="cc-target-error"
+                >
+                  {{ basicsErrors.target }}
+                </p>
               </div>
               <div>
-                <label class="mb-1.5 block text-sm font-medium">Token</label>
-                <div class="flex gap-1.5">
+                <label id="cc-token-label" class="mb-1.5 block text-sm font-medium">Token</label>
+                <div class="flex gap-1.5" role="radiogroup" aria-labelledby="cc-token-label">
                   <button
                     v-for="t in tokens"
                     :key="t"
                     type="button"
+                    role="radio"
+                    :aria-checked="form.token === t"
                     :class="creditChipClass(form.token === t)"
+                    :data-test="`cc-token-${t}`"
                     @click="form.token = t"
                   >
                     {{ t }}
@@ -83,10 +97,10 @@
           </div>
 
           <!-- Step 2 — Terms -->
-          <CreditCallTermsStep v-else-if="step === 1" v-model:form="form" />
+          <CreditCallTermsStep v-else-if="step === 1" ref="termsStepRef" v-model:form="form" />
 
           <!-- Step 3 — Access -->
-          <CreditCallAccessStep v-else v-model:form="form" />
+          <CreditCallAccessStep v-else ref="accessStepRef" v-model:form="form" />
         </div>
 
         <!-- Error -->
@@ -139,7 +153,6 @@ import { useToast } from '@nuxt/ui/composables'
 import { useQueryClient } from '@tanstack/vue-query'
 import { config } from '@/wagmi.config'
 import { FIXED_RETURN_ABI } from '@/artifacts/abi/fixed-return'
-import { useCommunityCreditStore } from '@/stores'
 import {
   useFixedReturnAddress,
   useFixedReturnGetSupportedTokens
@@ -147,13 +160,14 @@ import {
 import { useFixedReturnCreateLendingOffer } from '@/composables/fixedReturn/writes'
 import { useCreateFixedReturnOfferingMutation } from '@/queries/fixedReturnOffering.queries'
 import {
+  applyZodFieldErrors,
   CREDIT_FIELD_CLASS,
   classifyError,
   creditChipClass,
   getSupportedOfferingTokenOptions,
   toFixedReturnOfferParams
 } from '@/utils'
-import type { CreditCallForm, OfferingForm, WhitelistEntry } from '@/types'
+import { creditCallBasicsSchema, type CreditCallForm, type OfferingForm } from '@/types'
 import StepIndicator from '@/components/sections/FixedReturnView/StepIndicator.vue'
 import CreditCallAccessStep from '@/components/sections/CommunityCreditView/CreditCallAccessStep.vue'
 import CreditCallTermsStep from '@/components/sections/CommunityCreditView/CreditCallTermsStep.vue'
@@ -163,7 +177,6 @@ const route = useRoute()
 const router = useRouter()
 const toast = useToast()
 const queryClient = useQueryClient()
-const store = useCommunityCreditStore()
 const fixedReturnAddress = useFixedReturnAddress()
 
 const teamId = computed(() => String(route.params.id))
@@ -171,6 +184,10 @@ const teamId = computed(() => String(route.params.id))
 const stepLabels = ['Basics', 'Terms', 'Access']
 const step = ref(0)
 const isLastStep = computed(() => step.value === stepLabels.length - 1)
+
+type StepHandle = { validate?: () => boolean } | null
+const termsStepRef = ref<StepHandle>(null)
+const accessStepRef = ref<StepHandle>(null)
 
 // Only tokens this team's FixedReturn contract actually accepts (ERC20-only).
 const { data: supportedTokens } = useFixedReturnGetSupportedTokens()
@@ -192,9 +209,9 @@ const form = reactive<CreditCallForm>({
   periodUnit: 'days',
   deadline: '2026-07-31',
   access: 'everyone',
-  whitelist: {},
+  whitelist: [],
   capOn: false,
-  cap: '10000'
+  cap: ''
 })
 
 // Keep the selected token valid against what the contract supports.
@@ -207,7 +224,7 @@ watch(
   { immediate: true }
 )
 
-const whitelistCount = computed(() => Object.values(form.whitelist).filter(Boolean).length)
+const whitelistCount = computed(() => form.whitelist.length)
 
 const createOfferResult = useFixedReturnCreateLendingOffer()
 const createMetadataResult = useCreateFixedReturnOfferingMutation()
@@ -219,10 +236,22 @@ const publishLabel = computed(() =>
   isLastStep.value ? (isPublishing.value ? 'Publishing…' : 'Publish credit call') : 'Continue'
 )
 
+const basicsErrors = reactive<Record<string, string>>({})
+
+/** Validates the Basics step; populates basicsErrors and returns whether it passed. */
+function validateBasics(): boolean {
+  const result = creditCallBasicsSchema.safeParse({ name: form.name, target: form.target })
+  return applyZodFieldErrors(result, basicsErrors)
+}
+
 function back() {
   if (step.value > 0) step.value--
 }
 function next() {
+  if (step.value === 0 && !validateBasics()) return
+  if (step.value === 1 && termsStepRef.value?.validate?.() === false) return
+  if (step.value === 2 && accessStepRef.value?.validate?.() === false) return
+
   if (!isLastStep.value) {
     step.value++
     return
@@ -256,19 +285,7 @@ async function publish() {
       token: form.token
     }
 
-    // The boolean picker only captures who's in — split the target evenly as each
-    // whitelisted lender's on-chain allocation.
-    const selected = Object.entries(form.whitelist)
-      .filter(([, checked]) => checked)
-      .map(([address]) => address)
-    const perLender = selected.length ? (Number(form.target) || 0) / selected.length : 0
-    const whitelist: WhitelistEntry[] = selected.map((address) => ({
-      username: store.members.find((member) => member.id === address)?.name ?? address,
-      address,
-      amount: perLender
-    }))
-
-    const params = toFixedReturnOfferParams(offeringForm, whitelist)
+    const params = toFixedReturnOfferParams(offeringForm, form.whitelist)
     await createOfferResult.mutateAsync({ args: [params] })
 
     // Offers are 1-indexed and sequential, so the new offer's id is the post-write count.
