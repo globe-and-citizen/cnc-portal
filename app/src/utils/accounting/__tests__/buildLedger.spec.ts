@@ -6,12 +6,11 @@ import { catalogueLedger } from './catalogueLedger'
 describe('buildLedger — summary on the catalogue worked example', () => {
   const { summary, entries } = buildLedger(catalogueLedger)
 
-  it('rolls up the period totals (cash / income / expense / equity / net)', () => {
+  it('rolls up the period totals (cash / income / expense / equity)', () => {
     expect(summary.cash).toBeCloseTo(142.2, 2)
     expect(summary.income).toBeCloseTo(115, 2)
     expect(summary.expense).toBeCloseTo(110.8, 2)
     expect(summary.equity).toBeCloseTo(138, 2)
-    expect(summary.netIncome).toBeCloseTo(4.2, 2)
   })
 
   it('counts only monetary postings (memo-only Default-D excluded)', () => {

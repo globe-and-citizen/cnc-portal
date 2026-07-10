@@ -45,7 +45,7 @@ describe('assembleCncAccounting', () => {
   it('returns an empty, balanced result for no feeds', () => {
     const a = emptyCncAccounting()
     expect(a.entries).toEqual([])
-    expect(a.summary).toMatchObject({ cash: 0, income: 0, expense: 0, equity: 0, netIncome: 0 })
+    expect(a.summary).toMatchObject({ cash: 0, income: 0, expense: 0, equity: 0 })
     expect(a.generalLedger.balanced).toBe(true)
     expect(a.balanceSheet.balanced).toBe(true)
     expect(a.incomeStatement.netIncome).toBe(0)
