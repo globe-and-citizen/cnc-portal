@@ -68,8 +68,8 @@ export type LedgerColumn = { value: LedgerColumnKey; label: string }
 
 /**
  * Ledger columns as `{ value, label }`, for the show/hide-columns selector.
- * Devise / Quantité / Taux (spec §2) trail the USD debit/credit so each posting
- * reads "$ moved · native currency · quantity · rate of record".
+ * Devise / Quantité / Taux (spec §2) lead the USD debit/credit so each posting
+ * reads "native currency · quantity · rate of record · $ moved".
  */
 export const LEDGER_COLUMNS: ReadonlyArray<LedgerColumn> = [
   { value: 'date', label: 'Date' },
@@ -77,11 +77,11 @@ export const LEDGER_COLUMNS: ReadonlyArray<LedgerColumn> = [
   { value: 'transaction', label: 'Transaction' },
   { value: 'activity', label: 'Activity' },
   { value: 'account', label: 'Account' },
-  { value: 'dr', label: 'Debit' },
-  { value: 'cr', label: 'Credit' },
   { value: 'currency', label: 'Currency' },
   { value: 'quantity', label: 'Quantity' },
-  { value: 'rate', label: 'Rate' }
+  { value: 'rate', label: 'Rate' },
+  { value: 'dr', label: 'Debit' },
+  { value: 'cr', label: 'Credit' }
 ]
 
 /**
