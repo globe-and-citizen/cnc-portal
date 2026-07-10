@@ -250,6 +250,37 @@ describe('Team Controller', () => {
       expect(response.status).toBe(500);
       expect(response.body.message).toBe('Internal server error has occured');
     });
+
+    it('auto-generates a slug from the team name', async () => {
+      vi.spyOn(prisma.user, 'findUnique').mockResolvedValue(mockOwner);
+      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(null);
+      vi.spyOn(prisma.team, 'create').mockResolvedValue(teamMockResolve);
+
+      const response = await request(app)
+        .post('/')
+        .send({ ...mockTeamData, name: 'Acme Corp' });
+
+      expect(response.status).toBe(201);
+      const createCall = vi.mocked(prisma.team.create).mock.calls[0][0];
+      expect(createCall.data).toMatchObject({ slug: 'acme-corp' });
+    });
+
+    it('appends a numeric suffix when the slug is already taken', async () => {
+      vi.spyOn(prisma.user, 'findUnique').mockResolvedValue(mockOwner);
+      // `acme-corp` is taken; the next candidate is free.
+      vi.spyOn(prisma.team, 'findUnique').mockImplementation((async (args: {
+        where: { slug: string };
+      }) => (args.where.slug === 'acme-corp' ? { id: 1 } : null)) as never);
+      vi.spyOn(prisma.team, 'create').mockResolvedValue(teamMockResolve);
+
+      const response = await request(app)
+        .post('/')
+        .send({ ...mockTeamData, name: 'Acme Corp' });
+
+      expect(response.status).toBe(201);
+      const createCall = vi.mocked(prisma.team.create).mock.calls[0][0];
+      expect(createCall.data).toMatchObject({ slug: 'acme-corp-2' });
+    });
   });
 
   describe('getTeam', () => {
