@@ -218,9 +218,8 @@ contract Investor is
     uint256[] calldata amounts,
     bytes32[][] calldata proofs
   ) external onlyOwner whenNotPaused nonReentrant {
-    if (shareholders.length != amounts.length || shareholders.length != proofs.length) {
+    if (shareholders.length != amounts.length || shareholders.length != proofs.length)
       revert LengthMismatch();
-    }
     for (uint256 i = 0; i < shareholders.length; i++) {
       if (!migrationClaimed[shareholders[i]]) {
         _migrate(shareholders[i], amounts[i], proofs[i]);
@@ -438,8 +437,6 @@ contract Investor is
 
   /// @dev Reverts if a migration root is set but the migration has not been completed yet.
   function _requireMigrationSettled() private view {
-    if (migrationRoot != bytes32(0) && !migrationComplete) {
-      revert DividendsFrozenDuringMigration();
-    }
+    if (migrationRoot != bytes32(0) && !migrationComplete) revert DividendsFrozenDuringMigration();
   }
 }
