@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { Team, User } from '@prisma/client';
+import { Prisma, Team, User } from '@prisma/client';
 import express, { NextFunction, Request, Response } from 'express';
 import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -280,6 +280,36 @@ describe('Team Controller', () => {
       expect(response.status).toBe(201);
       const createCall = vi.mocked(prisma.team.create).mock.calls[0][0];
       expect(createCall.data).toMatchObject({ slug: 'acme-corp-2' });
+    });
+
+    it('retries once with a fresh slug when the insert loses a unique-constraint race', async () => {
+      vi.spyOn(prisma.user, 'findUnique').mockResolvedValue(mockOwner);
+      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(null);
+      const slugRace = new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
+        code: 'P2002',
+        clientVersion: '6.19.2',
+      });
+      vi.spyOn(prisma.team, 'create')
+        .mockRejectedValueOnce(slugRace)
+        .mockResolvedValueOnce(teamMockResolve);
+
+      const response = await request(app)
+        .post('/')
+        .send({ ...mockTeamData, name: 'Acme Corp' });
+
+      expect(response.status).toBe(201);
+      expect(prisma.team.create).toHaveBeenCalledTimes(2);
+    });
+
+    it('surfaces a 500 when team creation fails for a non-slug reason', async () => {
+      vi.spyOn(prisma.user, 'findUnique').mockResolvedValue(mockOwner);
+      vi.spyOn(prisma.team, 'findUnique').mockResolvedValue(null);
+      vi.spyOn(prisma.team, 'create').mockRejectedValue(new Error('DB down'));
+
+      const response = await request(app).post('/').send(mockTeamData);
+
+      expect(response.status).toBe(500);
+      expect(prisma.team.create).toHaveBeenCalledTimes(1);
     });
   });
 
