@@ -8,9 +8,8 @@
  * emitted as several entries, one balanced pair each, so the trial balance always
  * balances by construction.
  *
- * Memo-only entries (an `InvestorV1 Minted` with no backing deposit/withdraw —
- * "Default D", spec §4) carry `debit === credit === null` and `amountUsd === 0`;
- * they only record a share-count change, not money.
+ * A memo-only entry (no monetary legs) carries `debit === credit === null` and
+ * `amountUsd === 0`, recording only a share-count change, not money.
  */
 import { getAddress, isAddress, type Address } from 'viem'
 import type { TokenId } from '@/constant'
@@ -41,7 +40,7 @@ export type UseCase =
   | 'UC-EXP-01'
   /** Dividend paid to a shareholder. */
   | 'UC-INV-01'
-  /** Direct SHER mint with no backing deposit/withdraw — memo only, value 0. */
+  /** Direct SHER mint: issue shares into equity — Dr Shares to be issued · Cr Investor Equity. */
   | 'DEFAULT-D'
   /** Bank protocol fee skimmed to the FeeCollector — a Transaction Fee Expense. */
   | 'FEE'
@@ -67,9 +66,9 @@ export interface LedgerEntry {
   timestamp: number
   /** The journal template this entry realises. */
   useCase: UseCase
-  /** Account debited. `null` only for memo-only Default-D entries. */
+  /** Account debited. `null` only for memo-only entries (no monetary legs). */
   debit: AccountName | null
-  /** Account credited. `null` only for memo-only Default-D entries. */
+  /** Account credited. `null` only for memo-only entries (no monetary legs). */
   credit: AccountName | null
   /** Absolute USD amount. `0` for memo-only entries. */
   amountUsd: number

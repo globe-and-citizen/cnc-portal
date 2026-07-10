@@ -170,10 +170,7 @@ export function categoryOf(entry: LedgerEntry): LedgerCategory {
     'UC-EXP-01': 'Expense',
     'CASH-OUT': 'Expense',
     'UC-INV-01': 'Dividend',
-    'DEFAULT-D': 'Memo',
-    // The Bank protocol fee is a real cost leaving the treasury (booked as
-    // Transaction Fee Expense), so it reads as an Expense — red badge, filterable
-    // under the Expense pill — not a neutral internal Transfer.
+    'DEFAULT-D': 'Investment',
     FEE: 'Expense',
     INTERNAL: 'Transfer',
     'UC-BANK-03': 'Transfer'
@@ -220,7 +217,7 @@ function rowsOf(entry: LedgerEntry): LedgerRow[] {
     rate: rateLabel(entry)
   }
   const blankMovement = { currency: '', quantity: '', rate: '' }
-  // Memo-only posting (Default-D): a single dimmed share-count line, no money.
+  // Memo-only posting (no monetary legs): a single dimmed share-count line, no money.
   if (!entry.debit && !entry.credit) {
     const account = entry.shares ? `+${entry.shares} SHER (memo)` : 'Memo'
     return [
