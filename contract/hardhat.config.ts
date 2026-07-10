@@ -100,6 +100,12 @@ const config: HardhatUserConfig = {
     coinmarketcap: process.env.COINMARKETCAP_KEY,
     token: 'POL'
   },
+  // VERSIONING INVARIANT: each `path` targets the `json/` subdir and `clear:true`
+  // wipes only that subdir on every compile. Frozen version snapshots
+  // (`abi/v1/`, `abis/v1/`, …) are written as SIBLINGS of `json/` by
+  // `scripts/freeze-version.ts`, so they must never live under any exporter
+  // `path`. Do NOT point a `path` at the `abi/` root, or `clear:true` would
+  // delete every frozen version. See contract/versions/registry.json.
   abiExporter: [
     {
       path: '../app/src/artifacts/abi/json',
