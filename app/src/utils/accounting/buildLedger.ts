@@ -99,18 +99,25 @@ function isMonetary(entry: LedgerEntry): boolean {
 }
 
 /**
- * A posting with real accounts but $0.00 USD and no share count. In a
- * USD-reported book it moves nothing — it only clutters the journal with a line
- * like "Wage Payable $0.00 / Cash — Payroll $0.00". These arise from **unpriced
- * native (POL/ETH)** legs: with no price-of-record yet (Phase 2 gap, see
- * {@link toUsd}) a native wage withdrawal or funding move values to $0. We drop
- * them here so the ledger shows no phantom, unlinked entries; once a native
- * price-of-record exists the same postings carry a non-zero USD amount and are
- * kept. Memo-only Default-D entries (no legs, but a real share count) are never
- * dropped — {@link isMonetary} already excludes them from the roll-up.
+ * An **unpriced** posting: real accounts but $0.00 USD, no share count and no
+ * rate of record. In a USD-reported book it moves nothing — it only clutters the
+ * journal with a line like "Wage Payable $0.00 / Cash — Payroll $0.00". These
+ * arise from **unpriced native (POL/ETH)** legs: with no price-of-record yet
+ * (Phase 2 gap, see {@link toUsd}) a native wage withdrawal or funding move
+ * values to $0. We drop those phantom, unlinked entries.
+ *
+ * The `!entry.rate` guard is what makes this "unpriced" rather than merely
+ * "tiny". A genuinely small but **priced** posting — e.g. the 0.5% Bank protocol
+ * fee on a few POL (~$0.003, which rounds to $0.00) — carries a real rate of
+ * record, so it is **kept**: every Bank transfer that skims a fee still surfaces
+ * that fee as its own general-ledger line, its token quantity intact even when
+ * the USD figure rounds to zero. Once a native price-of-record exists, the
+ * formerly-unpriced legs likewise gain a rate and stop being dropped. Memo-only
+ * Default-D entries (no legs, real share count) are never dropped —
+ * {@link isMonetary} already excludes them from the roll-up.
  */
 function isZeroValuePosting(entry: LedgerEntry): boolean {
-  return isMonetary(entry) && round2(entry.amountUsd) === 0 && !entry.shares
+  return isMonetary(entry) && round2(entry.amountUsd) === 0 && !entry.shares && !entry.rate
 }
 
 /** Aggregate the summary totals from the deduped feed. */

@@ -130,6 +130,26 @@ export interface LedgerEntry {
    * never from the Expense pocket balance, so historical entries stay accurate.
    */
   expenseRemainingUsd?: number
+  /**
+   * A Bank protocol fee (the 0.5% skim) charged in the **same on-chain
+   * transaction** as this transfer, folded into it for the **general-ledger view
+   * only** so the transfer reads as one compound entry — Dr destination (net) ·
+   * Dr Transaction Fee Expense (fee) · Cr Cash — Bank (gross). Presentation-only:
+   * set by the ledger presenter ({@link mergeBankFees}), never by a source
+   * mapper, so the canonical feed the trial balance / income statement / balance
+   * sheet roll up still carries the fee as its own standalone posting (no double
+   * count).
+   */
+  mergedBankFee?: {
+    /** The fee posting's USD amount. */
+    amountUsd: number
+    /** The fee's raw on-chain amount, in the token's base units. */
+    rawAmount: string
+    /** The token the fee was skimmed in — the transfer's token. */
+    token: TokenId
+    /** The fee's USD rate of record, when resolved. */
+    rate?: number
+  }
   /** Off-chain enrichment status. */
   enrichment: EnrichmentStatus
 }
