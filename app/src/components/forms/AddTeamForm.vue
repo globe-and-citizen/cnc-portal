@@ -16,7 +16,7 @@
         label="Company Name"
         name="name"
         required
-        help="Give your company a unique, recognizable name"
+        help="Give your company a recognizable name"
       >
         <UInput
           v-model="teamData.name"
