@@ -69,6 +69,9 @@ describe('buildAccountingTables', () => {
       'left',
       'left',
       'right',
+      'right',
+      'left',
+      'right',
       'right'
     ])
   })
@@ -87,7 +90,10 @@ describe('buildAccountingTables', () => {
       'Activity',
       'Account',
       'Debit',
-      'Credit'
+      'Credit',
+      'Currency',
+      'Quantity',
+      'Rate'
     ])
     // the deposit posts two legs (debit Bank / credit Service Revenue) + a total row
     expect(ledger.body.length).toBe(3)

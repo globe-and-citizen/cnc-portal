@@ -72,7 +72,10 @@ describe('buildAccountingSheets', () => {
       'Activity',
       'Account',
       'Debit',
-      'Credit'
+      'Credit',
+      'Currency',
+      'Quantity',
+      'Rate'
     ])
     // title + blank + header + the deposit's two legs + total row
     expect(rows.length).toBe(6)
