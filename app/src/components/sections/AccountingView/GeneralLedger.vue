@@ -77,8 +77,10 @@ import {
 
 // Show/hide table columns — persisted across sessions so the choice sticks.
 const columnItems = [...LEDGER_COLUMNS]
+// Key bumped to -v2 when Currency / Quantity / Rate were added, so a saved
+// pre-v2 selection doesn't hide the newly-mandated columns (spec §2).
 const visibleColumns = useLocalStorage<LedgerColumnKey[]>(
-  'cnc-accounting-ledger-columns',
+  'cnc-accounting-ledger-columns-v2',
   columnItems.map((c) => c.value)
 )
 
