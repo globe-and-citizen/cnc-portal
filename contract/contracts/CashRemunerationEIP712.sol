@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/utils/Address.sol";
-import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import "@quant-finance/solidity-datetime/contracts/DateTime.sol";
-import "./base/TokenSupport.sol";
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {EIP712Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
+import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {Address} from "@openzeppelin/contracts/utils/Address.sol";
+import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import {DateTime} from "@quant-finance/solidity-datetime/contracts/DateTime.sol";
+import {TokenSupport} from "./base/TokenSupport.sol";
 import {IInvestorV1} from "./interfaces/IInvestorV1.sol";
 import {IOfficer} from "./interfaces/IOfficer.sol";
 
@@ -63,10 +63,11 @@ contract CashRemunerationEIP712 is
     "WageClaim(address employeeAddress,uint16 minutesWorked,Wage[] wages,uint256 date)";
 
   /// @dev Typehash for the Wage struct, used in EIP-712 encoding.
-  bytes32 constant _WAGE_TYPEHASH = keccak256(abi.encodePacked(_WAGE_TYPE));
+  bytes32 private constant _WAGE_TYPEHASH = keccak256(abi.encodePacked(_WAGE_TYPE));
 
   /// @dev Typehash for the WageClaim struct, used in EIP-712 encoding.
-  bytes32 constant _WAGE_CLAIM_TYPEHASH = keccak256(abi.encodePacked(_WAGE_CLAIM_TYPE, _WAGE_TYPE));
+  bytes32 private constant _WAGE_CLAIM_TYPEHASH =
+    keccak256(abi.encodePacked(_WAGE_CLAIM_TYPE, _WAGE_TYPE));
 
   /// @dev Mapping to track wage claims that have already been paid.
   mapping(bytes32 signatureHash => bool paid) public paidWageClaims;
@@ -78,6 +79,7 @@ contract CashRemunerationEIP712 is
   mapping(bytes32 signatureHash => bool disabled) public disabledWageClaims;
 
   // Storage gap for future upgrades
+  // solhint-disable-next-line chainlink-solidity/prefix-storage-variables-with-s-underscore
   uint256[49] private __gap;
 
   /**
@@ -227,9 +229,8 @@ contract CashRemunerationEIP712 is
   ) external whenNotPaused nonReentrant {
     // Step 1: Verify the caller is the authorized employee
     // Prevents someone else from withdrawing another employee's wages
-    if (msg.sender != wageClaim.employeeAddress) {
+    if (msg.sender != wageClaim.employeeAddress)
       revert NotClaimOwner(wageClaim.employeeAddress, msg.sender);
-    }
 
     // Step 2: EIP-712 Signature Verification
     // Create the EIP-712 compliant digest for signature recovery
@@ -247,9 +248,7 @@ contract CashRemunerationEIP712 is
 
     // Step 4: Verify the signer is the contract owner
     // Ensures only authorized owners can approve wage claims
-    if (signer != owner()) {
-      revert UnauthorizedAccess(owner(), signer);
-    }
+    if (signer != owner()) revert UnauthorizedAccess(owner(), signer);
 
     // Step 5: Prevent double-spending of the same signature & usage of disabled claims
     // Each signature can only be used once to prevent replay attacks
@@ -287,9 +286,8 @@ contract CashRemunerationEIP712 is
       // Step 7b: Handle ERC20 Token Payments
       else {
         // Ensure the requested token is supported by the contract
-        if (!_isTokenSupported(wageClaim.wages[i].tokenAddress)) {
+        if (!_isTokenSupported(wageClaim.wages[i].tokenAddress))
           revert TokenNotSupported(wageClaim.wages[i].tokenAddress);
-        }
 
         // Step 7b(i): Special Case - Mintable InvestorV1 Token
         // If we have an officer address configured and this is the InvestorV1 token,
@@ -314,13 +312,12 @@ contract CashRemunerationEIP712 is
         else {
           // Verify the contract has sufficient token balance
           uint256 tokenBalance = IERC20(wageClaim.wages[i].tokenAddress).balanceOf(address(this));
-          if (tokenBalance < amountToPay) {
+          if (tokenBalance < amountToPay)
             revert InsufficientTokenBalance(
               wageClaim.wages[i].tokenAddress,
               amountToPay,
               tokenBalance
             );
-          }
 
           // Transfer tokens from contract to employee
           IERC20(wageClaim.wages[i].tokenAddress).transfer(wageClaim.employeeAddress, amountToPay);
@@ -407,9 +404,8 @@ contract CashRemunerationEIP712 is
     for (uint256 i = 0; i < tokens.length; i++) {
       uint256 tokenBalance = IERC20(tokens[i]).balanceOf(address(this));
       if (tokenBalance > 0) {
-        if (!IERC20(tokens[i]).transfer(bankAddress, tokenBalance)) {
+        if (!IERC20(tokens[i]).transfer(bankAddress, tokenBalance))
           revert TokenTransferFailed(tokens[i]);
-        }
         emit OwnerTreasuryWithdrawToken(owner(), tokens[i], tokenBalance);
       }
     }

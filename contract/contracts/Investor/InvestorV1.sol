@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {IOfficer} from "../interfaces/IOfficer.sol";
 
@@ -42,13 +42,14 @@ contract InvestorV1 is
   bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
   /// @dev Set of addresses currently holding a non-zero balance.
-  EnumerableSet.AddressSet private _shareholderSet;
+  EnumerableSet.AddressSet private s_shareholderSet;
 
   /// @notice Address of the Officer contract (set immutably at initialization)
   address public officerAddress;
 
   // address private officerAddress;
   // Add a gap for future upgrades (important for upgradeable contracts)
+  // solhint-disable-next-line chainlink-solidity/prefix-storage-variables-with-s-underscore
   uint256[50] private __gap;
 
   /**
@@ -291,9 +292,9 @@ contract InvestorV1 is
    * @return Array of Shareholder structs.
    */
   function getShareholders() external view returns (Shareholder[] memory) {
-    Shareholder[] memory _shareholders = new Shareholder[](_shareholderSet.length());
-    for (uint256 i = 0; i < _shareholderSet.length(); i++) {
-      address shareholder = _shareholderSet.at(i);
+    Shareholder[] memory _shareholders = new Shareholder[](s_shareholderSet.length());
+    for (uint256 i = 0; i < s_shareholderSet.length(); i++) {
+      address shareholder = s_shareholderSet.at(i);
       _shareholders[i] = Shareholder(shareholder, balanceOf(shareholder));
     }
     return _shareholders;
@@ -308,11 +309,11 @@ contract InvestorV1 is
     super._update(from, to, value);
 
     if (balanceOf(from) == 0) {
-      _shareholderSet.remove(from);
+      s_shareholderSet.remove(from);
     }
 
-    if (balanceOf(to) > 0 && !_shareholderSet.contains(to)) {
-      _shareholderSet.add(to);
+    if (balanceOf(to) > 0 && !s_shareholderSet.contains(to)) {
+      s_shareholderSet.add(to);
     }
   }
 
@@ -332,9 +333,9 @@ contract InvestorV1 is
    * @return Array of shareholder addresses and their balances
    */
   function _getShareholders() internal view returns (Shareholder[] memory) {
-    Shareholder[] memory _shareholders = new Shareholder[](_shareholderSet.length());
-    for (uint256 i = 0; i < _shareholderSet.length(); i++) {
-      address shareholder = _shareholderSet.at(i);
+    Shareholder[] memory _shareholders = new Shareholder[](s_shareholderSet.length());
+    for (uint256 i = 0; i < s_shareholderSet.length(); i++) {
+      address shareholder = s_shareholderSet.at(i);
       _shareholders[i] = Shareholder(shareholder, balanceOf(shareholder));
     }
     return _shareholders;
