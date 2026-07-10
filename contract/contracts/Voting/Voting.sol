@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import {IBoardOfDirectors} from "../interfaces/IBoardOfDirectors.sol";
 import {IOfficer} from "../interfaces/IOfficer.sol";
-import "./Types.sol";
+import {Types} from "./Types.sol";
 
 /// @title Voting Contract for Decentralized Governance
 /// @notice This contract manages proposals, elections, and voting processes
@@ -312,14 +312,14 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
     } else if (option == Types.TieBreakOption.RUNOFF_ELECTION) {
       // Create a new election with only the tied candidates
       string memory newTitle = string(abi.encodePacked("Runoff: ", proposal.title));
-      addProposal(
-        newTitle,
-        proposal.description,
-        true,
-        proposal.winnerCount,
-        _getVoterAddresses(proposal),
-        proposal.tiedCandidates
-      );
+      addProposal({
+        _title: newTitle,
+        _description: proposal.description,
+        _isElection: true,
+        _winnerCount: proposal.winnerCount,
+        _voters: _getVoterAddresses(proposal),
+        _candidates: proposal.tiedCandidates
+      });
       emit RunoffElectionStarted(proposalCount - 1, proposal.tiedCandidates);
       proposal.hasTie = false;
       proposal.isActive = !proposal.isActive;
@@ -335,9 +335,8 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
     Types.Proposal storage proposal = proposalsById[proposalId];
     if (msg.sender != proposal.draftedBy) revert OnlyFounder();
     if (!proposal.hasTie) revert NoTieToResolve();
-    if (proposal.selectedTieBreakOption != Types.TieBreakOption.FOUNDER_CHOICE) {
+    if (proposal.selectedTieBreakOption != Types.TieBreakOption.FOUNDER_CHOICE)
       revert WrongTieBreakOption();
-    }
 
     bool isValidChoice = false;
     for (uint256 i = 0; i < proposal.tiedCandidates.length; i++) {
