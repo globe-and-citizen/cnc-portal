@@ -189,11 +189,13 @@ export function presentSummaryCards(
   balance: BalanceSheet
 ): SummaryCard[] {
   // Profit reads green (a gain); a loss reads red (a deficit) — never green.
-  const profitable = summary.netIncome >= 0
+  // Net income has a single source — the income statement — so the card, the
+  // Retained Earnings on the balance sheet and every export all show one figure.
+  const profitable = income.netIncome >= 0
   return [
     {
       label: 'Net income',
-      value: money(summary.netIncome),
+      value: money(income.netIncome),
       valueClass: profitable ? 'text-primary' : 'text-error',
       sub: 'Profit · revenue − expenses',
       icon: 'i-heroicons-sparkles',

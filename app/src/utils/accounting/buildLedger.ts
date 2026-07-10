@@ -14,8 +14,10 @@
  *    one economic move. We collapse the twins to a single posting so no internal
  *    transfer or fee is counted twice (the fee dual-write is already deduped in
  *    the fee mapper; this is the cross-contract belt-and-suspenders).
- * 2. **Computes the summary totals** (cash on hand, income, expense, contributed
- *    equity, net income) the dashboard cards read.
+ * 2. **Computes the summary roll-up totals** (cash on hand, income, expense,
+ *    contributed equity). The bottom line — net income — is derived once by the
+ *    income statement (`income − expense`) and closes into Retained Earnings on
+ *    the balance sheet, so it is not recomputed here.
  *
  * Internal moves are kept in the feed (they let the general-ledger view show the
  * funding journal, catalogue §6.2) — they are cash-to-cash, so they net to zero
@@ -51,8 +53,6 @@ export interface AccountingSummary {
   transactionFees: number
   /** Contributed equity (Owner Capital + Investor Equity), excluding retained earnings. */
   equity: number
-  /** income − expense — the period's bottom line (becomes Retained Earnings). */
-  netIncome: number
   /** Number of monetary postings counted (memo-only Default-D entries excluded). */
   entryCount: number
 }
@@ -152,7 +152,6 @@ function summarize(entries: readonly LedgerEntry[]): AccountingSummary {
     expense: round2(expense),
     transactionFees: round2(transactionFees),
     equity: round2(equity),
-    netIncome: round2(income - expense),
     entryCount
   }
 }
