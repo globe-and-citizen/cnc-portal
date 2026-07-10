@@ -17,8 +17,13 @@
 export const slugify = (input: string): string => {
   const slug = input
     .toLowerCase()
+    // Collapse every run of non-alphanumerics to a single hyphen. After this
+    // the string never contains consecutive hyphens…
     .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
+    // …so trimming a single leading/trailing hyphen is enough — no `+`
+    // quantifier, which keeps the match linear (avoids the polynomial-regex
+    // ReDoS class CodeQL flags on user-controlled input).
+    .replace(/^-|-$/g, '');
   return slug || 'team';
 };
 
