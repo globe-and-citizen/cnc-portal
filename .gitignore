@@ -54,7 +54,9 @@ scripts/
 # Local review / architecture notes (not for public repo)
 /reviews/
 /archi-update.md
-.claude/
+# Keep .claude local (settings, worktrees, …) but share committed agent skills
+.claude/*
+!.claude/skills/
 
 # Local working todolist shared between dev and AI agents (never committed)
 /todolist.md
