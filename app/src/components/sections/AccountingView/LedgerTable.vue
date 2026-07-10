@@ -105,8 +105,6 @@
         {{ row.cr }}
       </div>
     </template>
-
-    
   </UTable>
 </template>
 
