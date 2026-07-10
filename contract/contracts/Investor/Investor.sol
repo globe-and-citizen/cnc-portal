@@ -13,7 +13,7 @@ import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet
 import {IOfficer} from "../interfaces/IOfficer.sol";
 
 /**
- * @title InvestorV2
+ * @title Investor
  * @notice ERC20 share token with a Merkle-based shareholder migration for the v1 -> v2 redeploy.
  * @dev New proxy line (breaking storage change vs InvestorV1). Shareholders of the previous
  *      Investor are re-issued their balances by self-claiming against a committed Merkle root
@@ -22,7 +22,7 @@ import {IOfficer} from "../interfaces/IOfficer.sol";
  *      is `ERC20Burnable` and `_update` is pause-gated, so a future v2 -> v3 hop can migrate from a
  *      frozen, burn-capable source.
  */
-contract InvestorV2 is
+contract Investor is
   ERC20BurnableUpgradeable,
   OwnableUpgradeable,
   PausableUpgradeable,
@@ -160,7 +160,7 @@ contract InvestorV2 is
   }
 
   /**
-   * @notice Initializes the InvestorV2 token.
+   * @notice Initializes the Investor token.
    * @param _name ERC20 token name.
    * @param _symbol ERC20 token symbol.
    * @param _owner Contract owner; if address(0) the caller becomes owner.

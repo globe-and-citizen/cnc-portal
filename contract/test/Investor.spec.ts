@@ -59,7 +59,7 @@ async function deployFixture() {
   const MockOfficerFactory = await ethers.getContractFactory('MockOfficer')
   const mockOfficer = await MockOfficerFactory.deploy()
 
-  const InvestorFactory = await ethers.getContractFactory('InvestorV2')
+  const InvestorFactory = await ethers.getContractFactory('Investor')
   const investorImpl = await InvestorFactory.deploy()
 
   const BeaconFactory = await ethers.getContractFactory('Beacon')
@@ -74,17 +74,17 @@ async function deployFixture() {
   const investorAddress = await mockOfficer.deployBeaconProxy.staticCall(
     await beacon.getAddress(),
     initData,
-    'InvestorV2'
+    'Investor'
   )
-  await mockOfficer.deployBeaconProxy(await beacon.getAddress(), initData, 'InvestorV2')
+  await mockOfficer.deployBeaconProxy(await beacon.getAddress(), initData, 'Investor')
 
-  const investor = await ethers.getContractAt('InvestorV2', investorAddress)
+  const investor = await ethers.getContractAt('Investor', investorAddress)
   await mockOfficer.setDeployedContract('Bank', bankSigner.address)
 
   return { investor, mockOfficer, owner, addr1, addr2, addr3, bankSigner }
 }
 
-describe('InvestorV2 — Merkle-pull migration', () => {
+describe('Investor — Merkle-pull migration', () => {
   let investor: Awaited<ReturnType<typeof deployFixture>>['investor']
   let owner: SignerWithAddress
   let addr1: SignerWithAddress
