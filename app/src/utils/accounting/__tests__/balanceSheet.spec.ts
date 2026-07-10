@@ -123,9 +123,9 @@ describe('buildBalanceSheet — cash breakdown by pocket and currency', () => {
       cashIn('c', 'Cash — Safe', 'usdc', '50000000', 50) // 50 USDC → $50
     ])
     expect(bs.cashByPocketCurrency).toEqual([
-      { account: 'Cash — Bank', token: 'native', amountUsd: 0, tokenAmount: 2 },
-      { account: 'Cash — Bank', token: 'usdc', amountUsd: 100, tokenAmount: 100 },
-      { account: 'Cash — Safe', token: 'usdc', amountUsd: 50, tokenAmount: 50 }
+      { account: 'Cash — Bank', token: 'native', amountUsd: 0, tokenAmount: 2, priced: false },
+      { account: 'Cash — Bank', token: 'usdc', amountUsd: 100, tokenAmount: 100, priced: true },
+      { account: 'Cash — Safe', token: 'usdc', amountUsd: 50, tokenAmount: 50, priced: true }
     ])
   })
 
@@ -134,7 +134,24 @@ describe('buildBalanceSheet — cash breakdown by pocket and currency', () => {
       cashIn('a', 'Cash — Payroll', 'native', '3500000000000000000', 0)
     ])
     const pol = bs.cashByPocketCurrency.find((l) => l.token === 'native')
-    expect(pol).toMatchObject({ account: 'Cash — Payroll', amountUsd: 0, tokenAmount: 3.5 })
+    // No rate resolved (amountUsd 0) → not priced, so it shows quantity alone.
+    expect(pol).toMatchObject({
+      account: 'Cash — Payroll',
+      amountUsd: 0,
+      tokenAmount: 3.5,
+      priced: false
+    })
+  })
+
+  it('flags a priced native dust holding whose USD value rounds to $0.00', () => {
+    // 0.028953 POL priced at ~$0.08 → ~$0.0023, which rounds to $0.00. The rate
+    // resolved (non-zero amountUsd leg), so the holding is priced, not unpriced.
+    const bs = buildBalanceSheet([
+      cashIn('a', 'Cash — Bank', 'native', '28953000000000000', 0.002328)
+    ])
+    const pol = bs.cashByPocketCurrency.find((l) => l.token === 'native')
+    expect(pol).toMatchObject({ account: 'Cash — Bank', amountUsd: 0, priced: true })
+    expect(pol?.tokenAmount).toBeCloseTo(0.028953, 6)
   })
 
   it('drops a currency once it nets back to zero in the pocket', () => {

@@ -13,7 +13,8 @@ import {
   filterByPeriod,
   incomeExportTitle,
   balanceExportTitle,
-  trialExportTitle
+  trialExportTitle,
+  currencySymbol
 } from '@/utils/accounting/presenter'
 import { presentLedger, categoryOf } from '@/utils/accounting/ledgerPresenter'
 import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
@@ -173,6 +174,35 @@ describe('presentBalance', () => {
     const balance = presentBalance(books().entries)
     // The USDC deposit lands in the Bank pocket → a "• Bank · USDC" drill-down line.
     expect(balance.assetLines).toContainEqual({ label: '• Bank · USDC', value: '$100.00' })
+  })
+
+  const nativeLabel = `• Bank · ${currencySymbol('native')}`
+  const nativeEntry = (amountUsd: number): LedgerEntry => ({
+    id: 'pol',
+    timestamp: 1,
+    useCase: 'UC-BANK-02',
+    debit: 'Cash — Bank',
+    credit: 'Service Revenue',
+    amountUsd,
+    token: 'native',
+    rawAmount: '28953000000000000', // 0.028953 POL
+    internal: false,
+    memo: '',
+    enrichment: 'not-applicable'
+  })
+
+  it('shows the ≈ $ equivalence for priced native dust that rounds to $0.00', () => {
+    // 0.028953 POL priced at ~$0.08 → ~$0.0023 (rounds to $0.00). A resolved rate
+    // must still print the dollar equivalence, not the quantity alone.
+    const line = presentBalance([nativeEntry(0.002328)]).assetLines.find(
+      (l) => l.label === nativeLabel
+    )
+    expect(line?.value).toBe(`0.028953 ${currencySymbol('native')} ≈ $0.00`)
+  })
+
+  it('shows an unpriced native holding as its quantity alone (no misleading $0.00)', () => {
+    const line = presentBalance([nativeEntry(0)]).assetLines.find((l) => l.label === nativeLabel)
+    expect(line?.value).toBe(`0.028953 ${currencySymbol('native')}`)
   })
 })
 
