@@ -130,9 +130,7 @@ describe('CreditCallAccessStep validate()', () => {
     )
     expect(wrapper.vm.validate()).toBe(false)
     await wrapper.vm.$nextTick()
-    expect(wrapper.find('[data-test="cc-cap-error"]').text()).toContain(
-      'exceed the per-lender cap'
-    )
+    expect(wrapper.find('[data-test="cc-cap-error"]').text()).toContain('exceed the per-lender cap')
   })
 
   it('passes when every whitelisted amount stays within the cap', () => {

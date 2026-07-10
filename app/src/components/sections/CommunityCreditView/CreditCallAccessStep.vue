@@ -37,7 +37,11 @@
               <template #leading><span class="text-muted text-xs font-semibold">$</span></template>
             </UInput>
             <span class="text-muted text-[11px] leading-tight">Max per lender</span>
-            <span v-if="accessErrors.cap" class="text-error text-[11px] leading-tight" data-test="cc-cap-error">
+            <span
+              v-if="accessErrors.cap"
+              class="text-error text-[11px] leading-tight"
+              data-test="cc-cap-error"
+            >
               {{ accessErrors.cap }}
             </span>
           </div>
@@ -74,7 +78,11 @@
               <template #leading><span class="text-muted text-xs font-semibold">$</span></template>
             </UInput>
             <span class="text-muted text-[11px] leading-tight">Max per lender</span>
-            <span v-if="accessErrors.cap" class="text-error text-[11px] leading-tight" data-test="cc-cap-error">
+            <span
+              v-if="accessErrors.cap"
+              class="text-error text-[11px] leading-tight"
+              data-test="cc-cap-error"
+            >
               {{ accessErrors.cap }}
             </span>
           </div>
