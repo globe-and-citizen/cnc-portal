@@ -18,7 +18,7 @@ import type { LedgerEntry } from './ledgerEntry'
 import { NETWORK, type TokenId } from '@/constant'
 
 /** The breakdown-line fields the display helpers read (subset of {@link CashCurrencyLine}). */
-type CashLineData = Pick<CashCurrencyLine, 'token' | 'amountUsd' | 'tokenAmount'>
+type CashLineData = Pick<CashCurrencyLine, 'token' | 'amountUsd' | 'tokenAmount' | 'priced'>
 
 export type TrialNature = 'Asset' | 'Equity' | 'Income' | 'Liability' | 'Expense'
 
@@ -290,14 +290,15 @@ function tokenQuantity(amount: number, token: TokenId): string {
  * One breakdown line's display value. Stablecoins show their USD value directly.
  * **Native (POL/ETH)** shows its quantity *and* USD equivalent at the closing
  * rate of record — e.g. `0.023953 POL ≈ $0.00` (spec §5) — so the holding is
- * visible in both its native unit and dollars. Until a price-of-record has
- * resolved (USD value still 0) it shows the quantity alone rather than a
- * misleading `$0.00`.
+ * visible in both its native unit and dollars. A **priced** dust holding worth a
+ * few cents still shows `≈ $0.00`; only a genuinely **unpriced** native holding
+ * (no rate of record resolved yet) drops to the quantity alone, so we never print
+ * a misleading `$0.00` for a value that has not actually been priced.
  */
 function cashCurrencyValue(line: CashLineData): string {
   if (line.token !== 'native') return money(line.amountUsd)
   const quantity = tokenQuantity(line.tokenAmount, line.token)
-  return line.amountUsd !== 0 ? `${quantity} ≈ ${money(line.amountUsd)}` : quantity
+  return line.priced ? `${quantity} ≈ ${money(line.amountUsd)}` : quantity
 }
 
 /** Balance-sheet lines as of a point in time. */

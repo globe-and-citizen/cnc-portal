@@ -45,6 +45,15 @@ export interface CashCurrencyLine {
   amountUsd: number
   /** Net quantity in whole tokens (POL/USDC/…), so unpriced native is still visible. */
   tokenAmount: number
+  /**
+   * Whether a USD rate of record resolved for this holding — always true for
+   * stablecoins (pegged), and true for native (POL/ETH) once its price-of-record
+   * lands. Distinguishes a **priced dust** holding (worth a few cents, so its
+   * {@link CashCurrencyLine.amountUsd} rounds to $0.00 but is still shown as
+   * `≈ $0.00`) from a genuinely **unpriced** native holding (no rate yet, shown
+   * as its token quantity alone). See {@link ../presenter.cashCurrencyValue}.
+   */
+  priced: boolean
 }
 
 export interface BalanceSheet {
@@ -140,12 +149,19 @@ function toBigInt(raw: string): bigint {
  * value reads 0). Fully-settled (net-zero) holdings are dropped.
  */
 function buildCashByPocketCurrency(entries: readonly LedgerEntry[]): CashCurrencyLine[] {
-  const acc = new Map<string, { account: AccountName; token: TokenId; usd: number; raw: bigint }>()
+  const acc = new Map<
+    string,
+    { account: AccountName; token: TokenId; usd: number; raw: bigint; priced: boolean }
+  >()
   const bump = (account: AccountName, token: TokenId, usd: number, raw: bigint): void => {
     const key = `${account}|${token}`
-    const cur = acc.get(key) ?? { account, token, usd: 0, raw: 0n }
+    const cur = acc.get(key) ?? { account, token, usd: 0, raw: 0n, priced: false }
     cur.usd += usd
     cur.raw += raw
+    // A non-zero USD leg means its rate of record resolved (stablecoins always;
+    // native once priced). Accumulated with OR so a holding whose legs net to
+    // dust — value rounds to $0.00 — is still flagged priced, not unpriced.
+    cur.priced = cur.priced || usd !== 0
     acc.set(key, cur)
   }
   for (const entry of entries) {
@@ -167,7 +183,7 @@ function buildCashByPocketCurrency(entries: readonly LedgerEntry[]): CashCurrenc
       const tokenAmount = Number(formatUnits(cur.raw, getTokenDecimals(token)))
       const amountUsd = round2(cur.usd)
       if (amountUsd === 0 && Math.abs(tokenAmount) < 1e-9) continue
-      lines.push({ account, token, amountUsd, tokenAmount })
+      lines.push({ account, token, amountUsd, tokenAmount, priced: cur.priced })
     }
   }
   return lines
