@@ -2,7 +2,7 @@ import { computed } from 'vue'
 import { useReadContract } from '@wagmi/vue'
 import { isAddress } from 'viem'
 import { useTeamStore } from '@/stores'
-import { useContractAbi } from '@/composables/contracts/useContractAbi'
+import { BANK_ABI } from '@/artifacts/abi/bank'
 
 /**
  * Bank contract address helper
@@ -14,10 +14,9 @@ export function useBankAddress() {
 
 export function useBankOwner() {
   const bankAddress = useBankAddress()
-  const abi = useContractAbi('Bank')
   return useReadContract({
     address: bankAddress,
-    abi,
+    abi: BANK_ABI,
     functionName: 'owner',
     query: { enabled: !!bankAddress.value && isAddress(bankAddress.value) }
   })

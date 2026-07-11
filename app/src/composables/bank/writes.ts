@@ -1,21 +1,17 @@
 import { computed } from 'vue'
 import { BANK_ABI } from '@/artifacts/abi/bank'
 import { useContractWritesV3 } from '@/composables/contracts/useContractWritesV3'
-import { useContractAbi } from '@/composables/contracts/useContractAbi'
 import { useTeamStore } from '@/stores/teamStore'
 import type { ExtractAbiFunctionNames } from 'abitype'
 
-// BANK_ABI is kept only for the compile-time function-name type. The runtime
-// ABI comes from useContractAbi so it tracks the current team's version.
 type BankFunctionNames = ExtractAbiFunctionNames<typeof BANK_ABI>
 
 function useBankContractWrite(functionName: BankFunctionNames) {
   const teamStore = useTeamStore()
   const bankAddress = computed(() => teamStore.getContractAddressByType('Bank'))
-  const abi = useContractAbi('Bank')
   return useContractWritesV3({
     contractAddress: bankAddress,
-    abi,
+    abi: BANK_ABI,
     functionName
   })
 }

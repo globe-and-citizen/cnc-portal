@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest'
 import { useContractVersion } from '@/composables/contracts/useContractVersion'
-import { useContractAbi } from '@/composables/contracts/useContractAbi'
 import { mockTeamStore } from '@/tests/mocks/store.mock'
 
 // The global store mock (src/tests/setup/store.setup.ts) makes `useTeamStore()`
@@ -25,14 +24,5 @@ describe('useContractVersion', () => {
   it('defaults to the oldest folder when no team data is present', () => {
     setTeam(null)
     expect(useContractVersion().value).toBe('v1')
-  })
-})
-
-describe('useContractAbi', () => {
-  it('returns the resolved ABI for the current team version', () => {
-    setTeam({ currentOfficer: { version: 'legacy' } })
-    const abi = useContractAbi('Bank')
-    expect(Array.isArray(abi.value)).toBe(true)
-    expect(abi.value.length).toBeGreaterThan(0)
   })
 })

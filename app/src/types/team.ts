@@ -56,8 +56,9 @@ export interface Team {
   isMigrated?: boolean
   /**
    * Artifact-folder version (`v1` / `v2` / …) this team's contracts run on,
-   * resolved backend-side from `currentOfficer.version`. Drives version-aware
-   * ABI selection via `useContractAbi`. Optional: when absent the frontend
+   * resolved backend-side from `currentOfficer.version`. Read via
+   * `useContractVersion()` to branch explicitly on the team's contract version
+   * (see composables/contracts/README.md). Optional: when absent the frontend
    * derives it from `currentOfficer.version`. Set by the backend (see the
    * version registry in contract/versions/registry.json).
    */

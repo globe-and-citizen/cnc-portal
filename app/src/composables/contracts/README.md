@@ -245,3 +245,29 @@ Error()` falls into `category: 'unknown'`.
 | `parseError` / `parseErrorV2` | `@/utils/errorUtil`           | String formatters for logging or non-V3 paths.                                                                       |
 | `createContractWriteV3Mock`   | `@/tests/mocks/erc20.mock`    | TanStack-mutation-shaped mock factory.                                                                               |
 | `resetContractMocks`          | `@/tests/mocks/contract.mock` | Resets every pre-baked V3 write/read mock between tests.                                                             |
+
+## Contract versioning (v1 / v2)
+
+Contracts are versioned in snapshot folders (`app/src/artifacts/abi/<version>/`,
+frozen by `contract/scripts/freeze-version.ts`; `version-registry.json` maps a
+team's Officer-generation tag to a folder). There is **no magic ABI resolver** — a
+version difference can be behavioural (changed args, new/removed functions), so the
+version a function targets is chosen **explicitly** by the developer.
+
+- **Know the team's version** — `useContractVersion()` returns the current team's
+  folder (`v1` / `v2` …), from the payload's `contractVersion` or derived from
+  `currentOfficer.version`. Use it to branch at the call site.
+- **Unchanged function → no versioning.** If a function's signature is identical
+  across versions, its single composable keeps using the current ABI; the encoding
+  is version-invariant, so it works for every team.
+- **Divergent / v2-only function → explicit `useXxxV2`.** When a function changes
+  or only exists in v2, add an explicit composable (e.g. `useFundFixedReturnRepaymentV2`)
+  that imports the pinned version ABI (`@/artifacts/abi/v2/<contract>`) and
+  implements the v2 flow. Keep the v1 composable for teams still on v1; the
+  component picks which to call based on `useContractVersion()`. The `…V2` suffix
+  makes it obvious the flow is version-specific.
+
+Do **not** reintroduce a `useContractAbi(type)`-style resolver that auto-swaps the
+ABI by team version: it only changes the encoding, not the call logic, so it
+silently breaks when a version diverges — and it hides the version choice the
+developer must make.
