@@ -1,0 +1,40 @@
+{
+  "$comment": "Single source of truth for contract-artifact versioning. Maps a team's Officer-generation tag (TeamOfficer.version in the backend DB, e.g. 'legacy' / 'v0.10') to a coarse artifact-folder version ('v1' / 'v2'), and records which Ignition module keys back each contract type per version. All four consumers (app, dashboard, backend, ponder) receive a copy as 'version-registry.json' via `npm run mc`. Structure is kept as FLAT string maps (like deployed_addresses) so prettier formats it identically at any printWidth across every consumer. See contract/UPGRADE_STRATEGY.md and .claude/plans.",
+  "current": "v1",
+  "folders": {
+    "v1": {
+      "officerVersions": ["legacy", "v0.10"],
+      "onchainVersionMin": "0.0.0",
+      "onchainVersionMax": "1.999.999",
+      "beacons": {
+        "Officer": "Officer#FactoryBeacon",
+        "Bank": "BankBeaconModule#Beacon",
+        "BoardOfDirectors": "BoardOfDirectorsModule#Beacon",
+        "Proposals": "ProposalBeaconModule#Beacon",
+        "Elections": "ElectionsBeaconModule#Beacon",
+        "InvestorV1": "InvestorsV1BeaconModule#Beacon",
+        "Voting": "VotingBeaconModule#Beacon",
+        "ExpenseAccountEIP712": "ExpenseAccountEIP712Module#FactoryBeacon",
+        "CashRemunerationEIP712": "CashRemunerationEIP712Module#FactoryBeacon",
+        "SafeDepositRouter": "SafeDepositRouterBeaconModule#Beacon",
+        "Vesting": "VestingBeaconModule#Beacon",
+        "FixedReturn": "FixedReturnBeaconModule#Beacon"
+      },
+      "implementations": {
+        "Officer": "Officer#Officer",
+        "Bank": "BankBeaconModule#Bank",
+        "BoardOfDirectors": "BoardOfDirectorsModule#BoardOfDirectors",
+        "Proposals": "ProposalBeaconModule#Proposals",
+        "Elections": "ElectionsBeaconModule#Elections",
+        "InvestorV1": "InvestorsV1BeaconModule#InvestorV1",
+        "Voting": "VotingBeaconModule#Voting",
+        "ExpenseAccountEIP712": "ExpenseAccountEIP712Module#ExpenseAccountEIP712",
+        "CashRemunerationEIP712": "CashRemunerationEIP712Module#CashRemunerationEIP712",
+        "SafeDepositRouter": "SafeDepositRouterBeaconModule#SafeDepositRouter",
+        "Vesting": "VestingModule#Vesting",
+        "FixedReturn": "FixedReturnBeaconModule#FixedReturn",
+        "FeeCollector": "FeeCollectorModule#FeeCollector"
+      }
+    }
+  }
+}

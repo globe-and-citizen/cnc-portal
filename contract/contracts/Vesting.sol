@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import {IInvestorV1} from "./interfaces/IInvestorV1.sol";
 import {IOfficer} from "./interfaces/IOfficer.sol";
 
@@ -49,6 +49,9 @@ contract Vesting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
   mapping(address account => bool tracked) public isMember;
   /// @notice Officer contract address (set at init); source of the Investor address.
   address public officerAddress;
+
+  /// @dev Reserved storage slots for future upgrades.
+  uint256[50] private __gap; // solhint-disable-line chainlink-solidity/prefix-storage-variables-with-s-underscore
 
   /**
    * @notice Emitted when a new vesting schedule is created for a member.
@@ -258,7 +261,14 @@ contract Vesting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     VestingInfo memory v = vestings[member][index];
     if (!v.active) return 0;
 
-    return _vestingSchedule(v.totalAmount, v.start, v.cliff, v.duration, uint64(block.timestamp));
+    return
+      _vestingSchedule({
+        totalAllocation: v.totalAmount,
+        start: v.start,
+        cliff: v.cliff,
+        duration: v.duration,
+        timestamp: uint64(block.timestamp)
+      });
   }
 
   /// @notice Get the releasable (vested minus already minted) amount for one schedule.
@@ -274,9 +284,7 @@ contract Vesting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
    */
   function _mintShares(address to, uint256 amount) internal {
     IInvestorV1 investor = IInvestorV1(_getInvestor());
-    if (!investor.hasRole(investor.MINTER_ROLE(), address(this))) {
-      revert InsufficientMinterRole();
-    }
+    if (!investor.hasRole(investor.MINTER_ROLE(), address(this))) revert InsufficientMinterRole();
     investor.individualMint(to, amount);
   }
 
@@ -361,7 +369,4 @@ contract Vesting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
       return (totalAllocation * (timestamp - start)) / duration;
     }
   }
-
-  /// @dev Reserved storage slots for future upgrades.
-  uint256[50] private __gap;
 }

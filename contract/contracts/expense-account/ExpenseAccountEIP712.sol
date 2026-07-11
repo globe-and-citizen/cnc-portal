@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/utils/Address.sol";
-import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import "@quant-finance/solidity-datetime/contracts/DateTime.sol";
-import "../base/TokenSupport.sol";
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {EIP712Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
+import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {Address} from "@openzeppelin/contracts/utils/Address.sol";
+import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import {DateTime} from "@quant-finance/solidity-datetime/contracts/DateTime.sol";
+import {TokenSupport} from "../base/TokenSupport.sol";
 import {IOfficer} from "../interfaces/IOfficer.sol";
 
 /**
@@ -91,6 +91,7 @@ contract ExpenseAccountEIP712 is
   address public officerAddress;
 
   // Storage gap for future upgrades
+  // solhint-disable-next-line chainlink-solidity/prefix-storage-variables-with-s-underscore
   uint256[49] private __gap;
 
   /**
@@ -264,9 +265,8 @@ contract ExpenseAccountEIP712 is
     if (to == address(0)) revert ZeroAddress();
 
     // Verify the caller is the approved spender
-    if (msg.sender != budgetLimit.approvedAddress) {
+    if (msg.sender != budgetLimit.approvedAddress)
       revert SpenderNotApproved(budgetLimit.approvedAddress, msg.sender);
-    }
 
     // Verify EIP-712 signature
     bytes32 budgetHash = _hashTypedDataV4(budgetLimitHash(budgetLimit));
@@ -283,19 +283,16 @@ contract ExpenseAccountEIP712 is
 
     // Perform transfer
     if (budgetLimit.tokenAddress == address(0)) {
-      if (address(this).balance < amount) {
+      if (address(this).balance < amount)
         revert InsufficientNativeBalance(amount, address(this).balance);
-      }
       payable(to).sendValue(amount);
       emit Transfer(budgetLimit.approvedAddress, to, amount);
     } else {
       uint256 tokenBal = IERC20(budgetLimit.tokenAddress).balanceOf(address(this));
-      if (tokenBal < amount) {
+      if (tokenBal < amount)
         revert InsufficientTokenBalance(budgetLimit.tokenAddress, amount, tokenBal);
-      }
-      if (!IERC20(budgetLimit.tokenAddress).transfer(to, amount)) {
+      if (!IERC20(budgetLimit.tokenAddress).transfer(to, amount))
         revert TokenTransferFailed(budgetLimit.tokenAddress);
-      }
       emit TokenTransfer(budgetLimit.approvedAddress, to, budgetLimit.tokenAddress, amount);
     }
   }
@@ -359,9 +356,8 @@ contract ExpenseAccountEIP712 is
     for (uint256 i = 0; i < tokens.length; i++) {
       uint256 tokenBalance = IERC20(tokens[i]).balanceOf(address(this));
       if (tokenBalance > 0) {
-        if (!IERC20(tokens[i]).transfer(bankAddress, tokenBalance)) {
+        if (!IERC20(tokens[i]).transfer(bankAddress, tokenBalance))
           revert TokenTransferFailed(tokens[i]);
-        }
         emit OwnerTreasuryWithdrawToken(owner(), tokens[i], tokenBalance);
       }
     }
@@ -382,9 +378,8 @@ contract ExpenseAccountEIP712 is
     if (token != address(0) && !isTokenSupported(token)) revert TokenNotSupported(token);
     if (amount == 0) revert ZeroAmount();
 
-    if (!IERC20(token).transferFrom(msg.sender, address(this), amount)) {
+    if (!IERC20(token).transferFrom(msg.sender, address(this), amount))
       revert TokenTransferFailed(token);
-    }
     emit TokenDeposited(msg.sender, token, amount);
   }
 
@@ -460,12 +455,10 @@ contract ExpenseAccountEIP712 is
     uint256 amount,
     bytes32 signatureHash
   ) public view returns (bool) {
-    if (block.timestamp < budgetLimit.startDate) {
+    if (block.timestamp < budgetLimit.startDate)
       revert ApprovalNotActive(block.timestamp, budgetLimit.startDate);
-    }
-    if (block.timestamp > budgetLimit.endDate) {
+    if (block.timestamp > budgetLimit.endDate)
       revert ApprovalExpired(block.timestamp, budgetLimit.endDate);
-    }
 
     // Check amount doesn't exceed single withdrawal limit
     if (amount > budgetLimit.amount) revert AmountExceedsBudgetLimit();
@@ -486,15 +479,12 @@ contract ExpenseAccountEIP712 is
       if (amount > budgetLimit.amount) revert AmountExceedsPeriodBudget();
     } else {
       // Same period - check cumulative amount
-      if (balance.totalWithdrawn + amount > budgetLimit.amount) {
-        revert AmountExceedsPeriodBudget();
-      }
+      if (balance.totalWithdrawn + amount > budgetLimit.amount) revert AmountExceedsPeriodBudget();
     }
 
     // Check token is supported (allows native token)
-    if (budgetLimit.tokenAddress != address(0) && !isTokenSupported(budgetLimit.tokenAddress)) {
+    if (budgetLimit.tokenAddress != address(0) && !isTokenSupported(budgetLimit.tokenAddress))
       revert TokenNotSupported(budgetLimit.tokenAddress);
-    }
 
     return true;
   }
