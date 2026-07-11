@@ -1,8 +1,8 @@
 {
-  "$comment": "Deployment-aligned contract-artifact versions on Polygon. Each folder (contract/versions/<version>/) is a snapshot of the ABIs (recompiled at the deploy commit) + deployed_addresses (copied from git history) for a real POL deployment — see `officer`/`commit`/`deployedAt`. `officerVersions` (backend TeamOfficer.version tags) is left empty for now: runtime per-team resolution is not wired yet, and 0.0.0/0.1.0 share the same Officer (0.1.0 is an in-place beacon upgrade of ExpenseAccount + CashRemuneration). Distributed to consumers as 'version-registry.json' via `npm run mc`. FLAT string maps keep prettier width-stable across consumers. See contract/versions/README.md and UPGRADE_STRATEGY.md.",
-  "current": "1.0.1",
+  "$comment": "Deployment-aligned contract-artifact versions on Polygon. Each folder (contract/versions/<version>/) is a snapshot of the ABIs (recompiled at the deploy commit) + deployed_addresses (copied from git history) for a real POL deployment — see `officer`/`commit`/`deployedAt`. `officerVersions` (backend TeamOfficer.version tags) is left empty for now: runtime per-team resolution is not wired yet, and V0/V0.1 share the same Officer (V0.1 is an in-place beacon upgrade of ExpenseAccount + CashRemuneration). Distributed to consumers as 'version-registry.json' via `npm run mc`. FLAT string maps keep prettier width-stable across consumers. See contract/versions/README.md and UPGRADE_STRATEGY.md.",
+  "current": "V1",
   "folders": {
-    "0.0.0": {
+    "V0": {
       "officer": "0x8aC4A4793EfCdA54e7BaECa6D0479292f4996162",
       "commit": "44cd9eb12",
       "deployedAt": "2026-04-02",
@@ -34,7 +34,7 @@
         "FeeCollector": "FeeCollectorModule#FeeCollector"
       }
     },
-    "0.1.0": {
+    "V0.1": {
       "officer": "0x8aC4A4793EfCdA54e7BaECa6D0479292f4996162",
       "commit": "41c1ea08c",
       "deployedAt": "2026-04-04",
@@ -66,7 +66,7 @@
         "FeeCollector": "FeeCollectorModule#FeeCollector"
       }
     },
-    "1.0.1": {
+    "V1": {
       "officer": "0xa90C50305C45d613D951D1Dd435294BFcA5f4615",
       "commit": "9613f0882",
       "deployedAt": "2026-04-24",

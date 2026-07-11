@@ -9,15 +9,19 @@ are copied verbatim from git history** at that commit.
 This replaces the earlier `v1` placeholder, which was frozen from `HEAD` and did
 not correspond to any real deployment.
 
+Version names stay short (`V0`, `V0.1`, `V1`) and only carry more precision when a
+deployment needs to be distinguished from a sibling — e.g. `V0.1` is the minor
+in-place upgrade between the `V0` and `V1` full deployments.
+
 ## Versions
 
 | version | deploy commit | on-chain date | Officer                                      | notes                                                                                                               |
 | ------- | ------------- | ------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| `0.0.0` | `44cd9eb12`   | 2026-04-02    | `0x8aC4A4793EfCdA54e7BaECa6D0479292f4996162` | full redeploy                                                                                                       |
-| `0.1.0` | `41c1ea08c`   | 2026-04-04    | _(same `0x8aC4…`)_                           | in-place beacon upgrade of ExpenseAccount + CashRemuneration (same addresses; adds `*UpgradeModule#*` impl records) |
-| `1.0.1` | `9613f0882`   | 2026-04-24    | `0xa90C50305C45d613D951D1Dd435294BFcA5f4615` | full redeploy (fresh addresses; ~20 days of source evolution)                                                       |
+| `V0`    | `44cd9eb12`   | 2026-04-02    | `0x8aC4A4793EfCdA54e7BaECa6D0479292f4996162` | full redeploy                                                                                                       |
+| `V0.1`  | `41c1ea08c`   | 2026-04-04    | _(same `0x8aC4…`)_                           | in-place beacon upgrade of ExpenseAccount + CashRemuneration (same addresses; adds `*UpgradeModule#*` impl records) |
+| `V1`    | `9613f0882`   | 2026-04-24    | `0xa90C50305C45d613D951D1Dd435294BFcA5f4615` | full redeploy (fresh addresses; ~20 days of source evolution)                                                       |
 
-`current` in `registry.json` = `1.0.1`.
+`current` in `registry.json` = `V1`.
 
 ## Layout
 
@@ -38,9 +42,9 @@ is wired (not done here — these folders are for tracking/audit).
 
 ```bash
 # one version at a time (clones + recompiles at the commit, writes the folders)
-contract/scripts/regenerate-version.sh 0.0.0 44cd9eb12
-contract/scripts/regenerate-version.sh 0.1.0 41c1ea08c
-contract/scripts/regenerate-version.sh 1.0.1 9613f0882
+contract/scripts/regenerate-version.sh V0 44cd9eb12
+contract/scripts/regenerate-version.sh V0.1 41c1ea08c
+contract/scripts/regenerate-version.sh V1 9613f0882
 # then rebuild the registry from the freshly written deployed_addresses:
 node contract/scripts/build-version-registry.mjs
 ```
@@ -49,10 +53,10 @@ node contract/scripts/build-version-registry.mjs
 
 - `registry.json` `beacons`/`implementations` are **derived from each version's own
   `deployed_addresses`** — so contracts not deployed in a version (e.g. `FixedReturn`,
-  or `Voting` in 1.0.1) are correctly absent, and `Vesting` appears only under
+  or `Voting` in `V1`) are correctly absent, and `Vesting` appears only under
   `implementations` (it is a transparent proxy, not a beacon).
 - `officerVersions` (backend `TeamOfficer.version` tags) is intentionally empty:
-  per-team runtime resolution is not wired yet, and `0.0.0`/`0.1.0` share the same
+  per-team runtime resolution is not wired yet, and `V0`/`V0.1` share the same
   Officer, so they are not distinguishable per-team (the difference is temporal —
   before/after the 2026-04-04 upgrade).
 - On-chain dates are the real `block.timestamp` of the deploy transactions; they can
