@@ -10,13 +10,14 @@
  *   - **Backend DB** — the team's contracts, signed weekly claims and approved
  *     expenses, the off-chain accrual + category context (spec §3.2).
  *
- * The raw feeds are handed to the pure {@link assembleCncAccounting}, which runs
- * the #2113 source mappers, the #2117 consolidation and the statement builders.
+ * The raw feeds are handed to the pure {@link buildRawCncEntries} /
+ * {@link assembleFromRawEntries}, which run the #2113 source mappers, the #2117
+ * consolidation and the statement builders.
  * Optional / flaky sources (the external Safe service, a contract a team has not
  * deployed) degrade gracefully: a missing or failed feed is simply absent from
  * the ledger and never blocks the page or surfaces as a hard error.
  */
-import { computed, toValue, type ComputedRef, type MaybeRefOrGetter } from 'vue'
+import { computed, ref, toValue, watch, type ComputedRef, type MaybeRefOrGetter } from 'vue'
 import { useQuery as useApolloQuery } from '@vue/apollo-composable'
 import { useReadContract } from '@wagmi/vue'
 import type { DocumentNode } from 'graphql'
@@ -42,7 +43,8 @@ import { useCurrencyStore } from '@/stores/currencyStore'
 import { useTransferInitiators } from './useTransferInitiators'
 import { useHistoricalTokenRates } from './useHistoricalTokenRates'
 import {
-  assembleCncAccounting,
+  assembleFromRawEntries,
+  buildRawCncEntries,
   collectNativeRateDays,
   type CncAccounting,
   type CncAccountingInput
@@ -181,7 +183,7 @@ export function useCNCAccounting(
     options.rateOfRecord ?? ((tokenId) => currencyStore.getTokenPrice(tokenId, false, 'usd'))
 
   // The raw feeds + the live-price fallback — everything the ledger needs except
-  // the resolved historical rate. Also drives which POL days need a price.
+  // the resolved historical rate.
   const baseInput = computed<CncAccountingInput>(() => ({
     contracts: contracts.value,
     safeAddress: safeAddress.value,
@@ -206,16 +208,32 @@ export function useCNCAccounting(
   // day's historical price (spec §2 — never a live/deferred rate). USDC is pegged
   // $1 by `toUsd` and SHER is valued from the router multiplier, so only native
   // is fetched here; SHER/other days fall through to the live fallback.
+  //
+  // The days come *from* the mapped feed, which is valued *with* the rate — so the
+  // day set is held in a plain ref, written by a watcher, rather than a computed
+  // that would close the loop into a cycle. The set depends only on timestamps, so
+  // it settles on the first pass and a re-valuation never changes it.
   const nativeCoingeckoId = SUPPORTED_TOKENS.find((t) => t.id === 'native')?.coingeckoId ?? ''
-  const nativeRateDays = computed(() => collectNativeRateDays(baseInput.value))
+  const nativeRateDays = ref<string[]>([])
   const historicalRates = useHistoricalTokenRates('native', nativeCoingeckoId, nativeRateDays)
   const rateOfRecord = computed<UsdRateOfRecord>(() =>
     makeHistoricalRateOfRecord(historicalRates.value, liveRate)
   )
 
-  const accounting = computed<CncAccounting>(() =>
-    assembleCncAccounting({ ...baseInput.value, rateOfRecord: rateOfRecord.value })
+  const rawEntries = computed<LedgerEntry[]>(() =>
+    buildRawCncEntries({ ...baseInput.value, rateOfRecord: rateOfRecord.value })
   )
+  watch(
+    rawEntries,
+    (entries) => {
+      const days = collectNativeRateDays(entries)
+      // Same days re-fetch nothing, so only publish a genuine change.
+      if (days.join() !== nativeRateDays.value.join()) nativeRateDays.value = days
+    },
+    { immediate: true }
+  )
+
+  const accounting = computed<CncAccounting>(() => assembleFromRawEntries(rawEntries.value))
 
   // Resolve the human who signed each internal transfer (the tx feed carries only
   // a hash), then attach it so the ledger reads "Stravid87 transferred money from
