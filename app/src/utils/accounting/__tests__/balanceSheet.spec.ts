@@ -119,38 +119,35 @@ describe('buildBalanceSheet — cash breakdown by pocket and currency', () => {
   it('splits each pocket into its per-currency holdings', () => {
     const bs = buildBalanceSheet([
       cashIn('a', 'Cash — Bank', 'usdc', '100000000', 100), // 100 USDC → $100
-      cashIn('b', 'Cash — Bank', 'native', '2000000000000000000', 0), // 2 POL, unpriced
+      cashIn('b', 'Cash — Bank', 'native', '2000000000000000000', 0.16), // 2 POL → $0.16
       cashIn('c', 'Cash — Safe', 'usdc', '50000000', 50) // 50 USDC → $50
     ])
     expect(bs.cashByPocketCurrency).toEqual([
-      { account: 'Cash — Bank', token: 'native', amountUsd: 0, tokenAmount: 2, priced: false },
-      { account: 'Cash — Bank', token: 'usdc', amountUsd: 100, tokenAmount: 100, priced: true },
-      { account: 'Cash — Safe', token: 'usdc', amountUsd: 50, tokenAmount: 50, priced: true }
+      { account: 'Cash — Bank', token: 'native', amountUsd: 0.16, tokenAmount: 2 },
+      { account: 'Cash — Bank', token: 'usdc', amountUsd: 100, tokenAmount: 100 },
+      { account: 'Cash — Safe', token: 'usdc', amountUsd: 50, tokenAmount: 50 }
     ])
   })
 
-  it('keeps an unpriced native holding visible via its token quantity', () => {
+  it('reports a native holding in POL as well as USD', () => {
     const bs = buildBalanceSheet([
-      cashIn('a', 'Cash — Payroll', 'native', '3500000000000000000', 0)
+      cashIn('a', 'Cash — Payroll', 'native', '3500000000000000000', 0.28)
     ])
-    const pol = bs.cashByPocketCurrency.find((l) => l.token === 'native')
-    // No rate resolved (amountUsd 0) → not priced, so it shows quantity alone.
-    expect(pol).toMatchObject({
+    expect(bs.cashByPocketCurrency.find((l) => l.token === 'native')).toMatchObject({
       account: 'Cash — Payroll',
-      amountUsd: 0,
-      tokenAmount: 3.5,
-      priced: false
+      amountUsd: 0.28,
+      tokenAmount: 3.5
     })
   })
 
-  it('flags a priced native dust holding whose USD value rounds to $0.00', () => {
-    // 0.028953 POL priced at ~$0.08 → ~$0.0023, which rounds to $0.00. The rate
-    // resolved (non-zero amountUsd leg), so the holding is priced, not unpriced.
+  it('keeps a native dust holding whose USD value rounds to $0.00', () => {
+    // 0.028953 POL at ~$0.08 → ~$0.0023, which rounds to $0.00 — but the POL
+    // quantity keeps the holding on the balance sheet instead of vanishing.
     const bs = buildBalanceSheet([
       cashIn('a', 'Cash — Bank', 'native', '28953000000000000', 0.002328)
     ])
     const pol = bs.cashByPocketCurrency.find((l) => l.token === 'native')
-    expect(pol).toMatchObject({ account: 'Cash — Bank', amountUsd: 0, priced: true })
+    expect(pol).toMatchObject({ account: 'Cash — Bank', amountUsd: 0 })
     expect(pol?.tokenAmount).toBeCloseTo(0.028953, 6)
   })
 

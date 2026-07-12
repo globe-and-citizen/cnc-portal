@@ -191,18 +191,13 @@ describe('presentBalance', () => {
     enrichment: 'not-applicable'
   })
 
-  it('shows the ≈ $ equivalence for priced native dust that rounds to $0.00', () => {
-    // 0.028953 POL priced at ~$0.08 → ~$0.0023 (rounds to $0.00). A resolved rate
-    // must still print the dollar equivalence, not the quantity alone.
+  it('shows a native holding as its quantity and its USD equivalent', () => {
+    // 0.028953 POL at ~$0.08 → ~$0.0023, which rounds to $0.00 — the quantity is
+    // what keeps the holding legible, but the $ equivalence is still printed.
     const line = presentBalance([nativeEntry(0.002328)]).assetLines.find(
       (l) => l.label === nativeLabel
     )
     expect(line?.value).toBe(`0.028953 ${currencySymbol('native')} ≈ $0.00`)
-  })
-
-  it('shows an unpriced native holding as its quantity alone (no misleading $0.00)', () => {
-    const line = presentBalance([nativeEntry(0)]).assetLines.find((l) => l.label === nativeLabel)
-    expect(line?.value).toBe(`0.028953 ${currencySymbol('native')}`)
   })
 })
 
