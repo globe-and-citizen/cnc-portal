@@ -1,26 +1,22 @@
 /**
  * ExpenseAccount source mapper — operating expense payouts (spec §4, UC-EXP-01).
  *
- * Expenses are **cash basis**: the cost is recognised when the money actually
- * leaves the pocket, not when the budget is approved. Every payout originates
- * from an **Expense Approval** — either **one-time** (a single withdrawal) or
- * **recurring** (Daily / Weekly / Monthly / Custom, a fresh cap each period). A
- * recurring approval can produce many payouts over time, so every on-chain
- * `Transfer` / `TokenTransfer` is booked on its own — Dr Operating Expense ·
- * Cr Cash — Expense — carrying the structured fields the Activity column reads to
- * adapt its narration: a one-time payout reports its approved cap, a recurring
- * one the balance left in *that* withdrawal's period. Those figures are
- * reconstructed here from the approval and the running total of prior draws
- * (never the Expense pocket balance), so historical entries stay accurate.
+ * Expenses are **cash basis**: the cost is recognised when the money leaves the
+ * pocket, not when the budget is approved. Every payout is backed by an approval —
+ * one-time (single withdrawal) or recurring (Daily / Weekly / Monthly / Custom, a
+ * fresh cap each period) — so each `Transfer` / `TokenTransfer` is booked on its
+ * own and carries the approved cap and the balance left in *that* withdrawal's
+ * period. Both are reconstructed here from the approval plus the running total of
+ * prior draws, never from the Expense pocket balance, so historical entries stay
+ * accurate.
  *
- * - `Transfer` / `TokenTransfer` to an external address: an approved expense
- *   payout, flagged `needs-off-chain-data` so enrichment can attach the
- *   `Expense` budget category. The counterparty is the **withdrawer** (the
- *   member the budget was approved for), so both the remaining-budget match and
- *   the off-chain join key on the right address. A transfer to an internal
- *   pocket is instead an internal move.
- * - `Deposited` / `TokenDeposited`: internal funding of the expense pocket from
- *   Bank — internal move.
+ * - `Transfer` / `TokenTransfer` to an external address: an approved payout —
+ *   Dr Operating Expense · Cr Cash — Expense — flagged `needs-off-chain-data` so
+ *   enrichment can attach the budget category. Its counterparty is the
+ *   **withdrawer** (the member the budget was approved for), which is what both
+ *   the budget match and the off-chain join key hang off. A transfer to an
+ *   internal pocket is an internal move instead.
+ * - `Deposited` / `TokenDeposited`: internal funding of the pocket from Bank.
  * - `OwnerTreasuryWithdraw*` (the `ownerWithdrawAllToBank` sweep): internal move
  *   back to Bank.
  */
@@ -194,10 +190,9 @@ function tokenAmount(amountBase: bigint, tokenId: TokenId): string {
 }
 
 /**
- * Structured Activity fields + audit memo suffix for a matched expense payout.
- * A one-time approval carries only its approved cap (it is single-use, so no
- * remaining is meaningful); a recurring one also carries the USD remaining in the
- * withdrawal's period, so the ledger can read "$0.70 remaining".
+ * Structured Activity fields + audit memo suffix for a matched payout. A one-time
+ * approval is single-use, so it carries only its cap; a recurring one also carries
+ * the USD left in the withdrawal's period, so the ledger can read "$0.70 remaining".
  */
 function presentApproval(
   info: ExpenseDrawInfo,
@@ -332,20 +327,15 @@ export function mapExpenseAccountEvents(
 }
 
 /**
- * Fallback recognition of expense spend from the **portal** budget balance, used
- * when the on-chain payout events are unavailable (the indexer is down or not
- * synced for the team, so `mapExpenseAccountEvents` yields no UC-EXP-01 payout).
+ * Fallback recognition of expense spend from the **portal** budget balance, for
+ * when the indexer yields no payout event at all (down, or not synced for the
+ * team). `ExpenseResponse.balances[1]` is the amount already drawn against the
+ * budget, read from the contract — enough to book the spend cash-basis without any
+ * indexed `Transfer`, at one posting per budget rather than one per withdrawal.
  *
- * The portal's `ExpenseResponse` carries the amount already drawn against each
- * approved budget (`balances[1]`, whole-token units, read from the contract), so
- * even with no indexed `Transfer` we can book the spend cash-basis —
- * Dr Operating Expense · Cr Cash — Expense — for the drawn total, with the memo
- * stating the budget's remaining balance. This gives one posting per budget (the
- * per-withdrawal granularity only the on-chain events carry is unavailable here).
- *
- * The entry is timestamped at the record's last update (when it was last drawn),
- * falling back to its creation. It is booked `enriched` (its `Operating` category
- * is known from the budget itself), so the enrichment join leaves it untouched.
+ * Timestamped at the record's last update (when it was last drawn), falling back
+ * to its creation, and booked `enriched` — the budget itself names the category,
+ * so the enrichment join leaves it alone.
  */
 export function mapExpenseDrawsFromPortal(
   expenses: readonly ExpenseResponse[] | undefined,

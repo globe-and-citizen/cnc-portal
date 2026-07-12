@@ -42,7 +42,11 @@ export interface AccountingSheet {
   rows: SheetRows
 }
 
-/** `"$1,234.50"` → `1234.5`; `"—"` / `""` → `""` (blank cell). */
+/**
+ * A displayed figure as a spreadsheet number: `"$1,234.50"` → `1234.5`;
+ * `"—"` / `""` → `""` (blank cell). Applies to any formatted amount — USD, a
+ * token quantity, a rate — so the cell is sortable and summable in Excel.
+ */
 function usd(value: string): number | '' {
   if (!value || value === '—') return ''
   const n = Number(value.replace(/[$,]/g, ''))
@@ -127,8 +131,8 @@ const LEDGER_SHEET_CELL: Record<
   dr: (r) => usd(r.dr),
   cr: (r) => usd(r.cr),
   currency: (r) => r.currency,
-  quantity: (r) => r.quantity,
-  rate: (r) => r.rate
+  quantity: (r) => usd(r.quantity),
+  rate: (r) => usd(r.rate)
 }
 
 interface LedgerSheetOptions {
