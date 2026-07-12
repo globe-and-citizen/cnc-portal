@@ -62,15 +62,17 @@ describe('buildAccountingTables', () => {
 
   it('right-aligns the amount columns', () => {
     expect(byTitle('Income Statement').align).toEqual(['left', 'right'])
+    // date · action · transaction · activity · account · currency, then the
+    // right-aligned figures: quantity · rate · debit · credit.
     expect(byTitle('General Ledger').align).toEqual([
       'left',
       'left',
       'left',
       'left',
       'left',
-      'right',
-      'right',
       'left',
+      'right',
+      'right',
       'right',
       'right'
     ])
@@ -89,18 +91,18 @@ describe('buildAccountingTables', () => {
       'Transaction',
       'Activity',
       'Account',
-      'Debit',
-      'Credit',
       'Currency',
       'Quantity',
-      'Rate'
+      'Rate',
+      'Debit',
+      'Credit'
     ])
     // the deposit posts two legs (debit Bank / credit Service Revenue) + a total row
     expect(ledger.body.length).toBe(3)
     const totalRow = ledger.body.at(-1)!
     expect(totalRow[2]).toBe('Total movements')
-    expect(totalRow[5]).toBe('$100.00') // Debit total
-    expect(totalRow[6]).toBe('$100.00') // Credit total
+    expect(totalRow[8]).toBe('$100.00') // Debit total
+    expect(totalRow[9]).toBe('$100.00') // Credit total
   })
 
   it('renders the Activity column via the supplied name resolver', () => {
@@ -143,7 +145,7 @@ describe('buildTables (section selection)', () => {
     expect(ledger.body).toHaveLength(1)
     const totalRow = ledger.body[0]
     expect(totalRow[2]).toBe('Total movements')
-    expect(totalRow[5]).toBe('$0.00')
+    expect(totalRow[8]).toBe('$0.00') // Debit total
   })
 
   it('names the category and period in the ledger heading when narrowed', () => {
