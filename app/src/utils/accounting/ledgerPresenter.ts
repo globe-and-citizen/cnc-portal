@@ -180,61 +180,73 @@ export function categoryOf(entry: LedgerEntry): LedgerCategory {
   return byUseCase[entry.useCase] ?? 'Transfer'
 }
 
-/** Safe base-unit → whole-token parse (tolerates a malformed raw amount). */
-function wholeAmountOf(rawAmount: string, token: TokenId): number {
+/** The Devise / Quantité / Taux columns of one token move (spec §2). */
+type Movement = Pick<LedgerRow, 'currency' | 'quantity' | 'rate'>
+
+/** Carried by the continuation rows of a posting, which repeat no movement. */
+const NO_MOVEMENT: Movement = { currency: '', quantity: '', rate: '' }
+
+/** The movement columns of a token move; a malformed raw amount reads as 0. */
+function movementOf(rawAmount: string, token: TokenId, rate?: number): Movement {
+  let whole = 0
   try {
-    return wholeTokenAmount(BigInt(rawAmount), token)
+    whole = wholeTokenAmount(BigInt(rawAmount), token)
   } catch {
-    return 0
+    whole = 0
+  }
+  return {
+    currency: currencySymbol(token),
+    quantity: whole.toLocaleString('en-US', { maximumFractionDigits: 6 }),
+    rate:
+      rate == null
+        ? ''
+        : '$' + rate.toLocaleString('en-US', { minimumFractionDigits: 6, maximumFractionDigits: 6 })
   }
 }
 
-/** Format a Quantité — whole-token amount at 6-dp, e.g. `0.070352`. */
-function fmtQuantity(amount: number): string {
-  return amount.toLocaleString('en-US', { maximumFractionDigits: 6 })
+/** A posting's second and later lines — the lead row alone carries date / action / activity. */
+function continuationRow(
+  account: string,
+  amounts: { dr?: string; cr?: string; accountMuted?: boolean },
+  movement: Movement = NO_MOVEMENT
+): LedgerRow {
+  return {
+    isFirst: false,
+    date: '',
+    label: '',
+    activity: NO_ACTIVITY,
+    cat: '',
+    catClass: '',
+    account,
+    accountMuted: amounts.accountMuted ?? false,
+    accountDimmed: false,
+    dr: amounts.dr ?? '',
+    cr: amounts.cr ?? '',
+    ...movement
+  }
 }
 
-/** Format a Taux — USD rate of record at 6-dp, e.g. `$0.080000`; blank if unset. */
-function fmtRate(rate?: number): string {
-  if (rate == null) return ''
-  return '$' + rate.toLocaleString('en-US', { minimumFractionDigits: 6, maximumFractionDigits: 6 })
-}
-
-/** The posting's Quantité — whole-token amount at 6-dp, e.g. `0.070352`. */
-function quantityLabel(entry: LedgerEntry): string {
-  return fmtQuantity(wholeAmountOf(entry.rawAmount, entry.token))
-}
-
-/** The posting's Taux — USD rate of record at 6-dp, e.g. `$0.080000`; blank if unset. */
-function rateLabel(entry: LedgerEntry): string {
-  return fmtRate(entry.rate)
-}
-
-/** The two journal-line rows (debit then credit) a posting renders as. */
+/** The journal-line rows (debit then credit) a posting renders as. */
 function rowsOf(entry: LedgerEntry): LedgerRow[] {
-  const cat = categoryOf(entry)
   const head = {
     isFirst: true,
     date: fmtDateTime(entry.timestamp),
     label: entryLabel(entry),
     activity: activityOf(entry),
-    cat,
-    catClass: badgeClassOf(entry),
-    // Devise / Quantité / Taux — the same token move backs both legs of a posting,
-    // so they are shown once on the lead row (blank on the credit continuation).
-    currency: currencySymbol(entry.token),
-    quantity: quantityLabel(entry),
-    rate: rateLabel(entry)
+    cat: categoryOf(entry),
+    catClass: badgeClassOf(entry)
   }
-  const blankMovement = { currency: '', quantity: '', rate: '' }
-  // Memo-only posting (no monetary legs): a single dimmed share-count line, no money.
+  // The same token move backs every leg, so the movement columns show once, on the
+  // lead row — except the fee leg below, which is its own (smaller) move.
+  const movement = movementOf(entry.rawAmount, entry.token, entry.rate)
+
+  // Memo-only posting (no monetary legs): a single dimmed share-count line.
   if (!entry.debit && !entry.credit) {
-    const account = entry.shares ? `+${entry.shares} SHER (memo)` : 'Memo'
     return [
       {
         ...head,
-        ...blankMovement,
-        account,
+        ...NO_MOVEMENT,
+        account: entry.shares ? `+${entry.shares} SHER (memo)` : 'Memo',
         accountMuted: false,
         accountDimmed: true,
         dr: '',
@@ -243,54 +255,30 @@ function rowsOf(entry: LedgerEntry): LedgerRow[] {
     ]
   }
 
-  // Bank transfer with a fee skimmed in the same transaction ({@link mergeBankFees}):
-  // render it as one compound entry — Dr destination (net) · Dr Transaction Fee
-  // Expense (fee) · Cr Cash — Bank (gross = net + fee) — so the fee shows as its own
-  // line under the transfer instead of a separate posting.
+  // A transfer with a fee skimmed in the same transaction ({@link mergeBankFees})
+  // renders as one compound entry: Dr destination (net) · Dr Transaction Fee
+  // Expense · Cr Cash — Bank (gross), rather than two separate postings.
   const fee = entry.mergedBankFee
   if (fee && entry.debit && entry.credit) {
     return [
-      // Net to the destination pocket — the lead row (date / action / activity).
       {
         ...head,
+        ...movement,
         account: entry.debit,
         accountMuted: false,
         accountDimmed: false,
         dr: money(entry.amountUsd),
         cr: ''
       },
-      // The fee leg — a distinct debit line designating the skimmed protocol fee.
-      {
-        isFirst: false,
-        date: '',
-        label: '',
-        activity: NO_ACTIVITY,
-        cat: '',
-        catClass: '',
-        account: 'Transaction Fee Expense',
-        accountMuted: false,
-        accountDimmed: false,
-        dr: money(fee.amountUsd),
-        cr: '',
-        currency: currencySymbol(fee.token),
-        quantity: fmtQuantity(wholeAmountOf(fee.rawAmount, fee.token)),
-        rate: fmtRate(fee.rate)
-      },
-      // Gross leaving the Bank (net + fee) — the single credit closing the entry.
-      {
-        isFirst: false,
-        date: '',
-        label: '',
-        activity: NO_ACTIVITY,
-        cat: '',
-        catClass: '',
-        account: entry.credit,
-        accountMuted: true,
-        accountDimmed: false,
-        dr: '',
+      continuationRow(
+        'Transaction Fee Expense',
+        { dr: money(fee.amountUsd) },
+        movementOf(fee.rawAmount, fee.token, fee.rate)
+      ),
+      continuationRow(entry.credit, {
         cr: money(entry.amountUsd + fee.amountUsd),
-        ...blankMovement
-      }
+        accountMuted: true
+      })
     ]
   }
 
@@ -298,6 +286,7 @@ function rowsOf(entry: LedgerEntry): LedgerRow[] {
   if (entry.debit) {
     rows.push({
       ...head,
+      ...movement,
       account: entry.debit,
       accountMuted: false,
       accountDimmed: false,
@@ -306,24 +295,19 @@ function rowsOf(entry: LedgerEntry): LedgerRow[] {
     })
   }
   if (entry.credit) {
-    const lead = rows.length === 0
-    rows.push({
-      isFirst: lead,
-      date: lead ? head.date : '',
-      label: lead ? head.label : '',
-      activity: lead ? head.activity : NO_ACTIVITY,
-      cat: lead ? cat : '',
-      catClass: lead ? head.catClass : '',
-      account: entry.credit,
-      accountMuted: true,
-      accountDimmed: false,
-      dr: '',
-      cr: money(entry.amountUsd),
-      // Movement details lead the posting; the credit continuation leaves them blank.
-      ...(lead
-        ? { currency: head.currency, quantity: head.quantity, rate: head.rate }
-        : blankMovement)
-    })
+    rows.push(
+      rows.length
+        ? continuationRow(entry.credit, { cr: money(entry.amountUsd), accountMuted: true })
+        : {
+            ...head,
+            ...movement,
+            account: entry.credit,
+            accountMuted: true,
+            accountDimmed: false,
+            dr: '',
+            cr: money(entry.amountUsd)
+          }
+    )
   }
   return rows
 }

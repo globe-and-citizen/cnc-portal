@@ -18,7 +18,7 @@ import type { LedgerEntry } from './ledgerEntry'
 import { NETWORK, type TokenId } from '@/constant'
 
 /** The breakdown-line fields the display helpers read (subset of {@link CashCurrencyLine}). */
-type CashLineData = Pick<CashCurrencyLine, 'token' | 'amountUsd' | 'tokenAmount' | 'priced'>
+type CashLineData = Pick<CashCurrencyLine, 'token' | 'amountUsd' | 'tokenAmount'>
 
 export type TrialNature = 'Asset' | 'Equity' | 'Income' | 'Liability' | 'Expense'
 
@@ -189,8 +189,8 @@ export function presentSummaryCards(
   balance: BalanceSheet
 ): SummaryCard[] {
   // Profit reads green (a gain); a loss reads red (a deficit) — never green.
-  // Net income has a single source — the income statement — so the card, the
-  // Retained Earnings on the balance sheet and every export all show one figure.
+  // Net income comes from the income statement alone, so the card, the balance
+  // sheet's Retained Earnings and every export show one figure.
   const profitable = income.netIncome >= 0
   return [
     {
@@ -244,9 +244,7 @@ export function presentSummaryCards(
 
 /** The "books are balanced" banner copy from the live statements. */
 export function presentBanner(balance: BalanceSheet, ledger: GeneralLedger): SummaryBanner {
-  // `totalEquity` is the balancing residual (Liabilities+Equity − Liabilities),
-  // so the three displayed figures foot exactly: Assets = Liabilities + Equity,
-  // with no cent-level gap from independent per-total rounding.
+  // `totalEquity` is the balancing residual, so the three figures foot exactly.
   return {
     balanced: balance.balanced && ledger.balanced,
     identity: `${money(balance.totalAssets)} = ${money(balance.totalLiabilities)} + ${money(balance.totalEquity)}`,
@@ -289,27 +287,23 @@ function tokenQuantity(amount: number, token: TokenId): string {
 }
 
 /**
- * One breakdown line's display value. Stablecoins show their USD value directly.
- * **Native (POL/ETH)** shows its quantity *and* USD equivalent at the closing
- * rate of record — e.g. `0.023953 POL ≈ $0.00` (spec §5) — so the holding is
- * visible in both its native unit and dollars. A **priced** dust holding worth a
- * few cents still shows `≈ $0.00`; only a genuinely **unpriced** native holding
- * (no rate of record resolved yet) drops to the quantity alone, so we never print
- * a misleading `$0.00` for a value that has not actually been priced.
+ * One breakdown line's display value. A stablecoin shows its USD value directly;
+ * native (POL/ETH) shows its quantity *and* USD equivalent at the closing rate of
+ * record — `0.023953 POL ≈ $0.00` (spec §5) — so a holding worth a few cents is
+ * still legible as a POL balance.
  */
 function cashCurrencyValue(line: CashLineData): string {
   if (line.token !== 'native') return money(line.amountUsd)
-  const quantity = tokenQuantity(line.tokenAmount, line.token)
-  return line.priced ? `${quantity} ≈ ${money(line.amountUsd)}` : quantity
+  return `${tokenQuantity(line.tokenAmount, line.token)} ≈ ${money(line.amountUsd)}`
 }
 
 /** Balance-sheet lines as of a point in time. */
 export function presentBalance(entries: readonly LedgerEntry[], asOf?: Date | null): BalanceView {
   const bs = buildBalanceSheet(filterByPeriod(entries, null, asOf))
   const assetLines: StatementLineView[] = [
-    // The rolled-up cash total, then its per-pocket / per-currency breakdown
-    // (bulleted so it reads as a drill-down, not extra assets). The bullet and
-    // middle-dot are WinAnsi glyphs, so they render in the PDF export's font.
+    // Bulleted so the per-pocket / per-currency lines read as a drill-down of the
+    // cash total, not as extra assets. The bullet and middle-dot are WinAnsi
+    // glyphs, so they render in the PDF export's font.
     { label: 'Cash (all pockets)', value: money(bs.cash) },
     ...bs.cashByPocketCurrency.map((l) => ({
       label: `• ${pocketShortName(l.account)} · ${currencySymbol(l.token)}`,
@@ -331,9 +325,8 @@ export function presentBalance(entries: readonly LedgerEntry[], asOf?: Date | nu
     equityLines,
     totalAssets: money(bs.totalAssets),
     totalEquity: money(bs.totalEquity),
-    // The single raw-summed total, equal to Total assets to the cent — never
-    // `totalLiabilities + totalEquity`, which re-adds two independently-rounded
-    // figures and can drift a cent.
+    // The raw-summed total, not `totalLiabilities + totalEquity` — re-adding two
+    // independently-rounded figures can drift a cent off Total assets.
     liabilitiesPlusEquity: money(bs.totalLiabilitiesAndEquity)
   }
 }

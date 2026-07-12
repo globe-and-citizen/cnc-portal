@@ -1,17 +1,14 @@
 /**
  * General-ledger presentation transform: fold each Bank protocol fee into the
  * transfer it was skimmed on, so the ledger shows **one compound entry per
- * transfer** (Dr destination · Dr fee · Cr Bank gross) instead of two separate
- * postings.
+ * transfer** (Dr destination · Dr fee · Cr Bank gross) instead of two postings.
  *
- * On-chain, `Bank.transfer` pays the fee (emitting `FeePaid`) and emits `Transfer`
- * in the **same transaction**, so a fee and its transfer share a transaction hash.
- * Both are indexed with an id of the shape `${txHash}-${logIndex}`, so the tx hash
- * is the id with its `-logIndex` suffix stripped — that is the pairing key.
+ * `Bank.transfer` pays the fee and sends the net in the **same transaction**, so a
+ * fee and its transfer share a transaction hash — the pairing key, recovered from
+ * the indexed-event id (`${txHash}-${logIndex}`).
  *
  * Presentation-only: the canonical feed keeps both postings, so the trial balance
- * and the statements never double count — this only reshapes what the ledger view
- * and its exports render.
+ * and the statements never double count.
  */
 import type { LedgerEntry } from './ledgerEntry'
 
@@ -46,26 +43,23 @@ export function mergeBankFees(entries: readonly LedgerEntry[]): LedgerEntry[] {
   }
   if (feeByTx.size === 0) return entries.slice()
 
-  const folded = new Set<string>() // ids of fee postings folded into a transfer
-  const out: LedgerEntry[] = []
-  for (const entry of entries) {
-    if (isBankOutflow(entry)) {
-      const fee = feeByTx.get(txHashOf(entry))
-      if (fee && fee.id !== entry.id) {
-        folded.add(fee.id)
-        out.push({
-          ...entry,
-          mergedBankFee: {
-            amountUsd: fee.amountUsd,
-            rawAmount: fee.rawAmount,
-            token: fee.token,
-            ...(fee.rate != null ? { rate: fee.rate } : {})
-          }
-        })
-        continue
+  // Fold in one pass, then drop the fees that were folded — an unpaired fee (its
+  // transfer filtered out of this view) is left in place as its own posting.
+  const folded = new Set<string>()
+  const merged = entries.map((entry) => {
+    if (!isBankOutflow(entry)) return entry
+    const fee = feeByTx.get(txHashOf(entry))
+    if (!fee || fee.id === entry.id) return entry
+    folded.add(fee.id)
+    return {
+      ...entry,
+      mergedBankFee: {
+        amountUsd: fee.amountUsd,
+        rawAmount: fee.rawAmount,
+        token: fee.token,
+        ...(fee.rate != null ? { rate: fee.rate } : {})
       }
     }
-    out.push(entry)
-  }
-  return out.filter((entry) => !folded.has(entry.id))
+  })
+  return folded.size === 0 ? merged : merged.filter((entry) => !folded.has(entry.id))
 }

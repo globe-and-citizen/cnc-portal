@@ -41,19 +41,10 @@ export interface CashCurrencyLine {
   account: AccountName
   /** The token held in that pocket. */
   token: TokenId
-  /** Net USD value of the holding (0 for unpriced native — see {@link CashCurrencyLine.tokenAmount}). */
+  /** Net USD value of the holding. */
   amountUsd: number
-  /** Net quantity in whole tokens (POL/USDC/…), so unpriced native is still visible. */
+  /** Net quantity in whole tokens (POL/USDC/…) — what a native holding is shown in. */
   tokenAmount: number
-  /**
-   * Whether a USD rate of record resolved for this holding — always true for
-   * stablecoins (pegged), and true for native (POL/ETH) once its price-of-record
-   * lands. Distinguishes a **priced dust** holding (worth a few cents, so its
-   * {@link CashCurrencyLine.amountUsd} rounds to $0.00 but is still shown as
-   * `≈ $0.00`) from a genuinely **unpriced** native holding (no rate yet, shown
-   * as its token quantity alone). See {@link ../presenter.cashCurrencyValue}.
-   */
-  priced: boolean
 }
 
 export interface BalanceSheet {
@@ -144,24 +135,16 @@ function toBigInt(raw: string): bigint {
 /**
  * Break the cash pockets down by **pocket and currency** (Bank×POL, Bank×USDC,
  * Safe×USDC, …). Each cash leg contributes its signed USD value *and* its signed
- * raw token amount, so a pocket's holding is tracked per token — the native
- * quantity stays visible even while native has no USD price-of-record (its USD
- * value reads 0). Fully-settled (net-zero) holdings are dropped.
+ * raw token amount, so a holding is tracked in both — a native pocket is reported
+ * in POL as well as dollars. Fully-settled (net-zero) holdings are dropped.
  */
 function buildCashByPocketCurrency(entries: readonly LedgerEntry[]): CashCurrencyLine[] {
-  const acc = new Map<
-    string,
-    { account: AccountName; token: TokenId; usd: number; raw: bigint; priced: boolean }
-  >()
+  const acc = new Map<string, { account: AccountName; token: TokenId; usd: number; raw: bigint }>()
   const bump = (account: AccountName, token: TokenId, usd: number, raw: bigint): void => {
     const key = `${account}|${token}`
-    const cur = acc.get(key) ?? { account, token, usd: 0, raw: 0n, priced: false }
+    const cur = acc.get(key) ?? { account, token, usd: 0, raw: 0n }
     cur.usd += usd
     cur.raw += raw
-    // A non-zero USD leg means its rate of record resolved (stablecoins always;
-    // native once priced). Accumulated with OR so a holding whose legs net to
-    // dust — value rounds to $0.00 — is still flagged priced, not unpriced.
-    cur.priced = cur.priced || usd !== 0
     acc.set(key, cur)
   }
   for (const entry of entries) {
@@ -183,7 +166,7 @@ function buildCashByPocketCurrency(entries: readonly LedgerEntry[]): CashCurrenc
       const tokenAmount = Number(formatUnits(cur.raw, getTokenDecimals(token)))
       const amountUsd = round2(cur.usd)
       if (amountUsd === 0 && Math.abs(tokenAmount) < 1e-9) continue
-      lines.push({ account, token, amountUsd, tokenAmount, priced: cur.priced })
+      lines.push({ account, token, amountUsd, tokenAmount })
     }
   }
   return lines

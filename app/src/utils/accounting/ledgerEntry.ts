@@ -116,38 +116,32 @@ export interface LedgerEntry {
   category?: string
   /**
    * The expense approval's frequency behind a UC-EXP-01 payout — 0 One-Time,
-   * 1 Daily, 2 Weekly, 3 Monthly, 4 Custom. Set only when the payout was matched
-   * to an approved budget, so the Activity narration can adapt: a one-time
-   * approval reads the approved amount, a recurring one the remaining balance.
+   * 1 Daily, 2 Weekly, 3 Monthly, 4 Custom. Set only when the payout matched an
+   * approved budget; it is what lets the Activity narration adapt.
    */
   expenseFrequencyType?: number
   /** Approved budget cap in USD behind a UC-EXP-01 payout, when matched to a budget. */
   expenseApprovedUsd?: number
   /**
-   * Budget remaining in USD within the approval's current period **after** this
-   * withdrawal — recurring approvals only (a one-time approval is single-use, so
-   * no remaining is reported). Reconstructed from the approval and its prior draws,
-   * never from the Expense pocket balance, so historical entries stay accurate.
+   * Budget left in USD within the approval's current period **after** this
+   * withdrawal — recurring approvals only (a one-time one is single-use).
+   * Reconstructed from the approval and its prior draws, never from the Expense
+   * pocket balance, so historical entries stay accurate.
    */
   expenseRemainingUsd?: number
   /**
-   * A Bank protocol fee (the 0.5% skim) charged in the **same on-chain
-   * transaction** as this transfer, folded into it for the **general-ledger view
-   * only** so the transfer reads as one compound entry — Dr destination (net) ·
-   * Dr Transaction Fee Expense (fee) · Cr Cash — Bank (gross). Presentation-only:
-   * set by the ledger presenter ({@link mergeBankFees}), never by a source
-   * mapper, so the canonical feed the trial balance / income statement / balance
-   * sheet roll up still carries the fee as its own standalone posting (no double
-   * count).
+   * The Bank protocol fee charged in the **same on-chain transaction** as this
+   * transfer, folded in for the general-ledger view only — Dr destination (net) ·
+   * Dr Transaction Fee Expense · Cr Cash — Bank (gross). Set by the presenter
+   * ({@link mergeBankFees}), never by a mapper: the canonical feed the statements
+   * roll up keeps the fee as its own posting, so nothing is double counted.
    */
   mergedBankFee?: {
-    /** The fee posting's USD amount. */
     amountUsd: number
-    /** The fee's raw on-chain amount, in the token's base units. */
+    /** Raw on-chain amount, in the token's base units. */
     rawAmount: string
-    /** The token the fee was skimmed in — the transfer's token. */
     token: TokenId
-    /** The fee's USD rate of record, when resolved. */
+    /** USD rate of record, when resolved. */
     rate?: number
   }
   /** Off-chain enrichment status. */

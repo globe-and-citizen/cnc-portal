@@ -243,14 +243,13 @@ function toLedgerSources(input: CncAccountingInput): LedgerSources {
 
 /**
  * The USD rate-of-record resolver for a team's feeds: the caller's price source
- * for native (POL/ETH), overlaid with the SHER price derived from the router's
- * compensation multiplier.
+ * for native (POL/ETH), overlaid with the SHER price.
  *
- * SHER has no market price; value it from the router's compensation multiplier
- * (1 SHER = 1/multiplier USD, historised over the multiplier changes) so
- * wage-in-SHER increases Investor Equity. With no change events we use the
- * router's live multiplier (read from the contract) or, failing that, the
- * contract's 1x default (1 SHER = $1) — no longer the Phase-1 $0.
+ * SHER has no market price, so it is valued from the router's compensation
+ * multiplier (1 SHER = 1/multiplier USD, historised over the multiplier changes)
+ * — that is what makes a wage paid in SHER increase Investor Equity. With no
+ * change events we fall back to the router's live multiplier, then to the
+ * contract's 1x default.
  */
 function buildRateOfRecord(input: CncAccountingInput): UsdRateOfRecord {
   const baseRate = input.rateOfRecord ?? phase1RateOfRecord
@@ -267,12 +266,9 @@ function buildRateOfRecord(input: CncAccountingInput): UsdRateOfRecord {
 }
 
 /**
- * Run the source mappers and stamp each posting with its rate of record
- * (spec §2 "Taux"), yielding the raw, pre-consolidation feed. Every entry then
- * carries Devise (`token`), Quantité (`rawAmount`), Taux (`rate`) and the derived
- * Montant USD (`amountUsd`). Split out so the composable can collect the set of
- * transaction days it must fetch a price for **before** the prices are known
- * (the day depends only on the timestamp, not the rate).
+ * Run the source mappers and stamp each posting with its rate of record, yielding
+ * the raw, pre-consolidation feed: Devise (`token`), Quantité (`rawAmount`), Taux
+ * (`rate`) and the derived Montant USD (`amountUsd`), spec §2.
  */
 export function buildRawCncEntries(input: CncAccountingInput): LedgerEntry[] {
   const internalAddresses = collectInternalAddresses(
@@ -296,9 +292,9 @@ export function buildRawCncEntries(input: CncAccountingInput): LedgerEntry[] {
     expenses: input.expenses
   })
 
-  // Central Taux pass: the rate is a pure function of (token, timestamp), so we
-  // resolve it once here rather than threading it through every mapper. Uses the
-  // exact rate the mappers valued `amountUsd` with, so amountUsd = Quantité × rate.
+  // The rate is a pure function of (token, timestamp), so it is resolved once here
+  // rather than threaded through every mapper — with the same resolver the mappers
+  // valued `amountUsd` with, so amountUsd = Quantité × rate.
   return rawEntries.map((entry) => ({
     ...entry,
     rate: tokenUsdRate(entry.token, atDate(entry.timestamp), rateOfRecord)
@@ -306,24 +302,24 @@ export function buildRawCncEntries(input: CncAccountingInput): LedgerEntry[] {
 }
 
 /**
- * The distinct UTC days (`YYYY-MM-DD`) on which the feed has native (POL/ETH)
- * activity — the set of daily prices the caller must fetch to value POL at its
- * rate of record. Empty when the team never transacted in the native token.
+ * The distinct UTC days (`YYYY-MM-DD`) the feed has native (POL/ETH) activity on
+ * — the daily prices the caller must fetch to value POL at its rate of record.
  */
-export function collectNativeRateDays(input: CncAccountingInput): string[] {
+export function collectNativeRateDays(entries: readonly LedgerEntry[]): string[] {
   const days = new Set<string>()
-  for (const entry of buildRawCncEntries(input)) {
+  for (const entry of entries) {
     if (entry.token === 'native') days.add(dayKey(atDate(entry.timestamp)))
   }
   return [...days]
 }
 
 /**
- * Assemble a team's consolidated ledger and the three statements from its raw
- * feeds. Pure: no I/O, no Vue — the composable supplies the fetched data.
+ * Consolidate a raw feed into the ledger and the three statements. Split from
+ * {@link assembleCncAccounting} so a caller that already holds the raw entries
+ * (the composable, which derives the price-fetch days from them) doesn't run the
+ * whole mapper pipeline a second time.
  */
-export function assembleCncAccounting(input: CncAccountingInput): CncAccounting {
-  const rawEntries = buildRawCncEntries(input)
+export function assembleFromRawEntries(rawEntries: readonly LedgerEntry[]): CncAccounting {
   const { entries, summary } = buildLedger(rawEntries)
 
   return {
@@ -333,6 +329,14 @@ export function assembleCncAccounting(input: CncAccountingInput): CncAccounting 
     incomeStatement: buildIncomeStatement(entries),
     balanceSheet: buildBalanceSheet(entries)
   }
+}
+
+/**
+ * Assemble a team's consolidated ledger and the three statements from its raw
+ * feeds. Pure: no I/O, no Vue — the composable supplies the fetched data.
+ */
+export function assembleCncAccounting(input: CncAccountingInput): CncAccounting {
+  return assembleFromRawEntries(buildRawCncEntries(input))
 }
 
 /** An empty accounting result — used before any data has loaded. */
