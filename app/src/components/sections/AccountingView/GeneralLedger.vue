@@ -71,6 +71,9 @@ import {
   ledgerRows,
   ledgerTotal,
   ledgerCategories,
+  ledgerFeeRows,
+  ledgerFeeTotal,
+  FEE_FILTER,
   LEDGER_COLUMNS,
   type LedgerColumnKey
 } from '@/utils/accounting/ledgerPresenter'
@@ -85,7 +88,8 @@ const visibleColumns = useLocalStorage<LedgerColumnKey[]>(
 )
 
 // Active category filter — persisted so a reload keeps the user's chosen tab
-// rather than snapping back to "All".
+// rather than snapping back to "All". `Fee` is a pseudo-category pill that
+// isolates the Transaction Fee Expense legs (see filterLedgerEntries).
 const filter = useLocalStorage('ledger_active_category_filter', 'All')
 
 // Reporting period (range mode) — defaults to "All time" (whole book).
@@ -101,15 +105,19 @@ const acc = useAccountingContext()
 const filtered = computed(() =>
   filterLedgerEntries(acc.entries.value, filter.value, period.value.start, period.value.end)
 )
+const isFeeFilter = computed(() => filter.value === FEE_FILTER)
 const total = computed(() => filtered.value.length)
-const grandTotal = computed(() => ledgerTotal(filtered.value))
+const grandTotal = computed(() =>
+  isFeeFilter.value ? ledgerFeeTotal(filtered.value) : ledgerTotal(filtered.value)
+)
 
 const { page, pageSize, reset } = usePagination(() => total.value, { key: 'ledger' })
 watch([filter, period], reset, { deep: true })
 
 const pageRows = computed(() => {
   const start = (page.value - 1) * pageSize.value
-  return ledgerRows(filtered.value.slice(start, start + pageSize.value))
+  const slice = filtered.value.slice(start, start + pageSize.value)
+  return isFeeFilter.value ? ledgerFeeRows(slice) : ledgerRows(slice)
 })
 
 // A real date window is in play only when the picker isn't on "All time" (whose

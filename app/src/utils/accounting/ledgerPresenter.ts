@@ -14,6 +14,9 @@ import type { TokenId } from '@/constant'
 /** The empty activity carried by a posting's continuation (credit) and total rows. */
 const NO_ACTIVITY: ActivityCell = { kind: 'plain', text: '' }
 
+/** Exact chart-of-accounts label for a protocol-fee leg; drives badge + filter. */
+export const FEE_ACCOUNT = 'Transaction Fee Expense'
+
 export type LedgerCategory =
   | 'Investment'
   | 'Revenue'
@@ -40,8 +43,15 @@ export const CATEGORY_BADGE: Record<LedgerCategory, string> = {
   Memo: 'bg-muted text-dimmed' // share-count note — grey
 }
 
+/**
+ * The pseudo-category the Fee pill filters on — not a {@link LedgerCategory} (a
+ * fee is a leg of a Transfer/Expense entry), so it's handled specially by
+ * {@link filterLedgerEntries} / {@link presentLedger} rather than via `categoryOf`.
+ */
+export const FEE_FILTER = 'Fee'
+
 /** Ledger filter categories shown as pills (in design order). */
-export const ledgerCategories: Array<LedgerCategory | 'All'> = [
+export const ledgerCategories: Array<LedgerCategory | 'All' | typeof FEE_FILTER> = [
   'All',
   'Investment',
   'Revenue',
@@ -49,7 +59,8 @@ export const ledgerCategories: Array<LedgerCategory | 'All'> = [
   'Transfer',
   'Payroll',
   'Expense',
-  'Dividend'
+  'Dividend',
+  FEE_FILTER
 ]
 
 /** The toggleable ledger table columns (keys match the table's cell slots). */
@@ -137,6 +148,8 @@ export interface LedgerRow {
   quantity: string
   /** USD rate of record (spec §2 "Taux"), 6-dp, e.g. `$0.080000` / `$1.000000`. */
   rate: string
+  /** True on a `Transaction Fee Expense` leg — drives the "Fee" badge and filter. */
+  isFee?: boolean
 }
 
 export interface LedgerView {
@@ -207,7 +220,7 @@ function movementOf(rawAmount: string, token: TokenId, rate?: number): Movement 
 /** A posting's second and later lines — the lead row alone carries date / action / activity. */
 function continuationRow(
   account: string,
-  amounts: { dr?: string; cr?: string; accountMuted?: boolean },
+  amounts: { dr?: string; cr?: string; accountMuted?: boolean; isFee?: boolean },
   movement: Movement = NO_MOVEMENT
 ): LedgerRow {
   return {
@@ -222,6 +235,7 @@ function continuationRow(
     accountDimmed: false,
     dr: amounts.dr ?? '',
     cr: amounts.cr ?? '',
+    isFee: amounts.isFee ?? false,
     ...movement
   }
 }
@@ -271,8 +285,8 @@ function rowsOf(entry: LedgerEntry): LedgerRow[] {
         cr: ''
       },
       continuationRow(
-        'Transaction Fee Expense',
-        { dr: money(fee.amountUsd) },
+        FEE_ACCOUNT,
+        { dr: money(fee.amountUsd), isFee: true },
         movementOf(fee.rawAmount, fee.token, fee.rate)
       ),
       continuationRow(entry.credit, {
@@ -291,7 +305,8 @@ function rowsOf(entry: LedgerEntry): LedgerRow[] {
       accountMuted: false,
       accountDimmed: false,
       dr: money(entry.amountUsd),
-      cr: ''
+      cr: '',
+      isFee: entry.debit === FEE_ACCOUNT
     })
   }
   if (entry.credit) {
@@ -325,15 +340,45 @@ export function filterLedgerEntries(
   to?: Date | null
 ): LedgerEntry[] {
   const shown = filterByPeriod(entries, from, to)
-    .filter((e) => filter === 'All' || categoryOf(e) === filter)
+    .filter((e) => filter === 'All' || filter === FEE_FILTER || categoryOf(e) === filter)
     .slice()
     .sort((a, b) => b.timestamp - a.timestamp) // most recent first
-  return mergeBankFees(shown)
+  const merged = mergeBankFees(shown)
+  return filter === FEE_FILTER ? merged.filter(entryHasFee) : merged
 }
 
 /** Flatten postings into the table's two-rows-per-entry shape. */
 export function ledgerRows(entries: readonly LedgerEntry[]): LedgerRow[] {
   return entries.flatMap((entry) => rowsOf(entry))
+}
+
+/** True when an entry carries a {@link FEE_ACCOUNT} leg (folded or standalone). */
+export function entryHasFee(entry: LedgerEntry): boolean {
+  return entry.mergedBankFee != null || entry.debit === FEE_ACCOUNT
+}
+/** The USD amount of that leg — the folded fee, else the standalone fee itself. */
+function feeUsdOf(entry: LedgerEntry): number {
+  return entry.mergedBankFee?.amountUsd ?? entry.amountUsd
+}
+
+/**
+ * One contextual line per fee-bearing entry — just the single isFee leg rowsOf
+ * emits (its own amount + movement), promoted to a lead row so the isolated line
+ * keeps its date / activity (a folded fee's leg is a blank continuation).
+ */
+export function ledgerFeeRows(entries: readonly LedgerEntry[]): LedgerRow[] {
+  return entries.filter(entryHasFee).map((entry) => ({
+    ...(rowsOf(entry).find((r) => r.isFee) as LedgerRow),
+    isFirst: true,
+    date: fmtDateTime(entry.timestamp),
+    label: entryLabel(entry),
+    activity: activityOf(entry)
+  }))
+}
+
+/** Σ of the fee legs across the fee-bearing entries, formatted as USD. */
+export function ledgerFeeTotal(entries: readonly LedgerEntry[]): string {
+  return money(entries.filter(entryHasFee).reduce((sum, e) => sum + feeUsdOf(e), 0))
 }
 
 /**
@@ -358,7 +403,9 @@ export function presentLedger(
   to?: Date | null
 ): LedgerView {
   const shown = filterLedgerEntries(entries, filter, from, to)
-  return { rows: ledgerRows(shown), total: ledgerTotal(shown), entryCount: shown.length }
+  const rows = filter === FEE_FILTER ? ledgerFeeRows(shown) : ledgerRows(shown)
+  const total = filter === FEE_FILTER ? ledgerFeeTotal(shown) : ledgerTotal(shown)
+  return { rows, total, entryCount: shown.length }
 }
 
 /**
