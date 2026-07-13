@@ -182,12 +182,6 @@ const router = createRouter({
           component: () => import('@/views/team/[id]/CommunityCredit/NewView.vue')
         },
         {
-          path: '/teams/:id/community-credit/:roundId/repay',
-          name: 'community-credit-repay',
-          meta: { name: 'Repay Round' },
-          component: () => import('@/views/team/[id]/CommunityCredit/RepayView.vue')
-        },
-        {
           path: '/teams/:id/community-credit/:roundId',
           name: 'community-credit-round',
           meta: { name: 'Credit Round' },

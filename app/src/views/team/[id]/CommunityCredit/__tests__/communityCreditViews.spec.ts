@@ -12,8 +12,7 @@ import {
   useQueryClientFn,
   mockInvalidateQueries,
   mockFixedReturnReads,
-  mockFixedReturnWrites,
-  mockBankWrites
+  mockFixedReturnWrites
 } from '@/tests/mocks'
 import { mockToast } from '@/tests/mocks/store.mock'
 
@@ -50,7 +49,6 @@ vi.mock('@/stores/communityCredit', () => ({
 
 import IndexView from '../IndexView.vue'
 import RoundView from '../RoundView.vue'
-import RepayView from '../RepayView.vue'
 import CreditRoundCard from '@/components/sections/CommunityCreditView/CreditRoundCard.vue'
 import CreditLendModal from '@/components/sections/CommunityCreditView/CreditLendModal.vue'
 
@@ -61,9 +59,11 @@ function sampleRound(over: Partial<CreditRound> = {}): CreditRound {
     token: 'USDC',
     target: 40000,
     raised: 23400,
+    totalRepaid: 0,
     rate: 5,
     period: 90,
     status: 'open',
+    fundable: true,
     opened: 'Jun 1',
     deadline: 'Jun 28',
     maturity: 'Oct 26',
@@ -160,8 +160,9 @@ describe('Community Credit views', () => {
         expect.objectContaining({ name: 'community-credit-round' })
       )
       card.vm.$emit('repay')
+      expect(store.setVariant).toHaveBeenCalledWith('repay')
       expect(mockRouterPush).toHaveBeenCalledWith(
-        expect.objectContaining({ name: 'community-credit-repay' })
+        expect.objectContaining({ name: 'community-credit-round' })
       )
       card.vm.$emit('lend')
       await nextTick()
@@ -190,9 +191,18 @@ describe('Community Credit views', () => {
     it('lists a funded round in history too, labeled as awaiting repayment rather than repaid', () => {
       store.historyRounds = [sampleRound({ id: '9', status: 'funded', maturity: 'Oct 26' })]
       const wrapper = mount(IndexView)
-      const row = wrapper.find('[data-test="credit-history-row"]').text()
+      const row = wrapper.find('tbody tr').text()
       expect(row).toContain('Awaiting repayment')
       expect(row).toContain('Oct 26')
+      expect(row).not.toContain('Repaid')
+    })
+
+    it('lists a stalled round in history labeled as awaiting a refund/accept decision, not Repaid', () => {
+      store.historyRounds = [sampleRound({ id: '9', status: 'stalled' })]
+      const wrapper = mount(IndexView)
+      const row = wrapper.find('tbody tr').text()
+      expect(row).toContain('Action needed')
+      expect(row).toContain('awaiting refund or acceptance')
       expect(row).not.toContain('Repaid')
     })
   })
@@ -214,80 +224,70 @@ describe('Community Credit views', () => {
       )
     })
 
-    it('routes the owner to the repay screen for a round in repayment', async () => {
+    it('switches to the Repay layout variant for a round in repayment, same as the switcher pill', async () => {
       store.isOwner = true
       const wrapper = mountRound(sampleRound({ status: 'active' }))
       await flushPromises()
       await wrapper.find('[data-test="round-cta-repay"]').trigger('click')
-      expect(mockRouterPush).toHaveBeenCalledWith(
-        expect.objectContaining({ name: 'community-credit-repay' })
-      )
+      expect(store.setVariant).toHaveBeenCalledWith('repay')
     })
 
-    it('lets the owner mark an expired open round refundable', async () => {
+    it('lets the owner push refunds to every lender on a stalled round in one step', async () => {
       store.isOwner = true
-      const wrapper = mountRound(sampleRound({ status: 'open' }), offerStruct({ state: 0 }))
+      const wrapper = mountRound(sampleRound({ status: 'stalled' }), offerStruct({ state: 0 }))
       await flushPromises()
       await wrapper.find('[data-test="round-cta-refundable"]').trigger('click')
       await flushPromises()
-      expect(mockFixedReturnWrites.markAsRefundable.mutateAsync).toHaveBeenCalledWith({
+      expect(mockFixedReturnWrites.refundLenders.mutateAsync).toHaveBeenCalledWith({
         args: [1n]
       })
     })
 
-    it('lets a lender claim a refund on a refundable round', async () => {
-      store.isOwner = false
-      const wrapper = mountRound(sampleRound({ status: 'refundable' }), offerStruct({ state: 2 }))
-      await flushPromises()
-      await wrapper.find('[data-test="round-cta-claim"]').trigger('click')
-      await flushPromises()
-      expect(mockFixedReturnWrites.claimRefund.mutateAsync).toHaveBeenCalledWith({ args: [1n] })
-    })
-  })
-
-  describe('RepayView', () => {
-    it('redirects to the list when the round is unknown', async () => {
-      setMockRoute({ params: { id: '1', roundId: '99' } })
-      mount(RepayView)
-      await flushPromises()
-      expect(mockRouterPush).toHaveBeenCalledWith(
-        expect.objectContaining({ name: 'community-credit' })
+    it('lets the owner accept partial funding on a stalled round instead of refunding', async () => {
+      store.isOwner = true
+      const wrapper = mountRound(
+        sampleRound({ status: 'stalled', raised: 23400 }),
+        offerStruct({ state: 0 })
       )
-    })
-
-    it('repays every lender their principal + interest on confirm', async () => {
-      store.rounds = [sampleRound({ id: '1', status: 'active' })]
-      mockFixedReturnReads.getLendingOffer.data.value = offerStruct()
-      mockFixedReturnReads.offerLenders.data.value = [
-        { address: '0x00000000000000000000000000000000000000a1', principal: 5000, expected: 5250 }
-      ]
-      setMockRoute({ params: { id: '1', roundId: '1' } })
-      const wrapper = mount(RepayView)
       await flushPromises()
-
-      expect(wrapper.text()).toContain('Repayment breakdown')
-      await wrapper.find('[data-test="confirm-repay"]').trigger('click')
+      await wrapper.find('[data-test="round-cta-accept-partial"]').trigger('click')
       await flushPromises()
-
-      expect(mockBankWrites.fundFixedReturnRepayment.mutateAsync).toHaveBeenCalledWith({
-        args: [1n, 5250_000000n]
+      expect(mockFixedReturnWrites.acceptPartialFunding.mutateAsync).toHaveBeenCalledWith({
+        args: [1n]
       })
     })
 
-    it('surfaces a repay error when the treasury transaction fails', async () => {
-      mockBankWrites.fundFixedReturnRepayment.mutateAsync.mockRejectedValueOnce(new Error('boom'))
-      store.rounds = [sampleRound({ id: '1', status: 'active' })]
-      mockFixedReturnReads.getLendingOffer.data.value = offerStruct()
+    it('hides the accept-partial-funding action when nothing was raised', async () => {
+      store.isOwner = true
+      const wrapper = mountRound(
+        sampleRound({ status: 'stalled', raised: 0 }),
+        offerStruct({ state: 0, totalFunded: 0n })
+      )
+      await flushPromises()
+      expect(wrapper.find('[data-test="round-cta-accept-partial"]').exists()).toBe(false)
+      expect(wrapper.find('[data-test="round-cta-refundable"]').exists()).toBe(true)
+    })
+
+    it('does not offer to lend into a stalled round even though it is still Open on-chain', async () => {
+      store.isOwner = false
+      const wrapper = mountRound(sampleRound({ status: 'stalled' }), offerStruct({ state: 0 }))
+      await flushPromises()
+      expect(wrapper.find('[data-test="round-cta-lend"]').exists()).toBe(false)
+    })
+
+    it('offers Repay as a fourth layout-exploration option, rendering the same panel as the Repay round button', async () => {
+      store.isOwner = true
+      store.variant = 'repay'
       mockFixedReturnReads.offerLenders.data.value = [
         { address: '0x00000000000000000000000000000000000000a1', principal: 5000, expected: 5250 }
       ]
-      setMockRoute({ params: { id: '1', roundId: '1' } })
-      const wrapper = mount(RepayView)
-      await flushPromises()
-      await wrapper.find('[data-test="confirm-repay"]').trigger('click')
+      const wrapper = mountRound(sampleRound({ status: 'active' }))
       await flushPromises()
 
-      expect(wrapper.find('[data-test="repay-error"]').exists()).toBe(true)
+      expect(wrapper.find('[data-test="variant-repay"]').exists()).toBe(true)
+      expect(wrapper.text()).toContain('Repayment breakdown')
+      expect(wrapper.text()).toContain('5,250')
+      expect(wrapper.find('[data-test="confirm-repay"]').exists()).toBe(true)
     })
   })
 })

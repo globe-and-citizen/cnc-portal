@@ -27,11 +27,12 @@
           <div v-if="step === 0" class="flex flex-col gap-4.5">
             <div>
               <label class="mb-1.5 block text-sm font-medium" for="cc-name">Round name</label>
-              <input
+              <UInput
                 id="cc-name"
                 v-model="form.name"
-                :class="[CREDIT_FIELD_CLASS, basicsErrors.name && 'border-error']"
+                :color="basicsErrors.name ? 'error' : undefined"
                 placeholder="e.g. Q3 runway bridge"
+                class="w-full"
                 data-test="cc-name"
               />
               <p v-if="basicsErrors.name" class="text-error mt-1 text-xs" data-test="cc-name-error">
@@ -40,11 +41,11 @@
             </div>
             <div>
               <label class="mb-1.5 block text-sm font-medium" for="cc-desc">Purpose</label>
-              <textarea
+              <UTextarea
                 id="cc-desc"
                 v-model="form.desc"
-                :class="[CREDIT_FIELD_CLASS, 'min-h-20 py-2.5']"
                 placeholder="What is this credit for? Members see this before lending."
+                class="w-full"
               />
             </div>
             <div class="grid grid-cols-2 gap-4">
@@ -52,22 +53,20 @@
                 <label class="mb-1.5 block text-sm font-medium" for="cc-target"
                   >Target amount</label
                 >
-                <div class="relative">
-                  <input
-                    id="cc-target"
-                    v-model="form.target"
-                    type="number"
-                    min="0"
-                    :class="[CREDIT_FIELD_CLASS, 'pr-14', basicsErrors.target && 'border-error']"
-                    placeholder="25000"
-                    data-test="cc-target"
-                  />
-                  <span
-                    class="text-muted pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-xs font-bold"
-                  >
-                    {{ form.token }}
-                  </span>
-                </div>
+                <UInput
+                  id="cc-target"
+                  v-model="form.target"
+                  type="number"
+                  min="0"
+                  :color="basicsErrors.target ? 'error' : undefined"
+                  placeholder="25000"
+                  class="w-full"
+                  data-test="cc-target"
+                >
+                  <template #trailing>
+                    <span class="text-muted text-xs font-bold">{{ form.token }}</span>
+                  </template>
+                </UInput>
                 <p
                   v-if="basicsErrors.target"
                   class="text-error mt-1 text-xs"
@@ -161,11 +160,10 @@ import { useFixedReturnCreateLendingOffer } from '@/composables/fixedReturn/writ
 import { useCreateFixedReturnOfferingMutation } from '@/queries/fixedReturnOffering.queries'
 import {
   applyZodFieldErrors,
-  CREDIT_FIELD_CLASS,
   classifyError,
   creditChipClass,
   getSupportedOfferingTokenOptions,
-  toFixedReturnOfferParams
+  toCreditCallOfferParams
 } from '@/utils'
 import { creditCallBasicsSchema, type CreditCallForm, type OfferingForm } from '@/types'
 import StepIndicator from '@/components/sections/FixedReturnView/StepIndicator.vue'
@@ -285,7 +283,7 @@ async function publish() {
       token: form.token
     }
 
-    const params = toFixedReturnOfferParams(offeringForm, form.whitelist)
+    const params = toCreditCallOfferParams(offeringForm, form.whitelist)
     await createOfferResult.mutateAsync({ args: [params] })
 
     // Offers are 1-indexed and sequential, so the new offer's id is the post-write count.

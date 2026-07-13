@@ -37,7 +37,7 @@ describe('CreditHistoryTable', () => {
     store.historyRounds = [makeRound()]
     const wrapper = mount(CreditHistoryTable)
 
-    const row = wrapper.find('[data-test="credit-history-row"]')
+    const row = wrapper.find('tbody tr')
     expect(row.text()).toContain('Q3 runway bridge')
     expect(row.text()).toContain('Repaid')
   })
@@ -47,7 +47,7 @@ describe('CreditHistoryTable', () => {
     store.historyRounds = [round]
     const wrapper = mount(CreditHistoryTable)
 
-    await wrapper.find('[data-test="credit-history-row"]').trigger('click')
+    await wrapper.find('tbody tr').trigger('click')
 
     expect(wrapper.emitted('select')).toEqual([[round]])
   })

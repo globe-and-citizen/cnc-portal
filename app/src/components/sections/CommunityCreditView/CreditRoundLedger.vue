@@ -17,12 +17,7 @@
             <div class="text-muted text-xs">{{ remainingNote }}</div>
           </div>
         </div>
-        <div class="bg-muted mt-4.5 h-3.5 overflow-hidden rounded-full">
-          <div
-            class="bg-primary h-full rounded-full transition-all"
-            :style="{ width: pct + '%' }"
-          ></div>
-        </div>
+        <UProgress :model-value="pct" :max="100" size="md" class="mt-4.5" />
         <div class="text-muted mt-2.5 flex justify-between text-[11px]">
           <span>Subscription closes {{ round.deadline || '—' }}</span>
           <span>Matures {{ round.maturity || '—' }} · {{ round.period }} days</span>
@@ -36,51 +31,53 @@
           <UBadge color="primary" variant="subtle" :label="`${round.lenders.length} lenders`" />
         </div>
 
-        <table v-if="round.lenders.length" class="w-full border-collapse">
-          <thead>
-            <tr class="bg-muted text-muted text-left text-xs font-semibold">
-              <th class="px-4 py-3">Lender</th>
-              <th class="px-4 py-3">Address</th>
-              <th class="px-4 py-3 text-right">Amount</th>
-              <th class="px-4 py-3 text-right">Share</th>
-              <th class="px-4 py-3 text-right">Date</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="lender in lenders"
-              :key="lender.addr"
-              class="border-default/60 border-t"
-              :class="{ 'bg-primary/5': lender.you }"
-            >
-              <td class="px-4 py-3.5">
-                <div class="flex items-center gap-2.5">
-                  <CreditAvatar :name="lender.name" :gradient="lender.gradient" :size="30" />
-                  <span class="font-semibold">{{ lender.name }}</span>
-                  <UBadge
-                    v-if="lender.you"
-                    color="primary"
-                    variant="subtle"
-                    size="sm"
-                    label="You"
-                  />
-                </div>
-              </td>
-              <td class="px-4 py-3.5">
-                <span class="text-muted font-mono text-xs">{{ lender.addr }}</span>
-              </td>
-              <td class="px-4 py-3.5 text-right font-bold">{{ formatAmount(lender.amount) }}</td>
-              <td class="text-muted px-4 py-3.5 text-right">{{ lender.share }}%</td>
-              <td class="text-muted px-4 py-3.5 text-right">{{ lender.date }}</td>
-            </tr>
-          </tbody>
-        </table>
-
-        <div v-else class="text-muted px-6 py-10 text-center">
-          <UIcon name="heroicons:users" class="text-dimmed size-7" />
-          <div class="text-default mt-2 text-sm font-semibold">No lenders yet</div>
-          <div class="mt-0.5 text-xs">Be the first to back this round.</div>
-        </div>
+        <UTable
+          :data="lenders"
+          :columns="lenderColumns"
+          :meta="{ class: { tr: (row) => (row.original.you ? 'bg-primary/5' : '') } }"
+        >
+          <template #lender-cell="{ row }">
+            <div class="flex items-center gap-2.5">
+              <CreditAvatar
+                :name="row.original.name"
+                :gradient="row.original.gradient"
+                :size="30"
+              />
+              <span class="font-semibold">{{ row.original.name }}</span>
+              <UBadge
+                v-if="row.original.you"
+                color="primary"
+                variant="subtle"
+                size="sm"
+                label="You"
+              />
+            </div>
+          </template>
+          <template #address-cell="{ row }">
+            <span class="text-muted font-mono text-xs">{{ row.original.addr }}</span>
+          </template>
+          <template #amount-cell="{ row }">
+            <span class="font-bold">{{ formatAmount(row.original.amount) }}</span>
+          </template>
+          <template #expected-cell="{ row }">
+            <span class="text-primary font-semibold">{{
+              formatAmount(row.original.expected)
+            }}</span>
+          </template>
+          <template #paid-cell="{ row }">
+            <span class="font-semibold">{{ formatAmount(row.original.paid) }}</span>
+          </template>
+          <template #share-cell="{ row }">
+            <span class="text-muted">{{ row.original.share }}%</span>
+          </template>
+          <template #empty>
+            <div class="text-muted px-6 py-10 text-center">
+              <UIcon name="heroicons:users" class="text-dimmed size-7" />
+              <div class="text-default mt-2 text-sm font-semibold">No lenders yet</div>
+              <div class="mt-0.5 text-xs">Be the first to back this round.</div>
+            </div>
+          </template>
+        </UTable>
       </div>
     </div>
 
@@ -94,7 +91,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { formatAmount, percentOf } from '@/utils'
+import { formatAmount, percentOf, reachedFundingTarget } from '@/utils'
 import type { CreditRound } from '@/types'
 import CreditAvatar from './CreditAvatar.vue'
 import CreditConditionsCard from './CreditConditionsCard.vue'
@@ -103,15 +100,26 @@ import CreditRepaymentCard from './CreditRepaymentCard.vue'
 const props = defineProps<{ round: CreditRound }>()
 
 const pct = computed(() => percentOf(props.round.raised, props.round.target))
-const remainingNote = computed(() =>
-  props.round.status === 'open'
-    ? `${formatAmount(props.round.target - props.round.raised)} remaining`
-    : 'Fully funded'
-)
+const remainingNote = computed(() => {
+  if (props.round.status === 'open' || props.round.status === 'stalled') {
+    return `${formatAmount(props.round.target - props.round.raised)} remaining`
+  }
+  return reachedFundingTarget(props.round) ? 'Fully funded' : 'Accepted with partial funding'
+})
 const lenders = computed(() =>
   props.round.lenders.map((lender) => ({
     ...lender,
     share: percentOf(lender.amount, props.round.raised)
   }))
 )
+
+const rightAlign = { class: { th: 'text-right', td: 'text-right' } }
+const lenderColumns = [
+  { accessorKey: 'lender', header: 'Lender' },
+  { accessorKey: 'address', header: 'Address' },
+  { accessorKey: 'amount', header: 'Amount', meta: rightAlign },
+  { accessorKey: 'expected', header: 'Expected return', meta: rightAlign },
+  { accessorKey: 'paid', header: 'Paid so far', meta: rightAlign },
+  { accessorKey: 'share', header: 'Share', meta: rightAlign }
+]
 </script>

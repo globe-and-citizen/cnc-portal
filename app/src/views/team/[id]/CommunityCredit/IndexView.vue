@@ -143,7 +143,10 @@ function goRound(roundId: string) {
   router.push({ name: 'community-credit-round', params: { id: teamId.value, roundId } })
 }
 function goRepay(roundId: string) {
-  router.push({ name: 'community-credit-repay', params: { id: teamId.value, roundId } })
+  // Same behavior as the round page's own "Repay round" button — switch to the inline
+  // Repay layout variant rather than a separate route.
+  store.setVariant('repay')
+  goRound(roundId)
 }
 function onHistorySelect(round: CreditRound) {
   goRound(round.id)

@@ -62,21 +62,33 @@ describe('CreditCallAccessStep', () => {
     })
   })
 
-  describe('inline cap input (no separate toggle)', () => {
-    it('shows the cap input only on the currently selected mode', async () => {
-      const form = makeForm({ access: 'everyone' })
+  describe('cap section (separate toggle, below the whitelist)', () => {
+    it('hides the cap input until the toggle is switched on', async () => {
+      const form = makeForm({ access: 'everyone', capOn: false })
+      const wrapper = mountStep(form)
+
+      expect(wrapper.find('[data-test="cc-cap"]').exists()).toBe(false)
+
+      await wrapper.find('[data-test="cc-cap-toggle"]').trigger('click')
+
+      expect(form.capOn).toBe(true)
+      expect(wrapper.find('[data-test="cc-cap"]').exists()).toBe(true)
+    })
+
+    it('shows the cap section regardless of the selected access mode', async () => {
+      const form = makeForm({ access: 'everyone', capOn: true, cap: '5000' })
       const wrapper = mountStep(form)
 
       expect(wrapper.find('[data-test="cc-cap"]').exists()).toBe(true)
 
       await wrapper.find('[data-test="access-restricted-button"]').trigger('click')
 
-      // Still exactly one cap input — it moved to the Restricted row, not duplicated.
+      // Still exactly one cap section — not tied to (and not duplicated by) access mode.
       expect(wrapper.findAll('[data-test="cc-cap"]')).toHaveLength(1)
     })
 
-    it('turns the cap on by typing a value — no separate switch needed', async () => {
-      const form = makeForm({ access: 'everyone', capOn: false, cap: '' })
+    it('sets the cap amount by typing, independently of the toggle', async () => {
+      const form = makeForm({ access: 'everyone', capOn: true, cap: '' })
       const wrapper = mountStep(form)
 
       await wrapper.find('[data-test="cc-cap"]').setValue('5000')
@@ -85,14 +97,48 @@ describe('CreditCallAccessStep', () => {
       expect(form.capOn).toBe(true)
     })
 
-    it('turns the cap back off by clearing the value', async () => {
+    it('turns the cap off via the toggle without clearing a previously entered amount', async () => {
       const form = makeForm({ access: 'everyone', capOn: true, cap: '5000' })
       const wrapper = mountStep(form)
 
-      await wrapper.find('[data-test="cc-cap"]').setValue('')
+      await wrapper.find('[data-test="cc-cap-toggle"]').trigger('click')
 
-      expect(form.cap).toBe('')
       expect(form.capOn).toBe(false)
+      expect(form.cap).toBe('5000')
+      expect(wrapper.find('[data-test="cc-cap"]').exists()).toBe(false)
+    })
+  })
+
+  describe('stale error clearing on toggle', () => {
+    it('does not resurface an old whitelist error after leaving and re-entering restricted mode', async () => {
+      const form = makeForm({ access: 'restricted', capOn: false, whitelist: [] })
+      const wrapper = mountStep(form)
+
+      // No lenders — validate() fails and the error is shown.
+      expect(wrapper.vm.validate()).toBe(false)
+      await nextTick()
+      expect(wrapper.find('[data-test="cc-whitelist-error"]').exists()).toBe(true)
+
+      await wrapper.find('[data-test="access-everyone-button"]').trigger('click')
+      await wrapper.find('[data-test="access-restricted-button"]').trigger('click')
+
+      // Back in restricted mode, still no lenders — but nothing has re-validated since,
+      // so the old error must not simply reappear from stale state.
+      expect(wrapper.find('[data-test="cc-whitelist-error"]').exists()).toBe(false)
+    })
+
+    it('does not resurface an old cap error after switching capOn off and back on', async () => {
+      const form = makeForm({ access: 'everyone', capOn: true, cap: '0' })
+      const wrapper = mountStep(form)
+
+      expect(wrapper.vm.validate()).toBe(false)
+      await nextTick()
+      expect(wrapper.find('[data-test="cc-cap-error"]').exists()).toBe(true)
+
+      await wrapper.find('[data-test="cc-cap-toggle"]').trigger('click')
+      await wrapper.find('[data-test="cc-cap-toggle"]').trigger('click')
+
+      expect(wrapper.find('[data-test="cc-cap-error"]').exists()).toBe(false)
     })
   })
 
@@ -101,7 +147,7 @@ describe('CreditCallAccessStep', () => {
     afterEach(() => vi.useRealTimers())
 
     it('searches, adds a lender, and lets you set a custom amount', async () => {
-      const form = makeForm({ access: 'restricted' })
+      const form = makeForm({ access: 'restricted', capOn: true })
       const wrapper = mountStep(form)
 
       await wrapper.find('[data-test="whitelist-search-name"]').setValue('Bob')
@@ -114,8 +160,13 @@ describe('CreditCallAccessStep', () => {
       expect(form.whitelist).toHaveLength(1)
       expect(form.whitelist[0]).toMatchObject({ address: BOB, username: 'Bob' })
 
-      await wrapper.find('[data-test="whitelist-amount-input"]').setValue('5000')
+      // Focusing switches the lender to custom mode (matching a real click into the
+      // field) before it becomes typable.
+      const input = wrapper.find('[data-test="whitelist-amount-input"]')
+      await input.trigger('focus')
+      await input.setValue('5000')
       expect(form.whitelist[0].amount).toBe(5000)
+      expect(form.whitelist[0].custom).toBe(true)
     })
 
     it('removes a selected lender', async () => {
@@ -132,11 +183,27 @@ describe('CreditCallAccessStep', () => {
     })
   })
 
-  describe('cap backfill for unset lender amounts', () => {
+  describe('default vs custom lender amounts (live cap sync)', () => {
     beforeEach(() => vi.useFakeTimers())
     afterEach(() => vi.useRealTimers())
 
-    it('fills in the cap for lenders added before the cap was turned on', async () => {
+    it('defaults a new lender to a read-only input showing the live cap value', () => {
+      const form = makeForm({
+        access: 'restricted',
+        capOn: true,
+        cap: '4000',
+        whitelist: [{ username: 'Bob', address: BOB, amount: null }]
+      })
+      const wrapper = mountStep(form)
+
+      const input = wrapper.find('[data-test="whitelist-amount-input"]')
+      expect(form.whitelist[0].custom).toBeFalsy()
+      expect(form.whitelist[0].amount).toBe(4000)
+      expect((input.element as HTMLInputElement).value).toBe('4000')
+      expect(input.attributes('readonly')).toBeDefined()
+    })
+
+    it('syncs a lender added before the cap was turned on, once a cap value lands', async () => {
       const form = makeForm({
         access: 'restricted',
         whitelist: [{ username: 'Bob', address: BOB, amount: null }]
@@ -146,12 +213,11 @@ describe('CreditCallAccessStep', () => {
       form.capOn = true
       form.cap = '4000'
       await nextTick()
-      await vi.advanceTimersByTime(300)
 
       expect(form.whitelist[0].amount).toBe(4000)
     })
 
-    it('does not backfill on every keystroke — only once the cap value has settled', async () => {
+    it('updates live on every keystroke, converging on the final typed cap value', async () => {
       const form = makeForm({
         access: 'restricted',
         whitelist: [{ username: 'Bob', address: BOB, amount: null }]
@@ -159,37 +225,18 @@ describe('CreditCallAccessStep', () => {
       mountStep(form)
       form.capOn = true
 
-      // Typing "100" digit by digit must not lock the entry in at "1" the moment the
-      // first keystroke lands — only the settled value should ever be backfilled.
       form.cap = '1'
       await nextTick()
-      await vi.advanceTimersByTime(50)
+      expect(form.whitelist[0].amount).toBe(1)
       form.cap = '10'
       await nextTick()
-      await vi.advanceTimersByTime(50)
+      expect(form.whitelist[0].amount).toBe(10)
       form.cap = '100'
       await nextTick()
-      await vi.advanceTimersByTime(300)
-
       expect(form.whitelist[0].amount).toBe(100)
     })
 
-    it('does not overwrite an amount the owner already set', async () => {
-      const form = makeForm({
-        access: 'restricted',
-        whitelist: [{ username: 'Bob', address: BOB, amount: 2500 }]
-      })
-      mountStep(form)
-
-      form.capOn = true
-      form.cap = '4000'
-      await nextTick()
-      await vi.advanceTimersByTime(300)
-
-      expect(form.whitelist[0].amount).toBe(2500)
-    })
-
-    it('backfills again when the cap value changes while still unset', async () => {
+    it('keeps tracking on later cap changes too, as long as the lender stays default', async () => {
       const form = makeForm({
         access: 'restricted',
         capOn: true,
@@ -200,55 +247,130 @@ describe('CreditCallAccessStep', () => {
 
       form.cap = '6000'
       await nextTick()
-      await vi.advanceTimersByTime(300)
 
       expect(form.whitelist[0].amount).toBe(6000)
     })
 
-    it('hides "Use default" while the cap is unset — there is nothing to default to yet', async () => {
+    it('clears every lender back to unset (and non-custom) once the round-level cap is switched off', async () => {
       const form = makeForm({
         access: 'restricted',
         capOn: true,
-        cap: '',
+        cap: '4000',
+        whitelist: [
+          { username: 'Bob', address: BOB, amount: 4000 },
+          {
+            username: 'Alice',
+            address: '0x2222222222222222222222222222222222222222',
+            amount: 5000,
+            custom: true
+          }
+        ]
+      })
+      mountStep(form)
+
+      form.capOn = false
+      await nextTick()
+
+      expect(form.whitelist[0].amount).toBeNull()
+      expect(form.whitelist[0].custom).toBeFalsy()
+      expect(form.whitelist[1].amount).toBeNull()
+      expect(form.whitelist[1].custom).toBeFalsy()
+    })
+
+    it('switches to custom mode and becomes editable once the input is focused', async () => {
+      const form = makeForm({
+        access: 'restricted',
+        capOn: true,
+        cap: '4000',
         whitelist: [{ username: 'Bob', address: BOB, amount: null }]
       })
       const wrapper = mountStep(form)
+
+      const input = wrapper.find('[data-test="whitelist-amount-input"]')
+      await input.trigger('focus')
+
+      expect(form.whitelist[0].custom).toBe(true)
+      // Focusing doesn't change the amount — it was already tracking the cap (4000).
+      expect(form.whitelist[0].amount).toBe(4000)
+    })
+
+    it('stops tracking the cap once a lender is custom, keeping whatever amount it was given', async () => {
+      const form = makeForm({
+        access: 'restricted',
+        capOn: true,
+        cap: '4000',
+        whitelist: [{ username: 'Bob', address: BOB, amount: 2500, custom: true }]
+      })
+      mountStep(form)
+
+      form.cap = '6000'
       await nextTick()
 
-      expect(wrapper.find('[data-test="whitelist-use-default-button"]').exists()).toBe(false)
+      expect(form.whitelist[0].amount).toBe(2500)
     })
 
-    it('shows "Use default" again once a valid cap exists and an amount is cleared back to unset', async () => {
+    it('clearing a custom lender leaves the amount unset without exiting custom mode', async () => {
       const form = makeForm({
         access: 'restricted',
         capOn: true,
         cap: '4000',
-        whitelist: [{ username: 'Bob', address: BOB, amount: 2500 }]
+        whitelist: [{ username: 'Bob', address: BOB, amount: 2500, custom: true }]
       })
       const wrapper = mountStep(form)
 
-      // Simulate the owner clearing a previously-typed amount back to blank.
       await wrapper.find('[data-test="whitelist-amount-input"]').setValue('')
-      expect(form.whitelist[0].amount).toBeNull()
 
-      expect(wrapper.find('[data-test="whitelist-use-default-button"]').exists()).toBe(true)
+      expect(form.whitelist[0].amount).toBeNull()
+      expect(form.whitelist[0].custom).toBe(true)
     })
 
-    it('shows "Use default" even when the lender already has a custom amount set', async () => {
+    it('hides "Reset to default" for a lender still in default mode', () => {
       const form = makeForm({
         access: 'restricted',
         capOn: true,
         cap: '4000',
-        whitelist: [{ username: 'Bob', address: BOB, amount: 2500 }]
+        whitelist: [{ username: 'Bob', address: BOB, amount: null }]
       })
       const wrapper = mountStep(form)
 
-      // Bob already has a custom amount (2500) — the button should still let the
-      // owner reset it to the cap, not just offer to fill in an empty row.
-      expect(wrapper.find('[data-test="whitelist-use-default-button"]').exists()).toBe(true)
+      expect(wrapper.find('[data-test="whitelist-reset-default-button"]').exists()).toBe(false)
+    })
 
-      await wrapper.find('[data-test="whitelist-use-default-button"]').trigger('click')
+    it('shows "Reset to default" for a custom lender, and clicking it re-syncs to the live cap', async () => {
+      const form = makeForm({
+        access: 'restricted',
+        capOn: true,
+        cap: '4000',
+        whitelist: [{ username: 'Bob', address: BOB, amount: 2500, custom: true }]
+      })
+      const wrapper = mountStep(form)
+
+      const resetButton = wrapper.find('[data-test="whitelist-reset-default-button"]')
+      expect(resetButton.exists()).toBe(true)
+
+      await resetButton.trigger('click')
+
+      expect(form.whitelist[0].custom).toBe(false)
       expect(form.whitelist[0].amount).toBe(4000)
+
+      // Re-synced lenders keep tracking future cap changes again.
+      form.cap = '6000'
+      await nextTick()
+      expect(form.whitelist[0].amount).toBe(6000)
+    })
+  })
+
+  describe('per-lender amount hidden without a round-level cap', () => {
+    it('shows every lender as Uncapped, with no amount input, when the cap is off', () => {
+      const form = makeForm({
+        access: 'restricted',
+        capOn: false,
+        whitelist: [{ username: 'Bob', address: BOB, amount: 5000 }]
+      })
+      const wrapper = mountStep(form)
+
+      expect(wrapper.find('[data-test="whitelist-uncapped-label"]').text()).toBe('Uncapped')
+      expect(wrapper.find('[data-test="whitelist-amount-input"]').exists()).toBe(false)
     })
   })
 })

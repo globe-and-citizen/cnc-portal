@@ -50,7 +50,10 @@
     <!-- Active variant -->
     <CreditRoundLedger v-if="store.variant === 'ledger'" :round="round" />
     <CreditRoundGauge v-else-if="store.variant === 'gauge'" :round="round" />
-    <CreditRoundTimeline v-else :round="round" />
+    <CreditRoundTimeline v-else-if="store.variant === 'timeline'" :round="round" />
+    <!-- Same panel the "Repay round" button switches to — CreditRepayPanel reads
+         roundId/teamId straight from this page's own route params. -->
+    <CreditRepayPanel v-else />
 
     <CreditLendModal :round="lendRound" @close="lendRound = null" @lent="onLent" />
   </div>
@@ -74,19 +77,14 @@ import {
   useFixedReturnOfferLenders
 } from '@/composables/fixedReturn/reads'
 import {
-  useFixedReturnClaimRefund,
-  useFixedReturnMarkAsRefundable
+  useFixedReturnRefundLenders,
+  useFixedReturnAcceptPartialFunding
 } from '@/composables/fixedReturn/writes'
-import {
-  classifyError,
-  isLendingOfferAcceptingFunds,
-  offerLenderToCreditLender,
-  resolveUser,
-  statusMeta
-} from '@/utils'
+import { classifyError, offerLenderToCreditLender, resolveUser, statusMeta } from '@/utils'
 import type { CreditRound, LendingOfferStruct } from '@/types'
 import CreditLayoutSwitcher from '@/components/sections/CommunityCreditView/CreditLayoutSwitcher.vue'
 import CreditLendModal from '@/components/sections/CommunityCreditView/CreditLendModal.vue'
+import CreditRepayPanel from '@/components/sections/CommunityCreditView/CreditRepayPanel.vue'
 import CreditRoundGauge from '@/components/sections/CommunityCreditView/CreditRoundGauge.vue'
 import CreditRoundLedger from '@/components/sections/CommunityCreditView/CreditRoundLedger.vue'
 import CreditRoundTimeline from '@/components/sections/CommunityCreditView/CreditRoundTimeline.vue'
@@ -115,7 +113,12 @@ const round = computed<CreditRound | undefined>(() => {
   return {
     ...base,
     lenders: (lenderData.value ?? []).map((lender) =>
-      offerLenderToCreditLender(lender, (address) => resolveUser(address).name, userStore.address)
+      offerLenderToCreditLender(
+        lender,
+        (address) => resolveUser(address).name,
+        userStore.address,
+        base
+      )
     )
   }
 })
@@ -123,11 +126,16 @@ const round = computed<CreditRound | undefined>(() => {
 const status = computed(() => statusMeta(round.value?.status ?? 'open'))
 const lendRound = ref<CreditRound | null>(null)
 
-/** Open, but the subscription window has closed without reaching target → owner can refund. */
-const canMarkRefundable = computed(() => {
-  const current = offer.value
-  return !!current && current.state === 0 && !isLendingOfferAcceptingFunds(current)
-})
+/** Stalled: still Open on-chain, but the deadline passed without reaching target —
+ *  owner can refund. round.status is the single source of truth for this (derived in
+ *  offerStateToRoundStatus from the same offer/deadline check this used to duplicate). */
+const canRefundLenders = computed(() => round.value?.status === 'stalled')
+
+/** Same stalled-round eligibility as canRefundLenders, plus something to actually keep —
+ *  acceptPartialFunding reverts on-chain if nothing was raised. */
+const canAcceptPartialFunding = computed(
+  () => canRefundLenders.value && (round.value?.raised ?? 0) > 0
+)
 
 function goList() {
   router.push({ name: 'community-credit', params: { id: teamId.value } })
@@ -142,8 +150,8 @@ watch(
   { immediate: true }
 )
 
-const markRefundableResult = useFixedReturnMarkAsRefundable()
-const claimRefundResult = useFixedReturnClaimRefund()
+const refundLendersResult = useFixedReturnRefundLenders()
+const acceptPartialFundingResult = useFixedReturnAcceptPartialFunding()
 
 async function invalidateRound() {
   await Promise.all([
@@ -153,11 +161,14 @@ async function invalidateRound() {
   ])
 }
 
-async function markRefundable() {
+// Single owner-triggered step: refundLenders checks the deadline itself and pushes
+// every lender's principal back in the same transaction — no separate "mark
+// refundable" step, and no individual lender claim action anymore.
+async function refundLenders() {
   try {
-    await markRefundableResult.mutateAsync({ args: [offerId.value] })
+    await refundLendersResult.mutateAsync({ args: [offerId.value] })
     toast.add({
-      title: 'Round marked refundable — lenders can reclaim their principal',
+      title: 'Round refunded — every lender got their principal back',
       color: 'success'
     })
     await invalidateRound()
@@ -169,10 +180,15 @@ async function markRefundable() {
   }
 }
 
-async function claimRefund() {
+// Alternative to refundLenders on the same stalled round: keep whatever was raised
+// and proceed as if fully funded, instead of returning it to lenders.
+async function acceptPartialFunding() {
   try {
-    await claimRefundResult.mutateAsync({ args: [offerId.value] })
-    toast.add({ title: 'Refund claimed — your principal was returned', color: 'success' })
+    await acceptPartialFundingResult.mutateAsync({ args: [offerId.value] })
+    toast.add({
+      title: 'Round accepted with partial funding — ready to repay lenders',
+      color: 'success'
+    })
     await invalidateRound()
   } catch (error) {
     toast.add({
@@ -190,7 +206,7 @@ type Cta = {
   test: string
   label: string
   icon: string
-  color: 'primary' | 'neutral'
+  color: 'primary' | 'neutral' | 'warning'
   variant: 'solid' | 'soft'
   loading?: boolean
   run: () => void
@@ -221,33 +237,31 @@ const ctas = computed<Cta[]>(() => {
         icon: 'heroicons:arrow-uturn-left',
         color: 'primary',
         variant: 'solid',
-        run: () =>
-          router.push({
-            name: 'community-credit-repay',
-            params: { id: teamId.value, roundId: r.id }
-          })
+        // Same behavior as clicking the "Repay" layout-exploration pill.
+        run: () => store.setVariant('repay')
       })
-    } else if (r.status === 'open' && canMarkRefundable.value) {
+    } else if (r.status === 'stalled') {
       list.push({
         test: 'round-cta-refundable',
-        label: 'Mark refundable',
-        icon: 'heroicons:exclamation-triangle',
-        color: 'primary',
+        label: 'Refund lenders',
+        icon: 'heroicons:arrow-uturn-left',
+        color: 'warning',
         variant: 'soft',
-        loading: markRefundableResult.isPending.value,
-        run: markRefundable
+        loading: refundLendersResult.isPending.value,
+        run: refundLenders
       })
+      if (canAcceptPartialFunding.value) {
+        list.push({
+          test: 'round-cta-accept-partial',
+          label: 'Accept raised funds',
+          icon: 'heroicons:check-circle',
+          color: 'primary',
+          variant: 'soft',
+          loading: acceptPartialFundingResult.isPending.value,
+          run: acceptPartialFunding
+        })
+      }
     }
-  } else if (r.status === 'refundable') {
-    list.push({
-      test: 'round-cta-claim',
-      label: 'Claim refund',
-      icon: 'heroicons:arrow-uturn-left',
-      color: 'primary',
-      variant: 'solid',
-      loading: claimRefundResult.isPending.value,
-      run: claimRefund
-    })
   }
 
   return list

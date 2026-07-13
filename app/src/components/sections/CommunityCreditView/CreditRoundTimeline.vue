@@ -41,12 +41,7 @@
             }}</span>
             <span class="text-muted text-sm">/ {{ formatAmount(round.target) }}</span>
           </div>
-          <div class="bg-muted mt-3.5 h-3 overflow-hidden rounded-full">
-            <div
-              class="bg-primary h-full rounded-full transition-all"
-              :style="{ width: pct + '%' }"
-            ></div>
-          </div>
+          <UProgress :model-value="pct" :max="100" size="md" class="mt-3.5" />
         </div>
 
         <div class="border-default bg-default overflow-hidden rounded-2xl border shadow-sm">
@@ -124,7 +119,7 @@ import CreditAvatar from './CreditAvatar.vue'
 
 const props = defineProps<{ round: CreditRound }>()
 
-const LIFE_ORDER: RoundStatus[] = ['open', 'funded', 'active', 'repaid']
+const LIFE_ORDER: RoundStatus[] = ['open', 'stalled', 'funded', 'active', 'repaid']
 const currentIndex = computed(() => LIFE_ORDER.indexOf(props.round.status))
 
 const pct = computed(() => percentOf(props.round.raised, props.round.target))
@@ -139,12 +134,13 @@ const lifecycle = computed(() => {
     {
       label: 'Funded',
       icon: 'heroicons:check-circle',
-      date: r.status === 'open' ? 'pending' : r.deadline || '—'
+      date: r.status === 'open' || r.status === 'stalled' ? 'pending' : r.deadline || '—'
     },
     {
       label: 'In repayment',
       icon: 'heroicons:clock',
-      date: r.maturity && r.status !== 'open' ? `until ${r.maturity}` : '—'
+      date:
+        r.maturity && r.status !== 'open' && r.status !== 'stalled' ? `until ${r.maturity}` : '—'
     },
     { label: 'Repaid', icon: 'heroicons:banknotes', date: r.repaidOn || r.maturity || '—' }
   ]

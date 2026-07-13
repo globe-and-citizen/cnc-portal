@@ -28,6 +28,8 @@ vi.mock('@/composables/fixedReturn/writes', () => ({
   useFixedReturnLendFunds: vi.fn(() => mockFixedReturnWrites.lendFunds),
   useFixedReturnMarkAsRefundable: vi.fn(() => mockFixedReturnWrites.markAsRefundable),
   useFixedReturnClaimRefund: vi.fn(() => mockFixedReturnWrites.claimRefund),
+  useFixedReturnRefundLenders: vi.fn(() => mockFixedReturnWrites.refundLenders),
+  useFixedReturnAcceptPartialFunding: vi.fn(() => mockFixedReturnWrites.acceptPartialFunding),
   useFixedReturnAddTokenSupport: vi.fn(() => mockFixedReturnWrites.addTokenSupport),
   useFixedReturnRemoveTokenSupport: vi.fn(() => mockFixedReturnWrites.removeTokenSupport)
 }))

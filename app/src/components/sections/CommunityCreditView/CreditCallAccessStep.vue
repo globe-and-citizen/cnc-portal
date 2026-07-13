@@ -23,28 +23,6 @@
               </div>
             </div>
           </div>
-          <div v-if="form.access === 'everyone'" class="flex flex-none flex-col items-end gap-1">
-            <UInput
-              :model-value="form.cap || undefined"
-              type="number"
-              min="0"
-              placeholder="No cap"
-              class="w-28"
-              :color="accessErrors.cap ? 'error' : undefined"
-              data-test="cc-cap"
-              @update:model-value="updateCap"
-            >
-              <template #leading><span class="text-muted text-xs font-semibold">$</span></template>
-            </UInput>
-            <span class="text-muted text-[11px] leading-tight">Max per lender</span>
-            <span
-              v-if="accessErrors.cap"
-              class="text-error text-[11px] leading-tight"
-              data-test="cc-cap-error"
-            >
-              {{ accessErrors.cap }}
-            </span>
-          </div>
         </div>
         <div :class="creditAccessRowClass(form.access === 'restricted')">
           <div
@@ -64,41 +42,20 @@
               <div class="text-muted mt-0.5 text-xs">Only the members you pick below can lend.</div>
             </div>
           </div>
-          <div v-if="form.access === 'restricted'" class="flex flex-none flex-col items-end gap-1">
-            <UInput
-              :model-value="form.cap || undefined"
-              type="number"
-              min="0"
-              placeholder="No cap"
-              class="w-28"
-              :color="accessErrors.cap ? 'error' : undefined"
-              data-test="cc-cap"
-              @update:model-value="updateCap"
-            >
-              <template #leading><span class="text-muted text-xs font-semibold">$</span></template>
-            </UInput>
-            <span class="text-muted text-[11px] leading-tight">Max per lender</span>
-            <span
-              v-if="accessErrors.cap"
-              class="text-error text-[11px] leading-tight"
-              data-test="cc-cap-error"
-            >
-              {{ accessErrors.cap }}
-            </span>
-          </div>
         </div>
       </div>
     </div>
 
     <div v-if="form.access === 'restricted'" class="border-default/60 border-t pt-4">
-      <WhitelistEditor
+      <CreditWhitelistEditor
         :whitelist="form.whitelist"
         :default-amount-label="defaultAmountLabel"
-        :default-amount="capAmount"
         :principal-target="Number(form.target) || 0"
         :token="form.token"
+        :cap-on="form.capOn"
         @remove="removeWhitelist"
         @update-amount="updateWhitelistAmount"
+        @update-custom="updateWhitelistCustom"
         @add="addWhitelist"
       />
       <p
@@ -109,25 +66,73 @@
         {{ accessErrors.whitelist }}
       </p>
     </div>
+
+    <div class="border-default/60 border-t pt-4">
+      <UCard variant="subtle" :ui="{ body: 'flex items-center justify-between gap-3 px-3 py-3' }">
+        <div>
+          <div class="text-sm font-semibold">Cap the amount per lender</div>
+          <div class="text-muted text-xs">
+            Optional — keeps any single lender from dominating the round.
+          </div>
+        </div>
+        <USwitch v-model="form.capOn" data-test="cc-cap-toggle" />
+      </UCard>
+      <div v-if="form.capOn" class="mt-3.5 max-w-60">
+        <label class="mb-1.5 block text-sm font-medium" for="cc-cap">Maximum per lender</label>
+        <UInput
+          id="cc-cap"
+          :model-value="form.cap"
+          type="number"
+          min="0"
+          placeholder="10000"
+          class="w-full"
+          data-test="cc-cap"
+          @update:model-value="(v) => (form.cap = String(v))"
+        >
+          <template #trailing>
+            <span class="text-muted text-xs font-bold">{{ form.token }}</span>
+          </template>
+        </UInput>
+        <span
+          v-if="accessErrors.cap"
+          class="text-error mt-1 block text-[11px] leading-tight"
+          data-test="cc-cap-error"
+        >
+          {{ accessErrors.cap }}
+        </span>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, reactive } from 'vue'
-import { watchDebounced } from '@vueuse/core'
-import { applyZodFieldErrors, creditAccessRowClass, creditRadioClass, formatAmount } from '@/utils'
+import { computed, reactive, watch } from 'vue'
+import {
+  applyZodFieldErrors,
+  creditAccessRowClass,
+  creditRadioClass,
+  findOfferingToken,
+  formatAmount
+} from '@/utils'
 import { createCreditCallAccessSchema, type CreditCallForm } from '@/types'
-import WhitelistEditor from '@/components/sections/FixedReturnView/WhitelistEditor.vue'
+import CreditWhitelistEditor from './CreditWhitelistEditor.vue'
 
 const form = defineModel<CreditCallForm>('form', { required: true })
 
-// No separate on/off switch — the cap is simply whatever's typed, mirroring the lender
-// row's "amount" input: empty means unset ("No cap"), a value turns it on.
-function updateCap(value: unknown) {
-  const str = value == null ? '' : String(value)
-  form.value.cap = str
-  form.value.capOn = str !== ''
-}
+const accessErrors = reactive<Record<string, string>>({})
+
+// A stale error from a prior failed validate() would otherwise linger in accessErrors —
+// invisible while its section is hidden (access !== 'restricted', capOn off) but ready to
+// reappear the instant the user toggles back, even though nothing has been re-validated
+// since. Clearing on toggle keeps a re-entered section blank until the next real check.
+watch(
+  () => form.value.access,
+  () => delete accessErrors.whitelist
+)
+watch(
+  () => form.value.capOn,
+  () => delete accessErrors.cap
+)
 
 // null whenever there's no genuine positive cap to use as a default yet — not just when
 // capOn is off, but also while it's on with an empty/zero value (nothing typed yet).
@@ -140,24 +145,36 @@ const defaultAmountLabel = computed(() =>
   capAmount.value != null ? formatAmount(capAmount.value, form.value.token) : 'No cap'
 )
 
-// Every whitelisted lender needs a nonzero allocation on-chain — the cap is the natural
-// default for one that hasn't been set yet. Backfill only still-unset entries once there's
-// a genuine positive cap; never overwrite an amount someone already typed. Debounced so
-// typing "100" digit-by-digit doesn't fire on "1" first — that would backfill every unset
-// entry to 1, un-nulling them before "0" and "0" land, leaving them stuck at 1 forever.
-watchDebounced(
+// Every lender defaults to tracking the round-level cap live — not just backfilled once.
+// Any entry not marked custom stays synced to the current cap value, so bumping the cap
+// after some lenders already have an amount still reaches them. A custom entry (the user
+// typed into it directly) is excluded and keeps whatever value it was given.
+watch(
   capAmount,
   (amount) => {
-    if (!amount) return
     for (const entry of form.value.whitelist) {
-      if (entry.amount == null) entry.amount = amount
+      if (!entry.custom) entry.amount = amount
     }
   },
-  { debounce: 300, maxWait: 1000 }
+  { immediate: true }
 )
 
-function addWhitelist(username: string, address: string, amount: number | null) {
-  form.value.whitelist.push({ username, address, amount })
+// Without a round-level cap there's no per-lender ceiling to speak of — every lender is
+// uncapped by definition. Clear amounts and custom flags so the (now hidden) per-lender
+// input can't leave stale data behind that would otherwise still count toward validation.
+watch(
+  () => form.value.capOn,
+  (on) => {
+    if (on) return
+    for (const entry of form.value.whitelist) {
+      entry.amount = null
+      entry.custom = false
+    }
+  }
+)
+
+function addWhitelist(username: string, address: string) {
+  form.value.whitelist.push({ username, address, amount: capAmount.value, custom: false })
 }
 function removeWhitelist(i: number) {
   form.value.whitelist.splice(i, 1)
@@ -166,11 +183,19 @@ function updateWhitelistAmount(i: number, val: string | number) {
   const entry = form.value.whitelist[i]
   if (entry) entry.amount = val === '' ? null : Number(val)
 }
-
-const accessErrors = reactive<Record<string, string>>({})
+function updateWhitelistCustom(i: number, custom: boolean) {
+  const entry = form.value.whitelist[i]
+  if (!entry) return
+  entry.custom = custom
+  // Leaving custom mode re-syncs immediately, rather than waiting for the next cap change.
+  if (!custom) entry.amount = capAmount.value
+}
 
 function validate(): boolean {
-  const schema = createCreditCallAccessSchema({ target: Number(form.value.target) || 0 })
+  const schema = createCreditCallAccessSchema({
+    target: Number(form.value.target) || 0,
+    decimals: findOfferingToken(form.value.token)?.decimals
+  })
   const result = schema.safeParse({
     access: form.value.access,
     whitelist: form.value.whitelist,

@@ -23,12 +23,7 @@
         </span>
         <span class="text-primary text-xs font-bold">{{ pct }}%</span>
       </div>
-      <div class="bg-muted h-2.5 overflow-hidden rounded-full">
-        <div
-          class="bg-primary h-full rounded-full transition-all"
-          :style="{ width: pct + '%' }"
-        ></div>
-      </div>
+      <UProgress :model-value="pct" :max="100" size="sm" />
       <div class="text-muted mt-1.5 text-[11px]">{{ progressNote }}</div>
     </div>
 
@@ -83,7 +78,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useCommunityCreditStore } from '@/stores'
-import { formatAmount, percentOf, statusMeta } from '@/utils'
+import { formatAmount, percentOf, reachedFundingTarget, statusMeta } from '@/utils'
 import type { CreditRound } from '@/types'
 import CreditAvatar from './CreditAvatar.vue'
 
@@ -102,8 +97,10 @@ const progressNote = computed(() => {
   if (props.round.status === 'open') {
     return `${formatAmount(remaining, props.round.token, 4)} to go · closes ${props.round.deadline}`
   }
-  if (props.round.status === 'funded') return `Target reached · matures ${props.round.maturity}`
-  return `Fully funded · matures ${props.round.maturity}`
+  const fundedLabel = reachedFundingTarget(props.round)
+    ? 'Target reached'
+    : 'Accepted with partial funding'
+  return `${fundedLabel} · matures ${props.round.maturity}`
 })
 
 const terms = computed(() => [

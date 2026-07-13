@@ -15,6 +15,7 @@ import {
   offerLenderToCreditLender,
   offerMaturityDate,
   offerStateToRoundStatus,
+  reachedFundingTarget,
   roundInterest,
   roundTotalDue,
   statusMeta
@@ -95,10 +96,24 @@ describe('communityCreditUtil', () => {
     })
   })
 
+  describe('reachedFundingTarget', () => {
+    it('is true once raised meets or exceeds the target', () => {
+      expect(reachedFundingTarget({ raised: 1000, target: 1000 })).toBe(true)
+      expect(reachedFundingTarget({ raised: 1200, target: 1000 })).toBe(true)
+    })
+
+    it('is false for a round accepted via acceptPartialFunding, short of its target', () => {
+      // A Funded/Repaying round doesn't always mean the target was actually hit —
+      // acceptPartialFunding can move a stalled round straight there with less raised.
+      expect(reachedFundingTarget({ raised: 400, target: 1000 })).toBe(false)
+    })
+  })
+
   describe('statusMeta', () => {
     it('maps every status to a label and badge colour', () => {
       const cases: Record<RoundStatus, { label: string; color: string }> = {
         open: { label: 'Open', color: 'primary' },
+        stalled: { label: 'Action needed', color: 'warning' },
         funded: { label: 'Funded', color: 'info' },
         active: { label: 'In repayment', color: 'warning' },
         repaid: { label: 'Repaid', color: 'success' },
@@ -150,10 +165,19 @@ describe('communityCreditUtil', () => {
     const raw: FixedReturnRawOffer = { offerId: 7, decimals: 6, offer: baseOffer }
 
     describe('offerStateToRoundStatus', () => {
+      // baseOffer.subscriptionDeadline is a fixed unix timestamp — pass `now` explicitly
+      // wherever the Open/deadline boundary matters, rather than relying on the real clock.
+      const beforeDeadline = new Date(1_700_400_000 * 1000)
+      const afterDeadline = new Date(1_700_600_000 * 1000)
+
       it('maps Open / Funded / Refundable', () => {
-        expect(offerStateToRoundStatus(makeOffer({ state: 0 }))).toBe('open')
+        expect(offerStateToRoundStatus(makeOffer({ state: 0 }), beforeDeadline)).toBe('open')
         expect(offerStateToRoundStatus(makeOffer({ state: 1 }))).toBe('funded')
         expect(offerStateToRoundStatus(makeOffer({ state: 2 }))).toBe('refundable')
+      })
+
+      it('maps a still-Open offer past its deadline to stalled', () => {
+        expect(offerStateToRoundStatus(makeOffer({ state: 0 }), afterDeadline)).toBe('stalled')
       })
       it('treats Repaying as active until principal + interest is fully repaid', () => {
         // totalFunded 1_000_000 @ 10% → expected 1_100_000
@@ -168,8 +192,13 @@ describe('communityCreditUtil', () => {
     })
 
     describe('lendingOfferToCreditRound', () => {
+      // baseOffer.subscriptionDeadline is a fixed unix timestamp — pass `now` explicitly
+      // so this asserts 'open' regardless of when the real clock happens to run the test.
+      const beforeDeadline = new Date(1_700_400_000 * 1000)
+      const afterDeadline = new Date(1_700_600_000 * 1000)
+
       it('scales amounts by decimals and maps rate, term and access', () => {
-        const round = lendingOfferToCreditRound(raw, 'Q3 bridge', 'Payroll')
+        const round = lendingOfferToCreditRound(raw, 'Q3 bridge', 'Payroll', beforeDeadline)
         expect(round.id).toBe('7')
         expect(round.name).toBe('Q3 bridge')
         expect(round.desc).toBe('Payroll')
@@ -180,7 +209,21 @@ describe('communityCreditUtil', () => {
         expect(round.restricted).toBe(true)
         expect(round.cap).toBe(10000)
         expect(round.status).toBe('open')
+        expect(round.fundable).toBe(true)
         expect(round.lenders).toEqual([])
+      })
+
+      it('maps to stalled and not fundable once the deadline has passed without reaching target', () => {
+        const round = lendingOfferToCreditRound(raw, 'Q3 bridge', 'Payroll', afterDeadline)
+        expect(round.status).toBe('stalled')
+        expect(round.fundable).toBe(false)
+      })
+      it('scales totalRepaid by decimals, same as raised', () => {
+        const round = lendingOfferToCreditRound({
+          ...raw,
+          offer: makeOffer({ totalRepaidByIssuer: 12_345_000000n })
+        })
+        expect(round.totalRepaid).toBe(12345)
       })
       it('falls back to generic title/purpose and null cap', () => {
         const round = lendingOfferToCreditRound({
@@ -235,6 +278,24 @@ describe('communityCreditUtil', () => {
       })
       it('is not "you" for a different connected address', () => {
         expect(offerLenderToCreditLender(lender, () => 'Bob', '0xdead').you).toBe(false)
+      })
+      it('defaults paid to 0 when no round totals are given', () => {
+        expect(offerLenderToCreditLender(lender, () => 'Alice').paid).toBe(0)
+      })
+      it("estimates paid as this lender's proportional share of the round's totalRepaid", () => {
+        // lender.principal (5000) is 25% of round.raised (20000) → 25% of totalRepaid (4000).
+        const mapped = offerLenderToCreditLender(lender, () => 'Alice', undefined, {
+          raised: 20000,
+          totalRepaid: 4000
+        })
+        expect(mapped.paid).toBe(1000)
+      })
+      it('is 0 when nothing has been raised yet, even with a round object present', () => {
+        const mapped = offerLenderToCreditLender(lender, () => 'Alice', undefined, {
+          raised: 0,
+          totalRepaid: 0
+        })
+        expect(mapped.paid).toBe(0)
       })
     })
 

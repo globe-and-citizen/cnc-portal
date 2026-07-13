@@ -10,10 +10,12 @@ export type CreditRole = 'owner' | 'lender'
 
 // Mirrors FixedReturn.sol's OfferState (Open, Funded, Refundable, Repaying) resolved
 // against the offer's deadline and repayment progress. 'active' = Repaying but not yet
-// fully repaid; 'refundable' = deadline missed, lenders can claim their principal back.
-export type RoundStatus = 'open' | 'funded' | 'active' | 'repaid' | 'refundable'
+// fully repaid; 'refundable' = deadline missed, lenders can claim their principal back;
+// 'stalled' = still contract-state Open but past its deadline without reaching target —
+// the issuer hasn't yet chosen refundLenders or acceptPartialFunding.
+export type RoundStatus = 'open' | 'stalled' | 'funded' | 'active' | 'repaid' | 'refundable'
 
-export type RoundDetailVariant = 'ledger' | 'gauge' | 'timeline'
+export type RoundDetailVariant = 'ledger' | 'gauge' | 'timeline' | 'repay'
 
 export interface StatusMeta {
   label: string
@@ -21,6 +23,23 @@ export interface StatusMeta {
 }
 
 export type CreditAccess = 'everyone' | 'restricted'
+
+/** Community Credit's own whitelist entry — same shape as Issue Note's WhitelistEntry
+ *  plus `custom`. A lender defaults to tracking the round-level cap live (amount stays
+ *  in sync whenever the cap changes); `custom: true` means their amount was set
+ *  independently and stops following further cap changes. */
+export interface CreditWhitelistEntry extends WhitelistEntry {
+  custom?: boolean
+}
+
+export interface CreditWhitelistAllocationSummary {
+  committedTotal: number
+  /** 'over' and 'exact' are both publishable — over-allocating is a deliberate buffer
+   *  against a whitelisted lender who doesn't end up depositing. Only 'under' blocks
+   *  publishing (FixedReturn.sol's AllocationSumBelowFundingTarget). */
+  status: 'over' | 'under' | 'exact'
+  description: string
+}
 
 /** Units offered for a custom term length. The term is always stored in days. */
 export type CreditTermUnit = 'days' | 'weeks' | 'months' | 'years'
@@ -33,6 +52,14 @@ export interface CreditLender {
   /** Two comma-separated hex colors used to render the avatar gradient. */
   gradient: string
   amount: number
+  /** Total owed at maturity — principal + interest (mirrors Issue Note's "Expected
+   *  return" column, from FixedReturn's totalEntitlementOf). */
+  expected: number
+  /** Paid to this lender so far — proportional estimate (this lender's share of
+   *  raised × the round's totalRepaid), mirroring Issue Note's buildFixedReturnLenderRows
+   *  rather than an extra per-lender contract read (totalPaidToLender exists on-chain but
+   *  Issue Note doesn't call it either, for the same reason). */
+  paid: number
   /** Short, human display date, e.g. `Jun 3`. */
   date: string
   /** True for the currently-connected user's position. */
@@ -46,11 +73,16 @@ export interface CreditRound {
   token: string
   target: number
   raised: number
+  /** Cumulative amount the issuer has repaid so far, across all lenders. */
+  totalRepaid: number
   /** Fixed interest rate over the whole term, in percent. */
   rate: number
   /** Term length in days. */
   period: number
   status: RoundStatus
+  /** True only while `status === 'open'` — false once the round is `'stalled'` (or any
+   *  later status), meaning lendFunds would revert. */
+  fundable: boolean
   opened?: string
   deadline: string
   maturity: string
@@ -86,8 +118,8 @@ export interface CreditCallForm {
   periodUnit: CreditTermUnit
   deadline: string
   access: CreditAccess
-  /** Searchable, per-lender custom-amount whitelist — same shape as Issue Note's. */
-  whitelist: WhitelistEntry[]
+  /** Searchable, per-lender custom-amount whitelist. */
+  whitelist: CreditWhitelistEntry[]
   capOn: boolean
   cap: string
 }

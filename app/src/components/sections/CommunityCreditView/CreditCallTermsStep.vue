@@ -5,22 +5,18 @@
         <label class="mb-1.5 block text-sm font-medium" for="cc-rate">
           Interest rate (fixed, over the term)
         </label>
-        <div class="relative">
-          <input
-            id="cc-rate"
-            v-model="form.rate"
-            type="number"
-            min="0"
-            :class="[CREDIT_FIELD_CLASS, 'pr-8', termErrors.rate && 'border-error']"
-            placeholder="6"
-            data-test="cc-rate"
-          />
-          <span
-            class="text-muted pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-sm font-bold"
-          >
-            %
-          </span>
-        </div>
+        <UInput
+          id="cc-rate"
+          v-model="form.rate"
+          type="number"
+          min="0"
+          :color="termErrors.rate ? 'error' : undefined"
+          placeholder="6"
+          class="w-full"
+          data-test="cc-rate"
+        >
+          <template #trailing><span class="text-muted text-sm font-bold">%</span></template>
+        </UInput>
         <p v-if="termErrors.rate" class="text-error mt-1 text-xs" data-test="cc-rate-error">
           {{ termErrors.rate }}
         </p>
@@ -29,11 +25,12 @@
         <label class="mb-1.5 block text-sm font-medium" for="cc-deadline">
           Subscription deadline
         </label>
-        <input
+        <UInput
           id="cc-deadline"
           v-model="form.deadline"
           type="date"
-          :class="[CREDIT_FIELD_CLASS, termErrors.deadline && 'border-error']"
+          :color="termErrors.deadline ? 'error' : undefined"
+          class="w-full"
           data-test="cc-deadline"
         />
         <p v-if="termErrors.deadline" class="text-error mt-1 text-xs" data-test="cc-deadline-error">
@@ -70,12 +67,12 @@
       </div>
 
       <div v-if="form.periodMode === 'custom'" class="mt-2.5 flex items-stretch gap-2.5">
-        <input
+        <UInput
           v-model="form.periodVal"
           type="number"
           min="1"
           placeholder="180"
-          :class="[CREDIT_FIELD_CLASS, 'max-w-30']"
+          class="max-w-30"
           data-test="cc-term-value"
           @input="recalcPeriod(form.periodVal, form.periodUnit)"
         />
@@ -115,7 +112,7 @@
 
 <script setup lang="ts">
 import { computed, reactive } from 'vue'
-import { applyZodFieldErrors, CREDIT_FIELD_CLASS, creditChipClass, formatAmount } from '@/utils'
+import { applyZodFieldErrors, creditChipClass, formatAmount } from '@/utils'
 import { createCreditCallTermsSchema, type CreditCallForm, type CreditTermUnit } from '@/types'
 
 const form = defineModel<CreditCallForm>('form', { required: true })

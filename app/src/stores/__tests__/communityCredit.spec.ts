@@ -15,6 +15,14 @@ vi.mock('@/queries/fixedReturnOffering.queries', async (importOriginal) => ({
   useGetFixedReturnOfferingsQuery: vi.fn(() => ({ data: ref([]) }))
 }))
 
+// The store derives "has the deadline passed" from the chain's own clock, not the
+// device's — fixed comfortably between EXPIRED_OPEN_OFFER's deadline (must read as
+// past) and OPEN_OFFER's (must read as not yet reached).
+const NOW = 2_000_000_000n
+vi.mock('@/composables/useBlockTimestamp', () => ({
+  useBlockTimestamp: vi.fn(() => ref(NOW))
+}))
+
 import { useCommunityCreditStore } from '@/stores/communityCredit'
 
 const TOKEN = '0x0000000000000000000000000000000000000abc' as Address
@@ -27,7 +35,9 @@ function offer(over: Partial<LendingOfferStruct> = {}): LendingOfferStruct {
     termDuration: 3,
     termUnit: 1, // months
     startDate: 1_700_000_000n,
-    subscriptionDeadline: 1_700_500_000n,
+    // Far enough in the future that isLendingOfferAcceptingFunds' real-clock deadline
+    // check treats an Open offer as still fundable, unless a test overrides it.
+    subscriptionDeadline: 9_999_999_999n,
     fundingAccess: 0,
     isCapEnabled: false,
     lenderCap: 0n,
@@ -54,6 +64,13 @@ const FUNDED_OFFER: FixedReturnRawOffer = {
   decimals: 6,
   offer: offer({ totalFunded: 40_000_000000n, state: 1 }) // fully raised, not yet repaid
 }
+// Still contract-state Open, but its subscription window closed without reaching
+// target — no longer fundable; offerStateToRoundStatus resolves this to 'stalled'.
+const EXPIRED_OPEN_OFFER: FixedReturnRawOffer = {
+  offerId: 4,
+  decimals: 6,
+  offer: offer({ subscriptionDeadline: 1_700_500_000n })
+}
 
 describe('Community Credit store (contract-backed)', () => {
   beforeEach(() => {
@@ -77,6 +94,18 @@ describe('Community Credit store (contract-backed)', () => {
     expect(store.historyRounds.map((r) => r.id)).toEqual(['1'])
     expect(store.getRound('2')?.raised).toBe(23400)
     expect(store.getRound('1')?.status).toBe('repaid')
+  })
+
+  it('moves a stalled (expired, unfunded) round to history and still counts its principal as outstanding', () => {
+    mockFixedReturnReads.allOffers.data.value = [OPEN_OFFER, EXPIRED_OPEN_OFFER]
+    const store = useCommunityCreditStore()
+
+    expect(store.getRound('4')?.status).toBe('stalled')
+    expect(store.activeRounds.map((r) => r.id)).toEqual(['2'])
+    expect(store.historyRounds.map((r) => r.id)).toContain('4')
+    // 23,400 (open) + 23,400 (stalled) — a stalled round's principal is still
+    // outstanding, awaiting the issuer's refund/accept decision.
+    expect(store.outstandingPrincipal).toBe(46800)
   })
 
   it('moves a funded round to history instead of the active list, but still counts its principal as outstanding', () => {

@@ -173,8 +173,12 @@ export const mockFixedReturnReads = {
 export const mockFixedReturnWrites = {
   createLendingOffer: createContractWriteV3Mock(),
   lendFunds: createContractWriteV3Mock(),
+  // markAsRefundable / claimRefund no longer exist on FixedReturn v1.3.0 — kept only
+  // because Issue Note's refund UI still calls them (reverts at runtime until migrated).
   markAsRefundable: createContractWriteV3Mock(),
   claimRefund: createContractWriteV3Mock(),
+  refundLenders: createContractWriteV3Mock(),
+  acceptPartialFunding: createContractWriteV3Mock(),
   addTokenSupport: createContractWriteV3Mock(),
   removeTokenSupport: createContractWriteV3Mock()
 }

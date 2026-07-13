@@ -43,33 +43,32 @@
             <label class="mb-1.5 block text-sm font-medium" for="credit-lend-amount">
               Your contribution
             </label>
-            <div class="relative">
-              <input
-                id="credit-lend-amount"
-                v-model="amount"
-                type="number"
-                min="0"
-                placeholder="0"
-                class="border-default bg-default focus:border-primary focus:ring-primary/20 h-[46px] w-full rounded-lg border pr-14 pl-3 text-lg font-bold outline-none focus:ring-3"
-                data-test="lend-amount-input"
-              />
-              <span
-                class="text-muted absolute top-1/2 right-3.5 -translate-y-1/2 text-sm font-bold"
-              >
-                {{ round.token }}
-              </span>
-            </div>
+            <UInput
+              id="credit-lend-amount"
+              v-model="amount"
+              type="number"
+              min="0"
+              placeholder="0"
+              size="xl"
+              class="w-full text-lg font-bold"
+              data-test="lend-amount-input"
+            >
+              <template #trailing>
+                <span class="text-muted text-sm font-bold">{{ round.token }}</span>
+              </template>
+            </UInput>
             <div class="mt-2.5 flex gap-1.5">
-              <button
+              <UButton
                 v-for="q in quick"
                 :key="q.label"
-                type="button"
-                class="border-default bg-muted hover:bg-elevated flex-1 cursor-pointer rounded-lg border py-1.5 text-center text-xs font-semibold transition-colors"
+                variant="outline"
+                color="neutral"
+                size="xs"
+                :label="q.label"
+                class="flex-1 justify-center"
                 :data-test="`lend-quick-${q.label}`"
                 @click="amount = String(q.value)"
-              >
-                {{ q.label }}
-              </button>
+              />
             </div>
           </div>
 
@@ -156,7 +155,8 @@ import {
   findOfferingToken,
   formatAmount,
   roundToDisplayPrecision,
-  toLenderOffering
+  toLenderOffering,
+  UNCAPPED_ALLOCATION
 } from '@/utils'
 import type { CreditRound, LendingOfferStruct } from '@/types'
 
@@ -207,13 +207,17 @@ const lenderOffering = computed(() => {
     allocation: 0n,
     deposited: 0n
   }
-  return toLenderOffering(
+  const offering = toLenderOffering(
     Number(props.round.id),
     rawOffer.value as LendingOfferStruct,
     decimals.value,
     position.allocation,
     position.deposited
   )
+  // toLenderOffering formatUnits-es the raw allocation as-is — for an uncapped whitelist
+  // lender that's UNCAPPED_ALLOCATION (near-max uint256), which would otherwise render
+  // as a nonsensical giant "cap" figure. Treat it exactly like no personal cap.
+  return position.allocation === UNCAPPED_ALLOCATION ? { ...offering, cap: null } : offering
 })
 
 /** Personal ceiling left — whitelist allocation or general cap, whichever the offer uses. */

@@ -1,32 +1,36 @@
 <template>
   <div>
-    <div class="grid items-stretch gap-5 lg:grid-cols-[1fr_1.1fr]">
-      <!-- Gauge ring -->
-      <div
-        class="border-default bg-default flex flex-col items-center justify-center rounded-2xl border p-8 text-center shadow-sm"
-      >
+    <div class="flex flex-col gap-5">
+      <!-- Gauge rings: funding progress and repayment progress, separate cards side by side -->
+      <div class="grid gap-5 lg:grid-cols-2">
         <div
-          class="flex h-[190px] w-[190px] items-center justify-center rounded-full"
-          :style="ringStyle"
+          v-for="gauge in gauges"
+          :key="gauge.key"
+          class="border-default bg-default flex flex-col items-center justify-center rounded-2xl border p-8 text-center shadow-sm"
         >
           <div
-            class="bg-default flex h-[152px] w-[152px] flex-col items-center justify-center rounded-full"
+            class="flex h-[190px] w-[190px] items-center justify-center rounded-full"
+            :style="gauge.ringStyle"
           >
-            <div class="text-primary text-[38px] leading-none font-extrabold tracking-tight">
-              {{ pct }}%
+            <div
+              class="bg-default flex h-[152px] w-[152px] flex-col items-center justify-center rounded-full"
+            >
+              <div class="text-primary text-[38px] leading-none font-extrabold tracking-tight">
+                {{ gauge.pct }}%
+              </div>
+              <div class="text-muted mt-1 text-[11px]">{{ gauge.label }}</div>
             </div>
-            <div class="text-muted mt-1 text-[11px]">funded</div>
+          </div>
+          <div class="mt-5.5 text-[22px] font-extrabold tracking-tight">{{ gauge.amount }}</div>
+          <div class="text-muted mt-0.5 text-sm">{{ gauge.totalNote }}</div>
+          <div v-if="gauge.remainingNote" class="text-primary mt-2.5 text-xs font-semibold">
+            {{ gauge.remainingNote }}
           </div>
         </div>
-        <div class="mt-5.5 text-[22px] font-extrabold tracking-tight">
-          {{ formatAmount(round.raised) }}
-        </div>
-        <div class="text-muted mt-0.5 text-sm">raised of {{ formatAmount(round.target) }}</div>
-        <div class="text-primary mt-2.5 text-xs font-semibold">{{ remainingNote }}</div>
       </div>
 
       <!-- Stats + access -->
-      <div class="flex flex-col gap-5">
+      <div class="grid items-start gap-5 lg:grid-cols-[1.1fr_1fr]">
         <div class="grid grid-cols-2 gap-3.5">
           <div
             v-for="stat in stats"
@@ -80,13 +84,13 @@
             <div class="text-sm font-semibold">{{ lender.name }}</div>
             <div class="text-muted font-mono text-[11px]">{{ lender.addr }}</div>
           </div>
-          <div class="bg-muted h-2 flex-1 overflow-hidden rounded-full">
-            <div
-              class="h-full rounded-full"
-              :class="lender.you ? 'bg-primary' : 'bg-primary/40'"
-              :style="{ width: lender.share + '%' }"
-            ></div>
-          </div>
+          <UProgress
+            :model-value="lender.share"
+            :max="100"
+            size="sm"
+            :color="lender.you ? 'primary' : 'neutral'"
+            class="flex-1"
+          />
           <div class="min-w-[90px] text-right">
             <div class="text-sm font-bold">{{ formatAmount(lender.amount) }}</div>
             <div class="text-muted text-[11px]">{{ lender.share }}%</div>
@@ -100,7 +104,13 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { formatAmount, percentOf, roundInterest, roundTotalDue } from '@/utils'
+import {
+  formatAmount,
+  percentOf,
+  reachedFundingTarget,
+  roundInterest,
+  roundTotalDue
+} from '@/utils'
 import type { CreditRound } from '@/types'
 import CreditAvatar from './CreditAvatar.vue'
 
@@ -110,11 +120,44 @@ const pct = computed(() => percentOf(props.round.raised, props.round.target))
 const ringStyle = computed(() => ({
   background: `conic-gradient(#00bf7a ${pct.value * 3.6}deg, #eef3f0 0deg)`
 }))
-const remainingNote = computed(() =>
-  props.round.status === 'open'
-    ? `${formatAmount(props.round.target - props.round.raised)} remaining`
-    : 'Fully funded'
-)
+const remainingNote = computed(() => {
+  if (props.round.status === 'open' || props.round.status === 'stalled') {
+    return `${formatAmount(props.round.target - props.round.raised)} remaining`
+  }
+  return reachedFundingTarget(props.round) ? 'Fully funded' : 'Accepted with partial funding'
+})
+
+// State of repayment — how much of principal + interest has actually been paid back,
+// mirroring Issue Note's OfferingDetail "Repayment progress" gauge.
+const totalDue = computed(() => roundTotalDue(props.round))
+const repaymentPct = computed(() => percentOf(props.round.totalRepaid, totalDue.value))
+const repaymentRingStyle = computed(() => ({
+  background: `conic-gradient(#00bf7a ${repaymentPct.value * 3.6}deg, #eef3f0 0deg)`
+}))
+
+const gauges = computed(() => [
+  {
+    key: 'funding',
+    pct: pct.value,
+    ringStyle: ringStyle.value,
+    label: 'funded',
+    amount: formatAmount(props.round.raised),
+    totalNote: `raised of ${formatAmount(props.round.target)}`,
+    remainingNote: remainingNote.value
+  },
+  {
+    key: 'repayment',
+    pct: repaymentPct.value,
+    ringStyle: repaymentRingStyle.value,
+    label: 'repaid',
+    amount: formatAmount(props.round.totalRepaid),
+    totalNote: `repaid of ${formatAmount(totalDue.value)}`,
+    remainingNote:
+      totalDue.value > props.round.totalRepaid
+        ? `${formatAmount(totalDue.value - props.round.totalRepaid)} remaining`
+        : undefined
+  }
+])
 
 const stats = computed(() => [
   {
@@ -126,7 +169,7 @@ const stats = computed(() => [
   {
     icon: 'heroicons:flag',
     label: 'Total at maturity',
-    value: formatAmount(roundTotalDue(props.round)),
+    value: formatAmount(totalDue.value),
     sub: `matures ${props.round.maturity || '—'}`
   },
   {

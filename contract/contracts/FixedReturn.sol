@@ -17,14 +17,14 @@ import {IBank} from './interfaces/IBank.sol';
  *
  *  Lifecycle per lending offer
  *  ───────────────────────────
- *  Open → (funding target reached)        → Funded → (issuer repays) → Repaying
- *  Open → (deadline missed, issuer flips) → Refundable
+ *  Open → (funding target reached)         → Funded → (issuer repays) → Repaying
+ *  Open → (deadline missed, issuer refunds) → Refundable
  *
  *  Money flow
  *  ──────────
  *  Open        — lender deposits sit in this contract. No owner-callable drain function
- *                exists, so deposits are protected structurally: only claimRefund (lender)
- *                or the funded-sweep (to Bank) can move them out.
+ *                exists, so deposits are protected structurally: only refundLenders or
+ *                the funded-sweep (to Bank) can move them out.
  *  Funded      — on the final deposit that hits the target, the full accumulated principal
  *                is swept to Bank in the same transaction. From that point this contract
  *                holds no lender funds.
@@ -32,8 +32,23 @@ import {IBank} from './interfaces/IBank.sol';
  *                that amount here (drawn from the treasury built up via the funding sweep
  *                and ongoing deposits) and calls repayLenders, which fans it out. Funds
  *                only ever pass through this contract transiently, in the same transaction.
- *  Refundable  — lenders claim their principal directly from this contract (funds never
- *                left since the offer did not reach its target).
+ *  Refundable  — reached in the same call as the refund itself: refundLenders checks the
+ *                deadline directly against a still-Open offer (no separate "mark
+ *                refundable" step), flips state, and pushes every lender's principal
+ *                back in one transaction — funds never left this contract, since the
+ *                offer didn't reach its target.
+ *
+ *  Stalled offers (deadline passed, target not reached)
+ *  ──────────────────────────────────────────────────────
+ *  The issuer has two mutually-exclusive options, both gated on the same Open +
+ *  deadline-passed window — whichever is called first wins, since both require
+ *  state == Open:
+ *    - refundLenders        — return every lender's principal (see Refundable above).
+ *    - acceptPartialFunding — keep whatever was raised and proceed as if fully funded;
+ *                             sweeps totalFunded to Bank and flips to Funded, same as
+ *                             the target-reached path in lendFunds. Repayment already
+ *                             bases its obligation math on totalFunded rather than
+ *                             fundingTarget, so it needs no special-casing for this.
  *
  *  Repayment model
  *  ───────────────
@@ -46,7 +61,28 @@ import {IBank} from './interfaces/IBank.sol';
  *  ─────────────────────────────
  *  General   — lenderCap controls max deposit per lender (if isCapEnabled)
  *  Whitelist — lenderAllocation controls max deposit per lender (cap ignored, since
- *              the allocation already IS that lender's personal cap)
+ *              the allocation already IS that lender's personal cap). A whitelist
+ *              entry may instead be UNCAPPED_ALLOCATION, meaning that lender has no
+ *              personal ceiling beyond the offer's remaining funding target.
+ *
+ *  Whitelist reachability
+ *  ───────────────────────
+ *  If every whitelisted lender is capped (none use UNCAPPED_ALLOCATION), their
+ *  allocations must sum to at least the funding target at creation time — otherwise
+ *  the offer could never be fully funded even if every lender deposits their whole
+ *  allocation. Summing to more than the target is fine, and expected: it's a buffer
+ *  against any individual whitelisted lender who ends up not depositing (or not
+ *  depositing their full allocation) — the others' spare capacity can still cover the
+ *  target. Actual deposits stay bounded regardless, since lendFunds separately caps
+ *  the running total at fundingTarget (FundingTargetReached). If the aggregate raised
+ *  still falls short by the deadline despite adequate allocated capacity (e.g. a
+ *  whitelisted lender simply doesn't lend), acceptPartialFunding is the issuer's
+ *  fallback. An offer with at least one UNCAPPED_ALLOCATION entry skips this check
+ *  entirely: that lender can always absorb whatever the capped lenders don't, so the
+ *  offer is unconditionally fundable regardless of how the capped allocations sum.
+ *  A whitelistAddrs entry may not repeat an address — createLendingOffer reverts on a
+ *  duplicate, since a repeat would silently overwrite the earlier allocation in
+ *  storage while still counting both towards the sum, defeating this guarantee.
  *
  *  Off-chain data
  *  ──────────────
@@ -112,12 +148,18 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
     uint256 lenderCap;
     address[] whitelistAddrs; // Whitelist mode only — ignored in General mode
     uint256[] allocations; // parallel array to whitelistAddrs: allocations[i] is the
-    // max amount whitelistAddrs[i] may deposit into this offer
+    // max amount whitelistAddrs[i] may deposit into this offer, or UNCAPPED_ALLOCATION
+    // for no personal ceiling beyond the offer's remaining funding target
   }
 
   // ────────────────────────────────────────────────────
   // Storage
   // ────────────────────────────────────────────────────
+
+  /// @notice Sentinel `lenderAllocation` value meaning "whitelisted, no personal cap" —
+  ///         distinct from 0 ("not whitelisted"). Such a lender is still bounded by the
+  ///         offer's remaining funding target, just not by an individual ceiling.
+  uint256 public constant UNCAPPED_ALLOCATION = type(uint256).max;
 
   /// @dev Also serves as the next offer's id generator — see createLendingOffer.
   uint256 public totalOfferings;
@@ -141,7 +183,8 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
   mapping(uint256 => mapping(address => uint256)) public lenderDeposits;
 
   /// @dev offerId => lender => max amount that lender may deposit. Only meaningful
-  ///      for Whitelist-mode offers; zero means "not whitelisted for this offer".
+  ///      for Whitelist-mode offers; zero means "not whitelisted for this offer",
+  ///      UNCAPPED_ALLOCATION means "whitelisted, no personal ceiling".
   mapping(uint256 => mapping(address => uint256)) public lenderAllocation;
 
   /// @dev offerId => addresses that have deposited at least once, in deposit order.
@@ -191,8 +234,16 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
   /// @notice Emitted when an offer is flipped to refundable after a missed deadline.
   event LendingOfferRefundable(uint256 indexed offerId);
 
-  /// @notice Emitted when a lender claims back their principal from a refundable offer.
+  /// @notice Emitted per lender when refundLenders returns their principal.
   event PrincipalRefunded(uint256 indexed offerId, address indexed lender, uint256 amount);
+
+  /// @notice Emitted once per refundLenders call, for the total amount refunded.
+  event RefundsDistributed(uint256 indexed offerId, uint256 totalAmount);
+
+  /// @notice Emitted when the issuer accepts partial funding on a stalled offer,
+  ///         alongside LendingOfferFunded — distinguishes this from reaching the
+  ///         funding target in the ordinary course of lendFunds.
+  event PartialFundingAccepted(uint256 indexed offerId, uint256 totalFunded, uint256 fundingTarget);
 
   /// @notice Emitted once per repayLenders call, for the total amount distributed.
   event RepaymentDistributed(uint256 indexed offerId, uint256 totalAmount);
@@ -212,18 +263,23 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
   error InvalidTermDuration();
   /// @dev lenderCap exceeds the offer's fundingTarget.
   error LenderCapExceedsFundingTarget();
-  /// @dev The sum of whitelist allocations exceeds the offer's fundingTarget.
-  error AllocationSumExceedsFundingTarget();
+  /// @dev Every whitelist entry is capped (none UNCAPPED_ALLOCATION), but their sum
+  ///      falls short of the offer's fundingTarget — the offer could never be funded
+  ///      even under full participation.
+  error AllocationSumBelowFundingTarget();
   /// @dev whitelistAddrs and allocations arrays have different lengths.
   error WhitelistLengthMismatch();
+  /// @dev The same address appears more than once in whitelistAddrs.
+  error DuplicateWhitelistAddress();
   /// @dev The offer is not in the Open state.
   error OfferNotOpen();
   /// @dev The offer is not in the Funded or Repaying state.
   error OfferNotFunded();
-  /// @dev The offer is not in the Refundable state.
-  error OfferNotRefundable();
-  /// @dev markAsRefundable was called before the subscription deadline passed.
+  /// @dev refundLenders or acceptPartialFunding was called before the subscription
+  ///      deadline passed.
   error DeadlineNotPassed();
+  /// @dev acceptPartialFunding was called on an offer with nothing raised.
+  error NoFundsRaised();
   /// @dev msg.sender has no allocation on this whitelist offer.
   error NotWhitelisted();
   /// @dev Deposit would exceed the caller's whitelist allocation.
@@ -232,8 +288,6 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
   error DepositExceedsLenderCap();
   /// @dev Deposit would exceed the offer's remaining funding target.
   error FundingTargetReached();
-  /// @dev Caller has nothing to refund on this offer.
-  error NothingToRefund();
   /// @dev amount must be greater than zero.
   error ZeroAmount();
   /// @dev The repayment would exceed the total lender obligation (principal + interest).
@@ -291,7 +345,7 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
 
   /// @notice Current contract version, per semver.
   function version() external pure returns (string memory) {
-    return '1.1.0';
+    return '1.4.0';
   }
 
   // ────────────────────────────────────────────────────
@@ -386,11 +440,28 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
         revert WhitelistLengthMismatch();
       }
       uint256 allocatedTotal;
+      bool hasUncappedLender;
       for (uint256 i = 0; i < params.whitelistAddrs.length; ++i) {
+        // A fresh offerId has never touched this mapping, so a non-zero read here
+        // means this address already appeared earlier in this same loop.
+        if (lenderAllocation[offerId][params.whitelistAddrs[i]] != 0) {
+          revert DuplicateWhitelistAddress();
+        }
         lenderAllocation[offerId][params.whitelistAddrs[i]] = params.allocations[i];
-        allocatedTotal += params.allocations[i];
+        if (params.allocations[i] == UNCAPPED_ALLOCATION) {
+          hasUncappedLender = true;
+        } else {
+          allocatedTotal += params.allocations[i];
+        }
       }
-      if (allocatedTotal > params.fundingTarget) revert AllocationSumExceedsFundingTarget();
+      // Summing above the target is fine — a deliberate buffer against a whitelisted
+      // lender who ends up not depositing (or not depositing their full allocation).
+      // Actual deposits stay bounded regardless by lendFunds' own FundingTargetReached
+      // check. An uncapped lender can always absorb whatever the capped lenders don't,
+      // so the offer is unconditionally fundable and this check doesn't apply to it.
+      if (!hasUncappedLender && allocatedTotal < params.fundingTarget) {
+        revert AllocationSumBelowFundingTarget();
+      }
     }
 
     emit LendingOfferCreated(
@@ -429,10 +500,12 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
     if (block.timestamp > offer.subscriptionDeadline) revert OfferNotOpen();
 
     if (offer.fundingAccess == FundingAccess.Whitelist) {
-      if (lenderAllocation[offerId][msg.sender] == 0) revert NotWhitelisted();
-      uint256 remainingAllocation = lenderAllocation[offerId][msg.sender] -
-        lenderDeposits[offerId][msg.sender];
-      if (amount > remainingAllocation) revert DepositExceedsAllocation();
+      uint256 allocation = lenderAllocation[offerId][msg.sender];
+      if (allocation == 0) revert NotWhitelisted();
+      if (allocation != UNCAPPED_ALLOCATION) {
+        uint256 remainingAllocation = allocation - lenderDeposits[offerId][msg.sender];
+        if (amount > remainingAllocation) revert DepositExceedsAllocation();
+      }
     } else if (offer.isCapEnabled) {
       if (lenderDeposits[offerId][msg.sender] + amount > offer.lenderCap) {
         revert DepositExceedsLenderCap();
@@ -471,47 +544,75 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
   }
 
   // ────────────────────────────────────────────────────
-  // Issuer — mark refundable (deadline missed)
+  // Issuer — refund all lenders (deadline missed)
   // ────────────────────────────────────────────────────
 
   /**
-   * @notice Flip an offer to Refundable once its subscription deadline has passed
-   *         without reaching its funding target.
-   * @dev Only reachable from Open — a Funded offer has already succeeded and moves
-   *      on to repayment instead, never refunding. This is an issuer decision, not
-   *      automatic: missing the deadline doesn't force a refund by itself, the issuer
-   *      must explicitly choose to open the refund path for lenders to claim from.
+   * @notice Once an offer's subscription deadline has passed without reaching its
+   *         funding target, pushes every lender's principal back in one transaction.
+   * @dev Eligibility is a plain date check against the still-Open offer — there is no
+   *      separate "mark refundable" step first, mirroring how repayLenders itself
+   *      checks state directly rather than requiring a prior transition call.
+   *      Only reachable from Open — a Funded offer has already succeeded and moves on
+   *      to repayment instead, never refunding. Missing the deadline doesn't refund
+   *      automatically either: the issuer must call this.
+   * @dev Unbounded loop over _offerLenders[offerId], same tradeoff as repayLenders — a
+   *      lender whose token receipt reverts blocks everyone else in this call, and
+   *      because the state flip below shares the same transaction, a revert here also
+   *      undoes it, leaving the offer callable again once unblocked. Acceptable at
+   *      current scale (matches repayLenders' own accepted risk).
    */
-  function markAsRefundable(uint256 offerId) external onlyOwner {
+  function refundLenders(uint256 offerId) external onlyOwner nonReentrant {
     LendingOffer storage offer = lendingOffers[offerId];
     if (offer.state != OfferState.Open) revert OfferNotOpen();
     if (block.timestamp <= offer.subscriptionDeadline) revert DeadlineNotPassed();
+
     offer.state = OfferState.Refundable;
     emit LendingOfferRefundable(offerId);
+
+    address[] storage lenders = _offerLenders[offerId];
+    uint256 totalRefunded;
+    for (uint256 i = 0; i < lenders.length; ++i) {
+      address lender = lenders[i];
+      uint256 amount = lenderDeposits[offerId][lender];
+      if (amount == 0) continue;
+
+      lenderDeposits[offerId][lender] = 0;
+      IERC20(offer.token).safeTransfer(lender, amount);
+      totalRefunded += amount;
+      emit PrincipalRefunded(offerId, lender, amount);
+    }
+
+    emit RefundsDistributed(offerId, totalRefunded);
   }
 
   // ────────────────────────────────────────────────────
-  // Lender — claim refund (only if Refundable)
+  // Issuer — accept partial funding (deadline missed, keep what was raised)
   // ────────────────────────────────────────────────────
 
   /**
-   * @notice Claim back principal from a Refundable offer.
-   * @dev Funds for a refundable offer never left this contract (the offer never
-   *      reached its funding target, so the Bank sweep in lendFunds never ran).
-   *      Principal only, no interest — the loan never actually started.
-   *      Deposit is zeroed before the transfer (effects before interaction).
+   * @notice Alternative to refundLenders for a stalled offer (deadline passed, target
+   *         not reached): keep whatever has been raised and proceed as if fully funded,
+   *         instead of returning it to lenders.
+   * @dev Same eligibility window as refundLenders (Open, deadline passed) — the issuer's
+   *      two mutually-exclusive options, whichever is called first wins since both
+   *      require state == Open. Sweeps the current totalFunded to Bank exactly like the
+   *      target-reached branch of lendFunds. repayLenders' obligation math already keys
+   *      off totalFunded rather than fundingTarget, so repayment against a partially
+   *      funded offer needs no further changes.
    */
-  function claimRefund(uint256 offerId) external nonReentrant {
+  function acceptPartialFunding(uint256 offerId) external onlyOwner nonReentrant {
     LendingOffer storage offer = lendingOffers[offerId];
-    if (offer.state != OfferState.Refundable) revert OfferNotRefundable();
+    if (offer.state != OfferState.Open) revert OfferNotOpen();
+    if (block.timestamp <= offer.subscriptionDeadline) revert DeadlineNotPassed();
+    if (offer.totalFunded == 0) revert NoFundsRaised();
 
-    uint256 amount = lenderDeposits[offerId][msg.sender];
-    if (amount == 0) revert NothingToRefund();
+    offer.state = OfferState.Funded;
+    emit PartialFundingAccepted(offerId, offer.totalFunded, offer.fundingTarget);
+    emit LendingOfferFunded(offerId);
 
-    lenderDeposits[offerId][msg.sender] = 0;
-    IERC20(offer.token).safeTransfer(msg.sender, amount);
-
-    emit PrincipalRefunded(offerId, msg.sender, amount);
+    address bankAddress = _getBankAddress();
+    IERC20(offer.token).safeTransfer(bankAddress, offer.totalFunded);
   }
 
   // ────────────────────────────────────────────────────
