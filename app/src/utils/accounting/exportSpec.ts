@@ -26,4 +26,9 @@ export interface SectionSpec {
   filter?: string
   /** General Ledger visible columns. */
   columns?: LedgerColumnKey[]
+  /**
+   * General Ledger currency selection — the subset of currencies in view. Unset
+   * (or all currencies) means no currency narrowing.
+   */
+  currencies?: string[]
 }

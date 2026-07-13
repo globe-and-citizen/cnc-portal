@@ -140,6 +140,7 @@ interface LedgerSheetOptions {
   from?: Date | null
   to?: Date | null
   columns?: LedgerColumnKey[]
+  currencies?: string[]
 }
 
 function ledgerSheet(
@@ -147,7 +148,13 @@ function ledgerSheet(
   resolveName?: ResolveName,
   opts: LedgerSheetOptions = {}
 ): SheetRows {
-  const { rows, total } = presentLedger(acc.entries, opts.filter ?? 'All', opts.from, opts.to)
+  const { rows, total } = presentLedger(
+    acc.entries,
+    opts.filter ?? 'All',
+    opts.from,
+    opts.to,
+    opts.currencies
+  )
   const cols = resolveLedgerColumns(opts.columns)
   return [
     // Title row spells out the active category / period; the tab keeps its short name.
@@ -191,7 +198,8 @@ function sectionSheet(
           filter: spec.filter,
           from: spec.from,
           to: spec.to,
-          columns: spec.columns
+          columns: spec.columns,
+          currencies: spec.currencies
         })
     }
   })()
