@@ -14,6 +14,9 @@ import type { TokenId } from '@/constant'
 /** The empty activity carried by a posting's continuation (credit) and total rows. */
 const NO_ACTIVITY: ActivityCell = { kind: 'plain', text: '' }
 
+/** Exact chart-of-accounts label for a protocol-fee leg; drives badge + filter. */
+export const FEE_ACCOUNT = 'Transaction Fee Expense'
+
 export type LedgerCategory =
   | 'Investment'
   | 'Revenue'
@@ -137,6 +140,8 @@ export interface LedgerRow {
   quantity: string
   /** USD rate of record (spec §2 "Taux"), 6-dp, e.g. `$0.080000` / `$1.000000`. */
   rate: string
+  /** True on a `Transaction Fee Expense` leg — drives the "Fee" badge and filter. */
+  isFee?: boolean
 }
 
 export interface LedgerView {
@@ -207,7 +212,7 @@ function movementOf(rawAmount: string, token: TokenId, rate?: number): Movement 
 /** A posting's second and later lines — the lead row alone carries date / action / activity. */
 function continuationRow(
   account: string,
-  amounts: { dr?: string; cr?: string; accountMuted?: boolean },
+  amounts: { dr?: string; cr?: string; accountMuted?: boolean; isFee?: boolean },
   movement: Movement = NO_MOVEMENT
 ): LedgerRow {
   return {
@@ -222,6 +227,7 @@ function continuationRow(
     accountDimmed: false,
     dr: amounts.dr ?? '',
     cr: amounts.cr ?? '',
+    isFee: amounts.isFee ?? false,
     ...movement
   }
 }
@@ -268,11 +274,12 @@ function rowsOf(entry: LedgerEntry): LedgerRow[] {
         accountMuted: false,
         accountDimmed: false,
         dr: money(entry.amountUsd),
-        cr: ''
+        cr: '',
+        isFee: false
       },
       continuationRow(
-        'Transaction Fee Expense',
-        { dr: money(fee.amountUsd) },
+        FEE_ACCOUNT,
+        { dr: money(fee.amountUsd), isFee: true },
         movementOf(fee.rawAmount, fee.token, fee.rate)
       ),
       continuationRow(entry.credit, {
@@ -291,7 +298,8 @@ function rowsOf(entry: LedgerEntry): LedgerRow[] {
       accountMuted: false,
       accountDimmed: false,
       dr: money(entry.amountUsd),
-      cr: ''
+      cr: '',
+      isFee: entry.debit === FEE_ACCOUNT
     })
   }
   if (entry.credit) {
@@ -334,6 +342,37 @@ export function filterLedgerEntries(
 /** Flatten postings into the table's two-rows-per-entry shape. */
 export function ledgerRows(entries: readonly LedgerEntry[]): LedgerRow[] {
   return entries.flatMap((entry) => rowsOf(entry))
+}
+
+/** True when an entry carries a {@link FEE_ACCOUNT} leg (folded or standalone). */
+export function entryHasFee(entry: LedgerEntry): boolean {
+  return entry.mergedBankFee != null || entry.debit === FEE_ACCOUNT
+}
+/** The USD amount of that leg — the folded fee, else the standalone fee itself. */
+function feeUsdOf(entry: LedgerEntry): number {
+  return entry.mergedBankFee?.amountUsd ?? entry.amountUsd
+}
+
+/** One contextual line per fee-bearing entry — just its {@link FEE_ACCOUNT} leg. */
+export function ledgerFeeRows(entries: readonly LedgerEntry[]): LedgerRow[] {
+  return entries.filter(entryHasFee).map((entry) => {
+    // The single isFee leg rowsOf emits (its own amount + movement), promoted to a
+    // lead row so the isolated line keeps its date / activity — a folded fee's leg
+    // is a continuation, blank on those.
+    const feeRow = rowsOf(entry).find((r) => r.isFee) as LedgerRow
+    return {
+      ...feeRow,
+      isFirst: true,
+      date: fmtDateTime(entry.timestamp),
+      label: entryLabel(entry),
+      activity: activityOf(entry)
+    }
+  })
+}
+
+/** Σ of the fee legs across the fee-bearing entries, formatted as USD. */
+export function ledgerFeeTotal(entries: readonly LedgerEntry[]): string {
+  return money(entries.filter(entryHasFee).reduce((sum, e) => sum + feeUsdOf(e), 0))
 }
 
 /**

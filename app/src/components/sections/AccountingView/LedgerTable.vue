@@ -49,14 +49,16 @@
     </template>
 
     <template #account-cell="{ row: { original: row } }">
-      <span
-        v-if="!row.isTotal"
-        class="text-sm tabular-nums"
-        :class="
-          row.accountDimmed ? 'text-dimmed' : row.accountMuted ? 'text-muted' : 'text-default'
-        "
-      >
-        {{ row.account }}
+      <span v-if="!row.isTotal" class="inline-flex items-center gap-1.5">
+        <span
+          class="text-sm tabular-nums"
+          :class="
+            row.accountDimmed ? 'text-dimmed' : row.accountMuted ? 'text-muted' : 'text-default'
+          "
+        >
+          {{ row.account }}
+        </span>
+        <UBadge v-if="row.isFee" color="warning" variant="subtle" size="xs" label="Fee" />
       </span>
     </template>
 

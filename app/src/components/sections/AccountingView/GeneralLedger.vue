@@ -16,11 +16,23 @@
               <span class="text-[15px] font-semibold">General ledger</span>
               <UBadge color="primary" variant="subtle" :label="`${total} entries`" />
             </div>
-            <SegmentedPills
-              :items="categoryItems"
-              :model-value="filter"
-              @update:model-value="filter = $event"
-            />
+            <div class="flex items-center gap-2">
+              <SegmentedPills
+                :items="categoryItems"
+                :model-value="filter"
+                @update:model-value="filter = $event"
+              />
+              <UButton
+                :variant="feeOnly ? 'solid' : 'outline'"
+                :color="feeOnly ? 'warning' : 'neutral'"
+                size="xs"
+                icon="i-heroicons-receipt-percent"
+                label="Fee"
+                :aria-pressed="feeOnly"
+                data-test="ledger-fee-filter"
+                @click="feeOnly = !feeOnly"
+              />
+            </div>
           </div>
 
           <!-- Reporting period + show/hide columns -->
@@ -71,6 +83,9 @@ import {
   ledgerRows,
   ledgerTotal,
   ledgerCategories,
+  entryHasFee,
+  ledgerFeeRows,
+  ledgerFeeTotal,
   LEDGER_COLUMNS,
   type LedgerColumnKey
 } from '@/utils/accounting/ledgerPresenter'
@@ -88,6 +103,10 @@ const visibleColumns = useLocalStorage<LedgerColumnKey[]>(
 // rather than snapping back to "All".
 const filter = useLocalStorage('ledger_active_category_filter', 'All')
 
+// "Fee only" toggle — isolates the Transaction Fee Expense legs. Layered on top
+// of the category / period filters, so it composes with whatever tab is active.
+const feeOnly = useLocalStorage('ledger_fee_only', false)
+
 // Reporting period (range mode) — defaults to "All time" (whole book).
 const period = ref<Range>(defaultValueForMode('range') as Range)
 
@@ -98,18 +117,27 @@ const acc = useAccountingContext()
 // Filter once, paginate by entry (a posting spans two rows), then flatten the
 // current page into table rows. The "Total movements" figure stays the grand
 // total across the whole filtered book, not just the page.
-const filtered = computed(() =>
-  filterLedgerEntries(acc.entries.value, filter.value, period.value.start, period.value.end)
-)
+const filtered = computed(() => {
+  const entries = filterLedgerEntries(
+    acc.entries.value,
+    filter.value,
+    period.value.start,
+    period.value.end
+  )
+  return feeOnly.value ? entries.filter(entryHasFee) : entries
+})
 const total = computed(() => filtered.value.length)
-const grandTotal = computed(() => ledgerTotal(filtered.value))
+const grandTotal = computed(() =>
+  feeOnly.value ? ledgerFeeTotal(filtered.value) : ledgerTotal(filtered.value)
+)
 
 const { page, pageSize, reset } = usePagination(() => total.value, { key: 'ledger' })
-watch([filter, period], reset, { deep: true })
+watch([filter, period, feeOnly], reset, { deep: true })
 
 const pageRows = computed(() => {
   const start = (page.value - 1) * pageSize.value
-  return ledgerRows(filtered.value.slice(start, start + pageSize.value))
+  const slice = filtered.value.slice(start, start + pageSize.value)
+  return feeOnly.value ? ledgerFeeRows(slice) : ledgerRows(slice)
 })
 
 // A real date window is in play only when the picker isn't on "All time" (whose
