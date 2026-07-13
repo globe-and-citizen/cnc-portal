@@ -10,8 +10,17 @@
     </template>
 
     <template #action-cell="{ row: { original: row } }">
+      <!-- A fee leg reads as its own action ("Fee"), on the same footing as the
+           category pills (Expense / Transfer / …) — even on a continuation row. -->
       <span
-        v-if="row.isFirst && !row.isTotal"
+        v-if="row.isFee"
+        class="inline-block rounded-full px-2 py-0.5 text-xs font-medium"
+        :class="FEE_BADGE"
+      >
+        Fee
+      </span>
+      <span
+        v-else-if="row.isFirst && !row.isTotal"
         class="inline-block rounded-full px-2 py-0.5 text-xs font-medium"
         :class="row.catClass"
       >
@@ -49,16 +58,14 @@
     </template>
 
     <template #account-cell="{ row: { original: row } }">
-      <span v-if="!row.isTotal" class="inline-flex items-center gap-1.5">
-        <span
-          class="text-sm tabular-nums"
-          :class="
-            row.accountDimmed ? 'text-dimmed' : row.accountMuted ? 'text-muted' : 'text-default'
-          "
-        >
-          {{ row.account }}
-        </span>
-        <UBadge v-if="row.isFee" color="warning" variant="subtle" size="xs" label="Fee" />
+      <span
+        v-if="!row.isTotal"
+        class="text-sm tabular-nums"
+        :class="
+          row.accountDimmed ? 'text-dimmed' : row.accountMuted ? 'text-muted' : 'text-default'
+        "
+      >
+        {{ row.account }}
       </span>
     </template>
 
@@ -129,6 +136,10 @@ const props = defineProps<{
 }>()
 
 type LedgerTableRow = LedgerRow & { isTotal: boolean }
+
+// Action-pill classes for a fee leg — amber, a peer of the category badges
+// (CATEGORY_BADGE in ledgerPresenter). A static string so Tailwind keeps it.
+const FEE_BADGE = 'bg-warning/10 text-warning'
 
 /** A cash pocket account rendered as a contract avatar (document icon + short name). */
 function pocketUser(account: string) {
