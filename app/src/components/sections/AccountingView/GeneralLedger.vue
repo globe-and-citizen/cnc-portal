@@ -23,12 +23,17 @@
             />
           </div>
 
-          <!-- Reporting period + show/hide columns -->
+          <!-- Reporting period + currency filter + show/hide columns -->
           <div class="flex flex-wrap items-center justify-end gap-2.5">
             <AccountingDatePicker
               v-model="period"
               mode="range"
               storage-key="cnc-accounting-ledger-period"
+            />
+            <CurrencyFilterSelect
+              v-if="showCurrencyFilter"
+              v-model="selectedCurrencies"
+              :currencies="availableCurrencies"
             />
             <ColumnVisibilitySelect v-model="visibleColumns" :items="columnItems" />
           </div>
@@ -59,6 +64,7 @@ import AccountingExportBar from './AccountingExportBar.vue'
 import TablePagination from '@/components/TablePagination.vue'
 import AccountingDatePicker from '@/components/AccountingDatePicker.vue'
 import ColumnVisibilitySelect from '@/components/ColumnVisibilitySelect.vue'
+import CurrencyFilterSelect from '@/components/CurrencyFilterSelect.vue'
 import { usePagination } from '@/composables/usePagination'
 import { defaultValueForMode, isAllTimeRange, type Range } from '@/utils/datePicker'
 import { useAccountingContext } from '@/composables/accounting/useAccountingContext'
@@ -68,6 +74,8 @@ import { exportFilename } from '@/utils/accounting/exportNaming'
 import type { SectionSpec } from '@/utils/accounting/exportSpec'
 import {
   filterLedgerEntries,
+  filterLedgerByCurrency,
+  ledgerCurrencies,
   ledgerRows,
   ledgerTotal,
   ledgerCategories,
@@ -102,21 +110,59 @@ const acc = useAccountingContext()
 // Filter once, paginate by entry (a posting spans two rows), then flatten the
 // current page into table rows. The "Total movements" figure stays the grand
 // total across the whole filtered book, not just the page.
+const isFeeFilter = computed(() => filter.value === FEE_FILTER)
+
+// After category + date + fee, before currency — so the currency options reflect
+// the data in view and recompute when those upstream filters change (spec §4).
 const filtered = computed(() =>
   filterLedgerEntries(acc.entries.value, filter.value, period.value.start, period.value.end)
 )
-const isFeeFilter = computed(() => filter.value === FEE_FILTER)
-const total = computed(() => filtered.value.length)
+
+// The distinct currencies currently in view. The selector is shown only when at
+// least two are present (a single-currency ledger needs no filter).
+const availableCurrencies = computed(() => ledgerCurrencies(filtered.value, isFeeFilter.value))
+const showCurrencyFilter = computed(() => availableCurrencies.value.length >= 2)
+
+// Selected currencies (defaults to all). Reconciled whenever the available set
+// changes: keep what's still present, falling back to "all" when nothing valid
+// remains — so switching another filter never leaves a stale, empty selection.
+const selectedCurrencies = ref<string[]>([])
+watch(
+  availableCurrencies,
+  (avail) => {
+    const kept = selectedCurrencies.value.filter((c) => avail.includes(c))
+    selectedCurrencies.value = kept.length ? kept : [...avail]
+  },
+  { immediate: true }
+)
+
+// The currencies to actually filter by, or null when there's nothing to narrow
+// (selector hidden, or every currency selected). Shared by the view and export.
+const activeCurrencies = computed<string[] | null>(() => {
+  if (!showCurrencyFilter.value) return null
+  if (selectedCurrencies.value.length >= availableCurrencies.value.length) return null
+  return selectedCurrencies.value
+})
+
+const filteredByCurrency = computed(() =>
+  activeCurrencies.value === null
+    ? filtered.value
+    : filterLedgerByCurrency(filtered.value, activeCurrencies.value, isFeeFilter.value)
+)
+
+const total = computed(() => filteredByCurrency.value.length)
 const grandTotal = computed(() =>
-  isFeeFilter.value ? ledgerFeeTotal(filtered.value) : ledgerTotal(filtered.value)
+  isFeeFilter.value
+    ? ledgerFeeTotal(filteredByCurrency.value)
+    : ledgerTotal(filteredByCurrency.value)
 )
 
 const { page, pageSize, reset } = usePagination(() => total.value, { key: 'ledger' })
-watch([filter, period], reset, { deep: true })
+watch([filter, period, selectedCurrencies], reset, { deep: true })
 
 const pageRows = computed(() => {
   const start = (page.value - 1) * pageSize.value
-  const slice = filtered.value.slice(start, start + pageSize.value)
+  const slice = filteredByCurrency.value.slice(start, start + pageSize.value)
   return isFeeFilter.value ? ledgerFeeRows(slice) : ledgerRows(slice)
 })
 
@@ -142,7 +188,8 @@ const spec = (): SectionSpec => ({
   filter: filter.value,
   from: dateSelected.value ? period.value.start : null,
   to: dateSelected.value ? period.value.end : null,
-  columns: visibleColumns.value
+  columns: visibleColumns.value,
+  ...(activeCurrencies.value ? { currencies: activeCurrencies.value } : {})
 })
 // The filename mirrors the export scope: the active category, plus the period
 // when a real range is set (all-time needs no date suffix).
