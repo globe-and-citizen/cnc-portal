@@ -8,6 +8,7 @@ import { money, fmtDateTime, filterByPeriod, periodLabel, currencySymbol } from 
 import { wholeTokenAmount } from './toUsd'
 import { activityOf, entryLabel, type ActivityCell } from './describeEntry'
 import { mergeBankFees } from './mergeBankFees'
+import { formatAmountWithPrecision } from '@/utils/currencyUtil'
 import type { LedgerEntry, UseCase } from './ledgerEntry'
 import type { TokenId } from '@/constant'
 
@@ -146,7 +147,7 @@ export interface LedgerRow {
   currency: string
   /** Whole-token quantity moved (spec §2 "Quantité"), 6-dp, e.g. `0.070352`. */
   quantity: string
-  /** USD rate of record (spec §2 "Taux"), 6-dp, e.g. `$0.080000` / `$1.000000`. */
+  /** USD rate of record (spec §2 "Taux"), up to 6-dp with trailing zeros trimmed, e.g. `$0.08` / `$1`. */
   rate: string
   /** True on a `Transaction Fee Expense` leg — drives the "Fee" badge and filter. */
   isFee?: boolean
@@ -210,10 +211,10 @@ function movementOf(rawAmount: string, token: TokenId, rate?: number): Movement 
   return {
     currency: currencySymbol(token),
     quantity: whole.toLocaleString('en-US', { maximumFractionDigits: 6 }),
-    rate:
-      rate == null
-        ? ''
-        : '$' + rate.toLocaleString('en-US', { minimumFractionDigits: 6, maximumFractionDigits: 6 })
+    // Reuse the shared amount formatter (as Bank / Payroll do) so trailing zeros
+    // are trimmed — `1.000000` reads `1`, `0.200000` reads `0.2` — while a value
+    // with real decimals keeps them, capped at 6 dp.
+    rate: rate == null ? '' : '$' + formatAmountWithPrecision(rate, 0, 6)
   }
 }
 
