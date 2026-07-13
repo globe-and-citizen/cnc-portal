@@ -71,6 +71,9 @@ describe('buildAccountingSheets', () => {
       'Transaction',
       'Activity',
       'Account',
+      'Currency',
+      'Quantity',
+      'Rate',
       'Debit',
       'Credit'
     ])
@@ -78,7 +81,7 @@ describe('buildAccountingSheets', () => {
     expect(rows.length).toBe(6)
     const totalRow = rows.at(-1)!
     expect(totalRow[2]).toBe('Total movements')
-    expect(totalRow[5]).toBe(100) // numeric Debit total
+    expect(totalRow[8]).toBe(100) // numeric Debit total
   })
 
   it('fills the Activity column via the supplied name resolver', () => {

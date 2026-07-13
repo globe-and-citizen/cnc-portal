@@ -4,9 +4,12 @@
  * category/date filter. Split from {@link ./presenter} (which handles the
  * statement-level views) to keep each module focused. Pure and unit-testable.
  */
-import { money, fmtDateTime, filterByPeriod, periodLabel } from './presenter'
+import { money, fmtDateTime, filterByPeriod, periodLabel, currencySymbol } from './presenter'
+import { wholeTokenAmount } from './toUsd'
 import { activityOf, entryLabel, type ActivityCell } from './describeEntry'
+import { mergeBankFees } from './mergeBankFees'
 import type { LedgerEntry, UseCase } from './ledgerEntry'
+import type { TokenId } from '@/constant'
 
 /** The empty activity carried by a posting's continuation (credit) and total rows. */
 const NO_ACTIVITY: ActivityCell = { kind: 'plain', text: '' }
@@ -58,17 +61,27 @@ export type LedgerColumnKey =
   | 'account'
   | 'dr'
   | 'cr'
+  | 'currency'
+  | 'quantity'
+  | 'rate'
 
 /** A ledger column as rendered in the selector and the exports. */
 export type LedgerColumn = { value: LedgerColumnKey; label: string }
 
-/** Ledger columns as `{ value, label }`, for the show/hide-columns selector. */
+/**
+ * Ledger columns as `{ value, label }`, for the show/hide-columns selector.
+ * Devise / Quantité / Taux (spec §2) lead the USD debit/credit so each posting
+ * reads "native currency · quantity · rate of record · $ moved".
+ */
 export const LEDGER_COLUMNS: ReadonlyArray<LedgerColumn> = [
   { value: 'date', label: 'Date' },
   { value: 'action', label: 'Action' },
   { value: 'transaction', label: 'Transaction' },
   { value: 'activity', label: 'Activity' },
   { value: 'account', label: 'Account' },
+  { value: 'currency', label: 'Currency' },
+  { value: 'quantity', label: 'Quantity' },
+  { value: 'rate', label: 'Rate' },
   { value: 'dr', label: 'Debit' },
   { value: 'cr', label: 'Credit' }
 ]
@@ -118,6 +131,12 @@ export interface LedgerRow {
   accountDimmed: boolean
   dr: string
   cr: string
+  /** The posting's currency (spec §2 "Devise"), e.g. `POL` / `USDC`. */
+  currency: string
+  /** Whole-token quantity moved (spec §2 "Quantité"), 6-dp, e.g. `0.070352`. */
+  quantity: string
+  /** USD rate of record (spec §2 "Taux"), 6-dp, e.g. `$0.080000` / `$1.000000`. */
+  rate: string
 }
 
 export interface LedgerView {
@@ -153,34 +172,121 @@ export function categoryOf(entry: LedgerEntry): LedgerCategory {
     'UC-EXP-01': 'Expense',
     'CASH-OUT': 'Expense',
     'UC-INV-01': 'Dividend',
-    'DEFAULT-D': 'Memo',
-    FEE: 'Transfer',
+    'DEFAULT-D': 'Investment',
+    FEE: 'Expense',
     INTERNAL: 'Transfer',
     'UC-BANK-03': 'Transfer'
   }
   return byUseCase[entry.useCase] ?? 'Transfer'
 }
 
-/** The two journal-line rows (debit then credit) a posting renders as. */
+/** The Devise / Quantité / Taux columns of one token move (spec §2). */
+type Movement = Pick<LedgerRow, 'currency' | 'quantity' | 'rate'>
+
+/** Carried by the continuation rows of a posting, which repeat no movement. */
+const NO_MOVEMENT: Movement = { currency: '', quantity: '', rate: '' }
+
+/** The movement columns of a token move; a malformed raw amount reads as 0. */
+function movementOf(rawAmount: string, token: TokenId, rate?: number): Movement {
+  let whole = 0
+  try {
+    whole = wholeTokenAmount(BigInt(rawAmount), token)
+  } catch {
+    whole = 0
+  }
+  return {
+    currency: currencySymbol(token),
+    quantity: whole.toLocaleString('en-US', { maximumFractionDigits: 6 }),
+    rate:
+      rate == null
+        ? ''
+        : '$' + rate.toLocaleString('en-US', { minimumFractionDigits: 6, maximumFractionDigits: 6 })
+  }
+}
+
+/** A posting's second and later lines — the lead row alone carries date / action / activity. */
+function continuationRow(
+  account: string,
+  amounts: { dr?: string; cr?: string; accountMuted?: boolean },
+  movement: Movement = NO_MOVEMENT
+): LedgerRow {
+  return {
+    isFirst: false,
+    date: '',
+    label: '',
+    activity: NO_ACTIVITY,
+    cat: '',
+    catClass: '',
+    account,
+    accountMuted: amounts.accountMuted ?? false,
+    accountDimmed: false,
+    dr: amounts.dr ?? '',
+    cr: amounts.cr ?? '',
+    ...movement
+  }
+}
+
+/** The journal-line rows (debit then credit) a posting renders as. */
 function rowsOf(entry: LedgerEntry): LedgerRow[] {
-  const cat = categoryOf(entry)
   const head = {
     isFirst: true,
     date: fmtDateTime(entry.timestamp),
     label: entryLabel(entry),
     activity: activityOf(entry),
-    cat,
+    cat: categoryOf(entry),
     catClass: badgeClassOf(entry)
   }
-  // Memo-only posting (Default-D): a single dimmed share-count line, no money.
+  // The same token move backs every leg, so the movement columns show once, on the
+  // lead row — except the fee leg below, which is its own (smaller) move.
+  const movement = movementOf(entry.rawAmount, entry.token, entry.rate)
+
+  // Memo-only posting (no monetary legs): a single dimmed share-count line.
   if (!entry.debit && !entry.credit) {
-    const account = entry.shares ? `+${entry.shares} SHER (memo)` : 'Memo'
-    return [{ ...head, account, accountMuted: false, accountDimmed: true, dr: '', cr: '' }]
+    return [
+      {
+        ...head,
+        ...NO_MOVEMENT,
+        account: entry.shares ? `+${entry.shares} SHER (memo)` : 'Memo',
+        accountMuted: false,
+        accountDimmed: true,
+        dr: '',
+        cr: ''
+      }
+    ]
   }
+
+  // A transfer with a fee skimmed in the same transaction ({@link mergeBankFees})
+  // renders as one compound entry: Dr destination (net) · Dr Transaction Fee
+  // Expense · Cr Cash — Bank (gross), rather than two separate postings.
+  const fee = entry.mergedBankFee
+  if (fee && entry.debit && entry.credit) {
+    return [
+      {
+        ...head,
+        ...movement,
+        account: entry.debit,
+        accountMuted: false,
+        accountDimmed: false,
+        dr: money(entry.amountUsd),
+        cr: ''
+      },
+      continuationRow(
+        'Transaction Fee Expense',
+        { dr: money(fee.amountUsd) },
+        movementOf(fee.rawAmount, fee.token, fee.rate)
+      ),
+      continuationRow(entry.credit, {
+        cr: money(entry.amountUsd + fee.amountUsd),
+        accountMuted: true
+      })
+    ]
+  }
+
   const rows: LedgerRow[] = []
   if (entry.debit) {
     rows.push({
       ...head,
+      ...movement,
       account: entry.debit,
       accountMuted: false,
       accountDimmed: false,
@@ -189,28 +295,28 @@ function rowsOf(entry: LedgerEntry): LedgerRow[] {
     })
   }
   if (entry.credit) {
-    const lead = rows.length === 0
-    rows.push({
-      isFirst: lead,
-      date: lead ? head.date : '',
-      label: lead ? head.label : '',
-      activity: lead ? head.activity : NO_ACTIVITY,
-      cat: lead ? cat : '',
-      catClass: lead ? head.catClass : '',
-      account: entry.credit,
-      accountMuted: true,
-      accountDimmed: false,
-      dr: '',
-      cr: money(entry.amountUsd)
-    })
+    rows.push(
+      rows.length
+        ? continuationRow(entry.credit, { cr: money(entry.amountUsd), accountMuted: true })
+        : {
+            ...head,
+            ...movement,
+            account: entry.credit,
+            accountMuted: true,
+            accountDimmed: false,
+            dr: '',
+            cr: money(entry.amountUsd)
+          }
+    )
   }
   return rows
 }
 
 /**
  * The ledger entries narrowed by category + inclusive date window, sorted
- * chronologically. Split out so a paginated view can slice by **entry** (not by
- * row — a posting spans two rows) before flattening into table rows.
+ * chronologically, with each Bank fee folded into its transfer ({@link
+ * mergeBankFees}). Split out so a paginated view can slice by **entry** (not by
+ * row — a posting spans two-plus rows) before flattening into table rows.
  */
 export function filterLedgerEntries(
   entries: readonly LedgerEntry[],
@@ -218,10 +324,11 @@ export function filterLedgerEntries(
   from?: Date | null,
   to?: Date | null
 ): LedgerEntry[] {
-  return filterByPeriod(entries, from, to)
+  const shown = filterByPeriod(entries, from, to)
     .filter((e) => filter === 'All' || categoryOf(e) === filter)
     .slice()
     .sort((a, b) => b.timestamp - a.timestamp) // most recent first
+  return mergeBankFees(shown)
 }
 
 /** Flatten postings into the table's two-rows-per-entry shape. */
@@ -229,9 +336,18 @@ export function ledgerRows(entries: readonly LedgerEntry[]): LedgerRow[] {
   return entries.flatMap((entry) => rowsOf(entry))
 }
 
-/** Σ of the debit legs — the "Total movements" figure, formatted as USD. */
+/**
+ * Σ of the debit legs — the "Total movements" figure, formatted as USD. A folded
+ * Bank fee ({@link mergeBankFees}) is an extra debit leg on its transfer, so its
+ * amount is added in too (the standalone fee posting it replaced is gone).
+ */
 export function ledgerTotal(entries: readonly LedgerEntry[]): string {
-  return money(entries.reduce((sum, e) => sum + (e.debit ? e.amountUsd : 0), 0))
+  return money(
+    entries.reduce(
+      (sum, e) => sum + (e.debit ? e.amountUsd : 0) + (e.mergedBankFee?.amountUsd ?? 0),
+      0
+    )
+  )
 }
 
 /** General-ledger rows narrowed by category + inclusive date window. */

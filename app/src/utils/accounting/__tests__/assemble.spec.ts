@@ -45,7 +45,7 @@ describe('assembleCncAccounting', () => {
   it('returns an empty, balanced result for no feeds', () => {
     const a = emptyCncAccounting()
     expect(a.entries).toEqual([])
-    expect(a.summary).toMatchObject({ cash: 0, income: 0, expense: 0, equity: 0, netIncome: 0 })
+    expect(a.summary).toMatchObject({ cash: 0, income: 0, expense: 0, equity: 0 })
     expect(a.generalLedger.balanced).toBe(true)
     expect(a.balanceSheet.balanced).toBe(true)
     expect(a.incomeStatement.netIncome).toBe(0)
@@ -90,12 +90,17 @@ describe('assembleCncAccounting', () => {
 
     expect(a.summary.income).toBe(100)
     expect(a.incomeStatement.revenue).toContainEqual({ account: 'Service Revenue', amount: 100 })
-    // The fee is an internal Bank → FeeCollector move: it nets out of income.
+    // The protocol fee is booked as a Transaction Fee Expense leaving the Bank.
     const fee = a.entries.find((e) => e.useCase === 'FEE')
     expect(fee).toMatchObject({
-      debit: 'Cash — FeeCollector',
+      debit: 'Transaction Fee Expense',
       credit: 'Cash — Bank',
-      internal: true
+      internal: false
+    })
+    expect(a.summary.expense).toBe(1)
+    expect(a.incomeStatement.expenses).toContainEqual({
+      account: 'Transaction Fee Expense',
+      amount: 1
     })
     expect(a.generalLedger.balanced).toBe(true)
     expect(a.balanceSheet.balanced).toBe(true)
@@ -241,6 +246,46 @@ describe('assembleCncAccounting', () => {
     expect(a.balanceSheet.investorEquity).toBe(200)
     // The backed mint dropped out — no Default-D memo entry survives.
     expect(a.entries.some((e) => e.useCase === 'DEFAULT-D')).toBe(false)
+    expect(a.balanceSheet.balanced).toBe(true)
+  })
+
+  it('issues an unbacked direct mint into equity (Dr Shares to be issued · Cr Investor Equity)', () => {
+    const a = assembleCncAccounting({
+      ...BASE,
+      // No backing deposit/withdraw → the mint is a direct share issuance.
+      investorEvents: {
+        investorMints: {
+          items: [
+            {
+              id: 'm1',
+              contractAddress: INVESTOR,
+              shareholder: ADDR.member,
+              amount: '60000000', // 60 SHER
+              timestamp: 150
+            }
+          ]
+        },
+        investorDividendDistributeds: { items: [] },
+        investorDividendPaids: { items: [] },
+        investorDividendPaymentFaileds: { items: [] }
+      }
+    })
+
+    // A real posting now (not a value-0 memo): it clears Shares to be issued into
+    // equity at the SHER rate of record (60 SHER × $1.00 = $60) — Dr/Cr filled.
+    const issued = a.entries.find((e) => e.useCase === 'DEFAULT-D')
+    expect(issued).toMatchObject({
+      debit: 'Shares to be issued',
+      credit: 'Investor Equity',
+      token: 'sher',
+      amountUsd: 60,
+      shares: 60
+    })
+    // Equity increased and the trial balance still balances (Dr = Cr). No prior
+    // accrual in this fixture, so the liability reads −$60 alone; in production the
+    // wage accrual credits it first and the issuance nets it down.
+    expect(a.balanceSheet.investorEquity).toBe(60)
+    expect(a.generalLedger.balanced).toBe(true)
     expect(a.balanceSheet.balanced).toBe(true)
   })
 

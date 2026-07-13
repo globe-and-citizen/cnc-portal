@@ -60,6 +60,28 @@
       </span>
     </template>
 
+    <template #currency-cell="{ row: { original: row } }">
+      <span v-if="!row.isTotal" class="text-muted text-sm">{{ row.currency }}</span>
+    </template>
+
+    <template #quantity-header>
+      <div class="text-right">Quantity</div>
+    </template>
+    <template #quantity-cell="{ row: { original: row } }">
+      <div v-if="!row.isTotal" class="text-muted text-right text-sm tabular-nums">
+        {{ row.quantity }}
+      </div>
+    </template>
+
+    <template #rate-header>
+      <div class="text-right">Rate</div>
+    </template>
+    <template #rate-cell="{ row: { original: row } }">
+      <div v-if="!row.isTotal" class="text-muted text-right text-sm tabular-nums">
+        {{ row.rate }}
+      </div>
+    </template>
+
     <template #dr-header>
       <div class="text-right">Debit</div>
     </template>
@@ -125,6 +147,9 @@ const tableRows = computed<LedgerTableRow[]>(() => [
     accountDimmed: false,
     dr: props.total,
     cr: props.total,
+    currency: '',
+    quantity: '',
+    rate: '',
     isTotal: true
   }
 ])
@@ -138,7 +163,10 @@ const COLUMN_DEFS: Record<LedgerColumnKey, TableColumn<LedgerTableRow>> = {
   activity: { id: 'activity', header: 'Activity' },
   account: { accessorKey: 'account', header: 'Account' },
   dr: { accessorKey: 'dr', header: 'Debit' },
-  cr: { accessorKey: 'cr', header: 'Credit' }
+  cr: { accessorKey: 'cr', header: 'Credit' },
+  currency: { accessorKey: 'currency', header: 'Currency' },
+  quantity: { accessorKey: 'quantity', header: 'Quantity' },
+  rate: { accessorKey: 'rate', header: 'Rate' }
 }
 
 const columns = computed<TableColumn<LedgerTableRow>[]>(() => {

@@ -82,9 +82,10 @@ describe('activityOf — actor rows', () => {
     ).toBe('invested $500.00 in capital and got 120 SHER')
   })
 
-  it('narrates an expense reimbursement, a dividend and a share issuance', () => {
+  it('narrates an expense withdrawal, a dividend and a share issuance', () => {
+    // Unmatched payout (no approval on file) reads the generic phrase.
     expect(activityOf(entry({ useCase: 'UC-EXP-01', counterparty: ALI, amountUsd: 80 })).text).toBe(
-      'was reimbursed $80.00 for an expense'
+      'withdrew $80.00 for an expense'
     )
     expect(activityOf(entry({ useCase: 'UC-INV-01', counterparty: ALI })).text).toBe(
       'received a $500.00 dividend'
@@ -93,6 +94,62 @@ describe('activityOf — actor rows', () => {
       'was issued 120 SHER'
     )
   })
+
+  it('names the approved amount for a one-time expense withdrawal (no remaining)', () => {
+    expect(
+      activityOf(
+        entry({
+          useCase: 'UC-EXP-01',
+          counterparty: ALI,
+          amountUsd: 0.8,
+          expenseFrequencyType: 0,
+          expenseApprovedUsd: 1
+        })
+      ).text
+    ).toBe('withdrew $0.80 from a one-time expense approval of $1.00')
+  })
+
+  it('names the remaining balance for a recurring expense withdrawal (no period word)', () => {
+    expect(
+      activityOf(
+        entry({
+          useCase: 'UC-EXP-01',
+          counterparty: ALI,
+          amountUsd: 0.3,
+          expenseFrequencyType: 1,
+          expenseApprovedUsd: 1,
+          expenseRemainingUsd: 0.7
+        })
+      ).text
+    ).toBe('withdrew $0.30 for an expense. $0.70 remaining')
+    // Frequency no longer changes the wording — the ledger date carries the period.
+    expect(
+      activityOf(
+        entry({
+          useCase: 'UC-EXP-01',
+          counterparty: ALI,
+          amountUsd: 5,
+          expenseFrequencyType: 2,
+          expenseRemainingUsd: 15
+        })
+      ).text
+    ).toBe('withdrew $5.00 for an expense. $15.00 remaining')
+  })
+
+  it('says the budget is fully used when a recurring withdrawal leaves nothing', () => {
+    expect(
+      activityOf(
+        entry({
+          useCase: 'UC-EXP-01',
+          counterparty: ALI,
+          amountUsd: 0.06,
+          expenseFrequencyType: 1,
+          expenseApprovedUsd: 0.06,
+          expenseRemainingUsd: 0
+        })
+      ).text
+    ).toBe('withdrew $0.06 for an expense. Budget fully used')
+  })
 })
 
 describe('activityOf — transfer rows', () => {
@@ -100,9 +157,12 @@ describe('activityOf — transfer rows', () => {
     expect(
       activityOf(entry({ useCase: 'INTERNAL', debit: 'Cash — Safe', credit: 'Cash — Bank' }))
     ).toEqual({ kind: 'transfer', from: 'Cash — Bank', to: 'Cash — Safe' })
+  })
+
+  it('reads a transaction fee as a plain expense row, not a pocket transfer', () => {
     expect(
-      activityOf(entry({ useCase: 'FEE', debit: 'Cash — FeeCollector', credit: 'Cash — Bank' }))
-    ).toEqual({ kind: 'transfer', from: 'Cash — Bank', to: 'Cash — FeeCollector' })
+      activityOf(entry({ useCase: 'FEE', debit: 'Transaction Fee Expense', credit: 'Cash — Bank' }))
+    ).toEqual({ kind: 'plain', text: 'Transaction fee' })
   })
 
   it('names the initiator (the signer) when it is resolved', () => {
