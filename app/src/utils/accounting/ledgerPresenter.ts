@@ -8,9 +8,13 @@ import { money, fmtDateTime, filterByPeriod, periodLabel, currencySymbol } from 
 import { wholeTokenAmount } from './toUsd'
 import { activityOf, entryLabel, type ActivityCell } from './describeEntry'
 import { mergeBankFees } from './mergeBankFees'
+import { filterLedgerByCurrency } from './ledgerCurrency'
 import { formatAmountWithPrecision } from '@/utils/currencyUtil'
 import type { LedgerEntry, UseCase } from './ledgerEntry'
 import type { TokenId } from '@/constant'
+
+// Currency derivation / filtering lives in its own module, re-exported here.
+export { entryCurrency, ledgerCurrencies, filterLedgerByCurrency } from './ledgerCurrency'
 
 /** The empty activity carried by a posting's continuation (credit) and total rows. */
 const NO_ACTIVITY: ActivityCell = { kind: 'plain', text: '' }
@@ -329,23 +333,26 @@ function rowsOf(entry: LedgerEntry): LedgerRow[] {
 }
 
 /**
- * The ledger entries narrowed by category + inclusive date window, sorted
- * chronologically, with each Bank fee folded into its transfer ({@link
- * mergeBankFees}). Split out so a paginated view can slice by **entry** (not by
- * row — a posting spans two-plus rows) before flattening into table rows.
+ * The ledger entries narrowed by category + inclusive date window (+ an optional
+ * currency selection), sorted chronologically, with each Bank fee folded into its
+ * transfer ({@link mergeBankFees}). Split out so a paginated view can slice by
+ * **entry** (not by row — a posting spans two-plus rows) before flattening into
+ * table rows.
  */
 export function filterLedgerEntries(
   entries: readonly LedgerEntry[],
   filter: string,
   from?: Date | null,
-  to?: Date | null
+  to?: Date | null,
+  currencies?: readonly string[] | null
 ): LedgerEntry[] {
   const shown = filterByPeriod(entries, from, to)
     .filter((e) => filter === 'All' || filter === FEE_FILTER || categoryOf(e) === filter)
     .slice()
     .sort((a, b) => b.timestamp - a.timestamp) // most recent first
   const merged = mergeBankFees(shown)
-  return filter === FEE_FILTER ? merged.filter(entryHasFee) : merged
+  const scoped = filter === FEE_FILTER ? merged.filter(entryHasFee) : merged
+  return currencies ? filterLedgerByCurrency(scoped, currencies, filter === FEE_FILTER) : scoped
 }
 
 /** Flatten postings into the table's two-rows-per-entry shape. */
@@ -356,10 +363,6 @@ export function ledgerRows(entries: readonly LedgerEntry[]): LedgerRow[] {
 /** True when an entry carries a {@link FEE_ACCOUNT} leg (folded or standalone). */
 export function entryHasFee(entry: LedgerEntry): boolean {
   return entry.mergedBankFee != null || entry.debit === FEE_ACCOUNT
-}
-/** The USD amount of that leg — the folded fee, else the standalone fee itself. */
-function feeUsdOf(entry: LedgerEntry): number {
-  return entry.mergedBankFee?.amountUsd ?? entry.amountUsd
 }
 
 /**
@@ -377,9 +380,13 @@ export function ledgerFeeRows(entries: readonly LedgerEntry[]): LedgerRow[] {
   }))
 }
 
-/** Σ of the fee legs across the fee-bearing entries, formatted as USD. */
+/**
+ * Σ of the fee legs across the fee-bearing entries, formatted as USD — each
+ * leg's amount is the folded fee, else the standalone fee posting itself.
+ */
 export function ledgerFeeTotal(entries: readonly LedgerEntry[]): string {
-  return money(entries.filter(entryHasFee).reduce((sum, e) => sum + feeUsdOf(e), 0))
+  const legUsd = (e: LedgerEntry) => e.mergedBankFee?.amountUsd ?? e.amountUsd
+  return money(entries.filter(entryHasFee).reduce((sum, e) => sum + legUsd(e), 0))
 }
 
 /**
@@ -396,14 +403,15 @@ export function ledgerTotal(entries: readonly LedgerEntry[]): string {
   )
 }
 
-/** General-ledger rows narrowed by category + inclusive date window. */
+/** General-ledger rows narrowed by category + inclusive date window (+ currency). */
 export function presentLedger(
   entries: readonly LedgerEntry[],
   filter: string,
   from?: Date | null,
-  to?: Date | null
+  to?: Date | null,
+  currencies?: readonly string[] | null
 ): LedgerView {
-  const shown = filterLedgerEntries(entries, filter, from, to)
+  const shown = filterLedgerEntries(entries, filter, from, to, currencies)
   const rows = filter === FEE_FILTER ? ledgerFeeRows(shown) : ledgerRows(shown)
   const total = filter === FEE_FILTER ? ledgerFeeTotal(shown) : ledgerTotal(shown)
   return { rows, total, entryCount: shown.length }
