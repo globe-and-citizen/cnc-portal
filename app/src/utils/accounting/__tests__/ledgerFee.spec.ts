@@ -4,7 +4,9 @@ import {
   entryHasFee,
   ledgerFeeRows,
   ledgerFeeTotal,
-  FEE_ACCOUNT
+  presentLedger,
+  FEE_ACCOUNT,
+  FEE_FILTER
 } from '@/utils/accounting/ledgerPresenter'
 import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
 
@@ -59,7 +61,7 @@ describe('Fee badge (isFee row flag)', () => {
 
   it('flags only the fee leg of a folded transfer (Dr net · Dr fee · Cr gross)', () => {
     const rows = ledgerRows([transferWithFee])
-    expect(rows.map((r) => r.isFee)).toEqual([false, true, false])
+    expect(rows.map((r) => Boolean(r.isFee))).toEqual([false, true, false])
     expect(rows[1].account).toBe(FEE_ACCOUNT)
   })
 
@@ -88,5 +90,13 @@ describe('Fee filter', () => {
 
   it('ledgerFeeTotal sums only the fee legs', () => {
     expect(ledgerFeeTotal([standaloneFee, transferWithFee, plainTransfer])).toBe('$0.55')
+  })
+
+  it('presentLedger(FEE_FILTER) isolates fees — the on-screen + print/export funnel', () => {
+    const view = presentLedger([standaloneFee, transferWithFee, plainTransfer], FEE_FILTER)
+    expect(view.entryCount).toBe(2)
+    expect(view.rows).toHaveLength(2)
+    expect(view.rows.every((r) => r.isFee)).toBe(true)
+    expect(view.total).toBe('$0.55')
   })
 })
