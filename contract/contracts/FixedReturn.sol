@@ -543,21 +543,21 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
    *      Only reachable from Open — a Funded offer has already succeeded and moves on
    *      to repayment instead, never refunding. Missing the deadline doesn't refund
    *      automatically either: the issuer must call this.
-   * @dev Unbounded loop over _offerLenders[offerId], same tradeoff as repayLenders — a
+   * @dev Unbounded loop over s_offerLenders[offerId], same tradeoff as repayLenders — a
    *      lender whose token receipt reverts blocks everyone else in this call, and
    *      because the state flip below shares the same transaction, a revert here also
    *      undoes it, leaving the offer callable again once unblocked. Acceptable at
    *      current scale (matches repayLenders' own accepted risk).
    */
   function refundLenders(uint256 offerId) external onlyOwner nonReentrant {
-    LendingOffer storage offer = lendingOffers[offerId];
+    LendingOffer storage offer = s_lendingOffers[offerId];
     if (offer.state != OfferState.Open) revert OfferNotOpen();
     if (block.timestamp <= offer.subscriptionDeadline) revert DeadlineNotPassed();
 
     offer.state = OfferState.Refundable;
     emit LendingOfferRefundable(offerId);
 
-    address[] storage lenders = _offerLenders[offerId];
+    address[] storage lenders = s_offerLenders[offerId];
     uint256 totalRefunded;
     for (uint256 i = 0; i < lenders.length; ++i) {
       address lender = lenders[i];
@@ -589,7 +589,7 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
    *      funded offer needs no further changes.
    */
   function acceptPartialFunding(uint256 offerId) external onlyOwner nonReentrant {
-    LendingOffer storage offer = lendingOffers[offerId];
+    LendingOffer storage offer = s_lendingOffers[offerId];
     if (offer.state != OfferState.Open) revert OfferNotOpen();
     if (block.timestamp <= offer.subscriptionDeadline) revert DeadlineNotPassed();
     if (offer.totalFunded == 0) revert NoFundsRaised();
@@ -695,11 +695,6 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
   /// @notice Full configuration and funding/repayment state for a given offer.
   function getLendingOffer(uint256 offerId) external view returns (LendingOffer memory) {
     return s_lendingOffers[offerId];
-  }
-
-  /// @notice Current contract version, per semver.
-  function version() external pure returns (string memory) {
-    return "1.1.0";
   }
 
   /// @dev Resolves Bank via Officer. Reverts if not found.
