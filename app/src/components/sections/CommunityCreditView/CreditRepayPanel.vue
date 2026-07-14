@@ -12,11 +12,11 @@
       </p>
     </div>
 
-    <div class="grid items-start gap-5 lg:grid-cols-[1.55fr_1fr]">
+    <div class="grid items-start gap-5" :class="store.isOwner ? 'lg:grid-cols-[1.55fr_1fr]' : ''">
       <CreditRepayBreakdownTable :rows="rows" :token="round.token" />
 
       <!-- Confirm -->
-      <div class="flex flex-col gap-4">
+      <div v-if="store.isOwner" class="flex flex-col gap-4">
         <div
           class="border-primary/20 from-primary/5 to-default rounded-2xl border bg-gradient-to-br p-6 shadow-sm"
         >

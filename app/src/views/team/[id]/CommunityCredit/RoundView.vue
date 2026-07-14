@@ -74,7 +74,8 @@ import { zeroAddress } from 'viem'
 import { useCommunityCreditStore, useUserDataStore } from '@/stores'
 import {
   useFixedReturnGetLendingOffer,
-  useFixedReturnOfferLenders
+  useFixedReturnOfferLenders,
+  useFixedReturnMyLenderPositions
 } from '@/composables/fixedReturn/reads'
 import {
   useFixedReturnRefundLenders,
@@ -125,6 +126,17 @@ const round = computed<CreditRound | undefined>(() => {
 
 const status = computed(() => statusMeta(round.value?.status ?? 'open'))
 const lendRound = ref<CreditRound | null>(null)
+
+const { data: myLenderPositions } = useFixedReturnMyLenderPositions()
+// Restricted rounds only accept deposits from whitelisted addresses — lenderAllocation
+// reads back 0 for anyone not on the whitelist, owner included. The contract already
+// reverts lendFunds for them; hide the Lend action too instead of offering a button
+// that's guaranteed to fail on-chain.
+const canLend = computed(() => {
+  if (!round.value || !round.value.restricted) return true
+  const position = myLenderPositions.value?.get(Number(round.value.id))
+  return !!position && position.allocation > 0n
+})
 
 /** Stalled: still Open on-chain, but the deadline passed without reaching target —
  *  owner can refund. round.status is the single source of truth for this (derived in
@@ -217,8 +229,9 @@ const ctas = computed<Cta[]>(() => {
   if (!r) return []
   const list: Cta[] = []
 
-  // Anyone can lend to an open round — the owner is a member too.
-  if (r.status === 'open') {
+  // Anyone eligible can lend to an open round — the owner is a member too, but a
+  // restricted round still needs a whitelist allocation, owner included.
+  if (r.status === 'open' && canLend.value) {
     list.push({
       test: 'round-cta-lend',
       label: 'Lend now',

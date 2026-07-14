@@ -120,6 +120,7 @@ describe('Community Credit views', () => {
     mockFixedReturnReads.getLendingOffer.data.value = null
     mockFixedReturnReads.offerLenders.data.value = []
     mockFixedReturnReads.allOffers.data.value = []
+    mockFixedReturnReads.myLenderPositions.data.value = new Map()
     useQueryClientFn.mockReturnValue({
       invalidateQueries: mockInvalidateQueries,
       getQueryData: vi.fn(),
@@ -273,6 +274,24 @@ describe('Community Credit views', () => {
       const wrapper = mountRound(sampleRound({ status: 'stalled' }), offerStruct({ state: 0 }))
       await flushPromises()
       expect(wrapper.find('[data-test="round-cta-lend"]').exists()).toBe(false)
+    })
+
+    it('hides the Lend action on a restricted round when the owner has no whitelist allocation', async () => {
+      store.isOwner = true
+      mockFixedReturnReads.myLenderPositions.data.value = new Map()
+      const wrapper = mountRound(sampleRound({ restricted: true }))
+      await flushPromises()
+      expect(wrapper.find('[data-test="round-cta-lend"]').exists()).toBe(false)
+    })
+
+    it('offers the Lend action on a restricted round once the owner has a whitelist allocation', async () => {
+      store.isOwner = true
+      mockFixedReturnReads.myLenderPositions.data.value = new Map([
+        [1, { allocation: 500n, deposited: 0n }]
+      ])
+      const wrapper = mountRound(sampleRound({ restricted: true }))
+      await flushPromises()
+      expect(wrapper.find('[data-test="round-cta-lend"]').exists()).toBe(true)
     })
 
     it('offers Repay as a fourth layout-exploration option, rendering the same panel as the Repay round button', async () => {

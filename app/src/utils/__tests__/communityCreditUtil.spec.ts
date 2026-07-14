@@ -297,7 +297,7 @@ describe('communityCreditUtil', () => {
         })
         expect(mapped.paid).toBe(0)
       })
-      it('flags refunded once refundLenders has zeroed this lender\'s principal', () => {
+      it("flags refunded once refundLenders has zeroed this lender's principal", () => {
         const refundedLender: FixedReturnOfferLender = { ...lender, principal: 0, expected: 0 }
         const mapped = offerLenderToCreditLender(refundedLender, () => 'Alice', undefined, {
           raised: 20000,

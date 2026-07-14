@@ -1,6 +1,7 @@
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import type { CreditRound } from '@/types'
+import { mockFixedReturnReads } from '@/tests/mocks'
 
 const { store } = vi.hoisted(() => ({ store: { isOwner: false } }))
 
@@ -32,6 +33,31 @@ function makeRound(overrides: Partial<CreditRound> = {}): CreditRound {
 }
 
 describe('CreditRoundCard', () => {
+  beforeEach(() => {
+    store.isOwner = false
+    mockFixedReturnReads.myLenderPositions.data.value = new Map()
+  })
+
+  it('hides the Lend action on a restricted round when the viewer has no whitelist allocation, owner included', () => {
+    store.isOwner = true
+    const wrapper = mount(CreditRoundCard, {
+      props: { round: makeRound({ restricted: true }) }
+    })
+
+    expect(wrapper.find('[data-test="round-cta-lend"]').exists()).toBe(false)
+  })
+
+  it('shows the Lend action on a restricted round once the viewer has a whitelist allocation', () => {
+    mockFixedReturnReads.myLenderPositions.data.value = new Map([
+      [1, { allocation: 500n, deposited: 0n }]
+    ])
+    const wrapper = mount(CreditRoundCard, {
+      props: { round: makeRound({ restricted: true }) }
+    })
+
+    expect(wrapper.find('[data-test="round-cta-lend"]').exists()).toBe(true)
+  })
+
   it('shows a fractional raised amount precisely instead of rounding it down to 0', () => {
     const wrapper = mount(CreditRoundCard, { props: { round: makeRound({ raised: 0.1 }) } })
 

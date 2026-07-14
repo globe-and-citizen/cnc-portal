@@ -20,6 +20,7 @@ import {
 const { store } = vi.hoisted(() => {
   const store = {
     isLoading: false,
+    isOwner: true,
     rounds: [] as CreditRound[],
     getRound: (id: string): CreditRound | undefined => store.rounds.find((r) => r.id === id)
   }
@@ -77,6 +78,7 @@ function offerStruct(over: Partial<LendingOfferStruct> = {}): LendingOfferStruct
 describe('CreditRepayPanel', () => {
   beforeEach(() => {
     store.isLoading = false
+    store.isOwner = true
     store.rounds = []
     mockRouterPush.mockClear()
     mockInvalidateQueries.mockClear()
@@ -172,5 +174,21 @@ describe('CreditRepayPanel', () => {
     await flushPromises()
 
     expect(wrapper.find('[data-test="repay-error"]').exists()).toBe(true)
+  })
+
+  it('shows only the breakdown table for a non-owner, with no repay form', async () => {
+    store.isOwner = false
+    store.rounds = [sampleRound()]
+    mockFixedReturnReads.getLendingOffer.data.value = offerStruct()
+    mockFixedReturnReads.offerLenders.data.value = [
+      { address: '0x00000000000000000000000000000000000000a1', principal: 5000, expected: 5250 }
+    ]
+    setMockRoute({ params: { id: '1', roundId: '1' } })
+    const wrapper = mount(CreditRepayPanel)
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('Repayment breakdown')
+    expect(wrapper.find('[data-test="confirm-repay"]').exists()).toBe(false)
+    expect(wrapper.text()).not.toContain('Outstanding')
   })
 })

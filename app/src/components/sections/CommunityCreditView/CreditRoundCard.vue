@@ -78,6 +78,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useCommunityCreditStore } from '@/stores'
+import { useFixedReturnMyLenderPositions } from '@/composables/fixedReturn/reads'
 import { formatAmount, percentOf, reachedFundingTarget, statusMeta } from '@/utils'
 import type { CreditRound } from '@/types'
 import CreditAvatar from './CreditAvatar.vue'
@@ -86,6 +87,17 @@ const props = defineProps<{ round: CreditRound }>()
 const emit = defineEmits<{ open: []; lend: []; repay: [] }>()
 
 const store = useCommunityCreditStore()
+const { data: myLenderPositions } = useFixedReturnMyLenderPositions()
+
+// Restricted rounds only accept deposits from whitelisted addresses — lenderAllocation
+// reads back 0 for anyone not on the whitelist, owner included. The contract already
+// reverts lendFunds for them; hide the Lend action too instead of offering a button
+// that's guaranteed to fail on-chain.
+const canLend = computed(() => {
+  if (!props.round.restricted) return true
+  const position = myLenderPositions.value?.get(Number(props.round.id))
+  return !!position && position.allocation > 0n
+})
 
 const status = computed(() => statusMeta(props.round.status))
 const pct = computed(() => percentOf(props.round.raised, props.round.target))
@@ -144,10 +156,14 @@ const LEND: Cta = {
 
 const ctas = computed<Cta[]>(() => {
   const { status: s } = props.round
-  // Open rounds are lendable by anyone. The owner is a member too, so they keep
-  // a Manage action alongside the Lend action.
+  // Open rounds are lendable by anyone eligible. The owner is a member too, so they
+  // keep a Manage action alongside the Lend action — but Lend itself only appears when
+  // this user (owner or not) can actually deposit into the round.
   if (s === 'open') {
-    return store.isOwner ? [MANAGE, LEND] : [LEND]
+    const list: Cta[] = []
+    if (store.isOwner) list.push(MANAGE)
+    if (canLend.value) list.push(LEND)
+    return list
   }
   // Funded / in repayment: the owner repays, everyone else just views.
   if (store.isOwner) {
