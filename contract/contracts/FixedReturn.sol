@@ -345,7 +345,7 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
 
   /// @notice Current contract version, per semver.
   function version() external pure returns (string memory) {
-    return '1.4.0';
+    return "1.4.0";
   }
 
   // ────────────────────────────────────────────────────
