@@ -117,7 +117,7 @@ describe('communityCreditUtil', () => {
         funded: { label: 'Funded', color: 'info' },
         active: { label: 'In repayment', color: 'warning' },
         repaid: { label: 'Repaid', color: 'success' },
-        refundable: { label: 'Refundable', color: 'warning' }
+        refunded: { label: 'Refunded', color: 'neutral' }
       }
       for (const [status, expected] of Object.entries(cases)) {
         expect(statusMeta(status as RoundStatus)).toEqual(expected)
@@ -173,7 +173,7 @@ describe('communityCreditUtil', () => {
       it('maps Open / Funded / Refundable', () => {
         expect(offerStateToRoundStatus(makeOffer({ state: 0 }), beforeDeadline)).toBe('open')
         expect(offerStateToRoundStatus(makeOffer({ state: 1 }))).toBe('funded')
-        expect(offerStateToRoundStatus(makeOffer({ state: 2 }))).toBe('refundable')
+        expect(offerStateToRoundStatus(makeOffer({ state: 2 }))).toBe('refunded')
       })
 
       it('maps a still-Open offer past its deadline to stalled', () => {
@@ -296,6 +296,23 @@ describe('communityCreditUtil', () => {
           totalRepaid: 0
         })
         expect(mapped.paid).toBe(0)
+      })
+      it('flags refunded once refundLenders has zeroed this lender\'s principal', () => {
+        const refundedLender: FixedReturnOfferLender = { ...lender, principal: 0, expected: 0 }
+        const mapped = offerLenderToCreditLender(refundedLender, () => 'Alice', undefined, {
+          raised: 20000,
+          totalRepaid: 0,
+          status: 'refunded'
+        })
+        expect(mapped.refunded).toBe(true)
+      })
+      it('is not refunded when principal is 0 but the round is not in the refunded state', () => {
+        const mapped = offerLenderToCreditLender(lender, () => 'Alice', undefined, {
+          raised: 20000,
+          totalRepaid: 0,
+          status: 'active'
+        })
+        expect(mapped.refunded).toBe(false)
       })
     })
 

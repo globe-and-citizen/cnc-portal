@@ -102,7 +102,7 @@ export const ROUND_STATUS_META: Record<RoundStatus, StatusMeta> = {
   funded: { label: 'Funded', color: 'info' },
   active: { label: 'In repayment', color: 'warning' },
   repaid: { label: 'Repaid', color: 'success' },
-  refundable: { label: 'Refundable', color: 'warning' }
+  refunded: { label: 'Refunded', color: 'neutral' }
 }
 
 export function statusMeta(status: RoundStatus): StatusMeta {
@@ -167,8 +167,10 @@ function offerExpectedTotal(offer: LendingOfferStruct): bigint {
  * Resolves FixedReturn.sol's OfferState (+ deadline and repayment progress) to a
  * Community Credit round status: Open→open (or stalled, once its deadline has passed
  * without reaching target — awaiting the issuer's refundLenders/acceptPartialFunding
- * decision), Funded→funded, Refundable→refundable, Repaying→active until the issuer
- * has repaid the full principal+interest, then repaid.
+ * decision), Funded→funded, Refundable→refunded (refundLenders already pushed every
+ * lender's principal back by the time this state is observable — there's no
+ * intermediate "refund pending" state to distinguish), Repaying→active until the
+ * issuer has repaid the full principal+interest, then repaid.
  */
 export function offerStateToRoundStatus(
   offer: LendingOfferStruct,
@@ -178,7 +180,7 @@ export function offerStateToRoundStatus(
     case 1:
       return 'funded'
     case 2:
-      return 'refundable'
+      return 'refunded'
     case 3:
       return offer.totalRepaidByIssuer >= offerExpectedTotal(offer) ? 'repaid' : 'active'
     default:
@@ -249,12 +251,15 @@ export function lendingOfferToCreditRound(
  * timestamp on-chain so `date` is blank. `paid` mirrors buildFixedReturnLenderRows'
  * proportional estimate — this lender's share of raised × the round's totalRepaid —
  * rather than an extra per-lender read of the on-chain totalPaidToLender mapping.
+ * `refunded` mirrors buildFixedReturnLenderRows' same check: refundLenders zeroes this
+ * lender's on-chain principal, so `principal === 0` in an otherwise-refunded round means
+ * they were paid back, not that they never lent.
  */
 export function offerLenderToCreditLender(
   lender: FixedReturnOfferLender,
   resolveName: (address: string) => string,
   connectedAddress?: string,
-  round?: Pick<CreditRound, 'raised' | 'totalRepaid'>
+  round?: Pick<CreditRound, 'raised' | 'totalRepaid'> & { status?: RoundStatus }
 ): CreditLender {
   const paid = round && round.raised > 0 ? (round.totalRepaid * lender.principal) / round.raised : 0
   return {
@@ -265,7 +270,8 @@ export function offerLenderToCreditLender(
     expected: lender.expected,
     paid,
     date: '',
-    you: !!connectedAddress && lender.address.toLowerCase() === connectedAddress.toLowerCase()
+    you: !!connectedAddress && lender.address.toLowerCase() === connectedAddress.toLowerCase(),
+    refunded: lender.principal === 0 && round?.status === 'refunded'
   }
 }
 

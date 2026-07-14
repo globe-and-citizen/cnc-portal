@@ -69,14 +69,14 @@ const store = useCommunityCreditStore()
 
 // History = rounds no longer raising: stalled past their deadline awaiting a
 // refund/accept decision, fully funded and awaiting repayment, fully repaid, or
-// refundable after a missed deadline.
+// refunded after the issuer returned every lender's principal.
 const rows = computed(() =>
   store.historyRounds.map((round) => {
     const outcome =
       round.status === 'stalled'
         ? 'Deadline passed — awaiting refund or acceptance'
-        : round.status === 'refundable'
-          ? 'Refund available'
+        : round.status === 'refunded'
+          ? 'Refunded — principal returned to lenders'
           : round.status === 'funded'
             ? `Awaiting repayment · matures ${round.maturity}`
             : round.status === 'active'
@@ -85,7 +85,7 @@ const rows = computed(() =>
     const icon =
       round.status === 'stalled'
         ? 'heroicons:exclamation-triangle'
-        : round.status === 'refundable'
+        : round.status === 'refunded'
           ? 'heroicons:arrow-uturn-left'
           : round.status === 'funded' || round.status === 'active'
             ? 'heroicons:clock'
@@ -93,8 +93,8 @@ const rows = computed(() =>
     const iconClass =
       round.status === 'stalled'
         ? 'bg-warning/10 text-warning'
-        : round.status === 'refundable'
-          ? 'bg-warning/10 text-warning'
+        : round.status === 'refunded'
+          ? 'bg-neutral/10 text-neutral'
           : round.status === 'funded' || round.status === 'active'
             ? 'bg-info/10 text-info'
             : 'bg-success/10 text-success'

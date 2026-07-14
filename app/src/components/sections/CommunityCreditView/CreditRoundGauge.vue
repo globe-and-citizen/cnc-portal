@@ -92,8 +92,17 @@
             class="flex-1"
           />
           <div class="min-w-[90px] text-right">
-            <div class="text-sm font-bold">{{ formatAmount(lender.amount) }}</div>
-            <div class="text-muted text-[11px]">{{ lender.share }}%</div>
+            <div :class="lender.refunded ? 'text-muted text-sm' : 'text-sm font-bold'">
+              {{ formatAmount(lender.amount) }}
+            </div>
+            <UBadge
+              v-if="lender.refunded"
+              color="neutral"
+              variant="subtle"
+              label="Refunded"
+              size="sm"
+            />
+            <div v-else class="text-muted text-[11px]">{{ lender.share }}%</div>
           </div>
         </div>
       </div>
@@ -123,6 +132,9 @@ const ringStyle = computed(() => ({
 const remainingNote = computed(() => {
   if (props.round.status === 'open' || props.round.status === 'stalled') {
     return `${formatAmount(props.round.target - props.round.raised)} remaining`
+  }
+  if (props.round.status === 'refunded') {
+    return 'Refunded — principal returned to lenders'
   }
   return reachedFundingTarget(props.round) ? 'Fully funded' : 'Accepted with partial funding'
 })

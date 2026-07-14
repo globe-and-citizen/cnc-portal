@@ -46,6 +46,9 @@
     </div>
 
     <template v-else>
+      <!-- Contract balance -->
+      <CreditBalanceSection />
+
       <!-- Credit Account hero -->
       <CreditAccountHero />
 
@@ -122,6 +125,7 @@ import CreditAccountHero from '@/components/sections/CommunityCreditView/CreditA
 import CreditHistoryTable from '@/components/sections/CommunityCreditView/CreditHistoryTable.vue'
 import CreditLendModal from '@/components/sections/CommunityCreditView/CreditLendModal.vue'
 import CreditRoundCard from '@/components/sections/CommunityCreditView/CreditRoundCard.vue'
+import CreditBalanceSection from '@/components/sections/CommunityCreditView/CreditBalanceSection.vue'
 
 const route = useRoute()
 const router = useRouter()

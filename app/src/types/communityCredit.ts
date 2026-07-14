@@ -10,10 +10,13 @@ export type CreditRole = 'owner' | 'lender'
 
 // Mirrors FixedReturn.sol's OfferState (Open, Funded, Refundable, Repaying) resolved
 // against the offer's deadline and repayment progress. 'active' = Repaying but not yet
-// fully repaid; 'refundable' = deadline missed, lenders can claim their principal back;
-// 'stalled' = still contract-state Open but past its deadline without reaching target —
-// the issuer hasn't yet chosen refundLenders or acceptPartialFunding.
-export type RoundStatus = 'open' | 'stalled' | 'funded' | 'active' | 'repaid' | 'refundable'
+// fully repaid; 'refunded' = deadline missed and the issuer already called
+// refundLenders — on-chain, entering the Refundable state IS the refund (it pushes
+// every lender's principal back in the same transaction), so this is a terminal state,
+// never a pending one; 'stalled' = still contract-state Open but past its deadline
+// without reaching target — the issuer hasn't yet chosen refundLenders or
+// acceptPartialFunding.
+export type RoundStatus = 'open' | 'stalled' | 'funded' | 'active' | 'repaid' | 'refunded'
 
 export type RoundDetailVariant = 'ledger' | 'gauge' | 'timeline' | 'repay'
 
@@ -64,6 +67,10 @@ export interface CreditLender {
   date: string
   /** True for the currently-connected user's position. */
   you?: boolean
+  /** True once this lender's principal has been returned by refundLenders — `amount`
+   *  reads live from lenderDeposits, which refundLenders zeroes per lender, so without
+   *  this flag a refunded lender is indistinguishable from one who never lent. */
+  refunded?: boolean
 }
 
 /** A single credit round (a "credit call"). */

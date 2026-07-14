@@ -57,7 +57,9 @@
             <span class="text-muted font-mono text-xs">{{ row.original.addr }}</span>
           </template>
           <template #amount-cell="{ row }">
-            <span class="font-bold">{{ formatAmount(row.original.amount) }}</span>
+            <span :class="row.original.refunded ? 'text-muted' : 'font-bold'">{{
+              formatAmount(row.original.amount)
+            }}</span>
           </template>
           <template #expected-cell="{ row }">
             <span class="text-primary font-semibold">{{
@@ -103,6 +105,9 @@ const pct = computed(() => percentOf(props.round.raised, props.round.target))
 const remainingNote = computed(() => {
   if (props.round.status === 'open' || props.round.status === 'stalled') {
     return `${formatAmount(props.round.target - props.round.raised)} remaining`
+  }
+  if (props.round.status === 'refunded') {
+    return 'Refunded — principal returned to lenders'
   }
   return reachedFundingTarget(props.round) ? 'Fully funded' : 'Accepted with partial funding'
 })

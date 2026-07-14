@@ -97,6 +97,12 @@ const progressNote = computed(() => {
   if (props.round.status === 'open') {
     return `${formatAmount(remaining, props.round.token, 4)} to go · closes ${props.round.deadline}`
   }
+  if (props.round.status === 'stalled') {
+    return `${formatAmount(remaining, props.round.token, 4)} short · deadline passed`
+  }
+  if (props.round.status === 'refunded') {
+    return 'Refunded — principal returned to lenders'
+  }
   const fundedLabel = reachedFundingTarget(props.round)
     ? 'Target reached'
     : 'Accepted with partial funding'
