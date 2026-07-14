@@ -4,6 +4,7 @@ import { PrismaClient, User } from '@prisma/client';
 import { faker } from '@faker-js/faker';
 import { type SeedConfig } from './config';
 import { distributeDate } from './helpers';
+import { generateUniqueSlug } from '../../src/utils/slug.util';
 
 // All available contract types
 const CONTRACT_TYPES = [
@@ -36,13 +37,20 @@ export async function seedTeams(prisma: PrismaClient, config: SeedConfig, users:
     // All team members including owner
     const allMembers = [owner, ...selectedUsers];
 
+    // Slug is unique even when faker hands us the same company name twice.
+    const name = faker.company.name();
+    const slug = await generateUniqueSlug(name, async (candidate) =>
+      Boolean(await prisma.team.findUnique({ where: { slug: candidate }, select: { id: true } }))
+    );
+
     // Create team with owner, members, current Officer, and memberships.
     // Contracts are created in a follow-up step so we can link them to both
     // the team (required FK) and the officer (so they surface via the
     // currentOfficerWithContractsInclude relation).
     const team = await prisma.team.create({
       data: {
-        name: faker.company.name(),
+        name,
+        slug,
         description: faker.company.catchPhrase(),
         ownerAddress: owner.address,
         createdAt: teamCreatedAt,

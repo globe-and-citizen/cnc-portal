@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
-import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
-import '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
-import '@openzeppelin/contracts/utils/structs/EnumerableSet.sol';
-import './base/TokenSupport.sol';
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import {TokenSupport} from "./base/TokenSupport.sol";
 
 /**
  * @title FeeCollector
@@ -34,7 +34,7 @@ contract FeeCollector is
   }
 
   /// @dev Stored fee configurations, one entry per contract type.
-  FeeConfig[] private feeConfigs;
+  FeeConfig[] private s_feeConfigs;
 
   /**
    * @notice Address that receives funds when `withdraw` / `withdrawToken` is called.
@@ -100,51 +100,9 @@ contract FeeCollector is
   }
 
   /**
-   * @notice Initializes the FeeCollector with owner, fee configs, and supported tokens
-   * @param _owner The address that will own this contract
-   * @param _configs Array of fee configurations for different contract types
-   * @param _tokenAddresses Array of ERC20 token addresses to be supported initially
-   * @dev Can only be called once due to initializer modifier
+   * @notice Allows contract to receive native tokens
    */
-  function initialize(
-    address _owner,
-    FeeConfig[] memory _configs,
-    address[] calldata _tokenAddresses
-  ) public initializer {
-    if (_owner == address(0)) revert ZeroAddress();
-
-    __Ownable_init(_owner);
-    __ReentrancyGuard_init();
-
-    // Store fee configs
-    for (uint256 i = 0; i < _configs.length; i++) {
-      if (bytes(_configs[i].contractType).length == 0) revert EmptyContractType();
-      if (_configs[i].feeBps > 10000) revert InvalidBps(_configs[i].feeBps);
-
-      // No duplicates allowed
-      for (uint256 j = 0; j < i; j++) {
-        if (
-          keccak256(bytes(feeConfigs[j].contractType)) == keccak256(bytes(_configs[i].contractType))
-        ) {
-          revert DuplicateContractType(_configs[i].contractType);
-        }
-      }
-
-      feeConfigs.push(
-        FeeConfig({contractType: _configs[i].contractType, feeBps: _configs[i].feeBps})
-      );
-    }
-
-    // Set the initial supported tokens (same pattern as Bank contract)
-    for (uint256 i = 0; i < _tokenAddresses.length; i++) {
-      if (_tokenAddresses[i] == address(0)) revert ZeroAddress();
-      _addTokenSupport(_tokenAddresses[i]);
-    }
-    // Emit events after they're already added to avoid duplicate events
-    for (uint256 i = 0; i < _tokenAddresses.length; i++) {
-      emit TokenSupportAdded(_tokenAddresses[i]);
-    }
-  }
+  receive() external payable {}
 
   /**
    * @notice Adds a supported token to the contract
@@ -163,11 +121,6 @@ contract FeeCollector is
   function removeTokenSupport(address _tokenAddress) external override onlyOwner {
     _removeTokenSupport(_tokenAddress);
   }
-
-  /**
-   * @notice Allows contract to receive native tokens
-   */
-  receive() external payable {}
 
   /**
    * @notice Accept a native fee payment and emit a FeePaid event.
@@ -212,14 +165,6 @@ contract FeeCollector is
   }
 
   /**
-   * @dev Resolves the effective recipient for withdrawals: beneficiary if set, otherwise owner.
-   */
-  function _withdrawRecipient() internal view returns (address) {
-    address beneficiary = feeBeneficiary;
-    return beneficiary == address(0) ? owner() : beneficiary;
-  }
-
-  /**
    * @notice Sweep the entire native balance and every supported ERC20 balance
    *         held by this contract to the fee beneficiary (or owner if unset).
    * @dev Owner-only and reentrancy-guarded. Any token whose balance is zero is
@@ -230,12 +175,12 @@ contract FeeCollector is
 
     uint256 nativeBalance = address(this).balance;
     if (nativeBalance > 0) {
-      (bool sent, ) = recipient.call{value: nativeBalance}('');
+      (bool sent, ) = recipient.call{value: nativeBalance}("");
       if (!sent) revert WithdrawalFailed();
       emit Withdrawn(recipient, nativeBalance);
     }
 
-    address[] memory tokens = _supportedTokens.values();
+    address[] memory tokens = s_supportedTokens.values();
     uint256 len = tokens.length;
     for (uint256 i = 0; i < len; ++i) {
       address token = tokens[i];
@@ -248,17 +193,28 @@ contract FeeCollector is
   }
 
   /**
-   * @notice Get the fee in basis points for a specific contract type
-   * @param contractType The type of contract (e.g., "BANK")
-   * @return The fee in basis points (e.g., 50 = 0.5%)
+   * @notice Add or update a single fee configuration
+   * @param contractType The contract type this fee applies to.
+   * @param feeBps Fee in basis points (must be <= 10000).
    */
-  function getFeeFor(string memory contractType) public view returns (uint16) {
+  function setFee(string memory contractType, uint16 feeBps) external onlyOwner {
+    if (bytes(contractType).length == 0) revert EmptyContractType();
+    if (feeBps > 10000) revert InvalidBps(feeBps);
+
     bytes32 key = keccak256(bytes(contractType));
+
     (bool exists, uint256 idx) = _findFeeIndex(key);
 
-    if (!exists) return 0;
+    if (exists) {
+      // Update
+      s_feeConfigs[idx].feeBps = feeBps;
+      emit FeeConfigUpdated(contractType, feeBps);
+      return;
+    }
 
-    return feeConfigs[idx].feeBps;
+    // Add new
+    s_feeConfigs.push(FeeConfig(contractType, feeBps));
+    emit FeeConfigUpdated(contractType, feeBps);
   }
 
   /**
@@ -280,41 +236,85 @@ contract FeeCollector is
   }
 
   /**
-   * @notice Add or update a single fee configuration
-   * @param contractType The contract type this fee applies to.
-   * @param feeBps Fee in basis points (must be <= 10000).
-   */
-  function setFee(string memory contractType, uint16 feeBps) external onlyOwner {
-    if (bytes(contractType).length == 0) revert EmptyContractType();
-    if (feeBps > 10000) revert InvalidBps(feeBps);
-
-    bytes32 key = keccak256(bytes(contractType));
-
-    (bool exists, uint256 idx) = _findFeeIndex(key);
-
-    if (exists) {
-      // Update
-      feeConfigs[idx].feeBps = feeBps;
-      emit FeeConfigUpdated(contractType, feeBps);
-      return;
-    }
-
-    // Add new
-    feeConfigs.push(FeeConfig(contractType, feeBps));
-    emit FeeConfigUpdated(contractType, feeBps);
-  }
-
-  /**
    * @notice Get all fee configurations
    * @return Array of fee configurations
    */
   function getAllFeeConfigs() external view returns (FeeConfig[] memory) {
-    return feeConfigs;
+    return s_feeConfigs;
+  }
+
+  /**
+   * @notice Initializes the FeeCollector with owner, fee configs, and supported tokens
+   * @param _owner The address that will own this contract
+   * @param _configs Array of fee configurations for different contract types
+   * @param _tokenAddresses Array of ERC20 token addresses to be supported initially
+   * @dev Can only be called once due to initializer modifier
+   */
+  function initialize(
+    address _owner,
+    FeeConfig[] memory _configs,
+    address[] calldata _tokenAddresses
+  ) public initializer {
+    if (_owner == address(0)) revert ZeroAddress();
+
+    __Ownable_init(_owner);
+    __ReentrancyGuard_init();
+
+    // Store fee configs
+    for (uint256 i = 0; i < _configs.length; i++) {
+      if (bytes(_configs[i].contractType).length == 0) revert EmptyContractType();
+      if (_configs[i].feeBps > 10000) revert InvalidBps(_configs[i].feeBps);
+
+      // No duplicates allowed
+      for (uint256 j = 0; j < i; j++) {
+        if (
+          keccak256(bytes(s_feeConfigs[j].contractType)) ==
+          keccak256(bytes(_configs[i].contractType))
+        ) revert DuplicateContractType(_configs[i].contractType);
+      }
+
+      s_feeConfigs.push(
+        FeeConfig({contractType: _configs[i].contractType, feeBps: _configs[i].feeBps})
+      );
+    }
+
+    // Set the initial supported tokens (same pattern as Bank contract)
+    for (uint256 i = 0; i < _tokenAddresses.length; i++) {
+      if (_tokenAddresses[i] == address(0)) revert ZeroAddress();
+      _addTokenSupport(_tokenAddresses[i]);
+    }
+    // Emit events after they're already added to avoid duplicate events
+    for (uint256 i = 0; i < _tokenAddresses.length; i++) {
+      emit TokenSupportAdded(_tokenAddresses[i]);
+    }
+  }
+
+  /**
+   * @notice Get the fee in basis points for a specific contract type
+   * @param contractType The type of contract (e.g., "BANK")
+   * @return The fee in basis points (e.g., 50 = 0.5%)
+   */
+  function getFeeFor(string memory contractType) public view returns (uint16) {
+    bytes32 key = keccak256(bytes(contractType));
+    (bool exists, uint256 idx) = _findFeeIndex(key);
+
+    if (!exists) return 0;
+
+    return s_feeConfigs[idx].feeBps;
+  }
+
+  /**
+   * @dev Resolves the effective recipient for withdrawals: beneficiary if set, otherwise owner.
+   */
+  function _withdrawRecipient() internal view returns (address) {
+    address beneficiary = feeBeneficiary;
+    return beneficiary == address(0) ? owner() : beneficiary;
   }
 
   function _findFeeIndex(bytes32 key) private view returns (bool, uint256) {
-    for (uint256 i = 0; i < feeConfigs.length; i++) {
-      if (keccak256(bytes(feeConfigs[i].contractType)) == key) {
+    uint256 length = s_feeConfigs.length;
+    for (uint256 i = 0; i < length; i++) {
+      if (keccak256(bytes(s_feeConfigs[i].contractType)) == key) {
         return (true, i);
       }
     }
