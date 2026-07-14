@@ -12,7 +12,6 @@
 | [Proposals](#proposals)                           | `contracts/Proposals/Proposals.sol`                  | Yes (Beacon)      | Board proposal voting                |
 | [ExpenseAccountEIP712](#expenseaccounteip712)     | `contracts/expense-account/ExpenseAccountEIP712.sol` | Yes (Beacon)      | Expense reimbursement                |
 | [CashRemunerationEIP712](#cashremunerationeip712) | `contracts/CashRemunerationEIP712.sol`               | Yes (Beacon)      | Wage payment with equity             |
-| [Tips](#tips)                                     | `contracts/Tips.sol`                                 | Yes (Transparent) | ETH tip distribution                 |
 | [Vesting](#vesting)                               | `contracts/Vesting.sol`                              | Yes (Beacon)      | Per-team share vesting (mint-on-release) |
 | [AdCampaignManager](#adcampaignmanager)           | `contracts/AdCampaignManager.sol`                    | No                | Ad campaign & payment                |
 | [SafeDepositRouter](#safedepositrouter)           | `contracts/SafeDepositRouter.sol`                    | Yes               | Token deposit → SHER minting         |
@@ -241,32 +240,6 @@ disableClaim(signatureHash)                       // Revoke claim before use
 ---
 
 ## Financial Utility Contracts
-
-### Tips
-
-**Path**: `contracts/Tips.sol`
-
-ETH tip distribution to team members. Two modes: push (immediate send) or pull (balance accumulation + withdraw).
-
-**Features**:
-
-- `pushTip`: Immediately sends equal ETH share to each recipient (up to `pushLimit`)
-- `sendTip`: Credits balance per recipient; they withdraw later
-- Remainder from integer division carried over to next transaction
-- Configurable `pushLimit` (default 10, max 100)
-- Upgradeable (TransparentProxy), Pausable
-
-**Key Functions**:
-
-```
-pushTip(teamMembers[])                            // Direct ETH distribution
-sendTip(teamMembers[])                            // Balance-based distribution
-withdraw()                                        // Recipient claims balance
-getBalance(address) → uint256
-updatePushLimit(value)                            // Owner only
-```
-
----
 
 ### Vesting
 

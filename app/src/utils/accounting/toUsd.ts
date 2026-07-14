@@ -21,6 +21,19 @@ import type { TokenId } from '@/constant'
 import { getTokenDecimals } from '@/utils/constantUtil'
 
 /**
+ * Storage / internal-calculation precision (spec §3): every ledger value — the
+ * rate of record, the whole-token quantity and the derived USD amount — is kept
+ * and manipulated at **6 decimals**. The final 2-decimal rounding happens once,
+ * at render time only (see {@link ./presenter.money}), never here.
+ */
+export const USD_STORAGE_DECIMALS = 6
+
+/** Round to the 6-decimal storage precision (spec §3) — never the 2-dp display. */
+export function round6(value: number): number {
+  return Math.round(value * 1e6) / 1e6
+}
+
+/**
  * Resolves the USD price of one whole token at a given time — the
  * "rate of record" for that transaction. Phase 2 wires this to a price oracle;
  * for now callers inject their own (e.g. the agreed SHER mint price).
@@ -49,14 +62,35 @@ export const requireRateOfRecord: UsdRateOfRecord = (tokenId) => {
 }
 
 /**
- * Normalize a raw on-chain token amount to USD.
+ * The USD-per-whole-token **rate of record** (spec §2 "Taux") for a transaction:
+ * exactly `1.000000` for USD-pegged stablecoins (the peg), otherwise the injected
+ * resolver's price at that instant. Kept at 6-dp storage precision so the same
+ * rate that values the entry is the one shown in the ledger's "Rate" column.
+ */
+export function tokenUsdRate(
+  tokenId: TokenId,
+  at: Date,
+  rateOfRecord: UsdRateOfRecord = requireRateOfRecord
+): number {
+  return round6(isUsdPegged(tokenId) ? 1 : rateOfRecord(tokenId, at))
+}
+
+/** Whole-token quantity (spec §2 "Quantité") of a raw base-unit amount. */
+export function wholeTokenAmount(amount: bigint, tokenId: TokenId): number {
+  return Number(formatUnits(amount, getTokenDecimals(tokenId)))
+}
+
+/**
+ * Normalize a raw on-chain token amount to USD: `Quantité × Taux`, stored at
+ * 6-dp precision (spec §2–3). For USD-pegged stablecoins the rate is `1.000000`,
+ * so the USD amount equals the quantity exactly.
  *
  * @param amount  Raw amount in the token's base units (e.g. wei for native).
  * @param tokenId The token being normalized.
  * @param at      The transaction date — drives the rate of record.
  * @param rateOfRecord Resolver for non-pegged tokens (native, SHER). Pegged
  *   stablecoins ignore it and use $1.00. Defaults to {@link requireRateOfRecord}.
- * @returns The USD value as a number.
+ * @returns The USD value as a number, rounded to 6 decimals.
  */
 export function toUsd(
   amount: bigint,
@@ -64,7 +98,5 @@ export function toUsd(
   at: Date,
   rateOfRecord: UsdRateOfRecord = requireRateOfRecord
 ): number {
-  const wholeAmount = Number(formatUnits(amount, getTokenDecimals(tokenId)))
-  const rate = isUsdPegged(tokenId) ? 1 : rateOfRecord(tokenId, at)
-  return wholeAmount * rate
+  return round6(wholeTokenAmount(amount, tokenId) * tokenUsdRate(tokenId, at, rateOfRecord))
 }

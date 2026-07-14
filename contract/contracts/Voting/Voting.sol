@@ -1,19 +1,18 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import './Types.sol';
-
-import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
-import '@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol';
-import '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
-import {IOfficer} from '../interfaces/IOfficer.sol';
-import {IBoardOfDirectors} from '../interfaces/IBoardOfDirectors.sol';
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import {IBoardOfDirectors} from "../interfaces/IBoardOfDirectors.sol";
+import {IOfficer} from "../interfaces/IOfficer.sol";
+import {Types} from "./Types.sol";
 
 /// @title Voting Contract for Decentralized Governance
 /// @notice This contract manages proposals, elections, and voting processes
 /// @dev Implements upgradeable patterns with OpenZeppelin contracts
 contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgradeable {
-  mapping(uint256 => Types.Proposal) public proposalsById;
+  mapping(uint256 proposalId => Types.Proposal proposal) public proposalsById;
 
   uint256 public proposalCount;
   address public officerAddress;
@@ -70,6 +69,18 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
   /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() {
     _disableInitializers();
+  }
+
+  /// @notice Pauses the contract
+  /// @dev Only callable by contract owner
+  function pause() external onlyOwner {
+    _pause();
+  }
+
+  /// @notice Unpauses the contract
+  /// @dev Only callable by contract owner
+  function unpause() external onlyOwner {
+    _unpause();
   }
 
   /// @notice Initializes the contract
@@ -145,12 +156,12 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
     Types.Proposal storage proposal = proposalsById[proposalId];
     if (!proposal.isActive) revert ProposalNotActive();
 
-    Types.Member storage voter = findVoter(proposal, msg.sender);
+    Types.Member storage voter = _findVoter(proposal, msg.sender);
 
     if (!voter.isEligible) revert VoterNotEligible();
     if (voter.isVoted) revert VoterAlreadyVoted();
 
-    recordDirectiveVote(proposal, vote);
+    _recordDirectiveVote(proposal, vote);
 
     voter.isVoted = true;
     emit DirectiveVoted(msg.sender, proposalId, vote);
@@ -166,7 +177,7 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
     Types.Proposal storage proposal = proposalsById[proposalId];
     if (!proposal.isActive) revert ProposalNotActive();
 
-    Types.Member storage voter = findVoter(proposal, msg.sender);
+    Types.Member storage voter = _findVoter(proposal, msg.sender);
 
     if (!voter.isEligible) revert VoterNotEligible();
     if (voter.isVoted) revert VoterAlreadyVoted();
@@ -300,15 +311,15 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
       return;
     } else if (option == Types.TieBreakOption.RUNOFF_ELECTION) {
       // Create a new election with only the tied candidates
-      string memory newTitle = string(abi.encodePacked('Runoff: ', proposal.title));
-      addProposal(
-        newTitle,
-        proposal.description,
-        true,
-        proposal.winnerCount,
-        _getVoterAddresses(proposal),
-        proposal.tiedCandidates
-      );
+      string memory newTitle = string(abi.encodePacked("Runoff: ", proposal.title));
+      addProposal({
+        _title: newTitle,
+        _description: proposal.description,
+        _isElection: true,
+        _winnerCount: proposal.winnerCount,
+        _voters: _getVoterAddresses(proposal),
+        _candidates: proposal.tiedCandidates
+      });
       emit RunoffElectionStarted(proposalCount - 1, proposal.tiedCandidates);
       proposal.hasTie = false;
       proposal.isActive = !proposal.isActive;
@@ -324,9 +335,8 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
     Types.Proposal storage proposal = proposalsById[proposalId];
     if (msg.sender != proposal.draftedBy) revert OnlyFounder();
     if (!proposal.hasTie) revert NoTieToResolve();
-    if (proposal.selectedTieBreakOption != Types.TieBreakOption.FOUNDER_CHOICE) {
+    if (proposal.selectedTieBreakOption != Types.TieBreakOption.FOUNDER_CHOICE)
       revert WrongTieBreakOption();
-    }
 
     bool isValidChoice = false;
     for (uint256 i = 0; i < proposal.tiedCandidates.length; i++) {
@@ -350,6 +360,38 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
     proposal.isActive = !proposal.isActive;
   }
 
+  /// @notice Sets the Board of Directors members
+  /// @param _boardOfDirectors Array of addresses for the new board members
+  /// @dev Only callable by contract owner
+  function setBoardOfDirectors(address[] memory _boardOfDirectors) public onlyOwner {
+    address bodAddress = _getBoardOfDirectorsAddress();
+    IBoardOfDirectors(bodAddress).setBoardOfDirectors(_boardOfDirectors);
+  }
+
+  /// @notice Retrieves a proposal by its ID
+  /// @param proposalId The ID of the proposal to retrieve
+  /// @return The complete proposal data
+  function getProposalById(uint256 proposalId) public view returns (Types.Proposal memory) {
+    if (proposalId >= proposalCount) revert ProposalNotFound(proposalId);
+    return proposalsById[proposalId];
+  }
+
+  /// @notice Records a vote for a directive proposal
+  /// @param proposal The proposal to record the vote for
+  /// @param vote The vote value (0=No, 1=Yes, 2=Abstain)
+  /// @dev Internal function to update vote counts
+  function _recordDirectiveVote(Types.Proposal storage proposal, uint256 vote) internal {
+    if (vote == 0) {
+      proposal.votes.no++;
+    } else if (vote == 1) {
+      proposal.votes.yes++;
+    } else if (vote == 2) {
+      proposal.votes.abstain++;
+    } else {
+      revert InvalidVote(vote);
+    }
+  }
+
   /// @notice Internal function to get all voter addresses from a proposal
   /// @param proposal The proposal to extract voters from
   /// @return Array of voter addresses
@@ -368,7 +410,7 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
   /// @param voterAddress The address of the voter to find
   /// @return The found voter's data
   /// @dev Reverts if voter is not found
-  function findVoter(
+  function _findVoter(
     Types.Proposal storage proposal,
     address voterAddress
   ) internal view returns (Types.Member storage) {
@@ -380,58 +422,14 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
     revert VoterNotRegistered(voterAddress);
   }
 
-  /// @notice Retrieves a proposal by its ID
-  /// @param proposalId The ID of the proposal to retrieve
-  /// @return The complete proposal data
-  function getProposalById(uint256 proposalId) public view returns (Types.Proposal memory) {
-    if (proposalId >= proposalCount) revert ProposalNotFound(proposalId);
-    return proposalsById[proposalId];
-  }
-
-  /// @notice Records a vote for a directive proposal
-  /// @param proposal The proposal to record the vote for
-  /// @param vote The vote value (0=No, 1=Yes, 2=Abstain)
-  /// @dev Internal function to update vote counts
-  function recordDirectiveVote(Types.Proposal storage proposal, uint256 vote) internal {
-    if (vote == 0) {
-      proposal.votes.no++;
-    } else if (vote == 1) {
-      proposal.votes.yes++;
-    } else if (vote == 2) {
-      proposal.votes.abstain++;
-    } else {
-      revert InvalidVote(vote);
-    }
-  }
-
-  /// @notice Sets the Board of Directors members
-  /// @param _boardOfDirectors Array of addresses for the new board members
-  /// @dev Only callable by contract owner
-  function setBoardOfDirectors(address[] memory _boardOfDirectors) public onlyOwner {
-    address bodAddress = _getBoardOfDirectorsAddress();
-    IBoardOfDirectors(bodAddress).setBoardOfDirectors(_boardOfDirectors);
-  }
-
   /**
    * @dev Internal helper to get BoardOfDirectors contract address from Officer
    * @return Address of the BoardOfDirectors contract
    */
   function _getBoardOfDirectorsAddress() internal view returns (address) {
     if (officerAddress == address(0)) revert OfficerAddressNotSet();
-    address bodAddress = IOfficer(officerAddress).findDeployedContract('BoardOfDirectors');
+    address bodAddress = IOfficer(officerAddress).findDeployedContract("BoardOfDirectors");
     if (bodAddress == address(0)) revert BoardOfDirectorsNotFound();
     return bodAddress;
-  }
-
-  /// @notice Pauses the contract
-  /// @dev Only callable by contract owner
-  function pause() external onlyOwner {
-    _pause();
-  }
-
-  /// @notice Unpauses the contract
-  /// @dev Only callable by contract owner
-  function unpause() external onlyOwner {
-    _unpause();
   }
 }

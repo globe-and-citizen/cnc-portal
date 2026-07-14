@@ -31,7 +31,8 @@ describe('chart of accounts', () => {
       'Share-based Compensation': 'EXPENSE',
       'Operating Expense': 'EXPENSE',
       'Dividend Expense': 'EXPENSE',
-      'Trading Loss': 'EXPENSE'
+      'Trading Loss': 'EXPENSE',
+      'Transaction Fee Expense': 'EXPENSE'
     })
   })
 

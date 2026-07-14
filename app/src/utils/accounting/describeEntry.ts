@@ -30,7 +30,7 @@ const ENTRY_LABEL: Record<UseCase, string> = {
   'UC-EXP-01': 'Operating expense',
   'UC-INV-01': 'Dividend paid',
   'DEFAULT-D': 'Share issuance',
-  FEE: 'Protocol fee',
+  FEE: 'Transaction fee',
   INTERNAL: 'Internal transfer',
   'CASH-IN': 'Cash receipt',
   'CASH-OUT': 'Cash payment'
@@ -53,7 +53,7 @@ export type ActivityCell =
   | { kind: 'plain'; text: string }
 
 /** Internal pocket-to-pocket moves — rendered as two contract avatars (from → to). */
-const TRANSFER_USE_CASES: ReadonlySet<UseCase> = new Set<UseCase>(['INTERNAL', 'UC-BANK-03', 'FEE'])
+const TRANSFER_USE_CASES: ReadonlySet<UseCase> = new Set<UseCase>(['INTERNAL', 'UC-BANK-03'])
 
 /** Use cases that name a single party (member / investor / client) — avatar + predicate. */
 const ACTOR_USE_CASES: ReadonlySet<UseCase> = new Set<UseCase>([
@@ -67,6 +67,30 @@ const ACTOR_USE_CASES: ReadonlySet<UseCase> = new Set<UseCase>([
   'UC-INV-01',
   'DEFAULT-D'
 ])
+
+/**
+ * Narrate an approved expense withdrawal, adapting to its approval type. A
+ * **one-time** approval is single-use, so it names the approved amount
+ * ("withdrew $0.80 from a one-time expense approval of $1.00"); a **recurring**
+ * one names the balance still available for the current period ("withdrew $0.30
+ * for an expense. $0.70 remaining"), or that the budget is now fully used when
+ * nothing is left — the ledger date already tells the reader which period it is,
+ * so no "today"/"this week" qualifier is needed. An unmatched withdrawal (no
+ * approval on file) reads the generic phrase.
+ */
+function expensePredicate(entry: LedgerEntry, amount: string): string {
+  if (entry.expenseFrequencyType === 0 && entry.expenseApprovedUsd != null) {
+    return `withdrew ${amount} from a one-time expense approval of ${money(entry.expenseApprovedUsd)}`
+  }
+  if (entry.expenseFrequencyType != null && entry.expenseRemainingUsd != null) {
+    const left =
+      entry.expenseRemainingUsd <= 0
+        ? 'Budget fully used'
+        : `${money(entry.expenseRemainingUsd)} remaining`
+    return `withdrew ${amount} for an expense. ${left}`
+  }
+  return `withdrew ${amount} for an expense`
+}
 
 /** Hours and minutes worked — e.g. "16h", "1h 30min", "50min" — never a decimal. */
 function formatDuration(minutes: number | undefined): string | null {
@@ -104,7 +128,7 @@ function predicate(entry: LedgerEntry): string {
     case 'UC-MEMBER-01':
       return `invested ${amount} in capital${sher}`
     case 'UC-EXP-01':
-      return `was reimbursed ${amount} for an expense`
+      return expensePredicate(entry, amount)
     case 'UC-INV-01':
       return `received a ${amount} dividend`
     case 'DEFAULT-D':
@@ -135,4 +159,40 @@ export function activityOf(entry: LedgerEntry): ActivityCell {
     return { kind: 'actor', actor: entry.counterparty, text: predicate(entry) }
   }
   return { kind: 'plain', text: entryLabel(entry) }
+}
+
+/** `"0x1234…cdef"` — an address shortened for a text cell; other strings pass through. */
+function shortAddress(value: string): string {
+  return /^0x[0-9a-fA-F]{40}$/.test(value) ? `${value.slice(0, 6)}…${value.slice(-4)}` : value
+}
+
+/** A pocket account name without its `"Cash — "` prefix, matching the on-screen avatar label. */
+function pocketName(account: string): string {
+  return account.replace(/^Cash — /, '')
+}
+
+/**
+ * Flatten an {@link ActivityCell} to a single line of text for the Excel/PDF exports —
+ * the tabular counterpart of the avatar + predicate the ledger renders on screen.
+ * `resolveName` turns a party's address into its display name (member/contract); it
+ * defaults to a shortened address so the helper stays pure and usable without a store.
+ */
+export function activityText(
+  cell: ActivityCell,
+  resolveName: (address: string) => string = shortAddress
+): string {
+  switch (cell.kind) {
+    case 'actor':
+      return `${resolveName(cell.actor)} ${cell.text}`
+    case 'transfer': {
+      const from = pocketName(cell.from)
+      const to = pocketName(cell.to)
+      // Mirror the on-screen ledger phrasing exactly (see LedgerTable.vue).
+      return cell.actor
+        ? `${resolveName(cell.actor)} transferred money from ${from} to ${to}`
+        : `${from} transferred money to ${to}`
+    }
+    case 'plain':
+      return cell.text
+  }
 }

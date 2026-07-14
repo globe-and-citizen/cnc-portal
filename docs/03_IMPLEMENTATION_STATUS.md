@@ -89,7 +89,6 @@
 | Proposals            | 4/4     | ✅       | 🚫       | Board proposal creation and voting                 |
 | ExpenseAccount       | 6/6     | ✅       | 🚫       | EIP-712 signed expense budgets for employees       |
 | CashRemuneration     | 5/5     | ✅       | 🚫       | EIP-712 signed wage claims with equity minting     |
-| Tips                 | 4/4     | ✅       | 🚫       | ETH tip distribution (push or pull)                |
 | Vesting              | 5/5     | ✅       | 🚫       | Linear ERC20 token vesting with cliff periods      |
 | FeeCollector         | 4/4     | ✅       | ✅       | Global fee vault with per-type configuration       |
 | SafeDepositRouter    | 5/5     | ✅       | 🚫       | Deposit tokens, receive SHER equity tokens         |
@@ -220,7 +219,7 @@ Contract groups in parentheses indicate which contracts were delivered in that m
 
 **Contract milestone mapping:**
 - M1: Officer, Infrastructure, Bank
-- M2: CashRemuneration, ExpenseAccount, Tips, FeeCollector
+- M2: CashRemuneration, ExpenseAccount, FeeCollector
 - M3: Elections, BoardOfDirectors, Proposals, Voting
 - M4: Vesting, InvestorV1, SafeDepositRouter, AdCampaignManager
 

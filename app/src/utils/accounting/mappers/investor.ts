@@ -9,8 +9,12 @@
  * - **backed** mint (matches a SafeDepositRouter deposit or a SHER wage withdraw)
  *   → emit nothing: the Investor Equity was booked by UC-SDR-01 / UC-CASH-03.
  *   Re-booking it here would double-count the equity.
- * - **unbacked** mint → **Default D**: a memo-only entry (+N shares, value 0, no
- *   monetary posting).
+ * - **unbacked** mint → **Default D**: a direct share issuance. The SHER were
+ *   accrued into `Shares to be issued` (the wage accrual, UC-CASH-02) and are now
+ *   formally issued, so we clear that liability into equity —
+ *   Dr Shares to be issued · Cr Investor Equity — valued at the SHER rate of
+ *   record. (It no longer emits a value-0 memo, which left `Shares to be issued`
+ *   permanently inflated.)
  *
  * `DividendPaid` → UC-INV-01 (Dr Dividend Expense · Cr Cash — Bank). The summary
  * events `InvestorV1 DividendDistributed` and `Bank DividendDistributionTriggered`
@@ -72,14 +76,14 @@ export function mapInvestorEvents(input: InvestorMapperInput, ctx: MapperContext
         id: row.id,
         timestamp: row.timestamp,
         useCase: 'DEFAULT-D',
-        debit: null,
-        credit: null,
-        amountUsd: 0,
+        debit: 'Shares to be issued',
+        credit: 'Investor Equity',
+        amountUsd: ctx.toUsd(BigInt(row.amount), 'sher', atDate(row.timestamp)),
         token: 'sher',
         rawAmount: row.amount,
         counterparty: row.shareholder,
         shares: Number(formatUnits(BigInt(row.amount), 6)),
-        memo: 'Direct SHER mint — memo only (Default D)'
+        memo: 'Direct SHER mint — shares issued to equity'
       })
     )
   }

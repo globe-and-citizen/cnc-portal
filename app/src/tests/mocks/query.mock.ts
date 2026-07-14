@@ -32,6 +32,7 @@ export const mockMembersData: User[] = [
 export const mockTeamData: Team = {
   id: '1',
   name: 'Test Team',
+  slug: 'test-team',
   description: 'Test Team Description',
   members: [
     mockMembersData[0] as Member,

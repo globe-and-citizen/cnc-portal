@@ -48,7 +48,8 @@ const expenseRecord = (): ExpenseResponse =>
   ({
     id: 42,
     userAddress: ADDR.member,
-    createdAt: new Date(1_700_000_000 * 1000)
+    createdAt: new Date(1_700_000_000 * 1000),
+    data: { tokenAddress: ADDR.usdcToken }
   }) as unknown as ExpenseResponse
 
 describe('enrichEntries', () => {
@@ -64,6 +65,23 @@ describe('enrichEntries', () => {
   it('attaches the Operating category to an expense entry', () => {
     const [entry] = enrichEntries([expenseEntry()], { expenses: [expenseRecord()] })
     expect(entry).toMatchObject({ category: 'Operating', enrichment: 'enriched' })
+    expect(entry.memo).toContain('#42')
+  })
+
+  it('prefers the budget in the entry token over a nearer-dated one in another token', () => {
+    const nearerNativeBudget = {
+      ...expenseRecord(),
+      id: 43,
+      createdAt: new Date(1_700_000_100 * 1000), // closest by date, but wrong token
+      data: { tokenAddress: null }
+    } as unknown as ExpenseResponse
+    const tokenIdOf = (address: string | null | undefined) =>
+      address?.toLowerCase() === ADDR.usdcToken ? ('usdc' as const) : ('native' as const)
+    const [entry] = enrichEntries(
+      [expenseEntry()],
+      { expenses: [nearerNativeBudget, expenseRecord()] },
+      tokenIdOf
+    )
     expect(entry.memo).toContain('#42')
   })
 

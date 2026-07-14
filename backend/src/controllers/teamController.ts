@@ -1,10 +1,15 @@
-import { TeamContract, TeamOfficer, User } from '@prisma/client';
+import { Prisma, TeamContract, TeamOfficer, User } from '@prisma/client';
 import { Request, Response } from 'express';
 import { isAddress } from 'viem';
 import { addNotification, prisma } from '../utils';
 import { errorResponse } from '../utils/utils';
 import { resolveStorageImageUrl } from '../utils/profileImage.util';
+import { generateUniqueSlug } from '../utils/slug.util';
 import { CURRENT_OFFICER_VERSION } from './contractController';
+
+// A slug is taken when some team already holds it.
+const isTeamSlugTaken = async (slug: string) =>
+  Boolean(await prisma.team.findUnique({ where: { slug }, select: { id: true } }));
 
 // Shared: include the immediate predecessor (id + address only) so clients
 // can walk one step back for copy-forward flows (e.g. shareholder migration)
@@ -135,33 +140,50 @@ const addTeam = async (req: Request, res: Response) => {
       });
     }
 
-    // Create the team with the members connected and membership tracking records
-    const team = await prisma.team.create({
-      data: {
-        name,
-        description,
-        isArchived: false,
-        ownerAddress: String(callerAddress),
-        members: {
-          connect: members.map((member: User) => ({
-            address: member.address,
-          })),
-        },
-        memberTeamsData: {
-          create: members.map((member: User) => ({
-            memberAddress: member.address,
-          })),
-        },
-      },
-      include: {
-        members: {
-          select: {
-            address: true,
-            name: true,
+    // Teams may share a name; the unique identifier is a slug auto-generated
+    // from the name (acme-corp, acme-corp-2, …).
+    const createTeamWithSlug = (slug: string) =>
+      prisma.team.create({
+        data: {
+          name,
+          slug,
+          description,
+          isArchived: false,
+          ownerAddress: String(callerAddress),
+          members: {
+            connect: members.map((member: User) => ({
+              address: member.address,
+            })),
+          },
+          memberTeamsData: {
+            create: members.map((member: User) => ({
+              memberAddress: member.address,
+            })),
           },
         },
-      },
-    });
+        include: {
+          members: {
+            select: {
+              address: true,
+              name: true,
+            },
+          },
+        },
+      });
+
+    // Create the team with the members connected and membership tracking records.
+    let team;
+    try {
+      team = await createTeamWithSlug(await generateUniqueSlug(name, isTeamSlugTaken));
+    } catch (error: unknown) {
+      // Rare race: another team claimed the slug between the uniqueness check
+      // and the insert. Regenerate once and retry before giving up.
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        team = await createTeamWithSlug(await generateUniqueSlug(name, isTeamSlugTaken));
+      } else {
+        throw error;
+      }
+    }
 
     addNotification(
       members.map((member: User) => member.address),
