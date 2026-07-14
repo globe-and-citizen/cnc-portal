@@ -96,7 +96,7 @@ describe('CreditCallAccessStep validate()', () => {
       expect(wrapper.vm.validate()).toBe(true)
     })
 
-    it('fails when whitelisted allocations exceed the principal target', async () => {
+    it('passes when whitelisted allocations exceed the principal target — a buffer against a non-participating lender', () => {
       const wrapper = mountStep(
         makeForm({
           target: '10000',
@@ -107,11 +107,7 @@ describe('CreditCallAccessStep validate()', () => {
           whitelist: [{ username: 'Bob', address: BOB, amount: 15000, custom: true }]
         })
       )
-      expect(wrapper.vm.validate()).toBe(false)
-      await wrapper.vm.$nextTick()
-      expect(wrapper.find('[data-test="cc-whitelist-error"]').text()).toContain(
-        'must add up to exactly the target amount'
-      )
+      expect(wrapper.vm.validate()).toBe(true)
     })
 
     it('fails when whitelisted allocations fall short of the target — no uncapped lender to absorb the rest', async () => {
@@ -127,7 +123,7 @@ describe('CreditCallAccessStep validate()', () => {
       expect(wrapper.vm.validate()).toBe(false)
       await wrapper.vm.$nextTick()
       expect(wrapper.find('[data-test="cc-whitelist-error"]').text()).toContain(
-        'must add up to exactly the target amount'
+        'must add up to at least the target amount'
       )
     })
 
