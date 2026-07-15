@@ -6,9 +6,10 @@
 //
 //   node contract/scripts/distribute-versions.mjs
 //
-// - app + dashboard: abi/<V>/json/*.json (flat ABIs) + deployed_addresses/<V>/chain-137.json
-// - backend:         <V>/<hand-maintained-name>.json (its 6 named raw-ABI files)
-// - Removes the legacy lowercase `v1` snapshot from each consumer.
+// - app + dashboard + ponder: <V>/json/*.json (flat ABIs) + deployed_addresses/<V>/chain-137.json
+// - backend:                   <V>/<hand-maintained-name>.json (its 6 named raw-ABI files)
+// The legacy lowercase `v1` snapshot is migrated to `V1` out-of-band via `git rm`
+// (a case-insensitive FS makes an in-script rm of v1 unsafe once V1 exists).
 import { readFileSync, writeFileSync, mkdirSync, rmSync, existsSync, readdirSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
@@ -19,8 +20,20 @@ const folders = Object.keys(
   JSON.parse(readFileSync(join(VERSIONS, 'registry.json'), 'utf8')).folders
 )
 
-// Consumers whose ABI layout mirrors the canonical flat json + deployed_addresses.
-const JSON_CONSUMERS = ['app/src/artifacts', 'dashboard/app/artifacts']
+// Consumers that take the canonical flat json ABIs + chain-137 addresses, keyed by
+// version folder. Their on-disk parents differ (app/dashboard nest under `abi/`,
+// ponder under `abis/`), so each names its own abi + address base.
+// Only the JSON is packaged — the typed `.ts` wrappers ponder's config imports are a
+// deferred runtime concern (hand-maintained, divergent format); these version folders
+// are for tracking/audit, matching app + dashboard.
+const JSON_CONSUMERS = [
+  { abiBase: 'app/src/artifacts/abi', addrBase: 'app/src/artifacts/deployed_addresses' },
+  {
+    abiBase: 'dashboard/app/artifacts/abi',
+    addrBase: 'dashboard/app/artifacts/deployed_addresses'
+  },
+  { abiBase: 'ponder/abis', addrBase: 'ponder/artifacts/deployed_addresses' }
+]
 
 // Backend keeps 6 hand-named raw-ABI files → the contract each maps to.
 const BACKEND_MAP = {
@@ -43,11 +56,11 @@ for (const v of folders) {
   const srcAddr = join(VERSIONS, v, 'deployed_addresses/chain-137.json')
   const abiFiles = readdirSync(srcAbi).filter((f) => f.endsWith('.json'))
 
-  for (const base of JSON_CONSUMERS) {
-    const abiDir = join(REPO, base, 'abi', v, 'json')
+  for (const { abiBase, addrBase } of JSON_CONSUMERS) {
+    const abiDir = join(REPO, abiBase, v, 'json')
     rmSync(abiDir, { recursive: true, force: true })
     for (const f of abiFiles) copy(join(srcAbi, f), join(abiDir, f))
-    copy(srcAddr, join(REPO, base, 'deployed_addresses', v, 'chain-137.json'))
+    copy(srcAddr, join(REPO, addrBase, v, 'chain-137.json'))
   }
 
   const backendDir = join(REPO, BACKEND, v)
@@ -60,7 +73,7 @@ for (const v of folders) {
       n++
     }
   }
-  console.log(`  ${v}: ${abiFiles.length} abi -> app/dashboard, ${n} -> backend`)
+  console.log(`  ${v}: ${abiFiles.length} abi -> app/dashboard/ponder, ${n} -> backend`)
 }
 
-console.log(`distributed ${folders.join(', ')} to app, dashboard, backend`)
+console.log(`distributed ${folders.join(', ')} to app, dashboard, ponder, backend`)
