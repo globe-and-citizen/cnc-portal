@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { TableColumn } from '@nuxt/ui'
+import type { Column } from '@tanstack/table-core'
 import { getPaginationRowModel } from '@tanstack/table-core'
 import type { Address } from 'viem'
 import type { Team } from '~/types'
@@ -27,30 +28,34 @@ const columnFilters = ref([
 ])
 const columnVisibility = ref()
 
+// Reusable sortable header: renders a ghost button whose icon reflects the
+// current sort direction and toggles asc/desc on click. Applied to every column.
+const sortableHeader = (label: string) => ({ column }: { column: Column<Team> }) => {
+  const isSorted = column.getIsSorted()
+
+  return h(UButton, {
+    color: 'neutral',
+    variant: 'ghost',
+    label,
+    icon: isSorted
+      ? isSorted === 'asc'
+        ? 'i-lucide-arrow-up-narrow-wide'
+        : 'i-lucide-arrow-down-wide-narrow'
+      : 'i-lucide-arrow-up-down',
+    class: '-mx-2.5',
+    onClick: () => column.toggleSorting(column.getIsSorted() === 'asc')
+  })
+}
+
 const columns: TableColumn<Team>[] = [
   {
     accessorKey: 'id',
-    header: 'ID',
+    header: sortableHeader('ID'),
     cell: ({ row }) => `#${row.original.id}`
   },
   {
     accessorKey: 'name',
-    header: ({ column }) => {
-      const isSorted = column.getIsSorted()
-
-      return h(UButton, {
-        color: 'neutral',
-        variant: 'ghost',
-        label: 'Name',
-        icon: isSorted
-          ? isSorted === 'asc'
-            ? 'i-lucide-arrow-up-narrow-wide'
-            : 'i-lucide-arrow-down-wide-narrow'
-          : 'i-lucide-arrow-up-down',
-        class: '-mx-2.5',
-        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc')
-      })
-    },
+    header: sortableHeader('Name'),
     cell: ({ row }) => {
       return h('div', { class: 'flex flex-col' }, [
         h('p', { class: 'font-medium text-highlighted' }, row.original.name),
@@ -63,7 +68,7 @@ const columns: TableColumn<Team>[] = [
   {
     id: 'members',
     accessorFn: row => row._count?.members || 0,
-    header: 'Members',
+    header: sortableHeader('Members'),
     cell: ({ row }) => {
       const count = row.original._count?.members || 0
       return h(
@@ -78,13 +83,14 @@ const columns: TableColumn<Team>[] = [
   },
   {
     accessorKey: 'ownerAddress',
-    header: 'Owner',
+    header: sortableHeader('Owner'),
     cell: ({ row }) =>
       h(UserIdentity, { address: row.original.ownerAddress as Address })
   },
   {
-    accessorKey: 'currentOfficer',
-    header: 'Officer',
+    id: 'currentOfficer',
+    accessorFn: row => row.currentOfficer?.address ?? '',
+    header: sortableHeader('Officer'),
     cell: ({ row }) => {
       const address = row.original.currentOfficer?.address
       if (!address) {
@@ -105,7 +111,7 @@ const columns: TableColumn<Team>[] = [
   {
     id: 'officerVersion',
     accessorFn: row => row.currentOfficer?.version ?? null,
-    header: 'Version',
+    header: sortableHeader('Version'),
     cell: ({ row }) => {
       const version = row.original.currentOfficer?.version
       if (!version) {
@@ -116,7 +122,7 @@ const columns: TableColumn<Team>[] = [
   },
   {
     accessorKey: 'createdAt',
-    header: 'Created',
+    header: sortableHeader('Created'),
     cell: ({ row }) => {
       const date = dayjs(row.original.createdAt)
       return h('div', { class: 'flex flex-col' }, [
