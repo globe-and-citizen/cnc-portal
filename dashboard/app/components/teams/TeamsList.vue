@@ -1,8 +1,13 @@
 <script setup lang="ts">
 import type { TableColumn } from '@nuxt/ui'
 import { getPaginationRowModel } from '@tanstack/table-core'
+import type { Address } from 'viem'
 import type { Team } from '~/types'
-import { formatDistanceToNow } from 'date-fns'
+import dayjs from 'dayjs'
+import relativeTime from 'dayjs/plugin/relativeTime'
+import UserIdentity from '~/components/UserIdentity.vue'
+
+dayjs.extend(relativeTime)
 
 const UButton = resolveComponent('UButton')
 const UBadge = resolveComponent('UBadge')
@@ -74,14 +79,8 @@ const columns: TableColumn<Team>[] = [
   {
     accessorKey: 'ownerAddress',
     header: 'Owner',
-    cell: ({ row }) => {
-      const address = row.original.ownerAddress
-      return h(
-        'span',
-        { class: 'font-mono text-sm' },
-        `${address.slice(0, 6)}...${address.slice(-4)}`
-      )
-    }
+    cell: ({ row }) =>
+      h(UserIdentity, { address: row.original.ownerAddress as Address })
   },
   {
     accessorKey: 'currentOfficer',
@@ -92,18 +91,38 @@ const columns: TableColumn<Team>[] = [
         return h(UBadge, { color: 'warning', variant: 'subtle' }, () => 'Not Set')
       }
       return h(
-        'span',
-        { class: 'font-mono text-sm' },
+        'a',
+        {
+          href: `https://polygonscan.com/address/${address}`,
+          target: '_blank',
+          rel: 'noopener noreferrer',
+          class: 'font-mono text-sm text-primary hover:underline'
+        },
         `${address.slice(0, 6)}...${address.slice(-4)}`
       )
+    }
+  },
+  {
+    id: 'officerVersion',
+    accessorFn: row => row.currentOfficer?.version ?? null,
+    header: 'Version',
+    cell: ({ row }) => {
+      const version = row.original.currentOfficer?.version
+      if (!version) {
+        return h('span', { class: 'text-sm text-muted' }, '—')
+      }
+      return h(UBadge, { color: 'neutral', variant: 'subtle' }, () => version)
     }
   },
   {
     accessorKey: 'createdAt',
     header: 'Created',
     cell: ({ row }) => {
-      const date = new Date(row.original.createdAt)
-      return formatDistanceToNow(date, { addSuffix: true })
+      const date = dayjs(row.original.createdAt)
+      return h('div', { class: 'flex flex-col' }, [
+        h('p', { class: 'text-sm' }, date.fromNow()),
+        h('p', { class: 'text-xs text-muted' }, date.format('MMM D, YYYY'))
+      ])
     }
   }
 ]

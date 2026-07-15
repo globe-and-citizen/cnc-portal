@@ -67,6 +67,7 @@ export interface PreviousOfficerRef {
 export interface CurrentOfficer {
   id: number
   address: string
+  version: string | null
   teamId: number
   deployer: string
   deployBlockNumber: string | null
