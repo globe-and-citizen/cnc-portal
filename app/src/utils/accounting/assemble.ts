@@ -36,7 +36,7 @@ import { buildIncomeStatement, type IncomeStatement } from '@/utils/accounting/i
 import { buildBalanceSheet, type BalanceSheet } from '@/utils/accounting/balanceSheet'
 import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
 import { tokenUsdRate, type UsdRateOfRecord } from '@/utils/accounting/toUsd'
-import { buildSherMultiplierTimeline, makeSherUsdRate } from '@/utils/accounting/sherRate'
+import { currentSherUsdRate } from '@/utils/accounting/sherRate'
 import { atDate } from '@/utils/accounting/mappers/context'
 import { dayKey } from '@/utils/accounting/historicalRate'
 import type { SafeTransferRow } from '@/utils/accounting/mappers/safe'
@@ -246,23 +246,18 @@ function toLedgerSources(input: CncAccountingInput): LedgerSources {
  * for native (POL/ETH), overlaid with the SHER price.
  *
  * SHER has no market price, so it is valued from the router's compensation
- * multiplier (1 SHER = 1/multiplier USD, historised over the multiplier changes)
- * — that is what makes a wage paid in SHER increase Investor Equity. With no
- * change events we fall back to the router's live multiplier, then to the
- * contract's 1x default.
+ * multiplier (1 SHER = 1/multiplier USD) — that is what makes a wage paid in SHER
+ * increase Investor Equity. Every SHER leg uses the **current** multiplier
+ * whatever its date, so an accrual and its later issuance always net to zero.
  */
 function buildRateOfRecord(input: CncAccountingInput): UsdRateOfRecord {
   const baseRate = input.rateOfRecord ?? phase1RateOfRecord
-  const sherRate = makeSherUsdRate(
-    buildSherMultiplierTimeline(
-      input.safeDepositRouterEvents?.safeMultiplierUpdateds?.items,
-      input.safeDepositRouterEvents?.safeDeposits?.items,
-      input.currentSherMultiplier
-    )
+  const sherRate = currentSherUsdRate(
+    input.safeDepositRouterEvents?.safeMultiplierUpdateds?.items,
+    input.safeDepositRouterEvents?.safeDeposits?.items,
+    input.currentSherMultiplier
   )
-  return sherRate
-    ? (tokenId, at) => (tokenId === 'sher' ? sherRate(at) : baseRate(tokenId, at))
-    : baseRate
+  return (tokenId, at) => (tokenId === 'sher' ? sherRate : baseRate(tokenId, at))
 }
 
 /**
