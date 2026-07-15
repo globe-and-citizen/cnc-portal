@@ -50,7 +50,7 @@ const { data: officers, isLoading, isError } = useTeamOfficersQuery(() => props.
       <li
         v-for="officer in officers"
         :key="officer.id"
-        class="relative shrink-0 w-72"
+        class="relative shrink-0 w-96"
       >
         <!-- Timeline node, centered over the card and sitting on the rail. -->
         <span

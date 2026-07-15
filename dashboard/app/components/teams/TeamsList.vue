@@ -69,8 +69,7 @@ const columns: TableColumn<Team>[] = [
   // wide fixed width since it holds the richest per-row content.
   {
     id: 'officerHistory',
-    header: 'Officer history',
-    meta: { class: { th: 'w-[40rem]', td: 'w-[40rem] max-w-[40rem]' } }
+    header: 'Officer history'
   },
   { accessorKey: 'createdAt', header: sortableHeader('Created') }
 ]
