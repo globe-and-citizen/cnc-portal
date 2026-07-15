@@ -11,7 +11,6 @@ import UserIdentity from '~/components/UserIdentity.vue'
 dayjs.extend(relativeTime)
 
 const UButton = resolveComponent('UButton')
-const UBadge = resolveComponent('UBadge')
 
 const props = defineProps<{
   teams: Team[]
@@ -47,90 +46,29 @@ const sortableHeader = (label: string) => ({ column }: { column: Column<Team> })
   })
 }
 
+// Column definitions stay minimal — just the accessor + a sortable header.
+// All cell rendering lives in the `#<column>-cell` template slots below, so the
+// per-column customization is readable directly in the template.
 const columns: TableColumn<Team>[] = [
-  {
-    accessorKey: 'id',
-    header: sortableHeader('ID'),
-    cell: ({ row }) => `#${row.original.id}`
-  },
-  {
-    accessorKey: 'name',
-    header: sortableHeader('Name'),
-    cell: ({ row }) => {
-      return h('div', { class: 'flex flex-col' }, [
-        h('p', { class: 'font-medium text-highlighted' }, row.original.name),
-        row.original.description
-          ? h('p', { class: 'text-sm text-muted truncate max-w-xs' }, row.original.description)
-          : null
-      ])
-    }
-  },
+  { accessorKey: 'id', header: sortableHeader('ID') },
+  { accessorKey: 'name', header: sortableHeader('Name') },
   {
     id: 'members',
     accessorFn: row => row._count?.members || 0,
-    header: sortableHeader('Members'),
-    cell: ({ row }) => {
-      const count = row.original._count?.members || 0
-      return h(
-        UBadge,
-        {
-          color: 'neutral',
-          variant: 'subtle'
-        },
-        () => `${count} member${count !== 1 ? 's' : ''}`
-      )
-    }
+    header: sortableHeader('Members')
   },
-  {
-    accessorKey: 'ownerAddress',
-    header: sortableHeader('Owner'),
-    cell: ({ row }) =>
-      h(UserIdentity, { address: row.original.ownerAddress as Address })
-  },
+  { accessorKey: 'ownerAddress', header: sortableHeader('Owner') },
   {
     id: 'currentOfficer',
     accessorFn: row => row.currentOfficer?.address ?? '',
-    header: sortableHeader('Officer'),
-    cell: ({ row }) => {
-      const address = row.original.currentOfficer?.address
-      if (!address) {
-        return h(UBadge, { color: 'warning', variant: 'subtle' }, () => 'Not Set')
-      }
-      return h(
-        'a',
-        {
-          href: `https://polygonscan.com/address/${address}`,
-          target: '_blank',
-          rel: 'noopener noreferrer',
-          class: 'font-mono text-sm text-primary hover:underline'
-        },
-        `${address.slice(0, 6)}...${address.slice(-4)}`
-      )
-    }
+    header: sortableHeader('Officer')
   },
   {
     id: 'officerVersion',
     accessorFn: row => row.currentOfficer?.version ?? null,
-    header: sortableHeader('Version'),
-    cell: ({ row }) => {
-      const version = row.original.currentOfficer?.version
-      if (!version) {
-        return h('span', { class: 'text-sm text-muted' }, '—')
-      }
-      return h(UBadge, { color: 'neutral', variant: 'subtle' }, () => version)
-    }
+    header: sortableHeader('Version')
   },
-  {
-    accessorKey: 'createdAt',
-    header: sortableHeader('Created'),
-    cell: ({ row }) => {
-      const date = dayjs(row.original.createdAt)
-      return h('div', { class: 'flex flex-col' }, [
-        h('p', { class: 'text-sm' }, date.fromNow()),
-        h('p', { class: 'text-xs text-muted' }, date.format('MMM D, YYYY'))
-      ])
-    }
-  }
+  { accessorKey: 'createdAt', header: sortableHeader('Created') }
 ]
 
 // Route-bound page + size (shareable, reload-safe) with resize anchoring —
@@ -188,7 +126,77 @@ const pagination = computed({
         td: 'border-b border-default',
         separator: 'h-0'
       }"
-    />
+    >
+      <template #id-cell="{ row }">
+        #{{ row.original.id }}
+      </template>
+
+      <template #name-cell="{ row }">
+        <div class="flex flex-col">
+          <p class="font-medium text-highlighted">
+            {{ row.original.name }}
+          </p>
+          <p
+            v-if="row.original.description"
+            class="text-sm text-muted truncate max-w-xs"
+          >
+            {{ row.original.description }}
+          </p>
+        </div>
+      </template>
+
+      <template #members-cell="{ row }">
+        <UBadge color="neutral" variant="subtle">
+          {{ row.original._count?.members || 0 }}
+          member{{ (row.original._count?.members || 0) !== 1 ? 's' : '' }}
+        </UBadge>
+      </template>
+
+      <template #ownerAddress-cell="{ row }">
+        <UserIdentity :address="row.original.ownerAddress as Address" />
+      </template>
+
+      <template #currentOfficer-cell="{ row }">
+        <UBadge
+          v-if="!row.original.currentOfficer?.address"
+          color="warning"
+          variant="subtle"
+        >
+          Not Set
+        </UBadge>
+        <a
+          v-else
+          :href="`https://polygonscan.com/address/${row.original.currentOfficer.address}`"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="font-mono text-sm text-primary hover:underline"
+        >
+          {{ row.original.currentOfficer.address.slice(0, 6) }}...{{ row.original.currentOfficer.address.slice(-4) }}
+        </a>
+      </template>
+
+      <template #officerVersion-cell="{ row }">
+        <UBadge
+          v-if="row.original.currentOfficer?.version"
+          color="neutral"
+          variant="subtle"
+        >
+          {{ row.original.currentOfficer.version }}
+        </UBadge>
+        <span v-else class="text-sm text-muted">—</span>
+      </template>
+
+      <template #createdAt-cell="{ row }">
+        <div class="flex flex-col">
+          <p class="text-sm">
+            {{ dayjs(row.original.createdAt).fromNow() }}
+          </p>
+          <p class="text-xs text-muted">
+            {{ dayjs(row.original.createdAt).format('MMM D, YYYY') }}
+          </p>
+        </div>
+      </template>
+    </UTable>
 
     <AccountingPagination
       v-model:page="page"
