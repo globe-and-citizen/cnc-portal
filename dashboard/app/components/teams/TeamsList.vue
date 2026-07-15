@@ -7,6 +7,7 @@ import type { Team } from '~/types'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import UserIdentity from '~/components/UserIdentity.vue'
+import TeamOfficersCell from '~/components/teams/TeamOfficersCell.vue'
 
 dayjs.extend(relativeTime)
 
@@ -68,6 +69,9 @@ const columns: TableColumn<Team>[] = [
     accessorFn: row => row.currentOfficer?.version ?? null,
     header: sortableHeader('Version')
   },
+  // Display-only column (no accessor → not sortable): the full Officer chain,
+  // fetched per-team via GET /contract/officers by TeamOfficersCell.
+  { id: 'officerHistory', header: 'Officer history' },
   { accessorKey: 'createdAt', header: sortableHeader('Created') }
 ]
 
@@ -184,6 +188,10 @@ const pagination = computed({
           {{ row.original.currentOfficer.version }}
         </UBadge>
         <span v-else class="text-sm text-muted">—</span>
+      </template>
+
+      <template #officerHistory-cell="{ row }">
+        <TeamOfficersCell :team-id="row.original.id" />
       </template>
 
       <template #createdAt-cell="{ row }">

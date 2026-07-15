@@ -78,6 +78,23 @@ export interface CurrentOfficer {
   updatedAt: string
 }
 
+// One row of a team's Officer linked list, as returned by
+// GET /contract/officers?teamId= (ordered newest-first). `isCurrent` flags the
+// head of the chain (the Officer with no successor).
+export interface TeamOfficer {
+  id: number
+  address: string
+  version: string | null
+  teamId: number
+  deployer: string
+  deployBlockNumber: string | null
+  deployedAt: string | null
+  previousOfficerId: number | null
+  isCurrent: boolean
+  createdAt: string
+  updatedAt: string
+}
+
 export interface Team {
   id: number
   name: string
