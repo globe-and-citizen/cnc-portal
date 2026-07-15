@@ -32,10 +32,11 @@ contract/versions/<version>/abi/*.json         # ABIs recompiled at the deploy c
 contract/versions/<version>/deployed_addresses/chain-137.json   # from git at the deploy commit
 ```
 
-The app receives the same per-version artifacts under
-`app/src/artifacts/{abi/<version>/json, deployed_addresses/<version>}/`. Only the
-JSON ABIs are packaged (typed `.ts` wrappers are a deferred runtime concern; these
-folders are for tracking/audit).
+app, dashboard, and ponder receive the same per-version JSON ABIs +
+`deployed_addresses/<version>/chain-137.json`; backend gets its 6 hand-named raw-ABI
+files. Only the JSON ABIs are packaged (ponder's typed `.ts` wrappers are a deferred
+runtime concern; these folders are for tracking/audit). Distribute with
+`node contract/scripts/distribute-versions.mjs` after `contract/versions/` changes.
 
 ## Regenerating
 
