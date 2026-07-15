@@ -49,6 +49,7 @@ const { data: officers, isLoading, isError } = useTeamOfficersQuery(() => props.
             >
               {{ shortenAddress(officer.address) }}
             </a>
+            <CopyButton :value="officer.address" label="Officer address copied" />
             <UBadge
               v-if="officer.isCurrent"
               color="success"

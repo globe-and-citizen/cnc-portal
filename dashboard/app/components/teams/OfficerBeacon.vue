@@ -19,14 +19,16 @@ const { data: beacon, isLoading, isError } = useOfficerBeaconQuery(() => props.a
 
     <span v-else-if="!beacon">no beacon</span>
 
-    <a
-      v-else
-      :href="`https://polygonscan.com/address/${beacon}`"
-      target="_blank"
-      rel="noopener noreferrer"
-      class="font-mono hover:underline"
-    >
-      {{ shortenAddress(beacon) }}
-    </a>
+    <template v-else>
+      <a
+        :href="`https://polygonscan.com/address/${beacon}`"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="font-mono hover:underline"
+      >
+        {{ shortenAddress(beacon) }}
+      </a>
+      <CopyButton :value="beacon" label="Beacon address copied" />
+    </template>
   </div>
 </template>
