@@ -60,18 +60,18 @@ const columns: TableColumn<Team>[] = [
   },
   { accessorKey: 'ownerAddress', header: sortableHeader('Owner') },
   {
-    id: 'currentOfficer',
-    accessorFn: row => row.currentOfficer?.address ?? '',
-    header: sortableHeader('Officer')
-  },
-  {
     id: 'officerVersion',
     accessorFn: row => row.currentOfficer?.version ?? null,
     header: sortableHeader('Version')
   },
   // Display-only column (no accessor → not sortable): the full Officer chain,
-  // fetched per-team via GET /contract/officers by TeamOfficersCell.
-  { id: 'officerHistory', header: 'Officer history' },
+  // fetched per-team via GET /contract/officers by TeamOfficersCell. Given a
+  // wide fixed width since it holds the richest per-row content.
+  {
+    id: 'officerHistory',
+    header: 'Officer history',
+    meta: { class: { th: 'w-[26rem]', td: 'w-[26rem]' } }
+  },
   { accessorKey: 'createdAt', header: sortableHeader('Created') }
 ]
 
@@ -158,25 +158,6 @@ const pagination = computed({
 
       <template #ownerAddress-cell="{ row }">
         <UserIdentity :address="row.original.ownerAddress as Address" />
-      </template>
-
-      <template #currentOfficer-cell="{ row }">
-        <UBadge
-          v-if="!row.original.currentOfficer?.address"
-          color="warning"
-          variant="subtle"
-        >
-          Not Set
-        </UBadge>
-        <a
-          v-else
-          :href="`https://polygonscan.com/address/${row.original.currentOfficer.address}`"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="font-mono text-sm text-primary hover:underline"
-        >
-          {{ row.original.currentOfficer.address.slice(0, 6) }}...{{ row.original.currentOfficer.address.slice(-4) }}
-        </a>
       </template>
 
       <template #officerVersion-cell="{ row }">
