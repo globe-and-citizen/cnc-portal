@@ -70,7 +70,7 @@ const columns: TableColumn<Team>[] = [
   {
     id: 'officerHistory',
     header: 'Officer history',
-    meta: { class: { th: 'w-[26rem]', td: 'w-[26rem]' } }
+    meta: { class: { th: 'w-[40rem]', td: 'w-[40rem] max-w-[40rem]' } }
   },
   { accessorKey: 'createdAt', header: sortableHeader('Created') }
 ]

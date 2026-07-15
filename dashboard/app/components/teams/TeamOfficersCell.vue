@@ -16,10 +16,10 @@ const { data: officers, isLoading, isError } = useTeamOfficersQuery(() => props.
 
 <template>
   <div class="py-1">
-    <!-- Loading: mimic the eventual card stack so height stays stable. -->
-    <div v-if="isLoading" class="flex flex-col gap-2">
-      <USkeleton class="h-16 w-full rounded-lg" />
-      <USkeleton class="h-16 w-full rounded-lg opacity-60" />
+    <!-- Loading: mimic the eventual horizontal card row so height stays stable. -->
+    <div v-if="isLoading" class="flex gap-4 pt-5">
+      <USkeleton class="h-32 w-72 shrink-0 rounded-lg" />
+      <USkeleton class="h-32 w-72 shrink-0 rounded-lg opacity-60" />
     </div>
 
     <div
@@ -38,22 +38,28 @@ const { data: officers, isLoading, isError } = useTeamOfficersQuery(() => props.
       No officer deployed
     </div>
 
-    <!-- Timeline: newest first. A continuous rail (border-l) threads the dots;
-         each generation is a card, the current head highlighted. -->
-    <ol v-else class="flex flex-col gap-2.5 border-l border-default ml-1 pl-4">
+    <!-- Timeline: newest first, laid out horizontally. A continuous rail
+         (the ::before line) threads the dots; each generation is a card, the
+         current head highlighted. Scrolls horizontally when there are many. -->
+    <ol
+      v-else
+      class="relative flex gap-4 overflow-x-auto pt-5 pb-1
+             before:content-[''] before:absolute before:top-[0.6875rem]
+             before:left-0 before:right-0 before:h-px before:bg-default"
+    >
       <li
         v-for="officer in officers"
         :key="officer.id"
-        class="relative"
+        class="relative shrink-0 w-72"
       >
-        <!-- Timeline node, overlapping the rail. -->
+        <!-- Timeline node, centered over the card and sitting on the rail. -->
         <span
-          class="absolute left-[-1.31rem] top-3 size-2.5 rounded-full ring-4 ring-white dark:ring-neutral-900"
+          class="absolute top-[0.375rem] left-1/2 -translate-x-1/2 size-2.5 rounded-full ring-4 ring-white dark:ring-neutral-900"
           :class="officer.isCurrent ? 'bg-primary' : 'bg-neutral-400 dark:bg-neutral-600'"
         />
 
         <div
-          class="rounded-lg border p-2.5 transition-colors"
+          class="rounded-lg border p-4 transition-colors h-full"
           :class="officer.isCurrent
             ? 'border-primary/40 bg-primary/5'
             : 'border-default bg-elevated'"
@@ -63,6 +69,7 @@ const { data: officers, isLoading, isError } = useTeamOfficersQuery(() => props.
             <UBadge
               :color="officer.isCurrent ? 'primary' : 'neutral'"
               variant="subtle"
+              size="lg"
               class="font-semibold"
             >
               {{ officer.version || 'unknown' }}
@@ -71,7 +78,6 @@ const { data: officers, isLoading, isError } = useTeamOfficersQuery(() => props.
               v-if="officer.isCurrent"
               color="success"
               variant="soft"
-              size="sm"
               icon="i-lucide-circle-check"
             >
               current
@@ -79,25 +85,25 @@ const { data: officers, isLoading, isError } = useTeamOfficersQuery(() => props.
           </div>
 
           <!-- Address -->
-          <div class="mt-2 flex items-center gap-1">
-            <UIcon name="i-lucide-shield" class="size-3.5 text-muted shrink-0" />
+          <div class="mt-3 flex items-center gap-1.5">
+            <UIcon name="i-lucide-shield" class="size-4 text-muted shrink-0" />
             <a
               :href="`https://polygonscan.com/address/${officer.address}`"
               target="_blank"
               rel="noopener noreferrer"
-              class="font-mono text-xs text-primary hover:underline"
+              class="font-mono text-sm text-primary hover:underline"
             >
               {{ shortenAddress(officer.address) }}
             </a>
-            <UIcon name="i-lucide-external-link" class="size-3 text-dimmed" />
+            <UIcon name="i-lucide-external-link" class="size-3.5 text-dimmed" />
             <CopyButton :value="officer.address" label="Officer address copied" />
           </div>
 
           <!-- Deploy metadata -->
-          <dl class="mt-2 flex flex-col gap-1 text-[11px]">
-            <div v-if="officer.deployBlockNumber" class="flex items-center gap-1.5">
-              <UIcon name="i-lucide-box" class="size-3 text-dimmed shrink-0" />
-              <dt class="text-muted w-16 shrink-0">
+          <dl class="mt-3 flex flex-col gap-1.5 text-sm">
+            <div v-if="officer.deployBlockNumber" class="flex items-center gap-2">
+              <UIcon name="i-lucide-box" class="size-4 text-dimmed shrink-0" />
+              <dt class="text-muted w-20 shrink-0">
                 Block
               </dt>
               <dd>
@@ -112,9 +118,9 @@ const { data: officers, isLoading, isError } = useTeamOfficersQuery(() => props.
               </dd>
             </div>
 
-            <div v-if="officer.deployedAt" class="flex items-center gap-1.5">
-              <UIcon name="i-lucide-clock" class="size-3 text-dimmed shrink-0" />
-              <dt class="text-muted w-16 shrink-0">
+            <div v-if="officer.deployedAt" class="flex items-center gap-2">
+              <UIcon name="i-lucide-clock" class="size-4 text-dimmed shrink-0" />
+              <dt class="text-muted w-20 shrink-0">
                 Deployed
               </dt>
               <dd class="text-muted">
@@ -123,9 +129,9 @@ const { data: officers, isLoading, isError } = useTeamOfficersQuery(() => props.
               </dd>
             </div>
 
-            <div class="flex items-center gap-1.5">
-              <UIcon name="i-lucide-radio-tower" class="size-3 text-dimmed shrink-0" />
-              <dt class="text-muted w-16 shrink-0">
+            <div class="flex items-center gap-2">
+              <UIcon name="i-lucide-radio-tower" class="size-4 text-dimmed shrink-0" />
+              <dt class="text-muted w-20 shrink-0">
                 Beacon
               </dt>
               <dd>
