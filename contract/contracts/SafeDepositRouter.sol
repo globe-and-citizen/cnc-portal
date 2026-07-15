@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "./base/TokenSupport.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {TokenSupport} from "./base/TokenSupport.sol";
 import {IInvestorV1} from "./interfaces/IInvestorV1.sol";
 import {IOfficer} from "./interfaces/IOfficer.sol";
 
@@ -64,6 +64,12 @@ contract SafeDepositRouter is
 
   /// @notice Stored decimals for each token (prevents manipulation)
   mapping(address token => uint8 decimals) public tokenDecimals;
+
+  /*//////////////////////////////////////////////////////////////
+                          UPGRADE STORAGE GAP
+    //////////////////////////////////////////////////////////////*/
+
+  uint256[50] private __gap; // solhint-disable-line chainlink-solidity/prefix-storage-variables-with-s-underscore
 
   /*//////////////////////////////////////////////////////////////
                                 EVENTS
@@ -425,17 +431,13 @@ contract SafeDepositRouter is
 
     // Check MINTER_ROLE before attempting to mint
     IInvestorV1 investor = IInvestorV1(investorAddress);
-    if (!investor.hasRole(investor.MINTER_ROLE(), address(this))) {
-      revert InsufficientMinterRole();
-    }
+    if (!investor.hasRole(investor.MINTER_ROLE(), address(this))) revert InsufficientMinterRole();
 
     // Calculate SHER compensation
     uint256 sherAmount = calculateCompensation(tokenAddress, amount);
 
     // Check slippage if specified
-    if (minSherOut > 0 && sherAmount < minSherOut) {
-      revert SlippageExceeded(minSherOut, sherAmount);
-    }
+    if (minSherOut > 0 && sherAmount < minSherOut) revert SlippageExceeded(minSherOut, sherAmount);
 
     // Transfer tokens to Safe
     IERC20(tokenAddress).safeTransferFrom(msg.sender, safeAddress, amount);
@@ -443,7 +445,13 @@ contract SafeDepositRouter is
     // Mint SHER to depositor
     investor.individualMint(msg.sender, sherAmount);
 
-    emit Deposited(msg.sender, tokenAddress, amount, sherAmount, block.number);
+    emit Deposited({
+      depositor: msg.sender,
+      token: tokenAddress,
+      tokenAmount: amount,
+      sherAmount: sherAmount,
+      timestamp: block.number
+    });
   }
 
   /**
@@ -470,10 +478,4 @@ contract SafeDepositRouter is
       return amount / (10 ** (fromDec - toDec));
     }
   }
-
-  /*//////////////////////////////////////////////////////////////
-                          UPGRADE STORAGE GAP
-    //////////////////////////////////////////////////////////////*/
-
-  uint256[50] private __gap;
 }

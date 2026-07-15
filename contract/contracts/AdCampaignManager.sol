@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/Pausable.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-import "@openzeppelin/contracts/utils/Strings.sol";
+import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 
 /**
  * @title AdCampaignManager
@@ -14,7 +14,7 @@ import "@openzeppelin/contracts/utils/Strings.sol";
  *         payments against click/impression spend, with withdrawal of remaining budget.
  * @dev Pausable and reentrancy-guarded; admins and owner share most privileged actions.
  */
-contract AdCampaignManager is Ownable(msg.sender), Pausable, ReentrancyGuard {
+contract AdCampaignManager is Ownable, Pausable, ReentrancyGuard {
   using Strings for uint256;
 
   /// @dev Lifecycle status of an ad campaign.
@@ -51,11 +51,11 @@ contract AdCampaignManager is Ownable(msg.sender), Pausable, ReentrancyGuard {
   /// @notice Maps a campaign id to its campaign record.
   mapping(uint256 campaignId => AdCampaign campaign) public adCampaigns;
   /// @dev Enumerable list of admins for iteration.
-  address[] private _adminList;
+  address[] private s_adminList;
   /// @notice True when the address is registered as an admin.
   mapping(address account => bool isAdmin) public admins;
-  /// @dev Index into _adminList for each admin (for O(1) removal).
-  mapping(address account => uint256 index) private _adminIndex;
+  /// @dev Index into s_adminList for each admin (for O(1) removal).
+  mapping(address account => uint256 index) private s_adminIndex;
   /// @notice Total number of campaigns ever created.
   uint256 public adCampaignCount;
 
@@ -131,7 +131,11 @@ contract AdCampaignManager is Ownable(msg.sender), Pausable, ReentrancyGuard {
    * @param _costPerImpression Cost per impression.
    * @param _bankContractAddress Bank contract to receive claimed payments.
    */
-  constructor(uint256 _costPerClick, uint256 _costPerImpression, address _bankContractAddress) {
+  constructor(
+    uint256 _costPerClick,
+    uint256 _costPerImpression,
+    address _bankContractAddress
+  ) Ownable(msg.sender) {
     if (_bankContractAddress == address(0)) revert ZeroAddress();
     costPerClick = _costPerClick;
     costPerImpression = _costPerImpression;
@@ -151,13 +155,13 @@ contract AdCampaignManager is Ownable(msg.sender), Pausable, ReentrancyGuard {
     if (msg.value == 0) revert ZeroAmount();
     adCampaignCount++;
     string memory campaignCode = _generateCampaignCode();
-    adCampaigns[adCampaignCount] = AdCampaign(
-      msg.value,
-      0,
-      CampaignStatus.Active,
-      campaignCode,
-      msg.sender
-    );
+    adCampaigns[adCampaignCount] = AdCampaign({
+      budget: msg.value,
+      amountSpent: 0,
+      status: CampaignStatus.Active,
+      campaignCode: campaignCode,
+      advertiser: msg.sender
+    });
     campaignCodesToId[campaignCode] = adCampaignCount;
 
     emit AdCampaignCreated(campaignCode, msg.value);
@@ -189,9 +193,8 @@ contract AdCampaignManager is Ownable(msg.sender), Pausable, ReentrancyGuard {
       ? unspentBudget
       : currentClaimedAmount;
 
-    if (address(this).balance < paymentAmount) {
+    if (address(this).balance < paymentAmount)
       revert InsufficientContractBalance(paymentAmount, address(this).balance);
-    }
 
     campaign.amountSpent = campaign.amountSpent + paymentAmount;
 
@@ -221,9 +224,8 @@ contract AdCampaignManager is Ownable(msg.sender), Pausable, ReentrancyGuard {
     if (campaignId == 0) revert InvalidCampaignCode();
     AdCampaign storage campaign = adCampaigns[campaignId];
     if (campaign.status != CampaignStatus.Active) revert CampaignNotActive();
-    if (!(msg.sender == campaign.advertiser || admins[msg.sender] || msg.sender == owner())) {
+    if (!(msg.sender == campaign.advertiser || admins[msg.sender] || msg.sender == owner()))
       revert NotAuthorizedWithdrawer(msg.sender);
-    }
     if (campaign.amountSpent > currentAmountSpent) revert SpentLessThanClaimed();
     uint256 remainingBudget = campaign.budget - currentAmountSpent;
 
@@ -254,8 +256,8 @@ contract AdCampaignManager is Ownable(msg.sender), Pausable, ReentrancyGuard {
   function addAdmin(address admin) external onlyOwner {
     if (admins[admin]) revert AlreadyAdmin(admin);
     admins[admin] = true;
-    _adminIndex[admin] = _adminList.length;
-    _adminList.push(admin);
+    s_adminIndex[admin] = s_adminList.length;
+    s_adminList.push(admin);
     emit AdminAdded(admin);
   }
 
@@ -267,16 +269,16 @@ contract AdCampaignManager is Ownable(msg.sender), Pausable, ReentrancyGuard {
     if (!admins[admin]) revert NotAnAdmin(admin);
     admins[admin] = false;
 
-    uint256 indexToRemove = _adminIndex[admin];
-    uint256 lastIndex = _adminList.length - 1;
+    uint256 indexToRemove = s_adminIndex[admin];
+    uint256 lastIndex = s_adminList.length - 1;
 
     if (indexToRemove != lastIndex) {
-      address lastAdmin = _adminList[lastIndex];
-      _adminList[indexToRemove] = lastAdmin;
-      _adminIndex[lastAdmin] = indexToRemove;
+      address lastAdmin = s_adminList[lastIndex];
+      s_adminList[indexToRemove] = lastAdmin;
+      s_adminIndex[lastAdmin] = indexToRemove;
     }
-    _adminList.pop();
-    delete _adminIndex[admin];
+    s_adminList.pop();
+    delete s_adminIndex[admin];
     emit AdminRemoved(admin);
   }
 
@@ -336,7 +338,7 @@ contract AdCampaignManager is Ownable(msg.sender), Pausable, ReentrancyGuard {
 
   /// @notice Returns the list of all admin addresses.
   function getAdminList() external view returns (address[] memory) {
-    return _adminList;
+    return s_adminList;
   }
 
   // Generate a unique campaign code

@@ -38,7 +38,7 @@
     </div>
 
     <!-- Metric cards -->
-    <div class="grid grid-cols-2 gap-4 lg:grid-cols-5">
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       <div
         v-for="card in summaryCards"
         :key="card.label"

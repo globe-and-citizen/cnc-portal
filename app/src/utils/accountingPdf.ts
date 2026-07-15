@@ -143,7 +143,10 @@ const LEDGER_PDF_CELL: Record<
   activity: { align: 'left', pick: (r, resolveName) => activityText(r.activity, resolveName) },
   account: { align: 'left', pick: (r) => r.account },
   dr: { align: 'right', pick: (r) => r.dr },
-  cr: { align: 'right', pick: (r) => r.cr }
+  cr: { align: 'right', pick: (r) => r.cr },
+  currency: { align: 'left', pick: (r) => r.currency },
+  quantity: { align: 'right', pick: (r) => r.quantity },
+  rate: { align: 'right', pick: (r) => r.rate }
 }
 
 interface LedgerTableOptions {
@@ -151,6 +154,7 @@ interface LedgerTableOptions {
   from?: Date | null
   to?: Date | null
   columns?: LedgerColumnKey[]
+  currencies?: string[]
 }
 
 function ledgerTable(
@@ -158,7 +162,13 @@ function ledgerTable(
   resolveName?: ResolveName,
   opts: LedgerTableOptions = {}
 ): AccountingPdfTable {
-  const { rows, total } = presentLedger(acc.entries, opts.filter ?? 'All', opts.from, opts.to)
+  const { rows, total } = presentLedger(
+    acc.entries,
+    opts.filter ?? 'All',
+    opts.from,
+    opts.to,
+    opts.currencies
+  )
   const cols = resolveLedgerColumns(opts.columns)
   const body = rows.map((r) => cols.map((c) => LEDGER_PDF_CELL[c.value].pick(r, resolveName)))
   // Carry the same movement total the table footer shows, so a filtered export
@@ -192,7 +202,8 @@ function sectionTable(
         filter: spec.filter,
         from: spec.from,
         to: spec.to,
-        columns: spec.columns
+        columns: spec.columns,
+        currencies: spec.currencies
       })
   }
 }
