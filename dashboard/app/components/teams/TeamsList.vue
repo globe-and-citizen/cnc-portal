@@ -94,6 +94,8 @@ const pagination = computed({
 
 <template>
   <div class="space-y-4">
+    <OfficerBeaconSummary :teams="teams" />
+
     <div class="flex flex-wrap items-center justify-between gap-1.5">
       <UInput
         :model-value="table?.tableApi?.getColumn('name')?.getFilterValue() as string"
