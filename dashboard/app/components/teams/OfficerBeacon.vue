@@ -11,8 +11,6 @@ const { data: beacon, isLoading, isError } = useOfficerBeaconQuery(() => props.a
 
 <template>
   <div class="inline-flex items-center gap-1 text-[11px] text-muted">
-    <UIcon name="i-lucide-factory" class="size-3 shrink-0" />
-
     <USkeleton v-if="isLoading" class="h-3 w-16" />
 
     <span v-else-if="isError" class="text-error">beacon?</span>
