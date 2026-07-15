@@ -15,19 +15,12 @@ const VERSIONS_DIR = join(REPO, 'contract/versions')
 
 // Per-version metadata (deploy commit + on-chain deploy date + on-chain version()
 // range for future runtime resolution). Add a row here when cutting a new version.
+// The three real prod Officer#FactoryBeacon generations (with live teams),
+// identified from prod detection across teams — NOT the raw git deploy log
+// (deployed_addresses was hand-edited across branches, so it's unreliable).
 const VERSIONS = {
-  V0: { commit: '44cd9eb12', deployedAt: '2026-04-02', min: '0.0.0', max: '0.0.999' },
-  'V0.1': {
-    commit: '41c1ea08c',
-    deployedAt: '2026-04-04',
-    min: '0.1.0',
-    max: '0.1.999',
-    // in-place beacon upgrade → live impl is the upgrade record
-    implOverride: {
-      ExpenseAccountEIP712: 'ExpenseAccountUpgradeModule#ExpenseAccountEIP712',
-      CashRemunerationEIP712: 'CashRemunerationUpgradeModule#CashRemunerationEIP712'
-    }
-  },
+  V0: { commit: 'a8c6f815b', deployedAt: '2026-02-20', min: '0.0.0', max: '0.0.999' },
+  'V0.1': { commit: 'd79baeaaf', deployedAt: '2026-04-24', min: '0.1.0', max: '0.1.999' },
   V1: { commit: '9613f0882', deployedAt: '2026-04-24', min: '1.0.0', max: '1.999.999' }
 }
 const CURRENT = 'V1'
@@ -95,7 +88,7 @@ for (const [version, meta] of Object.entries(VERSIONS)) {
 
 const registry = {
   $comment:
-    "Deployment-aligned contract-artifact versions on Polygon. Each folder (contract/versions/<version>/) is a snapshot of the ABIs (recompiled at the deploy commit) + deployed_addresses (copied from git history) for a real POL deployment — see `officer`/`commit`/`deployedAt`. `officerVersions` (backend TeamOfficer.version tags) is left empty for now: runtime per-team resolution is not wired yet, and V0/V0.1 share the same Officer (V0.1 is an in-place beacon upgrade of ExpenseAccount + CashRemuneration). Distributed to consumers as 'version-registry.json' via `npm run mc`. FLAT string maps keep prettier width-stable across consumers. See contract/versions/README.md and UPGRADE_STRATEGY.md.",
+    "Deployment-aligned contract-artifact versions on Polygon, matched to the three real prod Officer#FactoryBeacon generations (detected across teams). Each folder (contract/versions/<version>/) snapshots the ABIs (recompiled at the deploy commit) + deployed_addresses (from git) for one deployment — see `officer`/`commit`/`deployedAt`. V0/V0.1/V1 are three DISTINCT full redeployments (each a new Officer + factory). `officerVersions` (backend TeamOfficer.version tags) is left empty: runtime per-team resolution is not wired yet — but each folder's `officer`/`beacons.Officer` is the concrete on-chain identifier a team maps to. Distributed to consumers as 'version-registry.json' via `npm run mc`. FLAT string maps keep prettier width-stable across consumers. See contract/versions/README.md.",
   current: CURRENT,
   folders
 }
