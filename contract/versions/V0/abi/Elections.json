@@ -291,6 +291,19 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "bodAddress",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "uint256",
@@ -606,19 +619,6 @@
   },
   {
     "inputs": [],
-    "name": "officerAddress",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
     "name": "owner",
     "outputs": [
       {
@@ -666,6 +666,19 @@
   {
     "inputs": [],
     "name": "renounceOwnership",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_bodAddress",
+        "type": "address"
+      }
+    ],
+    "name": "setBoardOfDirectorsContractAddress",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

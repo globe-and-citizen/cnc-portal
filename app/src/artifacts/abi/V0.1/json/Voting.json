@@ -307,6 +307,19 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "boardOfDirectorsContractAddress",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "uint256",
@@ -462,19 +475,6 @@
     "name": "initialize",
     "outputs": [],
     "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "officerAddress",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -656,6 +656,19 @@
       }
     ],
     "name": "setBoardOfDirectors",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_boardOfDirectorsContractAddress",
+        "type": "address"
+      }
+    ],
+    "name": "setBoardOfDirectorsContractAddress",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
