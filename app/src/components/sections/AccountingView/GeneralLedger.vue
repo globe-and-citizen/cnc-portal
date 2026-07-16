@@ -126,10 +126,18 @@ const showCurrencyFilter = computed(() => availableCurrencies.value.length >= 2)
 // Selected currencies (defaults to all). Reconciled whenever the available set
 // changes: keep what's still present, falling back to "all" when nothing valid
 // remains — so switching another filter never leaves a stale, empty selection.
+// When the whole set was selected (the default), stay "all" as new currencies
+// appear — the ledger loads incrementally, so SHER can show up after POL and
+// must not be left unselected.
 const selectedCurrencies = ref<string[]>([])
 watch(
   availableCurrencies,
-  (avail) => {
+  (avail, prev) => {
+    const wasAll = !prev || selectedCurrencies.value.length >= prev.length
+    if (wasAll) {
+      selectedCurrencies.value = [...avail]
+      return
+    }
     const kept = selectedCurrencies.value.filter((c) => avail.includes(c))
     selectedCurrencies.value = kept.length ? kept : [...avail]
   },
