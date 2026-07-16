@@ -1,14 +1,18 @@
 /**
- * SHER price-of-record: every SHER leg is valued at the **current** router
- * compensation multiplier — 1 SHER = 1 / multiplier USD — whatever the entry's
- * date. Valuing all SHER at one rate keeps a wage accrual and its later share
- * issuance in step, so `Shares to be issued` nets to zero once the shares are
- * issued (no historised gap between submit and issuance).
+ * SHER price-of-record, historised over the router compensation multiplier.
  *
- * The current multiplier is resolved, in order, from: the router's live
- * `multiplier` read (covers the constructor's initial value, which emits no
- * event), then the most recent `MultiplierUpdated` event, then the multiplier
- * implied by a USD-pegged deposit, then the 1x default (1 SHER = $1).
+ * The router mints `multiplier` SHER per one USD-pegged token deposited, so one
+ * SHER costs `1 / multiplier` USD on any given date. The multiplier can change
+ * over time, so we replay the `MultiplierUpdated` events to know its value on each
+ * entry's date — every SHER leg is therefore **frozen at the multiplier of its own
+ * date** (a past entry never re-values when the multiplier moves later). An
+ * issuance is then settled at the frozen value of the accruals it matches (see
+ * `mappers/sherIssuance.ts`), so `Shares to be issued` nets to zero and a
+ * multiplier change never creates a P&L gain or loss.
+ *
+ * With no change events the multiplier never moved on-chain, so a single point
+ * covers every date; we resolve it from the router's live `multiplier` read, then
+ * a deposit-implied value, then the 1x default (1 SHER = $1).
  */
 import { formatUnits } from 'viem'
 import type { SafeMultiplierUpdatedRow, SafeDepositRow } from '@/types/ponder/investor'
@@ -28,6 +32,12 @@ function toWhole(value: string | bigint, decimals: number): number {
   }
 }
 
+/** The whole-units SHER-per-token multiplier in effect from `timestamp` onward. */
+export interface SherMultiplierPoint {
+  timestamp: number
+  multiplier: number
+}
+
 /** Multiplier implied by the most recent USD-pegged deposit (sherWhole / tokenWhole). */
 function inferMultiplierFromDeposits(deposits: readonly SafeDepositRow[] | undefined): number {
   const recentFirst = [...(deposits ?? [])].sort((a, b) => b.timestamp - a.timestamp)
@@ -42,30 +52,59 @@ function inferMultiplierFromDeposits(deposits: readonly SafeDepositRow[] | undef
 }
 
 /**
- * The current whole-units SHER-per-token multiplier: live contract read, else the
- * most recent change event, else a deposit-implied value, else the 1x default.
+ * Reconstruct the multiplier timeline from the `MultiplierUpdated` events. The
+ * first point uses the event's `oldMultiplier` so dates before the first change
+ * are valued at the pre-change multiplier. With no events the timeline is a single
+ * point resolved from the live read, a deposit, then the 1x default.
  */
-export function resolveCurrentSherMultiplier(
+export function buildSherMultiplierTimeline(
   updates: readonly SafeMultiplierUpdatedRow[] | undefined,
   deposits: readonly SafeDepositRow[] | undefined,
   currentMultiplier?: number | null
-): number {
-  if (currentMultiplier && currentMultiplier > 0) return currentMultiplier
+): SherMultiplierPoint[] {
   const events = [...(updates ?? [])].sort((a, b) => a.timestamp - b.timestamp)
-  const last = events[events.length - 1]
-  if (last) {
-    const m = toWhole(last.newMultiplier, MULTIPLIER_DECIMALS)
-    if (m > 0) return m
+  const [first] = events
+  if (first) {
+    const points: SherMultiplierPoint[] = [
+      {
+        timestamp: 0,
+        // Defended to the 1x default — a malformed `oldMultiplier` must not value
+        // every pre-first-event SHER entry at $0.
+        multiplier: toWhole(first.oldMultiplier, MULTIPLIER_DECIMALS) || DEFAULT_MULTIPLIER
+      }
+    ]
+    for (const event of events) {
+      points.push({
+        timestamp: event.timestamp,
+        multiplier: toWhole(event.newMultiplier, MULTIPLIER_DECIMALS)
+      })
+    }
+    return points
   }
-  return inferMultiplierFromDeposits(deposits) || DEFAULT_MULTIPLIER
+  const live = currentMultiplier && currentMultiplier > 0 ? currentMultiplier : 0
+  const fallback = live || inferMultiplierFromDeposits(deposits) || DEFAULT_MULTIPLIER
+  return [{ timestamp: 0, multiplier: fallback }]
 }
 
-/** USD value of one SHER (1 / current multiplier); 0 only for a non-positive multiplier. */
-export function currentSherUsdRate(
-  updates: readonly SafeMultiplierUpdatedRow[] | undefined,
-  deposits: readonly SafeDepositRow[] | undefined,
-  currentMultiplier?: number | null
-): number {
-  const multiplier = resolveCurrentSherMultiplier(updates, deposits, currentMultiplier)
-  return multiplier > 0 ? 1 / multiplier : 0
+/**
+ * A SHER USD rate-of-record over the timeline: `1 / multiplier` at the multiplier
+ * in effect on the entry's date. Returns `null` only for a truly empty timeline
+ * (defensive) — {@link buildSherMultiplierTimeline} always yields at least the 1x
+ * default.
+ */
+export function makeSherUsdRate(
+  timeline: readonly SherMultiplierPoint[]
+): ((at: Date) => number) | null {
+  const points = [...timeline].sort((a, b) => a.timestamp - b.timestamp)
+  const [earliest] = points
+  if (!earliest) return null
+  return (at: Date): number => {
+    const seconds = Math.floor(at.getTime() / 1000)
+    let multiplier = earliest.multiplier
+    for (const point of points) {
+      if (point.timestamp <= seconds) multiplier = point.multiplier
+      else break
+    }
+    return multiplier > 0 ? 1 / multiplier : 0
+  }
 }

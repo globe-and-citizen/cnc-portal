@@ -36,7 +36,7 @@ import { buildIncomeStatement, type IncomeStatement } from '@/utils/accounting/i
 import { buildBalanceSheet, type BalanceSheet } from '@/utils/accounting/balanceSheet'
 import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
 import { tokenUsdRate, type UsdRateOfRecord } from '@/utils/accounting/toUsd'
-import { currentSherUsdRate } from '@/utils/accounting/sherRate'
+import { buildSherMultiplierTimeline, makeSherUsdRate } from '@/utils/accounting/sherRate'
 import { atDate } from '@/utils/accounting/mappers/context'
 import { dayKey } from '@/utils/accounting/historicalRate'
 import type { SafeTransferRow } from '@/utils/accounting/mappers/safe'
@@ -247,17 +247,21 @@ function toLedgerSources(input: CncAccountingInput): LedgerSources {
  *
  * SHER has no market price, so it is valued from the router's compensation
  * multiplier (1 SHER = 1/multiplier USD) — that is what makes a wage paid in SHER
- * increase Investor Equity. Every SHER leg uses the **current** multiplier
- * whatever its date, so an accrual and its later issuance always net to zero.
+ * increase Investor Equity. Each SHER leg is frozen at the multiplier of its own
+ * date (historised) — a past entry never re-values when the multiplier moves later.
  */
 function buildRateOfRecord(input: CncAccountingInput): UsdRateOfRecord {
   const baseRate = input.rateOfRecord ?? phase1RateOfRecord
-  const sherRate = currentSherUsdRate(
-    input.safeDepositRouterEvents?.safeMultiplierUpdateds?.items,
-    input.safeDepositRouterEvents?.safeDeposits?.items,
-    input.currentSherMultiplier
+  const sherRate = makeSherUsdRate(
+    buildSherMultiplierTimeline(
+      input.safeDepositRouterEvents?.safeMultiplierUpdateds?.items,
+      input.safeDepositRouterEvents?.safeDeposits?.items,
+      input.currentSherMultiplier
+    )
   )
-  return (tokenId, at) => (tokenId === 'sher' ? sherRate : baseRate(tokenId, at))
+  return sherRate
+    ? (tokenId, at) => (tokenId === 'sher' ? sherRate(at) : baseRate(tokenId, at))
+    : baseRate
 }
 
 /**
