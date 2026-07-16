@@ -2,22 +2,24 @@
   <UForm ref="formRef" :schema="schema" :state="state" class="flex flex-col gap-5">
     <section class="flex flex-col gap-2">
       <UFormField name="access" label="Who can lend" hint="Optional">
-        <URadioGroup
-          :model-value="form.access"
-          :items="accessOptions"
-          orientation="horizontal"
-          variant="card"
-          class="w-full"
-          data-test="offering-access-picker"
-          :ui="{ fieldset: 'grid w-full grid-cols-2 gap-3', item: 'cursor-pointer' }"
-          @update:model-value="updateAccess"
-        >
-          <template #label="{ item }">
-            <span class="text-sm font-bold" :data-test="`access-${String(item.value)}-button`">
-              {{ item.label }}
+        <div class="flex flex-col gap-2.5" data-test="offering-access-picker">
+          <div
+            v-for="option in accessOptions"
+            :key="option.value"
+            :class="creditAccessRowClass(form.access === option.value)"
+            @click="updateAccess(option.value)"
+          >
+            <span :class="creditRadioClass(form.access === option.value)">
+              <span v-if="form.access === option.value" class="bg-primary h-2 w-2 rounded-full" />
             </span>
-          </template>
-        </URadioGroup>
+            <div>
+              <div class="text-sm font-semibold" :data-test="`access-${option.value}-button`">
+                {{ option.label }}
+              </div>
+              <div class="text-muted mt-0.5 text-xs">{{ option.description }}</div>
+            </div>
+          </div>
+        </div>
       </UFormField>
 
       <UFormField v-if="form.access === 'whitelist'" name="whitelist">
@@ -60,6 +62,7 @@
 import { ref, computed } from 'vue'
 import WhitelistEditor from './WhitelistEditor.vue'
 import { createOfferingAccessSchema, type OfferingForm, type WhitelistEntry } from '@/types'
+import { creditAccessRowClass, creditRadioClass } from '@/utils'
 
 const form = defineModel<OfferingForm>('form', { required: true })
 

@@ -8,6 +8,7 @@ import { config } from '@/wagmi.config'
 import { FIXED_RETURN_ABI } from '@/artifacts/abi/fixed-return'
 import { useFixedReturnAddress, useFixedReturnAllOffers } from '@/composables/fixedReturn/reads'
 import { useGetFixedReturnOfferingsQuery } from '@/queries/fixedReturnOffering.queries'
+import { useBlockTimestamp } from '@/composables/useBlockTimestamp'
 import { useTeamStore } from './teamStore'
 import { useUserDataStore } from './user'
 import {
@@ -66,10 +67,20 @@ export const useCommunityCreditStore = defineStore('communityCredit', () => {
     return (metadataQuery.data.value ?? []).find((m) => m.offerId === offerId)?.purpose ?? undefined
   }
 
+  // The chain's own clock, not the browser's — a round's "has the deadline passed"
+  // status must agree with what lendFunds itself checks (block.timestamp), or the UI
+  // can show a round as lendable/Open right up until the moment the transaction it
+  // just accepted reverts on-chain with OfferNotOpen. Falls back to the device clock
+  // only for the brief instant before the first block resolves.
+  const blockTimestamp = useBlockTimestamp()
+  const now = computed(() =>
+    blockTimestamp.value !== null ? new Date(Number(blockTimestamp.value) * 1000) : new Date()
+  )
+
   /** Every offer as a CreditRound, newest first (lenders resolved lazily by the detail view). */
   const rounds = computed<CreditRound[]>(() =>
     (offersQuery.data.value ?? []).map((raw) =>
-      lendingOfferToCreditRound(raw, titleFor(raw.offerId), purposeFor(raw.offerId))
+      lendingOfferToCreditRound(raw, titleFor(raw.offerId), purposeFor(raw.offerId), now.value)
     )
   )
 
@@ -83,21 +94,31 @@ export const useCommunityCreditStore = defineStore('communityCredit', () => {
   const isLender = computed(() => !isOwner.value)
 
   // ───────── derived round buckets ─────────
-  const activeRounds = computed(() =>
-    rounds.value.filter(
-      (r) => r.status === 'open' || r.status === 'funded' || r.status === 'active'
-    )
-  )
-  const historyRounds = computed(() =>
-    rounds.value.filter((r) => r.status === 'repaid' || r.status === 'refundable')
-  )
+  // "Open & active rounds" — only rounds a lender could still fund right now. Everything
+  // else (funded, mid-repayment, repaid, refundable, or stalled past its deadline) has
+  // nothing left for a lender to act on, so it lives in History instead.
+  const activeRounds = computed(() => rounds.value.filter((r) => r.fundable))
+  const historyRounds = computed(() => rounds.value.filter((r) => !r.fundable))
 
   // ───────── account stats (from raw offers so token decimals stay correct) ─────────
+  // Broader than `activeRounds`: outstanding principal/interest covers every round with
+  // money out and not yet repaid, including funded rounds sitting in History awaiting
+  // a repay action, and stalled rounds awaiting the issuer's refund/accept decision —
+  // that principal is still very much outstanding in both cases.
+  const outstandingRounds = computed(() =>
+    rounds.value.filter(
+      (r) =>
+        r.status === 'open' ||
+        r.status === 'stalled' ||
+        r.status === 'funded' ||
+        r.status === 'active'
+    )
+  )
   const outstandingPrincipal = computed(() =>
-    activeRounds.value.reduce((sum, r) => sum + r.raised, 0)
+    outstandingRounds.value.reduce((sum, r) => sum + r.raised, 0)
   )
   const interestDue = computed(() =>
-    activeRounds.value.reduce((sum, r) => sum + roundInterest(r), 0)
+    outstandingRounds.value.reduce((sum, r) => sum + roundInterest(r), 0)
   )
   const raisedLifetime = computed(() => rounds.value.reduce((sum, r) => sum + r.raised, 0))
   const repaidLifetime = computed(() =>
@@ -109,8 +130,8 @@ export const useCommunityCreditStore = defineStore('communityCredit', () => {
   const nextMaturity = computed(() => {
     const soonest = (offersQuery.data.value ?? [])
       .filter((raw) => {
-        const s = offerStateToRoundStatus(raw.offer)
-        return s === 'open' || s === 'funded' || s === 'active'
+        const s = offerStateToRoundStatus(raw.offer, now.value)
+        return s === 'open' || s === 'stalled' || s === 'funded' || s === 'active'
       })
       .map((raw) => offerMaturityDate(raw.offer))
       .sort((a, b) => a.getTime() - b.getTime())[0]
