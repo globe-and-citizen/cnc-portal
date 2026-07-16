@@ -30,7 +30,7 @@ defineProps<{
         <div
           v-for="d in contract.deployments"
           :key="d.version"
-          class="shrink-0 w-72 rounded-lg border p-3"
+          class="shrink-0 w-auto rounded-lg border p-4"
           :class="d.isCurrent
             ? 'border-primary/40 bg-primary/5'
             : 'border-default bg-elevated'"
@@ -80,14 +80,15 @@ defineProps<{
                 <AddressLink :address="d.implementation" label="Implementation address copied" />
               </dd>
             </div>
-            <div v-if="d.beacon" class="flex items-center gap-2">
+            <div class="flex items-center gap-2">
               <UIcon name="i-lucide-key-round" class="size-4 text-dimmed shrink-0" />
               <dt class="text-muted w-24 shrink-0">
                 Owner
               </dt>
               <dd>
-                <!-- Beacon owner (upgrade authority), read on-chain via owner(). -->
-                <BeaconOwner :address="d.beacon" />
+                <!-- Upgrade authority: beacon owner, or ProxyAdmin owner for
+                     transparent-proxy contracts. Read on-chain. -->
+                <ContractOwner :beacon="d.beacon" :proxy="d.implementation" />
               </dd>
             </div>
           </dl>

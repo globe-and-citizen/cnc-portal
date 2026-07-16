@@ -27,7 +27,7 @@ const { versions, contracts } = useContractRegistry()
         <div
           v-for="v in versions"
           :key="v.version"
-          class="rounded-lg border p-3 min-w-64"
+          class="rounded-lg border p-4 min-w-[30rem]"
           :class="v.isCurrent ? 'border-primary/40 bg-primary/5' : 'border-default bg-elevated'"
         >
           <div class="flex items-center justify-between gap-2">
