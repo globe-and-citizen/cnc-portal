@@ -1,6 +1,11 @@
 <template>
   <UCard variant="subtle" :ui="{ body: 'flex flex-col gap-3 p-4' }">
-    <p :class="targetStatusClass" class="text-xs font-semibold" data-test="whitelist-target-total">
+    <p
+      v-if="capOn"
+      :class="targetStatusClass"
+      class="text-xs font-semibold"
+      data-test="whitelist-target-total"
+    >
       {{ targetStatusDescription }}
     </p>
 
@@ -26,43 +31,48 @@
           </div>
         </div>
         <div class="flex flex-none flex-col items-end gap-0.5">
-          <UInput
-            type="number"
-            :model-value="w.amount != null ? String(w.amount) : undefined"
-            :placeholder="defaultAmountLabel"
-            :color="isOverCap(w.amount) ? 'error' : undefined"
-            class="w-28"
-            data-test="whitelist-amount-input"
-            @update:model-value="(v) => $emit('update-amount', i, v)"
-          >
-            <template #leading><span class="text-muted text-xs font-semibold">$</span></template>
-          </UInput>
-          <span
-            v-if="isOverCap(w.amount)"
-            class="text-[10px] font-bold text-red-600"
-            data-test="whitelist-amount-error"
-          >
-            Exceeds cap ({{ defaultAmountLabel }})
-          </span>
-          <span v-else class="flex items-center gap-1">
-            <span
-              :style="{ color: w.amount != null ? '#0a7a52' : '#b45309' }"
-              class="text-[10px] font-bold"
-            >
-              {{ w.amount != null ? 'custom' : 'not set' }}
+          <template v-if="!capOn">
+            <span class="text-primary text-[10px] font-bold" data-test="whitelist-uncapped-label">
+              Uncapped
             </span>
-            <UButton
-              v-if="defaultAmount != null"
-              type="button"
-              size="xs"
-              color="success"
-              variant="link"
-              label="Use default"
-              class="p-0 text-[10px]"
-              data-test="whitelist-use-default-button"
-              @click="$emit('update-amount', i, defaultAmount)"
-            />
-          </span>
+          </template>
+          <template v-else>
+            <UInput
+              type="number"
+              min="0"
+              :model-value="w.amount != null ? String(w.amount) : ''"
+              :placeholder="defaultAmountLabel"
+              :readonly="!w.custom"
+              :variant="w.custom ? 'outline' : 'subtle'"
+              size="sm"
+              class="w-28"
+              :class="!w.custom && 'text-muted cursor-pointer'"
+              data-test="whitelist-amount-input"
+              @focus="!w.custom && $emit('update-custom', i, true)"
+              @update:model-value="(v) => $emit('update-amount', i, v)"
+            >
+              <template #leading><span class="text-muted text-xs font-semibold">$</span></template>
+            </UInput>
+            <span class="flex items-center gap-1">
+              <span
+                :style="{ color: w.custom ? '#0a7a52' : '#6b7c74' }"
+                class="text-[10px] font-bold"
+              >
+                {{ w.custom ? 'custom' : 'default' }}
+              </span>
+              <UButton
+                v-if="w.custom"
+                type="button"
+                size="xs"
+                color="success"
+                variant="link"
+                label="Reset to default"
+                class="p-0 text-[10px]"
+                data-test="whitelist-reset-default-button"
+                @click="$emit('update-custom', i, false)"
+              />
+            </span>
+          </template>
         </div>
         <UButton
           color="neutral"
@@ -107,33 +117,36 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { watchDebounced } from '@vueuse/core'
-import type { Member, WhitelistEntry } from '@/types'
-import CreditAvatar from '@/components/sections/CommunityCreditView/CreditAvatar.vue'
+import type { CreditWhitelistEntry, Member } from '@/types'
+import CreditAvatar from './CreditAvatar.vue'
 import SelectMemberResults from '@/components/utils/SelectMemberResults.vue'
 import { formatAddress } from '@/utils/formatAddress'
 import { useTeamStore } from '@/stores/teamStore'
 import {
   filter,
-  getWhitelistAllocationSummary,
+  getCreditWhitelistAllocationSummary,
   gradientForAddress,
-  isWhitelistAmountOverCap,
   resolveUser
 } from '@/utils'
 
 const props = defineProps<{
-  whitelist: WhitelistEntry[]
+  whitelist: CreditWhitelistEntry[]
   defaultAmountLabel: string
-  defaultAmount: number | null
   principalTarget: number
   token: string | undefined
+  /** Without a round-level cap there's no per-lender ceiling — every lender is
+   *  uncapped by definition, so the per-lender amount input/toggle stay hidden. */
+  capOn: boolean
 }>()
 
 const allocationSummary = computed(() =>
-  getWhitelistAllocationSummary(props.whitelist, props.principalTarget, props.token)
+  getCreditWhitelistAllocationSummary(props.whitelist, props.principalTarget, props.token)
 )
 const targetStatusClass = computed(() => {
-  if (allocationSummary.value.status === 'over') return 'text-error'
-  if (allocationSummary.value.status === 'under') return 'text-warning'
+  // 'over' is a deliberate, publishable buffer against a lender who doesn't deposit —
+  // only 'under' actually blocks publishing (AllocationSumBelowFundingTarget).
+  if (allocationSummary.value.status === 'under') return 'text-error'
+  if (allocationSummary.value.status === 'over') return 'text-muted'
   return 'text-muted'
 })
 
@@ -142,7 +155,8 @@ const targetStatusDescription = computed(() => allocationSummary.value.descripti
 const emit = defineEmits<{
   remove: [i: number]
   'update-amount': [i: number, val: string | number]
-  add: [username: string, address: string, amount: number | null]
+  'update-custom': [i: number, custom: boolean]
+  add: [username: string, address: string]
 }>()
 
 const teamStore = useTeamStore()
@@ -166,12 +180,8 @@ watchDebounced(
   { debounce: 300, maxWait: 1000 }
 )
 
-function isOverCap(amount: number | null): boolean {
-  return isWhitelistAmountOverCap(amount, props.defaultAmount)
-}
-
 function handleAdd(member: Member) {
-  emit('add', member.name ?? member.address ?? '', member.address ?? '', props.defaultAmount)
+  emit('add', member.name ?? member.address ?? '', member.address ?? '')
   search.value = { name: '', address: '' }
   showResults.value = false
 }
