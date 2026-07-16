@@ -51,10 +51,6 @@ const teamOutletKey = computed(() => {
   if (name === 'bod-proposals' || name === 'proposal-detail') {
     return route.fullPath
   }
-  // Keep the Accounting layout mounted while switching its sub-sections.
-  if (typeof name === 'string' && name.startsWith('accounting')) {
-    return 'accounting'
-  }
   return String(name ?? route.fullPath)
 })
 
