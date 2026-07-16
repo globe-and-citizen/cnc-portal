@@ -35,6 +35,7 @@ const pageTitle = computed(() => {
     'micropayments': 'Micropayments',
     'accounting': 'Polymarket Accounting',
     'contracts': 'Contracts',
+    'contracts-history': 'Contract History',
     'settings': 'Settings',
     'settings-members': 'Members',
     'settings-notifications': 'Notifications',
@@ -122,6 +123,13 @@ const links = [
           label: 'General',
           to: '/contracts',
           exact: true,
+          onSelect: () => {
+            open.value = false
+          }
+        },
+        {
+          label: 'Contract History',
+          to: '/contracts/history',
           onSelect: () => {
             open.value = false
           }
