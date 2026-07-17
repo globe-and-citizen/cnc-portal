@@ -73,7 +73,8 @@ const columns: TableColumn<Team>[] = [
   {
     id: 'balance',
     accessorFn: row => getBalanceRecap(row.id).totalStableValue,
-    header: sortableHeader('Balances')
+    header: sortableHeader('Balances'),
+    meta: { class: { th: 'w-64', td: 'w-64 align-top' } }
   },
   // Display-only column (no accessor → not sortable): the full Officer chain,
   // fetched per-team via GET /contract/officers by TeamOfficersCell. Given a

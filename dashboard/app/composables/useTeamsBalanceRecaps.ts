@@ -37,20 +37,31 @@ export interface ContractBalance {
   tokens: TokenAmount[]
 }
 
+// One Officer generation's value-holding contracts, with their balances.
+export interface GenerationBalance {
+  officerId: number
+  version: string | null
+  isCurrent: boolean
+  officerAddress: Address
+  contracts: ContractBalance[]
+}
+
 export interface TeamBalanceBreakdown {
   loading: boolean
-  contracts: ContractBalance[]
-  // Sort key: summed stablecoin value (all ~1 USD) across the team's contracts.
+  generations: GenerationBalance[]
+  // Sort key: summed stablecoin value (all ~1 USD) across every generation.
   totalStableValue: number
 }
 
-const EMPTY: TeamBalanceBreakdown = { loading: false, contracts: [], totalStableValue: 0 }
+const EMPTY: TeamBalanceBreakdown = { loading: false, generations: [], totalStableValue: 0 }
+
+type AddressBalance = { native: bigint, tokens: TokenAmount[] }
 
 /**
- * List-level balance recap for every team: per value-holding contract, its
- * native + stablecoin balances, plus a numeric total (stablecoin sum) usable as
- * a sort key. One officers fetch + one balance multicall per team, both cached
- * and shared with the per-row cells.
+ * List-level balance recap for every team, GROUPED BY OFFICER VERSION. Each
+ * generation lists its value-holding contracts + native/stablecoin balances, so
+ * it's clear which balance belongs to which version (current vs legacy). One
+ * officers fetch + one balance multicall per team, cached and shared with cells.
  */
 export const useTeamsBalanceRecaps = (teams: MaybeRefOrGetter<Team[]>) => {
   const chainId = Number(useRuntimeConfig().public.chainId)
@@ -58,7 +69,6 @@ export const useTeamsBalanceRecaps = (teams: MaybeRefOrGetter<Team[]>) => {
 
   const teamList = computed(() => toValue(teams) ?? [])
 
-  // 1. Officers (with their contracts) per team.
   const officerQueries = useQueries({
     queries: computed(() =>
       teamList.value.map(team => ({
@@ -69,37 +79,52 @@ export const useTeamsBalanceRecaps = (teams: MaybeRefOrGetter<Team[]>) => {
     )
   })
 
-  // Value-holding contracts (deduped by address) per team, across all officers.
-  const contractsByTeam = computed(() => {
-    const map = new Map<number, { address: Address, type: string }[]>()
+  // Per team: Officer generations that own ≥1 value-holding contract.
+  const generationsByTeam = computed(() => {
+    const map = new Map<number, {
+      officerId: number
+      version: string | null
+      isCurrent: boolean
+      officerAddress: Address
+      contracts: { address: Address, type: string }[]
+    }[]>()
     teamList.value.forEach((team, i) => {
-      const byAddress = new Map<string, { address: Address, type: string }>()
-      for (const officer of officerQueries.value[i]?.data ?? []) {
-        for (const contract of officer.contracts ?? []) {
-          if (VALUE_HOLDING_TYPES.has(contract.type)) {
-            byAddress.set(contract.address.toLowerCase(), {
-              address: contract.address as Address,
-              type: contract.type
-            })
-          }
-        }
-      }
-      map.set(team.id, [...byAddress.values()])
+      const groups = (officerQueries.value[i]?.data ?? [])
+        .map(officer => ({
+          officerId: officer.id,
+          version: officer.version,
+          isCurrent: officer.isCurrent,
+          officerAddress: officer.address as Address,
+          contracts: (officer.contracts ?? [])
+            .filter(c => VALUE_HOLDING_TYPES.has(c.type))
+            .map(c => ({ address: c.address as Address, type: c.type }))
+        }))
+        .filter(g => g.contracts.length > 0)
+      map.set(team.id, groups)
     })
     return map
   })
 
-  // 2. One balance multicall per team (native via Multicall3 + ERC-20 balanceOf).
+  // Distinct addresses to price per team (a contract belongs to one officer).
+  const addressesByTeam = computed(() => {
+    const map = new Map<number, Address[]>()
+    for (const [teamId, groups] of generationsByTeam.value) {
+      const set = new Set<string>()
+      groups.forEach(g => g.contracts.forEach(c => set.add(c.address.toLowerCase())))
+      map.set(teamId, [...set] as Address[])
+    }
+    return map
+  })
+
+  // One balance multicall per team → map of address → balances.
   const balanceQueries = useQueries({
     queries: computed(() =>
       teamList.value.map((team) => {
-        const contracts = contractsByTeam.value.get(team.id) ?? []
-        const addresses = contracts.map(c => c.address)
+        const addresses = addressesByTeam.value.get(team.id) ?? []
         return {
           queryKey: ['team-balance-recap', { teamId: team.id, addresses }],
-          queryFn: async (): Promise<ContractBalance[]> => {
-            if (!client.value || addresses.length === 0) return []
-
+          queryFn: async (): Promise<Record<string, AddressBalance>> => {
+            if (!client.value || addresses.length === 0) return {}
             const nativeCalls = addresses.map(address => ({
               address: MULTICALL3 as Address,
               abi: MULTICALL3_ABI,
@@ -122,16 +147,18 @@ export const useTeamsBalanceRecaps = (teams: MaybeRefOrGetter<Team[]>) => {
               const r = results[i]
               return r && r.status === 'success' ? (r.result as bigint) : 0n
             }
-            return contracts.map((contract, a) => ({
-              address: contract.address,
-              type: contract.type,
-              native: val(a),
-              tokens: TOKENS.map((token, t) => ({
-                symbol: token.symbol,
-                decimals: token.decimals,
-                raw: val(addresses.length + a * TOKENS.length + t)
-              }))
-            }))
+            const out: Record<string, AddressBalance> = {}
+            addresses.forEach((address, a) => {
+              out[address.toLowerCase()] = {
+                native: val(a),
+                tokens: TOKENS.map((token, t) => ({
+                  symbol: token.symbol,
+                  decimals: token.decimals,
+                  raw: val(addresses.length + a * TOKENS.length + t)
+                }))
+              }
+            })
+            return out
           },
           enabled: addresses.length > 0 && !!client.value,
           refetchOnWindowFocus: false,
@@ -144,21 +171,37 @@ export const useTeamsBalanceRecaps = (teams: MaybeRefOrGetter<Team[]>) => {
   const recaps = computed(() => {
     const map = new Map<number, TeamBalanceBreakdown>()
     teamList.value.forEach((team, i) => {
-      const contracts = contractsByTeam.value.get(team.id) ?? []
-      if (contracts.length === 0) {
+      const groups = generationsByTeam.value.get(team.id) ?? []
+      if (groups.length === 0) {
         map.set(team.id, EMPTY)
         return
       }
       const query = balanceQueries.value[i]
-      const balances = (query?.data ?? []) as ContractBalance[]
-      const totalStableValue = balances.reduce(
-        (sum, c) =>
-          sum + c.tokens.reduce((s, t) => s + Number(formatUnits(t.raw, t.decimals)), 0),
-        0
-      )
+      const balances = (query?.data ?? {}) as Record<string, AddressBalance>
+      const zero = (): AddressBalance => ({
+        native: 0n,
+        tokens: TOKENS.map(t => ({ symbol: t.symbol, decimals: t.decimals, raw: 0n }))
+      })
+
+      let totalStableValue = 0
+      const generations: GenerationBalance[] = groups.map(group => ({
+        officerId: group.officerId,
+        version: group.version,
+        isCurrent: group.isCurrent,
+        officerAddress: group.officerAddress,
+        contracts: group.contracts.map((contract) => {
+          const bal = balances[contract.address.toLowerCase()] ?? zero()
+          totalStableValue += bal.tokens.reduce(
+            (s, t) => s + Number(formatUnits(t.raw, t.decimals)),
+            0
+          )
+          return { address: contract.address, type: contract.type, native: bal.native, tokens: bal.tokens }
+        })
+      }))
+
       map.set(team.id, {
         loading: query?.isLoading ?? false,
-        contracts: balances,
+        generations,
         totalStableValue
       })
     })
