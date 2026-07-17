@@ -91,6 +91,8 @@ export interface TeamOfficer {
   deployedAt: string | null
   previousOfficerId: number | null
   isCurrent: boolean
+  // Contracts deployed under this Officer generation (GET /contract/officers).
+  contracts?: TeamContract[]
   createdAt: string
   updatedAt: string
 }

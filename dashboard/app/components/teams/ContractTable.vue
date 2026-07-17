@@ -1,0 +1,44 @@
+<script setup lang="ts">
+import { computed } from 'vue'
+import type { Address } from 'viem'
+import type { TeamContract } from '~/types'
+
+const props = defineProps<{
+  contracts: TeamContract[]
+}>()
+
+const rows = computed(() =>
+  props.contracts.map((contract, index) => ({ ...contract, index: index + 1 }))
+)
+</script>
+
+<template>
+  <UTable
+    :data="rows"
+    :columns="[
+      { accessorKey: 'index', header: '#' },
+      { accessorKey: 'type', header: 'Type' },
+      { accessorKey: 'address', header: 'Contract Address' },
+      { accessorKey: 'deployer', header: 'Deployer' },
+      { accessorKey: 'balance', header: 'Balance' }
+    ]"
+  >
+    <template #type-cell="{ row }">
+      <UBadge color="neutral" variant="subtle">
+        {{ row.original.type }}
+      </UBadge>
+    </template>
+
+    <template #address-cell="{ row }">
+      <AddressLink :address="row.original.address" label="Contract address copied" />
+    </template>
+
+    <template #deployer-cell="{ row }">
+      <UserIdentity :address="row.original.deployer as Address" />
+    </template>
+
+    <template #balance-cell="{ row }">
+      <ContractBalance :address="row.original.address" />
+    </template>
+  </UTable>
+</template>

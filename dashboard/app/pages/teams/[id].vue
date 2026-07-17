@@ -9,11 +9,10 @@ const teamId = computed(() => Number(route.params.id))
 
 const { data: team, isLoading, isError } = useTeamQuery(teamId)
 
-const contractRows = computed(() =>
-  (team.value?.teamContracts ?? []).map((contract, index) => ({
-    ...contract,
-    index: index + 1
-  }))
+// Officer-less contracts (Safe, SafeDepositRouter) survive Officer redeploys and
+// aren't tied to a version generation — shown as their own group.
+const sharedContracts = computed(() =>
+  (team.value?.teamContracts ?? []).filter(c => c.officerId === null)
 )
 </script>
 
@@ -92,52 +91,18 @@ const contractRows = computed(() =>
         </dl>
       </UPageCard>
 
-      <!-- Contracts -->
+      <!-- Contracts, grouped by Officer version generation -->
       <UPageCard :ui="{ header: 'w-full' }">
         <template #header>
           <div class="flex items-center gap-2">
             <UIcon name="i-lucide-file-code-2" class="size-5 text-muted" />
             <h2 class="text-lg font-semibold text-highlighted">
-              Contracts
+              Contracts by version
             </h2>
-            <UBadge color="neutral" variant="subtle" size="sm">
-              {{ contractRows.length }}
-            </UBadge>
           </div>
         </template>
 
-        <p
-          v-if="contractRows.length === 0"
-          class="text-sm text-muted"
-          data-test="no-contracts"
-        >
-          No contracts deployed for this team yet.
-        </p>
-
-        <UTable
-          v-else
-          :data="contractRows"
-          :columns="[
-            { accessorKey: 'index', header: '#' },
-            { accessorKey: 'type', header: 'Type' },
-            { accessorKey: 'address', header: 'Contract Address' },
-            { accessorKey: 'deployer', header: 'Deployer' }
-          ]"
-        >
-          <template #type-cell="{ row }">
-            <UBadge color="neutral" variant="subtle">
-              {{ row.original.type }}
-            </UBadge>
-          </template>
-
-          <template #address-cell="{ row }">
-            <AddressLink :address="row.original.address" label="Contract address copied" />
-          </template>
-
-          <template #deployer-cell="{ row }">
-            <UserIdentity :address="row.original.deployer as Address" />
-          </template>
-        </UTable>
+        <TeamContractGroups :team-id="teamId" :shared-contracts="sharedContracts" />
       </UPageCard>
     </template>
   </div>
