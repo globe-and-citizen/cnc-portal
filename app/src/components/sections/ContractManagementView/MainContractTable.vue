@@ -1,8 +1,8 @@
 <template>
-  <div id="team-contracts" class="mt-4 overflow-x-auto">
+  <div class="overflow-x-auto">
     <UTable
       :data="
-        teamContracts.map((contract, index) => ({
+        enrichedContracts.map((contract, index) => ({
           ...contract,
           index: index + 1
         }))
@@ -18,8 +18,8 @@
       ]"
     >
       <template #version-cell>
-        <UBadge v-if="officerVersion" color="primary" variant="subtle" size="sm">
-          {{ officerVersion }}
+        <UBadge v-if="version" color="primary" variant="subtle" size="sm">
+          {{ version }}
         </UBadge>
         <span v-else class="text-xs text-gray-400">—</span>
       </template>
@@ -34,45 +34,37 @@
       </template>
 
       <template #owner-cell="{ row: { original: row } }">
-        <UserComponent
-          :user="
-            getUser(row.owner) //teamStore.currentTeam?.members.find((member) => member.address == row.owner) as User
-          "
-        />
+        <UserComponent :user="getUser(row.owner)" />
       </template>
 
       <template #actions-cell="{ row: { original: row } }">
-        <MainContractActions
-          @contract-status-changed="
-            async () =>
-              (teamContracts = teamStore.currentTeam?.teamContracts
-                ? (await getTeamContracts(teamStore.currentTeam?.teamContracts)) || []
-                : [])
-          "
-          :row="row"
-        />
+        <MainContractActions @contract-status-changed="refresh" :row="row" />
       </template>
     </UTable>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { ref, watch } from 'vue'
 import UserComponent from '@/components/UserComponent.vue'
 import { useTeamStore } from '@/stores/'
 import { type User } from '@/types'
+import type { TeamContract } from '@/types/teamContract'
 import AddressToolTip from '@/components/AddressToolTip.vue'
 import MainContractActions from './MainContractActions.vue'
 import MainContractBalanceCell from './MainContractBalanceCell.vue'
 import { getTeamContracts } from '@/utils'
 
+// Raw contracts to display, and the version tag of the generation they belong
+// to. Rendered identically for the current and legacy Officer generations.
+const props = defineProps<{
+  contracts: Array<{ address: string; type: string; deployer: string }>
+  version: string | null
+}>()
+
 const teamStore = useTeamStore()
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const teamContracts = ref<any[]>([])
-
-// Main contracts all belong to the current Officer generation, so they share
-// its version tag.
-const officerVersion = computed(() => teamStore.currentTeam?.currentOfficer?.version ?? null)
+const enrichedContracts = ref<any[]>([])
 
 // Only these contract types custody funds — show a balance for them only.
 const VALUE_HOLDING_TYPES = new Set([
@@ -95,11 +87,19 @@ const getUser = (address: string): User => {
     )
 }
 
+const refresh = async () => {
+  enrichedContracts.value =
+    (await getTeamContracts(props.contracts as unknown as TeamContract[])) || []
+}
+
 watch(
-  () => teamStore.currentTeam?.teamContracts,
+  () => props.contracts,
   async (newContracts) => {
-    if (newContracts && newContracts?.length > 0) {
-      teamContracts.value = (await getTeamContracts(newContracts)) || []
+    if (newContracts?.length) {
+      enrichedContracts.value =
+        (await getTeamContracts(newContracts as unknown as TeamContract[])) || []
+    } else {
+      enrichedContracts.value = []
     }
   },
   { immediate: true }
