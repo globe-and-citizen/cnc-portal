@@ -170,10 +170,13 @@ export const useTeamsBalanceRecaps = (teams: MaybeRefOrGetter<Team[]>) => {
   return { recaps, get }
 }
 
-// Helper for cells: does a contract hold anything?
-export const formatNative = (raw: bigint) =>
-  Number(formatEther(raw)).toLocaleString(undefined, { maximumFractionDigits: 2 })
+// Format a positive amount to 2 decimals, but surface dust that would otherwise
+// round to a misleading "0" as "<0.01" so it's not mistaken for empty.
+const formatAmount = (value: number) => {
+  if (value > 0 && value < 0.01) return '<0.01'
+  return value.toLocaleString(undefined, { maximumFractionDigits: 2 })
+}
+
+export const formatNative = (raw: bigint) => formatAmount(Number(formatEther(raw)))
 export const formatToken = (amount: TokenAmount) =>
-  Number(formatUnits(amount.raw, amount.decimals)).toLocaleString(undefined, {
-    maximumFractionDigits: 2
-  })
+  formatAmount(Number(formatUnits(amount.raw, amount.decimals)))
