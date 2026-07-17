@@ -4,6 +4,7 @@ import { useClient } from '@wagmi/vue'
 import { multicall } from 'viem/actions'
 import { formatEther, formatUnits, parseAbi, type Address } from 'viem'
 import { getTeamOfficers } from '~/api/contract'
+import { getTeam } from '~/api/teams'
 import { USDC_ADDRESS, USDC_E_ADDRESS, USDT_ADDRESS } from '~/constant'
 import type { Team } from '~/types'
 
@@ -112,11 +113,24 @@ export const useTeamsBalanceRecaps = (teams: MaybeRefOrGetter<Team[]>) => {
     return map
   })
 
-  // Officer-less value-holding contracts (Safe) exposed on the list payload.
+  // The list endpoint (getAllTeams) doesn't return officer-less contracts, so
+  // fetch each team's detail (GET /teams/:id) — which DOES include the Safe —
+  // and reuse the ['team', …] key so it warms the team-detail page cache.
+  const teamDetailQueries = useQueries({
+    queries: computed(() =>
+      teamList.value.map(team => ({
+        queryKey: ['team', { id: team.id }],
+        queryFn: async () => await getTeam(team.id),
+        staleTime: 1000 * 60 * 5
+      }))
+    )
+  })
+
+  // Officer-less value-holding contracts (Safe) from the team detail payload.
   const sharedByTeam = computed(() => {
     const map = new Map<number, { address: Address, type: string }[]>()
-    teamList.value.forEach((team) => {
-      const contracts = (team.teamContracts ?? [])
+    teamList.value.forEach((team, i) => {
+      const contracts = (teamDetailQueries.value[i]?.data?.teamContracts ?? [])
         .filter(c => c.officerId === null && VALUE_HOLDING_TYPES.has(c.type))
         .map(c => ({ address: c.address as Address, type: c.type }))
       map.set(team.id, contracts)
