@@ -30,7 +30,8 @@ const holdsValue = (type: string) => VALUE_HOLDING_TYPES.has(type)
       { accessorKey: 'type', header: 'Type' },
       { accessorKey: 'address', header: 'Contract Address' },
       { accessorKey: 'deployer', header: 'Deployer' },
-      { accessorKey: 'balance', header: 'Balance' }
+      { accessorKey: 'balance', header: 'Balance' },
+      { accessorKey: 'logs', header: 'Logs' }
     ]"
   >
     <template #type-cell="{ row }">
@@ -53,6 +54,21 @@ const holdsValue = (type: string) => VALUE_HOLDING_TYPES.has(type)
         :address="row.original.address"
       />
       <span v-else class="text-sm text-dimmed">n/a</span>
+    </template>
+
+    <template #logs-cell="{ row }">
+      <UModal :title="`Logs · ${row.original.type}`" :ui="{ content: 'max-w-4xl' }">
+        <UButton
+          size="xs"
+          color="neutral"
+          variant="ghost"
+          icon="i-lucide-scroll-text"
+          label="Logs"
+        />
+        <template #body>
+          <ContractLogs :address="row.original.address" :type="row.original.type" />
+        </template>
+      </UModal>
     </template>
   </UTable>
 </template>
