@@ -64,16 +64,20 @@ const { data: officers, isLoading, isError } = useTeamOfficersQuery(() => props.
             ? 'border-primary/40 bg-primary/5'
             : 'border-default bg-elevated'"
         >
-          <!-- Header: version + current badge -->
+          <!-- Header: version + registry version + current badge -->
           <div class="flex items-center justify-between gap-2">
-            <UBadge
-              :color="officer.isCurrent ? 'primary' : 'neutral'"
-              variant="subtle"
-              size="lg"
-              class="font-semibold"
-            >
-              {{ officer.version || 'unknown' }}
-            </UBadge>
+            <div class="flex items-center gap-1.5">
+              <UBadge
+                :color="officer.isCurrent ? 'primary' : 'neutral'"
+                variant="subtle"
+                size="lg"
+                class="font-semibold"
+              >
+                {{ officer.version || 'unknown' }}
+              </UBadge>
+              <!-- Registry generation (V0 / V0.1 / V1) matched from the beacon. -->
+              <OfficerRegistryVersion :address="officer.address" />
+            </div>
             <UBadge
               v-if="officer.isCurrent"
               color="success"

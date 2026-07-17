@@ -27,6 +27,25 @@ type Folder = {
 const folders = registry.folders as Record<string, Folder>
 const currentVersion = registry.current as string
 
+// Each generation's Officer FactoryBeacon resolves to a distinct address; this
+// lets us map a team's on-chain Officer beacon back to its registry version
+// (V0 / V0.1 / V1) — the concrete identifier the registry says a team maps to.
+const OFFICER_BEACON_TO_VERSION: Record<string, string> = {}
+for (const [version, folder] of Object.entries(folders)) {
+  const ref = folder.beacons.Officer
+  const address = ref ? ADDRESSES[version]?.[ref] : undefined
+  if (address) OFFICER_BEACON_TO_VERSION[address.toLowerCase()] = version
+}
+
+/**
+ * Resolve the registry version (V0 / V0.1 / V1) an Officer belongs to from its
+ * on-chain FactoryBeacon address. Returns null if the beacon isn't a known
+ * generation.
+ */
+export const registryVersionForOfficerBeacon = (
+  beacon: string | null | undefined
+): string | null => (beacon ? (OFFICER_BEACON_TO_VERSION[beacon.toLowerCase()] ?? null) : null)
+
 // Stable display order: Officer first, then the beacon-backed sub-contracts, then
 // the transparent-proxy contracts (no beacon). Any unlisted contract is appended.
 const CONTRACT_ORDER = [
