@@ -10,6 +10,16 @@ const props = defineProps<{
 const rows = computed(() =>
   props.contracts.map((contract, index) => ({ ...contract, index: index + 1 }))
 )
+
+// Only these contract types actually custody funds — skip the on-chain balance
+// reads for everything else (Officer, Voting, Elections, …).
+const VALUE_HOLDING_TYPES = new Set([
+  'Bank',
+  'ExpenseAccountEIP712',
+  'CashRemunerationEIP712',
+  'Safe'
+])
+const holdsValue = (type: string) => VALUE_HOLDING_TYPES.has(type)
 </script>
 
 <template>
@@ -38,7 +48,11 @@ const rows = computed(() =>
     </template>
 
     <template #balance-cell="{ row }">
-      <ContractBalance :address="row.original.address" />
+      <ContractBalance
+        v-if="holdsValue(row.original.type)"
+        :address="row.original.address"
+      />
+      <span v-else class="text-sm text-dimmed">n/a</span>
     </template>
   </UTable>
 </template>

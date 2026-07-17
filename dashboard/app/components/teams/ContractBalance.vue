@@ -27,7 +27,11 @@ const isEmpty = computed(() => !hasNative.value && tokenBalances.value.length ==
 
 <template>
   <USkeleton v-if="isLoading" class="h-4 w-20" />
-  <span v-else-if="isEmpty" class="text-sm text-dimmed">—</span>
+  <!-- Rendered only for value-holding contracts, so "empty" means a genuine
+       zero balance — show 0 rather than an ambiguous dash. -->
+  <span v-else-if="isEmpty" class="font-mono text-sm text-dimmed tabular-nums">
+    0 <span>POL</span>
+  </span>
   <div v-else class="flex flex-col gap-0.5 font-mono text-sm tabular-nums">
     <span v-if="hasNative">
       {{ nativeFormatted }} <span class="text-dimmed">POL</span>

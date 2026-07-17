@@ -29,7 +29,8 @@ export interface BeaconStat {
  * summary shares the cache with TeamOfficersCell / OfficerBeacon — no refetch.
  */
 export const useOfficerBeaconSummary = (teams: MaybeRefOrGetter<Team[]>) => {
-  const client = useClient()
+  const chainId = Number(useRuntimeConfig().public.chainId)
+  const client = useClient({ chainId })
 
   // 1. Officer linked list per team.
   const officerQueries = useQueries({

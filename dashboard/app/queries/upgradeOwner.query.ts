@@ -40,7 +40,8 @@ export const useUpgradeOwnerQuery = (
   beacon: MaybeRefOrGetter<string | null | undefined>,
   proxy: MaybeRefOrGetter<string | null | undefined>
 ) => {
-  const client = useClient()
+  const chainId = Number(useRuntimeConfig().public.chainId)
+  const client = useClient({ chainId })
 
   return useQuery({
     queryKey: ['upgrade-owner', { beacon: toValue(beacon), proxy: toValue(proxy) }],

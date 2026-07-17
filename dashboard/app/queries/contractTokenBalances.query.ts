@@ -29,7 +29,8 @@ export interface TokenBalance {
 export const useContractTokenBalancesQuery = (
   address: MaybeRefOrGetter<string | null | undefined>
 ) => {
-  const client = useClient()
+  const chainId = Number(useRuntimeConfig().public.chainId)
+  const client = useClient({ chainId })
 
   return useQuery({
     queryKey: ['contract-token-balances', { address: toValue(address) }],
@@ -46,8 +47,6 @@ export const useContractTokenBalancesQuery = (
           args: [target as Address]
         }))
       })
-
-      console.log('useContractTokenBalancesQuery', { target, results })
 
       return TOKENS.flatMap((token, i) => {
         const result = results[i]

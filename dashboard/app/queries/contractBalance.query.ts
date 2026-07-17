@@ -10,7 +10,8 @@ import { toValue } from 'vue'
  * format at the call site with viem's formatEther.
  */
 export const useContractBalanceQuery = (address: MaybeRefOrGetter<string | null | undefined>) => {
-  const client = useClient()
+  const chainId = Number(useRuntimeConfig().public.chainId)
+  const client = useClient({ chainId })
 
   return useQuery({
     queryKey: ['contract-balance', { address: toValue(address) }],

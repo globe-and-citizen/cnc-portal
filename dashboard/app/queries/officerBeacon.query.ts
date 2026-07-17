@@ -17,7 +17,8 @@ const BEACON_SLOT
  * the address isn't a beacon proxy).
  */
 export const useOfficerBeaconQuery = (address: MaybeRefOrGetter<string | undefined>) => {
-  const client = useClient()
+  const chainId = Number(useRuntimeConfig().public.chainId)
+  const client = useClient({ chainId })
 
   return useQuery({
     queryKey: ['officer-beacon', { address: toValue(address) }],
