@@ -20,7 +20,7 @@ const props = defineProps<{
 
 // List-level on-chain balances: one map keyed by team id, so the cell can show a
 // per-contract breakdown and the column can sort on a numeric total.
-const { get: getBalanceRecap } = useTeamsBalanceRecaps(() => props.teams)
+const { get: getBalanceRecap, totals: tvl } = useTeamsBalanceRecaps(() => props.teams)
 
 const table = useTemplateRef('table')
 
@@ -106,6 +106,8 @@ const pagination = computed({
 
 <template>
   <div class="space-y-4">
+    <ProjectTvlCard :tvl="tvl" />
+
     <OfficerBeaconSummary :teams="teams" />
 
     <div class="flex flex-wrap items-center justify-between gap-1.5">

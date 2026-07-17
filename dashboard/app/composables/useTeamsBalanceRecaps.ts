@@ -47,6 +47,14 @@ export interface GenerationBalance {
   contracts: ContractBalance[]
 }
 
+export interface ProjectTvl {
+  native: bigint
+  tokens: TokenAmount[]
+  // Summed stablecoin value (all ~1 USD) — the USD-ish TVL.
+  stableValue: number
+  loading: boolean
+}
+
 export interface TeamBalanceBreakdown {
   loading: boolean
   generations: GenerationBalance[]
@@ -253,7 +261,38 @@ export const useTeamsBalanceRecaps = (teams: MaybeRefOrGetter<Team[]>) => {
 
   const get = (teamId: number): TeamBalanceBreakdown => recaps.value.get(teamId) ?? EMPTY
 
-  return { recaps, get }
+  // Project-wide TVL: sum every contract's balance across every team.
+  const totals = computed<ProjectTvl>(() => {
+    let native = 0n
+    const tokenRaw = new Map<string, bigint>(TOKENS.map(t => [t.symbol, 0n]))
+    let stableValue = 0
+
+    const add = (contract: ContractBalance) => {
+      native += contract.native
+      for (const t of contract.tokens) {
+        tokenRaw.set(t.symbol, (tokenRaw.get(t.symbol) ?? 0n) + t.raw)
+        stableValue += Number(formatUnits(t.raw, t.decimals))
+      }
+    }
+
+    for (const recap of recaps.value.values()) {
+      recap.generations.forEach(g => g.contracts.forEach(add))
+      recap.shared.forEach(add)
+    }
+
+    const tokens = TOKENS.map(t => ({
+      symbol: t.symbol,
+      decimals: t.decimals,
+      raw: tokenRaw.get(t.symbol) ?? 0n
+    }))
+
+    // Loading while any team's balance query is still in flight.
+    const loading = balanceQueries.value.some(q => q.isLoading)
+
+    return { native, tokens, stableValue, loading }
+  })
+
+  return { recaps, get, totals }
 }
 
 // Format a positive amount to 2 decimals, but surface dust that would otherwise
