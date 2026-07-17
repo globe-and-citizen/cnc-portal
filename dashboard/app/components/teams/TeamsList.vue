@@ -64,6 +64,8 @@ const columns: TableColumn<Team>[] = [
     accessorFn: row => row.currentOfficer?.version ?? null,
     header: sortableHeader('Version')
   },
+  // On-chain balance recap across the team's value-holding contracts.
+  { id: 'balance', header: 'Balances' },
   // Display-only column (no accessor → not sortable): the full Officer chain,
   // fetched per-team via GET /contract/officers by TeamOfficersCell. Given a
   // wide fixed width since it holds the richest per-row content.
@@ -173,6 +175,10 @@ const pagination = computed({
           {{ row.original.currentOfficer.version }}
         </UBadge>
         <span v-else class="text-sm text-muted">—</span>
+      </template>
+
+      <template #balance-cell="{ row }">
+        <TeamBalanceRecap :team-id="row.original.id" />
       </template>
 
       <template #officerHistory-cell="{ row }">
