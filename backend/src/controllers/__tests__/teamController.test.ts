@@ -486,7 +486,6 @@ describe('Team Controller', () => {
             take: 1,
             include: { previousOfficer: { select: { id: true, address: true } } },
           },
-          teamContracts: { where: { officerId: null } },
         },
       });
     });
@@ -550,7 +549,6 @@ describe('Team Controller', () => {
             take: 1,
             include: { previousOfficer: { select: { id: true, address: true } } },
           },
-          teamContracts: { where: { officerId: null } },
         },
       });
     });
