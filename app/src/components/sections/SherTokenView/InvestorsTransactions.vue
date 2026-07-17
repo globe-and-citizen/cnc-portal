@@ -201,16 +201,13 @@ import {
   DIVIDEND_TYPES,
   log
 } from '@/utils'
-import { useQuery } from '@vue/apollo-composable'
 import { computed, watch } from 'vue'
 import { useTransactionTable } from '@/composables/transactions/useTransactionTable'
 import { useTransactionInline } from '@/composables/transactions/useTransactionInline'
-import { GRAPHQL_POLL_INTERVAL } from '@/constant'
 import { useCurrencyStore, useTeamStore } from '@/stores'
 import { useInvestorSymbol } from '@/composables/investor/reads'
-import { GET_INVESTOR_EVENTS } from '@/queries/ponder/investor.queries'
-import { GET_SAFE_DEPOSIT_ROUTER_EVENTS } from '@/queries/ponder/safe-deposit-router.queries'
-import type { InvestorEventsQuery, SafeDepositRouterEventsQuery } from '@/types/ponder/investor'
+import { useInvestorEventsViaLogs } from '@/composables/investor/useInvestorEventsViaLogs'
+import { useSafeDepositRouterEventsViaLogs } from '@/composables/investor/useSafeDepositRouterEventsViaLogs'
 import { formatDateRelative, formatDateUTC } from '@/utils/dayUtils'
 
 const teamStore = useTeamStore()
