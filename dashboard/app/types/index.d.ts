@@ -95,12 +95,27 @@ export interface TeamOfficer {
   updatedAt: string
 }
 
+// A contract governed by a team (Bank, Voting, Campaign, …), as returned on the
+// team detail endpoint. Officer-less contracts (Safe, SafeDepositRouter) and the
+// current Officer's contracts are merged into `Team.teamContracts`.
+export interface TeamContract {
+  id: number
+  address: string
+  type: string
+  deployer: string
+  teamId: number
+  officerId: number | null
+  createdAt: string
+  updatedAt: string
+}
+
 export interface Team {
   id: number
   name: string
   description: string | null
   ownerAddress: string
   currentOfficer: CurrentOfficer | null
+  teamContracts?: TeamContract[]
   createdAt: string
   updatedAt: string
   _count?: {

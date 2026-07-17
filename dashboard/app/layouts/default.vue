@@ -30,6 +30,7 @@ const pageTitle = computed(() => {
   const titleMap: Record<string, string> = {
     'index': 'Overview',
     'teams': 'Teams Management',
+    'teams-id': 'Team Details',
     'features': 'Submit Restriction',
     'feature': 'Feature',
     'micropayments': 'Micropayments',

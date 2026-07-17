@@ -138,9 +138,12 @@ const pagination = computed({
 
       <template #name-cell="{ row }">
         <div class="flex flex-col">
-          <p class="font-medium text-highlighted">
+          <ULink
+            :to="`/teams/${row.original.id}`"
+            class="font-medium text-highlighted hover:text-primary"
+          >
             {{ row.original.name }}
-          </p>
+          </ULink>
           <p
             v-if="row.original.description"
             class="text-sm text-muted truncate max-w-xs"
