@@ -1,42 +1,43 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { formatEther, formatUnits } from 'viem'
-import { useTeamBalanceRecap } from '~/composables/useTeamBalanceRecap'
+import {
+  formatNative,
+  formatToken,
+  type TeamBalanceBreakdown
+} from '~/composables/useTeamsBalanceRecaps'
 
 const props = defineProps<{
-  teamId: number
+  recap: TeamBalanceBreakdown
 }>()
 
-const { data: recap, isLoading } = useTeamBalanceRecap(() => props.teamId)
-
-const fmt = (value: number) =>
-  value.toLocaleString(undefined, { maximumFractionDigits: 2 })
-
-// Compact list of non-zero holdings across the team's value-holding contracts.
-const lines = computed(() => {
-  if (!recap.value) return []
-  const out: { key: string, amount: string, symbol: string }[] = []
-  const native = Number(formatEther(recap.value.native))
-  if (native > 0) out.push({ key: 'POL', amount: fmt(native), symbol: 'POL' })
-  for (const token of recap.value.tokens) {
-    if (token.raw > 0n) {
-      out.push({
-        key: token.symbol,
-        amount: fmt(Number(formatUnits(token.raw, token.decimals))),
-        symbol: token.symbol
-      })
-    }
-  }
-  return out
-})
+// Keep only contracts that actually hold something, with their non-zero lines.
+const rows = computed(() =>
+  props.recap.contracts
+    .map(contract => ({
+      address: contract.address,
+      type: contract.type,
+      lines: [
+        ...(contract.native > 0n ? [{ amount: formatNative(contract.native), symbol: 'POL' }] : []),
+        ...contract.tokens
+          .filter(t => t.raw > 0n)
+          .map(t => ({ amount: formatToken(t), symbol: t.symbol }))
+      ]
+    }))
+    .filter(c => c.lines.length > 0)
+)
 </script>
 
 <template>
-  <USkeleton v-if="isLoading" class="h-4 w-24" />
-  <span v-else-if="lines.length === 0" class="text-sm text-dimmed">—</span>
-  <div v-else class="flex flex-col gap-0.5 font-mono text-sm tabular-nums">
-    <span v-for="line in lines" :key="line.key">
-      {{ line.amount }} <span class="text-dimmed">{{ line.symbol }}</span>
-    </span>
+  <USkeleton v-if="recap.loading" class="h-4 w-28" />
+  <span v-else-if="rows.length === 0" class="text-sm text-dimmed">—</span>
+  <div v-else class="flex flex-col gap-1.5">
+    <div v-for="contract in rows" :key="contract.address" class="flex flex-col">
+      <span class="text-xs font-medium text-muted">{{ contract.type }}</span>
+      <div class="flex flex-wrap gap-x-2 font-mono text-sm tabular-nums">
+        <span v-for="line in contract.lines" :key="line.symbol">
+          {{ line.amount }} <span class="text-dimmed">{{ line.symbol }}</span>
+        </span>
+      </div>
+    </div>
   </div>
 </template>

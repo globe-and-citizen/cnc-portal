@@ -18,6 +18,10 @@ const props = defineProps<{
   isLoading?: boolean
 }>()
 
+// List-level on-chain balances: one map keyed by team id, so the cell can show a
+// per-contract breakdown and the column can sort on a numeric total.
+const { get: getBalanceRecap } = useTeamsBalanceRecaps(() => props.teams)
+
 const table = useTemplateRef('table')
 
 const columnFilters = ref([
@@ -64,8 +68,13 @@ const columns: TableColumn<Team>[] = [
     accessorFn: row => row.currentOfficer?.version ?? null,
     header: sortableHeader('Version')
   },
-  // On-chain balance recap across the team's value-holding contracts.
-  { id: 'balance', header: 'Balances' },
+  // On-chain balance recap across the team's value-holding contracts. Sorts on
+  // the summed stablecoin value; the cell shows the per-contract breakdown.
+  {
+    id: 'balance',
+    accessorFn: row => getBalanceRecap(row.id).totalStableValue,
+    header: sortableHeader('Balances')
+  },
   // Display-only column (no accessor → not sortable): the full Officer chain,
   // fetched per-team via GET /contract/officers by TeamOfficersCell. Given a
   // wide fixed width since it holds the richest per-row content.
@@ -178,7 +187,7 @@ const pagination = computed({
       </template>
 
       <template #balance-cell="{ row }">
-        <TeamBalanceRecap :team-id="row.original.id" />
+        <TeamBalanceRecap :recap="getBalanceRecap(row.original.id)" />
       </template>
 
       <template #officerHistory-cell="{ row }">
