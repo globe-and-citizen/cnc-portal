@@ -49,11 +49,18 @@ export interface GenerationBalance {
 export interface TeamBalanceBreakdown {
   loading: boolean
   generations: GenerationBalance[]
-  // Sort key: summed stablecoin value (all ~1 USD) across every generation.
+  // Officer-less contracts (Safe, SafeDepositRouter): version-independent.
+  shared: ContractBalance[]
+  // Sort key: summed stablecoin value (all ~1 USD) across everything.
   totalStableValue: number
 }
 
-const EMPTY: TeamBalanceBreakdown = { loading: false, generations: [], totalStableValue: 0 }
+const EMPTY: TeamBalanceBreakdown = {
+  loading: false,
+  generations: [],
+  shared: [],
+  totalStableValue: 0
+}
 
 type AddressBalance = { native: bigint, tokens: TokenAmount[] }
 
@@ -105,14 +112,31 @@ export const useTeamsBalanceRecaps = (teams: MaybeRefOrGetter<Team[]>) => {
     return map
   })
 
-  // Distinct addresses to price per team (a contract belongs to one officer).
+  // Officer-less value-holding contracts (Safe) exposed on the list payload.
+  const sharedByTeam = computed(() => {
+    const map = new Map<number, { address: Address, type: string }[]>()
+    teamList.value.forEach((team) => {
+      const contracts = (team.teamContracts ?? [])
+        .filter(c => c.officerId === null && VALUE_HOLDING_TYPES.has(c.type))
+        .map(c => ({ address: c.address as Address, type: c.type }))
+      map.set(team.id, contracts)
+    })
+    return map
+  })
+
+  // Distinct addresses to price per team (officer contracts + shared).
   const addressesByTeam = computed(() => {
     const map = new Map<number, Address[]>()
-    for (const [teamId, groups] of generationsByTeam.value) {
+    teamList.value.forEach((team) => {
       const set = new Set<string>()
-      groups.forEach(g => g.contracts.forEach(c => set.add(c.address.toLowerCase())))
-      map.set(teamId, [...set] as Address[])
-    }
+      for (const g of generationsByTeam.value.get(team.id) ?? []) {
+        g.contracts.forEach(c => set.add(c.address.toLowerCase()))
+      }
+      for (const c of sharedByTeam.value.get(team.id) ?? []) {
+        set.add(c.address.toLowerCase())
+      }
+      map.set(team.id, [...set] as Address[])
+    })
     return map
   })
 
@@ -172,7 +196,8 @@ export const useTeamsBalanceRecaps = (teams: MaybeRefOrGetter<Team[]>) => {
     const map = new Map<number, TeamBalanceBreakdown>()
     teamList.value.forEach((team, i) => {
       const groups = generationsByTeam.value.get(team.id) ?? []
-      if (groups.length === 0) {
+      const sharedList = sharedByTeam.value.get(team.id) ?? []
+      if (groups.length === 0 && sharedList.length === 0) {
         map.set(team.id, EMPTY)
         return
       }
@@ -184,24 +209,28 @@ export const useTeamsBalanceRecaps = (teams: MaybeRefOrGetter<Team[]>) => {
       })
 
       let totalStableValue = 0
+      const resolve = (contract: { address: Address, type: string }): ContractBalance => {
+        const bal = balances[contract.address.toLowerCase()] ?? zero()
+        totalStableValue += bal.tokens.reduce(
+          (s, t) => s + Number(formatUnits(t.raw, t.decimals)),
+          0
+        )
+        return { address: contract.address, type: contract.type, native: bal.native, tokens: bal.tokens }
+      }
+
       const generations: GenerationBalance[] = groups.map(group => ({
         officerId: group.officerId,
         version: group.version,
         isCurrent: group.isCurrent,
         officerAddress: group.officerAddress,
-        contracts: group.contracts.map((contract) => {
-          const bal = balances[contract.address.toLowerCase()] ?? zero()
-          totalStableValue += bal.tokens.reduce(
-            (s, t) => s + Number(formatUnits(t.raw, t.decimals)),
-            0
-          )
-          return { address: contract.address, type: contract.type, native: bal.native, tokens: bal.tokens }
-        })
+        contracts: group.contracts.map(resolve)
       }))
+      const shared = sharedList.map(resolve)
 
       map.set(team.id, {
         loading: query?.isLoading ?? false,
         generations,
+        shared,
         totalStableValue
       })
     })

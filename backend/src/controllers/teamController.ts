@@ -359,6 +359,10 @@ const getAllTeams = async (req: Request, res: Response) => {
             },
           },
           ...currentOfficerInclude,
+          // Officer-less contracts (Safe, SafeDepositRouter) survive Officer
+          // redeploys and hold funds independently of the current version, so
+          // expose them on the list for the balance recap.
+          teamContracts: { where: { officerId: null } },
         },
       });
 
@@ -393,6 +397,10 @@ const getAllTeams = async (req: Request, res: Response) => {
           },
         },
         ...currentOfficerInclude,
+        // Officer-less contracts (Safe, SafeDepositRouter) survive Officer
+        // redeploys and hold funds independently of the current version, so
+        // expose them on the list for the balance recap.
+        teamContracts: { where: { officerId: null } },
       },
     });
 
