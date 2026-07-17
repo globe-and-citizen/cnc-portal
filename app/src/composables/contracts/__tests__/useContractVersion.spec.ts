@@ -1,6 +1,13 @@
 import { describe, it, expect } from 'vitest'
 import { useContractVersion } from '@/composables/contracts/useContractVersion'
 import { mockTeamStore } from '@/tests/mocks/store.mock'
+import registry from '@/artifacts/version-registry.json'
+
+// Oldest folder per resolveFolder's numeric sort — the fallback while per-team
+// version resolution is unwired (empty `officerVersions`).
+const OLDEST = Object.keys(registry.folders).sort(
+  (a, b) => Number(a.replace(/\D/g, '')) - Number(b.replace(/\D/g, ''))
+)[0]
 
 // The global store mock (src/tests/setup/store.setup.ts) makes `useTeamStore()`
 // return `mockTeamStore`, and resets it before each test. We drive the team
@@ -17,12 +24,13 @@ describe('useContractVersion', () => {
   })
 
   it('derives the folder from the current Officer generation tag', () => {
+    // Unwired: the tag isn't mapped, so it falls back to the oldest folder.
     setTeam({ currentOfficer: { version: 'v0.10' } })
-    expect(useContractVersion().value).toBe('v1')
+    expect(useContractVersion().value).toBe(OLDEST)
   })
 
   it('defaults to the oldest folder when no team data is present', () => {
     setTeam(null)
-    expect(useContractVersion().value).toBe('v1')
+    expect(useContractVersion().value).toBe(OLDEST)
   })
 })
