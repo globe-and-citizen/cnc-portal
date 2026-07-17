@@ -1,12 +1,67 @@
-import { createMutationHook } from './queryFactory'
+import { toValue, type MaybeRefOrGetter } from 'vue'
+import { createMutationHook, createQueryHook, queryPresets } from './queryFactory'
 import { teamKeys } from './team.queries'
 
 /**
  * Query key factory for contract-related queries
  */
 export const contractKeys = {
-  all: ['contracts'] as const
+  all: ['contracts'] as const,
+  officers: (teamId: string | number) => [...contractKeys.all, 'officers', String(teamId)] as const
 }
+
+// ============================================================================
+// GET /contract/officers?teamId= - List a team's Officer generations (history)
+// ============================================================================
+
+/** A contract governed by an Officer generation. */
+export interface OfficerContract {
+  id: number
+  address: string
+  type: string
+  deployer: string
+  officerId: number | null
+}
+
+/** One row of a team's Officer linked list, with the contracts it governs. */
+export interface TeamOfficerWithContracts {
+  id: number
+  address: string
+  version: string | null
+  teamId: number
+  deployer: string
+  deployBlockNumber: string | null
+  deployedAt: string | null
+  previousOfficerId: number | null
+  isCurrent: boolean
+  contracts: OfficerContract[]
+  createdAt: string
+  updatedAt: string
+}
+
+export interface GetTeamOfficersParams {
+  queryParams: {
+    /** Team ID */
+    teamId: MaybeRefOrGetter<string | number>
+  }
+}
+
+/**
+ * List the Officer generations of a team (newest first), each with the
+ * contracts it governs.
+ *
+ * @endpoint GET /contract/officers
+ * @queryParams { teamId }
+ */
+export const useGetTeamOfficersQuery = createQueryHook<
+  TeamOfficerWithContracts[],
+  GetTeamOfficersParams
+>({
+  endpoint: 'contract/officers',
+  queryKey: (params) => contractKeys.officers(toValue(params.queryParams.teamId)),
+  enabled: (params) => !!toValue(params.queryParams.teamId),
+  options: queryPresets.stable
+})
 
 // ============================================================================
 // POST /contract - Create contract
