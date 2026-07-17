@@ -20,8 +20,7 @@ const WORKSPACE_LABELS = [
   'Contract Management',
   'SHER Token',
   'Administration',
-  'Vesting',
-  'Debt Financing'
+  'Vesting'
 ]
 
 describe('useSidebarNavItems', () => {

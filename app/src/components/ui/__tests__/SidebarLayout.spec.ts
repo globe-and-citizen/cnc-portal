@@ -111,16 +111,6 @@ describe('SidebarLayout.vue', () => {
           component: { template: '<div>General Ledger</div>' }
         },
         {
-          path: '/teams/:id/debt-financing/fixed-return',
-          name: 'fixed-return',
-          component: { template: '<div>Fixed Return</div>' }
-        },
-        {
-          path: '/teams/:id/debt-financing/lender-marketplace',
-          name: 'lender-marketplace',
-          component: { template: '<div>Lender Marketplace</div>' }
-        },
-        {
           path: '/teams/:id/community-credit',
           name: 'community-credit',
           component: { template: '<div>Community Credit</div>' }

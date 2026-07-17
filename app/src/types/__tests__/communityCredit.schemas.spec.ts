@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { createCreditCallAccessSchema } from '../communityCredit.schemas'
+import { createCreditCallAccessSchema, createRepayAmountSchema } from '../communityCredit.schemas'
 
 function baseAccessData(overrides: Record<string, unknown> = {}) {
   return {
@@ -206,5 +206,65 @@ describe('createCreditCallAccessSchema — whitelist addresses must be unique', 
       const whitelistIssue = result.error.issues.find((issue) => issue.path[0] === 'whitelist')
       expect(whitelistIssue?.message).toContain('can only appear once')
     }
+  })
+})
+
+describe('createRepayAmountSchema', () => {
+  it('validates repayment amounts against the outstanding balance', () => {
+    const schema = createRepayAmountSchema({
+      outstanding: 50.5,
+      treasuryBalance: Infinity,
+      tokenSymbol: 'USDC'
+    })
+
+    expect(schema.safeParse({ amount: 0 }).success).toBe(false)
+    expect(schema.safeParse({ amount: 50.5 }).success).toBe(true)
+
+    const overLimit = schema.safeParse({ amount: 51 })
+    expect(overLimit.success).toBe(false)
+    if (!overLimit.success) {
+      expect(overLimit.error.issues[0]?.message).toContain('50.5 USDC')
+    }
+  })
+
+  it('rejects an amount that exceeds the treasury balance with a treasury-cap message', () => {
+    // outstanding=100, treasuryBalance=30 → entering 50 hits treasury cap only
+    const schema = createRepayAmountSchema({
+      outstanding: 100,
+      treasuryBalance: 30,
+      tokenSymbol: 'USDC'
+    })
+
+    const result = schema.safeParse({ amount: 50 })
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      expect(result.error.issues[0]?.message).toContain('treasury balance')
+      expect(result.error.issues[0]?.message).toContain('30')
+    }
+  })
+
+  it('rejects an amount that exceeds the outstanding balance with an outstanding message', () => {
+    // outstanding=20, treasuryBalance=100 → entering 30 hits outstanding cap only
+    const schema = createRepayAmountSchema({
+      outstanding: 20,
+      treasuryBalance: 100,
+      tokenSymbol: 'USDC'
+    })
+
+    const result = schema.safeParse({ amount: 30 })
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      expect(result.error.issues[0]?.message).toContain('outstanding balance')
+      expect(result.error.issues[0]?.message).toContain('20')
+    }
+  })
+
+  it('accepts an amount within both outstanding and treasury limits', () => {
+    const schema = createRepayAmountSchema({
+      outstanding: 100,
+      treasuryBalance: 80,
+      tokenSymbol: 'USDC'
+    })
+    expect(schema.safeParse({ amount: 50 }).success).toBe(true)
   })
 })
