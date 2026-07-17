@@ -238,33 +238,15 @@ const getUsdPrice = (tokenId: TokenId | null): number => {
   return 0
 }
 
-const {
-  result,
-  error,
-  loading: investorLoading
-} = useQuery<InvestorEventsQuery>(
-  GET_INVESTOR_EVENTS,
-  { contractAddress: investorAddress, limit: 500 },
-  {
-    pollInterval: GRAPHQL_POLL_INTERVAL,
-    fetchPolicy: 'cache-and-network',
-    enabled: computed(() => Boolean(investorAddress.value))
-  }
-)
+// EXPERIMENT: source Investor + SafeDepositRouter events from the RPC (eth_getLogs)
+// instead of Ponder.
+const { result, error, loading: investorLoading } = useInvestorEventsViaLogs(investorAddress)
 
 const {
   result: safeResult,
   error: safeError,
   loading: safeLoading
-} = useQuery<SafeDepositRouterEventsQuery>(
-  GET_SAFE_DEPOSIT_ROUTER_EVENTS,
-  { contractAddress: safeDepositRouterAddress, limit: 500 },
-  {
-    pollInterval: GRAPHQL_POLL_INTERVAL,
-    fetchPolicy: 'cache-and-network',
-    enabled: computed(() => Boolean(safeDepositRouterAddress.value))
-  }
-)
+} = useSafeDepositRouterEventsViaLogs(safeDepositRouterAddress)
 
 const loading = computed(() => investorLoading.value || safeLoading.value)
 
