@@ -84,8 +84,15 @@ interface IFixedReturn is IOwnable, ITokenSupport {
   /// @notice Emitted when an offer is flipped to refundable after a missed deadline
   event LendingOfferRefundable(uint256 indexed offerId);
 
-  /// @notice Emitted when a lender claims back their principal from a refundable offer
+  /// @notice Emitted per lender when refundLenders returns their principal
   event PrincipalRefunded(uint256 indexed offerId, address indexed lender, uint256 amount);
+
+  /// @notice Emitted once per refundLenders call, for the total amount refunded
+  event RefundsDistributed(uint256 indexed offerId, uint256 totalAmount);
+
+  /// @notice Emitted when the issuer accepts partial funding on a stalled offer,
+  ///         alongside LendingOfferFunded
+  event PartialFundingAccepted(uint256 indexed offerId, uint256 totalFunded, uint256 fundingTarget);
 
   /// @notice Emitted once per repayLenders call, for the total amount distributed
   event RepaymentDistributed(uint256 indexed offerId, uint256 totalAmount);
@@ -100,9 +107,14 @@ interface IFixedReturn is IOwnable, ITokenSupport {
   ///      persisted off-chain by the calling application, linked by the returned offerId
   function createLendingOffer(CreateOfferParams calldata params) external returns (uint256 offerId);
 
-  /// @notice Flip an offer to Refundable once its subscription deadline has passed
-  ///         without reaching its funding target
-  function markAsRefundable(uint256 offerId) external;
+  /// @notice Once the subscription deadline has passed without reaching the funding
+  ///         target, pushes every lender's principal back in one transaction — a plain
+  ///         date check against the still-Open offer, no separate "mark refundable" step
+  function refundLenders(uint256 offerId) external;
+
+  /// @notice Alternative to refundLenders for a stalled offer: keep whatever has been
+  ///         raised and proceed as if fully funded, instead of returning it to lenders
+  function acceptPartialFunding(uint256 offerId) external;
 
   /// @notice Distributes a repayment installment proportionally to all lenders of the
   ///         offer. Callable only by Bank, which transfers `amount` in immediately
@@ -113,9 +125,6 @@ interface IFixedReturn is IOwnable, ITokenSupport {
 
   /// @notice Lend funds into an open offer
   function lendFunds(uint256 offerId, uint256 amount) external;
-
-  /// @notice Claim back principal from a Refundable offer
-  function claimRefund(uint256 offerId) external;
 
   // ============ Views ============
 

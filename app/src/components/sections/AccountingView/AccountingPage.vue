@@ -12,19 +12,20 @@
       data-test="accounting-error"
     />
 
-    <RouterView />
+    <slot />
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { RouterView, useRoute } from 'vue-router'
-import AccountingHeader from '@/components/sections/AccountingView/AccountingHeader.vue'
+import { useRoute } from 'vue-router'
+import AccountingHeader from './AccountingHeader.vue'
 import { provideAccounting } from '@/composables/accounting/useAccountingContext'
 
 const route = useRoute()
 
-// tabs export their current, filtered view) via `useAccountingExport`.
+// Resolve the team's books once here; the slotted section injects them via
+// `useAccountingContext` (its export bar included) instead of re-fetching.
 const accounting = provideAccounting(() => (route.params.id as string) ?? null)
 const error = computed(() => accounting.error.value)
 </script>
