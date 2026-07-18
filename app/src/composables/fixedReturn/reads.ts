@@ -7,7 +7,7 @@ import type { ExtractAbiFunctionNames } from 'abitype'
 import { useTeamStore, useUserDataStore } from '@/stores'
 import { config } from '@/wagmi.config'
 import { FIXED_RETURN_ABI } from '@/artifacts/abi/fixed-return'
-import { decimalsForOfferingToken, log, parseError } from '@/utils'
+import { decimalsForFixedReturnToken, log, parseError } from '@/utils'
 import type {
   FixedReturnLenderPosition,
   FixedReturnOfferLender,
@@ -178,7 +178,7 @@ export function useFixedReturnAllOffers() {
             functionName: 'getLendingOffer',
             args: [BigInt(offerId)]
           })) as LendingOfferStruct
-          offers.push({ offerId, offer, decimals: decimalsForOfferingToken(offer.token) ?? 6 })
+          offers.push({ offerId, offer, decimals: decimalsForFixedReturnToken(offer.token) ?? 6 })
         } catch (error) {
           log.error(`Failed to fetch FixedReturn offer #${offerId}:`, parseError(error))
         }
@@ -214,7 +214,7 @@ export function useFixedReturnOfferLenders(
     if (!address) return []
 
     const offerIdValue = BigInt(toValue(offerId))
-    const decimals = decimalsForOfferingToken(toValue(token)) ?? 6
+    const decimals = decimalsForFixedReturnToken(toValue(token)) ?? 6
 
     try {
       const lenderAddresses = (await readContract(config, {
