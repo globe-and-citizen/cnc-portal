@@ -1,22 +1,29 @@
 import { computed, type ComputedRef } from 'vue'
 import { useTeamStore } from '@/stores'
-import { resolveFolder, type FolderVersion } from '@/artifacts/registry'
+import { CURRENT_VERSION, type FolderVersion } from '@/artifacts/registry'
+import { useOfficerBeaconFolder } from './useOfficerBeaconFolder'
 
 /**
- * The artifact-folder version (`v1` / `v2` / …) the CURRENT team runs on.
+ * The artifact-folder version (`V0` / `V0.1` / `V1` / …) the CURRENT team runs on.
  *
- * Prefers the explicit `contractVersion` the backend resolves (hybrid: DB
- * `TeamOfficer.version` + on-chain `version()` fallback); otherwise derives it
- * from the Officer-generation tag already on the team payload. Defaults to the
- * oldest folder when nothing is known — the backward-compatibility-safe choice.
+ * Resolution order:
+ *   1. `Team.contractVersion` — the backend-resolved folder, once the DB backfill
+ *      lands (planned). Preferred so the frontend just consumes the API result.
+ *   2. On-chain: the Officer's FactoryBeacon address → registry folder (wired now
+ *      via {@link useOfficerBeaconFolder}).
+ *   3. `CURRENT_VERSION` — safe default while unresolved (most teams run the
+ *      current generation).
  *
- * Today there is a single version, so this always resolves to it.
+ * Branch on this explicitly to pick a per-version ABI / call flow (`useXxxV2`);
+ * never auto-resolve ABIs — version diffs can be behavioral. See registry.ts.
  */
 export function useContractVersion(): ComputedRef<FolderVersion> {
   const teamStore = useTeamStore()
+  const officerAddress = computed(() => teamStore.currentTeamMeta.data?.currentOfficer?.address)
+  const beaconFolder = useOfficerBeaconFolder(officerAddress)
+
   return computed(() => {
-    // Accessed through the Pinia store proxy, so `data` is already unwrapped.
     const team = teamStore.currentTeamMeta.data
-    return team?.contractVersion ?? resolveFolder(team?.currentOfficer?.version)
+    return team?.contractVersion ?? beaconFolder.value ?? CURRENT_VERSION
   })
 }
