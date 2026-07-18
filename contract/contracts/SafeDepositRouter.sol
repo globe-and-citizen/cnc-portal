@@ -417,6 +417,36 @@ contract SafeDepositRouter is
     return (normalizedAmount * s_multiplier) / (10 ** sherDec);
   }
 
+  /*//////////////////////////////////////////////////////////////
+                                GETTERS
+    //////////////////////////////////////////////////////////////*/
+
+  /// @notice Returns the Safe address where deposited tokens are sent.
+  function getSafeAddress() public view returns (address) {
+    return s_safeAddress;
+  }
+
+  /// @notice Returns the Officer contract address.
+  function getOfficerAddress() public view returns (address) {
+    return s_officerAddress;
+  }
+
+  /// @notice Returns the current SHER multiplier.
+  function getMultiplier() public view returns (uint256) {
+    return s_multiplier;
+  }
+
+  /// @notice Returns whether deposits are currently enabled.
+  function getDepositsEnabled() public view returns (bool) {
+    return s_depositsEnabled;
+  }
+
+  /// @notice Returns the stored decimals for a supported token.
+  /// @param token The token address.
+  function getTokenDecimals(address token) public view returns (uint8) {
+    return s_tokenDecimals[token];
+  }
+
   /**
    * @notice Internal deposit implementation
    * @param tokenAddress Address of the token to deposit
@@ -454,36 +484,6 @@ contract SafeDepositRouter is
       sherAmount: sherAmount,
       timestamp: block.number
     });
-  }
-
-  /*//////////////////////////////////////////////////////////////
-                                GETTERS
-    //////////////////////////////////////////////////////////////*/
-
-  /// @notice Returns the Safe address where deposited tokens are sent.
-  function getSafeAddress() external view returns (address) {
-    return s_safeAddress;
-  }
-
-  /// @notice Returns the Officer contract address.
-  function getOfficerAddress() external view returns (address) {
-    return s_officerAddress;
-  }
-
-  /// @notice Returns the current SHER multiplier.
-  function getMultiplier() external view returns (uint256) {
-    return s_multiplier;
-  }
-
-  /// @notice Returns whether deposits are currently enabled.
-  function getDepositsEnabled() external view returns (bool) {
-    return s_depositsEnabled;
-  }
-
-  /// @notice Returns the stored decimals for a supported token.
-  /// @param token The token address.
-  function getTokenDecimals(address token) external view returns (uint8) {
-    return s_tokenDecimals[token];
   }
 
   /**

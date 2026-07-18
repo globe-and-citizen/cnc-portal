@@ -79,8 +79,11 @@ contract ExpenseAccountEIP712 is
     ApprovalState state;
   }
 
+  // Split across adjacent string literals (implicitly concatenated) to stay within
+  // the line-length limit — the encoded EIP-712 type string is byte-identical.
   string private constant _BUDGET_LIMIT_TYPE =
-    "BudgetLimit(uint256 amount,uint8 frequencyType,uint256 customFrequency,uint256 startDate,uint256 endDate,address tokenAddress,address approvedAddress)";
+    "BudgetLimit(uint256 amount,uint8 frequencyType,uint256 customFrequency,"
+    "uint256 startDate,uint256 endDate,address tokenAddress,address approvedAddress)";
 
   bytes32 private constant _BUDGET_LIMIT_TYPEHASH = keccak256(abi.encodePacked(_BUDGET_LIMIT_TYPE));
 

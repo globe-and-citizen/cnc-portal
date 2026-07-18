@@ -263,13 +263,12 @@ contract CashRemunerationEIP712 is
     // Step 6: Mark this signature as used to prevent reuse
     s_paidWageClaims[sigHash] = true;
 
+    // Officer.findDeployedContract is a non-reverting view that returns address(0)
+    // when the team has no InvestorV1, so a plain call is enough — the zero address
+    // simply skips the mintable-token path below.
     address investorV1Token = address(0);
     if (s_officerAddress != address(0) && s_officerAddress.code.length > 0) {
-      try IOfficer(s_officerAddress).findDeployedContract("InvestorV1") returns (
-        address deployedInvestorV1
-      ) {
-        investorV1Token = deployedInvestorV1;
-      } catch {}
+      investorV1Token = IOfficer(s_officerAddress).findDeployedContract("InvestorV1");
     }
 
     // Step 7: Process each wage component in the claim

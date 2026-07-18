@@ -379,17 +379,17 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
   /// @notice Returns the stored proposal for a given id.
   /// @param proposalId The id of the proposal.
   /// @return The complete proposal data.
-  function getProposalsById(uint256 proposalId) external view returns (Types.Proposal memory) {
+  function getProposalsById(uint256 proposalId) public view returns (Types.Proposal memory) {
     return s_proposalsById[proposalId];
   }
 
   /// @notice Returns the number of proposals created so far.
-  function getProposalCount() external view returns (uint256) {
+  function getProposalCount() public view returns (uint256) {
     return s_proposalCount;
   }
 
   /// @notice Returns the address of the Officer contract used to locate BoardOfDirectors.
-  function getOfficerAddress() external view returns (address) {
+  function getOfficerAddress() public view returns (address) {
     return s_officerAddress;
   }
 

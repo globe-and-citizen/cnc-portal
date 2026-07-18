@@ -336,6 +336,14 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
   }
 
   /**
+   * @notice Returns the address of the Officer contract configured on this bank.
+   * @return The Officer contract address.
+   */
+  function getOfficerAddress() external view returns (address) {
+    return s_officerAddress;
+  }
+
+  /**
    * @notice Initializes the Bank contract with supported tokens and owner
    * @dev This function replaces the constructor for upgradeable contracts
    * @param tokenAddresses Array of ERC20 token addresses to be supported initially
@@ -359,14 +367,6 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
     }
     if (msg.sender == address(0)) revert Bank__ZeroAddress();
     s_officerAddress = msg.sender;
-  }
-
-  /**
-   * @notice Returns the address of the Officer contract configured on this bank.
-   * @return The Officer contract address.
-   */
-  function getOfficerAddress() external view returns (address) {
-    return s_officerAddress;
   }
 
   /**

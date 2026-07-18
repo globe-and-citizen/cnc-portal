@@ -346,11 +346,6 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
     }
   }
 
-  /// @notice Current contract version, per semver.
-  function version() external pure returns (string memory) {
-    return "1.4.0";
-  }
-
   // ────────────────────────────────────────────────────
   // Token allowlist (TokenSupport overrides — owner-gated)
   // ────────────────────────────────────────────────────
@@ -435,9 +430,8 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
       for (uint256 i = 0; i < params.whitelistAddrs.length; ++i) {
         // A fresh offerId has never touched this mapping, so a non-zero read here
         // means this address already appeared earlier in this same loop.
-        if (s_lenderAllocation[offerId][params.whitelistAddrs[i]] != 0) {
+        if (s_lenderAllocation[offerId][params.whitelistAddrs[i]] != 0)
           revert FixedReturn__DuplicateWhitelistAddress();
-        }
         s_lenderAllocation[offerId][params.whitelistAddrs[i]] = params.allocations[i];
         if (params.allocations[i] == UNCAPPED_ALLOCATION) {
           hasUncappedLender = true;
@@ -450,9 +444,8 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
       // Actual deposits stay bounded regardless by lendFunds' own FundingTargetReached
       // check. An uncapped lender can always absorb whatever the capped lenders don't,
       // so the offer is unconditionally fundable and this check doesn't apply to it.
-      if (!hasUncappedLender && allocatedTotal < params.fundingTarget) {
+      if (!hasUncappedLender && allocatedTotal < params.fundingTarget)
         revert FixedReturn__AllocationSumBelowFundingTarget();
-      }
     }
 
     emit LendingOfferCreated({
@@ -730,6 +723,11 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
   /// @notice Address of the Officer contract that deployed this proxy.
   function getOfficerAddress() external view returns (address) {
     return s_officerAddress;
+  }
+
+  /// @notice Current contract version, per semver.
+  function version() external pure returns (string memory) {
+    return "1.4.0";
   }
 
   /// @dev Resolves Bank via Officer. Reverts if not found.
