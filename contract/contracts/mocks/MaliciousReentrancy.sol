@@ -34,10 +34,10 @@ contract MaliciousReentrancy {
    *         we attempt to call withdraw again, which should revert with
    *         ReentrancyGuardReentrantCall.
    */
-  function attack(address _target) external {
-    s_target = _target;
+  function attack(address target) external {
+    s_target = target;
     s_attacking = true;
-    IFeeCollectorForAttack(_target).withdraw();
+    IFeeCollectorForAttack(target).withdraw();
     s_attacking = false;
   }
 }

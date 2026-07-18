@@ -326,20 +326,23 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
    * @dev Called by Officer at proxy-creation time. s_officerAddress is captured from
    *      msg.sender because Officer is always the proxy deployer — matching the pattern
    *      used by Bank (Bank.sol line 143) and InvestorV1 (InvestorV1.sol line 148).
-   * @param _tokenAddresses Initial set of ERC20 tokens lenders may fund offers with.
-   * @param _owner Address that will become the owner of this contract.
+   * @param tokenAddresses Initial set of ERC20 tokens lenders may fund offers with.
+   * @param ownerAddress Address that will become the owner of this contract.
    * @custom:security Only callable once due to the initializer modifier.
    */
-  function initialize(address[] calldata _tokenAddresses, address _owner) external initializer {
-    if (_owner == address(0)) revert FixedReturn__ZeroAddress();
-    __Ownable_init(_owner);
+  function initialize(
+    address[] calldata tokenAddresses,
+    address ownerAddress
+  ) external initializer {
+    if (ownerAddress == address(0)) revert FixedReturn__ZeroAddress();
+    __Ownable_init(ownerAddress);
     __ReentrancyGuard_init();
 
     s_officerAddress = msg.sender;
 
-    uint256 length = _tokenAddresses.length;
+    uint256 length = tokenAddresses.length;
     for (uint256 i = 0; i < length; ++i) {
-      _addTokenSupport(_tokenAddresses[i]);
+      _addTokenSupport(tokenAddresses[i]);
     }
   }
 
@@ -357,13 +360,13 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
   // out to the owner; that restriction is structural and intentional.
 
   /// @inheritdoc TokenSupport
-  function addTokenSupport(address _tokenAddress) external override onlyOwner {
-    _addTokenSupport(_tokenAddress);
+  function addTokenSupport(address tokenAddress) external override onlyOwner {
+    _addTokenSupport(tokenAddress);
   }
 
   /// @inheritdoc TokenSupport
-  function removeTokenSupport(address _tokenAddress) external override onlyOwner {
-    _removeTokenSupport(_tokenAddress);
+  function removeTokenSupport(address tokenAddress) external override onlyOwner {
+    _removeTokenSupport(tokenAddress);
   }
 
   // ────────────────────────────────────────────────────

@@ -14,12 +14,12 @@ contract MockFixedReturn {
   uint256 public lastOfferId;
   uint256 public lastAmount;
 
-  function setToken(address _token) external {
-    token = _token;
+  function setToken(address tokenAddress) external {
+    token = tokenAddress;
   }
 
-  function setShouldRevertOnRepay(bool _shouldRevert) external {
-    shouldRevertOnRepay = _shouldRevert;
+  function setShouldRevertOnRepay(bool shouldRevert) external {
+    shouldRevertOnRepay = shouldRevert;
   }
 
   function repayLenders(uint256 offerId, uint256 amount) external {

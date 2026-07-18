@@ -17,9 +17,9 @@ describe('Cash Remuneration - Withdraw SHER', function () {
   let investor: InvestorV1__factory
   let investorBeacon: UpgradeableBeacon
   let investorV1Proxy: InvestorV1
-  let cashRemunerationEip712: CashRemunerationEIP712__factory
-  let cashRemunerationEip712Beacon: UpgradeableBeacon
-  let cashRemunerationEip712Proxy: CashRemunerationEIP712
+  let cashRemunerationEIP712: CashRemunerationEIP712__factory
+  let cashRemunerationEIP712Beacon: UpgradeableBeacon
+  let cashRemunerationEIP712Proxy: CashRemunerationEIP712
   let owner: SignerWithAddress
   let addr1: SignerWithAddress
   let feeCollector: FeeCollector
@@ -51,15 +51,15 @@ describe('Cash Remuneration - Withdraw SHER', function () {
     investor = await ethers.getContractFactory('InvestorV1')
     investorBeacon = (await upgrades.deployBeacon(investor)) as unknown as UpgradeableBeacon
 
-    cashRemunerationEip712 = await ethers.getContractFactory('CashRemunerationEIP712')
-    cashRemunerationEip712Beacon = (await upgrades.deployBeacon(
-      cashRemunerationEip712
+    cashRemunerationEIP712 = await ethers.getContractFactory('CashRemunerationEIP712')
+    cashRemunerationEIP712Beacon = (await upgrades.deployBeacon(
+      cashRemunerationEIP712
     )) as unknown as UpgradeableBeacon
 
     const beaconConfigs: Array<{ beaconType: string; beaconAddress: string }> = [
       {
         beaconType: 'CashRemunerationEIP712',
-        beaconAddress: await cashRemunerationEip712Beacon.getAddress()
+        beaconAddress: await cashRemunerationEIP712Beacon.getAddress()
       },
       {
         beaconType: 'InvestorV1',
@@ -71,7 +71,7 @@ describe('Cash Remuneration - Withdraw SHER', function () {
 
     deployments.push({
       contractType: 'CashRemunerationEIP712',
-      initializerData: cashRemunerationEip712.interface.encodeFunctionData('initialize', [
+      initializerData: cashRemunerationEIP712.interface.encodeFunctionData('initialize', [
         ZeroAddress,
         []
       ])
@@ -110,14 +110,14 @@ describe('Cash Remuneration - Withdraw SHER', function () {
       contractAddresses.set(contractType, contractAddress)
     }
 
-    cashRemunerationEip712Proxy = await ethers.getContractAt(
+    cashRemunerationEIP712Proxy = await ethers.getContractAt(
       'CashRemunerationEIP712',
       contractAddresses.get('CashRemunerationEIP712')
     )
     investorV1Proxy = await ethers.getContractAt('InvestorV1', contractAddresses.get('InvestorV1'))
 
     chainId = (await ethers.provider.getNetwork()).chainId
-    verifyingContract = await cashRemunerationEip712Proxy.getAddress()
+    verifyingContract = await cashRemunerationEIP712Proxy.getAddress()
 
     domain = {
       name: DOMAIN_NAME,
@@ -141,14 +141,14 @@ describe('Cash Remuneration - Withdraw SHER', function () {
   })
 
   it('Should initialize contracts properly', async () => {
-    expect((await cashRemunerationEip712Proxy.getOfficerAddress()).toLocaleLowerCase()).to.be.equal(
+    expect((await cashRemunerationEIP712Proxy.getOfficerAddress()).toLocaleLowerCase()).to.be.equal(
       (await officer.getAddress()).toLocaleLowerCase()
     )
-    expect((await cashRemunerationEip712Proxy.owner()).toLocaleLowerCase()).to.be.equal(
+    expect((await cashRemunerationEIP712Proxy.owner()).toLocaleLowerCase()).to.be.equal(
       owner.address.toLocaleLowerCase()
     )
     expect(
-      await cashRemunerationEip712Proxy.isTokenSupported(await investorV1Proxy.getAddress())
+      await cashRemunerationEIP712Proxy.isTokenSupported(await investorV1Proxy.getAddress())
     ).to.be.equal(true)
 
     expect((await investorV1Proxy.owner()).toLocaleLowerCase()).to.be.equal(
@@ -157,7 +157,7 @@ describe('Cash Remuneration - Withdraw SHER', function () {
     expect(
       await investorV1Proxy.hasRole(
         await investorV1Proxy.MINTER_ROLE(),
-        await cashRemunerationEip712Proxy.getAddress()
+        await cashRemunerationEIP712Proxy.getAddress()
       )
     ).to.be.equal(true)
     expect(
@@ -183,14 +183,14 @@ describe('Cash Remuneration - Withdraw SHER', function () {
 
     const signature = await owner.signTypedData(domain, types, wageClaim)
     const signatureHash = ethers.keccak256(signature)
-    const tx = await cashRemunerationEip712Proxy.connect(addr1).withdraw(wageClaim, signature)
+    const tx = await cashRemunerationEIP712Proxy.connect(addr1).withdraw(wageClaim, signature)
 
     const amountSher = (BigInt(wageClaim.minutesWorked) * wageClaim.wages[0].hourlyRate) / 60n
 
     await expect(tx)
-      .to.emit(cashRemunerationEip712Proxy, 'WithdrawToken')
+      .to.emit(cashRemunerationEIP712Proxy, 'WithdrawToken')
       .withArgs(addr1.address, await investorV1Proxy.getAddress(), amountSher)
-    const paidWageClaim = await cashRemunerationEip712Proxy.getPaidWageClaim(signatureHash)
+    const paidWageClaim = await cashRemunerationEIP712Proxy.getPaidWageClaim(signatureHash)
     expect(paidWageClaim).to.be.equal(true)
     expect(await investorV1Proxy.balanceOf(addr1.address)).to.be.equal(amountSher)
   })
@@ -216,16 +216,16 @@ describe('Cash Remuneration - Withdraw SHER', function () {
 
     const signature = await owner.signTypedData(domain, types, wageClaim)
     const signatureHash = ethers.keccak256(signature)
-    const tx = await cashRemunerationEip712Proxy.connect(owner).disableClaim(signatureHash)
+    const tx = await cashRemunerationEIP712Proxy.connect(owner).disableClaim(signatureHash)
 
     await expect(tx)
-      .to.emit(cashRemunerationEip712Proxy, 'WageClaimDisabled')
+      .to.emit(cashRemunerationEIP712Proxy, 'WageClaimDisabled')
       .withArgs(signatureHash)
 
     await expect(
-      cashRemunerationEip712Proxy.connect(addr1).withdraw(wageClaim, signature)
+      cashRemunerationEIP712Proxy.connect(addr1).withdraw(wageClaim, signature)
     ).to.be.revertedWithCustomError(
-      cashRemunerationEip712Proxy,
+      cashRemunerationEIP712Proxy,
       'CashRemunerationEIP712__ClaimIsDisabled'
     )
   })
@@ -246,26 +246,26 @@ describe('Cash Remuneration - Withdraw SHER', function () {
     const signature = await owner.signTypedData(domain, types, wageClaim)
     const signatureHash = ethers.keccak256(signature)
 
-    let tx = await cashRemunerationEip712Proxy.connect(owner).enableClaim(signatureHash)
+    let tx = await cashRemunerationEIP712Proxy.connect(owner).enableClaim(signatureHash)
 
     await expect(tx)
-      .to.emit(cashRemunerationEip712Proxy, 'WageClaimEnabled')
+      .to.emit(cashRemunerationEIP712Proxy, 'WageClaimEnabled')
       .withArgs(signatureHash)
 
-    tx = await cashRemunerationEip712Proxy.connect(addr1).withdraw(wageClaim, signature)
+    tx = await cashRemunerationEIP712Proxy.connect(addr1).withdraw(wageClaim, signature)
 
     const amountSher = (BigInt(wageClaim.minutesWorked) * wageClaim.wages[0].hourlyRate) / 60n
 
     await expect(tx)
-      .to.emit(cashRemunerationEip712Proxy, 'WithdrawToken')
+      .to.emit(cashRemunerationEIP712Proxy, 'WithdrawToken')
       .withArgs(addr1.address, await investorV1Proxy.getAddress(), amountSher)
-    const paidWageClaim = await cashRemunerationEip712Proxy.getPaidWageClaim(signatureHash)
+    const paidWageClaim = await cashRemunerationEIP712Proxy.getPaidWageClaim(signatureHash)
     expect(paidWageClaim).to.be.equal(true)
     expect(await investorV1Proxy.balanceOf(addr1.address)).to.be.equal(amountSher)
   })
 
   it('Should set officer address during deployment', async () => {
-    expect((await cashRemunerationEip712Proxy.getOfficerAddress()).toLocaleLowerCase()).to.be.equal(
+    expect((await cashRemunerationEIP712Proxy.getOfficerAddress()).toLocaleLowerCase()).to.be.equal(
       (await officer.getAddress()).toLocaleLowerCase()
     )
   })
@@ -287,16 +287,16 @@ describe('Cash Remuneration - Withdraw SHER', function () {
     const signatureHash = ethers.keccak256(signature)
 
     // First invocation mints SHER successfully
-    await cashRemunerationEip712Proxy.connect(addr1).withdraw(wageClaim, signature)
-    expect(await cashRemunerationEip712Proxy.getPaidWageClaim(signatureHash)).to.equal(true)
+    await cashRemunerationEIP712Proxy.connect(addr1).withdraw(wageClaim, signature)
+    expect(await cashRemunerationEIP712Proxy.getPaidWageClaim(signatureHash)).to.equal(true)
 
     const amountSher = (BigInt(wageClaim.minutesWorked) * wageClaim.wages[0].hourlyRate) / 60n
     expect(await investorV1Proxy.balanceOf(addr1.address)).to.equal(amountSher)
 
     // Replay attempt with identical signature/claim must revert with WageAlreadyPaid
-    await expect(cashRemunerationEip712Proxy.connect(addr1).withdraw(wageClaim, signature))
+    await expect(cashRemunerationEIP712Proxy.connect(addr1).withdraw(wageClaim, signature))
       .to.be.revertedWithCustomError(
-        cashRemunerationEip712Proxy,
+        cashRemunerationEIP712Proxy,
         'CashRemunerationEIP712__WageAlreadyPaid'
       )
       .withArgs(signatureHash)
@@ -322,16 +322,16 @@ describe('Cash Remuneration - Withdraw SHER', function () {
     const signatureHash = ethers.keccak256(signature)
 
     // Use the claim once
-    await cashRemunerationEip712Proxy.connect(addr1).withdraw(wageClaim, signature)
+    await cashRemunerationEIP712Proxy.connect(addr1).withdraw(wageClaim, signature)
 
     // Owner disables it afterwards
-    await cashRemunerationEip712Proxy.connect(owner).disableClaim(signatureHash)
+    await cashRemunerationEIP712Proxy.connect(owner).disableClaim(signatureHash)
 
     // Replay: WageAlreadyPaid is checked first in the contract, so it should hit that error
     await expect(
-      cashRemunerationEip712Proxy.connect(addr1).withdraw(wageClaim, signature)
+      cashRemunerationEIP712Proxy.connect(addr1).withdraw(wageClaim, signature)
     ).to.be.revertedWithCustomError(
-      cashRemunerationEip712Proxy,
+      cashRemunerationEIP712Proxy,
       'CashRemunerationEIP712__WageAlreadyPaid'
     )
   })

@@ -141,17 +141,17 @@ contract InvestorV1 is
 
   /**
    * @notice Initializes the InvestorV1 token.
-   * @param _name ERC20 token name.
-   * @param _symbol ERC20 token symbol.
-   * @param _owner Contract owner; if address(0) the caller becomes owner.
+   * @param tokenName ERC20 token name.
+   * @param tokenSymbol ERC20 token symbol.
+   * @param initialOwner Contract owner; if address(0) the caller becomes owner.
    */
   function initialize(
-    string calldata _name,
-    string calldata _symbol,
-    address _owner
+    string calldata tokenName,
+    string calldata tokenSymbol,
+    address initialOwner
   ) external initializer {
-    __ERC20_init(_name, _symbol);
-    address owner = _owner == address(0) ? msg.sender : _owner;
+    __ERC20_init(tokenName, tokenSymbol);
+    address owner = initialOwner == address(0) ? msg.sender : initialOwner;
     __Ownable_init(owner);
     __AccessControl_init();
     __Pausable_init();
@@ -166,13 +166,13 @@ contract InvestorV1 is
 
   /**
    * @notice Mints tokens to a batch of shareholders.
-   * @param _shareholders Array of shareholders and amounts to mint.
+   * @param shareholders Array of shareholders and amounts to mint.
    */
   function distributeMint(
-    Shareholder[] memory _shareholders
+    Shareholder[] memory shareholders
   ) external onlyOwner whenNotPaused nonReentrant {
-    for (uint256 i = 0; i < _shareholders.length; i++) {
-      Shareholder memory shareholder = _shareholders[i];
+    for (uint256 i = 0; i < shareholders.length; i++) {
+      Shareholder memory shareholder = shareholders[i];
       _mint(shareholder.shareholder, shareholder.amount);
 
       emit Minted(shareholder.shareholder, shareholder.amount);
@@ -194,15 +194,15 @@ contract InvestorV1 is
 
   /**
    * @notice Distributes native token (ETH) dividends directly to all shareholders
-   * @param _amount Total amount to distribute in wei
+   * @param amount Total amount to distribute in wei
    * @dev Calculates per-shareholder share based on token balance proportion
    * Handles rounding by giving remainder to last shareholder
    */
   function distributeNativeDividends(
-    uint256 _amount
+    uint256 amount
   ) external payable onlyBank nonReentrant whenNotPaused {
-    if (_amount == 0) revert InvestorV1__ZeroAmount();
-    if (msg.value != _amount) revert InvestorV1__InvalidNativeFunding(_amount, msg.value);
+    if (amount == 0) revert InvestorV1__ZeroAmount();
+    if (msg.value != amount) revert InvestorV1__InvalidNativeFunding(amount, msg.value);
 
     uint256 supply = totalSupply();
     if (supply == 0) revert InvestorV1__NoTokensMinted();
@@ -210,13 +210,13 @@ contract InvestorV1 is
     Shareholder[] memory currentShareholders = _getShareholders();
     if (currentShareholders.length == 0) revert InvestorV1__NoShareholders();
 
-    uint256 remaining = _amount;
+    uint256 remaining = amount;
 
     for (uint256 i = 0; i < currentShareholders.length; i++) {
       address shareholder = currentShareholders[i].shareholder;
       uint256 balance = currentShareholders[i].amount;
 
-      uint256 share = (_amount * balance) / supply;
+      uint256 share = (amount * balance) / supply;
 
       // Last shareholder gets remainder to handle rounding
       if (i == currentShareholders.length - 1) {
@@ -233,38 +233,38 @@ contract InvestorV1 is
       }
     }
 
-    emit DividendDistributed(msg.sender, address(0), _amount, currentShareholders.length);
+    emit DividendDistributed(msg.sender, address(0), amount, currentShareholders.length);
   }
 
   /**
    * @notice Distributes ERC20 token dividends directly to all shareholders
-   * @param _token Address of the ERC20 token contract
-   * @param _amount Total amount of tokens to distribute
+   * @param token Address of the ERC20 token contract
+   * @param amount Total amount of tokens to distribute
    * @dev Requires Bank to pre-fund this contract before calling
    */
   function distributeTokenDividends(
-    address _token,
-    uint256 _amount
+    address token,
+    uint256 amount
   ) external onlyBank nonReentrant whenNotPaused {
-    if (_token == address(0)) revert InvestorV1__ZeroAddress();
-    if (_amount == 0) revert InvestorV1__ZeroAmount();
+    if (token == address(0)) revert InvestorV1__ZeroAddress();
+    if (amount == 0) revert InvestorV1__ZeroAmount();
 
     uint256 supply = totalSupply();
     if (supply == 0) revert InvestorV1__NoTokensMinted();
 
     Shareholder[] memory currentShareholders = _getShareholders();
     if (currentShareholders.length == 0) revert InvestorV1__NoShareholders();
-    uint256 tokenBal = IERC20(_token).balanceOf(address(this));
-    if (tokenBal < _amount)
-      revert InvestorV1__InsufficientFundedTokenBalance(_token, _amount, tokenBal);
+    uint256 tokenBal = IERC20(token).balanceOf(address(this));
+    if (tokenBal < amount)
+      revert InvestorV1__InsufficientFundedTokenBalance(token, amount, tokenBal);
 
-    uint256 remaining = _amount;
+    uint256 remaining = amount;
 
     for (uint256 i = 0; i < currentShareholders.length; i++) {
       address shareholder = currentShareholders[i].shareholder;
       uint256 balance = currentShareholders[i].amount;
 
-      uint256 share = (_amount * balance) / supply;
+      uint256 share = (amount * balance) / supply;
 
       if (i == currentShareholders.length - 1) {
         share = remaining;
@@ -273,13 +273,13 @@ contract InvestorV1 is
       }
 
       if (share > 0) {
-        IERC20(_token).safeTransfer(shareholder, share);
-        emit DividendPaid(shareholder, _token, share);
+        IERC20(token).safeTransfer(shareholder, share);
+        emit DividendPaid(shareholder, token, share);
         remaining -= share;
       }
     }
 
-    emit DividendDistributed(msg.sender, _token, _amount, currentShareholders.length);
+    emit DividendDistributed(msg.sender, token, amount, currentShareholders.length);
   }
 
   /// @notice Pauses token operations.
@@ -297,12 +297,12 @@ contract InvestorV1 is
    * @return Array of Shareholder structs.
    */
   function getShareholders() external view returns (Shareholder[] memory) {
-    Shareholder[] memory _shareholders = new Shareholder[](s_shareholderSet.length());
+    Shareholder[] memory shareholders = new Shareholder[](s_shareholderSet.length());
     for (uint256 i = 0; i < s_shareholderSet.length(); i++) {
       address shareholder = s_shareholderSet.at(i);
-      _shareholders[i] = Shareholder(shareholder, balanceOf(shareholder));
+      shareholders[i] = Shareholder(shareholder, balanceOf(shareholder));
     }
-    return _shareholders;
+    return shareholders;
   }
 
   /// @notice Returns the addresses currently tracked as holding a non-zero balance.
@@ -348,11 +348,11 @@ contract InvestorV1 is
    * @return Array of shareholder addresses and their balances
    */
   function _getShareholders() internal view returns (Shareholder[] memory) {
-    Shareholder[] memory _shareholders = new Shareholder[](s_shareholderSet.length());
+    Shareholder[] memory shareholders = new Shareholder[](s_shareholderSet.length());
     for (uint256 i = 0; i < s_shareholderSet.length(); i++) {
       address shareholder = s_shareholderSet.at(i);
-      _shareholders[i] = Shareholder(shareholder, balanceOf(shareholder));
+      shareholders[i] = Shareholder(shareholder, balanceOf(shareholder));
     }
-    return _shareholders;
+    return shareholders;
   }
 }

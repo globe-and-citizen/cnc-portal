@@ -128,61 +128,61 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
 
   /**
    * @notice Adds a supported token to the contract.
-   * @param _tokenAddress The address of the token contract.
+   * @param tokenAddress The address of the token contract.
    * @dev Can only be called by the contract owner.
    */
-  function addTokenSupport(address _tokenAddress) external override onlyOwner {
-    _addTokenSupport(_tokenAddress);
+  function addTokenSupport(address tokenAddress) external override onlyOwner {
+    _addTokenSupport(tokenAddress);
   }
 
   /**
    * @notice Removes a supported token from the contract.
-   * @param _tokenAddress The address of the token contract.
+   * @param tokenAddress The address of the token contract.
    * @dev Can only be called by the contract owner.
    */
-  function removeTokenSupport(address _tokenAddress) external override onlyOwner {
-    _removeTokenSupport(_tokenAddress);
+  function removeTokenSupport(address tokenAddress) external override onlyOwner {
+    _removeTokenSupport(tokenAddress);
   }
 
   /**
    * @notice Allows users to deposit ERC20 tokens into the contract
    * @dev Transfers tokens from sender to contract using transferFrom
-   * @param _token The address of the ERC20 token to deposit
-   * @param _amount The amount of tokens to deposit
+   * @param token The address of the ERC20 token to deposit
+   * @param amount The amount of tokens to deposit
    * @custom:security Protected against reentrancy and requires contract to be unpaused
    */
-  function depositToken(address _token, uint256 _amount) external nonReentrant whenNotPaused {
-    if (!_isTokenSupported(_token)) revert Bank__UnsupportedToken(_token);
-    if (_amount == 0) revert Bank__ZeroAmount();
+  function depositToken(address token, uint256 amount) external nonReentrant whenNotPaused {
+    if (!_isTokenSupported(token)) revert Bank__UnsupportedToken(token);
+    if (amount == 0) revert Bank__ZeroAmount();
 
-    IERC20(_token).safeTransferFrom(msg.sender, address(this), _amount);
-    emit TokenDeposited(msg.sender, _token, _amount);
+    IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
+    emit TokenDeposited(msg.sender, token, amount);
   }
 
   /**
    * @notice Transfers ETH/native tokens from the contract to a specified address
    * @dev Only owner can call this function and can transfer available balance
-   * @param _to The recipient address
-   * @param _amount The amount of ETH/native tokens to transfer
+   * @param to The recipient address
+   * @param amount The amount of ETH/native tokens to transfer
    * @custom:security Protected against reentrancy and requires contract to be unpaused
    */
-  function transfer(address _to, uint256 _amount) external onlyOwner nonReentrant whenNotPaused {
-    if (_to == address(0)) revert Bank__ZeroAddress();
-    if (_amount == 0) revert Bank__ZeroAmount();
-    if (_amount > address(this).balance)
-      revert Bank__InsufficientBalance(_amount, address(this).balance);
+  function transfer(address to, uint256 amount) external onlyOwner nonReentrant whenNotPaused {
+    if (to == address(0)) revert Bank__ZeroAddress();
+    if (amount == 0) revert Bank__ZeroAmount();
+    if (amount > address(this).balance)
+      revert Bank__InsufficientBalance(amount, address(this).balance);
 
     // --- Step 1: Get fee configuration ---
     uint16 feeBps = _getFeeBps(); // e.g., 50 = 0.5%
     if (feeBps > 10_000) revert Bank__InvalidFeeBps(feeBps);
 
     uint256 fee = 0;
-    uint256 net = _amount;
+    uint256 net = amount;
 
     // --- Step 2: Calculate and process fee if configured ---
     if (feeBps > 0) {
-      fee = (_amount * feeBps) / 10_000;
-      net = _amount - fee;
+      fee = (amount * feeBps) / 10_000;
+      net = amount - fee;
 
       // Get fee collector address
       address feeCollector = IOfficer(s_officerAddress).getFeeCollector();
@@ -193,38 +193,38 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
     }
 
     // --- Step 3: Send net amount to recipient ---
-    (bool sentNet, ) = _to.call{value: net}("");
+    (bool sentNet, ) = to.call{value: net}("");
     if (!sentNet) revert Bank__TransferFailed();
 
-    emit Transfer(msg.sender, _to, net);
+    emit Transfer(msg.sender, to, net);
   }
 
   /**
    * @notice Transfers ERC20 tokens from the contract to a specified address
    * @dev Only owner can call this function. Fees are only charged for FeeCollector-supported tokens
-   * @param _token The address of the ERC20 token contract
-   * @param _to The recipient address
-   * @param _amount The amount of tokens to transfer (before fees)
+   * @param token The address of the ERC20 token contract
+   * @param to The recipient address
+   * @param amount The amount of tokens to transfer (before fees)
    * @custom:security Protected against reentrancy and requires contract to be unpaused
    */
   function transferToken(
-    address _token,
-    address _to,
-    uint256 _amount
+    address token,
+    address to,
+    uint256 amount
   ) external onlyOwner nonReentrant whenNotPaused {
-    if (!_isTokenSupported(_token)) revert Bank__UnsupportedToken(_token);
-    if (_to == address(0)) revert Bank__ZeroAddress();
-    if (_amount == 0) revert Bank__ZeroAmount();
+    if (!_isTokenSupported(token)) revert Bank__UnsupportedToken(token);
+    if (to == address(0)) revert Bank__ZeroAddress();
+    if (amount == 0) revert Bank__ZeroAmount();
     {
-      uint256 tokenBal = getTokenBalance(_token);
-      if (_amount > tokenBal) revert Bank__InsufficientBalance(_amount, tokenBal);
+      uint256 tokenBal = getTokenBalance(token);
+      if (amount > tokenBal) revert Bank__InsufficientBalance(amount, tokenBal);
     }
 
     // Check if this is a fee-supported token (USDC or USDT)
-    bool shouldChargeFee = _isSupportedFeeToken(_token);
+    bool shouldChargeFee = _isSupportedFeeToken(token);
 
     uint256 fee = 0;
-    uint256 net = _amount;
+    uint256 net = amount;
 
     // Only charge fee for FeeCollector-supported tokens
     if (shouldChargeFee) {
@@ -232,62 +232,60 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
       if (feeBps > 10_000) revert Bank__InvalidFeeBps(feeBps);
 
       if (feeBps > 0) {
-        fee = (_amount * feeBps) / 10_000;
-        net = _amount - fee;
+        fee = (amount * feeBps) / 10_000;
+        net = amount - fee;
 
         // Get fee collector address
         address feeCollector = IOfficer(s_officerAddress).getFeeCollector();
         if (feeCollector == address(0)) revert Bank__FeeCollectorNotConfigured();
 
         // Pay fee via FeeCollector (pulled via transferFrom; emits FeePaid on the collector)
-        IERC20(_token).forceApprove(feeCollector, fee);
-        IFeeCollector(feeCollector).payFeeToken("BANK", _token, fee);
+        IERC20(token).forceApprove(feeCollector, fee);
+        IFeeCollector(feeCollector).payFeeToken("BANK", token, fee);
       }
     }
 
     // Transfer net amount to recipient
-    IERC20(_token).safeTransfer(_to, net);
-    emit TokenTransfer(msg.sender, _to, _token, net);
+    IERC20(token).safeTransfer(to, net);
+    emit TokenTransfer(msg.sender, to, token, net);
   }
 
   /**
    * @notice Funds Investor and triggers native ETH dividend distribution
-   * @param _amount Total ETH amount to distribute
+   * @param amount Total ETH amount to distribute
    */
-  function distributeNativeDividends(
-    uint256 _amount
-  ) external onlyOwner nonReentrant whenNotPaused {
-    if (_amount == 0) revert Bank__ZeroAmount();
-    if (_amount > address(this).balance)
-      revert Bank__InsufficientBalance(_amount, address(this).balance);
+  function distributeNativeDividends(uint256 amount) external onlyOwner nonReentrant whenNotPaused {
+    if (amount == 0) revert Bank__ZeroAmount();
+    if (amount > address(this).balance)
+      revert Bank__InsufficientBalance(amount, address(this).balance);
 
     address investorAddress = _getInvestorAddress();
-    IInvestorV1(investorAddress).distributeNativeDividends{value: _amount}(_amount);
+    IInvestorV1(investorAddress).distributeNativeDividends{value: amount}(amount);
 
-    emit DividendDistributionTriggered(investorAddress, address(0), _amount);
+    emit DividendDistributionTriggered(investorAddress, address(0), amount);
   }
 
   /**
    * @notice Funds Investor and triggers ERC20 dividend distribution
-   * @param _token Token address to distribute
-   * @param _amount Total token amount to distribute
+   * @param token Token address to distribute
+   * @param amount Total token amount to distribute
    */
   function distributeTokenDividends(
-    address _token,
-    uint256 _amount
+    address token,
+    uint256 amount
   ) external onlyOwner nonReentrant whenNotPaused {
-    if (!_isTokenSupported(_token)) revert Bank__UnsupportedToken(_token);
-    if (_amount == 0) revert Bank__ZeroAmount();
+    if (!_isTokenSupported(token)) revert Bank__UnsupportedToken(token);
+    if (amount == 0) revert Bank__ZeroAmount();
     {
-      uint256 tokenBal = getTokenBalance(_token);
-      if (_amount > tokenBal) revert Bank__InsufficientBalance(_amount, tokenBal);
+      uint256 tokenBal = getTokenBalance(token);
+      if (amount > tokenBal) revert Bank__InsufficientBalance(amount, tokenBal);
     }
 
     address investorAddress = _getInvestorAddress();
-    IERC20(_token).safeTransfer(investorAddress, _amount);
-    IInvestorV1(investorAddress).distributeTokenDividends(_token, _amount);
+    IERC20(token).safeTransfer(investorAddress, amount);
+    IInvestorV1(investorAddress).distributeTokenDividends(token, amount);
 
-    emit DividendDistributionTriggered(investorAddress, _token, _amount);
+    emit DividendDistributionTriggered(investorAddress, token, amount);
   }
 
   /**
@@ -340,24 +338,24 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
   /**
    * @notice Initializes the Bank contract with supported tokens and owner
    * @dev This function replaces the constructor for upgradeable contracts
-   * @param _tokenAddresses Array of ERC20 token addresses to be supported initially
-   * @param _sender Address that will become the owner of the contract
+   * @param tokenAddresses Array of ERC20 token addresses to be supported initially
+   * @param sender Address that will become the owner of the contract
    * @custom:security Only callable once due to initializer modifier
    */
-  function initialize(address[] calldata _tokenAddresses, address _sender) public initializer {
-    if (_sender == address(0)) revert Bank__ZeroAddress();
-    __Ownable_init(_sender);
+  function initialize(address[] calldata tokenAddresses, address sender) public initializer {
+    if (sender == address(0)) revert Bank__ZeroAddress();
+    __Ownable_init(sender);
     __ReentrancyGuard_init();
     __Pausable_init();
     // Set the initial supported tokens
-    uint256 length = _tokenAddresses.length;
+    uint256 length = tokenAddresses.length;
     for (uint256 i = 0; i < length; ++i) {
-      if (_tokenAddresses[i] == address(0)) revert Bank__ZeroAddress();
-      _addTokenSupport(_tokenAddresses[i]);
+      if (tokenAddresses[i] == address(0)) revert Bank__ZeroAddress();
+      _addTokenSupport(tokenAddresses[i]);
     }
     // Emit events after they're already added to avoid duplicate events
     for (uint256 i = 0; i < length; ++i) {
-      emit TokenSupportAdded(_tokenAddresses[i]);
+      emit TokenSupportAdded(tokenAddresses[i]);
     }
     if (msg.sender == address(0)) revert Bank__ZeroAddress();
     s_officerAddress = msg.sender;
@@ -381,12 +379,12 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
 
   /**
    * @notice Returns the current ERC20 token balance held by the contract.
-   * @param _token The address of the ERC20 token contract.
+   * @param token The address of the ERC20 token contract.
    * @return Current token balance.
    */
-  function getTokenBalance(address _token) public view returns (uint256) {
-    if (!_isTokenSupported(_token)) revert Bank__UnsupportedToken(_token);
-    return IERC20(_token).balanceOf(address(this));
+  function getTokenBalance(address token) public view returns (uint256) {
+    if (!_isTokenSupported(token)) revert Bank__UnsupportedToken(token);
+    return IERC20(token).balanceOf(address(this));
   }
 
   /**
@@ -425,10 +423,10 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
 
   /**
    * @dev Internal function to check if a token is supported by the FeeCollector
-   * @param _token The token address to check
+   * @param token The token address to check
    * @return bool True if the token is supported by the FeeCollector
    */
-  function _isSupportedFeeToken(address _token) internal view returns (bool) {
-    return IOfficer(s_officerAddress).isFeeCollectorToken(_token);
+  function _isSupportedFeeToken(address token) internal view returns (bool) {
+    return IOfficer(s_officerAddress).isFeeCollectorToken(token);
   }
 }

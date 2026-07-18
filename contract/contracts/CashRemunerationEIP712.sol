@@ -447,10 +447,10 @@ contract CashRemunerationEIP712 is
 
   /**
    * @dev Initializes the contract with the specified owner.
-   * @param _owner The address of the contract owner.
+   * @param initialOwner The address of the contract owner.
    */
-  function initialize(address _owner, address[] calldata _tokenAddresses) public initializer {
-    address owner = _owner == address(0) ? msg.sender : _owner;
+  function initialize(address initialOwner, address[] calldata tokenAddresses) public initializer {
+    address owner = initialOwner == address(0) ? msg.sender : initialOwner;
     __Ownable_init(owner);
     __ReentrancyGuard_init();
     __EIP712_init("CashRemuneration", "1");
@@ -460,13 +460,13 @@ contract CashRemunerationEIP712 is
     s_officerAddress = msg.sender;
 
     // Set the initial supported tokens
-    for (uint256 i = 0; i < _tokenAddresses.length; i++) {
-      if (_tokenAddresses[i] == address(0)) revert CashRemunerationEIP712__ZeroAddress();
-      _addTokenSupport(_tokenAddresses[i]);
+    for (uint256 i = 0; i < tokenAddresses.length; i++) {
+      if (tokenAddresses[i] == address(0)) revert CashRemunerationEIP712__ZeroAddress();
+      _addTokenSupport(tokenAddresses[i]);
     }
     // Emit events after they're already added to avoid duplicate events
-    for (uint256 i = 0; i < _tokenAddresses.length; i++) {
-      emit TokenSupportAdded(_tokenAddresses[i]);
+    for (uint256 i = 0; i < tokenAddresses.length; i++) {
+      emit TokenSupportAdded(tokenAddresses[i]);
     }
   }
 

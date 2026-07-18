@@ -285,17 +285,17 @@ contract SafeDepositRouter is
 
   /**
    * @notice Update Safe address
-   * @param _newSafe New Safe address
+   * @param newSafe New Safe address
    */
-  function setSafeAddress(address _newSafe) external onlyOwner {
-    if (_newSafe == address(0)) revert SafeDepositRouter__InvalidSafeAddress();
-    emit SafeAddressUpdated(s_safeAddress, _newSafe);
-    s_safeAddress = _newSafe;
+  function setSafeAddress(address newSafe) external onlyOwner {
+    if (newSafe == address(0)) revert SafeDepositRouter__InvalidSafeAddress();
+    emit SafeAddressUpdated(s_safeAddress, newSafe);
+    s_safeAddress = newSafe;
   }
 
   /**
    * @notice Update multiplier
-   * @param _newMultiplier New multiplier as fixed-point using SHER decimals
+   * @param newMultiplier New multiplier as fixed-point using SHER decimals
    *
    * @dev Interpretation:
    *      - `1.0x` = `10^sherDec`
@@ -309,7 +309,7 @@ contract SafeDepositRouter is
    *      - `2e18` = 2.0x (1 token → 2 SHER, after normalization)
    *      - `1e12` = 0.000001x
    */
-  function setMultiplier(uint256 _newMultiplier) external onlyOwner {
+  function setMultiplier(uint256 newMultiplier) external onlyOwner {
     address investorAddress = _getInvestorAddress();
 
     uint8 sherDec = IERC20Metadata(investorAddress).decimals();
@@ -319,10 +319,10 @@ contract SafeDepositRouter is
 
     uint256 minMultiplier = 10 ** (sherDec - 6);
 
-    if (_newMultiplier < minMultiplier) revert SafeDepositRouter__MultiplierTooLow();
+    if (newMultiplier < minMultiplier) revert SafeDepositRouter__MultiplierTooLow();
 
-    emit MultiplierUpdated(s_multiplier, _newMultiplier);
-    s_multiplier = _newMultiplier;
+    emit MultiplierUpdated(s_multiplier, newMultiplier);
+    s_multiplier = newMultiplier;
   }
 
   /**
@@ -345,34 +345,34 @@ contract SafeDepositRouter is
 
   /**
    * @notice Initialize the SafeDepositRouter
-   * @param _safeAddress Safe wallet address where deposits are sent
-   * @param _tokenAddresses Initial supported tokens
-   * @param _multiplier SHER multiplier (1 = 1:1, 2 = 2:1, etc.)
+   * @param safeAddress Safe wallet address where deposits are sent
+   * @param tokenAddresses Initial supported tokens
+   * @param multiplier SHER multiplier (1 = 1:1, 2 = 2:1, etc.)
    *
    * @dev Deposits disabled by default - call enableDeposits() to start
    * @dev officerAddress is set from msg.sender (Officer contract)
    */
   function initialize(
-    address _safeAddress,
-    address[] calldata _tokenAddresses,
-    uint256 _multiplier
+    address safeAddress,
+    address[] calldata tokenAddresses,
+    uint256 multiplier
   ) public initializer {
-    if (_safeAddress == address(0)) revert SafeDepositRouter__InvalidSafeAddress();
-    if (_multiplier < MIN_MULTIPLIER) revert SafeDepositRouter__MultiplierTooLow();
+    if (safeAddress == address(0)) revert SafeDepositRouter__InvalidSafeAddress();
+    if (multiplier < MIN_MULTIPLIER) revert SafeDepositRouter__MultiplierTooLow();
 
     __Ownable_init(msg.sender);
     __ReentrancyGuard_init();
     __Pausable_init();
 
-    s_safeAddress = _safeAddress;
+    s_safeAddress = safeAddress;
     if (msg.sender == address(0)) revert SafeDepositRouter__ZeroSender();
     s_officerAddress = msg.sender;
-    s_multiplier = _multiplier;
+    s_multiplier = multiplier;
     s_depositsEnabled = false; // Disabled by default
 
     // Whitelist initial tokens
-    for (uint256 i = 0; i < _tokenAddresses.length; ++i) {
-      address tokenAddress = _tokenAddresses[i];
+    for (uint256 i = 0; i < tokenAddresses.length; ++i) {
+      address tokenAddress = tokenAddresses[i];
       if (tokenAddress == address(0)) revert SafeDepositRouter__InvalidTokenAddress();
 
       uint8 decimals = IERC20Metadata(tokenAddress).decimals();

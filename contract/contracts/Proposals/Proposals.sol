@@ -62,7 +62,7 @@ contract Proposals is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUp
     uint256 noCount;
     uint256 abstainCount;
     ProposalState state;
-    mapping(address => bool) hasVoted;
+    mapping(address voter => bool voted) hasVoted;
   }
 
   /**
@@ -337,10 +337,10 @@ contract Proposals is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUp
 
   /**
    * @notice Initializes the Proposals contract.
-   * @param _owner Address that will own the contract.
+   * @param ownerAddress Address that will own the contract.
    */
-  function initialize(address _owner) public initializer {
-    __Ownable_init(_owner);
+  function initialize(address ownerAddress) public initializer {
+    __Ownable_init(ownerAddress);
     __Pausable_init();
     __ReentrancyGuard_init();
     s_nextProposalId = 1; // Start proposal IDs from 1

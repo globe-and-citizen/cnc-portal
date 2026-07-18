@@ -112,12 +112,12 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
 
   /**
    * @notice Sets the immutable fee collector used by this officer.
-   * @param _feeCollector Address of the fee collector contract.
+   * @param feeCollector Address of the fee collector contract.
    */
   /// @custom:oz-upgrades-unsafe-allow constructor
-  constructor(address _feeCollector) {
-    if (_feeCollector == address(0)) revert Officer__ZeroAddress();
-    i_feeCollectorAddress = _feeCollector;
+  constructor(address feeCollector) {
+    if (feeCollector == address(0)) revert Officer__ZeroAddress();
+    i_feeCollectorAddress = feeCollector;
     _disableInitializers();
   }
 
@@ -219,35 +219,35 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
 
   /**
    * @notice Checks if a token address is supported by the FeeCollector
-   * @param _tokenAddress The address of the token to check
+   * @param tokenAddress The address of the token to check
    * @return True if the token is supported, false otherwise
    */
-  function isFeeCollectorToken(address _tokenAddress) external view returns (bool) {
-    if (_tokenAddress == address(0)) return false;
-    return IFeeCollector(i_feeCollectorAddress).isTokenSupported(_tokenAddress);
+  function isFeeCollectorToken(address tokenAddress) external view returns (bool) {
+    if (tokenAddress == address(0)) return false;
+    return IFeeCollector(i_feeCollectorAddress).isTokenSupported(tokenAddress);
   }
 
   /**
    * @notice Initializes the contract with owner and optional beacon configurations.
-   * @param _owner Address of the contract owner.
+   * @param ownerAddress Address of the contract owner.
    * @param beaconConfigs Array of beacon configurations to initialize.
-   * @param _deployments Deployment descriptors run when `_isDeployAllContracts` is true.
-   * @param _isDeployAllContracts When true, immediately deploys all described proxies.
+   * @param deployments Deployment descriptors run when `isDeployAllContracts` is true.
+   * @param isDeployAllContracts When true, immediately deploys all described proxies.
    */
   function initialize(
-    address _owner,
+    address ownerAddress,
     BeaconConfig[] memory beaconConfigs,
-    DeploymentData[] calldata _deployments,
-    bool _isDeployAllContracts
+    DeploymentData[] calldata deployments,
+    bool isDeployAllContracts
   ) public initializer {
-    __Ownable_init(_owner);
+    __Ownable_init(ownerAddress);
     __ReentrancyGuard_init();
     __Pausable_init();
 
     _configureBeacons(beaconConfigs);
 
-    if (_isDeployAllContracts) {
-      _deployAndSetupContracts(_deployments, _owner);
+    if (isDeployAllContracts) {
+      _deployAndSetupContracts(deployments, ownerAddress);
     }
   }
 
@@ -350,14 +350,14 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
   }
 
   function _deployAndSetupContracts(
-    DeploymentData[] calldata _deployments,
-    address _owner
+    DeploymentData[] calldata deployments,
+    address ownerAddress
   ) internal {
-    deployAllContracts(_deployments);
-    _setupContractPermissions(_owner);
+    deployAllContracts(deployments);
+    _setupContractPermissions(ownerAddress);
   }
 
-  function _setupContractPermissions(address _owner) internal {
+  function _setupContractPermissions(address ownerAddress) internal {
     // Find deployed contracts
     address cashRemunerationAddress = findDeployedContract("CashRemunerationEIP712");
     address depositRouterAddress = findDeployedContract("SafeDepositRouter");
@@ -377,7 +377,7 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     if (cashRemunerationAddress != address(0)) {
       ICashRemuneration cashRemuneration = ICashRemuneration(cashRemunerationAddress);
       cashRemuneration.addTokenSupport(investorV1Address);
-      cashRemuneration.transferOwnership(_owner);
+      cashRemuneration.transferOwnership(ownerAddress);
 
       // Grant MINTER_ROLE to CashRemuneration
       investorV1.grantRole(minterRole, cashRemunerationAddress);
@@ -390,7 +390,7 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
 
       // Transfer ownership to final owner
       ISafeDepositRouter depositRouter = ISafeDepositRouter(depositRouterAddress);
-      depositRouter.transferOwnership(_owner);
+      depositRouter.transferOwnership(ownerAddress);
     }
 
     // Setup Vesting permissions if deployed
@@ -399,12 +399,12 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
       investorV1.grantRole(minterRole, vestingAddress);
 
       // Transfer ownership to final owner so the team owner manages schedules
-      IVesting(vestingAddress).transferOwnership(_owner);
+      IVesting(vestingAddress).transferOwnership(ownerAddress);
     }
 
     // Setup owner permissions on InvestorV1
-    investorV1.grantRole(minterRole, _owner);
-    investorV1.grantRole(adminRole, _owner);
-    investorV1.transferOwnership(_owner);
+    investorV1.grantRole(minterRole, ownerAddress);
+    investorV1.grantRole(adminRole, ownerAddress);
+    investorV1.transferOwnership(ownerAddress);
   }
 }

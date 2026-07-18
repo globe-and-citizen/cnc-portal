@@ -84,10 +84,10 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
   }
 
   /// @notice Initializes the contract
-  /// @param _sender Address that will be set as the owner
+  /// @param sender Address that will be set as the owner
   /// @dev This is the initialization function for the upgradeable contract pattern
-  function initialize(address _sender) public initializer {
-    __Ownable_init(_sender);
+  function initialize(address sender) public initializer {
+    __Ownable_init(sender);
     __ReentrancyGuard_init();
     __Pausable_init();
 
@@ -96,45 +96,45 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
   }
 
   /// @notice Creates a new proposal
-  /// @param _title Title of the proposal
-  /// @param _description Detailed description of the proposal
-  /// @param _isElection Whether this is an election proposal
-  /// @param _winnerCount Number of winners to be selected (for elections)
-  /// @param _voters Array of addresses eligible to vote
-  /// @param _candidates Array of candidate addresses (for elections)
-  /// @dev For elections, _candidates must not be empty
+  /// @param title Title of the proposal
+  /// @param description Detailed description of the proposal
+  /// @param isElection Whether this is an election proposal
+  /// @param winnerCount Number of winners to be selected (for elections)
+  /// @param voters Array of addresses eligible to vote
+  /// @param candidates Array of candidate addresses (for elections)
+  /// @dev For elections, candidates must not be empty
   function addProposal(
-    string memory _title,
-    string memory _description,
-    bool _isElection,
-    uint256 _winnerCount,
-    address[] memory _voters,
-    address[] memory _candidates
+    string memory title,
+    string memory description,
+    bool isElection,
+    uint256 winnerCount,
+    address[] memory voters,
+    address[] memory candidates
   ) public {
-    if (bytes(_title).length == 0) revert Voting__EmptyTitle();
+    if (bytes(title).length == 0) revert Voting__EmptyTitle();
 
     Types.Proposal storage newProposal = s_proposalsById[s_proposalCount];
     newProposal.id = s_proposalCount;
-    newProposal.title = _title;
-    newProposal.description = _description;
+    newProposal.title = title;
+    newProposal.description = description;
     newProposal.draftedBy = msg.sender;
-    newProposal.isElection = _isElection;
+    newProposal.isElection = isElection;
     newProposal.isActive = true;
-    newProposal.winnerCount = _winnerCount;
+    newProposal.winnerCount = winnerCount;
 
-    for (uint256 i = 0; i < _voters.length; i++) {
+    for (uint256 i = 0; i < voters.length; i++) {
       Types.Member memory voter = Types.Member({
         isEligible: true,
         isVoted: false,
-        memberAddress: _voters[i]
+        memberAddress: voters[i]
       });
       newProposal.voters.push(voter);
     }
-    if (_isElection) {
-      if (_candidates.length == 0) revert Voting__NoCandidates();
-      for (uint256 i = 0; i < _candidates.length; i++) {
+    if (isElection) {
+      if (candidates.length == 0) revert Voting__NoCandidates();
+      for (uint256 i = 0; i < candidates.length; i++) {
         Types.Candidate memory candidate = Types.Candidate({
-          candidateAddress: _candidates[i],
+          candidateAddress: candidates[i],
           votes: 0
         });
         newProposal.candidates.push(candidate);
@@ -142,7 +142,7 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
     }
 
     s_proposalsById[s_proposalCount] = newProposal;
-    emit ProposalAdded(s_proposalCount, _title, _description);
+    emit ProposalAdded(s_proposalCount, title, description);
     s_proposalCount++;
   }
 
@@ -313,12 +313,12 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
       // Create a new election with only the tied candidates
       string memory newTitle = string(abi.encodePacked("Runoff: ", proposal.title));
       addProposal({
-        _title: newTitle,
-        _description: proposal.description,
-        _isElection: true,
-        _winnerCount: proposal.winnerCount,
-        _voters: _getVoterAddresses(proposal),
-        _candidates: proposal.tiedCandidates
+        title: newTitle,
+        description: proposal.description,
+        isElection: true,
+        winnerCount: proposal.winnerCount,
+        voters: _getVoterAddresses(proposal),
+        candidates: proposal.tiedCandidates
       });
       emit RunoffElectionStarted(s_proposalCount - 1, proposal.tiedCandidates);
       proposal.hasTie = false;
@@ -361,11 +361,11 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
   }
 
   /// @notice Sets the Board of Directors members
-  /// @param _boardOfDirectors Array of addresses for the new board members
+  /// @param boardMembers Array of addresses for the new board members
   /// @dev Only callable by contract owner
-  function setBoardOfDirectors(address[] memory _boardOfDirectors) public onlyOwner {
+  function setBoardOfDirectors(address[] memory boardMembers) public onlyOwner {
     address bodAddress = _getBoardOfDirectorsAddress();
-    IBoardOfDirectors(bodAddress).setBoardOfDirectors(_boardOfDirectors);
+    IBoardOfDirectors(bodAddress).setBoardOfDirectors(boardMembers);
   }
 
   /// @notice Retrieves a proposal by its ID

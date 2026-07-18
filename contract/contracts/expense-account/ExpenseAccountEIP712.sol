@@ -338,12 +338,12 @@ contract ExpenseAccountEIP712 is
 
   /**
    * @notice Sets the officer address for cross-contract discovery.
-   * @param _officerAddress The address of the officer contract.
+   * @param officerAddress The address of the officer contract.
    * @dev Can only be called by the contract owner. Used for already-deployed proxies.
    */
-  function setOfficerAddress(address _officerAddress) external onlyOwner {
-    if (_officerAddress == address(0)) revert ExpenseAccountEIP712__ZeroAddress();
-    s_officerAddress = _officerAddress;
+  function setOfficerAddress(address officerAddress) external onlyOwner {
+    if (officerAddress == address(0)) revert ExpenseAccountEIP712__ZeroAddress();
+    s_officerAddress = officerAddress;
   }
 
   /**
@@ -395,20 +395,20 @@ contract ExpenseAccountEIP712 is
 
   /**
    * @notice Adds a supported token to the contract.
-   * @param _tokenAddress The address of the token contract.
+   * @param tokenAddress The address of the token contract.
    * @dev Can only be called by the contract owner.
    */
-  function addTokenSupport(address _tokenAddress) external override onlyOwner {
-    _addTokenSupport(_tokenAddress);
+  function addTokenSupport(address tokenAddress) external override onlyOwner {
+    _addTokenSupport(tokenAddress);
   }
 
   /**
    * @notice Removes a supported token from the contract.
-   * @param _tokenAddress The address of the token contract.
+   * @param tokenAddress The address of the token contract.
    * @dev Can only be called by the contract owner.
    */
-  function removeTokenSupport(address _tokenAddress) external override onlyOwner {
-    _removeTokenSupport(_tokenAddress);
+  function removeTokenSupport(address tokenAddress) external override onlyOwner {
+    _removeTokenSupport(tokenAddress);
   }
 
   /// @notice Returns the contract's native token balance.
@@ -447,9 +447,9 @@ contract ExpenseAccountEIP712 is
   /**
    * @notice Initializes the expense account contract.
    * @param owner The contract owner that will sign budget approvals.
-   * @param _tokenAddresses Initial set of supported ERC20 tokens.
+   * @param tokenAddresses Initial set of supported ERC20 tokens.
    */
-  function initialize(address owner, address[] calldata _tokenAddresses) public initializer {
+  function initialize(address owner, address[] calldata tokenAddresses) public initializer {
     if (owner == address(0)) revert ExpenseAccountEIP712__ZeroAddress();
     __Ownable_init(owner);
     __ReentrancyGuard_init();
@@ -460,14 +460,14 @@ contract ExpenseAccountEIP712 is
     s_officerAddress = msg.sender;
 
     // Set the initial supported tokens
-    uint256 length = _tokenAddresses.length;
+    uint256 length = tokenAddresses.length;
     for (uint256 i = 0; i < length; ++i) {
-      if (_tokenAddresses[i] == address(0)) revert ExpenseAccountEIP712__ZeroAddress();
-      _addTokenSupport(_tokenAddresses[i]);
+      if (tokenAddresses[i] == address(0)) revert ExpenseAccountEIP712__ZeroAddress();
+      _addTokenSupport(tokenAddresses[i]);
     }
     // Emit events after they're already added to avoid duplicate events
     for (uint256 i = 0; i < length; ++i) {
-      emit TokenSupportAdded(_tokenAddresses[i]);
+      emit TokenSupportAdded(tokenAddresses[i]);
     }
   }
 

@@ -342,10 +342,10 @@ contract Elections is Initializable, OwnableUpgradeable, PausableUpgradeable {
 
   /**
    * @notice Initializes the Elections contract.
-   * @param _owner Address that will own the contract.
+   * @param ownerAddress Address that will own the contract.
    */
-  function initialize(address _owner) public initializer {
-    __Ownable_init(_owner);
+  function initialize(address ownerAddress) public initializer {
+    __Ownable_init(ownerAddress);
     __Pausable_init();
     s_nextElectionId = 1;
 

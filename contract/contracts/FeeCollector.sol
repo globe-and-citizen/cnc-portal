@@ -106,20 +106,20 @@ contract FeeCollector is
 
   /**
    * @notice Adds a supported token to the contract
-   * @param _tokenAddress The address of the token contract
+   * @param tokenAddress The address of the token contract
    * @dev Can only be called by the contract owner
    */
-  function addTokenSupport(address _tokenAddress) external override onlyOwner {
-    _addTokenSupport(_tokenAddress);
+  function addTokenSupport(address tokenAddress) external override onlyOwner {
+    _addTokenSupport(tokenAddress);
   }
 
   /**
    * @notice Removes a supported token from the contract
-   * @param _tokenAddress The address of the token to remove
+   * @param tokenAddress The address of the token to remove
    * @dev Can only be called by the contract owner
    */
-  function removeTokenSupport(address _tokenAddress) external override onlyOwner {
-    _removeTokenSupport(_tokenAddress);
+  function removeTokenSupport(address tokenAddress) external override onlyOwner {
+    _removeTokenSupport(tokenAddress);
   }
 
   /**
@@ -156,12 +156,12 @@ contract FeeCollector is
 
   /**
    * @notice Set the address that receives swept fees on withdrawals.
-   * @param _beneficiary New beneficiary; address(0) clears it and falls back to owner().
+   * @param beneficiary New beneficiary; address(0) clears it and falls back to owner().
    */
-  function setFeeBeneficiary(address _beneficiary) external onlyOwner {
+  function setFeeBeneficiary(address beneficiary) external onlyOwner {
     address previous = s_feeBeneficiary;
-    s_feeBeneficiary = _beneficiary;
-    emit FeeBeneficiaryUpdated(previous, _beneficiary);
+    s_feeBeneficiary = beneficiary;
+    emit FeeBeneficiaryUpdated(previous, beneficiary);
   }
 
   /**
@@ -235,12 +235,12 @@ contract FeeCollector is
 
   /**
    * @notice Get the contract's ERC20 token balance
-   * @param _token The address of the token contract
+   * @param token The address of the token contract
    * @return The token balance
    */
-  function getTokenBalance(address _token) external view returns (uint256) {
-    if (!_isTokenSupported(_token)) revert FeeCollector__TokenNotSupported(_token);
-    return IERC20(_token).balanceOf(address(this));
+  function getTokenBalance(address token) external view returns (uint256) {
+    if (!_isTokenSupported(token)) revert FeeCollector__TokenNotSupported(token);
+    return IERC20(token).balanceOf(address(this));
   }
 
   /**
@@ -253,47 +253,47 @@ contract FeeCollector is
 
   /**
    * @notice Initializes the FeeCollector with owner, fee configs, and supported tokens
-   * @param _owner The address that will own this contract
-   * @param _configs Array of fee configurations for different contract types
-   * @param _tokenAddresses Array of ERC20 token addresses to be supported initially
+   * @param initialOwner The address that will own this contract
+   * @param configs Array of fee configurations for different contract types
+   * @param tokenAddresses Array of ERC20 token addresses to be supported initially
    * @dev Can only be called once due to initializer modifier
    */
   function initialize(
-    address _owner,
-    FeeConfig[] memory _configs,
-    address[] calldata _tokenAddresses
+    address initialOwner,
+    FeeConfig[] memory configs,
+    address[] calldata tokenAddresses
   ) public initializer {
-    if (_owner == address(0)) revert FeeCollector__ZeroAddress();
+    if (initialOwner == address(0)) revert FeeCollector__ZeroAddress();
 
-    __Ownable_init(_owner);
+    __Ownable_init(initialOwner);
     __ReentrancyGuard_init();
 
     // Store fee configs
-    for (uint256 i = 0; i < _configs.length; i++) {
-      if (bytes(_configs[i].contractType).length == 0) revert FeeCollector__EmptyContractType();
-      if (_configs[i].feeBps > 10000) revert FeeCollector__InvalidBps(_configs[i].feeBps);
+    for (uint256 i = 0; i < configs.length; i++) {
+      if (bytes(configs[i].contractType).length == 0) revert FeeCollector__EmptyContractType();
+      if (configs[i].feeBps > 10000) revert FeeCollector__InvalidBps(configs[i].feeBps);
 
       // No duplicates allowed
       for (uint256 j = 0; j < i; j++) {
         if (
           keccak256(bytes(s_feeConfigs[j].contractType)) ==
-          keccak256(bytes(_configs[i].contractType))
-        ) revert FeeCollector__DuplicateContractType(_configs[i].contractType);
+          keccak256(bytes(configs[i].contractType))
+        ) revert FeeCollector__DuplicateContractType(configs[i].contractType);
       }
 
       s_feeConfigs.push(
-        FeeConfig({contractType: _configs[i].contractType, feeBps: _configs[i].feeBps})
+        FeeConfig({contractType: configs[i].contractType, feeBps: configs[i].feeBps})
       );
     }
 
     // Set the initial supported tokens (same pattern as Bank contract)
-    for (uint256 i = 0; i < _tokenAddresses.length; i++) {
-      if (_tokenAddresses[i] == address(0)) revert FeeCollector__ZeroAddress();
-      _addTokenSupport(_tokenAddresses[i]);
+    for (uint256 i = 0; i < tokenAddresses.length; i++) {
+      if (tokenAddresses[i] == address(0)) revert FeeCollector__ZeroAddress();
+      _addTokenSupport(tokenAddresses[i]);
     }
     // Emit events after they're already added to avoid duplicate events
-    for (uint256 i = 0; i < _tokenAddresses.length; i++) {
-      emit TokenSupportAdded(_tokenAddresses[i]);
+    for (uint256 i = 0; i < tokenAddresses.length; i++) {
+      emit TokenSupportAdded(tokenAddresses[i]);
     }
   }
 

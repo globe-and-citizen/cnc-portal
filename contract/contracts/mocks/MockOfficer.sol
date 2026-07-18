@@ -4,7 +4,7 @@ pragma solidity ^0.8.24;
 import {UserBeaconProxy} from "../beacons/UserBeaconProxy.sol";
 
 interface IInitializableByOwner {
-  function initialize(address _owner) external;
+  function initialize(address owner) external;
 }
 
 interface IOwnableLike {

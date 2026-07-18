@@ -10,26 +10,26 @@ contract MockBoardOfDirectors is IBoardOfDirectors {
     return s_boardMembers;
   }
 
-  function initialize(address[] memory _owners) external {
-    s_boardMembers = _owners;
+  function initialize(address[] memory owners) external {
+    s_boardMembers = owners;
   }
 
-  function setBoardOfDirectors(address[] memory _members) external {
-    s_boardMembers = _members;
+  function setBoardOfDirectors(address[] memory members) external {
+    s_boardMembers = members;
   }
 
-  function addMember(address _member) external {
+  function addMember(address member) external {
     for (uint256 i = 0; i < s_boardMembers.length; i++) {
-      if (s_boardMembers[i] == _member) {
+      if (s_boardMembers[i] == member) {
         revert("Member already exists");
       }
     }
-    s_boardMembers.push(_member);
+    s_boardMembers.push(member);
   }
 
-  function removeMember(address _member) external {
+  function removeMember(address member) external {
     for (uint256 i = 0; i < s_boardMembers.length; i++) {
-      if (s_boardMembers[i] == _member) {
+      if (s_boardMembers[i] == member) {
         s_boardMembers[i] = s_boardMembers[s_boardMembers.length - 1];
         s_boardMembers.pop();
         return;
@@ -42,9 +42,9 @@ contract MockBoardOfDirectors is IBoardOfDirectors {
     return s_boardMembers;
   }
 
-  function isMember(address _address) external view returns (bool) {
+  function isMember(address account) external view returns (bool) {
     for (uint256 i = 0; i < s_boardMembers.length; i++) {
-      if (s_boardMembers[i] == _address) {
+      if (s_boardMembers[i] == account) {
         return true;
       }
     }

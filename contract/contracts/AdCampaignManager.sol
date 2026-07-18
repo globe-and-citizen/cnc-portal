@@ -128,19 +128,19 @@ contract AdCampaignManager is Ownable, Pausable, ReentrancyGuard {
 
   /**
    * @notice Sets up the manager with initial pricing and the bank destination address.
-   * @param _costPerClick Cost per click.
-   * @param _costPerImpression Cost per impression.
-   * @param _bankContractAddress Bank contract to receive claimed payments.
+   * @param costPerClick Cost per click.
+   * @param costPerImpression Cost per impression.
+   * @param bankContractAddress Bank contract to receive claimed payments.
    */
   constructor(
-    uint256 _costPerClick,
-    uint256 _costPerImpression,
-    address _bankContractAddress
+    uint256 costPerClick,
+    uint256 costPerImpression,
+    address bankContractAddress
   ) Ownable(msg.sender) {
-    if (_bankContractAddress == address(0)) revert AdCampaignManager__ZeroAddress();
-    s_costPerClick = _costPerClick;
-    s_costPerImpression = _costPerImpression;
-    s_bankContractAddress = _bankContractAddress;
+    if (bankContractAddress == address(0)) revert AdCampaignManager__ZeroAddress();
+    s_costPerClick = costPerClick;
+    s_costPerImpression = costPerImpression;
+    s_bankContractAddress = bankContractAddress;
   }
 
   // Fallback function to receive MATIC payments
@@ -286,29 +286,29 @@ contract AdCampaignManager is Ownable, Pausable, ReentrancyGuard {
   // Set the bank contract address (can be done by admins or owner)
   /**
    * @notice Updates the bank contract receiving payments.
-   * @param _bankContractAddress The new bank contract address.
+   * @param bankContractAddress The new bank contract address.
    */
-  function setBankContractAddress(address _bankContractAddress) external onlyAdminOrOwner {
-    if (_bankContractAddress == address(0)) revert AdCampaignManager__ZeroAddress();
-    s_bankContractAddress = _bankContractAddress;
+  function setBankContractAddress(address bankContractAddress) external onlyAdminOrOwner {
+    if (bankContractAddress == address(0)) revert AdCampaignManager__ZeroAddress();
+    s_bankContractAddress = bankContractAddress;
   }
 
   // Set the cost per click (can be done by admins or owner)
   /**
    * @notice Updates the cost per click.
-   * @param _costPerClick The new cost per click.
+   * @param costPerClick The new cost per click.
    */
-  function setCostPerClick(uint256 _costPerClick) external onlyAdminOrOwner {
-    s_costPerClick = _costPerClick;
+  function setCostPerClick(uint256 costPerClick) external onlyAdminOrOwner {
+    s_costPerClick = costPerClick;
   }
 
   // Set the cost per impression (can be done by admins or owner)
   /**
    * @notice Updates the cost per impression.
-   * @param _costPerImpression The new cost per impression.
+   * @param costPerImpression The new cost per impression.
    */
-  function setCostPerImpression(uint256 _costPerImpression) external onlyAdminOrOwner {
-    s_costPerImpression = _costPerImpression;
+  function setCostPerImpression(uint256 costPerImpression) external onlyAdminOrOwner {
+    s_costPerImpression = costPerImpression;
   }
 
   // Pause contract in case of emergency
