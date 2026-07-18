@@ -41,14 +41,14 @@ contract Vesting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     bool active; // Whether the schedule is live
   }
 
-  /// @notice All vesting schedules per member, addressed by index (append-only).
-  mapping(address member => VestingInfo[] schedules) public vestings;
-  /// @notice Every member that has ever had a schedule.
-  address[] public members;
-  /// @notice Whether an address is tracked in {members}.
-  mapping(address account => bool tracked) public isMember;
-  /// @notice Officer contract address (set at init); source of the Investor address.
-  address public officerAddress;
+  /// @dev All vesting schedules per member, addressed by index (append-only).
+  mapping(address member => VestingInfo[] schedules) private s_vestings;
+  /// @dev Every member that has ever had a schedule.
+  address[] private s_members;
+  /// @dev Whether an address is tracked in {s_members}.
+  mapping(address account => bool tracked) private s_isMember;
+  /// @dev Officer contract address (set at init); source of the Investor address.
+  address private s_officerAddress;
 
   /// @dev Reserved storage slots for future upgrades.
   uint256[50] private __gap; // solhint-disable-line chainlink-solidity/prefix-storage-variables-with-s-underscore
@@ -75,23 +75,23 @@ contract Vesting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
   event VestingStopped(address indexed member, uint256 index);
 
   /// @dev A required address argument was the zero address.
-  error ZeroAddress();
+  error Vesting__ZeroAddress();
   /// @dev The caller (msg.sender) was the zero address when assigning officerAddress.
-  error ZeroSender();
+  error Vesting__ZeroSender();
   /// @dev The cliff duration exceeds the vesting duration.
-  error CliffExceedsDuration();
+  error Vesting__CliffExceedsDuration();
   /// @dev No schedule exists at the given index for this member.
-  error IndexOutOfBounds();
+  error Vesting__IndexOutOfBounds();
   /// @dev The targeted schedule is not active.
-  error VestingNotActive();
+  error Vesting__VestingNotActive();
   /// @dev The releasable amount is zero.
-  error NothingToRelease();
+  error Vesting__NothingToRelease();
   /// @dev The officer contract address has not been configured on this contract.
-  error OfficerAddressNotSet();
+  error Vesting__OfficerAddressNotSet();
   /// @dev The InvestorV1 contract could not be located via the Officer.
-  error InvestorContractNotFound();
+  error Vesting__InvestorContractNotFound();
   /// @dev This contract does not hold MINTER_ROLE on InvestorV1.
-  error InsufficientMinterRole();
+  error Vesting__InsufficientMinterRole();
 
   /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() {
@@ -114,11 +114,11 @@ contract Vesting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     uint64 cliff,
     uint256 totalAmount
   ) external onlyOwner whenNotPaused {
-    if (member == address(0)) revert ZeroAddress();
-    if (duration < cliff) revert CliffExceedsDuration();
+    if (member == address(0)) revert Vesting__ZeroAddress();
+    if (duration < cliff) revert Vesting__CliffExceedsDuration();
 
-    uint256 index = vestings[member].length;
-    vestings[member].push(
+    uint256 index = s_vestings[member].length;
+    s_vestings[member].push(
       VestingInfo({
         start: start,
         duration: duration,
@@ -129,9 +129,9 @@ contract Vesting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
       })
     );
 
-    if (!isMember[member]) {
-      members.push(member);
-      isMember[member] = true;
+    if (!s_isMember[member]) {
+      s_members.push(member);
+      s_isMember[member] = true;
     }
 
     emit VestingCreated(member, index, totalAmount);
@@ -143,12 +143,12 @@ contract Vesting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
    * @param index The schedule's index in the caller's `vestings` array.
    */
   function release(uint256 index) external nonReentrant whenNotPaused {
-    if (index >= vestings[msg.sender].length) revert IndexOutOfBounds();
-    VestingInfo storage v = vestings[msg.sender][index];
-    if (!v.active) revert VestingNotActive();
+    if (index >= s_vestings[msg.sender].length) revert Vesting__IndexOutOfBounds();
+    VestingInfo storage v = s_vestings[msg.sender][index];
+    if (!v.active) revert Vesting__VestingNotActive();
 
     uint256 amount = releasable(msg.sender, index);
-    if (amount == 0) revert NothingToRelease();
+    if (amount == 0) revert Vesting__NothingToRelease();
 
     v.released += amount;
     _mintShares(msg.sender, amount);
@@ -166,9 +166,9 @@ contract Vesting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     address member,
     uint256 index
   ) external onlyOwner nonReentrant whenNotPaused {
-    if (index >= vestings[member].length) revert IndexOutOfBounds();
-    VestingInfo storage v = vestings[member][index];
-    if (!v.active) revert VestingNotActive();
+    if (index >= s_vestings[member].length) revert Vesting__IndexOutOfBounds();
+    VestingInfo storage v = s_vestings[member][index];
+    if (!v.active) revert Vesting__VestingNotActive();
 
     // Effects before interactions: deactivate and book the release before minting.
     uint256 releasableAmount = releasable(member, index);
@@ -194,12 +194,29 @@ contract Vesting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
 
   /// @notice Number of schedules a member holds (active + stopped).
   function getVestingCount(address member) external view returns (uint256) {
-    return vestings[member].length;
+    return s_vestings[member].length;
+  }
+
+  /// @notice Get all vesting schedules for a member (active + stopped).
+  /// @param member The member whose schedules are returned.
+  function getVestings(address member) external view returns (VestingInfo[] memory) {
+    return s_vestings[member];
+  }
+
+  /// @notice Whether an address is tracked as a member.
+  /// @param account The address to query.
+  function getIsMember(address account) external view returns (bool) {
+    return s_isMember[account];
+  }
+
+  /// @notice Returns the Officer contract address.
+  function getOfficerAddress() external view returns (address) {
+    return s_officerAddress;
   }
 
   /// @notice Get every member that has ever had a schedule.
   function getMembers() external view returns (address[] memory) {
-    return members;
+    return s_members;
   }
 
   /**
@@ -251,14 +268,14 @@ contract Vesting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     __ReentrancyGuard_init();
     __Pausable_init();
 
-    if (msg.sender == address(0)) revert ZeroSender();
-    officerAddress = msg.sender;
+    if (msg.sender == address(0)) revert Vesting__ZeroSender();
+    s_officerAddress = msg.sender;
   }
 
   /// @notice Get the amount vested for one of a member's schedules at the current time.
   function vestedAmount(address member, uint256 index) public view returns (uint256) {
-    if (index >= vestings[member].length) revert IndexOutOfBounds();
-    VestingInfo memory v = vestings[member][index];
+    if (index >= s_vestings[member].length) revert Vesting__IndexOutOfBounds();
+    VestingInfo memory v = s_vestings[member][index];
     if (!v.active) return 0;
 
     return
@@ -274,7 +291,7 @@ contract Vesting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
   /// @notice Get the releasable (vested minus already minted) amount for one schedule.
   function releasable(address member, uint256 index) public view returns (uint256) {
     uint256 vested = vestedAmount(member, index);
-    return vested - vestings[member][index].released;
+    return vested - s_vestings[member][index].released;
   }
 
   /**
@@ -284,7 +301,8 @@ contract Vesting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
    */
   function _mintShares(address to, uint256 amount) internal {
     IInvestorV1 investor = IInvestorV1(_getInvestor());
-    if (!investor.hasRole(investor.MINTER_ROLE(), address(this))) revert InsufficientMinterRole();
+    if (!investor.hasRole(investor.MINTER_ROLE(), address(this)))
+      revert Vesting__InsufficientMinterRole();
     investor.individualMint(to, amount);
   }
 
@@ -293,9 +311,9 @@ contract Vesting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
    *      Mirrors SafeDepositRouter._getInvestorAddress.
    */
   function _getInvestor() internal view returns (address) {
-    if (officerAddress == address(0)) revert OfficerAddressNotSet();
-    address investorAddress = IOfficer(officerAddress).findDeployedContract("InvestorV1");
-    if (investorAddress == address(0)) revert InvestorContractNotFound();
+    if (s_officerAddress == address(0)) revert Vesting__OfficerAddressNotSet();
+    address investorAddress = IOfficer(s_officerAddress).findDeployedContract("InvestorV1");
+    if (investorAddress == address(0)) revert Vesting__InvestorContractNotFound();
     return investorAddress;
   }
 
@@ -311,10 +329,10 @@ contract Vesting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
       VestingInfo[] memory outInfos
     )
   {
-    uint256 membersLength = members.length;
+    uint256 membersLength = s_members.length;
     uint256 count = 0;
     for (uint256 i = 0; i < membersLength; i++) {
-      VestingInfo[] storage schedules = vestings[members[i]];
+      VestingInfo[] storage schedules = s_vestings[s_members[i]];
       uint256 schedulesLength = schedules.length;
       for (uint256 j = 0; j < schedulesLength; j++) {
         if (schedules[j].active == wantActive) {
@@ -329,11 +347,11 @@ contract Vesting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
 
     uint256 k = 0;
     for (uint256 i = 0; i < membersLength; i++) {
-      VestingInfo[] storage schedules = vestings[members[i]];
+      VestingInfo[] storage schedules = s_vestings[s_members[i]];
       uint256 schedulesLength = schedules.length;
       for (uint256 j = 0; j < schedulesLength; j++) {
         if (schedules[j].active == wantActive) {
-          outMembers[k] = members[i];
+          outMembers[k] = s_members[i];
           outIndices[k] = j;
           outInfos[k] = schedules[j];
           k++;

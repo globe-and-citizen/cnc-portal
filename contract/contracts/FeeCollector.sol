@@ -40,7 +40,7 @@ contract FeeCollector is
    * @notice Address that receives funds when `withdraw` / `withdrawToken` is called.
    * @dev If unset (address(0)), withdrawals fall back to `owner()`.
    */
-  address public feeBeneficiary;
+  address private s_feeBeneficiary;
 
   /// @notice Emitted when ERC20 tokens are withdrawn
   event TokenWithdrawn(address indexed recipient, address indexed token, uint256 amount);
@@ -77,22 +77,22 @@ contract FeeCollector is
   event FeeConfigUpdated(string indexed contractType, uint16 feeBps);
 
   /// @dev A required address argument was the zero address.
-  error ZeroAddress();
+  error FeeCollector__ZeroAddress();
   /// @dev The contractType string was empty.
-  error EmptyContractType();
+  error FeeCollector__EmptyContractType();
   /// @dev The fee basis points value is invalid (> 10000).
   /// @param feeBps The invalid fee value.
-  error InvalidBps(uint16 feeBps);
+  error FeeCollector__InvalidBps(uint16 feeBps);
   /// @dev Duplicate contractType entries are not allowed.
   /// @param contractType The duplicated contract type.
-  error DuplicateContractType(string contractType);
+  error FeeCollector__DuplicateContractType(string contractType);
   /// @dev A low-level native token transfer failed.
-  error WithdrawalFailed();
+  error FeeCollector__WithdrawalFailed();
   /// @dev The token is not supported by this fee collector.
   /// @param token The unsupported token.
-  error TokenNotSupported(address token);
+  error FeeCollector__TokenNotSupported(address token);
   /// @dev The amount must be greater than zero.
-  error ZeroAmount();
+  error FeeCollector__ZeroAmount();
 
   /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() {
@@ -128,8 +128,8 @@ contract FeeCollector is
    * @param contractType Identifier of the contract type charging the fee (e.g. "BANK").
    */
   function payFee(string calldata contractType) external payable {
-    if (bytes(contractType).length == 0) revert EmptyContractType();
-    if (msg.value == 0) revert ZeroAmount();
+    if (bytes(contractType).length == 0) revert FeeCollector__EmptyContractType();
+    if (msg.value == 0) revert FeeCollector__ZeroAmount();
     emit FeePaid(contractType, msg.sender, address(0), msg.value);
   }
 
@@ -146,9 +146,9 @@ contract FeeCollector is
     address token,
     uint256 amount
   ) external nonReentrant {
-    if (bytes(contractType).length == 0) revert EmptyContractType();
-    if (!_isTokenSupported(token)) revert TokenNotSupported(token);
-    if (amount == 0) revert ZeroAmount();
+    if (bytes(contractType).length == 0) revert FeeCollector__EmptyContractType();
+    if (!_isTokenSupported(token)) revert FeeCollector__TokenNotSupported(token);
+    if (amount == 0) revert FeeCollector__ZeroAmount();
 
     IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
     emit FeePaid(contractType, msg.sender, token, amount);
@@ -159,8 +159,8 @@ contract FeeCollector is
    * @param _beneficiary New beneficiary; address(0) clears it and falls back to owner().
    */
   function setFeeBeneficiary(address _beneficiary) external onlyOwner {
-    address previous = feeBeneficiary;
-    feeBeneficiary = _beneficiary;
+    address previous = s_feeBeneficiary;
+    s_feeBeneficiary = _beneficiary;
     emit FeeBeneficiaryUpdated(previous, _beneficiary);
   }
 
@@ -176,7 +176,7 @@ contract FeeCollector is
     uint256 nativeBalance = address(this).balance;
     if (nativeBalance > 0) {
       (bool sent, ) = recipient.call{value: nativeBalance}("");
-      if (!sent) revert WithdrawalFailed();
+      if (!sent) revert FeeCollector__WithdrawalFailed();
       emit Withdrawn(recipient, nativeBalance);
     }
 
@@ -198,8 +198,8 @@ contract FeeCollector is
    * @param feeBps Fee in basis points (must be <= 10000).
    */
   function setFee(string memory contractType, uint16 feeBps) external onlyOwner {
-    if (bytes(contractType).length == 0) revert EmptyContractType();
-    if (feeBps > 10000) revert InvalidBps(feeBps);
+    if (bytes(contractType).length == 0) revert FeeCollector__EmptyContractType();
+    if (feeBps > 10000) revert FeeCollector__InvalidBps(feeBps);
 
     bytes32 key = keccak256(bytes(contractType));
 
@@ -218,6 +218,14 @@ contract FeeCollector is
   }
 
   /**
+   * @notice Get the address that receives swept fees on withdrawals.
+   * @return Current beneficiary; address(0) means withdrawals fall back to owner().
+   */
+  function getFeeBeneficiary() external view returns (address) {
+    return s_feeBeneficiary;
+  }
+
+  /**
    * @notice Get the contract's native token balance
    * @return The balance in wei
    */
@@ -231,7 +239,7 @@ contract FeeCollector is
    * @return The token balance
    */
   function getTokenBalance(address _token) external view returns (uint256) {
-    if (!_isTokenSupported(_token)) revert TokenNotSupported(_token);
+    if (!_isTokenSupported(_token)) revert FeeCollector__TokenNotSupported(_token);
     return IERC20(_token).balanceOf(address(this));
   }
 
@@ -255,22 +263,22 @@ contract FeeCollector is
     FeeConfig[] memory _configs,
     address[] calldata _tokenAddresses
   ) public initializer {
-    if (_owner == address(0)) revert ZeroAddress();
+    if (_owner == address(0)) revert FeeCollector__ZeroAddress();
 
     __Ownable_init(_owner);
     __ReentrancyGuard_init();
 
     // Store fee configs
     for (uint256 i = 0; i < _configs.length; i++) {
-      if (bytes(_configs[i].contractType).length == 0) revert EmptyContractType();
-      if (_configs[i].feeBps > 10000) revert InvalidBps(_configs[i].feeBps);
+      if (bytes(_configs[i].contractType).length == 0) revert FeeCollector__EmptyContractType();
+      if (_configs[i].feeBps > 10000) revert FeeCollector__InvalidBps(_configs[i].feeBps);
 
       // No duplicates allowed
       for (uint256 j = 0; j < i; j++) {
         if (
           keccak256(bytes(s_feeConfigs[j].contractType)) ==
           keccak256(bytes(_configs[i].contractType))
-        ) revert DuplicateContractType(_configs[i].contractType);
+        ) revert FeeCollector__DuplicateContractType(_configs[i].contractType);
       }
 
       s_feeConfigs.push(
@@ -280,7 +288,7 @@ contract FeeCollector is
 
     // Set the initial supported tokens (same pattern as Bank contract)
     for (uint256 i = 0; i < _tokenAddresses.length; i++) {
-      if (_tokenAddresses[i] == address(0)) revert ZeroAddress();
+      if (_tokenAddresses[i] == address(0)) revert FeeCollector__ZeroAddress();
       _addTokenSupport(_tokenAddresses[i]);
     }
     // Emit events after they're already added to avoid duplicate events
@@ -307,7 +315,7 @@ contract FeeCollector is
    * @dev Resolves the effective recipient for withdrawals: beneficiary if set, otherwise owner.
    */
   function _withdrawRecipient() internal view returns (address) {
-    address beneficiary = feeBeneficiary;
+    address beneficiary = s_feeBeneficiary;
     return beneficiary == address(0) ? owner() : beneficiary;
   }
 

@@ -162,7 +162,7 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
   uint256 public constant UNCAPPED_ALLOCATION = type(uint256).max;
 
   /// @dev Also serves as the next offer's id generator — see createLendingOffer.
-  uint256 public totalOfferings;
+  uint256 private s_totalOfferings;
 
   /// @dev offerId => the offer's full configuration and funding/repayment state.
   ///      Private — LendingOffer has 13 fields, and the auto-generated public getter
@@ -180,12 +180,12 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
   ///      pays the lender directly, it doesn't reduce their recorded contribution),
   ///      and is the basis for both the per-lender cap/allocation checks and the
   ///      proportional repayment split in repayLenders.
-  mapping(uint256 offerId => mapping(address lender => uint256 amount)) public lenderDeposits;
+  mapping(uint256 offerId => mapping(address lender => uint256 amount)) private s_lenderDeposits;
 
   /// @dev offerId => lender => max amount that lender may deposit. Only meaningful
   ///      for Whitelist-mode offers; zero means "not whitelisted for this offer",
   ///      UNCAPPED_ALLOCATION means "whitelisted, no personal ceiling".
-  mapping(uint256 => mapping(address => uint256)) public lenderAllocation;
+  mapping(uint256 offerId => mapping(address lender => uint256 amount)) private s_lenderAllocation;
 
   /// @dev offerId => addresses that have deposited at least once, in deposit order.
   ///      Drives the proportional payout loop in repayLenders — every entry here
@@ -195,26 +195,26 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
 
   /// @dev offerId => lender => whether they're already recorded in s_offerLenders,
   ///      so a lender's second/third deposit doesn't push a duplicate entry.
-  mapping(uint256 offerId => mapping(address lender => bool deposited)) public hasDeposited;
+  mapping(uint256 offerId => mapping(address lender => bool deposited)) private s_hasDeposited;
 
   /// @dev offerId => lender => cumulative tokens already forwarded to that lender
   ///      across all repayLenders installments.
   ///      Used by the cumulative-entitlement algorithm in repayLenders to ensure
   ///      proportional distribution is independent of installment partitioning.
-  mapping(uint256 offerId => mapping(address lender => uint256 amount)) public totalPaidToLender;
+  mapping(uint256 offerId => mapping(address lender => uint256 amount)) private s_totalPaidToLender;
 
   /// @notice Address of the Officer contract — set once at initialization from msg.sender.
   ///         Officer is the proxy deployer, so msg.sender IS Officer at init time,
   ///         matching the pattern used by Bank (Bank.sol line 163) and InvestorV1.
   ///         MUST be appended after all v1.0.0 storage variables (totalOfferings through
   ///         hasDeposited) so that upgrading an existing proxy does not shift their slots.
-  address public officerAddress;
+  address private s_officerAddress;
 
   /*//////////////////////////////////////////////////////////////
                           UPGRADE STORAGE GAP
     //////////////////////////////////////////////////////////////*/
 
-  // Gap reduced from 50 to 48: two new slots added above (totalPaidToLender, officerAddress).
+  // Gap reduced from 50 to 48: two new slots added above (totalPaidToLender, s_officerAddress).
   uint256[48] private __gap; // solhint-disable-line chainlink-solidity/prefix-storage-variables-with-s-underscore
 
   // ────────────────────────────────────────────────────
@@ -263,56 +263,56 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
   // ────────────────────────────────────────────────────
 
   /// @dev A required address argument was the zero address.
-  error ZeroAddress();
+  error FixedReturn__ZeroAddress();
   /// @dev subscriptionDeadline must be on or before startDate.
-  error InvalidDeadline();
+  error FixedReturn__InvalidDeadline();
   /// @dev termDuration is zero or exceeds the maximum allowed for its termUnit.
-  error InvalidTermDuration();
+  error FixedReturn__InvalidTermDuration();
   /// @dev lenderCap exceeds the offer's fundingTarget.
-  error LenderCapExceedsFundingTarget();
+  error FixedReturn__LenderCapExceedsFundingTarget();
   /// @dev Every whitelist entry is capped (none UNCAPPED_ALLOCATION), but their sum
   ///      falls short of the offer's fundingTarget — the offer could never be funded
   ///      even under full participation.
-  error AllocationSumBelowFundingTarget();
+  error FixedReturn__AllocationSumBelowFundingTarget();
   /// @dev whitelistAddrs and allocations arrays have different lengths.
-  error WhitelistLengthMismatch();
+  error FixedReturn__WhitelistLengthMismatch();
   /// @dev The same address appears more than once in whitelistAddrs.
-  error DuplicateWhitelistAddress();
+  error FixedReturn__DuplicateWhitelistAddress();
   /// @dev The offer is not in the Open state.
-  error OfferNotOpen();
+  error FixedReturn__OfferNotOpen();
   /// @dev The offer is not in the Funded or Repaying state.
-  error OfferNotFunded();
+  error FixedReturn__OfferNotFunded();
   /// @dev refundLenders or acceptPartialFunding was called before the subscription
   ///      deadline passed.
-  error DeadlineNotPassed();
+  error FixedReturn__DeadlineNotPassed();
   /// @dev acceptPartialFunding was called on an offer with nothing raised.
-  error NoFundsRaised();
+  error FixedReturn__NoFundsRaised();
   /// @dev msg.sender has no allocation on this whitelist offer.
-  error NotWhitelisted();
+  error FixedReturn__NotWhitelisted();
   /// @dev Deposit would exceed the caller's whitelist allocation.
-  error DepositExceedsAllocation();
+  error FixedReturn__DepositExceedsAllocation();
   /// @dev Deposit would exceed the offer's per-lender cap.
-  error DepositExceedsLenderCap();
+  error FixedReturn__DepositExceedsLenderCap();
   /// @dev Deposit would exceed the offer's remaining funding target.
-  error FundingTargetReached();
+  error FixedReturn__FundingTargetReached();
   /// @dev amount must be greater than zero.
-  error ZeroAmount();
+  error FixedReturn__ZeroAmount();
   /// @dev The repayment would exceed the total lender obligation (principal + interest).
-  error ExceedsRepaymentObligation();
+  error FixedReturn__ExceedsRepaymentObligation();
   /// @dev The Bank contract could not be located via the Officer.
-  error BankContractNotFound();
+  error FixedReturn__BankContractNotFound();
   /// @dev The offer token is not supported by Bank.
-  error TokenNotSupportedByBank(address token);
+  error FixedReturn__TokenNotSupportedByBank(address token);
   /// @dev The caller is not the Bank contract.
   /// @param caller The caller address.
-  error NotBank(address caller);
+  error FixedReturn__NotBank(address caller);
 
   // ────────────────────────────────────────────────────
   // Peer-contract resolution
   // ────────────────────────────────────────────────────
 
   modifier onlyBank() {
-    if (msg.sender != _getBankAddress()) revert NotBank(msg.sender);
+    if (msg.sender != _getBankAddress()) revert FixedReturn__NotBank(msg.sender);
     _;
   }
 
@@ -323,7 +323,7 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
 
   /**
    * @notice Initializes the FixedReturn contract with its owner and initial supported tokens.
-   * @dev Called by Officer at proxy-creation time. officerAddress is captured from
+   * @dev Called by Officer at proxy-creation time. s_officerAddress is captured from
    *      msg.sender because Officer is always the proxy deployer — matching the pattern
    *      used by Bank (Bank.sol line 143) and InvestorV1 (InvestorV1.sol line 148).
    * @param _tokenAddresses Initial set of ERC20 tokens lenders may fund offers with.
@@ -331,11 +331,11 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
    * @custom:security Only callable once due to the initializer modifier.
    */
   function initialize(address[] calldata _tokenAddresses, address _owner) external initializer {
-    if (_owner == address(0)) revert ZeroAddress();
+    if (_owner == address(0)) revert FixedReturn__ZeroAddress();
     __Ownable_init(_owner);
     __ReentrancyGuard_init();
 
-    officerAddress = msg.sender;
+    s_officerAddress = msg.sender;
 
     uint256 length = _tokenAddresses.length;
     for (uint256 i = 0; i < length; ++i) {
@@ -380,33 +380,33 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
     CreateOfferParams calldata params
   ) external onlyOwner returns (uint256 offerId) {
     // The deposit token must already be on this team's allowlist.
-    if (!_isTokenSupported(params.token)) revert TokenSupportNotFound(params.token);
+    if (!_isTokenSupported(params.token)) revert TokenSupport__NotFound(params.token);
 
     // Bank must also support the token — lend deposits are swept there on funding
     // and repayments are routed through Bank. Validating here prevents offers that
     // would fail at fund or repay time due to Bank token mismatch.
     address bankAddress = _getBankAddress();
     if (!IBank(bankAddress).isTokenSupported(params.token))
-      revert TokenNotSupportedByBank(params.token);
+      revert FixedReturn__TokenNotSupportedByBank(params.token);
 
     // The subscription window must close on or before the loan's start date.
-    if (params.subscriptionDeadline > params.startDate) revert InvalidDeadline();
+    if (params.subscriptionDeadline > params.startDate) revert FixedReturn__InvalidDeadline();
 
     if (params.termUnit == TermUnit.Days && (params.termDuration == 0 || params.termDuration > 365))
-      revert InvalidTermDuration();
+      revert FixedReturn__InvalidTermDuration();
     if (
       params.termUnit == TermUnit.Months && (params.termDuration == 0 || params.termDuration > 120)
-    ) revert InvalidTermDuration();
+    ) revert FixedReturn__InvalidTermDuration();
     if (params.termUnit == TermUnit.Years && (params.termDuration == 0 || params.termDuration > 30))
-      revert InvalidTermDuration();
+      revert FixedReturn__InvalidTermDuration();
 
     if (
       params.fundingAccess == FundingAccess.General &&
       params.isCapEnabled &&
       params.lenderCap > params.fundingTarget
-    ) revert LenderCapExceedsFundingTarget();
+    ) revert FixedReturn__LenderCapExceedsFundingTarget();
 
-    offerId = ++totalOfferings;
+    offerId = ++s_totalOfferings;
 
     s_lendingOffers[offerId] = LendingOffer({
       token: params.token,
@@ -426,16 +426,16 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
 
     if (params.fundingAccess == FundingAccess.Whitelist) {
       if (params.whitelistAddrs.length != params.allocations.length)
-        revert WhitelistLengthMismatch();
+        revert FixedReturn__WhitelistLengthMismatch();
       uint256 allocatedTotal;
       bool hasUncappedLender;
       for (uint256 i = 0; i < params.whitelistAddrs.length; ++i) {
         // A fresh offerId has never touched this mapping, so a non-zero read here
         // means this address already appeared earlier in this same loop.
-        if (lenderAllocation[offerId][params.whitelistAddrs[i]] != 0) {
-          revert DuplicateWhitelistAddress();
+        if (s_lenderAllocation[offerId][params.whitelistAddrs[i]] != 0) {
+          revert FixedReturn__DuplicateWhitelistAddress();
         }
-        lenderAllocation[offerId][params.whitelistAddrs[i]] = params.allocations[i];
+        s_lenderAllocation[offerId][params.whitelistAddrs[i]] = params.allocations[i];
         if (params.allocations[i] == UNCAPPED_ALLOCATION) {
           hasUncappedLender = true;
         } else {
@@ -448,7 +448,7 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
       // check. An uncapped lender can always absorb whatever the capped lenders don't,
       // so the offer is unconditionally fundable and this check doesn't apply to it.
       if (!hasUncappedLender && allocatedTotal < params.fundingTarget) {
-        revert AllocationSumBelowFundingTarget();
+        revert FixedReturn__AllocationSumBelowFundingTarget();
       }
     }
 
@@ -480,33 +480,34 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
    *      lender funds for this offer.
    */
   function lendFunds(uint256 offerId, uint256 amount) external nonReentrant {
-    if (amount == 0) revert ZeroAmount();
+    if (amount == 0) revert FixedReturn__ZeroAmount();
 
     LendingOffer storage offer = s_lendingOffers[offerId];
 
-    if (offer.state != OfferState.Open) revert OfferNotOpen();
-    if (block.timestamp > offer.subscriptionDeadline) revert OfferNotOpen();
+    if (offer.state != OfferState.Open) revert FixedReturn__OfferNotOpen();
+    if (block.timestamp > offer.subscriptionDeadline) revert FixedReturn__OfferNotOpen();
 
     if (offer.fundingAccess == FundingAccess.Whitelist) {
-      uint256 allocation = lenderAllocation[offerId][msg.sender];
-      if (allocation == 0) revert NotWhitelisted();
+      uint256 allocation = s_lenderAllocation[offerId][msg.sender];
+      if (allocation == 0) revert FixedReturn__NotWhitelisted();
       if (allocation != UNCAPPED_ALLOCATION) {
-        uint256 remainingAllocation = allocation - lenderDeposits[offerId][msg.sender];
-        if (amount > remainingAllocation) revert DepositExceedsAllocation();
+        uint256 remainingAllocation = allocation - s_lenderDeposits[offerId][msg.sender];
+        if (amount > remainingAllocation) revert FixedReturn__DepositExceedsAllocation();
       }
     } else if (offer.isCapEnabled) {
-      if (lenderDeposits[offerId][msg.sender] + amount > offer.lenderCap)
-        revert DepositExceedsLenderCap();
+      if (s_lenderDeposits[offerId][msg.sender] + amount > offer.lenderCap)
+        revert FixedReturn__DepositExceedsLenderCap();
     }
 
-    if (amount > offer.fundingTarget - offer.totalFunded) revert FundingTargetReached();
+    if (amount > offer.fundingTarget - offer.totalFunded)
+      revert FixedReturn__FundingTargetReached();
 
     // Effects
-    lenderDeposits[offerId][msg.sender] += amount;
+    s_lenderDeposits[offerId][msg.sender] += amount;
     offer.totalFunded += amount;
 
-    if (!hasDeposited[offerId][msg.sender]) {
-      hasDeposited[offerId][msg.sender] = true;
+    if (!s_hasDeposited[offerId][msg.sender]) {
+      s_hasDeposited[offerId][msg.sender] = true;
       s_offerLenders[offerId].push(msg.sender);
     }
 
@@ -551,8 +552,8 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
    */
   function refundLenders(uint256 offerId) external onlyOwner nonReentrant {
     LendingOffer storage offer = s_lendingOffers[offerId];
-    if (offer.state != OfferState.Open) revert OfferNotOpen();
-    if (block.timestamp <= offer.subscriptionDeadline) revert DeadlineNotPassed();
+    if (offer.state != OfferState.Open) revert FixedReturn__OfferNotOpen();
+    if (block.timestamp <= offer.subscriptionDeadline) revert FixedReturn__DeadlineNotPassed();
 
     offer.state = OfferState.Refundable;
     emit LendingOfferRefundable(offerId);
@@ -561,10 +562,10 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
     uint256 totalRefunded;
     for (uint256 i = 0; i < lenders.length; ++i) {
       address lender = lenders[i];
-      uint256 amount = lenderDeposits[offerId][lender];
+      uint256 amount = s_lenderDeposits[offerId][lender];
       if (amount == 0) continue;
 
-      lenderDeposits[offerId][lender] = 0;
+      s_lenderDeposits[offerId][lender] = 0;
       IERC20(offer.token).safeTransfer(lender, amount);
       totalRefunded += amount;
       emit PrincipalRefunded(offerId, lender, amount);
@@ -590,9 +591,9 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
    */
   function acceptPartialFunding(uint256 offerId) external onlyOwner nonReentrant {
     LendingOffer storage offer = s_lendingOffers[offerId];
-    if (offer.state != OfferState.Open) revert OfferNotOpen();
-    if (block.timestamp <= offer.subscriptionDeadline) revert DeadlineNotPassed();
-    if (offer.totalFunded == 0) revert NoFundsRaised();
+    if (offer.state != OfferState.Open) revert FixedReturn__OfferNotOpen();
+    if (block.timestamp <= offer.subscriptionDeadline) revert FixedReturn__DeadlineNotPassed();
+    if (offer.totalFunded == 0) revert FixedReturn__NoFundsRaised();
 
     offer.state = OfferState.Funded;
     emit PartialFundingAccepted(offerId, offer.totalFunded, offer.fundingTarget);
@@ -622,17 +623,18 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
    *      reverts blocks everyone else in the same offer. Acceptable at current scale.
    */
   function repayLenders(uint256 offerId, uint256 amount) external onlyBank nonReentrant {
-    if (amount == 0) revert ZeroAmount();
+    if (amount == 0) revert FixedReturn__ZeroAmount();
 
     LendingOffer storage offer = s_lendingOffers[offerId];
     if (offer.state != OfferState.Funded && offer.state != OfferState.Repaying)
-      revert OfferNotFunded();
+      revert FixedReturn__OfferNotFunded();
 
     // Repayment ceiling — prevent overpayment beyond total lender entitlement.
     uint256 totalObligation = offer.totalFunded +
       (offer.totalFunded * offer.interestRateBps) /
       10_000;
-    if (offer.totalRepaidByIssuer + amount > totalObligation) revert ExceedsRepaymentObligation();
+    if (offer.totalRepaidByIssuer + amount > totalObligation)
+      revert FixedReturn__ExceedsRepaymentObligation();
 
     offer.state = OfferState.Repaying;
     offer.totalRepaidByIssuer += amount;
@@ -650,13 +652,13 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
         cumulativeEntitlement = offer.totalRepaidByIssuer - cumulativeForNonLast;
       } else {
         cumulativeEntitlement =
-          (offer.totalRepaidByIssuer * lenderDeposits[offerId][lender]) /
+          (offer.totalRepaidByIssuer * s_lenderDeposits[offerId][lender]) /
           offer.totalFunded;
         cumulativeForNonLast += cumulativeEntitlement;
       }
-      uint256 alreadyPaid = totalPaidToLender[offerId][lender];
+      uint256 alreadyPaid = s_totalPaidToLender[offerId][lender];
       uint256 share = cumulativeEntitlement > alreadyPaid ? cumulativeEntitlement - alreadyPaid : 0;
-      totalPaidToLender[offerId][lender] = cumulativeEntitlement;
+      s_totalPaidToLender[offerId][lender] = cumulativeEntitlement;
       if (share > 0) {
         IERC20(offer.token).safeTransfer(lender, share);
         emit LenderRepaid(offerId, lender, share);
@@ -677,7 +679,7 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
   ///      and may receive slightly more. Returns 0 if the lender has no deposit or
   ///      the offer has no funded amount yet.
   function totalEntitlementOf(uint256 offerId, address lender) external view returns (uint256) {
-    uint256 lenderDeposit = lenderDeposits[offerId][lender];
+    uint256 lenderDeposit = s_lenderDeposits[offerId][lender];
     if (lenderDeposit == 0) return 0;
     LendingOffer storage offer = s_lendingOffers[offerId];
     if (offer.totalFunded == 0) return 0;
@@ -697,10 +699,40 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
     return s_lendingOffers[offerId];
   }
 
+  /// @notice Total number of offers ever created (also the highest offer id).
+  function getTotalOfferings() external view returns (uint256) {
+    return s_totalOfferings;
+  }
+
+  /// @notice Cumulative amount a lender has deposited into an offer (principal only).
+  function getLenderDeposits(uint256 offerId, address lender) external view returns (uint256) {
+    return s_lenderDeposits[offerId][lender];
+  }
+
+  /// @notice Max amount a lender may deposit into a Whitelist-mode offer.
+  function getLenderAllocation(uint256 offerId, address lender) external view returns (uint256) {
+    return s_lenderAllocation[offerId][lender];
+  }
+
+  /// @notice Whether a lender is already recorded in the offer's lender list.
+  function getHasDeposited(uint256 offerId, address lender) external view returns (bool) {
+    return s_hasDeposited[offerId][lender];
+  }
+
+  /// @notice Cumulative tokens already forwarded to a lender across all repayments.
+  function getTotalPaidToLender(uint256 offerId, address lender) external view returns (uint256) {
+    return s_totalPaidToLender[offerId][lender];
+  }
+
+  /// @notice Address of the Officer contract that deployed this proxy.
+  function getOfficerAddress() external view returns (address) {
+    return s_officerAddress;
+  }
+
   /// @dev Resolves Bank via Officer. Reverts if not found.
   function _getBankAddress() internal view returns (address) {
-    address bankAddress = IOfficer(officerAddress).findDeployedContract("Bank");
-    if (bankAddress == address(0)) revert BankContractNotFound();
+    address bankAddress = IOfficer(s_officerAddress).findDeployedContract("Bank");
+    if (bankAddress == address(0)) revert FixedReturn__BankContractNotFound();
     return bankAddress;
   }
 }

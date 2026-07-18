@@ -53,10 +53,10 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
   address private immutable i_feeCollectorAddress;
 
   /// @notice Mapping of contract type to beacon address
-  mapping(string contractType => address beacon) public contractBeacons;
+  mapping(string contractType => address beacon) private s_contractBeacons;
 
   /// @notice Array to store configured contract types
-  string[] public contractTypes;
+  string[] private s_contractTypes;
 
   /// @notice Array to store deployed contract information
   DeployedContract[] private s_deployedContracts;
@@ -73,26 +73,26 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
   event BeaconProxiesDeployed(address[] beaconProxies);
 
   /// @dev A required address argument was the zero address.
-  error ZeroAddress();
+  error Officer__ZeroAddress();
   /// @dev The beaconType string was empty.
-  error EmptyBeaconType();
+  error Officer__EmptyBeaconType();
   /// @dev Duplicate beacon types are not allowed.
   /// @param beaconType The duplicated type.
-  error DuplicateBeaconType(string beaconType);
+  error Officer__DuplicateBeaconType(string beaconType);
   /// @dev No beacon is configured for this contract type.
   /// @param contractType The requested contract type.
-  error BeaconNotConfigured(string contractType);
+  error Officer__BeaconNotConfigured(string contractType);
   /// @dev BoardOfDirectors must be deployed through Elections.
-  error BodMustBeDeployedViaElections();
+  error Officer__BodMustBeDeployedViaElections();
   /// @dev The caller is not authorized for this action.
-  error Unauthorized();
+  error Officer__Unauthorized();
   /// @dev The contractType string was empty.
-  error EmptyContractType();
+  error Officer__EmptyContractType();
   /// @dev Missing initializer data for deployment.
   /// @param contractType The deployment contract type.
-  error MissingInitializerData(string contractType);
+  error Officer__MissingInitializerData(string contractType);
   /// @dev The caller is neither the contract owner nor is initialization in progress.
-  error NotOwnerOrInitializing();
+  error Officer__NotOwnerOrInitializing();
 
   /**
    * @notice Modifier that allows only owners or founders to execute a function
@@ -102,11 +102,11 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
       _;
       return;
     }
-    revert Unauthorized();
+    revert Officer__Unauthorized();
   }
 
   modifier onlyInitializingOrOwners() {
-    if (!(_isInitializing() || owner() == msg.sender)) revert NotOwnerOrInitializing();
+    if (!(_isInitializing() || owner() == msg.sender)) revert Officer__NotOwnerOrInitializing();
     _;
   }
 
@@ -116,7 +116,7 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
    */
   /// @custom:oz-upgrades-unsafe-allow constructor
   constructor(address _feeCollector) {
-    if (_feeCollector == address(0)) revert ZeroAddress();
+    if (_feeCollector == address(0)) revert Officer__ZeroAddress();
     i_feeCollectorAddress = _feeCollector;
     _disableInitializers();
   }
@@ -130,10 +130,10 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     string calldata contractType,
     address beaconAddress
   ) external onlyOwners {
-    if (contractBeacons[contractType] == address(0)) {
-      contractTypes.push(contractType);
+    if (s_contractBeacons[contractType] == address(0)) {
+      s_contractTypes.push(contractType);
     }
-    contractBeacons[contractType] = beaconAddress;
+    s_contractBeacons[contractType] = beaconAddress;
     emit BeaconConfigured(contractType, beaconAddress);
   }
 
@@ -172,7 +172,32 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
    * @return Array of configured contract types
    */
   function getConfiguredContractTypes() external view returns (string[] memory) {
-    return contractTypes;
+    return s_contractTypes;
+  }
+
+  /**
+   * @notice Returns all configured contract types
+   * @return Array of configured contract types
+   */
+  function getContractTypes() external view returns (string[] memory) {
+    return s_contractTypes;
+  }
+
+  /**
+   * @notice Returns the beacon address configured for a contract type
+   * @param contractType The contract type identifier
+   * @return The beacon address, or address(0) if none is configured
+   */
+  function getContractBeacon(string calldata contractType) external view returns (address) {
+    return s_contractBeacons[contractType];
+  }
+
+  /**
+   * @notice Returns the Board of Directors contract address
+   * @return The address of the Board of Directors contract
+   */
+  function getBodContract() external view returns (address) {
+    return s_bodContract;
   }
 
   /**
@@ -237,17 +262,18 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     bytes calldata initializerData
   ) public whenNotPaused onlyInitializingOrOwners returns (address) {
     // Validate inputs
-    if (contractBeacons[contractType] == address(0)) revert BeaconNotConfigured(contractType);
+    if (s_contractBeacons[contractType] == address(0))
+      revert Officer__BeaconNotConfigured(contractType);
     if (keccak256(bytes(contractType)) == keccak256(bytes("BoardOfDirectors")))
-      revert BodMustBeDeployedViaElections();
-    BeaconProxy proxy = new BeaconProxy(contractBeacons[contractType], initializerData);
+      revert Officer__BodMustBeDeployedViaElections();
+    BeaconProxy proxy = new BeaconProxy(s_contractBeacons[contractType], initializerData);
 
     address proxyAddress = address(proxy);
     s_deployedContracts.push(DeployedContract(contractType, proxyAddress));
     emit ContractDeployed(contractType, proxyAddress);
 
     if (keccak256(bytes(contractType)) == keccak256(bytes("Elections"))) {
-      address bodContractBeacon = contractBeacons["BoardOfDirectors"];
+      address bodContractBeacon = s_contractBeacons["BoardOfDirectors"];
       address[] memory args = new address[](1);
       args[0] = proxyAddress;
       s_bodContract = address(
@@ -274,13 +300,13 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     address[] memory deployedAddresses = new address[](deployments.length);
 
     for (uint256 i = 0; i < deployments.length; i++) {
-      if (bytes(deployments[i].contractType).length == 0) revert EmptyContractType();
+      if (bytes(deployments[i].contractType).length == 0) revert Officer__EmptyContractType();
       if (deployments[i].initializerData.length == 0)
-        revert MissingInitializerData(deployments[i].contractType);
-      if (contractBeacons[deployments[i].contractType] == address(0))
-        revert BeaconNotConfigured(deployments[i].contractType);
+        revert Officer__MissingInitializerData(deployments[i].contractType);
+      if (s_contractBeacons[deployments[i].contractType] == address(0))
+        revert Officer__BeaconNotConfigured(deployments[i].contractType);
       if (keccak256(bytes(deployments[i].contractType)) == keccak256(bytes("BoardOfDirectors")))
-        revert BodMustBeDeployedViaElections();
+        revert Officer__BodMustBeDeployedViaElections();
       deployedAddresses[i] = deployBeaconProxy(
         deployments[i].contractType,
         deployments[i].initializerData
@@ -307,18 +333,18 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
 
   function _configureBeacons(BeaconConfig[] memory beaconConfigs) internal {
     for (uint256 i = 0; i < beaconConfigs.length; i++) {
-      if (beaconConfigs[i].beaconAddress == address(0)) revert ZeroAddress();
-      if (bytes(beaconConfigs[i].beaconType).length == 0) revert EmptyBeaconType();
+      if (beaconConfigs[i].beaconAddress == address(0)) revert Officer__ZeroAddress();
+      if (bytes(beaconConfigs[i].beaconType).length == 0) revert Officer__EmptyBeaconType();
 
       // Check for duplicate beacon types
       for (uint256 j = 0; j < i; j++) {
         if (
           keccak256(bytes(beaconConfigs[i].beaconType)) ==
           keccak256(bytes(beaconConfigs[j].beaconType))
-        ) revert DuplicateBeaconType(beaconConfigs[i].beaconType);
+        ) revert Officer__DuplicateBeaconType(beaconConfigs[i].beaconType);
       }
 
-      contractBeacons[beaconConfigs[i].beaconType] = beaconConfigs[i].beaconAddress;
+      s_contractBeacons[beaconConfigs[i].beaconType] = beaconConfigs[i].beaconAddress;
       emit BeaconConfigured(beaconConfigs[i].beaconType, beaconConfigs[i].beaconAddress);
     }
   }

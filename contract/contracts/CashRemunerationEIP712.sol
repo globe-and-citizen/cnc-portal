@@ -70,13 +70,13 @@ contract CashRemunerationEIP712 is
     keccak256(abi.encodePacked(_WAGE_CLAIM_TYPE, _WAGE_TYPE));
 
   /// @dev Mapping to track wage claims that have already been paid.
-  mapping(bytes32 signatureHash => bool paid) public paidWageClaims;
+  mapping(bytes32 signatureHash => bool paid) private s_paidWageClaims;
 
   // Add new state variable - MUST be added after existing ones
-  address public officerAddress;
+  address private s_officerAddress;
 
   // @dev Mapping to track enabled wage claims by their signature hash.
-  mapping(bytes32 signatureHash => bool disabled) public disabledWageClaims;
+  mapping(bytes32 signatureHash => bool disabled) private s_disabledWageClaims;
 
   // Storage gap for future upgrades
   // solhint-disable-next-line chainlink-solidity/prefix-storage-variables-with-s-underscore
@@ -146,43 +146,47 @@ contract CashRemunerationEIP712 is
    * @param expected The expected authorized address.
    * @param received The unauthorized address that attempted the action.
    */
-  error UnauthorizedAccess(address expected, address received);
+  error CashRemunerationEIP712__UnauthorizedAccess(address expected, address received);
 
   /// @dev A required address argument was the zero address.
-  error ZeroAddress();
+  error CashRemunerationEIP712__ZeroAddress();
 
   /// @dev The caller is not the employee declared in the wage claim.
   /// @param expected The employee address recorded in the claim.
   /// @param actual The caller attempting the withdrawal.
-  error NotClaimOwner(address expected, address actual);
+  error CashRemunerationEIP712__NotClaimOwner(address expected, address actual);
 
   /// @dev The wage claim signature has already been paid out.
   /// @param signatureHash keccak256 hash of the signature that was reused.
-  error WageAlreadyPaid(bytes32 signatureHash);
+  error CashRemunerationEIP712__WageAlreadyPaid(bytes32 signatureHash);
 
   /// @dev The wage claim was disabled by the owner.
   /// @param signatureHash keccak256 hash of the disabled signature.
-  error ClaimIsDisabled(bytes32 signatureHash);
+  error CashRemunerationEIP712__ClaimIsDisabled(bytes32 signatureHash);
 
   /// @dev The token in the wage claim is not in the contract's supported list.
   /// @param token The unsupported token address.
-  error TokenNotSupported(address token);
+  error CashRemunerationEIP712__TokenNotSupported(address token);
 
   /// @dev The contract's balance of `token` is less than the amount owed.
   /// @param token The ERC20 token being paid out.
   /// @param required The amount needed for this payout.
   /// @param available The current contract balance of the token.
-  error InsufficientTokenBalance(address token, uint256 required, uint256 available);
+  error CashRemunerationEIP712__InsufficientTokenBalance(
+    address token,
+    uint256 required,
+    uint256 available
+  );
 
   /// @dev The officer address has not been set, so dependent features are unavailable.
-  error OfficerAddressNotSet();
+  error CashRemunerationEIP712__OfficerAddressNotSet();
 
   /// @dev The Bank contract could not be located via the Officer.
-  error BankContractNotFound();
+  error CashRemunerationEIP712__BankContractNotFound();
 
   /// @dev A raw ERC20 transfer returned false.
   /// @param token The token whose `transfer` returned false.
-  error TokenTransferFailed(address token);
+  error CashRemunerationEIP712__TokenTransferFailed(address token);
 
   /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() {
@@ -230,7 +234,7 @@ contract CashRemunerationEIP712 is
     // Step 1: Verify the caller is the authorized employee
     // Prevents someone else from withdrawing another employee's wages
     if (msg.sender != wageClaim.employeeAddress)
-      revert NotClaimOwner(wageClaim.employeeAddress, msg.sender);
+      revert CashRemunerationEIP712__NotClaimOwner(wageClaim.employeeAddress, msg.sender);
 
     // Step 2: EIP-712 Signature Verification
     // Create the EIP-712 compliant digest for signature recovery
@@ -248,20 +252,20 @@ contract CashRemunerationEIP712 is
 
     // Step 4: Verify the signer is the contract owner
     // Ensures only authorized owners can approve wage claims
-    if (signer != owner()) revert UnauthorizedAccess(owner(), signer);
+    if (signer != owner()) revert CashRemunerationEIP712__UnauthorizedAccess(owner(), signer);
 
     // Step 5: Prevent double-spending of the same signature & usage of disabled claims
     // Each signature can only be used once to prevent replay attacks
     bytes32 sigHash = keccak256(signature);
-    if (paidWageClaims[sigHash]) revert WageAlreadyPaid(sigHash);
-    if (disabledWageClaims[sigHash]) revert ClaimIsDisabled(sigHash);
+    if (s_paidWageClaims[sigHash]) revert CashRemunerationEIP712__WageAlreadyPaid(sigHash);
+    if (s_disabledWageClaims[sigHash]) revert CashRemunerationEIP712__ClaimIsDisabled(sigHash);
 
     // Step 6: Mark this signature as used to prevent reuse
-    paidWageClaims[sigHash] = true;
+    s_paidWageClaims[sigHash] = true;
 
     address investorV1Token = address(0);
-    if (officerAddress != address(0) && officerAddress.code.length > 0) {
-      try IOfficer(officerAddress).findDeployedContract("InvestorV1") returns (
+    if (s_officerAddress != address(0) && s_officerAddress.code.length > 0) {
+      try IOfficer(s_officerAddress).findDeployedContract("InvestorV1") returns (
         address deployedInvestorV1
       ) {
         investorV1Token = deployedInvestorV1;
@@ -287,7 +291,7 @@ contract CashRemunerationEIP712 is
       else {
         // Ensure the requested token is supported by the contract
         if (!_isTokenSupported(wageClaim.wages[i].tokenAddress))
-          revert TokenNotSupported(wageClaim.wages[i].tokenAddress);
+          revert CashRemunerationEIP712__TokenNotSupported(wageClaim.wages[i].tokenAddress);
 
         // Step 7b(i): Special Case - Mintable InvestorV1 Token
         // If we have an officer address configured and this is the InvestorV1 token,
@@ -313,7 +317,7 @@ contract CashRemunerationEIP712 is
           // Verify the contract has sufficient token balance
           uint256 tokenBalance = IERC20(wageClaim.wages[i].tokenAddress).balanceOf(address(this));
           if (tokenBalance < amountToPay)
-            revert InsufficientTokenBalance(
+            revert CashRemunerationEIP712__InsufficientTokenBalance(
               wageClaim.wages[i].tokenAddress,
               amountToPay,
               tokenBalance
@@ -356,7 +360,7 @@ contract CashRemunerationEIP712 is
    * @param signatureHash The signature hash of the wage claim.
    */
   function enableClaim(bytes32 signatureHash) external onlyOwner whenNotPaused {
-    disabledWageClaims[signatureHash] = false;
+    s_disabledWageClaims[signatureHash] = false;
     emit WageClaimEnabled(signatureHash);
   }
 
@@ -365,7 +369,7 @@ contract CashRemunerationEIP712 is
    * @param signatureHash The signature hash of the wage claim.
    */
   function disableClaim(bytes32 signatureHash) external onlyOwner whenNotPaused {
-    disabledWageClaims[signatureHash] = true;
+    s_disabledWageClaims[signatureHash] = true;
     emit WageClaimDisabled(signatureHash);
   }
 
@@ -390,9 +394,9 @@ contract CashRemunerationEIP712 is
    * @dev Discovers the Bank address via the Officer contract. Single transaction drain.
    */
   function ownerWithdrawAllToBank() external onlyOwner nonReentrant whenNotPaused {
-    if (officerAddress == address(0)) revert OfficerAddressNotSet();
-    address bankAddress = IOfficer(officerAddress).findDeployedContract("Bank");
-    if (bankAddress == address(0)) revert BankContractNotFound();
+    if (s_officerAddress == address(0)) revert CashRemunerationEIP712__OfficerAddressNotSet();
+    address bankAddress = IOfficer(s_officerAddress).findDeployedContract("Bank");
+    if (bankAddress == address(0)) revert CashRemunerationEIP712__BankContractNotFound();
 
     uint256 nativeBalance = address(this).balance;
     if (nativeBalance > 0) {
@@ -405,7 +409,7 @@ contract CashRemunerationEIP712 is
       uint256 tokenBalance = IERC20(tokens[i]).balanceOf(address(this));
       if (tokenBalance > 0) {
         if (!IERC20(tokens[i]).transfer(bankAddress, tokenBalance))
-          revert TokenTransferFailed(tokens[i]);
+          revert CashRemunerationEIP712__TokenTransferFailed(tokens[i]);
         emit OwnerTreasuryWithdrawToken(owner(), tokens[i], tokenBalance);
       }
     }
@@ -413,6 +417,32 @@ contract CashRemunerationEIP712 is
 
   function getBalance() external view returns (uint256) {
     return address(this).balance;
+  }
+
+  /**
+   * @notice Returns the configured officer contract address.
+   * @return The officer address.
+   */
+  function getOfficerAddress() external view returns (address) {
+    return s_officerAddress;
+  }
+
+  /**
+   * @notice Returns whether a wage claim signature has already been paid.
+   * @param signatureHash keccak256 hash of the wage claim signature.
+   * @return True if the claim has been paid.
+   */
+  function getPaidWageClaim(bytes32 signatureHash) external view returns (bool) {
+    return s_paidWageClaims[signatureHash];
+  }
+
+  /**
+   * @notice Returns whether a wage claim signature is disabled.
+   * @param signatureHash keccak256 hash of the wage claim signature.
+   * @return True if the claim is disabled.
+   */
+  function getDisabledWageClaim(bytes32 signatureHash) external view returns (bool) {
+    return s_disabledWageClaims[signatureHash];
   }
 
   /**
@@ -426,12 +456,12 @@ contract CashRemunerationEIP712 is
     __EIP712_init("CashRemuneration", "1");
     __Pausable_init();
 
-    if (msg.sender == address(0)) revert ZeroAddress();
-    officerAddress = msg.sender;
+    if (msg.sender == address(0)) revert CashRemunerationEIP712__ZeroAddress();
+    s_officerAddress = msg.sender;
 
     // Set the initial supported tokens
     for (uint256 i = 0; i < _tokenAddresses.length; i++) {
-      if (_tokenAddresses[i] == address(0)) revert ZeroAddress();
+      if (_tokenAddresses[i] == address(0)) revert CashRemunerationEIP712__ZeroAddress();
       _addTokenSupport(_tokenAddresses[i]);
     }
     // Emit events after they're already added to avoid duplicate events

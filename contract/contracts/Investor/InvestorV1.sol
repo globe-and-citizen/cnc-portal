@@ -44,8 +44,8 @@ contract InvestorV1 is
   /// @dev Set of addresses currently holding a non-zero balance.
   EnumerableSet.AddressSet private s_shareholderSet;
 
-  /// @notice Address of the Officer contract (set immutably at initialization)
-  address public officerAddress;
+  /// @dev Address of the Officer contract (set immutably at initialization)
+  address private s_officerAddress;
 
   // address private officerAddress;
   // Add a gap for future upgrades (important for upgradeable contracts)
@@ -93,35 +93,39 @@ contract InvestorV1 is
   );
 
   /// @dev A required address argument was the zero address.
-  error ZeroAddress();
+  error InvestorV1__ZeroAddress();
   /// @dev The officer contract address has not been configured.
-  error OfficerAddressNotSet();
+  error InvestorV1__OfficerAddressNotSet();
   /// @dev The Bank contract could not be located via the Officer.
-  error BankContractNotFound();
+  error InvestorV1__BankContractNotFound();
   /// @dev The caller is not the Bank contract.
   /// @param caller The caller address.
-  error NotBank(address caller);
+  error InvestorV1__NotBank(address caller);
   /// @dev The amount must be greater than zero.
-  error ZeroAmount();
+  error InvestorV1__ZeroAmount();
   /// @dev The provided msg.value does not match the expected funding amount.
   /// @param expected The expected amount.
   /// @param actual The actual msg.value.
-  error InvalidNativeFunding(uint256 expected, uint256 actual);
+  error InvestorV1__InvalidNativeFunding(uint256 expected, uint256 actual);
   /// @dev There are no minted tokens in circulation.
-  error NoTokensMinted();
+  error InvestorV1__NoTokensMinted();
   /// @dev There are no shareholders to distribute to.
-  error NoShareholders();
+  error InvestorV1__NoShareholders();
   /// @dev A low-level native token transfer failed.
   /// @param to The recipient.
-  error NativeTransferFailed(address to);
+  error InvestorV1__NativeTransferFailed(address to);
   /// @dev The contract holds an insufficient token balance for distribution.
   /// @param token The ERC20 token.
   /// @param required The amount required.
   /// @param available The current contract balance.
-  error InsufficientFundedTokenBalance(address token, uint256 required, uint256 available);
+  error InvestorV1__InsufficientFundedTokenBalance(
+    address token,
+    uint256 required,
+    uint256 available
+  );
 
   modifier onlyBank() {
-    if (msg.sender != _getBankAddress()) revert NotBank(msg.sender);
+    if (msg.sender != _getBankAddress()) revert InvestorV1__NotBank(msg.sender);
     _;
   }
 
@@ -156,8 +160,8 @@ contract InvestorV1 is
     _grantRole(DEFAULT_ADMIN_ROLE, owner);
     _grantRole(MINTER_ROLE, owner);
 
-    if (msg.sender == address(0)) revert ZeroAddress();
-    officerAddress = msg.sender;
+    if (msg.sender == address(0)) revert InvestorV1__ZeroAddress();
+    s_officerAddress = msg.sender;
   }
 
   /**
@@ -197,14 +201,14 @@ contract InvestorV1 is
   function distributeNativeDividends(
     uint256 _amount
   ) external payable onlyBank nonReentrant whenNotPaused {
-    if (_amount == 0) revert ZeroAmount();
-    if (msg.value != _amount) revert InvalidNativeFunding(_amount, msg.value);
+    if (_amount == 0) revert InvestorV1__ZeroAmount();
+    if (msg.value != _amount) revert InvestorV1__InvalidNativeFunding(_amount, msg.value);
 
     uint256 supply = totalSupply();
-    if (supply == 0) revert NoTokensMinted();
+    if (supply == 0) revert InvestorV1__NoTokensMinted();
 
     Shareholder[] memory currentShareholders = _getShareholders();
-    if (currentShareholders.length == 0) revert NoShareholders();
+    if (currentShareholders.length == 0) revert InvestorV1__NoShareholders();
 
     uint256 remaining = _amount;
 
@@ -223,7 +227,7 @@ contract InvestorV1 is
 
       if (share > 0) {
         (bool sent, ) = payable(shareholder).call{value: share}("");
-        if (!sent) revert NativeTransferFailed(shareholder);
+        if (!sent) revert InvestorV1__NativeTransferFailed(shareholder);
         emit DividendPaid(shareholder, address(0), share);
         remaining -= share;
       }
@@ -242,16 +246,17 @@ contract InvestorV1 is
     address _token,
     uint256 _amount
   ) external onlyBank nonReentrant whenNotPaused {
-    if (_token == address(0)) revert ZeroAddress();
-    if (_amount == 0) revert ZeroAmount();
+    if (_token == address(0)) revert InvestorV1__ZeroAddress();
+    if (_amount == 0) revert InvestorV1__ZeroAmount();
 
     uint256 supply = totalSupply();
-    if (supply == 0) revert NoTokensMinted();
+    if (supply == 0) revert InvestorV1__NoTokensMinted();
 
     Shareholder[] memory currentShareholders = _getShareholders();
-    if (currentShareholders.length == 0) revert NoShareholders();
+    if (currentShareholders.length == 0) revert InvestorV1__NoShareholders();
     uint256 tokenBal = IERC20(_token).balanceOf(address(this));
-    if (tokenBal < _amount) revert InsufficientFundedTokenBalance(_token, _amount, tokenBal);
+    if (tokenBal < _amount)
+      revert InvestorV1__InsufficientFundedTokenBalance(_token, _amount, tokenBal);
 
     uint256 remaining = _amount;
 
@@ -300,6 +305,16 @@ contract InvestorV1 is
     return _shareholders;
   }
 
+  /// @notice Returns the addresses currently tracked as holding a non-zero balance.
+  function getShareholderSet() external view returns (address[] memory) {
+    return s_shareholderSet.values();
+  }
+
+  /// @notice Returns the Officer contract address.
+  function getOfficerAddress() external view returns (address) {
+    return s_officerAddress;
+  }
+
   /// @notice Returns the token's decimal count.
   function decimals() public view virtual override returns (uint8) {
     return 6; // Standard for many tokens, can be adjusted as needed
@@ -322,9 +337,9 @@ contract InvestorV1 is
    * @return Address of the Bank contract
    */
   function _getBankAddress() internal view returns (address) {
-    if (officerAddress == address(0)) revert OfficerAddressNotSet();
-    address bankAddress = IOfficer(officerAddress).findDeployedContract("Bank");
-    if (bankAddress == address(0)) revert BankContractNotFound();
+    if (s_officerAddress == address(0)) revert InvestorV1__OfficerAddressNotSet();
+    address bankAddress = IOfficer(s_officerAddress).findDeployedContract("Bank");
+    if (bankAddress == address(0)) revert InvestorV1__BankContractNotFound();
     return bankAddress;
   }
 

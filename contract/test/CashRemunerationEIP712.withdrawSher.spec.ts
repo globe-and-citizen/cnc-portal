@@ -141,7 +141,7 @@ describe('Cash Remuneration - Withdraw SHER', function () {
   })
 
   it('Should initialize contracts properly', async () => {
-    expect((await cashRemunerationEip712Proxy.officerAddress()).toLocaleLowerCase()).to.be.equal(
+    expect((await cashRemunerationEip712Proxy.getOfficerAddress()).toLocaleLowerCase()).to.be.equal(
       (await officer.getAddress()).toLocaleLowerCase()
     )
     expect((await cashRemunerationEip712Proxy.owner()).toLocaleLowerCase()).to.be.equal(
@@ -190,7 +190,7 @@ describe('Cash Remuneration - Withdraw SHER', function () {
     await expect(tx)
       .to.emit(cashRemunerationEip712Proxy, 'WithdrawToken')
       .withArgs(addr1.address, await investorV1Proxy.getAddress(), amountSher)
-    const paidWageClaim = await cashRemunerationEip712Proxy.paidWageClaims(signatureHash)
+    const paidWageClaim = await cashRemunerationEip712Proxy.getPaidWageClaim(signatureHash)
     expect(paidWageClaim).to.be.equal(true)
     expect(await investorV1Proxy.balanceOf(addr1.address)).to.be.equal(amountSher)
   })
@@ -224,7 +224,10 @@ describe('Cash Remuneration - Withdraw SHER', function () {
 
     await expect(
       cashRemunerationEip712Proxy.connect(addr1).withdraw(wageClaim, signature)
-    ).to.be.revertedWithCustomError(cashRemunerationEip712Proxy, 'ClaimIsDisabled')
+    ).to.be.revertedWithCustomError(
+      cashRemunerationEip712Proxy,
+      'CashRemunerationEIP712__ClaimIsDisabled'
+    )
   })
 
   it('Should enable claims so the user can withdraw SHER again', async () => {
@@ -256,13 +259,13 @@ describe('Cash Remuneration - Withdraw SHER', function () {
     await expect(tx)
       .to.emit(cashRemunerationEip712Proxy, 'WithdrawToken')
       .withArgs(addr1.address, await investorV1Proxy.getAddress(), amountSher)
-    const paidWageClaim = await cashRemunerationEip712Proxy.paidWageClaims(signatureHash)
+    const paidWageClaim = await cashRemunerationEip712Proxy.getPaidWageClaim(signatureHash)
     expect(paidWageClaim).to.be.equal(true)
     expect(await investorV1Proxy.balanceOf(addr1.address)).to.be.equal(amountSher)
   })
 
   it('Should set officer address during deployment', async () => {
-    expect((await cashRemunerationEip712Proxy.officerAddress()).toLocaleLowerCase()).to.be.equal(
+    expect((await cashRemunerationEip712Proxy.getOfficerAddress()).toLocaleLowerCase()).to.be.equal(
       (await officer.getAddress()).toLocaleLowerCase()
     )
   })
@@ -285,14 +288,17 @@ describe('Cash Remuneration - Withdraw SHER', function () {
 
     // First invocation mints SHER successfully
     await cashRemunerationEip712Proxy.connect(addr1).withdraw(wageClaim, signature)
-    expect(await cashRemunerationEip712Proxy.paidWageClaims(signatureHash)).to.equal(true)
+    expect(await cashRemunerationEip712Proxy.getPaidWageClaim(signatureHash)).to.equal(true)
 
     const amountSher = (BigInt(wageClaim.minutesWorked) * wageClaim.wages[0].hourlyRate) / 60n
     expect(await investorV1Proxy.balanceOf(addr1.address)).to.equal(amountSher)
 
     // Replay attempt with identical signature/claim must revert with WageAlreadyPaid
     await expect(cashRemunerationEip712Proxy.connect(addr1).withdraw(wageClaim, signature))
-      .to.be.revertedWithCustomError(cashRemunerationEip712Proxy, 'WageAlreadyPaid')
+      .to.be.revertedWithCustomError(
+        cashRemunerationEip712Proxy,
+        'CashRemunerationEIP712__WageAlreadyPaid'
+      )
       .withArgs(signatureHash)
 
     // Balance unchanged after failed replay
@@ -324,6 +330,9 @@ describe('Cash Remuneration - Withdraw SHER', function () {
     // Replay: WageAlreadyPaid is checked first in the contract, so it should hit that error
     await expect(
       cashRemunerationEip712Proxy.connect(addr1).withdraw(wageClaim, signature)
-    ).to.be.revertedWithCustomError(cashRemunerationEip712Proxy, 'WageAlreadyPaid')
+    ).to.be.revertedWithCustomError(
+      cashRemunerationEip712Proxy,
+      'CashRemunerationEIP712__WageAlreadyPaid'
+    )
   })
 })

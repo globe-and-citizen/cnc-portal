@@ -93,7 +93,7 @@ describe('Proposals Contract', function () {
       proposalsContract
         .connect(nonMember)
         .createProposal('Invalid', 'Description', 'Policy', now + 2, now + ONE_DAY_IN_SECS + 1)
-    ).to.be.revertedWithCustomError(proposalsContract, 'OnlyBoardMember')
+    ).to.be.revertedWithCustomError(proposalsContract, 'Proposals__OnlyBoardMember')
   })
 
   it('tracks voting and tallies to succeeded', async function () {
@@ -147,7 +147,7 @@ describe('Proposals Contract', function () {
 
     await expect(
       proposalsContract.createProposal('T', 'D', 'Type', now + 1, now + ONE_DAY_IN_SECS)
-    ).to.be.revertedWithCustomError(proposalsContract, 'BoardOfDirectorsNotFound')
+    ).to.be.revertedWithCustomError(proposalsContract, 'Proposals__BoardOfDirectorsNotFound')
   })
 
   it('tallies to Defeated when No votes exceed Yes votes', async function () {
@@ -242,7 +242,7 @@ describe('Proposals Contract', function () {
     // Do not advance time
     await expect(
       proposalsContract.connect(boardMember1).castVote(1, VoteOption.Yes)
-    ).to.be.revertedWithCustomError(proposalsContract, 'ProposalVotingNotStarted')
+    ).to.be.revertedWithCustomError(proposalsContract, 'Proposals__ProposalVotingNotStarted')
   })
 
   it('rejects castVote after the voting period has ended', async function () {
@@ -259,7 +259,7 @@ describe('Proposals Contract', function () {
 
     await expect(
       proposalsContract.connect(boardMember1).castVote(1, VoteOption.Yes)
-    ).to.be.revertedWithCustomError(proposalsContract, 'ProposalVotingEnded')
+    ).to.be.revertedWithCustomError(proposalsContract, 'Proposals__ProposalVotingEnded')
   })
 
   it('rejects duplicate votes from the same member', async function () {
@@ -275,7 +275,7 @@ describe('Proposals Contract', function () {
     await proposalsContract.connect(boardMember1).castVote(1, VoteOption.Yes)
     await expect(
       proposalsContract.connect(boardMember1).castVote(1, VoteOption.No)
-    ).to.be.revertedWithCustomError(proposalsContract, 'ProposalAlreadyVoted')
+    ).to.be.revertedWithCustomError(proposalsContract, 'Proposals__ProposalAlreadyVoted')
   })
 
   it('rejects castVote on a non-existent proposal', async function () {
@@ -283,7 +283,7 @@ describe('Proposals Contract', function () {
 
     await expect(
       proposalsContract.connect(boardMember1).castVote(999, VoteOption.Yes)
-    ).to.be.revertedWithCustomError(proposalsContract, 'ProposalNotFound')
+    ).to.be.revertedWithCustomError(proposalsContract, 'Proposals__ProposalNotFound')
   })
 
   it('rejects castVote from a non board member', async function () {
@@ -298,7 +298,7 @@ describe('Proposals Contract', function () {
 
     await expect(
       proposalsContract.connect(nonMember).castVote(1, VoteOption.Yes)
-    ).to.be.revertedWithCustomError(proposalsContract, 'OnlyBoardMember')
+    ).to.be.revertedWithCustomError(proposalsContract, 'Proposals__OnlyBoardMember')
   })
 
   it('rejects createProposal with empty title', async function () {
@@ -309,7 +309,7 @@ describe('Proposals Contract', function () {
       proposalsContract
         .connect(boardMember1)
         .createProposal('', 'Description', 'Budget', now + 1, now + ONE_DAY_IN_SECS)
-    ).to.be.revertedWithCustomError(proposalsContract, 'InvalidProposalContent')
+    ).to.be.revertedWithCustomError(proposalsContract, 'ProposalUtils__InvalidProposalContent')
   })
 
   it('rejects createProposal with empty description', async function () {
@@ -320,7 +320,7 @@ describe('Proposals Contract', function () {
       proposalsContract
         .connect(boardMember1)
         .createProposal('Title', '', 'Budget', now + 1, now + ONE_DAY_IN_SECS)
-    ).to.be.revertedWithCustomError(proposalsContract, 'InvalidProposalContent')
+    ).to.be.revertedWithCustomError(proposalsContract, 'ProposalUtils__InvalidProposalContent')
   })
 
   it('rejects createProposal with title too long', async function () {
@@ -332,7 +332,7 @@ describe('Proposals Contract', function () {
       proposalsContract
         .connect(boardMember1)
         .createProposal(longTitle, 'Description', 'Budget', now + 1, now + ONE_DAY_IN_SECS)
-    ).to.be.revertedWithCustomError(proposalsContract, 'InvalidProposalContent')
+    ).to.be.revertedWithCustomError(proposalsContract, 'ProposalUtils__InvalidProposalContent')
   })
 
   it('rejects createProposal with invalid dates (start >= end)', async function () {
@@ -343,7 +343,7 @@ describe('Proposals Contract', function () {
       proposalsContract
         .connect(boardMember1)
         .createProposal('Title', 'Description', 'Budget', now + 1000, now + 500)
-    ).to.be.revertedWithCustomError(proposalsContract, 'InvalidProposalDates')
+    ).to.be.revertedWithCustomError(proposalsContract, 'ProposalUtils__InvalidProposalDates')
   })
 
   it('rejects createProposal with start date in the past', async function () {
@@ -354,7 +354,7 @@ describe('Proposals Contract', function () {
       proposalsContract
         .connect(boardMember1)
         .createProposal('Title', 'Description', 'Budget', now - 100, now + ONE_DAY_IN_SECS)
-    ).to.be.revertedWithCustomError(proposalsContract, 'InvalidProposalDates')
+    ).to.be.revertedWithCustomError(proposalsContract, 'ProposalUtils__InvalidProposalDates')
   })
 
   it('rejects createProposal with zero dates', async function () {
@@ -362,7 +362,7 @@ describe('Proposals Contract', function () {
 
     await expect(
       proposalsContract.connect(boardMember1).createProposal('Title', 'Description', 'Budget', 0, 0)
-    ).to.be.revertedWithCustomError(proposalsContract, 'InvalidProposalDates')
+    ).to.be.revertedWithCustomError(proposalsContract, 'ProposalUtils__InvalidProposalDates')
   })
 
   it('getProposal reverts for non-existent proposal', async function () {
@@ -370,7 +370,7 @@ describe('Proposals Contract', function () {
 
     await expect(proposalsContract.getProposal(999)).to.be.revertedWithCustomError(
       proposalsContract,
-      'ProposalNotFound'
+      'Proposals__ProposalNotFound'
     )
   })
 
@@ -391,7 +391,7 @@ describe('Proposals Contract', function () {
 
     await expect(
       proposalsContract.hasVoted(999, boardMember1.address)
-    ).to.be.revertedWithCustomError(proposalsContract, 'ProposalNotFound')
+    ).to.be.revertedWithCustomError(proposalsContract, 'Proposals__ProposalNotFound')
   })
 
   it('tallyResults can be called manually by a board member and reverts for non-member', async function () {
@@ -411,7 +411,7 @@ describe('Proposals Contract', function () {
     // Non-member cannot tally
     await expect(
       proposalsContract.connect(nonMember).tallyResults(1)
-    ).to.be.revertedWithCustomError(proposalsContract, 'OnlyBoardMember')
+    ).to.be.revertedWithCustomError(proposalsContract, 'Proposals__OnlyBoardMember')
 
     // Board member can tally manually (yes == no -> Expired)
     await expect(proposalsContract.connect(boardMember1).tallyResults(1)).to.emit(
@@ -428,7 +428,7 @@ describe('Proposals Contract', function () {
 
     await expect(
       proposalsContract.connect(boardMember1).tallyResults(999)
-    ).to.be.revertedWithCustomError(proposalsContract, 'ProposalNotFound')
+    ).to.be.revertedWithCustomError(proposalsContract, 'Proposals__ProposalNotFound')
   })
 
   it('tallyResults reverts before voting has started', async function () {
@@ -441,7 +441,7 @@ describe('Proposals Contract', function () {
 
     await expect(
       proposalsContract.connect(boardMember1).tallyResults(1)
-    ).to.be.revertedWithCustomError(proposalsContract, 'ProposalVotingNotStarted')
+    ).to.be.revertedWithCustomError(proposalsContract, 'Proposals__ProposalVotingNotStarted')
   })
 
   it('emits ProposalCreated with the expected arguments', async function () {

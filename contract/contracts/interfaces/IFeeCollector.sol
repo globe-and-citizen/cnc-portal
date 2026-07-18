@@ -53,7 +53,7 @@ interface IFeeCollector is ITokenSupport {
   // ============ Fee Beneficiary ============
   /// @notice Address that receives funds on withdraw / withdrawToken
   /// @return Current beneficiary; address(0) means withdrawals fall back to owner()
-  function feeBeneficiary() external view returns (address);
+  function getFeeBeneficiary() external view returns (address);
 
   // ============ Balance Queries ============
   /// @notice Get native ETH balance

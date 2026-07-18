@@ -113,7 +113,7 @@ describe('Elections', function () {
 
     await expect(
       elections.connect(nonVoter).castVote(1, candidate1.address)
-    ).to.be.revertedWithCustomError(elections, 'NotEligibleVoter')
+    ).to.be.revertedWithCustomError(elections, 'Elections__NotEligibleVoter')
   })
 
   it('publishes results and updates board winners', async () => {
@@ -165,7 +165,7 @@ describe('Elections', function () {
         [candidate1.address, candidate2.address],
         [voter1.address]
       )
-    ).to.be.revertedWithCustomError(elections, 'InvalidSeatCount')
+    ).to.be.revertedWithCustomError(elections, 'ElectionUtils__InvalidSeatCount')
   })
 
   it('rejects createElection with invalid dates (start in past)', async () => {
@@ -183,7 +183,7 @@ describe('Elections', function () {
         [candidate1.address, candidate2.address],
         [voter1.address]
       )
-    ).to.be.revertedWithCustomError(elections, 'InvalidDates')
+    ).to.be.revertedWithCustomError(elections, 'ElectionUtils__InvalidDates')
   })
 
   it('rejects createElection with end before start', async () => {
@@ -201,7 +201,7 @@ describe('Elections', function () {
         [candidate1.address, candidate2.address],
         [voter1.address]
       )
-    ).to.be.revertedWithCustomError(elections, 'InvalidDates')
+    ).to.be.revertedWithCustomError(elections, 'ElectionUtils__InvalidDates')
   })
 
   it('rejects createElection with duplicate candidates', async () => {
@@ -219,7 +219,7 @@ describe('Elections', function () {
         [candidate1.address, candidate1.address], // duplicate
         [voter1.address]
       )
-    ).to.be.revertedWithCustomError(elections, 'DuplicateCandidates')
+    ).to.be.revertedWithCustomError(elections, 'ElectionUtils__DuplicateCandidates')
   })
 
   it('rejects createElection with duplicate voters', async () => {
@@ -237,7 +237,7 @@ describe('Elections', function () {
         [candidate1.address, candidate2.address],
         [voter1.address, voter1.address] // duplicate
       )
-    ).to.be.revertedWithCustomError(elections, 'DuplicateVoters')
+    ).to.be.revertedWithCustomError(elections, 'ElectionUtils__DuplicateVoters')
   })
 
   it('rejects createElection when a previous election is ongoing', async () => {
@@ -266,7 +266,7 @@ describe('Elections', function () {
           [candidate1.address, candidate2.address],
           [voter1.address, voter2.address]
         )
-    ).to.be.revertedWithCustomError(elections, 'ElectionIsOngoing')
+    ).to.be.revertedWithCustomError(elections, 'Elections__ElectionIsOngoing')
   })
 
   it('rejects castVote when already voted', async () => {
@@ -285,7 +285,7 @@ describe('Elections', function () {
 
     await expect(
       elections.connect(voter1).castVote(1, candidate1.address)
-    ).to.be.revertedWithCustomError(elections, 'AlreadyVoted')
+    ).to.be.revertedWithCustomError(elections, 'Elections__AlreadyVoted')
   })
 
   it('rejects castVote before election starts', async () => {
@@ -310,7 +310,7 @@ describe('Elections', function () {
     // Do not advance time - election hasn't started
     await expect(
       elections.connect(voter1).castVote(1, candidate1.address)
-    ).to.be.revertedWithCustomError(elections, 'ElectionNotActive')
+    ).to.be.revertedWithCustomError(elections, 'Elections__ElectionNotActive')
   })
 
   it('rejects publishResults before election ends and not all voted', async () => {
@@ -330,7 +330,7 @@ describe('Elections', function () {
 
     await expect(elections.connect(owner).publishResults(1)).to.be.revertedWithCustomError(
       elections,
-      'ResultsNotReady'
+      'Elections__ResultsNotReady'
     )
   })
 
@@ -401,7 +401,7 @@ describe('Elections', function () {
 
     await expect(elections.connect(owner).publishResults(1)).to.be.revertedWithCustomError(
       elections,
-      'ResultsAlreadyPublished'
+      'Elections__ResultsAlreadyPublished'
     )
   })
 
@@ -410,7 +410,7 @@ describe('Elections', function () {
 
     await expect(elections.connect(owner).publishResults(99)).to.be.revertedWithCustomError(
       elections,
-      'ElectionNotFound'
+      'Elections__ElectionNotFound'
     )
   })
 
@@ -448,7 +448,7 @@ describe('Elections', function () {
 
     await expect(elections.getElection(99)).to.be.revertedWithCustomError(
       elections,
-      'ElectionNotFound'
+      'Elections__ElectionNotFound'
     )
   })
 
@@ -500,7 +500,7 @@ describe('Elections', function () {
 
     await expect(elections.getElectionWinners(1)).to.be.revertedWithCustomError(
       elections,
-      'ResultsNotReady'
+      'Elections__ResultsNotReady'
     )
   })
 
@@ -627,31 +627,31 @@ describe('Elections', function () {
 
     await expect(elections.getElectionCandidates(99)).to.be.revertedWithCustomError(
       elections,
-      'ElectionNotFound'
+      'Elections__ElectionNotFound'
     )
     await expect(elections.getElectionEligibleVoters(99)).to.be.revertedWithCustomError(
       elections,
-      'ElectionNotFound'
+      'Elections__ElectionNotFound'
     )
     await expect(elections.getElectionWinners(99)).to.be.revertedWithCustomError(
       elections,
-      'ElectionNotFound'
+      'Elections__ElectionNotFound'
     )
     await expect(elections.getVoterChoice(99, voter1.address)).to.be.revertedWithCustomError(
       elections,
-      'ElectionNotFound'
+      'Elections__ElectionNotFound'
     )
     await expect(elections.hasVoted(99, voter1.address)).to.be.revertedWithCustomError(
       elections,
-      'ElectionNotFound'
+      'Elections__ElectionNotFound'
     )
     await expect(elections.isEligibleVoter(99, voter1.address)).to.be.revertedWithCustomError(
       elections,
-      'ElectionNotFound'
+      'Elections__ElectionNotFound'
     )
     await expect(elections.getVoteCount(99)).to.be.revertedWithCustomError(
       elections,
-      'ElectionNotFound'
+      'Elections__ElectionNotFound'
     )
   })
 

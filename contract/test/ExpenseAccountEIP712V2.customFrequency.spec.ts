@@ -148,7 +148,7 @@ describe('ExpenseAccountEIP712V2 - Custom Frequency', function () {
         .transfer(recipient.address, ethers.parseEther('0.3'), budgetLimit, signature)
 
       const signatureHash = ethers.keccak256(signature)
-      const expenseBalance = await expenseAccount.expenseBalances(signatureHash)
+      const expenseBalance = await expenseAccount.getExpenseBalance(signatureHash)
       expect(expenseBalance.totalWithdrawn).to.equal(ethers.parseEther('0.8'))
     })
 
@@ -165,7 +165,7 @@ describe('ExpenseAccountEIP712V2 - Custom Frequency', function () {
       // Test period calculation with zero custom frequency
       await expect(expenseAccount.getPeriod(budgetLimit, 1000)).to.be.revertedWithCustomError(
         expenseAccount,
-        'InvalidCustomFrequency'
+        'ExpenseAccountEIP712__InvalidCustomFrequency'
       )
     })
 
@@ -222,10 +222,13 @@ describe('ExpenseAccountEIP712V2 - Custom Frequency', function () {
         expenseAccount
           .connect(approvedAddress)
           .transfer(recipient.address, ethers.parseEther('0.1'), budgetLimit, signature)
-      ).to.be.revertedWithCustomError(expenseAccount, 'AmountExceedsPeriodBudget')
+      ).to.be.revertedWithCustomError(
+        expenseAccount,
+        'ExpenseAccountEIP712__AmountExceedsPeriodBudget'
+      )
 
       // Verify we're in period 2
-      const expenseBalance = await expenseAccount.expenseBalances(signatureHash)
+      const expenseBalance = await expenseAccount.getExpenseBalance(signatureHash)
       const currentPeriod = await expenseAccount.getCurrentPeriod(budgetLimit)
       expect(expenseBalance.lastWithdrawnPeriod).to.equal(currentPeriod)
       expect(currentPeriod).to.equal(2)

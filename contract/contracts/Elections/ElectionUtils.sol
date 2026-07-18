@@ -21,42 +21,42 @@ library ElectionUtils {
   /**
    * @dev Error thrown when seat count is not odd
    */
-  error InvalidSeatCount();
+  error ElectionUtils__InvalidSeatCount();
 
   /**
    * @dev Error thrown when date validation fails
    */
-  error InvalidDates();
+  error ElectionUtils__InvalidDates();
 
   /**
    * @dev Error thrown when candidate validation fails
    */
-  error InvalidCandidate();
+  error ElectionUtils__InvalidCandidate();
 
   /**
    * @dev Error thrown when there is ongoing election
    */
-  error ElectionIsOngoing();
+  error ElectionUtils__ElectionIsOngoing();
 
   /**
    * @dev Error thrown when there are insufficient candidates
    */
-  error InsufficientCandidates();
+  error ElectionUtils__InsufficientCandidates();
 
   /**
    * @dev Error thrown when duplicate candidates are detected
    */
-  error DuplicateCandidates();
+  error ElectionUtils__DuplicateCandidates();
 
   /**
    * @dev Error thrown when voter list is empty
    */
-  error NoEligibleVoters();
+  error ElectionUtils__NoEligibleVoters();
 
   /**
    * @dev Error thrown when duplicate voters are detected
    */
-  error DuplicateVoters();
+  error ElectionUtils__DuplicateVoters();
 
   /**
    * @dev Validates election dates
@@ -64,7 +64,7 @@ library ElectionUtils {
    * @param endDate Election end timestamp
    */
   function _validateDates(uint256 startDate, uint256 endDate) internal view {
-    if (startDate <= block.timestamp || endDate <= startDate) revert InvalidDates();
+    if (startDate <= block.timestamp || endDate <= startDate) revert ElectionUtils__InvalidDates();
   }
 
   /**
@@ -74,7 +74,7 @@ library ElectionUtils {
    */
   function _validateVote(ElectionTypes.Election storage election, address candidate) internal view {
     // Check if candidate is valid
-    if (candidate == address(0)) revert InvalidCandidate();
+    if (candidate == address(0)) revert ElectionUtils__InvalidCandidate();
     bool isValidCandidate = false;
     for (uint256 i = 0; i < election.candidateList.length; i++) {
       if (election.candidateList[i] == candidate) {
@@ -82,7 +82,7 @@ library ElectionUtils {
         break;
       }
     }
-    if (!isValidCandidate) revert InvalidCandidate();
+    if (!isValidCandidate) revert ElectionUtils__InvalidCandidate();
   }
 
   /**
@@ -109,7 +109,7 @@ library ElectionUtils {
    * @param seatCount Number of seats to validate
    */
   function _validateSeatCount(uint256 seatCount) internal pure {
-    if (seatCount == 0 || seatCount % 2 == 0) revert InvalidSeatCount();
+    if (seatCount == 0 || seatCount % 2 == 0) revert ElectionUtils__InvalidSeatCount();
   }
 
   /**
@@ -118,10 +118,10 @@ library ElectionUtils {
    * @param seatCount Number of seats
    */
   function _validateCandidates(address[] memory candidates, uint256 seatCount) internal pure {
-    if (candidates.length < seatCount) revert InsufficientCandidates();
+    if (candidates.length < seatCount) revert ElectionUtils__InsufficientCandidates();
 
     // Check for duplicate candidate addresses
-    if (_isDuplicate(candidates)) revert DuplicateCandidates();
+    if (_isDuplicate(candidates)) revert ElectionUtils__DuplicateCandidates();
   }
 
   /**
@@ -129,10 +129,10 @@ library ElectionUtils {
    * @param eligibleVoters Array of voter addresses
    */
   function _validateVoters(address[] memory eligibleVoters) internal pure {
-    if (eligibleVoters.length == 0) revert NoEligibleVoters();
+    if (eligibleVoters.length == 0) revert ElectionUtils__NoEligibleVoters();
 
     // Check for duplicate voter addresses
-    if (_isDuplicate(eligibleVoters)) revert DuplicateVoters();
+    if (_isDuplicate(eligibleVoters)) revert ElectionUtils__DuplicateVoters();
   }
 
   /**

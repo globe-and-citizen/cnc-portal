@@ -65,10 +65,10 @@ describe('SafeDepositRouter', function () {
     const { owner, safeWallet, mockOfficer, router, usdc } = await deployFixture()
 
     expect(await router.owner()).to.equal(owner.address)
-    expect(await router.officerAddress()).to.equal(await mockOfficer.getAddress())
-    expect(await router.safeAddress()).to.equal(safeWallet.address)
+    expect(await router.getOfficerAddress()).to.equal(await mockOfficer.getAddress())
+    expect(await router.getSafeAddress()).to.equal(safeWallet.address)
     expect(await router.isTokenSupported(await usdc.getAddress())).to.equal(true)
-    expect(await router.depositsEnabled()).to.equal(false)
+    expect(await router.getDepositsEnabled()).to.equal(false)
   })
 
   it('allows owner to enable and disable deposits', async () => {
@@ -78,13 +78,13 @@ describe('SafeDepositRouter', function () {
       .to.emit(router, 'DepositsEnabled')
       .withArgs(owner.address)
 
-    expect(await router.depositsEnabled()).to.equal(true)
+    expect(await router.getDepositsEnabled()).to.equal(true)
 
     await expect(router.connect(owner).disableDeposits())
       .to.emit(router, 'DepositsDisabled')
       .withArgs(owner.address)
 
-    expect(await router.depositsEnabled()).to.equal(false)
+    expect(await router.getDepositsEnabled()).to.equal(false)
   })
 
   it('rejects non-owner deposit control calls', async () => {
@@ -104,7 +104,7 @@ describe('SafeDepositRouter', function () {
 
     await expect(
       router.connect(depositor).deposit(await usdc.getAddress(), amount)
-    ).to.be.revertedWithCustomError(router, 'DepositsNotEnabled')
+    ).to.be.revertedWithCustomError(router, 'SafeDepositRouter__DepositsNotEnabled')
   })
 
   it('deposits token, forwards funds to safe, and mints SHER', async () => {
@@ -140,7 +140,7 @@ describe('SafeDepositRouter', function () {
       router
         .connect(depositor)
         .depositWithSlippage(await usdc.getAddress(), amount, expectedOut + 1n)
-    ).to.be.revertedWithCustomError(router, 'SlippageExceeded')
+    ).to.be.revertedWithCustomError(router, 'SafeDepositRouter__SlippageExceeded')
   })
 
   it('depositWithSlippage succeeds within slippage tolerance', async () => {
@@ -166,7 +166,7 @@ describe('SafeDepositRouter', function () {
 
     await expect(
       router.connect(depositor).deposit(await usdc.getAddress(), 0)
-    ).to.be.revertedWithCustomError(router, 'ZeroAmount')
+    ).to.be.revertedWithCustomError(router, 'SafeDepositRouter__ZeroAmount')
   })
 
   it('reverts deposit with unsupported token', async () => {
@@ -179,7 +179,7 @@ describe('SafeDepositRouter', function () {
 
     await expect(
       router.connect(depositor).deposit(await otherToken.getAddress(), ethers.parseUnits('10', 18))
-    ).to.be.revertedWithCustomError(router, 'TokenNotSupported')
+    ).to.be.revertedWithCustomError(router, 'SafeDepositRouter__TokenNotSupported')
   })
 
   it('reverts deposit when paused', async () => {
@@ -214,7 +214,7 @@ describe('SafeDepositRouter', function () {
       'SafeAddressUpdated'
     )
 
-    expect(await router.safeAddress()).to.equal(newSafe)
+    expect(await router.getSafeAddress()).to.equal(newSafe)
   })
 
   it('rejects setSafeAddress with zero address', async () => {
@@ -222,7 +222,7 @@ describe('SafeDepositRouter', function () {
 
     await expect(
       router.connect(owner).setSafeAddress(ethers.ZeroAddress)
-    ).to.be.revertedWithCustomError(router, 'InvalidSafeAddress')
+    ).to.be.revertedWithCustomError(router, 'SafeDepositRouter__InvalidSafeAddress')
   })
 
   it('updates multiplier', async () => {
@@ -235,7 +235,7 @@ describe('SafeDepositRouter', function () {
       'MultiplierUpdated'
     )
 
-    expect(await router.multiplier()).to.equal(newMultiplier)
+    expect(await router.getMultiplier()).to.equal(newMultiplier)
   })
 
   it('rejects multiplier below minimum', async () => {
@@ -243,7 +243,7 @@ describe('SafeDepositRouter', function () {
 
     await expect(router.connect(owner).setMultiplier(0)).to.be.revertedWithCustomError(
       router,
-      'MultiplierTooLow'
+      'SafeDepositRouter__MultiplierTooLow'
     )
   })
 
@@ -264,7 +264,7 @@ describe('SafeDepositRouter', function () {
 
     await expect(
       router.connect(owner).addTokenSupport(ethers.ZeroAddress)
-    ).to.be.revertedWithCustomError(router, 'InvalidTokenAddress')
+    ).to.be.revertedWithCustomError(router, 'SafeDepositRouter__InvalidTokenAddress')
   })
 
   it('rejects addTokenSupport for already supported token', async () => {
@@ -272,7 +272,7 @@ describe('SafeDepositRouter', function () {
 
     await expect(
       router.connect(owner).addTokenSupport(await usdc.getAddress())
-    ).to.be.revertedWithCustomError(router, 'TokenAlreadySupported')
+    ).to.be.revertedWithCustomError(router, 'SafeDepositRouter__TokenAlreadySupported')
   })
 
   it('removes token support', async () => {
@@ -294,7 +294,7 @@ describe('SafeDepositRouter', function () {
 
     await expect(
       router.connect(owner).removeTokenSupport(await otherToken.getAddress())
-    ).to.be.revertedWithCustomError(router, 'TokenNotSupported')
+    ).to.be.revertedWithCustomError(router, 'SafeDepositRouter__TokenNotSupported')
   })
 
   it('recovers accidentally sent ERC20 tokens to safe', async () => {
@@ -318,7 +318,7 @@ describe('SafeDepositRouter', function () {
 
     await expect(
       router.connect(owner).recoverERC20(ethers.ZeroAddress, 1)
-    ).to.be.revertedWithCustomError(router, 'InvalidTokenAddress')
+    ).to.be.revertedWithCustomError(router, 'SafeDepositRouter__InvalidTokenAddress')
   })
 
   it('rejects recoverERC20 with zero amount', async () => {
@@ -326,6 +326,6 @@ describe('SafeDepositRouter', function () {
 
     await expect(
       router.connect(owner).recoverERC20(await usdc.getAddress(), 0)
-    ).to.be.revertedWithCustomError(router, 'ZeroAmount')
+    ).to.be.revertedWithCustomError(router, 'SafeDepositRouter__ZeroAmount')
   })
 })
