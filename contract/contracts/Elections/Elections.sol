@@ -28,6 +28,11 @@ contract Elections is Initializable, OwnableUpgradeable, PausableUpgradeable {
   /// @dev Vote count per candidate for each election.
   mapping(uint256 electionId => mapping(address candidate => uint256 count)) private s_voteCounts;
 
+  /// @dev Storage gap reserving 50 slots for future upgrades. Decrement when adding
+  ///      new state variables above so the reserve stays constant and proxy slots don't shift.
+  // solhint-disable-next-line chainlink-solidity/prefix-storage-variables-with-s-underscore
+  uint256[50] private __gap;
+
   /**
    * @notice Emitted when a new election is created.
    * @param electionId Id of the created election.

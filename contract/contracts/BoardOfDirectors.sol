@@ -44,6 +44,11 @@ contract BoardOfDirectors is ReentrancyGuardUpgradeable, IBoardOfDirectors {
   /// @notice Maps an action id to its action record.
   mapping(uint256 actionId => Action action) private s_actions;
 
+  /// @dev Storage gap reserving 50 slots for future upgrades. Decrement when adding
+  ///      new state variables above so the reserve stays constant and proxy slots don't shift.
+  // solhint-disable-next-line chainlink-solidity/prefix-storage-variables-with-s-underscore
+  uint256[50] private __gap;
+
   /// @notice Emitted when the board-of-directors set is replaced.
   event BoardOfDirectorsChanged(address[] boardOfDirectors);
   /// @notice Emitted when the owner set changes.

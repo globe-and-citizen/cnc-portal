@@ -17,6 +17,11 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
   uint256 private s_proposalCount;
   address private s_officerAddress;
 
+  /// @dev Storage gap reserving 50 slots for future upgrades. Decrement when adding
+  ///      new state variables above so the reserve stays constant and proxy slots don't shift.
+  // solhint-disable-next-line chainlink-solidity/prefix-storage-variables-with-s-underscore
+  uint256[50] private __gap;
+
   event ProposalAdded(uint256 indexed proposalId, string title, string description);
   event DirectiveVoted(address indexed voter, uint256 indexed proposalId, uint256 vote);
   event ElectionVoted(

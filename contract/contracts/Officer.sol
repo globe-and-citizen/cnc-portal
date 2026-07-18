@@ -64,6 +64,11 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
   /// @notice Address of the Board of Directors contract
   address private s_bodContract;
 
+  /// @dev Storage gap reserving 50 slots for future upgrades. Decrement when adding
+  ///      new state variables above so the reserve stays constant and proxy slots don't shift.
+  // solhint-disable-next-line chainlink-solidity/prefix-storage-variables-with-s-underscore
+  uint256[50] private __gap;
+
   /// @notice Emitted when a new contract is deployed via beacon proxy
   event ContractDeployed(string contractType, address deployedAddress);
   /// @notice Emitted when a new beacon is configured

@@ -42,6 +42,11 @@ contract FeeCollector is
    */
   address private s_feeBeneficiary;
 
+  /// @dev Storage gap reserving 50 slots for future upgrades. Decrement when adding
+  ///      new state variables above so the reserve stays constant and proxy slots don't shift.
+  // solhint-disable-next-line chainlink-solidity/prefix-storage-variables-with-s-underscore
+  uint256[50] private __gap;
+
   /// @notice Emitted when ERC20 tokens are withdrawn
   event TokenWithdrawn(address indexed recipient, address indexed token, uint256 amount);
 

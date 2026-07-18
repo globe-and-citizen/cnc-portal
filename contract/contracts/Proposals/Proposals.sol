@@ -105,6 +105,11 @@ contract Proposals is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUp
   /// @dev Address of the Officer contract used to locate BoardOfDirectors.
   address private s_officerAddress;
 
+  /// @dev Storage gap reserving 50 slots for future upgrades. Decrement when adding
+  ///      new state variables above so the reserve stays constant and proxy slots don't shift.
+  // solhint-disable-next-line chainlink-solidity/prefix-storage-variables-with-s-underscore
+  uint256[50] private __gap;
+
   // --- Events ---
   /**
    * @notice Emitted when a proposal is created.
