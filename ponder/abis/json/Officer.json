@@ -3,49 +3,12 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_feeCollector",
+        "name": "feeCollector",
         "type": "address"
       }
     ],
     "stateMutability": "nonpayable",
     "type": "constructor"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "string",
-        "name": "contractType",
-        "type": "string"
-      }
-    ],
-    "name": "BeaconNotConfigured",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "BodMustBeDeployedViaElections",
-    "type": "error"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "string",
-        "name": "beaconType",
-        "type": "string"
-      }
-    ],
-    "name": "DuplicateBeaconType",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "EmptyBeaconType",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "EmptyContractType",
-    "type": "error"
   },
   {
     "inputs": [],
@@ -63,6 +26,11 @@
     "type": "error"
   },
   {
+    "inputs": [],
+    "name": "NotInitializing",
+    "type": "error"
+  },
+  {
     "inputs": [
       {
         "internalType": "string",
@@ -70,17 +38,59 @@
         "type": "string"
       }
     ],
-    "name": "MissingInitializerData",
+    "name": "Officer__BeaconNotConfigured",
     "type": "error"
   },
   {
     "inputs": [],
-    "name": "NotInitializing",
+    "name": "Officer__BodMustBeDeployedViaElections",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "beaconType",
+        "type": "string"
+      }
+    ],
+    "name": "Officer__DuplicateBeaconType",
     "type": "error"
   },
   {
     "inputs": [],
-    "name": "NotOwnerOrInitializing",
+    "name": "Officer__EmptyBeaconType",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Officer__EmptyContractType",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "contractType",
+        "type": "string"
+      }
+    ],
+    "name": "Officer__MissingInitializerData",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Officer__NotOwnerOrInitializing",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Officer__Unauthorized",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Officer__ZeroAddress",
     "type": "error"
   },
   {
@@ -108,16 +118,6 @@
   {
     "inputs": [],
     "name": "ReentrancyGuardReentrantCall",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "Unauthorized",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "ZeroAddress",
     "type": "error"
   },
   {
@@ -250,44 +250,6 @@
   {
     "inputs": [
       {
-        "internalType": "string",
-        "name": "",
-        "type": "string"
-      }
-    ],
-    "name": "contractBeacons",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "name": "contractTypes",
-    "outputs": [
-      {
-        "internalType": "string",
-        "name": "",
-        "type": "string"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
         "components": [
           {
             "internalType": "string",
@@ -361,7 +323,52 @@
   },
   {
     "inputs": [],
+    "name": "getBodContract",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "getConfiguredContractTypes",
+    "outputs": [
+      {
+        "internalType": "string[]",
+        "name": "",
+        "type": "string[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "contractType",
+        "type": "string"
+      }
+    ],
+    "name": "getContractBeacon",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getContractTypes",
     "outputs": [
       {
         "internalType": "string[]",
@@ -458,7 +465,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_owner",
+        "name": "ownerAddress",
         "type": "address"
       },
       {
@@ -492,12 +499,12 @@
           }
         ],
         "internalType": "struct DeploymentData[]",
-        "name": "_deployments",
+        "name": "deployments",
         "type": "tuple[]"
       },
       {
         "internalType": "bool",
-        "name": "_isDeployAllContracts",
+        "name": "isDeployAllContracts",
         "type": "bool"
       }
     ],
@@ -510,7 +517,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_tokenAddress",
+        "name": "tokenAddress",
         "type": "address"
       }
     ],

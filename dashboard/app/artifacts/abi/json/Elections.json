@@ -6,42 +6,97 @@
   },
   {
     "inputs": [],
-    "name": "AlreadyVoted",
+    "name": "ElectionUtils__DuplicateCandidates",
     "type": "error"
   },
   {
     "inputs": [],
-    "name": "BoardOfDirectorsNotFound",
+    "name": "ElectionUtils__DuplicateVoters",
     "type": "error"
   },
   {
     "inputs": [],
-    "name": "DuplicateCandidates",
+    "name": "ElectionUtils__InsufficientCandidates",
     "type": "error"
   },
   {
     "inputs": [],
-    "name": "DuplicateVoters",
+    "name": "ElectionUtils__InvalidCandidate",
     "type": "error"
   },
   {
     "inputs": [],
-    "name": "ElectionEnded",
+    "name": "ElectionUtils__InvalidDates",
     "type": "error"
   },
   {
     "inputs": [],
-    "name": "ElectionIsOngoing",
+    "name": "ElectionUtils__InvalidSeatCount",
     "type": "error"
   },
   {
     "inputs": [],
-    "name": "ElectionNotActive",
+    "name": "ElectionUtils__NoEligibleVoters",
     "type": "error"
   },
   {
     "inputs": [],
-    "name": "ElectionNotFound",
+    "name": "Elections__AlreadyVoted",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Elections__BoardOfDirectorsNotFound",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Elections__ElectionEnded",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Elections__ElectionIsOngoing",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Elections__ElectionNotActive",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Elections__ElectionNotFound",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Elections__NotEligibleVoter",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Elections__OfficerAddressNotSet",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Elections__ResultsAlreadyPublished",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Elections__ResultsNotReady",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Elections__Unauthorized",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Elections__ZeroSender",
     "type": "error"
   },
   {
@@ -56,47 +111,12 @@
   },
   {
     "inputs": [],
-    "name": "InsufficientCandidates",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "InvalidCandidate",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "InvalidDates",
-    "type": "error"
-  },
-  {
-    "inputs": [],
     "name": "InvalidInitialization",
     "type": "error"
   },
   {
     "inputs": [],
-    "name": "InvalidSeatCount",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "NoEligibleVoters",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "NotEligibleVoter",
-    "type": "error"
-  },
-  {
-    "inputs": [],
     "name": "NotInitializing",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "OfficerAddressNotSet",
     "type": "error"
   },
   {
@@ -119,26 +139,6 @@
       }
     ],
     "name": "OwnableUnauthorizedAccount",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "ResultsAlreadyPublished",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "ResultsNotReady",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "Unauthorized",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "ZeroSender",
     "type": "error"
   },
   {
@@ -285,30 +285,6 @@
     ],
     "name": "VoteSubmitted",
     "type": "event"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      },
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "name": "_voteCounts",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
   },
   {
     "inputs": [
@@ -470,6 +446,19 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "getElectionIds",
+    "outputs": [
+      {
+        "internalType": "uint256[]",
+        "name": "",
+        "type": "uint256[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "uint256",
@@ -521,6 +510,19 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "getOfficerAddress",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "uint256",
@@ -529,6 +531,30 @@
       }
     ],
     "name": "getVoteCount",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "electionId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "candidate",
+        "type": "address"
+      }
+    ],
+    "name": "getVoteCounts",
     "outputs": [
       {
         "internalType": "uint256",
@@ -591,7 +617,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_owner",
+        "name": "ownerAddress",
         "type": "address"
       }
     ],
@@ -619,19 +645,6 @@
         "internalType": "bool",
         "name": "",
         "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "officerAddress",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
       }
     ],
     "stateMutability": "view",

@@ -6,11 +6,6 @@
   },
   {
     "inputs": [],
-    "name": "DepositsNotEnabled",
-    "type": "error"
-  },
-  {
-    "inputs": [],
     "name": "EnforcedPause",
     "type": "error"
   },
@@ -21,57 +16,12 @@
   },
   {
     "inputs": [],
-    "name": "InsufficientMinterRole",
-    "type": "error"
-  },
-  {
-    "inputs": [],
     "name": "InvalidInitialization",
     "type": "error"
   },
   {
     "inputs": [],
-    "name": "InvalidInvestorAddress",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "InvalidOwner",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "InvalidSafeAddress",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "InvalidTokenAddress",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "InvalidTokenDecimals",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "InvestorContractNotFound",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "MultiplierTooLow",
-    "type": "error"
-  },
-  {
-    "inputs": [],
     "name": "NotInitializing",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "OfficerAddressNotSet",
     "type": "error"
   },
   {
@@ -102,14 +52,53 @@
     "type": "error"
   },
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "token",
-        "type": "address"
-      }
-    ],
-    "name": "SafeERC20FailedOperation",
+    "inputs": [],
+    "name": "SafeDepositRouter__DepositsNotEnabled",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "SafeDepositRouter__InsufficientMinterRole",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "SafeDepositRouter__InvalidInvestorAddress",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "SafeDepositRouter__InvalidOwner",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "SafeDepositRouter__InvalidSafeAddress",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "SafeDepositRouter__InvalidTokenAddress",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "SafeDepositRouter__InvalidTokenDecimals",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "SafeDepositRouter__InvestorContractNotFound",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "SafeDepositRouter__MultiplierTooLow",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "SafeDepositRouter__OfficerAddressNotSet",
     "type": "error"
   },
   {
@@ -125,17 +114,27 @@
         "type": "uint256"
       }
     ],
-    "name": "SlippageExceeded",
+    "name": "SafeDepositRouter__SlippageExceeded",
     "type": "error"
   },
   {
     "inputs": [],
-    "name": "TokenAlreadySupported",
+    "name": "SafeDepositRouter__TokenAlreadySupported",
     "type": "error"
   },
   {
     "inputs": [],
-    "name": "TokenNotSupported",
+    "name": "SafeDepositRouter__TokenNotSupported",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "SafeDepositRouter__ZeroAmount",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "SafeDepositRouter__ZeroSender",
     "type": "error"
   },
   {
@@ -146,7 +145,7 @@
         "type": "address"
       }
     ],
-    "name": "TokenSupportAlreadyAdded",
+    "name": "SafeERC20FailedOperation",
     "type": "error"
   },
   {
@@ -157,22 +156,23 @@
         "type": "address"
       }
     ],
-    "name": "TokenSupportNotFound",
+    "name": "TokenSupport__AlreadyAdded",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      }
+    ],
+    "name": "TokenSupport__NotFound",
     "type": "error"
   },
   {
     "inputs": [],
-    "name": "TokenSupportZeroAddress",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "ZeroAmount",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "ZeroSender",
+    "name": "TokenSupport__ZeroAddress",
     "type": "error"
   },
   {
@@ -497,7 +497,21 @@
   },
   {
     "inputs": [],
-    "name": "depositsEnabled",
+    "name": "disableDeposits",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "enableDeposits",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getDepositsEnabled",
     "outputs": [
       {
         "internalType": "bool",
@@ -510,16 +524,41 @@
   },
   {
     "inputs": [],
-    "name": "disableDeposits",
-    "outputs": [],
-    "stateMutability": "nonpayable",
+    "name": "getMultiplier",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
     "inputs": [],
-    "name": "enableDeposits",
-    "outputs": [],
-    "stateMutability": "nonpayable",
+    "name": "getOfficerAddress",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getSafeAddress",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -552,17 +591,36 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_safeAddress",
+        "name": "token",
+        "type": "address"
+      }
+    ],
+    "name": "getTokenDecimals",
+    "outputs": [
+      {
+        "internalType": "uint8",
+        "name": "",
+        "type": "uint8"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "safeAddress",
         "type": "address"
       },
       {
         "internalType": "address[]",
-        "name": "_tokenAddresses",
+        "name": "tokenAddresses",
         "type": "address[]"
       },
       {
         "internalType": "uint256",
-        "name": "_multiplier",
+        "name": "multiplier",
         "type": "uint256"
       }
     ],
@@ -575,7 +633,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_token",
+        "name": "token",
         "type": "address"
       }
     ],
@@ -585,32 +643,6 @@
         "internalType": "bool",
         "name": "",
         "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "multiplier",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "officerAddress",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
       }
     ],
     "stateMutability": "view",
@@ -688,23 +720,10 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "safeAddress",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "_newMultiplier",
+        "name": "newMultiplier",
         "type": "uint256"
       }
     ],
@@ -717,32 +736,13 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_newSafe",
+        "name": "newSafe",
         "type": "address"
       }
     ],
     "name": "setSafeAddress",
     "outputs": [],
     "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "name": "tokenDecimals",
-    "outputs": [
-      {
-        "internalType": "uint8",
-        "name": "",
-        "type": "uint8"
-      }
-    ],
-    "stateMutability": "view",
     "type": "function"
   },
   {
