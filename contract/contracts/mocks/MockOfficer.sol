@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import '../beacons/UserBeaconProxy.sol';
+import "../beacons/UserBeaconProxy.sol";
 
 interface IInitializableByOwner {
   function initialize(address _owner) external;
@@ -12,14 +12,10 @@ interface IOwnableLike {
 }
 
 contract MockOfficer {
-  mapping(bytes32 => address) private deployedByType;
+  mapping(bytes32 contractTypeHash => address contractAddress) private _deployedByType;
 
   function setDeployedContract(string calldata contractType, address contractAddress) external {
-    deployedByType[keccak256(bytes(contractType))] = contractAddress;
-  }
-
-  function findDeployedContract(string memory contractType) external view returns (address) {
-    return deployedByType[keccak256(bytes(contractType))];
+    _deployedByType[keccak256(bytes(contractType))] = contractAddress;
   }
 
   function deployBeaconProxy(
@@ -29,7 +25,7 @@ contract MockOfficer {
   ) external returns (address) {
     UserBeaconProxy proxy = new UserBeaconProxy(beacon, initializerData);
     address proxyAddress = address(proxy);
-    deployedByType[keccak256(bytes(contractType))] = proxyAddress;
+    _deployedByType[keccak256(bytes(contractType))] = proxyAddress;
     return proxyAddress;
   }
 
@@ -41,11 +37,15 @@ contract MockOfficer {
     IOwnableLike(target).transferOwnership(newOwner);
   }
 
-  function getFeeFor(string memory) external pure returns (uint16) {
-    return 0;
+  function findDeployedContract(string memory contractType) external view returns (address) {
+    return _deployedByType[keccak256(bytes(contractType))];
   }
 
   function getFeeCollector() external view returns (address) {
     return address(this);
+  }
+
+  function getFeeFor(string memory) external pure returns (uint16) {
+    return 0;
   }
 }

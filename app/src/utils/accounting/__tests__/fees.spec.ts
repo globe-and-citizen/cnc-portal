@@ -5,7 +5,7 @@ import { makeCtx, ADDR } from './fixtures'
 const ctx = makeCtx()
 
 describe('mapFees', () => {
-  it('books a fee as an internal Bank → FeeCollector move (not an expense)', () => {
+  it('books the protocol fee as a Transaction Fee Expense leaving the Bank', () => {
     const [entry] = mapFees(
       {
         bankFeePaids: [
@@ -23,10 +23,10 @@ describe('mapFees', () => {
     )
     expect(entry).toMatchObject({
       useCase: 'FEE',
-      debit: 'Cash — FeeCollector',
+      debit: 'Transaction Fee Expense',
       credit: 'Cash — Bank',
       amountUsd: 1,
-      internal: true
+      internal: false
     })
   })
 

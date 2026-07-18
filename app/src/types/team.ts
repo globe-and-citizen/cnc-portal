@@ -34,6 +34,12 @@ export interface CurrentOfficer {
 export interface Team {
   id: string
   name: string
+  /**
+   * Unique, URL-friendly identifier auto-generated from `name` on creation.
+   * Names are no longer unique — teams may share one — so the slug is what
+   * distinguishes homonyms (e.g. `acme-corp`, `acme-corp-2`).
+   */
+  slug: string
   description: string
   isHidden: boolean
   isArchived: boolean

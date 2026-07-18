@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
-import '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
-import '@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol';
-import {IInvestorV1} from './interfaces/IInvestorV1.sol';
-import {IOfficer} from './interfaces/IOfficer.sol';
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import {IInvestorV1} from "./interfaces/IInvestorV1.sol";
+import {IOfficer} from "./interfaces/IOfficer.sol";
 
 /**
  * @title Vesting
@@ -42,13 +42,16 @@ contract Vesting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
   }
 
   /// @notice All vesting schedules per member, addressed by index (append-only).
-  mapping(address => VestingInfo[]) public vestings;
+  mapping(address member => VestingInfo[] schedules) public vestings;
   /// @notice Every member that has ever had a schedule.
   address[] public members;
   /// @notice Whether an address is tracked in {members}.
-  mapping(address => bool) public isMember;
+  mapping(address account => bool tracked) public isMember;
   /// @notice Officer contract address (set at init); source of the Investor address.
   address public officerAddress;
+
+  /// @dev Reserved storage slots for future upgrades.
+  uint256[50] private __gap; // solhint-disable-line chainlink-solidity/prefix-storage-variables-with-s-underscore
 
   /**
    * @notice Emitted when a new vesting schedule is created for a member.
@@ -93,20 +96,6 @@ contract Vesting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
   /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() {
     _disableInitializers();
-  }
-
-  /**
-   * @notice Initializer instead of constructor for proxy compatibility.
-   * @dev `officerAddress` is taken from `msg.sender`, which is the Officer deploying
-   *      this proxy via its beacon registry (mirrors SafeDepositRouter).
-   */
-  function initialize() public initializer {
-    __Ownable_init(msg.sender);
-    __ReentrancyGuard_init();
-    __Pausable_init();
-
-    if (msg.sender == address(0)) revert ZeroSender();
-    officerAddress = msg.sender;
   }
 
   /**
@@ -193,76 +182,19 @@ contract Vesting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     emit VestingStopped(member, index);
   }
 
-  /**
-   * @dev Resolve the team's InvestorV1 share token through the Officer and mint to `to`.
-   *      Mirrors SafeDepositRouter: explicit officer/investor lookup and an upfront
-   *      MINTER_ROLE check so a missing grant reverts with a clear error.
-   */
-  function _mintShares(address to, uint256 amount) internal {
-    IInvestorV1 investor = IInvestorV1(_getInvestor());
-    if (!investor.hasRole(investor.MINTER_ROLE(), address(this))) {
-      revert InsufficientMinterRole();
-    }
-    investor.individualMint(to, amount);
+  /// @notice Pauses the contract, blocking vesting operations.
+  function pause() external onlyOwner {
+    _pause();
   }
 
-  /**
-   * @dev Resolve the team's InvestorV1 address via the Officer registry.
-   *      Mirrors SafeDepositRouter._getInvestorAddress.
-   */
-  function _getInvestor() internal view returns (address) {
-    if (officerAddress == address(0)) revert OfficerAddressNotSet();
-    address investorAddress = IOfficer(officerAddress).findDeployedContract('InvestorV1');
-    if (investorAddress == address(0)) revert InvestorContractNotFound();
-    return investorAddress;
-  }
-
-  /**
-   * @dev Calculates the amount of tokens vested at a given timestamp.
-   * Tokens are locked until the cliff period ends. After the cliff,
-   * vesting is linear until the full duration is reached.
-   *
-   * @param totalAllocation Total amount of tokens allocated for vesting
-   * @param start Timestamp when vesting starts
-   * @param cliff Duration (in seconds) of the cliff period
-   * @param duration Total vesting duration (in seconds)
-   * @param timestamp Current timestamp to calculate vested amount
-   * @return Amount of tokens vested at the given timestamp
-   */
-  function _vestingSchedule(
-    uint256 totalAllocation,
-    uint256 start,
-    uint256 cliff,
-    uint256 duration,
-    uint256 timestamp
-  ) internal pure returns (uint256) {
-    if (timestamp < start + cliff) {
-      return 0;
-    } else if (timestamp >= start + duration) {
-      return totalAllocation;
-    } else {
-      return (totalAllocation * (timestamp - start)) / duration;
-    }
+  /// @notice Unpauses the contract, restoring normal operation.
+  function unpause() external onlyOwner {
+    _unpause();
   }
 
   /// @notice Number of schedules a member holds (active + stopped).
   function getVestingCount(address member) external view returns (uint256) {
     return vestings[member].length;
-  }
-
-  /// @notice Get the amount vested for one of a member's schedules at the current time.
-  function vestedAmount(address member, uint256 index) public view returns (uint256) {
-    if (index >= vestings[member].length) revert IndexOutOfBounds();
-    VestingInfo memory v = vestings[member][index];
-    if (!v.active) return 0;
-
-    return _vestingSchedule(v.totalAmount, v.start, v.cliff, v.duration, uint64(block.timestamp));
-  }
-
-  /// @notice Get the releasable (vested minus already minted) amount for one schedule.
-  function releasable(address member, uint256 index) public view returns (uint256) {
-    uint256 vested = vestedAmount(member, index);
-    return vested - vestings[member][index].released;
   }
 
   /// @notice Get every member that has ever had a schedule.
@@ -302,6 +234,69 @@ contract Vesting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     )
   {
     return _flatten(false);
+  }
+
+  /// @notice Returns the current block timestamp.
+  function getCurrentTimestamp() external view returns (uint256) {
+    return block.timestamp;
+  }
+
+  /**
+   * @notice Initializer instead of constructor for proxy compatibility.
+   * @dev `officerAddress` is taken from `msg.sender`, which is the Officer deploying
+   *      this proxy via its beacon registry (mirrors SafeDepositRouter).
+   */
+  function initialize() public initializer {
+    __Ownable_init(msg.sender);
+    __ReentrancyGuard_init();
+    __Pausable_init();
+
+    if (msg.sender == address(0)) revert ZeroSender();
+    officerAddress = msg.sender;
+  }
+
+  /// @notice Get the amount vested for one of a member's schedules at the current time.
+  function vestedAmount(address member, uint256 index) public view returns (uint256) {
+    if (index >= vestings[member].length) revert IndexOutOfBounds();
+    VestingInfo memory v = vestings[member][index];
+    if (!v.active) return 0;
+
+    return
+      _vestingSchedule({
+        totalAllocation: v.totalAmount,
+        start: v.start,
+        cliff: v.cliff,
+        duration: v.duration,
+        timestamp: uint64(block.timestamp)
+      });
+  }
+
+  /// @notice Get the releasable (vested minus already minted) amount for one schedule.
+  function releasable(address member, uint256 index) public view returns (uint256) {
+    uint256 vested = vestedAmount(member, index);
+    return vested - vestings[member][index].released;
+  }
+
+  /**
+   * @dev Resolve the team's InvestorV1 share token through the Officer and mint to `to`.
+   *      Mirrors SafeDepositRouter: explicit officer/investor lookup and an upfront
+   *      MINTER_ROLE check so a missing grant reverts with a clear error.
+   */
+  function _mintShares(address to, uint256 amount) internal {
+    IInvestorV1 investor = IInvestorV1(_getInvestor());
+    if (!investor.hasRole(investor.MINTER_ROLE(), address(this))) revert InsufficientMinterRole();
+    investor.individualMint(to, amount);
+  }
+
+  /**
+   * @dev Resolve the team's InvestorV1 address via the Officer registry.
+   *      Mirrors SafeDepositRouter._getInvestorAddress.
+   */
+  function _getInvestor() internal view returns (address) {
+    if (officerAddress == address(0)) revert OfficerAddressNotSet();
+    address investorAddress = IOfficer(officerAddress).findDeployedContract("InvestorV1");
+    if (investorAddress == address(0)) revert InvestorContractNotFound();
+    return investorAddress;
   }
 
   /// @dev Flatten every member's schedules whose `active` flag equals `wantActive`.
@@ -347,21 +342,31 @@ contract Vesting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     }
   }
 
-  /// @notice Returns the current block timestamp.
-  function getCurrentTimestamp() external view returns (uint256) {
-    return block.timestamp;
+  /**
+   * @dev Calculates the amount of tokens vested at a given timestamp.
+   * Tokens are locked until the cliff period ends. After the cliff,
+   * vesting is linear until the full duration is reached.
+   *
+   * @param totalAllocation Total amount of tokens allocated for vesting
+   * @param start Timestamp when vesting starts
+   * @param cliff Duration (in seconds) of the cliff period
+   * @param duration Total vesting duration (in seconds)
+   * @param timestamp Current timestamp to calculate vested amount
+   * @return Amount of tokens vested at the given timestamp
+   */
+  function _vestingSchedule(
+    uint256 totalAllocation,
+    uint256 start,
+    uint256 cliff,
+    uint256 duration,
+    uint256 timestamp
+  ) internal pure returns (uint256) {
+    if (timestamp < start + cliff) {
+      return 0;
+    } else if (timestamp >= start + duration) {
+      return totalAllocation;
+    } else {
+      return (totalAllocation * (timestamp - start)) / duration;
+    }
   }
-
-  /// @notice Pauses the contract, blocking vesting operations.
-  function pause() external onlyOwner {
-    _pause();
-  }
-
-  /// @notice Unpauses the contract, restoring normal operation.
-  function unpause() external onlyOwner {
-    _unpause();
-  }
-
-  /// @dev Reserved storage slots for future upgrades.
-  uint256[50] private __gap;
 }

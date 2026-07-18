@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
-import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
-import '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
-import '@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol';
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
-import {IInvestorV1} from './interfaces/IInvestorV1.sol';
-import {IOfficer} from './interfaces/IOfficer.sol';
-import {IERC20Metadata} from '@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol';
-import './base/TokenSupport.sol';
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {TokenSupport} from "./base/TokenSupport.sol";
+import {IInvestorV1} from "./interfaces/IInvestorV1.sol";
+import {IOfficer} from "./interfaces/IOfficer.sol";
 
 /**
  * @title SafeDepositRouter
@@ -63,7 +63,13 @@ contract SafeDepositRouter is
   bool public depositsEnabled;
 
   /// @notice Stored decimals for each token (prevents manipulation)
-  mapping(address => uint8) public tokenDecimals;
+  mapping(address token => uint8 decimals) public tokenDecimals;
+
+  /*//////////////////////////////////////////////////////////////
+                          UPGRADE STORAGE GAP
+    //////////////////////////////////////////////////////////////*/
+
+  uint256[50] private __gap; // solhint-disable-line chainlink-solidity/prefix-storage-variables-with-s-underscore
 
   /*//////////////////////////////////////////////////////////////
                                 EVENTS
@@ -160,52 +166,6 @@ contract SafeDepositRouter is
   }
 
   /*//////////////////////////////////////////////////////////////
-                              INITIALIZATION
-    //////////////////////////////////////////////////////////////*/
-
-  /**
-   * @notice Initialize the SafeDepositRouter
-   * @param _safeAddress Safe wallet address where deposits are sent
-   * @param _tokenAddresses Initial supported tokens
-   * @param _multiplier SHER multiplier (1 = 1:1, 2 = 2:1, etc.)
-   *
-   * @dev Deposits disabled by default - call enableDeposits() to start
-   * @dev officerAddress is set from msg.sender (Officer contract)
-   */
-  function initialize(
-    address _safeAddress,
-    address[] calldata _tokenAddresses,
-    uint256 _multiplier
-  ) public initializer {
-    if (_safeAddress == address(0)) revert InvalidSafeAddress();
-    if (_multiplier < MIN_MULTIPLIER) revert MultiplierTooLow();
-
-    __Ownable_init(msg.sender);
-    __ReentrancyGuard_init();
-    __Pausable_init();
-
-    safeAddress = _safeAddress;
-    if (msg.sender == address(0)) revert ZeroSender();
-    officerAddress = msg.sender;
-    multiplier = _multiplier;
-    depositsEnabled = false; // Disabled by default
-
-    // Whitelist initial tokens
-    for (uint256 i = 0; i < _tokenAddresses.length; ++i) {
-      address tokenAddress = _tokenAddresses[i];
-      if (tokenAddress == address(0)) revert InvalidTokenAddress();
-
-      uint8 decimals = IERC20Metadata(tokenAddress).decimals();
-      if (decimals > 18) revert InvalidTokenDecimals();
-
-      _addTokenSupport(tokenAddress);
-      tokenDecimals[tokenAddress] = decimals;
-
-      emit TokenSupportAdded(tokenAddress, decimals);
-    }
-  }
-
-  /*//////////////////////////////////////////////////////////////
                           DEPOSIT FUNCTIONS
     //////////////////////////////////////////////////////////////*/
 
@@ -235,98 +195,6 @@ contract SafeDepositRouter is
     uint256 minSherOut
   ) external nonReentrant whenDepositsEnabled whenNotPaused {
     _deposit(tokenAddress, amount, minSherOut);
-  }
-
-  /**
-   * @notice Internal helper to get InvestorV1 contract address from Officer
-   * @return Address of the InvestorV1 contract
-   */
-  function _getInvestorAddress() internal view returns (address) {
-    if (officerAddress == address(0)) revert OfficerAddressNotSet();
-    address investorAddress = IOfficer(officerAddress).findDeployedContract('InvestorV1');
-    if (investorAddress == address(0)) revert InvestorContractNotFound();
-    return investorAddress;
-  }
-
-  /**
-   * @notice Internal deposit implementation
-   * @param tokenAddress Address of the token to deposit
-   * @param amount Amount of tokens to deposit
-   * @param minSherOut Minimum SHER to receive (0 for no slippage protection)
-   */
-  function _deposit(address tokenAddress, uint256 amount, uint256 minSherOut) internal {
-    if (!_isTokenSupported(tokenAddress)) revert TokenNotSupported();
-    if (amount == 0) revert ZeroAmount();
-
-    address investorAddress = _getInvestorAddress();
-
-    // Check MINTER_ROLE before attempting to mint
-    IInvestorV1 investor = IInvestorV1(investorAddress);
-    if (!investor.hasRole(investor.MINTER_ROLE(), address(this))) {
-      revert InsufficientMinterRole();
-    }
-
-    // Calculate SHER compensation
-    uint256 sherAmount = calculateCompensation(tokenAddress, amount);
-
-    // Check slippage if specified
-    if (minSherOut > 0 && sherAmount < minSherOut) {
-      revert SlippageExceeded(minSherOut, sherAmount);
-    }
-
-    // Transfer tokens to Safe
-    IERC20(tokenAddress).safeTransferFrom(msg.sender, safeAddress, amount);
-
-    // Mint SHER to depositor
-    investor.individualMint(msg.sender, sherAmount);
-
-    emit Deposited(msg.sender, tokenAddress, amount, sherAmount, block.number);
-  }
-
-  function _normalizeDecimals(
-    uint256 amount,
-    uint8 fromDec,
-    uint8 toDec
-  ) internal pure returns (uint256) {
-    if (fromDec == toDec) return amount;
-
-    if (fromDec < toDec) {
-      return amount * (10 ** (toDec - fromDec));
-    } else {
-      return amount / (10 ** (fromDec - toDec));
-    }
-  }
-
-  /*//////////////////////////////////////////////////////////////
-                        CALCULATION FUNCTIONS
-    //////////////////////////////////////////////////////////////*/
-
-  /**
-   * @notice Calculate SHER compensation for token amount
-   * @param tokenAddress Token address
-   * @param tokenAmount Amount in token's decimals
-   * @return SHER amount (in SHER token decimals)
-   *
-   * @dev Multiplier is fixed-point using SHER decimals.
-   *      Formula:
-   *      - `normalized = tokenAmount` normalized to `sherDec`
-   *      - `sherOut = normalized × multiplier ÷ 10^sherDec`
-   */
-  function calculateCompensation(
-    address tokenAddress,
-    uint256 tokenAmount
-  ) public view returns (uint256) {
-    if (!_isTokenSupported(tokenAddress)) revert TokenNotSupported();
-    if (tokenAmount == 0) revert ZeroAmount();
-
-    address investorAddress = _getInvestorAddress();
-
-    uint8 tokenDec = tokenDecimals[tokenAddress];
-    uint8 sherDec = IERC20Metadata(investorAddress).decimals();
-
-    uint256 normalizedAmount = _normalizeDecimals(tokenAmount, tokenDec, sherDec);
-
-    return (normalizedAmount * multiplier) / (10 ** sherDec);
   }
 
   /*//////////////////////////////////////////////////////////////
@@ -472,8 +340,142 @@ contract SafeDepositRouter is
   }
 
   /*//////////////////////////////////////////////////////////////
-                          UPGRADE STORAGE GAP
+                              INITIALIZATION
     //////////////////////////////////////////////////////////////*/
 
-  uint256[50] private __gap;
+  /**
+   * @notice Initialize the SafeDepositRouter
+   * @param _safeAddress Safe wallet address where deposits are sent
+   * @param _tokenAddresses Initial supported tokens
+   * @param _multiplier SHER multiplier (1 = 1:1, 2 = 2:1, etc.)
+   *
+   * @dev Deposits disabled by default - call enableDeposits() to start
+   * @dev officerAddress is set from msg.sender (Officer contract)
+   */
+  function initialize(
+    address _safeAddress,
+    address[] calldata _tokenAddresses,
+    uint256 _multiplier
+  ) public initializer {
+    if (_safeAddress == address(0)) revert InvalidSafeAddress();
+    if (_multiplier < MIN_MULTIPLIER) revert MultiplierTooLow();
+
+    __Ownable_init(msg.sender);
+    __ReentrancyGuard_init();
+    __Pausable_init();
+
+    safeAddress = _safeAddress;
+    if (msg.sender == address(0)) revert ZeroSender();
+    officerAddress = msg.sender;
+    multiplier = _multiplier;
+    depositsEnabled = false; // Disabled by default
+
+    // Whitelist initial tokens
+    for (uint256 i = 0; i < _tokenAddresses.length; ++i) {
+      address tokenAddress = _tokenAddresses[i];
+      if (tokenAddress == address(0)) revert InvalidTokenAddress();
+
+      uint8 decimals = IERC20Metadata(tokenAddress).decimals();
+      if (decimals > 18) revert InvalidTokenDecimals();
+
+      _addTokenSupport(tokenAddress);
+      tokenDecimals[tokenAddress] = decimals;
+
+      emit TokenSupportAdded(tokenAddress, decimals);
+    }
+  }
+
+  /*//////////////////////////////////////////////////////////////
+                        CALCULATION FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
+
+  /**
+   * @notice Calculate SHER compensation for token amount
+   * @param tokenAddress Token address
+   * @param tokenAmount Amount in token's decimals
+   * @return SHER amount (in SHER token decimals)
+   *
+   * @dev Multiplier is fixed-point using SHER decimals.
+   *      Formula:
+   *      - `normalized = tokenAmount` normalized to `sherDec`
+   *      - `sherOut = normalized × multiplier ÷ 10^sherDec`
+   */
+  function calculateCompensation(
+    address tokenAddress,
+    uint256 tokenAmount
+  ) public view returns (uint256) {
+    if (!_isTokenSupported(tokenAddress)) revert TokenNotSupported();
+    if (tokenAmount == 0) revert ZeroAmount();
+
+    address investorAddress = _getInvestorAddress();
+
+    uint8 tokenDec = tokenDecimals[tokenAddress];
+    uint8 sherDec = IERC20Metadata(investorAddress).decimals();
+
+    uint256 normalizedAmount = _normalizeDecimals(tokenAmount, tokenDec, sherDec);
+
+    return (normalizedAmount * multiplier) / (10 ** sherDec);
+  }
+
+  /**
+   * @notice Internal deposit implementation
+   * @param tokenAddress Address of the token to deposit
+   * @param amount Amount of tokens to deposit
+   * @param minSherOut Minimum SHER to receive (0 for no slippage protection)
+   */
+  function _deposit(address tokenAddress, uint256 amount, uint256 minSherOut) internal {
+    if (!_isTokenSupported(tokenAddress)) revert TokenNotSupported();
+    if (amount == 0) revert ZeroAmount();
+
+    address investorAddress = _getInvestorAddress();
+
+    // Check MINTER_ROLE before attempting to mint
+    IInvestorV1 investor = IInvestorV1(investorAddress);
+    if (!investor.hasRole(investor.MINTER_ROLE(), address(this))) revert InsufficientMinterRole();
+
+    // Calculate SHER compensation
+    uint256 sherAmount = calculateCompensation(tokenAddress, amount);
+
+    // Check slippage if specified
+    if (minSherOut > 0 && sherAmount < minSherOut) revert SlippageExceeded(minSherOut, sherAmount);
+
+    // Transfer tokens to Safe
+    IERC20(tokenAddress).safeTransferFrom(msg.sender, safeAddress, amount);
+
+    // Mint SHER to depositor
+    investor.individualMint(msg.sender, sherAmount);
+
+    emit Deposited({
+      depositor: msg.sender,
+      token: tokenAddress,
+      tokenAmount: amount,
+      sherAmount: sherAmount,
+      timestamp: block.number
+    });
+  }
+
+  /**
+   * @notice Internal helper to get InvestorV1 contract address from Officer
+   * @return Address of the InvestorV1 contract
+   */
+  function _getInvestorAddress() internal view returns (address) {
+    if (officerAddress == address(0)) revert OfficerAddressNotSet();
+    address investorAddress = IOfficer(officerAddress).findDeployedContract("InvestorV1");
+    if (investorAddress == address(0)) revert InvestorContractNotFound();
+    return investorAddress;
+  }
+
+  function _normalizeDecimals(
+    uint256 amount,
+    uint8 fromDec,
+    uint8 toDec
+  ) internal pure returns (uint256) {
+    if (fromDec == toDec) return amount;
+
+    if (fromDec < toDec) {
+      return amount * (10 ** (toDec - fromDec));
+    } else {
+      return amount / (10 ** (fromDec - toDec));
+    }
+  }
 }

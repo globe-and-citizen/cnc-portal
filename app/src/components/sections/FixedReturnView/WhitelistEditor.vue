@@ -1,18 +1,8 @@
 <template>
   <UCard variant="subtle" :ui="{ body: 'flex flex-col gap-3 p-4' }">
-    <UAlert color="neutral" variant="soft">
-      <template #description>
-        Per-lender limit: <strong>{{ defaultAmountLabel }}</strong
-        >. Set an explicit amount on each row — required before publishing.
-      </template>
-    </UAlert>
-
-    <UAlert
-      :color="targetStatusColor"
-      variant="soft"
-      :description="targetStatusDescription"
-      data-test="whitelist-target-total"
-    />
+    <p :class="targetStatusClass" class="text-xs font-semibold" data-test="whitelist-target-total">
+      {{ targetStatusDescription }}
+    </p>
 
     <!-- Existing whitelist entries -->
     <div class="flex flex-col gap-2">
@@ -22,7 +12,19 @@
         data-test="whitelist-entry"
         class="flex items-center gap-3 rounded-xl border border-[#e6efe9] bg-white px-3 py-2"
       >
-        <UserComponent :user="resolveUser(w.address)" class="min-w-0 flex-1" />
+        <CreditAvatar
+          :name="resolveUser(w.address).name ?? w.address"
+          :gradient="gradientForAddress(w.address)"
+          :size="28"
+        />
+        <div class="min-w-0 flex-1">
+          <div class="truncate text-sm font-semibold">
+            {{ resolveUser(w.address).name || 'User' }}
+          </div>
+          <div class="text-muted truncate font-mono text-[11px]">
+            {{ formatAddress(w.address) }}
+          </div>
+        </div>
         <div class="flex flex-none flex-col items-end gap-0.5">
           <UInput
             type="number"
@@ -50,7 +52,7 @@
               {{ w.amount != null ? 'custom' : 'not set' }}
             </span>
             <UButton
-              v-if="w.amount == null && defaultAmount != null"
+              v-if="defaultAmount != null"
               type="button"
               size="xs"
               color="success"
@@ -96,7 +98,7 @@
         class="top-full left-0 mt-1 w-full"
         data-test="whitelist-search-results"
       >
-        <SelectMemberResults :members="filteredMembers" @select="handleAdd" />
+        <SelectMemberResults :members="filteredMembers" variant="list" @select="handleAdd" />
       </div>
     </div>
   </UCard>
@@ -106,12 +108,14 @@
 import { computed, ref } from 'vue'
 import { watchDebounced } from '@vueuse/core'
 import type { Member, WhitelistEntry } from '@/types'
-import UserComponent from '@/components/UserComponent.vue'
+import CreditAvatar from '@/components/sections/CommunityCreditView/CreditAvatar.vue'
 import SelectMemberResults from '@/components/utils/SelectMemberResults.vue'
+import { formatAddress } from '@/utils/formatAddress'
 import { useTeamStore } from '@/stores/teamStore'
 import {
   filter,
   getWhitelistAllocationSummary,
+  gradientForAddress,
   isWhitelistAmountOverCap,
   resolveUser
 } from '@/utils'
@@ -127,10 +131,10 @@ const props = defineProps<{
 const allocationSummary = computed(() =>
   getWhitelistAllocationSummary(props.whitelist, props.principalTarget, props.token)
 )
-const targetStatusColor = computed<'error' | 'warning' | 'neutral'>(() => {
-  if (allocationSummary.value.status === 'over') return 'error'
-  if (allocationSummary.value.status === 'under') return 'warning'
-  return 'neutral'
+const targetStatusClass = computed(() => {
+  if (allocationSummary.value.status === 'over') return 'text-error'
+  if (allocationSummary.value.status === 'under') return 'text-warning'
+  return 'text-muted'
 })
 
 const targetStatusDescription = computed(() => allocationSummary.value.description)

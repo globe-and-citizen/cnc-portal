@@ -68,6 +68,8 @@
     "events": "^3.3.0",
     "graphql": "^16.10.0",
     "graphql-tag": "^2.12.6",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.8",
     "node-xlsx": "^0.24.0",
     "pdfmake": "^0.2.18",
     "pinia": "^3.0.2",
@@ -80,6 +82,7 @@
     "vue-router": "^4.2.5",
     "vue-sonner": "^2.0.9",
     "xlsx": "^0.18.5",
+    "xlsx-js-style": "^1.2.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {

@@ -1,6 +1,19 @@
 import * as fs from 'fs'
 import * as path from 'path'
 
+// ⚠️ DRIFT WARNING — do not run `npm run update-abi` without reconciling first.
+// The typed ABI wrappers actually on disk (app/src/artifacts/abi/*.ts) are
+// HAND-MAINTAINED (18 files) in the `import X from './json/X.json'; export const
+// X_ABI = X as Abi` form, fed by the abiExporter `json/` output. This script
+// instead emits a DIVERGENT inline `as const satisfies Abi` format for only the
+// 12 contracts listed below, with kebab names that don't all match the
+// hand-written filenames — so running it would clobber/duplicate wrappers.
+// The frozen version snapshots (abi/vN/) are produced by scripts/freeze-version.ts,
+// which copies the hand-written wrappers verbatim. Reconciling this generator
+// (match the JSON-import wrapper format + the full wrapper set, or retire it in
+// favour of freeze-version.ts) is tracked as a follow-up. See
+// contract/versions/registry.json and the plan in .claude/plans.
+
 // Configuration: list of contracts to copy ABIs for
 const contracts = [
   'AdCampaignManager',
