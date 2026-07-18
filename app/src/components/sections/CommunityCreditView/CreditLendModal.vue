@@ -152,7 +152,7 @@ import { useErc20Allowance } from '@/composables/erc20/reads'
 import { useERC20Approve } from '@/composables/erc20/writes'
 import {
   classifyError,
-  findOfferingToken,
+  findCreditToken,
   formatAmount,
   roundToDisplayPrecision,
   toLenderOffering,
@@ -177,7 +177,7 @@ const remaining = computed(() => (props.round ? props.round.target - props.round
 
 // CreditRound.token is a symbol; resolve it to the on-chain token to scale amounts and
 // approve/lend against. FixedReturn is ERC20-only, so an unknown symbol means we can't lend.
-const token = computed(() => (props.round ? findOfferingToken(props.round.token) : undefined))
+const token = computed(() => (props.round ? findCreditToken(props.round.token) : undefined))
 const decimals = computed(() => token.value?.decimals ?? 6)
 const amountUnits = computed(() => parseUnits(String(numericAmount.value || 0), decimals.value))
 

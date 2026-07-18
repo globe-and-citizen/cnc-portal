@@ -6,9 +6,9 @@ import {
   toCreditCallOfferParams,
   UNCAPPED_ALLOCATION
 } from '../communityCreditUtil'
-import type { CreditWhitelistEntry, OfferingForm } from '@/types'
+import type { CreditWhitelistEntry, CreditOfferForm } from '@/types'
 
-function baseForm(overrides: Partial<OfferingForm> = {}): OfferingForm {
+function baseForm(overrides: Partial<CreditOfferForm> = {}): CreditOfferForm {
   return {
     title: 'Round',
     purpose: '',
