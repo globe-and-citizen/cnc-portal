@@ -1,8 +1,36 @@
 import { describe, it, expect } from 'vitest'
-import { resolveFolder, CURRENT_VERSION } from '@/artifacts/registry'
+import { resolveFolder, folderForOfficerBeacon, CURRENT_VERSION } from '@/artifacts/registry'
 import registry from '@/artifacts/version-registry.json'
+import addrV0 from '@/artifacts/deployed_addresses/V0/chain-137.json'
+import addrV1 from '@/artifacts/deployed_addresses/V1/chain-137.json'
+
+const POLYGON = 137
+const V0_OFFICER_BEACON = (addrV0 as Record<string, string>)[registry.folders.V0.beacons.Officer]
+const V1_OFFICER_BEACON = (addrV1 as Record<string, string>)[registry.folders.V1.beacons.Officer]
 
 describe('artifacts/registry', () => {
+  describe('folderForOfficerBeacon', () => {
+    it('maps a known Officer beacon to its folder on the deployed chain', () => {
+      expect(folderForOfficerBeacon(V0_OFFICER_BEACON, POLYGON)).toBe('V0')
+      expect(folderForOfficerBeacon(V1_OFFICER_BEACON, POLYGON)).toBe('V1')
+      // Case-insensitive.
+      expect(folderForOfficerBeacon(V0_OFFICER_BEACON.toLowerCase(), POLYGON)).toBe('V0')
+    })
+
+    it('returns undefined on a chain with no per-version snapshots', () => {
+      // Only chain-137 has V0/V0.1/V1 snapshots; testnets are single-version.
+      expect(folderForOfficerBeacon(V0_OFFICER_BEACON, 80002)).toBeUndefined()
+    })
+
+    it('returns undefined for an unknown beacon or missing args', () => {
+      expect(
+        folderForOfficerBeacon('0x0000000000000000000000000000000000000000', POLYGON)
+      ).toBeUndefined()
+      expect(folderForOfficerBeacon(undefined, POLYGON)).toBeUndefined()
+      expect(folderForOfficerBeacon(V0_OFFICER_BEACON)).toBeUndefined()
+    })
+  })
+
   describe('resolveFolder', () => {
     // Oldest folder per resolveFolder's numeric sort (V0 < V0.1 < V1).
     const OLDEST = Object.keys(registry.folders).sort(

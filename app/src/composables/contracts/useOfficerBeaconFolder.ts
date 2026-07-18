@@ -32,7 +32,7 @@ export function useOfficerBeaconFolder(
       if (!raw) return null
       const beacon = getAddress(`0x${raw.slice(-40)}`)
       if (isAddressEqual(beacon, zeroAddress)) return null
-      return folderForOfficerBeacon(beacon) ?? null
+      return folderForOfficerBeacon(beacon, currentChainId) ?? null
     }
   })
 

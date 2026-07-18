@@ -1,7 +1,4 @@
 import registryJson from './version-registry.json'
-import addrV0 from './deployed_addresses/V0/chain-137.json'
-import addrV01 from './deployed_addresses/V0.1/chain-137.json'
-import addrV1 from './deployed_addresses/V1/chain-137.json'
 
 /**
  * Contract-version signal (no magic ABI resolution).
@@ -47,30 +44,45 @@ export function resolveFolder(officerTag?: string | null): FolderVersion {
   return FOLDERS[0] ?? CURRENT_FOLDER
 }
 
-// Per-version module-name → address maps (Polygon). Add a folder's import here
-// when a new generation (e.g. V2) is snapshotted.
-const ADDRESSES: Partial<Record<FolderVersion, Record<string, string>>> = {
-  ['V0' as FolderVersion]: addrV0,
-  ['V0.1' as FolderVersion]: addrV01,
-  ['V1' as FolderVersion]: addrV1
-}
+// Per-(folder, chain) module-name → address maps, discovered from the bundled
+// snapshots. Only chains/versions actually deployed have a `deployed_addresses/
+// <folder>/chain-<id>.json`, so a network missing a version simply has no entry
+// (teams there resolve to CURRENT). The top-level `deployed_addresses/chain-*.json`
+// (no folder segment) is intentionally NOT matched.
+const addressSnapshots = import.meta.glob<Record<string, string>>(
+  './deployed_addresses/*/chain-*.json',
+  { eager: true, import: 'default' }
+)
 
-// Each generation's Officer FactoryBeacon resolves to a distinct address; this
-// maps a team's on-chain Officer beacon back to its artifact folder. This is the
-// concrete identifier the registry says a team maps to (the `officerVersions`
-// tags aren't wired). Until the backend backfills `Team.contractVersion`, the
-// frontend resolves the folder from this map (see useContractVersion).
-const OFFICER_BEACON_TO_FOLDER: Record<string, FolderVersion> = {}
-for (const folder of FOLDERS) {
-  const ref = (registryJson.folders[folder] as { beacons: Record<string, string> }).beacons.Officer
-  const address = ref ? ADDRESSES[folder]?.[ref] : undefined
-  if (address) OFFICER_BEACON_TO_FOLDER[address.toLowerCase()] = folder
+// chainId → (lowercased Officer FactoryBeacon address → folder). Each generation's
+// Officer beacon is a distinct address per chain, so this maps a team's on-chain
+// Officer beacon back to its artifact folder. It's the concrete identifier the
+// registry says a team maps to (the `officerVersions` tags aren't wired). Until
+// the backend backfills `Team.contractVersion`, the frontend resolves from this
+// map (see useOfficerBeaconFolder).
+const OFFICER_BEACON_TO_FOLDER: Record<number, Record<string, FolderVersion>> = {}
+for (const [path, addresses] of Object.entries(addressSnapshots)) {
+  const match = path.match(/\/deployed_addresses\/([^/]+)\/chain-(\d+)\.json$/)
+  if (!match) continue
+  const folder = match[1] as FolderVersion
+  const chainId = Number(match[2])
+  const cfg = registryJson.folders[folder] as { beacons?: Record<string, string> } | undefined
+  const ref = cfg?.beacons?.Officer // skips folders not in the registry
+  const beacon = ref ? addresses[ref] : undefined
+  if (!beacon) continue
+  ;(OFFICER_BEACON_TO_FOLDER[chainId] ??= {})[beacon.toLowerCase()] = folder
 }
 
 /**
  * Resolve the artifact folder a team runs from its on-chain Officer FactoryBeacon
- * address. Returns undefined if the beacon isn't a known generation.
+ * address, scoped to the chain. Returns undefined when the beacon isn't a known
+ * generation on that chain (e.g. a network where only the current version is
+ * deployed) — the caller then defaults to CURRENT_VERSION.
  */
-export function folderForOfficerBeacon(beacon?: string | null): FolderVersion | undefined {
-  return beacon ? OFFICER_BEACON_TO_FOLDER[beacon.toLowerCase()] : undefined
+export function folderForOfficerBeacon(
+  beacon?: string | null,
+  chainId?: number
+): FolderVersion | undefined {
+  if (!beacon || chainId == null) return undefined
+  return OFFICER_BEACON_TO_FOLDER[chainId]?.[beacon.toLowerCase()]
 }
