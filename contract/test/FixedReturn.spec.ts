@@ -207,7 +207,7 @@ describe('FixedReturn', () => {
 
     it('reports its version', async () => {
       const { fixedReturn } = await loadFixture(deployFixture)
-      expect(await fixedReturn.version()).to.equal('1.4.0')
+      expect(await fixedReturn.version()).to.equal('2.0.0')
     })
 
     it('rejects a zero-address owner', async () => {

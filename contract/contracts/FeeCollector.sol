@@ -311,6 +311,11 @@ contract FeeCollector is
     return s_feeConfigs[idx].feeBps;
   }
 
+  /// @notice Current contract version, per semver.
+  function version() public pure returns (string memory) {
+    return "2.0.0";
+  }
+
   /**
    * @dev Resolves the effective recipient for withdrawals: beneficiary if set, otherwise owner.
    */

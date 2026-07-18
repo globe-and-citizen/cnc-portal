@@ -447,6 +447,11 @@ contract SafeDepositRouter is
     return s_tokenDecimals[token];
   }
 
+  /// @notice Current contract version, per semver.
+  function version() public pure returns (string memory) {
+    return "2.0.0";
+  }
+
   /**
    * @notice Internal deposit implementation
    * @param tokenAddress Address of the token to deposit

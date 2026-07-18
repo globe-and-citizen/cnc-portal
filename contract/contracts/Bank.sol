@@ -387,6 +387,11 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
     return IERC20(token).balanceOf(address(this));
   }
 
+  /// @notice Current contract version, per semver.
+  function version() public pure returns (string memory) {
+    return "2.0.0";
+  }
+
   /**
    * @dev Resolves the deployed FixedReturn contract from Officer.
    */

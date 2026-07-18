@@ -331,6 +331,11 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     return address(0);
   }
 
+  /// @notice Current contract version, per semver.
+  function version() public pure returns (string memory) {
+    return "2.0.0";
+  }
+
   function _configureBeacons(BeaconConfig[] memory beaconConfigs) internal {
     for (uint256 i = 0; i < beaconConfigs.length; i++) {
       if (beaconConfigs[i].beaconAddress == address(0)) revert Officer__ZeroAddress();

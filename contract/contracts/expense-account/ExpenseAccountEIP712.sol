@@ -605,6 +605,11 @@ contract ExpenseAccountEIP712 is
       );
   }
 
+  /// @notice Current contract version, per semver.
+  function version() public pure returns (string memory) {
+    return "2.0.0";
+  }
+
   /**
    * @dev Updates the expense balance record after a successful withdrawal.
    * @param budgetLimit The signed budget authorization.

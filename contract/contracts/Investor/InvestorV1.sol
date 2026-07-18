@@ -320,6 +320,11 @@ contract InvestorV1 is
     return 6; // Standard for many tokens, can be adjusted as needed
   }
 
+  /// @notice Current contract version, per semver.
+  function version() public pure returns (string memory) {
+    return "2.0.0";
+  }
+
   function _update(address from, address to, uint256 value) internal override {
     super._update(from, to, value);
 

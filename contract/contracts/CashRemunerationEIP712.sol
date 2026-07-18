@@ -469,6 +469,11 @@ contract CashRemunerationEIP712 is
     }
   }
 
+  /// @notice Current contract version, per semver.
+  function version() public pure returns (string memory) {
+    return "2.0.0";
+  }
+
   /**
    * @dev Computes the hash of a given Wage struct.
    * @param wage A single wage struct to hash.

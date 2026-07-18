@@ -363,6 +363,11 @@ contract BoardOfDirectors is ReentrancyGuardUpgradeable, IBoardOfDirectors {
 
   // Private functions
 
+  /// @notice Current contract version, per semver.
+  function version() public pure returns (string memory) {
+    return "2.0.0";
+  }
+
   /**
    * @dev Executes an action.
    * @param actionId The id of the action to execute.

@@ -386,6 +386,11 @@ contract AdCampaignManager is Ownable, Pausable, ReentrancyGuard {
     return s_adCampaignCount;
   }
 
+  /// @notice Current contract version, per semver.
+  function version() public pure returns (string memory) {
+    return "2.0.0";
+  }
+
   // Generate a unique campaign code
   /**
    * @dev Generates a pseudo-random campaign code using block data and caller.

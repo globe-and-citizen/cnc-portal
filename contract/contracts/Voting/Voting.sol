@@ -393,6 +393,11 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
     return s_officerAddress;
   }
 
+  /// @notice Current contract version, per semver.
+  function version() public pure returns (string memory) {
+    return "2.0.0";
+  }
+
   /// @notice Records a vote for a directive proposal
   /// @param proposal The proposal to record the vote for
   /// @param vote The vote value (0=No, 1=Yes, 2=Abstain)

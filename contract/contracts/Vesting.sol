@@ -294,6 +294,11 @@ contract Vesting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     return vested - s_vestings[member][index].released;
   }
 
+  /// @notice Current contract version, per semver.
+  function version() public pure returns (string memory) {
+    return "2.0.0";
+  }
+
   /**
    * @dev Resolve the team's InvestorV1 share token through the Officer and mint to `to`.
    *      Mirrors SafeDepositRouter: explicit officer/investor lookup and an upfront

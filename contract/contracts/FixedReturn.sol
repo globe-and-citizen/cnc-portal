@@ -726,8 +726,8 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
   }
 
   /// @notice Current contract version, per semver.
-  function version() external pure returns (string memory) {
-    return "1.4.0";
+  function version() public pure returns (string memory) {
+    return "2.0.0";
   }
 
   /// @dev Resolves Bank via Officer. Reverts if not found.

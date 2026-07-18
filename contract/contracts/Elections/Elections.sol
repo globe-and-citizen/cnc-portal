@@ -430,6 +430,11 @@ contract Elections is Initializable, OwnableUpgradeable, PausableUpgradeable {
     return winners;
   }
 
+  /// @notice Current contract version, per semver.
+  function version() public pure returns (string memory) {
+    return "2.0.0";
+  }
+
   /**
    * @dev Internal helper to get BoardOfDirectors contract address from Officer
    * @return Address of the BoardOfDirectors contract
