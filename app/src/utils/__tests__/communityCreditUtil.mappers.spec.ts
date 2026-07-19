@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import type { Address } from 'viem'
 import {
   gradientForAddress,
   lendingOfferToCreditRound,
@@ -7,7 +8,6 @@ import {
   offerStateToRoundStatus
 } from '../communityCreditUtil'
 import type { FixedReturnOfferLender, FixedReturnRawOffer, LendingOfferStruct } from '@/types'
-import type { Address } from 'viem'
 
 describe('communityCreditUtil on-chain mappers', () => {
   const baseOffer: LendingOfferStruct = {

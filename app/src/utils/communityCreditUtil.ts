@@ -3,6 +3,7 @@ import dayjs from 'dayjs'
 import type { ZodSafeParseResult } from 'zod'
 import type {
   CreditLender,
+  CreditOfferForm,
   CreditRound,
   CreditWhitelistAllocationSummary,
   CreditWhitelistEntry,
@@ -10,16 +11,15 @@ import type {
   FixedReturnOfferParams,
   FixedReturnRawOffer,
   LendingOfferStruct,
-  OfferingForm,
   RoundStatus,
   StatusMeta
 } from '@/types'
 import {
-  getOfferingTokenSymbol,
+  getCreditTokenSymbol,
   isLendingOfferAcceptingFunds,
   sumWhitelistAmount,
   toFixedReturnOfferParams
-} from './offeringUtil'
+} from './communityCreditOfferUtil'
 import { shortenAddress } from './generalUtil'
 
 /** Clears `errors`, then repopulates it from a failed `safeParse` result (first issue
@@ -222,7 +222,7 @@ export function lendingOfferToCreditRound(
   return {
     id: String(offerId),
     name: title || `Round #${offerId}`,
-    token: getOfferingTokenSymbol(offer.token),
+    token: getCreditTokenSymbol(offer.token),
     target: Number(formatUnits(offer.fundingTarget, decimals)),
     raised: Number(formatUnits(offer.totalFunded, decimals)),
     totalRepaid: Number(formatUnits(offer.totalRepaidByIssuer, decimals)),
@@ -246,14 +246,13 @@ export function lendingOfferToCreditRound(
 
 /**
  * Maps one on-chain lender position (from useFixedReturnOfferLenders) to a CreditLender.
- * Name resolution is injected (like buildFixedReturnLenderRows' resolveName) to keep this
- * pure; the avatar gradient is derived from the address, and there is no per-deposit
- * timestamp on-chain so `date` is blank. `paid` mirrors buildFixedReturnLenderRows'
- * proportional estimate — this lender's share of raised × the round's totalRepaid —
- * rather than an extra per-lender read of the on-chain totalPaidToLender mapping.
- * `refunded` mirrors buildFixedReturnLenderRows' same check: refundLenders zeroes this
- * lender's on-chain principal, so `principal === 0` in an otherwise-refunded round means
- * they were paid back, not that they never lent.
+ * Name resolution is injected to keep this pure; the avatar gradient is derived from
+ * the address, and there is no per-deposit timestamp on-chain so `date` is blank.
+ * `paid` is a proportional estimate — this lender's share of raised × the round's
+ * totalRepaid — rather than an extra per-lender read of the on-chain totalPaidToLender
+ * mapping. `refunded` checks that refundLenders zeroes this lender's on-chain
+ * principal, so `principal === 0` in an otherwise-refunded round means they were paid
+ * back, not that they never lent.
  */
 export function offerLenderToCreditLender(
   lender: FixedReturnOfferLender,
@@ -276,9 +275,9 @@ export function offerLenderToCreditLender(
 }
 
 // ───────── whitelist / uncapped allocation (Community Credit only) ─────────
-// FixedReturn.sol's UNCAPPED_ALLOCATION sentinel — Issue Note's whitelist picker
-// doesn't expose "no cap", so this concept lives entirely in Community Credit's
-// own files rather than the shared offering* utils/types.
+// FixedReturn.sol's UNCAPPED_ALLOCATION sentinel has no representation in the
+// generic FixedReturnWhitelistEntry/toFixedReturnOfferParams shapes above, so this
+// concept lives entirely in Community Credit's own files.
 
 /** Mirrors FixedReturn.sol's UNCAPPED_ALLOCATION — a whitelisted lender with no
  *  personal ceiling beyond the round's remaining funding target. */
@@ -317,7 +316,7 @@ export function sumWhitelistAmountUnits(
  * sentinel through the normal parseUnits path.
  */
 export function toCreditCallOfferParams(
-  form: OfferingForm,
+  form: CreditOfferForm,
   whitelist: CreditWhitelistEntry[]
 ): FixedReturnOfferParams {
   const params = toFixedReturnOfferParams(form, whitelist)

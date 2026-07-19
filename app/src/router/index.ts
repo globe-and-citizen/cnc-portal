@@ -150,18 +150,6 @@ const router = createRouter({
           component: () => import('@/views/team/[id]/Accounting/GeneralLedgerView.vue')
         },
         {
-          path: '/teams/:id/debt-financing/fixed-return',
-          name: 'fixed-return',
-          meta: { name: 'Fixed Return' },
-          component: () => import('@/views/team/[id]/FixedReturnView.vue')
-        },
-        {
-          path: '/teams/:id/debt-financing/lender-marketplace',
-          name: 'lender-marketplace',
-          meta: { name: 'Lender Marketplace' },
-          component: () => import('@/views/team/[id]/LenderMarketplaceView.vue')
-        },
-        {
           path: '/teams/:id/community-credit',
           name: 'community-credit',
           meta: { name: 'Community Credit' },
