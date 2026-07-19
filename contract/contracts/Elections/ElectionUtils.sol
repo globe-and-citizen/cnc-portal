@@ -76,7 +76,8 @@ library ElectionUtils {
     // Check if candidate is valid
     if (candidate == address(0)) revert ElectionUtils__InvalidCandidate();
     bool isValidCandidate = false;
-    for (uint256 i = 0; i < election.candidateList.length; i++) {
+    uint256 length = election.candidateList.length;
+    for (uint256 i = 0; i < length; ++i) {
       if (election.candidateList[i] == candidate) {
         isValidCandidate = true;
         break;

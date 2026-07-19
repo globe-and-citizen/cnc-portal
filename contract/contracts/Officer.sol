@@ -210,7 +210,7 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
    * @param contractType The contract type identifier.
    * @return Fee in basis points.
    */
-  function getFeeFor(string memory contractType) external view returns (uint16) {
+  function getFeeFor(string calldata contractType) external view returns (uint16) {
     return IFeeCollector(i_feeCollectorAddress).getFeeFor(contractType);
   }
 
@@ -267,11 +267,11 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     bytes calldata initializerData
   ) public whenNotPaused onlyInitializingOrOwners returns (address) {
     // Validate inputs
-    if (s_contractBeacons[contractType] == address(0))
-      revert Officer__BeaconNotConfigured(contractType);
+    address beacon = s_contractBeacons[contractType];
+    if (beacon == address(0)) revert Officer__BeaconNotConfigured(contractType);
     if (keccak256(bytes(contractType)) == keccak256(bytes("BoardOfDirectors")))
       revert Officer__BodMustBeDeployedViaElections();
-    BeaconProxy proxy = new BeaconProxy(s_contractBeacons[contractType], initializerData);
+    BeaconProxy proxy = new BeaconProxy(beacon, initializerData);
 
     address proxyAddress = address(proxy);
     s_deployedContracts.push(DeployedContract(contractType, proxyAddress));
@@ -302,20 +302,19 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
   function deployAllContracts(
     DeploymentData[] calldata deployments
   ) public whenNotPaused onlyInitializingOrOwners returns (address[] memory) {
-    address[] memory deployedAddresses = new address[](deployments.length);
+    uint256 length = deployments.length;
+    address[] memory deployedAddresses = new address[](length);
 
-    for (uint256 i = 0; i < deployments.length; i++) {
-      if (bytes(deployments[i].contractType).length == 0) revert Officer__EmptyContractType();
-      if (deployments[i].initializerData.length == 0)
-        revert Officer__MissingInitializerData(deployments[i].contractType);
-      if (s_contractBeacons[deployments[i].contractType] == address(0))
-        revert Officer__BeaconNotConfigured(deployments[i].contractType);
-      if (keccak256(bytes(deployments[i].contractType)) == keccak256(bytes("BoardOfDirectors")))
+    for (uint256 i = 0; i < length; ++i) {
+      DeploymentData calldata deployment = deployments[i];
+      if (bytes(deployment.contractType).length == 0) revert Officer__EmptyContractType();
+      if (deployment.initializerData.length == 0)
+        revert Officer__MissingInitializerData(deployment.contractType);
+      if (s_contractBeacons[deployment.contractType] == address(0))
+        revert Officer__BeaconNotConfigured(deployment.contractType);
+      if (keccak256(bytes(deployment.contractType)) == keccak256(bytes("BoardOfDirectors")))
         revert Officer__BodMustBeDeployedViaElections();
-      deployedAddresses[i] = deployBeaconProxy(
-        deployments[i].contractType,
-        deployments[i].initializerData
-      );
+      deployedAddresses[i] = deployBeaconProxy(deployment.contractType, deployment.initializerData);
     }
     emit BeaconProxiesDeployed(deployedAddresses);
     return deployedAddresses;
@@ -327,10 +326,12 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
    * @return The address of the contract, or address(0) if not found
    */
   function findDeployedContract(string memory contractType) public view returns (address) {
+    bytes32 target = keccak256(bytes(contractType));
     uint256 length = s_deployedContracts.length;
-    for (uint256 i = 0; i < length; i++) {
-      if (keccak256(bytes(s_deployedContracts[i].contractType)) == keccak256(bytes(contractType))) {
-        return s_deployedContracts[i].contractAddress;
+    for (uint256 i = 0; i < length; ++i) {
+      DeployedContract storage deployed = s_deployedContracts[i];
+      if (keccak256(bytes(deployed.contractType)) == target) {
+        return deployed.contractAddress;
       }
     }
     return address(0);

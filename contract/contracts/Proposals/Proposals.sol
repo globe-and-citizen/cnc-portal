@@ -187,11 +187,6 @@ contract Proposals is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUp
     _;
   }
 
-  modifier boardOfDirectorsContractExists() {
-    _getBoardOfDirectorsAddress(); // Will revert if not found
-    _;
-  }
-
   /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() {
     _disableInitializers();
@@ -211,17 +206,20 @@ contract Proposals is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUp
     string memory proposalType,
     uint256 startDate,
     uint256 endDate
-  ) external boardOfDirectorsContractExists {
+  ) external {
+    // Resolve BOD once up front (replaces the boardOfDirectorsContractExists
+    // modifier, preserving revert order) and reuse the address below.
+    address bodAddress = _getBoardOfDirectorsAddress();
     ProposalUtils._validateProposalDates(startDate, endDate);
     ProposalUtils._validateProposalContent(title, description);
 
-    address bodAddress = _getBoardOfDirectorsAddress();
     uint256 boardCount = IBoardOfDirectors(bodAddress).getBoardOfDirectors().length;
     if (boardCount == 0) revert Proposals__NoBoardMembers();
     if (!IBoardOfDirectors(bodAddress).isMember(msg.sender)) revert Proposals__OnlyBoardMember();
 
-    Proposal storage newProposal = s_proposals[s_nextProposalId];
-    newProposal.id = s_nextProposalId;
+    uint256 proposalId = s_nextProposalId;
+    Proposal storage newProposal = s_proposals[proposalId];
+    newProposal.id = proposalId;
     newProposal.title = title;
     newProposal.description = description;
     newProposal.proposalType = proposalType;
@@ -233,13 +231,13 @@ contract Proposals is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUp
     newProposal.state = ProposalState.Active;
 
     emit ProposalCreated({
-      proposalId: s_nextProposalId,
+      proposalId: proposalId,
       title: title,
       creator: msg.sender,
       startDate: startDate,
       endDate: endDate
     });
-    s_nextProposalId++;
+    s_nextProposalId = proposalId + 1;
   }
 
   /**
@@ -248,10 +246,7 @@ contract Proposals is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUp
    * @param vote The vote option (Yes, No, Abstain).
    * @notice Only members of the board of directors can vote on proposals.
    */
-  function castVote(
-    uint256 proposalId,
-    VoteOption vote
-  ) external boardOfDirectorsContractExists onlyMember nonReentrant {
+  function castVote(uint256 proposalId, VoteOption vote) external onlyMember nonReentrant {
     Proposal storage proposal = s_proposals[proposalId];
     if (proposal.id == 0) revert Proposals__ProposalNotFound();
     if (block.timestamp < proposal.startDate) revert Proposals__ProposalVotingNotStarted();
@@ -273,7 +268,9 @@ contract Proposals is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUp
 
     emit ProposalVoted(proposalId, msg.sender, vote, block.timestamp);
 
-    if (proposal.voteCount == proposal.totalVoters) tallyResults(proposalId);
+    // Caller is already a verified member (onlyMember above) — skip the
+    // redundant re-resolution tallyResults' own modifier would perform.
+    if (proposal.voteCount == proposal.totalVoters) _tallyResults(proposalId);
   }
 
   /**
@@ -307,15 +304,9 @@ contract Proposals is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUp
    * @notice Returns the current Board of Directors members.
    * @return Array of BOD member addresses.
    */
-  function getBoardOfDirectors()
-    external
-    view
-    boardOfDirectorsContractExists
-    returns (address[] memory)
-  {
-    address bodAddress = _getBoardOfDirectorsAddress();
-    IBoardOfDirectors boardOfDirectors = IBoardOfDirectors(bodAddress);
-    return boardOfDirectors.getBoardOfDirectors();
+  function getBoardOfDirectors() external view returns (address[] memory) {
+    // _getBoardOfDirectorsAddress reverts if unset — no modifier needed.
+    return IBoardOfDirectors(_getBoardOfDirectorsAddress()).getBoardOfDirectors();
   }
 
   /**
@@ -360,6 +351,17 @@ contract Proposals is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUp
    * @notice This function is called automatically when all board members have voted.
    */
   function tallyResults(uint256 proposalId) public onlyMember {
+    _tallyResults(proposalId);
+  }
+
+  /// @notice Current contract version, per semver.
+  function version() public pure returns (string memory) {
+    return "2.0.0";
+  }
+
+  /// @dev Tally logic shared by `tallyResults` and the auto-tally in `castVote`
+  ///      (which has already verified membership and skips the modifier).
+  function _tallyResults(uint256 proposalId) internal {
     Proposal storage proposal = s_proposals[proposalId];
     if (proposal.id == 0) revert Proposals__ProposalNotFound();
     if (block.timestamp < proposal.startDate) revert Proposals__ProposalVotingNotStarted();
@@ -379,11 +381,6 @@ contract Proposals is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUp
       noCount: proposal.noCount,
       abstainCount: proposal.abstainCount
     });
-  }
-
-  /// @notice Current contract version, per semver.
-  function version() public pure returns (string memory) {
-    return "2.0.0";
   }
 
   /**

@@ -282,12 +282,12 @@ contract ExpenseAccountEIP712 is
 
     bytes32 signatureHash = keccak256(signature);
 
-    // Validate transfer conditions
-    if (!validateTransfer(budgetLimit, amount, signatureHash))
-      revert ExpenseAccountEIP712__TransferNotAllowed();
+    // Validate transfer conditions (reverts on violation) and reuse the
+    // computed period so the DateTime math runs only once per transfer.
+    uint256 currentPeriod = _validateTransfer(budgetLimit, amount, signatureHash);
 
     // Update expense balance
-    _updateExpenseBalance(budgetLimit, amount, signatureHash);
+    _updateExpenseBalance(budgetLimit, amount, signatureHash, currentPeriod);
 
     // Perform transfer
     if (budgetLimit.tokenAddress == address(0)) {
@@ -364,13 +364,15 @@ contract ExpenseAccountEIP712 is
       emit OwnerTreasuryWithdrawNative(owner(), nativeBalance);
     }
 
-    address[] memory tokens = this.getSupportedTokens();
-    for (uint256 i = 0; i < tokens.length; i++) {
+    address[] memory tokens = _getSupportedTokens();
+    uint256 length = tokens.length;
+    address ownerAddress = owner();
+    for (uint256 i = 0; i < length; ++i) {
       uint256 tokenBalance = IERC20(tokens[i]).balanceOf(address(this));
       if (tokenBalance > 0) {
         if (!IERC20(tokens[i]).transfer(bankAddress, tokenBalance))
           revert ExpenseAccountEIP712__TokenTransferFailed(tokens[i]);
-        emit OwnerTreasuryWithdrawToken(owner(), tokens[i], tokenBalance);
+        emit OwnerTreasuryWithdrawToken(ownerAddress, tokens[i], tokenBalance);
       }
     }
   }
@@ -486,38 +488,7 @@ contract ExpenseAccountEIP712 is
     uint256 amount,
     bytes32 signatureHash
   ) public view returns (bool) {
-    if (block.timestamp < budgetLimit.startDate)
-      revert ExpenseAccountEIP712__ApprovalNotActive(block.timestamp, budgetLimit.startDate);
-    if (block.timestamp > budgetLimit.endDate)
-      revert ExpenseAccountEIP712__ApprovalExpired(block.timestamp, budgetLimit.endDate);
-
-    // Check amount doesn't exceed single withdrawal limit
-    if (amount > budgetLimit.amount) revert ExpenseAccountEIP712__AmountExceedsBudgetLimit();
-
-    ExpenseBalance storage balance = s_expenseBalances[signatureHash];
-
-    // For one-time withdrawals
-    if (budgetLimit.frequencyType == FrequencyType.OneTime) {
-      if (balance.totalWithdrawn != 0) revert ExpenseAccountEIP712__OneTimeBudgetAlreadyUsed();
-      return true;
-    }
-
-    // For periodic withdrawals
-    uint256 currentPeriod = getCurrentPeriod(budgetLimit);
-
-    if (currentPeriod > balance.lastWithdrawnPeriod || balance.lastWithdrawnDate == 0) {
-      // New period - check single withdrawal limit
-      if (amount > budgetLimit.amount) revert ExpenseAccountEIP712__AmountExceedsPeriodBudget();
-    } else {
-      // Same period - check cumulative amount
-      if (balance.totalWithdrawn + amount > budgetLimit.amount)
-        revert ExpenseAccountEIP712__AmountExceedsPeriodBudget();
-    }
-
-    // Check token is supported (allows native token)
-    if (budgetLimit.tokenAddress != address(0) && !isTokenSupported(budgetLimit.tokenAddress))
-      revert ExpenseAccountEIP712__TokenNotSupported(budgetLimit.tokenAddress);
-
+    _validateTransfer(budgetLimit, amount, signatureHash);
     return true;
   }
 
@@ -615,14 +586,15 @@ contract ExpenseAccountEIP712 is
    * @param budgetLimit The signed budget authorization.
    * @param amount Amount that was withdrawn.
    * @param signatureHash The keccak256 hash of the approval signature.
+   * @param currentPeriod Period index already computed by `_validateTransfer`.
    */
   function _updateExpenseBalance(
     BudgetLimit calldata budgetLimit,
     uint256 amount,
-    bytes32 signatureHash
+    bytes32 signatureHash,
+    uint256 currentPeriod
   ) internal {
     ExpenseBalance storage balance = s_expenseBalances[signatureHash];
-    uint256 currentPeriod = getCurrentPeriod(budgetLimit);
 
     if (budgetLimit.frequencyType == FrequencyType.OneTime) {
       // One-time withdrawal - just add to total
@@ -636,6 +608,48 @@ contract ExpenseAccountEIP712 is
       // Same period - add to existing total
       balance.totalWithdrawn += amount;
     }
+  }
+
+  /// @dev Validation shared with `transfer`; returns the computed period index
+  ///      (0 for one-time budgets) so callers can reuse it without recomputing.
+  function _validateTransfer(
+    BudgetLimit calldata budgetLimit,
+    uint256 amount,
+    bytes32 signatureHash
+  ) internal view returns (uint256) {
+    if (block.timestamp < budgetLimit.startDate)
+      revert ExpenseAccountEIP712__ApprovalNotActive(block.timestamp, budgetLimit.startDate);
+    if (block.timestamp > budgetLimit.endDate)
+      revert ExpenseAccountEIP712__ApprovalExpired(block.timestamp, budgetLimit.endDate);
+
+    // Check amount doesn't exceed single withdrawal limit
+    if (amount > budgetLimit.amount) revert ExpenseAccountEIP712__AmountExceedsBudgetLimit();
+
+    ExpenseBalance storage balance = s_expenseBalances[signatureHash];
+
+    // For one-time withdrawals
+    if (budgetLimit.frequencyType == FrequencyType.OneTime) {
+      if (balance.totalWithdrawn != 0) revert ExpenseAccountEIP712__OneTimeBudgetAlreadyUsed();
+      return 0;
+    }
+
+    // For periodic withdrawals
+    uint256 currentPeriod = getCurrentPeriod(budgetLimit);
+
+    if (currentPeriod > balance.lastWithdrawnPeriod || balance.lastWithdrawnDate == 0) {
+      // New period - check single withdrawal limit
+      if (amount > budgetLimit.amount) revert ExpenseAccountEIP712__AmountExceedsPeriodBudget();
+    } else {
+      // Same period - check cumulative amount
+      if (balance.totalWithdrawn + amount > budgetLimit.amount)
+        revert ExpenseAccountEIP712__AmountExceedsPeriodBudget();
+    }
+
+    // Check token is supported (allows native token)
+    if (budgetLimit.tokenAddress != address(0) && !isTokenSupported(budgetLimit.tokenAddress))
+      revert ExpenseAccountEIP712__TokenNotSupported(budgetLimit.tokenAddress);
+
+    return currentPeriod;
   }
 
   /**

@@ -208,18 +208,20 @@ contract InvestorV1 is
     if (supply == 0) revert InvestorV1__NoTokensMinted();
 
     Shareholder[] memory currentShareholders = _getShareholders();
-    if (currentShareholders.length == 0) revert InvestorV1__NoShareholders();
+    uint256 count = currentShareholders.length;
+    if (count == 0) revert InvestorV1__NoShareholders();
 
     uint256 remaining = amount;
+    uint256 last = count - 1;
 
-    for (uint256 i = 0; i < currentShareholders.length; i++) {
+    for (uint256 i = 0; i < count; ++i) {
       address shareholder = currentShareholders[i].shareholder;
       uint256 balance = currentShareholders[i].amount;
 
       uint256 share = (amount * balance) / supply;
 
       // Last shareholder gets remainder to handle rounding
-      if (i == currentShareholders.length - 1) {
+      if (i == last) {
         share = remaining;
       } else if (share > remaining) {
         share = remaining;
@@ -233,7 +235,7 @@ contract InvestorV1 is
       }
     }
 
-    emit DividendDistributed(msg.sender, address(0), amount, currentShareholders.length);
+    emit DividendDistributed(msg.sender, address(0), amount, count);
   }
 
   /**
@@ -253,20 +255,22 @@ contract InvestorV1 is
     if (supply == 0) revert InvestorV1__NoTokensMinted();
 
     Shareholder[] memory currentShareholders = _getShareholders();
-    if (currentShareholders.length == 0) revert InvestorV1__NoShareholders();
+    uint256 count = currentShareholders.length;
+    if (count == 0) revert InvestorV1__NoShareholders();
     uint256 tokenBal = IERC20(token).balanceOf(address(this));
     if (tokenBal < amount)
       revert InvestorV1__InsufficientFundedTokenBalance(token, amount, tokenBal);
 
     uint256 remaining = amount;
+    uint256 last = count - 1;
 
-    for (uint256 i = 0; i < currentShareholders.length; i++) {
+    for (uint256 i = 0; i < count; ++i) {
       address shareholder = currentShareholders[i].shareholder;
       uint256 balance = currentShareholders[i].amount;
 
       uint256 share = (amount * balance) / supply;
 
-      if (i == currentShareholders.length - 1) {
+      if (i == last) {
         share = remaining;
       } else if (share > remaining) {
         share = remaining;
@@ -279,7 +283,7 @@ contract InvestorV1 is
       }
     }
 
-    emit DividendDistributed(msg.sender, token, amount, currentShareholders.length);
+    emit DividendDistributed(msg.sender, token, amount, count);
   }
 
   /// @notice Pauses token operations.
@@ -297,12 +301,7 @@ contract InvestorV1 is
    * @return Array of Shareholder structs.
    */
   function getShareholders() external view returns (Shareholder[] memory) {
-    Shareholder[] memory shareholders = new Shareholder[](s_shareholderSet.length());
-    for (uint256 i = 0; i < s_shareholderSet.length(); i++) {
-      address shareholder = s_shareholderSet.at(i);
-      shareholders[i] = Shareholder(shareholder, balanceOf(shareholder));
-    }
-    return shareholders;
+    return _getShareholders();
   }
 
   /// @notice Returns the addresses currently tracked as holding a non-zero balance.
@@ -353,8 +352,9 @@ contract InvestorV1 is
    * @return Array of shareholder addresses and their balances
    */
   function _getShareholders() internal view returns (Shareholder[] memory) {
-    Shareholder[] memory shareholders = new Shareholder[](s_shareholderSet.length());
-    for (uint256 i = 0; i < s_shareholderSet.length(); i++) {
+    uint256 count = s_shareholderSet.length();
+    Shareholder[] memory shareholders = new Shareholder[](count);
+    for (uint256 i = 0; i < count; ++i) {
       address shareholder = s_shareholderSet.at(i);
       shareholders[i] = Shareholder(shareholder, balanceOf(shareholder));
     }

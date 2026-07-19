@@ -165,14 +165,16 @@ contract BoardOfDirectors is ReentrancyGuardUpgradeable, IBoardOfDirectors {
    * @param actionId The id of the action to approve.
    */
   function approve(uint256 actionId) external onlyBoardOfDirectors {
-    if (s_actions[actionId].isExecuted) revert BoardOfDirectors__ActionAlreadyExecuted(actionId);
-    if (s_actions[actionId].approvals[msg.sender]) revert BoardOfDirectors__AlreadyApproved();
+    Action storage action = s_actions[actionId];
+    if (action.isExecuted) revert BoardOfDirectors__ActionAlreadyExecuted(actionId);
+    if (action.approvals[msg.sender]) revert BoardOfDirectors__AlreadyApproved();
 
-    s_actions[actionId].approvals[msg.sender] = true;
-    s_actions[actionId].approvalCount++;
+    action.approvals[msg.sender] = true;
+    uint8 newCount = action.approvalCount + 1;
+    action.approvalCount = newCount;
     emit Approval(actionId, msg.sender);
 
-    if (s_actions[actionId].approvalCount >= (s_boardOfDirectorsSet.length() / 2) + 1) {
+    if (newCount >= (s_boardOfDirectorsSet.length() / 2) + 1) {
       _call(actionId);
     }
   }
@@ -182,11 +184,12 @@ contract BoardOfDirectors is ReentrancyGuardUpgradeable, IBoardOfDirectors {
    * @param actionId The id of the action to revoke approval for.
    */
   function revoke(uint256 actionId) external onlyBoardOfDirectors {
-    if (s_actions[actionId].isExecuted) revert BoardOfDirectors__ActionAlreadyExecuted(actionId);
-    if (!s_actions[actionId].approvals[msg.sender]) revert BoardOfDirectors__NotApproved();
+    Action storage action = s_actions[actionId];
+    if (action.isExecuted) revert BoardOfDirectors__ActionAlreadyExecuted(actionId);
+    if (!action.approvals[msg.sender]) revert BoardOfDirectors__NotApproved();
 
-    s_actions[actionId].approvals[msg.sender] = false;
-    s_actions[actionId].approvalCount--;
+    action.approvals[msg.sender] = false;
+    action.approvalCount--;
 
     emit Revocation(actionId, msg.sender);
   }

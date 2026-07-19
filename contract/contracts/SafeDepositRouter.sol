@@ -407,14 +407,7 @@ contract SafeDepositRouter is
     if (!_isTokenSupported(tokenAddress)) revert SafeDepositRouter__TokenNotSupported();
     if (tokenAmount == 0) revert SafeDepositRouter__ZeroAmount();
 
-    address investorAddress = _getInvestorAddress();
-
-    uint8 tokenDec = s_tokenDecimals[tokenAddress];
-    uint8 sherDec = IERC20Metadata(investorAddress).decimals();
-
-    uint256 normalizedAmount = _normalizeDecimals(tokenAmount, tokenDec, sherDec);
-
-    return (normalizedAmount * s_multiplier) / (10 ** sherDec);
+    return _calculateCompensation(_getInvestorAddress(), tokenAddress, tokenAmount);
   }
 
   /*//////////////////////////////////////////////////////////////
@@ -469,8 +462,8 @@ contract SafeDepositRouter is
     if (!investor.hasRole(investor.MINTER_ROLE(), address(this)))
       revert SafeDepositRouter__InsufficientMinterRole();
 
-    // Calculate SHER compensation
-    uint256 sherAmount = calculateCompensation(tokenAddress, amount);
+    // Calculate SHER compensation (reuse the investor address resolved above)
+    uint256 sherAmount = _calculateCompensation(investorAddress, tokenAddress, amount);
 
     // Check slippage if specified
     if (minSherOut > 0 && sherAmount < minSherOut)
@@ -489,6 +482,21 @@ contract SafeDepositRouter is
       sherAmount: sherAmount,
       timestamp: block.number
     });
+  }
+
+  /// @dev Compensation math shared by `calculateCompensation` and `_deposit`,
+  ///      which has already resolved the investor address and validated token/amount.
+  function _calculateCompensation(
+    address investorAddress,
+    address tokenAddress,
+    uint256 tokenAmount
+  ) internal view returns (uint256) {
+    uint8 tokenDec = s_tokenDecimals[tokenAddress];
+    uint8 sherDec = IERC20Metadata(investorAddress).decimals();
+
+    uint256 normalizedAmount = _normalizeDecimals(tokenAmount, tokenDec, sherDec);
+
+    return (normalizedAmount * s_multiplier) / (10 ** sherDec);
   }
 
   /**

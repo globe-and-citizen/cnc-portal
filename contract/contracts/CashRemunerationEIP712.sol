@@ -273,64 +273,57 @@ contract CashRemunerationEIP712 is
 
     // Step 7: Process each wage component in the claim
     // A wage claim can contain multiple wage types (ETH and/or multiple tokens)
-    for (uint8 i = 0; i < wageClaim.wages.length; i++) {
+    address employee = wageClaim.employeeAddress;
+    uint256 minutesWorked = wageClaim.minutesWorked;
+    uint256 wageCount = wageClaim.wages.length;
+    for (uint256 i = 0; i < wageCount; ++i) {
+      Wage calldata wage = wageClaim.wages[i];
       // Calculate the total amount to pay for this wage component
-      uint256 amountToPay = (wageClaim.minutesWorked * wageClaim.wages[i].hourlyRate) / 60;
+      uint256 amountToPay = (minutesWorked * wage.hourlyRate) / 60;
 
       // Step 7a: Handle Native ETH Payments
       // tokenAddress == address(0) indicates native ETH
-      if (wageClaim.wages[i].tokenAddress == address(0)) {
+      if (wage.tokenAddress == address(0)) {
         // Transfer ETH directly to the employee
-        payable(wageClaim.employeeAddress).sendValue(amountToPay);
+        payable(employee).sendValue(amountToPay);
 
         // Emit event for ETH withdrawal
-        emit Withdraw(wageClaim.employeeAddress, amountToPay);
+        emit Withdraw(employee, amountToPay);
       }
       // Step 7b: Handle ERC20 Token Payments
       else {
         // Ensure the requested token is supported by the contract
-        if (!_isTokenSupported(wageClaim.wages[i].tokenAddress))
-          revert CashRemunerationEIP712__TokenNotSupported(wageClaim.wages[i].tokenAddress);
+        if (!_isTokenSupported(wage.tokenAddress))
+          revert CashRemunerationEIP712__TokenNotSupported(wage.tokenAddress);
 
         // Step 7b(i): Special Case - Mintable InvestorV1 Token
         // If we have an officer address configured and this is the InvestorV1 token,
         // we mint new tokens instead of transferring from contract balance
-        if (investorV1Token != address(0) && wageClaim.wages[i].tokenAddress == investorV1Token) {
+        if (investorV1Token != address(0) && wage.tokenAddress == investorV1Token) {
           // Mint new tokens directly to the employee
           // This creates new supply rather than transferring existing tokens
-          IInvestorV1(wageClaim.wages[i].tokenAddress).individualMint(
-            wageClaim.employeeAddress,
-            amountToPay
-          );
+          IInvestorV1(wage.tokenAddress).individualMint(employee, amountToPay);
 
           // Emit event for token withdrawal (minting)
-          emit WithdrawToken(
-            wageClaim.employeeAddress,
-            wageClaim.wages[i].tokenAddress,
-            amountToPay
-          );
+          emit WithdrawToken(employee, wage.tokenAddress, amountToPay);
         }
         // Step 7b(ii): Standard ERC20 Token Transfer
         // For regular ERC20 tokens, transfer from contract's balance
         else {
           // Verify the contract has sufficient token balance
-          uint256 tokenBalance = IERC20(wageClaim.wages[i].tokenAddress).balanceOf(address(this));
+          uint256 tokenBalance = IERC20(wage.tokenAddress).balanceOf(address(this));
           if (tokenBalance < amountToPay)
             revert CashRemunerationEIP712__InsufficientTokenBalance(
-              wageClaim.wages[i].tokenAddress,
+              wage.tokenAddress,
               amountToPay,
               tokenBalance
             );
 
           // Transfer tokens from contract to employee
-          IERC20(wageClaim.wages[i].tokenAddress).transfer(wageClaim.employeeAddress, amountToPay);
+          IERC20(wage.tokenAddress).transfer(employee, amountToPay);
 
           // Emit event for token withdrawal (transfer)
-          emit WithdrawToken(
-            wageClaim.employeeAddress,
-            wageClaim.wages[i].tokenAddress,
-            amountToPay
-          );
+          emit WithdrawToken(employee, wage.tokenAddress, amountToPay);
         }
       }
     }
@@ -403,13 +396,15 @@ contract CashRemunerationEIP712 is
       emit OwnerTreasuryWithdrawNative(owner(), nativeBalance);
     }
 
-    address[] memory tokens = this.getSupportedTokens();
-    for (uint256 i = 0; i < tokens.length; i++) {
+    address[] memory tokens = _getSupportedTokens();
+    uint256 length = tokens.length;
+    address ownerAddress = owner();
+    for (uint256 i = 0; i < length; ++i) {
       uint256 tokenBalance = IERC20(tokens[i]).balanceOf(address(this));
       if (tokenBalance > 0) {
         if (!IERC20(tokens[i]).transfer(bankAddress, tokenBalance))
           revert CashRemunerationEIP712__TokenTransferFailed(tokens[i]);
-        emit OwnerTreasuryWithdrawToken(owner(), tokens[i], tokenBalance);
+        emit OwnerTreasuryWithdrawToken(ownerAddress, tokens[i], tokenBalance);
       }
     }
   }
@@ -490,8 +485,9 @@ contract CashRemunerationEIP712 is
    * @return The hash of the Wage structs.
    */
   function _wageHashes(Wage[] calldata wages) private pure returns (bytes32) {
-    bytes32[] memory hashes = new bytes32[](wages.length);
-    for (uint256 i = 0; i < wages.length; i++) {
+    uint256 length = wages.length;
+    bytes32[] memory hashes = new bytes32[](length);
+    for (uint256 i = 0; i < length; ++i) {
       hashes[i] = _wageHash(wages[i]);
     }
     return keccak256(abi.encodePacked(hashes));

@@ -178,7 +178,8 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
       revert Bank__InsufficientBalance(amount, address(this).balance);
 
     // --- Step 1: Get fee configuration ---
-    uint16 feeBps = _getFeeBps(); // e.g., 50 = 0.5%
+    address officer = s_officerAddress;
+    uint16 feeBps = IOfficer(officer).getFeeFor("BANK"); // e.g., 50 = 0.5%
     if (feeBps > 10_000) revert Bank__InvalidFeeBps(feeBps);
 
     uint256 fee = 0;
@@ -190,7 +191,7 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
       net = amount - fee;
 
       // Get fee collector address
-      address feeCollector = IOfficer(s_officerAddress).getFeeCollector();
+      address feeCollector = IOfficer(officer).getFeeCollector();
       if (feeCollector == address(0)) revert Bank__FeeCollectorNotConfigured();
 
       // Pay fee via FeeCollector (emits FeePaid on the collector)
@@ -226,14 +227,15 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
     }
 
     // Check if this is a fee-supported token (USDC or USDT)
-    bool shouldChargeFee = _isSupportedFeeToken(token);
+    address officer = s_officerAddress;
+    bool shouldChargeFee = IOfficer(officer).isFeeCollectorToken(token);
 
     uint256 fee = 0;
     uint256 net = amount;
 
     // Only charge fee for FeeCollector-supported tokens
     if (shouldChargeFee) {
-      uint16 feeBps = _getFeeBps(); // e.g., 50 = 0.5%
+      uint16 feeBps = IOfficer(officer).getFeeFor("BANK"); // e.g., 50 = 0.5%
       if (feeBps > 10_000) revert Bank__InvalidFeeBps(feeBps);
 
       if (feeBps > 0) {
@@ -241,7 +243,7 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
         net = amount - fee;
 
         // Get fee collector address
-        address feeCollector = IOfficer(s_officerAddress).getFeeCollector();
+        address feeCollector = IOfficer(officer).getFeeCollector();
         if (feeCollector == address(0)) revert Bank__FeeCollectorNotConfigured();
 
         // Pay fee via FeeCollector (pulled via transferFrom; emits FeePaid on the collector)
@@ -423,20 +425,4 @@ contract Bank is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgrade
     return investorAddress;
   }
 
-  /**
-   * @dev Internal function to get the fee basis points from Officer contract
-   * @return The fee in basis points (e.g., 50 = 0.5%)
-   */
-  function _getFeeBps() internal view returns (uint16) {
-    return IOfficer(s_officerAddress).getFeeFor("BANK");
-  }
-
-  /**
-   * @dev Internal function to check if a token is supported by the FeeCollector
-   * @param token The token address to check
-   * @return bool True if the token is supported by the FeeCollector
-   */
-  function _isSupportedFeeToken(address token) internal view returns (bool) {
-    return IOfficer(s_officerAddress).isFeeCollectorToken(token);
-  }
 }

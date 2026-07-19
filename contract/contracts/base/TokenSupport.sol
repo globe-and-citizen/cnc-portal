@@ -97,6 +97,14 @@ abstract contract TokenSupport {
   }
 
   /**
+   * @notice Returns all supported token addresses (internal, avoids an external self-call)
+   * @return Array of supported token addresses
+   */
+  function _getSupportedTokens() internal view returns (address[] memory) {
+    return s_supportedTokens.values();
+  }
+
+  /**
    * @notice Checks if a token is supported
    * @param token The address of the token to check
    * @return True if the token is supported, false otherwise

@@ -202,7 +202,7 @@ contract FeeCollector is
    * @param contractType The contract type this fee applies to.
    * @param feeBps Fee in basis points (must be <= 10000).
    */
-  function setFee(string memory contractType, uint16 feeBps) external onlyOwner {
+  function setFee(string calldata contractType, uint16 feeBps) external onlyOwner {
     if (bytes(contractType).length == 0) revert FeeCollector__EmptyContractType();
     if (feeBps > 10000) revert FeeCollector__InvalidBps(feeBps);
 
@@ -257,6 +257,20 @@ contract FeeCollector is
   }
 
   /**
+   * @notice Get the fee in basis points for a specific contract type
+   * @param contractType The type of contract (e.g., "BANK")
+   * @return The fee in basis points (e.g., 50 = 0.5%)
+   */
+  function getFeeFor(string calldata contractType) external view returns (uint16) {
+    bytes32 key = keccak256(bytes(contractType));
+    (bool exists, uint256 idx) = _findFeeIndex(key);
+
+    if (!exists) return 0;
+
+    return s_feeConfigs[idx].feeBps;
+  }
+
+  /**
    * @notice Initializes the FeeCollector with owner, fee configs, and supported tokens
    * @param initialOwner The address that will own this contract
    * @param configs Array of fee configurations for different contract types
@@ -302,20 +316,6 @@ contract FeeCollector is
     }
   }
 
-  /**
-   * @notice Get the fee in basis points for a specific contract type
-   * @param contractType The type of contract (e.g., "BANK")
-   * @return The fee in basis points (e.g., 50 = 0.5%)
-   */
-  function getFeeFor(string memory contractType) public view returns (uint16) {
-    bytes32 key = keccak256(bytes(contractType));
-    (bool exists, uint256 idx) = _findFeeIndex(key);
-
-    if (!exists) return 0;
-
-    return s_feeConfigs[idx].feeBps;
-  }
-
   /// @notice Current contract version, per semver.
   function version() public pure returns (string memory) {
     return "2.0.0";
@@ -331,7 +331,7 @@ contract FeeCollector is
 
   function _findFeeIndex(bytes32 key) private view returns (bool, uint256) {
     uint256 length = s_feeConfigs.length;
-    for (uint256 i = 0; i < length; i++) {
+    for (uint256 i = 0; i < length; ++i) {
       if (keccak256(bytes(s_feeConfigs[i].contractType)) == key) {
         return (true, i);
       }

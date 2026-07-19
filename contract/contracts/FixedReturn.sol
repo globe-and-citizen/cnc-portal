@@ -555,14 +555,16 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
     emit LendingOfferRefundable(offerId);
 
     address[] storage lenders = s_offerLenders[offerId];
+    uint256 lenderCount = lenders.length;
+    IERC20 token = IERC20(offer.token);
     uint256 totalRefunded;
-    for (uint256 i = 0; i < lenders.length; ++i) {
+    for (uint256 i = 0; i < lenderCount; ++i) {
       address lender = lenders[i];
       uint256 amount = s_lenderDeposits[offerId][lender];
       if (amount == 0) continue;
 
       s_lenderDeposits[offerId][lender] = 0;
-      IERC20(offer.token).safeTransfer(lender, amount);
+      token.safeTransfer(lender, amount);
       totalRefunded += amount;
       emit PrincipalRefunded(offerId, lender, amount);
     }
@@ -640,15 +642,17 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
     // The final lender absorbs any rounding remainder at the cumulative level,
     // so proportions hold regardless of how the issuer partitions installments.
     address[] storage lenders = s_offerLenders[offerId];
+    uint256 lenderCount = lenders.length;
+    uint256 totalRepaid = offer.totalRepaidByIssuer;
     uint256 cumulativeForNonLast = 0;
-    for (uint256 i = 0; i < lenders.length; ++i) {
+    for (uint256 i = 0; i < lenderCount; ++i) {
       address lender = lenders[i];
       uint256 cumulativeEntitlement;
-      if (i == lenders.length - 1) {
-        cumulativeEntitlement = offer.totalRepaidByIssuer - cumulativeForNonLast;
+      if (i + 1 == lenderCount) {
+        cumulativeEntitlement = totalRepaid - cumulativeForNonLast;
       } else {
         cumulativeEntitlement =
-          (offer.totalRepaidByIssuer * s_lenderDeposits[offerId][lender]) /
+          (totalRepaid * s_lenderDeposits[offerId][lender]) /
           offer.totalFunded;
         cumulativeForNonLast += cumulativeEntitlement;
       }
