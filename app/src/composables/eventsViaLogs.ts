@@ -20,7 +20,10 @@ import { config } from '@/wagmi.config'
 import { currentChainId } from '@/constant'
 
 // CNC contracts were first deployed around this Polygon block — scan from here.
-export const START_BLOCK = 79743826n
+// On other chains (local Hardhat, testnets) the deployment starts near genesis,
+// so scan from block 0; a Polygon-only start block there yields an empty range.
+const POLYGON_START_BLOCK = 79743826n
+export const START_BLOCK = currentChainId === 137 ? POLYGON_START_BLOCK : 0n
 
 /** Concatenate several ABIs into a single event ABI, deduped by signature. */
 export function unionEventAbi(abis: unknown[]): Abi {
