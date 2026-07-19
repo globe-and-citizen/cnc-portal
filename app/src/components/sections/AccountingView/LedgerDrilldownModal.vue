@@ -19,6 +19,7 @@
             </span>
           </div>
           <div class="flex items-center gap-2">
+            <ColumnVisibilitySelect v-model="visibleColumns" :items="columnItems" />
             <UButton
               color="neutral"
               variant="outline"
@@ -39,7 +40,7 @@
           </div>
         </div>
 
-        <LedgerTable :rows="pageRows" :total="total" />
+        <LedgerTable :rows="pageRows" :total="total" :visible-columns="visibleColumns" />
 
         <TablePagination
           v-model:page="page"
@@ -57,7 +58,12 @@
 import { computed, ref, watch } from 'vue'
 import LedgerTable from './LedgerTable.vue'
 import TablePagination from '@/components/TablePagination.vue'
-import { ledgerRows } from '@/utils/accounting/ledgerPresenter'
+import ColumnVisibilitySelect from '@/components/ColumnVisibilitySelect.vue'
+import {
+  ledgerRows,
+  LEDGER_COLUMNS,
+  type LedgerColumnKey
+} from '@/utils/accounting/ledgerPresenter'
 import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
 
 const props = defineProps<{
@@ -67,7 +73,14 @@ const props = defineProps<{
 }>()
 
 const open = defineModel<boolean>('open', { required: true })
+// Which ledger columns to show — owned by the parent so the drill-down export
+// matches what's on screen; defaults to all when left unbound.
+const visibleColumns = defineModel<LedgerColumnKey[]>('columns', {
+  default: () => LEDGER_COLUMNS.map((c) => c.value)
+})
 const emit = defineEmits<{ export: [format: 'pdf' | 'excel'] }>()
+
+const columnItems = [...LEDGER_COLUMNS]
 
 const entryCount = computed(() => props.entries.length)
 

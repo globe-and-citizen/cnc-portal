@@ -97,6 +97,7 @@
 
     <LedgerDrilldownModal
       v-model:open="drilldownOpen"
+      v-model:columns="drilldownColumns"
       :account="drilldownAccount"
       :total="drilldownTotal"
       :entries="drilldownEntries"
@@ -107,6 +108,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { useLocalStorage } from '@vueuse/core'
 import type { TableColumn, TableRow } from '@nuxt/ui'
 import AccountingDatePicker from '@/components/AccountingDatePicker.vue'
 import AccountingExportBar from './AccountingExportBar.vue'
@@ -118,6 +120,7 @@ import { buildGeneralLedger } from '@/utils/accounting/generalLedger'
 import { filterByPeriod, presentTrial } from '@/utils/accounting/presenter'
 import { entriesForAccount } from '@/utils/accounting/accountLedger'
 import { exportFilename } from '@/utils/accounting/exportNaming'
+import { LEDGER_COLUMNS, type LedgerColumnKey } from '@/utils/accounting/ledgerPresenter'
 import type { SectionSpec } from '@/utils/accounting/exportSpec'
 import type { ExportFormat } from './ExportReportModal.vue'
 
@@ -186,6 +189,13 @@ const drilldownEntries = computed(() =>
     : []
 )
 
+// Show/hide drill-down columns — persisted so the choice sticks across sessions,
+// on its own key so it stays independent of the General Ledger's selection.
+const drilldownColumns = useLocalStorage<LedgerColumnKey[]>(
+  'cnc-accounting-drilldown-columns-v1',
+  LEDGER_COLUMNS.map((c) => c.value)
+)
+
 function openDrilldown(row: TrialTableRow): void {
   drilldownAccount.value = row.account
   // The line's balance sits in whichever column isn't the em-dash placeholder.
@@ -200,7 +210,8 @@ const onDrilldownExport = (format: ExportFormat): void => {
     key: 'ledger',
     account: drilldownAccount.value,
     to: asOf.value,
-    from: null
+    from: null,
+    columns: drilldownColumns.value
   }
   if (format === 'excel') {
     exportExcel(
