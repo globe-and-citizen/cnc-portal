@@ -28,6 +28,7 @@ import {
   ledgerTotalRow,
   type LedgerColumnKey
 } from '@/utils/accounting/ledgerPresenter'
+import { presentAccountLedger, accountLedgerTitle } from '@/utils/accounting/accountLedger'
 import { activityText } from '@/utils/accounting/describeEntry'
 import type { LedgerRow } from '@/utils/accounting/ledgerPresenter'
 import type { SectionKey, SectionSpec } from '@/utils/accounting/exportSpec'
@@ -141,6 +142,8 @@ interface LedgerSheetOptions {
   to?: Date | null
   columns?: LedgerColumnKey[]
   currencies?: string[]
+  /** Single-account drill-down (issue #2249): postings touching this account, up to `to`. */
+  account?: string
 }
 
 function ledgerSheet(
@@ -148,17 +151,20 @@ function ledgerSheet(
   resolveName?: ResolveName,
   opts: LedgerSheetOptions = {}
 ): SheetRows {
-  const { rows, total } = presentLedger(
-    acc.entries,
-    opts.filter ?? 'All',
-    opts.from,
-    opts.to,
-    opts.currencies
-  )
+  // An account drill-down scopes to one account's postings (its balance is the
+  // total); otherwise the standard category/period/currency ledger.
+  const { rows, total } = opts.account
+    ? presentAccountLedger(acc.entries, opts.account, opts.to)
+    : presentLedger(acc.entries, opts.filter ?? 'All', opts.from, opts.to, opts.currencies)
   const cols = resolveLedgerColumns(opts.columns)
   return [
-    // Title row spells out the active category / period; the tab keeps its short name.
-    [ledgerExportTitle(opts.filter, opts.from, opts.to)],
+    // Title row spells out the active category / period (or drilled-in account);
+    // the tab keeps its short name.
+    [
+      opts.account
+        ? accountLedgerTitle(opts.account, opts.to)
+        : ledgerExportTitle(opts.filter, opts.from, opts.to)
+    ],
     [],
     cols.map((c) => c.label),
     ...rows.map((r) => cols.map((c) => LEDGER_SHEET_CELL[c.value](r, resolveName))),
@@ -199,7 +205,8 @@ function sectionSheet(
           from: spec.from,
           to: spec.to,
           columns: spec.columns,
-          currencies: spec.currencies
+          currencies: spec.currencies,
+          account: spec.account
         })
     }
   })()
