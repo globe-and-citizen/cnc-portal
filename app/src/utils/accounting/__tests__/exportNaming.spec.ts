@@ -39,6 +39,19 @@ describe('exportBaseName', () => {
     expect(scoped).toContain('General Ledger - Investment -')
     expect(scoped).toContain('Jan 1, 2026')
   })
+
+  it('names the account (not the category) for a single-line drill-down', () => {
+    // Account drill-down (issue #2249): the account leads, with its as-of date.
+    expect(exportBaseName({ key: 'ledger', account: 'Investor Equity' })).toBe(
+      'General Ledger - Investor Equity'
+    )
+    const dated = exportBaseName({
+      key: 'ledger',
+      account: 'Cash — Bank',
+      to: new Date('2026-07-08')
+    })
+    expect(dated).toContain('General Ledger - Cash — Bank - As of')
+  })
 })
 
 describe('exportFilename', () => {
