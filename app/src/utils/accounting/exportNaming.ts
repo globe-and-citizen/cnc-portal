@@ -33,6 +33,13 @@ export function exportBaseName(spec: SectionSpec): string {
     case 'trial':
       return spec.asOf ? `Trial Balance - As of ${dayLabel(spec.asOf)}` : 'Trial Balance'
     case 'ledger': {
+      // A single-account drill-down (issue #2249) names the account and its
+      // as-of date; otherwise the category + optional range.
+      if (spec.account) {
+        const parts = ['General Ledger', spec.account]
+        if (spec.to) parts.push(`As of ${dayLabel(spec.to)}`)
+        return parts.join(' - ')
+      }
       const parts = ['General Ledger', spec.filter && spec.filter !== 'All' ? spec.filter : 'All']
       // A date suffix only when the page carries a real range; all-time needs none.
       if (spec.from || spec.to) parts.push(periodLabel(spec.from, spec.to))

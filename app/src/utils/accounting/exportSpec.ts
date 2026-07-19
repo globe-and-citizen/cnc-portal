@@ -31,4 +31,10 @@ export interface SectionSpec {
    * (or all currencies) means no currency narrowing.
    */
   currencies?: string[]
+  /**
+   * General Ledger single-account drill-down (issue #2249): export only the
+   * postings whose debit or credit leg touches this account, up to `asOf`. When
+   * set, it takes precedence over `filter` / `from` / `to` / `currencies`.
+   */
+  account?: string
 }
