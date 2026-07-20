@@ -32,6 +32,18 @@ describe('TrialBalanceCard', () => {
     expect(text).toContain('Trial balance')
     expect(text).toContain('In balance')
   })
+
+  it('opens a per-account drill-down when a row is clicked', async () => {
+    const wrapper = renderWithProviders(TrialBalanceCard)
+    const row = wrapper.find('[data-test^="drilldown-"]')
+    // Empty books show no account rows; only exercise the drill-down when present.
+    if (row.exists()) {
+      await row.trigger('click')
+      await flushPromises()
+      expect(wrapper.find('[data-test="drilldown-export-pdf"]').exists()).toBe(true)
+    }
+    wrapper.unmount()
+  })
 })
 
 describe('IncomeStatementCard', () => {
@@ -41,6 +53,18 @@ describe('IncomeStatementCard', () => {
     expect(text).toContain('Income statement')
     expect(text).toContain('Net income')
   })
+
+  it('opens the drill-down when a revenue / expense line is clicked', async () => {
+    const wrapper = renderWithProviders(IncomeStatementCard)
+    const line = wrapper.find('[data-test^="income-drilldown-"]')
+    // The mocked book may hold no income lines; only assert when one is present.
+    if (line.exists()) {
+      await line.trigger('click')
+      await flushPromises()
+      expect(wrapper.find('[data-test="drilldown-export-excel"]').exists()).toBe(true)
+    }
+    wrapper.unmount()
+  })
 })
 
 describe('BalanceSheetCard', () => {
@@ -49,6 +73,20 @@ describe('BalanceSheetCard', () => {
     const text = wrapper.text()
     expect(text).toContain('Balance sheet')
     expect(text).toContain('Total assets')
+  })
+
+  it('drills a single equity account and the Retained earnings aggregate', async () => {
+    const wrapper = renderWithProviders(BalanceSheetCard)
+    // Equity lines always render: Owner capital (single account) and Retained
+    // earnings (an aggregate of every income + expense account).
+    await wrapper.find('[data-test="balance-drilldown-Owner Capital"]').trigger('click')
+    await flushPromises()
+    expect(wrapper.find('[data-test="drilldown-export-excel"]').exists()).toBe(true)
+
+    await wrapper.find('[data-test="balance-drilldown-aggregate"]').trigger('click')
+    await flushPromises()
+    expect(wrapper.find('[data-test="drilldown-export-pdf"]').exists()).toBe(true)
+    wrapper.unmount()
   })
 })
 

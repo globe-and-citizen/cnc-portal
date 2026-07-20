@@ -124,6 +124,26 @@ describe('buildSheets (section selection)', () => {
     expect(String(ledger.rows[0][0])).toBe('General Ledger — Revenue')
     expect(ledger.name).toBe('General Ledger')
   })
+
+  it('drills a single account into its own sheet (issue #2249)', () => {
+    const [ledger] = buildSheets(sampleBooks(), [{ key: 'ledger', account: 'Cash — Bank' }])
+    expect(String(ledger.rows[0][0])).toBe('General Ledger — Cash — Bank')
+    // Excel renders the total as a number; the account nets to 100.
+    expect(ledger.rows.at(-1)!.some((c) => c === 100)).toBe(true)
+  })
+
+  it('drills an aggregate line with its label and supplied total', () => {
+    const [ledger] = buildSheets(sampleBooks(), [
+      {
+        key: 'ledger',
+        account: ['Service Revenue'],
+        accountLabel: 'Retained earnings',
+        accountTotal: '$100.00'
+      }
+    ])
+    expect(String(ledger.rows[0][0])).toBe('General Ledger — Retained earnings')
+    expect(ledger.rows.at(-1)!.some((c) => c === 100)).toBe(true)
+  })
 })
 
 describe('exportAccountingExcel', () => {
