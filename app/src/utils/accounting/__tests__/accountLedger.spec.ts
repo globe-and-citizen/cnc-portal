@@ -33,12 +33,35 @@ describe('accountLedger — statement-line drill-down', () => {
       expect(times).toEqual([...times].sort((a, b) => b - a))
     })
 
-    it('honours the as-of cutoff, excluding later postings', () => {
+    it('honours the as-of cutoff (to), excluding later postings', () => {
       const all = entriesForAccount(catalogueLedger, 'Cash — Safe')
       const cutoff = new Date(Math.min(...all.map((e) => e.timestamp)) * 1000)
-      const upTo = entriesForAccount(catalogueLedger, 'Cash — Safe', cutoff)
+      const upTo = entriesForAccount(catalogueLedger, 'Cash — Safe', null, cutoff)
       expect(upTo.length).toBeLessThan(all.length)
       expect(upTo.every((e) => e.timestamp <= Math.floor(cutoff.getTime() / 1000))).toBe(true)
+    })
+
+    it('honours the reporting-period lower bound (from), excluding earlier postings', () => {
+      const all = entriesForAccount(catalogueLedger, 'Cash — Safe')
+      const cutoff = new Date(Math.max(...all.map((e) => e.timestamp)) * 1000)
+      const since = entriesForAccount(catalogueLedger, 'Cash — Safe', cutoff)
+      expect(since.length).toBeLessThan(all.length)
+      expect(since.every((e) => e.timestamp >= Math.floor(cutoff.getTime() / 1000))).toBe(true)
+    })
+
+    it('accepts a list of accounts (aggregate line) — the union of their postings', () => {
+      const group: AccountName[] = ['Payroll Expense', 'Share-based Compensation']
+      const scoped = entriesForAccount(catalogueLedger, group)
+      const a = entriesForAccount(catalogueLedger, 'Payroll Expense')
+      const b = entriesForAccount(catalogueLedger, 'Share-based Compensation')
+      // Every posting touches at least one of the accounts…
+      expect(
+        scoped.every(
+          (e) => group.includes(e.debit as AccountName) || group.includes(e.credit as AccountName)
+        )
+      ).toBe(true)
+      // …and the union has no fewer entries than either account alone.
+      expect(scoped.length).toBeGreaterThanOrEqual(Math.max(a.length, b.length))
     })
   })
 
@@ -78,11 +101,24 @@ describe('accountLedger — statement-line drill-down', () => {
   })
 
   describe('accountLedgerTitle', () => {
-    it('names the account, with the as-of date when set', () => {
+    it('names the account, bare when unscoped', () => {
       expect(accountLedgerTitle('Cash — Safe')).toBe('General Ledger — Cash — Safe')
-      expect(accountLedgerTitle('Cash — Safe', new Date('2026-03-31T00:00:00Z'))).toMatch(
+    })
+
+    it('shows the as-of date for a point-in-time scope (to only)', () => {
+      expect(accountLedgerTitle('Cash — Safe', null, new Date('2026-03-31T00:00:00Z'))).toMatch(
         /^General Ledger — Cash — Safe — As of /
       )
+    })
+
+    it('shows a reporting period when a start date is set (from)', () => {
+      const title = accountLedgerTitle(
+        'Cash — Safe',
+        new Date('2026-01-01T00:00:00Z'),
+        new Date('2026-03-31T00:00:00Z')
+      )
+      expect(title).toMatch(/^General Ledger — Cash — Safe — /)
+      expect(title).not.toMatch(/As of/)
     })
   })
 })
