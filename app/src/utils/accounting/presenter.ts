@@ -61,6 +61,8 @@ export function fmtDateTime(timestamp: number): string {
 export interface StatementLineView {
   label: string
   value: string
+  account?: AccountName
+  accounts?: AccountName[]
 }
 
 export interface SummaryCard {
@@ -260,8 +262,16 @@ export function presentIncome(
 ): IncomeView {
   const is = buildIncomeStatement(filterByPeriod(entries, from, to))
   return {
-    revLines: is.revenue.map((l) => ({ label: l.account, value: money(l.amount) })),
-    expLines: is.expenses.map((l) => ({ label: l.account, value: money(l.amount) })),
+    revLines: is.revenue.map((l) => ({
+      label: l.account,
+      value: money(l.amount),
+      account: l.account
+    })),
+    expLines: is.expenses.map((l) => ({
+      label: l.account,
+      value: money(l.amount),
+      account: l.account
+    })),
     totalRevenue: money(is.totalRevenue),
     totalExpenses: money(is.totalExpenses),
     netIncome: money(is.netIncome),
@@ -299,25 +309,34 @@ function cashCurrencyValue(line: CashLineData): string {
 
 /** Balance-sheet lines as of a point in time. */
 export function presentBalance(entries: readonly LedgerEntry[], asOf?: Date | null): BalanceView {
-  const bs = buildBalanceSheet(filterByPeriod(entries, null, asOf))
+  const scoped = filterByPeriod(entries, null, asOf)
+  const bs = buildBalanceSheet(scoped)
+  const is = buildIncomeStatement(scoped)
+  const retainedAccounts = [...is.revenue, ...is.expenses].map((l) => l.account)
   const assetLines: StatementLineView[] = [
-    // Bulleted so the per-pocket / per-currency lines read as a drill-down of the
-    // cash total, not as extra assets. The bullet and middle-dot are WinAnsi
-    // glyphs, so they render in the PDF export's font.
     { label: 'Cash (all pockets)', value: money(bs.cash) },
     ...bs.cashByPocketCurrency.map((l) => ({
       label: `• ${pocketShortName(l.account)} · ${currencySymbol(l.token)}`,
-      value: cashCurrencyValue(l)
+      value: cashCurrencyValue(l),
+      account: l.account
     })),
-    ...bs.otherAssets.map((a) => ({ label: a.account, value: money(a.amount) }))
+    ...bs.otherAssets.map((a) => ({ label: a.account, value: money(a.amount), account: a.account }))
   ]
   const liabLines: StatementLineView[] = bs.liabilities.length
-    ? bs.liabilities.map((l) => ({ label: l.account, value: money(l.amount) }))
+    ? bs.liabilities.map((l) => ({ label: l.account, value: money(l.amount), account: l.account }))
     : [{ label: 'None (no debt)', value: money(0) }]
   const equityLines: StatementLineView[] = [
-    { label: 'Owner capital', value: money(bs.ownerCapital) },
-    { label: 'Investor equity (SHER)', value: money(bs.investorEquity) },
-    { label: 'Retained earnings (net profit)', value: money(bs.retainedEarnings) }
+    { label: 'Owner capital', value: money(bs.ownerCapital), account: 'Owner Capital' },
+    {
+      label: 'Investor equity (SHER)',
+      value: money(bs.investorEquity),
+      account: 'Investor Equity'
+    },
+    {
+      label: 'Retained earnings (net profit)',
+      value: money(bs.retainedEarnings),
+      accounts: retainedAccounts
+    }
   ]
   return {
     assetLines,
@@ -325,8 +344,6 @@ export function presentBalance(entries: readonly LedgerEntry[], asOf?: Date | nu
     equityLines,
     totalAssets: money(bs.totalAssets),
     totalEquity: money(bs.totalEquity),
-    // The raw-summed total, not `totalLiabilities + totalEquity` — re-adding two
-    // independently-rounded figures can drift a cent off Total assets.
     liabilitiesPlusEquity: money(bs.totalLiabilitiesAndEquity)
   }
 }
