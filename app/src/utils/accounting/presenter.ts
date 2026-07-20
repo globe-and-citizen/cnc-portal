@@ -1,13 +1,3 @@
-/**
- * View presentation for the Accounting screens — maps the live engine output
- * ({@link CncAccounting}, issues #2117/#2118) into the display shapes the cards
- * and tables render. Pure and unit-testable; replaces the former static
- * `accountingDemo` fixtures so every figure now comes from real data.
- *
- * The date-scoped helpers re-run the pure statement builders over a filtered
- * slice of the consolidated `entries`, so the income statement reports a period
- * and the balance sheet a point in time ("as of").
- */
 import dayjs from 'dayjs'
 import { classOf, type AccountClass, type AccountName } from './chartOfAccounts'
 import type { GeneralLedger } from './generalLedger'
@@ -73,7 +63,6 @@ export interface SummaryCard {
   icon: string
   chipClass: string
   accent: boolean
-  /** Top-border accent colour, when `accent` is set. */
   accentClass?: string
   trend?: string
 }
@@ -100,7 +89,6 @@ export interface IncomeView {
   totalRevenue: string
   totalExpenses: string
   netIncome: string
-  /** True when net income is a loss (< 0) — drives the red deficit styling. */
   netNegative: boolean
 }
 
@@ -190,9 +178,6 @@ export function presentSummaryCards(
   income: IncomeStatement,
   balance: BalanceSheet
 ): SummaryCard[] {
-  // Profit reads green (a gain); a loss reads red (a deficit) — never green.
-  // Net income comes from the income statement alone, so the card, the balance
-  // sheet's Retained Earnings and every export show one figure.
   const profitable = income.netIncome >= 0
   return [
     {
