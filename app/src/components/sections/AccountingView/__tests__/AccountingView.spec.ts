@@ -3,6 +3,8 @@ import { flushPromises } from '@vue/test-utils'
 import { renderWithProviders } from '@/tests/mocks'
 import AccountingSummary from '../AccountingSummary.vue'
 import TrialBalanceCard from '../TrialBalanceCard.vue'
+import IncomeStatementCard from '../IncomeStatementCard.vue'
+import BalanceSheetCard from '../BalanceSheetCard.vue'
 import GeneralLedger from '../GeneralLedger.vue'
 import LedgerDrilldownModal from '../LedgerDrilldownModal.vue'
 import { entriesForAccount } from '@/utils/accounting/accountLedger'
@@ -29,6 +31,24 @@ describe('TrialBalanceCard', () => {
     const text = wrapper.text()
     expect(text).toContain('Trial balance')
     expect(text).toContain('In balance')
+  })
+})
+
+describe('IncomeStatementCard', () => {
+  it('renders the income statement with its per-line drill-down rows', () => {
+    const wrapper = renderWithProviders(IncomeStatementCard)
+    const text = wrapper.text()
+    expect(text).toContain('Income statement')
+    expect(text).toContain('Net income')
+  })
+})
+
+describe('BalanceSheetCard', () => {
+  it('renders the balance sheet with its per-line drill-down rows', () => {
+    const wrapper = renderWithProviders(BalanceSheetCard)
+    const text = wrapper.text()
+    expect(text).toContain('Balance sheet')
+    expect(text).toContain('Total assets')
   })
 })
 
