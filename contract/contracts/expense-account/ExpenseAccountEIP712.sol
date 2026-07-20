@@ -79,16 +79,19 @@ contract ExpenseAccountEIP712 is
     ApprovalState state;
   }
 
+  // Split across adjacent string literals (implicitly concatenated) to stay within
+  // the line-length limit — the encoded EIP-712 type string is byte-identical.
   string private constant _BUDGET_LIMIT_TYPE =
-    "BudgetLimit(uint256 amount,uint8 frequencyType,uint256 customFrequency,uint256 startDate,uint256 endDate,address tokenAddress,address approvedAddress)";
+    "BudgetLimit(uint256 amount,uint8 frequencyType,uint256 customFrequency,"
+    "uint256 startDate,uint256 endDate,address tokenAddress,address approvedAddress)";
 
   bytes32 private constant _BUDGET_LIMIT_TYPEHASH = keccak256(abi.encodePacked(_BUDGET_LIMIT_TYPE));
 
   /// @notice Tracks expense balances per signature hash.
-  mapping(bytes32 signatureHash => ExpenseBalance balance) public expenseBalances;
+  mapping(bytes32 signatureHash => ExpenseBalance balance) private s_expenseBalances;
 
   // Add new state variable - MUST be added after existing ones
-  address public officerAddress;
+  address private s_officerAddress;
 
   // Storage gap for future upgrades
   // solhint-disable-next-line chainlink-solidity/prefix-storage-variables-with-s-underscore
@@ -173,69 +176,73 @@ contract ExpenseAccountEIP712 is
   /// @dev The caller is not authorized for this operation.
   /// @param expected The expected authorized address.
   /// @param received The actual caller.
-  error UnauthorizedAccess(address expected, address received);
+  error ExpenseAccountEIP712__UnauthorizedAccess(address expected, address received);
 
   /// @dev The requested amount exceeds the per-period budget.
   /// @param amount The requested amount.
-  error AmountPerPeriodExceeded(uint256 amount);
+  error ExpenseAccountEIP712__AmountPerPeriodExceeded(uint256 amount);
 
   /// @dev The requested amount exceeds the per-transaction limit.
   /// @param amount The requested amount.
-  error AmountPerTransactionExceeded(uint256 amount);
+  error ExpenseAccountEIP712__AmountPerTransactionExceeded(uint256 amount);
 
   /// @dev The approval has not yet become active at the current time.
   /// @param currentTime Current block timestamp.
   /// @param startDate The approval's start timestamp.
-  error ApprovalNotActive(uint256 currentTime, uint256 startDate);
+  error ExpenseAccountEIP712__ApprovalNotActive(uint256 currentTime, uint256 startDate);
 
   /// @dev The approval has expired.
   /// @param currentTime Current block timestamp.
   /// @param endDate The approval's end timestamp.
-  error ApprovalExpired(uint256 currentTime, uint256 endDate);
+  error ExpenseAccountEIP712__ApprovalExpired(uint256 currentTime, uint256 endDate);
 
   /// @dev A required address argument was the zero address.
-  error ZeroAddress();
+  error ExpenseAccountEIP712__ZeroAddress();
   /// @dev The caller is not the approved spender for this budget limit.
   /// @param expected The approved spender address.
   /// @param actual The caller attempting the transfer.
-  error SpenderNotApproved(address expected, address actual);
+  error ExpenseAccountEIP712__SpenderNotApproved(address expected, address actual);
   /// @dev The EIP-712 signature was not signed by the contract owner.
   /// @param expected The expected signer (contract owner).
   /// @param actual The address recovered from the signature.
-  error SignerNotAuthorized(address expected, address actual);
+  error ExpenseAccountEIP712__SignerNotAuthorized(address expected, address actual);
   /// @dev The transfer did not pass the validation checks.
-  error TransferNotAllowed();
+  error ExpenseAccountEIP712__TransferNotAllowed();
   /// @dev The contract's native balance is less than the requested amount.
   /// @param required The amount requested.
   /// @param available The current contract native balance.
-  error InsufficientNativeBalance(uint256 required, uint256 available);
+  error ExpenseAccountEIP712__InsufficientNativeBalance(uint256 required, uint256 available);
   /// @dev The contract's token balance is less than the requested amount.
   /// @param token The ERC20 token being paid out.
   /// @param required The amount requested.
   /// @param available The current contract token balance.
-  error InsufficientTokenBalance(address token, uint256 required, uint256 available);
+  error ExpenseAccountEIP712__InsufficientTokenBalance(
+    address token,
+    uint256 required,
+    uint256 available
+  );
   /// @dev A raw ERC20 transfer returned false.
   /// @param token The token whose transfer returned false.
-  error TokenTransferFailed(address token);
+  error ExpenseAccountEIP712__TokenTransferFailed(address token);
   /// @dev The transfer amount exceeds the single-withdrawal budget limit.
-  error AmountExceedsBudgetLimit();
+  error ExpenseAccountEIP712__AmountExceedsBudgetLimit();
   /// @dev A one-time budget has already been used.
-  error OneTimeBudgetAlreadyUsed();
+  error ExpenseAccountEIP712__OneTimeBudgetAlreadyUsed();
   /// @dev The amount exceeds the remaining budget for the current period.
-  error AmountExceedsPeriodBudget();
+  error ExpenseAccountEIP712__AmountExceedsPeriodBudget();
   /// @dev The token is not supported by this contract.
   /// @param token The unsupported token address.
-  error TokenNotSupported(address token);
+  error ExpenseAccountEIP712__TokenNotSupported(address token);
   /// @dev The custom-frequency value must be greater than zero.
-  error InvalidCustomFrequency();
+  error ExpenseAccountEIP712__InvalidCustomFrequency();
   /// @dev The budget frequency type is invalid.
-  error InvalidFrequencyType();
+  error ExpenseAccountEIP712__InvalidFrequencyType();
   /// @dev The amount must be greater than zero.
-  error ZeroAmount();
+  error ExpenseAccountEIP712__ZeroAmount();
   /// @dev The officer contract address has not been configured.
-  error OfficerAddressNotSet();
+  error ExpenseAccountEIP712__OfficerAddressNotSet();
   /// @dev The Bank contract could not be located via the Officer.
-  error BankContractNotFound();
+  error ExpenseAccountEIP712__BankContractNotFound();
 
   /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() {
@@ -262,37 +269,42 @@ contract ExpenseAccountEIP712 is
     bytes calldata signature
   ) external {
     // Verify to address is non-zero address
-    if (to == address(0)) revert ZeroAddress();
+    if (to == address(0)) revert ExpenseAccountEIP712__ZeroAddress();
 
     // Verify the caller is the approved spender
     if (msg.sender != budgetLimit.approvedAddress)
-      revert SpenderNotApproved(budgetLimit.approvedAddress, msg.sender);
+      revert ExpenseAccountEIP712__SpenderNotApproved(budgetLimit.approvedAddress, msg.sender);
 
     // Verify EIP-712 signature
     bytes32 budgetHash = _hashTypedDataV4(budgetLimitHash(budgetLimit));
     address recovered = budgetHash.recover(signature);
-    if (recovered != owner()) revert SignerNotAuthorized(owner(), recovered);
+    if (recovered != owner()) revert ExpenseAccountEIP712__SignerNotAuthorized(owner(), recovered);
 
     bytes32 signatureHash = keccak256(signature);
 
-    // Validate transfer conditions
-    if (!validateTransfer(budgetLimit, amount, signatureHash)) revert TransferNotAllowed();
+    // Validate transfer conditions (reverts on violation) and reuse the
+    // computed period so the DateTime math runs only once per transfer.
+    uint256 currentPeriod = _validateTransfer(budgetLimit, amount, signatureHash);
 
     // Update expense balance
-    _updateExpenseBalance(budgetLimit, amount, signatureHash);
+    _updateExpenseBalance(budgetLimit, amount, signatureHash, currentPeriod);
 
     // Perform transfer
     if (budgetLimit.tokenAddress == address(0)) {
       if (address(this).balance < amount)
-        revert InsufficientNativeBalance(amount, address(this).balance);
+        revert ExpenseAccountEIP712__InsufficientNativeBalance(amount, address(this).balance);
       payable(to).sendValue(amount);
       emit Transfer(budgetLimit.approvedAddress, to, amount);
     } else {
       uint256 tokenBal = IERC20(budgetLimit.tokenAddress).balanceOf(address(this));
       if (tokenBal < amount)
-        revert InsufficientTokenBalance(budgetLimit.tokenAddress, amount, tokenBal);
+        revert ExpenseAccountEIP712__InsufficientTokenBalance(
+          budgetLimit.tokenAddress,
+          amount,
+          tokenBal
+        );
       if (!IERC20(budgetLimit.tokenAddress).transfer(to, amount))
-        revert TokenTransferFailed(budgetLimit.tokenAddress);
+        revert ExpenseAccountEIP712__TokenTransferFailed(budgetLimit.tokenAddress);
       emit TokenTransfer(budgetLimit.approvedAddress, to, budgetLimit.tokenAddress, amount);
     }
   }
@@ -303,7 +315,7 @@ contract ExpenseAccountEIP712 is
    * Emits {ApprovalDeactivated} event
    */
   function deactivateApproval(bytes32 signatureHash) external onlyOwner {
-    expenseBalances[signatureHash].state = ApprovalState.Inactive;
+    s_expenseBalances[signatureHash].state = ApprovalState.Inactive;
     emit ApprovalDeactivated(signatureHash);
   }
 
@@ -313,7 +325,7 @@ contract ExpenseAccountEIP712 is
    * Emits {ApprovalActivated} event
    */
   function activateApproval(bytes32 signatureHash) external onlyOwner {
-    expenseBalances[signatureHash].state = ApprovalState.Active;
+    s_expenseBalances[signatureHash].state = ApprovalState.Active;
     emit ApprovalActivated(signatureHash);
   }
 
@@ -329,12 +341,12 @@ contract ExpenseAccountEIP712 is
 
   /**
    * @notice Sets the officer address for cross-contract discovery.
-   * @param _officerAddress The address of the officer contract.
+   * @param officerAddress The address of the officer contract.
    * @dev Can only be called by the contract owner. Used for already-deployed proxies.
    */
-  function setOfficerAddress(address _officerAddress) external onlyOwner {
-    if (_officerAddress == address(0)) revert ZeroAddress();
-    officerAddress = _officerAddress;
+  function setOfficerAddress(address officerAddress) external onlyOwner {
+    if (officerAddress == address(0)) revert ExpenseAccountEIP712__ZeroAddress();
+    s_officerAddress = officerAddress;
   }
 
   /**
@@ -342,9 +354,9 @@ contract ExpenseAccountEIP712 is
    * @dev Discovers the Bank address via the Officer contract. Single transaction drain.
    */
   function ownerWithdrawAllToBank() external onlyOwner nonReentrant whenNotPaused {
-    if (officerAddress == address(0)) revert OfficerAddressNotSet();
-    address bankAddress = IOfficer(officerAddress).findDeployedContract("Bank");
-    if (bankAddress == address(0)) revert BankContractNotFound();
+    if (s_officerAddress == address(0)) revert ExpenseAccountEIP712__OfficerAddressNotSet();
+    address bankAddress = IOfficer(s_officerAddress).findDeployedContract("Bank");
+    if (bankAddress == address(0)) revert ExpenseAccountEIP712__BankContractNotFound();
 
     uint256 nativeBalance = address(this).balance;
     if (nativeBalance > 0) {
@@ -352,13 +364,15 @@ contract ExpenseAccountEIP712 is
       emit OwnerTreasuryWithdrawNative(owner(), nativeBalance);
     }
 
-    address[] memory tokens = this.getSupportedTokens();
-    for (uint256 i = 0; i < tokens.length; i++) {
+    address[] memory tokens = _getSupportedTokens();
+    uint256 length = tokens.length;
+    address ownerAddress = owner();
+    for (uint256 i = 0; i < length; ++i) {
       uint256 tokenBalance = IERC20(tokens[i]).balanceOf(address(this));
       if (tokenBalance > 0) {
         if (!IERC20(tokens[i]).transfer(bankAddress, tokenBalance))
-          revert TokenTransferFailed(tokens[i]);
-        emit OwnerTreasuryWithdrawToken(owner(), tokens[i], tokenBalance);
+          revert ExpenseAccountEIP712__TokenTransferFailed(tokens[i]);
+        emit OwnerTreasuryWithdrawToken(ownerAddress, tokens[i], tokenBalance);
       }
     }
   }
@@ -375,30 +389,31 @@ contract ExpenseAccountEIP712 is
    * Emits a {TokenDeposited} event.
    */
   function depositToken(address token, uint256 amount) external nonReentrant whenNotPaused {
-    if (token != address(0) && !isTokenSupported(token)) revert TokenNotSupported(token);
-    if (amount == 0) revert ZeroAmount();
+    if (token != address(0) && !isTokenSupported(token))
+      revert ExpenseAccountEIP712__TokenNotSupported(token);
+    if (amount == 0) revert ExpenseAccountEIP712__ZeroAmount();
 
     if (!IERC20(token).transferFrom(msg.sender, address(this), amount))
-      revert TokenTransferFailed(token);
+      revert ExpenseAccountEIP712__TokenTransferFailed(token);
     emit TokenDeposited(msg.sender, token, amount);
   }
 
   /**
    * @notice Adds a supported token to the contract.
-   * @param _tokenAddress The address of the token contract.
+   * @param tokenAddress The address of the token contract.
    * @dev Can only be called by the contract owner.
    */
-  function addTokenSupport(address _tokenAddress) external override onlyOwner {
-    _addTokenSupport(_tokenAddress);
+  function addTokenSupport(address tokenAddress) external override onlyOwner {
+    _addTokenSupport(tokenAddress);
   }
 
   /**
    * @notice Removes a supported token from the contract.
-   * @param _tokenAddress The address of the token contract.
+   * @param tokenAddress The address of the token contract.
    * @dev Can only be called by the contract owner.
    */
-  function removeTokenSupport(address _tokenAddress) external override onlyOwner {
-    _removeTokenSupport(_tokenAddress);
+  function removeTokenSupport(address tokenAddress) external override onlyOwner {
+    _removeTokenSupport(tokenAddress);
   }
 
   /// @notice Returns the contract's native token balance.
@@ -412,34 +427,52 @@ contract ExpenseAccountEIP712 is
    * @return The token balance held by the contract.
    */
   function getTokenBalance(address token) external view returns (uint256) {
-    if (token != address(0) && !isTokenSupported(token)) revert TokenNotSupported(token);
+    if (token != address(0) && !isTokenSupported(token))
+      revert ExpenseAccountEIP712__TokenNotSupported(token);
     return IERC20(token).balanceOf(address(this));
+  }
+
+  /**
+   * @notice Returns the configured officer contract address.
+   * @return The officer address.
+   */
+  function getOfficerAddress() external view returns (address) {
+    return s_officerAddress;
+  }
+
+  /**
+   * @notice Returns the expense balance record for a given approval signature hash.
+   * @param signatureHash The keccak256 hash of the approval signature.
+   * @return The stored expense balance record.
+   */
+  function getExpenseBalance(bytes32 signatureHash) external view returns (ExpenseBalance memory) {
+    return s_expenseBalances[signatureHash];
   }
 
   /**
    * @notice Initializes the expense account contract.
    * @param owner The contract owner that will sign budget approvals.
-   * @param _tokenAddresses Initial set of supported ERC20 tokens.
+   * @param tokenAddresses Initial set of supported ERC20 tokens.
    */
-  function initialize(address owner, address[] calldata _tokenAddresses) public initializer {
-    if (owner == address(0)) revert ZeroAddress();
+  function initialize(address owner, address[] calldata tokenAddresses) public initializer {
+    if (owner == address(0)) revert ExpenseAccountEIP712__ZeroAddress();
     __Ownable_init(owner);
     __ReentrancyGuard_init();
     __EIP712_init("CNCExpenseAccount", "1");
     __Pausable_init();
 
-    if (msg.sender == address(0)) revert ZeroAddress();
-    officerAddress = msg.sender;
+    if (msg.sender == address(0)) revert ExpenseAccountEIP712__ZeroAddress();
+    s_officerAddress = msg.sender;
 
     // Set the initial supported tokens
-    uint256 length = _tokenAddresses.length;
+    uint256 length = tokenAddresses.length;
     for (uint256 i = 0; i < length; ++i) {
-      if (_tokenAddresses[i] == address(0)) revert ZeroAddress();
-      _addTokenSupport(_tokenAddresses[i]);
+      if (tokenAddresses[i] == address(0)) revert ExpenseAccountEIP712__ZeroAddress();
+      _addTokenSupport(tokenAddresses[i]);
     }
     // Emit events after they're already added to avoid duplicate events
     for (uint256 i = 0; i < length; ++i) {
-      emit TokenSupportAdded(_tokenAddresses[i]);
+      emit TokenSupportAdded(tokenAddresses[i]);
     }
   }
 
@@ -455,37 +488,7 @@ contract ExpenseAccountEIP712 is
     uint256 amount,
     bytes32 signatureHash
   ) public view returns (bool) {
-    if (block.timestamp < budgetLimit.startDate)
-      revert ApprovalNotActive(block.timestamp, budgetLimit.startDate);
-    if (block.timestamp > budgetLimit.endDate)
-      revert ApprovalExpired(block.timestamp, budgetLimit.endDate);
-
-    // Check amount doesn't exceed single withdrawal limit
-    if (amount > budgetLimit.amount) revert AmountExceedsBudgetLimit();
-
-    ExpenseBalance storage balance = expenseBalances[signatureHash];
-
-    // For one-time withdrawals
-    if (budgetLimit.frequencyType == FrequencyType.OneTime) {
-      if (balance.totalWithdrawn != 0) revert OneTimeBudgetAlreadyUsed();
-      return true;
-    }
-
-    // For periodic withdrawals
-    uint256 currentPeriod = getCurrentPeriod(budgetLimit);
-
-    if (currentPeriod > balance.lastWithdrawnPeriod || balance.lastWithdrawnDate == 0) {
-      // New period - check single withdrawal limit
-      if (amount > budgetLimit.amount) revert AmountExceedsPeriodBudget();
-    } else {
-      // Same period - check cumulative amount
-      if (balance.totalWithdrawn + amount > budgetLimit.amount) revert AmountExceedsPeriodBudget();
-    }
-
-    // Check token is supported (allows native token)
-    if (budgetLimit.tokenAddress != address(0) && !isTokenSupported(budgetLimit.tokenAddress))
-      revert TokenNotSupported(budgetLimit.tokenAddress);
-
+    _validateTransfer(budgetLimit, amount, signatureHash);
     return true;
   }
 
@@ -512,7 +515,7 @@ contract ExpenseAccountEIP712 is
       return false;
     }
 
-    ExpenseBalance storage balance = expenseBalances[signatureHash];
+    ExpenseBalance storage balance = s_expenseBalances[signatureHash];
     if (balance.lastWithdrawnDate == 0) {
       return true; // Never withdrawn
     }
@@ -545,11 +548,11 @@ contract ExpenseAccountEIP712 is
       // Monthly periods: 1st to last day of each month
       return _getMonthsSinceStart(budgetLimit.startDate, timestamp);
     } else if (budgetLimit.frequencyType == FrequencyType.Custom) {
-      if (budgetLimit.customFrequency == 0) revert InvalidCustomFrequency();
+      if (budgetLimit.customFrequency == 0) revert ExpenseAccountEIP712__InvalidCustomFrequency();
       return (timestamp - budgetLimit.startDate) / budgetLimit.customFrequency;
     }
 
-    revert InvalidFrequencyType();
+    revert ExpenseAccountEIP712__InvalidFrequencyType();
   }
 
   /**
@@ -573,19 +576,25 @@ contract ExpenseAccountEIP712 is
       );
   }
 
+  /// @notice Current contract version, per semver.
+  function version() public pure returns (string memory) {
+    return "2.0.0";
+  }
+
   /**
    * @dev Updates the expense balance record after a successful withdrawal.
    * @param budgetLimit The signed budget authorization.
    * @param amount Amount that was withdrawn.
    * @param signatureHash The keccak256 hash of the approval signature.
+   * @param currentPeriod Period index already computed by `_validateTransfer`.
    */
   function _updateExpenseBalance(
     BudgetLimit calldata budgetLimit,
     uint256 amount,
-    bytes32 signatureHash
+    bytes32 signatureHash,
+    uint256 currentPeriod
   ) internal {
-    ExpenseBalance storage balance = expenseBalances[signatureHash];
-    uint256 currentPeriod = getCurrentPeriod(budgetLimit);
+    ExpenseBalance storage balance = s_expenseBalances[signatureHash];
 
     if (budgetLimit.frequencyType == FrequencyType.OneTime) {
       // One-time withdrawal - just add to total
@@ -599,6 +608,48 @@ contract ExpenseAccountEIP712 is
       // Same period - add to existing total
       balance.totalWithdrawn += amount;
     }
+  }
+
+  /// @dev Validation shared with `transfer`; returns the computed period index
+  ///      (0 for one-time budgets) so callers can reuse it without recomputing.
+  function _validateTransfer(
+    BudgetLimit calldata budgetLimit,
+    uint256 amount,
+    bytes32 signatureHash
+  ) internal view returns (uint256) {
+    if (block.timestamp < budgetLimit.startDate)
+      revert ExpenseAccountEIP712__ApprovalNotActive(block.timestamp, budgetLimit.startDate);
+    if (block.timestamp > budgetLimit.endDate)
+      revert ExpenseAccountEIP712__ApprovalExpired(block.timestamp, budgetLimit.endDate);
+
+    // Check amount doesn't exceed single withdrawal limit
+    if (amount > budgetLimit.amount) revert ExpenseAccountEIP712__AmountExceedsBudgetLimit();
+
+    ExpenseBalance storage balance = s_expenseBalances[signatureHash];
+
+    // For one-time withdrawals
+    if (budgetLimit.frequencyType == FrequencyType.OneTime) {
+      if (balance.totalWithdrawn != 0) revert ExpenseAccountEIP712__OneTimeBudgetAlreadyUsed();
+      return 0;
+    }
+
+    // For periodic withdrawals
+    uint256 currentPeriod = getCurrentPeriod(budgetLimit);
+
+    if (currentPeriod > balance.lastWithdrawnPeriod || balance.lastWithdrawnDate == 0) {
+      // New period - check single withdrawal limit
+      if (amount > budgetLimit.amount) revert ExpenseAccountEIP712__AmountExceedsPeriodBudget();
+    } else {
+      // Same period - check cumulative amount
+      if (balance.totalWithdrawn + amount > budgetLimit.amount)
+        revert ExpenseAccountEIP712__AmountExceedsPeriodBudget();
+    }
+
+    // Check token is supported (allows native token)
+    if (budgetLimit.tokenAddress != address(0) && !isTokenSupported(budgetLimit.tokenAddress))
+      revert ExpenseAccountEIP712__TokenNotSupported(budgetLimit.tokenAddress);
+
+    return currentPeriod;
   }
 
   /**

@@ -9,5 +9,5 @@ import {BeaconProxy} from "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol"
  * @dev Thin passthrough around OpenZeppelin's BeaconProxy.
  */
 contract UserBeaconProxy is BeaconProxy {
-  constructor(address _beacon, bytes memory _data) BeaconProxy(_beacon, _data) {}
+  constructor(address beacon, bytes memory data) BeaconProxy(beacon, data) {}
 }

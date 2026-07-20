@@ -199,10 +199,9 @@ import {
   enrichTransaction
 } from '@/utils'
 import { formatDateRelative, formatDateUTC } from '@/utils/dayUtils'
-import { GET_EXPENSE_EVENTS } from '@/queries/ponder/expense.queries'
+import { useExpenseEventsViaLogs } from '@/composables/expense/useExpenseEventsViaLogs'
 import { GET_INCOMING_BANK_TOKEN_TRANSFERS } from '@/queries/ponder/bank.queries'
 import type { IncomingBankTokenTransfersQuery } from '@/types/ponder/bank'
-import type { ExpenseEventsQuery } from '@/types/ponder/expense'
 
 const props = defineProps<{
   expenseAddress: Address
@@ -211,22 +210,9 @@ const props = defineProps<{
 const currencyStore = useCurrencyStore()
 const contractAddress = computed(() => props.expenseAddress.toLowerCase())
 
-const {
-  result,
-  error,
-  loading: expenseLoading
-} = useQuery<ExpenseEventsQuery>(
-  GET_EXPENSE_EVENTS,
-  {
-    contractAddress,
-    limit: 500
-  },
-  {
-    enabled: computed(() => Boolean(contractAddress.value)),
-    pollInterval: GRAPHQL_POLL_INTERVAL,
-    fetchPolicy: 'cache-and-network'
-  }
-)
+// EXPERIMENT: source the Expense account's own events from the RPC (eth_getLogs)
+// instead of Ponder. The incoming Bank→Expense transfers below stay on Ponder.
+const { result, error, loading: expenseLoading } = useExpenseEventsViaLogs(contractAddress)
 
 const {
   result: incomingTokenTransfersResult,
