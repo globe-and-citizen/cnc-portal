@@ -116,8 +116,6 @@ function balanceTable(acc: CncAccounting, asOf?: Date | null): AccountingPdfTabl
 }
 
 function trialTable(acc: CncAccounting, asOf?: Date | null): AccountingPdfTable {
-  // Rebuild the ledger over the "as of" slice when a date is set, mirroring the
-  // Trial Balance card; otherwise use the pre-built whole-book ledger.
   const ledger = asOf
     ? buildGeneralLedger(filterByPeriod(acc.entries, null, asOf))
     : acc.generalLedger
@@ -156,7 +154,14 @@ interface LedgerTableOptions {
   to?: Date | null
   columns?: LedgerColumnKey[]
   currencies?: string[]
-  account?: string
+  account?: string | readonly string[]
+  accountLabel?: string
+  accountTotal?: string
+}
+
+/** Display name for a drill-down: the account, or the aggregate's label. */
+function drillName(opts: LedgerTableOptions): string {
+  return Array.isArray(opts.account) ? (opts.accountLabel ?? 'Ledger') : (opts.account as string)
 }
 
 function ledgerTable(
@@ -165,14 +170,14 @@ function ledgerTable(
   opts: LedgerTableOptions = {}
 ): AccountingPdfTable {
   const { rows, total } = opts.account
-    ? presentAccountLedger(acc.entries, opts.account, opts.to)
+    ? presentAccountLedger(acc.entries, opts.account, opts.from, opts.to, opts.accountTotal)
     : presentLedger(acc.entries, opts.filter ?? 'All', opts.from, opts.to, opts.currencies)
   const cols = resolveLedgerColumns(opts.columns)
   const body = rows.map((r) => cols.map((c) => LEDGER_PDF_CELL[c.value].pick(r, resolveName)))
   body.push(ledgerTotalRow(cols, total))
   return {
     title: opts.account
-      ? accountLedgerTitle(opts.account, opts.to)
+      ? accountLedgerTitle(drillName(opts), opts.from, opts.to)
       : ledgerExportTitle(opts.filter, opts.from, opts.to),
     head: cols.map((c) => c.label),
     align: cols.map((c) => LEDGER_PDF_CELL[c.value].align),
@@ -202,7 +207,9 @@ function sectionTable(
         to: spec.to,
         columns: spec.columns,
         currencies: spec.currencies,
-        account: spec.account
+        account: spec.account,
+        accountLabel: spec.accountLabel,
+        accountTotal: spec.accountTotal
       })
   }
 }
