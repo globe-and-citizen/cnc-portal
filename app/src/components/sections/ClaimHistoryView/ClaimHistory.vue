@@ -23,8 +23,11 @@
           :weekly-claim="selectWeekWeelyClaim"
           :selected-week="selectedMonthObject"
           :member-address="selectedMemberAddress"
+          :is-restricted="isRestricted"
           @quick-submit="handleQuickSubmit"
         />
+
+        <WeeklyGoalsDisplay :weekly-claim="selectWeekWeelyClaim" />
       </div>
     </div>
   </div>
@@ -39,6 +42,7 @@ import { formatIsoWeekRange, startOfWeek, type Week } from '@/utils/dayUtils'
 import { useTeamStore } from '@/stores'
 import { useRoute } from 'vue-router'
 import { useGetTeamWeeklyClaimsQuery, useGetTeamWagesQuery } from '@/queries'
+import { useSubmitRestriction } from '@/composables'
 import type { Address } from 'viem'
 
 import WeeklyRecap from './WeeklyRecap.vue'
@@ -46,12 +50,14 @@ import ClaimHistoryMemberHeader from './ClaimHistoryMemberHeader.vue'
 import ClaimHistoryWeekNavigator from './ClaimHistoryWeekNavigator.vue'
 import ClaimHistoryActionAlerts from './ClaimHistoryActionAlerts.vue'
 import ClaimHistoryDailyBreakdown from './ClaimHistoryDailyBreakdown.vue'
+import WeeklyGoalsDisplay from './WeeklyGoalsDisplay.vue'
 
 dayjs.extend(utc)
 dayjs.extend(isoWeek)
 
 const route = useRoute()
 const teamStore = useTeamStore()
+const { isRestricted } = useSubmitRestriction()
 
 const selectedMemberAddress = computed(() => route.params.memberAddress as Address | undefined)
 

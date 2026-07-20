@@ -35,3 +35,7 @@ export function useTransfer() {
 export function useTransferToken() {
   return useBankContractWrite('transferToken')
 }
+
+export function useFundFixedReturnRepayment() {
+  return useBankContractWrite('fundFixedReturnRepayment')
+}

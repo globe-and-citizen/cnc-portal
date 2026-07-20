@@ -43,13 +43,19 @@ PONDER_RPC_URL_137=https://polygon-mainnet.g.alchemy.com/v2/<your-key>
    npx hardhat run scripts/deploy.ts --network localhost
    ```
 
-2. Note the `OfficerFactoryBeacon` address printed by the deploy script.
+2. Sync the deployed addresses into every consumer (app, dashboard, ponder):
 
-3. In `.env.local`, set:
+   ```bash
+   cd contract && npm run mc
+   ```
+
+   This writes `ponder/artifacts/deployed_addresses/chain-31337.json` (gitignored),
+   from which Ponder reads `OfficerFactoryBeacon` and `FeeCollector` — no manual copy.
+
+3. In `.env.local`, just select the network:
 
    ```bash
    NETWORK=hardhat
-   FACTORY_ADDRESS=0x<address from step 2>
    ```
 
 4. Start the indexer:
@@ -60,7 +66,9 @@ PONDER_RPC_URL_137=https://polygon-mainnet.g.alchemy.com/v2/<your-key>
 
 The indexer will connect to `http://127.0.0.1:8545` (override with `PONDER_RPC_URL_HARDHAT` if needed) and start from block 0.
 
-> **Note:** every time you restart `npx hardhat node` contracts are redeployed at new addresses. Update `FACTORY_ADDRESS` and restart `pnpm dev` each time.
+> **Note:** every time you restart `npx hardhat node` contracts are redeployed at
+> new addresses. Re-run `npm run mc` (in contract/) and restart `pnpm dev`. You can
+> still override an address via `FACTORY_ADDRESS` / `FEE_COLLECTOR_ADDRESS` in `.env.local`.
 
 ## Scripts
 

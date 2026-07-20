@@ -14,6 +14,15 @@
       </div>
 
       <div class="flex shrink-0 items-center gap-1.5">
+        <UBadge
+          v-if="isOnLegacyContracts"
+          label="Legacy"
+          icon="i-lucide-triangle-alert"
+          color="warning"
+          variant="soft"
+          size="sm"
+          data-test="team-legacy-badge"
+        />
         <RoleBadge :role="treasury.role" />
 
         <UDropdownMenu v-model:open="menuOpen" :items="menuItems">
@@ -127,6 +136,13 @@ const treasury = computed<CompanyTreasury>(
 )
 
 const isOwner = computed(() => treasury.value.role === 'owner')
+
+// Legacy = an Officer is deployed but on an older contract generation. Gate on
+// the Officer existing so onboarding teams (isMigrated false, no Officer) don't
+// get flagged.
+const isOnLegacyContracts = computed(
+  () => !!props.team.currentOfficer?.address && props.team.isMigrated === false
+)
 
 const menuOpen = ref(false)
 

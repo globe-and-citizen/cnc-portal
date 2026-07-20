@@ -6,7 +6,7 @@
   },
   {
     "inputs": [],
-    "name": "BankContractNotFound",
+    "name": "CashRemunerationEIP712__BankContractNotFound",
     "type": "error"
   },
   {
@@ -17,7 +17,103 @@
         "type": "bytes32"
       }
     ],
-    "name": "ClaimIsDisabled",
+    "name": "CashRemunerationEIP712__ClaimIsDisabled",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "required",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "available",
+        "type": "uint256"
+      }
+    ],
+    "name": "CashRemunerationEIP712__InsufficientTokenBalance",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "expected",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "actual",
+        "type": "address"
+      }
+    ],
+    "name": "CashRemunerationEIP712__NotClaimOwner",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "CashRemunerationEIP712__OfficerAddressNotSet",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      }
+    ],
+    "name": "CashRemunerationEIP712__TokenNotSupported",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      }
+    ],
+    "name": "CashRemunerationEIP712__TokenTransferFailed",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "expected",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "received",
+        "type": "address"
+      }
+    ],
+    "name": "CashRemunerationEIP712__UnauthorizedAccess",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "signatureHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "CashRemunerationEIP712__WageAlreadyPaid",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "CashRemunerationEIP712__ZeroAddress",
     "type": "error"
   },
   {
@@ -79,55 +175,13 @@
     "type": "error"
   },
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "token",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "required",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "available",
-        "type": "uint256"
-      }
-    ],
-    "name": "InsufficientTokenBalance",
-    "type": "error"
-  },
-  {
     "inputs": [],
     "name": "InvalidInitialization",
     "type": "error"
   },
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "expected",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "actual",
-        "type": "address"
-      }
-    ],
-    "name": "NotClaimOwner",
-    "type": "error"
-  },
-  {
     "inputs": [],
     "name": "NotInitializing",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "OfficerAddressNotSet",
     "type": "error"
   },
   {
@@ -165,7 +219,7 @@
         "type": "address"
       }
     ],
-    "name": "TokenNotSupported",
+    "name": "TokenSupport__AlreadyAdded",
     "type": "error"
   },
   {
@@ -176,66 +230,12 @@
         "type": "address"
       }
     ],
-    "name": "TokenSupportAlreadyAdded",
-    "type": "error"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "token",
-        "type": "address"
-      }
-    ],
-    "name": "TokenSupportNotFound",
+    "name": "TokenSupport__NotFound",
     "type": "error"
   },
   {
     "inputs": [],
-    "name": "TokenSupportZeroAddress",
-    "type": "error"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "token",
-        "type": "address"
-      }
-    ],
-    "name": "TokenTransferFailed",
-    "type": "error"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "expected",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "received",
-        "type": "address"
-      }
-    ],
-    "name": "UnauthorizedAccess",
-    "type": "error"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "bytes32",
-        "name": "signatureHash",
-        "type": "bytes32"
-      }
-    ],
-    "name": "WageAlreadyPaid",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "ZeroAddress",
+    "name": "TokenSupport__ZeroAddress",
     "type": "error"
   },
   {
@@ -501,25 +501,6 @@
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "bytes32",
-        "name": "",
-        "type": "bytes32"
-      }
-    ],
-    "name": "disabledWageClaims",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [],
     "name": "eip712Domain",
     "outputs": [
@@ -589,6 +570,57 @@
     "type": "function"
   },
   {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "signatureHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "getDisabledWageClaim",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getOfficerAddress",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "signatureHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "getPaidWageClaim",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [],
     "name": "getSupportedTokenCount",
     "outputs": [
@@ -618,12 +650,12 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_owner",
+        "name": "initialOwner",
         "type": "address"
       },
       {
         "internalType": "address[]",
-        "name": "_tokenAddresses",
+        "name": "tokenAddresses",
         "type": "address[]"
       }
     ],
@@ -636,7 +668,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_token",
+        "name": "token",
         "type": "address"
       }
     ],
@@ -646,19 +678,6 @@
         "internalType": "bool",
         "name": "",
         "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "officerAddress",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
       }
     ],
     "stateMutability": "view",
@@ -682,25 +701,6 @@
     "name": "ownerWithdrawAllToBank",
     "outputs": [],
     "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "bytes32",
-        "name": "",
-        "type": "bytes32"
-      }
-    ],
-    "name": "paidWageClaims",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -761,6 +761,19 @@
     "name": "unpause",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "version",
+    "outputs": [
+      {
+        "internalType": "string",
+        "name": "",
+        "type": "string"
+      }
+    ],
+    "stateMutability": "pure",
     "type": "function"
   },
   {

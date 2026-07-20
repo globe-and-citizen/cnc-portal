@@ -1,183 +1,159 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
+import { ref } from 'vue'
+import type { Address } from 'viem'
+import { mockFixedReturnReads, mockUserStore, useQueryFn } from '@/tests/mocks'
+import type { FixedReturnRawOffer, LendingOfferStruct } from '@/types'
+
+// The store reads the offer list through useFixedReturnAllOffers (globally mocked) and
+// opens an owner useQuery (globally mocked as useQueryFn) plus the off-chain metadata
+// query. Drive the owner ref through useQueryFn and stub the metadata query so the store
+// instantiates without a live query client; the owner ref is what drives isOwner.
+const ownerData = ref<string | undefined>(undefined)
+vi.mock('@/queries/fixedReturnOffering.queries', async (importOriginal) => ({
+  ...(await importOriginal<object>()),
+  useGetFixedReturnOfferingsQuery: vi.fn(() => ({ data: ref([]) }))
+}))
+
+// The store derives "has the deadline passed" from the chain's own clock, not the
+// device's — fixed comfortably between EXPIRED_OPEN_OFFER's deadline (must read as
+// past) and OPEN_OFFER's (must read as not yet reached).
+const NOW = 2_000_000_000n
+vi.mock('@/composables/useBlockTimestamp', () => ({
+  useBlockTimestamp: vi.fn(() => ref(NOW))
+}))
 
 import { useCommunityCreditStore } from '@/stores/communityCredit'
-import type { CreditCallForm } from '@/types'
 
-function makeForm(overrides: Partial<CreditCallForm> = {}): CreditCallForm {
+const TOKEN = '0x0000000000000000000000000000000000000abc' as Address
+
+function offer(over: Partial<LendingOfferStruct> = {}): LendingOfferStruct {
   return {
-    name: 'New round',
-    desc: 'desc',
-    target: '30000',
-    token: 'USDC',
-    rate: '7',
-    period: 60,
-    periodMode: 'preset',
-    periodVal: '60',
-    periodUnit: 'days',
-    deadline: '2026-09-01',
-    access: 'everyone',
-    whitelist: {},
-    capOn: false,
-    cap: '5000',
-    ...overrides
+    token: TOKEN,
+    fundingTarget: 40_000_000000n,
+    interestRateBps: 500n, // 5%
+    termDuration: 3,
+    termUnit: 1, // months
+    startDate: 1_700_000_000n,
+    // Far enough in the future that isLendingOfferAcceptingFunds' real-clock deadline
+    // check treats an Open offer as still fundable, unless a test overrides it.
+    subscriptionDeadline: 9_999_999_999n,
+    fundingAccess: 0,
+    isCapEnabled: false,
+    lenderCap: 0n,
+    totalFunded: 23_400_000000n,
+    totalRepaidByIssuer: 0n,
+    state: 0, // Open
+    ...over
   }
 }
 
-describe('Community Credit Store', () => {
+const OPEN_OFFER: FixedReturnRawOffer = { offerId: 2, decimals: 6, offer: offer() }
+const REPAID_OFFER: FixedReturnRawOffer = {
+  offerId: 1,
+  decimals: 6,
+  offer: offer({
+    interestRateBps: 550n,
+    totalFunded: 18_000_000000n,
+    totalRepaidByIssuer: 18_990_000000n, // 18000 + 5.5% → fully repaid
+    state: 3
+  })
+}
+const FUNDED_OFFER: FixedReturnRawOffer = {
+  offerId: 3,
+  decimals: 6,
+  offer: offer({ totalFunded: 40_000_000000n, state: 1 }) // fully raised, not yet repaid
+}
+// Still contract-state Open, but its subscription window closed without reaching
+// target — no longer fundable; offerStateToRoundStatus resolves this to 'stalled'.
+const EXPIRED_OPEN_OFFER: FixedReturnRawOffer = {
+  offerId: 4,
+  decimals: 6,
+  offer: offer({ subscriptionDeadline: 1_700_500_000n })
+}
+
+describe('Community Credit store (contract-backed)', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
+    mockFixedReturnReads.allOffers.data.value = [OPEN_OFFER, REPAID_OFFER]
+    mockFixedReturnReads.allOffers.isLoading.value = false
+    mockFixedReturnReads.allOffers.isError.value = false
+    ownerData.value = undefined
+    useQueryFn.mockReturnValue({
+      data: ownerData,
+      isLoading: ref(false),
+      error: ref(null)
+    } as unknown as ReturnType<typeof useQueryFn>)
   })
 
-  describe('initial state', () => {
-    it('seeds four rounds and starts as the owner viewing the ledger', () => {
-      const store = useCommunityCreditStore()
-      expect(store.rounds).toHaveLength(4)
-      expect(store.role).toBe('owner')
-      expect(store.isOwner).toBe(true)
-      expect(store.variant).toBe('ledger')
-    })
-
-    it('splits rounds into active and history buckets', () => {
-      const store = useCommunityCreditStore()
-      expect(store.activeRounds.map((r) => r.id)).toEqual(['q3', 'hw'])
-      expect(store.historyRounds.map((r) => r.id)).toEqual(['audit', 'spring'])
-    })
+  it('maps each on-chain offer to a CreditRound and splits active vs history', () => {
+    const store = useCommunityCreditStore()
+    expect(store.hasContract).toBe(true)
+    expect(store.rounds.map((r) => r.id)).toEqual(['2', '1'])
+    expect(store.activeRounds.map((r) => r.id)).toEqual(['2'])
+    expect(store.historyRounds.map((r) => r.id)).toEqual(['1'])
+    expect(store.getRound('2')?.raised).toBe(23400)
+    expect(store.getRound('1')?.status).toBe('repaid')
   })
 
-  describe('account stats', () => {
-    it('derives the credit-account figures from the seed', () => {
-      const store = useCommunityCreditStore()
-      expect(store.outstandingPrincipal).toBe(48400)
-      expect(store.interestDue).toBe(2670) // 23400*5% + 25000*6%
-      expect(store.lenderPositions).toBe(8)
-      expect(store.raisedLifetime).toBe(66400)
-      expect(store.repaidLifetime).toBe(18990) // 18000 + 5.5%
-      expect(store.nextMaturity).toBe('Aug 14') // the in-repayment round
-    })
+  it('moves a stalled (expired, unfunded) round to history and still counts its principal as outstanding', () => {
+    mockFixedReturnReads.allOffers.data.value = [OPEN_OFFER, EXPIRED_OPEN_OFFER]
+    const store = useCommunityCreditStore()
+
+    expect(store.getRound('4')?.status).toBe('stalled')
+    expect(store.activeRounds.map((r) => r.id)).toEqual(['2'])
+    expect(store.historyRounds.map((r) => r.id)).toContain('4')
+    // 23,400 (open) + 23,400 (stalled) — a stalled round's principal is still
+    // outstanding, awaiting the issuer's refund/accept decision.
+    expect(store.outstandingPrincipal).toBe(46800)
   })
 
-  describe('setRole / setVariant', () => {
-    it('switches the demo role and detail layout', () => {
-      const store = useCommunityCreditStore()
-      store.setRole('lender')
-      expect(store.isLender).toBe(true)
-      expect(store.isOwner).toBe(false)
-      store.setVariant('gauge')
-      expect(store.variant).toBe('gauge')
-    })
+  it('moves a funded round to history instead of the active list, but still counts its principal as outstanding', () => {
+    mockFixedReturnReads.allOffers.data.value = [OPEN_OFFER, REPAID_OFFER, FUNDED_OFFER]
+    const store = useCommunityCreditStore()
+
+    expect(store.activeRounds.map((r) => r.id)).toEqual(['2'])
+    expect(store.historyRounds.map((r) => r.id)).toEqual(['1', '3'])
+    expect(store.getRound('3')?.status).toBe('funded')
+    // 23,400 (open) + 40,000 (funded) — funded principal is still outstanding even
+    // though the round itself moved out of the active list.
+    expect(store.outstandingPrincipal).toBe(63400)
   })
 
-  describe('lend', () => {
-    it('merges into the existing "You" position and returns the amount added', () => {
-      const store = useCommunityCreditStore()
-      const before = store.getRound('q3')!.raised
-      const mineBefore = store.getRound('q3')!.lenders.find((l) => l.you)!.amount
-
-      const added = store.lend('q3', 1000)
-
-      expect(added).toBe(1000)
-      expect(store.getRound('q3')!.raised).toBe(before + 1000)
-      expect(store.getRound('q3')!.lenders.find((l) => l.you)!.amount).toBe(mineBefore + 1000)
-    })
-
-    it('clamps to the remaining capacity and flips the round to funded', () => {
-      const store = useCommunityCreditStore()
-      const round = store.getRound('q3')!
-      const remaining = round.target - round.raised
-
-      const added = store.lend('q3', remaining + 5000)
-
-      expect(added).toBe(remaining)
-      expect(store.getRound('q3')!.raised).toBe(round.target)
-      expect(store.getRound('q3')!.status).toBe('funded')
-    })
-
-    it('adds a new "You" lender when the user has no position yet', () => {
-      const store = useCommunityCreditStore()
-      const round = store.getRound('hw')!
-      // hw is fully funded, so lend against a fresh open round instead.
-      const id = store.createRound(makeForm({ name: 'Fresh', target: '10000' }))
-      const added = store.lend(id, 2500)
-
-      expect(added).toBe(2500)
-      const created = store.getRound(id)!
-      expect(created.lenders).toHaveLength(1)
-      expect(created.lenders[0]?.you).toBe(true)
-      expect(round.status).toBe('active') // untouched
-    })
-
-    it('ignores unknown rounds and non-positive amounts', () => {
-      const store = useCommunityCreditStore()
-      expect(store.lend('does-not-exist', 1000)).toBe(0)
-      expect(store.lend('q3', 0)).toBe(0)
-      expect(store.lend('q3', -50)).toBe(0)
-    })
+  it('derives the account stats from the offers', () => {
+    const store = useCommunityCreditStore()
+    expect(store.outstandingPrincipal).toBe(23400)
+    expect(store.interestDue).toBe(1170) // 23400 × 5%
+    expect(store.raisedLifetime).toBe(41400)
+    expect(store.repaidLifetime).toBe(18990)
+    expect(store.nextMaturity).not.toBe('—')
   })
 
-  describe('repay', () => {
-    it('marks a round repaid', () => {
-      const store = useCommunityCreditStore()
-      expect(store.repay('hw')).toBe(true)
-      const round = store.getRound('hw')!
-      expect(round.status).toBe('repaid')
-      expect(round.repaidOn).toBe('today')
-      expect(store.activeRounds.map((r) => r.id)).toEqual(['q3'])
-    })
-
-    it('returns false for an unknown round', () => {
-      const store = useCommunityCreditStore()
-      expect(store.repay('nope')).toBe(false)
-    })
+  it('derives ownership from the connected wallet', () => {
+    const store = useCommunityCreditStore()
+    expect(store.isOwner).toBe(false)
+    ownerData.value = mockUserStore.address
+    expect(store.isOwner).toBe(true)
+    expect(store.isLender).toBe(false)
   })
 
-  describe('createRound', () => {
-    it('publishes an open round at the top of the list with mapped fields', () => {
-      const store = useCommunityCreditStore()
-      const id = store.createRound(
-        makeForm({
-          name: '  Q4 bridge  ',
-          target: '40000',
-          access: 'restricted',
-          capOn: true,
-          cap: '8000'
-        })
-      )
-      const round = store.getRound(id)!
-
-      expect(store.rounds[0]?.id).toBe(id)
-      expect(round.name).toBe('Q4 bridge')
-      expect(round.status).toBe('open')
-      expect(round.raised).toBe(0)
-      expect(round.target).toBe(40000)
-      expect(round.restricted).toBe(true)
-      expect(round.cap).toBe(8000)
-      expect(round.lenders).toEqual([])
-    })
-
-    it('falls back to defaults for blank name and disabled cap', () => {
-      const store = useCommunityCreditStore()
-      const id = store.createRound(makeForm({ name: '   ', desc: '', capOn: false }))
-      const round = store.getRound(id)!
-      expect(round.name).toBe('Untitled round')
-      expect(round.desc).toBe('New credit round.')
-      expect(round.cap).toBeNull()
-    })
+  it('reflects the loading state and toggles the layout variant', () => {
+    const store = useCommunityCreditStore()
+    expect(store.variant).toBe('ledger')
+    store.setVariant('gauge')
+    expect(store.variant).toBe('gauge')
+    mockFixedReturnReads.allOffers.isLoading.value = true
+    expect(store.isLoading).toBe(true)
   })
 
-  describe('resetDemo', () => {
-    it('restores seed rounds, balance, role and variant', () => {
-      const store = useCommunityCreditStore()
-      store.lend('q3', 1000)
-      store.setRole('lender')
-      store.setVariant('timeline')
-
-      store.resetDemo()
-
-      expect(store.rounds).toHaveLength(4)
-      expect(store.getRound('q3')!.raised).toBe(23400)
-      expect(store.role).toBe('owner')
-      expect(store.variant).toBe('ledger')
+  it('maps the team members eligible to lend', () => {
+    const store = useCommunityCreditStore()
+    expect(store.members.length).toBeGreaterThan(0)
+    expect(store.members[0]).toMatchObject({
+      id: expect.any(String),
+      name: expect.any(String),
+      addr: expect.any(String),
+      gradient: expect.stringContaining('#')
     })
   })
 })

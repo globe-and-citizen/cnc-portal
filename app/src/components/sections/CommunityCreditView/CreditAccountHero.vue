@@ -51,13 +51,13 @@ const chips = computed(() => [
     icon: 'heroicons:bolt',
     text: `${store.activeRounds.length} rounds raising or in repayment`
   },
-  { icon: 'heroicons:users', text: `${store.lenderPositions} lender positions` }
+  { icon: 'heroicons:check-circle', text: `${store.historyRounds.length} settled` }
 ])
 
 const cards = computed(() => [
   { label: 'Raised lifetime', value: formatAmount(store.raisedLifetime) },
   { label: 'Repaid lifetime', value: formatAmount(store.repaidLifetime) },
-  { label: 'Account balance', value: formatAmount(store.accountBalance) },
+  { label: 'Active rounds', value: String(store.activeRounds.length) },
   { label: 'Next maturity', value: store.nextMaturity }
 ])
 </script>

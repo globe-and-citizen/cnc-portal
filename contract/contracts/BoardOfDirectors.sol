@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
-import '@openzeppelin/contracts/utils/structs/EnumerableSet.sol';
-import {IBoardOfDirectors} from './interfaces/IBoardOfDirectors.sol';
+import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import {IBoardOfDirectors} from "./interfaces/IBoardOfDirectors.sol";
 
 /**
  * @title BoardOfDirectors
@@ -11,16 +11,6 @@ import {IBoardOfDirectors} from './interfaces/IBoardOfDirectors.sol';
  */
 contract BoardOfDirectors is ReentrancyGuardUpgradeable, IBoardOfDirectors {
   using EnumerableSet for EnumerableSet.AddressSet;
-
-  /// @dev Set of owner addresses allowed to manage board membership.
-  EnumerableSet.AddressSet private owners;
-  /// @dev Set of current board-of-directors members.
-  EnumerableSet.AddressSet private boardOfDirectors;
-  /// @notice Total number of actions that have been added.
-  uint256 public actionCount;
-
-  /// @notice Maps an action id to its action record.
-  mapping(uint256 => Action) public actions;
 
   /**
    * @dev An action submitted for board approval and execution.
@@ -41,8 +31,23 @@ contract BoardOfDirectors is ReentrancyGuardUpgradeable, IBoardOfDirectors {
     bool isExecuted;
     bytes data;
     address createdBy;
-    mapping(address => bool) approvals;
+    mapping(address approver => bool approved) approvals;
   }
+
+  /// @dev Set of owner addresses allowed to manage board membership.
+  EnumerableSet.AddressSet private s_ownersSet;
+  /// @dev Set of current board-of-directors members.
+  EnumerableSet.AddressSet private s_boardOfDirectorsSet;
+  /// @notice Total number of actions that have been added.
+  uint256 private s_actionCount;
+
+  /// @notice Maps an action id to its action record.
+  mapping(uint256 actionId => Action action) private s_actions;
+
+  /// @dev Storage gap reserving 50 slots for future upgrades. Decrement when adding
+  ///      new state variables above so the reserve stays constant and proxy slots don't shift.
+  // solhint-disable-next-line chainlink-solidity/prefix-storage-variables-with-s-underscore
+  uint256[50] private __gap;
 
   /// @notice Emitted when the board-of-directors set is replaced.
   event BoardOfDirectorsChanged(address[] boardOfDirectors);
@@ -52,18 +57,18 @@ contract BoardOfDirectors is ReentrancyGuardUpgradeable, IBoardOfDirectors {
    * @notice Emitted when a new action is added to the board.
    * @param id Action id.
    * @param target Target contract.
-   * @param _description Description of the action.
+   * @param description Description of the action.
    * @param data Calldata payload for the action.
    */
-  event ActionAdded(uint256 indexed id, address indexed target, string _description, bytes data);
+  event ActionAdded(uint256 indexed id, address indexed target, string description, bytes data);
   /**
    * @notice Emitted when an action is executed.
    * @param id Action id.
    * @param target Target contract that was called.
-   * @param _description Description of the action.
+   * @param description Description of the action.
    * @param data Calldata that was executed.
    */
-  event ActionExecuted(uint256 indexed id, address indexed target, string _description, bytes data);
+  event ActionExecuted(uint256 indexed id, address indexed target, string description, bytes data);
   /**
    * @notice Emitted when a board member approves an action.
    * @param id Action id.
@@ -78,33 +83,49 @@ contract BoardOfDirectors is ReentrancyGuardUpgradeable, IBoardOfDirectors {
   event Revocation(uint256 indexed id, address indexed approver);
 
   /// @dev A required address argument was the zero address.
-  error ZeroAddress();
+  error BoardOfDirectors__ZeroAddress();
   /// @dev The action has already been executed and cannot be modified.
   /// @param actionId The action id.
-  error ActionAlreadyExecuted(uint256 actionId);
+  error BoardOfDirectors__ActionAlreadyExecuted(uint256 actionId);
   /// @dev The caller has already approved this action.
-  error AlreadyApproved();
+  error BoardOfDirectors__AlreadyApproved();
   /// @dev The caller has not approved this action.
-  error NotApproved();
+  error BoardOfDirectors__NotApproved();
   /// @dev The list must not be empty.
-  error EmptyList();
+  error BoardOfDirectors__EmptyList();
   /// @dev The owner is already registered.
   /// @param owner The owner address.
-  error OwnerAlreadyExists(address owner);
+  error BoardOfDirectors__OwnerAlreadyExists(address owner);
   /// @dev The owner was not found in the owners set.
   /// @param owner The owner address.
-  error OwnerNotFound(address owner);
+  error BoardOfDirectors__OwnerNotFound(address owner);
   /// @dev The low-level call to the target contract failed.
   /// @param target The call target.
-  error CallFailed(address target);
+  error BoardOfDirectors__CallFailed(address target);
   /// @dev The caller is not in the owners set.
   /// @param caller The caller address.
-  error NotOwner(address caller);
+  error BoardOfDirectors__NotOwner(address caller);
   /// @dev The caller is not a board of directors member.
   /// @param caller The caller address.
-  error NotBoardMember(address caller);
+  error BoardOfDirectors__NotBoardMember(address caller);
   /// @dev The function can only be called by the contract itself.
-  error NotSelf();
+  error BoardOfDirectors__NotSelf();
+
+  modifier onlyOwner() {
+    if (!s_ownersSet.contains(msg.sender)) revert BoardOfDirectors__NotOwner(msg.sender);
+    _;
+  }
+
+  modifier onlyBoardOfDirectors() {
+    if (!s_boardOfDirectorsSet.contains(msg.sender))
+      revert BoardOfDirectors__NotBoardMember(msg.sender);
+    _;
+  }
+
+  modifier onlySelf() {
+    if (msg.sender != address(this)) revert BoardOfDirectors__NotSelf();
+    _;
+  }
 
   /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() {
@@ -112,126 +133,202 @@ contract BoardOfDirectors is ReentrancyGuardUpgradeable, IBoardOfDirectors {
   }
 
   /**
-   * @dev Initializes the contract with the initial set of owners.
-   * @param _owners The initial set of owners.
-   */
-  function initialize(address[] memory _owners) public initializer {
-    uint256 length = _owners.length;
-    for (uint256 i = 0; i < length; i++) {
-      if (_owners[i] == address(0)) revert ZeroAddress();
-      owners.add(_owners[i]);
-    }
-    __ReentrancyGuard_init();
-  }
-
-  /**
    * @dev Adds a new action to the board.
-   * @param _target The target address of the action.
-   * @param _description The description of the action.
-   * @param _data The function signature associated with the action target.
+   * @param target The target address of the action.
+   * @param description The description of the action.
+   * @param data The function signature associated with the action target.
    */
   function addAction(
-    address _target,
-    string memory _description,
-    bytes memory _data
+    address target,
+    string memory description,
+    bytes memory data
   ) external onlyBoardOfDirectors {
-    if (_target == address(0)) revert ZeroAddress();
+    if (target == address(0)) revert BoardOfDirectors__ZeroAddress();
 
-    Action storage _action = actions[actionCount];
-    _action.id = actionCount;
-    _action.target = _target;
-    _action.description = _description;
-    _action.data = _data;
-    _action.createdBy = msg.sender;
+    Action storage action = s_actions[s_actionCount];
+    action.id = s_actionCount;
+    action.target = target;
+    action.description = description;
+    action.data = data;
+    action.createdBy = msg.sender;
 
     // Add the first approval
-    _action.approvalCount = 1;
-    _action.approvals[msg.sender] = true;
-    emit ActionAdded(actionCount, _target, _description, _data);
+    action.approvalCount = 1;
+    action.approvals[msg.sender] = true;
+    emit ActionAdded(s_actionCount, target, description, data);
 
-    actionCount++;
+    s_actionCount++;
   }
 
   /**
    * @dev Approves an action.
-   * @param _actionId The id of the action to approve.
+   * @param actionId The id of the action to approve.
    */
-  function approve(uint256 _actionId) external onlyBoardOfDirectors {
-    if (actions[_actionId].isExecuted) revert ActionAlreadyExecuted(_actionId);
-    if (actions[_actionId].approvals[msg.sender]) revert AlreadyApproved();
+  function approve(uint256 actionId) external onlyBoardOfDirectors {
+    Action storage action = s_actions[actionId];
+    if (action.isExecuted) revert BoardOfDirectors__ActionAlreadyExecuted(actionId);
+    if (action.approvals[msg.sender]) revert BoardOfDirectors__AlreadyApproved();
 
-    actions[_actionId].approvals[msg.sender] = true;
-    actions[_actionId].approvalCount++;
-    emit Approval(_actionId, msg.sender);
+    action.approvals[msg.sender] = true;
+    uint8 newCount = action.approvalCount + 1;
+    action.approvalCount = newCount;
+    emit Approval(actionId, msg.sender);
 
-    if (actions[_actionId].approvalCount >= (boardOfDirectors.length() / 2) + 1) {
-      call(_actionId);
+    if (newCount >= (s_boardOfDirectorsSet.length() / 2) + 1) {
+      _call(actionId);
     }
   }
 
   /**
    * @dev Revokes approval for an action.
-   * @param _actionId The id of the action to revoke approval for.
+   * @param actionId The id of the action to revoke approval for.
    */
-  function revoke(uint256 _actionId) external onlyBoardOfDirectors {
-    if (actions[_actionId].isExecuted) revert ActionAlreadyExecuted(_actionId);
-    if (!actions[_actionId].approvals[msg.sender]) revert NotApproved();
+  function revoke(uint256 actionId) external onlyBoardOfDirectors {
+    Action storage action = s_actions[actionId];
+    if (action.isExecuted) revert BoardOfDirectors__ActionAlreadyExecuted(actionId);
+    if (!action.approvals[msg.sender]) revert BoardOfDirectors__NotApproved();
 
-    actions[_actionId].approvals[msg.sender] = false;
-    actions[_actionId].approvalCount--;
+    action.approvals[msg.sender] = false;
+    action.approvalCount--;
 
-    emit Revocation(_actionId, msg.sender);
+    emit Revocation(actionId, msg.sender);
   }
 
   /**
    * @dev Sets the board of directors.
-   * @param _boardOfDirectors The new board of directors.
+   * @param boardOfDirectors The new board of directors.
    */
-  function setBoardOfDirectors(address[] memory _boardOfDirectors) external onlyOwner {
-    if (_boardOfDirectors.length == 0) revert EmptyList();
+  function setBoardOfDirectors(address[] memory boardOfDirectors) external onlyOwner {
+    if (boardOfDirectors.length == 0) revert BoardOfDirectors__EmptyList();
 
     // Remove all existing board of directors
-    while (boardOfDirectors.length() > 0) {
-      address lastBoardOfDirector = boardOfDirectors.at(boardOfDirectors.length() - 1);
-      boardOfDirectors.remove(lastBoardOfDirector);
+    while (s_boardOfDirectorsSet.length() > 0) {
+      address lastBoardOfDirector = s_boardOfDirectorsSet.at(s_boardOfDirectorsSet.length() - 1);
+      s_boardOfDirectorsSet.remove(lastBoardOfDirector);
     }
 
     // Set the new board of directors
-    uint256 length = _boardOfDirectors.length;
+    uint256 length = boardOfDirectors.length;
     for (uint256 i = 0; i < length; i++) {
-      if (_boardOfDirectors[i] == address(0)) revert ZeroAddress();
-      boardOfDirectors.add(_boardOfDirectors[i]);
+      if (boardOfDirectors[i] == address(0)) revert BoardOfDirectors__ZeroAddress();
+      s_boardOfDirectorsSet.add(boardOfDirectors[i]);
     }
 
-    emit BoardOfDirectorsChanged(_boardOfDirectors);
+    emit BoardOfDirectorsChanged(boardOfDirectors);
+  }
+
+  /**
+   * @dev Sets the owners of the contract.
+   * @param owners The new owners.
+   */
+  function setOwners(address[] memory owners) external onlySelf {
+    if (owners.length == 0) revert BoardOfDirectors__EmptyList();
+
+    // Remove all existing owners
+    while (s_ownersSet.length() > 0) {
+      address lastOwner = s_ownersSet.at(s_ownersSet.length() - 1);
+      s_ownersSet.remove(lastOwner);
+    }
+
+    // Set the new owners
+    uint256 length = owners.length;
+    for (uint256 i = 0; i < length; i++) {
+      if (owners[i] == address(0)) revert BoardOfDirectors__ZeroAddress();
+      s_ownersSet.add(owners[i]);
+    }
+
+    emit OwnersChanged(owners);
+  }
+
+  /**
+   * @dev Adds a new owner to the contract.
+   * @param owner The new owner.
+   */
+  function addOwner(address owner) external onlySelf {
+    if (owner == address(0)) revert BoardOfDirectors__ZeroAddress();
+
+    if (s_ownersSet.contains(owner)) revert BoardOfDirectors__OwnerAlreadyExists(owner);
+    s_ownersSet.add(owner);
+
+    emit OwnersChanged(s_ownersSet.values());
+  }
+
+  /**
+   * @dev Removes an owner from the contract.
+   * @param owner The owner to remove.
+   */
+  function removeOwner(address owner) external onlySelf {
+    if (!s_ownersSet.contains(owner)) revert BoardOfDirectors__OwnerNotFound(owner);
+
+    s_ownersSet.remove(owner);
+    emit OwnersChanged(s_ownersSet.values());
   }
 
   /**
    * @dev Checks if an action has been executed.
-   * @param _actionId The id of the action.
+   * @param actionId The id of the action.
    * @return A boolean indicating if the action has been executed.
    */
-  function isActionExecuted(uint256 _actionId) external view returns (bool) {
-    return actions[_actionId].isExecuted;
+  function isActionExecuted(uint256 actionId) external view returns (bool) {
+    return s_actions[actionId].isExecuted;
+  }
+
+  /**
+   * @dev Returns the total number of actions that have been added.
+   * @return The action count.
+   */
+  function getActionCount() external view returns (uint256) {
+    return s_actionCount;
+  }
+
+  /**
+   * @dev Returns the stored fields of an action (excluding the per-approver mapping).
+   * @param actionId The id of the action.
+   */
+  function getActions(
+    uint256 actionId
+  )
+    external
+    view
+    returns (
+      uint256 id,
+      address target,
+      string memory description,
+      uint8 approvalCount_,
+      bool isExecuted,
+      bytes memory data,
+      address createdBy
+    )
+  {
+    Action storage action = s_actions[actionId];
+    return (
+      action.id,
+      action.target,
+      action.description,
+      action.approvalCount,
+      action.isExecuted,
+      action.data,
+      action.createdBy
+    );
   }
 
   /**
    * @dev Checks if an action has been approved by an address.
-   * @param _actionId The id of the action.
-   * @param _address The address to check approval for.
+   * @param actionId The id of the action.
+   * @param account The address to check approval for.
    * @return A boolean indicating if the action has been approved.
    */
-  function isApproved(uint256 _actionId, address _address) external view returns (bool) {
-    return actions[_actionId].approvals[_address];
+  function isApproved(uint256 actionId, address account) external view returns (bool) {
+    return s_actions[actionId].approvals[account];
   }
 
   /**
    * @dev Returns the approval count for an action.
-   * @param _actionId The id of the action.
+   * @param actionId The id of the action.
    * @return The approval count.
    */
-  function approvalCount(uint256 _actionId) external view returns (uint256) {
-    return actions[_actionId].approvalCount;
+  function approvalCount(uint256 actionId) external view returns (uint256) {
+    return s_actions[actionId].approvalCount;
   }
 
   /**
@@ -239,7 +336,7 @@ contract BoardOfDirectors is ReentrancyGuardUpgradeable, IBoardOfDirectors {
    * @return An array of owners.
    */
   function getOwners() external view returns (address[] memory) {
-    return owners.values();
+    return s_ownersSet.values();
   }
 
   /**
@@ -247,96 +344,50 @@ contract BoardOfDirectors is ReentrancyGuardUpgradeable, IBoardOfDirectors {
    * @return An array of board of directors.
    */
   function getBoardOfDirectors() external view returns (address[] memory) {
-    return boardOfDirectors.values();
+    return s_boardOfDirectorsSet.values();
   }
 
   /**
    * @dev Checks if an address is a member of the board of directors.
-   * @param _address The address to check.
+   * @param account The address to check.
    * @return A boolean indicating if the address is a member.
    */
-  function isMember(address _address) external view returns (bool) {
-    return boardOfDirectors.contains(_address);
+  function isMember(address account) external view returns (bool) {
+    return s_boardOfDirectorsSet.contains(account);
+  }
+
+  /**
+   * @dev Initializes the contract with the initial set of owners.
+   * @param owners The initial set of owners.
+   */
+  function initialize(address[] memory owners) public initializer {
+    uint256 length = owners.length;
+    for (uint256 i = 0; i < length; i++) {
+      if (owners[i] == address(0)) revert BoardOfDirectors__ZeroAddress();
+      s_ownersSet.add(owners[i]);
+    }
+    __ReentrancyGuard_init();
   }
 
   // Private functions
 
+  /// @notice Current contract version, per semver.
+  function version() public pure returns (string memory) {
+    return "2.0.0";
+  }
+
   /**
    * @dev Executes an action.
-   * @param _actionId The id of the action to execute.
+   * @param actionId The id of the action to execute.
    */
-  function call(uint256 _actionId) private nonReentrant {
-    Action storage _action = actions[_actionId];
+  function _call(uint256 actionId) private nonReentrant {
+    Action storage action = s_actions[actionId];
 
-    (bool success, ) = _action.target.call(_action.data);
-    if (!success) revert CallFailed(_action.target);
+    (bool success, ) = action.target.call(action.data);
+    if (!success) revert BoardOfDirectors__CallFailed(action.target);
 
-    _action.isExecuted = true;
+    action.isExecuted = true;
 
-    emit ActionExecuted(_actionId, _action.target, _action.description, _action.data);
-  }
-
-  /**
-   * @dev Sets the owners of the contract.
-   * @param _owners The new owners.
-   */
-  function setOwners(address[] memory _owners) external onlySelf {
-    if (_owners.length == 0) revert EmptyList();
-
-    // Remove all existing owners
-    while (owners.length() > 0) {
-      address lastOwner = owners.at(owners.length() - 1);
-      owners.remove(lastOwner);
-    }
-
-    // Set the new owners
-    uint256 length = _owners.length;
-    for (uint256 i = 0; i < length; i++) {
-      if (_owners[i] == address(0)) revert ZeroAddress();
-      owners.add(_owners[i]);
-    }
-
-    emit OwnersChanged(_owners);
-  }
-
-  /**
-   * @dev Adds a new owner to the contract.
-   * @param _owner The new owner.
-   */
-  function addOwner(address _owner) external onlySelf {
-    if (_owner == address(0)) revert ZeroAddress();
-
-    if (owners.contains(_owner)) {
-      revert OwnerAlreadyExists(_owner);
-    }
-    owners.add(_owner);
-
-    emit OwnersChanged(owners.values());
-  }
-
-  /**
-   * @dev Removes an owner from the contract.
-   * @param _owner The owner to remove.
-   */
-  function removeOwner(address _owner) external onlySelf {
-    if (!owners.contains(_owner)) revert OwnerNotFound(_owner);
-
-    owners.remove(_owner);
-    emit OwnersChanged(owners.values());
-  }
-
-  modifier onlyOwner() {
-    if (!owners.contains(msg.sender)) revert NotOwner(msg.sender);
-    _;
-  }
-
-  modifier onlyBoardOfDirectors() {
-    if (!boardOfDirectors.contains(msg.sender)) revert NotBoardMember(msg.sender);
-    _;
-  }
-
-  modifier onlySelf() {
-    if (msg.sender != address(this)) revert NotSelf();
-    _;
+    emit ActionExecuted(actionId, action.target, action.description, action.data);
   }
 }

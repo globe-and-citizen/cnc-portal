@@ -1,18 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
-import '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
-import '@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol';
-import '@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol';
-import '@openzeppelin/contracts/utils/Address.sol';
-import '@openzeppelin/contracts/utils/cryptography/ECDSA.sol';
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import '@quant-finance/solidity-datetime/contracts/DateTime.sol';
-import './base/TokenSupport.sol';
-import {IMintableERC20} from './interfaces/IMintableERC20.sol';
-import {IInvestorV1} from './interfaces/IInvestorV1.sol';
-import {IOfficer} from './interfaces/IOfficer.sol';
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {EIP712Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
+import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {Address} from "@openzeppelin/contracts/utils/Address.sol";
+import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import {DateTime} from "@quant-finance/solidity-datetime/contracts/DateTime.sol";
+import {TokenSupport} from "./base/TokenSupport.sol";
+import {IInvestorV1} from "./interfaces/IInvestorV1.sol";
+import {IOfficer} from "./interfaces/IOfficer.sol";
 
 /**
  * @title CashRemunerationEIP712
@@ -59,26 +58,28 @@ contract CashRemunerationEIP712 is
   }
 
   /// @dev String representations of the Wage and WageClaim structs, used in EIP-712 encoding.
-  string private constant WAGE_TYPE = 'Wage(uint256 hourlyRate,address tokenAddress)';
-  string private constant WAGE_CLAIM_TYPE =
-    'WageClaim(address employeeAddress,uint16 minutesWorked,Wage[] wages,uint256 date)';
+  string private constant _WAGE_TYPE = "Wage(uint256 hourlyRate,address tokenAddress)";
+  string private constant _WAGE_CLAIM_TYPE =
+    "WageClaim(address employeeAddress,uint16 minutesWorked,Wage[] wages,uint256 date)";
 
   /// @dev Typehash for the Wage struct, used in EIP-712 encoding.
-  bytes32 constant WAGE_TYPEHASH = keccak256(abi.encodePacked(WAGE_TYPE));
+  bytes32 private constant _WAGE_TYPEHASH = keccak256(abi.encodePacked(_WAGE_TYPE));
 
   /// @dev Typehash for the WageClaim struct, used in EIP-712 encoding.
-  bytes32 constant WAGE_CLAIM_TYPEHASH = keccak256(abi.encodePacked(WAGE_CLAIM_TYPE, WAGE_TYPE));
+  bytes32 private constant _WAGE_CLAIM_TYPEHASH =
+    keccak256(abi.encodePacked(_WAGE_CLAIM_TYPE, _WAGE_TYPE));
 
   /// @dev Mapping to track wage claims that have already been paid.
-  mapping(bytes32 => bool) public paidWageClaims;
+  mapping(bytes32 signatureHash => bool paid) private s_paidWageClaims;
 
   // Add new state variable - MUST be added after existing ones
-  address public officerAddress;
+  address private s_officerAddress;
 
   // @dev Mapping to track enabled wage claims by their signature hash.
-  mapping(bytes32 => bool) public disabledWageClaims;
+  mapping(bytes32 signatureHash => bool disabled) private s_disabledWageClaims;
 
   // Storage gap for future upgrades
+  // solhint-disable-next-line chainlink-solidity/prefix-storage-variables-with-s-underscore
   uint256[49] private __gap;
 
   /**
@@ -145,43 +146,47 @@ contract CashRemunerationEIP712 is
    * @param expected The expected authorized address.
    * @param received The unauthorized address that attempted the action.
    */
-  error UnauthorizedAccess(address expected, address received);
+  error CashRemunerationEIP712__UnauthorizedAccess(address expected, address received);
 
   /// @dev A required address argument was the zero address.
-  error ZeroAddress();
+  error CashRemunerationEIP712__ZeroAddress();
 
   /// @dev The caller is not the employee declared in the wage claim.
   /// @param expected The employee address recorded in the claim.
   /// @param actual The caller attempting the withdrawal.
-  error NotClaimOwner(address expected, address actual);
+  error CashRemunerationEIP712__NotClaimOwner(address expected, address actual);
 
   /// @dev The wage claim signature has already been paid out.
   /// @param signatureHash keccak256 hash of the signature that was reused.
-  error WageAlreadyPaid(bytes32 signatureHash);
+  error CashRemunerationEIP712__WageAlreadyPaid(bytes32 signatureHash);
 
   /// @dev The wage claim was disabled by the owner.
   /// @param signatureHash keccak256 hash of the disabled signature.
-  error ClaimIsDisabled(bytes32 signatureHash);
+  error CashRemunerationEIP712__ClaimIsDisabled(bytes32 signatureHash);
 
   /// @dev The token in the wage claim is not in the contract's supported list.
   /// @param token The unsupported token address.
-  error TokenNotSupported(address token);
+  error CashRemunerationEIP712__TokenNotSupported(address token);
 
   /// @dev The contract's balance of `token` is less than the amount owed.
   /// @param token The ERC20 token being paid out.
   /// @param required The amount needed for this payout.
   /// @param available The current contract balance of the token.
-  error InsufficientTokenBalance(address token, uint256 required, uint256 available);
+  error CashRemunerationEIP712__InsufficientTokenBalance(
+    address token,
+    uint256 required,
+    uint256 available
+  );
 
   /// @dev The officer address has not been set, so dependent features are unavailable.
-  error OfficerAddressNotSet();
+  error CashRemunerationEIP712__OfficerAddressNotSet();
 
   /// @dev The Bank contract could not be located via the Officer.
-  error BankContractNotFound();
+  error CashRemunerationEIP712__BankContractNotFound();
 
   /// @dev A raw ERC20 transfer returned false.
   /// @param token The token whose `transfer` returned false.
-  error TokenTransferFailed(address token);
+  error CashRemunerationEIP712__TokenTransferFailed(address token);
 
   /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() {
@@ -189,69 +194,11 @@ contract CashRemunerationEIP712 is
   }
 
   /**
-   * @dev Initializes the contract with the specified owner.
-   * @param _owner The address of the contract owner.
+   * @notice Allows the contract to receive Ether.
+   * @dev Emits a {Deposited} event.
    */
-  function initialize(address _owner, address[] calldata _tokenAddresses) public initializer {
-    address owner = _owner == address(0) ? msg.sender : _owner;
-    __Ownable_init(owner);
-    __ReentrancyGuard_init();
-    __EIP712_init('CashRemuneration', '1');
-    __Pausable_init();
-
-    if (msg.sender == address(0)) revert ZeroAddress();
-    officerAddress = msg.sender;
-
-    // Set the initial supported tokens
-    for (uint256 i = 0; i < _tokenAddresses.length; i++) {
-      if (_tokenAddresses[i] == address(0)) revert ZeroAddress();
-      _addTokenSupport(_tokenAddresses[i]);
-    }
-    // Emit events after they're already added to avoid duplicate events
-    for (uint256 i = 0; i < _tokenAddresses.length; i++) {
-      emit TokenSupportAdded(_tokenAddresses[i]);
-    }
-  }
-
-  /**
-   * @dev Computes the hash of a given Wage struct.
-   * @param wage A single wage struct to hash.
-   * @return The hash of the Wage struct.
-   * The hash is used for signature verification in EIP-712.
-   */
-  function wageHash(Wage calldata wage) private pure returns (bytes32) {
-    return keccak256(abi.encode(WAGE_TYPEHASH, wage.hourlyRate, wage.tokenAddress));
-  }
-
-  /**
-   * @dev Computes the hash of a given collection of Wage structs.
-   * @param wages The Wage structs to hash.
-   * @return The hash of the Wage structs.
-   */
-  function wageHashes(Wage[] calldata wages) private pure returns (bytes32) {
-    bytes32[] memory hashes = new bytes32[](wages.length);
-    for (uint256 i = 0; i < wages.length; i++) {
-      hashes[i] = wageHash(wages[i]);
-    }
-    return keccak256(abi.encodePacked(hashes));
-  }
-
-  /**
-   * @dev Computes the hash of a given WageClaim.
-   * @param wageClaim The WageClaim struct to hash.
-   * @return The hash of the WageClaim.
-   */
-  function wageClaimHash(WageClaim calldata wageClaim) private pure returns (bytes32) {
-    return
-      keccak256(
-        abi.encode(
-          WAGE_CLAIM_TYPEHASH,
-          wageClaim.employeeAddress,
-          wageClaim.minutesWorked,
-          wageHashes(wageClaim.wages),
-          wageClaim.date
-        )
-      );
+  receive() external payable {
+    emit Deposited(msg.sender, msg.value);
   }
 
   /**
@@ -286,17 +233,16 @@ contract CashRemunerationEIP712 is
   ) external whenNotPaused nonReentrant {
     // Step 1: Verify the caller is the authorized employee
     // Prevents someone else from withdrawing another employee's wages
-    if (msg.sender != wageClaim.employeeAddress) {
-      revert NotClaimOwner(wageClaim.employeeAddress, msg.sender);
-    }
+    if (msg.sender != wageClaim.employeeAddress)
+      revert CashRemunerationEIP712__NotClaimOwner(wageClaim.employeeAddress, msg.sender);
 
     // Step 2: EIP-712 Signature Verification
     // Create the EIP-712 compliant digest for signature recovery
     bytes32 digest = keccak256(
       abi.encodePacked(
-        '\x19\x01', // EIP-712 prefix
+        "\x19\x01", // EIP-712 prefix
         _domainSeparatorV4(), // Contract-specific domain separator
-        wageClaimHash(wageClaim) // Hash of the wage claim data
+        _wageClaimHash(wageClaim) // Hash of the wage claim data
       )
     );
 
@@ -306,90 +252,78 @@ contract CashRemunerationEIP712 is
 
     // Step 4: Verify the signer is the contract owner
     // Ensures only authorized owners can approve wage claims
-    if (signer != owner()) {
-      revert UnauthorizedAccess(owner(), signer);
-    }
+    if (signer != owner()) revert CashRemunerationEIP712__UnauthorizedAccess(owner(), signer);
 
     // Step 5: Prevent double-spending of the same signature & usage of disabled claims
     // Each signature can only be used once to prevent replay attacks
     bytes32 sigHash = keccak256(signature);
-    if (paidWageClaims[sigHash]) revert WageAlreadyPaid(sigHash);
-    if (disabledWageClaims[sigHash]) revert ClaimIsDisabled(sigHash);
+    if (s_paidWageClaims[sigHash]) revert CashRemunerationEIP712__WageAlreadyPaid(sigHash);
+    if (s_disabledWageClaims[sigHash]) revert CashRemunerationEIP712__ClaimIsDisabled(sigHash);
 
     // Step 6: Mark this signature as used to prevent reuse
-    paidWageClaims[sigHash] = true;
+    s_paidWageClaims[sigHash] = true;
 
+    // Officer.findDeployedContract is a non-reverting view that returns address(0)
+    // when the team has no InvestorV1, so a plain call is enough — the zero address
+    // simply skips the mintable-token path below.
     address investorV1Token = address(0);
-    if (officerAddress != address(0) && officerAddress.code.length > 0) {
-      try IOfficer(officerAddress).findDeployedContract('InvestorV1') returns (
-        address deployedInvestorV1
-      ) {
-        investorV1Token = deployedInvestorV1;
-      } catch {}
+    if (s_officerAddress != address(0) && s_officerAddress.code.length > 0) {
+      investorV1Token = IOfficer(s_officerAddress).findDeployedContract("InvestorV1");
     }
 
     // Step 7: Process each wage component in the claim
     // A wage claim can contain multiple wage types (ETH and/or multiple tokens)
-    for (uint8 i = 0; i < wageClaim.wages.length; i++) {
+    address employee = wageClaim.employeeAddress;
+    uint256 minutesWorked = wageClaim.minutesWorked;
+    uint256 wageCount = wageClaim.wages.length;
+    for (uint256 i = 0; i < wageCount; ++i) {
+      Wage calldata wage = wageClaim.wages[i];
       // Calculate the total amount to pay for this wage component
-      uint256 amountToPay = (wageClaim.minutesWorked * wageClaim.wages[i].hourlyRate) / 60;
+      uint256 amountToPay = (minutesWorked * wage.hourlyRate) / 60;
 
       // Step 7a: Handle Native ETH Payments
       // tokenAddress == address(0) indicates native ETH
-      if (wageClaim.wages[i].tokenAddress == address(0)) {
+      if (wage.tokenAddress == address(0)) {
         // Transfer ETH directly to the employee
-        payable(wageClaim.employeeAddress).sendValue(amountToPay);
+        payable(employee).sendValue(amountToPay);
 
         // Emit event for ETH withdrawal
-        emit Withdraw(wageClaim.employeeAddress, amountToPay);
+        emit Withdraw(employee, amountToPay);
       }
       // Step 7b: Handle ERC20 Token Payments
       else {
         // Ensure the requested token is supported by the contract
-        if (!_isTokenSupported(wageClaim.wages[i].tokenAddress)) {
-          revert TokenNotSupported(wageClaim.wages[i].tokenAddress);
-        }
+        if (!_isTokenSupported(wage.tokenAddress))
+          revert CashRemunerationEIP712__TokenNotSupported(wage.tokenAddress);
 
         // Step 7b(i): Special Case - Mintable InvestorV1 Token
         // If we have an officer address configured and this is the InvestorV1 token,
         // we mint new tokens instead of transferring from contract balance
-        if (investorV1Token != address(0) && wageClaim.wages[i].tokenAddress == investorV1Token) {
+        if (investorV1Token != address(0) && wage.tokenAddress == investorV1Token) {
           // Mint new tokens directly to the employee
           // This creates new supply rather than transferring existing tokens
-          IInvestorV1(wageClaim.wages[i].tokenAddress).individualMint(
-            wageClaim.employeeAddress,
-            amountToPay
-          );
+          IInvestorV1(wage.tokenAddress).individualMint(employee, amountToPay);
 
           // Emit event for token withdrawal (minting)
-          emit WithdrawToken(
-            wageClaim.employeeAddress,
-            wageClaim.wages[i].tokenAddress,
-            amountToPay
-          );
+          emit WithdrawToken(employee, wage.tokenAddress, amountToPay);
         }
         // Step 7b(ii): Standard ERC20 Token Transfer
         // For regular ERC20 tokens, transfer from contract's balance
         else {
           // Verify the contract has sufficient token balance
-          uint256 tokenBalance = IERC20(wageClaim.wages[i].tokenAddress).balanceOf(address(this));
-          if (tokenBalance < amountToPay) {
-            revert InsufficientTokenBalance(
-              wageClaim.wages[i].tokenAddress,
+          uint256 tokenBalance = IERC20(wage.tokenAddress).balanceOf(address(this));
+          if (tokenBalance < amountToPay)
+            revert CashRemunerationEIP712__InsufficientTokenBalance(
+              wage.tokenAddress,
               amountToPay,
               tokenBalance
             );
-          }
 
           // Transfer tokens from contract to employee
-          IERC20(wageClaim.wages[i].tokenAddress).transfer(wageClaim.employeeAddress, amountToPay);
+          IERC20(wage.tokenAddress).transfer(employee, amountToPay);
 
           // Emit event for token withdrawal (transfer)
-          emit WithdrawToken(
-            wageClaim.employeeAddress,
-            wageClaim.wages[i].tokenAddress,
-            amountToPay
-          );
+          emit WithdrawToken(employee, wage.tokenAddress, amountToPay);
         }
       }
     }
@@ -418,7 +352,7 @@ contract CashRemunerationEIP712 is
    * @param signatureHash The signature hash of the wage claim.
    */
   function enableClaim(bytes32 signatureHash) external onlyOwner whenNotPaused {
-    disabledWageClaims[signatureHash] = false;
+    s_disabledWageClaims[signatureHash] = false;
     emit WageClaimEnabled(signatureHash);
   }
 
@@ -427,7 +361,7 @@ contract CashRemunerationEIP712 is
    * @param signatureHash The signature hash of the wage claim.
    */
   function disableClaim(bytes32 signatureHash) external onlyOwner whenNotPaused {
-    disabledWageClaims[signatureHash] = true;
+    s_disabledWageClaims[signatureHash] = true;
     emit WageClaimDisabled(signatureHash);
   }
 
@@ -452,9 +386,9 @@ contract CashRemunerationEIP712 is
    * @dev Discovers the Bank address via the Officer contract. Single transaction drain.
    */
   function ownerWithdrawAllToBank() external onlyOwner nonReentrant whenNotPaused {
-    if (officerAddress == address(0)) revert OfficerAddressNotSet();
-    address bankAddress = IOfficer(officerAddress).findDeployedContract('Bank');
-    if (bankAddress == address(0)) revert BankContractNotFound();
+    if (s_officerAddress == address(0)) revert CashRemunerationEIP712__OfficerAddressNotSet();
+    address bankAddress = IOfficer(s_officerAddress).findDeployedContract("Bank");
+    if (bankAddress == address(0)) revert CashRemunerationEIP712__BankContractNotFound();
 
     uint256 nativeBalance = address(this).balance;
     if (nativeBalance > 0) {
@@ -462,14 +396,15 @@ contract CashRemunerationEIP712 is
       emit OwnerTreasuryWithdrawNative(owner(), nativeBalance);
     }
 
-    address[] memory tokens = this.getSupportedTokens();
-    for (uint256 i = 0; i < tokens.length; i++) {
+    address[] memory tokens = _getSupportedTokens();
+    uint256 length = tokens.length;
+    address ownerAddress = owner();
+    for (uint256 i = 0; i < length; ++i) {
       uint256 tokenBalance = IERC20(tokens[i]).balanceOf(address(this));
       if (tokenBalance > 0) {
-        if (!IERC20(tokens[i]).transfer(bankAddress, tokenBalance)) {
-          revert TokenTransferFailed(tokens[i]);
-        }
-        emit OwnerTreasuryWithdrawToken(owner(), tokens[i], tokenBalance);
+        if (!IERC20(tokens[i]).transfer(bankAddress, tokenBalance))
+          revert CashRemunerationEIP712__TokenTransferFailed(tokens[i]);
+        emit OwnerTreasuryWithdrawToken(ownerAddress, tokens[i], tokenBalance);
       }
     }
   }
@@ -479,10 +414,100 @@ contract CashRemunerationEIP712 is
   }
 
   /**
-   * @notice Allows the contract to receive Ether.
-   * @dev Emits a {Deposited} event.
+   * @notice Returns the configured officer contract address.
+   * @return The officer address.
    */
-  receive() external payable {
-    emit Deposited(msg.sender, msg.value);
+  function getOfficerAddress() external view returns (address) {
+    return s_officerAddress;
+  }
+
+  /**
+   * @notice Returns whether a wage claim signature has already been paid.
+   * @param signatureHash keccak256 hash of the wage claim signature.
+   * @return True if the claim has been paid.
+   */
+  function getPaidWageClaim(bytes32 signatureHash) external view returns (bool) {
+    return s_paidWageClaims[signatureHash];
+  }
+
+  /**
+   * @notice Returns whether a wage claim signature is disabled.
+   * @param signatureHash keccak256 hash of the wage claim signature.
+   * @return True if the claim is disabled.
+   */
+  function getDisabledWageClaim(bytes32 signatureHash) external view returns (bool) {
+    return s_disabledWageClaims[signatureHash];
+  }
+
+  /**
+   * @dev Initializes the contract with the specified owner.
+   * @param initialOwner The address of the contract owner.
+   */
+  function initialize(address initialOwner, address[] calldata tokenAddresses) public initializer {
+    address owner = initialOwner == address(0) ? msg.sender : initialOwner;
+    __Ownable_init(owner);
+    __ReentrancyGuard_init();
+    __EIP712_init("CashRemuneration", "1");
+    __Pausable_init();
+
+    if (msg.sender == address(0)) revert CashRemunerationEIP712__ZeroAddress();
+    s_officerAddress = msg.sender;
+
+    // Set the initial supported tokens
+    for (uint256 i = 0; i < tokenAddresses.length; i++) {
+      if (tokenAddresses[i] == address(0)) revert CashRemunerationEIP712__ZeroAddress();
+      _addTokenSupport(tokenAddresses[i]);
+    }
+    // Emit events after they're already added to avoid duplicate events
+    for (uint256 i = 0; i < tokenAddresses.length; i++) {
+      emit TokenSupportAdded(tokenAddresses[i]);
+    }
+  }
+
+  /// @notice Current contract version, per semver.
+  function version() public pure returns (string memory) {
+    return "2.0.0";
+  }
+
+  /**
+   * @dev Computes the hash of a given Wage struct.
+   * @param wage A single wage struct to hash.
+   * @return The hash of the Wage struct.
+   * The hash is used for signature verification in EIP-712.
+   */
+  function _wageHash(Wage calldata wage) private pure returns (bytes32) {
+    return keccak256(abi.encode(_WAGE_TYPEHASH, wage.hourlyRate, wage.tokenAddress));
+  }
+
+  /**
+   * @dev Computes the hash of a given collection of Wage structs.
+   * @param wages The Wage structs to hash.
+   * @return The hash of the Wage structs.
+   */
+  function _wageHashes(Wage[] calldata wages) private pure returns (bytes32) {
+    uint256 length = wages.length;
+    bytes32[] memory hashes = new bytes32[](length);
+    for (uint256 i = 0; i < length; ++i) {
+      hashes[i] = _wageHash(wages[i]);
+    }
+    return keccak256(abi.encodePacked(hashes));
+  }
+
+  /**
+   * @dev Computes the hash of a given WageClaim.
+   * @param wageClaim The WageClaim struct to hash.
+   * @return The hash of the WageClaim.
+   */
+  function _wageClaimHash(WageClaim calldata wageClaim) private pure returns (bytes32) {
+    return
+      keccak256(
+        abi.encode(
+          _WAGE_CLAIM_TYPEHASH,
+          wageClaim.employeeAddress,
+          wageClaim.minutesWorked,
+          _wageHashes(wageClaim.wages),
+          wageClaim.date
+        )
+      );
   }
 }

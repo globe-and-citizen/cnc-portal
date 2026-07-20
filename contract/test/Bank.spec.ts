@@ -1,6 +1,13 @@
 import { ethers, upgrades } from 'hardhat'
 import { expect } from 'chai'
-import { Bank, FeeCollector, MockERC20, Officer } from '../typechain-types'
+import {
+  Bank,
+  FeeCollector,
+  MockERC20,
+  MockFixedReturn,
+  MockOfficer,
+  Officer
+} from '../typechain-types'
 import { HardhatEthersSigner, SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers'
 import { impersonateAccount, setBalance } from '@nomicfoundation/hardhat-network-helpers'
 
@@ -19,14 +26,14 @@ describe('Bank', () => {
   const BANK_FEE_BPS = 50n
 
   const ERRORS = {
-    INSUFFICIENT_BALANCE: 'InsufficientBalance',
+    INSUFFICIENT_BALANCE: 'Bank__InsufficientBalance',
     PAUSED: 'EnforcedPause',
-    UNSUPPORTED_TOKEN: 'UnsupportedToken',
-    TOKEN_SUPPORT_ALREADY_ADDED: 'TokenSupportAlreadyAdded',
-    TOKEN_SUPPORT_NOT_FOUND: 'TokenSupportNotFound',
-    TOKEN_SUPPORT_ZERO_ADDRESS: 'TokenSupportZeroAddress',
-    ZERO_ADDRESS: 'ZeroAddress',
-    ZERO_AMOUNT: 'ZeroAmount'
+    UNSUPPORTED_TOKEN: 'Bank__UnsupportedToken',
+    TOKEN_SUPPORT_ALREADY_ADDED: 'TokenSupport__AlreadyAdded',
+    TOKEN_SUPPORT_NOT_FOUND: 'TokenSupport__NotFound',
+    TOKEN_SUPPORT_ZERO_ADDRESS: 'TokenSupport__ZeroAddress',
+    ZERO_ADDRESS: 'Bank__ZeroAddress',
+    ZERO_AMOUNT: 'Bank__ZeroAmount'
   } as const
 
   async function deployContracts() {
@@ -90,7 +97,7 @@ describe('Bank', () => {
     it('should set the correct owner and initial values', async () => {
       const officerAddress = await officer.getAddress()
       expect(await bankProxy.owner()).to.eq(owner.address)
-      expect(await bankProxy.officerAddress()).to.eq(officerAddress)
+      expect(await bankProxy.getOfficerAddress()).to.eq(officerAddress)
       expect(await bankProxy.isTokenSupported(await mockUSDT.getAddress())).to.be.true
       expect(await bankProxy.isTokenSupported(await mockUSDC.getAddress())).to.be.true
     })
@@ -377,6 +384,140 @@ describe('Bank', () => {
       await expect(bankProxy.getTokenBalance(await unsupportedToken.getAddress()))
         .to.be.revertedWithCustomError(bankProxy, ERRORS.UNSUPPORTED_TOKEN)
         .withArgs(await unsupportedToken.getAddress())
+    })
+  })
+
+  // fundFixedReturnRepayment resolves FixedReturn via Officer, so — like the old
+  // releaseLenderRepayment tests — these use MockOfficer + a MockFixedReturn stand-in
+  // (rather than the outer beforeEach's real, unregistered Officer) so a FixedReturn
+  // address can be registered without beacon infrastructure or a full offer lifecycle.
+  describe('fundFixedReturnRepayment', () => {
+    async function deployWithMock() {
+      const [owner, lenderAccount] = await ethers.getSigners()
+      const MockOfficerFactory = await ethers.getContractFactory('MockOfficer')
+      const MockFixedReturnFactory = await ethers.getContractFactory('MockFixedReturn')
+      const BankFactory = await ethers.getContractFactory('Bank')
+      const MockToken = await ethers.getContractFactory('MockERC20')
+
+      const mockOfficer = (await MockOfficerFactory.deploy()) as unknown as MockOfficer
+      const mockOfficerAddress = await mockOfficer.getAddress()
+
+      await impersonateAccount(mockOfficerAddress)
+      const officerSigner = await ethers.getSigner(mockOfficerAddress)
+      await setBalance(mockOfficerAddress, ethers.parseEther('10'))
+
+      const localBank = (await upgrades.deployProxy(
+        BankFactory.connect(officerSigner),
+        [[], owner.address],
+        { initializer: 'initialize', unsafeSkipProxyAdminCheck: true }
+      )) as unknown as Bank
+
+      const mockFixedReturn = (await MockFixedReturnFactory.deploy()) as unknown as MockFixedReturn
+      const token = (await MockToken.deploy('Mock USDC', 'mUSDC')) as unknown as MockERC20
+      await mockFixedReturn.setToken(await token.getAddress())
+
+      await localBank.connect(owner).addTokenSupport(await token.getAddress())
+      // Pre-fund Bank so fundFixedReturnRepayment has tokens to transfer
+      await token.mint(await localBank.getAddress(), ethers.parseUnits('1000', 6))
+
+      return { localBank, mockOfficer, mockFixedReturn, owner, lenderAccount, token }
+    }
+
+    const OFFER_ID = 1n
+
+    it('transfers the amount to FixedReturn and calls repayLenders', async () => {
+      const { localBank, mockOfficer, mockFixedReturn, owner, token } = await deployWithMock()
+      await mockOfficer.setDeployedContract('FixedReturn', await mockFixedReturn.getAddress())
+
+      const amount = ethers.parseUnits('100', 6)
+      const fixedReturnBefore = await token.balanceOf(await mockFixedReturn.getAddress())
+
+      await expect(localBank.connect(owner).fundFixedReturnRepayment(OFFER_ID, amount))
+        .to.emit(localBank, 'FixedReturnRepaymentFunded')
+        .withArgs(await mockFixedReturn.getAddress(), OFFER_ID, await token.getAddress(), amount)
+
+      expect(await token.balanceOf(await mockFixedReturn.getAddress())).to.equal(
+        fixedReturnBefore + amount
+      )
+      expect(await mockFixedReturn.repayLendersCallCount()).to.equal(1n)
+      expect(await mockFixedReturn.lastOfferId()).to.equal(OFFER_ID)
+      expect(await mockFixedReturn.lastAmount()).to.equal(amount)
+    })
+
+    it('rejects a call from a non-owner', async () => {
+      const { localBank, mockOfficer, mockFixedReturn, lenderAccount } = await deployWithMock()
+      await mockOfficer.setDeployedContract('FixedReturn', await mockFixedReturn.getAddress())
+
+      await expect(
+        localBank.connect(lenderAccount).fundFixedReturnRepayment(OFFER_ID, 1n)
+      ).to.be.revertedWithCustomError(localBank, 'OwnableUnauthorizedAccount')
+    })
+
+    it('rejects when no FixedReturn is registered in Officer', async () => {
+      const { localBank, owner } = await deployWithMock()
+      // No setDeployedContract call — findDeployedContract returns address(0)
+
+      await expect(
+        localBank.connect(owner).fundFixedReturnRepayment(OFFER_ID, 1n)
+      ).to.be.revertedWithCustomError(localBank, 'Bank__FixedReturnContractNotFound')
+    })
+
+    it('rejects when the offer token is not supported by Bank', async () => {
+      const { localBank, mockOfficer, mockFixedReturn, owner } = await deployWithMock()
+      const MockToken = await ethers.getContractFactory('MockERC20')
+      const unsupportedToken = (await MockToken.deploy(
+        'UNSUPPORTED',
+        'UNS'
+      )) as unknown as MockERC20
+      await mockFixedReturn.setToken(await unsupportedToken.getAddress())
+      await mockOfficer.setDeployedContract('FixedReturn', await mockFixedReturn.getAddress())
+
+      await expect(localBank.connect(owner).fundFixedReturnRepayment(OFFER_ID, 1n))
+        .to.be.revertedWithCustomError(localBank, ERRORS.UNSUPPORTED_TOKEN)
+        .withArgs(await unsupportedToken.getAddress())
+    })
+
+    it('rejects when the contract is paused', async () => {
+      const { localBank, mockOfficer, mockFixedReturn, owner } = await deployWithMock()
+      await mockOfficer.setDeployedContract('FixedReturn', await mockFixedReturn.getAddress())
+      await localBank.connect(owner).pause()
+
+      await expect(
+        localBank.connect(owner).fundFixedReturnRepayment(OFFER_ID, 1n)
+      ).to.be.revertedWithCustomError(localBank, 'EnforcedPause')
+    })
+
+    it('rejects a zero amount', async () => {
+      const { localBank, mockOfficer, mockFixedReturn, owner } = await deployWithMock()
+      await mockOfficer.setDeployedContract('FixedReturn', await mockFixedReturn.getAddress())
+
+      await expect(
+        localBank.connect(owner).fundFixedReturnRepayment(OFFER_ID, 0n)
+      ).to.be.revertedWithCustomError(localBank, 'Bank__ZeroAmount')
+    })
+
+    it('rejects an amount exceeding the treasury balance', async () => {
+      const { localBank, mockOfficer, mockFixedReturn, owner } = await deployWithMock()
+      await mockOfficer.setDeployedContract('FixedReturn', await mockFixedReturn.getAddress())
+
+      const excessAmount = ethers.parseUnits('2000', 6)
+      await expect(localBank.connect(owner).fundFixedReturnRepayment(OFFER_ID, excessAmount))
+        .to.be.revertedWithCustomError(localBank, ERRORS.INSUFFICIENT_BALANCE)
+        .withArgs(excessAmount, ethers.parseUnits('1000', 6))
+    })
+
+    it('reverts the whole call, including the transfer, if repayLenders reverts', async () => {
+      const { localBank, mockOfficer, mockFixedReturn, owner, token } = await deployWithMock()
+      await mockOfficer.setDeployedContract('FixedReturn', await mockFixedReturn.getAddress())
+      await mockFixedReturn.setShouldRevertOnRepay(true)
+
+      const amount = ethers.parseUnits('100', 6)
+      const fixedReturnBefore = await token.balanceOf(await mockFixedReturn.getAddress())
+
+      await expect(localBank.connect(owner).fundFixedReturnRepayment(OFFER_ID, amount)).to.be
+        .reverted
+
+      expect(await token.balanceOf(await mockFixedReturn.getAddress())).to.equal(fixedReturnBefore)
     })
   })
 })

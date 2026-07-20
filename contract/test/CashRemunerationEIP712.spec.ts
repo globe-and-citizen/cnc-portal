@@ -49,7 +49,7 @@ describe('CashRemuneration*** (EIP712)', () => {
           [employer.address, [ethers.ZeroAddress]],
           { initializer: 'initialize' }
         )
-      ).to.be.revertedWithCustomError(cashRemunerationProxy, 'ZeroAddress')
+      ).to.be.revertedWithCustomError(cashRemunerationProxy, 'CashRemunerationEIP712__ZeroAddress')
     })
 
     it('should prevent reinitialization', async () => {
@@ -178,7 +178,7 @@ describe('CashRemuneration*** (EIP712)', () => {
         await expect(tx)
           .to.emit(cashRemunerationProxy, 'WithdrawToken')
           .withArgs(employee.address, await mockUSDC.getAddress(), amountUSDC)
-        const paidWageClaim = await cashRemunerationProxy.paidWageClaims(sigHash)
+        const paidWageClaim = await cashRemunerationProxy.getPaidWageClaim(sigHash)
         expect(paidWageClaim).to.be.equal(true)
       })
 
@@ -204,7 +204,10 @@ describe('CashRemuneration*** (EIP712)', () => {
 
           await expect(
             cashRemunerationProxy.connect(employee).withdraw(wageClaim, signature)
-          ).to.be.revertedWithCustomError(cashRemunerationProxy, 'UnauthorizedAccess')
+          ).to.be.revertedWithCustomError(
+            cashRemunerationProxy,
+            'CashRemunerationEIP712__UnauthorizedAccess'
+          )
         })
         it('the withdrawer is not the approved user', async () => {
           const wageClaim = {
@@ -227,7 +230,10 @@ describe('CashRemuneration*** (EIP712)', () => {
 
           await expect(
             cashRemunerationProxy.connect(imposter).withdraw(wageClaim, signature)
-          ).to.be.revertedWithCustomError(cashRemunerationProxy, 'NotClaimOwner')
+          ).to.be.revertedWithCustomError(
+            cashRemunerationProxy,
+            'CashRemunerationEIP712__NotClaimOwner'
+          )
         })
         it('the wage has already been paid', async () => {
           const wageClaim = {
@@ -255,12 +261,15 @@ describe('CashRemuneration*** (EIP712)', () => {
           await expect(tx)
             .to.emit(cashRemunerationProxy, 'Withdraw')
             .withArgs(employee.address, amount)
-          const paidWageClaim = await cashRemunerationProxy.paidWageClaims(sigHash)
+          const paidWageClaim = await cashRemunerationProxy.getPaidWageClaim(sigHash)
           expect(paidWageClaim).to.be.equal(true)
 
           await expect(
             cashRemunerationProxy.connect(employee).withdraw(wageClaim, signature)
-          ).to.be.revertedWithCustomError(cashRemunerationProxy, 'WageAlreadyPaid')
+          ).to.be.revertedWithCustomError(
+            cashRemunerationProxy,
+            'CashRemunerationEIP712__WageAlreadyPaid'
+          )
         })
         it('the wage amount exceeds the contract balance', async () => {
           const wageClaim = {
@@ -386,11 +395,14 @@ describe('CashRemuneration*** (EIP712)', () => {
 
       // First invocation succeeds
       await cashRemunerationProxy.connect(employee).withdraw(wageClaim, signature)
-      expect(await cashRemunerationProxy.paidWageClaims(sigHash)).to.equal(true)
+      expect(await cashRemunerationProxy.getPaidWageClaim(sigHash)).to.equal(true)
 
       // Second invocation with same signature must revert with WageAlreadyPaid
       await expect(cashRemunerationProxy.connect(employee).withdraw(wageClaim, signature))
-        .to.be.revertedWithCustomError(cashRemunerationProxy, 'WageAlreadyPaid')
+        .to.be.revertedWithCustomError(
+          cashRemunerationProxy,
+          'CashRemunerationEIP712__WageAlreadyPaid'
+        )
         .withArgs(sigHash)
     })
 
@@ -419,12 +431,18 @@ describe('CashRemuneration*** (EIP712)', () => {
       // Reusing the first signature must still fail
       await expect(
         cashRemunerationProxy.connect(employee).withdraw(wageClaimA, sigA)
-      ).to.be.revertedWithCustomError(cashRemunerationProxy, 'WageAlreadyPaid')
+      ).to.be.revertedWithCustomError(
+        cashRemunerationProxy,
+        'CashRemunerationEIP712__WageAlreadyPaid'
+      )
 
       // Reusing the second signature must also fail
       await expect(
         cashRemunerationProxy.connect(employee).withdraw(wageClaimB, sigB)
-      ).to.be.revertedWithCustomError(cashRemunerationProxy, 'WageAlreadyPaid')
+      ).to.be.revertedWithCustomError(
+        cashRemunerationProxy,
+        'CashRemunerationEIP712__WageAlreadyPaid'
+      )
     })
   })
 })

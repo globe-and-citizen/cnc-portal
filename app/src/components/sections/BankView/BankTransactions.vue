@@ -174,8 +174,7 @@
 <script setup lang="ts">
 import { computed, watch } from 'vue'
 import { type Address } from 'viem'
-import { GRAPHQL_POLL_INTERVAL } from '@/constant'
-import { useQuery } from '@vue/apollo-composable'
+import { useBankEventsViaLogs } from '@/composables/bank/useBankEventsViaLogs'
 import UserComponent from '@/components/UserComponent.vue'
 import CustomDatePicker from '@/components/CustomDatePicker.vue'
 import TablePagination from '@/components/TablePagination.vue'
@@ -203,8 +202,6 @@ import {
   enrichTransaction
 } from '@/utils'
 import { formatDateRelative, formatDateUTC } from '@/utils/dayUtils'
-import { GET_BANK_EVENTS } from '@/queries/ponder/bank.queries'
-import type { BankEventsQuery } from '@/types/ponder/bank'
 
 const props = defineProps<{
   bankAddress: Address
@@ -213,18 +210,9 @@ const props = defineProps<{
 const currencyStore = useCurrencyStore()
 const contractAddress = computed(() => props.bankAddress.toLowerCase())
 
-const { result, error, loading } = useQuery<BankEventsQuery>(
-  GET_BANK_EVENTS,
-  {
-    contractAddress,
-    limit: 500
-  },
-  {
-    enabled: computed(() => Boolean(contractAddress.value)),
-    pollInterval: GRAPHQL_POLL_INTERVAL,
-    fetchPolicy: 'cache-and-network'
-  }
-)
+// EXPERIMENT: source the Bank transaction history from the RPC (eth_getLogs)
+// instead of Ponder. Returns the same { result, loading, error } shape.
+const { result, error, loading } = useBankEventsViaLogs(contractAddress)
 
 const rawTransactions = computed(() => buildRawBankTransactions(result.value))
 

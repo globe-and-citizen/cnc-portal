@@ -17,6 +17,12 @@ import {
   type FileAttachmentData,
 } from '../validation';
 import { formatMinutesAsDuration } from '../utils/wageUtil';
+import {
+  getEffectiveStatus,
+  isDayWithinSubmitWindow,
+  isSubmitRestricted,
+  SUBMIT_RESTRICTION_MAX_DAYS_BACK,
+} from '../utils/featureUtils';
 
 dayjs.extend(utc);
 dayjs.extend(isoWeek);
@@ -48,7 +54,6 @@ const buildWeeklyHoursExceededMessage = ({
   };
 };
 
-// TODO limit weeday only for the current week. Betwen Monday and the current day
 export const addClaim = async (req: Request, res: Response) => {
   const callerAddress = req.address;
 
@@ -78,6 +83,18 @@ export const addClaim = async (req: Request, res: Response) => {
 
     if (wage.disabled) {
       return errorResponse(400, 'Cannot add claim: the wage is disabled', res);
+    }
+
+    // Enforce the SUBMIT_RESTRICTION feature server-side: when active (team
+    // override > global setting > default active), a claim can only target the
+    // current ISO week, at most SUBMIT_RESTRICTION_MAX_DAYS_BACK days in the past.
+    const submitStatus = await getEffectiveStatus('SUBMIT_RESTRICTION', teamId);
+    if (isSubmitRestricted(submitStatus) && !isDayWithinSubmitWindow(dayWorked)) {
+      return errorResponse(
+        400,
+        `Submission failed: claims can only be submitted for the current week, up to ${SUBMIT_RESTRICTION_MAX_DAYS_BACK} days in the past.`,
+        res
+      );
     }
 
     // get the member current wage
@@ -399,7 +416,9 @@ export const deleteClaim = async (req: Request, res: Response) => {
 
     if (weeklyClaim) {
       const remainingClaims = (weeklyClaim.claims ?? []).filter((c) => c.id !== claimId);
-      if (remainingClaims.length === 0) {
+      // Keep a claim-less weekly claim alive when it still carries a goals memo —
+      // deleting it here would silently wipe the member's weekly goals.
+      if (remainingClaims.length === 0 && !weeklyClaim.weeklyGoals) {
         await prisma.weeklyClaim.delete({
           where: { id: weeklyClaim.id },
         });

@@ -41,7 +41,8 @@ export const mockWagmiCore = {
   getBalance: vi.fn(),
   getWalletClient: vi.fn(),
   estimateGas: vi.fn(),
-  getPublicClient: vi.fn()
+  getPublicClient: vi.fn(),
+  getConnections: vi.fn(() => [])
 }
 
 // Mock useConnection composable

@@ -10,8 +10,17 @@
     </template>
 
     <template #action-cell="{ row: { original: row } }">
+      <!-- A fee leg reads as its own action ("Fee"), on the same footing as the
+           category pills (Expense / Transfer / …) — even on a continuation row. -->
       <span
-        v-if="row.isFirst && !row.isTotal"
+        v-if="row.isFee"
+        class="inline-block rounded-full px-2 py-0.5 text-xs font-medium"
+        :class="FEE_BADGE"
+      >
+        Fee
+      </span>
+      <span
+        v-else-if="row.isFirst && !row.isTotal"
         class="inline-block rounded-full px-2 py-0.5 text-xs font-medium"
         :class="row.catClass"
       >
@@ -24,6 +33,30 @@
       <span v-else-if="row.isFirst" class="text-sm font-semibold">{{ row.label }}</span>
     </template>
 
+    <template #activity-cell="{ row: { original: row } }">
+      <div v-if="!row.isTotal && row.isFirst" class="flex items-center gap-1.5 text-sm">
+        <template v-if="row.activity.kind === 'actor'">
+          <UserComponent compact size="sm" hide-address :user="resolveUser(row.activity.actor)" />
+          <span class="text-muted">{{ row.activity.text }}</span>
+        </template>
+        <template v-else-if="row.activity.kind === 'transfer'">
+          <template v-if="row.activity.actor">
+            <UserComponent compact size="sm" hide-address :user="resolveUser(row.activity.actor)" />
+            <span class="text-muted">transferred money from</span>
+            <UserComponent compact size="sm" hide-address :user="pocketUser(row.activity.from)" />
+            <span class="text-muted">to</span>
+            <UserComponent compact size="sm" hide-address :user="pocketUser(row.activity.to)" />
+          </template>
+          <template v-else>
+            <UserComponent compact size="sm" hide-address :user="pocketUser(row.activity.from)" />
+            <span class="text-muted">transferred money to</span>
+            <UserComponent compact size="sm" hide-address :user="pocketUser(row.activity.to)" />
+          </template>
+        </template>
+        <span v-else-if="row.activity.text" class="text-muted">{{ row.activity.text }}</span>
+      </div>
+    </template>
+
     <template #account-cell="{ row: { original: row } }">
       <span
         v-if="!row.isTotal"
@@ -34,6 +67,28 @@
       >
         {{ row.account }}
       </span>
+    </template>
+
+    <template #currency-cell="{ row: { original: row } }">
+      <span v-if="!row.isTotal" class="text-muted text-sm">{{ row.currency }}</span>
+    </template>
+
+    <template #quantity-header>
+      <div class="text-right">Quantity</div>
+    </template>
+    <template #quantity-cell="{ row: { original: row } }">
+      <div v-if="!row.isTotal" class="text-muted text-right text-sm tabular-nums">
+        {{ row.quantity }}
+      </div>
+    </template>
+
+    <template #rate-header>
+      <div class="text-right">Rate</div>
+    </template>
+    <template #rate-cell="{ row: { original: row } }">
+      <div v-if="!row.isTotal" class="text-muted text-right text-sm tabular-nums">
+        {{ row.rate }}
+      </div>
     </template>
 
     <template #dr-header>
@@ -65,11 +120,31 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
-import type { LedgerRow } from '@/utils/accounting/ledgerPresenter'
+import UserComponent from '@/components/UserComponent.vue'
+import { resolveUser } from '@/utils/transactionHistoryUtil'
+import {
+  LEDGER_COLUMNS,
+  type LedgerRow,
+  type LedgerColumnKey
+} from '@/utils/accounting/ledgerPresenter'
 
-const props = defineProps<{ rows: LedgerRow[]; total: string }>()
+const props = defineProps<{
+  rows: LedgerRow[]
+  total: string
+  /** Column keys to show; omit to show them all. */
+  visibleColumns?: LedgerColumnKey[]
+}>()
 
 type LedgerTableRow = LedgerRow & { isTotal: boolean }
+
+// Action-pill classes for a fee leg — amber, a peer of the category badges
+// (CATEGORY_BADGE in ledgerPresenter). A static string so Tailwind keeps it.
+const FEE_BADGE = 'bg-warning/10 text-warning'
+
+/** A cash pocket account rendered as a contract avatar (document icon + short name). */
+function pocketUser(account: string) {
+  return { name: account.replace('Cash — ', ''), address: '', icon: 'heroicons:document-text' }
+}
 
 const tableRows = computed<LedgerTableRow[]>(() => [
   ...props.rows.map((r) => ({ ...r, isTotal: false })),
@@ -77,6 +152,7 @@ const tableRows = computed<LedgerTableRow[]>(() => [
     isFirst: false,
     date: '',
     label: '',
+    activity: { kind: 'plain', text: '' } as const,
     cat: '',
     catClass: '',
     account: '',
@@ -84,16 +160,30 @@ const tableRows = computed<LedgerTableRow[]>(() => [
     accountDimmed: false,
     dr: props.total,
     cr: props.total,
+    currency: '',
+    quantity: '',
+    rate: '',
     isTotal: true
   }
 ])
 
-const columns: TableColumn<LedgerTableRow>[] = [
-  { accessorKey: 'date', header: 'Date' },
-  { id: 'action', header: 'Action' },
-  { id: 'transaction', header: 'Transaction' },
-  { accessorKey: 'account', header: 'Account' },
-  { accessorKey: 'dr', header: 'Debit' },
-  { accessorKey: 'cr', header: 'Credit' }
-]
+// Data columns bind to a row field (accessorKey); slot-only columns use an id.
+// Every column also has a `<key>-cell` template, so the key drives both.
+const COLUMN_DEFS: Record<LedgerColumnKey, TableColumn<LedgerTableRow>> = {
+  date: { accessorKey: 'date', header: 'Date' },
+  action: { id: 'action', header: 'Action' },
+  transaction: { id: 'transaction', header: 'Transaction' },
+  activity: { id: 'activity', header: 'Activity' },
+  account: { accessorKey: 'account', header: 'Account' },
+  dr: { accessorKey: 'dr', header: 'Debit' },
+  cr: { accessorKey: 'cr', header: 'Credit' },
+  currency: { accessorKey: 'currency', header: 'Currency' },
+  quantity: { accessorKey: 'quantity', header: 'Quantity' },
+  rate: { accessorKey: 'rate', header: 'Rate' }
+}
+
+const columns = computed<TableColumn<LedgerTableRow>[]>(() => {
+  const visible = props.visibleColumns ?? LEDGER_COLUMNS.map((c) => c.value)
+  return LEDGER_COLUMNS.filter((c) => visible.includes(c.value)).map((c) => COLUMN_DEFS[c.value])
+})
 </script>

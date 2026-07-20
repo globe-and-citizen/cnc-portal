@@ -77,15 +77,9 @@ describe('resolveRevertMessage', () => {
       )
     })
 
-    it('formats Vesting.InsufficientAllowance', () => {
-      expect(resolveRevertMessage('InsufficientAllowance', [100n, 10n], 'Vesting')).toBe(
-        'Not enough token allowance — needs 100, only 10'
-      )
-    })
-
-    it('formats Vesting.InsufficientBalance (required/actual)', () => {
-      expect(resolveRevertMessage('InsufficientBalance', [5n, 3n], 'Vesting')).toBe(
-        'Insufficient token balance — needs 5, only 3'
+    it('resolves Vesting.InsufficientMinterRole', () => {
+      expect(resolveRevertMessage('InsufficientMinterRole', undefined, 'Vesting')).toBe(
+        'Vesting is missing minter role on the investor token'
       )
     })
 
@@ -99,24 +93,6 @@ describe('resolveRevertMessage', () => {
       expect(
         resolveRevertMessage('InsufficientFundedTokenBalance', ['0xT', 50n, 10n], 'InvestorV1')
       ).toBe('Insufficient funded token balance — needs 50, only 10')
-    })
-
-    it('formats Tips.TooManyTeamMembers', () => {
-      expect(resolveRevertMessage('TooManyTeamMembers', [30, 20], 'Tips')).toBe(
-        'Too many team members — provided 30, limit is 20'
-      )
-    })
-
-    it('formats Tips.LimitTooHigh', () => {
-      expect(resolveRevertMessage('LimitTooHigh', [100, 50], 'Tips')).toBe(
-        'Push limit 100 exceeds the maximum of 50'
-      )
-    })
-
-    it('formats Tips.InsufficientBalance (contract-balance shape)', () => {
-      expect(resolveRevertMessage('InsufficientBalance', [5n, 1n], 'Tips')).toBe(
-        'Insufficient contract balance — needs 5, only 1'
-      )
     })
 
     it('formats AdCampaignManager.InsufficientContractBalance', () => {
@@ -163,6 +139,24 @@ describe('resolveRevertMessage', () => {
   })
 
   describe('static per-contract messages', () => {
+    it('resolves FixedReturn.ExceedsRepaymentObligation', () => {
+      expect(resolveRevertMessage('ExceedsRepaymentObligation', undefined, 'FixedReturn')).toBe(
+        'Repayment amount exceeds the total lender obligation (principal + interest)'
+      )
+    })
+
+    it('resolves FixedReturn.TokenNotSupportedByBank', () => {
+      expect(resolveRevertMessage('TokenNotSupportedByBank', undefined, 'FixedReturn')).toBe(
+        'This token is not supported by the team treasury'
+      )
+    })
+
+    it('resolves Bank.FixedReturnContractNotFound', () => {
+      expect(resolveRevertMessage('FixedReturnContractNotFound', undefined, 'Bank')).toBe(
+        'FixedReturn contract could not be located'
+      )
+    })
+
     it('returns the expected message for Elections.AlreadyVoted', () => {
       expect(resolveRevertMessage('AlreadyVoted', undefined, 'Elections')).toBe(
         'You have already voted in this election'
@@ -197,7 +191,6 @@ describe('resolveRevertMessage', () => {
       ['AdCampaignManager', 'Ad campaign action failed'],
       ['Vesting', 'Vesting action failed'],
       ['InvestorV1', 'Investor action failed'],
-      ['Tips', 'Tips action failed'],
       ['FeeCollector', 'Fee collector action failed'],
       ['TokenSupport', 'Token support update failed'],
       ['Elections', 'Election action failed'],
@@ -257,16 +250,6 @@ describe('resolveRevertMessage', () => {
         expected: 'Insufficient contract balance — needs undefined, only undefined'
       },
       {
-        name: 'InsufficientAllowance',
-        contract: 'Vesting',
-        expected: 'Not enough token allowance — needs undefined, only undefined'
-      },
-      {
-        name: 'InsufficientBalance',
-        contract: 'Vesting',
-        expected: 'Insufficient token balance — needs undefined, only undefined'
-      },
-      {
         name: 'InvalidNativeFunding',
         contract: 'InvestorV1',
         expected: 'Invalid native funding — expected undefined, got undefined'
@@ -275,21 +258,6 @@ describe('resolveRevertMessage', () => {
         name: 'InsufficientFundedTokenBalance',
         contract: 'InvestorV1',
         expected: 'Insufficient funded token balance — needs undefined, only undefined'
-      },
-      {
-        name: 'TooManyTeamMembers',
-        contract: 'Tips',
-        expected: 'Too many team members — provided undefined, limit is undefined'
-      },
-      {
-        name: 'LimitTooHigh',
-        contract: 'Tips',
-        expected: 'Push limit undefined exceeds the maximum of undefined'
-      },
-      {
-        name: 'InsufficientBalance',
-        contract: 'Tips',
-        expected: 'Insufficient contract balance — needs undefined, only undefined'
       },
       {
         name: 'InsufficientBalance',

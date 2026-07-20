@@ -8,9 +8,8 @@
  * emitted as several entries, one balanced pair each, so the trial balance always
  * balances by construction.
  *
- * Memo-only entries (an `InvestorV1 Minted` with no backing deposit/withdraw —
- * "Default D", spec §4) carry `debit === credit === null` and `amountUsd === 0`;
- * they only record a share-count change, not money.
+ * A memo-only entry (no monetary legs) carries `debit === credit === null` and
+ * `amountUsd === 0`, recording only a share-count change, not money.
  */
 import { getAddress, isAddress, type Address } from 'viem'
 import type { TokenId } from '@/constant'
@@ -30,6 +29,9 @@ export type UseCase =
   | 'UC-BANK-03'
   /** Invest via SafeDepositRouter → SHER mint (cash lands in Safe). */
   | 'UC-SDR-01'
+  /** A team member funds the Safe to invest & get SHER — booked as a capital
+   *  contribution (Cr Investor Equity) when no SafeDepositRouter event is present. */
+  | 'UC-MEMBER-01'
   /** Wage earned — accrual booked when the weekly claim is submitted. */
   | 'UC-CASH-02'
   /** Wage withdrawal settlement (cash leg and/or share leg). */
@@ -38,9 +40,9 @@ export type UseCase =
   | 'UC-EXP-01'
   /** Dividend paid to a shareholder. */
   | 'UC-INV-01'
-  /** Direct SHER mint with no backing deposit/withdraw — memo only, value 0. */
+  /** Direct SHER mint: issue shares into equity — Dr Shares to be issued · Cr Investor Equity. */
   | 'DEFAULT-D'
-  /** Fee skim Bank → FeeCollector — internal move, not an expense (spec §5.1). */
+  /** Bank protocol fee skimmed to the FeeCollector — a Transaction Fee Expense. */
   | 'FEE'
   /** Generic internal pocket-to-pocket move (funding deposits, owner sweeps). */
   | 'INTERNAL'
@@ -64,16 +66,24 @@ export interface LedgerEntry {
   timestamp: number
   /** The journal template this entry realises. */
   useCase: UseCase
-  /** Account debited. `null` only for memo-only Default-D entries. */
+  /** Account debited. `null` only for memo-only entries (no monetary legs). */
   debit: AccountName | null
-  /** Account credited. `null` only for memo-only Default-D entries. */
+  /** Account credited. `null` only for memo-only entries (no monetary legs). */
   credit: AccountName | null
   /** Absolute USD amount. `0` for memo-only entries. */
   amountUsd: number
-  /** Token actually moved on-chain (for audit / display). */
+  /** Token actually moved on-chain — the entry's currency (spec §2 "Devise"). */
   token: TokenId
   /** Raw on-chain amount in the token's base units (stringified bigint). */
   rawAmount: string
+  /**
+   * USD-per-whole-token rate of record at the transaction time (spec §2 "Taux"),
+   * stored at 6-dp precision: `1.000000` for USD-pegged stablecoins, the
+   * timestamped price for native (POL) / SHER. `amountUsd = Quantité × rate`.
+   * Absent on entries produced before a rate resolver has run (e.g. raw mapper
+   * output in unit tests); the consolidation layer fills it in for every entry.
+   */
+  rate?: number
   /** The other party of the move (checksum address), when there is one. */
   counterparty?: Address
   /** True when both sides are CNC-owned pockets — an internal move (no IS impact). */
@@ -82,12 +92,58 @@ export interface LedgerEntry {
   contract?: Address
   /** Transaction hash, when known. */
   txHash?: string
+  /**
+   * The EOA that signed the transaction behind an internal transfer (resolved
+   * from {@link txHash}), i.e. the person who performed the move. Transfer-only.
+   */
+  initiator?: Address
   /** Human-readable memo. */
   memo: string
   /** Share count for equity / Default-D entries (whole SHER, not base units). */
   shares?: number
+  /**
+   * Minutes worked behind a payroll entry (UC-CASH-02 / UC-CASH-03), carried from
+   * the weekly claim so the human-readable label can read "submitted 16h". Absent
+   * for non-payroll entries.
+   */
+  minutesWorked?: number
+  /**
+   * End of the work week a wage accrual covers (Unix seconds), carried from the
+   * weekly claim so the label can read "week ending Jun 14". Accrual-only.
+   */
+  periodEnd?: number
   /** Accounting category attached during off-chain enrichment (e.g. "Payroll"). */
   category?: string
+  /**
+   * The expense approval's frequency behind a UC-EXP-01 payout — 0 One-Time,
+   * 1 Daily, 2 Weekly, 3 Monthly, 4 Custom. Set only when the payout matched an
+   * approved budget; it is what lets the Activity narration adapt.
+   */
+  expenseFrequencyType?: number
+  /** Approved budget cap in USD behind a UC-EXP-01 payout, when matched to a budget. */
+  expenseApprovedUsd?: number
+  /**
+   * Budget left in USD within the approval's current period **after** this
+   * withdrawal — recurring approvals only (a one-time one is single-use).
+   * Reconstructed from the approval and its prior draws, never from the Expense
+   * pocket balance, so historical entries stay accurate.
+   */
+  expenseRemainingUsd?: number
+  /**
+   * The Bank protocol fee charged in the **same on-chain transaction** as this
+   * transfer, folded in for the general-ledger view only — Dr destination (net) ·
+   * Dr Transaction Fee Expense · Cr Cash — Bank (gross). Set by the presenter
+   * ({@link mergeBankFees}), never by a mapper: the canonical feed the statements
+   * roll up keeps the fee as its own posting, so nothing is double counted.
+   */
+  mergedBankFee?: {
+    amountUsd: number
+    /** Raw on-chain amount, in the token's base units. */
+    rawAmount: string
+    token: TokenId
+    /** USD rate of record, when resolved. */
+    rate?: number
+  }
   /** Off-chain enrichment status. */
   enrichment: EnrichmentStatus
 }

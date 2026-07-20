@@ -14,8 +14,10 @@
  *    one economic move. We collapse the twins to a single posting so no internal
  *    transfer or fee is counted twice (the fee dual-write is already deduped in
  *    the fee mapper; this is the cross-contract belt-and-suspenders).
- * 2. **Computes the summary totals** (cash on hand, income, expense, contributed
- *    equity, net income) the dashboard cards read.
+ * 2. **Computes the summary roll-up totals** (cash on hand, income, expense,
+ *    contributed equity). The bottom line — net income — is derived once by the
+ *    income statement (`income − expense`) and closes into Retained Earnings on
+ *    the balance sheet, so it is not recomputed here.
  *
  * Internal moves are kept in the feed (they let the general-ledger view show the
  * funding journal, catalogue §6.2) — they are cash-to-cash, so they net to zero
@@ -47,10 +49,10 @@ export interface AccountingSummary {
   income: number
   /** Net expense-account total over the period (payroll, operating, dividend …). */
   expense: number
+  /** Cumulative Bank protocol transaction fees skimmed to the FeeCollector (a subset of `expense`). */
+  transactionFees: number
   /** Contributed equity (Owner Capital + Investor Equity), excluding retained earnings. */
   equity: number
-  /** income − expense — the period's bottom line (becomes Retained Earnings). */
-  netIncome: number
   /** Number of monetary postings counted (memo-only Default-D entries excluded). */
   entryCount: number
 }
@@ -96,11 +98,26 @@ function isMonetary(entry: LedgerEntry): boolean {
   return entry.debit !== null || entry.credit !== null
 }
 
+/**
+ * An **unpriced** posting: real accounts, but $0.00 with no rate of record — a
+ * native (POL/ETH) leg no price-of-record resolved for. In a USD-reported book it
+ * moves nothing and only clutters the journal, so it is dropped.
+ *
+ * The `!entry.rate` guard is what makes this "unpriced" rather than merely "tiny":
+ * a small but *priced* posting — the 0.5% fee on a few POL, ~$0.003 — carries a
+ * real rate and is kept, so its token quantity stays visible even when the USD
+ * figure rounds to zero.
+ */
+function isZeroValuePosting(entry: LedgerEntry): boolean {
+  return isMonetary(entry) && round2(entry.amountUsd) === 0 && !entry.shares && !entry.rate
+}
+
 /** Aggregate the summary totals from the deduped feed. */
 function summarize(entries: readonly LedgerEntry[]): AccountingSummary {
   let cash = 0
   let income = 0
   let expense = 0
+  let transactionFees = 0
   let equity = 0
   let entryCount = 0
 
@@ -121,14 +138,19 @@ function summarize(entries: readonly LedgerEntry[]): AccountingSummary {
       else if (classOf(entry.credit) === 'EXPENSE') expense -= amount
       else if (CONTRIBUTED_EQUITY.has(entry.credit)) equity += amount
     }
+
+    // Transaction Fee Expense is also an EXPENSE, so it is already folded into
+    // `expense` above; track it separately here for the dedicated summary metric.
+    if (entry.debit === 'Transaction Fee Expense') transactionFees += amount
+    if (entry.credit === 'Transaction Fee Expense') transactionFees -= amount
   }
 
   return {
     cash: round2(cash),
     income: round2(income),
     expense: round2(expense),
+    transactionFees: round2(transactionFees),
     equity: round2(equity),
-    netIncome: round2(income - expense),
     entryCount
   }
 }
@@ -139,6 +161,8 @@ function summarize(entries: readonly LedgerEntry[]): AccountingSummary {
  * feeds the general ledger, income statement and balance sheet.
  */
 export function buildLedger(entries: readonly LedgerEntry[]): BuiltLedger {
-  const deduped = dedupeInternalTransfers(entries).sort((a, b) => a.timestamp - b.timestamp)
+  const deduped = dedupeInternalTransfers(entries)
+    .filter((entry) => !isZeroValuePosting(entry))
+    .sort((a, b) => a.timestamp - b.timestamp)
   return { entries: deduped, summary: summarize(deduped) }
 }

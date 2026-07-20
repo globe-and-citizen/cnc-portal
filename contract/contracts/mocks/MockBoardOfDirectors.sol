@@ -1,49 +1,53 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import '../interfaces/IBoardOfDirectors.sol';
+import {IBoardOfDirectors} from "../interfaces/IBoardOfDirectors.sol";
 
 contract MockBoardOfDirectors is IBoardOfDirectors {
-  address[] public boardMembers;
+  address[] private s_boardMembers;
 
-  function initialize(address[] memory _owners) external {
-    boardMembers = _owners;
+  function getBoardMembers() external view returns (address[] memory) {
+    return s_boardMembers;
   }
 
-  function setBoardOfDirectors(address[] memory _members) external {
-    boardMembers = _members;
+  function initialize(address[] memory owners) external {
+    s_boardMembers = owners;
+  }
+
+  function setBoardOfDirectors(address[] memory members) external {
+    s_boardMembers = members;
+  }
+
+  function addMember(address member) external {
+    for (uint256 i = 0; i < s_boardMembers.length; i++) {
+      if (s_boardMembers[i] == member) {
+        revert("Member already exists");
+      }
+    }
+    s_boardMembers.push(member);
+  }
+
+  function removeMember(address member) external {
+    for (uint256 i = 0; i < s_boardMembers.length; i++) {
+      if (s_boardMembers[i] == member) {
+        s_boardMembers[i] = s_boardMembers[s_boardMembers.length - 1];
+        s_boardMembers.pop();
+        return;
+      }
+    }
+    revert("Member not found");
   }
 
   function getBoardOfDirectors() external view returns (address[] memory) {
-    return boardMembers;
+    return s_boardMembers;
   }
 
-  function isMember(address _address) external view returns (bool) {
-    for (uint256 i = 0; i < boardMembers.length; i++) {
-      if (boardMembers[i] == _address) {
+  function isMember(address account) external view returns (bool) {
+    for (uint256 i = 0; i < s_boardMembers.length; i++) {
+      if (s_boardMembers[i] == account) {
         return true;
       }
     }
     return false;
-  }
-
-  function addMember(address _member) external {
-    for (uint256 i = 0; i < boardMembers.length; i++) {
-      if (boardMembers[i] == _member) {
-        revert('Member already exists');
-      }
-    }
-    boardMembers.push(_member);
-  }
-
-  function removeMember(address _member) external {
-    for (uint256 i = 0; i < boardMembers.length; i++) {
-      if (boardMembers[i] == _member) {
-        boardMembers[i] = boardMembers[boardMembers.length - 1];
-        boardMembers.pop();
-        return;
-      }
-    }
-    revert('Member not found');
   }
 }

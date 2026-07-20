@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import {ERC20Upgradeable} from '@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol';
-import {OwnableUpgradeable} from '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
-import {PausableUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol';
-import {ReentrancyGuardUpgradeable} from '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
-import {EnumerableSet} from '@openzeppelin/contracts/utils/structs/EnumerableSet.sol';
-import '@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol';
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
-import {IOfficer} from '../interfaces/IOfficer.sol';
+import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
+import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import {IOfficer} from "../interfaces/IOfficer.sol";
 
 /**
  * @title InvestorV1
@@ -27,12 +27,6 @@ contract InvestorV1 is
   using EnumerableSet for EnumerableSet.AddressSet;
   using SafeERC20 for IERC20;
 
-  // Add MINTER_ROLE constant - this doesn't affect storage
-  /// @notice Access control role allowed to mint new tokens.
-  bytes32 public constant MINTER_ROLE = keccak256('MINTER_ROLE');
-
-  /// @dev Set of addresses currently holding a non-zero balance.
-  EnumerableSet.AddressSet private shareholders;
   /**
    * @dev Snapshot of a shareholder and their balance.
    * @param shareholder Address of the shareholder.
@@ -43,11 +37,19 @@ contract InvestorV1 is
     uint256 amount;
   }
 
-  /// @notice Address of the Officer contract (set immutably at initialization)
-  address public officerAddress;
+  // Add MINTER_ROLE constant - this doesn't affect storage
+  /// @notice Access control role allowed to mint new tokens.
+  bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
+
+  /// @dev Set of addresses currently holding a non-zero balance.
+  EnumerableSet.AddressSet private s_shareholderSet;
+
+  /// @dev Address of the Officer contract (set immutably at initialization)
+  address private s_officerAddress;
 
   // address private officerAddress;
   // Add a gap for future upgrades (important for upgradeable contracts)
+  // solhint-disable-next-line chainlink-solidity/prefix-storage-variables-with-s-underscore
   uint256[50] private __gap;
 
   /**
@@ -91,51 +93,65 @@ contract InvestorV1 is
   );
 
   /// @dev A required address argument was the zero address.
-  error ZeroAddress();
+  error InvestorV1__ZeroAddress();
   /// @dev The officer contract address has not been configured.
-  error OfficerAddressNotSet();
+  error InvestorV1__OfficerAddressNotSet();
   /// @dev The Bank contract could not be located via the Officer.
-  error BankContractNotFound();
+  error InvestorV1__BankContractNotFound();
   /// @dev The caller is not the Bank contract.
   /// @param caller The caller address.
-  error NotBank(address caller);
+  error InvestorV1__NotBank(address caller);
   /// @dev The amount must be greater than zero.
-  error ZeroAmount();
+  error InvestorV1__ZeroAmount();
   /// @dev The provided msg.value does not match the expected funding amount.
   /// @param expected The expected amount.
   /// @param actual The actual msg.value.
-  error InvalidNativeFunding(uint256 expected, uint256 actual);
+  error InvestorV1__InvalidNativeFunding(uint256 expected, uint256 actual);
   /// @dev There are no minted tokens in circulation.
-  error NoTokensMinted();
+  error InvestorV1__NoTokensMinted();
   /// @dev There are no shareholders to distribute to.
-  error NoShareholders();
+  error InvestorV1__NoShareholders();
   /// @dev A low-level native token transfer failed.
   /// @param to The recipient.
-  error NativeTransferFailed(address to);
+  error InvestorV1__NativeTransferFailed(address to);
   /// @dev The contract holds an insufficient token balance for distribution.
   /// @param token The ERC20 token.
   /// @param required The amount required.
   /// @param available The current contract balance.
-  error InsufficientFundedTokenBalance(address token, uint256 required, uint256 available);
+  error InvestorV1__InsufficientFundedTokenBalance(
+    address token,
+    uint256 required,
+    uint256 available
+  );
+
+  modifier onlyBank() {
+    if (msg.sender != _getBankAddress()) revert InvestorV1__NotBank(msg.sender);
+    _;
+  }
 
   /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() {
     _disableInitializers();
   }
 
+  /// @notice Allows the contract to receive native ETH (e.g. from Bank dividend funding).
+  receive() external payable {
+    // Contract can receive ETH
+  }
+
   /**
    * @notice Initializes the InvestorV1 token.
-   * @param _name ERC20 token name.
-   * @param _symbol ERC20 token symbol.
-   * @param _owner Contract owner; if address(0) the caller becomes owner.
+   * @param tokenName ERC20 token name.
+   * @param tokenSymbol ERC20 token symbol.
+   * @param initialOwner Contract owner; if address(0) the caller becomes owner.
    */
   function initialize(
-    string calldata _name,
-    string calldata _symbol,
-    address _owner
+    string calldata tokenName,
+    string calldata tokenSymbol,
+    address initialOwner
   ) external initializer {
-    __ERC20_init(_name, _symbol);
-    address owner = _owner == address(0) ? msg.sender : _owner;
+    __ERC20_init(tokenName, tokenSymbol);
+    address owner = initialOwner == address(0) ? msg.sender : initialOwner;
     __Ownable_init(owner);
     __AccessControl_init();
     __Pausable_init();
@@ -144,29 +160,19 @@ contract InvestorV1 is
     _grantRole(DEFAULT_ADMIN_ROLE, owner);
     _grantRole(MINTER_ROLE, owner);
 
-    if (msg.sender == address(0)) revert ZeroAddress();
-    officerAddress = msg.sender;
-  }
-
-  /// @notice Allows the contract to receive native ETH (e.g. from Bank dividend funding).
-  receive() external payable {
-    // Contract can receive ETH
-  }
-
-  /// @notice Returns the token's decimal count.
-  function decimals() public view virtual override returns (uint8) {
-    return 6; // Standard for many tokens, can be adjusted as needed
+    if (msg.sender == address(0)) revert InvestorV1__ZeroAddress();
+    s_officerAddress = msg.sender;
   }
 
   /**
    * @notice Mints tokens to a batch of shareholders.
-   * @param _shareholders Array of shareholders and amounts to mint.
+   * @param shareholders Array of shareholders and amounts to mint.
    */
   function distributeMint(
-    Shareholder[] memory _shareholders
+    Shareholder[] memory shareholders
   ) external onlyOwner whenNotPaused nonReentrant {
-    for (uint256 i = 0; i < _shareholders.length; i++) {
-      Shareholder memory shareholder = _shareholders[i];
+    for (uint256 i = 0; i < shareholders.length; i++) {
+      Shareholder memory shareholder = shareholders[i];
       _mint(shareholder.shareholder, shareholder.amount);
 
       emit Minted(shareholder.shareholder, shareholder.amount);
@@ -186,147 +192,98 @@ contract InvestorV1 is
     emit Minted(shareholder, amount);
   }
 
-  function _update(address from, address to, uint256 value) internal override {
-    super._update(from, to, value);
-
-    if (balanceOf(from) == 0) {
-      shareholders.remove(from);
-    }
-
-    if (balanceOf(to) > 0 && !shareholders.contains(to)) {
-      shareholders.add(to);
-    }
-  }
-
-  /**
-   * @notice Returns a snapshot of all current shareholders with their balances.
-   * @return Array of Shareholder structs.
-   */
-  function getShareholders() external view returns (Shareholder[] memory) {
-    Shareholder[] memory _shareholders = new Shareholder[](shareholders.length());
-    for (uint256 i = 0; i < shareholders.length(); i++) {
-      address shareholder = shareholders.at(i);
-      _shareholders[i] = Shareholder(shareholder, balanceOf(shareholder));
-    }
-    return _shareholders;
-  }
-
-  /**
-   * @notice Internal helper to get Bank contract address from Officer
-   * @return Address of the Bank contract
-   */
-  function _getBankAddress() internal view returns (address) {
-    if (officerAddress == address(0)) revert OfficerAddressNotSet();
-    address bankAddress = IOfficer(officerAddress).findDeployedContract('Bank');
-    if (bankAddress == address(0)) revert BankContractNotFound();
-    return bankAddress;
-  }
-
-  modifier onlyBank() {
-    if (msg.sender != _getBankAddress()) revert NotBank(msg.sender);
-    _;
-  }
-
   /**
    * @notice Distributes native token (ETH) dividends directly to all shareholders
-   * @param _amount Total amount to distribute in wei
+   * @param amount Total amount to distribute in wei
    * @dev Calculates per-shareholder share based on token balance proportion
    * Handles rounding by giving remainder to last shareholder
    */
   function distributeNativeDividends(
-    uint256 _amount
+    uint256 amount
   ) external payable onlyBank nonReentrant whenNotPaused {
-    if (_amount == 0) revert ZeroAmount();
-    if (msg.value != _amount) revert InvalidNativeFunding(_amount, msg.value);
+    if (amount == 0) revert InvestorV1__ZeroAmount();
+    if (msg.value != amount) revert InvestorV1__InvalidNativeFunding(amount, msg.value);
 
     uint256 supply = totalSupply();
-    if (supply == 0) revert NoTokensMinted();
+    if (supply == 0) revert InvestorV1__NoTokensMinted();
 
     Shareholder[] memory currentShareholders = _getShareholders();
-    if (currentShareholders.length == 0) revert NoShareholders();
+    uint256 count = currentShareholders.length;
+    if (count == 0) revert InvestorV1__NoShareholders();
 
-    uint256 remaining = _amount;
+    uint256 remaining = amount;
+    uint256 last = count - 1;
 
-    for (uint256 i = 0; i < currentShareholders.length; i++) {
+    for (uint256 i = 0; i < count; ++i) {
       address shareholder = currentShareholders[i].shareholder;
       uint256 balance = currentShareholders[i].amount;
 
-      uint256 share = (_amount * balance) / supply;
+      uint256 share = (amount * balance) / supply;
 
       // Last shareholder gets remainder to handle rounding
-      if (i == currentShareholders.length - 1) {
+      if (i == last) {
         share = remaining;
       } else if (share > remaining) {
         share = remaining;
       }
 
       if (share > 0) {
-        (bool sent, ) = payable(shareholder).call{value: share}('');
-        if (!sent) revert NativeTransferFailed(shareholder);
+        (bool sent, ) = payable(shareholder).call{value: share}("");
+        if (!sent) revert InvestorV1__NativeTransferFailed(shareholder);
         emit DividendPaid(shareholder, address(0), share);
         remaining -= share;
       }
     }
 
-    emit DividendDistributed(msg.sender, address(0), _amount, currentShareholders.length);
+    emit DividendDistributed(msg.sender, address(0), amount, count);
   }
 
   /**
    * @notice Distributes ERC20 token dividends directly to all shareholders
-   * @param _token Address of the ERC20 token contract
-   * @param _amount Total amount of tokens to distribute
+   * @param token Address of the ERC20 token contract
+   * @param amount Total amount of tokens to distribute
    * @dev Requires Bank to pre-fund this contract before calling
    */
   function distributeTokenDividends(
-    address _token,
-    uint256 _amount
+    address token,
+    uint256 amount
   ) external onlyBank nonReentrant whenNotPaused {
-    if (_token == address(0)) revert ZeroAddress();
-    if (_amount == 0) revert ZeroAmount();
+    if (token == address(0)) revert InvestorV1__ZeroAddress();
+    if (amount == 0) revert InvestorV1__ZeroAmount();
 
     uint256 supply = totalSupply();
-    if (supply == 0) revert NoTokensMinted();
+    if (supply == 0) revert InvestorV1__NoTokensMinted();
 
     Shareholder[] memory currentShareholders = _getShareholders();
-    if (currentShareholders.length == 0) revert NoShareholders();
-    uint256 tokenBal = IERC20(_token).balanceOf(address(this));
-    if (tokenBal < _amount) revert InsufficientFundedTokenBalance(_token, _amount, tokenBal);
+    uint256 count = currentShareholders.length;
+    if (count == 0) revert InvestorV1__NoShareholders();
+    uint256 tokenBal = IERC20(token).balanceOf(address(this));
+    if (tokenBal < amount)
+      revert InvestorV1__InsufficientFundedTokenBalance(token, amount, tokenBal);
 
-    uint256 remaining = _amount;
+    uint256 remaining = amount;
+    uint256 last = count - 1;
 
-    for (uint256 i = 0; i < currentShareholders.length; i++) {
+    for (uint256 i = 0; i < count; ++i) {
       address shareholder = currentShareholders[i].shareholder;
       uint256 balance = currentShareholders[i].amount;
 
-      uint256 share = (_amount * balance) / supply;
+      uint256 share = (amount * balance) / supply;
 
-      if (i == currentShareholders.length - 1) {
+      if (i == last) {
         share = remaining;
       } else if (share > remaining) {
         share = remaining;
       }
 
       if (share > 0) {
-        IERC20(_token).safeTransfer(shareholder, share);
-        emit DividendPaid(shareholder, _token, share);
+        IERC20(token).safeTransfer(shareholder, share);
+        emit DividendPaid(shareholder, token, share);
         remaining -= share;
       }
     }
 
-    emit DividendDistributed(msg.sender, _token, _amount, currentShareholders.length);
-  }
-
-  /**
-   * @notice Internal helper to get current shareholders snapshot
-   * @return Array of shareholder addresses and their balances
-   */
-  function _getShareholders() internal view returns (Shareholder[] memory) {
-    Shareholder[] memory _shareholders = new Shareholder[](shareholders.length());
-    for (uint256 i = 0; i < shareholders.length(); i++) {
-      address shareholder = shareholders.at(i);
-      _shareholders[i] = Shareholder(shareholder, balanceOf(shareholder));
-    }
-    return _shareholders;
+    emit DividendDistributed(msg.sender, token, amount, count);
   }
 
   /// @notice Pauses token operations.
@@ -337,5 +294,70 @@ contract InvestorV1 is
   /// @notice Unpauses token operations.
   function unpause() external onlyOwner {
     _unpause();
+  }
+
+  /**
+   * @notice Returns a snapshot of all current shareholders with their balances.
+   * @return Array of Shareholder structs.
+   */
+  function getShareholders() external view returns (Shareholder[] memory) {
+    return _getShareholders();
+  }
+
+  /// @notice Returns the addresses currently tracked as holding a non-zero balance.
+  function getShareholderSet() external view returns (address[] memory) {
+    return s_shareholderSet.values();
+  }
+
+  /// @notice Returns the Officer contract address.
+  function getOfficerAddress() external view returns (address) {
+    return s_officerAddress;
+  }
+
+  /// @notice Returns the token's decimal count.
+  function decimals() public view virtual override returns (uint8) {
+    return 6; // Standard for many tokens, can be adjusted as needed
+  }
+
+  /// @notice Current contract version, per semver.
+  function version() public pure returns (string memory) {
+    return "2.0.0";
+  }
+
+  function _update(address from, address to, uint256 value) internal override {
+    super._update(from, to, value);
+
+    if (balanceOf(from) == 0) {
+      s_shareholderSet.remove(from);
+    }
+
+    if (balanceOf(to) > 0 && !s_shareholderSet.contains(to)) {
+      s_shareholderSet.add(to);
+    }
+  }
+
+  /**
+   * @notice Internal helper to get Bank contract address from Officer
+   * @return Address of the Bank contract
+   */
+  function _getBankAddress() internal view returns (address) {
+    if (s_officerAddress == address(0)) revert InvestorV1__OfficerAddressNotSet();
+    address bankAddress = IOfficer(s_officerAddress).findDeployedContract("Bank");
+    if (bankAddress == address(0)) revert InvestorV1__BankContractNotFound();
+    return bankAddress;
+  }
+
+  /**
+   * @notice Internal helper to get current shareholders snapshot
+   * @return Array of shareholder addresses and their balances
+   */
+  function _getShareholders() internal view returns (Shareholder[] memory) {
+    uint256 count = s_shareholderSet.length();
+    Shareholder[] memory shareholders = new Shareholder[](count);
+    for (uint256 i = 0; i < count; ++i) {
+      address shareholder = s_shareholderSet.at(i);
+      shareholders[i] = Shareholder(shareholder, balanceOf(shareholder));
+    }
+    return shareholders;
   }
 }

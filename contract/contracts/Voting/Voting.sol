@@ -1,22 +1,26 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import './Types.sol';
-
-import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
-import '@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol';
-import '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
-import {IOfficer} from '../interfaces/IOfficer.sol';
-import {IBoardOfDirectors} from '../interfaces/IBoardOfDirectors.sol';
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import {IBoardOfDirectors} from "../interfaces/IBoardOfDirectors.sol";
+import {IOfficer} from "../interfaces/IOfficer.sol";
+import {Types} from "./Types.sol";
 
 /// @title Voting Contract for Decentralized Governance
 /// @notice This contract manages proposals, elections, and voting processes
 /// @dev Implements upgradeable patterns with OpenZeppelin contracts
 contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgradeable {
-  mapping(uint256 => Types.Proposal) public proposalsById;
+  mapping(uint256 proposalId => Types.Proposal proposal) private s_proposalsById;
 
-  uint256 public proposalCount;
-  address public officerAddress;
+  uint256 private s_proposalCount;
+  address private s_officerAddress;
+
+  /// @dev Storage gap reserving 50 slots for future upgrades. Decrement when adding
+  ///      new state variables above so the reserve stays constant and proxy slots don't shift.
+  // solhint-disable-next-line chainlink-solidity/prefix-storage-variables-with-s-underscore
+  uint256[50] private __gap;
 
   event ProposalAdded(uint256 indexed proposalId, string title, string description);
   event DirectiveVoted(address indexed voter, uint256 indexed proposalId, uint256 vote);
@@ -32,107 +36,119 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
   event RunoffElectionStarted(uint256 indexed proposalId, address[] candidates);
 
   /// @dev The caller (msg.sender) was the zero address when initializing.
-  error ZeroSender();
+  error Voting__ZeroSender();
   /// @dev A required string argument was empty.
-  error EmptyTitle();
+  error Voting__EmptyTitle();
   /// @dev Election proposals require at least one candidate.
-  error NoCandidates();
+  error Voting__NoCandidates();
   /// @dev The proposal id does not exist.
   /// @param proposalId The non-existent id.
-  error ProposalNotFound(uint256 proposalId);
+  error Voting__ProposalNotFound(uint256 proposalId);
   /// @dev The proposal is no longer active.
-  error ProposalNotActive();
+  error Voting__ProposalNotActive();
   /// @dev The caller is not registered to vote on this proposal.
   /// @param voter The caller address.
-  error VoterNotRegistered(address voter);
+  error Voting__VoterNotRegistered(address voter);
   /// @dev The caller is not eligible to vote on this proposal.
-  error VoterNotEligible();
+  error Voting__VoterNotEligible();
   /// @dev The caller has already voted on this proposal.
-  error VoterAlreadyVoted();
+  error Voting__VoterAlreadyVoted();
   /// @dev The specified candidate was not declared on this proposal.
-  error CandidateNotFound();
+  error Voting__CandidateNotFound();
   /// @dev Only the proposal creator (founder) can perform this action.
-  error OnlyFounder();
+  error Voting__OnlyFounder();
   /// @dev No tie exists on this proposal.
-  error NoTieToResolve();
+  error Voting__NoTieToResolve();
   /// @dev The chosen tie-break option requires a different flow.
-  error WrongTieBreakOption();
+  error Voting__WrongTieBreakOption();
   /// @dev The selected winner was not in the tied candidates list.
-  error InvalidTieWinner();
+  error Voting__InvalidTieWinner();
   /// @dev The directive vote value was not 0/1/2.
   /// @param vote The invalid vote value.
-  error InvalidVote(uint256 vote);
+  error Voting__InvalidVote(uint256 vote);
   /// @dev The officer contract address has not been configured.
-  error OfficerAddressNotSet();
+  error Voting__OfficerAddressNotSet();
   /// @dev The BoardOfDirectors contract could not be located via the Officer.
-  error BoardOfDirectorsNotFound();
+  error Voting__BoardOfDirectorsNotFound();
 
   /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() {
     _disableInitializers();
   }
 
+  /// @notice Pauses the contract
+  /// @dev Only callable by contract owner
+  function pause() external onlyOwner {
+    _pause();
+  }
+
+  /// @notice Unpauses the contract
+  /// @dev Only callable by contract owner
+  function unpause() external onlyOwner {
+    _unpause();
+  }
+
   /// @notice Initializes the contract
-  /// @param _sender Address that will be set as the owner
+  /// @param sender Address that will be set as the owner
   /// @dev This is the initialization function for the upgradeable contract pattern
-  function initialize(address _sender) public initializer {
-    __Ownable_init(_sender);
+  function initialize(address sender) public initializer {
+    __Ownable_init(sender);
     __ReentrancyGuard_init();
     __Pausable_init();
 
-    if (msg.sender == address(0)) revert ZeroSender();
-    officerAddress = msg.sender;
+    if (msg.sender == address(0)) revert Voting__ZeroSender();
+    s_officerAddress = msg.sender;
   }
 
   /// @notice Creates a new proposal
-  /// @param _title Title of the proposal
-  /// @param _description Detailed description of the proposal
-  /// @param _isElection Whether this is an election proposal
-  /// @param _winnerCount Number of winners to be selected (for elections)
-  /// @param _voters Array of addresses eligible to vote
-  /// @param _candidates Array of candidate addresses (for elections)
-  /// @dev For elections, _candidates must not be empty
+  /// @param title Title of the proposal
+  /// @param description Detailed description of the proposal
+  /// @param isElection Whether this is an election proposal
+  /// @param winnerCount Number of winners to be selected (for elections)
+  /// @param voters Array of addresses eligible to vote
+  /// @param candidates Array of candidate addresses (for elections)
+  /// @dev For elections, candidates must not be empty
   function addProposal(
-    string memory _title,
-    string memory _description,
-    bool _isElection,
-    uint256 _winnerCount,
-    address[] memory _voters,
-    address[] memory _candidates
+    string memory title,
+    string memory description,
+    bool isElection,
+    uint256 winnerCount,
+    address[] memory voters,
+    address[] memory candidates
   ) public {
-    if (bytes(_title).length == 0) revert EmptyTitle();
+    if (bytes(title).length == 0) revert Voting__EmptyTitle();
 
-    Types.Proposal storage newProposal = proposalsById[proposalCount];
-    newProposal.id = proposalCount;
-    newProposal.title = _title;
-    newProposal.description = _description;
+    Types.Proposal storage newProposal = s_proposalsById[s_proposalCount];
+    newProposal.id = s_proposalCount;
+    newProposal.title = title;
+    newProposal.description = description;
     newProposal.draftedBy = msg.sender;
-    newProposal.isElection = _isElection;
+    newProposal.isElection = isElection;
     newProposal.isActive = true;
-    newProposal.winnerCount = _winnerCount;
+    newProposal.winnerCount = winnerCount;
 
-    for (uint256 i = 0; i < _voters.length; i++) {
+    for (uint256 i = 0; i < voters.length; i++) {
       Types.Member memory voter = Types.Member({
         isEligible: true,
         isVoted: false,
-        memberAddress: _voters[i]
+        memberAddress: voters[i]
       });
       newProposal.voters.push(voter);
     }
-    if (_isElection) {
-      if (_candidates.length == 0) revert NoCandidates();
-      for (uint256 i = 0; i < _candidates.length; i++) {
+    if (isElection) {
+      if (candidates.length == 0) revert Voting__NoCandidates();
+      for (uint256 i = 0; i < candidates.length; i++) {
         Types.Candidate memory candidate = Types.Candidate({
-          candidateAddress: _candidates[i],
+          candidateAddress: candidates[i],
           votes: 0
         });
         newProposal.candidates.push(candidate);
       }
     }
 
-    proposalsById[proposalCount] = newProposal;
-    emit ProposalAdded(proposalCount, _title, _description);
-    proposalCount++;
+    s_proposalsById[s_proposalCount] = newProposal;
+    emit ProposalAdded(s_proposalCount, title, description);
+    s_proposalCount++;
   }
 
   /// @notice Allows a voter to vote on a directive proposal
@@ -140,17 +156,17 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
   /// @param vote 0 for No, 1 for Yes, 2 for Abstain
   /// @dev Requires voter to be eligible and not to have voted already
   function voteDirective(uint256 proposalId, uint256 vote) public {
-    if (proposalId >= proposalCount) revert ProposalNotFound(proposalId);
+    if (proposalId >= s_proposalCount) revert Voting__ProposalNotFound(proposalId);
 
-    Types.Proposal storage proposal = proposalsById[proposalId];
-    if (!proposal.isActive) revert ProposalNotActive();
+    Types.Proposal storage proposal = s_proposalsById[proposalId];
+    if (!proposal.isActive) revert Voting__ProposalNotActive();
 
-    Types.Member storage voter = findVoter(proposal, msg.sender);
+    Types.Member storage voter = _findVoter(proposal, msg.sender);
 
-    if (!voter.isEligible) revert VoterNotEligible();
-    if (voter.isVoted) revert VoterAlreadyVoted();
+    if (!voter.isEligible) revert Voting__VoterNotEligible();
+    if (voter.isVoted) revert Voting__VoterAlreadyVoted();
 
-    recordDirectiveVote(proposal, vote);
+    _recordDirectiveVote(proposal, vote);
 
     voter.isVoted = true;
     emit DirectiveVoted(msg.sender, proposalId, vote);
@@ -161,15 +177,15 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
   /// @param candidateAddress Address of the candidate being voted for
   /// @dev Requires voter to be eligible and not to have voted already
   function voteElection(uint256 proposalId, address candidateAddress) public {
-    if (proposalId >= proposalCount) revert ProposalNotFound(proposalId);
+    if (proposalId >= s_proposalCount) revert Voting__ProposalNotFound(proposalId);
 
-    Types.Proposal storage proposal = proposalsById[proposalId];
-    if (!proposal.isActive) revert ProposalNotActive();
+    Types.Proposal storage proposal = s_proposalsById[proposalId];
+    if (!proposal.isActive) revert Voting__ProposalNotActive();
 
-    Types.Member storage voter = findVoter(proposal, msg.sender);
+    Types.Member storage voter = _findVoter(proposal, msg.sender);
 
-    if (!voter.isEligible) revert VoterNotEligible();
-    if (voter.isVoted) revert VoterAlreadyVoted();
+    if (!voter.isEligible) revert Voting__VoterNotEligible();
+    if (voter.isVoted) revert Voting__VoterAlreadyVoted();
 
     bool candidateExists = false;
     for (uint256 i = 0; i < proposal.candidates.length; i++) {
@@ -180,7 +196,7 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
       }
     }
 
-    if (!candidateExists) revert CandidateNotFound();
+    if (!candidateExists) revert Voting__CandidateNotFound();
     voter.isVoted = true;
     emit ElectionVoted(msg.sender, proposalId, candidateAddress);
   }
@@ -189,10 +205,10 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
   /// @param proposalId ID of the proposal to conclude
   /// @dev Only the proposal creator can conclude it. Handles tie detection for elections
   function concludeProposal(uint256 proposalId) public {
-    if (proposalId >= proposalCount) revert ProposalNotFound(proposalId);
-    if (msg.sender != proposalsById[proposalId].draftedBy) revert OnlyFounder();
+    if (proposalId >= s_proposalCount) revert Voting__ProposalNotFound(proposalId);
+    if (msg.sender != s_proposalsById[proposalId].draftedBy) revert Voting__OnlyFounder();
 
-    Types.Proposal storage proposal = proposalsById[proposalId];
+    Types.Proposal storage proposal = s_proposalsById[proposalId];
 
     if (proposal.isElection) {
       uint256 winnerCount = proposal.winnerCount;
@@ -258,10 +274,10 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
   /// @param option The chosen method to break the tie
   /// @dev Only the proposal creator can resolve ties
   function resolveTie(uint256 proposalId, Types.TieBreakOption option) public {
-    if (proposalId >= proposalCount) revert ProposalNotFound(proposalId);
-    Types.Proposal storage proposal = proposalsById[proposalId];
-    if (msg.sender != proposal.draftedBy) revert OnlyFounder();
-    if (!proposal.hasTie) revert NoTieToResolve();
+    if (proposalId >= s_proposalCount) revert Voting__ProposalNotFound(proposalId);
+    Types.Proposal storage proposal = s_proposalsById[proposalId];
+    if (msg.sender != proposal.draftedBy) revert Voting__OnlyFounder();
+    if (!proposal.hasTie) revert Voting__NoTieToResolve();
 
     proposal.selectedTieBreakOption = option;
     emit TieBreakOptionSelected(proposalId, option);
@@ -300,16 +316,16 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
       return;
     } else if (option == Types.TieBreakOption.RUNOFF_ELECTION) {
       // Create a new election with only the tied candidates
-      string memory newTitle = string(abi.encodePacked('Runoff: ', proposal.title));
-      addProposal(
-        newTitle,
-        proposal.description,
-        true,
-        proposal.winnerCount,
-        _getVoterAddresses(proposal),
-        proposal.tiedCandidates
-      );
-      emit RunoffElectionStarted(proposalCount - 1, proposal.tiedCandidates);
+      string memory newTitle = string(abi.encodePacked("Runoff: ", proposal.title));
+      addProposal({
+        title: newTitle,
+        description: proposal.description,
+        isElection: true,
+        winnerCount: proposal.winnerCount,
+        voters: _getVoterAddresses(proposal),
+        candidates: proposal.tiedCandidates
+      });
+      emit RunoffElectionStarted(s_proposalCount - 1, proposal.tiedCandidates);
       proposal.hasTie = false;
       proposal.isActive = !proposal.isActive;
     }
@@ -320,13 +336,12 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
   /// @param winner Address of the chosen winner
   /// @dev Only usable when FOUNDER_CHOICE was selected as tie break option
   function selectWinner(uint256 proposalId, address winner) public {
-    if (proposalId >= proposalCount) revert ProposalNotFound(proposalId);
-    Types.Proposal storage proposal = proposalsById[proposalId];
-    if (msg.sender != proposal.draftedBy) revert OnlyFounder();
-    if (!proposal.hasTie) revert NoTieToResolve();
-    if (proposal.selectedTieBreakOption != Types.TieBreakOption.FOUNDER_CHOICE) {
-      revert WrongTieBreakOption();
-    }
+    if (proposalId >= s_proposalCount) revert Voting__ProposalNotFound(proposalId);
+    Types.Proposal storage proposal = s_proposalsById[proposalId];
+    if (msg.sender != proposal.draftedBy) revert Voting__OnlyFounder();
+    if (!proposal.hasTie) revert Voting__NoTieToResolve();
+    if (proposal.selectedTieBreakOption != Types.TieBreakOption.FOUNDER_CHOICE)
+      revert Voting__WrongTieBreakOption();
 
     bool isValidChoice = false;
     for (uint256 i = 0; i < proposal.tiedCandidates.length; i++) {
@@ -335,7 +350,7 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
         break;
       }
     }
-    if (!isValidChoice) revert InvalidTieWinner();
+    if (!isValidChoice) revert Voting__InvalidTieWinner();
 
     address[] memory winnerList = new address[](proposal.winnerCount);
     for (uint256 i = 0; i < proposal.winnerCount - 1; i++) {
@@ -348,6 +363,60 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
     emit BoardOfDirectorsSet(winnerList);
     proposal.hasTie = false;
     proposal.isActive = !proposal.isActive;
+  }
+
+  /// @notice Sets the Board of Directors members
+  /// @param boardMembers Array of addresses for the new board members
+  /// @dev Only callable by contract owner
+  function setBoardOfDirectors(address[] memory boardMembers) public onlyOwner {
+    address bodAddress = _getBoardOfDirectorsAddress();
+    IBoardOfDirectors(bodAddress).setBoardOfDirectors(boardMembers);
+  }
+
+  /// @notice Retrieves a proposal by its ID
+  /// @param proposalId The ID of the proposal to retrieve
+  /// @return The complete proposal data
+  function getProposalById(uint256 proposalId) public view returns (Types.Proposal memory) {
+    if (proposalId >= s_proposalCount) revert Voting__ProposalNotFound(proposalId);
+    return s_proposalsById[proposalId];
+  }
+
+  /// @notice Returns the stored proposal for a given id.
+  /// @param proposalId The id of the proposal.
+  /// @return The complete proposal data.
+  function getProposalsById(uint256 proposalId) public view returns (Types.Proposal memory) {
+    return s_proposalsById[proposalId];
+  }
+
+  /// @notice Returns the number of proposals created so far.
+  function getProposalCount() public view returns (uint256) {
+    return s_proposalCount;
+  }
+
+  /// @notice Returns the address of the Officer contract used to locate BoardOfDirectors.
+  function getOfficerAddress() public view returns (address) {
+    return s_officerAddress;
+  }
+
+  /// @notice Current contract version, per semver.
+  function version() public pure returns (string memory) {
+    return "2.0.0";
+  }
+
+  /// @notice Records a vote for a directive proposal
+  /// @param proposal The proposal to record the vote for
+  /// @param vote The vote value (0=No, 1=Yes, 2=Abstain)
+  /// @dev Internal function to update vote counts
+  function _recordDirectiveVote(Types.Proposal storage proposal, uint256 vote) internal {
+    if (vote == 0) {
+      proposal.votes.no++;
+    } else if (vote == 1) {
+      proposal.votes.yes++;
+    } else if (vote == 2) {
+      proposal.votes.abstain++;
+    } else {
+      revert Voting__InvalidVote(vote);
+    }
   }
 
   /// @notice Internal function to get all voter addresses from a proposal
@@ -368,7 +437,7 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
   /// @param voterAddress The address of the voter to find
   /// @return The found voter's data
   /// @dev Reverts if voter is not found
-  function findVoter(
+  function _findVoter(
     Types.Proposal storage proposal,
     address voterAddress
   ) internal view returns (Types.Member storage) {
@@ -377,39 +446,7 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
         return proposal.voters[i];
       }
     }
-    revert VoterNotRegistered(voterAddress);
-  }
-
-  /// @notice Retrieves a proposal by its ID
-  /// @param proposalId The ID of the proposal to retrieve
-  /// @return The complete proposal data
-  function getProposalById(uint256 proposalId) public view returns (Types.Proposal memory) {
-    if (proposalId >= proposalCount) revert ProposalNotFound(proposalId);
-    return proposalsById[proposalId];
-  }
-
-  /// @notice Records a vote for a directive proposal
-  /// @param proposal The proposal to record the vote for
-  /// @param vote The vote value (0=No, 1=Yes, 2=Abstain)
-  /// @dev Internal function to update vote counts
-  function recordDirectiveVote(Types.Proposal storage proposal, uint256 vote) internal {
-    if (vote == 0) {
-      proposal.votes.no++;
-    } else if (vote == 1) {
-      proposal.votes.yes++;
-    } else if (vote == 2) {
-      proposal.votes.abstain++;
-    } else {
-      revert InvalidVote(vote);
-    }
-  }
-
-  /// @notice Sets the Board of Directors members
-  /// @param _boardOfDirectors Array of addresses for the new board members
-  /// @dev Only callable by contract owner
-  function setBoardOfDirectors(address[] memory _boardOfDirectors) public onlyOwner {
-    address bodAddress = _getBoardOfDirectorsAddress();
-    IBoardOfDirectors(bodAddress).setBoardOfDirectors(_boardOfDirectors);
+    revert Voting__VoterNotRegistered(voterAddress);
   }
 
   /**
@@ -417,21 +454,9 @@ contract Voting is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgra
    * @return Address of the BoardOfDirectors contract
    */
   function _getBoardOfDirectorsAddress() internal view returns (address) {
-    if (officerAddress == address(0)) revert OfficerAddressNotSet();
-    address bodAddress = IOfficer(officerAddress).findDeployedContract('BoardOfDirectors');
-    if (bodAddress == address(0)) revert BoardOfDirectorsNotFound();
+    if (s_officerAddress == address(0)) revert Voting__OfficerAddressNotSet();
+    address bodAddress = IOfficer(s_officerAddress).findDeployedContract("BoardOfDirectors");
+    if (bodAddress == address(0)) revert Voting__BoardOfDirectorsNotFound();
     return bodAddress;
-  }
-
-  /// @notice Pauses the contract
-  /// @dev Only callable by contract owner
-  function pause() external onlyOwner {
-    _pause();
-  }
-
-  /// @notice Unpauses the contract
-  /// @dev Only callable by contract owner
-  function unpause() external onlyOwner {
-    _unpause();
   }
 }

@@ -57,7 +57,7 @@ describe('BoardOfDirectors', () => {
         )
     ).to.emit(board, 'ActionAdded')
 
-    expect(await board.actionCount()).to.equal(1)
+    expect(await board.getActionCount()).to.equal(1)
     expect(await board.isApproved(0, member1.address)).to.equal(true)
   })
 
@@ -89,7 +89,7 @@ describe('BoardOfDirectors', () => {
           'bank transfer',
           bank.interface.encodeFunctionData('transfer', [recipient.address, ethers.parseEther('1')])
         )
-    ).to.be.revertedWithCustomError(board, 'NotBoardMember')
+    ).to.be.revertedWithCustomError(board, 'BoardOfDirectors__NotBoardMember')
   })
 
   it('supports revoking approvals', async () => {
@@ -143,7 +143,7 @@ describe('BoardOfDirectors', () => {
 
     await expect(board.connect(member2).approve(0)).to.be.revertedWithCustomError(
       board,
-      'ActionAlreadyExecuted'
+      'BoardOfDirectors__ActionAlreadyExecuted'
     )
   })
 
@@ -161,7 +161,7 @@ describe('BoardOfDirectors', () => {
     // member2 has not approved, so revoke should fail
     await expect(board.connect(member2).revoke(0)).to.be.revertedWithCustomError(
       board,
-      'NotApproved'
+      'BoardOfDirectors__NotApproved'
     )
   })
 
@@ -180,7 +180,7 @@ describe('BoardOfDirectors', () => {
 
     await expect(board.connect(member1).revoke(0)).to.be.revertedWithCustomError(
       board,
-      'ActionAlreadyExecuted'
+      'BoardOfDirectors__ActionAlreadyExecuted'
     )
   })
 
@@ -189,7 +189,7 @@ describe('BoardOfDirectors', () => {
 
     await expect(board.connect(founder).setBoardOfDirectors([])).to.be.revertedWithCustomError(
       board,
-      'EmptyList'
+      'BoardOfDirectors__EmptyList'
     )
   })
 
@@ -198,7 +198,7 @@ describe('BoardOfDirectors', () => {
 
     await expect(
       board.connect(member1).addAction(ethers.ZeroAddress, 'invalid', '0x')
-    ).to.be.revertedWithCustomError(board, 'ZeroAddress')
+    ).to.be.revertedWithCustomError(board, 'BoardOfDirectors__ZeroAddress')
   })
 
   it('calls setOwners via self-referential board action', async () => {
@@ -255,7 +255,7 @@ describe('BoardOfDirectors', () => {
 
     await expect(board.connect(member2).approve(0)).to.be.revertedWithCustomError(
       board,
-      'CallFailed'
+      'BoardOfDirectors__CallFailed'
     )
   })
 })

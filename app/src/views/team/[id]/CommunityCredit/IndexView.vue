@@ -1,10 +1,5 @@
 <template>
   <div class="flex flex-col gap-6">
-    <!-- Demo role control -->
-    <div class="flex justify-end">
-      <CreditRoleSwitcher />
-    </div>
-
     <!-- Header -->
     <div class="flex flex-wrap items-start justify-between gap-4">
       <div>
@@ -17,63 +12,106 @@
           at maturity — signed on-chain from the dedicated Credit Account.
         </p>
       </div>
-      <div class="flex flex-shrink-0 gap-2.5">
-        <template v-if="store.isOwner">
-          <UButton
-            color="primary"
-            variant="soft"
-            icon="heroicons:adjustments-horizontal"
-            label="Default rules"
-            @click="toast.add({ title: 'Default rules — set who can lend across all rounds' })"
-          />
-          <UButton
-            color="primary"
-            icon="heroicons:plus"
-            label="New credit call"
-            data-test="new-credit-call"
-            @click="goNew"
-          />
-        </template>
+      <div v-if="store.hasContract" class="flex flex-shrink-0 gap-2.5">
+        <UButton
+          v-if="store.isOwner"
+          color="primary"
+          icon="heroicons:plus"
+          label="New credit call"
+          data-test="new-credit-call"
+          @click="goNew"
+        />
         <UButton
           v-else
           color="primary"
           icon="heroicons:hand-raised"
           label="Lend to a round"
-          @click="toast.add({ title: 'Pick an open round below to lend' })"
+          data-test="lend-hint-button"
+          @click="showLendHint"
         />
       </div>
     </div>
 
-    <!-- Credit Account hero -->
-    <CreditAccountHero />
+    <!-- No Credit Account deployed for this team -->
+    <div
+      v-if="!store.hasContract"
+      class="border-default text-muted flex flex-col items-center gap-2 rounded-2xl border border-dashed py-16 text-center"
+      data-test="credit-no-contract"
+    >
+      <UIcon name="heroicons:building-library" class="text-dimmed size-8" />
+      <p class="text-sm font-semibold">No Credit Account for this team yet</p>
+      <p class="max-w-sm text-xs">
+        A FixedReturn contract has to be deployed for this team before credit rounds can be raised.
+      </p>
+    </div>
 
-    <!-- Open & active rounds -->
-    <div>
-      <div class="mb-3.5 flex items-center justify-between">
-        <span class="text-[15px] font-bold tracking-tight">Open &amp; active rounds</span>
-        <span class="text-muted text-xs">{{ activeLabel }}</span>
-      </div>
-      <div class="grid gap-5" style="grid-template-columns: repeat(auto-fill, minmax(360px, 1fr))">
-        <CreditRoundCard
-          v-for="round in store.activeRounds"
-          :key="round.id"
-          :round="round"
-          @open="goRound(round.id)"
-          @lend="lendRound = round"
-          @repay="goRepay(round.id)"
+    <template v-else>
+      <!-- Contract balance -->
+      <CreditBalanceSection />
+
+      <!-- Credit Account hero -->
+      <CreditAccountHero />
+
+      <!-- Open & active rounds -->
+      <div>
+        <div class="mb-3.5 flex items-center justify-between">
+          <span class="text-[15px] font-bold tracking-tight">Open &amp; active rounds</span>
+          <span class="text-muted text-xs">{{ activeLabel }}</span>
+        </div>
+
+        <div
+          v-if="store.isLoading"
+          class="grid gap-5"
+          style="grid-template-columns: repeat(auto-fill, minmax(360px, 1fr))"
+          data-test="credit-rounds-loading"
+        >
+          <USkeleton v-for="n in 3" :key="n" class="h-56 rounded-2xl" />
+        </div>
+
+        <UAlert
+          v-else-if="store.isError"
+          color="error"
+          variant="soft"
+          icon="i-lucide-circle-alert"
+          title="Couldn't load credit rounds"
+          description="Reading the FixedReturn contract failed. Please retry in a moment."
+          data-test="credit-rounds-error"
         />
-      </div>
-    </div>
 
-    <!-- History & drafts -->
-    <div>
-      <div class="mb-3.5 flex items-center justify-between">
-        <span class="text-[15px] font-bold tracking-tight">History &amp; drafts</span>
-      </div>
-      <CreditHistoryTable @select="onHistorySelect" @continue="goNew" />
-    </div>
+        <div
+          v-else-if="!store.activeRounds.length"
+          class="border-default text-muted rounded-2xl border border-dashed py-12 text-center text-sm"
+          data-test="credit-rounds-empty"
+        >
+          No open or active rounds right now.
+        </div>
 
-    <CreditLendModal :round="lendRound" @close="lendRound = null" @lend="confirmLend" />
+        <div
+          v-else
+          class="grid gap-5"
+          style="grid-template-columns: repeat(auto-fill, minmax(360px, 1fr))"
+        >
+          <CreditRoundCard
+            v-for="round in store.activeRounds"
+            :key="round.id"
+            :round="round"
+            @open="goRound(round.id)"
+            @lend="lendRound = round"
+            @repay="goRepay(round.id)"
+          />
+        </div>
+      </div>
+
+      <!-- History -->
+      <div v-if="store.historyRounds.length">
+        <div class="mb-3.5 flex items-center justify-between">
+          <span class="text-[15px] font-bold tracking-tight">History</span>
+        </div>
+        <CreditHistoryTable @select="onHistorySelect" />
+      </div>
+    </template>
+
+    <CreditLendModal :round="lendRound" @close="lendRound = null" @lent="lendRound = null" />
   </div>
 </template>
 
@@ -82,13 +120,12 @@ import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useToast } from '@nuxt/ui/composables'
 import { useCommunityCreditStore } from '@/stores'
-import { formatAmount } from '@/utils'
 import type { CreditRound } from '@/types'
 import CreditAccountHero from '@/components/sections/CommunityCreditView/CreditAccountHero.vue'
 import CreditHistoryTable from '@/components/sections/CommunityCreditView/CreditHistoryTable.vue'
 import CreditLendModal from '@/components/sections/CommunityCreditView/CreditLendModal.vue'
-import CreditRoleSwitcher from '@/components/sections/CommunityCreditView/CreditRoleSwitcher.vue'
 import CreditRoundCard from '@/components/sections/CommunityCreditView/CreditRoundCard.vue'
+import CreditBalanceSection from '@/components/sections/CommunityCreditView/CreditBalanceSection.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -110,23 +147,15 @@ function goRound(roundId: string) {
   router.push({ name: 'community-credit-round', params: { id: teamId.value, roundId } })
 }
 function goRepay(roundId: string) {
-  router.push({ name: 'community-credit-repay', params: { id: teamId.value, roundId } })
+  // Same behavior as the round page's own "Repay round" button — switch to the inline
+  // Repay layout variant rather than a separate route.
+  store.setVariant('repay')
+  goRound(roundId)
 }
 function onHistorySelect(round: CreditRound) {
-  if (round.status === 'draft') goNew()
-  else goRound(round.id)
+  goRound(round.id)
 }
-
-function confirmLend(amount: number) {
-  const round = lendRound.value
-  if (!round) return
-  const added = store.lend(round.id, amount)
-  lendRound.value = null
-  if (added > 0) {
-    toast.add({
-      title: `Credit signed — ${formatAmount(added, round.token)} sent`,
-      color: 'success'
-    })
-  }
+function showLendHint() {
+  toast.add({ title: 'Pick an open round below to lend' })
 }
 </script>

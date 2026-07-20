@@ -1,212 +1,312 @@
-import { beforeEach, describe, expect, it } from 'vitest'
-import { mount } from '@vue/test-utils'
-import { createPinia, setActivePinia } from 'pinia'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { mount, flushPromises } from '@vue/test-utils'
 import { nextTick } from 'vue'
+import type { CreditRound, LendingOfferStruct } from '@/types'
+import { USDC_ADDRESS } from '@/constant'
 
 // vue-router is globally mocked (composables.setup.ts); useRouter().push is
-// mockRouterPush and useRoute() reads the shared reactive mockRoute. The views
-// navigate imperatively and render no <RouterLink>, so this is all we need.
-import { mockRouterPush, setMockRoute } from '@/tests/mocks'
+// mockRouterPush and useRoute() reads the shared reactive mockRoute.
+import {
+  mockRouterPush,
+  setMockRoute,
+  useQueryClientFn,
+  mockInvalidateQueries,
+  mockFixedReturnReads,
+  mockFixedReturnWrites
+} from '@/tests/mocks'
+import { mockToast } from '@/tests/mocks/store.mock'
+
+// The Community Credit store is the contract-backed read hub. We mock it so the views
+// can be driven deterministically; mocking the submodule propagates through the
+// `@/stores` barrel (see tests/setup/store.setup.ts convention). The fixedReturn / erc20
+// composables the views call directly are already mocked globally.
+const { store } = vi.hoisted(() => {
+  const store = {
+    hasContract: true,
+    isLoading: false,
+    isError: false,
+    isOwner: true,
+    isLender: false,
+    variant: 'ledger' as const,
+    rounds: [] as CreditRound[],
+    activeRounds: [] as CreditRound[],
+    historyRounds: [] as CreditRound[],
+    outstandingPrincipal: 0,
+    interestDue: 0,
+    raisedLifetime: 0,
+    repaidLifetime: 0,
+    nextMaturity: '—',
+    members: [] as unknown[],
+    setVariant: vi.fn(),
+    getRound: (id: string): CreditRound | undefined => store.rounds.find((r) => r.id === id)
+  }
+  return { store }
+})
+
+vi.mock('@/stores/communityCredit', () => ({
+  useCommunityCreditStore: () => store
+}))
+
 import IndexView from '../IndexView.vue'
 import RoundView from '../RoundView.vue'
-import NewView from '../NewView.vue'
-import RepayView from '../RepayView.vue'
-import { useCommunityCreditStore } from '@/stores/communityCredit'
 import CreditRoundCard from '@/components/sections/CommunityCreditView/CreditRoundCard.vue'
-import CreditHistoryTable from '@/components/sections/CommunityCreditView/CreditHistoryTable.vue'
 import CreditLendModal from '@/components/sections/CommunityCreditView/CreditLendModal.vue'
-import type { CreditRound } from '@/types'
 
-const mockPush = mockRouterPush
-const setRoute = (params: Record<string, string>) => setMockRoute({ params })
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const mountView = (view: any) => mount(view)
+function sampleRound(over: Partial<CreditRound> = {}): CreditRound {
+  return {
+    id: '1',
+    name: 'Q3 runway bridge',
+    token: 'USDC',
+    target: 40000,
+    raised: 23400,
+    totalRepaid: 0,
+    rate: 5,
+    period: 90,
+    status: 'open',
+    fundable: true,
+    opened: 'Jun 1',
+    deadline: 'Jun 28',
+    maturity: 'Oct 26',
+    restricted: false,
+    cap: null,
+    desc: 'Working capital.',
+    lenders: [],
+    ...over
+  }
+}
+
+/** A raw on-chain offer, as useFixedReturnGetLendingOffer returns it. Defaults are USDC,
+ * Open, with a subscription deadline in the past (so canMarkRefundable holds). */
+function offerStruct(over: Partial<LendingOfferStruct> = {}): LendingOfferStruct {
+  return {
+    token: USDC_ADDRESS,
+    fundingTarget: 40_000_000000n,
+    interestRateBps: 500n,
+    termDuration: 90,
+    termUnit: 0,
+    startDate: 1_700_000_000n,
+    subscriptionDeadline: 1_700_000_000n,
+    fundingAccess: 0,
+    isCapEnabled: false,
+    lenderCap: 0n,
+    totalFunded: 23_400_000000n,
+    totalRepaidByIssuer: 0n,
+    state: 0,
+    ...over
+  }
+}
+
+function resetStore() {
+  Object.assign(store, {
+    hasContract: true,
+    isLoading: false,
+    isError: false,
+    isOwner: true,
+    isLender: false,
+    variant: 'ledger',
+    rounds: [],
+    activeRounds: [],
+    historyRounds: [],
+    nextMaturity: '—',
+    members: []
+  })
+}
 
 describe('Community Credit views', () => {
   beforeEach(() => {
-    setActivePinia(createPinia())
-    mockPush.mockClear()
-    setRoute({ id: '1' })
+    resetStore()
+    mockRouterPush.mockClear()
+    mockInvalidateQueries.mockClear()
+    mockFixedReturnReads.getLendingOffer.data.value = null
+    mockFixedReturnReads.offerLenders.data.value = []
+    mockFixedReturnReads.allOffers.data.value = []
+    mockFixedReturnReads.myLenderPositions.data.value = new Map()
+    useQueryClientFn.mockReturnValue({
+      invalidateQueries: mockInvalidateQueries,
+      getQueryData: vi.fn(),
+      setQueryData: vi.fn(),
+      removeQueries: vi.fn()
+    })
+    setMockRoute({ params: { id: '1' } })
   })
 
   describe('IndexView', () => {
-    it('renders the hero figures and both active round cards', () => {
-      const wrapper = mountView(IndexView)
-      expect(wrapper.text()).toContain('48,400 USDC')
-      expect(wrapper.findAllComponents(CreditRoundCard)).toHaveLength(2)
+    it('shows the no-contract empty state when the team has no Credit Account', () => {
+      store.hasContract = false
+      const wrapper = mount(IndexView)
+      expect(wrapper.find('[data-test="credit-no-contract"]').exists()).toBe(true)
+      expect(wrapper.findAllComponents(CreditRoundCard)).toHaveLength(0)
     })
 
-    it('routes from round-card events', async () => {
-      const wrapper = mountView(IndexView)
-      const card = wrapper.findAllComponents(CreditRoundCard)[0]!
+    it('renders a card per active round and the owner new-call button', () => {
+      store.activeRounds = [sampleRound(), sampleRound({ id: '2', name: 'Hardware' })]
+      const wrapper = mount(IndexView)
+      expect(wrapper.findAllComponents(CreditRoundCard)).toHaveLength(2)
+      expect(wrapper.find('[data-test="new-credit-call"]').exists()).toBe(true)
+    })
+
+    it('shows the loading skeletons while offers load', () => {
+      store.isLoading = true
+      const wrapper = mount(IndexView)
+      expect(wrapper.find('[data-test="credit-rounds-loading"]').exists()).toBe(true)
+    })
+
+    it('opens the lend modal and routes from round-card events', async () => {
+      store.activeRounds = [sampleRound()]
+      const wrapper = mount(IndexView)
+      const card = wrapper.findComponent(CreditRoundCard)
 
       card.vm.$emit('open')
-      expect(mockPush).toHaveBeenCalledWith(
+      expect(mockRouterPush).toHaveBeenCalledWith(
         expect.objectContaining({ name: 'community-credit-round' })
       )
       card.vm.$emit('repay')
-      expect(mockPush).toHaveBeenCalledWith(
-        expect.objectContaining({ name: 'community-credit-repay' })
+      expect(store.setVariant).toHaveBeenCalledWith('repay')
+      expect(mockRouterPush).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'community-credit-round' })
       )
       card.vm.$emit('lend')
       await nextTick()
       expect(wrapper.findComponent(CreditLendModal).props('round')).not.toBeNull()
     })
 
-    it('handles history select/continue for drafts and repaid rounds', () => {
-      const wrapper = mountView(IndexView)
-      const store = useCommunityCreditStore()
-      const table = wrapper.findComponent(CreditHistoryTable)
+    it('shows a hint toast when a non-owner clicks "Lend to a round"', async () => {
+      store.isOwner = false
+      const wrapper = mount(IndexView)
 
-      table.vm.$emit('select', store.getRound('audit') as CreditRound) // draft → new
-      expect(mockPush).toHaveBeenLastCalledWith(
-        expect.objectContaining({ name: 'community-credit-new' })
-      )
-      table.vm.$emit('select', store.getRound('spring') as CreditRound) // repaid → detail
-      expect(mockPush).toHaveBeenLastCalledWith(
-        expect.objectContaining({ name: 'community-credit-round' })
-      )
-      table.vm.$emit('continue', store.getRound('audit') as CreditRound)
-      expect(mockPush).toHaveBeenLastCalledWith(
-        expect.objectContaining({ name: 'community-credit-new' })
-      )
-    })
-
-    it('lends through the modal and updates the store', async () => {
-      const wrapper = mountView(IndexView)
-      const store = useCommunityCreditStore()
-      const before = store.getRound('q3')!.raised
-      const openModal = async () => {
-        wrapper.findAllComponents(CreditRoundCard)[0]!.vm.$emit('lend')
-        await nextTick()
-        return wrapper.findComponent(CreditLendModal)
-      }
-
-      // Each lend closes the modal, so reopen between emits.
-      ;(await openModal()).vm.$emit('lend', 1500)
-      await nextTick()
-      expect(store.getRound('q3')!.raised).toBe(before + 1500)
-      expect(wrapper.findComponent(CreditLendModal).props('round')).toBeNull()
-      ;(await openModal()).vm.$emit('lend', 0) // no-op branch, no toast
-      await nextTick()
-      expect(store.getRound('q3')!.raised).toBe(before + 1500)
-    })
-
-    it('switches owner/lender actions but lets the owner lend too', async () => {
-      const wrapper = mountView(IndexView)
-      const store = useCommunityCreditStore()
-      expect(wrapper.find('[data-test="new-credit-call"]').exists()).toBe(true)
-      // Owner is a member: the open round card offers BOTH Manage and Lend.
-      const ownerCard = wrapper.findAllComponents(CreditRoundCard)[0]!
-      expect(ownerCard.find('[data-test="round-cta-open"]').exists()).toBe(true) // Manage
-      expect(ownerCard.find('[data-test="round-cta-lend"]').exists()).toBe(true) // Lend
-
-      await wrapper.find('[data-test="role-lender"]').trigger('click')
-      expect(store.isLender).toBe(true)
       expect(wrapper.find('[data-test="new-credit-call"]').exists()).toBe(false)
-      // A plain lender only gets the Lend action — no Manage.
-      const lenderCard = wrapper.findAllComponents(CreditRoundCard)[0]!
-      expect(lenderCard.find('[data-test="round-cta-open"]').exists()).toBe(false)
-      expect(lenderCard.find('[data-test="round-cta-lend"]').exists()).toBe(true)
+      await wrapper.find('[data-test="lend-hint-button"]').trigger('click')
+
+      expect(mockToast.add).toHaveBeenCalledWith(
+        expect.objectContaining({ title: 'Pick an open round below to lend' })
+      )
+    })
+
+    it('renders the history table for settled rounds', () => {
+      store.historyRounds = [sampleRound({ id: '9', status: 'repaid', repaidOn: 'Apr 10' })]
+      const wrapper = mount(IndexView)
+      expect(wrapper.find('[data-test="credit-history-table"]').exists()).toBe(true)
+      expect(wrapper.text()).toContain('History')
+    })
+
+    it('lists a funded round in history too, labeled as awaiting repayment rather than repaid', () => {
+      store.historyRounds = [sampleRound({ id: '9', status: 'funded', maturity: 'Oct 26' })]
+      const wrapper = mount(IndexView)
+      const row = wrapper.find('tbody tr').text()
+      expect(row).toContain('Awaiting repayment')
+      expect(row).toContain('Oct 26')
+      expect(row).not.toContain('Repaid')
+    })
+
+    it('lists a stalled round in history labeled as awaiting a refund/accept decision, not Repaid', () => {
+      store.historyRounds = [sampleRound({ id: '9', status: 'stalled' })]
+      const wrapper = mount(IndexView)
+      const row = wrapper.find('tbody tr').text()
+      expect(row).toContain('Action needed')
+      expect(row).toContain('awaiting refund or acceptance')
+      expect(row).not.toContain('Repaid')
     })
   })
 
   describe('RoundView', () => {
-    it('renders each layout variant', () => {
-      for (const variant of ['ledger', 'gauge', 'timeline'] as const) {
-        setActivePinia(createPinia())
-        useCommunityCreditStore().setVariant(variant)
-        setRoute({ id: '1', roundId: 'hw' })
-        const wrapper = mountView(RoundView)
-        expect(wrapper.find('[data-test="credit-layout-switcher"]').exists()).toBe(true)
-        expect(wrapper.text()).toContain('Hardware refresh round')
-      }
-    })
+    function mountRound(round: CreditRound, offer: LendingOfferStruct = offerStruct()) {
+      store.rounds = [round]
+      mockFixedReturnReads.getLendingOffer.data.value = offer
+      setMockRoute({ params: { id: '1', roundId: round.id } })
+      return mount(RoundView)
+    }
 
-    it('redirects to the list when the round is unknown', () => {
-      setRoute({ id: '1', roundId: 'nope' })
-      mountView(RoundView)
-      expect(mockPush).toHaveBeenCalledWith(expect.objectContaining({ name: 'community-credit' }))
-    })
-
-    it('owner repay CTA navigates to the repay screen', async () => {
-      useCommunityCreditStore().setRole('owner')
-      setRoute({ id: '1', roundId: 'hw' })
-      const wrapper = mountView(RoundView)
-      await wrapper.find('[data-test="round-cta-repay"]').trigger('click')
-      expect(mockPush).toHaveBeenCalledWith(
-        expect.objectContaining({ name: 'community-credit-repay' })
-      )
-    })
-
-    it('lets the owner both lend to and edit an open round', async () => {
-      useCommunityCreditStore().setRole('owner')
-      setRoute({ id: '1', roundId: 'q3' })
-      const wrapper = mountView(RoundView)
-      // Owner is a member too: an open round offers both actions.
-      expect(wrapper.find('[data-test="round-cta-edit"]').exists()).toBe(true)
-      await wrapper.find('[data-test="round-cta-lend"]').trigger('click')
-      expect(wrapper.findComponent(CreditLendModal).props('round')).not.toBeNull()
-    })
-
-    it('lender lend-now CTA opens the modal; view-receipt toasts', async () => {
-      useCommunityCreditStore().setRole('lender')
-      setRoute({ id: '1', roundId: 'q3' })
-      const lendWrapper = mountView(RoundView)
-      expect(lendWrapper.find('[data-test="round-cta-edit"]').exists()).toBe(false)
-      await lendWrapper.find('[data-test="round-cta-lend"]').trigger('click')
-      expect(lendWrapper.findComponent(CreditLendModal).props('round')).not.toBeNull()
-      lendWrapper.findComponent(CreditLendModal).vm.$emit('lend', 500)
-      await nextTick()
-
-      setActivePinia(createPinia())
-      useCommunityCreditStore().setRole('lender')
-      setRoute({ id: '1', roundId: 'spring' })
-      const receiptWrapper = mountView(RoundView)
-      await receiptWrapper.find('[data-test="round-cta-receipt"]').trigger('click')
-      expect(receiptWrapper.text()).toContain('Spring infra round')
-    })
-  })
-
-  describe('NewView', () => {
-    it('steps through the wizard and publishes a round', async () => {
-      setRoute({ id: '1' })
-      const store = useCommunityCreditStore()
-      const wrapper = mountView(NewView)
-      const before = store.rounds.length
-
-      await wrapper.find('[data-test="cc-name"]').setValue('Q4 ops bridge')
-      await wrapper.find('[data-test="cc-back"]').trigger('click') // no-op on step 0
-      await wrapper.find('[data-test="cc-next"]').trigger('click') // → Terms
-      await wrapper.find('[data-test="cc-back"]').trigger('click') // → Basics
-      await wrapper.find('[data-test="cc-next"]').trigger('click') // → Terms
-      await wrapper.find('[data-test="cc-next"]').trigger('click') // → Access
-      await wrapper.find('[data-test="cc-next"]').trigger('click') // publish
-
-      expect(store.rounds.length).toBe(before + 1)
-      expect(store.rounds[0]!.name).toBe('Q4 ops bridge')
-      expect(mockPush).toHaveBeenLastCalledWith(
+    it('redirects to the list when the round is unknown', async () => {
+      setMockRoute({ params: { id: '1', roundId: '99' } })
+      mount(RoundView)
+      await flushPromises()
+      expect(mockRouterPush).toHaveBeenCalledWith(
         expect.objectContaining({ name: 'community-credit' })
       )
     })
-  })
 
-  describe('RepayView', () => {
-    it('shows the breakdown and repays on confirm', async () => {
-      setRoute({ id: '1', roundId: 'hw' })
-      const store = useCommunityCreditStore()
-      const wrapper = mountView(RepayView)
-      expect(wrapper.text()).toContain('Repayment breakdown')
-
-      await wrapper.find('[data-test="confirm-repay"]').trigger('click')
-      expect(store.getRound('hw')!.status).toBe('repaid')
-      expect(mockPush).toHaveBeenCalledWith(expect.objectContaining({ name: 'community-credit' }))
+    it('switches to the Repay layout variant for a round in repayment, same as the switcher pill', async () => {
+      store.isOwner = true
+      const wrapper = mountRound(sampleRound({ status: 'active' }))
+      await flushPromises()
+      await wrapper.find('[data-test="round-cta-repay"]').trigger('click')
+      expect(store.setVariant).toHaveBeenCalledWith('repay')
     })
 
-    it('redirects when the round is unknown', () => {
-      setRoute({ id: '1', roundId: 'nope' })
-      mountView(RepayView)
-      expect(mockPush).toHaveBeenCalledWith(expect.objectContaining({ name: 'community-credit' }))
+    it('lets the owner push refunds to every lender on a stalled round in one step', async () => {
+      store.isOwner = true
+      const wrapper = mountRound(sampleRound({ status: 'stalled' }), offerStruct({ state: 0 }))
+      await flushPromises()
+      await wrapper.find('[data-test="round-cta-refundable"]').trigger('click')
+      await flushPromises()
+      expect(mockFixedReturnWrites.refundLenders.mutateAsync).toHaveBeenCalledWith({
+        args: [1n]
+      })
+    })
+
+    it('lets the owner accept partial funding on a stalled round instead of refunding', async () => {
+      store.isOwner = true
+      const wrapper = mountRound(
+        sampleRound({ status: 'stalled', raised: 23400 }),
+        offerStruct({ state: 0 })
+      )
+      await flushPromises()
+      await wrapper.find('[data-test="round-cta-accept-partial"]').trigger('click')
+      await flushPromises()
+      expect(mockFixedReturnWrites.acceptPartialFunding.mutateAsync).toHaveBeenCalledWith({
+        args: [1n]
+      })
+    })
+
+    it('hides the accept-partial-funding action when nothing was raised', async () => {
+      store.isOwner = true
+      const wrapper = mountRound(
+        sampleRound({ status: 'stalled', raised: 0 }),
+        offerStruct({ state: 0, totalFunded: 0n })
+      )
+      await flushPromises()
+      expect(wrapper.find('[data-test="round-cta-accept-partial"]').exists()).toBe(false)
+      expect(wrapper.find('[data-test="round-cta-refundable"]').exists()).toBe(true)
+    })
+
+    it('does not offer to lend into a stalled round even though it is still Open on-chain', async () => {
+      store.isOwner = false
+      const wrapper = mountRound(sampleRound({ status: 'stalled' }), offerStruct({ state: 0 }))
+      await flushPromises()
+      expect(wrapper.find('[data-test="round-cta-lend"]').exists()).toBe(false)
+    })
+
+    it('hides the Lend action on a restricted round when the owner has no whitelist allocation', async () => {
+      store.isOwner = true
+      mockFixedReturnReads.myLenderPositions.data.value = new Map()
+      const wrapper = mountRound(sampleRound({ restricted: true }))
+      await flushPromises()
+      expect(wrapper.find('[data-test="round-cta-lend"]').exists()).toBe(false)
+    })
+
+    it('offers the Lend action on a restricted round once the owner has a whitelist allocation', async () => {
+      store.isOwner = true
+      mockFixedReturnReads.myLenderPositions.data.value = new Map([
+        [1, { allocation: 500n, deposited: 0n }]
+      ])
+      const wrapper = mountRound(sampleRound({ restricted: true }))
+      await flushPromises()
+      expect(wrapper.find('[data-test="round-cta-lend"]').exists()).toBe(true)
+    })
+
+    it('offers Repay as a fourth layout-exploration option, rendering the same panel as the Repay round button', async () => {
+      store.isOwner = true
+      store.variant = 'repay'
+      mockFixedReturnReads.offerLenders.data.value = [
+        { address: '0x00000000000000000000000000000000000000a1', principal: 5000, expected: 5250 }
+      ]
+      const wrapper = mountRound(sampleRound({ status: 'active' }))
+      await flushPromises()
+
+      expect(wrapper.find('[data-test="variant-repay"]').exists()).toBe(true)
+      expect(wrapper.text()).toContain('Repayment breakdown')
+      expect(wrapper.text()).toContain('5,250')
+      expect(wrapper.find('[data-test="confirm-repay"]').exists()).toBe(true)
     })
   })
 })

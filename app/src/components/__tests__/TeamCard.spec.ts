@@ -153,4 +153,25 @@ describe('TeamCard', () => {
       expect(chip.text()).toContain('No wage set')
     })
   })
+
+  describe('Legacy contracts badge', () => {
+    const officer = {
+      address: '0x00000000000000000000000000000000000000ff'
+    } as unknown as Team['currentOfficer']
+
+    it('shows the Legacy badge when an officer is deployed on an older generation', () => {
+      const wrapper = render(makeTeam({ currentOfficer: officer, isMigrated: false }))
+      expect(wrapper.find('[data-test="team-legacy-badge"]').exists()).toBe(true)
+    })
+
+    it('hides the Legacy badge for a migrated team', () => {
+      const wrapper = render(makeTeam({ currentOfficer: officer, isMigrated: true }))
+      expect(wrapper.find('[data-test="team-legacy-badge"]').exists()).toBe(false)
+    })
+
+    it('hides the Legacy badge when no officer is deployed yet', () => {
+      const wrapper = render(makeTeam({ isMigrated: false }))
+      expect(wrapper.find('[data-test="team-legacy-badge"]').exists()).toBe(false)
+    })
+  })
 })

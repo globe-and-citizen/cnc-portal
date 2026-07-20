@@ -15,6 +15,7 @@
  * mappers never flagged (deposits, internal moves, dividends, …) are untouched.
  */
 import { getAddress, isAddress, type Address } from 'viem'
+import type { TokenId } from '@/constant'
 import type { Wage, WeeklyClaim } from '@/types/cash-remuneration'
 import type { ExpenseResponse } from '@/types/expense-account'
 import type { LedgerEntry } from './ledgerEntry'
@@ -74,6 +75,7 @@ function enrichPayroll(entry: LedgerEntry, claim: WeeklyClaim | undefined): Ledg
   return {
     ...entry,
     category: 'Payroll',
+    minutesWorked: claim.minutesWorked,
     enrichment: 'enriched',
     memo: parts.length ? `${entry.memo} — ${parts.join('; ')}` : entry.memo
   }
@@ -91,11 +93,15 @@ function enrichExpense(entry: LedgerEntry, expense: ExpenseResponse | undefined)
 
 /**
  * Enrich the flagged payroll/expense entries against the portal records. Returns a
- * new array; entries that need no off-chain data pass through unchanged.
+ * new array; entries that need no off-chain data pass through unchanged. When a
+ * `tokenIdOf` resolver is supplied, expense candidates are narrowed to budgets in
+ * the entry's own token before picking the nearest by date — a same-member budget
+ * in another token can't be the payout's backing record.
  */
 export function enrichEntries(
   entries: readonly LedgerEntry[],
-  sources: EnrichmentSources
+  sources: EnrichmentSources,
+  tokenIdOf?: (tokenAddress: string | null | undefined) => TokenId
 ): LedgerEntry[] {
   const claimsByMember = indexByAddress(sources.weeklyClaims, (c) => c.memberAddress)
   const expensesByUser = indexByAddress(sources.expenses, (e) => e.userAddress)
@@ -112,7 +118,11 @@ export function enrichEntries(
       return enrichPayroll(entry, claim)
     }
     if (entry.useCase === 'UC-EXP-01') {
-      const expense = nearest(expensesByUser.get(member), entry.timestamp, (e) =>
+      const candidates = expensesByUser.get(member)
+      const sameToken = tokenIdOf
+        ? candidates?.filter((e) => tokenIdOf(e.data?.tokenAddress) === entry.token)
+        : candidates
+      const expense = nearest(sameToken?.length ? sameToken : candidates, entry.timestamp, (e) =>
         new Date(e.createdAt).getTime()
       )
       return enrichExpense(entry, expense)

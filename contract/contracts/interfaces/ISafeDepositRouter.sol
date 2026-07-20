@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import './IPausable.sol';
-import './IOwnable.sol';
-import './ITokenSupport.sol';
+import {IOwnable} from "./IOwnable.sol";
+import {IPausable} from "./IPausable.sol";
+import {ITokenSupport} from "./ITokenSupport.sol";
 
 /**
  * @title ISafeDepositRouter
@@ -15,12 +15,12 @@ import './ITokenSupport.sol';
 interface ISafeDepositRouter is IPausable, IOwnable, ITokenSupport {
   // ============ Configuration ============
   /// @notice Set the safe address where deposits are sent
-  /// @param _newSafe New safe address
-  function setSafeAddress(address _newSafe) external;
+  /// @param newSafe New safe address
+  function setSafeAddress(address newSafe) external;
 
   /// @notice Set the SHER token multiplier
-  /// @param _newMultiplier New multiplier value
-  function setMultiplier(uint256 _newMultiplier) external;
+  /// @param newMultiplier New multiplier value
+  function setMultiplier(uint256 newMultiplier) external;
 
   // ============ Deposit Controls ============
   /// @notice Enable deposits

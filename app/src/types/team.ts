@@ -1,4 +1,5 @@
 import type { Address } from 'viem'
+import type { FolderVersion } from '@/artifacts/registry'
 import type { Member } from './member'
 import type { TeamContract } from './teamContract'
 
@@ -34,6 +35,12 @@ export interface CurrentOfficer {
 export interface Team {
   id: string
   name: string
+  /**
+   * Unique, URL-friendly identifier auto-generated from `name` on creation.
+   * Names are no longer unique — teams may share one — so the slug is what
+   * distinguishes homonyms (e.g. `acme-corp`, `acme-corp-2`).
+   */
+  slug: string
   description: string
   isHidden: boolean
   isArchived: boolean
@@ -47,6 +54,15 @@ export interface Team {
    * (issue #1825).
    */
   isMigrated?: boolean
+  /**
+   * Artifact-folder version (`v1` / `v2` / …) this team's contracts run on,
+   * resolved backend-side from `currentOfficer.version`. Read via
+   * `useContractVersion()` to branch explicitly on the team's contract version
+   * (see composables/contracts/README.md). Optional: when absent the frontend
+   * derives it from `currentOfficer.version`. Set by the backend (see the
+   * version registry in contract/versions/registry.json).
+   */
+  contractVersion?: FolderVersion
   safeAddress?: Address
   teamContracts: TeamContract[]
   _count?: { members: number }

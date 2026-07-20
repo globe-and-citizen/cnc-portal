@@ -12,12 +12,12 @@
         "type": "uint256"
       }
     ],
-    "name": "ActionAlreadyExecuted",
+    "name": "BoardOfDirectors__ActionAlreadyExecuted",
     "type": "error"
   },
   {
     "inputs": [],
-    "name": "AlreadyApproved",
+    "name": "BoardOfDirectors__AlreadyApproved",
     "type": "error"
   },
   {
@@ -28,12 +28,71 @@
         "type": "address"
       }
     ],
-    "name": "CallFailed",
+    "name": "BoardOfDirectors__CallFailed",
     "type": "error"
   },
   {
     "inputs": [],
-    "name": "EmptyList",
+    "name": "BoardOfDirectors__EmptyList",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "BoardOfDirectors__NotApproved",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "caller",
+        "type": "address"
+      }
+    ],
+    "name": "BoardOfDirectors__NotBoardMember",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "caller",
+        "type": "address"
+      }
+    ],
+    "name": "BoardOfDirectors__NotOwner",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "BoardOfDirectors__NotSelf",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "owner",
+        "type": "address"
+      }
+    ],
+    "name": "BoardOfDirectors__OwnerAlreadyExists",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "owner",
+        "type": "address"
+      }
+    ],
+    "name": "BoardOfDirectors__OwnerNotFound",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "BoardOfDirectors__ZeroAddress",
     "type": "error"
   },
   {
@@ -43,71 +102,12 @@
   },
   {
     "inputs": [],
-    "name": "NotApproved",
-    "type": "error"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "caller",
-        "type": "address"
-      }
-    ],
-    "name": "NotBoardMember",
-    "type": "error"
-  },
-  {
-    "inputs": [],
     "name": "NotInitializing",
-    "type": "error"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "caller",
-        "type": "address"
-      }
-    ],
-    "name": "NotOwner",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "NotSelf",
-    "type": "error"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "owner",
-        "type": "address"
-      }
-    ],
-    "name": "OwnerAlreadyExists",
-    "type": "error"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "owner",
-        "type": "address"
-      }
-    ],
-    "name": "OwnerNotFound",
     "type": "error"
   },
   {
     "inputs": [],
     "name": "ReentrancyGuardReentrantCall",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "ZeroAddress",
     "type": "error"
   },
   {
@@ -128,7 +128,7 @@
       {
         "indexed": false,
         "internalType": "string",
-        "name": "_description",
+        "name": "description",
         "type": "string"
       },
       {
@@ -159,7 +159,7 @@
       {
         "indexed": false,
         "internalType": "string",
-        "name": "_description",
+        "name": "description",
         "type": "string"
       },
       {
@@ -250,8 +250,50 @@
     "type": "event"
   },
   {
-    "inputs": [],
-    "name": "actionCount",
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "target",
+        "type": "address"
+      },
+      {
+        "internalType": "string",
+        "name": "description",
+        "type": "string"
+      },
+      {
+        "internalType": "bytes",
+        "name": "data",
+        "type": "bytes"
+      }
+    ],
+    "name": "addAction",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "owner",
+        "type": "address"
+      }
+    ],
+    "name": "addOwner",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "actionId",
+        "type": "uint256"
+      }
+    ],
+    "name": "approvalCount",
     "outputs": [
       {
         "internalType": "uint256",
@@ -266,11 +308,37 @@
     "inputs": [
       {
         "internalType": "uint256",
+        "name": "actionId",
+        "type": "uint256"
+      }
+    ],
+    "name": "approve",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getActionCount",
+    "outputs": [
+      {
+        "internalType": "uint256",
         "name": "",
         "type": "uint256"
       }
     ],
-    "name": "actions",
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "actionId",
+        "type": "uint256"
+      }
+    ],
+    "name": "getActions",
     "outputs": [
       {
         "internalType": "uint256",
@@ -289,7 +357,7 @@
       },
       {
         "internalType": "uint8",
-        "name": "approvalCount",
+        "name": "approvalCount_",
         "type": "uint8"
       },
       {
@@ -309,74 +377,6 @@
       }
     ],
     "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_target",
-        "type": "address"
-      },
-      {
-        "internalType": "string",
-        "name": "_description",
-        "type": "string"
-      },
-      {
-        "internalType": "bytes",
-        "name": "_data",
-        "type": "bytes"
-      }
-    ],
-    "name": "addAction",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_owner",
-        "type": "address"
-      }
-    ],
-    "name": "addOwner",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_actionId",
-        "type": "uint256"
-      }
-    ],
-    "name": "approvalCount",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_actionId",
-        "type": "uint256"
-      }
-    ],
-    "name": "approve",
-    "outputs": [],
-    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -409,7 +409,7 @@
     "inputs": [
       {
         "internalType": "address[]",
-        "name": "_owners",
+        "name": "owners",
         "type": "address[]"
       }
     ],
@@ -422,7 +422,7 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "_actionId",
+        "name": "actionId",
         "type": "uint256"
       }
     ],
@@ -441,12 +441,12 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "_actionId",
+        "name": "actionId",
         "type": "uint256"
       },
       {
         "internalType": "address",
-        "name": "_address",
+        "name": "account",
         "type": "address"
       }
     ],
@@ -465,7 +465,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_address",
+        "name": "account",
         "type": "address"
       }
     ],
@@ -484,7 +484,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_owner",
+        "name": "owner",
         "type": "address"
       }
     ],
@@ -497,7 +497,7 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "_actionId",
+        "name": "actionId",
         "type": "uint256"
       }
     ],
@@ -510,7 +510,7 @@
     "inputs": [
       {
         "internalType": "address[]",
-        "name": "_boardOfDirectors",
+        "name": "boardOfDirectors",
         "type": "address[]"
       }
     ],
@@ -523,13 +523,26 @@
     "inputs": [
       {
         "internalType": "address[]",
-        "name": "_owners",
+        "name": "owners",
         "type": "address[]"
       }
     ],
     "name": "setOwners",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "version",
+    "outputs": [
+      {
+        "internalType": "string",
+        "name": "",
+        "type": "string"
+      }
+    ],
+    "stateMutability": "pure",
     "type": "function"
   }
 ]

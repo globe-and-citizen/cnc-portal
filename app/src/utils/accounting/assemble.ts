@@ -35,8 +35,10 @@ import { buildGeneralLedger, type GeneralLedger } from '@/utils/accounting/gener
 import { buildIncomeStatement, type IncomeStatement } from '@/utils/accounting/incomeStatement'
 import { buildBalanceSheet, type BalanceSheet } from '@/utils/accounting/balanceSheet'
 import type { LedgerEntry } from '@/utils/accounting/ledgerEntry'
-import type { UsdRateOfRecord } from '@/utils/accounting/toUsd'
+import { tokenUsdRate, type UsdRateOfRecord } from '@/utils/accounting/toUsd'
 import { buildSherMultiplierTimeline, makeSherUsdRate } from '@/utils/accounting/sherRate'
+import { atDate } from '@/utils/accounting/mappers/context'
+import { dayKey } from '@/utils/accounting/historicalRate'
 import type { SafeTransferRow } from '@/utils/accounting/mappers/safe'
 
 /** The raw feeds for one team, as fetched by {@link useCNCAccounting}. */
@@ -47,6 +49,9 @@ export interface CncAccountingInput {
   safeAddress?: Address | string | null
   /** Founder / owner addresses whose treasury inflows are Owner Capital. */
   founderAddresses?: Iterable<Address | string>
+  /** Team member addresses — a member's Safe inflow is a capital contribution
+   *  (invest & get SHER → Investor Equity), not client revenue. */
+  memberAddresses?: Iterable<Address | string>
   /** Protocol-wide FeeCollector address (its pocket is `Cash — FeeCollector`). */
   feeCollectorAddress?: Address | string | null
   /** On-chain SHER token address, so it resolves to the `sher` token id. */
@@ -237,20 +242,16 @@ function toLedgerSources(input: CncAccountingInput): LedgerSources {
 }
 
 /**
- * Assemble a team's consolidated ledger and the three statements from its raw
- * feeds. Pure: no I/O, no Vue — the composable supplies the fetched data.
+ * The USD rate-of-record resolver for a team's feeds: the caller's price source
+ * for native (POL/ETH), overlaid with the SHER price.
+ *
+ * SHER has no market price, so it is valued from the router's compensation
+ * multiplier (1 SHER = 1/multiplier USD, historised over the multiplier changes)
+ * — that is what makes a wage paid in SHER increase Investor Equity. With no
+ * change events we fall back to the router's live multiplier, then to the
+ * contract's 1x default.
  */
-export function assembleCncAccounting(input: CncAccountingInput): CncAccounting {
-  const internalAddresses = collectInternalAddresses(
-    input.contracts,
-    input.feeCollectorAddress ? [input.feeCollectorAddress] : []
-  )
-
-  // SHER has no market price; value it from the router's compensation multiplier
-  // (1 SHER = 1/multiplier USD, historised over the multiplier changes) so
-  // wage-in-SHER increases Investor Equity. With no change events we use the
-  // router's live multiplier (read from the contract) or, failing that, the
-  // contract's 1x default (1 SHER = $1) — no longer the Phase-1 $0.
+function buildRateOfRecord(input: CncAccountingInput): UsdRateOfRecord {
   const baseRate = input.rateOfRecord ?? phase1RateOfRecord
   const sherRate = makeSherUsdRate(
     buildSherMultiplierTimeline(
@@ -259,14 +260,28 @@ export function assembleCncAccounting(input: CncAccountingInput): CncAccounting 
       input.currentSherMultiplier
     )
   )
-  const rateOfRecord: UsdRateOfRecord = sherRate
+  return sherRate
     ? (tokenId, at) => (tokenId === 'sher' ? sherRate(at) : baseRate(tokenId, at))
     : baseRate
+}
+
+/**
+ * Run the source mappers and stamp each posting with its rate of record, yielding
+ * the raw, pre-consolidation feed: Devise (`token`), Quantité (`rawAmount`), Taux
+ * (`rate`) and the derived Montant USD (`amountUsd`), spec §2.
+ */
+export function buildRawCncEntries(input: CncAccountingInput): LedgerEntry[] {
+  const internalAddresses = collectInternalAddresses(
+    input.contracts,
+    input.feeCollectorAddress ? [input.feeCollectorAddress] : []
+  )
+  const rateOfRecord = buildRateOfRecord(input)
 
   const ctx = buildMapperContext({
     contracts: input.contracts,
     internalAddresses,
     founderAddresses: input.founderAddresses,
+    memberAddresses: input.memberAddresses,
     feeCollectorAddress: input.feeCollectorAddress,
     sherTokenAddress: input.sherTokenAddress,
     rateOfRecord
@@ -277,6 +292,34 @@ export function assembleCncAccounting(input: CncAccountingInput): CncAccounting 
     expenses: input.expenses
   })
 
+  // The rate is a pure function of (token, timestamp), so it is resolved once here
+  // rather than threaded through every mapper — with the same resolver the mappers
+  // valued `amountUsd` with, so amountUsd = Quantité × rate.
+  return rawEntries.map((entry) => ({
+    ...entry,
+    rate: tokenUsdRate(entry.token, atDate(entry.timestamp), rateOfRecord)
+  }))
+}
+
+/**
+ * The distinct UTC days (`YYYY-MM-DD`) the feed has native (POL/ETH) activity on
+ * — the daily prices the caller must fetch to value POL at its rate of record.
+ */
+export function collectNativeRateDays(entries: readonly LedgerEntry[]): string[] {
+  const days = new Set<string>()
+  for (const entry of entries) {
+    if (entry.token === 'native') days.add(dayKey(atDate(entry.timestamp)))
+  }
+  return [...days]
+}
+
+/**
+ * Consolidate a raw feed into the ledger and the three statements. Split from
+ * {@link assembleCncAccounting} so a caller that already holds the raw entries
+ * (the composable, which derives the price-fetch days from them) doesn't run the
+ * whole mapper pipeline a second time.
+ */
+export function assembleFromRawEntries(rawEntries: readonly LedgerEntry[]): CncAccounting {
   const { entries, summary } = buildLedger(rawEntries)
 
   return {
@@ -286,6 +329,14 @@ export function assembleCncAccounting(input: CncAccountingInput): CncAccounting 
     incomeStatement: buildIncomeStatement(entries),
     balanceSheet: buildBalanceSheet(entries)
   }
+}
+
+/**
+ * Assemble a team's consolidated ledger and the three statements from its raw
+ * feeds. Pure: no I/O, no Vue — the composable supplies the fetched data.
+ */
+export function assembleCncAccounting(input: CncAccountingInput): CncAccounting {
+  return assembleFromRawEntries(buildRawCncEntries(input))
 }
 
 /** An empty accounting result — used before any data has loaded. */

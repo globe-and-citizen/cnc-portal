@@ -8,7 +8,6 @@ export type ContractKey =
   | 'AdCampaignManager'
   | 'Vesting'
   | 'InvestorV1'
-  | 'Tips'
   | 'FeeCollector'
   | 'TokenSupport'
   | 'Elections'
@@ -16,6 +15,7 @@ export type ContractKey =
   | 'Voting'
   | 'BoardOfDirectors'
   | 'Officer'
+  | 'FixedReturn'
 
 export interface ContractErrorCatalog {
   /** Shared messages: OZ-inherited errors and names with identical semantics across contracts. */
