@@ -26,11 +26,6 @@
     "type": "error"
   },
   {
-    "inputs": [],
-    "name": "BankContractNotFound",
-    "type": "error"
-  },
-  {
     "inputs": [
       {
         "internalType": "address",
@@ -127,6 +122,16 @@
     "type": "error"
   },
   {
+    "inputs": [],
+    "name": "InvalidInitialization",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "InvestorV1__BankContractNotFound",
+    "type": "error"
+  },
+  {
     "inputs": [
       {
         "internalType": "address",
@@ -144,12 +149,7 @@
         "type": "uint256"
       }
     ],
-    "name": "InsufficientFundedTokenBalance",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "InvalidInitialization",
+    "name": "InvestorV1__InsufficientFundedTokenBalance",
     "type": "error"
   },
   {
@@ -165,7 +165,7 @@
         "type": "uint256"
       }
     ],
-    "name": "InvalidNativeFunding",
+    "name": "InvestorV1__InvalidNativeFunding",
     "type": "error"
   },
   {
@@ -176,17 +176,17 @@
         "type": "address"
       }
     ],
-    "name": "NativeTransferFailed",
+    "name": "InvestorV1__NativeTransferFailed",
     "type": "error"
   },
   {
     "inputs": [],
-    "name": "NoShareholders",
+    "name": "InvestorV1__NoShareholders",
     "type": "error"
   },
   {
     "inputs": [],
-    "name": "NoTokensMinted",
+    "name": "InvestorV1__NoTokensMinted",
     "type": "error"
   },
   {
@@ -197,17 +197,27 @@
         "type": "address"
       }
     ],
-    "name": "NotBank",
+    "name": "InvestorV1__NotBank",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "InvestorV1__OfficerAddressNotSet",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "InvestorV1__ZeroAddress",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "InvestorV1__ZeroAmount",
     "type": "error"
   },
   {
     "inputs": [],
     "name": "NotInitializing",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "OfficerAddressNotSet",
     "type": "error"
   },
   {
@@ -246,16 +256,6 @@
       }
     ],
     "name": "SafeERC20FailedOperation",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "ZeroAddress",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "ZeroAmount",
     "type": "error"
   },
   {
@@ -669,7 +669,7 @@
           }
         ],
         "internalType": "struct InvestorV1.Shareholder[]",
-        "name": "_shareholders",
+        "name": "shareholders",
         "type": "tuple[]"
       }
     ],
@@ -682,7 +682,7 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "_amount",
+        "name": "amount",
         "type": "uint256"
       }
     ],
@@ -695,18 +695,31 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_token",
+        "name": "token",
         "type": "address"
       },
       {
         "internalType": "uint256",
-        "name": "_amount",
+        "name": "amount",
         "type": "uint256"
       }
     ],
     "name": "distributeTokenDividends",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getOfficerAddress",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -723,6 +736,19 @@
         "internalType": "bytes32",
         "name": "",
         "type": "bytes32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getShareholderSet",
+    "outputs": [
+      {
+        "internalType": "address[]",
+        "name": "",
+        "type": "address[]"
       }
     ],
     "stateMutability": "view",
@@ -817,17 +843,17 @@
     "inputs": [
       {
         "internalType": "string",
-        "name": "_name",
+        "name": "tokenName",
         "type": "string"
       },
       {
         "internalType": "string",
-        "name": "_symbol",
+        "name": "tokenSymbol",
         "type": "string"
       },
       {
         "internalType": "address",
-        "name": "_owner",
+        "name": "initialOwner",
         "type": "address"
       }
     ],
@@ -844,19 +870,6 @@
         "internalType": "string",
         "name": "",
         "type": "string"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "officerAddress",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
       }
     ],
     "stateMutability": "view",
@@ -1054,6 +1067,19 @@
     "name": "unpause",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "version",
+    "outputs": [
+      {
+        "internalType": "string",
+        "name": "",
+        "type": "string"
+      }
+    ],
+    "stateMutability": "pure",
     "type": "function"
   },
   {

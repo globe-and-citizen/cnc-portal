@@ -48,6 +48,25 @@
     "type": "function"
   },
   {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "contractTypeHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "getDeployedByType",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [],
     "name": "getFeeCollector",
     "outputs": [

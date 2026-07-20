@@ -12,15 +12,15 @@ describe('FeeCollector', () => {
   let mockUSDC: MockERC20
 
   const ERRORS = {
-    ZERO_ADDRESS: 'ZeroAddress',
-    EMPTY_TYPE: 'EmptyContractType',
-    INVALID_BPS: 'InvalidBps',
-    DUPLICATE_TYPE: 'DuplicateContractType',
-    TOKEN_SUPPORT_ZERO_ADDRESS: 'TokenSupportZeroAddress',
-    TOKEN_ALREADY_SUPPORTED: 'TokenSupportAlreadyAdded',
-    TOKEN_NOT_SUPPORTED: 'TokenNotSupported',
-    TOKEN_SUPPORT_NOT_FOUND: 'TokenSupportNotFound',
-    AMOUNT_ZERO: 'ZeroAmount',
+    ZERO_ADDRESS: 'FeeCollector__ZeroAddress',
+    EMPTY_TYPE: 'FeeCollector__EmptyContractType',
+    INVALID_BPS: 'FeeCollector__InvalidBps',
+    DUPLICATE_TYPE: 'FeeCollector__DuplicateContractType',
+    TOKEN_SUPPORT_ZERO_ADDRESS: 'TokenSupport__ZeroAddress',
+    TOKEN_ALREADY_SUPPORTED: 'TokenSupport__AlreadyAdded',
+    TOKEN_NOT_SUPPORTED: 'FeeCollector__TokenNotSupported',
+    TOKEN_SUPPORT_NOT_FOUND: 'TokenSupport__NotFound',
+    AMOUNT_ZERO: 'FeeCollector__ZeroAmount',
     UNAUTHORIZED: 'OwnableUnauthorizedAccount'
   } as const
 
@@ -583,7 +583,7 @@ describe('FeeCollector', () => {
       // transfer (.call) to return false, which surfaces as WithdrawalFailed.
       await expect(malicious.attack(await feeCollector.getAddress())).to.be.revertedWithCustomError(
         feeCollector,
-        'WithdrawalFailed'
+        'FeeCollector__WithdrawalFailed'
       )
     })
   })

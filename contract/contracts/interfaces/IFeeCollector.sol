@@ -34,8 +34,8 @@ interface IFeeCollector is ITokenSupport {
   function payFeeToken(string calldata contractType, address token, uint256 amount) external;
 
   /// @notice Set the address that will receive swept fees
-  /// @param _beneficiary New beneficiary address, or address(0) to clear (fall back to owner)
-  function setFeeBeneficiary(address _beneficiary) external;
+  /// @param beneficiary New beneficiary address, or address(0) to clear (fall back to owner)
+  function setFeeBeneficiary(address beneficiary) external;
 
   // ============ Withdrawals ============
   /// @notice Sweep the full native balance and every supported ERC20 balance to the fee beneficiary (or owner if unset)
@@ -53,7 +53,7 @@ interface IFeeCollector is ITokenSupport {
   // ============ Fee Beneficiary ============
   /// @notice Address that receives funds on withdraw / withdrawToken
   /// @return Current beneficiary; address(0) means withdrawals fall back to owner()
-  function feeBeneficiary() external view returns (address);
+  function getFeeBeneficiary() external view returns (address);
 
   // ============ Balance Queries ============
   /// @notice Get native ETH balance
@@ -61,7 +61,7 @@ interface IFeeCollector is ITokenSupport {
   function getBalance() external view returns (uint256);
 
   /// @notice Get token balance
-  /// @param _token Token address
+  /// @param token Token address
   /// @return Token balance
-  function getTokenBalance(address _token) external view returns (uint256);
+  function getTokenBalance(address token) external view returns (uint256);
 }
