@@ -19,7 +19,7 @@
     "drizzle-kit": "0.22.8",
     "hono": "^4.12.26",
     "ponder": "^0.16.5",
-    "viem": "^2.21.3"
+    "viem": "^2.55.4"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",
