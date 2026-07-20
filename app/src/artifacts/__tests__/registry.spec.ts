@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest'
-import { resolveFolder, folderForOfficerBeacon, CURRENT_VERSION } from '@/artifacts/registry'
+import {
+  resolveFolder,
+  folderForOfficerBeacon,
+  latestDeployedVersionForChain,
+  CURRENT_VERSION
+} from '@/artifacts/registry'
 import registry from '@/artifacts/version-registry.json'
 import addrV0 from '@/artifacts/deployed_addresses/V0/chain-137.json'
 import addrV1 from '@/artifacts/deployed_addresses/V1/chain-137.json'
@@ -9,6 +14,20 @@ const V0_OFFICER_BEACON = (addrV0 as Record<string, string>)[registry.folders.V0
 const V1_OFFICER_BEACON = (addrV1 as Record<string, string>)[registry.folders.V1.beacons.Officer]
 
 describe('artifacts/registry', () => {
+  describe('latestDeployedVersionForChain', () => {
+    it('matches the active Polygon Officer beacon to its deployed generation', () => {
+      expect(latestDeployedVersionForChain(POLYGON)).toBe('V1')
+    })
+
+    it('matches the active Hardhat Officer beacon to the V2 deployment snapshot', () => {
+      expect(latestDeployedVersionForChain(31337)).toBe('V2')
+    })
+
+    it('falls back to the registry current version for an unknown chain', () => {
+      expect(latestDeployedVersionForChain(1)).toBe(CURRENT_VERSION)
+    })
+  })
+
   describe('folderForOfficerBeacon', () => {
     it('maps a known Officer beacon to its folder on the deployed chain', () => {
       expect(folderForOfficerBeacon(V0_OFFICER_BEACON, POLYGON)).toBe('V0')

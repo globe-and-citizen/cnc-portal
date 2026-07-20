@@ -2,6 +2,15 @@
   <div class="flex justify-end">
     <div class="flex justify-between">
       <div class="flex items-center space-x-2 sm:space-x-4">
+        <UTooltip
+          v-if="showContractVersion"
+          :text="`Latest contract version deployed on ${NETWORK.networkName}`"
+        >
+          <UBadge color="neutral" variant="subtle" size="lg" data-test="contract-version-badge">
+            <span class="hidden sm:inline">Contracts&nbsp;</span>{{ latestContractVersion }}
+          </UBadge>
+        </UTooltip>
+
         <UButton color="neutral" variant="ghost">
           <img src="../assets/Ethereum.png" class="h-4 w-4 sm:h-5 sm:w-5" alt="Ethereum Icon" />
           <span
@@ -43,7 +52,8 @@
 </template>
 
 <script setup lang="ts">
-import { NETWORK } from '@/constant/index'
+import { currentChainId, NETWORK } from '@/constant/index'
+import { latestDeployedVersionForChain } from '@/artifacts/registry'
 import { useAuth } from '@/composables/useAuth'
 import NotificationDropdown from '@/components/NotificationDropdown.vue'
 import { useUserDataStore } from '@/stores'
@@ -58,6 +68,8 @@ const userStore = useUserDataStore()
 const { imageUrl } = storeToRefs(userStore)
 
 const open = ref(false)
+const showContractVersion = import.meta.env.DEV
+const latestContractVersion = latestDeployedVersionForChain(currentChainId)
 
 const profileItems = <DropdownMenuItem[]>[
   { label: 'Settings', onSelect: () => (open.value = true) },
