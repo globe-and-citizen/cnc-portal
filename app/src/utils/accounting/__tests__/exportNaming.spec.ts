@@ -52,6 +52,28 @@ describe('exportBaseName', () => {
     })
     expect(dated).toContain('General Ledger - Cash — Bank - As of')
   })
+
+  it('uses the aggregate label for a multi-account drill-down, with the period', () => {
+    expect(
+      exportBaseName({
+        key: 'ledger',
+        account: ['Payroll Expense', 'Share-based Compensation'],
+        accountLabel: 'Retained earnings',
+        from: FROM,
+        to: TO
+      })
+    ).toContain('General Ledger - Retained earnings -')
+  })
+
+  it('falls back to "Aggregate" when a multi-account drill-down carries no label', () => {
+    expect(
+      exportBaseName({ key: 'ledger', account: ['Payroll Expense', 'Operating Expense'] })
+    ).toBe('General Ledger - Aggregate')
+  })
+
+  it('names the summary export generically', () => {
+    expect(exportBaseName({ key: 'summary' })).toBe('Accounting Report')
+  })
 })
 
 describe('exportFilename', () => {

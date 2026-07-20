@@ -98,6 +98,21 @@ describe('accountLedger — statement-line drill-down', () => {
       expect(view.rows).toEqual([])
       expect(view.total).toBe(money(0))
     })
+
+    it('keeps the supplied total for an aggregate line', () => {
+      const group: AccountName[] = ['Payroll Expense', 'Share-based Compensation']
+      const view = presentAccountLedger(catalogueLedger, group, null, null, '-$50.00')
+      expect(view.entryCount).toBe(entriesForAccount(catalogueLedger, group).length)
+      // Mixed classes can't be netted, so the caller's figure is kept verbatim.
+      expect(view.total).toBe('-$50.00')
+    })
+
+    it('nets to zero for an aggregate line with no supplied total', () => {
+      const group: AccountName[] = ['Payroll Expense', 'Share-based Compensation']
+      const view = presentAccountLedger(catalogueLedger, group)
+      // With no single account to net against, the balance falls back to $0.00.
+      expect(view.total).toBe(money(0))
+    })
   })
 
   describe('accountLedgerTitle', () => {

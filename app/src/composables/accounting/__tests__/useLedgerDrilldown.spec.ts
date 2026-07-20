@@ -68,6 +68,14 @@ describe('useLedgerDrilldown', () => {
     expect(specs[0]).toMatchObject({ accountLabel: 'Retained earnings', accountTotal: '-$50.00' })
   })
 
+  it('labels an unlabelled aggregate "Aggregate"', () => {
+    const d = useLedgerDrilldown(entries, bounds, 'cnc-test-cols-agg')
+    // A list of accounts with no explicit label falls back to the generic name.
+    d.openFor(['Payroll Expense', 'Share-based Compensation'], '-$50.00')
+    expect(d.account.value).toBe('Aggregate')
+    expect(d.total.value).toBe('-$50.00')
+  })
+
   it('defaults the visible columns to the full set', () => {
     const d = useLedgerDrilldown(entries, bounds, 'cnc-test-cols-5')
     expect(d.columns.value.length).toBeGreaterThan(0)

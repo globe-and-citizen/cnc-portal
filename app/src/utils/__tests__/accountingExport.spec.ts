@@ -6,13 +6,25 @@ import { USDC_ADDRESS } from '@/constant'
 
 const BANK = '0x1111111111111111111111111111111111111111'
 const CLIENT = '0x7777777777777777777777777777777777777777'
+const EXPENSE = '0x2222222222222222222222222222222222222222'
+const MEMBER = '0x3333333333333333333333333333333333333333'
+
+const emptyBankEvents = {
+  bankDeposits: { items: [] },
+  bankTransfers: { items: [] },
+  bankTokenTransfers: { items: [] },
+  bankDividendDistributionTriggereds: { items: [] },
+  bankFeePaids: { items: [] },
+  bankOwnershipTransferreds: { items: [] },
+  rawContractTokenTransfers: { items: [] }
+}
 
 /** A tiny live book: one $100 client deposit into the Bank → Service Revenue 100. */
 function sampleBooks(): CncAccounting {
   return assembleCncAccounting({
     contracts: [{ type: 'Bank', address: BANK as Address, deployer: BANK as Address, admins: [] }],
     bankEvents: {
-      bankDeposits: { items: [] },
+      ...emptyBankEvents,
       bankTokenDeposits: {
         items: [
           {
@@ -24,13 +36,61 @@ function sampleBooks(): CncAccounting {
             timestamp: 100
           }
         ]
+      }
+    }
+  })
+}
+
+/** The same book plus a $30 expense payout, so the income statement carries both sides. */
+function booksWithExpense(): CncAccounting {
+  return assembleCncAccounting({
+    contracts: [
+      { type: 'Bank', address: BANK as Address, deployer: BANK as Address, admins: [] },
+      {
+        type: 'ExpenseAccountEIP712',
+        address: EXPENSE as Address,
+        deployer: BANK as Address,
+        admins: []
+      }
+    ],
+    bankEvents: {
+      ...emptyBankEvents,
+      bankTokenDeposits: {
+        items: [
+          {
+            id: 'bd1',
+            contractAddress: BANK,
+            depositor: CLIENT,
+            token: USDC_ADDRESS,
+            amount: '100000000',
+            timestamp: 100
+          }
+        ]
+      }
+    },
+    expenseEvents: {
+      expenseDeposits: { items: [] },
+      expenseTokenDeposits: { items: [] },
+      expenseTransfers: { items: [] },
+      expenseTokenTransfers: {
+        items: [
+          {
+            id: 'et1',
+            contractAddress: EXPENSE,
+            withdrawer: EXPENSE,
+            to: MEMBER,
+            token: USDC_ADDRESS,
+            amount: '30000000',
+            timestamp: 200
+          }
+        ]
       },
-      bankTransfers: { items: [] },
-      bankTokenTransfers: { items: [] },
-      bankDividendDistributionTriggereds: { items: [] },
-      bankFeePaids: { items: [] },
-      bankOwnershipTransferreds: { items: [] },
-      rawContractTokenTransfers: { items: [] }
+      expenseApprovals: { items: [] },
+      expenseOwnerTreasuryWithdrawNatives: { items: [] },
+      expenseOwnerTreasuryWithdrawTokens: { items: [] },
+      expenseTokenSupportAddeds: { items: [] },
+      expenseTokenSupportRemoveds: { items: [] },
+      expenseTokenAddressChangeds: { items: [] }
     }
   })
 }
@@ -143,6 +203,24 @@ describe('buildSheets (section selection)', () => {
     ])
     expect(String(ledger.rows[0][0])).toBe('General Ledger — Retained earnings')
     expect(ledger.rows.at(-1)!.some((c) => c === 100)).toBe(true)
+  })
+
+  it('builds the statement sheets (income, balance, trial) on request', () => {
+    const sheets = buildSheets(booksWithExpense(), [
+      { key: 'income' },
+      { key: 'balance' },
+      { key: 'trial' }
+    ])
+    expect(sheets.map((s) => s.name)).toEqual([
+      'Income Statement',
+      'Balance Sheet',
+      'Trial Balance'
+    ])
+    // The income sheet lists the expense line, so its Expenses section carries a row.
+    const income = sheets[0].rows
+    expect(income.some((r) => r[0] === 'Operating Expense')).toBe(true)
+    const totalExpenses = income.find((r) => r[0] === 'Total expenses')!
+    expect(totalExpenses[1]).toBe(30)
   })
 })
 
