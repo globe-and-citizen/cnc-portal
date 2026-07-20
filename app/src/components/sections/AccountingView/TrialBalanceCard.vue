@@ -108,7 +108,6 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { useLocalStorage } from '@vueuse/core'
 import type { TableColumn, TableRow } from '@nuxt/ui'
 import AccountingDatePicker from '@/components/AccountingDatePicker.vue'
 import AccountingExportBar from './AccountingExportBar.vue'
@@ -116,13 +115,11 @@ import LedgerDrilldownModal from './LedgerDrilldownModal.vue'
 import { defaultValueForMode } from '@/utils/datePicker'
 import { useAccountingContext } from '@/composables/accounting/useAccountingContext'
 import { useAccountingExport } from '@/composables/accounting/useAccountingExport'
+import { useLedgerDrilldown } from '@/composables/accounting/useLedgerDrilldown'
 import { buildGeneralLedger } from '@/utils/accounting/generalLedger'
 import { filterByPeriod, presentTrial } from '@/utils/accounting/presenter'
-import { entriesForAccount } from '@/utils/accounting/accountLedger'
 import { exportFilename } from '@/utils/accounting/exportNaming'
-import { LEDGER_COLUMNS, type LedgerColumnKey } from '@/utils/accounting/ledgerPresenter'
 import type { SectionSpec } from '@/utils/accounting/exportSpec'
-import type { ExportFormat } from './ExportReportModal.vue'
 
 interface TrialTableRow {
   account: string
@@ -165,11 +162,13 @@ const columns: TableColumn<TrialTableRow>[] = [
   { accessorKey: 'cr', header: 'Credit', meta: { class: { th: 'w-[13%]' } } }
 ]
 
-// on hover, get a subtle fill + a left accent bar (inset shadow, no layout shift).
+// On hover, a soft rounded-pill fill (matching the Income / Balance statement
+// rows): the fill sits on the cells so the first / last round into a pill, and
+// no full-width band or accent bar.
 function rowClass(row: TableRow<TrialTableRow>): string {
   return row.original.isTotal
     ? ''
-    : 'cursor-pointer transition-colors hover:bg-elevated/50 hover:shadow-[inset_3px_0_0_0_#9ca3af]'
+    : 'cursor-pointer [&>td]:transition-colors [&:hover>td]:bg-elevated/60 [&>td:first-child]:rounded-l-lg [&>td:last-child]:rounded-r-lg'
 }
 
 function onRowSelect(_event: Event, row: TableRow<TrialTableRow>): void {
@@ -178,54 +177,24 @@ function onRowSelect(_event: Event, row: TableRow<TrialTableRow>): void {
 
 const { exportPdf, exportExcel } = useAccountingExport()
 
-// balance — the same as-of slice the trial balance itself is built from.
-const drilldownOpen = ref(false)
-const drilldownAccount = ref('')
-const drilldownTotal = ref('')
-
-const drilldownEntries = computed(() =>
-  drilldownAccount.value
-    ? entriesForAccount(acc.entries.value, drilldownAccount.value, asOf.value)
-    : []
-)
-
-// Show/hide drill-down columns — persisted so the choice sticks across sessions,
-// on its own key so it stays independent of the General Ledger's selection.
-const drilldownColumns = useLocalStorage<LedgerColumnKey[]>(
-  'cnc-accounting-drilldown-columns-v1',
-  LEDGER_COLUMNS.map((c) => c.value)
+// Per-line drill-down — over the same as-of slice the trial balance is built from.
+const {
+  open: drilldownOpen,
+  account: drilldownAccount,
+  total: drilldownTotal,
+  columns: drilldownColumns,
+  drilldownEntries,
+  openFor,
+  onExport: onDrilldownExport
+} = useLedgerDrilldown(
+  acc.entries,
+  () => ({ from: null, to: asOf.value }),
+  'cnc-accounting-drilldown-columns-v1'
 )
 
 function openDrilldown(row: TrialTableRow): void {
-  drilldownAccount.value = row.account
   // The line's balance sits in whichever column isn't the em-dash placeholder.
-  drilldownTotal.value = row.dr === '—' ? row.cr : row.dr
-  drilldownOpen.value = true
-}
-
-// Export exactly the drilled-in account's ledger, as of the same date, reusing
-// the shared PDF / Excel pipeline via the `account` spec.
-const onDrilldownExport = (format: ExportFormat): void => {
-  const s: SectionSpec = {
-    key: 'ledger',
-    account: drilldownAccount.value,
-    to: asOf.value,
-    from: null,
-    columns: drilldownColumns.value
-  }
-  if (format === 'excel') {
-    exportExcel(
-      [s],
-      exportFilename(s, 'xlsx'),
-      `${drilldownAccount.value} ledger exported to Excel`
-    )
-  } else {
-    exportPdf(
-      [s],
-      { filename: exportFilename(s, 'pdf') },
-      `${drilldownAccount.value} ledger exported to PDF`
-    )
-  }
+  openFor(row.account, row.dr === '—' ? row.cr : row.dr)
 }
 
 // Export the current, as-of-filtered trial balance. The filename carries the
