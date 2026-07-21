@@ -26,7 +26,6 @@ const contracts = [
   'Officer',
   'Proposals',
   'Vesting',
-  'Voting',
   'SafeDepositRouter'
 ]
 

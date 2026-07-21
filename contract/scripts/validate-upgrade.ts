@@ -24,7 +24,6 @@ const UPGRADEABLE_CONTRACTS: ContractConfig[] = [
   { name: 'Proposals' },
   { name: 'SafeDepositRouter' },
   { name: 'Vesting' },
-  { name: 'Voting' }
 ]
 
 const BASELINE_ROOT = path.join(__dirname, '..', 'storage-baselines')
