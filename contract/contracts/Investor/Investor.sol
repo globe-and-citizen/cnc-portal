@@ -3,6 +3,7 @@ pragma solidity ^0.8.24;
 
 import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+// solhint-disable-next-line max-line-length
 import {ERC20BurnableUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20BurnableUpgradeable.sol";
 import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
@@ -46,7 +47,7 @@ contract Investor is
   bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
   /// @dev Set of addresses currently holding a non-zero balance.
-  EnumerableSet.AddressSet private _shareholderSet;
+  EnumerableSet.AddressSet private s_shareholderSet;
 
   /// @notice Address of the Officer contract (set immutably at initialization).
   address public officerAddress;
@@ -61,6 +62,7 @@ contract Investor is
   bool public migrationComplete;
 
   /// @dev Reserved storage for future upgrades of this proxy line.
+  // solhint-disable-next-line chainlink-solidity/prefix-storage-variables-with-s-underscore
   uint256[47] private __gap;
 
   /**
@@ -385,11 +387,11 @@ contract Investor is
     super._update(from, to, value);
 
     if (balanceOf(from) == 0) {
-      _shareholderSet.remove(from);
+      s_shareholderSet.remove(from);
     }
 
-    if (balanceOf(to) > 0 && !_shareholderSet.contains(to)) {
-      _shareholderSet.add(to);
+    if (balanceOf(to) > 0 && !s_shareholderSet.contains(to)) {
+      s_shareholderSet.add(to);
     }
   }
 
@@ -409,10 +411,10 @@ contract Investor is
    * @return Array of shareholder addresses and their balances.
    */
   function _getShareholders() internal view returns (Shareholder[] memory) {
-    uint256 length = _shareholderSet.length();
+    uint256 length = s_shareholderSet.length();
     Shareholder[] memory _shareholders = new Shareholder[](length);
     for (uint256 i = 0; i < length; i++) {
-      address shareholder = _shareholderSet.at(i);
+      address shareholder = s_shareholderSet.at(i);
       _shareholders[i] = Shareholder(shareholder, balanceOf(shareholder));
     }
     return _shareholders;

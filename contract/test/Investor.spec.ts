@@ -86,7 +86,6 @@ async function deployFixture() {
 
 describe('Investor — Merkle-pull migration', () => {
   let investor: Awaited<ReturnType<typeof deployFixture>>['investor']
-  let owner: SignerWithAddress
   let addr1: SignerWithAddress
   let addr2: SignerWithAddress
   let addr3: SignerWithAddress
@@ -95,7 +94,7 @@ describe('Investor — Merkle-pull migration', () => {
   let tree: ReturnType<typeof buildTree>
 
   beforeEach(async () => {
-    ;({ investor, owner, addr1, addr2, addr3, bankSigner } = await deployFixture())
+    ;({ investor, addr1, addr2, addr3, bankSigner } = await deployFixture())
     entries = [
       { account: addr1.address, amount: 100n },
       { account: addr2.address, amount: 50n },
