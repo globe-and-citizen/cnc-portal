@@ -48,18 +48,22 @@ export type MigrateShareholdersResult =
   | { kind: 'noop-empty' }
   | { kind: 'noop-already-migrated' }
 
-const findInvestorV1Address = async (officerAddress: Address): Promise<Address | null> => {
+const findPreviousInvestorAddress = async (officerAddress: Address): Promise<Address | null> => {
   const contracts = (await readContract(config, {
     address: officerAddress,
     abi: OFFICER_ABI,
     functionName: 'getTeam'
   })) as readonly { contractType: string; contractAddress: Address }[]
-  return contracts.find((c) => c.contractType === 'InvestorV1')?.contractAddress ?? null
+  // Support both V2→V2 redeploy (finds 'Investor') and V1→V2 migration (finds 'InvestorV1')
+  return (
+    contracts.find((c) => c.contractType === 'Investor' || c.contractType === 'InvestorV1')
+      ?.contractAddress ?? null
+  )
 }
 
 /**
  * Guards before migration:
- *   - old InvestorV1 has 0 shareholders → noop-empty
+ *   - old Investor (V1 or V2) has 0 shareholders → noop-empty
  *   - new Investor already has a migration root set → noop-already-migrated
  *   - otherwise → proceed to generate & commit
  */
@@ -68,9 +72,9 @@ export async function checkMigrationEligibility(
 ): Promise<
   { eligible: true } | { eligible: false; reason: 'noop-empty' | 'noop-already-migrated' }
 > {
-  const oldInvestor = await findInvestorV1Address(args.previousOfficerAddress)
+  const oldInvestor = await findPreviousInvestorAddress(args.previousOfficerAddress)
   if (!oldInvestor) {
-    throw new Error('Previous Officer has no InvestorV1 sub-contract to migrate from')
+    throw new Error('Previous Officer has no Investor contract to migrate from')
   }
 
   const shareholders = (await readContract(config, {
@@ -123,9 +127,9 @@ export function useMigrateShareholders(options: UseMigrateShareholdersOptions = 
   return useMutation<MigrateShareholdersResult, Error, MigrateShareholdersArgs>({
     mutationKey: ['migrateShareholders'],
     mutationFn: async (args) => {
-      const oldInvestor = await findInvestorV1Address(args.previousOfficerAddress)
+      const oldInvestor = await findPreviousInvestorAddress(args.previousOfficerAddress)
       if (!oldInvestor) {
-        throw new Error('Previous Officer has no InvestorV1 sub-contract to migrate from')
+        throw new Error('Previous Officer has no Investor contract to migrate from')
       }
 
       const eligibility = await checkMigrationEligibility(args)

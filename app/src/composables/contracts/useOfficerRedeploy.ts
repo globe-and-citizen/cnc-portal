@@ -87,6 +87,19 @@ export function useOfficerRedeploy() {
     return contracts.find((c) => c.contractType === 'Investor')?.contractAddress ?? null
   }
 
+  const findPreviousInvestorAddress = async (officerAddress: Address): Promise<Address | null> => {
+    const contracts = (await readContract(config, {
+      address: officerAddress,
+      abi: OFFICER_ABI,
+      functionName: 'getTeam'
+    })) as readonly { contractType: string; contractAddress: Address }[]
+    // Support both V1→V2 migration (finds 'InvestorV1') and V2→V2 redeploy (finds 'Investor')
+    return (
+      contracts.find((c) => c.contractType === 'Investor' || c.contractType === 'InvestorV1')
+        ?.contractAddress ?? null
+    )
+  }
+
   const tryMigration = async (ctx: {
     teamId: string | number
     previousOfficerAddress: Address
@@ -165,7 +178,9 @@ export function useOfficerRedeploy() {
     const { previousOfficer } = registerResult
 
     if (previousOfficer) {
-      const previousInvestorAddress = await findInvestorAddress(previousOfficer.address as Address)
+      const previousInvestorAddress = await findPreviousInvestorAddress(
+        previousOfficer.address as Address
+      )
       if (!previousInvestorAddress) {
         log.error('Previous Investor address not found in Officer.getTeam()')
         workflowError.value = new Error(
