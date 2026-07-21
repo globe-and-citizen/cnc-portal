@@ -279,7 +279,13 @@ describe('toLenderOffering', () => {
   })
 
   it('disallows lending when no offer-wide funding remains', () => {
-    const offering = toLenderOffering(1, lendOffer({ totalFunded: 100000_000000n }), DECIMALS, 0n, 0n)
+    const offering = toLenderOffering(
+      1,
+      lendOffer({ totalFunded: 100000_000000n }),
+      DECIMALS,
+      0n,
+      0n
+    )
 
     expect(offering.allowed).toBe(false)
     expect(offering.remaining).toBe(0)
