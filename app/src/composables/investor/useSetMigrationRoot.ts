@@ -1,25 +1,25 @@
 /**
- * Set migration root from backend-generated Merkle snapshot.
- * Backend handles double-hash computation; frontend just commits the root on-chain.
+ * Write-only composable: set migration root on Investor v2 contract.
+ * Backend snapshot generation is handled by useGenerateMerkleSnapshotMutation (in queries).
+ *
+ * Separation of concerns:
+ *   - Queries (investorMigration.queries.ts): backend API calls
+ *   - This composable: contract writes only
  *
  * Side-effect contract:
- *   - onSuccess: outcome toast
+ *   - onSuccess: outcome toast (unless options.silent)
  *   - onError: no toast — error left for caller to render
  */
 import { useMutation } from '@tanstack/vue-query'
-import { readContract } from '@wagmi/core'
-import { type Address, zeroHash, type Hex } from 'viem'
-import { config } from '@/wagmi.config'
-import { useApi } from '@/composables/api'
+import { type Address, type Hex } from 'viem'
 import { INVESTOR_V2_ABI } from '@/artifacts/abi/investorV2'
-import { OFFICER_ABI } from '@/artifacts/abi/officer'
 import { executeContractWrite } from '@/composables/contracts/useContractWritesV3'
 import { useToast } from '@nuxt/ui/composables'
 
 export interface SetMigrationRootArgs {
-  teamId: string | number
-  previousOfficerAddress: Address
-  newInvestorAddress: Address
+  investorV2Address: Address
+  root: Hex
+  shareholderCount: number
 }
 
 export interface SetMigrationRootResult {
@@ -27,68 +27,23 @@ export interface SetMigrationRootResult {
   shareholderCount: number
 }
 
-const findInvestorV1Address = async (officerAddress: Address): Promise<Address | null> => {
-  const contracts = (await readContract(config, {
-    address: officerAddress,
-    abi: OFFICER_ABI,
-    functionName: 'getTeam'
-  })) as readonly { contractType: string; contractAddress: Address }[]
-  return contracts.find((c) => c.contractType === 'InvestorV1')?.contractAddress ?? null
-}
-
 /**
- * Set migration root from backend Merkle snapshot.
- * Backend generates the tree with correct double hash; frontend commits root on-chain.
+ * Set migration root on Investor v2 contract.
+ * Caller must generate snapshot separately via useGenerateMerkleSnapshotMutation.
  */
 export async function setMigrationRoot(
   args: SetMigrationRootArgs
 ): Promise<SetMigrationRootResult> {
-  const { apiFetch } = useApi()
-
-  // Find old Investor address
-  const oldInvestor = await findInvestorV1Address(args.previousOfficerAddress)
-  if (!oldInvestor) {
-    throw new Error('Previous Officer has no InvestorV1 sub-contract')
-  }
-
-  // Check if already migrated
-  const existingRoot = (await readContract(config, {
-    address: args.newInvestorAddress,
-    abi: INVESTOR_V2_ABI,
-    functionName: 'getMigrationRoot'
-  })) as Hex
-
-  if (existingRoot !== zeroHash) {
-    throw new Error('This Investor already has a migration root set')
-  }
-
-  // Generate Merkle snapshot from backend (with correct double hash)
-  const response = await apiFetch(`/investor-migration/generate`, {
-    method: 'POST',
-    body: JSON.stringify({ investorV1Address: oldInvestor })
-  })
-
-  if (!response.ok) {
-    throw new Error(`Failed to generate Merkle snapshot: ${response.statusText}`)
-  }
-
-  const snapshot = await response.json()
-
-  if (snapshot.shareholders.length === 0) {
-    throw new Error('No shareholders to migrate')
-  }
-
-  // Commit root on-chain
   await executeContractWrite({
-    address: args.newInvestorAddress,
+    address: args.investorV2Address,
     abi: INVESTOR_V2_ABI,
     functionName: 'setMigrationRoot',
-    args: [snapshot.root]
+    args: [args.root]
   })
 
   return {
-    root: snapshot.root,
-    shareholderCount: snapshot.shareholders.length
+    root: args.root,
+    shareholderCount: args.shareholderCount
   }
 }
 

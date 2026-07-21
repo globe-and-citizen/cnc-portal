@@ -70,3 +70,35 @@ export const useGetInvestorMigrationQuery = createQueryHook<
   enabled: (params) => !!toValue(params.queryParams.teamId),
   options: queryPresets.stable
 })
+
+// ============================================================================
+// POST /investor-migration/generate - Generate Merkle snapshot + proofs
+// (backend double-hash, ready for claim())
+// ============================================================================
+
+export interface MerkleSnapshotShareholder {
+  address: string
+  amount: string
+}
+
+export interface MerkleSnapshot {
+  root: string
+  shareholders: MerkleSnapshotShareholder[]
+  proofs: Record<string, string[]>
+  blockNumber: number
+  totalSupply: string
+}
+
+export interface GenerateMerkleSnapshotParams {
+  body: {
+    investorV1Address: string
+  }
+}
+
+export const useGenerateMerkleSnapshotMutation = createMutationHook<
+  MerkleSnapshot,
+  GenerateMerkleSnapshotParams
+>({
+  method: 'POST',
+  endpoint: 'investor-migration/generate'
+})
