@@ -150,9 +150,12 @@ export function useContractEventsViaLogs<T>(opts: EventsViaLogsOptions<T>) {
   })
 
   // Mirror @vue/apollo-composable's shape so it drops into the *Transactions.vue.
+  // `refetch` is exposed so consumers (e.g. useCNCAccounting's refresh) can force
+  // a re-scan the same way they did with the Apollo queries.
   return {
     result: query.data,
     loading: query.isPending,
-    error: query.error
+    error: query.error,
+    refetch: query.refetch
   }
 }
