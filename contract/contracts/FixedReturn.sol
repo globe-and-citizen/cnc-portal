@@ -659,7 +659,9 @@ contract FixedReturn is OwnableUpgradeable, ReentrancyGuardUpgradeable, TokenSup
           cumulativeForNonLast += cumulativeEntitlement;
         }
         uint256 alreadyPaid = s_totalPaidToLender[offerId][lender];
-        uint256 share = cumulativeEntitlement > alreadyPaid ? cumulativeEntitlement - alreadyPaid : 0;
+        uint256 share = cumulativeEntitlement > alreadyPaid
+          ? cumulativeEntitlement - alreadyPaid
+          : 0;
         if (share > 0) {
           s_totalPaidToLender[offerId][lender] = cumulativeEntitlement;
           IERC20(offer.token).safeTransfer(lender, share);
