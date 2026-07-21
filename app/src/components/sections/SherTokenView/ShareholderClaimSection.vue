@@ -1,14 +1,14 @@
 <template>
   <div v-if="showSection" class="flex flex-col gap-y-4">
     <MerkleClaimForm
-      :investor-v2-address="investorV2Address"
+      :investor-v2-address="investorV2AddressValue"
       :migration-data="migrationData"
       :user-address="userAddress"
       data-test="merkle-claim-form-section"
     />
     <MigrationOwnerSweep
       v-if="isOwner"
-      :investor-v2-address="investorV2Address"
+      :investor-v2-address="investorV2AddressValue"
       :migration-data="migrationData"
       :claimed-addresses="claimedAddresses"
       data-test="migration-owner-sweep-section"
@@ -31,14 +31,19 @@ const userStore = useUserDataStore()
 const userAddress = computed(() => userStore.address as Address | undefined)
 
 const investorV2Address = useInvestorV2Address()
+const investorV2AddressValue = computed(() => investorV2Address.value as Address)
 const { data: migrationRoot } = useInvestorV2MigrationRoot()
 const { data: migrationData } = useGetInvestorMigrationQuery({
-  queryParams: { teamId: teamStore.currentTeamId }
+  queryParams: { teamId: teamStore.currentTeamId as string | number }
 })
 
 const isOwner = computed(() => {
-  const currentOfficer = teamStore.currentTeamMeta.data?.currentOfficer
-  return currentOfficer?.isOwner ?? false
+  const teamData = teamStore.currentTeamMeta.data
+  return !!(
+    teamData?.ownerAddress &&
+    userStore.address &&
+    teamData.ownerAddress.toLowerCase() === userStore.address.toLowerCase()
+  )
 })
 
 const claimedAddresses = computed<Set<Address>>(() => {
