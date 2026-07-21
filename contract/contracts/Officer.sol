@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
+import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
@@ -8,7 +9,6 @@ import {BeaconProxy} from "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol"
 import {IBoardOfDirectors} from "./interfaces/IBoardOfDirectors.sol";
 import {ICashRemuneration} from "./interfaces/ICashRemuneration.sol";
 import {IFeeCollector} from "./interfaces/IFeeCollector.sol";
-import {IInvestorV1} from "./interfaces/IInvestorV1.sol";
 import {ISafeDepositRouter} from "./interfaces/ISafeDepositRouter.sol";
 import {IVesting} from "./interfaces/IVesting.sol";
 
@@ -80,9 +80,7 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
   event ProposalsDeployed(address indexed proposals);
   /// @notice Emitted when a new BoardOfDirectors is deployed via beacon proxy
   event BoardOfDirectorsDeployed(address indexed board);
-  /// @notice Emitted when a new InvestorV1 is deployed via beacon proxy
-  event InvestorV1Deployed(address indexed investorV1);
-  /// @notice Emitted when a new Investor is deployed via beacon proxy
+  /// @notice Emitted when a new Investor (V2) is deployed via beacon proxy
   event InvestorDeployed(address indexed investor);
   /// @notice Emitted when a new CashRemunerationEIP712 is deployed via beacon proxy
   event CashRemunerationEIP712Deployed(address indexed remuneration);
@@ -388,31 +386,34 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     address cashRemunerationAddress = findDeployedContract("CashRemunerationEIP712");
     address depositRouterAddress = findDeployedContract("SafeDepositRouter");
     address vestingAddress = findDeployedContract("Vesting");
-    address investorV1Address = findDeployedContract("InvestorV1");
 
-    // Only proceed if InvestorV1 was deployed
-    if (investorV1Address == address(0)) {
+    // Officer deploys only Investor (V2). Legacy InvestorV1 instances remain in prod unchanged.
+    address investorAddress = findDeployedContract("Investor");
+
+    // Only proceed if Investor V2 was deployed
+    if (investorAddress == address(0)) {
       return;
     }
 
-    IInvestorV1 investorV1 = IInvestorV1(investorV1Address);
-    bytes32 minterRole = investorV1.MINTER_ROLE();
-    bytes32 adminRole = investorV1.DEFAULT_ADMIN_ROLE();
+    // Cast to AccessControlUpgradeable-compatible interface for role management
+    AccessControlUpgradeable investor = AccessControlUpgradeable(investorAddress);
+    bytes32 minterRole = keccak256("MINTER_ROLE");
+    bytes32 adminRole = investor.DEFAULT_ADMIN_ROLE();
 
     // Setup CashRemuneration permissions if deployed
     if (cashRemunerationAddress != address(0)) {
       ICashRemuneration cashRemuneration = ICashRemuneration(cashRemunerationAddress);
-      cashRemuneration.addTokenSupport(investorV1Address);
+      cashRemuneration.addTokenSupport(investorAddress);
       cashRemuneration.transferOwnership(ownerAddress);
 
       // Grant MINTER_ROLE to CashRemuneration
-      investorV1.grantRole(minterRole, cashRemunerationAddress);
+      investor.grantRole(minterRole, cashRemunerationAddress);
     }
 
     // Setup SafeDepositRouter permissions if deployed
     if (depositRouterAddress != address(0)) {
       // Grant MINTER_ROLE to SafeDepositRouter (no longer needs setInvestorAddress)
-      investorV1.grantRole(minterRole, depositRouterAddress);
+      investor.grantRole(minterRole, depositRouterAddress);
 
       // Transfer ownership to final owner
       ISafeDepositRouter depositRouter = ISafeDepositRouter(depositRouterAddress);
@@ -422,16 +423,16 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     // Setup Vesting permissions if deployed
     if (vestingAddress != address(0)) {
       // Grant MINTER_ROLE so release()/stopVesting() can mint vested shares on demand
-      investorV1.grantRole(minterRole, vestingAddress);
+      investor.grantRole(minterRole, vestingAddress);
 
       // Transfer ownership to final owner so the team owner manages schedules
       IVesting(vestingAddress).transferOwnership(ownerAddress);
     }
 
-    // Setup owner permissions on InvestorV1
-    investorV1.grantRole(minterRole, ownerAddress);
-    investorV1.grantRole(adminRole, ownerAddress);
-    investorV1.transferOwnership(ownerAddress);
+    // Setup owner permissions on Investor V2
+    investor.grantRole(minterRole, ownerAddress);
+    investor.grantRole(adminRole, ownerAddress);
+    OwnableUpgradeable(investorAddress).transferOwnership(ownerAddress);
   }
 
   function _emitContractDeployedEvent(string calldata contractType, address deployedAddress) internal {
@@ -442,8 +443,6 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
       emit ElectionsDeployed(deployedAddress);
     } else if (typeHash == keccak256(bytes("Proposals"))) {
       emit ProposalsDeployed(deployedAddress);
-    } else if (typeHash == keccak256(bytes("InvestorV1"))) {
-      emit InvestorV1Deployed(deployedAddress);
     } else if (typeHash == keccak256(bytes("Investor"))) {
       emit InvestorDeployed(deployedAddress);
     } else if (typeHash == keccak256(bytes("CashRemunerationEIP712"))) {
