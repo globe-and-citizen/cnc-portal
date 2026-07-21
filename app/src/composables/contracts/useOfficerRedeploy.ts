@@ -21,6 +21,7 @@ import {
   useInvalidateOfficerQueries
 } from '@/composables/contracts/useOfficerDeployment'
 import { useSetMigrationRootMutation } from '@/composables/investor/useSetMigrationRoot'
+import { useGenerateMerkleSnapshotMutation } from '@/queries/investorMigration.queries'
 import { useCreateOfficerMutation } from '@/queries/contract.queries'
 import { OFFICER_ABI } from '@/artifacts/abi/officer'
 import { log } from '@/utils'
@@ -51,6 +52,7 @@ export function useOfficerRedeploy() {
   // invalidation pass — see CONVENTIONS.md §1 / §2.
   const deployMutation = useDeployOfficer({ silent: true, skipInvalidation: true })
   const registerMutation = useCreateOfficerMutation()
+  const generateSnapshotMutation = useGenerateMerkleSnapshotMutation()
   const migrateMutation = useSetMigrationRootMutation({ silent: true })
   const invalidateQueries = useInvalidateOfficerQueries()
 
@@ -58,6 +60,7 @@ export function useOfficerRedeploy() {
   const pendingMigration = ref<{
     teamId: string | number
     previousOfficerAddress: Address
+    previousInvestorAddress: Address
     newInvestorAddress: Address
   } | null>(null)
   // Workflow-level error that doesn't map to any single mutation (e.g. the
@@ -68,13 +71,14 @@ export function useOfficerRedeploy() {
     () =>
       deployMutation.isPending.value ||
       registerMutation.isPending.value ||
+      generateSnapshotMutation.isPending.value ||
       migrateMutation.isPending.value
   )
   const migrationFailed = computed(
     () => pendingMigration.value !== null && !migrateMutation.isPending.value
   )
 
-  const findNewInvestorAddress = async (officerAddress: Address): Promise<Address | null> => {
+  const findInvestorAddress = async (officerAddress: Address): Promise<Address | null> => {
     const contracts = (await readContract(config, {
       address: officerAddress,
       abi: OFFICER_ABI,
@@ -86,11 +90,21 @@ export function useOfficerRedeploy() {
   const tryMigration = async (ctx: {
     teamId: string | number
     previousOfficerAddress: Address
+    previousInvestorAddress: Address
     newInvestorAddress: Address
   }) => {
-    // Wrapper is silent (orchestrator owns flow-level toasts).
-    // Errors remain on migrateMutation.error for the caller's retry UI.
-    await migrateMutation.mutateAsync(ctx)
+    // Step 1: Generate Merkle snapshot from previous Investor v1
+    const snapshot = await generateSnapshotMutation.mutateAsync({
+      body: { investorV1Address: ctx.previousInvestorAddress }
+    })
+    if (!snapshot) return
+
+    // Step 2: Write root to new Investor v2 contract
+    await migrateMutation.mutateAsync({
+      investorV2Address: ctx.newInvestorAddress,
+      root: snapshot.root as any,
+      shareholderCount: snapshot.shareholders.length
+    })
     if (migrateMutation.isSuccess.value) {
       pendingMigration.value = null
     }
@@ -122,6 +136,7 @@ export function useOfficerRedeploy() {
     workflowError.value = null
     deployMutation.reset()
     registerMutation.reset()
+    generateSnapshotMutation.reset()
     migrateMutation.reset()
   }
 
@@ -150,7 +165,16 @@ export function useOfficerRedeploy() {
     const { previousOfficer } = registerResult
 
     if (previousOfficer) {
-      const newInvestorAddress = await findNewInvestorAddress(metadata.officerAddress)
+      const previousInvestorAddress = await findInvestorAddress(previousOfficer.address as Address)
+      if (!previousInvestorAddress) {
+        log.error('Previous Investor address not found in Officer.getTeam()')
+        workflowError.value = new Error(
+          'Could not locate previous Investor contract. Retry from the Share Token page.'
+        )
+        return
+      }
+
+      const newInvestorAddress = await findInvestorAddress(metadata.officerAddress)
       if (!newInvestorAddress) {
         log.error('New Investor address not found in Officer.getTeam()')
         workflowError.value = new Error(
@@ -161,6 +185,7 @@ export function useOfficerRedeploy() {
       pendingMigration.value = {
         teamId,
         previousOfficerAddress: previousOfficer.address as Address,
+        previousInvestorAddress,
         newInvestorAddress
       }
       await tryMigration(pendingMigration.value)
@@ -185,6 +210,7 @@ export function useOfficerRedeploy() {
     // Reactive errors — bind directly to UAlert in the template
     deployError: deployMutation.error,
     registerError: registerMutation.error,
+    generateSnapshotError: generateSnapshotMutation.error,
     migrationError: migrateMutation.error,
     workflowError
   }

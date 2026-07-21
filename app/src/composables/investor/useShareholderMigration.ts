@@ -13,14 +13,17 @@
  */
 import { useMutation } from '@tanstack/vue-query'
 import { readContract } from '@wagmi/core'
-import { StandardMerkleTree } from '@openzeppelin/merkle-tree'
 import { zeroHash, type Address, type Hex } from 'viem'
 import { config } from '@/wagmi.config'
 import { INVESTOR_ABI } from '@/artifacts/abi/investors'
 import { INVESTOR_V2_ABI } from '@/artifacts/abi/investorV2'
 import { OFFICER_ABI } from '@/artifacts/abi/officer'
 import { executeContractWrite } from '@/composables/contracts/useContractWritesV3'
-import { useCreateInvestorMigrationMutation } from '@/queries/investorMigration.queries'
+import {
+  useCreateInvestorMigrationMutation,
+  useGenerateMerkleSnapshotMutation
+} from '@/queries/investorMigration.queries'
+import { useToast } from '@nuxt/ui/composables'
 
 export interface Shareholder {
   shareholder: Address
@@ -55,21 +58,16 @@ const findInvestorV1Address = async (officerAddress: Address): Promise<Address |
 }
 
 /**
- * Builds a Merkle root over the previous Officer's InvestorV1 cap table and
- * commits it on the new Investor (v2) via `setMigrationRoot` — shareholders
- * self-claim their balance later (Share Token page), they are not re-minted
- * here. Call directly for raw control, or use `useMigrateShareholders` for
- * TanStack-managed loading/error state plus backend persistence of the
- * snapshot (needed so a shareholder can later fetch their claim proof).
- *
- * Guards:
+ * Guards before migration:
  *   - old InvestorV1 has 0 shareholders → noop-empty
  *   - new Investor already has a migration root set → noop-already-migrated
- *   - otherwise → builds the tree and calls setMigrationRoot
+ *   - otherwise → proceed to generate & commit
  */
-export async function migrateShareholders(
+export async function checkMigrationEligibility(
   args: MigrateShareholdersArgs
-): Promise<MigrateShareholdersResult> {
+): Promise<
+  { eligible: true } | { eligible: false; reason: 'noop-empty' | 'noop-already-migrated' }
+> {
   const oldInvestor = await findInvestorV1Address(args.previousOfficerAddress)
   if (!oldInvestor) {
     throw new Error('Previous Officer has no InvestorV1 sub-contract to migrate from')
@@ -82,7 +80,7 @@ export async function migrateShareholders(
   })) as readonly Shareholder[]
 
   if (shareholders.length === 0) {
-    return { kind: 'noop-empty' }
+    return { eligible: false, reason: 'noop-empty' }
   }
 
   const existingRoot = (await readContract(config, {
@@ -92,29 +90,10 @@ export async function migrateShareholders(
   })) as Hex
 
   if (existingRoot !== zeroHash) {
-    return { kind: 'noop-already-migrated' }
+    return { eligible: false, reason: 'noop-already-migrated' }
   }
 
-  const tree = StandardMerkleTree.of(
-    shareholders.map((s) => [s.shareholder, s.amount]),
-    ['address', 'uint256']
-  )
-
-  const { receipt } = await executeContractWrite({
-    address: args.newInvestorAddress,
-    abi: INVESTOR_V2_ABI,
-    functionName: 'setMigrationRoot',
-    args: [tree.root]
-  })
-
-  return {
-    kind: 'done',
-    migratedCount: shareholders.length,
-    previousInvestorAddress: oldInvestor,
-    merkleRoot: tree.root as Hex,
-    blockNumber: receipt.blockNumber,
-    shareholders
-  }
+  return { eligible: true }
 }
 
 export interface UseMigrateShareholdersOptions {
@@ -127,45 +106,75 @@ export interface UseMigrateShareholdersOptions {
 }
 
 /**
- * TanStack-wrapped variant of {@link migrateShareholders}. Prefer this in
- * components: it exposes `mutateAsync`, `isPending`, `error`, `data` without
- * any manual ref juggling. On a successful 'done', also persists the frozen
- * shareholder list to the backend (see `investorMigration.queries.ts`) so
- * shareholders can later fetch their claim proof — Ponder cannot reconstruct
- * this after the fact since it never indexed InvestorV1 Transfer events.
+ * Orchestrates shareholder migration from v1 to v2:
+ *   1. Check eligibility (no previous root, shareholders exist)
+ *   2. Generate Merkle snapshot with double hash via backend
+ *   3. Write root to new Investor v2 contract
+ *   4. Persist snapshot for shareholders' later claim proof fetches
  *
- * Side effects: emits a success toast describing the outcome (done / noop).
- * Error toasts are intentionally left to the caller because the right
- * message depends on where the migration was triggered from (inline retry,
- * standalone banner, orchestrated redeploy). Callers typically surface the
- * error via `mutation.error` on their own UI instead.
+ * Side effects: emits a success toast describing the outcome.
+ * Callers typically render errors via `mutation.error` on their own UI.
  */
 export function useMigrateShareholders(options: UseMigrateShareholdersOptions = {}) {
   const toast = useToast()
+  const generateSnapshotMutation = useGenerateMerkleSnapshotMutation()
   const persistMutation = useCreateInvestorMigrationMutation()
 
   return useMutation<MigrateShareholdersResult, Error, MigrateShareholdersArgs>({
     mutationKey: ['migrateShareholders'],
     mutationFn: async (args) => {
-      const result = await migrateShareholders(args)
-
-      if (result.kind === 'done') {
-        await persistMutation.mutateAsync({
-          body: {
-            teamId: args.teamId,
-            previousInvestorAddress: result.previousInvestorAddress,
-            newInvestorAddress: args.newInvestorAddress,
-            merkleRoot: result.merkleRoot,
-            blockNumber: Number(result.blockNumber),
-            shareholders: result.shareholders.map((s) => ({
-              shareholder: s.shareholder,
-              amount: s.amount.toString()
-            }))
-          }
-        })
+      const oldInvestor = await findInvestorV1Address(args.previousOfficerAddress)
+      if (!oldInvestor) {
+        throw new Error('Previous Officer has no InvestorV1 sub-contract to migrate from')
       }
 
-      return result
+      const eligibility = await checkMigrationEligibility(args)
+      if (!eligibility.eligible) {
+        return { kind: eligibility.reason }
+      }
+
+      // Generate Merkle snapshot with double hash from backend
+      const snapshot = await generateSnapshotMutation.mutateAsync({
+        body: { investorV1Address: oldInvestor }
+      })
+      if (!snapshot) {
+        throw new Error('Failed to generate Merkle snapshot')
+      }
+
+      // Write root to new Investor v2
+      await executeContractWrite({
+        address: args.newInvestorAddress,
+        abi: INVESTOR_V2_ABI,
+        functionName: 'setMigrationRoot',
+        args: [snapshot.root]
+      })
+
+      // Persist snapshot so shareholders can fetch their claim proofs
+      await persistMutation.mutateAsync({
+        body: {
+          teamId: args.teamId,
+          previousInvestorAddress: oldInvestor,
+          newInvestorAddress: args.newInvestorAddress,
+          merkleRoot: snapshot.root,
+          blockNumber: snapshot.blockNumber,
+          shareholders: snapshot.shareholders.map((s) => ({
+            shareholder: s.address as Address,
+            amount: s.amount
+          }))
+        }
+      })
+
+      return {
+        kind: 'done',
+        migratedCount: snapshot.shareholders.length,
+        previousInvestorAddress: oldInvestor,
+        merkleRoot: snapshot.root as Hex,
+        blockNumber: BigInt(snapshot.blockNumber),
+        shareholders: snapshot.shareholders.map((s) => ({
+          shareholder: s.address as Address,
+          amount: BigInt(s.amount)
+        }))
+      }
     },
     onSuccess: (result) => {
       if (options.silent) return
