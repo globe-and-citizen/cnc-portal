@@ -17,7 +17,7 @@ const UPGRADEABLE_CONTRACTS: ContractConfig[] = [
   { name: 'Elections' },
   { name: 'ExpenseAccountEIP712' },
   { name: 'FeeCollector' },
-  { name: 'InvestorV1' },
+  { name: 'Investor' },
   // Officer's constructor expects a trusted forwarder address; zero address is a
   // placeholder since validation only checks storage layout, not actual deployment.
   { name: 'Officer', constructorArgs: ['0x0000000000000000000000000000000000000000'] },

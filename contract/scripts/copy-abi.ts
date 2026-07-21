@@ -22,7 +22,7 @@ const contracts = [
   'CashRemunerationEIP712',
   'Elections',
   'ExpenseAccountEIP712',
-  'InvestorV1',
+  'Investor',
   'Officer',
   'Proposals',
   'Vesting',
