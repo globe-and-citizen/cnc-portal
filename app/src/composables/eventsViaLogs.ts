@@ -5,7 +5,8 @@
  *   - getLogs on the contract from the deploy start block,
  *   - decode against a multi-version union ABI (a beacon proxy's logs span every
  *     implementation it ran, so we need all versions),
- *   - one getBlock per unique block for timestamps (logs don't carry them),
+ *   - a getBlock per *uncached* block for timestamps (logs don't carry them; a
+ *     process-wide cache dedupes blocks across feeds and refetches),
  *   - iterate the decoded logs through a caller-supplied `mapEvent`.
  *
  * Optionally, `extraLogs` fetches a second, already-filtered log set (e.g. the
@@ -24,6 +25,17 @@ import { currentChainId } from '@/constant'
 // so scan from block 0; a Polygon-only start block there yields an empty range.
 const POLYGON_START_BLOCK = 79743826n
 export const START_BLOCK = currentChainId === 137 ? POLYGON_START_BLOCK : 0n
+
+/**
+ * Shared block-number → Unix-seconds cache. A mined block's timestamp never
+ * changes, so it is memoised process-wide and reused across every contract feed
+ * and every refetch: a block that several feeds touch (or the same feed re-scans)
+ * is fetched from the RPC only once, instead of one `getBlock` per contract and
+ * again on each re-scan. Keyed by chain so it stays correct if the active chain
+ * changes within a session.
+ */
+const blockTimestampCache = new Map<string, number>()
+const blockCacheKey = (blockNumber: bigint): string => `${currentChainId}-${blockNumber}`
 
 /** Concatenate several ABIs into a single event ABI, deduped by signature. */
 export function unionEventAbi(abis: unknown[]): Abi {
@@ -105,17 +117,23 @@ export function useContractEventsViaLogs<T>(opts: EventsViaLogsOptions<T>) {
       const decoded = parseEventLogs({ abi: opts.eventAbi, logs: rawLogs, strict: false })
       const extra = opts.extraLogs ? await opts.extraLogs(client, contract) : []
 
-      // One getBlock per unique block (contract + extra logs) for timestamps.
+      // Timestamps for each unique block the logs touch (logs carry none). Only
+      // blocks missing from the shared cache are fetched; with the transport's
+      // batching those `getBlock` calls collapse into a single JSON-RPC POST.
       const blockNumbers = [
         ...new Set(
           [...decoded, ...extra].map((l) => l.blockNumber).filter((b): b is bigint => b != null)
         )
       ]
-      const blocks = await Promise.all(
-        blockNumbers.map((blockNumber) => client.getBlock({ blockNumber }))
+      const uncached = blockNumbers.filter((n) => !blockTimestampCache.has(blockCacheKey(n)))
+      const fetched = await Promise.all(
+        uncached.map((blockNumber) => client.getBlock({ blockNumber }))
       )
-      const tsByBlock = new Map(blocks.map((b) => [b.number, Number(b.timestamp)]))
-      const tsOf = (blockNumber: bigint | null) => tsByBlock.get(blockNumber ?? 0n) ?? 0
+      for (const block of fetched) {
+        blockTimestampCache.set(blockCacheKey(block.number), Number(block.timestamp))
+      }
+      const tsOf = (blockNumber: bigint | null) =>
+        blockNumber == null ? 0 : (blockTimestampCache.get(blockCacheKey(blockNumber)) ?? 0)
 
       const out = opts.empty()
 
