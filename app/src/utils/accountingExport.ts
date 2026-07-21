@@ -28,6 +28,7 @@ import {
   ledgerTotalRow,
   type LedgerColumnKey
 } from '@/utils/accounting/ledgerPresenter'
+import { presentAccountLedger, accountLedgerTitle } from '@/utils/accounting/accountLedger'
 import { activityText } from '@/utils/accounting/describeEntry'
 import type { LedgerRow } from '@/utils/accounting/ledgerPresenter'
 import type { SectionKey, SectionSpec } from '@/utils/accounting/exportSpec'
@@ -141,6 +142,14 @@ interface LedgerSheetOptions {
   to?: Date | null
   columns?: LedgerColumnKey[]
   currencies?: string[]
+  account?: string | readonly string[]
+  accountLabel?: string
+  accountTotal?: string
+}
+
+/** Display name for a drill-down: the account, or the aggregate's label. */
+function drillName(opts: LedgerSheetOptions): string {
+  return Array.isArray(opts.account) ? (opts.accountLabel ?? 'Ledger') : (opts.account as string)
 }
 
 function ledgerSheet(
@@ -148,22 +157,19 @@ function ledgerSheet(
   resolveName?: ResolveName,
   opts: LedgerSheetOptions = {}
 ): SheetRows {
-  const { rows, total } = presentLedger(
-    acc.entries,
-    opts.filter ?? 'All',
-    opts.from,
-    opts.to,
-    opts.currencies
-  )
+  const { rows, total } = opts.account
+    ? presentAccountLedger(acc.entries, opts.account, opts.from, opts.to, opts.accountTotal)
+    : presentLedger(acc.entries, opts.filter ?? 'All', opts.from, opts.to, opts.currencies)
   const cols = resolveLedgerColumns(opts.columns)
   return [
-    // Title row spells out the active category / period; the tab keeps its short name.
-    [ledgerExportTitle(opts.filter, opts.from, opts.to)],
+    [
+      opts.account
+        ? accountLedgerTitle(drillName(opts), opts.from, opts.to)
+        : ledgerExportTitle(opts.filter, opts.from, opts.to)
+    ],
     [],
     cols.map((c) => c.label),
     ...rows.map((r) => cols.map((c) => LEDGER_SHEET_CELL[c.value](r, resolveName))),
-    // Carry the movement total the table footer shows, so a filtered export totals its rows.
-    // Excel needs a numeric total cell, so render it through `usd` like the row amounts.
     ledgerTotalRow(cols, usd(total))
   ]
 }
@@ -199,7 +205,10 @@ function sectionSheet(
           from: spec.from,
           to: spec.to,
           columns: spec.columns,
-          currencies: spec.currencies
+          currencies: spec.currencies,
+          account: spec.account,
+          accountLabel: spec.accountLabel,
+          accountTotal: spec.accountTotal
         })
     }
   })()
@@ -302,10 +311,7 @@ export async function exportSheetsExcel(
   sheets: AccountingSheet[],
   filename: string
 ): Promise<void> {
-  // `xlsx-js-style` is a drop-in SheetJS fork that also writes cell styles
-  // (the community `xlsx` build silently drops them), so the zebra survives export.
   const mod = await import('xlsx-js-style')
-  // Vite's CJS→ESM interop may expose SheetJS under `default`; fall back to the namespace.
   const XLSX = (mod as unknown as { default?: XlsxModule }).default ?? mod
   const workbook = XLSX.utils.book_new()
   for (const sheet of sheets) {

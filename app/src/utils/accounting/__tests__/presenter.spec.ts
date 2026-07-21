@@ -145,8 +145,16 @@ describe('presentSummaryCards / presentBanner', () => {
 describe('presentIncome', () => {
   it('lists revenue and expense lines for the full period', () => {
     const income = presentIncome(books().entries)
-    expect(income.revLines).toContainEqual({ label: 'Service Revenue', value: '$100.00' })
-    expect(income.expLines).toContainEqual({ label: 'Operating Expense', value: '$30.00' })
+    expect(income.revLines).toContainEqual({
+      label: 'Service Revenue',
+      value: '$100.00',
+      account: 'Service Revenue'
+    })
+    expect(income.expLines).toContainEqual({
+      label: 'Operating Expense',
+      value: '$30.00',
+      account: 'Operating Expense'
+    })
     expect(income.netIncome).toBe('$70.00')
   })
 
@@ -172,8 +180,13 @@ describe('presentBalance', () => {
 
   it('breaks cash down by pocket and currency under the total', () => {
     const balance = presentBalance(books().entries)
-    // The USDC deposit lands in the Bank pocket → a "• Bank · USDC" drill-down line.
-    expect(balance.assetLines).toContainEqual({ label: '• Bank · USDC', value: '$100.00' })
+    // The USDC deposit lands in the Bank pocket → a "• Bank · USDC" drill-down
+    // line that opens the Cash — Bank account.
+    expect(balance.assetLines).toContainEqual({
+      label: '• Bank · USDC',
+      value: '$100.00',
+      account: 'Cash — Bank'
+    })
   })
 
   const nativeLabel = `• Bank · ${currencySymbol('native')}`
@@ -198,6 +211,28 @@ describe('presentBalance', () => {
       (l) => l.label === nativeLabel
     )
     expect(line?.value).toBe(`0.028953 ${currencySymbol('native')} ≈ $0.00`)
+  })
+
+  it('lists a non-cash asset (Trading account) as its own drillable asset line', () => {
+    const tradingEntry: LedgerEntry = {
+      id: 'trd',
+      timestamp: 1,
+      useCase: 'CASH-OUT',
+      debit: 'Trading account',
+      credit: 'Cash — Bank',
+      amountUsd: 30,
+      token: 'usdc',
+      rawAmount: '30000000',
+      internal: false,
+      memo: '',
+      enrichment: 'not-applicable'
+    }
+    const balance = presentBalance([tradingEntry])
+    expect(balance.assetLines).toContainEqual({
+      label: 'Trading account',
+      value: '$30.00',
+      account: 'Trading account'
+    })
   })
 })
 
