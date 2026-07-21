@@ -2,6 +2,7 @@ import express from 'express';
 import {
   createInvestorMigration,
   getInvestorMigration,
+  generateInvestorMerkleSnapshot,
 } from '../controllers/investorMigrationController';
 import { rejectIfArchived, requireTeamMember } from '../middleware/teamAuthzMiddleware';
 import {
@@ -99,5 +100,51 @@ investorMigrationRoutes.get(
   requireTeamMember('query.teamId'),
   getInvestorMigration
 );
+
+/**
+ * @openapi
+ * /investor-migration/generate:
+ *  post:
+ *   summary: Generate Merkle snapshot and proofs from Investor v1 on-chain data
+ *   tags: [InvestorMigration]
+ *   security:
+ *     - bearerAuth: []
+ *   requestBody:
+ *     required: true
+ *     content:
+ *       application/json:
+ *         schema:
+ *           type: object
+ *           properties:
+ *             investorV1Address:
+ *               type: string
+ *               description: Address of the Investor v1 contract to snapshot
+ *             blockNumber:
+ *               type: number
+ *               description: Optional block number for snapshot (defaults to latest)
+ *   responses:
+ *     200:
+ *       description: Merkle snapshot generated successfully
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               root:
+ *                 type: string
+ *               shareholders:
+ *                 type: array
+ *               proofs:
+ *                 type: object
+ *               blockNumber:
+ *                 type: number
+ *               totalSupply:
+ *                 type: string
+ *     400:
+ *       description: Bad request
+ *     500:
+ *       description: Internal server error
+ */
+investorMigrationRoutes.post('/generate', generateInvestorMerkleSnapshot);
 
 export default investorMigrationRoutes;

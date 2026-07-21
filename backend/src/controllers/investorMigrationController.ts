@@ -7,6 +7,7 @@ import {
   getInvestorMigrationQuerySchema,
   z,
 } from '../validation';
+import { generateMerkleSnapshot } from '../services/merkleSnapshotService';
 
 type CreateInvestorMigrationBody = z.infer<typeof createInvestorMigrationBodySchema>;
 type GetInvestorMigrationQuery = z.infer<typeof getInvestorMigrationQuerySchema>;
@@ -87,6 +88,22 @@ export const getInvestorMigration = async (req: Request, res: Response) => {
       ...migration,
       blockNumber: migration.blockNumber.toString(),
     });
+  } catch (error) {
+    return errorResponse(500, error, res);
+  }
+};
+
+export const generateInvestorMerkleSnapshot = async (req: Request, res: Response) => {
+  const { investorV1Address } = req.body;
+
+  try {
+    if (!investorV1Address) {
+      return errorResponse(400, 'investorV1Address is required', res);
+    }
+
+    const snapshot = await generateMerkleSnapshot(investorV1Address as Address);
+
+    return res.status(200).json(snapshot);
   } catch (error) {
     return errorResponse(500, error, res);
   }
