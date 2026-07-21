@@ -9,6 +9,7 @@ import { ELECTIONS_ABI } from "./abis/elections";
 import { PROPOSALS_ABI } from "./abis/proposals";
 import { BOARD_OF_DIRECTORS_ABI } from "./abis/board-of-directors";
 import { INVESTOR_V1_ABI } from "./abis/investor-v1";
+import { INVESTOR_ABI } from "./abis/investor";
 import { CASH_REMUNERATION_EIP712_ABI } from "./abis/cash-remuneration-eip712";
 import { SAFE_DEPOSIT_ROUTER_ABI } from "./abis/safe-deposit-router";
 import { VESTING_ABI } from "./abis/vesting";
@@ -192,6 +193,12 @@ export default createConfig({
     InvestorV1: {
       chain: chainName,
       abi: INVESTOR_V1_ABI,
+      address: subContractFactory,
+      startBlock,
+    },
+    Investor: {
+      chain: chainName,
+      abi: INVESTOR_ABI,
       address: subContractFactory,
       startBlock,
     },
