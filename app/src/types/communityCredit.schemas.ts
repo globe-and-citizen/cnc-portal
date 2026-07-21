@@ -176,7 +176,10 @@ interface LendAmountSchemaContext {
   tokenSymbol?: string
 }
 
-export function createLendAmountSchema({ remaining, tokenSymbol = 'Token' }: LendAmountSchemaContext) {
+export function createLendAmountSchema({
+  remaining,
+  tokenSymbol = 'Token'
+}: LendAmountSchemaContext) {
   return z.object({
     amount: z
       .number()
