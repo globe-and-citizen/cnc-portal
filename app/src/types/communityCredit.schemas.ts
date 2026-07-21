@@ -167,3 +167,22 @@ export function createRepayAmountSchema({
       })
   })
 }
+
+interface LendAmountSchemaContext {
+  /** The tighter of the round's remaining funding gap and the lender's own remaining
+   *  whitelist allocation/general cap — same figure already shown in the modal's
+   *  "Remaining"/"Your cap left" tile (`CreditLendModal.vue`'s `displayRemaining`). */
+  remaining: number
+  tokenSymbol?: string
+}
+
+export function createLendAmountSchema({ remaining, tokenSymbol = 'Token' }: LendAmountSchemaContext) {
+  return z.object({
+    amount: z
+      .number()
+      .positive('Amount must be greater than 0.')
+      .refine((value) => value <= remaining, {
+        message: `Cannot exceed remaining amount of ${formatAmountWithPrecision(remaining, 0, 4)} ${tokenSymbol}.`
+      })
+  })
+}

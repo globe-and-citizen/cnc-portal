@@ -55,6 +55,12 @@
          roundId/teamId straight from this page's own route params. -->
     <CreditRepayPanel v-else />
 
+    <CreditAccountTransactions
+      v-if="fixedReturnAddress"
+      :fixed-return-address="fixedReturnAddress"
+      :round-id="roundId"
+    />
+
     <CreditLendModal :round="lendRound" @close="lendRound = null" @lent="onLent" />
   </div>
 
@@ -73,6 +79,7 @@ import { useQueryClient } from '@tanstack/vue-query'
 import { zeroAddress } from 'viem'
 import { useCommunityCreditStore, useUserDataStore } from '@/stores'
 import {
+  useFixedReturnAddress,
   useFixedReturnGetLendingOffer,
   useFixedReturnOfferLenders,
   useFixedReturnMyLenderPositions
@@ -83,6 +90,7 @@ import {
 } from '@/composables/fixedReturn/writes'
 import { classifyError, offerLenderToCreditLender, resolveUser, statusMeta } from '@/utils'
 import type { CreditRound, LendingOfferStruct } from '@/types'
+import CreditAccountTransactions from '@/components/sections/CommunityCreditView/CreditAccountTransactions.vue'
 import CreditLayoutSwitcher from '@/components/sections/CommunityCreditView/CreditLayoutSwitcher.vue'
 import CreditLendModal from '@/components/sections/CommunityCreditView/CreditLendModal.vue'
 import CreditRepayPanel from '@/components/sections/CommunityCreditView/CreditRepayPanel.vue'
@@ -101,6 +109,7 @@ const teamId = computed(() => String(route.params.id))
 const roundId = computed(() => String(route.params.roundId))
 const offerId = computed(() => BigInt(roundId.value || '0'))
 
+const fixedReturnAddress = useFixedReturnAddress()
 const baseRound = computed(() => store.getRound(roundId.value))
 const { data: rawOffer } = useFixedReturnGetLendingOffer(offerId)
 const offer = computed(() => rawOffer.value as LendingOfferStruct | undefined)

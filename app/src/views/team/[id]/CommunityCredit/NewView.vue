@@ -290,7 +290,7 @@ async function publish() {
     const total = (await readContract(config, {
       address: fixedReturnAddress.value,
       abi: FIXED_RETURN_ABI,
-      functionName: 'totalOfferings'
+      functionName: 'getTotalOfferings'
     })) as bigint
     const offerId = Number(total)
 
