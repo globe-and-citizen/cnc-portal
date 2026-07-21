@@ -72,8 +72,26 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
   // solhint-disable-next-line chainlink-solidity/prefix-storage-variables-with-s-underscore
   uint256[50] private __gap;
 
-  /// @notice Emitted when a new contract is deployed via beacon proxy
-  event ContractDeployed(string contractType, address deployedAddress);
+  /// @notice Emitted when a new Bank is deployed via beacon proxy
+  event BankDeployed(address indexed bank);
+  /// @notice Emitted when a new Elections is deployed via beacon proxy
+  event ElectionsDeployed(address indexed elections);
+  /// @notice Emitted when a new Proposals is deployed via beacon proxy
+  event ProposalsDeployed(address indexed proposals);
+  /// @notice Emitted when a new BoardOfDirectors is deployed via beacon proxy
+  event BoardOfDirectorsDeployed(address indexed board);
+  /// @notice Emitted when a new InvestorV1 is deployed via beacon proxy
+  event InvestorV1Deployed(address indexed investorV1);
+  /// @notice Emitted when a new Investor is deployed via beacon proxy
+  event InvestorDeployed(address indexed investor);
+  /// @notice Emitted when a new CashRemunerationEIP712 is deployed via beacon proxy
+  event CashRemunerationEIP712Deployed(address indexed remuneration);
+  /// @notice Emitted when a new SafeDepositRouter is deployed via beacon proxy
+  event SafeDepositRouterDeployed(address indexed router);
+  /// @notice Emitted when a new Vesting is deployed via beacon proxy
+  event VestingDeployed(address indexed vesting);
+  /// @notice Emitted when a new ExpenseAccountEIP712 is deployed via beacon proxy
+  event ExpenseAccountEIP712Deployed(address indexed account);
   /// @notice Emitted when a new beacon is configured
   event BeaconConfigured(string contractType, address beaconAddress);
 
@@ -279,7 +297,7 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     address proxyAddress = address(proxy);
     s_deployedContracts.push(DeployedContract(contractType, proxyAddress));
     s_deployedContractsByHash[keccak256(bytes(contractType))] = proxyAddress;
-    emit ContractDeployed(contractType, proxyAddress);
+    _emitContractDeployedEvent(contractType, proxyAddress);
 
     if (keccak256(bytes(contractType)) == keccak256(bytes("Elections"))) {
       address bodContractBeacon = s_contractBeacons["BoardOfDirectors"];
@@ -293,7 +311,7 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
       );
       s_deployedContracts.push(DeployedContract("BoardOfDirectors", s_bodContract));
       s_deployedContractsByHash[keccak256(bytes("BoardOfDirectors"))] = s_bodContract;
-      emit ContractDeployed("BoardOfDirectors", s_bodContract);
+      emit BoardOfDirectorsDeployed(s_bodContract);
     }
 
     return proxyAddress;
@@ -414,5 +432,28 @@ contract Officer is OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgr
     investorV1.grantRole(minterRole, ownerAddress);
     investorV1.grantRole(adminRole, ownerAddress);
     investorV1.transferOwnership(ownerAddress);
+  }
+
+  function _emitContractDeployedEvent(string calldata contractType, address deployedAddress) internal {
+    bytes32 typeHash = keccak256(bytes(contractType));
+    if (typeHash == keccak256(bytes("Bank"))) {
+      emit BankDeployed(deployedAddress);
+    } else if (typeHash == keccak256(bytes("Elections"))) {
+      emit ElectionsDeployed(deployedAddress);
+    } else if (typeHash == keccak256(bytes("Proposals"))) {
+      emit ProposalsDeployed(deployedAddress);
+    } else if (typeHash == keccak256(bytes("InvestorV1"))) {
+      emit InvestorV1Deployed(deployedAddress);
+    } else if (typeHash == keccak256(bytes("Investor"))) {
+      emit InvestorDeployed(deployedAddress);
+    } else if (typeHash == keccak256(bytes("CashRemunerationEIP712"))) {
+      emit CashRemunerationEIP712Deployed(deployedAddress);
+    } else if (typeHash == keccak256(bytes("SafeDepositRouter"))) {
+      emit SafeDepositRouterDeployed(deployedAddress);
+    } else if (typeHash == keccak256(bytes("Vesting"))) {
+      emit VestingDeployed(deployedAddress);
+    } else if (typeHash == keccak256(bytes("ExpenseAccountEIP712"))) {
+      emit ExpenseAccountEIP712Deployed(deployedAddress);
+    }
   }
 }

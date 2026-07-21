@@ -126,11 +126,61 @@ const wsUrls = parseRpcUrls(
 );
 const polygonWs = wsUrls[0] || undefined;
 
-// ─── Shared factory helper ────────────────────────────────────────────────────
-const subContractFactory = factory({
-  event: CONTRACT_DEPLOYED_EVENT,
-  parameter: "deployedAddress",
+// ─── Per-type factory helpers ────────────────────────────────────────────────
+const bankFactory = factory({
+  address: factoryAddress,
+  event: parseAbiItem("event BankDeployed(address indexed bank)"),
+  parameter: "bank",
 });
+
+const electionsFactory = factory({
+  address: factoryAddress,
+  event: parseAbiItem("event ElectionsDeployed(address indexed elections)"),
+  parameter: "elections",
+});
+
+const proposalsFactory = factory({
+  address: factoryAddress,
+  event: parseAbiItem("event ProposalsDeployed(address indexed proposals)"),
+  parameter: "proposals",
+});
+
+const investorV1Factory = factory({
+  address: factoryAddress,
+  event: parseAbiItem("event InvestorV1Deployed(address indexed investorV1)"),
+  parameter: "investorV1",
+});
+
+const investorFactory = factory({
+  address: factoryAddress,
+  event: parseAbiItem("event InvestorDeployed(address indexed investor)"),
+  parameter: "investor",
+});
+
+const cashRemunerationFactory = factory({
+  address: factoryAddress,
+  event: parseAbiItem("event CashRemunerationEIP712Deployed(address indexed remuneration)"),
+  parameter: "remuneration",
+});
+
+const safeDepositRouterFactory = factory({
+  address: factoryAddress,
+  event: parseAbiItem("event SafeDepositRouterDeployed(address indexed router)"),
+  parameter: "router",
+});
+
+const vestingFactory = factory({
+  address: factoryAddress,
+  event: parseAbiItem("event VestingDeployed(address indexed vesting)"),
+  parameter: "vesting",
+});
+
+const expenseAccountFactory = factory({
+  address: factoryAddress,
+  event: parseAbiItem("event ExpenseAccountEIP712Deployed(address indexed account)"),
+  parameter: "account",
+});
+
 export default createConfig({
   chains: {
     polygon: {
@@ -169,61 +219,65 @@ export default createConfig({
     Bank: {
       chain: chainName,
       abi: BANK_ABI,
-      address: subContractFactory,
+      address: bankFactory,
       startBlock,
     },
     Elections: {
       chain: chainName,
       abi: ELECTIONS_ABI,
-      address: subContractFactory,
+      address: electionsFactory,
       startBlock,
     },
     Proposals: {
       chain: chainName,
       abi: PROPOSALS_ABI,
-      address: subContractFactory,
+      address: proposalsFactory,
       startBlock,
     },
     BoardOfDirectors: {
       chain: chainName,
       abi: BOARD_OF_DIRECTORS_ABI,
-      address: subContractFactory,
+      address: factory({
+        address: factoryAddress,
+        event: parseAbiItem("event BoardOfDirectorsDeployed(address indexed board)"),
+        parameter: "board",
+      }),
       startBlock,
     },
     InvestorV1: {
       chain: chainName,
       abi: INVESTOR_V1_ABI,
-      address: subContractFactory,
+      address: investorV1Factory,
       startBlock,
     },
     Investor: {
       chain: chainName,
       abi: INVESTOR_ABI,
-      address: subContractFactory,
+      address: investorFactory,
       startBlock,
     },
     CashRemunerationEIP712: {
       chain: chainName,
       abi: CASH_REMUNERATION_EIP712_ABI,
-      address: subContractFactory,
+      address: cashRemunerationFactory,
       startBlock,
     },
     SafeDepositRouter: {
       chain: chainName,
       abi: SAFE_DEPOSIT_ROUTER_ABI,
-      address: subContractFactory,
+      address: safeDepositRouterFactory,
       startBlock,
     },
     Vesting: {
       chain: chainName,
       abi: VESTING_ABI,
-      address: subContractFactory,
+      address: vestingFactory,
       startBlock,
     },
     ExpenseAccountEIP712: {
       chain: chainName,
       abi: EXPENSE_ACCOUNT_EIP712_ABI,
-      address: subContractFactory,
+      address: expenseAccountFactory,
       startBlock,
     },
     FeeCollector: {
