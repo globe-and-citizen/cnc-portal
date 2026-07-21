@@ -108,7 +108,7 @@ describe('Investor — Merkle-pull migration', () => {
       await expect(investor.setMigrationRoot(tree.root))
         .to.emit(investor, 'MigrationRootSet')
         .withArgs(tree.root)
-      expect(await investor.migrationRoot()).to.equal(tree.root)
+      expect(await investor.getMigrationRoot()).to.equal(tree.root)
     })
 
     it('reverts for a non-owner', async () => {
@@ -125,27 +125,27 @@ describe('Investor — Merkle-pull migration', () => {
         .to.emit(investor, 'MigrationClaimed')
         .withArgs(addr1.address, 100n)
       expect(await investor.balanceOf(addr1.address)).to.equal(100n)
-      expect(await investor.migrationClaimed(addr1.address)).to.equal(true)
+      expect(await investor.getMigrationClaimed(addr1.address)).to.equal(true)
     })
 
     it('reverts when the root is not set', async () => {
       await expect(
         investor.connect(addr1).claim(100n, tree.proof(0))
-      ).to.be.revertedWithCustomError(investor, 'MigrationRootNotSet')
+      ).to.be.revertedWithCustomError(investor, 'Investor__MigrationRootNotSet')
     })
 
     it('reverts on an invalid proof', async () => {
       await investor.setMigrationRoot(tree.root)
       await expect(
         investor.connect(addr1).claim(100n, tree.proof(1))
-      ).to.be.revertedWithCustomError(investor, 'InvalidProof')
+      ).to.be.revertedWithCustomError(investor, 'Investor__InvalidProof')
     })
 
     it('reverts on a tampered amount', async () => {
       await investor.setMigrationRoot(tree.root)
       await expect(
         investor.connect(addr1).claim(999n, tree.proof(0))
-      ).to.be.revertedWithCustomError(investor, 'InvalidProof')
+      ).to.be.revertedWithCustomError(investor, 'Investor__InvalidProof')
     })
 
     it('reverts on a double claim', async () => {
@@ -153,7 +153,7 @@ describe('Investor — Merkle-pull migration', () => {
       await investor.connect(addr1).claim(100n, tree.proof(0))
       await expect(
         investor.connect(addr1).claim(100n, tree.proof(0))
-      ).to.be.revertedWithCustomError(investor, 'AlreadyMigrated')
+      ).to.be.revertedWithCustomError(investor, 'Investor__AlreadyMigrated')
     })
   })
 
@@ -178,7 +178,7 @@ describe('Investor — Merkle-pull migration', () => {
       await investor.setMigrationRoot(tree.root)
       await expect(
         investor.bulkClaim([addr1.address], [100n, 50n], [tree.proof(0)])
-      ).to.be.revertedWithCustomError(investor, 'LengthMismatch')
+      ).to.be.revertedWithCustomError(investor, 'Investor__LengthMismatch')
     })
 
     it('reverts for a non-owner', async () => {
@@ -197,7 +197,7 @@ describe('Investor — Merkle-pull migration', () => {
 
       await expect(investor.connect(addr2).claim(50n, tree.proof(1))).to.be.revertedWithCustomError(
         investor,
-        'MigrationAlreadyComplete'
+        'Investor__MigrationAlreadyComplete'
       )
     })
   })
@@ -209,7 +209,7 @@ describe('Investor — Merkle-pull migration', () => {
 
       await expect(
         investor.connect(bankSigner).distributeNativeDividends(100n, { value: 100n })
-      ).to.be.revertedWithCustomError(investor, 'DividendsFrozenDuringMigration')
+      ).to.be.revertedWithCustomError(investor, 'Investor__DividendsFrozenDuringMigration')
 
       await investor.completeMigration()
 
