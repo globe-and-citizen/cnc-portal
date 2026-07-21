@@ -162,7 +162,7 @@ describe('Officer Contract', function () {
 
       await expect(
         officer.connect(owner).deployBeaconProxy('Elections', electionsInitData)
-      ).to.emit(officer, 'ContractDeployed')
+      ).to.emit(officer, 'ElectionsDeployed')
 
       const deployedContracts = await officer.getTeam()
       expect(deployedContracts.length).to.equal(2)
@@ -171,21 +171,21 @@ describe('Officer Contract', function () {
 
       await expect(officer.connect(owner).deployBeaconProxy('Bank', bankInitData)).to.emit(
         officer,
-        'ContractDeployed'
+        'BankDeployed'
       )
 
       await expect(
         officer.connect(owner).deployBeaconProxy('ExpenseAccountEIP712', expenseInitData)
-      ).to.emit(officer, 'ContractDeployed')
+      ).to.emit(officer, 'ExpenseAccountEIP712Deployed')
 
       await expect(
         officer.connect(owner).deployBeaconProxy('InvestorV1', investorInitData)
-      ).to.emit(officer, 'ContractDeployed')
+      ).to.emit(officer, 'InvestorV1Deployed')
 
       //  ADD: Deploy SafeDepositRouter
       await expect(
         officer.connect(owner).deployBeaconProxy('SafeDepositRouter', safeDepositRouterInitData)
-      ).to.emit(officer, 'ContractDeployed')
+      ).to.emit(officer, 'SafeDepositRouterDeployed')
     })
 
     it('Should restrict deployment to owners and founders', async function () {
@@ -199,7 +199,7 @@ describe('Officer Contract', function () {
       // Test authorized access (founder)
       await expect(officer.connect(owner).deployBeaconProxy('Bank', initData)).to.emit(
         officer,
-        'ContractDeployed'
+        'BankDeployed'
       )
     })
 
