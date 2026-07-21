@@ -1,7 +1,7 @@
 import { vi } from 'vitest'
 import { computed } from 'vue'
 import type { Address } from 'viem'
-import { mockInvestorReads, mockInvestorWrites } from '../mocks/contract.mock'
+import { mockInvestorReads, mockInvestorV2Reads, mockInvestorWrites } from '../mocks/contract.mock'
 
 const MOCK_INVESTOR_ADDRESS = '0x4234567890123456789012345678901234567890' as Address
 
@@ -22,4 +22,13 @@ vi.mock('@/composables/investor/reads', () => ({
 vi.mock('@/composables/investor/writes', () => ({
   useIndividualMint: vi.fn(() => mockInvestorWrites.individualMint),
   useDistributeMint: vi.fn(() => mockInvestorWrites.distributeMint)
+}))
+
+/**
+ * Mock Investor v2 (Investor.sol) read composables — distinct contractType
+ * from InvestorV1, see composables/investor/readsV2.ts.
+ */
+vi.mock('@/composables/investor/readsV2', () => ({
+  useInvestorV2Address: vi.fn(() => computed(() => MOCK_INVESTOR_ADDRESS)),
+  useInvestorV2MigrationRoot: vi.fn(() => mockInvestorV2Reads.migrationRoot)
 }))

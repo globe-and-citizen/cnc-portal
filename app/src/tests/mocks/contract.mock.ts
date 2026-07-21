@@ -1,5 +1,6 @@
 import { vi } from 'vitest'
 import { ref } from 'vue'
+import { zeroHash } from 'viem'
 import { createContractReadMock, createContractWriteV3Mock } from './erc20.mock'
 import type { LendingOfferStruct } from '@/types'
 
@@ -132,6 +133,14 @@ export const mockInvestorReads = {
   investorCount: createContractReadMock(0n)
 }
 
+/**
+ * Investor v2 (Investor.sol) read mocks — distinct contractType from
+ * InvestorV1, see composables/investor/readsV2.ts.
+ */
+export const mockInvestorV2Reads = {
+  migrationRoot: createContractReadMock<`0x${string}`>(zeroHash)
+}
+
 export const mockInvestorWrites = {
   invest: createContractWriteV3Mock(),
   claimDividend: createContractWriteV3Mock(),
@@ -192,6 +201,7 @@ export const resetContractMocks = () => {
     mockBankReads,
     mockBODReads,
     mockInvestorReads,
+    mockInvestorV2Reads,
     mockCashRemunerationReads,
     mockExpenseAccountReads,
     mockFixedReturnReads
