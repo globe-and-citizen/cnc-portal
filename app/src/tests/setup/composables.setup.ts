@@ -234,6 +234,18 @@ vi.mock('@/queries/contract.queries', () => ({
 }))
 
 /**
+ * Mock Investor Migration Queries (investorMigration.queries.ts)
+ */
+vi.mock('@/queries/investorMigration.queries', () => ({
+  investorMigrationKeys: {
+    all: ['investorMigration'] as const,
+    team: (teamId: string | number) => ['investorMigration', String(teamId)] as const
+  },
+  useCreateInvestorMigrationMutation: vi.fn(queryMocks.useCreateInvestorMigrationMutation),
+  useGetInvestorMigrationQuery: vi.fn(queryMocks.useGetInvestorMigrationQuery)
+}))
+
+/**
  * Mock Health Queries (health.queries.ts)
  */
 vi.mock('@/queries/health.queries', () => ({

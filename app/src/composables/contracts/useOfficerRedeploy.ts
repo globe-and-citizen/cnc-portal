@@ -19,10 +19,7 @@ import {
   useDeployOfficer,
   useInvalidateOfficerQueries
 } from '@/composables/contracts/useOfficerDeployment'
-import {
-  useMigrateShareholders,
-  InconsistentSupplyError
-} from '@/composables/investor/useShareholderMigration'
+import { useMigrateShareholders } from '@/composables/investor/useShareholderMigration'
 import { useCreateOfficerMutation } from '@/queries/contract.queries'
 import { OFFICER_ABI } from '@/artifacts/abi/officer'
 import { log } from '@/utils'
@@ -58,6 +55,7 @@ export function useOfficerRedeploy() {
 
   // Workflow-level state that spans multiple mutations.
   const pendingMigration = ref<{
+    teamId: string | number
     previousOfficerAddress: Address
     newInvestorAddress: Address
   } | null>(null)
@@ -74,9 +72,6 @@ export function useOfficerRedeploy() {
   const migrationFailed = computed(
     () => pendingMigration.value !== null && !migrateMutation.isPending.value
   )
-  const isInconsistent = computed(
-    () => migrateMutation.error.value instanceof InconsistentSupplyError
-  )
 
   const findNewInvestorAddress = async (officerAddress: Address): Promise<Address | null> => {
     const contracts = (await readContract(config, {
@@ -84,10 +79,11 @@ export function useOfficerRedeploy() {
       abi: OFFICER_ABI,
       functionName: 'getTeam'
     })) as readonly { contractType: string; contractAddress: Address }[]
-    return contracts.find((c) => c.contractType === 'InvestorV1')?.contractAddress ?? null
+    return contracts.find((c) => c.contractType === 'Investor')?.contractAddress ?? null
   }
 
   const tryMigration = async (ctx: {
+    teamId: string | number
     previousOfficerAddress: Address
     newInvestorAddress: Address
   }) => {
@@ -155,13 +151,14 @@ export function useOfficerRedeploy() {
     if (previousOfficer) {
       const newInvestorAddress = await findNewInvestorAddress(metadata.officerAddress)
       if (!newInvestorAddress) {
-        log.error('New InvestorV1 address not found in Officer.getTeam()')
+        log.error('New Investor address not found in Officer.getTeam()')
         workflowError.value = new Error(
-          'Officer redeployed, but the new InvestorV1 could not be located in Officer.getTeam(). Retry from the Share Token page.'
+          'Officer redeployed, but the new Investor could not be located in Officer.getTeam(). Retry from the Share Token page.'
         )
         return
       }
       pendingMigration.value = {
+        teamId,
         previousOfficerAddress: previousOfficer.address as Address,
         newInvestorAddress
       }
@@ -183,7 +180,6 @@ export function useOfficerRedeploy() {
     // State
     isRunning,
     migrationFailed,
-    isInconsistent,
 
     // Reactive errors — bind directly to UAlert in the template
     deployError: deployMutation.error,

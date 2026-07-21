@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import type { Address } from 'viem'
 import { useOfficerRedeploy } from '../useOfficerRedeploy'
-import { InconsistentSupplyError } from '@/composables/investor/useShareholderMigration'
 import { useTeamStore } from '@/stores'
 import { useCreateOfficerMutation } from '@/queries/contract.queries'
 
@@ -179,7 +178,7 @@ describe('useOfficerRedeploy', () => {
       contractsCreated: 0
     })
     mockReadContract.mockResolvedValue([
-      { contractType: 'InvestorV1', contractAddress: NEW_INVESTOR }
+      { contractType: 'Investor', contractAddress: NEW_INVESTOR }
     ])
     migrateMutationRefs.mutateAsync.mockImplementation(async () => {
       migrateMutationRefs.isSuccess.value = true
@@ -190,6 +189,7 @@ describe('useOfficerRedeploy', () => {
     await redeploy({ name: 'Shares', symbol: 'SH' })
 
     expect(migrateMutationRefs.mutateAsync).toHaveBeenCalledWith({
+      teamId: 42,
       previousOfficerAddress: PREV_OFFICER,
       newInvestorAddress: NEW_INVESTOR
     })
@@ -197,7 +197,7 @@ describe('useOfficerRedeploy', () => {
     expect(invalidateMock).toHaveBeenCalledWith()
   })
 
-  it('surfaces workflowError when the new InvestorV1 is missing from getTeam()', async () => {
+  it('surfaces workflowError when the new Investor is missing from getTeam()', async () => {
     deployMutationRefs.mutateAsync.mockResolvedValue({
       hash: '0xhash',
       officerAddress: NEW_OFFICER,
@@ -218,7 +218,7 @@ describe('useOfficerRedeploy', () => {
     expect(migrateMutationRefs.mutateAsync).not.toHaveBeenCalled()
     expect(invalidateMock).not.toHaveBeenCalled()
     expect(workflowError.value).toBeInstanceOf(Error)
-    expect(workflowError.value?.message).toMatch(/InvestorV1 could not be located/)
+    expect(workflowError.value?.message).toMatch(/Investor could not be located/)
   })
 
   it('marks migration as failed (not auto-invalidating) when migrate mutation throws', async () => {
@@ -234,9 +234,9 @@ describe('useOfficerRedeploy', () => {
       contractsCreated: 0
     })
     mockReadContract.mockResolvedValue([
-      { contractType: 'InvestorV1', contractAddress: NEW_INVESTOR }
+      { contractType: 'Investor', contractAddress: NEW_INVESTOR }
     ])
-    const err = new InconsistentSupplyError(999n, 300n)
+    const err = new Error('setMigrationRoot reverted')
     // Don't throw — the wrapping tanstack mutation would set .error.value and
     // return undefined rather than rethrow in the real impl. Mirror that here.
     migrateMutationRefs.mutateAsync.mockImplementation(async () => {
@@ -245,11 +245,10 @@ describe('useOfficerRedeploy', () => {
       return undefined
     })
 
-    const { redeploy, migrationFailed, isInconsistent, migrationError } = useOfficerRedeploy()
+    const { redeploy, migrationFailed, migrationError } = useOfficerRedeploy()
     await redeploy({ name: 'Shares', symbol: 'SH' })
 
     expect(migrationFailed.value).toBe(true)
-    expect(isInconsistent.value).toBe(true)
     expect(migrationError.value).toBe(err)
     expect(invalidateMock).not.toHaveBeenCalled()
   })
@@ -268,7 +267,7 @@ describe('useOfficerRedeploy', () => {
       contractsCreated: 0
     })
     mockReadContract.mockResolvedValue([
-      { contractType: 'InvestorV1', contractAddress: NEW_INVESTOR }
+      { contractType: 'Investor', contractAddress: NEW_INVESTOR }
     ])
     migrateMutationRefs.mutateAsync.mockImplementationOnce(async () => {
       migrateMutationRefs.error.value = new Error('boom')
@@ -282,6 +281,7 @@ describe('useOfficerRedeploy', () => {
     // Now retry — this time the migration succeeds.
     migrateMutationRefs.mutateAsync.mockImplementationOnce(async (ctx) => {
       expect(ctx).toEqual({
+        teamId: 42,
         previousOfficerAddress: PREV_OFFICER,
         newInvestorAddress: NEW_INVESTOR
       })
@@ -307,7 +307,7 @@ describe('useOfficerRedeploy', () => {
       contractsCreated: 0
     })
     mockReadContract.mockResolvedValue([
-      { contractType: 'InvestorV1', contractAddress: NEW_INVESTOR }
+      { contractType: 'Investor', contractAddress: NEW_INVESTOR }
     ])
     migrateMutationRefs.mutateAsync.mockImplementation(async () => {
       migrateMutationRefs.error.value = new Error('migrate boom')

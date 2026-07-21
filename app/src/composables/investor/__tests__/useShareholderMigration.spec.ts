@@ -1,10 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { readContract } from '@wagmi/core'
-import {
-  migrateShareholders,
-  useMigrateShareholders,
-  InconsistentSupplyError
-} from '../useShareholderMigration'
+import { zeroHash } from 'viem'
+import { migrateShareholders, useMigrateShareholders } from '../useShareholderMigration'
 import { executeContractWrite } from '@/composables/contracts/useContractWritesV3'
 import {
   useMutationFn,
@@ -30,6 +27,7 @@ const NEW_INVESTOR = '0x3333333333333333333333333333333333333333' as Address
 const SHAREHOLDER_A = '0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' as Address
 const SHAREHOLDER_B = '0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB' as Address
 const TX_HASH = '0xdeadbeef00000000000000000000000000000000000000000000000000000000' as const
+const SOME_ROOT = '0x1234567800000000000000000000000000000000000000000000000000000000' as const
 
 const shareholders = [
   { shareholder: SHAREHOLDER_A, amount: 100n },
@@ -43,7 +41,7 @@ const shareholders = [
 function stubReads(opts: {
   oldInvestor?: Address | null
   shareholders?: readonly { shareholder: Address; amount: bigint }[]
-  newSupply?: bigint
+  existingRoot?: `0x${string}`
 }) {
   vi.mocked(readContract).mockImplementation(async (_config, params) => {
     const p = params as { address: Address; functionName: string }
@@ -53,7 +51,7 @@ function stubReads(opts: {
         : [{ contractType: 'InvestorV1', contractAddress: opts.oldInvestor ?? OLD_INVESTOR }]
     }
     if (p.functionName === 'getShareholders') return opts.shareholders ?? []
-    if (p.functionName === 'totalSupply') return opts.newSupply ?? 0n
+    if (p.functionName === 'getMigrationRoot') return opts.existingRoot ?? zeroHash
     throw new Error(`Unexpected readContract call: ${p.functionName}`)
   })
 }
@@ -63,30 +61,30 @@ describe('migrateShareholders (pure)', () => {
     vi.clearAllMocks()
   })
 
-  it('mints on the new InvestorV1 when supply is 0', async () => {
-    stubReads({ shareholders, newSupply: 0n })
+  it('sets the migration root on the new Investor when none is set yet', async () => {
+    stubReads({ shareholders, existingRoot: zeroHash })
     vi.mocked(executeContractWrite).mockResolvedValue({
       hash: TX_HASH,
-      receipt: { status: 'success' } as never,
+      receipt: { status: 'success', blockNumber: 42n } as never,
       simulation: {} as never
     })
 
     const res = await migrateShareholders({
+      teamId: 1,
       previousOfficerAddress: PREV_OFFICER,
       newInvestorAddress: NEW_INVESTOR
     })
 
-    expect(res).toEqual({ kind: 'done', migratedCount: 2, shareholders })
+    expect(res).toMatchObject({
+      kind: 'done',
+      migratedCount: 2,
+      previousInvestorAddress: OLD_INVESTOR,
+      blockNumber: 42n
+    })
     expect(executeContractWrite).toHaveBeenCalledWith(
       expect.objectContaining({
         address: NEW_INVESTOR,
-        functionName: 'distributeMint',
-        args: [
-          [
-            { shareholder: SHAREHOLDER_A, amount: 100n },
-            { shareholder: SHAREHOLDER_B, amount: 200n }
-          ]
-        ]
+        functionName: 'setMigrationRoot'
       })
     )
   })
@@ -95,6 +93,7 @@ describe('migrateShareholders (pure)', () => {
     stubReads({ shareholders: [] })
 
     const res = await migrateShareholders({
+      teamId: 1,
       previousOfficerAddress: PREV_OFFICER,
       newInvestorAddress: NEW_INVESTOR
     })
@@ -103,45 +102,17 @@ describe('migrateShareholders (pure)', () => {
     expect(executeContractWrite).not.toHaveBeenCalled()
   })
 
-  it('returns noop-already-migrated when supply matches sum', async () => {
-    stubReads({ shareholders, newSupply: 300n })
+  it('returns noop-already-migrated when a migration root is already set', async () => {
+    stubReads({ shareholders, existingRoot: SOME_ROOT })
 
     const res = await migrateShareholders({
+      teamId: 1,
       previousOfficerAddress: PREV_OFFICER,
       newInvestorAddress: NEW_INVESTOR
     })
 
-    expect(res).toEqual({ kind: 'noop-already-migrated', matchedCount: 2 })
+    expect(res).toEqual({ kind: 'noop-already-migrated' })
     expect(executeContractWrite).not.toHaveBeenCalled()
-  })
-
-  it('throws InconsistentSupplyError when supply is non-zero and differs', async () => {
-    stubReads({ shareholders, newSupply: 999n })
-
-    await expect(
-      migrateShareholders({
-        previousOfficerAddress: PREV_OFFICER,
-        newInvestorAddress: NEW_INVESTOR
-      })
-    ).rejects.toBeInstanceOf(InconsistentSupplyError)
-    expect(executeContractWrite).not.toHaveBeenCalled()
-  })
-
-  it('exposes newSupply and expectedSupply on the error', async () => {
-    stubReads({ shareholders, newSupply: 999n })
-
-    try {
-      await migrateShareholders({
-        previousOfficerAddress: PREV_OFFICER,
-        newInvestorAddress: NEW_INVESTOR
-      })
-      throw new Error('should have thrown')
-    } catch (e) {
-      expect(e).toBeInstanceOf(InconsistentSupplyError)
-      expect((e as InconsistentSupplyError).newSupply).toBe(999n)
-      expect((e as InconsistentSupplyError).expectedSupply).toBe(300n)
-      expect((e as InconsistentSupplyError).message).toContain('double-minting')
-    }
   })
 
   it('throws when the previous Officer has no InvestorV1 sub-contract', async () => {
@@ -149,6 +120,7 @@ describe('migrateShareholders (pure)', () => {
 
     await expect(
       migrateShareholders({
+        teamId: 1,
         previousOfficerAddress: PREV_OFFICER,
         newInvestorAddress: NEW_INVESTOR
       })
@@ -168,16 +140,17 @@ describe('useMigrateShareholders (TanStack wrapper)', () => {
     })
   })
 
-  it('resolves with done result when supply is 0', async () => {
-    stubReads({ shareholders, newSupply: 0n })
+  it('resolves with done result and persists the snapshot when no root is set', async () => {
+    stubReads({ shareholders, existingRoot: zeroHash })
     vi.mocked(executeContractWrite).mockResolvedValue({
       hash: TX_HASH,
-      receipt: { status: 'success' } as never,
+      receipt: { status: 'success', blockNumber: 42n } as never,
       simulation: {} as never
     })
 
     const m = useMigrateShareholders()
     const res = await m.mutateAsync({
+      teamId: 1,
       previousOfficerAddress: PREV_OFFICER,
       newInvestorAddress: NEW_INVESTOR
     })
@@ -185,16 +158,17 @@ describe('useMigrateShareholders (TanStack wrapper)', () => {
     expect(res).toMatchObject({ kind: 'done', migratedCount: 2 })
   })
 
-  it('resolves with noop-already-migrated when supply matches', async () => {
-    stubReads({ shareholders, newSupply: 300n })
+  it('resolves with noop-already-migrated when a root is already set', async () => {
+    stubReads({ shareholders, existingRoot: SOME_ROOT })
 
     const m = useMigrateShareholders()
     const res = await m.mutateAsync({
+      teamId: 1,
       previousOfficerAddress: PREV_OFFICER,
       newInvestorAddress: NEW_INVESTOR
     })
 
-    expect(res).toEqual({ kind: 'noop-already-migrated', matchedCount: 2 })
+    expect(res).toEqual({ kind: 'noop-already-migrated' })
   })
 
   it('resolves with noop-empty when there are no previous shareholders', async () => {
@@ -202,22 +176,11 @@ describe('useMigrateShareholders (TanStack wrapper)', () => {
 
     const m = useMigrateShareholders()
     const res = await m.mutateAsync({
+      teamId: 1,
       previousOfficerAddress: PREV_OFFICER,
       newInvestorAddress: NEW_INVESTOR
     })
 
     expect(res).toEqual({ kind: 'noop-empty' })
-  })
-
-  it('rethrows InconsistentSupplyError from the mutation', async () => {
-    stubReads({ shareholders, newSupply: 999n })
-
-    const m = useMigrateShareholders()
-    await expect(
-      m.mutateAsync({
-        previousOfficerAddress: PREV_OFFICER,
-        newInvestorAddress: NEW_INVESTOR
-      })
-    ).rejects.toBeInstanceOf(InconsistentSupplyError)
   })
 })
