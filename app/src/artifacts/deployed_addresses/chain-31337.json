@@ -13,6 +13,8 @@
   "ElectionsBeaconModule#Beacon": "0x610178dA211FEF7D417bC0e6FeD39F05609AD788",
   "InvestorsV1BeaconModule#InvestorV1": "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e",
   "InvestorsV1BeaconModule#Beacon": "0xA51c1fc2f0D1a1b8494Ed1FE312d7C3a78Ed91C0",
+  "InvestorBeaconModule#Investor": "0x8f5e3c23e7cf6213434087444c275636b166e3d7",
+  "InvestorBeaconModule#Beacon": "0x01ed6143f386070d8645301ffc2989ee9b0ef4ef",
   "ExpenseAccountEIP712Module#ExpenseAccountEIP712": "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82",
   "ExpenseAccountEIP712Module#FactoryBeacon": "0x9A676e781A523b5d0C0e43731313A708CB607508",
   "CashRemunerationEIP712Module#CashRemunerationEIP712": "0x0B306BF915C4d645ff596e518fAf3F9669b97016",
